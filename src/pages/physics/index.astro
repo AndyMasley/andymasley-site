@@ -55,6 +55,51 @@ const totalVideos = getTotalVideoCount();
 
   <hr class="divider" />
 
+  <div class="section-title">Advice and Resources</div>
+
+  <details class="unit-dropdown">
+    <summary>How to learn physics</summary>
+    <div class="advice-content">
+      <p>Ultimately I think the best way to learn physics looks something like this:</p>
+      <ul>
+        <li>Start with great explanations. I've tried to provide those on my YouTube channel.</li>
+        <li>Diligently take notes on everything. Map the idea for yourself. Form a narrative in your head.</li>
+        <li>For anything that requires memorization (thankfully physics is low on memorization compared to other sciences, that's one reason why I studied it!), use <a href="https://en.wikipedia.org/wiki/Spaced_repetition" target="_blank" rel="noopener">spaced repetition</a>. <a href="https://augmentingcognition.com/ltm.html" target="_blank" rel="noopener">This blog post</a> goes into a lot of detail on spaced repetition, it's the single most important learning tool we have for actually retaining important information.</li>
+        <li>Take this knowledge and do a ton of unrelated equations, and see where you're tripping up and what you're getting right. Most of the learning happens here. You will mostly be blind to all the ways you're misunderstanding the equations until you actually try to use them. Becoming an expert in physics means marinating your brain in these tiny failures until you have a deep intuitive understanding for how to avoid them. Failure feels bad, but it's your ladder to understanding. If you're willing to put up with the bad feelings it causes, you can be among a small percentage of people who know the fundamental nature of reality.</li>
+        <li>Remember that everything in physics is actually deeply coherent, and an application of a few ideas used over and over in different circumstances. If you truly understand Newton's 3 Laws, and know that energy just means "the ability to apply a force F over distance D" it's possible to independently derive the equations for energy, as an example. Most students leave physics without much of an understanding of this underlying structure. For them, learning the equations for momentum, energy, kinematics, and force is kind of like learning about different unrelated parts of a cell. I think this is a huge tragedy, because the main lesson and mindset of physics is that all of these are actually expressions of the same underlying ideas, and you can move back and forth between them. Try in your own time to get a deep sense of why each equation looks the way that it looks. Understand why if Newton's Second and Third Laws are true, momentum <em>has</em> to be conserved as well.</li>
+        <li>Use AI to test yourself whenever possible. Talk through what you're thinking with an AI model. Have it design new novel tests and problems for you. AI now is akin to the internet when I was in school. Something relatively new with insane potential that most people are still not tapping at all.</li>
+        <li>Most students haven't had calculus when they take their first physics course, which is a shame, because calculus makes it much easier to understand physics. And calculus is not actually that hard to understand. If you don't know calculus, see if you can find good resources for learning what a derivative is. I'd recommend <a href="https://www.youtube.com/watch?v=WUvTyaaNkzM&list=PLZHQObOWTQDMsr9K-rj53DwVRMYO3t5Yr" target="_blank" rel="noopener">3Blue1Brown's Essence of Calculus series</a>, plus a free online course to test yourself.</li>
+        <li>Besides AI, your 3 best bets for external resources on physics are going to be: Textbooks, Wikipedia, and YouTube. Popular books on physics mostly focus on surface-level stories, very simple ideas, or the deep history of physics or how it's applied in the real world. These can be good to know for other reasons, but mostly don't help you approach a deep understanding of physics itself.</li>
+        <li>I have more advice on strategies for learning something new <a href="https://andymasley.substack.com/p/strategies-for-learning" target="_blank" rel="noopener">here</a>.</li>
+      </ul>
+    </div>
+  </details>
+
+  <details class="unit-dropdown">
+    <summary>Physics resources I like</summary>
+    <div class="advice-content">
+      <h4>Books</h4>
+      <p>I don't think popular books are a useful tool for learning actual physics, they're usually too focused on stories and just can't go into enough of the abstract detail required to actually understand physics well. These books are some of my favorite popular applications of physics or histories of physics. Reading these will teach you a lot about how our knowledge of physics interacts with the real world, but less about the underlying nature of physics itself.</p>
+      <ul>
+        <li><a href="https://www.amazon.com/Sustainable-Energy-Without-Hot-Air/dp/0954452933" target="_blank" rel="noopener">Sustainable Energy, without the hot air</a> - A huge inspiration for me as a model of good science communication</li>
+        <li><a href="https://www.amazon.com/Making-Atomic-Bomb-Richard-Rhodes/dp/1451677618" target="_blank" rel="noopener">The Making of the Atomic Bomb</a> - Amazing social history of physics at the time</li>
+        <li><a href="https://www.amazon.com/Energy-Civilization-History-MIT-Press/dp/0262035774" target="_blank" rel="noopener">Energy and Civilization</a> - A history of human civilization framed entirely around humans progressively accessing more and more energy</li>
+      </ul>
+
+      <h4>Popular physics YouTube channels</h4>
+      <ul>
+        <li><a href="https://www.youtube.com/@3blue1brown" target="_blank" rel="noopener">3Blue1Brown</a> - The best math YouTuber. He made <a href="https://www.youtube.com/watch?v=jsYwFizhncE" target="_blank" rel="noopener">my favorite physics video</a>.</li>
+        <li><a href="https://www.youtube.com/@fermilab" target="_blank" rel="noopener">Fermilab</a> - One of the best explainers ever. I thought <a href="https://www.youtube.com/watch?v=CUjt36SD3h8" target="_blank" rel="noopener">this video was perfect</a>.</li>
+        <li><a href="https://www.youtube.com/@MinutePhysics" target="_blank" rel="noopener">Minute Physics</a></li>
+        <li><a href="https://www.youtube.com/@sixtysymbols" target="_blank" rel="noopener">Sixty Symbols</a></li>
+        <li><a href="https://www.youtube.com/@physicsgirl" target="_blank" rel="noopener">Physics Girl</a></li>
+        <li><a href="https://www.youtube.com/@veritasium" target="_blank" rel="noopener">Veritasium</a></li>
+      </ul>
+    </div>
+  </details>
+
+  <hr class="divider" />
+
   <div class="back-link">
     <a href="/">← home</a>
   </div>
@@ -188,6 +233,47 @@ const totalVideos = getTotalVideoCount();
     margin-left: 4px;
   }
 
+  /* Advice content */
+  .advice-content {
+    margin-left: 20px;
+    padding-bottom: 8px;
+    font-size: 0.85rem;
+    line-height: 1.6;
+  }
+
+  .advice-content p {
+    margin-bottom: 0.75em;
+  }
+
+  .advice-content ul {
+    margin: 0.5em 0 1em 1.25em;
+    padding: 0;
+  }
+
+  .advice-content li {
+    margin-bottom: 0.5em;
+  }
+
+  .advice-content h4 {
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin: 1em 0 0.5em 0;
+  }
+
+  .advice-content h4:first-child {
+    margin-top: 0;
+  }
+
+  .advice-content a {
+    color: var(--accent);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  .advice-content a:hover {
+    text-decoration: none;
+  }
+
   /* Responsive */
   @media (max-width: 600px) {
     .unit-content {
@@ -195,6 +281,10 @@ const totalVideos = getTotalVideoCount();
     }
 
     .topic-content {
+      margin-left: 12px;
+    }
+
+    .advice-content {
       margin-left: 12px;
     }
   }
