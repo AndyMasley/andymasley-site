@@ -5,12 +5,45 @@ import { metaPosts, getMetaPostSlugs } from '@/lib/meta-posts';
 import { bylines } from '@/lib/bylines';
 import { fetchEAForumPosts } from '@/lib/eaforum';
 
-// Fetch posts
-const allPosts = await fetchSubstackPosts();
+// Unified post interface for timeline
+interface TimelinePost {
+  title: string;
+  slug: string;
+  date: Date;
+  url: string;
+  category: string;
+}
+
+// Fetch posts from both sources
+const [allSubstackPosts, eaForumPosts] = await Promise.all([
+  fetchSubstackPosts(),
+  fetchEAForumPosts()
+]);
+
 const metaSlugs = getMetaPostSlugs();
 
-// Filter out meta posts from timeline
-const posts = allPosts.filter(p => !metaSlugs.includes(p.slug));
+// Filter out meta posts from Substack timeline
+const substackPosts: TimelinePost[] = allSubstackPosts
+  .filter(p => !metaSlugs.includes(p.slug))
+  .map(p => ({
+    title: p.title,
+    slug: p.slug,
+    date: p.date,
+    url: p.url,
+    category: p.category
+  }));
+
+// Convert EA Forum posts to timeline format
+const eaForumTimelinePosts: TimelinePost[] = eaForumPosts.map(p => ({
+  title: p.title,
+  slug: p.slug,
+  date: p.date,
+  url: p.url,
+  category: 'EA Forum'
+}));
+
+// Combine all posts
+const posts: TimelinePost[] = [...substackPosts, ...eaForumTimelinePosts];
 
 // Fetch content for each meta post
 const metaPostsWithContent = await Promise.all(
@@ -24,7 +57,7 @@ const metaPostsWithContent = await Promise.all(
 interface MonthGroup {
   label: string;
   month: number;
-  posts: typeof posts;
+  posts: TimelinePost[];
 }
 
 interface YearGroup {
@@ -35,7 +68,7 @@ interface YearGroup {
 const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
                     'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
-const yearMap = new Map<number, Map<number, typeof posts>>();
+const yearMap = new Map<number, Map<number, TimelinePost[]>>();
 
 for (const post of posts) {
   const year = post.date.getFullYear();
@@ -86,20 +119,24 @@ function getShortName(categoryName: string): string {
     'Politics': 'Politics',
     'Recs & Advice': 'Recs',
     'Misc': 'Misc',
+    'EA Forum': 'EA Forum',
   };
   return shortNames[categoryName] || categoryName;
 }
 
 // Get category slug
 function getCategorySlug(categoryName: string): string {
+  if (categoryName === 'EA Forum') return 'ea-forum';
   const config = categoryConfigs.find(c => c.name === categoryName);
   return config?.slug || categoryName.toLowerCase().replace(/\s+/g, '-');
 }
 
 // Filter categories to show (only ones with posts)
-const activeCategories = categoryConfigs.filter(c =>
-  posts.some(p => p.category === c.name)
-);
+// Include both Substack categories and EA Forum
+const activeCategories = [
+  ...categoryConfigs.filter(c => posts.some(p => p.category === c.name)),
+  ...(eaForumTimelinePosts.length > 0 ? [{ name: 'EA Forum', slug: 'ea-forum', overview: '', sectionIds: [] }] : [])
+];
 
 // Process HTML content - fix internal links
 function processContent(html: string): string {
@@ -117,16 +154,6 @@ function formatBylineDate(dateStr: string): string {
   return `${month}.${day}.${year}`;
 }
 
-// Fetch EA Forum posts
-const eaForumPosts = await fetchEAForumPosts();
-
-// Format EA Forum date
-function formatEAForumDate(date: Date): string {
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  const year = date.getFullYear();
-  return `${month}.${day}.${year}`;
-}
 ---
 
 <Base title="Writing">
@@ -222,30 +249,6 @@ function formatEAForumDate(date: Date): string {
         </div>
       ) : (
         <p class="bylines-placeholder">Coming soon.</p>
-      )}
-    </div>
-  </div>
-
-  <!-- EA FORUM DROPDOWN -->
-  <div class="top-dropdown">
-    <button class="top-toggle" aria-expanded="false" data-section="eaforum">
-      <span class="top-arrow">&#9654;</span>
-      <span class="top-title">EA Forum</span>
-    </button>
-    <div class="top-content" data-content="eaforum" hidden>
-      {eaForumPosts.length > 0 ? (
-        <div class="eaforum-list">
-          {eaForumPosts.map(post => (
-            <div class="eaforum-row">
-              <span class="eaforum-date">{formatEAForumDate(post.date)}</span>
-              <a href={post.url} target="_blank" rel="noopener" class="eaforum-link">
-                {post.title}
-              </a>
-            </div>
-          ))}
-        </div>
-      ) : (
-        <p class="eaforum-placeholder">No posts found.</p>
       )}
     </div>
   </div>
@@ -618,44 +621,6 @@ function formatEAForumDate(date: Date): string {
     white-space: nowrap;
   }
 
-  /* EA Forum */
-  .eaforum-placeholder {
-    font-size: 0.875rem;
-    color: var(--dim);
-    font-style: italic;
-    margin: 8px 0;
-  }
-
-  .eaforum-list {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-  }
-
-  .eaforum-row {
-    display: grid;
-    grid-template-columns: 80px 1fr;
-    gap: 12px;
-    font-size: 0.8rem;
-    align-items: baseline;
-  }
-
-  .eaforum-date {
-    font-family: var(--font-mono);
-    font-size: 0.7rem;
-    color: var(--dim);
-  }
-
-  .eaforum-link {
-    color: var(--accent);
-    text-decoration: underline;
-    text-underline-offset: 2px;
-  }
-
-  .eaforum-link:hover {
-    text-decoration: none;
-  }
-
   /* Responsive */
   @media (max-width: 600px) {
     .timeline-row {
@@ -682,19 +647,6 @@ function formatEAForumDate(date: Date): string {
 
     .byline-pub {
       order: 3;
-    }
-
-    .eaforum-row {
-      grid-template-columns: 1fr;
-      gap: 2px;
-    }
-
-    .eaforum-date {
-      order: 2;
-    }
-
-    .eaforum-link {
-      order: 1;
     }
 
     .meta-content {

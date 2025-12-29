@@ -1,11 +1,13 @@
 // Fetches posts from EA Forum GraphQL API
 // Only includes posts where the user is the primary author (not co-author)
+// Excludes events
 
 export interface EAForumPost {
   title: string;
   slug: string;
   date: Date;
   url: string;
+  isEvent: boolean;
 }
 
 interface GraphQLPost {
@@ -13,6 +15,7 @@ interface GraphQLPost {
   title: string;
   slug: string;
   postedAt: string;
+  isEvent: boolean;
 }
 
 const USER_ID = 'bhod9XuEeXYvaRF8w'; // andy-masley's EA Forum user ID
@@ -33,6 +36,7 @@ export async function fetchEAForumPosts(): Promise<EAForumPost[]> {
         title
         slug
         postedAt
+        isEvent
       }
     }
   }`;
@@ -54,13 +58,16 @@ export async function fetchEAForumPosts(): Promise<EAForumPost[]> {
     const data = await response.json();
     const posts: GraphQLPost[] = data?.data?.posts?.results || [];
 
-    // All posts returned by this query are ones where the user is the author
-    return posts.map(post => ({
-      title: post.title,
-      slug: post.slug,
-      date: new Date(post.postedAt),
-      url: `https://forum.effectivealtruism.org/posts/${post._id}/${post.slug}`
-    }));
+    // Filter out events and return posts
+    return posts
+      .filter(post => !post.isEvent)
+      .map(post => ({
+        title: post.title,
+        slug: post.slug,
+        date: new Date(post.postedAt),
+        url: `https://forum.effectivealtruism.org/posts/${post._id}/${post.slug}`,
+        isEvent: post.isEvent
+      }));
   } catch (error) {
     console.error('Failed to fetch EA Forum posts:', error);
     return [];
