@@ -19,47 +19,56 @@ const metaPostsWithContent = await Promise.all(
   })
 );
 
-// Group posts by month for timeline
+// Group posts by year and month for timeline
 interface MonthGroup {
   label: string;
-  year: number;
   month: number;
   posts: typeof posts;
 }
 
-const postsByMonth: MonthGroup[] = [];
-const monthMap = new Map<string, typeof posts>();
+interface YearGroup {
+  year: number;
+  months: MonthGroup[];
+}
+
+const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+                    'July', 'August', 'September', 'October', 'November', 'December'];
+
+const yearMap = new Map<number, Map<number, typeof posts>>();
 
 for (const post of posts) {
   const year = post.date.getFullYear();
   const month = post.date.getMonth();
-  const key = `${year}-${month}`;
 
-  if (!monthMap.has(key)) {
-    monthMap.set(key, []);
+  if (!yearMap.has(year)) {
+    yearMap.set(year, new Map());
   }
-  monthMap.get(key)!.push(post);
+  const monthMap = yearMap.get(year)!;
+  if (!monthMap.has(month)) {
+    monthMap.set(month, []);
+  }
+  monthMap.get(month)!.push(post);
 }
 
-// Convert map to sorted array
-const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
-                    'July', 'August', 'September', 'October', 'November', 'December'];
+// Convert to sorted array structure
+const postsByYear: YearGroup[] = [];
 
-for (const [key, monthPosts] of monthMap) {
-  const [year, month] = key.split('-').map(Number);
-  postsByMonth.push({
-    label: `${monthNames[month]} ${year}`,
-    year,
-    month,
-    posts: monthPosts.sort((a, b) => b.date.getTime() - a.date.getTime()),
-  });
+for (const [year, monthMap] of yearMap) {
+  const months: MonthGroup[] = [];
+  for (const [month, monthPosts] of monthMap) {
+    months.push({
+      label: monthNames[month],
+      month,
+      posts: monthPosts.sort((a, b) => b.date.getTime() - a.date.getTime()),
+    });
+  }
+  // Sort months descending
+  months.sort((a, b) => b.month - a.month);
+  postsByYear.push({ year, months });
 }
 
-// Sort by date descending
-postsByMonth.sort((a, b) => {
-  if (a.year !== b.year) return b.year - a.year;
-  return b.month - a.month;
-});
+// Sort years descending
+postsByYear.sort((a, b) => b.year - a.year);
 
 // Get day only
 function getDay(date: Date): string {
@@ -153,17 +162,24 @@ function formatBylineDate(dateStr: string): string {
       </div>
 
       <div class="timeline">
-        {postsByMonth.map(monthGroup => (
-          <div class="month-group" data-month={`${monthGroup.year}-${monthGroup.month}`}>
-            <div class="month-header">{monthGroup.label}</div>
-            <div class="month-posts">
-              {monthGroup.posts.map(post => (
-                <div class="timeline-row" data-cat={getCategorySlug(post.category)}>
-                  <span class="timeline-day">{getDay(post.date)}</span>
-                  <a href={post.url} target="_blank" rel="noopener" class="timeline-link">
-                    {post.title}
-                  </a>
-                  <span class="timeline-cat">{getShortName(post.category)}</span>
+        {postsByYear.map(yearGroup => (
+          <div class="year-group" data-year={yearGroup.year}>
+            <div class="year-header">{yearGroup.year}</div>
+            <div class="year-months">
+              {yearGroup.months.map(monthGroup => (
+                <div class="month-group" data-month={`${yearGroup.year}-${monthGroup.month}`}>
+                  <div class="month-header">{monthGroup.label}</div>
+                  <div class="month-posts">
+                    {monthGroup.posts.map(post => (
+                      <div class="timeline-row" data-cat={getCategorySlug(post.category)}>
+                        <span class="timeline-day">{getDay(post.date)}</span>
+                        <a href={post.url} target="_blank" rel="noopener" class="timeline-link">
+                          {post.title}
+                        </a>
+                        <span class="timeline-cat">{getShortName(post.category)}</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               ))}
             </div>
@@ -454,7 +470,27 @@ function formatBylineDate(dateStr: string): string {
   .timeline {
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 24px;
+  }
+
+  .year-group.hidden {
+    display: none;
+  }
+
+  .year-header {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 12px;
+    padding-bottom: 6px;
+    border-bottom: 2px solid var(--text);
+  }
+
+  .year-months {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding-left: 8px;
   }
 
   .month-group.hidden {
@@ -464,10 +500,8 @@ function formatBylineDate(dateStr: string): string {
   .month-header {
     font-size: 0.8rem;
     font-weight: normal;
-    color: var(--text);
+    color: var(--dim);
     margin-bottom: 6px;
-    padding-bottom: 4px;
-    border-bottom: 1px solid var(--border);
   }
 
   .month-posts {
@@ -652,6 +686,16 @@ function formatBylineDate(dateStr: string): string {
       document.querySelectorAll('.month-group').forEach(group => {
         const visiblePosts = group.querySelectorAll('.timeline-row:not(.hidden)');
         if (visiblePosts.length === 0) {
+          group.classList.add('hidden');
+        } else {
+          group.classList.remove('hidden');
+        }
+      });
+
+      // Hide empty years
+      document.querySelectorAll('.year-group').forEach(group => {
+        const visibleMonths = group.querySelectorAll('.month-group:not(.hidden)');
+        if (visibleMonths.length === 0) {
           group.classList.add('hidden');
         } else {
           group.classList.remove('hidden');
