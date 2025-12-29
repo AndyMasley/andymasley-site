@@ -382,13 +382,9 @@ function formatBylineDate(dateStr: string): string {
 
   /* Style standalone strong tags as sub-headings */
   .meta-body :global(p:has(> strong:only-child)) {
-    margin: 0.8em 0 0.3em 1em;
+    margin: 0.8em 0 0.3em 0;
     font-size: 0.75rem;
     color: var(--dim);
-  }
-
-  .meta-body :global(p:has(> strong:only-child) + ul) {
-    margin-left: 1em;
   }
 
   .meta-body :global(ul),
