@@ -165,22 +165,20 @@ function formatBylineDate(dateStr: string): string {
         {postsByYear.map(yearGroup => (
           <div class="year-group" data-year={yearGroup.year}>
             <div class="year-header">{yearGroup.year}</div>
-            <div class="year-months">
+            <div class="year-posts">
               {yearGroup.months.map(monthGroup => (
-                <div class="month-group" data-month={`${yearGroup.year}-${monthGroup.month}`}>
-                  <div class="month-header">{monthGroup.label}</div>
-                  <div class="month-posts">
-                    {monthGroup.posts.map(post => (
-                      <div class="timeline-row" data-cat={getCategorySlug(post.category)}>
-                        <span class="timeline-day">{getDay(post.date)}</span>
-                        <a href={post.url} target="_blank" rel="noopener" class="timeline-link">
-                          {post.title}
-                        </a>
-                        <span class="timeline-cat">{getShortName(post.category)}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+                <>
+                  {monthGroup.posts.map((post, i) => (
+                    <div class="timeline-row" data-cat={getCategorySlug(post.category)} data-month={`${yearGroup.year}-${monthGroup.month}`} data-month-label={monthGroup.label}>
+                      <span class="timeline-month">{i === 0 ? monthGroup.label : ''}</span>
+                      <span class="timeline-day">{getDay(post.date)}</span>
+                      <a href={post.url} target="_blank" rel="noopener" class="timeline-link">
+                        {post.title}
+                      </a>
+                      <span class="timeline-cat">{getShortName(post.category)}</span>
+                    </div>
+                  ))}
+                </>
               ))}
             </div>
           </div>
@@ -486,41 +484,29 @@ function formatBylineDate(dateStr: string): string {
     border-bottom: 1px solid var(--border);
   }
 
-  .year-months {
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-    padding-left: 8px;
-  }
-
-  .month-group.hidden {
-    display: none;
-  }
-
-  .month-header {
-    font-size: 0.8rem;
-    font-weight: normal;
-    color: var(--dim);
-    margin-bottom: 6px;
-  }
-
-  .month-posts {
+  .year-posts {
     display: flex;
     flex-direction: column;
     gap: 3px;
-    padding-left: 6px;
+    padding-left: 8px;
   }
 
   .timeline-row {
     display: grid;
-    grid-template-columns: 24px 1fr auto;
-    gap: 10px;
+    grid-template-columns: 70px 24px 1fr auto;
+    gap: 8px;
     font-size: 0.8rem;
     align-items: baseline;
   }
 
   .timeline-row.hidden {
     display: none;
+  }
+
+  .timeline-month {
+    font-size: 0.7rem;
+    color: var(--dim);
+    text-align: right;
   }
 
   .timeline-day {
@@ -603,6 +589,7 @@ function formatBylineDate(dateStr: string): string {
       grid-template-columns: 24px 1fr;
     }
 
+    .timeline-month,
     .timeline-cat {
       display: none;
     }
@@ -682,8 +669,8 @@ function formatBylineDate(dateStr: string): string {
         }
       });
 
-      // Hide empty months
-      document.querySelectorAll('.month-group').forEach(group => {
+      // Hide empty years
+      document.querySelectorAll('.year-group').forEach(group => {
         const visiblePosts = group.querySelectorAll('.timeline-row:not(.hidden)');
         if (visiblePosts.length === 0) {
           group.classList.add('hidden');
@@ -692,14 +679,24 @@ function formatBylineDate(dateStr: string): string {
         }
       });
 
-      // Hide empty years
-      document.querySelectorAll('.year-group').forEach(group => {
-        const visibleMonths = group.querySelectorAll('.month-group:not(.hidden)');
-        if (visibleMonths.length === 0) {
-          group.classList.add('hidden');
-        } else {
-          group.classList.remove('hidden');
-        }
+      // Update month labels (show on first visible post of each month)
+      document.querySelectorAll('.year-group').forEach(yearGroup => {
+        const seenMonths = new Set();
+        yearGroup.querySelectorAll('.timeline-row').forEach(row => {
+          const monthLabel = row.querySelector('.timeline-month') as HTMLElement;
+          const month = row.getAttribute('data-month');
+          const label = row.getAttribute('data-month-label') || '';
+          if (monthLabel && month) {
+            if (row.classList.contains('hidden')) {
+              monthLabel.textContent = '';
+            } else if (!seenMonths.has(month)) {
+              seenMonths.add(month);
+              monthLabel.textContent = label;
+            } else {
+              monthLabel.textContent = '';
+            }
+          }
+        });
       });
 
       // Update post count
