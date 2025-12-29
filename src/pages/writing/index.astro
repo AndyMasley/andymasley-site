@@ -81,7 +81,7 @@ function getShortName(categoryName: string): string {
     'AI & the Environment': 'AI & Env',
     'Artificial Intelligence': 'AI',
     'Animal Welfare': 'Animals',
-    'Charity': 'Charity',
+    'Charity': 'EA',
     'Politics': 'Politics',
     'Recs & Advice': 'Recs',
     'Misc': 'Misc',
@@ -665,6 +665,15 @@ function formatBylineDate(dateStr: string): string {
           row.classList.remove('hidden');
         } else {
           row.classList.add('hidden');
+        }
+      });
+
+      // Hide category column when filtering by specific category
+      document.querySelectorAll('.timeline-cat').forEach(cat => {
+        if (filter === 'all') {
+          (cat as HTMLElement).style.display = '';
+        } else {
+          (cat as HTMLElement).style.display = 'none';
         }
       });
 
