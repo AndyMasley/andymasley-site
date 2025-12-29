@@ -377,7 +377,18 @@ function formatBylineDate(dateStr: string): string {
   }
 
   .meta-body :global(strong) {
-    font-weight: normal;
+    font-weight: 500;
+  }
+
+  /* Style standalone strong tags as sub-headings */
+  .meta-body :global(p:has(> strong:only-child)) {
+    margin: 0.8em 0 0.3em 1em;
+    font-size: 0.75rem;
+    color: var(--dim);
+  }
+
+  .meta-body :global(p:has(> strong:only-child) + ul) {
+    margin-left: 1em;
   }
 
   .meta-body :global(ul),
