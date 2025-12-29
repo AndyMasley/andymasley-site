@@ -1,0 +1,205 @@
+---
+import Base from '@/layouts/Base.astro';
+import { getCollection, type CollectionEntry } from 'astro:content';
+
+export async function getStaticPaths() {
+  const items = await getCollection('music');
+  return items.map(item => ({
+    params: { slug: item.slug },
+    props: { item },
+  }));
+}
+
+interface Props {
+  item: CollectionEntry<'music'>;
+}
+
+const { item } = Astro.props;
+const { Content } = await item.render();
+
+function formatDate(date: Date): string {
+  return date.toLocaleDateString('en-US', { 
+    year: 'numeric',
+    month: 'long', 
+    day: 'numeric' 
+  });
+}
+---
+
+<Base 
+  title={`${item.data.album || item.data.title}${item.data.artist ? ` — ${item.data.artist}` : ''}`}
+  description={item.data.description}
+>
+  <article class="container container--narrow">
+    <nav class="breadcrumbs animate-in">
+      <a href="/">Home</a>
+      <span class="breadcrumbs__separator">/</span>
+      <a href="/music">Music</a>
+      <span class="breadcrumbs__separator">/</span>
+      <span class="breadcrumbs__current">{item.data.album || item.data.title}</span>
+    </nav>
+    
+    <header class="music-header animate-in">
+      <div class="music-header__info">
+        <h1 class="music-header__title">{item.data.album || item.data.title}</h1>
+        {item.data.artist && (
+          <p class="music-header__artist">{item.data.artist}</p>
+        )}
+        
+        <div class="music-header__meta">
+          {item.data.year && <span class="music-header__year">{item.data.year}</span>}
+          {item.data.genre.length > 0 && (
+            <div class="tags">
+              {item.data.genre.map(g => (
+                <span class="tag">{g}</span>
+              ))}
+            </div>
+          )}
+        </div>
+        
+        {item.data.rating && (
+          <div class="music-header__rating">
+            <span class="rating-value">{item.data.rating.toFixed(1)}</span>
+            <span class="rating-max">/ 10</span>
+          </div>
+        )}
+      </div>
+    </header>
+
+    <div class="prose animate-in">
+      <Content />
+    </div>
+    
+    <footer class="article-footer">
+      <div class="footer-links">
+        {item.data.listen_link && (
+          <a href={item.data.listen_link} target="_blank" rel="noopener" class="external-link">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+              <polyline points="15 3 21 3 21 9"></polyline>
+              <line x1="10" x2="21" y1="14" y2="3"></line>
+            </svg>
+            Listen
+          </a>
+        )}
+      </div>
+      
+      <p class="meta-note">Added {formatDate(item.data.date)}</p>
+      
+      <nav class="article-nav">
+        <a href="/music" class="article-nav__link">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="m12 19-7-7 7-7"></path>
+            <path d="M19 12H5"></path>
+          </svg>
+          Back to music
+        </a>
+      </nav>
+    </footer>
+  </article>
+</Base>
+
+<style>
+  .music-header {
+    margin-bottom: var(--space-3xl);
+    padding-bottom: var(--space-2xl);
+    border-bottom: 1px solid var(--border);
+  }
+  
+  .music-header__title {
+    font-size: 2.25rem;
+    font-weight: 600;
+    line-height: 1.15;
+    margin: 0 0 var(--space-sm) 0;
+    letter-spacing: -0.03em;
+  }
+  
+  .music-header__artist {
+    font-size: 1.25rem;
+    color: var(--text-secondary);
+    margin: 0 0 var(--space-lg) 0;
+  }
+  
+  .music-header__meta {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    margin-bottom: var(--space-lg);
+  }
+  
+  .music-header__year {
+    font-size: 0.875rem;
+    color: var(--text-tertiary);
+  }
+  
+  .music-header__rating {
+    display: inline-flex;
+    align-items: baseline;
+    gap: var(--space-xs);
+  }
+  
+  .rating-value {
+    font-family: var(--font-serif);
+    font-size: 2rem;
+    font-weight: 600;
+    color: var(--accent);
+  }
+  
+  .rating-max {
+    font-size: 0.875rem;
+    color: var(--text-tertiary);
+  }
+  
+  .article-footer {
+    margin-top: var(--space-4xl);
+    padding-top: var(--space-xl);
+    border-top: 1px solid var(--border);
+  }
+  
+  .footer-links {
+    display: flex;
+    gap: var(--space-md);
+    margin-bottom: var(--space-lg);
+  }
+  
+  .external-link {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-sm);
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    padding: var(--space-sm) var(--space-md);
+    background: var(--bg-tertiary);
+    border-radius: 6px;
+    transition: background-color var(--transition-fast), color var(--transition-fast);
+  }
+  
+  .external-link:hover {
+    background: var(--accent);
+    color: white;
+  }
+  
+  .meta-note {
+    font-size: 0.8125rem;
+    color: var(--text-tertiary);
+    margin-bottom: var(--space-xl);
+  }
+  
+  .article-nav__link {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-sm);
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    text-decoration: none;
+    padding: var(--space-sm) var(--space-md);
+    margin-left: calc(-1 * var(--space-md));
+    border-radius: 6px;
+    transition: background-color var(--transition-fast), color var(--transition-fast);
+  }
+  
+  .article-nav__link:hover {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+  }
+</style>

@@ -1,0 +1,147 @@
+---
+import Base from '@/layouts/Base.astro';
+import { getCollection, type CollectionEntry } from 'astro:content';
+
+export async function getStaticPaths() {
+  const items = await getCollection('notes');
+  return items.map(item => ({
+    params: { slug: item.slug },
+    props: { item },
+  }));
+}
+
+interface Props {
+  item: CollectionEntry<'notes'>;
+}
+
+const { item } = Astro.props;
+const { Content } = await item.render();
+
+function formatDate(date: Date): string {
+  return date.toLocaleDateString('en-US', { 
+    year: 'numeric',
+    month: 'long', 
+    day: 'numeric' 
+  });
+}
+---
+
+<Base 
+  title={item.data.title}
+  description={item.data.description}
+>
+  <article class="container container--narrow">
+    <nav class="breadcrumbs animate-in">
+      <a href="/">Home</a>
+      <span class="breadcrumbs__separator">/</span>
+      <a href="/notes">Notes</a>
+      <span class="breadcrumbs__separator">/</span>
+      <span class="breadcrumbs__current">{item.data.title}</span>
+    </nav>
+    
+    <header class="note-header animate-in">
+      <div class="note-header__top">
+        {item.data.category && (
+          <span class="note-header__category">{item.data.category}</span>
+        )}
+        <span class="note-header__date">{formatDate(item.data.date)}</span>
+      </div>
+      <h1 class="note-header__title">{item.data.title}</h1>
+      
+      {item.data.tags.length > 0 && (
+        <div class="tags">
+          {item.data.tags.map(tag => (
+            <a href={`/tags/${tag}`} class="tag">{tag}</a>
+          ))}
+        </div>
+      )}
+    </header>
+
+    <div class="prose animate-in">
+      <Content />
+    </div>
+    
+    <footer class="article-footer">
+      {item.data.updated && (
+        <p class="meta-note">Last updated {formatDate(item.data.updated)}</p>
+      )}
+      
+      <nav class="article-nav">
+        <a href="/notes" class="article-nav__link">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="m12 19-7-7 7-7"></path>
+            <path d="M19 12H5"></path>
+          </svg>
+          Back to notes
+        </a>
+      </nav>
+    </footer>
+  </article>
+</Base>
+
+<style>
+  .note-header {
+    margin-bottom: var(--space-2xl);
+  }
+  
+  .note-header__top {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    margin-bottom: var(--space-md);
+  }
+  
+  .note-header__category {
+    font-size: 0.6875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-weight: 600;
+    color: var(--accent);
+    background: var(--accent-subtle);
+    padding: 4px 8px;
+    border-radius: 4px;
+  }
+  
+  .note-header__date {
+    font-size: 0.8125rem;
+    color: var(--text-tertiary);
+  }
+  
+  .note-header__title {
+    font-size: 2rem;
+    font-weight: 600;
+    line-height: 1.2;
+    margin: 0 0 var(--space-md) 0;
+    letter-spacing: -0.025em;
+  }
+  
+  .article-footer {
+    margin-top: var(--space-3xl);
+    padding-top: var(--space-xl);
+    border-top: 1px solid var(--border);
+  }
+  
+  .meta-note {
+    font-size: 0.8125rem;
+    color: var(--text-tertiary);
+    margin-bottom: var(--space-lg);
+  }
+  
+  .article-nav__link {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-sm);
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    text-decoration: none;
+    padding: var(--space-sm) var(--space-md);
+    margin-left: calc(-1 * var(--space-md));
+    border-radius: 6px;
+    transition: background-color var(--transition-fast), color var(--transition-fast);
+  }
+  
+  .article-nav__link:hover {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+  }
+</style>

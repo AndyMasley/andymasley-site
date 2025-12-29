@@ -1,0 +1,453 @@
+---
+import '@/styles/global.css';
+import { ViewTransitions } from 'astro:transitions';
+
+interface Props {
+  title: string;
+  description?: string;
+  showReadingProgress?: boolean;
+  showTableOfContents?: boolean;
+}
+
+const { 
+  title, 
+  description = "Andy Masley's personal site", 
+  showReadingProgress = false,
+  showTableOfContents = false 
+} = Astro.props;
+const currentPath = Astro.url.pathname;
+
+const navLinks = [
+  { href: '/writing', label: 'Writing' },
+  { href: '/music', label: 'Music' },
+  { href: '/film', label: 'Film' },
+  { href: '/books', label: 'Books' },
+  { href: '/notes', label: 'Notes' },
+  { href: '/about', label: 'About' },
+];
+---
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content={description}>
+  <title>{title} — Andy Masley</title>
+  
+  <!-- View Transitions for smooth page navigation -->
+  <ViewTransitions />
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+  
+  <!-- RSS -->
+  <link rel="alternate" type="application/rss+xml" title="Andy Masley" href="/rss.xml">
+  
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  
+  <!-- Theme initialization (prevents flash) -->
+  <script is:inline>
+    const theme = localStorage.getItem('theme') || 
+      (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    document.documentElement.setAttribute('data-theme', theme);
+  </script>
+</head>
+<body>
+  {showReadingProgress && <div class="reading-progress" id="reading-progress"></div>}
+  
+  <header class="header" transition:persist>
+    <div class="container">
+      <div class="header__inner">
+        <a href="/" class="header__logo">Andy Masley</a>
+        
+        <nav class="header__nav">
+          {navLinks.map(link => (
+            <a 
+              href={link.href} 
+              class:list={[
+                'header__link',
+                { 'header__link--active': currentPath.startsWith(link.href) }
+              ]}
+            >
+              {link.label}
+            </a>
+          ))}
+          
+          <button class="search-toggle" id="search-toggle" aria-label="Search" title="Search (⌘K)">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"></circle>
+              <path d="m21 21-4.3-4.3"></path>
+            </svg>
+          </button>
+          
+          <button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode">
+            <svg class="sun-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="4"></circle>
+              <path d="M12 2v2"></path>
+              <path d="M12 20v2"></path>
+              <path d="m4.93 4.93 1.41 1.41"></path>
+              <path d="m17.66 17.66 1.41 1.41"></path>
+              <path d="M2 12h2"></path>
+              <path d="M20 12h2"></path>
+              <path d="m6.34 17.66-1.41 1.41"></path>
+              <path d="m19.07 4.93-1.41 1.41"></path>
+            </svg>
+            <svg class="moon-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;">
+              <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path>
+            </svg>
+          </button>
+        </nav>
+      </div>
+    </div>
+  </header>
+
+  <!-- Search Modal -->
+  <div class="search-overlay" id="search-overlay"></div>
+  <div class="search-modal" id="search-modal">
+    <div class="search-input-wrapper">
+      <input 
+        type="text" 
+        class="search-input" 
+        id="search-input" 
+        placeholder="Search everything..."
+        autocomplete="off"
+      >
+    </div>
+    <div class="search-results" id="search-results">
+      <p class="text-secondary text-center" style="padding: var(--space-xl);">
+        Start typing to search...
+      </p>
+    </div>
+    <div class="search-hint">
+      <kbd>↵</kbd> to select · <kbd>↑↓</kbd> to navigate · <kbd>esc</kbd> to close
+    </div>
+  </div>
+
+  <!-- Back to top button -->
+  <button class="back-to-top" id="back-to-top" aria-label="Back to top" title="Back to top">
+    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="m18 15-6-6-6 6"/>
+    </svg>
+  </button>
+
+  <main class="main-content" transition:animate="fade">
+    <slot />
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="footer__inner">
+        <div class="footer__section">
+          <h4>Content</h4>
+          <ul class="footer__links">
+            <li><a href="/writing">Writing</a></li>
+            <li><a href="/music">Music</a></li>
+            <li><a href="/film">Film</a></li>
+            <li><a href="/books">Books</a></li>
+            <li><a href="/notes">Notes</a></li>
+          </ul>
+        </div>
+        
+        <div class="footer__section">
+          <h4>Archive</h4>
+          <ul class="footer__links">
+            <li><a href="/physics">IB Physics</a></li>
+            <li><a href="/tags">All Tags</a></li>
+          </ul>
+        </div>
+        
+        <div class="footer__section">
+          <h4>Elsewhere</h4>
+          <ul class="footer__links">
+            <li><a href="https://substack.com/@andymasley" target="_blank" rel="noopener">Substack</a></li>
+            <li><a href="https://x.com/AndyMasley" target="_blank" rel="noopener">X/Twitter</a></li>
+            <li><a href="https://effectivealtruismdc.org" target="_blank" rel="noopener">EA DC</a></li>
+            <li><a href="/rss.xml">RSS Feed</a></li>
+          </ul>
+        </div>
+        
+        <div class="footer__section">
+          <h4>Meta</h4>
+          <ul class="footer__links">
+            <li><a href="/about">About</a></li>
+            <li><a href="/now">Now</a></li>
+            <li><a href="mailto:AndyMasley@gmail.com">Email</a></li>
+          </ul>
+        </div>
+      </div>
+      
+      <p class="footer__copyright">
+        © {new Date().getFullYear()} Andy Masley
+      </p>
+    </div>
+  </footer>
+
+  <script>
+    // Persist functionality across view transitions
+    document.addEventListener('astro:page-load', () => {
+      initThemeToggle();
+      initSearch();
+      initReadingProgress();
+      initBackToTop();
+      initSmoothAnchors();
+      initLinkHints();
+    });
+
+    function initThemeToggle() {
+      const themeToggle = document.getElementById('theme-toggle');
+      const sunIcon = themeToggle?.querySelector('.sun-icon');
+      const moonIcon = themeToggle?.querySelector('.moon-icon');
+      
+      function updateThemeIcons() {
+        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        if (sunIcon && moonIcon) {
+          sunIcon.style.display = isDark ? 'none' : 'block';
+          moonIcon.style.display = isDark ? 'block' : 'none';
+        }
+      }
+      
+      updateThemeIcons();
+      
+      themeToggle?.addEventListener('click', () => {
+        const currentTheme = document.documentElement.getAttribute('data-theme');
+        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', newTheme);
+        localStorage.setItem('theme', newTheme);
+        updateThemeIcons();
+      });
+    }
+
+    function initSearch() {
+      const searchToggle = document.getElementById('search-toggle');
+      const searchOverlay = document.getElementById('search-overlay');
+      const searchModal = document.getElementById('search-modal');
+      const searchInput = document.getElementById('search-input') as HTMLInputElement | null;
+      const searchResults = document.getElementById('search-results');
+      
+      let searchIndex: any[] = [];
+      let fuse: any = null;
+      let selectedIndex = -1;
+      
+      // Load Fuse.js from CDN
+      function loadFuse() {
+        return new Promise((resolve) => {
+          if ((window as any).Fuse) {
+            resolve((window as any).Fuse);
+            return;
+          }
+          const script = document.createElement('script');
+          script.src = 'https://cdn.jsdelivr.net/npm/fuse.js@7.0.0/dist/fuse.min.js';
+          script.onload = () => resolve((window as any).Fuse);
+          document.head.appendChild(script);
+        });
+      }
+      
+      // Load search index
+      async function loadSearchIndex() {
+        if (searchIndex.length > 0) return;
+        try {
+          const [response, Fuse] = await Promise.all([
+            fetch('/search.json'),
+            loadFuse()
+          ]);
+          searchIndex = await response.json();
+          fuse = new (Fuse as any)(searchIndex, {
+            keys: ['title', 'description', 'tags'],
+            threshold: 0.3,
+            includeScore: true,
+          });
+        } catch (e) {
+          console.error('Failed to load search:', e);
+        }
+      }
+      
+      function renderResults(results: any[]) {
+        if (!searchResults) return;
+        
+        if (results.length === 0) {
+          searchResults.innerHTML = `
+            <p class="search-empty">No results found</p>
+          `;
+          return;
+        }
+        
+        searchResults.innerHTML = results.slice(0, 10).map((result, i) => {
+          const item = result.item || result;
+          return `
+            <a href="${item.url}" class="search-result ${i === selectedIndex ? 'search-result--selected' : ''}" data-index="${i}">
+              <span class="search-result__type">${item.type}</span>
+              <div class="search-result__content">
+                <span class="search-result__title">${item.title}</span>
+                ${item.description ? `<span class="search-result__desc">${item.description}</span>` : ''}
+              </div>
+            </a>
+          `;
+        }).join('');
+      }
+      
+      function openSearch() {
+        searchOverlay?.classList.add('search-overlay--open');
+        searchModal?.classList.add('search-modal--open');
+        searchInput?.focus();
+        document.body.style.overflow = 'hidden';
+        loadSearchIndex();
+        selectedIndex = -1;
+      }
+      
+      function closeSearch() {
+        searchOverlay?.classList.remove('search-overlay--open');
+        searchModal?.classList.remove('search-modal--open');
+        document.body.style.overflow = '';
+        if (searchInput) searchInput.value = '';
+        if (searchResults) {
+          searchResults.innerHTML = `<p class="search-empty">Start typing to search...</p>`;
+        }
+        selectedIndex = -1;
+      }
+      
+      searchToggle?.addEventListener('click', openSearch);
+      searchOverlay?.addEventListener('click', closeSearch);
+      
+      searchInput?.addEventListener('input', (e) => {
+        const query = (e.target as HTMLInputElement).value.trim();
+        selectedIndex = -1;
+        
+        if (!query) {
+          if (searchResults) {
+            searchResults.innerHTML = `<p class="search-empty">Start typing to search...</p>`;
+          }
+          return;
+        }
+        
+        if (fuse) {
+          const results = fuse.search(query);
+          renderResults(results);
+        } else {
+          // Fallback simple search
+          const results = searchIndex.filter((item: any) => 
+            item.title.toLowerCase().includes(query.toLowerCase()) ||
+            item.description?.toLowerCase().includes(query.toLowerCase())
+          );
+          renderResults(results.map((item: any) => ({ item })));
+        }
+      });
+      
+      document.addEventListener('keydown', (e) => {
+        if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+          e.preventDefault();
+          if (searchModal?.classList.contains('search-modal--open')) {
+            closeSearch();
+          } else {
+            openSearch();
+          }
+        }
+        if (e.key === 'Escape') {
+          closeSearch();
+        }
+        
+        // Arrow navigation in search
+        if (searchModal?.classList.contains('search-modal--open')) {
+          const results = searchResults?.querySelectorAll('.search-result');
+          if (!results || results.length === 0) return;
+          
+          if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            selectedIndex = Math.min(selectedIndex + 1, results.length - 1);
+            results.forEach((r, i) => r.classList.toggle('search-result--selected', i === selectedIndex));
+            results[selectedIndex]?.scrollIntoView({ block: 'nearest' });
+          } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            selectedIndex = Math.max(selectedIndex - 1, 0);
+            results.forEach((r, i) => r.classList.toggle('search-result--selected', i === selectedIndex));
+            results[selectedIndex]?.scrollIntoView({ block: 'nearest' });
+          } else if (e.key === 'Enter' && selectedIndex >= 0) {
+            e.preventDefault();
+            const selected = results[selectedIndex] as HTMLAnchorElement;
+            if (selected) window.location.href = selected.href;
+          }
+        }
+      });
+    }
+
+    function initReadingProgress() {
+      const progressBar = document.getElementById('reading-progress');
+      if (progressBar) {
+        window.addEventListener('scroll', () => {
+          const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+          const scrollPos = window.scrollY;
+          const progress = (scrollPos / docHeight) * 100;
+          progressBar.style.width = `${progress}%`;
+        }, { passive: true });
+      }
+    }
+
+    function initBackToTop() {
+      const btn = document.getElementById('back-to-top');
+      if (!btn) return;
+      
+      // Show/hide based on scroll position
+      const toggleVisibility = () => {
+        if (window.scrollY > 400) {
+          btn.classList.add('visible');
+        } else {
+          btn.classList.remove('visible');
+        }
+      };
+      
+      window.addEventListener('scroll', toggleVisibility, { passive: true });
+      toggleVisibility();
+      
+      btn.addEventListener('click', () => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
+    }
+
+    function initSmoothAnchors() {
+      // Smooth scroll to anchor links with offset for sticky header
+      document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', (e) => {
+          const href = anchor.getAttribute('href');
+          if (href === '#') return;
+          
+          const target = document.querySelector(href);
+          if (target) {
+            e.preventDefault();
+            const headerOffset = 80;
+            const elementPosition = target.getBoundingClientRect().top;
+            const offsetPosition = elementPosition + window.scrollY - headerOffset;
+            
+            window.scrollTo({
+              top: offsetPosition,
+              behavior: 'smooth'
+            });
+            
+            // Update URL without jumping
+            history.pushState(null, '', href);
+          }
+        });
+      });
+    }
+
+    function initLinkHints() {
+      // Add subtle visual feedback for external links
+      document.querySelectorAll('a[href^="http"]').forEach(link => {
+        if (!link.querySelector('.external-indicator')) {
+          link.classList.add('external-link-indicator');
+        }
+      });
+    }
+
+    // Initialize on first load
+    initThemeToggle();
+    initSearch();
+    initReadingProgress();
+    initBackToTop();
+    initSmoothAnchors();
+    initLinkHints();
+  </script>
+</body>
+</html>

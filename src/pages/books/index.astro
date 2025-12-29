@@ -1,0 +1,142 @@
+---
+import Base from '@/layouts/Base.astro';
+import { getCollection } from 'astro:content';
+
+const allBooks = await getCollection('books', ({ data }) => !data.draft);
+const items = allBooks.sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+
+function formatRating(rating?: number): string {
+  if (!rating) return '';
+  return rating.toFixed(1);
+}
+---
+
+<Base title="Books" description="Book reviews and reading notes">
+  <div class="container container--wide">
+    <header class="page-header">
+      <h1 class="page-header__title">Books</h1>
+      <p class="page-header__subtitle">
+        Reviews, notes, and thoughts on what I've been reading.
+      </p>
+      <p class="section-header__count">{items.length} entries</p>
+    </header>
+
+    <ul class="books-list stagger-in">
+      {items.map(item => (
+        <li class="book-item">
+          <a href={`/books/${item.slug}`} class="book-item__link">
+            <div class="book-item__content">
+              <h3 class="book-item__title">{item.data.title}</h3>
+              {item.data.author && (
+                <p class="book-item__author">{item.data.author}</p>
+              )}
+              {item.data.description && (
+                <p class="book-item__description">{item.data.description}</p>
+              )}
+            </div>
+            <div class="book-item__meta">
+              {item.data.rating && (
+                <span class="book-item__rating">{formatRating(item.data.rating)}</span>
+              )}
+              {item.data.year && <span class="book-item__year">{item.data.year}</span>}
+            </div>
+          </a>
+        </li>
+      ))}
+    </ul>
+  </div>
+</Base>
+
+<style>
+  .books-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  
+  .book-item {
+    border-bottom: 1px solid var(--border-subtle);
+  }
+  
+  .book-item:last-child {
+    border-bottom: none;
+  }
+  
+  .book-item__link {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: var(--space-lg);
+    padding: var(--space-lg) 0;
+    text-decoration: none;
+    color: inherit;
+    position: relative;
+  }
+  
+  .book-item__link::before {
+    content: '';
+    position: absolute;
+    left: calc(-1 * var(--space-md));
+    top: 50%;
+    transform: translateY(-50%);
+    width: 3px;
+    height: 0;
+    background: var(--accent);
+    transition: height var(--transition-base);
+    border-radius: 2px;
+  }
+  
+  .book-item__link:hover::before {
+    height: 50%;
+  }
+  
+  .book-item__content {
+    flex: 1;
+  }
+  
+  .book-item__title {
+    font-family: var(--font-serif);
+    font-size: 1.125rem;
+    font-weight: 500;
+    margin: 0 0 var(--space-xs) 0;
+    color: var(--text-primary);
+    transition: color var(--transition-fast);
+  }
+  
+  .book-item__link:hover .book-item__title {
+    color: var(--accent);
+  }
+  
+  .book-item__author {
+    font-size: 0.9375rem;
+    color: var(--text-secondary);
+    margin: 0 0 var(--space-sm) 0;
+  }
+  
+  .book-item__description {
+    font-size: 0.875rem;
+    color: var(--text-tertiary);
+    margin: 0;
+    line-height: 1.5;
+  }
+  
+  .book-item__meta {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: var(--space-xs);
+    flex-shrink: 0;
+  }
+  
+  .book-item__rating {
+    font-family: var(--font-serif);
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--accent);
+  }
+  
+  .book-item__year {
+    font-size: 0.75rem;
+    color: var(--text-tertiary);
+  }
+</style>

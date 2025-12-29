@@ -1,0 +1,137 @@
+---
+import Base from '@/layouts/Base.astro';
+import { getCollection } from 'astro:content';
+
+const allFilm = await getCollection('film', ({ data }) => !data.draft);
+const items = allFilm.sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+
+function formatRating(rating?: number): string {
+  if (!rating) return '';
+  return rating.toFixed(1);
+}
+---
+
+<Base title="Film" description="Film reviews and notes">
+  <div class="container container--wide">
+    <header class="page-header">
+      <h1 class="page-header__title">Film</h1>
+      <p class="page-header__subtitle">
+        Reviews and notes on what I've been watching.
+      </p>
+      <p class="section-header__count">{items.length} entries</p>
+    </header>
+
+    <ul class="film-list stagger-in">
+      {items.map(item => (
+        <li class="film-item">
+          <a href={`/film/${item.slug}`} class="film-item__link">
+            <div class="film-item__content">
+              <h3 class="film-item__title">{item.data.title}</h3>
+              <div class="film-item__info">
+                {item.data.director && (
+                  <span class="film-item__director">{item.data.director}</span>
+                )}
+                {item.data.year && <span class="film-item__year">{item.data.year}</span>}
+              </div>
+              {item.data.description && (
+                <p class="film-item__description">{item.data.description}</p>
+              )}
+            </div>
+            {item.data.rating && (
+              <span class="film-item__rating">{formatRating(item.data.rating)}</span>
+            )}
+          </a>
+        </li>
+      ))}
+    </ul>
+  </div>
+</Base>
+
+<style>
+  .film-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  
+  .film-item {
+    border-bottom: 1px solid var(--border-subtle);
+  }
+  
+  .film-item:last-child {
+    border-bottom: none;
+  }
+  
+  .film-item__link {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: var(--space-lg);
+    padding: var(--space-lg) 0;
+    text-decoration: none;
+    color: inherit;
+    position: relative;
+  }
+  
+  .film-item__link::before {
+    content: '';
+    position: absolute;
+    left: calc(-1 * var(--space-md));
+    top: 50%;
+    transform: translateY(-50%);
+    width: 3px;
+    height: 0;
+    background: var(--accent);
+    transition: height var(--transition-base);
+    border-radius: 2px;
+  }
+  
+  .film-item__link:hover::before {
+    height: 50%;
+  }
+  
+  .film-item__content {
+    flex: 1;
+  }
+  
+  .film-item__title {
+    font-family: var(--font-serif);
+    font-size: 1.125rem;
+    font-weight: 500;
+    margin: 0 0 var(--space-xs) 0;
+    color: var(--text-primary);
+    transition: color var(--transition-fast);
+  }
+  
+  .film-item__link:hover .film-item__title {
+    color: var(--accent);
+  }
+  
+  .film-item__info {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    margin-bottom: var(--space-sm);
+  }
+  
+  .film-item__year {
+    color: var(--text-tertiary);
+  }
+  
+  .film-item__description {
+    font-size: 0.875rem;
+    color: var(--text-tertiary);
+    margin: 0;
+    line-height: 1.5;
+  }
+  
+  .film-item__rating {
+    font-family: var(--font-serif);
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--accent);
+    flex-shrink: 0;
+  }
+</style>

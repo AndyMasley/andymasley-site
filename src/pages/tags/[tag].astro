@@ -1,0 +1,109 @@
+---
+import Base from '@/layouts/Base.astro';
+import { getCollection } from 'astro:content';
+
+export async function getStaticPaths() {
+  const writing = await getCollection('writing');
+  const music = await getCollection('music');
+  const film = await getCollection('film');
+  const books = await getCollection('books');
+  const notes = await getCollection('notes');
+  
+  // Collect all unique tags
+  const allTags = new Set<string>();
+  [...writing, ...music, ...film, ...books, ...notes].forEach(item => {
+    item.data.tags.forEach(tag => allTags.add(tag));
+  });
+  
+  return [...allTags].map(tag => ({
+    params: { tag },
+    props: { tag },
+  }));
+}
+
+interface Props {
+  tag: string;
+}
+
+const { tag } = Astro.props;
+
+// Get all content with this tag
+const writing = await getCollection('writing', ({ data }) => !data.draft && data.tags.includes(tag));
+const music = await getCollection('music', ({ data }) => !data.draft && data.tags.includes(tag));
+const film = await getCollection('film', ({ data }) => !data.draft && data.tags.includes(tag));
+const books = await getCollection('books', ({ data }) => !data.draft && data.tags.includes(tag));
+const notes = await getCollection('notes', ({ data }) => !data.draft && data.tags.includes(tag));
+
+// Combine and sort by date
+const allItems = [
+  ...writing.map(item => ({ ...item, type: 'writing', url: `/writing/${item.slug}` })),
+  ...music.map(item => ({ ...item, type: 'music', url: `/music/${item.slug}` })),
+  ...film.map(item => ({ ...item, type: 'film', url: `/film/${item.slug}` })),
+  ...books.map(item => ({ ...item, type: 'books', url: `/books/${item.slug}` })),
+  ...notes.map(item => ({ ...item, type: 'notes', url: `/notes/${item.slug}` })),
+].sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+
+function formatDate(date: Date): string {
+  return date.toLocaleDateString('en-US', { 
+    year: 'numeric',
+    month: 'short', 
+    day: 'numeric' 
+  });
+}
+---
+
+<Base title={`#${tag}`} description={`All content tagged "${tag}"`}>
+  <div class="container container--wide">
+    <header class="page-header">
+      <nav class="breadcrumbs">
+        <a href="/">Home</a>
+        <span class="breadcrumbs__separator">/</span>
+        <a href="/tags">Tags</a>
+        <span class="breadcrumbs__separator">/</span>
+        <span class="breadcrumbs__current">{tag}</span>
+      </nav>
+      <h1 class="page-header__title">#{tag}</h1>
+      <p class="page-header__subtitle">
+        {allItems.length} item{allItems.length === 1 ? '' : 's'}
+      </p>
+    </header>
+
+    <ul class="content-list stagger-in">
+      {allItems.map(item => (
+        <li class="content-item">
+          <a href={item.url} class="content-item__link">
+            <div class="content-item__header">
+              <span class="content-type">{item.type}</span>
+              <h3 class="content-item__title">{item.data.title}</h3>
+            </div>
+            <div class="content-item__meta">
+              <span>{formatDate(item.data.date)}</span>
+            </div>
+            {item.data.description && (
+              <p class="content-item__description">{item.data.description}</p>
+            )}
+          </a>
+        </li>
+      ))}
+    </ul>
+  </div>
+</Base>
+
+<style>
+  .content-item__header {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+  }
+  
+  .content-type {
+    font-size: 0.6875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--accent);
+    background: var(--accent-subtle);
+    padding: 2px 6px;
+    border-radius: 3px;
+    flex-shrink: 0;
+  }
+</style>

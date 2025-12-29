@@ -1,0 +1,73 @@
+---
+interface Heading {
+  depth: number;
+  slug: string;
+  text: string;
+}
+
+interface Props {
+  headings: Heading[];
+}
+
+const { headings } = Astro.props;
+
+// Only include h2 and h3
+const filteredHeadings = headings.filter(h => h.depth === 2 || h.depth === 3);
+---
+
+{filteredHeadings.length > 0 && (
+  <nav class="toc" aria-label="Table of contents">
+    <h2 class="toc__title">On this page</h2>
+    <ul class="toc__list">
+      {filteredHeadings.map(heading => (
+        <li class="toc__item">
+          <a 
+            href={`#${heading.slug}`} 
+            class:list={[
+              'toc__link',
+              { 'toc__link--h3': heading.depth === 3 }
+            ]}
+            data-heading={heading.slug}
+          >
+            {heading.text}
+          </a>
+        </li>
+      ))}
+    </ul>
+  </nav>
+)}
+
+<script>
+  function initTOC() {
+    const tocLinks = document.querySelectorAll('.toc__link');
+    const headings = document.querySelectorAll('h2[id], h3[id]');
+    
+    if (tocLinks.length === 0 || headings.length === 0) return;
+    
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            const id = entry.target.getAttribute('id');
+            tocLinks.forEach(link => {
+              link.classList.remove('toc__link--active');
+              if (link.getAttribute('data-heading') === id) {
+                link.classList.add('toc__link--active');
+              }
+            });
+          }
+        });
+      },
+      {
+        rootMargin: '-80px 0px -60% 0px',
+        threshold: 0
+      }
+    );
+    
+    headings.forEach(heading => observer.observe(heading));
+  }
+  
+  // Initialize on load and after view transitions
+  initTOC();
+  document.addEventListener('astro:page-load', initTOC);
+</script>

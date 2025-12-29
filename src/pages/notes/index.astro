@@ -1,0 +1,234 @@
+---
+import Base from '@/layouts/Base.astro';
+import { getCollection } from 'astro:content';
+
+const allNotes = await getCollection('notes', ({ data }) => !data.draft);
+const items = allNotes.sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+
+// Group by category
+const categories = [...new Set(items.map(item => item.data.category || 'misc'))];
+const itemsByCategory = items.reduce((acc, item) => {
+  const cat = item.data.category || 'misc';
+  if (!acc[cat]) acc[cat] = [];
+  acc[cat].push(item);
+  return acc;
+}, {} as Record<string, typeof items>);
+
+function formatDate(date: Date): string {
+  return date.toLocaleDateString('en-US', { 
+    month: 'short', 
+    day: 'numeric',
+    year: 'numeric'
+  });
+}
+---
+
+<Base title="Notes" description="Shorter notes, ideas, and references">
+  <div class="container container--wide">
+    <header class="page-header">
+      <h1 class="page-header__title">Notes</h1>
+      <p class="page-header__subtitle">
+        Shorter pieces—ideas, TILs, references, and miscellaneous thoughts.
+      </p>
+      <p class="section-header__count">{items.length} entries</p>
+    </header>
+
+    <div class="notes-layout">
+      <aside class="notes-sidebar">
+        <h3 class="sidebar-title">Categories</h3>
+        <ul class="category-list">
+          <li>
+            <a href="#all" class="category-link category-link--active" data-category="all">
+              All <span class="category-count">{items.length}</span>
+            </a>
+          </li>
+          {categories.map(cat => (
+            <li>
+              <a href={`#${cat}`} class="category-link" data-category={cat}>
+                {cat} <span class="category-count">{itemsByCategory[cat].length}</span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      </aside>
+      
+      <main class="notes-main">
+        <ul class="notes-list stagger-in" id="notes-list">
+          {items.map(item => (
+            <li class="note-item" data-category={item.data.category || 'misc'}>
+              <a href={`/notes/${item.slug}`} class="note-item__link">
+                <div class="note-item__header">
+                  <h3 class="note-item__title">{item.data.title}</h3>
+                  {item.data.category && (
+                    <span class="note-item__category">{item.data.category}</span>
+                  )}
+                </div>
+                <span class="note-item__date">{formatDate(item.data.date)}</span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      </main>
+    </div>
+  </div>
+</Base>
+
+<script>
+  const categoryLinks = document.querySelectorAll('.category-link');
+  const noteItems = document.querySelectorAll('.note-item');
+  
+  categoryLinks.forEach(link => {
+    link.addEventListener('click', (e) => {
+      e.preventDefault();
+      const category = link.getAttribute('data-category');
+      
+      // Update active state
+      categoryLinks.forEach(l => l.classList.remove('category-link--active'));
+      link.classList.add('category-link--active');
+      
+      // Filter notes
+      noteItems.forEach(item => {
+        const itemCat = item.getAttribute('data-category');
+        if (category === 'all' || itemCat === category) {
+          item.style.display = '';
+        } else {
+          item.style.display = 'none';
+        }
+      });
+    });
+  });
+</script>
+
+<style>
+  .notes-layout {
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    gap: var(--space-3xl);
+  }
+  
+  @media (max-width: 768px) {
+    .notes-layout {
+      grid-template-columns: 1fr;
+      gap: var(--space-xl);
+    }
+    
+    .notes-sidebar {
+      order: -1;
+    }
+  }
+  
+  .notes-sidebar {
+    position: sticky;
+    top: calc(64px + var(--space-xl));
+    align-self: start;
+  }
+  
+  .sidebar-title {
+    font-family: var(--font-sans);
+    font-size: 0.6875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-tertiary);
+    margin: 0 0 var(--space-md) 0;
+  }
+  
+  .category-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  
+  .category-link {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-sm) var(--space-md);
+    margin-left: calc(-1 * var(--space-md));
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    text-decoration: none;
+    border-radius: 6px;
+    transition: background-color var(--transition-fast), color var(--transition-fast);
+  }
+  
+  .category-link:hover {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+  }
+  
+  .category-link--active {
+    background: var(--accent-subtle);
+    color: var(--accent);
+  }
+  
+  .category-count {
+    font-size: 0.75rem;
+    color: var(--text-tertiary);
+  }
+  
+  .notes-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  
+  .note-item {
+    border-bottom: 1px solid var(--border-subtle);
+  }
+  
+  .note-item:last-child {
+    border-bottom: none;
+  }
+  
+  .note-item__link {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--space-md);
+    padding: var(--space-md) 0;
+    text-decoration: none;
+    color: inherit;
+  }
+  
+  .note-item__header {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    flex: 1;
+    min-width: 0;
+  }
+  
+  .note-item__title {
+    font-family: var(--font-sans);
+    font-size: 0.9375rem;
+    font-weight: 500;
+    margin: 0;
+    color: var(--text-primary);
+    transition: color var(--transition-fast);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  
+  .note-item__link:hover .note-item__title {
+    color: var(--accent);
+  }
+  
+  .note-item__category {
+    font-size: 0.6875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--accent);
+    background: var(--accent-subtle);
+    padding: 2px 6px;
+    border-radius: 3px;
+    flex-shrink: 0;
+  }
+  
+  .note-item__date {
+    font-size: 0.75rem;
+    color: var(--text-tertiary);
+    flex-shrink: 0;
+  }
+</style>

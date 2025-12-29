@@ -1,0 +1,75 @@
+---
+import Base from '@/layouts/Base.astro';
+
+const lastUpdated = new Date('2024-12-28'); // Update this when you update the page
+---
+
+<Base title="Now" description="What I'm currently working on and thinking about">
+  <div class="container container--narrow">
+    <header class="page-header animate-in">
+      <h1 class="page-header__title">Now</h1>
+      <p class="page-header__subtitle">
+        What I'm focused on at the moment. <br>
+        <span class="text-tertiary">Last updated: {lastUpdated.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</span>
+      </p>
+    </header>
+
+    <div class="prose animate-in">
+      <p>
+        <em>This is a <a href="https://nownownow.com/about">now page</a>. It's like an about page, 
+        but for what I'm actually doing right now rather than a static bio.</em>
+      </p>
+
+      <h2>Work</h2>
+      
+      <p>
+        Running EA DC continues to be my main job. Right now I'm focused on [current EA DC priorities].
+      </p>
+      
+      <p>
+        On the research side, I'm working on a piece about data center water consumption—specifically 
+        challenging the narrative that AI data centers are causing water crises. The data tells a 
+        much more nuanced story than most coverage suggests.
+      </p>
+
+      <h2>Writing</h2>
+      
+      <p>
+        Working on:
+      </p>
+      <ul>
+        <li>Data center water consumption analysis (aiming for publication in [target])</li>
+        <li>[Other current writing projects]</li>
+      </ul>
+
+      <h2>Reading</h2>
+      
+      <p>
+        Currently reading [current book]. Recently finished [recent book].
+      </p>
+
+      <h2>Listening</h2>
+      
+      <p>
+        [Current music obsessions]
+      </p>
+
+      <h2>Location</h2>
+      
+      <p>
+        Washington, DC.
+      </p>
+    </div>
+  </div>
+</Base>
+
+<style>
+  .prose ul {
+    margin: var(--space-md) 0 var(--space-lg) 0;
+    padding-left: var(--space-xl);
+  }
+  
+  .prose li {
+    margin-bottom: var(--space-sm);
+  }
+</style>

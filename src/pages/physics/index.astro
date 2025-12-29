@@ -1,0 +1,187 @@
+---
+import Base from '@/layouts/Base.astro';
+import { getCollection } from 'astro:content';
+
+const allPhysics = await getCollection('physics', ({ data }) => !data.draft);
+const items = allPhysics.sort((a, b) => {
+  // Sort by unit first, then by title
+  const unitA = a.data.unit || 'zzz';
+  const unitB = b.data.unit || 'zzz';
+  if (unitA !== unitB) return unitA.localeCompare(unitB);
+  return a.data.title.localeCompare(b.data.title);
+});
+
+// Group by unit
+const itemsByUnit = items.reduce((acc, item) => {
+  const unit = item.data.unit || 'Other';
+  if (!acc[unit]) acc[unit] = [];
+  acc[unit].push(item);
+  return acc;
+}, {} as Record<string, typeof items>);
+
+const units = Object.keys(itemsByUnit).sort();
+---
+
+<Base title="IB Physics Archive" description="Teaching resources from my physics teaching years">
+  <div class="container container--wide">
+    <header class="page-header">
+      <h1 class="page-header__title">IB Physics Archive</h1>
+      <p class="page-header__subtitle">
+        Resources from my seven years teaching IB Physics. This includes animated video lectures 
+        for the complete two-year curriculum, available on 
+        <a href="https://www.youtube.com/channel/UCP_OGrNktHPMW4LSct_lQYQ">YouTube</a>.
+      </p>
+    </header>
+
+    <div class="units-grid stagger-in">
+      {units.map(unit => (
+        <section class="unit-section collapsible" id={`unit-${unit.toLowerCase().replace(/\s+/g, '-')}`}>
+          <button class="collapsible__trigger" aria-expanded="false">
+            <span>{unit}</span>
+            <span class="unit-count">{itemsByUnit[unit].length} resources</span>
+            <svg class="collapsible__icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="m6 9 6 6 6-6"/>
+            </svg>
+          </button>
+          <div class="collapsible__content">
+            <div class="collapsible__inner">
+              <ul class="resource-list">
+                {itemsByUnit[unit].map(item => (
+                  <li class="resource-item">
+                    <a href={`/physics/${item.slug}`} class="resource-item__link">
+                      <span class="resource-item__title">{item.data.title}</span>
+                      {item.data.topic && (
+                        <span class="resource-item__topic">{item.data.topic}</span>
+                      )}
+                    </a>
+                    {item.data.youtube_url && (
+                      <a href={item.data.youtube_url} target="_blank" rel="noopener" class="resource-item__video">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                        </svg>
+                        Video
+                      </a>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </section>
+      ))}
+    </div>
+    
+    <div class="archive-note">
+      <p>
+        These resources are from my teaching days (2014–2021). While I no longer teach, 
+        I keep them available because they're still useful to students and teachers worldwide.
+      </p>
+    </div>
+  </div>
+</Base>
+
+<script>
+  const collapsibles = document.querySelectorAll('.collapsible');
+  
+  collapsibles.forEach(collapsible => {
+    const trigger = collapsible.querySelector('.collapsible__trigger');
+    
+    trigger?.addEventListener('click', () => {
+      const isOpen = collapsible.classList.contains('collapsible--open');
+      collapsible.classList.toggle('collapsible--open');
+      trigger.setAttribute('aria-expanded', (!isOpen).toString());
+    });
+  });
+</script>
+
+<style>
+  .units-grid {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+  }
+  
+  .unit-section {
+    background: var(--bg-secondary);
+  }
+  
+  .unit-count {
+    font-size: 0.75rem;
+    color: var(--text-tertiary);
+    margin-left: auto;
+    margin-right: var(--space-md);
+  }
+  
+  .resource-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  
+  .resource-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-sm) 0;
+    border-bottom: 1px solid var(--border-subtle);
+  }
+  
+  .resource-item:last-child {
+    border-bottom: none;
+  }
+  
+  .resource-item__link {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    text-decoration: none;
+    color: inherit;
+    flex: 1;
+  }
+  
+  .resource-item__title {
+    font-size: 0.9375rem;
+    color: var(--text-primary);
+    transition: color var(--transition-fast);
+  }
+  
+  .resource-item__link:hover .resource-item__title {
+    color: var(--accent);
+  }
+  
+  .resource-item__topic {
+    font-size: 0.75rem;
+    color: var(--text-tertiary);
+  }
+  
+  .resource-item__video {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-xs);
+    font-size: 0.75rem;
+    color: var(--accent);
+    text-decoration: none;
+    padding: var(--space-xs) var(--space-sm);
+    background: var(--accent-subtle);
+    border-radius: 4px;
+    transition: background-color var(--transition-fast);
+  }
+  
+  .resource-item__video:hover {
+    background: var(--accent);
+    color: white;
+  }
+  
+  .archive-note {
+    margin-top: var(--space-3xl);
+    padding: var(--space-lg);
+    background: var(--bg-tertiary);
+    border-radius: 8px;
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+  }
+  
+  .archive-note p {
+    margin: 0;
+  }
+</style>

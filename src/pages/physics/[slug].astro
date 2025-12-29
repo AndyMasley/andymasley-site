@@ -1,0 +1,151 @@
+---
+import Base from '@/layouts/Base.astro';
+import { getCollection, type CollectionEntry } from 'astro:content';
+
+export async function getStaticPaths() {
+  const items = await getCollection('physics');
+  return items.map(item => ({
+    params: { slug: item.slug },
+    props: { item },
+  }));
+}
+
+interface Props {
+  item: CollectionEntry<'physics'>;
+}
+
+const { item } = Astro.props;
+const { Content } = await item.render();
+---
+
+<Base title={item.data.title} description={item.data.description}>
+  <article class="container container--narrow">
+    <nav class="breadcrumbs animate-in">
+      <a href="/">Home</a>
+      <span class="breadcrumbs__separator">/</span>
+      <a href="/physics">Physics</a>
+      {item.data.unit && (
+        <>
+          <span class="breadcrumbs__separator">/</span>
+          <span>{item.data.unit}</span>
+        </>
+      )}
+      <span class="breadcrumbs__separator">/</span>
+      <span class="breadcrumbs__current">{item.data.title}</span>
+    </nav>
+    
+    <header class="physics-header animate-in">
+      {item.data.unit && (
+        <span class="physics-header__unit">{item.data.unit}</span>
+      )}
+      <h1 class="physics-header__title">{item.data.title}</h1>
+      {item.data.topic && (
+        <p class="physics-header__topic">{item.data.topic}</p>
+      )}
+    </header>
+
+    {item.data.youtube_url && (
+      <div class="video-embed animate-in">
+        <a href={item.data.youtube_url} target="_blank" rel="noopener" class="video-link">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="5 3 19 12 5 21 5 3"></polygon>
+          </svg>
+          Watch on YouTube
+        </a>
+      </div>
+    )}
+
+    <div class="prose animate-in">
+      <Content />
+    </div>
+    
+    <footer class="article-footer">
+      <nav class="article-nav">
+        <a href="/physics" class="article-nav__link">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="m12 19-7-7 7-7"></path>
+            <path d="M19 12H5"></path>
+          </svg>
+          Back to physics archive
+        </a>
+      </nav>
+    </footer>
+  </article>
+</Base>
+
+<style>
+  .physics-header {
+    margin-bottom: var(--space-2xl);
+  }
+  
+  .physics-header__unit {
+    display: inline-block;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--accent);
+    background: var(--accent-subtle);
+    padding: 4px 8px;
+    border-radius: 4px;
+    margin-bottom: var(--space-md);
+  }
+  
+  .physics-header__title {
+    font-size: 2rem;
+    font-weight: 600;
+    margin: 0 0 var(--space-sm) 0;
+  }
+  
+  .physics-header__topic {
+    font-size: 1rem;
+    color: var(--text-secondary);
+    margin: 0;
+  }
+  
+  .video-embed {
+    margin-bottom: var(--space-2xl);
+  }
+  
+  .video-link {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: var(--space-md) var(--space-lg);
+    background: var(--accent);
+    color: white;
+    text-decoration: none;
+    border-radius: 8px;
+    font-weight: 500;
+    transition: background-color var(--transition-fast);
+  }
+  
+  .video-link:hover {
+    background: var(--accent-hover);
+    color: white;
+  }
+  
+  .article-footer {
+    margin-top: var(--space-3xl);
+    padding-top: var(--space-xl);
+    border-top: 1px solid var(--border);
+  }
+  
+  .article-nav__link {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-sm);
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    text-decoration: none;
+    padding: var(--space-sm) var(--space-md);
+    margin-left: calc(-1 * var(--space-md));
+    border-radius: 6px;
+    transition: background-color var(--transition-fast), color var(--transition-fast);
+  }
+  
+  .article-nav__link:hover {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+  }
+</style>

@@ -1,0 +1,89 @@
+---
+import Base from '@/layouts/Base.astro';
+import { getCollection } from 'astro:content';
+
+// Get all content with tags
+const writing = await getCollection('writing', ({ data }) => !data.draft);
+const music = await getCollection('music', ({ data }) => !data.draft);
+const film = await getCollection('film', ({ data }) => !data.draft);
+const books = await getCollection('books', ({ data }) => !data.draft);
+const notes = await getCollection('notes', ({ data }) => !data.draft);
+
+// Combine all tags with counts
+const tagCounts = new Map<string, number>();
+
+[...writing, ...music, ...film, ...books, ...notes].forEach(item => {
+  item.data.tags.forEach(tag => {
+    tagCounts.set(tag, (tagCounts.get(tag) || 0) + 1);
+  });
+});
+
+// Sort by count (descending), then alphabetically
+const sortedTags = [...tagCounts.entries()]
+  .sort((a, b) => {
+    if (b[1] !== a[1]) return b[1] - a[1];
+    return a[0].localeCompare(b[0]);
+  });
+
+const maxCount = Math.max(...tagCounts.values());
+---
+
+<Base title="Tags" description="Browse all content by tag">
+  <div class="container container--wide">
+    <header class="page-header">
+      <h1 class="page-header__title">Tags</h1>
+      <p class="page-header__subtitle">
+        Browse content by topic. {tagCounts.size} tags across {writing.length + music.length + film.length + books.length + notes.length} items.
+      </p>
+    </header>
+
+    <div class="tags-cloud stagger-in">
+      {sortedTags.map(([tag, count]) => {
+        // Scale font size based on count
+        const scale = 0.75 + (count / maxCount) * 0.75;
+        return (
+          <a 
+            href={`/tags/${tag}`} 
+            class="tag-item"
+            style={`font-size: ${scale}rem;`}
+          >
+            {tag}
+            <span class="tag-count">{count}</span>
+          </a>
+        );
+      })}
+    </div>
+  </div>
+</Base>
+
+<style>
+  .tags-cloud {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-md);
+    align-items: center;
+  }
+  
+  .tag-item {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-xs);
+    padding: var(--space-sm) var(--space-md);
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-subtle);
+    border-radius: 6px;
+    color: var(--text-primary);
+    text-decoration: none;
+    transition: border-color var(--transition-fast), background-color var(--transition-fast);
+  }
+  
+  .tag-item:hover {
+    border-color: var(--accent);
+    background: var(--accent-subtle);
+  }
+  
+  .tag-count {
+    font-size: 0.75em;
+    color: var(--text-tertiary);
+  }
+</style>
