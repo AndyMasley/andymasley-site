@@ -338,8 +338,8 @@ a:hover {
 
 .content-item {
   display: grid;
-  grid-template-columns: 85px 1fr;
-  gap: 12px;
+  grid-template-columns: 42px 1fr;
+  gap: 10px;
   margin-bottom: 6px;
   font-size: 0.9375rem;
   align-items: baseline;
