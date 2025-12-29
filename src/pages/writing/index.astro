@@ -345,22 +345,19 @@ function formatBylineDate(dateStr: string): string {
   }
 
   .meta-body {
-    font-size: 0.75rem;
+    font-size: 0.8rem;
     line-height: 1.5;
-    color: var(--dim);
   }
 
   .meta-body :global(h1),
   .meta-body :global(h2),
   .meta-body :global(h3) {
     font-family: var(--font-serif);
-    font-weight: 600;
-    color: var(--text);
+    font-weight: normal;
     margin: 1em 0 0.4em;
-    letter-spacing: -0.01em;
   }
 
-  .meta-body :global(h1) { font-size: 0.95rem; }
+  .meta-body :global(h1) { font-size: 0.9rem; }
   .meta-body :global(h2) { font-size: 0.85rem; }
   .meta-body :global(h3) { font-size: 0.8rem; }
 
@@ -370,12 +367,17 @@ function formatBylineDate(dateStr: string): string {
 
   .meta-body :global(a) {
     color: var(--accent);
-    text-decoration: none;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    font-weight: normal;
   }
 
   .meta-body :global(a:hover) {
-    text-decoration: underline;
-    text-underline-offset: 2px;
+    text-decoration: none;
+  }
+
+  .meta-body :global(strong) {
+    font-weight: normal;
   }
 
   .meta-body :global(ul),
