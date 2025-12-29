@@ -71,7 +71,6 @@ function isActive(href: string): boolean {
           <button class="header__control" id="theme-toggle">
             [<span id="theme-label">dark</span>]
           </button>
-          <button class="header__control" id="search-toggle">[search]</button>
         </div>
       </div>
 
@@ -100,24 +99,10 @@ function isActive(href: string): boolean {
     </footer>
   </main>
 
-  <!-- Search Modal -->
-  <div class="search-overlay" id="search-overlay"></div>
-  <div class="search-modal" id="search-modal">
-    <input
-      type="text"
-      class="search-input"
-      id="search-input"
-      placeholder="search..."
-      autocomplete="off"
-    >
-    <div class="search-hint">[esc to close]</div>
-    <div class="search-results" id="search-results"></div>
-  </div>
 
   <script>
     document.addEventListener('astro:page-load', () => {
       initThemeToggle();
-      initSearch();
       initReadingProgress();
     });
 
@@ -143,143 +128,6 @@ function isActive(href: string): boolean {
       });
     }
 
-    function initSearch() {
-      const searchToggle = document.getElementById('search-toggle');
-      const searchOverlay = document.getElementById('search-overlay');
-      const searchModal = document.getElementById('search-modal');
-      const searchInput = document.getElementById('search-input') as HTMLInputElement | null;
-      const searchResults = document.getElementById('search-results');
-
-      let searchIndex: any[] = [];
-      let fuse: any = null;
-      let selectedIndex = -1;
-
-      function loadFuse() {
-        return new Promise((resolve) => {
-          if ((window as any).Fuse) {
-            resolve((window as any).Fuse);
-            return;
-          }
-          const script = document.createElement('script');
-          script.src = 'https://cdn.jsdelivr.net/npm/fuse.js@7.0.0/dist/fuse.min.js';
-          script.onload = () => resolve((window as any).Fuse);
-          document.head.appendChild(script);
-        });
-      }
-
-      async function loadSearchIndex() {
-        if (searchIndex.length > 0) return;
-        try {
-          const [response, Fuse] = await Promise.all([
-            fetch('/search.json'),
-            loadFuse()
-          ]);
-          searchIndex = await response.json();
-          fuse = new (Fuse as any)(searchIndex, {
-            keys: ['title', 'description', 'tags'],
-            threshold: 0.3,
-            includeScore: true,
-          });
-        } catch (e) {
-          console.error('Failed to load search:', e);
-        }
-      }
-
-      function renderResults(results: any[]) {
-        if (!searchResults) return;
-
-        if (results.length === 0) {
-          searchResults.innerHTML = `<p class="search-empty">No results found</p>`;
-          return;
-        }
-
-        searchResults.innerHTML = results.slice(0, 10).map((result, i) => {
-          const item = result.item || result;
-          return `
-            <a href="${item.url}" class="search-result ${i === selectedIndex ? 'search-result--selected' : ''}" data-index="${i}">
-              <span class="search-result__type">${item.type}</span>
-              <span class="search-result__title">${item.title}</span>
-            </a>
-          `;
-        }).join('');
-      }
-
-      function openSearch() {
-        searchOverlay?.classList.add('search-overlay--open');
-        searchModal?.classList.add('search-modal--open');
-        searchInput?.focus();
-        document.body.style.overflow = 'hidden';
-        loadSearchIndex();
-        selectedIndex = -1;
-      }
-
-      function closeSearch() {
-        searchOverlay?.classList.remove('search-overlay--open');
-        searchModal?.classList.remove('search-modal--open');
-        document.body.style.overflow = '';
-        if (searchInput) searchInput.value = '';
-        if (searchResults) searchResults.innerHTML = '';
-        selectedIndex = -1;
-      }
-
-      searchToggle?.addEventListener('click', openSearch);
-      searchOverlay?.addEventListener('click', closeSearch);
-
-      searchInput?.addEventListener('input', (e) => {
-        const query = (e.target as HTMLInputElement).value.trim();
-        selectedIndex = -1;
-
-        if (!query) {
-          if (searchResults) searchResults.innerHTML = '';
-          return;
-        }
-
-        if (fuse) {
-          const results = fuse.search(query);
-          renderResults(results);
-        } else {
-          const results = searchIndex.filter((item: any) =>
-            item.title.toLowerCase().includes(query.toLowerCase()) ||
-            item.description?.toLowerCase().includes(query.toLowerCase())
-          );
-          renderResults(results.map((item: any) => ({ item })));
-        }
-      });
-
-      document.addEventListener('keydown', (e) => {
-        if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
-          e.preventDefault();
-          if (searchModal?.classList.contains('search-modal--open')) {
-            closeSearch();
-          } else {
-            openSearch();
-          }
-        }
-        if (e.key === 'Escape') {
-          closeSearch();
-        }
-
-        if (searchModal?.classList.contains('search-modal--open')) {
-          const results = searchResults?.querySelectorAll('.search-result');
-          if (!results || results.length === 0) return;
-
-          if (e.key === 'ArrowDown') {
-            e.preventDefault();
-            selectedIndex = Math.min(selectedIndex + 1, results.length - 1);
-            results.forEach((r, i) => r.classList.toggle('search-result--selected', i === selectedIndex));
-          } else if (e.key === 'ArrowUp') {
-            e.preventDefault();
-            selectedIndex = Math.max(selectedIndex - 1, 0);
-            results.forEach((r, i) => r.classList.toggle('search-result--selected', i === selectedIndex));
-          } else if (e.key === 'Enter' && selectedIndex >= 0) {
-            e.preventDefault();
-            const selected = results[selectedIndex] as HTMLAnchorElement;
-            if (selected) window.location.href = selected.href;
-          }
-        }
-      });
-    }
-
     function initReadingProgress() {
       const progressBar = document.getElementById('reading-progress');
       if (progressBar) {
@@ -294,7 +142,6 @@ function isActive(href: string): boolean {
 
     // Initialize on first load
     initThemeToggle();
-    initSearch();
     initReadingProgress();
   </script>
 </body>
