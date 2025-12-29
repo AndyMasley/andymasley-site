@@ -13,19 +13,17 @@ const totalVideos = getTotalVideoCount();
     </p>
   </div>
 
+  <hr class="divider" />
+
+  <div class="section-title">Video Lectures</div>
   <div class="physics-intro">
     <p>
-      I made these videos under the old curriculum and reorganized them into the new curriculum. There's a chance there are some inconsistencies but so far not many have come up. A few topics are missing because they didn't exist under the old curriculum.
+      Below are all my IB physics videos. I only taught IB physics SL and don't have time to make HL videos right now. If you're looking for HL resources <a href="https://www.youtube.com/@donerphysics" target="_blank" rel="noopener">Chris Doner</a> and <a href="https://www.youtube.com/@siriusrevision" target="_blank" rel="noopener">Sirius Revision</a> both have great videos on IB HL topics!
     </p>
     <p>
-      I only taught IB physics SL. If you're looking for HL resources, <a href="https://www.youtube.com/@donerphysics" target="_blank" rel="noopener">Chris Doner</a> and <a href="https://www.youtube.com/@siriusrevision" target="_blank" rel="noopener">Sirius Revision</a> both have great videos.
-    </p>
-    <p>
-      Old curriculum resources: <a href="https://drive.google.com/drive/folders/1OH8Z_HHKgzdE2iCyGRxKAmBPvVn561Kg?usp=sharing" target="_blank" rel="noopener">year 1</a> · <a href="https://drive.google.com/drive/folders/1G7bomqqBiaB_7HLErh5XGw8S9GcteZ3o?usp=sharing" target="_blank" rel="noopener">year 2</a>
+      I made these videos under the old curriculum. I reorganized them into the new curriculum. There's a chance there are some inconsistencies between the old and new curricula but so far not many have come up! A few topics are missing because they didn't exist under the old curriculum.
     </p>
   </div>
-
-  <hr class="divider" />
 
   {physicsTopics.map(topic => (
     <div class="top-dropdown">
@@ -35,10 +33,14 @@ const totalVideos = getTotalVideoCount();
         <span class="top-count">({topic.subtopics.reduce((sum, s) => sum + s.videos.length, 0)})</span>
       </button>
       <div class="top-content" data-content={topic.id} hidden>
-        {topic.subtopics.map(subtopic => (
-          <div class="subtopic">
-            <div class="subtopic-header">{subtopic.name}</div>
-            <div class="video-list">
+        {topic.subtopics.map((subtopic, idx) => (
+          <div class="subtopic-dropdown">
+            <button class="subtopic-toggle" aria-expanded="false" data-subtopic={`${topic.id}-${idx}`}>
+              <span class="subtopic-arrow">&#9654;</span>
+              <span class="subtopic-title">{subtopic.name}</span>
+              <span class="subtopic-count">({subtopic.videos.length})</span>
+            </button>
+            <div class="subtopic-content" data-subcontent={`${topic.id}-${idx}`} hidden>
               {subtopic.videos.map(video => (
                 <div class="video-row">
                   <a href={video.url} target="_blank" rel="noopener" class="video-link">
@@ -61,10 +63,16 @@ const totalVideos = getTotalVideoCount();
 </Base>
 
 <style>
+  .section-title {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 12px;
+  }
+
   .physics-intro {
-    font-size: 0.9rem;
-    color: var(--dim);
-    margin-bottom: 1rem;
+    font-size: 0.875rem;
+    color: var(--text);
+    margin-bottom: 1.5rem;
   }
 
   .physics-intro p {
@@ -83,7 +91,7 @@ const totalVideos = getTotalVideoCount();
 
   /* Top-level dropdowns */
   .top-dropdown {
-    margin-bottom: 8px;
+    margin-bottom: 4px;
   }
 
   .top-toggle {
@@ -91,11 +99,11 @@ const totalVideos = getTotalVideoCount();
     align-items: center;
     gap: 10px;
     width: 100%;
-    padding: 10px 0;
+    padding: 8px 0;
     background: none;
     border: none;
     font-family: inherit;
-    font-size: 1rem;
+    font-size: 0.95rem;
     font-weight: 600;
     color: var(--text);
     cursor: pointer;
@@ -107,10 +115,10 @@ const totalVideos = getTotalVideoCount();
   }
 
   .top-arrow {
-    font-size: 0.65rem;
+    font-size: 0.6rem;
     transition: transform 0.2s ease;
     color: var(--dim);
-    width: 12px;
+    width: 10px;
   }
 
   .top-toggle[aria-expanded="true"] .top-arrow {
@@ -122,34 +130,66 @@ const totalVideos = getTotalVideoCount();
   }
 
   .top-count {
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     font-weight: normal;
     color: var(--dim);
   }
 
   .top-content {
-    padding-left: 22px;
-    padding-bottom: 16px;
+    padding-left: 20px;
+    padding-bottom: 8px;
   }
 
-  /* Subtopics */
-  .subtopic {
-    margin-bottom: 16px;
+  /* Subtopic dropdowns */
+  .subtopic-dropdown {
+    margin-bottom: 2px;
   }
 
-  .subtopic-header {
-    font-size: 0.75rem;
-    font-weight: 500;
+  .subtopic-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 6px 0;
+    background: none;
+    border: none;
+    font-family: inherit;
+    font-size: 0.8rem;
+    color: var(--text);
+    cursor: pointer;
+    text-align: left;
+  }
+
+  .subtopic-toggle:hover {
+    color: var(--accent);
+  }
+
+  .subtopic-arrow {
+    font-size: 0.5rem;
+    transition: transform 0.2s ease;
     color: var(--dim);
-    margin-bottom: 8px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+    width: 8px;
   }
 
-  .video-list {
+  .subtopic-toggle[aria-expanded="true"] .subtopic-arrow {
+    transform: rotate(90deg);
+  }
+
+  .subtopic-title {
+    flex: 1;
+  }
+
+  .subtopic-count {
+    font-size: 0.65rem;
+    color: var(--dim);
+  }
+
+  .subtopic-content {
+    padding-left: 16px;
+    padding-bottom: 8px;
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 3px;
   }
 
   .video-row {
@@ -171,10 +211,15 @@ const totalVideos = getTotalVideoCount();
     .top-content {
       padding-left: 12px;
     }
+
+    .subtopic-content {
+      padding-left: 12px;
+    }
   }
 </style>
 
 <script>
+  // Top-level dropdown toggle
   document.querySelectorAll('.top-toggle').forEach(btn => {
     btn.addEventListener('click', () => {
       const expanded = btn.getAttribute('aria-expanded') === 'true';
@@ -182,6 +227,20 @@ const totalVideos = getTotalVideoCount();
 
       const section = btn.getAttribute('data-section');
       const content = document.querySelector(`[data-content="${section}"]`) as HTMLElement;
+      if (content) {
+        content.hidden = expanded;
+      }
+    });
+  });
+
+  // Subtopic dropdown toggle
+  document.querySelectorAll('.subtopic-toggle').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const expanded = btn.getAttribute('aria-expanded') === 'true';
+      btn.setAttribute('aria-expanded', String(!expanded));
+
+      const subtopic = btn.getAttribute('data-subtopic');
+      const content = document.querySelector(`[data-subcontent="${subtopic}"]`) as HTMLElement;
       if (content) {
         content.hidden = expanded;
       }
