@@ -175,30 +175,22 @@ export function getCategoryPostCount(posts: SubstackPost[], categoryName: string
   return posts.filter(p => p.category === categoryName).length;
 }
 
-// Fetch full HTML content for a specific post via RSS
+// Fetch full HTML content for a specific post via Substack API
 export async function fetchPostContent(slug: string): Promise<string> {
-  const RSS_URL = 'https://andymasley.substack.com/feed';
+  const API_URL = `https://andymasley.substack.com/api/v1/posts/${slug}`;
 
   try {
-    const response = await fetch(RSS_URL);
-    const xml = await response.text();
+    const response = await fetch(API_URL);
+    if (!response.ok) {
+      console.error(`Failed to fetch post ${slug}: ${response.status}`);
+      return '';
+    }
 
-    // Parse RSS to find the post by slug
-    // Look for the item with matching link
-    const itemRegex = /<item>([\s\S]*?)<\/item>/g;
-    let match;
+    const post = await response.json();
 
-    while ((match = itemRegex.exec(xml)) !== null) {
-      const item = match[1];
-      const linkMatch = item.match(/<link>([^<]+)<\/link>/);
-
-      if (linkMatch && linkMatch[1].includes(`/p/${slug}`)) {
-        // Extract content:encoded
-        const contentMatch = item.match(/<content:encoded><!\[CDATA\[([\s\S]*?)\]\]><\/content:encoded>/);
-        if (contentMatch) {
-          return contentMatch[1];
-        }
-      }
+    // The API returns body_html with the full content
+    if (post.body_html) {
+      return post.body_html;
     }
 
     return '';
