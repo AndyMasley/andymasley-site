@@ -171,7 +171,7 @@ function formatBylineDate(dateStr: string): string {
         ))}
       </div>
 
-      <p class="post-count">{posts.length} posts</p>
+      <p class="post-count" id="post-count">{posts.length} posts</p>
     </div>
   </div>
 
@@ -657,6 +657,13 @@ function formatBylineDate(dateStr: string): string {
           group.classList.remove('hidden');
         }
       });
+
+      // Update post count
+      const visibleCount = document.querySelectorAll('.timeline-row:not(.hidden)').length;
+      const postCountEl = document.getElementById('post-count');
+      if (postCountEl) {
+        postCountEl.textContent = `${visibleCount} posts`;
+      }
     });
   });
 </script>
