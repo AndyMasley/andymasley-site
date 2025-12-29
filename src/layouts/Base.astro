@@ -109,17 +109,23 @@ function isActive(href: string): boolean {
     function initThemeToggle() {
       const themeToggle = document.getElementById('theme-toggle');
       const themeLabel = document.getElementById('theme-label');
+      if (!themeToggle) return;
 
       function updateThemeLabel() {
         const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-        if (themeLabel) {
-          themeLabel.textContent = isDark ? 'light' : 'dark';
+        const label = document.getElementById('theme-label');
+        if (label) {
+          label.textContent = isDark ? 'light' : 'dark';
         }
       }
 
       updateThemeLabel();
 
-      themeToggle?.addEventListener('click', () => {
+      // Clone to remove any stale event listeners from View Transitions
+      const newToggle = themeToggle.cloneNode(true) as HTMLElement;
+      themeToggle.parentNode?.replaceChild(newToggle, themeToggle);
+
+      newToggle.addEventListener('click', () => {
         const currentTheme = document.documentElement.getAttribute('data-theme');
         const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
         document.documentElement.setAttribute('data-theme', newTheme);
