@@ -1,101 +1,13 @@
 ---
 import Base from '@/layouts/Base.astro';
-import { getCollection } from 'astro:content';
-
-const allMusic = await getCollection('music', ({ data }) => !data.draft);
-const allFilm = await getCollection('film', ({ data }) => !data.draft);
-const allBooks = await getCollection('books', ({ data }) => !data.draft);
-
-const musicItems = allMusic.sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
-const filmItems = allFilm.sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
-const bookItems = allBooks.sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
-
-// Group music by a simple categorization
-const musicByGenre = musicItems.reduce((acc, item) => {
-  const genre = item.data.genre?.[0] || 'other';
-  if (!acc[genre]) acc[genre] = [];
-  acc[genre].push(item);
-  return acc;
-}, {} as Record<string, typeof musicItems>);
 ---
 
 <Base title="Media Recs" description="Albums, films, and books worth your time">
   <div class="page-header">
     <h2 class="page-header__title">Media Recs</h2>
-    <p class="page-header__description">
-      Things worth your time.
-    </p>
   </div>
 
-  <div class="jump-links">
-    <span class="jump-links__label">Jump: </span>
-    <a href="#albums">Albums</a>
-    <span class="jump-links__sep"> · </span>
-    <a href="#films">Films</a>
-    <span class="jump-links__sep"> · </span>
-    <a href="#books">Books</a>
-  </div>
-
-  <hr class="divider" />
-
-  <!-- Albums -->
-  <div id="albums" style="margin-bottom: 24px;">
-    <div class="label">Albums</div>
-    {Object.entries(musicByGenre).map(([genre, items]) => (
-      <div class="section">
-        <div class="section__header" data-section={`music-${genre}`}>
-          <span class="section__toggle">▼</span>
-          <span class="section__title">{genre}</span>
-          <span class="section__count">({items.length})</span>
-        </div>
-        <div class="section__content" data-content={`music-${genre}`}>
-          {items.map(item => (
-            <div class="content-item">
-              {item.data.album || item.data.title} ({item.data.artist}, {item.data.year})
-            </div>
-          ))}
-        </div>
-      </div>
-    ))}
-  </div>
-
-  <!-- Films -->
-  <div id="films" style="margin-bottom: 24px;">
-    <div class="label">Films</div>
-    <div class="section">
-      <div class="section__header" data-section="films">
-        <span class="section__toggle">▼</span>
-        <span class="section__title">all films</span>
-        <span class="section__count">({filmItems.length})</span>
-      </div>
-      <div class="section__content" data-content="films">
-        {filmItems.map(item => (
-          <div class="content-item">
-            {item.data.title} ({item.data.director}, {item.data.year})
-          </div>
-        ))}
-      </div>
-    </div>
-  </div>
-
-  <!-- Books -->
-  <div id="books" style="margin-bottom: 24px;">
-    <div class="label">Books</div>
-    <div class="section">
-      <div class="section__header" data-section="books">
-        <span class="section__toggle">▼</span>
-        <span class="section__title">all books</span>
-        <span class="section__count">({bookItems.length})</span>
-      </div>
-      <div class="section__content" data-content="books">
-        {bookItems.map(item => (
-          <div class="content-item">
-            {item.data.title} — {item.data.author}
-          </div>
-        ))}
-      </div>
-    </div>
-  </div>
+  <p>Coming soon.</p>
 
   <hr class="divider" />
 
@@ -103,19 +15,3 @@ const musicByGenre = musicItems.reduce((acc, item) => {
     <a href="/">← home</a>
   </div>
 </Base>
-
-<script>
-  document.querySelectorAll('.section__header').forEach(header => {
-    header.addEventListener('click', () => {
-      const section = header.getAttribute('data-section');
-      const content = document.querySelector(`[data-content="${section}"]`) as HTMLElement;
-      const toggle = header.querySelector('.section__toggle');
-
-      if (content && toggle) {
-        const isCollapsed = content.style.display === 'none';
-        content.style.display = isCollapsed ? 'block' : 'none';
-        toggle.textContent = isCollapsed ? '▼' : '▶';
-      }
-    });
-  });
-</script>
