@@ -74,6 +74,17 @@ const physics = defineCollection({
   }),
 });
 
+// Categories - for writing page category overviews
+const categories = defineCollection({
+  type: 'content',
+  schema: z.object({
+    name: z.string(),
+    categorySlug: z.string(),
+    shortName: z.string(),
+    order: z.number(),
+  }),
+});
+
 export const collections = {
   writing,
   music,
@@ -81,4 +92,5 @@ export const collections = {
   books,
   notes,
   physics,
+  categories,
 };
