@@ -33,14 +33,13 @@ const totalVideos = getTotalVideoCount();
         <span class="top-count">({topic.subtopics.reduce((sum, s) => sum + s.videos.length, 0)})</span>
       </button>
       <div class="top-content" data-content={topic.id} hidden>
-        {topic.subtopics.map((subtopic, idx) => (
-          <div class="subtopic-dropdown">
-            <button class="subtopic-toggle" aria-expanded="false" data-subtopic={`${topic.id}-${idx}`}>
-              <span class="subtopic-arrow">&#9654;</span>
+        {topic.subtopics.map((subtopic) => (
+          <div class="subtopic-section">
+            <div class="subtopic-header">
               <span class="subtopic-title">{subtopic.name}</span>
               <span class="subtopic-count">({subtopic.videos.length})</span>
-            </button>
-            <div class="subtopic-content" data-subcontent={`${topic.id}-${idx}`} hidden>
+            </div>
+            <div class="subtopic-videos">
               {subtopic.videos.map(video => (
                 <div class="video-row">
                   <a href={video.url} target="_blank" rel="noopener" class="video-link">
@@ -140,39 +139,19 @@ const totalVideos = getTotalVideoCount();
     padding-bottom: 8px;
   }
 
-  /* Subtopic dropdowns */
-  .subtopic-dropdown {
-    margin-bottom: 2px;
+  /* Subtopic sections */
+  .subtopic-section {
+    margin-bottom: 12px;
   }
 
-  .subtopic-toggle {
+  .subtopic-header {
     display: flex;
     align-items: center;
     gap: 8px;
-    width: 100%;
-    padding: 6px 0;
-    background: none;
-    border: none;
-    font-family: inherit;
+    padding: 4px 0;
     font-size: 0.8rem;
+    font-weight: 600;
     color: var(--text);
-    cursor: pointer;
-    text-align: left;
-  }
-
-  .subtopic-toggle:hover {
-    color: var(--accent);
-  }
-
-  .subtopic-arrow {
-    font-size: 0.5rem;
-    transition: transform 0.2s ease;
-    color: var(--dim);
-    width: 8px;
-  }
-
-  .subtopic-toggle[aria-expanded="true"] .subtopic-arrow {
-    transform: rotate(90deg);
   }
 
   .subtopic-title {
@@ -181,12 +160,13 @@ const totalVideos = getTotalVideoCount();
 
   .subtopic-count {
     font-size: 0.65rem;
+    font-weight: normal;
     color: var(--dim);
   }
 
-  .subtopic-content {
-    padding-left: 16px;
-    padding-bottom: 8px;
+  .subtopic-videos {
+    padding-left: 0;
+    padding-top: 4px;
     display: flex;
     flex-direction: column;
     gap: 3px;
@@ -211,10 +191,6 @@ const totalVideos = getTotalVideoCount();
     .top-content {
       padding-left: 12px;
     }
-
-    .subtopic-content {
-      padding-left: 12px;
-    }
   }
 </style>
 
@@ -227,20 +203,6 @@ const totalVideos = getTotalVideoCount();
 
       const section = btn.getAttribute('data-section');
       const content = document.querySelector(`[data-content="${section}"]`) as HTMLElement;
-      if (content) {
-        content.hidden = expanded;
-      }
-    });
-  });
-
-  // Subtopic dropdown toggle
-  document.querySelectorAll('.subtopic-toggle').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const expanded = btn.getAttribute('aria-expanded') === 'true';
-      btn.setAttribute('aria-expanded', String(!expanded));
-
-      const subtopic = btn.getAttribute('data-subtopic');
-      const content = document.querySelector(`[data-subcontent="${subtopic}"]`) as HTMLElement;
       if (content) {
         content.hidden = expanded;
       }
