@@ -57,33 +57,58 @@ export const categoryConfigs: CategoryConfig[] = [
   }
 ];
 
-// Manual category mapping - add your posts here as needed
-// Key is the post slug (end of URL), value is the category name
+// ============================================================
+// MANUAL CATEGORY MAPPING
+// Add your post slug (end of URL) and assign it to a category.
+// Posts not listed here will be auto-categorized by keywords.
+// ============================================================
 const categoryMap: Record<string, string> = {
-  // AI & the Environment
-  "data-centers-dont-use-that-much-water": "AI & the Environment",
+  // ---- AI & the Environment ----
   "empire-of-ai-is-wildly-misleading": "AI & the Environment",
+  "a-short-summary-of-my-argument-that": "AI & the Environment",
+  "data-centers-and-low-social-trust": "AI & the Environment",
+  "a-pause-for-now-on-ai-and-the-environment": "AI & the Environment",
+  "requests-for-journalists-covering": "AI & the Environment",
+  "a-few-meta-points-on-my-posts-on": "AI & the Environment",
+  "the-ai-water-issue-is-fake": "AI & the Environment",
+  "data-centers-and-electricity-part": "AI & the Environment",
+  "data-centers-dont-use-that-much-water": "AI & the Environment",
   "ai-water-use-in-context": "AI & the Environment",
   "the-ai-water-discourse": "AI & the Environment",
 
-  // Artificial Intelligence (general)
+  // ---- Artificial Intelligence (general) ----
   "ai-can-obviously-create-new-knowledge": "Artificial Intelligence",
+  "the-lump-of-cognition-fallacy": "Artificial Intelligence",
+  "its-much-easier-to-hold-computers": "Artificial Intelligence",
+  "an-armchair-diagnosis-of-the-chatbot": "Artificial Intelligence",
+  "ai-and-folk-cartesianism-part-2-problems": "Artificial Intelligence",
+  "ai-and-folk-cartesianism-part-1-defining": "Artificial Intelligence",
+  "slop-implies-capability": "Artificial Intelligence",
   "on-compute-governance": "Artificial Intelligence",
 
-  // Animal Welfare
+  // ---- Animal Welfare ----
   "factory-farming": "Animal Welfare",
   "animal-welfare": "Animal Welfare",
 
-  // Charity / EA
+  // ---- Charity / EA ----
   "what-open-philanthropy-gets-right": "Charity",
   "ea-dc-year-one": "Charity",
   "effective-altruism": "Charity",
 
-  // Politics
+  // ---- Politics ----
+  "please-please-please-do-not-ban-autonomous": "Politics",
   "labor-theory-value": "Politics",
   "the-labor-theory-of-value": "Politics",
 
-  // Add more mappings as you publish
+  // ---- Recs & Advice ----
+  "always-mask-in-airports": "Recs & Advice",
+
+  // ---- Misc ----
+  "a-list-of-other-catastrophes-that": "Misc",
+  "a-quick-plug-for-my-recent-podcast": "Misc",
+  "the-main-way-ive-seen-people-turn": "Misc",
+
+  // Add more mappings as you publish new posts
 };
 
 // Keywords to auto-categorize (fallback if not in manual map)
