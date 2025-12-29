@@ -31,8 +31,8 @@ interface YearGroup {
   months: MonthGroup[];
 }
 
-const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
-                    'July', 'August', 'September', 'October', 'November', 'December'];
+const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+                    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
 const yearMap = new Map<number, Map<number, typeof posts>>();
 
@@ -493,7 +493,7 @@ function formatBylineDate(dateStr: string): string {
 
   .timeline-row {
     display: grid;
-    grid-template-columns: 70px 24px 1fr auto;
+    grid-template-columns: 32px 24px 1fr auto;
     gap: 8px;
     font-size: 0.8rem;
     align-items: baseline;
