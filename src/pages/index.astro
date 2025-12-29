@@ -1,12 +1,71 @@
 ---
 import Base from '@/layouts/Base.astro';
+import { getCollection } from 'astro:content';
+
+const allWriting = await getCollection('writing', ({ data }) => !data.draft);
+const allMusic = await getCollection('music', ({ data }) => !data.draft);
+const allNotes = await getCollection('notes', ({ data }) => !data.draft);
+const allPhysics = await getCollection('physics', ({ data }) => !data.draft);
+
+// Combine recent items
+const recentItems = [
+  ...allWriting.map(p => ({ ...p, type: 'writing', url: `/writing/${p.slug}` })),
+  ...allMusic.map(p => ({ ...p, type: 'music', url: `/music/${p.slug}` })),
+  ...allNotes.map(p => ({ ...p, type: 'notes', url: `/notes/${p.slug}` })),
+].sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf()).slice(0, 5);
+
+function formatDate(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}.${month}.${day}`;
+}
 ---
 
 <Base title="Home">
-  <div class="container">
-    <section class="home-intro stagger-in">
-      <h1 class="home-intro__title">Andy Masley</h1>
-      <p class="home-intro__description">This site is under construction.</p>
-    </section>
+  <div class="home-intro">
+    <p>
+      Writer, researcher, director of <a href="https://effectivealtruismdc.org" target="_blank" rel="noopener">Effective Altruism DC</a>.
+      Former physics teacher. I write about AI policy and challenge narratives with data.
+    </p>
+  </div>
+
+  <hr class="divider" />
+
+  <div class="home-sections">
+    <div class="label">Sections</div>
+    <a href="/writing">Writing</a> — essays on AI, economics, EA<br/>
+    <a href="/physics">IB Physics</a> — video lectures, full curriculum<br/>
+    <a href="/notes">Notes</a> — ideas, TILs, references, quotes<br/>
+    <a href="/music">Media Recs</a> — albums, films, books<br/>
+  </div>
+
+  <hr class="divider" />
+
+  <div class="home-recent">
+    <div class="label">Recent</div>
+    <ul class="content-list">
+      {recentItems.map(item => (
+        <li class="content-item">
+          <span class="content-item__date">{formatDate(item.data.date)}</span>
+          <a href={item.url} class="content-item__link">
+            {item.data.title || item.data.album}
+          </a>
+        </li>
+      ))}
+    </ul>
+  </div>
+
+  <hr class="divider" />
+
+  <div class="home-elsewhere">
+    <span class="label">Elsewhere: </span>
+    <a href="https://substack.com/@andymasley" target="_blank" rel="noopener">Substack</a>
+    <span class="header__nav-sep"> · </span>
+    <a href="https://x.com/AndyMasley" target="_blank" rel="noopener">Twitter</a>
+    <span class="header__nav-sep"> · </span>
+    <a href="https://www.youtube.com/@andymasley" target="_blank" rel="noopener">YouTube</a>
+    <span class="header__nav-sep"> · </span>
+    <a href="/rss.xml">RSS</a>
   </div>
 </Base>

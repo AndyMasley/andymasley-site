@@ -3,202 +3,119 @@ import Base from '@/layouts/Base.astro';
 import { getCollection } from 'astro:content';
 
 const allMusic = await getCollection('music', ({ data }) => !data.draft);
-const items = allMusic.sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+const allFilm = await getCollection('film', ({ data }) => !data.draft);
+const allBooks = await getCollection('books', ({ data }) => !data.draft);
 
-// Get all unique genres
-const allGenres = [...new Set(items.flatMap(item => item.data.genre))].sort();
+const musicItems = allMusic.sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+const filmItems = allFilm.sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+const bookItems = allBooks.sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
 
-function formatDate(date: Date): string {
-  return date.toLocaleDateString('en-US', { 
-    year: 'numeric',
-    month: 'short'
-  });
-}
-
-function formatRating(rating?: number): string {
-  if (!rating) return '';
-  return rating.toFixed(1);
-}
+// Group music by a simple categorization
+const musicByGenre = musicItems.reduce((acc, item) => {
+  const genre = item.data.genre?.[0] || 'other';
+  if (!acc[genre]) acc[genre] = [];
+  acc[genre].push(item);
+  return acc;
+}, {} as Record<string, typeof musicItems>);
 ---
 
-<Base title="Music" description="Album reviews, recommendations, and music notes">
-  <div class="container container--wide">
-    <header class="page-header">
-      <h1 class="page-header__title">Music</h1>
-      <p class="page-header__subtitle">
-        Album reviews, artist notes, and sonic explorations—from noise rock to whatever catches my ear.
-      </p>
-      <p class="section-header__count">{items.length} entries</p>
-    </header>
+<Base title="Media Recs" description="Albums, films, and books worth your time">
+  <div class="page-header">
+    <h2 class="page-header__title">Media Recs</h2>
+    <p class="page-header__description">
+      Things worth your time.
+    </p>
+  </div>
 
-    {allGenres.length > 0 && (
-      <div class="filter-bar">
-        <span class="filter-label">Filter:</span>
-        <div class="tags">
-          <button class="tag tag--filter tag--active" data-genre="all">All</button>
-          {allGenres.map(genre => (
-            <button class="tag tag--filter" data-genre={genre}>{genre}</button>
+  <div class="jump-links">
+    <span class="jump-links__label">Jump: </span>
+    <a href="#albums">Albums</a>
+    <span class="jump-links__sep"> · </span>
+    <a href="#films">Films</a>
+    <span class="jump-links__sep"> · </span>
+    <a href="#books">Books</a>
+  </div>
+
+  <hr class="divider" />
+
+  <!-- Albums -->
+  <div id="albums" style="margin-bottom: 24px;">
+    <div class="label">Albums</div>
+    {Object.entries(musicByGenre).map(([genre, items]) => (
+      <div class="section">
+        <div class="section__header" data-section={`music-${genre}`}>
+          <span class="section__toggle">▼</span>
+          <span class="section__title">{genre}</span>
+          <span class="section__count">({items.length})</span>
+        </div>
+        <div class="section__content" data-content={`music-${genre}`}>
+          {items.map(item => (
+            <div class="content-item">
+              {item.data.album || item.data.title} ({item.data.artist}, {item.data.year})
+            </div>
           ))}
         </div>
       </div>
-    )}
+    ))}
+  </div>
 
-    <ul class="music-grid stagger-in" id="music-list">
-      {items.map(item => (
-        <li class="music-item" data-genres={item.data.genre.join(',')}>
-          <a href={`/music/${item.slug}`} class="music-item__link">
-            <div class="music-item__content">
-              <h3 class="music-item__title">{item.data.album || item.data.title}</h3>
-              {item.data.artist && (
-                <p class="music-item__artist">{item.data.artist}</p>
-              )}
-              <div class="music-item__meta">
-                {item.data.year && <span>{item.data.year}</span>}
-                {item.data.rating && (
-                  <span class="music-item__rating">{formatRating(item.data.rating)}</span>
-                )}
-              </div>
-            </div>
-            {item.data.genre.length > 0 && (
-              <div class="music-item__genres">
-                {item.data.genre.slice(0, 2).map(g => (
-                  <span class="genre-tag">{g}</span>
-                ))}
-              </div>
-            )}
-          </a>
-        </li>
-      ))}
-    </ul>
+  <!-- Films -->
+  <div id="films" style="margin-bottom: 24px;">
+    <div class="label">Films</div>
+    <div class="section">
+      <div class="section__header" data-section="films">
+        <span class="section__toggle">▼</span>
+        <span class="section__title">all films</span>
+        <span class="section__count">({filmItems.length})</span>
+      </div>
+      <div class="section__content" data-content="films">
+        {filmItems.map(item => (
+          <div class="content-item">
+            {item.data.title} ({item.data.director}, {item.data.year})
+          </div>
+        ))}
+      </div>
+    </div>
+  </div>
+
+  <!-- Books -->
+  <div id="books" style="margin-bottom: 24px;">
+    <div class="label">Books</div>
+    <div class="section">
+      <div class="section__header" data-section="books">
+        <span class="section__toggle">▼</span>
+        <span class="section__title">all books</span>
+        <span class="section__count">({bookItems.length})</span>
+      </div>
+      <div class="section__content" data-content="books">
+        {bookItems.map(item => (
+          <div class="content-item">
+            {item.data.title} — {item.data.author}
+          </div>
+        ))}
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider" />
+
+  <div class="back-link">
+    <a href="/">← index</a>
   </div>
 </Base>
 
 <script>
-  const filterButtons = document.querySelectorAll('.tag--filter');
-  const items = document.querySelectorAll('.music-item');
-  
-  filterButtons.forEach(button => {
-    button.addEventListener('click', () => {
-      const genre = button.getAttribute('data-genre');
-      
-      // Update active state
-      filterButtons.forEach(b => b.classList.remove('tag--active'));
-      button.classList.add('tag--active');
-      
-      // Filter items
-      items.forEach(item => {
-        const itemGenres = item.getAttribute('data-genres')?.split(',') || [];
-        if (genre === 'all' || itemGenres.includes(genre)) {
-          item.style.display = '';
-          item.classList.add('expand-in');
-        } else {
-          item.style.display = 'none';
-          item.classList.remove('expand-in');
-        }
-      });
+  document.querySelectorAll('.section__header').forEach(header => {
+    header.addEventListener('click', () => {
+      const section = header.getAttribute('data-section');
+      const content = document.querySelector(`[data-content="${section}"]`) as HTMLElement;
+      const toggle = header.querySelector('.section__toggle');
+
+      if (content && toggle) {
+        const isCollapsed = content.style.display === 'none';
+        content.style.display = isCollapsed ? 'block' : 'none';
+        toggle.textContent = isCollapsed ? '▼' : '▶';
+      }
     });
   });
 </script>
-
-<style>
-  .filter-bar {
-    display: flex;
-    align-items: center;
-    gap: var(--space-md);
-    margin-bottom: var(--space-2xl);
-    padding-bottom: var(--space-lg);
-    border-bottom: 1px solid var(--border-subtle);
-    overflow-x: auto;
-  }
-  
-  .filter-label {
-    font-size: 0.8125rem;
-    color: var(--text-tertiary);
-    white-space: nowrap;
-  }
-  
-  .tag--filter {
-    cursor: pointer;
-    border: none;
-    font-family: inherit;
-  }
-  
-  .tag--active {
-    background: var(--accent);
-    color: white;
-  }
-
-  .music-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: var(--space-lg);
-    list-style: none;
-    padding: 0;
-    margin: 0;
-  }
-  
-  .music-item__link {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-    padding: var(--space-lg);
-    background: var(--bg-secondary);
-    border: 1px solid var(--border-subtle);
-    border-radius: 8px;
-    text-decoration: none;
-    color: inherit;
-    transition: border-color var(--transition-fast), transform var(--transition-fast), box-shadow var(--transition-fast);
-  }
-  
-  .music-item__link:hover {
-    border-color: var(--accent);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  }
-  
-  .music-item__content {
-    flex: 1;
-  }
-  
-  .music-item__title {
-    font-family: var(--font-serif);
-    font-size: 1.0625rem;
-    font-weight: 500;
-    margin: 0 0 var(--space-xs) 0;
-    color: var(--text-primary);
-  }
-  
-  .music-item__artist {
-    font-size: 0.9375rem;
-    color: var(--text-secondary);
-    margin: 0 0 var(--space-sm) 0;
-  }
-  
-  .music-item__meta {
-    display: flex;
-    align-items: center;
-    gap: var(--space-md);
-    font-size: 0.8125rem;
-    color: var(--text-tertiary);
-  }
-  
-  .music-item__rating {
-    font-weight: 600;
-    color: var(--accent);
-  }
-  
-  .music-item__genres {
-    display: flex;
-    gap: var(--space-xs);
-    margin-top: var(--space-md);
-    padding-top: var(--space-md);
-    border-top: 1px solid var(--border-subtle);
-  }
-  
-  .genre-tag {
-    font-size: 0.6875rem;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: var(--text-tertiary);
-  }
-</style>
