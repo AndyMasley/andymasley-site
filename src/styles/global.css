@@ -421,6 +421,10 @@ a:hover {
 }
 
 .home-intro p {
+  margin-bottom: 1em;
+}
+
+.home-intro p:last-child {
   margin-bottom: 0;
 }
 
