@@ -345,49 +345,52 @@ function formatBylineDate(dateStr: string): string {
   }
 
   .meta-body {
-    font-size: 0.875rem;
-    line-height: 1.7;
+    font-size: 0.75rem;
+    line-height: 1.5;
+    color: var(--dim);
   }
 
   .meta-body :global(h1),
   .meta-body :global(h2),
   .meta-body :global(h3) {
     font-family: var(--font-serif);
-    font-weight: normal;
-    margin: 1.5em 0 0.5em;
+    font-weight: 600;
+    color: var(--text);
+    margin: 1em 0 0.4em;
+    letter-spacing: -0.01em;
   }
 
-  .meta-body :global(h1) { font-size: 1.3rem; }
-  .meta-body :global(h2) { font-size: 1.1rem; }
-  .meta-body :global(h3) { font-size: 1rem; }
+  .meta-body :global(h1) { font-size: 0.95rem; }
+  .meta-body :global(h2) { font-size: 0.85rem; }
+  .meta-body :global(h3) { font-size: 0.8rem; }
 
   .meta-body :global(p) {
-    margin: 0 0 1em;
+    margin: 0 0 0.6em;
   }
 
   .meta-body :global(a) {
     color: var(--accent);
+    text-decoration: none;
+  }
+
+  .meta-body :global(a:hover) {
     text-decoration: underline;
     text-underline-offset: 2px;
   }
 
-  .meta-body :global(a:hover) {
-    text-decoration: none;
-  }
-
   .meta-body :global(ul),
   .meta-body :global(ol) {
-    margin: 0 0 1em;
-    padding-left: 1.5em;
+    margin: 0 0 0.6em;
+    padding-left: 1.2em;
   }
 
   .meta-body :global(li) {
-    margin-bottom: 0.5em;
+    margin-bottom: 0.2em;
   }
 
   .meta-body :global(blockquote) {
-    margin: 1em 0;
-    padding-left: 1em;
+    margin: 0.6em 0;
+    padding-left: 0.8em;
     border-left: 2px solid var(--border);
     color: var(--dim);
     font-style: italic;
@@ -396,18 +399,18 @@ function formatBylineDate(dateStr: string): string {
   .meta-body :global(img) {
     max-width: 100%;
     height: auto;
-    margin: 1em 0;
+    margin: 0.6em 0;
   }
 
   .meta-body :global(figure) {
-    margin: 1em 0;
+    margin: 0.6em 0;
   }
 
   .meta-body :global(figcaption) {
-    font-size: 0.75rem;
+    font-size: 0.65rem;
     color: var(--dim);
     text-align: center;
-    margin-top: 0.5em;
+    margin-top: 0.3em;
   }
 
   /* Timeline filters */
