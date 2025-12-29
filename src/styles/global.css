@@ -337,15 +337,19 @@ a:hover {
 }
 
 .content-item {
-  margin-bottom: 4px;
+  display: grid;
+  grid-template-columns: 85px 1fr;
+  gap: 12px;
+  margin-bottom: 6px;
   font-size: 0.9375rem;
+  align-items: baseline;
 }
 
 .content-item__date {
   color: var(--dim);
   font-family: var(--font-mono);
   font-size: 0.8rem;
-  margin-right: 10px;
+  white-space: nowrap;
 }
 
 .content-item__link {
