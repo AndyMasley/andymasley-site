@@ -661,97 +661,114 @@ function formatBylineDate(dateStr: string): string {
 </style>
 
 <script>
-  // Top-level dropdown toggle
-  document.querySelectorAll('.top-toggle').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const expanded = btn.getAttribute('aria-expanded') === 'true';
-      btn.setAttribute('aria-expanded', String(!expanded));
+  function initWritingPage() {
+    // Top-level dropdown toggle
+    document.querySelectorAll('.top-toggle').forEach(btn => {
+      const newBtn = btn.cloneNode(true) as HTMLElement;
+      btn.parentNode?.replaceChild(newBtn, btn);
 
-      const section = btn.getAttribute('data-section');
-      const content = document.querySelector(`[data-content="${section}"]`) as HTMLElement;
-      if (content) {
-        content.hidden = expanded;
-      }
+      newBtn.addEventListener('click', () => {
+        const expanded = newBtn.getAttribute('aria-expanded') === 'true';
+        newBtn.setAttribute('aria-expanded', String(!expanded));
+
+        const section = newBtn.getAttribute('data-section');
+        const content = document.querySelector(`[data-content="${section}"]`) as HTMLElement;
+        if (content) {
+          content.hidden = expanded;
+        }
+      });
     });
-  });
 
-  // Meta dropdown toggle
-  document.querySelectorAll('.meta-toggle').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const expanded = btn.getAttribute('aria-expanded') === 'true';
-      btn.setAttribute('aria-expanded', String(!expanded));
+    // Meta dropdown toggle
+    document.querySelectorAll('.meta-toggle').forEach(btn => {
+      const newBtn = btn.cloneNode(true) as HTMLElement;
+      btn.parentNode?.replaceChild(newBtn, btn);
 
-      const content = btn.nextElementSibling as HTMLElement;
-      if (content) {
-        content.hidden = expanded;
-      }
+      newBtn.addEventListener('click', () => {
+        const expanded = newBtn.getAttribute('aria-expanded') === 'true';
+        newBtn.setAttribute('aria-expanded', String(!expanded));
+
+        const content = newBtn.nextElementSibling as HTMLElement;
+        if (content) {
+          content.hidden = expanded;
+        }
+      });
     });
-  });
 
-  // Timeline filtering
-  document.querySelectorAll('.filter-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const filter = btn.getAttribute('data-filter');
+    // Timeline filtering
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+      const newBtn = btn.cloneNode(true) as HTMLElement;
+      btn.parentNode?.replaceChild(newBtn, btn);
 
-      // Update active button
-      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
+      newBtn.addEventListener('click', () => {
+        const filter = newBtn.getAttribute('data-filter');
 
-      // Filter posts
-      document.querySelectorAll('.timeline-row').forEach(row => {
-        const cat = row.getAttribute('data-cat');
-        if (filter === 'all' || cat === filter) {
-          row.classList.remove('hidden');
-        } else {
-          row.classList.add('hidden');
-        }
-      });
+        // Update active button
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        newBtn.classList.add('active');
 
-      // Hide category column when filtering by specific category
-      document.querySelectorAll('.timeline-cat').forEach(cat => {
-        if (filter === 'all') {
-          (cat as HTMLElement).style.display = '';
-        } else {
-          (cat as HTMLElement).style.display = 'none';
-        }
-      });
-
-      // Hide empty years
-      document.querySelectorAll('.year-group').forEach(group => {
-        const visiblePosts = group.querySelectorAll('.timeline-row:not(.hidden)');
-        if (visiblePosts.length === 0) {
-          group.classList.add('hidden');
-        } else {
-          group.classList.remove('hidden');
-        }
-      });
-
-      // Update month labels (show on first visible post of each month)
-      document.querySelectorAll('.year-group').forEach(yearGroup => {
-        const seenMonths = new Set();
-        yearGroup.querySelectorAll('.timeline-row').forEach(row => {
-          const monthLabel = row.querySelector('.timeline-month') as HTMLElement;
-          const month = row.getAttribute('data-month');
-          const label = row.getAttribute('data-month-label') || '';
-          if (monthLabel && month) {
-            if (row.classList.contains('hidden')) {
-              monthLabel.textContent = '';
-            } else if (!seenMonths.has(month)) {
-              seenMonths.add(month);
-              monthLabel.textContent = label;
-            } else {
-              monthLabel.textContent = '';
-            }
+        // Filter posts
+        document.querySelectorAll('.timeline-row').forEach(row => {
+          const cat = row.getAttribute('data-cat');
+          if (filter === 'all' || cat === filter) {
+            row.classList.remove('hidden');
+          } else {
+            row.classList.add('hidden');
           }
         });
-      });
 
-      // Update post count
-      const visibleCount = document.querySelectorAll('.timeline-row:not(.hidden)').length;
-      const postCountEl = document.getElementById('post-count');
-      if (postCountEl) {
-        postCountEl.textContent = `${visibleCount} posts`;
-      }
+        // Hide category column when filtering by specific category
+        document.querySelectorAll('.timeline-cat').forEach(cat => {
+          if (filter === 'all') {
+            (cat as HTMLElement).style.display = '';
+          } else {
+            (cat as HTMLElement).style.display = 'none';
+          }
+        });
+
+        // Hide empty years
+        document.querySelectorAll('.year-group').forEach(group => {
+          const visiblePosts = group.querySelectorAll('.timeline-row:not(.hidden)');
+          if (visiblePosts.length === 0) {
+            group.classList.add('hidden');
+          } else {
+            group.classList.remove('hidden');
+          }
+        });
+
+        // Update month labels (show on first visible post of each month)
+        document.querySelectorAll('.year-group').forEach(yearGroup => {
+          const seenMonths = new Set();
+          yearGroup.querySelectorAll('.timeline-row').forEach(row => {
+            const monthLabel = row.querySelector('.timeline-month') as HTMLElement;
+            const month = row.getAttribute('data-month');
+            const label = row.getAttribute('data-month-label') || '';
+            if (monthLabel && month) {
+              if (row.classList.contains('hidden')) {
+                monthLabel.textContent = '';
+              } else if (!seenMonths.has(month)) {
+                seenMonths.add(month);
+                monthLabel.textContent = label;
+              } else {
+                monthLabel.textContent = '';
+              }
+            }
+          });
+        });
+
+        // Update post count
+        const visibleCount = document.querySelectorAll('.timeline-row:not(.hidden)').length;
+        const postCountEl = document.getElementById('post-count');
+        if (postCountEl) {
+          postCountEl.textContent = `${visibleCount} posts`;
+        }
+      });
     });
-  });
+  }
+
+  // Initialize on first load
+  initWritingPage();
+
+  // Re-initialize after view transitions
+  document.addEventListener('astro:page-load', initWritingPage);
 </script>
