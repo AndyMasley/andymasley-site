@@ -174,20 +174,25 @@ function formatBylineDate(dateStr: string): string {
       <div class="section-header">Meta</div>
       <div class="meta-section">
         {metaPostsWithContent.map((meta) => (
-          <div class="meta-item">
-            <button class="meta-toggle" aria-expanded="false">
-              <span class="meta-arrow">&#9654;</span>
-              <span class="meta-title">{meta.title}</span>
-            </button>
-            <div class="meta-content" hidden>
-              <p class="meta-source">
-                <a href={meta.url} target="_blank" rel="noopener">Originally published on Substack</a>
-              </p>
-              <div class="meta-body prose" set:html={processContent(meta.content)} />
-            </div>
-          </div>
+          <button class="meta-link" data-slug={meta.slug}>
+            <span class="meta-arrow">&rarr;</span>
+            <span class="meta-title">{meta.title}</span>
+          </button>
         ))}
       </div>
+
+      <!-- Hidden templates for panel content -->
+      {metaPostsWithContent.map((meta) => (
+        <template id={`content-${meta.slug}`}>
+          <div class="panel-header">
+            <h3 class="panel-title">{meta.title}</h3>
+            <p class="panel-source">
+              <a href={meta.url} target="_blank" rel="noopener">Originally published on Substack</a>
+            </p>
+          </div>
+          <div class="panel-body prose" set:html={processContent(meta.content)} />
+        </template>
+      ))}
 
       <!-- TIMELINE SUBSECTION -->
       <div class="section-header">Timeline</div>
@@ -257,6 +262,13 @@ function formatBylineDate(dateStr: string): string {
 
   <div class="back-link">
     <a href="/">← home</a>
+  </div>
+
+  <!-- Stacked panel overlay -->
+  <div class="panel-backdrop" id="panel-backdrop"></div>
+  <div class="stacked-panel" id="stacked-panel">
+    <button class="panel-close" id="panel-close" aria-label="Close panel">&times;</button>
+    <div class="panel-content" id="panel-content"></div>
   </div>
 </Base>
 
@@ -331,145 +343,221 @@ function formatBylineDate(dateStr: string): string {
     margin-bottom: 20px;
   }
 
-  .meta-item {
-    border: 1px solid var(--border);
-  }
-
-  .meta-toggle {
+  .meta-link {
     display: flex;
     align-items: center;
     gap: 10px;
     width: 100%;
     padding: 10px 14px;
     background: none;
-    border: none;
+    border: 1px solid var(--border);
     font-family: inherit;
     font-size: 0.875rem;
     color: var(--text);
     cursor: pointer;
     text-align: left;
-    transition: background 0.15s ease;
+    transition: all 0.15s ease;
   }
 
-  .meta-toggle:hover {
-    background: rgba(0, 0, 0, 0.03);
+  .meta-link:hover {
+    border-color: var(--accent);
+    color: var(--accent);
   }
 
-  [data-theme="dark"] .meta-toggle:hover {
-    background: rgba(255, 255, 255, 0.05);
-  }
-
-  .meta-arrow {
-    font-size: 0.6rem;
-    transition: transform 0.2s ease;
+  .meta-link .meta-arrow {
+    font-size: 0.8rem;
     color: var(--dim);
+    transition: transform 0.2s ease;
   }
 
-  .meta-toggle[aria-expanded="true"] .meta-arrow {
-    transform: rotate(90deg);
+  .meta-link:hover .meta-arrow {
+    color: var(--accent);
+    transform: translateX(3px);
   }
 
-  .meta-title {
+  .meta-link .meta-title {
     flex: 1;
   }
 
-  .meta-content {
-    padding: 0 14px 14px 14px;
-    margin-bottom: 14px;
+  /* Stacked panel */
+  .panel-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.3);
+    z-index: 100;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
   }
 
-  .meta-source {
+  .panel-backdrop.open {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  .stacked-panel {
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 500px;
+    max-width: 90vw;
+    height: 100vh;
+    background: var(--bg);
+    z-index: 101;
+    transform: translateX(100%);
+    transition: transform 0.3s cubic-bezier(0.19, 1, 0.22, 1);
+    box-shadow: -4px 0 20px rgba(0, 0, 0, 0.15);
+    display: flex;
+    flex-direction: column;
+  }
+
+  .stacked-panel.open {
+    transform: translateX(0);
+  }
+
+  .panel-close {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    width: 32px;
+    height: 32px;
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    font-size: 1.25rem;
+    color: var(--dim);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s ease;
+    z-index: 10;
+  }
+
+  .panel-close:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  .panel-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 48px 32px 32px;
+  }
+
+  .panel-header {
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .panel-title {
+    font-family: var(--font-serif);
+    font-size: 1.25rem;
+    font-weight: normal;
+    margin: 0 0 8px;
+    color: var(--text);
+  }
+
+  .panel-source {
     font-size: 0.75rem;
     color: var(--dim);
-    margin-bottom: 14px;
+    margin: 0;
   }
 
-  .meta-source a {
+  .panel-source a {
     color: var(--accent);
     text-decoration: underline;
     text-underline-offset: 2px;
   }
 
-  .meta-source a:hover {
+  .panel-source a:hover {
     text-decoration: none;
   }
 
-  .meta-body {
-    font-size: 0.8rem;
-    line-height: 1.5;
+  .panel-body {
+    font-size: 0.85rem;
+    line-height: 1.6;
   }
 
-  .meta-body :global(h1),
-  .meta-body :global(h2),
-  .meta-body :global(h3) {
+  .panel-body :global(h1),
+  .panel-body :global(h2),
+  .panel-body :global(h3) {
     font-family: var(--font-serif);
     font-weight: normal;
-    margin: 1em 0 0.4em;
+    margin: 1.2em 0 0.5em;
   }
 
-  .meta-body :global(h1) { font-size: 0.9rem; }
-  .meta-body :global(h2) { font-size: 0.85rem; }
-  .meta-body :global(h3) { font-size: 0.8rem; }
+  .panel-body :global(h1) { font-size: 1rem; }
+  .panel-body :global(h2) { font-size: 0.95rem; }
+  .panel-body :global(h3) { font-size: 0.9rem; }
 
-  .meta-body :global(p) {
-    margin: 0 0 0.6em;
+  .panel-body :global(p) {
+    margin: 0 0 0.8em;
+    color: var(--text);
   }
 
-  .meta-body :global(a) {
+  .panel-body :global(a) {
     color: var(--accent);
     text-decoration: underline;
     text-underline-offset: 2px;
     font-weight: normal;
   }
 
-  .meta-body :global(a:hover) {
+  .panel-body :global(a:hover) {
     text-decoration: none;
   }
 
-  .meta-body :global(strong) {
+  .panel-body :global(strong) {
     font-weight: 500;
   }
 
   /* Style standalone strong tags as sub-headings */
-  .meta-body :global(p:has(> strong:only-child)) {
-    margin: 0.8em 0 0.3em 0;
-    font-size: 0.75rem;
-    color: var(--dim);
+  .panel-body :global(p:has(> strong:only-child)) {
+    margin: 1em 0 0.4em 0;
+    font-size: 0.8rem;
   }
 
-  .meta-body :global(ul),
-  .meta-body :global(ol) {
-    margin: 0 0 0.6em;
-    padding-left: 1.2em;
+  /* Ensure all text in panel-body is not faded */
+  .panel-body :global(p),
+  .panel-body :global(li),
+  .panel-body :global(span) {
+    color: var(--text);
   }
 
-  .meta-body :global(li) {
-    margin-bottom: 0.2em;
+  .panel-body :global(ul),
+  .panel-body :global(ol) {
+    margin: 0 0 0.8em;
+    padding-left: 1.4em;
   }
 
-  .meta-body :global(blockquote) {
-    margin: 0.6em 0;
-    padding-left: 0.8em;
+  .panel-body :global(li) {
+    margin-bottom: 0.3em;
+  }
+
+  .panel-body :global(blockquote) {
+    margin: 0.8em 0;
+    padding-left: 1em;
     border-left: 2px solid var(--border);
     color: var(--dim);
     font-style: italic;
   }
 
-  .meta-body :global(img) {
+  .panel-body :global(img) {
     max-width: 100%;
     height: auto;
-    margin: 0.6em 0;
+    margin: 0.8em 0;
   }
 
-  .meta-body :global(figure) {
-    margin: 0.6em 0;
+  .panel-body :global(figure) {
+    margin: 0.8em 0;
   }
 
-  .meta-body :global(figcaption) {
-    font-size: 0.65rem;
+  .panel-body :global(figcaption) {
+    font-size: 0.7rem;
     color: var(--dim);
     text-align: center;
-    margin-top: 0.3em;
+    margin-top: 0.4em;
   }
 
   /* Timeline filters */
@@ -649,13 +737,17 @@ function formatBylineDate(dateStr: string): string {
       order: 3;
     }
 
-    .meta-content {
-      margin-left: 6px;
-      padding-left: 14px;
-    }
-
     .top-content {
       padding-left: 12px;
+    }
+
+    .stacked-panel {
+      width: 100vw;
+      max-width: 100vw;
+    }
+
+    .panel-content {
+      padding: 48px 20px 20px;
     }
   }
 </style>
@@ -679,20 +771,51 @@ function formatBylineDate(dateStr: string): string {
       });
     });
 
-    // Meta dropdown toggle
-    document.querySelectorAll('.meta-toggle').forEach(btn => {
+    // Stacked panel functionality
+    const backdrop = document.getElementById('panel-backdrop');
+    const panel = document.getElementById('stacked-panel');
+    const panelContent = document.getElementById('panel-content');
+    const panelClose = document.getElementById('panel-close');
+
+    function openPanel(slug: string) {
+      const template = document.getElementById(`content-${slug}`) as HTMLTemplateElement;
+      if (template && panelContent) {
+        panelContent.innerHTML = '';
+        panelContent.appendChild(template.content.cloneNode(true));
+        backdrop?.classList.add('open');
+        panel?.classList.add('open');
+        document.body.style.overflow = 'hidden';
+      }
+    }
+
+    function closePanel() {
+      backdrop?.classList.remove('open');
+      panel?.classList.remove('open');
+      document.body.style.overflow = '';
+    }
+
+    // Meta link click handler
+    document.querySelectorAll('.meta-link').forEach(btn => {
       const newBtn = btn.cloneNode(true) as HTMLElement;
       btn.parentNode?.replaceChild(newBtn, btn);
 
       newBtn.addEventListener('click', () => {
-        const expanded = newBtn.getAttribute('aria-expanded') === 'true';
-        newBtn.setAttribute('aria-expanded', String(!expanded));
-
-        const content = newBtn.nextElementSibling as HTMLElement;
-        if (content) {
-          content.hidden = expanded;
+        const slug = newBtn.getAttribute('data-slug');
+        if (slug) {
+          openPanel(slug);
         }
       });
+    });
+
+    // Close panel handlers
+    panelClose?.addEventListener('click', closePanel);
+    backdrop?.addEventListener('click', closePanel);
+
+    // Close on escape key
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && panel?.classList.contains('open')) {
+        closePanel();
+      }
     });
 
     // Timeline filtering
