@@ -1,66 +1,52 @@
 ---
 import Base from '@/layouts/Base.astro';
-import { getCollection } from 'astro:content';
+import { physicsTopics, getTotalVideoCount } from '@/lib/physics-videos';
 
-const allPhysics = await getCollection('physics', ({ data }) => !data.draft);
-const items = allPhysics.sort((a, b) => {
-  const unitA = a.data.unit || 'zzz';
-  const unitB = b.data.unit || 'zzz';
-  if (unitA !== unitB) return unitA.localeCompare(unitB);
-  return a.data.title.localeCompare(b.data.title);
-});
-
-// Group by unit
-const itemsByUnit = items.reduce((acc, item) => {
-  const unit = item.data.unit || 'Other';
-  if (!acc[unit]) acc[unit] = [];
-  acc[unit].push(item);
-  return acc;
-}, {} as Record<string, typeof items>);
-
-const units = Object.keys(itemsByUnit).sort();
+const totalVideos = getTotalVideoCount();
 ---
 
 <Base title="IB Physics" description="Video lectures for the full IB Physics curriculum">
   <div class="page-header">
     <h2 class="page-header__title">IB Physics</h2>
     <p class="page-header__description">
-      Complete video curriculum. All lectures on <a href="https://www.youtube.com/@andymasley" target="_blank" rel="noopener">YouTube</a>.
+      {totalVideos} video lectures for the IB Physics SL curriculum. All videos on <a href="https://www.youtube.com/@andymasley" target="_blank" rel="noopener">YouTube</a>.
     </p>
   </div>
 
-  <div class="jump-links">
-    <span class="jump-links__label">Jump: </span>
-    {units.map((unit, i) => (
-      <>
-        {i > 0 && <span class="jump-links__sep"> · </span>}
-        <a href={`#unit-${unit.toLowerCase().replace(/\s+/g, '-')}`}>{unit}</a>
-      </>
-    ))}
-  </div>
-
-  <div class="controls">
-    <a href="#" id="expand-all">[expand all]</a>
-    <span class="jump-links__sep"> · </span>
-    <a href="#" id="collapse-all">[collapse all]</a>
+  <div class="physics-intro">
+    <p>
+      I made these videos under the old curriculum and reorganized them into the new curriculum. There's a chance there are some inconsistencies but so far not many have come up. A few topics are missing because they didn't exist under the old curriculum.
+    </p>
+    <p>
+      I only taught IB physics SL. If you're looking for HL resources, <a href="https://www.youtube.com/@donerphysics" target="_blank" rel="noopener">Chris Doner</a> and <a href="https://www.youtube.com/@siriusrevision" target="_blank" rel="noopener">Sirius Revision</a> both have great videos.
+    </p>
+    <p>
+      Old curriculum resources: <a href="https://drive.google.com/drive/folders/1OH8Z_HHKgzdE2iCyGRxKAmBPvVn561Kg?usp=sharing" target="_blank" rel="noopener">year 1</a> · <a href="https://drive.google.com/drive/folders/1G7bomqqBiaB_7HLErh5XGw8S9GcteZ3o?usp=sharing" target="_blank" rel="noopener">year 2</a>
+    </p>
   </div>
 
   <hr class="divider" />
 
-  {units.map(unit => (
-    <div class="section" id={`unit-${unit.toLowerCase().replace(/\s+/g, '-')}`}>
-      <div class="section__header" data-section={unit}>
-        <span class="section__toggle">▼</span>
-        <span class="section__title">{unit}</span>
-        <span class="section__count">({itemsByUnit[unit].length})</span>
-      </div>
-      <div class="section__content" data-content={unit}>
-        {itemsByUnit[unit].map(item => (
-          <div class="content-item">
-            <a href={`/physics/${item.slug}`} class="content-item__link">{item.data.title}</a>
-            {item.data.youtube_url && (
-              <a href={item.data.youtube_url} target="_blank" rel="noopener" class="video-link">[video]</a>
-            )}
+  {physicsTopics.map(topic => (
+    <div class="top-dropdown">
+      <button class="top-toggle" aria-expanded="false" data-section={topic.id}>
+        <span class="top-arrow">&#9654;</span>
+        <span class="top-title">{topic.name}</span>
+        <span class="top-count">({topic.subtopics.reduce((sum, s) => sum + s.videos.length, 0)})</span>
+      </button>
+      <div class="top-content" data-content={topic.id} hidden>
+        {topic.subtopics.map(subtopic => (
+          <div class="subtopic">
+            <div class="subtopic-header">{subtopic.name}</div>
+            <div class="video-list">
+              {subtopic.videos.map(video => (
+                <div class="video-row">
+                  <a href={video.url} target="_blank" rel="noopener" class="video-link">
+                    {video.title}
+                  </a>
+                </div>
+              ))}
+            </div>
           </div>
         ))}
       </div>
@@ -74,46 +60,131 @@ const units = Object.keys(itemsByUnit).sort();
   </div>
 </Base>
 
-<script>
-  document.querySelectorAll('.section__header').forEach(header => {
-    header.addEventListener('click', () => {
-      const section = header.getAttribute('data-section');
-      const content = document.querySelector(`[data-content="${section}"]`) as HTMLElement;
-      const toggle = header.querySelector('.section__toggle');
+<style>
+  .physics-intro {
+    font-size: 0.9rem;
+    color: var(--dim);
+    margin-bottom: 1rem;
+  }
 
-      if (content && toggle) {
-        const isCollapsed = content.style.display === 'none';
-        content.style.display = isCollapsed ? 'block' : 'none';
-        toggle.textContent = isCollapsed ? '▼' : '▶';
+  .physics-intro p {
+    margin-bottom: 0.75em;
+  }
+
+  .physics-intro a {
+    color: var(--accent);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  .physics-intro a:hover {
+    text-decoration: none;
+  }
+
+  /* Top-level dropdowns */
+  .top-dropdown {
+    margin-bottom: 8px;
+  }
+
+  .top-toggle {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 10px 0;
+    background: none;
+    border: none;
+    font-family: inherit;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text);
+    cursor: pointer;
+    text-align: left;
+  }
+
+  .top-toggle:hover {
+    color: var(--accent);
+  }
+
+  .top-arrow {
+    font-size: 0.65rem;
+    transition: transform 0.2s ease;
+    color: var(--dim);
+    width: 12px;
+  }
+
+  .top-toggle[aria-expanded="true"] .top-arrow {
+    transform: rotate(90deg);
+  }
+
+  .top-title {
+    flex: 1;
+  }
+
+  .top-count {
+    font-size: 0.75rem;
+    font-weight: normal;
+    color: var(--dim);
+  }
+
+  .top-content {
+    padding-left: 22px;
+    padding-bottom: 16px;
+  }
+
+  /* Subtopics */
+  .subtopic {
+    margin-bottom: 16px;
+  }
+
+  .subtopic-header {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--dim);
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .video-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .video-row {
+    font-size: 0.8rem;
+  }
+
+  .video-link {
+    color: var(--accent);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  .video-link:hover {
+    text-decoration: none;
+  }
+
+  /* Responsive */
+  @media (max-width: 600px) {
+    .top-content {
+      padding-left: 12px;
+    }
+  }
+</style>
+
+<script>
+  document.querySelectorAll('.top-toggle').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const expanded = btn.getAttribute('aria-expanded') === 'true';
+      btn.setAttribute('aria-expanded', String(!expanded));
+
+      const section = btn.getAttribute('data-section');
+      const content = document.querySelector(`[data-content="${section}"]`) as HTMLElement;
+      if (content) {
+        content.hidden = expanded;
       }
     });
   });
-
-  document.getElementById('expand-all')?.addEventListener('click', (e) => {
-    e.preventDefault();
-    document.querySelectorAll('.section__content').forEach(content => {
-      (content as HTMLElement).style.display = 'block';
-    });
-    document.querySelectorAll('.section__toggle').forEach(toggle => {
-      toggle.textContent = '▼';
-    });
-  });
-
-  document.getElementById('collapse-all')?.addEventListener('click', (e) => {
-    e.preventDefault();
-    document.querySelectorAll('.section__content').forEach(content => {
-      (content as HTMLElement).style.display = 'none';
-    });
-    document.querySelectorAll('.section__toggle').forEach(toggle => {
-      toggle.textContent = '▶';
-    });
-  });
 </script>
-
-<style>
-  .video-link {
-    font-size: 0.8rem;
-    margin-left: 8px;
-    color: var(--dim);
-  }
-</style>
