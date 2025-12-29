@@ -219,31 +219,47 @@ const totalVideos = getTotalVideoCount();
 </style>
 
 <script>
-  // Top-level dropdown toggle
-  document.querySelectorAll('.top-toggle').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const expanded = btn.getAttribute('aria-expanded') === 'true';
-      btn.setAttribute('aria-expanded', String(!expanded));
+  function initDropdowns() {
+    // Top-level dropdown toggle
+    document.querySelectorAll('.top-toggle').forEach(btn => {
+      // Remove existing listeners by cloning
+      const newBtn = btn.cloneNode(true);
+      btn.parentNode?.replaceChild(newBtn, btn);
 
-      const section = btn.getAttribute('data-section');
-      const content = document.querySelector(`[data-content="${section}"]`) as HTMLElement;
-      if (content) {
-        content.hidden = expanded;
-      }
+      newBtn.addEventListener('click', () => {
+        const expanded = newBtn.getAttribute('aria-expanded') === 'true';
+        newBtn.setAttribute('aria-expanded', String(!expanded));
+
+        const section = newBtn.getAttribute('data-section');
+        const content = document.querySelector(`[data-content="${section}"]`) as HTMLElement;
+        if (content) {
+          content.hidden = expanded;
+        }
+      });
     });
-  });
 
-  // Subtopic dropdown toggle
-  document.querySelectorAll('.subtopic-toggle').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const expanded = btn.getAttribute('aria-expanded') === 'true';
-      btn.setAttribute('aria-expanded', String(!expanded));
+    // Subtopic dropdown toggle
+    document.querySelectorAll('.subtopic-toggle').forEach(btn => {
+      // Remove existing listeners by cloning
+      const newBtn = btn.cloneNode(true);
+      btn.parentNode?.replaceChild(newBtn, btn);
 
-      const subtopic = btn.getAttribute('data-subtopic');
-      const content = document.querySelector(`[data-subcontent="${subtopic}"]`) as HTMLElement;
-      if (content) {
-        content.hidden = expanded;
-      }
+      newBtn.addEventListener('click', () => {
+        const expanded = newBtn.getAttribute('aria-expanded') === 'true';
+        newBtn.setAttribute('aria-expanded', String(!expanded));
+
+        const subtopic = newBtn.getAttribute('data-subtopic');
+        const content = document.querySelector(`[data-subcontent="${subtopic}"]`) as HTMLElement;
+        if (content) {
+          content.hidden = expanded;
+        }
+      });
     });
-  });
+  }
+
+  // Run on initial load
+  initDropdowns();
+
+  // Re-run after view transitions
+  document.addEventListener('astro:page-load', initDropdowns);
 </script>
