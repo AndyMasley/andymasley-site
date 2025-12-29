@@ -1,259 +1,144 @@
 ---
 import Base from '@/layouts/Base.astro';
-import { fetchSubstackPosts, groupByCategory } from '@/lib/substack';
+import { fetchSubstackPosts, groupByCategory, getCategoryConfig } from '@/lib/substack';
 
 const posts = await fetchSubstackPosts();
 const postsByCategory = groupByCategory(posts);
 const categories = Object.keys(postsByCategory);
 
+// Format date as MM.DD.YYYY
 function formatDate(date: Date): string {
-  return date.toISOString().split('T')[0].replace(/-/g, '.');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const year = date.getFullYear();
+  return `${month}.${day}.${year}`;
 }
 ---
 
 <Base title="Writing">
-  <div class="brutalist">
-    <header class="page-header">
-      <h1>Writing</h1>
-      <p class="dim">
-        Essays and analysis. Pulled from <a href="https://andymasley.substack.com" target="_blank" rel="noopener">Substack</a>.
-      </p>
-    </header>
-    
-    <nav class="jump-nav">
-      <span class="dim">Navigate:</span>
-      {categories.map((cat, i) => (
-        <>
-          {i > 0 && <span class="dim"> · </span>}
-          <a href={`#cat-${cat.toLowerCase().replace(/\s+/g, '-')}`}>{cat}</a>
-        </>
-      ))}
-    </nav>
-    
-    <hr />
-    
-    <div class="controls">
-      <button id="expand-all">[expand all]</button>
-      <span class="dim"> · </span>
-      <button id="collapse-all">[collapse all]</button>
-    </div>
-    
-    {Object.entries(postsByCategory).map(([category, categoryPosts]) => (
-      <section class="category-section" id={`cat-${category.toLowerCase().replace(/\s+/g, '-')}`}>
-        <button class="section-toggle" aria-expanded="true" data-section={category}>
-          <span class="toggle-icon">▼</span>
-          {category}
-          <span class="count dim">({categoryPosts.length})</span>
-        </button>
-        <div class="section-content" data-content={category}>
+  <div class="page-header">
+    <h2 class="page-header__title">Writing</h2>
+    <p class="page-header__description">
+      Essays and analysis from <a href="https://andymasley.substack.com" target="_blank" rel="noopener">Substack</a>.
+    </p>
+  </div>
+
+  <div class="jump-links">
+    <span class="jump-links__label">Jump: </span>
+    {categories.map((cat, i) => (
+      <>
+        {i > 0 && <span class="jump-links__sep"> · </span>}
+        <a href={`#cat-${getCategoryConfig(cat)?.slug || cat.toLowerCase().replace(/\s+/g, '-')}`}>{cat}</a>
+      </>
+    ))}
+  </div>
+
+  <div class="controls">
+    <a href="#" id="expand-all">[expand all]</a>
+    <span class="jump-links__sep"> · </span>
+    <a href="#" id="collapse-all">[collapse all]</a>
+  </div>
+
+  <hr class="divider" />
+
+  <div class="label">Blog</div>
+
+  {Object.entries(postsByCategory).map(([category, categoryPosts]) => {
+    const config = getCategoryConfig(category);
+    const slug = config?.slug || category.toLowerCase().replace(/\s+/g, '-');
+    return (
+      <div class="section" id={`cat-${slug}`}>
+        <div class="section__header" data-section={category}>
+          <span class="section__toggle">▼</span>
+          <span class="section__title">{category}</span>
+          <span class="section__count">({categoryPosts.length})</span>
+        </div>
+        <div class="section__content" data-content={category}>
+          {config?.overview && (
+            <p class="category-overview">{config.overview}</p>
+          )}
+          <div class="recent-label">Recent</div>
           {categoryPosts.map(post => (
-            <div class="post-item">
-              <span class="date mono">{formatDate(post.date)}</span>
-              <a href={post.url} target="_blank" rel="noopener" class="post-link">
+            <div class="content-item">
+              <span class="content-item__date">{formatDate(post.date)}</span>
+              <a href={post.url} target="_blank" rel="noopener" class="content-item__link">
                 {post.title}
               </a>
             </div>
           ))}
         </div>
-      </section>
-    ))}
-    
-    <hr />
-    
-    <nav class="back-nav">
-      <a href="/">← index</a>
-    </nav>
-    
-    <p class="meta dim">
-      Last updated: {new Date().toISOString().split('T')[0]} · {posts.length} posts
-    </p>
+      </div>
+    );
+  })}
+
+  <hr class="divider" />
+
+  <div class="back-link">
+    <a href="/">← index</a>
   </div>
+
+  <p class="meta">
+    Last updated: {formatDate(new Date())} · {posts.length} posts
+  </p>
 </Base>
 
 <style>
-  .brutalist {
-    font-family: Georgia, serif;
-    font-size: 14px;
-    line-height: 1.6;
-    max-width: 720px;
-    margin: 0 auto;
-    padding: 0 24px;
+  .category-overview {
+    font-size: 0.875rem;
+    color: var(--dim);
+    margin: 0 0 12px 0;
+    line-height: 1.5;
   }
-  
-  .page-header {
-    margin-bottom: 24px;
-  }
-  
-  .page-header h1 {
-    font-size: 16px;
-    font-weight: normal;
-    margin: 0 0 8px 0;
-  }
-  
-  .page-header p {
-    margin: 0;
-    font-size: 13px;
-  }
-  
-  .dim {
-    color: var(--text-tertiary);
-  }
-  
-  a {
-    color: var(--accent);
-    text-decoration: underline;
-    text-underline-offset: 2px;
-  }
-  
-  a:hover {
-    color: var(--accent-hover);
-  }
-  
-  hr {
-    border: none;
-    border-top: 1px solid var(--border);
-    margin: 20px 0;
-  }
-  
-  .jump-nav {
-    font-size: 12px;
-    margin-bottom: 16px;
-  }
-  
-  .controls {
-    font-size: 12px;
-    margin-bottom: 24px;
-  }
-  
-  .controls button {
-    background: none;
-    border: none;
-    color: var(--accent);
-    cursor: pointer;
-    font-family: inherit;
-    font-size: inherit;
-    padding: 0;
-    text-decoration: underline;
-    text-underline-offset: 2px;
-  }
-  
-  .controls button:hover {
-    color: var(--accent-hover);
-  }
-  
-  .category-section {
-    margin-bottom: 16px;
-  }
-  
-  .section-toggle {
-    background: none;
-    border: none;
-    color: var(--text-primary);
-    cursor: pointer;
-    font-family: inherit;
-    font-size: 14px;
-    padding: 4px 0;
-    text-align: left;
-    width: 100%;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-  
-  .section-toggle:hover {
-    color: var(--accent);
-  }
-  
-  .toggle-icon {
-    font-family: monospace;
-    font-size: 10px;
-    width: 12px;
-    color: var(--text-tertiary);
-  }
-  
-  .count {
-    font-size: 12px;
-    margin-left: auto;
-  }
-  
-  .section-content {
-    margin-left: 20px;
-    margin-top: 8px;
-    overflow: hidden;
-  }
-  
-  .section-content.collapsed {
-    display: none;
-  }
-  
-  .post-item {
+
+  .recent-label {
+    font-size: 0.75rem;
+    color: var(--dim);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
     margin-bottom: 6px;
-    font-size: 13px;
-    display: flex;
-    gap: 12px;
-    align-items: baseline;
+    padding-top: 4px;
+    border-top: 1px solid var(--border);
   }
-  
-  .date {
-    color: var(--text-tertiary);
-    font-size: 11px;
-    flex-shrink: 0;
-  }
-  
-  .mono {
-    font-family: monospace;
-  }
-  
-  .post-link {
-    flex: 1;
-  }
-  
-  .back-nav {
-    font-size: 12px;
-  }
-  
+
   .meta {
-    font-size: 11px;
+    font-size: 0.75rem;
+    color: var(--dim);
     margin-top: 24px;
   }
 </style>
 
 <script>
-  // Toggle individual sections
-  document.querySelectorAll('.section-toggle').forEach(button => {
-    button.addEventListener('click', () => {
-      const section = button.getAttribute('data-section');
-      const content = document.querySelector(`[data-content="${section}"]`);
-      const icon = button.querySelector('.toggle-icon');
-      const isExpanded = button.getAttribute('aria-expanded') === 'true';
-      
-      button.setAttribute('aria-expanded', (!isExpanded).toString());
-      content?.classList.toggle('collapsed', isExpanded);
-      if (icon) icon.textContent = isExpanded ? '▶' : '▼';
+  document.querySelectorAll('.section__header').forEach(header => {
+    header.addEventListener('click', () => {
+      const section = header.getAttribute('data-section');
+      const content = document.querySelector(`[data-content="${section}"]`) as HTMLElement;
+      const toggle = header.querySelector('.section__toggle');
+
+      if (content && toggle) {
+        const isCollapsed = content.style.display === 'none';
+        content.style.display = isCollapsed ? 'block' : 'none';
+        toggle.textContent = isCollapsed ? '▼' : '▶';
+      }
     });
   });
-  
-  // Expand all
-  document.getElementById('expand-all')?.addEventListener('click', () => {
-    document.querySelectorAll('.section-toggle').forEach(button => {
-      button.setAttribute('aria-expanded', 'true');
-      const section = button.getAttribute('data-section');
-      const content = document.querySelector(`[data-content="${section}"]`);
-      const icon = button.querySelector('.toggle-icon');
-      content?.classList.remove('collapsed');
-      if (icon) icon.textContent = '▼';
+
+  document.getElementById('expand-all')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    document.querySelectorAll('.section__content').forEach(content => {
+      (content as HTMLElement).style.display = 'block';
+    });
+    document.querySelectorAll('.section__toggle').forEach(toggle => {
+      toggle.textContent = '▼';
     });
   });
-  
-  // Collapse all
-  document.getElementById('collapse-all')?.addEventListener('click', () => {
-    document.querySelectorAll('.section-toggle').forEach(button => {
-      button.setAttribute('aria-expanded', 'false');
-      const section = button.getAttribute('data-section');
-      const content = document.querySelector(`[data-content="${section}"]`);
-      const icon = button.querySelector('.toggle-icon');
-      content?.classList.add('collapsed');
-      if (icon) icon.textContent = '▶';
+
+  document.getElementById('collapse-all')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    document.querySelectorAll('.section__content').forEach(content => {
+      (content as HTMLElement).style.display = 'none';
+    });
+    document.querySelectorAll('.section__toggle').forEach(toggle => {
+      toggle.textContent = '▶';
     });
   });
 </script>
