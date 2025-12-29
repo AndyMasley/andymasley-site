@@ -186,7 +186,6 @@ function formatDate(date: Date): string {
           {config?.overview && (
             <p class="category-overview">{config.overview}</p>
           )}
-          <div class="recent-label">Recent</div>
           {categoryPosts.map(post => (
             <div class="content-item">
               <span class="content-item__date">{formatDate(post.date)}</span>
