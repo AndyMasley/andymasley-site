@@ -1,18 +1,14 @@
 ---
 import Base from '@/layouts/Base.astro';
-import { getCollection } from 'astro:content';
+import { fetchSubstackPosts } from '@/lib/substack';
+import { getMetaPostSlugs } from '@/lib/meta-posts';
 
-const allWriting = await getCollection('writing', ({ data }) => !data.draft);
-const allMusic = await getCollection('music', ({ data }) => !data.draft);
-const allNotes = await getCollection('notes', ({ data }) => !data.draft);
-const allPhysics = await getCollection('physics', ({ data }) => !data.draft);
-
-// Combine recent items
-const recentItems = [
-  ...allWriting.map(p => ({ ...p, type: 'writing', url: `/writing/${p.slug}` })),
-  ...allMusic.map(p => ({ ...p, type: 'music', url: `/music/${p.slug}` })),
-  ...allNotes.map(p => ({ ...p, type: 'notes', url: `/notes/${p.slug}` })),
-].sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf()).slice(0, 5);
+// Fetch recent blog posts from Substack
+const allPosts = await fetchSubstackPosts();
+const metaSlugs = getMetaPostSlugs();
+const recentPosts = allPosts
+  .filter(p => !metaSlugs.includes(p.slug))
+  .slice(0, 4);
 
 function formatDate(date: Date): string {
   const year = date.getFullYear();
@@ -23,6 +19,10 @@ function formatDate(date: Date): string {
 ---
 
 <Base title="Home">
+  <div class="page-header">
+    <h2 class="page-header__title">Home</h2>
+  </div>
+
   <div class="home-intro">
     <p>
       I'm the director of <a href="https://effectivealtruismdc.org" target="_blank" rel="noopener">Effective Altruism DC</a> and spend a lot of time thinking about how to support the EA DC professional network and manage projects and people to make it better. More info about EA <a href="https://www.effectivealtruism.org/" target="_blank" rel="noopener">here</a>. Outside of my job I spend most of my time with friends, reading, watching movies, listening to music, and exercising. I use this site as a place to link to stuff I make or that I'm interested in.
@@ -40,24 +40,14 @@ function formatDate(date: Date): string {
 
   <hr class="divider" />
 
-  <div class="home-sections">
-    <div class="label">Sections</div>
-    <a href="/writing">Writing</a> — essays on AI, economics, EA<br/>
-    <a href="/physics">IB Physics</a> — video lectures, full curriculum<br/>
-    <a href="/notes">Notes</a> — ideas, TILs, references, quotes<br/>
-    <a href="/music">Media Recs</a> — albums, films, books<br/>
-  </div>
-
-  <hr class="divider" />
-
   <div class="home-recent">
     <div class="label">Recent</div>
     <ul class="content-list">
-      {recentItems.map(item => (
+      {recentPosts.map(post => (
         <li class="content-item">
-          <span class="content-item__date">{formatDate(item.data.date)}</span>
-          <a href={item.url} class="content-item__link">
-            {item.data.title || item.data.album}
+          <span class="content-item__date">{formatDate(post.date)}</span>
+          <a href={post.url} target="_blank" rel="noopener" class="content-item__link">
+            {post.title}
           </a>
         </li>
       ))}
