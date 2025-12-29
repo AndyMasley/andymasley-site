@@ -1,254 +1,139 @@
-// Fetches and parses Substack RSS feed
-// Run at build time - Cloudflare scheduled builds will refresh daily
+// Fetches posts from Substack API
+// Uses the undocumented /api/v1/posts endpoint which returns all posts with section IDs
 
 export interface SubstackPost {
   title: string;
   slug: string;
   date: Date;
   description: string;
-  content: string;
   url: string;
   category: string;
 }
 
 // Category definitions with editable overviews
-// Edit these descriptions to update what appears on the writing page
 export interface CategoryConfig {
   name: string;
   slug: string;
   overview: string;
+  sectionIds: (number | null)[]; // Substack section IDs that map to this category
 }
 
+// Map Substack section IDs to categories
+// To find section IDs: curl "https://andymasley.substack.com/api/v1/posts?limit=50" | jq '.[].section_id'
 export const categoryConfigs: CategoryConfig[] = [
   {
     name: "AI & the Environment",
     slug: "ai-environment",
-    overview: "Analysis of AI's environmental impact—water use, energy consumption, and data centers. I challenge misleading narratives with data and primary sources."
+    overview: "Analysis of AI's environmental impact—water use, energy consumption, and data centers. I challenge misleading narratives with data and primary sources.",
+    sectionIds: [234003]
   },
   {
     name: "Artificial Intelligence",
     slug: "artificial-intelligence",
-    overview: "Broader thinking about AI capabilities, policy, governance, and societal implications beyond environmental concerns."
+    overview: "Broader thinking about AI capabilities, policy, governance, and societal implications beyond environmental concerns.",
+    sectionIds: [207379]
   },
   {
     name: "Animal Welfare",
     slug: "animal-welfare",
-    overview: "Essays on animal welfare, factory farming, and the moral consideration we owe to non-human animals."
-  },
-  {
-    name: "Charity",
-    slug: "charity",
-    overview: "Effective altruism, philanthropy, and how to do the most good. Includes coverage of EA DC and the broader EA movement."
+    overview: "Essays on animal welfare, factory farming, and the moral consideration we owe to non-human animals.",
+    sectionIds: [220462]
   },
   {
     name: "Politics",
     slug: "politics",
-    overview: "Political analysis, policy critiques, and commentary on current events."
+    overview: "Political analysis, policy critiques, and commentary on current events.",
+    sectionIds: [260435, 260436]
   },
   {
     name: "Recs & Advice",
     slug: "recs-advice",
-    overview: "Recommendations, life advice, and miscellaneous thoughts that don't fit elsewhere."
+    overview: "Recommendations, life advice, and miscellaneous thoughts.",
+    sectionIds: [136593]
   },
   {
     name: "Misc",
     slug: "misc",
-    overview: "Everything else—random thoughts, experiments, and posts that defy categorization."
+    overview: "Everything else—random thoughts, experiments, and posts that defy categorization.",
+    sectionIds: [268168, null] // null = uncategorized posts
   }
 ];
 
-// ============================================================
-// MANUAL CATEGORY MAPPING
-// Add your post slug (end of URL) and assign it to a category.
-// Posts not listed here will be auto-categorized by keywords.
-// ============================================================
-const categoryMap: Record<string, string> = {
-  // ---- AI & the Environment ----
-  "empire-of-ai-is-wildly-misleading": "AI & the Environment",
-  "a-short-summary-of-my-argument-that": "AI & the Environment",
-  "data-centers-and-low-social-trust": "AI & the Environment",
-  "a-pause-for-now-on-ai-and-the-environment": "AI & the Environment",
-  "requests-for-journalists-covering": "AI & the Environment",
-  "a-few-meta-points-on-my-posts-on": "AI & the Environment",
-  "the-ai-water-issue-is-fake": "AI & the Environment",
-  "data-centers-and-electricity-part": "AI & the Environment",
-  "data-centers-dont-use-that-much-water": "AI & the Environment",
-  "ai-water-use-in-context": "AI & the Environment",
-  "the-ai-water-discourse": "AI & the Environment",
-
-  // ---- Artificial Intelligence (general) ----
-  "ai-can-obviously-create-new-knowledge": "Artificial Intelligence",
-  "the-lump-of-cognition-fallacy": "Artificial Intelligence",
-  "its-much-easier-to-hold-computers": "Artificial Intelligence",
-  "an-armchair-diagnosis-of-the-chatbot": "Artificial Intelligence",
-  "ai-and-folk-cartesianism-part-2-problems": "Artificial Intelligence",
-  "ai-and-folk-cartesianism-part-1-defining": "Artificial Intelligence",
-  "slop-implies-capability": "Artificial Intelligence",
-  "on-compute-governance": "Artificial Intelligence",
-
-  // ---- Animal Welfare ----
-  "factory-farming": "Animal Welfare",
-  "animal-welfare": "Animal Welfare",
-
-  // ---- Charity / EA ----
-  "what-open-philanthropy-gets-right": "Charity",
-  "ea-dc-year-one": "Charity",
-  "effective-altruism": "Charity",
-
-  // ---- Politics ----
-  "please-please-please-do-not-ban-autonomous": "Politics",
-  "labor-theory-value": "Politics",
-  "the-labor-theory-of-value": "Politics",
-
-  // ---- Recs & Advice ----
-  "always-mask-in-airports": "Recs & Advice",
-
-  // ---- Misc ----
-  "a-list-of-other-catastrophes-that": "Misc",
-  "a-quick-plug-for-my-recent-podcast": "Misc",
-  "the-main-way-ive-seen-people-turn": "Misc",
-
-  // Add more mappings as you publish new posts
-};
-
-// Keywords to auto-categorize (fallback if not in manual map)
-const categoryKeywords: Record<string, string[]> = {
-  "AI & the Environment": [
-    "water use", "data center water", "cooling", "environmental",
-    "water consumption", "gallons", "thirsty", "empire of ai"
-  ],
-  "Artificial Intelligence": [
-    "ai", "gpt", "claude", "llm", "model", "openai", "anthropic",
-    "machine learning", "compute", "neural", "transformer"
-  ],
-  "Animal Welfare": [
-    "animal", "factory farm", "chicken", "pig", "cow", "meat",
-    "vegan", "vegetarian", "suffering", "sentience"
-  ],
-  "Charity": [
-    "effective altruism", "ea", "philanthropy", "giving", "charity",
-    "open philanthropy", "givewell", "impact", "donate"
-  ],
-  "Politics": [
-    "policy", "regulation", "government", "law", "congress",
-    "legislation", "political", "election", "vote", "democrat",
-    "republican", "labor", "economy", "economics", "marxism"
-  ],
-  "Recs & Advice": [
-    "recommend", "advice", "tip", "guide", "how to", "best",
-    "favorite", "review", "rating"
-  ],
-};
-
-function inferCategory(title: string, description: string, slug: string): string {
-  // Check manual mapping first
-  if (categoryMap[slug]) {
-    return categoryMap[slug];
-  }
-
-  // Try keyword matching - check AI & Environment first since it's more specific
-  const text = `${title} ${description}`.toLowerCase();
-
-  // Check AI & Environment before general AI
-  if (categoryKeywords["AI & the Environment"].some(kw => text.includes(kw.toLowerCase()))) {
-    return "AI & the Environment";
-  }
-
-  // Check other categories
-  for (const [category, keywords] of Object.entries(categoryKeywords)) {
-    if (category === "AI & the Environment") continue; // Already checked
-    if (keywords.some(kw => text.includes(kw.toLowerCase()))) {
-      return category;
+function getSectionCategory(sectionId: number | null): string {
+  for (const config of categoryConfigs) {
+    if (config.sectionIds.includes(sectionId)) {
+      return config.name;
     }
   }
-
   return "Misc";
 }
 
-function extractSlug(url: string): string {
-  const parts = url.split('/');
-  return parts[parts.length - 1] || parts[parts.length - 2] || '';
-}
-
-function stripHtml(html: string): string {
-  return html
-    .replace(/<[^>]*>/g, '')
-    .replace(/&nbsp;/g, ' ')
-    .replace(/&amp;/g, '&')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&quot;/g, '"')
-    .replace(/&#8217;/g, "'")
-    .replace(/&#8220;/g, '"')
-    .replace(/&#8221;/g, '"')
-    .replace(/&#8212;/g, '—')
-    .trim();
-}
-
-function parseRssDate(dateStr: string): Date {
-  return new Date(dateStr);
+interface SubstackAPIPost {
+  title: string;
+  slug: string;
+  post_date: string;
+  description: string | null;
+  subtitle: string | null;
+  canonical_url: string;
+  section_id: number | null;
+  is_published: boolean;
+  type: string;
 }
 
 export async function fetchSubstackPosts(): Promise<SubstackPost[]> {
-  const FEED_URL = 'https://andymasley.substack.com/feed';
+  const BASE_URL = 'https://andymasley.substack.com/api/v1/posts';
+  const allPosts: SubstackPost[] = [];
 
   try {
-    const response = await fetch(FEED_URL);
-    const xml = await response.text();
+    // Fetch all posts with pagination (API limit is 50 per request)
+    let offset = 0;
+    const limit = 50;
+    let hasMore = true;
 
-    const posts: SubstackPost[] = [];
+    while (hasMore) {
+      const response = await fetch(`${BASE_URL}?offset=${offset}&limit=${limit}`);
+      const posts: SubstackAPIPost[] = await response.json();
 
-    // Parse XML manually (Astro build environment)
-    const itemRegex = /<item>([\s\S]*?)<\/item>/g;
-    let match;
+      if (!posts || posts.length === 0) {
+        hasMore = false;
+        break;
+      }
 
-    while ((match = itemRegex.exec(xml)) !== null) {
-      const item = match[1];
+      for (const post of posts) {
+        // Skip non-newsletter posts (like hub pages)
+        if (post.type !== 'newsletter' || !post.is_published) continue;
 
-      const getTag = (tag: string): string => {
-        const regex = new RegExp(`<${tag}[^>]*><!\\[CDATA\\[([\\s\\S]*?)\\]\\]><\\/${tag}>|<${tag}[^>]*>([\\s\\S]*?)<\\/${tag}>`);
-        const m = item.match(regex);
-        return m ? (m[1] || m[2] || '').trim() : '';
-      };
+        // Skip special pages (links, hub pages, etc.)
+        if (['links', 'ai-and-the-environment'].includes(post.slug)) continue;
 
-      const title = getTag('title');
-      const link = getTag('link');
-      const pubDate = getTag('pubDate');
-      const description = stripHtml(getTag('description'));
-      const content = getTag('content:encoded') || getTag('description');
+        allPosts.push({
+          title: post.title,
+          slug: post.slug,
+          date: new Date(post.post_date),
+          description: post.subtitle || post.description || '',
+          url: post.canonical_url,
+          category: getSectionCategory(post.section_id),
+        });
+      }
 
-      if (!title || !link) continue;
-
-      const slug = extractSlug(link);
-
-      posts.push({
-        title,
-        slug,
-        date: parseRssDate(pubDate),
-        description: description.slice(0, 300) + (description.length > 300 ? '...' : ''),
-        content,
-        url: link,
-        category: inferCategory(title, description, slug),
-      });
+      offset += limit;
+      if (posts.length < limit) {
+        hasMore = false;
+      }
     }
 
     // Sort by date descending
-    posts.sort((a, b) => b.date.getTime() - a.date.getTime());
+    allPosts.sort((a, b) => b.date.getTime() - a.date.getTime());
 
-    return posts;
+    return allPosts;
   } catch (error) {
-    console.error('Failed to fetch Substack feed:', error);
+    console.error('Failed to fetch Substack posts:', error);
     return [];
   }
 }
 
 export function groupByCategory(posts: SubstackPost[]): Record<string, SubstackPost[]> {
   const grouped: Record<string, SubstackPost[]> = {};
-
-  // Initialize all categories (even empty ones)
-  for (const config of categoryConfigs) {
-    grouped[config.name] = [];
-  }
 
   // Assign posts to categories
   for (const post of posts) {
@@ -278,4 +163,8 @@ export function groupByCategory(posts: SubstackPost[]): Record<string, SubstackP
 
 export function getCategoryConfig(categoryName: string): CategoryConfig | undefined {
   return categoryConfigs.find(c => c.name === categoryName);
+}
+
+export function getCategoryPostCount(posts: SubstackPost[], categoryName: string): number {
+  return posts.filter(p => p.category === categoryName).length;
 }
