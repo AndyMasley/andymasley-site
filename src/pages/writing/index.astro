@@ -6,6 +6,9 @@ const posts = await fetchSubstackPosts();
 const postsByCategory = groupByCategory(posts);
 const categories = Object.keys(postsByCategory);
 
+// Get AI & Environment posts for "By date" section
+const aiEnvPosts = postsByCategory["AI & the Environment"] || [];
+
 // Format date as MM.DD.YYYY
 function formatDate(date: Date): string {
   const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -43,7 +46,133 @@ function formatDate(date: Date): string {
 
   <div class="label">Blog</div>
 
-  {Object.entries(postsByCategory).map(([category, categoryPosts]) => {
+  {/* Special handling for AI & the Environment */}
+  <div class="section" id="cat-ai-environment">
+    <div class="section__header" data-section="AI & the Environment">
+      <span class="section__toggle">▼</span>
+      <span class="section__title">AI & the Environment</span>
+      <span class="section__count">({aiEnvPosts.length})</span>
+    </div>
+    <div class="section__content" data-content="AI & the Environment">
+      <p class="category-overview">Analysis of AI's environmental impact—water use, energy consumption, and data centers. I challenge misleading narratives with data and primary sources.</p>
+
+      {/* By Topic dropdown */}
+      <div class="subsection">
+        <div class="subsection__header" data-subsection="ai-env-topic">
+          <span class="subsection__toggle">▼</span>
+          <span class="subsection__title">By topic</span>
+        </div>
+        <div class="subsection__content" data-subcontent="ai-env-topic">
+          <div class="topic-section">
+            <h4>Start here</h4>
+            <ul>
+              <li><a href="https://andymasley.substack.com/p/a-short-summary-of-my-argument-that" target="_blank" rel="noopener">A short summary of my argument that using ChatGPT isn't bad for the environment</a></li>
+              <li><a href="https://andymasley.substack.com/p/a-cheat-sheet-for-conversations-about" target="_blank" rel="noopener">Using ChatGPT is not bad for the environment - a cheat sheet</a></li>
+              <li><a href="https://andymasley.substack.com/p/for-the-climate-little-things-dont" target="_blank" rel="noopener">For the climate, little things don't add up</a></li>
+              <li><a href="https://andymasley.substack.com/p/mapping-the-ai-and-environment-debate" target="_blank" rel="noopener">Mapping the AI & environment debate</a></li>
+              <li><a href="https://andymasley.substack.com/p/computing-is-efficient" target="_blank" rel="noopener">Computing is efficient</a></li>
+              <li><a href="https://andymasley.substack.com/p/what-a-data-center-is" target="_blank" rel="noopener">What a data center is</a></li>
+              <li><a href="https://andymasley.substack.com/p/requests-for-journalists-covering" target="_blank" rel="noopener">Requests for journalists covering AI and the environment</a></li>
+              <li><a href="https://andymasley.substack.com/p/the-ai-water-issue-is-fake" target="_blank" rel="noopener">The AI water issue is fake</a></li>
+              <li>Or watch <a href="https://www.youtube.com/watch?v=87CWDd1a4O0&t=892s" target="_blank" rel="noopener">this podcast appearance</a></li>
+            </ul>
+          </div>
+
+          <div class="topic-section">
+            <h4>Individual prompts</h4>
+            <p class="topic-desc">My original post was <a href="https://andymasley.substack.com/p/individual-ai-use-is-not-bad-for" target="_blank" rel="noopener">Using ChatGPT is not bad for the environment</a>. The main points are distilled <a href="https://andymasley.substack.com/p/a-cheat-sheet-for-conversations-about" target="_blank" rel="noopener">in the cheat sheet</a>.</p>
+            <ul>
+              <li><a href="https://andymasley.substack.com/p/whats-the-full-hidden-climate-cost" target="_blank" rel="noopener">What's the full "hidden" climate cost of a ChatGPT prompt?</a></li>
+              <li><a href="https://andymasley.substack.com/p/an-example-of-what-i-consider-a-misleading" target="_blank" rel="noopener">An example of what I consider a misleading article about AI and the environment</a></li>
+              <li><a href="https://andymasley.substack.com/p/reactions-to-mit-technology-reviews" target="_blank" rel="noopener">Reactions to MIT Technology Review's report on AI and the environment</a></li>
+              <li><a href="https://andymasley.substack.com/p/why-goofy-ai-art-almost-never-seems" target="_blank" rel="noopener">Why goofy AI art almost never seems wasteful to me</a></li>
+            </ul>
+          </div>
+
+          <div class="topic-section">
+            <h4>Data centers</h4>
+            <p class="topic-desc">The big buildings where AI processes are run. They're basically building-sized computers.</p>
+            <ul>
+              <li><a href="https://andymasley.substack.com/p/what-a-data-center-is" target="_blank" rel="noopener">What a data center is</a></li>
+              <li><a href="https://andymasley.substack.com/p/do-data-centers-only-seem-bad-for" target="_blank" rel="noopener">Do data centers only seem bad for the environment because we can see them?</a></li>
+            </ul>
+            <p class="topic-sublabel">Electricity:</p>
+            <ul>
+              <li><a href="https://andymasley.substack.com/p/data-centers-and-electricity-part" target="_blank" rel="noopener">Data centers & electricity - part 1: as of 2025 they haven't raised national prices</a></li>
+            </ul>
+            <p class="topic-sublabel">Water:</p>
+            <ul>
+              <li><a href="https://andymasley.substack.com/p/the-ai-water-issue-is-fake" target="_blank" rel="noopener">The AI water issue is fake</a></li>
+              <li><a href="https://andymasley.substack.com/p/i-cant-find-any-instances-of-data" target="_blank" rel="noopener">Data centers don't harm water access at all anywhere in America</a></li>
+              <li><a href="https://andymasley.substack.com/p/empire-of-ai-is-wildly-misleading" target="_blank" rel="noopener">Empire of AI is wildly misleading about AI water use</a></li>
+              <li><a href="https://andymasley.substack.com/p/more-perfect-union-is-deceptive" target="_blank" rel="noopener">More Perfect Union videos are wildly deceptive on data center water use</a></li>
+              <li><a href="https://andymasley.substack.com/p/contra-the-uk-government-please-dont" target="_blank" rel="noopener">Contra the UK government, please don't delete your old photos and emails to save water</a></li>
+            </ul>
+          </div>
+
+          <div class="topic-section">
+            <h4>Environmental ethics</h4>
+            <ul>
+              <li><a href="https://andymasley.substack.com/p/for-the-climate-little-things-dont" target="_blank" rel="noopener">For the climate, little things don't add up</a></li>
+              <li><a href="https://andymasley.substack.com/p/when-making-cuts-for-the-climate" target="_blank" rel="noopener">When making cuts for the climate, always consider the value you're getting per unit energy, not just the total energy used</a></li>
+              <li><a href="https://andymasley.substack.com/p/jevons-paradox-isnt-always-bad" target="_blank" rel="noopener">Jevons' Paradox is good sometimes</a></li>
+              <li><a href="https://andymasley.substack.com/p/my-can-of-soup-example-for-bad-climate" target="_blank" rel="noopener">My can of soup example of bad climate communication</a></li>
+            </ul>
+          </div>
+
+          <div class="topic-section">
+            <h4>Meta</h4>
+            <ul>
+              <li><a href="https://andymasley.substack.com/p/a-pause-for-now-on-ai-and-the-environment" target="_blank" rel="noopener">A pause (for now) on AI and the environment posts, and a bounty for mistakes</a></li>
+              <li><a href="https://andymasley.substack.com/p/a-few-meta-points-on-my-posts-on" target="_blank" rel="noopener">A few meta points on my posts on AI and the environment</a></li>
+              <li><a href="https://andymasley.substack.com/p/requests-for-journalists-covering" target="_blank" rel="noopener">Requests for journalists covering AI and the environment</a></li>
+              <li><a href="https://andymasley.substack.com/p/replies-to-criticisms-of-my-chatgpt" target="_blank" rel="noopener">Replies to criticisms of my posts on AI & the environment</a></li>
+              <li><a href="https://andymasley.substack.com/p/things-i-got-wrong-in-my-chatgptenvironment" target="_blank" rel="noopener">Things I got wrong in my ChatGPT/environment posts</a></li>
+            </ul>
+          </div>
+
+          <div class="topic-section">
+            <h4>Misc</h4>
+            <ul>
+              <li><a href="https://andymasley.substack.com/p/recommended-resources-for-energy" target="_blank" rel="noopener">Resource recs for energy literacy</a></li>
+            </ul>
+          </div>
+
+          <div class="topic-section">
+            <h4>Podcast appearances</h4>
+            <p class="topic-desc">I've gone on a few podcasts to talk about AI and the environment:</p>
+            <ul>
+              <li><a href="https://open.spotify.com/episode/2E3Yfi24OUyHxz67BtzhHB?si=8110a29fe7034cf5" target="_blank" rel="noopener">Conspicuous Cognition</a></li>
+              <li><a href="https://open.spotify.com/episode/1Lzt9pMcqOcjfE3WLxNy3j?si=fdb4604af43d40e9" target="_blank" rel="noopener">Chain of Thought</a></li>
+              <li><a href="https://open.spotify.com/episode/0UaOQ0DcP9c8OG5IfAgfnT?si=5d00e4bce6aa43f0" target="_blank" rel="noopener">NYT Hard Fork</a></li>
+              <li><a href="https://open.spotify.com/episode/0RBBVeGb5yfHsFWnKkDgD0?si=15d8b610374544b0" target="_blank" rel="noopener">The Cognitive Revolution</a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      {/* By Date dropdown */}
+      <div class="subsection">
+        <div class="subsection__header" data-subsection="ai-env-date">
+          <span class="subsection__toggle">▼</span>
+          <span class="subsection__title">By date</span>
+        </div>
+        <div class="subsection__content" data-subcontent="ai-env-date">
+          {aiEnvPosts.map(post => (
+            <div class="content-item">
+              <span class="content-item__date">{formatDate(post.date)}</span>
+              <a href={post.url} target="_blank" rel="noopener" class="content-item__link">
+                {post.title}
+              </a>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {/* Other categories */}
+  {Object.entries(postsByCategory).filter(([category]) => category !== "AI & the Environment").map(([category, categoryPosts]) => {
     const config = getCategoryConfig(category);
     const slug = config?.slug || category.toLowerCase().replace(/\s+/g, '-');
     return (
@@ -105,9 +234,94 @@ function formatDate(date: Date): string {
     color: var(--dim);
     margin-top: 24px;
   }
+
+  /* Subsection styles */
+  .subsection {
+    margin-bottom: 8px;
+  }
+
+  .subsection__header {
+    cursor: pointer;
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    padding: 4px 0;
+  }
+
+  .subsection__header:hover {
+    color: var(--accent);
+  }
+
+  .subsection__toggle {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    color: var(--dim);
+    width: 10px;
+    flex-shrink: 0;
+  }
+
+  .subsection__title {
+    font-size: 0.875rem;
+    font-style: italic;
+  }
+
+  .subsection__content {
+    margin-left: 16px;
+    margin-top: 4px;
+  }
+
+  /* Topic section styles */
+  .topic-section {
+    margin-bottom: 16px;
+  }
+
+  .topic-section h4 {
+    font-size: 0.875rem;
+    font-weight: normal;
+    margin: 0 0 6px 0;
+    color: var(--text);
+  }
+
+  .topic-section ul {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 8px 0;
+  }
+
+  .topic-section li {
+    font-size: 0.8125rem;
+    margin-bottom: 3px;
+    padding-left: 12px;
+    position: relative;
+  }
+
+  .topic-section li::before {
+    content: "·";
+    position: absolute;
+    left: 0;
+    color: var(--dim);
+  }
+
+  .topic-section a {
+    color: var(--accent);
+  }
+
+  .topic-desc {
+    font-size: 0.8125rem;
+    color: var(--dim);
+    margin: 0 0 6px 0;
+  }
+
+  .topic-sublabel {
+    font-size: 0.8125rem;
+    color: var(--dim);
+    margin: 8px 0 4px 0;
+    font-style: italic;
+  }
 </style>
 
 <script>
+  // Main section toggles
   document.querySelectorAll('.section__header').forEach(header => {
     header.addEventListener('click', () => {
       const section = header.getAttribute('data-section');
@@ -122,22 +336,40 @@ function formatDate(date: Date): string {
     });
   });
 
+  // Subsection toggles
+  document.querySelectorAll('.subsection__header').forEach(header => {
+    header.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const subsection = header.getAttribute('data-subsection');
+      const content = document.querySelector(`[data-subcontent="${subsection}"]`) as HTMLElement;
+      const toggle = header.querySelector('.subsection__toggle');
+
+      if (content && toggle) {
+        const isCollapsed = content.style.display === 'none';
+        content.style.display = isCollapsed ? 'block' : 'none';
+        toggle.textContent = isCollapsed ? '▼' : '▶';
+      }
+    });
+  });
+
+  // Expand all
   document.getElementById('expand-all')?.addEventListener('click', (e) => {
     e.preventDefault();
-    document.querySelectorAll('.section__content').forEach(content => {
+    document.querySelectorAll('.section__content, .subsection__content').forEach(content => {
       (content as HTMLElement).style.display = 'block';
     });
-    document.querySelectorAll('.section__toggle').forEach(toggle => {
+    document.querySelectorAll('.section__toggle, .subsection__toggle').forEach(toggle => {
       toggle.textContent = '▼';
     });
   });
 
+  // Collapse all
   document.getElementById('collapse-all')?.addEventListener('click', (e) => {
     e.preventDefault();
-    document.querySelectorAll('.section__content').forEach(content => {
+    document.querySelectorAll('.section__content, .subsection__content').forEach(content => {
       (content as HTMLElement).style.display = 'none';
     });
-    document.querySelectorAll('.section__toggle').forEach(toggle => {
+    document.querySelectorAll('.section__toggle, .subsection__toggle').forEach(toggle => {
       toggle.textContent = '▶';
     });
   });
