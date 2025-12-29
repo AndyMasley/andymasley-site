@@ -2,6 +2,7 @@
 import Base from '@/layouts/Base.astro';
 import { fetchSubstackPosts, fetchPostContent, categoryConfigs } from '@/lib/substack';
 import { metaPosts, getMetaPostSlugs } from '@/lib/meta-posts';
+import { bylines } from '@/lib/bylines';
 
 // Fetch posts
 const allPosts = await fetchSubstackPosts();
@@ -92,74 +93,112 @@ const activeCategories = categoryConfigs.filter(c =>
 
 // Process HTML content - fix internal links
 function processContent(html: string): string {
-  // Fix internal Substack links to stay on site or open in new tab
   return html
     .replace(/href="https:\/\/andymasley\.substack\.com\/p\/([^"]+)"/g, 'href="/writing/$1"')
     .replace(/href="https:\/\/andymasley\.substack\.com([^"]*)"/g, 'href="https://andymasley.substack.com$1" target="_blank" rel="noopener"');
+}
+
+// Format byline date
+function formatBylineDate(dateStr: string): string {
+  const date = new Date(dateStr);
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const year = date.getFullYear();
+  return `${month}.${day}.${year}`;
 }
 ---
 
 <Base title="Writing">
   <div class="page-header">
     <h2 class="page-header__title">Writing</h2>
-    <p class="page-header__description">
-      Essays and analysis from <a href="https://andymasley.substack.com" target="_blank" rel="noopener">Substack</a>.
-    </p>
+    <p class="page-header__description">Essays and analysis.</p>
   </div>
 
   <hr class="divider" />
 
-  <!-- META SECTION -->
-  <div class="section-header">Meta</div>
-
-  <div class="meta-section">
-    {metaPostsWithContent.map((meta) => (
-      <div class="meta-item">
-        <button class="meta-toggle" aria-expanded="false">
-          <span class="meta-arrow">&#9654;</span>
-          <span class="meta-title">{meta.title}</span>
-        </button>
-        <div class="meta-content" hidden>
-          <p class="meta-source">
-            <a href={meta.url} target="_blank" rel="noopener">Originally published on Substack</a>
-          </p>
-          <div class="meta-body prose" set:html={processContent(meta.content)} />
-        </div>
+  <!-- BLOG DROPDOWN -->
+  <div class="top-dropdown">
+    <button class="top-toggle" aria-expanded="true" data-section="blog">
+      <span class="top-arrow">&#9660;</span>
+      <span class="top-title">Blog</span>
+    </button>
+    <div class="top-content" data-content="blog">
+      <!-- META SUBSECTION -->
+      <div class="section-header">Meta</div>
+      <div class="meta-section">
+        {metaPostsWithContent.map((meta) => (
+          <div class="meta-item">
+            <button class="meta-toggle" aria-expanded="false">
+              <span class="meta-arrow">&#9654;</span>
+              <span class="meta-title">{meta.title}</span>
+            </button>
+            <div class="meta-content" hidden>
+              <p class="meta-source">
+                <a href={meta.url} target="_blank" rel="noopener">Originally published on Substack</a>
+              </p>
+              <div class="meta-body prose" set:html={processContent(meta.content)} />
+            </div>
+          </div>
+        ))}
       </div>
-    ))}
+
+      <!-- TIMELINE SUBSECTION -->
+      <div class="section-header">Timeline</div>
+      <div class="timeline-filters">
+        <button class="filter-btn active" data-filter="all">All</button>
+        {activeCategories.map(cat => (
+          <button class="filter-btn" data-filter={cat.slug}>
+            {getShortName(cat.name)}
+          </button>
+        ))}
+      </div>
+
+      <div class="timeline">
+        {postsByMonth.map(monthGroup => (
+          <div class="month-group" data-month={`${monthGroup.year}-${monthGroup.month}`}>
+            <div class="month-header">{monthGroup.label}</div>
+            <div class="month-posts">
+              {monthGroup.posts.map(post => (
+                <div class="timeline-row" data-cat={getCategorySlug(post.category)}>
+                  <span class="timeline-day">{getDay(post.date)}</span>
+                  <a href={post.url} target="_blank" rel="noopener" class="timeline-link">
+                    {post.title}
+                  </a>
+                  <span class="timeline-cat">{getShortName(post.category)}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <p class="post-count">{posts.length} posts</p>
+    </div>
   </div>
 
-  <hr class="divider" />
-
-  <!-- TIMELINE SECTION -->
-  <div class="section-header">Timeline</div>
-
-  <div class="timeline-filters">
-    <button class="filter-btn active" data-filter="all">All</button>
-    {activeCategories.map(cat => (
-      <button class="filter-btn" data-filter={cat.slug}>
-        {getShortName(cat.name)}
-      </button>
-    ))}
-  </div>
-
-  <div class="timeline">
-    {postsByMonth.map(monthGroup => (
-      <div class="month-group" data-month={`${monthGroup.year}-${monthGroup.month}`}>
-        <div class="month-header">{monthGroup.label}</div>
-        <div class="month-posts">
-          {monthGroup.posts.map(post => (
-            <div class="timeline-row" data-cat={getCategorySlug(post.category)}>
-              <span class="timeline-day">{getDay(post.date)}</span>
-              <a href={post.url} target="_blank" rel="noopener" class="timeline-link">
-                {post.title}
+  <!-- BYLINES DROPDOWN -->
+  <div class="top-dropdown">
+    <button class="top-toggle" aria-expanded="false" data-section="bylines">
+      <span class="top-arrow">&#9654;</span>
+      <span class="top-title">Bylines</span>
+    </button>
+    <div class="top-content" data-content="bylines" hidden>
+      {bylines.length > 0 ? (
+        <div class="bylines-list">
+          {bylines.map(byline => (
+            <div class="byline-row">
+              <span class="byline-date">{formatBylineDate(byline.date)}</span>
+              <a href={byline.url} target="_blank" rel="noopener" class="byline-link">
+                {byline.title}
               </a>
-              <span class="timeline-cat">{getShortName(post.category)}</span>
+              <span class="byline-pub">{byline.publication}</span>
             </div>
           ))}
         </div>
-      </div>
-    ))}
+      ) : (
+        <p class="bylines-placeholder">Coming soon.</p>
+      )}
+    </div>
   </div>
 
   <hr class="divider" />
@@ -167,28 +206,77 @@ function processContent(html: string): string {
   <div class="back-link">
     <a href="/">← index</a>
   </div>
-
-  <p class="meta-count">
-    {posts.length} posts
-  </p>
 </Base>
 
 <style>
+  /* Top-level dropdowns */
+  .top-dropdown {
+    margin-bottom: 8px;
+  }
+
+  .top-toggle {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 10px 0;
+    background: none;
+    border: none;
+    font-family: inherit;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text);
+    cursor: pointer;
+    text-align: left;
+  }
+
+  .top-toggle:hover {
+    color: var(--accent);
+  }
+
+  .top-arrow {
+    font-size: 0.65rem;
+    transition: transform 0.2s ease;
+    color: var(--dim);
+    width: 12px;
+  }
+
+  .top-toggle[aria-expanded="true"] .top-arrow {
+    transform: rotate(0deg);
+  }
+
+  .top-toggle[aria-expanded="false"] .top-arrow {
+    transform: rotate(-90deg);
+  }
+
+  .top-title {
+    flex: 1;
+  }
+
+  .top-content {
+    padding-left: 22px;
+    padding-bottom: 16px;
+  }
+
   /* Section headers */
   .section-header {
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     text-transform: uppercase;
     letter-spacing: 1.5px;
     color: var(--dim);
-    margin-bottom: 16px;
+    margin: 16px 0 12px;
+  }
+
+  .section-header:first-child {
+    margin-top: 8px;
   }
 
   /* Meta section */
   .meta-section {
     display: flex;
     flex-direction: column;
-    gap: 8px;
-    margin-bottom: 24px;
+    gap: 6px;
+    margin-bottom: 20px;
   }
 
   .meta-item {
@@ -200,11 +288,11 @@ function processContent(html: string): string {
     align-items: center;
     gap: 10px;
     width: 100%;
-    padding: 12px 16px;
+    padding: 10px 14px;
     background: none;
     border: none;
     font-family: inherit;
-    font-size: 0.9rem;
+    font-size: 0.875rem;
     color: var(--text);
     cursor: pointer;
     text-align: left;
@@ -220,7 +308,7 @@ function processContent(html: string): string {
   }
 
   .meta-arrow {
-    font-size: 0.7rem;
+    font-size: 0.6rem;
     transition: transform 0.2s ease;
     color: var(--dim);
   }
@@ -234,16 +322,16 @@ function processContent(html: string): string {
   }
 
   .meta-content {
-    padding: 0 16px 16px 36px;
+    padding: 0 14px 14px 32px;
     border-left: 3px solid var(--accent);
-    margin-left: 16px;
-    margin-bottom: 16px;
+    margin-left: 14px;
+    margin-bottom: 14px;
   }
 
   .meta-source {
-    font-size: 0.8rem;
+    font-size: 0.75rem;
     color: var(--dim);
-    margin-bottom: 16px;
+    margin-bottom: 14px;
   }
 
   .meta-source a {
@@ -257,7 +345,7 @@ function processContent(html: string): string {
   }
 
   .meta-body {
-    font-size: 0.9rem;
+    font-size: 0.875rem;
     line-height: 1.7;
   }
 
@@ -269,9 +357,9 @@ function processContent(html: string): string {
     margin: 1.5em 0 0.5em;
   }
 
-  .meta-body :global(h1) { font-size: 1.4rem; }
-  .meta-body :global(h2) { font-size: 1.2rem; }
-  .meta-body :global(h3) { font-size: 1.1rem; }
+  .meta-body :global(h1) { font-size: 1.3rem; }
+  .meta-body :global(h2) { font-size: 1.1rem; }
+  .meta-body :global(h3) { font-size: 1rem; }
 
   .meta-body :global(p) {
     margin: 0 0 1em;
@@ -316,7 +404,7 @@ function processContent(html: string): string {
   }
 
   .meta-body :global(figcaption) {
-    font-size: 0.8rem;
+    font-size: 0.75rem;
     color: var(--dim);
     text-align: center;
     margin-top: 0.5em;
@@ -326,16 +414,16 @@ function processContent(html: string): string {
   .timeline-filters {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
-    margin-bottom: 20px;
+    gap: 6px;
+    margin-bottom: 16px;
   }
 
   .filter-btn {
     background: none;
     border: 1px solid var(--border);
-    padding: 4px 12px;
+    padding: 3px 10px;
     font-family: inherit;
-    font-size: 0.8rem;
+    font-size: 0.75rem;
     color: var(--dim);
     cursor: pointer;
     border-radius: 3px;
@@ -357,7 +445,7 @@ function processContent(html: string): string {
   .timeline {
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 16px;
   }
 
   .month-group.hidden {
@@ -365,10 +453,10 @@ function processContent(html: string): string {
   }
 
   .month-header {
-    font-size: 0.875rem;
+    font-size: 0.8rem;
     font-weight: normal;
     color: var(--text);
-    margin-bottom: 8px;
+    margin-bottom: 6px;
     padding-bottom: 4px;
     border-bottom: 1px solid var(--border);
   }
@@ -376,15 +464,15 @@ function processContent(html: string): string {
   .month-posts {
     display: flex;
     flex-direction: column;
-    gap: 4px;
-    padding-left: 8px;
+    gap: 3px;
+    padding-left: 6px;
   }
 
   .timeline-row {
     display: grid;
-    grid-template-columns: 28px 1fr auto;
-    gap: 12px;
-    font-size: 0.875rem;
+    grid-template-columns: 24px 1fr auto;
+    gap: 10px;
+    font-size: 0.8rem;
     align-items: baseline;
   }
 
@@ -394,7 +482,7 @@ function processContent(html: string): string {
 
   .timeline-day {
     font-family: var(--font-mono);
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     color: var(--dim);
     text-align: right;
   }
@@ -411,35 +499,114 @@ function processContent(html: string): string {
   }
 
   .timeline-cat {
+    font-size: 0.65rem;
+    color: var(--dim);
+    white-space: nowrap;
+  }
+
+  .post-count {
+    font-size: 0.7rem;
+    color: var(--dim);
+    margin-top: 16px;
+  }
+
+  /* Bylines */
+  .bylines-placeholder {
+    font-size: 0.875rem;
+    color: var(--dim);
+    font-style: italic;
+    margin: 8px 0;
+  }
+
+  .bylines-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .byline-row {
+    display: grid;
+    grid-template-columns: 80px 1fr auto;
+    gap: 12px;
+    font-size: 0.8rem;
+    align-items: baseline;
+  }
+
+  .byline-date {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    color: var(--dim);
+  }
+
+  .byline-link {
+    color: var(--accent);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  .byline-link:hover {
+    text-decoration: none;
+  }
+
+  .byline-pub {
     font-size: 0.7rem;
     color: var(--dim);
     white-space: nowrap;
   }
 
-  .meta-count {
-    font-size: 0.75rem;
-    color: var(--dim);
-    margin-top: 24px;
-  }
-
   /* Responsive */
   @media (max-width: 600px) {
     .timeline-row {
-      grid-template-columns: 28px 1fr;
+      grid-template-columns: 24px 1fr;
     }
 
     .timeline-cat {
       display: none;
     }
 
+    .byline-row {
+      grid-template-columns: 1fr;
+      gap: 2px;
+    }
+
+    .byline-date {
+      order: 2;
+    }
+
+    .byline-link {
+      order: 1;
+    }
+
+    .byline-pub {
+      order: 3;
+    }
+
     .meta-content {
-      margin-left: 8px;
-      padding-left: 16px;
+      margin-left: 6px;
+      padding-left: 14px;
+    }
+
+    .top-content {
+      padding-left: 12px;
     }
   }
 </style>
 
 <script>
+  // Top-level dropdown toggle
+  document.querySelectorAll('.top-toggle').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const expanded = btn.getAttribute('aria-expanded') === 'true';
+      btn.setAttribute('aria-expanded', String(!expanded));
+
+      const section = btn.getAttribute('data-section');
+      const content = document.querySelector(`[data-content="${section}"]`) as HTMLElement;
+      if (content) {
+        content.hidden = expanded;
+      }
+    });
+  });
+
   // Meta dropdown toggle
   document.querySelectorAll('.meta-toggle').forEach(btn => {
     btn.addEventListener('click', () => {
