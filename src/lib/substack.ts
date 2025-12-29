@@ -40,10 +40,16 @@ export const categoryConfigs: CategoryConfig[] = [
     sectionIds: [220462]
   },
   {
+    name: "Charity",
+    slug: "charity",
+    overview: "Posts on charitable giving and effective altruism.",
+    sectionIds: [260435]
+  },
+  {
     name: "Politics",
     slug: "politics",
     overview: "Political analysis, policy critiques, and commentary on current events.",
-    sectionIds: [260435, 260436]
+    sectionIds: [260436]
   },
   {
     name: "Recs & Advice",
