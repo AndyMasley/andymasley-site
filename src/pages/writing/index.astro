@@ -1,26 +1,22 @@
 ---
 import Base from '@/layouts/Base.astro';
-import { getCollection } from 'astro:content';
-import { fetchSubstackPosts, groupByCategory, categoryConfigs } from '@/lib/substack';
+import { fetchSubstackPosts, fetchPostContent, categoryConfigs } from '@/lib/substack';
+import { metaPosts, getMetaPostSlugs } from '@/lib/meta-posts';
 
-// Fetch posts and categories
-const posts = await fetchSubstackPosts();
-const postsByCategory = groupByCategory(posts);
-const categoryContent = await getCollection('categories');
+// Fetch posts
+const allPosts = await fetchSubstackPosts();
+const metaSlugs = getMetaPostSlugs();
 
-// Sort categories by order
-const sortedCategories = categoryContent.sort((a, b) => a.data.order - b.data.order);
+// Filter out meta posts from timeline
+const posts = allPosts.filter(p => !metaSlugs.includes(p.slug));
 
-// Get category overviews mapped by slug
-const categoryOverviews: Record<string, { name: string; shortName: string; body: string }> = {};
-for (const cat of sortedCategories) {
-  const { Content } = await cat.render();
-  categoryOverviews[cat.data.categorySlug] = {
-    name: cat.data.name,
-    shortName: cat.data.shortName,
-    body: cat.body || '',
-  };
-}
+// Fetch content for each meta post
+const metaPostsWithContent = await Promise.all(
+  metaPosts.map(async (meta) => {
+    const content = await fetchPostContent(meta.slug);
+    return { ...meta, content };
+  })
+);
 
 // Group posts by month for timeline
 interface MonthGroup {
@@ -64,13 +60,6 @@ postsByMonth.sort((a, b) => {
   return b.month - a.month;
 });
 
-// Format date as MM.DD
-function formatShortDate(date: Date): string {
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${month}.${day}`;
-}
-
 // Get day only
 function getDay(date: Date): string {
   return String(date.getDate()).padStart(2, '0');
@@ -78,16 +67,35 @@ function getDay(date: Date): string {
 
 // Get category short name
 function getShortName(categoryName: string): string {
-  const config = categoryConfigs.find(c => c.name === categoryName);
-  if (!config) return categoryName;
-  const overview = categoryOverviews[config.slug];
-  return overview?.shortName || categoryName;
+  const shortNames: Record<string, string> = {
+    'AI & the Environment': 'AI & Env',
+    'Artificial Intelligence': 'AI',
+    'Animal Welfare': 'Animals',
+    'Charity': 'Charity',
+    'Politics': 'Politics',
+    'Recs & Advice': 'Recs',
+    'Misc': 'Misc',
+  };
+  return shortNames[categoryName] || categoryName;
 }
 
 // Get category slug
 function getCategorySlug(categoryName: string): string {
   const config = categoryConfigs.find(c => c.name === categoryName);
   return config?.slug || categoryName.toLowerCase().replace(/\s+/g, '-');
+}
+
+// Filter categories to show (only ones with posts)
+const activeCategories = categoryConfigs.filter(c =>
+  posts.some(p => p.category === c.name)
+);
+
+// Process HTML content - fix internal links
+function processContent(html: string): string {
+  // Fix internal Substack links to stay on site or open in new tab
+  return html
+    .replace(/href="https:\/\/andymasley\.substack\.com\/p\/([^"]+)"/g, 'href="/writing/$1"')
+    .replace(/href="https:\/\/andymasley\.substack\.com([^"]*)"/g, 'href="https://andymasley.substack.com$1" target="_blank" rel="noopener"');
 }
 ---
 
@@ -101,50 +109,24 @@ function getCategorySlug(categoryName: string): string {
 
   <hr class="divider" />
 
-  <!-- CATEGORIES SECTION -->
-  <div class="section-header">Categories</div>
+  <!-- META SECTION -->
+  <div class="section-header">Meta</div>
 
-  <div class="categories-container">
-    <div class="categories-list">
-      {sortedCategories.map((cat, index) => {
-        const count = postsByCategory[cat.data.name]?.length || 0;
-        return (
-          <button
-            class={`category-btn ${index === 0 ? 'active' : ''}`}
-            data-category={cat.data.categorySlug}
-          >
-            <span class="category-bullet">●</span>
-            <span class="category-name">{cat.data.shortName}</span>
-            <span class="category-count">({count})</span>
-          </button>
-        );
-      })}
-    </div>
-
-    <div class="categories-content">
-      {sortedCategories.map((cat, index) => {
-        const catPosts = postsByCategory[cat.data.name] || [];
-        return (
-          <div
-            class={`category-panel ${index === 0 ? 'active' : ''}`}
-            data-panel={cat.data.categorySlug}
-          >
-            <div class="category-title">{cat.data.name}</div>
-            <p class="category-overview">{cat.body}</p>
-            <div class="category-posts">
-              {catPosts.map(post => (
-                <div class="post-row">
-                  <span class="post-date">{formatShortDate(post.date)}</span>
-                  <a href={post.url} target="_blank" rel="noopener" class="post-link">
-                    {post.title}
-                  </a>
-                </div>
-              ))}
-            </div>
-          </div>
-        );
-      })}
-    </div>
+  <div class="meta-section">
+    {metaPostsWithContent.map((meta) => (
+      <div class="meta-item">
+        <button class="meta-toggle" aria-expanded="false">
+          <span class="meta-arrow">&#9654;</span>
+          <span class="meta-title">{meta.title}</span>
+        </button>
+        <div class="meta-content" hidden>
+          <p class="meta-source">
+            <a href={meta.url} target="_blank" rel="noopener">Originally published on Substack</a>
+          </p>
+          <div class="meta-body prose" set:html={processContent(meta.content)} />
+        </div>
+      </div>
+    ))}
   </div>
 
   <hr class="divider" />
@@ -154,9 +136,9 @@ function getCategorySlug(categoryName: string): string {
 
   <div class="timeline-filters">
     <button class="filter-btn active" data-filter="all">All</button>
-    {sortedCategories.map(cat => (
-      <button class="filter-btn" data-filter={cat.data.categorySlug}>
-        {cat.data.shortName}
+    {activeCategories.map(cat => (
+      <button class="filter-btn" data-filter={cat.slug}>
+        {getShortName(cat.name)}
       </button>
     ))}
   </div>
@@ -186,7 +168,7 @@ function getCategorySlug(categoryName: string): string {
     <a href="/">← index</a>
   </div>
 
-  <p class="meta">
+  <p class="meta-count">
     {posts.length} posts
   </p>
 </Base>
@@ -201,127 +183,143 @@ function getCategorySlug(categoryName: string): string {
     margin-bottom: 16px;
   }
 
-  /* Categories container */
-  .categories-container {
-    display: grid;
-    grid-template-columns: 160px 1fr;
-    gap: 24px;
-    border: 1px solid var(--border);
-    padding: 16px;
-    margin-bottom: 24px;
-    min-height: 300px;
-  }
-
-  .categories-list {
+  /* Meta section */
+  .meta-section {
     display: flex;
     flex-direction: column;
-    gap: 4px;
-    border-right: 1px solid var(--border);
-    padding-right: 16px;
+    gap: 8px;
+    margin-bottom: 24px;
   }
 
-  .category-btn {
+  .meta-item {
+    border: 1px solid var(--border);
+  }
+
+  .meta-toggle {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 10px;
+    width: 100%;
+    padding: 12px 16px;
     background: none;
     border: none;
-    padding: 6px 8px;
     font-family: inherit;
-    font-size: 0.875rem;
+    font-size: 0.9rem;
     color: var(--text);
     cursor: pointer;
     text-align: left;
-    border-radius: 3px;
     transition: background 0.15s ease;
   }
 
-  .category-btn:hover {
+  .meta-toggle:hover {
     background: rgba(0, 0, 0, 0.03);
   }
 
-  [data-theme="dark"] .category-btn:hover {
+  [data-theme="dark"] .meta-toggle:hover {
     background: rgba(255, 255, 255, 0.05);
   }
 
-  .category-btn.active {
-    color: var(--accent);
-  }
-
-  .category-bullet {
-    opacity: 0;
-    font-size: 0.5rem;
-    transition: opacity 0.15s ease;
-  }
-
-  .category-btn.active .category-bullet {
-    opacity: 1;
-    color: var(--accent);
-  }
-
-  .category-count {
+  .meta-arrow {
+    font-size: 0.7rem;
+    transition: transform 0.2s ease;
     color: var(--dim);
+  }
+
+  .meta-toggle[aria-expanded="true"] .meta-arrow {
+    transform: rotate(90deg);
+  }
+
+  .meta-title {
+    flex: 1;
+  }
+
+  .meta-content {
+    padding: 0 16px 16px 36px;
+    border-left: 3px solid var(--accent);
+    margin-left: 16px;
+    margin-bottom: 16px;
+  }
+
+  .meta-source {
     font-size: 0.8rem;
-    margin-left: auto;
-  }
-
-  /* Category panels */
-  .categories-content {
-    min-width: 0;
-  }
-
-  .category-panel {
-    display: none;
-  }
-
-  .category-panel.active {
-    display: block;
-  }
-
-  .category-title {
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    letter-spacing: 1px;
     color: var(--dim);
-    margin-bottom: 12px;
+    margin-bottom: 16px;
   }
 
-  .category-overview {
-    font-size: 0.875rem;
-    color: var(--dim);
-    margin: 0 0 16px 0;
-    line-height: 1.5;
-  }
-
-  .category-posts {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-  }
-
-  .post-row {
-    display: grid;
-    grid-template-columns: 50px 1fr;
-    gap: 12px;
-    font-size: 0.875rem;
-    align-items: baseline;
-  }
-
-  .post-date {
-    font-family: var(--font-mono);
-    font-size: 0.75rem;
-    color: var(--dim);
-    white-space: nowrap;
-  }
-
-  .post-link {
+  .meta-source a {
     color: var(--accent);
     text-decoration: underline;
     text-underline-offset: 2px;
   }
 
-  .post-link:hover {
+  .meta-source a:hover {
     text-decoration: none;
+  }
+
+  .meta-body {
+    font-size: 0.9rem;
+    line-height: 1.7;
+  }
+
+  .meta-body :global(h1),
+  .meta-body :global(h2),
+  .meta-body :global(h3) {
+    font-family: var(--font-serif);
+    font-weight: normal;
+    margin: 1.5em 0 0.5em;
+  }
+
+  .meta-body :global(h1) { font-size: 1.4rem; }
+  .meta-body :global(h2) { font-size: 1.2rem; }
+  .meta-body :global(h3) { font-size: 1.1rem; }
+
+  .meta-body :global(p) {
+    margin: 0 0 1em;
+  }
+
+  .meta-body :global(a) {
+    color: var(--accent);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  .meta-body :global(a:hover) {
+    text-decoration: none;
+  }
+
+  .meta-body :global(ul),
+  .meta-body :global(ol) {
+    margin: 0 0 1em;
+    padding-left: 1.5em;
+  }
+
+  .meta-body :global(li) {
+    margin-bottom: 0.5em;
+  }
+
+  .meta-body :global(blockquote) {
+    margin: 1em 0;
+    padding-left: 1em;
+    border-left: 2px solid var(--border);
+    color: var(--dim);
+    font-style: italic;
+  }
+
+  .meta-body :global(img) {
+    max-width: 100%;
+    height: auto;
+    margin: 1em 0;
+  }
+
+  .meta-body :global(figure) {
+    margin: 1em 0;
+  }
+
+  .meta-body :global(figcaption) {
+    font-size: 0.8rem;
+    color: var(--dim);
+    text-align: center;
+    margin-top: 0.5em;
   }
 
   /* Timeline filters */
@@ -418,7 +416,7 @@ function getCategorySlug(categoryName: string): string {
     white-space: nowrap;
   }
 
-  .meta {
+  .meta-count {
     font-size: 0.75rem;
     color: var(--dim);
     margin-top: 24px;
@@ -426,24 +424,6 @@ function getCategorySlug(categoryName: string): string {
 
   /* Responsive */
   @media (max-width: 600px) {
-    .categories-container {
-      grid-template-columns: 1fr;
-      gap: 16px;
-    }
-
-    .categories-list {
-      flex-direction: row;
-      flex-wrap: wrap;
-      border-right: none;
-      border-bottom: 1px solid var(--border);
-      padding-right: 0;
-      padding-bottom: 12px;
-    }
-
-    .category-btn {
-      padding: 4px 8px;
-    }
-
     .timeline-row {
       grid-template-columns: 28px 1fr;
     }
@@ -451,22 +431,25 @@ function getCategorySlug(categoryName: string): string {
     .timeline-cat {
       display: none;
     }
+
+    .meta-content {
+      margin-left: 8px;
+      padding-left: 16px;
+    }
   }
 </style>
 
 <script>
-  // Category panel switching
-  document.querySelectorAll('.category-btn').forEach(btn => {
+  // Meta dropdown toggle
+  document.querySelectorAll('.meta-toggle').forEach(btn => {
     btn.addEventListener('click', () => {
-      const category = btn.getAttribute('data-category');
+      const expanded = btn.getAttribute('aria-expanded') === 'true';
+      btn.setAttribute('aria-expanded', String(!expanded));
 
-      // Update active button
-      document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-
-      // Update active panel
-      document.querySelectorAll('.category-panel').forEach(p => p.classList.remove('active'));
-      document.querySelector(`[data-panel="${category}"]`)?.classList.add('active');
+      const content = btn.nextElementSibling as HTMLElement;
+      if (content) {
+        content.hidden = expanded;
+      }
     });
   });
 
