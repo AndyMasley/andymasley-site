@@ -41,7 +41,7 @@ function formatDate(date: Date): string {
       {recentPosts.map(post => (
         <li class="content-item">
           <span class="content-item__date">{formatDate(post.date)}</span>
-          <a href={post.url} target="_blank" rel="noopener" class="content-item__link">
+          <a href={`/writing/${post.slug}`} class="content-item__link">
             {post.title}
           </a>
         </li>
