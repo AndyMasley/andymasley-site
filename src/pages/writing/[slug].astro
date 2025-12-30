@@ -94,7 +94,7 @@ export async function getStaticPaths() {
 
     // Fetch full content
     const rawContent = await fetchEAForumPostContent(post.postId);
-    const htmlContent = processEAForumContent(rawContent);
+    const htmlContent = processEAForumContent(rawContent, post.slug);
 
     paths.push({
       params: { slug: post.slug },

@@ -262,28 +262,79 @@ export function parseSubcategoriesFromHTML(html: string): Subcategory[] {
 }
 
 // Fix internal anchor links in Substack HTML
-// Converts href="https://andymasley.substack.com/p/same-post#heading" to href="#heading"
-// when the link points to the same post
+// Converts all internal links to the appropriate format:
+// - Same-post anchors become href="#heading"
+// - Other Substack posts become href="/writing/slug"
+// - Other Substack posts with anchors become href="/writing/slug#heading"
 export function fixAnchorLinks(html: string, currentSlug: string): string {
-  // Pattern to match links to the same post with anchor
-  const samePostAnchorRegex = new RegExp(
-    `href="https://andymasley\\.substack\\.com/p/${currentSlug}#([^"]+)"`,
-    'gi'
+  let fixed = html;
+
+  // Normalize the current slug for comparison (handle URL encoding)
+  const normalizedSlug = decodeURIComponent(currentSlug).toLowerCase();
+
+  // Helper to check if a slug matches the current post
+  const isSamePost = (slug: string): boolean => {
+    const normalized = decodeURIComponent(slug).toLowerCase();
+    return normalized === normalizedSlug;
+  };
+
+  // 1. Handle full URLs to same post with anchor → local anchor
+  // href="https://andymasley.substack.com/p/current-post#heading" → href="#heading"
+  fixed = fixed.replace(
+    /href="https:\/\/andymasley\.substack\.com\/p\/([^"#?]+)#([^"]+)"/gi,
+    (match, slug, anchor) => {
+      if (isSamePost(slug)) {
+        return `href="#${anchor}"`;
+      }
+      // Different post - convert to local URL with anchor
+      return `href="/writing/${slug}#${anchor}"`;
+    }
   );
 
-  // Replace with just the anchor
-  let fixed = html.replace(samePostAnchorRegex, 'href="#$1"');
-
-  // Also convert links to other Substack posts to local URLs
+  // 2. Handle full URLs to same post without anchor → stay on page (remove link or make #top)
+  // This handles links like "Read more" that point to the same post
   fixed = fixed.replace(
-    /href="https:\/\/andymasley\.substack\.com\/p\/([^"#]+)"/gi,
-    'href="/writing/$1"'
+    /href="https:\/\/andymasley\.substack\.com\/p\/([^"#?]+)"/gi,
+    (match, slug) => {
+      if (isSamePost(slug)) {
+        return 'href="#"';
+      }
+      // Different post - convert to local URL
+      return `href="/writing/${slug}"`;
+    }
   );
 
-  // Convert links to other Substack posts with anchors to local URLs
+  // 3. Handle relative URLs: /p/slug#anchor
   fixed = fixed.replace(
-    /href="https:\/\/andymasley\.substack\.com\/p\/([^"#]+)#([^"]+)"/gi,
-    'href="/writing/$1#$2"'
+    /href="\/p\/([^"#?]+)#([^"]+)"/gi,
+    (match, slug, anchor) => {
+      if (isSamePost(slug)) {
+        return `href="#${anchor}"`;
+      }
+      return `href="/writing/${slug}#${anchor}"`;
+    }
+  );
+
+  // 4. Handle relative URLs without anchor: /p/slug
+  fixed = fixed.replace(
+    /href="\/p\/([^"#?]+)"/gi,
+    (match, slug) => {
+      if (isSamePost(slug)) {
+        return 'href="#"';
+      }
+      return `href="/writing/${slug}"`;
+    }
+  );
+
+  // 5. Handle any remaining substack.com/p/ links (with www, etc.)
+  fixed = fixed.replace(
+    /href="https?:\/\/(?:www\.)?andymasley\.substack\.com\/p\/([^"#?]+)(?:#([^"]+))?"/gi,
+    (match, slug, anchor) => {
+      if (isSamePost(slug)) {
+        return anchor ? `href="#${anchor}"` : 'href="#"';
+      }
+      return anchor ? `href="/writing/${slug}#${anchor}"` : `href="/writing/${slug}"`;
+    }
   );
 
   return fixed;

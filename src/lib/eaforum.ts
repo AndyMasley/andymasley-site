@@ -111,8 +111,42 @@ export async function fetchEAForumPostContent(postId: string): Promise<string> {
 }
 
 // Process EA Forum HTML content for display
-export function processEAForumContent(html: string): string {
-  // EA Forum content is generally cleaner, but we might want to do some processing
-  // For now, just return as-is
-  return html;
+// Fixes internal links to point to local pages where applicable
+export function processEAForumContent(html: string, currentSlug?: string): string {
+  let processed = html;
+
+  // Normalize slug for comparison
+  const normalizedSlug = currentSlug ? decodeURIComponent(currentSlug).toLowerCase() : '';
+
+  const isSamePost = (slug: string): boolean => {
+    if (!currentSlug) return false;
+    const normalized = decodeURIComponent(slug).toLowerCase();
+    return normalized === normalizedSlug;
+  };
+
+  // Handle EA Forum links with anchors to same post
+  // href="https://forum.effectivealtruism.org/posts/ID/slug#heading" → href="#heading"
+  processed = processed.replace(
+    /href="https:\/\/forum\.effectivealtruism\.org\/posts\/[^/]+\/([^"#?]+)#([^"]+)"/gi,
+    (match, slug, anchor) => {
+      if (isSamePost(slug)) {
+        return `href="#${anchor}"`;
+      }
+      // Different EA Forum post - keep as external for now since we may not have it locally
+      return match;
+    }
+  );
+
+  // Handle EA Forum links without anchors to same post
+  processed = processed.replace(
+    /href="https:\/\/forum\.effectivealtruism\.org\/posts\/[^/]+\/([^"#?]+)"/gi,
+    (match, slug) => {
+      if (isSamePost(slug)) {
+        return 'href="#"';
+      }
+      return match;
+    }
+  );
+
+  return processed;
 }
