@@ -347,7 +347,7 @@ if (post.source === 'local') {
     display: none !important;
   }
 
-  /* Footnote styling */
+  /* Footnote styling - inline references */
   .prose :global(sup) {
     font-size: 0.7em;
     line-height: 0;
@@ -356,15 +356,26 @@ if (post.source === 'local') {
     top: -0.4em;
   }
 
-  .prose :global(sup a),
-  .prose :global(.footnote-anchor),
-  .prose :global(.footnote-link) {
+  .prose :global(sup a) {
     font-size: inherit;
     text-decoration: none;
     color: var(--accent);
   }
 
   .prose :global(sup a:hover) {
+    text-decoration: underline;
+  }
+
+  /* Substack-specific footnote anchors (inline "1" references) */
+  .prose :global(.footnote-anchor) {
+    font-size: 0.7em;
+    vertical-align: super;
+    line-height: 0;
+    text-decoration: none;
+    color: var(--accent);
+  }
+
+  .prose :global(.footnote-anchor:hover) {
     text-decoration: underline;
   }
 
@@ -376,6 +387,13 @@ if (post.source === 'local') {
     margin-top: var(--space-xl);
     padding-top: var(--space-md);
     border-top: 1px solid var(--border);
+  }
+
+  .prose :global(.footnote .footnote-number) {
+    font-size: 0.85em;
+    margin-right: var(--space-sm);
+    color: var(--accent);
+    text-decoration: none;
   }
 
   .prose :global(.footnotes li),
