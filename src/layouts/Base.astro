@@ -43,9 +43,30 @@ function isActive(href: string): boolean {
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 
   <script is:inline>
-    const theme = localStorage.getItem('theme') ||
-      (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-    document.documentElement.setAttribute('data-theme', theme);
+    // Initialize theme immediately to prevent flash
+    (function() {
+      const stored = localStorage.getItem('theme');
+      const theme = stored || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+      document.documentElement.setAttribute('data-theme', theme);
+
+      // Persist theme across View Transitions
+      document.addEventListener('astro:after-swap', () => {
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme) {
+          document.documentElement.setAttribute('data-theme', savedTheme);
+        }
+      });
+
+      // Handle tab visibility changes - restore from localStorage
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') {
+          const savedTheme = localStorage.getItem('theme');
+          if (savedTheme) {
+            document.documentElement.setAttribute('data-theme', savedTheme);
+          }
+        }
+      });
+    })();
   </script>
 </head>
 <body>
