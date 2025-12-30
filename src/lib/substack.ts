@@ -8,6 +8,7 @@ export interface SubstackPost {
   description: string;
   url: string;
   category: string;
+  source: 'substack';
 }
 
 // Category definitions with editable overviews
@@ -119,6 +120,7 @@ export async function fetchSubstackPosts(): Promise<SubstackPost[]> {
           description: post.subtitle || post.description || '',
           url: post.canonical_url,
           category: getSectionCategory(post.section_id),
+          source: 'substack',
         });
       }
 
@@ -257,4 +259,45 @@ export function parseSubcategoriesFromHTML(html: string): Subcategory[] {
   }
 
   return subcategories;
+}
+
+// Fix internal anchor links in Substack HTML
+// Converts href="https://andymasley.substack.com/p/same-post#heading" to href="#heading"
+// when the link points to the same post
+export function fixAnchorLinks(html: string, currentSlug: string): string {
+  // Pattern to match links to the same post with anchor
+  const samePostAnchorRegex = new RegExp(
+    `href="https://andymasley\\.substack\\.com/p/${currentSlug}#([^"]+)"`,
+    'gi'
+  );
+
+  // Replace with just the anchor
+  let fixed = html.replace(samePostAnchorRegex, 'href="#$1"');
+
+  // Also convert links to other Substack posts to local URLs
+  fixed = fixed.replace(
+    /href="https:\/\/andymasley\.substack\.com\/p\/([^"#]+)"/gi,
+    'href="/writing/$1"'
+  );
+
+  // Convert links to other Substack posts with anchors to local URLs
+  fixed = fixed.replace(
+    /href="https:\/\/andymasley\.substack\.com\/p\/([^"#]+)#([^"]+)"/gi,
+    'href="/writing/$1#$2"'
+  );
+
+  return fixed;
+}
+
+// Process HTML content for display
+export function processPostContent(html: string, slug: string): string {
+  // Fix anchor links
+  let processed = fixAnchorLinks(html, slug);
+
+  // Remove Substack's subscription widgets and buttons
+  processed = processed.replace(/<div class="subscription-widget[^>]*>[\s\S]*?<\/div>/gi, '');
+  processed = processed.replace(/<div class="subscribe-widget[^>]*>[\s\S]*?<\/div>/gi, '');
+  processed = processed.replace(/<a[^>]*class="[^"]*button[^"]*"[^>]*>Subscribe<\/a>/gi, '');
+
+  return processed;
 }

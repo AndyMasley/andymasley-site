@@ -238,7 +238,7 @@ function formatBylineDate(dateStr: string): string {
                     <div class="timeline-row" data-cat={getCategorySlug(post.category)} data-slug={post.slug} data-month={`${yearGroup.year}-${monthGroup.month}`} data-month-label={monthGroup.label}>
                       <span class="timeline-month">{i === 0 ? monthGroup.label : ''}</span>
                       <span class="timeline-day">{getDay(post.date)}</span>
-                      <a href={post.url} target="_blank" rel="noopener" class="timeline-link">
+                      <a href={`/writing/${post.slug}`} class="timeline-link">
                         {post.title}
                       </a>
                       <span class="timeline-cat">{getShortName(post.category)}</span>
