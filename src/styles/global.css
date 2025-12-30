@@ -728,6 +728,103 @@ a:hover {
 }
 
 /* ============================================
+   Search Modal
+   ============================================ */
+
+.search-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 15vh;
+}
+
+.search-modal__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.search-modal__content {
+  position: relative;
+  width: 90%;
+  max-width: 500px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.search-modal__input {
+  width: 100%;
+  padding: var(--space-md);
+  font-family: var(--font-serif);
+  font-size: var(--font-size-body);
+  border: none;
+  border-bottom: 1px solid var(--border);
+  background: transparent;
+  color: var(--text);
+  outline: none;
+}
+
+.search-modal__input::placeholder {
+  color: var(--dim);
+}
+
+.search-modal__results {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.search-modal__result {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-sm) var(--space-md);
+  text-decoration: none;
+  color: var(--text);
+  border-bottom: 1px solid var(--border);
+}
+
+.search-modal__result:last-child {
+  border-bottom: none;
+}
+
+.search-modal__result:hover {
+  background: var(--border);
+}
+
+.search-modal__result-title {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.search-modal__result-type {
+  font-size: var(--font-size-mono);
+  font-family: var(--font-mono);
+  color: var(--dim);
+  margin-left: var(--space-md);
+}
+
+.search-modal__empty {
+  padding: var(--space-md);
+  color: var(--dim);
+  text-align: center;
+}
+
+.search-modal__hint {
+  padding: var(--space-sm) var(--space-md);
+  font-size: var(--font-size-mono);
+  font-family: var(--font-mono);
+  color: var(--dim);
+  text-align: right;
+  border-top: 1px solid var(--border);
+}
+
+/* ============================================
    Responsive
    ============================================ */
 
