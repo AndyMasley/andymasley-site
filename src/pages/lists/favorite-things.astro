@@ -195,46 +195,46 @@ import Base from '@/layouts/Base.astro';
 
     <details class="accordion">
       <summary>Quotes</summary>
-      <div class="accordion-content">
-        <blockquote>
+      <div class="accordion-content quotes-section">
+        <div class="quote">
           <p>I am not interested in erecting a building but in having the foundations of possible buildings transparently before me. [...] If the place I want to reach could only be climbed up to by a ladder, I would give up trying to get there. For the place to which I really have to go is one that I must actually be at already. Anything that can be reached with a ladder does not interest me. [...] You must climb down to the sources to see them all side by side, the disregarded & the preferred.</p>
-          <cite>— Wittgenstein</cite>
-        </blockquote>
-        <blockquote>
+          <span class="attribution">— Wittgenstein</span>
+        </div>
+        <div class="quote">
           <p>This capability, seen from the human and animal side, calls for the gradual formation of an interdependent world in which all species will enjoy cooperative and mutually supportive relations with one another. Nature is not that way and has never been. So it calls, in a very general way, for the gradual supplanting of the natural by the just.</p>
-          <cite>— Nussbaum</cite>
-        </blockquote>
-        <blockquote>
+          <span class="attribution">— Nussbaum</span>
+        </div>
+        <div class="quote">
           <p>Philosophy is really homesickness. It is the urge to be at home everywhere.</p>
-          <cite>— Novalis</cite>
-        </blockquote>
-        <blockquote>
+          <span class="attribution">— Novalis</span>
+        </div>
+        <div class="quote">
           <p>The inferno of the living is not something that will be; if there is one, it is what is already here, the inferno where we live every day, that we form by being together. There are two ways to escape suffering it. The first is easy for many: accept the inferno and become such a part of it that you can no longer see it. The second is risky and demands constant vigilance and apprehension: seek and learn to recognize who and what, in the midst of inferno, are not inferno, then make them endure, give them space.</p>
-          <cite>— Italo Calvino</cite>
-        </blockquote>
-        <blockquote>
+          <span class="attribution">— Italo Calvino</span>
+        </div>
+        <div class="quote">
           <p>There are only two true things: intelligent religion and youthful love, which is to say the future and the present. The rest is not worth the trouble.</p>
-          <cite>— François-René de Chateaubriand</cite>
-        </blockquote>
-        <blockquote>
+          <span class="attribution">— François-René de Chateaubriand</span>
+        </div>
+        <div class="quote">
           <p>It is, therefore, a great source of virtue for the practiced mind to learn, bit by bit, first to change about in visible and transitory things, so that afterwards it may be possible to leave them behind altogether. The man who finds his homeland sweet is still a tender beginner; he to whom every soil is as his native one is already strong; but he is perfect to whom the entire world is as a foreign land. The tender soul has fixed his love on one spot in the world; the strong man has extended his love to all places; the perfect man has extinguished his. From boyhood I have dwelt on foreign soil and I know with what grief sometimes the mind takes leave of the narrow hearth of a peasant's hut, and I know too how frankly it afterwards disdains marble firesides and panelled halls.</p>
-          <cite>— Hugh of Saint Victor</cite>
-        </blockquote>
-        <blockquote>
+          <span class="attribution">— Hugh of Saint Victor</span>
+        </div>
+        <div class="quote">
           <p>Familiar words, easy to take for granted; easy to misconstrue . . . This idea of the pursuit of happiness is at the heart of the civilization to so many outside it or on the periphery. I find it marvelous to contemplate to what an extent, after two centuries, and after the terrible history of the earlier part of this century, the idea has come to a kind of fruition. It is an elastic idea; it fits all men. It implies a certain kind of society, a certain kind of awakened spirit. So much is contained in it: the idea of the individual, responsibility, choice, the life of the intellect, the idea of vocation and perfectibility and achievement. It is an immense human idea. It cannot be reduced to a fixed system. It cannot generate fanaticism. But it is known to exist; and because of that, other more rigid systems in the end blow away.</p>
-          <cite>— V.S. Naipaul</cite>
-        </blockquote>
-        <blockquote>
+          <span class="attribution">— V.S. Naipaul</span>
+        </div>
+        <div class="quote">
           <p>Each day, you need to do all of the things that are necessary for you to succeed.</p>
-        </blockquote>
-        <blockquote>
+        </div>
+        <div class="quote">
           <p>When you think like a hermit you forget what you know.</p>
-          <cite>— Bonnie Prince Billy</cite>
-        </blockquote>
-        <blockquote>
+          <span class="attribution">— Bonnie Prince Billy</span>
+        </div>
+        <div class="quote">
           <p>I don't know why we are here, but I'm pretty sure that it is not in order to enjoy ourselves.</p>
-          <cite>— Wittgenstein</cite>
-        </blockquote>
+          <span class="attribution">— Wittgenstein</span>
+        </div>
       </div>
     </details>
   </div>
@@ -341,19 +341,23 @@ import Base from '@/layouts/Base.astro';
     text-underline-offset: var(--underline-offset);
   }
 
-  .accordion-content blockquote {
-    border-left: 3px solid var(--accent);
-    padding-left: var(--space-md);
-    margin: var(--space-md) 0;
-    color: var(--dim);
-    font-style: italic;
+  .quotes-section .quote {
+    margin-bottom: var(--space-lg);
   }
 
-  .accordion-content blockquote cite {
+  .quotes-section .quote:last-child {
+    margin-bottom: 0;
+  }
+
+  .quotes-section .quote p {
+    margin-bottom: var(--space-xs);
+  }
+
+  .quotes-section .attribution {
     display: block;
-    margin-top: var(--space-sm);
-    font-style: normal;
-    font-size: var(--font-size-ui);
+    font-size: 0.85em;
+    color: var(--dim);
+    font-style: italic;
   }
 
   .accordion-content p {
