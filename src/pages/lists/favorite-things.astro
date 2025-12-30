@@ -4,9 +4,9 @@ import Base from '@/layouts/Base.astro';
 
 <Base title="Favorite things" description="A list of my favorite things">
   <div class="favorite-things">
-    <details class="accordion">
-      <summary>Books</summary>
-      <div class="accordion-content">
+    <div class="category" data-category="books">
+      <button class="category-title">Books</button>
+      <div class="category-content">
         <h3>Fiction</h3>
         <ul>
           <li>In Search of Lost Time — Marcel Proust</li>
@@ -37,11 +37,11 @@ import Base from '@/layouts/Base.astro';
           <li>Selected Non-Fictions — Jorge Luis Borges</li>
         </ul>
       </div>
-    </details>
+    </div>
 
-    <details class="accordion">
-      <summary>Movies</summary>
-      <div class="accordion-content">
+    <div class="category" data-category="movies">
+      <button class="category-title">Movies</button>
+      <div class="category-content">
         <ul>
           <li>Spirited Away</li>
           <li>Love Streams</li>
@@ -56,11 +56,11 @@ import Base from '@/layouts/Base.astro';
         </ul>
         <p><a href="https://letterboxd.com/andymasley/films/by/entry-rating/">More on my Letterboxd here</a>. 5 stars = raw kino.</p>
       </div>
-    </details>
+    </div>
 
-    <details class="accordion">
-      <summary>Music</summary>
-      <div class="accordion-content">
+    <div class="category" data-category="music">
+      <button class="category-title">Music</button>
+      <div class="category-content">
         <h3>Albums</h3>
         <ul>
           <li><a href="https://open.spotify.com/album/0HHmJpwOXXRJu9HI9iQiEO">White Light, White Heat</a> — The Velvet Underground</li>
@@ -109,11 +109,11 @@ import Base from '@/layouts/Base.astro';
           <li><a href="https://open.spotify.com/track/7Me0vOSlJfaPY7Pc4GeItd">Marquee Moon</a> — Television</li>
         </ul>
       </div>
-    </details>
+    </div>
 
-    <details class="accordion">
-      <summary>Places</summary>
-      <div class="accordion-content">
+    <div class="category" data-category="places">
+      <button class="category-title">Places</button>
+      <div class="category-content">
         <ul>
           <li>The Montague Bookmill</li>
           <li>The Pioneer Valley in general</li>
@@ -139,11 +139,11 @@ import Base from '@/layouts/Base.astro';
           <li>Holyoke Hummus</li>
         </ul>
       </div>
-    </details>
+    </div>
 
-    <details class="accordion">
-      <summary>Quotes</summary>
-      <div class="accordion-content quotes-section">
+    <div class="category" data-category="quotes">
+      <button class="category-title">Quotes</button>
+      <div class="category-content quotes-section">
         <div class="quote">
           <p>I am not interested in erecting a building but in having the foundations of possible buildings transparently before me. [...] If the place I want to reach could only be climbed up to by a ladder, I would give up trying to get there. For the place to which I really have to go is one that I must actually be at already. Anything that can be reached with a ladder does not interest me. [...] You must climb down to the sources to see them all side by side, the disregarded & the preferred.</p>
           <span class="attribution">— Wittgenstein</span>
@@ -184,11 +184,11 @@ import Base from '@/layouts/Base.astro';
           <span class="attribution">— Wittgenstein</span>
         </div>
       </div>
-    </details>
+    </div>
 
-    <details class="accordion">
-      <summary>Simple guiding ideas</summary>
-      <div class="accordion-content">
+    <div class="category" data-category="ideas">
+      <button class="category-title">Simple guiding ideas</button>
+      <div class="category-content">
         <ul>
           <li>The laws of physics are not violated.</li>
           <li>Mental functionalism is probably true.</li>
@@ -215,11 +215,11 @@ import Base from '@/layouts/Base.astro';
           <li>The recent past was probably worse than you think.</li>
         </ul>
       </div>
-    </details>
+    </div>
 
-    <details class="accordion">
-      <summary>TV</summary>
-      <div class="accordion-content">
+    <div class="category" data-category="tv">
+      <button class="category-title">TV</button>
+      <div class="category-content">
         <ul>
           <li>The Sopranos</li>
           <li>Fleabag</li>
@@ -229,14 +229,14 @@ import Base from '@/layouts/Base.astro';
           <li>Serial Experiments Lain</li>
         </ul>
       </div>
-    </details>
+    </div>
 
-    <details class="accordion">
-      <summary>Video games</summary>
-      <div class="accordion-content">
+    <div class="category" data-category="games">
+      <button class="category-title">Video games</button>
+      <div class="category-content">
         <p>It's very very easy for me to get addicted to things, and life is short, so I mostly don't play video games except with friends, and rarely. My favorites are Factorio, Age of Empires 2, Portal, and Minecraft. All obvious answers.</p>
       </div>
-    </details>
+    </div>
   </div>
 
   <hr class="divider" />
@@ -244,101 +244,146 @@ import Base from '@/layouts/Base.astro';
   <div class="back-link">
     <a href="/lists">← back to lists</a>
   </div>
+
+  <script>
+    document.addEventListener('astro:page-load', initFavoriteThings);
+    initFavoriteThings();
+
+    function initFavoriteThings() {
+      const categories = document.querySelectorAll('.category');
+
+      categories.forEach(category => {
+        const title = category.querySelector('.category-title');
+        const content = category.querySelector('.category-content');
+
+        if (!title || !content) return;
+
+        title.addEventListener('click', () => {
+          const isOpen = category.classList.contains('open');
+
+          if (isOpen) {
+            // Close this category
+            content.style.maxHeight = content.scrollHeight + 'px';
+            requestAnimationFrame(() => {
+              content.style.maxHeight = '0';
+              content.style.opacity = '0';
+            });
+            category.classList.remove('open');
+          } else {
+            // Open this category
+            category.classList.add('open');
+            content.style.maxHeight = content.scrollHeight + 'px';
+            content.style.opacity = '1';
+
+            // Remove max-height after animation to allow dynamic content
+            content.addEventListener('transitionend', function handler() {
+              if (category.classList.contains('open')) {
+                content.style.maxHeight = 'none';
+              }
+              content.removeEventListener('transitionend', handler);
+            });
+          }
+        });
+      });
+    }
+  </script>
 </Base>
 
 <style>
   .favorite-things {
     display: flex;
     flex-direction: column;
-    gap: var(--space-sm);
   }
 
-  .accordion {
-    border: 1px solid var(--border);
+  .category {
+    border-bottom: 1px solid var(--border);
   }
 
-  .accordion summary {
-    padding: var(--space-md);
+  .category:first-child {
+    border-top: 1px solid var(--border);
+  }
+
+  .category-title {
+    display: block;
+    width: 100%;
+    background: none;
+    border: none;
+    padding: var(--space-md) 0;
+    text-align: left;
     cursor: pointer;
-    font-weight: var(--font-weight-heading);
     font-size: var(--font-size-h3);
-    list-style: none;
-    display: flex;
-    align-items: center;
-    gap: var(--space-sm);
+    font-weight: var(--font-weight-heading);
+    font-family: inherit;
+    color: var(--text);
+    transition: color 0.2s ease;
   }
 
-  .accordion summary::-webkit-details-marker {
-    display: none;
+  .category-title:hover {
+    color: var(--accent);
   }
 
-  .accordion summary::before {
-    content: '▸';
-    display: inline-block;
-    transition: transform 0.3s ease;
+  .category.open .category-title {
+    color: var(--accent);
   }
 
-  .accordion[open] summary::before {
-    transform: rotate(90deg);
+  .category-content {
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden;
+    transition: max-height 0.4s ease, opacity 0.3s ease;
   }
 
-  .accordion summary:hover {
-    background: var(--border);
+  .category.open .category-content {
+    padding-bottom: var(--space-lg);
   }
 
-  .accordion-content {
-    padding: 0 var(--space-md) var(--space-md) var(--space-md);
-    animation: slideDown 0.3s ease;
-  }
-
-  @keyframes slideDown {
-    from {
-      opacity: 0;
-      max-height: 0;
-      transform: translateY(-10px);
-    }
-    to {
-      opacity: 1;
-      max-height: 2000px;
-      transform: translateY(0);
-    }
-  }
-
-  .accordion-content h3 {
+  .category-content h3 {
     font-size: var(--font-size-h3);
     font-weight: var(--font-weight-heading);
     margin-top: var(--space-md);
     margin-bottom: var(--space-sm);
   }
 
-  .accordion-content h3:first-child {
+  .category-content h3:first-child {
     margin-top: 0;
   }
 
-  .accordion-content h4 {
+  .category-content h4 {
     font-size: var(--font-size-body);
     font-weight: var(--font-weight-heading);
     margin-top: var(--space-md);
     margin-bottom: var(--space-sm);
   }
 
-  .accordion-content ul {
+  .category-content ul {
     padding-left: var(--space-lg);
     margin-bottom: var(--space-sm);
   }
 
-  .accordion-content li {
+  .category-content ul:first-child {
+    margin-top: 0;
+  }
+
+  .category-content li {
     margin-bottom: var(--space-xs);
   }
 
-  .accordion-content li ul {
+  .category-content li ul {
     margin-top: var(--space-xs);
   }
 
-  .accordion-content a {
+  .category-content a {
     color: var(--accent);
     text-decoration: underline;
     text-underline-offset: var(--underline-offset);
+  }
+
+  .category-content p {
+    margin-bottom: var(--space-md);
+  }
+
+  .category-content p:last-child {
+    margin-bottom: 0;
   }
 
   .quotes-section .quote {
@@ -358,9 +403,5 @@ import Base from '@/layouts/Base.astro';
     font-size: 0.85em;
     color: var(--dim);
     font-style: italic;
-  }
-
-  .accordion-content p {
-    margin-bottom: var(--space-md);
   }
 </style>
