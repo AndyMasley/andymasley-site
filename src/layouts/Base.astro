@@ -89,9 +89,6 @@ function isActive(href: string): boolean {
         </a>
 
         <div class="header__controls">
-          <button class="header__control" id="search-toggle" onclick="document.getElementById('search-modal').style.display='flex'; document.getElementById('search-input').focus();">
-            [search]
-          </button>
           <button class="header__control" id="theme-toggle">
             [<span id="theme-label">dark</span>]
           </button>
@@ -123,21 +120,6 @@ function isActive(href: string): boolean {
     </footer>
   </main>
 
-  <!-- Search Modal -->
-  <div id="search-modal" class="search-modal" style="display: none;">
-    <div class="search-modal__backdrop" onclick="document.getElementById('search-modal').style.display='none';"></div>
-    <div class="search-modal__content">
-      <input
-        type="text"
-        id="search-input"
-        class="search-modal__input"
-        placeholder="Search..."
-        autocomplete="off"
-      />
-      <div id="search-results" class="search-modal__results"></div>
-      <div class="search-modal__hint">esc to close</div>
-    </div>
-  </div>
 
 
   <script>
@@ -191,83 +173,5 @@ function isActive(href: string): boolean {
     initReadingProgress();
   </script>
 
-  <script is:inline>
-    // Search functionality
-    var searchIndex = null;
-
-    async function loadSearchIndex() {
-      if (searchIndex) return searchIndex;
-      try {
-        var response = await fetch('/search.json');
-        searchIndex = await response.json();
-        return searchIndex;
-      } catch (e) {
-        console.error('Failed to load search index:', e);
-        return [];
-      }
-    }
-
-    // Preload search index
-    loadSearchIndex();
-
-    // Global keyboard handler
-    document.addEventListener('keydown', function(e) {
-      var modal = document.getElementById('search-modal');
-      // cmd/ctrl + k to open
-      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
-        e.preventDefault();
-        modal.style.display = 'flex';
-        document.getElementById('search-input').focus();
-      }
-      // esc to close
-      if (e.key === 'Escape' && modal && modal.style.display === 'flex') {
-        modal.style.display = 'none';
-      }
-    });
-
-    // Search input handler
-    document.addEventListener('input', async function(e) {
-      if (e.target.id !== 'search-input') return;
-
-      var query = e.target.value.toLowerCase().trim();
-      var resultsEl = document.getElementById('search-results');
-
-      if (!query) {
-        resultsEl.innerHTML = '';
-        return;
-      }
-
-      var index = await loadSearchIndex();
-      var results = index.filter(function(item) {
-        var titleMatch = item.title.toLowerCase().includes(query);
-        var descMatch = item.description && item.description.toLowerCase().includes(query);
-        var tagMatch = item.tags && item.tags.some(function(t) { return t.toLowerCase().includes(query); });
-        return titleMatch || descMatch || tagMatch;
-      }).slice(0, 10);
-
-      if (results.length === 0) {
-        resultsEl.innerHTML = '<div class="search-modal__empty">No results found</div>';
-        return;
-      }
-
-      resultsEl.innerHTML = results.map(function(item) {
-        return '<a href="' + item.url + '" class="search-modal__result">' +
-          '<span class="search-modal__result-title">' + item.title + '</span>' +
-          '<span class="search-modal__result-type">' + item.type + '</span>' +
-          '</a>';
-      }).join('');
-    });
-
-    // Enter to navigate to first result
-    document.addEventListener('keydown', function(e) {
-      if (e.target.id !== 'search-input') return;
-      if (e.key === 'Enter') {
-        var firstResult = document.querySelector('#search-results a');
-        if (firstResult) {
-          window.location.href = firstResult.getAttribute('href');
-        }
-      }
-    });
-  </script>
 </body>
 </html>
