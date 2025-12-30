@@ -1,6 +1,6 @@
 ---
 import Base from '@/layouts/Base.astro';
-import { fetchSubstackPosts, fetchPostContent, categoryConfigs } from '@/lib/substack';
+import { fetchSubstackPosts, fetchPostContent, categoryConfigs, parseSubcategoriesFromHTML } from '@/lib/substack';
 import { metaPosts, getMetaPostSlugs } from '@/lib/meta-posts';
 import { bylines } from '@/lib/bylines';
 import { fetchEAForumPosts } from '@/lib/eaforum';
@@ -52,6 +52,10 @@ const metaPostsWithContent = await Promise.all(
     return { ...meta, content };
   })
 );
+
+// Parse subcategories from AI & environment meta post
+const aiEnvMeta = metaPostsWithContent.find(m => m.slug === 'ai-and-the-environment');
+const aiEnvSubcategories = aiEnvMeta ? parseSubcategoriesFromHTML(aiEnvMeta.content) : [];
 
 // Group posts by year and month for timeline
 interface MonthGroup {
@@ -157,12 +161,6 @@ function formatBylineDate(dateStr: string): string {
 ---
 
 <Base title="Writing">
-  <div class="page-header">
-    <h2 class="page-header__title">Writing</h2>
-  </div>
-
-  <hr class="divider" />
-
   <!-- BLOG DROPDOWN -->
   <div class="top-dropdown">
     <button class="top-toggle" aria-expanded="true" data-section="blog">
@@ -197,10 +195,34 @@ function formatBylineDate(dateStr: string): string {
       <!-- TIMELINE SUBSECTION -->
       <div class="section-header">Timeline</div>
       <div class="timeline-filters">
-        <button class="filter-btn active" data-filter="all">All</button>
         {activeCategories.map(cat => (
-          <button class="filter-btn" data-filter={cat.slug}>
+          <button class="filter-btn" data-filter={cat.slug} data-has-subcategories={cat.slug === 'ai-environment' ? 'true' : undefined}>
             {getShortName(cat.name)}
+          </button>
+        ))}
+      </div>
+
+      <div class="subcategory-filters" id="subcategory-filters">
+        <button
+          class="subcategory-btn"
+          data-subcategory="start-here"
+          data-posts={JSON.stringify([
+            'a-short-summary-of-my-argument-that',
+            'chatgpt-cheat-sheet',
+            'for-the-climate-little-things-dont',
+            'mapping-the-ai-and-environment-debate',
+            'computing-is-efficient',
+            'what-a-data-center-is',
+            'requests-for-journalists-covering-ai',
+            'the-ai-water-issue-is-fake'
+          ])}
+          data-custom-order="true"
+        >
+          Start Here
+        </button>
+        {aiEnvSubcategories.map(sub => (
+          <button class="subcategory-btn" data-subcategory={sub.slug} data-posts={JSON.stringify(sub.postSlugs)}>
+            {sub.name}
           </button>
         ))}
       </div>
@@ -213,7 +235,7 @@ function formatBylineDate(dateStr: string): string {
               {yearGroup.months.map(monthGroup => (
                 <>
                   {monthGroup.posts.map((post, i) => (
-                    <div class="timeline-row" data-cat={getCategorySlug(post.category)} data-month={`${yearGroup.year}-${monthGroup.month}`} data-month-label={monthGroup.label}>
+                    <div class="timeline-row" data-cat={getCategorySlug(post.category)} data-slug={post.slug} data-month={`${yearGroup.year}-${monthGroup.month}`} data-month-label={monthGroup.label}>
                       <span class="timeline-month">{i === 0 ? monthGroup.label : ''}</span>
                       <span class="timeline-day">{getDay(post.date)}</span>
                       <a href={post.url} target="_blank" rel="noopener" class="timeline-link">
@@ -591,6 +613,69 @@ function formatBylineDate(dateStr: string): string {
     color: white;
   }
 
+  /* Subcategory filters */
+  .subcategory-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-left: 12px;
+    padding-left: 12px;
+    border-left: 2px solid var(--border);
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    margin-bottom: 0;
+    transform: translateY(-8px);
+    transition: max-height 0.3s ease, opacity 0.25s ease, margin-bottom 0.3s ease, transform 0.25s ease;
+  }
+
+  .subcategory-filters.visible {
+    max-height: 200px;
+    opacity: 1;
+    margin-bottom: 16px;
+    transform: translateY(0);
+  }
+
+  .subcategory-btn {
+    background: none;
+    border: 1px solid var(--border);
+    padding: 2px 8px;
+    font-family: inherit;
+    font-size: 0.7rem;
+    color: var(--dim);
+    cursor: pointer;
+    border-radius: 3px;
+    transition: all 0.15s ease, transform 0.25s ease, opacity 0.25s ease;
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+
+  .subcategory-filters.visible .subcategory-btn {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* Stagger the button animations */
+  .subcategory-filters.visible .subcategory-btn:nth-child(1) { transition-delay: 0.02s; }
+  .subcategory-filters.visible .subcategory-btn:nth-child(2) { transition-delay: 0.04s; }
+  .subcategory-filters.visible .subcategory-btn:nth-child(3) { transition-delay: 0.06s; }
+  .subcategory-filters.visible .subcategory-btn:nth-child(4) { transition-delay: 0.08s; }
+  .subcategory-filters.visible .subcategory-btn:nth-child(5) { transition-delay: 0.10s; }
+  .subcategory-filters.visible .subcategory-btn:nth-child(6) { transition-delay: 0.12s; }
+  .subcategory-filters.visible .subcategory-btn:nth-child(7) { transition-delay: 0.14s; }
+  .subcategory-filters.visible .subcategory-btn:nth-child(8) { transition-delay: 0.16s; }
+
+  .subcategory-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  .subcategory-btn.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: white;
+  }
+
   /* Timeline */
   .timeline {
     display: flex;
@@ -819,71 +904,232 @@ function formatBylineDate(dateStr: string): string {
     });
 
     // Timeline filtering
+    const subcategoryFilters = document.getElementById('subcategory-filters');
+
+    function updateTimelineDisplay() {
+      // Hide empty years
+      document.querySelectorAll('.year-group').forEach(group => {
+        const visiblePosts = group.querySelectorAll('.timeline-row:not(.hidden)');
+        if (visiblePosts.length === 0) {
+          group.classList.add('hidden');
+        } else {
+          group.classList.remove('hidden');
+        }
+      });
+
+      // Update month labels (show on first visible post of each month)
+      document.querySelectorAll('.year-group').forEach(yearGroup => {
+        const seenMonths = new Set();
+        yearGroup.querySelectorAll('.timeline-row').forEach(row => {
+          const monthLabel = row.querySelector('.timeline-month') as HTMLElement;
+          const month = row.getAttribute('data-month');
+          const label = row.getAttribute('data-month-label') || '';
+          if (monthLabel && month) {
+            if (row.classList.contains('hidden')) {
+              monthLabel.textContent = '';
+            } else if (!seenMonths.has(month)) {
+              seenMonths.add(month);
+              monthLabel.textContent = label;
+            } else {
+              monthLabel.textContent = '';
+            }
+          }
+        });
+      });
+
+      // Update post count
+      const visibleCount = document.querySelectorAll('.timeline-row:not(.hidden)').length;
+      const postCountEl = document.getElementById('post-count');
+      if (postCountEl) {
+        postCountEl.textContent = `${visibleCount} posts`;
+      }
+    }
+
+    function filterByCategory(filter: string) {
+      document.querySelectorAll('.timeline-row').forEach(row => {
+        const cat = row.getAttribute('data-cat');
+        if (filter === 'all' || cat === filter) {
+          row.classList.remove('hidden');
+        } else {
+          row.classList.add('hidden');
+        }
+      });
+
+      // Hide category column when filtering by specific category
+      document.querySelectorAll('.timeline-cat').forEach(cat => {
+        if (filter === 'all') {
+          (cat as HTMLElement).style.display = '';
+        } else {
+          (cat as HTMLElement).style.display = 'none';
+        }
+      });
+
+      updateTimelineDisplay();
+    }
+
+    function filterByPostSlugs(slugs: string[]) {
+      document.querySelectorAll('.timeline-row').forEach(row => {
+        const slug = row.getAttribute('data-slug');
+        if (slug && slugs.includes(slug)) {
+          row.classList.remove('hidden');
+        } else {
+          row.classList.add('hidden');
+        }
+      });
+
+      // Hide category column when filtering by subcategory
+      document.querySelectorAll('.timeline-cat').forEach(cat => {
+        (cat as HTMLElement).style.display = 'none';
+      });
+
+      updateTimelineDisplay();
+    }
+
+    // Main category filter buttons
     document.querySelectorAll('.filter-btn').forEach(btn => {
       const newBtn = btn.cloneNode(true) as HTMLElement;
       btn.parentNode?.replaceChild(newBtn, btn);
 
       newBtn.addEventListener('click', () => {
         const filter = newBtn.getAttribute('data-filter');
+        const hasSubcategories = newBtn.getAttribute('data-has-subcategories') === 'true';
+        const isActive = newBtn.classList.contains('active');
+
+        // If already active, deselect and show all posts
+        if (isActive) {
+          newBtn.classList.remove('active');
+          document.querySelectorAll('.subcategory-btn').forEach(b => b.classList.remove('active'));
+          if (subcategoryFilters) {
+            subcategoryFilters.classList.remove('visible');
+          }
+          // Restore timeline order before filtering
+          const timeline = document.querySelector('.timeline') as HTMLElement;
+          if (timeline && (window as any).originalTimelineHTML) {
+            timeline.innerHTML = (window as any).originalTimelineHTML;
+          }
+          filterByCategory('all');
+          return;
+        }
 
         // Update active button
         document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.subcategory-btn').forEach(b => b.classList.remove('active'));
         newBtn.classList.add('active');
 
+        // Restore timeline order before filtering
+        const timeline = document.querySelector('.timeline') as HTMLElement;
+        if (timeline && (window as any).originalTimelineHTML) {
+          timeline.innerHTML = (window as any).originalTimelineHTML;
+        }
+
+        // Show/hide subcategories
+        if (hasSubcategories && subcategoryFilters) {
+          subcategoryFilters.classList.add('visible');
+        } else if (subcategoryFilters) {
+          subcategoryFilters.classList.remove('visible');
+        }
+
         // Filter posts
-        document.querySelectorAll('.timeline-row').forEach(row => {
-          const cat = row.getAttribute('data-cat');
-          if (filter === 'all' || cat === filter) {
-            row.classList.remove('hidden');
-          } else {
-            row.classList.add('hidden');
-          }
+        if (filter) {
+          filterByCategory(filter);
+        }
+      });
+    });
+
+    // Subcategory filter buttons
+    const timeline = document.querySelector('.timeline') as HTMLElement;
+    if (timeline && !(window as any).originalTimelineHTML) {
+      (window as any).originalTimelineHTML = timeline.innerHTML;
+    }
+
+    function restoreTimelineOrder() {
+      if (timeline && (window as any).originalTimelineHTML) {
+        timeline.innerHTML = (window as any).originalTimelineHTML;
+      }
+    }
+
+    function filterByPostSlugsWithOrder(slugs: string[]) {
+      if (!timeline) return;
+
+      // Get all timeline rows
+      const allRows = Array.from(document.querySelectorAll('.timeline-row')) as HTMLElement[];
+
+      // Filter to matching rows and sort by the slug order
+      const matchingRows = allRows
+        .filter(row => {
+          const slug = row.getAttribute('data-slug');
+          return slug && slugs.includes(slug);
+        })
+        .sort((a, b) => {
+          const slugA = a.getAttribute('data-slug') || '';
+          const slugB = b.getAttribute('data-slug') || '';
+          return slugs.indexOf(slugA) - slugs.indexOf(slugB);
         });
 
-        // Hide category column when filtering by specific category
-        document.querySelectorAll('.timeline-cat').forEach(cat => {
-          if (filter === 'all') {
-            (cat as HTMLElement).style.display = '';
-          } else {
-            (cat as HTMLElement).style.display = 'none';
-          }
-        });
+      // Clear timeline and add a simple ordered list
+      timeline.innerHTML = '';
+      const orderedContainer = document.createElement('div');
+      orderedContainer.className = 'year-group';
+      orderedContainer.innerHTML = '<div class="year-header">Start Here</div><div class="year-posts"></div>';
+      const yearPosts = orderedContainer.querySelector('.year-posts') as HTMLElement;
 
-        // Hide empty years
-        document.querySelectorAll('.year-group').forEach(group => {
-          const visiblePosts = group.querySelectorAll('.timeline-row:not(.hidden)');
-          if (visiblePosts.length === 0) {
-            group.classList.add('hidden');
-          } else {
-            group.classList.remove('hidden');
-          }
-        });
+      matchingRows.forEach((row, i) => {
+        const clone = row.cloneNode(true) as HTMLElement;
+        clone.classList.remove('hidden');
+        // Clear month label except for first
+        const monthLabel = clone.querySelector('.timeline-month') as HTMLElement;
+        if (monthLabel) monthLabel.textContent = '';
+        // Add order number instead of day
+        const dayLabel = clone.querySelector('.timeline-day') as HTMLElement;
+        if (dayLabel) dayLabel.textContent = String(i + 1).padStart(2, '0');
+        yearPosts.appendChild(clone);
+      });
 
-        // Update month labels (show on first visible post of each month)
-        document.querySelectorAll('.year-group').forEach(yearGroup => {
-          const seenMonths = new Set();
-          yearGroup.querySelectorAll('.timeline-row').forEach(row => {
-            const monthLabel = row.querySelector('.timeline-month') as HTMLElement;
-            const month = row.getAttribute('data-month');
-            const label = row.getAttribute('data-month-label') || '';
-            if (monthLabel && month) {
-              if (row.classList.contains('hidden')) {
-                monthLabel.textContent = '';
-              } else if (!seenMonths.has(month)) {
-                seenMonths.add(month);
-                monthLabel.textContent = label;
-              } else {
-                monthLabel.textContent = '';
-              }
-            }
-          });
-        });
+      timeline.appendChild(orderedContainer);
 
-        // Update post count
-        const visibleCount = document.querySelectorAll('.timeline-row:not(.hidden)').length;
-        const postCountEl = document.getElementById('post-count');
-        if (postCountEl) {
-          postCountEl.textContent = `${visibleCount} posts`;
+      // Hide category column
+      document.querySelectorAll('.timeline-cat').forEach(cat => {
+        (cat as HTMLElement).style.display = 'none';
+      });
+
+      // Update post count
+      const postCountEl = document.getElementById('post-count');
+      if (postCountEl) {
+        postCountEl.textContent = `${matchingRows.length} posts`;
+      }
+    }
+
+    document.querySelectorAll('.subcategory-btn').forEach(btn => {
+      const newBtn = btn.cloneNode(true) as HTMLElement;
+      btn.parentNode?.replaceChild(newBtn, btn);
+
+      newBtn.addEventListener('click', () => {
+        const isActive = newBtn.classList.contains('active');
+        const hasCustomOrder = newBtn.getAttribute('data-custom-order') === 'true';
+
+        // If already active, deselect and show all AI & environment posts
+        if (isActive) {
+          newBtn.classList.remove('active');
+          restoreTimelineOrder();
+          filterByCategory('ai-environment');
+          return;
+        }
+
+        const postsJson = newBtn.getAttribute('data-posts');
+        if (!postsJson) return;
+
+        const postSlugs = JSON.parse(postsJson) as string[];
+
+        // Update active subcategory button
+        document.querySelectorAll('.subcategory-btn').forEach(b => b.classList.remove('active'));
+        newBtn.classList.add('active');
+
+        // Filter by post slugs (with custom order if specified)
+        if (hasCustomOrder) {
+          filterByPostSlugsWithOrder(postSlugs);
+        } else {
+          restoreTimelineOrder();
+          filterByPostSlugs(postSlugs);
         }
       });
     });

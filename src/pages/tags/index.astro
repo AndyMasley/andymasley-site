@@ -30,12 +30,9 @@ const maxCount = Math.max(...tagCounts.values());
 
 <Base title="Tags" description="Browse all content by tag">
   <div class="container container--wide">
-    <header class="page-header">
-      <h1 class="page-header__title">Tags</h1>
-      <p class="page-header__subtitle">
-        Browse content by topic. {tagCounts.size} tags across {writing.length + music.length + film.length + books.length + notes.length} items.
-      </p>
-    </header>
+    <p class="page-intro">
+      Browse content by topic. {tagCounts.size} tags across {writing.length + music.length + film.length + books.length + notes.length} items.
+    </p>
 
     <div class="tags-cloud stagger-in">
       {sortedTags.map(([tag, count]) => {

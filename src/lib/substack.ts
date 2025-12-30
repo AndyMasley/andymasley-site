@@ -199,3 +199,62 @@ export async function fetchPostContent(slug: string): Promise<string> {
     return '';
   }
 }
+
+// Subcategory extracted from meta post
+export interface Subcategory {
+  name: string;
+  slug: string;
+  postSlugs: string[];
+}
+
+// Parse subcategories from meta post HTML
+// Expects structure: <h3>Category Name</h3> followed by <ul> with post links
+export function parseSubcategoriesFromHTML(html: string): Subcategory[] {
+  const subcategories: Subcategory[] = [];
+
+  // Match h3 headers followed by ul lists
+  // Regex to find h3 tags and capture their content
+  const h3Regex = /<h3[^>]*>([^<]+)<\/h3>/gi;
+  const linkRegex = /href="https:\/\/andymasley\.substack\.com\/p\/([^"]+)"/g;
+
+  // Split by h3 tags to process each section
+  const sections = html.split(/<h3[^>]*>/i);
+
+  for (let i = 1; i < sections.length; i++) {
+    const section = sections[i];
+
+    // Extract category name (text before closing </h3>)
+    const nameMatch = section.match(/^([^<]+)<\/h3>/i);
+    if (!nameMatch) continue;
+
+    const name = nameMatch[1].trim();
+
+    // Skip certain sections that aren't real categories
+    if (['Start here', 'Misc', 'Podcast appearances'].includes(name)) continue;
+
+    // Find all post slugs in this section (until next h3 or end)
+    const postSlugs: string[] = [];
+    let match;
+    const sectionContent = section.substring(nameMatch[0].length);
+
+    // Reset regex
+    linkRegex.lastIndex = 0;
+    while ((match = linkRegex.exec(sectionContent)) !== null) {
+      const slug = match[1];
+      // Don't include the meta post itself or duplicates
+      if (slug !== 'ai-and-the-environment' && !postSlugs.includes(slug)) {
+        postSlugs.push(slug);
+      }
+    }
+
+    if (postSlugs.length > 0) {
+      subcategories.push({
+        name,
+        slug: name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/-+$/, ''),
+        postSlugs
+      });
+    }
+  }
+
+  return subcategories;
+}
