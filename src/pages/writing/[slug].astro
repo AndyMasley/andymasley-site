@@ -346,4 +346,40 @@ if (post.source === 'local') {
   .prose :global(.subscription-widget) {
     display: none !important;
   }
+
+  /* Footnote styling */
+  .prose :global(sup) {
+    font-size: 0.7em;
+    line-height: 0;
+    vertical-align: baseline;
+    position: relative;
+    top: -0.4em;
+  }
+
+  .prose :global(sup a),
+  .prose :global(.footnote-anchor),
+  .prose :global(.footnote-link) {
+    font-size: inherit;
+    text-decoration: none;
+    color: var(--accent);
+  }
+
+  .prose :global(sup a:hover) {
+    text-decoration: underline;
+  }
+
+  /* Footnote section at bottom */
+  .prose :global(.footnotes),
+  .prose :global(.footnote) {
+    font-size: var(--font-size-ui);
+    color: var(--dim);
+    margin-top: var(--space-xl);
+    padding-top: var(--space-md);
+    border-top: 1px solid var(--border);
+  }
+
+  .prose :global(.footnotes li),
+  .prose :global(.footnote li) {
+    margin-bottom: var(--space-sm);
+  }
 </style>
