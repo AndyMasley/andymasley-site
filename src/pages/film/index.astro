@@ -96,41 +96,41 @@ function formatRating(rating?: number): string {
   
   .film-item__title {
     font-family: var(--font-serif);
-    font-size: 1.125rem;
-    font-weight: 500;
+    font-size: var(--font-size-h2);
+    font-weight: var(--font-weight-heading);
     margin: 0 0 var(--space-xs) 0;
     color: var(--text-primary);
     transition: color var(--transition-fast);
   }
-  
+
   .film-item__link:hover .film-item__title {
     color: var(--accent);
   }
-  
+
   .film-item__info {
     display: flex;
     align-items: center;
     gap: var(--space-md);
-    font-size: 0.875rem;
+    font-size: var(--font-size-ui);
     color: var(--text-secondary);
     margin-bottom: var(--space-sm);
   }
-  
+
   .film-item__year {
     color: var(--text-tertiary);
   }
-  
+
   .film-item__description {
-    font-size: 0.875rem;
+    font-size: var(--font-size-ui);
     color: var(--text-tertiary);
     margin: 0;
-    line-height: 1.5;
+    line-height: var(--line-height-body);
   }
-  
+
   .film-item__rating {
     font-family: var(--font-serif);
-    font-size: 1.25rem;
-    font-weight: 600;
+    font-size: var(--font-size-h2);
+    font-weight: var(--font-weight-heading);
     color: var(--accent);
     flex-shrink: 0;
   }

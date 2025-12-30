@@ -92,46 +92,48 @@ function formatDate(date: Date): string {
   }
   
   .note-header__category {
-    font-size: 0.6875rem;
+    font-size: var(--font-size-mono);
+    font-family: var(--font-mono);
     text-transform: uppercase;
     letter-spacing: 0.1em;
-    font-weight: 600;
+    font-weight: var(--font-weight-heading);
     color: var(--accent);
     background: var(--accent-subtle);
     padding: 4px 8px;
     border-radius: 4px;
   }
-  
+
   .note-header__date {
-    font-size: 0.8125rem;
+    font-size: var(--font-size-mono);
+    font-family: var(--font-mono);
     color: var(--text-tertiary);
   }
-  
+
   .note-header__title {
-    font-size: 2rem;
-    font-weight: 600;
-    line-height: 1.2;
+    font-size: var(--font-size-h1);
+    font-weight: var(--font-weight-heading);
+    line-height: var(--line-height-h1);
     margin: 0 0 var(--space-md) 0;
-    letter-spacing: -0.025em;
   }
-  
+
   .article-footer {
     margin-top: var(--space-3xl);
     padding-top: var(--space-xl);
     border-top: 1px solid var(--border);
   }
-  
+
   .meta-note {
-    font-size: 0.8125rem;
+    font-size: var(--font-size-mono);
+    font-family: var(--font-mono);
     color: var(--text-tertiary);
     margin-bottom: var(--space-lg);
   }
-  
+
   .article-nav__link {
     display: inline-flex;
     align-items: center;
     gap: var(--space-sm);
-    font-size: 0.875rem;
+    font-size: var(--font-size-ui);
     color: var(--text-secondary);
     text-decoration: none;
     padding: var(--space-sm) var(--space-md);

@@ -107,89 +107,90 @@ function formatDate(date: Date): string {
   }
   
   .music-header__title {
-    font-size: 2.25rem;
-    font-weight: 600;
-    line-height: 1.15;
+    font-size: var(--font-size-h1);
+    font-weight: var(--font-weight-heading);
+    line-height: var(--line-height-h1);
     margin: 0 0 var(--space-sm) 0;
-    letter-spacing: -0.03em;
   }
-  
+
   .music-header__artist {
-    font-size: 1.25rem;
+    font-size: var(--font-size-h2);
     color: var(--text-secondary);
     margin: 0 0 var(--space-lg) 0;
   }
-  
+
   .music-header__meta {
     display: flex;
     align-items: center;
     gap: var(--space-md);
     margin-bottom: var(--space-lg);
   }
-  
+
   .music-header__year {
-    font-size: 0.875rem;
+    font-size: var(--font-size-mono);
+    font-family: var(--font-mono);
     color: var(--text-tertiary);
   }
-  
+
   .music-header__rating {
     display: inline-flex;
     align-items: baseline;
     gap: var(--space-xs);
   }
-  
+
   .rating-value {
     font-family: var(--font-serif);
-    font-size: 2rem;
-    font-weight: 600;
+    font-size: var(--font-size-h1);
+    font-weight: var(--font-weight-heading);
     color: var(--accent);
   }
-  
+
   .rating-max {
-    font-size: 0.875rem;
+    font-size: var(--font-size-ui);
     color: var(--text-tertiary);
   }
-  
+
   .article-footer {
     margin-top: var(--space-4xl);
     padding-top: var(--space-xl);
     border-top: 1px solid var(--border);
   }
-  
+
   .footer-links {
     display: flex;
     gap: var(--space-md);
     margin-bottom: var(--space-lg);
   }
-  
+
   .external-link {
     display: inline-flex;
     align-items: center;
     gap: var(--space-sm);
-    font-size: 0.875rem;
+    font-size: var(--font-size-ui);
     color: var(--text-secondary);
     padding: var(--space-sm) var(--space-md);
     background: var(--bg-tertiary);
     border-radius: 6px;
     transition: background-color var(--transition-fast), color var(--transition-fast);
   }
-  
+
   .external-link:hover {
     background: var(--accent);
     color: white;
   }
-  
+
   .meta-note {
-    font-size: 0.8125rem;
+    font-size: var(--font-size-mono);
+    font-family: var(--font-mono);
     color: var(--text-tertiary);
     margin-bottom: var(--space-xl);
   }
-  
+
   .article-nav__link {
     display: inline-flex;
     align-items: center;
     gap: var(--space-sm);
-    font-size: 0.875rem;
+    font-size: var(--font-size-ui);
     color: var(--text-secondary);
     text-decoration: none;
     padding: var(--space-sm) var(--space-md);

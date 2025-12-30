@@ -96,30 +96,30 @@ function formatRating(rating?: number): string {
   
   .book-item__title {
     font-family: var(--font-serif);
-    font-size: 1.125rem;
-    font-weight: 500;
+    font-size: var(--font-size-h2);
+    font-weight: var(--font-weight-heading);
     margin: 0 0 var(--space-xs) 0;
     color: var(--text-primary);
     transition: color var(--transition-fast);
   }
-  
+
   .book-item__link:hover .book-item__title {
     color: var(--accent);
   }
-  
+
   .book-item__author {
-    font-size: 0.9375rem;
+    font-size: var(--font-size-ui);
     color: var(--text-secondary);
     margin: 0 0 var(--space-sm) 0;
   }
-  
+
   .book-item__description {
-    font-size: 0.875rem;
+    font-size: var(--font-size-ui);
     color: var(--text-tertiary);
     margin: 0;
-    line-height: 1.5;
+    line-height: var(--line-height-body);
   }
-  
+
   .book-item__meta {
     display: flex;
     flex-direction: column;
@@ -127,16 +127,17 @@ function formatRating(rating?: number): string {
     gap: var(--space-xs);
     flex-shrink: 0;
   }
-  
+
   .book-item__rating {
     font-family: var(--font-serif);
-    font-size: 1.25rem;
-    font-weight: 600;
+    font-size: var(--font-size-h2);
+    font-weight: var(--font-weight-heading);
     color: var(--accent);
   }
-  
+
   .book-item__year {
-    font-size: 0.75rem;
+    font-size: var(--font-size-mono);
+    font-family: var(--font-mono);
     color: var(--text-tertiary);
   }
 </style>

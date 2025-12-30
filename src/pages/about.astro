@@ -20,7 +20,7 @@ import Base from '@/layouts/Base.astro';
 
   <hr class="divider" />
 
-  <p style="font-size: 0.875rem; color: var(--dim);">
+  <p class="site-meta">
     This site: Georgia, Astro, Cloudflare Pages. No analytics.
   </p>
 
@@ -30,3 +30,10 @@ import Base from '@/layouts/Base.astro';
     <a href="/">← home</a>
   </div>
 </Base>
+
+<style>
+  .site-meta {
+    font-size: var(--font-size-ui);
+    color: var(--dim);
+  }
+</style>
