@@ -1,0 +1,34 @@
+---
+import Base from '@/layouts/Base.astro';
+---
+
+<Base title="Lists" description="Various lists">
+  <ul class="lists-index">
+    <li>
+      <a href="/lists/favorite-things">Favorite things</a>
+    </li>
+  </ul>
+
+  <hr class="divider" />
+
+  <div class="back-link">
+    <a href="/">← home</a>
+  </div>
+</Base>
+
+<style>
+  .lists-index {
+    list-style: disc;
+    padding-left: var(--space-lg);
+  }
+
+  .lists-index li {
+    margin-bottom: var(--space-sm);
+  }
+
+  .lists-index a {
+    color: var(--accent);
+    text-decoration: underline;
+    text-underline-offset: var(--underline-offset);
+  }
+</style>
