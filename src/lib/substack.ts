@@ -350,5 +350,14 @@ export function processPostContent(html: string, slug: string): string {
   processed = processed.replace(/<div class="subscribe-widget[^>]*>[\s\S]*?<\/div>/gi, '');
   processed = processed.replace(/<a[^>]*class="[^"]*button[^"]*"[^>]*>Subscribe<\/a>/gi, '');
 
+  // Remove "Subscribe now" button wrappers
+  processed = processed.replace(/<p[^>]*class="button-wrapper"[^>]*>[\s\S]*?<\/p>/gi, '');
+
+  // Remove any remaining subscribe links/buttons
+  processed = processed.replace(/<a[^>]*href="[^"]*substack\.com\/subscribe[^"]*"[^>]*>[\s\S]*?<\/a>/gi, '');
+
+  // Remove subscription widget wraps (nested divs)
+  processed = processed.replace(/<div[^>]*class="[^"]*subscription-widget-wrap[^"]*"[^>]*>[\s\S]*?<\/div>\s*<\/div>/gi, '');
+
   return processed;
 }
