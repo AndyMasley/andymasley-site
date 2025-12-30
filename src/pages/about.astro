@@ -3,18 +3,25 @@ import Base from '@/layouts/Base.astro';
 ---
 
 <Base title="About" description="About Andy Masley">
-  <p>
-    I run <a href="https://effectivealtruismdc.org">Effective Altruism DC</a>, funded by the Centre for Effective Altruism.
-  </p>
+  <div class="about-intro">
+    <img
+      src="/images/headshot.jpg"
+      alt="Andy Masley"
+      class="headshot"
+    />
+    <p>
+      I run <a href="https://effectivealtruismdc.org">Effective Altruism DC</a>, funded by the Centre for Effective Altruism.
+    </p>
 
-  <p>
-    Before that I taught high school physics for seven years.
-    The <a href="/physics">IB Physics</a> lectures are still on YouTube.
-  </p>
+    <p>
+      Before that I taught high school physics for seven years.
+      The <a href="/physics">IB Physics</a> lectures are still on YouTube.
+    </p>
 
-  <p>
-    More coming soon.
-  </p>
+    <p>
+      More coming soon.
+    </p>
+  </div>
 
   <hr class="divider" />
 
@@ -30,6 +37,25 @@ import Base from '@/layouts/Base.astro';
 </Base>
 
 <style>
+  .about-intro {
+    overflow: hidden;
+  }
+
+  .headshot {
+    float: left;
+    width: 100px;
+    height: 100px;
+    object-fit: cover;
+    margin: 0 20px 10px 0;
+    border-radius: 4px;
+    filter: grayscale(100%);
+    transition: filter 0.3s ease;
+  }
+
+  .headshot:hover {
+    filter: grayscale(0%);
+  }
+
   .site-meta {
     font-size: var(--font-size-ui);
     color: var(--dim);
