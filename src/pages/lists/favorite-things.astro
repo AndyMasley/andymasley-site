@@ -820,13 +820,20 @@ import Base from '@/layouts/Base.astro';
   }
 
   /* Dark mode support */
-  @media (prefers-color-scheme: dark) {
-    .popout-card {
-      background: var(--bg);
-    }
+  :global([data-theme="dark"]) .popout-card {
+    background: var(--bg);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  }
 
-    .popout-arrow::after {
-      border-bottom-color: var(--bg);
-    }
+  :global([data-theme="dark"]) .popout-arrow {
+    border-bottom-color: var(--border);
+  }
+
+  :global([data-theme="dark"]) .popout-arrow::after {
+    border-bottom-color: var(--bg);
+  }
+
+  :global([data-theme="dark"]) .popout-body {
+    color: var(--text);
   }
 </style>
