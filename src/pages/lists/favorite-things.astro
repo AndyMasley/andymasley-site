@@ -8,35 +8,100 @@ import Base from '@/layouts/Base.astro';
       <button class="category-title">Books</button>
       <div class="category-content">
         <h3>Fiction</h3>
-        <ul>
-          <li>In Search of Lost Time — Marcel Proust</li>
-          <li>Collected Fictions — Jorge Luis Borges</li>
-          <li>Invisible Cities — Italo Calvino</li>
-          <li>The Notebook, the Proof, the Third Lie: Three Novels — Ágota Kristóf</li>
-          <li>Ada, or Ardor — Vladimir Nabokov</li>
-          <li>Little, Big — John Crowley</li>
-          <li>The Book of the New Sun — Gene Wolfe</li>
-        </ul>
-        <h3>Non-fiction</h3>
-        <ul>
-          <li>Word and Object — WVO Quine</li>
-          <li>Basically all books by Joseph Heath, especially
+        <ul class="has-popouts">
+          <li>In Search of Lost Time — Marcel Proust
             <ul>
-              <li>Following the Rules: Practical Reasoning and Deontic Constraint</li>
-              <li>The Machinery of Government</li>
-              <li>Philosophical Foundations of Climate Change Policy</li>
+              <li>When I was 17 I hadn't actually bumped into too much truly, deeply relatable media. I got into a lot of books and movies because I wanted to be the type of person who was into them, but I felt a pretty big gulf between my day to day experience and most of what I saw expressed in art. Swann's Way exploded that barrier. I was almost constantly overwhelmed with how Proust was able to describe aspects of day to day experience I had only ever half-articulated myself but seemed so obvious when it was on the page. I came away thinking that most people were actually having much more deeply similar experiences to me than I expected, and maybe we all just didn't have the words for it. The book opened the world for me and made me feel much more at home in it.</li>
             </ul>
           </li>
-          <li>Essays — Lydia Davis</li>
-          <li>Reasons and Persons — Derek Parfit</li>
-          <li>The Sources of Normativity — Korsgaard</li>
-          <li>Nature's Metropolis: Chicago and the Great West</li>
+          <li>Collected Fictions — Jorge Luis Borges
+            <ul>
+              <li>I remember my cousin was reading a Borges story collection when I was around 16 and briefly explained the plot of The Library of Babel, I got obsessed with the idea but forgot the author's name and didn't find it again until a few years later, so it felt like I was unlocking some half-remembered secret when I read it. Loving Borges has been a commonality among most friend groups I've had.</li>
+            </ul>
+          </li>
+          <li>Invisible Cities — Italo Calvino
+            <ul>
+              <li>So simple and nice to read.</li>
+            </ul>
+          </li>
+          <li>The Notebook, the Proof, the Third Lie: Three Novels — Ágota Kristóf
+            <ul>
+              <li>I was completely overwhelmed, though I can't really explain why. Just loved the whole thing.</li>
+            </ul>
+          </li>
+          <li>Ada, or Ardor — Vladimir Nabokov
+            <ul>
+              <li>The most beautiful language in a book.</li>
+            </ul>
+          </li>
+          <li>Little, Big — John Crowley
+            <ul>
+              <li>New England has a deep sense of hidden secrets, magic, and the weight of history, and this book captures that sense so well.</li>
+            </ul>
+          </li>
+          <li>The Book of the New Sun — Gene Wolfe
+            <ul>
+              <li>The book that does the best job of being a book.</li>
+            </ul>
+          </li>
           <li>My Struggle — Karl Ove Knausgård</li>
-          <li>Essays — George Orwell</li>
-          <li>The Structures of Everyday Life — Fernand Braudel</li>
-          <li>Selected Non-Fictions — Jorge Luis Borges</li>
+        </ul>
+        <h3>Non-fiction</h3>
+        <ul class="has-popouts">
+          <li>Word and Object — WVO Quine
+            <ul>
+              <li>A personal Bible. Very useful in the age of LLMs. A great example of thinking well in general.</li>
+            </ul>
+          </li>
+          <li>Basically all books by Joseph Heath, especially Following the Rules: Practical Reasoning and Deontic Constraint, The Machinery of Government, and Philosophical Foundations of Climate Change Policy.
+            <ul>
+              <li>I come away from basically every Heath book feeling like I have a new real deep understanding of a key part of the world.</li>
+            </ul>
+          </li>
+          <li>Essays — Lydia Davis
+            <ul>
+              <li>One of the most fun interesting books to read about anything</li>
+            </ul>
+          </li>
+          <li>Reasons and Persons — Derek Parfit
+            <ul>
+              <li>Reading this in my junior year of college got me into effective altruism. Was like an ideological nuclear bomb. More than anything else I really admired Parfit's approach to problems where he'd completely exhaust every possibility in some abstract but important question and choose the least terrible option.</li>
+            </ul>
+          </li>
+          <li>The Sources of Normativity — Korsgaard
+            <ul>
+              <li>I'm pretty sympathetic to Kantianism and this is the best book for making deontology seem intuitive rather than arbitrary.</li>
+            </ul>
+          </li>
+          <li>Nature's Metropolis: Chicago and the Great West — William Cronon
+            <ul>
+              <li>Beautiful and fun economic history. Good headspace.</li>
+            </ul>
+          </li>
+          <li>Essays — George Orwell
+            <ul>
+              <li>Read when I was 18, I wanted to write and think like him. Think it's unfortunate that people mainly associate Orwell with 1984, his essays are where the good stuff's at.</li>
+            </ul>
+          </li>
+          <li>The Structures of Everyday Life — Fernand Braudel
+            <ul>
+              <li>Real economic history, about flows and patterns. Individuals don't play a role.</li>
+            </ul>
+          </li>
+          <li>Selected Non-Fictions — Jorge Luis Borges
+            <ul>
+              <li>He's the king</li>
+            </ul>
+          </li>
         </ul>
       </div>
+    </div>
+
+    <!-- Popout card (single reusable element) -->
+    <div class="popout-card" id="popout-card">
+      <div class="popout-arrow"></div>
+      <button class="popout-close" aria-label="Close">&times;</button>
+      <div class="popout-body"></div>
     </div>
 
     <div class="category" data-category="movies">
@@ -130,12 +195,20 @@ import Base from '@/layouts/Base.astro';
     <div class="category" data-category="places">
       <button class="category-title">Places</button>
       <div class="category-content">
-        <ul>
-          <li>The Montague Bookmill</li>
+        <ul class="has-popouts">
+          <li>The Montague Bookmill
+            <ul>
+              <li>Rivendell of lib rural Massachusetts, my culture. Very calm and quiet, could spend weeks here.</li>
+            </ul>
+          </li>
           <li>The Pioneer Valley in general</li>
-          <li>Misquamicut Beach</li>
+          <li>Misquamicut Beach
+            <ul>
+              <li>Spent a lot of time here as a kid.</li>
+            </ul>
+          </li>
           <li>Acadia National Park</li>
-          <li>Texas</li>
+          <li>Texas, in general</li>
         </ul>
         <h3>Cities</h3>
         <ul>
@@ -263,6 +336,112 @@ import Base from '@/layouts/Base.astro';
 
   <script is:inline>
     function initFavoriteThings() {
+      // Popout card functionality
+      const popoutCard = document.getElementById('popout-card');
+      const popoutBody = popoutCard?.querySelector('.popout-body');
+      const popoutClose = popoutCard?.querySelector('.popout-close');
+      let currentPopoutItem = null;
+
+      function closePopout() {
+        if (!popoutCard) return;
+        popoutCard.classList.remove('open');
+        if (currentPopoutItem) {
+          currentPopoutItem.classList.remove('active');
+          currentPopoutItem = null;
+        }
+      }
+
+      function openPopout(item, sublist) {
+        if (!popoutCard || !popoutBody || !sublist) return;
+
+        // Close if clicking same item
+        if (currentPopoutItem === item) {
+          closePopout();
+          return;
+        }
+
+        // Update active state
+        if (currentPopoutItem) {
+          currentPopoutItem.classList.remove('active');
+        }
+        item.classList.add('active');
+        currentPopoutItem = item;
+
+        // Convert sub-bullets to paragraphs
+        const bullets = sublist.querySelectorAll(':scope > li');
+        let html = '';
+        bullets.forEach(bullet => {
+          html += '<p>' + bullet.innerHTML + '</p>';
+        });
+        popoutBody.innerHTML = html;
+
+        // Position the card below the item
+        const itemRect = item.getBoundingClientRect();
+        const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+        const isMobile = window.innerWidth <= 600;
+
+        if (isMobile) {
+          // Mobile: fixed to bottom
+          popoutCard.style.position = 'fixed';
+          popoutCard.style.top = 'auto';
+          popoutCard.style.bottom = '0';
+          popoutCard.style.left = '0';
+          popoutCard.style.right = '0';
+          popoutCard.classList.add('mobile');
+        } else {
+          // Desktop: position below item
+          popoutCard.style.position = 'absolute';
+          popoutCard.style.top = (itemRect.bottom + scrollTop + 8) + 'px';
+          popoutCard.style.left = (itemRect.left) + 'px';
+          popoutCard.style.bottom = 'auto';
+          popoutCard.style.right = 'auto';
+          popoutCard.classList.remove('mobile');
+        }
+
+        popoutCard.classList.add('open');
+      }
+
+      // Find all list items in .has-popouts that have nested <ul>
+      document.querySelectorAll('.has-popouts > li').forEach(item => {
+        const sublist = item.querySelector(':scope > ul');
+        if (!sublist) return;
+
+        // Mark as having popout and hide the sublist
+        item.classList.add('has-popout');
+        sublist.classList.add('popout-content');
+
+        // Make the text before the sublist clickable
+        item.addEventListener('click', (e) => {
+          // Don't trigger if clicking inside the sublist or on a link
+          if (e.target.closest('.popout-content') || e.target.tagName === 'A') return;
+          e.preventDefault();
+          e.stopPropagation();
+          openPopout(item, sublist);
+        });
+      });
+
+      // Close button
+      popoutClose?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        closePopout();
+      });
+
+      // Click outside to close
+      document.addEventListener('click', (e) => {
+        if (popoutCard?.classList.contains('open') &&
+            !popoutCard.contains(e.target) &&
+            !e.target.closest('.has-popout')) {
+          closePopout();
+        }
+      });
+
+      // Escape key to close
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && popoutCard?.classList.contains('open')) {
+          closePopout();
+        }
+      });
+
       // Handle all expandable sections
       const allExpandables = document.querySelectorAll('.category, .subcategory, .sub-subcategory');
 
@@ -342,7 +521,7 @@ import Base from '@/layouts/Base.astro';
     padding: var(--space-md) 0;
     text-align: left;
     cursor: pointer;
-    font-size: var(--font-size-h3);
+    font-size: var(--font-size-h2);
     font-weight: var(--font-weight-heading);
     font-family: inherit;
     color: var(--text);
@@ -369,10 +548,11 @@ import Base from '@/layouts/Base.astro';
   }
 
   .category-content h3 {
-    font-size: var(--font-size-h3);
+    font-size: var(--font-size-body);
     font-weight: var(--font-weight-heading);
     margin-top: var(--space-md);
     margin-bottom: var(--space-sm);
+    color: var(--dim);
   }
 
   .category-content h3:first-child {
@@ -472,7 +652,6 @@ import Base from '@/layouts/Base.astro';
     font-weight: var(--font-weight-heading);
     font-family: inherit;
     color: var(--dim);
-    font-style: italic;
     transition: color 0.2s ease;
   }
 
@@ -513,5 +692,141 @@ import Base from '@/layouts/Base.astro';
     font-size: 0.85em;
     color: var(--dim);
     font-style: italic;
+  }
+
+  /* Popout card styles */
+  .has-popout {
+    position: relative;
+    cursor: pointer;
+    transition: color 0.2s ease;
+  }
+
+  .has-popout:hover,
+  .has-popout.active {
+    color: var(--accent);
+  }
+
+  /* Hide the nested sub-bullets (they show in popout card instead) */
+  .popout-content {
+    display: none;
+  }
+
+  .popout-card {
+    position: absolute;
+    z-index: 1000;
+    width: 320px;
+    max-width: calc(100vw - 2rem);
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    padding: var(--space-md);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-8px);
+    transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s;
+  }
+
+  .popout-card.open {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+  }
+
+  .popout-arrow {
+    position: absolute;
+    top: -8px;
+    left: 20px;
+    width: 0;
+    height: 0;
+    border-left: 8px solid transparent;
+    border-right: 8px solid transparent;
+    border-bottom: 8px solid var(--border);
+  }
+
+  .popout-arrow::after {
+    content: '';
+    position: absolute;
+    top: 1px;
+    left: -7px;
+    width: 0;
+    height: 0;
+    border-left: 7px solid transparent;
+    border-right: 7px solid transparent;
+    border-bottom: 7px solid #fff;
+  }
+
+  .popout-close {
+    position: absolute;
+    top: var(--space-xs);
+    right: var(--space-xs);
+    background: none;
+    border: none;
+    font-size: 1.25rem;
+    color: var(--dim);
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.2s ease;
+  }
+
+  .popout-close:hover {
+    color: var(--text);
+  }
+
+  .popout-body {
+    font-size: var(--font-size-body);
+    line-height: var(--line-height-body);
+    color: var(--text);
+  }
+
+  .popout-body p {
+    margin: 0 0 var(--space-sm) 0;
+  }
+
+  .popout-body p:last-child {
+    margin-bottom: 0;
+  }
+
+  /* Mobile: fixed to bottom */
+  @media (max-width: 600px) {
+    .popout-card.mobile {
+      position: fixed;
+      width: 100%;
+      max-width: 100%;
+      border-radius: 12px 12px 0 0;
+      border-bottom: none;
+      padding: var(--space-lg);
+      padding-top: var(--space-md);
+      box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
+    }
+
+    .popout-card.mobile .popout-arrow {
+      display: none;
+    }
+
+    .popout-card.mobile.open {
+      transform: translateY(0);
+    }
+
+    .popout-card.mobile {
+      transform: translateY(100%);
+    }
+  }
+
+  /* Dark mode support */
+  @media (prefers-color-scheme: dark) {
+    .popout-card {
+      background: var(--bg);
+    }
+
+    .popout-arrow::after {
+      border-bottom-color: var(--bg);
+    }
   }
 </style>
