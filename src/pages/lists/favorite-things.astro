@@ -5,6 +5,76 @@ import Base from '@/layouts/Base.astro';
 <Base title="Favorite things" description="A list of my favorite things">
   <h1 class="page-title">Favorite things</h1>
   <div class="favorite-things">
+    <div class="category" data-category="writing">
+      <button class="category-title">Blog posts, essays, and papers</button>
+      <div class="category-content">
+        <div class="subcategory">
+          <button class="subcategory-title">Blog posts</button>
+          <div class="subcategory-content">
+            <ul>
+              <li><a href="https://josephheath.substack.com/p/why-the-culture-wins-an-appreciation">Why the culture wins</a></li>
+              <li><a href="https://induecourse.utoronto.ca/absent-mindedness-as-dominance-behaviour/">Absent-mindedness as dominance behaviour</a></li>
+              <li><a href="https://usefulfictions.substack.com/p/maybe-youre-not-actually-trying">Maybe you're not actually trying</a></li>
+              <li><a href="http://johnsalvatier.org/blog/2017/reality-has-a-surprising-amount-of-detail">Reality has a surprising amount of detail</a></li>
+              <li><a href="https://jsomers.net/i-should-have-loved-biology/">I should have loved biology</a></li>
+              <li>Dynomight's status series
+                <ul>
+                  <li><a href="https://dynomight.net/bourdieu/">Bourdieu's theory of taste: a grumbling abrégé</a></li>
+                  <li><a href="https://dynomight.net/class/">Your tastes are a point in space</a></li>
+                  <li><a href="https://dynomight.net/taste-games/">Taste games</a></li>
+                </ul>
+              </li>
+              <li><a href="https://www.economicforces.xyz/p/what-price-theory-is-and-is-not">What price theory is and is not</a></li>
+              <li><a href="https://www.conspicuouscognition.com/p/why-do-people-believe-true-things">Why do people believe true things?</a></li>
+              <li><a href="https://scholarstage.substack.com/p/washington-dc-is-not-a-popularity">Washington DC is not a popularity contest</a></li>
+              <li>1a3orn on AI risk
+                <ul>
+                  <li><a href="https://1a3orn.com/sub/ai-doom-consistency.html">Will AI resist your efforts to change its totally fake values?</a></li>
+                  <li><a href="https://1a3orn.com/sub/essays-ai-doom-invincible.html">On those undefeatable arguments for AI doom</a></li>
+                </ul>
+              </li>
+              <li><a href="https://www.henrikkarlsson.xyz/p/search-query">A blog post is a very long and complex search query to find fascinating people and make them route interesting stuff to your inbox</a></li>
+              <li><a href="https://scholars-stage.org/questing-for-transcendence/">Questing for transcendence</a></li>
+              <li><a href="https://collabfund.com/blog/how-this-all-happened/">How this all happened</a></li>
+              <li><a href="https://paulgraham.com/words.html">Putting ideas into words</a></li>
+              <li><a href="https://www.ribbonfarm.com/2010/07/26/a-big-little-idea-called-legibility/">A big little idea called legibility</a></li>
+              <li><a href="https://andymatuschak.org/books/">Why books don't work</a></li>
+              <li><a href="https://michaelnotebook.com/optimism/index.html">How to be a wise optimist about science and technology?</a></li>
+              <li><a href="https://barnacles.substack.com/p/my-mental-models-2020">My mental models</a></li>
+              <li><a href="https://www.themoneyillusion.com/understanding-middlebrow/">Understanding middlebrow</a></li>
+              <li><a href="https://guzey.com/lifehacks/">Life hacks</a></li>
+              <li><a href="https://guzey.com/productivity/">Every productivity thought I've ever had, as concisely as possible</a></li>
+            </ul>
+          </div>
+        </div>
+        <div class="subcategory">
+          <button class="subcategory-title">Essays</button>
+          <div class="subcategory-content">
+            <ul>
+              <li><a href="https://theanarchistlibrary.org/library/donna-haraway-a-cyborg-manifesto">A cyborg manifesto</a></li>
+              <li><a href="https://worksinprogress.co/issue/the-housing-theory-of-everything/">The housing theory of everything</a></li>
+              <li><a href="https://www.commentary.org/articles/jeane-kirkpatrick/dictatorships-double-standards/">Dictatorships and double standards</a></li>
+              <li><a href="https://d37ugbyn3rpeym.cloudfront.net/stripe-press/TAODSAE_zine_press.pdf">You and your research</a></li>
+              <li><a href="https://www.orwellfoundation.com/the-orwell-foundation/orwell/essays-and-other-works/you-and-the-atom-bomb/">You and the atom bomb</a></li>
+              <li><a href="https://www.orwellfoundation.com/the-orwell-foundation/orwell/essays-and-other-works/politics-and-the-english-language/">Politics and the English language</a></li>
+              <li><a href="https://sites.gatech.edu/alexburgin/on-self-respect-by-joan-didion/">On self respect</a></li>
+            </ul>
+          </div>
+        </div>
+        <div class="subcategory">
+          <button class="subcategory-title">Papers</button>
+          <div class="subcategory-content">
+            <ul>
+              <li><a href="https://link.springer.com/article/10.1007/s10677-015-9567-7">The possibility of an ongoing moral catastrophe</a></li>
+              <li><a href="https://www.theologie.uzh.ch/dam/jcr:ffffffff-fbd6-1538-0000-000070cf64bc/Quine51.pdf">Two dogmas of empiricism</a></li>
+              <li><a href="https://escholarship.org/uc/item/83k4763m">Sex and death in the rational world of defense intellectuals</a></li>
+              <li><a href="https://www.academia.edu/89468776/When_does_Critical_Theory_Become_Conspiracy_Theory">When does critical theory become conspiracy theory?</a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div class="category" data-category="books">
       <button class="category-title">Books</button>
       <div class="category-content">
@@ -375,63 +445,6 @@ import Base from '@/layouts/Base.astro';
       </div>
     </div>
 
-    <div class="category" data-category="writing">
-      <button class="category-title">Blog posts, essays, and papers</button>
-      <div class="category-content">
-        <h3>Blog posts</h3>
-        <ul>
-          <li><a href="https://josephheath.substack.com/p/why-the-culture-wins-an-appreciation">Why the culture wins</a></li>
-          <li><a href="https://induecourse.utoronto.ca/absent-mindedness-as-dominance-behaviour/">Absent-mindedness as dominance behaviour</a></li>
-          <li><a href="https://usefulfictions.substack.com/p/maybe-youre-not-actually-trying">Maybe you're not actually trying</a></li>
-          <li><a href="http://johnsalvatier.org/blog/2017/reality-has-a-surprising-amount-of-detail">Reality has a surprising amount of detail</a></li>
-          <li><a href="https://jsomers.net/i-should-have-loved-biology/">I should have loved biology</a></li>
-          <li>Dynomight's status series
-            <ul>
-              <li><a href="https://dynomight.net/bourdieu/">Bourdieu's theory of taste: a grumbling abrégé</a></li>
-              <li><a href="https://dynomight.net/class/">Your tastes are a point in space</a></li>
-              <li><a href="https://dynomight.net/taste-games/">Taste games</a></li>
-            </ul>
-          </li>
-          <li><a href="https://www.economicforces.xyz/p/what-price-theory-is-and-is-not">What price theory is and is not</a></li>
-          <li><a href="https://www.conspicuouscognition.com/p/why-do-people-believe-true-things">Why do people believe true things?</a></li>
-          <li><a href="https://scholarstage.substack.com/p/washington-dc-is-not-a-popularity">Washington DC is not a popularity contest</a></li>
-          <li>1a3orn on AI risk
-            <ul>
-              <li><a href="https://1a3orn.com/sub/ai-doom-consistency.html">Will AI resist your efforts to change its totally fake values?</a></li>
-              <li><a href="https://1a3orn.com/sub/essays-ai-doom-invincible.html">On those undefeatable arguments for AI doom</a></li>
-            </ul>
-          </li>
-          <li><a href="https://www.henrikkarlsson.xyz/p/search-query">A blog post is a very long and complex search query to find fascinating people and make them route interesting stuff to your inbox</a></li>
-          <li><a href="https://scholars-stage.org/questing-for-transcendence/">Questing for transcendence</a></li>
-          <li><a href="https://collabfund.com/blog/how-this-all-happened/">How this all happened</a></li>
-          <li><a href="https://paulgraham.com/words.html">Putting ideas into words</a></li>
-          <li><a href="https://www.ribbonfarm.com/2010/07/26/a-big-little-idea-called-legibility/">A big little idea called legibility</a></li>
-          <li><a href="https://andymatuschak.org/books/">Why books don't work</a></li>
-          <li><a href="https://michaelnotebook.com/optimism/index.html">How to be a wise optimist about science and technology?</a></li>
-          <li><a href="https://barnacles.substack.com/p/my-mental-models-2020">My mental models</a></li>
-          <li><a href="https://www.themoneyillusion.com/understanding-middlebrow/">Understanding middlebrow</a></li>
-          <li><a href="https://guzey.com/lifehacks/">Life hacks</a></li>
-          <li><a href="https://guzey.com/productivity/">Every productivity thought I've ever had, as concisely as possible</a></li>
-        </ul>
-        <h3>Essays</h3>
-        <ul>
-          <li><a href="https://theanarchistlibrary.org/library/donna-haraway-a-cyborg-manifesto">A cyborg manifesto</a></li>
-          <li><a href="https://worksinprogress.co/issue/the-housing-theory-of-everything/">The housing theory of everything</a></li>
-          <li><a href="https://www.commentary.org/articles/jeane-kirkpatrick/dictatorships-double-standards/">Dictatorships and double standards</a></li>
-          <li><a href="https://d37ugbyn3rpeym.cloudfront.net/stripe-press/TAODSAE_zine_press.pdf">You and your research</a></li>
-          <li><a href="https://www.orwellfoundation.com/the-orwell-foundation/orwell/essays-and-other-works/you-and-the-atom-bomb/">You and the atom bomb</a></li>
-          <li><a href="https://www.orwellfoundation.com/the-orwell-foundation/orwell/essays-and-other-works/politics-and-the-english-language/">Politics and the English language</a></li>
-          <li><a href="https://sites.gatech.edu/alexburgin/on-self-respect-by-joan-didion/">On self respect</a></li>
-        </ul>
-        <h3>Papers</h3>
-        <ul>
-          <li><a href="https://link.springer.com/article/10.1007/s10677-015-9567-7">The possibility of an ongoing moral catastrophe</a></li>
-          <li><a href="https://www.theologie.uzh.ch/dam/jcr:ffffffff-fbd6-1538-0000-000070cf64bc/Quine51.pdf">Two dogmas of empiricism</a></li>
-          <li><a href="https://escholarship.org/uc/item/83k4763m">Sex and death in the rational world of defense intellectuals</a></li>
-          <li><a href="https://www.academia.edu/89468776/When_does_Critical_Theory_Become_Conspiracy_Theory">When does critical theory become conspiracy theory?</a></li>
-        </ul>
-      </div>
-    </div>
   </div>
 
   <hr class="divider" />
