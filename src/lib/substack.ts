@@ -1,6 +1,36 @@
 // Fetches posts from Substack API
 // Uses the undocumented /api/v1/posts endpoint which returns all posts with section IDs
 
+// In-memory cache for build-time to avoid rate limiting
+let postsCache: SubstackPost[] | null = null;
+const contentCache: Map<string, string> = new Map();
+
+// Rate limiting helper
+let lastRequestTime = 0;
+const MIN_REQUEST_INTERVAL = 250; // ms between requests
+
+async function rateLimitedFetch(url: string, retries = 3): Promise<Response> {
+  const now = Date.now();
+  const timeSinceLastRequest = now - lastRequestTime;
+
+  if (timeSinceLastRequest < MIN_REQUEST_INTERVAL) {
+    await new Promise(resolve => setTimeout(resolve, MIN_REQUEST_INTERVAL - timeSinceLastRequest));
+  }
+
+  lastRequestTime = Date.now();
+  const response = await fetch(url);
+
+  // Retry on rate limit with exponential backoff
+  if (response.status === 429 && retries > 0) {
+    const delay = (4 - retries) * 2000; // 2s, 4s, 6s
+    console.log(`Rate limited, waiting ${delay}ms before retry...`);
+    await new Promise(resolve => setTimeout(resolve, delay));
+    return rateLimitedFetch(url, retries - 1);
+  }
+
+  return response;
+}
+
 export interface SubstackPost {
   title: string;
   slug: string;
@@ -88,6 +118,11 @@ interface SubstackAPIPost {
 }
 
 export async function fetchSubstackPosts(): Promise<SubstackPost[]> {
+  // Return cached posts if available
+  if (postsCache !== null) {
+    return postsCache;
+  }
+
   const BASE_URL = 'https://andymasley.substack.com/api/v1/posts';
   const allPosts: SubstackPost[] = [];
 
@@ -98,7 +133,7 @@ export async function fetchSubstackPosts(): Promise<SubstackPost[]> {
     let hasMore = true;
 
     while (hasMore) {
-      const response = await fetch(`${BASE_URL}?offset=${offset}&limit=${limit}`);
+      const response = await rateLimitedFetch(`${BASE_URL}?offset=${offset}&limit=${limit}`);
       const posts: SubstackAPIPost[] = await response.json();
 
       if (!posts || posts.length === 0) {
@@ -133,6 +168,8 @@ export async function fetchSubstackPosts(): Promise<SubstackPost[]> {
     // Sort by date descending
     allPosts.sort((a, b) => b.date.getTime() - a.date.getTime());
 
+    // Cache for subsequent calls during build
+    postsCache = allPosts;
     return allPosts;
   } catch (error) {
     console.error('Failed to fetch Substack posts:', error);
@@ -179,10 +216,15 @@ export function getCategoryPostCount(posts: SubstackPost[], categoryName: string
 
 // Fetch full HTML content for a specific post via Substack API
 export async function fetchPostContent(slug: string): Promise<string> {
+  // Check cache first
+  if (contentCache.has(slug)) {
+    return contentCache.get(slug)!;
+  }
+
   const API_URL = `https://andymasley.substack.com/api/v1/posts/${slug}`;
 
   try {
-    const response = await fetch(API_URL);
+    const response = await rateLimitedFetch(API_URL);
     if (!response.ok) {
       console.error(`Failed to fetch post ${slug}: ${response.status}`);
       return '';
@@ -192,6 +234,7 @@ export async function fetchPostContent(slug: string): Promise<string> {
 
     // The API returns body_html with the full content
     if (post.body_html) {
+      contentCache.set(slug, post.body_html);
       return post.body_html;
     }
 

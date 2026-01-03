@@ -135,6 +135,17 @@ function getCategorySlug(categoryName: string): string {
   return config?.slug || categoryName.toLowerCase().replace(/\s+/g, '-');
 }
 
+// Normalize capitalization: first word capitalized, rest lowercase
+function normalizeCapitalization(text: string): string {
+  const words = text.split(' ');
+  return words.map((word, i) => {
+    if (i === 0) {
+      return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+    }
+    return word.toLowerCase();
+  }).join(' ');
+}
+
 // Filter categories to show (only ones with posts)
 // Include both Substack categories and EA Forum
 const activeCategories = [
@@ -142,11 +153,15 @@ const activeCategories = [
   ...(eaForumTimelinePosts.length > 0 ? [{ name: 'EA Forum', slug: 'ea-forum', overview: '', sectionIds: [] }] : [])
 ];
 
-// Process HTML content - fix internal links
+// Process HTML content - fix internal links and normalize h3 capitalization
 function processContent(html: string): string {
   return html
     .replace(/href="https:\/\/andymasley\.substack\.com\/p\/([^"]+)"/g, 'href="/writing/$1"')
-    .replace(/href="https:\/\/andymasley\.substack\.com([^"]*)"/g, 'href="https://andymasley.substack.com$1" target="_blank" rel="noopener"');
+    .replace(/href="https:\/\/andymasley\.substack\.com([^"]*)"/g, 'href="https://andymasley.substack.com$1" target="_blank" rel="noopener"')
+    .replace(/<h3([^>]*)>([^<]+)<\/h3>/gi, (match, attrs, text) => {
+      const normalized = normalizeCapitalization(text.trim());
+      return `<h3${attrs}>${normalized}</h3>`;
+    });
 }
 
 // Format byline date
@@ -222,7 +237,7 @@ function formatBylineDate(dateStr: string): string {
         </button>
         {aiEnvSubcategories.map(sub => (
           <button class="subcategory-btn" data-subcategory={sub.slug} data-posts={JSON.stringify(sub.postSlugs)}>
-            {sub.name}
+            {normalizeCapitalization(sub.name)}
           </button>
         ))}
       </div>
@@ -278,12 +293,6 @@ function formatBylineDate(dateStr: string): string {
         <p class="bylines-placeholder">Coming soon.</p>
       )}
     </div>
-  </div>
-
-  <hr class="divider" />
-
-  <div class="back-link">
-    <a href="/">← home</a>
   </div>
 
   <!-- Stacked panel overlay -->

@@ -3,6 +3,7 @@ import Base from '@/layouts/Base.astro';
 ---
 
 <Base title="Favorite things" description="A list of my favorite things">
+  <h1 class="page-title">Favorite things</h1>
   <div class="favorite-things">
     <div class="category" data-category="books">
       <button class="category-title">Books</button>
@@ -44,7 +45,11 @@ import Base from '@/layouts/Base.astro';
               <li>The book that does the best job of being a book.</li>
             </ul>
           </li>
-          <li>My Struggle — Karl Ove Knausgård</li>
+          <li>My Struggle — Karl Ove Knausgård
+            <ul>
+              <li>Like Proust all over again. I never once got bored in the thousands of pages.</li>
+            </ul>
+          </li>
         </ul>
         <h3>Non-fiction</h3>
         <ul class="has-popouts">
@@ -211,21 +216,65 @@ import Base from '@/layouts/Base.astro';
           <li>Texas, in general</li>
         </ul>
         <h3>Cities</h3>
-        <ul>
-          <li>London</li>
-          <li>Montreal</li>
-          <li>Berlin</li>
-          <li>Boston</li>
-          <li>DC</li>
-          <li>Venice</li>
-          <li>Austin</li>
+        <ul class="has-popouts">
+          <li>London
+            <ul>
+              <li>My favorite city to be in. Does so much right. Dynamic yet localist, genuinely diverse with people from all over still participating in this really fun shared culture, so many little details everywhere. The accents. Amazing for vegans. Perfect.</li>
+            </ul>
+          </li>
+          <li>Montreal
+            <ul>
+              <li>Such a beautiful city so tucked away, like finding a secret utopia deep in the forests where I grew up.</li>
+            </ul>
+          </li>
+          <li>Berlin
+            <ul>
+              <li>Incredibly vegan friendly and one of the most alive-feeling European cities (most others feel more like museums to me). I enjoy brutalism when I'm not living in it.</li>
+            </ul>
+          </li>
+          <li>Boston
+            <ul>
+              <li>Feels like home still. I love New England culture. Boston is the most calming city to spend time in for me.</li>
+            </ul>
+          </li>
+          <li>DC
+            <ul>
+              <li>My dear home. I love the specific ways people seek status in DC, and how it's not especially conducive to radical chic.</li>
+            </ul>
+          </li>
+          <li>Venice
+            <ul>
+              <li>Spent a wonderful evening getting lost walking around Venice talking about life with a friend. Beautiful and I love its place in commercial history.</li>
+            </ul>
+          </li>
+          <li>Austin
+            <ul>
+              <li>I love Texas in general. Big open spaces everywhere. So free and open. I gravitate to more lib cities. The last time I was there some friends and I stopped in a convenience store and saw 30 punk kids hanging out outside, turns out the owner was hosting a punk show in the store itself. Kids set up by the energy drinks and start playing somber and loud, the whole place was packed. Was like magic. Couldn't imagine that happening where I grew up.</li>
+            </ul>
+          </li>
         </ul>
         <h3>Restaurants</h3>
-        <ul>
-          <li>The Peter Chang restaurants around the DC area</li>
-          <li>Annie's Clark Brunch</li>
-          <li><a href="https://maps.app.goo.gl/3j4vS6f13ee2Mfpi8">Eden Center</a>'s <a href="https://maps.app.goo.gl/AaDzJwx74ohbNKds8">Dieu Huong Vegetarian Restaurant</a> and <a href="https://edencenter.com/stores/thanh-son-tofu/">Thanh Son Tofu</a></li>
-          <li>Holyoke Hummus</li>
+        <ul class="has-popouts">
+          <li>The Peter Chang restaurants around the DC area
+            <ul>
+              <li>Sichuan is my favorite cuisine and this is my favorite Sichuan.</li>
+            </ul>
+          </li>
+          <li>Annie's Clark Brunch
+            <ul>
+              <li>The city near where I'm from, and where I went to college, is where diners were invented. Annie's Clark Brunch is the college's local diner. Sadly not vegan-friendly so I don't go anymore, but I spent a lot of my best mornings in college here.</li>
+            </ul>
+          </li>
+          <li>Eden Center's Dieu Huong Vegetarian Restaurant and Thanh Son Tofu
+            <ul>
+              <li>Dieu Huong Vegetarian has the best spring rolls I've ever had and is the only place where I can get simulated animal fat. Thanh Son Tofu provides ridiculous piles of fried tofu. Both very fun.</li>
+            </ul>
+          </li>
+          <li>Holyoke Hummus
+            <ul>
+              <li>A food truck in Pioneer Valley with my favorite falafel sandwiches.</li>
+            </ul>
+          </li>
         </ul>
       </div>
     </div>
@@ -279,29 +328,28 @@ import Base from '@/layouts/Base.astro';
       <button class="category-title">Simple guiding ideas</button>
       <div class="category-content">
         <ul>
-          <li>The laws of physics are not violated.</li>
-          <li>Mental functionalism is probably true.</li>
-          <li>Many animals probably have first-person experiences in the same way we do. Humans are most likely a tiny tiny minority of conscious minds.</li>
-          <li>A lot of what we do is motivated by social status, and that's okay, because social status is more like a language or currency we use to live together, and can often be positive-sum, and this doesn't mean we're all isolated egoists. In fact...</li>
-          <li>Psychological and ethical egoism are both incorrect, for hard-nosed realistic reasons rather than wishy washy reasons.</li>
+          <li>The laws of physics <a href="https://plato.stanford.edu/entries/physicalism/">are not violated</a>.</li>
+          <li><a href="https://plato.stanford.edu/entries/functionalism/">Mental functionalism</a> is probably true. Human minds aren't magic, and probably <a href="https://physics.stackexchange.com/questions/228579/does-quantum-mechanics-play-a-role-in-the-brain">aren't operating at the quantum level</a>. What we call minds and intelligence can exist in other systems.</li>
+          <li>Many animals <a href="https://medium.economist.com/can-we-know-what-animals-are-thinking-83991bc994c4">probably have first-person experiences</a>. Humans are most likely a tiny tiny minority of conscious minds.</li>
+          <li>A lot of what we do is <a href="https://dynomight.net/class/">motivated by social status</a>, and that's okay, because social status is more like a language or currency we use to live together, and can often be positive-sum, and this doesn't mean we're all isolated egoists. In fact...</li>
+          <li><a href="https://www.amazon.com/Reasons-Persons-Derek-Parfit/dp/019824908X">Psychological and ethical egoism are both incorrect</a>, for hard-nosed realistic reasons rather than wishy washy reasons.</li>
           <li>A lot of the ways people get stuck in life is discovering a very local maximum of social status, where after the negative status hit of moving off of that little hill becomes too painful to consider. The people who feel most alive are the ones who can comfortably step off these hills.</li>
-          <li>Markets communicate complex information and translate that into incentives, even if no one involved is <a href="https://en.wikipedia.org/wiki/Homo_economicus">homo economicus</a>. A lot of the "planning" of what society is like is happening outside of human brains.</li>
+          <li><a href="https://www.economicforces.xyz/p/what-price-theory-is-and-is-not">Markets communicate complex information and translate that into incentives</a>, even if no one involved is <a href="https://en.wikipedia.org/wiki/Homo_economicus">homo economicus</a>. A lot of the "planning" of what society is like <a href="https://www.econlib.org/library/Essays/hykKnw.html">is happening outside of human brains</a>.</li>
           <li>Free reasonable people will arrive at conflicting visions of the good life. We can either build institutions which allow for and mediate this deep value pluralism, or squash freedom. No third option. The state is important as a tool to mediate the potential for violence that comes from pluralistic values. Giving specific institutions this power to mediate is necessary to preserve pluralism, and does not need to be elitist.</li>
           <li>Almost everyone can be getting a big question wrong.</li>
-          <li>Surprisingly few people are thinking super hard about their careers or doing simple cost-benefit calculations about different decisions.</li>
-          <li>Surprisingly few people are interested in doing middle school-level math, even if it'd help them a lot. My series on why AI isn't bad for the environment built me a big audience because I was doing the relatively simple calculations that seemed to be missing from the discourse.</li>
+          <li><a href="https://theonion.com/study-average-person-s-life-plan-can-only-withstand-25-1819578876/">Surprisingly few people are thinking super hard about their careers</a> or <a href="https://80000hours.org">doing simple cost-benefit calculations about different decisions</a>.</li>
+          <li>Surprisingly few people are interested in doing middle school-level math, even if it'd help them a lot. My series on <a href="https://andymasley.substack.com/p/ai-and-the-environment">why AI isn't bad for the environment</a> built me a big audience because I was doing the relatively simple calculations that seemed to be missing from the discourse.</li>
           <li>Mostly don't do drugs or other addictive stuff. Your entire experience of the whole world, the potential for all future good things to happen from your perspective, in some sense depends on your brain continuing to work well and not becoming brittle to new things.</li>
           <li>The two big events in human history were the Agricultural and Industrial Revolutions. A third might be coming...</li>
-          <li>Resentment of success and competence is a better explainer for a lot of behavior than I used to think. Malevolence too. A lot more of the world is positive-sum than I used to think too. There's a lot more simple kindness and care than I used to think. There's just a lot more of everything. Reality has a surprising amount of detail.</li>
-          <li>The labor theory of value is incorrect. A lot of people have a simple folk labor theory of value in their heads that leads to bad misunderstandings of the world.</li>
+          <li>Resentment of success and competence is a better explainer for a lot of behavior than I used to think. Malevolence too. A lot more of the world is positive-sum than I used to think too. There's a lot more simple kindness and care than I used to think. There's just a lot more of everything. <a href="http://johnsalvatier.org/blog/2017/reality-has-a-surprising-amount-of-detail">Reality has a surprising amount of detail</a>.</li>
           <li>Almost everyone seems to have this psychological bias where it's hard for them not to think that the 20 closest people to them are representative of the whole world. Everyone has a superego floating around behind them judging social situations and other people as well as themselves, that they believe is representative of the attitudes of the world more broadly. It rarely is.</li>
-          <li>The market is not pricing in a lot of the very most important things, so charity to the right places is deathly important.</li>
+          <li>The market is not pricing in a lot of the very most important things, so government aid and charity to the right places is deathly important.</li>
           <li>A lot of people are pretty desperately hungry for real deep conversational company with others where it feels like they're getting their head above water for a bit. Learning to give and get that company is important and hard but is basically one of the single best things that can happen. The world is much more lonely than I used to think. Avoiding that and building a real community where you feel deep company takes lots of diligence and care in how you live. Looking back I'm very very grateful that my younger self chose to be so careful in pursuit of this goal.</li>
           <li>The meaning of life is reliably love.</li>
-          <li>Avoid the naturalistic fallacy.</li>
-          <li>We have a lot of mental blocks around the idea of extreme suffering and your worldview should probably take it more seriously as a problem.</li>
-          <li>Condemnation of anyone getting their hands dirty in complex ethical decisions (this comes up a lot in discussions about war) is evil. Extreme pacifism is one bad manifestation of this. There should be no special points for sitting on the sidelines and allowing terrible things to happen. A big reason we're not currently living in a global political hellscape is complex and often fraught decisions made during World War 2. The world could get really really really bad.</li>
-          <li>The recent past was probably worse than you think.</li>
+          <li>Avoid <a href="https://en.wikipedia.org/wiki/Naturalistic_fallacy">the naturalistic fallacy</a>.</li>
+          <li>We have a lot of mental blocks around the idea of <a href="https://reducing-suffering.org/the-horror-of-suffering/">extreme suffering</a> and your worldview should probably take it more seriously as a problem.</li>
+          <li>Condemnation of anyone getting their hands dirty in complex ethical decisions (this comes up a lot in discussions about war) is evil. Extreme pacifism is one bad manifestation of this. There should be no special points for sitting on the sidelines and allowing terrible things to happen. A big reason we're not currently living in a global political hellscape is complex and often fraught decisions made during World War 2, as an example. <a href="https://en.wikipedia.org/wiki/Molotov%E2%80%93Ribbentrop_Pact">The world could get really really really bad</a>.</li>
+          <li>The recent past was probably <a href="https://scottsumner.substack.com/p/the-artificial-macroeconomist#:~:text=If%20the%20official,or%20%24100%2C000%20today%3F">worse than you think</a>.</li>
         </ul>
       </div>
     </div>
@@ -324,6 +372,64 @@ import Base from '@/layouts/Base.astro';
       <button class="category-title">Video games</button>
       <div class="category-content">
         <p>It's very very easy for me to get addicted to things, and life is short, so I mostly don't play video games except with friends, and rarely. My favorites are Factorio, Age of Empires 2, Portal, and Minecraft. All obvious answers.</p>
+      </div>
+    </div>
+
+    <div class="category" data-category="writing">
+      <button class="category-title">Blog posts, essays, and papers</button>
+      <div class="category-content">
+        <h3>Blog posts</h3>
+        <ul>
+          <li><a href="https://josephheath.substack.com/p/why-the-culture-wins-an-appreciation">Why the culture wins</a></li>
+          <li><a href="https://induecourse.utoronto.ca/absent-mindedness-as-dominance-behaviour/">Absent-mindedness as dominance behaviour</a></li>
+          <li><a href="https://usefulfictions.substack.com/p/maybe-youre-not-actually-trying">Maybe you're not actually trying</a></li>
+          <li><a href="http://johnsalvatier.org/blog/2017/reality-has-a-surprising-amount-of-detail">Reality has a surprising amount of detail</a></li>
+          <li><a href="https://jsomers.net/i-should-have-loved-biology/">I should have loved biology</a></li>
+          <li>Dynomight's status series
+            <ul>
+              <li><a href="https://dynomight.net/bourdieu/">Bourdieu's theory of taste: a grumbling abrégé</a></li>
+              <li><a href="https://dynomight.net/class/">Your tastes are a point in space</a></li>
+              <li><a href="https://dynomight.net/taste-games/">Taste games</a></li>
+            </ul>
+          </li>
+          <li><a href="https://www.economicforces.xyz/p/what-price-theory-is-and-is-not">What price theory is and is not</a></li>
+          <li><a href="https://www.conspicuouscognition.com/p/why-do-people-believe-true-things">Why do people believe true things?</a></li>
+          <li><a href="https://scholarstage.substack.com/p/washington-dc-is-not-a-popularity">Washington DC is not a popularity contest</a></li>
+          <li>1a3orn on AI risk
+            <ul>
+              <li><a href="https://1a3orn.com/sub/ai-doom-consistency.html">Will AI resist your efforts to change its totally fake values?</a></li>
+              <li><a href="https://1a3orn.com/sub/essays-ai-doom-invincible.html">On those undefeatable arguments for AI doom</a></li>
+            </ul>
+          </li>
+          <li><a href="https://www.henrikkarlsson.xyz/p/search-query">A blog post is a very long and complex search query to find fascinating people and make them route interesting stuff to your inbox</a></li>
+          <li><a href="https://scholars-stage.org/questing-for-transcendence/">Questing for transcendence</a></li>
+          <li><a href="https://collabfund.com/blog/how-this-all-happened/">How this all happened</a></li>
+          <li><a href="https://paulgraham.com/words.html">Putting ideas into words</a></li>
+          <li><a href="https://www.ribbonfarm.com/2010/07/26/a-big-little-idea-called-legibility/">A big little idea called legibility</a></li>
+          <li><a href="https://andymatuschak.org/books/">Why books don't work</a></li>
+          <li><a href="https://michaelnotebook.com/optimism/index.html">How to be a wise optimist about science and technology?</a></li>
+          <li><a href="https://barnacles.substack.com/p/my-mental-models-2020">My mental models</a></li>
+          <li><a href="https://www.themoneyillusion.com/understanding-middlebrow/">Understanding middlebrow</a></li>
+          <li><a href="https://guzey.com/lifehacks/">Life hacks</a></li>
+          <li><a href="https://guzey.com/productivity/">Every productivity thought I've ever had, as concisely as possible</a></li>
+        </ul>
+        <h3>Essays</h3>
+        <ul>
+          <li><a href="https://theanarchistlibrary.org/library/donna-haraway-a-cyborg-manifesto">A cyborg manifesto</a></li>
+          <li><a href="https://worksinprogress.co/issue/the-housing-theory-of-everything/">The housing theory of everything</a></li>
+          <li><a href="https://www.commentary.org/articles/jeane-kirkpatrick/dictatorships-double-standards/">Dictatorships and double standards</a></li>
+          <li><a href="https://d37ugbyn3rpeym.cloudfront.net/stripe-press/TAODSAE_zine_press.pdf">You and your research</a></li>
+          <li><a href="https://www.orwellfoundation.com/the-orwell-foundation/orwell/essays-and-other-works/you-and-the-atom-bomb/">You and the atom bomb</a></li>
+          <li><a href="https://www.orwellfoundation.com/the-orwell-foundation/orwell/essays-and-other-works/politics-and-the-english-language/">Politics and the English language</a></li>
+          <li><a href="https://sites.gatech.edu/alexburgin/on-self-respect-by-joan-didion/">On self respect</a></li>
+        </ul>
+        <h3>Papers</h3>
+        <ul>
+          <li><a href="https://link.springer.com/article/10.1007/s10677-015-9567-7">The possibility of an ongoing moral catastrophe</a></li>
+          <li><a href="https://www.theologie.uzh.ch/dam/jcr:ffffffff-fbd6-1538-0000-000070cf64bc/Quine51.pdf">Two dogmas of empiricism</a></li>
+          <li><a href="https://escholarship.org/uc/item/83k4763m">Sex and death in the rational world of defense intellectuals</a></li>
+          <li><a href="https://www.academia.edu/89468776/When_does_Critical_Theory_Become_Conspiracy_Theory">When does critical theory become conspiracy theory?</a></li>
+        </ul>
       </div>
     </div>
   </div>
@@ -500,6 +606,14 @@ import Base from '@/layouts/Base.astro';
 </Base>
 
 <style>
+  .page-title {
+    font-family: var(--font-serif);
+    font-size: 1.25rem;
+    font-weight: normal;
+    margin: 0 0 1rem 0;
+    color: var(--text);
+  }
+
   .favorite-things {
     display: flex;
     flex-direction: column;

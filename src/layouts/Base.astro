@@ -18,7 +18,7 @@ const currentPath = Astro.url.pathname;
 const navLinks = [
   { href: '/', label: 'home' },
   { href: '/writing', label: 'writing' },
-  { href: '/physics', label: 'ib physics' },
+  { href: '/physics', label: 'IB physics' },
   { href: '/lists', label: 'lists' },
   { href: '/about', label: 'about' },
   { href: '/contact', label: 'contact' },
@@ -50,7 +50,7 @@ function isActive(href: string): boolean {
       const theme = stored || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
       document.documentElement.setAttribute('data-theme', theme);
 
-      // Persist theme across View Transitions
+      // Persist across View Transitions
       document.addEventListener('astro:after-swap', () => {
         const savedTheme = localStorage.getItem('theme');
         if (savedTheme) {
@@ -120,6 +120,7 @@ function isActive(href: string): boolean {
       <a href="/rss.xml">RSS</a> · <a href="mailto:AndyMasley@gmail.com">contact</a>
     </footer>
   </main>
+
 
 
 
