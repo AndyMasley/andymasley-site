@@ -9,9 +9,21 @@ import Base from '@/layouts/Base.astro';
         <path d="M12 2 L20.66 7 L20.66 17 L12 22 L3.34 17 L3.34 7 Z" />
       </svg>
     </div>
-    <p class="hexagon-text">
-      A nod to <a href="https://press.princeton.edu/ideas/insect-intelligence?srsltid=AfmBOoqx4JrvpkFdj7ih1NOGo-1jIE4U2wbuoa1Lr3i16332P7uGLEJ0">bees</a>, <a href="https://sites.evergreen.edu/politicalshakespeares/wp-content/uploads/sites/226/2015/12/Borges-The-Library-of-Babel.pdf">Borges</a>, <a href="https://econreview.studentorg.berkeley.edu/the-hexagon/">minimalist efficiency</a>, <a href="https://www.youtube.com/watch?v=Pypd_yKGYpA">order without design in nature</a>, and <a href="https://www.cold-takes.com/the-track-record-of-futurists-seems-fine/">futurism</a>
-    </p>
+    <div class="hexagon-text">
+      <p class="hexagon-intro">A nod to</p>
+      <p class="hexagon-links">
+        <a href="https://press.princeton.edu/ideas/insect-intelligence?srsltid=AfmBOoqx4JrvpkFdj7ih1NOGo-1jIE4U2wbuoa1Lr3i16332P7uGLEJ0">bees</a>
+        <span class="hexagon-sep">·</span>
+        <a href="https://sites.evergreen.edu/politicalshakespeares/wp-content/uploads/sites/226/2015/12/Borges-The-Library-of-Babel.pdf">Borges</a>
+        <span class="hexagon-sep">·</span>
+        <a href="https://econreview.studentorg.berkeley.edu/the-hexagon/">minimalist efficiency</a>
+      </p>
+      <p class="hexagon-links">
+        <a href="https://www.youtube.com/watch?v=Pypd_yKGYpA">order without design</a>
+        <span class="hexagon-sep">·</span>
+        <a href="https://www.cold-takes.com/the-track-record-of-futurists-seems-fine/">futurism</a>
+      </p>
+    </div>
   </div>
 </Base>
 
@@ -53,5 +65,20 @@ import Base from '@/layouts/Base.astro';
   .hexagon-text {
     color: var(--dim);
     font-size: var(--font-size-ui);
+    text-align: center;
+  }
+
+  .hexagon-intro {
+    margin-bottom: 0.5rem;
+    font-style: italic;
+  }
+
+  .hexagon-links {
+    margin: 0.25rem 0;
+  }
+
+  .hexagon-sep {
+    margin: 0 0.5rem;
+    opacity: 0.5;
   }
 </style>
