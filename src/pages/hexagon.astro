@@ -1,0 +1,55 @@
+---
+import Base from '@/layouts/Base.astro';
+---
+
+<Base title="Hexagon" description="A hidden corner">
+  <div class="hexagon-page">
+    <div class="hexagon-container">
+      <svg class="center-hexagon" width="120" height="120" viewBox="0 0 24 24" fill="none">
+        <path d="M12 2 L20.66 7 L20.66 17 L12 22 L3.34 17 L3.34 7 Z" />
+      </svg>
+    </div>
+    <p class="hexagon-text">You found it.</p>
+  </div>
+</Base>
+
+<style>
+  .hexagon-page {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 50vh;
+    text-align: center;
+  }
+
+  .hexagon-container {
+    margin-bottom: 2rem;
+  }
+
+  .center-hexagon {
+    stroke: var(--accent);
+    stroke-width: 1;
+    fill: transparent;
+    animation: hexagon-spin 20s linear infinite;
+  }
+
+  .center-hexagon:hover {
+    fill: var(--accent);
+    stroke-width: 0;
+  }
+
+  @keyframes hexagon-spin {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  .hexagon-text {
+    color: var(--dim);
+    font-size: var(--font-size-ui);
+  }
+</style>

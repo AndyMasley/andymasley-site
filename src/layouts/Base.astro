@@ -80,12 +80,14 @@ function isActive(href: string): boolean {
   <main class="main-content" transition:animate="fade">
     <header class="header">
       <div class="header__inner">
-        <a href="/" class="header__logo">
-          <svg class="logo-hexagon" width="22" height="22" viewBox="0 0 24 24" fill="none">
-            <path d="M12 2 L20.66 7 L20.66 17 L12 22 L3.34 17 L3.34 7 Z" />
-          </svg>
-          Andy Masley
-        </a>
+        <div class="header__logo">
+          <a href="/hexagon" class="header__hexagon-link">
+            <svg class="logo-hexagon" width="22" height="22" viewBox="0 0 24 24" fill="none">
+              <path d="M12 2 L20.66 7 L20.66 17 L12 22 L3.34 17 L3.34 7 Z" />
+            </svg>
+          </a>
+          <a href="/" class="header__name-link">Andy Masley</a>
+        </div>
 
         <div class="header__controls">
           <button class="dark-toggle" id="theme-toggle">
@@ -113,6 +115,14 @@ function isActive(href: string): boolean {
     </header>
 
     <slot />
+
+    {currentPath === '/hexagon' && (
+      <a href="/" class="nav-hexagon" title="Return home">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
+          <path d="M12 2 L20.66 7 L20.66 17 L12 22 L3.34 17 L3.34 7 Z" />
+        </svg>
+      </a>
+    )}
 
     <footer class="footer">
       <a href="/rss.xml">RSS</a> · <a href="mailto:AndyMasley@gmail.com">contact</a>
