@@ -113,14 +113,14 @@ function isActive(href: string): boolean {
           </>
         ))}
         {isHexagonPage && (
-          <>
+          <span class="nav-hexagon-wrap">
             <span class="header__nav-sep"> · </span>
             <a href="/hexagon" class="nav-hexagon" aria-current="page">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
                 <path d="M12 2 L20.66 7 L20.66 17 L12 22 L3.34 17 L3.34 7 Z" stroke="var(--accent)" stroke-width="1.5"/>
               </svg>
             </a>
-          </>
+          </span>
         )}
       </nav>
     </header>

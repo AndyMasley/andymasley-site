@@ -935,6 +935,16 @@ details[open] summary::before {
    Nav Hexagon (appears in nav on hexagon page)
    ============================================ */
 
+.nav-hexagon-wrap {
+  white-space: nowrap;
+}
+
+@media (max-width: 420px) {
+  .nav-hexagon-wrap {
+    display: none;
+  }
+}
+
 .nav-hexagon {
   display: inline-flex;
   align-items: center;
