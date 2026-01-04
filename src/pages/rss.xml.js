@@ -3,25 +3,21 @@ import { getCollection } from 'astro:content';
 
 export async function GET(context) {
   const writing = await getCollection('writing', ({ data }) => !data.draft);
-  const notes = await getCollection('notes', ({ data }) => !data.draft);
-  
-  const items = [...writing, ...notes]
+
+  const items = writing
     .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf())
     .slice(0, 50);
-  
+
   return rss({
     title: 'Andy Masley',
-    description: 'Essays, notes, and miscellany',
+    description: 'Blog posts and essays',
     site: context.site,
-    items: items.map(item => {
-      const collection = 'body' in item && item.collection === 'writing' ? 'writing' : 'notes';
-      return {
-        title: item.data.title,
-        pubDate: item.data.date,
-        description: item.data.description || '',
-        link: `/${collection}/${item.slug}/`,
-      };
-    }),
+    items: items.map(item => ({
+      title: item.data.title,
+      pubDate: item.data.date,
+      description: item.data.description || '',
+      link: `/writing/${item.slug}/`,
+    })),
     customData: `<language>en-us</language>`,
   });
 }
