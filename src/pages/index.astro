@@ -33,13 +33,13 @@ function formatDate(date: Date): string {
     </p>
   </div>
 
-  <hr class="divider" />
+  <div class="divider"><div class="divider-diamond"></div></div>
 
   <div class="home-recent">
     <div class="label">Recent</div>
     <ul class="content-list">
       {recentPosts.map(post => (
-        <li class="content-item">
+        <li class="content-item post-item">
           <span class="content-item__date">{formatDate(post.date)}</span>
           <a href={`/writing/${post.slug}`} class="content-item__link">
             {post.title}
@@ -49,7 +49,7 @@ function formatDate(date: Date): string {
     </ul>
   </div>
 
-  <hr class="divider" />
+  <div class="divider"><div class="divider-diamond"></div></div>
 
   <div class="home-elsewhere">
     <span class="label">Elsewhere: </span>

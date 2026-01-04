@@ -10,7 +10,7 @@ const totalVideos = getTotalVideoCount();
     I taught high school physics for 7 years, and made and collected lots of online resources for my students. This page has everything useful I can share from my time teaching, most importantly the {totalVideos} animated video lectures I made for the IB Physics SL curriculum.
   </p>
 
-  <hr class="divider" />
+  <div class="divider"><div class="divider-diamond"></div></div>
 
   <div class="section-title">Video lectures</div>
   <div class="physics-intro">
@@ -39,7 +39,7 @@ const totalVideos = getTotalVideoCount();
 
             <div class="topic-content">
               {subtopic.videos.map(video => (
-                <a href={video.url} target="_blank" rel="noopener">
+                <a href={video.url} target="_blank" rel="noopener" class="video-item">
                   {video.title}
                 </a>
               ))}
@@ -50,7 +50,7 @@ const totalVideos = getTotalVideoCount();
     </details>
   ))}
 
-  <hr class="divider" />
+  <div class="divider"><div class="divider-diamond"></div></div>
 
   <div class="section-title">Advice and resources</div>
 
