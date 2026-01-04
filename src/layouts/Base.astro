@@ -136,6 +136,7 @@ function isActive(href: string): boolean {
     document.addEventListener('astro:page-load', () => {
       initThemeToggle();
       initReadingProgress();
+      initExternalLinks();
     });
 
     function initThemeToggle() {
@@ -178,9 +179,22 @@ function isActive(href: string): boolean {
       }
     }
 
+    function initExternalLinks() {
+      const links = document.querySelectorAll('a[href^="http"]');
+      const currentHost = window.location.host;
+      links.forEach(link => {
+        const href = link.getAttribute('href');
+        if (href && !href.includes(currentHost)) {
+          link.setAttribute('target', '_blank');
+          link.setAttribute('rel', 'noopener');
+        }
+      });
+    }
+
     // Initialize on first load
     initThemeToggle();
     initReadingProgress();
+    initExternalLinks();
   </script>
 
 </body>
