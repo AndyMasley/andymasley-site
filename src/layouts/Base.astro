@@ -14,6 +14,7 @@ const {
   showReadingProgress = false,
 } = Astro.props;
 const currentPath = Astro.url.pathname;
+const isHexagonPage = currentPath === '/hexagon' || currentPath === '/hexagon/';
 
 const navLinks = [
   { href: '/', label: 'home' },
@@ -111,18 +112,20 @@ function isActive(href: string): boolean {
             </a>
           </>
         ))}
+        {isHexagonPage && (
+          <>
+            <span class="header__nav-sep"> · </span>
+            <a href="/hexagon" class="nav-hexagon" aria-current="page">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                <path d="M12 2 L20.66 7 L20.66 17 L12 22 L3.34 17 L3.34 7 Z" stroke="currentColor" stroke-width="1.5"/>
+              </svg>
+            </a>
+          </>
+        )}
       </nav>
     </header>
 
     <slot />
-
-    {currentPath === '/hexagon' && (
-      <a href="/" class="nav-hexagon" title="Return home">
-        <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
-          <path d="M12 2 L20.66 7 L20.66 17 L12 22 L3.34 17 L3.34 7 Z" />
-        </svg>
-      </a>
-    )}
 
     <footer class="footer">
       <a href="/rss.xml">RSS</a> · <a href="mailto:AndyMasley@gmail.com">contact</a>

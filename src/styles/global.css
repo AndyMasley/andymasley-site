@@ -932,37 +932,34 @@ details[open] summary::before {
 }
 
 /* ============================================
-   Nav Hexagon (floating element on hexagon page)
+   Nav Hexagon (appears in nav on hexagon page)
    ============================================ */
 
 .nav-hexagon {
-  position: fixed;
-  bottom: 24px;
-  right: 24px;
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  justify-content: center;
+  vertical-align: middle;
+  color: var(--text);
   text-decoration: none;
-  animation: nav-hexagon-float 3s ease-in-out infinite;
+  animation: hexagonAppear 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .nav-hexagon svg {
-  stroke: var(--accent);
-  stroke-width: 1;
-  fill: transparent;
-  transition: fill 0.3s ease, transform 0.3s ease;
+  display: block;
+  transition: transform 0.3s ease;
 }
 
 .nav-hexagon:hover svg {
-  fill: var(--accent);
   transform: rotate(30deg);
 }
 
-@keyframes nav-hexagon-float {
-  0%, 100% {
-    transform: translateY(0);
+@keyframes hexagonAppear {
+  0% {
+    opacity: 0;
+    transform: scale(0) rotate(-60deg);
   }
-  50% {
-    transform: translateY(-8px);
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
   }
 }
