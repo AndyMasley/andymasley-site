@@ -210,7 +210,7 @@ import Base from '@/layouts/Base.astro';
               <div class="albums-list-column">
                 <ul class="album-list">
                   <li class="album-item" data-spotify-id="0HHmJpwOXXRJu9HI9iQiEO" data-title="White Light, White Heat"><span class="album-title">White Light, White Heat</span> <span class="album-artist">The Velvet Underground</span></li>
-                  <li class="album-item"><a href="https://www.youtube.com/watch?v=t0dJqlvOSq4" target="_blank" rel="noopener noreferrer" class="album-title">Loveless</a> <span class="album-artist">My Bloody Valentine</span></li>
+                  <li class="album-item"><a href="https://www.youtube.com/watch?v=ILCs0sP-F6Y" target="_blank" rel="noopener noreferrer" class="album-title">Loveless</a> <span class="album-artist">My Bloody Valentine</span></li>
                   <li class="album-item" data-spotify-id="17q5eeNk3HAjX1gzQnkTX7" data-title="In the Aeroplane Over the Sea"><span class="album-title">In the Aeroplane Over the Sea</span> <span class="album-artist">Neutral Milk Hotel</span></li>
                   <li class="album-item" data-spotify-id="5g5JAnBYxmaTMVvh6RnA1c" data-title="Monoliths and Dimensions"><span class="album-title">Monoliths and Dimensions</span> <span class="album-artist">Sunn O)))</span></li>
                   <li class="album-item"><a href="https://www.youtube.com/watch?v=yi0_jHVOfQU" target="_blank" rel="noopener noreferrer" class="album-title">Have One on Me</a> <span class="album-artist">Joanna Newsom</span></li>
@@ -1137,6 +1137,18 @@ import Base from '@/layouts/Base.astro';
   }
 
   .album-item.has-spotify:hover .album-title {
+    color: var(--accent);
+  }
+
+  /* YouTube link items - style like regular items */
+  a.album-title,
+  a.track-title {
+    text-decoration: none;
+    color: var(--text);
+  }
+
+  a.album-title:hover,
+  a.track-title:hover {
     color: var(--accent);
   }
 
