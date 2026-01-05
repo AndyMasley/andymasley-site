@@ -82,42 +82,42 @@ import Base from '@/layouts/Base.astro';
       <div class="category-content">
         <h3>Fiction</h3>
         <ul class="has-popouts">
-          <li>In Search of Lost Time — Marcel Proust
+          <li><span class="book-title">In Search of Lost Time</span> <span class="book-author">Marcel Proust</span>
             <ul>
               <li>When I was 17 I hadn't actually bumped into too much truly, deeply relatable media. I got into a lot of books and movies because I wanted to be the type of person who was into them, but I felt a pretty big gulf between my day to day experience and most of what I saw expressed in art. Swann's Way exploded that barrier. I was almost constantly overwhelmed with how Proust was able to describe aspects of day to day experience I had only ever half-articulated myself but seemed so obvious when it was on the page. I came away thinking that most people were actually having much more deeply similar experiences to me than I expected, and maybe we all just didn't have the words for it. The book opened the world for me and made me feel much more at home in it.</li>
             </ul>
           </li>
-          <li>Collected Fictions — Jorge Luis Borges
+          <li><span class="book-title">Collected Fictions</span> <span class="book-author">Jorge Luis Borges</span>
             <ul>
               <li>I remember my cousin was reading a Borges story collection when I was around 16 and briefly explained the plot of The Library of Babel, I got obsessed with the idea but forgot the author's name and didn't find it again until a few years later, so it felt like I was unlocking some half-remembered secret when I read it. Loving Borges has been a commonality among most friend groups I've had.</li>
             </ul>
           </li>
-          <li>Invisible Cities — Italo Calvino
+          <li><span class="book-title">Invisible Cities</span> <span class="book-author">Italo Calvino</span>
             <ul>
               <li>So simple and nice to read.</li>
             </ul>
           </li>
-          <li>The Notebook, the Proof, the Third Lie: Three Novels — Ágota Kristóf
+          <li><span class="book-title">The Notebook, the Proof, the Third Lie: Three Novels</span> <span class="book-author">Ágota Kristóf</span>
             <ul>
               <li>I was completely overwhelmed, though I can't really explain why. Just loved the whole thing.</li>
             </ul>
           </li>
-          <li>Ada, or Ardor — Vladimir Nabokov
+          <li><span class="book-title">Ada, or Ardor</span> <span class="book-author">Vladimir Nabokov</span>
             <ul>
               <li>The most beautiful language in a book.</li>
             </ul>
           </li>
-          <li>Little, Big — John Crowley
+          <li><span class="book-title">Little, Big</span> <span class="book-author">John Crowley</span>
             <ul>
               <li>New England has a deep sense of hidden secrets, magic, and the weight of history, and this book captures that sense so well.</li>
             </ul>
           </li>
-          <li>The Book of the New Sun — Gene Wolfe
+          <li><span class="book-title">The Book of the New Sun</span> <span class="book-author">Gene Wolfe</span>
             <ul>
               <li>The book that does the best job of being a book.</li>
             </ul>
           </li>
-          <li>My Struggle — Karl Ove Knausgård
+          <li><span class="book-title">My Struggle</span> <span class="book-author">Karl Ove Knausgård</span>
             <ul>
               <li>Like Proust all over again. I never once got bored in the thousands of pages.</li>
             </ul>
@@ -125,7 +125,7 @@ import Base from '@/layouts/Base.astro';
         </ul>
         <h3>Non-fiction</h3>
         <ul class="has-popouts">
-          <li>Word and Object — WVO Quine
+          <li><span class="book-title">Word and Object</span> <span class="book-author">WVO Quine</span>
             <ul>
               <li>A personal Bible. Very useful in the age of LLMs. A great example of thinking well in general.</li>
             </ul>
@@ -135,37 +135,37 @@ import Base from '@/layouts/Base.astro';
               <li>I come away from basically every Heath book feeling like I have a new real deep understanding of a key part of the world.</li>
             </ul>
           </li>
-          <li>Essays — Lydia Davis
+          <li><span class="book-title">Essays</span> <span class="book-author">Lydia Davis</span>
             <ul>
               <li>One of the most fun interesting books to read about anything</li>
             </ul>
           </li>
-          <li>Reasons and Persons — Derek Parfit
+          <li><span class="book-title">Reasons and Persons</span> <span class="book-author">Derek Parfit</span>
             <ul>
               <li>Reading this in my junior year of college got me into effective altruism. Was like an ideological nuclear bomb. More than anything else I really admired Parfit's approach to problems where he'd completely exhaust every possibility in some abstract but important question and choose the least terrible option.</li>
             </ul>
           </li>
-          <li>The Sources of Normativity — Korsgaard
+          <li><span class="book-title">The Sources of Normativity</span> <span class="book-author">Korsgaard</span>
             <ul>
               <li>I'm pretty sympathetic to Kantianism and this is the best book for making deontology seem intuitive rather than arbitrary.</li>
             </ul>
           </li>
-          <li>Nature's Metropolis: Chicago and the Great West — William Cronon
+          <li><span class="book-title">Nature's Metropolis: Chicago and the Great West</span> <span class="book-author">William Cronon</span>
             <ul>
               <li>Beautiful and fun economic history. Good headspace.</li>
             </ul>
           </li>
-          <li>Essays — George Orwell
+          <li><span class="book-title">Essays</span> <span class="book-author">George Orwell</span>
             <ul>
               <li>Read when I was 18, I wanted to write and think like him. Think it's unfortunate that people mainly associate Orwell with 1984, his essays are where the good stuff's at.</li>
             </ul>
           </li>
-          <li>The Structures of Everyday Life — Fernand Braudel
+          <li><span class="book-title">The Structures of Everyday Life</span> <span class="book-author">Fernand Braudel</span>
             <ul>
               <li>Real economic history, about flows and patterns. Individuals don't play a role.</li>
             </ul>
           </li>
-          <li>Selected Non-Fictions — Jorge Luis Borges
+          <li><span class="book-title">Selected Non-Fictions</span> <span class="book-author">Jorge Luis Borges</span>
             <ul>
               <li>He's the king</li>
             </ul>
@@ -1141,7 +1141,8 @@ import Base from '@/layouts/Base.astro';
   }
 
   .album-artist,
-  .music-artist {
+  .music-artist,
+  .book-author {
     color: var(--dim);
   }
 
