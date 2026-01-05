@@ -206,32 +206,39 @@ import Base from '@/layouts/Base.astro';
         <div class="subcategory">
           <button class="subcategory-title">Albums</button>
           <div class="subcategory-content">
-            <ul>
-              <li><a href="https://open.spotify.com/album/0HHmJpwOXXRJu9HI9iQiEO">White Light, White Heat</a> — The Velvet Underground</li>
-              <li><a href="https://www.youtube.com/watch?v=ILCs0sP-F6Y">Loveless</a> — My Bloody Valentine</li>
-              <li><a href="https://open.spotify.com/album/17q5eeNk3HAjX1gzQnkTX7">In the Aeroplane Over the Sea</a> — Neutral Milk Hotel</li>
-              <li><a href="https://open.spotify.com/album/5g5JAnBYxmaTMVvh6RnA1c">Monoliths and Dimensions</a> — Sunn O)))</li>
-              <li><a href="https://www.youtube.com/watch?v=yi0_jBHObqs">Have One on Me</a> — Joanna Newsom</li>
-              <li><a href="https://open.spotify.com/album/0xxHfGQtC485rStXundfMi">All Hail West Texas</a> — the Mountain Goats</li>
-              <li><a href="https://open.spotify.com/album/386IqvSuljaZsMjwDGGdLj">Charli</a> — Charli XCX</li>
-              <li><a href="https://open.spotify.com/album/6uoeezh45SYEb8lcT8gDTY">Another Green World</a> — Brian Eno</li>
-              <li><a href="https://open.spotify.com/album/1mrhahrlJu5JfzgeV6Cy8t">Take Me to Your Leader</a> — King Geedorah</li>
-              <li><a href="https://open.spotify.com/album/3iC6dJobZulVXp0F4Bojig">Car Wheels on a Gravel Road</a> — Lucinda Williams</li>
-            </ul>
-            <div class="sub-subcategory">
-              <button class="sub-subcategory-title">When I was a teenager</button>
-              <div class="sub-subcategory-content">
-                <ul>
-                  <li><a href="https://open.spotify.com/album/6dVIqQ8qmQ5GBnJ9shOYGE">OK Computer</a> — Radiohead</li>
-                  <li><a href="https://open.spotify.com/album/5dN7F9DV0Qg1XRdIgW8rke">American Idiot</a> — Green Day
-                    <ul><li>I was specifically really obsessed with the two long songs on the album and have so many memories of walking around my hometown at night with them on that now they're some of the most nostalgic sounds in the world to me.</li></ul>
-                  </li>
-                  <li><a href="https://open.spotify.com/album/6eo9wHG2V79FTfz9pmfUEU">Source Tags & Codes</a> — ...And You Will Know Us By the Trail of Dead</li>
-                  <li><a href="https://open.spotify.com/album/0DQyTVcDhK9wm0f6RaErWO">Doolittle</a> — Pixies</li>
-                  <li><a href="https://open.spotify.com/album/17q5eeNk3HAjX1gzQnkTX7">In the Aeroplane Over the Sea</a> — Neutral Milk Hotel</li>
-                  <li><a href="https://open.spotify.com/album/4gPkBsMmufyOMCJbXUUme8">Sister</a> — Sonic Youth</li>
-                  <li><a href="https://open.spotify.com/album/0K5FvRzJl6iTKikI9tMdAB">69 Love Songs</a> — The Magnetic Fields</li>
+            <div class="albums-layout">
+              <div class="albums-list-column">
+                <ul class="album-list">
+                  <li class="album-item" data-spotify-id="0HHmJpwOXXRJu9HI9iQiEO" data-title="White Light, White Heat"><span class="album-title">White Light, White Heat</span> <span class="album-artist">The Velvet Underground</span></li>
+                  <li class="album-item" data-service="youtube" data-youtube-id="t0dJqlvOSq4" data-title="Loveless"><span class="album-title">Loveless</span> <span class="album-artist">My Bloody Valentine</span></li>
+                  <li class="album-item" data-spotify-id="17q5eeNk3HAjX1gzQnkTX7" data-title="In the Aeroplane Over the Sea"><span class="album-title">In the Aeroplane Over the Sea</span> <span class="album-artist">Neutral Milk Hotel</span></li>
+                  <li class="album-item" data-spotify-id="5g5JAnBYxmaTMVvh6RnA1c" data-title="Monoliths and Dimensions"><span class="album-title">Monoliths and Dimensions</span> <span class="album-artist">Sunn O)))</span></li>
+                  <li class="album-item" data-service="youtube" data-youtube-id="yi0_jHVOfQU" data-title="Have One on Me"><span class="album-title">Have One on Me</span> <span class="album-artist">Joanna Newsom</span></li>
+                  <li class="album-item" data-spotify-id="0xxHfGQtC485rStXundfMi" data-title="All Hail West Texas"><span class="album-title">All Hail West Texas</span> <span class="album-artist">the Mountain Goats</span></li>
+                  <li class="album-item" data-spotify-id="386IqvSuljaZsMjwDGGdLj" data-title="Charli"><span class="album-title">Charli</span> <span class="album-artist">Charli XCX</span></li>
+                  <li class="album-item" data-spotify-id="6uoeezh45SYEb8lcT8gDTY" data-title="Another Green World"><span class="album-title">Another Green World</span> <span class="album-artist">Brian Eno</span></li>
+                  <li class="album-item" data-spotify-id="1mrhahrlJu5JfzgeV6Cy8t" data-title="Take Me to Your Leader"><span class="album-title">Take Me to Your Leader</span> <span class="album-artist">King Geedorah</span></li>
+                  <li class="album-item" data-spotify-id="3iC6dJobZulVXp0F4Bojig" data-title="Car Wheels on a Gravel Road"><span class="album-title">Car Wheels on a Gravel Road</span> <span class="album-artist">Lucinda Williams</span></li>
                 </ul>
+                <div class="sub-subcategory">
+                  <button class="sub-subcategory-title">When I was a teenager</button>
+                  <div class="sub-subcategory-content">
+                    <ul class="album-list">
+                      <li class="album-item" data-spotify-id="6dVIqQ8qmQ5GBnJ9shOYGE" data-title="OK Computer"><span class="album-title">OK Computer</span> <span class="album-artist">Radiohead</span></li>
+                      <li class="album-item has-popout" data-spotify-id="5dN7F9DV0Qg1XRdIgW8rke" data-title="American Idiot"><span class="album-title">American Idiot</span> <span class="album-artist">Green Day</span>
+                        <ul class="popout-content"><li>I was specifically really obsessed with the two long songs on the album and have so many memories of walking around my hometown at night with them on that now they're some of the most nostalgic sounds in the world to me.</li></ul>
+                      </li>
+                      <li class="album-item" data-spotify-id="6eo9wHG2V79FTfz9pmfUEU" data-title="Source Tags & Codes"><span class="album-title">Source Tags & Codes</span> <span class="album-artist">...And You Will Know Us By the Trail of Dead</span></li>
+                      <li class="album-item" data-spotify-id="0DQyTVcDhK9wm0f6RaErWO" data-title="Doolittle"><span class="album-title">Doolittle</span> <span class="album-artist">Pixies</span></li>
+                      <li class="album-item" data-spotify-id="17q5eeNk3HAjX1gzQnkTX7" data-title="In the Aeroplane Over the Sea"><span class="album-title">In the Aeroplane Over the Sea</span> <span class="album-artist">Neutral Milk Hotel</span></li>
+                      <li class="album-item" data-spotify-id="4gPkBsMmufyOMCJbXUUme8" data-title="Sister"><span class="album-title">Sister</span> <span class="album-artist">Sonic Youth</span></li>
+                      <li class="album-item" data-spotify-id="0K5FvRzJl6iTKikI9tMdAB" data-title="69 Love Songs"><span class="album-title">69 Love Songs</span> <span class="album-artist">The Magnetic Fields</span></li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+              <div class="player-panel" hidden>
+                <div class="player-embed"></div>
               </div>
             </div>
           </div>
@@ -239,31 +246,47 @@ import Base from '@/layouts/Base.astro';
         <div class="subcategory">
           <button class="subcategory-title">Songs</button>
           <div class="subcategory-content">
-            <ul>
-              <li><a href="https://open.spotify.com/track/5CRPGdCSOfstyTVK9Ja5EQ">Ceremony</a>, <a href="https://open.spotify.com/track/7j5Q3zhjvpQvMeoPSZwdsa">Temptation</a>, and <a href="https://www.youtube.com/watch?v=n_TivwP-yqY">The Village</a> — New Order</li>
-              <li><a href="https://open.spotify.com/track/45gyo0I5zHilhomXRwBDnZ">Frontwards</a> — Pavement</li>
-              <li><a href="https://open.spotify.com/track/6L0BBPYeWnaQJeDa0ox0IA">Impossible Germany</a> — Wilco</li>
-              <li><a href="https://open.spotify.com/track/27rd2bxXr8WJDF0cLWC3Kn">The Luckiest Guy on the Lower East Side</a> — The Magnetic Fields</li>
-              <li><a href="https://open.spotify.com/track/6N3NBd2vrhbH5m8ZHFO6xI">New Partner</a> — Palace Music</li>
-              <li><a href="https://open.spotify.com/track/6a7mw7O1naaefvxaSdC55W">Distant Stations</a> — The Mountain Goats</li>
-              <li><a href="https://open.spotify.com/track/3g158Ik8k4KUphKC1asZ3T">Two Headed Boy</a> — Neutral Milk Hotel</li>
-              <li><a href="https://open.spotify.com/track/4pbEwQiDjPln3oYlijXuOE">The Moon</a> — The Microphones</li>
-              <li><a href="https://open.spotify.com/track/1rmXfdk4DFRuw6LLKoUTb0">Nothing is Real</a> — Boards of Canada</li>
-              <li><a href="https://open.spotify.com/track/5oOC6EBnSQ3PfRAQyfjAla">That Summer Feeling</a> — Jonathan Richman</li>
-              <li><a href="https://www.youtube.com/watch?v=Xq891Mi2OCU">Come In Alone</a> — My Bloody Valentine</li>
-            </ul>
+            <div class="music-layout">
+              <div class="music-list-column">
+                <ul class="music-list">
+                  <li class="track-item" data-spotify-id="5CRPGdCSOfstyTVK9Ja5EQ" data-type="track"><span class="track-title">Ceremony</span> <span class="music-artist">New Order</span></li>
+                  <li class="track-item" data-spotify-id="7j5Q3zhjvpQvMeoPSZwdsa" data-type="track"><span class="track-title">Temptation</span> <span class="music-artist">New Order</span></li>
+                  <li class="track-item" data-title="The Village"><span class="track-title">The Village</span> <span class="music-artist">New Order</span></li>
+                  <li class="track-item" data-spotify-id="45gyo0I5zHilhomXRwBDnZ" data-type="track"><span class="track-title">Frontwards</span> <span class="music-artist">Pavement</span></li>
+                  <li class="track-item" data-spotify-id="6L0BBPYeWnaQJeDa0ox0IA" data-type="track"><span class="track-title">Impossible Germany</span> <span class="music-artist">Wilco</span></li>
+                  <li class="track-item" data-spotify-id="27rd2bxXr8WJDF0cLWC3Kn" data-type="track"><span class="track-title">The Luckiest Guy on the Lower East Side</span> <span class="music-artist">The Magnetic Fields</span></li>
+                  <li class="track-item" data-spotify-id="6N3NBd2vrhbH5m8ZHFO6xI" data-type="track"><span class="track-title">New Partner</span> <span class="music-artist">Palace Music</span></li>
+                  <li class="track-item" data-spotify-id="6a7mw7O1naaefvxaSdC55W" data-type="track"><span class="track-title">Distant Stations</span> <span class="music-artist">The Mountain Goats</span></li>
+                  <li class="track-item" data-spotify-id="3g158Ik8k4KUphKC1asZ3T" data-type="track"><span class="track-title">Two Headed Boy</span> <span class="music-artist">Neutral Milk Hotel</span></li>
+                  <li class="track-item" data-spotify-id="4pbEwQiDjPln3oYlijXuOE" data-type="track"><span class="track-title">The Moon</span> <span class="music-artist">The Microphones</span></li>
+                  <li class="track-item" data-spotify-id="1rmXfdk4DFRuw6LLKoUTb0" data-type="track"><span class="track-title">Nothing is Real</span> <span class="music-artist">Boards of Canada</span></li>
+                  <li class="track-item" data-spotify-id="5oOC6EBnSQ3PfRAQyfjAla" data-type="track"><span class="track-title">That Summer Feeling</span> <span class="music-artist">Jonathan Richman</span></li>
+                  <li class="track-item" data-service="youtube" data-youtube-id="nVHPvdpFQeE" data-title="Come In Alone"><span class="track-title">Come In Alone</span> <span class="music-artist">My Bloody Valentine</span></li>
+                </ul>
+              </div>
+              <div class="player-panel songs-player" hidden>
+                <div class="player-embed"></div>
+              </div>
+            </div>
           </div>
         </div>
         <div class="subcategory">
           <button class="subcategory-title">Solos</button>
           <div class="subcategory-content">
-            <ul>
-              <li><a href="https://open.spotify.com/track/2McQn0M9t059SFVgw1OW8U">Machine Gun</a> — Jimi Hendrix</li>
-              <li><a href="https://open.spotify.com/track/4mlZurguzNJior9siewA8C">Gosh</a> — Jamie XX</li>
-              <li><a href="https://open.spotify.com/track/6L0BBPYeWnaQJeDa0ox0IA">Impossible Germany</a> — Wilco</li>
-              <li><a href="https://open.spotify.com/track/5uvosCdMlFdTXhoazkTI5R">Light My Fire</a> — The Doors</li>
-              <li><a href="https://open.spotify.com/track/7Me0vOSlJfaPY7Pc4GeItd">Marquee Moon</a> — Television</li>
-            </ul>
+            <div class="music-layout">
+              <div class="music-list-column">
+                <ul class="music-list">
+                  <li class="track-item" data-spotify-id="2McQn0M9t059SFVgw1OW8U" data-type="track"><span class="track-title">Machine Gun</span> <span class="music-artist">Jimi Hendrix</span></li>
+                  <li class="track-item" data-spotify-id="4mlZurguzNJior9siewA8C" data-type="track"><span class="track-title">Gosh</span> <span class="music-artist">Jamie XX</span></li>
+                  <li class="track-item" data-spotify-id="6L0BBPYeWnaQJeDa0ox0IA" data-type="track"><span class="track-title">Impossible Germany</span> <span class="music-artist">Wilco</span></li>
+                  <li class="track-item" data-spotify-id="5uvosCdMlFdTXhoazkTI5R" data-type="track"><span class="track-title">Light My Fire</span> <span class="music-artist">The Doors</span></li>
+                  <li class="track-item" data-spotify-id="7Me0vOSlJfaPY7Pc4GeItd" data-type="track"><span class="track-title">Marquee Moon</span> <span class="music-artist">Television</span></li>
+                </ul>
+              </div>
+              <div class="player-panel solos-player" hidden>
+                <div class="player-embed"></div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -610,12 +633,111 @@ import Base from '@/layouts/Base.astro';
       });
     }
 
+    // Spotify player panel functionality
+    function initSpotifyPanel() {
+      // Handle Albums
+      const albumsLayout = document.querySelector('.albums-layout');
+      if (albumsLayout) {
+        initMusicSection(albumsLayout.querySelectorAll('.album-item'), albumsLayout.querySelector('.player-panel'), 'album');
+      }
+
+      // Handle Songs
+      const songsPanel = document.querySelector('.songs-player');
+      if (songsPanel) {
+        const songsLayout = songsPanel.closest('.music-layout');
+        if (songsLayout) {
+          initMusicSection(songsLayout.querySelectorAll('.track-item'), songsPanel, 'track');
+        }
+      }
+
+      // Handle Solos
+      const solosPanel = document.querySelector('.solos-player');
+      if (solosPanel) {
+        const solosLayout = solosPanel.closest('.music-layout');
+        if (solosLayout) {
+          initMusicSection(solosLayout.querySelectorAll('.track-item'), solosPanel, 'track');
+        }
+      }
+    }
+
+    function initMusicSection(items, playerPanel, type) {
+      if (!items || !items.length || !playerPanel) return;
+
+      const playerEmbed = playerPanel.querySelector('.player-embed');
+      if (!playerEmbed) return;
+
+      items.forEach(item => {
+        // Skip if already initialized
+        if (item.dataset.panelInit) return;
+        item.dataset.panelInit = 'true';
+
+        const spotifyId = item.dataset.spotifyId;
+        const youtubeId = item.dataset.youtubeId;
+        const service = item.dataset.service || (spotifyId ? 'spotify' : null);
+        const itemType = item.dataset.type || type;
+
+        // Make clickable if has any playable ID
+        if (spotifyId || youtubeId) {
+          item.classList.add('has-spotify');
+        }
+
+        item.addEventListener('click', (e) => {
+          // Don't trigger on popout content clicks
+          if (e.target.closest('.popout-content')) return;
+
+          if (!spotifyId && !youtubeId) return;
+
+          // Update active state within this section
+          items.forEach(i => i.classList.remove('active'));
+          item.classList.add('active');
+
+          // Show player panel
+          playerPanel.removeAttribute('hidden');
+
+          // Create/update iframe based on service
+          if (service === 'youtube' && youtubeId) {
+            playerEmbed.innerHTML = `
+              <iframe
+                src="https://www.youtube.com/embed/${youtubeId}"
+                width="100%"
+                height="352"
+                frameborder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowfullscreen
+                loading="lazy"
+                style="border-radius: 12px;"
+              ></iframe>
+            `;
+          } else if (spotifyId) {
+            playerEmbed.innerHTML = `
+              <iframe
+                src="https://open.spotify.com/embed/${itemType}/${spotifyId}?utm_source=generator&theme=0"
+                width="100%"
+                height="352"
+                frameborder="0"
+                allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+                loading="lazy"
+                style="border-radius: 12px;"
+              ></iframe>
+            `;
+          }
+        });
+      });
+    }
+
     // Run on initial load and View Transitions
-    document.addEventListener('astro:page-load', initFavoriteThings);
+    document.addEventListener('astro:page-load', () => {
+      initFavoriteThings();
+      initSpotifyPanel();
+    });
     if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', initFavoriteThings);
+      document.addEventListener('DOMContentLoaded', () => {
+        initFavoriteThings();
+        initSpotifyPanel();
+      });
     } else {
       initFavoriteThings();
+      initSpotifyPanel();
     }
   </script>
 </Base>
@@ -964,5 +1086,154 @@ import Base from '@/layouts/Base.astro';
 
   :global([data-theme="dark"]) .popout-body {
     color: var(--text);
+  }
+
+  /* Albums layout with breakout player panel */
+  .albums-layout {
+    position: relative;
+  }
+
+  .albums-list-column {
+    min-width: 0;
+  }
+
+  .album-item {
+    cursor: default;
+    padding: 0 8px;
+    margin-left: -8px;
+    margin-right: -8px;
+    margin-bottom: var(--space-xs);
+    border-radius: 4px;
+    transition: background 0.15s ease, color 0.15s ease;
+  }
+
+  .album-item.has-spotify {
+    cursor: pointer;
+  }
+
+  .album-item.has-spotify:hover {
+    background: rgba(139, 58, 58, 0.08);
+  }
+
+  :global([data-theme="dark"]) .album-item.has-spotify:hover {
+    background: rgba(194, 132, 122, 0.1);
+  }
+
+  .album-item.active {
+    background: rgba(139, 58, 58, 0.15);
+  }
+
+  :global([data-theme="dark"]) .album-item.active {
+    background: rgba(194, 132, 122, 0.15);
+  }
+
+  .album-item.active .album-title {
+    color: var(--accent);
+  }
+
+  .album-title {
+    color: var(--text);
+    transition: color 0.15s ease;
+  }
+
+  .album-item.has-spotify:hover .album-title {
+    color: var(--accent);
+  }
+
+  .album-artist,
+  .music-artist {
+    color: var(--dim);
+  }
+
+  /* Track items (songs/solos) */
+  .music-layout {
+    position: relative;
+  }
+
+  .music-list-column {
+    min-width: 0;
+  }
+
+  .track-item {
+    cursor: default;
+    padding: 0 8px;
+    margin-left: -8px;
+    margin-right: -8px;
+    margin-bottom: var(--space-xs);
+    border-radius: 4px;
+    transition: background 0.15s ease, color 0.15s ease;
+  }
+
+  .track-item.has-spotify {
+    cursor: pointer;
+  }
+
+  .track-item.has-spotify:hover {
+    background: rgba(139, 58, 58, 0.08);
+  }
+
+  :global([data-theme="dark"]) .track-item.has-spotify:hover {
+    background: rgba(194, 132, 122, 0.1);
+  }
+
+  .track-item.active {
+    background: rgba(139, 58, 58, 0.15);
+  }
+
+  :global([data-theme="dark"]) .track-item.active {
+    background: rgba(194, 132, 122, 0.15);
+  }
+
+  .track-item.active .track-title {
+    color: var(--accent);
+  }
+
+  .track-title {
+    color: var(--text);
+    transition: color 0.15s ease;
+  }
+
+  .track-item.has-spotify:hover .track-title {
+    color: var(--accent);
+  }
+
+  /* Player panel - breaks out to the right */
+  .player-panel {
+    position: fixed;
+    top: 50%;
+    transform: translateY(-50%);
+    right: calc((100vw - var(--max-width)) / 2 - 320px);
+    width: 300px;
+    z-index: 50;
+  }
+
+  .player-panel[hidden] {
+    display: none;
+  }
+
+  /* When viewport is too narrow for breakout, hide player */
+  @media (max-width: 1100px) {
+    .player-panel {
+      position: fixed;
+      top: auto;
+      bottom: 24px;
+      right: 24px;
+      transform: none;
+      width: 300px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+      background: var(--bg);
+      padding: 16px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+    }
+  }
+
+  @media (max-width: 500px) {
+    .player-panel {
+      left: 16px;
+      right: 16px;
+      width: auto;
+      bottom: 16px;
+    }
   }
 </style>
