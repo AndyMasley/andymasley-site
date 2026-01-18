@@ -412,9 +412,7 @@ function isActive(href: string): boolean {
             }
           }
 
-          // Type bonus: page > list/article
-          if (type === 'page') score += 1000;
-          else if (type === 'list') score += 500;
+          // No type bonus - rank purely by relevance
 
           // Individual word matches for ranking (unquoted terms)
           words.forEach(word => {
