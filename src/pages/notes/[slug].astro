@@ -1,5 +1,6 @@
 ---
 import Base from '@/layouts/Base.astro';
+import Breadcrumbs from '@/components/Breadcrumbs.astro';
 import { getCollection, type CollectionEntry } from 'astro:content';
 
 export async function getStaticPaths() {
@@ -18,26 +19,23 @@ const { item } = Astro.props;
 const { Content } = await item.render();
 
 function formatDate(date: Date): string {
-  return date.toLocaleDateString('en-US', { 
+  return date.toLocaleDateString('en-US', {
     year: 'numeric',
-    month: 'long', 
-    day: 'numeric' 
+    month: 'long',
+    day: 'numeric'
   });
 }
 ---
 
-<Base 
+<Base
   title={item.data.title}
   description={item.data.description}
 >
   <article class="container container--narrow">
-    <nav class="breadcrumbs animate-in">
-      <a href="/">Home</a>
-      <span class="breadcrumbs__separator">/</span>
-      <a href="/notes">Notes</a>
-      <span class="breadcrumbs__separator">/</span>
-      <span class="breadcrumbs__current">{item.data.title}</span>
-    </nav>
+    <Breadcrumbs items={[
+      { label: 'notes', href: '/notes' },
+      { label: item.data.title }
+    ]} />
     
     <header class="note-header animate-in">
       <div class="note-header__top">
