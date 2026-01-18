@@ -5,11 +5,46 @@ import { getMetaPostSlugs } from '@/lib/meta-posts';
 import fs from 'node:fs';
 import path from 'node:path';
 
-// Strip HTML and truncate for search
+// Extract headers from HTML
+function extractHeaders(html) {
+  if (!html) return '';
+  const headerMatches = html.match(/<h[1-6][^>]*>([\s\S]*?)<\/h[1-6]>/gi) || [];
+  return headerMatches
+    .map(h => h.replace(/<[^>]*>/g, '').trim())
+    .join(' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+// Strip HTML and truncate for search (excluding headers)
 function extractText(html, maxLength = 500) {
   if (!html) return '';
-  // Remove HTML tags
-  const text = html.replace(/<[^>]*>/g, ' ')
+  // Remove headers first, then other HTML tags
+  const text = html
+    .replace(/<h[1-6][^>]*>[\s\S]*?<\/h[1-6]>/gi, ' ')
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+  return text.slice(0, maxLength);
+}
+
+// Extract headers from markdown
+function extractMarkdownHeaders(md) {
+  if (!md) return '';
+  const lines = md.split('\n');
+  const headers = lines
+    .filter(line => /^#{1,6}\s+/.test(line))
+    .map(line => line.replace(/^#{1,6}\s+/, '').trim());
+  return headers.join(' ');
+}
+
+// Extract text from markdown (excluding headers)
+function extractMarkdownText(md, maxLength = 500) {
+  if (!md) return '';
+  const text = md
+    .replace(/^#{1,6}\s+.*$/gm, '') // Remove headers
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1') // Links to text
+    .replace(/[*_~`]/g, '') // Remove formatting
     .replace(/\s+/g, ' ')
     .trim();
   return text.slice(0, maxLength);
@@ -154,8 +189,9 @@ export async function GET() {
     searchIndex.push({
       title: item.data.title,
       description: item.data.description || '',
-      content: item.body ? extractText(item.body) : '',
-      type: 'writing',
+      headers: item.body ? extractMarkdownHeaders(item.body) : '',
+      content: item.body ? extractMarkdownText(item.body) : '',
+      type: 'article',
       url: `/writing/${item.slug}`,
       tags: item.data.tags || [],
     });
@@ -169,8 +205,9 @@ export async function GET() {
     searchIndex.push({
       title: item.title,
       description: item.description || '',
+      headers: extractHeaders(htmlContent),
       content: extractText(htmlContent),
-      type: 'writing',
+      type: 'article',
       url: `/writing/${item.slug}`,
       tags: [],
     });
@@ -184,8 +221,9 @@ export async function GET() {
     searchIndex.push({
       title: item.title,
       description: '',
+      headers: extractHeaders(htmlContent),
       content: extractText(htmlContent),
-      type: 'writing',
+      type: 'article',
       url: `/writing/${item.slug}`,
       tags: [],
     });
@@ -196,8 +234,9 @@ export async function GET() {
     searchIndex.push({
       title: item.data.album || item.data.title,
       description: item.data.artist || '',
-      content: item.body ? extractText(item.body) : '',
-      type: 'music',
+      headers: item.body ? extractMarkdownHeaders(item.body) : '',
+      content: item.body ? extractMarkdownText(item.body) : '',
+      type: 'article',
       url: `/music/${item.slug}`,
       tags: item.data.tags || [],
     });
@@ -207,8 +246,9 @@ export async function GET() {
     searchIndex.push({
       title: item.data.title,
       description: item.data.director || '',
-      content: item.body ? extractText(item.body) : '',
-      type: 'film',
+      headers: item.body ? extractMarkdownHeaders(item.body) : '',
+      content: item.body ? extractMarkdownText(item.body) : '',
+      type: 'article',
       url: `/film/${item.slug}`,
       tags: item.data.tags || [],
     });
@@ -218,8 +258,9 @@ export async function GET() {
     searchIndex.push({
       title: item.data.title,
       description: item.data.author || '',
-      content: item.body ? extractText(item.body) : '',
-      type: 'books',
+      headers: item.body ? extractMarkdownHeaders(item.body) : '',
+      content: item.body ? extractMarkdownText(item.body) : '',
+      type: 'article',
       url: `/books/${item.slug}`,
       tags: item.data.tags || [],
     });
@@ -229,8 +270,9 @@ export async function GET() {
     searchIndex.push({
       title: item.data.title,
       description: item.data.description || '',
-      content: item.body ? extractText(item.body) : '',
-      type: 'notes',
+      headers: item.body ? extractMarkdownHeaders(item.body) : '',
+      content: item.body ? extractMarkdownText(item.body) : '',
+      type: 'article',
       url: `/notes/${item.slug}`,
       tags: item.data.tags || [],
     });
@@ -240,8 +282,9 @@ export async function GET() {
     searchIndex.push({
       title: item.data.title,
       description: item.data.topic || '',
-      content: item.body ? extractText(item.body) : '',
-      type: 'physics',
+      headers: item.body ? extractMarkdownHeaders(item.body) : '',
+      content: item.body ? extractMarkdownText(item.body) : '',
+      type: 'article',
       url: `/physics/${item.slug}`,
       tags: item.data.tags || [],
     });

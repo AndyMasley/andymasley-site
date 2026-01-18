@@ -92,9 +92,22 @@ function isActive(href: string): boolean {
         </div>
 
         <div class="header__controls">
-          <button class="search-toggle" id="search-toggle" aria-label="Search">
-            [search]
-          </button>
+          <div class="search-widget" id="search-widget">
+            <span class="search-bracket search-bracket--left">[</span>
+            <span class="search-label" id="search-label">search</span>
+            <input
+              type="text"
+              class="search-inline-input"
+              id="search-input"
+              placeholder="search..."
+              autocomplete="off"
+              spellcheck="false"
+            />
+            <span class="search-bracket search-bracket--right">]</span>
+            <div class="search-dropdown" id="search-dropdown">
+              <div class="search-results" id="search-results"></div>
+            </div>
+          </div>
           <button class="dark-toggle" id="theme-toggle">
             [<span id="theme-label">dark</span>]
           </button>
@@ -135,22 +148,6 @@ function isActive(href: string): boolean {
       <a href="/rss.xml">RSS</a> · <a href="mailto:AndyMasley@gmail.com">contact</a>
     </footer>
   </main>
-
-  <!-- Inline Search -->
-  <div class="search-container" id="search-container">
-    <div class="search-bar">
-      <input
-        type="text"
-        class="search-input"
-        id="search-input"
-        placeholder="Search all content..."
-        autocomplete="off"
-        spellcheck="false"
-      />
-      <span class="search-hint">esc to close</span>
-    </div>
-    <div class="search-results" id="search-results"></div>
-  </div>
 
 
 
@@ -232,30 +229,59 @@ function isActive(href: string): boolean {
     }
 
     function initSearch() {
-      const container = document.getElementById('search-container');
-      const input = document.getElementById('search-input');
+      const widget = document.getElementById('search-widget');
+      const input = document.getElementById('search-input') as HTMLInputElement;
+      const label = document.getElementById('search-label');
+      const dropdown = document.getElementById('search-dropdown');
       const results = document.getElementById('search-results');
-      const searchToggle = document.getElementById('search-toggle');
 
-      if (!container || !input || !results) return;
+      if (!widget || !input || !dropdown || !results) return;
 
       // Preload search index
       loadSearchIndex();
 
       function openSearch() {
-        container.classList.add('active');
+        widget.classList.add('active');
         input.value = '';
         results.innerHTML = '';
         selectedIndex = 0;
-        setTimeout(() => input.focus(), 10);
+        input.focus();
+        // Don't show dropdown until there's something to show
+        dropdown.classList.remove('active');
       }
 
       function closeSearch() {
-        container.classList.remove('active');
+        widget.classList.remove('active');
+        dropdown.classList.remove('active');
         results.innerHTML = '';
         input.value = '';
         input.blur();
       }
+
+      function showDropdown() {
+        dropdown.classList.add('active');
+      }
+
+      function hideDropdown() {
+        dropdown.classList.remove('active');
+      }
+
+      // Click on widget (label or brackets) to open
+      widget.addEventListener('click', (e) => {
+        if (e.target === input) return; // Don't toggle if clicking input
+        if (!widget.classList.contains('active')) {
+          openSearch();
+        }
+      });
+
+      // Click outside to close
+      document.addEventListener('click', (e) => {
+        if (!widget.contains(e.target as Node) && !dropdown.contains(e.target as Node)) {
+          if (widget.classList.contains('active')) {
+            closeSearch();
+          }
+        }
+      });
 
       function highlightMatch(text, query) {
         if (!query || !text) return text || '';
@@ -322,6 +348,7 @@ function isActive(href: string): boolean {
         const index = await loadSearchIndex();
         if (!query.trim()) {
           results.innerHTML = '';
+          hideDropdown();
           return;
         }
 
@@ -337,9 +364,11 @@ function isActive(href: string): boolean {
           let contentMatch = false;
           const title = (item.title || '').toLowerCase();
           const desc = (item.description || '').toLowerCase();
+          const headers = (item.headers || '').toLowerCase();
           const content = (item.content || '').toLowerCase();
           const tags = (item.tags || []).join(' ').toLowerCase();
-          const allText = title + ' ' + desc + ' ' + content + ' ' + tags;
+          const type = item.type || 'article';
+          const allText = title + ' ' + desc + ' ' + headers + ' ' + content + ' ' + tags;
 
           // For multi-word queries, require ALL significant words to match somewhere
           if (words.length > 1) {
@@ -349,35 +378,38 @@ function isActive(href: string): boolean {
             }
           }
 
-          // Exact phrase match (highest priority)
-          if (title.includes(q)) score += 100;
-          else if (desc.includes(q)) score += 50;
-          else if (content.includes(q)) {
-            score += 30;
+          // Type bonus: page > list/article
+          // Pages get a base bonus to appear first
+          if (type === 'page') score += 1000;
+          else if (type === 'list') score += 500;
+          // articles get no bonus
+
+          // Title/page name match (highest within type)
+          if (title.includes(q)) score += 200;
+          else if (desc.includes(q)) score += 100;
+
+          // Header match (second priority)
+          if (headers.includes(q)) {
+            score += 50;
+          }
+
+          // Content match (lowest priority)
+          if (content.includes(q)) {
+            score += 10;
             contentMatch = true;
           }
 
-          // Individual word matches (for ranking among results that pass the filter)
+          // Individual word matches for ranking
           words.forEach(word => {
-            if (title.includes(word)) score += 15;
-            if (desc.includes(word)) score += 8;
-            if (tags.includes(word)) score += 10;
+            if (title.includes(word)) score += 30;
+            if (desc.includes(word)) score += 15;
+            if (headers.includes(word)) score += 8;
+            if (tags.includes(word)) score += 5;
             if (content.includes(word)) {
-              score += 3;
+              score += 2;
               contentMatch = true;
             }
           });
-
-          // Single word query - be more lenient
-          if (words.length <= 1 && q.length > 2) {
-            if (title.includes(q)) score += 50;
-            else if (desc.includes(q)) score += 25;
-            else if (tags.includes(q)) score += 20;
-            else if (content.includes(q)) {
-              score += 10;
-              contentMatch = true;
-            }
-          }
 
           return { ...item, score, contentMatch };
         })
@@ -387,23 +419,11 @@ function isActive(href: string): boolean {
 
         selectedIndex = 0;
         renderResults(scored, query);
-      }
-
-      // Event listeners - clone to remove stale listeners from View Transitions
-      if (searchToggle) {
-        const newToggle = searchToggle.cloneNode(true);
-        searchToggle.parentNode?.replaceChild(newToggle, searchToggle);
-        newToggle.addEventListener('click', () => {
-          if (container.classList.contains('active')) {
-            closeSearch();
-          } else {
-            openSearch();
-          }
-        });
+        showDropdown();
       }
 
       input.addEventListener('input', (e) => {
-        search(e.target.value);
+        search((e.target as HTMLInputElement).value);
       });
 
       input.addEventListener('keydown', (e) => {
@@ -425,7 +445,7 @@ function isActive(href: string): boolean {
           const selected = resultElements[selectedIndex];
           if (selected) {
             closeSearch();
-            window.location.href = selected.getAttribute('href');
+            window.location.href = selected.getAttribute('href') || '';
           }
         }
       });
@@ -434,13 +454,13 @@ function isActive(href: string): boolean {
       document.addEventListener('keydown', (e) => {
         if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
           e.preventDefault();
-          if (container.classList.contains('active')) {
+          if (widget.classList.contains('active')) {
             closeSearch();
           } else {
             openSearch();
           }
         }
-        if (e.key === 'Escape' && container.classList.contains('active')) {
+        if (e.key === 'Escape' && widget.classList.contains('active')) {
           closeSearch();
         }
       });
