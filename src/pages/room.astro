@@ -1,0 +1,1015 @@
+---
+import '@/styles/global.css';
+---
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="The Hexagon Archive">
+  <title>room</title>
+  <!-- Immediate dark background to prevent flash -->
+  <style>html, body { background: #0a0806; }</style>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,500;0,8..60,600;1,8..60,400&display=swap" rel="stylesheet">
+
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      overflow: hidden;
+      background-color: #0a0806;
+      font-family: 'Source Serif 4', Georgia, serif;
+      cursor: none;
+    }
+
+    canvas { display: block; }
+
+    #crosshair {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      z-index: 50;
+    }
+
+    #crosshair::before {
+      content: '';
+      display: block;
+      width: 4px;
+      height: 4px;
+      background: #c9a87c;
+      transition: all 0.15s ease;
+    }
+
+    #crosshair.hovering::before {
+      width: 8px;
+      height: 8px;
+      background: #e8d5b5;
+    }
+
+    #object-label {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, 24px);
+      color: #c9a87c;
+      font-size: 0.8rem;
+      font-style: italic;
+      pointer-events: none;
+      z-index: 50;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+      text-align: center;
+      white-space: nowrap;
+    }
+
+    #object-label.visible {
+      opacity: 1;
+    }
+
+    #controls-hint {
+      position: fixed;
+      bottom: 1.25rem;
+      left: 50%;
+      transform: translateX(-50%);
+      color: #c9a87c;
+      font-family: 'SF Mono', SFMono-Regular, Menlo, monospace;
+      font-size: 0.65rem;
+      pointer-events: none;
+      text-align: center;
+      letter-spacing: 0.05em;
+      opacity: 0.6;
+    }
+
+    #start-prompt {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(10, 8, 6, 0.95);
+      z-index: 250;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.4s ease, visibility 0.4s ease;
+      cursor: auto;
+    }
+
+    #start-prompt.visible {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    #start-prompt .prompt-text {
+      color: #c9a87c;
+      font-size: 1rem;
+      letter-spacing: 0.1em;
+      margin-bottom: 2rem;
+      cursor: pointer;
+      transition: color 0.2s ease;
+    }
+
+    #start-prompt .prompt-text:hover {
+      color: #e8d5b5;
+    }
+
+    #start-prompt .prompt-instructions {
+      color: #c9a87c;
+      font-family: 'SF Mono', SFMono-Regular, Menlo, monospace;
+      font-size: 0.65rem;
+      text-align: center;
+      opacity: 0.6;
+      margin-bottom: 2rem;
+    }
+
+    #start-prompt .prompt-home {
+      color: #c9a87c;
+      font-family: 'SF Mono', SFMono-Regular, Menlo, monospace;
+      font-size: 0.75rem;
+      text-decoration: none;
+      transition: color 0.2s ease;
+    }
+
+    #start-prompt .prompt-home:hover {
+      color: #e8d5b5;
+    }
+
+    #reading-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: #0a0806;
+      z-index: 200;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.4s ease, visibility 0.4s ease;
+      cursor: auto;
+    }
+
+    #reading-overlay.visible {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    #reading-content {
+      max-width: 520px;
+      max-height: 75vh;
+      padding: 2.5rem;
+      color: #c9a87c;
+      overflow-y: auto;
+      position: relative;
+      border: 1px solid #c9a87c;
+    }
+
+    #reading-content .quote-text {
+      font-size: 1.15rem;
+      line-height: 1.85;
+      color: #c9a87c;
+      margin-bottom: 1.5rem;
+      font-style: italic;
+    }
+
+    #reading-content .quote-source {
+      font-size: 0.85rem;
+      color: #c9a87c;
+      opacity: 0.7;
+      text-align: right;
+    }
+
+    #reading-content .close-hint {
+      display: block;
+      margin-top: 2rem;
+      color: #c9a87c;
+      font-family: 'SF Mono', SFMono-Regular, Menlo, monospace;
+      font-size: 0.65rem;
+      text-align: center;
+      opacity: 0.6;
+    }
+
+    #eye-opening {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 300;
+      pointer-events: none;
+    }
+
+    #eye-opening.hidden {
+      display: none;
+    }
+
+    #eyelid-top, #eyelid-bottom {
+      position: absolute;
+      left: 0;
+      right: 0;
+      height: 50%;
+      background: #0a0806;
+    }
+
+    #eyelid-top {
+      top: 0;
+      transform-origin: top center;
+      animation: eyelidOpenTop 1.8s ease-out forwards;
+    }
+
+    #eyelid-bottom {
+      bottom: 0;
+      transform-origin: bottom center;
+      animation: eyelidOpenBottom 1.8s ease-out forwards;
+    }
+
+    @keyframes eyelidOpenTop {
+      0% { transform: scaleY(1); }
+      100% { transform: scaleY(0); }
+    }
+
+    @keyframes eyelidOpenBottom {
+      0% { transform: scaleY(1); }
+      100% { transform: scaleY(0); }
+    }
+  </style>
+</head>
+<body>
+  <div id="eye-opening">
+    <div id="eyelid-top"></div>
+    <div id="eyelid-bottom"></div>
+  </div>
+
+
+  <div id="crosshair"></div>
+  <div id="object-label"></div>
+  <div id="controls-hint">WASD/arrows move · mouse look · click to read · ESC menu</div>
+
+  <div id="start-prompt">
+    <div class="prompt-text" id="start-button">Click to continue</div>
+    <div class="prompt-instructions">WASD/arrows move · mouse look · click to read</div>
+    <a href="/" class="prompt-home">← Return to main website</a>
+  </div>
+
+  <div id="reading-overlay">
+    <div id="reading-content">
+      <div id="reading-text"></div>
+      <span class="close-hint">click anywhere or press ESC to close</span>
+    </div>
+  </div>
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.160.0/build/three.module.js"
+      }
+    }
+  </script>
+
+  <script type="module">
+    import * as THREE from 'three';
+
+    // --- COLORS ---
+    const DARK = 0x0a0806;
+    const LIGHT = 0xc9a87c;
+
+    // --- AUDIO ---
+    let audioCtx = null;
+    function getAudioContext() {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      return audioCtx;
+    }
+
+    // Footstep sound - soft tap
+    let lastFootstep = 0;
+    function playFootstep() {
+      const now = Date.now();
+      if (now - lastFootstep < 350) return; // limit frequency
+      lastFootstep = now;
+
+      const ctx = getAudioContext();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      const filter = ctx.createBiquadFilter();
+
+      filter.type = 'lowpass';
+      filter.frequency.value = 150 + Math.random() * 100;
+
+      osc.type = 'sine';
+      osc.frequency.value = 60 + Math.random() * 40;
+
+      gain.gain.setValueAtTime(0.15, ctx.currentTime);
+      gain.gain.exponentialDecayTo && gain.gain.exponentialDecayTo(0.01, ctx.currentTime + 0.1);
+      gain.gain.setValueAtTime(0.15, ctx.currentTime);
+      gain.gain.linearRampToValueAtTime(0.01, ctx.currentTime + 0.08);
+
+      osc.connect(filter);
+      filter.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + 0.1);
+    }
+
+    // Page turn sound - papery swoosh
+    function playPageTurn() {
+      const ctx = getAudioContext();
+      const bufferSize = ctx.sampleRate * 0.4;
+      const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+      const data = buffer.getChannelData(0);
+
+      for (let i = 0; i < bufferSize; i++) {
+        const t = i / bufferSize;
+        // Noise with envelope
+        data[i] = (Math.random() * 2 - 1) * Math.sin(t * Math.PI) * 0.3 * (1 - t * 0.5);
+      }
+
+      const source = ctx.createBufferSource();
+      source.buffer = buffer;
+
+      const filter = ctx.createBiquadFilter();
+      filter.type = 'bandpass';
+      filter.frequency.value = 3000;
+      filter.Q.value = 0.5;
+
+      const gain = ctx.createGain();
+      gain.gain.value = 0.08;
+
+      source.connect(filter);
+      filter.connect(gain);
+      gain.connect(ctx.destination);
+      source.start();
+    }
+
+    // Book close sound - soft thud
+    function playBookClose() {
+      const ctx = getAudioContext();
+
+      // Low thump
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(80, ctx.currentTime);
+      osc.frequency.linearRampToValueAtTime(40, ctx.currentTime + 0.15);
+
+      gain.gain.setValueAtTime(0.3, ctx.currentTime);
+      gain.gain.linearRampToValueAtTime(0.01, ctx.currentTime + 0.15);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + 0.15);
+
+      // Add noise component
+      const bufferSize = ctx.sampleRate * 0.1;
+      const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) {
+        const t = i / bufferSize;
+        data[i] = (Math.random() * 2 - 1) * (1 - t) * 0.15;
+      }
+
+      const noiseSource = ctx.createBufferSource();
+      noiseSource.buffer = buffer;
+      const noiseFilter = ctx.createBiquadFilter();
+      noiseFilter.type = 'lowpass';
+      noiseFilter.frequency.value = 500;
+      const noiseGain = ctx.createGain();
+      noiseGain.gain.value = 0.2;
+
+      noiseSource.connect(noiseFilter);
+      noiseFilter.connect(noiseGain);
+      noiseGain.connect(ctx.destination);
+      noiseSource.start();
+    }
+
+    // --- SEEDED RANDOM (for consistent book generation) ---
+    let seed = 42;
+    function seededRandom() {
+      seed = (seed * 1103515245 + 12345) & 0x7fffffff;
+      return seed / 0x7fffffff;
+    }
+
+    // --- BORGES QUOTES (242 total) ---
+    const borgesQuotes = [
+      // Original Library-themed quotes
+      { source: "On Infinite Libraries", quote: "The universe (which others call the Library) is composed of an indefinite and perhaps infinite number of hexagonal galleries. From any of the hexagons one can see, interminably, the upper and lower floors." },
+      { source: "Fragment 7.23.1", quote: "I have traveled in my youth; I have wandered in search of a book, perhaps the catalogue of catalogues. Now that my eyes can hardly decipher what I write, I am preparing to die just a few leagues from the hexagon in which I was born." },
+      { source: "The Anatomy of Melancholy", quote: "All places are distant from heaven alike. The mind is its own place, and in itself can make a heaven of hell, a hell of heaven." },
+      { source: "Notes on Pattern", quote: "The hexagon persists because it is optimal. Bees discovered this. Mathematicians proved it. The universe embodies it." },
+      { source: "Letter to No One", quote: "If you are reading this, you have found one of the many thousands of volumes I have placed in the Library. Hello, stranger. You are not alone." },
+      { source: "On the Futility of Catalogues", quote: "There must exist a book which is the formula and perfect compendium of all the rest." },
+      { source: "Marginalia", quote: "Someone has written in the margins: 'I was here. I understood nothing. I leave satisfied.'" },
+      { source: "The Last Entry", quote: "Day 4,827 in the Library. Or perhaps 48,270. The lamps never dim. Time has lost meaning." },
+      { source: "Permutations", quote: "Everything: the minutely detailed history of the future, the archangels' autobiographies, the faithful catalogues of the Library." },
+      { source: "The Vindications", quote: "Somewhere there exist the vindications: books of apology and prophecy which vindicate for all time the acts of every man in the universe." },
+      { source: "On Certainty", quote: "The certainty that everything has been written negates us or turns us into phantoms." },
+      { source: "Spiral", quote: "There are official searchers, inquisitors. They always arrive extremely tired from their journeys." },
+      // Quotes from obsidian file
+      { source: "The Library of Babel", quote: "The Library is a sphere whose exact center is any one of its hexagons and whose circumference is inaccessible." },
+      { source: "Tlön, Uqbar, Orbis Tertius", quote: "The world will be Tlön." },
+      { source: "The Garden of Forking Paths", quote: "Time forks perpetually toward innumerable futures." },
+      { source: "Pierre Menard, Author of the Quixote", quote: "The Cervantes text and the Menard text are verbally identical, but the second is almost infinitely richer." },
+      { source: "The Lottery in Babylon", quote: "I have known what the Greeks knew not: uncertainty." },
+      { source: "The Circular Ruins", quote: "He understood that he too was an illusion, that someone else was dreaming him." },
+      { source: "Funes the Memorious", quote: "To think is to forget differences, to generalize, to abstract." },
+      { source: "The Aleph", quote: "I saw the Aleph from all points; I saw the earth in the Aleph and the Aleph in the earth..." },
+      { source: "The Zahir", quote: "I shall no longer perceive the universe, I shall perceive the Zahir." },
+      { source: "The Book of Sand", quote: "The number of pages in this book is literally infinite. No page is the first; no page is the last." },
+      { source: "Death and the Compass", quote: "The next time I kill you, I promise you the labyrinth made of a single straight line." },
+      { source: "The Secret Miracle", quote: "God made him die in a straight line, from one second to the next." },
+      { source: "The South", quote: "Dahlmann saw that they were two faces of the same coin." },
+      { source: "The Immortal", quote: "No one is someone; a single immortal man is all men." },
+      { source: "The Writing of the God", quote: "A god might create a single word that would contain the entire universe." },
+      { source: "The House of Asterion", quote: "The sun and the stars are my house." },
+      { source: "The God's Script", quote: "Whoever has glimpsed the universe can have no thought for his own trivial misfortunes." },
+      { source: "The Theologians", quote: "In paradise, Aurelian learned that he and John of Pannonia formed a single person." },
+      { source: "Story of the Warrior and the Captive", quote: "Perhaps my grandmother could perceive in the other woman a monstrous mirror of her own destiny." },
+      { source: "The Waiting", quote: "He was pursued by the act of killing him." },
+      { source: "Averroës' Search", quote: "I felt that Averroës, trying to imagine what a play is, was no more absurd than I." },
+      { source: "The Approach to Al-Mu'tasim", quote: "A man can be an enemy of other men, but not of a country." },
+      { source: "The Shape of the Sword", quote: "I am Vincent Moon. Now despise me." },
+      { source: "Theme of the Traitor and the Hero", quote: "History copied history." },
+      { source: "Three Versions of Judas", quote: "God became totally man, but man even to the point of infamy." },
+      { source: "The Sect of the Phoenix", quote: "The Secret is sacred, but it is also somewhat ridiculous." },
+      { source: "The Form of the Sword", quote: "Whatever one man does, it is as if all men did it." },
+      { source: "Emma Zunz", quote: "The story was incredible, but it convinced everyone because it was essentially true." },
+      { source: "The Intruder", quote: "One more link bound them now; the woman was sadly sacrificed." },
+      { source: "A New Refutation of Time", quote: "Time is a river that sweeps me along, but I am the river." },
+      { source: "Kafka and His Precursors", quote: "Each writer creates his own precursors." },
+      { source: "On Exactitude in Science", quote: "The Cartographers Guild created a Map of the Empire the size of the Empire." },
+      { source: "Avatars of the Tortoise", quote: "We have allowed slight, eternal crevices of unreason in our dream of the world." },
+      { source: "The Analytical Language of John Wilkins", quote: "There is no classification of the universe that is not arbitrary and conjectural." },
+      { source: "The Wall and the Books", quote: "The imminence of a revelation that is not produced is, perhaps, the aesthetic fact." },
+      { source: "The Cult of the Phoenix", quote: "The Secret is transmitted from generation to generation, but tradition forbids a mother from teaching it to her son." },
+      { source: "The Flower of Coleridge", quote: "If a man traversed Paradise in a dream and received a flower as proof, and upon waking found it in his hand—what then?" },
+      { source: "The Mirror of Enigmas", quote: "The universe is a sacred book whose text we must decipher." },
+      { source: "Narrative Art and Magic", quote: "In fiction, every episode is the work of magic." },
+      { source: "The Postulation of Reality", quote: "Reality is not verbal, but literature is exclusively verbal." },
+      { source: "The Doctrine of Cycles", quote: "If eternal return were true, we wouldn't know it." },
+      { source: "The Total Library", quote: "Everything would be in its blind volumes—the detailed history of the future." },
+      { source: "Pascal's Sphere", quote: "Perhaps universal history is the history of a few metaphors." },
+      { source: "From Someone to Nobody", quote: "God has been made into a single respectable gentleman." },
+      { source: "The Fearful Sphere of Pascal", quote: "Nature is an infinite sphere whose center is everywhere and circumference nowhere." },
+      { source: "Our Poor Individualism", quote: "The Argentine, unlike the Americans of the North, does not identify with the State." },
+      { source: "The Argentine Writer and Tradition", quote: "Our patrimony is the universe." },
+      { source: "On the Classics", quote: "A classic is a book that generations read with prior fervor and mysterious loyalty." },
+      { source: "Blindness", quote: "Blindness is a gift. I owe to the shadow some gifts." },
+      { source: "The Enigma of Edward FitzGerald", quote: "A Persian and an Englishman collaborate across centuries to produce a poem." },
+      { source: "Forms of a Legend", quote: "Buddha's four encounters were not events but symbols." },
+      { source: "The Scandinavian Destiny", quote: "No one has known glory like the Scandinavians." },
+      { source: "The Biathanatos", quote: "Donne wrote that Christ committed suicide." },
+      { source: "On William Beckford's Vathek", quote: "Hell is not a place but a state." },
+      { source: "Limits (Límites)", quote: "There is a line of Verlaine I will not remember again." },
+      { source: "Chess (Ajedrez)", quote: "God moves the player, the player moves the piece. What god behind God initiates the round?" },
+      { source: "The Other Tiger (El Otro Tigre)", quote: "The evening brings me the tiger who is not in verse." },
+      { source: "Poem of the Gifts", quote: "I who imagined Paradise in the form of a library." },
+      { source: "The Golem", quote: "The rabbi looked upon his creature with tenderness and also with horror." },
+      { source: "Spinoza", quote: "He builds God in the dim geometry of thought." },
+      { source: "To a Minor Poet of the Greek Anthology", quote: "The days pass and no one knows the face behind the single perfect line." },
+      { source: "The Labyrinth", quote: "There will never be a door. You are inside and the keep encompasses the world." },
+      { source: "Everness", quote: "Only one thing does not exist: oblivion." },
+      { source: "Camden, 1892", quote: "The smell of coffee and newspapers. Sunday." },
+      { source: "A Soldier of Urbina", quote: "The slow clear soldier sets his tale in lands he'd never see." },
+      { source: "To the German Language", quote: "You gave me Hölderlin, gave me Heine and the anguished music." },
+      { source: "The Sea", quote: "The sea is an ancient language I cannot decipher." },
+      { source: "Composición escrita en un ejemplar de Beowulf", quote: "At different times I have questioned the fate of my days." },
+      { source: "The Moon", quote: "There is such solitude in that gold." },
+      { source: "In Praise of Darkness", quote: "Old age is perhaps the highest pleasure." },
+      { source: "Remorse for Any Death", quote: "Free of memory and hope, unlimited, abstract, almost future." },
+      { source: "The Cyclical Night", quote: "This is the night in which you dreamed of a man who dreamed you." },
+      { source: "Matthew XXV: 30", quote: "I have committed the worst sin: I was not happy." },
+      { source: "Poem Written in a Copy of Beowulf", quote: "At various times I have asked myself what reasons moved me." },
+      { source: "Conjectural Poem", quote: "I who studied the laws and the canons now await my death by unsheathed steel." },
+      { source: "Ars Poetica", quote: "To see in death sleep, and in sunset a sad gold—such is poetry." },
+      { source: "The Other Death", quote: "I began to wonder whether the affair of that afternoon had actually happened." },
+      { source: "The Life of Tadeo Isidoro Cruz", quote: "Any life, however long and complicated, consists of a single moment." },
+      { source: "Deutsches Requiem", quote: "Germany will be reborn from the mirror of my destruction." },
+      { source: "The Duel", quote: "They did not know that they were necessary to each other." },
+      { source: "The Gospel According to Mark", quote: "He looked at the sky and thought aloud: the stars are far off." },
+      { source: "Guayaquil", quote: "I will never know what happened that afternoon." },
+      { source: "The Maker (El Hacedor)", quote: "He had never dwelt on the pleasures of memory." },
+      { source: "Tankas", quote: "Mist is the dream of the water." },
+      { source: "Two English Poems", quote: "I offer you the bitterness of a man who has looked long at the lonely moon." },
+      { source: "The Unending Rose", quote: "You are music, rivers, firmaments, palaces, angels, the rose without end." },
+      { source: "Proteus", quote: "Before the rowers' oars could splash in the sea-dark blue, I was already other." },
+      { source: "The Enigmas", quote: "I who am singing these lines am not the singer of yesterday." },
+      { source: "Things", quote: "How many things—files, thresholds, atlases, wine glasses, nails—serve us like silent slaves." },
+      { source: "The Theologians", quote: "In the eyes of the unfathomable deity, he and John of Pannonia were the same person." },
+      { source: "Biography of Tadeo Isidoro Cruz", quote: "He understood that the other was himself." },
+      { source: "Parable of the Palace", quote: "The poet had only to utter the poem to make the palace disappear." },
+      { source: "Everything and Nothing", quote: "There is no one in me; behind my face there dwells no I." },
+      { source: "Borges and I", quote: "I do not know which of us has written this page." },
+      { source: "The Witness", quote: "What will die with me when I die?" },
+      { source: "A Problem", quote: "What might a man do who truly believed he was God?" },
+      { source: "The Modesty of History", quote: "The real day of the cross was a secret day." },
+      { source: "Epilogue to El Hacedor", quote: "A man sets out to draw the world. At the end he discovers that labyrinth is his own face." },
+      { source: "Afterword to Doctor Brodie's Report", quote: "I have tried to write straightforward stories." },
+      { source: "The Congress", quote: "Like all men, I have been given bad times to live in." },
+      { source: "There Are More Things", quote: "Not to see was perhaps the best thing to have done." },
+      { source: "The Mirror and the Mask", quote: "The poem was a single line." },
+      { source: "Undr", quote: "Undr. Wonder. The single word that is all of poetry." },
+      { source: "The Disk", quote: "I had held in my hands a disk that was one-sided." },
+      { source: "The Night of the Gifts", quote: "The knife I honed against the stone was my life." },
+      { source: "The Rose of Paracelsus", quote: "When the rose came back, he said nothing." },
+      { source: "Blue Tigers", quote: "They are not countable." },
+      { source: "Shakespeare's Memory", quote: "Gradually I came to be Shakespeare's memory." },
+      { source: "August 25, 1983", quote: "I know that one of us will write this, but I don't know which." },
+      { source: "Milonga of Manuel Flores", quote: "I'm dying and I still haven't died." },
+      { source: "To a Cat", quote: "Yours is the solitude, the secret center." },
+      { source: "The Web", quote: "Which of my cities will I die in?" },
+      { source: "1964", quote: "I am not he who watches from the mirror." },
+      { source: "I Am", quote: "I am he who knows himself no less vain than one who watches himself in a mirror." },
+      { source: "Heraclitus", quote: "Heraclitus walks along the afternoon." },
+      { source: "The Palace", quote: "The palace is infinite." },
+      { source: "Labyrinths", quote: "There will not be a door." },
+      { source: "The Just", quote: "The just save the world and they do not know it." },
+      { source: "Inventory", quote: "I want to inventory the things I have loved." },
+      { source: "The Garden of Forking Paths", quote: "In all fictions, each time a man meets diverse alternatives, he chooses one." },
+      { source: "The Library of Babel", quote: "For every sensible line there are leagues of insensate cacophony." },
+      { source: "The Library of Babel", quote: "This useless and wordy epistle already exists in one of the hexagons." },
+      { source: "The Aleph", quote: "How can one transmit to others the infinite Aleph?" },
+      { source: "The Aleph", quote: "I saw all the mirrors on earth and none reflected me." },
+      { source: "Tlön, Uqbar, Orbis Tertius", quote: "Any symmetry, any system with an appearance of order, can deceive us." },
+      { source: "Tlön, Uqbar, Orbis Tertius", quote: "Contact with Tlön has disintegrated this world." },
+      { source: "Funes the Memorious", quote: "He knew the shapes of the southern clouds at dawn on April 30, 1882." },
+      { source: "Pierre Menard, Author of the Quixote", quote: "To compose the Quixote at the beginning of the seventeenth century was a reasonable undertaking." },
+      { source: "The Circular Ruins", quote: "The purpose of his life was to dream a man and impose him on reality." },
+      { source: "Death and the Compass", quote: "Scharlach, I know of one Greek labyrinth: a single straight line." },
+      { source: "The Sect of the Phoenix", quote: "The Secret is not as remarkable as the fact that it remains secret." },
+      { source: "The Immortal", quote: "Being immortal is commonplace; except for man, all creatures are immortal." },
+      { source: "The Immortal", quote: "Death makes men precious and pathetic." },
+      { source: "The Writing of the God", quote: "I beheld the universe and I beheld the intimate designs of the universe." },
+      { source: "The House of Asterion", quote: "I know they call me arrogant, but I have never left this house." },
+      { source: "The Lottery in Babylon", quote: "The Company, with divine modesty, avoids all publicity." },
+      { source: "The Book of Sand", quote: "I told him my book was called the Book of Sand because the book and sand have no beginning or end." },
+      { source: "The South", quote: "Reality favors symmetries and slight anachronisms." },
+      { source: "The Secret Miracle", quote: "For him, there was no yesterday, no today, no future—only an interminable present." },
+      { source: "A New Refutation of Time", quote: "I deny succession; I deny the present; I deny the past." },
+      { source: "A New Refutation of Time", quote: "The world, unfortunately, is real; I, unfortunately, am Borges." },
+      { source: "Kafka and His Precursors", quote: "In each of these texts we find Kafka's idiosyncrasy, in greater or lesser degree." },
+      { source: "The Wall and the Books", quote: "The burning of books and the erection of a wall are operations that secretly cancel each other." },
+      { source: "Avatars of the Tortoise", quote: "There is a concept that corrupts all others: the infinite." },
+      { source: "The Analytical Language of John Wilkins", quote: "These ambiguities reveal that no classification of the universe is not arbitrary." },
+      { source: "Narrative Art and Magic", quote: "I have distinguished two causal processes: the natural, which is the incessant result of uncontrollable operations; the magical." },
+      { source: "The Homeric Versions", quote: "No problem is as consubstantial with literature as translation." },
+      { source: "On Dubbing", quote: "The art of combination is not infinite." },
+      { source: "A History of Eternity", quote: "I do not know how to verify the ancient assertion that eternity is made of time." },
+      { source: "The Cult of the Phoenix", quote: "There is no decent man who has not, at some time, been a member." },
+      { source: "Blindness", quote: "A writer considers things as destiny gives them to him." },
+      { source: "Blindness", quote: "I speak of God's splendid irony in granting me books and night at one time." },
+      { source: "On the Classics", quote: "A classic is a book that comes before us." },
+      { source: "The Argentine Writer and Tradition", quote: "We cannot confine ourselves to what is Argentine." },
+      { source: "The Fearful Sphere of Pascal", quote: "Pascal's thought seems to have been inspired by terror." },
+      { source: "Pascal's Sphere", quote: "The history of philosophy is the history of certain metaphors." },
+      { source: "From Someone to Nobody", quote: "Being is more than being someone." },
+      { source: "The Mirror of Enigmas", quote: "We are the verses or words of a magic book." },
+      { source: "Forms of a Legend", quote: "The legend is more effective than historical reality." },
+      { source: "The Scandinavian Destiny", quote: "They did not know they were writing for future ages." },
+      { source: "On William Beckford's Vathek", quote: "Beckford's hell is a symbol of the intolerable." },
+      { source: "The Enigma of Edward FitzGerald", quote: "Two men collaborate across centuries." },
+      { source: "The Biathanatos", quote: "God required an act that would redeem all humanity." },
+      { source: "Limits (Límites)", quote: "Among the books of my library there is one I shall never open." },
+      { source: "Chess (Ajedrez)", quote: "The player is a prisoner of the board." },
+      { source: "The Other Tiger", quote: "A third tiger I shall seek." },
+      { source: "Poem of the Gifts", quote: "No one should read self-pity or reproach into this statement." },
+      { source: "The Golem", quote: "Who will tell us the things God felt, beholding his rabbi in Prague?" },
+      { source: "Spinoza", quote: "Someone is building God." },
+      { source: "To a Minor Poet of the Greek Anthology", quote: "What does it matter that time has forgotten you?" },
+      { source: "The Labyrinth", quote: "Do not expect the rigor of my path to tire." },
+      { source: "Everness", quote: "In God's watchful memory everything is preserved." },
+      { source: "Camden, 1892", quote: "He thinks of the young man who went to the Civil War." },
+      { source: "A Soldier of Urbina", quote: "He is dreaming of the lean hidalgo." },
+      { source: "To the German Language", quote: "You gave me the night and the music of the night." },
+      { source: "The Sea", quote: "Before the morning, before the watch, before the first pilgrims." },
+      { source: "The Moon", quote: "The moon is a mirror of the evening." },
+      { source: "In Praise of Darkness", quote: "I await God's four last things." },
+      { source: "Remorse for Any Death", quote: "The dead man is nothing." },
+      { source: "The Cyclical Night", quote: "Tonight, once more, the invincible sword of iron." },
+      { source: "Matthew XXV: 30", quote: "I have not been happy." },
+      { source: "Conjectural Poem", quote: "At last I meet my South American destiny." },
+      { source: "Ars Poetica", quote: "They say Ulysses, wearied of wonders, wept with love on seeing Ithaca." },
+      { source: "The Other Death", quote: "He was granted the thing he most wanted." },
+      { source: "The Life of Tadeo Isidoro Cruz", quote: "He comprehended that his destiny was not better or worse than any other." },
+      { source: "Deutsches Requiem", quote: "I have destroyed the best thing in me." },
+      { source: "The Duel", quote: "Clara saw that as long as she lived, her work would be incomplete." },
+      { source: "The Gospel According to Mark", quote: "The Gutres had begun to respect him and almost to worship him." },
+      { source: "Guayaquil", quote: "I knew I would never decipher that old mystery." },
+      { source: "The Maker (El Hacedor)", quote: "Gradually the beautiful universe was leaving him." },
+      { source: "Two English Poems", quote: "I offer you lean streets, desperate sunsets, the moon of the jagged suburbs." },
+      { source: "The Unending Rose", quote: "I see you with my eyes shut." },
+      { source: "Proteus", quote: "He knew the secrets that keep the sea and the day." },
+      { source: "The Enigmas", quote: "I shall be a thing I cannot see: a word." },
+      { source: "Things", quote: "They will outlast us, never knowing we have gone." },
+      { source: "The Congress", quote: "We are the Congress of the World." },
+      { source: "There Are More Things", quote: "I went in search of things I did not want to find." },
+      { source: "The Mirror and the Mask", quote: "Beauty has been given to men, and we may not endure it." },
+      { source: "Undr", quote: "I have wasted my years exchanging hard words." },
+      { source: "The Disk", quote: "It had but one side." },
+      { source: "The Night of the Gifts", quote: "Nobody forgot that night." },
+      { source: "The Rose of Paracelsus", quote: "There was no one there to witness the miracle." },
+      { source: "Blue Tigers", quote: "I was no longer able to count." },
+      { source: "Shakespeare's Memory", quote: "I began to forget my own poor memory." },
+      { source: "August 25, 1983", quote: "The encounter was real, but the other man spoke to me in a dream." },
+      { source: "Milonga of Manuel Flores", quote: "They are killing me. They are killing me well." },
+      { source: "To a Cat", quote: "In another time you are." },
+      { source: "The Web", quote: "The evening is long and I shall not live." },
+      { source: "1964", quote: "I no longer know who I am." },
+      { source: "The Library of Babel", quote: "Let heaven exist, though my place be in hell." },
+      { source: "In Praise of Darkness", quote: "We are our memory, we are that chimerical museum of shifting shapes, that pile of broken mirrors." },
+      { source: "The Threatened", quote: "Being with you and not being with you is the only way I have to measure time." },
+      { source: "The God's Script", quote: "I realized that the word of a god ought to be infinite and that no single thing could contain it." },
+      { source: "The Aleph (Prologue)", quote: "Fame is a form—perhaps the worst form—of incomprehension." },
+      { source: "Pierre Menard, Author of the Quixote", quote: "There is no intellectual exercise which is not ultimately useless." },
+      { source: "Deutsches Requiem", quote: "To die for a religion is easier than to live it fully." },
+      { source: "Preface to The Book of Sand", quote: "I do not write for a select minority... nor for that adulated platonic entity known as 'The Masses'." },
+      { source: "On Translation", quote: "The original is unfaithful to the translation." },
+      { source: "The Book of Sand", quote: "If space is infinite, we may be at any point in space. If time is infinite, we may be at any point in time." },
+      { source: "The Aleph", quote: "Everything touches everything." },
+      { source: "The Nightmare", quote: "Sleep is the most secret of our acts." },
+      { source: "The Immortal", quote: "The machinery of the world is far too complex for the simplicity of men." },
+      { source: "The Library of Babel", quote: "I am blind and I am ignorant, but I foresee that there are many roads." },
+      { source: "Fragments of an Apocryphal Gospel", quote: "Nothing is built on stone; all is built on sand, but we must build as if the sand were stone." },
+      { source: "The Library of Babel", quote: "Like all men of the Library, I have traveled in my youth; I have wandered in search of a book, perhaps the catalogue of catalogues." },
+      { source: "The Book of Sand", quote: "The line is made up of an infinite number of points; the plane of an infinite number of lines; the volume of an infinite number of planes..." },
+      { source: "Borges and I", quote: "The other one, the one called Borges, is the one things happen to." },
+      { source: "Remorse", quote: "I have committed the worst of sins... I have not been happy." },
+      { source: "About the Classics", quote: "A classic is a book that a nation or a group of people has decided to read as if everything in it were deliberate, fatal, profound." },
+    ];
+
+    // --- SCENE ---
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(DARK);
+
+    const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 100);
+    camera.position.set(0, 1.7, 0);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    document.body.appendChild(renderer.domElement);
+
+    // --- MATERIALS ---
+    const lineMat = new THREE.LineBasicMaterial({ color: LIGHT });
+    const dimMat = new THREE.LineBasicMaterial({ color: LIGHT, transparent: true, opacity: 0.3 });
+
+    const interactiveObjects = [];
+    let quoteIdx = 0;
+
+    function addLine(pts, dim = false) {
+      scene.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), dim ? dimMat : lineMat));
+    }
+
+    // --- ROOM ---
+    const R = 5, H = 8;
+    const apothem = R * Math.cos(Math.PI / 6);
+
+    function vtx(i, r = R, y = 0) {
+      const a = (i / 6) * Math.PI * 2 - Math.PI / 6;
+      return new THREE.Vector3(Math.cos(a) * r, y, Math.sin(a) * r);
+    }
+
+    // Floor & ceiling outlines
+    const floor = [], ceil = [];
+    for (let i = 0; i <= 6; i++) { floor.push(vtx(i, R, 0)); ceil.push(vtx(i, R, H)); }
+    addLine(floor); addLine(ceil);
+
+    // Vertical edges
+    for (let i = 0; i < 6; i++) { const v = vtx(i); addLine([v, new THREE.Vector3(v.x, H, v.z)]); }
+
+    // Floor pattern
+    for (let i = 0; i < 6; i++) addLine([new THREE.Vector3(0,0,0), vtx(i)], true);
+    addLine([...Array(7)].map((_,i) => vtx(i, R*0.5, 0)), true);
+
+    // Ceiling beams
+    for (let i = 0; i < 6; i++) addLine([new THREE.Vector3(0,H,0), vtx(i,R,H)]);
+
+    // Column
+    const colR = 0.3;
+    for (let y = 0; y <= H; y += 1) {
+      const ring = [];
+      for (let i = 0; i <= 6; i++) {
+        const a = (i/6) * Math.PI * 2;
+        ring.push(new THREE.Vector3(Math.cos(a)*colR, y, Math.sin(a)*colR));
+      }
+      addLine(ring);
+    }
+    for (let i = 0; i < 6; i++) {
+      const a = (i/6) * Math.PI * 2;
+      addLine([
+        new THREE.Vector3(Math.cos(a)*colR, 0, Math.sin(a)*colR),
+        new THREE.Vector3(Math.cos(a)*colR, H, Math.sin(a)*colR)
+      ]);
+    }
+
+    // --- BOOKSHELVES WITH EXACTLY 242 BOOKS ---
+    // 6 walls * 5 shelves = 30 shelves
+    // We need to distribute 242 books across these shelves
+    // Target: ~8 books per shelf
+
+    const totalBooks = 242;
+    const totalShelves = 30;
+    const booksPerShelf = [];
+
+    // Calculate how many books per shelf to hit exactly 242
+    let remaining = totalBooks;
+    for (let i = 0; i < totalShelves; i++) {
+      const avgRemaining = remaining / (totalShelves - i);
+      // Add some variation but keep it reasonable
+      const variation = Math.floor(seededRandom() * 3) - 1; // -1, 0, or 1
+      const count = Math.max(6, Math.min(10, Math.round(avgRemaining) + variation));
+      const actualCount = Math.min(count, remaining);
+      booksPerShelf.push(actualCount);
+      remaining -= actualCount;
+    }
+
+    // Distribute any remaining books
+    while (remaining > 0) {
+      for (let i = 0; i < totalShelves && remaining > 0; i++) {
+        if (booksPerShelf[i] < 10) {
+          booksPerShelf[i]++;
+          remaining--;
+        }
+      }
+    }
+
+    let shelfIndex = 0;
+
+    for (let w = 0; w < 6; w++) {
+      const wallAng = (w / 6) * Math.PI * 2;
+      const outX = Math.cos(wallAng), outZ = Math.sin(wallAng);
+      const tanX = -Math.sin(wallAng), tanZ = Math.cos(wallAng);
+
+      const shelfW = R * 0.7;
+      const shelfD = 0.25;
+      const wallDist = apothem - 0.1;
+
+      for (let s = 0; s < 5; s++) {
+        const shelfY = 0.8 + s * 1.2;
+
+        // Shelf corners
+        const bl = new THREE.Vector3(
+          outX * wallDist + tanX * (-shelfW/2),
+          shelfY,
+          outZ * wallDist + tanZ * (-shelfW/2)
+        );
+        const br = new THREE.Vector3(
+          outX * wallDist + tanX * (shelfW/2),
+          shelfY,
+          outZ * wallDist + tanZ * (shelfW/2)
+        );
+        const fl = new THREE.Vector3(
+          bl.x - outX * shelfD, shelfY, bl.z - outZ * shelfD
+        );
+        const fr = new THREE.Vector3(
+          br.x - outX * shelfD, shelfY, br.z - outZ * shelfD
+        );
+
+        // Shelf outline
+        addLine([bl, br]); addLine([fl, fr]); addLine([bl, fl], true); addLine([br, fr], true);
+
+        // Books for this shelf
+        const numBooks = booksPerShelf[shelfIndex];
+        shelfIndex++;
+
+        if (numBooks === 0) continue;
+
+        // Books with realistic varying widths, bunched in middle
+        const gap = 0.012;
+
+        // Pre-calculate book widths for centering
+        const bookWidths = [];
+        for (let b = 0; b < numBooks; b++) {
+          // Varying widths: thin (0.05) to thick (0.12)
+          bookWidths.push(0.05 + seededRandom() * 0.07);
+        }
+        const totalBooksWidth = bookWidths.reduce((a, b) => a + b, 0) + (numBooks - 1) * gap;
+
+        // Start position to center books on shelf
+        let bx = -totalBooksWidth / 2;
+
+        for (let b = 0; b < numBooks && quoteIdx < borgesQuotes.length; b++) {
+          const bw = bookWidths[b];
+          const bh = 0.28 + seededRandom() * 0.35; // varying heights too
+
+          const bc = bx + bw/2;
+          const bookX = outX * (wallDist - shelfD/2) + tanX * bc;
+          const bookZ = outZ * (wallDist - shelfD/2) + tanZ * bc;
+          const bookY = shelfY + 0.01;
+
+          const hw = bw / 2;
+          const c1 = new THREE.Vector3(bookX + tanX*(-hw), bookY, bookZ + tanZ*(-hw));
+          const c2 = new THREE.Vector3(bookX + tanX*(hw), bookY, bookZ + tanZ*(hw));
+          const c3 = new THREE.Vector3(bookX + tanX*(hw), bookY + bh, bookZ + tanZ*(hw));
+          const c4 = new THREE.Vector3(bookX + tanX*(-hw), bookY + bh, bookZ + tanZ*(-hw));
+
+          const spineGeo = new THREE.BufferGeometry().setFromPoints([c1, c2, c3, c4, c1]);
+          const spineLine = new THREE.Line(spineGeo, lineMat.clone());
+          scene.add(spineLine);
+
+          const hitGeo = new THREE.PlaneGeometry(bw, bh);
+          const hitMat = new THREE.MeshBasicMaterial({ visible: false, side: THREE.DoubleSide });
+          const hitMesh = new THREE.Mesh(hitGeo, hitMat);
+          hitMesh.position.set(bookX, bookY + bh/2, bookZ);
+          hitMesh.rotation.y = wallAng;
+
+          hitMesh.userData = {
+            isInteractive: true,
+            content: borgesQuotes[quoteIdx],
+            line: spineLine
+          };
+          quoteIdx++;
+          interactiveObjects.push(hitMesh);
+          scene.add(hitMesh);
+
+          bx += bw + gap;
+        }
+      }
+    }
+
+    // --- CONTROLS ---
+    let locked = false, reading = false, menuOpen = false;
+    let yaw = 0, pitch = 0;
+    const euler = new THREE.Euler(0, 0, 0, 'YXZ');
+    const keys = {};
+
+    document.addEventListener('keydown', e => {
+      keys[e.code] = true;
+      if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) {
+        e.preventDefault();
+      }
+    });
+    document.addEventListener('keyup', e => keys[e.code] = false);
+
+    const eyeOpening = document.getElementById('eye-opening');
+    const startPrompt = document.getElementById('start-prompt');
+    const startButton = document.getElementById('start-button');
+
+    setTimeout(() => {
+      eyeOpening.classList.add('hidden');
+      document.body.requestPointerLock();
+    }, 1900);
+
+    function showMenu() {
+      menuOpen = true;
+      document.exitPointerLock();
+      startPrompt.classList.add('visible');
+    }
+
+    function hideMenu() {
+      menuOpen = false;
+      startPrompt.classList.remove('visible');
+      document.body.requestPointerLock();
+    }
+
+    startButton.addEventListener('click', hideMenu);
+
+    document.addEventListener('pointerlockchange', () => {
+      const wasLocked = locked;
+      locked = document.pointerLockElement === document.body;
+      if (wasLocked && !locked && !reading) {
+        menuOpen = true;
+        startPrompt.classList.add('visible');
+      }
+    });
+
+    document.addEventListener('mousemove', e => {
+      if (!locked || reading) return;
+      yaw -= e.movementX * 0.002;
+      pitch -= e.movementY * 0.002;
+      pitch = Math.max(-1.2, Math.min(1.2, pitch));
+      euler.set(pitch, yaw, 0);
+      camera.quaternion.setFromEuler(euler);
+    });
+
+    // --- INTERACTION ---
+    const ray = new THREE.Raycaster();
+    const center = new THREE.Vector2(0, 0);
+    let hovered = null;
+
+    const crosshair = document.getElementById('crosshair');
+    const label = document.getElementById('object-label');
+    const overlay = document.getElementById('reading-overlay');
+    const rText = document.getElementById('reading-text');
+
+    function checkHover() {
+      ray.setFromCamera(center, camera);
+      const hits = ray.intersectObjects(interactiveObjects);
+
+      if (hovered?.userData.line) hovered.userData.line.material.color.setHex(LIGHT);
+
+      if (hits.length && hits[0].distance < 6) {
+        hovered = hits[0].object;
+        hovered.userData.line.material.color.setHex(0xffffff);
+        crosshair.classList.add('hovering');
+        // Show truncated quote as label
+        const q = hovered.userData.content.quote;
+        label.textContent = q.length > 40 ? q.substring(0, 40) + '...' : q;
+        label.classList.add('visible');
+      } else {
+        hovered = null;
+        crosshair.classList.remove('hovering');
+        label.classList.remove('visible');
+      }
+    }
+
+    function openBook(c) {
+      reading = true;
+      overlay.classList.add('visible');
+      document.exitPointerLock();
+      rText.innerHTML = `<p class="quote-text">"${c.quote}"</p><p class="quote-source">— ${c.source}</p>`;
+      playPageTurn();
+    }
+
+    function closeBook() {
+      reading = false;
+      overlay.classList.remove('visible');
+      document.body.requestPointerLock();
+      playBookClose();
+    }
+
+    document.addEventListener('click', e => {
+      if (e.target.closest('#start-prompt a')) return;
+
+      if (reading) {
+        closeBook();
+      } else if (hovered && locked) {
+        openBook(hovered.userData.content);
+      } else if (!locked && !menuOpen) {
+        document.body.requestPointerLock();
+      }
+    });
+
+    document.addEventListener('keydown', e => {
+      if (e.code === 'Escape' && reading) {
+        closeBook();
+      }
+    });
+
+    // --- LOOP ---
+    const clock = new THREE.Clock();
+
+    function loop() {
+      requestAnimationFrame(loop);
+      const dt = clock.getDelta();
+
+      if (locked && !reading) {
+        const dir = new THREE.Vector3();
+        if (keys['KeyW'] || keys['ArrowUp']) dir.z = -1;
+        if (keys['KeyS'] || keys['ArrowDown']) dir.z = 1;
+        if (keys['KeyA'] || keys['ArrowLeft']) dir.x = -1;
+        if (keys['KeyD'] || keys['ArrowRight']) dir.x = 1;
+        dir.normalize();
+
+        const move = new THREE.Vector3(dir.x * 3 * dt, 0, dir.z * 3 * dt);
+        move.applyQuaternion(camera.quaternion);
+        move.y = 0;
+        camera.position.add(move);
+
+        // Play footstep if moving
+        if (dir.length() > 0) {
+          playFootstep();
+        }
+
+        const d = Math.hypot(camera.position.x, camera.position.z);
+        if (d > apothem - 0.5) {
+          const a = Math.atan2(camera.position.z, camera.position.x);
+          camera.position.x = Math.cos(a) * (apothem - 0.5);
+          camera.position.z = Math.sin(a) * (apothem - 0.5);
+        }
+        if (d < 0.5) {
+          const a = Math.atan2(camera.position.z, camera.position.x);
+          camera.position.x = Math.cos(a) * 0.5;
+          camera.position.z = Math.sin(a) * 0.5;
+        }
+
+        checkHover();
+      }
+
+      renderer.render(scene, camera);
+    }
+
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    loop();
+  </script>
+</body>
+</html>

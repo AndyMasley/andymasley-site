@@ -4,15 +4,15 @@ import Base from '@/layouts/Base.astro';
 
 <Base title="Hexagon" description="A hidden corner">
   <div class="hexagon-page">
-    <div class="hexagon-container">
-      <svg class="center-hexagon" width="120" height="120" viewBox="0 0 24 24" fill="none">
+    <div class="hexagon-container" id="hexagon-container">
+      <svg class="center-hexagon" id="center-hexagon" width="120" height="120" viewBox="0 0 24 24" fill="none">
         <path d="M12 2 L20.66 7 L20.66 17 L12 22 L3.34 17 L3.34 7 Z" />
       </svg>
     </div>
     <div class="hexagon-text">
       <p class="hexagon-intro">A nod to</p>
       <p class="hexagon-links">
-        <a href="https://press.princeton.edu/ideas/insect-intelligence?srsltid=AfmBOoqx4JrvpkFdj7ih1NOGo-1jIE4U2wbuoa1Lr3i16332P7uGLEJ0">bees</a>
+        <a href="https://press.princeton.edu/ideas/insect-intelligence">bees</a>
         <span class="hexagon-sep">·</span>
         <a href="https://sites.evergreen.edu/politicalshakespeares/wp-content/uploads/sites/226/2015/12/Borges-The-Library-of-Babel.pdf">Borges</a>
         <span class="hexagon-sep">·</span>
@@ -25,6 +25,174 @@ import Base from '@/layouts/Base.astro';
       </p>
     </div>
   </div>
+
+  <script>
+    // Track which small hexes have been activated (on window for cross-script access)
+    window.hexPortalState = window.hexPortalState || { header: false, nav: false };
+
+    // Called from Base.astro when hex state changes
+    window.updateHexagonState = function(headerState, navState) {
+      const centerHex = document.getElementById('center-hexagon');
+      if (!centerHex) return;
+      if (centerHex.classList.contains('portal-active')) return;
+
+      window.hexPortalState.header = headerState;
+      window.hexPortalState.nav = navState;
+
+      // Update center hex ready state
+      if (window.hexPortalState.header && window.hexPortalState.nav) {
+        centerHex.classList.add('portal-ready');
+      } else {
+        centerHex.classList.remove('portal-ready');
+      }
+    };
+
+    // Set up center hex click handler
+    function initCenterHexClick() {
+      const centerHex = document.getElementById('center-hexagon');
+      if (!centerHex) return;
+      if (centerHex.dataset.clickInitialized) return;
+      centerHex.dataset.clickInitialized = 'true';
+
+      centerHex.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        // Only trigger if both small hexes are activated
+        if (!window.hexPortalState.header || !window.hexPortalState.nav) return;
+        if (centerHex.classList.contains('portal-active')) return;
+        if (centerHex.classList.contains('portal-filling')) return;
+
+        // Fill in the hex first
+        centerHex.classList.add('portal-filling');
+
+        // Then trigger portal animation after fill completes
+        setTimeout(() => {
+          triggerPortalAnimation();
+        }, 400);
+      });
+    }
+
+    // Initialize immediately and on page load events
+    initCenterHexClick();
+    document.addEventListener('DOMContentLoaded', initCenterHexClick);
+    document.addEventListener('astro:page-load', initCenterHexClick);
+
+    function triggerPortalAnimation() {
+      const centerHex = document.getElementById('center-hexagon');
+      const headerHex = document.getElementById('header-hexagon');
+      const navHex = document.querySelector('.nav-hexagon');
+      const mainContent = document.querySelector('.main-content');
+
+      // Get positions of all three hexagons
+      const centerRect = centerHex.getBoundingClientRect();
+      const centerX = centerRect.left + centerRect.width / 2;
+      const centerY = centerRect.top + centerRect.height / 2;
+
+      const headerRect = headerHex?.getBoundingClientRect();
+      const headerX = headerRect ? headerRect.left + headerRect.width / 2 : 0;
+      const headerY = headerRect ? headerRect.top + headerRect.height / 2 : 0;
+
+      const navRect = navHex?.getBoundingClientRect();
+      const navX = navRect ? navRect.left + navRect.width / 2 : 0;
+      const navY = navRect ? navRect.top + navRect.height / 2 : 0;
+
+      // Midpoint between the two small hexes
+      const midX = (headerX + navX) / 2;
+      const midY = (headerY + navY) / 2;
+
+      // Create beam container
+      const beamContainer = document.createElement('div');
+      beamContainer.className = 'beam-container';
+      document.body.appendChild(beamContainer);
+
+      // Helper to create a beam
+      function createBeam(x1, y1, x2, y2, className) {
+        const beam = document.createElement('div');
+        beam.className = 'portal-beam ' + className;
+        const dx = x2 - x1;
+        const dy = y2 - y1;
+        const length = Math.sqrt(dx * dx + dy * dy);
+        const angle = Math.atan2(dy, dx) * (180 / Math.PI);
+
+        beam.style.left = x1 + 'px';
+        beam.style.top = y1 + 'px';
+        beam.style.setProperty('--length', length + 'px');
+        beam.style.setProperty('--angle', angle + 'deg');
+        beamContainer.appendChild(beam);
+        return beam;
+      }
+
+      // Both small hexes glow and send beams simultaneously
+      if (headerHex) headerHex.classList.add('hex-sending');
+      if (navHex) navHex.classList.add('hex-sending');
+
+      // Create all four beams: two to center, two half-beams to midpoint
+      const headerToCenter = createBeam(headerX, headerY, centerX, centerY, 'beam-primary');
+      const navToCenter = createBeam(navX, navY, centerX, centerY, 'beam-primary');
+      const headerToMid = createBeam(headerX, headerY, midX, midY, 'beam-secondary');
+      const navToMid = createBeam(navX, navY, midX, midY, 'beam-secondary');
+
+      // Fire all beams simultaneously
+      setTimeout(() => {
+        headerToCenter.classList.add('firing');
+        navToCenter.classList.add('firing');
+        headerToMid.classList.add('firing');
+        navToMid.classList.add('firing');
+      }, 50);
+
+      // Portal activates when beams reach center
+      const beamTravelTime = 800;
+      setTimeout(() => {
+        centerHex.classList.add('portal-active');
+
+        // Determine current theme for explosion style
+        const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+        const explosionStyle = currentTheme === 'dark' ? 'orange' : 'dark';
+
+        // Create portal overlay centered on the hexagon
+        const portalOverlay = document.createElement('div');
+        portalOverlay.className = 'portal-overlay';
+        portalOverlay.setAttribute('data-explosion-theme', explosionStyle);
+        portalOverlay.style.setProperty('--center-x', centerX + 'px');
+        portalOverlay.style.setProperty('--center-y', centerY + 'px');
+        document.body.appendChild(portalOverlay);
+
+        // Create vortex rings
+        for (let i = 0; i < 6; i++) {
+          const ring = document.createElement('div');
+          ring.className = 'portal-ring';
+          ring.style.setProperty('--ring-index', i);
+          portalOverlay.appendChild(ring);
+        }
+
+        // Create particle effects
+        for (let i = 0; i < 30; i++) {
+          const particle = document.createElement('div');
+          particle.className = 'portal-particle';
+          particle.style.setProperty('--angle', (Math.random() * 360) + 'deg');
+          particle.style.setProperty('--distance', (50 + Math.random() * 150) + 'px');
+          particle.style.setProperty('--delay', (Math.random() * 500) + 'ms');
+          particle.style.setProperty('--duration', (800 + Math.random() * 400) + 'ms');
+          portalOverlay.appendChild(particle);
+        }
+
+        setTimeout(() => portalOverlay.classList.add('rings-active'), 100);
+        setTimeout(() => {
+          portalOverlay.classList.add('particles-active');
+          if (mainContent) mainContent.classList.add('dissolving');
+        }, 400);
+        setTimeout(() => {
+          portalOverlay.classList.add('sucking');
+          centerHex.classList.add('portal-expand');
+        }, 1000);
+        setTimeout(() => portalOverlay.classList.add('whiteout'), 1800);
+        setTimeout(() => {
+          window.location.href = '/room';
+        }, 2400);
+      }, beamTravelTime);
+    }
+  </script>
 </Base>
 
 <style>
@@ -39,6 +207,8 @@ import Base from '@/layouts/Base.astro';
 
   .hexagon-container {
     margin-bottom: 2rem;
+    position: relative;
+    z-index: 10;
   }
 
   .center-hexagon {
@@ -80,5 +250,337 @@ import Base from '@/layouts/Base.astro';
   .hexagon-sep {
     margin: 0 0.5rem;
     opacity: 0.5;
+  }
+
+  /* Portal Animation Styles */
+  .center-hexagon.portal-active {
+    animation: hexagon-spin 20s linear infinite, portalGlow 0.8s ease-out forwards;
+  }
+
+  .center-hexagon.portal-expand {
+    animation: hexagon-spin 2s linear infinite, portalExpand 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  }
+
+  @keyframes portalGlow {
+    0% {
+      filter: drop-shadow(0 0 0 var(--accent));
+    }
+    100% {
+      filter: drop-shadow(0 0 30px var(--accent)) drop-shadow(0 0 60px var(--accent));
+      stroke: var(--accent);
+      fill: var(--accent);
+    }
+  }
+
+  @keyframes portalExpand {
+    0% {
+      transform: rotate(0deg) scale(1);
+      filter: drop-shadow(0 0 30px var(--accent)) drop-shadow(0 0 60px var(--accent));
+      stroke: var(--accent);
+      fill: var(--accent);
+    }
+    30% {
+      fill: transparent;
+      stroke: white;
+      stroke-width: 0.5;
+    }
+    100% {
+      transform: rotate(180deg) scale(15);
+      filter: drop-shadow(0 0 60px white) drop-shadow(0 0 120px rgba(255,255,255,0.5));
+      fill: transparent;
+      stroke: white;
+      stroke-width: 0.3;
+      opacity: 0.8;
+    }
+  }
+
+  /* Page dissolve effect */
+  :global(.main-content.dissolving) {
+    animation: dissolve 1.5s ease-in forwards;
+  }
+
+  :global(.main-content.dissolving .header),
+  :global(.main-content.dissolving .footer),
+  :global(.main-content.dissolving .hexagon-text) {
+    animation: fragmentDissolve 1s ease-in forwards;
+  }
+
+  @keyframes dissolve {
+    0% {
+      filter: blur(0);
+    }
+    100% {
+      filter: blur(10px);
+      opacity: 0.3;
+    }
+  }
+
+  @keyframes fragmentDissolve {
+    0% {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+    100% {
+      opacity: 0;
+      transform: translateY(-30px) scale(0.95);
+    }
+  }
+
+  /* Beam styles */
+  :global(.beam-container) {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    pointer-events: none;
+    z-index: 9998;
+  }
+
+  :global(.portal-beam) {
+    position: absolute;
+    height: 3px;
+    background: linear-gradient(90deg,
+      var(--accent) 0%,
+      rgba(255, 255, 255, 0.9) 50%,
+      var(--accent) 100%);
+    transform-origin: left center;
+    transform: rotate(var(--angle)) scaleX(0);
+    opacity: 0;
+    box-shadow:
+      0 0 10px var(--accent),
+      0 0 20px var(--accent),
+      0 0 40px rgba(255, 255, 255, 0.5);
+    border-radius: 2px;
+  }
+
+  :global(.portal-beam.firing) {
+    width: var(--length);
+    opacity: 1;
+    transform: rotate(var(--angle)) scaleX(1);
+    transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease-out;
+  }
+
+  :global(.portal-beam.beam-secondary) {
+    background: linear-gradient(90deg,
+      var(--accent) 0%,
+      rgba(255, 200, 200, 0.9) 50%,
+      var(--accent) 100%);
+  }
+
+  /* Hex glow states */
+  :global(.hex-activated svg path) {
+    fill: var(--accent) !important;
+  }
+
+  :global(.hex-sending svg path) {
+    fill: var(--accent) !important;
+  }
+
+  :global(.hex-receiving) {
+    animation: hexPulseReceive 0.3s ease-out;
+  }
+
+  @keyframes hexPulseReceive {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.3); }
+    100% { transform: scale(1); }
+  }
+
+  /* Center hex ready state - no visual change, just clickable */
+  .center-hexagon.portal-ready {
+    cursor: pointer;
+  }
+
+  /* Center hex fills in when clicked */
+  .center-hexagon.portal-filling {
+    animation: hexagon-spin 20s linear infinite, portalFill 0.4s ease-out forwards;
+  }
+
+  @keyframes portalFill {
+    0% {
+      fill: transparent;
+    }
+    100% {
+      fill: var(--accent);
+      filter: drop-shadow(0 0 10px var(--accent));
+    }
+  }
+
+  /* Portal overlay - centered on the hexagon */
+  :global(.portal-overlay) {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    pointer-events: none;
+    z-index: 9999;
+    overflow: hidden;
+  }
+
+  :global(.portal-ring) {
+    position: absolute;
+    left: var(--center-x);
+    top: var(--center-y);
+    border: 2px solid var(--accent);
+    border-radius: 50%;
+    opacity: 0;
+    width: calc(80px + var(--ring-index) * 60px);
+    height: calc(80px + var(--ring-index) * 60px);
+    transform: translate(-50%, -50%) scale(0.5);
+  }
+
+  :global(.portal-overlay.rings-active .portal-ring) {
+    animation: ringExpand 2s ease-out forwards, ringSpin 3s linear infinite;
+    animation-delay: calc(var(--ring-index) * 100ms);
+  }
+
+  @keyframes ringExpand {
+    0% {
+      opacity: 0;
+      transform: translate(-50%, -50%) scale(0.5) rotate(0deg);
+    }
+    30% {
+      opacity: 0.8;
+    }
+    100% {
+      opacity: 0.4;
+      transform: translate(-50%, -50%) scale(1) rotate(60deg);
+    }
+  }
+
+  @keyframes ringSpin {
+    0% {
+      transform: translate(-50%, -50%) rotate(0deg);
+    }
+    100% {
+      transform: translate(-50%, -50%) rotate(360deg);
+    }
+  }
+
+  :global(.portal-particle) {
+    position: absolute;
+    left: var(--center-x);
+    top: var(--center-y);
+    width: 4px;
+    height: 4px;
+    background: var(--accent);
+    border-radius: 50%;
+    opacity: 0;
+  }
+
+  :global(.portal-overlay.particles-active .portal-particle) {
+    animation: particleSuck var(--duration) ease-in forwards;
+    animation-delay: var(--delay);
+  }
+
+  @keyframes particleSuck {
+    0% {
+      opacity: 1;
+      transform: rotate(var(--angle)) translateX(var(--distance));
+    }
+    100% {
+      opacity: 0;
+      transform: rotate(var(--angle)) translateX(0);
+    }
+  }
+
+  :global(.portal-overlay.sucking .portal-ring) {
+    animation: ringSuck 0.8s ease-in forwards;
+  }
+
+  @keyframes ringSuck {
+    0% {
+      transform: translate(-50%, -50%) scale(1);
+      opacity: 0.4;
+    }
+    100% {
+      transform: translate(-50%, -50%) scale(0);
+      opacity: 0;
+    }
+  }
+
+  :global(.portal-overlay.whiteout)::before {
+    content: '';
+    position: absolute;
+    left: var(--center-x);
+    top: var(--center-y);
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    transform: translate(-50%, -50%) scale(0);
+    animation: portalFlash 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  }
+
+  /* Dark explosion (when coming from light mode) */
+  :global(.portal-overlay[data-explosion-theme="dark"].whiteout)::before {
+    background: radial-gradient(circle,
+      #1c1917 0%,
+      rgba(28, 25, 23, 0.95) 20%,
+      rgba(35, 32, 30, 0.9) 40%,
+      rgba(45, 42, 40, 0.8) 60%,
+      transparent 100%);
+  }
+
+  /* Orange stargate effect (when coming from dark mode) */
+  :global(.portal-overlay[data-explosion-theme="orange"].whiteout)::before {
+    background: radial-gradient(circle,
+      #1c1917 0%,
+      rgba(28, 25, 23, 0.98) 30%,
+      rgba(28, 25, 23, 0.95) 100%);
+  }
+
+  :global(.portal-overlay[data-explosion-theme="orange"].whiteout)::after {
+    content: '';
+    position: absolute;
+    left: var(--center-x);
+    top: var(--center-y);
+    width: 100vmax;
+    height: 100vmax;
+    transform: translate(-50%, -50%);
+    background:
+      repeating-conic-gradient(
+        from 0deg,
+        transparent 0deg,
+        rgba(139, 90, 43, 0.4) 2deg,
+        transparent 4deg,
+        transparent 8deg,
+        rgba(180, 100, 50, 0.3) 10deg,
+        transparent 12deg,
+        transparent 20deg
+      );
+    animation: stargateRotate 2s linear infinite, stargateExpand 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    opacity: 0;
+  }
+
+  @keyframes stargateRotate {
+    from { transform: translate(-50%, -50%) rotate(0deg); }
+    to { transform: translate(-50%, -50%) rotate(360deg); }
+  }
+
+  @keyframes stargateExpand {
+    0% {
+      opacity: 0;
+      clip-path: circle(0% at 50% 50%);
+    }
+    30% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 1;
+      clip-path: circle(100% at 50% 50%);
+    }
+  }
+
+  @keyframes portalFlash {
+    0% {
+      transform: translate(-50%, -50%) scale(0);
+      opacity: 1;
+    }
+    100% {
+      transform: translate(-50%, -50%) scale(400);
+      opacity: 1;
+    }
   }
 </style>
