@@ -22,6 +22,7 @@ const navLinks = [
   { href: '/physics', label: 'IB physics' },
   { href: '/lists', label: 'lists' },
   { href: '/about', label: 'about' },
+  { href: '/appearances', label: 'appearances' },
   { href: '/contact', label: 'contact' },
 ];
 
@@ -41,7 +42,7 @@ function isActive(href: string): boolean {
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,500;0,8..60,600;1,8..60,400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,400;0,14..32,500;1,14..32,400&display=swap" rel="stylesheet">
 
   <ViewTransitions />
 
@@ -82,7 +83,7 @@ function isActive(href: string): boolean {
     <header class="header">
       <div class="header__inner">
         <div class="header__logo">
-          <a href="/hexagon" class="header__hexagon-link">
+          <a href="/hexagon" class="header__hexagon-link" id="header-hexagon">
             <svg class="logo-hexagon" width="22" height="22" viewBox="0 0 24 24" fill="none">
               <path d="M12 2 L20.66 7 L20.66 17 L12 22 L3.34 17 L3.34 7 Z" />
             </svg>
@@ -198,6 +199,94 @@ function isActive(href: string): boolean {
     initThemeToggle();
     initReadingProgress();
     initExternalLinks();
+
+    // Hexagon portal activation - requires clicking BOTH hexes
+    function initHexagonPortalTrigger() {
+      const headerHexagon = document.getElementById('header-hexagon');
+      const navHexagon = document.querySelector('.nav-hexagon');
+
+      const isHexagonPage = window.location.pathname === '/hexagon' || window.location.pathname === '/hexagon/';
+      if (!isHexagonPage) return;
+
+      let headerActivated = false;
+      let navActivated = false;
+
+      function activateHex(hexElement) {
+        if (!hexElement) return;
+
+        // Get current rotation from hover state and freeze it
+        const svg = hexElement.querySelector('svg');
+        if (svg) {
+          const computedStyle = window.getComputedStyle(svg);
+          const matrix = computedStyle.transform;
+          let currentRotation = 0;
+          if (matrix && matrix !== 'none') {
+            const values = matrix.split('(')[1]?.split(')')[0]?.split(',');
+            if (values) {
+              const a = parseFloat(values[0]);
+              const b = parseFloat(values[1]);
+              currentRotation = Math.atan2(b, a) * (180 / Math.PI);
+            }
+          }
+          svg.style.transform = `rotate(${currentRotation}deg)`;
+        }
+
+        hexElement.classList.add('hex-activated');
+      }
+
+      function deactivateHex(hexElement) {
+        if (!hexElement) return;
+        hexElement.classList.remove('hex-activated');
+        const svg = hexElement.querySelector('svg');
+        if (svg) {
+          svg.style.transform = '';
+        }
+      }
+
+      function handleHexagonClick(e) {
+        e.preventDefault();
+        const clickedElement = e.currentTarget;
+        const isHeader = clickedElement === headerHexagon || clickedElement?.closest('#header-hexagon');
+
+        // Toggle the clicked hex
+        if (isHeader) {
+          if (headerActivated) {
+            headerActivated = false;
+            deactivateHex(headerHexagon);
+          } else {
+            headerActivated = true;
+            activateHex(headerHexagon);
+          }
+        } else {
+          if (navActivated) {
+            navActivated = false;
+            deactivateHex(navHexagon);
+          } else {
+            navActivated = true;
+            activateHex(navHexagon);
+          }
+        }
+
+        // Notify hexagon page of current state
+        if (typeof window.updateHexagonState === 'function') {
+          window.updateHexagonState(headerActivated, navActivated);
+        }
+      }
+
+      if (headerHexagon) {
+        headerHexagon.addEventListener('click', handleHexagonClick);
+      }
+      if (navHexagon) {
+        navHexagon.addEventListener('click', handleHexagonClick);
+      }
+    }
+
+    document.addEventListener('astro:page-load', initHexagonPortalTrigger);
+    if (document.readyState !== 'loading') {
+      initHexagonPortalTrigger();
+    } else {
+      document.addEventListener('DOMContentLoaded', initHexagonPortalTrigger);
+    }
   </script>
 
 </body>

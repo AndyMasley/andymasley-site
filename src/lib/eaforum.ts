@@ -1,6 +1,24 @@
 // Fetches posts from EA Forum GraphQL API
-// Only includes posts where the user is the primary author (not co-author)
-// Excludes events
+// Uses file-based caching to avoid rate limiting during builds
+
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
+import { join } from 'path';
+
+// Cache configuration
+const CACHE_DIR = join(process.cwd(), '.cache', 'eaforum');
+const POSTS_CACHE_FILE = join(CACHE_DIR, 'posts.json');
+const CONTENT_CACHE_DIR = join(CACHE_DIR, 'content');
+const CACHE_TTL = 1000 * 60 * 60; // 1 hour TTL for posts list
+
+// Ensure cache directories exist
+function ensureCacheDir() {
+  if (!existsSync(CACHE_DIR)) {
+    mkdirSync(CACHE_DIR, { recursive: true });
+  }
+  if (!existsSync(CONTENT_CACHE_DIR)) {
+    mkdirSync(CONTENT_CACHE_DIR, { recursive: true });
+  }
+}
 
 export interface EAForumPost {
   title: string;
@@ -20,10 +38,43 @@ interface GraphQLPost {
   isEvent: boolean;
 }
 
+interface CachedPosts {
+  timestamp: number;
+  posts: EAForumPost[];
+}
+
 const USER_ID = 'bhod9XuEeXYvaRF8w'; // andy-masley's EA Forum user ID
 const GRAPHQL_ENDPOINT = 'https://forum-bots.effectivealtruism.org/graphql';
 
+// In-memory cache for current build
+let memoryCache: EAForumPost[] | null = null;
+
 export async function fetchEAForumPosts(): Promise<EAForumPost[]> {
+  // Return memory cache if available (same build)
+  if (memoryCache !== null) {
+    return memoryCache;
+  }
+
+  ensureCacheDir();
+
+  // Check file cache
+  if (existsSync(POSTS_CACHE_FILE)) {
+    try {
+      const cached: CachedPosts = JSON.parse(readFileSync(POSTS_CACHE_FILE, 'utf-8'));
+      const age = Date.now() - cached.timestamp;
+
+      if (age < CACHE_TTL) {
+        console.log(`Using cached EA Forum posts list (${Math.round(age / 1000)}s old)`);
+        // Restore Date objects
+        const posts = cached.posts.map(p => ({ ...p, date: new Date(p.date) }));
+        memoryCache = posts;
+        return posts;
+      }
+    } catch (e) {
+      console.log('EA Forum cache read error, fetching fresh data');
+    }
+  }
+
   // Inline the user ID directly in the query (simpler, avoids variable issues)
   const query = `{
     posts(input: {
@@ -44,6 +95,7 @@ export async function fetchEAForumPosts(): Promise<EAForumPost[]> {
   }`;
 
   try {
+    console.log('Fetching posts list from EA Forum API...');
     const response = await fetch(GRAPHQL_ENDPOINT, {
       method: 'POST',
       headers: {
@@ -61,7 +113,7 @@ export async function fetchEAForumPosts(): Promise<EAForumPost[]> {
     const posts: GraphQLPost[] = data?.data?.posts?.results || [];
 
     // Filter out events and return posts
-    return posts
+    const eaForumPosts = posts
       .filter(post => !post.isEvent)
       .map(post => ({
         title: post.title,
@@ -72,6 +124,18 @@ export async function fetchEAForumPosts(): Promise<EAForumPost[]> {
         isEvent: post.isEvent,
         source: 'eaforum' as const,
       }));
+
+    // Save to file cache
+    const cacheData: CachedPosts = {
+      timestamp: Date.now(),
+      posts: eaForumPosts
+    };
+    writeFileSync(POSTS_CACHE_FILE, JSON.stringify(cacheData, null, 2));
+    console.log(`Cached ${eaForumPosts.length} EA Forum posts to disk`);
+
+    // Save to memory cache
+    memoryCache = eaForumPosts;
+    return eaForumPosts;
   } catch (error) {
     console.error('Failed to fetch EA Forum posts:', error);
     return [];
@@ -80,6 +144,14 @@ export async function fetchEAForumPosts(): Promise<EAForumPost[]> {
 
 // Fetch full HTML content for an EA Forum post
 export async function fetchEAForumPostContent(postId: string): Promise<string> {
+  ensureCacheDir();
+
+  // Check file cache first
+  const cacheFile = join(CONTENT_CACHE_DIR, `${postId}.html`);
+  if (existsSync(cacheFile)) {
+    return readFileSync(cacheFile, 'utf-8');
+  }
+
   const query = `{
     post(input: { selector: { _id: "${postId}" } }) {
       result {
@@ -103,7 +175,14 @@ export async function fetchEAForumPostContent(postId: string): Promise<string> {
     }
 
     const data = await response.json();
-    return data?.data?.post?.result?.htmlBody || '';
+    const htmlBody = data?.data?.post?.result?.htmlBody || '';
+
+    if (htmlBody) {
+      // Cache to file
+      writeFileSync(cacheFile, htmlBody);
+    }
+
+    return htmlBody;
   } catch (error) {
     console.error('Failed to fetch EA Forum post content:', error);
     return '';

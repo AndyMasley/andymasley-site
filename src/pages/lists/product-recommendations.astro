@@ -283,4 +283,64 @@ import Base from '@/layouts/Base.astro';
   .category-content p:last-child {
     margin-bottom: 0;
   }
+
+  /* Mobile: Zine-like experience */
+  @media (max-width: 600px) {
+    .page-title {
+      font-size: 1.375rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .intro {
+      font-size: 1rem;
+      line-height: 1.7;
+    }
+
+    /* Categories - full-width tap targets */
+    .category-title {
+      font-size: 1.125rem;
+      padding: 1rem 0;
+      margin: 0 -1.5rem;
+      padding-left: 1.5rem;
+      padding-right: 1.5rem;
+      width: calc(100% + 3rem);
+    }
+
+    .category-content {
+      margin: 0 -1.5rem;
+      padding-left: 1.5rem;
+      padding-right: 1.5rem;
+    }
+
+    .category.open .category-content {
+      padding-bottom: 1.5rem;
+    }
+
+    .category-content h3 {
+      font-size: 1rem;
+      margin-top: 1.5rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .category-content h3:first-child {
+      margin-top: 0;
+    }
+
+    .category-content h4 {
+      font-size: 0.9375rem;
+      margin-top: 1.25rem;
+      margin-bottom: 0.625rem;
+    }
+
+    .category-content ul {
+      padding-left: 1.25rem;
+      margin-bottom: 1rem;
+    }
+
+    .category-content li {
+      margin-bottom: 0.75rem;
+      line-height: 1.7;
+      padding: 0.25rem 0;
+    }
+  }
 </style>

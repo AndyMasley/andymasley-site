@@ -1,13 +1,28 @@
 // Fetches posts from Substack API
-// Uses the undocumented /api/v1/posts endpoint which returns all posts with section IDs
+// Uses file-based caching to avoid rate limiting during builds
 
-// In-memory cache for build-time to avoid rate limiting
-let postsCache: SubstackPost[] | null = null;
-const contentCache: Map<string, string> = new Map();
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
+import { join } from 'path';
+
+// Cache configuration
+const CACHE_DIR = join(process.cwd(), '.cache', 'substack');
+const POSTS_CACHE_FILE = join(CACHE_DIR, 'posts.json');
+const CONTENT_CACHE_DIR = join(CACHE_DIR, 'content');
+const CACHE_TTL = 1000 * 60 * 60; // 1 hour TTL for posts list
+
+// Ensure cache directories exist
+function ensureCacheDir() {
+  if (!existsSync(CACHE_DIR)) {
+    mkdirSync(CACHE_DIR, { recursive: true });
+  }
+  if (!existsSync(CONTENT_CACHE_DIR)) {
+    mkdirSync(CONTENT_CACHE_DIR, { recursive: true });
+  }
+}
 
 // Rate limiting helper
 let lastRequestTime = 0;
-const MIN_REQUEST_INTERVAL = 250; // ms between requests
+const MIN_REQUEST_INTERVAL = 500; // ms between requests
 
 async function rateLimitedFetch(url: string, retries = 3): Promise<Response> {
   const now = Date.now();
@@ -117,16 +132,46 @@ interface SubstackAPIPost {
   type: string;
 }
 
+interface CachedPosts {
+  timestamp: number;
+  posts: SubstackPost[];
+}
+
+// In-memory cache for current build
+let memoryCache: SubstackPost[] | null = null;
+
 export async function fetchSubstackPosts(): Promise<SubstackPost[]> {
-  // Return cached posts if available
-  if (postsCache !== null) {
-    return postsCache;
+  // Return memory cache if available (same build)
+  if (memoryCache !== null) {
+    return memoryCache;
+  }
+
+  ensureCacheDir();
+
+  // Check file cache
+  if (existsSync(POSTS_CACHE_FILE)) {
+    try {
+      const cached: CachedPosts = JSON.parse(readFileSync(POSTS_CACHE_FILE, 'utf-8'));
+      const age = Date.now() - cached.timestamp;
+
+      if (age < CACHE_TTL) {
+        console.log(`Using cached posts list (${Math.round(age / 1000)}s old)`);
+        // Restore Date objects
+        const posts = cached.posts.map(p => ({ ...p, date: new Date(p.date) }));
+        memoryCache = posts;
+        return posts;
+      }
+    } catch (e) {
+      console.log('Cache read error, fetching fresh data');
+    }
   }
 
   const BASE_URL = 'https://andymasley.substack.com/api/v1/posts';
   const allPosts: SubstackPost[] = [];
 
   try {
+    console.log('Fetching posts list from Substack API...');
+
     // Fetch all posts with pagination (API limit is 50 per request)
     let offset = 0;
     const limit = 50;
@@ -168,8 +213,16 @@ export async function fetchSubstackPosts(): Promise<SubstackPost[]> {
     // Sort by date descending
     allPosts.sort((a, b) => b.date.getTime() - a.date.getTime());
 
-    // Cache for subsequent calls during build
-    postsCache = allPosts;
+    // Save to file cache
+    const cacheData: CachedPosts = {
+      timestamp: Date.now(),
+      posts: allPosts
+    };
+    writeFileSync(POSTS_CACHE_FILE, JSON.stringify(cacheData, null, 2));
+    console.log(`Cached ${allPosts.length} posts to disk`);
+
+    // Save to memory cache
+    memoryCache = allPosts;
     return allPosts;
   } catch (error) {
     console.error('Failed to fetch Substack posts:', error);
@@ -216,9 +269,12 @@ export function getCategoryPostCount(posts: SubstackPost[], categoryName: string
 
 // Fetch full HTML content for a specific post via Substack API
 export async function fetchPostContent(slug: string): Promise<string> {
-  // Check cache first
-  if (contentCache.has(slug)) {
-    return contentCache.get(slug)!;
+  ensureCacheDir();
+
+  // Check file cache first
+  const cacheFile = join(CONTENT_CACHE_DIR, `${slug}.html`);
+  if (existsSync(cacheFile)) {
+    return readFileSync(cacheFile, 'utf-8');
   }
 
   const API_URL = `https://andymasley.substack.com/api/v1/posts/${slug}`;
@@ -234,7 +290,8 @@ export async function fetchPostContent(slug: string): Promise<string> {
 
     // The API returns body_html with the full content
     if (post.body_html) {
-      contentCache.set(slug, post.body_html);
+      // Cache to file
+      writeFileSync(cacheFile, post.body_html);
       return post.body_html;
     }
 
@@ -259,7 +316,6 @@ export function parseSubcategoriesFromHTML(html: string): Subcategory[] {
 
   // Match h3 headers followed by ul lists
   // Regex to find h3 tags and capture their content
-  const h3Regex = /<h3[^>]*>([^<]+)<\/h3>/gi;
   const linkRegex = /href="https:\/\/andymasley\.substack\.com\/p\/([^"]+)"/g;
 
   // Split by h3 tags to process each section

@@ -54,10 +54,10 @@ import Base from '@/layouts/Base.astro';
           <div class="subcategory-content">
             <ul>
               <li><a href="https://theanarchistlibrary.org/library/donna-haraway-a-cyborg-manifesto">A cyborg manifesto</a></li>
-              <li><a href="https://www.commentary.org/articles/jeane-kirkpatrick/dictatorships-double-standards/">Dictatorships and double standards</a></li>
               <li><a href="https://sites.gatech.edu/alexburgin/on-self-respect-by-joan-didion/">On self respect</a></li>
               <li><a href="https://www.orwellfoundation.com/the-orwell-foundation/orwell/essays-and-other-works/politics-and-the-english-language/">Politics and the English language</a></li>
               <li><a href="https://worksinprogress.co/issue/the-housing-theory-of-everything/">The housing theory of everything</a></li>
+              <li><a href="https://www.andrewwmarshallfoundation.org/library/thoughts-for-the-2001-quadrennial-defense-review/">Thoughts for the 2001 Quadrennial Defense Review</a> (turned this one into <a href="https://www.youtube.com/watch?v=8TraoxOUNjY&list=PLh5Jfpib1z_EW0I9RpFUjtmBvQ-7guNan&index=5">an AI song</a>)</li>
               <li><a href="https://www.orwellfoundation.com/the-orwell-foundation/orwell/essays-and-other-works/you-and-the-atom-bomb/">You and the atom bomb</a></li>
               <li><a href="https://d37ugbyn3rpeym.cloudfront.net/stripe-press/TAODSAE_zine_press.pdf">You and your research</a></li>
             </ul>
@@ -185,17 +185,17 @@ import Base from '@/layouts/Base.astro';
     <div class="category" data-category="movies">
       <button class="category-title">Movies</button>
       <div class="category-content">
-        <ul>
-          <li>Spirited Away</li>
-          <li>Love Streams</li>
-          <li>Fanny and Alexander</li>
-          <li>The Green Ray</li>
-          <li>The Lord of the Rings</li>
-          <li>Mulholland Drive</li>
-          <li>Tampopo</li>
-          <li>Only Yesterday</li>
-          <li>Come and See</li>
-          <li>Werckmeister Harmonies</li>
+        <ul class="movies-list">
+          <li class="movie-item has-link"><a href="https://letterboxd.com/film/spirited-away/" target="_blank" rel="noopener noreferrer" class="item-link"><span class="movie-title">Spirited Away</span></a></li>
+          <li class="movie-item has-link"><a href="https://letterboxd.com/film/love-streams/" target="_blank" rel="noopener noreferrer" class="item-link"><span class="movie-title">Love Streams</span></a></li>
+          <li class="movie-item has-link"><a href="https://letterboxd.com/film/fanny-and-alexander/" target="_blank" rel="noopener noreferrer" class="item-link"><span class="movie-title">Fanny and Alexander</span></a></li>
+          <li class="movie-item has-link"><a href="https://letterboxd.com/film/the-green-ray/" target="_blank" rel="noopener noreferrer" class="item-link"><span class="movie-title">The Green Ray</span></a></li>
+          <li class="movie-item has-link"><a href="https://letterboxd.com/film/the-lord-of-the-rings-the-fellowship-of-the-ring/" target="_blank" rel="noopener noreferrer" class="item-link"><span class="movie-title">The Lord of the Rings</span></a></li>
+          <li class="movie-item has-link"><a href="https://letterboxd.com/film/mulholland-drive/" target="_blank" rel="noopener noreferrer" class="item-link"><span class="movie-title">Mulholland Drive</span></a></li>
+          <li class="movie-item has-link"><a href="https://letterboxd.com/film/tampopo/" target="_blank" rel="noopener noreferrer" class="item-link"><span class="movie-title">Tampopo</span></a></li>
+          <li class="movie-item has-link"><a href="https://letterboxd.com/film/only-yesterday/" target="_blank" rel="noopener noreferrer" class="item-link"><span class="movie-title">Only Yesterday</span></a></li>
+          <li class="movie-item has-link"><a href="https://letterboxd.com/film/come-and-see/" target="_blank" rel="noopener noreferrer" class="item-link"><span class="movie-title">Come and See</span></a></li>
+          <li class="movie-item has-link"><a href="https://letterboxd.com/film/werckmeister-harmonies/" target="_blank" rel="noopener noreferrer" class="item-link"><span class="movie-title">Werckmeister Harmonies</span></a></li>
         </ul>
         <p><a href="https://letterboxd.com/andymasley/films/by/entry-rating/">More on my Letterboxd</a></p>
       </div>
@@ -211,10 +211,10 @@ import Base from '@/layouts/Base.astro';
               <div class="albums-list-column">
                 <ul class="album-list">
                   <li class="album-item" data-spotify-id="0HHmJpwOXXRJu9HI9iQiEO" data-title="White Light, White Heat"><span class="album-title">White Light, White Heat</span> <span class="album-artist">The Velvet Underground</span></li>
-                  <li class="album-item"><a href="https://www.youtube.com/watch?v=ILCs0sP-F6Y" target="_blank" rel="noopener noreferrer" class="album-title">Loveless</a> <span class="album-artist">My Bloody Valentine</span></li>
+                  <li class="album-item has-link"><a href="https://www.youtube.com/watch?v=ILCs0sP-F6Y" target="_blank" rel="noopener noreferrer" class="item-link"><span class="album-title">Loveless</span> <span class="album-artist">My Bloody Valentine</span></a></li>
                   <li class="album-item" data-spotify-id="17q5eeNk3HAjX1gzQnkTX7" data-title="In the Aeroplane Over the Sea"><span class="album-title">In the Aeroplane Over the Sea</span> <span class="album-artist">Neutral Milk Hotel</span></li>
                   <li class="album-item" data-spotify-id="5g5JAnBYxmaTMVvh6RnA1c" data-title="Monoliths and Dimensions"><span class="album-title">Monoliths and Dimensions</span> <span class="album-artist">Sunn O)))</span></li>
-                  <li class="album-item"><a href="https://www.youtube.com/watch?v=yi0_jHVOfQU" target="_blank" rel="noopener noreferrer" class="album-title">Have One on Me</a> <span class="album-artist">Joanna Newsom</span></li>
+                  <li class="album-item has-link"><a href="https://www.youtube.com/watch?v=yi0_jBHObqs" target="_blank" rel="noopener noreferrer" class="item-link"><span class="album-title">Have One on Me</span> <span class="album-artist">Joanna Newsom</span></a></li>
                   <li class="album-item" data-spotify-id="0xxHfGQtC485rStXundfMi" data-title="All Hail West Texas"><span class="album-title">All Hail West Texas</span> <span class="album-artist">the Mountain Goats</span></li>
                   <li class="album-item" data-spotify-id="386IqvSuljaZsMjwDGGdLj" data-title="Charli"><span class="album-title">Charli</span> <span class="album-artist">Charli XCX</span></li>
                   <li class="album-item" data-spotify-id="6uoeezh45SYEb8lcT8gDTY" data-title="Another Green World"><span class="album-title">Another Green World</span> <span class="album-artist">Brian Eno</span></li>
@@ -239,6 +239,7 @@ import Base from '@/layouts/Base.astro';
                 </div>
               </div>
               <div class="player-panel" hidden>
+                <button class="player-close" aria-label="Close">&times;</button>
                 <div class="player-embed"></div>
               </div>
             </div>
@@ -262,10 +263,11 @@ import Base from '@/layouts/Base.astro';
                   <li class="track-item" data-spotify-id="4pbEwQiDjPln3oYlijXuOE" data-type="track"><span class="track-title">The Moon</span> <span class="music-artist">The Microphones</span></li>
                   <li class="track-item" data-spotify-id="1rmXfdk4DFRuw6LLKoUTb0" data-type="track"><span class="track-title">Nothing is Real</span> <span class="music-artist">Boards of Canada</span></li>
                   <li class="track-item" data-spotify-id="5oOC6EBnSQ3PfRAQyfjAla" data-type="track"><span class="track-title">That Summer Feeling</span> <span class="music-artist">Jonathan Richman</span></li>
-                  <li class="track-item"><a href="https://www.youtube.com/watch?v=nVHPvdpFQeE" target="_blank" rel="noopener noreferrer" class="track-title">Come In Alone</a> <span class="music-artist">My Bloody Valentine</span></li>
+                  <li class="track-item has-link"><a href="https://www.youtube.com/watch?v=nVHPvdpFQeE" target="_blank" rel="noopener noreferrer" class="item-link"><span class="track-title">Come In Alone</span> <span class="music-artist">My Bloody Valentine</span></a></li>
                 </ul>
               </div>
               <div class="player-panel songs-player" hidden>
+                <button class="player-close" aria-label="Close">&times;</button>
                 <div class="player-embed"></div>
               </div>
             </div>
@@ -285,11 +287,13 @@ import Base from '@/layouts/Base.astro';
                 </ul>
               </div>
               <div class="player-panel solos-player" hidden>
+                <button class="player-close" aria-label="Close">&times;</button>
                 <div class="player-embed"></div>
               </div>
             </div>
           </div>
         </div>
+        <p><a href="https://open.spotify.com/user/andymasley?si=36e3373985884630">More on my Spotify</a></p>
       </div>
     </div>
 
@@ -380,42 +384,46 @@ import Base from '@/layouts/Base.astro';
       <div class="category-content quotes-section">
         <div class="quote">
           <p>I am not interested in erecting a building but in having the foundations of possible buildings transparently before me. [...] If the place I want to reach could only be climbed up to by a ladder, I would give up trying to get there. For the place to which I really have to go is one that I must actually be at already. Anything that can be reached with a ladder does not interest me. [...] You must climb down to the sources to see them all side by side, the disregarded & the preferred.</p>
-          <span class="attribution">— Wittgenstein</span>
+          <span class="attribution">Wittgenstein</span>
         </div>
         <div class="quote">
           <p>This capability, seen from the human and animal side, calls for the gradual formation of an interdependent world in which all species will enjoy cooperative and mutually supportive relations with one another. Nature is not that way and has never been. So it calls, in a very general way, for the gradual supplanting of the natural by the just.</p>
-          <span class="attribution">— Nussbaum</span>
+          <span class="attribution">Nussbaum</span>
         </div>
         <div class="quote">
           <p>Philosophy is really homesickness. It is the urge to be at home everywhere.</p>
-          <span class="attribution">— Novalis</span>
+          <span class="attribution">Novalis</span>
         </div>
         <div class="quote">
           <p>The inferno of the living is not something that will be; if there is one, it is what is already here, the inferno where we live every day, that we form by being together. There are two ways to escape suffering it. The first is easy for many: accept the inferno and become such a part of it that you can no longer see it. The second is risky and demands constant vigilance and apprehension: seek and learn to recognize who and what, in the midst of inferno, are not inferno, then make them endure, give them space.</p>
-          <span class="attribution">— Italo Calvino</span>
+          <span class="attribution">Italo Calvino</span>
         </div>
         <div class="quote">
           <p>There are only two true things: intelligent religion and youthful love, which is to say the future and the present. The rest is not worth the trouble.</p>
-          <span class="attribution">— François-René de Chateaubriand</span>
+          <span class="attribution">François-René de Chateaubriand</span>
         </div>
         <div class="quote">
           <p>It is, therefore, a great source of virtue for the practiced mind to learn, bit by bit, first to change about in visible and transitory things, so that afterwards it may be possible to leave them behind altogether. The man who finds his homeland sweet is still a tender beginner; he to whom every soil is as his native one is already strong; but he is perfect to whom the entire world is as a foreign land. The tender soul has fixed his love on one spot in the world; the strong man has extended his love to all places; the perfect man has extinguished his. From boyhood I have dwelt on foreign soil and I know with what grief sometimes the mind takes leave of the narrow hearth of a peasant's hut, and I know too how frankly it afterwards disdains marble firesides and panelled halls.</p>
-          <span class="attribution">— Hugh of Saint Victor</span>
+          <span class="attribution">Hugh of Saint Victor</span>
         </div>
         <div class="quote">
           <p>Familiar words, easy to take for granted; easy to misconstrue . . . This idea of the pursuit of happiness is at the heart of the civilization to so many outside it or on the periphery. I find it marvelous to contemplate to what an extent, after two centuries, and after the terrible history of the earlier part of this century, the idea has come to a kind of fruition. It is an elastic idea; it fits all men. It implies a certain kind of society, a certain kind of awakened spirit. So much is contained in it: the idea of the individual, responsibility, choice, the life of the intellect, the idea of vocation and perfectibility and achievement. It is an immense human idea. It cannot be reduced to a fixed system. It cannot generate fanaticism. But it is known to exist; and because of that, other more rigid systems in the end blow away.</p>
-          <span class="attribution">— V.S. Naipaul</span>
+          <span class="attribution">V.S. Naipaul</span>
         </div>
         <div class="quote">
           <p>Each day, you need to do all of the things that are necessary for you to succeed.</p>
         </div>
         <div class="quote">
           <p>When you think like a hermit you forget what you know.</p>
-          <span class="attribution">— Bonnie Prince Billy</span>
+          <span class="attribution">Bonnie Prince Billy</span>
         </div>
         <div class="quote">
           <p>I don't know why we are here, but I'm pretty sure that it is not in order to enjoy ourselves.</p>
-          <span class="attribution">— Wittgenstein</span>
+          <span class="attribution">Wittgenstein</span>
+        </div>
+        <div class="quote">
+          <p>If there is something comforting - religious, if you want - about paranoia, there is still also anti-paranoia, where nothing is connected to anything, a condition not many of us can bear for long.</p>
+          <span class="attribution">Thomas Pynchon</span>
         </div>
       </div>
     </div>
@@ -635,16 +643,27 @@ import Base from '@/layouts/Base.astro';
     }
 
     // Spotify player panel functionality
+    // Store all items and panels globally for cross-section clearing
+    let allMusicItems = [];
+    let allPlayerPanels = [];
+
     function initSpotifyPanel() {
+      // Reset the global arrays on each init
+      allMusicItems = [];
+      allPlayerPanels = [];
+
       // Handle Albums
       const albumsLayout = document.querySelector('.albums-layout');
       if (albumsLayout) {
-        initMusicSection(albumsLayout.querySelectorAll('.album-item'), albumsLayout.querySelector('.player-panel'), 'album');
+        const panel = albumsLayout.querySelector('.player-panel');
+        if (panel) allPlayerPanels.push(panel);
+        initMusicSection(albumsLayout.querySelectorAll('.album-item'), panel, 'album');
       }
 
       // Handle Songs
       const songsPanel = document.querySelector('.songs-player');
       if (songsPanel) {
+        allPlayerPanels.push(songsPanel);
         const songsLayout = songsPanel.closest('.music-layout');
         if (songsLayout) {
           initMusicSection(songsLayout.querySelectorAll('.track-item'), songsPanel, 'track');
@@ -654,11 +673,25 @@ import Base from '@/layouts/Base.astro';
       // Handle Solos
       const solosPanel = document.querySelector('.solos-player');
       if (solosPanel) {
+        allPlayerPanels.push(solosPanel);
         const solosLayout = solosPanel.closest('.music-layout');
         if (solosLayout) {
           initMusicSection(solosLayout.querySelectorAll('.track-item'), solosPanel, 'track');
         }
       }
+
+      // Add close button handlers
+      document.querySelectorAll('.player-close').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          // Hide all panels and clear all active states
+          allPlayerPanels.forEach(p => {
+            p.setAttribute('hidden', '');
+            p.querySelector('.player-embed').innerHTML = '';
+          });
+          allMusicItems.forEach(i => i.classList.remove('active'));
+        });
+      });
     }
 
     function initMusicSection(items, playerPanel, type) {
@@ -666,6 +699,9 @@ import Base from '@/layouts/Base.astro';
 
       const playerEmbed = playerPanel.querySelector('.player-embed');
       if (!playerEmbed) return;
+
+      // Add these items to global list
+      items.forEach(item => allMusicItems.push(item));
 
       items.forEach(item => {
         // Skip if already initialized
@@ -688,11 +724,17 @@ import Base from '@/layouts/Base.astro';
 
           if (!spotifyId && !youtubeId) return;
 
-          // Update active state within this section
-          items.forEach(i => i.classList.remove('active'));
+          // Clear active state from ALL music sections
+          allMusicItems.forEach(i => i.classList.remove('active'));
           item.classList.add('active');
 
-          // Show player panel
+          // Hide all other panels, then show this one
+          allPlayerPanels.forEach(p => {
+            if (p !== playerPanel) {
+              p.setAttribute('hidden', '');
+              p.querySelector('.player-embed').innerHTML = '';
+            }
+          });
           playerPanel.removeAttribute('hidden');
 
           // Create/update iframe based on service
@@ -1089,6 +1131,40 @@ import Base from '@/layouts/Base.astro';
     color: var(--text);
   }
 
+  /* Movies list */
+  .movies-list {
+    padding-left: var(--space-lg);
+    margin-bottom: var(--space-sm);
+  }
+
+  .movie-item {
+    margin-bottom: var(--space-xs);
+    border-radius: 4px;
+    transition: background 0.15s ease, color 0.15s ease;
+  }
+
+  .movie-item.has-link {
+    padding: 0;
+    cursor: pointer;
+  }
+
+  .movie-item.has-link:hover {
+    background: rgba(139, 58, 58, 0.08);
+  }
+
+  :global([data-theme="dark"]) .movie-item.has-link:hover {
+    background: rgba(194, 132, 122, 0.1);
+  }
+
+  .movie-item.has-link:hover .movie-title {
+    color: var(--accent);
+  }
+
+  .movie-title {
+    color: var(--text);
+    transition: color 0.15s ease;
+  }
+
   /* Albums layout with breakout player panel */
   .albums-layout {
     position: relative;
@@ -1141,30 +1217,36 @@ import Base from '@/layouts/Base.astro';
     color: var(--accent);
   }
 
-  /* YouTube link items - style like regular items */
-  .album-item:has(a.album-title),
-  .track-item:has(a.track-title) {
+  /* YouTube link items - full row is clickable */
+  .album-item.has-link,
+  .track-item.has-link {
+    padding: 0;
     cursor: pointer;
   }
 
-  .album-item:has(a.album-title):hover,
-  .track-item:has(a.track-title):hover {
+  .item-link {
+    display: block;
+    padding: 0 8px;
+    text-decoration: none !important;
+    color: inherit !important;
+  }
+
+  .item-link:hover {
+    text-decoration: none !important;
+  }
+
+  .album-item.has-link:hover,
+  .track-item.has-link:hover {
     background: rgba(139, 58, 58, 0.08);
   }
 
-  :global([data-theme="dark"]) .album-item:has(a.album-title):hover,
-  :global([data-theme="dark"]) .track-item:has(a.track-title):hover {
+  :global([data-theme="dark"]) .album-item.has-link:hover,
+  :global([data-theme="dark"]) .track-item.has-link:hover {
     background: rgba(194, 132, 122, 0.1);
   }
 
-  .category-content a.album-title,
-  .category-content a.track-title {
-    text-decoration: none;
-    color: var(--text);
-  }
-
-  .album-item:has(a.album-title):hover a.album-title,
-  .track-item:has(a.track-title):hover a.track-title {
+  .album-item.has-link:hover .album-title,
+  .track-item.has-link:hover .track-title {
     color: var(--accent);
   }
 
@@ -1240,6 +1322,31 @@ import Base from '@/layouts/Base.astro';
     display: none;
   }
 
+  .player-close {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    width: 24px;
+    height: 24px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    font-size: 16px;
+    line-height: 1;
+    color: var(--dim);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.15s ease, background 0.15s ease;
+    z-index: 51;
+  }
+
+  .player-close:hover {
+    color: var(--text);
+    background: var(--border);
+  }
+
   /* When viewport is too narrow for breakout, hide player */
   @media (max-width: 1100px) {
     .player-panel {
@@ -1263,6 +1370,167 @@ import Base from '@/layouts/Base.astro';
       right: 16px;
       width: auto;
       bottom: 16px;
+    }
+  }
+
+  /* ==========================================
+     Mobile: Zine-like experience
+     ========================================== */
+  @media (max-width: 600px) {
+    .page-title {
+      font-size: 1.375rem;
+      margin-bottom: 1.5rem;
+    }
+
+    /* Categories - full-width tap targets */
+    .category-title {
+      font-size: 1.125rem;
+      padding: 1rem 0;
+      /* Extend tap target to edges */
+      margin: 0 -1.5rem;
+      padding-left: 1.5rem;
+      padding-right: 1.5rem;
+      width: calc(100% + 3rem);
+    }
+
+    .category-content {
+      margin: 0 -1.5rem;
+      padding-left: 1.5rem;
+      padding-right: 1.5rem;
+    }
+
+    .category.open .category-content {
+      padding-bottom: 1.5rem;
+    }
+
+    .category-content h3 {
+      font-size: 1rem;
+      margin-top: 1.25rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .category-content h4 {
+      font-size: 0.9375rem;
+      margin-top: 1rem;
+    }
+
+    .category-content ul {
+      padding-left: 1.25rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .category-content li {
+      margin-bottom: 0.625rem;
+      line-height: 1.6;
+    }
+
+    /* Subcategories - generous tap area */
+    .subcategory-title {
+      font-size: 1rem;
+      padding: 0.875rem 0;
+      margin: 0 -1.5rem;
+      padding-left: 1.5rem;
+      padding-right: 1.5rem;
+      width: calc(100% + 3rem);
+    }
+
+    .subcategory-content {
+      padding-left: 0;
+    }
+
+    .subcategory.open .subcategory-content {
+      padding-bottom: 1rem;
+    }
+
+    /* Sub-subcategories */
+    .sub-subcategory-title {
+      font-size: 0.9375rem;
+      padding: 0.75rem 0;
+      margin: 0 -1.5rem;
+      padding-left: 1.5rem;
+      padding-right: 1.5rem;
+      width: calc(100% + 3rem);
+    }
+
+    .sub-subcategory-content {
+      padding-left: 0;
+    }
+
+    /* Links - comfortable tap targets */
+    .category-content a {
+      display: inline;
+      padding: 0.25rem 0;
+    }
+
+    /* Books with descriptions - more padding */
+    .has-popouts li {
+      padding: 0.5rem 0;
+      margin-bottom: 0.25rem;
+    }
+
+    .book-title {
+      display: block;
+      font-size: 1rem;
+    }
+
+    .book-author {
+      font-size: 0.875rem;
+    }
+
+    /* Movie items */
+    .movie-item {
+      margin-bottom: 0.625rem;
+      line-height: 1.6;
+    }
+
+    .movies-list {
+      padding-left: 1.25rem;
+      margin-bottom: 0.75rem;
+    }
+
+    /* Album items - full width tap */
+    .album-item {
+      padding: 0.75rem 1.5rem;
+      margin-left: -1.5rem;
+      margin-right: -1.5rem;
+      margin-bottom: 0;
+      border-radius: 0;
+    }
+
+    /* Quotes - more breathing room */
+    .quotes-section .quote {
+      margin-bottom: 2rem;
+      padding: 0.5rem 0;
+    }
+
+    .quotes-section .quote p {
+      font-size: 1rem;
+      line-height: 1.7;
+    }
+
+    .quotes-section .attribution {
+      font-size: 0.875rem;
+      margin-top: 0.5rem;
+    }
+
+    /* Popout card - already handled above, but refine */
+    .popout-card.mobile {
+      padding: 1.5rem;
+      padding-top: 1.25rem;
+      max-height: 60vh;
+      overflow-y: auto;
+    }
+
+    .popout-close {
+      width: 44px;
+      height: 44px;
+      top: 0.5rem;
+      right: 0.5rem;
+    }
+
+    .popout-body {
+      font-size: 1rem;
+      line-height: 1.7;
     }
   }
 </style>
