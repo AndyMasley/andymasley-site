@@ -94,15 +94,17 @@ function isActive(href: string): boolean {
         <div class="header__controls">
           <div class="search-widget" id="search-widget">
             <span class="search-bracket search-bracket--left">[</span>
-            <span class="search-label" id="search-label">search</span>
-            <input
-              type="text"
-              class="search-inline-input"
-              id="search-input"
-              placeholder="search..."
-              autocomplete="off"
-              spellcheck="false"
-            />
+            <span class="search-inner">
+              <span class="search-label" id="search-label">search</span>
+              <input
+                type="text"
+                class="search-inline-input"
+                id="search-input"
+                placeholder="type to search..."
+                autocomplete="off"
+                spellcheck="false"
+              />
+            </span>
             <span class="search-bracket search-bracket--right">]</span>
             <div class="search-dropdown" id="search-dropdown">
               <div class="search-results" id="search-results"></div>

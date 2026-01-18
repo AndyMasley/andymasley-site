@@ -1342,74 +1342,115 @@ details[open] summary::before {
   position: relative;
   font-size: var(--font-size-small);
   color: var(--dim);
-  transition: color 0.25s ease;
+  transition: color 0.3s ease;
+  height: 1.4em;
+  /* GPU acceleration for smooth animations */
+  will-change: color;
 }
 
 .search-widget:hover {
   color: var(--text);
 }
 
+/* Inner wrapper - fixed width container for smooth expansion */
+.search-inner {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 100%;
+  /* CLOSING: contract after content fades */
+  transition: width 0.35s cubic-bezier(0.4, 0, 0.2, 1) 0.12s;
+  will-change: width;
+}
+
 .search-bracket {
   display: inline-block;
-  /* Closing: gentle ease-out */
-  transition: transform 0.25s ease-out;
+  flex-shrink: 0;
+  /* CLOSING: slide back smoothly */
+  transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1) 0.08s;
+  will-change: transform;
 }
 
 .search-label {
-  display: inline-block;
+  position: absolute;
+  left: 0;
+  right: 0;
+  text-align: center;
   white-space: nowrap;
-  overflow: hidden;
-  /* Closing: fade in after input shrinks */
-  transition: opacity 0.2s ease 0.15s, transform 0.2s ease 0.15s;
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  /* CLOSING: fade in after input fades out */
+  transition: opacity 0.25s ease 0.18s,
+              transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) 0.15s;
+  will-change: opacity, transform;
 }
 
 .search-inline-input {
-  width: 0;
+  position: absolute;
+  left: 0;
+  right: 0;
+  width: 100%;
+  text-align: left;
   opacity: 0;
+  transform: translateY(6px);
   background: none;
   border: none;
   font-family: var(--font-body);
   font-size: inherit;
   color: var(--text);
   outline: none;
-  padding: 0;
-  /* Closing: shrink first, then fade */
-  transition: width 0.2s ease-out, opacity 0.15s ease;
+  padding: 0 2px;
+  pointer-events: none;
+  /* CLOSING: fade out immediately */
+  transition: opacity 0.15s ease,
+              transform 0.2s ease;
+  will-change: opacity, transform;
 }
 
 .search-inline-input::placeholder {
   color: var(--dim);
+  opacity: 0.6;
 }
 
-/* Active state - expanded */
+/* ===== ACTIVE STATE ===== */
 .search-widget.active {
   color: var(--text);
 }
 
+/* OPENING: expand container with gentle overshoot */
+.search-widget.active .search-inner {
+  width: 140px;
+  transition: width 0.45s cubic-bezier(0.34, 1.15, 0.64, 1);
+}
+
+/* OPENING: brackets expand with spring */
 .search-widget.active .search-bracket--left {
-  transform: translateX(-0.3em);
-  /* Opening: bouncy spring effect */
-  transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transform: translateX(-4px);
+  transition: transform 0.45s cubic-bezier(0.34, 1.15, 0.64, 1);
 }
 
 .search-widget.active .search-bracket--right {
-  transform: translateX(0.3em);
-  /* Opening: bouncy spring effect */
-  transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transform: translateX(4px);
+  transition: transform 0.45s cubic-bezier(0.34, 1.15, 0.64, 1);
 }
 
+/* OPENING: label fades up and shrinks */
 .search-widget.active .search-label {
   opacity: 0;
-  width: 0;
-  /* Opening: fade out immediately */
-  transition: opacity 0.15s ease, width 0.25s ease;
+  transform: translateY(-6px) scale(0.95);
+  transition: opacity 0.15s ease,
+              transform 0.2s ease;
 }
 
+/* OPENING: input fades up into place */
 .search-widget.active .search-inline-input {
-  width: 140px;
   opacity: 1;
-  /* Opening: expand with spring, fade in with delay */
-  transition: width 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.2s ease 0.1s;
+  transform: translateY(0);
+  pointer-events: auto;
+  transition: opacity 0.25s ease 0.12s,
+              transform 0.35s cubic-bezier(0.34, 1.15, 0.64, 1) 0.08s;
 }
 
 /* Search dropdown for results */
