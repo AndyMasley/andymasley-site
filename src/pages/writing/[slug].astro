@@ -1,6 +1,5 @@
 ---
 import Base from '@/layouts/Base.astro';
-import Breadcrumbs from '@/components/Breadcrumbs.astro';
 import { getCollection } from 'astro:content';
 import { fetchSubstackPosts, fetchPostContent, processPostContent, type SubstackPost } from '@/lib/substack';
 import { fetchEAForumPosts, fetchEAForumPostContent, processEAForumContent, type EAForumPost } from '@/lib/eaforum';
@@ -156,10 +155,6 @@ if (post.source === 'local') {
   description={post.description}
 >
   <article class="container container--narrow">
-    <Breadcrumbs items={[
-      { label: 'writing', href: '/writing' },
-      { label: post.title }
-    ]} />
 
     {post.source !== 'local' && (
       <p class="originally-on">

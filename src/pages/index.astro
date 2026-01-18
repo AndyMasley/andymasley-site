@@ -19,6 +19,11 @@ function formatDate(date: Date): string {
 
 <Base title="Home">
   <div class="home-intro">
+    <img
+      src="/images/headshot.jpg"
+      alt="Andy Masley"
+      class="headshot"
+    />
     <p>
       I'm the director of <a href="https://effectivealtruismdc.org" target="_blank" rel="noopener">Effective Altruism DC</a> and spend a lot of time thinking about how to support the EA DC professional network and manage projects and people to make it better. More info about EA <a href="https://www.effectivealtruism.org/" target="_blank" rel="noopener">here</a>. Outside of my job I spend most of my time with friends, reading, watching movies, listening to music, and exercising. I use this site as a place to link to stuff I make or that I'm interested in.
     </p>
@@ -72,3 +77,43 @@ function formatDate(date: Date): string {
     <a href="/rss.xml">RSS</a>
   </div>
 </Base>
+
+<style>
+  .home-intro {
+    overflow: hidden;
+  }
+
+  .headshot {
+    float: left;
+    width: 120px;
+    height: 120px;
+    object-fit: cover;
+    margin: 0 28px 16px 0;
+    border-radius: 10px;
+    box-shadow: var(--shadow-lg);
+    border: 2px solid var(--bg-elevated);
+    outline: 1px solid var(--border);
+    transition: transform var(--transition-medium), box-shadow var(--transition-medium);
+  }
+
+  .headshot:hover {
+    transform: scale(1.02);
+    box-shadow: var(--shadow-xl);
+  }
+
+  .home-elsewhere {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 0;
+  }
+
+  .home-elsewhere .label {
+    margin-bottom: 0;
+    margin-right: 8px;
+  }
+
+  .home-elsewhere .label::after {
+    display: none;
+  }
+</style>

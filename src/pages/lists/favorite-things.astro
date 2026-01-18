@@ -1,13 +1,8 @@
 ---
 import Base from '@/layouts/Base.astro';
-import Breadcrumbs from '@/components/Breadcrumbs.astro';
 ---
 
 <Base title="Favorite things" description="A list of my favorite things">
-  <Breadcrumbs items={[
-    { label: 'lists', href: '/lists' },
-    { label: 'favorite things' }
-  ]} />
   <h1 class="page-title">Favorite things</h1>
   <div class="favorite-things">
     <div class="category" data-category="writing">

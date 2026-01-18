@@ -17,7 +17,7 @@ function extractHeaders(html) {
 }
 
 // Strip HTML and truncate for search (excluding headers)
-function extractText(html, maxLength = 500) {
+function extractText(html, maxLength = 20000) {
   if (!html) return '';
   // Remove headers first, then other HTML tags
   const text = html
@@ -39,7 +39,7 @@ function extractMarkdownHeaders(md) {
 }
 
 // Extract text from markdown (excluding headers)
-function extractMarkdownText(md, maxLength = 500) {
+function extractMarkdownText(md, maxLength = 20000) {
   if (!md) return '';
   const text = md
     .replace(/^#{1,6}\s+.*$/gm, '') // Remove headers
@@ -91,14 +91,6 @@ export async function GET() {
 
   // Static pages
   searchIndex.push(
-    {
-      title: 'About',
-      description: 'About Andy Masley',
-      content: 'I run Effective Altruism DC, funded by the Centre for Effective Altruism. Before this I taught high school physics for 7 years. I made a full animated video lecture series for the IB SL curriculum.',
-      type: 'page',
-      url: '/about',
-      tags: [],
-    },
     {
       title: 'Contact',
       description: 'Get in touch',

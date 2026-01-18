@@ -1,6 +1,5 @@
 ---
 import Base from '@/layouts/Base.astro';
-import Breadcrumbs from '@/components/Breadcrumbs.astro';
 import { getCollection, type CollectionEntry } from 'astro:content';
 
 export async function getStaticPaths() {
@@ -32,10 +31,6 @@ function formatDate(date: Date): string {
   description={item.data.description}
 >
   <article class="container container--narrow">
-    <Breadcrumbs items={[
-      { label: 'notes', href: '/notes' },
-      { label: item.data.title }
-    ]} />
     
     <header class="note-header animate-in">
       <div class="note-header__top">

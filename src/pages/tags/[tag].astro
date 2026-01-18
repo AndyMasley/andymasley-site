@@ -1,6 +1,5 @@
 ---
 import Base from '@/layouts/Base.astro';
-import Breadcrumbs from '@/components/Breadcrumbs.astro';
 import { getCollection } from 'astro:content';
 
 export async function getStaticPaths() {
@@ -47,10 +46,6 @@ function formatDate(date: Date): string {
 <Base title={`#${tag}`} description={`All content tagged "${tag}"`}>
   <div class="container container--wide">
     <header class="page-header">
-      <Breadcrumbs items={[
-        { label: 'tags', href: '/tags' },
-        { label: tag }
-      ]} />
       <h1 class="page-header__title">#{tag}</h1>
       <p class="page-header__subtitle">
         {allItems.length} item{allItems.length === 1 ? '' : 's'}

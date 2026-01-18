@@ -1,6 +1,5 @@
 ---
 import Base from '@/layouts/Base.astro';
-import Breadcrumbs from '@/components/Breadcrumbs.astro';
 import { getCollection, type CollectionEntry } from 'astro:content';
 
 export async function getStaticPaths() {
@@ -17,20 +16,10 @@ interface Props {
 
 const { item } = Astro.props;
 const { Content } = await item.render();
-
-// Build breadcrumb items
-const breadcrumbItems = [
-  { label: 'IB physics', href: '/physics' },
-];
-if (item.data.unit) {
-  breadcrumbItems.push({ label: item.data.unit });
-}
-breadcrumbItems.push({ label: item.data.title });
 ---
 
 <Base title={item.data.title} description={item.data.description}>
   <article class="container container--narrow">
-    <Breadcrumbs items={breadcrumbItems} />
     
     <header class="physics-header animate-in">
       {item.data.unit && (
