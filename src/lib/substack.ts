@@ -377,44 +377,79 @@ export function fixAnchorLinks(html: string, currentSlug: string): string {
     return normalized === normalizedSlug;
   };
 
-  // 1. Handle full URLs to same post with anchor → local anchor
-  // href="https://andymasley.substack.com/p/current-post#heading" → href="#heading"
+  // Helper to clean up anchor - decode and remove section symbol prefix
+  const cleanAnchor = (anchor: string): string => {
+    let cleaned = decodeURIComponent(anchor);
+    // Remove section symbol prefix (§ or %C2%A7)
+    cleaned = cleaned.replace(/^§/, '');
+    // Remove text fragment syntax (:~:text=...)
+    if (cleaned.includes(':~:text=')) {
+      return '';
+    }
+    return cleaned;
+  };
+
+  // 1. Handle URLs with query params AND anchors: ?open=false#anchor
+  // href="https://andymasley.substack.com/p/slug?open=false#%C2%A7section" → href="#section"
   fixed = fixed.replace(
-    /href="https:\/\/andymasley\.substack\.com\/p\/([^"#?]+)#([^"]+)"/gi,
+    /href="https?:\/\/(?:www\.)?andymasley\.substack\.com\/p\/([^"#?]+)\?[^"#]*#([^"]+)"/gi,
     (match, slug, anchor) => {
+      const cleanedAnchor = cleanAnchor(anchor);
       if (isSamePost(slug)) {
-        return `href="#${anchor}"`;
+        return cleanedAnchor ? `href="#${cleanedAnchor}"` : 'href="#"';
       }
-      // Different post - convert to local URL with anchor
-      return `href="/writing/${slug}#${anchor}"`;
+      return cleanedAnchor ? `href="/writing/${slug}#${cleanedAnchor}"` : `href="/writing/${slug}"`;
     }
   );
 
-  // 2. Handle full URLs to same post without anchor → stay on page (remove link or make #top)
-  // This handles links like "Read more" that point to the same post
+  // 2. Handle full URLs with anchor (no query params)
+  // href="https://andymasley.substack.com/p/current-post#heading" → href="#heading"
   fixed = fixed.replace(
-    /href="https:\/\/andymasley\.substack\.com\/p\/([^"#?]+)"/gi,
+    /href="https?:\/\/(?:www\.)?andymasley\.substack\.com\/p\/([^"#?]+)#([^"]+)"/gi,
+    (match, slug, anchor) => {
+      const cleanedAnchor = cleanAnchor(anchor);
+      if (isSamePost(slug)) {
+        return cleanedAnchor ? `href="#${cleanedAnchor}"` : 'href="#"';
+      }
+      return cleanedAnchor ? `href="/writing/${slug}#${cleanedAnchor}"` : `href="/writing/${slug}"`;
+    }
+  );
+
+  // 3. Handle full URLs with query params but no anchor
+  fixed = fixed.replace(
+    /href="https?:\/\/(?:www\.)?andymasley\.substack\.com\/p\/([^"#?]+)\?[^"]*"/gi,
     (match, slug) => {
       if (isSamePost(slug)) {
         return 'href="#"';
       }
-      // Different post - convert to local URL
       return `href="/writing/${slug}"`;
     }
   );
 
-  // 3. Handle relative URLs: /p/slug#anchor
+  // 4. Handle full URLs without anchor or query params
   fixed = fixed.replace(
-    /href="\/p\/([^"#?]+)#([^"]+)"/gi,
-    (match, slug, anchor) => {
+    /href="https?:\/\/(?:www\.)?andymasley\.substack\.com\/p\/([^"#?]+)"/gi,
+    (match, slug) => {
       if (isSamePost(slug)) {
-        return `href="#${anchor}"`;
+        return 'href="#"';
       }
-      return `href="/writing/${slug}#${anchor}"`;
+      return `href="/writing/${slug}"`;
     }
   );
 
-  // 4. Handle relative URLs without anchor: /p/slug
+  // 5. Handle relative URLs: /p/slug#anchor
+  fixed = fixed.replace(
+    /href="\/p\/([^"#?]+)#([^"]+)"/gi,
+    (match, slug, anchor) => {
+      const cleanedAnchor = cleanAnchor(anchor);
+      if (isSamePost(slug)) {
+        return cleanedAnchor ? `href="#${cleanedAnchor}"` : 'href="#"';
+      }
+      return cleanedAnchor ? `href="/writing/${slug}#${cleanedAnchor}"` : `href="/writing/${slug}"`;
+    }
+  );
+
+  // 6. Handle relative URLs without anchor: /p/slug
   fixed = fixed.replace(
     /href="\/p\/([^"#?]+)"/gi,
     (match, slug) => {
@@ -422,17 +457,6 @@ export function fixAnchorLinks(html: string, currentSlug: string): string {
         return 'href="#"';
       }
       return `href="/writing/${slug}"`;
-    }
-  );
-
-  // 5. Handle any remaining substack.com/p/ links (with www, etc.)
-  fixed = fixed.replace(
-    /href="https?:\/\/(?:www\.)?andymasley\.substack\.com\/p\/([^"#?]+)(?:#([^"]+))?"/gi,
-    (match, slug, anchor) => {
-      if (isSamePost(slug)) {
-        return anchor ? `href="#${anchor}"` : 'href="#"';
-      }
-      return anchor ? `href="/writing/${slug}#${anchor}"` : `href="/writing/${slug}"`;
     }
   );
 
