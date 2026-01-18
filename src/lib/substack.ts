@@ -389,6 +389,17 @@ export function fixAnchorLinks(html: string, currentSlug: string): string {
     return cleaned;
   };
 
+  // 0. Handle Substack TOC links: /i/{post-id}/{section-slug}
+  // href="https://andymasley.substack.com/i/162196004/this-post-in-a-nutshell" → href="#this-post-in-a-nutshell"
+  // These are always same-post anchors (used for table of contents)
+  fixed = fixed.replace(
+    /href="https?:\/\/(?:www\.)?andymasley\.substack\.com\/i\/\d+\/([^"]+)"/gi,
+    (match, sectionSlug) => {
+      const cleanedSlug = decodeURIComponent(sectionSlug);
+      return `href="#${cleanedSlug}"`;
+    }
+  );
+
   // 1. Handle URLs with query params AND anchors: ?open=false#anchor
   // href="https://andymasley.substack.com/p/slug?open=false#%C2%A7section" → href="#section"
   fixed = fixed.replace(
