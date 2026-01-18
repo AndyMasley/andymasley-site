@@ -2,6 +2,8 @@ import { getCollection } from 'astro:content';
 import { fetchSubstackPosts, fetchPostContent } from '@/lib/substack';
 import { fetchEAForumPosts, fetchEAForumPostContent } from '@/lib/eaforum';
 import { getMetaPostSlugs } from '@/lib/meta-posts';
+import fs from 'node:fs';
+import path from 'node:path';
 
 // Strip HTML and truncate for search
 function extractText(html, maxLength = 500) {
@@ -11,6 +13,29 @@ function extractText(html, maxLength = 500) {
     .replace(/\s+/g, ' ')
     .trim();
   return text.slice(0, maxLength);
+}
+
+// Extract text content from an Astro file (for static pages)
+function extractAstroContent(filePath, maxLength = 2000) {
+  try {
+    const fullPath = path.join(process.cwd(), 'src/pages', filePath);
+    const content = fs.readFileSync(fullPath, 'utf-8');
+    // Extract just the HTML template part (after the frontmatter ---)
+    const templateMatch = content.match(/---[\s\S]*?---\s*([\s\S]*)/);
+    if (!templateMatch) return '';
+    const template = templateMatch[1];
+    // Remove Astro/JSX expressions and extract text
+    const text = template
+      .replace(/<script[\s\S]*?<\/script>/gi, '') // Remove scripts
+      .replace(/<style[\s\S]*?<\/style>/gi, '') // Remove styles
+      .replace(/\{[\s\S]*?\}/g, ' ') // Remove JSX expressions
+      .replace(/<[^>]*>/g, ' ') // Remove HTML tags
+      .replace(/\s+/g, ' ')
+      .trim();
+    return text.slice(0, maxLength);
+  } catch (e) {
+    return '';
+  }
 }
 
 export async function GET() {
@@ -69,7 +94,7 @@ export async function GET() {
     {
       title: 'Favorite Things',
       description: 'Books, movies, music, and more',
-      content: 'Favorite books movies music albums songs places restaurants quotes TV video games essays papers fiction non-fiction',
+      content: extractAstroContent('lists/favorite-things.astro', 10000),
       type: 'list',
       url: '/lists/favorite-things',
       tags: [],
@@ -77,7 +102,7 @@ export async function GET() {
     {
       title: 'Product Recommendations',
       description: 'Things I recommend',
-      content: 'Product recommendations clothes electronics kitchen items apps hardware desk computer',
+      content: extractAstroContent('lists/product-recommendations.astro', 10000),
       type: 'list',
       url: '/lists/product-recommendations',
       tags: [],

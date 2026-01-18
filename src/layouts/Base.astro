@@ -325,7 +325,13 @@ function isActive(href: string): boolean {
           return;
         }
 
-        const q = query.toLowerCase();
+        const q = query.toLowerCase().trim();
+        // Common words to ignore when checking if all words match
+        const stopWords = new Set(['a', 'an', 'the', 'is', 'are', 'was', 'were', 'be', 'been', 'being', 'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'could', 'should', 'may', 'might', 'must', 'shall', 'can', 'need', 'dare', 'ought', 'used', 'to', 'of', 'in', 'for', 'on', 'with', 'at', 'by', 'from', 'as', 'into', 'through', 'during', 'before', 'after', 'above', 'below', 'between', 'under', 'again', 'further', 'then', 'once', 'here', 'there', 'when', 'where', 'why', 'how', 'all', 'each', 'few', 'more', 'most', 'other', 'some', 'such', 'no', 'nor', 'not', 'only', 'own', 'same', 'so', 'than', 'too', 'very', 'just', 'and', 'but', 'if', 'or', 'because', 'until', 'while', 'about', 'against', 'this', 'that', 'these', 'those', 'i', 'me', 'my', 'myself', 'we', 'our', 'ours', 'you', 'your', 'yours', 'he', 'him', 'his', 'she', 'her', 'hers', 'it', 'its', 'they', 'them', 'their', 'what', 'which', 'who', 'whom']);
+
+        // Get significant words (not stop words, length > 2)
+        const words = q.split(/\s+/).filter(w => w.length > 2 && !stopWords.has(w));
+
         const scored = index.map(item => {
           let score = 0;
           let contentMatch = false;
@@ -333,36 +339,45 @@ function isActive(href: string): boolean {
           const desc = (item.description || '').toLowerCase();
           const content = (item.content || '').toLowerCase();
           const tags = (item.tags || []).join(' ').toLowerCase();
+          const allText = title + ' ' + desc + ' ' + content + ' ' + tags;
 
-          // Exact title match
-          if (title === q) score += 100;
-          // Title starts with query
-          else if (title.startsWith(q)) score += 50;
-          // Title contains query
-          else if (title.includes(q)) score += 30;
+          // For multi-word queries, require ALL significant words to match somewhere
+          if (words.length > 1) {
+            const allWordsMatch = words.every(word => allText.includes(word));
+            if (!allWordsMatch) {
+              return { ...item, score: 0, contentMatch: false };
+            }
+          }
 
-          // Description contains query
-          if (desc.includes(q)) score += 15;
-
-          // Content contains query
-          if (content.includes(q)) {
-            score += 10;
+          // Exact phrase match (highest priority)
+          if (title.includes(q)) score += 100;
+          else if (desc.includes(q)) score += 50;
+          else if (content.includes(q)) {
+            score += 30;
             contentMatch = true;
           }
 
-          // Tags contain query
-          if (tags.includes(q)) score += 20;
-
-          // Word boundary bonus
-          const words = q.split(/\s+/).filter(w => w.length > 1);
+          // Individual word matches (for ranking among results that pass the filter)
           words.forEach(word => {
-            if (title.includes(word)) score += 5;
-            if (desc.includes(word)) score += 3;
+            if (title.includes(word)) score += 15;
+            if (desc.includes(word)) score += 8;
+            if (tags.includes(word)) score += 10;
             if (content.includes(word)) {
-              score += 2;
+              score += 3;
               contentMatch = true;
             }
           });
+
+          // Single word query - be more lenient
+          if (words.length <= 1 && q.length > 2) {
+            if (title.includes(q)) score += 50;
+            else if (desc.includes(q)) score += 25;
+            else if (tags.includes(q)) score += 20;
+            else if (content.includes(q)) {
+              score += 10;
+              contentMatch = true;
+            }
+          }
 
           return { ...item, score, contentMatch };
         })
