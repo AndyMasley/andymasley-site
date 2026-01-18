@@ -355,10 +355,11 @@ if (post.source === 'local') {
     margin-top: var(--space-sm);
   }
 
-  /* Hide Substack subscription widgets */
+  /* Hide Substack subscription widgets and image controls */
   .prose :global(.subscription-widget-wrap),
   .prose :global(.subscribe-widget),
-  .prose :global(.subscription-widget) {
+  .prose :global(.subscription-widget),
+  .prose :global(.image-link-expand) {
     display: none !important;
   }
 
