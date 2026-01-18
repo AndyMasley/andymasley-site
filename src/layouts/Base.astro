@@ -92,6 +92,9 @@ function isActive(href: string): boolean {
         </div>
 
         <div class="header__controls">
+          <button class="search-toggle" id="search-toggle" aria-label="Search">
+            [search]
+          </button>
           <button class="dark-toggle" id="theme-toggle">
             [<span id="theme-label">dark</span>]
           </button>
@@ -133,6 +136,24 @@ function isActive(href: string): boolean {
     </footer>
   </main>
 
+  <!-- Search Modal -->
+  <div class="search-overlay" id="search-overlay">
+    <div class="search-modal">
+      <div class="search-input-wrap">
+        <input
+          type="text"
+          class="search-input"
+          id="search-input"
+          placeholder="Search..."
+          autocomplete="off"
+          spellcheck="false"
+        />
+        <kbd class="search-kbd">esc</kbd>
+      </div>
+      <div class="search-results" id="search-results"></div>
+    </div>
+  </div>
+
 
 
 
@@ -141,6 +162,7 @@ function isActive(href: string): boolean {
       initThemeToggle();
       initReadingProgress();
       initExternalLinks();
+      initSearch();
     });
 
     function initThemeToggle() {
@@ -195,10 +217,195 @@ function isActive(href: string): boolean {
       });
     }
 
+    // Search functionality
+    let searchIndex = null;
+    let selectedIndex = 0;
+
+    async function loadSearchIndex() {
+      if (searchIndex) return searchIndex;
+      try {
+        const res = await fetch('/search.json');
+        searchIndex = await res.json();
+        return searchIndex;
+      } catch (e) {
+        console.error('Failed to load search index:', e);
+        return [];
+      }
+    }
+
+    function initSearch() {
+      const overlay = document.getElementById('search-overlay');
+      const input = document.getElementById('search-input');
+      const results = document.getElementById('search-results');
+      const searchToggle = document.getElementById('search-toggle');
+
+      if (!overlay || !input || !results) return;
+
+      // Preload search index
+      loadSearchIndex();
+
+      function openSearch() {
+        overlay.classList.add('active');
+        input.value = '';
+        results.innerHTML = '';
+        selectedIndex = 0;
+        setTimeout(() => input.focus(), 10);
+        showAllResults();
+      }
+
+      function closeSearch() {
+        overlay.classList.remove('active');
+        input.blur();
+      }
+
+      async function showAllResults() {
+        const index = await loadSearchIndex();
+        renderResults(index.slice(0, 50), '');
+      }
+
+      function highlightMatch(text, query) {
+        if (!query || !text) return text || '';
+        const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+        return text.replace(regex, '<mark>$1</mark>');
+      }
+
+      function renderResults(items, query) {
+        if (items.length === 0) {
+          results.innerHTML = '<div class="search-empty">No results found</div>';
+          return;
+        }
+
+        results.innerHTML = items.map((item, i) => `
+          <a href="${item.url}" class="search-result ${i === selectedIndex ? 'selected' : ''}" data-index="${i}">
+            <div class="search-result-main">
+              <span class="search-result-type">${item.type}</span>
+              <span class="search-result-title">${highlightMatch(item.title, query)}</span>
+            </div>
+            ${item.description ? `<div class="search-result-desc">${highlightMatch(item.description, query)}</div>` : ''}
+            ${item.tags && item.tags.length ? `<div class="search-result-tags">${item.tags.map(t => `<span class="search-tag">${t}</span>`).join('')}</div>` : ''}
+          </a>
+        `).join('');
+
+        // Add hover handlers
+        results.querySelectorAll('.search-result').forEach((el, i) => {
+          el.addEventListener('mouseenter', () => {
+            selectedIndex = i;
+            updateSelection();
+          });
+        });
+      }
+
+      function updateSelection() {
+        results.querySelectorAll('.search-result').forEach((el, i) => {
+          el.classList.toggle('selected', i === selectedIndex);
+        });
+        // Scroll into view
+        const selected = results.querySelector('.search-result.selected');
+        if (selected) {
+          selected.scrollIntoView({ block: 'nearest' });
+        }
+      }
+
+      async function search(query) {
+        const index = await loadSearchIndex();
+        if (!query.trim()) {
+          renderResults(index.slice(0, 50), '');
+          return;
+        }
+
+        const q = query.toLowerCase();
+        const scored = index.map(item => {
+          let score = 0;
+          const title = (item.title || '').toLowerCase();
+          const desc = (item.description || '').toLowerCase();
+          const tags = (item.tags || []).join(' ').toLowerCase();
+
+          // Exact title match
+          if (title === q) score += 100;
+          // Title starts with query
+          else if (title.startsWith(q)) score += 50;
+          // Title contains query
+          else if (title.includes(q)) score += 30;
+
+          // Description contains query
+          if (desc.includes(q)) score += 10;
+
+          // Tags contain query
+          if (tags.includes(q)) score += 15;
+
+          // Word boundary bonus
+          const words = q.split(/\s+/);
+          words.forEach(word => {
+            if (title.includes(word)) score += 5;
+            if (desc.includes(word)) score += 2;
+          });
+
+          return { ...item, score };
+        })
+        .filter(item => item.score > 0)
+        .sort((a, b) => b.score - a.score)
+        .slice(0, 30);
+
+        selectedIndex = 0;
+        renderResults(scored, query);
+      }
+
+      // Event listeners
+      searchToggle?.addEventListener('click', openSearch);
+
+      overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) closeSearch();
+      });
+
+      input.addEventListener('input', (e) => {
+        search(e.target.value);
+      });
+
+      input.addEventListener('keydown', (e) => {
+        const resultElements = results.querySelectorAll('.search-result');
+        const count = resultElements.length;
+
+        if (e.key === 'Escape') {
+          closeSearch();
+        } else if (e.key === 'ArrowDown') {
+          e.preventDefault();
+          selectedIndex = (selectedIndex + 1) % count;
+          updateSelection();
+        } else if (e.key === 'ArrowUp') {
+          e.preventDefault();
+          selectedIndex = (selectedIndex - 1 + count) % count;
+          updateSelection();
+        } else if (e.key === 'Enter') {
+          e.preventDefault();
+          const selected = resultElements[selectedIndex];
+          if (selected) {
+            closeSearch();
+            window.location.href = selected.getAttribute('href');
+          }
+        }
+      });
+
+      // Keyboard shortcut: Cmd/Ctrl + K
+      document.addEventListener('keydown', (e) => {
+        if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+          e.preventDefault();
+          if (overlay.classList.contains('active')) {
+            closeSearch();
+          } else {
+            openSearch();
+          }
+        }
+        if (e.key === 'Escape' && overlay.classList.contains('active')) {
+          closeSearch();
+        }
+      });
+    }
+
     // Initialize on first load
     initThemeToggle();
     initReadingProgress();
     initExternalLinks();
+    initSearch();
 
     // Hexagon portal activation - requires clicking BOTH hexes
     function initHexagonPortalTrigger() {
