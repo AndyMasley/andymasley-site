@@ -354,12 +354,26 @@ function isActive(href: string): boolean {
           return;
         }
 
-        const q = query.toLowerCase().trim();
-        // Common words to ignore when checking if all words match
+        // Parse quoted phrases and unquoted words
+        const exactPhrases: string[] = [];
+        let remaining = query.toLowerCase().trim();
+
+        // Extract quoted phrases (supports both "double" and 'single' quotes)
+        const quoteRegex = /["']([^"']+)["']/g;
+        let match;
+        while ((match = quoteRegex.exec(remaining)) !== null) {
+          if (match[1].trim()) {
+            exactPhrases.push(match[1].trim());
+          }
+        }
+        // Remove quoted phrases from remaining query
+        remaining = remaining.replace(quoteRegex, ' ').trim();
+
+        // Common words to ignore for unquoted terms
         const stopWords = new Set(['a', 'an', 'the', 'is', 'are', 'was', 'were', 'be', 'been', 'being', 'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'could', 'should', 'may', 'might', 'must', 'shall', 'can', 'need', 'dare', 'ought', 'used', 'to', 'of', 'in', 'for', 'on', 'with', 'at', 'by', 'from', 'as', 'into', 'through', 'during', 'before', 'after', 'above', 'below', 'between', 'under', 'again', 'further', 'then', 'once', 'here', 'there', 'when', 'where', 'why', 'how', 'all', 'each', 'few', 'more', 'most', 'other', 'some', 'such', 'no', 'nor', 'not', 'only', 'own', 'same', 'so', 'than', 'too', 'very', 'just', 'and', 'but', 'if', 'or', 'because', 'until', 'while', 'about', 'against', 'this', 'that', 'these', 'those', 'i', 'me', 'my', 'myself', 'we', 'our', 'ours', 'you', 'your', 'yours', 'he', 'him', 'his', 'she', 'her', 'hers', 'it', 'its', 'they', 'them', 'their', 'what', 'which', 'who', 'whom']);
 
-        // Get significant words (not stop words, length > 2)
-        const words = q.split(/\s+/).filter(w => w.length > 2 && !stopWords.has(w));
+        // Get significant words from remaining unquoted text
+        const words = remaining.split(/\s+/).filter(w => w.length > 2 && !stopWords.has(w));
 
         const scored = index.map(item => {
           let score = 0;
@@ -372,7 +386,25 @@ function isActive(href: string): boolean {
           const type = item.type || 'article';
           const allText = title + ' ' + desc + ' ' + headers + ' ' + content + ' ' + tags;
 
-          // For multi-word queries, require ALL significant words to match somewhere
+          // EXACT PHRASE MATCHING: All quoted phrases must match exactly
+          if (exactPhrases.length > 0) {
+            const allPhrasesMatch = exactPhrases.every(phrase => allText.includes(phrase));
+            if (!allPhrasesMatch) {
+              return { ...item, score: 0, contentMatch: false };
+            }
+            // Bonus for exact phrase matches
+            exactPhrases.forEach(phrase => {
+              if (title.includes(phrase)) score += 300;
+              else if (desc.includes(phrase)) score += 150;
+              else if (headers.includes(phrase)) score += 75;
+              else if (content.includes(phrase)) {
+                score += 25;
+                contentMatch = true;
+              }
+            });
+          }
+
+          // For remaining unquoted multi-word queries, require ALL significant words to match
           if (words.length > 1) {
             const allWordsMatch = words.every(word => allText.includes(word));
             if (!allWordsMatch) {
@@ -381,27 +413,10 @@ function isActive(href: string): boolean {
           }
 
           // Type bonus: page > list/article
-          // Pages get a base bonus to appear first
           if (type === 'page') score += 1000;
           else if (type === 'list') score += 500;
-          // articles get no bonus
 
-          // Title/page name match (highest within type)
-          if (title.includes(q)) score += 200;
-          else if (desc.includes(q)) score += 100;
-
-          // Header match (second priority)
-          if (headers.includes(q)) {
-            score += 50;
-          }
-
-          // Content match (lowest priority)
-          if (content.includes(q)) {
-            score += 10;
-            contentMatch = true;
-          }
-
-          // Individual word matches for ranking
+          // Individual word matches for ranking (unquoted terms)
           words.forEach(word => {
             if (title.includes(word)) score += 30;
             if (desc.includes(word)) score += 15;
@@ -412,6 +427,11 @@ function isActive(href: string): boolean {
               contentMatch = true;
             }
           });
+
+          // If only exact phrases (no unquoted words), still need minimum score
+          if (exactPhrases.length > 0 && words.length === 0 && score === 0) {
+            score = 1; // Matched phrases but no type bonus
+          }
 
           return { ...item, score, contentMatch };
         })
