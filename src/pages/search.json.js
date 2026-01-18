@@ -75,9 +75,6 @@ function extractAstroContent(filePath, maxLength = 2000) {
 
 export async function GET() {
   const writing = await getCollection('writing', ({ data }) => !data.draft);
-  const music = await getCollection('music', ({ data }) => !data.draft);
-  const film = await getCollection('film', ({ data }) => !data.draft);
-  const books = await getCollection('books', ({ data }) => !data.draft);
   const notes = await getCollection('notes', ({ data }) => !data.draft);
   const physics = await getCollection('physics', ({ data }) => !data.draft);
 
@@ -108,14 +105,6 @@ export async function GET() {
       content: 'Contact Andy Masley email',
       type: 'page',
       url: '/contact',
-      tags: [],
-    },
-    {
-      title: 'Now',
-      description: 'What I\'m doing now',
-      content: 'What Andy is currently working on and focused on',
-      type: 'page',
-      url: '/now',
       tags: [],
     },
     {
@@ -156,30 +145,6 @@ export async function GET() {
       content: 'Blog writing essays AI environment data centers animal welfare effective altruism philosophy politics',
       type: 'page',
       url: '/writing',
-      tags: [],
-    },
-    {
-      title: 'Books',
-      description: 'Book reviews and recommendations',
-      content: 'Book reviews reading recommendations',
-      type: 'page',
-      url: '/books',
-      tags: [],
-    },
-    {
-      title: 'Film',
-      description: 'Film reviews',
-      content: 'Film movie reviews cinema',
-      type: 'page',
-      url: '/film',
-      tags: [],
-    },
-    {
-      title: 'Music',
-      description: 'Music reviews',
-      content: 'Music album reviews',
-      type: 'page',
-      url: '/music',
       tags: [],
     },
   );
@@ -230,42 +195,6 @@ export async function GET() {
   }
 
   // Other collections with body content
-  for (const item of music) {
-    searchIndex.push({
-      title: item.data.album || item.data.title,
-      description: item.data.artist || '',
-      headers: item.body ? extractMarkdownHeaders(item.body) : '',
-      content: item.body ? extractMarkdownText(item.body) : '',
-      type: 'article',
-      url: `/music/${item.slug}`,
-      tags: item.data.tags || [],
-    });
-  }
-
-  for (const item of film) {
-    searchIndex.push({
-      title: item.data.title,
-      description: item.data.director || '',
-      headers: item.body ? extractMarkdownHeaders(item.body) : '',
-      content: item.body ? extractMarkdownText(item.body) : '',
-      type: 'article',
-      url: `/film/${item.slug}`,
-      tags: item.data.tags || [],
-    });
-  }
-
-  for (const item of books) {
-    searchIndex.push({
-      title: item.data.title,
-      description: item.data.author || '',
-      headers: item.body ? extractMarkdownHeaders(item.body) : '',
-      content: item.body ? extractMarkdownText(item.body) : '',
-      type: 'article',
-      url: `/books/${item.slug}`,
-      tags: item.data.tags || [],
-    });
-  }
-
   for (const item of notes) {
     searchIndex.push({
       title: item.data.title,

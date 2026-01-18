@@ -19,43 +19,6 @@ const writing = defineCollection({
   }),
 });
 
-// Music - reviews, recommendations, notes on albums/artists
-const music = defineCollection({
-  type: 'content',
-  schema: baseSchema.extend({
-    artist: z.string().optional(),
-    album: z.string().optional(),
-    year: z.number().optional(),
-    rating: z.number().min(0).max(10).optional(),
-    genre: z.array(z.string()).default([]),
-    listen_link: z.string().url().optional(),
-  }),
-});
-
-// Film - reviews, notes
-const film = defineCollection({
-  type: 'content',
-  schema: baseSchema.extend({
-    director: z.string().optional(),
-    year: z.number().optional(),
-    rating: z.number().min(0).max(10).optional(),
-    genre: z.array(z.string()).default([]),
-    watch_link: z.string().url().optional(),
-  }),
-});
-
-// Books - reviews, notes
-const books = defineCollection({
-  type: 'content',
-  schema: baseSchema.extend({
-    author: z.string().optional(),
-    year: z.number().optional(),
-    rating: z.number().min(0).max(10).optional(),
-    genre: z.array(z.string()).default([]),
-    goodreads: z.string().url().optional(),
-  }),
-});
-
 // Notes - shorter wiki-style entries, ideas, TILs
 const notes = defineCollection({
   type: 'content',
@@ -87,9 +50,6 @@ const categories = defineCollection({
 
 export const collections = {
   writing,
-  music,
-  film,
-  books,
   notes,
   physics,
   categories,
