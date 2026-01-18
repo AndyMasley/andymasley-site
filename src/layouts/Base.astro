@@ -374,14 +374,18 @@ function isActive(href: string): boolean {
         renderResults(scored, query);
       }
 
-      // Event listeners
-      searchToggle?.addEventListener('click', () => {
-        if (container.classList.contains('active')) {
-          closeSearch();
-        } else {
-          openSearch();
-        }
-      });
+      // Event listeners - clone to remove stale listeners from View Transitions
+      if (searchToggle) {
+        const newToggle = searchToggle.cloneNode(true);
+        searchToggle.parentNode?.replaceChild(newToggle, searchToggle);
+        newToggle.addEventListener('click', () => {
+          if (container.classList.contains('active')) {
+            closeSearch();
+          } else {
+            openSearch();
+          }
+        });
+      }
 
       input.addEventListener('input', (e) => {
         search(e.target.value);
