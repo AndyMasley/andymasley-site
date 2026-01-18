@@ -463,10 +463,55 @@ export function fixAnchorLinks(html: string, currentSlug: string): string {
   return fixed;
 }
 
+// Generate a slug from heading text for use as an ID
+function generateHeadingId(text: string): string {
+  return text
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, '') // Remove special characters
+    .replace(/\s+/g, '-')          // Replace spaces with hyphens
+    .replace(/-+/g, '-')           // Collapse multiple hyphens
+    .replace(/^-|-$/g, '');        // Remove leading/trailing hyphens
+}
+
+// Add ID attributes to headings so anchor links can target them
+function addHeadingIds(html: string): string {
+  // Track used IDs to avoid duplicates
+  const usedIds = new Set<string>();
+
+  // Match h1, h2, h3, h4, h5, h6 tags and add IDs based on their content
+  return html.replace(
+    /<(h[1-6])([^>]*)>([^<]+)<\/h[1-6]>/gi,
+    (match, tag, attrs, content) => {
+      // Skip if already has an id attribute
+      if (/\bid\s*=/i.test(attrs)) {
+        return match;
+      }
+
+      // Generate ID from content
+      let id = generateHeadingId(content.trim());
+      if (!id) return match;
+
+      // Handle duplicate IDs by appending numbers
+      let uniqueId = id;
+      let counter = 1;
+      while (usedIds.has(uniqueId)) {
+        uniqueId = `${id}-${counter}`;
+        counter++;
+      }
+      usedIds.add(uniqueId);
+
+      return `<${tag}${attrs} id="${uniqueId}">${content}</${tag}>`;
+    }
+  );
+}
+
 // Process HTML content for display
 export function processPostContent(html: string, slug: string): string {
   // Fix anchor links
   let processed = fixAnchorLinks(html, slug);
+
+  // Add IDs to headings so anchor links work
+  processed = addHeadingIds(processed);
 
   // Remove Substack's subscription widgets and buttons
   processed = processed.replace(/<div class="subscription-widget[^>]*>[\s\S]*?<\/div>/gi, '');
