@@ -1549,15 +1549,39 @@ details[open] summary::before {
 
 .search-label {
   position: absolute;
+  left: 0;
   right: 0;
   text-align: right;
   white-space: nowrap;
   opacity: 1;
-  transform: translateY(0) scale(1);
-  /* CLOSING: fade in after input fades out */
-  transition: opacity 0.25s ease 0.18s,
-              transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) 0.15s;
-  will-change: opacity, transform;
+  pointer-events: none;
+  /* CLOSING: slide back to the right */
+  transition: text-align 0s linear 0.3s,
+              opacity 0.25s ease,
+              color 0.25s ease;
+  will-change: opacity;
+}
+
+.search-label-prefix,
+.search-label-suffix {
+  display: inline-block;
+  max-width: 0;
+  overflow: hidden;
+  opacity: 0;
+  vertical-align: bottom;
+  /* CLOSING: collapse the prefix/suffix */
+  transition: max-width 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              opacity 0.2s ease;
+}
+
+.search-label-prefix {
+  /* Enough width for "type to " */
+  max-width: 0;
+}
+
+.search-label-suffix {
+  /* Enough width for "..." */
+  max-width: 0;
 }
 
 .search-inline-input {
@@ -1567,7 +1591,6 @@ details[open] summary::before {
   width: 100%;
   text-align: left;
   opacity: 0;
-  transform: translateY(6px);
   background: none;
   border: none;
   font-family: var(--font-body);
@@ -1576,15 +1599,8 @@ details[open] summary::before {
   outline: none;
   padding: 0 2px;
   pointer-events: none;
-  /* CLOSING: fade out immediately */
-  transition: opacity 0.15s ease,
-              transform 0.2s ease;
-  will-change: opacity, transform;
-}
-
-.search-inline-input::placeholder {
-  color: var(--dim);
-  opacity: 0.6;
+  transition: opacity 0.2s ease;
+  will-change: opacity;
 }
 
 /* ===== ACTIVE STATE ===== */
@@ -1604,21 +1620,41 @@ details[open] summary::before {
   transition: transform 0.45s cubic-bezier(0.34, 1.15, 0.64, 1);
 }
 
-/* OPENING: label fades up and shrinks */
+/* OPENING: label slides left and becomes placeholder-like */
 .search-widget.active .search-label {
-  opacity: 0;
-  transform: translateY(-6px) scale(0.95);
-  transition: opacity 0.15s ease,
-              transform 0.2s ease;
+  text-align: left;
+  color: var(--dim);
+  opacity: 0.6;
+  transition: text-align 0s linear,
+              opacity 0.3s ease 0.1s,
+              color 0.3s ease 0.1s;
 }
 
-/* OPENING: input fades up into place */
+.search-widget.active .search-label-prefix {
+  max-width: 4.5em;
+  opacity: 1;
+  transition: max-width 0.35s cubic-bezier(0.34, 1.15, 0.64, 1) 0.05s,
+              opacity 0.25s ease 0.1s;
+}
+
+.search-widget.active .search-label-suffix {
+  max-width: 1.5em;
+  opacity: 1;
+  transition: max-width 0.3s cubic-bezier(0.34, 1.15, 0.64, 1) 0.15s,
+              opacity 0.25s ease 0.2s;
+}
+
+/* Hide label when user is typing */
+.search-widget.has-input .search-label {
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+/* OPENING: input becomes active */
 .search-widget.active .search-inline-input {
   opacity: 1;
-  transform: translateY(0);
   pointer-events: auto;
-  transition: opacity 0.25s ease 0.12s,
-              transform 0.35s cubic-bezier(0.34, 1.15, 0.64, 1) 0.08s;
+  transition: opacity 0.15s ease 0.2s;
 }
 
 /* Search dropdown for results */

@@ -94,12 +94,11 @@ function isActive(href: string): boolean {
           <div class="search-widget" id="search-widget">
             <span class="search-bracket search-bracket--left">[</span>
             <span class="search-inner">
-              <span class="search-label" id="search-label">search</span>
+              <span class="search-label" id="search-label"><span class="search-label-prefix">type to&nbsp;</span>search<span class="search-label-suffix">...</span></span>
               <input
                 type="text"
                 class="search-inline-input"
                 id="search-input"
-                placeholder="type to search..."
                 autocomplete="off"
                 spellcheck="false"
               />
@@ -243,6 +242,7 @@ function isActive(href: string): boolean {
 
       function openSearch() {
         widget.classList.add('active');
+        widget.classList.remove('has-input');
         input.value = '';
         results.innerHTML = '';
         selectedIndex = 0;
@@ -253,10 +253,19 @@ function isActive(href: string): boolean {
 
       function closeSearch() {
         widget.classList.remove('active');
+        widget.classList.remove('has-input');
         dropdown.classList.remove('active');
         results.innerHTML = '';
         input.value = '';
         input.blur();
+      }
+
+      function updateHasInput() {
+        if (input.value.length > 0) {
+          widget.classList.add('has-input');
+        } else {
+          widget.classList.remove('has-input');
+        }
       }
 
       function showDropdown() {
@@ -442,6 +451,7 @@ function isActive(href: string): boolean {
       }
 
       input.addEventListener('input', (e) => {
+        updateHasInput();
         search((e.target as HTMLInputElement).value);
       });
 
@@ -502,55 +512,8 @@ function isActive(href: string): boolean {
       let headerActivated = false;
       let navActivated = false;
 
-      // Create satisfying click sound like a key in a lock
-      function playClickSound() {
-        try {
-          const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
-
-          // Main click - sharp attack
-          const clickOsc = audioCtx.createOscillator();
-          const clickGain = audioCtx.createGain();
-          clickOsc.connect(clickGain);
-          clickGain.connect(audioCtx.destination);
-          clickOsc.frequency.setValueAtTime(1800, audioCtx.currentTime);
-          clickOsc.frequency.exponentialRampToValueAtTime(400, audioCtx.currentTime + 0.03);
-          clickGain.gain.setValueAtTime(0.3, audioCtx.currentTime);
-          clickGain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.08);
-          clickOsc.start(audioCtx.currentTime);
-          clickOsc.stop(audioCtx.currentTime + 0.08);
-
-          // Metallic resonance
-          const resOsc = audioCtx.createOscillator();
-          const resGain = audioCtx.createGain();
-          resOsc.connect(resGain);
-          resGain.connect(audioCtx.destination);
-          resOsc.frequency.setValueAtTime(2400, audioCtx.currentTime + 0.01);
-          resOsc.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.1);
-          resGain.gain.setValueAtTime(0.15, audioCtx.currentTime + 0.01);
-          resGain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.12);
-          resOsc.start(audioCtx.currentTime + 0.01);
-          resOsc.stop(audioCtx.currentTime + 0.12);
-
-          // Low thunk for weight
-          const thunkOsc = audioCtx.createOscillator();
-          const thunkGain = audioCtx.createGain();
-          thunkOsc.connect(thunkGain);
-          thunkGain.connect(audioCtx.destination);
-          thunkOsc.frequency.setValueAtTime(150, audioCtx.currentTime);
-          thunkOsc.frequency.exponentialRampToValueAtTime(80, audioCtx.currentTime + 0.05);
-          thunkGain.gain.setValueAtTime(0.2, audioCtx.currentTime);
-          thunkGain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
-          thunkOsc.start(audioCtx.currentTime);
-          thunkOsc.stop(audioCtx.currentTime + 0.1);
-        } catch (e) {
-          // Audio not supported, fail silently
-        }
-      }
-
       function activateHex(hexElement) {
         if (!hexElement) return;
-
-        playClickSound();
 
         // Get current rotation from hover state and freeze it
         const svg = hexElement.querySelector('svg');
