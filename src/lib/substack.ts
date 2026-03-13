@@ -179,9 +179,15 @@ export async function fetchSubstackPosts(): Promise<SubstackPost[]> {
 
     while (hasMore) {
       const response = await rateLimitedFetch(`${BASE_URL}?offset=${offset}&limit=${limit}`);
+
+      if (!response.ok) {
+        console.error(`Substack API returned ${response.status}`);
+        break;
+      }
+
       const posts: SubstackAPIPost[] = await response.json();
 
-      if (!posts || posts.length === 0) {
+      if (!Array.isArray(posts) || posts.length === 0) {
         hasMore = false;
         break;
       }
@@ -213,6 +219,15 @@ export async function fetchSubstackPosts(): Promise<SubstackPost[]> {
     // Sort by date descending
     allPosts.sort((a, b) => b.date.getTime() - a.date.getTime());
 
+    // If we got no posts, fall back to stale cache rather than caching empty results
+    if (allPosts.length === 0 && existsSync(POSTS_CACHE_FILE)) {
+      console.warn('Substack API returned 0 posts, falling back to stale cache');
+      const cached: CachedPosts = JSON.parse(readFileSync(POSTS_CACHE_FILE, 'utf-8'));
+      const posts = cached.posts.map(p => ({ ...p, date: new Date(p.date) }));
+      memoryCache = posts;
+      return posts;
+    }
+
     // Save to file cache
     const cacheData: CachedPosts = {
       timestamp: Date.now(),
@@ -226,6 +241,20 @@ export async function fetchSubstackPosts(): Promise<SubstackPost[]> {
     return allPosts;
   } catch (error) {
     console.error('Failed to fetch Substack posts:', error);
+
+    // Fall back to stale cache rather than returning nothing
+    if (existsSync(POSTS_CACHE_FILE)) {
+      try {
+        const cached: CachedPosts = JSON.parse(readFileSync(POSTS_CACHE_FILE, 'utf-8'));
+        console.log(`Using stale cache (${cached.posts.length} posts) after API failure`);
+        const posts = cached.posts.map(p => ({ ...p, date: new Date(p.date) }));
+        memoryCache = posts;
+        return posts;
+      } catch (e) {
+        // Cache is also broken
+      }
+    }
+
     return [];
   }
 }
