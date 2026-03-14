@@ -10,7 +10,7 @@ interface Props {
 
 const {
   title,
-  description = "Andy Masley's personal site",
+  description = "When the going gets weird the weird turn pro",
   showReadingProgress = false,
 } = Astro.props;
 const currentPath = Astro.url.pathname;
@@ -21,6 +21,7 @@ const navLinks = [
   { href: '/writing', label: 'writing' },
   { href: '/physics', label: 'IB physics' },
   { href: '/lists', label: 'lists' },
+  { href: '/visuals', label: 'visuals' },
   { href: '/appearances', label: 'appearances' },
   { href: '/contact', label: 'contact' },
 ];

@@ -1,0 +1,256 @@
+---
+import Base from '@/layouts/Base.astro';
+---
+
+<Base title="Factory-farmed chickens" description="Visualizing the number of factory-farmed chickens alive in the United States at any given moment">
+
+  <article class="chickens-viz">
+    <h1>Factory-farmed chickens</h1>
+
+    <div class="prose intro-text">
+      <p>At any given moment, approximately <strong>1.6 billion chickens</strong> are alive in <a href="https://ffacoalition.org/articles/what-is-chicken-factory-farming-and-how-bad-is-it/">factory farm conditions</a> in the United States — about 1.2 billion broilers raised for meat and 400 million hens kept for eggs.</p>
+
+      <p>If you packed those 1.2 billion meat chickens together at typical factory-farm density, they would fill roughly <a href="https://royalsocietypublishing.org/doi/10.1098/rsos.210478"><strong>32 square miles</strong></a> — a patch of land smaller than many cities. That's about 58,000 birds per acre, or <strong>115 times</strong> as dense as the <a href="https://www.freedomrangerhatchery.com/blog/square-feet-per-chicken/">suggested humane standard of 500 per acre</a>.</p>
+
+      <p>It's nearly impossible to hold a number like 1.6 billion in your head. Below, every single dot represents one chicken. Scroll to see them all.</p>
+    </div>
+
+    <div class="viz-wrapper" id="viz-wrapper">
+      <div class="viz-counter" id="viz-counter">
+        <span class="viz-counter-pct" id="viz-pct">0.00%</span>
+        <span class="viz-counter-num" id="viz-num">0 / 1,600,000,000</span>
+      </div>
+      <div class="viz-scroll-area" id="viz-scroll-area">
+        <canvas id="viz-canvas"></canvas>
+      </div>
+    </div>
+
+  </article>
+
+</Base>
+
+<style>
+  .chickens-viz h1 {
+    font-size: 1.75rem;
+    line-height: 1.15;
+    letter-spacing: -0.03em;
+    font-weight: 700;
+    margin-bottom: var(--space-lg);
+  }
+
+  .intro-text {
+    margin-bottom: var(--space-xl);
+  }
+
+  .viz-wrapper {
+    position: relative;
+    width: calc(var(--max-width) * 2);
+    max-width: 100vw;
+    margin-left: calc((var(--max-width) * -0.5));
+  }
+
+  .viz-scroll-area {
+    position: relative;
+    /* height set by JS */
+  }
+
+  #viz-canvas {
+    display: block;
+    position: sticky;
+    /* top set by JS to sit below counter */
+  }
+
+  .viz-counter {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 24px;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    transition: background 0.3s;
+  }
+
+  .viz-counter-pct {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--accent);
+    min-width: 5em;
+  }
+
+  .viz-counter-num {
+    font-size: var(--font-size-small);
+    color: var(--dim);
+  }
+
+  @media (max-width: 600px) {
+    .chickens-viz h1 {
+      font-size: 1.35rem;
+    }
+
+    .viz-counter {
+      padding: 8px 16px;
+      gap: 8px;
+    }
+
+    .viz-counter-pct {
+      font-size: 1rem;
+    }
+  }
+</style>
+
+<script>
+  document.addEventListener('astro:page-load', initChickensViz);
+
+  function initChickensViz() {
+    const canvas = document.getElementById('viz-canvas') as HTMLCanvasElement;
+    const scrollArea = document.getElementById('viz-scroll-area');
+    const wrapper = document.getElementById('viz-wrapper');
+    const counter = document.getElementById('viz-counter');
+    const pctEl = document.getElementById('viz-pct');
+    const numEl = document.getElementById('viz-num');
+    if (!canvas || !scrollArea || !wrapper || !counter || !pctEl || !numEl) return;
+
+    if ((wrapper as any).__vizInit) return;
+    (wrapper as any).__vizInit = true;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const TOTAL_DOTS = 1_600_000_000;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const screenWidth = wrapper.clientWidth;
+    const counterHeight = counter.offsetHeight;
+    const viewHeight = window.innerHeight - counterHeight;
+
+    // Dynamically size cells so total page height stays under 25M px.
+    // CELL = sqrt(targetHeight * width / totalDots)
+    const TARGET_HEIGHT = 20_000_000;
+    let CELL = Math.sqrt(TARGET_HEIGHT * screenWidth / TOTAL_DOTS);
+    CELL = Math.max(CELL, 3);
+    CELL = Math.round(CELL * 4) / 4; // round to nearest 0.25
+
+    const DOT_RADIUS = CELL * 0.3;
+    const cols = Math.floor(screenWidth / CELL);
+    const totalRows = Math.ceil(TOTAL_DOTS / cols);
+    const virtualHeight = totalRows * CELL;
+
+    // If height is within browser limits, use it directly (1:1 scroll).
+    // Otherwise cap and apply minimal scale factor.
+    const MAX_SAFE = 25_000_000;
+    const spacerHeight = Math.min(virtualHeight, MAX_SAFE);
+    const scrollScale = virtualHeight / spacerHeight;
+
+    scrollArea.style.height = spacerHeight + 'px';
+
+    // Canvas: viewport-sized, sticky below counter
+    canvas.width = screenWidth * dpr;
+    canvas.height = viewHeight * dpr;
+    canvas.style.width = screenWidth + 'px';
+    canvas.style.height = viewHeight + 'px';
+    canvas.style.top = counterHeight + 'px';
+    ctx.scale(dpr, dpr);
+
+    // Pre-render one full row of dots into an offscreen canvas.
+    // Then render() just tiles this row image — orders of magnitude faster
+    // than drawing thousands of arcs each frame.
+    const rowCanvas = document.createElement('canvas');
+    rowCanvas.width = screenWidth * dpr;
+    rowCanvas.height = Math.ceil(CELL * dpr);
+    const rowCtx = rowCanvas.getContext('2d')!;
+    rowCtx.scale(dpr, dpr);
+
+    function getDotColor(): string {
+      const theme = document.documentElement.getAttribute('data-theme');
+      return theme === 'dark' ? '#e8e6e1' : '#1a1918';
+    }
+
+    function prerenderRow() {
+      rowCtx.clearRect(0, 0, screenWidth, CELL);
+      rowCtx.fillStyle = getDotColor();
+      rowCtx.beginPath();
+      for (let col = 0; col < cols; col++) {
+        const cx = col * CELL + CELL / 2;
+        const cy = CELL / 2;
+        rowCtx.moveTo(cx + DOT_RADIUS, cy);
+        rowCtx.arc(cx, cy, DOT_RADIUS, 0, Math.PI * 2);
+      }
+      rowCtx.fill();
+    }
+    prerenderRow();
+
+    let lastScrollY = -1;
+
+    function render() {
+      const scrollAreaRect = scrollArea.getBoundingClientRect();
+      const rawScrollY = -(scrollAreaRect.top);
+
+      const roundedScroll = Math.round(rawScrollY);
+      if (roundedScroll === lastScrollY) return;
+      lastScrollY = roundedScroll;
+
+      const virtualScrollY = rawScrollY * scrollScale;
+      const clampedY = Math.max(0, Math.min(virtualScrollY, virtualHeight - viewHeight));
+
+      const rowStart = Math.floor(clampedY / CELL);
+      const rowEnd = Math.min(Math.ceil((clampedY + viewHeight) / CELL), totalRows);
+
+      ctx.clearRect(0, 0, screenWidth, viewHeight);
+
+      for (let row = rowStart; row < rowEnd; row++) {
+        const y = row * CELL - clampedY;
+        // Draw pre-rendered row at this y position
+        ctx.drawImage(
+          rowCanvas,
+          0, 0, rowCanvas.width, rowCanvas.height,
+          0, y, screenWidth, CELL
+        );
+      }
+
+      // Update counter
+      const bottomVisible = clampedY + viewHeight;
+      const rowsVisible = Math.min(Math.ceil(bottomVisible / CELL), totalRows);
+      const dotsVisible = Math.min(TOTAL_DOTS, rowsVisible * cols);
+      const fraction = dotsVisible / TOTAL_DOTS;
+      pctEl.textContent = (fraction * 100).toFixed(2) + '%';
+      numEl.textContent = dotsVisible.toLocaleString() + ' / 1,600,000,000';
+    }
+
+    // Theme change: re-render the row stamp and force a redraw
+    const themeObserver = new MutationObserver(() => {
+      prerenderRow();
+      lastScrollY = -1;
+      render();
+    });
+    themeObserver.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['data-theme']
+    });
+
+    // Scroll handler with rAF throttle
+    let ticking = false;
+    function onScroll() {
+      if (!ticking) {
+        requestAnimationFrame(() => {
+          render();
+          ticking = false;
+        });
+        ticking = true;
+      }
+    }
+    window.addEventListener('scroll', onScroll, { passive: true });
+
+    // Cleanup on Astro navigation
+    document.addEventListener('astro:before-swap', () => {
+      window.removeEventListener('scroll', onScroll);
+      themeObserver.disconnect();
+    }, { once: true });
+
+    // Initial render
+    render();
+  }
+</script>
