@@ -16,7 +16,7 @@ import Base from '@/layouts/Base.astro';
     </div>
 
     <div class="viz-wrapper" id="viz-wrapper">
-      <div class="viz-counter" id="viz-counter">
+      <div class="viz-counter viz-counter--hidden" id="viz-counter">
         <span class="viz-counter-pct" id="viz-pct">0.00%</span>
         <span class="viz-counter-num" id="viz-num">0 / 1,600,000,000</span>
       </div>
@@ -43,15 +43,14 @@ import Base from '@/layouts/Base.astro';
   }
 
   .viz-wrapper {
-    position: relative;
-    width: calc(var(--max-width) * 2);
-    max-width: 100vw;
-    left: 50%;
-    transform: translateX(-50%);
+    margin-left: calc(-50vw + 50%);
+    width: 100vw;
   }
 
   .viz-scroll-area {
     position: relative;
+    max-width: calc(var(--max-width) * 2);
+    margin: 0 auto;
     /* height set by JS */
   }
 
@@ -69,11 +68,17 @@ import Base from '@/layouts/Base.astro';
     align-items: center;
     gap: 12px;
     padding: 10px 24px;
+    max-width: calc(var(--max-width) * 2);
+    margin: 0 auto;
     background: var(--bg);
     border-bottom: 1px solid var(--border);
     font-family: var(--font-mono);
     font-variant-numeric: tabular-nums;
-    transition: background 0.3s;
+    transition: background 0.3s, opacity 0.4s ease;
+  }
+
+  .viz-counter--hidden {
+    opacity: 0;
   }
 
   .viz-counter-pct {
@@ -124,7 +129,7 @@ import Base from '@/layouts/Base.astro';
 
     const TOTAL_DOTS = 1_600_000_000;
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
-    const screenWidth = wrapper.clientWidth;
+    const screenWidth = scrollArea.clientWidth;
     const counterHeight = counter.offsetHeight;
     const viewHeight = window.innerHeight - counterHeight;
 
@@ -142,7 +147,7 @@ import Base from '@/layouts/Base.astro';
 
     // If height is within browser limits, use it directly (1:1 scroll).
     // Otherwise cap and apply minimal scale factor.
-    const MAX_SAFE = 25_000_000;
+    const MAX_SAFE = 15_000_000;
     const spacerHeight = Math.min(virtualHeight, MAX_SAFE);
     const scrollScale = virtualHeight / spacerHeight;
 
@@ -212,13 +217,19 @@ import Base from '@/layouts/Base.astro';
         );
       }
 
-      // Update counter
-      const bottomVisible = clampedY + viewHeight;
-      const rowsVisible = Math.min(Math.ceil(bottomVisible / CELL), totalRows);
-      const dotsVisible = Math.min(TOTAL_DOTS, rowsVisible * cols);
-      const fraction = dotsVisible / TOTAL_DOTS;
+      // Update counter — count dots scrolled past (top of viewport)
+      const rowsScrolledPast = Math.floor(clampedY / CELL);
+      const dotsScrolledPast = Math.min(TOTAL_DOTS, rowsScrolledPast * cols);
+      const fraction = dotsScrolledPast / TOTAL_DOTS;
       pctEl.textContent = (fraction * 100).toFixed(2) + '%';
-      numEl.textContent = dotsVisible.toLocaleString() + ' / 1,600,000,000';
+      numEl.textContent = dotsScrolledPast.toLocaleString() + ' / 1,600,000,000';
+
+      // Fade in counter once user starts scrolling
+      if (dotsScrolledPast > 0) {
+        counter.classList.remove('viz-counter--hidden');
+      } else {
+        counter.classList.add('viz-counter--hidden');
+      }
     }
 
     // Theme change: re-render the row stamp and force a redraw
