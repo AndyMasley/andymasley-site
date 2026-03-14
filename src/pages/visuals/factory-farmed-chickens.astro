@@ -145,9 +145,10 @@ import Base from '@/layouts/Base.astro';
     const totalRows = Math.ceil(TOTAL_DOTS / cols);
     const virtualHeight = totalRows * CELL;
 
-    // If height is within browser limits, use it directly (1:1 scroll).
-    // Otherwise cap and apply minimal scale factor.
-    const MAX_SAFE = 15_000_000;
+    // Cap spacer height to stay within browser limits.
+    // Mobile browsers crash at very tall elements, so use a lower cap there.
+    const isMobile = window.innerWidth < 768;
+    const MAX_SAFE = isMobile ? 5_000_000 : 15_000_000;
     const spacerHeight = Math.min(virtualHeight, MAX_SAFE);
     const scrollScale = virtualHeight / spacerHeight;
 
