@@ -12,7 +12,7 @@ import Base from '@/layouts/Base.astro';
 
       <p>If you packed those 1.2 billion meat chickens together at typical factory-farm density, they would fill roughly <a href="https://royalsocietypublishing.org/doi/10.1098/rsos.210478"><strong>32 square miles</strong></a> — a patch of land smaller than many cities. That's about 58,000 birds per acre, or <strong>115 times</strong> as dense as the <a href="https://www.freedomrangerhatchery.com/blog/square-feet-per-chicken/">suggested humane standard of 500 per acre</a>.</p>
 
-      <p>It's nearly impossible to hold a number like 1.6 billion in your head. Below, every single dot represents one chicken. Scroll to see them all.</p>
+      <p>It's impossible to hold a number like 1.6 billion in your head. Below are 1.6 billion dots, one for each chicken. Scroll down to see them all.</p>
     </div>
 
     <div class="viz-wrapper" id="viz-wrapper">
@@ -46,7 +46,8 @@ import Base from '@/layouts/Base.astro';
     position: relative;
     width: calc(var(--max-width) * 2);
     max-width: 100vw;
-    margin-left: calc((var(--max-width) * -0.5));
+    left: 50%;
+    transform: translateX(-50%);
   }
 
   .viz-scroll-area {
