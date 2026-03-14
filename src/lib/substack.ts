@@ -148,24 +148,25 @@ export async function fetchSubstackPosts(): Promise<SubstackPost[]> {
 
   ensureCacheDir();
 
-  // Check file cache
+  // Load existing cache (used as fallback and for freshness check)
+  let existingCache: CachedPosts | null = null;
   if (existsSync(POSTS_CACHE_FILE)) {
     try {
-      const cached: CachedPosts = JSON.parse(readFileSync(POSTS_CACHE_FILE, 'utf-8'));
-      const age = Date.now() - cached.timestamp;
-
-      if (age < CACHE_TTL) {
-        console.log(`Using cached posts list (${Math.round(age / 1000)}s old)`);
-        // Restore Date objects
-        const posts = cached.posts.map(p => ({ ...p, date: new Date(p.date) }));
-        memoryCache = posts;
-        return posts;
-      }
+      existingCache = JSON.parse(readFileSync(POSTS_CACHE_FILE, 'utf-8'));
     } catch (e) {
-      console.log('Cache read error, fetching fresh data');
+      console.log('Cache read error, will fetch fresh data');
     }
   }
 
+  // If cache is fresh, use it
+  if (existingCache && (Date.now() - existingCache.timestamp) < CACHE_TTL) {
+    console.log(`Using cached posts list (${Math.round((Date.now() - existingCache.timestamp) / 1000)}s old)`);
+    const posts = existingCache.posts.map(p => ({ ...p, date: new Date(p.date) }));
+    memoryCache = posts;
+    return posts;
+  }
+
+  // Cache is stale or missing — try to fetch fresh data
   const BASE_URL = 'https://andymasley.substack.com/api/v1/posts';
   const allPosts: SubstackPost[] = [];
 
@@ -219,13 +220,16 @@ export async function fetchSubstackPosts(): Promise<SubstackPost[]> {
     // Sort by date descending
     allPosts.sort((a, b) => b.date.getTime() - a.date.getTime());
 
-    // If we got no posts, fall back to stale cache rather than caching empty results
-    if (allPosts.length === 0 && existsSync(POSTS_CACHE_FILE)) {
-      console.warn('Substack API returned 0 posts, falling back to stale cache');
-      const cached: CachedPosts = JSON.parse(readFileSync(POSTS_CACHE_FILE, 'utf-8'));
-      const posts = cached.posts.map(p => ({ ...p, date: new Date(p.date) }));
-      memoryCache = posts;
-      return posts;
+    // If API returned 0 posts, always fall back to cache — never cache empty results
+    if (allPosts.length === 0) {
+      if (existingCache && existingCache.posts.length > 0) {
+        console.warn('Substack API returned 0 posts, using stale cache');
+        const posts = existingCache.posts.map(p => ({ ...p, date: new Date(p.date) }));
+        memoryCache = posts;
+        return posts;
+      }
+      console.error('Substack API returned 0 posts and no cache available');
+      return [];
     }
 
     // Save to file cache
@@ -242,17 +246,12 @@ export async function fetchSubstackPosts(): Promise<SubstackPost[]> {
   } catch (error) {
     console.error('Failed to fetch Substack posts:', error);
 
-    // Fall back to stale cache rather than returning nothing
-    if (existsSync(POSTS_CACHE_FILE)) {
-      try {
-        const cached: CachedPosts = JSON.parse(readFileSync(POSTS_CACHE_FILE, 'utf-8'));
-        console.log(`Using stale cache (${cached.posts.length} posts) after API failure`);
-        const posts = cached.posts.map(p => ({ ...p, date: new Date(p.date) }));
-        memoryCache = posts;
-        return posts;
-      } catch (e) {
-        // Cache is also broken
-      }
+    // Always fall back to stale cache rather than returning nothing
+    if (existingCache && existingCache.posts.length > 0) {
+      console.log(`Using stale cache (${existingCache.posts.length} posts) after API failure`);
+      const posts = existingCache.posts.map(p => ({ ...p, date: new Date(p.date) }));
+      memoryCache = posts;
+      return posts;
     }
 
     return [];
