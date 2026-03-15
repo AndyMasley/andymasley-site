@@ -47,6 +47,9 @@ export function Calculator() {
   const [enabledPersonal, setEnabledPersonal] = useState<Set<string>>(new Set());
   const [enabledSystemic, setEnabledSystemic] = useState<Set<string>>(new Set());
   const [systemicOverrides, setSystemicOverrides] = useState<Record<string, SystemicOverride>>({});
+  // Per-action parameter overrides: key = action name, value = multiplier on savings
+  // e.g., if default is 50 queries/day and user sets 100, the override stores the ratio
+  const [actionParamOverrides, setActionParamOverrides] = useState<Record<string, number>>({});
 
   const footprint = useMemo(() => computeFootprint(baseline, overrides), [baseline, overrides]);
   const allPersonalActions = useMemo(() => computePersonalActions(baseline, footprint), [baseline, footprint]);
@@ -108,6 +111,7 @@ export function Calculator() {
         togglePersonal={togglePersonal}
         enabledSystemic={enabledSystemic}
         toggleSystemic={toggleSystemic}
+        actionParamOverrides={actionParamOverrides}
       />
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -125,6 +129,8 @@ export function Calculator() {
             toggleSystemic={toggleSystemic}
             systemicOverrides={systemicOverrides}
             onSystemicOverridesChange={setSystemicOverrides}
+            actionParamOverrides={actionParamOverrides}
+            onActionParamOverridesChange={setActionParamOverrides}
             footprintKg={footprint.totalKgCO2ePerYear}
           />
           <RefineSection buckets={footprint.buckets} overrides={overrides} onOverridesChange={setOverrides} />

@@ -26,9 +26,37 @@ interface AdvancedEditorProps {
   systemicOverrides: Record<string, SystemicOverride>;
   onSystemicOverridesChange: (o: Record<string, SystemicOverride>) => void;
   footprintKg: number;
+  actionParamOverrides: Record<string, number>;
+  onActionParamOverridesChange: (o: Record<string, number>) => void;
 }
 
 const GREEN = '#4A7C59';
+
+/** Inline editable parameter — only renders if action name includes `match` */
+function ActionParam({ name, label, defaultVal, match, unit, actionParamOverrides, getParamValue, updateActionParam }: {
+  name: string; label: string; defaultVal: number; match: string; unit: string;
+  actionParamOverrides: Record<string, number>;
+  getParamValue: (name: string, defaultVal: number) => string;
+  updateActionParam: (name: string, defaultVal: number, val: string) => void;
+}) {
+  if (!name.toLowerCase().includes(match.toLowerCase())) return null;
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+      <span>{label}:</span>
+      <input
+        type="number"
+        min={0}
+        step={1}
+        style={{ padding: '2px 4px', fontSize: '0.62rem', fontFamily: 'inherit', border: '1px solid #DDD9D0', borderRadius: '3px', width: '55px', textAlign: 'right', background: 'var(--bg-elevated, #fff)', color: 'var(--text, #1A1A18)' }}
+        value={getParamValue(name, defaultVal)}
+        placeholder={String(defaultVal)}
+        onChange={e => updateActionParam(name, defaultVal, e.target.value)}
+        onClick={e => e.stopPropagation()}
+      />
+      {unit && <span>{unit}</span>}
+    </div>
+  );
+}
 const MUTED = 'var(--text-secondary, #6B6B60)';
 const DIVIDER = 'var(--divider, #DDD9D0)';
 
@@ -123,7 +151,25 @@ export function AdvancedEditor({
   systemicOverrides,
   onSystemicOverridesChange,
   footprintKg,
+  actionParamOverrides,
+  onActionParamOverridesChange,
 }: AdvancedEditorProps) {
+
+  const updateActionParam = (actionName: string, defaultVal: number, newVal: string) => {
+    const num = parseFloat(newVal);
+    if (newVal === '' || isNaN(num)) {
+      const { [actionName]: _, ...rest } = actionParamOverrides;
+      onActionParamOverridesChange(rest);
+    } else {
+      onActionParamOverridesChange({ ...actionParamOverrides, [actionName]: num / defaultVal });
+    }
+  };
+
+  const getParamValue = (actionName: string, defaultVal: number): string => {
+    const mult = actionParamOverrides[actionName];
+    if (mult === undefined) return '';
+    return String(Math.round(defaultVal * mult));
+  };
 
   const housing = HOUSING_DEFAULTS[baseline.housingType] ?? HOUSING_DEFAULTS['single-family-small'];
   const defaultMiles = TRANSPORT_MILES[baseline.urbanForm] ?? 13500;
@@ -284,45 +330,33 @@ export function AdvancedEditor({
                           <Dot on={isOn} />
                           <span style={{ flex: 1, fontWeight: isOn ? 600 : 400, fontSize: '0.72rem' }}>{action.name}</span>
                           <span style={{ fontWeight: 700, color: isOn ? GREEN : MUTED, fontVariantNumeric: 'tabular-nums', fontSize: '0.68rem', whiteSpace: 'nowrap' }}>
-                            −{action.savingsKg.toLocaleString()}
+                            −{Math.round(action.savingsKg * (actionParamOverrides[action.name] ?? 1)).toLocaleString()}
                           </span>
                         </button>
                         {isOn && (
-                          <div style={{ padding: '1px 6px 5px 30px', fontSize: '0.62rem', color: MUTED, lineHeight: 1.4 }}>
-                            {action.note}
-                            {(action.name.includes('driving') || action.name.includes('Bike commute') || action.name.includes('transit') || action.name.includes('ride-hailing')) && (
-                              <div style={{ marginTop: '3px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <div style={{ padding: '2px 6px 5px 30px', fontSize: '0.62rem', color: MUTED, lineHeight: 1.5, display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                            <span>{action.note}</span>
+                            <ActionParam name={action.name} label="Queries/day" defaultVal={50} match="AI chatbot" unit="" actionParamOverrides={actionParamOverrides} getParamValue={getParamValue} updateActionParam={updateActionParam} />
+                            <ActionParam name={action.name} label="Hours/day" defaultVal={2} match="streaming" unit="" actionParamOverrides={actionParamOverrides} getParamValue={getParamValue} updateActionParam={updateActionParam} />
+                            <ActionParam name={action.name} label="Solar kW" defaultVal={7} match="solar" unit="kW" actionParamOverrides={actionParamOverrides} getParamValue={getParamValue} updateActionParam={updateActionParam} />
+                            <ActionParam name={action.name} label="Gas therms saved" defaultVal={500} match="gas furnace" unit="" actionParamOverrides={actionParamOverrides} getParamValue={getParamValue} updateActionParam={updateActionParam} />
+                            <ActionParam name={action.name} label="Gas therms saved" defaultVal={200} match="water heater" unit="" actionParamOverrides={actionParamOverrides} getParamValue={getParamValue} updateActionParam={updateActionParam} />
+                            <ActionParam name={action.name} label="% heating loss reduced" defaultVal={20} match="window" unit="%" actionParamOverrides={actionParamOverrides} getParamValue={getParamValue} updateActionParam={updateActionParam} />
+                            <ActionParam name={action.name} label="% savings" defaultVal={8} match="smart thermostat" unit="%" actionParamOverrides={actionParamOverrides} getParamValue={getParamValue} updateActionParam={updateActionParam} />
+                            <ActionParam name={action.name} label="% insulation savings" defaultVal={15} match="Weatherize" unit="%" actionParamOverrides={actionParamOverrides} getParamValue={getParamValue} updateActionParam={updateActionParam} />
+                            {action.name.includes('beef') && <ActionParam name={action.name} label="% beef cut" defaultVal={50} match="beef" unit="%" actionParamOverrides={actionParamOverrides} getParamValue={getParamValue} updateActionParam={updateActionParam} />}
+                            {(action.name.includes('driving') || action.name.includes('Bike') || action.name.includes('transit') || action.name.includes('ride-hailing')) && (
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                                 Miles/yr: <input type="number" min={0} step={500} style={INLINE_INPUT_STYLE} value={overrides.milesPerYear ?? ''} placeholder={String(defaultMiles)} onChange={e => updateOverride('milesPerYear', e.target.value)} onClick={e => e.stopPropagation()} />
                               </div>
                             )}
                             {action.category === 'Flights' && (
-                              <div style={{ marginTop: '3px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                                 Flights/yr: <input type="number" min={0} step={1} style={{ ...INLINE_INPUT_STYLE, width: '55px' }} value={baseline.flightsPerYear} onChange={e => onBaselineChange({ ...baseline, flightsPerYear: Math.max(0, parseInt(e.target.value) || 0) })} onClick={e => e.stopPropagation()} />
                               </div>
                             )}
-                            {action.name === 'Stop using AI chatbots' && (
-                              <div style={{ marginTop: '3px' }}>Based on 50 queries/day × 0.28 g each</div>
-                            )}
-                            {action.name === 'Reduce streaming by half' && (
-                              <div style={{ marginTop: '3px' }}>Based on ~2 hrs/day × 0.1 kWh/hr</div>
-                            )}
-                            {action.name.includes('solar') && (
-                              <div style={{ marginTop: '3px' }}>7 kW system → ~10,000 kWh/yr displaced</div>
-                            )}
-                            {action.name.includes('heat pump') && action.category === 'Home' && !action.name.includes('water') && (
-                              <div style={{ marginTop: '3px' }}>Saves ~500 therms gas, adds ~3,500 kWh electricity</div>
-                            )}
-                            {action.name.includes('water heater') && (
-                              <div style={{ marginTop: '3px' }}>Saves ~200 therms gas, adds ~1,500 kWh electricity</div>
-                            )}
-                            {action.name.includes('window') && (
-                              <div style={{ marginTop: '3px' }}>Reduces heating/cooling loss ~20%</div>
-                            )}
-                            {action.name.includes('smart thermostat') && (
-                              <div style={{ marginTop: '3px' }}>ENERGY STAR: ~8% savings on heating/cooling</div>
-                            )}
                             {action.name.includes('spending') && (
-                              <div style={{ marginTop: '3px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                                 Monthly $: <input type="number" min={0} step={100} style={INLINE_INPUT_STYLE} value={overrides.goodsSpendingPerMonth ?? ''} placeholder={String(baseline.monthlySpending)} onChange={e => updateOverride('goodsSpendingPerMonth', e.target.value)} onClick={e => e.stopPropagation()} />
                               </div>
                             )}

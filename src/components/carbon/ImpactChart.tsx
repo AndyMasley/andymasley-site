@@ -28,6 +28,7 @@ interface ImpactChartProps {
   togglePersonal: (name: string) => void;
   enabledSystemic: Set<string>;
   toggleSystemic: (name: string) => void;
+  actionParamOverrides: Record<string, number>;
 }
 
 function sigFigs(n: number, figs: number = 2): string {
@@ -56,7 +57,7 @@ const LIFESTYLE_PRESETS: { id: string; label: string; baseline: BaselineInputs }
 export function ImpactChart({
   footprintKg, personalActions, leverageCases, buckets,
   baseline, onBaselineChange, activeArchetypeId, onSelectArchetype, archetypeTotals,
-  enabledPersonal, togglePersonal, enabledSystemic, toggleSystemic,
+  enabledPersonal, togglePersonal, enabledSystemic, toggleSystemic, actionParamOverrides,
 }: ImpactChartProps) {
   const [activePresetId, setActivePresetId] = useState<string | null>(null);
   const [openCategory, setOpenCategory] = useState<string | null>(null);
@@ -66,7 +67,10 @@ export function ImpactChart({
     onBaselineChange(preset.baseline);
   };
 
-  const totalSaved = useMemo(() => personalActions.filter(a => enabledPersonal.has(a.name)).reduce((s, a) => s + a.savingsKg, 0), [personalActions, enabledPersonal]);
+  const totalSaved = useMemo(() => personalActions.filter(a => enabledPersonal.has(a.name)).reduce((s, a) => {
+    const mult = actionParamOverrides[a.name] ?? 1;
+    return s + Math.round(a.savingsKg * mult);
+  }, 0), [personalActions, enabledPersonal, actionParamOverrides]);
   const afterPersonal = Math.max(footprintKg - totalSaved, 0);
 
   const sortedLeverage = useMemo(() => [...leverageCases].sort((a, b) => b.displayKg.central - a.displayKg.central), [leverageCases]);
@@ -185,7 +189,7 @@ export function ImpactChart({
                               <Dot on={isOn} />
                               <span style={{ flex: 1, fontWeight: isOn ? 600 : 400, fontSize: '0.8rem' }}>{action.name}</span>
                               <span style={{ fontWeight: 700, color: isOn ? GREEN : MUTED, fontVariantNumeric: 'tabular-nums', fontSize: '0.75rem', whiteSpace: 'nowrap' }}>
-                                −{action.savingsKg.toLocaleString()}
+                                −{Math.round(action.savingsKg * (actionParamOverrides[action.name] ?? 1)).toLocaleString()}
                               </span>
                             </button>
                             {isOn && action.name === 'Cut beef by half' && (
