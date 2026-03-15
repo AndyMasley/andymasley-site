@@ -10,11 +10,17 @@ import Base from '@/layouts/Base.astro';
 
   <article class="cfp" id="cfp">
 
+    <!-- Mobile sticky total -->
+    <div class="cfp-mobile-sticky" id="cfp-mobile-sticky">
+      <span class="cfp-mobile-title">Carbon Footprint</span>
+      <span class="cfp-mobile-total" id="cfp-mobile-total">0 kg / yr</span>
+    </div>
+
     <!-- ZONE 1: Hero -->
     <header class="cfp-hero">
       <div class="cfp-hero-left">
         <h1 class="cfp-title">Carbon Footprint</h1>
-        <p class="cfp-intro">The average American produces roughly <strong>16 metric tons of CO<sub>2</sub>e per year</strong>&hairsp;&mdash;&hairsp;about 44 kg per day. Select activities below to see how your choices compare.</p>
+        <p class="cfp-intro">The average American produces roughly <strong>16 metric tons of CO<sub>2</sub>e per year</strong>&hairsp;&mdash;&hairsp;about <strong>44 kg per day</strong>. This puts the US among the highest-emitting countries per capita, roughly 2&times; the EU average and 8&times; the global average. Select activities below to see how specific choices contribute to&hairsp;&mdash;&hairsp;or subtract from&hairsp;&mdash;&hairsp;that total. <em>The concept of a &ldquo;personal carbon footprint&rdquo; was <a href="#cfp-systemic" class="cfp-link">popularized by BP</a>&hairsp;&mdash;&hairsp;individual choices still matter, but <a href="#cfp-systemic" class="cfp-link">systemic action matters more</a>.</em></p>
         <div class="cfp-toggle" id="cfp-toggle">
           <button class="cfp-toggle-btn active" data-mode="year">Per year</button>
           <button class="cfp-toggle-btn" data-mode="day">Per day</button>
@@ -38,15 +44,16 @@ import Base from '@/layouts/Base.astro';
         <div class="cfp-context" id="context-line"></div>
       </div>
       <div class="cfp-equiv-chips" id="equiv-chips"></div>
-      <div class="cfp-spectrum" id="cfp-spectrum">
-        <svg viewBox="0 0 800 44" preserveAspectRatio="xMidYMid meet">
-          <line x1="0" y1="28" x2="800" y2="28" stroke="#DDD9D0" stroke-width="2"/>
-          <g id="spectrum-paris" class="cfp-spec-mark"><line x1="0" y1="18" x2="0" y2="38" stroke="#4A7C59" stroke-width="1.5" stroke-dasharray="3,2"/><text x="0" y="12" fill="#4A7C59">Paris 2030</text></g>
-          <g id="spectrum-global" class="cfp-spec-mark"><line x1="0" y1="18" x2="0" y2="38" stroke="#9A9A8A" stroke-width="1.5"/><text x="0" y="12" fill="#9A9A8A">Global avg</text></g>
-          <g id="spectrum-eu" class="cfp-spec-mark"><line x1="0" y1="18" x2="0" y2="38" stroke="#9A9A8A" stroke-width="1.5"/><text x="0" y="12" fill="#9A9A8A">EU avg</text></g>
-          <g id="spectrum-us" class="cfp-spec-mark"><line x1="0" y1="18" x2="0" y2="38" stroke="#C8C3B8" stroke-width="2"/><text x="0" y="12" fill="#9A9A8A">US avg</text></g>
-          <circle id="spectrum-user" cx="0" cy="28" r="7" fill="#8B2E2E" stroke="#F5F2EC" stroke-width="2"/>
-        </svg>
+      <div class="cfp-global-strip-wrap">
+        <div class="cfp-global-strip-label">WHERE YOU FALL GLOBALLY</div>
+        <div class="cfp-global-strip-container" id="cfp-global-strip">
+          <div class="cfp-global-gradient"></div>
+          <div class="cfp-global-ticks" id="cfp-global-ticks"></div>
+          <div class="cfp-global-user-marker" id="cfp-global-marker">
+            <div class="cfp-global-marker-dot"></div>
+            <div class="cfp-global-marker-label" id="cfp-global-marker-label">You</div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -85,26 +92,32 @@ import Base from '@/layouts/Base.astro';
       <div class="cfp-controls-header">
         <span class="cfp-controls-label">Activities</span>
         <div class="cfp-controls-right">
-          <input type="text" class="cfp-search" id="cfp-search" placeholder="Filter activities..." />
           <div class="cfp-presets">
             <button class="cfp-preset-btn" id="btn-all">All</button>
             <button class="cfp-preset-btn" id="btn-none">None</button>
-            <button class="cfp-preset-btn cfp-preset-btn--accent" id="btn-avg">Avg American</button>
+            <button class="cfp-preset-btn cfp-preset-btn--accent" id="btn-avg">Rep. basket</button>
+          </div>
+          <div class="cfp-compare-inline">
+            <span class="cfp-compare-label-text">Compare:</span>
+            <select class="cfp-compare-select" id="compare-select">
+              <option value="">None</option>
+              <option value="vegan-urbanite">Vegan urbanite</option>
+              <option value="suburban-family">Suburban family</option>
+              <option value="climate-conscious">Climate-conscious</option>
+            </select>
           </div>
         </div>
       </div>
-      <div class="cfp-preset-note" id="preset-note" hidden>Approx. basket&hairsp;&mdash;&hairsp;actual average includes many uncategorized sources</div>
-      <details class="cfp-compare-details">
-        <summary>Compare against a profile</summary>
-        <label class="cfp-compare-label">
-          <select class="cfp-compare-select" id="compare-select">
-            <option value="">None</option>
-            <option value="vegan-urbanite">Vegan urbanite</option>
-            <option value="suburban-family">Suburban family</option>
-            <option value="climate-conscious">Climate-conscious</option>
-          </select>
-        </label>
-      </details>
+      <div class="cfp-preset-note" id="preset-note" hidden>&hairsp;&#8505; This basket (~11,500 kg) represents activities trackable here. The full 16,000 kg average includes healthcare, government services, and other uncounted sources.</div>
+      <div class="cfp-activities-controls">
+        <div class="cfp-search-wrap">
+          <input type="text" class="cfp-search" id="cfp-search" placeholder="Filter activities…" autocomplete="off" spellcheck="false" />
+        </div>
+        <div class="cfp-sort-wrap">
+          <button class="cfp-sort-btn active" data-sort="default" id="sort-default">Default</button>
+          <button class="cfp-sort-btn" data-sort="impact" id="sort-impact">Highest impact ↓</button>
+        </div>
+      </div>
       <div class="cfp-grid" id="cfp-grid"></div>
     </div>
 
@@ -222,10 +235,18 @@ import Base from '@/layouts/Base.astro';
   .cfp-equiv-chip { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--div); border-radius: 20px; padding: 4px 12px; font-size: 0.75rem; color: var(--text2); }
   .cfp-equiv-chip svg { width: 14px; height: 14px; stroke: var(--cat); fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
 
-  .cfp-spectrum { margin: 1rem 0; max-width: 700px; }
-  .cfp-spectrum svg { width: 100%; height: 44px; overflow: visible; }
-  .cfp-spec-mark text { font-family: var(--font); font-size: 9px; font-weight: 600; letter-spacing: 0.04em; text-anchor: middle; }
-  #spectrum-user { transition: cx 0.4s ease; }
+  /* Global gradient strip */
+  .cfp-global-strip-wrap { margin: 1.5rem 0; }
+  .cfp-global-strip-label { font-size: 0.58rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--cat); font-weight: 700; margin-bottom: 0.4rem; }
+  .cfp-global-strip-container { position: relative; height: 64px; }
+  .cfp-global-gradient { position: absolute; top: 22px; left: 0; right: 0; height: 14px; border-radius: 7px; background: linear-gradient(to right, #4A7C59 0%, #8AB04A 15%, #DDD9D0 30%, #C4A060 50%, #A0522D 75%, #8B2E2E 100%); }
+  .cfp-global-ticks { position: absolute; top: 0; left: 0; right: 0; height: 100%; }
+  .cfp-global-tick { position: absolute; top: 0; transform: translateX(-50%); }
+  .cfp-global-tick-line { width: 1px; height: 20px; background: var(--div); margin: 0 auto; margin-top: 18px; }
+  .cfp-global-tick-label { font-size: 0.58rem; color: var(--cat); white-space: nowrap; text-align: center; margin-top: 2px; }
+  .cfp-global-user-marker { position: absolute; top: 0; transform: translateX(-50%); transition: left 0.45s cubic-bezier(0.25, 0.46, 0.45, 0.94); z-index: 5; }
+  .cfp-global-marker-dot { width: 14px; height: 14px; border-radius: 50%; background: var(--text); border: 2px solid var(--bg); margin: 0 auto; margin-top: 15px; box-shadow: 0 2px 6px rgba(0,0,0,0.25); }
+  .cfp-global-marker-label { font-size: 0.6rem; font-weight: 700; white-space: nowrap; text-align: center; color: var(--text); margin-top: 3px; font-variant-numeric: tabular-nums; }
 
   /* ── ZONE 3: Bars + Treemap ── */
   .cfp-viz { margin-bottom: 2rem; }
@@ -290,9 +311,9 @@ import Base from '@/layouts/Base.astro';
   .cfp-preset-btn--accent { border-color: var(--accent); color: var(--accent); }
   .cfp-preset-btn--accent:hover { background: var(--accent); color: var(--bg); }
   .cfp-preset-note { font-size: 0.72rem; color: var(--text2); font-style: italic; margin-top: 6px; }
-  .cfp-compare-details { margin: 1rem 0 1.5rem; }
-  .cfp-compare-details summary { font-size: 0.75rem; color: var(--cat); cursor: pointer; font-weight: 600; }
-  .cfp-compare-select { font-family: var(--font); font-size: 0.8rem; padding: 5px 10px; border: 1px solid var(--div); border-radius: 4px; background: var(--bg); color: var(--text); cursor: pointer; margin-top: 8px; display: block; }
+  .cfp-compare-inline { display: flex; align-items: center; gap: 6px; margin-left: 0.5rem; }
+  .cfp-compare-label-text { font-size: 0.72rem; color: var(--cat); white-space: nowrap; }
+  .cfp-compare-select { font-family: var(--font); font-size: 0.8rem; padding: 5px 10px; border: 1px solid var(--div); border-radius: 4px; background: var(--bg); color: var(--text); cursor: pointer; }
 
   .cfp-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0 3vw; width: 100%; margin-top: 1.5rem; }
   .cfp-cat-group { display: flex; flex-direction: column; gap: 2px; }
@@ -429,6 +450,22 @@ import Base from '@/layouts/Base.astro';
     .cfp-sys-axis { margin-left: 0; }
   }
 
+  /* Link style for intro */
+  .cfp-link { color: var(--accent); text-decoration: underline; text-underline-offset: 3px; }
+
+  /* Mobile sticky header */
+  .cfp-mobile-sticky { display: none; position: sticky; top: 0; z-index: 50; background: var(--bg); border-bottom: 1px solid var(--div); padding: 10px 0; justify-content: space-between; align-items: center; }
+  .cfp-mobile-title { font-weight: 700; font-size: 0.9rem; color: var(--text); }
+  .cfp-mobile-total { font-size: 0.85rem; font-weight: 600; color: var(--accent); font-variant-numeric: tabular-nums; }
+
+  /* Activities controls (search + sort) */
+  .cfp-activities-controls { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+  .cfp-search-wrap { position: relative; flex: 1; max-width: 280px; }
+  .cfp-sort-wrap { display: flex; gap: 4px; }
+  .cfp-sort-btn { padding: 7px 13px; font-size: 0.75rem; font-family: var(--font); font-weight: 500; border-radius: 5px; border: 1px solid var(--div); background: transparent; color: var(--text2); cursor: pointer; transition: all 0.15s; }
+  .cfp-sort-btn.active { background: var(--accent); border-color: var(--accent); color: var(--bg); }
+  .cfp-sort-btn:hover:not(.active) { border-color: var(--accent); color: var(--accent); }
+
   /* Animations */
   .cfp-hero, .cfp-dashboard, .cfp-viz, .cfp-story, .cfp-controls { animation: fadeUp 0.5s ease both; }
   .cfp-dashboard { animation-delay: 80ms; }
@@ -442,7 +479,12 @@ import Base from '@/layouts/Base.astro';
 
   /* Responsive */
   @media (max-width: 1100px) { .cfp-grid { grid-template-columns: repeat(3, 1fr); gap: 2rem 3vw; } }
-  @media (max-width: 700px) { .cfp-grid { grid-template-columns: repeat(2, 1fr); gap: 1.5rem 3vw; } }
+  @media (max-width: 700px) {
+    .cfp-grid { grid-template-columns: repeat(2, 1fr); gap: 1.5rem 3vw; }
+    .cfp-mobile-sticky { display: flex; }
+    .cfp-activities-controls { flex-direction: column; align-items: flex-start; }
+    .cfp-search-wrap { max-width: 100%; width: 100%; }
+  }
   @media (max-width: 480px) {
     .cfp { padding: 2rem 1.25rem 4rem; }
     .cfp-grid { grid-template-columns: 1fr; gap: 2rem; }
@@ -743,20 +785,31 @@ import Base from '@/layouts/Base.astro';
       return result;
     }
 
-    // ── Spectrum ──
-    function renderSpectrum(totalKg: number) {
-      const maxKg = 20000;
-      const toX = (kg: number) => Math.min(kg / maxKg, 1) * 800;
-      const setMark = (id: string, kg: number) => {
-        const g = document.getElementById(id);
-        if (g) { g.querySelectorAll('line').forEach(l => { l.setAttribute('x1', String(toX(kg))); l.setAttribute('x2', String(toX(kg))); }); g.querySelector('text')?.setAttribute('x', String(toX(kg))); }
-      };
-      setMark('spectrum-paris', BENCHMARKS.paris2030);
-      setMark('spectrum-global', BENCHMARKS.globalAvg);
-      setMark('spectrum-eu', BENCHMARKS.euAvg);
-      setMark('spectrum-us', BASELINE.kgPerYear);
-      const userCircle = document.getElementById('spectrum-user');
-      if (userCircle) userCircle.setAttribute('cx', String(toX(Math.max(0, totalKg))));
+    // ── Global gradient strip ──
+    function updateGlobalStrip(totalKg: number) {
+      const MAX_KG = 24000;
+      const pct = Math.min(Math.max(totalKg / MAX_KG * 100, 0), 103);
+      const markerEl = document.getElementById('cfp-global-marker') as HTMLElement | null;
+      const markerLabelEl = document.getElementById('cfp-global-marker-label');
+      if (markerEl) markerEl.style.left = `${pct}%`;
+      if (markerLabelEl) {
+        const kVal = totalKg / 1000;
+        markerLabelEl.textContent = totalKg > 0 ? `${kVal >= 10 ? Math.round(kVal) : kVal.toFixed(1)}k kg` : 'You';
+      }
+      const ticksEl = document.getElementById('cfp-global-ticks') as HTMLElement | null;
+      if (ticksEl && !ticksEl.dataset.rendered) {
+        ticksEl.dataset.rendered = '1';
+        const ticks = [
+          { kg: 2500, label: 'Paris 2030' },
+          { kg: 4700, label: 'Global avg' },
+          { kg: 8200, label: 'EU avg' },
+          { kg: 16000, label: 'US avg' },
+        ];
+        ticksEl.innerHTML = ticks.map(t => {
+          const p = (t.kg / MAX_KG) * 100;
+          return `<div class="cfp-global-tick" style="left:${p}%"><div class="cfp-global-tick-line"></div><div class="cfp-global-tick-label">${t.label}</div></div>`;
+        }).join('');
+      }
     }
 
     // ── Context sentence & equivalencies ──
@@ -796,7 +849,7 @@ import Base from '@/layouts/Base.astro';
         });
       }
 
-      renderSpectrum(totalKg);
+      updateGlobalStrip(totalKg);
     }
 
     // ── Carbon story ──
@@ -1090,6 +1143,15 @@ import Base from '@/layouts/Base.astro';
       renderParisPath(checked, totalKg);
       renderSystemic(totalKg);
       renderCompare();
+
+      // Mobile sticky total
+      const mobileTotal = document.getElementById('cfp-mobile-total');
+      if (mobileTotal) {
+        mobileTotal.textContent = mode === 'day'
+          ? `${(totalKg/365).toFixed(1)} kg / day`
+          : `${fmt(totalKg)} kg / yr`;
+      }
+
       saveHash();
     }
 
@@ -1250,13 +1312,68 @@ import Base from '@/layouts/Base.astro';
       });
     });
 
-    // Share
-    document.getElementById('share-btn')!.addEventListener('click', () => {
-      navigator.clipboard.writeText(location.href).then(() => {
-        const confirm = document.getElementById('share-confirm')!;
-        confirm.hidden = false;
-        setTimeout(() => { confirm.hidden = true; }, 2000);
+    // Sort
+    document.querySelectorAll('.cfp-sort-btn').forEach(btn => {
+      btn.addEventListener('click', function() {
+        document.querySelectorAll('.cfp-sort-btn').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+        const sortMode = (this as HTMLElement).dataset.sort;
+        grid.querySelectorAll('.cfp-cat-group').forEach(group => {
+          const rows = [...group.querySelectorAll('.cfp-act')] as HTMLElement[];
+          if (sortMode === 'impact') {
+            rows.sort((a, b) => {
+              const aKg = Math.abs(actMap.get(a.dataset.key!)?.kgYear || 0);
+              const bKg = Math.abs(actMap.get(b.dataset.key!)?.kgYear || 0);
+              return bKg - aKg;
+            });
+          } else {
+            rows.sort((a, b) => {
+              const aIdx = DATA.findIndex(d => d.key === a.dataset.key);
+              const bIdx = DATA.findIndex(d => d.key === b.dataset.key);
+              return aIdx - bIdx;
+            });
+          }
+          rows.forEach(row => group.appendChild(row));
+        });
       });
+    });
+
+    // Smooth scroll for internal links
+    document.querySelectorAll('.cfp a[href^="#"]').forEach(link => {
+      link.addEventListener('click', function(e) {
+        const href = (this as HTMLAnchorElement).getAttribute('href');
+        if (!href) return;
+        const target = document.querySelector(href);
+        if (target) {
+          e.preventDefault();
+          target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      });
+    });
+
+    // Share
+    const shareBtn = document.getElementById('share-btn')!;
+    shareBtn.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(location.href);
+      } catch {
+        const ta = document.createElement('textarea');
+        ta.value = location.href;
+        ta.style.cssText = 'position:fixed;opacity:0';
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+      }
+      const originalText = shareBtn.textContent;
+      shareBtn.textContent = '✓ Link copied';
+      shareBtn.style.color = 'var(--green)';
+      shareBtn.style.borderColor = 'var(--green)';
+      setTimeout(() => {
+        shareBtn.textContent = originalText;
+        shareBtn.style.color = '';
+        shareBtn.style.borderColor = '';
+      }, 2500);
     });
 
     // Keyboard
