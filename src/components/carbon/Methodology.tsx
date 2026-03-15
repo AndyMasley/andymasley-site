@@ -528,15 +528,16 @@ export function Methodology() {
             </p>
 
             <p style={{ marginTop: '12px' }}>
-              <strong>Stop using AI chatbots:</strong> <code>18 kg CO₂e/yr</code>
+              <strong>Stop using AI chatbots:</strong> <code>5 kg CO₂e/yr</code>
             </p>
             <ul>
               <li>Based on ~50 queries/day, ~365 days/year</li>
-              <li>Each AI query uses approximately <code>2.9 Wh</code> of electricity (including data center, networking, and device), roughly 10× a standard web search at ~0.3 Wh</li>
-              <li>Calculation: <code>50 queries × 0.0029 kWh × 365 days × 0.39 kg/kWh = ~21 kg</code>. We use 18 kg as a conservative round.</li>
-              <li>Source: <Src href="https://www.iea.org/reports/energy-and-ai">IEA — Energy and AI (2024)</Src></li>
-              <li>Also see: <Src href="https://www.cell.com/joule/fulltext/S2542-4351(23)00365-3">de Vries 2023 — "The growing energy footprint of artificial intelligence"</Src> in Joule</li>
-              <li><strong>Context:</strong> 18 kg is ~0.1% of a typical American footprint. This is included because it&apos;s frequently asked about, not because it&apos;s materially significant.</li>
+              <li>Each ChatGPT prompt uses approximately <code>0.3 Wh</code> of electricity (including cooling and data center overhead)</li>
+              <li>CO₂ per prompt: <code>0.28 g</code> (accounting for data center grid carbon intensity being ~48% above US average, and including training overhead at ~40% of AI energy)</li>
+              <li>Calculation: <code>50 queries × 0.28 g × 365 days = 5,110 g ≈ 5 kg/yr</code></li>
+              <li>For context, you would need to prompt ChatGPT ~2,000 times in a single day to increase your daily emissions by 1%</li>
+              <li>Source: <Src href="https://www.andymasley.com/writing/whats-the-full-hidden-climate-cost/">Andy Masley — "What&apos;s the full hidden climate cost of using ChatGPT?"</Src></li>
+              <li><strong>Context:</strong> 5 kg is ~0.03% of a typical American footprint. This is included because it&apos;s frequently asked about, not because it&apos;s materially significant.</li>
             </ul>
 
             <p style={{ marginTop: '12px' }}>

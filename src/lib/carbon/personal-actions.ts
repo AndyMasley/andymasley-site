@@ -212,10 +212,10 @@ export function computePersonalActions(baseline: BaselineInputs, footprint: Foot
     // ── Digital ──
     {
       name: 'Stop using AI chatbots',
-      savingsKg: 18,
+      savingsKg: 5,
       category: 'Digital',
       applicable: true,
-      note: 'Based on ~50 queries/day; each query uses ~10x the energy of a search',
+      note: '~50 queries/day × 0.28 g CO₂ each = ~5 kg/yr. Negligible.',
     },
     {
       name: 'Reduce streaming by half',
