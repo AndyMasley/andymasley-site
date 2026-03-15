@@ -46,15 +46,10 @@ import { Calculator } from '@/components/carbon/Calculator';
 </Base>
 
 <style is:global>
-  /* Use the site's normal background — don't override */
-
-  body:has(.cfv2) .main-content {
-    max-width: 100%;
-  }
-  /* Keep the header at normal site width */
-  body:has(.cfv2) .main-content > .header {
-    max-width: var(--max-width, 640px);
-    margin: 0 auto;
+  /* Break the calculator out of the normal content width without touching .main-content or .header */
+  .cfv2 {
+    width: calc(100vw - 48px);
+    margin-left: calc(-1 * (100vw - 48px - 100%) / 2);
   }
 
   .cfv2 {
@@ -67,9 +62,8 @@ import { Calculator } from '@/components/carbon/Calculator';
     --bar-track: #D4CFCA;
     font-family: 'DM Sans', sans-serif;
     color: var(--text);
-    padding: 0 16px 3rem;
+    padding: 0 0 3rem;
     max-width: 1600px;
-    margin: 0 auto;
   }
 
   .cfv2-hero {
@@ -297,9 +291,4 @@ import { Calculator } from '@/components/carbon/Calculator';
     .cfv2 { padding: 1.5rem 0 3rem; }
   }
 
-  /* Disable view transition animations on this page */
-  ::view-transition-old(root),
-  ::view-transition-new(root) {
-    animation: none !important;
-  }
 </style>
