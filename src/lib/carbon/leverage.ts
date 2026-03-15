@@ -198,6 +198,7 @@ export function computeLeverage(
 export interface SystemicOverride {
   coalitionSize?: number;
   probability?: number;
+  donationAmount?: number;
 }
 
 export function computeLeverageWithOverrides(
@@ -214,6 +215,10 @@ export function computeLeverageWithOverrides(
     if (ov.coalitionSize !== undefined && ov.coalitionSize > 0) {
       adjusted.coalitionSize = ov.coalitionSize;
       adjusted.attributionFraction = 1 / ov.coalitionSize;
+    }
+    if (ov.donationAmount !== undefined && ov.donationAmount > 0) {
+      // Charity case: scale MWh linearly with donation amount (base is $200)
+      adjusted.annualLoadAffectedMWh = c.annualLoadAffectedMWh * (ov.donationAmount / 200);
     }
     if (ov.probability !== undefined) {
       // probability is 0-1; override central (low and high stay the same ratio)

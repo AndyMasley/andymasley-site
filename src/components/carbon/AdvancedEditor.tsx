@@ -375,34 +375,52 @@ export function AdvancedEditor({
                         {sigFigs(central)}<span style={{ fontSize: '0.5rem', fontWeight: 400, marginLeft: '2px' }}>{result.displayUnit}</span>
                       </span>
                     </button>
-                    <div style={{ padding: '2px 8px 6px 30px', display: 'flex', flexWrap: 'wrap', gap: '6px 12px', alignItems: 'center' }}>
-                      <label style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.62rem', color: MUTED }}>
-                        Coalition:
-                        <input
-                          type="number"
-                          min={1}
-                          style={INLINE_INPUT_STYLE}
-                          value={ov?.coalitionSize ?? ''}
-                          placeholder={String(result.case.coalitionSize)}
-                          onChange={e => updateSystemicOverride(result.case.name, 'coalitionSize', e.target.value)}
-                          onClick={e => e.stopPropagation()}
-                        />
-                      </label>
-                      <label style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.62rem', color: MUTED }}>
-                        P(success) %:
-                        <input
-                          type="number"
-                          min={0}
-                          max={100}
-                          step={0.1}
-                          style={{ ...INLINE_INPUT_STYLE, width: '65px' }}
-                          value={ov?.probability !== undefined ? Math.round(ov.probability * 1000) / 10 : ''}
-                          placeholder={String(Math.round(result.case.probabilityOfSuccess.central * 1000) / 10)}
-                          onChange={e => updateSystemicOverride(result.case.name, 'probability', e.target.value)}
-                          onClick={e => e.stopPropagation()}
-                        />
-                      </label>
-                    </div>
+                    {result.case.name.includes('effective climate charity') ? (
+                      <div style={{ padding: '2px 8px 6px 30px', display: 'flex', flexWrap: 'wrap', gap: '6px 12px', alignItems: 'center' }}>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.62rem', color: MUTED }}>
+                          Donation $:
+                          <input
+                            type="number"
+                            min={1}
+                            step={50}
+                            style={INLINE_INPUT_STYLE}
+                            value={ov?.donationAmount ?? ''}
+                            placeholder="200"
+                            onChange={e => updateSystemicOverride(result.case.name, 'donationAmount', e.target.value)}
+                            onClick={e => e.stopPropagation()}
+                          />
+                        </label>
+                      </div>
+                    ) : (
+                      <div style={{ padding: '2px 8px 6px 30px', display: 'flex', flexWrap: 'wrap', gap: '6px 12px', alignItems: 'center' }}>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.62rem', color: MUTED }}>
+                          Coalition:
+                          <input
+                            type="number"
+                            min={1}
+                            style={INLINE_INPUT_STYLE}
+                            value={ov?.coalitionSize ?? ''}
+                            placeholder={String(result.case.coalitionSize)}
+                            onChange={e => updateSystemicOverride(result.case.name, 'coalitionSize', e.target.value)}
+                            onClick={e => e.stopPropagation()}
+                          />
+                        </label>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.62rem', color: MUTED }}>
+                          P(success) %:
+                          <input
+                            type="number"
+                            min={0}
+                            max={100}
+                            step={0.1}
+                            style={{ ...INLINE_INPUT_STYLE, width: '65px' }}
+                            value={ov?.probability !== undefined ? Math.round(ov.probability * 1000) / 10 : ''}
+                            placeholder={String(Math.round(result.case.probabilityOfSuccess.central * 1000) / 10)}
+                            onChange={e => updateSystemicOverride(result.case.name, 'probability', e.target.value)}
+                            onClick={e => e.stopPropagation()}
+                          />
+                        </label>
+                      </div>
+                    )}
                   </div>
                 );
               })}

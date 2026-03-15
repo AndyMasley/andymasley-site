@@ -600,7 +600,7 @@ export function Methodology() {
             </p>
             <p style={{ marginTop: '8px' }}>
               <code>
-                expectedKg/yr = P(success) × annualGeneration(MWh) × emissionRate(kg/MWh) × timeHorizon(yr) × attribution ÷ timeHorizon
+                expectedKg = P(success) × annualGeneration(MWh) × emissionRate(kg/MWh) × timeHorizon(yr) × attribution
               </code>
             </p>
             <p style={{ marginTop: '8px' }}>
@@ -617,7 +617,7 @@ export function Methodology() {
               <li>Coalition size: <code>3,000</code> advocates (e.g., the Diablo Canyon campaign involved thousands across multiple orgs) → attribution = <code>1/3,000</code></li>
               <li>P(success): low <code>2%</code>, central <code>5%</code>, high <code>15%</code>. Most nuclear closure campaigns do not succeed in reversal.</li>
               <li>Time horizon: <code>15 years</code> (remaining plant life)</li>
-              <li>Worked example (central): <code>7,884,000 × 300 × 15 × (1/3000) × 0.05 ÷ 15 = 39,420 kg/yr</code> per person (~2.5× US avg footprint)</li>
+              <li>Worked example (central): <code>7,884,000 × 300 × 15 × (1/3000) × 0.05 = 591,300 kg total</code> per person (~37 years of US avg footprint)</li>
               <li>Sources: <Src href="https://www.eia.gov/electricity/monthly/">EIA Electric Power Monthly</Src>, <Src href="https://www.epa.gov/egrid">EPA eGRID</Src>, <Src href="https://www.ucsusa.org/resources/nuclear-power-dilemma">UCS nuclear plant economics</Src></li>
             </ul>
 
@@ -628,7 +628,7 @@ export function Methodology() {
               <li>Coalition size: <code>10,000</code> (state-level campaigns involve many organizations, lobbyists, and grassroots supporters) → attribution = <code>1/10,000</code></li>
               <li>P(success): low <code>0.5%</code>, central <code>2%</code>, high <code>5%</code></li>
               <li>Time horizon: <code>10 years</code></li>
-              <li>Worked example (central): <code>60,000,000 × 250 × 10 × (1/10,000) × 0.02 ÷ 10 = 30,000 kg/yr</code> per person (~1.9× US avg)</li>
+              <li>Worked example (central): <code>60,000,000 × 250 × 10 × (1/10,000) × 0.02 = 300,000 kg total</code> per person (~19 years of US avg)</li>
               <li>Sources: <Src href="https://www.eia.gov/electricity/state/">EIA State Electricity Profiles</Src>, <Src href="https://www.dsireusa.org/">DSIRE renewable policy database</Src></li>
             </ul>
 
@@ -639,7 +639,7 @@ export function Methodology() {
               <li>Coalition size: <code>2,000</code> (local + national orgs like Sierra Club Beyond Coal) → attribution = <code>1/2,000</code></li>
               <li>P(success): low <code>1%</code>, central <code>3%</code>, high <code>10%</code></li>
               <li>Time horizon: <code>10 years</code> (early retirement = 10 years ahead of schedule)</li>
-              <li>Worked example (central): <code>3,500,000 × 500 × 10 × (1/2,000) × 0.03 ÷ 10 = 26,250 kg/yr</code> per person (~1.6× US avg)</li>
+              <li>Worked example (central): <code>3,500,000 × 500 × 10 × (1/2,000) × 0.03 = 262,500 kg total</code> per person (~16 years of US avg)</li>
               <li>Sources: <Src href="https://www.epa.gov/egrid">EPA eGRID</Src>, <Src href="https://www.sierraclub.org/campaign/beyond-coal">Sierra Club Beyond Coal campaign data</Src></li>
             </ul>
 
@@ -650,7 +650,7 @@ export function Methodology() {
               <li>Coalition size: <code>2,000</code> (includes all advocates, community supporters, developers, local officials — not just the permitting committee) → attribution = <code>1/2,000</code></li>
               <li>P(success): low <code>5%</code>, central <code>15%</code>, high <code>40%</code>. Many proposed solar projects face permitting delays or community opposition.</li>
               <li>Time horizon: <code>25 years</code> (solar farm lifespan)</li>
-              <li>Worked example (central): <code>1,095,000 × 350 × 25 × (1/2,000) × 0.15 ÷ 25 = 28,744 kg/yr</code> per person (~1.8× US avg)</li>
+              <li>Worked example (central): <code>1,095,000 × 350 × 25 × (1/2,000) × 0.15 = 718,594 kg total</code> per person (~45 years of US avg)</li>
               <li>Source: <Src href="https://atb.nrel.gov/">NREL Annual Technology Baseline</Src></li>
             </ul>
 
@@ -661,7 +661,7 @@ export function Methodology() {
               <li>Coalition size: <code>15</code> (you + internal champions + sustainability staff) → attribution = <code>1/15</code></li>
               <li>P(success): low <code>5%</code>, central <code>15%</code>, high <code>40%</code>. Many companies are receptive but procurement timelines are long.</li>
               <li>Time horizon: <code>12 years</code> (typical PPA contract length)</li>
-              <li>Worked example (central): <code>5,000 × 375 × 12 × (1/15) × 0.15 ÷ 12 = 18,750 kg/yr</code> per person (~1.2× US avg)</li>
+              <li>Worked example (central): <code>5,000 × 375 × 12 × (1/15) × 0.15 = 225,000 kg total</code> per person (~14 years of US avg)</li>
               <li>Sources: <Src href="https://rebuyers.org/">Renewable Energy Buyers Alliance</Src></li>
             </ul>
 
@@ -672,17 +672,18 @@ export function Methodology() {
               <li>Coalition size: <code>20,000</code> (national-scale advocacy involves tens of thousands) → attribution = <code>1/20,000</code></li>
               <li>P(success): low <code>0.1%</code>, central <code>0.5%</code>, high <code>2%</code>. This is a diffuse, long-term policy goal with very uncertain attribution.</li>
               <li>Time horizon: <code>15 years</code></li>
-              <li>Worked example (central): <code>100,000,000 × 350 × 15 × (1/20,000) × 0.005 ÷ 15 = 8,750 kg/yr</code> per person (~0.5× US avg)</li>
+              <li>Worked example (central): <code>100,000,000 × 350 × 15 × (1/20,000) × 0.005 = 131,250 kg total</code> per person (~8 years of US avg)</li>
               <li>Sources: <Src href="https://emp.lbl.gov/queues">LBNL Queued Up report</Src>, <Src href="https://www.ferc.gov/electric-transmission">FERC transmission planning</Src></li>
             </ul>
 
-            <p style={{ marginTop: '16px', fontWeight: 700, fontSize: '0.85rem', color: 'var(--text, #1A1A18)' }}>7. Donate $200 to effective climate charity</p>
+            <p style={{ marginTop: '16px', fontWeight: 700, fontSize: '0.85rem', color: 'var(--text, #1A1A18)' }}>7. Donate to effective climate charity</p>
             <ul>
-              <li>This case is modeled differently — the "probability" field captures cost-effectiveness uncertainty rather than campaign success probability</li>
-              <li>Central estimate: <code>$10 per tonne CO₂e</code> averted → $200 = 20 tonnes = <code>20,000 kg</code>. This is a realistic central estimate for a portfolio of effective climate charities.</li>
+              <li>This case is modeled differently from the advocacy cases — it scales linearly with donation amount and the uncertainty is in cost-effectiveness, not probability of success</li>
+              <li>Formula: <code>expectedKg = donationAmount ÷ costPerTonne × 1,000</code></li>
+              <li>Central cost-effectiveness: <code>$10 per tonne CO₂e</code> averted. At $200 donation = 20 tonnes = <code>20,000 kg</code></li>
               <li>Pessimistic ($50/tonne): $200 = 4 tonnes = <code>4,000 kg</code></li>
               <li>Optimistic ($1/tonne — Founders Pledge's most optimistic CATF estimate): $200 = 200 tonnes = <code>200,000 kg</code></li>
-              <li>Coalition size: <code>1</code> (individual donation)</li>
+              <li>The donation amount is editable in the advanced editor — doubling the donation doubles the expected impact</li>
               <li><strong>Important:</strong> The $1/tonne CATF estimate from Founders Pledge is their most optimistic scenario for their single best recommendation. Most effective climate charities operate at $5-$50/tonne. Our central of $10/tonne reflects a realistic portfolio, not the theoretical optimum.</li>
               <li>Source: <Src href="https://www.founderspledge.com/recommendations/topic/climate-change">Founders Pledge — Climate Giving Recommendations</Src> (updated 2025)</li>
               <li>Latest research: <Src href="https://www.founderspledge.com/research/climate2025">Robust to Risk — Climate Philanthropy in 2025</Src></li>
