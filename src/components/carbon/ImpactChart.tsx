@@ -207,7 +207,7 @@ export function ImpactChart({
           <div className="cf-impact-scroll">
             <div style={{ fontSize: '0.72rem', color: MUTED, lineHeight: 1.45, marginBottom: '0.5rem' }}>
               Each number is a back-of-the-envelope calculation: how much carbon would be saved if the action succeeds × probability of success ÷ number of people working on it.
-              {' '}<a href="#methodology-systemic" style={{ color: GREEN, fontWeight: 600 }}>All numbers explained in methodology ↓</a>
+              {' '}All numbers explained in methodology below.
             </div>
             <ExampleDropdown />
             {sortedLeverage.map(result => {
