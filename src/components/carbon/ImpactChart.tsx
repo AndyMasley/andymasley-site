@@ -47,6 +47,7 @@ export function ImpactChart({
   const [enabledPersonal, setEnabledPersonal] = useState<Set<string>>(new Set());
   const [enabledSystemic, setEnabledSystemic] = useState<Set<string>>(new Set());
   const [activePresetId, setActivePresetId] = useState<string | null>(null);
+  const [openCategory, setOpenCategory] = useState<string | null>(null);
 
   const togglePersonal = (name: string) => {
     setEnabledPersonal(prev => { const n = new Set(prev); if (n.has(name)) n.delete(name); else n.add(name); return n; });
@@ -142,25 +143,54 @@ export function ImpactChart({
             Personal cuts
           </div>
           <div className="cf-impact-scroll">
-            {groupedActions.map(group => (
-              <div key={group.category}>
-                <div style={categoryHeader}>{group.category}</div>
-                {group.actions.map(action => {
-                  const isOn = enabledPersonal.has(action.name);
-                  return (
-                    <button key={action.name} onClick={() => togglePersonal(action.name)} className="cf-toggle-row" data-on={isOn} aria-pressed={isOn}>
-                      <Dot on={isOn} />
-                      <span style={{ flex: 1, fontWeight: isOn ? 600 : 400, fontSize: '0.8rem' }}>{action.name}</span>
-                      <span style={{ fontWeight: 700, color: isOn ? GREEN : MUTED, fontVariantNumeric: 'tabular-nums', fontSize: '0.75rem', whiteSpace: 'nowrap' }}>
-                        −{action.savingsKg.toLocaleString()}
+            {groupedActions.map(group => {
+              const isOpen = openCategory === group.category;
+              const enabledCount = group.actions.filter(a => enabledPersonal.has(a.name)).length;
+              const groupSaved = group.actions.filter(a => enabledPersonal.has(a.name)).reduce((s, a) => s + a.savingsKg, 0);
+              return (
+                <div key={group.category} style={{ marginBottom: '2px' }}>
+                  <button
+                    onClick={() => setOpenCategory(isOpen ? null : group.category)}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: '6px', width: '100%',
+                      padding: '6px 8px', border: 'none', borderRadius: '5px',
+                      background: isOpen ? 'rgba(74,124,89,0.06)' : 'transparent',
+                      cursor: 'pointer', fontFamily: 'inherit', fontSize: '0.72rem',
+                      fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase',
+                      color: 'var(--text, #1A1A18)', textAlign: 'left', minHeight: '32px',
+                    }}
+                    aria-expanded={isOpen}
+                  >
+                    <span style={{ fontSize: '0.6rem', transition: 'transform 0.15s', transform: isOpen ? 'rotate(90deg)' : 'none', color: MUTED }}>▶</span>
+                    <span style={{ flex: 1 }}>{group.category}</span>
+                    {enabledCount > 0 && (
+                      <span style={{ fontSize: '0.65rem', fontWeight: 700, color: GREEN, fontVariantNumeric: 'tabular-nums' }}>
+                        {enabledCount} · −{groupSaved.toLocaleString()}
                       </span>
-                    </button>
-                  );
-                })}
-              </div>
-            ))}
+                    )}
+                    <span style={{ fontSize: '0.6rem', color: MUTED, fontWeight: 400 }}>{group.actions.length}</span>
+                  </button>
+                  {isOpen && (
+                    <div style={{ paddingLeft: '4px', paddingBottom: '4px' }}>
+                      {group.actions.map(action => {
+                        const isOn = enabledPersonal.has(action.name);
+                        return (
+                          <button key={action.name} onClick={() => togglePersonal(action.name)} className="cf-toggle-row" data-on={isOn} aria-pressed={isOn}>
+                            <Dot on={isOn} />
+                            <span style={{ flex: 1, fontWeight: isOn ? 600 : 400, fontSize: '0.8rem' }}>{action.name}</span>
+                            <span style={{ fontWeight: 700, color: isOn ? GREEN : MUTED, fontVariantNumeric: 'tabular-nums', fontSize: '0.75rem', whiteSpace: 'nowrap' }}>
+                              −{action.savingsKg.toLocaleString()}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
             {hasPersonal && (
-              <div style={{ fontSize: '0.75rem', color: MUTED, marginTop: '0.75rem', lineHeight: 1.4 }}>
+              <div style={{ fontSize: '0.75rem', color: MUTED, marginTop: '0.75rem', lineHeight: 1.4, paddingTop: '0.5rem', borderTop: `1px solid ${DIVIDER}` }}>
                 Cut <strong style={{ color: GREEN }}>{totalSaved.toLocaleString()} kg</strong> ({Math.round(totalSaved / footprintKg * 100)}%).
                 {afterPersonal > 0 && <> <strong>{afterPersonal.toLocaleString()}</strong> remains — your ceiling.</>}
               </div>
