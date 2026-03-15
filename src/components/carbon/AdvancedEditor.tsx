@@ -335,7 +335,6 @@ export function AdvancedEditor({
                         </button>
                         {isOn && (
                           <div style={{ padding: '2px 6px 5px 30px', fontSize: '0.62rem', color: MUTED, lineHeight: 1.5, display: 'flex', flexDirection: 'column', gap: '3px' }}>
-                            <span>{action.note}</span>
                             <ActionParam name={action.name} label="Queries/day" defaultVal={50} match="AI chatbot" unit="" actionParamOverrides={actionParamOverrides} getParamValue={getParamValue} updateActionParam={updateActionParam} />
                             <ActionParam name={action.name} label="Hours/day" defaultVal={2} match="streaming" unit="" actionParamOverrides={actionParamOverrides} getParamValue={getParamValue} updateActionParam={updateActionParam} />
                             <ActionParam name={action.name} label="Solar kW" defaultVal={7} match="solar" unit="kW" actionParamOverrides={actionParamOverrides} getParamValue={getParamValue} updateActionParam={updateActionParam} />
