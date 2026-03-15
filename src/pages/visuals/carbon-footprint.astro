@@ -49,7 +49,9 @@ import { Calculator } from '@/components/carbon/Calculator';
   /* Break the calculator out of the normal content width without touching .main-content or .header */
   .cfv2 {
     width: calc(100vw - 48px);
-    margin-left: calc(-1 * (100vw - 48px - 100%) / 2);
+    position: relative;
+    left: 50%;
+    transform: translateX(-50%);
   }
 
   .cfv2 {
