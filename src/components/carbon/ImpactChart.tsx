@@ -24,6 +24,10 @@ interface ImpactChartProps {
   activeArchetypeId: string | null;
   onSelectArchetype: (id: string) => void;
   archetypeTotals: Record<string, number>;
+  enabledPersonal: Set<string>;
+  togglePersonal: (name: string) => void;
+  enabledSystemic: Set<string>;
+  toggleSystemic: (name: string) => void;
 }
 
 function sigFigs(n: number, figs: number = 2): string {
@@ -52,35 +56,10 @@ const LIFESTYLE_PRESETS: { id: string; label: string; baseline: BaselineInputs }
 export function ImpactChart({
   footprintKg, personalActions, leverageCases, buckets,
   baseline, onBaselineChange, activeArchetypeId, onSelectArchetype, archetypeTotals,
+  enabledPersonal, togglePersonal, enabledSystemic, toggleSystemic,
 }: ImpactChartProps) {
-  const [enabledPersonal, setEnabledPersonal] = useState<Set<string>>(new Set());
-  const [enabledSystemic, setEnabledSystemic] = useState<Set<string>>(new Set());
   const [activePresetId, setActivePresetId] = useState<string | null>(null);
   const [openCategory, setOpenCategory] = useState<string | null>(null);
-
-  const togglePersonal = (name: string) => {
-    setEnabledPersonal(prev => {
-      const n = new Set(prev);
-      if (n.has(name)) {
-        n.delete(name);
-      } else {
-        // Remove any other action in the same exclusive group
-        const action = personalActions.find(a => a.name === name);
-        if (action?.exclusiveGroup) {
-          for (const other of personalActions) {
-            if (other.exclusiveGroup === action.exclusiveGroup && other.name !== name) {
-              n.delete(other.name);
-            }
-          }
-        }
-        n.add(name);
-      }
-      return n;
-    });
-  };
-  const toggleSystemic = (name: string) => {
-    setEnabledSystemic(prev => { const n = new Set(prev); if (n.has(name)) n.delete(name); else n.add(name); return n; });
-  };
 
   const handlePresetClick = (preset: typeof LIFESTYLE_PRESETS[number]) => {
     setActivePresetId(preset.id);

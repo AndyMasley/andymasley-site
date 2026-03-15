@@ -12,10 +12,13 @@ import { DEFAULT_BASELINE } from '@/lib/carbon/types';
 import type { BaselineInputs, DetailedInputs } from '@/lib/carbon/types';
 import { computeFootprint } from '@/lib/carbon/baseline';
 import { computePersonalActions } from '@/lib/carbon/personal-actions';
-import { computeLeverage } from '@/lib/carbon/leverage';
+import type { PersonalAction } from '@/lib/carbon/personal-actions';
+import { computeLeverageWithOverrides } from '@/lib/carbon/leverage';
+import type { SystemicOverride } from '@/lib/carbon/leverage';
 import { BaselineForm } from './BaselineForm';
 import { ImpactChart } from './ImpactChart';
 import { AdvancedSection } from './AdvancedSection';
+import { AdvancedEditor } from './AdvancedEditor';
 import { RefineSection } from './RefineSection';
 import { PersonalChanges } from './PersonalChanges';
 import { ElectricitySection } from './ElectricitySection';
@@ -40,10 +43,39 @@ export function Calculator() {
   const [comparisonMode, setComparisonMode] = useState<ComparisonModeId | null>(null);
   const [copyFeedback, setCopyFeedback] = useState(false);
 
+  // Lifted from ImpactChart so both ImpactChart and AdvancedEditor share toggle state
+  const [enabledPersonal, setEnabledPersonal] = useState<Set<string>>(new Set());
+  const [enabledSystemic, setEnabledSystemic] = useState<Set<string>>(new Set());
+  const [systemicOverrides, setSystemicOverrides] = useState<Record<string, SystemicOverride>>({});
+
   const footprint = useMemo(() => computeFootprint(baseline, overrides), [baseline, overrides]);
   const allPersonalActions = useMemo(() => computePersonalActions(baseline, footprint), [baseline, footprint]);
-  const leverageData = useMemo(() => computeLeverage(footprint.totalKgCO2ePerYear), [footprint.totalKgCO2ePerYear]);
+  const leverageData = useMemo(() => computeLeverageWithOverrides(footprint.totalKgCO2ePerYear, systemicOverrides), [footprint.totalKgCO2ePerYear, systemicOverrides]);
   const comparisonContext = useMemo(() => getComparisonContext(footprint.totalKgCO2ePerYear, comparisonMode, baseline), [footprint.totalKgCO2ePerYear, comparisonMode, baseline]);
+
+  const togglePersonal = useCallback((name: string) => {
+    setEnabledPersonal(prev => {
+      const n = new Set(prev);
+      if (n.has(name)) {
+        n.delete(name);
+      } else {
+        const action = allPersonalActions.find((a: PersonalAction) => a.name === name);
+        if (action?.exclusiveGroup) {
+          for (const other of allPersonalActions) {
+            if (other.exclusiveGroup === action.exclusiveGroup && other.name !== name) {
+              n.delete(other.name);
+            }
+          }
+        }
+        n.add(name);
+      }
+      return n;
+    });
+  }, [allPersonalActions]);
+
+  const toggleSystemic = useCallback((name: string) => {
+    setEnabledSystemic(prev => { const n = new Set(prev); if (n.has(name)) n.delete(name); else n.add(name); return n; });
+  }, []);
 
   const handleSelectArchetype = useCallback((archId: string) => {
     const arch = ARCHETYPES.find(a => a.id === archId);
@@ -72,10 +104,29 @@ export function Calculator() {
         activeArchetypeId={activeArchetypeId}
         onSelectArchetype={handleSelectArchetype}
         archetypeTotals={ARCHETYPE_TOTALS}
+        enabledPersonal={enabledPersonal}
+        togglePersonal={togglePersonal}
+        enabledSystemic={enabledSystemic}
+        toggleSystemic={toggleSystemic}
       />
 
       <div style={{ maxWidth: 900, margin: '0 auto', padding: '0 24px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
         <AdvancedSection>
+          <AdvancedEditor
+            baseline={baseline}
+            onBaselineChange={b => { setBaseline(b); setActiveArchetypeId(null); }}
+            overrides={overrides}
+            onOverridesChange={setOverrides}
+            personalActions={allPersonalActions}
+            enabledPersonal={enabledPersonal}
+            togglePersonal={togglePersonal}
+            leverageCases={leverageData.cases}
+            enabledSystemic={enabledSystemic}
+            toggleSystemic={toggleSystemic}
+            systemicOverrides={systemicOverrides}
+            onSystemicOverridesChange={setSystemicOverrides}
+            footprintKg={footprint.totalKgCO2ePerYear}
+          />
           <RefineSection buckets={footprint.buckets} overrides={overrides} onOverridesChange={setOverrides} />
           <PersonalChanges baseline={baseline} footprint={footprint} />
           <ElectricitySection baseline={baseline} />

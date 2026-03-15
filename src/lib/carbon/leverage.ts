@@ -190,3 +190,48 @@ export function computeLeverage(
     skepticMode,
   };
 }
+
+// ---------------------------------------------------------------------------
+// Overrides — allow the advanced editor to tweak coalition size & probability
+// ---------------------------------------------------------------------------
+
+export interface SystemicOverride {
+  coalitionSize?: number;
+  probability?: number;
+}
+
+export function computeLeverageWithOverrides(
+  userMaxReduction: number,
+  overrides: Record<string, SystemicOverride>,
+  skepticMode: boolean = false,
+): LeverageModel {
+  const cases = LEVERAGE_CASES.map(c => {
+    const ov = overrides[c.name];
+    if (!ov) return computeCase(c, userMaxReduction, skepticMode);
+
+    // Apply overrides: coalition size changes attributionFraction, probability replaces central
+    const adjusted: LeverageCase = { ...c };
+    if (ov.coalitionSize !== undefined && ov.coalitionSize > 0) {
+      adjusted.coalitionSize = ov.coalitionSize;
+      adjusted.attributionFraction = 1 / ov.coalitionSize;
+    }
+    if (ov.probability !== undefined) {
+      // probability is 0-1; override central (low and high stay the same ratio)
+      const ratio = c.probabilityOfSuccess.central > 0
+        ? ov.probability / c.probabilityOfSuccess.central
+        : 1;
+      adjusted.probabilityOfSuccess = {
+        low: c.probabilityOfSuccess.low * ratio,
+        central: ov.probability,
+        high: c.probabilityOfSuccess.high * ratio,
+      };
+    }
+    return computeCase(adjusted, userMaxReduction, skepticMode);
+  });
+
+  return {
+    userMaxPersonalReduction: userMaxReduction,
+    cases,
+    skepticMode,
+  };
+}
