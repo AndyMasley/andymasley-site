@@ -438,6 +438,10 @@ export function AdvancedEditor({
           <div className="cf-impact-col" style={{ borderRight: 'none' }}>
             <div style={colHead}>Systemic actions</div>
             <div className="cf-impact-scroll">
+              <div style={{ fontSize: '0.62rem', color: MUTED, lineHeight: 1.4, marginBottom: '8px' }}>
+                <strong>Coalition</strong> = the number of people working together.
+                {' '}<strong>P(success)</strong> = the probability you all succeed.
+              </div>
               {sortedLeverage.map(result => {
                 const isOn = enabledSystemic.has(result.case.name);
                 const central = result.displayKg.central;
