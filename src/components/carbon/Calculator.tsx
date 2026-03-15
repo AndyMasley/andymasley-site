@@ -266,6 +266,7 @@ export function Calculator() {
                 background: showUncertainty ? 'var(--accent, #8B2E2E)' : 'transparent',
                 color: showUncertainty ? 'white' : 'var(--text-secondary, #6B6B60)',
                 cursor: 'pointer',
+                minHeight: '44px',
               }}
               aria-pressed={showUncertainty}
             >
@@ -284,7 +285,9 @@ export function Calculator() {
                 color: copyFeedback ? 'white' : 'var(--text-secondary, #6B6B60)',
                 cursor: 'pointer',
                 transition: 'all 0.15s',
+                minHeight: '44px',
               }}
+              aria-label={copyFeedback ? 'Link copied to clipboard' : 'Copy shareable link to clipboard'}
             >
               {copyFeedback ? 'Copied!' : 'Copy share link'}
             </button>

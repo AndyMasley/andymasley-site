@@ -49,6 +49,7 @@ const SELECT_STYLE: React.CSSProperties = {
   color: 'var(--text, #1A1A18)',
   cursor: 'pointer',
   outline: 'none',
+  minHeight: '44px',
 };
 
 const INPUT_STYLE: React.CSSProperties = {

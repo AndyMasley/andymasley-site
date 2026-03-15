@@ -139,6 +139,7 @@ export function ElectricitySection({ baseline }: ElectricitySectionProps) {
               color: activeView === view ? 'white' : 'var(--text-secondary, #6B6B60)',
               cursor: 'pointer',
               transition: 'all 0.15s',
+              minHeight: '44px',
             }}
             aria-pressed={activeView === view}
           >
@@ -191,8 +192,9 @@ export function ElectricitySection({ baseline }: ElectricitySectionProps) {
                   step={1}
                   value={sliderYear}
                   onChange={e => setSliderYear(parseInt(e.target.value))}
-                  style={{ flex: 1 }}
+                  style={{ flex: 1, minHeight: '44px' }}
                   aria-label="Grid decarbonization year"
+                  aria-valuetext={`Year ${sliderYear}: ${(sliderRate * 1000).toFixed(0)} grams CO2 per kilowatt-hour, total footprint ${sliderFootprint.totalKgCO2ePerYear.toLocaleString()} kilograms per year`}
                 />
                 <span style={{ fontSize: '0.72rem' }}>2035</span>
               </div>

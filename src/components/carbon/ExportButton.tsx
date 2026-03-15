@@ -188,6 +188,7 @@ function ExportBtn({ label, onClick }: { label: string; onClick: () => void }) {
         color: 'var(--text-secondary, #6B6B60)',
         cursor: 'pointer',
         transition: 'all 0.15s',
+        minHeight: '44px',
       }}
       aria-label={`Download as ${label}`}
     >

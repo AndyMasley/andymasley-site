@@ -125,6 +125,7 @@ export function LeverageLab({ userMaxPersonalReduction, userFootprint }: Leverag
             color: skepticMode ? 'white' : 'var(--text-secondary, #6B6B60)',
             cursor: 'pointer',
             transition: 'all 0.15s',
+            minHeight: '44px',
           }}
           aria-pressed={skepticMode}
         >
@@ -148,6 +149,7 @@ export function LeverageLab({ userMaxPersonalReduction, userFootprint }: Leverag
                 color: viewMode === mode ? 'white' : 'var(--text-secondary, #6B6B60)',
                 cursor: 'pointer',
                 transition: 'all 0.15s',
+                minHeight: '44px',
               }}
               aria-pressed={viewMode === mode}
             >
@@ -200,6 +202,7 @@ export function LeverageLab({ userMaxPersonalReduction, userFootprint }: Leverag
                   fontWeight: 600,
                   color: 'var(--text, #1A1A18)',
                   textAlign: 'left',
+                  minHeight: '44px',
                 }}
                 aria-expanded={expandedFaq === i}
               >
@@ -243,12 +246,18 @@ function CaseCard({ result, viewMode }: { result: LeverageResult; viewMode: 'ann
   const maxVal = values.high;
   const barScale = maxVal > 0 ? 100 / maxVal : 0;
 
+  const cardId = `leverage-card-${result.case.name.replace(/\s+/g, '-').toLowerCase()}`;
+  const valuesId = `${cardId}-values`;
+
   return (
-    <div style={{
-      background: 'var(--panel, #EFECE5)',
-      borderRadius: '6px',
-      padding: '14px 16px',
-    }}>
+    <div
+      style={{
+        background: 'var(--panel, #EFECE5)',
+        borderRadius: '6px',
+        padding: '14px 16px',
+      }}
+      aria-describedby={valuesId}
+    >
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px', marginBottom: '6px' }}>
         <div>
           <div style={{ fontWeight: 600, fontSize: '0.88rem', marginBottom: '2px' }}>
@@ -316,6 +325,15 @@ function CaseCard({ result, viewMode }: { result: LeverageResult; viewMode: 'ann
         <span>Low: <strong>{values.low.toLocaleString()}</strong> {unit}</span>
         <span>Central: <strong style={{ color: 'var(--green, #4A7C59)' }}>{values.central.toLocaleString()}</strong> {unit}</span>
         <span>High: <strong>{values.high.toLocaleString()}</strong> {unit}</span>
+      </div>
+
+      {/* Screen reader text equivalent for range visualization */}
+      <div className="sr-only" id={valuesId}>
+        {result.case.name}: expected value range from {values.low.toLocaleString()} to {values.high.toLocaleString()} {unit},
+        central estimate {values.central.toLocaleString()} {unit}.
+        {mult.central >= 1 ? ` ${mult.central} times your personal ceiling.` : ''}
+        Probability of success: {(result.case.probabilityOfSuccess.low * 100).toFixed(1)} to {(result.case.probabilityOfSuccess.high * 100).toFixed(0)} percent.
+        Coalition size: {result.case.coalitionSize.toLocaleString()}.
       </div>
 
       {/* Key parameters */}

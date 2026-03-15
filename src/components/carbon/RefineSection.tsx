@@ -28,6 +28,7 @@ const INPUT_STYLE: React.CSSProperties = {
   outline: 'none',
   width: '120px',
   textAlign: 'right',
+  minHeight: '44px',
 };
 
 export function RefineSection({ buckets, overrides, onOverridesChange }: RefineSectionProps) {
@@ -77,6 +78,7 @@ export function RefineSection({ buckets, overrides, onOverridesChange }: RefineS
                   fontSize: '0.85rem',
                   color: 'var(--text, #1A1A18)',
                   textAlign: 'left',
+                  minHeight: '44px',
                 }}
                 aria-expanded={isOpen}
               >

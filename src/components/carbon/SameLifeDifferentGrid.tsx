@@ -52,8 +52,8 @@ export function SameLifeDifferentGrid({ baseline, overrides, todayFootprint }: S
       </p>
 
       {/* Waterfall-style bar chart */}
-      <div style={{ marginBottom: '1.5rem' }}>
-        <div style={{ display: 'flex', gap: '4px', alignItems: 'flex-end', height: '160px' }}
+      <div style={{ marginBottom: '1.5rem', minHeight: '200px' }}>
+        <div style={{ display: 'flex', gap: '4px', alignItems: 'flex-end', height: '160px', minHeight: '160px' }}
           role="img"
           aria-label={`Footprint declining from ${todayTotal.toLocaleString()} kg in 2024 to ${futureTotal.toLocaleString()} kg in 2035 as the grid cleans up`}
         >

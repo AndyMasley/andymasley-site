@@ -97,6 +97,7 @@ export function ScenarioManager({ baseline, overrides, totalKg, onLoad }: Scenar
             color: 'var(--text, #1A1A18)',
             outline: 'none',
             width: '180px',
+            minHeight: '44px',
           }}
           onKeyDown={e => e.key === 'Enter' && handleSave()}
         />
@@ -112,6 +113,7 @@ export function ScenarioManager({ baseline, overrides, totalKg, onLoad }: Scenar
             background: 'transparent',
             color: 'var(--accent, #8B2E2E)',
             cursor: 'pointer',
+            minHeight: '44px',
           }}
         >
           Save scenario
@@ -129,6 +131,7 @@ export function ScenarioManager({ baseline, overrides, totalKg, onLoad }: Scenar
               background: 'transparent',
               color: 'var(--text-secondary, #6B6B60)',
               cursor: 'pointer',
+              minHeight: '44px',
             }}
           >
             {showSaved ? 'Hide' : `Saved (${scenarios.length})`}

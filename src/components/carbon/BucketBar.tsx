@@ -27,6 +27,7 @@ export function BucketBar({ buckets, totalKg }: BucketBarProps) {
         style={{
           display: 'flex',
           height: '48px',
+          minHeight: '48px',
           borderRadius: '6px',
           overflow: 'hidden',
           background: 'var(--bar-track, #D4CFCA)',

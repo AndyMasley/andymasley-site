@@ -23,6 +23,7 @@ import type {
   IncomeBand,
   UrbanForm,
 } from './types';
+import { DEFAULT_BASELINE } from './types';
 import { getGridIntensity } from './grid';
 
 // ---------------------------------------------------------------------------
@@ -285,21 +286,78 @@ function computeFinance(): BucketResult {
 // Public API
 // ---------------------------------------------------------------------------
 
+// ---------------------------------------------------------------------------
+// Input sanitization — never let NaN, Infinity, or out-of-range values through
+// ---------------------------------------------------------------------------
+
+function sanitizeNumber(value: number, fallback: number, min?: number, max?: number): number {
+  if (!Number.isFinite(value)) return fallback;
+  let v = value;
+  if (min !== undefined) v = Math.max(v, min);
+  if (max !== undefined) v = Math.min(v, max);
+  return v;
+}
+
+function sanitizeBaseline(raw: BaselineInputs): BaselineInputs {
+  return {
+    ...raw,
+    householdSize: sanitizeNumber(raw.householdSize, DEFAULT_BASELINE.householdSize, 1, 20),
+    flightsPerYear: sanitizeNumber(raw.flightsPerYear, DEFAULT_BASELINE.flightsPerYear, 0, 200),
+    state: raw.state || DEFAULT_BASELINE.state,
+    housingType: HOUSING_ENERGY[raw.housingType] ? raw.housingType : DEFAULT_BASELINE.housingType,
+    urbanForm: TRANSPORT_MILES[raw.urbanForm] !== undefined ? raw.urbanForm : DEFAULT_BASELINE.urbanForm,
+    dietType: DIET_KG[raw.dietType] !== undefined ? raw.dietType : DEFAULT_BASELINE.dietType,
+    incomeBand: GOODS_BY_INCOME[raw.incomeBand] !== undefined ? raw.incomeBand : DEFAULT_BASELINE.incomeBand,
+  };
+}
+
+function sanitizeOverrides(raw: Partial<DetailedInputs>): Partial<DetailedInputs> {
+  const result: Partial<DetailedInputs> = { ...raw };
+  if (result.electricityKwhPerYear !== undefined) {
+    result.electricityKwhPerYear = sanitizeNumber(result.electricityKwhPerYear, 0, 0);
+  }
+  if (result.gasThermsPerYear !== undefined) {
+    result.gasThermsPerYear = sanitizeNumber(result.gasThermsPerYear, 0, 0);
+  }
+  if (result.milesPerYear !== undefined) {
+    result.milesPerYear = sanitizeNumber(result.milesPerYear, 0, 0);
+  }
+  if (result.goodsSpendingPerMonth !== undefined) {
+    result.goodsSpendingPerMonth = sanitizeNumber(result.goodsSpendingPerMonth, 0, 0);
+  }
+  return result;
+}
+
+/** Ensure a BucketResult never contains NaN or Infinity. */
+function sanitizeBucket(bucket: BucketResult): BucketResult {
+  return {
+    ...bucket,
+    kgCO2ePerYear: Number.isFinite(bucket.kgCO2ePerYear) ? bucket.kgCO2ePerYear : 0,
+    lineItems: bucket.lineItems.map(li => ({
+      ...li,
+      kgCO2ePerYear: Number.isFinite(li.kgCO2ePerYear) ? li.kgCO2ePerYear : 0,
+    })),
+  };
+}
+
 export function computeFootprint(
-  baseline: BaselineInputs,
-  overrides: Partial<DetailedInputs> = {},
+  rawBaseline: BaselineInputs,
+  rawOverrides: Partial<DetailedInputs> = {},
   gridKgPerKwhOverride?: number,
 ): FootprintModel {
-  const gridKgPerKwh = gridKgPerKwhOverride ?? getGridIntensity(baseline.state);
+  const baseline = sanitizeBaseline(rawBaseline);
+  const overrides = sanitizeOverrides(rawOverrides);
+  const rawGrid = gridKgPerKwhOverride ?? getGridIntensity(baseline.state);
+  const gridKgPerKwh = Number.isFinite(rawGrid) ? rawGrid : DEFAULT_GRID_KG_PER_KWH;
 
   const buckets: BucketResult[] = [
-    computeHomeEnergy(baseline, overrides, gridKgPerKwh),
-    computeGroundTransport(baseline, overrides, gridKgPerKwh),
-    computeFlights(baseline, overrides),
-    computeFood(baseline),
-    computeGoods(baseline, overrides),
-    computeSharedSystems(),
-    computeFinance(),
+    sanitizeBucket(computeHomeEnergy(baseline, overrides, gridKgPerKwh)),
+    sanitizeBucket(computeGroundTransport(baseline, overrides, gridKgPerKwh)),
+    sanitizeBucket(computeFlights(baseline, overrides)),
+    sanitizeBucket(computeFood(baseline)),
+    sanitizeBucket(computeGoods(baseline, overrides)),
+    sanitizeBucket(computeSharedSystems()),
+    sanitizeBucket(computeFinance()),
   ];
 
   const totalKgCO2ePerYear = buckets.reduce((s, b) => s + b.kgCO2ePerYear, 0);

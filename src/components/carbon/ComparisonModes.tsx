@@ -231,6 +231,7 @@ export function ComparisonModes({
               color: activeMode === c.id ? 'white' : 'var(--text-secondary, #6B6B60)',
               cursor: 'pointer',
               transition: 'all 0.15s',
+              minHeight: '44px',
             }}
             aria-pressed={activeMode === c.id}
           >
@@ -267,6 +268,7 @@ function ComparisonBar({ userKg, datum }: { userKg: number; datum: ComparisonDat
       background: 'var(--panel, #EFECE5)',
       borderRadius: '8px',
       padding: '14px 18px',
+      minHeight: '120px',
     }}>
       <div style={{ fontSize: '0.82rem', fontWeight: 600, marginBottom: '10px' }}>
         {datum.label}
@@ -312,6 +314,13 @@ function ComparisonBar({ userKg, datum }: { userKg: number; datum: ComparisonDat
             minWidth: '4px',
           }} />
         </div>
+      </div>
+
+      {/* Screen reader text equivalent */}
+      <div className="sr-only">
+        {isLeverageMode ? 'Your footprint (personal ceiling)' : 'You'}: {userKg.toLocaleString()} kg.
+        {datum.referenceLabel}: {datum.referenceKg.toLocaleString()} kg.
+        Difference: {diff > 0 ? `+${diff.toLocaleString()}` : diff.toLocaleString()} kg.
       </div>
 
       {/* Difference callout */}
