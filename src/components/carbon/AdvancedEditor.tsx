@@ -238,6 +238,66 @@ export function AdvancedEditor({
             <div className="cf-impact-scroll">
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 <div style={FIELD_STYLE}>
+                  <label style={LABEL_STYLE} htmlFor="adv-state">State</label>
+                  <select id="adv-state" style={INPUT_STYLE} value={baseline.state} onChange={e => onBaselineChange({ ...baseline, state: e.target.value })}>
+                    <option value="US">US Average</option>
+                    {['AL','AK','AZ','AR','CA','CO','CT','DE','DC','FL','GA','HI','ID','IL','IN','IA','KS','KY','LA','ME','MD','MA','MI','MN','MS','MO','MT','NE','NV','NH','NJ','NM','NY','NC','ND','OH','OK','OR','PA','RI','SC','SD','TN','TX','UT','VT','VA','WA','WV','WI','WY'].map(s => <option key={s} value={s}>{s}</option>)}
+                  </select>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                  <div style={FIELD_STYLE}>
+                    <label style={LABEL_STYLE} htmlFor="adv-housing">Housing type</label>
+                    <select id="adv-housing" style={INPUT_STYLE} value={baseline.housingType} onChange={e => onBaselineChange({ ...baseline, housingType: e.target.value as BaselineInputs['housingType'] })}>
+                      <option value="apartment">Apartment</option>
+                      <option value="townhouse">Townhouse</option>
+                      <option value="single-family-small">House (small)</option>
+                      <option value="single-family-large">House (large)</option>
+                    </select>
+                  </div>
+                  <div style={FIELD_STYLE}>
+                    <label style={LABEL_STYLE} htmlFor="adv-household">Household size</label>
+                    <input id="adv-household" type="number" min={1} max={10} step={1} style={INPUT_STYLE} value={baseline.householdSize} onChange={e => onBaselineChange({ ...baseline, householdSize: Math.max(1, parseFloat(e.target.value) || 1) })} />
+                  </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                  <div style={FIELD_STYLE}>
+                    <label style={LABEL_STYLE} htmlFor="adv-car">Car type</label>
+                    <select id="adv-car" style={INPUT_STYLE} value={baseline.carOwnership} onChange={e => onBaselineChange({ ...baseline, carOwnership: e.target.value as BaselineInputs['carOwnership'] })}>
+                      <option value="none">No car</option>
+                      <option value="gas">Gas</option>
+                      <option value="hybrid">Hybrid</option>
+                      <option value="ev">EV</option>
+                    </select>
+                  </div>
+                  <div style={FIELD_STYLE}>
+                    <label style={LABEL_STYLE} htmlFor="adv-area">Area</label>
+                    <select id="adv-area" style={INPUT_STYLE} value={baseline.urbanForm} onChange={e => onBaselineChange({ ...baseline, urbanForm: e.target.value as BaselineInputs['urbanForm'] })}>
+                      <option value="urban">Urban</option>
+                      <option value="suburban">Suburban</option>
+                      <option value="rural">Rural</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div style={FIELD_STYLE}>
+                  <label style={LABEL_STYLE} htmlFor="adv-diet">Diet</label>
+                  <select id="adv-diet" style={INPUT_STYLE} value={baseline.dietType} onChange={e => onBaselineChange({ ...baseline, dietType: e.target.value as BaselineInputs['dietType'] })}>
+                    <option value="average">Average</option>
+                    <option value="heavy-meat">Heavy meat</option>
+                    <option value="light-meat">Light meat</option>
+                    <option value="pescatarian">Pescatarian</option>
+                    <option value="vegetarian">Vegetarian</option>
+                    <option value="vegan">Vegan</option>
+                  </select>
+                </div>
+
+                <div style={{ borderTop: `1px solid ${DIVIDER}`, paddingTop: '8px', marginTop: '2px', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: MUTED }}>
+                  Override with exact values
+                </div>
+
+                <div style={FIELD_STYLE}>
                   <label style={LABEL_STYLE} htmlFor="adv-kwh">Electricity (kWh/yr)</label>
                   <input
                     id="adv-kwh"
@@ -294,7 +354,7 @@ export function AdvancedEditor({
                 </div>
 
                 <div style={FIELD_STYLE}>
-                  <label style={LABEL_STYLE} htmlFor="adv-spending">Monthly spending ($)</label>
+                  <label style={LABEL_STYLE} htmlFor="adv-spending">Monthly non-food, non-housing spending ($)</label>
                   <input
                     id="adv-spending"
                     type="number"
