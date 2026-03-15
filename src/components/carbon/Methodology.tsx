@@ -8,13 +8,15 @@ import { useState } from 'react';
 function Bucket({
   title,
   children,
+  id,
 }: {
   title: string;
   children: React.ReactNode;
+  id?: string;
 }) {
   const [open, setOpen] = useState(false);
   return (
-    <div style={{ borderBottom: '1px solid var(--divider, #DDD9D0)' }}>
+    <div id={id} style={{ borderBottom: '1px solid var(--divider, #DDD9D0)' }}>
       <button
         onClick={() => setOpen(!open)}
         aria-expanded={open}
@@ -486,7 +488,7 @@ export function Methodology() {
             </p>
           </Bucket>
 
-          <Bucket title="Systemic Actions (Expected Values)">
+          <Bucket title="Systemic Actions (Expected Values)" id="methodology-systemic">
             <p>
               Every systemic action uses the same <strong>expected value framework</strong>:
             </p>

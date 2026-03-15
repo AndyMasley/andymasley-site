@@ -212,6 +212,7 @@ export function ImpactChart({
               <strong style={{ color: 'var(--text, #1A1A18)' }}>Example:</strong> Say 100 people work to stop a nuclear plant from closing. The plant generates 7.9 million MWh of zero-carbon electricity per year. If it closes, that's replaced by gas, adding about 3.2 million tonnes of CO₂ per year. If the campaign has an 80% chance of succeeding and the plant runs for 20 more years:<br /><br />
               <code style={{ fontSize: '0.65rem' }}>3,200,000,000 kg × 80% ÷ 100 people = 25,600,000 kg per person</code><br /><br />
               That's <strong style={{ color: GREEN }}>25,600 tonnes</strong> per person — roughly <strong style={{ color: GREEN }}>1,600× a typical American's annual footprint</strong>. Even at 10% probability, it's 160× your footprint. That's why the numbers below are so large.
+              <br /><a href="#methodology-systemic" style={{ color: GREEN, fontSize: '0.65rem', fontWeight: 600 }}>All numbers explained in methodology ↓</a>
             </div>
             {sortedLeverage.map(result => {
               const isOn = enabledSystemic.has(result.case.name);
@@ -392,8 +393,8 @@ function Dot({ on }: { on: boolean }) {
 }
 
 const colHead: React.CSSProperties = {
-  display: 'flex', alignItems: 'center', gap: '8px',
-  fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase',
+  display: 'flex', alignItems: 'center', gap: '10px',
+  fontSize: '0.95rem', fontWeight: 700, letterSpacing: '0.01em',
   color: 'var(--text, #1A1A18)', paddingBottom: '0.75rem',
   borderBottom: `1px solid var(--divider, #DDD9D0)`, marginBottom: '0.75rem',
 };
