@@ -66,8 +66,8 @@ import Base from '@/layouts/Base.astro';
           <div class="cfp-bar-header"><span class="cfp-bar-name" id="compare-name">Profile</span><span class="cfp-bar-val" id="compare-val"></span></div>
           <div class="cfp-bar-track"><div class="cfp-bar cfp-bar--compare" id="compare-bar"></div></div>
         </div>
-        <div class="cfp-overflow" id="overflow-msg" hidden>Your selected activities exceed the average American footprint</div>
-        <div class="cfp-paris-badge" id="paris-badge" hidden>Below Paris 2030 target</div>
+        <div class="cfp-overflow" id="overflow-msg">Your selected activities exceed the average American footprint</div>
+        <div class="cfp-paris-badge" id="paris-badge">Below Paris 2030 target</div>
       </div>
 
       <div class="cfp-treemap-wrap">
@@ -220,9 +220,12 @@ import Base from '@/layouts/Base.astro';
   .cfp-seg-tip { display: none; position: absolute; bottom: calc(100% + 10px); left: 50%; transform: translateX(-50%); background: #1A1A18; color: #F5F2EC; font-size: 0.78rem; padding: 12px 16px; border-radius: 8px; white-space: nowrap; pointer-events: none; z-index: 30; line-height: 1.5; box-shadow: 0 8px 24px rgba(0,0,0,0.2); max-width: 280px; }
   .cfp-seg-tip::after { content: ''; position: absolute; top: 100%; left: 50%; transform: translateX(-50%); border: 5px solid transparent; border-top-color: #1A1A18; }
   .cfp-segment:hover .cfp-seg-tip { display: block; }
-  .cfp-overflow { font-size: 0.8rem; font-weight: 600; color: var(--accent); margin-top: 0.5rem; display: flex; align-items: center; gap: 6px; }
+  .cfp-overflow, .cfp-paris-badge { font-size: 0.8rem; font-weight: 600; margin-top: 0.5rem; align-items: center; gap: 6px; }
+  .cfp-overflow { color: var(--accent); display: none; }
+  .cfp-overflow.visible { display: flex; }
   .cfp-overflow::before { content: ''; display: inline-block; width: 8px; height: 8px; background: var(--accent); border-radius: 50%; flex-shrink: 0; }
-  .cfp-paris-badge { font-size: 0.8rem; font-weight: 600; color: var(--green); margin-top: 0.5rem; display: flex; align-items: center; gap: 6px; }
+  .cfp-paris-badge { color: var(--green); display: none; }
+  .cfp-paris-badge.visible { display: flex; }
   .cfp-paris-badge::before { content: '\2713'; }
 
   /* Treemap */
@@ -723,8 +726,8 @@ import Base from '@/layouts/Base.astro';
 
       const isOver = totalKg > BASELINE.kgPerYear;
       const belowParis = totalKg > 0 && totalKg <= BENCHMARKS.paris2030;
-      overflowMsg.hidden = !isOver || belowParis;
-      parisBadge.hidden = !belowParis || isOver;
+      overflowMsg.classList.toggle('visible', isOver);
+      parisBadge.classList.toggle('visible', belowParis && !isOver);
 
       // Segments with category colors
       userBar.innerHTML = '';
