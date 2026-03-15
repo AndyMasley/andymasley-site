@@ -30,13 +30,13 @@ import { getGridIntensity } from './grid';
 // ---------------------------------------------------------------------------
 
 // Default national average grid intensity — overridden by location-aware rate
-const DEFAULT_GRID_KG_PER_KWH = 0.39;
+const DEFAULT_GRID_KG_PER_KWH = 0.375;
 
 // Natural gas: 5.3 kg CO2 per therm
 const GAS_KG_PER_THERM = 5.3;
 
-// Gasoline: 8.89 kg CO2 per gallon, avg fuel economy 25.4 MPG
-const DRIVING_KG_PER_MILE = 8.89 / 25.4;
+// EPA typical passenger vehicle: ~400 g CO2/mi (~22.2 MPG), including CH4 and N2O
+const DRIVING_KG_PER_MILE = 0.40;
 
 // Hybrid: ~45 MPG
 const HYBRID_KG_PER_MILE = 8.89 / 45;

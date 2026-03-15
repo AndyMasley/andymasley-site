@@ -138,9 +138,9 @@ describe('Resilience — no NaN/undefined leaks', () => {
 
 describe('Grid fallback for unknown states', () => {
   it('returns national average for unknown state codes', () => {
-    expect(getGridIntensity('XX')).toBeCloseTo(0.39, 1);
-    expect(getGridIntensity('')).toBeCloseTo(0.39, 1);
-    expect(getGridIntensity('ZZZ')).toBeCloseTo(0.39, 1);
+    expect(getGridIntensity('XX')).toBeCloseTo(0.375, 1);
+    expect(getGridIntensity('')).toBeCloseTo(0.375, 1);
+    expect(getGridIntensity('ZZZ')).toBeCloseTo(0.375, 1);
   });
 
   it('returns "US National Average" name for unknown states', () => {

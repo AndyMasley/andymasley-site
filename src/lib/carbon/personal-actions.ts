@@ -27,7 +27,7 @@ export function computePersonalActions(baseline: BaselineInputs, footprint: Foot
     rural: 16000,
   };
   const miles = transportMiles[baseline.urbanForm] ?? 13500;
-  const gasKgPerMile = 8.89 / 25.4;
+  const gasKgPerMile = 0.40;
   const hybridKgPerMile = 8.89 / 45;
   const evKgPerMile = 0.32 * gridRate;
   // Use the actual per-mile rate for whatever the user drives

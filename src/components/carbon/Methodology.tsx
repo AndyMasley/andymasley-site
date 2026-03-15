@@ -210,11 +210,13 @@ export function Methodology() {
               <Src href="https://www.eia.gov/consumption/residential/">
                 EIA Residential Energy Consumption Survey (RECS) 2020
               </Src>
+              <br />
+              <em>Note: These are representative values interpolated from RECS 2020 microdata by housing-unit type, not directly from a single published table.</em>
             </p>
 
             <p style={{ marginTop: '12px' }}>
               <strong>Grid carbon intensity:</strong> national average{' '}
-              <code>0.39 kg CO₂e/kWh</code>. State-level rates come from total
+              <code>0.375 kg CO₂e/kWh</code> (eGRID 2022 US total output rate: 827.5 lb/MWh). State-level rates come from total
               output emission rates by subregion.
               <br />
               Source:{' '}
@@ -254,7 +256,7 @@ export function Methodology() {
             <p style={{ marginTop: '8px' }}>
               <strong>Worked example</strong> (suburban, small house, household of 2.5, US avg grid):
               <br />
-              <code>((10,500 × 1.0 × 0.39) + (500 × 1.0 × 5.3)) ÷ 2.5 = (4,095 + 2,650) ÷ 2.5 = 2,698 kg/yr</code>
+              <code>((10,500 × 1.0 × 0.375) + (500 × 1.0 × 5.3)) ÷ 2.5 = (3,938 + 2,650) ÷ 2.5 = 2,635 kg/yr</code>
             </p>
             <p style={{ marginTop: '8px' }}>
               <strong>What this doesn't capture:</strong> wood burning, propane, heating oil (significant in rural New England), and solar self-consumption (which would reduce grid electricity). Users with these energy sources can override via the Refine section.
@@ -285,7 +287,7 @@ export function Methodology() {
 
             <p style={{ marginTop: '12px' }}>
               <strong>Gas car emission factor:</strong>{' '}
-              <code>8.89 kg CO₂/gal &divide; 25.4 MPG = 0.35 kg/mi</code>
+              <code>0.40 kg CO₂e/mi</code> (EPA typical passenger vehicle: ~400 g CO₂/mi at ~22.2 MPG, including CH₄ and N₂O)
               <br />
               <strong>Hybrid:</strong>{' '}
               <code>8.89 &divide; 45 MPG = 0.20 kg/mi</code>
@@ -337,12 +339,12 @@ export function Methodology() {
             <p style={{ marginTop: '8px' }}>
               <strong>Worked example</strong> (suburban, gas car):
               <br />
-              <code>13,500 mi × 0.35 kg/mi = 4,725 kg/yr</code>
+              <code>13,500 mi × 0.40 kg/mi = 5,400 kg/yr</code>
             </p>
             <p style={{ marginTop: '8px' }}>
               <strong>Worked example</strong> (suburban, EV on US avg grid):
               <br />
-              <code>13,500 mi × 0.32 kWh/mi × 0.39 kg/kWh = 1,685 kg/yr</code>
+              <code>13,500 mi × 0.32 kWh/mi × 0.375 kg/kWh = 1,620 kg/yr</code>
             </p>
             <p style={{ marginTop: '8px' }}>
               <strong>What this doesn't capture:</strong> ride-hailing, motorcycle use, long-distance bus travel, or freight associated with personal deliveries. The transit estimate for car-free users is a rough allocation based on average transit ridership by area type.
@@ -500,6 +502,9 @@ export function Methodology() {
             <p style={{ marginTop: '8px' }}>
               <strong>Known limitation:</strong> EEIO factors are sector averages. A dollar spent on fast fashion has much higher embodied carbon than a dollar spent on a haircut. The spending field is a blunt instrument — users who know their spending patterns will get better results from category-specific calculators.
             </p>
+            <p style={{ marginTop: '8px' }}>
+              <em>Note: The 0.22 factor is close to the median of EPA's supply-chain GHG emission factors (USEEIO, median ~0.208 kg CO₂e/$). A future version may use category-specific USEEIO factors.</em>
+            </p>
           </Bucket>
 
           <Bucket title="Shared Public Systems" id="methodology-shared" isOpen={openBucketId === 'methodology-shared'} onToggle={() => toggleBucket('methodology-shared')}>
@@ -519,6 +524,9 @@ export function Methodology() {
               <Src href="https://www.epa.gov/ghgemissions/inventory-us-greenhouse-gas-emissions-and-sinks">
                 EPA Inventory of U.S. Greenhouse Gas Emissions and Sinks (2023)
               </Src>
+            </p>
+            <p style={{ marginTop: '8px' }}>
+              <em>Note: This is a rough per-capita allocation derived from EPA GHG Inventory government/public sector emissions. It is not a precisely traceable line item and should be treated as an order-of-magnitude estimate.</em>
             </p>
           </Bucket>
 
@@ -546,7 +554,7 @@ export function Methodology() {
             <ul>
               <li>Based on ~1 hour/day of HD video streaming, halved to 0.5 hr/day</li>
               <li>Streaming uses approximately <code>0.1 kWh per hour</code> including data center, CDN, network, and end-user device</li>
-              <li>Calculation: <code>0.5 hr × 0.1 kWh × 365 days × 0.39 kg/kWh = ~7 kg</code> for the half you cut. Full year at 1 hr/day ≈ 14 kg, so halving saves ~7-17 kg depending on hours watched.</li>
+              <li>Calculation: <code>0.5 hr × 0.1 kWh × 365 days × 0.375 kg/kWh = ~7 kg</code> for the half you cut. Full year at 1 hr/day ≈ 14 kg, so halving saves ~7-17 kg depending on hours watched.</li>
               <li>We use 17 kg assuming a heavier viewer (~2 hrs/day)</li>
               <li>Source: <Src href="https://www.iea.org/reports/data-centres-and-data-transmission-networks">IEA — Data Centres and Data Transmission Networks (2024)</Src></li>
               <li>Also see: <Src href="https://www.carbontrust.com/our-work-and-impact/guides-reports-and-tools/carbon-impact-of-video-streaming">Carbon Trust — Carbon impact of video streaming (2021)</Src></li>
@@ -617,11 +625,11 @@ export function Methodology() {
             <p style={{ marginTop: '16px', fontWeight: 700, fontSize: '0.85rem', color: 'var(--text, #1A1A18)' }}>5. Workplace clean power purchase agreement</p>
             <ul>
               <li>Load: <code>5,000 MWh/yr</code> (mid-size employer, ~200 employees)</li>
-              <li>Displaced: grid average at <code>0.39 kg CO₂e/kWh</code></li>
+              <li>Displaced: grid average at <code>0.375 kg CO₂e/kWh</code></li>
               <li>Coalition size: <code>15</code> (you + internal champions + sustainability staff) → attribution = <code>1/15</code></li>
               <li>P(success): low <code>5%</code>, central <code>15%</code>, high <code>40%</code>. Many companies are receptive but procurement timelines are long.</li>
               <li>Time horizon: <code>12 years</code> (typical PPA contract length)</li>
-              <li>Worked example (central): <code>5,000 × 390 × 12 × (1/15) × 0.15 ÷ 12 = 19,500 kg/yr</code> per person (~1.2× US avg)</li>
+              <li>Worked example (central): <code>5,000 × 375 × 12 × (1/15) × 0.15 ÷ 12 = 18,750 kg/yr</code> per person (~1.2× US avg)</li>
               <li>Sources: <Src href="https://rebuyers.org/">Renewable Energy Buyers Alliance</Src></li>
             </ul>
 
@@ -684,6 +692,9 @@ export function Methodology() {
               <Src href="https://ourworldindata.org/co2-emissions">
                 Our World in Data — CO₂ Emissions
               </Src>
+            </p>
+            <p style={{ marginTop: '8px' }}>
+              <em>Note: Our World in Data's consumption-based figure is CO₂ only. The University of Michigan CSS factsheet gives 17.6 t CO₂e per capita for 2023, which is a closer comparison for this CO₂e calculator.</em>
             </p>
           </Bucket>
 

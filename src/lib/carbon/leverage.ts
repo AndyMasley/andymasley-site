@@ -84,7 +84,7 @@ export const LEVERAGE_CASES: LeverageCase[] = [
     coalitionSize: 15,
     durationYears: 1,
     annualLoadAffectedMWh: 5_000,
-    counterfactualGenerationMix: 'Grid average (0.39 kg/kWh)',
+    counterfactualGenerationMix: 'Grid average (0.375 kg/kWh)',
     attributionFraction: 1 / 15,
     timeHorizonYears: 12,
   },
@@ -112,8 +112,8 @@ export const LEVERAGE_CASES: LeverageCase[] = [
     probabilityOfSuccess: { low: 0.20, central: 1.0, high: 10.0 },
     coalitionSize: 1,
     durationYears: 1,
-    annualLoadAffectedMWh: 51.3, // 20,000 kg ÷ 390 kg/MWh (central = $10/tonne)
-    counterfactualGenerationMix: 'Policy advocacy portfolio (0.39 kg/kWh equivalent)',
+    annualLoadAffectedMWh: 53.3, // ~20,000 kg ÷ 375 kg/MWh (central = $10/tonne, approximate)
+    counterfactualGenerationMix: 'Policy advocacy portfolio (0.375 kg/kWh equivalent)',
     attributionFraction: 1.0,
     timeHorizonYears: 1,
   },
@@ -138,7 +138,7 @@ function computeCase(
 
   // kg CO2e avoided per MWh depends on the counterfactual mix
   const kgPerKwhMatch = leverageCase.counterfactualGenerationMix.match(/([\d.]+)\s*kg\/kWh/);
-  const kgPerMwh = kgPerKwhMatch ? parseFloat(kgPerKwhMatch[1]) * 1000 : 390;
+  const kgPerMwh = kgPerKwhMatch ? parseFloat(kgPerKwhMatch[1]) * 1000 : 375;
 
   const compute = (p: number) => {
     const totalAvoided = leverageCase.annualLoadAffectedMWh * kgPerMwh * leverageCase.timeHorizonYears;

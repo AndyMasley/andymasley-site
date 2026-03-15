@@ -12,8 +12,8 @@ import { DEFAULT_BASELINE } from '@/lib/carbon/types';
 
 describe('Grid module', () => {
   it('returns national average for unknown state', () => {
-    expect(getGridIntensity('XX')).toBeCloseTo(0.39, 1);
-    expect(getGridIntensity('US')).toBeCloseTo(0.39, 1);
+    expect(getGridIntensity('XX')).toBeCloseTo(0.375, 1);
+    expect(getGridIntensity('US')).toBeCloseTo(0.375, 1);
   });
 
   it('California has lower grid intensity than national average', () => {

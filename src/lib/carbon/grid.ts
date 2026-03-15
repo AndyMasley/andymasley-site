@@ -37,7 +37,7 @@ export const EGRID_SUBREGIONS: Record<string, EGridSubregion> = {
   MROW: { code: 'MROW', name: 'MRO West',                     kgCO2ePerKwh: 0.442, nonbaseloadKgCO2ePerKwh: 0.520 },
   NEWE: { code: 'NEWE', name: 'NPCC New England',             kgCO2ePerKwh: 0.230, nonbaseloadKgCO2ePerKwh: 0.340 },
   NWPP: { code: 'NWPP', name: 'WECC Northwest',               kgCO2ePerKwh: 0.278, nonbaseloadKgCO2ePerKwh: 0.390 },
-  NYCW: { code: 'NYCW', name: 'NPCC NYC/Westchester',         kgCO2ePerKwh: 0.253, nonbaseloadKgCO2ePerKwh: 0.340 },
+  NYCW: { code: 'NYCW', name: 'NPCC NYC/Westchester',         kgCO2ePerKwh: 0.402, nonbaseloadKgCO2ePerKwh: 0.480 },
   NYLI: { code: 'NYLI', name: 'NPCC Long Island',             kgCO2ePerKwh: 0.463, nonbaseloadKgCO2ePerKwh: 0.520 },
   NYUP: { code: 'NYUP', name: 'NPCC Upstate NY',              kgCO2ePerKwh: 0.117, nonbaseloadKgCO2ePerKwh: 0.290 },
   RFCE: { code: 'RFCE', name: 'RFC East',                     kgCO2ePerKwh: 0.301, nonbaseloadKgCO2ePerKwh: 0.410 },
@@ -64,14 +64,14 @@ export const STATE_TO_EGRID: Record<string, string> = {
   KS: 'SPNO',  KY: 'SRTV',  LA: 'SRMV',   ME: 'NEWE',  MD: 'RFCE',
   MA: 'NEWE',  MI: 'RFCM',  MN: 'MROW',   MS: 'SRMV',  MO: 'SRMV',
   MT: 'NWPP',  NE: 'MROW',  NV: 'AZNM',   NH: 'NEWE',  NJ: 'RFCE',
-  NM: 'AZNM',  NY: 'NYCW',  NC: 'SRVC',   ND: 'MROW',  OH: 'RFCW',
+  NM: 'AZNM',  NY: 'NYUP',  NC: 'SRVC',   ND: 'MROW',  OH: 'RFCW',
   OK: 'SPSO',  OR: 'NWPP',  PA: 'RFCE',   RI: 'NEWE',  SC: 'SRVC',
   SD: 'MROW',  TN: 'SRTV',  TX: 'ERCT',   UT: 'NWPP',  VT: 'NEWE',
   VA: 'SRVC',  WA: 'NWPP',  WV: 'RFCW',   WI: 'MROE',  WY: 'RMPA',
   DC: 'RFCE',
 };
 
-const US_NATIONAL_AVG_KG_PER_KWH = 0.390;
+const US_NATIONAL_AVG_KG_PER_KWH = 0.375;
 
 // ---------------------------------------------------------------------------
 // Grid scenarios
