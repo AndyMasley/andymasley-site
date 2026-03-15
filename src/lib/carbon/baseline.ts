@@ -23,13 +23,14 @@ import type {
   IncomeBand,
   UrbanForm,
 } from './types';
+import { getGridIntensity } from './grid';
 
 // ---------------------------------------------------------------------------
 // Emission factors (kg CO2e per unit)
 // ---------------------------------------------------------------------------
 
-// National average grid intensity: ~0.39 kg CO2/kWh (EPA eGRID 2022)
-const GRID_KG_PER_KWH = 0.39;
+// Default national average grid intensity — overridden by location-aware rate
+const DEFAULT_GRID_KG_PER_KWH = 0.39;
 
 // Natural gas: 5.3 kg CO2 per therm
 const GAS_KG_PER_THERM = 5.3;
@@ -40,8 +41,8 @@ const DRIVING_KG_PER_MILE = 8.89 / 25.4;
 // Hybrid: ~45 MPG
 const HYBRID_KG_PER_MILE = 8.89 / 45;
 
-// EV: ~0.3 kWh/mi × grid intensity
-const EV_KG_PER_MILE = 0.3 * GRID_KG_PER_KWH;
+// EV: ~0.3 kWh/mi × grid intensity (computed dynamically now)
+const EV_KWH_PER_MILE = 0.3;
 
 // Flight: ~0.255 kg CO2e per passenger-mile (economy, incl. radiative forcing)
 const FLIGHT_KG_PER_MILE_ECONOMY = 0.255;
@@ -114,6 +115,7 @@ const SHARED_SYSTEMS_KG_PER_CAPITA = 1800;
 function computeHomeEnergy(
   baseline: BaselineInputs,
   overrides: Partial<DetailedInputs>,
+  gridKgPerKwh: number,
 ): BucketResult {
   const housing = HOUSING_ENERGY[baseline.housingType];
   const hasElecOverride = overrides.electricityKwhPerYear !== undefined;
@@ -122,7 +124,7 @@ function computeHomeEnergy(
   const kwh = hasElecOverride ? overrides.electricityKwhPerYear! : housing.kwhPerYear;
   const therms = hasGasOverride ? overrides.gasThermsPerYear! : housing.thermsPerYear;
 
-  const elecKg = (kwh * GRID_KG_PER_KWH) / baseline.householdSize;
+  const elecKg = (kwh * gridKgPerKwh) / baseline.householdSize;
   const gasKg = (therms * GAS_KG_PER_THERM) / baseline.householdSize;
 
   let confidence: Confidence = 'estimated';
@@ -150,6 +152,7 @@ function computeHomeEnergy(
 function computeGroundTransport(
   baseline: BaselineInputs,
   overrides: Partial<DetailedInputs>,
+  gridKgPerKwh: number,
 ): BucketResult {
   if (baseline.carOwnership === 'none') {
     // Public transit only — small allocation
@@ -172,7 +175,7 @@ function computeGroundTransport(
     none: 0,
     gas: DRIVING_KG_PER_MILE,
     hybrid: HYBRID_KG_PER_MILE,
-    ev: EV_KG_PER_MILE,
+    ev: EV_KWH_PER_MILE * gridKgPerKwh,
   };
 
   const drivingKg = miles * kgPerMile[baseline.carOwnership];
@@ -285,10 +288,13 @@ function computeFinance(): BucketResult {
 export function computeFootprint(
   baseline: BaselineInputs,
   overrides: Partial<DetailedInputs> = {},
+  gridKgPerKwhOverride?: number,
 ): FootprintModel {
+  const gridKgPerKwh = gridKgPerKwhOverride ?? getGridIntensity(baseline.state);
+
   const buckets: BucketResult[] = [
-    computeHomeEnergy(baseline, overrides),
-    computeGroundTransport(baseline, overrides),
+    computeHomeEnergy(baseline, overrides, gridKgPerKwh),
+    computeGroundTransport(baseline, overrides, gridKgPerKwh),
     computeFlights(baseline, overrides),
     computeFood(baseline),
     computeGoods(baseline, overrides),

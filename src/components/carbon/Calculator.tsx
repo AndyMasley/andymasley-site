@@ -19,6 +19,7 @@ import { computeFootprint } from '@/lib/carbon/baseline';
 import { BaselineForm } from './BaselineForm';
 import { BucketBar } from './BucketBar';
 import { ResidualWedge } from './ResidualWedge';
+import { ElectricitySection } from './ElectricitySection';
 
 export function Calculator() {
   const [baseline, setBaseline] = useState<BaselineInputs>(DEFAULT_BASELINE);
@@ -78,6 +79,9 @@ export function Calculator() {
         <ResidualWedge totalKg={footprint.totalKgCO2ePerYear} residualKg={footprint.residualKgCO2ePerYear} />
 
         <BucketBar buckets={footprint.buckets} totalKg={footprint.totalKgCO2ePerYear} />
+
+        {/* Electricity section */}
+        <ElectricitySection baseline={baseline} />
 
         {/* Boundary label */}
         <div style={{
