@@ -1,0 +1,225 @@
+---
+/**
+ * Phase 5 — Boundary Crosswalk
+ *
+ * Separate route showing how this calculator's headline number relates to
+ * other calculators and why numbers differ. Kills confusion and preempts criticism.
+ */
+import Base from '@/layouts/Base.astro';
+---
+
+<Base title="Why Carbon Calculator Numbers Differ — Boundary Crosswalk" description="How this calculator's number relates to EPA, CoolClimate, and other tools — and why they give different results">
+
+  <article class="crosswalk">
+
+    <h1>Why carbon calculator numbers differ</h1>
+    <p class="crosswalk-intro">
+      Different carbon calculators give different numbers for the same person. This isn't because
+      some are wrong — it's because they draw different <strong>system boundaries</strong>. A boundary
+      defines what emissions count as "yours." Reasonable people disagree about where to draw it.
+    </p>
+
+    <hr class="crosswalk-rule" />
+
+    <h2>How our number compares</h2>
+
+    <table class="crosswalk-table">
+      <thead>
+        <tr>
+          <th>Calculator</th>
+          <th>Typical result</th>
+          <th>Boundary</th>
+          <th>What's included that others miss</th>
+          <th>What's excluded that others include</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>This calculator</strong></td>
+          <td>~14,000–16,000 kg</td>
+          <td>Household + consumption + per-capita public systems</td>
+          <td>Government/military/infrastructure per-capita allocation (~1,800 kg)</td>
+          <td>Financed emissions (hidden behind Advanced toggle)</td>
+        </tr>
+        <tr>
+          <td>EPA Household Tool</td>
+          <td>~8,000–12,000 kg</td>
+          <td>Direct household energy + transport</td>
+          <td>—</td>
+          <td>Food, goods/services, public systems, embodied emissions</td>
+        </tr>
+        <tr>
+          <td>CoolClimate (UC Berkeley)</td>
+          <td>~15,000–20,000 kg</td>
+          <td>Full consumption-based including EEIO spending</td>
+          <td>Detailed spending-based goods & services (EEIO model)</td>
+          <td>Uses older emission factors; may double-count some categories</td>
+        </tr>
+        <tr>
+          <td>Direct household only</td>
+          <td>~6,000–10,000 kg</td>
+          <td>Scope 1+2 — what you directly burn or buy electricity for</td>
+          <td>—</td>
+          <td>Everything upstream: food production, manufacturing, services</td>
+        </tr>
+        <tr>
+          <td>Full consumption-based</td>
+          <td>~18,000–25,000 kg</td>
+          <td>Everything attributable to your spending, including embodied</td>
+          <td>Full supply chain emissions for all goods and services</td>
+          <td>May overcount if using broad EEIO multipliers</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <hr class="crosswalk-rule" />
+
+    <h2>Why the numbers diverge</h2>
+
+    <div class="crosswalk-reasons">
+      <div class="crosswalk-reason">
+        <h3>1. System boundary</h3>
+        <p>
+          The single biggest source of difference. A calculator that only counts your home
+          energy and driving will give a number half the size of one that includes your food,
+          clothing, and share of public infrastructure. Neither is wrong — they answer different
+          questions. Our calculator includes public systems because those emissions exist and
+          someone has to account for them.
+        </p>
+      </div>
+
+      <div class="crosswalk-reason">
+        <h3>2. Emission factors</h3>
+        <p>
+          How many kg of CO₂e per kWh of electricity? Per mile of driving? Per kg of beef?
+          These factors come from different databases (EPA eGRID, IPCC, academic studies) and
+          are updated at different frequencies. A calculator using 2018 grid data will show
+          higher electricity emissions than one using 2022 data, because the grid has gotten
+          cleaner. We use EPA eGRID 2022 data (released January 2024).
+        </p>
+      </div>
+
+      <div class="crosswalk-reason">
+        <h3>3. Allocation method</h3>
+        <p>
+          If your household has two adults and two kids, does each person get 25% of the
+          home energy emissions? Or do adults get more? We divide by household size equally.
+          Some calculators weight by age or income. For food, some calculators assign average
+          American diet to everyone; we let you select your actual diet type.
+        </p>
+      </div>
+
+      <div class="crosswalk-reason">
+        <h3>4. Accounting vs. consumption basis</h3>
+        <p>
+          Production-based accounting counts emissions produced within national borders.
+          Consumption-based accounting counts emissions embedded in what you consume, regardless
+          of where it was produced. If your phone was made in China, production-based accounting
+          assigns those emissions to China; consumption-based assigns them to you. We use a
+          hybrid: direct emissions (energy, transport) plus estimated consumption emissions
+          (food, goods).
+        </p>
+      </div>
+    </div>
+
+    <hr class="crosswalk-rule" />
+
+    <h2>Our boundary choices and why</h2>
+
+    <div class="crosswalk-choices">
+      <p>
+        We include <strong>per-capita public systems</strong> (~1,800 kg) because pretending
+        government and infrastructure emissions don't exist makes personal action look more
+        decisive than it is. If you eliminated your entire personal footprint tomorrow, those
+        shared emissions would persist because they're driven by collective decisions, not individual ones.
+      </p>
+      <p>
+        We exclude <strong>financed emissions</strong> by default (available under Advanced)
+        because the methodology is still immature and the attribution problem is genuinely hard.
+        We'd rather show nothing than show a confident-looking number built on shaky math.
+      </p>
+      <p>
+        We use <strong>EPA eGRID subregion rates</strong> rather than national averages because
+        your electricity footprint depends heavily on where you live. A New Yorker on a hydro-heavy
+        grid has fundamentally different electricity emissions than a West Virginian on a coal-heavy grid.
+      </p>
+    </div>
+
+    <hr class="crosswalk-rule" />
+
+    <p class="crosswalk-footer">
+      <a href="/visuals/carbon-footprint-v2">← Back to the calculator</a>
+    </p>
+
+  </article>
+</Base>
+
+<style>
+  .crosswalk {
+    max-width: 750px;
+    line-height: 1.8;
+  }
+  .crosswalk h1 {
+    font-size: clamp(1.5rem, 3vw, 2.2rem);
+    margin-bottom: 1rem;
+  }
+  .crosswalk-intro {
+    font-size: 1rem;
+    max-width: 640px;
+  }
+  .crosswalk-rule {
+    border: none;
+    border-top: 1px solid var(--divider, #DDD9D0);
+    margin: 2rem 0;
+  }
+  .crosswalk h2 {
+    font-size: 1.2rem;
+    margin-bottom: 1rem;
+  }
+  .crosswalk-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.82rem;
+    line-height: 1.5;
+    margin-bottom: 1rem;
+  }
+  .crosswalk-table th {
+    text-align: left;
+    padding: 8px 10px;
+    border-bottom: 2px solid var(--divider, #DDD9D0);
+    font-weight: 700;
+    font-size: 0.72rem;
+    letter-spacing: 0.04em;
+  }
+  .crosswalk-table td {
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--divider, #DDD9D0);
+    vertical-align: top;
+  }
+  .crosswalk-reasons {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+  .crosswalk-reason h3 {
+    font-size: 0.95rem;
+    margin-bottom: 0.3rem;
+  }
+  .crosswalk-reason p {
+    font-size: 0.88rem;
+    margin: 0;
+  }
+  .crosswalk-choices p {
+    font-size: 0.88rem;
+    margin-bottom: 0.75rem;
+  }
+  .crosswalk-footer {
+    font-size: 0.85rem;
+  }
+  .crosswalk-footer a {
+    color: var(--accent, #8B2E2E);
+  }
+  @media (max-width: 700px) {
+    .crosswalk-table { display: block; overflow-x: auto; }
+  }
+</style>
