@@ -48,14 +48,6 @@ import { Calculator } from '@/components/carbon/Calculator';
 
   body:has(.cfv2) .main-content {
     max-width: 100%;
-    padding-left: 0;
-    padding-right: 0;
-  }
-  body:has(.cfv2) .main-content > .header {
-    max-width: var(--max-width, 800px);
-    margin: 0 auto;
-    padding-left: 24px;
-    padding-right: 24px;
   }
 
   .cfv2 {
@@ -68,13 +60,14 @@ import { Calculator } from '@/components/carbon/Calculator';
     --bar-track: #D4CFCA;
     font-family: 'DM Sans', sans-serif;
     color: var(--text);
-    padding: 0;
+    padding: 0 24px 3rem;
+    max-width: 1400px;
+    margin: 0 auto;
   }
 
   .cfv2-hero {
-    max-width: 700px;
-    margin: 0 auto;
-    padding: 2rem 24px 1.5rem;
+    padding: 1.5rem 0 1rem;
+    max-width: 600px;
   }
 
   [data-theme="dark"] .cfv2 {
@@ -205,38 +198,28 @@ import { Calculator } from '@/components/carbon/Calculator';
     border: 0;
   }
 
-  /* Full-viewport impact layout */
+  /* Three-panel + bar layout */
   .cf-impact-layout {
-    display: flex;
-    flex-direction: column;
-    min-height: calc(100vh - 120px); /* account for site header */
+    border: 1px solid var(--divider);
+    border-radius: 10px;
+    overflow: hidden;
+    background: var(--panel);
   }
 
   .cf-impact-panels {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
-    flex: 2; /* top 2/3 */
-    min-height: 0;
   }
 
   .cf-impact-col {
-    padding: 1.25rem 1.5rem;
+    padding: 1.25rem;
     border-right: 1px solid var(--divider);
     display: flex;
     flex-direction: column;
-    transition: opacity 0.4s ease, filter 0.4s ease;
-    overflow: hidden;
+    background: var(--bg, #F5F2EC);
   }
-
-  .cf-impact-col[data-active="false"] {
-    opacity: 0.3;
-    filter: grayscale(0.5);
-    pointer-events: none;
-  }
-
-  .cf-impact-col[data-active="true"] {
-    opacity: 1;
-    filter: none;
+  [data-theme="dark"] .cf-impact-col {
+    background: var(--bg, #1C1A17);
   }
 
   .cf-impact-scroll {
@@ -246,23 +229,12 @@ import { Calculator } from '@/components/carbon/Calculator';
   }
 
   .cf-impact-bars {
-    flex: 1; /* bottom 1/3 */
-    padding: 1.5rem 1.5rem 1rem;
-    border-top: 2px solid var(--divider);
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
+    padding: 1.25rem;
+    border-top: 1px solid var(--divider);
+    background: var(--bg, #F5F2EC);
   }
-
-  .cf-impact-locked {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex: 1;
-    color: var(--text-secondary);
-    font-size: 0.82rem;
-    opacity: 0.5;
-    text-align: center;
+  [data-theme="dark"] .cf-impact-bars {
+    background: var(--bg, #1C1A17);
   }
 
   /* Toggle row */
@@ -270,7 +242,7 @@ import { Calculator } from '@/components/carbon/Calculator';
     display: flex;
     align-items: center;
     gap: 8px;
-    padding: 6px 8px;
+    padding: 5px 6px;
     border: 1.5px solid transparent;
     border-radius: 5px;
     cursor: pointer;
@@ -279,32 +251,25 @@ import { Calculator } from '@/components/carbon/Calculator';
     color: var(--text);
     text-align: left;
     transition: all 0.12s;
-    min-height: 38px;
+    min-height: 36px;
     background: transparent;
     width: 100%;
   }
   .cf-toggle-row[data-on="true"] {
     background: rgba(74, 124, 89, 0.08);
-    border-color: rgba(74, 124, 89, 0.25);
+    border-color: rgba(74, 124, 89, 0.2);
   }
   .cf-toggle-row:hover {
-    background: rgba(74, 124, 89, 0.05);
+    background: rgba(74, 124, 89, 0.04);
   }
 
   @media (max-width: 900px) {
-    .cf-impact-layout {
-      min-height: auto;
-    }
     .cf-impact-panels {
       grid-template-columns: 1fr;
     }
     .cf-impact-col {
       border-right: none;
       border-bottom: 1px solid var(--divider);
-      padding: 1rem;
-    }
-    .cf-impact-bars {
-      padding: 1rem;
     }
   }
 
