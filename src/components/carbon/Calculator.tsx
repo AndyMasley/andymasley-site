@@ -19,19 +19,16 @@ import { computePersonalActions } from '@/lib/carbon/personal-actions';
 import { computeLeverage } from '@/lib/carbon/leverage';
 import { BaselineForm } from './BaselineForm';
 import { BucketBar } from './BucketBar';
-import { ResidualWedge } from './ResidualWedge';
 import { RefineSection } from './RefineSection';
 import { PersonalChanges } from './PersonalChanges';
 import { SameLifeDifferentGrid } from './SameLifeDifferentGrid';
 import { ElectricitySection } from './ElectricitySection';
 import { LeverageLab } from './LeverageLab';
 import { StickyTotal } from './StickyTotal';
-import { ClickableValue } from './ClickableValue';
 import { ExportButton } from './ExportButton';
 import { ScenarioManager } from './ScenarioManager';
 import { Changelog } from './Changelog';
 import { ARCHETYPES } from './Archetypes';
-import type { Archetype } from './Archetypes';
 import { ComparisonModes, getComparisonContext } from './ComparisonModes';
 import type { ComparisonModeId } from './ComparisonModes';
 import { ImpactChart } from './ImpactChart';
@@ -174,7 +171,6 @@ export function Calculator() {
   const [activeArchetypeId, setActiveArchetypeId] = useState<string | null>(initialState?.archetypeId ?? null);
   const [comparisonMode, setComparisonMode] = useState<ComparisonModeId | null>(initialState?.comparisonMode ?? null);
   const [showSticky, setShowSticky] = useState(false);
-  const [showUncertainty, setShowUncertainty] = useState(false);
   const [copyFeedback, setCopyFeedback] = useState(false);
   const resultsRef = useRef<HTMLDivElement>(null);
   const advancedRef = useRef<HTMLDivElement>(null);
@@ -189,16 +185,6 @@ export function Calculator() {
       .filter(b => b.kgCO2ePerYear > 0)
       .sort((a, b) => b.kgCO2ePerYear - a.kgCO2ePerYear)
       .slice(0, 3);
-  }, [footprint]);
-
-  // Rough uncertainty: +/-20% for estimated, +/-10% for approximate, +/-5% for exact
-  const uncertaintyRange = useMemo(() => {
-    const estimatedKg = footprint.buckets.filter(b => b.confidence === 'estimated').reduce((s, b) => s + b.kgCO2ePerYear, 0);
-    const approxKg = footprint.buckets.filter(b => b.confidence === 'approximate').reduce((s, b) => s + b.kgCO2ePerYear, 0);
-    const exactKg = footprint.buckets.filter(b => b.confidence === 'exact').reduce((s, b) => s + b.kgCO2ePerYear, 0);
-    const lower = Math.round(estimatedKg * 0.8 + approxKg * 0.9 + exactKg * 0.95);
-    const upper = Math.round(estimatedKg * 1.2 + approxKg * 1.1 + exactKg * 1.05);
-    return { lower, upper };
   }, [footprint]);
 
   const comparisonContext = useMemo(
@@ -305,121 +291,22 @@ export function Calculator() {
         <BaselineForm value={baseline} onChange={(b) => { setBaseline(b); setActiveArchetypeId(null); }} />
       </section>
 
-      {/* -- Section 2: Your footprint -- */}
-      <section ref={resultsRef} style={{ marginBottom: '3rem' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '10px', marginBottom: '0.5rem' }}>
-          <div className="cf-section-label">YOUR ESTIMATED FOOTPRINT</div>
-          <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap' }}>
-            <button
-              onClick={() => setShowUncertainty(!showUncertainty)}
-              style={{
-                padding: '4px 12px',
-                fontSize: '0.68rem',
-                fontFamily: 'inherit',
-                fontWeight: 600,
-                border: '1px solid var(--divider, #DDD9D0)',
-                borderRadius: '4px',
-                background: showUncertainty ? 'var(--accent, #8B2E2E)' : 'transparent',
-                color: showUncertainty ? 'white' : 'var(--text-secondary, #6B6B60)',
-                cursor: 'pointer',
-                minHeight: '44px',
-              }}
-              aria-pressed={showUncertainty}
-            >
-              {showUncertainty ? '+/- Ranges ON' : '+/- Ranges'}
-            </button>
-            <button
-              onClick={handleCopyShareLink}
-              style={{
-                padding: '4px 12px',
-                fontSize: '0.68rem',
-                fontFamily: 'inherit',
-                fontWeight: 600,
-                border: '1px solid var(--divider, #DDD9D0)',
-                borderRadius: '4px',
-                background: copyFeedback ? 'var(--green, #4A7C59)' : 'transparent',
-                color: copyFeedback ? 'white' : 'var(--text-secondary, #6B6B60)',
-                cursor: 'pointer',
-                transition: 'all 0.15s',
-                minHeight: '44px',
-              }}
-              aria-label={copyFeedback ? 'Link copied to clipboard' : 'Copy shareable link to clipboard'}
-            >
-              {copyFeedback ? 'Copied!' : 'Copy share link'}
-            </button>
-            <ExportButton
-              footprint={footprint}
-              comparisonContext={comparisonContext}
-            />
-          </div>
-        </div>
-
-        {/* Big number */}
-        <div style={{ display: 'flex', alignItems: 'baseline', gap: '10px', marginBottom: '0.25rem' }}>
-          <ClickableValue
-            value={footprint.totalKgCO2ePerYear}
-            label="Total footprint"
-            formula="Sum (bucket_i kg CO2e/yr) for i in [home, transport, flights, food, goods, public]"
-            lineItems={footprint.buckets.flatMap(b => b.lineItems)}
-            style={{ fontSize: 'clamp(3rem, 7vw, 6rem)', fontWeight: 700, lineHeight: 1, letterSpacing: '-0.02em' }}
-          />
+      {/* -- Your footprint -- */}
+      <section ref={resultsRef} style={{ marginBottom: '2rem' }}>
+        <div className="cf-section-label">YOUR ESTIMATED FOOTPRINT</div>
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: '10px', marginBottom: '0.5rem' }}>
+          <span style={{ fontSize: 'clamp(3rem, 7vw, 5.5rem)', fontWeight: 700, lineHeight: 1, letterSpacing: '-0.02em', fontVariantNumeric: 'tabular-nums' }}>
+            {footprint.totalKgCO2ePerYear.toLocaleString()}
+          </span>
           <span style={{ fontSize: '1rem', color: 'var(--text-secondary, #6B6B60)' }}>
             kg CO<sub>2</sub>e / year
           </span>
         </div>
-
-        {/* Uncertainty range */}
-        {showUncertainty && (
-          <div style={{ fontSize: '0.82rem', color: 'var(--text-secondary, #6B6B60)', marginBottom: '0.5rem' }}>
-            Confidence interval: <strong>{uncertaintyRange.lower.toLocaleString()}</strong> – <strong>{uncertaintyRange.upper.toLocaleString()}</strong> kg/yr
-            <span style={{ fontSize: '0.68rem', marginLeft: '6px', opacity: 0.7 }}>
-              (+/-20% estimated, +/-10% approximate, +/-5% exact buckets)
-            </span>
-          </div>
-        )}
-
-        {/* Context */}
-        <div style={{ fontSize: '0.9rem', color: 'var(--text-secondary, #6B6B60)', lineHeight: 1.6, maxWidth: '600px', marginBottom: '1rem' }}>
-          {footprint.totalKgCO2ePerYear <= 2500 ? (
-            'Below the Paris 2030 per-capita target.'
-          ) : (
-            <>
-              {comparisonContext}.
-              {' '}Top drivers: {topDrivers.map((b, i) => (
-                <span key={b.bucketId}>
-                  {i > 0 && ', '}
-                  <ClickableValue
-                    value={b.kgCO2ePerYear}
-                    label={BUCKET_META[b.bucketId].label}
-                    formula={`${BUCKET_META[b.bucketId].label}: Sum line_items`}
-                    lineItems={b.lineItems}
-                    style={{ fontWeight: 700 }}
-                  />
-                </span>
-              ))}.
-            </>
-          )}
+        <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary, #6B6B60)', marginBottom: '1rem' }}>
+          {Math.round(footprint.totalKgCO2ePerYear / 16000 * 100)}% of the US average.
+          Top driver: <strong>{BUCKET_META[topDrivers[0]?.bucketId]?.label}</strong> ({topDrivers[0]?.kgCO2ePerYear.toLocaleString()} kg).
         </div>
-
-        {/* Boundary */}
-        <div style={{
-          fontSize: '0.75rem',
-          color: 'var(--text-secondary, #6B6B60)',
-          background: 'var(--panel, #EFECE5)',
-          borderRadius: '6px',
-          padding: '10px 14px',
-          lineHeight: 1.6,
-          marginBottom: '1.5rem',
-        }}>
-          <strong>Boundary:</strong> Household energy, personal transport, food, consumer spending,
-          and per-capita public infrastructure. Does not include financed emissions (the carbon impact of investments).
-          {' '}<a href="/visuals/carbon-boundary-crosswalk" style={{ color: 'var(--accent, #8B2E2E)' }}>
-            Why do different calculators give different numbers? →
-          </a>
-        </div>
-
         <BucketBar buckets={footprint.buckets} totalKg={footprint.totalKgCO2ePerYear} />
-        <ResidualWedge totalKg={footprint.totalKgCO2ePerYear} residualKg={footprint.residualKgCO2ePerYear} />
       </section>
 
       {/* -- Interactive impact chart: personal changes → systemic reveal -- */}
@@ -457,6 +344,33 @@ export function Calculator() {
 
           <hr style={{ border: 'none', borderTop: '1px solid var(--divider, #DDD9D0)', margin: '3rem 0' }} />
           <LeverageLab userMaxPersonalReduction={footprint.totalKgCO2ePerYear} userFootprint={footprint.totalKgCO2ePerYear} />
+
+          {/* Export and share */}
+          <section style={{ marginBottom: '2rem' }}>
+            <div className="cf-section-label">EXPORT & SHARE</div>
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center', marginBottom: '1rem' }}>
+              <button
+                onClick={handleCopyShareLink}
+                style={{
+                  padding: '8px 16px',
+                  fontSize: '0.78rem',
+                  fontFamily: 'inherit',
+                  fontWeight: 600,
+                  border: '1px solid var(--divider, #DDD9D0)',
+                  borderRadius: '6px',
+                  background: copyFeedback ? 'var(--green, #4A7C59)' : 'transparent',
+                  color: copyFeedback ? 'white' : 'var(--text-secondary, #6B6B60)',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s',
+                  minHeight: '44px',
+                }}
+                aria-label={copyFeedback ? 'Link copied' : 'Copy shareable link'}
+              >
+                {copyFeedback ? '✓ Copied' : 'Copy share link'}
+              </button>
+              <ExportButton footprint={footprint} comparisonContext={comparisonContext} />
+            </div>
+          </section>
 
           <ScenarioManager
             baseline={baseline}

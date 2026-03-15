@@ -1,12 +1,16 @@
 /**
  * ImpactChart — the visual centerpiece of the calculator.
  *
- * One interactive bar chart where:
- * 1. Your footprint is a bar
- * 2. You toggle personal lifestyle changes on/off → bar shrinks with animation
- * 3. Systemic grid actions appear on the SAME scale → they obliterate the personal bar
+ * One unified interactive bar chart:
+ * 1. Your footprint bar
+ * 2. Toggle personal changes → bar shrinks left
+ * 3. Toggle systemic actions → a green bar grows RIGHT from the same track,
+ *    showing carbon you can PREVENT. The personal bar shrinks proportionally
+ *    to accommodate the new scale.
  *
- * The entire argument lives in this one visual.
+ * The visual: personal reductions nibble at your bar from the right.
+ * Systemic actions explode a green bar out the other direction, dwarfing
+ * the personal changes on the same scale.
  */
 
 import { useState, useMemo } from 'react';
@@ -19,347 +23,282 @@ interface ImpactChartProps {
   leverageCases: LeverageResult[];
 }
 
-const GREEN = 'var(--green, #4A7C59)';
-const ACCENT = 'var(--accent, #8B2E2E)';
+const GREEN = '#4A7C59';
+const GREEN_LIGHT = 'rgba(74, 124, 89, 0.08)';
+const GREEN_BORDER = 'rgba(74, 124, 89, 0.35)';
+const ACCENT = '#8B2E2E';
 const MUTED = 'var(--text-secondary, #6B6B60)';
 const DIVIDER = 'var(--divider, #DDD9D0)';
 const PANEL = 'var(--panel, #EFECE5)';
 const TRACK = 'var(--bar-track, #D4CFCA)';
 
 export function ImpactChart({ footprintKg, personalActions, leverageCases }: ImpactChartProps) {
-  const [enabled, setEnabled] = useState<Set<string>>(new Set());
-  const [showSystemic, setShowSystemic] = useState(false);
+  const [enabledPersonal, setEnabledPersonal] = useState<Set<string>>(new Set());
+  const [enabledSystemic, setEnabledSystemic] = useState<Set<string>>(new Set());
 
-  const toggle = (name: string) => {
-    setEnabled(prev => {
+  const togglePersonal = (name: string) => {
+    setEnabledPersonal(prev => {
       const next = new Set(prev);
       if (next.has(name)) next.delete(name); else next.add(name);
       return next;
     });
   };
 
-  const totalPersonalSavings = useMemo(
-    () => personalActions.filter(a => enabled.has(a.name)).reduce((s, a) => s + a.savingsKg, 0),
-    [personalActions, enabled],
-  );
+  const toggleSystemic = (name: string) => {
+    setEnabledSystemic(prev => {
+      const next = new Set(prev);
+      if (next.has(name)) next.delete(name); else next.add(name);
+      return next;
+    });
+  };
 
+  // Personal savings
+  const totalPersonalSavings = useMemo(
+    () => personalActions.filter(a => enabledPersonal.has(a.name)).reduce((s, a) => s + a.savingsKg, 0),
+    [personalActions, enabledPersonal],
+  );
   const afterPersonal = Math.max(footprintKg - totalPersonalSavings, 0);
 
-  // Top 3 leverage cases sorted by central expected value
-  const topLeverage = useMemo(
-    () => [...leverageCases]
-      .sort((a, b) => b.expectedKgCO2ePerYear.central - a.expectedKgCO2ePerYear.central)
-      .slice(0, 3),
+  // Systemic cases sorted by central EV
+  const sortedLeverage = useMemo(
+    () => [...leverageCases].sort((a, b) => b.expectedKgCO2ePerYear.central - a.expectedKgCO2ePerYear.central),
     [leverageCases],
   );
 
-  // Scale: personal bars use footprintKg as 100%.
-  // Systemic bars use the same scale — they'll overflow dramatically.
-  const maxSystemic = topLeverage.length > 0 ? topLeverage[0].expectedKgCO2ePerYear.central : 0;
-  const scaleMax = showSystemic ? Math.max(footprintKg, maxSystemic) : footprintKg;
-  const pct = (kg: number) => Math.min((kg / scaleMax) * 100, 100);
-  const overflowX = (kg: number) => kg / scaleMax; // can be > 1
+  // Total systemic prevented
+  const totalSystemicPrevented = useMemo(
+    () => sortedLeverage.filter(c => enabledSystemic.has(c.case.name)).reduce((s, c) => s + c.expectedKgCO2ePerYear.central, 0),
+    [sortedLeverage, enabledSystemic],
+  );
+
+  // Scale: the bar track represents max(footprint, totalSystemicPrevented)
+  // so both personal and systemic fit on the same visual
+  const scaleMax = Math.max(footprintKg, totalSystemicPrevented, 1);
+  const pct = (kg: number) => (kg / scaleMax) * 100;
+
+  const hasPersonal = enabledPersonal.size > 0;
+  const hasSystemic = enabledSystemic.size > 0;
 
   return (
     <div
       role="figure"
       aria-label="Interactive comparison of personal lifestyle changes versus systemic grid actions"
-      style={{ margin: '2rem 0 3rem' }}
+      style={{ margin: '1rem 0 3rem' }}
     >
-      {/* ── YOUR FOOTPRINT ── */}
-      <div style={{ marginBottom: '2rem' }}>
-        <div style={rowLabel}>
-          <span>Your footprint</span>
-          <span style={kgLabel}>{footprintKg.toLocaleString()} kg/yr</span>
+      {/* ════════════════ THE BAR ════════════════ */}
+      <div style={{ marginBottom: '2.5rem' }}>
+
+        {/* ── YOUR FOOTPRINT (starting bar) ── */}
+        <div style={{ marginBottom: '1.25rem' }}>
+          <div style={rowLabel}>
+            <span style={{ fontWeight: 600 }}>Your footprint</span>
+            <span style={kgLabel}>{footprintKg.toLocaleString()} kg/yr</span>
+          </div>
+          <div style={trackStyle}>
+            <div style={{ ...barFill, width: `${pct(footprintKg)}%`, background: ACCENT }} />
+          </div>
         </div>
-        <div style={trackStyle}>
-          <div style={{
-            ...barBase,
-            width: `${pct(footprintKg)}%`,
-            background: ACCENT,
-          }} />
-        </div>
-      </div>
 
-      {/* ── PERSONAL CHANGES ── */}
-      <div style={{ fontSize: '0.62rem', letterSpacing: '0.12em', textTransform: 'uppercase', fontWeight: 700, color: MUTED, marginBottom: '0.75rem' }}>
-        TOGGLE PERSONAL CHANGES
-      </div>
+        {/* ── AFTER PERSONAL CHANGES ── */}
+        {hasPersonal && (
+          <div style={{ marginBottom: '1.25rem' }}>
+            <div style={rowLabel}>
+              <span style={{ fontWeight: 600 }}>After your changes</span>
+              <span style={{ ...kgLabel, color: GREEN }}>
+                {afterPersonal.toLocaleString()} kg/yr
+                <span style={{ fontWeight: 400, color: MUTED, fontSize: '0.75rem', marginLeft: '6px' }}>
+                  (−{totalPersonalSavings.toLocaleString()})
+                </span>
+              </span>
+            </div>
+            <div style={trackStyle}>
+              {/* Ghost of original */}
+              <div style={{ ...barFill, width: `${pct(footprintKg)}%`, background: DIVIDER, position: 'absolute' }} />
+              {/* Reduced bar */}
+              <div style={{ ...barFill, width: `${pct(afterPersonal)}%`, background: ACCENT, opacity: 0.7, position: 'relative', zIndex: 1 }} />
+            </div>
+          </div>
+        )}
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: '1.5rem' }}>
-        {personalActions.slice(0, 6).map(action => {
-          const isOn = enabled.has(action.name);
-          return (
-            <button
-              key={action.name}
-              onClick={() => toggle(action.name)}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '10px',
-                padding: '8px 12px',
-                background: isOn ? 'rgba(74, 124, 89, 0.08)' : PANEL,
-                border: isOn ? `1.5px solid ${GREEN}` : `1.5px solid transparent`,
-                borderRadius: '6px',
-                cursor: 'pointer',
-                fontFamily: 'inherit',
-                fontSize: '0.85rem',
-                color: 'var(--text, #1A1A18)',
-                textAlign: 'left',
-                transition: 'all 0.15s',
-                minHeight: '44px',
-              }}
-              aria-pressed={isOn}
-            >
-              <span style={{
-                width: '20px',
-                height: '20px',
-                borderRadius: '4px',
-                border: isOn ? `2px solid ${GREEN}` : `2px solid ${DIVIDER}`,
-                background: isOn ? GREEN : 'transparent',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexShrink: 0,
-                transition: 'all 0.15s',
-                color: 'white',
-                fontSize: '0.7rem',
-                fontWeight: 700,
-              }}>
-                {isOn ? '✓' : ''}
+        {/* ── CARBON YOU CAN PREVENT (systemic — grows in green) ── */}
+        {hasSystemic && (
+          <div style={{ marginBottom: '0.5rem' }}>
+            <div style={rowLabel}>
+              <span style={{ fontWeight: 700, color: GREEN }}>Carbon you can help prevent</span>
+              <span style={{ ...kgLabel, color: GREEN }}>
+                {totalSystemicPrevented.toLocaleString()} kg/yr
+                {footprintKg > 0 && (
+                  <span style={{ fontWeight: 800, marginLeft: '8px', fontSize: '0.9rem' }}>
+                    {Math.round(totalSystemicPrevented / footprintKg * 10) / 10}×
+                  </span>
+                )}
               </span>
-              <span style={{ flex: 1, fontWeight: isOn ? 600 : 400 }}>{action.name}</span>
-              <span style={{
-                fontWeight: 700,
-                color: isOn ? GREEN : MUTED,
-                whiteSpace: 'nowrap',
-                fontVariantNumeric: 'tabular-nums',
-                fontSize: '0.82rem',
-              }}>
-                −{action.savingsKg.toLocaleString()} kg
-              </span>
-            </button>
-          );
-        })}
-      </div>
-
-      {/* ── AFTER PERSONAL CHANGES BAR ── */}
-      <div style={{ marginBottom: '0.5rem' }}>
-        <div style={rowLabel}>
-          <span style={{ fontWeight: 700 }}>
-            {enabled.size === 0 ? 'Your footprint (unchanged)' : 'After your changes'}
-          </span>
-          <span style={{ ...kgLabel, color: enabled.size > 0 ? GREEN : undefined }}>
-            {afterPersonal.toLocaleString()} kg/yr
-            {enabled.size > 0 && (
-              <span style={{ fontWeight: 400, color: MUTED, marginLeft: '6px', fontSize: '0.75rem' }}>
-                (−{totalPersonalSavings.toLocaleString()})
-              </span>
+            </div>
+            <div style={trackStyle}>
+              {/* Show personal bar faintly for comparison */}
+              <div style={{ ...barFill, width: `${pct(afterPersonal)}%`, background: ACCENT, opacity: 0.2, position: 'absolute' }} />
+              {/* Systemic green bar */}
+              <div style={{ ...barFill, width: `${Math.min(pct(totalSystemicPrevented), 100)}%`, background: GREEN, position: 'relative', zIndex: 1 }} />
+            </div>
+            {totalSystemicPrevented > footprintKg && (
+              <div style={{ fontSize: '0.72rem', color: GREEN, fontWeight: 600, marginTop: '4px' }}>
+                {Math.round(totalSystemicPrevented / footprintKg * 10) / 10}× your entire footprint — from expected value of the campaigns you selected
+              </div>
             )}
-          </span>
+          </div>
+        )}
+      </div>
+
+      {/* ════════════════ PERSONAL TOGGLES ════════════════ */}
+      <div style={{ marginBottom: '2rem' }}>
+        <div style={sectionLabel}>PERSONAL CHANGES</div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          {personalActions.slice(0, 6).map(action => {
+            const isOn = enabledPersonal.has(action.name);
+            return (
+              <button
+                key={action.name}
+                onClick={() => togglePersonal(action.name)}
+                style={{
+                  ...toggleBtn,
+                  background: isOn ? GREEN_LIGHT : PANEL,
+                  borderColor: isOn ? GREEN_BORDER : 'transparent',
+                }}
+                aria-pressed={isOn}
+              >
+                <Checkbox on={isOn} color={GREEN} />
+                <span style={{ flex: 1, fontWeight: isOn ? 600 : 400 }}>{action.name}</span>
+                <span style={{ ...toggleKg, color: isOn ? GREEN : MUTED }}>
+                  −{action.savingsKg.toLocaleString()} kg
+                </span>
+              </button>
+            );
+          })}
         </div>
-        <div style={trackStyle}>
-          {/* Ghost of original footprint */}
-          <div style={{
-            ...barBase,
-            width: `${pct(footprintKg)}%`,
-            background: DIVIDER,
-            position: 'absolute',
-          }} />
-          {/* Current bar after reductions */}
-          <div style={{
-            ...barBase,
-            width: `${pct(afterPersonal)}%`,
-            background: enabled.size > 0 ? GREEN : ACCENT,
-            position: 'relative',
-            zIndex: 1,
-          }} />
+        {hasPersonal && (
+          <div style={{ fontSize: '0.78rem', color: MUTED, marginTop: '0.75rem', lineHeight: 1.5 }}>
+            You've cut <strong>{Math.round(totalPersonalSavings / footprintKg * 100)}%</strong>.
+            {afterPersonal > 0 && <> <strong>{afterPersonal.toLocaleString()} kg</strong> remains — that's your ceiling.</>}
+          </div>
+        )}
+      </div>
+
+      {/* ════════════════ SYSTEMIC TOGGLES ════════════════ */}
+      <div style={{ borderTop: `2px solid ${DIVIDER}`, paddingTop: '2rem', marginBottom: '2rem' }}>
+        <div style={sectionLabel}>SYSTEMIC ACTIONS — EXPECTED VALUE PER PERSON</div>
+        <p style={{ fontSize: '0.78rem', color: MUTED, lineHeight: 1.5, marginBottom: '1rem', maxWidth: 580 }}>
+          Each action shows the probability-weighted emissions prevented, divided by coalition size. Select any to see their impact on the same scale as your personal changes.
+        </p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          {sortedLeverage.map(result => {
+            const isOn = enabledSystemic.has(result.case.name);
+            const central = result.expectedKgCO2ePerYear.central;
+            const mult = result.leverageMultiple.central;
+            return (
+              <button
+                key={result.case.name}
+                onClick={() => toggleSystemic(result.case.name)}
+                style={{
+                  ...toggleBtn,
+                  background: isOn ? GREEN_LIGHT : PANEL,
+                  borderColor: isOn ? GREEN_BORDER : 'transparent',
+                }}
+                aria-pressed={isOn}
+              >
+                <Checkbox on={isOn} color={GREEN} />
+                <div style={{ flex: 1, textAlign: 'left' }}>
+                  <div style={{ fontWeight: isOn ? 600 : 400 }}>{result.case.name}</div>
+                  <div style={{ fontSize: '0.68rem', color: MUTED, marginTop: '1px' }}>
+                    {result.case.description.split('.')[0]}.
+                  </div>
+                </div>
+                <div style={{ textAlign: 'right', flexShrink: 0, marginLeft: '8px' }}>
+                  <div style={{ ...toggleKg, color: isOn ? GREEN : MUTED }}>
+                    {central.toLocaleString()} kg
+                  </div>
+                  {mult >= 1 && (
+                    <div style={{ fontSize: '0.65rem', color: isOn ? GREEN : MUTED, fontWeight: 700 }}>
+                      {mult}× your footprint
+                    </div>
+                  )}
+                </div>
+              </button>
+            );
+          })}
         </div>
       </div>
 
-      {enabled.size > 0 && (
-        <div style={{ fontSize: '0.78rem', color: MUTED, marginBottom: '1.5rem', lineHeight: 1.5 }}>
-          {totalPersonalSavings >= footprintKg ? (
-            <span>You've eliminated your entire footprint. <strong>This is your ceiling.</strong></span>
+      {/* ════════════════ PUNCHLINE ════════════════ */}
+      {(hasPersonal || hasSystemic) && (
+        <div style={{
+          padding: '16px 20px',
+          background: hasSystemic ? GREEN_LIGHT : PANEL,
+          borderLeft: `3px solid ${hasSystemic ? GREEN : ACCENT}`,
+          borderRadius: '0 8px 8px 0',
+          lineHeight: 1.7,
+          marginBottom: '2rem',
+        }}>
+          {hasSystemic ? (
+            <>
+              <div style={{ fontSize: '0.95rem', fontWeight: 600, marginBottom: '4px' }}>
+                Your personal changes save {totalPersonalSavings.toLocaleString()} kg.
+                The systemic actions you selected prevent {totalSystemicPrevented.toLocaleString()} kg — {Math.round(totalSystemicPrevented / Math.max(totalPersonalSavings, 1))}× more.
+              </div>
+              <div style={{ fontSize: '0.78rem', color: MUTED }}>
+                These are expected values. The probability of any one campaign succeeding is small, but the emissions at stake are enormous. That's why the math favors systemic action.
+              </div>
+            </>
           ) : (
-            <span>
-              You've cut <strong>{Math.round(totalPersonalSavings / footprintKg * 100)}%</strong> of your footprint.
-              {afterPersonal > 0 && <> Even with every change above, <strong>{afterPersonal.toLocaleString()} kg remains.</strong></>}
-            </span>
+            <div style={{ fontSize: '0.88rem', color: MUTED }}>
+              You've made personal changes worth {totalPersonalSavings.toLocaleString()} kg/yr.
+              Try selecting systemic actions below to see how they compare on the same scale.
+            </div>
           )}
         </div>
       )}
 
-      {/* ── THE TURN ── */}
-      <div style={{
-        borderTop: `2px solid ${DIVIDER}`,
-        margin: '2rem 0',
-        paddingTop: '2rem',
-      }}>
-        <button
-          onClick={() => setShowSystemic(!showSystemic)}
-          style={{
-            display: 'block',
-            width: '100%',
-            padding: '16px 20px',
-            background: showSystemic ? 'rgba(74, 124, 89, 0.06)' : PANEL,
-            border: showSystemic ? `1.5px solid ${GREEN}` : `1.5px solid ${DIVIDER}`,
-            borderRadius: '8px',
-            cursor: 'pointer',
-            fontFamily: 'inherit',
-            textAlign: 'left',
-            transition: 'all 0.2s',
-            minHeight: '52px',
-          }}
-          aria-expanded={showSystemic}
-        >
-          <div style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--text, #1A1A18)', marginBottom: '4px' }}>
-            {showSystemic ? 'Now look at systemic actions on the same scale ↓' : 'Now see what systemic grid actions look like on the same scale →'}
-          </div>
-          <div style={{ fontSize: '0.78rem', color: MUTED, lineHeight: 1.5 }}>
-            These are expected values per person: the probability of success × the total emissions prevented ÷ the number of people involved.
-          </div>
-        </button>
-      </div>
-
-      {/* ── SYSTEMIC BARS ── */}
-      {showSystemic && (
-        <div style={{ marginTop: '1rem' }}>
-          {/* Re-show personal bar for comparison */}
-          <div style={{ marginBottom: '1.5rem', opacity: 0.5 }}>
-            <div style={rowLabel}>
-              <span>Your personal ceiling</span>
-              <span style={kgLabel}>{footprintKg.toLocaleString()} kg/yr</span>
-            </div>
-            <div style={trackStyle}>
-              <div style={{
-                ...barBase,
-                width: `${pct(footprintKg)}%`,
-                background: ACCENT,
-                minWidth: '3px',
-              }} />
-            </div>
-          </div>
-
-          {/* Systemic action bars */}
-          {topLeverage.map(result => {
-            const central = result.expectedKgCO2ePerYear.central;
-            const high = result.expectedKgCO2ePerYear.high;
-            const mult = result.leverageMultiple.central;
-            const centralOverflow = overflowX(central);
-            const barWidthPct = Math.min(pct(central), 100);
-            const highWidthPct = Math.min(pct(high), 100);
-
-            return (
-              <div key={result.case.name} style={{ marginBottom: '1.5rem' }}>
-                <div style={rowLabel}>
-                  <span>{result.case.name}</span>
-                  <span style={{ ...kgLabel, color: GREEN }}>
-                    {central.toLocaleString()} kg/yr
-                    {mult >= 1 && (
-                      <span style={{ fontWeight: 800, marginLeft: '8px', fontSize: '0.88rem' }}>
-                        {mult}×
-                      </span>
-                    )}
-                  </span>
-                </div>
-                <div style={{ ...trackStyle, overflow: 'visible', position: 'relative' }}>
-                  {/* High range — lighter */}
-                  <div style={{
-                    ...barBase,
-                    width: `${highWidthPct}%`,
-                    background: 'rgba(74, 124, 89, 0.18)',
-                    position: 'absolute',
-                    borderRadius: '5px',
-                  }} />
-                  {/* Central — solid green */}
-                  <div style={{
-                    ...barBase,
-                    width: `${barWidthPct}%`,
-                    background: GREEN,
-                    position: 'relative',
-                    zIndex: 1,
-                  }}>
-                    {/* Overflow indicator if bar would extend past 100% */}
-                    {centralOverflow > 1.05 && (
-                      <div style={{
-                        position: 'absolute',
-                        right: '-8px',
-                        top: '50%',
-                        transform: 'translateY(-50%)',
-                        fontSize: '1.2rem',
-                        color: GREEN,
-                        fontWeight: 700,
-                        textShadow: `0 0 8px ${PANEL}`,
-                      }}>
-                        →
-                      </div>
-                    )}
-                  </div>
-                </div>
-                <div style={{ fontSize: '0.68rem', color: MUTED, marginTop: '3px' }}>
-                  {result.case.description}
-                  <span style={{ marginLeft: '6px' }}>
-                    Range: {result.expectedKgCO2ePerYear.low.toLocaleString()}–{result.expectedKgCO2ePerYear.high.toLocaleString()} kg/yr
-                  </span>
-                </div>
-              </div>
-            );
-          })}
-
-          {/* The punchline */}
-          <div style={{
-            marginTop: '2rem',
-            padding: '16px 20px',
-            background: 'rgba(74, 124, 89, 0.06)',
-            borderLeft: `3px solid ${GREEN}`,
-            borderRadius: '0 8px 8px 0',
-            lineHeight: 1.7,
-          }}>
-            <div style={{ fontSize: '0.95rem', fontWeight: 600, color: 'var(--text, #1A1A18)', marginBottom: '4px' }}>
-              The most you can do for yourself is cut {footprintKg.toLocaleString()} kg.
-              The expected value of systemic action starts at {topLeverage[topLeverage.length - 1]?.expectedKgCO2ePerYear.central.toLocaleString()} kg and goes up from there.
-            </div>
-            <div style={{ fontSize: '0.78rem', color: MUTED }}>
-              These aren't fantasies. They're probability-weighted estimates of real campaigns that real people have run.
-              {' '}A small chance of preventing a huge amount of pollution is still worth a lot.
-            </div>
-          </div>
-
-          {/* Specific actions */}
-          <div style={{ marginTop: '2rem' }}>
-            <div style={{ fontSize: '0.62rem', letterSpacing: '0.12em', textTransform: 'uppercase', fontWeight: 700, color: MUTED, marginBottom: '0.75rem' }}>
-              WHERE TO START
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-              {[
-                { action: 'Attend a public utility commission hearing', why: 'PUCs decide how electricity is generated. Your comment enters the official record and shapes billion-dollar decisions.' },
-                { action: 'Join a local clean energy campaign', why: 'Organized groups have kept nuclear plants open, blocked coal plants, and passed clean energy standards. One more person shifts the math.' },
-                { action: 'Call your state legislator about clean energy', why: 'States set renewable standards, approve rate cases, and fund efficiency. A 5-minute call from a constituent has measurable effect.' },
-              ].map(item => (
-                <div key={item.action} style={{ padding: '10px 14px', background: PANEL, borderRadius: '6px' }}>
-                  <div style={{ fontWeight: 600, fontSize: '0.85rem', marginBottom: '2px' }}>{item.action}</div>
-                  <div style={{ fontSize: '0.72rem', color: MUTED, lineHeight: 1.5 }}>{item.why}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Screen reader text */}
+      {/* Screen reader */}
       <div className="sr-only" aria-live="polite">
         Your footprint: {footprintKg.toLocaleString()} kg per year.
-        {enabled.size > 0 && ` After personal changes: ${afterPersonal.toLocaleString()} kg per year, a reduction of ${totalPersonalSavings.toLocaleString()} kg.`}
-        {showSystemic && topLeverage.length > 0 && ` Top systemic action: ${topLeverage[0].case.name} with expected value of ${topLeverage[0].expectedKgCO2ePerYear.central.toLocaleString()} kg per year, ${topLeverage[0].leverageMultiple.central} times your personal ceiling.`}
+        {hasPersonal && ` After personal changes: ${afterPersonal.toLocaleString()} kg, a reduction of ${totalPersonalSavings.toLocaleString()} kg.`}
+        {hasSystemic && ` Systemic actions selected prevent ${totalSystemicPrevented.toLocaleString()} kg per year in expected value.`}
       </div>
     </div>
   );
 }
 
-// ---------------------------------------------------------------------------
-// Shared styles
-// ---------------------------------------------------------------------------
+// ─── Shared UI ───
+
+function Checkbox({ on, color }: { on: boolean; color: string }) {
+  return (
+    <span style={{
+      width: '20px',
+      height: '20px',
+      borderRadius: '4px',
+      border: `2px solid ${on ? color : DIVIDER}`,
+      background: on ? color : 'transparent',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      flexShrink: 0,
+      transition: 'all 0.15s',
+      color: 'white',
+      fontSize: '0.7rem',
+      fontWeight: 700,
+    }}>
+      {on ? '✓' : ''}
+    </span>
+  );
+}
+
+const sectionLabel: React.CSSProperties = {
+  fontSize: '0.62rem',
+  letterSpacing: '0.12em',
+  textTransform: 'uppercase',
+  fontWeight: 700,
+  color: 'var(--text-secondary, #6B6B60)',
+  marginBottom: '0.75rem',
+};
 
 const rowLabel: React.CSSProperties = {
   display: 'flex',
@@ -385,9 +324,32 @@ const trackStyle: React.CSSProperties = {
   overflow: 'hidden',
 };
 
-const barBase: React.CSSProperties = {
+const barFill: React.CSSProperties = {
   height: '100%',
   borderRadius: '5px',
-  transition: 'width 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+  transition: 'width 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
   minWidth: '0',
+};
+
+const toggleBtn: React.CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: '10px',
+  padding: '8px 12px',
+  border: '1.5px solid transparent',
+  borderRadius: '6px',
+  cursor: 'pointer',
+  fontFamily: 'inherit',
+  fontSize: '0.85rem',
+  color: 'var(--text, #1A1A18)',
+  textAlign: 'left',
+  transition: 'all 0.15s',
+  minHeight: '44px',
+};
+
+const toggleKg: React.CSSProperties = {
+  fontWeight: 700,
+  whiteSpace: 'nowrap',
+  fontVariantNumeric: 'tabular-nums',
+  fontSize: '0.82rem',
 };
