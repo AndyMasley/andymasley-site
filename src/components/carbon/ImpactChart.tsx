@@ -131,9 +131,9 @@ export function ImpactChart({
                   key={p.id}
                   onClick={() => handlePresetClick(p)}
                   style={{
-                    fontSize: '0.68rem',
-                    padding: '4px 10px',
-                    borderRadius: '12px',
+                    fontSize: '0.62rem',
+                    padding: '3px 8px',
+                    borderRadius: '10px',
                     border: `1px solid ${DIVIDER}`,
                     background: activePresetId === p.id ? ACCENT : 'transparent',
                     color: activePresetId === p.id ? 'white' : MUTED,
