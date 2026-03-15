@@ -59,8 +59,8 @@ import { Calculator } from '@/components/carbon/Calculator';
     --bar-track: #D4CFCA;
     font-family: 'DM Sans', sans-serif;
     color: var(--text);
-    padding: 0 24px 3rem;
-    max-width: 1400px;
+    padding: 0 16px 3rem;
+    max-width: 1600px;
     margin: 0 auto;
   }
 
@@ -202,16 +202,11 @@ import { Calculator } from '@/components/carbon/Calculator';
     border-radius: 10px;
     overflow: hidden;
     background: var(--panel);
-    min-height: calc(100vh - 160px);
-    display: flex;
-    flex-direction: column;
   }
 
   .cf-impact-panels {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
-    flex: 1;
-    min-height: 0;
   }
 
   .cf-impact-col {
@@ -220,7 +215,6 @@ import { Calculator } from '@/components/carbon/Calculator';
     display: flex;
     flex-direction: column;
     background: var(--bg, #F5F2EC);
-    overflow: hidden;
   }
   [data-theme="dark"] .cf-impact-col {
     background: var(--bg, #1C1A17);

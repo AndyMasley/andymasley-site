@@ -1,21 +1,17 @@
 /**
- * Personal actions computation — shared between Calculator (top 3) and PersonalChanges (full list).
+ * Personal actions computation — categorized actions with savings estimates.
  *
- * Extracted from PersonalChanges.tsx so the Calculator can display the top 3
- * actions inline without importing the full PersonalChanges component.
+ * Actions are organized into categories: Transport, Home, Food, Digital, Purchases, Flights.
+ * Each action includes a category, savings estimate, applicability check, and note.
  */
 
 import type { BaselineInputs, FootprintModel } from './types';
 import { getGridIntensity } from './grid';
 
-export type Friction = 'low' | 'medium' | 'high';
-
 export interface PersonalAction {
   name: string;
   savingsKg: number;
-  friction: Friction;
-  upfrontCost: string;
-  certainty: string;
+  category: string;
   applicable: boolean;
   note: string;
 }
@@ -23,86 +19,242 @@ export interface PersonalAction {
 export function computePersonalActions(baseline: BaselineInputs, footprint: FootprintModel): PersonalAction[] {
   const gridRate = getGridIntensity(baseline.state);
 
+  const transportMiles: Record<string, number> = {
+    urban: 8000,
+    suburban: 13500,
+    rural: 16000,
+  };
+  const miles = transportMiles[baseline.urbanForm] ?? 13500;
+  const gasKgPerMile = 8.89 / 25.4;
+
+  const foodBucket = footprint.buckets.find(b => b.bucketId === 'food');
+  const foodKg = foodBucket?.kgCO2ePerYear ?? 2500;
+
+  const goodsBucket = footprint.buckets.find(b => b.bucketId === 'goods-and-services');
+  const goodsKg = goodsBucket?.kgCO2ePerYear ?? 1200;
+
+  const dietKgTable: Record<string, number> = {
+    average: 2500,
+    'heavy-meat': 3200,
+    'light-meat': 2000,
+    pescatarian: 1700,
+    vegetarian: 1500,
+    vegan: 1050,
+  };
+  const currentDietKg = dietKgTable[baseline.dietType] ?? 2500;
+
   const actions: PersonalAction[] = [
+    // ── Transport ──
     {
       name: 'Switch to an EV',
       savingsKg: Math.round(
-        (baseline.carOwnership === 'gas' ? 13500 * (8.89 / 25.4 - 0.3 * gridRate) : 0)
+        baseline.carOwnership === 'gas'
+          ? miles * (gasKgPerMile - 0.3 * gridRate)
+          : baseline.carOwnership === 'hybrid'
+            ? miles * (8.89 / 45 - 0.3 * gridRate)
+            : 0
       ),
-      friction: 'high',
-      upfrontCost: '$25,000–$45,000 (new)',
-      certainty: 'High — well-measured per-mile savings',
+      category: 'Transport',
       applicable: baseline.carOwnership === 'gas' || baseline.carOwnership === 'hybrid',
       note: 'Savings depend on your grid — cleaner grids make EVs better',
     },
     {
+      name: 'Cut driving 20%',
+      savingsKg: baseline.carOwnership !== 'none'
+        ? Math.round(miles * 0.2 * gasKgPerMile)
+        : 0,
+      category: 'Transport',
+      applicable: baseline.carOwnership !== 'none',
+      note: 'Work from home, combine trips, or bike for short errands',
+    },
+    {
+      name: 'Cut driving 50%',
+      savingsKg: baseline.carOwnership !== 'none'
+        ? Math.round(miles * 0.5 * gasKgPerMile)
+        : 0,
+      category: 'Transport',
+      applicable: baseline.carOwnership !== 'none',
+      note: 'Major lifestyle shift — bike commute + transit for most trips',
+    },
+    {
+      name: 'Bike commute (replace car for commute)',
+      savingsKg: baseline.carOwnership !== 'none'
+        ? Math.round(5000 * gasKgPerMile) // ~5000 mi/yr commute
+        : 0,
+      category: 'Transport',
+      applicable: baseline.carOwnership !== 'none' && (baseline.urbanForm === 'urban' || baseline.urbanForm === 'suburban'),
+      note: 'Assumes ~5,000 miles/yr commute replaced by bike',
+    },
+    {
+      name: 'Use public transit instead of driving',
+      savingsKg: baseline.carOwnership !== 'none'
+        ? Math.round(miles * 0.6 * (gasKgPerMile - 0.05)) // transit emits ~0.05 kg/mi
+        : 0,
+      category: 'Transport',
+      applicable: baseline.carOwnership !== 'none' && baseline.urbanForm === 'urban',
+      note: 'Replace 60% of driving with transit (urban areas only)',
+    },
+
+    // ── Home ──
+    {
       name: 'Install rooftop solar (7 kW)',
       savingsKg: Math.round((10000 * gridRate) / baseline.householdSize),
-      friction: 'medium',
-      upfrontCost: '$15,000–$25,000 (before tax credit)',
-      certainty: 'High — production is predictable from location',
+      category: 'Home',
       applicable: baseline.housingType !== 'apartment',
       note: 'Savings scale with your grid intensity',
     },
     {
-      name: 'Go vegan',
-      savingsKg: baseline.dietType === 'average' ? 1450 : baseline.dietType === 'heavy-meat' ? 2150 : 0,
-      friction: 'high',
-      upfrontCost: '$0 (may save money)',
-      certainty: 'Medium — varies with specific food choices',
-      applicable: baseline.dietType === 'average' || baseline.dietType === 'heavy-meat' || baseline.dietType === 'light-meat',
-      note: 'Largest food-related change available',
-    },
-    {
-      name: 'Go vegetarian',
-      savingsKg: baseline.dietType === 'average' ? 800 : baseline.dietType === 'heavy-meat' ? 1500 : 0,
-      friction: 'medium',
-      upfrontCost: '$0',
-      certainty: 'Medium — varies with specific food choices',
-      applicable: baseline.dietType === 'average' || baseline.dietType === 'heavy-meat',
-      note: 'More achievable than vegan for most people',
-    },
-    {
       name: 'Replace gas furnace with heat pump',
       savingsKg: Math.round((500 * 5.3 - 3000 * gridRate) / baseline.householdSize),
-      friction: 'medium',
-      upfrontCost: '$8,000–$15,000 (before rebates)',
-      certainty: 'High — engineering-based estimate',
+      category: 'Home',
       applicable: baseline.housingType !== 'apartment',
       note: 'Bigger savings on clean grids; may increase bills on coal-heavy grids',
     },
     {
+      name: 'Reduce thermostat 2\u00B0F in winter',
+      savingsKg: Math.round(200 / baseline.householdSize),
+      category: 'Home',
+      applicable: baseline.urbanForm !== 'urban' || baseline.housingType !== 'apartment',
+      note: 'Saves ~3% of heating energy per degree',
+    },
+    {
+      name: 'Switch to LED lighting',
+      savingsKg: Math.round((300 * gridRate) / baseline.householdSize),
+      category: 'Home',
+      applicable: true,
+      note: 'Replace all incandescent/CFL bulbs with LEDs',
+    },
+    {
+      name: 'Air-dry clothes (no dryer)',
+      savingsKg: Math.round((400 * gridRate) / baseline.householdSize),
+      category: 'Home',
+      applicable: true,
+      note: 'Dryers use ~400 kWh/yr; line-drying eliminates this',
+    },
+    {
+      name: 'Weatherize/insulate home',
+      savingsKg: Math.round(500 / baseline.householdSize),
+      category: 'Home',
+      applicable: baseline.housingType !== 'apartment',
+      note: 'Sealing drafts and adding insulation cuts heating/cooling ~15%',
+    },
+
+    // ── Food ──
+    {
+      name: 'Go vegan',
+      savingsKg: Math.round((currentDietKg - 1050) * 1.15), // include waste multiplier
+      category: 'Food',
+      applicable: baseline.dietType !== 'vegan',
+      note: 'Largest food-related change available',
+    },
+    {
+      name: 'Go vegetarian',
+      savingsKg: Math.round((currentDietKg - 1500) * 1.15),
+      category: 'Food',
+      applicable: baseline.dietType !== 'vegan' && baseline.dietType !== 'vegetarian',
+      note: 'More achievable than vegan for most people',
+    },
+    {
+      name: 'Cut beef by half',
+      savingsKg: Math.round(450 * 1.15), // beef is ~900 kg of an average diet; halving saves ~450
+      category: 'Food',
+      applicable: baseline.dietType === 'average' || baseline.dietType === 'heavy-meat',
+      note: 'Beef is the most emission-intensive common food',
+    },
+    {
+      name: 'Cut food waste by half',
+      savingsKg: Math.round(foodKg * 0.15 * 0.5), // half of the 15% waste
+      category: 'Food',
+      applicable: true,
+      note: 'Average American wastes ~30% of food; halving saves ~7.5% of food emissions',
+    },
+    {
+      name: 'Buy local/seasonal produce',
+      savingsKg: Math.round(150),
+      category: 'Food',
+      applicable: true,
+      note: 'Reduces transport emissions; effect is moderate compared to diet changes',
+    },
+
+    // ── Digital ──
+    {
+      name: 'Stop using AI chatbots',
+      savingsKg: 18,
+      category: 'Digital',
+      applicable: true,
+      note: 'Based on ~50 queries/day; each query uses ~10x the energy of a search',
+    },
+    {
+      name: 'Reduce streaming by half',
+      savingsKg: 17,
+      category: 'Digital',
+      applicable: true,
+      note: 'HD streaming uses ~0.1 kWh per hour including data centers',
+    },
+    {
+      name: 'Cancel crypto/NFT activity',
+      savingsKg: 500,
+      category: 'Digital',
+      applicable: true,
+      note: 'Proof-of-work crypto mining is extremely energy-intensive',
+    },
+
+    // ── Purchases ──
+    {
+      name: 'Buy 50% less clothing',
+      savingsKg: Math.round(goodsKg * 0.12), // clothing is ~12% of goods emissions
+      category: 'Purchases',
+      applicable: true,
+      note: 'Fast fashion has high embodied carbon; buying less has outsize impact',
+    },
+    {
+      name: 'Buy used instead of new electronics',
+      savingsKg: Math.round(goodsKg * 0.08), // electronics ~8% of goods emissions
+      category: 'Purchases',
+      applicable: true,
+      note: 'Manufacturing new electronics is carbon-intensive',
+    },
+    {
+      name: 'Reduce general spending 15%',
+      savingsKg: Math.round(goodsKg * 0.15),
+      category: 'Purchases',
+      applicable: true,
+      note: 'Rough estimate — embodied emissions vary hugely by product',
+    },
+
+    // ── Flights ──
+    {
       name: 'Eliminate one transatlantic flight',
       savingsKg: Math.round(4400 * 0.255),
-      friction: 'medium',
-      upfrontCost: '$0 (saves money)',
-      certainty: 'High — well-measured per-mile rate',
+      category: 'Flights',
       applicable: baseline.flightsPerYear > 0,
       note: 'One of the highest-impact single actions',
     },
     {
-      name: 'Cut driving 20% (WFH, bike, transit)',
-      savingsKg: baseline.carOwnership !== 'none'
-        ? Math.round(13500 * 0.2 * 8.89 / 25.4)
-        : 0,
-      friction: 'low',
-      upfrontCost: '$0 (saves money)',
-      certainty: 'High — proportional to mileage reduction',
-      applicable: baseline.carOwnership !== 'none',
-      note: 'Often the lowest-friction transport change',
+      name: 'Eliminate one domestic flight',
+      savingsKg: Math.round(2200 * 0.255),
+      category: 'Flights',
+      applicable: baseline.flightsPerYear > 0,
+      note: 'Average domestic round-trip: ~2,200 miles',
     },
     {
-      name: 'Reduce spending 15%',
-      savingsKg: Math.round((footprint.buckets.find(b => b.bucketId === 'goods-and-services')?.kgCO2ePerYear ?? 0) * 0.15),
-      friction: 'low',
-      upfrontCost: '$0 (saves money)',
-      certainty: 'Low — spending-emissions link is approximate',
-      applicable: true,
-      note: 'Rough estimate — embodied emissions vary hugely by product',
+      name: 'Eliminate all flights',
+      savingsKg: Math.round(baseline.flightsPerYear * 2200 * 0.255),
+      category: 'Flights',
+      applicable: baseline.flightsPerYear > 1,
+      note: `Eliminates all ${baseline.flightsPerYear} flights per year`,
     },
   ];
 
+  const CATEGORY_ORDER = ['Transport', 'Home', 'Food', 'Digital', 'Purchases', 'Flights'];
+
   return actions
     .filter(a => a.applicable && a.savingsKg > 0)
-    .sort((a, b) => b.savingsKg - a.savingsKg);
+    .sort((a, b) => {
+      const catA = CATEGORY_ORDER.indexOf(a.category);
+      const catB = CATEGORY_ORDER.indexOf(b.category);
+      if (catA !== catB) return catA - catB;
+      return b.savingsKg - a.savingsKg;
+    });
 }
+

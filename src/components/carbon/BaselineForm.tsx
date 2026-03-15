@@ -1,4 +1,4 @@
-import type { BaselineInputs, HousingType, IncomeBand, UrbanForm, DietType, CarOwnership } from '@/lib/carbon/types';
+import type { BaselineInputs, HousingType, UrbanForm, DietType, CarOwnership } from '@/lib/carbon/types';
 
 const US_STATES: { code: string; name: string }[] = [
   { code: 'US', name: 'US Average' },
@@ -29,32 +29,33 @@ interface BaselineFormProps {
 const FIELD_STYLE: React.CSSProperties = {
   display: 'flex',
   flexDirection: 'column',
-  gap: '4px',
+  gap: '2px',
 };
 
 const LABEL_STYLE: React.CSSProperties = {
-  fontSize: '0.72rem',
+  fontSize: '0.65rem',
   fontWeight: 600,
   letterSpacing: '0.04em',
   color: 'var(--text-secondary, #6B6B60)',
 };
 
 const SELECT_STYLE: React.CSSProperties = {
-  padding: '8px 10px',
-  fontSize: '0.85rem',
+  padding: '5px 8px',
+  fontSize: '0.78rem',
   fontFamily: 'inherit',
   border: '1px solid var(--divider, #DDD9D0)',
-  borderRadius: '6px',
+  borderRadius: '5px',
   background: 'var(--panel, #EFECE5)',
   color: 'var(--text, #1A1A18)',
   cursor: 'pointer',
   outline: 'none',
-  minHeight: '44px',
+  minHeight: '34px',
+  width: '100%',
 };
 
 const INPUT_STYLE: React.CSSProperties = {
   ...SELECT_STYLE,
-  width: '80px',
+  width: '100%',
   textAlign: 'center',
   cursor: 'text',
 };
@@ -65,7 +66,7 @@ export function BaselineForm({ value, onChange }: BaselineFormProps) {
   };
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '1rem 1.5rem' }}>
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.5rem 0.75rem' }}>
 
       <div style={FIELD_STYLE}>
         <label style={LABEL_STYLE} htmlFor="cf-state">Location</label>
@@ -171,19 +172,18 @@ export function BaselineForm({ value, onChange }: BaselineFormProps) {
       </div>
 
       <div style={FIELD_STYLE}>
-        <label style={LABEL_STYLE} htmlFor="cf-income">Income band</label>
-        <select
-          id="cf-income"
-          style={SELECT_STYLE}
-          value={value.incomeBand}
-          onChange={e => update('incomeBand', e.target.value as IncomeBand)}
-        >
-          <option value="under-30k">Under $30k</option>
-          <option value="30k-60k">$30k–$60k</option>
-          <option value="60k-100k">$60k–$100k</option>
-          <option value="100k-150k">$100k–$150k</option>
-          <option value="over-150k">Over $150k</option>
-        </select>
+        <label style={LABEL_STYLE} htmlFor="cf-spending">Monthly spending ($)</label>
+        <input
+          id="cf-spending"
+          type="number"
+          min={0}
+          max={50000}
+          step={100}
+          style={INPUT_STYLE}
+          value={value.monthlySpending}
+          placeholder="2000"
+          onChange={e => update('monthlySpending', Math.max(0, parseFloat(e.target.value) || 0))}
+        />
       </div>
     </div>
   );

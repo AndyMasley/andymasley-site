@@ -12,9 +12,7 @@ import { useState, useMemo } from 'react';
 import type { BaselineInputs } from '@/lib/carbon/types';
 import type { PersonalAction } from '@/lib/carbon/personal-actions';
 import type { LeverageResult, BucketResult } from '@/lib/carbon/types';
-import { BUCKET_META } from '@/lib/carbon/types';
 import { BaselineForm } from './BaselineForm';
-import { ARCHETYPES } from './Archetypes';
 
 interface ImpactChartProps {
   footprintKg: number;
@@ -34,12 +32,21 @@ const ACCENT = '#8B2E2E';
 const MUTED = 'var(--text-secondary, #6B6B60)';
 const DIVIDER = 'var(--divider, #DDD9D0)';
 
+const LIFESTYLE_PRESETS: { id: string; label: string; baseline: BaselineInputs }[] = [
+  { id: 'urban-vegan', label: 'Urban vegan', baseline: { state: 'NY', householdSize: 1, housingType: 'apartment', urbanForm: 'urban', dietType: 'vegan', carOwnership: 'none', flightsPerYear: 1, monthlySpending: 1500 } },
+  { id: 'suburban-family', label: 'Suburban family', baseline: { state: 'US', householdSize: 4, housingType: 'single-family-small', urbanForm: 'suburban', dietType: 'average', carOwnership: 'gas', flightsPerYear: 2, monthlySpending: 2500 } },
+  { id: 'rural-truck', label: 'Rural driver', baseline: { state: 'US', householdSize: 2, housingType: 'single-family-large', urbanForm: 'rural', dietType: 'heavy-meat', carOwnership: 'gas', flightsPerYear: 0, monthlySpending: 1800 } },
+  { id: 'frequent-flyer', label: 'Frequent flyer', baseline: { state: 'US', householdSize: 1, housingType: 'apartment', urbanForm: 'urban', dietType: 'average', carOwnership: 'none', flightsPerYear: 8, monthlySpending: 3000 } },
+  { id: 'ev-professional', label: 'EV professional', baseline: { state: 'CA', householdSize: 2, housingType: 'townhouse', urbanForm: 'suburban', dietType: 'light-meat', carOwnership: 'ev', flightsPerYear: 3, monthlySpending: 3500 } },
+];
+
 export function ImpactChart({
   footprintKg, personalActions, leverageCases, buckets,
   baseline, onBaselineChange, activeArchetypeId, onSelectArchetype, archetypeTotals,
 }: ImpactChartProps) {
   const [enabledPersonal, setEnabledPersonal] = useState<Set<string>>(new Set());
   const [enabledSystemic, setEnabledSystemic] = useState<Set<string>>(new Set());
+  const [activePresetId, setActivePresetId] = useState<string | null>(null);
 
   const togglePersonal = (name: string) => {
     setEnabledPersonal(prev => { const n = new Set(prev); if (n.has(name)) n.delete(name); else n.add(name); return n; });
@@ -48,11 +55,30 @@ export function ImpactChart({
     setEnabledSystemic(prev => { const n = new Set(prev); if (n.has(name)) n.delete(name); else n.add(name); return n; });
   };
 
+  const handlePresetClick = (preset: typeof LIFESTYLE_PRESETS[number]) => {
+    setActivePresetId(preset.id);
+    onBaselineChange(preset.baseline);
+  };
+
   const totalSaved = useMemo(() => personalActions.filter(a => enabledPersonal.has(a.name)).reduce((s, a) => s + a.savingsKg, 0), [personalActions, enabledPersonal]);
   const afterPersonal = Math.max(footprintKg - totalSaved, 0);
 
   const sortedLeverage = useMemo(() => [...leverageCases].sort((a, b) => b.expectedKgCO2ePerYear.central - a.expectedKgCO2ePerYear.central), [leverageCases]);
   const totalSystemic = useMemo(() => sortedLeverage.filter(c => enabledSystemic.has(c.case.name)).reduce((s, c) => s + c.expectedKgCO2ePerYear.central, 0), [sortedLeverage, enabledSystemic]);
+
+  // Group personal actions by category
+  const groupedActions = useMemo(() => {
+    const groups: { category: string; actions: PersonalAction[] }[] = [];
+    for (const action of personalActions) {
+      const last = groups[groups.length - 1];
+      if (last && last.category === action.category) {
+        last.actions.push(action);
+      } else {
+        groups.push({ category: action.category, actions: [action] });
+      }
+    }
+    return groups;
+  }, [personalActions]);
 
   const hasPersonal = enabledPersonal.size > 0;
   const hasSystemic = enabledSystemic.size > 0;
@@ -61,7 +87,7 @@ export function ImpactChart({
 
   return (
     <div className="cf-impact-layout">
-      {/* ═══ THREE PANELS ═══ */}
+      {/* THREE PANELS */}
       <div className="cf-impact-panels">
 
         {/* LEFT: YOUR FOOTPRINT */}
@@ -71,22 +97,36 @@ export function ImpactChart({
             Your footprint
           </div>
           <div className="cf-impact-scroll">
-            <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '0.75rem' }}>
-              <select
-                value={activeArchetypeId || ''}
-                onChange={e => { const v = e.target.value; if (v) onSelectArchetype(v); }}
-                style={selectStyle}
-              >
-                <option value="">Profile…</option>
-                {ARCHETYPES.map(a => <option key={a.id} value={a.id}>{a.name} (~{archetypeTotals[a.id]?.toLocaleString()} kg)</option>)}
-              </select>
+            {/* Lifestyle preset pills */}
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginBottom: '0.75rem' }}>
+              {LIFESTYLE_PRESETS.map(p => (
+                <button
+                  key={p.id}
+                  onClick={() => handlePresetClick(p)}
+                  style={{
+                    fontSize: '0.68rem',
+                    padding: '4px 10px',
+                    borderRadius: '12px',
+                    border: `1px solid ${DIVIDER}`,
+                    background: activePresetId === p.id ? ACCENT : 'transparent',
+                    color: activePresetId === p.id ? 'white' : MUTED,
+                    fontFamily: 'inherit',
+                    fontWeight: activePresetId === p.id ? 600 : 400,
+                    cursor: 'pointer',
+                    transition: 'all 0.12s',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {p.label}
+                </button>
+              ))}
             </div>
-            <BaselineForm value={baseline} onChange={onBaselineChange} />
+            <BaselineForm value={baseline} onChange={b => { setActivePresetId(null); onBaselineChange(b); }} />
 
             <div style={{ marginTop: '1.25rem', paddingTop: '1rem', borderTop: `1px solid ${DIVIDER}` }}>
               <div style={{ fontSize: 'clamp(2rem, 4vw, 3rem)', fontWeight: 700, letterSpacing: '-0.02em', fontVariantNumeric: 'tabular-nums', lineHeight: 1 }}>
                 {footprintKg.toLocaleString()}
-                <span style={{ fontSize: '0.4em', fontWeight: 400, color: MUTED, marginLeft: '6px' }}>kg CO₂e/yr</span>
+                <span style={{ fontSize: '0.4em', fontWeight: 400, color: MUTED, marginLeft: '6px' }}>kg CO2e/yr</span>
               </div>
               <div style={{ fontSize: '0.75rem', color: MUTED, marginTop: '4px' }}>
                 {Math.round(footprintKg / 16000 * 100)}% of US average
@@ -102,18 +142,23 @@ export function ImpactChart({
             Personal cuts
           </div>
           <div className="cf-impact-scroll">
-            {personalActions.slice(0, 7).map(action => {
-              const isOn = enabledPersonal.has(action.name);
-              return (
-                <button key={action.name} onClick={() => togglePersonal(action.name)} className="cf-toggle-row" data-on={isOn} aria-pressed={isOn}>
-                  <Dot on={isOn} />
-                  <span style={{ flex: 1, fontWeight: isOn ? 600 : 400, fontSize: '0.8rem' }}>{action.name}</span>
-                  <span style={{ fontWeight: 700, color: isOn ? GREEN : MUTED, fontVariantNumeric: 'tabular-nums', fontSize: '0.75rem', whiteSpace: 'nowrap' }}>
-                    −{action.savingsKg.toLocaleString()}
-                  </span>
-                </button>
-              );
-            })}
+            {groupedActions.map(group => (
+              <div key={group.category}>
+                <div style={categoryHeader}>{group.category}</div>
+                {group.actions.map(action => {
+                  const isOn = enabledPersonal.has(action.name);
+                  return (
+                    <button key={action.name} onClick={() => togglePersonal(action.name)} className="cf-toggle-row" data-on={isOn} aria-pressed={isOn}>
+                      <Dot on={isOn} />
+                      <span style={{ flex: 1, fontWeight: isOn ? 600 : 400, fontSize: '0.8rem' }}>{action.name}</span>
+                      <span style={{ fontWeight: 700, color: isOn ? GREEN : MUTED, fontVariantNumeric: 'tabular-nums', fontSize: '0.75rem', whiteSpace: 'nowrap' }}>
+                        −{action.savingsKg.toLocaleString()}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            ))}
             {hasPersonal && (
               <div style={{ fontSize: '0.75rem', color: MUTED, marginTop: '0.75rem', lineHeight: 1.4 }}>
                 Cut <strong style={{ color: GREEN }}>{totalSaved.toLocaleString()} kg</strong> ({Math.round(totalSaved / footprintKg * 100)}%).
@@ -145,7 +190,7 @@ export function ImpactChart({
                     <div style={{ fontWeight: 700, color: isOn ? GREEN : MUTED, fontVariantNumeric: 'tabular-nums', fontSize: '0.72rem', whiteSpace: 'nowrap' }}>
                       {central.toLocaleString()}
                     </div>
-                    {mult >= 1 && <div style={{ fontSize: '0.58rem', fontWeight: 700, color: isOn ? GREEN : MUTED }}>{mult}×</div>}
+                    {mult >= 1 && <div style={{ fontSize: '0.58rem', fontWeight: 700, color: isOn ? GREEN : MUTED }}>{mult}x</div>}
                   </div>
                 </button>
               );
@@ -153,14 +198,14 @@ export function ImpactChart({
             {hasSystemic && (
               <div style={{ marginTop: '0.75rem', padding: '8px 10px', background: GREEN_BG, borderLeft: `3px solid ${GREEN}`, borderRadius: '0 4px 4px 0', fontSize: '0.75rem', lineHeight: 1.4 }}>
                 <strong style={{ color: GREEN }}>{totalSystemic.toLocaleString()} kg</strong> prevented
-                {totalSaved > 0 && <> — <strong>{Math.round(totalSystemic / Math.max(totalSaved, 1))}×</strong> your personal cuts</>}
+                {totalSaved > 0 && <> — <strong>{Math.round(totalSystemic / Math.max(totalSaved, 1))}x</strong> your personal cuts</>}
               </div>
             )}
           </div>
         </div>
       </div>
 
-      {/* ═══ BAR CHART ═══ */}
+      {/* BAR CHART */}
       <div className="cf-impact-bars">
         {/* Always show footprint bar */}
         <BarRow label="Your footprint" kg={footprintKg} pctWidth={pct(footprintKg)} color={ACCENT} />
@@ -173,7 +218,7 @@ export function ImpactChart({
         {hasSystemic && (
           <BarRow label="Carbon you can help prevent" kg={totalSystemic} pctWidth={Math.min(pct(totalSystemic), 100)} color={GREEN}
             ghostWidth={pct(afterPersonal)} ghostOpacity={0.12}
-            suffix={`${Math.round(totalSystemic / footprintKg * 10) / 10}×`} labelColor={GREEN} bold />
+            suffix={`${Math.round(totalSystemic / footprintKg * 10) / 10}x`} labelColor={GREEN} bold />
         )}
 
         {!hasPersonal && !hasSystemic && (
@@ -192,7 +237,7 @@ export function ImpactChart({
   );
 }
 
-// ─── Bar row ───
+// --- Bar row ---
 
 function BarRow({ label, kg, pctWidth, color, opacity, ghostWidth, ghostOpacity, suffix, labelColor, bold }: {
   label: string; kg: number; pctWidth: number; color: string;
@@ -222,7 +267,7 @@ function BarRow({ label, kg, pctWidth, color, opacity, ghostWidth, ghostOpacity,
   );
 }
 
-// ─── Primitives ───
+// --- Primitives ---
 
 function Num({ n, green }: { n: number; green?: boolean }) {
   return (
@@ -242,7 +287,7 @@ function Dot({ on }: { on: boolean }) {
       border: `2px solid ${on ? GREEN : DIVIDER}`, background: on ? GREEN : 'transparent',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       transition: 'all 0.12s', color: 'white', fontSize: '0.6rem', fontWeight: 700,
-    }}>{on ? '✓' : ''}</span>
+    }}>{on ? '\u2713' : ''}</span>
   );
 }
 
@@ -250,12 +295,16 @@ const colHead: React.CSSProperties = {
   display: 'flex', alignItems: 'center', gap: '8px',
   fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase',
   color: 'var(--text, #1A1A18)', paddingBottom: '0.75rem',
-  borderBottom: `1px solid ${DIVIDER}`, marginBottom: '0.75rem',
+  borderBottom: `1px solid var(--divider, #DDD9D0)`, marginBottom: '0.75rem',
 };
 
-const selectStyle: React.CSSProperties = {
-  padding: '5px 8px', fontSize: '0.78rem', fontFamily: 'inherit',
-  border: `1px solid ${DIVIDER}`, borderRadius: '5px',
-  background: 'var(--panel, #EFECE5)', color: 'var(--text, #1A1A18)',
-  cursor: 'pointer', minHeight: '36px', width: '100%',
+const categoryHeader: React.CSSProperties = {
+  fontSize: '0.6rem',
+  fontWeight: 700,
+  letterSpacing: '0.08em',
+  textTransform: 'uppercase',
+  color: 'var(--text-secondary, #6B6B60)',
+  marginTop: '0.6rem',
+  marginBottom: '0.25rem',
+  paddingLeft: '2px',
 };

@@ -20,7 +20,6 @@ import type {
   CarOwnership,
   DietType,
   HousingType,
-  IncomeBand,
   UrbanForm,
 } from './types';
 import { DEFAULT_BASELINE } from './types';
@@ -89,16 +88,25 @@ const DIET_KG: Record<DietType, number> = {
 };
 
 // ---------------------------------------------------------------------------
-// Goods & services (kg CO2e per year, per person)
-// Source: Jones & Kammen 2014 adjusted with BLS CES
+// Urban form multiplier for home energy
+// Source: EIA RECS micro data — urban apartments use ~40% less, rural homes ~30% more
 // ---------------------------------------------------------------------------
 
-const GOODS_BY_INCOME: Record<IncomeBand, number> = {
-  'under-30k':  1200,
-  '30k-60k':    1800,
-  '60k-100k':   2500,
-  '100k-150k':  3200,
-  'over-150k':  4500,
+const URBAN_FORM_ENERGY_FACTOR: Record<UrbanForm, number> = {
+  urban:    0.85,
+  suburban: 1.0,
+  rural:    1.15,
+};
+
+// ---------------------------------------------------------------------------
+// Transit emissions for car-free people (kg CO2e per year, per person)
+// Source: FTA National Transit Database, location-adjusted
+// ---------------------------------------------------------------------------
+
+const TRANSIT_KG_BY_URBAN_FORM: Record<UrbanForm, number> = {
+  urban:    800,
+  suburban: 400,
+  rural:    200,
 };
 
 // ---------------------------------------------------------------------------
@@ -119,11 +127,12 @@ function computeHomeEnergy(
   gridKgPerKwh: number,
 ): BucketResult {
   const housing = HOUSING_ENERGY[baseline.housingType];
+  const urbanFactor = URBAN_FORM_ENERGY_FACTOR[baseline.urbanForm] ?? 1.0;
   const hasElecOverride = overrides.electricityKwhPerYear !== undefined;
   const hasGasOverride = overrides.gasThermsPerYear !== undefined;
 
-  const kwh = hasElecOverride ? overrides.electricityKwhPerYear! : housing.kwhPerYear;
-  const therms = hasGasOverride ? overrides.gasThermsPerYear! : housing.thermsPerYear;
+  const kwh = hasElecOverride ? overrides.electricityKwhPerYear! : housing.kwhPerYear * urbanFactor;
+  const therms = hasGasOverride ? overrides.gasThermsPerYear! : housing.thermsPerYear * urbanFactor;
 
   const elecKg = (kwh * gridKgPerKwh) / baseline.householdSize;
   const gasKg = (therms * GAS_KG_PER_THERM) / baseline.householdSize;
@@ -156,8 +165,8 @@ function computeGroundTransport(
   gridKgPerKwh: number,
 ): BucketResult {
   if (baseline.carOwnership === 'none') {
-    // Public transit only — small allocation
-    const transitKg = 400 / baseline.householdSize;
+    // Public transit only — allocation depends on urban form
+    const transitKg = TRANSIT_KG_BY_URBAN_FORM[baseline.urbanForm] / baseline.householdSize;
     return {
       bucketId: 'ground-transport',
       kgCO2ePerYear: Math.round(transitKg),
@@ -227,14 +236,18 @@ function computeFlights(
 }
 
 function computeFood(baseline: BaselineInputs): BucketResult {
-  const kg = DIET_KG[baseline.dietType];
+  const dietKg = DIET_KG[baseline.dietType];
+  // Add 15% for food waste emissions
+  const wasteKg = Math.round(dietKg * 0.15);
+  const kg = dietKg + wasteKg;
   return {
     bucketId: 'food',
     kgCO2ePerYear: kg,
     confidence: 'estimated',
     nextUpgrade: 'A detailed food diary would improve this, but diet type gets within ~20%',
     lineItems: [
-      { label: `${baseline.dietType} diet`, kgCO2ePerYear: kg, source: 'Poore & Nemecek 2018, Scarborough et al. 2023', sourceUpdated: '2023-09', isDefault: true },
+      { label: `${baseline.dietType} diet`, kgCO2ePerYear: dietKg, source: 'Poore & Nemecek 2018, Scarborough et al. 2023', sourceUpdated: '2023-09', isDefault: true },
+      { label: 'Food waste', kgCO2ePerYear: wasteKg, source: 'ReFED 2023', sourceUpdated: '2024-01', isDefault: true },
     ],
   };
 }
@@ -247,7 +260,7 @@ function computeGoods(
   // Rough: $1 of spending ≈ 0.5 kg CO2e (Jones & Kammen 2014 EEIO factor)
   const kg = hasSpending
     ? overrides.goodsSpendingPerMonth! * 12 * 0.5
-    : GOODS_BY_INCOME[baseline.incomeBand];
+    : baseline.monthlySpending * 12 * 0.5;
 
   return {
     bucketId: 'goods-and-services',
@@ -303,11 +316,11 @@ function sanitizeBaseline(raw: BaselineInputs): BaselineInputs {
     ...raw,
     householdSize: sanitizeNumber(raw.householdSize, DEFAULT_BASELINE.householdSize, 1, 20),
     flightsPerYear: sanitizeNumber(raw.flightsPerYear, DEFAULT_BASELINE.flightsPerYear, 0, 200),
+    monthlySpending: sanitizeNumber(raw.monthlySpending, DEFAULT_BASELINE.monthlySpending, 0, 50000),
     state: raw.state || DEFAULT_BASELINE.state,
     housingType: HOUSING_ENERGY[raw.housingType] ? raw.housingType : DEFAULT_BASELINE.housingType,
     urbanForm: TRANSPORT_MILES[raw.urbanForm] !== undefined ? raw.urbanForm : DEFAULT_BASELINE.urbanForm,
     dietType: DIET_KG[raw.dietType] !== undefined ? raw.dietType : DEFAULT_BASELINE.dietType,
-    incomeBand: GOODS_BY_INCOME[raw.incomeBand] !== undefined ? raw.incomeBand : DEFAULT_BASELINE.incomeBand,
   };
 }
 

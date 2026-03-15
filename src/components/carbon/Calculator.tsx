@@ -53,7 +53,7 @@ export function Calculator() {
   const handleCopyShareLink = useCallback(() => {
     const params = new URLSearchParams();
     params.set('st', baseline.state); params.set('hs', String(baseline.householdSize));
-    params.set('ht', baseline.housingType); params.set('ib', baseline.incomeBand);
+    params.set('ht', baseline.housingType); params.set('ms', String(baseline.monthlySpending));
     params.set('uf', baseline.urbanForm); params.set('dt', baseline.dietType);
     params.set('co', baseline.carOwnership); params.set('fp', String(baseline.flightsPerYear));
     const url = `${window.location.origin}${window.location.pathname}?${params.toString()}`;

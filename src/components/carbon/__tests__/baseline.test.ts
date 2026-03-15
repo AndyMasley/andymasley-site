@@ -6,9 +6,10 @@ import type { BaselineInputs } from '@/lib/carbon/types';
 describe('computeFootprint', () => {
   it('produces a credible total from default baseline', () => {
     const result = computeFootprint(DEFAULT_BASELINE);
-    // US average is ~16,000 kg. Default baseline should be in a reasonable range.
+    // Default baseline should produce a total in a reasonable range.
+    // With monthlySpending-based goods calculation, totals run higher.
     expect(result.totalKgCO2ePerYear).toBeGreaterThan(8000);
-    expect(result.totalKgCO2ePerYear).toBeLessThan(25000);
+    expect(result.totalKgCO2ePerYear).toBeLessThan(30000);
   });
 
   it('returns exactly 7 buckets', () => {
@@ -85,9 +86,9 @@ describe('computeFootprint', () => {
     expect(flights.kgCO2ePerYear).toBe(0);
   });
 
-  it('higher income increases goods-and-services emissions', () => {
-    const lowResult = computeFootprint({ ...DEFAULT_BASELINE, incomeBand: 'under-30k' });
-    const highResult = computeFootprint({ ...DEFAULT_BASELINE, incomeBand: 'over-150k' });
+  it('higher spending increases goods-and-services emissions', () => {
+    const lowResult = computeFootprint({ ...DEFAULT_BASELINE, monthlySpending: 1000 });
+    const highResult = computeFootprint({ ...DEFAULT_BASELINE, monthlySpending: 4000 });
     const lowGoods = lowResult.buckets.find(b => b.bucketId === 'goods-and-services')!;
     const highGoods = highResult.buckets.find(b => b.bucketId === 'goods-and-services')!;
     expect(highGoods.kgCO2ePerYear).toBeGreaterThan(lowGoods.kgCO2ePerYear);

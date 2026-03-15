@@ -122,7 +122,7 @@ describe('Resilience — no NaN/undefined leaks', () => {
       state: 'ZZZZ',
       householdSize: -Infinity,
       housingType: 'nonexistent' as 'apartment',
-      incomeBand: 'bogus' as 'under-30k',
+      monthlySpending: NaN,
       urbanForm: 'moon' as 'urban',
       dietType: 'breatharian' as 'average',
       carOwnership: 'flying-car' as 'gas',

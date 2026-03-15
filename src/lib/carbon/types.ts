@@ -89,8 +89,6 @@ export type USState = string; // 2-letter state code
 
 export type HousingType = 'apartment' | 'townhouse' | 'single-family-small' | 'single-family-large';
 
-export type IncomeBand = 'under-30k' | '30k-60k' | '60k-100k' | '100k-150k' | 'over-150k';
-
 export type UrbanForm = 'urban' | 'suburban' | 'rural';
 
 export type DietType = 'average' | 'heavy-meat' | 'light-meat' | 'pescatarian' | 'vegetarian' | 'vegan';
@@ -101,7 +99,7 @@ export interface BaselineInputs {
   state: USState;
   householdSize: number;
   housingType: HousingType;
-  incomeBand: IncomeBand;
+  monthlySpending: number;
   urbanForm: UrbanForm;
   dietType: DietType;
   carOwnership: CarOwnership;
@@ -112,7 +110,7 @@ export const DEFAULT_BASELINE: BaselineInputs = {
   state: 'US',       // national average fallback
   householdSize: 2.5,
   housingType: 'single-family-small',
-  incomeBand: '60k-100k',
+  monthlySpending: 2000,
   urbanForm: 'suburban',
   dietType: 'average',
   carOwnership: 'gas',

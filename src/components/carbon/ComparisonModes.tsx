@@ -52,15 +52,10 @@ function estimateSimilarHousehold(baseline: BaselineInputs): number {
   };
   adj += housingAdj[baseline.housingType] ?? 0;
 
-  // Income adjustment (higher income → more spending emissions)
-  const incomeAdj: Record<string, number> = {
-    'under-30k': -1500,
-    '30k-60k': -600,
-    '60k-100k': 0,
-    '100k-150k': 800,
-    'over-150k': 2000,
-  };
-  adj += incomeAdj[baseline.incomeBand] ?? 0;
+  // Spending adjustment (higher spending → more emissions)
+  // Baseline: $2000/mo = 0 adjustment. Scale linearly.
+  const spendingAdj = Math.round((baseline.monthlySpending - 2000) * 0.8);
+  adj += spendingAdj;
 
   // Urban form
   const urbanAdj: Record<string, number> = {
@@ -136,7 +131,7 @@ function useComparisons(
         shortLabel: 'Similar HH',
         referenceKg: estimateSimilarHousehold(baseline),
         referenceLabel: 'Similar household average',
-        note: `Adjusted for ${baseline.housingType}, ${baseline.incomeBand}, ${baseline.urbanForm}`,
+        note: `Adjusted for ${baseline.housingType}, $${baseline.monthlySpending}/mo spending, ${baseline.urbanForm}`,
       },
       {
         id: 'us',
