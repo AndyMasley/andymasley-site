@@ -63,7 +63,8 @@ describe('Leverage Lab — Phase 4 requirements', () => {
     result.cases.forEach(c => {
       // Lifetime should be annual × timeHorizon
       const expectedLifetime = c.expectedKgCO2ePerYear.central * c.case.timeHorizonYears;
-      expect(c.expectedKgCO2eLifetime.central).toBe(expectedLifetime);
+      // Allow small rounding differences (both are independently Math.round'd)
+      expect(Math.abs(c.expectedKgCO2eLifetime.central - expectedLifetime)).toBeLessThan(c.case.timeHorizonYears + 1);
     });
   });
 

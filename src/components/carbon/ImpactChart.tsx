@@ -386,9 +386,9 @@ function ExampleDropdown() {
       </button>
       {open && (
         <div style={{ fontSize: '0.68rem', color: MUTED, lineHeight: 1.5, padding: '8px 10px', marginTop: '2px', background: 'rgba(74, 124, 89, 0.04)', borderRadius: '0 0 5px 5px', borderLeft: `2px solid ${GREEN}` }}>
-          Say 100 people work to stop a nuclear plant from closing. The plant generates 7.9 million MWh of zero-carbon electricity per year. If it closes, gas replaces it, adding about 3.2 million tonnes of CO₂ per year. If the campaign has an 80% chance of succeeding and the plant runs for 20 more years:<br /><br />
-          <code style={{ fontSize: '0.63rem' }}>3,200,000,000 kg × 80% ÷ 100 people = 25,600,000 kg per person</code><br /><br />
-          That's <strong style={{ color: GREEN }}>25,600 tonnes</strong> per person — roughly <strong style={{ color: GREEN }}>1,600×</strong> a typical American's annual footprint. Even at 10% probability, it's 160×. That's why the numbers below are so large.
+          Say 3,000 people work to stop a nuclear plant from closing. The plant generates 7.9 million MWh of zero-carbon electricity per year. If it closes, it's replaced by a mix of gas and renewables, adding about 2.4 million tonnes of CO₂ per year (net). If the campaign has a 5% chance of succeeding and the plant runs for 15 more years:<br /><br />
+          <code style={{ fontSize: '0.63rem' }}>2,400,000,000 kg/yr × 15 yr × 5% ÷ 3,000 people ÷ 15 yr = 39,420 kg per person per year</code><br /><br />
+          That's <strong style={{ color: GREEN }}>~40 tonnes</strong> per person per year — roughly <strong style={{ color: GREEN }}>2.5×</strong> a typical American's annual footprint. Even at 2% probability, it's still the equivalent of your footprint. That's why systemic action has such high leverage.
         </div>
       )}
     </div>

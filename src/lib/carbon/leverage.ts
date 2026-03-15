@@ -1,99 +1,118 @@
 /**
- * Phase 1 — Leverage model
+ * Leverage model — systemic action expected values.
  *
- * Audit finding: the previous implementation mixed leverage cases into the same
- * render function as personal emissions (renderSystemic was called from render()).
- * This module is entirely separate from baseline.ts. The two models share no
- * mutable state and are displayed in different sections of the page.
+ * IMPORTANT: These numbers are expected values with wide uncertainty.
+ * Each case uses conservative assumptions:
+ * - Coalition sizes are deliberately large (thousands, not dozens)
+ * - Probabilities are low (single-digit percentages for most cases)
+ * - Counterfactual rates use NET avoided emissions (coal → gas+renewables mix,
+ *   not coal → zero)
+ * - Time horizons are moderate
+ *
+ * The argument for systemic action holds even with conservative numbers —
+ * most cases still produce expected values comparable to or exceeding a
+ * full personal footprint elimination.
  */
 
 import type { LeverageCase, LeverageModel, LeverageResult } from './types';
 
 // ---------------------------------------------------------------------------
-// Case studies
+// Case studies — revised with conservative assumptions
 // ---------------------------------------------------------------------------
 
 export const LEVERAGE_CASES: LeverageCase[] = [
   {
     name: 'Prevent closure of one nuclear plant',
-    description: 'A 1 GW plant kept online instead of replaced by gas. Coalition of ~1,000 serious advocates over 2 years.',
-    probabilityOfSuccess: { low: 0.02, central: 0.10, high: 0.25 },
-    coalitionSize: 1000,
+    description: 'A 1 GW plant kept online instead of replaced by gas + renewables. Coalition of ~3,000 advocates over 2 years.',
+    // Diablo Canyon campaign involved thousands of advocates. P(success) is low —
+    // most nuclear closure campaigns fail to reverse the decision.
+    probabilityOfSuccess: { low: 0.02, central: 0.05, high: 0.15 },
+    coalitionSize: 3000,
     durationYears: 2,
     annualLoadAffectedMWh: 7_884_000, // 1 GW × 90% CF × 8760 hrs
-    counterfactualGenerationMix: 'Combined cycle gas (0.41 kg/kWh)',
-    attributionFraction: 0.001, // 1/1000 of the coalition
-    timeHorizonYears: 20,
-  },
-  {
-    name: 'Help pass a state clean energy standard',
-    description: 'Advocating for legislation that shifts a mid-size state\'s electricity to 80% clean by 2035.',
-    probabilityOfSuccess: { low: 0.005, central: 0.03, high: 0.10 },
-    coalitionSize: 5000,
-    durationYears: 3,
-    annualLoadAffectedMWh: 60_000_000,
-    counterfactualGenerationMix: 'State average grid (0.45 kg/kWh displaced)',
-    attributionFraction: 0.0002, // 1/5000
+    // Net counterfactual: replacement is a mix of ~60% gas + ~40% renewables,
+    // not 100% gas. Net avoided rate: ~0.30 kg/kWh.
+    counterfactualGenerationMix: 'Gas + renewables replacement mix (0.30 kg/kWh net avoided)',
+    attributionFraction: 1 / 3000,
     timeHorizonYears: 15,
   },
   {
+    name: 'Help pass a state clean energy standard',
+    description: 'Advocating for legislation that accelerates a mid-size state\'s electricity decarbonization.',
+    // State-level campaigns involve thousands of people across organizations,
+    // lobbyists, grassroots groups. P(success) is very low for any individual campaign.
+    probabilityOfSuccess: { low: 0.005, central: 0.02, high: 0.05 },
+    coalitionSize: 10000,
+    durationYears: 3,
+    annualLoadAffectedMWh: 60_000_000,
+    // Many states already have partial clean energy. Net displaced is lower.
+    counterfactualGenerationMix: 'Accelerated displacement of remaining fossil (0.25 kg/kWh net)',
+    attributionFraction: 1 / 10000,
+    timeHorizonYears: 10,
+  },
+  {
     name: 'Campaign for one coal plant early retirement',
-    description: 'A 500 MW coal plant retired 10 years before scheduled. Local organizing campaign.',
-    probabilityOfSuccess: { low: 0.01, central: 0.05, high: 0.15 },
-    coalitionSize: 500,
+    description: 'A 500 MW coal plant retired 10 years early. Local + national organizing.',
+    probabilityOfSuccess: { low: 0.01, central: 0.03, high: 0.10 },
+    coalitionSize: 2000,
     durationYears: 3,
     annualLoadAffectedMWh: 3_500_000,
-    counterfactualGenerationMix: 'Subcritical coal (0.95 kg/kWh) → gas + renewables',
-    attributionFraction: 0.002, // 1/500
+    // Coal is replaced by a mix of gas + renewables, not zero-carbon.
+    // Net avoided: ~0.50 kg/kWh (coal at 0.95 minus replacement at ~0.45).
+    counterfactualGenerationMix: 'Coal → gas/renewables mix (0.50 kg/kWh net avoided)',
+    attributionFraction: 1 / 2000,
     timeHorizonYears: 10,
   },
   {
     name: 'Serve on permitting for 500 MW solar farm',
-    description: 'Local committee work to get a utility-scale solar project through siting and permitting.',
-    probabilityOfSuccess: { low: 0.10, central: 0.40, high: 0.70 },
-    coalitionSize: 50,
+    description: 'Community engagement and permitting support for utility-scale solar.',
+    // The broader advocacy ecosystem around a utility-scale project includes
+    // developers, lobbyists, community supporters, and local officials.
+    // Attribution is shared across all of them.
+    probabilityOfSuccess: { low: 0.05, central: 0.15, high: 0.40 },
+    coalitionSize: 2000,
     durationYears: 2,
     annualLoadAffectedMWh: 1_095_000, // 500 MW × 25% CF × 8760
-    counterfactualGenerationMix: 'Grid average displaced (0.39 kg/kWh)',
-    attributionFraction: 0.02, // 1/50
-    timeHorizonYears: 30,
+    counterfactualGenerationMix: 'Marginal grid displaced (0.35 kg/kWh)',
+    attributionFraction: 1 / 2000,
+    timeHorizonYears: 25,
   },
   {
     name: 'Workplace clean power purchase agreement',
-    description: 'Persuade a mid-size employer to sign a PPA for renewable electricity.',
-    probabilityOfSuccess: { low: 0.05, central: 0.20, high: 0.50 },
-    coalitionSize: 5,
+    description: 'Persuade an employer to sign a PPA for ~5,000 MWh/yr of renewable electricity.',
+    probabilityOfSuccess: { low: 0.05, central: 0.15, high: 0.40 },
+    coalitionSize: 15,
     durationYears: 1,
-    annualLoadAffectedMWh: 20_000,
+    annualLoadAffectedMWh: 5_000,
     counterfactualGenerationMix: 'Grid average (0.39 kg/kWh)',
-    attributionFraction: 0.20, // 1/5
-    timeHorizonYears: 15,
+    attributionFraction: 1 / 15,
+    timeHorizonYears: 12,
   },
   {
     name: 'Advocate for transmission reform',
-    description: 'Support federal or regional transmission planning that unblocks clean energy interconnection queues.',
-    probabilityOfSuccess: { low: 0.001, central: 0.01, high: 0.05 },
-    coalitionSize: 10000,
+    description: 'Support regional or federal transmission planning to unblock clean energy queues.',
+    // National-scale advocacy involves tens of thousands of people.
+    probabilityOfSuccess: { low: 0.001, central: 0.005, high: 0.02 },
+    coalitionSize: 20000,
     durationYears: 5,
-    annualLoadAffectedMWh: 200_000_000,
-    counterfactualGenerationMix: 'Delayed renewables replaced by gas (0.41 kg/kWh)',
-    attributionFraction: 0.0001, // 1/10000
-    timeHorizonYears: 20,
+    annualLoadAffectedMWh: 100_000_000,
+    counterfactualGenerationMix: 'Delayed renewables replaced by gas (0.35 kg/kWh)',
+    attributionFraction: 1 / 20000,
+    timeHorizonYears: 15,
   },
   {
     name: 'Donate $200/yr to effective climate charity',
-    description: 'Founders Pledge top recommendations (CATF, Carbon180) avert an estimated 1 tonne CO₂e per $1–$10 donated. $200/yr at central estimate of ~$1/tonne.',
-    // We model the cost-effectiveness uncertainty through the probability field:
-    // low = pessimistic cost-effectiveness ($10/tonne → 20 tonnes → 20,000 kg)
-    // central = Founders Pledge central ($1/tonne → 200 tonnes → 200,000 kg)
-    // high = optimistic ($0.10/tonne → 2,000 tonnes → 2,000,000 kg)
-    // To get these numbers through the formula, we set annualLoadAffectedMWh and
-    // attributionFraction to produce ~200,000 kg at probability 1.0, then use
-    // the probability field to scale for cost-effectiveness uncertainty.
-    probabilityOfSuccess: { low: 0.10, central: 1.0, high: 10.0 },
+    description: 'Founders Pledge top picks (CATF, Carbon180). Realistic central estimate: ~$10/tonne CO₂e averted.',
+    // Founders Pledge estimates CATF at $0.10-$10/tonne. But that's their MOST
+    // optimistic pick. A realistic portfolio central is ~$10/tonne.
+    // $200 at $10/tonne = 20 tonnes = 20,000 kg.
+    // $200 at $50/tonne (pessimistic) = 4 tonnes = 4,000 kg.
+    // $200 at $1/tonne (CATF optimistic) = 200 tonnes = 200,000 kg.
+    // We model this through the probability field as cost-effectiveness uncertainty.
+    probabilityOfSuccess: { low: 0.20, central: 1.0, high: 10.0 },
     coalitionSize: 1,
     durationYears: 1,
-    annualLoadAffectedMWh: 513, // 200,000 kg ÷ 390 kg/MWh
+    annualLoadAffectedMWh: 51.3, // 20,000 kg ÷ 390 kg/MWh (central = $10/tonne)
     counterfactualGenerationMix: 'Policy advocacy portfolio (0.39 kg/kWh equivalent)',
     attributionFraction: 1.0,
     timeHorizonYears: 1,
@@ -118,7 +137,6 @@ function computeCase(
     : leverageCase.probabilityOfSuccess.high;
 
   // kg CO2e avoided per MWh depends on the counterfactual mix
-  // Extract the kg/kWh rate from the description or use a default
   const kgPerKwhMatch = leverageCase.counterfactualGenerationMix.match(/([\d.]+)\s*kg\/kWh/);
   const kgPerMwh = kgPerKwhMatch ? parseFloat(kgPerKwhMatch[1]) * 1000 : 390;
 

@@ -541,78 +541,77 @@ export function Methodology() {
             <p style={{ marginTop: '16px', fontWeight: 700, fontSize: '0.85rem', color: 'var(--text, #1A1A18)' }}>1. Prevent closure of one nuclear plant</p>
             <ul>
               <li>Plant size: <code>1 GW</code> at <code>90%</code> capacity factor = <code>7,884,000 MWh/yr</code></li>
-              <li>Counterfactual: replaced by combined-cycle gas at <code>0.41 kg CO₂e/kWh</code> (<Src href="https://www.epa.gov/egrid">EPA eGRID</Src>)</li>
-              <li>Coalition size: <code>1,000</code> serious advocates → attribution = <code>1/1,000</code></li>
-              <li>P(success): low <code>2%</code>, central <code>10%</code>, high <code>25%</code></li>
-              <li>Time horizon: <code>20 years</code> (remaining plant life)</li>
-              <li>Duration of campaign: <code>2 years</code></li>
-              <li>Worked example (central): <code>7,884,000 × 410 × 20 × 0.001 × 0.10 ÷ 20 = 323,244 kg/yr</code> per person</li>
+              <li>Counterfactual: replaced by ~60% gas + ~40% renewables mix. Net avoided: <code>0.30 kg CO₂e/kWh</code> (not the full gas rate of 0.41 — replacement includes some clean energy). Source: <Src href="https://www.epa.gov/egrid">EPA eGRID</Src></li>
+              <li>Coalition size: <code>3,000</code> advocates (e.g., the Diablo Canyon campaign involved thousands across multiple orgs) → attribution = <code>1/3,000</code></li>
+              <li>P(success): low <code>2%</code>, central <code>5%</code>, high <code>15%</code>. Most nuclear closure campaigns do not succeed in reversal.</li>
+              <li>Time horizon: <code>15 years</code> (remaining plant life)</li>
+              <li>Worked example (central): <code>7,884,000 × 300 × 15 × (1/3000) × 0.05 ÷ 15 = 39,420 kg/yr</code> per person (~2.5× US avg footprint)</li>
               <li>Sources: <Src href="https://www.eia.gov/electricity/monthly/">EIA Electric Power Monthly</Src>, <Src href="https://www.epa.gov/egrid">EPA eGRID</Src>, <Src href="https://www.ucsusa.org/resources/nuclear-power-dilemma">UCS nuclear plant economics</Src></li>
             </ul>
 
             <p style={{ marginTop: '16px', fontWeight: 700, fontSize: '0.85rem', color: 'var(--text, #1A1A18)' }}>2. Help pass a state clean energy standard</p>
             <ul>
               <li>Load affected: <code>60,000,000 MWh/yr</code> (mid-size state electricity sector)</li>
-              <li>Displaced generation: state average at <code>0.45 kg CO₂e/kWh</code></li>
-              <li>Coalition size: <code>5,000</code> advocates → attribution = <code>1/5,000</code></li>
-              <li>P(success): low <code>0.5%</code>, central <code>3%</code>, high <code>10%</code></li>
-              <li>Time horizon: <code>15 years</code></li>
-              <li>Worked example (central): <code>60,000,000 × 450 × 15 × 0.0002 × 0.03 ÷ 15 = 162,000 kg/yr</code></li>
+              <li>Net displaced: <code>0.25 kg CO₂e/kWh</code> (many states already have partial clean energy, so the marginal displacement is lower than the full grid rate)</li>
+              <li>Coalition size: <code>10,000</code> (state-level campaigns involve many organizations, lobbyists, and grassroots supporters) → attribution = <code>1/10,000</code></li>
+              <li>P(success): low <code>0.5%</code>, central <code>2%</code>, high <code>5%</code></li>
+              <li>Time horizon: <code>10 years</code></li>
+              <li>Worked example (central): <code>60,000,000 × 250 × 10 × (1/10,000) × 0.02 ÷ 10 = 30,000 kg/yr</code> per person (~1.9× US avg)</li>
               <li>Sources: <Src href="https://www.eia.gov/electricity/state/">EIA State Electricity Profiles</Src>, <Src href="https://www.dsireusa.org/">DSIRE renewable policy database</Src></li>
             </ul>
 
             <p style={{ marginTop: '16px', fontWeight: 700, fontSize: '0.85rem', color: 'var(--text, #1A1A18)' }}>3. Campaign for one coal plant early retirement</p>
             <ul>
               <li>Plant: <code>500 MW</code> coal = <code>3,500,000 MWh/yr</code></li>
-              <li>Emission rate: subcritical coal at <code>0.95 kg CO₂e/kWh</code> (<Src href="https://www.epa.gov/egrid">EPA eGRID</Src>)</li>
-              <li>Coalition size: <code>500</code> → attribution = <code>1/500</code></li>
-              <li>P(success): low <code>1%</code>, central <code>5%</code>, high <code>15%</code></li>
+              <li>Net avoided: <code>0.50 kg CO₂e/kWh</code>. Coal emits ~0.95 kg/kWh but is replaced by a mix of gas + renewables averaging ~0.45, so the NET reduction per kWh displaced is ~0.50. Source: <Src href="https://www.epa.gov/egrid">EPA eGRID</Src></li>
+              <li>Coalition size: <code>2,000</code> (local + national orgs like Sierra Club Beyond Coal) → attribution = <code>1/2,000</code></li>
+              <li>P(success): low <code>1%</code>, central <code>3%</code>, high <code>10%</code></li>
               <li>Time horizon: <code>10 years</code> (early retirement = 10 years ahead of schedule)</li>
-              <li>Worked example (central): <code>3,500,000 × 950 × 10 × 0.002 × 0.05 ÷ 10 = 332,500 kg/yr</code></li>
+              <li>Worked example (central): <code>3,500,000 × 500 × 10 × (1/2,000) × 0.03 ÷ 10 = 26,250 kg/yr</code> per person (~1.6× US avg)</li>
               <li>Sources: <Src href="https://www.epa.gov/egrid">EPA eGRID</Src>, <Src href="https://www.sierraclub.org/campaign/beyond-coal">Sierra Club Beyond Coal campaign data</Src></li>
             </ul>
 
             <p style={{ marginTop: '16px', fontWeight: 700, fontSize: '0.85rem', color: 'var(--text, #1A1A18)' }}>4. Serve on permitting for 500 MW solar farm</p>
             <ul>
               <li>Generation: <code>500 MW × 25% CF × 8,760 hrs = 1,095,000 MWh/yr</code></li>
-              <li>Displaced generation: grid average at <code>0.39 kg CO₂e/kWh</code></li>
-              <li>Coalition size: <code>50</code> (local committee) → attribution = <code>1/50</code></li>
-              <li>P(success): low <code>10%</code>, central <code>40%</code>, high <code>70%</code></li>
-              <li>Time horizon: <code>30 years</code> (solar farm lifespan)</li>
-              <li>Worked example (central): <code>1,095,000 × 390 × 30 × 0.02 × 0.40 ÷ 30 = 3,416,400 kg/yr</code></li>
+              <li>Displaced: marginal grid at <code>0.35 kg CO₂e/kWh</code> (lower than grid average because solar displaces the marginal mix, not the average)</li>
+              <li>Coalition size: <code>2,000</code> (includes all advocates, community supporters, developers, local officials — not just the permitting committee) → attribution = <code>1/2,000</code></li>
+              <li>P(success): low <code>5%</code>, central <code>15%</code>, high <code>40%</code>. Many proposed solar projects face permitting delays or community opposition.</li>
+              <li>Time horizon: <code>25 years</code> (solar farm lifespan)</li>
+              <li>Worked example (central): <code>1,095,000 × 350 × 25 × (1/2,000) × 0.15 ÷ 25 = 28,744 kg/yr</code> per person (~1.8× US avg)</li>
               <li>Source: <Src href="https://atb.nrel.gov/">NREL Annual Technology Baseline</Src></li>
             </ul>
 
             <p style={{ marginTop: '16px', fontWeight: 700, fontSize: '0.85rem', color: 'var(--text, #1A1A18)' }}>5. Workplace clean power purchase agreement</p>
             <ul>
-              <li>Load: <code>20,000 MWh/yr</code> (mid-size employer)</li>
+              <li>Load: <code>5,000 MWh/yr</code> (mid-size employer, ~200 employees)</li>
               <li>Displaced: grid average at <code>0.39 kg CO₂e/kWh</code></li>
-              <li>Coalition size: <code>5</code> (you + a few allies) → attribution = <code>1/5</code></li>
-              <li>P(success): low <code>5%</code>, central <code>20%</code>, high <code>50%</code></li>
-              <li>Time horizon: <code>15 years</code> (PPA contract length)</li>
-              <li>Worked example (central): <code>20,000 × 390 × 15 × 0.20 × 0.20 ÷ 15 = 312,000 kg/yr</code></li>
+              <li>Coalition size: <code>15</code> (you + internal champions + sustainability staff) → attribution = <code>1/15</code></li>
+              <li>P(success): low <code>5%</code>, central <code>15%</code>, high <code>40%</code>. Many companies are receptive but procurement timelines are long.</li>
+              <li>Time horizon: <code>12 years</code> (typical PPA contract length)</li>
+              <li>Worked example (central): <code>5,000 × 390 × 12 × (1/15) × 0.15 ÷ 12 = 19,500 kg/yr</code> per person (~1.2× US avg)</li>
               <li>Sources: <Src href="https://rebuyers.org/">Renewable Energy Buyers Alliance</Src></li>
             </ul>
 
             <p style={{ marginTop: '16px', fontWeight: 700, fontSize: '0.85rem', color: 'var(--text, #1A1A18)' }}>6. Advocate for transmission reform</p>
             <ul>
-              <li>Load affected: <code>200,000,000 MWh/yr</code> (unblocking interconnection queues nationally)</li>
-              <li>Displaced: gas at <code>0.41 kg CO₂e/kWh</code></li>
-              <li>Coalition size: <code>10,000</code> → attribution = <code>1/10,000</code></li>
-              <li>P(success): low <code>0.1%</code>, central <code>1%</code>, high <code>5%</code></li>
-              <li>Time horizon: <code>20 years</code></li>
-              <li>Worked example (central): <code>200,000,000 × 410 × 20 × 0.0001 × 0.01 ÷ 20 = 82,000 kg/yr</code></li>
+              <li>Load affected: <code>100,000,000 MWh/yr</code> (portion of queued clean energy unlocked by reform)</li>
+              <li>Displaced: gas at <code>0.35 kg CO₂e/kWh</code></li>
+              <li>Coalition size: <code>20,000</code> (national-scale advocacy involves tens of thousands) → attribution = <code>1/20,000</code></li>
+              <li>P(success): low <code>0.1%</code>, central <code>0.5%</code>, high <code>2%</code>. This is a diffuse, long-term policy goal with very uncertain attribution.</li>
+              <li>Time horizon: <code>15 years</code></li>
+              <li>Worked example (central): <code>100,000,000 × 350 × 15 × (1/20,000) × 0.005 ÷ 15 = 8,750 kg/yr</code> per person (~0.5× US avg)</li>
               <li>Sources: <Src href="https://emp.lbl.gov/queues">LBNL Queued Up report</Src>, <Src href="https://www.ferc.gov/electric-transmission">FERC transmission planning</Src></li>
             </ul>
 
             <p style={{ marginTop: '16px', fontWeight: 700, fontSize: '0.85rem', color: 'var(--text, #1A1A18)' }}>7. Donate $200/yr to effective climate charity</p>
             <ul>
               <li>This case is modeled differently — the "probability" field captures cost-effectiveness uncertainty rather than campaign success probability</li>
-              <li>Central estimate: <code>$1 per tonne CO₂e</code> averted → $200 = 200 tonnes = <code>200,000 kg</code></li>
-              <li>Pessimistic ($10/tonne): $200 = 20 tonnes = <code>20,000 kg</code></li>
-              <li>Optimistic ($0.10/tonne): $200 = 2,000 tonnes = <code>2,000,000 kg</code></li>
+              <li>Central estimate: <code>$10 per tonne CO₂e</code> averted → $200 = 20 tonnes = <code>20,000 kg</code>. This is a realistic central estimate for a portfolio of effective climate charities.</li>
+              <li>Pessimistic ($50/tonne): $200 = 4 tonnes = <code>4,000 kg</code></li>
+              <li>Optimistic ($1/tonne — Founders Pledge's most optimistic CATF estimate): $200 = 200 tonnes = <code>200,000 kg</code></li>
               <li>Coalition size: <code>1</code> (individual donation)</li>
-              <li>The wide range reflects genuine uncertainty in charity cost-effectiveness. Top recommendations work primarily through policy advocacy (lobbying for clean energy standards, R&D funding) rather than direct abatement</li>
+              <li><strong>Important:</strong> The $1/tonne CATF estimate from Founders Pledge is their most optimistic scenario for their single best recommendation. Most effective climate charities operate at $5-$50/tonne. Our central of $10/tonne reflects a realistic portfolio, not the theoretical optimum.</li>
               <li>Source: <Src href="https://founderspledge.com/research/fp-climate-change">Founders Pledge — Climate Change</Src></li>
               <li>Top recommended organizations: <Src href="https://www.catf.us/">Clean Air Task Force (CATF)</Src>, <Src href="https://carbon180.org/">Carbon180</Src></li>
             </ul>
