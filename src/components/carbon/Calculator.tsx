@@ -133,18 +133,6 @@ export function Calculator() {
             onActionParamOverridesChange={setActionParamOverrides}
             footprintKg={footprint.totalKgCO2ePerYear}
           />
-          <section style={{ marginBottom: '2rem' }}>
-            <div className="cf-section-label">EXPORT & SHARE</div>
-            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
-              <button onClick={handleCopyShareLink} style={{ padding: '8px 16px', fontSize: '0.78rem', fontFamily: 'inherit', fontWeight: 600, border: '1px solid var(--divider)', borderRadius: '6px', background: copyFeedback ? '#4A7C59' : 'transparent', color: copyFeedback ? 'white' : 'var(--text-secondary)', cursor: 'pointer', minHeight: '44px' }}>
-                {copyFeedback ? '✓ Copied' : 'Copy share link'}
-              </button>
-              <ExportButton footprint={footprint} comparisonContext={comparisonContext} />
-            </div>
-          </section>
-          <ScenarioManager baseline={baseline} overrides={overrides} totalKg={footprint.totalKgCO2ePerYear} onLoad={(b, o) => { setBaseline(b); setOverrides(o); }} />
-          <hr style={{ border: 'none', borderTop: '1px solid var(--divider)', margin: '3rem 0' }} />
-          <Changelog />
         </AdvancedSection>
         <Methodology />
       </div>
