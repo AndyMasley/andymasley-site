@@ -1,337 +1,290 @@
 /**
- * ImpactChart — full-width three-panel layout revealed left to right.
+ * ImpactChart — full-viewport three-panel layout.
  *
- * LEFT: Your footprint (result + bar)
- * MIDDLE: Personal cuts (toggles that shrink the bar)
- * RIGHT: Systemic actions (toggles that grow a green bar, obliterating personal)
+ * Top 2/3: three equal columns (footprint | personal cuts | systemic actions)
+ * Bottom 1/3: shared bar chart showing all three states
  *
- * A shared bar runs across the top, connecting all three panels.
- * Panels are revealed one at a time: left → middle → right.
+ * Panels revealed left → middle → right.
+ * No margins. Full width. The bar chart IS the argument.
  */
 
 import { useState, useMemo } from 'react';
 import type { PersonalAction } from '@/lib/carbon/personal-actions';
-import type { LeverageResult } from '@/lib/carbon/types';
+import type { LeverageResult, BucketResult } from '@/lib/carbon/types';
+import { BUCKET_META } from '@/lib/carbon/types';
 
 interface ImpactChartProps {
   footprintKg: number;
   personalActions: PersonalAction[];
   leverageCases: LeverageResult[];
+  buckets: BucketResult[];
+  onBack: () => void;
 }
 
 const GREEN = '#4A7C59';
-const GREEN_LIGHT = 'rgba(74, 124, 89, 0.06)';
 const GREEN_BG = 'rgba(74, 124, 89, 0.08)';
 const ACCENT = '#8B2E2E';
 const MUTED = 'var(--text-secondary, #6B6B60)';
 const DIVIDER = 'var(--divider, #DDD9D0)';
-const PANEL = 'var(--panel, #EFECE5)';
 
 type Step = 1 | 2 | 3;
 
-export function ImpactChart({ footprintKg, personalActions, leverageCases }: ImpactChartProps) {
+export function ImpactChart({ footprintKg, personalActions, leverageCases, buckets, onBack }: ImpactChartProps) {
   const [step, setStep] = useState<Step>(1);
   const [enabledPersonal, setEnabledPersonal] = useState<Set<string>>(new Set());
   const [enabledSystemic, setEnabledSystemic] = useState<Set<string>>(new Set());
 
   const togglePersonal = (name: string) => {
-    setEnabledPersonal(prev => {
-      const next = new Set(prev);
-      if (next.has(name)) next.delete(name); else next.add(name);
-      return next;
-    });
+    setEnabledPersonal(prev => { const n = new Set(prev); if (n.has(name)) n.delete(name); else n.add(name); return n; });
   };
-
   const toggleSystemic = (name: string) => {
-    setEnabledSystemic(prev => {
-      const next = new Set(prev);
-      if (next.has(name)) next.delete(name); else next.add(name);
-      return next;
-    });
+    setEnabledSystemic(prev => { const n = new Set(prev); if (n.has(name)) n.delete(name); else n.add(name); return n; });
   };
 
-  const totalPersonalSavings = useMemo(
-    () => personalActions.filter(a => enabledPersonal.has(a.name)).reduce((s, a) => s + a.savingsKg, 0),
-    [personalActions, enabledPersonal],
-  );
-  const afterPersonal = Math.max(footprintKg - totalPersonalSavings, 0);
+  const totalSaved = useMemo(() => personalActions.filter(a => enabledPersonal.has(a.name)).reduce((s, a) => s + a.savingsKg, 0), [personalActions, enabledPersonal]);
+  const afterPersonal = Math.max(footprintKg - totalSaved, 0);
 
-  const sortedLeverage = useMemo(
-    () => [...leverageCases].sort((a, b) => b.expectedKgCO2ePerYear.central - a.expectedKgCO2ePerYear.central),
-    [leverageCases],
-  );
-
-  const totalSystemicPrevented = useMemo(
-    () => sortedLeverage.filter(c => enabledSystemic.has(c.case.name)).reduce((s, c) => s + c.expectedKgCO2ePerYear.central, 0),
-    [sortedLeverage, enabledSystemic],
-  );
+  const sortedLeverage = useMemo(() => [...leverageCases].sort((a, b) => b.expectedKgCO2ePerYear.central - a.expectedKgCO2ePerYear.central), [leverageCases]);
+  const totalSystemic = useMemo(() => sortedLeverage.filter(c => enabledSystemic.has(c.case.name)).reduce((s, c) => s + c.expectedKgCO2ePerYear.central, 0), [sortedLeverage, enabledSystemic]);
 
   const hasPersonal = enabledPersonal.size > 0;
   const hasSystemic = enabledSystemic.size > 0;
-  const scaleMax = Math.max(footprintKg, totalSystemicPrevented, 1);
+  const scaleMax = Math.max(footprintKg, totalSystemic, 1);
   const pct = (kg: number) => Math.min((kg / scaleMax) * 100, 100);
 
+  // Top 3 buckets for the footprint panel
+  const topBuckets = useMemo(() =>
+    [...buckets].filter(b => b.kgCO2ePerYear > 0).sort((a, b) => b.kgCO2ePerYear - a.kgCO2ePerYear).slice(0, 4),
+    [buckets],
+  );
+
   return (
-    <div role="figure" aria-label="Interactive carbon impact comparison" style={{ margin: '2rem 0 3rem' }}>
+    <div className="cf-impact-layout">
+      {/* ═══ TOP: THREE PANELS ═══ */}
+      <div className="cf-impact-panels">
 
-      {/* ═══════════ SHARED BAR ═══════════ */}
-      <div style={{ marginBottom: '2rem' }}>
-        {/* Footprint bar */}
-        <div style={{ marginBottom: step >= 2 && hasPersonal ? '10px' : '0' }}>
-          <div style={barLabel}>
+        {/* PANEL 1: FOOTPRINT */}
+        <div className="cf-impact-col" data-active={true}>
+          <div style={colHeader}>
+            <Num n={1} active />
             <span>Your footprint</span>
-            <span style={{ fontVariantNumeric: 'tabular-nums', fontWeight: 700 }}>
-              {footprintKg.toLocaleString()} kg/yr
-            </span>
           </div>
-          <div style={track}>
-            <div style={{ ...bar, width: `${pct(footprintKg)}%`, background: ACCENT }} />
-          </div>
-        </div>
-
-        {/* After personal changes bar */}
-        {step >= 2 && hasPersonal && (
-          <div style={{ marginBottom: hasSystemic ? '10px' : '0' }}>
-            <div style={barLabel}>
-              <span style={{ color: GREEN, fontWeight: 600 }}>After your cuts</span>
-              <span style={{ fontVariantNumeric: 'tabular-nums', fontWeight: 700, color: GREEN }}>
-                {afterPersonal.toLocaleString()} kg/yr
-                <span style={{ fontWeight: 400, color: MUTED, fontSize: '0.75rem', marginLeft: '6px' }}>
-                  (−{totalPersonalSavings.toLocaleString()})
-                </span>
-              </span>
+          <div className="cf-impact-scroll">
+            <div style={{ fontSize: 'clamp(2.5rem, 5vw, 4rem)', fontWeight: 700, letterSpacing: '-0.02em', fontVariantNumeric: 'tabular-nums', lineHeight: 1, margin: '0.5rem 0 0.25rem' }}>
+              {footprintKg.toLocaleString()}
             </div>
-            <div style={track}>
-              <div style={{ ...bar, width: `${pct(footprintKg)}%`, background: DIVIDER, position: 'absolute' }} />
-              <div style={{ ...bar, width: `${pct(afterPersonal)}%`, background: ACCENT, opacity: 0.6, position: 'relative', zIndex: 1 }} />
+            <div style={{ fontSize: '0.82rem', color: MUTED, marginBottom: '1.25rem' }}>
+              kg CO₂e/yr · {Math.round(footprintKg / 16000 * 100)}% of US avg
             </div>
-          </div>
-        )}
-
-        {/* Systemic prevention bar */}
-        {step >= 3 && hasSystemic && (
-          <div>
-            <div style={barLabel}>
-              <span style={{ color: GREEN, fontWeight: 700 }}>Carbon you can help prevent</span>
-              <span style={{ fontVariantNumeric: 'tabular-nums', fontWeight: 700, color: GREEN }}>
-                {totalSystemicPrevented.toLocaleString()} kg/yr
-                <span style={{ fontWeight: 800, marginLeft: '8px' }}>
-                  {Math.round(totalSystemicPrevented / footprintKg * 10) / 10}×
-                </span>
-              </span>
-            </div>
-            <div style={track}>
-              <div style={{ ...bar, width: `${pct(afterPersonal)}%`, background: ACCENT, opacity: 0.15, position: 'absolute' }} />
-              <div style={{ ...bar, width: `${Math.min(pct(totalSystemicPrevented), 100)}%`, background: GREEN, position: 'relative', zIndex: 1 }} />
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* ═══════════ THREE PANELS ═══════════ */}
-      <div className="cf-panels">
-
-        {/* ── PANEL 1: YOUR FOOTPRINT ── */}
-        <div className="cf-panel" data-active={true}>
-          <div style={panelHeader}>
-            <span style={panelNumber}>1</span>
-            <span style={panelTitle}>Your footprint</span>
-          </div>
-          <div style={{ fontSize: 'clamp(2rem, 5vw, 3.5rem)', fontWeight: 700, letterSpacing: '-0.02em', fontVariantNumeric: 'tabular-nums', lineHeight: 1, marginBottom: '0.5rem' }}>
-            {footprintKg.toLocaleString()}
-            <span style={{ fontSize: '0.5em', fontWeight: 400, color: MUTED, marginLeft: '6px' }}>kg/yr</span>
-          </div>
-          <div style={{ fontSize: '0.78rem', color: MUTED, marginBottom: '1.5rem' }}>
-            {Math.round(footprintKg / 16000 * 100)}% of the US average
-          </div>
-          {step === 1 && (
-            <button onClick={() => setStep(2)} style={nextBtn}>
-              What can you cut? →
-            </button>
-          )}
-        </div>
-
-        {/* ── PANEL 2: PERSONAL CUTS ── */}
-        <div className="cf-panel" data-active={step >= 2} data-locked={step < 2}>
-          <div style={panelHeader}>
-            <span style={panelNumber}>2</span>
-            <span style={panelTitle}>Personal cuts</span>
-          </div>
-
-          {step >= 2 ? (
-            <>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', marginBottom: '1rem' }}>
-                {personalActions.slice(0, 6).map(action => {
-                  const isOn = enabledPersonal.has(action.name);
-                  return (
-                    <button key={action.name} onClick={() => togglePersonal(action.name)} style={toggleStyle(isOn)} aria-pressed={isOn}>
-                      <Dot on={isOn} color={GREEN} />
-                      <span style={{ flex: 1, fontWeight: isOn ? 600 : 400, fontSize: '0.82rem' }}>{action.name}</span>
-                      <span style={{ fontWeight: 700, color: isOn ? GREEN : MUTED, fontVariantNumeric: 'tabular-nums', fontSize: '0.78rem', whiteSpace: 'nowrap' }}>
-                        −{action.savingsKg.toLocaleString()}
-                      </span>
-                    </button>
-                  );
-                })}
+            {topBuckets.map(b => (
+              <div key={b.bucketId} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem', padding: '4px 0', borderBottom: `1px solid ${DIVIDER}` }}>
+                <span>{BUCKET_META[b.bucketId].label}</span>
+                <span style={{ fontVariantNumeric: 'tabular-nums', fontWeight: 600 }}>{b.kgCO2ePerYear.toLocaleString()}</span>
               </div>
+            ))}
+            <button onClick={onBack} style={{ ...linkBtn, marginTop: '1rem' }}>
+              ← Edit inputs
+            </button>
+            {step === 1 && (
+              <button onClick={() => setStep(2)} style={{ ...primaryBtn, marginTop: '1rem' }}>
+                What can you cut? →
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* PANEL 2: PERSONAL CUTS */}
+        <div className="cf-impact-col" data-active={step >= 2}>
+          <div style={colHeader}>
+            <Num n={2} active={step >= 2} />
+            <span>Personal cuts</span>
+          </div>
+          {step >= 2 ? (
+            <div className="cf-impact-scroll">
+              {personalActions.slice(0, 7).map(action => {
+                const isOn = enabledPersonal.has(action.name);
+                return (
+                  <button key={action.name} onClick={() => togglePersonal(action.name)} className="cf-toggle-row" data-on={isOn} aria-pressed={isOn}>
+                    <Dot on={isOn} />
+                    <span style={{ flex: 1, fontWeight: isOn ? 600 : 400, fontSize: '0.82rem' }}>{action.name}</span>
+                    <span style={{ fontWeight: 700, color: isOn ? GREEN : MUTED, fontVariantNumeric: 'tabular-nums', fontSize: '0.78rem', whiteSpace: 'nowrap' }}>
+                      −{action.savingsKg.toLocaleString()}
+                    </span>
+                  </button>
+                );
+              })}
               {hasPersonal && (
-                <div style={{ fontSize: '0.78rem', color: MUTED, lineHeight: 1.5, marginBottom: '1rem' }}>
-                  Saved <strong style={{ color: GREEN }}>{totalPersonalSavings.toLocaleString()} kg</strong>.
-                  {afterPersonal > 0 && <> <strong>{afterPersonal.toLocaleString()} kg</strong> remains.</>}
+                <div style={{ fontSize: '0.78rem', color: MUTED, marginTop: '0.75rem', lineHeight: 1.4 }}>
+                  Cut <strong style={{ color: GREEN }}>{totalSaved.toLocaleString()} kg</strong> ({Math.round(totalSaved / footprintKg * 100)}%).
+                  {afterPersonal > 0 && <> <strong>{afterPersonal.toLocaleString()}</strong> remains.</>}
                 </div>
               )}
               {step === 2 && hasPersonal && (
-                <button onClick={() => setStep(3)} style={nextBtn}>
+                <button onClick={() => setStep(3)} style={{ ...primaryBtn, marginTop: '1rem' }}>
                   Now see systemic actions →
                 </button>
               )}
-              {step === 2 && !hasPersonal && (
-                <div style={{ fontSize: '0.75rem', color: MUTED, fontStyle: 'italic' }}>
-                  Toggle changes above to see their effect
-                </div>
-              )}
-            </>
-          ) : (
-            <div style={lockedOverlay}>
-              <div style={{ fontSize: '0.85rem', fontWeight: 500 }}>Calculate your footprint first</div>
             </div>
+          ) : (
+            <div className="cf-impact-locked">Step 1 first</div>
           )}
         </div>
 
-        {/* ── PANEL 3: SYSTEMIC ACTIONS ── */}
-        <div className="cf-panel" data-active={step >= 3} data-locked={step < 3}>
-          <div style={panelHeader}>
-            <span style={{ ...panelNumber, background: step >= 3 ? GREEN : undefined }}>3</span>
-            <span style={panelTitle}>Systemic actions</span>
+        {/* PANEL 3: SYSTEMIC ACTIONS */}
+        <div className="cf-impact-col" data-active={step >= 3} style={{ borderRight: 'none' }}>
+          <div style={colHeader}>
+            <Num n={3} active={step >= 3} green />
+            <span>Systemic actions</span>
           </div>
-
           {step >= 3 ? (
-            <>
-              <div style={{ fontSize: '0.68rem', color: MUTED, lineHeight: 1.4, marginBottom: '0.75rem' }}>
-                Expected value per person: probability × emissions prevented ÷ coalition size
+            <div className="cf-impact-scroll">
+              <div style={{ fontSize: '0.68rem', color: MUTED, lineHeight: 1.4, marginBottom: '0.5rem' }}>
+                Expected value per person
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', marginBottom: '1rem' }}>
-                {sortedLeverage.map(result => {
-                  const isOn = enabledSystemic.has(result.case.name);
-                  const central = result.expectedKgCO2ePerYear.central;
-                  const mult = result.leverageMultiple.central;
-                  return (
-                    <button key={result.case.name} onClick={() => toggleSystemic(result.case.name)} style={toggleStyle(isOn)} aria-pressed={isOn}>
-                      <Dot on={isOn} color={GREEN} />
-                      <div style={{ flex: 1, textAlign: 'left' }}>
-                        <div style={{ fontWeight: isOn ? 600 : 400, fontSize: '0.82rem', lineHeight: 1.3 }}>{result.case.name}</div>
+              {sortedLeverage.map(result => {
+                const isOn = enabledSystemic.has(result.case.name);
+                const central = result.expectedKgCO2ePerYear.central;
+                const mult = result.leverageMultiple.central;
+                return (
+                  <button key={result.case.name} onClick={() => toggleSystemic(result.case.name)} className="cf-toggle-row" data-on={isOn} aria-pressed={isOn}>
+                    <Dot on={isOn} />
+                    <span style={{ flex: 1, fontWeight: isOn ? 600 : 400, fontSize: '0.78rem', lineHeight: 1.25, textAlign: 'left' }}>{result.case.name}</span>
+                    <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                      <div style={{ fontWeight: 700, color: isOn ? GREEN : MUTED, fontVariantNumeric: 'tabular-nums', fontSize: '0.75rem', whiteSpace: 'nowrap' }}>
+                        {central.toLocaleString()}
                       </div>
-                      <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                        <div style={{ fontWeight: 700, color: isOn ? GREEN : MUTED, fontVariantNumeric: 'tabular-nums', fontSize: '0.78rem', whiteSpace: 'nowrap' }}>
-                          {central.toLocaleString()} kg
-                        </div>
-                        {mult >= 1 && (
-                          <div style={{ fontSize: '0.62rem', color: isOn ? GREEN : MUTED, fontWeight: 700 }}>
-                            {mult}×
-                          </div>
-                        )}
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
+                      {mult >= 1 && <div style={{ fontSize: '0.6rem', fontWeight: 700, color: isOn ? GREEN : MUTED }}>{mult}×</div>}
+                    </div>
+                  </button>
+                );
+              })}
               {hasSystemic && (
-                <div style={{
-                  padding: '12px 14px',
-                  background: GREEN_LIGHT,
-                  borderLeft: `3px solid ${GREEN}`,
-                  borderRadius: '0 6px 6px 0',
-                  fontSize: '0.82rem',
-                  lineHeight: 1.5,
-                }}>
-                  <strong>Personal cuts: {totalPersonalSavings.toLocaleString()} kg.</strong>
-                  {' '}<strong style={{ color: GREEN }}>Systemic actions: {totalSystemicPrevented.toLocaleString()} kg</strong>
-                  {' '}— {Math.round(totalSystemicPrevented / Math.max(totalPersonalSavings, 1))}× more.
+                <div style={{ marginTop: '0.75rem', padding: '10px 12px', background: GREEN_BG, borderLeft: `3px solid ${GREEN}`, borderRadius: '0 5px 5px 0', fontSize: '0.78rem', lineHeight: 1.4 }}>
+                  <strong style={{ color: GREEN }}>{totalSystemic.toLocaleString()} kg</strong> prevented
+                  {totalSaved > 0 && <> — <strong>{Math.round(totalSystemic / Math.max(totalSaved, 1))}×</strong> your personal cuts</>}
                 </div>
               )}
-            </>
-          ) : (
-            <div style={lockedOverlay}>
-              <div style={{ fontSize: '0.85rem', fontWeight: 500 }}>
-                {step === 1 ? 'Start from step 1' : 'Toggle a personal change first'}
-              </div>
             </div>
+          ) : (
+            <div className="cf-impact-locked">{step === 1 ? 'Start from step 1' : 'Toggle a cut first'}</div>
           )}
         </div>
       </div>
 
-      {/* Screen reader */}
+      {/* ═══ BOTTOM: BAR CHART ═══ */}
+      <div className="cf-impact-bars">
+        {/* Footprint */}
+        <div style={{ marginBottom: '8px' }}>
+          <div style={barRow}>
+            <span style={barRowLabel}>Your footprint</span>
+            <span style={barRowKg}>{footprintKg.toLocaleString()} kg/yr</span>
+          </div>
+          <div style={barTrack}>
+            <div style={{ ...barFill, width: `${pct(footprintKg)}%`, background: ACCENT }} />
+          </div>
+        </div>
+
+        {/* After cuts */}
+        {hasPersonal && (
+          <div style={{ marginBottom: '8px' }}>
+            <div style={barRow}>
+              <span style={{ ...barRowLabel, color: GREEN }}>After your cuts</span>
+              <span style={{ ...barRowKg, color: GREEN }}>
+                {afterPersonal.toLocaleString()} kg/yr
+                <span style={{ fontWeight: 400, color: MUTED, marginLeft: '6px', fontSize: '0.7rem' }}>(−{totalSaved.toLocaleString()})</span>
+              </span>
+            </div>
+            <div style={barTrack}>
+              <div style={{ ...barFill, width: `${pct(footprintKg)}%`, background: DIVIDER, position: 'absolute' }} />
+              <div style={{ ...barFill, width: `${pct(afterPersonal)}%`, background: ACCENT, opacity: 0.55, position: 'relative', zIndex: 1 }} />
+            </div>
+          </div>
+        )}
+
+        {/* Systemic prevented */}
+        {hasSystemic && (
+          <div>
+            <div style={barRow}>
+              <span style={{ ...barRowLabel, color: GREEN, fontWeight: 700 }}>Carbon you can help prevent</span>
+              <span style={{ ...barRowKg, color: GREEN }}>
+                {totalSystemic.toLocaleString()} kg/yr
+                <span style={{ fontWeight: 800, marginLeft: '8px' }}>{Math.round(totalSystemic / footprintKg * 10) / 10}×</span>
+              </span>
+            </div>
+            <div style={barTrack}>
+              <div style={{ ...barFill, width: `${pct(afterPersonal)}%`, background: ACCENT, opacity: 0.12, position: 'absolute' }} />
+              <div style={{ ...barFill, width: `${Math.min(pct(totalSystemic), 100)}%`, background: GREEN, position: 'relative', zIndex: 1 }} />
+            </div>
+          </div>
+        )}
+
+        {/* Empty state */}
+        {!hasPersonal && !hasSystemic && (
+          <div style={{ fontSize: '0.82rem', color: MUTED, textAlign: 'center', padding: '2rem 0' }}>
+            Toggle personal cuts and systemic actions above to see them compared here
+          </div>
+        )}
+      </div>
+
       <div className="sr-only" aria-live="polite">
-        Your footprint: {footprintKg.toLocaleString()} kg.
-        {hasPersonal && ` After cuts: ${afterPersonal.toLocaleString()} kg.`}
-        {hasSystemic && ` Systemic actions prevent: ${totalSystemicPrevented.toLocaleString()} kg.`}
+        Footprint: {footprintKg.toLocaleString()} kg. {hasPersonal && `After cuts: ${afterPersonal.toLocaleString()} kg.`} {hasSystemic && `Systemic: ${totalSystemic.toLocaleString()} kg.`}
       </div>
     </div>
   );
 }
 
-function Dot({ on, color }: { on: boolean; color: string }) {
+// ─── Shared primitives ───
+
+function Num({ n, active, green }: { n: number; active: boolean; green?: boolean }) {
   return (
     <span style={{
-      width: '18px', height: '18px', borderRadius: '4px', flexShrink: 0,
-      border: `2px solid ${on ? color : DIVIDER}`,
-      background: on ? color : 'transparent',
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      transition: 'all 0.15s', color: 'white', fontSize: '0.65rem', fontWeight: 700,
-    }}>
-      {on ? '✓' : ''}
-    </span>
+      width: '22px', height: '22px', borderRadius: '50%',
+      background: active ? (green ? GREEN : ACCENT) : DIVIDER,
+      color: 'white', display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+      fontSize: '0.65rem', fontWeight: 700, flexShrink: 0, transition: 'background 0.3s',
+    }}>{n}</span>
   );
 }
 
-const track: React.CSSProperties = {
-  position: 'relative', height: '28px', background: 'var(--bar-track, #D4CFCA)', borderRadius: '5px', overflow: 'hidden',
-};
-
-const bar: React.CSSProperties = {
-  height: '100%', borderRadius: '5px', transition: 'width 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94)', minWidth: '0',
-};
-
-const barLabel: React.CSSProperties = {
-  display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', fontSize: '0.8rem', marginBottom: '4px', gap: '8px',
-};
-
-const panelHeader: React.CSSProperties = {
-  display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '1rem',
-};
-
-const panelNumber: React.CSSProperties = {
-  width: '24px', height: '24px', borderRadius: '50%', background: ACCENT, color: 'white',
-  display: 'flex', alignItems: 'center', justifyContent: 'center',
-  fontSize: '0.7rem', fontWeight: 700, flexShrink: 0,
-};
-
-const panelTitle: React.CSSProperties = {
-  fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase',
-  color: 'var(--text, #1A1A18)',
-};
-
-const nextBtn: React.CSSProperties = {
-  display: 'block', width: '100%', padding: '12px 16px',
-  fontSize: '0.88rem', fontFamily: 'inherit', fontWeight: 700,
-  border: `1.5px solid ${GREEN}`, borderRadius: '8px',
-  background: GREEN_BG, color: GREEN, cursor: 'pointer',
-  transition: 'all 0.15s', minHeight: '48px', textAlign: 'center',
-};
-
-const lockedOverlay: React.CSSProperties = {
-  display: 'flex', alignItems: 'center', justifyContent: 'center',
-  minHeight: '200px', color: MUTED, textAlign: 'center',
-  opacity: 0.5,
-};
-
-function toggleStyle(isOn: boolean): React.CSSProperties {
-  return {
-    display: 'flex', alignItems: 'center', gap: '8px',
-    padding: '7px 10px', border: `1.5px solid ${isOn ? GREEN_BG : 'transparent'}`,
-    borderRadius: '5px', cursor: 'pointer', fontFamily: 'inherit',
-    fontSize: '0.85rem', color: 'var(--text, #1A1A18)', textAlign: 'left',
-    transition: 'all 0.12s', minHeight: '40px',
-    background: isOn ? GREEN_BG : 'transparent',
-  };
+function Dot({ on }: { on: boolean }) {
+  return (
+    <span style={{
+      width: '16px', height: '16px', borderRadius: '3px', flexShrink: 0,
+      border: `2px solid ${on ? GREEN : DIVIDER}`, background: on ? GREEN : 'transparent',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      transition: 'all 0.12s', color: 'white', fontSize: '0.6rem', fontWeight: 700,
+    }}>{on ? '✓' : ''}</span>
+  );
 }
+
+const colHeader: React.CSSProperties = {
+  display: 'flex', alignItems: 'center', gap: '8px',
+  fontSize: '0.68rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase',
+  color: 'var(--text, #1A1A18)', paddingBottom: '0.75rem',
+  borderBottom: `1px solid ${DIVIDER}`, marginBottom: '0.75rem',
+};
+
+const primaryBtn: React.CSSProperties = {
+  display: 'block', width: '100%', padding: '10px 14px',
+  fontSize: '0.82rem', fontFamily: 'inherit', fontWeight: 700,
+  border: `1.5px solid ${GREEN}`, borderRadius: '6px',
+  background: GREEN_BG, color: GREEN, cursor: 'pointer', minHeight: '44px', textAlign: 'center',
+};
+
+const linkBtn: React.CSSProperties = {
+  padding: 0, border: 'none', background: 'transparent', fontFamily: 'inherit',
+  fontSize: '0.75rem', fontWeight: 600, color: MUTED, cursor: 'pointer',
+};
+
+const barRow: React.CSSProperties = {
+  display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', fontSize: '0.78rem', marginBottom: '4px', gap: '8px',
+};
+const barRowLabel: React.CSSProperties = { fontWeight: 600 };
+const barRowKg: React.CSSProperties = { fontVariantNumeric: 'tabular-nums', fontWeight: 700, whiteSpace: 'nowrap' };
+
+const barTrack: React.CSSProperties = {
+  position: 'relative', height: '28px', background: 'var(--bar-track, #D4CFCA)', borderRadius: '4px', overflow: 'hidden',
+};
+const barFill: React.CSSProperties = {
+  height: '100%', borderRadius: '4px', transition: 'width 0.5s cubic-bezier(0.25,0.46,0.45,0.94)', minWidth: 0,
+};
