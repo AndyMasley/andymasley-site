@@ -80,6 +80,24 @@ export const LEVERAGE_CASES: LeverageCase[] = [
     attributionFraction: 0.0001, // 1/10000
     timeHorizonYears: 20,
   },
+  {
+    name: 'Donate $200/yr to effective climate charity',
+    description: 'Founders Pledge top recommendations (CATF, Carbon180) avert an estimated 1 tonne CO₂e per $1–$10 donated. $200/yr at central estimate of ~$1/tonne.',
+    // We model the cost-effectiveness uncertainty through the probability field:
+    // low = pessimistic cost-effectiveness ($10/tonne → 20 tonnes → 20,000 kg)
+    // central = Founders Pledge central ($1/tonne → 200 tonnes → 200,000 kg)
+    // high = optimistic ($0.10/tonne → 2,000 tonnes → 2,000,000 kg)
+    // To get these numbers through the formula, we set annualLoadAffectedMWh and
+    // attributionFraction to produce ~200,000 kg at probability 1.0, then use
+    // the probability field to scale for cost-effectiveness uncertainty.
+    probabilityOfSuccess: { low: 0.10, central: 1.0, high: 10.0 },
+    coalitionSize: 1,
+    durationYears: 1,
+    annualLoadAffectedMWh: 513, // 200,000 kg ÷ 390 kg/MWh
+    counterfactualGenerationMix: 'Policy advocacy portfolio (0.39 kg/kWh equivalent)',
+    attributionFraction: 1.0,
+    timeHorizonYears: 1,
+  },
 ];
 
 // ---------------------------------------------------------------------------

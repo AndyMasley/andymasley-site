@@ -191,13 +191,6 @@ export function computePersonalActions(baseline: BaselineInputs, footprint: Foot
       applicable: true,
       note: 'HD streaming uses ~0.1 kWh per hour including data centers',
     },
-    {
-      name: 'Cancel crypto/NFT activity',
-      savingsKg: 500,
-      category: 'Digital',
-      applicable: true,
-      note: 'Proof-of-work crypto mining is extremely energy-intensive',
-    },
 
     // ── Purchases ──
     {
