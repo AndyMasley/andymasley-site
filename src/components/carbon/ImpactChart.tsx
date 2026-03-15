@@ -215,7 +215,11 @@ export function ImpactChart({
               return (
                 <button key={result.case.name} onClick={() => toggleSystemic(result.case.name)} className="cf-toggle-row" data-on={isOn} aria-pressed={isOn}>
                   <Dot on={isOn} />
-                  <span style={{ flex: 1, fontWeight: isOn ? 600 : 400, fontSize: '0.76rem', lineHeight: 1.25, textAlign: 'left' }}>{result.case.name}</span>
+                  <span style={{ flex: 1, fontWeight: isOn ? 600 : 400, fontSize: '0.76rem', lineHeight: 1.25, textAlign: 'left' }}>
+                    {result.case.name.includes('effective climate charity') ? (
+                      <>Donate $200/yr to <a href="https://founderspledge.com/research/fp-climate-change" target="_blank" rel="noopener noreferrer" style={{ color: isOn ? GREEN : ACCENT, textDecoration: 'underline', textUnderlineOffset: '2px' }} onClick={e => e.stopPropagation()}>effective climate charity</a></>
+                    ) : result.case.name}
+                  </span>
                   <div style={{ textAlign: 'right', flexShrink: 0 }}>
                     <div style={{ fontWeight: 700, color: isOn ? GREEN : MUTED, fontVariantNumeric: 'tabular-nums', fontSize: '0.72rem', whiteSpace: 'nowrap' }}>
                       {central.toLocaleString()}
@@ -235,27 +239,32 @@ export function ImpactChart({
         </div>
       </div>
 
-      {/* BAR CHART */}
+      {/* BAR CHART — fixed position, never moves */}
       <div className="cf-impact-bars">
-        {/* Always show footprint bar */}
         <BarRow label="Your footprint" kg={footprintKg} pctWidth={pct(footprintKg)} color={ACCENT} />
 
-        {hasPersonal && (
-          <BarRow label="After your cuts" kg={afterPersonal} pctWidth={pct(afterPersonal)} color={ACCENT} opacity={0.55}
-            ghostWidth={pct(footprintKg)} suffix={`(−${totalSaved.toLocaleString()})`} labelColor={GREEN} />
-        )}
+        <BarRow
+          label={hasPersonal ? 'After your cuts' : 'After your cuts'}
+          kg={hasPersonal ? afterPersonal : 0}
+          pctWidth={hasPersonal ? pct(afterPersonal) : 0}
+          color={ACCENT} opacity={hasPersonal ? 0.55 : 0}
+          ghostWidth={hasPersonal ? pct(footprintKg) : 0}
+          suffix={hasPersonal ? `(−${totalSaved.toLocaleString()})` : ''}
+          labelColor={hasPersonal ? GREEN : MUTED}
+          dimmed={!hasPersonal}
+        />
 
-        {hasSystemic && (
-          <BarRow label="Carbon you can help prevent" kg={totalSystemic} pctWidth={Math.min(pct(totalSystemic), 100)} color={GREEN}
-            ghostWidth={pct(afterPersonal)} ghostOpacity={0.12}
-            suffix={`${Math.round(totalSystemic / footprintKg * 10) / 10}x`} labelColor={GREEN} bold />
-        )}
-
-        {!hasPersonal && !hasSystemic && (
-          <div style={{ fontSize: '0.78rem', color: MUTED, textAlign: 'center', padding: '1rem 0' }}>
-            Toggle personal cuts and systemic actions above to compare them here
-          </div>
-        )}
+        <BarRow
+          label={hasSystemic ? 'Carbon you can help prevent' : 'Carbon you can help prevent'}
+          kg={hasSystemic ? totalSystemic : 0}
+          pctWidth={hasSystemic ? Math.min(pct(totalSystemic), 100) : 0}
+          color={GREEN}
+          ghostWidth={hasSystemic ? pct(afterPersonal) : 0} ghostOpacity={0.12}
+          suffix={hasSystemic ? `${Math.round(totalSystemic / footprintKg * 10) / 10}×` : ''}
+          labelColor={hasSystemic ? GREEN : MUTED}
+          bold={hasSystemic}
+          dimmed={!hasSystemic}
+        />
       </div>
 
       <div className="sr-only" aria-live="polite">
@@ -269,18 +278,18 @@ export function ImpactChart({
 
 // --- Bar row ---
 
-function BarRow({ label, kg, pctWidth, color, opacity, ghostWidth, ghostOpacity, suffix, labelColor, bold }: {
+function BarRow({ label, kg, pctWidth, color, opacity, ghostWidth, ghostOpacity, suffix, labelColor, bold, dimmed }: {
   label: string; kg: number; pctWidth: number; color: string;
   opacity?: number; ghostWidth?: number; ghostOpacity?: number;
-  suffix?: string; labelColor?: string; bold?: boolean;
+  suffix?: string; labelColor?: string; bold?: boolean; dimmed?: boolean;
 }) {
   return (
-    <div style={{ marginBottom: '6px' }}>
+    <div style={{ marginBottom: '6px', opacity: dimmed ? 0.25 : 1, transition: 'opacity 0.3s ease' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', fontSize: '0.78rem', marginBottom: '3px' }}>
         <span style={{ fontWeight: bold ? 700 : 600, color: labelColor }}>{label}</span>
         <span style={{ fontVariantNumeric: 'tabular-nums', fontWeight: 700, color: labelColor, whiteSpace: 'nowrap' }}>
-          {kg.toLocaleString()} kg/yr
-          {suffix && <span style={{ fontWeight: 800, marginLeft: '6px' }}>{suffix}</span>}
+          {dimmed ? '—' : `${kg.toLocaleString()} kg/yr`}
+          {!dimmed && suffix && <span style={{ fontWeight: 800, marginLeft: '6px' }}>{suffix}</span>}
         </span>
       </div>
       <div style={{ position: 'relative', height: '24px', background: 'var(--bar-track, #D4CFCA)', borderRadius: '4px', overflow: 'hidden' }}>
