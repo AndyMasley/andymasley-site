@@ -395,8 +395,7 @@ export function AdvancedEditor({
                             −{Math.round(action.savingsKg * (actionParamOverrides[action.name] ?? 1)).toLocaleString()}
                           </span>
                         </button>
-                        {isOn && (
-                          <div style={{ padding: '2px 6px 5px 30px', fontSize: '0.62rem', color: MUTED, lineHeight: 1.5, display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                        <div style={{ padding: '2px 6px 5px 30px', fontSize: '0.62rem', color: MUTED, lineHeight: 1.5, display: 'flex', flexDirection: 'column', gap: '3px' }}>
                             <ActionParam name={action.name} label="Queries/day" defaultVal={50} match="AI chatbot" unit="" actionParamOverrides={actionParamOverrides} getParamValue={getParamValue} updateActionParam={updateActionParam} />
                             <ActionParam name={action.name} label="Hours/day" defaultVal={2} match="streaming" unit="" max={24} actionParamOverrides={actionParamOverrides} getParamValue={getParamValue} updateActionParam={updateActionParam} />
                             <ActionParam name={action.name} label="Solar kW" defaultVal={7} match="solar" unit="kW" actionParamOverrides={actionParamOverrides} getParamValue={getParamValue} updateActionParam={updateActionParam} />
@@ -424,8 +423,7 @@ export function AdvancedEditor({
                                 Monthly $: <input type="number" min={0} step={100} style={INLINE_INPUT_STYLE} value={overrides.goodsSpendingPerMonth ?? ''} placeholder={String(baseline.monthlySpending)} onChange={e => updateOverride('goodsSpendingPerMonth', e.target.value)} onClick={e => e.stopPropagation()} />
                               </div>
                             )}
-                          </div>
-                        )}
+                        </div>
                       </div>
                     );
                   })}
