@@ -288,20 +288,48 @@ const REFERENCE_MARKS = [
 
 function ReferenceLines({ scaleMax }: { scaleMax: number }) {
   return (
-    <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 2 }}>
-      {REFERENCE_MARKS.map(mark => {
-        const leftPct = Math.min((mark.kg / scaleMax) * 100, 100);
-        if (leftPct > 99 || leftPct < 1) return null;
-        return (
-          <div key={mark.label} style={{ position: 'absolute', left: `${leftPct}%`, top: 0, bottom: 0, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            <div style={{ width: '1px', flex: 1, background: mark.color, opacity: 0.3 }} />
-            <div style={{ fontSize: '0.55rem', fontWeight: 600, color: mark.color, whiteSpace: 'nowrap', paddingTop: '2px', transform: 'translateX(-50%)', position: 'absolute', bottom: '-14px', left: 0 }}>
+    <>
+      {/* Labels row above the bars */}
+      <div style={{ position: 'relative', height: '16px', marginBottom: '4px' }}>
+        {REFERENCE_MARKS.map(mark => {
+          const leftPct = (mark.kg / scaleMax) * 100;
+          if (leftPct > 98 || leftPct < 2) return null;
+          return (
+            <span key={mark.label} style={{
+              position: 'absolute',
+              left: `${leftPct}%`,
+              transform: 'translateX(-50%)',
+              fontSize: '0.58rem',
+              fontWeight: 700,
+              color: mark.color,
+              whiteSpace: 'nowrap',
+              letterSpacing: '0.02em',
+            }}>
               {mark.label}
-            </div>
-          </div>
-        );
-      })}
-    </div>
+            </span>
+          );
+        })}
+      </div>
+      {/* Vertical lines spanning the bar area */}
+      <div style={{ position: 'absolute', left: 0, right: 0, top: '20px', bottom: '12px', pointerEvents: 'none', zIndex: 2 }}>
+        {REFERENCE_MARKS.map(mark => {
+          const leftPct = (mark.kg / scaleMax) * 100;
+          if (leftPct > 98 || leftPct < 2) return null;
+          return (
+            <div key={mark.label} style={{
+              position: 'absolute',
+              left: `${leftPct}%`,
+              top: 0,
+              bottom: 0,
+              width: 0,
+              borderLeft: `1.5px dashed ${mark.color}`,
+              opacity: 0.4,
+              transition: 'left 0.5s cubic-bezier(0.25,0.46,0.45,0.94)',
+            }} />
+          );
+        })}
+      </div>
+    </>
   );
 }
 
