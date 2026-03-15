@@ -192,13 +192,20 @@ export function ImpactChart({
                       {group.actions.map(action => {
                         const isOn = enabledPersonal.has(action.name);
                         return (
-                          <button key={action.name} onClick={() => togglePersonal(action.name)} className="cf-toggle-row" data-on={isOn} aria-pressed={isOn}>
-                            <Dot on={isOn} />
-                            <span style={{ flex: 1, fontWeight: isOn ? 600 : 400, fontSize: '0.8rem' }}>{action.name}</span>
-                            <span style={{ fontWeight: 700, color: isOn ? GREEN : MUTED, fontVariantNumeric: 'tabular-nums', fontSize: '0.75rem', whiteSpace: 'nowrap' }}>
-                              −{action.savingsKg.toLocaleString()}
-                            </span>
-                          </button>
+                          <div key={action.name}>
+                            <button onClick={() => togglePersonal(action.name)} className="cf-toggle-row" data-on={isOn} aria-pressed={isOn}>
+                              <Dot on={isOn} />
+                              <span style={{ flex: 1, fontWeight: isOn ? 600 : 400, fontSize: '0.8rem' }}>{action.name}</span>
+                              <span style={{ fontWeight: 700, color: isOn ? GREEN : MUTED, fontVariantNumeric: 'tabular-nums', fontSize: '0.75rem', whiteSpace: 'nowrap' }}>
+                                −{action.savingsKg.toLocaleString()}
+                              </span>
+                            </button>
+                            {isOn && action.name === 'Cut beef by half' && (
+                              <div style={{ fontSize: '0.65rem', color: MUTED, lineHeight: 1.45, padding: '4px 8px 8px 34px', opacity: 0.8 }}>
+                                Please don't substitute chicken for beef. Replacing half your beef with chicken means ~<a href="https://animalclock.org/" target="_blank" rel="noopener noreferrer" style={{ color: ACCENT }}>8 more chickens</a> per year go through <a href="https://thehumaneleague.org/article/how-many-chickens-are-in-the-world" target="_blank" rel="noopener noreferrer" style={{ color: ACCENT }}>factory farms</a>, versus ~<a href="https://sentientmedia.org/meat-consumption-in-the-us/" target="_blank" rel="noopener noreferrer" style={{ color: ACCENT }}>1/15th of a cow</a>. Substitute plants instead.
+                              </div>
+                            )}
+                          </div>
                         );
                       })}
                     </div>
