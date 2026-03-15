@@ -1,0 +1,151 @@
+---
+/**
+ * Phase 1 — Carbon Footprint Calculator (v2)
+ *
+ * This page replaces the previous monolithic carbon-footprint.astro.
+ * Key structural changes:
+ * - Footprint calculator and leverage lab are separate React components
+ *   with no shared mutable state
+ * - Users start from an inferred baseline, not a blank slate
+ * - Seven mutually exclusive emission buckets, no overlap
+ * - Every bucket shows its confidence level
+ * - A visible residual wedge stays on screen until all buckets are accounted for
+ *
+ * The previous page mixed personal emission activities (driving, diet) with
+ * systemic advocacy claims (nuclear plant advocacy, grid reform) in the same
+ * data array, the same render loop, and the same URL hash. This page separates
+ * them into distinct product surfaces.
+ */
+import Base from '@/layouts/Base.astro';
+import { Calculator } from '@/components/carbon/Calculator';
+---
+
+<Base title="Carbon Footprint Calculator" description="Estimate your carbon footprint from a credible baseline, then explore what systemic actions have the highest expected leverage">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Playfair+Display:ital,wght@0,700;1,400&display=swap" rel="stylesheet" />
+
+  <article class="cfv2" id="cfv2">
+
+    <!-- Hero -->
+    <header class="cfv2-hero">
+      <h1 class="cfv2-title">Carbon Footprint</h1>
+      <p class="cfv2-hero-line">Your footprint matters — but systems determine the carbon intensity of millions of footprints at once.</p>
+    </header>
+
+    <!-- Calculator (React island) -->
+    <Calculator client:load />
+
+    <!-- Leverage Lab placeholder — Phase 4 will build this out -->
+    <hr class="cfv2-rule" />
+    <section class="cfv2-leverage-placeholder" id="leverage-lab">
+      <h2 class="cfv2-section-title">Leverage Lab</h2>
+      <p class="cfv2-section-desc">
+        The calculator above shows what emissions are associated with your life today.
+        The Leverage Lab (coming in Phase 4) will show what emissions your actions can
+        help change beyond you — across many people and future years. These are
+        fundamentally different questions and require different math.
+      </p>
+    </section>
+
+  </article>
+</Base>
+
+<style is:global>
+  body:has(.cfv2) { background: #F5F2EC !important; }
+  [data-theme="dark"] body:has(.cfv2) { background: #1A1917 !important; }
+
+  body:has(.cfv2) .main-content {
+    max-width: 800px;
+  }
+
+  .cfv2 {
+    --text: #1A1A18;
+    --text-secondary: #6B6B60;
+    --accent: #8B2E2E;
+    --divider: #DDD9D0;
+    --panel: #EFECE5;
+    --bar-track: #D4CFCA;
+    font-family: 'DM Sans', sans-serif;
+    color: var(--text);
+    padding: 2rem 0 4rem;
+  }
+
+  [data-theme="dark"] .cfv2 {
+    --text: #F0EDE6;
+    --text-secondary: #9A9485;
+    --accent: #B85555;
+    --divider: #3A3733;
+    --panel: #252320;
+    --bar-track: #3A3733;
+  }
+
+  .cfv2-hero {
+    margin-bottom: 3rem;
+  }
+
+  .cfv2-title {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-weight: 700;
+    font-size: clamp(2.5rem, 5vw, 4rem);
+    letter-spacing: -0.02em;
+    line-height: 1;
+    margin: 0 0 1rem 0;
+  }
+
+  .cfv2-hero-line {
+    font-size: 1rem;
+    line-height: 1.7;
+    color: var(--text-secondary);
+    max-width: 600px;
+    margin: 0;
+  }
+
+  .cfv2-rule {
+    border: none;
+    border-top: 1px solid var(--divider);
+    margin: 3rem 0;
+  }
+
+  .cfv2-section-title {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: clamp(1.4rem, 3vw, 2rem);
+    font-weight: 700;
+    margin: 0 0 0.75rem;
+  }
+
+  .cfv2-section-desc {
+    font-size: 0.9rem;
+    line-height: 1.75;
+    color: var(--text-secondary);
+    max-width: 600px;
+  }
+
+  .cfv2-leverage-placeholder {
+    opacity: 0.6;
+  }
+
+  /* Screen reader only */
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  /* Focus states */
+  .cfv2 *:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+  }
+
+  @media (max-width: 480px) {
+    .cfv2 { padding: 1.5rem 0 3rem; }
+  }
+</style>
