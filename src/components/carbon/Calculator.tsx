@@ -23,6 +23,7 @@ import { LeverageLab } from './LeverageLab';
 import { ExportButton } from './ExportButton';
 import { ScenarioManager } from './ScenarioManager';
 import { Changelog } from './Changelog';
+import { Methodology } from './Methodology';
 import { ComparisonModes, getComparisonContext } from './ComparisonModes';
 import type { ComparisonModeId } from './ComparisonModes';
 import { ARCHETYPES } from './Archetypes';
@@ -73,7 +74,7 @@ export function Calculator() {
         archetypeTotals={ARCHETYPE_TOTALS}
       />
 
-      <div style={{ maxWidth: '900px', margin: '0 auto', padding: '0 24px' }}>
+      <div style={{ maxWidth: 900, margin: '0 auto', padding: '0 24px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
         <AdvancedSection>
           <RefineSection buckets={footprint.buckets} overrides={overrides} onOverridesChange={setOverrides} />
           <PersonalChanges baseline={baseline} footprint={footprint} />
@@ -96,6 +97,7 @@ export function Calculator() {
           <hr style={{ border: 'none', borderTop: '1px solid var(--divider)', margin: '3rem 0' }} />
           <Changelog />
         </AdvancedSection>
+        <Methodology />
       </div>
     </div>
   );
