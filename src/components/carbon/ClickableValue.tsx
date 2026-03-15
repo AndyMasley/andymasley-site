@@ -54,7 +54,7 @@ export function ClickableValue({ value, unit = 'kg', label, formula, lineItems, 
         aria-expanded={open}
         aria-label={`${label}: ${value.toLocaleString()} ${unit}. Click for details.`}
       >
-        {value.toLocaleString()} {unit}
+        {value.toLocaleString()} {unit}<span style={{ fontSize: '0.7em', opacity: 0.6, marginLeft: '2px' }} aria-hidden="true">{'\u24D8'}</span>
       </button>
 
       {open && (
@@ -69,21 +69,21 @@ export function ClickableValue({ value, unit = 'kg', label, formula, lineItems, 
             border: '1px solid var(--divider, #DDD9D0)',
             borderRadius: '8px',
             padding: '14px 18px',
-            minWidth: '300px',
-            maxWidth: '420px',
+            width: 'min(calc(100vw - 40px), 420px)',
             boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
             fontSize: '0.78rem',
             lineHeight: 1.6,
             color: 'var(--text, #1A1A18)',
           }}
           role="dialog"
+          aria-modal="true"
           aria-label={`Methodology for ${label}`}
         >
           <div style={{ fontWeight: 700, marginBottom: '8px', fontSize: '0.85rem' }}>{label}</div>
 
           <div style={{ marginBottom: '8px' }}>
             <div style={{ fontSize: '0.6rem', letterSpacing: '0.1em', textTransform: 'uppercase', fontWeight: 700, color: 'var(--text-secondary, #6B6B60)', marginBottom: '2px' }}>
-              Formula
+              How this was calculated
             </div>
             <code style={{ fontSize: '0.75rem', background: 'var(--divider, #DDD9D0)', padding: '2px 6px', borderRadius: '3px' }}>
               {formula}

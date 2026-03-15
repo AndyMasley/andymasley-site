@@ -209,11 +209,14 @@ export function ComparisonModes({
       <div className="cf-section-label">COMPARE</div>
 
       {/* Mode selector pills */}
+      <div style={{ position: 'relative', marginBottom: '1rem' }}>
       <div style={{
         display: 'flex',
         gap: '4px',
-        flexWrap: 'wrap',
-        marginBottom: '1rem',
+        flexWrap: 'nowrap',
+        overflowX: 'auto',
+        WebkitOverflowScrolling: 'touch',
+        paddingBottom: '4px',
       }}>
         {comparisons.map(c => (
           <button
@@ -238,6 +241,16 @@ export function ComparisonModes({
             {c.shortLabel}
           </button>
         ))}
+      </div>
+      <div style={{
+        position: 'absolute',
+        top: 0,
+        right: 0,
+        bottom: '4px',
+        width: '24px',
+        background: 'linear-gradient(to right, transparent, var(--bg, #F5F2EC))',
+        pointerEvents: 'none',
+      }} />
       </div>
 
       {/* Active comparison */}

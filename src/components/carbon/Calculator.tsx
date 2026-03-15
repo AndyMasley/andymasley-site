@@ -236,8 +236,7 @@ export function Calculator() {
       <section style={{ marginBottom: '3rem' }}>
         <div className="cf-section-label">QUICK ESTIMATE</div>
         <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary, #6B6B60)', lineHeight: 1.7, marginBottom: '1rem', maxWidth: 600 }}>
-          Answer a few questions to get a credible first estimate. Everything uses
-          reasonable defaults — you can refine any number later.
+          Answer a few questions for a first estimate. We fill in the rest using EPA data and national averages — you can replace any default later.
         </p>
         <BaselineForm value={baseline} onChange={(b) => { setBaseline(b); setActiveArchetypeId(null); }} />
       </section>
@@ -356,7 +355,7 @@ export function Calculator() {
           marginBottom: '1.5rem',
         }}>
           <strong>Boundary:</strong> Household energy, personal transport, food, consumer spending,
-          and per-capita public infrastructure. Does not include financed emissions.
+          and per-capita public infrastructure. Does not include financed emissions (the carbon impact of investments).
           {' '}<a href="/visuals/carbon-boundary-crosswalk" style={{ color: 'var(--accent, #8B2E2E)' }}>
             Why do different calculators give different numbers? →
           </a>

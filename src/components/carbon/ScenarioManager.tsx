@@ -96,7 +96,8 @@ export function ScenarioManager({ baseline, overrides, totalKg, onLoad }: Scenar
             background: 'var(--panel, #EFECE5)',
             color: 'var(--text, #1A1A18)',
             outline: 'none',
-            width: '180px',
+            flex: '1',
+            minWidth: '120px',
             minHeight: '44px',
           }}
           onKeyDown={e => e.key === 'Enter' && handleSave()}
@@ -221,8 +222,8 @@ function ComparisonTable({
   const savedFP = computeFootprint(savedScenario.baseline, savedScenario.overrides);
 
   return (
-    <div style={{ fontSize: '0.82rem' }}>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 100px 100px 80px', gap: '4px', fontWeight: 600, borderBottom: '1px solid var(--divider, #DDD9D0)', paddingBottom: '6px', marginBottom: '4px' }}>
+    <div style={{ overflowX: 'auto', fontSize: '0.82rem' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 90px 90px 70px', gap: '4px', fontWeight: 600, borderBottom: '1px solid var(--divider, #DDD9D0)', paddingBottom: '6px', marginBottom: '4px', minWidth: '380px' }}>
         <span>Bucket</span>
         <span style={{ textAlign: 'right' }}>Current</span>
         <span style={{ textAlign: 'right' }}>{savedScenario.name}</span>
@@ -232,7 +233,7 @@ function ComparisonTable({
         const savedBucket = savedFP.buckets.find(sb => sb.bucketId === b.bucketId);
         const diff = b.kgCO2ePerYear - (savedBucket?.kgCO2ePerYear ?? 0);
         return (
-          <div key={b.bucketId} style={{ display: 'grid', gridTemplateColumns: '1fr 100px 100px 80px', gap: '4px', padding: '3px 0', borderBottom: '1px solid var(--divider, #DDD9D0)' }}>
+          <div key={b.bucketId} style={{ display: 'grid', gridTemplateColumns: '1fr 90px 90px 70px', gap: '4px', padding: '3px 0', borderBottom: '1px solid var(--divider, #DDD9D0)', minWidth: '380px' }}>
             <span>{BUCKET_META[b.bucketId].label}</span>
             <span style={{ textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{b.kgCO2ePerYear.toLocaleString()}</span>
             <span style={{ textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{(savedBucket?.kgCO2ePerYear ?? 0).toLocaleString()}</span>
@@ -242,7 +243,7 @@ function ComparisonTable({
           </div>
         );
       })}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 100px 100px 80px', gap: '4px', padding: '6px 0', fontWeight: 700 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 90px 90px 70px', gap: '4px', padding: '6px 0', fontWeight: 700, minWidth: '380px' }}>
         <span>Total</span>
         <span style={{ textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{currentTotal.toLocaleString()}</span>
         <span style={{ textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{savedScenario.totalKg.toLocaleString()}</span>

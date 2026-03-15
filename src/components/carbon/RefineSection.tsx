@@ -26,7 +26,7 @@ const INPUT_STYLE: React.CSSProperties = {
   background: 'var(--panel, #EFECE5)',
   color: 'var(--text, #1A1A18)',
   outline: 'none',
-  width: '120px',
+  width: 'min(120px, 40%)',
   textAlign: 'right',
   minHeight: '44px',
 };

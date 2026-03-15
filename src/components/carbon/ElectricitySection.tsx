@@ -114,7 +114,7 @@ export function ElectricitySection({ baseline }: ElectricitySectionProps) {
   return (
     <section style={{ marginBottom: '2.5rem' }}>
       <div style={{ fontSize: '0.58rem', letterSpacing: '0.14em', textTransform: 'uppercase', fontWeight: 700, color: 'var(--text-secondary, #6B6B60)', marginBottom: '0.5rem' }}>
-        ELECTRICITY &amp; YOUR GRID
+        ELECTRICITY & YOUR GRID
       </div>
       <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary, #6B6B60)', lineHeight: 1.6, marginBottom: '1rem', maxWidth: 600 }}>
         Your grid: <strong>{regionName}</strong> — {(todayRate * 1000).toFixed(0)} g CO₂e/kWh.
@@ -123,7 +123,7 @@ export function ElectricitySection({ baseline }: ElectricitySectionProps) {
       </p>
 
       {/* Tab bar */}
-      <div style={{ display: 'flex', gap: '2px', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', gap: '2px', marginBottom: '1.5rem', flexWrap: 'nowrap', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }} role="tablist">
         {(Object.keys(VIEW_LABELS) as ElecView[]).map(view => (
           <button
             key={view}
@@ -140,8 +140,10 @@ export function ElectricitySection({ baseline }: ElectricitySectionProps) {
               cursor: 'pointer',
               transition: 'all 0.15s',
               minHeight: '44px',
+              whiteSpace: 'nowrap',
             }}
-            aria-pressed={activeView === view}
+            role="tab"
+            aria-selected={activeView === view}
           >
             {VIEW_LABELS[view]}
           </button>
@@ -149,7 +151,7 @@ export function ElectricitySection({ baseline }: ElectricitySectionProps) {
       </div>
 
       {/* View content */}
-      <div style={{ background: 'var(--panel, #EFECE5)', borderRadius: '8px', padding: '1.5rem' }}>
+      <div style={{ background: 'var(--panel, #EFECE5)', borderRadius: '8px', padding: '1.5rem' }} role="tabpanel">
 
         {activeView === 'today' && (
           <div>
@@ -208,6 +210,7 @@ export function ElectricitySection({ baseline }: ElectricitySectionProps) {
         {activeView === 'personal-changes' && (
           <div>
             <h3 style={{ fontSize: '1rem', fontWeight: 600, margin: '0 0 0.75rem' }}>Personal changes on today's grid</h3>
+            <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', fontSize: '0.85rem', borderCollapse: 'collapse' }}>
               <thead>
                 <tr style={{ borderBottom: '1px solid var(--divider, #DDD9D0)' }}>
@@ -236,6 +239,7 @@ export function ElectricitySection({ baseline }: ElectricitySectionProps) {
                 )}
               </tbody>
             </table>
+            </div>
             <p style={{ fontSize: '0.72rem', color: 'var(--text-secondary, #6B6B60)', marginTop: '0.75rem', fontStyle: 'italic' }}>
               Savings depend on your grid — the same solar panels save more in a coal-heavy region than in hydro-rich Washington state.
             </p>

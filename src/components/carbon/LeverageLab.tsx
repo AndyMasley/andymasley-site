@@ -91,8 +91,7 @@ export function LeverageLab({ userMaxPersonalReduction, userFootprint }: Leverag
       <div className="cf-section-label">LEVERAGE LAB</div>
       <p style={{ fontSize: '0.95rem', lineHeight: 1.7, maxWidth: 640, marginBottom: '0.5rem' }}>
         The calculator above shows what emissions are associated with your life.
-        This section asks a different question: what emissions can your actions
-        help change <em>beyond</em> you — across many people and future years?
+        This section explores a different question: what if the same hours you'd spend optimizing your own footprint went toward changing systems that affect millions of people?
       </p>
 
       {/* Expected value explainer */}
@@ -105,7 +104,7 @@ export function LeverageLab({ userMaxPersonalReduction, userFootprint }: Leverag
         fontSize: '0.85rem',
         lineHeight: 1.6,
       }}>
-        Small probability × huge consequence = still a large expected value.
+        A small chance of preventing a huge amount of pollution is still worth a lot — that's expected value.
       </div>
 
       {/* Controls */}

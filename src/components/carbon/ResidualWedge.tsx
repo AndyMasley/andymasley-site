@@ -28,7 +28,7 @@ export function ResidualWedge({ totalKg, residualKg }: ResidualWedgeProps) {
             <strong>{pctProvided}%</strong> from your inputs · <strong>{pctResidual}%</strong> estimated from defaults
           </>
         ) : pctResidual === 100 ? (
-          'All values are estimated from national averages — edit inputs above to refine'
+          'All values are estimated from national averages. Use the Refine section to replace defaults with your actual data.'
         ) : (
           'All values based on your data'
         )}

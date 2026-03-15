@@ -47,8 +47,7 @@ export function SameLifeDifferentGrid({ baseline, overrides, todayFootprint }: S
     <section style={{ marginBottom: '3rem' }}>
       <div className="cf-section-label">SAME LIFE, DIFFERENT GRID</div>
       <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary, #6B6B60)', lineHeight: 1.7, marginBottom: '1.5rem', maxWidth: 600 }}>
-        Nothing about your lifestyle changes. Same home, same car, same diet.
-        Only the grid gets cleaner. Here's what happens to your footprint.
+        Your lifestyle stays exactly the same — same home, same car, same diet. Only the electricity grid gets cleaner. Watch what happens to your footprint.
       </p>
 
       {/* Waterfall-style bar chart */}
@@ -96,7 +95,14 @@ export function SameLifeDifferentGrid({ baseline, overrides, todayFootprint }: S
                     height: `${heightPct}%`,
                     background: year === 2024
                       ? 'var(--accent, #8B2E2E)'
-                      : `color-mix(in srgb, var(--green, #4A7C59) ${Math.round((1 - total / todayTotal) * 200)}%, var(--accent, #8B2E2E))`,
+                      : (() => {
+                          const greenPct = Math.min(Math.round((1 - total / todayTotal) * 200), 100);
+                          // Blend from accent (#8B2E2E) toward green (#4A7C59) based on reduction
+                          const r = Math.round(0x8B + (0x4A - 0x8B) * greenPct / 100);
+                          const g = Math.round(0x2E + (0x7C - 0x2E) * greenPct / 100);
+                          const b = Math.round(0x2E + (0x59 - 0x2E) * greenPct / 100);
+                          return `rgb(${r}, ${g}, ${b})`;
+                        })(),
                     borderRadius: '4px 4px 0 0',
                     transition: 'height 0.4s ease, filter 0.15s',
                     filter: isHovered ? 'brightness(1.15)' : 'none',

@@ -124,9 +124,7 @@ export function PersonalChanges({ baseline, footprint }: PersonalChangesProps) {
     <section style={{ marginBottom: '3rem' }}>
       <div className="cf-section-label">PERSONAL CHANGES</div>
       <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary, #6B6B60)', lineHeight: 1.7, marginBottom: '1.5rem', maxWidth: 600 }}>
-        What you can change inside your own life, ranked by estimated impact.
-        These are real, meaningful reductions — but they have a ceiling: the
-        most you can cut is your own footprint.
+        Actions you can take in your own life, ranked by estimated annual savings. Each shows how hard it is, what it costs, and how certain the estimate is.
       </p>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
@@ -136,63 +134,47 @@ export function PersonalChanges({ baseline, footprint }: PersonalChangesProps) {
             <div
               key={i}
               style={{
-                display: 'grid',
-                gridTemplateColumns: '1fr auto auto auto',
-                gap: '12px',
-                alignItems: 'center',
                 padding: '10px 14px',
                 background: 'var(--panel, #EFECE5)',
                 borderRadius: '6px',
                 fontSize: '0.85rem',
               }}
             >
-              <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '8px', marginBottom: '4px' }}>
                 <div style={{ fontWeight: 600 }}>{action.name}</div>
-                <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary, #6B6B60)', marginTop: '2px' }}>
-                  {action.note}
-                </div>
+                <span
+                  style={{
+                    fontWeight: 700,
+                    color: 'var(--green, #4A7C59)',
+                    fontVariantNumeric: 'tabular-nums',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  −{action.savingsKg.toLocaleString()} kg
+                </span>
               </div>
-
-              <span
-                style={{
-                  fontSize: '0.6rem',
-                  fontWeight: 700,
-                  letterSpacing: '0.06em',
-                  textTransform: 'uppercase',
-                  color: fStyle.color,
-                  background: fStyle.bg,
-                  borderRadius: '3px',
-                  padding: '2px 7px',
-                  whiteSpace: 'nowrap',
-                }}
-                title={`Friction: ${action.friction}. Upfront cost: ${action.upfrontCost}`}
-              >
-                {fStyle.label} friction
-              </span>
-
-              <span
-                style={{
-                  fontSize: '0.65rem',
-                  color: 'var(--text-secondary, #6B6B60)',
-                  whiteSpace: 'nowrap',
-                }}
-                title={action.certainty}
-              >
-                {action.upfrontCost.split('(')[0].trim()}
-              </span>
-
-              <span
-                style={{
-                  fontWeight: 700,
-                  color: 'var(--green, #4A7C59)',
-                  fontVariantNumeric: 'tabular-nums',
-                  whiteSpace: 'nowrap',
-                  minWidth: '80px',
-                  textAlign: 'right',
-                }}
-              >
-                −{action.savingsKg.toLocaleString()} kg
-              </span>
+              <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary, #6B6B60)', marginBottom: '6px' }}>
+                {action.note}
+              </div>
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', fontSize: '0.68rem' }}>
+                <span
+                  style={{
+                    fontWeight: 700,
+                    letterSpacing: '0.06em',
+                    textTransform: 'uppercase',
+                    color: fStyle.color,
+                    background: fStyle.bg,
+                    borderRadius: '3px',
+                    padding: '2px 7px',
+                    whiteSpace: 'nowrap',
+                  }}
+                  title={`Friction: ${action.friction}`}
+                >
+                  {fStyle.label} friction
+                </span>
+                <span style={{ color: 'var(--text-secondary, #6B6B60)' }}>{action.upfrontCost}</span>
+                <span style={{ opacity: 0.7, color: 'var(--text-secondary, #6B6B60)' }}>{action.certainty}</span>
+              </div>
             </div>
           );
         })}
@@ -211,8 +193,7 @@ export function PersonalChanges({ baseline, footprint }: PersonalChangesProps) {
       }}>
         <strong>The personal ceiling:</strong> Even if you did every action above, the maximum
         you could eliminate is your own {footprint.totalKgCO2ePerYear.toLocaleString()} kg/yr.
-        That matters — but it's fixed. The next section shows what changes when the grid improves
-        for everyone.
+        That's meaningful — and the next section shows what happens when the system itself improves.
       </div>
     </section>
   );

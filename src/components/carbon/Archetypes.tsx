@@ -55,7 +55,7 @@ export const ARCHETYPES: Archetype[] = [
   {
     id: 'rural-homeowner',
     name: 'Rural homeowner',
-    description: 'Large house, gas car, rural, heavy-meat diet, mid income. Long drives, more heating, higher baseline.',
+    description: 'Large house, gas car, rural, heavy-meat diet, mid income. Long drives, more heating, higher energy and fuel use.',
     baseline: {
       state: 'TX',
       householdSize: 3,
@@ -69,7 +69,7 @@ export const ARCHETYPES: Archetype[] = [
   },
   {
     id: 'climate-pro',
-    name: 'Climate-conscious professional',
+    name: 'City professional with EV',
     description: 'Townhouse, EV, urban, vegan, high income. Already optimized — but income-driven spending still adds up.',
     baseline: {
       state: 'CA',
