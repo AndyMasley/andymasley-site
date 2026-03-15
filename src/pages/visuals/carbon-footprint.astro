@@ -26,14 +26,14 @@ import { Calculator } from '@/components/carbon/Calculator';
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Playfair+Display:ital,wght@0,700;1,400&display=swap" rel="stylesheet" />
 
-  <article class="cfv2" id="cfv2">
+  <article class="cfv2" id="cfv2" transition:animate="none">
 
     <!-- Hero -->
     <header class="cfv2-hero">
       <h1 class="cfv2-title">Carbon Footprint</h1>
     </header>
 
-    <div style="background: #FFF3CD; border: 1px solid #E0C868; border-radius: 8px; padding: 12px 16px; margin-bottom: 1.25rem; font-size: 0.82rem; line-height: 1.5; color: #664D03;">
+    <div style="background: var(--bg-subtle, #f5f4f2); border: 1px solid var(--border, #DDD9D0); border-radius: 8px; padding: 12px 16px; margin-bottom: 1.25rem; font-size: 0.82rem; line-height: 1.5; color: var(--text-secondary, #6B6B60);">
       <strong>NOTE:</strong> This is under construction and a lot of the numbers on the right are likely to be wrong. I'll add an update once I'm more confident in them. Right now this page is showing off what the tool can look like.
     </div>
 
@@ -46,20 +46,19 @@ import { Calculator } from '@/components/carbon/Calculator';
 </Base>
 
 <style is:global>
-  body:has(.cfv2) { background: #F5F2EC !important; }
-  [data-theme="dark"] body:has(.cfv2) { background: #1A1917 !important; }
+  /* Use the site's normal background — don't override */
 
   body:has(.cfv2) .main-content {
     max-width: 100%;
   }
 
   .cfv2 {
-    --text: #1A1A18;
+    --text: var(--text-primary, #1A1A18);
     --text-secondary: #6B6B60;
     --accent: #8B2E2E;
     --green: #4A7C59;
-    --divider: #DDD9D0;
-    --panel: #EFECE5;
+    --divider: var(--border, #DDD9D0);
+    --panel: var(--bg-subtle, #f5f4f2);
     --bar-track: #D4CFCA;
     font-family: 'DM Sans', sans-serif;
     color: var(--text);
@@ -73,11 +72,11 @@ import { Calculator } from '@/components/carbon/Calculator';
   }
 
   [data-theme="dark"] .cfv2 {
-    --text: #F0EDE6;
+    --text: var(--text-primary, #F0EDE6);
     --text-secondary: #9A9485;
     --accent: #B85555;
-    --divider: #3A3733;
-    --panel: #252320;
+    --divider: var(--border, #3A3733);
+    --panel: var(--bg-subtle, #1a1918);
     --bar-track: #3A3733;
   }
 
@@ -120,12 +119,12 @@ import { Calculator } from '@/components/carbon/Calculator';
     position: sticky;
     top: 0;
     z-index: 50;
-    background: var(--bg, #F5F2EC);
+    background: var(--bg);
     border-bottom: 1px solid var(--divider);
     padding: 8px 0;
   }
   [data-theme="dark"] .cf-sticky-desktop {
-    background: var(--bg, #1C1A17);
+    background: var(--bg);
   }
   .cf-sticky-inner {
     display: flex;
@@ -150,14 +149,14 @@ import { Calculator } from '@/components/carbon/Calculator';
     left: 0;
     right: 0;
     z-index: 50;
-    background: var(--bg, #F5F2EC);
+    background: var(--bg);
     border-top: 1px solid var(--divider);
     padding: 10px 20px;
     justify-content: space-between;
     align-items: center;
   }
   [data-theme="dark"] .cf-sticky-mobile {
-    background: var(--bg, #1C1A17);
+    background: var(--bg);
   }
 
   @media (min-width: 641px) {
@@ -219,11 +218,11 @@ import { Calculator } from '@/components/carbon/Calculator';
     border-right: 1px solid var(--divider);
     display: flex;
     flex-direction: column;
-    background: var(--bg, #F5F2EC);
+    background: var(--bg);
     overflow: hidden;
   }
   [data-theme="dark"] .cf-impact-col {
-    background: var(--bg, #1C1A17);
+    background: var(--bg);
   }
 
   .cf-impact-scroll {
@@ -236,10 +235,10 @@ import { Calculator } from '@/components/carbon/Calculator';
   .cf-impact-bars {
     padding: 1.25rem 1.25rem 2rem;
     border-top: 1px solid var(--divider);
-    background: var(--bg, #F5F2EC);
+    background: var(--bg);
   }
   [data-theme="dark"] .cf-impact-bars {
-    background: var(--bg, #1C1A17);
+    background: var(--bg);
   }
 
   /* Toggle row */
