@@ -26,6 +26,14 @@ interface ImpactChartProps {
   archetypeTotals: Record<string, number>;
 }
 
+function sigFigs(n: number, figs: number = 2): string {
+  if (n === 0) return '0';
+  const d = Math.ceil(Math.log10(Math.abs(n) + 1));
+  const power = figs - d;
+  const rounded = Math.round(n * Math.pow(10, power)) / Math.pow(10, power);
+  return rounded.toLocaleString();
+}
+
 const GREEN = '#4A7C59';
 const GREEN_BG = 'rgba(74, 124, 89, 0.08)';
 const ACCENT = '#8B2E2E';
@@ -248,7 +256,7 @@ export function ImpactChart({
                   </span>
                   <div style={{ textAlign: 'right', flexShrink: 0 }}>
                     <div style={{ fontWeight: 700, color: isOn ? GREEN : MUTED, fontVariantNumeric: 'tabular-nums', fontSize: '0.72rem', whiteSpace: 'nowrap' }}>
-                      {central.toLocaleString()}<span style={{ fontSize: '0.55rem', fontWeight: 400, marginLeft: '2px' }}>{result.displayUnit}</span>
+                      {sigFigs(central)}<span style={{ fontSize: '0.55rem', fontWeight: 400, marginLeft: '2px' }}>{result.displayUnit}</span>
                     </div>
                     {mult >= 1 && <div style={{ fontSize: '0.58rem', fontWeight: 700, color: isOn ? GREEN : MUTED }}>{mult}×</div>}
                   </div>
@@ -257,7 +265,7 @@ export function ImpactChart({
             })}
             {hasSystemic && (
               <div style={{ marginTop: '0.75rem', padding: '8px 10px', background: GREEN_BG, borderLeft: `3px solid ${GREEN}`, borderRadius: '0 4px 4px 0', fontSize: '0.75rem', lineHeight: 1.4 }}>
-                <strong style={{ color: GREEN }}>{totalSystemic.toLocaleString()} kg</strong> prevented
+                <strong style={{ color: GREEN }}>{sigFigs(totalSystemic)} kg</strong> prevented
                 {totalSaved > 0 && <> — <strong>{Math.round(totalSystemic / Math.max(totalSaved, 1))}x</strong> your personal cuts</>}
               </div>
             )}
@@ -292,13 +300,14 @@ export function ImpactChart({
           bold={hasSystemic}
           dimmed={!hasSystemic}
           unit="kg"
+          useSigFigs
         />
       </div>
 
       <div className="sr-only" aria-live="polite">
         Footprint: {footprintKg.toLocaleString()} kg.
         {hasPersonal && ` After cuts: ${afterPersonal.toLocaleString()} kg.`}
-        {hasSystemic && ` Systemic: ${totalSystemic.toLocaleString()} kg.`}
+        {hasSystemic && ` Systemic: ${sigFigs(totalSystemic)} kg.`}
       </div>
     </div>
   );
@@ -361,17 +370,18 @@ function ReferenceLines({ scaleMax }: { scaleMax: number }) {
 
 // --- Bar row ---
 
-function BarRow({ label, kg, pctWidth, color, opacity, ghostWidth, ghostOpacity, suffix, labelColor, bold, dimmed, unit }: {
+function BarRow({ label, kg, pctWidth, color, opacity, ghostWidth, ghostOpacity, suffix, labelColor, bold, dimmed, unit, useSigFigs }: {
   label: string; kg: number; pctWidth: number; color: string;
   opacity?: number; ghostWidth?: number; ghostOpacity?: number;
-  suffix?: string; labelColor?: string; bold?: boolean; dimmed?: boolean; unit?: string;
+  suffix?: string; labelColor?: string; bold?: boolean; dimmed?: boolean; unit?: string; useSigFigs?: boolean;
 }) {
+  const kgStr = useSigFigs ? sigFigs(kg) : kg.toLocaleString();
   return (
     <div style={{ marginBottom: '6px', opacity: dimmed ? 0.25 : 1, transition: 'opacity 0.3s ease' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', fontSize: '0.78rem', marginBottom: '3px' }}>
         <span style={{ fontWeight: bold ? 700 : 600, color: labelColor }}>{label}</span>
         <span style={{ fontVariantNumeric: 'tabular-nums', fontWeight: 700, color: labelColor, whiteSpace: 'nowrap' }}>
-          {dimmed ? '—' : `${kg.toLocaleString()} ${unit ?? 'kg/yr'}`}
+          {dimmed ? '—' : `${kgStr} ${unit ?? 'kg/yr'}`}
           {!dimmed && suffix && <span style={{ fontWeight: 800, marginLeft: '6px' }}>{suffix}</span>}
         </span>
       </div>
