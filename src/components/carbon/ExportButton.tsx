@@ -13,7 +13,7 @@ interface ExportButtonProps {
   comparisonContext?: string;
 }
 
-const CALC_URL = 'andymasley.com/visuals/carbon-footprint-v2';
+const CALC_URL = 'andymasley.com/visuals/carbon-footprint';
 
 function toCSV(footprint: FootprintModel): string {
   const rows = [

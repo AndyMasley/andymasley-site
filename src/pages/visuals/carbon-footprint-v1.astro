@@ -1,0 +1,1441 @@
+---
+import Base from '@/layouts/Base.astro';
+---
+
+<Base title="Carbon Footprint Calculator — How Do Your Choices Compare?" description="Compare different activities' carbon emissions against the average American's footprint">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Playfair+Display:ital,wght@0,700;1,400&display=swap" rel="stylesheet" />
+
+  <article class="cfp" id="cfp">
+
+    <!-- Mobile sticky total -->
+    <div class="cfp-mobile-sticky" id="cfp-mobile-sticky">
+      <span class="cfp-mobile-title">Carbon Footprint</span>
+      <span class="cfp-mobile-total" id="cfp-mobile-total">0 kg / yr</span>
+    </div>
+
+    <!-- ZONE 1: Hero -->
+    <header class="cfp-hero">
+      <div class="cfp-hero-left">
+        <h1 class="cfp-title">Carbon Footprint</h1>
+        <p class="cfp-intro">The average American produces roughly <strong>16 metric tons of CO<sub>2</sub>e per year</strong>&hairsp;&mdash;&hairsp;about <strong>44 kg per day</strong>. This puts the US among the highest-emitting countries per capita, roughly 2&times; the EU average and 8&times; the global average. Select activities below to see how specific choices contribute to&hairsp;&mdash;&hairsp;or subtract from&hairsp;&mdash;&hairsp;that total. <em>The concept of a &ldquo;personal carbon footprint&rdquo; was <a href="#cfp-systemic" class="cfp-link">popularized by BP</a>&hairsp;&mdash;&hairsp;individual choices still matter, but <a href="#cfp-systemic" class="cfp-link">systemic action matters more</a>.</em></p>
+        <div class="cfp-toggle" id="cfp-toggle">
+          <button class="cfp-toggle-btn active" data-mode="year">Per year</button>
+          <button class="cfp-toggle-btn" data-mode="day">Per day</button>
+        </div>
+      </div>
+      <details class="cfp-method-toggle">
+        <summary>Methodology notes</summary>
+        <p>All figures are approximate CO<sub>2</sub>-equivalent, incorporating production, transport, and use-phase emissions where applicable. Activities may overlap&hairsp;&mdash;&hairsp;e.g., selecting &ldquo;average diet&rdquo; already includes beef. Sources: EPA, EIA, Our World in Data, IEA, ICAO, Project Drawdown.</p>
+      </details>
+    </header>
+
+    <!-- ZONE 2: Dashboard -->
+    <div class="cfp-dashboard" id="cfp-dashboard">
+      <div class="cfp-dash-main">
+        <div class="cfp-total-label">Your selected total</div>
+        <div class="cfp-total">
+          <span class="cfp-total-num" id="total-num">0</span>
+          <span class="cfp-total-unit" id="total-unit">kg CO<sub>2</sub>e / yr</span>
+        </div>
+        <div class="cfp-pct-line" id="pct-line"></div>
+        <div class="cfp-context" id="context-line"></div>
+      </div>
+      <div class="cfp-equiv-chips" id="equiv-chips"></div>
+      <div class="cfp-global-strip-wrap">
+        <div class="cfp-global-strip-label">WHERE YOU FALL GLOBALLY</div>
+        <div class="cfp-global-strip-container" id="cfp-global-strip">
+          <div class="cfp-global-gradient"></div>
+          <div class="cfp-global-ticks" id="cfp-global-ticks"></div>
+          <div class="cfp-global-user-marker" id="cfp-global-marker">
+            <div class="cfp-global-marker-dot"></div>
+            <div class="cfp-global-marker-label" id="cfp-global-marker-label">You</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ZONE 3: Bars + Treemap -->
+    <div class="cfp-viz" id="cfp-viz">
+      <div class="cfp-chart" id="cfp-chart">
+        <div class="cfp-scale-labels"><span style="left:0">0</span><span style="left:25%">25%</span><span style="left:50%">50%</span><span style="left:75%">75%</span><span style="left:100%">100%</span></div>
+        <div class="cfp-bar-row">
+          <div class="cfp-bar-header"><span class="cfp-bar-name">Average American</span><span class="cfp-bar-val" id="ref-val">16,000 kg / yr</span></div>
+          <div class="cfp-bar-track"><div class="cfp-bar cfp-bar--ref" style="width:100%"></div><div class="cfp-ref-line" style="left:15.6%" data-label="Paris 2030"></div><div class="cfp-ref-line" style="left:29.4%" data-label="Global avg"></div><div class="cfp-ref-line" style="left:51.3%" data-label="EU avg"></div></div>
+        </div>
+        <div class="cfp-bar-row">
+          <div class="cfp-bar-header"><span class="cfp-bar-name">Your selections</span><span class="cfp-bar-val" id="user-val">0 kg / yr</span></div>
+          <div class="cfp-bar-track" id="user-track"><div class="cfp-bar cfp-bar--user" id="user-bar"></div></div>
+        </div>
+        <div class="cfp-bar-row" id="compare-row" hidden>
+          <div class="cfp-bar-header"><span class="cfp-bar-name" id="compare-name">Profile</span><span class="cfp-bar-val" id="compare-val"></span></div>
+          <div class="cfp-bar-track"><div class="cfp-bar cfp-bar--compare" id="compare-bar"></div></div>
+        </div>
+        <div class="cfp-overflow" id="overflow-msg">Your selected activities exceed the average American footprint</div>
+        <div class="cfp-paris-badge" id="paris-badge">Below Paris 2030 target</div>
+        <div class="cfp-bar-legend" id="cfp-bar-legend"></div>
+      </div>
+
+      <div class="cfp-treemap-wrap">
+        <div class="cfp-treemap-label">Breakdown</div>
+        <div class="cfp-treemap" id="cfp-treemap"></div>
+        <div class="cfp-treemap-legend" id="treemap-legend"></div>
+      </div>
+    </div>
+
+    <!-- Carbon Story -->
+    <div class="cfp-story" id="cfp-story"></div>
+
+    <!-- ZONE 4: Activities -->
+    <div class="cfp-controls" id="cfp-controls">
+      <div class="cfp-controls-header">
+        <span class="cfp-controls-label">Activities</span>
+        <div class="cfp-controls-right">
+          <div class="cfp-presets">
+            <button class="cfp-preset-btn" id="btn-all">All</button>
+            <button class="cfp-preset-btn" id="btn-none">None</button>
+            <button class="cfp-preset-btn cfp-preset-btn--accent" id="btn-avg">Rep. basket</button>
+          </div>
+          <div class="cfp-compare-inline">
+            <span class="cfp-compare-label-text">Compare:</span>
+            <select class="cfp-compare-select" id="compare-select">
+              <option value="">None</option>
+              <option value="vegan-urbanite">Vegan urbanite</option>
+              <option value="suburban-family">Suburban family</option>
+              <option value="climate-conscious">Climate-conscious</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="cfp-preset-note" id="preset-note" hidden>&hairsp;&#8505; This basket (~11,500 kg) represents activities trackable here. The full 16,000 kg average includes healthcare, government services, and other uncounted sources.</div>
+      <div class="cfp-activities-controls">
+        <div class="cfp-search-wrap">
+          <input type="text" class="cfp-search" id="cfp-search" placeholder="Filter activities…" autocomplete="off" spellcheck="false" />
+        </div>
+        <div class="cfp-sort-wrap">
+          <button class="cfp-sort-btn active" data-sort="default" id="sort-default">Default</button>
+          <button class="cfp-sort-btn" data-sort="impact" id="sort-impact">Highest impact ↓</button>
+        </div>
+      </div>
+      <div class="cfp-grid" id="cfp-grid"></div>
+    </div>
+
+    <!-- Paris Path -->
+    <div class="cfp-paris-path" id="cfp-paris-path"></div>
+
+    <hr class="cfp-rule" />
+
+    <!-- Systemic Impact -->
+    <section class="cfp-systemic" id="cfp-systemic">
+      <div class="cfp-sys-header">
+        <h2 class="cfp-sys-title">Individual choices vs. collective action</h2>
+        <p class="cfp-sys-subtitle">Expected CO<sub>2</sub>e impact per person, log scale</p>
+      </div>
+
+      <div class="cfp-sys-intro">
+        <p>Most carbon calculators stop at individual choices&hairsp;&mdash;&hairsp;what you eat, how you drive, whether you fly. These matter. But they have a hard ceiling: the most you can eliminate is your own footprint (~<strong>16,000 kg/yr</strong> for the average American).</p>
+        <p>Collective action operates differently. A nuclear plant kept open saves <strong>3&ndash;4 million metric tons per year</strong>. Divided among the 1,000 serious advocates who fought for it, that&rsquo;s 3,000 metric tons per person&hairsp;&mdash;&hairsp;roughly <strong>188 times</strong> an average American annual footprint. In expectation, one afternoon canvassing for the right candidate in a swing district can outweigh a lifetime of dietary choices.</p>
+        <p>These are expected values&hairsp;&mdash;&hairsp;probabilities multiplied by impact. The probability that your individual canvassing effort tips an election is small. But so is the probability that any one CO<sub>2</sub> molecule causes a specific flood. Climate math is statistics, not determinism. The expected value framework is the right one.</p>
+        <p>The shaded ranges reflect genuine uncertainty&hairsp;&mdash;&hairsp;these estimates can easily be off by 10&times; in either direction. But even at the low end of these ranges, collective action outweighs individual lifestyle change by orders of magnitude.</p>
+      </div>
+
+      <div class="cfp-sys-toggle" id="cfp-sys-toggle">
+        <button class="cfp-sys-toggle-btn active" data-ref="avg">Show against US average</button>
+        <button class="cfp-sys-toggle-btn" data-ref="mine">Show against my selections</button>
+      </div>
+
+      <div class="cfp-sys-chart" id="cfp-sys-chart"></div>
+
+      <div class="cfp-sys-callout">The highest-leverage individual climate action is not dietary change, nor avoiding flights&hairsp;&mdash;&hairsp;it is spending time on collective political and infrastructure work. Even accounting for uncertainty, the expected value of advocacy dwarfs lifestyle optimization by 2&ndash;3 orders of magnitude.</div>
+    </section>
+
+    <hr class="cfp-rule" />
+
+    <!-- Sources -->
+    <div class="cfp-methodology">
+      <details>
+        <summary>Sources &amp; methodology</summary>
+        <p>Emission figures are drawn from the EPA GREET model, the EIA Residential Energy Consumption Survey, Our World in Data, the MIT Climate Portal, Project Drawdown, the IEA, ICAO Carbon Calculator, and peer-reviewed literature cited per item. All values represent annualized CO<sub>2</sub>-equivalent emissions incorporating Scope 1, 2, and partial Scope 3 where data is available. Transport figures use US average fuel economy and grid carbon intensity. Food figures include farm-to-retail supply chain emissions. &ldquo;Amortized&rdquo; items distribute one-time manufacturing emissions over typical product lifespan. Some categories overlap: the &ldquo;average diet&rdquo; figure already includes beef and dairy, so selecting those separately will double-count.</p>
+      </details>
+    </div>
+
+    <!-- Share -->
+    <div class="cfp-share-row">
+      <button class="cfp-share-btn" id="share-btn">Copy share link</button>
+      <span class="cfp-share-confirm" id="share-confirm" hidden>Copied</span>
+    </div>
+
+  </article>
+</Base>
+
+<style is:global>
+  body:has(.cfp) { background: #F5F2EC !important; }
+  [data-theme="dark"] body:has(.cfp) { background: #1A1917 !important; }
+  /* Widen main-content but keep header at its normal width */
+  body:has(.cfp) .main-content {
+    max-width: 100%;
+    padding-left: 0;
+    padding-right: 0;
+  }
+  body:has(.cfp) .main-content > .header {
+    max-width: var(--max-width);
+    margin: 0 auto;
+    padding-left: 24px;
+    padding-right: 24px;
+  }
+
+  .cfp {
+    --bg: #F5F2EC; --text: #1A1A18; --text2: #6B6B60; --accent: #8B2E2E;
+    --accent-h: #6E2323; --bar-ref: #C8C3B8; --green: #4A7C59; --cat: #9A9A8A;
+    --div: #DDD9D0; --panel: #EFECE5; --font: 'DM Sans', sans-serif;
+    --serif: 'Playfair Display', Georgia, serif;
+    --c-transport: #8B2E2E; --c-home: #A0522D; --c-food: #6B7C3A;
+    --c-purchases: #5C4A7A; --c-digital: #2E6B7A; --c-reduction: #4A7C59;
+    font-family: var(--font); color: var(--text); background: transparent;
+    max-width: 100%; padding: 3rem 4vw 5rem; margin: 0; box-sizing: border-box;
+    font-variant-numeric: tabular-nums;
+  }
+  [data-theme="dark"] .cfp {
+    --bg: #1C1A17; --text: #F0EDE6; --text2: #9A9485; --accent: #B85555;
+    --accent-h: #C96060; --bar-ref: #4A4540; --green: #5A9B6E; --cat: #7A7A70;
+    --div: #3A3733; --panel: #252320;
+    --c-transport: #B85555; --c-home: #C47A50; --c-food: #8FA050;
+    --c-purchases: #8070A8; --c-digital: #4A8E9E; --c-reduction: #5A9B6E;
+  }
+
+  /* ── ZONE 1: Hero ── */
+  .cfp-hero { margin-bottom: 2.5rem; }
+  .cfp-title { font-family: var(--serif); font-weight: 700; font-size: clamp(3.5rem, 7vw, 7rem); letter-spacing: -0.02em; line-height: 0.95; margin: 0 0 1.2rem 0; }
+  .cfp-intro { font-size: 0.9rem; line-height: 1.75; max-width: 600px; margin: 0 0 1.5rem 0; }
+  .cfp-method-toggle { margin-top: 0.5rem; max-width: 600px; }
+  .cfp-method-toggle summary { font-size: 0.75rem; color: var(--cat); cursor: pointer; font-weight: 600; letter-spacing: 0.04em; list-style: none; }
+  .cfp-method-toggle summary::-webkit-details-marker { display: none; }
+  .cfp-method-toggle p { font-size: 0.78rem; line-height: 1.65; color: var(--text2); font-style: italic; margin: 0.5rem 0 0; }
+
+  .cfp-toggle { display: inline-flex; border: 1px solid var(--div); border-radius: 6px; overflow: hidden; }
+  .cfp-toggle-btn { background: transparent; border: none; padding: 8px 22px; font-family: var(--font); font-size: 0.8rem; font-weight: 600; color: var(--text2); cursor: pointer; transition: all 0.15s; }
+  .cfp-toggle-btn + .cfp-toggle-btn { border-left: 1px solid var(--div); }
+  .cfp-toggle-btn.active { background: var(--accent); color: var(--bg); }
+  .cfp-toggle-btn:not(.active):hover { background: var(--div); color: var(--text); }
+
+  /* ── ZONE 2: Dashboard ── */
+  .cfp-dashboard { margin-bottom: 3rem; }
+  .cfp-dash-main { margin-bottom: 1rem; }
+  .cfp-total-label { font-size: 0.6rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.18em; color: var(--cat); margin-bottom: 4px; }
+  .cfp-total { display: flex; align-items: baseline; gap: 10px; margin-bottom: 0.5rem; }
+  .cfp-total-num { font-size: clamp(4rem, 8vw, 9rem); font-weight: 700; line-height: 1; letter-spacing: -0.02em; }
+  .cfp-total-unit { font-size: 1rem; color: var(--text2); }
+  .cfp-total-unit sub { font-size: 0.7em; }
+  .cfp-pct-line { font-size: 1.4rem; font-weight: 600; margin-bottom: 0.3rem; }
+  .cfp-pct-line.below-paris { color: var(--green); }
+  .cfp-pct-line.above-paris { color: var(--accent); }
+  .cfp-context { font-size: 0.85rem; color: var(--text2); line-height: 1.6; max-width: 600px; }
+
+  .cfp-equiv-chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 1rem 0; }
+  .cfp-equiv-chip { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--div); border-radius: 20px; padding: 4px 12px; font-size: 0.75rem; color: var(--text2); }
+  .cfp-equiv-chip svg { width: 14px; height: 14px; stroke: var(--cat); fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+
+  /* Global gradient strip */
+  .cfp-global-strip-wrap { margin: 1.5rem 0; }
+  .cfp-global-strip-label { font-size: 0.58rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--cat); font-weight: 700; margin-bottom: 0.4rem; }
+  .cfp-global-strip-container { position: relative; height: 64px; }
+  .cfp-global-gradient { position: absolute; top: 22px; left: 0; right: 0; height: 14px; border-radius: 7px; background: linear-gradient(to right, #4A7C59 0%, #8AB04A 15%, #DDD9D0 30%, #C4A060 50%, #A0522D 75%, #8B2E2E 100%); }
+  .cfp-global-ticks { position: absolute; top: 0; left: 0; right: 0; height: 100%; }
+  .cfp-global-tick { position: absolute; top: 0; transform: translateX(-50%); }
+  .cfp-global-tick-line { width: 1px; height: 20px; background: var(--div); margin: 0 auto; margin-top: 18px; }
+  .cfp-global-tick-label { font-size: 0.58rem; color: var(--cat); white-space: nowrap; text-align: center; margin-top: 2px; }
+  .cfp-global-user-marker { position: absolute; top: 0; transform: translateX(-50%); transition: left 0.45s cubic-bezier(0.25, 0.46, 0.45, 0.94); z-index: 5; }
+  .cfp-global-marker-dot { width: 14px; height: 14px; border-radius: 50%; background: var(--text); border: 2px solid var(--bg); margin: 0 auto; margin-top: 15px; box-shadow: 0 2px 6px rgba(0,0,0,0.25); }
+  .cfp-global-marker-label { font-size: 0.6rem; font-weight: 700; white-space: nowrap; text-align: center; color: var(--text); margin-top: 3px; font-variant-numeric: tabular-nums; }
+
+  /* ── ZONE 3: Bars + Treemap ── */
+  .cfp-viz { margin-bottom: 2rem; }
+  .cfp-chart { margin-bottom: 2rem; position: relative; }
+  .cfp-scale-labels { position: relative; height: 18px; margin-bottom: 8px; }
+  .cfp-scale-labels span { position: absolute; font-size: 0.6rem; font-weight: 700; letter-spacing: 0.06em; color: var(--cat); transform: translateX(-50%); }
+  .cfp-scale-labels span:first-child { transform: none; }
+  .cfp-bar-row { margin-bottom: 1rem; }
+  .cfp-bar-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 5px; }
+  .cfp-bar-name { font-size: 0.75rem; font-weight: 600; color: var(--text); }
+  .cfp-bar-val { font-size: 0.75rem; font-weight: 500; color: var(--text2); }
+  .cfp-bar-track { position: relative; height: 56px; background: rgba(0,0,0,0.03); border-radius: 0 4px 4px 0; overflow: visible; background-image: linear-gradient(to right, var(--div) 1px, transparent 1px); background-size: 25% 100%; }
+  [data-theme="dark"] .cfp-bar-track { background-color: rgba(255,255,255,0.03); background-image: linear-gradient(to right, var(--div) 1px, transparent 1px); }
+  .cfp-bar-track::after { content: ''; position: absolute; right: 0; top: 0; bottom: 0; width: 1px; background: var(--div); }
+  .cfp-bar { height: 100%; border-radius: 0 4px 4px 0; transition: width 0.45s cubic-bezier(0.25, 0.46, 0.45, 0.94); min-width: 0; }
+  .cfp-bar--ref { background: var(--bar-ref); }
+  .cfp-bar--user { display: flex; align-items: stretch; overflow: visible; background: transparent; }
+  .cfp-bar--compare { background: var(--cat); opacity: 0.5; }
+  .cfp-segment { height: 100%; position: relative; transition: width 0.45s cubic-bezier(0.25, 0.46, 0.45, 0.94); min-width: 0; cursor: default; border-right: 1.5px solid var(--bg); display: flex; align-items: center; justify-content: center; overflow: hidden; }
+  .cfp-segment:last-child { border-right: none; border-radius: 0 4px 4px 0; }
+  .cfp-segment:hover { filter: brightness(0.9); transform: scaleY(1.06); transform-origin: center; z-index: 2; }
+  .cfp-seg-label { font-size: 0.6rem; font-weight: 600; color: rgba(255,255,255,0.9); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 0 4px; pointer-events: none; }
+  .cfp-seg-tip { display: none; position: absolute; bottom: calc(100% + 10px); left: 50%; transform: translateX(-50%); background: #1A1A18; color: #F5F2EC; font-size: 0.78rem; padding: 12px 16px; border-radius: 8px; white-space: nowrap; pointer-events: none; z-index: 30; line-height: 1.5; box-shadow: 0 8px 24px rgba(0,0,0,0.2); max-width: 280px; }
+  .cfp-seg-tip::after { content: ''; position: absolute; top: 100%; left: 50%; transform: translateX(-50%); border: 5px solid transparent; border-top-color: #1A1A18; }
+  .cfp-segment:hover .cfp-seg-tip { display: block; }
+  .cfp-overflow, .cfp-paris-badge { font-size: 0.8rem; font-weight: 600; margin-top: 0.5rem; align-items: center; gap: 6px; }
+  .cfp-overflow { color: var(--accent); display: none; }
+  .cfp-overflow.visible { display: flex; }
+  .cfp-overflow::before { content: ''; display: inline-block; width: 8px; height: 8px; background: var(--accent); border-radius: 50%; flex-shrink: 0; }
+  .cfp-paris-badge { color: var(--green); display: none; }
+  .cfp-paris-badge.visible { display: flex; }
+  .cfp-paris-badge::before { content: '\2713'; }
+
+  .cfp-ref-line { position: absolute; top: 0; bottom: 0; width: 1.5px; background: rgba(0,0,0,0.18); z-index: 3; }
+  [data-theme="dark"] .cfp-ref-line { background: rgba(255,255,255,0.18); }
+  .cfp-ref-line::after { content: attr(data-label); position: absolute; bottom: -18px; left: 50%; transform: translateX(-50%); font-size: 0.55rem; white-space: nowrap; color: var(--cat); font-family: var(--font); }
+
+  .cfp-bar-legend { display: flex; gap: 0.75rem; flex-wrap: wrap; margin-top: 0.75rem; }
+  .cfp-legend-chip { font-size: 0.62rem; letter-spacing: 0.07em; text-transform: uppercase; font-weight: 700; padding: 2px 9px; border-radius: 3px; color: rgba(255,255,255,0.92); font-family: var(--font); }
+
+  /* Treemap */
+  .cfp-treemap-wrap { margin-bottom: 1.5rem; }
+  .cfp-treemap-label { font-size: 0.6rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.18em; color: var(--cat); margin-bottom: 8px; }
+  .cfp-treemap { position: relative; height: 180px; width: 100%; border-radius: 6px; overflow: hidden; background: rgba(0,0,0,0.02); }
+  .cfp-tm-rect { position: absolute; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94); cursor: default; padding: 4px; box-sizing: border-box; }
+  .cfp-tm-rect:hover { filter: brightness(1.12); z-index: 2; }
+  .cfp-tm-name { font-size: clamp(0.5rem, 0.9vw, 0.75rem); font-weight: 600; color: rgba(255,255,255,0.9); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; line-height: 1.2; }
+  .cfp-tm-val { font-size: clamp(0.45rem, 0.7vw, 0.65rem); color: rgba(255,255,255,0.65); white-space: nowrap; }
+  .cfp-tm-empty { display: flex; align-items: center; justify-content: center; height: 100%; font-size: 0.85rem; color: var(--cat); font-style: italic; border: 2px dashed var(--div); border-radius: 6px; }
+  .cfp-treemap-legend { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: 10px; }
+  .cfp-legend-item { display: flex; align-items: center; gap: 5px; font-size: 0.7rem; color: var(--text2); }
+  .cfp-legend-swatch { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+
+  /* Carbon Story */
+  .cfp-story { background: var(--panel); border-radius: 8px; padding: 1.5rem 2rem; margin-bottom: 3rem; max-width: 700px; min-height: 0; border-left: 3px solid var(--accent); }
+  .cfp-story:empty { display: none; }
+  .cfp-story-label { font-size: 0.58rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--cat); font-weight: 700; margin-bottom: 0.5rem; }
+  .cfp-story p { font-family: var(--serif); font-style: italic; font-size: 0.95rem; line-height: 1.8; color: var(--text); margin: 0; }
+
+  /* ── ZONE 4: Controls ── */
+  .cfp-controls { margin-bottom: 3rem; }
+  .cfp-controls-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; padding-bottom: 12px; border-bottom: 1px solid var(--div); margin-bottom: 1rem; }
+  .cfp-controls-label { font-size: 0.6rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.18em; color: var(--cat); }
+  .cfp-controls-right { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .cfp-search { width: 180px; padding: 6px 12px 6px 32px; background: var(--panel) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%239A9A8A' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'/%3E%3C/svg%3E") 10px center no-repeat; border: 1px solid var(--div); border-radius: 6px; font-family: var(--font); font-size: 0.8rem; color: var(--text); outline: none; transition: border-color 0.15s; }
+  .cfp-search:focus { border-color: var(--accent); }
+  .cfp-presets { display: flex; gap: 6px; }
+  .cfp-preset-btn { background: none; border: 1px solid var(--div); color: var(--text2); font-family: var(--font); font-size: 0.72rem; font-weight: 600; padding: 4px 12px; border-radius: 20px; cursor: pointer; transition: all 0.15s; }
+  .cfp-preset-btn:hover { color: var(--accent); border-color: var(--accent); }
+  .cfp-preset-btn--accent { border-color: var(--accent); color: var(--accent); }
+  .cfp-preset-btn--accent:hover { background: var(--accent); color: var(--bg); }
+  .cfp-preset-note { font-size: 0.72rem; color: var(--text2); font-style: italic; margin-top: 6px; }
+  .cfp-compare-inline { display: flex; align-items: center; gap: 6px; margin-left: 0.5rem; }
+  .cfp-compare-label-text { font-size: 0.72rem; color: var(--cat); white-space: nowrap; }
+  .cfp-compare-select { font-family: var(--font); font-size: 0.8rem; padding: 5px 10px; border: 1px solid var(--div); border-radius: 4px; background: var(--bg); color: var(--text); cursor: pointer; }
+
+  .cfp-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0 3vw; width: 100%; margin-top: 1.5rem; }
+  .cfp-cat-group { display: flex; flex-direction: column; gap: 2px; }
+  .cfp-cat-header { display: flex; align-items: center; gap: 6px; font-size: 0.6rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.18em; color: var(--cat); padding-top: 0.75rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--div); margin-bottom: 1rem; border-top: 2.5px solid var(--cat); }
+  .cfp-cat-group[data-cat="transport"] .cfp-cat-header { border-top-color: var(--c-transport); }
+  .cfp-cat-group[data-cat="home"] .cfp-cat-header { border-top-color: var(--c-home); }
+  .cfp-cat-group[data-cat="food"] .cfp-cat-header { border-top-color: var(--c-food); }
+  .cfp-cat-group[data-cat="purchases"] .cfp-cat-header { border-top-color: var(--c-purchases); }
+  .cfp-cat-group[data-cat="digital"] .cfp-cat-header { border-top-color: var(--c-digital); }
+  .cfp-cat-header svg { width: 14px; height: 14px; stroke: var(--cat); fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+
+  /* Activity rows */
+  .cfp-act { display: flex; align-items: flex-start; gap: 10px; padding: 10px 10px; min-height: 52px; border-radius: 6px; cursor: pointer; transition: background 0.15s; user-select: none; position: relative; background: transparent; }
+  .cfp-act:hover { background: rgba(139,46,46,0.04); }
+  .cfp-act.checked { background: rgba(139,46,46,0.06); border-left: 2.5px solid var(--accent); }
+  .cfp-act.checked[data-cat="home"] { border-left-color: var(--c-home); }
+  .cfp-act.checked[data-cat="food"] { border-left-color: var(--c-food); }
+  .cfp-act.checked[data-cat="purchases"] { border-left-color: var(--c-purchases); }
+  .cfp-act.checked[data-cat="digital"] { border-left-color: var(--c-digital); }
+  .cfp-act--reduction.checked { background: rgba(74,124,89,0.06); border-left-color: var(--c-reduction); }
+  .cfp-act.cfp-act--filtered { opacity: 0.15; pointer-events: none; }
+  [data-theme="dark"] .cfp-act:hover { background: rgba(212,165,154,0.05); }
+  [data-theme="dark"] .cfp-act.checked { background: rgba(212,165,154,0.08); }
+  .cfp-act--reduction { border-left: 3px solid var(--green); }
+  .cfp-act input[type="checkbox"] { position: absolute; opacity: 0; width: 0; height: 0; }
+  .cfp-check { flex-shrink: 0; width: 18px; height: 18px; border: 1.5px solid var(--bar-ref); border-radius: 3px; margin-top: 1px; transition: all 0.15s; position: relative; display: flex; align-items: center; justify-content: center; }
+  .cfp-check svg { width: 10px; height: 10px; stroke: #fff; stroke-width: 2.5; fill: none; opacity: 0; transform: scale(0.5); transition: all 0.15s; }
+  .cfp-act.checked .cfp-check { background: var(--accent); border-color: var(--accent); animation: checkPulse 0.15s ease; }
+  .cfp-act.checked .cfp-check svg { opacity: 1; transform: scale(1); }
+  .cfp-act--reduction.checked .cfp-check { background: var(--green); border-color: var(--green); }
+  @keyframes checkPulse { 50% { transform: scale(1.2); } }
+  .cfp-act-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+  .cfp-act-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 6px; }
+  .cfp-act-name { font-size: 0.88rem; font-weight: 500; line-height: 1.3; }
+  .cfp-act-kg { font-size: 0.75rem; color: var(--text2); white-space: nowrap; flex-shrink: 0; min-width: 60px; text-align: right; line-height: 1.3; margin-top: 1px; }
+  .cfp-act-detail { font-size: 0.72rem; color: var(--text2); font-style: italic; line-height: 1.3; }
+  .cfp-act-input-row { display: flex; align-items: center; gap: 6px; margin-top: 2px; max-height: 0; opacity: 0; overflow: hidden; transition: max-height 0.25s ease, opacity 0.2s ease; }
+  .cfp-act.checked .cfp-act-input-row { max-height: 36px; opacity: 1; }
+  .cfp-act-input { width: 56px; padding: 3px 4px; text-align: center; font-family: var(--font); font-size: 0.75rem; color: var(--text); background: var(--panel); border: 1px solid var(--div); border-radius: 4px; outline: none; -moz-appearance: textfield; transition: border-color 0.15s, box-shadow 0.15s; }
+  .cfp-act-input::-webkit-inner-spin-button, .cfp-act-input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+  .cfp-act-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(139,46,46,0.1); }
+  .cfp-act-unit { font-size: 0.65rem; color: var(--cat); white-space: nowrap; }
+  .cfp-act-minibar { height: 6px; border-radius: 3px; background: var(--div); margin-top: 5px; max-width: 80px; overflow: hidden; }
+  .cfp-act-minifill { height: 100%; border-radius: 3px; transition: width 0.3s ease; min-width: 0; }
+  .cfp-act-impact { font-size: 0.55rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; margin-top: 2px; }
+  .cfp-act-impact--high { color: var(--accent); }
+  .cfp-act-impact--med { color: #B8860B; }
+  .cfp-reduction-tag { display: inline-block; font-size: 0.55rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--green); background: rgba(74,124,89,0.1); border-radius: 3px; padding: 1px 5px; margin-top: 2px; width: fit-content; }
+  .cfp-src-tip { display: none; position: absolute; top: -4px; right: 0; transform: translateY(-100%); background: #1A1A18; color: #F5F2EC; font-size: 0.72rem; font-style: normal; padding: 12px 16px; border-radius: 8px; max-width: 260px; line-height: 1.5; box-shadow: 0 8px 24px rgba(0,0,0,0.2); z-index: 20; pointer-events: none; }
+  .cfp-act:hover .cfp-src-tip { display: block; }
+
+  /* Methodology & Share */
+  .cfp-methodology { margin-bottom: 2rem; max-width: 680px; }
+  .cfp-methodology summary { font-size: 0.75rem; font-weight: 700; color: var(--cat); cursor: pointer; padding-bottom: 0.5rem; border-bottom: 1px solid var(--div); }
+  .cfp-methodology p { font-size: 0.78rem; line-height: 1.7; color: var(--text2); margin: 0.75rem 0 0; }
+  .cfp-share-row { display: flex; align-items: center; gap: 10px; margin-bottom: 2rem; }
+  .cfp-share-btn { background: none; border: 1px solid var(--accent); color: var(--accent); font-family: var(--font); font-size: 0.75rem; font-weight: 600; padding: 6px 16px; border-radius: 20px; cursor: pointer; transition: all 0.15s; }
+  .cfp-share-btn:hover { background: var(--accent); color: var(--bg); }
+  .cfp-share-confirm { font-size: 0.75rem; color: var(--green); font-weight: 600; }
+
+  /* Section rule */
+  .cfp-rule { border: none; border-top: 1px solid var(--div); margin: 3rem 0; }
+
+  /* Paris path panel */
+  .cfp-paris-path { margin: 2rem 0; }
+  .cfp-paris-path:empty { display: none; }
+  .cfp-paris-path-title { font-size: 0.6rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.18em; color: var(--cat); margin-bottom: 0.5rem; }
+  .cfp-paris-path-gap { font-size: 0.9rem; color: var(--text); margin-bottom: 1rem; line-height: 1.6; }
+  .cfp-paris-path-list { list-style: none; padding: 0; margin: 0 0 1rem; display: flex; flex-direction: column; gap: 6px; }
+  .cfp-pp-item { display: flex; align-items: center; gap: 12px; padding: 8px 12px; border-radius: 6px; background: var(--panel); cursor: pointer; transition: background 0.15s; }
+  .cfp-pp-item:hover { background: var(--div); }
+  .cfp-pp-action { flex: 1; font-size: 0.85rem; font-weight: 500; }
+  .cfp-pp-saves { font-size: 0.78rem; color: var(--green); font-weight: 600; white-space: nowrap; }
+  .cfp-pp-bar { width: 100px; height: 6px; background: var(--div); border-radius: 3px; overflow: hidden; flex-shrink: 0; }
+  .cfp-pp-fill { height: 100%; background: var(--green); border-radius: 3px; }
+  .cfp-pp-summary { font-size: 0.85rem; color: var(--text2); font-style: italic; line-height: 1.6; }
+  .cfp-pp-done { font-size: 0.9rem; font-weight: 600; color: var(--green); }
+
+  /* ── Systemic Impact ── */
+  .cfp-systemic { margin-bottom: 2rem; }
+  .cfp-sys-title { font-family: var(--serif); font-size: clamp(1.4rem, 3vw, 2.2rem); font-weight: 700; margin: 0 0 0.4rem; }
+  .cfp-sys-subtitle { font-size: 0.8rem; color: var(--text2); letter-spacing: 0.06em; text-transform: uppercase; font-weight: 600; margin: 0 0 2rem; }
+  .cfp-sys-intro { max-width: 780px; margin-bottom: 2.5rem; }
+  .cfp-sys-intro p { font-size: 0.92rem; line-height: 1.85; margin: 0 0 0.75rem; }
+  .cfp-sys-intro strong { color: var(--accent); }
+
+  .cfp-sys-toggle { display: inline-flex; border: 1px solid var(--div); border-radius: 6px; overflow: hidden; margin-bottom: 2rem; }
+  .cfp-sys-toggle-btn { background: transparent; border: none; padding: 7px 18px; font-family: var(--font); font-size: 0.75rem; font-weight: 600; color: var(--text2); cursor: pointer; transition: all 0.15s; }
+  .cfp-sys-toggle-btn + .cfp-sys-toggle-btn { border-left: 1px solid var(--div); }
+  .cfp-sys-toggle-btn.active { background: var(--accent); color: var(--bg); }
+  .cfp-sys-toggle-btn:not(.active):hover { background: var(--div); }
+
+  .cfp-sys-chart { margin-bottom: 2rem; }
+
+  .cfp-sys-divider { display: flex; align-items: center; gap: 1rem; margin: 1.5rem 0; color: var(--text2); font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; font-weight: 700; }
+  .cfp-sys-divider-line { flex: 1; height: 1px; background: var(--div); }
+  .cfp-sys-divider-arrow { font-size: 1.1rem; color: var(--accent); }
+
+  .cfp-sys-row { display: flex; align-items: center; gap: 12px; margin-bottom: 6px; min-height: 44px; }
+  .cfp-sys-row-info { width: clamp(180px, 22vw, 260px); flex-shrink: 0; }
+  .cfp-sys-row-name { font-size: 0.82rem; font-weight: 600; line-height: 1.3; }
+  .cfp-sys-row-desc { font-size: 0.68rem; color: var(--text2); font-style: italic; line-height: 1.3; margin-top: 1px; }
+  .cfp-sys-row-badge { display: inline-block; font-size: 0.5rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; padding: 1px 5px; border-radius: 3px; margin-left: 4px; vertical-align: middle; color: #fff; }
+  .cfp-sys-row-badge--political { background: var(--c-transport); }
+  .cfp-sys-row-badge--infrastructure { background: var(--green); }
+  .cfp-sys-row-badge--career { background: var(--c-purchases); }
+  .cfp-sys-row-badge--community { background: var(--c-digital); }
+  .cfp-sys-row-badge--individual { background: var(--bar-ref); }
+
+  .cfp-sys-bar-area { flex: 1; position: relative; height: 28px; min-width: 0; }
+  .cfp-sys-uncertainty { position: absolute; top: 0; height: 100%; border-radius: 0 3px 3px 0; opacity: 0.12; }
+  .cfp-sys-bar { position: absolute; top: 4px; height: calc(100% - 8px); border-radius: 0 3px 3px 0; transition: width 0.4s cubic-bezier(0.25,0.46,0.45,0.94); }
+  .cfp-sys-refline { position: absolute; top: -6px; bottom: -6px; width: 1.5px; background: var(--accent); opacity: 0.5; z-index: 2; transition: left 0.4s cubic-bezier(0.25,0.46,0.45,0.94); }
+  .cfp-sys-refline::before { content: attr(data-label); position: absolute; top: -16px; left: 50%; transform: translateX(-50%); font-size: 0.55rem; white-space: nowrap; color: var(--accent); font-weight: 700; letter-spacing: 0.04em; }
+
+  .cfp-sys-row-annot { flex-shrink: 0; text-align: right; min-width: clamp(100px, 18vw, 200px); }
+  .cfp-sys-kg { font-size: 0.72rem; font-weight: 600; color: var(--text); }
+  .cfp-sys-mult { font-size: 0.72rem; font-weight: 700; margin-left: 6px; white-space: nowrap; }
+
+  .cfp-sys-axis { position: relative; height: 28px; margin-top: 0.5rem; margin-left: clamp(180px, 22vw, 260px); padding-left: 12px; border-top: 1px solid var(--div); }
+  .cfp-sys-tick { position: absolute; transform: translateX(-50%); }
+  .cfp-sys-tick-line { width: 1px; height: 6px; background: var(--div); margin: 0 auto; }
+  .cfp-sys-tick-label { font-size: 0.55rem; color: var(--text2); white-space: nowrap; text-align: center; margin-top: 2px; }
+
+  .cfp-sys-callout { border-left: 3px solid var(--accent); padding: 1.25rem 1.75rem; margin: 2.5rem 0 0; background: var(--panel); border-radius: 0 6px 6px 0; font-family: var(--serif); font-size: 1.05rem; line-height: 1.8; font-style: italic; }
+
+  .cfp-sys-note { font-size: 0.7rem; color: var(--text2); line-height: 1.5; margin-top: 4px; max-width: 500px; }
+
+  @media (max-width: 700px) {
+    .cfp-sys-row { flex-wrap: wrap; }
+    .cfp-sys-row-info { width: 100%; }
+    .cfp-sys-bar-area { width: 100%; height: 24px; }
+    .cfp-sys-row-annot { width: 100%; text-align: left; }
+    .cfp-sys-axis { margin-left: 0; }
+  }
+
+  /* Link style for intro */
+  .cfp-link { color: var(--accent); text-decoration: underline; text-underline-offset: 3px; }
+
+  /* Mobile sticky header */
+  .cfp-mobile-sticky { display: none; position: sticky; top: 0; z-index: 50; background: var(--bg); border-bottom: 1px solid var(--div); padding: 10px 0; justify-content: space-between; align-items: center; }
+  .cfp-mobile-title { font-weight: 700; font-size: 0.9rem; color: var(--text); }
+  .cfp-mobile-total { font-size: 0.85rem; font-weight: 600; color: var(--accent); font-variant-numeric: tabular-nums; }
+
+  /* Activities controls (search + sort) */
+  .cfp-activities-controls { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+  .cfp-search-wrap { position: relative; flex: 1; max-width: 280px; }
+  .cfp-sort-wrap { display: flex; gap: 4px; }
+  .cfp-sort-btn { padding: 7px 13px; font-size: 0.75rem; font-family: var(--font); font-weight: 500; border-radius: 5px; border: 1px solid var(--div); background: transparent; color: var(--text2); cursor: pointer; transition: all 0.15s; }
+  .cfp-sort-btn.active { background: var(--accent); border-color: var(--accent); color: var(--bg); }
+  .cfp-sort-btn:hover:not(.active) { border-color: var(--accent); color: var(--accent); }
+
+  /* Animations */
+  .cfp-hero, .cfp-dashboard, .cfp-viz, .cfp-story, .cfp-controls { animation: fadeUp 0.5s ease both; }
+  .cfp-dashboard { animation-delay: 80ms; }
+  .cfp-viz { animation-delay: 160ms; }
+  .cfp-story { animation-delay: 200ms; }
+  .cfp-controls { animation-delay: 240ms; }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* Focus */
+  .cfp *:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+  /* Responsive */
+  @media (max-width: 1100px) { .cfp-grid { grid-template-columns: repeat(3, 1fr); gap: 2rem 3vw; } }
+  @media (max-width: 700px) {
+    .cfp-grid { grid-template-columns: repeat(2, 1fr); gap: 1.5rem 3vw; }
+    .cfp-mobile-sticky { display: flex; }
+    .cfp-activities-controls { flex-direction: column; align-items: flex-start; }
+    .cfp-search-wrap { max-width: 100%; width: 100%; }
+  }
+  @media (max-width: 480px) {
+    .cfp { padding: 2rem 1.25rem 4rem; }
+    .cfp-grid { grid-template-columns: 1fr; gap: 2rem; }
+    .cfp-controls-header { flex-direction: column; align-items: flex-start; }
+    .cfp-search { width: 100%; }
+    .cfp-bar-track { height: 40px; }
+    .cfp-treemap { height: 120px; }
+    .cfp-act { min-height: 56px; }
+  }
+</style>
+
+<script>
+  document.addEventListener('astro:page-load', initCFP);
+
+  function initCFP() {
+    const root = document.getElementById('cfp');
+    if (!root || (root as any).__init) return;
+    (root as any).__init = true;
+
+    const BASELINE = { kgPerYear: 16000, get kgPerDay() { return +(this.kgPerYear / 365).toFixed(1); }, label: 'Average American' };
+    const BENCHMARKS = { paris2030: 2500, globalAvg: 4700, euAvg: 8200 };
+    const CAT_COLORS: Record<string, string> = { transport: '#8B2E2E', home: '#A0522D', food: '#6B4226', purchases: '#7A3B2E', digital: '#9B6B5A' };
+    const isDark = () => document.documentElement.getAttribute('data-theme') === 'dark';
+
+    const DATA = [
+      { key:'driving', cat:'transport', label:'Driving', detail:'Avg fuel economy, gasoline', kgYear:4600, hasInput:true, inputUnit:'mi / yr', inputDefault:13500, kgPerUnit:4600/13500, source:'EPA GREET model', sourceNote:'Based on 8,887 g CO\u2082 per gallon and avg 25.4 MPG.' },
+      { key:'ev-driving', cat:'transport', label:'Driving an EV', detail:'US grid avg electricity', kgYear:1800, hasInput:true, inputUnit:'mi / yr', inputDefault:13500, kgPerUnit:1800/13500, source:'DOE AFDC', sourceNote:'Includes grid electricity carbon intensity.' },
+      { key:'domestic-flight', cat:'transport', label:'Domestic round trip', detail:'e.g. NYC \u2194 LA', kgYear:620, hasInput:true, inputUnit:'flights / yr', inputDefault:1, kgPerUnit:620, source:'ICAO', sourceNote:'Economy class, ~2,500 mi each way.' },
+      { key:'transatlantic-flight', cat:'transport', label:'Transatlantic round trip', detail:'e.g. NYC \u2194 London', kgYear:1600, hasInput:true, inputUnit:'flights / yr', inputDefault:1, kgPerUnit:1600, source:'ICAO', sourceNote:'Economy class, ~3,450 mi each way.' },
+      { key:'short-flight', cat:'transport', label:'Short-haul round trip', detail:'e.g. DC \u2194 Boston', kgYear:180, hasInput:true, inputUnit:'flights / yr', inputDefault:1, kgPerUnit:180, source:'ICAO', sourceNote:'Economy class, ~400 mi each way.' },
+      { key:'public-transit', cat:'transport', label:'Public transit', detail:'Bus, metro, light rail', kgYear:210, hasInput:true, inputUnit:'mi / yr', inputDefault:2500, kgPerUnit:210/2500, source:'FTA', sourceNote:'Average across US transit modes.' },
+      { key:'motorcycle', cat:'transport', label:'Motorcycle', detail:'Avg US usage', kgYear:1400, hasInput:true, inputUnit:'mi / yr', inputDefault:3000, kgPerUnit:1400/3000, source:'EPA', sourceNote:'Avg motorcycle ~44 MPG.' },
+      { key:'cruise', cat:'transport', label:'Cruise vacation', detail:'7-day cruise', kgYear:1000, hasInput:true, inputUnit:'cruises / yr', inputDefault:1, inputMax:52, kgPerUnit:1000, source:'ICCT', sourceNote:'Includes fuel, hotel load, food.' },
+      { key:'home-energy', cat:'home', label:'Home electricity & gas', detail:'Avg US household, per person', kgYear:2800, source:'EIA', sourceNote:'US avg per household / 2.5 persons.' },
+      { key:'gas-heating', cat:'home', label:'Natural gas heating', detail:'Avg US home, per person', kgYear:1400, source:'EIA RECS', sourceNote:'Residential natural gas for heating.' },
+      { key:'ac', cat:'home', label:'Air conditioning', detail:'Avg US home, per person', kgYear:700, source:'EIA RECS', sourceNote:'Electricity for cooling, US avg.' },
+      { key:'dryer', cat:'home', label:'Clothes dryer', detail:'Electric, avg US', kgYear:400, hasInput:true, inputUnit:'loads / yr', inputDefault:300, kgPerUnit:400/300, source:'DOE', sourceNote:'~5.5 kWh per load.' },
+      { key:'washing', cat:'home', label:'Clothes washing', detail:'Cold water recommended', kgYear:160, hasInput:true, inputUnit:'loads / yr', inputDefault:300, kgPerUnit:160/300, source:'DOE', sourceNote:'Cold wash ~0.3 kWh vs ~4.5 kWh hot.' },
+      { key:'heat-pump', cat:'home', label:'Heat pump (replacing gas)', detail:'Net annual savings', kgYear:-900, reduction:true, source:'Project Drawdown', sourceNote:'Savings vs gas furnace.' },
+      { key:'solar', cat:'home', label:'Home solar panels', detail:'Avg 7 kW system', kgYear:-1500, reduction:true, source:'NREL', sourceNote:'~10,000 kWh/yr displacing grid.' },
+      { key:'diet-avg', cat:'food', label:'Average American diet', detail:'All food-related emissions', kgYear:2500, source:'U. Michigan CSS', sourceNote:'Farm-to-retail including land use.' },
+      { key:'diet-vegetarian', cat:'food', label:'Vegetarian diet', detail:'No meat, dairy included', kgYear:1700, source:'Scarborough et al. 2014', sourceNote:'UK-based survey, adjusted.' },
+      { key:'diet-vegan', cat:'food', label:'Vegan diet', detail:'All food-related emissions', kgYear:1050, source:'Poore & Nemecek 2018', sourceNote:'Meta-analysis of 38,700 farms.' },
+      { key:'beef', cat:'food', label:'Beef consumption', detail:'Avg American ~57 lbs/yr', kgYear:950, hasInput:true, inputUnit:'lbs / yr', inputDefault:57, kgPerUnit:950/57, source:'Our World in Data', sourceNote:'Includes methane, feed, land use.' },
+      { key:'dairy', cat:'food', label:'Dairy consumption', detail:'Milk, cheese, yogurt, butter', kgYear:350, source:'Poore & Nemecek 2018', sourceNote:'Avg American dairy intake.' },
+      { key:'food-waste', cat:'food', label:'Food waste', detail:'Avg American household', kgYear:650, source:'ReFED', sourceNote:'~30% of food purchased is wasted.' },
+      { key:'cheeseburger', cat:'food', label:'Cheeseburgers', detail:'~4 kg CO\u2082e per burger', kgYear:1460, hasInput:true, inputUnit:'per week', inputDefault:7, kgPerUnit:4*52, source:'Our World in Data', sourceNote:'Beef + cheese + bun supply chain.' },
+      { key:'new-car', cat:'purchases', label:'New car manufacturing', detail:'Amortized over 12 years', kgYear:1500, source:'IEA', sourceNote:'~18t for mid-size ICE / 12 yr.' },
+      { key:'smartphone', cat:'purchases', label:'New smartphone', detail:'Amortized over 3 years', kgYear:280, source:'Apple Environmental Report', sourceNote:'~70 kg manufacturing + supply chain.' },
+      { key:'laptop', cat:'purchases', label:'New laptop', detail:'Amortized over 4 years', kgYear:120, source:'Dell', sourceNote:'~480 kg manufacturing + use / 4 yr.' },
+      { key:'clothing', cat:'purchases', label:'Clothing', detail:'Avg American, ~65 garments/yr', kgYear:1100, hasInput:true, inputUnit:'items / yr', inputDefault:65, kgPerUnit:1100/65, source:'Quantis / World Bank', sourceNote:'Full lifecycle per garment avg.' },
+      { key:'pet-dog', cat:'purchases', label:'Medium dog', detail:'Food, supplies, vet', kgYear:770, source:'Okin 2017', sourceNote:'Primarily from meat-based pet food.' },
+      { key:'cat', cat:'purchases', label:'Cat', detail:'Food, litter, supplies', kgYear:310, source:'Okin 2017', sourceNote:'Lower food intake than dogs.' },
+      { key:'renovation', cat:'purchases', label:'Home renovation', detail:'Avg project, amortized', kgYear:3500, source:'MIT Climate Portal', sourceNote:'Cement, steel, wood, transport.' },
+      { key:'streaming', cat:'digital', label:'Streaming video', detail:'Netflix, YouTube, etc.', kgYear:35, hasInput:true, inputUnit:'hrs / day', inputDefault:1, inputMax:24, kgPerUnit:35, source:'IEA', sourceNote:'~36 g per hour incl. device + network.' },
+      { key:'ai-queries', cat:'digital', label:'AI queries', detail:'ChatGPT-scale', kgYear:18, hasInput:true, inputUnit:'per day', inputDefault:50, kgPerUnit:18/50, source:'IEA', sourceNote:'~2.9 Wh per query, US grid avg.' },
+      { key:'email', cat:'digital', label:'Email', detail:'Including spam', kgYear:14, hasInput:true, inputUnit:'per day', inputDefault:40, kgPerUnit:14/40, source:'Berners-Lee', sourceNote:'~4 g per email avg.' },
+      { key:'bitcoin-tx', cat:'digital', label:'Bitcoin transactions', detail:'Proof-of-work', kgYear:1040, hasInput:true, inputUnit:'per week', inputDefault:1, inputMax:7, kgPerUnit:1040, source:'Digiconomist', sourceNote:'~20 kg CO\u2082e per transaction.' },
+      { key:'gaming', cat:'digital', label:'PC gaming', detail:'Desktop + monitor', kgYear:55, hasInput:true, inputUnit:'hrs / day', inputDefault:2, inputMax:24, kgPerUnit:55/2, source:'Evan Mills, LBNL', sourceNote:'~300W system, US grid avg.' },
+      { key:'cloud-storage', cat:'digital', label:'Cloud storage', detail:'100 GB', kgYear:3, source:'IEA', sourceNote:'Tiny \u2014 included to show scale.' },
+    ] as const;
+
+    type Act = typeof DATA[number];
+    const actMap = new Map<string, Act>(); DATA.forEach(a => actMap.set(a.key, a));
+
+    const CATS: Record<string, { label: string; icon: string }> = {
+      transport: { label: 'Transport', icon: '<path d="M2 9.5l2-4.5h8l2 4.5M2 9.5v3h12v-3"/><circle cx="5" cy="12" r="1.2"/><circle cx="11" cy="12" r="1.2"/>' },
+      home: { label: 'Home', icon: '<path d="M2 8.5l6-5 6 5"/><path d="M3.5 8v6h9V8"/><path d="M6.5 14v-3.5h3V14"/>' },
+      food: { label: 'Food', icon: '<path d="M4 2v5c0 1 1 2 2.5 2V14M9.5 2v12M12 2c0 2-1 4-2.5 4"/>' },
+      purchases: { label: 'Purchases', icon: '<path d="M3 5h10l-1 8H4L3 5z"/><path d="M5 5V3.5a3 3 0 016 0V5"/>' },
+      digital: { label: 'Digital', icon: '<rect x="2" y="3" width="12" height="8" rx="1"/><path d="M5 14h6M8 11v3"/>' },
+    };
+
+    const PRESETS: Record<string, { label: string; items: Record<string, number|true> }> = {
+      'vegan-urbanite': { label: 'Vegan urbanite', items: { 'public-transit':2500, 'home-energy':true, 'diet-vegan':true, smartphone:true, streaming:1, 'ai-queries':50 } },
+      'suburban-family': { label: 'Suburban family', items: { driving:27000, 'home-energy':true, 'gas-heating':true, 'diet-avg':true, clothing:65, 'new-car':true, 'pet-dog':true } },
+      'climate-conscious': { label: 'Climate-conscious', items: { 'ev-driving':13500, solar:true, 'heat-pump':true, 'diet-vegetarian':true, 'public-transit':2500 } },
+    };
+
+    let mode: 'year'|'day' = 'year';
+    let prevTotal = 0;
+
+    // DOM refs
+    const grid = document.getElementById('cfp-grid')!;
+    const userBar = document.getElementById('user-bar')!;
+    const userVal = document.getElementById('user-val')!;
+    const refVal = document.getElementById('ref-val')!;
+    const totalNum = document.getElementById('total-num')!;
+    const totalUnit = document.getElementById('total-unit')!;
+    const toggle = document.getElementById('cfp-toggle')!;
+    const overflowMsg = document.getElementById('overflow-msg')!;
+    const parisBadge = document.getElementById('paris-badge')!;
+    const compareRow = document.getElementById('compare-row')!;
+    const compareName = document.getElementById('compare-name')!;
+    const compareBar = document.getElementById('compare-bar')!;
+    const compareVal = document.getElementById('compare-val')!;
+    const compareSelect = document.getElementById('compare-select') as HTMLSelectElement;
+    const pctLine = document.getElementById('pct-line')!;
+    const contextLine = document.getElementById('context-line')!;
+    const equivChips = document.getElementById('equiv-chips')!;
+    const treemapEl = document.getElementById('cfp-treemap')!;
+    const treemapLegend = document.getElementById('treemap-legend')!;
+    const storyEl = document.getElementById('cfp-story')!;
+    const searchInput = document.getElementById('cfp-search') as HTMLInputElement;
+
+    // ── Build activity grid ──
+    const catOrder = ['transport','home','food','purchases','digital'];
+    catOrder.forEach(catKey => {
+      const catInfo = CATS[catKey];
+      const items = DATA.filter(a => a.cat === catKey);
+      const group = document.createElement('div');
+      group.className = 'cfp-cat-group';
+      group.dataset.cat = catKey;
+      const header = document.createElement('div');
+      header.className = 'cfp-cat-header';
+      header.innerHTML = `<svg viewBox="0 0 16 16">${catInfo.icon}</svg>${catInfo.label}`;
+      group.appendChild(header);
+
+      items.forEach(a => {
+        const row = document.createElement('label');
+        row.className = 'cfp-act' + ((a as any).reduction ? ' cfp-act--reduction' : '');
+        row.dataset.key = a.key;
+        row.dataset.cat = a.cat;
+
+        const cb = document.createElement('input'); cb.type = 'checkbox'; cb.tabIndex = 0;
+        const check = document.createElement('span'); check.className = 'cfp-check';
+        check.innerHTML = '<svg viewBox="0 0 10 10"><polyline points="1.5,5.5 4,8 8.5,2"/></svg>';
+
+        const body = document.createElement('div'); body.className = 'cfp-act-body';
+        const top = document.createElement('div'); top.className = 'cfp-act-top';
+        const name = document.createElement('span'); name.className = 'cfp-act-name'; name.textContent = a.label;
+        const kg = document.createElement('span'); kg.className = 'cfp-act-kg';
+        top.appendChild(name); top.appendChild(kg); body.appendChild(top);
+
+        const detail = document.createElement('span'); detail.className = 'cfp-act-detail'; detail.textContent = a.detail;
+        body.appendChild(detail);
+
+        if ((a as any).reduction) { const tag = document.createElement('span'); tag.className = 'cfp-reduction-tag'; tag.textContent = 'Reduction'; body.appendChild(tag); }
+
+        if ((a as any).hasInput) {
+          const ir = document.createElement('div'); ir.className = 'cfp-act-input-row';
+          const ni = document.createElement('input'); ni.type = 'number'; ni.className = 'cfp-act-input';
+          ni.value = String((a as any).inputDefault); ni.min = '0'; ni.dataset.key = a.key;
+          if ((a as any).inputMax) ni.max = String((a as any).inputMax);
+          const u = document.createElement('span'); u.className = 'cfp-act-unit'; u.textContent = (a as any).inputUnit;
+          ir.appendChild(ni); ir.appendChild(u); body.appendChild(ir);
+        }
+
+        const minibar = document.createElement('div'); minibar.className = 'cfp-act-minibar';
+        const minifill = document.createElement('div'); minifill.className = 'cfp-act-minifill';
+        minibar.appendChild(minifill); body.appendChild(minibar);
+
+        // Impact badge
+        const pctOfAvg = Math.abs(a.kgYear) / BASELINE.kgPerYear * 100;
+        if (pctOfAvg >= 20) { const b = document.createElement('span'); b.className = 'cfp-act-impact cfp-act-impact--high'; b.textContent = 'HIGH IMPACT'; body.appendChild(b); }
+        else if (pctOfAvg >= 10) { const b = document.createElement('span'); b.className = 'cfp-act-impact cfp-act-impact--med'; b.textContent = 'MED IMPACT'; body.appendChild(b); }
+
+        const srcTip = document.createElement('div'); srcTip.className = 'cfp-src-tip';
+        srcTip.innerHTML = `<strong>${(a as any).source}</strong><br>${(a as any).sourceNote}`;
+
+        row.appendChild(cb); row.appendChild(check); row.appendChild(body); row.appendChild(srcTip);
+        group.appendChild(row);
+      });
+      grid.appendChild(group);
+    });
+
+    // ── Helpers ──
+    function fmt(n: number): string { return Math.round(n).toLocaleString(); }
+    function fmtVal(kgYear: number): string {
+      const v = mode === 'day' ? kgYear / 365 : kgYear;
+      if (Math.abs(v) >= 1000) return fmt(v) + ' kg';
+      if (Math.abs(v) >= 1) return v.toFixed(1).replace(/\.0$/, '') + ' kg';
+      if (Math.abs(v) >= 0.01) return (v * 1000).toFixed(0) + ' g';
+      return '< 1 g';
+    }
+    function getDayFactor(unit: string): number { if (unit.includes('/ yr')||unit.includes('/ year')) return 365; if (unit.includes('week')) return 7; return 1; }
+    function getDayUnit(unit: string): string { return unit.replace('/ yr','/ day').replace('/ year','/ day').replace('per week','/ day'); }
+    function getKgYear(key: string): number {
+      const a = actMap.get(key)!;
+      if ((a as any).hasInput) {
+        const input = grid.querySelector(`.cfp-act-input[data-key="${key}"]`) as HTMLInputElement;
+        const displayVal = input ? parseFloat(input.value) || 0 : (a as any).inputDefault;
+        const dayFactor = getDayFactor((a as any).inputUnit);
+        const effectiveVal = mode === 'day' ? displayVal * dayFactor : displayVal;
+        return (a as any).kgPerUnit * effectiveVal;
+      }
+      return a.kgYear;
+    }
+    function getChecked(): string[] {
+      const keys: string[] = [];
+      grid.querySelectorAll('.cfp-act').forEach(el => {
+        const cb = el.querySelector('input[type="checkbox"]') as HTMLInputElement;
+        if (cb?.checked) keys.push((el as HTMLElement).dataset.key!);
+      });
+      return keys;
+    }
+    function getCatColor(cat: string): string {
+      if (isDark()) {
+        const dk: Record<string,string> = { transport:'#C47058', home:'#C4935A', food:'#A07050', purchases:'#B86850', digital:'#C4A08A' };
+        return dk[cat] || CAT_COLORS[cat] || '#8B2E2E';
+      }
+      return CAT_COLORS[cat] || '#8B2E2E';
+    }
+
+    // ── Animated number ──
+    let animFrame = 0;
+    function animateNum(from: number, to: number) {
+      cancelAnimationFrame(animFrame);
+      const start = performance.now(); const dur = 400;
+      function tick(now: number) {
+        const t = Math.min((now - start) / dur, 1);
+        const ease = 1 - Math.pow(1 - t, 4); // easeOutQuart
+        totalNum.textContent = fmt(Math.round(from + (to - from) * ease));
+        if (t < 1) animFrame = requestAnimationFrame(tick);
+      }
+      animFrame = requestAnimationFrame(tick);
+    }
+
+    // ── Treemap (squarified) ──
+    function renderTreemap(items: { key: string; kg: number; cat: string; label: string }[]) {
+      treemapEl.innerHTML = '';
+      treemapLegend.innerHTML = '';
+      const posItems = items.filter(i => i.kg > 0).sort((a, b) => b.kg - a.kg);
+      if (posItems.length === 0) {
+        // Show average American baseline grayed out
+        const baselineItems = [
+          { key:'avg-t', kg:4600, cat:'transport', label:'Transport' },
+          { key:'avg-h', kg:2800, cat:'home', label:'Home energy' },
+          { key:'avg-f', kg:2500, cat:'food', label:'Food' },
+          { key:'avg-p', kg:3200, cat:'purchases', label:'Purchases' },
+          { key:'avg-d', kg:2900, cat:'digital', label:'Services' },
+        ];
+        const bTotal = baselineItems.reduce((s, i) => s + i.kg, 0);
+        const bW = treemapEl.clientWidth || 800;
+        const bH = treemapEl.clientHeight || 180;
+        const bRects = squarify(baselineItems.map(i => i.kg / bTotal), bW, bH);
+        baselineItems.forEach((item, idx) => {
+          const r = bRects[idx]; if (!r) return;
+          const div = document.createElement('div');
+          div.className = 'cfp-tm-rect';
+          div.style.cssText = `left:${r.x}px;top:${r.y}px;width:${r.w}px;height:${r.h}px;background:#888;opacity:0.35;`;
+          if (r.w > 50 && r.h > 30) {
+            const n = document.createElement('span'); n.className = 'cfp-tm-name'; n.textContent = item.label;
+            const v = document.createElement('span'); v.className = 'cfp-tm-val'; v.textContent = fmt(item.kg) + ' kg';
+            div.appendChild(n); div.appendChild(v);
+          }
+          treemapEl.appendChild(div);
+        });
+        return;
+      }
+      const W = treemapEl.clientWidth || 800;
+      const H = treemapEl.clientHeight || 180;
+      const total = posItems.reduce((s, i) => s + i.kg, 0);
+      const rects = squarify(posItems.map(i => i.kg / total), W, H);
+
+      const catsUsed = new Set<string>();
+      posItems.forEach((item, i) => {
+        const r = rects[i]; if (!r) return;
+        const div = document.createElement('div');
+        div.className = 'cfp-tm-rect';
+        div.style.left = r.x + 'px'; div.style.top = r.y + 'px';
+        div.style.width = r.w + 'px'; div.style.height = r.h + 'px';
+        div.style.background = item.kg < 0 ? 'var(--green)' : getCatColor(item.cat);
+        if (r.w > 50 && r.h > 30) {
+          const n = document.createElement('span'); n.className = 'cfp-tm-name'; n.textContent = item.label;
+          const v = document.createElement('span'); v.className = 'cfp-tm-val'; v.textContent = fmtVal(item.kg);
+          div.appendChild(n); div.appendChild(v);
+        }
+        treemapEl.appendChild(div);
+        catsUsed.add(item.cat);
+      });
+
+      // Legend
+      catsUsed.forEach(cat => {
+        const le = document.createElement('div'); le.className = 'cfp-legend-item';
+        const sw = document.createElement('span'); sw.className = 'cfp-legend-swatch'; sw.style.background = getCatColor(cat);
+        le.appendChild(sw); le.appendChild(document.createTextNode(CATS[cat]?.label || cat));
+        treemapLegend.appendChild(le);
+      });
+    }
+
+    function squarify(areas: number[], W: number, H: number): { x: number; y: number; w: number; h: number }[] {
+      const result: { x: number; y: number; w: number; h: number }[] = [];
+      let x = 0, y = 0, w = W, h = H;
+      const sorted = [...areas];
+      let i = 0;
+      while (i < sorted.length) {
+        const vertical = w < h;
+        const side = vertical ? h : w;
+        let row: number[] = [];
+        let rowArea = 0;
+        let bestAspect = Infinity;
+        for (let j = i; j < sorted.length; j++) {
+          const testRow = [...row, sorted[j]];
+          const testArea = rowArea + sorted[j];
+          const rowSide = testArea * (vertical ? W : H) / (side > 0 ? side : 1);
+          let worstAspect = 0;
+          for (const a of testRow) {
+            const cellSide = rowSide > 0 ? (a / testArea) * side : 0;
+            const aspect = rowSide > cellSide ? rowSide / (cellSide || 1) : (cellSide || 1) / (rowSide || 1);
+            worstAspect = Math.max(worstAspect, aspect);
+          }
+          if (worstAspect <= bestAspect || row.length === 0) {
+            row = testRow; rowArea = testArea; bestAspect = worstAspect;
+          } else break;
+          i = j + 1;
+        }
+        const rowSide = rowArea * (vertical ? W : H) / (side > 0 ? side : 1);
+        let offset = 0;
+        for (const a of row) {
+          const cellSide = rowSide > 0 ? (a / rowArea) * side : 0;
+          if (vertical) {
+            result.push({ x: x, y: y + offset, w: rowSide, h: cellSide });
+          } else {
+            result.push({ x: x + offset, y: y, w: cellSide, h: rowSide });
+          }
+          offset += cellSide;
+        }
+        if (vertical) { x += rowSide; w -= rowSide; } else { y += rowSide; h -= rowSide; }
+      }
+      return result;
+    }
+
+    // ── Global gradient strip ──
+    function updateGlobalStrip(totalKg: number) {
+      const MAX_KG = 24000;
+      const pct = Math.min(Math.max(totalKg / MAX_KG * 100, 0), 103);
+      const markerEl = document.getElementById('cfp-global-marker') as HTMLElement | null;
+      const markerLabelEl = document.getElementById('cfp-global-marker-label');
+      if (markerEl) markerEl.style.left = `${pct}%`;
+      if (markerLabelEl) {
+        const kVal = totalKg / 1000;
+        markerLabelEl.textContent = totalKg > 0 ? `${kVal >= 10 ? Math.round(kVal) : kVal.toFixed(1)}k kg` : 'You';
+      }
+      const ticksEl = document.getElementById('cfp-global-ticks') as HTMLElement | null;
+      if (ticksEl && !ticksEl.dataset.rendered) {
+        ticksEl.dataset.rendered = '1';
+        const ticks = [
+          { kg: 2500, label: 'Paris 2030' },
+          { kg: 4700, label: 'Global avg' },
+          { kg: 8200, label: 'EU avg' },
+          { kg: 16000, label: 'US avg' },
+        ];
+        ticksEl.innerHTML = ticks.map(t => {
+          const p = (t.kg / MAX_KG) * 100;
+          return `<div class="cfp-global-tick" style="left:${p}%"><div class="cfp-global-tick-line"></div><div class="cfp-global-tick-label">${t.label}</div></div>`;
+        }).join('');
+      }
+    }
+
+    // ── Context sentence & equivalencies ──
+    function renderDashboard(totalKg: number) {
+      const divisor = mode === 'day' ? 365 : 1;
+      const displayVal = totalKg / divisor;
+      const ratio = totalKg / BASELINE.kgPerYear;
+      const belowParis = totalKg <= BENCHMARKS.paris2030;
+
+      // % line
+      if (totalKg === 0) { pctLine.textContent = ''; pctLine.className = 'cfp-pct-line'; }
+      else {
+        const pctStr = Math.round(ratio * 100) + '% of the average American';
+        pctLine.textContent = pctStr;
+        pctLine.className = 'cfp-pct-line ' + (belowParis ? 'below-paris' : 'above-paris');
+      }
+
+      // Context with global percentile
+      if (totalKg > 0) {
+        const ratioStr = ratio < 1 ? `${(1/ratio).toFixed(1)}\u00d7 below` : ratio > 1 ? `${ratio.toFixed(1)}\u00d7 above` : 'equal to';
+        let percentile = '';
+        if (totalKg > 12000) percentile = ' \u2014 top 5% of global emitters';
+        else if (totalKg > 8000) percentile = ' \u2014 top 15% of global emitters';
+        else if (totalKg > 4700) percentile = ' \u2014 top 30% of global emitters';
+        else if (totalKg > 2500) percentile = ' \u2014 top 50% of global emitters';
+        else percentile = ' \u2014 bottom half of global emitters';
+        contextLine.textContent = `That\u2019s ${ratioStr} the average American${percentile}.`;
+      } else { contextLine.textContent = ''; }
+
+      // Equivalency chips
+      equivChips.innerHTML = '';
+      if (totalKg > 0) {
+        const chips = [
+          { icon: '<path d="M2 9.5l2-4h8l2 4M2 9.5v2h12v-2"/><circle cx="5" cy="11" r="1"/><circle cx="11" cy="11" r="1"/>', text: `${Math.round(totalKg/0.341).toLocaleString()} miles driven` },
+          { icon: '<path d="M2 8.5l6-5 6 5"/><path d="M3.5 8v6h9V8"/>', text: `Powers ${(totalKg/7330).toFixed(1)} homes / yr` },
+          { icon: '<polygon points="8,2 3.5,8 6,8 4,12 12,12 10,8 12.5,8"/><line x1="8" y1="12" x2="8" y2="15"/>', text: `${Math.round(totalKg/21).toLocaleString()} trees to offset` },
+        ];
+        chips.forEach(c => {
+          const chip = document.createElement('span'); chip.className = 'cfp-equiv-chip';
+          chip.innerHTML = `<svg viewBox="0 0 16 16">${c.icon}</svg>${c.text}`;
+          equivChips.appendChild(chip);
+        });
+      }
+
+      updateGlobalStrip(totalKg);
+    }
+
+    // ── Carbon story ──
+    function renderStory(items: { key: string; kg: number; cat: string; label: string }[], totalKg: number) {
+      if (items.length === 0 || totalKg === 0) { storyEl.innerHTML = ''; return; }
+      const ratio = totalKg / BASELINE.kgPerYear;
+      const parts: string[] = [];
+      if (ratio < 0.5) parts.push('Your footprint is remarkably low \u2014 roughly half the US average.');
+      else if (ratio < 0.8) parts.push('Your footprint is meaningfully below the US average.');
+      else if (ratio < 1.2) parts.push('Your footprint is close to the US average.');
+      else parts.push('Your footprint exceeds the US average.');
+
+      const byCat: Record<string, number> = {};
+      items.forEach(i => { byCat[i.cat] = (byCat[i.cat] || 0) + i.kg; });
+      const topCat = Object.entries(byCat).sort((a, b) => b[1] - a[1])[0];
+      if (topCat && totalKg > 0) parts.push(`${CATS[topCat[0]]?.label || topCat[0]} is your biggest source, at ${Math.round(topCat[1] / totalKg * 100)}% of your total.`);
+
+      const biggest = items.filter(i => i.kg > 0).sort((a, b) => b.kg - a.kg)[0];
+      if (biggest && totalKg > 0) parts.push(`${biggest.label} alone contributes ${Math.round(biggest.kg / totalKg * 100)}%.`);
+
+      if (items.some(i => i.kg < 0)) parts.push('Your reductions are already offsetting some emissions.');
+      if (totalKg > BENCHMARKS.paris2030) {
+        const excess = totalKg - BENCHMARKS.paris2030;
+        parts.push(`To reach the Paris 2030 target, you\u2019d need to cut ${excess.toLocaleString()} kg \u2014 roughly ${Math.round(excess / totalKg * 100)}% of your total.`);
+      }
+      storyEl.innerHTML = `<div class="cfp-story-label">Your carbon profile</div><p>${parts.join(' ')}</p>`;
+    }
+
+    // ── Paris path ──
+    const parisPathEl = document.getElementById('cfp-paris-path')!;
+
+    function renderParisPath(checkedKeys: string[], totalKg: number) {
+      if (totalKg <= BENCHMARKS.paris2030 || totalKg <= 0) { parisPathEl.innerHTML = ''; return; }
+      const gap = totalKg - BENCHMARKS.paris2030;
+
+      const REDUCTIONS = [
+        { action: 'Switch to an EV', saves: 2800, requires: 'driving', applies: () => { uncheckKey('driving'); checkKey('ev-driving', 13500); } },
+        { action: 'Go vegan', saves: 1450, requires: 'diet-avg', applies: () => { uncheckKey('diet-avg'); checkKey('diet-vegan'); } },
+        { action: 'Go vegetarian', saves: 800, requires: 'diet-avg', applies: () => { uncheckKey('diet-avg'); checkKey('diet-vegetarian'); } },
+        { action: 'Install solar panels', saves: 1500, requires: null, applies: () => { checkKey('solar'); } },
+        { action: 'Add a heat pump', saves: 900, requires: 'gas-heating', applies: () => { checkKey('heat-pump'); } },
+        { action: 'One fewer transatlantic flight', saves: 1600, requires: 'transatlantic-flight', applies: () => { uncheckKey('transatlantic-flight'); } },
+        { action: 'One fewer domestic flight', saves: 620, requires: 'domestic-flight', applies: () => { uncheckKey('domestic-flight'); } },
+      ].filter(r => !r.requires || checkedKeys.includes(r.requires));
+
+      let remaining = gap;
+      const plan: typeof REDUCTIONS[number][] & { impact?: number }[] = [];
+      for (const r of [...REDUCTIONS].sort((a, b) => b.saves - a.saves)) {
+        if (remaining <= 0) break;
+        (r as any).impact = Math.min(r.saves, remaining);
+        plan.push(r);
+        remaining -= r.saves;
+      }
+
+      if (plan.length === 0) { parisPathEl.innerHTML = ''; return; }
+
+      const totalSaved = plan.reduce((s, r) => s + (r as any).impact, 0);
+      const projected = totalKg - totalSaved;
+
+      let html = `<div class="cfp-paris-path-title">Your path to the Paris target</div>`;
+      html += `<div class="cfp-paris-path-gap">You need to cut <strong>${gap.toLocaleString()} kg</strong> more to reach 2,500 kg/yr.</div>`;
+      html += `<div class="cfp-paris-path-list">`;
+      plan.forEach((r, i) => {
+        const barPct = Math.min(((r as any).impact / gap) * 100, 100);
+        html += `<div class="cfp-pp-item" data-pp-idx="${i}">
+          <span class="cfp-pp-action">${r.action}</span>
+          <span class="cfp-pp-saves">\u2212${r.saves.toLocaleString()} kg</span>
+          <div class="cfp-pp-bar"><div class="cfp-pp-fill" style="width:${barPct}%"></div></div>
+        </div>`;
+      });
+      html += `</div>`;
+      if (projected <= BENCHMARKS.paris2030) {
+        html += `<div class="cfp-pp-done">Together these bring you to ~${projected.toLocaleString()} kg/yr \u2014 within the Paris target.</div>`;
+      } else {
+        html += `<div class="cfp-pp-summary">Together these save ${totalSaved.toLocaleString()} kg, bringing you to ~${projected.toLocaleString()} kg/yr.</div>`;
+      }
+      parisPathEl.innerHTML = html;
+
+      // Click handlers for applying reductions
+      parisPathEl.querySelectorAll('.cfp-pp-item').forEach(el => {
+        el.addEventListener('click', () => {
+          const idx = parseInt((el as HTMLElement).dataset.ppIdx || '0');
+          plan[idx].applies();
+          render();
+        });
+      });
+    }
+
+    function checkKey(key: string, inputVal?: number) {
+      const row = grid.querySelector(`.cfp-act[data-key="${key}"]`);
+      if (!row) return;
+      const cb = row.querySelector('input[type="checkbox"]') as HTMLInputElement;
+      if (cb) cb.checked = true;
+      if (inputVal !== undefined) {
+        const input = row.querySelector('.cfp-act-input') as HTMLInputElement;
+        if (input) input.value = String(inputVal);
+      }
+    }
+
+    function uncheckKey(key: string) {
+      const row = grid.querySelector(`.cfp-act[data-key="${key}"]`);
+      if (!row) return;
+      const cb = row.querySelector('input[type="checkbox"]') as HTMLInputElement;
+      if (cb) cb.checked = false;
+    }
+
+    // ── Systemic Impact ──
+    const SYSTEMIC_ACTIONS = [
+      { id:'vote-swing', name:'Vote in a swing-state election', cat:'political', desc:'Pivotal vote probability \u00d7 climate policy difference', expectedKg:50000, unc:4, source:'Gelman et al. 2012; EPA GHG inventory' },
+      { id:'canvass', name:'Deep-canvass 200 voters on climate', cat:'political', desc:'Persuasion effect \u00d7 vote margin \u00d7 policy impact', expectedKg:15000000, unc:10, source:'Green & Gerber 2019; EIA state emissions' },
+      { id:'state-clean-energy', name:'Help pass a state clean energy standard', cat:'political', desc:'Mid-size state electricity sector decarbonized', expectedKg:62500000, unc:20, source:'VA CEJA analysis; Rhodium Group' },
+      { id:'federal-carbon-price', name:'Advocate for US federal carbon pricing', cat:'political', desc:'$50/ton would cut US emissions ~15%', expectedKg:16800000, unc:50, source:'RFF; EPA GHG inventory' },
+      { id:'prevent-nuclear', name:'Prevent closure of one nuclear plant', cat:'infrastructure', desc:'1 GW plant kept open vs. replaced by gas', expectedKg:18600000, unc:8, source:'EIA; EPA eGRID; Crane & Lyman 2021' },
+      { id:'solar-farm', name:'Serve on committee for 500 MW solar farm', cat:'infrastructure', desc:'Displaces grid-avg generation over 30 years', expectedKg:17640000, unc:3, source:'EPA eGRID 2023; NREL' },
+      { id:'coal-retirement', name:'Campaign retiring one coal plant early', cat:'infrastructure', desc:'500 MW coal plant retired 10 years early', expectedKg:1000000, unc:10, source:'Sierra Club Beyond Coal; EPA eGRID' },
+      { id:'grid-reform', name:'Advocate for transmission reform', cat:'infrastructure', desc:'Accelerating clean energy interconnection', expectedKg:12000000, unc:30, source:'LBNL Queued Up 2023; FERC Order 2023' },
+      { id:'clean-energy-career', name:'Work as a clean energy engineer (10 yr)', cat:'career', desc:'Contribution to projects deployed at scale', expectedKg:8000000, unc:20, source:'IRENA 2023; author estimate' },
+      { id:'climate-journalism', name:'Write climate journalism (5 yr)', cat:'career', desc:'Shifting public opinion \u2192 policy and behavior', expectedKg:50000, unc:100, source:'Moyer & Tolbert 2022' },
+      { id:'community-solar', name:'Organize a 50-home solar co-op', cat:'community', desc:'50 homes switching to solar', expectedKg:2100000, unc:3, source:'NREL; EPA eGRID' },
+      { id:'zoning-reform', name:'Help pass urban zoning reform', cat:'community', desc:'Infill housing \u2192 reduced VMT and emissions', expectedKg:400000, unc:15, source:'Jones & Kammen 2014; ULI' },
+    ];
+
+    const INDIVIDUAL_COMPARATORS = [
+      { name:'Eliminate your entire footprint', kg:16000, desc:'Upper bound \u2014 go to zero' },
+      { name:'Switch to an EV', kg:2800, desc:'vs. avg American driving' },
+      { name:'Go vegan for a year', kg:1450, desc:'vs. avg American diet' },
+      { name:'Install home solar', kg:1500, desc:'avg 7 kW system' },
+      { name:'Give up flying entirely', kg:2220, desc:'1 domestic + 1 transatlantic/yr' },
+    ];
+
+    const SYS_COLORS: Record<string,string> = { political:'var(--c-transport)', infrastructure:'var(--green)', career:'var(--c-purchases)', community:'var(--c-digital)', individual:'var(--bar-ref)' };
+    const LOG_MIN = Math.log10(1000);
+    const LOG_MAX = Math.log10(1e9);
+    function toLogPct(kg: number): number { return Math.max(0, Math.min(100, ((Math.log10(Math.max(kg,1000)) - LOG_MIN) / (LOG_MAX - LOG_MIN)) * 100)); }
+
+    function fmtKgLarge(kg: number): string {
+      if (kg >= 1e9) return (kg/1e9).toFixed(1) + 'B kg';
+      if (kg >= 1e6) return (kg/1e6).toFixed(1) + 'M kg';
+      if (kg >= 1e3) return Math.round(kg/1e3).toLocaleString() + 'k kg';
+      return kg.toLocaleString() + ' kg';
+    }
+
+    let sysRefMode: 'avg'|'mine' = 'avg';
+    const sysChart = document.getElementById('cfp-sys-chart')!;
+    const sysToggle = document.getElementById('cfp-sys-toggle')!;
+
+    function renderSystemic(userTotalKg: number) {
+      const refKg = sysRefMode === 'mine' && userTotalKg > 0 ? userTotalKg : BASELINE.kgPerYear;
+      const refLabel = sysRefMode === 'mine' && userTotalKg > 0 ? 'Your footprint' : 'US avg';
+      const refPct = toLogPct(refKg);
+
+      let html = '';
+
+      // Individual comparators
+      html += '<div class="cfp-sys-section-label" style="font-size:0.6rem;font-weight:700;text-transform:uppercase;letter-spacing:0.14em;color:var(--cat);margin-bottom:0.5rem;">Individual lifestyle changes</div>';
+
+      INDIVIDUAL_COMPARATORS.forEach(item => {
+        const pct = toLogPct(item.kg);
+        const mult = item.kg / refKg;
+        const multStr = mult >= 1 ? mult.toFixed(1) + '\u00d7' : (mult * 100).toFixed(0) + '%';
+        html += `<div class="cfp-sys-row">
+          <div class="cfp-sys-row-info"><span class="cfp-sys-row-name">${item.name}</span><div class="cfp-sys-row-desc">${item.desc}</div></div>
+          <div class="cfp-sys-bar-area">
+            <div class="cfp-sys-bar" style="width:${pct}%;background:var(--bar-ref)"></div>
+            <div class="cfp-sys-refline" style="left:${refPct}%" data-label="${refLabel}"></div>
+          </div>
+          <div class="cfp-sys-row-annot"><span class="cfp-sys-kg">${fmtKgLarge(item.kg)}</span> <span class="cfp-sys-mult" style="color:var(--text2)">${multStr}</span></div>
+        </div>`;
+      });
+
+      // Divider
+      html += `<div class="cfp-sys-divider"><div class="cfp-sys-divider-line"></div><span class="cfp-sys-divider-arrow">\u2193</span><span>The scale of collective action</span><div class="cfp-sys-divider-line"></div></div>`;
+
+      // Systemic actions sorted by expected value
+      const sorted = [...SYSTEMIC_ACTIONS].sort((a, b) => b.expectedKg - a.expectedKg);
+
+      sorted.forEach(action => {
+        const pct = toLogPct(action.expectedKg);
+        const minPct = toLogPct(action.expectedKg / action.unc);
+        const maxPct = toLogPct(action.expectedKg * action.unc);
+        const mult = action.expectedKg / refKg;
+        const multStr = mult >= 1000 ? Math.round(mult).toLocaleString() + '\u00d7' : mult >= 1 ? mult.toFixed(0) + '\u00d7' : (mult * 100).toFixed(0) + '%';
+        const color = SYS_COLORS[action.cat] || 'var(--accent)';
+
+        html += `<div class="cfp-sys-row">
+          <div class="cfp-sys-row-info">
+            <span class="cfp-sys-row-name">${action.name} <span class="cfp-sys-row-badge cfp-sys-row-badge--${action.cat}">${action.cat}</span></span>
+            <div class="cfp-sys-row-desc">${action.desc}</div>
+          </div>
+          <div class="cfp-sys-bar-area">
+            <div class="cfp-sys-uncertainty" style="left:${minPct}%;width:${maxPct - minPct}%;background:${color}"></div>
+            <div class="cfp-sys-bar" style="width:${pct}%;background:${color}"></div>
+            <div class="cfp-sys-refline" style="left:${refPct}%" data-label="${refLabel}"></div>
+          </div>
+          <div class="cfp-sys-row-annot">
+            <span class="cfp-sys-kg">${fmtKgLarge(action.expectedKg)}</span>
+            <span class="cfp-sys-mult" style="color:${color}">${multStr}</span>
+          </div>
+        </div>`;
+      });
+
+      // Log axis
+      const LOG_TICKS = [1000, 10000, 100000, 1e6, 1e7, 1e8, 1e9];
+      const LOG_LABELS = ['1k', '10k', '100k', '1M', '10M', '100M', '1B kg'];
+      html += '<div class="cfp-sys-axis">';
+      LOG_TICKS.forEach((val, i) => {
+        html += `<div class="cfp-sys-tick" style="left:${toLogPct(val)}%"><div class="cfp-sys-tick-line"></div><div class="cfp-sys-tick-label">${LOG_LABELS[i]}</div></div>`;
+      });
+      html += '</div>';
+
+      sysChart.innerHTML = html;
+    }
+
+    // Systemic toggle
+    sysToggle.addEventListener('click', (e) => {
+      const btn = (e.target as HTMLElement).closest('.cfp-sys-toggle-btn') as HTMLElement;
+      if (!btn) return;
+      sysRefMode = btn.dataset.ref as 'avg'|'mine';
+      sysToggle.querySelectorAll('.cfp-sys-toggle-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const checked = getChecked();
+      const totalKg = checked.reduce((s, k) => s + getKgYear(k), 0);
+      renderSystemic(totalKg);
+    });
+
+    // ── Main render ──
+    function render() {
+      const divisor = mode === 'day' ? 365 : 1;
+      refVal.textContent = fmtVal(BASELINE.kgPerYear) + ' / ' + (mode === 'day' ? 'day' : 'yr');
+      totalUnit.innerHTML = 'kg CO<sub>2</sub>e / ' + (mode === 'day' ? 'day' : 'yr');
+
+      const checked = getChecked();
+      const items = checked.map(k => { const a = actMap.get(k)!; return { key: k, kg: getKgYear(k), cat: a.cat, label: a.label }; }).sort((a, b) => Math.abs(b.kg) - Math.abs(a.kg));
+      const totalKg = items.reduce((s, i) => s + i.kg, 0);
+      const totalDisplay = totalKg / divisor;
+
+      animateNum(prevTotal, totalDisplay);
+      prevTotal = totalDisplay;
+
+      userVal.textContent = fmtVal(totalKg) + ' / ' + (mode === 'day' ? 'day' : 'yr');
+      const pct = BASELINE.kgPerYear > 0 ? (Math.abs(totalKg) / BASELINE.kgPerYear) * 100 : 0;
+      userBar.style.width = Math.max(pct, 0) + '%';
+
+      const isOver = totalKg > BASELINE.kgPerYear;
+      const belowParis = totalKg > 0 && totalKg <= BENCHMARKS.paris2030;
+      overflowMsg.classList.toggle('visible', isOver);
+      parisBadge.classList.toggle('visible', belowParis && !isOver);
+
+      // Segments with category colors
+      userBar.innerHTML = '';
+      if (items.length > 0) {
+        items.forEach(item => {
+          if (item.kg === 0) return;
+          const segW = BASELINE.kgPerYear > 0 ? (Math.abs(item.kg) / BASELINE.kgPerYear) * 100 : 0;
+          const seg = document.createElement('div');
+          seg.className = 'cfp-segment';
+          seg.style.width = Math.max(segW, 0.3) + '%';
+          seg.style.background = item.kg < 0 ? 'var(--green)' : (isOver ? 'var(--accent)' : getCatColor(item.cat));
+
+          // Label inside if wide enough
+          if (segW > 8) {
+            const lbl = document.createElement('span'); lbl.className = 'cfp-seg-label'; lbl.textContent = item.label;
+            seg.appendChild(lbl);
+          }
+          const pctOfAvg = (Math.abs(item.kg) / BASELINE.kgPerYear * 100);
+          const tip = document.createElement('div'); tip.className = 'cfp-seg-tip';
+          tip.innerHTML = `<strong>${item.label}</strong><br>${fmtVal(item.kg)} &middot; ${pctOfAvg.toFixed(1)}% of avg American`;
+          seg.appendChild(tip);
+          userBar.appendChild(seg);
+        });
+      }
+
+      // Bar legend
+      const barLegend = document.getElementById('cfp-bar-legend');
+      if (barLegend) {
+        const usedCats = [...new Set(items.filter(i => i.kg > 0).map(i => i.cat))];
+        barLegend.innerHTML = usedCats.map(cat => {
+          const color = getCatColor(cat);
+          const name = CATS[cat]?.label || cat;
+          return `<span class="cfp-legend-chip" style="background:${color}">${name}</span>`;
+        }).join('');
+      }
+
+      // Activity rows
+      grid.querySelectorAll('.cfp-act').forEach(el => {
+        const htmlEl = el as HTMLElement; const key = htmlEl.dataset.key!;
+        const cb = el.querySelector('input[type="checkbox"]') as HTMLInputElement;
+        const kgEl = el.querySelector('.cfp-act-kg') as HTMLElement;
+        const minifill = el.querySelector('.cfp-act-minifill') as HTMLElement;
+        htmlEl.classList.toggle('checked', cb.checked);
+        const itemKg = getKgYear(key);
+        kgEl.textContent = (itemKg < 0 ? '\u2212' : '') + fmtVal(Math.abs(itemKg));
+        const miniPct = Math.min(Math.abs(itemKg) / BASELINE.kgPerYear * 100, 100);
+        minifill.style.width = miniPct + '%';
+        const cat = htmlEl.dataset.cat || 'transport';
+        minifill.style.background = itemKg < 0 ? 'var(--green)' : getCatColor(cat);
+      });
+
+      renderDashboard(totalKg);
+      renderTreemap(items);
+      renderStory(items, totalKg);
+      renderParisPath(checked, totalKg);
+      renderSystemic(totalKg);
+      renderCompare();
+
+      // Mobile sticky total
+      const mobileTotal = document.getElementById('cfp-mobile-total');
+      if (mobileTotal) {
+        mobileTotal.textContent = mode === 'day'
+          ? `${(totalKg/365).toFixed(1)} kg / day`
+          : `${fmt(totalKg)} kg / yr`;
+      }
+
+      saveHash();
+    }
+
+    function renderCompare() {
+      const preset = compareSelect.value;
+      if (!preset || !PRESETS[preset]) { compareRow.hidden = true; return; }
+      compareRow.hidden = false;
+      const p = PRESETS[preset]; compareName.textContent = p.label;
+      let total = 0;
+      Object.entries(p.items).forEach(([key, val]) => {
+        const a = actMap.get(key); if (!a) return;
+        total += (a as any).hasInput && typeof val === 'number' ? (a as any).kgPerUnit * val : a.kgYear;
+      });
+      compareVal.textContent = fmtVal(total) + ' / ' + (mode === 'day' ? 'day' : 'yr');
+      compareBar.style.width = (Math.abs(total) / BASELINE.kgPerYear) * 100 + '%';
+    }
+
+    // ── URL hash ──
+    function saveHash() {
+      const parts: string[] = [mode === 'day' ? 'd' : 'y'];
+      grid.querySelectorAll('.cfp-act').forEach(el => {
+        const cb = el.querySelector('input[type="checkbox"]') as HTMLInputElement;
+        if (!cb.checked) return;
+        const key = (el as HTMLElement).dataset.key!;
+        const input = el.querySelector('.cfp-act-input') as HTMLInputElement;
+        parts.push(input ? key + '=' + input.value : key);
+      });
+      history.replaceState(null, '', '#' + parts.join('&'));
+    }
+
+    function loadHash() {
+      const hash = location.hash.slice(1); if (!hash) return false;
+      const parts = hash.split('&'); if (!parts.length) return false;
+      if (parts[0] === 'd') mode = 'day'; else mode = 'year';
+      toggle.querySelectorAll('.cfp-toggle-btn').forEach(b => b.classList.toggle('active', (b as HTMLElement).dataset.mode === mode));
+      grid.querySelectorAll('.cfp-act input[type="checkbox"]').forEach(cb => { (cb as HTMLInputElement).checked = false; });
+      parts.slice(1).forEach(part => {
+        const [key, val] = part.split('=');
+        const row = grid.querySelector(`.cfp-act[data-key="${key}"]`); if (!row) return;
+        const cb = row.querySelector('input[type="checkbox"]') as HTMLInputElement; if (cb) cb.checked = true;
+        if (val) { const input = row.querySelector('.cfp-act-input') as HTMLInputElement; if (input) input.value = val; }
+      });
+      if (mode === 'day') {
+        grid.querySelectorAll('.cfp-act').forEach(el => {
+          const key = (el as HTMLElement).dataset.key!; const a = actMap.get(key)!;
+          if (!(a as any).hasInput) return;
+          const unitEl = el.querySelector('.cfp-act-unit') as HTMLElement;
+          if (unitEl) unitEl.textContent = getDayUnit((a as any).inputUnit);
+        });
+      }
+      return true;
+    }
+
+    function applyPreset(items: Record<string, number|true>) {
+      grid.querySelectorAll('.cfp-act input[type="checkbox"]').forEach(cb => { (cb as HTMLInputElement).checked = false; });
+      Object.entries(items).forEach(([key, val]) => {
+        const row = grid.querySelector(`.cfp-act[data-key="${key}"]`); if (!row) return;
+        const cb = row.querySelector('input[type="checkbox"]') as HTMLInputElement; if (cb) cb.checked = true;
+        if (typeof val === 'number') { const input = row.querySelector('.cfp-act-input') as HTMLInputElement; if (input) input.value = String(val); }
+      });
+      render();
+    }
+
+    // ── Mutual exclusivity groups ──
+    // When one item in a group is checked, all others in the same group get unchecked
+    const EXCLUSIVE_GROUPS: string[][] = [
+      ['driving', 'ev-driving', 'motorcycle'],         // primary vehicle
+      ['diet-avg', 'diet-vegetarian', 'diet-vegan'],    // diet type
+    ];
+
+    function enforceExclusivity(checkedKey: string) {
+      for (const group of EXCLUSIVE_GROUPS) {
+        if (!group.includes(checkedKey)) continue;
+        for (const otherKey of group) {
+          if (otherKey === checkedKey) continue;
+          const row = grid.querySelector(`.cfp-act[data-key="${otherKey}"]`);
+          if (!row) continue;
+          const cb = row.querySelector('input[type="checkbox"]') as HTMLInputElement;
+          if (cb) cb.checked = false;
+        }
+      }
+    }
+
+    // ── Events ──
+    const AVG_BASKET: Record<string, number|true> = { driving:13500, 'home-energy':true, 'diet-avg':true, clothing:65, smartphone:true, streaming:1 };
+    const presetNote = document.getElementById('preset-note')!;
+    let avgPresetActive = false;
+
+    grid.addEventListener('change', (e) => {
+      const target = e.target as HTMLInputElement;
+      if (target.matches('input[type="checkbox"]')) {
+        if (avgPresetActive) { avgPresetActive = false; presetNote.hidden = true; }
+        // Enforce mutual exclusivity when checking (not unchecking)
+        if (target.checked) {
+          const row = target.closest('.cfp-act') as HTMLElement;
+          if (row?.dataset.key) enforceExclusivity(row.dataset.key);
+        }
+        render();
+      }
+    });
+    grid.addEventListener('click', (e) => { if ((e.target as HTMLElement).matches('.cfp-act-input')) { e.preventDefault(); e.stopPropagation(); } });
+    grid.addEventListener('input', (e) => {
+      const t = e.target as HTMLInputElement;
+      if (t.matches('.cfp-act-input')) {
+        // Clamp to max if defined
+        if (t.max && t.value !== '') {
+          const val = parseFloat(t.value);
+          const max = parseFloat(t.max);
+          if (val > max) t.value = String(max);
+        }
+        if (avgPresetActive) { avgPresetActive = false; presetNote.hidden = true; }
+        render();
+      }
+    });
+
+    toggle.addEventListener('click', (e) => {
+      const btn = (e.target as HTMLElement).closest('.cfp-toggle-btn') as HTMLElement; if (!btn) return;
+      const m = btn.dataset.mode as 'year'|'day'; if (m === mode) return;
+      const switchingToDay = m === 'day'; mode = m;
+      toggle.querySelectorAll('.cfp-toggle-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      grid.querySelectorAll('.cfp-act').forEach(el => {
+        const key = (el as HTMLElement).dataset.key!; const a = actMap.get(key)!;
+        if (!(a as any).hasInput) return;
+        const input = el.querySelector('.cfp-act-input') as HTMLInputElement;
+        const unitEl = el.querySelector('.cfp-act-unit') as HTMLElement;
+        if (!input || !unitEl) return;
+        const origUnit = (a as any).inputUnit as string; const dayFactor = getDayFactor(origUnit);
+        if (dayFactor === 1) return;
+        const currentVal = parseFloat(input.value) || 0;
+        if (switchingToDay) {
+          const daily = currentVal / dayFactor;
+          input.value = daily < 1 ? daily.toPrecision(3) : daily.toFixed(1).replace(/\.0$/, '');
+          if ((a as any).inputMax) input.max = String((a as any).inputMax / dayFactor);
+          unitEl.textContent = getDayUnit(origUnit);
+        } else {
+          input.value = String(Math.round(currentVal * dayFactor));
+          if ((a as any).inputMax) input.max = String((a as any).inputMax);
+          unitEl.textContent = origUnit;
+        }
+      });
+      prevTotal = switchingToDay ? prevTotal / 365 : prevTotal * 365;
+      render();
+    });
+
+    document.getElementById('btn-all')!.addEventListener('click', () => { grid.querySelectorAll('.cfp-act input[type="checkbox"]').forEach(cb => { (cb as HTMLInputElement).checked = true; }); avgPresetActive = false; presetNote.hidden = true; render(); });
+    document.getElementById('btn-none')!.addEventListener('click', () => { grid.querySelectorAll('.cfp-act input[type="checkbox"]').forEach(cb => { (cb as HTMLInputElement).checked = false; }); avgPresetActive = false; presetNote.hidden = true; render(); });
+    document.getElementById('btn-avg')!.addEventListener('click', () => { applyPreset(AVG_BASKET); avgPresetActive = true; presetNote.hidden = false; });
+    compareSelect.addEventListener('change', render);
+
+    // Search
+    searchInput.addEventListener('input', () => {
+      const q = searchInput.value.toLowerCase().trim();
+      grid.querySelectorAll('.cfp-act').forEach(el => {
+        const name = el.querySelector('.cfp-act-name')?.textContent?.toLowerCase() || '';
+        const detail = el.querySelector('.cfp-act-detail')?.textContent?.toLowerCase() || '';
+        (el as HTMLElement).classList.toggle('cfp-act--filtered', q.length > 0 && !name.includes(q) && !detail.includes(q));
+      });
+    });
+
+    // Sort
+    document.querySelectorAll('.cfp-sort-btn').forEach(btn => {
+      btn.addEventListener('click', function() {
+        document.querySelectorAll('.cfp-sort-btn').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+        const sortMode = (this as HTMLElement).dataset.sort;
+        grid.querySelectorAll('.cfp-cat-group').forEach(group => {
+          const rows = [...group.querySelectorAll('.cfp-act')] as HTMLElement[];
+          if (sortMode === 'impact') {
+            rows.sort((a, b) => {
+              const aKg = Math.abs(actMap.get(a.dataset.key!)?.kgYear || 0);
+              const bKg = Math.abs(actMap.get(b.dataset.key!)?.kgYear || 0);
+              return bKg - aKg;
+            });
+          } else {
+            rows.sort((a, b) => {
+              const aIdx = DATA.findIndex(d => d.key === a.dataset.key);
+              const bIdx = DATA.findIndex(d => d.key === b.dataset.key);
+              return aIdx - bIdx;
+            });
+          }
+          rows.forEach(row => group.appendChild(row));
+        });
+      });
+    });
+
+    // Smooth scroll for internal links
+    document.querySelectorAll('.cfp a[href^="#"]').forEach(link => {
+      link.addEventListener('click', function(e) {
+        const href = (this as HTMLAnchorElement).getAttribute('href');
+        if (!href) return;
+        const target = document.querySelector(href);
+        if (target) {
+          e.preventDefault();
+          target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      });
+    });
+
+    // Share
+    const shareBtn = document.getElementById('share-btn')!;
+    shareBtn.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(location.href);
+      } catch {
+        const ta = document.createElement('textarea');
+        ta.value = location.href;
+        ta.style.cssText = 'position:fixed;opacity:0';
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+      }
+      const originalText = shareBtn.textContent;
+      shareBtn.textContent = '✓ Link copied';
+      shareBtn.style.color = 'var(--green)';
+      shareBtn.style.borderColor = 'var(--green)';
+      setTimeout(() => {
+        shareBtn.textContent = originalText;
+        shareBtn.style.color = '';
+        shareBtn.style.borderColor = '';
+      }, 2500);
+    });
+
+    // Keyboard
+    grid.addEventListener('keydown', (e) => {
+      const row = (e.target as HTMLElement).closest('.cfp-act'); if (!row) return;
+      if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); const cb = row.querySelector('input[type="checkbox"]') as HTMLInputElement; if (cb) { cb.checked = !cb.checked; render(); } }
+    });
+
+    document.addEventListener('astro:before-swap', () => { cancelAnimationFrame(animFrame); }, { once: true });
+
+    // ── Init ──
+    const hadHash = loadHash();
+    if (!hadHash) { ['driving', 'home-energy', 'diet-avg'].forEach(key => { const row = grid.querySelector(`.cfp-act[data-key="${key}"]`); if (row) { (row.querySelector('input[type="checkbox"]') as HTMLInputElement).checked = true; } }); }
+    render();
+  }
+</script>
