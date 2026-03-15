@@ -51,6 +51,11 @@ import { Calculator } from '@/components/carbon/Calculator';
   body:has(.cfv2) .main-content {
     max-width: 100%;
   }
+  /* Keep the header at normal site width */
+  body:has(.cfv2) .main-content > .header {
+    max-width: var(--max-width, 640px);
+    margin: 0 auto;
+  }
 
   .cfv2 {
     --text: var(--text-primary, #1A1A18);
