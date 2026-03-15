@@ -168,6 +168,38 @@ export function computePersonalActions(baseline: BaselineInputs, footprint: Foot
       applicable: baseline.housingType !== 'apartment',
       note: 'Sealing drafts and adding insulation cuts heating/cooling ~15%',
     },
+    {
+      name: 'Upgrade single-pane to triple-pane windows',
+      // Single-pane windows lose ~25-30% of heating/cooling energy.
+      // Triple-pane cuts that loss by ~70%. For a home using 500 therms gas + 10,500 kWh,
+      // heating/cooling is roughly 60% of total. Savings: ~20% of heating/cooling bill.
+      // Gas savings: 500 * 0.6 * 0.20 = 60 therms → 318 kg CO2
+      // Electricity savings: 10,500 * 0.3 * 0.20 = 630 kWh → 630 * gridRate
+      savingsKg: Math.round((60 * 5.3 + 630 * gridRate) / baseline.householdSize),
+      category: 'Home',
+      applicable: baseline.housingType !== 'apartment',
+      note: 'Reduces heating/cooling loss ~20%. Biggest impact in cold climates.',
+    },
+    {
+      name: 'Switch gas water heater to heat pump water heater',
+      // Avg gas water heater: ~200 therms/yr. Heat pump water heater: ~1,500 kWh/yr (COP ~3.5).
+      // Gas saved: 200 therms × 5.3 = 1,060 kg. Electricity added: 1,500 × gridRate.
+      savingsKg: Math.round((200 * 5.3 - 1500 * gridRate) / baseline.householdSize),
+      category: 'Home',
+      applicable: baseline.housingType !== 'apartment',
+      note: 'Replaces gas water heater with electric heat pump. Saves more on clean grids.',
+    },
+    {
+      name: 'Install smart thermostat',
+      // EPA ENERGY STAR estimates 8% savings on heating/cooling.
+      // ~60% of home energy is heating/cooling.
+      // Gas: 500 * 0.6 * 0.08 = 24 therms → 127 kg
+      // Elec: 10500 * 0.3 * 0.08 = 252 kWh → 252 * gridRate
+      savingsKg: Math.round((24 * 5.3 + 252 * gridRate) / baseline.householdSize),
+      category: 'Home',
+      applicable: true,
+      note: 'ENERGY STAR estimates ~8% savings on heating and cooling',
+    },
 
     // ── Food ──
     {

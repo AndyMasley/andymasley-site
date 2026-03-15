@@ -261,6 +261,38 @@ export function Methodology() {
             <p style={{ marginTop: '8px' }}>
               <strong>What this doesn't capture:</strong> wood burning, propane, heating oil (significant in rural New England), and solar self-consumption (which would reduce grid electricity). Users with these energy sources can override via the Refine section.
             </p>
+
+            <p style={{ marginTop: '16px', fontWeight: 700, fontSize: '0.85rem', color: 'var(--text, #1A1A18)' }}>Home personal action estimates</p>
+
+            <p style={{ marginTop: '8px' }}>
+              <strong>Install rooftop solar (7 kW):</strong> Saves <code>10,000 kWh/yr × gridRate ÷ householdSize</code>. A 7 kW system produces ~10,000 kWh/yr in average US conditions.
+              <br />Source: <Src href="https://pvwatts.nrel.gov/">NREL PVWatts Calculator</Src>
+            </p>
+
+            <p style={{ marginTop: '8px' }}>
+              <strong>Replace gas furnace with heat pump:</strong> Saves <code>(500 therms × 5.3 − 3,500 kWh × gridRate) ÷ householdSize</code>. Replaces ~500 therms/yr of gas heating with ~3,500 kWh of electricity (heat pump COP ~3.0). Net savings depend on grid — larger on clean grids.
+              <br />Source: <Src href="https://www.energy.gov/energysaver/heat-pump-systems">DOE — Heat Pump Systems</Src>
+            </p>
+
+            <p style={{ marginTop: '8px' }}>
+              <strong>Upgrade single-pane to triple-pane windows:</strong> Saves <code>(60 therms × 5.3 + 630 kWh × gridRate) ÷ householdSize</code>. Single-pane windows lose 25–30% of heating/cooling energy. Triple-pane cuts that loss by ~70%, saving roughly 20% of the heating/cooling bill. Heating/cooling is ~60% of total home energy.
+              <br />Source: <Src href="https://www.energy.gov/energysaver/energy-efficient-window-attachments">DOE — Energy-Efficient Windows</Src>, <Src href="https://www.energystar.gov/products/building_products/residential_windows_doors_skylights">ENERGY STAR Windows</Src>
+            </p>
+
+            <p style={{ marginTop: '8px' }}>
+              <strong>Switch gas water heater to heat pump water heater:</strong> Saves <code>(200 therms × 5.3 − 1,500 kWh × gridRate) ÷ householdSize</code>. Average gas water heater uses ~200 therms/yr. A heat pump water heater uses ~1,500 kWh/yr (COP ~3.5). Net savings depend on grid.
+              <br />Source: <Src href="https://www.energy.gov/energysaver/heat-pump-water-heaters">DOE — Heat Pump Water Heaters</Src>
+            </p>
+
+            <p style={{ marginTop: '8px' }}>
+              <strong>Install smart thermostat:</strong> Saves <code>(24 therms × 5.3 + 252 kWh × gridRate) ÷ householdSize</code>. ENERGY STAR estimates ~8% savings on heating and cooling. Heating/cooling is ~60% of home energy.
+              <br />Source: <Src href="https://www.energystar.gov/products/smart_thermostats">ENERGY STAR — Smart Thermostats</Src>
+            </p>
+
+            <p style={{ marginTop: '8px' }}>
+              <strong>Weatherize/insulate:</strong> Saves <code>~500 kg ÷ householdSize</code>. Sealing air leaks and adding insulation reduces heating and cooling energy by approximately 15%.
+              <br />Source: <Src href="https://www.energy.gov/energysaver/weatherize">DOE — Weatherize Your Home</Src>
+            </p>
           </Bucket>
 
           <Bucket title="Ground Transport" id="methodology-transport" isOpen={openBucketId === 'methodology-transport'} onToggle={() => toggleBucket('methodology-transport')}>
