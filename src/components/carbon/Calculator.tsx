@@ -20,6 +20,7 @@ import { RefineSection } from './RefineSection';
 import { PersonalChanges } from './PersonalChanges';
 import { SameLifeDifferentGrid } from './SameLifeDifferentGrid';
 import { ElectricitySection } from './ElectricitySection';
+import { LeverageLab } from './LeverageLab';
 import { StickyTotal } from './StickyTotal';
 
 export function Calculator() {
@@ -136,6 +137,13 @@ export function Calculator() {
 
       {/* ── Electricity deep dive ── */}
       <ElectricitySection baseline={baseline} />
+
+      {/* ── Section 7: Leverage Lab ── */}
+      <hr style={{ border: 'none', borderTop: '1px solid var(--divider, #DDD9D0)', margin: '3rem 0' }} />
+      <LeverageLab
+        userMaxPersonalReduction={footprint.totalKgCO2ePerYear}
+        userFootprint={footprint.totalKgCO2ePerYear}
+      />
     </div>
   );
 }
