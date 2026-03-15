@@ -205,16 +205,23 @@ export function Methodology() {
 
             <p style={{ marginTop: '12px' }}>
               <strong>Per-capita allocation:</strong> total household energy
-              emissions are divided by household size.
+              emissions are divided by household size. This is a simplification — adults typically consume more energy than children — but the error is small.
             </p>
 
             <p style={{ marginTop: '12px' }}>
               <strong>Formula:</strong>
               <br />
               <code>
-                homeKg = ((kWh &times; gridRate) + (therms &times; 5.3))
-                &times; urbanFactor / householdSize
+                homeKg = ((kWh × urbanFactor × gridRate) + (therms × urbanFactor × 5.3)) ÷ householdSize
               </code>
+            </p>
+            <p style={{ marginTop: '8px' }}>
+              <strong>Worked example</strong> (suburban, small house, household of 2.5, US avg grid):
+              <br />
+              <code>((10,500 × 1.0 × 0.39) + (500 × 1.0 × 5.3)) ÷ 2.5 = (4,095 + 2,650) ÷ 2.5 = 2,698 kg/yr</code>
+            </p>
+            <p style={{ marginTop: '8px' }}>
+              <strong>What this doesn't capture:</strong> wood burning, propane, heating oil (significant in rural New England), and solar self-consumption (which would reduce grid electricity). Users with these energy sources can override via the Refine section.
             </p>
           </Bucket>
 
@@ -289,7 +296,20 @@ export function Methodology() {
             <p style={{ marginTop: '12px' }}>
               <strong>Formula (car owners):</strong>
               <br />
-              <code>transportKg = annualMiles &times; emissionFactor</code>
+              <code>transportKg = annualMiles × emissionFactor(vehicle type)</code>
+            </p>
+            <p style={{ marginTop: '8px' }}>
+              <strong>Worked example</strong> (suburban, gas car):
+              <br />
+              <code>13,500 mi × 0.35 kg/mi = 4,725 kg/yr</code>
+            </p>
+            <p style={{ marginTop: '8px' }}>
+              <strong>Worked example</strong> (suburban, EV on US avg grid):
+              <br />
+              <code>13,500 mi × 0.3 kWh/mi × 0.39 kg/kWh = 1,580 kg/yr</code>
+            </p>
+            <p style={{ marginTop: '8px' }}>
+              <strong>What this doesn't capture:</strong> ride-hailing, motorcycle use, long-distance bus travel, or freight associated with personal deliveries. The transit estimate for car-free users is a rough allocation based on average transit ridership by area type.
             </p>
           </Bucket>
 
@@ -334,9 +354,19 @@ export function Methodology() {
               <strong>Formula:</strong>
               <br />
               <code>
-                flightKg = flights &times; 2,200 mi &times; 0.255 kg/mi
-                &times; classMultiplier
+                flightKg = flights × 2,200 mi × 0.255 kg/mi × classMultiplier
               </code>
+            </p>
+            <p style={{ marginTop: '8px' }}>
+              <strong>Worked example</strong> (2 economy round-trips):
+              <br />
+              <code>2 × 2,200 × 0.255 × 1.0 = 1,122 kg/yr</code>
+            </p>
+            <p style={{ marginTop: '8px' }}>
+              <strong>Why the radiative forcing multiplier matters:</strong> CO₂ emitted at altitude has additional warming effects beyond the CO₂ itself — contrails, NOx, and water vapor contribute roughly as much warming again. The <code>1.9×</code> multiplier is from <Src href="https://www.sciencedirect.com/science/article/pii/S1352231020305689">Lee et al. 2021</Src> and is already incorporated into the <code>0.255</code> factor. Without it, the raw CO₂-only factor would be ~<code>0.134 kg/mi</code>.
+            </p>
+            <p style={{ marginTop: '8px' }}>
+              <strong>What this doesn't capture:</strong> the model uses a single average trip distance. In reality, transatlantic flights (~4,400 mi round-trip) produce roughly twice the emissions of domestic flights. Users with known routes can enter specific distances in the Refine section.
             </p>
           </Bucket>
 
@@ -420,8 +450,19 @@ export function Methodology() {
               <strong>Formula:</strong>
               <br />
               <code>
-                goodsKg = monthlySpending &times; 12 &times; 0.22
+                goodsKg = monthlySpending × 12 × 0.22
               </code>
+            </p>
+            <p style={{ marginTop: '8px' }}>
+              <strong>Worked example</strong> ($1,200/mo):
+              <br />
+              <code>$1,200 × 12 × 0.22 = 3,168 kg/yr</code>
+            </p>
+            <p style={{ marginTop: '8px' }}>
+              <strong>Why 0.22 and not 0.50?</strong> The Jones & Kammen 2014 aggregate EEIO factor is ~$0.50/kg across <em>all</em> consumer spending. But food, housing energy, and transport are counted in their own buckets. The <code>0.22</code> factor applies only to the residual: clothing, electronics, healthcare, entertainment, household goods, and services. This avoids double-counting.
+            </p>
+            <p style={{ marginTop: '8px' }}>
+              <strong>Known limitation:</strong> EEIO factors are sector averages. A dollar spent on fast fashion has much higher embodied carbon than a dollar spent on a haircut. The spending field is a blunt instrument — users who know their spending patterns will get better results from category-specific calculators.
             </p>
           </Bucket>
 
@@ -447,66 +488,109 @@ export function Methodology() {
 
           <Bucket title="Systemic Actions (Expected Values)">
             <p>
-              Systemic actions use an{' '}
-              <strong>expected value framework</strong>:
-              <br />
+              Every systemic action uses the same <strong>expected value framework</strong>:
+            </p>
+            <p style={{ marginTop: '8px' }}>
               <code>
-                expectedImpact = probability &times; totalEmissionsAffected
-                &times; attributionFraction
+                expectedKg/yr = P(success) × annualGeneration(MWh) × emissionRate(kg/MWh) × timeHorizon(yr) × attribution ÷ timeHorizon
               </code>
             </p>
-
-            <p style={{ marginTop: '12px' }}>
-              <strong>Nuclear plant (prevent closure):</strong>
-              <br />
-              <code>
-                1 GW &times; 90% capacity factor &times; 8,760 hrs &times; 0.41
-                kg/kWh counterfactual
-              </code>
-              <br />
-              The counterfactual assumes displaced generation would come from
-              natural gas.
-              <br />
-              Sources:{' '}
-              <Src href="https://www.eia.gov/electricity/monthly/">
-                EIA Electric Power Monthly
-              </Src>
-              ,{' '}
-              <Src href="https://www.epa.gov/egrid">
-                EPA eGRID (gas counterfactual rates)
-              </Src>
+            <p style={{ marginTop: '8px' }}>
+              <strong>Attribution</strong> = 1 ÷ coalition size. This is the fraction of credit assigned to one person in the campaign. Coalition sizes are estimates — the true number of people who materially contribute to any campaign outcome is unknowable, so we use order-of-magnitude estimates.
+            </p>
+            <p style={{ marginTop: '8px' }}>
+              <strong>Probability of success</strong> reflects how likely the campaign is to achieve its goal. We show three scenarios (low, central, high) for every case. These are subjective estimates informed by historical base rates for similar campaigns.
             </p>
 
-            <p style={{ marginTop: '12px' }}>
-              <strong>Solar farm:</strong>
-              <br />
-              <code>500 MW &times; 25% capacity factor &times; 8,760 hrs</code>
-              <br />
-              Source:{' '}
-              <Src href="https://atb.nrel.gov/">
-                NREL Annual Technology Baseline
-              </Src>
-            </p>
+            <p style={{ marginTop: '16px', fontWeight: 700, fontSize: '0.85rem', color: 'var(--text, #1A1A18)' }}>1. Prevent closure of one nuclear plant</p>
+            <ul>
+              <li>Plant size: <code>1 GW</code> at <code>90%</code> capacity factor = <code>7,884,000 MWh/yr</code></li>
+              <li>Counterfactual: replaced by combined-cycle gas at <code>0.41 kg CO₂e/kWh</code> (<Src href="https://www.epa.gov/egrid">EPA eGRID</Src>)</li>
+              <li>Coalition size: <code>1,000</code> serious advocates → attribution = <code>1/1,000</code></li>
+              <li>P(success): low <code>2%</code>, central <code>10%</code>, high <code>25%</code></li>
+              <li>Time horizon: <code>20 years</code> (remaining plant life)</li>
+              <li>Duration of campaign: <code>2 years</code></li>
+              <li>Worked example (central): <code>7,884,000 × 410 × 20 × 0.001 × 0.10 ÷ 20 = 323,244 kg/yr</code> per person</li>
+              <li>Sources: <Src href="https://www.eia.gov/electricity/monthly/">EIA Electric Power Monthly</Src>, <Src href="https://www.epa.gov/egrid">EPA eGRID</Src>, <Src href="https://www.ucsusa.org/resources/nuclear-power-dilemma">UCS nuclear plant economics</Src></li>
+            </ul>
 
-            <p style={{ marginTop: '12px' }}>
-              <strong>Coal plant retirement:</strong>
-              <br />
-              <code>0.95 kg CO₂e/kWh</code> for subcritical coal
-              <br />
-              Source:{' '}
-              <Src href="https://www.epa.gov/egrid">EPA eGRID</Src>
-            </p>
+            <p style={{ marginTop: '16px', fontWeight: 700, fontSize: '0.85rem', color: 'var(--text, #1A1A18)' }}>2. Help pass a state clean energy standard</p>
+            <ul>
+              <li>Load affected: <code>60,000,000 MWh/yr</code> (mid-size state electricity sector)</li>
+              <li>Displaced generation: state average at <code>0.45 kg CO₂e/kWh</code></li>
+              <li>Coalition size: <code>5,000</code> advocates → attribution = <code>1/5,000</code></li>
+              <li>P(success): low <code>0.5%</code>, central <code>3%</code>, high <code>10%</code></li>
+              <li>Time horizon: <code>15 years</code></li>
+              <li>Worked example (central): <code>60,000,000 × 450 × 15 × 0.0002 × 0.03 ÷ 15 = 162,000 kg/yr</code></li>
+              <li>Sources: <Src href="https://www.eia.gov/electricity/state/">EIA State Electricity Profiles</Src>, <Src href="https://www.dsireusa.org/">DSIRE renewable policy database</Src></li>
+            </ul>
 
-            <p style={{ marginTop: '12px' }}>
-              <strong>Effective climate charity:</strong> central estimate of
-              approximately <code>$1 per tonne CO₂e</code> averted for top
-              recommendations (Clean Air Task Force, Carbon180).
-              <br />
-              Source:{' '}
-              <Src href="https://founderspledge.com/research/fp-climate-change">
-                Founders Pledge Climate Change Research
-              </Src>
+            <p style={{ marginTop: '16px', fontWeight: 700, fontSize: '0.85rem', color: 'var(--text, #1A1A18)' }}>3. Campaign for one coal plant early retirement</p>
+            <ul>
+              <li>Plant: <code>500 MW</code> coal = <code>3,500,000 MWh/yr</code></li>
+              <li>Emission rate: subcritical coal at <code>0.95 kg CO₂e/kWh</code> (<Src href="https://www.epa.gov/egrid">EPA eGRID</Src>)</li>
+              <li>Coalition size: <code>500</code> → attribution = <code>1/500</code></li>
+              <li>P(success): low <code>1%</code>, central <code>5%</code>, high <code>15%</code></li>
+              <li>Time horizon: <code>10 years</code> (early retirement = 10 years ahead of schedule)</li>
+              <li>Worked example (central): <code>3,500,000 × 950 × 10 × 0.002 × 0.05 ÷ 10 = 332,500 kg/yr</code></li>
+              <li>Sources: <Src href="https://www.epa.gov/egrid">EPA eGRID</Src>, <Src href="https://www.sierraclub.org/campaign/beyond-coal">Sierra Club Beyond Coal campaign data</Src></li>
+            </ul>
+
+            <p style={{ marginTop: '16px', fontWeight: 700, fontSize: '0.85rem', color: 'var(--text, #1A1A18)' }}>4. Serve on permitting for 500 MW solar farm</p>
+            <ul>
+              <li>Generation: <code>500 MW × 25% CF × 8,760 hrs = 1,095,000 MWh/yr</code></li>
+              <li>Displaced generation: grid average at <code>0.39 kg CO₂e/kWh</code></li>
+              <li>Coalition size: <code>50</code> (local committee) → attribution = <code>1/50</code></li>
+              <li>P(success): low <code>10%</code>, central <code>40%</code>, high <code>70%</code></li>
+              <li>Time horizon: <code>30 years</code> (solar farm lifespan)</li>
+              <li>Worked example (central): <code>1,095,000 × 390 × 30 × 0.02 × 0.40 ÷ 30 = 3,416,400 kg/yr</code></li>
+              <li>Source: <Src href="https://atb.nrel.gov/">NREL Annual Technology Baseline</Src></li>
+            </ul>
+
+            <p style={{ marginTop: '16px', fontWeight: 700, fontSize: '0.85rem', color: 'var(--text, #1A1A18)' }}>5. Workplace clean power purchase agreement</p>
+            <ul>
+              <li>Load: <code>20,000 MWh/yr</code> (mid-size employer)</li>
+              <li>Displaced: grid average at <code>0.39 kg CO₂e/kWh</code></li>
+              <li>Coalition size: <code>5</code> (you + a few allies) → attribution = <code>1/5</code></li>
+              <li>P(success): low <code>5%</code>, central <code>20%</code>, high <code>50%</code></li>
+              <li>Time horizon: <code>15 years</code> (PPA contract length)</li>
+              <li>Worked example (central): <code>20,000 × 390 × 15 × 0.20 × 0.20 ÷ 15 = 312,000 kg/yr</code></li>
+              <li>Sources: <Src href="https://rebuyers.org/">Renewable Energy Buyers Alliance</Src></li>
+            </ul>
+
+            <p style={{ marginTop: '16px', fontWeight: 700, fontSize: '0.85rem', color: 'var(--text, #1A1A18)' }}>6. Advocate for transmission reform</p>
+            <ul>
+              <li>Load affected: <code>200,000,000 MWh/yr</code> (unblocking interconnection queues nationally)</li>
+              <li>Displaced: gas at <code>0.41 kg CO₂e/kWh</code></li>
+              <li>Coalition size: <code>10,000</code> → attribution = <code>1/10,000</code></li>
+              <li>P(success): low <code>0.1%</code>, central <code>1%</code>, high <code>5%</code></li>
+              <li>Time horizon: <code>20 years</code></li>
+              <li>Worked example (central): <code>200,000,000 × 410 × 20 × 0.0001 × 0.01 ÷ 20 = 82,000 kg/yr</code></li>
+              <li>Sources: <Src href="https://emp.lbl.gov/queues">LBNL Queued Up report</Src>, <Src href="https://www.ferc.gov/electric-transmission">FERC transmission planning</Src></li>
+            </ul>
+
+            <p style={{ marginTop: '16px', fontWeight: 700, fontSize: '0.85rem', color: 'var(--text, #1A1A18)' }}>7. Donate $200/yr to effective climate charity</p>
+            <ul>
+              <li>This case is modeled differently — the "probability" field captures cost-effectiveness uncertainty rather than campaign success probability</li>
+              <li>Central estimate: <code>$1 per tonne CO₂e</code> averted → $200 = 200 tonnes = <code>200,000 kg</code></li>
+              <li>Pessimistic ($10/tonne): $200 = 20 tonnes = <code>20,000 kg</code></li>
+              <li>Optimistic ($0.10/tonne): $200 = 2,000 tonnes = <code>2,000,000 kg</code></li>
+              <li>Coalition size: <code>1</code> (individual donation)</li>
+              <li>The wide range reflects genuine uncertainty in charity cost-effectiveness. Top recommendations work primarily through policy advocacy (lobbying for clean energy standards, R&D funding) rather than direct abatement</li>
+              <li>Source: <Src href="https://founderspledge.com/research/fp-climate-change">Founders Pledge — Climate Change</Src></li>
+              <li>Top recommended organizations: <Src href="https://www.catf.us/">Clean Air Task Force (CATF)</Src>, <Src href="https://carbon180.org/">Carbon180</Src></li>
+            </ul>
+
+            <p style={{ marginTop: '16px' }}>
+              <strong>Important caveats:</strong>
             </p>
+            <ul>
+              <li>Coalition sizes are order-of-magnitude estimates. The true number of people who materially influence a campaign outcome is inherently uncertain.</li>
+              <li>Probability estimates are subjective. We calibrate to historical base rates where possible (e.g., what fraction of nuclear closure campaigns succeed) but these are rough.</li>
+              <li>Attribution is linear (1/N). In reality, marginal contributions vary — the 50th person may matter more than the 500th. We use linear attribution for simplicity and because better models require case-specific information we don't have.</li>
+              <li>Counterfactual generation mix assumptions significantly affect the numbers. If a closed nuclear plant is replaced by renewables rather than gas, the avoided emissions are much lower.</li>
+              <li>Time horizons assume the intervention persists for the stated period. Early reversal (e.g., a PPA cancelled, a plant re-opened) would reduce the realized value.</li>
+            </ul>
           </Bucket>
 
           <Bucket title="Reference Lines">
