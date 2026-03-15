@@ -110,7 +110,7 @@ export function Calculator() {
         toggleSystemic={toggleSystemic}
       />
 
-      <div style={{ maxWidth: 900, margin: '0 auto', padding: '0 24px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
         <AdvancedSection>
           <AdvancedEditor
             baseline={baseline}
