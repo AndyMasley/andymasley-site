@@ -108,10 +108,6 @@ function Dot({ on }: { on: boolean }) {
 }
 
 // Actions that have editable assumptions
-const EDITABLE_ACTIONS: Record<string, { paramLabel: string; defaultValue: number; unit: string }> = {
-  'Stop using AI chatbots': { paramLabel: 'Queries/day', defaultValue: 50, unit: 'queries/day' },
-  'Reduce streaming by half': { paramLabel: 'Hours/day', defaultValue: 2, unit: 'hrs/day' },
-};
 
 export function AdvancedEditor({
   baseline,
@@ -128,7 +124,6 @@ export function AdvancedEditor({
   onSystemicOverridesChange,
   footprintKg,
 }: AdvancedEditorProps) {
-  const [openCategory, setOpenCategory] = useState<string | null>(null);
 
   const housing = HOUSING_DEFAULTS[baseline.housingType] ?? HOUSING_DEFAULTS['single-family-small'];
   const defaultMiles = TRANSPORT_MILES[baseline.urbanForm] ?? 13500;
@@ -272,85 +267,72 @@ export function AdvancedEditor({
             </div>
           </div>
 
-          {/* COLUMN 2: PERSONAL CUTS (detailed) */}
+          {/* COLUMN 2: PERSONAL CUTS (all visible, with inline editable params) */}
           <div className="cf-impact-col">
             <div style={colHead}>Personal cuts</div>
             <div className="cf-impact-scroll">
-              {groupedActions.map(group => {
-                const isOpen = openCategory === group.category;
-                const enabledCount = group.actions.filter(a => enabledPersonal.has(a.name)).length;
-                const groupSaved = group.actions.filter(a => enabledPersonal.has(a.name)).reduce((s, a) => s + a.savingsKg, 0);
-                return (
-                  <div key={group.category} style={{ marginBottom: '2px' }}>
-                    <button
-                      onClick={() => setOpenCategory(isOpen ? null : group.category)}
-                      style={{
-                        display: 'flex', alignItems: 'center', gap: '6px', width: '100%',
-                        padding: '5px 6px', border: 'none', borderRadius: '5px',
-                        background: isOpen ? 'rgba(74,124,89,0.06)' : 'transparent',
-                        cursor: 'pointer', fontFamily: 'inherit', fontSize: '0.68rem',
-                        fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase',
-                        color: 'var(--text, #1A1A18)', textAlign: 'left', minHeight: '28px',
-                      }}
-                      aria-expanded={isOpen}
-                    >
-                      <span style={{ fontSize: '0.55rem', transition: 'transform 0.15s', transform: isOpen ? 'rotate(90deg)' : 'none', color: MUTED }}>&#9654;</span>
-                      <span style={{ flex: 1 }}>{group.category}</span>
-                      {enabledCount > 0 && (
-                        <span style={{ fontSize: '0.62rem', fontWeight: 700, color: GREEN, fontVariantNumeric: 'tabular-nums' }}>
-                          {enabledCount} &middot; &minus;{groupSaved.toLocaleString()}
-                        </span>
-                      )}
-                      <span style={{ fontSize: '0.55rem', color: MUTED, fontWeight: 400 }}>{group.actions.length}</span>
-                    </button>
-                    {isOpen && (
-                      <div style={{ paddingLeft: '4px', paddingBottom: '4px' }}>
-                        {group.actions.map(action => {
-                          const isOn = enabledPersonal.has(action.name);
-                          const editable = EDITABLE_ACTIONS[action.name];
-                          const isDrivingAction = action.name.includes('driving') || action.name.includes('Bike commute') || action.name.includes('public transit') || action.name.includes('ride-hailing');
-                          const isFlightAction = action.category === 'Flights';
-                          return (
-                            <div key={action.name}>
-                              <button onClick={() => togglePersonal(action.name)} className="cf-toggle-row" data-on={isOn} aria-pressed={isOn} style={{ minHeight: '30px', padding: '3px 6px' }}>
-                                <Dot on={isOn} />
-                                <span style={{ flex: 1, fontWeight: isOn ? 600 : 400, fontSize: '0.75rem' }}>{action.name}</span>
-                                <span style={{ fontWeight: 700, color: isOn ? GREEN : MUTED, fontVariantNumeric: 'tabular-nums', fontSize: '0.7rem', whiteSpace: 'nowrap' }}>
-                                  &minus;{action.savingsKg.toLocaleString()}
-                                </span>
-                              </button>
-                              {isOn && editable && (
-                                <div style={{ padding: '2px 8px 6px 30px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                  <span style={{ fontSize: '0.65rem', color: MUTED }}>{editable.paramLabel}:</span>
-                                  <input
-                                    type="number"
-                                    min={0}
-                                    style={INLINE_INPUT_STYLE}
-                                    defaultValue={editable.defaultValue}
-                                    readOnly
-                                    title={`Default: ${editable.defaultValue} ${editable.unit}`}
-                                  />
-                                  <span style={{ fontSize: '0.6rem', color: MUTED }}>{editable.unit}</span>
-                                </div>
-                              )}
-                              {isOn && isDrivingAction && (
-                                <div style={{ padding: '2px 8px 6px 30px', fontSize: '0.65rem', color: MUTED }}>
-                                  Based on {(overrides.milesPerYear ?? defaultMiles).toLocaleString()} mi/yr
-                                </div>
-                              )}
-                              {isOn && isFlightAction && (
-                                <div style={{ padding: '2px 8px 6px 30px', fontSize: '0.65rem', color: MUTED }}>
-                                  Based on {baseline.flightsPerYear} flight{baseline.flightsPerYear !== 1 ? 's' : ''}/yr
-                                </div>
-                              )}
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
+              {groupedActions.map(group => (
+                <div key={group.category} style={{ marginBottom: '8px' }}>
+                  <div style={{ fontSize: '0.58rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: MUTED, padding: '4px 0 2px', borderBottom: `1px solid ${DIVIDER}`, marginBottom: '2px' }}>
+                    {group.category}
                   </div>
-                );
-              })}
+                  {group.actions.map(action => {
+                    const isOn = enabledPersonal.has(action.name);
+                    return (
+                      <div key={action.name}>
+                        <button onClick={() => togglePersonal(action.name)} className="cf-toggle-row" data-on={isOn} aria-pressed={isOn} style={{ minHeight: '28px', padding: '2px 6px' }}>
+                          <Dot on={isOn} />
+                          <span style={{ flex: 1, fontWeight: isOn ? 600 : 400, fontSize: '0.72rem' }}>{action.name}</span>
+                          <span style={{ fontWeight: 700, color: isOn ? GREEN : MUTED, fontVariantNumeric: 'tabular-nums', fontSize: '0.68rem', whiteSpace: 'nowrap' }}>
+                            −{action.savingsKg.toLocaleString()}
+                          </span>
+                        </button>
+                        {isOn && (
+                          <div style={{ padding: '1px 6px 5px 30px', fontSize: '0.62rem', color: MUTED, lineHeight: 1.4 }}>
+                            {action.note}
+                            {(action.name.includes('driving') || action.name.includes('Bike commute') || action.name.includes('transit') || action.name.includes('ride-hailing')) && (
+                              <div style={{ marginTop: '3px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                Miles/yr: <input type="number" min={0} step={500} style={INLINE_INPUT_STYLE} value={overrides.milesPerYear ?? ''} placeholder={String(defaultMiles)} onChange={e => updateOverride('milesPerYear', e.target.value)} onClick={e => e.stopPropagation()} />
+                              </div>
+                            )}
+                            {action.category === 'Flights' && (
+                              <div style={{ marginTop: '3px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                Flights/yr: <input type="number" min={0} step={1} style={{ ...INLINE_INPUT_STYLE, width: '55px' }} value={baseline.flightsPerYear} onChange={e => onBaselineChange({ ...baseline, flightsPerYear: Math.max(0, parseInt(e.target.value) || 0) })} onClick={e => e.stopPropagation()} />
+                              </div>
+                            )}
+                            {action.name === 'Stop using AI chatbots' && (
+                              <div style={{ marginTop: '3px' }}>Based on 50 queries/day × 0.28 g each</div>
+                            )}
+                            {action.name === 'Reduce streaming by half' && (
+                              <div style={{ marginTop: '3px' }}>Based on ~2 hrs/day × 0.1 kWh/hr</div>
+                            )}
+                            {action.name.includes('solar') && (
+                              <div style={{ marginTop: '3px' }}>7 kW system → ~10,000 kWh/yr displaced</div>
+                            )}
+                            {action.name.includes('heat pump') && action.category === 'Home' && !action.name.includes('water') && (
+                              <div style={{ marginTop: '3px' }}>Saves ~500 therms gas, adds ~3,500 kWh electricity</div>
+                            )}
+                            {action.name.includes('water heater') && (
+                              <div style={{ marginTop: '3px' }}>Saves ~200 therms gas, adds ~1,500 kWh electricity</div>
+                            )}
+                            {action.name.includes('window') && (
+                              <div style={{ marginTop: '3px' }}>Reduces heating/cooling loss ~20%</div>
+                            )}
+                            {action.name.includes('smart thermostat') && (
+                              <div style={{ marginTop: '3px' }}>ENERGY STAR: ~8% savings on heating/cooling</div>
+                            )}
+                            {action.name.includes('spending') && (
+                              <div style={{ marginTop: '3px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                Monthly $: <input type="number" min={0} step={100} style={INLINE_INPUT_STYLE} value={overrides.goodsSpendingPerMonth ?? ''} placeholder={String(baseline.monthlySpending)} onChange={e => updateOverride('goodsSpendingPerMonth', e.target.value)} onClick={e => e.stopPropagation()} />
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              ))}
             </div>
           </div>
 
