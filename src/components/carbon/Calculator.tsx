@@ -1,12 +1,13 @@
 /**
- * Phase 6 — Main calculator component
+ * Phase 7 — Restructured calculator for persuasive impact
  *
- * Implements the full narrative arc with trust layer:
- * Quick estimate → Refine → Results (clickable, exportable, saveable) →
- * Personal changes → Same life different grid → Electricity →
- * Leverage Lab → Methods/sources/changelog
- *
- * Phase 6 additions: archetype presets, comparison modes, URL persistence.
+ * Narrative arc:
+ * 1. Quick estimate (archetype dropdown + baseline form)
+ * 2. Your footprint (result + breakdown — compact)
+ * 3. Top 3 personal actions (brief)
+ * 4. THE TURN — personal ceiling vs grid impact visualization
+ * 5. What you can do about the grid (tangible actions)
+ * 6. Go deeper (collapsible: refine, all actions, electricity, leverage lab, etc.)
  */
 
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
@@ -14,6 +15,8 @@ import { DEFAULT_BASELINE } from '@/lib/carbon/types';
 import type { BaselineInputs, DetailedInputs } from '@/lib/carbon/types';
 import { BUCKET_META } from '@/lib/carbon/types';
 import { computeFootprint } from '@/lib/carbon/baseline';
+import { computePersonalActions } from '@/lib/carbon/personal-actions';
+import { computeLeverage } from '@/lib/carbon/leverage';
 import { BaselineForm } from './BaselineForm';
 import { BucketBar } from './BucketBar';
 import { ResidualWedge } from './ResidualWedge';
@@ -27,10 +30,21 @@ import { ClickableValue } from './ClickableValue';
 import { ExportButton } from './ExportButton';
 import { ScenarioManager } from './ScenarioManager';
 import { Changelog } from './Changelog';
-import { Archetypes, ARCHETYPES } from './Archetypes';
+import { ARCHETYPES } from './Archetypes';
 import type { Archetype } from './Archetypes';
 import { ComparisonModes, getComparisonContext } from './ComparisonModes';
 import type { ComparisonModeId } from './ComparisonModes';
+import { TheTurn } from './TheTurn';
+import { AdvancedSection } from './AdvancedSection';
+
+// ---------------------------------------------------------------------------
+// Precompute archetype totals for the dropdown labels
+// ---------------------------------------------------------------------------
+
+const ARCHETYPE_TOTALS: Record<string, number> = {};
+for (const arch of ARCHETYPES) {
+  ARCHETYPE_TOTALS[arch.id] = computeFootprint(arch.baseline).totalKgCO2ePerYear;
+}
 
 // ---------------------------------------------------------------------------
 // URL encoding/decoding for scenario persistence
@@ -137,6 +151,13 @@ function decodeScenarioFromURL(search: string): DecodedScenario | null {
   return { baseline, overrides, archetypeId, comparisonMode };
 }
 
+// Label style for the archetype dropdown
+const LABEL_STYLE: React.CSSProperties = {
+  fontSize: '0.82rem',
+  fontWeight: 600,
+  color: 'var(--text, #1A1A18)',
+};
+
 // ---------------------------------------------------------------------------
 // Calculator component
 // ---------------------------------------------------------------------------
@@ -156,6 +177,7 @@ export function Calculator() {
   const [showUncertainty, setShowUncertainty] = useState(false);
   const [copyFeedback, setCopyFeedback] = useState(false);
   const resultsRef = useRef<HTMLDivElement>(null);
+  const advancedRef = useRef<HTMLDivElement>(null);
 
   const footprint = useMemo(
     () => computeFootprint(baseline, overrides),
@@ -184,16 +206,38 @@ export function Calculator() {
     [footprint.totalKgCO2ePerYear, comparisonMode, baseline],
   );
 
+  // Personal actions — top 3 for inline display
+  const top3Actions = useMemo(
+    () => computePersonalActions(baseline, footprint).slice(0, 3),
+    [baseline, footprint],
+  );
+
+  // Leverage — for TheTurn
+  const leverageData = useMemo(
+    () => computeLeverage(footprint.totalKgCO2ePerYear),
+    [footprint.totalKgCO2ePerYear],
+  );
+
+  const topLeverageCase = useMemo(() => {
+    const sorted = [...leverageData.cases].sort(
+      (a, b) => b.expectedKgCO2ePerYear.central - a.expectedKgCO2ePerYear.central,
+    );
+    return sorted[0] ?? null;
+  }, [leverageData]);
+
   const handleLoadScenario = (b: BaselineInputs, o: Partial<DetailedInputs>) => {
     setBaseline(b);
     setOverrides(o);
     setActiveArchetypeId(null);
   };
 
-  const handleSelectArchetype = useCallback((arch: Archetype) => {
-    setBaseline(arch.baseline);
-    setOverrides({});
-    setActiveArchetypeId(arch.id);
+  const handleSelectArchetype = useCallback((archId: string) => {
+    const arch = ARCHETYPES.find(a => a.id === archId);
+    if (arch) {
+      setBaseline(arch.baseline);
+      setOverrides({});
+      setActiveArchetypeId(arch.id);
+    }
   }, []);
 
   const handleCopyShareLink = useCallback(() => {
@@ -204,6 +248,10 @@ export function Calculator() {
       setTimeout(() => setCopyFeedback(false), 2000);
     });
   }, [baseline, overrides, activeArchetypeId, comparisonMode]);
+
+  const scrollToAdvanced = useCallback(() => {
+    advancedRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, []);
 
   useEffect(() => {
     const el = resultsRef.current;
@@ -224,31 +272,51 @@ export function Calculator() {
         visible={showSticky}
       />
 
-      {/* -- Archetypes -- */}
-      <section style={{ marginBottom: '3rem' }}>
-        <Archetypes
-          activeArchetypeId={activeArchetypeId}
-          onSelect={handleSelectArchetype}
-        />
-      </section>
-
-      {/* -- Quick estimate -- */}
+      {/* -- Section 1: Quick estimate -- */}
       <section style={{ marginBottom: '3rem' }}>
         <div className="cf-section-label">QUICK ESTIMATE</div>
+
+        {/* Archetype dropdown */}
+        <div style={{ display: 'flex', gap: '10px', alignItems: 'center', marginBottom: '1rem' }}>
+          <label style={LABEL_STYLE}>Start from a profile</label>
+          <select
+            value={activeArchetypeId || ''}
+            onChange={e => {
+              const val = e.target.value;
+              if (val) {
+                handleSelectArchetype(val);
+              } else {
+                setActiveArchetypeId(null);
+              }
+            }}
+            style={{
+              padding: '6px 10px',
+              fontSize: '0.82rem',
+              fontFamily: 'inherit',
+              border: '1px solid var(--divider, #DDD9D0)',
+              borderRadius: '6px',
+              background: 'var(--panel, #EFECE5)',
+              color: 'var(--text, #1A1A18)',
+              cursor: 'pointer',
+              minHeight: '44px',
+            }}
+          >
+            <option value="">Custom</option>
+            {ARCHETYPES.map(a => (
+              <option key={a.id} value={a.id}>
+                {a.name} (~{ARCHETYPE_TOTALS[a.id].toLocaleString()} kg)
+              </option>
+            ))}
+          </select>
+        </div>
+
         <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary, #6B6B60)', lineHeight: 1.7, marginBottom: '1rem', maxWidth: 600 }}>
           Answer a few questions for a first estimate. We fill in the rest using EPA data and national averages — you can replace any default later.
         </p>
         <BaselineForm value={baseline} onChange={(b) => { setBaseline(b); setActiveArchetypeId(null); }} />
       </section>
 
-      {/* -- Refine -- */}
-      <RefineSection
-        buckets={footprint.buckets}
-        overrides={overrides}
-        onOverridesChange={setOverrides}
-      />
-
-      {/* -- Results -- */}
+      {/* -- Section 2: Your footprint -- */}
       <section ref={resultsRef} style={{ marginBottom: '3rem' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '10px', marginBottom: '0.5rem' }}>
           <div className="cf-section-label">YOUR ESTIMATED FOOTPRINT</div>
@@ -361,43 +429,148 @@ export function Calculator() {
           </a>
         </div>
 
-        <ResidualWedge totalKg={footprint.totalKgCO2ePerYear} residualKg={footprint.residualKgCO2ePerYear} />
         <BucketBar buckets={footprint.buckets} totalKg={footprint.totalKgCO2ePerYear} />
-
-        {/* Comparison modes */}
-        <ComparisonModes
-          baseline={baseline}
-          overrides={overrides}
-          footprint={footprint}
-          activeMode={comparisonMode}
-          onModeChange={setComparisonMode}
-        />
-
-        {/* Scenario management */}
-        <ScenarioManager
-          baseline={baseline}
-          overrides={overrides}
-          totalKg={footprint.totalKgCO2ePerYear}
-          onLoad={handleLoadScenario}
-        />
+        <ResidualWedge totalKg={footprint.totalKgCO2ePerYear} residualKg={footprint.residualKgCO2ePerYear} />
       </section>
 
-      {/* -- Personal changes -- */}
-      <PersonalChanges baseline={baseline} footprint={footprint} />
+      {/* -- Section 3: Top 3 personal actions -- */}
+      {top3Actions.length > 0 && (
+        <section style={{ marginBottom: '3rem' }}>
+          <div className="cf-section-label">WHAT YOU CAN CHANGE</div>
+          <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary, #6B6B60)', lineHeight: 1.7, marginBottom: '1rem', maxWidth: 600 }}>
+            Your highest-impact personal actions.
+          </p>
 
-      {/* -- Same life, different grid -- */}
-      <SameLifeDifferentGrid baseline={baseline} overrides={overrides} todayFootprint={footprint} />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
+            {top3Actions.map(action => (
+              <div key={action.name} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', padding: '10px 0', borderBottom: '1px solid var(--divider, #DDD9D0)' }}>
+                <div>
+                  <div style={{ fontWeight: 600, fontSize: '0.88rem' }}>{action.name}</div>
+                  <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary, #6B6B60)' }}>{action.note}</div>
+                </div>
+                <span style={{ fontWeight: 700, color: 'var(--green, #4A7C59)', whiteSpace: 'nowrap', marginLeft: '12px' }}>
+                  −{action.savingsKg.toLocaleString()} kg/yr
+                </span>
+              </div>
+            ))}
+          </div>
 
-      {/* -- Electricity deep dive -- */}
-      <ElectricitySection baseline={baseline} />
+          <button
+            onClick={scrollToAdvanced}
+            style={{
+              marginTop: '0.75rem',
+              padding: '0',
+              border: 'none',
+              background: 'transparent',
+              fontFamily: 'inherit',
+              fontSize: '0.78rem',
+              fontWeight: 600,
+              color: 'var(--accent, #8B2E2E)',
+              cursor: 'pointer',
+            }}
+          >
+            See all actions →
+          </button>
+        </section>
+      )}
 
-      {/* -- Leverage Lab -- */}
-      <hr style={{ border: 'none', borderTop: '1px solid var(--divider, #DDD9D0)', margin: '3rem 0' }} />
-      <LeverageLab userMaxPersonalReduction={footprint.totalKgCO2ePerYear} userFootprint={footprint.totalKgCO2ePerYear} />
+      {/* -- Section 4: THE TURN -- */}
+      {topLeverageCase && (
+        <TheTurn
+          userFootprintKg={footprint.totalKgCO2ePerYear}
+          topLeverageAnnualKg={topLeverageCase.expectedKgCO2ePerYear}
+          leverageMultiple={topLeverageCase.leverageMultiple.central}
+          leverageCaseName={topLeverageCase.case.name}
+        />
+      )}
 
-      {/* -- Methods, sources, changelog -- */}
-      <hr style={{ border: 'none', borderTop: '1px solid var(--divider, #DDD9D0)', margin: '3rem 0' }} />
-      <Changelog />
+      {/* -- Section 5: What you can do about the grid -- */}
+      <section style={{ marginBottom: '3rem' }}>
+        <div className="cf-section-label">WHAT YOU CAN DO ABOUT THE GRID</div>
+        <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary, #6B6B60)', lineHeight: 1.7, marginBottom: '1.5rem', maxWidth: 600 }}>
+          The grid affects everyone. Here's how to help clean it.
+        </p>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', marginBottom: '1.5rem' }}>
+          <div style={{ padding: '12px 16px', background: 'var(--panel, #EFECE5)', borderRadius: '6px' }}>
+            <div style={{ fontWeight: 600, fontSize: '0.88rem', marginBottom: '4px' }}>
+              Attend one public utility commission hearing
+            </div>
+            <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary, #6B6B60)', lineHeight: 1.5 }}>
+              Utility commissions decide how your electricity is generated. Public comments are part of the official record and shape decisions worth billions.
+            </div>
+          </div>
+          <div style={{ padding: '12px 16px', background: 'var(--panel, #EFECE5)', borderRadius: '6px' }}>
+            <div style={{ fontWeight: 600, fontSize: '0.88rem', marginBottom: '4px' }}>
+              Join a local clean energy campaign
+            </div>
+            <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary, #6B6B60)', lineHeight: 1.5 }}>
+              Organized groups have changed the trajectory of coal plants, solar farms, and grid policy. One person joining shifts the coalition size in every expected value calculation.
+            </div>
+          </div>
+          <div style={{ padding: '12px 16px', background: 'var(--panel, #EFECE5)', borderRadius: '6px' }}>
+            <div style={{ fontWeight: 600, fontSize: '0.88rem', marginBottom: '4px' }}>
+              Contact your state representative about clean energy legislation
+            </div>
+            <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary, #6B6B60)', lineHeight: 1.5 }}>
+              State legislatures set renewable portfolio standards, approve utility rate cases, and fund efficiency programs. A constituent phone call takes 5 minutes.
+            </div>
+          </div>
+        </div>
+
+        <div style={{
+          padding: '10px 14px',
+          background: 'var(--panel, #EFECE5)',
+          borderRadius: '6px',
+          borderLeft: '3px solid var(--accent, #8B2E2E)',
+          fontSize: '0.78rem',
+          color: 'var(--text-secondary, #6B6B60)',
+          lineHeight: 1.6,
+        }}>
+          Every leverage number on this page is an expected value: probability × impact ÷ coalition size. Even conservative estimates exceed what personal lifestyle changes can achieve.
+        </div>
+      </section>
+
+      {/* -- Section 6: Go deeper -- */}
+      <div ref={advancedRef}>
+        <AdvancedSection>
+          <RefineSection
+            buckets={footprint.buckets}
+            overrides={overrides}
+            onOverridesChange={setOverrides}
+          />
+
+          <PersonalChanges baseline={baseline} footprint={footprint} />
+
+          <SameLifeDifferentGrid baseline={baseline} overrides={overrides} todayFootprint={footprint} />
+
+          <ElectricitySection baseline={baseline} />
+
+          {/* Comparison modes */}
+          <section style={{ marginBottom: '3rem' }}>
+            <ComparisonModes
+              baseline={baseline}
+              overrides={overrides}
+              footprint={footprint}
+              activeMode={comparisonMode}
+              onModeChange={setComparisonMode}
+            />
+          </section>
+
+          <hr style={{ border: 'none', borderTop: '1px solid var(--divider, #DDD9D0)', margin: '3rem 0' }} />
+          <LeverageLab userMaxPersonalReduction={footprint.totalKgCO2ePerYear} userFootprint={footprint.totalKgCO2ePerYear} />
+
+          <ScenarioManager
+            baseline={baseline}
+            overrides={overrides}
+            totalKg={footprint.totalKgCO2ePerYear}
+            onLoad={handleLoadScenario}
+          />
+
+          <hr style={{ border: 'none', borderTop: '1px solid var(--divider, #DDD9D0)', margin: '3rem 0' }} />
+          <Changelog />
+        </AdvancedSection>
+      </div>
     </div>
   );
 }
