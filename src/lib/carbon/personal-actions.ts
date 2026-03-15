@@ -14,6 +14,8 @@ export interface PersonalAction {
   category: string;
   applicable: boolean;
   note: string;
+  /** Actions in the same exclusive group are mutually exclusive — only one can be selected at a time */
+  exclusiveGroup?: string;
 }
 
 export function computePersonalActions(baseline: BaselineInputs, footprint: FootprintModel): PersonalAction[] {
@@ -66,6 +68,7 @@ export function computePersonalActions(baseline: BaselineInputs, footprint: Foot
       category: 'Transport',
       applicable: baseline.carOwnership !== 'none',
       note: 'Work from home, combine trips, or bike for short errands',
+      exclusiveGroup: 'driving-reduction',
     },
     {
       name: 'Cut driving 50%',
@@ -75,6 +78,7 @@ export function computePersonalActions(baseline: BaselineInputs, footprint: Foot
       category: 'Transport',
       applicable: baseline.carOwnership !== 'none',
       note: 'Major lifestyle shift — bike commute + transit for most trips',
+      exclusiveGroup: 'driving-reduction',
     },
     {
       name: 'Bike commute (replace car for commute)',
@@ -84,6 +88,7 @@ export function computePersonalActions(baseline: BaselineInputs, footprint: Foot
       category: 'Transport',
       applicable: baseline.carOwnership !== 'none' && (baseline.urbanForm === 'urban' || baseline.urbanForm === 'suburban'),
       note: 'Assumes ~5,000 miles/yr commute replaced by bike',
+      exclusiveGroup: 'driving-reduction',
     },
     {
       name: 'Use public transit instead of driving',
@@ -93,6 +98,7 @@ export function computePersonalActions(baseline: BaselineInputs, footprint: Foot
       category: 'Transport',
       applicable: baseline.carOwnership !== 'none' && baseline.urbanForm === 'urban',
       note: 'Replace 60% of driving with transit (urban areas only)',
+      exclusiveGroup: 'driving-reduction',
     },
     {
       name: 'Reduce ride-hailing/taxi 50%',
@@ -160,6 +166,7 @@ export function computePersonalActions(baseline: BaselineInputs, footprint: Foot
       category: 'Food',
       applicable: baseline.dietType !== 'vegan',
       note: 'Largest food-related change available',
+      exclusiveGroup: 'diet-change',
     },
     {
       name: 'Go vegetarian',
@@ -167,6 +174,7 @@ export function computePersonalActions(baseline: BaselineInputs, footprint: Foot
       category: 'Food',
       applicable: baseline.dietType !== 'vegan' && baseline.dietType !== 'vegetarian',
       note: 'More achievable than vegan for most people',
+      exclusiveGroup: 'diet-change',
     },
     {
       name: 'Cut beef by half',
@@ -174,6 +182,7 @@ export function computePersonalActions(baseline: BaselineInputs, footprint: Foot
       category: 'Food',
       applicable: baseline.dietType === 'average' || baseline.dietType === 'heavy-meat',
       note: 'Beef is the most emission-intensive common food',
+      exclusiveGroup: 'diet-change',
     },
     {
       name: 'Cut food waste by half',
@@ -236,6 +245,7 @@ export function computePersonalActions(baseline: BaselineInputs, footprint: Foot
       category: 'Flights',
       applicable: baseline.flightsPerYear > 0,
       note: 'One of the highest-impact single actions',
+      exclusiveGroup: 'flight-reduction',
     },
     {
       name: 'Eliminate one domestic flight',
@@ -243,6 +253,7 @@ export function computePersonalActions(baseline: BaselineInputs, footprint: Foot
       category: 'Flights',
       applicable: baseline.flightsPerYear > 0,
       note: 'Average domestic round-trip: ~2,200 miles',
+      exclusiveGroup: 'flight-reduction',
     },
     {
       name: 'Eliminate all flights',
@@ -250,6 +261,7 @@ export function computePersonalActions(baseline: BaselineInputs, footprint: Foot
       category: 'Flights',
       applicable: baseline.flightsPerYear > 1,
       note: `Eliminates all ${baseline.flightsPerYear} flights per year`,
+      exclusiveGroup: 'flight-reduction',
     },
   ];
 

@@ -50,7 +50,24 @@ export function ImpactChart({
   const [openCategory, setOpenCategory] = useState<string | null>(null);
 
   const togglePersonal = (name: string) => {
-    setEnabledPersonal(prev => { const n = new Set(prev); if (n.has(name)) n.delete(name); else n.add(name); return n; });
+    setEnabledPersonal(prev => {
+      const n = new Set(prev);
+      if (n.has(name)) {
+        n.delete(name);
+      } else {
+        // Remove any other action in the same exclusive group
+        const action = personalActions.find(a => a.name === name);
+        if (action?.exclusiveGroup) {
+          for (const other of personalActions) {
+            if (other.exclusiveGroup === action.exclusiveGroup && other.name !== name) {
+              n.delete(other.name);
+            }
+          }
+        }
+        n.add(name);
+      }
+      return n;
+    });
   };
   const toggleSystemic = (name: string) => {
     setEnabledSystemic(prev => { const n = new Set(prev); if (n.has(name)) n.delete(name); else n.add(name); return n; });
