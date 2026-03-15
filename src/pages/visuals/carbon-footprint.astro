@@ -63,7 +63,7 @@ import Base from '@/layouts/Base.astro';
         <div class="cfp-scale-labels"><span style="left:0">0</span><span style="left:25%">25%</span><span style="left:50%">50%</span><span style="left:75%">75%</span><span style="left:100%">100%</span></div>
         <div class="cfp-bar-row">
           <div class="cfp-bar-header"><span class="cfp-bar-name">Average American</span><span class="cfp-bar-val" id="ref-val">16,000 kg / yr</span></div>
-          <div class="cfp-bar-track"><div class="cfp-bar cfp-bar--ref" style="width:100%"></div></div>
+          <div class="cfp-bar-track"><div class="cfp-bar cfp-bar--ref" style="width:100%"></div><div class="cfp-ref-line" style="left:15.6%" data-label="Paris 2030"></div><div class="cfp-ref-line" style="left:29.4%" data-label="Global avg"></div><div class="cfp-ref-line" style="left:51.3%" data-label="EU avg"></div></div>
         </div>
         <div class="cfp-bar-row">
           <div class="cfp-bar-header"><span class="cfp-bar-name">Your selections</span><span class="cfp-bar-val" id="user-val">0 kg / yr</span></div>
@@ -75,6 +75,7 @@ import Base from '@/layouts/Base.astro';
         </div>
         <div class="cfp-overflow" id="overflow-msg">Your selected activities exceed the average American footprint</div>
         <div class="cfp-paris-badge" id="paris-badge">Below Paris 2030 target</div>
+        <div class="cfp-bar-legend" id="cfp-bar-legend"></div>
       </div>
 
       <div class="cfp-treemap-wrap">
@@ -209,7 +210,8 @@ import Base from '@/layouts/Base.astro';
   .cfp-title { font-family: var(--serif); font-weight: 700; font-size: clamp(3.5rem, 7vw, 7rem); letter-spacing: -0.02em; line-height: 0.95; margin: 0 0 1.2rem 0; }
   .cfp-intro { font-size: 0.9rem; line-height: 1.75; max-width: 600px; margin: 0 0 1.5rem 0; }
   .cfp-method-toggle { margin-top: 0.5rem; max-width: 600px; }
-  .cfp-method-toggle summary { font-size: 0.75rem; color: var(--cat); cursor: pointer; font-weight: 600; letter-spacing: 0.04em; }
+  .cfp-method-toggle summary { font-size: 0.75rem; color: var(--cat); cursor: pointer; font-weight: 600; letter-spacing: 0.04em; list-style: none; }
+  .cfp-method-toggle summary::-webkit-details-marker { display: none; }
   .cfp-method-toggle p { font-size: 0.78rem; line-height: 1.65; color: var(--text2); font-style: italic; margin: 0.5rem 0 0; }
 
   .cfp-toggle { display: inline-flex; border: 1px solid var(--div); border-radius: 6px; overflow: hidden; }
@@ -280,6 +282,13 @@ import Base from '@/layouts/Base.astro';
   .cfp-paris-badge.visible { display: flex; }
   .cfp-paris-badge::before { content: '\2713'; }
 
+  .cfp-ref-line { position: absolute; top: 0; bottom: 0; width: 1.5px; background: rgba(0,0,0,0.18); z-index: 3; }
+  [data-theme="dark"] .cfp-ref-line { background: rgba(255,255,255,0.18); }
+  .cfp-ref-line::after { content: attr(data-label); position: absolute; bottom: -18px; left: 50%; transform: translateX(-50%); font-size: 0.55rem; white-space: nowrap; color: var(--cat); font-family: var(--font); }
+
+  .cfp-bar-legend { display: flex; gap: 0.75rem; flex-wrap: wrap; margin-top: 0.75rem; }
+  .cfp-legend-chip { font-size: 0.62rem; letter-spacing: 0.07em; text-transform: uppercase; font-weight: 700; padding: 2px 9px; border-radius: 3px; color: rgba(255,255,255,0.92); font-family: var(--font); }
+
   /* Treemap */
   .cfp-treemap-wrap { margin-bottom: 1.5rem; }
   .cfp-treemap-label { font-size: 0.6rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.18em; color: var(--cat); margin-bottom: 8px; }
@@ -294,8 +303,9 @@ import Base from '@/layouts/Base.astro';
   .cfp-legend-swatch { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
 
   /* Carbon Story */
-  .cfp-story { background: var(--panel); border-radius: 8px; padding: 1.5rem 2rem; margin-bottom: 3rem; max-width: 700px; min-height: 0; }
+  .cfp-story { background: var(--panel); border-radius: 8px; padding: 1.5rem 2rem; margin-bottom: 3rem; max-width: 700px; min-height: 0; border-left: 3px solid var(--accent); }
   .cfp-story:empty { display: none; }
+  .cfp-story-label { font-size: 0.58rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--cat); font-weight: 700; margin-bottom: 0.5rem; }
   .cfp-story p { font-family: var(--serif); font-style: italic; font-size: 0.95rem; line-height: 1.8; color: var(--text); margin: 0; }
 
   /* ── ZONE 4: Controls ── */
@@ -709,7 +719,30 @@ import Base from '@/layouts/Base.astro';
       treemapLegend.innerHTML = '';
       const posItems = items.filter(i => i.kg > 0).sort((a, b) => b.kg - a.kg);
       if (posItems.length === 0) {
-        treemapEl.innerHTML = '<div class="cfp-tm-empty">Select activities above to see breakdown</div>';
+        // Show average American baseline grayed out
+        const baselineItems = [
+          { key:'avg-t', kg:4600, cat:'transport', label:'Transport' },
+          { key:'avg-h', kg:2800, cat:'home', label:'Home energy' },
+          { key:'avg-f', kg:2500, cat:'food', label:'Food' },
+          { key:'avg-p', kg:3200, cat:'purchases', label:'Purchases' },
+          { key:'avg-d', kg:2900, cat:'digital', label:'Services' },
+        ];
+        const bTotal = baselineItems.reduce((s, i) => s + i.kg, 0);
+        const bW = treemapEl.clientWidth || 800;
+        const bH = treemapEl.clientHeight || 180;
+        const bRects = squarify(baselineItems.map(i => i.kg / bTotal), bW, bH);
+        baselineItems.forEach((item, idx) => {
+          const r = bRects[idx]; if (!r) return;
+          const div = document.createElement('div');
+          div.className = 'cfp-tm-rect';
+          div.style.cssText = `left:${r.x}px;top:${r.y}px;width:${r.w}px;height:${r.h}px;background:#888;opacity:0.35;`;
+          if (r.w > 50 && r.h > 30) {
+            const n = document.createElement('span'); n.className = 'cfp-tm-name'; n.textContent = item.label;
+            const v = document.createElement('span'); v.className = 'cfp-tm-val'; v.textContent = fmt(item.kg) + ' kg';
+            div.appendChild(n); div.appendChild(v);
+          }
+          treemapEl.appendChild(div);
+        });
         return;
       }
       const W = treemapEl.clientWidth || 800;
@@ -827,11 +860,16 @@ import Base from '@/layouts/Base.astro';
         pctLine.className = 'cfp-pct-line ' + (belowParis ? 'below-paris' : 'above-paris');
       }
 
-      // Context
+      // Context with global percentile
       if (totalKg > 0) {
-        const miles = Math.round(totalKg / 0.341).toLocaleString();
         const ratioStr = ratio < 1 ? `${(1/ratio).toFixed(1)}\u00d7 below` : ratio > 1 ? `${ratio.toFixed(1)}\u00d7 above` : 'equal to';
-        contextLine.textContent = `That\u2019s ${ratioStr} the average American \u2014 equivalent to driving ${miles} miles in a gas car.`;
+        let percentile = '';
+        if (totalKg > 12000) percentile = ' \u2014 top 5% of global emitters';
+        else if (totalKg > 8000) percentile = ' \u2014 top 15% of global emitters';
+        else if (totalKg > 4700) percentile = ' \u2014 top 30% of global emitters';
+        else if (totalKg > 2500) percentile = ' \u2014 top 50% of global emitters';
+        else percentile = ' \u2014 bottom half of global emitters';
+        contextLine.textContent = `That\u2019s ${ratioStr} the average American${percentile}.`;
       } else { contextLine.textContent = ''; }
 
       // Equivalency chips
@@ -840,7 +878,7 @@ import Base from '@/layouts/Base.astro';
         const chips = [
           { icon: '<path d="M2 9.5l2-4h8l2 4M2 9.5v2h12v-2"/><circle cx="5" cy="11" r="1"/><circle cx="11" cy="11" r="1"/>', text: `${Math.round(totalKg/0.341).toLocaleString()} miles driven` },
           { icon: '<path d="M2 8.5l6-5 6 5"/><path d="M3.5 8v6h9V8"/>', text: `Powers ${(totalKg/7330).toFixed(1)} homes / yr` },
-          { icon: '<path d="M3 12h10M8 7v10"/><circle cx="8" cy="4" r="2"/>', text: `${Math.round(totalKg/8.887).toLocaleString()} gallons of gas` },
+          { icon: '<polygon points="8,2 3.5,8 6,8 4,12 12,12 10,8 12.5,8"/><line x1="8" y1="12" x2="8" y2="15"/>', text: `${Math.round(totalKg/21).toLocaleString()} trees to offset` },
         ];
         chips.forEach(c => {
           const chip = document.createElement('span'); chip.className = 'cfp-equiv-chip';
@@ -875,7 +913,7 @@ import Base from '@/layouts/Base.astro';
         const excess = totalKg - BENCHMARKS.paris2030;
         parts.push(`To reach the Paris 2030 target, you\u2019d need to cut ${excess.toLocaleString()} kg \u2014 roughly ${Math.round(excess / totalKg * 100)}% of your total.`);
       }
-      storyEl.innerHTML = `<p>${parts.join(' ')}</p>`;
+      storyEl.innerHTML = `<div class="cfp-story-label">Your carbon profile</div><p>${parts.join(' ')}</p>`;
     }
 
     // ── Paris path ──
@@ -1120,6 +1158,17 @@ import Base from '@/layouts/Base.astro';
           seg.appendChild(tip);
           userBar.appendChild(seg);
         });
+      }
+
+      // Bar legend
+      const barLegend = document.getElementById('cfp-bar-legend');
+      if (barLegend) {
+        const usedCats = [...new Set(items.filter(i => i.kg > 0).map(i => i.cat))];
+        barLegend.innerHTML = usedCats.map(cat => {
+          const color = getCatColor(cat);
+          const name = CATS[cat]?.label || cat;
+          return `<span class="cfp-legend-chip" style="background:${color}">${name}</span>`;
+        }).join('');
       }
 
       // Activity rows
