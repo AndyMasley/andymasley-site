@@ -522,6 +522,37 @@ export function Methodology() {
             </p>
           </Bucket>
 
+          <Bucket title="Digital (Personal Action Estimates)" id="methodology-digital" isOpen={openBucketId === 'methodology-digital'} onToggle={() => toggleBucket('methodology-digital')}>
+            <p>
+              Digital emissions are small relative to other categories but are included for completeness and because they are frequently discussed.
+            </p>
+
+            <p style={{ marginTop: '12px' }}>
+              <strong>Stop using AI chatbots:</strong> <code>18 kg CO₂e/yr</code>
+            </p>
+            <ul>
+              <li>Based on ~50 queries/day, ~365 days/year</li>
+              <li>Each AI query uses approximately <code>2.9 Wh</code> of electricity (including data center, networking, and device), roughly 10× a standard web search at ~0.3 Wh</li>
+              <li>Calculation: <code>50 queries × 0.0029 kWh × 365 days × 0.39 kg/kWh = ~21 kg</code>. We use 18 kg as a conservative round.</li>
+              <li>Source: <Src href="https://www.iea.org/reports/energy-and-ai">IEA — Energy and AI (2024)</Src></li>
+              <li>Also see: <Src href="https://www.cell.com/joule/fulltext/S2542-4351(23)00365-3">de Vries 2023 — "The growing energy footprint of artificial intelligence"</Src> in Joule</li>
+              <li><strong>Context:</strong> 18 kg is ~0.1% of a typical American footprint. This is included because it&apos;s frequently asked about, not because it&apos;s materially significant.</li>
+            </ul>
+
+            <p style={{ marginTop: '12px' }}>
+              <strong>Reduce streaming by half:</strong> <code>17 kg CO₂e/yr</code>
+            </p>
+            <ul>
+              <li>Based on ~1 hour/day of HD video streaming, halved to 0.5 hr/day</li>
+              <li>Streaming uses approximately <code>0.1 kWh per hour</code> including data center, CDN, network, and end-user device</li>
+              <li>Calculation: <code>0.5 hr × 0.1 kWh × 365 days × 0.39 kg/kWh = ~7 kg</code> for the half you cut. Full year at 1 hr/day ≈ 14 kg, so halving saves ~7-17 kg depending on hours watched.</li>
+              <li>We use 17 kg assuming a heavier viewer (~2 hrs/day)</li>
+              <li>Source: <Src href="https://www.iea.org/reports/data-centres-and-data-transmission-networks">IEA — Data Centres and Data Transmission Networks (2024)</Src></li>
+              <li>Also see: <Src href="https://www.carbontrust.com/our-work-and-impact/guides-reports-and-tools/carbon-impact-of-video-streaming">Carbon Trust — Carbon impact of video streaming (2021)</Src></li>
+              <li><strong>Note:</strong> Earlier estimates of streaming emissions (e.g., 36 g/hr) have been revised downward as data centers have become more efficient. The IEA&apos;s current estimate is substantially lower than figures from pre-2020 studies.</li>
+            </ul>
+          </Bucket>
+
           <Bucket title="Systemic Actions (Expected Values)" id="methodology-systemic" isOpen={openBucketId === 'methodology-systemic'} onToggle={() => toggleBucket('methodology-systemic')}>
             <p>
               Every systemic action uses the same <strong>expected value framework</strong>:

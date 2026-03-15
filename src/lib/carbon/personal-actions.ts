@@ -28,6 +28,16 @@ export function computePersonalActions(baseline: BaselineInputs, footprint: Foot
   };
   const miles = transportMiles[baseline.urbanForm] ?? 13500;
   const gasKgPerMile = 8.89 / 25.4;
+  const hybridKgPerMile = 8.89 / 45;
+  const evKgPerMile = 0.32 * gridRate;
+  // Use the actual per-mile rate for whatever the user drives
+  const userKgPerMile: Record<string, number> = {
+    gas: gasKgPerMile,
+    hybrid: hybridKgPerMile,
+    ev: evKgPerMile,
+    none: 0,
+  };
+  const drivingRate = userKgPerMile[baseline.carOwnership] ?? gasKgPerMile;
 
   const foodBucket = footprint.buckets.find(b => b.bucketId === 'food');
   const foodKg = foodBucket?.kgCO2ePerYear ?? 2500;
@@ -63,7 +73,7 @@ export function computePersonalActions(baseline: BaselineInputs, footprint: Foot
     {
       name: 'Cut driving 20%',
       savingsKg: baseline.carOwnership !== 'none'
-        ? Math.round(miles * 0.2 * gasKgPerMile)
+        ? Math.round(miles * 0.2 * drivingRate)
         : 0,
       category: 'Transport',
       applicable: baseline.carOwnership !== 'none',
@@ -73,7 +83,7 @@ export function computePersonalActions(baseline: BaselineInputs, footprint: Foot
     {
       name: 'Cut driving 50%',
       savingsKg: baseline.carOwnership !== 'none'
-        ? Math.round(miles * 0.5 * gasKgPerMile)
+        ? Math.round(miles * 0.5 * drivingRate)
         : 0,
       category: 'Transport',
       applicable: baseline.carOwnership !== 'none',
@@ -83,7 +93,7 @@ export function computePersonalActions(baseline: BaselineInputs, footprint: Foot
     {
       name: 'Bike commute (replace car for commute)',
       savingsKg: baseline.carOwnership !== 'none'
-        ? Math.round(5000 * gasKgPerMile) // ~5000 mi/yr commute
+        ? Math.round(5000 * drivingRate) // ~5000 mi/yr commute
         : 0,
       category: 'Transport',
       applicable: baseline.carOwnership !== 'none' && (baseline.urbanForm === 'urban' || baseline.urbanForm === 'suburban'),
@@ -93,7 +103,7 @@ export function computePersonalActions(baseline: BaselineInputs, footprint: Foot
     {
       name: 'Use public transit instead of driving',
       savingsKg: baseline.carOwnership !== 'none'
-        ? Math.round(miles * 0.6 * (gasKgPerMile - 0.05)) // transit emits ~0.05 kg/mi
+        ? Math.round(miles * 0.6 * (drivingRate - 0.05)) // transit emits ~0.05 kg/mi
         : 0,
       category: 'Transport',
       applicable: baseline.carOwnership !== 'none' && baseline.urbanForm === 'urban',
