@@ -291,6 +291,7 @@ export function ImpactChart({
           labelColor={hasSystemic ? GREEN : MUTED}
           bold={hasSystemic}
           dimmed={!hasSystemic}
+          unit="kg"
         />
       </div>
 
@@ -360,17 +361,17 @@ function ReferenceLines({ scaleMax }: { scaleMax: number }) {
 
 // --- Bar row ---
 
-function BarRow({ label, kg, pctWidth, color, opacity, ghostWidth, ghostOpacity, suffix, labelColor, bold, dimmed }: {
+function BarRow({ label, kg, pctWidth, color, opacity, ghostWidth, ghostOpacity, suffix, labelColor, bold, dimmed, unit }: {
   label: string; kg: number; pctWidth: number; color: string;
   opacity?: number; ghostWidth?: number; ghostOpacity?: number;
-  suffix?: string; labelColor?: string; bold?: boolean; dimmed?: boolean;
+  suffix?: string; labelColor?: string; bold?: boolean; dimmed?: boolean; unit?: string;
 }) {
   return (
     <div style={{ marginBottom: '6px', opacity: dimmed ? 0.25 : 1, transition: 'opacity 0.3s ease' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', fontSize: '0.78rem', marginBottom: '3px' }}>
         <span style={{ fontWeight: bold ? 700 : 600, color: labelColor }}>{label}</span>
         <span style={{ fontVariantNumeric: 'tabular-nums', fontWeight: 700, color: labelColor, whiteSpace: 'nowrap' }}>
-          {dimmed ? '—' : `${kg.toLocaleString()} kg/yr`}
+          {dimmed ? '—' : `${kg.toLocaleString()} ${unit ?? 'kg/yr'}`}
           {!dimmed && suffix && <span style={{ fontWeight: 800, marginLeft: '6px' }}>{suffix}</span>}
         </span>
       </div>
