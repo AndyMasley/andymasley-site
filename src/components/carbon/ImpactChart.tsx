@@ -34,10 +34,10 @@ const DIVIDER = 'var(--divider, #DDD9D0)';
 
 const LIFESTYLE_PRESETS: { id: string; label: string; baseline: BaselineInputs }[] = [
   { id: 'urban-vegan', label: 'Urban vegan', baseline: { state: 'NY', householdSize: 1, housingType: 'apartment', urbanForm: 'urban', dietType: 'vegan', carOwnership: 'none', flightsPerYear: 1, monthlySpending: 1500 } },
-  { id: 'suburban-family', label: 'Suburban family', baseline: { state: 'US', householdSize: 4, housingType: 'single-family-small', urbanForm: 'suburban', dietType: 'average', carOwnership: 'gas', flightsPerYear: 2, monthlySpending: 2500 } },
-  { id: 'rural-truck', label: 'Rural driver', baseline: { state: 'US', householdSize: 2, housingType: 'single-family-large', urbanForm: 'rural', dietType: 'heavy-meat', carOwnership: 'gas', flightsPerYear: 0, monthlySpending: 1800 } },
-  { id: 'frequent-flyer', label: 'Frequent flyer', baseline: { state: 'US', householdSize: 1, housingType: 'apartment', urbanForm: 'urban', dietType: 'average', carOwnership: 'none', flightsPerYear: 8, monthlySpending: 3000 } },
-  { id: 'ev-professional', label: 'EV professional', baseline: { state: 'CA', householdSize: 2, housingType: 'townhouse', urbanForm: 'suburban', dietType: 'light-meat', carOwnership: 'ev', flightsPerYear: 3, monthlySpending: 3500 } },
+  { id: 'suburban-family', label: 'Suburban family', baseline: { state: 'US', householdSize: 4, housingType: 'single-family-small', urbanForm: 'suburban', dietType: 'average', carOwnership: 'gas', flightsPerYear: 2, monthlySpending: 1500 } },
+  { id: 'rural-truck', label: 'Rural driver', baseline: { state: 'US', householdSize: 2, housingType: 'single-family-large', urbanForm: 'rural', dietType: 'heavy-meat', carOwnership: 'gas', flightsPerYear: 0, monthlySpending: 1000 } },
+  { id: 'frequent-flyer', label: 'Frequent flyer', baseline: { state: 'US', householdSize: 1, housingType: 'apartment', urbanForm: 'urban', dietType: 'average', carOwnership: 'none', flightsPerYear: 8, monthlySpending: 2000 } },
+  { id: 'ev-professional', label: 'EV professional', baseline: { state: 'CA', householdSize: 2, housingType: 'townhouse', urbanForm: 'suburban', dietType: 'light-meat', carOwnership: 'ev', flightsPerYear: 3, monthlySpending: 1800 } },
 ];
 
 export function ImpactChart({
@@ -281,9 +281,8 @@ export function ImpactChart({
 
 const REFERENCE_MARKS = [
   { kg: 16000, label: 'US avg', color: '#8B2E2E' },
-  { kg: 8200,  label: 'EU avg', color: '#6B6B60' },
+  { kg: 7800,  label: 'EU avg', color: '#6B6B60' },
   { kg: 4700,  label: 'Global avg', color: '#6B6B60' },
-  { kg: 2500,  label: 'Paris 2030', color: '#4A7C59' },
 ];
 
 function ReferenceLines({ scaleMax }: { scaleMax: number }) {

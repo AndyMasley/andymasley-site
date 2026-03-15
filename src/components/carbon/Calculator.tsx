@@ -18,7 +18,6 @@ import { ImpactChart } from './ImpactChart';
 import { AdvancedSection } from './AdvancedSection';
 import { RefineSection } from './RefineSection';
 import { PersonalChanges } from './PersonalChanges';
-import { SameLifeDifferentGrid } from './SameLifeDifferentGrid';
 import { ElectricitySection } from './ElectricitySection';
 import { LeverageLab } from './LeverageLab';
 import { ExportButton } from './ExportButton';
@@ -78,7 +77,6 @@ export function Calculator() {
         <AdvancedSection>
           <RefineSection buckets={footprint.buckets} overrides={overrides} onOverridesChange={setOverrides} />
           <PersonalChanges baseline={baseline} footprint={footprint} />
-          <SameLifeDifferentGrid baseline={baseline} overrides={overrides} todayFootprint={footprint} />
           <ElectricitySection baseline={baseline} />
           <section style={{ marginBottom: '3rem' }}>
             <ComparisonModes baseline={baseline} overrides={overrides} footprint={footprint} activeMode={comparisonMode} onModeChange={setComparisonMode} />

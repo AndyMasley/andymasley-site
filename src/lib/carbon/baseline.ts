@@ -104,9 +104,9 @@ const URBAN_FORM_ENERGY_FACTOR: Record<UrbanForm, number> = {
 // ---------------------------------------------------------------------------
 
 const TRANSIT_KG_BY_URBAN_FORM: Record<UrbanForm, number> = {
-  urban:    800,
-  suburban: 400,
-  rural:    200,
+  urban:    350,
+  suburban: 200,
+  rural:    100,
 };
 
 // ---------------------------------------------------------------------------
@@ -236,18 +236,15 @@ function computeFlights(
 }
 
 function computeFood(baseline: BaselineInputs): BucketResult {
-  const dietKg = DIET_KG[baseline.dietType];
-  // Add 15% for food waste emissions
-  const wasteKg = Math.round(dietKg * 0.15);
-  const kg = dietKg + wasteKg;
+  // Poore & Nemecek figures already include supply chain waste — don't double-count
+  const kg = DIET_KG[baseline.dietType];
   return {
     bucketId: 'food',
     kgCO2ePerYear: kg,
     confidence: 'estimated',
     nextUpgrade: 'A detailed food diary would improve this, but diet type gets within ~20%',
     lineItems: [
-      { label: `${baseline.dietType} diet`, kgCO2ePerYear: dietKg, source: 'Poore & Nemecek 2018, Scarborough et al. 2023', sourceUpdated: '2023-09', isDefault: true },
-      { label: 'Food waste', kgCO2ePerYear: wasteKg, source: 'ReFED 2023', sourceUpdated: '2024-01', isDefault: true },
+      { label: `${baseline.dietType} diet`, kgCO2ePerYear: kg, source: 'Poore & Nemecek 2018, Scarborough et al. 2023', sourceUpdated: '2023-09', isDefault: true },
     ],
   };
 }
@@ -257,10 +254,10 @@ function computeGoods(
   overrides: Partial<DetailedInputs>,
 ): BucketResult {
   const hasSpending = overrides.goodsSpendingPerMonth !== undefined;
-  // Rough: $1 of spending ≈ 0.5 kg CO2e (Jones & Kammen 2014 EEIO factor)
-  const kg = hasSpending
-    ? overrides.goodsSpendingPerMonth! * 12 * 0.5
-    : baseline.monthlySpending * 12 * 0.5;
+  // EEIO factor: ~0.22 kg CO2e per dollar of non-food, non-energy goods spending
+  // (Jones & Kammen 2014, adjusted to exclude categories counted elsewhere)
+  const spending = hasSpending ? overrides.goodsSpendingPerMonth! : baseline.monthlySpending;
+  const kg = spending * 12 * 0.22;
 
   return {
     bucketId: 'goods-and-services',

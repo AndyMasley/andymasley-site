@@ -88,7 +88,7 @@ export function LeverageLab({ userMaxPersonalReduction, userFootprint }: Leverag
   return (
     <section>
       {/* Header */}
-      <div className="cf-section-label">LEVERAGE LAB</div>
+      <div className="cf-section-label">SYSTEMIC CHANGE OPTIONS</div>
       <p style={{ fontSize: '0.95rem', lineHeight: 1.7, maxWidth: 640, marginBottom: '0.5rem' }}>
         The calculator above shows what emissions are associated with your life.
         This section explores a different question: what if the same hours you'd spend optimizing your own footprint went toward changing systems that affect millions of people?

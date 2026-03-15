@@ -110,7 +110,7 @@ export const DEFAULT_BASELINE: BaselineInputs = {
   state: 'US',       // national average fallback
   householdSize: 2.5,
   housingType: 'single-family-small',
-  monthlySpending: 2000,
+  monthlySpending: 1200,
   urbanForm: 'suburban',
   dietType: 'average',
   carOwnership: 'gas',

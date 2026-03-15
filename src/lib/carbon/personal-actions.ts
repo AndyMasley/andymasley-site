@@ -156,28 +156,28 @@ export function computePersonalActions(baseline: BaselineInputs, footprint: Foot
     // ── Food ──
     {
       name: 'Go vegan',
-      savingsKg: Math.round((currentDietKg - 1050) * 1.15), // include waste multiplier
+      savingsKg: Math.round(currentDietKg - 1050),
       category: 'Food',
       applicable: baseline.dietType !== 'vegan',
       note: 'Largest food-related change available',
     },
     {
       name: 'Go vegetarian',
-      savingsKg: Math.round((currentDietKg - 1500) * 1.15),
+      savingsKg: Math.round(currentDietKg - 1500),
       category: 'Food',
       applicable: baseline.dietType !== 'vegan' && baseline.dietType !== 'vegetarian',
       note: 'More achievable than vegan for most people',
     },
     {
       name: 'Cut beef by half',
-      savingsKg: Math.round(450 * 1.15), // beef is ~900 kg of an average diet; halving saves ~450
+      savingsKg: 450, // beef is ~900 kg of an average diet; halving saves ~450
       category: 'Food',
       applicable: baseline.dietType === 'average' || baseline.dietType === 'heavy-meat',
       note: 'Beef is the most emission-intensive common food',
     },
     {
       name: 'Cut food waste by half',
-      savingsKg: Math.round(foodKg * 0.15 * 0.5), // half of the 15% waste
+      savingsKg: Math.round(foodKg * 0.10 * 0.5), // ~10% of food emissions are from avoidable waste
       category: 'Food',
       applicable: true,
       note: 'Average American wastes ~30% of food; halving saves ~7.5% of food emissions',
