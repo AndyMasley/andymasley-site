@@ -113,6 +113,32 @@ import Base from '@/layouts/Base.astro';
 
     <hr class="cfp-rule" />
 
+    <!-- Systemic Impact -->
+    <section class="cfp-systemic" id="cfp-systemic">
+      <div class="cfp-sys-header">
+        <h2 class="cfp-sys-title">Individual choices vs. collective action</h2>
+        <p class="cfp-sys-subtitle">Expected CO<sub>2</sub>e impact per person, log scale</p>
+      </div>
+
+      <div class="cfp-sys-intro">
+        <p>Most carbon calculators stop at individual choices&hairsp;&mdash;&hairsp;what you eat, how you drive, whether you fly. These matter. But they have a hard ceiling: the most you can eliminate is your own footprint (~<strong>16,000 kg/yr</strong> for the average American).</p>
+        <p>Collective action operates differently. A nuclear plant kept open saves <strong>3&ndash;4 million metric tons per year</strong>. Divided among the 1,000 serious advocates who fought for it, that&rsquo;s 3,000 metric tons per person&hairsp;&mdash;&hairsp;roughly <strong>188 times</strong> an average American annual footprint. In expectation, one afternoon canvassing for the right candidate in a swing district can outweigh a lifetime of dietary choices.</p>
+        <p>These are expected values&hairsp;&mdash;&hairsp;probabilities multiplied by impact. The probability that your individual canvassing effort tips an election is small. But so is the probability that any one CO<sub>2</sub> molecule causes a specific flood. Climate math is statistics, not determinism. The expected value framework is the right one.</p>
+        <p>The shaded ranges reflect genuine uncertainty&hairsp;&mdash;&hairsp;these estimates can easily be off by 10&times; in either direction. But even at the low end of these ranges, collective action outweighs individual lifestyle change by orders of magnitude.</p>
+      </div>
+
+      <div class="cfp-sys-toggle" id="cfp-sys-toggle">
+        <button class="cfp-sys-toggle-btn active" data-ref="avg">Show against US average</button>
+        <button class="cfp-sys-toggle-btn" data-ref="mine">Show against my selections</button>
+      </div>
+
+      <div class="cfp-sys-chart" id="cfp-sys-chart"></div>
+
+      <div class="cfp-sys-callout">The highest-leverage individual climate action is not dietary change, nor avoiding flights&hairsp;&mdash;&hairsp;it is spending time on collective political and infrastructure work. Even accounting for uncertainty, the expected value of advocacy dwarfs lifestyle optimization by 2&ndash;3 orders of magnitude.</div>
+    </section>
+
+    <hr class="cfp-rule" />
+
     <!-- Sources -->
     <div class="cfp-methodology">
       <details>
@@ -344,6 +370,64 @@ import Base from '@/layouts/Base.astro';
   .cfp-pp-fill { height: 100%; background: var(--green); border-radius: 3px; }
   .cfp-pp-summary { font-size: 0.85rem; color: var(--text2); font-style: italic; line-height: 1.6; }
   .cfp-pp-done { font-size: 0.9rem; font-weight: 600; color: var(--green); }
+
+  /* ── Systemic Impact ── */
+  .cfp-systemic { margin-bottom: 2rem; }
+  .cfp-sys-title { font-family: var(--serif); font-size: clamp(1.4rem, 3vw, 2.2rem); font-weight: 700; margin: 0 0 0.4rem; }
+  .cfp-sys-subtitle { font-size: 0.8rem; color: var(--text2); letter-spacing: 0.06em; text-transform: uppercase; font-weight: 600; margin: 0 0 2rem; }
+  .cfp-sys-intro { max-width: 780px; margin-bottom: 2.5rem; }
+  .cfp-sys-intro p { font-size: 0.92rem; line-height: 1.85; margin: 0 0 0.75rem; }
+  .cfp-sys-intro strong { color: var(--accent); }
+
+  .cfp-sys-toggle { display: inline-flex; border: 1px solid var(--div); border-radius: 6px; overflow: hidden; margin-bottom: 2rem; }
+  .cfp-sys-toggle-btn { background: transparent; border: none; padding: 7px 18px; font-family: var(--font); font-size: 0.75rem; font-weight: 600; color: var(--text2); cursor: pointer; transition: all 0.15s; }
+  .cfp-sys-toggle-btn + .cfp-sys-toggle-btn { border-left: 1px solid var(--div); }
+  .cfp-sys-toggle-btn.active { background: var(--accent); color: var(--bg); }
+  .cfp-sys-toggle-btn:not(.active):hover { background: var(--div); }
+
+  .cfp-sys-chart { margin-bottom: 2rem; }
+
+  .cfp-sys-divider { display: flex; align-items: center; gap: 1rem; margin: 1.5rem 0; color: var(--text2); font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; font-weight: 700; }
+  .cfp-sys-divider-line { flex: 1; height: 1px; background: var(--div); }
+  .cfp-sys-divider-arrow { font-size: 1.1rem; color: var(--accent); }
+
+  .cfp-sys-row { display: flex; align-items: center; gap: 12px; margin-bottom: 6px; min-height: 44px; }
+  .cfp-sys-row-info { width: clamp(180px, 22vw, 260px); flex-shrink: 0; }
+  .cfp-sys-row-name { font-size: 0.82rem; font-weight: 600; line-height: 1.3; }
+  .cfp-sys-row-desc { font-size: 0.68rem; color: var(--text2); font-style: italic; line-height: 1.3; margin-top: 1px; }
+  .cfp-sys-row-badge { display: inline-block; font-size: 0.5rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; padding: 1px 5px; border-radius: 3px; margin-left: 4px; vertical-align: middle; color: #fff; }
+  .cfp-sys-row-badge--political { background: var(--c-transport); }
+  .cfp-sys-row-badge--infrastructure { background: var(--green); }
+  .cfp-sys-row-badge--career { background: var(--c-purchases); }
+  .cfp-sys-row-badge--community { background: var(--c-digital); }
+  .cfp-sys-row-badge--individual { background: var(--bar-ref); }
+
+  .cfp-sys-bar-area { flex: 1; position: relative; height: 28px; min-width: 0; }
+  .cfp-sys-uncertainty { position: absolute; top: 0; height: 100%; border-radius: 0 3px 3px 0; opacity: 0.12; }
+  .cfp-sys-bar { position: absolute; top: 4px; height: calc(100% - 8px); border-radius: 0 3px 3px 0; transition: width 0.4s cubic-bezier(0.25,0.46,0.45,0.94); }
+  .cfp-sys-refline { position: absolute; top: -6px; bottom: -6px; width: 1.5px; background: var(--accent); opacity: 0.5; z-index: 2; transition: left 0.4s cubic-bezier(0.25,0.46,0.45,0.94); }
+  .cfp-sys-refline::before { content: attr(data-label); position: absolute; top: -16px; left: 50%; transform: translateX(-50%); font-size: 0.55rem; white-space: nowrap; color: var(--accent); font-weight: 700; letter-spacing: 0.04em; }
+
+  .cfp-sys-row-annot { flex-shrink: 0; text-align: right; min-width: clamp(100px, 18vw, 200px); }
+  .cfp-sys-kg { font-size: 0.72rem; font-weight: 600; color: var(--text); }
+  .cfp-sys-mult { font-size: 0.72rem; font-weight: 700; margin-left: 6px; white-space: nowrap; }
+
+  .cfp-sys-axis { position: relative; height: 28px; margin-top: 0.5rem; margin-left: clamp(180px, 22vw, 260px); padding-left: 12px; border-top: 1px solid var(--div); }
+  .cfp-sys-tick { position: absolute; transform: translateX(-50%); }
+  .cfp-sys-tick-line { width: 1px; height: 6px; background: var(--div); margin: 0 auto; }
+  .cfp-sys-tick-label { font-size: 0.55rem; color: var(--text2); white-space: nowrap; text-align: center; margin-top: 2px; }
+
+  .cfp-sys-callout { border-left: 3px solid var(--accent); padding: 1.25rem 1.75rem; margin: 2.5rem 0 0; background: var(--panel); border-radius: 0 6px 6px 0; font-family: var(--serif); font-size: 1.05rem; line-height: 1.8; font-style: italic; }
+
+  .cfp-sys-note { font-size: 0.7rem; color: var(--text2); line-height: 1.5; margin-top: 4px; max-width: 500px; }
+
+  @media (max-width: 700px) {
+    .cfp-sys-row { flex-wrap: wrap; }
+    .cfp-sys-row-info { width: 100%; }
+    .cfp-sys-bar-area { width: 100%; height: 24px; }
+    .cfp-sys-row-annot { width: 100%; text-align: left; }
+    .cfp-sys-axis { margin-left: 0; }
+  }
 
   /* Animations */
   .cfp-hero, .cfp-dashboard, .cfp-viz, .cfp-story, .cfp-controls { animation: fadeUp 0.5s ease both; }
@@ -819,6 +903,125 @@ import Base from '@/layouts/Base.astro';
       if (cb) cb.checked = false;
     }
 
+    // ── Systemic Impact ──
+    const SYSTEMIC_ACTIONS = [
+      { id:'vote-swing', name:'Vote in a swing-state election', cat:'political', desc:'Pivotal vote probability \u00d7 climate policy difference', expectedKg:50000, unc:4, source:'Gelman et al. 2012; EPA GHG inventory' },
+      { id:'canvass', name:'Deep-canvass 200 voters on climate', cat:'political', desc:'Persuasion effect \u00d7 vote margin \u00d7 policy impact', expectedKg:15000000, unc:10, source:'Green & Gerber 2019; EIA state emissions' },
+      { id:'state-clean-energy', name:'Help pass a state clean energy standard', cat:'political', desc:'Mid-size state electricity sector decarbonized', expectedKg:62500000, unc:20, source:'VA CEJA analysis; Rhodium Group' },
+      { id:'federal-carbon-price', name:'Advocate for US federal carbon pricing', cat:'political', desc:'$50/ton would cut US emissions ~15%', expectedKg:16800000, unc:50, source:'RFF; EPA GHG inventory' },
+      { id:'prevent-nuclear', name:'Prevent closure of one nuclear plant', cat:'infrastructure', desc:'1 GW plant kept open vs. replaced by gas', expectedKg:18600000, unc:8, source:'EIA; EPA eGRID; Crane & Lyman 2021' },
+      { id:'solar-farm', name:'Serve on committee for 500 MW solar farm', cat:'infrastructure', desc:'Displaces grid-avg generation over 30 years', expectedKg:17640000, unc:3, source:'EPA eGRID 2023; NREL' },
+      { id:'coal-retirement', name:'Campaign retiring one coal plant early', cat:'infrastructure', desc:'500 MW coal plant retired 10 years early', expectedKg:1000000, unc:10, source:'Sierra Club Beyond Coal; EPA eGRID' },
+      { id:'grid-reform', name:'Advocate for transmission reform', cat:'infrastructure', desc:'Accelerating clean energy interconnection', expectedKg:12000000, unc:30, source:'LBNL Queued Up 2023; FERC Order 2023' },
+      { id:'clean-energy-career', name:'Work as a clean energy engineer (10 yr)', cat:'career', desc:'Contribution to projects deployed at scale', expectedKg:8000000, unc:20, source:'IRENA 2023; author estimate' },
+      { id:'climate-journalism', name:'Write climate journalism (5 yr)', cat:'career', desc:'Shifting public opinion \u2192 policy and behavior', expectedKg:50000, unc:100, source:'Moyer & Tolbert 2022' },
+      { id:'community-solar', name:'Organize a 50-home solar co-op', cat:'community', desc:'50 homes switching to solar', expectedKg:2100000, unc:3, source:'NREL; EPA eGRID' },
+      { id:'zoning-reform', name:'Help pass urban zoning reform', cat:'community', desc:'Infill housing \u2192 reduced VMT and emissions', expectedKg:400000, unc:15, source:'Jones & Kammen 2014; ULI' },
+    ];
+
+    const INDIVIDUAL_COMPARATORS = [
+      { name:'Eliminate your entire footprint', kg:16000, desc:'Upper bound \u2014 go to zero' },
+      { name:'Switch to an EV', kg:2800, desc:'vs. avg American driving' },
+      { name:'Go vegan for a year', kg:1450, desc:'vs. avg American diet' },
+      { name:'Install home solar', kg:1500, desc:'avg 7 kW system' },
+      { name:'Give up flying entirely', kg:2220, desc:'1 domestic + 1 transatlantic/yr' },
+    ];
+
+    const SYS_COLORS: Record<string,string> = { political:'var(--c-transport)', infrastructure:'var(--green)', career:'var(--c-purchases)', community:'var(--c-digital)', individual:'var(--bar-ref)' };
+    const LOG_MIN = Math.log10(1000);
+    const LOG_MAX = Math.log10(1e9);
+    function toLogPct(kg: number): number { return Math.max(0, Math.min(100, ((Math.log10(Math.max(kg,1000)) - LOG_MIN) / (LOG_MAX - LOG_MIN)) * 100)); }
+
+    function fmtKgLarge(kg: number): string {
+      if (kg >= 1e9) return (kg/1e9).toFixed(1) + 'B kg';
+      if (kg >= 1e6) return (kg/1e6).toFixed(1) + 'M kg';
+      if (kg >= 1e3) return Math.round(kg/1e3).toLocaleString() + 'k kg';
+      return kg.toLocaleString() + ' kg';
+    }
+
+    let sysRefMode: 'avg'|'mine' = 'avg';
+    const sysChart = document.getElementById('cfp-sys-chart')!;
+    const sysToggle = document.getElementById('cfp-sys-toggle')!;
+
+    function renderSystemic(userTotalKg: number) {
+      const refKg = sysRefMode === 'mine' && userTotalKg > 0 ? userTotalKg : BASELINE.kgPerYear;
+      const refLabel = sysRefMode === 'mine' && userTotalKg > 0 ? 'Your footprint' : 'US avg';
+      const refPct = toLogPct(refKg);
+
+      let html = '';
+
+      // Individual comparators
+      html += '<div class="cfp-sys-section-label" style="font-size:0.6rem;font-weight:700;text-transform:uppercase;letter-spacing:0.14em;color:var(--cat);margin-bottom:0.5rem;">Individual lifestyle changes</div>';
+
+      INDIVIDUAL_COMPARATORS.forEach(item => {
+        const pct = toLogPct(item.kg);
+        const mult = item.kg / refKg;
+        const multStr = mult >= 1 ? mult.toFixed(1) + '\u00d7' : (mult * 100).toFixed(0) + '%';
+        html += `<div class="cfp-sys-row">
+          <div class="cfp-sys-row-info"><span class="cfp-sys-row-name">${item.name}</span><div class="cfp-sys-row-desc">${item.desc}</div></div>
+          <div class="cfp-sys-bar-area">
+            <div class="cfp-sys-bar" style="width:${pct}%;background:var(--bar-ref)"></div>
+            <div class="cfp-sys-refline" style="left:${refPct}%" data-label="${refLabel}"></div>
+          </div>
+          <div class="cfp-sys-row-annot"><span class="cfp-sys-kg">${fmtKgLarge(item.kg)}</span> <span class="cfp-sys-mult" style="color:var(--text2)">${multStr}</span></div>
+        </div>`;
+      });
+
+      // Divider
+      html += `<div class="cfp-sys-divider"><div class="cfp-sys-divider-line"></div><span class="cfp-sys-divider-arrow">\u2193</span><span>The scale of collective action</span><div class="cfp-sys-divider-line"></div></div>`;
+
+      // Systemic actions sorted by expected value
+      const sorted = [...SYSTEMIC_ACTIONS].sort((a, b) => b.expectedKg - a.expectedKg);
+
+      sorted.forEach(action => {
+        const pct = toLogPct(action.expectedKg);
+        const minPct = toLogPct(action.expectedKg / action.unc);
+        const maxPct = toLogPct(action.expectedKg * action.unc);
+        const mult = action.expectedKg / refKg;
+        const multStr = mult >= 1000 ? Math.round(mult).toLocaleString() + '\u00d7' : mult >= 1 ? mult.toFixed(0) + '\u00d7' : (mult * 100).toFixed(0) + '%';
+        const color = SYS_COLORS[action.cat] || 'var(--accent)';
+
+        html += `<div class="cfp-sys-row">
+          <div class="cfp-sys-row-info">
+            <span class="cfp-sys-row-name">${action.name} <span class="cfp-sys-row-badge cfp-sys-row-badge--${action.cat}">${action.cat}</span></span>
+            <div class="cfp-sys-row-desc">${action.desc}</div>
+          </div>
+          <div class="cfp-sys-bar-area">
+            <div class="cfp-sys-uncertainty" style="left:${minPct}%;width:${maxPct - minPct}%;background:${color}"></div>
+            <div class="cfp-sys-bar" style="width:${pct}%;background:${color}"></div>
+            <div class="cfp-sys-refline" style="left:${refPct}%" data-label="${refLabel}"></div>
+          </div>
+          <div class="cfp-sys-row-annot">
+            <span class="cfp-sys-kg">${fmtKgLarge(action.expectedKg)}</span>
+            <span class="cfp-sys-mult" style="color:${color}">${multStr}</span>
+          </div>
+        </div>`;
+      });
+
+      // Log axis
+      const LOG_TICKS = [1000, 10000, 100000, 1e6, 1e7, 1e8, 1e9];
+      const LOG_LABELS = ['1k', '10k', '100k', '1M', '10M', '100M', '1B kg'];
+      html += '<div class="cfp-sys-axis">';
+      LOG_TICKS.forEach((val, i) => {
+        html += `<div class="cfp-sys-tick" style="left:${toLogPct(val)}%"><div class="cfp-sys-tick-line"></div><div class="cfp-sys-tick-label">${LOG_LABELS[i]}</div></div>`;
+      });
+      html += '</div>';
+
+      sysChart.innerHTML = html;
+    }
+
+    // Systemic toggle
+    sysToggle.addEventListener('click', (e) => {
+      const btn = (e.target as HTMLElement).closest('.cfp-sys-toggle-btn') as HTMLElement;
+      if (!btn) return;
+      sysRefMode = btn.dataset.ref as 'avg'|'mine';
+      sysToggle.querySelectorAll('.cfp-sys-toggle-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const checked = getChecked();
+      const totalKg = checked.reduce((s, k) => s + getKgYear(k), 0);
+      renderSystemic(totalKg);
+    });
+
     // ── Main render ──
     function render() {
       const divisor = mode === 'day' ? 365 : 1;
@@ -885,6 +1088,7 @@ import Base from '@/layouts/Base.astro';
       renderTreemap(items);
       renderStory(items, totalKg);
       renderParisPath(checked, totalKg);
+      renderSystemic(totalKg);
       renderCompare();
       saveHash();
     }
