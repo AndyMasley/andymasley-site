@@ -1,30 +1,37 @@
 /**
- * Phase 1 — Main calculator component
+ * Phase 3 — Main calculator component
  *
- * Audit finding: the previous carbon-footprint.astro mixed lifestyle emissions
- * and leverage/advocacy claims in a single monolithic render function (render()),
- * a single URL hash, and a single set of DOM refs. The systemic impact section
- * was rendered by the same function that computed personal emissions.
+ * Implements the narrative arc: Quick estimate → Results → Refine →
+ * Personal changes → Same life different grid → (Leverage Lab, Phase 4) →
+ * (Methods, Phase 5).
  *
- * This component cleanly separates the Footprint Calculator from the Leverage Lab.
- * They share no mutable state. The only data that flows from the calculator to
- * the leverage section is the user's max personal reduction (a single number,
- * passed as a prop).
+ * The user should feel seen before they are surprised. No guilt. No
+ * inspiration copy. Motion only when it teaches causality.
  */
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import { DEFAULT_BASELINE } from '@/lib/carbon/types';
-import type { BaselineInputs } from '@/lib/carbon/types';
+import type { BaselineInputs, DetailedInputs } from '@/lib/carbon/types';
 import { computeFootprint } from '@/lib/carbon/baseline';
 import { BaselineForm } from './BaselineForm';
 import { BucketBar } from './BucketBar';
 import { ResidualWedge } from './ResidualWedge';
+import { RefineSection } from './RefineSection';
+import { PersonalChanges } from './PersonalChanges';
+import { SameLifeDifferentGrid } from './SameLifeDifferentGrid';
 import { ElectricitySection } from './ElectricitySection';
+import { StickyTotal } from './StickyTotal';
 
 export function Calculator() {
   const [baseline, setBaseline] = useState<BaselineInputs>(DEFAULT_BASELINE);
+  const [overrides, setOverrides] = useState<Partial<DetailedInputs>>({});
+  const [showSticky, setShowSticky] = useState(false);
+  const resultsRef = useRef<HTMLDivElement>(null);
 
-  const footprint = useMemo(() => computeFootprint(baseline), [baseline]);
+  const footprint = useMemo(
+    () => computeFootprint(baseline, overrides),
+    [baseline, overrides],
+  );
 
   const topDrivers = useMemo(() => {
     return [...footprint.buckets]
@@ -33,69 +40,102 @@ export function Calculator() {
       .slice(0, 3);
   }, [footprint]);
 
+  // Show sticky after results section scrolls out of viewport
+  useEffect(() => {
+    const el = resultsRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => setShowSticky(!entry.isIntersecting),
+      { threshold: 0 },
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
   return (
     <div>
-      {/* ── Quick estimate ── */}
-      <section style={{ marginBottom: '2.5rem' }}>
-        <div style={{ fontSize: '0.58rem', letterSpacing: '0.14em', textTransform: 'uppercase', fontWeight: 700, color: 'var(--text-secondary, #6B6B60)', marginBottom: '1rem' }}>
-          QUICK ESTIMATE
-        </div>
+      <StickyTotal
+        totalKg={footprint.totalKgCO2ePerYear}
+        topDriver={topDrivers[0] ?? null}
+        visible={showSticky}
+      />
+
+      {/* ── Section 2: Quick estimate ── */}
+      <section style={{ marginBottom: '3rem' }}>
+        <div className="cf-section-label">QUICK ESTIMATE</div>
+        <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary, #6B6B60)', lineHeight: 1.7, marginBottom: '1rem', maxWidth: 600 }}>
+          Answer a few questions to get a credible first estimate. Everything uses
+          reasonable defaults — you can refine any number later.
+        </p>
         <BaselineForm value={baseline} onChange={setBaseline} />
       </section>
 
-      {/* ── Results ── */}
-      <section style={{ marginBottom: '2.5rem' }}>
-        <div style={{ marginBottom: '0.5rem' }}>
-          <div style={{ fontSize: '0.58rem', letterSpacing: '0.14em', textTransform: 'uppercase', fontWeight: 700, color: 'var(--text-secondary, #6B6B60)', marginBottom: '4px' }}>
-            YOUR ESTIMATED FOOTPRINT
-          </div>
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: '10px' }}>
-            <span style={{ fontSize: 'clamp(3rem, 7vw, 6rem)', fontWeight: 700, lineHeight: 1, letterSpacing: '-0.02em', fontVariantNumeric: 'tabular-nums' }}>
-              {footprint.totalKgCO2ePerYear.toLocaleString()}
-            </span>
-            <span style={{ fontSize: '1rem', color: 'var(--text-secondary, #6B6B60)' }}>
-              kg CO<sub>2</sub>e / year
-            </span>
-          </div>
+      {/* ── Section 3: Refine ── */}
+      <RefineSection
+        buckets={footprint.buckets}
+        overrides={overrides}
+        onOverridesChange={setOverrides}
+      />
 
-          {/* Context */}
-          <div style={{ fontSize: '0.9rem', color: 'var(--text-secondary, #6B6B60)', lineHeight: 1.6, marginTop: '0.5rem', maxWidth: '600px' }}>
-            {footprint.totalKgCO2ePerYear <= 2500 ? (
-              'Below the Paris 2030 per-capita target.'
-            ) : (
-              <>
-                {Math.round(footprint.totalKgCO2ePerYear / 16000 * 100)}% of the US average (16,000 kg).
-                {' '}Top drivers: {topDrivers.map((b, i) => (
-                  <span key={b.bucketId}>
-                    {i > 0 && ', '}
-                    <strong>{b.lineItems[0]?.label || b.bucketId}</strong> ({b.kgCO2ePerYear.toLocaleString()} kg)
-                  </span>
-                ))}.
-              </>
-            )}
-          </div>
+      {/* ── Section 4: Results ── */}
+      <section ref={resultsRef} style={{ marginBottom: '3rem' }}>
+        <div className="cf-section-label">YOUR ESTIMATED FOOTPRINT</div>
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: '10px', marginBottom: '0.5rem' }}>
+          <span style={{ fontSize: 'clamp(3rem, 7vw, 6rem)', fontWeight: 700, lineHeight: 1, letterSpacing: '-0.02em', fontVariantNumeric: 'tabular-nums' }}>
+            {footprint.totalKgCO2ePerYear.toLocaleString()}
+          </span>
+          <span style={{ fontSize: '1rem', color: 'var(--text-secondary, #6B6B60)' }}>
+            kg CO<sub>2</sub>e / year
+          </span>
         </div>
 
-        <ResidualWedge totalKg={footprint.totalKgCO2ePerYear} residualKg={footprint.residualKgCO2ePerYear} />
+        {/* Context: one total, one boundary, top 3 drivers */}
+        <div style={{ fontSize: '0.9rem', color: 'var(--text-secondary, #6B6B60)', lineHeight: 1.6, maxWidth: '600px', marginBottom: '1rem' }}>
+          {footprint.totalKgCO2ePerYear <= 2500 ? (
+            'Below the Paris 2030 per-capita target.'
+          ) : (
+            <>
+              {Math.round(footprint.totalKgCO2ePerYear / 16000 * 100)}% of the US average.
+              {' '}Top drivers: {topDrivers.map((b, i) => (
+                <span key={b.bucketId}>
+                  {i > 0 && ', '}
+                  <strong>{b.lineItems[0]?.label || b.bucketId}</strong> ({b.kgCO2ePerYear.toLocaleString()} kg)
+                </span>
+              ))}.
+            </>
+          )}
+        </div>
 
-        <BucketBar buckets={footprint.buckets} totalKg={footprint.totalKgCO2ePerYear} />
-
-        {/* Electricity section */}
-        <ElectricitySection baseline={baseline} />
-
-        {/* Boundary label */}
+        {/* Boundary */}
         <div style={{
           fontSize: '0.75rem',
           color: 'var(--text-secondary, #6B6B60)',
-          fontStyle: 'italic',
           background: 'var(--panel, #EFECE5)',
           borderRadius: '6px',
           padding: '10px 14px',
           lineHeight: 1.6,
+          marginBottom: '1.5rem',
         }}>
-          <strong>Boundary:</strong> This number includes your household energy, personal transport, food, consumer spending, and your per-capita share of public infrastructure. It does not include financed emissions from investments (available under Advanced). Different calculators draw different boundaries — that's why numbers vary.
+          <strong>Boundary:</strong> Household energy, personal transport, food, consumer spending,
+          and per-capita public infrastructure. Does not include financed emissions.
         </div>
+
+        <ResidualWedge totalKg={footprint.totalKgCO2ePerYear} residualKg={footprint.residualKgCO2ePerYear} />
+        <BucketBar buckets={footprint.buckets} totalKg={footprint.totalKgCO2ePerYear} />
       </section>
+
+      {/* ── Section 5: Personal changes ── */}
+      <PersonalChanges baseline={baseline} footprint={footprint} />
+
+      {/* ── Section 6: Same life, different grid ── */}
+      <SameLifeDifferentGrid
+        baseline={baseline}
+        overrides={overrides}
+        todayFootprint={footprint}
+      />
+
+      {/* ── Electricity deep dive ── */}
+      <ElectricitySection baseline={baseline} />
     </div>
   );
 }

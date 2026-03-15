@@ -108,6 +108,70 @@ import { Calculator } from '@/components/carbon/Calculator';
     margin: 3rem 0;
   }
 
+  /* Section label pattern */
+  .cf-section-label {
+    font-size: 0.58rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: var(--text-secondary);
+    margin-bottom: 0.5rem;
+  }
+
+  /* Sticky total — desktop: top bar */
+  .cf-sticky-desktop {
+    display: none;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background: var(--bg, #F5F2EC);
+    border-bottom: 1px solid var(--divider);
+    padding: 8px 0;
+  }
+  [data-theme="dark"] .cf-sticky-desktop {
+    background: var(--bg, #1C1A17);
+  }
+  .cf-sticky-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .cf-sticky-total {
+    font-weight: 700;
+    font-size: 0.9rem;
+    font-variant-numeric: tabular-nums;
+  }
+  .cf-sticky-driver {
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+  }
+
+  /* Sticky total — mobile: bottom rail */
+  .cf-sticky-mobile {
+    display: none;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 50;
+    background: var(--bg, #F5F2EC);
+    border-top: 1px solid var(--divider);
+    padding: 10px 20px;
+    justify-content: space-between;
+    align-items: center;
+  }
+  [data-theme="dark"] .cf-sticky-mobile {
+    background: var(--bg, #1C1A17);
+  }
+
+  @media (min-width: 641px) {
+    .cf-sticky-desktop { display: block; }
+  }
+  @media (max-width: 640px) {
+    .cf-sticky-mobile { display: flex; }
+    .cfv2 { padding-bottom: 5rem; } /* space for mobile rail */
+  }
+
   .cfv2-section-title {
     font-family: 'Playfair Display', Georgia, serif;
     font-size: clamp(1.4rem, 3vw, 2rem);
