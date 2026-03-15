@@ -287,7 +287,7 @@ export function ImpactChart({
           pctWidth={hasSystemic ? Math.min(pct(totalSystemic), 100) : 0}
           color={GREEN}
           ghostWidth={hasSystemic ? pct(afterPersonal) : 0} ghostOpacity={0.12}
-          suffix={hasSystemic ? `${Math.round(totalSystemic / footprintKg * 10) / 10}×` : ''}
+          suffix={hasSystemic ? `(${Math.round(totalSystemic / footprintKg * 10) / 10} yrs of your current emissions${hasPersonal && afterPersonal > 0 ? `, ${Math.round(totalSystemic / afterPersonal * 10) / 10} yrs with lifestyle cuts` : ''})` : ''}
           labelColor={hasSystemic ? GREEN : MUTED}
           bold={hasSystemic}
           dimmed={!hasSystemic}
