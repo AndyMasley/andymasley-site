@@ -81,8 +81,8 @@ export function ImpactChart({
   const totalSaved = useMemo(() => personalActions.filter(a => enabledPersonal.has(a.name)).reduce((s, a) => s + a.savingsKg, 0), [personalActions, enabledPersonal]);
   const afterPersonal = Math.max(footprintKg - totalSaved, 0);
 
-  const sortedLeverage = useMemo(() => [...leverageCases].sort((a, b) => b.expectedKgCO2ePerYear.central - a.expectedKgCO2ePerYear.central), [leverageCases]);
-  const totalSystemic = useMemo(() => sortedLeverage.filter(c => enabledSystemic.has(c.case.name)).reduce((s, c) => s + c.expectedKgCO2ePerYear.central, 0), [sortedLeverage, enabledSystemic]);
+  const sortedLeverage = useMemo(() => [...leverageCases].sort((a, b) => b.displayKg.central - a.displayKg.central), [leverageCases]);
+  const totalSystemic = useMemo(() => sortedLeverage.filter(c => enabledSystemic.has(c.case.name)).reduce((s, c) => s + c.displayKg.central, 0), [sortedLeverage, enabledSystemic]);
 
   // Group personal actions by category
   const groupedActions = useMemo(() => {
@@ -236,7 +236,7 @@ export function ImpactChart({
             <ExampleDropdown />
             {sortedLeverage.map(result => {
               const isOn = enabledSystemic.has(result.case.name);
-              const central = result.expectedKgCO2ePerYear.central;
+              const central = result.displayKg.central;
               const mult = result.leverageMultiple.central;
               return (
                 <button key={result.case.name} onClick={() => toggleSystemic(result.case.name)} className="cf-toggle-row" data-on={isOn} aria-pressed={isOn}>
@@ -248,9 +248,9 @@ export function ImpactChart({
                   </span>
                   <div style={{ textAlign: 'right', flexShrink: 0 }}>
                     <div style={{ fontWeight: 700, color: isOn ? GREEN : MUTED, fontVariantNumeric: 'tabular-nums', fontSize: '0.72rem', whiteSpace: 'nowrap' }}>
-                      {central.toLocaleString()}
+                      {central.toLocaleString()}<span style={{ fontSize: '0.55rem', fontWeight: 400, marginLeft: '2px' }}>{result.displayUnit}</span>
                     </div>
-                    {mult >= 1 && <div style={{ fontSize: '0.58rem', fontWeight: 700, color: isOn ? GREEN : MUTED }}>{mult}x</div>}
+                    {mult >= 1 && <div style={{ fontSize: '0.58rem', fontWeight: 700, color: isOn ? GREEN : MUTED }}>{mult}×</div>}
                   </div>
                 </button>
               );

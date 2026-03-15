@@ -116,6 +116,7 @@ export const LEVERAGE_CASES: LeverageCase[] = [
     counterfactualGenerationMix: 'Policy advocacy portfolio (0.375 kg/kWh equivalent)',
     attributionFraction: 1.0,
     timeHorizonYears: 1,
+    isRecurring: true,
   },
 ];
 
@@ -150,20 +151,31 @@ function computeCase(
   const low = compute(probLow);
   const high = compute(probHigh);
 
+  const isRecurring = leverageCase.isRecurring ?? false;
+  const years = leverageCase.timeHorizonYears;
+
+  // For one-off campaigns, display the total lifetime impact.
+  // For recurring actions (e.g., annual donation), display per-year.
+  const displayLow = isRecurring ? low : low * years;
+  const displayCentral = isRecurring ? central : central * years;
+  const displayHigh = isRecurring ? high : high * years;
+
   const multipleOf = (v: number) => userMaxReduction > 0 ? v / userMaxReduction : 0;
 
   return {
     case: leverageCase,
     expectedKgCO2ePerYear: { low: Math.round(low), central: Math.round(central), high: Math.round(high) },
     expectedKgCO2eLifetime: {
-      low: Math.round(low * leverageCase.timeHorizonYears),
-      central: Math.round(central * leverageCase.timeHorizonYears),
-      high: Math.round(high * leverageCase.timeHorizonYears),
+      low: Math.round(low * years),
+      central: Math.round(central * years),
+      high: Math.round(high * years),
     },
+    displayKg: { low: Math.round(displayLow), central: Math.round(displayCentral), high: Math.round(displayHigh) },
+    displayUnit: isRecurring ? '/yr' : ' total',
     leverageMultiple: {
-      low: Math.round(multipleOf(low) * 10) / 10,
-      central: Math.round(multipleOf(central) * 10) / 10,
-      high: Math.round(multipleOf(high) * 10) / 10,
+      low: Math.round(multipleOf(displayLow) * 10) / 10,
+      central: Math.round(multipleOf(displayCentral) * 10) / 10,
+      high: Math.round(multipleOf(displayHigh) * 10) / 10,
     },
   };
 }

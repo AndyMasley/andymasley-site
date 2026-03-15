@@ -47,12 +47,12 @@ describe('Leverage Lab — Phase 4 requirements', () => {
     });
   });
 
-  it('leverage multiples are computed relative to user max', () => {
+  it('leverage multiples are computed relative to user max using display values', () => {
     const result = computeLeverage(10000);
     result.cases.forEach(c => {
-      if (c.expectedKgCO2ePerYear.central > 0) {
-        // Multiple should be central_kg / user_max
-        const expectedMult = Math.round(c.expectedKgCO2ePerYear.central / 10000 * 10) / 10;
+      if (c.displayKg.central > 0) {
+        // Multiple should be displayKg / user_max
+        const expectedMult = Math.round(c.displayKg.central / 10000 * 10) / 10;
         expect(c.leverageMultiple.central).toBe(expectedMult);
       }
     });

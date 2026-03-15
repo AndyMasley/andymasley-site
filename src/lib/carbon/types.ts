@@ -149,6 +149,8 @@ export interface LeverageCase {
   counterfactualGenerationMix: string;
   attributionFraction: number;
   timeHorizonYears: number;
+  /** If true, this is a recurring annual action (e.g., charity donation). If false/undefined, it's a one-off campaign and the display shows total lifetime impact. */
+  isRecurring?: boolean;
 }
 
 /** Computed output for one leverage case. */
@@ -156,6 +158,10 @@ export interface LeverageResult {
   case: LeverageCase;
   expectedKgCO2ePerYear: { low: number; central: number; high: number };
   expectedKgCO2eLifetime: { low: number; central: number; high: number };
+  /** The number to display: lifetime total for one-off campaigns, per-year for recurring actions. */
+  displayKg: { low: number; central: number; high: number };
+  /** "total" for one-off campaigns, "/yr" for recurring */
+  displayUnit: string;
   /** Ratio of expected leverage to the user's max personal reduction. */
   leverageMultiple: { low: number; central: number; high: number };
 }
