@@ -196,8 +196,8 @@ export function computeElectricityFootprint(
   gridKgPerKwh: number,
 ): ElectricityFootprint {
   const homeElecKg = (electricityKwhPerYear * gridKgPerKwh) / householdSize;
-  // EV: ~0.3 kWh per mile
-  const evDrivingKg = hasEV ? evMilesPerYear * 0.3 * gridKgPerKwh : 0;
+  // EV: ~0.32 kWh per mile (sales-weighted avg, DOE FOTW #1374)
+  const evDrivingKg = hasEV ? evMilesPerYear * 0.32 * gridKgPerKwh : 0;
 
   return {
     homeElecKg: Math.round(homeElecKg),

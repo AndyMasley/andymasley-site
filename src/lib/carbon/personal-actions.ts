@@ -49,9 +49,9 @@ export function computePersonalActions(baseline: BaselineInputs, footprint: Foot
       name: 'Switch to an EV',
       savingsKg: Math.round(
         baseline.carOwnership === 'gas'
-          ? miles * (gasKgPerMile - 0.3 * gridRate)
+          ? miles * (gasKgPerMile - 0.32 * gridRate)
           : baseline.carOwnership === 'hybrid'
-            ? miles * (8.89 / 45 - 0.3 * gridRate)
+            ? miles * (8.89 / 45 - 0.32 * gridRate)
             : 0
       ),
       category: 'Transport',
@@ -119,10 +119,10 @@ export function computePersonalActions(baseline: BaselineInputs, footprint: Foot
     },
     {
       name: 'Replace gas furnace with heat pump',
-      savingsKg: Math.round((500 * 5.3 - 3000 * gridRate) / baseline.householdSize),
+      savingsKg: Math.round((500 * 5.3 - 3500 * gridRate) / baseline.householdSize),
       category: 'Home',
       applicable: baseline.housingType !== 'apartment',
-      note: 'Bigger savings on clean grids; may increase bills on coal-heavy grids',
+      note: 'Saves ~500 therms gas, adds ~3,500 kWh electricity. Bigger savings on clean grids.',
     },
     {
       name: 'Reduce thermostat 2\u00B0F in winter',
@@ -232,7 +232,7 @@ export function computePersonalActions(baseline: BaselineInputs, footprint: Foot
     // ── Flights ──
     {
       name: 'Eliminate one transatlantic flight',
-      savingsKg: Math.round(4400 * 0.255),
+      savingsKg: Math.round(6900 * 0.255),
       category: 'Flights',
       applicable: baseline.flightsPerYear > 0,
       note: 'One of the highest-impact single actions',

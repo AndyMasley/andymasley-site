@@ -41,8 +41,10 @@ const DRIVING_KG_PER_MILE = 8.89 / 25.4;
 // Hybrid: ~45 MPG
 const HYBRID_KG_PER_MILE = 8.89 / 45;
 
-// EV: ~0.3 kWh/mi × grid intensity (computed dynamically now)
-const EV_KWH_PER_MILE = 0.3;
+// EV: ~0.32 kWh/mi × grid intensity (computed dynamically now)
+// Sales-weighted average across sedans (~0.27) and SUVs/crossovers (~0.38)
+// Source: DOE FOTW #1374 (Dec 2024), EPA MY2024 data
+const EV_KWH_PER_MILE = 0.32;
 
 // Flight: ~0.255 kg CO2e per passenger-mile (economy, incl. radiative forcing)
 const FLIGHT_KG_PER_MILE_ECONOMY = 0.255;

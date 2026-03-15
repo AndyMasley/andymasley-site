@@ -298,7 +298,7 @@ export function Methodology() {
 
             <p style={{ marginTop: '12px' }}>
               <strong>Electric vehicle:</strong>{' '}
-              <code>0.3 kWh/mi &times; grid carbon rate</code>
+              <code>0.32 kWh/mi &times; grid carbon rate</code>
               <br />
               Source:{' '}
               <Src href="https://afdc.energy.gov/vehicles/electric-energy-use">
@@ -342,7 +342,7 @@ export function Methodology() {
             <p style={{ marginTop: '8px' }}>
               <strong>Worked example</strong> (suburban, EV on US avg grid):
               <br />
-              <code>13,500 mi × 0.3 kWh/mi × 0.39 kg/kWh = 1,580 kg/yr</code>
+              <code>13,500 mi × 0.32 kWh/mi × 0.39 kg/kWh = 1,685 kg/yr</code>
             </p>
             <p style={{ marginTop: '8px' }}>
               <strong>What this doesn't capture:</strong> ride-hailing, motorcycle use, long-distance bus travel, or freight associated with personal deliveries. The transit estimate for car-free users is a rough allocation based on average transit ridership by area type.
@@ -402,7 +402,7 @@ export function Methodology() {
               <strong>Why the radiative forcing multiplier matters:</strong> CO₂ emitted at altitude has additional warming effects beyond the CO₂ itself — contrails, NOx, and water vapor contribute roughly as much warming again. The <code>1.9×</code> multiplier is from <Src href="https://www.sciencedirect.com/science/article/pii/S1352231020305689">Lee et al. 2021</Src> and is already incorporated into the <code>0.255</code> factor. Without it, the raw CO₂-only factor would be ~<code>0.134 kg/mi</code>.
             </p>
             <p style={{ marginTop: '8px' }}>
-              <strong>What this doesn't capture:</strong> the model uses a single average trip distance. In reality, transatlantic flights (~4,400 mi round-trip) produce roughly twice the emissions of domestic flights. Users with known routes can enter specific distances in the Refine section.
+              <strong>What this doesn't capture:</strong> the model uses a single average trip distance. In reality, transatlantic flights (~6,900 mi round-trip, e.g. NYC&ndash;London) produce roughly three times the emissions of domestic flights. Users with known routes can enter specific distances in the Refine section.
             </p>
           </Bucket>
 
