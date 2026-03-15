@@ -34,7 +34,7 @@ import { ARCHETYPES } from './Archetypes';
 import type { Archetype } from './Archetypes';
 import { ComparisonModes, getComparisonContext } from './ComparisonModes';
 import type { ComparisonModeId } from './ComparisonModes';
-import { TheTurn } from './TheTurn';
+import { ImpactChart } from './ImpactChart';
 import { AdvancedSection } from './AdvancedSection';
 
 // ---------------------------------------------------------------------------
@@ -206,24 +206,17 @@ export function Calculator() {
     [footprint.totalKgCO2ePerYear, comparisonMode, baseline],
   );
 
-  // Personal actions — top 3 for inline display
-  const top3Actions = useMemo(
-    () => computePersonalActions(baseline, footprint).slice(0, 3),
+  // Personal actions for the interactive chart
+  const allPersonalActions = useMemo(
+    () => computePersonalActions(baseline, footprint),
     [baseline, footprint],
   );
 
-  // Leverage — for TheTurn
+  // Leverage cases for the interactive chart
   const leverageData = useMemo(
     () => computeLeverage(footprint.totalKgCO2ePerYear),
     [footprint.totalKgCO2ePerYear],
   );
-
-  const topLeverageCase = useMemo(() => {
-    const sorted = [...leverageData.cases].sort(
-      (a, b) => b.expectedKgCO2ePerYear.central - a.expectedKgCO2ePerYear.central,
-    );
-    return sorted[0] ?? null;
-  }, [leverageData]);
 
   const handleLoadScenario = (b: BaselineInputs, o: Partial<DetailedInputs>) => {
     setBaseline(b);
@@ -248,10 +241,6 @@ export function Calculator() {
       setTimeout(() => setCopyFeedback(false), 2000);
     });
   }, [baseline, overrides, activeArchetypeId, comparisonMode]);
-
-  const scrollToAdvanced = useCallback(() => {
-    advancedRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }, []);
 
   useEffect(() => {
     const el = resultsRef.current;
@@ -433,104 +422,12 @@ export function Calculator() {
         <ResidualWedge totalKg={footprint.totalKgCO2ePerYear} residualKg={footprint.residualKgCO2ePerYear} />
       </section>
 
-      {/* -- Section 3: Top 3 personal actions -- */}
-      {top3Actions.length > 0 && (
-        <section style={{ marginBottom: '3rem' }}>
-          <div className="cf-section-label">WHAT YOU CAN CHANGE</div>
-          <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary, #6B6B60)', lineHeight: 1.7, marginBottom: '1rem', maxWidth: 600 }}>
-            Your highest-impact personal actions.
-          </p>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
-            {top3Actions.map(action => (
-              <div key={action.name} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', padding: '10px 0', borderBottom: '1px solid var(--divider, #DDD9D0)' }}>
-                <div>
-                  <div style={{ fontWeight: 600, fontSize: '0.88rem' }}>{action.name}</div>
-                  <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary, #6B6B60)' }}>{action.note}</div>
-                </div>
-                <span style={{ fontWeight: 700, color: 'var(--green, #4A7C59)', whiteSpace: 'nowrap', marginLeft: '12px' }}>
-                  −{action.savingsKg.toLocaleString()} kg/yr
-                </span>
-              </div>
-            ))}
-          </div>
-
-          <button
-            onClick={scrollToAdvanced}
-            style={{
-              marginTop: '0.75rem',
-              padding: '0',
-              border: 'none',
-              background: 'transparent',
-              fontFamily: 'inherit',
-              fontSize: '0.78rem',
-              fontWeight: 600,
-              color: 'var(--accent, #8B2E2E)',
-              cursor: 'pointer',
-            }}
-          >
-            See all actions →
-          </button>
-        </section>
-      )}
-
-      {/* -- Section 4: THE TURN -- */}
-      {topLeverageCase && (
-        <TheTurn
-          userFootprintKg={footprint.totalKgCO2ePerYear}
-          topLeverageAnnualKg={topLeverageCase.expectedKgCO2ePerYear}
-          leverageMultiple={topLeverageCase.leverageMultiple.central}
-          leverageCaseName={topLeverageCase.case.name}
-        />
-      )}
-
-      {/* -- Section 5: What you can do about the grid -- */}
-      <section style={{ marginBottom: '3rem' }}>
-        <div className="cf-section-label">WHAT YOU CAN DO ABOUT THE GRID</div>
-        <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary, #6B6B60)', lineHeight: 1.7, marginBottom: '1.5rem', maxWidth: 600 }}>
-          The electricity grid powers millions of homes, cars, and businesses. Cleaning it
-          is the highest-leverage action available — and ordinary people do it all the time.
-        </p>
-
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', marginBottom: '1.5rem' }}>
-          <div style={{ padding: '12px 16px', background: 'var(--panel, #EFECE5)', borderRadius: '6px' }}>
-            <div style={{ fontWeight: 600, fontSize: '0.88rem', marginBottom: '4px' }}>
-              Attend one public utility commission hearing
-            </div>
-            <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary, #6B6B60)', lineHeight: 1.5 }}>
-              Utility commissions decide how your electricity is generated. Public comments are part of the official record and shape decisions worth billions.
-            </div>
-          </div>
-          <div style={{ padding: '12px 16px', background: 'var(--panel, #EFECE5)', borderRadius: '6px' }}>
-            <div style={{ fontWeight: 600, fontSize: '0.88rem', marginBottom: '4px' }}>
-              Join a local clean energy campaign
-            </div>
-            <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary, #6B6B60)', lineHeight: 1.5 }}>
-              Organized groups have changed the trajectory of coal plants, solar farms, and grid policy. One person joining shifts the coalition size in every expected value calculation.
-            </div>
-          </div>
-          <div style={{ padding: '12px 16px', background: 'var(--panel, #EFECE5)', borderRadius: '6px' }}>
-            <div style={{ fontWeight: 600, fontSize: '0.88rem', marginBottom: '4px' }}>
-              Contact your state representative about clean energy legislation
-            </div>
-            <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary, #6B6B60)', lineHeight: 1.5 }}>
-              State legislatures set renewable portfolio standards, approve utility rate cases, and fund efficiency programs. A constituent phone call takes 5 minutes.
-            </div>
-          </div>
-        </div>
-
-        <div style={{
-          padding: '10px 14px',
-          background: 'var(--panel, #EFECE5)',
-          borderRadius: '6px',
-          borderLeft: '3px solid var(--accent, #8B2E2E)',
-          fontSize: '0.78rem',
-          color: 'var(--text-secondary, #6B6B60)',
-          lineHeight: 1.6,
-        }}>
-          Every leverage number on this page is an expected value: probability × impact ÷ coalition size. Even conservative estimates exceed what personal lifestyle changes can achieve.
-        </div>
-      </section>
+      {/* -- Interactive impact chart: personal changes → systemic reveal -- */}
+      <ImpactChart
+        footprintKg={footprint.totalKgCO2ePerYear}
+        personalActions={allPersonalActions}
+        leverageCases={leverageData.cases}
+      />
 
       {/* -- Section 6: Go deeper -- */}
       <div ref={advancedRef}>
