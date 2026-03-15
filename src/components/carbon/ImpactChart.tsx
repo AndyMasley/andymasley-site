@@ -205,8 +205,13 @@ export function ImpactChart({
             Systemic actions
           </div>
           <div className="cf-impact-scroll">
-            <div style={{ fontSize: '0.65rem', color: MUTED, marginBottom: '0.5rem' }}>
-              Expected value per person
+            <div style={{ fontSize: '0.72rem', color: MUTED, lineHeight: 1.45, marginBottom: '0.75rem' }}>
+              Each number is a back-of-the-envelope calculation: how much carbon would be saved if the action succeeds, times the probability of success, divided by the number of people working together on it.
+            </div>
+            <div style={{ fontSize: '0.68rem', color: MUTED, lineHeight: 1.5, marginBottom: '0.75rem', padding: '8px 10px', background: 'rgba(74, 124, 89, 0.05)', borderRadius: '5px', borderLeft: `2px solid ${GREEN}` }}>
+              <strong style={{ color: 'var(--text, #1A1A18)' }}>Example:</strong> Say 100 people work to stop a nuclear plant from closing. The plant generates 7.9 million MWh of zero-carbon electricity per year. If it closes, that's replaced by gas, adding about 3.2 million tonnes of CO₂ per year. If the campaign has an 80% chance of succeeding and the plant runs for 20 more years:<br /><br />
+              <code style={{ fontSize: '0.65rem' }}>3,200,000,000 kg × 80% ÷ 100 people = 25,600,000 kg per person</code><br /><br />
+              That's <strong style={{ color: GREEN }}>25,600 tonnes</strong> per person — roughly <strong style={{ color: GREEN }}>1,600× a typical American's annual footprint</strong>. Even at 10% probability, it's 160× your footprint. That's why the numbers below are so large.
             </div>
             {sortedLeverage.map(result => {
               const isOn = enabledSystemic.has(result.case.name);
