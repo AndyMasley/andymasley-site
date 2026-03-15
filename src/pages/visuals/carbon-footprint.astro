@@ -108,6 +108,11 @@ import Base from '@/layouts/Base.astro';
       <div class="cfp-grid" id="cfp-grid"></div>
     </div>
 
+    <!-- Paris Path -->
+    <div class="cfp-paris-path" id="cfp-paris-path"></div>
+
+    <hr class="cfp-rule" />
+
     <!-- Sources -->
     <div class="cfp-methodology">
       <details>
@@ -146,18 +151,18 @@ import Base from '@/layouts/Base.astro';
     --accent-h: #6E2323; --bar-ref: #C8C3B8; --green: #4A7C59; --cat: #9A9A8A;
     --div: #DDD9D0; --panel: #EFECE5; --font: 'DM Sans', sans-serif;
     --serif: 'Playfair Display', Georgia, serif;
-    --c-transport: #8B2E2E; --c-home: #A0522D; --c-food: #6B4226;
-    --c-purchases: #7A3B2E; --c-digital: #9B6B5A; --c-reduction: #4A7C59;
+    --c-transport: #8B2E2E; --c-home: #A0522D; --c-food: #6B7C3A;
+    --c-purchases: #5C4A7A; --c-digital: #2E6B7A; --c-reduction: #4A7C59;
     font-family: var(--font); color: var(--text); background: transparent;
     max-width: 100%; padding: 3rem 4vw 5rem; margin: 0; box-sizing: border-box;
     font-variant-numeric: tabular-nums;
   }
   [data-theme="dark"] .cfp {
-    --bg: #1A1917; --text: #E8E5DE; --text2: #9A9790; --accent: #D4A59A;
-    --accent-h: #E8C4BB; --bar-ref: #3A3835; --green: #6AAF7E; --cat: #7A7A70;
-    --div: #2D2B28; --panel: #242220;
-    --c-transport: #C47058; --c-home: #C4935A; --c-food: #A07050;
-    --c-purchases: #B86850; --c-digital: #C4A08A; --c-reduction: #6AAF7E;
+    --bg: #1C1A17; --text: #F0EDE6; --text2: #9A9485; --accent: #B85555;
+    --accent-h: #C96060; --bar-ref: #4A4540; --green: #5A9B6E; --cat: #7A7A70;
+    --div: #3A3733; --panel: #252320;
+    --c-transport: #B85555; --c-home: #C47A50; --c-food: #8FA050;
+    --c-purchases: #8070A8; --c-digital: #4A8E9E; --c-reduction: #5A9B6E;
   }
 
   /* ── ZONE 1: Hero ── */
@@ -265,14 +270,23 @@ import Base from '@/layouts/Base.astro';
 
   .cfp-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0 3vw; width: 100%; margin-top: 1.5rem; }
   .cfp-cat-group { display: flex; flex-direction: column; gap: 2px; }
-  .cfp-cat-header { display: flex; align-items: center; gap: 6px; font-size: 0.6rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.18em; color: var(--cat); padding-bottom: 0.5rem; border-bottom: 1px solid var(--div); margin-bottom: 0.75rem; }
+  .cfp-cat-header { display: flex; align-items: center; gap: 6px; font-size: 0.6rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.18em; color: var(--cat); padding-top: 0.75rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--div); margin-bottom: 1rem; border-top: 2.5px solid var(--cat); }
+  .cfp-cat-group[data-cat="transport"] .cfp-cat-header { border-top-color: var(--c-transport); }
+  .cfp-cat-group[data-cat="home"] .cfp-cat-header { border-top-color: var(--c-home); }
+  .cfp-cat-group[data-cat="food"] .cfp-cat-header { border-top-color: var(--c-food); }
+  .cfp-cat-group[data-cat="purchases"] .cfp-cat-header { border-top-color: var(--c-purchases); }
+  .cfp-cat-group[data-cat="digital"] .cfp-cat-header { border-top-color: var(--c-digital); }
   .cfp-cat-header svg { width: 14px; height: 14px; stroke: var(--cat); fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
 
   /* Activity rows */
   .cfp-act { display: flex; align-items: flex-start; gap: 10px; padding: 10px 10px; min-height: 52px; border-radius: 6px; cursor: pointer; transition: background 0.15s; user-select: none; position: relative; background: transparent; }
   .cfp-act:hover { background: rgba(139,46,46,0.04); }
-  .cfp-act.checked { background: rgba(139,46,46,0.06); border-left: 2px solid var(--accent); }
-  .cfp-act--reduction.checked { background: rgba(74,124,89,0.06); border-left-color: var(--green); }
+  .cfp-act.checked { background: rgba(139,46,46,0.06); border-left: 2.5px solid var(--accent); }
+  .cfp-act.checked[data-cat="home"] { border-left-color: var(--c-home); }
+  .cfp-act.checked[data-cat="food"] { border-left-color: var(--c-food); }
+  .cfp-act.checked[data-cat="purchases"] { border-left-color: var(--c-purchases); }
+  .cfp-act.checked[data-cat="digital"] { border-left-color: var(--c-digital); }
+  .cfp-act--reduction.checked { background: rgba(74,124,89,0.06); border-left-color: var(--c-reduction); }
   .cfp-act.cfp-act--filtered { opacity: 0.15; pointer-events: none; }
   [data-theme="dark"] .cfp-act:hover { background: rgba(212,165,154,0.05); }
   [data-theme="dark"] .cfp-act.checked { background: rgba(212,165,154,0.08); }
@@ -289,7 +303,8 @@ import Base from '@/layouts/Base.astro';
   .cfp-act-name { font-size: 0.88rem; font-weight: 500; line-height: 1.3; }
   .cfp-act-kg { font-size: 0.75rem; color: var(--text2); white-space: nowrap; flex-shrink: 0; min-width: 60px; text-align: right; line-height: 1.3; margin-top: 1px; }
   .cfp-act-detail { font-size: 0.72rem; color: var(--text2); font-style: italic; line-height: 1.3; }
-  .cfp-act-input-row { display: flex; align-items: center; gap: 6px; margin-top: 2px; }
+  .cfp-act-input-row { display: flex; align-items: center; gap: 6px; margin-top: 2px; max-height: 0; opacity: 0; overflow: hidden; transition: max-height 0.25s ease, opacity 0.2s ease; }
+  .cfp-act.checked .cfp-act-input-row { max-height: 36px; opacity: 1; }
   .cfp-act-input { width: 56px; padding: 3px 4px; text-align: center; font-family: var(--font); font-size: 0.75rem; color: var(--text); background: var(--panel); border: 1px solid var(--div); border-radius: 4px; outline: none; -moz-appearance: textfield; transition: border-color 0.15s, box-shadow 0.15s; }
   .cfp-act-input::-webkit-inner-spin-button, .cfp-act-input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
   .cfp-act-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(139,46,46,0.1); }
@@ -311,6 +326,24 @@ import Base from '@/layouts/Base.astro';
   .cfp-share-btn { background: none; border: 1px solid var(--accent); color: var(--accent); font-family: var(--font); font-size: 0.75rem; font-weight: 600; padding: 6px 16px; border-radius: 20px; cursor: pointer; transition: all 0.15s; }
   .cfp-share-btn:hover { background: var(--accent); color: var(--bg); }
   .cfp-share-confirm { font-size: 0.75rem; color: var(--green); font-weight: 600; }
+
+  /* Section rule */
+  .cfp-rule { border: none; border-top: 1px solid var(--div); margin: 3rem 0; }
+
+  /* Paris path panel */
+  .cfp-paris-path { margin: 2rem 0; }
+  .cfp-paris-path:empty { display: none; }
+  .cfp-paris-path-title { font-size: 0.6rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.18em; color: var(--cat); margin-bottom: 0.5rem; }
+  .cfp-paris-path-gap { font-size: 0.9rem; color: var(--text); margin-bottom: 1rem; line-height: 1.6; }
+  .cfp-paris-path-list { list-style: none; padding: 0; margin: 0 0 1rem; display: flex; flex-direction: column; gap: 6px; }
+  .cfp-pp-item { display: flex; align-items: center; gap: 12px; padding: 8px 12px; border-radius: 6px; background: var(--panel); cursor: pointer; transition: background 0.15s; }
+  .cfp-pp-item:hover { background: var(--div); }
+  .cfp-pp-action { flex: 1; font-size: 0.85rem; font-weight: 500; }
+  .cfp-pp-saves { font-size: 0.78rem; color: var(--green); font-weight: 600; white-space: nowrap; }
+  .cfp-pp-bar { width: 100px; height: 6px; background: var(--div); border-radius: 3px; overflow: hidden; flex-shrink: 0; }
+  .cfp-pp-fill { height: 100%; background: var(--green); border-radius: 3px; }
+  .cfp-pp-summary { font-size: 0.85rem; color: var(--text2); font-style: italic; line-height: 1.6; }
+  .cfp-pp-done { font-size: 0.9rem; font-weight: 600; color: var(--green); }
 
   /* Animations */
   .cfp-hero, .cfp-dashboard, .cfp-viz, .cfp-story, .cfp-controls { animation: fadeUp 0.5s ease both; }
@@ -358,7 +391,7 @@ import Base from '@/layouts/Base.astro';
       { key:'short-flight', cat:'transport', label:'Short-haul round trip', detail:'e.g. DC \u2194 Boston', kgYear:180, hasInput:true, inputUnit:'flights / yr', inputDefault:1, kgPerUnit:180, source:'ICAO', sourceNote:'Economy class, ~400 mi each way.' },
       { key:'public-transit', cat:'transport', label:'Public transit', detail:'Bus, metro, light rail', kgYear:210, hasInput:true, inputUnit:'mi / yr', inputDefault:2500, kgPerUnit:210/2500, source:'FTA', sourceNote:'Average across US transit modes.' },
       { key:'motorcycle', cat:'transport', label:'Motorcycle', detail:'Avg US usage', kgYear:1400, hasInput:true, inputUnit:'mi / yr', inputDefault:3000, kgPerUnit:1400/3000, source:'EPA', sourceNote:'Avg motorcycle ~44 MPG.' },
-      { key:'cruise', cat:'transport', label:'Cruise vacation', detail:'7-day cruise', kgYear:1000, hasInput:true, inputUnit:'cruises / yr', inputDefault:1, kgPerUnit:1000, source:'ICCT', sourceNote:'Includes fuel, hotel load, food.' },
+      { key:'cruise', cat:'transport', label:'Cruise vacation', detail:'7-day cruise', kgYear:1000, hasInput:true, inputUnit:'cruises / yr', inputDefault:1, inputMax:52, kgPerUnit:1000, source:'ICCT', sourceNote:'Includes fuel, hotel load, food.' },
       { key:'home-energy', cat:'home', label:'Home electricity & gas', detail:'Avg US household, per person', kgYear:2800, source:'EIA', sourceNote:'US avg per household / 2.5 persons.' },
       { key:'gas-heating', cat:'home', label:'Natural gas heating', detail:'Avg US home, per person', kgYear:1400, source:'EIA RECS', sourceNote:'Residential natural gas for heating.' },
       { key:'ac', cat:'home', label:'Air conditioning', detail:'Avg US home, per person', kgYear:700, source:'EIA RECS', sourceNote:'Electricity for cooling, US avg.' },
@@ -380,11 +413,11 @@ import Base from '@/layouts/Base.astro';
       { key:'pet-dog', cat:'purchases', label:'Medium dog', detail:'Food, supplies, vet', kgYear:770, source:'Okin 2017', sourceNote:'Primarily from meat-based pet food.' },
       { key:'cat', cat:'purchases', label:'Cat', detail:'Food, litter, supplies', kgYear:310, source:'Okin 2017', sourceNote:'Lower food intake than dogs.' },
       { key:'renovation', cat:'purchases', label:'Home renovation', detail:'Avg project, amortized', kgYear:3500, source:'MIT Climate Portal', sourceNote:'Cement, steel, wood, transport.' },
-      { key:'streaming', cat:'digital', label:'Streaming video', detail:'Netflix, YouTube, etc.', kgYear:35, hasInput:true, inputUnit:'hrs / day', inputDefault:1, kgPerUnit:35, source:'IEA', sourceNote:'~36 g per hour incl. device + network.' },
+      { key:'streaming', cat:'digital', label:'Streaming video', detail:'Netflix, YouTube, etc.', kgYear:35, hasInput:true, inputUnit:'hrs / day', inputDefault:1, inputMax:24, kgPerUnit:35, source:'IEA', sourceNote:'~36 g per hour incl. device + network.' },
       { key:'ai-queries', cat:'digital', label:'AI queries', detail:'ChatGPT-scale', kgYear:18, hasInput:true, inputUnit:'per day', inputDefault:50, kgPerUnit:18/50, source:'IEA', sourceNote:'~2.9 Wh per query, US grid avg.' },
       { key:'email', cat:'digital', label:'Email', detail:'Including spam', kgYear:14, hasInput:true, inputUnit:'per day', inputDefault:40, kgPerUnit:14/40, source:'Berners-Lee', sourceNote:'~4 g per email avg.' },
-      { key:'bitcoin-tx', cat:'digital', label:'Bitcoin transactions', detail:'Proof-of-work', kgYear:1040, hasInput:true, inputUnit:'per week', inputDefault:1, kgPerUnit:1040, source:'Digiconomist', sourceNote:'~20 kg CO\u2082e per transaction.' },
-      { key:'gaming', cat:'digital', label:'PC gaming', detail:'Desktop + monitor', kgYear:55, hasInput:true, inputUnit:'hrs / day', inputDefault:2, kgPerUnit:55/2, source:'Evan Mills, LBNL', sourceNote:'~300W system, US grid avg.' },
+      { key:'bitcoin-tx', cat:'digital', label:'Bitcoin transactions', detail:'Proof-of-work', kgYear:1040, hasInput:true, inputUnit:'per week', inputDefault:1, inputMax:7, kgPerUnit:1040, source:'Digiconomist', sourceNote:'~20 kg CO\u2082e per transaction.' },
+      { key:'gaming', cat:'digital', label:'PC gaming', detail:'Desktop + monitor', kgYear:55, hasInput:true, inputUnit:'hrs / day', inputDefault:2, inputMax:24, kgPerUnit:55/2, source:'Evan Mills, LBNL', sourceNote:'~300W system, US grid avg.' },
       { key:'cloud-storage', cat:'digital', label:'Cloud storage', detail:'100 GB', kgYear:3, source:'IEA', sourceNote:'Tiny \u2014 included to show scale.' },
     ] as const;
 
@@ -438,6 +471,7 @@ import Base from '@/layouts/Base.astro';
       const items = DATA.filter(a => a.cat === catKey);
       const group = document.createElement('div');
       group.className = 'cfp-cat-group';
+      group.dataset.cat = catKey;
       const header = document.createElement('div');
       header.className = 'cfp-cat-header';
       header.innerHTML = `<svg viewBox="0 0 16 16">${catInfo.icon}</svg>${catInfo.label}`;
@@ -468,6 +502,7 @@ import Base from '@/layouts/Base.astro';
           const ir = document.createElement('div'); ir.className = 'cfp-act-input-row';
           const ni = document.createElement('input'); ni.type = 'number'; ni.className = 'cfp-act-input';
           ni.value = String((a as any).inputDefault); ni.min = '0'; ni.dataset.key = a.key;
+          if ((a as any).inputMax) ni.max = String((a as any).inputMax);
           const u = document.createElement('span'); u.className = 'cfp-act-unit'; u.textContent = (a as any).inputUnit;
           ir.appendChild(ni); ir.appendChild(u); body.appendChild(ir);
         }
@@ -706,6 +741,84 @@ import Base from '@/layouts/Base.astro';
       storyEl.innerHTML = `<p>${parts.join(' ')}</p>`;
     }
 
+    // ── Paris path ──
+    const parisPathEl = document.getElementById('cfp-paris-path')!;
+
+    function renderParisPath(checkedKeys: string[], totalKg: number) {
+      if (totalKg <= BENCHMARKS.paris2030 || totalKg <= 0) { parisPathEl.innerHTML = ''; return; }
+      const gap = totalKg - BENCHMARKS.paris2030;
+
+      const REDUCTIONS = [
+        { action: 'Switch to an EV', saves: 2800, requires: 'driving', applies: () => { uncheckKey('driving'); checkKey('ev-driving', 13500); } },
+        { action: 'Go vegan', saves: 1450, requires: 'diet-avg', applies: () => { uncheckKey('diet-avg'); checkKey('diet-vegan'); } },
+        { action: 'Go vegetarian', saves: 800, requires: 'diet-avg', applies: () => { uncheckKey('diet-avg'); checkKey('diet-vegetarian'); } },
+        { action: 'Install solar panels', saves: 1500, requires: null, applies: () => { checkKey('solar'); } },
+        { action: 'Add a heat pump', saves: 900, requires: 'gas-heating', applies: () => { checkKey('heat-pump'); } },
+        { action: 'One fewer transatlantic flight', saves: 1600, requires: 'transatlantic-flight', applies: () => { uncheckKey('transatlantic-flight'); } },
+        { action: 'One fewer domestic flight', saves: 620, requires: 'domestic-flight', applies: () => { uncheckKey('domestic-flight'); } },
+      ].filter(r => !r.requires || checkedKeys.includes(r.requires));
+
+      let remaining = gap;
+      const plan: typeof REDUCTIONS[number][] & { impact?: number }[] = [];
+      for (const r of [...REDUCTIONS].sort((a, b) => b.saves - a.saves)) {
+        if (remaining <= 0) break;
+        (r as any).impact = Math.min(r.saves, remaining);
+        plan.push(r);
+        remaining -= r.saves;
+      }
+
+      if (plan.length === 0) { parisPathEl.innerHTML = ''; return; }
+
+      const totalSaved = plan.reduce((s, r) => s + (r as any).impact, 0);
+      const projected = totalKg - totalSaved;
+
+      let html = `<div class="cfp-paris-path-title">Your path to the Paris target</div>`;
+      html += `<div class="cfp-paris-path-gap">You need to cut <strong>${gap.toLocaleString()} kg</strong> more to reach 2,500 kg/yr.</div>`;
+      html += `<div class="cfp-paris-path-list">`;
+      plan.forEach((r, i) => {
+        const barPct = Math.min(((r as any).impact / gap) * 100, 100);
+        html += `<div class="cfp-pp-item" data-pp-idx="${i}">
+          <span class="cfp-pp-action">${r.action}</span>
+          <span class="cfp-pp-saves">\u2212${r.saves.toLocaleString()} kg</span>
+          <div class="cfp-pp-bar"><div class="cfp-pp-fill" style="width:${barPct}%"></div></div>
+        </div>`;
+      });
+      html += `</div>`;
+      if (projected <= BENCHMARKS.paris2030) {
+        html += `<div class="cfp-pp-done">Together these bring you to ~${projected.toLocaleString()} kg/yr \u2014 within the Paris target.</div>`;
+      } else {
+        html += `<div class="cfp-pp-summary">Together these save ${totalSaved.toLocaleString()} kg, bringing you to ~${projected.toLocaleString()} kg/yr.</div>`;
+      }
+      parisPathEl.innerHTML = html;
+
+      // Click handlers for applying reductions
+      parisPathEl.querySelectorAll('.cfp-pp-item').forEach(el => {
+        el.addEventListener('click', () => {
+          const idx = parseInt((el as HTMLElement).dataset.ppIdx || '0');
+          plan[idx].applies();
+          render();
+        });
+      });
+    }
+
+    function checkKey(key: string, inputVal?: number) {
+      const row = grid.querySelector(`.cfp-act[data-key="${key}"]`);
+      if (!row) return;
+      const cb = row.querySelector('input[type="checkbox"]') as HTMLInputElement;
+      if (cb) cb.checked = true;
+      if (inputVal !== undefined) {
+        const input = row.querySelector('.cfp-act-input') as HTMLInputElement;
+        if (input) input.value = String(inputVal);
+      }
+    }
+
+    function uncheckKey(key: string) {
+      const row = grid.querySelector(`.cfp-act[data-key="${key}"]`);
+      if (!row) return;
+      const cb = row.querySelector('input[type="checkbox"]') as HTMLInputElement;
+      if (cb) cb.checked = false;
+    }
+
     // ── Main render ──
     function render() {
       const divisor = mode === 'day' ? 365 : 1;
@@ -771,6 +884,7 @@ import Base from '@/layouts/Base.astro';
       renderDashboard(totalKg);
       renderTreemap(items);
       renderStory(items, totalKg);
+      renderParisPath(checked, totalKg);
       renderCompare();
       saveHash();
     }
@@ -873,7 +987,19 @@ import Base from '@/layouts/Base.astro';
       }
     });
     grid.addEventListener('click', (e) => { if ((e.target as HTMLElement).matches('.cfp-act-input')) { e.preventDefault(); e.stopPropagation(); } });
-    grid.addEventListener('input', (e) => { if ((e.target as HTMLElement).matches('.cfp-act-input')) { if (avgPresetActive) { avgPresetActive = false; presetNote.hidden = true; } render(); } });
+    grid.addEventListener('input', (e) => {
+      const t = e.target as HTMLInputElement;
+      if (t.matches('.cfp-act-input')) {
+        // Clamp to max if defined
+        if (t.max && t.value !== '') {
+          const val = parseFloat(t.value);
+          const max = parseFloat(t.max);
+          if (val > max) t.value = String(max);
+        }
+        if (avgPresetActive) { avgPresetActive = false; presetNote.hidden = true; }
+        render();
+      }
+    });
 
     toggle.addEventListener('click', (e) => {
       const btn = (e.target as HTMLElement).closest('.cfp-toggle-btn') as HTMLElement; if (!btn) return;
@@ -890,8 +1016,16 @@ import Base from '@/layouts/Base.astro';
         const origUnit = (a as any).inputUnit as string; const dayFactor = getDayFactor(origUnit);
         if (dayFactor === 1) return;
         const currentVal = parseFloat(input.value) || 0;
-        if (switchingToDay) { const daily = currentVal / dayFactor; input.value = daily < 1 ? daily.toPrecision(3) : daily.toFixed(1).replace(/\.0$/, ''); unitEl.textContent = getDayUnit(origUnit); }
-        else { input.value = String(Math.round(currentVal * dayFactor)); unitEl.textContent = origUnit; }
+        if (switchingToDay) {
+          const daily = currentVal / dayFactor;
+          input.value = daily < 1 ? daily.toPrecision(3) : daily.toFixed(1).replace(/\.0$/, '');
+          if ((a as any).inputMax) input.max = String((a as any).inputMax / dayFactor);
+          unitEl.textContent = getDayUnit(origUnit);
+        } else {
+          input.value = String(Math.round(currentVal * dayFactor));
+          if ((a as any).inputMax) input.max = String((a as any).inputMax);
+          unitEl.textContent = origUnit;
+        }
       });
       prevTotal = switchingToDay ? prevTotal / 365 : prevTotal * 365;
       render();
