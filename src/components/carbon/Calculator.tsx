@@ -133,14 +133,6 @@ export function Calculator() {
             onActionParamOverridesChange={setActionParamOverrides}
             footprintKg={footprint.totalKgCO2ePerYear}
           />
-          <RefineSection buckets={footprint.buckets} overrides={overrides} onOverridesChange={setOverrides} />
-          <PersonalChanges baseline={baseline} footprint={footprint} />
-          <ElectricitySection baseline={baseline} />
-          <section style={{ marginBottom: '3rem' }}>
-            <ComparisonModes baseline={baseline} overrides={overrides} footprint={footprint} activeMode={comparisonMode} onModeChange={setComparisonMode} />
-          </section>
-          <hr style={{ border: 'none', borderTop: '1px solid var(--divider)', margin: '3rem 0' }} />
-          <LeverageLab userMaxPersonalReduction={footprint.totalKgCO2ePerYear} userFootprint={footprint.totalKgCO2ePerYear} />
           <section style={{ marginBottom: '2rem' }}>
             <div className="cf-section-label">EXPORT & SHARE</div>
             <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
