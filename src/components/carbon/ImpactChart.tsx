@@ -236,7 +236,7 @@ export function ImpactChart({
                   <Dot on={isOn} />
                   <span style={{ flex: 1, fontWeight: isOn ? 600 : 400, fontSize: '0.76rem', lineHeight: 1.25, textAlign: 'left' }}>
                     {result.case.name.includes('effective climate charity') ? (
-                      <>Donate $200/yr to <a href="https://founderspledge.com/research/fp-climate-change" target="_blank" rel="noopener noreferrer" style={{ color: isOn ? GREEN : ACCENT, textDecoration: 'underline', textUnderlineOffset: '2px' }} onClick={e => e.stopPropagation()}>effective climate charity</a></>
+                      <>Donate $200/yr to <a href="https://www.founderspledge.com/recommendations/topic/climate-change" target="_blank" rel="noopener noreferrer" style={{ color: isOn ? GREEN : ACCENT, textDecoration: 'underline', textUnderlineOffset: '2px' }} onClick={e => e.stopPropagation()}>effective climate charity</a></>
                     ) : result.case.name}
                   </span>
                   <div style={{ textAlign: 'right', flexShrink: 0 }}>

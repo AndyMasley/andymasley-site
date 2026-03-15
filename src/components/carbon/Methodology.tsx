@@ -612,8 +612,9 @@ export function Methodology() {
               <li>Optimistic ($1/tonne — Founders Pledge's most optimistic CATF estimate): $200 = 200 tonnes = <code>200,000 kg</code></li>
               <li>Coalition size: <code>1</code> (individual donation)</li>
               <li><strong>Important:</strong> The $1/tonne CATF estimate from Founders Pledge is their most optimistic scenario for their single best recommendation. Most effective climate charities operate at $5-$50/tonne. Our central of $10/tonne reflects a realistic portfolio, not the theoretical optimum.</li>
-              <li>Source: <Src href="https://founderspledge.com/research/fp-climate-change">Founders Pledge — Climate Change</Src></li>
-              <li>Top recommended organizations: <Src href="https://www.catf.us/">Clean Air Task Force (CATF)</Src>, <Src href="https://carbon180.org/">Carbon180</Src></li>
+              <li>Source: <Src href="https://www.founderspledge.com/recommendations/topic/climate-change">Founders Pledge — Climate Giving Recommendations</Src> (updated 2025)</li>
+              <li>Latest research: <Src href="https://www.founderspledge.com/research/climate2025">Robust to Risk — Climate Philanthropy in 2025</Src></li>
+              <li>Current top recommendations include: <Src href="https://www.catf.us/">Clean Air Task Force (CATF)</Src>, <Src href="https://www.deployus.org/">DEPLOY/US</Src>, <Src href="https://www.energyforgrowth.org/">Energy for Growth Hub</Src>, and the <Src href="https://www.founderspledge.com/programs/climate-fund/about">Founders Pledge Climate Fund</Src></li>
             </ul>
 
             <p style={{ marginTop: '16px' }}>
