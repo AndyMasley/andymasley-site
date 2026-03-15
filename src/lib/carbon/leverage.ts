@@ -101,7 +101,7 @@ export const LEVERAGE_CASES: LeverageCase[] = [
     timeHorizonYears: 15,
   },
   {
-    name: 'Donate $200/yr to effective climate charity',
+    name: 'Donate $200 to effective climate charity',
     description: 'Founders Pledge top picks (CATF, Carbon180). Realistic central estimate: ~$10/tonne CO₂e averted.',
     // Founders Pledge estimates CATF at $0.10-$10/tonne. But that's their MOST
     // optimistic pick. A realistic portfolio central is ~$10/tonne.

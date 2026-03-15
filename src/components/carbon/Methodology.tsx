@@ -644,7 +644,7 @@ export function Methodology() {
               <li>Sources: <Src href="https://emp.lbl.gov/queues">LBNL Queued Up report</Src>, <Src href="https://www.ferc.gov/electric-transmission">FERC transmission planning</Src></li>
             </ul>
 
-            <p style={{ marginTop: '16px', fontWeight: 700, fontSize: '0.85rem', color: 'var(--text, #1A1A18)' }}>7. Donate $200/yr to effective climate charity</p>
+            <p style={{ marginTop: '16px', fontWeight: 700, fontSize: '0.85rem', color: 'var(--text, #1A1A18)' }}>7. Donate $200 to effective climate charity</p>
             <ul>
               <li>This case is modeled differently — the "probability" field captures cost-effectiveness uncertainty rather than campaign success probability</li>
               <li>Central estimate: <code>$10 per tonne CO₂e</code> averted → $200 = 20 tonnes = <code>20,000 kg</code>. This is a realistic central estimate for a portfolio of effective climate charities.</li>
