@@ -94,6 +94,20 @@ export function computePersonalActions(baseline: BaselineInputs, footprint: Foot
       applicable: baseline.carOwnership !== 'none' && baseline.urbanForm === 'urban',
       note: 'Replace 60% of driving with transit (urban areas only)',
     },
+    {
+      name: 'Reduce ride-hailing/taxi 50%',
+      savingsKg: Math.round(baseline.urbanForm === 'urban' ? 300 : 150),
+      category: 'Transport',
+      applicable: baseline.carOwnership === 'none',
+      note: 'Walk, bike, or take transit instead of Uber/Lyft',
+    },
+    {
+      name: 'Walk or bike for trips under 2 miles',
+      savingsKg: Math.round(baseline.urbanForm === 'urban' ? 200 : 100),
+      category: 'Transport',
+      applicable: true,
+      note: 'Short trips add up — 40% of US car trips are under 2 miles',
+    },
 
     // ── Home ──
     {

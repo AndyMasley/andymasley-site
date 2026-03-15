@@ -240,7 +240,8 @@ export function ImpactChart({
       </div>
 
       {/* BAR CHART — fixed position, never moves */}
-      <div className="cf-impact-bars">
+      <div className="cf-impact-bars" style={{ position: 'relative' }}>
+        <ReferenceLines scaleMax={scaleMax} />
         <BarRow label="Your footprint" kg={footprintKg} pctWidth={pct(footprintKg)} color={ACCENT} />
 
         <BarRow
@@ -272,6 +273,34 @@ export function ImpactChart({
         {hasPersonal && ` After cuts: ${afterPersonal.toLocaleString()} kg.`}
         {hasSystemic && ` Systemic: ${totalSystemic.toLocaleString()} kg.`}
       </div>
+    </div>
+  );
+}
+
+// --- Reference lines ---
+
+const REFERENCE_MARKS = [
+  { kg: 16000, label: 'US avg', color: '#8B2E2E' },
+  { kg: 8200,  label: 'EU avg', color: '#6B6B60' },
+  { kg: 4700,  label: 'Global avg', color: '#6B6B60' },
+  { kg: 2500,  label: 'Paris 2030', color: '#4A7C59' },
+];
+
+function ReferenceLines({ scaleMax }: { scaleMax: number }) {
+  return (
+    <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 2 }}>
+      {REFERENCE_MARKS.map(mark => {
+        const leftPct = Math.min((mark.kg / scaleMax) * 100, 100);
+        if (leftPct > 99 || leftPct < 1) return null;
+        return (
+          <div key={mark.label} style={{ position: 'absolute', left: `${leftPct}%`, top: 0, bottom: 0, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <div style={{ width: '1px', flex: 1, background: mark.color, opacity: 0.3 }} />
+            <div style={{ fontSize: '0.55rem', fontWeight: 600, color: mark.color, whiteSpace: 'nowrap', paddingTop: '2px', transform: 'translateX(-50%)', position: 'absolute', bottom: '-14px', left: 0 }}>
+              {mark.label}
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 }
