@@ -147,8 +147,8 @@ export function AdvancedEditor({
     return groups;
   }, [personalActions]);
 
-  const sortedLeverage = useMemo(() =>
-    [...leverageCases].sort((a, b) => b.displayKg.central - a.displayKg.central),
+  // Don't sort — keep original order so rows don't jump when editing numbers
+  const sortedLeverage = useMemo(() => leverageCases,
     [leverageCases],
   );
 
