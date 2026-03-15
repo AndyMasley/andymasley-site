@@ -487,8 +487,9 @@ export function Calculator() {
       {/* -- Section 5: What you can do about the grid -- */}
       <section style={{ marginBottom: '3rem' }}>
         <div className="cf-section-label">WHAT YOU CAN DO ABOUT THE GRID</div>
-        <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary, #6B6B60)', lineHeight: 1.7, marginBottom: '1.5rem', maxWidth: 600 }}>
-          The grid affects everyone. Here's how to help clean it.
+        <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary, #6B6B60)', lineHeight: 1.7, marginBottom: '1.5rem', maxWidth: 600 }}>
+          The electricity grid powers millions of homes, cars, and businesses. Cleaning it
+          is the highest-leverage action available — and ordinary people do it all the time.
         </p>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', marginBottom: '1.5rem' }}>

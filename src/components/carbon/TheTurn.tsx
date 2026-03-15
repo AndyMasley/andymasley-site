@@ -39,27 +39,27 @@ export function TheTurn({ userFootprintKg, topLeverageAnnualKg, leverageMultiple
   return (
     <section
       style={{
-        margin: '3rem 0',
-        padding: '2.5rem 0',
-        borderTop: '1px solid var(--divider, #DDD9D0)',
+        margin: '3.5rem 0',
+        padding: '3rem 0 2.5rem',
+        borderTop: '2px solid var(--divider, #DDD9D0)',
       }}
     >
       <div className="cf-section-label">THE BIGGER PICTURE</div>
 
       <p style={{
-        fontSize: '1rem',
-        lineHeight: 1.7,
+        fontSize: '1.05rem',
+        lineHeight: 1.75,
         color: 'var(--text, #1A1A18)',
         maxWidth: 640,
-        marginBottom: '2rem',
+        marginBottom: '2.5rem',
       }}>
-        Even if you made every personal change possible, your impact has a ceiling. But helping clean the grid affects millions of households — including yours.
+        Even if you made every personal change above, the most you could eliminate is your own footprint. But helping clean the electricity grid changes the emissions of millions of households at once — including yours.
       </p>
 
       {/* Bar comparison */}
-      <div style={{ marginBottom: '1.5rem' }}>
+      <div style={{ marginBottom: '2rem' }} role="img" aria-label={`Your personal ceiling: ${userFootprintKg.toLocaleString()} kg per year. Expected impact of grid advocacy: ${topLeverageAnnualKg.low.toLocaleString()} to ${topLeverageAnnualKg.high.toLocaleString()} kg per year, central estimate ${topLeverageAnnualKg.central.toLocaleString()} kg.`}>
         {/* Bar 1: Personal ceiling */}
-        <div style={{ marginBottom: '1.25rem' }}>
+        <div style={{ marginBottom: '1.5rem' }}>
           <div style={{
             display: 'flex',
             justifyContent: 'space-between',
@@ -73,7 +73,7 @@ export function TheTurn({ userFootprintKg, topLeverageAnnualKg, leverageMultiple
             </span>
           </div>
           <div style={{
-            height: '36px',
+            height: '40px',
             background: 'var(--bar-track, #D4CFCA)',
             borderRadius: '4px',
             overflow: 'hidden',
@@ -104,7 +104,7 @@ export function TheTurn({ userFootprintKg, topLeverageAnnualKg, leverageMultiple
           </div>
           <div style={{
             position: 'relative',
-            height: '36px',
+            height: '40px',
             background: 'var(--bar-track, #D4CFCA)',
             borderRadius: '4px',
             overflow: 'hidden',
