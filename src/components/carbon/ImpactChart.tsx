@@ -205,15 +205,11 @@ export function ImpactChart({
             Systemic actions
           </div>
           <div className="cf-impact-scroll">
-            <div style={{ fontSize: '0.72rem', color: MUTED, lineHeight: 1.45, marginBottom: '0.75rem' }}>
-              Each number is a back-of-the-envelope calculation: how much carbon would be saved if the action succeeds, times the probability of success, divided by the number of people working together on it.
+            <div style={{ fontSize: '0.72rem', color: MUTED, lineHeight: 1.45, marginBottom: '0.5rem' }}>
+              Each number is a back-of-the-envelope calculation: how much carbon would be saved if the action succeeds × probability of success ÷ number of people working on it.
+              {' '}<a href="#methodology-systemic" style={{ color: GREEN, fontWeight: 600 }}>All numbers explained in methodology ↓</a>
             </div>
-            <div style={{ fontSize: '0.68rem', color: MUTED, lineHeight: 1.5, marginBottom: '0.75rem', padding: '8px 10px', background: 'rgba(74, 124, 89, 0.05)', borderRadius: '5px', borderLeft: `2px solid ${GREEN}` }}>
-              <strong style={{ color: 'var(--text, #1A1A18)' }}>Example:</strong> Say 100 people work to stop a nuclear plant from closing. The plant generates 7.9 million MWh of zero-carbon electricity per year. If it closes, that's replaced by gas, adding about 3.2 million tonnes of CO₂ per year. If the campaign has an 80% chance of succeeding and the plant runs for 20 more years:<br /><br />
-              <code style={{ fontSize: '0.65rem' }}>3,200,000,000 kg × 80% ÷ 100 people = 25,600,000 kg per person</code><br /><br />
-              That's <strong style={{ color: GREEN }}>25,600 tonnes</strong> per person — roughly <strong style={{ color: GREEN }}>1,600× a typical American's annual footprint</strong>. Even at 10% probability, it's 160× your footprint. That's why the numbers below are so large.
-              <br /><a href="#methodology-systemic" style={{ color: GREEN, fontSize: '0.65rem', fontWeight: 600 }}>All numbers explained in methodology ↓</a>
-            </div>
+            <ExampleDropdown />
             {sortedLeverage.map(result => {
               const isOn = enabledSystemic.has(result.case.name);
               const central = result.expectedKgCO2ePerYear.central;
@@ -369,6 +365,35 @@ function BarRow({ label, kg, pctWidth, color, opacity, ghostWidth, ghostOpacity,
 }
 
 // --- Primitives ---
+
+function ExampleDropdown() {
+  const [open, setOpen] = useState(false);
+  return (
+    <div style={{ marginBottom: '0.75rem' }}>
+      <button
+        onClick={() => setOpen(!open)}
+        style={{
+          display: 'flex', alignItems: 'center', gap: '6px',
+          padding: '5px 8px', border: `1px solid ${DIVIDER}`, borderRadius: '5px',
+          background: open ? 'rgba(74, 124, 89, 0.05)' : 'transparent',
+          cursor: 'pointer', fontFamily: 'inherit', fontSize: '0.68rem',
+          fontWeight: 600, color: GREEN, width: '100%', textAlign: 'left',
+        }}
+        aria-expanded={open}
+      >
+        <span style={{ fontSize: '0.6rem', transition: 'transform 0.15s', transform: open ? 'rotate(90deg)' : 'none' }}>▶</span>
+        See a worked example
+      </button>
+      {open && (
+        <div style={{ fontSize: '0.68rem', color: MUTED, lineHeight: 1.5, padding: '8px 10px', marginTop: '2px', background: 'rgba(74, 124, 89, 0.04)', borderRadius: '0 0 5px 5px', borderLeft: `2px solid ${GREEN}` }}>
+          Say 100 people work to stop a nuclear plant from closing. The plant generates 7.9 million MWh of zero-carbon electricity per year. If it closes, gas replaces it, adding about 3.2 million tonnes of CO₂ per year. If the campaign has an 80% chance of succeeding and the plant runs for 20 more years:<br /><br />
+          <code style={{ fontSize: '0.63rem' }}>3,200,000,000 kg × 80% ÷ 100 people = 25,600,000 kg per person</code><br /><br />
+          That's <strong style={{ color: GREEN }}>25,600 tonnes</strong> per person — roughly <strong style={{ color: GREEN }}>1,600×</strong> a typical American's annual footprint. Even at 10% probability, it's 160×. That's why the numbers below are so large.
+        </div>
+      )}
+    </div>
+  );
+}
 
 function Num({ n, green }: { n: number; green?: boolean }) {
   return (
