@@ -33,11 +33,11 @@ interface AdvancedEditorProps {
 const GREEN = '#4A7C59';
 
 /** Inline editable parameter — only renders if action name includes `match` */
-function ActionParam({ name, label, defaultVal, match, unit, actionParamOverrides, getParamValue, updateActionParam }: {
-  name: string; label: string; defaultVal: number; match: string; unit: string;
+function ActionParam({ name, label, defaultVal, match, unit, max, actionParamOverrides, getParamValue, updateActionParam }: {
+  name: string; label: string; defaultVal: number; match: string; unit: string; max?: number;
   actionParamOverrides: Record<string, number>;
   getParamValue: (name: string, defaultVal: number) => string;
-  updateActionParam: (name: string, defaultVal: number, val: string) => void;
+  updateActionParam: (name: string, defaultVal: number, val: string, max?: number) => void;
 }) {
   if (!name.toLowerCase().includes(match.toLowerCase())) return null;
   return (
@@ -46,11 +46,12 @@ function ActionParam({ name, label, defaultVal, match, unit, actionParamOverride
       <input
         type="number"
         min={0}
+        max={max}
         step={1}
         style={{ padding: '2px 4px', fontSize: '0.62rem', fontFamily: 'inherit', border: '1px solid #DDD9D0', borderRadius: '3px', width: '55px', textAlign: 'right', background: 'var(--bg-elevated, #fff)', color: 'var(--text, #1A1A18)' }}
         value={getParamValue(name, defaultVal)}
         placeholder={String(defaultVal)}
-        onChange={e => updateActionParam(name, defaultVal, e.target.value)}
+        onChange={e => updateActionParam(name, defaultVal, e.target.value, max)}
         onClick={e => e.stopPropagation()}
       />
       {unit && <span>{unit}</span>}
@@ -155,13 +156,14 @@ export function AdvancedEditor({
   onActionParamOverridesChange,
 }: AdvancedEditorProps) {
 
-  const updateActionParam = (actionName: string, defaultVal: number, newVal: string) => {
+  const updateActionParam = (actionName: string, defaultVal: number, newVal: string, max?: number) => {
     const num = parseFloat(newVal);
     if (newVal === '' || isNaN(num)) {
       const { [actionName]: _, ...rest } = actionParamOverrides;
       onActionParamOverridesChange(rest);
     } else {
-      onActionParamOverridesChange({ ...actionParamOverrides, [actionName]: num / defaultVal });
+      const clamped = max !== undefined ? Math.min(num, max) : num;
+      onActionParamOverridesChange({ ...actionParamOverrides, [actionName]: clamped / defaultVal });
     }
   };
 
@@ -336,15 +338,15 @@ export function AdvancedEditor({
                         {isOn && (
                           <div style={{ padding: '2px 6px 5px 30px', fontSize: '0.62rem', color: MUTED, lineHeight: 1.5, display: 'flex', flexDirection: 'column', gap: '3px' }}>
                             <ActionParam name={action.name} label="Queries/day" defaultVal={50} match="AI chatbot" unit="" actionParamOverrides={actionParamOverrides} getParamValue={getParamValue} updateActionParam={updateActionParam} />
-                            <ActionParam name={action.name} label="Hours/day" defaultVal={2} match="streaming" unit="" actionParamOverrides={actionParamOverrides} getParamValue={getParamValue} updateActionParam={updateActionParam} />
+                            <ActionParam name={action.name} label="Hours/day" defaultVal={2} match="streaming" unit="" max={24} actionParamOverrides={actionParamOverrides} getParamValue={getParamValue} updateActionParam={updateActionParam} />
                             <ActionParam name={action.name} label="Solar kW" defaultVal={7} match="solar" unit="kW" actionParamOverrides={actionParamOverrides} getParamValue={getParamValue} updateActionParam={updateActionParam} />
                             <ActionParam name={action.name} label="Gas therms saved" defaultVal={500} match="gas furnace" unit="" actionParamOverrides={actionParamOverrides} getParamValue={getParamValue} updateActionParam={updateActionParam} />
                             <ActionParam name={action.name} label="Gas therms saved" defaultVal={200} match="water heater" unit="" actionParamOverrides={actionParamOverrides} getParamValue={getParamValue} updateActionParam={updateActionParam} />
-                            <ActionParam name={action.name} label="% heating loss reduced" defaultVal={20} match="window" unit="%" actionParamOverrides={actionParamOverrides} getParamValue={getParamValue} updateActionParam={updateActionParam} />
-                            <ActionParam name={action.name} label="% savings" defaultVal={8} match="smart thermostat" unit="%" actionParamOverrides={actionParamOverrides} getParamValue={getParamValue} updateActionParam={updateActionParam} />
-                            <ActionParam name={action.name} label="% insulation savings" defaultVal={15} match="Weatherize" unit="%" actionParamOverrides={actionParamOverrides} getParamValue={getParamValue} updateActionParam={updateActionParam} />
+                            <ActionParam name={action.name} label="% heating loss reduced" defaultVal={20} match="window" unit="%" max={100} actionParamOverrides={actionParamOverrides} getParamValue={getParamValue} updateActionParam={updateActionParam} />
+                            <ActionParam name={action.name} label="% savings" defaultVal={8} match="smart thermostat" unit="%" max={100} actionParamOverrides={actionParamOverrides} getParamValue={getParamValue} updateActionParam={updateActionParam} />
+                            <ActionParam name={action.name} label="% insulation savings" defaultVal={15} match="Weatherize" unit="%" max={100} actionParamOverrides={actionParamOverrides} getParamValue={getParamValue} updateActionParam={updateActionParam} />
                             {action.name.includes('beef') && <>
-                              <ActionParam name={action.name} label="% beef cut" defaultVal={50} match="beef" unit="%" actionParamOverrides={actionParamOverrides} getParamValue={getParamValue} updateActionParam={updateActionParam} />
+                              <ActionParam name={action.name} label="% beef cut" defaultVal={50} match="beef" unit="%" max={100} actionParamOverrides={actionParamOverrides} getParamValue={getParamValue} updateActionParam={updateActionParam} />
                               <span style={{ opacity: 0.8 }}>Please don't substitute chicken. Replacing half your beef with chicken means ~<a href="https://animalclock.org/" target="_blank" rel="noopener noreferrer" style={{ color: '#8B2E2E' }}>8 more chickens</a> per year in <a href="https://thehumaneleague.org/article/how-many-chickens-are-in-the-world" target="_blank" rel="noopener noreferrer" style={{ color: '#8B2E2E' }}>factory farms</a>, vs ~<a href="https://sentientmedia.org/meat-consumption-in-the-us/" target="_blank" rel="noopener noreferrer" style={{ color: '#8B2E2E' }}>1/15th of a cow</a>. Substitute plants.</span>
                             </>}
                             {(action.name.includes('driving') || action.name.includes('Bike') || action.name.includes('transit') || action.name.includes('ride-hailing')) && (
