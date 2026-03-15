@@ -31,7 +31,6 @@ import { Calculator } from '@/components/carbon/Calculator';
     <!-- Hero -->
     <header class="cfv2-hero">
       <h1 class="cfv2-title">Carbon Footprint</h1>
-      <p class="cfv2-hero-line">Your footprint matters. But the grid your home runs on determines the carbon intensity of millions of footprints at once.</p>
     </header>
 
     <!-- Calculator (React island) -->
@@ -66,8 +65,7 @@ import { Calculator } from '@/components/carbon/Calculator';
   }
 
   .cfv2-hero {
-    padding: 1.5rem 0 1rem;
-    max-width: 600px;
+    padding: 1rem 0 0.75rem;
   }
 
   [data-theme="dark"] .cfv2 {
@@ -82,10 +80,10 @@ import { Calculator } from '@/components/carbon/Calculator';
   .cfv2-title {
     font-family: 'Playfair Display', Georgia, serif;
     font-weight: 700;
-    font-size: clamp(2.5rem, 5vw, 4rem);
+    font-size: clamp(1.5rem, 3vw, 2.2rem);
     letter-spacing: -0.02em;
     line-height: 1;
-    margin: 0 0 1rem 0;
+    margin: 0;
   }
 
   .cfv2-hero-line {
@@ -204,11 +202,16 @@ import { Calculator } from '@/components/carbon/Calculator';
     border-radius: 10px;
     overflow: hidden;
     background: var(--panel);
+    min-height: calc(100vh - 160px);
+    display: flex;
+    flex-direction: column;
   }
 
   .cf-impact-panels {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
+    flex: 1;
+    min-height: 0;
   }
 
   .cf-impact-col {
@@ -217,6 +220,7 @@ import { Calculator } from '@/components/carbon/Calculator';
     display: flex;
     flex-direction: column;
     background: var(--bg, #F5F2EC);
+    overflow: hidden;
   }
   [data-theme="dark"] .cf-impact-col {
     background: var(--bg, #1C1A17);
