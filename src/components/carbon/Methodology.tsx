@@ -3,22 +3,37 @@
  * formula, and source used in the carbon footprint calculator.
  */
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 function Bucket({
   title,
   children,
   id,
+  isOpen,
+  onToggle,
 }: {
   title: string;
   children: React.ReactNode;
   id?: string;
+  isOpen?: boolean;
+  onToggle?: () => void;
 }) {
-  const [open, setOpen] = useState(false);
+  const controlled = isOpen !== undefined && onToggle !== undefined;
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = controlled ? isOpen : internalOpen;
+  const toggle = controlled ? onToggle : () => setInternalOpen(!internalOpen);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (open && ref.current) {
+      ref.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+  }, [open]);
+
   return (
-    <div id={id} style={{ borderBottom: '1px solid var(--divider, #DDD9D0)' }}>
+    <div id={id} ref={ref} style={{ borderBottom: '1px solid var(--divider, #DDD9D0)' }}>
       <button
-        onClick={() => setOpen(!open)}
+        onClick={toggle}
         aria-expanded={open}
         style={{
           display: 'flex',
@@ -78,6 +93,25 @@ function Src({ href, children }: { href: string; children: React.ReactNode }) {
 
 export function Methodology() {
   const [open, setOpen] = useState(false);
+  const [openBucketId, setOpenBucketId] = useState<string | null>(null);
+
+  // Listen for hash changes to auto-open the right section
+  useEffect(() => {
+    function checkHash() {
+      const hash = window.location.hash.replace('#', '');
+      if (hash.startsWith('methodology-')) {
+        setOpen(true);
+        setOpenBucketId(hash);
+      }
+    }
+    checkHash();
+    window.addEventListener('hashchange', checkHash);
+    return () => window.removeEventListener('hashchange', checkHash);
+  }, []);
+
+  const toggleBucket = (id: string) => {
+    setOpenBucketId(prev => prev === id ? null : id);
+  };
 
   return (
     <div>
@@ -134,7 +168,7 @@ export function Methodology() {
             sources for each bucket.
           </p>
 
-          <Bucket title="Home Energy">
+          <Bucket title="Home Energy" id="methodology-home" isOpen={openBucketId === 'methodology-home'} onToggle={() => toggleBucket('methodology-home')}>
             <p>
               <strong>Electricity consumption by housing type</strong> (kWh per
               year):
@@ -227,7 +261,7 @@ export function Methodology() {
             </p>
           </Bucket>
 
-          <Bucket title="Ground Transport">
+          <Bucket title="Ground Transport" id="methodology-transport" isOpen={openBucketId === 'methodology-transport'} onToggle={() => toggleBucket('methodology-transport')}>
             <p>
               <strong>Annual vehicle miles by urban form:</strong>
             </p>
@@ -315,7 +349,7 @@ export function Methodology() {
             </p>
           </Bucket>
 
-          <Bucket title="Flights">
+          <Bucket title="Flights" id="methodology-flights" isOpen={openBucketId === 'methodology-flights'} onToggle={() => toggleBucket('methodology-flights')}>
             <p>
               <strong>Emission factor:</strong>{' '}
               <code>0.255 kg CO₂e per passenger-mile</code> (economy class).
@@ -372,7 +406,7 @@ export function Methodology() {
             </p>
           </Bucket>
 
-          <Bucket title="Food">
+          <Bucket title="Food" id="methodology-food" isOpen={openBucketId === 'methodology-food'} onToggle={() => toggleBucket('methodology-food')}>
             <p>
               <strong>
                 Annual diet emissions (kg CO₂e per year, per person):
@@ -419,7 +453,7 @@ export function Methodology() {
             </p>
           </Bucket>
 
-          <Bucket title="Goods & Services">
+          <Bucket title="Goods & Services" id="methodology-goods" isOpen={openBucketId === 'methodology-goods'} onToggle={() => toggleBucket('methodology-goods')}>
             <p>
               <strong>EEIO emission factor:</strong>{' '}
               <code>
@@ -468,7 +502,7 @@ export function Methodology() {
             </p>
           </Bucket>
 
-          <Bucket title="Shared Public Systems">
+          <Bucket title="Shared Public Systems" id="methodology-shared" isOpen={openBucketId === 'methodology-shared'} onToggle={() => toggleBucket('methodology-shared')}>
             <p>
               <strong>Per-capita allocation:</strong>{' '}
               <code>1,800 kg CO₂e per person per year</code>
@@ -488,7 +522,7 @@ export function Methodology() {
             </p>
           </Bucket>
 
-          <Bucket title="Systemic Actions (Expected Values)" id="methodology-systemic">
+          <Bucket title="Systemic Actions (Expected Values)" id="methodology-systemic" isOpen={openBucketId === 'methodology-systemic'} onToggle={() => toggleBucket('methodology-systemic')}>
             <p>
               Every systemic action uses the same <strong>expected value framework</strong>:
             </p>
@@ -595,7 +629,7 @@ export function Methodology() {
             </ul>
           </Bucket>
 
-          <Bucket title="Reference Lines">
+          <Bucket title="Reference Lines" id="methodology-refs" isOpen={openBucketId === 'methodology-refs'} onToggle={() => toggleBucket('methodology-refs')}>
             <p>
               <strong>Comparison benchmarks (kg CO₂e per capita):</strong>
             </p>
@@ -621,7 +655,7 @@ export function Methodology() {
             </p>
           </Bucket>
 
-          <Bucket title="Boundary Definition">
+          <Bucket title="Boundary Definition" id="methodology-boundary" isOpen={openBucketId === 'methodology-boundary'} onToggle={() => toggleBucket('methodology-boundary')}>
             <p>
               This calculator uses a <strong>hybrid boundary</strong>:
             </p>
