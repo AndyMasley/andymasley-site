@@ -189,7 +189,7 @@ export function ImpactChart({
           </div>
           <div className="cf-impact-scroll">
             {/* Lifestyle preset pills */}
-            <div style={{ fontSize: '0.6rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: MUTED, marginBottom: '5px' }}>Presets</div>
+            <div style={{ fontSize: '0.62rem', fontWeight: 500, color: MUTED, marginBottom: '5px' }}>Presets</div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '0.75rem' }}>
               {LIFESTYLE_PRESETS.map(p => (
                 <button
@@ -265,11 +265,16 @@ export function ImpactChart({
                     <span style={{ fontSize: '0.6rem', color: MUTED, width: '10px', flexShrink: 0, transition: 'transform 0.15s' }}>{isOpen ? '▾' : '▸'}</span>
                     <span style={{ flex: 1 }}>{group.category}</span>
                     {enabledCount > 0 && (
-                      <span style={{ fontSize: '0.65rem', fontWeight: 700, color: GREEN, fontVariantNumeric: 'tabular-nums' }}>
+                      <span style={{ fontSize: '0.62rem', fontWeight: 700, color: GREEN, fontVariantNumeric: 'tabular-nums' }}>
                         {enabledCount} · −{groupSaved.toLocaleString()}
                       </span>
                     )}
-                    {enabledCount === 0 && <span style={{ fontSize: '0.58rem', color: MUTED, fontWeight: 400, textTransform: 'none' }}>{group.actions.length} action{group.actions.length !== 1 ? 's' : ''} · up to {maxSavings.toLocaleString()} kg</span>}
+                    {enabledCount === 0 && <span style={{ fontSize: '0.62rem', color: MUTED, fontWeight: 400, textTransform: 'none' }}>{group.actions.length} action{group.actions.length !== 1 ? 's' : ''} · up to <strong style={{ fontWeight: 600, color: 'var(--text, #1A1A18)' }}>{maxSavings.toLocaleString()}</strong> kg</span>}
+                    {enabledCount > 0 && maxSavings > 0 && (
+                      <div style={{ width: '32px', height: '3px', background: DIVIDER, borderRadius: '2px', overflow: 'hidden', flexShrink: 0 }}>
+                        <div style={{ width: `${Math.min((groupSaved / maxSavings) * 100, 100)}%`, height: '100%', background: GREEN, borderRadius: '2px', transition: 'width 0.3s ease' }} />
+                      </div>
+                    )}
                   </button>
                   {isOpen && (
                     <div style={{ paddingLeft: '4px', paddingBottom: '4px' }}>
@@ -402,7 +407,7 @@ export function ImpactChart({
                           <div key={action.name}>
                             <button onClick={handleToggle} className="cf-toggle-row" data-on={isOn} aria-pressed={isOn}>
                               <Dot on={isOn} />
-                              <span style={{ flex: 1, fontWeight: isOn ? 600 : 400, fontSize: '0.8rem' }}>
+                              <span style={{ flex: 1, fontWeight: isOn ? 600 : 400, fontSize: '0.72rem' }}>
                                 {action.inlineParam ? (
                                   <>
                                     {action.inlineParam.before}
@@ -427,7 +432,7 @@ export function ImpactChart({
                                   </>
                                 ) : action.name}
                               </span>
-                              <span style={{ fontWeight: 700, color: isOn ? GREEN : MUTED, fontVariantNumeric: 'tabular-nums', fontSize: '0.75rem', whiteSpace: 'nowrap' }}>
+                              <span style={{ fontWeight: 700, color: isOn ? GREEN : MUTED, fontVariantNumeric: 'tabular-nums', fontSize: '0.72rem', whiteSpace: 'nowrap' }}>
                                   −{Math.round(action.savingsKg * (actionParamOverrides[action.name] ?? 1)).toLocaleString()} <span style={{ fontSize: '0.6em', fontWeight: 400 }}>kg</span>
                               </span>
                             </button>
@@ -460,10 +465,7 @@ export function ImpactChart({
             <div style={colSub}>Estimate your leverage on big problems</div>
           </div>
           <div className="cf-impact-scroll">
-            <div style={{ fontSize: '0.72rem', color: MUTED, lineHeight: 1.45, marginBottom: '0.5rem' }}>
-              Each number is how much carbon would be saved <em>per person working on the problem</em>, calculated as the amount of carbon saved if the action succeeds × the probability of success ÷ the number of people working together on it. All numbers explained in <a href="#methodology-systemic" style={{ color: 'var(--accent, #8B2E2E)' }} onClick={e => e.stopPropagation()}>methodology</a> below.
-            </div>
-            <ExampleDropdown />
+            <SystemicIntro />
             {sortedLeverage.map(result => {
               const isOn = enabledSystemic.has(result.case.name);
               const central = result.displayKg.central;
@@ -474,10 +476,10 @@ export function ImpactChart({
                 <div key={result.case.name}>
                   <button onClick={() => toggleSystemic(result.case.name)} className="cf-toggle-row" data-on={isOn} aria-pressed={isOn}>
                     <Dot on={isOn} />
-                    <span style={{ flex: 1, fontWeight: isOn ? 600 : 400, fontSize: '0.76rem', lineHeight: 1.25, textAlign: 'left' }}>
+                    <span style={{ flex: 1, fontWeight: isOn ? 600 : 400, fontSize: '0.72rem', lineHeight: 1.25, textAlign: 'left' }}>
                       {result.case.name}
                     </span>
-                    <span style={{ fontSize: '0.55rem', color: MUTED, opacity: 0.7, whiteSpace: 'nowrap', flexShrink: 0 }} onClick={e => e.stopPropagation()}>
+                    <span style={{ fontSize: '0.58rem', color: MUTED, opacity: 0.7, whiteSpace: 'nowrap', flexShrink: 0 }} onClick={e => e.stopPropagation()}>
                       <span style={{ fontSize: '0.85rem', opacity: 0.5, fontWeight: 300 }}>×</span> <InlineNum
                         value={Math.round((systemicOverrides[result.case.name]?.probability ?? result.case.probabilityOfSuccess.central) * 1000) / 10}
                         onChange={v => {
@@ -496,7 +498,7 @@ export function ImpactChart({
                         min={1}
                       /> people <span style={{ fontSize: '0.85rem', opacity: 0.5, fontWeight: 300 }}>=</span>
                     </span>
-                    <span style={{ fontWeight: 700, color: isOn ? GREEN : MUTED, fontVariantNumeric: 'tabular-nums', fontSize: '0.72rem', whiteSpace: 'nowrap', flexShrink: 0, marginLeft: '4px' }}>
+                    <span style={{ fontWeight: 700, color: isOn ? GREEN : MUTED, fontVariantNumeric: 'tabular-nums', fontSize: '0.7rem', whiteSpace: 'nowrap', flexShrink: 0, marginLeft: '4px' }}>
                       {sigFigs(central)} <span style={{ fontSize: '0.6em', fontWeight: 400 }}>kg/person</span>
                     </span>
                   </button>
@@ -634,7 +636,7 @@ function BarRow({ label, kg, pctWidth, color, opacity, ghostWidth, ghostOpacity,
   const kgStr = useSigFigs ? sigFigs(kg) : kg.toLocaleString();
   return (
     <div style={{ marginBottom: '6px', opacity: dimmed ? 0.25 : 1, transition: 'opacity 0.3s ease' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', fontSize: '0.78rem', marginBottom: '3px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', fontSize: '0.72rem', marginBottom: '3px' }}>
         <span style={{ fontWeight: bold ? 700 : 600, color: labelColor, display: 'flex', alignItems: 'center', gap: '5px' }}>
           {dotColor && <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: dotColor, flexShrink: 0, display: 'inline-block', position: 'relative', top: '0.5px' }} />}
           {label}
@@ -659,6 +661,33 @@ function BarRow({ label, kg, pctWidth, color, opacity, ghostWidth, ghostOpacity,
 }
 
 // --- Primitives ---
+
+function SystemicIntro() {
+  const [open, setOpen] = useState(false);
+  return (
+    <div style={{ marginBottom: '0.5rem' }}>
+      <div style={{ fontSize: '0.68rem', color: MUTED, lineHeight: 1.4, marginBottom: '4px' }}>
+        Carbon saved <em>per person</em> = total impact × probability ÷ coalition size.{' '}
+        <button
+          onClick={() => setOpen(!open)}
+          style={{
+            padding: '0', border: 'none', background: 'none',
+            cursor: 'pointer', fontFamily: 'inherit', fontSize: '0.68rem',
+            fontWeight: 500, color: 'var(--accent, #8B2E2E)', textDecoration: 'underline',
+          }}
+        >
+          {open ? 'Less' : 'More'}
+        </button>
+      </div>
+      {open && (
+        <div style={{ fontSize: '0.65rem', color: MUTED, lineHeight: 1.45, padding: '6px 0 6px 10px', borderLeft: `1px solid ${DIVIDER}`, marginBottom: '4px' }}>
+          Each number is how much carbon would be saved <em>per person working on the problem</em>, calculated as the amount of carbon saved if the action succeeds × the probability of success ÷ the number of people working together on it. All numbers explained in <a href="#methodology-systemic" style={{ color: 'var(--accent, #8B2E2E)' }} onClick={e => e.stopPropagation()}>methodology</a> below.
+          <ExampleDropdown />
+        </div>
+      )}
+    </div>
+  );
+}
 
 function ExampleDropdown() {
   const [open, setOpen] = useState(false);
