@@ -78,7 +78,7 @@ const LABEL_STYLE: React.CSSProperties = {
 };
 
 const SELECT_STYLE: React.CSSProperties = {
-  padding: '5px 8px',
+  padding: '6px 10px',
   fontSize: '0.78rem',
   fontFamily: 'inherit',
   border: '1px solid var(--divider, #DDD9D0)',
@@ -104,7 +104,7 @@ export function BaselineForm({ value, onChange }: BaselineFormProps) {
   };
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.5rem 0.75rem' }}>
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.6rem 1rem' }}>
 
       <div style={FIELD_STYLE}>
         <label style={LABEL_STYLE} htmlFor="cf-state">Location</label>

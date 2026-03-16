@@ -129,7 +129,7 @@ export function Methodology() {
           fontWeight: 600,
           border: '1px solid var(--divider, #DDD9D0)',
           borderRadius: '8px',
-          background: open ? 'var(--panel, #EFECE5)' : 'transparent',
+          background: open ? 'var(--panel, #EFECE5)' : 'var(--bg-subtle, #f5f4f2)',
           color: 'var(--text, #1A1A18)',
           cursor: 'pointer',
           transition: 'all 0.15s',

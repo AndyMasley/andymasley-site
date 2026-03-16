@@ -163,14 +163,14 @@ export function ImpactChart({
                   key={p.id}
                   onClick={() => handlePresetClick(p)}
                   style={{
-                    fontSize: '0.62rem',
-                    padding: '3px 8px',
-                    borderRadius: '10px',
+                    fontSize: '0.68rem',
+                    padding: '5px 11px',
+                    borderRadius: '14px',
                     border: `1px solid ${DIVIDER}`,
                     background: activePresetId === p.id ? ACCENT : 'transparent',
                     color: activePresetId === p.id ? 'white' : MUTED,
                     fontFamily: 'inherit',
-                    fontWeight: activePresetId === p.id ? 600 : 400,
+                    fontWeight: activePresetId === p.id ? 600 : 500,
                     cursor: 'pointer',
                     transition: 'all 0.12s',
                     whiteSpace: 'nowrap',
@@ -293,7 +293,7 @@ export function ImpactChart({
                       </div>
                     </div>
                   </button>
-                  <div style={{ padding: '0 6px 4px 30px', fontSize: '0.58rem', color: MUTED, display: 'flex', gap: '4px', alignItems: 'center' }}>
+                  <div style={{ padding: '0 6px 4px 30px', fontSize: '0.55rem', color: MUTED, opacity: 0.7, display: 'flex', gap: '6px', alignItems: 'center' }}>
                     <InlineNum
                       value={systemicOverrides[result.case.name]?.coalitionSize ?? result.case.coalitionSize}
                       onChange={v => {
@@ -523,9 +523,9 @@ function Dot({ on }: { on: boolean }) {
 
 const colHead: React.CSSProperties = {
   display: 'flex', alignItems: 'center', gap: '10px',
-  fontSize: '0.95rem', fontWeight: 700, letterSpacing: '0.01em',
-  color: 'var(--text, #1A1A18)', paddingBottom: '0.75rem',
-  borderBottom: `1px solid var(--divider, #DDD9D0)`, marginBottom: '0.75rem',
+  fontSize: '1rem', fontWeight: 700,
+  color: 'var(--text, #1A1A18)', paddingBottom: '0.85rem',
+  borderBottom: `2px solid var(--divider, #DDD9D0)`, marginBottom: '0.85rem',
 };
 
 const categoryHeader: React.CSSProperties = {
