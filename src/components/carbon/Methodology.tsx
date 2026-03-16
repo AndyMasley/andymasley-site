@@ -222,8 +222,7 @@ export function Methodology() {
 
           <Section title="Digital" id="methodology-digital">
             <p>
-              <strong>AI chatbots:</strong> <Val>~3 g/query</Val> for ChatGPT-class models (independent estimates range 1–5 g). 50 queries/day ≈ 55 kg/yr. Google's self-reported Gemini figure (0.03 g) uses favorable assumptions about renewable electricity credits.
-              <br /><Src href="https://hannahritchie.substack.com/p/carbon-footprint-chatgpt">Hannah Ritchie</Src>, <Src href="https://www.andymasley.com/writing/whats-the-full-hidden-climate-cost/">Andy Masley</Src>
+              <strong>AI chatbots:</strong> <Val>~0.28 g/query</Val> including full infrastructure costs. 50 queries/day ≈ 5 kg/yr. <Src href="https://www.andymasley.com/writing/whats-the-full-hidden-climate-cost/">Andy Masley</Src>
             </p>
             <p style={{ marginTop: '4px' }}>
               <strong>Video streaming:</strong> <Val>~0.08 kWh/hr</Val> including device, network, and data center. Grid-dependent: 2 hrs/day ≈ 22 kg/yr on US avg grid. <Src href="https://www.iea.org/reports/data-centres-and-data-transmission-networks">IEA 2020</Src>

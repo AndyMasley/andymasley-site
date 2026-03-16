@@ -248,10 +248,10 @@ export function computePersonalActions(baseline: BaselineInputs, footprint: Foot
     // ── Digital ──
     {
       name: 'Stop using AI chatbots',
-      savingsKg: Math.round(50 * 3 * 365 / 1000), // ~3g per query (independent estimates for ChatGPT-class), 50/day = ~55 kg/yr
+      savingsKg: Math.round(50 * 0.28 * 365 / 1000) || 1, // 0.28g per query (Andy Masley analysis)
       category: 'Digital',
       applicable: true,
-      note: '~3 g CO₂ per ChatGPT-class query (independent estimates range 1–5 g).',
+      note: '~0.28 g CO₂ per query including full infrastructure costs.',
       inlineParam: { before: 'Send ', defaultVal: 50, after: ' fewer AI prompts/day' },
     },
     {
