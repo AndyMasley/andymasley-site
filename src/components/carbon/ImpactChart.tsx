@@ -313,35 +313,31 @@ export function ImpactChart({
                 <div key={result.case.name}>
                   <button onClick={() => toggleSystemic(result.case.name)} className="cf-toggle-row" data-on={isOn} aria-pressed={isOn}>
                     <Dot on={isOn} />
-                    <div style={{ flex: 1, textAlign: 'left' }}>
-                      <span style={{ fontWeight: isOn ? 600 : 400, fontSize: '0.76rem', lineHeight: 1.25 }}>
-                        {result.case.name}
-                      </span>
-                      <span style={{ fontSize: '0.55rem', color: MUTED, opacity: 0.7, marginLeft: '6px' }} onClick={e => e.stopPropagation()}>
-                        <InlineNum
-                          value={systemicOverrides[result.case.name]?.coalitionSize ?? result.case.coalitionSize}
-                          onChange={v => {
-                            const ov = systemicOverrides[result.case.name] ?? {};
-                            onSystemicOverridesChange({ ...systemicOverrides, [result.case.name]: { ...ov, coalitionSize: v, attributionFraction: 1 / v } });
-                          }}
-                          min={1}
-                        /> people · <InlineNum
-                          value={Math.round((systemicOverrides[result.case.name]?.probability ?? result.case.probabilityOfSuccess.central) * 1000) / 10}
-                          onChange={v => {
-                            const ov = systemicOverrides[result.case.name] ?? {};
-                            onSystemicOverridesChange({ ...systemicOverrides, [result.case.name]: { ...ov, probability: v / 100 } });
-                          }}
-                          min={0}
-                          max={100}
-                          step={0.1}
-                        />% chance
-                      </span>
-                    </div>
-                    <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                      <div style={{ fontWeight: 700, color: isOn ? GREEN : MUTED, fontVariantNumeric: 'tabular-nums', fontSize: '0.72rem', whiteSpace: 'nowrap' }}>
-                        {sigFigs(central)} <span style={{ fontSize: '0.6em', fontWeight: 400 }}>kg</span><span style={{ fontSize: '0.55rem', fontWeight: 400, marginLeft: '2px' }}>{result.displayUnit}</span>
-                      </div>
-                    </div>
+                    <span style={{ fontWeight: isOn ? 600 : 400, fontSize: '0.76rem', lineHeight: 1.25, textAlign: 'left' }}>
+                      {result.case.name}
+                    </span>
+                    <span style={{ fontSize: '0.55rem', color: MUTED, opacity: 0.7, whiteSpace: 'nowrap', flexShrink: 0 }} onClick={e => e.stopPropagation()}>
+                      × <InlineNum
+                        value={Math.round((systemicOverrides[result.case.name]?.probability ?? result.case.probabilityOfSuccess.central) * 1000) / 10}
+                        onChange={v => {
+                          const ov = systemicOverrides[result.case.name] ?? {};
+                          onSystemicOverridesChange({ ...systemicOverrides, [result.case.name]: { ...ov, probability: v / 100 } });
+                        }}
+                        min={0}
+                        max={100}
+                        step={0.1}
+                      />% / <InlineNum
+                        value={systemicOverrides[result.case.name]?.coalitionSize ?? result.case.coalitionSize}
+                        onChange={v => {
+                          const ov = systemicOverrides[result.case.name] ?? {};
+                          onSystemicOverridesChange({ ...systemicOverrides, [result.case.name]: { ...ov, coalitionSize: v, attributionFraction: 1 / v } });
+                        }}
+                        min={1}
+                      /> people
+                    </span>
+                    <span style={{ fontWeight: 700, color: isOn ? GREEN : MUTED, fontVariantNumeric: 'tabular-nums', fontSize: '0.72rem', whiteSpace: 'nowrap', flexShrink: 0, marginLeft: '4px' }}>
+                      = {sigFigs(central)} <span style={{ fontSize: '0.6em', fontWeight: 400 }}>kg</span><span style={{ fontSize: '0.55rem', fontWeight: 400, marginLeft: '2px' }}>{result.displayUnit}</span>
+                    </span>
                   </button>
                 </div>
               );
