@@ -84,9 +84,9 @@ function InlineNum({ value, onChange, min, max, step }: {
   );
 }
 
-const GREEN = '#4A7C59';
+const GREEN = 'var(--green, #4A7C59)';
 const GREEN_BG = 'rgba(74, 124, 89, 0.08)';
-const ACCENT = '#8B2E2E';
+const ACCENT = 'var(--accent, #8B2E2E)';
 const MUTED = 'var(--text-secondary, #6B6B60)';
 const DIVIDER = 'var(--divider, #DDD9D0)';
 
@@ -238,7 +238,7 @@ export function ImpactChart({
                         {enabledCount} · −{groupSaved.toLocaleString()}
                       </span>
                     )}
-                    <span style={{ fontSize: '0.6rem', color: MUTED, fontWeight: 400 }}>{group.actions.length}</span>
+                    {enabledCount === 0 && <span style={{ fontSize: '0.58rem', color: MUTED, fontWeight: 400 }}>{group.actions.length} actions</span>}
                   </button>
                   {isOpen && (
                     <div style={{ paddingLeft: '4px', paddingBottom: '4px' }}>
@@ -352,7 +352,7 @@ export function ImpactChart({
       {/* BAR CHART — fixed position, never moves */}
       <div className="cf-impact-bars" style={{ position: 'relative' }}>
         <ReferenceLines scaleMax={scaleMax} />
-        <BarRow label="Your footprint" kg={footprintKg} pctWidth={pct(footprintKg)} color={ACCENT} dotColor="#8B2E2E" />
+        <BarRow label="Your footprint" kg={footprintKg} pctWidth={pct(footprintKg)} color={ACCENT} dotColor={ACCENT} />
 
         <BarRow
           label={hasPersonal ? 'After your cuts' : 'After your cuts'}
@@ -363,7 +363,7 @@ export function ImpactChart({
           suffix={hasPersonal ? `(−${totalSaved.toLocaleString()})` : ''}
           labelColor={hasPersonal ? GREEN : MUTED}
           dimmed={!hasPersonal}
-          dotColor="rgba(139,46,46,0.55)"
+          dotColor="var(--accent, #8B2E2E)"
         />
 
         <BarRow
@@ -378,7 +378,7 @@ export function ImpactChart({
           dimmed={!hasSystemic}
           unit="kg"
           useSigFigs
-          dotColor="#4A7C59"
+          dotColor={GREEN}
         />
       </div>
 
