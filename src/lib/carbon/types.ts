@@ -104,17 +104,21 @@ export interface BaselineInputs {
   dietType: DietType;
   carOwnership: CarOwnership;
   flightsPerYear: number;
+  transatlanticFlightsPerYear: number;
+  domesticFlightsPerYear: number;
 }
 
 export const DEFAULT_BASELINE: BaselineInputs = {
   state: 'US',       // national average fallback
-  householdSize: 2.5,
+  householdSize: 2.3,
   housingType: 'single-family-small',
-  monthlySpending: 1200,
+  monthlySpending: 1800,
   urbanForm: 'suburban',
   dietType: 'average',
   carOwnership: 'gas',
   flightsPerYear: 2,
+  transatlanticFlightsPerYear: 0,
+  domesticFlightsPerYear: 2,
 };
 
 // ---------------------------------------------------------------------------

@@ -96,7 +96,7 @@ const MUTED = 'var(--text-secondary, #6B6B60)';
 const DIVIDER = 'var(--divider, #DDD9D0)';
 
 const LIFESTYLE_PRESETS: { id: string; label: string; baseline: BaselineInputs }[] = [
-  { id: 'us-average', label: 'Average', baseline: { state: 'US', householdSize: 2.5, housingType: 'single-family-small', urbanForm: 'suburban', dietType: 'average', carOwnership: 'gas', flightsPerYear: 2, transatlanticFlightsPerYear: 0, domesticFlightsPerYear: 2, monthlySpending: 1200 } },
+  { id: 'us-average', label: 'Average', baseline: { state: 'US', householdSize: 2.3, housingType: 'single-family-small', urbanForm: 'suburban', dietType: 'average', carOwnership: 'gas', flightsPerYear: 2, transatlanticFlightsPerYear: 0, domesticFlightsPerYear: 2, monthlySpending: 1800 } },
   { id: 'urban-vegan', label: 'Urban vegan', baseline: { state: 'NY', householdSize: 1, housingType: 'apartment', urbanForm: 'urban', dietType: 'vegan', carOwnership: 'none', flightsPerYear: 1, transatlanticFlightsPerYear: 0, domesticFlightsPerYear: 1, monthlySpending: 1500 } },
   { id: 'suburban-family', label: 'Suburban', baseline: { state: 'US', householdSize: 4, housingType: 'single-family-small', urbanForm: 'suburban', dietType: 'average', carOwnership: 'gas', flightsPerYear: 2, transatlanticFlightsPerYear: 0, domesticFlightsPerYear: 2, monthlySpending: 1500 } },
   { id: 'rural-truck', label: 'Rural driver', baseline: { state: 'US', householdSize: 2, housingType: 'single-family-large', urbanForm: 'rural', dietType: 'heavy-meat', carOwnership: 'gas', flightsPerYear: 0, transatlanticFlightsPerYear: 0, domesticFlightsPerYear: 0, monthlySpending: 1000 } },
