@@ -164,7 +164,6 @@ const cropFlat = defaultCrop.map(d => ({ idx: idx++, ...d,
       </details>
     </div>
   </div>
-</Base>
 
 <script is:inline define:vars={{ cropDataAll, cropStartIdx, GAL_CORN, GAL_ALFALFA, GAL_GOLF }}>
   window.__cropDataAll = cropDataAll;
@@ -312,8 +311,8 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 
   // Crop list rebuild
-  const cropList = document.getElementById('crop-list')!;
-  const cropCatName = document.getElementById('crop-cat-name')!;
+  const cropList = document.getElementById('crop-list');
+  const cropCatName = document.getElementById('crop-cat-name');
 
   function rebuildCropItems() {
     const rate = RATES[activeUnit];
@@ -373,8 +372,8 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 
   // ── Animation ──────────────────────────────────
-  const chart = document.getElementById('chart')!;
-  const svg = document.getElementById('svg')!;
+  const chart = document.getElementById('chart');
+  const svg = document.getElementById('svg');
   const cur = new Map<number, number>();
   const tgt = new Map<number, number>();
   let raf = null;
@@ -459,3 +458,4 @@ document.addEventListener('DOMContentLoaded', function() {
   new ResizeObserver(() => { clearTimeout(rt); rt = window.setTimeout(() => { cur.clear(); render(); }, 60); }).observe(chart);
 });
 </script>
+</Base>
