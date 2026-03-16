@@ -491,7 +491,7 @@ export function Methodology() {
             <p>
               <strong>EEIO emission factor:</strong>{' '}
               <code>
-                0.22 kg CO₂e per dollar
+                0.18 kg CO₂e per dollar
               </code>{' '}
               of discretionary non-food, non-energy spending. This
               environmentally-extended input-output factor is adjusted to exclude
@@ -520,29 +520,29 @@ export function Methodology() {
               <strong>Formula:</strong>
               <br />
               <code>
-                goodsKg = monthlySpending × 12 × 0.22
+                goodsKg = monthlySpending × 12 × 0.18
               </code>
             </p>
             <p style={{ marginTop: '8px' }}>
               <strong>Worked example</strong> ($1,200/mo):
               <br />
-              <code>$1,200 × 12 × 0.22 = 3,168 kg/yr</code>
+              <code>$1,200 × 12 × 0.18 = 2,592 kg/yr</code>
             </p>
             <p style={{ marginTop: '8px' }}>
-              <strong>Why 0.22 and not 0.50?</strong> The Jones & Kammen 2014 aggregate EEIO factor is ~$0.50/kg across <em>all</em> consumer spending. But food, housing energy, and transport are counted in their own buckets. The <code>0.22</code> factor applies only to the residual: clothing, electronics, healthcare, entertainment, household goods, and services. This avoids double-counting.
+              <strong>Why 0.18 and not 0.50?</strong> The Jones & Kammen 2014 aggregate EEIO factor is ~$0.50/kg across <em>all</em> consumer spending. But food, housing energy, and transport are counted in their own buckets. The <code>0.18</code> factor applies only to the residual: clothing, electronics, healthcare, entertainment, household goods, and services. This avoids double-counting.
             </p>
             <p style={{ marginTop: '8px' }}>
               <strong>Known limitation:</strong> EEIO factors are sector averages. A dollar spent on fast fashion has much higher embodied carbon than a dollar spent on a haircut. The spending field is a blunt instrument — users who know their spending patterns will get better results from category-specific calculators.
             </p>
             <p style={{ marginTop: '8px' }}>
-              <em>Note: The 0.22 factor is close to the median of EPA's supply-chain GHG emission factors (USEEIO, median ~0.208 kg CO₂e/$). A future version may use category-specific USEEIO factors.</em>
+              <em>Note: The 0.18 factor is a conservative estimate below the median of EPA's supply-chain GHG emission factors (USEEIO, median ~0.208 kg CO₂e/$). A future version may use category-specific USEEIO factors.</em>
             </p>
           </Bucket>
 
           <Bucket title="Shared Public Systems" id="methodology-shared" isOpen={openBucketId === 'methodology-shared'} onToggle={() => toggleBucket('methodology-shared')}>
             <p>
               <strong>Per-capita allocation:</strong>{' '}
-              <code>1,800 kg CO₂e per person per year</code>
+              <code>1,751 kg CO₂e per person per year</code>
             </p>
             <p>
               This covers emissions from federal government operations,

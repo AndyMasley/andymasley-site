@@ -117,7 +117,7 @@ const TRANSIT_KG_BY_URBAN_FORM: Record<UrbanForm, number> = {
 // Government, military, infrastructure, public services
 // ---------------------------------------------------------------------------
 
-const SHARED_SYSTEMS_KG_PER_CAPITA = 1800;
+const SHARED_SYSTEMS_KG_PER_CAPITA = 1751;
 
 // ---------------------------------------------------------------------------
 // Compute baseline
@@ -256,10 +256,10 @@ function computeGoods(
   overrides: Partial<DetailedInputs>,
 ): BucketResult {
   const hasSpending = overrides.goodsSpendingPerMonth !== undefined;
-  // EEIO factor: ~0.22 kg CO2e per dollar of non-food, non-energy goods spending
-  // (Jones & Kammen 2014, adjusted to exclude categories counted elsewhere)
+  // EEIO factor: ~0.18 kg CO2e per dollar of non-food, non-energy goods spending
+  // (Jones & Kammen 2014, adjusted conservatively to exclude categories counted elsewhere)
   const spending = hasSpending ? overrides.goodsSpendingPerMonth! : baseline.monthlySpending;
-  const kg = spending * 12 * 0.22;
+  const kg = spending * 12 * 0.18;
 
   return {
     bucketId: 'goods-and-services',
