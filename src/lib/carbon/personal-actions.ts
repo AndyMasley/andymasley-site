@@ -84,17 +84,6 @@ export function computePersonalActions(baseline: BaselineInputs, footprint: Foot
       inlineParam: { before: 'Cut driving ', defaultVal: 20, after: '%', max: 100 },
     },
     {
-      name: 'Cut driving 50%',
-      savingsKg: baseline.carOwnership !== 'none'
-        ? Math.round(miles * 0.5 * drivingRate)
-        : 0,
-      category: 'Transport',
-      applicable: baseline.carOwnership !== 'none',
-      note: 'Major lifestyle shift — bike commute + transit for most trips',
-      exclusiveGroup: 'driving-reduction',
-      inlineParam: { before: 'Cut driving ', defaultVal: 50, after: '%', max: 100 },
-    },
-    {
       name: 'Bike commute (replace car for commute)',
       savingsKg: baseline.carOwnership !== 'none'
         ? Math.round(5000 * drivingRate) // ~5000 mi/yr commute
