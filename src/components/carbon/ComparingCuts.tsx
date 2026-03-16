@@ -36,7 +36,13 @@ export function ComparingCuts({ personalActions, enabledPersonal, actionParamOve
       const mult = actionParamOverrides[action.name] ?? 1;
       const kg = Math.round(action.savingsKg * mult);
       if (kg <= 0) continue;
-      bars.push({ name: action.name, kg, color: 'rgba(139, 46, 46, 0.55)', type: 'personal' });
+      // Build display name from inlineParam if available
+      let displayName = action.name;
+      if (action.inlineParam) {
+        const currentVal = Math.round(action.inlineParam.defaultVal * mult);
+        displayName = `${action.inlineParam.before}${currentVal}${action.inlineParam.after}`;
+      }
+      bars.push({ name: displayName, kg, color: 'rgba(139, 46, 46, 0.55)', type: 'personal' });
     }
 
     // Systemic actions
