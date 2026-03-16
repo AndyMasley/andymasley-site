@@ -83,7 +83,7 @@ const SELECT_STYLE: React.CSSProperties = {
   fontFamily: 'inherit',
   border: '1px solid var(--divider, #DDD9D0)',
   borderRadius: '5px',
-  background: 'var(--panel, #EFECE5)',
+  background: 'var(--bg-elevated, #ffffff)',
   color: 'var(--text, #1A1A18)',
   cursor: 'pointer',
   outline: 'none',

@@ -173,10 +173,9 @@ export function ImpactChart({
         <div className="cf-impact-col">
           <div style={colHead}>
             Your footprint
-            <div style={colSub}>Adjust your inputs below</div>
           </div>
           {/* Footprint number — always visible at top */}
-          <div style={{ marginBottom: '0.75rem' }}>
+          <div style={{ marginBottom: '1rem' }}>
             <div style={{ fontSize: 'clamp(2rem, 4vw, 3rem)', fontWeight: 700, letterSpacing: '-0.02em', fontVariantNumeric: 'tabular-nums', lineHeight: 1 }}>
               {footprintKg.toLocaleString()}
               <span style={{ fontSize: '0.4em', fontWeight: 400, color: MUTED, marginLeft: '6px' }} title="kilograms of carbon dioxide equivalent per year">kg CO₂e/yr</span>
@@ -233,7 +232,22 @@ export function ImpactChart({
                 const mult = actionParamOverrides[a.name] ?? 1;
                 return s + Math.round(a.savingsKg * mult);
               }, 0);
-              const maxSavings = group.actions.filter(a => !a.excludeFromTotal).reduce((s, a) => s + a.savingsKg, 0);
+              // Compute realistic max: for exclusive groups, only count the best action
+              const maxSavings = (() => {
+                const eligible = group.actions.filter(a => !a.excludeFromTotal);
+                const exclusiveGroups = new Map<string, number>();
+                let total = 0;
+                for (const a of eligible) {
+                  if (a.exclusiveGroup) {
+                    const best = exclusiveGroups.get(a.exclusiveGroup) ?? 0;
+                    exclusiveGroups.set(a.exclusiveGroup, Math.max(best, a.savingsKg));
+                  } else {
+                    total += a.savingsKg;
+                  }
+                }
+                for (const best of exclusiveGroups.values()) total += best;
+                return total;
+              })();
               return (
                 <div key={group.category} style={{ marginBottom: '2px' }}>
                   <button
@@ -248,6 +262,7 @@ export function ImpactChart({
                     }}
                     aria-expanded={isOpen}
                   >
+                    <span style={{ fontSize: '0.6rem', color: MUTED, width: '10px', flexShrink: 0, transition: 'transform 0.15s' }}>{isOpen ? '▾' : '▸'}</span>
                     <span style={{ flex: 1 }}>{group.category}</span>
                     {enabledCount > 0 && (
                       <span style={{ fontSize: '0.65rem', fontWeight: 700, color: GREEN, fontVariantNumeric: 'tabular-nums' }}>
@@ -463,7 +478,7 @@ export function ImpactChart({
                       {result.case.name}
                     </span>
                     <span style={{ fontSize: '0.55rem', color: MUTED, opacity: 0.7, whiteSpace: 'nowrap', flexShrink: 0 }} onClick={e => e.stopPropagation()}>
-                      <span style={{ fontSize: '0.8rem' }}>×</span> <InlineNum
+                      <span style={{ fontSize: '0.85rem', opacity: 0.5, fontWeight: 300 }}>×</span> <InlineNum
                         value={Math.round((systemicOverrides[result.case.name]?.probability ?? result.case.probabilityOfSuccess.central) * 1000) / 10}
                         onChange={v => {
                           const ov = systemicOverrides[result.case.name] ?? {};
@@ -472,14 +487,14 @@ export function ImpactChart({
                         min={0}
                         max={100}
                         step={0.1}
-                      />% chance <span style={{ fontSize: '0.8rem' }}>÷</span> <InlineNum
+                      />% chance <span style={{ fontSize: '0.85rem', opacity: 0.5, fontWeight: 300 }}>÷</span> <InlineNum
                         value={systemicOverrides[result.case.name]?.coalitionSize ?? result.case.coalitionSize}
                         onChange={v => {
                           const ov = systemicOverrides[result.case.name] ?? {};
                           onSystemicOverridesChange({ ...systemicOverrides, [result.case.name]: { ...ov, coalitionSize: v, attributionFraction: 1 / v } });
                         }}
                         min={1}
-                      /> people =
+                      /> people <span style={{ fontSize: '0.85rem', opacity: 0.5, fontWeight: 300 }}>=</span>
                     </span>
                     <span style={{ fontWeight: 700, color: isOn ? GREEN : MUTED, fontVariantNumeric: 'tabular-nums', fontSize: '0.72rem', whiteSpace: 'nowrap', flexShrink: 0, marginLeft: '4px' }}>
                       {sigFigs(central)} <span style={{ fontSize: '0.6em', fontWeight: 400 }}>kg/person</span>
