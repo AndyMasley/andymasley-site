@@ -34,6 +34,8 @@ interface ImpactChartProps {
   onActionParamOverridesChange: (o: Record<string, number>) => void;
   systemicOverrides: Record<string, import('@/lib/carbon/leverage').SystemicOverride>;
   onSystemicOverridesChange: (o: Record<string, import('@/lib/carbon/leverage').SystemicOverride>) => void;
+  customFootprintKg: number | null;
+  onCustomFootprintChange: (kg: number | null) => void;
 }
 
 function sigFigs(n: number, figs: number = 2): string {
@@ -106,7 +108,7 @@ export function ImpactChart({
   footprintKg, personalActions, leverageCases, buckets,
   baseline, onBaselineChange, activeArchetypeId, onSelectArchetype, archetypeTotals,
   enabledPersonal, setEnabledPersonal, togglePersonal, enabledSystemic, toggleSystemic, actionParamOverrides, onActionParamOverridesChange,
-  systemicOverrides, onSystemicOverridesChange,
+  systemicOverrides, onSystemicOverridesChange, customFootprintKg, onCustomFootprintChange,
 }: ImpactChartProps) {
   const [activePresetId, setActivePresetId] = useState<string | null>(null);
   const [openCategory, setOpenCategory] = useState<string | null>('Transport');
@@ -186,6 +188,26 @@ export function ImpactChart({
                 <div style={{ width: `${Math.min(footprintKg / 16000 * 100, 100)}%`, height: '100%', background: footprintKg > 16000 ? ACCENT : GREEN, borderRadius: '3px', transition: 'width 0.4s ease' }} />
               </div>
             </div>
+            {customFootprintKg !== null ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '6px' }}>
+                <span style={{ fontSize: '0.62rem', color: MUTED }}>Custom override:</span>
+                <InlineNum value={customFootprintKg} onChange={v => onCustomFootprintChange(Math.max(0, Math.round(v)))} min={0} />
+                <span style={{ fontSize: '0.62rem', color: MUTED }}>kg</span>
+                <button
+                  onClick={() => onCustomFootprintChange(null)}
+                  style={{ fontSize: '0.62rem', color: ACCENT, background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', textDecoration: 'underline', padding: 0 }}
+                >
+                  reset
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => onCustomFootprintChange(footprintKg)}
+                style={{ fontSize: '0.62rem', color: MUTED, background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', padding: 0, marginTop: '4px', textDecoration: 'underline', opacity: 0.7 }}
+              >
+                Already know your footprint? Enter it directly
+              </button>
+            )}
           </div>
           <div className="cf-impact-scroll">
             {/* Lifestyle preset pills */}

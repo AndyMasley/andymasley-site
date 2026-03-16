@@ -49,6 +49,7 @@ export function Calculator() {
   // Per-action parameter overrides: key = action name, value = multiplier on savings
   // e.g., if default is 50 queries/day and user sets 100, the override stores the ratio
   const [actionParamOverrides, setActionParamOverrides] = useState<Record<string, number>>({});
+  const [customFootprintKg, setCustomFootprintKg] = useState<number | null>(null);
 
   // Clamp flight elimination overrides when baseline flight counts drop
   useEffect(() => {
@@ -101,7 +102,7 @@ export function Calculator() {
 
   const handleSelectArchetype = useCallback((archId: string) => {
     const arch = ARCHETYPES.find(a => a.id === archId);
-    if (arch) { setBaseline(arch.baseline); setOverrides({}); setActiveArchetypeId(arch.id); }
+    if (arch) { setBaseline(arch.baseline); setOverrides({}); setActiveArchetypeId(arch.id); setCustomFootprintKg(null); }
   }, []);
 
   const handleCopyShareLink = useCallback(() => {
@@ -118,12 +119,14 @@ export function Calculator() {
   return (
     <div>
       <ImpactChart
-        footprintKg={footprint.totalKgCO2ePerYear}
+        footprintKg={customFootprintKg ?? footprint.totalKgCO2ePerYear}
+        customFootprintKg={customFootprintKg}
+        onCustomFootprintChange={setCustomFootprintKg}
         personalActions={allPersonalActions}
         leverageCases={leverageData.cases}
         buckets={footprint.buckets}
         baseline={baseline}
-        onBaselineChange={b => { setBaseline(b); setActiveArchetypeId(null); }}
+        onBaselineChange={b => { setBaseline(b); setActiveArchetypeId(null); setCustomFootprintKg(null); }}
         activeArchetypeId={activeArchetypeId}
         onSelectArchetype={handleSelectArchetype}
         archetypeTotals={ARCHETYPE_TOTALS}
