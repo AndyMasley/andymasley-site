@@ -59,9 +59,13 @@ export async function getStaticPaths() {
   const metaSlugs = getMetaPostSlugs();
   const substackPosts = await fetchSubstackPosts();
 
+  // Slugs with dedicated pages — skip to avoid conflict
+  const dedicatedPages = ['a-cheat-sheet-for-conversations-about'];
+
   for (const post of substackPosts) {
-    // Skip meta posts and posts that conflict with local content
+    // Skip meta posts, dedicated pages, and posts that conflict with local content
     if (metaSlugs.includes(post.slug)) continue;
+    if (dedicatedPages.includes(post.slug)) continue;
     if (paths.some(p => p.params.slug === post.slug)) continue;
 
     // Fetch full content
