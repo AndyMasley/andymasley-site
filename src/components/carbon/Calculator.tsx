@@ -7,7 +7,7 @@
  * Bottom: shared bar chart.
  */
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { DEFAULT_BASELINE } from '@/lib/carbon/types';
 import type { BaselineInputs, DetailedInputs } from '@/lib/carbon/types';
 import { computeFootprint } from '@/lib/carbon/baseline';
@@ -50,6 +50,26 @@ export function Calculator() {
   // e.g., if default is 50 queries/day and user sets 100, the override stores the ratio
   const [actionParamOverrides, setActionParamOverrides] = useState<Record<string, number>>({});
 
+  // Clamp flight elimination overrides when baseline flight counts drop
+  useEffect(() => {
+    const transKey = 'Eliminate one transatlantic flight';
+    const domKey = 'Eliminate one domestic flight';
+    const transOverride = actionParamOverrides[transKey];
+    const domOverride = actionParamOverrides[domKey];
+    let changed = false;
+    const next = { ...actionParamOverrides };
+    // override ratio × defaultVal(1) = elimination count; cap to baseline
+    if (transOverride !== undefined && Math.round(transOverride) > baseline.transatlanticFlightsPerYear) {
+      next[transKey] = baseline.transatlanticFlightsPerYear;
+      changed = true;
+    }
+    if (domOverride !== undefined && Math.round(domOverride) > baseline.domesticFlightsPerYear) {
+      next[domKey] = baseline.domesticFlightsPerYear;
+      changed = true;
+    }
+    if (changed) setActionParamOverrides(next);
+  }, [baseline.transatlanticFlightsPerYear, baseline.domesticFlightsPerYear]);
+
   const footprint = useMemo(() => computeFootprint(baseline, overrides), [baseline, overrides]);
   const allPersonalActions = useMemo(() => computePersonalActions(baseline, footprint), [baseline, footprint]);
   const leverageData = useMemo(() => computeLeverageWithOverrides(footprint.totalKgCO2ePerYear, systemicOverrides), [footprint.totalKgCO2ePerYear, systemicOverrides]);
@@ -90,6 +110,7 @@ export function Calculator() {
     params.set('ht', baseline.housingType); params.set('ms', String(baseline.monthlySpending));
     params.set('uf', baseline.urbanForm); params.set('dt', baseline.dietType);
     params.set('co', baseline.carOwnership); params.set('fp', String(baseline.flightsPerYear));
+    params.set('tf', String(baseline.transatlanticFlightsPerYear)); params.set('df', String(baseline.domesticFlightsPerYear));
     const url = `${window.location.origin}${window.location.pathname}?${params.toString()}`;
     navigator.clipboard.writeText(url).then(() => { setCopyFeedback(true); setTimeout(() => setCopyFeedback(false), 2000); });
   }, [baseline]);
@@ -107,6 +128,7 @@ export function Calculator() {
         onSelectArchetype={handleSelectArchetype}
         archetypeTotals={ARCHETYPE_TOTALS}
         enabledPersonal={enabledPersonal}
+        setEnabledPersonal={setEnabledPersonal}
         togglePersonal={togglePersonal}
         enabledSystemic={enabledSystemic}
         toggleSystemic={toggleSystemic}
@@ -122,6 +144,7 @@ export function Calculator() {
         actionParamOverrides={actionParamOverrides}
         leverageCases={leverageData.cases}
         enabledSystemic={enabledSystemic}
+        carOwnership={baseline.carOwnership}
       />
 
       <Methodology />
