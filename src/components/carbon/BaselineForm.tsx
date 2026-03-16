@@ -206,12 +206,25 @@ export function BaselineForm({ value, onChange }: BaselineFormProps) {
           max={100}
           style={INPUT_STYLE}
           value={value.flightsPerYear}
-          onChange={n => update('flightsPerYear', Math.round(n))}
+          onChange={n => {
+            const newTotal = Math.round(n);
+            const oldTotal = value.flightsPerYear;
+            const oldTrans = value.transatlanticFlightsPerYear ?? 0;
+            const oldDom = value.domesticFlightsPerYear ?? oldTotal;
+            let newTrans: number, newDom: number;
+            if (oldTotal > 0 && newTotal > 0) {
+              newTrans = Math.round(oldTrans * newTotal / oldTotal);
+              newDom = newTotal - newTrans;
+            } else {
+              newTrans = 0; newDom = newTotal;
+            }
+            onChange({ ...value, flightsPerYear: newTotal, transatlanticFlightsPerYear: newTrans, domesticFlightsPerYear: newDom });
+          }}
         />
       </div>
 
       <div style={FIELD_STYLE}>
-        <label style={LABEL_STYLE} htmlFor="cf-spending">Spending excl. rent ($)</label>
+        <label style={LABEL_STYLE} htmlFor="cf-spending">Monthly spending excl. rent ($)</label>
         <NumInput
           id="cf-spending"
           min={0}
