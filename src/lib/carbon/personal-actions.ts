@@ -265,10 +265,10 @@ export function computePersonalActions(baseline: BaselineInputs, footprint: Foot
 
     {
       name: 'Send fewer emails per day',
-      savingsKg: Math.round(10 * 0.3 * 365 / 1000) || 1, // 0.3g per short email (Berners-Lee 2020)
+      savingsKg: Math.round(10 * 0.05 * 365 / 1000) || 1, // 0.05g marginal (transmission + server only, excluding device embodied carbon)
       category: 'Digital',
       applicable: true,
-      note: '~0.3 g CO₂ per short email. 10 fewer/day ≈ 1 kg/yr.',
+      note: '~0.05 g CO₂ per email (server + transmission only). Negligible.',
       inlineParam: { before: 'Send ', defaultVal: 10, after: ' fewer emails/day', max: 100000 },
     },
     {

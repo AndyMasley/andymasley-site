@@ -228,7 +228,7 @@ export function Methodology() {
               <strong>Video streaming:</strong> <Val>~0.08 kWh/hr</Val> including device, network, and data center. Grid-dependent: 2 hrs/day ≈ 22 kg/yr on US avg grid. <Src href="https://www.iea.org/reports/data-centres-and-data-transmission-networks">IEA 2020</Src>
             </p>
             <p style={{ marginTop: '4px' }}>
-              <strong>Email:</strong> <Val>~0.3 g/email</Val> (short text; up to ~26 g with large attachments). The old "4 g" figure (2010) was revised down in 2020. Most cost is device embodied carbon, not transmission.
+              <strong>Email:</strong> <Val>~0.05 g/email</Val> marginal (server processing + network transmission only). Berners-Lee's oft-cited 0.3 g figure includes device embodied carbon — the manufacturing cost of your laptop amortized over usage time — which doesn't change if you send fewer emails.
               <br /><Src href="https://profilebooks.com/work/how-bad-are-bananas/">Berners-Lee 2020</Src>, <Src href="https://carbonliteracy.com/the-carbon-cost-of-an-email/">Carbon Literacy Project</Src>
             </p>
             <p style={{ marginTop: '4px' }}>
