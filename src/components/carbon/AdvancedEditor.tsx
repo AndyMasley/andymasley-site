@@ -40,19 +40,31 @@ function ActionParam({ name, label, defaultVal, match, unit, max, actionParamOve
   updateActionParam: (name: string, defaultVal: number, val: string, max?: number) => void;
 }) {
   if (!name.toLowerCase().includes(match.toLowerCase())) return null;
+  const displayVal = getParamValue(name, defaultVal) || String(defaultVal);
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: '3px' }}>
       <span>{label}:</span>
       <input
-        type="number"
-        min={0}
-        max={max}
-        step={1}
-        style={{ padding: '2px 4px', fontSize: '0.62rem', fontFamily: 'inherit', border: '1px solid #DDD9D0', borderRadius: '3px', width: '55px', textAlign: 'right', background: 'var(--bg-elevated, #fff)', color: 'var(--text, #1A1A18)' }}
+        type="text"
+        inputMode="numeric"
+        style={{
+          width: `${Math.max(displayVal.length, 2) * 0.65 + 0.8}em`,
+          padding: '0 2px',
+          border: 'none',
+          borderBottom: '1px dashed currentColor',
+          background: 'transparent',
+          font: 'inherit',
+          fontSize: 'inherit',
+          color: 'inherit',
+          fontWeight: 600,
+          textAlign: 'center',
+          outline: 'none',
+          fontVariantNumeric: 'tabular-nums',
+        }}
         value={getParamValue(name, defaultVal)}
         placeholder={String(defaultVal)}
         onChange={e => updateActionParam(name, defaultVal, e.target.value, max)}
-        onClick={e => e.stopPropagation()}
+        onClick={e => { e.stopPropagation(); (e.target as HTMLInputElement).select(); }}
       />
       {unit && <span>{unit}</span>}
     </div>
@@ -89,11 +101,18 @@ const INPUT_STYLE: React.CSSProperties = {
 };
 
 const INLINE_INPUT_STYLE: React.CSSProperties = {
-  ...INPUT_STYLE,
-  width: '80px',
-  minHeight: '28px',
-  padding: '3px 6px',
-  fontSize: '0.72rem',
+  width: '4em',
+  padding: '0 2px',
+  border: 'none',
+  borderBottom: '1px dashed currentColor',
+  background: 'transparent',
+  font: 'inherit',
+  fontSize: 'inherit',
+  color: 'inherit',
+  fontWeight: 600,
+  textAlign: 'center',
+  outline: 'none',
+  fontVariantNumeric: 'tabular-nums',
 };
 
 const colHead: React.CSSProperties = {
