@@ -112,6 +112,7 @@ export function ImpactChart({
 }: ImpactChartProps) {
   const [activePresetId, setActivePresetId] = useState<string | null>(null);
   const [openCategory, setOpenCategory] = useState<string | null>('Transport');
+  const [chartMode, setChartMode] = useState<'summary' | 'diverging' | 'waterfall'>('summary');
 
   const presetTotals = useMemo(() => {
     const totals: Record<string, number> = {};
@@ -546,35 +547,76 @@ export function ImpactChart({
 
       {/* BAR CHART — fixed position, never moves */}
       <div className="cf-impact-bars" style={{ position: 'relative' }}>
-        <ReferenceLines scaleMax={scaleMax} />
-        <BarRow label="Your footprint" kg={footprintKg} pctWidth={pct(footprintKg)} color={ACCENT} dotColor={ACCENT} />
+        {/* Chart mode toggles */}
+        <div style={{ display: 'flex', gap: '2px', marginBottom: '12px' }}>
+          {([['summary', 'Summary'], ['diverging', 'Diverging'], ['waterfall', 'Waterfall']] as const).map(([mode, label]) => (
+            <button
+              key={mode}
+              onClick={() => setChartMode(mode)}
+              style={{
+                fontSize: '0.62rem', fontWeight: chartMode === mode ? 600 : 400,
+                padding: '3px 10px', border: `1px solid ${chartMode === mode ? ACCENT : DIVIDER}`,
+                borderRadius: '10px', cursor: 'pointer', fontFamily: 'inherit',
+                background: chartMode === mode ? ACCENT : 'transparent',
+                color: chartMode === mode ? 'white' : MUTED,
+                transition: 'all 0.12s',
+              }}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
 
-        <BarRow
-          label="After your cuts"
-          kg={hasPersonal ? afterPersonal : (showPersonalBar ? footprintKg : 0)}
-          pctWidth={hasPersonal ? pct(afterPersonal) : (showPersonalBar ? pct(footprintKg) : 0)}
-          color={ACCENT} opacity={showPersonalBar ? 0.55 : 0}
-          ghostWidth={hasPersonal ? pct(footprintKg) : 0}
-          suffix={hasPersonal ? `(−${totalSaved.toLocaleString()})` : ''}
-          labelColor={hasPersonal ? GREEN : MUTED}
-          dimmed={!showPersonalBar}
-          dotColor="var(--accent, #8B2E2E)"
-        />
+        {chartMode === 'summary' && (
+          <>
+            <ReferenceLines scaleMax={scaleMax} />
+            <BarRow label="Your footprint" kg={footprintKg} pctWidth={pct(footprintKg)} color={ACCENT} dotColor={ACCENT} />
+            <BarRow
+              label="After your cuts"
+              kg={hasPersonal ? afterPersonal : (showPersonalBar ? footprintKg : 0)}
+              pctWidth={hasPersonal ? pct(afterPersonal) : (showPersonalBar ? pct(footprintKg) : 0)}
+              color={ACCENT} opacity={showPersonalBar ? 0.55 : 0}
+              ghostWidth={hasPersonal ? pct(footprintKg) : 0}
+              suffix={hasPersonal ? `(−${totalSaved.toLocaleString()})` : ''}
+              labelColor={hasPersonal ? GREEN : MUTED}
+              dimmed={!showPersonalBar}
+              dotColor="var(--accent, #8B2E2E)"
+            />
+            <BarRow
+              label="Carbon you can help prevent"
+              kg={hasSystemic ? totalSystemic : 0}
+              pctWidth={hasSystemic ? Math.min(pct(totalSystemic), 100) : 0}
+              color={GREEN}
+              ghostWidth={hasSystemic ? pct(afterPersonal) : 0} ghostOpacity={0.12}
+              suffix={hasSystemic ? `(${Math.round(totalSystemic / footprintKg * 10) / 10} yrs of your current emissions${hasPersonal && afterPersonal > 0 ? `, ${Math.round(totalSystemic / afterPersonal * 10) / 10} yrs with lifestyle cuts` : ''})` : ''}
+              labelColor={hasSystemic ? GREEN : MUTED}
+              bold={hasSystemic}
+              dimmed={!showSystemicBar}
+              unit="kg"
+              useSigFigs
+              dotColor={GREEN}
+            />
+          </>
+        )}
 
-        <BarRow
-          label="Carbon you can help prevent"
-          kg={hasSystemic ? totalSystemic : 0}
-          pctWidth={hasSystemic ? Math.min(pct(totalSystemic), 100) : 0}
-          color={GREEN}
-          ghostWidth={hasSystemic ? pct(afterPersonal) : 0} ghostOpacity={0.12}
-          suffix={hasSystemic ? `(${Math.round(totalSystemic / footprintKg * 10) / 10} yrs of your current emissions${hasPersonal && afterPersonal > 0 ? `, ${Math.round(totalSystemic / afterPersonal * 10) / 10} yrs with lifestyle cuts` : ''})` : ''}
-          labelColor={hasSystemic ? GREEN : MUTED}
-          bold={hasSystemic}
-          dimmed={!showSystemicBar}
-          unit="kg"
-          useSigFigs
-          dotColor={GREEN}
-        />
+        {chartMode === 'diverging' && (
+          <DivergingChart
+            personalKg={totalSaved}
+            systemicKg={totalSystemic}
+            hasPersonal={hasPersonal}
+            hasSystemic={hasSystemic}
+          />
+        )}
+
+        {chartMode === 'waterfall' && (
+          <WaterfallChart
+            footprintKg={footprintKg}
+            personalKg={totalSaved}
+            systemicKg={totalSystemic}
+            hasPersonal={hasPersonal}
+            hasSystemic={hasSystemic}
+          />
+        )}
       </div>
 
       <div className="sr-only" aria-live="polite">
@@ -582,6 +624,133 @@ export function ImpactChart({
         {hasPersonal && ` After cuts: ${afterPersonal.toLocaleString()} kg.`}
         {hasSystemic && ` Systemic: ${sigFigs(totalSystemic)} kg.`}
       </div>
+    </div>
+  );
+}
+
+// --- Diverging chart ---
+
+function DivergingChart({ personalKg, systemicKg, hasPersonal, hasSystemic }: {
+  personalKg: number; systemicKg: number; hasPersonal: boolean; hasSystemic: boolean;
+}) {
+  const maxKg = Math.max(personalKg, systemicKg, 1);
+  const personalPct = (personalKg / maxKg) * 50;
+  const systemicPct = (systemicKg / maxKg) * 50;
+  const ratio = hasPersonal && personalKg > 0 ? Math.round(systemicKg / personalKg) : 0;
+
+  if (!hasPersonal && !hasSystemic) {
+    return <p style={{ fontSize: '0.72rem', color: MUTED, fontStyle: 'italic' }}>Enable actions above to see the comparison.</p>;
+  }
+
+  return (
+    <div>
+      <div style={{ display: 'flex', alignItems: 'center', fontSize: '0.62rem', color: MUTED, marginBottom: '8px', justifyContent: 'space-between' }}>
+        <span>← Personal cuts</span>
+        <span>Systemic leverage →</span>
+      </div>
+      {/* Bars */}
+      <div style={{ position: 'relative', height: '48px', display: 'flex', alignItems: 'center' }}>
+        {/* Center line */}
+        <div style={{ position: 'absolute', left: '50%', top: 0, bottom: 0, width: '1px', background: DIVIDER, zIndex: 2 }} />
+        {/* Personal bar (grows left from center) */}
+        <div style={{ position: 'absolute', right: '50%', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
+          <div style={{
+            height: '100%', width: hasPersonal ? `${personalPct}vw` : '0',
+            maxWidth: `${personalPct}%`,
+            background: ACCENT, borderRadius: '4px 0 0 4px',
+            transition: 'all 0.5s cubic-bezier(0.25,0.46,0.45,0.94)',
+            minWidth: hasPersonal ? '2px' : '0',
+          }}>
+            <div style={{ position: 'absolute', right: '100%', paddingRight: '6px', whiteSpace: 'nowrap', fontSize: '0.72rem', fontWeight: 600, color: ACCENT }}>
+              {hasPersonal && `−${personalKg.toLocaleString()} kg`}
+            </div>
+          </div>
+        </div>
+        {/* Systemic bar (grows right from center) */}
+        <div style={{ position: 'absolute', left: '50%', height: '32px', display: 'flex', alignItems: 'center' }}>
+          <div style={{
+            height: '100%', width: hasSystemic ? `${systemicPct}vw` : '0',
+            maxWidth: `${systemicPct}%`,
+            background: GREEN, borderRadius: '0 4px 4px 0',
+            transition: 'all 0.5s cubic-bezier(0.25,0.46,0.45,0.94)',
+            minWidth: hasSystemic ? '2px' : '0',
+          }}>
+            <div style={{ position: 'absolute', left: '100%', paddingLeft: '6px', whiteSpace: 'nowrap', fontSize: '0.72rem', fontWeight: 600, color: GREEN }}>
+              {hasSystemic && `${sigFigs(systemicKg)} kg`}
+            </div>
+          </div>
+        </div>
+      </div>
+      {/* Ratio callout */}
+      {hasPersonal && hasSystemic && ratio > 0 && (
+        <div style={{ textAlign: 'center', marginTop: '10px', fontSize: '0.72rem', color: 'var(--text, #1A1A18)' }}>
+          Systemic leverage is <strong style={{ color: GREEN, fontSize: '0.9rem' }}>{ratio}×</strong> your personal cuts
+        </div>
+      )}
+    </div>
+  );
+}
+
+// --- Waterfall chart ---
+
+function WaterfallChart({ footprintKg, personalKg, systemicKg, hasPersonal, hasSystemic }: {
+  footprintKg: number; personalKg: number; systemicKg: number; hasPersonal: boolean; hasSystemic: boolean;
+}) {
+  const afterPersonal = Math.max(footprintKg - personalKg, 0);
+  const maxKg = Math.max(footprintKg, systemicKg, 1);
+  const pct = (kg: number) => Math.min((kg / maxKg) * 100, 100);
+  const barH = '24px';
+  const gap = '4px';
+
+  const steps: { label: string; start: number; end: number; color: string; isBridge?: boolean }[] = [
+    { label: 'Your footprint', start: 0, end: footprintKg, color: ACCENT },
+  ];
+  if (hasPersonal) {
+    steps.push({ label: `Personal cuts (−${personalKg.toLocaleString()})`, start: footprintKg, end: afterPersonal, color: GREEN });
+    steps.push({ label: 'After cuts', start: 0, end: afterPersonal, color: ACCENT, isBridge: true });
+  }
+  if (hasSystemic) {
+    steps.push({ label: `Systemic leverage (+${sigFigs(systemicKg)})`, start: 0, end: systemicKg, color: GREEN });
+  }
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap }}>
+      {steps.map((step, i) => {
+        const leftPct = pct(Math.min(step.start, step.end));
+        const widthPct = pct(Math.abs(step.end - step.start));
+        const isSubtract = step.end < step.start;
+        return (
+          <div key={i}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', fontSize: '0.72rem', marginBottom: '2px' }}>
+              <span style={{ fontWeight: step.isBridge ? 600 : 400, color: step.isBridge ? 'var(--text, #1A1A18)' : MUTED }}>{step.label}</span>
+              <span style={{ fontWeight: 600, color: step.color, fontVariantNumeric: 'tabular-nums', fontSize: '0.72rem' }}>
+                {step.isBridge ? `${step.end.toLocaleString()} kg` : isSubtract ? `−${Math.abs(step.end - step.start).toLocaleString()} kg` : `${step.end.toLocaleString()} kg`}
+              </span>
+            </div>
+            <div style={{ position: 'relative', height: barH, background: 'var(--bar-track, #E2DFD9)', borderRadius: '4px', overflow: 'hidden' }}>
+              {/* Connector line for waterfall */}
+              {isSubtract && (
+                <div style={{
+                  position: 'absolute', left: `${pct(step.end)}%`, height: '100%',
+                  width: `${pct(step.start - step.end)}%`,
+                  background: step.color, opacity: 0.15, borderRadius: '4px',
+                }} />
+              )}
+              <div style={{
+                position: 'absolute',
+                left: isSubtract ? `${pct(step.end)}%` : `${leftPct}%`,
+                height: '100%',
+                width: `${widthPct}%`,
+                background: step.color,
+                opacity: step.isBridge ? 0.5 : 1,
+                borderRadius: '4px',
+                transition: 'all 0.5s cubic-bezier(0.25,0.46,0.45,0.94)',
+                minWidth: widthPct > 0 ? '2px' : '0',
+              }} />
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 }
