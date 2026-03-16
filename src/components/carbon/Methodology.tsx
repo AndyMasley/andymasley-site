@@ -167,8 +167,8 @@ export function Methodology() {
               Source: <Src href="https://www.iea.org/reports/data-centres-and-data-transmission-networks">IEA — Data Centres 2024</Src>
             </p>
             <p style={{ marginTop: '8px' }}>
-              <strong>Email:</strong> <code>~4 g CO₂e per email</code>, covering server processing, transmission, and storage. 10 fewer emails/day ≈ 15 kg/yr.<br />
-              Source: <Src href="https://howbadarebananas.com/">Mike Berners-Lee — <em>How Bad Are Bananas?</em></Src>
+              <strong>Email:</strong> <code>~0.3 g CO₂e per short email</code> (up to ~26 g for a long email with large attachments). The widely cited "4 g" figure comes from the 2010 edition; the 2020 revision lowered a standard short email to ~0.3 g, reflecting improved data center efficiency and grid decarbonization. Most of the footprint is embodied carbon of the sender's and receiver's devices, not transmission. 10 fewer short emails/day ≈ 1 kg/yr.<br />
+              Source: <Src href="https://profilebooks.com/work/how-bad-are-bananas/">Mike Berners-Lee — <em>How Bad Are Bananas?</em> (2020 ed.)</Src>, <Src href="https://carbonliteracy.com/the-carbon-cost-of-an-email/">Carbon Literacy Project</Src>
             </p>
             <p style={{ marginTop: '8px' }}>
               <strong>Google searches:</strong> <code>~0.2 g CO₂e per search</code>. 10 fewer searches/day ≈ 0.7 kg/yr — essentially negligible.<br />
