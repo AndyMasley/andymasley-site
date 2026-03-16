@@ -485,7 +485,7 @@ export function ImpactChart({
               </div>
             )}
             <div style={{ fontSize: '0.62rem', color: MUTED, lineHeight: 1.45, marginTop: '0.5rem', opacity: 0.8 }}>
-              Note: these measure the emissions of the activity itself. In reality, small cuts often don't reduce total emissions due to the <a href="https://www.sciencedirect.com/science/article/pii/S095965261732382X?via%3Dihub" target="_blank" rel="noopener noreferrer" style={{ color: ACCENT }}>rebound effect</a>: cutting one activity often leads to doing other activities instead, and if the first activity didn't emit much, the replacement might emit more.
+              These measure the activity's emissions only. The <a href="https://www.sciencedirect.com/science/article/pii/S095965261732382X?via%3Dihub" target="_blank" rel="noopener noreferrer" style={{ color: ACCENT }}>rebound effect</a> means small cuts often don't reduce total emissions — the time or money saved gets spent on something that may emit more.
             </div>
           </div>
         </div>
