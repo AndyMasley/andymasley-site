@@ -1,0 +1,463 @@
+---
+import Base from '@/layouts/Base.astro';
+
+const GAL_CORN = 650_000;
+const GAL_ALFALFA = 1_500_000;
+const GAL_GOLF = 1_300_000;
+
+function fA(a: number) {
+  return a >= 1e6 ? (a/1e6).toFixed(1)+'M acres' : a >= 1e3 ? Math.round(a).toLocaleString()+' acres' : a.toFixed(0)+' acres';
+}
+function fG(g: number) {
+  return g >= 1e12 ? (g/1e12).toFixed(1)+'T gal/yr' : g >= 1e9 ? (g/1e9).toFixed(1)+'B gal/yr' : (g/1e6).toFixed(0)+'M gal/yr';
+}
+
+const dcItems = [
+  { name: 'ChatGPT inference', base: 186e6, elec: 558e6, color: '#3ba0d8', on: false },
+  { name: 'ChatGPT w/ training', base: 197e6, elec: 720e6, color: '#2a84b8', on: false },
+  { name: 'Microsoft', base: 2.06e9, elec: 14e9, color: '#6a9dc8', on: true },
+  { name: 'Google', base: 6e9, elec: 18.7e9, color: '#5088b8', on: true },
+  { name: 'All US data centers', base: 17e9, elec: 228e9, color: '#7b72ab', on: true },
+];
+
+const surfaceItems = [
+  { name: 'Manhattan', acres: 14611, color: '#c4a474', on: false },
+  { name: 'San Francisco', acres: 29997, color: '#b8976a', on: false },
+  { name: 'Washington, D.C.', acres: 39072, color: '#ad8b60', on: false },
+  { name: 'Los Angeles', acres: 299949, color: '#a28058', on: false },
+  { name: 'Rhode Island', acres: 661639, color: '#8f7350', on: false },
+  { name: 'New Jersey', acres: 4706701, color: '#7d6648', on: false },
+];
+
+// Per-unit crop data: different top-4 states for each crop
+const cropDataAll = {
+  corn: [
+    { name: 'Texas', acres: 463507, color: '#82c06e', on: false },
+    { name: 'Colorado', acres: 470075, color: '#76b562', on: false },
+    { name: 'Kansas', acres: 1181420, color: '#6aaa58', on: false },
+    { name: 'Nebraska', acres: 4554560, color: '#5e9c50', on: false },
+    { name: 'All US irrigated', acres: 11000000, color: '#4a8840', on: true },
+  ],
+  alfalfa: [
+    { name: 'Colorado', acres: 564610, color: '#82c06e', on: false },
+    { name: 'Montana', acres: 664411, color: '#76b562', on: false },
+    { name: 'California', acres: 868823, color: '#6aaa58', on: false },
+    { name: 'Idaho', acres: 870101, color: '#5e9c50', on: false },
+    { name: 'All US irrigated', acres: 6000000, color: '#4a8840', on: true },
+  ],
+  golf: [
+    { name: 'New York', acres: 62200, color: '#82c06e', on: false },
+    { name: 'Texas', acres: 63300, color: '#76b562', on: false },
+    { name: 'California', acres: 68600, color: '#6aaa58', on: false },
+    { name: 'Florida', acres: 81400, color: '#5e9c50', on: false },
+    { name: 'All US irrigated', acres: 1198000, color: '#4a8840', on: true },
+  ],
+};
+
+let idx = 0;
+const dcFlat = dcItems.map(d => ({ idx: idx++, ...d,
+  subBase: fA(d.base/GAL_CORN) + ' · ' + fG(d.base),
+  subElec: fA(d.elec/GAL_CORN) + ' · ' + fG(d.elec),
+}));
+const surfFlat = surfaceItems.map(d => ({ idx: idx++, ...d, sub: fA(d.acres) }));
+const cropStartIdx = idx;
+const defaultCrop = cropDataAll.corn;
+const cropFlat = defaultCrop.map(d => ({ idx: idx++, ...d,
+  sub: fA(d.acres) + ' · ' + fG(d.acres * GAL_CORN),
+}));
+---
+
+<Base title="AI Water Usage" description="How much water does AI use, measured in irrigated corn?">
+  <div class="w">
+    <div class="w-intro">
+      <h1>How thirsty is AI?</h1>
+      <p class="w-deck">Water usage measured in acres of irrigated farmland</p>
+      <p class="w-lede">Each square is sized by area to its acreage equivalent — how much irrigated farmland would use the same amount of water. Toggle items to compare, and change the crop to see how the unit shifts.</p>
+    </div>
+
+    <div class="w-viz">
+      <div class="w-panel">
+        <details class="w-cat" open>
+          <summary class="w-cat-head">
+            <div class="w-cat-pip" style="background:#5b8db8"></div>
+            <span class="w-cat-name">Data centers</span>
+            <span class="w-cat-arrow"></span>
+          </summary>
+          <div class="w-cat-list">
+            {dcFlat.map(d => (
+              <div class="w-dc-group">
+                <div class="w-item" data-idx={d.idx} data-on={d.on ? '1' : '0'}
+                  data-gal-base={d.base} data-gal-elec={d.elec} data-elec="0">
+                  <div class="w-item-dot" style={`background:${d.color}`}></div>
+                  <div class="w-item-text">
+                    <span class="w-item-name">{d.name}</span>
+                    <span class="w-item-val">{d.subBase}</span>
+                  </div>
+                </div>
+                <div class="w-sub" data-parent-idx={d.idx}>
+                  <span class="w-sub-check"></span>
+                  <span class="w-sub-label">+ water cost of electricity</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </details>
+
+        <details class="w-cat" open>
+          <summary class="w-cat-head">
+            <div class="w-cat-pip" style="background:#b89868"></div>
+            <span class="w-cat-name">Surface area</span>
+            <span class="w-cat-arrow"></span>
+          </summary>
+          <div class="w-cat-list">
+            {surfFlat.map(d => (
+              <div class="w-item" data-idx={d.idx} data-on={d.on ? '1' : '0'} data-fixed-acres={d.acres}>
+                <div class="w-item-dot" style={`background:${d.color}`}></div>
+                <div class="w-item-text">
+                  <span class="w-item-name">{d.name}</span>
+                  <span class="w-item-val">{d.sub}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </details>
+
+        <details class="w-cat" open>
+          <summary class="w-cat-head">
+            <div class="w-cat-pip" style="background:#5e9c50"></div>
+            <span class="w-cat-name" id="crop-cat-name">Irrigated corn</span>
+            <span class="w-cat-arrow"></span>
+          </summary>
+          <div class="w-cat-list" id="crop-list">
+            {cropFlat.map(d => (
+              <div class="w-item" data-idx={d.idx} data-on={d.on ? '1' : '0'}>
+                <div class="w-item-dot" style={`background:${d.color}`}></div>
+                <div class="w-item-text">
+                  <span class="w-item-name">{d.name} corn</span>
+                  <span class="w-item-val">{d.sub}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </details>
+      </div>
+
+      <div class="w-right">
+        <div class="w-unit-bar">
+          <span class="w-unit-label">Acres of irrigated</span>
+          <div class="w-unit-opts">
+            <button class="w-unit-btn" data-unit="corn" data-active="1">corn</button>
+            <button class="w-unit-btn" data-unit="alfalfa" data-active="0">alfalfa</button>
+            <button class="w-unit-btn" data-unit="golf" data-active="0">golf course</button>
+          </div>
+        </div>
+        <div class="w-chart" id="chart">
+          <svg id="svg"></svg>
+        </div>
+      </div>
+    </div>
+
+    <div class="w-sources">
+      <details>
+        <summary>Sources and methodology</summary>
+        <p>Corn: ~650k gal/acre/yr (USDA, MSU Extension). Alfalfa: ~1.5M gal/acre/yr (UNR Extension). Golf: ~1.3M gal/irrigated acre/yr (USGA). ChatGPT from Altman's 0.000085 gal + 0.34 Wh/query at ~1B queries/day, 6x adjusted. Electricity water: 0.5 gal/kWh (NREL). Google 2024: ~6B gal, ~25.3 TWh. Microsoft FY2023: ~2.06B gal, ~24 TWh. All US DCs: ~17B gal cooling, ~228B w/ electricity (LBNL, 2023). Corn by state: USDA 2022 Census. Alfalfa by state: USDA 2022 Census Table 26. Golf by state: GCSAA/NGF. Surface areas: US Census Bureau.</p>
+      </details>
+    </div>
+  </div>
+</Base>
+
+<script is:inline define:vars={{ cropDataAll, cropStartIdx, GAL_CORN, GAL_ALFALFA, GAL_GOLF }}>
+  window.__cropDataAll = cropDataAll;
+  window.__cropStartIdx = cropStartIdx;
+  window.__galRates = { corn: GAL_CORN, alfalfa: GAL_ALFALFA, golf: GAL_GOLF };
+</script>
+
+<style is:global>
+  .main-content:has(.w) { max-width: 1200px; }
+</style>
+
+<style>
+  .w { max-width: 1200px; margin: 0 auto; }
+  .w-intro { max-width: 640px; margin-bottom: 2.5rem; }
+  .w-intro h1 { font-size: 2rem; font-weight: 700; letter-spacing: -0.025em; margin-bottom: 0.35rem; }
+  .w-deck { color: var(--accent); font-size: 1rem; font-weight: 480; margin-bottom: 0.65rem; }
+  .w-lede { color: var(--text-secondary); font-size: 0.875rem; line-height: 1.65; }
+  .w-viz { display: flex; gap: 2.5rem; align-items: flex-start; margin-bottom: 3rem; }
+
+  .w-panel { width: 280px; flex-shrink: 0; }
+  .w-cat { margin-bottom: 1.5rem; }
+  .w-cat:last-child { margin-bottom: 0; }
+  .w-cat-head {
+    display: flex; align-items: center; gap: 0.5rem;
+    padding-bottom: 0.4rem; margin-bottom: 0.25rem;
+    border-bottom: 1.5px solid var(--border);
+    cursor: pointer; list-style: none; user-select: none;
+  }
+  .w-cat-head::-webkit-details-marker { display: none; }
+  .w-cat-head:hover { opacity: 0.75; }
+  .w-cat-pip { width: 10px; height: 10px; border-radius: 2.5px; flex-shrink: 0; }
+  .w-cat-name { font-size: 0.68rem; font-weight: 660; text-transform: uppercase; letter-spacing: 0.09em; color: var(--text-secondary); flex: 1; }
+  .w-cat-arrow { width: 0; height: 0; border-left: 4px solid transparent; border-right: 4px solid transparent; border-top: 5px solid var(--dim); flex-shrink: 0; transition: transform 0.2s ease; opacity: 0.5; }
+  .w-cat:not([open]) .w-cat-arrow { transform: rotate(-90deg); }
+  .w-cat-list { padding-top: 0.15rem; }
+
+  .w-item { display: flex; align-items: center; gap: 0.65rem; padding: 0.4rem 0.55rem; margin: 0 -0.55rem; border-radius: 6px; cursor: pointer; user-select: none; transition: background 0.1s ease; }
+  .w-item:hover { background: var(--bg-subtle); }
+  .w-item:active { background: var(--accent-subtle); transition: none; }
+  .w-item-dot { width: 10px; height: 10px; border-radius: 2.5px; flex-shrink: 0; transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.2s ease; }
+  .w-item[data-on="1"] .w-item-dot { opacity: 1; transform: scale(1); }
+  .w-item[data-on="0"] .w-item-dot { opacity: 0.12; transform: scale(0.5); }
+  .w-item-text { flex: 1; min-width: 0; transition: opacity 0.15s ease; }
+  .w-item[data-on="0"] .w-item-text { opacity: 0.25; }
+  .w-item-name { display: block; font-size: 0.82rem; font-weight: 490; color: var(--text); line-height: 1.35; }
+  .w-item-val { display: block; font-size: 0.64rem; color: var(--dim); line-height: 1.3; font-variant-numeric: tabular-nums; margin-top: 0.05rem; }
+
+  .w-dc-group { position: relative; }
+  .w-sub { display: flex; align-items: center; gap: 0.45rem; padding: 0.2rem 0.55rem 0.35rem 2.15rem; margin: -0.1rem -0.55rem 0; border-radius: 5px; cursor: pointer; user-select: none; transition: background 0.1s ease; }
+  .w-sub:hover { background: var(--bg-subtle); }
+  .w-sub-check { width: 11px; height: 11px; border-radius: 2.5px; border: 1.5px solid var(--border-strong); flex-shrink: 0; position: relative; transition: border-color 0.15s, background 0.15s; }
+  .w-sub[data-checked="1"] .w-sub-check { border-color: var(--accent); background: var(--accent); }
+  .w-sub[data-checked="1"] .w-sub-check::after { content: ''; position: absolute; top: 1px; left: 3px; width: 3px; height: 5.5px; border: solid white; border-width: 0 1.5px 1.5px 0; transform: rotate(45deg); }
+  .w-sub-label { font-size: 0.62rem; color: var(--dim); line-height: 1; }
+  .w-sub[data-checked="1"] .w-sub-label { color: var(--accent); }
+  .w-item[data-on="0"] ~ .w-sub { opacity: 0.25; pointer-events: none; }
+
+  .w-right { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0; }
+  .w-unit-bar { display: flex; align-items: center; gap: 0.6rem; padding: 0.5rem 0.75rem; background: var(--bg-elevated); border: 1px solid var(--border); border-bottom: none; border-radius: 8px 8px 0 0; }
+  .w-unit-label { font-size: 0.72rem; font-weight: 550; color: var(--text-secondary); white-space: nowrap; }
+  .w-unit-opts { display: flex; gap: 0.3rem; }
+  .w-unit-btn { font-family: var(--font-body); font-size: 0.7rem; font-weight: 520; padding: 0.3rem 0.65rem; border-radius: 4px; border: 1px solid var(--border); background: transparent; color: var(--dim); cursor: pointer; transition: all 0.12s ease; }
+  .w-unit-btn:hover { background: var(--bg-subtle); color: var(--text); }
+  .w-unit-btn[data-active="1"] { background: var(--accent); color: white; border-color: var(--accent); }
+
+  .w-chart { flex: 1; min-width: 0; aspect-ratio: 1.3 / 1; background: var(--bg-subtle); border: 1px solid var(--border); border-radius: 0 0 8px 8px; overflow: hidden; }
+  #svg { width: 100%; height: 100%; display: block; }
+
+  .w-sources { max-width: 640px; padding-bottom: 2rem; }
+  .w-sources details { border-top: 1px solid var(--border-subtle); padding-top: 0.5rem; }
+  .w-sources summary { font-size: 0.75rem; font-weight: 500; color: var(--dim); cursor: pointer; list-style: none; padding: 0.25rem 0; }
+  .w-sources summary::-webkit-details-marker { display: none; }
+  .w-sources summary::before { content: '+ '; }
+  .w-sources details[open] summary::before { content: '− '; }
+  .w-sources p { font-size: 0.72rem; color: var(--dim); line-height: 1.65; margin-top: 0.5rem; }
+
+  @media (max-width: 850px) {
+    .w-viz { flex-direction: column; }
+    .w-panel { width: 100%; display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem 2.5rem; }
+    .w-cat { margin-bottom: 0; }
+    .w-chart { aspect-ratio: 1; }
+  }
+  @media (max-width: 500px) { .w-panel { grid-template-columns: 1fr; } }
+</style>
+
+<script>
+  const RATES: Record<string, number> = { corn: 650_000, alfalfa: 1_500_000, golf: 1_300_000 };
+  const CROP_LABELS: Record<string, string> = { corn: 'corn', alfalfa: 'alfalfa', golf: 'golf course' };
+  const cropDataAll = (window as any).__cropDataAll;
+  const cropStartIdx: number = (window as any).__cropStartIdx;
+  let activeUnit = 'corn';
+
+  function fA(a: number) { return a >= 1e6 ? (a/1e6).toFixed(1)+'M acres' : a >= 1e3 ? Math.round(a).toLocaleString()+' acres' : a.toFixed(0)+' acres'; }
+  function fG(g: number) { return g >= 1e12 ? (g/1e12).toFixed(1)+'T gal/yr' : g >= 1e9 ? (g/1e9).toFixed(1)+'B gal/yr' : (g/1e6).toFixed(0)+'M gal/yr'; }
+
+  interface Item { idx: number; acres: number; on: boolean; color: string; name: string; sub: string; gallons: number; fixedAcres: number; baseName: string; elecOn: boolean; galBase: number; galElec: number; isCrop: boolean; }
+
+  const items: Item[] = [];
+
+  // Init non-crop items from server-rendered DOM
+  document.querySelectorAll<HTMLElement>('.w-item').forEach(row => {
+    const idx = parseInt(row.dataset.idx!);
+    const dot = row.querySelector<HTMLElement>('.w-item-dot')!;
+    const baseName = row.querySelector('.w-item-name')!.textContent!;
+    const galBase = parseFloat(row.dataset.galBase || '0');
+    const galElec = parseFloat(row.dataset.galElec || '0');
+    const fixedAcres = parseFloat(row.dataset.fixedAcres || '0');
+    const isFixed = fixedAcres > 0;
+    const isCrop = idx >= cropStartIdx;
+
+    let acres: number, gallons: number;
+    if (isFixed) { acres = fixedAcres; gallons = 0; }
+    else if (isCrop) { acres = 0; gallons = 0; } // will be set by rebuildCropItems
+    else { gallons = galBase; acres = gallons / RATES[activeUnit]; }
+
+    items[idx] = { idx, acres, on: row.dataset.on === '1', color: dot.style.backgroundColor, name: baseName, sub: row.querySelector('.w-item-val')!.textContent!, gallons, fixedAcres, baseName, elecOn: false, galBase, galElec, isCrop };
+    row.dataset.baseName = baseName;
+
+    if (!isCrop) {
+      row.addEventListener('click', () => { items[idx].on = !items[idx].on; row.dataset.on = items[idx].on ? '1' : '0'; render(); });
+    }
+  });
+
+  // Init crop items properly
+  rebuildCropItems();
+
+  // Sub-checkboxes
+  document.querySelectorAll<HTMLElement>('.w-sub').forEach(sub => {
+    sub.dataset.checked = '0';
+    const parentIdx = parseInt(sub.dataset.parentIdx!);
+    const parentRow = document.querySelector<HTMLElement>(`.w-item[data-idx="${parentIdx}"]`)!;
+
+    sub.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const nowChecked = sub.dataset.checked !== '1';
+      sub.dataset.checked = nowChecked ? '1' : '0';
+      parentRow.dataset.elec = nowChecked ? '1' : '0';
+
+      const it = items[parentIdx];
+      it.elecOn = nowChecked;
+      it.gallons = nowChecked ? it.galElec : it.galBase;
+      it.name = nowChecked ? it.baseName + ' + electricity' : it.baseName;
+      it.acres = it.gallons / RATES[activeUnit];
+      it.sub = fA(it.acres) + ' · ' + fG(it.gallons);
+      const valEl = parentRow.querySelector<HTMLElement>('.w-item-val');
+      if (valEl) valEl.textContent = it.sub;
+      render();
+    });
+  });
+
+  // Crop list rebuild
+  const cropList = document.getElementById('crop-list')!;
+  const cropCatName = document.getElementById('crop-cat-name')!;
+
+  function rebuildCropItems() {
+    const rate = RATES[activeUnit];
+    const label = CROP_LABELS[activeUnit];
+    const data = cropDataAll[activeUnit];
+
+    // Turn off old crop items
+    for (let i = cropStartIdx; i < cropStartIdx + 5; i++) {
+      if (items[i]) items[i].on = false;
+    }
+
+    cropList.innerHTML = '';
+
+    data.forEach((d: any, j: number) => {
+      const idx = cropStartIdx + j;
+      const displayName = d.name === 'All US irrigated' ? `All US irrigated ${label}` : `${d.name} ${label}`;
+      const gallons = d.acres * rate;
+      const sub = fA(d.acres) + ' · ' + fG(gallons);
+
+      items[idx] = { idx, acres: d.acres, on: d.on, color: d.color, name: displayName, sub, gallons, fixedAcres: 0, baseName: d.name, elecOn: false, galBase: 0, galElec: 0, isCrop: true };
+
+      const row = document.createElement('div');
+      row.className = 'w-item';
+      row.dataset.idx = String(idx);
+      row.dataset.on = d.on ? '1' : '0';
+      row.innerHTML = `<div class="w-item-dot" style="background:${d.color}"></div><div class="w-item-text"><span class="w-item-name">${displayName}</span><span class="w-item-val">${sub}</span></div>`;
+
+      row.addEventListener('click', () => { items[idx].on = !items[idx].on; row.dataset.on = items[idx].on ? '1' : '0'; render(); });
+      cropList.appendChild(row);
+    });
+  }
+
+  // Unit selector
+  const unitBtns = document.querySelectorAll<HTMLElement>('.w-unit-btn');
+  unitBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const unit = btn.dataset.unit!;
+      if (unit === activeUnit) return;
+      activeUnit = unit;
+      unitBtns.forEach(b => b.dataset.active = b.dataset.unit === unit ? '1' : '0');
+      cropCatName.textContent = `Irrigated ${CROP_LABELS[unit]}`;
+
+      rebuildCropItems();
+
+      // Recalc DC items at new rate
+      items.forEach((it, i) => {
+        if (!it || it.isCrop || it.fixedAcres > 0) return;
+        it.acres = it.gallons / RATES[activeUnit];
+        it.sub = fA(it.acres) + ' · ' + fG(it.gallons);
+        const row = document.querySelector<HTMLElement>(`.w-item[data-idx="${i}"]`);
+        const valEl = row?.querySelector<HTMLElement>('.w-item-val');
+        if (valEl) valEl.textContent = it.sub;
+      });
+
+      render();
+    });
+  });
+
+  // ── Animation ──────────────────────────────────
+  const chart = document.getElementById('chart')!;
+  const svg = document.getElementById('svg')!;
+  const cur = new Map<number, number>();
+  const tgt = new Map<number, number>();
+  let raf: number | null = null;
+
+  function render() {
+    const W = chart.clientWidth, H = chart.clientHeight;
+    const pad = 24;
+    const maxSide = Math.min(H - pad * 2, W - 200 - pad);
+    const active = items.filter(d => d && d.on);
+    const maxA = active.reduce((m, d) => Math.max(m, d.acres), 0);
+
+    tgt.clear();
+    if (maxA > 0) active.forEach(d => tgt.set(d.idx, Math.max(2, maxSide * Math.sqrt(d.acres / maxA))));
+    cur.forEach((_, k) => { if (!tgt.has(k)) tgt.set(k, 0); });
+    tgt.forEach((_, k) => { if (!cur.has(k)) cur.set(k, 0); });
+    if (!raf) raf = requestAnimationFrame(step);
+  }
+
+  function step() {
+    const W = chart.clientWidth, H = chart.clientHeight, pad = 24;
+    let moving = false;
+    tgt.forEach((t, k) => {
+      const c = cur.get(k) ?? 0, d = t - c;
+      if (Math.abs(d) < 0.4) { cur.set(k, t); if (t === 0) cur.delete(k); }
+      else { cur.set(k, c + d * 0.14); moving = true; }
+    });
+    draw(W, H, pad);
+    raf = moving ? requestAnimationFrame(step) : null;
+  }
+
+  function draw(W: number, H: number, pad: number) {
+    const vis: { idx: number; s: number }[] = [];
+    cur.forEach((s, i) => { if (s > 0.5) vis.push({ idx: i, s }); });
+    vis.sort((a, b) => b.s - a.s);
+
+    svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+    if (!vis.length) { svg.innerHTML = `<text x="${W/2}" y="${H/2}" text-anchor="middle" font-family="var(--font-body)" font-size="13" fill="var(--dim)">Select items to compare</text>`; return; }
+
+    const ox = pad, oy = H - pad, p: string[] = [];
+
+    vis.forEach(v => {
+      const it = items[v.idx], x = ox, y = oy - v.s;
+      p.push(`<rect x="${x}" y="${y}" width="${v.s}" height="${v.s}" rx="3" fill="${it.color}" fill-opacity=".12"/>`);
+      p.push(`<rect x="${x}" y="${y}" width="${v.s}" height="${v.s}" rx="3" fill="none" stroke="${it.color}" stroke-width="1.5" stroke-opacity=".55"/>`);
+    });
+
+    const bigSide = vis[0]?.s ?? 0, lx = ox + bigSide + 24, labelH = 30;
+    const labs = vis.map(v => ({ idx: v.idx, ny: oy - v.s, s: v.s })).sort((a, b) => a.ny - b.ny);
+    let cursor = -Infinity;
+    const positions = labs.map(l => { const y = Math.max(l.ny, cursor); cursor = y + labelH; return { ...l, y }; });
+
+    const lastBot = positions.length > 0 ? positions[positions.length - 1].y + labelH : 0;
+    const topY = positions.length > 0 ? positions[0].ny : pad;
+    if (lastBot > H - pad && positions.length > 1) {
+      const gap = Math.max(16, ((H - pad) - Math.max(pad, topY)) / positions.length);
+      let y = Math.max(pad, topY);
+      positions.forEach(p => { p.y = y; y += gap; });
+    }
+
+    positions.forEach(r => {
+      const it = items[r.idx], ax = ox + r.s, ay = r.ny + 1, ty = r.y + 5;
+      if (ty + 14 > H - 4 || ty < 2) return;
+      p.push(`<line x1="${ax}" y1="${ay}" x2="${lx-7}" y2="${ty+2}" stroke="${it.color}" stroke-width=".7" opacity=".2"/>`);
+      p.push(`<circle cx="${ax}" cy="${ay}" r="2" fill="${it.color}" opacity=".35"/>`);
+    });
+
+    positions.forEach(r => {
+      const it = items[r.idx], ty = r.y + 5;
+      if (ty + 14 > H - 4 || ty < 2) return;
+      p.push(`<rect x="${lx-4}" y="${ty-12}" width="${W-lx+4}" height="${labelH}" rx="3" fill="var(--bg-subtle)" fill-opacity=".9"/>`);
+      p.push(`<text x="${lx}" y="${ty}" font-family="var(--font-body)" font-size="12" font-weight="550" fill="var(--text)">${it.name}</text>`);
+      p.push(`<text x="${lx}" y="${ty+14}" font-family="var(--font-body)" font-size="9.5" fill="var(--dim)">${it.sub}</text>`);
+    });
+
+    svg.innerHTML = p.join('\n');
+  }
+
+  render();
+
+  let rt: number;
+  new ResizeObserver(() => { clearTimeout(rt); rt = window.setTimeout(() => { cur.clear(); render(); }, 60); }).observe(chart);
+</script>
