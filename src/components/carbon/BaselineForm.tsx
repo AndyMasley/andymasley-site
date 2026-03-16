@@ -104,10 +104,16 @@ export function BaselineForm({ value, onChange }: BaselineFormProps) {
           type="number"
           min={1}
           max={10}
-          step={1}
+          step="any"
+          inputMode="decimal"
           style={INPUT_STYLE}
           value={value.householdSize}
-          onChange={e => update('householdSize', Math.max(1, parseFloat(e.target.value) || 1))}
+          onChange={e => {
+            const raw = e.target.value;
+            if (raw === '') return;
+            const num = parseFloat(raw);
+            if (!isNaN(num) && num >= 1) update('householdSize', num);
+          }}
         />
       </div>
 
@@ -172,7 +178,7 @@ export function BaselineForm({ value, onChange }: BaselineFormProps) {
       </div>
 
       <div style={FIELD_STYLE}>
-        <label style={LABEL_STYLE} htmlFor="cf-spending">Monthly spending ($)</label>
+        <label style={LABEL_STYLE} htmlFor="cf-spending">Spending excl. rent ($)</label>
         <input
           id="cf-spending"
           type="number"
