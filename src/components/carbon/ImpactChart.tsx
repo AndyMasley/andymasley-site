@@ -165,6 +165,19 @@ export function ImpactChart({
           <div style={colHead}>
             Your footprint
           </div>
+          {/* Footprint number — always visible at top */}
+          <div style={{ marginBottom: '0.75rem' }}>
+            <div style={{ fontSize: 'clamp(2rem, 4vw, 3rem)', fontWeight: 700, letterSpacing: '-0.02em', fontVariantNumeric: 'tabular-nums', lineHeight: 1 }}>
+              {footprintKg.toLocaleString()}
+              <span style={{ fontSize: '0.4em', fontWeight: 400, color: MUTED, marginLeft: '6px' }} title="kilograms of carbon dioxide equivalent per year">kg CO₂e / yr</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '4px' }}>
+              <span style={{ fontSize: '0.75rem', color: MUTED }}>{Math.round(footprintKg / 16000 * 100)}% of US average</span>
+              <div style={{ width: '50px', height: '4px', background: DIVIDER, borderRadius: '2px', overflow: 'hidden' }}>
+                <div style={{ width: `${Math.min(footprintKg / 16000 * 100, 100)}%`, height: '100%', background: footprintKg > 16000 ? ACCENT : GREEN, borderRadius: '2px', transition: 'width 0.4s ease' }} />
+              </div>
+            </div>
+          </div>
           <div className="cf-impact-scroll">
             {/* Lifestyle preset pills */}
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginBottom: '0.75rem' }}>
@@ -192,19 +205,6 @@ export function ImpactChart({
               ))}
             </div>
             <BaselineForm value={baseline} onChange={b => { setActivePresetId(null); onBaselineChange(b); }} />
-
-            <div style={{ marginTop: '1.25rem', paddingTop: '1rem', borderTop: `1px solid ${DIVIDER}` }}>
-              <div style={{ fontSize: 'clamp(2rem, 4vw, 3rem)', fontWeight: 700, letterSpacing: '-0.02em', fontVariantNumeric: 'tabular-nums', lineHeight: 1 }}>
-                {footprintKg.toLocaleString()}
-                <span style={{ fontSize: '0.4em', fontWeight: 400, color: MUTED, marginLeft: '6px' }} title="kilograms of carbon dioxide equivalent per year">kg CO₂e / yr</span>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '4px' }}>
-                <span style={{ fontSize: '0.75rem', color: MUTED }}>{Math.round(footprintKg / 16000 * 100)}% of US average</span>
-                <div style={{ width: '50px', height: '4px', background: DIVIDER, borderRadius: '2px', overflow: 'hidden' }}>
-                  <div style={{ width: `${Math.min(footprintKg / 16000 * 100, 100)}%`, height: '100%', background: footprintKg > 16000 ? ACCENT : GREEN, borderRadius: '2px', transition: 'width 0.4s ease' }} />
-                </div>
-              </div>
-            </div>
           </div>
         </div>
 
