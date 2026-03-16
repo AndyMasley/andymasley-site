@@ -163,7 +163,7 @@ function downloadPNG(footprint: FootprintModel, comparisonContext: string) {
 }
 
 export function ExportButton({ footprint, comparisonContext }: ExportButtonProps) {
-  const ctx = comparisonContext ?? `${Math.round(footprint.totalKgCO2ePerYear / 16000 * 100)}% of US average`;
+  const ctx = comparisonContext ?? `${Math.round(footprint.totalKgCO2ePerYear / 17600 * 100)}% of US average`;
   return (
     <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
       <ExportBtn label="PNG" onClick={() => downloadPNG(footprint, ctx)} />

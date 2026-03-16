@@ -16,8 +16,8 @@ import { computeLeverage } from '@/lib/carbon/leverage';
 // Constants
 // ---------------------------------------------------------------------------
 
-const US_AVG_KG = 16_000;
-const GLOBAL_AVG_KG = 4_700;
+const US_AVG_KG = 17_600;
+const GLOBAL_AVG_KG = 6_500;
 const FAIR_SHARE_2030_KG = 2_500;
 
 /**

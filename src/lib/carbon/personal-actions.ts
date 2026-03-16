@@ -256,10 +256,10 @@ export function computePersonalActions(baseline: BaselineInputs, footprint: Foot
     },
     {
       name: 'Reduce video streaming by half',
-      savingsKg: 17,
+      savingsKg: Math.round(0.08 * 2 * 365 * gridRate), // 0.08 kWh/hr (IEA), default 2 hrs/day
       category: 'Digital',
       applicable: true,
-      note: 'HD streaming uses ~0.1 kWh per hour including data centers',
+      note: 'Streaming uses ~0.08 kWh/hr including device, network, and data center',
       inlineParam: { before: 'Cut ', defaultVal: 2, after: ' hrs/day of video streaming', max: 24 },
     },
 
@@ -273,10 +273,10 @@ export function computePersonalActions(baseline: BaselineInputs, footprint: Foot
     },
     {
       name: 'Do fewer Google searches per day',
-      savingsKg: Math.round(10 * 0.2 * 365 / 1000) || 1, // 0.2g per search — rounds to ~1 kg
+      savingsKg: Math.round(10 * 0.03 * 365 / 1000) || 1, // 0.03g per search — essentially zero
       category: 'Digital',
       applicable: true,
-      note: '~0.2 g CO₂ per search. Even 10 fewer/day saves < 1 kg/yr.',
+      note: '~0.03 g CO₂ per search. Even 100 fewer/day saves ~1 kg/yr.',
       inlineParam: { before: 'Do ', defaultVal: 10, after: ' fewer searches/day', max: 100000 },
     },
     {

@@ -56,7 +56,7 @@ export const LEVERAGE_CASES: LeverageCase[] = [
     probabilityOfSuccess: { low: 0.01, central: 0.03, high: 0.10 },
     coalitionSize: 2000,
     durationYears: 3,
-    annualLoadAffectedMWh: 3_500_000,
+    annualLoadAffectedMWh: 1_971_000, // 500 MW × 45% CF × 8760 (US coal avg CF ~45% in 2023)
     // Coal is replaced by a mix of gas + renewables, not zero-carbon.
     // Net avoided: ~0.50 kg/kWh (coal at 0.95 minus replacement at ~0.45).
     counterfactualGenerationMix: 'Coal → gas/renewables mix (0.50 kg/kWh net avoided)',

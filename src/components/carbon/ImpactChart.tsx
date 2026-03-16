@@ -183,9 +183,9 @@ export function ImpactChart({
               <span style={{ fontSize: '0.4em', fontWeight: 400, color: MUTED, marginLeft: '6px' }} title="kilograms of carbon dioxide equivalent per year">kg CO₂e/yr</span>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '6px' }}>
-              <span style={{ fontSize: '0.72rem', color: MUTED }}>{Math.round(footprintKg / 16000 * 100)}% of US avg</span>
+              <span style={{ fontSize: '0.72rem', color: MUTED }}>{Math.round(footprintKg / 17600 * 100)}% of US avg</span>
               <div style={{ width: '60px', height: '5px', background: DIVIDER, borderRadius: '3px', overflow: 'hidden' }}>
-                <div style={{ width: `${Math.min(footprintKg / 16000 * 100, 100)}%`, height: '100%', background: footprintKg > 16000 ? ACCENT : GREEN, borderRadius: '3px', transition: 'width 0.4s ease' }} />
+                <div style={{ width: `${Math.min(footprintKg / 17600 * 100, 100)}%`, height: '100%', background: footprintKg > 17600 ? ACCENT : GREEN, borderRadius: '3px', transition: 'width 0.4s ease' }} />
               </div>
             </div>
             {customFootprintKg !== null ? (
@@ -587,9 +587,9 @@ export function ImpactChart({
 // --- Reference lines ---
 
 const REFERENCE_MARKS = [
-  { kg: 16000, label: 'US avg', color: '#8B2E2E', weight: 700, opacity: 0.5 },
-  { kg: 7800,  label: 'EU avg', color: '#6B6B60', weight: 500, opacity: 0.3 },
-  { kg: 4700,  label: 'Global avg', color: '#6B6B60', weight: 500, opacity: 0.3 },
+  { kg: 17600, label: 'US avg', color: '#8B2E2E', weight: 700, opacity: 0.5 },
+  { kg: 8500,  label: 'EU avg', color: '#6B6B60', weight: 500, opacity: 0.3 },
+  { kg: 6500,  label: 'Global avg', color: '#6B6B60', weight: 500, opacity: 0.3 },
 ];
 
 function ReferenceLines({ scaleMax }: { scaleMax: number }) {

@@ -35,6 +35,8 @@ export const ARCHETYPES: Archetype[] = [
       dietType: 'vegetarian',
       carOwnership: 'none',
       flightsPerYear: 1,
+      transatlanticFlightsPerYear: 0,
+      domesticFlightsPerYear: 1,
     },
   },
   {
@@ -50,6 +52,8 @@ export const ARCHETYPES: Archetype[] = [
       dietType: 'average',
       carOwnership: 'gas',
       flightsPerYear: 2,
+      transatlanticFlightsPerYear: 0,
+      domesticFlightsPerYear: 2,
     },
   },
   {
@@ -65,6 +69,8 @@ export const ARCHETYPES: Archetype[] = [
       dietType: 'heavy-meat',
       carOwnership: 'gas',
       flightsPerYear: 1,
+      transatlanticFlightsPerYear: 0,
+      domesticFlightsPerYear: 1,
     },
   },
   {
@@ -80,6 +86,8 @@ export const ARCHETYPES: Archetype[] = [
       dietType: 'vegan',
       carOwnership: 'ev',
       flightsPerYear: 2,
+      transatlanticFlightsPerYear: 1,
+      domesticFlightsPerYear: 1,
     },
   },
   {
@@ -95,6 +103,8 @@ export const ARCHETYPES: Archetype[] = [
       dietType: 'average',
       carOwnership: 'none',
       flightsPerYear: 8,
+      transatlanticFlightsPerYear: 2,
+      domesticFlightsPerYear: 6,
     },
   },
   {
@@ -110,6 +120,8 @@ export const ARCHETYPES: Archetype[] = [
       dietType: 'light-meat',
       carOwnership: 'hybrid',
       flightsPerYear: 1,
+      transatlanticFlightsPerYear: 0,
+      domesticFlightsPerYear: 1,
     },
   },
 ];
@@ -170,7 +182,7 @@ function ArchetypeCard({
     [archetype],
   );
 
-  const pctOfUS = Math.round((total / 16_000) * 100);
+  const pctOfUS = Math.round((total / 17_600) * 100);
 
   return (
     <button

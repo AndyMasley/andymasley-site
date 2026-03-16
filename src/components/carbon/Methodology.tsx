@@ -225,14 +225,14 @@ export function Methodology() {
               <strong>AI chatbots:</strong> <Val>5 kg/yr</Val> at 50 queries/day × 0.28 g each. <Src href="https://www.andymasley.com/writing/whats-the-full-hidden-climate-cost/">Andy Masley</Src>
             </p>
             <p style={{ marginTop: '4px' }}>
-              <strong>Video streaming:</strong> <Val>17 kg/yr</Val> at ~2 hrs/day × 0.1 kWh/hr. <Src href="https://www.iea.org/reports/data-centres-and-data-transmission-networks">IEA 2024</Src>
+              <strong>Video streaming:</strong> <Val>~0.08 kWh/hr</Val> including device, network, and data center. Grid-dependent: 2 hrs/day ≈ 22 kg/yr on US avg grid. <Src href="https://www.iea.org/reports/data-centres-and-data-transmission-networks">IEA 2020</Src>
             </p>
             <p style={{ marginTop: '4px' }}>
               <strong>Email:</strong> <Val>~0.3 g/email</Val> (short text; up to ~26 g with large attachments). The old "4 g" figure (2010) was revised down in 2020. Most cost is device embodied carbon, not transmission.
               <br /><Src href="https://profilebooks.com/work/how-bad-are-bananas/">Berners-Lee 2020</Src>, <Src href="https://carbonliteracy.com/the-carbon-cost-of-an-email/">Carbon Literacy Project</Src>
             </p>
             <p style={{ marginTop: '4px' }}>
-              <strong>Google searches:</strong> <Val>~0.2 g/search</Val>. <Src href="https://blog.google/outreach-initiatives/sustainability/google-sustainability-report-2024/">Google 2024</Src>
+              <strong>Google searches:</strong> <Val>~0.03 g/search</Val> (down from ~0.2 g in 2009 due to efficiency gains). <Src href="https://blog.google/outreach-initiatives/sustainability/google-sustainability-report-2024/">Google 2024</Src>
             </p>
             <p style={{ marginTop: '4px' }}>
               <strong>Social media:</strong> <Val>~0.5 g/min</Val>. <Src href="https://www.carbontrust.com/what-we-do/assurance-and-labelling/product-carbon-footprint-label">Carbon Trust</Src>
@@ -263,7 +263,7 @@ export function Methodology() {
               </li>
               <li style={{ marginBottom: '10px' }}>
                 <strong>Retire a coal plant early</strong><br />
-                500 MW at 80% CF → 3,500,000 MWh/yr. Coal at 0.95 minus replacement at 0.45 = 0.50 kg/kWh net. 10 years: <Val>17.5 billion kg</Val>.<br />
+                500 MW at 45% CF → 1,971,000 MWh/yr (US coal fleet averaged ~45% CF in 2023, down from ~67% a decade ago). Coal at 0.95 minus replacement at 0.45 = 0.50 kg/kWh net. 10 years: <Val>9.9 billion kg</Val>.<br />
                 <Src href="https://www.sierraclub.org/campaign/beyond-coal">Sierra Club Beyond Coal</Src>
               </li>
               <li style={{ marginBottom: '10px' }}>
@@ -297,14 +297,14 @@ export function Methodology() {
           </Section>
 
           <Section title="Reference Lines" id="methodology-reference-lines">
-            <p><strong>Benchmarks</strong> (kg CO₂e per capita):</p>
+            <p><strong>Benchmarks</strong> (kg CO₂e per capita, consumption-based):</p>
             <ul style={{ paddingLeft: '1.25rem', margin: '4px 0 8px' }}>
-              <Li>US average: <Val>16,000</Val></Li>
-              <Li>EU average: <Val>7,800</Val></Li>
-              <Li>Global average: <Val>4,700</Val></Li>
+              <Li>US average: <Val>17,600</Val></Li>
+              <Li>EU average: <Val>8,500</Val></Li>
+              <Li>Global average: <Val>6,500</Val></Li>
             </ul>
-            <p><Src href="https://ourworldindata.org/co2-emissions">Our World in Data</Src> (consumption-based)</p>
-            <Note>OWID's figure is CO₂ only. The University of Michigan CSS factsheet gives 17.6 t CO₂e per capita for 2023, a closer comparison for this CO₂e calculator.</Note>
+            <p><Src href="https://css.umich.edu/publications/factsheets/sustainability-indicators/carbon-footprint-factsheet">University of Michigan CSS Factsheet</Src>, <Src href="https://ourworldindata.org/co2-emissions">Our World in Data</Src></p>
+            <Note>These are CO₂e figures (including CH₄, N₂O, and F-gases), consumption-based. OWID's commonly cited CO₂-only figures are lower: US ~14,000, EU ~6,000, Global ~4,700.</Note>
           </Section>
 
           <Section title="Boundary Definition" id="methodology-boundary">
