@@ -70,10 +70,11 @@ function InlineNum({ value, onChange, min, max, step }: {
       onClick={e => { e.stopPropagation(); (e.target as HTMLInputElement).select(); }}
       style={{
         width: `${Math.max(String(value).length, local.length, 2) * 0.65 + 0.8}em`,
-        padding: '0 2px',
+        padding: '1px 3px',
         border: 'none',
         borderBottom: '1px dashed currentColor',
-        background: 'transparent',
+        background: 'rgba(0,0,0,0.04)',
+        borderRadius: '2px 2px 0 0',
         font: 'inherit',
         fontSize: 'inherit',
         color: 'inherit',
@@ -108,7 +109,7 @@ export function ImpactChart({
   systemicOverrides, onSystemicOverridesChange,
 }: ImpactChartProps) {
   const [activePresetId, setActivePresetId] = useState<string | null>(null);
-  const [openCategory, setOpenCategory] = useState<string | null>(null);
+  const [openCategory, setOpenCategory] = useState<string | null>('Transport');
 
   const presetTotals = useMemo(() => {
     const totals: Record<string, number> = {};
@@ -177,18 +178,18 @@ export function ImpactChart({
           <div style={{ marginBottom: '0.75rem' }}>
             <div style={{ fontSize: 'clamp(2rem, 4vw, 3rem)', fontWeight: 700, letterSpacing: '-0.02em', fontVariantNumeric: 'tabular-nums', lineHeight: 1 }}>
               {footprintKg.toLocaleString()}
-              <span style={{ fontSize: '0.4em', fontWeight: 400, color: MUTED, marginLeft: '6px' }} title="kilograms of carbon dioxide equivalent per year">kg CO₂e / yr</span>
+              <span style={{ fontSize: '0.4em', fontWeight: 400, color: MUTED, marginLeft: '6px' }} title="kilograms of carbon dioxide equivalent per year">kg CO₂e/yr</span>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '4px' }}>
-              <span style={{ fontSize: '0.75rem', color: MUTED }}>{Math.round(footprintKg / 16000 * 100)}% of US average</span>
-              <div style={{ width: '50px', height: '4px', background: DIVIDER, borderRadius: '2px', overflow: 'hidden' }}>
-                <div style={{ width: `${Math.min(footprintKg / 16000 * 100, 100)}%`, height: '100%', background: footprintKg > 16000 ? ACCENT : GREEN, borderRadius: '2px', transition: 'width 0.4s ease' }} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '6px' }}>
+              <span style={{ fontSize: '0.72rem', color: MUTED }}>{Math.round(footprintKg / 16000 * 100)}% of US avg</span>
+              <div style={{ width: '60px', height: '5px', background: DIVIDER, borderRadius: '3px', overflow: 'hidden' }}>
+                <div style={{ width: `${Math.min(footprintKg / 16000 * 100, 100)}%`, height: '100%', background: footprintKg > 16000 ? ACCENT : GREEN, borderRadius: '3px', transition: 'width 0.4s ease' }} />
               </div>
             </div>
           </div>
           <div className="cf-impact-scroll">
             {/* Lifestyle preset pills */}
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginBottom: '0.75rem' }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '0.75rem' }}>
               {LIFESTYLE_PRESETS.map(p => (
                 <button
                   key={p.id}
@@ -196,7 +197,7 @@ export function ImpactChart({
                   onClick={() => handlePresetClick(p)}
                   style={{
                     fontSize: '0.68rem',
-                    padding: '5px 11px',
+                    padding: '5px 12px',
                     borderRadius: '14px',
                     border: `1px solid ${activePresetId === p.id ? ACCENT : 'var(--text-secondary, #6B6B60)'}`,
                     background: activePresetId === p.id ? ACCENT : 'transparent',
@@ -249,7 +250,7 @@ export function ImpactChart({
                         {enabledCount} · −{groupSaved.toLocaleString()}
                       </span>
                     )}
-                    {enabledCount === 0 && <span style={{ fontSize: '0.58rem', color: MUTED, fontWeight: 400 }}>{group.actions.length} actions</span>}
+                    {enabledCount === 0 && <span style={{ fontSize: '0.58rem', color: MUTED, fontWeight: 400, textTransform: 'none' }}>{group.actions.length} action{group.actions.length !== 1 ? 's' : ''}</span>}
                   </button>
                   {isOpen && (
                     <div style={{ paddingLeft: '4px', paddingBottom: '4px' }}>
@@ -476,7 +477,7 @@ export function ImpactChart({
                       /> people =
                     </span>
                     <span style={{ fontWeight: 700, color: isOn ? GREEN : MUTED, fontVariantNumeric: 'tabular-nums', fontSize: '0.72rem', whiteSpace: 'nowrap', flexShrink: 0, marginLeft: '4px' }}>
-                      {sigFigs(central)} <span style={{ fontSize: '0.6em', fontWeight: 400 }}>kg /person</span>
+                      {sigFigs(central)} <span style={{ fontSize: '0.6em', fontWeight: 400 }}>kg/person</span>
                     </span>
                   </button>
                 </div>

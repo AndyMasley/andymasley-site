@@ -224,14 +224,14 @@ export function BaselineForm({ value, onChange }: BaselineFormProps) {
       </div>
 
       <div style={FIELD_STYLE}>
-        <label style={LABEL_STYLE} htmlFor="cf-spending">Monthly spending excl. rent ($)</label>
+        <label style={LABEL_STYLE} htmlFor="cf-spending">Monthly spend, excl. rent</label>
         <NumInput
           id="cf-spending"
           min={0}
           max={50000}
           style={INPUT_STYLE}
           value={value.monthlySpending}
-          placeholder="1200"
+          placeholder="$1200"
           onChange={n => update('monthlySpending', n)}
         />
       </div>
