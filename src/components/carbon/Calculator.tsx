@@ -25,6 +25,7 @@ import { ExportButton } from './ExportButton';
 import { ScenarioManager } from './ScenarioManager';
 import { Changelog } from './Changelog';
 import { Methodology } from './Methodology';
+import { ComparingCuts } from './ComparingCuts';
 import { ComparisonModes, getComparisonContext } from './ComparisonModes';
 import type { ComparisonModeId } from './ComparisonModes';
 import { ARCHETYPES } from './Archetypes';
@@ -113,6 +114,14 @@ export function Calculator() {
         onActionParamOverridesChange={setActionParamOverrides}
         systemicOverrides={systemicOverrides}
         onSystemicOverridesChange={setSystemicOverrides}
+      />
+
+      <ComparingCuts
+        personalActions={allPersonalActions}
+        enabledPersonal={enabledPersonal}
+        actionParamOverrides={actionParamOverrides}
+        leverageCases={leverageData.cases}
+        enabledSystemic={enabledSystemic}
       />
 
       <Methodology />
