@@ -1,6 +1,7 @@
 /**
- * ArticleSidebar — sticky table of contents + reading progress
- * for long-form articles. Extracts headings from the DOM at runtime.
+ * ArticleSidebar — polished sticky table of contents + reading progress.
+ * Extracts headings from the DOM, groups h1 parents with h2/h3 children,
+ * tracks active section via IntersectionObserver, and shows scroll progress.
  */
 
 import { useState, useEffect, useRef, useCallback } from 'react';
@@ -8,25 +9,22 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 interface TocEntry {
   id: string;
   text: string;
-  level: number; // 1 = h1, 2 = h2, 3 = h3
+  level: number;
 }
-
-const ACCENT = 'var(--accent, #8b3a3a)';
-const DIM = 'var(--dim, #999)';
-const BG = 'var(--bg, #faf9f7)';
 
 export function ArticleSidebar() {
   const [entries, setEntries] = useState<TocEntry[]>([]);
   const [activeId, setActiveId] = useState<string>('');
   const [progress, setProgress] = useState(0);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
   const observerRef = useRef<IntersectionObserver | null>(null);
+  const activeGroupRef = useRef<string>('');
 
   // Extract headings on mount
   useEffect(() => {
     const prose = document.querySelector('.prose');
     if (!prose) return;
-
     const headings = prose.querySelectorAll('h1[id], h2[id], h3[id]');
     const toc: TocEntry[] = [];
     headings.forEach(h => {
@@ -40,19 +38,16 @@ export function ArticleSidebar() {
     setEntries(toc);
   }, []);
 
-  // Track active heading via intersection observer
+  // Track active heading
   useEffect(() => {
     if (entries.length === 0) return;
-
     const headingEls = entries
       .map(e => document.getElementById(e.id))
       .filter((el): el is HTMLElement => el !== null);
-
     if (headingEls.length === 0) return;
 
     observerRef.current = new IntersectionObserver(
       (intersections) => {
-        // Find the first visible heading
         for (const entry of intersections) {
           if (entry.isIntersecting) {
             setActiveId(entry.target.id);
@@ -60,13 +55,27 @@ export function ArticleSidebar() {
           }
         }
       },
-      { rootMargin: '-80px 0px -70% 0px', threshold: 0 }
+      { rootMargin: '-60px 0px -75% 0px', threshold: 0 }
     );
-
     headingEls.forEach(el => observerRef.current!.observe(el));
-
     return () => observerRef.current?.disconnect();
   }, [entries]);
+
+  // Auto-expand the group containing the active heading
+  useEffect(() => {
+    if (!activeId) return;
+    const group = grouped.find(g =>
+      g.entry.id === activeId || g.children.some(c => c.id === activeId)
+    );
+    if (group && group.entry.id !== activeGroupRef.current) {
+      activeGroupRef.current = group.entry.id;
+      setExpandedGroups(prev => {
+        const next = new Set(prev);
+        next.add(group.entry.id);
+        return next;
+      });
+    }
+  }, [activeId]);
 
   // Track scroll progress
   useEffect(() => {
@@ -89,6 +98,15 @@ export function ArticleSidebar() {
     }
   }, []);
 
+  const toggleGroup = useCallback((id: string) => {
+    setExpandedGroups(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
+
   if (entries.length === 0) return null;
 
   // Group entries: h1 are top-level, h2/h3 are children
@@ -103,103 +121,93 @@ export function ArticleSidebar() {
     }
   }
 
+  const pctText = Math.round(progress * 100);
+
   return (
     <>
-      {/* Progress bar — fixed at top */}
-      <div style={{
-        position: 'fixed', top: 0, left: 0, right: 0, height: '3px',
-        zIndex: 1000, pointerEvents: 'none',
-      }}>
-        <div style={{
-          height: '100%', width: `${progress * 100}%`,
-          background: ACCENT, transition: 'width 0.1s linear',
-        }} />
+      {/* Progress bar */}
+      <div className="toc-progress-bar">
+        <div className="toc-progress-fill" style={{ width: `${progress * 100}%` }} />
       </div>
 
-      {/* Mobile toggle button */}
+      {/* Mobile toggle */}
       <button
         onClick={() => setSidebarOpen(!sidebarOpen)}
         className="toc-mobile-toggle"
         aria-label="Table of contents"
-        style={{
-          position: 'fixed', bottom: '20px', right: '20px', zIndex: 999,
-          width: '44px', height: '44px', borderRadius: '50%',
-          background: ACCENT, color: 'white', border: 'none',
-          cursor: 'pointer', fontSize: '1.1rem', fontWeight: 700,
-          boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-          display: 'none', // shown via CSS media query
-          alignItems: 'center', justifyContent: 'center',
-        }}
       >
-        {sidebarOpen ? '✕' : '☰'}
+        {sidebarOpen ? (
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 4l10 10M14 4L4 14"/></svg>
+        ) : (
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="2"><path d="M2 4h14M2 9h14M2 14h14"/></svg>
+        )}
+        {!sidebarOpen && <span className="toc-mobile-pct">{pctText}%</span>}
       </button>
 
       {/* Sidebar */}
-      <nav
-        className={`toc-sidebar ${sidebarOpen ? 'toc-sidebar--open' : ''}`}
-        style={{
-          position: 'fixed',
-          top: '80px',
-          width: '240px',
-          maxHeight: 'calc(100vh - 100px)',
-          overflowY: 'auto',
-          overflowX: 'hidden',
-          paddingRight: '12px',
-          fontSize: '0.72rem',
-          lineHeight: 1.4,
-          WebkitOverflowScrolling: 'touch',
-        }}
-      >
-        <div style={{
-          fontWeight: 700, fontSize: '0.62rem', textTransform: 'uppercase',
-          letterSpacing: '0.05em', color: DIM, marginBottom: '10px',
-          paddingBottom: '6px', borderBottom: `1px solid var(--border, #ddd)`,
-        }}>
-          Contents · {Math.round(progress * 100)}%
+      <nav className={`toc-sidebar ${sidebarOpen ? 'toc-sidebar--open' : ''}`}>
+        {/* Header */}
+        <div className="toc-header">
+          <span>Contents</span>
+          <span className="toc-pct">{pctText}%</span>
         </div>
 
-        {grouped.map(({ entry, children }) => {
-          const isActive = activeId === entry.id || children.some(c => c.id === activeId);
-          return (
-            <div key={entry.id} style={{ marginBottom: '2px' }}>
-              <button
-                onClick={() => handleClick(entry.id)}
-                style={{
-                  display: 'block', width: '100%', textAlign: 'left',
-                  padding: '4px 6px', border: 'none', borderRadius: '3px',
-                  background: activeId === entry.id ? 'rgba(139,58,58,0.08)' : 'transparent',
-                  cursor: 'pointer', fontFamily: 'inherit',
-                  fontSize: '0.72rem', fontWeight: isActive ? 600 : 400,
-                  color: isActive ? `var(--text, #1a1a18)` : DIM,
-                  lineHeight: 1.35, transition: 'all 0.1s',
-                }}
-              >
-                {entry.text.length > 60 ? entry.text.slice(0, 57) + '...' : entry.text}
-              </button>
-              {isActive && children.length > 0 && (
-                <div style={{ paddingLeft: '12px' }}>
-                  {children.map(child => (
+        {/* Mini progress bar in sidebar */}
+        <div className="toc-mini-progress">
+          <div className="toc-mini-fill" style={{ width: `${progress * 100}%` }} />
+        </div>
+
+        {/* Entries */}
+        <div className="toc-entries">
+          {grouped.map(({ entry, children }) => {
+            const isGroupActive = activeId === entry.id || children.some(c => c.id === activeId);
+            const isExpanded = expandedGroups.has(entry.id);
+            const hasChildren = children.length > 0;
+
+            return (
+              <div key={entry.id} className="toc-group">
+                <div className="toc-group-header">
+                  {hasChildren && (
                     <button
-                      key={child.id}
-                      onClick={() => handleClick(child.id)}
-                      style={{
-                        display: 'block', width: '100%', textAlign: 'left',
-                        padding: '2px 6px', border: 'none', borderRadius: '3px',
-                        background: activeId === child.id ? 'rgba(139,58,58,0.06)' : 'transparent',
-                        cursor: 'pointer', fontFamily: 'inherit',
-                        fontSize: '0.62rem', fontWeight: activeId === child.id ? 600 : 400,
-                        color: activeId === child.id ? `var(--text, #1a1a18)` : DIM,
-                        lineHeight: 1.35, transition: 'all 0.1s',
-                      }}
+                      className="toc-chevron"
+                      onClick={(e) => { e.stopPropagation(); toggleGroup(entry.id); }}
+                      aria-label={isExpanded ? 'Collapse' : 'Expand'}
                     >
-                      {child.text.length > 55 ? child.text.slice(0, 52) + '...' : child.text}
+                      {isExpanded ? '▾' : '▸'}
                     </button>
-                  ))}
+                  )}
+                  <button
+                    className={`toc-item toc-item--h1 ${activeId === entry.id ? 'toc-item--active' : ''} ${isGroupActive ? 'toc-item--group-active' : ''}`}
+                    onClick={() => handleClick(entry.id)}
+                    title={entry.text}
+                  >
+                    {!hasChildren && <span className="toc-dot" />}
+                    {entry.text}
+                  </button>
                 </div>
-              )}
-            </div>
-          );
-        })}
+                {isExpanded && hasChildren && (
+                  <div className="toc-children">
+                    {children.map(child => (
+                      <button
+                        key={child.id}
+                        className={`toc-item toc-item--child ${activeId === child.id ? 'toc-item--active' : ''}`}
+                        onClick={() => handleClick(child.id)}
+                        title={child.text}
+                      >
+                        {child.text}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Back link */}
+        <div className="toc-back">
+          <a href="/writing">&larr; All writing</a>
+        </div>
       </nav>
     </>
   );
