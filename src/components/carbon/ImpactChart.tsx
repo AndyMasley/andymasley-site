@@ -8,7 +8,7 @@
  * Bottom: shared bar chart on one scale.
  */
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import type { BaselineInputs } from '@/lib/carbon/types';
 import type { PersonalAction } from '@/lib/carbon/personal-actions';
 import type { LeverageResult, BucketResult } from '@/lib/carbon/types';
@@ -29,6 +29,8 @@ interface ImpactChartProps {
   enabledSystemic: Set<string>;
   toggleSystemic: (name: string) => void;
   actionParamOverrides: Record<string, number>;
+  systemicOverrides: Record<string, import('@/lib/carbon/leverage').SystemicOverride>;
+  onSystemicOverridesChange: (o: Record<string, import('@/lib/carbon/leverage').SystemicOverride>) => void;
 }
 
 function sigFigs(n: number, figs: number = 2): string {
@@ -37,6 +39,47 @@ function sigFigs(n: number, figs: number = 2): string {
   const power = figs - d;
   const rounded = Math.round(n * Math.pow(10, power)) / Math.pow(10, power);
   return rounded.toLocaleString();
+}
+
+/** Tiny inline editable number — looks like text, editable on click */
+function InlineNum({ value, onChange, min, max, step }: {
+  value: number; onChange: (n: number) => void;
+  min?: number; max?: number; step?: number;
+}) {
+  const [local, setLocal] = useState(String(value));
+  useEffect(() => { setLocal(String(value)); }, [value]);
+  const commit = () => {
+    const num = parseFloat(local);
+    if (isNaN(num) || local.trim() === '') { setLocal(String(value)); return; }
+    const clamped = Math.max(min ?? 0, Math.min(max ?? Infinity, num));
+    onChange(clamped);
+    setLocal(String(clamped));
+  };
+  return (
+    <input
+      type="text"
+      inputMode="numeric"
+      value={local}
+      onChange={e => setLocal(e.target.value)}
+      onBlur={commit}
+      onKeyDown={e => { if (e.key === 'Enter') { commit(); (e.target as HTMLInputElement).blur(); } }}
+      onClick={e => { e.stopPropagation(); (e.target as HTMLInputElement).select(); }}
+      style={{
+        width: `${Math.max(String(value).length, local.length, 2) * 0.55 + 0.5}em`,
+        padding: '0 2px',
+        border: 'none',
+        borderBottom: '1px dashed currentColor',
+        background: 'transparent',
+        font: 'inherit',
+        fontSize: 'inherit',
+        color: 'inherit',
+        fontWeight: 600,
+        textAlign: 'center',
+        outline: 'none',
+        fontVariantNumeric: 'tabular-nums',
+      }}
+    />
+  );
 }
 
 const GREEN = '#4A7C59';
@@ -58,6 +101,7 @@ export function ImpactChart({
   footprintKg, personalActions, leverageCases, buckets,
   baseline, onBaselineChange, activeArchetypeId, onSelectArchetype, archetypeTotals,
   enabledPersonal, togglePersonal, enabledSystemic, toggleSystemic, actionParamOverrides,
+  systemicOverrides, onSystemicOverridesChange,
 }: ImpactChartProps) {
   const [activePresetId, setActivePresetId] = useState<string | null>(null);
   const [openCategory, setOpenCategory] = useState<string | null>(null);
@@ -245,10 +289,27 @@ export function ImpactChart({
                       </div>
                     </div>
                   </button>
-                  <div style={{ padding: '0 6px 4px 30px', fontSize: '0.58rem', color: MUTED, display: 'flex', gap: '8px' }}>
-                    <span>{result.case.coalitionSize.toLocaleString()} people</span>
-                    <span>·</span>
-                    <span>{pctStr} chance</span>
+                  <div style={{ padding: '0 6px 4px 30px', fontSize: '0.58rem', color: MUTED, display: 'flex', gap: '4px', alignItems: 'center' }}>
+                    <InlineNum
+                      value={systemicOverrides[result.case.name]?.coalitionSize ?? result.case.coalitionSize}
+                      onChange={v => {
+                        const ov = systemicOverrides[result.case.name] ?? {};
+                        onSystemicOverridesChange({ ...systemicOverrides, [result.case.name]: { ...ov, coalitionSize: v, attributionFraction: 1 / v } });
+                      }}
+                      min={1}
+                    />
+                    <span>people ·</span>
+                    <InlineNum
+                      value={Math.round((systemicOverrides[result.case.name]?.probability ?? result.case.probabilityOfSuccess.central) * 1000) / 10}
+                      onChange={v => {
+                        const ov = systemicOverrides[result.case.name] ?? {};
+                        onSystemicOverridesChange({ ...systemicOverrides, [result.case.name]: { ...ov, probability: v / 100 } });
+                      }}
+                      min={0}
+                      max={100}
+                      step={0.1}
+                    />
+                    <span>% chance</span>
                   </div>
                 </div>
               );

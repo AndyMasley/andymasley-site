@@ -112,6 +112,8 @@ export function Calculator() {
         enabledSystemic={enabledSystemic}
         toggleSystemic={toggleSystemic}
         actionParamOverrides={actionParamOverrides}
+        systemicOverrides={systemicOverrides}
+        onSystemicOverridesChange={setSystemicOverrides}
       />
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
