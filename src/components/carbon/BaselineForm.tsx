@@ -177,6 +177,8 @@ export function BaselineForm({ value, onChange }: BaselineFormProps) {
         </select>
       </div>
 
+      <div style={{ gridColumn: '1 / -1', borderTop: '1px solid var(--divider, #DDD9D0)', margin: '2px 0' }} />
+
       <div style={FIELD_STYLE}>
         <label style={LABEL_STYLE} htmlFor="cf-diet">Diet</label>
         <select

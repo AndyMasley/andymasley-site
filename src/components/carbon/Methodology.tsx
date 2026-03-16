@@ -610,7 +610,7 @@ export function Methodology() {
               <strong>Probability of success</strong> reflects how likely the campaign is to achieve its goal. We show three scenarios (low, central, high) for every case. These are subjective estimates informed by historical base rates for similar campaigns.
             </p>
 
-            <p style={{ marginTop: '16px', fontWeight: 700, fontSize: '0.85rem', color: 'var(--text, #1A1A18)' }}>1. Prevent closure of one nuclear plant</p>
+            <p style={{ marginTop: '16px', fontWeight: 700, fontSize: '0.85rem', color: 'var(--text, #1A1A18)' }}>1. Keep a nuclear plant open</p>
             <ul>
               <li>Plant size: <code>1 GW</code> at <code>90%</code> capacity factor = <code>7,884,000 MWh/yr</code></li>
               <li>Counterfactual: replaced by ~60% gas + ~40% renewables mix. Net avoided: <code>0.30 kg CO₂e/kWh</code> (not the full gas rate of 0.41 — replacement includes some clean energy). Source: <Src href="https://www.epa.gov/egrid">EPA eGRID</Src></li>
@@ -621,7 +621,7 @@ export function Methodology() {
               <li>Sources: <Src href="https://www.eia.gov/electricity/monthly/">EIA Electric Power Monthly</Src>, <Src href="https://www.epa.gov/egrid">EPA eGRID</Src>, <Src href="https://www.ucsusa.org/resources/nuclear-power-dilemma">UCS nuclear plant economics</Src></li>
             </ul>
 
-            <p style={{ marginTop: '16px', fontWeight: 700, fontSize: '0.85rem', color: 'var(--text, #1A1A18)' }}>2. Help pass a state clean energy standard</p>
+            <p style={{ marginTop: '16px', fontWeight: 700, fontSize: '0.85rem', color: 'var(--text, #1A1A18)' }}>2. Pass a state clean energy law</p>
             <ul>
               <li>Load affected: <code>60,000,000 MWh/yr</code> (mid-size state electricity sector)</li>
               <li>Net displaced: <code>0.25 kg CO₂e/kWh</code> (many states already have partial clean energy, so the marginal displacement is lower than the full grid rate)</li>
@@ -632,7 +632,7 @@ export function Methodology() {
               <li>Sources: <Src href="https://www.eia.gov/electricity/state/">EIA State Electricity Profiles</Src>, <Src href="https://www.dsireusa.org/">DSIRE renewable policy database</Src></li>
             </ul>
 
-            <p style={{ marginTop: '16px', fontWeight: 700, fontSize: '0.85rem', color: 'var(--text, #1A1A18)' }}>3. Campaign for one coal plant early retirement</p>
+            <p style={{ marginTop: '16px', fontWeight: 700, fontSize: '0.85rem', color: 'var(--text, #1A1A18)' }}>3. Retire a coal plant early</p>
             <ul>
               <li>Plant: <code>500 MW</code> coal = <code>3,500,000 MWh/yr</code></li>
               <li>Net avoided: <code>0.50 kg CO₂e/kWh</code>. Coal emits ~0.95 kg/kWh but is replaced by a mix of gas + renewables averaging ~0.45, so the NET reduction per kWh displaced is ~0.50. Source: <Src href="https://www.epa.gov/egrid">EPA eGRID</Src></li>
@@ -643,7 +643,7 @@ export function Methodology() {
               <li>Sources: <Src href="https://www.epa.gov/egrid">EPA eGRID</Src>, <Src href="https://www.sierraclub.org/campaign/beyond-coal">Sierra Club Beyond Coal campaign data</Src></li>
             </ul>
 
-            <p style={{ marginTop: '16px', fontWeight: 700, fontSize: '0.85rem', color: 'var(--text, #1A1A18)' }}>4. Help get a 500 MW solar farm approved</p>
+            <p style={{ marginTop: '16px', fontWeight: 700, fontSize: '0.85rem', color: 'var(--text, #1A1A18)' }}>4. Get a solar farm approved</p>
             <ul>
               <li>Generation: <code>500 MW × 25% CF × 8,760 hrs = 1,095,000 MWh/yr</code></li>
               <li>Displaced: marginal grid at <code>0.35 kg CO₂e/kWh</code> (lower than grid average because solar displaces the marginal mix, not the average)</li>
@@ -654,7 +654,7 @@ export function Methodology() {
               <li>Source: <Src href="https://atb.nrel.gov/">NREL Annual Technology Baseline</Src></li>
             </ul>
 
-            <p style={{ marginTop: '16px', fontWeight: 700, fontSize: '0.85rem', color: 'var(--text, #1A1A18)' }}>5. Workplace clean power purchase agreement</p>
+            <p style={{ marginTop: '16px', fontWeight: 700, fontSize: '0.85rem', color: 'var(--text, #1A1A18)' }}>5. Workplace clean energy PPA</p>
             <ul>
               <li>Load: <code>5,000 MWh/yr</code> (mid-size employer, ~200 employees)</li>
               <li>Displaced: grid average at <code>0.375 kg CO₂e/kWh</code></li>
@@ -665,7 +665,7 @@ export function Methodology() {
               <li>Sources: <Src href="https://rebuyers.org/">Renewable Energy Buyers Alliance</Src></li>
             </ul>
 
-            <p style={{ marginTop: '16px', fontWeight: 700, fontSize: '0.85rem', color: 'var(--text, #1A1A18)' }}>6. Advocate for transmission reform</p>
+            <p style={{ marginTop: '16px', fontWeight: 700, fontSize: '0.85rem', color: 'var(--text, #1A1A18)' }}>6. Advocate for grid reform</p>
             <ul>
               <li>Load affected: <code>100,000,000 MWh/yr</code> (portion of queued clean energy unlocked by reform)</li>
               <li>Displaced: gas at <code>0.35 kg CO₂e/kWh</code></li>

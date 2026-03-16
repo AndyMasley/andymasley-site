@@ -22,7 +22,7 @@ import type { LeverageCase, LeverageModel, LeverageResult } from './types';
 
 export const LEVERAGE_CASES: LeverageCase[] = [
   {
-    name: 'Prevent closure of one nuclear plant',
+    name: 'Keep a nuclear plant open',
     description: 'A 1 GW plant kept online instead of replaced by gas + renewables. Coalition of ~3,000 advocates over 2 years.',
     // Diablo Canyon campaign involved thousands of advocates. P(success) is low —
     // most nuclear closure campaigns fail to reverse the decision.
@@ -37,7 +37,7 @@ export const LEVERAGE_CASES: LeverageCase[] = [
     timeHorizonYears: 15,
   },
   {
-    name: 'Help pass a state clean energy standard',
+    name: 'Pass a state clean energy law',
     description: 'Advocating for legislation that accelerates a mid-size state\'s electricity decarbonization.',
     // State-level campaigns involve thousands of people across organizations,
     // lobbyists, grassroots groups. P(success) is very low for any individual campaign.
@@ -51,7 +51,7 @@ export const LEVERAGE_CASES: LeverageCase[] = [
     timeHorizonYears: 10,
   },
   {
-    name: 'Campaign for one coal plant early retirement',
+    name: 'Retire a coal plant early',
     description: 'A 500 MW coal plant retired 10 years early. Local + national organizing.',
     probabilityOfSuccess: { low: 0.01, central: 0.03, high: 0.10 },
     coalitionSize: 2000,
@@ -64,7 +64,7 @@ export const LEVERAGE_CASES: LeverageCase[] = [
     timeHorizonYears: 10,
   },
   {
-    name: 'Help get a 500 MW solar farm approved',
+    name: 'Get a solar farm approved',
     description: 'Community engagement and permitting support for utility-scale solar.',
     // The broader advocacy ecosystem around a utility-scale project includes
     // developers, lobbyists, community supporters, and local officials.
@@ -78,7 +78,7 @@ export const LEVERAGE_CASES: LeverageCase[] = [
     timeHorizonYears: 25,
   },
   {
-    name: 'Workplace clean power purchase agreement',
+    name: 'Workplace clean energy PPA',
     description: 'Persuade an employer to sign a PPA for ~5,000 MWh/yr of renewable electricity.',
     probabilityOfSuccess: { low: 0.05, central: 0.15, high: 0.40 },
     coalitionSize: 15,
@@ -89,7 +89,7 @@ export const LEVERAGE_CASES: LeverageCase[] = [
     timeHorizonYears: 12,
   },
   {
-    name: 'Advocate for transmission reform',
+    name: 'Advocate for grid reform',
     description: 'Support regional or federal transmission planning to unblock clean energy queues.',
     // National-scale advocacy involves tens of thousands of people.
     probabilityOfSuccess: { low: 0.001, central: 0.005, high: 0.02 },

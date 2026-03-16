@@ -9,6 +9,7 @@
  */
 
 import { useState, useMemo, useEffect } from 'react';
+import { computeFootprint } from '@/lib/carbon/baseline';
 import type { BaselineInputs } from '@/lib/carbon/types';
 import type { PersonalAction } from '@/lib/carbon/personal-actions';
 import type { LeverageResult, BucketResult } from '@/lib/carbon/types';
@@ -107,6 +108,15 @@ export function ImpactChart({
   const [activePresetId, setActivePresetId] = useState<string | null>(null);
   const [openCategory, setOpenCategory] = useState<string | null>(null);
 
+  const presetTotals = useMemo(() => {
+    const totals: Record<string, number> = {};
+    for (const p of LIFESTYLE_PRESETS) {
+      const fp = computeFootprint(p.baseline);
+      totals[p.id] = fp.totalKgCO2ePerYear;
+    }
+    return totals;
+  }, []);
+
   const handlePresetClick = (preset: typeof LIFESTYLE_PRESETS[number]) => {
     setActivePresetId(preset.id);
     onBaselineChange(preset.baseline);
@@ -177,7 +187,7 @@ export function ImpactChart({
                     whiteSpace: 'nowrap',
                   }}
                 >
-                  {p.label}
+                  {p.label} <span style={{ fontSize: '0.85em', opacity: 0.7 }}>~{Math.round(presetTotals[p.id] / 1000)}k</span>
                 </button>
               ))}
             </div>
@@ -188,8 +198,11 @@ export function ImpactChart({
                 {footprintKg.toLocaleString()}
                 <span style={{ fontSize: '0.4em', fontWeight: 400, color: MUTED, marginLeft: '6px' }} title="kilograms of carbon dioxide equivalent per year">kg CO₂e / yr</span>
               </div>
-              <div style={{ fontSize: '0.75rem', color: MUTED, marginTop: '4px' }}>
-                {Math.round(footprintKg / 16000 * 100)}% of US average
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '4px' }}>
+                <span style={{ fontSize: '0.75rem', color: MUTED }}>{Math.round(footprintKg / 16000 * 100)}% of US average</span>
+                <div style={{ width: '50px', height: '4px', background: DIVIDER, borderRadius: '2px', overflow: 'hidden' }}>
+                  <div style={{ width: `${Math.min(footprintKg / 16000 * 100, 100)}%`, height: '100%', background: footprintKg > 16000 ? ACCENT : GREEN, borderRadius: '2px', transition: 'width 0.4s ease' }} />
+                </div>
               </div>
             </div>
           </div>
@@ -253,6 +266,11 @@ export function ImpactChart({
                 </div>
               );
             })}
+            {!hasPersonal && (
+              <div style={{ fontSize: '0.75rem', color: MUTED, fontStyle: 'italic', textAlign: 'center', padding: '1rem 0', opacity: 0.6 }}>
+                Select actions to see their impact
+              </div>
+            )}
             {hasPersonal && (
               <div style={{ fontSize: '0.75rem', color: MUTED, marginTop: '0.75rem', lineHeight: 1.4, paddingTop: '0.5rem', borderTop: `1px solid ${DIVIDER}` }}>
                 Cut <strong style={{ color: GREEN }}>{totalSaved.toLocaleString()} kg</strong> ({Math.round(totalSaved / footprintKg * 100)}%).
@@ -316,6 +334,11 @@ export function ImpactChart({
                 </div>
               );
             })}
+            {!hasSystemic && (
+              <div style={{ fontSize: '0.75rem', color: MUTED, fontStyle: 'italic', textAlign: 'center', padding: '1rem 0', opacity: 0.6 }}>
+                Select actions to see their impact
+              </div>
+            )}
             {hasSystemic && (
               <div style={{ marginTop: '0.75rem', padding: '8px 10px', background: GREEN_BG, borderLeft: `3px solid ${GREEN}`, borderRadius: '0 4px 4px 0', fontSize: '0.75rem', lineHeight: 1.4 }}>
                 <strong style={{ color: GREEN }}>{sigFigs(totalSystemic)} kg</strong> prevented
@@ -329,7 +352,7 @@ export function ImpactChart({
       {/* BAR CHART — fixed position, never moves */}
       <div className="cf-impact-bars" style={{ position: 'relative' }}>
         <ReferenceLines scaleMax={scaleMax} />
-        <BarRow label="Your footprint" kg={footprintKg} pctWidth={pct(footprintKg)} color={ACCENT} />
+        <BarRow label="Your footprint" kg={footprintKg} pctWidth={pct(footprintKg)} color={ACCENT} dotColor="#8B2E2E" />
 
         <BarRow
           label={hasPersonal ? 'After your cuts' : 'After your cuts'}
@@ -340,6 +363,7 @@ export function ImpactChart({
           suffix={hasPersonal ? `(−${totalSaved.toLocaleString()})` : ''}
           labelColor={hasPersonal ? GREEN : MUTED}
           dimmed={!hasPersonal}
+          dotColor="rgba(139,46,46,0.55)"
         />
 
         <BarRow
@@ -354,6 +378,7 @@ export function ImpactChart({
           dimmed={!hasSystemic}
           unit="kg"
           useSigFigs
+          dotColor="#4A7C59"
         />
       </div>
 
@@ -437,16 +462,20 @@ function ReferenceLines({ scaleMax }: { scaleMax: number }) {
 
 // --- Bar row ---
 
-function BarRow({ label, kg, pctWidth, color, opacity, ghostWidth, ghostOpacity, suffix, labelColor, bold, dimmed, unit, useSigFigs }: {
+function BarRow({ label, kg, pctWidth, color, opacity, ghostWidth, ghostOpacity, suffix, labelColor, bold, dimmed, unit, useSigFigs, dotColor }: {
   label: string; kg: number; pctWidth: number; color: string;
   opacity?: number; ghostWidth?: number; ghostOpacity?: number;
   suffix?: string; labelColor?: string; bold?: boolean; dimmed?: boolean; unit?: string; useSigFigs?: boolean;
+  dotColor?: string;
 }) {
   const kgStr = useSigFigs ? sigFigs(kg) : kg.toLocaleString();
   return (
     <div style={{ marginBottom: '6px', opacity: dimmed ? 0.25 : 1, transition: 'opacity 0.3s ease' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', fontSize: '0.78rem', marginBottom: '3px' }}>
-        <span style={{ fontWeight: bold ? 700 : 600, color: labelColor }}>{label}</span>
+        <span style={{ fontWeight: bold ? 700 : 600, color: labelColor, display: 'flex', alignItems: 'center', gap: '5px' }}>
+          {dotColor && <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: dotColor, flexShrink: 0, display: 'inline-block', position: 'relative', top: '0.5px' }} />}
+          {label}
+        </span>
         <span style={{ fontVariantNumeric: 'tabular-nums', fontWeight: 700, color: labelColor, whiteSpace: 'nowrap' }}>
           {dimmed ? '—' : `${kgStr} ${unit ?? 'kg/yr'}`}
           {!dimmed && suffix && <span style={{ fontWeight: 800, marginLeft: '6px' }}>{suffix}</span>}
