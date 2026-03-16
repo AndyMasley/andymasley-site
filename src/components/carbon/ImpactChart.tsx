@@ -317,7 +317,7 @@ export function ImpactChart({
                       {result.case.name}
                     </span>
                     <span style={{ fontSize: '0.55rem', color: MUTED, opacity: 0.7, whiteSpace: 'nowrap', flexShrink: 0 }} onClick={e => e.stopPropagation()}>
-                      × <InlineNum
+                      <span style={{ fontSize: '0.8rem' }}>×</span> <InlineNum
                         value={Math.round((systemicOverrides[result.case.name]?.probability ?? result.case.probabilityOfSuccess.central) * 1000) / 10}
                         onChange={v => {
                           const ov = systemicOverrides[result.case.name] ?? {};
@@ -326,7 +326,7 @@ export function ImpactChart({
                         min={0}
                         max={100}
                         step={0.1}
-                      />% ÷ <InlineNum
+                      />% <span style={{ fontSize: '0.8rem' }}>÷</span> <InlineNum
                         value={systemicOverrides[result.case.name]?.coalitionSize ?? result.case.coalitionSize}
                         onChange={v => {
                           const ov = systemicOverrides[result.case.name] ?? {};
@@ -336,7 +336,7 @@ export function ImpactChart({
                       /> people =
                     </span>
                     <span style={{ fontWeight: 700, color: isOn ? GREEN : MUTED, fontVariantNumeric: 'tabular-nums', fontSize: '0.72rem', whiteSpace: 'nowrap', flexShrink: 0, marginLeft: '4px' }}>
-                      {sigFigs(central)} <span style={{ fontSize: '0.6em', fontWeight: 400 }}>kg{result.displayUnit}</span>
+                      {sigFigs(central)} <span style={{ fontSize: '0.6em', fontWeight: 400 }}>kg /person</span>
                     </span>
                   </button>
                 </div>
