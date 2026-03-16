@@ -250,7 +250,7 @@ export function computePersonalActions(baseline: BaselineInputs, footprint: Foot
       note: '~50 queries/day × 0.28 g CO₂ each = ~5 kg/yr. Negligible.',
     },
     {
-      name: 'Reduce streaming by half',
+      name: 'Reduce video streaming by half',
       savingsKg: 17,
       category: 'Digital',
       applicable: true,
