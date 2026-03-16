@@ -311,7 +311,7 @@ export function ImpactChart({
               const pctStr = pct < 1 ? `${(result.case.probabilityOfSuccess.central * 100).toFixed(1)}%` : `${pct}%`;
               return (
                 <div key={result.case.name}>
-                  <button onClick={() => toggleSystemic(result.case.name)} className="cf-toggle-row" data-on={isOn} aria-pressed={isOn}>
+                  <button onClick={() => toggleSystemic(result.case.name)} className="cf-toggle-row" data-on={isOn} aria-pressed={isOn} style={{ flexWrap: 'wrap' }}>
                     <Dot on={isOn} />
                     <span style={{ flex: 1, fontWeight: isOn ? 600 : 400, fontSize: '0.76rem', lineHeight: 1.25, textAlign: 'left' }}>
                       {result.case.name}
@@ -321,8 +321,7 @@ export function ImpactChart({
                         {sigFigs(central)} <span style={{ fontSize: '0.6em', fontWeight: 400 }}>kg</span><span style={{ fontSize: '0.55rem', fontWeight: 400, marginLeft: '2px' }}>{result.displayUnit}</span>
                       </div>
                     </div>
-                  </button>
-                  <div style={{ padding: '0 6px 4px 30px', fontSize: '0.55rem', color: MUTED, opacity: 0.7, display: 'flex', gap: '6px', alignItems: 'center' }}>
+                    <div style={{ width: '100%', paddingLeft: '24px', fontSize: '0.55rem', color: MUTED, opacity: 0.7, display: 'flex', gap: '6px', alignItems: 'center' }} onClick={e => e.stopPropagation()}>
                     <InlineNum
                       value={systemicOverrides[result.case.name]?.coalitionSize ?? result.case.coalitionSize}
                       onChange={v => {
@@ -343,7 +342,8 @@ export function ImpactChart({
                       step={0.1}
                     />
                     <span>% chance</span>
-                  </div>
+                    </div>
+                  </button>
                 </div>
               );
             })}
