@@ -203,7 +203,7 @@ export function ImpactChart({
             ) : (
               <button
                 onClick={() => onCustomFootprintChange(footprintKg)}
-                style={{ fontSize: '0.62rem', color: MUTED, background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', padding: 0, marginTop: '4px', textDecoration: 'underline', opacity: 0.7 }}
+                style={{ fontSize: '0.62rem', color: MUTED, background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', padding: 0, marginTop: '2px', textDecoration: 'underline', opacity: 0.7 }}
               >
                 Already know your footprint? Enter it directly
               </button>
@@ -270,16 +270,19 @@ export function ImpactChart({
                   }
                 }
                 for (const best of exclusiveGroups.values()) total += best;
-                return total;
+                // Cap at total footprint — can't save more than you emit
+                return Math.min(total, footprintKg);
               })();
               return (
                 <div key={group.category} style={{ marginBottom: '2px' }}>
                   <button
+                    key={`${group.category}-${maxSavings}`}
+                    className="cf-category-flash"
+                    data-open={isOpen}
                     onClick={() => setOpenCategory(isOpen ? null : group.category)}
                     style={{
                       display: 'flex', alignItems: 'center', gap: '6px', width: '100%',
                       padding: '6px 8px', border: 'none', borderRadius: '5px',
-                      background: isOpen ? 'rgba(74,124,89,0.06)' : 'transparent',
                       cursor: 'pointer', fontFamily: 'inherit', fontSize: '0.72rem',
                       fontWeight: 700, textTransform: 'capitalize',
                       color: 'var(--text, #1A1A18)', textAlign: 'left', minHeight: '32px',
@@ -289,8 +292,8 @@ export function ImpactChart({
                     <span style={{ fontSize: '0.6rem', color: MUTED, width: '10px', flexShrink: 0, transition: 'transform 0.15s' }}>{isOpen ? '▾' : '▸'}</span>
                     <span style={{ flex: 1 }}>{group.category}</span>
                     {enabledCount > 0 && (
-                      <span style={{ fontSize: '0.62rem', fontWeight: 700, color: GREEN, fontVariantNumeric: 'tabular-nums' }}>
-                        {enabledCount} · −{groupSaved.toLocaleString()}
+                      <span style={{ fontSize: '0.62rem', fontWeight: 700, color: GREEN, fontVariantNumeric: 'tabular-nums', textTransform: 'none' }}>
+                        −{groupSaved.toLocaleString()} <span style={{ fontWeight: 400, color: MUTED }}>of {maxSavings.toLocaleString()} kg</span>
                       </span>
                     )}
                     {enabledCount === 0 && <span style={{ fontSize: '0.62rem', color: MUTED, fontWeight: 400, textTransform: 'none' }}>{group.actions.length} action{group.actions.length !== 1 ? 's' : ''} · up to <strong style={{ fontWeight: 600, color: 'var(--text, #1A1A18)' }}>{maxSavings.toLocaleString()}</strong> kg</span>}

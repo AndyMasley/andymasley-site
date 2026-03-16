@@ -219,17 +219,20 @@ export function BaselineForm({ value, onChange }: BaselineFormProps) {
         />
       </div>
 
-      <div style={FIELD_STYLE}>
+      <div style={{ ...FIELD_STYLE, gridColumn: 'span 2' }}>
         <label style={LABEL_STYLE} htmlFor="cf-spending">Spend/mo <span style={{ fontWeight: 400, opacity: 0.7 }}>(excl. rent)</span></label>
-        <NumInput
-          id="cf-spending"
-          min={0}
-          max={50000}
-          style={INPUT_STYLE}
-          value={value.monthlySpending}
-          placeholder="$1200"
-          onChange={n => update('monthlySpending', n)}
-        />
+        <div style={{ position: 'relative' }}>
+          <span style={{ position: 'absolute', left: '8px', top: '50%', transform: 'translateY(-50%)', fontSize: '0.75rem', color: 'var(--text-secondary, #6B6B60)', pointerEvents: 'none' }}>$</span>
+          <NumInput
+            id="cf-spending"
+            min={0}
+            max={50000}
+            style={{ ...INPUT_STYLE, paddingLeft: '18px' }}
+            value={value.monthlySpending}
+            placeholder="1200"
+            onChange={n => update('monthlySpending', n)}
+          />
+        </div>
       </div>
     </div>
   );

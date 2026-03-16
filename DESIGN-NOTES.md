@@ -26,6 +26,10 @@ These are the specific visual patterns that mark a tool as hastily AI-generated:
 
 9. **Left number must never exceed right number** in "Eliminate X of Y flights" patterns. Enforce this both at default time (`Math.min(1, baseline)`) and reactively via `useEffect` clamping when baseline changes.
 
+10. **"Up to" capped at total footprint.** The max potential savings per category can never exceed the user's total footprint — you can't save more than you emit. This prevents misleading totals from overlapping actions (e.g., Switch to EV + Bike commute in Transport).
+
+11. **Enabled categories show context.** When collapsed with enabled actions: "−4,780 of 6,590 kg" — shows both actual savings and max potential, not just the savings number in isolation.
+
 ## Typography & consistency
 
 10. **Units are always compact:** `kg CO₂e/yr`, `kg/person` — no spaces around slashes.

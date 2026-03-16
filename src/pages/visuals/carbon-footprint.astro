@@ -275,6 +275,17 @@ import { Calculator } from '@/components/carbon/Calculator';
     outline-offset: 3px;
   }
 
+  @keyframes cf-flash {
+    0% { background-color: rgba(74, 124, 89, 0.15); }
+    100% { background-color: transparent; }
+  }
+  .cf-category-flash {
+    animation: cf-flash 0.6s ease-out;
+  }
+  .cf-category-flash[data-open="true"] {
+    background: rgba(74, 124, 89, 0.06);
+  }
+
   .cf-preset-pill:hover {
     border-color: var(--accent, #8B2E2E) !important;
   }
