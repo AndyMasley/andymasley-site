@@ -112,6 +112,7 @@ export function Calculator() {
         enabledSystemic={enabledSystemic}
         toggleSystemic={toggleSystemic}
         actionParamOverrides={actionParamOverrides}
+        onActionParamOverridesChange={setActionParamOverrides}
         systemicOverrides={systemicOverrides}
         onSystemicOverridesChange={setSystemicOverrides}
       />

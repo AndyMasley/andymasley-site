@@ -30,6 +30,7 @@ interface ImpactChartProps {
   enabledSystemic: Set<string>;
   toggleSystemic: (name: string) => void;
   actionParamOverrides: Record<string, number>;
+  onActionParamOverridesChange: (o: Record<string, number>) => void;
   systemicOverrides: Record<string, import('@/lib/carbon/leverage').SystemicOverride>;
   onSystemicOverridesChange: (o: Record<string, import('@/lib/carbon/leverage').SystemicOverride>) => void;
 }
@@ -102,7 +103,7 @@ const LIFESTYLE_PRESETS: { id: string; label: string; baseline: BaselineInputs }
 export function ImpactChart({
   footprintKg, personalActions, leverageCases, buckets,
   baseline, onBaselineChange, activeArchetypeId, onSelectArchetype, archetypeTotals,
-  enabledPersonal, togglePersonal, enabledSystemic, toggleSystemic, actionParamOverrides,
+  enabledPersonal, togglePersonal, enabledSystemic, toggleSystemic, actionParamOverrides, onActionParamOverridesChange,
   systemicOverrides, onSystemicOverridesChange,
 }: ImpactChartProps) {
   const [activePresetId, setActivePresetId] = useState<string | null>(null);
@@ -248,7 +249,24 @@ export function ImpactChart({
                           <div key={action.name}>
                             <button onClick={() => togglePersonal(action.name)} className="cf-toggle-row" data-on={isOn} aria-pressed={isOn}>
                               <Dot on={isOn} />
-                              <span style={{ flex: 1, fontWeight: isOn ? 600 : 400, fontSize: '0.8rem' }}>{action.name}</span>
+                              <span style={{ flex: 1, fontWeight: isOn ? 600 : 400, fontSize: '0.8rem' }}>
+                                {action.inlineParam ? (
+                                  <>
+                                    {action.inlineParam.before}
+                                    <InlineNum
+                                      value={Math.round((actionParamOverrides[action.name] ?? 1) * action.inlineParam.defaultVal)}
+                                      onChange={v => {
+                                        const clamped = action.inlineParam!.max ? Math.min(v, action.inlineParam!.max) : v;
+                                        const ratio = clamped / action.inlineParam!.defaultVal;
+                                        onActionParamOverridesChange({ ...actionParamOverrides, [action.name]: ratio });
+                                      }}
+                                      min={0}
+                                      max={action.inlineParam.max}
+                                    />
+                                    {action.inlineParam.after}
+                                  </>
+                                ) : action.name}
+                              </span>
                               <span style={{ fontWeight: 700, color: isOn ? GREEN : MUTED, fontVariantNumeric: 'tabular-nums', fontSize: '0.75rem', whiteSpace: 'nowrap' }}>
                                   −{Math.round(action.savingsKg * (actionParamOverrides[action.name] ?? 1)).toLocaleString()} <span style={{ fontSize: '0.6em', fontWeight: 400 }}>kg</span>
                               </span>

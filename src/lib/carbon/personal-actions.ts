@@ -16,6 +16,8 @@ export interface PersonalAction {
   note: string;
   /** Actions in the same exclusive group are mutually exclusive — only one can be selected at a time */
   exclusiveGroup?: string;
+  /** If set, the action name renders with an inline editable number */
+  inlineParam?: { before: string; defaultVal: number; after: string; max?: number };
 }
 
 export function computePersonalActions(baseline: BaselineInputs, footprint: FootprintModel): PersonalAction[] {
@@ -79,6 +81,7 @@ export function computePersonalActions(baseline: BaselineInputs, footprint: Foot
       applicable: baseline.carOwnership !== 'none',
       note: 'Work from home, combine trips, or bike for short errands',
       exclusiveGroup: 'driving-reduction',
+      inlineParam: { before: 'Cut driving ', defaultVal: 20, after: '%', max: 100 },
     },
     {
       name: 'Cut driving 50%',
@@ -89,6 +92,7 @@ export function computePersonalActions(baseline: BaselineInputs, footprint: Foot
       applicable: baseline.carOwnership !== 'none',
       note: 'Major lifestyle shift — bike commute + transit for most trips',
       exclusiveGroup: 'driving-reduction',
+      inlineParam: { before: 'Cut driving ', defaultVal: 50, after: '%', max: 100 },
     },
     {
       name: 'Bike commute (replace car for commute)',
@@ -116,6 +120,7 @@ export function computePersonalActions(baseline: BaselineInputs, footprint: Foot
       category: 'Transport',
       applicable: baseline.carOwnership === 'none',
       note: 'Walk, bike, or take transit instead of Uber/Lyft',
+      inlineParam: { before: 'Reduce ride-hailing ', defaultVal: 50, after: '%', max: 100 },
     },
     {
       name: 'Walk or bike for trips under 2 miles',
@@ -132,6 +137,7 @@ export function computePersonalActions(baseline: BaselineInputs, footprint: Foot
       category: 'Home',
       applicable: baseline.housingType !== 'apartment',
       note: 'Savings scale with your grid intensity',
+      inlineParam: { before: 'Install ', defaultVal: 7, after: ' kW rooftop solar' },
     },
     {
       name: 'Replace gas furnace with heat pump',
@@ -146,6 +152,7 @@ export function computePersonalActions(baseline: BaselineInputs, footprint: Foot
       category: 'Home',
       applicable: baseline.urbanForm !== 'urban' || baseline.housingType !== 'apartment',
       note: 'Saves ~3% of heating energy per degree',
+      inlineParam: { before: 'Reduce thermostat ', defaultVal: 2, after: '\u00B0F in winter', max: 15 },
     },
     {
       name: 'Switch to LED lighting',
@@ -225,6 +232,7 @@ export function computePersonalActions(baseline: BaselineInputs, footprint: Foot
       applicable: baseline.dietType === 'average' || baseline.dietType === 'heavy-meat',
       note: 'Beef is the most emission-intensive common food',
       exclusiveGroup: 'diet-change',
+      inlineParam: { before: 'Cut beef by ', defaultVal: 50, after: '%', max: 100 },
     },
     {
       name: 'Cut food waste by half',
@@ -248,6 +256,7 @@ export function computePersonalActions(baseline: BaselineInputs, footprint: Foot
       category: 'Digital',
       applicable: true,
       note: '~50 queries/day × 0.28 g CO₂ each = ~5 kg/yr. Negligible.',
+      inlineParam: { before: 'Stop sending ', defaultVal: 50, after: ' AI prompts/day' },
     },
     {
       name: 'Reduce video streaming by half',
@@ -255,6 +264,7 @@ export function computePersonalActions(baseline: BaselineInputs, footprint: Foot
       category: 'Digital',
       applicable: true,
       note: 'HD streaming uses ~0.1 kWh per hour including data centers',
+      inlineParam: { before: 'Cut ', defaultVal: 2, after: ' hrs/day of streaming', max: 24 },
     },
 
     // ── Purchases ──
@@ -264,6 +274,7 @@ export function computePersonalActions(baseline: BaselineInputs, footprint: Foot
       category: 'Purchases',
       applicable: true,
       note: 'Fast fashion has high embodied carbon; buying less has outsize impact',
+      inlineParam: { before: 'Buy ', defaultVal: 50, after: '% less clothing', max: 100 },
     },
     {
       name: 'Buy used instead of new electronics',
@@ -278,6 +289,7 @@ export function computePersonalActions(baseline: BaselineInputs, footprint: Foot
       category: 'Purchases',
       applicable: true,
       note: 'Rough estimate — embodied emissions vary hugely by product',
+      inlineParam: { before: 'Reduce spending ', defaultVal: 15, after: '%', max: 100 },
     },
 
     // ── Flights ──
@@ -287,6 +299,7 @@ export function computePersonalActions(baseline: BaselineInputs, footprint: Foot
       category: 'Flights',
       applicable: baseline.flightsPerYear > 0,
       note: 'One of the highest-impact single actions',
+      inlineParam: { before: 'Eliminate ', defaultVal: 1, after: ' transatlantic flight' },
     },
     {
       name: 'Eliminate one domestic flight',
@@ -294,6 +307,7 @@ export function computePersonalActions(baseline: BaselineInputs, footprint: Foot
       category: 'Flights',
       applicable: baseline.flightsPerYear > 0,
       note: 'Average domestic round-trip: ~2,200 miles',
+      inlineParam: { before: 'Eliminate ', defaultVal: 1, after: ' domestic flight' },
     },
     {
       name: 'Eliminate all flights',
