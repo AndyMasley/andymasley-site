@@ -317,7 +317,7 @@ export function computePersonalActions(baseline: BaselineInputs, footprint: Foot
       category: 'Flights',
       applicable: baseline.flightsPerYear > 0,
       note: 'One of the highest-impact single actions',
-      inlineParam: { before: 'Eliminate ', defaultVal: 1, after: '' },
+      inlineParam: { before: 'Eliminate ', defaultVal: Math.min(1, baseline.transatlanticFlightsPerYear), after: '' },
       inlineParam2: { before: ' of ', defaultVal: baseline.transatlanticFlightsPerYear, after: ` transatlantic flight${baseline.transatlanticFlightsPerYear !== 1 ? 's' : ''}` },
     },
     {
@@ -326,7 +326,7 @@ export function computePersonalActions(baseline: BaselineInputs, footprint: Foot
       category: 'Flights',
       applicable: baseline.flightsPerYear > 0,
       note: 'Average domestic round-trip: ~2,200 miles',
-      inlineParam: { before: 'Eliminate ', defaultVal: 1, after: '' },
+      inlineParam: { before: 'Eliminate ', defaultVal: Math.min(1, baseline.domesticFlightsPerYear), after: '' },
       inlineParam2: { before: ' of ', defaultVal: baseline.domesticFlightsPerYear, after: ` domestic flight${baseline.domesticFlightsPerYear !== 1 ? 's' : ''}` },
     },
     {
