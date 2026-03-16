@@ -78,8 +78,8 @@ const LABEL_STYLE: React.CSSProperties = {
 };
 
 const SELECT_STYLE: React.CSSProperties = {
-  padding: '6px 10px',
-  fontSize: '0.78rem',
+  padding: '5px 8px',
+  fontSize: '0.75rem',
   fontFamily: 'inherit',
   border: '1px solid var(--divider, #DDD9D0)',
   borderRadius: '5px',
@@ -104,7 +104,7 @@ export function BaselineForm({ value, onChange }: BaselineFormProps) {
   };
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.6rem 1rem' }}>
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.35rem 0.6rem' }}>
 
       <div style={FIELD_STYLE}>
         <label style={LABEL_STYLE} htmlFor="cf-state">Location</label>
@@ -177,7 +177,9 @@ export function BaselineForm({ value, onChange }: BaselineFormProps) {
         </select>
       </div>
 
-      <div style={{ gridColumn: '1 / -1', borderTop: '1px solid var(--divider, #DDD9D0)', margin: '2px 0' }} />
+      <div style={{ gridColumn: '1 / -1', borderTop: '1px solid var(--divider, #DDD9D0)', margin: '1px 0' }} />
+
+      <div style={{ gridColumn: '1 / -1', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.35rem 0.6rem' }}>
 
       <div style={FIELD_STYLE}>
         <label style={LABEL_STYLE} htmlFor="cf-diet">Diet</label>
@@ -209,7 +211,7 @@ export function BaselineForm({ value, onChange }: BaselineFormProps) {
       </div>
 
       <div style={FIELD_STYLE}>
-        <label style={LABEL_STYLE} htmlFor="cf-spending">Spending excluding rent ($)</label>
+        <label style={LABEL_STYLE} htmlFor="cf-spending">Spending excl. rent ($)</label>
         <NumInput
           id="cf-spending"
           min={0}
@@ -219,6 +221,7 @@ export function BaselineForm({ value, onChange }: BaselineFormProps) {
           placeholder="1200"
           onChange={n => update('monthlySpending', n)}
         />
+      </div>
       </div>
     </div>
   );
