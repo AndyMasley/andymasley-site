@@ -207,7 +207,7 @@ export function BaselineForm({ value, onChange }: BaselineFormProps) {
       </div>
 
       <div style={FIELD_STYLE}>
-        <label style={LABEL_STYLE} htmlFor="cf-spending">Spending excl. rent ($)</label>
+        <label style={LABEL_STYLE} htmlFor="cf-spending">Spending excluding rent ($)</label>
         <NumInput
           id="cf-spending"
           min={0}
