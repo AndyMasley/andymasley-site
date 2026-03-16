@@ -326,7 +326,7 @@ export function ImpactChart({
                         min={0}
                         max={100}
                         step={0.1}
-                      />% <span style={{ fontSize: '0.8rem' }}>÷</span> <InlineNum
+                      />% chance <span style={{ fontSize: '0.8rem' }}>÷</span> <InlineNum
                         value={systemicOverrides[result.case.name]?.coalitionSize ?? result.case.coalitionSize}
                         onChange={v => {
                           const ov = systemicOverrides[result.case.name] ?? {};
