@@ -133,8 +133,10 @@ export function ImpactChart({
   }, 0), [personalActions, enabledPersonal, actionParamOverrides]);
   const afterPersonal = Math.max(footprintKg - totalSaved, 0);
 
-  // Sort once on initial render order, then keep stable (no re-sorting when values change)
-  const [initialOrder] = useState(() => leverageCases.map(c => c.case.name));
+  // Sort by default kg/person (high→low) once, then keep stable when user edits values
+  const [initialOrder] = useState(() =>
+    [...leverageCases].sort((a, b) => b.displayKg.central - a.displayKg.central).map(c => c.case.name)
+  );
   const sortedLeverage = useMemo(() => {
     const byName = new Map(leverageCases.map(c => [c.case.name, c]));
     return initialOrder.map(name => byName.get(name)).filter((c): c is LeverageResult => c !== undefined);
