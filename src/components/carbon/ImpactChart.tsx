@@ -173,6 +173,7 @@ export function ImpactChart({
         <div className="cf-impact-col">
           <div style={colHead}>
             Your footprint
+            <div style={colSub}>Adjust your inputs below</div>
           </div>
           {/* Footprint number — always visible at top */}
           <div style={{ marginBottom: '0.75rem' }}>
@@ -189,6 +190,7 @@ export function ImpactChart({
           </div>
           <div className="cf-impact-scroll">
             {/* Lifestyle preset pills */}
+            <div style={{ fontSize: '0.6rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: MUTED, marginBottom: '5px' }}>Presets</div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '0.75rem' }}>
               {LIFESTYLE_PRESETS.map(p => (
                 <button
@@ -221,6 +223,7 @@ export function ImpactChart({
         <div className="cf-impact-col">
           <div style={colHead}>
             Personal cuts
+            <div style={colSub}>Toggle actions to see their impact</div>
           </div>
           <div className="cf-impact-scroll">
             {groupedActions.map(group => {
@@ -230,6 +233,7 @@ export function ImpactChart({
                 const mult = actionParamOverrides[a.name] ?? 1;
                 return s + Math.round(a.savingsKg * mult);
               }, 0);
+              const maxSavings = group.actions.filter(a => !a.excludeFromTotal).reduce((s, a) => s + a.savingsKg, 0);
               return (
                 <div key={group.category} style={{ marginBottom: '2px' }}>
                   <button
@@ -250,7 +254,7 @@ export function ImpactChart({
                         {enabledCount} · −{groupSaved.toLocaleString()}
                       </span>
                     )}
-                    {enabledCount === 0 && <span style={{ fontSize: '0.58rem', color: MUTED, fontWeight: 400, textTransform: 'none' }}>{group.actions.length} action{group.actions.length !== 1 ? 's' : ''}</span>}
+                    {enabledCount === 0 && <span style={{ fontSize: '0.58rem', color: MUTED, fontWeight: 400, textTransform: 'none' }}>{group.actions.length} action{group.actions.length !== 1 ? 's' : ''} · up to {maxSavings.toLocaleString()} kg</span>}
                   </button>
                   {isOpen && (
                     <div style={{ paddingLeft: '4px', paddingBottom: '4px' }}>
@@ -438,6 +442,7 @@ export function ImpactChart({
         <div className="cf-impact-col" style={{ borderRight: 'none' }}>
           <div style={colHead}>
             Systemic actions
+            <div style={colSub}>Estimate your leverage on big problems</div>
           </div>
           <div className="cf-impact-scroll">
             <div style={{ fontSize: '0.72rem', color: MUTED, lineHeight: 1.45, marginBottom: '0.5rem' }}>
@@ -538,9 +543,9 @@ export function ImpactChart({
 // --- Reference lines ---
 
 const REFERENCE_MARKS = [
-  { kg: 16000, label: 'US avg', color: '#8B2E2E' },
-  { kg: 7800,  label: 'EU avg', color: '#6B6B60' },
-  { kg: 4700,  label: 'Global avg', color: '#6B6B60' },
+  { kg: 16000, label: 'US avg', color: '#8B2E2E', weight: 700, opacity: 0.5 },
+  { kg: 7800,  label: 'EU avg', color: '#6B6B60', weight: 500, opacity: 0.3 },
+  { kg: 4700,  label: 'Global avg', color: '#6B6B60', weight: 500, opacity: 0.3 },
 ];
 
 function ReferenceLines({ scaleMax }: { scaleMax: number }) {
@@ -556,7 +561,6 @@ function ReferenceLines({ scaleMax }: { scaleMax: number }) {
     showLabel[visible[i].label] = true;
     for (let j = 0; j < i; j++) {
       if (showLabel[visible[j].label] && Math.abs(visible[i].pct - visible[j].pct) < MIN_GAP) {
-        // Hide the one with lower priority (later in array = lower priority)
         showLabel[visible[i].label] = false;
         break;
       }
@@ -575,7 +579,7 @@ function ReferenceLines({ scaleMax }: { scaleMax: number }) {
               left: `${mark.pct}%`,
               transform: 'translateX(-50%)',
               fontSize: '0.58rem',
-              fontWeight: 700,
+              fontWeight: mark.weight,
               color: mark.color,
               whiteSpace: 'nowrap',
               letterSpacing: '0.02em',
@@ -595,7 +599,7 @@ function ReferenceLines({ scaleMax }: { scaleMax: number }) {
               bottom: 0,
               width: 0,
               borderLeft: `1.5px dashed ${mark.color}`,
-              opacity: 0.4,
+              opacity: mark.opacity,
               transition: 'left 0.5s cubic-bezier(0.25,0.46,0.45,0.94)',
             }} />
         ))}
@@ -680,10 +684,13 @@ function Dot({ on }: { on: boolean }) {
 }
 
 const colHead: React.CSSProperties = {
-  display: 'flex', alignItems: 'center', gap: '10px',
   fontSize: '1rem', fontWeight: 700,
-  color: 'var(--text, #1A1A18)', paddingBottom: '0.85rem',
+  color: 'var(--text, #1A1A18)', paddingBottom: '0.75rem',
   borderBottom: `2px solid var(--divider, #DDD9D0)`, marginBottom: '0.85rem',
+};
+const colSub: React.CSSProperties = {
+  fontSize: '0.65rem', fontWeight: 400,
+  color: 'var(--text-secondary, #6B6B60)', marginTop: '2px', lineHeight: 1.3,
 };
 
 const categoryHeader: React.CSSProperties = {

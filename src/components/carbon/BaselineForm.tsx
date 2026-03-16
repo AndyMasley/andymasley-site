@@ -136,19 +136,6 @@ export function BaselineForm({ value, onChange }: BaselineFormProps) {
       </div>
 
       <div style={FIELD_STYLE}>
-        <label style={LABEL_STYLE} htmlFor="cf-household">Household size</label>
-        <NumInput
-          id="cf-household"
-          min={1}
-          max={10}
-          inputMode="decimal"
-          style={INPUT_STYLE}
-          value={value.householdSize}
-          onChange={n => update('householdSize', n)}
-        />
-      </div>
-
-      <div style={FIELD_STYLE}>
         <label style={LABEL_STYLE} htmlFor="cf-car">Car ownership</label>
         <select
           id="cf-car"
@@ -163,23 +150,61 @@ export function BaselineForm({ value, onChange }: BaselineFormProps) {
         </select>
       </div>
 
-      <div style={FIELD_STYLE}>
-        <label style={LABEL_STYLE} htmlFor="cf-area">Area</label>
-        <select
-          id="cf-area"
-          style={SELECT_STYLE}
-          value={value.urbanForm}
-          onChange={e => update('urbanForm', e.target.value as UrbanForm)}
-        >
-          <option value="urban">Urban</option>
-          <option value="suburban">Suburban</option>
-          <option value="rural">Rural</option>
-        </select>
+      <div style={{ gridColumn: '1 / -1', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.35rem 0.6rem' }}>
+        <div style={FIELD_STYLE}>
+          <label style={LABEL_STYLE} htmlFor="cf-household">Household size</label>
+          <NumInput
+            id="cf-household"
+            min={1}
+            max={10}
+            inputMode="decimal"
+            style={INPUT_STYLE}
+            value={value.householdSize}
+            onChange={n => update('householdSize', n)}
+          />
+        </div>
+
+        <div style={FIELD_STYLE}>
+          <label style={LABEL_STYLE} htmlFor="cf-area">Area</label>
+          <select
+            id="cf-area"
+            style={SELECT_STYLE}
+            value={value.urbanForm}
+            onChange={e => update('urbanForm', e.target.value as UrbanForm)}
+          >
+            <option value="urban">Urban</option>
+            <option value="suburban">Suburban</option>
+            <option value="rural">Rural</option>
+          </select>
+        </div>
+
+        <div style={FIELD_STYLE}>
+          <label style={LABEL_STYLE} htmlFor="cf-flights">Flights / year</label>
+          <NumInput
+            id="cf-flights"
+            min={0}
+            max={100}
+            style={INPUT_STYLE}
+            value={value.flightsPerYear}
+            onChange={n => {
+              const newTotal = Math.round(n);
+              const oldTotal = value.flightsPerYear;
+              const oldTrans = value.transatlanticFlightsPerYear ?? 0;
+              const oldDom = value.domesticFlightsPerYear ?? oldTotal;
+              let newTrans: number, newDom: number;
+              if (oldTotal > 0 && newTotal > 0) {
+                newTrans = Math.round(oldTrans * newTotal / oldTotal);
+                newDom = newTotal - newTrans;
+              } else {
+                newTrans = 0; newDom = newTotal;
+              }
+              onChange({ ...value, flightsPerYear: newTotal, transatlanticFlightsPerYear: newTrans, domesticFlightsPerYear: newDom });
+            }}
+          />
+        </div>
       </div>
 
       <div style={{ gridColumn: '1 / -1', borderTop: '1px solid var(--divider, #DDD9D0)', margin: '1px 0' }} />
-
-      <div style={{ gridColumn: '1 / -1', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.35rem 0.6rem' }}>
 
       <div style={FIELD_STYLE}>
         <label style={LABEL_STYLE} htmlFor="cf-diet">Diet</label>
@@ -199,31 +224,6 @@ export function BaselineForm({ value, onChange }: BaselineFormProps) {
       </div>
 
       <div style={FIELD_STYLE}>
-        <label style={LABEL_STYLE} htmlFor="cf-flights">Round-trip flights / year</label>
-        <NumInput
-          id="cf-flights"
-          min={0}
-          max={100}
-          style={INPUT_STYLE}
-          value={value.flightsPerYear}
-          onChange={n => {
-            const newTotal = Math.round(n);
-            const oldTotal = value.flightsPerYear;
-            const oldTrans = value.transatlanticFlightsPerYear ?? 0;
-            const oldDom = value.domesticFlightsPerYear ?? oldTotal;
-            let newTrans: number, newDom: number;
-            if (oldTotal > 0 && newTotal > 0) {
-              newTrans = Math.round(oldTrans * newTotal / oldTotal);
-              newDom = newTotal - newTrans;
-            } else {
-              newTrans = 0; newDom = newTotal;
-            }
-            onChange({ ...value, flightsPerYear: newTotal, transatlanticFlightsPerYear: newTrans, domesticFlightsPerYear: newDom });
-          }}
-        />
-      </div>
-
-      <div style={FIELD_STYLE}>
         <label style={LABEL_STYLE} htmlFor="cf-spending">Monthly spend, excl. rent</label>
         <NumInput
           id="cf-spending"
@@ -234,7 +234,6 @@ export function BaselineForm({ value, onChange }: BaselineFormProps) {
           placeholder="$1200"
           onChange={n => update('monthlySpending', n)}
         />
-      </div>
       </div>
     </div>
   );
