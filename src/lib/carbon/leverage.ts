@@ -64,8 +64,8 @@ export const LEVERAGE_CASES: LeverageCase[] = [
     timeHorizonYears: 10,
   },
   {
-    name: 'Get a solar farm approved',
-    description: 'Community engagement and permitting support for utility-scale solar.',
+    name: 'Get a 500 MW solar farm approved',
+    description: 'Community engagement and permitting support for a 500 MW utility-scale solar farm.',
     // The broader advocacy ecosystem around a utility-scale project includes
     // developers, lobbyists, community supporters, and local officials.
     // Attribution is shared across all of them.
