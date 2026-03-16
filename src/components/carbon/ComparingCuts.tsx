@@ -76,8 +76,7 @@ export function ComparingCuts({ personalActions, enabledPersonal, actionParamOve
               <span style={{
                 fontSize: '0.75rem',
                 color: 'var(--text, #1A1A18)',
-                minWidth: '200px',
-                maxWidth: '250px',
+                width: '320px',
                 textAlign: 'right',
                 flexShrink: 0,
                 overflow: 'hidden',
