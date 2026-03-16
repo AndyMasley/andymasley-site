@@ -166,47 +166,58 @@ export function Methodology() {
               <strong>Video streaming:</strong> <code>17 kg CO₂e/yr</code> at ~2 hrs/day × 0.1 kWh/hr.<br />
               Source: <Src href="https://www.iea.org/reports/data-centres-and-data-transmission-networks">IEA — Data Centres 2024</Src>
             </p>
-            <p style={{ marginTop: '8px' }}><em>Both are ~0.1% of a typical footprint — included because frequently asked about.</em></p>
+            <p style={{ marginTop: '8px' }}>
+              <strong>Email:</strong> <code>~4 g CO₂e per email</code>, covering server processing, transmission, and storage. 10 fewer emails/day ≈ 15 kg/yr.<br />
+              Source: <Src href="https://howbadarebananas.com/">Mike Berners-Lee — <em>How Bad Are Bananas?</em></Src>
+            </p>
+            <p style={{ marginTop: '8px' }}>
+              <strong>Google searches:</strong> <code>~0.2 g CO₂e per search</code>. 10 fewer searches/day ≈ 0.7 kg/yr — essentially negligible.<br />
+              Source: <Src href="https://blog.google/outreach-initiatives/sustainability/google-sustainability-report-2024/">Google Environmental Report 2024</Src>
+            </p>
+            <p style={{ marginTop: '8px' }}>
+              <strong>Social media:</strong> <code>~0.5 g CO₂e per minute</code> of scrolling, based on data transfer and server energy. 1 hr/day ≈ 11 kg/yr.<br />
+              Source: <Src href="https://www.carbontrust.com/what-we-do/assurance-and-labelling/product-carbon-footprint-label">Carbon Trust — digital product footprints</Src>
+            </p>
+            <p style={{ marginTop: '8px' }}><em>All digital actions are well under 0.5% of a typical footprint — included because frequently asked about.</em></p>
           </Section>
 
           <Section title="Systemic Actions (Expected Values)" id="methodology-systemic">
             <p>
               <strong>Formula:</strong><br />
-              <code>expectedKg = P(success) × annualGeneration(MWh) × emissionRate(kg/MWh) × timeHorizon(yr) × attribution</code>
+              <code>expectedKg = totalCarbon × chance ÷ coalitionSize</code><br />
+              where <code>totalCarbon = annualGeneration(MWh) × emissionRate(kg/MWh) × timeHorizon(yr)</code>
             </p>
-            <p style={{ marginTop: '8px' }}><strong>Attribution</strong> = 1 ÷ coalition size. Coalition sizes are order-of-magnitude estimates.</p>
+            <p style={{ marginTop: '8px' }}>Coalition sizes and probabilities are editable in the calculator above. Below are the sources for the total carbon values being multiplied and divided.</p>
 
             <p style={{ marginTop: '16px', fontWeight: 700 }}>1. Keep a nuclear plant open</p>
-            <p>1 GW at 90% CF = 7,884,000 MWh/yr. Net avoided: 0.30 kg/kWh. Coalition: 3,000. P: 5%. Horizon: 15 yr.<br />
-            <code>7,884,000 × 300 × 15 × (1/3000) × 0.05 = 591,300 kg</code> per person. Sources: <Src href="https://www.eia.gov/electricity/monthly/">EIA</Src>, <Src href="https://www.epa.gov/egrid">EPA eGRID</Src></p>
+            <p>A 1 GW plant at 90% capacity factor generates 7,884,000 MWh/yr. If it closes, replacement is a mix of ~60% gas + ~40% renewables, not 100% gas — the net avoided emission rate is 0.30 kg/kWh. Over a 15-year horizon: <code>7,884,000 × 300 × 15 = 35.5 billion kg</code>.<br />
+            Sources: <Src href="https://www.eia.gov/electricity/monthly/">EIA</Src>, <Src href="https://www.epa.gov/egrid">EPA eGRID</Src></p>
 
             <p style={{ marginTop: '16px', fontWeight: 700 }}>2. Pass a state clean energy law</p>
-            <p>60M MWh/yr. Net: 0.25 kg/kWh. Coalition: 10,000. P: 2%. Horizon: 10 yr.<br />
-            <code>60,000,000 × 250 × 10 × (1/10,000) × 0.02 = 300,000 kg</code>. Source: <Src href="https://www.eia.gov/electricity/state/">EIA State Profiles</Src></p>
+            <p>A mid-size state generates ~60 million MWh/yr. Accelerating decarbonization displaces remaining fossil fuels at a net rate of 0.25 kg/kWh (many states already have partial clean energy). Over 10 years: <code>60,000,000 × 250 × 10 = 150 billion kg</code>.<br />
+            Source: <Src href="https://www.eia.gov/electricity/state/">EIA State Profiles</Src></p>
 
             <p style={{ marginTop: '16px', fontWeight: 700 }}>3. Retire a coal plant early</p>
-            <p>500 MW = 3,500,000 MWh/yr. Net: 0.50 kg/kWh. Coalition: 2,000. P: 3%. Horizon: 10 yr.<br />
-            <code>3,500,000 × 500 × 10 × (1/2,000) × 0.03 = 262,500 kg</code>. Source: <Src href="https://www.sierraclub.org/campaign/beyond-coal">Sierra Club Beyond Coal</Src></p>
+            <p>A 500 MW coal plant at ~80% CF generates 3,500,000 MWh/yr. Coal is replaced by a mix of gas + renewables — net avoided rate is 0.50 kg/kWh (coal at 0.95 minus replacement at ~0.45). Over 10 years early retirement: <code>3,500,000 × 500 × 10 = 17.5 billion kg</code>.<br />
+            Source: <Src href="https://www.sierraclub.org/campaign/beyond-coal">Sierra Club Beyond Coal</Src></p>
 
             <p style={{ marginTop: '16px', fontWeight: 700 }}>4. Get a solar farm approved</p>
-            <p>500 MW × 25% CF = 1,095,000 MWh/yr. Net: 0.35 kg/kWh. Coalition: 2,000. P: 15%. Horizon: 25 yr.<br />
-            <code>1,095,000 × 350 × 25 × (1/2,000) × 0.15 = 718,594 kg</code>. Source: <Src href="https://atb.nrel.gov/">NREL ATB</Src></p>
+            <p>A 500 MW solar farm at 25% CF generates 1,095,000 MWh/yr. It displaces marginal grid generation at 0.35 kg/kWh. Over a 25-year project lifetime: <code>1,095,000 × 350 × 25 = 9.6 billion kg</code>.<br />
+            Source: <Src href="https://atb.nrel.gov/">NREL ATB</Src></p>
 
             <p style={{ marginTop: '16px', fontWeight: 700 }}>5. Workplace clean energy PPA</p>
-            <p>5,000 MWh/yr. Coalition: 15. P: 15%. Horizon: 12 yr.<br />
-            <code>5,000 × 375 × 12 × (1/15) × 0.15 = 225,000 kg</code>. Source: <Src href="https://rebuyers.org/">Renewable Energy Buyers Alliance</Src></p>
+            <p>A corporate power purchase agreement for 5,000 MWh/yr of renewable electricity, displacing grid average at 0.375 kg/kWh. Over a 12-year contract: <code>5,000 × 375 × 12 = 22.5 million kg</code>.<br />
+            Source: <Src href="https://rebuyers.org/">Renewable Energy Buyers Alliance</Src></p>
 
             <p style={{ marginTop: '16px', fontWeight: 700 }}>6. Advocate for grid reform</p>
-            <p>100M MWh/yr. Net: 0.35 kg/kWh. Coalition: 20,000. P: 0.5%. Horizon: 15 yr.<br />
-            <code>100,000,000 × 350 × 15 × (1/20,000) × 0.005 = 131,250 kg</code>. Sources: <Src href="https://emp.lbl.gov/queues">LBNL Queued Up</Src>, <Src href="https://www.ferc.gov/electric-transmission">FERC</Src></p>
+            <p>Regional or federal transmission reform could unblock ~100 million MWh/yr of queued clean energy. Delayed renewables are replaced by gas at 0.35 kg/kWh. Over 15 years: <code>100,000,000 × 350 × 15 = 525 billion kg</code>.<br />
+            Sources: <Src href="https://emp.lbl.gov/queues">LBNL Queued Up</Src>, <Src href="https://www.ferc.gov/electric-transmission">FERC</Src></p>
 
             <p style={{ marginTop: '16px', fontWeight: 700 }}>Important caveats</p>
             <ul>
-              <li>Coalition sizes are order-of-magnitude estimates.</li>
-              <li>Probability estimates are subjective.</li>
-              <li>Attribution is linear (1/N) — a simplification.</li>
-              <li>Counterfactual assumptions significantly affect numbers.</li>
-              <li>Time horizons assume the intervention persists.</li>
+              <li>Attribution is linear (1/N) — a simplification. In reality, marginal contributors may matter more or less.</li>
+              <li>Counterfactual assumptions significantly affect numbers — what would have happened without the intervention is uncertain.</li>
+              <li>Time horizons assume the intervention persists for the stated duration.</li>
             </ul>
           </Section>
 

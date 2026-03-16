@@ -18,6 +18,10 @@ export interface PersonalAction {
   exclusiveGroup?: string;
   /** If set, the action name renders with an inline editable number */
   inlineParam?: { before: string; defaultVal: number; after: string; max?: number };
+  /** Optional second inline editable number (e.g., "of X" in flight actions) */
+  inlineParam2?: { before: string; defaultVal: number; after: string; max?: number };
+  /** If true, this action's kg is not added to the total (used for convenience toggles like "eliminate all flights") */
+  excludeFromTotal?: boolean;
 }
 
 export function computePersonalActions(baseline: BaselineInputs, footprint: FootprintModel): PersonalAction[] {
@@ -256,6 +260,31 @@ export function computePersonalActions(baseline: BaselineInputs, footprint: Foot
       inlineParam: { before: 'Cut ', defaultVal: 2, after: ' hrs/day of streaming', max: 24 },
     },
 
+    {
+      name: 'Send fewer emails per day',
+      savingsKg: Math.round(10 * 4 * 365 / 1000), // 4g per email
+      category: 'Digital',
+      applicable: true,
+      note: '~4 g CO₂ per email (including server storage and transmission)',
+      inlineParam: { before: 'Send ', defaultVal: 10, after: ' fewer emails/day', max: 200 },
+    },
+    {
+      name: 'Do fewer Google searches per day',
+      savingsKg: Math.round(10 * 0.2 * 365 / 1000) || 1, // 0.2g per search — rounds to ~1 kg
+      category: 'Digital',
+      applicable: true,
+      note: '~0.2 g CO₂ per search. Even 10 fewer/day saves < 1 kg/yr.',
+      inlineParam: { before: 'Do ', defaultVal: 10, after: ' fewer searches/day', max: 200 },
+    },
+    {
+      name: 'Reduce social media by 1 hr/day',
+      savingsKg: Math.round(1 * 60 * 0.5 * 365 / 1000), // ~0.5g per minute of scrolling
+      category: 'Digital',
+      applicable: true,
+      note: '~0.5 g/min for data transfer + servers. Small but adds up.',
+      inlineParam: { before: 'Cut ', defaultVal: 1, after: ' hr/day of social media', max: 16 },
+    },
+
     // ── Purchases ──
     {
       name: 'Buy 50% less clothing',
@@ -288,7 +317,8 @@ export function computePersonalActions(baseline: BaselineInputs, footprint: Foot
       category: 'Flights',
       applicable: baseline.flightsPerYear > 0,
       note: 'One of the highest-impact single actions',
-      inlineParam: { before: 'Eliminate ', defaultVal: 1, after: ' transatlantic flight' },
+      inlineParam: { before: 'Eliminate ', defaultVal: 1, after: '' },
+      inlineParam2: { before: ' of ', defaultVal: baseline.transatlanticFlightsPerYear, after: ` transatlantic flight${baseline.transatlanticFlightsPerYear !== 1 ? 's' : ''}` },
     },
     {
       name: 'Eliminate one domestic flight',
@@ -296,26 +326,29 @@ export function computePersonalActions(baseline: BaselineInputs, footprint: Foot
       category: 'Flights',
       applicable: baseline.flightsPerYear > 0,
       note: 'Average domestic round-trip: ~2,200 miles',
-      inlineParam: { before: 'Eliminate ', defaultVal: 1, after: ' domestic flight' },
+      inlineParam: { before: 'Eliminate ', defaultVal: 1, after: '' },
+      inlineParam2: { before: ' of ', defaultVal: baseline.domesticFlightsPerYear, after: ` domestic flight${baseline.domesticFlightsPerYear !== 1 ? 's' : ''}` },
     },
     {
       name: 'Eliminate all flights',
-      savingsKg: Math.round(baseline.flightsPerYear * 2200 * 0.255),
+      savingsKg: Math.round(
+        baseline.transatlanticFlightsPerYear * 6900 * 0.255 +
+        baseline.domesticFlightsPerYear * 2200 * 0.255
+      ),
       category: 'Flights',
       applicable: baseline.flightsPerYear > 1,
       note: `Eliminates all ${baseline.flightsPerYear} flights per year`,
+      inlineParam: { before: 'Eliminate all ', defaultVal: baseline.flightsPerYear, after: ' flights' },
+      excludeFromTotal: true,
     },
   ];
 
   const CATEGORY_ORDER = ['Transport', 'Home', 'Food', 'Digital', 'Purchases', 'Flights'];
 
-  return actions
-    .filter(a => a.applicable && a.savingsKg > 0)
-    .sort((a, b) => {
-      const catA = CATEGORY_ORDER.indexOf(a.category);
-      const catB = CATEGORY_ORDER.indexOf(b.category);
-      if (catA !== catB) return catA - catB;
-      return b.savingsKg - a.savingsKg;
-    });
+  const filtered = actions.filter(a => a.applicable && a.savingsKg > 0);
+  // Stable sort: category order only, preserve definition order within each category
+  return filtered.sort((a, b) => {
+    return CATEGORY_ORDER.indexOf(a.category) - CATEGORY_ORDER.indexOf(b.category);
+  });
 }
 
