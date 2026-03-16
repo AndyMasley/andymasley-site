@@ -1,4 +1,42 @@
+import { useState, useEffect } from 'react';
 import type { BaselineInputs, HousingType, UrbanForm, DietType, CarOwnership } from '@/lib/carbon/types';
+
+/** Number input that uses local string state so users can freely type/delete.
+ *  Only commits to parent on blur or Enter. */
+function NumInput({ value, onChange, min, max, step, style, id, placeholder, inputMode }: {
+  value: number; onChange: (n: number) => void;
+  min?: number; max?: number; step?: string | number;
+  style?: React.CSSProperties; id?: string; placeholder?: string;
+  inputMode?: 'numeric' | 'decimal';
+}) {
+  const [local, setLocal] = useState(String(value));
+  useEffect(() => { setLocal(String(value)); }, [value]);
+
+  const commit = () => {
+    const num = parseFloat(local);
+    if (isNaN(num) || local.trim() === '') {
+      setLocal(String(value));
+    } else {
+      const clamped = Math.max(min ?? -Infinity, Math.min(max ?? Infinity, num));
+      onChange(clamped);
+      setLocal(String(clamped));
+    }
+  };
+
+  return (
+    <input
+      id={id}
+      type="text"
+      inputMode={inputMode ?? 'numeric'}
+      style={style}
+      value={local}
+      placeholder={placeholder}
+      onChange={e => setLocal(e.target.value)}
+      onBlur={commit}
+      onKeyDown={e => { if (e.key === 'Enter') commit(); }}
+    />
+  );
+}
 
 const US_STATES: { code: string; name: string }[] = [
   { code: 'US', name: 'US Average' },
@@ -99,21 +137,14 @@ export function BaselineForm({ value, onChange }: BaselineFormProps) {
 
       <div style={FIELD_STYLE}>
         <label style={LABEL_STYLE} htmlFor="cf-household">Household size</label>
-        <input
+        <NumInput
           id="cf-household"
-          type="number"
           min={1}
           max={10}
-          step="any"
           inputMode="decimal"
           style={INPUT_STYLE}
           value={value.householdSize}
-          onChange={e => {
-            const raw = e.target.value;
-            if (raw === '') return;
-            const num = parseFloat(raw);
-            if (!isNaN(num) && num >= 1) update('householdSize', num);
-          }}
+          onChange={n => update('householdSize', n)}
         />
       </div>
 
@@ -165,30 +196,26 @@ export function BaselineForm({ value, onChange }: BaselineFormProps) {
 
       <div style={FIELD_STYLE}>
         <label style={LABEL_STYLE} htmlFor="cf-flights">Flights / year</label>
-        <input
+        <NumInput
           id="cf-flights"
-          type="number"
           min={0}
           max={100}
-          step={1}
           style={INPUT_STYLE}
           value={value.flightsPerYear}
-          onChange={e => update('flightsPerYear', Math.max(0, parseInt(e.target.value) || 0))}
+          onChange={n => update('flightsPerYear', Math.round(n))}
         />
       </div>
 
       <div style={FIELD_STYLE}>
         <label style={LABEL_STYLE} htmlFor="cf-spending">Spending excl. rent ($)</label>
-        <input
+        <NumInput
           id="cf-spending"
-          type="number"
           min={0}
           max={50000}
-          step={100}
           style={INPUT_STYLE}
           value={value.monthlySpending}
-          placeholder="2000"
-          onChange={e => update('monthlySpending', Math.max(0, parseFloat(e.target.value) || 0))}
+          placeholder="1200"
+          onChange={n => update('monthlySpending', n)}
         />
       </div>
     </div>
