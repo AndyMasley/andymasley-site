@@ -42,7 +42,7 @@ export function ComparingCuts({ personalActions, enabledPersonal, actionParamOve
         const currentVal = Math.round(action.inlineParam.defaultVal * mult);
         displayName = `${action.inlineParam.before}${currentVal}${action.inlineParam.after}`;
       }
-      bars.push({ name: displayName, kg, color: 'rgba(139, 46, 46, 0.55)', type: 'personal' });
+      bars.push({ name: displayName, kg, color: GREEN, type: 'personal' });
     }
 
     // Systemic actions
