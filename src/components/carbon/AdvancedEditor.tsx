@@ -101,7 +101,7 @@ const INPUT_STYLE: React.CSSProperties = {
 };
 
 const INLINE_INPUT_STYLE: React.CSSProperties = {
-  width: '4em',
+  width: '5.5em',
   padding: '0 2px',
   border: 'none',
   borderBottom: '1px dashed currentColor',
