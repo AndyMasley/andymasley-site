@@ -101,6 +101,46 @@ export const LEVERAGE_CASES: LeverageCase[] = [
     timeHorizonYears: 15,
   },
   {
+    name: 'Pass a city building electrification code',
+    description: 'Require all-electric new construction in a mid-size city (~5,000 new housing units/yr).',
+    // Each gas-free unit avoids ~2 tonnes CO2/yr (no gas furnace, water heater, stove).
+    // 5,000 units/yr × 2,000 kg = 10,000,000 kg/yr once fully built out.
+    // We model this as equivalent MWh: 10,000,000 kg ÷ 375 kg/MWh ≈ 26,667 MWh/yr equivalent.
+    probabilityOfSuccess: { low: 0.03, central: 0.10, high: 0.25 },
+    coalitionSize: 500,
+    durationYears: 2,
+    annualLoadAffectedMWh: 26_667,
+    counterfactualGenerationMix: 'Gas appliances displaced by electric (0.375 kg/kWh equivalent)',
+    attributionFraction: 1 / 500,
+    timeHorizonYears: 20,
+  },
+  {
+    name: 'Organize a community solar project (2 MW)',
+    description: 'Set up a 2 MW community solar garden serving ~400 households.',
+    // 2 MW × 20% CF × 8,760 hrs = 3,504 MWh/yr
+    probabilityOfSuccess: { low: 0.10, central: 0.30, high: 0.60 },
+    coalitionSize: 100,
+    durationYears: 2,
+    annualLoadAffectedMWh: 3_504,
+    counterfactualGenerationMix: 'Grid average displaced (0.375 kg/kWh)',
+    attributionFraction: 1 / 100,
+    timeHorizonYears: 25,
+  },
+  {
+    name: 'Support state industrial decarbonization policy',
+    description: 'Advocate for emissions standards on heavy industry (cement, steel, chemicals) in a mid-size industrial state.',
+    // A mid-size state: ~10 million tonnes CO2/yr from industry.
+    // Policy aims to cut 30% over 15 years → 3,000,000 tonnes/yr average reduction.
+    // 3,000,000,000 kg/yr ÷ 375 kg/MWh = 8,000,000 MWh/yr equivalent.
+    probabilityOfSuccess: { low: 0.005, central: 0.02, high: 0.05 },
+    coalitionSize: 3000,
+    durationYears: 4,
+    annualLoadAffectedMWh: 8_000_000,
+    counterfactualGenerationMix: 'Industrial fossil fuel displaced (0.375 kg/kWh equivalent)',
+    attributionFraction: 1 / 3000,
+    timeHorizonYears: 15,
+  },
+  {
     name: 'Donate $200 to effective climate charity',
     description: 'Founders Pledge top picks (CATF, Carbon180). Realistic central estimate: ~$10/tonne CO₂e averted.',
     // Founders Pledge estimates CATF at $0.10-$10/tonne. But that's their MOST

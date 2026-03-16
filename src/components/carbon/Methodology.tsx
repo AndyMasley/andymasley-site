@@ -676,7 +676,42 @@ export function Methodology() {
               <li>Sources: <Src href="https://emp.lbl.gov/queues">LBNL Queued Up report</Src>, <Src href="https://www.ferc.gov/electric-transmission">FERC transmission planning</Src></li>
             </ul>
 
-            <p style={{ marginTop: '16px', fontWeight: 700, fontSize: '0.85rem', color: 'var(--text, #1A1A18)' }}>7. Donate to effective climate charity</p>
+            <p style={{ marginTop: '16px', fontWeight: 700, fontSize: '0.85rem', color: 'var(--text, #1A1A18)' }}>7. Pass a city building electrification code</p>
+            <ul>
+              <li>Scope: mid-size city with ~<code>5,000</code> new housing units per year</li>
+              <li>Each all-electric unit avoids ~<code>2,000 kg CO₂/yr</code> vs gas (no gas furnace, water heater, or stove). This is based on average gas consumption for heating (~300 therms) + water heating (~200 therms) + cooking (~30 therms) = ~530 therms × 5.3 kg/therm ÷ ~1.4 for electric replacement efficiency ≈ 2,000 kg net.</li>
+              <li>Modeled as <code>26,667 MWh/yr equivalent</code> (10,000,000 kg ÷ 375 kg/MWh)</li>
+              <li>Coalition size: <code>500</code> → attribution = <code>1/500</code></li>
+              <li>P(success): low <code>3%</code>, central <code>10%</code>, high <code>25%</code>. Several cities have passed these (NYC Local Law 154, Berkeley) but most attempts fail.</li>
+              <li>Time horizon: <code>20 years</code> (code persists once adopted; affects cumulative new construction)</li>
+              <li>Worked example (central): <code>26,667 × 375 × 20 × (1/500) × 0.10 = 40,000 kg total</code> per person (~2.5 years of US avg)</li>
+              <li>Sources: <Src href="https://rmi.org/insight/the-new-economics-of-electrifying-buildings/">RMI — The New Economics of Electrifying Buildings</Src>, <Src href="https://www.energy.gov/eere/buildings/building-codes">DOE Building Energy Codes</Src></li>
+            </ul>
+
+            <p style={{ marginTop: '16px', fontWeight: 700, fontSize: '0.85rem', color: 'var(--text, #1A1A18)' }}>8. Organize a community solar project (2 MW)</p>
+            <ul>
+              <li>Generation: <code>2 MW × 20% CF × 8,760 hrs = 3,504 MWh/yr</code></li>
+              <li>Displaced: grid average at <code>0.375 kg CO₂e/kWh</code></li>
+              <li>Coalition size: <code>100</code> (organizers, subscribers, local advocates) → attribution = <code>1/100</code></li>
+              <li>P(success): low <code>10%</code>, central <code>30%</code>, high <code>60%</code>. Community solar has higher success rates than utility-scale because projects are smaller and face less opposition.</li>
+              <li>Time horizon: <code>25 years</code></li>
+              <li>Worked example (central): <code>3,504 × 375 × 25 × (1/100) × 0.30 = 98,550 kg total</code> per person (~6 years of US avg)</li>
+              <li>Source: <Src href="https://www.energy.gov/eere/solar/community-solar-basics">DOE — Community Solar Basics</Src>, <Src href="https://atb.nrel.gov/">NREL ATB</Src></li>
+            </ul>
+
+            <p style={{ marginTop: '16px', fontWeight: 700, fontSize: '0.85rem', color: 'var(--text, #1A1A18)' }}>9. Support state industrial decarbonization policy</p>
+            <ul>
+              <li>Scope: emissions standards on heavy industry (cement, steel, chemicals) in a mid-size industrial state</li>
+              <li>Industrial emissions: ~<code>10,000,000 tonnes CO₂/yr</code>. Policy aims to cut 30% over 15 years → average reduction of <code>3,000,000 tonnes/yr</code></li>
+              <li>Modeled as <code>8,000,000 MWh/yr equivalent</code> (3,000,000,000 kg ÷ 375 kg/MWh)</li>
+              <li>Coalition size: <code>3,000</code> → attribution = <code>1/3,000</code></li>
+              <li>P(success): low <code>0.5%</code>, central <code>2%</code>, high <code>5%</code>. Industrial policy is harder to pass than electricity policy — fewer precedents, stronger industry opposition.</li>
+              <li>Time horizon: <code>15 years</code></li>
+              <li>Worked example (central): <code>8,000,000 × 375 × 15 × (1/3,000) × 0.02 = 300,000 kg total</code> per person (~19 years of US avg)</li>
+              <li>Sources: <Src href="https://www.epa.gov/ghgemissions/sources-greenhouse-gas-emissions#industry">EPA — Industrial GHG Emissions</Src>, <Src href="https://www.iea.org/reports/industry">IEA — Industry Sector</Src></li>
+            </ul>
+
+            <p style={{ marginTop: '16px', fontWeight: 700, fontSize: '0.85rem', color: 'var(--text, #1A1A18)' }}>10. Donate to effective climate charity</p>
             <ul>
               <li>This case is modeled differently from the advocacy cases — it scales linearly with donation amount and the uncertainty is in cost-effectiveness, not probability of success</li>
               <li>Formula: <code>expectedKg = donationAmount ÷ costPerTonne × 1,000</code></li>
