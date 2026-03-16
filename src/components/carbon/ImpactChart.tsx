@@ -65,7 +65,7 @@ function InlineNum({ value, onChange, min, max, step }: {
       onKeyDown={e => { if (e.key === 'Enter') { commit(); (e.target as HTMLInputElement).blur(); } }}
       onClick={e => { e.stopPropagation(); (e.target as HTMLInputElement).select(); }}
       style={{
-        width: `${Math.max(String(value).length, local.length, 2) * 0.55 + 0.5}em`,
+        width: `${Math.max(String(value).length, local.length, 2) * 0.65 + 0.8}em`,
         padding: '0 2px',
         border: 'none',
         borderBottom: '1px dashed currentColor',
