@@ -230,19 +230,27 @@ export function ImpactChart({
               const isOn = enabledSystemic.has(result.case.name);
               const central = result.displayKg.central;
               const mult = result.leverageMultiple.central;
+              const pct = Math.round(result.case.probabilityOfSuccess.central * 100);
+              const pctStr = pct < 1 ? `${(result.case.probabilityOfSuccess.central * 100).toFixed(1)}%` : `${pct}%`;
               return (
-                <button key={result.case.name} onClick={() => toggleSystemic(result.case.name)} className="cf-toggle-row" data-on={isOn} aria-pressed={isOn}>
-                  <Dot on={isOn} />
-                  <span style={{ flex: 1, fontWeight: isOn ? 600 : 400, fontSize: '0.76rem', lineHeight: 1.25, textAlign: 'left' }}>
-                    {result.case.name}
-                  </span>
-                  <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                    <div style={{ fontWeight: 700, color: isOn ? GREEN : MUTED, fontVariantNumeric: 'tabular-nums', fontSize: '0.72rem', whiteSpace: 'nowrap' }}>
-                      {sigFigs(central)}<span style={{ fontSize: '0.55rem', fontWeight: 400, marginLeft: '2px' }}>{result.displayUnit}</span>
+                <div key={result.case.name}>
+                  <button onClick={() => toggleSystemic(result.case.name)} className="cf-toggle-row" data-on={isOn} aria-pressed={isOn}>
+                    <Dot on={isOn} />
+                    <span style={{ flex: 1, fontWeight: isOn ? 600 : 400, fontSize: '0.76rem', lineHeight: 1.25, textAlign: 'left' }}>
+                      {result.case.name}
+                    </span>
+                    <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                      <div style={{ fontWeight: 700, color: isOn ? GREEN : MUTED, fontVariantNumeric: 'tabular-nums', fontSize: '0.72rem', whiteSpace: 'nowrap' }}>
+                        {sigFigs(central)}<span style={{ fontSize: '0.55rem', fontWeight: 400, marginLeft: '2px' }}>{result.displayUnit}</span>
+                      </div>
                     </div>
-                    {mult >= 1 && <div style={{ fontSize: '0.58rem', fontWeight: 700, color: isOn ? GREEN : MUTED }}>{mult}×</div>}
+                  </button>
+                  <div style={{ padding: '0 6px 4px 30px', fontSize: '0.58rem', color: MUTED, display: 'flex', gap: '8px' }}>
+                    <span>{result.case.coalitionSize.toLocaleString()} people</span>
+                    <span>·</span>
+                    <span>{pctStr} chance</span>
                   </div>
-                </button>
+                </div>
               );
             })}
             {hasSystemic && (
