@@ -117,9 +117,12 @@ export function computePersonalActions(baseline: BaselineInputs, footprint: Foot
     },
     {
       name: 'Walk or bike for trips under 2 miles',
-      savingsKg: Math.round(baseline.urbanForm === 'urban' ? 200 : 100),
+      // ~15% of total miles are under 2 mi (40% of trips but trips are short)
+      savingsKg: baseline.carOwnership !== 'none'
+        ? Math.round(miles * 0.15 * drivingRate)
+        : 0,
       category: 'Transport',
-      applicable: true,
+      applicable: baseline.carOwnership !== 'none',
       note: 'Short trips add up — 40% of US car trips are under 2 miles',
     },
 
