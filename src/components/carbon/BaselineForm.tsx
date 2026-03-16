@@ -141,7 +141,18 @@ export function BaselineForm({ value, onChange }: BaselineFormProps) {
           id="cf-car"
           style={SELECT_STYLE}
           value={value.carOwnership}
-          onChange={e => update('carOwnership', e.target.value as CarOwnership)}
+          onChange={e => {
+            const car = e.target.value as CarOwnership;
+            const defaultMiles: Record<string, number> = { urban: 8000, suburban: 13500, rural: 16000 };
+            const updates: Partial<typeof value> = { carOwnership: car };
+            if (car === 'none') {
+              updates.milesPerYear = 0;
+            } else if (value.carOwnership === 'none') {
+              // Switching from no car to a car — restore area default
+              updates.milesPerYear = defaultMiles[value.urbanForm] ?? 13500;
+            }
+            onChange({ ...value, ...updates });
+          }}
         >
           <option value="none">No car</option>
           <option value="gas">Gas car</option>
@@ -169,7 +180,17 @@ export function BaselineForm({ value, onChange }: BaselineFormProps) {
           id="cf-area"
           style={SELECT_STYLE}
           value={value.urbanForm}
-          onChange={e => update('urbanForm', e.target.value as UrbanForm)}
+          onChange={e => {
+            const newForm = e.target.value as UrbanForm;
+            const defaultMiles: Record<string, number> = { urban: 8000, suburban: 13500, rural: 16000 };
+            const currentDefault = defaultMiles[value.urbanForm] ?? 13500;
+            const updates: Partial<typeof value> = { urbanForm: newForm };
+            // Auto-update miles if user hasn't customized them
+            if (value.milesPerYear === currentDefault) {
+              updates.milesPerYear = defaultMiles[newForm] ?? 13500;
+            }
+            onChange({ ...value, ...updates });
+          }}
         >
           <option value="urban">Urban</option>
           <option value="suburban">Suburban</option>
@@ -192,6 +213,18 @@ export function BaselineForm({ value, onChange }: BaselineFormProps) {
           <option value="vegetarian">Vegetarian</option>
           <option value="vegan">Vegan</option>
         </select>
+      </div>
+
+      <div style={FIELD_STYLE}>
+        <label style={LABEL_STYLE} htmlFor="cf-miles">Miles/yr</label>
+        <NumInput
+          id="cf-miles"
+          min={0}
+          max={100000}
+          style={INPUT_STYLE}
+          value={value.milesPerYear}
+          onChange={n => update('milesPerYear', Math.round(n))}
+        />
       </div>
 
       <div style={FIELD_STYLE}>
@@ -222,7 +255,7 @@ export function BaselineForm({ value, onChange }: BaselineFormProps) {
         />
       </div>
 
-      <div style={{ ...FIELD_STYLE, gridColumn: 'span 2' }}>
+      <div style={FIELD_STYLE}>
         <label style={LABEL_STYLE} htmlFor="cf-spending">Spend/mo <span style={{ fontWeight: 400, opacity: 0.7 }}>(excl. rent)</span></label>
         <div style={{ position: 'relative' }}>
           <span style={{ position: 'absolute', left: '8px', top: '50%', transform: 'translateY(-50%)', fontSize: '0.75rem', color: 'var(--text-secondary, #6B6B60)', pointerEvents: 'none' }}>$</span>

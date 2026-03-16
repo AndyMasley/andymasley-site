@@ -27,12 +27,7 @@ export interface PersonalAction {
 export function computePersonalActions(baseline: BaselineInputs, footprint: FootprintModel): PersonalAction[] {
   const gridRate = getGridIntensity(baseline.state);
 
-  const transportMiles: Record<string, number> = {
-    urban: 8000,
-    suburban: 13500,
-    rural: 16000,
-  };
-  const miles = transportMiles[baseline.urbanForm] ?? 13500;
+  const miles = baseline.milesPerYear;
   const gasKgPerMile = 0.40;
   const hybridKgPerMile = 8.89 / 45;
   const evKgPerMile = 0.32 * gridRate;

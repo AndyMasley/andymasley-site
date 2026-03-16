@@ -103,6 +103,7 @@ export interface BaselineInputs {
   urbanForm: UrbanForm;
   dietType: DietType;
   carOwnership: CarOwnership;
+  milesPerYear: number;
   flightsPerYear: number;
   transatlanticFlightsPerYear: number;
   transpacificFlightsPerYear: number;
@@ -117,6 +118,7 @@ export const DEFAULT_BASELINE: BaselineInputs = {
   urbanForm: 'suburban',
   dietType: 'average',
   carOwnership: 'gas',
+  milesPerYear: 13500,
   flightsPerYear: 2,
   transatlanticFlightsPerYear: 0,
   transpacificFlightsPerYear: 0,

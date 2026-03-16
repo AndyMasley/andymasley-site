@@ -183,7 +183,7 @@ function computeGroundTransport(
   }
 
   const hasMilesOverride = overrides.milesPerYear !== undefined;
-  const miles = hasMilesOverride ? overrides.milesPerYear! : TRANSPORT_MILES[baseline.urbanForm];
+  const miles = hasMilesOverride ? overrides.milesPerYear! : baseline.milesPerYear;
 
   const kgPerMile: Record<CarOwnership, number> = {
     none: 0,
@@ -328,6 +328,7 @@ function sanitizeBaseline(raw: BaselineInputs): BaselineInputs {
   return {
     ...raw,
     householdSize: sanitizeNumber(raw.householdSize, DEFAULT_BASELINE.householdSize, 1, 20),
+    milesPerYear: sanitizeNumber(raw.milesPerYear ?? TRANSPORT_MILES[raw.urbanForm] ?? DEFAULT_BASELINE.milesPerYear, DEFAULT_BASELINE.milesPerYear, 0, 100000),
     flightsPerYear: sanitizeNumber(raw.flightsPerYear, DEFAULT_BASELINE.flightsPerYear, 0, 200),
     transatlanticFlightsPerYear: sanitizeNumber(raw.transatlanticFlightsPerYear ?? 0, 0, 0, 200),
     transpacificFlightsPerYear: sanitizeNumber(raw.transpacificFlightsPerYear ?? 0, 0, 0, 200),

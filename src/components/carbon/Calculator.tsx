@@ -112,7 +112,7 @@ export function Calculator() {
     params.set('st', baseline.state); params.set('hs', String(baseline.householdSize));
     params.set('ht', baseline.housingType); params.set('ms', String(baseline.monthlySpending));
     params.set('uf', baseline.urbanForm); params.set('dt', baseline.dietType);
-    params.set('co', baseline.carOwnership); params.set('fp', String(baseline.flightsPerYear));
+    params.set('co', baseline.carOwnership); params.set('mi', String(baseline.milesPerYear)); params.set('fp', String(baseline.flightsPerYear));
     params.set('tf', String(baseline.transatlanticFlightsPerYear)); params.set('pf', String(baseline.transpacificFlightsPerYear)); params.set('df', String(baseline.domesticFlightsPerYear));
     const url = `${window.location.origin}${window.location.pathname}?${params.toString()}`;
     navigator.clipboard.writeText(url).then(() => { setCopyFeedback(true); setTimeout(() => setCopyFeedback(false), 2000); });
