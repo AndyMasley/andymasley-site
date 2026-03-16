@@ -112,7 +112,6 @@ export function ImpactChart({
 }: ImpactChartProps) {
   const [activePresetId, setActivePresetId] = useState<string | null>(null);
   const [openCategory, setOpenCategory] = useState<string | null>('Transport');
-  const [chartMode, setChartMode] = useState<'summary' | 'diverging' | 'waterfall'>('summary');
 
   const presetTotals = useMemo(() => {
     const totals: Record<string, number> = {};
@@ -547,76 +546,33 @@ export function ImpactChart({
 
       {/* BAR CHART — fixed position, never moves */}
       <div className="cf-impact-bars" style={{ position: 'relative' }}>
-        {/* Chart mode toggles */}
-        <div style={{ display: 'flex', gap: '2px', marginBottom: '12px' }}>
-          {([['summary', 'Summary'], ['diverging', 'Diverging'], ['waterfall', 'Waterfall']] as const).map(([mode, label]) => (
-            <button
-              key={mode}
-              onClick={() => setChartMode(mode)}
-              style={{
-                fontSize: '0.62rem', fontWeight: chartMode === mode ? 600 : 400,
-                padding: '3px 10px', border: `1px solid ${chartMode === mode ? ACCENT : DIVIDER}`,
-                borderRadius: '10px', cursor: 'pointer', fontFamily: 'inherit',
-                background: chartMode === mode ? ACCENT : 'transparent',
-                color: chartMode === mode ? 'white' : MUTED,
-                transition: 'all 0.12s',
-              }}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
-
-        {chartMode === 'summary' && (
-          <>
-            <ReferenceLines scaleMax={scaleMax} />
-            <BarRow label="Your footprint" kg={footprintKg} pctWidth={pct(footprintKg)} color={ACCENT} dotColor={ACCENT} />
-            <BarRow
-              label="After your cuts"
-              kg={hasPersonal ? afterPersonal : (showPersonalBar ? footprintKg : 0)}
-              pctWidth={hasPersonal ? pct(afterPersonal) : (showPersonalBar ? pct(footprintKg) : 0)}
-              color={ACCENT} opacity={showPersonalBar ? 0.55 : 0}
-              ghostWidth={hasPersonal ? pct(footprintKg) : 0}
-              suffix={hasPersonal ? `(−${totalSaved.toLocaleString()})` : ''}
-              labelColor={hasPersonal ? GREEN : MUTED}
-              dimmed={!showPersonalBar}
-              dotColor="var(--accent, #8B2E2E)"
-            />
-            <BarRow
-              label="Carbon you can help prevent"
-              kg={hasSystemic ? totalSystemic : 0}
-              pctWidth={hasSystemic ? Math.min(pct(totalSystemic), 100) : 0}
-              color={GREEN}
-              ghostWidth={hasSystemic ? pct(afterPersonal) : 0} ghostOpacity={0.12}
-              suffix={hasSystemic ? `(${Math.round(totalSystemic / footprintKg * 10) / 10} yrs of your current emissions${hasPersonal && afterPersonal > 0 ? `, ${Math.round(totalSystemic / afterPersonal * 10) / 10} yrs with lifestyle cuts` : ''})` : ''}
-              labelColor={hasSystemic ? GREEN : MUTED}
-              bold={hasSystemic}
-              dimmed={!showSystemicBar}
-              unit="kg"
-              useSigFigs
-              dotColor={GREEN}
-            />
-          </>
-        )}
-
-        {chartMode === 'diverging' && (
-          <DivergingChart
-            personalKg={totalSaved}
-            systemicKg={totalSystemic}
-            hasPersonal={hasPersonal}
-            hasSystemic={hasSystemic}
-          />
-        )}
-
-        {chartMode === 'waterfall' && (
-          <WaterfallChart
-            footprintKg={footprintKg}
-            personalKg={totalSaved}
-            systemicKg={totalSystemic}
-            hasPersonal={hasPersonal}
-            hasSystemic={hasSystemic}
-          />
-        )}
+        <ReferenceLines scaleMax={scaleMax} />
+        <BarRow label="Your footprint" kg={footprintKg} pctWidth={pct(footprintKg)} color={ACCENT} dotColor={ACCENT} />
+        <BarRow
+          label="After your cuts"
+          kg={hasPersonal ? afterPersonal : (showPersonalBar ? footprintKg : 0)}
+          pctWidth={hasPersonal ? pct(afterPersonal) : (showPersonalBar ? pct(footprintKg) : 0)}
+          color={ACCENT} opacity={showPersonalBar ? 0.55 : 0}
+          ghostWidth={hasPersonal ? pct(footprintKg) : 0}
+          suffix={hasPersonal ? `(−${totalSaved.toLocaleString()})` : ''}
+          labelColor={hasPersonal ? GREEN : MUTED}
+          dimmed={!showPersonalBar}
+          dotColor="var(--accent, #8B2E2E)"
+        />
+        <BarRow
+          label="Carbon you can help prevent"
+          kg={hasSystemic ? totalSystemic : 0}
+          pctWidth={hasSystemic ? Math.min(pct(totalSystemic), 100) : 0}
+          color={GREEN}
+          ghostWidth={hasSystemic ? pct(afterPersonal) : 0} ghostOpacity={0.12}
+          suffix={hasSystemic ? `(${Math.round(totalSystemic / footprintKg * 10) / 10} yrs of your current emissions${hasPersonal && afterPersonal > 0 ? `, ${Math.round(totalSystemic / afterPersonal * 10) / 10} yrs with lifestyle cuts` : ''})` : ''}
+          labelColor={hasSystemic ? GREEN : MUTED}
+          bold={hasSystemic}
+          dimmed={!showSystemicBar}
+          unit="kg"
+          useSigFigs
+          dotColor={GREEN}
+        />
       </div>
 
       <div className="sr-only" aria-live="polite">
@@ -624,151 +580,6 @@ export function ImpactChart({
         {hasPersonal && ` After cuts: ${afterPersonal.toLocaleString()} kg.`}
         {hasSystemic && ` Systemic: ${sigFigs(totalSystemic)} kg.`}
       </div>
-    </div>
-  );
-}
-
-// --- Diverging chart ---
-
-function DivergingChart({ personalKg, systemicKg, hasPersonal, hasSystemic }: {
-  personalKg: number; systemicKg: number; hasPersonal: boolean; hasSystemic: boolean;
-}) {
-  const maxKg = Math.max(personalKg, systemicKg, 1);
-  const personalPct = hasPersonal ? (personalKg / maxKg) * 100 : 0;
-  const systemicPct = hasSystemic ? (systemicKg / maxKg) * 100 : 0;
-  const ratio = hasPersonal && personalKg > 0 ? Math.round(systemicKg / personalKg) : 0;
-
-  if (!hasPersonal && !hasSystemic) {
-    return <p style={{ fontSize: '0.72rem', color: MUTED, fontStyle: 'italic' }}>Enable actions above to see the comparison.</p>;
-  }
-
-  return (
-    <div>
-      {/* Personal cuts row */}
-      <div style={{ marginBottom: '6px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', fontSize: '0.72rem', marginBottom: '3px' }}>
-          <span style={{ color: MUTED }}>Personal cuts</span>
-          <span style={{ fontWeight: 600, color: ACCENT, fontVariantNumeric: 'tabular-nums' }}>
-            {hasPersonal ? `−${personalKg.toLocaleString()} kg/yr` : '—'}
-          </span>
-        </div>
-        <div style={{ height: '24px', background: 'var(--bar-track, #E2DFD9)', borderRadius: '4px', overflow: 'hidden', direction: 'rtl' }}>
-          <div style={{
-            height: '100%', width: `${personalPct}%`, background: ACCENT, borderRadius: '4px',
-            transition: 'width 0.5s cubic-bezier(0.25,0.46,0.45,0.94)', minWidth: hasPersonal ? '2px' : '0',
-          }} />
-        </div>
-      </div>
-
-      {/* Systemic leverage row */}
-      <div style={{ marginBottom: '6px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', fontSize: '0.72rem', marginBottom: '3px' }}>
-          <span style={{ color: MUTED }}>Systemic leverage</span>
-          <span style={{ fontWeight: 600, color: GREEN, fontVariantNumeric: 'tabular-nums' }}>
-            {hasSystemic ? `${sigFigs(systemicKg)} kg/person` : '—'}
-          </span>
-        </div>
-        <div style={{ height: '24px', background: 'var(--bar-track, #E2DFD9)', borderRadius: '4px', overflow: 'hidden' }}>
-          <div style={{
-            height: '100%', width: `${systemicPct}%`, background: GREEN, borderRadius: '4px',
-            transition: 'width 0.5s cubic-bezier(0.25,0.46,0.45,0.94)', minWidth: hasSystemic ? '2px' : '0',
-          }} />
-        </div>
-      </div>
-
-      {/* Ratio callout */}
-      {hasPersonal && hasSystemic && ratio > 0 && (
-        <div style={{
-          textAlign: 'center', marginTop: '8px', padding: '8px 12px',
-          background: 'rgba(74, 124, 89, 0.06)', borderRadius: '6px',
-          fontSize: '0.72rem', color: 'var(--text, #1A1A18)',
-        }}>
-          Systemic leverage is <strong style={{ color: GREEN, fontSize: '1.1rem' }}>{ratio}×</strong> your personal cuts
-        </div>
-      )}
-    </div>
-  );
-}
-
-// --- Waterfall chart ---
-
-function WaterfallChart({ footprintKg, personalKg, systemicKg, hasPersonal, hasSystemic }: {
-  footprintKg: number; personalKg: number; systemicKg: number; hasPersonal: boolean; hasSystemic: boolean;
-}) {
-  const afterPersonal = Math.max(footprintKg - personalKg, 0);
-  // Scale so the footprint bar is always full-width
-  const pct = (kg: number) => Math.min((kg / Math.max(footprintKg, 1)) * 100, 100);
-
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-      {/* Step 1: Your footprint */}
-      <div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', fontSize: '0.72rem', marginBottom: '3px' }}>
-          <span style={{ fontWeight: 600, color: 'var(--text, #1A1A18)' }}>Your footprint</span>
-          <span style={{ fontWeight: 600, color: ACCENT, fontVariantNumeric: 'tabular-nums' }}>{footprintKg.toLocaleString()} kg</span>
-        </div>
-        <div style={{ height: '24px', background: 'var(--bar-track, #E2DFD9)', borderRadius: '4px', overflow: 'hidden' }}>
-          <div style={{ height: '100%', width: '100%', background: ACCENT, borderRadius: '4px' }} />
-        </div>
-      </div>
-
-      {/* Step 2: Personal cuts (shows what's removed) */}
-      {hasPersonal && (
-        <div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', fontSize: '0.72rem', marginBottom: '3px' }}>
-            <span style={{ color: MUTED }}>Personal cuts</span>
-            <span style={{ fontWeight: 600, color: GREEN, fontVariantNumeric: 'tabular-nums' }}>−{personalKg.toLocaleString()} kg</span>
-          </div>
-          <div style={{ position: 'relative', height: '24px', background: 'var(--bar-track, #E2DFD9)', borderRadius: '4px', overflow: 'hidden' }}>
-            {/* Remaining footprint (dimmed) */}
-            <div style={{ position: 'absolute', height: '100%', width: `${pct(afterPersonal)}%`, background: ACCENT, opacity: 0.3, borderRadius: '4px' }} />
-            {/* Cut portion (green, positioned after the remaining) */}
-            <div style={{
-              position: 'absolute', left: `${pct(afterPersonal)}%`, height: '100%',
-              width: `${pct(personalKg)}%`, background: GREEN, borderRadius: '0 4px 4px 0',
-              transition: 'all 0.5s cubic-bezier(0.25,0.46,0.45,0.94)',
-            }} />
-          </div>
-        </div>
-      )}
-
-      {/* Step 3: After cuts */}
-      {hasPersonal && (
-        <div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', fontSize: '0.72rem', marginBottom: '3px' }}>
-            <span style={{ fontWeight: 600, color: 'var(--text, #1A1A18)' }}>After cuts</span>
-            <span style={{ fontWeight: 600, color: ACCENT, fontVariantNumeric: 'tabular-nums', opacity: 0.7 }}>{afterPersonal.toLocaleString()} kg</span>
-          </div>
-          <div style={{ height: '24px', background: 'var(--bar-track, #E2DFD9)', borderRadius: '4px', overflow: 'hidden' }}>
-            <div style={{
-              height: '100%', width: `${pct(afterPersonal)}%`, background: ACCENT, opacity: 0.6,
-              borderRadius: '4px', transition: 'width 0.5s cubic-bezier(0.25,0.46,0.45,0.94)',
-            }} />
-          </div>
-        </div>
-      )}
-
-      {/* Step 4: Systemic leverage (separate scale — can be much larger) */}
-      {hasSystemic && (
-        <div style={{ marginTop: '4px', paddingTop: '8px', borderTop: `1px dashed ${DIVIDER}` }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', fontSize: '0.72rem', marginBottom: '3px' }}>
-            <span style={{ fontWeight: 600, color: GREEN }}>Systemic leverage</span>
-            <span style={{ fontWeight: 600, color: GREEN, fontVariantNumeric: 'tabular-nums' }}>{sigFigs(systemicKg)} kg/person</span>
-          </div>
-          <div style={{ height: '24px', background: 'var(--bar-track, #E2DFD9)', borderRadius: '4px', overflow: 'hidden' }}>
-            <div style={{
-              height: '100%', width: `${Math.min((systemicKg / Math.max(systemicKg, footprintKg, 1)) * 100, 100)}%`,
-              background: GREEN, borderRadius: '4px',
-              transition: 'width 0.5s cubic-bezier(0.25,0.46,0.45,0.94)', minWidth: '2px',
-            }} />
-          </div>
-          {hasPersonal && personalKg > 0 && (
-            <div style={{ fontSize: '0.62rem', color: MUTED, marginTop: '4px' }}>
-              {Math.round(systemicKg / personalKg)}× your personal cuts · {Math.round(systemicKg / footprintKg * 10) / 10} years of your emissions
-            </div>
-          )}
-        </div>
-      )}
     </div>
   );
 }
