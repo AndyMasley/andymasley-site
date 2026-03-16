@@ -1,9 +1,9 @@
 /**
  * ComparingCuts — horizontal bar chart comparing all selected
- * personal cuts and systemic actions, sorted smallest to largest.
+ * personal cuts and systemic actions, sorted largest to smallest.
  */
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import type { PersonalAction } from '@/lib/carbon/personal-actions';
 import type { LeverageResult } from '@/lib/carbon/types';
 
@@ -13,11 +13,14 @@ interface ComparingCutsProps {
   actionParamOverrides: Record<string, number>;
   leverageCases: LeverageResult[];
   enabledSystemic: Set<string>;
+  carOwnership: string;
+  footprintKg: number;
 }
 
 const ACCENT = 'var(--accent, #8B2E2E)';
 const GREEN = 'var(--green, #4A7C59)';
 const MUTED = 'var(--text-secondary, #6B6B60)';
+const DIVIDER = 'var(--divider, #DDD9D0)';
 
 interface BarItem {
   name: string;
@@ -26,23 +29,50 @@ interface BarItem {
   type: 'personal' | 'systemic';
 }
 
-export function ComparingCuts({ personalActions, enabledPersonal, actionParamOverrides, leverageCases, enabledSystemic }: ComparingCutsProps) {
-  const items = useMemo(() => {
+const CAR_LABELS: Record<string, string> = { gas: 'gas car', hybrid: 'hybrid', ev: 'EV' };
+
+const FILTER_OPTIONS = [
+  { value: null, label: 'All' },
+  { value: 'personal' as const, label: 'Personal' },
+  { value: 'systemic' as const, label: 'Systemic' },
+];
+
+export function ComparingCuts({ personalActions, enabledPersonal, actionParamOverrides, leverageCases, enabledSystemic, carOwnership, footprintKg }: ComparingCutsProps) {
+  const [filter, setFilter] = useState<'personal' | 'systemic' | null>(null);
+  const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
+
+  const allItems = useMemo(() => {
     const bars: BarItem[] = [];
 
     // Personal cuts
     for (const action of personalActions) {
-      if (!enabledPersonal.has(action.name)) continue;
+      if (!enabledPersonal.has(action.name) || action.excludeFromTotal) continue;
       const mult = actionParamOverrides[action.name] ?? 1;
       const kg = Math.round(action.savingsKg * mult);
       if (kg <= 0) continue;
-      // Build display name from inlineParam if available
       let displayName = action.name;
       if (action.inlineParam) {
         const currentVal = Math.round(action.inlineParam.defaultVal * mult);
         displayName = `${action.inlineParam.before}${currentVal}${action.inlineParam.after}`;
+        if (action.inlineParam2) {
+          displayName += action.inlineParam2.after;
+        }
+        if (currentVal === 1) {
+          displayName = displayName.replace(/flights/, 'flight');
+        }
+        if (displayName.includes('/day')) displayName += ' for a year';
       }
-      bars.push({ name: displayName, kg, color: GREEN, type: 'personal' });
+      const carLabel = CAR_LABELS[carOwnership];
+      if (carLabel && action.category === 'Transport' && !displayName.includes('ride-hailing') && !displayName.includes('EV')) {
+        if (displayName.includes('driving')) {
+          displayName = displayName.replace(/driving/, `driving ${carLabel}`);
+        } else if (displayName.includes('car for')) {
+          displayName = displayName.replace(/car for/, `${carLabel} for`);
+        } else if (displayName.includes('trips under')) {
+          displayName = displayName.replace(/trips/, `${carLabel} trips`);
+        }
+      }
+      bars.push({ name: displayName, kg, color: ACCENT, type: 'personal' });
     }
 
     // Systemic actions
@@ -53,60 +83,93 @@ export function ComparingCuts({ personalActions, enabledPersonal, actionParamOve
       bars.push({ name: result.case.name, kg, color: GREEN, type: 'systemic' });
     }
 
-    // Sort smallest to largest
-    bars.sort((a, b) => a.kg - b.kg);
+    // Sort largest to smallest
+    bars.sort((a, b) => b.kg - a.kg);
     return bars;
-  }, [personalActions, enabledPersonal, actionParamOverrides, leverageCases, enabledSystemic]);
+  }, [personalActions, enabledPersonal, actionParamOverrides, leverageCases, enabledSystemic, carOwnership]);
 
-  const maxKg = items.length > 0 ? items[items.length - 1].kg : 1;
+  const items = filter ? allItems.filter(i => i.type === filter) : allItems;
+  const maxKg = items.length > 0 ? items[0].kg : 1;
 
   return (
-    <div style={{ marginTop: '2.5rem', paddingTop: '1.5rem', borderTop: '2px solid var(--divider, #DDD9D0)' }}>
-      <h2 style={{ fontSize: '1.3rem', fontWeight: 700, margin: '0 0 1rem', color: 'var(--text, #1A1A18)' }}>
-        Comparing your cuts
-      </h2>
+    <div style={{ marginTop: '2.5rem', paddingTop: '1.5rem', borderTop: `1px solid ${DIVIDER}` }}>
+      <div style={{ marginBottom: '1rem' }}>
+        <h2 style={{ fontSize: '1.3rem', fontWeight: 700, margin: '0 0 0.5rem', color: 'var(--text, #1A1A18)' }}>
+          Comparing your cuts
+        </h2>
+        <div style={{ display: 'flex', gap: '2px' }}>
+          {FILTER_OPTIONS.map(opt => (
+            <button
+              key={opt.label}
+              onClick={() => setFilter(opt.value)}
+              style={{
+                fontSize: '0.62rem', fontWeight: filter === opt.value ? 600 : 400,
+                padding: '3px 10px', border: `1px solid ${filter === opt.value ? ACCENT : DIVIDER}`,
+                borderRadius: '10px', cursor: 'pointer', fontFamily: 'inherit',
+                background: filter === opt.value ? ACCENT : 'transparent',
+                color: filter === opt.value ? 'white' : MUTED,
+                transition: 'all 0.12s',
+              }}
+            >
+              {opt.label}
+            </button>
+          ))}
+          {items.length > 0 && (
+            <span style={{ fontSize: '0.62rem', color: MUTED, marginLeft: '8px', alignSelf: 'center' }}>
+              <span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '2px', background: ACCENT, marginRight: '3px', verticalAlign: 'middle' }} />personal
+              <span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '2px', background: GREEN, marginLeft: '8px', marginRight: '3px', verticalAlign: 'middle' }} />systemic
+            </span>
+          )}
+        </div>
+      </div>
 
       {items.length === 0 && (
-        <p style={{ fontSize: '0.82rem', color: MUTED, fontStyle: 'italic' }}>
-          Select things to cut or systemic changes to make and they'll appear here.
+        <p style={{ fontSize: '0.72rem', color: MUTED, fontStyle: 'italic' }}>
+          Enable actions above to compare them here.
         </p>
       )}
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-        {items.map(item => {
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        {items.map((item, idx) => {
           const pct = (item.kg / maxKg) * 100;
+          const pctOfFootprint = footprintKg > 0 ? Math.round((item.kg / footprintKg) * 100) : 0;
+          const isHovered = hoveredIdx === idx;
           return (
-            <div key={`${item.type}-${item.name}`} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <span style={{
-                fontSize: '0.75rem',
-                color: 'var(--text, #1A1A18)',
-                width: '320px',
-                textAlign: 'right',
-                flexShrink: 0,
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
-              }}>
-                {item.name}
-              </span>
-              <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <div style={{
-                  height: '20px',
-                  width: `${pct}%`,
-                  background: item.color,
-                  borderRadius: '3px',
-                  transition: 'width 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
-                  minWidth: '1px',
-                }} />
+            <div
+              key={`${item.type}-${item.name}`}
+              onMouseEnter={() => setHoveredIdx(idx)}
+              onMouseLeave={() => setHoveredIdx(null)}
+              style={{
+                padding: '4px 6px', borderRadius: '4px',
+                background: isHovered ? 'rgba(0,0,0,0.02)' : 'transparent',
+                transition: 'background 0.12s',
+              }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '3px' }}>
                 <span style={{
-                  fontSize: '0.68rem',
-                  fontWeight: 600,
-                  color: item.color,
-                  fontVariantNumeric: 'tabular-nums',
-                  whiteSpace: 'nowrap',
+                  fontSize: '0.72rem', color: 'var(--text, #1A1A18)',
+                  overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1,
+                }}>
+                  {item.name}
+                </span>
+                <span style={{
+                  fontSize: '0.72rem', fontWeight: 600, color: item.color,
+                  fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap', marginLeft: '8px',
                 }}>
                   {item.kg.toLocaleString()} kg
+                  {item.type === 'personal' && pctOfFootprint > 0 && (
+                    <span style={{ fontSize: '0.62rem', fontWeight: 400, color: MUTED, marginLeft: '4px' }}>
+                      ({pctOfFootprint}%)
+                    </span>
+                  )}
                 </span>
+              </div>
+              <div style={{ height: '14px', background: `var(--bar-track, #E2DFD9)`, borderRadius: '3px', overflow: 'hidden' }}>
+                <div style={{
+                  height: '100%', width: `${pct}%`, background: item.color,
+                  borderRadius: '3px', transition: 'width 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+                  minWidth: '2px',
+                }} />
               </div>
             </div>
           );

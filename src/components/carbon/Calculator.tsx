@@ -148,6 +148,7 @@ export function Calculator() {
         leverageCases={leverageData.cases}
         enabledSystemic={enabledSystemic}
         carOwnership={baseline.carOwnership}
+        footprintKg={customFootprintKg ?? footprint.totalKgCO2ePerYear}
       />
 
       <Methodology />

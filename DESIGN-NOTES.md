@@ -68,3 +68,26 @@ Operator symbols in formulas (× ÷ =) use 0.85rem relative to their container b
 - **Systemic intro text:** Collapsed by default into a one-line summary with "More" link. The full explanation + Example dropdown are nested inside the expanded state. Action list is immediately visible.
 - **Category progress bars:** When actions are enabled, a tiny 32px-wide green progress bar appears on the category row showing fraction of max potential used. Gives visual weight to collapsed categories.
 - **"Up to X kg" display:** The kg number is `fontWeight: 600` in body color, rest of the meta text is muted. Makes the most useful info the most visible.
+
+## Comparing Your Cuts
+
+- **Stacked layout** (label above bar), not fixed-width label columns — adapts to content length
+- **Sorted largest to smallest** — most impactful action at top
+- **Color-coded:** personal cuts use accent red, systemic actions use green — matches panel identity
+- **Pill filter toggles** (All/Personal/Systemic), not browser checkboxes — matches calculator visual language
+- **Inline legend** next to filter pills — colored squares with type labels
+- **Percentage of footprint** shown for personal cuts: "1,080 kg (7%)"
+- **Hover state** on bars — subtle background highlight
+- **Bar height:** 14px (not 20px) — proportional for a comparison view, not the main visualization
+- **1px top border** — consistent with bar chart separator
+
+## Methodology
+
+- **Collapsible sections** with chevrons — readers scan headers first, expand what they care about
+- **Table of contents** at top with anchor links to each section
+- **Custom components:** `Val` for inline values (subtle bg + bold, not `<code>`), `Note` for caveats (left border + italic), `WorkedExample` (shaded block), `Src` for citations (smaller font), `Li` for dash-style list items
+- **Systemic actions as `<ol>`** — proper numbered list, not bold paragraphs
+- **Important caveats in a callout** — accent-colored left border + shaded background, not buried text
+- **Digital section tightened** — one line per item instead of separate paragraphs
+- **Font sizes follow the 3-tier scale:** 0.9rem headers, 0.72rem body, 0.62rem meta/sources/notes
+- **1px top border** — consistent with other section separators
