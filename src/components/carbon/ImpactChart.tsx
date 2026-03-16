@@ -57,6 +57,7 @@ function InlineNum({ value, onChange, min, max, step }: {
   };
   return (
     <input
+      className="cf-inline-num"
       type="text"
       inputMode="numeric"
       value={local}
@@ -81,6 +82,8 @@ function InlineNum({ value, onChange, min, max, step }: {
     />
   );
 }
+
+const CAT_DOTS: Record<string, string> = { Transport: '#8B2E2E', Home: '#A0522D', Food: '#5C6B2E', Digital: '#1E5F6B', Purchases: '#4A3D6B', Flights: '#6B4226' };
 
 const GREEN = '#4A7C59';
 const GREEN_BG = 'rgba(74, 124, 89, 0.08)';
@@ -161,6 +164,7 @@ export function ImpactChart({
               {LIFESTYLE_PRESETS.map(p => (
                 <button
                   key={p.id}
+                  className="cf-preset-pill"
                   onClick={() => handlePresetClick(p)}
                   style={{
                     fontSize: '0.68rem',
@@ -214,12 +218,13 @@ export function ImpactChart({
                       padding: '6px 8px', border: 'none', borderRadius: '5px',
                       background: isOpen ? 'rgba(74,124,89,0.06)' : 'transparent',
                       cursor: 'pointer', fontFamily: 'inherit', fontSize: '0.72rem',
-                      fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase',
+                      fontWeight: 700, textTransform: 'capitalize',
                       color: 'var(--text, #1A1A18)', textAlign: 'left', minHeight: '32px',
                     }}
                     aria-expanded={isOpen}
                   >
                     <span style={{ fontSize: '0.6rem', transition: 'transform 0.15s', transform: isOpen ? 'rotate(90deg)' : 'none', color: MUTED }}>▶</span>
+                    <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: CAT_DOTS[group.category] || '#6B6B60', flexShrink: 0 }} />
                     <span style={{ flex: 1 }}>{group.category}</span>
                     {enabledCount > 0 && (
                       <span style={{ fontSize: '0.65rem', fontWeight: 700, color: GREEN, fontVariantNumeric: 'tabular-nums' }}>
@@ -238,7 +243,7 @@ export function ImpactChart({
                               <Dot on={isOn} />
                               <span style={{ flex: 1, fontWeight: isOn ? 600 : 400, fontSize: '0.8rem' }}>{action.name}</span>
                               <span style={{ fontWeight: 700, color: isOn ? GREEN : MUTED, fontVariantNumeric: 'tabular-nums', fontSize: '0.75rem', whiteSpace: 'nowrap' }}>
-                                −{Math.round(action.savingsKg * (actionParamOverrides[action.name] ?? 1)).toLocaleString()}
+                                  −{Math.round(action.savingsKg * (actionParamOverrides[action.name] ?? 1)).toLocaleString()} <span style={{ fontSize: '0.6em', fontWeight: 400 }}>kg</span>
                               </span>
                             </button>
                             {isOn && action.name === 'Cut beef by half' && (
@@ -454,7 +459,7 @@ function BarRow({ label, kg, pctWidth, color, opacity, ghostWidth, ghostOpacity,
           {!dimmed && suffix && <span style={{ fontWeight: 800, marginLeft: '6px' }}>{suffix}</span>}
         </span>
       </div>
-      <div style={{ position: 'relative', height: '24px', background: 'var(--bar-track, #D4CFCA)', borderRadius: '4px', overflow: 'hidden' }}>
+      <div style={{ position: 'relative', height: '24px', background: 'var(--bar-track, #E2DFD9)', borderRadius: '4px', overflow: 'hidden' }}>
         {ghostWidth !== undefined && (
           <div style={{ position: 'absolute', height: '100%', width: `${ghostWidth}%`, background: ACCENT, opacity: ghostOpacity ?? 0.15, borderRadius: '4px' }} />
         )}
@@ -479,7 +484,7 @@ function ExampleDropdown() {
         style={{
           display: 'flex', alignItems: 'center', gap: '6px',
           padding: '5px 8px', border: `1px solid ${DIVIDER}`, borderRadius: '5px',
-          background: open ? 'rgba(74, 124, 89, 0.05)' : 'transparent',
+          background: open ? 'rgba(74, 124, 89, 0.05)' : 'rgba(74, 124, 89, 0.03)',
           cursor: 'pointer', fontFamily: 'inherit', fontSize: '0.68rem',
           fontWeight: 600, color: GREEN, width: '100%', textAlign: 'left',
         }}
@@ -531,8 +536,7 @@ const colHead: React.CSSProperties = {
 const categoryHeader: React.CSSProperties = {
   fontSize: '0.6rem',
   fontWeight: 700,
-  letterSpacing: '0.08em',
-  textTransform: 'uppercase',
+  textTransform: 'capitalize',
   color: 'var(--text-secondary, #6B6B60)',
   marginTop: '0.6rem',
   marginBottom: '0.25rem',
