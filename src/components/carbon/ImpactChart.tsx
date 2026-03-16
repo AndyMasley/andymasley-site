@@ -136,7 +136,7 @@ export function ImpactChart({
             <div style={{ marginTop: '1.25rem', paddingTop: '1rem', borderTop: `1px solid ${DIVIDER}` }}>
               <div style={{ fontSize: 'clamp(2rem, 4vw, 3rem)', fontWeight: 700, letterSpacing: '-0.02em', fontVariantNumeric: 'tabular-nums', lineHeight: 1 }}>
                 {footprintKg.toLocaleString()}
-                <span style={{ fontSize: '0.4em', fontWeight: 400, color: MUTED, marginLeft: '6px' }}>kg CO2e/yr</span>
+                <span style={{ fontSize: '0.4em', fontWeight: 400, color: MUTED, marginLeft: '6px' }}>kilograms of CO₂ equivalent per year</span>
               </div>
               <div style={{ fontSize: '0.75rem', color: MUTED, marginTop: '4px' }}>
                 {Math.round(footprintKg / 16000 * 100)}% of US average
