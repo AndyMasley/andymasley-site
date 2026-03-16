@@ -58,8 +58,6 @@ export function ComparingCuts({ personalActions, enabledPersonal, actionParamOve
     return bars;
   }, [personalActions, enabledPersonal, actionParamOverrides, leverageCases, enabledSystemic]);
 
-  if (items.length === 0) return null;
-
   const maxKg = items.length > 0 ? items[items.length - 1].kg : 1;
 
   return (
@@ -67,6 +65,12 @@ export function ComparingCuts({ personalActions, enabledPersonal, actionParamOve
       <h2 style={{ fontSize: '1.3rem', fontWeight: 700, margin: '0 0 1rem', color: 'var(--text, #1A1A18)' }}>
         Comparing your cuts
       </h2>
+
+      {items.length === 0 && (
+        <p style={{ fontSize: '0.82rem', color: MUTED, fontStyle: 'italic' }}>
+          Select things to cut or systemic changes to make and they'll appear here.
+        </p>
+      )}
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
         {items.map(item => {
