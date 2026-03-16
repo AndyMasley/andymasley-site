@@ -141,6 +141,86 @@ export const LEVERAGE_CASES: LeverageCase[] = [
     timeHorizonYears: 15,
   },
   {
+    name: 'Elect a climate-friendly state legislator',
+    description: 'Canvass, phone bank, or donate to flip one state legislature seat to a climate-supportive candidate.',
+    // One state legislator influences ~5-15 years of state energy/climate votes.
+    // A single supportive vote on a clean energy bill affecting 60M MWh/yr state grid
+    // has marginal impact of ~1/100 of the bill passing (one vote in a 100-seat chamber).
+    // Total: 60,000,000 × 250 × 10 × (1/100 legislature share) × P × attribution
+    // But the campaign is to get them ELECTED, not pass one bill.
+    // Model: the legislator's full term (4 yr) × marginal climate legislation effect.
+    // Estimate: one legislator's climate vote portfolio ≈ 500,000 tonnes CO2 over their term.
+    // 500,000,000 kg ÷ 375 = 1,333,333 MWh equivalent.
+    probabilityOfSuccess: { low: 0.01, central: 0.05, high: 0.15 },
+    coalitionSize: 2000,
+    durationYears: 1,
+    annualLoadAffectedMWh: 1_333_333,
+    counterfactualGenerationMix: 'Legislative portfolio effect (0.375 kg/kWh equivalent)',
+    attributionFraction: 1 / 2000,
+    timeHorizonYears: 4,
+  },
+  {
+    name: 'Block a new gas pipeline or LNG terminal',
+    description: 'Campaign to prevent construction of fossil fuel infrastructure that would lock in decades of emissions.',
+    // A mid-size gas pipeline: ~1 billion cubic feet/day = ~365 BCF/yr
+    // Combustion: 365 BCF × 117 lb CO2/MCF = ~19,400,000 tonnes CO2/yr
+    // But we count avoided LOCK-IN, not annual flow. If blocked, this gas stays unburned.
+    // Conservative: attribute 30% of pipeline capacity to marginal demand (rest would find other routes).
+    // 19,400,000 × 0.30 = 5,820,000 tonnes/yr = 5,820,000,000 kg/yr
+    // Over 30 year infrastructure life: modeled in timeHorizon.
+    // 5,820,000,000 ÷ 375 = 15,520,000 MWh equivalent
+    probabilityOfSuccess: { low: 0.005, central: 0.03, high: 0.10 },
+    coalitionSize: 5000,
+    durationYears: 3,
+    annualLoadAffectedMWh: 15_520_000,
+    counterfactualGenerationMix: 'Marginal gas demand avoided (0.375 kg/kWh equivalent)',
+    attributionFraction: 1 / 5000,
+    timeHorizonYears: 30,
+  },
+  {
+    name: 'Win a utility rate case for clean energy',
+    description: 'Intervene in a public utility commission proceeding to shift utility investment from gas to renewables.',
+    // Utility rate cases determine billions in capital allocation.
+    // A mid-size utility: ~20,000,000 MWh/yr. Shifting 10% of capital plan from gas to renewables
+    // avoids ~2,000,000 MWh/yr of gas generation.
+    probabilityOfSuccess: { low: 0.01, central: 0.05, high: 0.15 },
+    coalitionSize: 1000,
+    durationYears: 1,
+    annualLoadAffectedMWh: 2_000_000,
+    counterfactualGenerationMix: 'Gas generation displaced by renewables (0.375 kg/kWh)',
+    attributionFraction: 1 / 1000,
+    timeHorizonYears: 20,
+  },
+  {
+    name: 'Pass a local bike infrastructure ballot measure',
+    description: 'Campaign for a city ballot measure funding protected bike lanes and bike-share expansion.',
+    // A city with 500,000 people. Bike infrastructure shifts ~3% of car VMT to cycling.
+    // City VMT: ~500,000 people × 8,000 mi/yr × 0.6 (driving share) = 2,400,000,000 mi/yr
+    // 3% shift: 72,000,000 mi/yr × 0.40 kg/mi = 28,800,000 kg/yr
+    // 28,800,000 ÷ 375 = 76,800 MWh equivalent
+    probabilityOfSuccess: { low: 0.05, central: 0.20, high: 0.50 },
+    coalitionSize: 1000,
+    durationYears: 1,
+    annualLoadAffectedMWh: 76_800,
+    counterfactualGenerationMix: 'Car VMT displaced by cycling (0.375 kg/kWh equivalent)',
+    attributionFraction: 1 / 1000,
+    timeHorizonYears: 20,
+  },
+  {
+    name: 'Convince your employer to go net-zero',
+    description: 'Internal advocacy to get a 500-person company to adopt a credible net-zero commitment with real action plan.',
+    // 500-person company: ~15,000 MWh/yr electricity + ~5,000 tonnes scope 1+2
+    // Net-zero plan cuts ~60% over 10 years: 3,000 tonnes/yr average reduction
+    // 3,000,000 kg ÷ 375 = 8,000 MWh equivalent
+    probabilityOfSuccess: { low: 0.05, central: 0.15, high: 0.35 },
+    coalitionSize: 10,
+    durationYears: 2,
+    annualLoadAffectedMWh: 8_000,
+    counterfactualGenerationMix: 'Corporate emissions reduced (0.375 kg/kWh equivalent)',
+    attributionFraction: 1 / 10,
+    timeHorizonYears: 10,
+  },
+  {
     name: 'Donate $200 to effective climate charity',
     description: 'Founders Pledge top picks (CATF, Carbon180). Realistic central estimate: ~$10/tonne CO₂e averted.',
     // Founders Pledge estimates CATF at $0.10-$10/tonne. But that's their MOST

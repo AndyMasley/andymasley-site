@@ -711,7 +711,66 @@ export function Methodology() {
               <li>Sources: <Src href="https://www.epa.gov/ghgemissions/sources-greenhouse-gas-emissions#industry">EPA — Industrial GHG Emissions</Src>, <Src href="https://www.iea.org/reports/industry">IEA — Industry Sector</Src></li>
             </ul>
 
-            <p style={{ marginTop: '16px', fontWeight: 700, fontSize: '0.85rem', color: 'var(--text, #1A1A18)' }}>10. Donate to effective climate charity</p>
+            <p style={{ marginTop: '16px', fontWeight: 700, fontSize: '0.85rem', color: 'var(--text, #1A1A18)' }}>10. Elect a climate-friendly state legislator</p>
+            <ul>
+              <li>Model: one state legislator&apos;s climate vote portfolio over a 4-year term ≈ <code>500,000 tonnes CO₂</code> of marginal policy impact (across clean energy bills, utility regulation, building codes, etc.)</li>
+              <li>Modeled as <code>1,333,333 MWh/yr equivalent</code></li>
+              <li>Coalition size: <code>2,000</code> (canvassers, phone bankers, donors for one competitive race) → attribution = <code>1/2,000</code></li>
+              <li>P(success): low <code>1%</code>, central <code>5%</code>, high <code>15%</code>. Your campaign effort has a small chance of being the marginal cause of victory.</li>
+              <li>Time horizon: <code>4 years</code> (one legislative term)</li>
+              <li>Worked example (central): <code>1,333,333 × 375 × 4 × (1/2,000) × 0.05 = 50,000 kg total</code> per person (~3 years of US avg)</li>
+              <li>Sources: <Src href="https://www.nber.org/papers/w26092">Caughey &amp; Warshaw — Policy Preferences of State Legislators (NBER)</Src></li>
+            </ul>
+
+            <p style={{ marginTop: '16px', fontWeight: 700, fontSize: '0.85rem', color: 'var(--text, #1A1A18)' }}>11. Block a new gas pipeline or LNG terminal</p>
+            <ul>
+              <li>A mid-size gas pipeline: ~1 BCF/day capacity = 365 BCF/yr</li>
+              <li>Combustion emissions: 365 BCF × 117 lb CO₂/MCF ≈ <code>19,400,000 tonnes CO₂/yr</code> at full utilization</li>
+              <li>Conservative: only 30% of pipeline capacity represents marginal demand (rest would find other routes) → <code>5,820,000 tonnes/yr</code></li>
+              <li>Modeled as <code>15,520,000 MWh/yr equivalent</code></li>
+              <li>Coalition size: <code>5,000</code> → attribution = <code>1/5,000</code></li>
+              <li>P(success): low <code>0.5%</code>, central <code>3%</code>, high <code>10%</code>. Pipeline campaigns occasionally succeed (Mountain Valley, Keystone XL) but most do not.</li>
+              <li>Time horizon: <code>30 years</code> (infrastructure lock-in period)</li>
+              <li>Worked example (central): <code>15,520,000 × 375 × 30 × (1/5,000) × 0.03 = 1,047,600 kg total</code> per person (~66 years of US avg)</li>
+              <li>Sources: <Src href="https://www.eia.gov/naturalgas/pipelines/EIA-NaturalGasPipelineProjects.xlsx">EIA Natural Gas Pipeline Projects</Src></li>
+            </ul>
+
+            <p style={{ marginTop: '16px', fontWeight: 700, fontSize: '0.85rem', color: 'var(--text, #1A1A18)' }}>12. Win a utility rate case for clean energy</p>
+            <ul>
+              <li>A mid-size utility: <code>20,000,000 MWh/yr</code>. Intervening in a rate case to shift 10% of capital plan from gas to renewables avoids <code>2,000,000 MWh/yr</code> of gas generation.</li>
+              <li>Coalition size: <code>1,000</code> (intervenors, expert witnesses, advocacy orgs, supporting public commenters) → attribution = <code>1/1,000</code></li>
+              <li>P(success): low <code>1%</code>, central <code>5%</code>, high <code>15%</code>. PUC proceedings are technical; intervenor input is formally considered but outcomes are uncertain.</li>
+              <li>Time horizon: <code>20 years</code> (utility capital investments are long-lived)</li>
+              <li>Worked example (central): <code>2,000,000 × 375 × 20 × (1/1,000) × 0.05 = 750,000 kg total</code> per person (~47 years of US avg)</li>
+              <li>Sources: <Src href="https://www.naruc.org/">National Association of Regulatory Utility Commissioners</Src></li>
+            </ul>
+
+            <p style={{ marginTop: '16px', fontWeight: 700, fontSize: '0.85rem', color: 'var(--text, #1A1A18)' }}>13. Pass a local bike infrastructure ballot measure</p>
+            <ul>
+              <li>City of 500,000 people. Bike infrastructure shifts ~3% of car VMT to cycling.</li>
+              <li>City VMT: 500,000 × 8,000 mi/yr × 60% driving share = <code>2,400,000,000 mi/yr</code></li>
+              <li>3% shift: 72,000,000 mi/yr × 0.40 kg/mi = <code>28,800,000 kg/yr</code></li>
+              <li>Modeled as <code>76,800 MWh/yr equivalent</code></li>
+              <li>Coalition size: <code>1,000</code> → attribution = <code>1/1,000</code></li>
+              <li>P(success): low <code>5%</code>, central <code>20%</code>, high <code>50%</code>. Bike ballot measures have a decent track record in mid-size cities.</li>
+              <li>Time horizon: <code>20 years</code> (infrastructure lasts)</li>
+              <li>Worked example (central): <code>76,800 × 375 × 20 × (1/1,000) × 0.20 = 115,200 kg total</code> per person (~7 years of US avg)</li>
+              <li>Sources: <Src href="https://www.peopleforbikes.org/reports">PeopleForBikes — City Ratings and Reports</Src></li>
+            </ul>
+
+            <p style={{ marginTop: '16px', fontWeight: 700, fontSize: '0.85rem', color: 'var(--text, #1A1A18)' }}>14. Convince your employer to go net-zero</p>
+            <ul>
+              <li>500-person company: ~15,000 MWh/yr electricity + ~5,000 tonnes scope 1+2</li>
+              <li>Net-zero plan cuts ~60% over 10 years → average reduction <code>3,000 tonnes/yr</code></li>
+              <li>Modeled as <code>8,000 MWh/yr equivalent</code></li>
+              <li>Coalition size: <code>10</code> (you + a few internal allies) → attribution = <code>1/10</code></li>
+              <li>P(success): low <code>5%</code>, central <code>15%</code>, high <code>35%</code>. Many companies are receptive but execution is uncertain.</li>
+              <li>Time horizon: <code>10 years</code></li>
+              <li>Worked example (central): <code>8,000 × 375 × 10 × (1/10) × 0.15 = 450,000 kg total</code> per person (~28 years of US avg)</li>
+              <li>Sources: <Src href="https://sciencebasedtargets.org/">Science Based Targets initiative (SBTi)</Src></li>
+            </ul>
+
+            <p style={{ marginTop: '16px', fontWeight: 700, fontSize: '0.85rem', color: 'var(--text, #1A1A18)' }}>15. Donate to effective climate charity</p>
             <ul>
               <li>This case is modeled differently from the advocacy cases — it scales linearly with donation amount and the uncertainty is in cost-effectiveness, not probability of success</li>
               <li>Formula: <code>expectedKg = donationAmount ÷ costPerTonne × 1,000</code></li>
