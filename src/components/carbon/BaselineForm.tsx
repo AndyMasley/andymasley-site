@@ -130,8 +130,8 @@ export function BaselineForm({ value, onChange }: BaselineFormProps) {
         >
           <option value="apartment">Apartment</option>
           <option value="townhouse">Townhouse</option>
-          <option value="single-family-small">House (sm)</option>
-          <option value="single-family-large">House (lg)</option>
+          <option value="single-family-small">House (small)</option>
+          <option value="single-family-large">House (large)</option>
         </select>
       </div>
 
