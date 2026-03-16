@@ -484,6 +484,9 @@ export function ImpactChart({
                 {afterPersonal > 0 && <> <strong>{afterPersonal.toLocaleString()}</strong> remains — your ceiling.</>}
               </div>
             )}
+            <div style={{ fontSize: '0.62rem', color: MUTED, lineHeight: 1.45, marginTop: '0.5rem', opacity: 0.8 }}>
+              Note: these measure the emissions of the activity itself. In reality, small cuts often don't reduce total emissions due to the <a href="https://www.sciencedirect.com/science/article/pii/S095965261732382X?via%3Dihub" target="_blank" rel="noopener noreferrer" style={{ color: ACCENT }}>rebound effect</a>.
+            </div>
           </div>
         </div>
 
