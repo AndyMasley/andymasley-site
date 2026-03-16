@@ -287,7 +287,6 @@ export function computePersonalActions(baseline: BaselineInputs, footprint: Foot
       category: 'Flights',
       applicable: baseline.flightsPerYear > 0,
       note: 'One of the highest-impact single actions',
-      exclusiveGroup: 'flight-reduction',
     },
     {
       name: 'Eliminate one domestic flight',
@@ -295,7 +294,6 @@ export function computePersonalActions(baseline: BaselineInputs, footprint: Foot
       category: 'Flights',
       applicable: baseline.flightsPerYear > 0,
       note: 'Average domestic round-trip: ~2,200 miles',
-      exclusiveGroup: 'flight-reduction',
     },
     {
       name: 'Eliminate all flights',
@@ -303,7 +301,6 @@ export function computePersonalActions(baseline: BaselineInputs, footprint: Foot
       category: 'Flights',
       applicable: baseline.flightsPerYear > 1,
       note: `Eliminates all ${baseline.flightsPerYear} flights per year`,
-      exclusiveGroup: 'flight-reduction',
     },
   ];
 
