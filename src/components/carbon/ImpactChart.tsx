@@ -304,17 +304,35 @@ const REFERENCE_MARKS = [
 ];
 
 function ReferenceLines({ scaleMax }: { scaleMax: number }) {
+  // Filter visible marks and check for overlaps (hide labels that are too close)
+  const visible = REFERENCE_MARKS
+    .map(mark => ({ ...mark, pct: (mark.kg / scaleMax) * 100 }))
+    .filter(m => m.pct >= 2 && m.pct <= 98);
+
+  // Min distance between labels (in % of bar width) to avoid overlap
+  const MIN_GAP = 8;
+  const showLabel: Record<string, boolean> = {};
+  for (let i = 0; i < visible.length; i++) {
+    showLabel[visible[i].label] = true;
+    for (let j = 0; j < i; j++) {
+      if (showLabel[visible[j].label] && Math.abs(visible[i].pct - visible[j].pct) < MIN_GAP) {
+        // Hide the one with lower priority (later in array = lower priority)
+        showLabel[visible[i].label] = false;
+        break;
+      }
+    }
+  }
+
   return (
     <>
       {/* Labels row above the bars */}
       <div style={{ position: 'relative', height: '16px', marginBottom: '4px' }}>
-        {REFERENCE_MARKS.map(mark => {
-          const leftPct = (mark.kg / scaleMax) * 100;
-          if (leftPct > 98 || leftPct < 2) return null;
+        {visible.map(mark => {
+          if (!showLabel[mark.label]) return null;
           return (
             <span key={mark.label} style={{
               position: 'absolute',
-              left: `${leftPct}%`,
+              left: `${mark.pct}%`,
               transform: 'translateX(-50%)',
               fontSize: '0.58rem',
               fontWeight: 700,
@@ -329,13 +347,10 @@ function ReferenceLines({ scaleMax }: { scaleMax: number }) {
       </div>
       {/* Vertical lines spanning the bar area */}
       <div style={{ position: 'absolute', left: 0, right: 0, top: '20px', bottom: '12px', pointerEvents: 'none', zIndex: 2 }}>
-        {REFERENCE_MARKS.map(mark => {
-          const leftPct = (mark.kg / scaleMax) * 100;
-          if (leftPct > 98 || leftPct < 2) return null;
-          return (
+        {visible.map(mark => (
             <div key={mark.label} style={{
               position: 'absolute',
-              left: `${leftPct}%`,
+              left: `${mark.pct}%`,
               top: 0,
               bottom: 0,
               width: 0,
@@ -343,8 +358,7 @@ function ReferenceLines({ scaleMax }: { scaleMax: number }) {
               opacity: 0.4,
               transition: 'left 0.5s cubic-bezier(0.25,0.46,0.45,0.94)',
             }} />
-          );
-        })}
+        ))}
       </div>
     </>
   );
