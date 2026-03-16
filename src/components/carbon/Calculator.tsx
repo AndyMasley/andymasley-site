@@ -17,8 +17,6 @@ import { computeLeverageWithOverrides } from '@/lib/carbon/leverage';
 import type { SystemicOverride } from '@/lib/carbon/leverage';
 import { BaselineForm } from './BaselineForm';
 import { ImpactChart } from './ImpactChart';
-import { AdvancedSection } from './AdvancedSection';
-import { AdvancedEditor } from './AdvancedEditor';
 import { RefineSection } from './RefineSection';
 import { PersonalChanges } from './PersonalChanges';
 import { ElectricitySection } from './ElectricitySection';
@@ -117,28 +115,7 @@ export function Calculator() {
         onSystemicOverridesChange={setSystemicOverrides}
       />
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-        <AdvancedSection>
-          <AdvancedEditor
-            baseline={baseline}
-            onBaselineChange={b => { setBaseline(b); setActiveArchetypeId(null); }}
-            overrides={overrides}
-            onOverridesChange={setOverrides}
-            personalActions={allPersonalActions}
-            enabledPersonal={enabledPersonal}
-            togglePersonal={togglePersonal}
-            leverageCases={leverageData.cases}
-            enabledSystemic={enabledSystemic}
-            toggleSystemic={toggleSystemic}
-            systemicOverrides={systemicOverrides}
-            onSystemicOverridesChange={setSystemicOverrides}
-            actionParamOverrides={actionParamOverrides}
-            onActionParamOverridesChange={setActionParamOverrides}
-            footprintKg={footprint.totalKgCO2ePerYear}
-          />
-        </AdvancedSection>
-        <Methodology />
-      </div>
+      <Methodology />
     </div>
   );
 }
