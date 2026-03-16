@@ -248,10 +248,10 @@ export function computePersonalActions(baseline: BaselineInputs, footprint: Foot
     // ── Digital ──
     {
       name: 'Stop using AI chatbots',
-      savingsKg: 5,
+      savingsKg: Math.round(50 * 3 * 365 / 1000), // ~3g per query (independent estimates for ChatGPT-class), 50/day = ~55 kg/yr
       category: 'Digital',
       applicable: true,
-      note: '~50 queries/day × 0.28 g CO₂ each = ~5 kg/yr. Negligible.',
+      note: '~3 g CO₂ per ChatGPT-class query (independent estimates range 1–5 g).',
       inlineParam: { before: 'Send ', defaultVal: 50, after: ' fewer AI prompts/day' },
     },
     {
@@ -273,10 +273,10 @@ export function computePersonalActions(baseline: BaselineInputs, footprint: Foot
     },
     {
       name: 'Do fewer Google searches per day',
-      savingsKg: Math.round(10 * 0.03 * 365 / 1000) || 1, // 0.03g per search — essentially zero
+      savingsKg: Math.round(10 * 0.2 * 365 / 1000) || 1, // 0.2g per search (Google 2009, still roughly accurate for traditional search)
       category: 'Digital',
       applicable: true,
-      note: '~0.03 g CO₂ per search. Even 100 fewer/day saves ~1 kg/yr.',
+      note: '~0.2 g CO₂ per traditional search. Similar to a short email.',
       inlineParam: { before: 'Do ', defaultVal: 10, after: ' fewer searches/day', max: 100000 },
     },
     {

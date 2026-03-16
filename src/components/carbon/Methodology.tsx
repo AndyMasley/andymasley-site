@@ -222,7 +222,8 @@ export function Methodology() {
 
           <Section title="Digital" id="methodology-digital">
             <p>
-              <strong>AI chatbots:</strong> <Val>5 kg/yr</Val> at 50 queries/day × 0.28 g each. <Src href="https://www.andymasley.com/writing/whats-the-full-hidden-climate-cost/">Andy Masley</Src>
+              <strong>AI chatbots:</strong> <Val>~3 g/query</Val> for ChatGPT-class models (independent estimates range 1–5 g). 50 queries/day ≈ 55 kg/yr. Google's self-reported Gemini figure (0.03 g) uses favorable assumptions about renewable electricity credits.
+              <br /><Src href="https://hannahritchie.substack.com/p/carbon-footprint-chatgpt">Hannah Ritchie</Src>, <Src href="https://www.andymasley.com/writing/whats-the-full-hidden-climate-cost/">Andy Masley</Src>
             </p>
             <p style={{ marginTop: '4px' }}>
               <strong>Video streaming:</strong> <Val>~0.08 kWh/hr</Val> including device, network, and data center. Grid-dependent: 2 hrs/day ≈ 22 kg/yr on US avg grid. <Src href="https://www.iea.org/reports/data-centres-and-data-transmission-networks">IEA 2020</Src>
@@ -232,7 +233,7 @@ export function Methodology() {
               <br /><Src href="https://profilebooks.com/work/how-bad-are-bananas/">Berners-Lee 2020</Src>, <Src href="https://carbonliteracy.com/the-carbon-cost-of-an-email/">Carbon Literacy Project</Src>
             </p>
             <p style={{ marginTop: '4px' }}>
-              <strong>Google searches:</strong> <Val>~0.03 g/search</Val> (down from ~0.2 g in 2009 due to efficiency gains). <Src href="https://blog.google/outreach-initiatives/sustainability/google-sustainability-report-2024/">Google 2024</Src>
+              <strong>Google searches:</strong> <Val>~0.2 g/search</Val> for a traditional search. Google's 2009 figure, still roughly accurate for non-AI searches. <Src href="https://www.silicon.co.uk/e-innovation/google-search-produces-02-grams-of-c02-877">Silicon UK (2009)</Src>
             </p>
             <p style={{ marginTop: '4px' }}>
               <strong>Social media:</strong> <Val>~0.5 g/min</Val>. <Src href="https://www.carbontrust.com/what-we-do/assurance-and-labelling/product-carbon-footprint-label">Carbon Trust</Src>
