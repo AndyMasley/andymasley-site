@@ -47,7 +47,7 @@ export function AdvancedSection({ children }: AdvancedSectionProps) {
           ▶
         </span>
         <span>
-          {open ? 'Hide advanced sections' : 'Go deeper — refine inputs, explore electricity, compare scenarios'}
+          {open ? 'Hide advanced sections' : 'Go deeper'}
         </span>
       </button>
 

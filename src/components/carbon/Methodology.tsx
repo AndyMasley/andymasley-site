@@ -149,7 +149,7 @@ export function Methodology() {
         <span>
           {open
             ? 'Hide methodology'
-            : 'Methodology — sources and assumptions'}
+            : 'Methodology'}
         </span>
       </button>
 
