@@ -87,7 +87,7 @@ export function ComparingCuts({ personalActions, enabledPersonal, actionParamOve
                   background: item.color,
                   borderRadius: '3px',
                   transition: 'width 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
-                  minWidth: '3px',
+                  minWidth: pct > 0.5 ? '1px' : '0',
                 }} />
                 <span style={{
                   fontSize: '0.68rem',
