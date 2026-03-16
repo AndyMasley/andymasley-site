@@ -230,7 +230,7 @@ export function AdvancedEditor({
     <div style={{ marginBottom: '2rem' }}>
       <div className="cf-section-label" style={{ marginBottom: '0.75rem' }}>ADVANCED EDITOR</div>
       <div className="cf-impact-layout">
-        <div className="cf-impact-panels" style={{ height: '520px' }}>
+        <div className="cf-impact-panels" style={{ height: 'auto' }}>
 
           {/* COLUMN 1: YOUR FOOTPRINT (detailed) */}
           <div className="cf-impact-col">
