@@ -249,7 +249,7 @@ export function computePersonalActions(baseline: BaselineInputs, footprint: Foot
       category: 'Digital',
       applicable: true,
       note: '~50 queries/day × 0.28 g CO₂ each = ~5 kg/yr. Negligible.',
-      inlineParam: { before: 'Stop sending ', defaultVal: 50, after: ' AI prompts/day' },
+      inlineParam: { before: 'Send ', defaultVal: 50, after: ' fewer AI prompts/day' },
     },
     {
       name: 'Reduce video streaming by half',
