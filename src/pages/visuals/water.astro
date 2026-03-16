@@ -248,6 +248,7 @@ const cropFlat = defaultCrop.map(d => ({ idx: idx++, ...d,
 </style>
 
 <script is:inline>
+document.addEventListener('DOMContentLoaded', function() {
   const RATES = { corn: 650000, alfalfa: 1500000, golf: 1300000 };
   const CROP_LABELS = { corn: 'corn', alfalfa: 'alfalfa', golf: 'golf course' };
   const cropDataAll = window.__cropDataAll;
@@ -456,4 +457,5 @@ const cropFlat = defaultCrop.map(d => ({ idx: idx++, ...d,
 
   let rt;
   new ResizeObserver(() => { clearTimeout(rt); rt = window.setTimeout(() => { cur.clear(); render(); }, 60); }).observe(chart);
+});
 </script>
