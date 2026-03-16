@@ -284,6 +284,22 @@ export function computePersonalActions(baseline: BaselineInputs, footprint: Foot
       note: '~0.5 g/min for data transfer + servers. Small but adds up.',
       inlineParam: { before: 'Cut ', defaultVal: 1, after: ' hr/day of social media', max: 16 },
     },
+    {
+      name: 'Use your laptop fewer hours per day',
+      savingsKg: Math.round(0.05 * 2 * 365 * gridRate), // 50W laptop, default 2 hrs
+      category: 'Digital',
+      applicable: true,
+      note: 'Laptop draws ~50 W. Savings depend on your grid.',
+      inlineParam: { before: 'Use laptop ', defaultVal: 2, after: ' fewer hrs/day', max: 24 },
+    },
+    {
+      name: 'Use your desktop fewer hours per day',
+      savingsKg: Math.round(0.15 * 2 * 365 * gridRate), // 150W desktop + monitor, default 2 hrs
+      category: 'Digital',
+      applicable: true,
+      note: 'Desktop + monitor draws ~150 W. Savings depend on your grid.',
+      inlineParam: { before: 'Use desktop ', defaultVal: 2, after: ' fewer hrs/day', max: 24 },
+    },
 
     // ── Purchases ──
     {

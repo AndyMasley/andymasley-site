@@ -178,6 +178,14 @@ export function Methodology() {
               <strong>Social media:</strong> <code>~0.5 g CO₂e per minute</code> of scrolling, based on data transfer and server energy. 1 hr/day ≈ 11 kg/yr.<br />
               Source: <Src href="https://www.carbontrust.com/what-we-do/assurance-and-labelling/product-carbon-footprint-label">Carbon Trust — digital product footprints</Src>
             </p>
+            <p style={{ marginTop: '8px' }}>
+              <strong>Laptop usage:</strong> <code>~50 W</code> average active power draw. 2 fewer hrs/day ≈ 36.5 kWh/yr, scaled by your grid intensity.<br />
+              Source: <Src href="https://www.energystar.gov/products/computers">ENERGY STAR — Computers</Src>
+            </p>
+            <p style={{ marginTop: '8px' }}>
+              <strong>Desktop usage:</strong> <code>~150 W</code> average active power draw (including monitor). 2 fewer hrs/day ≈ 109.5 kWh/yr, scaled by your grid intensity.<br />
+              Source: <Src href="https://www.energystar.gov/products/computers">ENERGY STAR — Computers</Src>, <Src href="https://eta.lbl.gov/">Lawrence Berkeley National Lab</Src>
+            </p>
             <p style={{ marginTop: '8px' }}><em>All digital actions are well under 0.5% of a typical footprint — included because frequently asked about.</em></p>
           </Section>
 
