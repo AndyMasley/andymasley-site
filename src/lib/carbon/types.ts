@@ -105,6 +105,7 @@ export interface BaselineInputs {
   carOwnership: CarOwnership;
   flightsPerYear: number;
   transatlanticFlightsPerYear: number;
+  transpacificFlightsPerYear: number;
   domesticFlightsPerYear: number;
 }
 
@@ -118,6 +119,7 @@ export const DEFAULT_BASELINE: BaselineInputs = {
   carOwnership: 'gas',
   flightsPerYear: 2,
   transatlanticFlightsPerYear: 0,
+  transpacificFlightsPerYear: 0,
   domesticFlightsPerYear: 2,
 };
 

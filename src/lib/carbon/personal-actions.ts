@@ -340,6 +340,15 @@ export function computePersonalActions(baseline: BaselineInputs, footprint: Foot
       inlineParam2: { before: ' of ', defaultVal: baseline.transatlanticFlightsPerYear, after: ` transatlantic flight${baseline.transatlanticFlightsPerYear !== 1 ? 's' : ''}` },
     },
     {
+      name: 'Eliminate one transpacific flight',
+      savingsKg: Math.round(12400 * 0.255),
+      category: 'Flights',
+      applicable: baseline.flightsPerYear > 0,
+      note: 'Average transpacific round-trip: ~12,400 miles (e.g. LAX–Tokyo)',
+      inlineParam: { before: 'Eliminate ', defaultVal: Math.min(1, baseline.transpacificFlightsPerYear), after: '' },
+      inlineParam2: { before: ' of ', defaultVal: baseline.transpacificFlightsPerYear, after: ` transpacific flight${baseline.transpacificFlightsPerYear !== 1 ? 's' : ''}` },
+    },
+    {
       name: 'Eliminate one domestic flight',
       savingsKg: Math.round(2200 * 0.255),
       category: 'Flights',
@@ -352,6 +361,7 @@ export function computePersonalActions(baseline: BaselineInputs, footprint: Foot
       name: 'Eliminate all flights',
       savingsKg: Math.round(
         baseline.transatlanticFlightsPerYear * 6900 * 0.255 +
+        baseline.transpacificFlightsPerYear * 12400 * 0.255 +
         baseline.domesticFlightsPerYear * 2200 * 0.255
       ),
       category: 'Flights',

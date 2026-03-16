@@ -96,12 +96,12 @@ const MUTED = 'var(--text-secondary, #6B6B60)';
 const DIVIDER = 'var(--divider, #DDD9D0)';
 
 const LIFESTYLE_PRESETS: { id: string; label: string; baseline: BaselineInputs }[] = [
-  { id: 'us-average', label: 'Average', baseline: { state: 'US', householdSize: 2.3, housingType: 'single-family-small', urbanForm: 'suburban', dietType: 'average', carOwnership: 'gas', flightsPerYear: 2, transatlanticFlightsPerYear: 0, domesticFlightsPerYear: 2, monthlySpending: 1800 } },
-  { id: 'urban-vegan', label: 'Urban vegan', baseline: { state: 'NY', householdSize: 1, housingType: 'apartment', urbanForm: 'urban', dietType: 'vegan', carOwnership: 'none', flightsPerYear: 1, transatlanticFlightsPerYear: 0, domesticFlightsPerYear: 1, monthlySpending: 1500 } },
-  { id: 'suburban-family', label: 'Suburban', baseline: { state: 'US', householdSize: 4, housingType: 'single-family-small', urbanForm: 'suburban', dietType: 'average', carOwnership: 'gas', flightsPerYear: 2, transatlanticFlightsPerYear: 0, domesticFlightsPerYear: 2, monthlySpending: 1500 } },
-  { id: 'rural-truck', label: 'Rural driver', baseline: { state: 'US', householdSize: 2, housingType: 'single-family-large', urbanForm: 'rural', dietType: 'heavy-meat', carOwnership: 'gas', flightsPerYear: 0, transatlanticFlightsPerYear: 0, domesticFlightsPerYear: 0, monthlySpending: 1000 } },
-  { id: 'frequent-flyer', label: 'Frequent flyer', baseline: { state: 'US', householdSize: 1, housingType: 'apartment', urbanForm: 'urban', dietType: 'average', carOwnership: 'none', flightsPerYear: 8, transatlanticFlightsPerYear: 2, domesticFlightsPerYear: 6, monthlySpending: 2000 } },
-  { id: 'ev-professional', label: 'EV professional', baseline: { state: 'CA', householdSize: 2, housingType: 'townhouse', urbanForm: 'suburban', dietType: 'light-meat', carOwnership: 'ev', flightsPerYear: 3, transatlanticFlightsPerYear: 1, domesticFlightsPerYear: 2, monthlySpending: 1800 } },
+  { id: 'us-average', label: 'Average', baseline: { state: 'US', householdSize: 2.3, housingType: 'single-family-small', urbanForm: 'suburban', dietType: 'average', carOwnership: 'gas', flightsPerYear: 2, transatlanticFlightsPerYear: 0, transpacificFlightsPerYear: 0, domesticFlightsPerYear: 2, monthlySpending: 1800 } },
+  { id: 'urban-vegan', label: 'Urban vegan', baseline: { state: 'NY', householdSize: 1, housingType: 'apartment', urbanForm: 'urban', dietType: 'vegan', carOwnership: 'none', flightsPerYear: 1, transatlanticFlightsPerYear: 0, transpacificFlightsPerYear: 0, domesticFlightsPerYear: 1, monthlySpending: 1500 } },
+  { id: 'suburban-family', label: 'Suburban', baseline: { state: 'US', householdSize: 4, housingType: 'single-family-small', urbanForm: 'suburban', dietType: 'average', carOwnership: 'gas', flightsPerYear: 2, transatlanticFlightsPerYear: 0, transpacificFlightsPerYear: 0, domesticFlightsPerYear: 2, monthlySpending: 1500 } },
+  { id: 'rural-truck', label: 'Rural driver', baseline: { state: 'US', householdSize: 2, housingType: 'single-family-large', urbanForm: 'rural', dietType: 'heavy-meat', carOwnership: 'gas', flightsPerYear: 0, transatlanticFlightsPerYear: 0, transpacificFlightsPerYear: 0, domesticFlightsPerYear: 0, monthlySpending: 1000 } },
+  { id: 'frequent-flyer', label: 'Frequent flyer', baseline: { state: 'US', householdSize: 1, housingType: 'apartment', urbanForm: 'urban', dietType: 'average', carOwnership: 'none', flightsPerYear: 8, transatlanticFlightsPerYear: 2, transpacificFlightsPerYear: 0, domesticFlightsPerYear: 6, monthlySpending: 2000 } },
+  { id: 'ev-professional', label: 'EV professional', baseline: { state: 'CA', householdSize: 2, housingType: 'townhouse', urbanForm: 'suburban', dietType: 'light-meat', carOwnership: 'ev', flightsPerYear: 3, transatlanticFlightsPerYear: 1, transpacificFlightsPerYear: 0, domesticFlightsPerYear: 2, monthlySpending: 1800 } },
 ];
 
 export function ImpactChart({
@@ -309,23 +309,27 @@ export function ImpactChart({
                     <div style={{ paddingLeft: '4px', paddingBottom: '4px' }}>
                       {group.category === 'Flights' && (
                         <div style={{ fontSize: '0.65rem', color: MUTED, padding: '2px 8px 6px', lineHeight: 1.4 }}>
-                          The kg savings from transatlantic and domestic flights add up to equal "eliminate all flights."
+                          The kg savings from transatlantic, transpacific, and domestic flights add up to equal "eliminate all flights."
                         </div>
                       )}
                       {group.actions.map(action => {
                         // For "eliminate all flights", auto-check when both types are fully eliminated
                         const transAction = group.actions.find(a => a.name === 'Eliminate one transatlantic flight');
+                        const pacAction = group.actions.find(a => a.name === 'Eliminate one transpacific flight');
                         const domAction = group.actions.find(a => a.name === 'Eliminate one domestic flight');
                         const isAllFlights = action.name === 'Eliminate all flights';
                         let isOn = enabledPersonal.has(action.name);
-                        if (isAllFlights && transAction && domAction) {
+                        if (isAllFlights && transAction && pacAction && domAction) {
                           const transElim = Math.round((actionParamOverrides['Eliminate one transatlantic flight'] ?? 1) * transAction.inlineParam!.defaultVal);
+                          const pacElim = Math.round((actionParamOverrides['Eliminate one transpacific flight'] ?? 1) * pacAction.inlineParam!.defaultVal);
                           const domElim = Math.round((actionParamOverrides['Eliminate one domestic flight'] ?? 1) * domAction.inlineParam!.defaultVal);
                           const allTransEliminated = enabledPersonal.has('Eliminate one transatlantic flight') && transElim >= baseline.transatlanticFlightsPerYear && baseline.transatlanticFlightsPerYear > 0;
+                          const allPacEliminated = enabledPersonal.has('Eliminate one transpacific flight') && pacElim >= baseline.transpacificFlightsPerYear && baseline.transpacificFlightsPerYear > 0;
                           const allDomEliminated = enabledPersonal.has('Eliminate one domestic flight') && domElim >= baseline.domesticFlightsPerYear && baseline.domesticFlightsPerYear > 0;
                           const noTrans = baseline.transatlanticFlightsPerYear === 0;
+                          const noPac = baseline.transpacificFlightsPerYear === 0;
                           const noDom = baseline.domesticFlightsPerYear === 0;
-                          if ((allTransEliminated || noTrans) && (allDomEliminated || noDom) && baseline.flightsPerYear > 0) {
+                          if ((allTransEliminated || noTrans) && (allPacEliminated || noPac) && (allDomEliminated || noDom) && baseline.flightsPerYear > 0) {
                             isOn = true;
                           }
                         }
@@ -337,10 +341,14 @@ export function ImpactChart({
                             const newEnabled = new Set(enabledPersonal);
                             const newOverrides = { ...actionParamOverrides };
                             if (shouldEnable) {
-                              // Enable both and set elimination to max
+                              // Enable all and set elimination to max
                               if (baseline.transatlanticFlightsPerYear > 0) {
                                 newEnabled.add('Eliminate one transatlantic flight');
                                 newOverrides['Eliminate one transatlantic flight'] = baseline.transatlanticFlightsPerYear;
+                              }
+                              if (baseline.transpacificFlightsPerYear > 0) {
+                                newEnabled.add('Eliminate one transpacific flight');
+                                newOverrides['Eliminate one transpacific flight'] = baseline.transpacificFlightsPerYear;
                               }
                               if (baseline.domesticFlightsPerYear > 0) {
                                 newEnabled.add('Eliminate one domestic flight');
@@ -348,6 +356,7 @@ export function ImpactChart({
                               }
                             } else {
                               newEnabled.delete('Eliminate one transatlantic flight');
+                              newEnabled.delete('Eliminate one transpacific flight');
                               newEnabled.delete('Eliminate one domestic flight');
                             }
                             newEnabled.delete('Eliminate all flights'); // never actually in the set
@@ -368,41 +377,49 @@ export function ImpactChart({
                           if (action.name === 'Eliminate one transatlantic flight') {
                             const elimCount = Math.round(clamped);
                             if (elimCount > baseline.transatlanticFlightsPerYear) {
-                              const newTotal = elimCount + baseline.domesticFlightsPerYear;
+                              const newTotal = elimCount + baseline.transpacificFlightsPerYear + baseline.domesticFlightsPerYear;
                               onBaselineChange({ ...baseline, transatlanticFlightsPerYear: elimCount, flightsPerYear: newTotal });
+                              delete newOverrides['Eliminate all flights'];
+                            }
+                          } else if (action.name === 'Eliminate one transpacific flight') {
+                            const elimCount = Math.round(clamped);
+                            if (elimCount > baseline.transpacificFlightsPerYear) {
+                              const newTotal = baseline.transatlanticFlightsPerYear + elimCount + baseline.domesticFlightsPerYear;
+                              onBaselineChange({ ...baseline, transpacificFlightsPerYear: elimCount, flightsPerYear: newTotal });
                               delete newOverrides['Eliminate all flights'];
                             }
                           } else if (action.name === 'Eliminate one domestic flight') {
                             const elimCount = Math.round(clamped);
                             if (elimCount > baseline.domesticFlightsPerYear) {
-                              const newTotal = baseline.transatlanticFlightsPerYear + elimCount;
+                              const newTotal = baseline.transatlanticFlightsPerYear + baseline.transpacificFlightsPerYear + elimCount;
                               onBaselineChange({ ...baseline, domesticFlightsPerYear: elimCount, flightsPerYear: newTotal });
                               delete newOverrides['Eliminate all flights'];
                             }
                           }
 
                           if (isAllFlights) {
-                            // Update baseline — distribute flights between transatlantic and domestic
+                            // Update baseline — distribute flights proportionally
                             const newTotal = Math.max(Math.round(clamped), 0);
                             const oldTrans = baseline.transatlanticFlightsPerYear;
+                            const oldPac = baseline.transpacificFlightsPerYear;
                             const oldDom = baseline.domesticFlightsPerYear;
-                            const oldSum = oldTrans + oldDom;
-                            let newTrans: number, newDom: number;
+                            const oldSum = oldTrans + oldPac + oldDom;
+                            let newTrans: number, newPac: number, newDom: number;
                             if (newTotal <= 0) {
-                              newTrans = 0; newDom = 0;
-                            } else if (newTotal < oldSum) {
+                              newTrans = 0; newPac = 0; newDom = 0;
+                            } else if (oldSum > 0 && newTotal < oldSum) {
                               const scale = newTotal / oldSum;
                               newTrans = Math.floor(oldTrans * scale);
-                              newDom = newTotal - newTrans;
+                              newPac = Math.floor(oldPac * scale);
+                              newDom = newTotal - newTrans - newPac;
                             } else {
                               const extra = newTotal - oldSum;
-                              const extraTrans = Math.floor(Math.random() * (extra + 1));
-                              newTrans = oldTrans + extraTrans;
-                              newDom = oldDom + (extra - extraTrans);
+                              newTrans = oldTrans; newPac = oldPac; newDom = oldDom + extra;
                             }
-                            onBaselineChange({ ...baseline, flightsPerYear: newTotal, transatlanticFlightsPerYear: newTrans, domesticFlightsPerYear: newDom });
+                            onBaselineChange({ ...baseline, flightsPerYear: newTotal, transatlanticFlightsPerYear: newTrans, transpacificFlightsPerYear: newPac, domesticFlightsPerYear: newDom });
                             delete newOverrides['Eliminate all flights'];
                             delete newOverrides['Eliminate one transatlantic flight'];
+                            delete newOverrides['Eliminate one transpacific flight'];
                             delete newOverrides['Eliminate one domestic flight'];
                           }
                           onActionParamOverridesChange(newOverrides);
@@ -412,16 +429,23 @@ export function ImpactChart({
                           const newCount = Math.max(Math.round(v), 0);
                           const newOverrides = { ...actionParamOverrides };
                           if (action.name === 'Eliminate one transatlantic flight') {
-                            const newTotal = newCount + baseline.domesticFlightsPerYear;
+                            const newTotal = newCount + baseline.transpacificFlightsPerYear + baseline.domesticFlightsPerYear;
                             onBaselineChange({ ...baseline, transatlanticFlightsPerYear: newCount, flightsPerYear: newTotal });
-                            // Cap elimination count to new total for this type
+                            const currentElim = Math.round((actionParamOverrides[action.name] ?? 1) * action.inlineParam!.defaultVal);
+                            if (currentElim > newCount) {
+                              newOverrides[action.name] = newCount / action.inlineParam!.defaultVal;
+                            }
+                            delete newOverrides['Eliminate all flights'];
+                          } else if (action.name === 'Eliminate one transpacific flight') {
+                            const newTotal = baseline.transatlanticFlightsPerYear + newCount + baseline.domesticFlightsPerYear;
+                            onBaselineChange({ ...baseline, transpacificFlightsPerYear: newCount, flightsPerYear: newTotal });
                             const currentElim = Math.round((actionParamOverrides[action.name] ?? 1) * action.inlineParam!.defaultVal);
                             if (currentElim > newCount) {
                               newOverrides[action.name] = newCount / action.inlineParam!.defaultVal;
                             }
                             delete newOverrides['Eliminate all flights'];
                           } else if (action.name === 'Eliminate one domestic flight') {
-                            const newTotal = baseline.transatlanticFlightsPerYear + newCount;
+                            const newTotal = baseline.transatlanticFlightsPerYear + baseline.transpacificFlightsPerYear + newCount;
                             onBaselineChange({ ...baseline, domesticFlightsPerYear: newCount, flightsPerYear: newTotal });
                             const currentElim = Math.round((actionParamOverrides[action.name] ?? 1) * action.inlineParam!.defaultVal);
                             if (currentElim > newCount) {

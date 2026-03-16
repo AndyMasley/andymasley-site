@@ -172,7 +172,7 @@ export function Methodology() {
               <Src href="https://www.icao.int/environmental-protection/CarbonOffset/Pages/default.aspx">ICAO</Src>, <Src href="https://www.sciencedirect.com/science/article/pii/S1352231020305689">Lee et al. 2021</Src>
             </p>
             <p style={{ marginTop: '8px' }}>
-              <strong>Domestic round-trip:</strong> <Val>2,200 mi</Val> · <strong>Transatlantic:</strong> <Val>6,900 mi</Val> (NYC–London)<br />
+              <strong>Domestic round-trip:</strong> <Val>2,200 mi</Val> · <strong>Transatlantic:</strong> <Val>6,900 mi</Val> (NYC–London) · <strong>Transpacific:</strong> <Val>12,400 mi</Val> (LAX–Tokyo)<br />
               <Src href="https://www.bts.gov/topics/airlines-and-airports">BTS T-100</Src>
             </p>
             <p style={{ marginTop: '8px' }}>

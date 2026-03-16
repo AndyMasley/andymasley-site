@@ -54,22 +54,24 @@ export function Calculator() {
   // Clamp flight elimination overrides when baseline flight counts drop
   useEffect(() => {
     const transKey = 'Eliminate one transatlantic flight';
+    const pacKey = 'Eliminate one transpacific flight';
     const domKey = 'Eliminate one domestic flight';
-    const transOverride = actionParamOverrides[transKey];
-    const domOverride = actionParamOverrides[domKey];
     let changed = false;
     const next = { ...actionParamOverrides };
-    // override ratio × defaultVal(1) = elimination count; cap to baseline
-    if (transOverride !== undefined && Math.round(transOverride) > baseline.transatlanticFlightsPerYear) {
+    if (next[transKey] !== undefined && Math.round(next[transKey]) > baseline.transatlanticFlightsPerYear) {
       next[transKey] = baseline.transatlanticFlightsPerYear;
       changed = true;
     }
-    if (domOverride !== undefined && Math.round(domOverride) > baseline.domesticFlightsPerYear) {
+    if (next[pacKey] !== undefined && Math.round(next[pacKey]) > baseline.transpacificFlightsPerYear) {
+      next[pacKey] = baseline.transpacificFlightsPerYear;
+      changed = true;
+    }
+    if (next[domKey] !== undefined && Math.round(next[domKey]) > baseline.domesticFlightsPerYear) {
       next[domKey] = baseline.domesticFlightsPerYear;
       changed = true;
     }
     if (changed) setActionParamOverrides(next);
-  }, [baseline.transatlanticFlightsPerYear, baseline.domesticFlightsPerYear]);
+  }, [baseline.transatlanticFlightsPerYear, baseline.transpacificFlightsPerYear, baseline.domesticFlightsPerYear]);
 
   const footprint = useMemo(() => computeFootprint(baseline, overrides), [baseline, overrides]);
   const allPersonalActions = useMemo(() => computePersonalActions(baseline, footprint), [baseline, footprint]);
@@ -111,7 +113,7 @@ export function Calculator() {
     params.set('ht', baseline.housingType); params.set('ms', String(baseline.monthlySpending));
     params.set('uf', baseline.urbanForm); params.set('dt', baseline.dietType);
     params.set('co', baseline.carOwnership); params.set('fp', String(baseline.flightsPerYear));
-    params.set('tf', String(baseline.transatlanticFlightsPerYear)); params.set('df', String(baseline.domesticFlightsPerYear));
+    params.set('tf', String(baseline.transatlanticFlightsPerYear)); params.set('pf', String(baseline.transpacificFlightsPerYear)); params.set('df', String(baseline.domesticFlightsPerYear));
     const url = `${window.location.origin}${window.location.pathname}?${params.toString()}`;
     navigator.clipboard.writeText(url).then(() => { setCopyFeedback(true); setTimeout(() => setCopyFeedback(false), 2000); });
   }, [baseline]);

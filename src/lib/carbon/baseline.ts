@@ -51,8 +51,10 @@ const FLIGHT_KG_PER_MILE_ECONOMY = 0.255;
 const FLIGHT_KG_PER_MILE_BUSINESS = 0.255 * 2.5;
 const FLIGHT_KG_PER_MILE_FIRST = 0.255 * 4;
 
-// Average domestic round-trip distance: ~2,200 miles
+// Average round-trip distances
 const AVG_DOMESTIC_FLIGHT_MILES = 2200;
+const AVG_TRANSATLANTIC_FLIGHT_MILES = 6900;
+const AVG_TRANSPACIFIC_FLIGHT_MILES = 12400; // e.g. LAX–Tokyo
 
 // ---------------------------------------------------------------------------
 // Housing baselines (kWh electricity + therms gas per year, per household)
@@ -225,15 +227,27 @@ function computeFlights(
     };
   }
 
-  const flightKg = baseline.flightsPerYear * AVG_DOMESTIC_FLIGHT_MILES * FLIGHT_KG_PER_MILE_ECONOMY;
+  const transKg = (baseline.transatlanticFlightsPerYear ?? 0) * AVG_TRANSATLANTIC_FLIGHT_MILES * FLIGHT_KG_PER_MILE_ECONOMY;
+  const pacKg = (baseline.transpacificFlightsPerYear ?? 0) * AVG_TRANSPACIFIC_FLIGHT_MILES * FLIGHT_KG_PER_MILE_ECONOMY;
+  const domKg = (baseline.domesticFlightsPerYear ?? baseline.flightsPerYear) * AVG_DOMESTIC_FLIGHT_MILES * FLIGHT_KG_PER_MILE_ECONOMY;
+  const flightKg = transKg + pacKg + domKg;
+  const lineItems: LineItem[] = [];
+  if (baseline.transatlanticFlightsPerYear > 0) {
+    lineItems.push({ label: `${baseline.transatlanticFlightsPerYear} transatlantic flight${baseline.transatlanticFlightsPerYear !== 1 ? 's' : ''}`, kgCO2ePerYear: Math.round(transKg), source: 'ICAO Carbon Calculator', sourceUpdated: '2024-01', isDefault: true });
+  }
+  if ((baseline.transpacificFlightsPerYear ?? 0) > 0) {
+    lineItems.push({ label: `${baseline.transpacificFlightsPerYear} transpacific flight${baseline.transpacificFlightsPerYear !== 1 ? 's' : ''}`, kgCO2ePerYear: Math.round(pacKg), source: 'ICAO Carbon Calculator', sourceUpdated: '2024-01', isDefault: true });
+  }
+  if ((baseline.domesticFlightsPerYear ?? baseline.flightsPerYear) > 0) {
+    const domCount = baseline.domesticFlightsPerYear ?? baseline.flightsPerYear;
+    lineItems.push({ label: `${domCount} domestic flight${domCount !== 1 ? 's' : ''}`, kgCO2ePerYear: Math.round(domKg), source: 'ICAO Carbon Calculator', sourceUpdated: '2024-01', isDefault: true });
+  }
   return {
     bucketId: 'flights',
     kgCO2ePerYear: Math.round(flightKg),
     confidence: baseline.flightsPerYear === 0 ? 'exact' : 'estimated',
     nextUpgrade: baseline.flightsPerYear > 0 ? 'Enter specific flight routes for accuracy' : null,
-    lineItems: [
-      { label: `${baseline.flightsPerYear} round-trip flight${baseline.flightsPerYear !== 1 ? 's' : ''} (estimated)`, kgCO2ePerYear: Math.round(flightKg), source: 'ICAO Carbon Calculator', sourceUpdated: '2024-01', isDefault: true },
-    ],
+    lineItems,
   };
 }
 
@@ -315,6 +329,9 @@ function sanitizeBaseline(raw: BaselineInputs): BaselineInputs {
     ...raw,
     householdSize: sanitizeNumber(raw.householdSize, DEFAULT_BASELINE.householdSize, 1, 20),
     flightsPerYear: sanitizeNumber(raw.flightsPerYear, DEFAULT_BASELINE.flightsPerYear, 0, 200),
+    transatlanticFlightsPerYear: sanitizeNumber(raw.transatlanticFlightsPerYear ?? 0, 0, 0, 200),
+    transpacificFlightsPerYear: sanitizeNumber(raw.transpacificFlightsPerYear ?? 0, 0, 0, 200),
+    domesticFlightsPerYear: sanitizeNumber(raw.domesticFlightsPerYear ?? raw.flightsPerYear, DEFAULT_BASELINE.domesticFlightsPerYear, 0, 200),
     monthlySpending: sanitizeNumber(raw.monthlySpending, DEFAULT_BASELINE.monthlySpending, 0, 50000),
     state: raw.state || DEFAULT_BASELINE.state,
     housingType: HOUSING_ENERGY[raw.housingType] ? raw.housingType : DEFAULT_BASELINE.housingType,

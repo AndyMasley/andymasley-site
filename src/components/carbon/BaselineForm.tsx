@@ -206,15 +206,18 @@ export function BaselineForm({ value, onChange }: BaselineFormProps) {
             const newTotal = Math.round(n);
             const oldTotal = value.flightsPerYear;
             const oldTrans = value.transatlanticFlightsPerYear ?? 0;
+            const oldPac = value.transpacificFlightsPerYear ?? 0;
             const oldDom = value.domesticFlightsPerYear ?? oldTotal;
-            let newTrans: number, newDom: number;
+            let newTrans: number, newPac: number, newDom: number;
             if (oldTotal > 0 && newTotal > 0) {
-              newTrans = Math.round(oldTrans * newTotal / oldTotal);
-              newDom = newTotal - newTrans;
+              const scale = newTotal / oldTotal;
+              newTrans = Math.round(oldTrans * scale);
+              newPac = Math.round(oldPac * scale);
+              newDom = Math.max(newTotal - newTrans - newPac, 0);
             } else {
-              newTrans = 0; newDom = newTotal;
+              newTrans = 0; newPac = 0; newDom = newTotal;
             }
-            onChange({ ...value, flightsPerYear: newTotal, transatlanticFlightsPerYear: newTrans, domesticFlightsPerYear: newDom });
+            onChange({ ...value, flightsPerYear: newTotal, transatlanticFlightsPerYear: newTrans, transpacificFlightsPerYear: newPac, domesticFlightsPerYear: newDom });
           }}
         />
       </div>
