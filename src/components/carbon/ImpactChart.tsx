@@ -266,11 +266,6 @@ export function ImpactChart({
                 </div>
               );
             })}
-            {!hasPersonal && (
-              <div style={{ fontSize: '0.75rem', color: MUTED, fontStyle: 'italic', textAlign: 'center', padding: '1rem 0', opacity: 0.6 }}>
-                Select actions to see their impact
-              </div>
-            )}
             {hasPersonal && (
               <div style={{ fontSize: '0.75rem', color: MUTED, marginTop: '0.75rem', lineHeight: 1.4, paddingTop: '0.5rem', borderTop: `1px solid ${DIVIDER}` }}>
                 Cut <strong style={{ color: GREEN }}>{totalSaved.toLocaleString()} kg</strong> ({Math.round(totalSaved / footprintKg * 100)}%).
@@ -305,7 +300,7 @@ export function ImpactChart({
                     </span>
                     <div style={{ textAlign: 'right', flexShrink: 0 }}>
                       <div style={{ fontWeight: 700, color: isOn ? GREEN : MUTED, fontVariantNumeric: 'tabular-nums', fontSize: '0.72rem', whiteSpace: 'nowrap' }}>
-                        {sigFigs(central)}<span style={{ fontSize: '0.55rem', fontWeight: 400, marginLeft: '2px' }}>{result.displayUnit}</span>
+                        {sigFigs(central)} <span style={{ fontSize: '0.6em', fontWeight: 400 }}>kg</span><span style={{ fontSize: '0.55rem', fontWeight: 400, marginLeft: '2px' }}>{result.displayUnit}</span>
                       </div>
                     </div>
                   </button>
@@ -335,10 +330,6 @@ export function ImpactChart({
               );
             })}
             {!hasSystemic && (
-              <div style={{ fontSize: '0.75rem', color: MUTED, fontStyle: 'italic', textAlign: 'center', padding: '1rem 0', opacity: 0.6 }}>
-                Select actions to see their impact
-              </div>
-            )}
             {hasSystemic && (
               <div style={{ marginTop: '0.75rem', padding: '8px 10px', background: GREEN_BG, borderLeft: `3px solid ${GREEN}`, borderRadius: '0 4px 4px 0', fontSize: '0.75rem', lineHeight: 1.4 }}>
                 <strong style={{ color: GREEN }}>{sigFigs(totalSystemic)} kg</strong> prevented
