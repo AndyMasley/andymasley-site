@@ -70,7 +70,7 @@ export function ComparingCuts({ personalActions, enabledPersonal, actionParamOve
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
         {items.map(item => {
-          const pct = Math.max((item.kg / maxKg) * 100, 1);
+          const pct = (item.kg / maxKg) * 100;
           return (
             <div key={`${item.type}-${item.name}`} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
               <span style={{
@@ -93,7 +93,7 @@ export function ComparingCuts({ personalActions, enabledPersonal, actionParamOve
                   background: item.color,
                   borderRadius: '3px',
                   transition: 'width 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
-                  minWidth: pct > 0.5 ? '1px' : '0',
+                  minWidth: '1px',
                 }} />
                 <span style={{
                   fontSize: '0.68rem',
