@@ -185,6 +185,22 @@ function formatBylineDate(dateStr: string): string {
 
   <div class="divider"><div class="divider-diamond"></div></div>
 
+  <!-- PAGES SECTION -->
+  <div class="top-dropdown">
+    <button class="top-toggle" aria-expanded="true" data-section="pages">
+      <span class="top-arrow">&#9660;</span>
+      <span class="top-title">Pages</span>
+    </button>
+    <div class="top-content" data-content="pages">
+      <ul class="pages-list">
+        <li>
+          <a href="/pages/chatgpt-environment-cheat-sheet">A cheat sheet for conversations about ChatGPT's environmental impact</a>
+          <span class="pages-desc">Navigable reference version with sidebar table of contents</span>
+        </li>
+      </ul>
+    </div>
+  </div>
+
   <!-- BLOG DROPDOWN -->
   <div class="top-dropdown">
     <button class="top-toggle" aria-expanded="true" data-section="blog">
@@ -360,6 +376,28 @@ function formatBylineDate(dateStr: string): string {
   .top-content {
     padding-left: 22px;
     padding-bottom: 16px;
+  }
+
+  /* Pages list */
+  .pages-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  .pages-list li {
+    margin-bottom: 8px;
+  }
+  .pages-list a {
+    color: var(--accent);
+    text-decoration: underline;
+    text-underline-offset: var(--underline-offset);
+    font-size: 0.9rem;
+  }
+  .pages-desc {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--dim);
+    margin-top: 2px;
   }
 
   /* Section headers */
