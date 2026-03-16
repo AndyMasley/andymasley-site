@@ -668,25 +668,10 @@ function SystemicIntro() {
   const [open, setOpen] = useState(false);
   return (
     <div style={{ marginBottom: '0.5rem' }}>
-      <div style={{ fontSize: '0.68rem', color: MUTED, lineHeight: 1.4, marginBottom: '4px' }}>
-        Carbon saved <em>per person</em> = total impact × probability ÷ coalition size.{' '}
-        <button
-          onClick={() => setOpen(!open)}
-          style={{
-            padding: '0', border: 'none', background: 'none',
-            cursor: 'pointer', fontFamily: 'inherit', fontSize: '0.68rem',
-            fontWeight: 500, color: 'var(--accent, #8B2E2E)', textDecoration: 'underline',
-          }}
-        >
-          {open ? 'Less' : 'More'}
-        </button>
+      <div style={{ fontSize: '0.62rem', color: MUTED, lineHeight: 1.45, marginBottom: '4px' }}>
+        Each number is how much carbon would be saved <em>per person working on the problem</em>, calculated as the amount of carbon saved if the action succeeds × the probability of success ÷ the number of people working together on it. All numbers explained in <a href="#methodology-systemic" style={{ color: 'var(--accent, #8B2E2E)' }} onClick={e => e.stopPropagation()}>methodology</a> below.
       </div>
-      {open && (
-        <div style={{ fontSize: '0.65rem', color: MUTED, lineHeight: 1.45, padding: '6px 0 6px 10px', borderLeft: `1px solid ${DIVIDER}`, marginBottom: '4px' }}>
-          Each number is how much carbon would be saved <em>per person working on the problem</em>, calculated as the amount of carbon saved if the action succeeds × the probability of success ÷ the number of people working together on it. All numbers explained in <a href="#methodology-systemic" style={{ color: 'var(--accent, #8B2E2E)' }} onClick={e => e.stopPropagation()}>methodology</a> below.
-          <ExampleDropdown />
-        </div>
-      )}
+      <ExampleDropdown />
     </div>
   );
 }
