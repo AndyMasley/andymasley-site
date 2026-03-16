@@ -329,7 +329,6 @@ export function ImpactChart({
                 </div>
               );
             })}
-            {!hasSystemic && (
             {hasSystemic && (
               <div style={{ marginTop: '0.75rem', padding: '8px 10px', background: GREEN_BG, borderLeft: `3px solid ${GREEN}`, borderRadius: '0 4px 4px 0', fontSize: '0.75rem', lineHeight: 1.4 }}>
                 <strong style={{ color: GREEN }}>{sigFigs(totalSystemic)} kg</strong> prevented
