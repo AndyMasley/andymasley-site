@@ -234,9 +234,7 @@ export function ImpactChart({
                 <button key={result.case.name} onClick={() => toggleSystemic(result.case.name)} className="cf-toggle-row" data-on={isOn} aria-pressed={isOn}>
                   <Dot on={isOn} />
                   <span style={{ flex: 1, fontWeight: isOn ? 600 : 400, fontSize: '0.76rem', lineHeight: 1.25, textAlign: 'left' }}>
-                    {result.case.name.includes('effective climate charity') ? (
-                      <>Donate $200 to <a href="https://www.founderspledge.com/recommendations/topic/climate-change" target="_blank" rel="noopener noreferrer" style={{ color: isOn ? GREEN : ACCENT, textDecoration: 'underline', textUnderlineOffset: '2px' }} onClick={e => e.stopPropagation()}>effective climate charity</a></>
-                    ) : result.case.name}
+                    {result.case.name}
                   </span>
                   <div style={{ textAlign: 'right', flexShrink: 0 }}>
                     <div style={{ fontWeight: 700, color: isOn ? GREEN : MUTED, fontVariantNumeric: 'tabular-nums', fontSize: '0.72rem', whiteSpace: 'nowrap' }}>

@@ -676,20 +676,6 @@ export function Methodology() {
               <li>Sources: <Src href="https://emp.lbl.gov/queues">LBNL Queued Up report</Src>, <Src href="https://www.ferc.gov/electric-transmission">FERC transmission planning</Src></li>
             </ul>
 
-            <p style={{ marginTop: '16px', fontWeight: 700, fontSize: '0.85rem', color: 'var(--text, #1A1A18)' }}>7. Donate to effective climate charity</p>
-            <ul>
-              <li>This case is modeled differently from the advocacy cases — it scales linearly with donation amount and the uncertainty is in cost-effectiveness, not probability of success</li>
-              <li>Formula: <code>expectedKg = donationAmount ÷ costPerTonne × 1,000</code></li>
-              <li>Central cost-effectiveness: <code>$10 per tonne CO₂e</code> averted. At $200 donation = 20 tonnes = <code>20,000 kg</code></li>
-              <li>Pessimistic ($50/tonne): $200 = 4 tonnes = <code>4,000 kg</code></li>
-              <li>Optimistic ($1/tonne — Founders Pledge's most optimistic CATF estimate): $200 = 200 tonnes = <code>200,000 kg</code></li>
-              <li>The donation amount is editable in the advanced editor — doubling the donation doubles the expected impact</li>
-              <li><strong>Important:</strong> The $1/tonne CATF estimate from Founders Pledge is their most optimistic scenario for their single best recommendation. Most effective climate charities operate at $5-$50/tonne. Our central of $10/tonne reflects a realistic portfolio, not the theoretical optimum.</li>
-              <li>Source: <Src href="https://www.founderspledge.com/recommendations/topic/climate-change">Founders Pledge — Climate Giving Recommendations</Src> (updated 2025)</li>
-              <li>Latest research: <Src href="https://www.founderspledge.com/research/climate2025">Robust to Risk — Climate Philanthropy in 2025</Src></li>
-              <li>Current top recommendations include: <Src href="https://www.catf.us/">Clean Air Task Force (CATF)</Src>, <Src href="https://www.deployus.org/">DEPLOY/US</Src>, <Src href="https://www.energyforgrowth.org/">Energy for Growth Hub</Src>, and the <Src href="https://www.founderspledge.com/programs/climate-fund/about">Founders Pledge Climate Fund</Src></li>
-            </ul>
-
             <p style={{ marginTop: '16px' }}>
               <strong>Important caveats:</strong>
             </p>

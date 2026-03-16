@@ -100,24 +100,6 @@ export const LEVERAGE_CASES: LeverageCase[] = [
     attributionFraction: 1 / 20000,
     timeHorizonYears: 15,
   },
-  {
-    name: 'Donate $200 to effective climate charity',
-    description: 'Founders Pledge top picks (CATF, Carbon180). Realistic central estimate: ~$10/tonne CO₂e averted.',
-    // Founders Pledge estimates CATF at $0.10-$10/tonne. But that's their MOST
-    // optimistic pick. A realistic portfolio central is ~$10/tonne.
-    // $200 at $10/tonne = 20 tonnes = 20,000 kg.
-    // $200 at $50/tonne (pessimistic) = 4 tonnes = 4,000 kg.
-    // $200 at $1/tonne (CATF optimistic) = 200 tonnes = 200,000 kg.
-    // We model this through the probability field as cost-effectiveness uncertainty.
-    probabilityOfSuccess: { low: 0.20, central: 1.0, high: 10.0 },
-    coalitionSize: 1,
-    durationYears: 1,
-    annualLoadAffectedMWh: 53.3, // ~20,000 kg ÷ 375 kg/MWh (central = $10/tonne, approximate)
-    counterfactualGenerationMix: 'Policy advocacy portfolio (0.375 kg/kWh equivalent)',
-    attributionFraction: 1.0,
-    timeHorizonYears: 1,
-    isRecurring: true,
-  },
 ];
 
 // ---------------------------------------------------------------------------
