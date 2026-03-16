@@ -257,7 +257,7 @@ export function computePersonalActions(baseline: BaselineInputs, footprint: Foot
       category: 'Digital',
       applicable: true,
       note: 'HD streaming uses ~0.1 kWh per hour including data centers',
-      inlineParam: { before: 'Cut ', defaultVal: 2, after: ' hrs/day of streaming', max: 24 },
+      inlineParam: { before: 'Cut ', defaultVal: 2, after: ' hrs/day of video streaming', max: 24 },
     },
 
     {
