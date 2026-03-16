@@ -266,7 +266,7 @@ export function computePersonalActions(baseline: BaselineInputs, footprint: Foot
       category: 'Digital',
       applicable: true,
       note: '~0.3 g CO₂ per short email. 10 fewer/day ≈ 1 kg/yr.',
-      inlineParam: { before: 'Send ', defaultVal: 10, after: ' fewer emails/day', max: 200 },
+      inlineParam: { before: 'Send ', defaultVal: 10, after: ' fewer emails/day', max: 100000 },
     },
     {
       name: 'Do fewer Google searches per day',
@@ -274,7 +274,7 @@ export function computePersonalActions(baseline: BaselineInputs, footprint: Foot
       category: 'Digital',
       applicable: true,
       note: '~0.2 g CO₂ per search. Even 10 fewer/day saves < 1 kg/yr.',
-      inlineParam: { before: 'Do ', defaultVal: 10, after: ' fewer searches/day', max: 200 },
+      inlineParam: { before: 'Do ', defaultVal: 10, after: ' fewer searches/day', max: 100000 },
     },
     {
       name: 'Reduce social media by 1 hr/day',
