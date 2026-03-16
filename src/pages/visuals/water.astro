@@ -247,37 +247,35 @@ const cropFlat = defaultCrop.map(d => ({ idx: idx++, ...d,
   @media (max-width: 500px) { .w-panel { grid-template-columns: 1fr; } }
 </style>
 
-<script>
-  const RATES: Record<string, number> = { corn: 650_000, alfalfa: 1_500_000, golf: 1_300_000 };
-  const CROP_LABELS: Record<string, string> = { corn: 'corn', alfalfa: 'alfalfa', golf: 'golf course' };
-  const cropDataAll = (window as any).__cropDataAll;
-  const cropStartIdx: number = (window as any).__cropStartIdx;
+<script is:inline>
+  const RATES = { corn: 650000, alfalfa: 1500000, golf: 1300000 };
+  const CROP_LABELS = { corn: 'corn', alfalfa: 'alfalfa', golf: 'golf course' };
+  const cropDataAll = window.__cropDataAll;
+  const cropStartIdx = window.__cropStartIdx;
   let activeUnit = 'corn';
 
-  function fA(a: number) { return a >= 1e6 ? (a/1e6).toFixed(1)+'M acres' : a >= 1e3 ? Math.round(a).toLocaleString()+' acres' : a.toFixed(0)+' acres'; }
-  function fG(g: number) { return g >= 1e12 ? (g/1e12).toFixed(1)+'T gal/yr' : g >= 1e9 ? (g/1e9).toFixed(1)+'B gal/yr' : (g/1e6).toFixed(0)+'M gal/yr'; }
+  function fA(a) { return a >= 1e6 ? (a/1e6).toFixed(1)+'M acres' : a >= 1e3 ? Math.round(a).toLocaleString()+' acres' : a.toFixed(0)+' acres'; }
+  function fG(g) { return g >= 1e12 ? (g/1e12).toFixed(1)+'T gal/yr' : g >= 1e9 ? (g/1e9).toFixed(1)+'B gal/yr' : (g/1e6).toFixed(0)+'M gal/yr'; }
 
-  interface Item { idx: number; acres: number; on: boolean; color: string; name: string; sub: string; gallons: number; fixedAcres: number; baseName: string; elecOn: boolean; galBase: number; galElec: number; isCrop: boolean; }
-
-  const items: Item[] = [];
+  const items = [];
 
   // Init non-crop items from server-rendered DOM
-  document.querySelectorAll<HTMLElement>('.w-item').forEach(row => {
-    const idx = parseInt(row.dataset.idx!);
-    const dot = row.querySelector<HTMLElement>('.w-item-dot')!;
-    const baseName = row.querySelector('.w-item-name')!.textContent!;
-    const galBase = parseFloat(row.dataset.galBase || '0');
-    const galElec = parseFloat(row.dataset.galElec || '0');
-    const fixedAcres = parseFloat(row.dataset.fixedAcres || '0');
+  document.querySelectorAll('.w-item').forEach(row => {
+    const idx = parseInt(row.dataset.idx);
+    const dot = row.querySelector('.w-item-dot');
+    const baseName = row.querySelector('.w-item-name').textContent;
+    const galBase = parseFloat(row.dataset.galBase || 0);
+    const galElec = parseFloat(row.dataset.galElec || 0);
+    const fixedAcres = parseFloat(row.dataset.fixedAcres || 0);
     const isFixed = fixedAcres > 0;
     const isCrop = idx >= cropStartIdx;
 
-    let acres: number, gallons: number;
+    let acres, gallons;
     if (isFixed) { acres = fixedAcres; gallons = 0; }
     else if (isCrop) { acres = 0; gallons = 0; } // will be set by rebuildCropItems
     else { gallons = galBase; acres = gallons / RATES[activeUnit]; }
 
-    items[idx] = { idx, acres, on: row.dataset.on === '1', color: dot.style.backgroundColor, name: baseName, sub: row.querySelector('.w-item-val')!.textContent!, gallons, fixedAcres, baseName, elecOn: false, galBase, galElec, isCrop };
+    items[idx] = { idx, acres, on: row.dataset.on === '1', color: dot.style.backgroundColor, name: baseName, sub: row.querySelector('.w-item-val').textContent, gallons, fixedAcres, baseName, elecOn: false, galBase, galElec, isCrop };
     row.dataset.baseName = baseName;
 
     if (!isCrop) {
@@ -289,10 +287,10 @@ const cropFlat = defaultCrop.map(d => ({ idx: idx++, ...d,
   rebuildCropItems();
 
   // Sub-checkboxes
-  document.querySelectorAll<HTMLElement>('.w-sub').forEach(sub => {
+  document.querySelectorAll('.w-sub').forEach(sub => {
     sub.dataset.checked = '0';
-    const parentIdx = parseInt(sub.dataset.parentIdx!);
-    const parentRow = document.querySelector<HTMLElement>(`.w-item[data-idx="${parentIdx}"]`)!;
+    const parentIdx = parseInt(sub.dataset.parentIdx);
+    const parentRow = document.querySelector(`.w-item[data-idx="${parentIdx}"]`);
 
     sub.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -306,7 +304,7 @@ const cropFlat = defaultCrop.map(d => ({ idx: idx++, ...d,
       it.name = nowChecked ? it.baseName + ' + electricity' : it.baseName;
       it.acres = it.gallons / RATES[activeUnit];
       it.sub = fA(it.acres) + ' · ' + fG(it.gallons);
-      const valEl = parentRow.querySelector<HTMLElement>('.w-item-val');
+      const valEl = parentRow.querySelector('.w-item-val');
       if (valEl) valEl.textContent = it.sub;
       render();
     });
@@ -328,7 +326,7 @@ const cropFlat = defaultCrop.map(d => ({ idx: idx++, ...d,
 
     cropList.innerHTML = '';
 
-    data.forEach((d: any, j: number) => {
+    data.forEach((d, j) => {
       const idx = cropStartIdx + j;
       const displayName = d.name === 'All US irrigated' ? `All US irrigated ${label}` : `${d.name} ${label}`;
       const gallons = d.acres * rate;
@@ -348,10 +346,10 @@ const cropFlat = defaultCrop.map(d => ({ idx: idx++, ...d,
   }
 
   // Unit selector
-  const unitBtns = document.querySelectorAll<HTMLElement>('.w-unit-btn');
+  const unitBtns = document.querySelectorAll('.w-unit-btn');
   unitBtns.forEach(btn => {
     btn.addEventListener('click', () => {
-      const unit = btn.dataset.unit!;
+      const unit = btn.dataset.unit;
       if (unit === activeUnit) return;
       activeUnit = unit;
       unitBtns.forEach(b => b.dataset.active = b.dataset.unit === unit ? '1' : '0');
@@ -364,8 +362,8 @@ const cropFlat = defaultCrop.map(d => ({ idx: idx++, ...d,
         if (!it || it.isCrop || it.fixedAcres > 0) return;
         it.acres = it.gallons / RATES[activeUnit];
         it.sub = fA(it.acres) + ' · ' + fG(it.gallons);
-        const row = document.querySelector<HTMLElement>(`.w-item[data-idx="${i}"]`);
-        const valEl = row?.querySelector<HTMLElement>('.w-item-val');
+        const row = document.querySelector(`.w-item[data-idx="${i}"]`);
+        const valEl = row?.querySelector('.w-item-val');
         if (valEl) valEl.textContent = it.sub;
       });
 
@@ -378,7 +376,7 @@ const cropFlat = defaultCrop.map(d => ({ idx: idx++, ...d,
   const svg = document.getElementById('svg')!;
   const cur = new Map<number, number>();
   const tgt = new Map<number, number>();
-  let raf: number | null = null;
+  let raf = null;
 
   function render() {
     const W = chart.clientWidth, H = chart.clientHeight;
@@ -406,15 +404,15 @@ const cropFlat = defaultCrop.map(d => ({ idx: idx++, ...d,
     raf = moving ? requestAnimationFrame(step) : null;
   }
 
-  function draw(W: number, H: number, pad: number) {
-    const vis: { idx: number; s: number }[] = [];
+  function draw(W, H, pad) {
+    const vis = [];
     cur.forEach((s, i) => { if (s > 0.5) vis.push({ idx: i, s }); });
     vis.sort((a, b) => b.s - a.s);
 
     svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
     if (!vis.length) { svg.innerHTML = `<text x="${W/2}" y="${H/2}" text-anchor="middle" font-family="var(--font-body)" font-size="13" fill="var(--dim)">Select items to compare</text>`; return; }
 
-    const ox = pad, oy = H - pad, p: string[] = [];
+    const ox = pad, oy = H - pad, p = [];
 
     vis.forEach(v => {
       const it = items[v.idx], x = ox, y = oy - v.s;
@@ -456,6 +454,6 @@ const cropFlat = defaultCrop.map(d => ({ idx: idx++, ...d,
   // Wait for layout before first render
   requestAnimationFrame(() => { requestAnimationFrame(() => { render(); }); });
 
-  let rt: number;
+  let rt;
   new ResizeObserver(() => { clearTimeout(rt); rt = window.setTimeout(() => { cur.clear(); render(); }, 60); }).observe(chart);
 </script>
