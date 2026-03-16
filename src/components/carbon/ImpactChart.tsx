@@ -232,17 +232,19 @@ export function ImpactChart({
                 const mult = actionParamOverrides[a.name] ?? 1;
                 return s + Math.round(a.savingsKg * mult);
               }, 0);
-              // Compute realistic max: for exclusive groups, only count the best action
+              // Compute realistic max: respect exclusive groups + user's inline param overrides
               const maxSavings = (() => {
                 const eligible = group.actions.filter(a => !a.excludeFromTotal);
                 const exclusiveGroups = new Map<string, number>();
                 let total = 0;
                 for (const a of eligible) {
+                  const mult = actionParamOverrides[a.name] ?? 1;
+                  const kg = Math.round(a.savingsKg * mult);
                   if (a.exclusiveGroup) {
                     const best = exclusiveGroups.get(a.exclusiveGroup) ?? 0;
-                    exclusiveGroups.set(a.exclusiveGroup, Math.max(best, a.savingsKg));
+                    exclusiveGroups.set(a.exclusiveGroup, Math.max(best, kg));
                   } else {
-                    total += a.savingsKg;
+                    total += kg;
                   }
                 }
                 for (const best of exclusiveGroups.values()) total += best;
