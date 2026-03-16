@@ -88,12 +88,6 @@ function Li({ children }: { children: React.ReactNode }) {
   );
 }
 
-const SECTIONS = [
-  'Home Energy', 'Ground Transport', 'Flights', 'Food',
-  'Goods & Services', 'Shared Public Systems', 'Digital',
-  'Systemic Actions', 'Reference Lines', 'Boundary',
-];
-
 export function Methodology() {
   return (
     <div style={{ marginTop: '3rem', paddingTop: '2rem', borderTop: `1px solid ${DIVIDER}` }}>
@@ -102,18 +96,6 @@ export function Methodology() {
         Every number in this calculator is derived from publicly available data. Click a section to see exact values, formulas, and sources.
       </p>
 
-      {/* Table of contents */}
-      <nav style={{ display: 'flex', flexWrap: 'wrap', gap: '4px 12px', marginBottom: '1.25rem' }}>
-        {SECTIONS.map(s => (
-          <a
-            key={s}
-            href={`#methodology-${s.toLowerCase().replace(/[^a-z]+/g, '-')}`}
-            style={{ fontSize: '0.62rem', color: ACCENT, textDecoration: 'none' }}
-          >
-            {s}
-          </a>
-        ))}
-      </nav>
 
           <Section title="Home Energy" id="methodology-home-energy">
             <p>
