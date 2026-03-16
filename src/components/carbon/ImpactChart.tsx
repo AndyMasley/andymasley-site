@@ -8,7 +8,7 @@
  * Bottom: shared bar chart on one scale.
  */
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { computeFootprint } from '@/lib/carbon/baseline';
 import type { BaselineInputs } from '@/lib/carbon/types';
 import type { PersonalAction } from '@/lib/carbon/personal-actions';
@@ -26,6 +26,7 @@ interface ImpactChartProps {
   onSelectArchetype: (id: string) => void;
   archetypeTotals: Record<string, number>;
   enabledPersonal: Set<string>;
+  setEnabledPersonal: (s: Set<string>) => void;
   togglePersonal: (name: string) => void;
   enabledSystemic: Set<string>;
   toggleSystemic: (name: string) => void;
@@ -92,18 +93,18 @@ const MUTED = 'var(--text-secondary, #6B6B60)';
 const DIVIDER = 'var(--divider, #DDD9D0)';
 
 const LIFESTYLE_PRESETS: { id: string; label: string; baseline: BaselineInputs }[] = [
-  { id: 'us-average', label: 'Average', baseline: { state: 'US', householdSize: 2.5, housingType: 'single-family-small', urbanForm: 'suburban', dietType: 'average', carOwnership: 'gas', flightsPerYear: 2, monthlySpending: 1200 } },
-  { id: 'urban-vegan', label: 'Urban vegan', baseline: { state: 'NY', householdSize: 1, housingType: 'apartment', urbanForm: 'urban', dietType: 'vegan', carOwnership: 'none', flightsPerYear: 1, monthlySpending: 1500 } },
-  { id: 'suburban-family', label: 'Suburban', baseline: { state: 'US', householdSize: 4, housingType: 'single-family-small', urbanForm: 'suburban', dietType: 'average', carOwnership: 'gas', flightsPerYear: 2, monthlySpending: 1500 } },
-  { id: 'rural-truck', label: 'Rural driver', baseline: { state: 'US', householdSize: 2, housingType: 'single-family-large', urbanForm: 'rural', dietType: 'heavy-meat', carOwnership: 'gas', flightsPerYear: 0, monthlySpending: 1000 } },
-  { id: 'frequent-flyer', label: 'Frequent flyer', baseline: { state: 'US', householdSize: 1, housingType: 'apartment', urbanForm: 'urban', dietType: 'average', carOwnership: 'none', flightsPerYear: 8, monthlySpending: 2000 } },
-  { id: 'ev-professional', label: 'EV professional', baseline: { state: 'CA', householdSize: 2, housingType: 'townhouse', urbanForm: 'suburban', dietType: 'light-meat', carOwnership: 'ev', flightsPerYear: 3, monthlySpending: 1800 } },
+  { id: 'us-average', label: 'Average', baseline: { state: 'US', householdSize: 2.5, housingType: 'single-family-small', urbanForm: 'suburban', dietType: 'average', carOwnership: 'gas', flightsPerYear: 2, transatlanticFlightsPerYear: 0, domesticFlightsPerYear: 2, monthlySpending: 1200 } },
+  { id: 'urban-vegan', label: 'Urban vegan', baseline: { state: 'NY', householdSize: 1, housingType: 'apartment', urbanForm: 'urban', dietType: 'vegan', carOwnership: 'none', flightsPerYear: 1, transatlanticFlightsPerYear: 0, domesticFlightsPerYear: 1, monthlySpending: 1500 } },
+  { id: 'suburban-family', label: 'Suburban', baseline: { state: 'US', householdSize: 4, housingType: 'single-family-small', urbanForm: 'suburban', dietType: 'average', carOwnership: 'gas', flightsPerYear: 2, transatlanticFlightsPerYear: 0, domesticFlightsPerYear: 2, monthlySpending: 1500 } },
+  { id: 'rural-truck', label: 'Rural driver', baseline: { state: 'US', householdSize: 2, housingType: 'single-family-large', urbanForm: 'rural', dietType: 'heavy-meat', carOwnership: 'gas', flightsPerYear: 0, transatlanticFlightsPerYear: 0, domesticFlightsPerYear: 0, monthlySpending: 1000 } },
+  { id: 'frequent-flyer', label: 'Frequent flyer', baseline: { state: 'US', householdSize: 1, housingType: 'apartment', urbanForm: 'urban', dietType: 'average', carOwnership: 'none', flightsPerYear: 8, transatlanticFlightsPerYear: 2, domesticFlightsPerYear: 6, monthlySpending: 2000 } },
+  { id: 'ev-professional', label: 'EV professional', baseline: { state: 'CA', householdSize: 2, housingType: 'townhouse', urbanForm: 'suburban', dietType: 'light-meat', carOwnership: 'ev', flightsPerYear: 3, transatlanticFlightsPerYear: 1, domesticFlightsPerYear: 2, monthlySpending: 1800 } },
 ];
 
 export function ImpactChart({
   footprintKg, personalActions, leverageCases, buckets,
   baseline, onBaselineChange, activeArchetypeId, onSelectArchetype, archetypeTotals,
-  enabledPersonal, togglePersonal, enabledSystemic, toggleSystemic, actionParamOverrides, onActionParamOverridesChange,
+  enabledPersonal, setEnabledPersonal, togglePersonal, enabledSystemic, toggleSystemic, actionParamOverrides, onActionParamOverridesChange,
   systemicOverrides, onSystemicOverridesChange,
 }: ImpactChartProps) {
   const [activePresetId, setActivePresetId] = useState<string | null>(null);
@@ -123,7 +124,7 @@ export function ImpactChart({
     onBaselineChange(preset.baseline);
   };
 
-  const totalSaved = useMemo(() => personalActions.filter(a => enabledPersonal.has(a.name)).reduce((s, a) => {
+  const totalSaved = useMemo(() => personalActions.filter(a => enabledPersonal.has(a.name) && !a.excludeFromTotal).reduce((s, a) => {
     const mult = actionParamOverrides[a.name] ?? 1;
     return s + Math.round(a.savingsKg * mult);
   }, 0), [personalActions, enabledPersonal, actionParamOverrides]);
@@ -153,6 +154,12 @@ export function ImpactChart({
 
   const hasPersonal = enabledPersonal.size > 0;
   const hasSystemic = enabledSystemic.size > 0;
+  const everHadPersonal = useRef(false);
+  const everHadSystemic = useRef(false);
+  if (hasPersonal) everHadPersonal.current = true;
+  if (hasSystemic) everHadSystemic.current = true;
+  const showPersonalBar = everHadPersonal.current;
+  const showSystemicBar = everHadSystemic.current;
   const scaleMax = Math.max(footprintKg, totalSystemic, 1);
   const pct = (kg: number) => Math.min((kg / scaleMax) * 100, 100);
 
@@ -217,8 +224,11 @@ export function ImpactChart({
           <div className="cf-impact-scroll">
             {groupedActions.map(group => {
               const isOpen = openCategory === group.category;
-              const enabledCount = group.actions.filter(a => enabledPersonal.has(a.name)).length;
-              const groupSaved = group.actions.filter(a => enabledPersonal.has(a.name)).reduce((s, a) => s + a.savingsKg, 0);
+              const enabledCount = group.actions.filter(a => enabledPersonal.has(a.name) && !a.excludeFromTotal).length;
+              const groupSaved = group.actions.filter(a => enabledPersonal.has(a.name) && !a.excludeFromTotal).reduce((s, a) => {
+                const mult = actionParamOverrides[a.name] ?? 1;
+                return s + Math.round(a.savingsKg * mult);
+              }, 0);
               return (
                 <div key={group.category} style={{ marginBottom: '2px' }}>
                   <button
@@ -243,11 +253,134 @@ export function ImpactChart({
                   </button>
                   {isOpen && (
                     <div style={{ paddingLeft: '4px', paddingBottom: '4px' }}>
+                      {group.category === 'Flights' && (
+                        <div style={{ fontSize: '0.65rem', color: MUTED, padding: '2px 8px 6px', lineHeight: 1.4 }}>
+                          The kg savings from transatlantic and domestic flights add up to equal "eliminate all flights."
+                        </div>
+                      )}
                       {group.actions.map(action => {
-                        const isOn = enabledPersonal.has(action.name);
+                        // For "eliminate all flights", auto-check when both types are fully eliminated
+                        const transAction = group.actions.find(a => a.name === 'Eliminate one transatlantic flight');
+                        const domAction = group.actions.find(a => a.name === 'Eliminate one domestic flight');
+                        const isAllFlights = action.name === 'Eliminate all flights';
+                        let isOn = enabledPersonal.has(action.name);
+                        if (isAllFlights && transAction && domAction) {
+                          const transElim = Math.round((actionParamOverrides['Eliminate one transatlantic flight'] ?? 1) * transAction.inlineParam!.defaultVal);
+                          const domElim = Math.round((actionParamOverrides['Eliminate one domestic flight'] ?? 1) * domAction.inlineParam!.defaultVal);
+                          const allTransEliminated = enabledPersonal.has('Eliminate one transatlantic flight') && transElim >= baseline.transatlanticFlightsPerYear && baseline.transatlanticFlightsPerYear > 0;
+                          const allDomEliminated = enabledPersonal.has('Eliminate one domestic flight') && domElim >= baseline.domesticFlightsPerYear && baseline.domesticFlightsPerYear > 0;
+                          const noTrans = baseline.transatlanticFlightsPerYear === 0;
+                          const noDom = baseline.domesticFlightsPerYear === 0;
+                          if ((allTransEliminated || noTrans) && (allDomEliminated || noDom) && baseline.flightsPerYear > 0) {
+                            isOn = true;
+                          }
+                        }
+
+                        const handleToggle = () => {
+                          if (isAllFlights) {
+                            // Convenience toggle: check/uncheck both individual flight types
+                            const shouldEnable = !isOn;
+                            const newEnabled = new Set(enabledPersonal);
+                            const newOverrides = { ...actionParamOverrides };
+                            if (shouldEnable) {
+                              // Enable both and set elimination to max
+                              if (baseline.transatlanticFlightsPerYear > 0) {
+                                newEnabled.add('Eliminate one transatlantic flight');
+                                newOverrides['Eliminate one transatlantic flight'] = baseline.transatlanticFlightsPerYear;
+                              }
+                              if (baseline.domesticFlightsPerYear > 0) {
+                                newEnabled.add('Eliminate one domestic flight');
+                                newOverrides['Eliminate one domestic flight'] = baseline.domesticFlightsPerYear;
+                              }
+                            } else {
+                              newEnabled.delete('Eliminate one transatlantic flight');
+                              newEnabled.delete('Eliminate one domestic flight');
+                            }
+                            newEnabled.delete('Eliminate all flights'); // never actually in the set
+                            setEnabledPersonal(newEnabled);
+                            onActionParamOverridesChange(newOverrides);
+                            return;
+                          }
+                          togglePersonal(action.name);
+                        };
+
+                        const handleInlineChange = (v: number) => {
+                          const clamped = action.inlineParam!.max ? Math.min(v, action.inlineParam!.max) : v;
+                          const ratio = clamped / action.inlineParam!.defaultVal;
+                          const newOverrides = { ...actionParamOverrides, [action.name]: ratio };
+
+                          // If left number (eliminate count) exceeds right number (total of that type),
+                          // bump the baseline up so left never exceeds right
+                          if (action.name === 'Eliminate one transatlantic flight') {
+                            const elimCount = Math.round(clamped);
+                            if (elimCount > baseline.transatlanticFlightsPerYear) {
+                              const newTotal = elimCount + baseline.domesticFlightsPerYear;
+                              onBaselineChange({ ...baseline, transatlanticFlightsPerYear: elimCount, flightsPerYear: newTotal });
+                              delete newOverrides['Eliminate all flights'];
+                            }
+                          } else if (action.name === 'Eliminate one domestic flight') {
+                            const elimCount = Math.round(clamped);
+                            if (elimCount > baseline.domesticFlightsPerYear) {
+                              const newTotal = baseline.transatlanticFlightsPerYear + elimCount;
+                              onBaselineChange({ ...baseline, domesticFlightsPerYear: elimCount, flightsPerYear: newTotal });
+                              delete newOverrides['Eliminate all flights'];
+                            }
+                          }
+
+                          if (isAllFlights) {
+                            // Update baseline — distribute flights between transatlantic and domestic
+                            const newTotal = Math.max(Math.round(clamped), 0);
+                            const oldTrans = baseline.transatlanticFlightsPerYear;
+                            const oldDom = baseline.domesticFlightsPerYear;
+                            const oldSum = oldTrans + oldDom;
+                            let newTrans: number, newDom: number;
+                            if (newTotal <= 0) {
+                              newTrans = 0; newDom = 0;
+                            } else if (newTotal < oldSum) {
+                              const scale = newTotal / oldSum;
+                              newTrans = Math.floor(oldTrans * scale);
+                              newDom = newTotal - newTrans;
+                            } else {
+                              const extra = newTotal - oldSum;
+                              const extraTrans = Math.floor(Math.random() * (extra + 1));
+                              newTrans = oldTrans + extraTrans;
+                              newDom = oldDom + (extra - extraTrans);
+                            }
+                            onBaselineChange({ ...baseline, flightsPerYear: newTotal, transatlanticFlightsPerYear: newTrans, domesticFlightsPerYear: newDom });
+                            delete newOverrides['Eliminate all flights'];
+                            delete newOverrides['Eliminate one transatlantic flight'];
+                            delete newOverrides['Eliminate one domestic flight'];
+                          }
+                          onActionParamOverridesChange(newOverrides);
+                        };
+
+                        const handleInlineParam2Change = (v: number) => {
+                          const newCount = Math.max(Math.round(v), 0);
+                          const newOverrides = { ...actionParamOverrides };
+                          if (action.name === 'Eliminate one transatlantic flight') {
+                            const newTotal = newCount + baseline.domesticFlightsPerYear;
+                            onBaselineChange({ ...baseline, transatlanticFlightsPerYear: newCount, flightsPerYear: newTotal });
+                            // Cap elimination count to new total for this type
+                            const currentElim = Math.round((actionParamOverrides[action.name] ?? 1) * action.inlineParam!.defaultVal);
+                            if (currentElim > newCount) {
+                              newOverrides[action.name] = newCount / action.inlineParam!.defaultVal;
+                            }
+                            delete newOverrides['Eliminate all flights'];
+                          } else if (action.name === 'Eliminate one domestic flight') {
+                            const newTotal = baseline.transatlanticFlightsPerYear + newCount;
+                            onBaselineChange({ ...baseline, domesticFlightsPerYear: newCount, flightsPerYear: newTotal });
+                            const currentElim = Math.round((actionParamOverrides[action.name] ?? 1) * action.inlineParam!.defaultVal);
+                            if (currentElim > newCount) {
+                              newOverrides[action.name] = newCount / action.inlineParam!.defaultVal;
+                            }
+                            delete newOverrides['Eliminate all flights'];
+                          }
+                          onActionParamOverridesChange(newOverrides);
+                        };
+
                         return (
                           <div key={action.name}>
-                            <button onClick={() => togglePersonal(action.name)} className="cf-toggle-row" data-on={isOn} aria-pressed={isOn}>
+                            <button onClick={handleToggle} className="cf-toggle-row" data-on={isOn} aria-pressed={isOn}>
                               <Dot on={isOn} />
                               <span style={{ flex: 1, fontWeight: isOn ? 600 : 400, fontSize: '0.8rem' }}>
                                 {action.inlineParam ? (
@@ -255,15 +388,22 @@ export function ImpactChart({
                                     {action.inlineParam.before}
                                     <InlineNum
                                       value={Math.round((actionParamOverrides[action.name] ?? 1) * action.inlineParam.defaultVal)}
-                                      onChange={v => {
-                                        const clamped = action.inlineParam!.max ? Math.min(v, action.inlineParam!.max) : v;
-                                        const ratio = clamped / action.inlineParam!.defaultVal;
-                                        onActionParamOverridesChange({ ...actionParamOverrides, [action.name]: ratio });
-                                      }}
+                                      onChange={handleInlineChange}
                                       min={0}
                                       max={action.inlineParam.max}
                                     />
                                     {action.inlineParam.after}
+                                    {action.inlineParam2 && (
+                                      <>
+                                        {action.inlineParam2.before}
+                                        <InlineNum
+                                          value={action.inlineParam2.defaultVal}
+                                          onChange={handleInlineParam2Change}
+                                          min={0}
+                                        />
+                                        {action.inlineParam2.after}
+                                      </>
+                                    )}
                                   </>
                                 ) : action.name}
                               </span>
@@ -300,7 +440,7 @@ export function ImpactChart({
           </div>
           <div className="cf-impact-scroll">
             <div style={{ fontSize: '0.72rem', color: MUTED, lineHeight: 1.45, marginBottom: '0.5rem' }}>
-              Each number is how much carbon would be saved <em>per person working on the problem</em>, calculated as the amount of carbon saved if the action succeeds × the probability of success ÷ the number of people working together on it. All numbers explained in methodology below.
+              Each number is how much carbon would be saved <em>per person working on the problem</em>, calculated as the amount of carbon saved if the action succeeds × the probability of success ÷ the number of people working together on it. All numbers explained in <a href="#methodology-systemic" style={{ color: 'var(--accent, #8B2E2E)' }} onClick={e => e.stopPropagation()}>methodology</a> below.
             </div>
             <ExampleDropdown />
             {sortedLeverage.map(result => {
@@ -358,19 +498,19 @@ export function ImpactChart({
         <BarRow label="Your footprint" kg={footprintKg} pctWidth={pct(footprintKg)} color={ACCENT} dotColor={ACCENT} />
 
         <BarRow
-          label={hasPersonal ? 'After your cuts' : 'After your cuts'}
-          kg={hasPersonal ? afterPersonal : 0}
-          pctWidth={hasPersonal ? pct(afterPersonal) : 0}
-          color={ACCENT} opacity={hasPersonal ? 0.55 : 0}
+          label="After your cuts"
+          kg={hasPersonal ? afterPersonal : (showPersonalBar ? footprintKg : 0)}
+          pctWidth={hasPersonal ? pct(afterPersonal) : (showPersonalBar ? pct(footprintKg) : 0)}
+          color={ACCENT} opacity={showPersonalBar ? 0.55 : 0}
           ghostWidth={hasPersonal ? pct(footprintKg) : 0}
           suffix={hasPersonal ? `(−${totalSaved.toLocaleString()})` : ''}
           labelColor={hasPersonal ? GREEN : MUTED}
-          dimmed={!hasPersonal}
+          dimmed={!showPersonalBar}
           dotColor="var(--accent, #8B2E2E)"
         />
 
         <BarRow
-          label={hasSystemic ? 'Carbon you can help prevent' : 'Carbon you can help prevent'}
+          label="Carbon you can help prevent"
           kg={hasSystemic ? totalSystemic : 0}
           pctWidth={hasSystemic ? Math.min(pct(totalSystemic), 100) : 0}
           color={GREEN}
@@ -378,7 +518,7 @@ export function ImpactChart({
           suffix={hasSystemic ? `(${Math.round(totalSystemic / footprintKg * 10) / 10} yrs of your current emissions${hasPersonal && afterPersonal > 0 ? `, ${Math.round(totalSystemic / afterPersonal * 10) / 10} yrs with lifestyle cuts` : ''})` : ''}
           labelColor={hasSystemic ? GREEN : MUTED}
           bold={hasSystemic}
-          dimmed={!hasSystemic}
+          dimmed={!showSystemicBar}
           unit="kg"
           useSigFigs
           dotColor={GREEN}
