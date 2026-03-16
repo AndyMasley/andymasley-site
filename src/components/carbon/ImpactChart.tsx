@@ -83,8 +83,6 @@ function InlineNum({ value, onChange, min, max, step }: {
   );
 }
 
-const CAT_DOTS: Record<string, string> = { Transport: '#8B2E2E', Home: '#A0522D', Food: '#5C6B2E', Digital: '#1E5F6B', Purchases: '#4A3D6B', Flights: '#6B4226' };
-
 const GREEN = '#4A7C59';
 const GREEN_BG = 'rgba(74, 124, 89, 0.08)';
 const ACCENT = '#8B2E2E';
@@ -155,7 +153,6 @@ export function ImpactChart({
         {/* LEFT: YOUR FOOTPRINT */}
         <div className="cf-impact-col">
           <div style={colHead}>
-            <Num n={1} />
             Your footprint
           </div>
           <div className="cf-impact-scroll">
@@ -189,7 +186,7 @@ export function ImpactChart({
             <div style={{ marginTop: '1.25rem', paddingTop: '1rem', borderTop: `1px solid ${DIVIDER}` }}>
               <div style={{ fontSize: 'clamp(2rem, 4vw, 3rem)', fontWeight: 700, letterSpacing: '-0.02em', fontVariantNumeric: 'tabular-nums', lineHeight: 1 }}>
                 {footprintKg.toLocaleString()}
-                <span style={{ fontSize: '0.4em', fontWeight: 400, color: MUTED, marginLeft: '6px' }}>kilograms of CO₂ equivalent per year</span>
+                <span style={{ fontSize: '0.4em', fontWeight: 400, color: MUTED, marginLeft: '6px' }} title="kilograms of carbon dioxide equivalent per year">kg CO₂e / yr</span>
               </div>
               <div style={{ fontSize: '0.75rem', color: MUTED, marginTop: '4px' }}>
                 {Math.round(footprintKg / 16000 * 100)}% of US average
@@ -201,7 +198,6 @@ export function ImpactChart({
         {/* MIDDLE: PERSONAL CUTS */}
         <div className="cf-impact-col">
           <div style={colHead}>
-            <Num n={2} />
             Personal cuts
           </div>
           <div className="cf-impact-scroll">
@@ -223,8 +219,6 @@ export function ImpactChart({
                     }}
                     aria-expanded={isOpen}
                   >
-                    <span style={{ fontSize: '0.6rem', transition: 'transform 0.15s', transform: isOpen ? 'rotate(90deg)' : 'none', color: MUTED }}>▶</span>
-                    <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: CAT_DOTS[group.category] || '#6B6B60', flexShrink: 0 }} />
                     <span style={{ flex: 1 }}>{group.category}</span>
                     {enabledCount > 0 && (
                       <span style={{ fontSize: '0.65rem', fontWeight: 700, color: GREEN, fontVariantNumeric: 'tabular-nums' }}>
@@ -271,7 +265,6 @@ export function ImpactChart({
         {/* RIGHT: SYSTEMIC ACTIONS */}
         <div className="cf-impact-col" style={{ borderRight: 'none' }}>
           <div style={colHead}>
-            <Num n={3} green />
             Systemic actions
           </div>
           <div className="cf-impact-scroll">
@@ -482,19 +475,17 @@ function ExampleDropdown() {
       <button
         onClick={() => setOpen(!open)}
         style={{
-          display: 'flex', alignItems: 'center', gap: '6px',
-          padding: '5px 8px', border: `1px solid ${DIVIDER}`, borderRadius: '5px',
-          background: open ? 'rgba(74, 124, 89, 0.05)' : 'rgba(74, 124, 89, 0.03)',
-          cursor: 'pointer', fontFamily: 'inherit', fontSize: '0.68rem',
-          fontWeight: 600, color: GREEN, width: '100%', textAlign: 'left',
+          display: 'inline-flex', alignItems: 'center', gap: '4px',
+          padding: '0', border: 'none', background: 'none',
+          cursor: 'pointer', fontFamily: 'inherit', fontSize: '0.72rem',
+          fontWeight: 500, color: MUTED, textAlign: 'left',
         }}
         aria-expanded={open}
       >
-        <span style={{ fontSize: '0.6rem', transition: 'transform 0.15s', transform: open ? 'rotate(90deg)' : 'none' }}>▶</span>
-        See a worked example
+        {open ? '▾' : '▸'} Example
       </button>
       {open && (
-        <div style={{ fontSize: '0.68rem', color: MUTED, lineHeight: 1.5, padding: '8px 10px', marginTop: '2px', background: 'rgba(74, 124, 89, 0.04)', borderRadius: '0 0 5px 5px', borderLeft: `2px solid ${GREEN}` }}>
+        <div style={{ fontSize: '0.68rem', color: MUTED, lineHeight: 1.5, padding: '8px 0 8px 12px', marginTop: '4px', borderLeft: `1px solid ${DIVIDER}` }}>
           Say 3,000 people work to stop a nuclear plant from closing. The plant generates 7.9 million MWh of zero-carbon electricity per year. If it closes, it's replaced by a mix of gas and renewables, adding about 2.4 million tonnes of CO₂ per year (net). If the campaign has a 5% chance of succeeding and the plant runs for 15 more years:<br /><br />
           <code style={{ fontSize: '0.63rem' }}>2,400,000,000 kg/yr × 15 yr × 5% ÷ 3,000 people = 591,300 kg per person</code><br /><br />
           That's <strong style={{ color: GREEN }}>~590 tonnes</strong> per person — roughly <strong style={{ color: GREEN }}>37 years</strong> of a typical American's annual footprint. Even at 2% probability, it's still 7 years' worth. That's why systemic action has such high leverage.
@@ -504,24 +495,13 @@ function ExampleDropdown() {
   );
 }
 
-function Num({ n, green }: { n: number; green?: boolean }) {
-  return (
-    <span style={{
-      width: '20px', height: '20px', borderRadius: '50%',
-      background: green ? GREEN : ACCENT, color: 'white',
-      display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-      fontSize: '0.6rem', fontWeight: 700, flexShrink: 0,
-    }}>{n}</span>
-  );
-}
-
 function Dot({ on }: { on: boolean }) {
   return (
     <span style={{
-      width: '16px', height: '16px', borderRadius: '3px', flexShrink: 0,
+      width: '16px', height: '16px', borderRadius: '5px', flexShrink: 0,
       border: `2px solid ${on ? GREEN : DIVIDER}`, background: on ? GREEN : 'transparent',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
-      transition: 'all 0.12s', color: 'white', fontSize: '0.6rem', fontWeight: 700,
+      transition: 'all 0.15s ease', color: 'white', fontSize: '0.6rem', fontWeight: 700,
     }}>{on ? '\u2713' : ''}</span>
   );
 }
