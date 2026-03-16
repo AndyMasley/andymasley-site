@@ -143,10 +143,21 @@ export function ImpactChart({
   }, [leverageCases, initialOrder]);
   const totalSystemic = useMemo(() => sortedLeverage.filter(c => enabledSystemic.has(c.case.name)).reduce((s, c) => s + c.displayKg.central, 0), [sortedLeverage, enabledSystemic]);
 
-  // Group personal actions by category
+  // Capture initial action order per category (sorted by default savingsKg desc),
+  // then keep that order stable when user modifies inline params
+  const [initialActionOrder] = useState(() => personalActions.map(a => a.name));
   const groupedActions = useMemo(() => {
+    const byName = new Map(personalActions.map(a => [a.name, a]));
+    // Rebuild in initial order, skipping any that no longer exist (e.g., became inapplicable)
+    const ordered = initialActionOrder
+      .map(name => byName.get(name))
+      .filter((a): a is PersonalAction => a !== undefined);
+    // Append any new actions that weren't in the initial order
+    for (const a of personalActions) {
+      if (!initialActionOrder.includes(a.name)) ordered.push(a);
+    }
     const groups: { category: string; actions: PersonalAction[] }[] = [];
-    for (const action of personalActions) {
+    for (const action of ordered) {
       const last = groups[groups.length - 1];
       if (last && last.category === action.category) {
         last.actions.push(action);
@@ -155,7 +166,7 @@ export function ImpactChart({
       }
     }
     return groups;
-  }, [personalActions]);
+  }, [personalActions, initialActionOrder]);
 
   const hasPersonal = enabledPersonal.size > 0;
   const hasSystemic = enabledSystemic.size > 0;

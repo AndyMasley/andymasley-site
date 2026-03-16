@@ -375,9 +375,11 @@ export function computePersonalActions(baseline: BaselineInputs, footprint: Foot
   const CATEGORY_ORDER = ['Transport', 'Home', 'Food', 'Digital', 'Purchases', 'Flights'];
 
   const filtered = actions.filter(a => a.applicable && a.savingsKg > 0);
-  // Stable sort: category order only, preserve definition order within each category
+  // Sort by category order, then by savingsKg descending within each category
   return filtered.sort((a, b) => {
-    return CATEGORY_ORDER.indexOf(a.category) - CATEGORY_ORDER.indexOf(b.category);
+    const catDiff = CATEGORY_ORDER.indexOf(a.category) - CATEGORY_ORDER.indexOf(b.category);
+    if (catDiff !== 0) return catDiff;
+    return b.savingsKg - a.savingsKg;
   });
 }
 
