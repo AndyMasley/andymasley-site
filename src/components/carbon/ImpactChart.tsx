@@ -117,7 +117,12 @@ export function ImpactChart({
   }, 0), [personalActions, enabledPersonal, actionParamOverrides]);
   const afterPersonal = Math.max(footprintKg - totalSaved, 0);
 
-  const sortedLeverage = useMemo(() => [...leverageCases].sort((a, b) => b.displayKg.central - a.displayKg.central), [leverageCases]);
+  // Sort once on initial render order, then keep stable (no re-sorting when values change)
+  const [initialOrder] = useState(() => leverageCases.map(c => c.case.name));
+  const sortedLeverage = useMemo(() => {
+    const byName = new Map(leverageCases.map(c => [c.case.name, c]));
+    return initialOrder.map(name => byName.get(name)).filter((c): c is LeverageResult => c !== undefined);
+  }, [leverageCases, initialOrder]);
   const totalSystemic = useMemo(() => sortedLeverage.filter(c => enabledSystemic.has(c.case.name)).reduce((s, c) => s + c.displayKg.central, 0), [sortedLeverage, enabledSystemic]);
 
   // Group personal actions by category
