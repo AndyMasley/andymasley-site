@@ -68,10 +68,16 @@ const cityItems = [
   { name: 'Las Vegas metro (SNWA)', gal: 77e9, color: '#154360', on: false },
 ];
 
+const nationalItems = [
+  { name: 'Total US freshwater withdrawals', gal: 102.6e12, color: '#1a3c5e', on: false },
+  { name: 'Total US public water supply', gal: 13.1e12, color: '#2a5f8f', on: false },
+];
+
 let idx = 0;
 const dcFlat = dcItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
 const indFlat = industryItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
 const cityFlat = cityItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
+const natFlat = nationalItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
 const agFlat = agItems.map(group => ({
   ...group,
   items: group.items.map(d => ({ idx: idx++, ...d, color: group.color, sub: fG(d.gal) })),
@@ -146,6 +152,25 @@ const agFlat = agItems.map(group => ({
           </summary>
           <div class="w-cat-list">
             {cityFlat.map(d => (
+              <div class="w-item" data-idx={d.idx} data-on={d.on ? '1' : '0'} data-gal-industry={d.gal}>
+                <div class="w-item-dot" style={`background:${d.color}`}></div>
+                <div class="w-item-text">
+                  <span class="w-item-name">{d.name}</span>
+                  <span class="w-item-val">{d.sub}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </details>
+
+        <details class="w-cat">
+          <summary class="w-cat-head">
+            <div class="w-cat-pip" style="background:#1a3c5e"></div>
+            <span class="w-cat-name">US national totals</span>
+            <span class="w-cat-arrow"></span>
+          </summary>
+          <div class="w-cat-list">
+            {natFlat.map(d => (
               <div class="w-item" data-idx={d.idx} data-on={d.on ? '1' : '0'} data-gal-industry={d.gal}>
                 <div class="w-item-dot" style={`background:${d.color}`}></div>
                 <div class="w-item-text">
