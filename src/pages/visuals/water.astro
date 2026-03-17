@@ -721,106 +721,88 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
       p.push(`<rect x="${x}" y="${y}" width="${v.s}" height="${v.s}" rx="3" fill="none" stroke="${it.color}" stroke-width="1.5" stroke-opacity=".55"/>`);
     });
 
-    // ── Two-tier label system ──
-    // Tier 1: boxes > 60px tall → right-column label at box top-edge y
-    // Tier 2: boxes ≤ 60px → collected into compact cluster panel
-    var TIER_THRESH = 60;
-    var labelH = 28, labelGap = 6;
-    var labelCol = W - 8; // right-align labels to this x
-    var tier1 = [], tier2 = [];
+    // ── Label system: tabs on large boxes + horizontal ticks for medium + cluster for tiny ──
+    var LARGE = 120, SMALL = 30;
 
-    vis.forEach(function(v) {
+    var all = vis.map(function(v) {
       var it = items[v.idx];
       var isProj = (it.name || '').indexOf('2030') >= 0;
       var elecTag = it.elecOn ? ' +elec' : '';
       var prefix = isProj ? '~' : '';
-      var valText = prefix + it.sub + elecTag;
-      var entry = { idx: v.idx, s: v.s, boxRight: ox + v.s, boxTop: oy - v.s, color: it.color, name: it.name, val: valText, nameOp: isProj ? 0.6 : 0.85 };
-      if (v.s > TIER_THRESH) tier1.push(entry);
-      else tier2.push(entry);
+      var val = prefix + it.sub + elecTag;
+      return { idx: v.idx, s: v.s, boxTop: oy - v.s, boxRight: ox + v.s, color: it.color, name: it.name, val: val, nameOp: isProj ? 0.55 : 0.9 };
     });
 
-    // ── Tier 1: collision-resolved right-column labels ──
-    tier1.sort(function(a, b) { return a.boxTop - b.boxTop; });
+    // ── Large boxes (>120px): label INSIDE the square, top-left area ──
+    all.filter(function(a) { return a.s > LARGE; }).forEach(function(a) {
+      var tx = ox + 8;
+      var ty = a.boxTop + 14;
+      p.push('<text x="' + tx + '" y="' + ty + '" font-family="IBM Plex Sans,sans-serif" font-size="12" font-weight="600" fill="rgba(255,255,255,' + a.nameOp + ')">' + a.name + '</text>');
+      p.push('<text x="' + tx + '" y="' + (ty + 14) + '" font-family="IBM Plex Mono,monospace" font-size="10" fill="' + a.color + '" fill-opacity="0.85">' + a.val + '</text>');
+    });
 
-    // Assign y positions greedily
-    for (var i = 0; i < tier1.length; i++) {
-      tier1[i].labelY = tier1[i].boxTop;
-      if (i > 0) {
-        var minY = tier1[i - 1].labelY + labelH + labelGap;
-        if (tier1[i].labelY < minY) tier1[i].labelY = minY;
+    // ── Medium boxes (30-120px): right-side label with horizontal tick ──
+    var meds = all.filter(function(a) { return a.s > SMALL && a.s <= LARGE; });
+    // Sort top to bottom, resolve collisions
+    meds.sort(function(a, b) { return a.boxTop - b.boxTop; });
+    var labelH = 26, labelGap = 4;
+    for (var mi = 0; mi < meds.length; mi++) {
+      meds[mi].labelY = meds[mi].boxTop;
+      if (mi > 0) {
+        var minY = meds[mi - 1].labelY + labelH + labelGap;
+        if (meds[mi].labelY < minY) meds[mi].labelY = minY;
       }
-      if (tier1[i].labelY < pad) tier1[i].labelY = pad;
+      if (meds[mi].labelY < pad) meds[mi].labelY = pad;
+      if (meds[mi].labelY > oy - labelH) meds[mi].labelY = oy - labelH;
     }
-    // If overflow bottom, compress
-    if (tier1.length > 1) {
-      var lastBot = tier1[tier1.length - 1].labelY + labelH;
-      if (lastBot > oy) {
-        var avail = oy - pad - labelH;
-        var gap = Math.max(labelH + 2, avail / (tier1.length - 1));
-        for (var j = 0; j < tier1.length; j++) {
-          tier1[j].labelY = pad + j * gap;
-        }
+    // Compress if overflow
+    if (meds.length > 1) {
+      var mLastBot = meds[meds.length - 1].labelY + labelH;
+      if (mLastBot > oy) {
+        var mGap = Math.max(labelH + 1, (oy - pad - labelH) / Math.max(1, meds.length - 1));
+        for (var mk = 0; mk < meds.length; mk++) meds[mk].labelY = pad + mk * mGap;
       }
     }
-    // Demote to tier2 if pushed >30px from ideal
-    var demoted = [];
-    tier1 = tier1.filter(function(t) {
-      if (Math.abs(t.labelY - t.boxTop) > 30 && t.labelY + labelH > oy) {
-        tier2.push(t);
-        return false;
+    // Find where labels start (right of largest box, or 60% of canvas)
+    var labelStartX = Math.max(ox + (vis[0] ? vis[0].s : 0) + 16, W * 0.55);
+    meds.forEach(function(m) {
+      var ly = m.labelY;
+      var tickY = m.boxTop;
+      // Horizontal tick from box right edge to label area
+      p.push('<line x1="' + m.boxRight + '" y1="' + tickY + '" x2="' + (labelStartX - 4) + '" y2="' + tickY + '" stroke="' + m.color + '" stroke-width="0.5" opacity="0.2"/>');
+      // Small connector if label is nudged vertically
+      if (Math.abs(ly - tickY) > 4) {
+        p.push('<line x1="' + (labelStartX - 4) + '" y1="' + tickY + '" x2="' + (labelStartX - 4) + '" y2="' + (ly + labelH / 2) + '" stroke="' + m.color + '" stroke-width="0.5" opacity="0.15"/>');
       }
-      return true;
+      p.push('<circle cx="' + m.boxRight + '" cy="' + tickY + '" r="2" fill="' + m.color + '" opacity="0.5"/>');
+      // Label
+      var lw = W - labelStartX - 4;
+      p.push('<rect x="' + labelStartX + '" y="' + ly + '" width="' + lw + '" height="' + labelH + '" rx="2" fill="rgba(10,14,20,0.7)"/>');
+      p.push('<text x="' + (labelStartX + 5) + '" y="' + (ly + 11) + '" font-family="IBM Plex Sans,sans-serif" font-size="11" font-weight="500" fill="rgba(255,255,255,' + m.nameOp + ')">' + m.name + '</text>');
+      p.push('<text x="' + (labelStartX + 5) + '" y="' + (ly + 23) + '" font-family="IBM Plex Mono,monospace" font-size="9.5" fill="' + m.color + '" fill-opacity="0.8">' + m.val + '</text>');
     });
 
-    // Render Tier 1 leaders + labels
-    tier1.forEach(function(t) {
-      var ly = t.labelY;
-      var lcy = ly + labelH / 2;
-      var nudged = Math.abs(ly - t.boxTop) > 4;
-      // Leader: from box right edge to label column
-      if (nudged) {
-        // Bent leader: horizontal from box, then vertical, then horizontal to label
-        var midX = Math.min(t.boxRight + 12, labelCol - 200);
-        p.push('<path d="M' + t.boxRight + ',' + t.boxTop + ' L' + midX + ',' + t.boxTop + ' L' + midX + ',' + lcy + ' L' + (labelCol - 196) + ',' + lcy + '" fill="none" stroke="' + t.color + '" stroke-width="0.5" opacity="0.25"/>');
-      } else {
-        p.push('<line x1="' + t.boxRight + '" y1="' + t.boxTop + '" x2="' + (labelCol - 196) + '" y2="' + lcy + '" stroke="' + t.color + '" stroke-width="0.5" opacity="0.25"/>');
-      }
-      p.push('<circle cx="' + t.boxRight + '" cy="' + t.boxTop + '" r="1.5" fill="' + t.color + '" opacity="0.4"/>');
-      // Label background + text (right-aligned to labelCol)
-      var lw = 192;
-      var lx = labelCol - lw;
-      p.push('<rect x="' + lx + '" y="' + ly + '" width="' + lw + '" height="' + labelH + '" rx="2" fill="rgba(10,14,20,0.75)"/>');
-      p.push('<text x="' + (lx + 5) + '" y="' + (ly + 12) + '" font-family="IBM Plex Sans,sans-serif" font-size="11" font-weight="500" fill="rgba(255,255,255,' + t.nameOp + ')">' + t.name + '</text>');
-      p.push('<text x="' + (lx + 5) + '" y="' + (ly + 24) + '" font-family="IBM Plex Mono,monospace" font-size="9.5" fill="' + t.color + '" fill-opacity="0.75">' + t.val + '</text>');
-    });
-
-    // ── Tier 2: compact cluster panel ──
-    if (tier2.length > 0) {
-      var rowH = 15, clusterPad = 8;
-      var clusterH = tier2.length * rowH + clusterPad * 2;
-      var clusterW = 210;
-      // Position: upper-right, above tier1 labels if any
-      var clusterY = pad;
-      var clusterX = W - clusterW - 8;
-      // Leader from cluster to small-box region (bottom-left corner area)
-      var smallCenterX = ox + 15;
-      var smallCenterY = oy - 15;
-      p.push('<line x1="' + clusterX + '" y1="' + (clusterY + clusterH / 2) + '" x2="' + smallCenterX + '" y2="' + smallCenterY + '" stroke="rgba(255,255,255,0.1)" stroke-width="0.5" stroke-dasharray="3,3"/>');
-      // Cluster background
-      p.push('<rect x="' + clusterX + '" y="' + clusterY + '" width="' + clusterW + '" height="' + clusterH + '" rx="3" fill="rgba(10,14,20,0.85)"/>');
-      p.push('<line x1="' + clusterX + '" y1="' + (clusterY + 1) + '" x2="' + clusterX + '" y2="' + (clusterY + clusterH - 1) + '" stroke="rgba(255,255,255,0.12)" stroke-width="2"/>');
+    // ── Small boxes (<30px): cluster panel ──
+    var smalls = all.filter(function(a) { return a.s <= SMALL; });
+    if (smalls.length > 0) {
+      var rowH = 16, cPad = 8;
+      var cH = smalls.length * rowH + cPad * 2 + 14; // +14 for header
+      var cW = Math.min(220, W * 0.4);
+      var cX = W - cW - 8, cY = pad;
+      // Background
+      p.push('<rect x="' + cX + '" y="' + cY + '" width="' + cW + '" height="' + cH + '" rx="3" fill="rgba(10,14,20,0.88)"/>');
+      p.push('<line x1="' + cX + '" y1="' + (cY + 1) + '" x2="' + cX + '" y2="' + (cY + cH - 1) + '" stroke="rgba(255,255,255,0.1)" stroke-width="2"/>');
+      // Header
+      p.push('<text x="' + (cX + 10) + '" y="' + (cY + 12) + '" font-family="IBM Plex Mono,monospace" font-size="8" font-weight="700" letter-spacing="0.08em" fill="rgba(255,255,255,0.35)">SMALL ITEMS</text>');
       // Rows
-      tier2.forEach(function(t, i) {
-        var ry = clusterY + clusterPad + i * rowH;
-        // Color dot
-        p.push('<rect x="' + (clusterX + 8) + '" y="' + (ry + 2) + '" width="6" height="6" rx="1" fill="' + t.color + '" fill-opacity="0.7"/>');
-        // Name · value
-        var isProj = t.name.indexOf('2030') >= 0;
-        var nameOp = isProj ? 0.5 : 0.7;
-        p.push('<text x="' + (clusterX + 20) + '" y="' + (ry + 10) + '" font-family="IBM Plex Sans,sans-serif" font-size="9.5" fill="rgba(255,255,255,' + nameOp + ')">' + t.name + '</text>');
-        p.push('<text x="' + (clusterX + clusterW - 8) + '" y="' + (ry + 10) + '" text-anchor="end" font-family="IBM Plex Mono,monospace" font-size="9" fill="' + t.color + '" fill-opacity="0.6">' + t.val + '</text>');
+      smalls.forEach(function(s, si) {
+        var ry = cY + cPad + 14 + si * rowH;
+        p.push('<rect x="' + (cX + 10) + '" y="' + (ry + 2) + '" width="5" height="5" rx="1" fill="' + s.color + '" fill-opacity="0.8"/>');
+        p.push('<text x="' + (cX + 20) + '" y="' + (ry + 9) + '" font-family="IBM Plex Sans,sans-serif" font-size="9" fill="rgba(255,255,255,' + (s.nameOp * 0.8) + ')">' + s.name + '</text>');
+        p.push('<text x="' + (cX + cW - 8) + '" y="' + (ry + 9) + '" text-anchor="end" font-family="IBM Plex Mono,monospace" font-size="8.5" fill="' + s.color + '" fill-opacity="0.6">' + s.val + '</text>');
       });
+      // Single leader to small-box region
+      p.push('<line x1="' + cX + '" y1="' + (cY + cH / 2) + '" x2="' + (ox + 20) + '" y2="' + (oy - 20) + '" stroke="rgba(255,255,255,0.08)" stroke-width="0.5" stroke-dasharray="3,3"/>');
     }
 
     svg.innerHTML = p.join('\n');
