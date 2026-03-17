@@ -474,6 +474,11 @@ const cropFlat = defaultCrop.map(d => ({ idx: idx++, ...d,
 (function() {
   const RATES = { corn: 650000, alfalfa: 1500000, golf: 1300000, lawn: 800000 };
   const CROP_LABELS = { corn: 'corn', alfalfa: 'alfalfa', golf: 'golf course', lawn: 'lawn' };
+  const chart = document.getElementById('chart');
+  const svg = document.getElementById('svg');
+  const cur = new Map();
+  const tgt = new Map();
+  let raf = null;
   const cropDataAll = window.__cropDataAll;
   const cropStartIdx = window.__cropStartIdx;
   let activeUnit = 'corn';
@@ -600,11 +605,6 @@ const cropFlat = defaultCrop.map(d => ({ idx: idx++, ...d,
   });
 
   // ── Animation ──────────────────────────────────
-  const chart = document.getElementById('chart');
-  const svg = document.getElementById('svg');
-  const cur = new Map();
-  const tgt = new Map();
-  let raf = null;
 
   function render() {
     const W = chart.clientWidth, H = chart.clientHeight;
