@@ -83,11 +83,11 @@ const agItems = [
 // NYC/Chicago: ~1.5 kWh/1000 gal (gravity-fed or lake). LA/Phoenix/Vegas: ~5 kWh/1000 gal
 // (long-distance import over mountains or desert pumping). × 1.19 gal water/kWh.
 const cityItems = [
-  { name: 'New York City', base: 364e9, elec: 364.65e9, color: '#3498db', on: false },
-  { name: 'Chicago metro system', base: 274e9, elec: 274.49e9, color: '#2e86c1', on: false },
-  { name: 'Los Angeles', base: 146e9, elec: 146.87e9, color: '#2471a3', on: false },
-  { name: 'Phoenix', base: 95.5e9, elec: 96.07e9, color: '#1a5276', on: false },
-  { name: 'Las Vegas metro (SNWA)', base: 77e9, elec: 77.37e9, color: '#154360', on: false },
+  { name: 'New York City', gal: 364e9, color: '#3498db', on: false },
+  { name: 'Chicago metro system', gal: 274e9, color: '#2e86c1', on: false },
+  { name: 'Los Angeles', gal: 146e9, color: '#2471a3', on: false },
+  { name: 'Phoenix', gal: 95.5e9, color: '#1a5276', on: false },
+  { name: 'Las Vegas metro (SNWA)', gal: 77e9, color: '#154360', on: false },
 ];
 
 const nationalItems = [
@@ -98,7 +98,7 @@ const nationalItems = [
 let idx = 0;
 const dcFlat = dcItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
 const indFlat = industryItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
-const cityFlat = cityItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
+const cityFlat = cityItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
 const natFlat = nationalItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
 const agFlat = agItems.map(group => ({
   ...group,
@@ -174,18 +174,11 @@ const agFlat = agItems.map(group => ({
           </summary>
           <div class="w-cat-list">
             {cityFlat.map(d => (
-              <div class="w-dc-group">
-                <div class="w-item" data-idx={d.idx} data-on={d.on ? '1' : '0'}
-                  data-gal-base={d.base} data-gal-elec={d.elec} data-elec="0">
-                  <div class="w-item-dot" style={`background:${d.color}`}></div>
-                  <div class="w-item-text">
-                    <span class="w-item-name">{d.name}</span>
-                    <span class="w-item-val">{d.sub}</span>
-                  </div>
-                </div>
-                <div class="w-sub" data-parent-idx={d.idx}>
-                  <span class="w-sub-check"></span>
-                  <span class="w-sub-label">+ water cost of electricity</span>
+              <div class="w-item" data-idx={d.idx} data-on={d.on ? '1' : '0'} data-gal-industry={d.gal}>
+                <div class="w-item-dot" style={`background:${d.color}`}></div>
+                <div class="w-item-text">
+                  <span class="w-item-name">{d.name}</span>
+                  <span class="w-item-val">{d.sub}</span>
                 </div>
               </div>
             ))}
