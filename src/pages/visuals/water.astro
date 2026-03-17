@@ -5,11 +5,14 @@ function fG(g: number) {
   return g >= 1e12 ? (g/1e12).toFixed(1)+'T gal/yr' : g >= 1e9 ? (g/1e9).toFixed(1)+'B gal/yr' : (g/1e6).toFixed(0)+'M gal/yr';
 }
 
+// ChatGPT bounds: all use 2.5B messages/day × 365, electricity at 310 GWh × 1.19 = 369M gal
+// Lower: Altman's 0.322 mL/query on-site → 77.6M direct, 447M w/ elec
+// Middle: 3× Altman (conservative independent est.) → 233M direct, 602M w/ elec
+// Upper: Ren et al. on-site U.S. avg 2.2 mL/query (6.8× Altman) → 528M direct, 897M w/ elec
 const dcItems = [
-  // ChatGPT: Altman's 0.000085 gal + 0.34 Wh/query × 2.5B messages/day (OpenAI 2025) × 365
-  // Direct: 77.6M. Elec: 310 GWh × 1.19 gal/kWh (LBNL) = 369M. Total: 447M.
-  // Labeled as lower-bound proxy — independent estimates suggest 3-7× higher per-query.
-  { name: 'ChatGPT (lower bound)', base: 77.6e6, elec: 447e6, color: '#3ba0d8', on: false },
+  { name: 'ChatGPT (lower — Altman)', base: 77.6e6, elec: 447e6, color: '#7ec8f0', on: false },
+  { name: 'ChatGPT (middle — 3× Altman)', base: 233e6, elec: 602e6, color: '#3ba0d8', on: false },
+  { name: 'ChatGPT (upper — Ren et al.)', base: 528e6, elec: 897e6, color: '#1a6fa0', on: false },
   // Microsoft FY23 total operational water (global, all facilities): 7,844 ML = 2.07B gal
   // Not datacenter-specific. Elec: 23.57 TWh × 1.19 = 28B. Total: 30B.
   { name: 'Microsoft operations (FY23)', base: 2.07e9, elec: 30e9, color: '#6a9dc8', on: true },
@@ -236,9 +239,18 @@ const agFlat = agItems.map(group => ({
           <p><strong>All US data centers, 2023: 17.4B gal/yr.</strong> LBNL's 2024 report: 66 billion liters direct site water. 66B L ÷ 3.785 = 17.4B gal. This is the strongest number in the visualization.</p>
           <p class="w-meth-src">Source: <a href="https://eta.lbl.gov/publications/2024-united-states-data-center-energy" target="_blank" rel="noopener">LBNL — 2024 United States Data Center Energy Usage Report</a></p>
 
-          <p><strong>ChatGPT (lower bound): 77.6M gal/yr direct.</strong> Sam Altman stated 0.000085 gal and 0.34 Wh per average ChatGPT query. OpenAI later disclosed the platform receives "more than 2.5 billion messages per day." Assuming one message ≈ one query-equivalent:</p>
-          <p class="w-meth-calc">0.000085 gal × 2,500,000,000 messages/day × 365 = 77.6M gal/yr</p>
-          <p class="w-meth-caveat">This is a lower-bound proxy, not a settled estimate. Ren et al. (2023) model a medium GPT-3 request at 2.2 mL on-site water (U.S. average), roughly 6.8× Altman's 0.322 mL figure — but their modeled task (800 words in, 150–300 words out) is not the same as an unspecified average ChatGPT query. The magnitude of the gap is real; the exact multiplier depends on query complexity and infrastructure assumptions.</p>
+          <p><strong>ChatGPT — three bounds.</strong> All use OpenAI's "more than 2.5 billion messages per day" (2025), assuming one message ≈ one query. Electricity for all three uses Altman's 0.34 Wh/query: 310 GWh/yr × 1.19 gal/kWh = 369M gal indirect.</p>
+          <table class="w-meth-table">
+            <thead><tr><th>Bound</th><th>On-site mL/query</th><th>Direct gal/yr</th><th>+ Electricity</th><th>Total</th></tr></thead>
+            <tbody>
+              <tr><td>Lower (Altman)</td><td>0.322 mL</td><td>77.6M</td><td>369M</td><td>447M</td></tr>
+              <tr><td>Middle (3× Altman)</td><td>~1 mL</td><td>233M</td><td>369M</td><td>602M</td></tr>
+              <tr><td>Upper (Ren et al.)</td><td>2.2 mL</td><td>528M</td><td>369M</td><td>897M</td></tr>
+            </tbody>
+          </table>
+          <p><strong>Lower:</strong> Sam Altman's stated 0.000085 gal (0.322 mL) per query — the only official figure.</p>
+          <p><strong>Middle:</strong> ~3× Altman. A conservative independent estimate reflecting cooling infrastructure overhead not captured at the per-query level.</p>
+          <p><strong>Upper:</strong> Ren et al. (2023) model a medium GPT-3 request at 2.2 mL on-site water (U.S. avg), ~6.8× Altman. Their task (800 words in, 150–300 out) differs from an average ChatGPT query; the paper notes their estimate is conservative.</p>
           <p class="w-meth-src">Sources: <a href="https://samaltman.com/2025/01/10/what-i-wish-someone-had-told-me-about-chatgpt/" target="_blank" rel="noopener">Sam Altman's post</a>, <a href="https://arxiv.org/abs/2304.03271" target="_blank" rel="noopener">Ren et al. 2023 (arXiv)</a></p>
 
           <p><strong>Microsoft operations, FY23: 2.07B gal/yr.</strong> Microsoft's Environmental Data Fact Sheet reports 7,844 megaliters of total water consumption. Reporting boundary uses operational control and includes <em>global owned and leased real-estate facilities and datacenters</em> — this is company-wide, not datacenter-specific. 7,844 ML × 264.172 gal/kL = 2.07B gal.</p>
@@ -258,7 +270,9 @@ const agFlat = agItems.map(group => ({
           <table class="w-meth-table">
             <thead><tr><th></th><th>Electricity</th><th>× 1.19 gal/kWh</th><th>+ Direct</th><th>= Total</th></tr></thead>
             <tbody>
-              <tr><td>ChatGPT (lower bound)</td><td>310 GWh</td><td>369M</td><td>77.6M</td><td>447M gal/yr</td></tr>
+              <tr><td>ChatGPT (lower)</td><td>310 GWh</td><td>369M</td><td>77.6M</td><td>447M gal/yr</td></tr>
+              <tr><td>ChatGPT (middle)</td><td>310 GWh</td><td>369M</td><td>233M</td><td>602M gal/yr</td></tr>
+              <tr><td>ChatGPT (upper)</td><td>310 GWh</td><td>369M</td><td>528M</td><td>897M gal/yr</td></tr>
               <tr><td>Microsoft ops (FY23)</td><td>23.6 TWh</td><td>28.1B</td><td>2.07B</td><td>30B gal/yr</td></tr>
               <tr><td>Google ops (2024)</td><td>~25.3 TWh</td><td>30.1B</td><td>6B</td><td>36B gal/yr</td></tr>
               <tr><td>All US data centers (2023)</td><td>176 TWh</td><td>209B</td><td>17.4B</td><td>227B gal/yr</td></tr>
