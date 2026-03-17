@@ -550,11 +550,14 @@ const cropFlat = defaultCrop.map(d => ({ idx: idx++, ...d,
     const label = CROP_LABELS[activeUnit];
     const data = cropDataAll[activeUnit];
 
-    // Turn off old crop items and clear their animation state
+    // Turn off old crop items; clear animation state only for indices
+    // that won't exist in the new crop (avoids pop-in for shared indices)
     for (let i = cropStartIdx; i < cropStartIdx + 10; i++) {
       if (items[i]) items[i].on = false;
-      cur.delete(i);
-      tgt.delete(i);
+      if (i >= cropStartIdx + data.length) {
+        cur.delete(i);
+        tgt.delete(i);
+      }
     }
 
     cropList.innerHTML = '';
