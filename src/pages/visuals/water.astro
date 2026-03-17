@@ -715,95 +715,87 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
 
     const ox = pad, oy = H - pad, p = [];
 
-    vis.forEach(v => {
-      const it = items[v.idx], x = ox, y = oy - v.s;
-      p.push(`<rect x="${x}" y="${y}" width="${v.s}" height="${v.s}" rx="3" fill="${it.color}" fill-opacity=".12"/>`);
-      p.push(`<rect x="${x}" y="${y}" width="${v.s}" height="${v.s}" rx="3" fill="none" stroke="${it.color}" stroke-width="1.5" stroke-opacity=".55"/>`);
+    // ── Boxes: graduated fills + bright top-edge accent ──
+    var n = vis.length;
+    vis.forEach(function(v, vi) {
+      var it = items[v.idx], x = ox, y = oy - v.s;
+      // Graduated fill: largest = lightest, smallest = darkest (so overlapping is visible)
+      var fillOp = 0.06 + (vi / Math.max(n - 1, 1)) * 0.12;
+      p.push('<rect x="' + x + '" y="' + y + '" width="' + v.s + '" height="' + v.s + '" fill="' + it.color + '" fill-opacity="' + fillOp.toFixed(3) + '"/>');
+      // Bright accent line on top edge only (the unique identifier of each square)
+      p.push('<line x1="' + x + '" y1="' + y + '" x2="' + (x + v.s) + '" y2="' + y + '" stroke="' + it.color + '" stroke-width="2" stroke-opacity="0.7"/>');
+      // Subtle side edges
+      p.push('<line x1="' + (x + v.s) + '" y1="' + y + '" x2="' + (x + v.s) + '" y2="' + (y + v.s) + '" stroke="' + it.color + '" stroke-width="0.5" stroke-opacity="0.2"/>');
     });
 
-    // ── Label system: tabs on large boxes + horizontal ticks for medium + cluster for tiny ──
-    var LARGE = 120, SMALL = 30;
-
-    var all = vis.map(function(v) {
+    // ── Labels: every item gets a label on the right side of its top edge ──
+    // Think of it like a ruler: each top edge is a "tick" and the label sits at the right end
+    var allLabels = vis.map(function(v) {
       var it = items[v.idx];
       var isProj = (it.name || '').indexOf('2030') >= 0;
       var elecTag = it.elecOn ? ' +elec' : '';
       var prefix = isProj ? '~' : '';
       var val = prefix + it.sub + elecTag;
-      return { idx: v.idx, s: v.s, boxTop: oy - v.s, boxRight: ox + v.s, color: it.color, name: it.name, val: val, nameOp: isProj ? 0.55 : 0.9 };
+      var nameOp = isProj ? 0.5 : 0.85;
+      return { idx: v.idx, s: v.s, topY: oy - v.s, rightX: ox + v.s, color: it.color, name: it.name, val: val, nameOp: nameOp };
     });
 
-    // ── Large boxes (>120px): label INSIDE the square, top-left area ──
-    all.filter(function(a) { return a.s > LARGE; }).forEach(function(a) {
-      var tx = ox + 8;
-      var ty = a.boxTop + 14;
-      p.push('<text x="' + tx + '" y="' + ty + '" font-family="IBM Plex Sans,sans-serif" font-size="12" font-weight="600" fill="rgba(255,255,255,' + a.nameOp + ')">' + a.name + '</text>');
-      p.push('<text x="' + tx + '" y="' + (ty + 14) + '" font-family="IBM Plex Mono,monospace" font-size="10" fill="' + a.color + '" fill-opacity="0.85">' + a.val + '</text>');
-    });
+    // Sort by topY (highest on screen = smallest number first)
+    allLabels.sort(function(a, b) { return a.topY - b.topY; });
 
-    // ── Medium boxes (30-120px): right-side label with horizontal tick ──
-    var meds = all.filter(function(a) { return a.s > SMALL && a.s <= LARGE; });
-    // Sort top to bottom, resolve collisions
-    meds.sort(function(a, b) { return a.boxTop - b.boxTop; });
-    var labelH = 26, labelGap = 4;
-    for (var mi = 0; mi < meds.length; mi++) {
-      meds[mi].labelY = meds[mi].boxTop;
-      if (mi > 0) {
-        var minY = meds[mi - 1].labelY + labelH + labelGap;
-        if (meds[mi].labelY < minY) meds[mi].labelY = minY;
+    // Collision resolution: stack from top, each label needs 20px
+    var lH = 20, lGap = 2;
+    for (var li = 0; li < allLabels.length; li++) {
+      allLabels[li].resolvedY = allLabels[li].topY - 2; // sit just above the top edge
+      if (li > 0) {
+        var minY = allLabels[li - 1].resolvedY + lH + lGap;
+        if (allLabels[li].resolvedY < minY) allLabels[li].resolvedY = minY;
       }
-      if (meds[mi].labelY < pad) meds[mi].labelY = pad;
-      if (meds[mi].labelY > oy - labelH) meds[mi].labelY = oy - labelH;
+      // Don't go below canvas
+      if (allLabels[li].resolvedY > oy - lH) allLabels[li].resolvedY = oy - lH;
     }
-    // Compress if overflow
-    if (meds.length > 1) {
-      var mLastBot = meds[meds.length - 1].labelY + labelH;
-      if (mLastBot > oy) {
-        var mGap = Math.max(labelH + 1, (oy - pad - labelH) / Math.max(1, meds.length - 1));
-        for (var mk = 0; mk < meds.length; mk++) meds[mk].labelY = pad + mk * mGap;
+    // If they overflow bottom, compress from top
+    if (allLabels.length > 1) {
+      var lastLabelBot = allLabels[allLabels.length - 1].resolvedY + lH;
+      if (lastLabelBot > oy) {
+        var totalSpace = oy - pad;
+        var step = Math.max(lH, totalSpace / allLabels.length);
+        for (var lj = 0; lj < allLabels.length; lj++) {
+          allLabels[lj].resolvedY = pad + lj * step;
+        }
       }
     }
-    // Find where labels start (right of largest box, or 60% of canvas)
-    var labelStartX = Math.max(ox + (vis[0] ? vis[0].s : 0) + 16, W * 0.55);
-    meds.forEach(function(m) {
-      var ly = m.labelY;
-      var tickY = m.boxTop;
-      // Horizontal tick from box right edge to label area
-      p.push('<line x1="' + m.boxRight + '" y1="' + tickY + '" x2="' + (labelStartX - 4) + '" y2="' + tickY + '" stroke="' + m.color + '" stroke-width="0.5" opacity="0.2"/>');
-      // Small connector if label is nudged vertically
-      if (Math.abs(ly - tickY) > 4) {
-        p.push('<line x1="' + (labelStartX - 4) + '" y1="' + tickY + '" x2="' + (labelStartX - 4) + '" y2="' + (ly + labelH / 2) + '" stroke="' + m.color + '" stroke-width="0.5" opacity="0.15"/>');
-      }
-      p.push('<circle cx="' + m.boxRight + '" cy="' + tickY + '" r="2" fill="' + m.color + '" opacity="0.5"/>');
-      // Label
-      var lw = W - labelStartX - 4;
-      p.push('<rect x="' + labelStartX + '" y="' + ly + '" width="' + lw + '" height="' + labelH + '" rx="2" fill="rgba(10,14,20,0.7)"/>');
-      p.push('<text x="' + (labelStartX + 5) + '" y="' + (ly + 11) + '" font-family="IBM Plex Sans,sans-serif" font-size="11" font-weight="500" fill="rgba(255,255,255,' + m.nameOp + ')">' + m.name + '</text>');
-      p.push('<text x="' + (labelStartX + 5) + '" y="' + (ly + 23) + '" font-family="IBM Plex Mono,monospace" font-size="9.5" fill="' + m.color + '" fill-opacity="0.8">' + m.val + '</text>');
-    });
 
-    // ── Small boxes (<30px): cluster panel ──
-    var smalls = all.filter(function(a) { return a.s <= SMALL; });
-    if (smalls.length > 0) {
-      var rowH = 16, cPad = 8;
-      var cH = smalls.length * rowH + cPad * 2 + 14; // +14 for header
-      var cW = Math.min(220, W * 0.4);
-      var cX = W - cW - 8, cY = pad;
-      // Background
-      p.push('<rect x="' + cX + '" y="' + cY + '" width="' + cW + '" height="' + cH + '" rx="3" fill="rgba(10,14,20,0.88)"/>');
-      p.push('<line x1="' + cX + '" y1="' + (cY + 1) + '" x2="' + cX + '" y2="' + (cY + cH - 1) + '" stroke="rgba(255,255,255,0.1)" stroke-width="2"/>');
-      // Header
-      p.push('<text x="' + (cX + 10) + '" y="' + (cY + 12) + '" font-family="IBM Plex Mono,monospace" font-size="8" font-weight="700" letter-spacing="0.08em" fill="rgba(255,255,255,0.35)">SMALL ITEMS</text>');
-      // Rows
-      smalls.forEach(function(s, si) {
-        var ry = cY + cPad + 14 + si * rowH;
-        p.push('<rect x="' + (cX + 10) + '" y="' + (ry + 2) + '" width="5" height="5" rx="1" fill="' + s.color + '" fill-opacity="0.8"/>');
-        p.push('<text x="' + (cX + 20) + '" y="' + (ry + 9) + '" font-family="IBM Plex Sans,sans-serif" font-size="9" fill="rgba(255,255,255,' + (s.nameOp * 0.8) + ')">' + s.name + '</text>');
-        p.push('<text x="' + (cX + cW - 8) + '" y="' + (ry + 9) + '" text-anchor="end" font-family="IBM Plex Mono,monospace" font-size="8.5" fill="' + s.color + '" fill-opacity="0.6">' + s.val + '</text>');
-      });
-      // Single leader to small-box region
-      p.push('<line x1="' + cX + '" y1="' + (cY + cH / 2) + '" x2="' + (ox + 20) + '" y2="' + (oy - 20) + '" stroke="rgba(255,255,255,0.08)" stroke-width="0.5" stroke-dasharray="3,3"/>');
-    }
+    // Render labels
+    allLabels.forEach(function(a) {
+      var ly = a.resolvedY;
+      var nudged = Math.abs(ly - (a.topY - 2)) > 6;
+
+      // Label goes at the right end of the top edge, extending rightward
+      var lx = a.rightX + 6;
+      // If the label would go off the right edge, place it inside the box
+      var inside = lx + 140 > W - 4;
+      if (inside) lx = ox + 6;
+
+      // If nudged, draw a subtle connector from the top edge to the label
+      if (nudged) {
+        p.push('<line x1="' + a.rightX + '" y1="' + a.topY + '" x2="' + a.rightX + '" y2="' + (ly + lH / 2) + '" stroke="' + a.color + '" stroke-width="0.5" opacity="0.15"/>');
+        p.push('<line x1="' + a.rightX + '" y1="' + (ly + lH / 2) + '" x2="' + lx + '" y2="' + (ly + lH / 2) + '" stroke="' + a.color + '" stroke-width="0.5" opacity="0.15"/>');
+      }
+
+      // For large boxes (inside labels), use brighter text
+      var textOp = inside ? a.nameOp : a.nameOp;
+      var fontSize = a.s > 80 ? '11' : '10';
+      var valSize = a.s > 80 ? '9.5' : '9';
+
+      // Text with shadow for readability (using duplicate offset text)
+      // Shadow
+      p.push('<text x="' + (lx + 1) + '" y="' + (ly + 10) + '" font-family="IBM Plex Sans,sans-serif" font-size="' + fontSize + '" font-weight="500" fill="rgba(0,0,0,0.6)">' + a.name + '</text>');
+      p.push('<text x="' + (lx + 1) + '" y="' + (ly + (lH - 2)) + '" font-family="IBM Plex Mono,monospace" font-size="' + valSize + '" fill="rgba(0,0,0,0.5)">' + a.val + '</text>');
+      // Foreground
+      p.push('<text x="' + lx + '" y="' + (ly + 9) + '" font-family="IBM Plex Sans,sans-serif" font-size="' + fontSize + '" font-weight="500" fill="rgba(255,255,255,' + textOp + ')">' + a.name + '</text>');
+      p.push('<text x="' + lx + '" y="' + (ly + (lH - 3)) + '" font-family="IBM Plex Mono,monospace" font-size="' + valSize + '" fill="' + a.color + '" fill-opacity="0.8">' + a.val + '</text>');
+    });
 
     svg.innerHTML = p.join('\n');
   }
