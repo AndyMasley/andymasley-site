@@ -255,6 +255,7 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
         <div class="w-chart" id="chart">
           <svg id="svg"></svg>
         </div>
+        <div class="w-legend" id="w-legend"></div>
       </div>
     </div>
 
@@ -567,7 +568,29 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
   /* ── Hidden original sub row (logic preserved, visually replaced by chip) ── */
   .w-dc-group .w-sub { display: none; }
 
-  .w-right { flex: 1; min-width: 0; }
+  .w-right { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0; }
+
+  /* Legend */
+  .w-legend { padding: 4px 0 0; }
+  .w-leg-row {
+    display: grid; grid-template-columns: 10px 1fr 80px;
+    gap: 8px; align-items: center;
+    padding: 5px 8px; border-bottom: 1px solid rgba(255,255,255,0.04);
+  }
+  .w-leg-row:last-child { border-bottom: none; }
+  .w-leg-color { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+  .w-leg-info { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; min-width: 0; }
+  .w-leg-name {
+    font-family: 'IBM Plex Sans', sans-serif; font-size: 0.78rem; font-weight: 500;
+    color: rgba(255,255,255,0.85); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .w-leg-proj { font-style: italic; color: rgba(255,255,255,0.55); }
+  .w-leg-val {
+    font-family: 'IBM Plex Mono', monospace; font-size: 0.68rem; font-weight: 400;
+    white-space: nowrap; flex-shrink: 0; opacity: 0.8;
+  }
+  .w-leg-bar { height: 3px; background: rgba(255,255,255,0.06); border-radius: 2px; overflow: hidden; }
+  .w-leg-fill { height: 100%; border-radius: 2px; opacity: 0.5; transition: width 0.3s ease; }
   .w-chart { min-width: 0; min-height: 400px; aspect-ratio: 1.3 / 1; background: var(--bg-subtle); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; position: relative; }
   #svg { width: 100%; height: 100%; display: block; }
 
@@ -715,87 +738,42 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
 
     const ox = pad, oy = H - pad, p = [];
 
-    // ── Boxes: graduated fills + bright top-edge accent ──
-    var n = vis.length;
+    // ── Boxes: clean nested squares, no labels on chart ──
     vis.forEach(function(v, vi) {
       var it = items[v.idx], x = ox, y = oy - v.s;
-      // Graduated fill: largest = lightest, smallest = darkest (so overlapping is visible)
-      var fillOp = 0.06 + (vi / Math.max(n - 1, 1)) * 0.12;
-      p.push('<rect x="' + x + '" y="' + y + '" width="' + v.s + '" height="' + v.s + '" fill="' + it.color + '" fill-opacity="' + fillOp.toFixed(3) + '"/>');
-      // Bright accent line on top edge only (the unique identifier of each square)
-      p.push('<line x1="' + x + '" y1="' + y + '" x2="' + (x + v.s) + '" y2="' + y + '" stroke="' + it.color + '" stroke-width="2" stroke-opacity="0.7"/>');
-      // Subtle side edges
-      p.push('<line x1="' + (x + v.s) + '" y1="' + y + '" x2="' + (x + v.s) + '" y2="' + (y + v.s) + '" stroke="' + it.color + '" stroke-width="0.5" stroke-opacity="0.2"/>');
+      p.push('<rect x="' + x + '" y="' + y + '" width="' + v.s + '" height="' + v.s + '" rx="2" fill="' + it.color + '" fill-opacity="0.1"/>');
+      p.push('<rect x="' + x + '" y="' + y + '" width="' + v.s + '" height="' + v.s + '" rx="2" fill="none" stroke="' + it.color + '" stroke-width="1.5" stroke-opacity="0.5"/>');
     });
 
-    // ── Labels: every item gets a label on the right side of its top edge ──
-    // Think of it like a ruler: each top edge is a "tick" and the label sits at the right end
-    var allLabels = vis.map(function(v) {
-      var it = items[v.idx];
-      var isProj = (it.name || '').indexOf('2030') >= 0;
-      var elecTag = it.elecOn ? ' +elec' : '';
-      var prefix = isProj ? '~' : '';
-      var val = prefix + it.sub + elecTag;
-      var nameOp = isProj ? 0.5 : 0.85;
-      return { idx: v.idx, s: v.s, topY: oy - v.s, rightX: ox + v.s, color: it.color, name: it.name, val: val, nameOp: nameOp };
-    });
-
-    // Sort by topY (highest on screen = smallest number first)
-    allLabels.sort(function(a, b) { return a.topY - b.topY; });
-
-    // Collision resolution: stack from top, each label needs 20px
-    var lH = 20, lGap = 2;
-    for (var li = 0; li < allLabels.length; li++) {
-      allLabels[li].resolvedY = allLabels[li].topY - 2; // sit just above the top edge
-      if (li > 0) {
-        var minY = allLabels[li - 1].resolvedY + lH + lGap;
-        if (allLabels[li].resolvedY < minY) allLabels[li].resolvedY = minY;
-      }
-      // Don't go below canvas
-      if (allLabels[li].resolvedY > oy - lH) allLabels[li].resolvedY = oy - lH;
-    }
-    // If they overflow bottom, compress from top
-    if (allLabels.length > 1) {
-      var lastLabelBot = allLabels[allLabels.length - 1].resolvedY + lH;
-      if (lastLabelBot > oy) {
-        var totalSpace = oy - pad;
-        var step = Math.max(lH, totalSpace / allLabels.length);
-        for (var lj = 0; lj < allLabels.length; lj++) {
-          allLabels[lj].resolvedY = pad + lj * step;
-        }
+    // ── Legend: ranked list below the chart, rendered as HTML ──
+    // Build legend data sorted largest to smallest
+    var legendEl = document.getElementById('w-legend');
+    if (legendEl) {
+      if (vis.length === 0) {
+        legendEl.innerHTML = '';
+      } else {
+        var legendHtml = '';
+        var maxG = 0;
+        vis.forEach(function(v) { var it = items[v.idx]; if (it.gallons > maxG) maxG = it.gallons; });
+        vis.forEach(function(v, vi) {
+          var it = items[v.idx];
+          var isProj = (it.name || '').indexOf('2030') >= 0;
+          var elecTag = it.elecOn ? ' +elec' : '';
+          var prefix = isProj ? '~' : '';
+          var val = prefix + it.sub + elecTag;
+          var barPct = maxG > 0 ? Math.max(1, (it.gallons / maxG) * 100) : 0;
+          legendHtml += '<div class="w-leg-row">';
+          legendHtml += '<div class="w-leg-color" style="background:' + it.color + '"></div>';
+          legendHtml += '<div class="w-leg-info">';
+          legendHtml += '<span class="w-leg-name' + (isProj ? ' w-leg-proj' : '') + '">' + it.name + '</span>';
+          legendHtml += '<span class="w-leg-val" style="color:' + it.color + '">' + val + '</span>';
+          legendHtml += '</div>';
+          legendHtml += '<div class="w-leg-bar"><div class="w-leg-fill" style="width:' + barPct.toFixed(1) + '%;background:' + it.color + '"></div></div>';
+          legendHtml += '</div>';
+        });
+        legendEl.innerHTML = legendHtml;
       }
     }
-
-    // Render labels
-    allLabels.forEach(function(a) {
-      var ly = a.resolvedY;
-      var nudged = Math.abs(ly - (a.topY - 2)) > 6;
-
-      // Label goes at the right end of the top edge, extending rightward
-      var lx = a.rightX + 6;
-      // If the label would go off the right edge, place it inside the box
-      var inside = lx + 140 > W - 4;
-      if (inside) lx = ox + 6;
-
-      // If nudged, draw a subtle connector from the top edge to the label
-      if (nudged) {
-        p.push('<line x1="' + a.rightX + '" y1="' + a.topY + '" x2="' + a.rightX + '" y2="' + (ly + lH / 2) + '" stroke="' + a.color + '" stroke-width="0.5" opacity="0.15"/>');
-        p.push('<line x1="' + a.rightX + '" y1="' + (ly + lH / 2) + '" x2="' + lx + '" y2="' + (ly + lH / 2) + '" stroke="' + a.color + '" stroke-width="0.5" opacity="0.15"/>');
-      }
-
-      // For large boxes (inside labels), use brighter text
-      var textOp = inside ? a.nameOp : a.nameOp;
-      var fontSize = a.s > 80 ? '11' : '10';
-      var valSize = a.s > 80 ? '9.5' : '9';
-
-      // Text with shadow for readability (using duplicate offset text)
-      // Shadow
-      p.push('<text x="' + (lx + 1) + '" y="' + (ly + 10) + '" font-family="IBM Plex Sans,sans-serif" font-size="' + fontSize + '" font-weight="500" fill="rgba(0,0,0,0.6)">' + a.name + '</text>');
-      p.push('<text x="' + (lx + 1) + '" y="' + (ly + (lH - 2)) + '" font-family="IBM Plex Mono,monospace" font-size="' + valSize + '" fill="rgba(0,0,0,0.5)">' + a.val + '</text>');
-      // Foreground
-      p.push('<text x="' + lx + '" y="' + (ly + 9) + '" font-family="IBM Plex Sans,sans-serif" font-size="' + fontSize + '" font-weight="500" fill="rgba(255,255,255,' + textOp + ')">' + a.name + '</text>');
-      p.push('<text x="' + lx + '" y="' + (ly + (lH - 3)) + '" font-family="IBM Plex Mono,monospace" font-size="' + valSize + '" fill="' + a.color + '" fill-opacity="0.8">' + a.val + '</text>');
-    });
 
     svg.innerHTML = p.join('\n');
   }
