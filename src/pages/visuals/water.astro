@@ -13,11 +13,17 @@ function fG(g: number) {
 }
 
 const dcItems = [
-  { name: 'ChatGPT inference', base: 186e6, elec: 558e6, color: '#3ba0d8', on: false },
-  { name: 'ChatGPT w/ training', base: 197e6, elec: 720e6, color: '#2a84b8', on: false },
+  // ChatGPT: Altman's 0.000085 gal + 0.34 Wh/query × 1B queries/day × 365
+  // Direct: 31M gal/yr. Elec: 124 GWh × 0.5 gal/kWh = 62M. Total w/ elec: 93M.
+  { name: 'ChatGPT inference', base: 31e6, elec: 93e6, color: '#3ba0d8', on: false },
+  // Training adds ~2M direct (GPT-4 ≈ 1.85M gal) + ~25M elec (est. 50 GWh × 0.5)
+  { name: 'ChatGPT w/ training', base: 33e6, elec: 118e6, color: '#2a84b8', on: false },
+  // Microsoft FY2023: 7.8M m³ = 2.06B gal. Elec: ~24 TWh × 0.5 = 12B. Total: 14.06B.
   { name: 'Microsoft', base: 2.06e9, elec: 14e9, color: '#6a9dc8', on: true },
+  // Google 2024: 6B gal direct. Elec: ~25.3 TWh × 0.5 = 12.65B. Total: 18.65B.
   { name: 'Google', base: 6e9, elec: 18.7e9, color: '#5088b8', on: true },
-  { name: 'All US data centers', base: 17e9, elec: 228e9, color: '#7b72ab', on: true },
+  // LBNL 2024: 17B direct. Elec: 176 TWh × 0.5 = 88B. Total: 105B.
+  { name: 'All US data centers', base: 17e9, elec: 105e9, color: '#7b72ab', on: true },
 ];
 
 const surfaceItems = [
@@ -157,10 +163,124 @@ const cropFlat = defaultCrop.map(d => ({ idx: idx++, ...d,
       </div>
     </div>
 
-    <div class="w-sources">
-      <details>
-        <summary>Sources and methodology</summary>
-        <p>Corn: ~650k gal/acre/yr (USDA, MSU Extension). Alfalfa: ~1.5M gal/acre/yr (UNR Extension). Golf: ~1.3M gal/irrigated acre/yr (USGA). ChatGPT from Altman's 0.000085 gal + 0.34 Wh/query at ~1B queries/day, 6x adjusted. Electricity water: 0.5 gal/kWh (NREL). Google 2024: ~6B gal, ~25.3 TWh. Microsoft FY2023: ~2.06B gal, ~24 TWh. All US DCs: ~17B gal cooling, ~228B w/ electricity (LBNL, 2023). Corn by state: USDA 2022 Census. Alfalfa by state: USDA 2022 Census Table 26. Golf by state: GCSAA/NGF. Surface areas: US Census Bureau.</p>
+    <div class="w-methodology">
+      <h2>Methodology</h2>
+      <p class="w-meth-intro">Every number below is sourced and documented. Where estimates involve significant uncertainty, we note the range and our reasoning.</p>
+
+      <details class="w-meth-section" open>
+        <summary>Crop water usage rates</summary>
+        <div class="w-meth-body">
+          <p><strong>Irrigated corn: 650,000 gal/acre/yr.</strong> Corn requires approximately 25 acre-inches of total water (irrigation + rainfall). In the Great Plains (Nebraska, Kansas), where most irrigated corn is grown, typical irrigation application is 1.5–2.0 acre-feet/year. We use 2.0 acre-feet = 651,700 gallons, rounded to 650,000. This represents <em>irrigation water applied</em>, not total crop water need.</p>
+          <p class="w-meth-src">Sources: <a href="https://www.ers.usda.gov/topics/farm-practices-management/irrigation-water-use" target="_blank" rel="noopener">USDA ERS — Irrigation & Water Use</a>, <a href="https://www.canr.msu.edu/news/how_much_water_does_corn_use" target="_blank" rel="noopener">MSU Extension</a>, <a href="https://www.pioneer.com/us/agronomy/water-corn-growth.html" target="_blank" rel="noopener">Pioneer Seeds — Water & Corn Growth</a></p>
+
+          <p><strong>Irrigated alfalfa: 1,500,000 gal/acre/yr.</strong> Alfalfa is the most water-intensive major US crop, requiring 3–6 acre-feet/year depending on climate. The western average (where most US alfalfa is grown) is approximately 4–5 acre-feet. We use 4.6 acre-feet ≈ 1.5M gallons. This matches UNR Extension's estimate.</p>
+          <p class="w-meth-src">Source: <a href="https://extension.unr.edu/publication.aspx?PubID=2575" target="_blank" rel="noopener">UNR Extension — How Much Water Does Alfalfa Need?</a></p>
+
+          <p><strong>Golf courses: 1,300,000 gal/irrigated acre/yr.</strong> This is a <em>Southwest/arid-region average</em> (~4 acre-feet/irrigated acre/yr), not a national average. The national average is considerably lower (~2–3 acre-feet) because courses in humid regions (Northeast, Southeast) irrigate less. We use the arid-region figure because it provides a more interesting comparison — users should understand this represents high-irrigation conditions.</p>
+          <p class="w-meth-src">Source: <a href="https://www.usga.org/content/dam/usga/pdf/Water%20Resource%20Center/how-much-water-does-golf-use.pdf" target="_blank" rel="noopener">USGA — How Much Water Does Golf Use? (PDF)</a></p>
+        </div>
+      </details>
+
+      <details class="w-meth-section">
+        <summary>Data center water — direct cooling</summary>
+        <div class="w-meth-body">
+          <p><strong>ChatGPT inference: 31 million gal/yr.</strong> Derived from Sam Altman's stated figures: 0.000085 gallons and 0.34 Wh per query, at approximately 1 billion queries/day.</p>
+          <p class="w-meth-calc">0.000085 gal × 1,000,000,000 queries/day × 365 days = 31 million gal/yr</p>
+          <p class="w-meth-caveat">Caveat: Independent researchers (notably <a href="https://arxiv.org/abs/2304.03271" target="_blank" rel="noopener">Shaolei Ren et al.</a>) estimate per-query water usage 3–6× higher than Altman's figure. ChatGPT query volume has also grown to ~2.5B/day as of mid-2025. We use Altman's published numbers since they're the only official figures, but actual usage may be substantially higher.</p>
+
+          <p><strong>ChatGPT w/ training: 33 million gal/yr.</strong> Training GPT-3 consumed approximately 185,000 gallons; GPT-4 is estimated at roughly 10× that (~1.85M gallons). Amortized over one year, training adds ~2M gallons to the inference figure.</p>
+          <p class="w-meth-src">Source: <a href="https://www.datacenterdynamics.com/en/news/sam-altman-chatgpt-queries-consume-034-watt-hours-of-electricity-and-0000085-gallons-of-water/" target="_blank" rel="noopener">DCD — Altman's claims</a></p>
+
+          <p><strong>Microsoft: 2.06 billion gal/yr.</strong> Microsoft's FY2023 environmental sustainability report states total water consumption of 7.8 million cubic meters. Converting: 7.8M m³ × 264.172 gal/m³ = 2.06 billion gallons. This is total company water consumption; data centers are the dominant component.</p>
+          <p class="w-meth-src">Source: <a href="https://blogs.microsoft.com/on-the-issues/2024/05/15/microsoft-environmental-sustainability-report-2024/" target="_blank" rel="noopener">Microsoft 2024 Environmental Sustainability Report</a></p>
+
+          <p><strong>Google: 6 billion gal/yr.</strong> Google's 2024 environmental report states data centers consumed nearly 6 billion gallons (22.7 billion liters) in calendar year 2024, an 8% increase year-over-year.</p>
+          <p class="w-meth-src">Source: <a href="https://sustainability.google/reports/google-2024-environmental-report/" target="_blank" rel="noopener">Google 2024 Environmental Report</a></p>
+
+          <p><strong>All US data centers: 17 billion gal/yr.</strong> LBNL's 2024 report estimated US data centers consumed approximately 17 billion gallons of water directly through on-site cooling in 2023.</p>
+          <p class="w-meth-src">Source: <a href="https://eta.lbl.gov/publications/2024-united-states-data-center-energy" target="_blank" rel="noopener">LBNL — 2024 United States Data Center Energy Usage Report</a></p>
+        </div>
+      </details>
+
+      <details class="w-meth-section">
+        <summary>Data center water — including electricity generation</summary>
+        <div class="w-meth-body">
+          <p><strong>Electricity-to-water conversion: 0.5 gal/kWh.</strong> Generating electricity requires water — primarily for cooling thermoelectric power plants (coal, gas, nuclear). We use the NREL estimate of 0.47 gal/kWh for thermoelectric generation, rounded to 0.5. This <em>excludes</em> hydroelectric reservoir evaporation.</p>
+          <p class="w-meth-caveat">Note: LBNL's 2024 report uses 1.2 gal/kWh, which includes hydroelectric reservoir evaporation (~18 gal/kWh for hydro alone). We exclude hydro evaporation because it occurs regardless of data center demand and is not a marginal water cost. This methodological choice significantly affects the numbers — at LBNL's rate, the figures below would be ~2.4× higher.</p>
+          <p class="w-meth-src">Sources: <a href="https://www.nrel.gov/docs/fy04osti/33905.pdf" target="_blank" rel="noopener">NREL — Consumptive Water Use for U.S. Power Production (PDF)</a>, <a href="https://www.construction-physics.com/p/i-was-wrong-about-data-center-water" target="_blank" rel="noopener">Construction Physics analysis</a></p>
+
+          <p>The "+ water cost of electricity" toggle adds indirect water from power generation:</p>
+          <table class="w-meth-table">
+            <thead>
+              <tr><th></th><th>Electricity</th><th>× 0.5 gal/kWh</th><th>+ Direct</th><th>= Total</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>ChatGPT inference</td><td>124 GWh</td><td>62M gal</td><td>31M</td><td>93M gal/yr</td></tr>
+              <tr><td>ChatGPT w/ training</td><td>~174 GWh</td><td>87M gal</td><td>33M</td><td>118M gal/yr</td></tr>
+              <tr><td>Microsoft</td><td>~24 TWh</td><td>12B gal</td><td>2.06B</td><td>14B gal/yr</td></tr>
+              <tr><td>Google</td><td>~25.3 TWh</td><td>12.65B gal</td><td>6B</td><td>18.7B gal/yr</td></tr>
+              <tr><td>All US data centers</td><td>176 TWh</td><td>88B gal</td><td>17B</td><td>105B gal/yr</td></tr>
+            </tbody>
+          </table>
+          <p class="w-meth-src">Electricity figures: Microsoft FY2023 report, Google 2024 report, <a href="https://eta.lbl.gov/publications/2024-united-states-data-center-energy" target="_blank" rel="noopener">LBNL 2024</a> (176 TWh for all US DCs)</p>
+        </div>
+      </details>
+
+      <details class="w-meth-section">
+        <summary>Crop acreage by state</summary>
+        <div class="w-meth-body">
+          <p>All state-level irrigated crop acreage comes from the <strong>USDA 2022 Census of Agriculture</strong>, accessed via <a href="https://www.nass.usda.gov/Quick_Stats/" target="_blank" rel="noopener">NASS QuickStats</a>.</p>
+          <table class="w-meth-table">
+            <thead><tr><th>Crop</th><th>State</th><th>Irrigated acres</th><th>Census table</th></tr></thead>
+            <tbody>
+              <tr><td rowspan="5">Corn</td><td>Texas</td><td>463,507</td><td rowspan="5">Table 28</td></tr>
+              <tr><td>Colorado</td><td>470,075</td></tr>
+              <tr><td>Kansas</td><td>1,181,420</td></tr>
+              <tr><td>Nebraska</td><td>4,554,560</td></tr>
+              <tr><td><em>All US</em></td><td><em>11,000,000</em></td></tr>
+              <tr><td rowspan="5">Alfalfa</td><td>Colorado</td><td>564,610</td><td rowspan="5">Table 26</td></tr>
+              <tr><td>Montana</td><td>664,411</td></tr>
+              <tr><td>California</td><td>868,823</td></tr>
+              <tr><td>Idaho</td><td>870,101</td></tr>
+              <tr><td><em>All US</em></td><td><em>~6,000,000</em></td></tr>
+            </tbody>
+          </table>
+          <p>The US total for corn (11M irrigated acres) is confirmed by <a href="https://www.ers.usda.gov/topics/farm-practices-management/irrigation-water-use" target="_blank" rel="noopener">USDA ERS</a>: "corn grown for grain accounted for the most irrigated acreage in the United States, with more than 11 million irrigated acres harvested" in 2022.</p>
+
+          <p><strong>Golf course acreage</strong> comes from the <a href="https://www.gcsaa.org/docs/default-source/Environment/phase-2-land-use-survey-full-report.pdf" target="_blank" rel="noopener">GCSAA Environmental Profile survey</a>: 1,198,381 irrigated acres nationally (80% of maintained golf turfgrass). State-level figures (FL 81,400; CA 68,600; TX 63,300; NY 62,200) are from the same GCSAA/NGF survey.</p>
+        </div>
+      </details>
+
+      <details class="w-meth-section">
+        <summary>Surface areas</summary>
+        <div class="w-meth-body">
+          <p>All surface areas are <strong>land area only</strong> (excluding water bodies), from the US Census Bureau, converted at 640 acres per square mile.</p>
+          <table class="w-meth-table">
+            <thead><tr><th>Place</th><th>Land area (sq mi)</th><th>Acres</th></tr></thead>
+            <tbody>
+              <tr><td>Manhattan</td><td>22.83</td><td>14,611</td></tr>
+              <tr><td>San Francisco</td><td>46.87</td><td>29,997</td></tr>
+              <tr><td>Washington, D.C.</td><td>61.05</td><td>39,072</td></tr>
+              <tr><td>Los Angeles</td><td>468.67</td><td>299,949</td></tr>
+              <tr><td>Rhode Island</td><td>1,033.81</td><td>661,639</td></tr>
+              <tr><td>New Jersey</td><td>7,354.22</td><td>4,706,701</td></tr>
+            </tbody>
+          </table>
+          <p class="w-meth-src">Source: <a href="https://www.census.gov/geographies/reference-files/time-series/geo/gazetteer-files.html" target="_blank" rel="noopener">US Census Bureau Gazetteer Files</a></p>
+        </div>
+      </details>
+
+      <details class="w-meth-section">
+        <summary>Key caveats and limitations</summary>
+        <div class="w-meth-body">
+          <ul>
+            <li><strong>ChatGPT figures are the most uncertain numbers here.</strong> Sam Altman's per-query claims are the only official figures but independent researchers estimate 3–6× higher water usage per query. Query volume has also grown substantially since the 1B/day figure was published.</li>
+            <li><strong>The electricity-water rate matters enormously.</strong> At the NREL thermoelectric rate (0.5 gal/kWh), indirect water for all US data centers is ~88B gal. At LBNL's rate including hydro (1.2 gal/kWh), it's ~211B gal — a 2.4× difference. We use the lower rate because hydro evaporation is not a marginal cost of data centers.</li>
+            <li><strong>The golf course water rate (1.3M gal/acre) is for arid-region courses</strong>, not a national average. Courses in humid regions use much less. The national average would be roughly 650,000–980,000 gal/acre/yr.</li>
+            <li><strong>Crop water varies enormously by region.</strong> The corn figure (650K gal/acre) is representative of Plains states; southern and eastern irrigated corn may use less supplemental water due to higher rainfall.</li>
+            <li><strong>"Direct" vs. "with electricity" is a real methodological debate.</strong> Both framings are legitimate. Direct cooling water is what the data center physically consumes. Electricity-generation water is consumed upstream at power plants. Neither is "wrong" — they answer different questions.</li>
+          </ul>
+        </div>
       </details>
     </div>
   </div>
@@ -229,13 +349,62 @@ const cropFlat = defaultCrop.map(d => ({ idx: idx++, ...d,
   .w-chart { min-width: 0; min-height: 400px; aspect-ratio: 1.3 / 1; background: var(--bg-subtle); border: 1px solid var(--border); border-radius: 0 0 8px 8px; overflow: hidden; position: relative; }
   #svg { width: 100%; height: 100%; display: block; }
 
-  .w-sources { max-width: 640px; padding-bottom: 2rem; }
-  .w-sources details { border-top: 1px solid var(--border-subtle); padding-top: 0.5rem; }
-  .w-sources summary { font-size: 0.75rem; font-weight: 500; color: var(--dim); cursor: pointer; list-style: none; padding: 0.25rem 0; }
-  .w-sources summary::-webkit-details-marker { display: none; }
-  .w-sources summary::before { content: '+ '; }
-  .w-sources details[open] summary::before { content: '− '; }
-  .w-sources p { font-size: 0.72rem; color: var(--dim); line-height: 1.65; margin-top: 0.5rem; }
+  /* Methodology */
+  .w-methodology { max-width: 760px; padding-bottom: 3rem; }
+  .w-methodology h2 { font-size: 1.4rem; font-weight: 700; margin-bottom: 0.25rem; letter-spacing: -0.02em; }
+  .w-meth-intro { font-size: 0.82rem; color: var(--dim); line-height: 1.6; margin-bottom: 1.5rem; }
+
+  .w-meth-section { border-bottom: 1px solid var(--border); }
+  .w-meth-section:last-child { border-bottom: none; }
+  .w-meth-section summary {
+    font-size: 0.88rem; font-weight: 600; color: var(--text);
+    cursor: pointer; list-style: none; padding: 0.75rem 0;
+    display: flex; align-items: center; gap: 8px;
+    user-select: none;
+  }
+  .w-meth-section summary::-webkit-details-marker { display: none; }
+  .w-meth-section summary::before { content: '▸'; font-size: 0.65rem; color: var(--dim); transition: transform 0.15s; }
+  .w-meth-section[open] summary::before { transform: rotate(90deg); }
+  .w-meth-section summary:hover { color: var(--accent); }
+
+  .w-meth-body { padding: 0 0 1.25rem 20px; }
+  .w-meth-body p { font-size: 0.78rem; line-height: 1.65; color: var(--text-secondary); margin-bottom: 0.5rem; }
+  .w-meth-body strong { color: var(--text); }
+  .w-meth-body a { color: var(--accent); text-decoration: underline; text-underline-offset: 2px; }
+  .w-meth-body ul { padding-left: 1.25rem; margin-bottom: 0.75rem; }
+  .w-meth-body li { font-size: 0.78rem; line-height: 1.65; color: var(--text-secondary); margin-bottom: 0.4rem; }
+  .w-meth-body li strong { color: var(--text); }
+
+  .w-meth-src { font-size: 0.68rem; color: var(--dim); margin-top: 0.15rem; margin-bottom: 0.75rem; }
+  .w-meth-src a { font-size: inherit; }
+
+  .w-meth-calc {
+    font-family: var(--font-mono, monospace); font-size: 0.72rem;
+    background: var(--bg-subtle); padding: 8px 12px; border-radius: 4px;
+    margin: 0.35rem 0 0.5rem; color: var(--text); line-height: 1.5;
+  }
+
+  .w-meth-caveat {
+    font-size: 0.72rem; color: var(--dim); font-style: italic;
+    border-left: 2px solid var(--border); padding-left: 10px;
+    margin: 0.35rem 0 0.75rem; line-height: 1.55;
+  }
+  .w-meth-caveat a { color: var(--accent); }
+
+  .w-meth-table {
+    width: 100%; border-collapse: collapse; margin: 0.5rem 0 0.75rem;
+    font-size: 0.72rem; line-height: 1.4;
+  }
+  .w-meth-table th {
+    text-align: left; font-weight: 600; color: var(--text);
+    padding: 4px 8px; border-bottom: 2px solid var(--border);
+    font-size: 0.68rem;
+  }
+  .w-meth-table td {
+    padding: 3px 8px; border-bottom: 1px solid var(--border-subtle);
+    color: var(--text-secondary); font-variant-numeric: tabular-nums;
+  }
+  .w-meth-table em { font-weight: 500; }
 
   @media (max-width: 850px) {
     .w-viz { flex-direction: column; }
