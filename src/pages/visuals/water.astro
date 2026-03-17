@@ -374,8 +374,8 @@ document.addEventListener('DOMContentLoaded', function() {
   // ── Animation ──────────────────────────────────
   const chart = document.getElementById('chart');
   const svg = document.getElementById('svg');
-  const cur = new Map<number, number>();
-  const tgt = new Map<number, number>();
+  const cur = new Map();
+  const tgt = new Map();
   let raf = null;
 
   function render() {
