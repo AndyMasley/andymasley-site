@@ -190,14 +190,21 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
               <span class="wv-cat-controls"><span class="wv-cat-toggle" data-action="all">all</span> / <span class="wv-cat-toggle" data-action="none">none</span></span>
             </button>
             <div class="wv-cat-list" data-visible="false">
-              {farmFlat.map(d => (
-                <button class="wv-toggle-row" data-idx={d.idx} data-on={d.on ? 'true' : 'false'} data-gal-industry={d.gal}>
-                  <span class="wv-dot"></span>
-                  <span class="wv-row-text">
-                    <span class="wv-row-name">{d.name}</span>
-                    <span class="wv-row-val">{d.sub}</span>
-                  </span>
-                </button>
+              {farmFlat.map((d, i) => (
+                <div>
+                  {i === 1 && <div class="wv-proj-divider">Corn by state</div>}
+                  {i === 5 && <div class="wv-proj-divider">Alfalfa (US & states)</div>}
+                  {i === 6 && <div class="wv-proj-divider">Alfalfa by state</div>}
+                  {i === 10 && <div class="wv-proj-divider">Berries (US & states)</div>}
+                  {i === 11 && <div class="wv-proj-divider">Berries by state</div>}
+                  <button class="wv-toggle-row" data-idx={d.idx} data-on={d.on ? 'true' : 'false'} data-gal-industry={d.gal}>
+                    <span class="wv-dot"></span>
+                    <span class="wv-row-text">
+                      <span class="wv-row-name">{d.name}</span>
+                      <span class="wv-row-val">{d.sub}</span>
+                    </span>
+                  </button>
+                </div>
               ))}
             </div>
           </div>
@@ -211,14 +218,18 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
               <span class="wv-cat-controls"><span class="wv-cat-toggle" data-action="all">all</span> / <span class="wv-cat-toggle" data-action="none">none</span></span>
             </button>
             <div class="wv-cat-list" data-visible="false">
-              {turfFlat.map(d => (
-                <button class="wv-toggle-row" data-idx={d.idx} data-on={d.on ? 'true' : 'false'} data-gal-industry={d.gal}>
-                  <span class="wv-dot"></span>
-                  <span class="wv-row-text">
-                    <span class="wv-row-name">{d.name}</span>
-                    <span class="wv-row-val">{d.sub}</span>
-                  </span>
-                </button>
+              {turfFlat.map((d, i) => (
+                <div>
+                  {i === 1 && <div class="wv-proj-divider">Lawns by state</div>}
+                  {i === 4 && <div class="wv-proj-divider">Golf courses</div>}
+                  <button class="wv-toggle-row" data-idx={d.idx} data-on={d.on ? 'true' : 'false'} data-gal-industry={d.gal}>
+                    <span class="wv-dot"></span>
+                    <span class="wv-row-text">
+                      <span class="wv-row-name">{d.name}</span>
+                      <span class="wv-row-val">{d.sub}</span>
+                    </span>
+                  </button>
+                </div>
               ))}
             </div>
           </div>
