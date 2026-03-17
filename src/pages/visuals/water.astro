@@ -976,8 +976,8 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
   .wv-gridline-labels {
     position: absolute;
     top: 4px;
-    left: 0;
-    right: 0;
+    left: 260px;  /* past name column (240px + gap) */
+    right: 120px; /* before value column (110px + gap) */
     height: 0;
     pointer-events: none;
   }
@@ -1651,7 +1651,7 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
       for (var j = 0; j < active.length; j++) {
         var it = active[j];
         var pct = maxG > 0 ? (it.gallons / maxG) * 100 : 0;
-        var pctRound = Math.round(pct);
+        var pctRound = pct >= 1 ? Math.round(pct) : pct >= 0.1 ? Math.round(pct * 10) / 10 : pct >= 0.01 ? Math.round(pct * 100) / 100 : '<0.01';
         var isProj = it.name.indexOf('2030') >= 0;
         var elecTag = it.elecOn ? ' +elec' : '';
         var prefix = isProj ? '~' : '';
