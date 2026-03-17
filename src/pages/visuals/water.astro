@@ -722,11 +722,7 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
     overflow-y: auto;
     padding: 16px;
     -webkit-overflow-scrolling: touch;
-    display: flex;
-    flex-wrap: wrap;
-    align-items: flex-start;
-    align-content: flex-start;
-    gap: 12px;
+    min-height: 500px;
   }
   .wv-sq-item {
     display: flex;
@@ -994,24 +990,63 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
 
     // ── Square view ──
     if (currentView === 'squares') {
-      // Each square's side length proportional to sqrt(value/max)
-      // Max square = 180px side
-      var maxSide = 180;
-      var sqHtml = '';
+      // Use the full panel area. Max square fills most of the space.
+      var panelW = squaresArea.clientWidth - 32; // padding
+      var panelH = squaresArea.clientHeight - 32;
+      if (panelW < 100) panelW = 600;
+      if (panelH < 100) panelH = 500;
+
+      // Max square side = 70% of the smaller panel dimension
+      var maxSide = Math.round(Math.min(panelW, panelH) * 0.7);
+      // No minimum — let tiny items be truly tiny (even 1px)
+      var labelH = 32; // space for label below each square
+
+      // Compute sizes
+      var sized = [];
       for (var k = 0; k < active.length; k++) {
         var sq = active[k];
-        var side = Math.max(8, Math.round(maxSide * Math.sqrt(sq.gallons / maxG)));
+        var side = Math.max(2, Math.round(maxSide * Math.sqrt(sq.gallons / maxG)));
         var isP = sq.name.indexOf('2030') >= 0;
         var eTag = sq.elecOn ? ' +elec' : '';
         var pre = isP ? '~' : '';
         var v = pre + sq.sub + eTag;
-        sqHtml += '<div class="wv-sq-item">';
-        sqHtml += '<div class="wv-sq-box" style="width:' + side + 'px;height:' + side + 'px;background:' + sq.color + ';opacity:0.18;border:1.5px solid ' + sq.color + '"></div>';
+        sized.push({ sq: sq, side: side, val: v });
+      }
+
+      // Shelf-packing: place squares left-to-right, wrapping to new rows
+      // Each "shelf" has height = tallest square on that row + label space
+      var placed = [];
+      var shelfX = 0, shelfY = 0, shelfH = 0;
+      var gap = 14;
+      for (var s = 0; s < sized.length; s++) {
+        var itemW = Math.max(sized[s].side, 60); // label needs at least 60px wide
+        var itemH = sized[s].side + labelH;
+        // Does it fit on current shelf?
+        if (shelfX + itemW > panelW && shelfX > 0) {
+          // New shelf
+          shelfY += shelfH + gap;
+          shelfX = 0;
+          shelfH = 0;
+        }
+        placed.push({ x: shelfX, y: shelfY, w: itemW, h: itemH, data: sized[s] });
+        shelfH = Math.max(shelfH, itemH);
+        shelfX += itemW + gap;
+      }
+
+      // Render as absolutely positioned divs
+      var totalH = shelfY + shelfH + 16;
+      var sqHtml = '<div style="position:relative;width:100%;height:' + totalH + 'px">';
+      for (var p = 0; p < placed.length; p++) {
+        var pl = placed[p];
+        var d = pl.data;
+        sqHtml += '<div class="wv-sq-item" style="position:absolute;left:' + pl.x + 'px;top:' + pl.y + 'px;width:' + pl.w + 'px">';
+        sqHtml += '<div class="wv-sq-box" style="width:' + d.side + 'px;height:' + d.side + 'px;background:' + d.sq.color + ';opacity:0.18;border:1.5px solid ' + d.sq.color + '"></div>';
         sqHtml += '<div class="wv-sq-label">';
-        sqHtml += '<span class="wv-sq-name" title="' + sq.name + '">' + sq.name + '</span>';
-        sqHtml += '<span class="wv-sq-val">' + v + '</span>';
+        sqHtml += '<span class="wv-sq-name" title="' + d.sq.name + '">' + d.sq.name + '</span>';
+        sqHtml += '<span class="wv-sq-val">' + d.val + '</span>';
         sqHtml += '</div></div>';
       }
+      sqHtml += '</div>';
       squaresArea.innerHTML = sqHtml;
     }
   }
