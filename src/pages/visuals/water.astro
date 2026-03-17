@@ -726,10 +726,11 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
     color: var(--text-secondary);
     background: transparent;
     cursor: pointer;
-    flex-shrink: 0;
     white-space: nowrap;
     transition: all 0.15s;
     margin-top: 2px;
+    align-self: flex-start;
+    width: fit-content;
   }
   .wv-toggle-row[data-on="true"] .wv-elec-chip {
     display: inline-block;
