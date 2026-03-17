@@ -124,6 +124,7 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
       <!-- Toggle panel (left) -->
       <div class="wv-toggles">
         <div class="wv-toggles-scroll">
+          <div class="wv-panel-title">ITEMS</div>
           <button class="wv-clear-all" id="wv-clear-all">Clear all</button>
 
           <!-- Data centers -->
@@ -282,8 +283,10 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
       <!-- Chart panel (right) -->
       <div class="wv-chart-panel">
         <div class="wv-chart-header">
-          <span class="wv-chart-count" id="wv-count">Comparing 3 items</span>
-          <button class="wv-share-btn" id="wv-share" style="font-family:inherit;font-size:0.65rem;color:var(--text-secondary);background:none;border:1px solid var(--divider);border-radius:4px;padding:2px 8px;cursor:pointer;margin-left:6px;transition:color 0.12s">Copy link</button>
+          <div class="wv-header-left">
+            <div style="display:flex;align-items:center;gap:6px"><span class="wv-chart-count" id="wv-count">Comparing 3 items</span><button class="wv-share-btn" id="wv-share" style="font-family:inherit;font-size:0.65rem;color:var(--text-secondary);background:none;border:1px solid var(--divider);border-radius:4px;padding:2px 8px;cursor:pointer;transition:color 0.12s">Copy link</button></div>
+            <div class="wv-treated-helper" id="wv-treated-helper" style="display:none;opacity:0">Showing only water from municipal supply. Crossed-out items use untreated sources.</div>
+          </div>
           <div class="wv-header-controls">
             <div class="wv-water-toggle">
               <button class="wv-water-btn" data-water="all" data-active="true">All freshwater</button>
@@ -295,8 +298,7 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
             </div>
           </div>
         </div>
-        <div class="wv-ratio-callout" id="wv-ratio" style="display:none"></div>
-        <div class="wv-treated-helper" id="wv-treated-helper" style="display:none;opacity:0">Showing only water from municipal supply. Crossed-out items use untreated sources.</div>
+        <div class="wv-ratio-wrap" id="wv-ratio-wrap"><div class="wv-ratio-callout" id="wv-ratio"></div></div>
         <div class="wv-bars-area" id="wv-bars" style="display:none">
           <div class="wv-bars-empty">Expand a category on the left and click items to add them to the comparison.</div>
         </div>
@@ -627,6 +629,8 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
   }
   .wv-cat-list[data-visible="true"] {
     display: block;
+    max-height: 300px;
+    overflow-y: auto;
   }
 
   /* Toggle rows */
@@ -698,7 +702,7 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
     font-size: 0.6rem;
     font-weight: 600;
     padding: 2px 7px;
-    border-radius: 9px;
+    border-radius: 4px;
     border: 1px solid var(--divider);
     color: var(--text-secondary);
     background: transparent;
@@ -736,8 +740,13 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 8px 16px;
+    padding: 12px 16px;
     border-bottom: 2px solid var(--divider);
+  }
+  .wv-header-left {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
   }
   .wv-chart-count {
     font-size: 0.72rem;
@@ -778,6 +787,7 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
     overflow-y: auto;
     padding: 12px 16px;
     -webkit-overflow-scrolling: touch;
+    transition: opacity 0.15s ease;
   }
   .wv-bars-empty {
     color: var(--text-secondary);
@@ -801,7 +811,13 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
     font-weight: 500;
     color: var(--text);
     text-align: left;
-    white-space: nowrap;
+    white-space: normal;
+    line-height: 1.3;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
   }
   .wv-bar-track {
     flex: 1;
@@ -825,6 +841,11 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
     color: var(--text-secondary);
     font-variant-numeric: tabular-nums;
     white-space: nowrap;
+  }
+
+  .wv-bar-pct {
+    opacity: 0.4;
+    font-size: 0.6rem;
   }
 
   /* Bar row hover (#12) */
@@ -858,7 +879,7 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
     font-size: 0.65rem;
     font-style: italic;
     color: var(--text-secondary);
-    padding: 4px 16px 0;
+    padding: 0;
     line-height: 1.4;
   }
 
@@ -878,6 +899,7 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
     flex: 1;
     overflow: hidden;
     padding: 16px;
+    transition: opacity 0.15s ease;
   }
   .wv-sq-item {
     display: flex;
@@ -916,6 +938,18 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
     font-variant-numeric: tabular-nums;
   }
 
+  /* Loading skeleton */
+  @keyframes wv-skeleton {
+    0% { background-position: -200px 0; }
+    100% { background-position: 200px 0; }
+  }
+  .wv-bars-area:empty,
+  .wv-squares-area:empty {
+    background-image: linear-gradient(90deg, transparent 0%, rgba(0,0,0,0.03) 40%, rgba(0,0,0,0.05) 50%, rgba(0,0,0,0.03) 60%, transparent 100%);
+    background-size: 400px 100%;
+    animation: wv-skeleton 1.5s ease-in-out infinite;
+  }
+
   /* Focus states */
   .wv2 *:focus-visible {
     outline: 2px solid var(--accent);
@@ -937,14 +971,50 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
   /* #17 Bar gridlines */
   .wv-bars-area {
     background: repeating-linear-gradient(90deg, transparent, transparent calc(25% - 0.5px), rgba(0,0,0,0.04) calc(25% - 0.5px), rgba(0,0,0,0.04) calc(25% + 0.5px));
+    position: relative;
+  }
+  .wv-gridline-labels {
+    position: absolute;
+    top: 4px;
+    left: 0;
+    right: 0;
+    height: 0;
+    pointer-events: none;
+  }
+  .wv-gridline-label {
+    position: absolute;
+    top: 0;
+    font-size: 0.55rem;
+    color: var(--text-secondary);
+    opacity: 0.4;
+    transform: translateX(-50%);
   }
 
   /* #3 Two-item ratio callout */
+  .wv-ratio-wrap {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.25s ease;
+  }
+  .wv-ratio-wrap.wv-ratio-visible {
+    max-height: 40px;
+  }
   .wv-ratio-callout {
     font-size: 0.75rem;
     color: var(--text-secondary);
     font-style: italic;
     padding: 2px 16px 4px;
+  }
+
+  /* Panel title */
+  .wv-panel-title {
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-secondary);
+    padding: 10px 12px 4px;
+    opacity: 0.6;
   }
 
   /* #8 Clear all button */
@@ -1007,13 +1077,21 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
   /* #1 Scale reference */
   .wv-scale-ref {
     position: absolute;
-    bottom: 8px;
-    right: 8px;
+    top: 0;
+    left: 0;
     display: flex;
     align-items: center;
     gap: 4px;
     font-size: 0.58rem;
+    font-weight: 500;
     color: var(--text-secondary);
+    border: 1px solid var(--divider);
+    padding: 4px 8px;
+    border-radius: 4px;
+    background: var(--bg-elevated, #fff);
+  }
+  [data-theme="dark"] .wv-scale-ref {
+    background: var(--bg-elevated, #1c1c1a);
   }
   .wv-scale-ref-box {
     border: 1.5px solid var(--text-secondary);
@@ -1086,6 +1164,7 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
   var countEl = document.getElementById('wv-count');
   var treatedHelper = document.getElementById('wv-treated-helper');
   var ratioEl = document.getElementById('wv-ratio');
+  var ratioWrap = document.getElementById('wv-ratio-wrap');
   var shareBtn = document.getElementById('wv-share');
   var currentView = 'squares';
   var waterMode = 'all';
@@ -1121,18 +1200,27 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
     }
   });
 
-  // View toggle
+  // View toggle with crossfade
   document.querySelectorAll('.wv-view-btn').forEach(function(btn) {
     btn.addEventListener('click', function() {
       var view = btn.dataset.view;
       if (view === currentView) return;
-      currentView = view;
       document.querySelectorAll('.wv-view-btn').forEach(function(b) {
         b.dataset.active = b.dataset.view === view ? 'true' : 'false';
       });
-      barsArea.style.display = view === 'bars' ? '' : 'none';
-      squaresArea.style.display = view === 'squares' ? '' : 'none';
-      render();
+      var outgoing = view === 'bars' ? squaresArea : barsArea;
+      var incoming = view === 'bars' ? barsArea : squaresArea;
+      outgoing.style.opacity = '0';
+      setTimeout(function() {
+        outgoing.style.display = 'none';
+        currentView = view;
+        render();
+        incoming.style.opacity = '0';
+        incoming.style.display = '';
+        requestAnimationFrame(function() {
+          incoming.style.opacity = '1';
+        });
+      }, 150);
     });
   });
 
@@ -1430,6 +1518,8 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
         row.dataset.on = 'false';
       });
       render();
+      clearBtn.textContent = 'Cleared!';
+      setTimeout(function() { clearBtn.textContent = 'Clear all'; }, 1500);
     });
   }
 
@@ -1443,10 +1533,10 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
       var url = window.location.origin + window.location.pathname + '?items=' + activeIndices.join(',');
       navigator.clipboard.writeText(url).then(function() {
         shareBtn.textContent = 'Copied!';
-        setTimeout(function() { shareBtn.textContent = 'Copy link'; }, 1500);
+        setTimeout(function() { shareBtn.textContent = 'Copy link'; }, 2000);
       }).catch(function() {
         shareBtn.textContent = 'Failed';
-        setTimeout(function() { shareBtn.textContent = 'Copy link'; }, 1500);
+        setTimeout(function() { shareBtn.textContent = 'Copy link'; }, 2000);
       });
     });
   }
@@ -1508,7 +1598,7 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
     // (#21) Count pulse animation
     var newCount = active.length;
     if (countEl) {
-      countEl.textContent = 'Comparing ' + newCount + ' item' + (newCount === 1 ? '' : 's');
+      countEl.innerHTML = 'Comparing <strong>' + newCount + '</strong> item' + (newCount === 1 ? '' : 's');
       if (lastCount !== -1 && lastCount !== newCount) {
         countEl.classList.add('wv-count-pulse');
         setTimeout(function() { countEl.classList.remove('wv-count-pulse'); }, 150);
@@ -1517,14 +1607,14 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
     }
 
     // (#3) Two-item ratio callout
-    if (ratioEl) {
+    if (ratioEl && ratioWrap) {
       if (active.length === 2) {
         var sorted = active.slice().sort(function(a, b) { return b.gallons - a.gallons; });
         var ratio = (sorted[0].gallons / sorted[1].gallons).toFixed(1);
         ratioEl.textContent = sorted[0].baseName + ' is ' + ratio + '\u00d7 larger than ' + sorted[1].baseName;
-        ratioEl.style.display = '';
+        ratioWrap.classList.add('wv-ratio-visible');
       } else {
-        ratioEl.style.display = 'none';
+        ratioWrap.classList.remove('wv-ratio-visible');
       }
     }
 
@@ -1547,7 +1637,7 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
 
     if (active.length === 0) {
       barsArea.innerHTML = '<div class="wv-bars-empty">Expand a category on the left and click items to add them to the comparison.</div>';
-      squaresArea.innerHTML = '<div class="wv-bars-empty">Expand a category on the left and click items to add them to the comparison.</div>';
+      squaresArea.innerHTML = '<div class="wv-bars-empty">Toggle items on the left to see their water use as proportional squares.</div>';
       return;
     }
 
@@ -1557,7 +1647,7 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
 
     // ── Bar view ──
     if (currentView === 'bars') {
-      var html = '';
+      var html = '<div class="wv-gridline-labels"><span class="wv-gridline-label" style="left:25%">25%</span><span class="wv-gridline-label" style="left:50%">50%</span><span class="wv-gridline-label" style="left:75%">75%</span></div>';
       for (var j = 0; j < active.length; j++) {
         var it = active[j];
         var pct = maxG > 0 ? (it.gallons / maxG) * 100 : 0;
@@ -1573,10 +1663,10 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
         if (isProj) {
           fillStyle += ';background-image:repeating-linear-gradient(45deg,transparent,transparent 3px,rgba(0,0,0,0.03) 3px,rgba(0,0,0,0.03) 6px)';
         }
-        html += '<div class="wv-bar-row" data-idx="' + it.idx + '" title="' + it.name + ': ' + val + '">';
+        html += '<div class="wv-bar-row" data-idx="' + it.idx + '" title="' + it.name + ': ' + val + '" style="border-left:3px solid ' + it.color + ';padding-left:8px">';
         html += '<span class="wv-bar-name" title="' + it.name + '">' + it.name + '</span>';
         html += '<div class="wv-bar-track"><div class="wv-bar-fill" style="' + fillStyle + '"></div></div>';
-        html += '<span class="wv-bar-val">' + val + pctText + '</span>';
+        html += '<span class="wv-bar-val">' + val + '<span class="wv-bar-pct">' + pctText + '</span></span>';
         html += '</div>';
       }
       barsArea.innerHTML = html;
@@ -1676,7 +1766,7 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
           el = document.createElement('div');
           el.className = 'wv-sq-item';
           el.dataset.sqIdx = key;
-          el.innerHTML = '<div class="wv-sq-box"></div><div class="wv-sq-label"><span class="wv-sq-name"></span><span class="wv-sq-val"></span></div>';
+          el.innerHTML = '<div class="wv-sq-box"></div><div class="wv-sq-color-bar"></div><div class="wv-sq-label"><span class="wv-sq-name"></span><span class="wv-sq-val"></span></div>';
           el.style.position = 'absolute';
           el.style.opacity = '0';
           container.appendChild(el);
@@ -1714,13 +1804,32 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
         el.style.top = pl.y + 'px';
         el.style.width = labelBelow ? pl.w + 'px' : '';
         var box = el.querySelector('.wv-sq-box');
-        box.style.width = ss + 'px';
-        box.style.height = ss + 'px';
-        box.style.background = d.sq.color;
-        box.style.opacity = fillOpacity;
-        box.style.border = '2px solid ' + d.sq.color;
-        box.style.borderColor = d.sq.color;
-        box.style.flexShrink = '0';
+        if (ss < 10) {
+          box.style.width = '6px';
+          box.style.height = '6px';
+          box.style.borderRadius = '50%';
+          box.style.background = d.sq.color;
+          box.style.opacity = fillOpacity;
+          box.style.border = 'none';
+          box.style.flexShrink = '0';
+        } else {
+          box.style.width = ss + 'px';
+          box.style.height = ss + 'px';
+          box.style.borderRadius = '3px';
+          box.style.background = d.sq.color;
+          box.style.opacity = fillOpacity;
+          box.style.border = '2px solid ' + d.sq.color;
+          box.style.borderColor = d.sq.color;
+          box.style.flexShrink = '0';
+        }
+        var colorBar = el.querySelector('.wv-sq-color-bar');
+        if (colorBar) {
+          colorBar.style.width = '20px';
+          colorBar.style.height = '2px';
+          colorBar.style.background = d.sq.color;
+          colorBar.style.borderRadius = '1px';
+          colorBar.style.flexShrink = '0';
+        }
         var nameEl = el.querySelector('.wv-sq-name');
         nameEl.textContent = showName ? d.sq.name : '';
         nameEl.title = d.sq.name;
@@ -1762,6 +1871,19 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
       }
     }
   }
+
+  // (#13) Click bar rows to toggle items off
+  barsArea.addEventListener('click', function(e) {
+    var barRow = e.target.closest('.wv-bar-row');
+    if (!barRow) return;
+    var idx = parseInt(barRow.dataset.idx);
+    if (items[idx]) {
+      items[idx].on = !items[idx].on;
+      var panelRow = document.querySelector('.wv-toggle-row[data-idx="' + idx + '"]');
+      if (panelRow) panelRow.dataset.on = items[idx].on ? 'true' : 'false';
+      render();
+    }
+  });
 
   render();
 })();
