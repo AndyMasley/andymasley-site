@@ -721,84 +721,107 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
       p.push(`<rect x="${x}" y="${y}" width="${v.s}" height="${v.s}" rx="3" fill="none" stroke="${it.color}" stroke-width="1.5" stroke-opacity=".55"/>`);
     });
 
-    // ── Corner-adjacent label placement ──
-    // Each box's top-right corner: (ox + s, oy - s)
-    // Labels placed near that corner, with collision resolution
-    var labelH = 22, labelGap = 3, leaderLen = 10;
-    var labs = vis.map(function(v) {
+    // ── Two-tier label system ──
+    // Tier 1: boxes > 60px tall → right-column label at box top-edge y
+    // Tier 2: boxes ≤ 60px → collected into compact cluster panel
+    var TIER_THRESH = 60;
+    var labelH = 28, labelGap = 6;
+    var labelCol = W - 8; // right-align labels to this x
+    var tier1 = [], tier2 = [];
+
+    vis.forEach(function(v) {
       var it = items[v.idx];
-      var cx = ox + v.s;        // top-right corner x
-      var cy = oy - v.s;        // top-right corner y
-      var isProjected = (it.name || '').indexOf('2030') >= 0;
+      var isProj = (it.name || '').indexOf('2030') >= 0;
       var elecTag = it.elecOn ? ' +elec' : '';
-      var prefix = isProjected ? '~' : '';
-      var label = it.name + ' · ' + prefix + it.sub + elecTag;
-      var nameOpacity = isProjected ? 0.6 : 0.85;
-      return { idx: v.idx, s: v.s, cx: cx, cy: cy, idealY: cy, resolvedY: cy, label: label, color: it.color, nameOpacity: nameOpacity, sub: prefix + it.sub + elecTag };
+      var prefix = isProj ? '~' : '';
+      var valText = prefix + it.sub + elecTag;
+      var entry = { idx: v.idx, s: v.s, boxRight: ox + v.s, boxTop: oy - v.s, color: it.color, name: it.name, val: valText, nameOp: isProj ? 0.6 : 0.85 };
+      if (v.s > TIER_THRESH) tier1.push(entry);
+      else tier2.push(entry);
     });
 
-    // Sort by idealY (top to bottom = smallest cy first)
-    labs.sort(function(a, b) { return a.idealY - b.idealY; });
+    // ── Tier 1: collision-resolved right-column labels ──
+    tier1.sort(function(a, b) { return a.boxTop - b.boxTop; });
 
-    // Collision resolution: push labels down if they overlap
-    for (var i = 0; i < labs.length; i++) {
+    // Assign y positions greedily
+    for (var i = 0; i < tier1.length; i++) {
+      tier1[i].labelY = tier1[i].boxTop;
       if (i > 0) {
-        var minY = labs[i - 1].resolvedY + labelH + labelGap;
-        if (labs[i].resolvedY < minY) labs[i].resolvedY = minY;
+        var minY = tier1[i - 1].labelY + labelH + labelGap;
+        if (tier1[i].labelY < minY) tier1[i].labelY = minY;
       }
-      // Clamp to canvas
-      if (labs[i].resolvedY < pad) labs[i].resolvedY = pad;
-      if (labs[i].resolvedY > H - pad - labelH) labs[i].resolvedY = H - pad - labelH;
+      if (tier1[i].labelY < pad) tier1[i].labelY = pad;
     }
-
-    // If labels overflow bottom, compress spacing
-    if (labs.length > 1) {
-      var lastBot = labs[labs.length - 1].resolvedY + labelH;
-      if (lastBot > H - pad) {
-        var availH = H - pad * 2;
-        var gap = Math.max(2, (availH - labelH) / (labs.length - 1));
-        for (var j = 0; j < labs.length; j++) {
-          labs[j].resolvedY = pad + j * gap;
+    // If overflow bottom, compress
+    if (tier1.length > 1) {
+      var lastBot = tier1[tier1.length - 1].labelY + labelH;
+      if (lastBot > oy) {
+        var avail = oy - pad - labelH;
+        var gap = Math.max(labelH + 2, avail / (tier1.length - 1));
+        for (var j = 0; j < tier1.length; j++) {
+          tier1[j].labelY = pad + j * gap;
         }
       }
     }
-
-    // Render leader lines (short, from corner to label)
-    labs.forEach(function(l) {
-      var it = items[l.idx];
-      var lx = l.cx + leaderLen;
-      var ly = l.resolvedY + labelH / 2;
-      // If label would go off right edge, flip to left side
-      var flipLeft = lx + 180 > W - 4;
-      if (flipLeft) {
-        lx = l.cx - leaderLen;
+    // Demote to tier2 if pushed >30px from ideal
+    var demoted = [];
+    tier1 = tier1.filter(function(t) {
+      if (Math.abs(t.labelY - t.boxTop) > 30 && t.labelY + labelH > oy) {
+        tier2.push(t);
+        return false;
       }
-      // Short leader line from corner to label
-      p.push('<line x1="' + l.cx + '" y1="' + l.cy + '" x2="' + (flipLeft ? lx + 4 : lx - 4) + '" y2="' + ly + '" stroke="' + l.color + '" stroke-width="0.7" opacity="0.25"/>');
-      p.push('<circle cx="' + l.cx + '" cy="' + l.cy + '" r="1.5" fill="' + l.color + '" opacity="0.4"/>');
+      return true;
     });
 
-    // Render labels
-    labs.forEach(function(l) {
-      var it = items[l.idx];
-      var lx = l.cx + leaderLen;
-      var ly = l.resolvedY;
-      var flipLeft = lx + 180 > W - 4;
-      var anchor = 'start';
-      if (flipLeft) {
-        lx = l.cx - leaderLen;
-        anchor = 'end';
-      }
-      // Label background
-      if (flipLeft) {
-        p.push('<rect x="' + (lx - 180) + '" y="' + ly + '" width="184" height="' + labelH + '" rx="2" fill="rgba(13,17,23,0.7)"/>');
+    // Render Tier 1 leaders + labels
+    tier1.forEach(function(t) {
+      var ly = t.labelY;
+      var lcy = ly + labelH / 2;
+      var nudged = Math.abs(ly - t.boxTop) > 4;
+      // Leader: from box right edge to label column
+      if (nudged) {
+        // Bent leader: horizontal from box, then vertical, then horizontal to label
+        var midX = Math.min(t.boxRight + 12, labelCol - 200);
+        p.push('<path d="M' + t.boxRight + ',' + t.boxTop + ' L' + midX + ',' + t.boxTop + ' L' + midX + ',' + lcy + ' L' + (labelCol - 196) + ',' + lcy + '" fill="none" stroke="' + t.color + '" stroke-width="0.5" opacity="0.25"/>');
       } else {
-        p.push('<rect x="' + (lx - 4) + '" y="' + ly + '" width="' + Math.min(240, W - lx + 4) + '" height="' + labelH + '" rx="2" fill="rgba(13,17,23,0.7)"/>');
+        p.push('<line x1="' + t.boxRight + '" y1="' + t.boxTop + '" x2="' + (labelCol - 196) + '" y2="' + lcy + '" stroke="' + t.color + '" stroke-width="0.5" opacity="0.25"/>');
       }
-      // Name + value on one line
-      p.push('<text x="' + lx + '" y="' + (ly + 9) + '" text-anchor="' + anchor + '" font-family="IBM Plex Sans,var(--font-body)" font-size="10" font-weight="500" fill="rgba(255,255,255,' + l.nameOpacity + ')">' + it.name + '</text>');
-      p.push('<text x="' + lx + '" y="' + (ly + 19) + '" text-anchor="' + anchor + '" font-family="IBM Plex Mono,monospace" font-size="9" fill="' + l.color + '" fill-opacity="0.8">' + l.sub + '</text>');
+      p.push('<circle cx="' + t.boxRight + '" cy="' + t.boxTop + '" r="1.5" fill="' + t.color + '" opacity="0.4"/>');
+      // Label background + text (right-aligned to labelCol)
+      var lw = 192;
+      var lx = labelCol - lw;
+      p.push('<rect x="' + lx + '" y="' + ly + '" width="' + lw + '" height="' + labelH + '" rx="2" fill="rgba(10,14,20,0.75)"/>');
+      p.push('<text x="' + (lx + 5) + '" y="' + (ly + 12) + '" font-family="IBM Plex Sans,sans-serif" font-size="11" font-weight="500" fill="rgba(255,255,255,' + t.nameOp + ')">' + t.name + '</text>');
+      p.push('<text x="' + (lx + 5) + '" y="' + (ly + 24) + '" font-family="IBM Plex Mono,monospace" font-size="9.5" fill="' + t.color + '" fill-opacity="0.75">' + t.val + '</text>');
     });
+
+    // ── Tier 2: compact cluster panel ──
+    if (tier2.length > 0) {
+      var rowH = 15, clusterPad = 8;
+      var clusterH = tier2.length * rowH + clusterPad * 2;
+      var clusterW = 210;
+      // Position: upper-right, above tier1 labels if any
+      var clusterY = pad;
+      var clusterX = W - clusterW - 8;
+      // Leader from cluster to small-box region (bottom-left corner area)
+      var smallCenterX = ox + 15;
+      var smallCenterY = oy - 15;
+      p.push('<line x1="' + clusterX + '" y1="' + (clusterY + clusterH / 2) + '" x2="' + smallCenterX + '" y2="' + smallCenterY + '" stroke="rgba(255,255,255,0.1)" stroke-width="0.5" stroke-dasharray="3,3"/>');
+      // Cluster background
+      p.push('<rect x="' + clusterX + '" y="' + clusterY + '" width="' + clusterW + '" height="' + clusterH + '" rx="3" fill="rgba(10,14,20,0.85)"/>');
+      p.push('<line x1="' + clusterX + '" y1="' + (clusterY + 1) + '" x2="' + clusterX + '" y2="' + (clusterY + clusterH - 1) + '" stroke="rgba(255,255,255,0.12)" stroke-width="2"/>');
+      // Rows
+      tier2.forEach(function(t, i) {
+        var ry = clusterY + clusterPad + i * rowH;
+        // Color dot
+        p.push('<rect x="' + (clusterX + 8) + '" y="' + (ry + 2) + '" width="6" height="6" rx="1" fill="' + t.color + '" fill-opacity="0.7"/>');
+        // Name · value
+        var isProj = t.name.indexOf('2030') >= 0;
+        var nameOp = isProj ? 0.5 : 0.7;
+        p.push('<text x="' + (clusterX + 20) + '" y="' + (ry + 10) + '" font-family="IBM Plex Sans,sans-serif" font-size="9.5" fill="rgba(255,255,255,' + nameOp + ')">' + t.name + '</text>');
+        p.push('<text x="' + (clusterX + clusterW - 8) + '" y="' + (ry + 10) + '" text-anchor="end" font-family="IBM Plex Mono,monospace" font-size="9" fill="' + t.color + '" fill-opacity="0.6">' + t.val + '</text>');
+      });
+    }
 
     svg.innerHTML = p.join('\n');
   }
