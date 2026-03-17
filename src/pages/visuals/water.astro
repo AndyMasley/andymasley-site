@@ -283,6 +283,10 @@ const cropFlat = defaultCrop.map(d => ({ idx: idx++, ...d,
     }
   });
 
+  // Crop list elements (needed by rebuildCropItems)
+  const cropList = document.getElementById('crop-list');
+  const cropCatName = document.getElementById('crop-cat-name');
+
   // Init crop items properly
   rebuildCropItems();
 
@@ -311,8 +315,6 @@ const cropFlat = defaultCrop.map(d => ({ idx: idx++, ...d,
   });
 
   // Crop list rebuild
-  const cropList = document.getElementById('crop-list');
-  const cropCatName = document.getElementById('crop-cat-name');
 
   function rebuildCropItems() {
     const rate = RATES[activeUnit];
