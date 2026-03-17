@@ -10,18 +10,24 @@ function fG(g: number) {
 // Middle: 3× Altman (conservative independent est.) → 233M direct, 602M w/ elec
 // Upper: Ren et al. on-site U.S. avg 2.2 mL/query (6.8× Altman) → 528M direct, 897M w/ elec
 const dcItems = [
+  // ── Current ──
   { name: 'ChatGPT (lower — Altman)', base: 77.6e6, elec: 447e6, color: '#7ec8f0', on: false },
   { name: 'ChatGPT (middle — 3× Altman)', base: 233e6, elec: 602e6, color: '#3ba0d8', on: false },
   { name: 'ChatGPT (upper — Ren et al.)', base: 528e6, elec: 897e6, color: '#1a6fa0', on: false },
-  // Microsoft FY23 total operational water (global, all facilities): 7,844 ML = 2.07B gal
-  // Not datacenter-specific. Elec: 23.57 TWh × 1.19 = 28B. Total: 30B.
+  // All US AI: IEA ~15% of total DC energy, LBNL/Pew 26-38% of servers. Using ~23%.
+  // Direct: 23% of 17.4B = 4B. Elec: 23% of 176 TWh = 40 TWh × 1.19 = 48B. Total: 52B.
+  { name: 'All US AI workloads (2024)', base: 4e9, elec: 52e9, color: '#4a69aa', on: false },
   { name: 'Microsoft operations (FY23)', base: 2.07e9, elec: 30e9, color: '#6a9dc8', on: true },
-  // Google 2023 total operational water (global): ~6B gal (2025 Environmental Report, covering FY2024 data)
-  // Scope includes data centers and offices. Elec: 25.3 TWh × 1.19 = 30.1B. Total: 36.1B.
   { name: 'Google operations (2024)', base: 6e9, elec: 36e9, color: '#5088b8', on: true },
-  // LBNL 2024: US data centers, 2023. Direct: 66B liters = 17.4B gal.
-  // Elec: 176 TWh × 1.19 gal/kWh (LBNL location-based) = 209B. Total: 227B.
   { name: 'All US data centers (2023)', base: 17.4e9, elec: 227e9, color: '#7b72ab', on: true },
+  // ── 2030 projections ──
+  // LBNL: direct DC water 2.5-3× by 2028-30. IEA: US DC elec ~400 TWh by 2030.
+  // AI share grows to ~40%. Microsoft targets ~4.8B gal globally.
+  { name: 'ChatGPT 2030 (middle est.)', base: 700e6, elec: 1.8e9, color: '#c4a0e0', on: false },
+  { name: 'All US AI 2030 (projected)', base: 17e9, elec: 150e9, color: '#9080c0', on: false },
+  { name: 'Microsoft 2030 (projected)', base: 4.8e9, elec: 60e9, color: '#a0b8d8', on: false },
+  { name: 'Google 2030 (projected)', base: 10e9, elec: 70e9, color: '#88a8c8', on: false },
+  { name: 'All US DCs 2030 (projected)', base: 51e9, elec: 560e9, color: '#a888c8', on: false },
 ];
 
 const industryItems = [
