@@ -4,6 +4,7 @@ import Base from '@/layouts/Base.astro';
 const GAL_CORN = 650_000;
 const GAL_ALFALFA = 1_500_000;
 const GAL_GOLF = 1_300_000;
+const GAL_LAWN = 800_000;
 
 function fA(a: number) {
   return a >= 1e6 ? (a/1e6).toFixed(1)+'M acres' : a >= 1e3 ? Math.round(a).toLocaleString()+' acres' : a.toFixed(0)+' acres';
@@ -57,6 +58,12 @@ const cropDataAll = {
     { name: 'California', acres: 68600, color: '#6aaa58', on: false },
     { name: 'Florida', acres: 81400, color: '#5e9c50', on: false },
     { name: 'All US irrigated', acres: 1198000, color: '#4a8840', on: true },
+  ],
+  lawn: [
+    { name: 'Texas', acres: 3500000, color: '#82c06e', on: false },
+    { name: 'California', acres: 4000000, color: '#76b562', on: false },
+    { name: 'Florida', acres: 4000000, color: '#6aaa58', on: false },
+    { name: 'All US irrigated', acres: 30000000, color: '#4a8840', on: true },
   ],
 };
 
@@ -160,6 +167,7 @@ const cropFlat = defaultCrop.map(d => ({ idx: idx++, ...d,
             <button class="w-unit-btn" data-unit="corn" data-active="1">corn</button>
             <button class="w-unit-btn" data-unit="alfalfa" data-active="0">alfalfa</button>
             <button class="w-unit-btn" data-unit="golf" data-active="0">golf course</button>
+            <button class="w-unit-btn" data-unit="lawn" data-active="0">lawn</button>
           </div>
         </div>
         <div class="w-chart" id="chart">
@@ -180,6 +188,9 @@ const cropFlat = defaultCrop.map(d => ({ idx: idx++, ...d,
 
           <p><strong>Irrigated alfalfa: 1,500,000 gal/acre/yr.</strong> Alfalfa is the most water-intensive major US crop, requiring 3–6 acre-feet/year depending on climate. The western average (where most US alfalfa is grown) is approximately 4–5 acre-feet. We use 4.6 acre-feet ≈ 1.5M gallons. This matches UNR Extension's estimate.</p>
           <p class="w-meth-src">Source: <a href="https://extension.unr.edu/publication.aspx?PubID=2575" target="_blank" rel="noopener">UNR Extension — How Much Water Does Alfalfa Need?</a></p>
+
+          <p><strong>Irrigated lawns: 800,000 gal/acre/yr.</strong> The EPA estimates Americans use approximately 9 billion gallons per day on outdoor landscape irrigation. Typical irrigated lawns require roughly 30 inches of supplemental water per year (varying from ~20 inches in the Southeast to ~50 inches in the arid West). At 30 inches: 30 × 27,154 gal/acre-inch = 814,620, rounded to 800,000. Total US irrigated residential lawn area is approximately 30 million acres (based on NASA's Milesi study estimating 40M total acres of turfgrass, ~80% residential, ~75% of residential irrigated).</p>
+          <p class="w-meth-src">Sources: <a href="https://www.epa.gov/watersense/outdoors" target="_blank" rel="noopener">EPA WaterSense — Outdoor Water Use</a>, <a href="https://earthobservatory.nasa.gov/features/Lawn" target="_blank" rel="noopener">NASA Earth Observatory — Milesi turfgrass study</a></p>
 
           <p><strong>Golf courses: 1,300,000 gal/irrigated acre/yr.</strong> This is a <em>Southwest/arid-region average</em> (~4 acre-feet/irrigated acre/yr), not a national average. The national average is considerably lower (~2–3 acre-feet) because courses in humid regions (Northeast, Southeast) irrigate less. We use the arid-region figure because it provides a more interesting comparison — users should understand this represents high-irrigation conditions.</p>
           <p class="w-meth-src">Source: <a href="https://www.usga.org/content/dam/usga/pdf/Water%20Resource%20Center/how-much-water-does-golf-use.pdf" target="_blank" rel="noopener">USGA — How Much Water Does Golf Use? (PDF)</a></p>
@@ -252,6 +263,9 @@ const cropFlat = defaultCrop.map(d => ({ idx: idx++, ...d,
           </table>
           <p>The US total for corn (11M irrigated acres) is confirmed by <a href="https://www.ers.usda.gov/topics/farm-practices-management/irrigation-water-use" target="_blank" rel="noopener">USDA ERS</a>: "corn grown for grain accounted for the most irrigated acreage in the United States, with more than 11 million irrigated acres harvested" in 2022.</p>
 
+          <p><strong>Irrigated lawn acreage</strong> estimates come from NASA's 2005 Milesi satellite study (40M total turfgrass acres) and EPA estimates. State-level figures (Florida ~4M, California ~4M, Texas ~3.5M) are approximations from state extension services. The US total of ~30M irrigated acres is a rough estimate — no federal agency tracks irrigated residential lawn area precisely.</p>
+          <p class="w-meth-src">Sources: <a href="https://earthobservatory.nasa.gov/features/Lawn" target="_blank" rel="noopener">NASA Earth Observatory</a>, <a href="https://legacy.geog.ucsb.edu/the-lawn-is-the-largest-irrigated-crop-in-the-usa/" target="_blank" rel="noopener">UC Santa Barbara — Lawn Is Largest Irrigated Crop</a></p>
+
           <p><strong>Golf course acreage</strong> comes from the <a href="https://www.gcsaa.org/docs/default-source/Environment/phase-2-land-use-survey-full-report.pdf" target="_blank" rel="noopener">GCSAA Environmental Profile survey</a>: 1,198,381 irrigated acres nationally (80% of maintained golf turfgrass). State-level figures (FL 81,400; CA 68,600; TX 63,300; NY 62,200) are from the same GCSAA/NGF survey.</p>
         </div>
       </details>
@@ -301,10 +315,10 @@ const cropFlat = defaultCrop.map(d => ({ idx: idx++, ...d,
     </div>
   </div>
 
-<script is:inline define:vars={{ cropDataAll, cropStartIdx, GAL_CORN, GAL_ALFALFA, GAL_GOLF }}>
+<script is:inline define:vars={{ cropDataAll, cropStartIdx, GAL_CORN, GAL_ALFALFA, GAL_GOLF, GAL_LAWN }}>
   window.__cropDataAll = cropDataAll;
   window.__cropStartIdx = cropStartIdx;
-  window.__galRates = { corn: GAL_CORN, alfalfa: GAL_ALFALFA, golf: GAL_GOLF };
+  window.__galRates = { corn: GAL_CORN, alfalfa: GAL_ALFALFA, golf: GAL_GOLF, lawn: GAL_LAWN };
 </script>
 
 <style is:global>
@@ -458,8 +472,8 @@ const cropFlat = defaultCrop.map(d => ({ idx: idx++, ...d,
 
 <script is:inline>
 (function() {
-  const RATES = { corn: 650000, alfalfa: 1500000, golf: 1300000 };
-  const CROP_LABELS = { corn: 'corn', alfalfa: 'alfalfa', golf: 'golf course' };
+  const RATES = { corn: 650000, alfalfa: 1500000, golf: 1300000, lawn: 800000 };
+  const CROP_LABELS = { corn: 'corn', alfalfa: 'alfalfa', golf: 'golf course', lawn: 'lawn' };
   const cropDataAll = window.__cropDataAll;
   const cropStartIdx = window.__cropStartIdx;
   let activeUnit = 'corn';
@@ -532,7 +546,7 @@ const cropFlat = defaultCrop.map(d => ({ idx: idx++, ...d,
     const data = cropDataAll[activeUnit];
 
     // Turn off old crop items
-    for (let i = cropStartIdx; i < cropStartIdx + 5; i++) {
+    for (let i = cropStartIdx; i < cropStartIdx + 10; i++) {
       if (items[i]) items[i].on = false;
     }
 
