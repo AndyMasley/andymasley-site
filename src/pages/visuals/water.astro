@@ -131,6 +131,7 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
               <span class="wv-cat-chevron">&#9662;</span>
               <span class="wv-cat-title">Data centers</span>
               <span class="wv-cat-count">{dcFlat.length}</span>
+              <span class="wv-cat-active"></span>
               <span class="wv-cat-controls"><span class="wv-cat-toggle" data-action="all">all</span> / <span class="wv-cat-toggle" data-action="none">none</span></span>
             </button>
             <div class="wv-cat-list" data-visible="true">
@@ -145,8 +146,8 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
                     <span class="wv-row-text">
                       <span class="wv-row-name">{d.name}</span>
                       <span class="wv-row-val">{i >= 7 ? '~' : ''}{fG(d.base)}</span>
+                      <span class="wv-elec-chip" data-parent-idx={d.idx} title="Include water consumed to generate electricity powering this operation (1.19 gal/kWh, LBNL)">+ elec</span>
                     </span>
-                    <span class="wv-elec-chip" data-parent-idx={d.idx} title="Include water consumed to generate electricity powering this operation (1.19 gal/kWh, LBNL)">+ elec</span>
                   </button>
                 </div>
               ))}
@@ -159,6 +160,7 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
               <span class="wv-cat-chevron">&#9656;</span>
               <span class="wv-cat-title">Other industries</span>
               <span class="wv-cat-count">{indFlat.length}</span>
+              <span class="wv-cat-active"></span>
               <span class="wv-cat-controls"><span class="wv-cat-toggle" data-action="all">all</span> / <span class="wv-cat-toggle" data-action="none">none</span></span>
             </button>
             <div class="wv-cat-list" data-visible="false">
@@ -180,6 +182,7 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
               <span class="wv-cat-chevron">&#9656;</span>
               <span class="wv-cat-title">City water systems</span>
               <span class="wv-cat-count">{cityFlat.length}</span>
+              <span class="wv-cat-active"></span>
               <span class="wv-cat-controls"><span class="wv-cat-toggle" data-action="all">all</span> / <span class="wv-cat-toggle" data-action="none">none</span></span>
             </button>
             <div class="wv-cat-list" data-visible="false">
@@ -201,6 +204,7 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
               <span class="wv-cat-chevron">&#9656;</span>
               <span class="wv-cat-title">Irrigated farmland</span>
               <span class="wv-cat-count">{farmFlat.length}</span>
+              <span class="wv-cat-active"></span>
               <span class="wv-cat-controls"><span class="wv-cat-toggle" data-action="all">all</span> / <span class="wv-cat-toggle" data-action="none">none</span></span>
             </button>
             <div class="wv-cat-list" data-visible="false">
@@ -229,6 +233,7 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
               <span class="wv-cat-chevron">&#9656;</span>
               <span class="wv-cat-title">Lawns & turf</span>
               <span class="wv-cat-count">{turfFlat.length}</span>
+              <span class="wv-cat-active"></span>
               <span class="wv-cat-controls"><span class="wv-cat-toggle" data-action="all">all</span> / <span class="wv-cat-toggle" data-action="none">none</span></span>
             </button>
             <div class="wv-cat-list" data-visible="false">
@@ -254,6 +259,7 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
               <span class="wv-cat-chevron">&#9656;</span>
               <span class="wv-cat-title">National totals</span>
               <span class="wv-cat-count">{natFlat.length}</span>
+              <span class="wv-cat-active"></span>
               <span class="wv-cat-controls"><span class="wv-cat-toggle" data-action="all">all</span> / <span class="wv-cat-toggle" data-action="none">none</span></span>
             </button>
             <div class="wv-cat-list" data-visible="false">
@@ -275,7 +281,7 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
       <!-- Chart panel (right) -->
       <div class="wv-chart-panel">
         <div class="wv-chart-header">
-          <span class="wv-chart-count" id="wv-count">3 items</span>
+          <span class="wv-chart-count" id="wv-count">Comparing 3 items</span>
           <div class="wv-header-controls">
             <div class="wv-water-toggle">
               <button class="wv-water-btn" data-water="all" data-active="true">All freshwater</button>
@@ -287,8 +293,9 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
             </div>
           </div>
         </div>
+        <div class="wv-treated-helper" id="wv-treated-helper" style="display:none">Showing only water from municipal supply. Crossed-out items use untreated sources.</div>
         <div class="wv-bars-area" id="wv-bars" style="display:none">
-          <div class="wv-bars-empty">Select items to compare</div>
+          <div class="wv-bars-empty">Expand a category on the left and click items to add them to the comparison.</div>
         </div>
         <div class="wv-squares-area" id="wv-squares">
         </div>
@@ -518,11 +525,12 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
     border-radius: 10px;
     overflow: hidden;
     display: grid;
-    grid-template-columns: 320px 1fr;
+    grid-template-columns: 360px 1fr;
     height: calc(100vh - 200px);
     min-height: 500px;
     max-height: 800px;
     background: var(--bg-elevated, #ffffff);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.05);
   }
   [data-theme="dark"] .wv-layout {
     background: var(--bg-elevated, #1c1c1a);
@@ -569,9 +577,9 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
     background: rgba(255, 255, 255, 0.03);
   }
   .wv-cat-chevron {
-    font-size: 0.6rem;
+    font-size: 0.75rem;
     color: var(--text-secondary);
-    width: 12px;
+    width: 14px;
     text-align: center;
     flex-shrink: 0;
   }
@@ -584,11 +592,22 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
     color: var(--text-secondary);
     margin-right: 4px;
   }
+  .wv-cat-active {
+    font-size: 0.6rem;
+    font-weight: 500;
+    color: var(--green);
+    margin-right: auto;
+  }
   .wv-cat-controls {
-    font-size: 0.7rem;
+    font-size: 0.6rem;
     font-weight: 400;
     color: var(--text-secondary);
     flex-shrink: 0;
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+  .wv-cat-head:hover .wv-cat-controls {
+    opacity: 1;
   }
   .wv-cat-toggle {
     cursor: pointer;
@@ -681,9 +700,11 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
     color: var(--text-secondary);
     background: transparent;
     cursor: pointer;
-    flex-shrink: 0;
     white-space: nowrap;
     transition: background 0.15s, border-color 0.15s, color 0.15s;
+    margin-left: 20px;
+    align-self: flex-start;
+    margin-top: 2px;
   }
   .wv-toggle-row[data-on="true"] .wv-elec-chip {
     display: inline-block;
@@ -776,7 +797,7 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
     font-size: 0.78rem;
     font-weight: 500;
     color: var(--text);
-    text-align: right;
+    text-align: left;
     white-space: nowrap;
   }
   .wv-bar-track {
@@ -801,6 +822,52 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
     color: var(--text-secondary);
     font-variant-numeric: tabular-nums;
     white-space: nowrap;
+  }
+
+  /* Bar row hover (#12) */
+  .wv-bar-row {
+    border-radius: 4px;
+    padding: 2px 4px;
+    transition: background 0.12s, opacity 0.2s;
+  }
+  .wv-bar-row:hover {
+    background: rgba(0,0,0,0.02);
+  }
+  [data-theme="dark"] .wv-bar-row:hover {
+    background: rgba(255,255,255,0.03);
+  }
+  .wv-bar-row:hover .wv-bar-fill {
+    filter: brightness(1.1);
+  }
+
+  /* Water toggle differentiation (#14) */
+  .wv-water-btn {
+    font-size: 0.8rem !important;
+    padding: 6px 18px !important;
+  }
+  .wv-water-btn[data-active="true"] {
+    color: var(--accent) !important;
+    font-weight: 600;
+  }
+
+  /* Treated helper text (#16) */
+  .wv-treated-helper {
+    font-size: 0.65rem;
+    font-style: italic;
+    color: var(--text-secondary);
+    padding: 4px 16px 0;
+    line-height: 1.4;
+  }
+
+  /* Item indentation (#4) */
+  .wv-toggle-row.wv-sub-item {
+    padding-left: 24px;
+  }
+  .wv-toggle-row.wv-sub-item .wv-row-name {
+    font-weight: 500;
+  }
+  .wv-toggle-row.wv-all-item .wv-row-name {
+    font-weight: 600;
   }
 
   /* Squares view */
@@ -914,9 +981,31 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
   var barsArea = document.getElementById('wv-bars');
   var squaresArea = document.getElementById('wv-squares');
   var countEl = document.getElementById('wv-count');
+  var treatedHelper = document.getElementById('wv-treated-helper');
   var currentView = 'squares';
   var waterMode = 'all'; // 'all' or 'treated'
   var items = [];
+
+  // (#4) Mark sub-items (state-level) vs "All US..." items
+  document.querySelectorAll('.wv-toggle-row').forEach(function(row) {
+    var name = row.querySelector('.wv-row-name');
+    if (!name) return;
+    var txt = name.textContent;
+    if (/^All US|^Total US/.test(txt)) {
+      row.classList.add('wv-all-item');
+    } else {
+      // Check if this category has any "All US" item — if so, others are sub-items
+      var cat = row.closest('.wv-cat');
+      if (cat) {
+        var hasAllUS = cat.querySelector('.wv-row-name') && Array.prototype.some.call(cat.querySelectorAll('.wv-row-name'), function(n) {
+          return /^All US|^Total US/.test(n.textContent);
+        });
+        if (hasAllUS) {
+          row.classList.add('wv-sub-item');
+        }
+      }
+    }
+  });
 
   // View toggle
   document.querySelectorAll('.wv-view-btn').forEach(function(btn) {
@@ -942,6 +1031,10 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
       document.querySelectorAll('.wv-water-btn').forEach(function(b) {
         b.dataset.active = b.dataset.water === mode ? 'true' : 'false';
       });
+      // (#16) Show/hide treated helper text
+      if (treatedHelper) {
+        treatedHelper.style.display = mode === 'treated' ? '' : 'none';
+      }
       // Update crossed-out state and values for all items
       document.querySelectorAll('.wv-toggle-row').forEach(function(row) {
         var idx = parseInt(row.dataset.idx);
@@ -1098,14 +1191,14 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
         if (otherList.dataset.visible === 'true') {
           otherList.dataset.visible = 'false';
           otherHead.dataset.open = 'false';
-          otherChevron.innerHTML = '&#9656;';
+          otherChevron.textContent = '\u25B8';
         }
       });
 
       // Toggle this one
       list.dataset.visible = isOpen ? 'false' : 'true';
       head.dataset.open = isOpen ? 'false' : 'true';
-      chevron.innerHTML = isOpen ? '&#9656;' : '&#9662;';
+      chevron.textContent = isOpen ? '\u25B8' : '\u25BE';
     });
   });
 
@@ -1129,20 +1222,34 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
     });
   });
 
+  // (#6) Update category active count badges
+  function updateCategoryBadges() {
+    document.querySelectorAll('.wv-cat').forEach(function(cat) {
+      var count = cat.querySelectorAll('.wv-toggle-row[data-on="true"]').length;
+      var badge = cat.querySelector('.wv-cat-active');
+      if (badge) {
+        badge.textContent = count > 0 ? '\u00b7 ' + count + ' on' : '';
+      }
+    });
+  }
+
   function render() {
     var active = [];
     for (var i = 0; i < items.length; i++) {
       if (items[i] && items[i].on) active.push(items[i]);
     }
 
-    // Update count
+    // (#6) Update category badges
+    updateCategoryBadges();
+
+    // (#15) Update count
     if (countEl) {
-      countEl.textContent = active.length + ' item' + (active.length === 1 ? '' : 's');
+      countEl.textContent = 'Comparing ' + active.length + ' item' + (active.length === 1 ? '' : 's');
     }
 
     if (active.length === 0) {
-      barsArea.innerHTML = '<div class="wv-bars-empty">Select items to compare</div>';
-      squaresArea.innerHTML = '<div class="wv-bars-empty">Select items to compare</div>';
+      barsArea.innerHTML = '<div class="wv-bars-empty">Expand a category on the left and click items to add them to the comparison.</div>';
+      squaresArea.innerHTML = '<div class="wv-bars-empty">Expand a category on the left and click items to add them to the comparison.</div>';
       return;
     }
 
@@ -1160,7 +1267,7 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
         var elecTag = it.elecOn ? ' +elec' : '';
         var prefix = isProj ? '~' : '';
         var val = prefix + it.sub + elecTag;
-        html += '<div class="wv-bar-row">';
+        html += '<div class="wv-bar-row" title="' + it.name + ': ' + val + '">';
         html += '<span class="wv-bar-name" title="' + it.name + '">' + it.name + '</span>';
         html += '<div class="wv-bar-track"><div class="wv-bar-fill" style="width:' + pct.toFixed(1) + '%;background:' + it.color + '"></div></div>';
         html += '<span class="wv-bar-val">' + val + '</span>';
@@ -1177,8 +1284,8 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
       if (panelW < 100) panelW = 600;
       if (panelH < 100) panelH = 500;
 
-      // Max square side = 70% of the smaller panel dimension
-      var maxSide = Math.round(Math.min(panelW, panelH) * 0.7);
+      // (#9) Max square side = 80% of the smaller panel dimension
+      var maxSide = Math.round(Math.min(panelW, panelH) * 0.8);
       // No minimum — let tiny items be truly tiny (even 1px)
       var labelH = 32; // space for label below each square
 
@@ -1209,8 +1316,19 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
         for (var s = 0; s < sized.length; s++) {
           var scaledSide = Math.max(2, Math.round(sized[s].side * scale));
           var textW = ctx.measureText(sized[s].sq.name).width + 8;
-          var itemW = Math.max(scaledSide, textW * Math.min(1, scale + 0.3), 36);
-          var itemH = scaledSide + labelH;
+          // (#8) For small squares, label goes to the right, not below
+          var labelBelowPack = scaledSide >= 60;
+          var showNamePack = scaledSide >= 20;
+          var nameW = showNamePack ? textW : ctx.measureText(sized[s].val).width + 8;
+          var itemW, itemH;
+          if (labelBelowPack) {
+            itemW = Math.max(scaledSide, nameW * Math.min(1, scale + 0.3), 36);
+            itemH = scaledSide + labelH;
+          } else {
+            // Horizontal layout: square + gap + label
+            itemW = scaledSide + 6 + nameW;
+            itemH = Math.max(scaledSide, 20) + 8;
+          }
           if (shelfX + itemW > panelW && shelfX > 0) {
             shelfY += shelfH + gap;
             shelfX = 0;
@@ -1270,22 +1388,49 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
           el.style.opacity = '1';
         }
 
+        // (#7, #20) Determine fill opacity based on dark mode
+        var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        var fillOpacity = isDark ? '0.55' : '0.5';
+        var borderOpacity = '1.0';
+
+        // (#8) Label positioning based on square size
+        var labelBelow = ss >= 60;
+        var showName = ss >= 20;
+
+        if (labelBelow) {
+          el.style.flexDirection = 'column';
+          el.style.alignItems = 'center';
+        } else {
+          // Put label to the right of the square
+          el.style.flexDirection = 'row';
+          el.style.alignItems = 'center';
+          el.style.gap = '6px';
+        }
+
         el.style.left = pl.x + 'px';
         el.style.top = pl.y + 'px';
-        el.style.width = pl.w + 'px';
+        el.style.width = labelBelow ? pl.w + 'px' : '';
         var box = el.querySelector('.wv-sq-box');
         box.style.width = ss + 'px';
         box.style.height = ss + 'px';
         box.style.background = d.sq.color;
-        box.style.opacity = '0.35';
+        box.style.opacity = fillOpacity;
         box.style.border = '2px solid ' + d.sq.color;
+        box.style.borderColor = d.sq.color;
+        box.style.flexShrink = '0';
         var nameEl = el.querySelector('.wv-sq-name');
-        nameEl.textContent = d.sq.name;
+        nameEl.textContent = showName ? d.sq.name : '';
         nameEl.title = d.sq.name;
         nameEl.style.fontSize = fontSize;
+        nameEl.style.textAlign = labelBelow ? 'center' : 'left';
         var valEl = el.querySelector('.wv-sq-val');
         valEl.textContent = d.val;
         valEl.style.fontSize = valSize;
+        valEl.style.textAlign = labelBelow ? 'center' : 'left';
+        var labelEl = el.querySelector('.wv-sq-label');
+        if (labelEl) {
+          labelEl.style.textAlign = labelBelow ? 'center' : 'left';
+        }
       }
 
       // Remove items no longer active (fade out)
