@@ -120,10 +120,6 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
   </header>
 
   <article class="wv2" id="wv2">
-    <div class="wv-water-toggle">
-      <button class="wv-water-btn" data-water="all" data-active="true">All freshwater</button>
-      <button class="wv-water-btn" data-water="treated" data-active="false">Treated water only</button>
-    </div>
     <div class="wv-layout">
       <!-- Toggle panel (left) -->
       <div class="wv-toggles">
@@ -280,15 +276,21 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
       <div class="wv-chart-panel">
         <div class="wv-chart-header">
           <span class="wv-chart-count" id="wv-count">3 items</span>
-          <div class="wv-view-toggle">
-            <button class="wv-view-btn" data-view="bars" data-active="true">Bars</button>
-            <button class="wv-view-btn" data-view="squares" data-active="false">Squares</button>
+          <div class="wv-header-controls">
+            <div class="wv-water-toggle">
+              <button class="wv-water-btn" data-water="all" data-active="true">All freshwater</button>
+              <button class="wv-water-btn" data-water="treated" data-active="false">Treated only</button>
+            </div>
+            <div class="wv-view-toggle">
+              <button class="wv-view-btn" data-view="squares" data-active="true">Squares</button>
+              <button class="wv-view-btn" data-view="bars" data-active="false">Bars</button>
+            </div>
           </div>
         </div>
-        <div class="wv-bars-area" id="wv-bars">
+        <div class="wv-bars-area" id="wv-bars" style="display:none">
           <div class="wv-bars-empty">Select items to compare</div>
         </div>
-        <div class="wv-squares-area" id="wv-squares" style="display:none">
+        <div class="wv-squares-area" id="wv-squares">
         </div>
       </div>
     </div>
@@ -456,15 +458,20 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
     --bar-track: #3A3733;
   }
 
+  /* Header controls row */
+  .wv-header-controls {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
   /* Water type toggle */
   .wv-water-toggle {
     display: flex;
     gap: 2px;
     background: var(--panel);
-    border-radius: 8px;
-    padding: 3px;
-    margin-bottom: 12px;
-    width: fit-content;
+    border-radius: 6px;
+    padding: 2px;
   }
   .wv-water-btn {
     font-family: inherit;
@@ -907,7 +914,7 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
   var barsArea = document.getElementById('wv-bars');
   var squaresArea = document.getElementById('wv-squares');
   var countEl = document.getElementById('wv-count');
-  var currentView = 'bars';
+  var currentView = 'squares';
   var waterMode = 'all'; // 'all' or 'treated'
   var items = [];
 
