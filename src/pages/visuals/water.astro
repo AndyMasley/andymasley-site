@@ -116,7 +116,15 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
 
   <header>
     <h1>How thirsty is AI?</h1>
-    <p style="font-size: 0.85rem; line-height: 1.65; color: var(--text-secondary, #6B6B60); margin-top: 0.75rem; max-width: 640px;">Consumptive water use in gallons per year. Each bar is sized proportionally to annual water consumption — water evaporated, incorporated into products, or otherwise not returned to source. Toggle items to compare.</p>
+    <div style="font-size: 0.85rem; line-height: 1.7; color: var(--text-secondary, #6B6B60); margin-top: 0.75rem; max-width: 680px;">
+      <p style="margin-bottom: 0.6rem;">Select items on the left to compare how much water data centers use relative to farms, cities, industries, and more. Toggle between boxes (proportional area) and bars.</p>
+      <p style="margin-bottom: 0.4rem;">Comparing data center water is tricky for three reasons:</p>
+      <ol style="padding-left: 1.25rem; margin-bottom: 0.6rem;">
+        <li style="margin-bottom: 0.3rem;">AI data centers use <strong style="color: var(--text, #1A1A18);">treated municipal water</strong>, while most comparable users (farms, steel mills, power plants) draw untreated water from rivers and wells. Use the <em>All freshwater / Treated only</em> toggle to see this distinction — in treated mode, untreated-water items are crossed out.</li>
+        <li style="margin-bottom: 0.3rem;">Most of the water "used" by data centers is actually consumed at nearby <strong style="color: var(--text, #1A1A18);">power plants</strong> generating their electricity. The <em>+ elec</em> buttons on data center items add this upstream water cost.</li>
+        <li style="margin-bottom: 0.3rem;">Data center water use is <strong style="color: var(--text, #1A1A18);">growing rapidly</strong> and will continue through 2030. The data centers category includes both current figures and 2030 projections.</li>
+      </ol>
+    </div>
   </header>
 
   <article class="wv2" id="wv2">
