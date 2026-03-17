@@ -729,10 +729,15 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
     flex-direction: column;
     align-items: center;
     gap: 4px;
+    transition: left 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+                top 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+                width 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+                opacity 0.3s ease;
   }
   .wv-sq-box {
     border-radius: 3px;
-    transition: width 0.3s ease, height 0.3s ease;
+    transition: width 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+                height 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
   }
   .wv-sq-label {
     text-align: center;
@@ -1044,22 +1049,78 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
         scale *= 0.75; // shrink and retry
       }
       var fitH = Math.max(totalH, panelH);
-      var sqHtml = '<div style="position:relative;width:100%;height:' + fitH + 'px">';
+
+      // Get or create the container
+      var container = squaresArea.querySelector('.wv-sq-container');
+      if (!container) {
+        container = document.createElement('div');
+        container.className = 'wv-sq-container';
+        container.style.position = 'relative';
+        container.style.width = '100%';
+        squaresArea.innerHTML = '';
+        squaresArea.appendChild(container);
+      }
+      container.style.height = fitH + 'px';
+
+      // Build a map of existing items by idx
+      var existing = {};
+      container.querySelectorAll('.wv-sq-item').forEach(function(el) {
+        existing[el.dataset.sqIdx] = el;
+      });
+
+      var usedKeys = {};
+      var fontSize = scale < 0.5 ? '9px' : '11px';
+      var valSize = scale < 0.5 ? '8px' : '10px';
+
       for (var p = 0; p < placed.length; p++) {
         var pl = placed[p];
         var d = pl.data;
         var ss = pl.scaledSide;
-        var fontSize = scale < 0.5 ? '9px' : '11px';
-        var valSize = scale < 0.5 ? '8px' : '10px';
-        sqHtml += '<div class="wv-sq-item" style="position:absolute;left:' + pl.x + 'px;top:' + pl.y + 'px;width:' + pl.w + 'px">';
-        sqHtml += '<div class="wv-sq-box" style="width:' + ss + 'px;height:' + ss + 'px;background:' + d.sq.color + ';opacity:0.18;border:1.5px solid ' + d.sq.color + '"></div>';
-        sqHtml += '<div class="wv-sq-label">';
-        sqHtml += '<span class="wv-sq-name" style="font-size:' + fontSize + '" title="' + d.sq.name + '">' + d.sq.name + '</span>';
-        sqHtml += '<span class="wv-sq-val" style="font-size:' + valSize + '">' + d.val + '</span>';
-        sqHtml += '</div></div>';
+        var key = '' + d.sq.idx;
+        usedKeys[key] = true;
+
+        var el = existing[key];
+        if (!el) {
+          // Create new element
+          el = document.createElement('div');
+          el.className = 'wv-sq-item';
+          el.dataset.sqIdx = key;
+          el.innerHTML = '<div class="wv-sq-box"></div><div class="wv-sq-label"><span class="wv-sq-name"></span><span class="wv-sq-val"></span></div>';
+          el.style.position = 'absolute';
+          el.style.opacity = '0';
+          container.appendChild(el);
+          // Trigger reflow then animate in
+          el.offsetHeight;
+          el.style.opacity = '1';
+        }
+
+        el.style.left = pl.x + 'px';
+        el.style.top = pl.y + 'px';
+        el.style.width = pl.w + 'px';
+        var box = el.querySelector('.wv-sq-box');
+        box.style.width = ss + 'px';
+        box.style.height = ss + 'px';
+        box.style.background = d.sq.color;
+        box.style.opacity = '0.35';
+        box.style.border = '2px solid ' + d.sq.color;
+        var nameEl = el.querySelector('.wv-sq-name');
+        nameEl.textContent = d.sq.name;
+        nameEl.title = d.sq.name;
+        nameEl.style.fontSize = fontSize;
+        var valEl = el.querySelector('.wv-sq-val');
+        valEl.textContent = d.val;
+        valEl.style.fontSize = valSize;
       }
-      sqHtml += '</div>';
-      squaresArea.innerHTML = sqHtml;
+
+      // Remove items no longer active (fade out)
+      for (var eKey in existing) {
+        if (!usedKeys[eKey]) {
+          var removeEl = existing[eKey];
+          removeEl.style.opacity = '0';
+          removeEl.style.transition = 'opacity 0.3s ease';
+          setTimeout(function(el) { if (el.parentNode) el.parentNode.removeChild(el); }, 350, removeEl);
+        }
+      }
     }
   }
 
