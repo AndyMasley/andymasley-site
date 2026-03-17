@@ -434,7 +434,9 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
     overflow: hidden;
     display: grid;
     grid-template-columns: 320px 1fr;
-    min-height: 520px;
+    height: calc(100vh - 200px);
+    min-height: 500px;
+    max-height: 800px;
     background: var(--bg-elevated, #ffffff);
   }
   [data-theme="dark"] .wv-layout {
@@ -719,10 +721,8 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
   /* Squares view */
   .wv-squares-area {
     flex: 1;
-    overflow-y: auto;
+    overflow: hidden;
     padding: 16px;
-    -webkit-overflow-scrolling: touch;
-    min-height: 500px;
   }
   .wv-sq-item {
     display: flex;
@@ -919,7 +919,7 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
     });
   });
 
-  // Category header toggle (expand/collapse)
+  // Category header toggle (accordion — only one open at a time)
   document.querySelectorAll('.wv-cat-head').forEach(function(head) {
     head.addEventListener('click', function(e) {
       if (e.target.closest('.wv-cat-toggle')) return;
@@ -927,6 +927,21 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
       var list = cat.querySelector('.wv-cat-list');
       var chevron = head.querySelector('.wv-cat-chevron');
       var isOpen = list.dataset.visible === 'true';
+
+      // Close all other categories first
+      document.querySelectorAll('.wv-cat').forEach(function(otherCat) {
+        if (otherCat === cat) return;
+        var otherList = otherCat.querySelector('.wv-cat-list');
+        var otherHead = otherCat.querySelector('.wv-cat-head');
+        var otherChevron = otherHead.querySelector('.wv-cat-chevron');
+        if (otherList.dataset.visible === 'true') {
+          otherList.dataset.visible = 'false';
+          otherHead.dataset.open = 'false';
+          otherChevron.innerHTML = '&#9656;';
+        }
+      });
+
+      // Toggle this one
       list.dataset.visible = isOpen ? 'false' : 'true';
       head.dataset.open = isOpen ? 'false' : 'true';
       chevron.innerHTML = isOpen ? '&#9656;' : '&#9662;';
