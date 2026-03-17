@@ -247,7 +247,9 @@ const cropFlat = defaultCrop.map(d => ({ idx: idx++, ...d,
 </style>
 
 <script is:inline>
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('astro:page-load', function() {
+  // Guard: bail if this page's elements don't exist (e.g. navigated away)
+  if (!document.getElementById('chart')) return;
   const RATES = { corn: 650000, alfalfa: 1500000, golf: 1300000 };
   const CROP_LABELS = { corn: 'corn', alfalfa: 'alfalfa', golf: 'golf course' };
   const cropDataAll = window.__cropDataAll;
