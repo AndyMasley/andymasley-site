@@ -81,6 +81,11 @@ const cropFlat = defaultCrop.map(d => ({ idx: idx++, ...d,
       <p class="w-lede">Each square is sized by area to its acreage equivalent — how much irrigated farmland would use the same amount of water. Toggle items to compare, and change the crop to see how the unit shifts.</p>
     </div>
 
+    <div class="w-section-header">
+      <h2>Total water</h2>
+      <p class="w-section-desc">All water consumed — cooling towers, process water, and upstream electricity generation. This is the broadest measure of water impact.</p>
+    </div>
+
     <div class="w-viz">
       <div class="w-panel">
         <details class="w-cat" open>
@@ -283,6 +288,17 @@ const cropFlat = defaultCrop.map(d => ({ idx: idx++, ...d,
         </div>
       </details>
     </div>
+
+    <div class="w-divider"></div>
+
+    <div class="w-section-header">
+      <h2>Potable water</h2>
+      <p class="w-section-desc">Freshwater withdrawn from municipal supply or aquifers — the water that competes directly with drinking water, agriculture, and ecosystems. A narrower but more locally impactful measure.</p>
+    </div>
+
+    <div class="w-potable-placeholder">
+      <p>Coming soon — potable water data with the same interactive comparison interface.</p>
+    </div>
   </div>
 
 <script is:inline define:vars={{ cropDataAll, cropStartIdx, GAL_CORN, GAL_ALFALFA, GAL_GOLF }}>
@@ -348,6 +364,31 @@ const cropFlat = defaultCrop.map(d => ({ idx: idx++, ...d,
 
   .w-chart { min-width: 0; min-height: 400px; aspect-ratio: 1.3 / 1; background: var(--bg-subtle); border: 1px solid var(--border); border-radius: 0 0 8px 8px; overflow: hidden; position: relative; }
   #svg { width: 100%; height: 100%; display: block; }
+
+  /* Section headers */
+  .w-section-header { margin-bottom: 1.5rem; }
+  .w-section-header h2 {
+    font-size: 1.35rem; font-weight: 700; letter-spacing: -0.02em;
+    margin-bottom: 0.25rem; color: var(--text);
+  }
+  .w-section-desc {
+    font-size: 0.82rem; color: var(--dim); line-height: 1.6; max-width: 640px;
+  }
+
+  .w-divider {
+    height: 1px; background: var(--border); margin: 3rem 0;
+  }
+
+  .w-potable-placeholder {
+    padding: 2.5rem 2rem;
+    background: var(--bg-subtle);
+    border: 1px dashed var(--border);
+    border-radius: 8px;
+    margin-bottom: 3rem;
+  }
+  .w-potable-placeholder p {
+    font-size: 0.88rem; color: var(--dim); font-style: italic; margin: 0;
+  }
 
   /* Methodology */
   .w-methodology { max-width: 760px; padding-bottom: 3rem; }
