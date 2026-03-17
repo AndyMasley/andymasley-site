@@ -1018,37 +1018,44 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
       var ctx = measureCanvas.getContext('2d');
       ctx.font = '500 11px sans-serif';
 
-      // Shelf-packing: place squares left-to-right, wrapping to new rows
-      var placed = [];
-      var shelfX = 0, shelfY = 0, shelfH = 0;
-      var gap = 16;
-      for (var s = 0; s < sized.length; s++) {
-        // Item width = max of square width and label text width
-        var textW = ctx.measureText(sized[s].sq.name).width + 8;
-        var itemW = Math.max(sized[s].side, textW, 40);
-        var itemH = sized[s].side + labelH;
-        // Does it fit on current shelf?
-        if (shelfX + itemW > panelW && shelfX > 0) {
-          shelfY += shelfH + gap;
-          shelfX = 0;
-          shelfH = 0;
+      // Try packing at current scale, shrink if it overflows
+      var scale = 1;
+      var placed, totalH;
+      for (var attempt = 0; attempt < 10; attempt++) {
+        var gap = Math.max(8, Math.round(14 * scale));
+        placed = [];
+        var shelfX = 0, shelfY = 0, shelfH = 0;
+        for (var s = 0; s < sized.length; s++) {
+          var scaledSide = Math.max(2, Math.round(sized[s].side * scale));
+          var textW = ctx.measureText(sized[s].sq.name).width + 8;
+          var itemW = Math.max(scaledSide, textW * Math.min(1, scale + 0.3), 36);
+          var itemH = scaledSide + labelH;
+          if (shelfX + itemW > panelW && shelfX > 0) {
+            shelfY += shelfH + gap;
+            shelfX = 0;
+            shelfH = 0;
+          }
+          placed.push({ x: shelfX, y: shelfY, w: itemW, h: itemH, scaledSide: scaledSide, data: sized[s] });
+          shelfH = Math.max(shelfH, itemH);
+          shelfX += itemW + gap;
         }
-        placed.push({ x: shelfX, y: shelfY, w: itemW, h: itemH, data: sized[s] });
-        shelfH = Math.max(shelfH, itemH);
-        shelfX += itemW + gap;
+        totalH = shelfY + shelfH + 16;
+        if (totalH <= panelH || scale < 0.15) break;
+        scale *= 0.75; // shrink and retry
       }
-
-      // Render as absolutely positioned divs
-      var totalH = shelfY + shelfH + 16;
-      var sqHtml = '<div style="position:relative;width:100%;height:' + totalH + 'px">';
+      var fitH = Math.max(totalH, panelH);
+      var sqHtml = '<div style="position:relative;width:100%;height:' + fitH + 'px">';
       for (var p = 0; p < placed.length; p++) {
         var pl = placed[p];
         var d = pl.data;
+        var ss = pl.scaledSide;
+        var fontSize = scale < 0.5 ? '9px' : '11px';
+        var valSize = scale < 0.5 ? '8px' : '10px';
         sqHtml += '<div class="wv-sq-item" style="position:absolute;left:' + pl.x + 'px;top:' + pl.y + 'px;width:' + pl.w + 'px">';
-        sqHtml += '<div class="wv-sq-box" style="width:' + d.side + 'px;height:' + d.side + 'px;background:' + d.sq.color + ';opacity:0.18;border:1.5px solid ' + d.sq.color + '"></div>';
+        sqHtml += '<div class="wv-sq-box" style="width:' + ss + 'px;height:' + ss + 'px;background:' + d.sq.color + ';opacity:0.18;border:1.5px solid ' + d.sq.color + '"></div>';
         sqHtml += '<div class="wv-sq-label">';
-        sqHtml += '<span class="wv-sq-name" title="' + d.sq.name + '">' + d.sq.name + '</span>';
-        sqHtml += '<span class="wv-sq-val">' + d.val + '</span>';
+        sqHtml += '<span class="wv-sq-name" style="font-size:' + fontSize + '" title="' + d.sq.name + '">' + d.sq.name + '</span>';
+        sqHtml += '<span class="wv-sq-val" style="font-size:' + valSize + '">' + d.val + '</span>';
         sqHtml += '</div></div>';
       }
       sqHtml += '</div>';
