@@ -9,34 +9,33 @@ function fG(g: number) {
 // Lower: Altman's 0.322 mL/query on-site → 77.6M direct, 447M w/ elec
 // Middle: 3× Altman (conservative independent est.) → 233M direct, 602M w/ elec
 // Upper: Ren et al. on-site U.S. avg 2.2 mL/query (6.8× Altman) → 528M direct, 897M w/ elec
+// tGal = treated water gallons (municipal/potable). null = cross out in treated mode.
+// tElec = treated water with electricity. null = cross out.
+// DC direct cooling: mostly municipal water, so tGal ≈ base.
+// DC electricity: power plants use untreated river water, so tElec = null (cross out).
 const dcItems = [
-  // ── Current ──
-  { name: 'ChatGPT (lower — Altman)', base: 77.6e6, elec: 447e6, color: '#7ec8f0', on: false },
-  { name: 'ChatGPT (middle — 3× Altman)', base: 233e6, elec: 602e6, color: '#3ba0d8', on: false },
-  { name: 'ChatGPT (upper — Ren et al.)', base: 528e6, elec: 897e6, color: '#1a6fa0', on: false },
-  // All US AI: IEA ~15% of total DC energy, LBNL/Pew 26-38% of servers. Using ~23%.
-  // Direct: 23% of 17.4B = 4B. Elec: 23% of 176 TWh = 40 TWh × 1.19 = 48B. Total: 52B.
-  { name: 'All US AI workloads (2024)', base: 4e9, elec: 52e9, color: '#4a69aa', on: false },
-  { name: 'Microsoft operations (FY23)', base: 2.07e9, elec: 30e9, color: '#6a9dc8', on: true },
-  { name: 'Google operations (2024)', base: 6e9, elec: 36e9, color: '#5088b8', on: true },
-  { name: 'All US data centers (2023)', base: 17.4e9, elec: 227e9, color: '#7b72ab', on: true },
-  // ── 2030 projections ──
-  // LBNL: direct DC water 2.5-3× by 2028-30. IEA: US DC elec ~400 TWh by 2030.
-  // AI share grows to ~40%. Microsoft targets ~4.8B gal globally.
-  { name: 'ChatGPT 2030 (middle est.)', base: 700e6, elec: 1.8e9, color: '#c4a0e0', on: false },
-  { name: 'All US AI 2030 (projected)', base: 17e9, elec: 150e9, color: '#9080c0', on: false },
-  { name: 'Microsoft 2030 (projected)', base: 4.8e9, elec: 60e9, color: '#a0b8d8', on: false },
-  { name: 'Google 2030 (projected)', base: 10e9, elec: 70e9, color: '#88a8c8', on: false },
-  { name: 'All US DCs 2030 (projected)', base: 51e9, elec: 560e9, color: '#a888c8', on: false },
+  { name: 'ChatGPT (lower — Altman)', base: 77.6e6, elec: 447e6, tGal: 77.6e6, tElec: null, color: '#7ec8f0', on: false },
+  { name: 'ChatGPT (middle — 3× Altman)', base: 233e6, elec: 602e6, tGal: 233e6, tElec: null, color: '#3ba0d8', on: false },
+  { name: 'ChatGPT (upper — Ren et al.)', base: 528e6, elec: 897e6, tGal: 528e6, tElec: null, color: '#1a6fa0', on: false },
+  { name: 'All US AI workloads (2024)', base: 4e9, elec: 52e9, tGal: 4e9, tElec: null, color: '#4a69aa', on: false },
+  { name: 'Microsoft operations (FY23)', base: 2.07e9, elec: 30e9, tGal: 2.07e9, tElec: null, color: '#6a9dc8', on: true },
+  { name: 'Google operations (2024)', base: 6e9, elec: 36e9, tGal: 6e9, tElec: null, color: '#5088b8', on: true },
+  { name: 'All US data centers (2023)', base: 17.4e9, elec: 227e9, tGal: 17.4e9, tElec: null, color: '#7b72ab', on: true },
+  { name: 'ChatGPT 2030 (middle est.)', base: 700e6, elec: 1.8e9, tGal: 700e6, tElec: null, color: '#c4a0e0', on: false },
+  { name: 'All US AI 2030 (projected)', base: 17e9, elec: 150e9, tGal: 17e9, tElec: null, color: '#9080c0', on: false },
+  { name: 'Microsoft 2030 (projected)', base: 4.8e9, elec: 60e9, tGal: 4.8e9, tElec: null, color: '#a0b8d8', on: false },
+  { name: 'Google 2030 (projected)', base: 10e9, elec: 70e9, tGal: 10e9, tElec: null, color: '#88a8c8', on: false },
+  { name: 'All US DCs 2030 (projected)', base: 51e9, elec: 560e9, tGal: 51e9, tElec: null, color: '#a888c8', on: false },
 ];
 
+// Industries: mostly self-supplied untreated water. tGal = null (cross out in treated mode).
 const industryItems = [
-  { name: 'US semiconductor fabs', gal: 9e9, color: '#d4825e', on: false },
-  { name: 'US auto manufacturing', gal: 12e9, color: '#c87450', on: false },
-  { name: 'US oil refining', gal: 22e9, color: '#b86844', on: false },
-  { name: 'US steel production', gal: 65e9, color: '#a85c3a', on: false },
-  { name: 'US food & beverage', gal: 150e9, color: '#984e30', on: false },
-  { name: 'US paper & pulp mills', gal: 175e9, color: '#884228', on: false },
+  { name: 'US semiconductor fabs', gal: 9e9, tGal: null, color: '#d4825e', on: false },
+  { name: 'US auto manufacturing', gal: 12e9, tGal: null, color: '#c87450', on: false },
+  { name: 'US oil refining', gal: 22e9, tGal: null, color: '#b86844', on: false },
+  { name: 'US steel production', gal: 65e9, tGal: null, color: '#a85c3a', on: false },
+  { name: 'US food & beverage', gal: 150e9, tGal: null, color: '#984e30', on: false },
+  { name: 'US paper & pulp mills', gal: 175e9, tGal: null, color: '#884228', on: false },
 ];
 
 // Agriculture & land use
@@ -47,48 +46,55 @@ const industryItems = [
 // Golf: GCSAA Phase 4 (2024), US median 1.1 ac-ft/ac = 358,436 gal/ac, 1.057M irrigated acres.
 // Lawns: EPA/NASA, ~800,000 gal/ac (est. 30 in supplemental), ~20M irrigated acres.
 // Irrigated farmland — all crops in one category
+// Agriculture: untreated irrigation water from wells/rivers. tGal = null (cross out).
 const farmItems = [
-  { name: 'All US corn (2023)', gal: 3.79e12, color: '#6aaa58', on: true },
-  { name: 'Nebraska corn', gal: 1.45e12, color: '#82c06e', on: false },
-  { name: 'Kansas corn', gal: 374e9, color: '#82c06e', on: false },
-  { name: 'Arkansas corn', gal: 232e9, color: '#82c06e', on: false },
-  { name: 'Texas corn', gal: 184e9, color: '#82c06e', on: false },
-  { name: 'All US alfalfa (2023)', gal: 4.05e12, color: '#4a8840', on: false },
-  { name: 'Idaho alfalfa', gal: 627e9, color: '#5e9c50', on: false },
-  { name: 'California alfalfa', gal: 460e9, color: '#5e9c50', on: false },
-  { name: 'Montana alfalfa', gal: 419e9, color: '#5e9c50', on: false },
-  { name: 'Colorado alfalfa', gal: 399e9, color: '#5e9c50', on: false },
-  { name: 'All US berries (2023)', gal: 80e9, color: '#9b59b6', on: false },
-  { name: 'California berries', gal: 17e9, color: '#b07cc6', on: false },
-  { name: 'Washington berries', gal: 11.3e9, color: '#b07cc6', on: false },
-  { name: 'Oregon berries', gal: 8.5e9, color: '#b07cc6', on: false },
-  { name: 'Wisconsin berries', gal: 7.6e9, color: '#b07cc6', on: false },
+  { name: 'All US corn (2023)', gal: 3.79e12, tGal: null, color: '#6aaa58', on: true },
+  { name: 'Nebraska corn', gal: 1.45e12, tGal: null, color: '#82c06e', on: false },
+  { name: 'Kansas corn', gal: 374e9, tGal: null, color: '#82c06e', on: false },
+  { name: 'Arkansas corn', gal: 232e9, tGal: null, color: '#82c06e', on: false },
+  { name: 'Texas corn', gal: 184e9, tGal: null, color: '#82c06e', on: false },
+  { name: 'All US alfalfa (2023)', gal: 4.05e12, tGal: null, color: '#4a8840', on: false },
+  { name: 'Idaho alfalfa', gal: 627e9, tGal: null, color: '#5e9c50', on: false },
+  { name: 'California alfalfa', gal: 460e9, tGal: null, color: '#5e9c50', on: false },
+  { name: 'Montana alfalfa', gal: 419e9, tGal: null, color: '#5e9c50', on: false },
+  { name: 'Colorado alfalfa', gal: 399e9, tGal: null, color: '#5e9c50', on: false },
+  { name: 'All US berries (2023)', gal: 80e9, tGal: null, color: '#9b59b6', on: false },
+  { name: 'California berries', gal: 17e9, tGal: null, color: '#b07cc6', on: false },
+  { name: 'Washington berries', gal: 11.3e9, tGal: null, color: '#b07cc6', on: false },
+  { name: 'Oregon berries', gal: 8.5e9, tGal: null, color: '#b07cc6', on: false },
+  { name: 'Wisconsin berries', gal: 7.6e9, tGal: null, color: '#b07cc6', on: false },
 ];
 
-// Lawns & turf — golf and residential together
+// Lawns: municipal treated water from tap. tGal = same as gal.
+// Golf: mostly wells/reclaimed, ~20% from treated supply. tGal = 20% of gal.
+// Arizona golf: ~335 courses × 80 ac × 358,436 gal/ac = 9.6B
 const turfItems = [
-  { name: 'All US irrigated lawns (est.)', gal: 16e12, color: '#27ae60', on: false },
-  { name: 'Florida lawns', gal: 2.8e12, color: '#2ecc71', on: false },
-  { name: 'California lawns', gal: 2.4e12, color: '#2ecc71', on: false },
-  { name: 'Texas lawns', gal: 2.4e12, color: '#2ecc71', on: false },
-  { name: 'All US golf courses (2024)', gal: 379e9, color: '#1abc9c', on: false },
+  { name: 'All US irrigated lawns (est.)', gal: 16e12, tGal: 16e12, color: '#27ae60', on: false },
+  { name: 'Florida lawns', gal: 2.8e12, tGal: 2.8e12, color: '#2ecc71', on: false },
+  { name: 'California lawns', gal: 2.4e12, tGal: 2.4e12, color: '#2ecc71', on: false },
+  { name: 'Texas lawns', gal: 2.4e12, tGal: 2.4e12, color: '#2ecc71', on: false },
+  { name: 'All US golf courses (2024)', gal: 379e9, tGal: 76e9, color: '#1abc9c', on: false },
+  { name: 'Arizona golf courses', gal: 9.6e9, tGal: 1.9e9, color: '#1abc9c', on: false },
 ];
 
 // City water systems — base = water delivered; elec = base + water cost of electricity
 // for pumping, treatment, and distribution. Electricity intensity varies by city:
 // NYC/Chicago: ~1.5 kWh/1000 gal (gravity-fed or lake). LA/Phoenix/Vegas: ~5 kWh/1000 gal
 // (long-distance import over mountains or desert pumping). × 1.19 gal water/kWh.
+// Cities: 100% treated municipal water. tGal = same as gal.
 const cityItems = [
-  { name: 'New York City', gal: 364e9, color: '#3498db', on: false },
-  { name: 'Chicago metro system', gal: 274e9, color: '#2e86c1', on: false },
-  { name: 'Los Angeles', gal: 146e9, color: '#2471a3', on: false },
-  { name: 'Phoenix', gal: 95.5e9, color: '#1a5276', on: false },
-  { name: 'Las Vegas metro (SNWA)', gal: 77e9, color: '#154360', on: false },
+  { name: 'New York City', gal: 364e9, tGal: 364e9, color: '#3498db', on: false },
+  { name: 'Chicago metro system', gal: 274e9, tGal: 274e9, color: '#2e86c1', on: false },
+  { name: 'Los Angeles', gal: 146e9, tGal: 146e9, color: '#2471a3', on: false },
+  { name: 'Phoenix', gal: 95.5e9, tGal: 95.5e9, color: '#1a5276', on: false },
+  { name: 'Las Vegas metro (SNWA)', gal: 77e9, tGal: 77e9, color: '#154360', on: false },
 ];
 
+// National: freshwater withdrawals includes untreated (cross out in treated mode).
+// Public water supply IS treated water.
 const nationalItems = [
-  { name: 'Total US freshwater withdrawals', gal: 102.6e12, color: '#1a3c5e', on: false },
-  { name: 'Total US public water supply', gal: 13.1e12, color: '#2a5f8f', on: false },
+  { name: 'Total US freshwater withdrawals', gal: 102.6e12, tGal: null, color: '#1a3c5e', on: false },
+  { name: 'Total US public water supply', gal: 13.1e12, tGal: 13.1e12, color: '#2a5f8f', on: false },
 ];
 
 let idx = 0;
@@ -108,6 +114,10 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
   </header>
 
   <article class="wv2" id="wv2">
+    <div class="wv-water-toggle">
+      <button class="wv-water-btn" data-water="all" data-active="true">All freshwater</button>
+      <button class="wv-water-btn" data-water="treated" data-active="false">Treated water only</button>
+    </div>
     <div class="wv-layout">
       <!-- Toggle panel (left) -->
       <div class="wv-toggles">
@@ -126,7 +136,9 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
                 <div class="wv-dc-group">
                   {i === 7 && <div class="wv-proj-divider">2030 projections</div>}
                   <button class="wv-toggle-row" data-idx={d.idx} data-on={d.on ? 'true' : 'false'}
-                    data-gal-base={d.base} data-gal-elec={d.elec} data-elec="false">
+                    data-gal-base={d.base} data-gal-elec={d.elec} data-elec="false"
+                    data-tgal={d.tGal !== null && d.tGal !== undefined ? d.tGal : 'null'}
+                    data-telec={d.tElec !== null && d.tElec !== undefined ? d.tElec : 'null'}>
                     <span class="wv-dot"></span>
                     <span class="wv-row-text">
                       <span class="wv-row-name">{d.name}</span>
@@ -149,7 +161,7 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
             </button>
             <div class="wv-cat-list" data-visible="false">
               {indFlat.map(d => (
-                <button class="wv-toggle-row" data-idx={d.idx} data-on={d.on ? 'true' : 'false'} data-gal-industry={d.gal}>
+                <button class="wv-toggle-row" data-idx={d.idx} data-on={d.on ? 'true' : 'false'} data-gal-industry={d.gal} data-tgal={d.tGal !== null && d.tGal !== undefined ? d.tGal : 'null'}>
                   <span class="wv-dot"></span>
                   <span class="wv-row-text">
                     <span class="wv-row-name">{d.name}</span>
@@ -170,7 +182,7 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
             </button>
             <div class="wv-cat-list" data-visible="false">
               {cityFlat.map(d => (
-                <button class="wv-toggle-row" data-idx={d.idx} data-on={d.on ? 'true' : 'false'} data-gal-industry={d.gal}>
+                <button class="wv-toggle-row" data-idx={d.idx} data-on={d.on ? 'true' : 'false'} data-gal-industry={d.gal} data-tgal={d.tGal !== null && d.tGal !== undefined ? d.tGal : 'null'}>
                   <span class="wv-dot"></span>
                   <span class="wv-row-text">
                     <span class="wv-row-name">{d.name}</span>
@@ -197,7 +209,7 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
                   {i === 6 && <div class="wv-proj-divider">Alfalfa by state</div>}
                   {i === 10 && <div class="wv-proj-divider">Berries (US & states)</div>}
                   {i === 11 && <div class="wv-proj-divider">Berries by state</div>}
-                  <button class="wv-toggle-row" data-idx={d.idx} data-on={d.on ? 'true' : 'false'} data-gal-industry={d.gal}>
+                  <button class="wv-toggle-row" data-idx={d.idx} data-on={d.on ? 'true' : 'false'} data-gal-industry={d.gal} data-tgal={d.tGal !== null && d.tGal !== undefined ? d.tGal : 'null'}>
                     <span class="wv-dot"></span>
                     <span class="wv-row-text">
                       <span class="wv-row-name">{d.name}</span>
@@ -222,7 +234,7 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
                 <div>
                   {i === 1 && <div class="wv-proj-divider">Lawns by state</div>}
                   {i === 4 && <div class="wv-proj-divider">Golf courses</div>}
-                  <button class="wv-toggle-row" data-idx={d.idx} data-on={d.on ? 'true' : 'false'} data-gal-industry={d.gal}>
+                  <button class="wv-toggle-row" data-idx={d.idx} data-on={d.on ? 'true' : 'false'} data-gal-industry={d.gal} data-tgal={d.tGal !== null && d.tGal !== undefined ? d.tGal : 'null'}>
                     <span class="wv-dot"></span>
                     <span class="wv-row-text">
                       <span class="wv-row-name">{d.name}</span>
@@ -244,7 +256,7 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
             </button>
             <div class="wv-cat-list" data-visible="false">
               {natFlat.map(d => (
-                <button class="wv-toggle-row" data-idx={d.idx} data-on={d.on ? 'true' : 'false'} data-gal-industry={d.gal}>
+                <button class="wv-toggle-row" data-idx={d.idx} data-on={d.on ? 'true' : 'false'} data-gal-industry={d.gal} data-tgal={d.tGal !== null && d.tGal !== undefined ? d.tGal : 'null'}>
                   <span class="wv-dot"></span>
                   <span class="wv-row-text">
                     <span class="wv-row-name">{d.name}</span>
@@ -436,6 +448,55 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
     --divider: var(--border, #3A3733);
     --panel: var(--bg-subtle, #1a1918);
     --bar-track: #3A3733;
+  }
+
+  /* Water type toggle */
+  .wv-water-toggle {
+    display: flex;
+    gap: 2px;
+    background: var(--panel);
+    border-radius: 8px;
+    padding: 3px;
+    margin-bottom: 12px;
+    width: fit-content;
+  }
+  .wv-water-btn {
+    font-family: inherit;
+    font-size: 0.75rem;
+    font-weight: 500;
+    padding: 6px 16px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    background: transparent;
+    color: var(--text-secondary);
+    transition: all 0.15s;
+  }
+  .wv-water-btn[data-active="true"] {
+    background: var(--bg-elevated, #fff);
+    color: var(--text);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  }
+  [data-theme="dark"] .wv-water-btn[data-active="true"] {
+    background: var(--bg-elevated, #1c1c1a);
+  }
+  .wv-water-btn:hover:not([data-active="true"]) {
+    color: var(--text);
+  }
+
+  /* Crossed out items (unavailable in treated mode) */
+  .wv-toggle-row[data-crossed="true"] {
+    opacity: 0.3;
+    pointer-events: none;
+    text-decoration: line-through;
+  }
+  .wv-toggle-row[data-crossed="true"] .wv-dot {
+    background: var(--divider) !important;
+  }
+  .wv-elec-chip[data-crossed="true"] {
+    opacity: 0.3;
+    pointer-events: none;
+    text-decoration: line-through;
   }
 
   /* Two-column layout */
@@ -841,6 +902,7 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
   var squaresArea = document.getElementById('wv-squares');
   var countEl = document.getElementById('wv-count');
   var currentView = 'bars';
+  var waterMode = 'all'; // 'all' or 'treated'
   var items = [];
 
   // View toggle
@@ -854,6 +916,74 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
       });
       barsArea.style.display = view === 'bars' ? '' : 'none';
       squaresArea.style.display = view === 'squares' ? '' : 'none';
+      render();
+    });
+  });
+
+  // Water type toggle (all freshwater vs treated only)
+  document.querySelectorAll('.wv-water-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var mode = btn.dataset.water;
+      if (mode === waterMode) return;
+      waterMode = mode;
+      document.querySelectorAll('.wv-water-btn').forEach(function(b) {
+        b.dataset.active = b.dataset.water === mode ? 'true' : 'false';
+      });
+      // Update crossed-out state and values for all items
+      document.querySelectorAll('.wv-toggle-row').forEach(function(row) {
+        var idx = parseInt(row.dataset.idx);
+        var it = items[idx];
+        if (!it) return;
+        if (mode === 'treated') {
+          var tg = row.dataset.tgal;
+          var isCrossed = tg === 'null' || tg === '';
+          row.dataset.crossed = isCrossed ? 'true' : 'false';
+          if (isCrossed && it.on) {
+            it.on = false;
+            row.dataset.on = 'false';
+          }
+          if (!isCrossed) {
+            it.gallons = parseFloat(tg);
+            it.sub = fG(it.gallons);
+            var valEl = row.querySelector('.wv-row-val');
+            if (valEl) valEl.textContent = it.sub;
+          }
+          // Cross out electricity chips if tElec is null
+          var chip = row.querySelector('.wv-elec-chip');
+          if (chip) {
+            var te = row.dataset.telec;
+            var elecCrossed = te === 'null' || te === '' || te === undefined;
+            chip.dataset.crossed = elecCrossed ? 'true' : 'false';
+            if (elecCrossed && it.elecOn) {
+              it.elecOn = false;
+              it.gallons = it.galBase;
+              chip.dataset.elecOn = 'false';
+              // Revert to treated base value
+              it.gallons = parseFloat(row.dataset.tgal);
+              it.sub = fG(it.gallons);
+              var valEl2 = row.querySelector('.wv-row-val');
+              if (valEl2) valEl2.textContent = it.sub;
+            }
+          }
+        } else {
+          // Revert to all-freshwater mode
+          row.dataset.crossed = 'false';
+          var chip2 = row.querySelector('.wv-elec-chip');
+          if (chip2) chip2.dataset.crossed = 'false';
+          // Restore original gallons
+          if (it.elecOn) {
+            it.gallons = it.galElec;
+          } else if (it.galBase > 0) {
+            it.gallons = it.galBase;
+          } else {
+            var gi = parseFloat(row.dataset.galIndustry || 0);
+            if (gi > 0) it.gallons = gi;
+          }
+          it.sub = fG(it.gallons);
+          var valEl3 = row.querySelector('.wv-row-val');
+          if (valEl3) valEl3.textContent = it.sub;
+        }
+      });
       render();
     });
   });
@@ -886,6 +1016,11 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
     };
     color = catColors[catName] || color;
 
+    var tGalRaw = row.dataset.tgal;
+    var tGal = (tGalRaw === 'null' || !tGalRaw) ? null : parseFloat(tGalRaw);
+    var tElecRaw = row.dataset.telec;
+    var tElec = (tElecRaw === 'null' || !tElecRaw) ? null : parseFloat(tElecRaw);
+
     items[idx] = {
       idx: idx,
       gallons: gallons,
@@ -896,7 +1031,9 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
       baseName: baseName,
       elecOn: false,
       galBase: galBase,
-      galElec: galElec
+      galElec: galElec,
+      tGal: tGal,
+      tElec: tElec
     };
 
     row.addEventListener('click', function(e) {
