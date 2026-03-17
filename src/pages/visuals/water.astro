@@ -1707,8 +1707,7 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
           var scaledSide = Math.max(2, Math.round(sized[s].side * scale));
           var textW = ctx.measureText(sized[s].sq.name).width + 8;
           var labelBelowPack = scaledSide >= 60;
-          var showNamePack = scaledSide >= 20;
-          var nameW = showNamePack ? textW : ctx.measureText(sized[s].val).width + 8;
+          var nameW = textW;
           var itemW, itemH;
           if (labelBelowPack) {
             itemW = Math.max(scaledSide, nameW * Math.min(1, scale + 0.3), 36);
@@ -1789,7 +1788,7 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
         var fillOpacity = isDark ? '0.55' : '0.5';
 
         var labelBelow = ss >= 60;
-        var showName = ss >= 20;
+        var showName = true;
 
         if (labelBelow) {
           el.style.flexDirection = 'column';
