@@ -721,32 +721,83 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
       p.push(`<rect x="${x}" y="${y}" width="${v.s}" height="${v.s}" rx="3" fill="none" stroke="${it.color}" stroke-width="1.5" stroke-opacity=".55"/>`);
     });
 
-    const bigSide = vis[0]?.s ?? 0, lx = ox + bigSide + 24, labelH = 30;
-    const labs = vis.map(v => ({ idx: v.idx, ny: oy - v.s, s: v.s })).sort((a, b) => a.ny - b.ny);
-    let cursor = -Infinity;
-    const positions = labs.map(l => { const y = Math.max(l.ny, cursor); cursor = y + labelH; return { ...l, y }; });
-
-    const lastBot = positions.length > 0 ? positions[positions.length - 1].y + labelH : 0;
-    const topY = positions.length > 0 ? positions[0].ny : pad;
-    if (lastBot > H - pad && positions.length > 1) {
-      const gap = Math.max(16, ((H - pad) - Math.max(pad, topY)) / positions.length);
-      let y = Math.max(pad, topY);
-      positions.forEach(p => { p.y = y; y += gap; });
-    }
-
-    positions.forEach(r => {
-      const it = items[r.idx], ax = ox + r.s, ay = r.ny + 1, ty = r.y + 5;
-      if (ty + 14 > H - 4 || ty < 2) return;
-      p.push(`<line x1="${ax}" y1="${ay}" x2="${lx-7}" y2="${ty+2}" stroke="${it.color}" stroke-width=".7" opacity=".2"/>`);
-      p.push(`<circle cx="${ax}" cy="${ay}" r="2" fill="${it.color}" opacity=".35"/>`);
+    // ── Corner-adjacent label placement ──
+    // Each box's top-right corner: (ox + s, oy - s)
+    // Labels placed near that corner, with collision resolution
+    var labelH = 22, labelGap = 3, leaderLen = 10;
+    var labs = vis.map(function(v) {
+      var it = items[v.idx];
+      var cx = ox + v.s;        // top-right corner x
+      var cy = oy - v.s;        // top-right corner y
+      var isProjected = (it.name || '').indexOf('2030') >= 0;
+      var elecTag = it.elecOn ? ' +elec' : '';
+      var prefix = isProjected ? '~' : '';
+      var label = it.name + ' · ' + prefix + it.sub + elecTag;
+      var nameOpacity = isProjected ? 0.6 : 0.85;
+      return { idx: v.idx, s: v.s, cx: cx, cy: cy, idealY: cy, resolvedY: cy, label: label, color: it.color, nameOpacity: nameOpacity, sub: prefix + it.sub + elecTag };
     });
 
-    positions.forEach(r => {
-      const it = items[r.idx], ty = r.y + 5;
-      if (ty + 14 > H - 4 || ty < 2) return;
-      p.push(`<rect x="${lx-4}" y="${ty-12}" width="${W-lx+4}" height="${labelH}" rx="3" fill="var(--bg-subtle)" fill-opacity=".9"/>`);
-      p.push(`<text x="${lx}" y="${ty}" font-family="var(--font-body)" font-size="12" font-weight="550" fill="var(--text)">${it.name}</text>`);
-      p.push(`<text x="${lx}" y="${ty+14}" font-family="var(--font-body)" font-size="9.5" fill="var(--dim)">${it.sub}</text>`);
+    // Sort by idealY (top to bottom = smallest cy first)
+    labs.sort(function(a, b) { return a.idealY - b.idealY; });
+
+    // Collision resolution: push labels down if they overlap
+    for (var i = 0; i < labs.length; i++) {
+      if (i > 0) {
+        var minY = labs[i - 1].resolvedY + labelH + labelGap;
+        if (labs[i].resolvedY < minY) labs[i].resolvedY = minY;
+      }
+      // Clamp to canvas
+      if (labs[i].resolvedY < pad) labs[i].resolvedY = pad;
+      if (labs[i].resolvedY > H - pad - labelH) labs[i].resolvedY = H - pad - labelH;
+    }
+
+    // If labels overflow bottom, compress spacing
+    if (labs.length > 1) {
+      var lastBot = labs[labs.length - 1].resolvedY + labelH;
+      if (lastBot > H - pad) {
+        var availH = H - pad * 2;
+        var gap = Math.max(2, (availH - labelH) / (labs.length - 1));
+        for (var j = 0; j < labs.length; j++) {
+          labs[j].resolvedY = pad + j * gap;
+        }
+      }
+    }
+
+    // Render leader lines (short, from corner to label)
+    labs.forEach(function(l) {
+      var it = items[l.idx];
+      var lx = l.cx + leaderLen;
+      var ly = l.resolvedY + labelH / 2;
+      // If label would go off right edge, flip to left side
+      var flipLeft = lx + 180 > W - 4;
+      if (flipLeft) {
+        lx = l.cx - leaderLen;
+      }
+      // Short leader line from corner to label
+      p.push('<line x1="' + l.cx + '" y1="' + l.cy + '" x2="' + (flipLeft ? lx + 4 : lx - 4) + '" y2="' + ly + '" stroke="' + l.color + '" stroke-width="0.7" opacity="0.25"/>');
+      p.push('<circle cx="' + l.cx + '" cy="' + l.cy + '" r="1.5" fill="' + l.color + '" opacity="0.4"/>');
+    });
+
+    // Render labels
+    labs.forEach(function(l) {
+      var it = items[l.idx];
+      var lx = l.cx + leaderLen;
+      var ly = l.resolvedY;
+      var flipLeft = lx + 180 > W - 4;
+      var anchor = 'start';
+      if (flipLeft) {
+        lx = l.cx - leaderLen;
+        anchor = 'end';
+      }
+      // Label background
+      if (flipLeft) {
+        p.push('<rect x="' + (lx - 180) + '" y="' + ly + '" width="184" height="' + labelH + '" rx="2" fill="rgba(13,17,23,0.7)"/>');
+      } else {
+        p.push('<rect x="' + (lx - 4) + '" y="' + ly + '" width="' + Math.min(240, W - lx + 4) + '" height="' + labelH + '" rx="2" fill="rgba(13,17,23,0.7)"/>');
+      }
+      // Name + value on one line
+      p.push('<text x="' + lx + '" y="' + (ly + 9) + '" text-anchor="' + anchor + '" font-family="IBM Plex Sans,var(--font-body)" font-size="10" font-weight="500" fill="rgba(255,255,255,' + l.nameOpacity + ')">' + it.name + '</text>');
+      p.push('<text x="' + lx + '" y="' + (ly + 19) + '" text-anchor="' + anchor + '" font-family="IBM Plex Mono,monospace" font-size="9" fill="' + l.color + '" fill-opacity="0.8">' + l.sub + '</text>');
     });
 
     svg.innerHTML = p.join('\n');
