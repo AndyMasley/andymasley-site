@@ -27,14 +27,15 @@ const dcItems = [
   { name: 'All US data centers', base: 17e9, elec: 105e9, color: '#7b72ab', on: true },
 ];
 
-// Other US industries — annual water consumption (not withdrawal)
+// Other US industries — annual CONSUMPTIVE water use (evaporated/incorporated, not returned)
+// Derived from withdrawal data × consumption ratios from USGS, DOE/Argonne, industry studies
 const industryItems = [
-  { name: 'US semiconductor fabs', gal: 40e9, color: '#d4825e', on: false },
-  { name: 'US auto manufacturing', gal: 45e9, color: '#c87450', on: false },
-  { name: 'US paper & pulp mills', gal: 135e9, color: '#b86844', on: false },
-  { name: 'US food & beverage', gal: 150e9, color: '#a85c3a', on: false },
-  { name: 'US oil refining', gal: 200e9, color: '#984e30', on: false },
-  { name: 'US steel production', gal: 40e9, color: '#884228', on: false },
+  { name: 'US semiconductor fabs', gal: 9e9, color: '#d4825e', on: false },     // ~29B withdrawal × ~30% consumption
+  { name: 'US auto manufacturing', gal: 12e9, color: '#c87450', on: false },     // ~50B withdrawal × ~20% consumption (direct ops only)
+  { name: 'US oil refining', gal: 22e9, color: '#b86844', on: false },           // ~100B withdrawal × ~22% consumption (cooling tower evap)
+  { name: 'US steel production', gal: 65e9, color: '#a85c3a', on: false },       // ~660B withdrawal × ~10% consumption
+  { name: 'US food & beverage', gal: 150e9, color: '#984e30', on: false },       // ~700B withdrawal × ~25% (water in products + evap)
+  { name: 'US paper & pulp mills', gal: 175e9, color: '#884228', on: false },    // ~1,460B withdrawal × ~12% consumption
 ];
 
 const surfaceItems = [
