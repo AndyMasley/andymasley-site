@@ -27,6 +27,16 @@ const dcItems = [
   { name: 'All US data centers', base: 17e9, elec: 105e9, color: '#7b72ab', on: true },
 ];
 
+// Other US industries — annual water consumption (not withdrawal)
+const industryItems = [
+  { name: 'US semiconductor fabs', gal: 40e9, color: '#d4825e', on: false },
+  { name: 'US auto manufacturing', gal: 45e9, color: '#c87450', on: false },
+  { name: 'US paper & pulp mills', gal: 135e9, color: '#b86844', on: false },
+  { name: 'US food & beverage', gal: 150e9, color: '#a85c3a', on: false },
+  { name: 'US oil refining', gal: 200e9, color: '#984e30', on: false },
+  { name: 'US steel production', gal: 40e9, color: '#884228', on: false },
+];
+
 const surfaceItems = [
   { name: 'Manhattan', acres: 14611, color: '#c4a474', on: false },
   { name: 'San Francisco', acres: 29997, color: '#b8976a', on: false },
@@ -72,6 +82,10 @@ const dcFlat = dcItems.map(d => ({ idx: idx++, ...d,
   subBase: fA(d.base/GAL_CORN) + ' · ' + fG(d.base),
   subElec: fA(d.elec/GAL_CORN) + ' · ' + fG(d.elec),
 }));
+const indFlat = industryItems.map(d => ({ idx: idx++, ...d,
+  acres: d.gal / GAL_CORN,
+  sub: fA(d.gal / GAL_CORN) + ' · ' + fG(d.gal),
+}));
 const surfFlat = surfaceItems.map(d => ({ idx: idx++, ...d, sub: fA(d.acres) }));
 const cropStartIdx = idx;
 const defaultCrop = cropDataAll.corn;
@@ -115,6 +129,25 @@ const cropFlat = defaultCrop.map(d => ({ idx: idx++, ...d,
                 <div class="w-sub" data-parent-idx={d.idx}>
                   <span class="w-sub-check"></span>
                   <span class="w-sub-label">+ water cost of electricity</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </details>
+
+        <details class="w-cat">
+          <summary class="w-cat-head">
+            <div class="w-cat-pip" style="background:#d4825e"></div>
+            <span class="w-cat-name">Other industries</span>
+            <span class="w-cat-arrow"></span>
+          </summary>
+          <div class="w-cat-list">
+            {indFlat.map(d => (
+              <div class="w-item" data-idx={d.idx} data-on={d.on ? '1' : '0'} data-gal-industry={d.gal}>
+                <div class="w-item-dot" style={`background:${d.color}`}></div>
+                <div class="w-item-text">
+                  <span class="w-item-name">{d.name}</span>
+                  <span class="w-item-val">{d.sub}</span>
                 </div>
               </div>
             ))}
@@ -495,13 +528,15 @@ const cropFlat = defaultCrop.map(d => ({ idx: idx++, ...d,
     const baseName = row.querySelector('.w-item-name').textContent;
     const galBase = parseFloat(row.dataset.galBase || 0);
     const galElec = parseFloat(row.dataset.galElec || 0);
+    const galIndustry = parseFloat(row.dataset.galIndustry || 0);
     const fixedAcres = parseFloat(row.dataset.fixedAcres || 0);
     const isFixed = fixedAcres > 0;
     const isCrop = idx >= cropStartIdx;
 
     let acres, gallons;
     if (isFixed) { acres = fixedAcres; gallons = 0; }
-    else if (isCrop) { acres = 0; gallons = 0; } // will be set by rebuildCropItems
+    else if (isCrop) { acres = 0; gallons = 0; }
+    else if (galIndustry > 0) { gallons = galIndustry; acres = gallons / RATES[activeUnit]; }
     else { gallons = galBase; acres = gallons / RATES[activeUnit]; }
 
     items[idx] = { idx, acres, on: row.dataset.on === '1', color: dot.style.backgroundColor, name: baseName, sub: row.querySelector('.w-item-val').textContent, gallons, fixedAcres, baseName, elecOn: false, galBase, galElec, isCrop };
