@@ -101,506 +101,598 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
 ---
 
 <Base title="AI Water Usage" description="How much water does AI use?">
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;700&family=IBM+Plex+Sans:wght@400;500;700&display=swap" rel="stylesheet" />
 
-  <div class="w">
-    <div class="w-intro">
-      <h1>How thirsty is AI?</h1>
-      <p class="w-deck">Consumptive water use in gallons per year</p>
-      <p class="w-lede">Each square is sized proportionally to annual water consumption — water evaporated, incorporated into products, or otherwise not returned to source. Toggle items to compare.</p>
-    </div>
+  <header>
+    <h1>How thirsty is AI?</h1>
+    <p style="font-size: 0.85rem; line-height: 1.65; color: var(--text-secondary, #6B6B60); margin-top: 0.75rem; max-width: 640px;">Consumptive water use in gallons per year. Each bar is sized proportionally to annual water consumption — water evaporated, incorporated into products, or otherwise not returned to source. Toggle items to compare.</p>
+  </header>
 
-    <div class="w-section-header">
-      <h2>Total water</h2>
-      <p class="w-section-desc">All water consumed — cooling towers, process water, and upstream electricity generation.</p>
-    </div>
+  <article class="wv2" id="wv2">
+    <div class="wv-layout">
+      <!-- Toggle panel (left) -->
+      <div class="wv-toggles">
+        <div class="wv-toggles-scroll">
 
-    <div class="w-viz">
-      <div class="w-panel">
-        <div class="w-status" id="w-status">SELECT ITEMS TO COMPARE</div>
-
-        <details class="w-cat" data-accent="#4A90D9" open>
-          <summary class="w-cat-head">
-            <span class="w-cat-name">Data centers <span class="w-cat-count">({dcFlat.length})</span></span>
-            <span class="w-cat-controls"><span class="w-cat-toggle" data-action="all">all</span> · <span class="w-cat-toggle" data-action="none">none</span></span>
-            <span class="w-cat-arrow"></span>
-          </summary>
-          <div class="w-cat-list">
-            {dcFlat.map((d, i) => (
-              <div class="w-dc-group">
-                {i === 7 && <div class="w-proj-divider"><span>— 2030 projections —</span></div>}
-                <div class={`w-item${i >= 7 ? ' w-projected' : ''}`} data-idx={d.idx} data-on={d.on ? '1' : '0'}
-                  data-gal-base={d.base} data-gal-elec={d.elec} data-elec="0">
-                  <div class="w-item-accent"></div>
-                  <div class="w-item-dot" style={`background:${d.color}`}></div>
-                  <div class="w-item-text">
-                    <span class="w-item-name">{d.name}</span>
-                    <span class="w-item-val">{i >= 7 ? '~' : ''}{fG(d.base)}</span>
-                  </div>
-                  <span class="w-elec-chip" data-parent-idx={d.idx} title="Include water consumed to generate electricity powering this operation (1.19 gal/kWh, LBNL)">+ ELEC.</span>
+          <!-- Data centers -->
+          <div class="wv-cat" data-cat="dc">
+            <button class="wv-cat-head" data-open="true">
+              <span class="wv-cat-chevron">&#9662;</span>
+              <span class="wv-cat-title">Data centers</span>
+              <span class="wv-cat-count">{dcFlat.length}</span>
+              <span class="wv-cat-controls"><span class="wv-cat-toggle" data-action="all">all</span> / <span class="wv-cat-toggle" data-action="none">none</span></span>
+            </button>
+            <div class="wv-cat-list" data-visible="true">
+              {dcFlat.map((d, i) => (
+                <div class="wv-dc-group">
+                  {i === 7 && <div class="wv-proj-divider">2030 projections</div>}
+                  <button class="wv-toggle-row" data-idx={d.idx} data-on={d.on ? 'true' : 'false'}
+                    data-gal-base={d.base} data-gal-elec={d.elec} data-elec="false">
+                    <span class="wv-dot"></span>
+                    <span class="wv-row-text">
+                      <span class="wv-row-name">{d.name}</span>
+                      <span class="wv-row-val">{i >= 7 ? '~' : ''}{fG(d.base)}</span>
+                    </span>
+                    <span class="wv-elec-chip" data-parent-idx={d.idx} title="Include water consumed to generate electricity powering this operation (1.19 gal/kWh, LBNL)">+ elec</span>
+                  </button>
                 </div>
-                <div class="w-sub" data-parent-idx={d.idx}>
-                  <span class="w-sub-check"></span>
-                  <span class="w-sub-label">+ water cost of electricity</span>
-                </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-        </details>
 
-        <details class="w-cat" data-accent="#D97A4A">
-          <summary class="w-cat-head">
-            <span class="w-cat-name">Other industries <span class="w-cat-count">({indFlat.length})</span></span>
-            <span class="w-cat-controls"><span class="w-cat-toggle" data-action="all">all</span> · <span class="w-cat-toggle" data-action="none">none</span></span>
-            <span class="w-cat-arrow"></span>
-          </summary>
-          <div class="w-cat-list">
-            {indFlat.map(d => (
-              <div class="w-item" data-idx={d.idx} data-on={d.on ? '1' : '0'} data-gal-industry={d.gal}>
-                <div class="w-item-accent"></div>
-                <div class="w-item-dot" style={`background:${d.color}`}></div>
-                <div class="w-item-text">
-                  <span class="w-item-name">{d.name}</span>
-                  <span class="w-item-val">{d.sub}</span>
-                </div>
-              </div>
-            ))}
+          <!-- Other industries -->
+          <div class="wv-cat" data-cat="industry">
+            <button class="wv-cat-head" data-open="false">
+              <span class="wv-cat-chevron">&#9656;</span>
+              <span class="wv-cat-title">Other industries</span>
+              <span class="wv-cat-count">{indFlat.length}</span>
+              <span class="wv-cat-controls"><span class="wv-cat-toggle" data-action="all">all</span> / <span class="wv-cat-toggle" data-action="none">none</span></span>
+            </button>
+            <div class="wv-cat-list" data-visible="false">
+              {indFlat.map(d => (
+                <button class="wv-toggle-row" data-idx={d.idx} data-on={d.on ? 'true' : 'false'} data-gal-industry={d.gal}>
+                  <span class="wv-dot"></span>
+                  <span class="wv-row-text">
+                    <span class="wv-row-name">{d.name}</span>
+                    <span class="wv-row-val">{d.sub}</span>
+                  </span>
+                </button>
+              ))}
+            </div>
           </div>
-        </details>
 
-        <details class="w-cat" data-accent="#5BA4CF">
-          <summary class="w-cat-head">
-            <span class="w-cat-name">City water systems <span class="w-cat-count">({cityFlat.length})</span></span>
-            <span class="w-cat-controls"><span class="w-cat-toggle" data-action="all">all</span> · <span class="w-cat-toggle" data-action="none">none</span></span>
-            <span class="w-cat-arrow"></span>
-          </summary>
-          <div class="w-cat-list">
-            {cityFlat.map(d => (
-              <div class="w-item" data-idx={d.idx} data-on={d.on ? '1' : '0'} data-gal-industry={d.gal}>
-                <div class="w-item-accent"></div>
-                <div class="w-item-dot" style={`background:${d.color}`}></div>
-                <div class="w-item-text">
-                  <span class="w-item-name">{d.name}</span>
-                  <span class="w-item-val">{d.sub}</span>
-                </div>
-              </div>
-            ))}
+          <!-- City water systems -->
+          <div class="wv-cat" data-cat="city">
+            <button class="wv-cat-head" data-open="false">
+              <span class="wv-cat-chevron">&#9656;</span>
+              <span class="wv-cat-title">City water systems</span>
+              <span class="wv-cat-count">{cityFlat.length}</span>
+              <span class="wv-cat-controls"><span class="wv-cat-toggle" data-action="all">all</span> / <span class="wv-cat-toggle" data-action="none">none</span></span>
+            </button>
+            <div class="wv-cat-list" data-visible="false">
+              {cityFlat.map(d => (
+                <button class="wv-toggle-row" data-idx={d.idx} data-on={d.on ? 'true' : 'false'} data-gal-industry={d.gal}>
+                  <span class="wv-dot"></span>
+                  <span class="wv-row-text">
+                    <span class="wv-row-name">{d.name}</span>
+                    <span class="wv-row-val">{d.sub}</span>
+                  </span>
+                </button>
+              ))}
+            </div>
           </div>
-        </details>
 
-        <details class="w-cat" data-accent="#4CAF78">
-          <summary class="w-cat-head">
-            <span class="w-cat-name">Irrigated farmland <span class="w-cat-count">({farmFlat.length})</span></span>
-            <span class="w-cat-controls"><span class="w-cat-toggle" data-action="all">all</span> · <span class="w-cat-toggle" data-action="none">none</span></span>
-            <span class="w-cat-arrow"></span>
-          </summary>
-          <div class="w-cat-list">
-            {farmFlat.map(d => (
-              <div class="w-item" data-idx={d.idx} data-on={d.on ? '1' : '0'} data-gal-industry={d.gal}>
-                <div class="w-item-accent"></div>
-                <div class="w-item-dot" style={`background:${d.color}`}></div>
-                <div class="w-item-text">
-                  <span class="w-item-name">{d.name}</span>
-                  <span class="w-item-val">{d.sub}</span>
-                </div>
-              </div>
-            ))}
+          <!-- Irrigated farmland -->
+          <div class="wv-cat" data-cat="farm">
+            <button class="wv-cat-head" data-open="false">
+              <span class="wv-cat-chevron">&#9656;</span>
+              <span class="wv-cat-title">Irrigated farmland</span>
+              <span class="wv-cat-count">{farmFlat.length}</span>
+              <span class="wv-cat-controls"><span class="wv-cat-toggle" data-action="all">all</span> / <span class="wv-cat-toggle" data-action="none">none</span></span>
+            </button>
+            <div class="wv-cat-list" data-visible="false">
+              {farmFlat.map(d => (
+                <button class="wv-toggle-row" data-idx={d.idx} data-on={d.on ? 'true' : 'false'} data-gal-industry={d.gal}>
+                  <span class="wv-dot"></span>
+                  <span class="wv-row-text">
+                    <span class="wv-row-name">{d.name}</span>
+                    <span class="wv-row-val">{d.sub}</span>
+                  </span>
+                </button>
+              ))}
+            </div>
           </div>
-        </details>
 
-        <details class="w-cat" data-accent="#6BBF84">
-          <summary class="w-cat-head">
-            <span class="w-cat-name">Lawns & turf <span class="w-cat-count">({turfFlat.length})</span></span>
-            <span class="w-cat-controls"><span class="w-cat-toggle" data-action="all">all</span> · <span class="w-cat-toggle" data-action="none">none</span></span>
-            <span class="w-cat-arrow"></span>
-          </summary>
-          <div class="w-cat-list">
-            {turfFlat.map(d => (
-              <div class="w-item" data-idx={d.idx} data-on={d.on ? '1' : '0'} data-gal-industry={d.gal}>
-                <div class="w-item-accent"></div>
-                <div class="w-item-dot" style={`background:${d.color}`}></div>
-                <div class="w-item-text">
-                  <span class="w-item-name">{d.name}</span>
-                  <span class="w-item-val">{d.sub}</span>
-                </div>
-              </div>
-            ))}
+          <!-- Lawns & turf -->
+          <div class="wv-cat" data-cat="turf">
+            <button class="wv-cat-head" data-open="false">
+              <span class="wv-cat-chevron">&#9656;</span>
+              <span class="wv-cat-title">Lawns & turf</span>
+              <span class="wv-cat-count">{turfFlat.length}</span>
+              <span class="wv-cat-controls"><span class="wv-cat-toggle" data-action="all">all</span> / <span class="wv-cat-toggle" data-action="none">none</span></span>
+            </button>
+            <div class="wv-cat-list" data-visible="false">
+              {turfFlat.map(d => (
+                <button class="wv-toggle-row" data-idx={d.idx} data-on={d.on ? 'true' : 'false'} data-gal-industry={d.gal}>
+                  <span class="wv-dot"></span>
+                  <span class="wv-row-text">
+                    <span class="wv-row-name">{d.name}</span>
+                    <span class="wv-row-val">{d.sub}</span>
+                  </span>
+                </button>
+              ))}
+            </div>
           </div>
-        </details>
 
-        <details class="w-cat" data-accent="#8B8FA8">
-          <summary class="w-cat-head">
-            <span class="w-cat-name">National totals <span class="w-cat-count">({natFlat.length})</span></span>
-            <span class="w-cat-controls"><span class="w-cat-toggle" data-action="all">all</span> · <span class="w-cat-toggle" data-action="none">none</span></span>
-            <span class="w-cat-arrow"></span>
-          </summary>
-          <div class="w-cat-list">
-            {natFlat.map(d => (
-              <div class="w-item" data-idx={d.idx} data-on={d.on ? '1' : '0'} data-gal-industry={d.gal}>
-                <div class="w-item-accent"></div>
-                <div class="w-item-dot" style={`background:${d.color}`}></div>
-                <div class="w-item-text">
-                  <span class="w-item-name">{d.name}</span>
-                  <span class="w-item-val">{d.sub}</span>
-                </div>
-              </div>
-            ))}
+          <!-- National totals -->
+          <div class="wv-cat" data-cat="national">
+            <button class="wv-cat-head" data-open="false">
+              <span class="wv-cat-chevron">&#9656;</span>
+              <span class="wv-cat-title">National totals</span>
+              <span class="wv-cat-count">{natFlat.length}</span>
+              <span class="wv-cat-controls"><span class="wv-cat-toggle" data-action="all">all</span> / <span class="wv-cat-toggle" data-action="none">none</span></span>
+            </button>
+            <div class="wv-cat-list" data-visible="false">
+              {natFlat.map(d => (
+                <button class="wv-toggle-row" data-idx={d.idx} data-on={d.on ? 'true' : 'false'} data-gal-industry={d.gal}>
+                  <span class="wv-dot"></span>
+                  <span class="wv-row-text">
+                    <span class="wv-row-name">{d.name}</span>
+                    <span class="wv-row-val">{d.sub}</span>
+                  </span>
+                </button>
+              ))}
+            </div>
           </div>
-        </details>
+
+        </div>
       </div>
 
-      <div class="w-right">
-        <div class="w-chart" id="chart">
-          <svg id="svg"></svg>
+      <!-- Bar chart (right) -->
+      <div class="wv-bars-panel">
+        <div class="wv-bars-header">
+          <span class="wv-bars-title">Comparison</span>
+          <span class="wv-bars-count" id="wv-count">3 items</span>
         </div>
-        <div class="w-legend" id="w-legend"></div>
+        <div class="wv-bars-area" id="wv-bars">
+          <div class="wv-bars-empty">Select items to compare</div>
+        </div>
       </div>
     </div>
+  </article>
 
-    <div class="w-methodology">
-      <h2>Methodology</h2>
-      <p class="w-meth-intro">All figures represent <strong>consumptive</strong> water use — water evaporated, incorporated into products, or not returned to source. Every figure is year-stamped. This visualization mixes U.S.-only totals (LBNL data centers, USDA crops) with global corporate totals (Microsoft, Google) and global AI-service usage (ChatGPT) — the comparison is useful for scale but is not a geographic like-for-like.</p>
+  <div class="w-methodology">
+    <h2>Methodology</h2>
+    <p class="w-meth-intro">All figures represent <strong>consumptive</strong> water use — water evaporated, incorporated into products, or not returned to source. Every figure is year-stamped. This visualization mixes U.S.-only totals (LBNL data centers, USDA crops) with global corporate totals (Microsoft, Google) and global AI-service usage (ChatGPT) — the comparison is useful for scale but is not a geographic like-for-like.</p>
 
-      <details class="w-meth-section" open>
-        <summary>Data centers — direct cooling</summary>
-        <div class="w-meth-body">
-          <p><strong>All US data centers, 2023: 17.4B gal/yr.</strong> LBNL's 2024 report: 66 billion liters direct site water. 66B L ÷ 3.785 = 17.4B gal. This is the strongest number in the visualization.</p>
-          <p class="w-meth-src">Source: <a href="https://eta.lbl.gov/publications/2024-united-states-data-center-energy" target="_blank" rel="noopener">LBNL — 2024 United States Data Center Energy Usage Report</a></p>
+    <details class="w-meth-section" open>
+      <summary>Data centers — direct cooling</summary>
+      <div class="w-meth-body">
+        <p><strong>All US data centers, 2023: 17.4B gal/yr.</strong> LBNL's 2024 report: 66 billion liters direct site water. 66B L ÷ 3.785 = 17.4B gal. This is the strongest number in the visualization.</p>
+        <p class="w-meth-src">Source: <a href="https://eta.lbl.gov/publications/2024-united-states-data-center-energy" target="_blank" rel="noopener">LBNL — 2024 United States Data Center Energy Usage Report</a></p>
 
-          <p><strong>ChatGPT — three bounds.</strong> All use OpenAI's "more than 2.5 billion messages per day" (2025), assuming one message ≈ one query. Electricity for all three uses Altman's 0.34 Wh/query: 310 GWh/yr × 1.19 gal/kWh = 369M gal indirect.</p>
-          <table class="w-meth-table">
-            <thead><tr><th>Bound</th><th>On-site mL/query</th><th>Direct gal/yr</th><th>+ Electricity</th><th>Total</th></tr></thead>
-            <tbody>
-              <tr><td>Lower (Altman)</td><td>0.322 mL</td><td>77.6M</td><td>369M</td><td>447M</td></tr>
-              <tr><td>Middle (3× Altman)</td><td>~1 mL</td><td>233M</td><td>369M</td><td>602M</td></tr>
-              <tr><td>Upper (Ren et al.)</td><td>2.2 mL</td><td>528M</td><td>369M</td><td>897M</td></tr>
-            </tbody>
-          </table>
-          <p><strong>Lower:</strong> Sam Altman's stated 0.000085 gal (0.322 mL) per query — the only official figure.</p>
-          <p><strong>Middle:</strong> ~3× Altman. A conservative independent estimate reflecting cooling infrastructure overhead not captured at the per-query level.</p>
-          <p><strong>Upper:</strong> Ren et al. (2023) model a medium GPT-3 request at 2.2 mL on-site water (U.S. avg), ~6.8× Altman. Their task (800 words in, 150–300 out) differs from an average ChatGPT query; the paper notes their estimate is conservative.</p>
-          <p class="w-meth-src">Sources: <a href="https://samaltman.com/2025/01/10/what-i-wish-someone-had-told-me-about-chatgpt/" target="_blank" rel="noopener">Sam Altman's post</a>, <a href="https://arxiv.org/abs/2304.03271" target="_blank" rel="noopener">Ren et al. 2023 (arXiv)</a></p>
+        <p><strong>ChatGPT — three bounds.</strong> All use OpenAI's "more than 2.5 billion messages per day" (2025), assuming one message = one query. Electricity for all three uses Altman's 0.34 Wh/query: 310 GWh/yr x 1.19 gal/kWh = 369M gal indirect.</p>
+        <table class="w-meth-table">
+          <thead><tr><th>Bound</th><th>On-site mL/query</th><th>Direct gal/yr</th><th>+ Electricity</th><th>Total</th></tr></thead>
+          <tbody>
+            <tr><td>Lower (Altman)</td><td>0.322 mL</td><td>77.6M</td><td>369M</td><td>447M</td></tr>
+            <tr><td>Middle (3x Altman)</td><td>~1 mL</td><td>233M</td><td>369M</td><td>602M</td></tr>
+            <tr><td>Upper (Ren et al.)</td><td>2.2 mL</td><td>528M</td><td>369M</td><td>897M</td></tr>
+          </tbody>
+        </table>
+        <p><strong>Lower:</strong> Sam Altman's stated 0.000085 gal (0.322 mL) per query — the only official figure.</p>
+        <p><strong>Middle:</strong> ~3x Altman. A conservative independent estimate reflecting cooling infrastructure overhead not captured at the per-query level.</p>
+        <p><strong>Upper:</strong> Ren et al. (2023) model a medium GPT-3 request at 2.2 mL on-site water (U.S. avg), ~6.8x Altman. Their task (800 words in, 150-300 out) differs from an average ChatGPT query; the paper notes their estimate is conservative.</p>
+        <p class="w-meth-src">Sources: <a href="https://samaltman.com/2025/01/10/what-i-wish-someone-had-told-me-about-chatgpt/" target="_blank" rel="noopener">Sam Altman's post</a>, <a href="https://arxiv.org/abs/2304.03271" target="_blank" rel="noopener">Ren et al. 2023 (arXiv)</a></p>
 
-          <p><strong>Microsoft operations, FY23: 2.07B gal/yr.</strong> Microsoft's Environmental Data Fact Sheet reports 7,844 megaliters of total water consumption. Reporting boundary uses operational control and includes <em>global owned and leased real-estate facilities and datacenters</em> — this is company-wide, not datacenter-specific. 7,844 ML × 264.172 gal/kL = 2.07B gal.</p>
-          <p class="w-meth-caveat">For datacenter-specific data, Microsoft publishes WUE: 0.30 L/kWh in FY24, 0.27 L/kWh in FY25 (liters used for humidification and cooling per kWh of IT equipment power).</p>
-          <p class="w-meth-src">Source: <a href="https://www.microsoft.com/en-us/corporate-responsibility/sustainability/report" target="_blank" rel="noopener">Microsoft Environmental Data Fact Sheet</a></p>
+        <p><strong>Microsoft operations, FY23: 2.07B gal/yr.</strong> Microsoft's Environmental Data Fact Sheet reports 7,844 megaliters of total water consumption. Reporting boundary uses operational control and includes <em>global owned and leased real-estate facilities and datacenters</em> — this is company-wide, not datacenter-specific. 7,844 ML x 264.172 gal/kL = 2.07B gal.</p>
+        <p class="w-meth-caveat">For datacenter-specific data, Microsoft publishes WUE: 0.30 L/kWh in FY24, 0.27 L/kWh in FY25 (liters used for humidification and cooling per kWh of IT equipment power).</p>
+        <p class="w-meth-src">Source: <a href="https://www.microsoft.com/en-us/corporate-responsibility/sustainability/report" target="_blank" rel="noopener">Microsoft Environmental Data Fact Sheet</a></p>
 
-          <p><strong>Google operations, 2024: ~6B gal/yr.</strong> Google's 2025 Environmental Report (covering FY2024 data) reports total operational water consumption. Scope includes data centers and offices. The exact datacenter-only breakout is not published separately.</p>
-          <p class="w-meth-src">Source: <a href="https://sustainability.google/reports/" target="_blank" rel="noopener">Google 2025 Environmental Report</a></p>
-        </div>
-      </details>
+        <p><strong>Google operations, 2024: ~6B gal/yr.</strong> Google's 2025 Environmental Report (covering FY2024 data) reports total operational water consumption. Scope includes data centers and offices. The exact datacenter-only breakout is not published separately.</p>
+        <p class="w-meth-src">Source: <a href="https://sustainability.google/reports/" target="_blank" rel="noopener">Google 2025 Environmental Report</a></p>
+      </div>
+    </details>
 
-      <details class="w-meth-section">
-        <summary>Data centers — including electricity generation</summary>
-        <div class="w-meth-body">
-          <p><strong>Rate: 1.19 gal/kWh</strong> (LBNL's location-based factor for U.S. data-center electricity, computed from county and balancing-authority-specific electricity mixes). This is the mainline factor used throughout.</p>
-          <p class="w-meth-caveat">LBNL's factor includes hydroelectric reservoir evaporation. Peer-reviewed literature (Bakken et al., Grubert) shows hydropower water accounting is methodologically unsettled — gross evaporation methods can ignore pre-dam evaporation and multipurpose reservoir allocation. A thermoelectric-only sensitivity case using NREL's 0.47 gal/kWh would reduce all "+ electricity" figures by roughly 60%. We use LBNL's factor as the mainline value because the rest of the visualization is attributional and average-based, and the thermoelectric-only factor reflects a consequential/marginal accounting choice that is inconsistent with that framing.</p>
-          <table class="w-meth-table">
-            <thead><tr><th></th><th>Electricity</th><th>× 1.19 gal/kWh</th><th>+ Direct</th><th>= Total</th></tr></thead>
-            <tbody>
-              <tr><td>ChatGPT (lower)</td><td>310 GWh</td><td>369M</td><td>77.6M</td><td>447M gal/yr</td></tr>
-              <tr><td>ChatGPT (middle)</td><td>310 GWh</td><td>369M</td><td>233M</td><td>602M gal/yr</td></tr>
-              <tr><td>ChatGPT (upper)</td><td>310 GWh</td><td>369M</td><td>528M</td><td>897M gal/yr</td></tr>
-              <tr><td>Microsoft ops (FY23)</td><td>23.6 TWh</td><td>28.1B</td><td>2.07B</td><td>30B gal/yr</td></tr>
-              <tr><td>Google ops (2024)</td><td>~25.3 TWh</td><td>30.1B</td><td>6B</td><td>36B gal/yr</td></tr>
-              <tr><td>All US data centers (2023)</td><td>176 TWh</td><td>209B</td><td>17.4B</td><td>227B gal/yr</td></tr>
-            </tbody>
-          </table>
-          <p class="w-meth-src">Sources: <a href="https://eta.lbl.gov/publications/2024-united-states-data-center-energy" target="_blank" rel="noopener">LBNL 2024 Report</a> (1.19 gal/kWh derived from ~800B L indirect ÷ 176 TWh)</p>
-        </div>
-      </details>
+    <details class="w-meth-section">
+      <summary>Data centers — including electricity generation</summary>
+      <div class="w-meth-body">
+        <p><strong>Rate: 1.19 gal/kWh</strong> (LBNL's location-based factor for U.S. data-center electricity, computed from county and balancing-authority-specific electricity mixes). This is the mainline factor used throughout.</p>
+        <p class="w-meth-caveat">LBNL's factor includes hydroelectric reservoir evaporation. Peer-reviewed literature (Bakken et al., Grubert) shows hydropower water accounting is methodologically unsettled — gross evaporation methods can ignore pre-dam evaporation and multipurpose reservoir allocation. A thermoelectric-only sensitivity case using NREL's 0.47 gal/kWh would reduce all "+ electricity" figures by roughly 60%. We use LBNL's factor as the mainline value because the rest of the visualization is attributional and average-based, and the thermoelectric-only factor reflects a consequential/marginal accounting choice that is inconsistent with that framing.</p>
+        <table class="w-meth-table">
+          <thead><tr><th></th><th>Electricity</th><th>x 1.19 gal/kWh</th><th>+ Direct</th><th>= Total</th></tr></thead>
+          <tbody>
+            <tr><td>ChatGPT (lower)</td><td>310 GWh</td><td>369M</td><td>77.6M</td><td>447M gal/yr</td></tr>
+            <tr><td>ChatGPT (middle)</td><td>310 GWh</td><td>369M</td><td>233M</td><td>602M gal/yr</td></tr>
+            <tr><td>ChatGPT (upper)</td><td>310 GWh</td><td>369M</td><td>528M</td><td>897M gal/yr</td></tr>
+            <tr><td>Microsoft ops (FY23)</td><td>23.6 TWh</td><td>28.1B</td><td>2.07B</td><td>30B gal/yr</td></tr>
+            <tr><td>Google ops (2024)</td><td>~25.3 TWh</td><td>30.1B</td><td>6B</td><td>36B gal/yr</td></tr>
+            <tr><td>All US data centers (2023)</td><td>176 TWh</td><td>209B</td><td>17.4B</td><td>227B gal/yr</td></tr>
+          </tbody>
+        </table>
+        <p class="w-meth-src">Sources: <a href="https://eta.lbl.gov/publications/2024-united-states-data-center-energy" target="_blank" rel="noopener">LBNL 2024 Report</a> (1.19 gal/kWh derived from ~800B L indirect / 176 TWh)</p>
+      </div>
+    </details>
 
-      <details class="w-meth-section">
-        <summary>Other industries — consumptive use</summary>
-        <div class="w-meth-body">
-          <p>Industry figures are derived from withdrawal data × sector consumption ratios. USGS does not publish consumption by manufacturing subsector; ratios come from USGS historical studies, DOE/Argonne research, and industry analyses.</p>
-          <table class="w-meth-table">
-            <thead><tr><th>Industry</th><th>Withdrawal</th><th>Consumption ratio</th><th>Consumed</th></tr></thead>
-            <tbody>
-              <tr><td>Semiconductor fabs</td><td>~29B gal/yr</td><td>~30%</td><td>9B</td></tr>
-              <tr><td>Auto manufacturing</td><td>~50B</td><td>~20%</td><td>12B</td></tr>
-              <tr><td>Oil refining</td><td>~100B</td><td>~22%</td><td>22B</td></tr>
-              <tr><td>Steel production</td><td>~660B</td><td>~10%</td><td>65B</td></tr>
-              <tr><td>Food & beverage</td><td>~700B</td><td>~25%</td><td>150B</td></tr>
-              <tr><td>Paper & pulp</td><td>~1,460B</td><td>~12%</td><td>175B</td></tr>
-            </tbody>
-          </table>
-          <p class="w-meth-src">Sources: <a href="https://www.construction-physics.com/p/how-does-the-us-use-water" target="_blank" rel="noopener">Construction Physics</a>, <a href="https://greet.anl.gov/files/refineries-water-2016" target="_blank" rel="noopener">Argonne GREET</a>, <a href="https://pubs.usgs.gov/wsp/1330h/report.pdf" target="_blank" rel="noopener">USGS</a></p>
-          <p class="w-meth-caveat">Food & beverage has the widest uncertainty (~100–275B). Semiconductor and auto figures are moderate confidence.</p>
-        </div>
-      </details>
+    <details class="w-meth-section">
+      <summary>Other industries — consumptive use</summary>
+      <div class="w-meth-body">
+        <p>Industry figures are derived from withdrawal data x sector consumption ratios. USGS does not publish consumption by manufacturing subsector; ratios come from USGS historical studies, DOE/Argonne research, and industry analyses.</p>
+        <table class="w-meth-table">
+          <thead><tr><th>Industry</th><th>Withdrawal</th><th>Consumption ratio</th><th>Consumed</th></tr></thead>
+          <tbody>
+            <tr><td>Semiconductor fabs</td><td>~29B gal/yr</td><td>~30%</td><td>9B</td></tr>
+            <tr><td>Auto manufacturing</td><td>~50B</td><td>~20%</td><td>12B</td></tr>
+            <tr><td>Oil refining</td><td>~100B</td><td>~22%</td><td>22B</td></tr>
+            <tr><td>Steel production</td><td>~660B</td><td>~10%</td><td>65B</td></tr>
+            <tr><td>Food & beverage</td><td>~700B</td><td>~25%</td><td>150B</td></tr>
+            <tr><td>Paper & pulp</td><td>~1,460B</td><td>~12%</td><td>175B</td></tr>
+          </tbody>
+        </table>
+        <p class="w-meth-src">Sources: <a href="https://www.construction-physics.com/p/how-does-the-us-use-water" target="_blank" rel="noopener">Construction Physics</a>, <a href="https://greet.anl.gov/files/refineries-water-2016" target="_blank" rel="noopener">Argonne GREET</a>, <a href="https://pubs.usgs.gov/wsp/1330h/report.pdf" target="_blank" rel="noopener">USGS</a></p>
+        <p class="w-meth-caveat">Food & beverage has the widest uncertainty (~100-275B). Semiconductor and auto figures are moderate confidence.</p>
+      </div>
+    </details>
 
-      <details class="w-meth-section">
-        <summary>Agriculture & land use</summary>
-        <div class="w-meth-body">
-          <p>Crop water = irrigated acres × applied irrigation rate. <strong>Rates from USDA 2023 IWMS Table 39</strong> (national averages of water actually applied by irrigators, not total crop water need):</p>
-          <table class="w-meth-table">
-            <thead><tr><th>Crop</th><th>Applied rate</th><th>Gal/acre/yr</th><th>US irrigated acres</th><th>Total gal/yr</th></tr></thead>
-            <tbody>
-              <tr><td>Corn for grain</td><td>1.0 ac-ft/ac</td><td>325,851</td><td>11.64M (Table 38)</td><td>3.79T</td></tr>
-              <tr><td>Alfalfa</td><td>2.3 ac-ft/ac</td><td>749,457</td><td>5.41M (Table 38)</td><td>4.05T</td></tr>
-              <tr><td>Berries (all types)</td><td>~1.0 ac-ft/ac (est.)</td><td>~325,851</td><td>246K (Table 38)</td><td>~80B</td></tr>
-            </tbody>
-          </table>
-          <p class="w-meth-src">Source: <a href="https://www.nass.usda.gov/Publications/AgCensus/2022/Online_Resources/Farm_and_Ranch_Irrigation_Survey/" target="_blank" rel="noopener">USDA NASS 2023 IWMS Tables 38 & 39</a></p>
+    <details class="w-meth-section">
+      <summary>Agriculture & land use</summary>
+      <div class="w-meth-body">
+        <p>Crop water = irrigated acres x applied irrigation rate. <strong>Rates from USDA 2023 IWMS Table 39</strong> (national averages of water actually applied by irrigators, not total crop water need):</p>
+        <table class="w-meth-table">
+          <thead><tr><th>Crop</th><th>Applied rate</th><th>Gal/acre/yr</th><th>US irrigated acres</th><th>Total gal/yr</th></tr></thead>
+          <tbody>
+            <tr><td>Corn for grain</td><td>1.0 ac-ft/ac</td><td>325,851</td><td>11.64M (Table 38)</td><td>3.79T</td></tr>
+            <tr><td>Alfalfa</td><td>2.3 ac-ft/ac</td><td>749,457</td><td>5.41M (Table 38)</td><td>4.05T</td></tr>
+            <tr><td>Berries (all types)</td><td>~1.0 ac-ft/ac (est.)</td><td>~325,851</td><td>246K (Table 38)</td><td>~80B</td></tr>
+          </tbody>
+        </table>
+        <p class="w-meth-src">Source: <a href="https://www.nass.usda.gov/Publications/AgCensus/2022/Online_Resources/Farm_and_Ranch_Irrigation_Survey/" target="_blank" rel="noopener">USDA NASS 2023 IWMS Tables 38 & 39</a></p>
 
-          <p><strong>Golf courses (2024): 379B gal/yr.</strong> GCSAA Phase 4 water report: U.S. median applied water in 2024 was 1.1 ac-ft/irrigated acre (358,436 gal/ac). Total irrigated golf turf: 1,057,165 acres (2024 projection, down from 1,181,611 in 2005). This is the <em>national median</em>; Southwest median is 3.3 ac-ft/ac. We use the national figure.</p>
-          <p class="w-meth-caveat">Golf data comes from an industry survey (GCSAA), not USDA, making it inherently softer than the crop figures. State-level golf breakouts are not included because the source data is less reliable at that granularity.</p>
+        <p><strong>Golf courses (2024): 379B gal/yr.</strong> GCSAA Phase 4 water report: U.S. median applied water in 2024 was 1.1 ac-ft/irrigated acre (358,436 gal/ac). Total irrigated golf turf: 1,057,165 acres (2024 projection, down from 1,181,611 in 2005). This is the <em>national median</em>; Southwest median is 3.3 ac-ft/ac. We use the national figure.</p>
+        <p class="w-meth-caveat">Golf data comes from an industry survey (GCSAA), not USDA, making it inherently softer than the crop figures. State-level golf breakouts are not included because the source data is less reliable at that granularity.</p>
 
-          <p><strong>Residential lawns (est.): 16T gal/yr.</strong> NASA's Milesi (2005) satellite study estimated ~40M total U.S. turfgrass acres; ~20M are estimated irrigated residential lawns. At ~800,000 gal/acre/yr (~30 in supplemental irrigation, national rough average). State figures are rough proportional estimates — no federal agency tracks irrigated residential lawn area.</p>
-          <p class="w-meth-src">Sources: <a href="https://earthobservatory.nasa.gov/features/Lawn" target="_blank" rel="noopener">NASA Earth Observatory — Milesi study</a>, <a href="https://www.epa.gov/watersense/outdoors" target="_blank" rel="noopener">EPA WaterSense</a></p>
-        </div>
-      </details>
+        <p><strong>Residential lawns (est.): 16T gal/yr.</strong> NASA's Milesi (2005) satellite study estimated ~40M total U.S. turfgrass acres; ~20M are estimated irrigated residential lawns. At ~800,000 gal/acre/yr (~30 in supplemental irrigation, national rough average). State figures are rough proportional estimates — no federal agency tracks irrigated residential lawn area.</p>
+        <p class="w-meth-src">Sources: <a href="https://earthobservatory.nasa.gov/features/Lawn" target="_blank" rel="noopener">NASA Earth Observatory — Milesi study</a>, <a href="https://www.epa.gov/watersense/outdoors" target="_blank" rel="noopener">EPA WaterSense</a></p>
+      </div>
+    </details>
 
-      <details class="w-meth-section">
-        <summary>City water systems & national totals</summary>
-        <div class="w-meth-body">
-          <p>City figures are total annual water delivered by the municipal system (residential + commercial + industrial customers).</p>
-          <table class="w-meth-table">
-            <thead><tr><th>System</th><th>Annual delivery</th><th>Year</th><th>Source</th></tr></thead>
-            <tbody>
-              <tr><td>New York City</td><td>364B gal (997 MGD)</td><td>2023</td><td>NYC DEP</td></tr>
-              <tr><td>Chicago metro</td><td>274B gal (750 MGD)</td><td>~2023</td><td>City of Chicago (incl. suburbs)</td></tr>
-              <tr><td>Los Angeles</td><td>146B gal</td><td>FY 2023-24</td><td>LADWP</td></tr>
-              <tr><td>Phoenix</td><td>95.5B gal</td><td>FY 2023-24</td><td>City billing data</td></tr>
-              <tr><td>Las Vegas metro</td><td>77B gal</td><td>2024</td><td>SNWA (derived from GPCD)</td></tr>
-            </tbody>
-          </table>
-          <p><strong>US national totals:</strong> Total freshwater withdrawals (all uses): 102.6T gal/yr (USGS 2015, 281 Bgal/d). Total public water supply: 13.1T gal/yr (USGS 2020, 35.9 Bgal/d).</p>
-          <p class="w-meth-src">Sources: <a href="https://pubs.usgs.gov/publication/cir1441" target="_blank" rel="noopener">USGS Circular 1441 (2015)</a>, <a href="https://pubs.usgs.gov/publication/pp1894D" target="_blank" rel="noopener">USGS Professional Paper 1894D (2020)</a></p>
-        </div>
-      </details>
+    <details class="w-meth-section">
+      <summary>City water systems & national totals</summary>
+      <div class="w-meth-body">
+        <p>City figures are total annual water delivered by the municipal system (residential + commercial + industrial customers).</p>
+        <table class="w-meth-table">
+          <thead><tr><th>System</th><th>Annual delivery</th><th>Year</th><th>Source</th></tr></thead>
+          <tbody>
+            <tr><td>New York City</td><td>364B gal (997 MGD)</td><td>2023</td><td>NYC DEP</td></tr>
+            <tr><td>Chicago metro</td><td>274B gal (750 MGD)</td><td>~2023</td><td>City of Chicago (incl. suburbs)</td></tr>
+            <tr><td>Los Angeles</td><td>146B gal</td><td>FY 2023-24</td><td>LADWP</td></tr>
+            <tr><td>Phoenix</td><td>95.5B gal</td><td>FY 2023-24</td><td>City billing data</td></tr>
+            <tr><td>Las Vegas metro</td><td>77B gal</td><td>2024</td><td>SNWA (derived from GPCD)</td></tr>
+          </tbody>
+        </table>
+        <p><strong>US national totals:</strong> Total freshwater withdrawals (all uses): 102.6T gal/yr (USGS 2015, 281 Bgal/d). Total public water supply: 13.1T gal/yr (USGS 2020, 35.9 Bgal/d).</p>
+        <p class="w-meth-src">Sources: <a href="https://pubs.usgs.gov/publication/cir1441" target="_blank" rel="noopener">USGS Circular 1441 (2015)</a>, <a href="https://pubs.usgs.gov/publication/pp1894D" target="_blank" rel="noopener">USGS Professional Paper 1894D (2020)</a></p>
+      </div>
+    </details>
 
-      <details class="w-meth-section">
-        <summary>Key caveats</summary>
-        <div class="w-meth-body">
-          <ul>
-            <li><strong>ChatGPT is a lower-bound proxy.</strong> Altman's per-query figure is the only official number. Ren et al.'s modeled estimate is ~6.8× higher for on-site water alone, but models a different task. The true figure is somewhere in between; we label it accordingly.</li>
-            <li><strong>Microsoft and Google are global operational totals</strong>, not U.S.-only or datacenter-only. Microsoft's fact sheet covers "global owned and leased real-estate facilities and datacenters." Google's report covers "data centers and offices." These are compared against a U.S.-only LBNL data-center total — the comparison is for scale, not geographic equivalence.</li>
-            <li><strong>The electricity-water factor (1.19 gal/kWh) is LBNL's location-based average</strong>, which includes hydroelectric reservoir evaporation. Peer-reviewed literature (Bakken et al., Grubert) shows hydro water accounting is methodologically unsettled. A thermoelectric-only sensitivity case at 0.47 gal/kWh would reduce "+ electricity" figures by ~60%.</li>
-            <li><strong>Crop rates use USDA applied irrigation</strong> (Table 39), not total crop water need or extension estimates. This is the water actually applied by irrigators, measured nationally. Regional rates vary significantly.</li>
-            <li><strong>"Consumed" vs. "withdrawn" matters for industries.</strong> Paper/pulp withdraws ~1.5T gal but returns 88%. Steel withdraws ~660B but returns 90%. Data centers are unusual: most withdrawal IS consumption (evaporative cooling).</li>
-            <li><strong>Year mixing is unavoidable.</strong> This visualization combines 2023 LBNL data, 2023 USDA irrigation data, 2024 corporate metrics, and 2025 AI usage proxies. Every figure is year-stamped in the labels.</li>
-          </ul>
-        </div>
-      </details>
-    </div>
-
-    <div class="w-divider"></div>
-
-    <div class="w-section-header">
-      <h2>Potable water</h2>
-      <p class="w-section-desc">Freshwater withdrawn from municipal supply or aquifers — the water that competes directly with drinking water, agriculture, and ecosystems.</p>
-    </div>
-
-    <div class="w-potable-placeholder">
-      <p>Coming soon — potable water data with the same interactive comparison interface.</p>
-    </div>
+    <details class="w-meth-section">
+      <summary>Key caveats</summary>
+      <div class="w-meth-body">
+        <ul>
+          <li><strong>ChatGPT is a lower-bound proxy.</strong> Altman's per-query figure is the only official number. Ren et al.'s modeled estimate is ~6.8x higher for on-site water alone, but models a different task. The true figure is somewhere in between; we label it accordingly.</li>
+          <li><strong>Microsoft and Google are global operational totals</strong>, not U.S.-only or datacenter-only. Microsoft's fact sheet covers "global owned and leased real-estate facilities and datacenters." Google's report covers "data centers and offices." These are compared against a U.S.-only LBNL data-center total — the comparison is for scale, not geographic equivalence.</li>
+          <li><strong>The electricity-water factor (1.19 gal/kWh) is LBNL's location-based average</strong>, which includes hydroelectric reservoir evaporation. Peer-reviewed literature (Bakken et al., Grubert) shows hydro water accounting is methodologically unsettled. A thermoelectric-only sensitivity case at 0.47 gal/kWh would reduce "+ electricity" figures by ~60%.</li>
+          <li><strong>Crop rates use USDA applied irrigation</strong> (Table 39), not total crop water need or extension estimates. This is the water actually applied by irrigators, measured nationally. Regional rates vary significantly.</li>
+          <li><strong>"Consumed" vs. "withdrawn" matters for industries.</strong> Paper/pulp withdraws ~1.5T gal but returns 88%. Steel withdraws ~660B but returns 90%. Data centers are unusual: most withdrawal IS consumption (evaporative cooling).</li>
+          <li><strong>Year mixing is unavoidable.</strong> This visualization combines 2023 LBNL data, 2023 USDA irrigation data, 2024 corporate metrics, and 2025 AI usage proxies. Every figure is year-stamped in the labels.</li>
+        </ul>
+      </div>
+    </details>
   </div>
+</Base>
 
 <style is:global>
-  .main-content:has(.w) { max-width: 1200px; }
-  .w { max-width: 1200px; margin: 0 auto; }
-  .w-intro { max-width: 640px; margin-bottom: 2.5rem; }
-  .w-intro h1 { font-size: 2rem; font-weight: 700; letter-spacing: -0.025em; margin-bottom: 0.35rem; }
-  .w-deck { color: var(--accent); font-size: 1rem; font-weight: 480; margin-bottom: 0.65rem; }
-  .w-lede { color: var(--text-secondary); font-size: 0.875rem; line-height: 1.65; }
-  .w-viz { display: flex; gap: 2.5rem; align-items: flex-start; margin-bottom: 3rem; }
-
-  /* ── Panel ── */
-  .w-panel {
-    width: 280px; flex-shrink: 0;
-    background: #0d1117;
-    border-right: 1px solid rgba(255,255,255,0.08);
-    border-radius: 8px;
-    box-shadow: inset 0 -24px 20px -16px rgba(0,0,0,0.45);
-    max-height: 80vh; overflow-y: auto;
-  }
-  .w-panel::-webkit-scrollbar { width: 4px; }
-  .w-panel::-webkit-scrollbar-track { background: transparent; }
-  .w-panel::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
-  .w-panel::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.18); }
-
-  /* ── Status bar ── */
-  .w-status {
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 0.65rem; font-weight: 700;
-    letter-spacing: 0.12em; text-transform: uppercase;
-    color: rgba(255,255,255,0.4);
-    padding: 10px 14px;
-    border-bottom: 1px solid rgba(255,255,255,0.06);
-  }
-
-  /* ── Category headers ── */
-  .w-cat { margin-bottom: 0; }
-  .w-cat-head {
-    display: flex; align-items: center; gap: 0.4rem;
-    height: 36px; padding: 0 10px 0 0;
-    cursor: pointer; list-style: none; user-select: none;
-    border-top: 1px solid rgba(255,255,255,0.06);
-    border-left: 4px solid var(--cat-accent, rgba(255,255,255,0.15));
-  }
-  .w-cat-head::-webkit-details-marker { display: none; }
-  .w-cat[data-accent="#4A90D9"] .w-cat-head { --cat-accent: #4A90D9; }
-  .w-cat[data-accent="#D97A4A"] .w-cat-head { --cat-accent: #D97A4A; }
-  .w-cat[data-accent="#5BA4CF"] .w-cat-head { --cat-accent: #5BA4CF; }
-  .w-cat[data-accent="#4CAF78"] .w-cat-head { --cat-accent: #4CAF78; }
-  .w-cat[data-accent="#6BBF84"] .w-cat-head { --cat-accent: #6BBF84; }
-  .w-cat[data-accent="#8B8FA8"] .w-cat-head { --cat-accent: #8B8FA8; }
-  .w-cat-head:hover .w-cat-name { color: rgba(255,255,255,0.95); }
-  .w-cat-name {
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 0.65rem; font-weight: 700;
-    text-transform: uppercase; letter-spacing: 0.12em;
-    color: rgba(255,255,255,0.8);
-    flex: 1; transition: color 0.1s;
-    padding-left: 8px;
-  }
-  .w-cat-count { color: rgba(255,255,255,0.25); font-weight: 400; }
-  .w-cat-controls {
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 0.55rem; letter-spacing: 0.05em;
-    color: rgba(255,255,255,0.25);
-    flex-shrink: 0; padding-right: 4px;
-  }
-  .w-cat-toggle {
-    cursor: pointer; transition: color 0.1s;
-  }
-  .w-cat-toggle:hover { color: rgba(255,255,255,0.7); }
-  .w-cat-arrow { font-size: 0.5rem; color: rgba(255,255,255,0.3); flex-shrink: 0; transition: transform 0.15s; }
-  .w-cat-arrow::after { content: '+'; font-family: 'IBM Plex Mono', monospace; font-weight: 700; }
-  .w-cat[open] .w-cat-arrow::after { content: '\2212'; }
-  .w-cat-list { padding: 0 0 4px; }
-
-  /* ── Item rows ── */
-  .w-item {
-    display: flex; align-items: center; gap: 0.5rem;
-    padding: 6px 10px 6px 0; margin: 0;
-    min-height: 44px; box-sizing: border-box;
-    cursor: pointer; user-select: none;
-    transition: background 0.1s;
+  /* Break out of content width */
+  .wv2 {
+    width: calc(100vw - 48px);
     position: relative;
+    left: 50%;
+    transform: translateX(-50%);
+    max-width: 1200px;
+    padding: 0 0 2rem;
   }
-  .w-item:hover { background: rgba(255,255,255,0.03); }
-  .w-item-accent {
-    width: 2px; align-self: stretch; flex-shrink: 0;
-    margin-left: 4px; border-radius: 1px;
-    background: transparent; transition: background 0.15s;
-  }
-  .w-item[data-on="1"] .w-item-accent { background: var(--cat-accent, rgba(255,255,255,0.3)); }
-  /* Inherit accent from parent category */
-  .w-cat[data-accent="#4A90D9"] .w-item { --cat-accent: #4A90D9; }
-  .w-cat[data-accent="#D97A4A"] .w-item { --cat-accent: #D97A4A; }
-  .w-cat[data-accent="#5BA4CF"] .w-item { --cat-accent: #5BA4CF; }
-  .w-cat[data-accent="#4CAF78"] .w-item { --cat-accent: #4CAF78; }
-  .w-cat[data-accent="#6BBF84"] .w-item { --cat-accent: #6BBF84; }
-  .w-cat[data-accent="#8B8FA8"] .w-item { --cat-accent: #8B8FA8; }
 
-  /* Hide the dot entirely */
-  .w-item-dot { display: none; }
+  .wv2 {
+    --text: var(--text-primary, #1A1A18);
+    --text-secondary: #6B6B60;
+    --accent: #8B2E2E;
+    --green: #4A7C59;
+    --divider: var(--border, #DDD9D0);
+    --panel: var(--bg-subtle, #f5f4f2);
+    --bar-track: #D4CFCA;
+    color: var(--text);
+  }
 
-  .w-item-text { flex: 1; min-width: 0; padding-left: 8px; }
-  .w-item-name {
-    display: block;
-    font-family: 'IBM Plex Sans', sans-serif;
-    font-size: 0.82rem; font-weight: 500;
-    color: rgba(255,255,255,0.85); line-height: 1.35;
-    transition: color 0.1s;
+  [data-theme="dark"] .wv2 {
+    --text: var(--text-primary, #F0EDE6);
+    --text-secondary: #9A9485;
+    --accent: #B85555;
+    --green: #5A9B6E;
+    --divider: var(--border, #3A3733);
+    --panel: var(--bg-subtle, #1a1918);
+    --bar-track: #3A3733;
   }
-  .w-item[data-on="0"] .w-item-name { color: rgba(255,255,255,0.55); }
-  .w-item-val {
-    display: block;
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 0.72rem; font-weight: 400;
-    color: rgba(255,255,255,0.38); line-height: 1.3;
-    font-variant-numeric: tabular-nums;
-    transition: color 0.1s;
-  }
-  .w-item[data-on="1"] .w-item-val { color: var(--cat-accent-80, rgba(255,255,255,0.38)); }
-  .w-item[data-on="0"] .w-item-val { color: rgba(255,255,255,0.25); }
-  /* accent at 80% per category */
-  .w-cat[data-accent="#4A90D9"] .w-item { --cat-accent-80: rgba(74,144,217,0.8); }
-  .w-cat[data-accent="#D97A4A"] .w-item { --cat-accent-80: rgba(217,122,74,0.8); }
-  .w-cat[data-accent="#5BA4CF"] .w-item { --cat-accent-80: rgba(91,164,207,0.8); }
-  .w-cat[data-accent="#4CAF78"] .w-item { --cat-accent-80: rgba(76,175,120,0.8); }
-  .w-cat[data-accent="#6BBF84"] .w-item { --cat-accent-80: rgba(107,191,132,0.8); }
-  .w-cat[data-accent="#8B8FA8"] .w-item { --cat-accent-80: rgba(139,143,168,0.8); }
 
-  /* ── Projected items ── */
-  .w-projected .w-item-name { font-style: italic; }
-  .w-proj-divider {
-    display: flex; align-items: center; justify-content: center;
-    padding: 8px 14px 4px;
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 0.55rem; color: rgba(255,255,255,0.2);
-    letter-spacing: 0.06em;
+  /* Two-column layout */
+  .wv-layout {
+    border: 1px solid var(--divider);
+    border-radius: 10px;
+    overflow: hidden;
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    min-height: 520px;
+    background: var(--bg-elevated, #ffffff);
   }
-  .w-proj-divider::before, .w-proj-divider::after {
-    content: ''; flex: 1; height: 1px;
-    background: rgba(255,255,255,0.06);
+  [data-theme="dark"] .wv-layout {
+    background: var(--bg-elevated, #1c1c1a);
   }
-  .w-proj-divider span { padding: 0 8px; white-space: nowrap; }
 
-  /* ── Electricity chip ── */
-  .w-elec-chip {
-    display: none;
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 0.6rem; font-weight: 700;
-    letter-spacing: 0.04em;
-    padding: 2px 6px; border-radius: 9px;
-    border: 1px solid rgba(255,255,255,0.15);
-    color: rgba(255,255,255,0.4);
+  /* Toggle panel */
+  .wv-toggles {
+    border-right: 1px solid var(--divider);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .wv-toggles-scroll {
+    flex: 1;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 0.5rem 0;
+  }
+
+  /* Category header */
+  .wv-cat {
+    margin-bottom: 0;
+  }
+  .wv-cat-head {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    width: 100%;
+    padding: 8px 12px;
+    border: none;
+    border-bottom: 1px solid var(--divider);
     background: transparent;
-    cursor: pointer; user-select: none;
-    flex-shrink: 0; white-space: nowrap;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--text);
+    text-align: left;
+  }
+  .wv-cat-head:hover {
+    background: rgba(0, 0, 0, 0.02);
+  }
+  [data-theme="dark"] .wv-cat-head:hover {
+    background: rgba(255, 255, 255, 0.03);
+  }
+  .wv-cat-chevron {
+    font-size: 0.6rem;
+    color: var(--text-secondary);
+    width: 12px;
+    text-align: center;
+    flex-shrink: 0;
+  }
+  .wv-cat-title {
+    flex: 1;
+  }
+  .wv-cat-count {
+    font-size: 0.7rem;
+    font-weight: 400;
+    color: var(--text-secondary);
+    margin-right: 4px;
+  }
+  .wv-cat-controls {
+    font-size: 0.7rem;
+    font-weight: 400;
+    color: var(--text-secondary);
+    flex-shrink: 0;
+  }
+  .wv-cat-toggle {
+    cursor: pointer;
+    transition: color 0.1s;
+  }
+  .wv-cat-toggle:hover {
+    color: var(--accent);
+  }
+
+  /* Category list */
+  .wv-cat-list {
+    display: none;
+    padding: 2px 0;
+  }
+  .wv-cat-list[data-visible="true"] {
+    display: block;
+  }
+
+  /* Toggle rows */
+  .wv-toggle-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 12px;
+    border: 1.5px solid transparent;
+    border-radius: 5px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 0.8rem;
+    color: var(--text);
+    text-align: left;
+    transition: all 0.12s;
+    min-height: 34px;
+    background: transparent;
+    width: 100%;
+    margin: 1px 0;
+  }
+  .wv-toggle-row[data-on="true"] {
+    background: rgba(74, 124, 89, 0.08);
+    border-color: rgba(74, 124, 89, 0.2);
+  }
+  .wv-toggle-row:hover {
+    background: rgba(74, 124, 89, 0.04);
+  }
+
+  /* Green dot checkmark */
+  .wv-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    background: var(--divider);
+    transition: background 0.12s;
+  }
+  .wv-toggle-row[data-on="true"] .wv-dot {
+    background: var(--green);
+  }
+
+  .wv-row-text {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+  }
+  .wv-row-name {
+    font-size: 0.8rem;
+    font-weight: 500;
+    line-height: 1.3;
+    color: var(--text);
+  }
+  .wv-toggle-row[data-on="false"] .wv-row-name {
+    color: var(--text-secondary);
+  }
+  .wv-row-val {
+    font-size: 0.7rem;
+    font-weight: 400;
+    color: var(--text-secondary);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Electricity chip */
+  .wv-elec-chip {
+    display: none;
+    font-size: 0.6rem;
+    font-weight: 600;
+    padding: 2px 7px;
+    border-radius: 9px;
+    border: 1px solid var(--divider);
+    color: var(--text-secondary);
+    background: transparent;
+    cursor: pointer;
+    flex-shrink: 0;
+    white-space: nowrap;
     transition: background 0.15s, border-color 0.15s, color 0.15s;
   }
-  .w-item[data-on="1"] .w-elec-chip { display: inline-block; }
-  .w-elec-chip[data-elec-on="1"] {
-    background: rgba(var(--chip-r,255),var(--chip-g,255),var(--chip-b,255),0.15);
-    border-color: rgba(var(--chip-r,255),var(--chip-g,255),var(--chip-b,255),0.5);
-    color: var(--cat-accent, rgba(255,255,255,0.7));
+  .wv-toggle-row[data-on="true"] .wv-elec-chip {
+    display: inline-block;
   }
-  .w-cat[data-accent="#4A90D9"] .w-elec-chip { --chip-r:74; --chip-g:144; --chip-b:217; }
-
-  /* ── Hidden original sub row (logic preserved, visually replaced by chip) ── */
-  .w-dc-group .w-sub { display: none; }
-
-  .w-right { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0; }
-
-  /* Legend */
-  .w-legend { padding: 4px 0 0; }
-  .w-leg-row {
-    display: grid; grid-template-columns: 10px 1fr 80px;
-    gap: 8px; align-items: center;
-    padding: 5px 8px; border-bottom: 1px solid rgba(255,255,255,0.04);
+  .wv-elec-chip[data-elec-on="true"] {
+    background: rgba(74, 124, 89, 0.12);
+    border-color: var(--green);
+    color: var(--green);
   }
-  .w-leg-row:last-child { border-bottom: none; }
-  .w-leg-color { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
-  .w-leg-info { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; min-width: 0; }
-  .w-leg-name {
-    font-family: 'IBM Plex Sans', sans-serif; font-size: 0.78rem; font-weight: 500;
-    color: rgba(255,255,255,0.85); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  }
-  .w-leg-proj { font-style: italic; color: rgba(255,255,255,0.55); }
-  .w-leg-val {
-    font-family: 'IBM Plex Mono', monospace; font-size: 0.68rem; font-weight: 400;
-    white-space: nowrap; flex-shrink: 0; opacity: 0.8;
-  }
-  .w-leg-bar { height: 3px; background: rgba(255,255,255,0.06); border-radius: 2px; overflow: hidden; }
-  .w-leg-fill { height: 100%; border-radius: 2px; opacity: 0.5; transition: width 0.3s ease; }
-  .w-chart { min-width: 0; min-height: 400px; aspect-ratio: 1.3 / 1; background: var(--bg-subtle); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; position: relative; }
-  #svg { width: 100%; height: 100%; display: block; }
 
-  /* Section headers */
-  .w-section-header { margin-bottom: 1.5rem; }
-  .w-section-header h2 { font-size: 1.35rem; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 0.25rem; color: var(--text); }
-  .w-section-desc { font-size: 0.82rem; color: var(--dim); line-height: 1.6; max-width: 640px; }
-  .w-divider { height: 1px; background: var(--border); margin: 3rem 0; }
-  .w-potable-placeholder { padding: 2.5rem 2rem; background: var(--bg-subtle); border: 1px dashed var(--border); border-radius: 8px; margin-bottom: 3rem; }
-  .w-potable-placeholder p { font-size: 0.88rem; color: var(--dim); font-style: italic; margin: 0; }
+  /* Projection divider */
+  .wv-proj-divider {
+    font-size: 0.65rem;
+    color: var(--text-secondary);
+    padding: 8px 12px 4px;
+    font-style: italic;
+  }
+
+  /* Bar chart panel */
+  .wv-bars-panel {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .wv-bars-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 16px;
+    border-bottom: 2px solid var(--accent);
+  }
+  .wv-bars-title {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--text);
+  }
+  .wv-bars-count {
+    font-size: 0.72rem;
+    color: var(--text-secondary);
+  }
+  .wv-bars-area {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px 16px;
+    -webkit-overflow-scrolling: touch;
+  }
+  .wv-bars-empty {
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    padding: 3rem 0;
+    text-align: center;
+  }
+
+  /* Individual bars */
+  .wv-bar-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+    transition: opacity 0.2s;
+  }
+  .wv-bar-name {
+    width: 180px;
+    flex-shrink: 0;
+    font-size: 0.78rem;
+    font-weight: 500;
+    color: var(--text);
+    text-align: right;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .wv-bar-track {
+    flex: 1;
+    height: 22px;
+    background: var(--bar-track);
+    border-radius: 4px;
+    overflow: hidden;
+    position: relative;
+  }
+  .wv-bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.3s ease;
+    min-width: 2px;
+  }
+  .wv-bar-val {
+    width: 90px;
+    flex-shrink: 0;
+    font-size: 0.72rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+
+  /* Focus states */
+  .wv2 *:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
 
   /* Methodology */
   .w-methodology { max-width: 760px; padding-bottom: 3rem; }
@@ -610,7 +702,7 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
   .w-meth-section:last-child { border-bottom: none; }
   .w-meth-section summary { font-size: 0.88rem; font-weight: 600; color: var(--text); cursor: pointer; list-style: none; padding: 0.75rem 0; display: flex; align-items: center; gap: 8px; user-select: none; }
   .w-meth-section summary::-webkit-details-marker { display: none; }
-  .w-meth-section summary::before { content: '▸'; font-size: 0.65rem; color: var(--dim); transition: transform 0.15s; }
+  .w-meth-section summary::before { content: '\25B8'; font-size: 0.65rem; color: var(--dim); transition: transform 0.15s; }
   .w-meth-section[open] summary::before { transform: rotate(90deg); }
   .w-meth-section summary:hover { color: var(--accent); }
   .w-meth-body { padding: 0 0 1.25rem 20px; }
@@ -629,10 +721,31 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
   .w-meth-table th { text-align: left; font-weight: 600; color: var(--text); padding: 4px 8px; border-bottom: 2px solid var(--border); font-size: 0.68rem; }
   .w-meth-table td { padding: 3px 8px; border-bottom: 1px solid var(--border-subtle); color: var(--text-secondary); font-variant-numeric: tabular-nums; }
 
+  /* Responsive */
   @media (max-width: 850px) {
-    .w-viz { flex-direction: column; }
-    .w-panel { width: 100%; max-height: none; }
-    .w-chart { aspect-ratio: 1; }
+    .wv-layout {
+      grid-template-columns: 1fr;
+      min-height: auto;
+    }
+    .wv-toggles {
+      border-right: none;
+      border-bottom: 1px solid var(--divider);
+      max-height: 400px;
+    }
+    .wv-bar-name {
+      width: 120px;
+      font-size: 0.7rem;
+    }
+    .wv-bar-val {
+      width: 70px;
+      font-size: 0.65rem;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .wv2 { padding: 0 0 2rem; }
+    .wv-bar-name { width: 90px; font-size: 0.65rem; }
+    .wv-bar-val { width: 60px; font-size: 0.6rem; }
   }
 </style>
 
@@ -640,212 +753,155 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
 (function() {
   function fG(g) { return g >= 1e12 ? (g/1e12).toFixed(1)+'T gal/yr' : g >= 1e9 ? (g/1e9).toFixed(1)+'B gal/yr' : (g/1e6).toFixed(0)+'M gal/yr'; }
 
-  const chart = document.getElementById('chart');
-  const svg = document.getElementById('svg');
-  const cur = new Map();
-  const tgt = new Map();
-  let raf = null;
-
-  const items = [];
+  var barsArea = document.getElementById('wv-bars');
+  var countEl = document.getElementById('wv-count');
+  var items = [];
 
   // Init all items from DOM
-  document.querySelectorAll('.w-item').forEach(row => {
-    const idx = parseInt(row.dataset.idx);
-    const dot = row.querySelector('.w-item-dot');
-    const baseName = row.querySelector('.w-item-name').textContent;
-    const galBase = parseFloat(row.dataset.galBase || 0);
-    const galElec = parseFloat(row.dataset.galElec || 0);
-    const galIndustry = parseFloat(row.dataset.galIndustry || 0);
+  document.querySelectorAll('.wv-toggle-row').forEach(function(row) {
+    var idx = parseInt(row.dataset.idx);
+    var galBase = parseFloat(row.dataset.galBase || 0);
+    var galElec = parseFloat(row.dataset.galElec || 0);
+    var galIndustry = parseFloat(row.dataset.galIndustry || 0);
+    var gallons = galIndustry > 0 ? galIndustry : galBase;
+    var baseName = row.querySelector('.wv-row-name').textContent;
 
-    const gallons = galIndustry > 0 ? galIndustry : galBase;
+    // Find color from category
+    var cat = row.closest('.wv-cat');
+    var catName = cat ? cat.dataset.cat : '';
+    var color = '#6B6B60';
+
+    // Use the item's data color from the server-rendered data
+    // We encode it in the frontmatter so grab it from the row
+    // Actually, we need to figure out colors. Let's encode as data attributes.
+    // For now, use category-based colors
+    var catColors = {
+      dc: '#4A90D9',
+      industry: '#D97A4A',
+      city: '#5BA4CF',
+      farm: '#4CAF78',
+      turf: '#6BBF84',
+      national: '#8B8FA8'
+    };
+    color = catColors[catName] || color;
 
     items[idx] = {
-      idx, gallons, on: row.dataset.on === '1',
-      color: dot.style.backgroundColor,
+      idx: idx,
+      gallons: gallons,
+      on: row.dataset.on === 'true',
+      color: color,
       name: baseName,
-      sub: row.querySelector('.w-item-val').textContent,
-      baseName, elecOn: false, galBase, galElec
+      sub: fG(gallons),
+      baseName: baseName,
+      elecOn: false,
+      galBase: galBase,
+      galElec: galElec
     };
 
     row.addEventListener('click', function(e) {
-      if (e.target.closest('.w-elec-chip')) return;
+      if (e.target.closest('.wv-elec-chip')) return;
       items[idx].on = !items[idx].on;
-      row.dataset.on = items[idx].on ? '1' : '0';
+      row.dataset.on = items[idx].on ? 'true' : 'false';
       render();
     });
   });
 
-  // Electricity sub-checkboxes
-  document.querySelectorAll('.w-sub').forEach(sub => {
-    sub.dataset.checked = '0';
-    const parentIdx = parseInt(sub.dataset.parentIdx);
-    const parentRow = document.querySelector(`.w-item[data-idx="${parentIdx}"]`);
-
-    sub.addEventListener('click', (e) => {
-      e.stopPropagation();
-      const nowChecked = sub.dataset.checked !== '1';
-      sub.dataset.checked = nowChecked ? '1' : '0';
-      parentRow.dataset.elec = nowChecked ? '1' : '0';
-
-      const it = items[parentIdx];
-      it.elecOn = nowChecked;
-      it.gallons = nowChecked ? it.galElec : it.galBase;
-      it.name = nowChecked ? it.baseName + ' + electricity' : it.baseName;
-      it.sub = fG(it.gallons);
-      const valEl = parentRow.querySelector('.w-item-val');
-      if (valEl) valEl.textContent = it.sub;
-      render();
-    });
-  });
-
-  // ── Animation ──────────────────────────────────
-
-  function render() {
-    const W = chart.clientWidth, H = chart.clientHeight;
-    const pad = 24;
-    const maxSide = Math.min(H - pad * 2, W - 200 - pad);
-    const active = items.filter(d => d && d.on);
-    const maxG = active.reduce((m, d) => Math.max(m, d.gallons), 0);
-
-    tgt.clear();
-    if (maxG > 0) active.forEach(d => tgt.set(d.idx, Math.max(2, maxSide * Math.sqrt(d.gallons / maxG))));
-    cur.forEach((_, k) => { if (!tgt.has(k)) tgt.set(k, 0); });
-    tgt.forEach((_, k) => { if (!cur.has(k)) cur.set(k, 0); });
-    if (!raf) raf = requestAnimationFrame(step);
-
-    updateStatus();
-  }
-
-  function step() {
-    const W = chart.clientWidth, H = chart.clientHeight, pad = 24;
-    let moving = false;
-    tgt.forEach((t, k) => {
-      const c = cur.get(k) ?? 0, d = t - c;
-      if (Math.abs(d) < 0.4) { cur.set(k, t); if (t === 0) cur.delete(k); }
-      else { cur.set(k, c + d * 0.14); moving = true; }
-    });
-    draw(W, H, pad);
-    raf = moving ? requestAnimationFrame(step) : null;
-  }
-
-  function draw(W, H, pad) {
-    const vis = [];
-    cur.forEach((s, i) => { if (s > 0.5) vis.push({ idx: i, s }); });
-    vis.sort((a, b) => b.s - a.s);
-
-    svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
-    if (!vis.length) { svg.innerHTML = `<text x="${W/2}" y="${H/2}" text-anchor="middle" font-family="var(--font-body)" font-size="13" fill="var(--dim)">Select items to compare</text>`; return; }
-
-    const ox = pad, oy = H - pad, p = [];
-
-    // ── Boxes: clean nested squares, no labels on chart ──
-    vis.forEach(function(v, vi) {
-      var it = items[v.idx], x = ox, y = oy - v.s;
-      p.push('<rect x="' + x + '" y="' + y + '" width="' + v.s + '" height="' + v.s + '" rx="2" fill="' + it.color + '" fill-opacity="0.1"/>');
-      p.push('<rect x="' + x + '" y="' + y + '" width="' + v.s + '" height="' + v.s + '" rx="2" fill="none" stroke="' + it.color + '" stroke-width="1.5" stroke-opacity="0.5"/>');
-    });
-
-    // ── Legend: ranked list below the chart, rendered as HTML ──
-    // Build legend data sorted largest to smallest
-    var legendEl = document.getElementById('w-legend');
-    if (legendEl) {
-      if (vis.length === 0) {
-        legendEl.innerHTML = '';
-      } else {
-        var legendHtml = '';
-        var maxG = 0;
-        vis.forEach(function(v) { var it = items[v.idx]; if (it.gallons > maxG) maxG = it.gallons; });
-        vis.forEach(function(v, vi) {
-          var it = items[v.idx];
-          var isProj = (it.name || '').indexOf('2030') >= 0;
-          var elecTag = it.elecOn ? ' +elec' : '';
-          var prefix = isProj ? '~' : '';
-          var val = prefix + it.sub + elecTag;
-          var barPct = maxG > 0 ? Math.max(1, (it.gallons / maxG) * 100) : 0;
-          legendHtml += '<div class="w-leg-row">';
-          legendHtml += '<div class="w-leg-color" style="background:' + it.color + '"></div>';
-          legendHtml += '<div class="w-leg-info">';
-          legendHtml += '<span class="w-leg-name' + (isProj ? ' w-leg-proj' : '') + '">' + it.name + '</span>';
-          legendHtml += '<span class="w-leg-val" style="color:' + it.color + '">' + val + '</span>';
-          legendHtml += '</div>';
-          legendHtml += '<div class="w-leg-bar"><div class="w-leg-fill" style="width:' + barPct.toFixed(1) + '%;background:' + it.color + '"></div></div>';
-          legendHtml += '</div>';
-        });
-        legendEl.innerHTML = legendHtml;
-      }
-    }
-
-    svg.innerHTML = p.join('\n');
-  }
-
-  render();
-
-  let rt;
-  new ResizeObserver(() => { clearTimeout(rt); rt = window.setTimeout(() => { cur.clear(); render(); }, 60); }).observe(chart);
-
-  // ── Status bar counter ──
-  var statusEl = document.getElementById('w-status');
-  function updateStatus() {
-    var count = 0;
-    document.querySelectorAll('.w-item[data-on="1"]').forEach(function() { count++; });
-    if (statusEl) {
-      statusEl.textContent = count > 0
-        ? 'COMPARING ' + count + ' ITEM' + (count === 1 ? '' : 'S')
-        : 'SELECT ITEMS TO COMPARE';
-    }
-  }
-  updateStatus();
-
-  // ── All / None category toggles ──
-  document.querySelectorAll('.w-cat-toggle').forEach(function(btn) {
-    btn.addEventListener('click', function(e) {
-      e.preventDefault();
-      e.stopPropagation();
-      var cat = btn.closest('.w-cat');
-      if (!cat) return;
-      var action = btn.dataset.action;
-      var newOn = action === 'all' ? true : false;
-      cat.querySelectorAll('.w-item').forEach(function(row) {
-        var idx = parseInt(row.dataset.idx);
-        if (items[idx]) {
-          items[idx].on = newOn;
-          row.dataset.on = newOn ? '1' : '0';
-        }
-      });
-      render();
-    });
-  });
-
-  // ── Electricity chip (replaces sub-checkbox visually) ──
-  document.querySelectorAll('.w-elec-chip').forEach(function(chip) {
+  // Electricity chip handlers
+  document.querySelectorAll('.wv-elec-chip').forEach(function(chip) {
     var parentIdx = parseInt(chip.dataset.parentIdx);
-    var parentRow = chip.closest('.w-item');
-    var sub = document.querySelector('.w-sub[data-parent-idx="' + parentIdx + '"]');
+    var parentRow = chip.closest('.wv-toggle-row');
 
     chip.addEventListener('click', function(e) {
       e.stopPropagation();
-      if (!parentRow || parentRow.dataset.on !== '1') return;
+      if (!parentRow || parentRow.dataset.on !== 'true') return;
 
-      // Toggle via the existing sub logic
-      var nowChecked = chip.dataset.elecOn !== '1';
-      chip.dataset.elecOn = nowChecked ? '1' : '0';
-
-      // Keep sub in sync (the existing handler reads from sub)
-      if (sub) {
-        sub.dataset.checked = nowChecked ? '1' : '0';
-      }
-      parentRow.dataset.elec = nowChecked ? '1' : '0';
+      var nowChecked = chip.dataset.elecOn !== 'true';
+      chip.dataset.elecOn = nowChecked ? 'true' : 'false';
 
       var it = items[parentIdx];
       it.elecOn = nowChecked;
       it.gallons = nowChecked ? it.galElec : it.galBase;
       it.name = nowChecked ? it.baseName + ' + electricity' : it.baseName;
       it.sub = fG(it.gallons);
-      var valEl = parentRow.querySelector('.w-item-val');
+      var valEl = parentRow.querySelector('.wv-row-val');
       if (valEl) valEl.textContent = it.sub;
       render();
     });
   });
+
+  // Category header toggle (expand/collapse)
+  document.querySelectorAll('.wv-cat-head').forEach(function(head) {
+    head.addEventListener('click', function(e) {
+      if (e.target.closest('.wv-cat-toggle')) return;
+      var cat = head.closest('.wv-cat');
+      var list = cat.querySelector('.wv-cat-list');
+      var chevron = head.querySelector('.wv-cat-chevron');
+      var isOpen = list.dataset.visible === 'true';
+      list.dataset.visible = isOpen ? 'false' : 'true';
+      head.dataset.open = isOpen ? 'false' : 'true';
+      chevron.innerHTML = isOpen ? '&#9656;' : '&#9662;';
+    });
+  });
+
+  // All / None category toggles
+  document.querySelectorAll('.wv-cat-toggle').forEach(function(btn) {
+    btn.addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      var cat = btn.closest('.wv-cat');
+      if (!cat) return;
+      var action = btn.dataset.action;
+      var newOn = action === 'all';
+      cat.querySelectorAll('.wv-toggle-row').forEach(function(row) {
+        var idx = parseInt(row.dataset.idx);
+        if (items[idx]) {
+          items[idx].on = newOn;
+          row.dataset.on = newOn ? 'true' : 'false';
+        }
+      });
+      render();
+    });
+  });
+
+  function render() {
+    var active = [];
+    for (var i = 0; i < items.length; i++) {
+      if (items[i] && items[i].on) active.push(items[i]);
+    }
+
+    // Update count
+    if (countEl) {
+      countEl.textContent = active.length + ' item' + (active.length === 1 ? '' : 's');
+    }
+
+    if (active.length === 0) {
+      barsArea.innerHTML = '<div class="wv-bars-empty">Select items to compare</div>';
+      return;
+    }
+
+    // Sort largest to smallest
+    active.sort(function(a, b) { return b.gallons - a.gallons; });
+    var maxG = active[0].gallons;
+
+    var html = '';
+    for (var j = 0; j < active.length; j++) {
+      var it = active[j];
+      var pct = maxG > 0 ? Math.max(1, (it.gallons / maxG) * 100) : 0;
+      var isProj = it.name.indexOf('2030') >= 0;
+      var elecTag = it.elecOn ? ' +elec' : '';
+      var prefix = isProj ? '~' : '';
+      var val = prefix + it.sub + elecTag;
+
+      html += '<div class="wv-bar-row">';
+      html += '<span class="wv-bar-name" title="' + it.name + '">' + it.name + '</span>';
+      html += '<div class="wv-bar-track"><div class="wv-bar-fill" style="width:' + pct.toFixed(1) + '%;background:' + it.color + '"></div></div>';
+      html += '<span class="wv-bar-val">' + val + '</span>';
+      html += '</div>';
+    }
+    barsArea.innerHTML = html;
+  }
+
+  render();
 })();
 </script>
 </Base>
