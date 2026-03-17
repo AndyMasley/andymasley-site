@@ -125,7 +125,6 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
       <div class="wv-toggles">
         <div class="wv-toggles-scroll">
           <button class="wv-clear-all" id="wv-clear-all">Clear all</button>
-          <input type="text" class="wv-search" id="wv-search" placeholder="Filter items...">
 
           <!-- Data centers -->
           <div class="wv-cat" data-cat="dc">
@@ -976,23 +975,6 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
     transition: width 0.2s;
   }
 
-  /* #6 Search filter */
-  .wv-search {
-    font-family: inherit;
-    font-size: 0.72rem;
-    padding: 5px 10px;
-    margin: 4px 8px;
-    border: 1px solid var(--divider);
-    border-radius: 4px;
-    background: transparent;
-    color: var(--text);
-    width: calc(100% - 16px);
-    box-sizing: border-box;
-  }
-  .wv-search::placeholder {
-    color: var(--text-secondary);
-  }
-
   /* #11 Hover-to-preview */
   .wv-bar-row.wv-preview-highlight .wv-bar-fill {
     outline: 2px solid rgba(74, 124, 89, 0.6);
@@ -1448,39 +1430,6 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
         row.dataset.on = 'false';
       });
       render();
-    });
-  }
-
-  // (#6) Search filter
-  var searchInput = document.getElementById('wv-search');
-  if (searchInput) {
-    searchInput.addEventListener('input', function() {
-      var q = searchInput.value.toLowerCase().trim();
-      document.querySelectorAll('.wv-toggle-row').forEach(function(row) {
-        var nameEl = row.querySelector('.wv-row-name');
-        if (!nameEl) return;
-        var match = !q || nameEl.textContent.toLowerCase().indexOf(q) >= 0;
-        row.style.display = match ? '' : 'none';
-      });
-      // Expand categories that have matching items
-      if (q) {
-        document.querySelectorAll('.wv-cat').forEach(function(cat) {
-          var hasVisible = false;
-          cat.querySelectorAll('.wv-toggle-row').forEach(function(row) {
-            if (row.style.display !== 'none') hasVisible = true;
-          });
-          if (hasVisible) {
-            var list = cat.querySelector('.wv-cat-list');
-            var head = cat.querySelector('.wv-cat-head');
-            var chevron = head.querySelector('.wv-cat-chevron');
-            if (list.dataset.visible !== 'true') {
-              list.dataset.visible = 'true';
-              head.dataset.open = 'true';
-              chevron.textContent = '\u25BE';
-            }
-          }
-        });
-      }
     });
   }
 
