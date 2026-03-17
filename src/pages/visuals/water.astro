@@ -247,9 +247,7 @@ const cropFlat = defaultCrop.map(d => ({ idx: idx++, ...d,
 </style>
 
 <script is:inline>
-document.addEventListener('astro:page-load', function() {
-  // Guard: bail if this page's elements don't exist (e.g. navigated away)
-  if (!document.getElementById('chart')) return;
+(function() {
   const RATES = { corn: 650000, alfalfa: 1500000, golf: 1300000 };
   const CROP_LABELS = { corn: 'corn', alfalfa: 'alfalfa', golf: 'golf course' };
   const cropDataAll = window.__cropDataAll;
@@ -453,11 +451,10 @@ document.addEventListener('astro:page-load', function() {
     svg.innerHTML = p.join('\n');
   }
 
-  // Wait for layout before first render
-  requestAnimationFrame(() => { requestAnimationFrame(() => { render(); }); });
+  render();
 
   let rt;
   new ResizeObserver(() => { clearTimeout(rt); rt = window.setTimeout(() => { cur.clear(); render(); }, 60); }).observe(chart);
-});
+})();
 </script>
 </Base>
