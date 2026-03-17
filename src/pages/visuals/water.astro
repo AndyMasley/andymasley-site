@@ -65,16 +65,16 @@ const farmItems = [
   { name: 'Wisconsin berries', gal: 7.6e9, tGal: null, color: '#b07cc6', on: false },
 ];
 
-// Lawns: municipal treated water from tap. tGal = same as gal.
-// Golf: mostly wells/reclaimed, ~20% from treated supply. tGal = 20% of gal.
+// Lawns: ~55% from municipal treated supply, rest from private wells/reclaimed.
+// Golf: GCSAA data — ~15% municipal potable, ~45% wells, ~25% surface, ~15% reclaimed.
 // Arizona golf: ~335 courses × 80 ac × 358,436 gal/ac = 9.6B
 const turfItems = [
-  { name: 'All US irrigated lawns (est.)', gal: 16e12, tGal: 16e12, color: '#27ae60', on: false },
-  { name: 'Florida lawns', gal: 2.8e12, tGal: 2.8e12, color: '#2ecc71', on: false },
-  { name: 'California lawns', gal: 2.4e12, tGal: 2.4e12, color: '#2ecc71', on: false },
-  { name: 'Texas lawns', gal: 2.4e12, tGal: 2.4e12, color: '#2ecc71', on: false },
-  { name: 'All US golf courses (2024)', gal: 379e9, tGal: 76e9, color: '#1abc9c', on: false },
-  { name: 'Arizona golf courses', gal: 9.6e9, tGal: 1.9e9, color: '#1abc9c', on: false },
+  { name: 'All US irrigated lawns (est.)', gal: 16e12, tGal: 8.8e12, color: '#27ae60', on: false },   // 55% treated
+  { name: 'Florida lawns', gal: 2.8e12, tGal: 1.4e12, color: '#2ecc71', on: false },    // ~50% (FL uses more wells)
+  { name: 'California lawns', gal: 2.4e12, tGal: 1.44e12, color: '#2ecc71', on: false }, // ~60% (mostly municipal)
+  { name: 'Texas lawns', gal: 2.4e12, tGal: 1.32e12, color: '#2ecc71', on: false },     // ~55%
+  { name: 'All US golf courses (2024)', gal: 379e9, tGal: 57e9, color: '#1abc9c', on: false },  // 15% treated
+  { name: 'Arizona golf courses', gal: 9.6e9, tGal: 960e6, color: '#1abc9c', on: false },       // ~10% (AZ mostly wells/reclaimed)
 ];
 
 // City water systems — base = water delivered; elec = base + water cost of electricity
