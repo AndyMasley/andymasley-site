@@ -65,16 +65,20 @@ const farmItems = [
   { name: 'Wisconsin berries', gal: 7.6e9, tGal: null, color: '#b07cc6', on: false },
 ];
 
-// Lawns: ~55% from municipal treated supply, rest from private wells/reclaimed.
+// Lawns: EPA says outdoor use = ~30% of residential, residential = ~60% of public supply.
+// Total US outdoor residential (all sources): ~2.4T gal/yr (30% × 60% × 13.1T).
+// About 70% of that is lawn irrigation specifically = ~1.7T from municipal supply.
+// Total from ALL sources (including private wells): ~3T gal/yr.
+// State figures scaled proportionally by housing stock + climate.
 // Golf: GCSAA data — ~15% municipal potable, ~45% wells, ~25% surface, ~15% reclaimed.
 // Arizona golf: ~335 courses × 80 ac × 358,436 gal/ac = 9.6B
 const turfItems = [
-  { name: 'All US irrigated lawns (est.)', gal: 16e12, tGal: 8.8e12, color: '#27ae60', on: false },   // 55% treated
-  { name: 'Florida lawns', gal: 2.8e12, tGal: 1.4e12, color: '#2ecc71', on: false },    // ~50% (FL uses more wells)
-  { name: 'California lawns', gal: 2.4e12, tGal: 1.44e12, color: '#2ecc71', on: false }, // ~60% (mostly municipal)
-  { name: 'Texas lawns', gal: 2.4e12, tGal: 1.32e12, color: '#2ecc71', on: false },     // ~55%
-  { name: 'All US golf courses (2024)', gal: 379e9, tGal: 57e9, color: '#1abc9c', on: false },  // 15% treated
-  { name: 'Arizona golf courses', gal: 9.6e9, tGal: 960e6, color: '#1abc9c', on: false },       // ~10% (AZ mostly wells/reclaimed)
+  { name: 'All US lawn irrigation (est.)', gal: 3e12, tGal: 1.7e12, color: '#27ae60', on: false },
+  { name: 'Florida lawns', gal: 350e9, tGal: 175e9, color: '#2ecc71', on: false },
+  { name: 'California lawns', gal: 400e9, tGal: 240e9, color: '#2ecc71', on: false },
+  { name: 'Texas lawns', gal: 320e9, tGal: 176e9, color: '#2ecc71', on: false },
+  { name: 'All US golf courses (2024)', gal: 379e9, tGal: 57e9, color: '#1abc9c', on: false },
+  { name: 'Arizona golf courses', gal: 9.6e9, tGal: 960e6, color: '#1abc9c', on: false },
 ];
 
 // City water systems — base = water delivered; elec = base + water cost of electricity
