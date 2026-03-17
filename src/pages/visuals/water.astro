@@ -124,6 +124,7 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
         <li style="margin-bottom: 0.3rem;">Most of the water "used" by data centers is actually consumed at nearby <strong style="color: var(--text, #1A1A18);">power plants</strong> generating their electricity. The <em>+ elec</em> buttons on data center items add this upstream water cost.</li>
         <li style="margin-bottom: 0.3rem;">Data center water use is <strong style="color: var(--text, #1A1A18);">growing rapidly</strong> and will continue through 2030. The data centers category includes both current figures and 2030 projections.</li>
       </ol>
+      <p>All values explained in the <a href="#methodology" style="color: var(--accent, #8b3a3a); text-decoration: underline; text-underline-offset: 2px;">methodology</a>. I did my best to figure out what each is, but I'm just some guy. If you think I'm getting something wrong, please email me at <a href="mailto:AndyMasley@gmail.com" style="color: var(--accent, #8b3a3a); text-decoration: underline; text-underline-offset: 2px;">AndyMasley@gmail.com</a>.</p>
     </div>
   </header>
 
@@ -316,7 +317,7 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
     </div>
   </article>
 
-  <div class="w-methodology">
+  <div class="w-methodology" id="methodology">
     <h2>Methodology</h2>
     <p class="w-meth-intro">All figures represent <strong>consumptive</strong> water use — water evaporated, incorporated into products, or not returned to source. Every figure is year-stamped. This visualization mixes U.S.-only totals (LBNL data centers, USDA crops) with global corporate totals (Microsoft, Google) and global AI-service usage (ChatGPT) — the comparison is useful for scale but is not a geographic like-for-like.</p>
 
