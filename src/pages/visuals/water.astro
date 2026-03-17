@@ -22,9 +22,51 @@ const industryItems = [
   { name: 'US paper & pulp mills', gal: 175e9, color: '#884228', on: false },
 ];
 
+// Agriculture & land use — each has a US total + top 4 states
+const agItems = [
+  { label: 'Irrigated corn', color: '#5e9c50', items: [
+    { name: 'All US irrigated corn', gal: 7.57e12, on: true },
+    { name: 'Nebraska corn', gal: 2.89e12, on: false },
+    { name: 'Kansas corn', gal: 744.5e9, on: false },
+    { name: 'Arkansas corn', gal: 463e9, on: false },
+    { name: 'Texas corn', gal: 366e9, on: false },
+  ]},
+  { label: 'Irrigated alfalfa', color: '#4a8840', items: [
+    { name: 'All US irrigated alfalfa', gal: 8.11e12, on: false },
+    { name: 'Idaho alfalfa', gal: 1.26e12, on: false },
+    { name: 'California alfalfa', gal: 920e9, on: false },
+    { name: 'Montana alfalfa', gal: 838e9, on: false },
+    { name: 'Colorado alfalfa', gal: 798e9, on: false },
+  ]},
+  { label: 'Irrigated berries', color: '#9b59b6', items: [
+    { name: 'All US irrigated berries', gal: 123e9, on: false },
+    { name: 'California berries', gal: 26e9, on: false },
+    { name: 'Washington berries', gal: 17.3e9, on: false },
+    { name: 'Oregon berries', gal: 13e9, on: false },
+    { name: 'Wisconsin berries', gal: 11.7e9, on: false },
+  ]},
+  { label: 'Golf courses', color: '#2ecc71', items: [
+    { name: 'All US golf courses', gal: 1.43e12, on: false },
+    { name: 'Florida golf', gal: 131e9, on: false },
+    { name: 'New York golf', gal: 104e9, on: false },
+    { name: 'California golf', gal: 95.7e9, on: false },
+    { name: 'Texas golf', gal: 93.6e9, on: false },
+  ]},
+  { label: 'Residential lawns', color: '#27ae60', items: [
+    { name: 'All US irrigated lawns', gal: 16e12, on: false },
+    { name: 'Florida lawns', gal: 2.8e12, on: false },
+    { name: 'California lawns', gal: 2.4e12, on: false },
+    { name: 'Texas lawns', gal: 2.4e12, on: false },
+  ]},
+];
+
 let idx = 0;
 const dcFlat = dcItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
 const indFlat = industryItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
+const agFlat = agItems.map(group => ({
+  ...group,
+  items: group.items.map(d => ({ idx: idx++, ...d, color: group.color, sub: fG(d.gal) })),
+}));
 ---
 
 <Base title="AI Water Usage" description="How much water does AI use?">
@@ -86,6 +128,27 @@ const indFlat = industryItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
             ))}
           </div>
         </details>
+
+        {agFlat.map(group => (
+          <details class="w-cat">
+            <summary class="w-cat-head">
+              <div class="w-cat-pip" style={`background:${group.color}`}></div>
+              <span class="w-cat-name">{group.label}</span>
+              <span class="w-cat-arrow"></span>
+            </summary>
+            <div class="w-cat-list">
+              {group.items.map(d => (
+                <div class="w-item" data-idx={d.idx} data-on={d.on ? '1' : '0'} data-gal-industry={d.gal}>
+                  <div class="w-item-dot" style={`background:${d.color}`}></div>
+                  <div class="w-item-text">
+                    <span class="w-item-name">{d.name}</span>
+                    <span class="w-item-val">{d.sub}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </details>
+        ))}
       </div>
 
       <div class="w-right">
