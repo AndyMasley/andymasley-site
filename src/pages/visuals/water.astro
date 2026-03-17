@@ -28,14 +28,16 @@ const dcItems = [
   { name: 'All US DCs 2030 (projected)', base: 51e9, elec: 560e9, tGal: 51e9, tElec: null, color: '#a888c8', on: false },
 ];
 
-// Industries: mostly self-supplied untreated water. tGal = null (cross out in treated mode).
+// Industries: mixed water sources. tGal = fraction from municipal/treated supply.
+// Semis: ~95% municipal (need pre-treated baseline for UPW). Food: ~80% (potable required by law).
+// Auto: ~65% municipal. Oil/steel/paper: almost entirely self-supplied from rivers.
 const industryItems = [
-  { name: 'US semiconductor fabs', gal: 9e9, tGal: null, color: '#d4825e', on: false },
-  { name: 'US auto manufacturing', gal: 12e9, tGal: null, color: '#c87450', on: false },
-  { name: 'US oil refining', gal: 22e9, tGal: null, color: '#b86844', on: false },
-  { name: 'US steel production', gal: 65e9, tGal: null, color: '#a85c3a', on: false },
-  { name: 'US food & beverage', gal: 150e9, tGal: null, color: '#984e30', on: false },
-  { name: 'US paper & pulp mills', gal: 175e9, tGal: null, color: '#884228', on: false },
+  { name: 'US semiconductor fabs', gal: 9e9, tGal: 8.5e9, color: '#d4825e', on: false },  // ~95% municipal
+  { name: 'US auto manufacturing', gal: 12e9, tGal: 7.8e9, color: '#c87450', on: false },  // ~65% municipal
+  { name: 'US oil refining', gal: 22e9, tGal: null, color: '#b86844', on: false },          // ~5% — negligible
+  { name: 'US steel production', gal: 65e9, tGal: null, color: '#a85c3a', on: false },      // ~4% — negligible
+  { name: 'US food & beverage', gal: 150e9, tGal: 120e9, color: '#984e30', on: false },     // ~80% (potable required)
+  { name: 'US paper & pulp mills', gal: 175e9, tGal: null, color: '#884228', on: false },   // ~0% — all river water
 ];
 
 // Agriculture & land use
