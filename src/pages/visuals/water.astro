@@ -1303,31 +1303,120 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
   .w-meth-table th { text-align: left; font-weight: 600; color: var(--text); padding: 4px 8px; border-bottom: 2px solid var(--border); font-size: 0.68rem; }
   .w-meth-table td { padding: 3px 8px; border-bottom: 1px solid var(--border-subtle); color: var(--text-secondary); font-variant-numeric: tabular-nums; }
 
-  /* Responsive */
+  /* ── Responsive: tablet ── */
   @media (max-width: 850px) {
     .wv-layout {
       grid-template-columns: 1fr;
+      height: auto;
+      max-height: none;
       min-height: auto;
     }
     .wv-toggles {
       border-right: none;
       border-bottom: 1px solid var(--divider);
-      max-height: 400px;
+      max-height: 280px;
     }
-    .wv-bar-name {
-      width: 120px;
-      font-size: 0.7rem;
+    .wv-chart-panel {
+      min-height: 420px;
+      height: 60vh;
+      max-height: 600px;
     }
-    .wv-bar-val {
-      width: 70px;
-      font-size: 0.65rem;
+    .wv-chart-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 8px;
     }
+    .wv-header-controls {
+      width: 100%;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .wv-bar-name { width: 130px; font-size: 0.66rem; }
+    .wv-bar-val { width: 75px; font-size: 0.6rem; }
   }
 
-  @media (max-width: 480px) {
-    .wv2 { padding: 0 0 2rem; }
-    .wv-bar-name { width: 90px; font-size: 0.65rem; }
-    .wv-bar-val { width: 60px; font-size: 0.6rem; }
+  /* ── Responsive: phone ── */
+  @media (max-width: 560px) {
+    .wv2 { width: calc(100vw - 16px); padding: 0 0 1.5rem; }
+
+    .wv-layout { height: auto; max-height: none; }
+
+    /* Toggle panel: compact, scrollable */
+    .wv-toggles { max-height: 220px; }
+    .wv-cat-list[data-visible="true"] { max-height: 200px; }
+
+    /* Chart: fill remaining viewport */
+    .wv-chart-panel { min-height: 360px; height: 55vh; max-height: 520px; }
+    .wv-squares-area { padding: 10px; }
+    .wv-bars-area { padding: 8px 10px; }
+
+    /* Chart header: stack everything vertically */
+    .wv-chart-header {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 6px;
+      padding: 8px 10px;
+    }
+    .wv-header-left { flex-direction: row; justify-content: space-between; align-items: center; }
+    .wv-header-controls {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 6px;
+      width: 100%;
+    }
+
+    /* Segmented controls: full width water toggle, compact view toggle */
+    .wv-water-toggle { flex: 1; }
+    .wv-water-btn { flex: 1; text-align: center; font-size: 0.6rem !important; padding: 5px 6px 6px !important; }
+    .wv-view-btn { font-size: 0.6rem; padding: 5px 8px 6px; }
+
+    /* Bar chart: ultra compact */
+    .wv-bar-row { gap: 6px; margin-bottom: 2px; }
+    .wv-bar-name { width: 100px; font-size: 0.62rem; -webkit-line-clamp: 1; white-space: nowrap; }
+    .wv-bar-track { height: 14px; }
+    .wv-bar-val { width: auto; flex-shrink: 1; font-size: 0.58rem; min-width: 55px; }
+    .wv-bar-pct { display: none; }
+
+    /* Toggle rows: tighter for touch */
+    .wv-toggle-row { padding: 6px 10px; min-height: 36px; }
+    .wv-cat-head { padding: 9px 10px; }
+
+    /* Bulk actions */
+    .wv-bulk-actions { padding: 4px 10px 6px; }
+    .wv-panel-title { padding: 10px 10px 2px; }
+
+    /* Tooltip: full width on mobile */
+    .wv-tooltip { max-width: calc(100vw - 24px); left: 12px !important; right: 12px; }
+
+    /* Scale ref: bottom-right instead of top-left to not block content */
+    .wv-scale-ref { top: auto !important; bottom: 4px; right: 4px; left: auto !important; }
+
+    /* Intro: tighter on mobile */
+    header h1 { font-size: 1.4rem; }
+    header > div { font-size: 0.78rem !important; line-height: 1.6 !important; margin-top: 0.5rem !important; }
+    header > div p { margin-bottom: 0.4rem !important; }
+    header > div ol { margin-bottom: 0.4rem !important; }
+    header > div li { margin-bottom: 0.2rem !important; }
+
+    /* Methodology: tighter */
+    .w-methodology { padding-bottom: 1.5rem; }
+    .w-meth-body { padding-left: 10px; }
+    .w-meth-table { font-size: 0.65rem; }
+    .w-meth-table th, .w-meth-table td { padding: 2px 4px; }
+  }
+
+  /* ── Responsive: very small phone ── */
+  @media (max-width: 380px) {
+    .wv2 { width: calc(100vw - 8px); }
+    .wv-bar-name { width: 80px; font-size: 0.58rem; }
+    .wv-bar-val { font-size: 0.54rem; min-width: 45px; }
+    .wv-toggle-row { padding: 6px 8px; }
+    .wv-cat-head { padding: 9px 8px; }
+    .wv-chart-header { padding: 6px 8px; }
+    .wv-bars-area { padding: 6px 8px; }
+    .wv-squares-area { padding: 8px; }
+    .wv-water-btn { font-size: 0.55rem !important; }
+    .wv-view-btn { font-size: 0.55rem; }
   }
 
   /*
@@ -1960,10 +2049,11 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
 
     // ── Square view ──
     if (currentView === 'squares') {
-      var panelW = squaresArea.clientWidth - 32;
-      var panelH = squaresArea.clientHeight - 32;
-      if (panelW < 100) panelW = 600;
-      if (panelH < 100) panelH = 500;
+      var pad = window.innerWidth < 560 ? 20 : 32;
+      var panelW = squaresArea.clientWidth - pad;
+      var panelH = squaresArea.clientHeight - pad;
+      if (panelW < 50) panelW = Math.min(window.innerWidth - 40, 600);
+      if (panelH < 50) panelH = Math.min(window.innerHeight * 0.4, 500);
 
       var maxSide = Math.round(Math.min(panelW, panelH) * 0.8);
       var labelH = 32;
@@ -2221,25 +2311,42 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
     var elecHtml = item.elecOn ? ELEC_EXPLAINER : '';
     tooltipEl.innerHTML = '<strong style="font-size:0.78rem;display:block;margin-bottom:4px">' + displayName + '</strong>' + html + elecHtml;
     tooltipEl.style.display = 'block';
-    // Position: try right of cursor, fall back left if near edge
     var w = tooltipEl.offsetWidth;
     var h = tooltipEl.offsetHeight;
     var vw = window.innerWidth;
     var vh = window.innerHeight;
-    var left = x + 16;
-    var top = y - 10;
-    if (left + w > vw - 12) left = x - w - 16;
-    if (top + h > vh - 12) top = vh - h - 12;
-    if (top < 12) top = 12;
-    tooltipEl.style.left = left + 'px';
-    tooltipEl.style.top = top + 'px';
+    // Mobile: fixed to bottom of viewport
+    if (vw < 560) {
+      tooltipEl.style.left = '8px';
+      tooltipEl.style.right = '8px';
+      tooltipEl.style.width = 'auto';
+      tooltipEl.style.bottom = '8px';
+      tooltipEl.style.top = 'auto';
+      tooltipEl.style.maxHeight = '40vh';
+      tooltipEl.style.overflowY = 'auto';
+      tooltipEl.style.pointerEvents = 'auto';
+    } else {
+      tooltipEl.style.right = '';
+      tooltipEl.style.width = '';
+      tooltipEl.style.bottom = '';
+      tooltipEl.style.maxHeight = '';
+      tooltipEl.style.overflowY = '';
+      tooltipEl.style.pointerEvents = 'none';
+      var left = x + 16;
+      var top = y - 10;
+      if (left + w > vw - 12) left = x - w - 16;
+      if (top + h > vh - 12) top = vh - h - 12;
+      if (top < 12) top = 12;
+      tooltipEl.style.left = left + 'px';
+      tooltipEl.style.top = top + 'px';
+    }
   }
 
   function hideTip() {
     tooltipEl.style.display = 'none';
   }
 
-  // Attach to squares
+  // Attach to squares (mouse + touch)
   squaresArea.addEventListener('mousemove', function(e) {
     var sqEl = e.target.closest('.wv-sq-item');
     if (!sqEl) { hideTip(); return; }
@@ -2249,7 +2356,7 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
   });
   squaresArea.addEventListener('mouseleave', hideTip);
 
-  // Attach to bars
+  // Attach to bars (mouse + touch)
   barsArea.addEventListener('mousemove', function(e) {
     var barRow = e.target.closest('.wv-bar-row');
     if (!barRow) { hideTip(); return; }
@@ -2258,6 +2365,30 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
     if (it) showTip(it, e.clientX, e.clientY);
   });
   barsArea.addEventListener('mouseleave', hideTip);
+
+  // Touch support: tap to show tooltip, tap elsewhere to dismiss
+  var tipVisible = false;
+  function handleTouch(area, selector, getIdx) {
+    area.addEventListener('touchstart', function(e) {
+      var el = e.target.closest(selector);
+      if (!el) return;
+      e.preventDefault();
+      var idx = getIdx(el);
+      var it = items[idx];
+      if (!it) return;
+      var touch = e.touches[0];
+      showTip(it, touch.clientX, touch.clientY);
+      tipVisible = true;
+    }, { passive: false });
+  }
+  handleTouch(squaresArea, '.wv-sq-item', function(el) { return parseInt(el.dataset.sqIdx); });
+  handleTouch(barsArea, '.wv-bar-row', function(el) { return parseInt(el.dataset.idx); });
+  document.addEventListener('touchstart', function(e) {
+    if (tipVisible && !e.target.closest('.wv-tooltip') && !e.target.closest('.wv-sq-item') && !e.target.closest('.wv-bar-row')) {
+      hideTip();
+      tipVisible = false;
+    }
+  });
 
   // Remove default title tooltips from squares (we handle it now)
   var observer = new MutationObserver(function() {
