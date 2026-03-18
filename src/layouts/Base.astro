@@ -12,12 +12,13 @@ interface Props {
 
 const {
   title,
-  description = "When the going gets weird the weird turn pro",
+  description = "Andy Masley's personal site — writing, data visualizations, physics lectures, and lists",
   showReadingProgress = false,
   ogImage,
   ogTitle,
 } = Astro.props;
 const resolvedOgTitle = ogTitle || title;
+const resolvedOgImage = ogImage || "/images/og-default.png";
 const currentPath = Astro.url.pathname;
 const isHexagonPage = currentPath === '/hexagon' || currentPath === '/hexagon/';
 
@@ -55,12 +56,12 @@ function isActive(href: string): boolean {
   <meta property="og:title" content={resolvedOgTitle}>
   <meta property="og:description" content={description}>
   <meta property="og:type" content="website">
-  {ogImage && <meta property="og:image" content={new URL(ogImage, Astro.site || Astro.url.origin).href}>}
-  <meta name="twitter:card" content={ogImage ? "summary_large_image" : "summary"}>
+  <meta property="og:image" content={new URL(resolvedOgImage, Astro.site || Astro.url.origin).href}>
+  <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content={resolvedOgTitle}>
   <meta name="twitter:description" content={description}>
-  {ogImage && <meta name="twitter:image" content={new URL(ogImage, Astro.site || Astro.url.origin).href}>}
-  <title>{title} — Andy Masley</title>
+  <meta name="twitter:image" content={new URL(resolvedOgImage, Astro.site || Astro.url.origin).href}>
+  <title>{title === "Andy Masley" ? title : `${title} — Andy Masley`}</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
