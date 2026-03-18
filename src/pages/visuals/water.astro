@@ -1565,10 +1565,15 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
   .wv-toggle-row { padding: 5px 14px; gap: 8px; min-height: auto; align-items: flex-start; background: transparent; }
   .wv-toggle-row[data-on="true"] { border-left: 2px solid var(--cat-color, var(--green)); padding-left: 12px; }
   .wv-toggle-row[data-on="false"] { border-left: 2px solid transparent; padding-left: 12px; }
-  .wv-dot { width: 9px; height: 9px; border-radius: 2px; border-width: 1.5px; margin-top: 4px; }
+  .wv-dot { width: 10px; height: 10px; border-radius: 2px; border-width: 1.5px; margin-top: 4px; border-color: var(--text-secondary); opacity: 0.5; }
+  .wv-toggle-row[data-on="true"] .wv-dot { opacity: 1; }
   .wv-row-name { font-size: 0.74rem; font-weight: 400; line-height: 1.3; }
   .wv-toggle-row[data-on="true"] .wv-row-name { color: var(--text); }
-  .wv-toggle-row[data-on="false"] .wv-row-name { color: var(--text-secondary); opacity: 0.7; }
+  .wv-toggle-row[data-on="false"] .wv-row-name { color: var(--text); opacity: 0.65; }
+  .wv-toggle-row[data-on="false"]:hover .wv-row-name { opacity: 1; }
+  .wv-toggle-row[data-on="false"]:hover .wv-dot { border-color: var(--cat-color, var(--green)); }
+  .wv-toggle-row[data-on="false"]:hover { background: rgba(0, 0, 0, 0.04); }
+  [data-theme="dark"] .wv-toggle-row[data-on="false"]:hover { background: rgba(255, 255, 255, 0.04); }
 
   /* Elec chip */
   .wv-elec-chip { border-radius: 1px; font-size: 0.5rem; padding: 1px 5px; letter-spacing: 0.04em; margin-top: 2px; }
