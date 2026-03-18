@@ -1078,7 +1078,7 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
                 opacity 0.3s ease;
   }
   .wv-sq-box {
-    border-radius: 3px;
+    border-radius: 0;
     transition: width 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94),
                 height 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
   }
@@ -1867,7 +1867,7 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
       var sized = [];
       for (var k = 0; k < active.length; k++) {
         var sq = active[k];
-        var side = Math.max(12, Math.round(maxSide * Math.sqrt(sq.gallons / maxG)));
+        var side = Math.max(1, Math.round(maxSide * Math.sqrt(sq.gallons / maxG)));
         var isP = sq.name.indexOf('2030') >= 0;
         var eTag = sq.elecOn ? ' +elec' : '';
         var pre = isP ? '~' : '';
@@ -1886,7 +1886,7 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
         placed = [];
         var shelfX = 0, shelfY = 0, shelfH = 0;
         for (var s = 0; s < sized.length; s++) {
-          var scaledSide = Math.max(12, Math.round(sized[s].side * scale));
+          var scaledSide = Math.max(1, Math.round(sized[s].side * scale));
           var textW = ctx.measureText(sized[s].sq.squareName).width + 8;
           var labelBelowPack = scaledSide >= 60;
           var nameW = textW;
