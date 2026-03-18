@@ -37,7 +37,7 @@ const industryItems = [
   { name: 'US dairy processing', base: 45e9, elec: 50.4e9, tGal: 31.5e9, tElec: null, color: '#d4a05e', on: false },  // USDA milk × EPA; 11.5 TWh (MECS 3115) × 0.47 = 5.4B; 70% public-supply
   { name: 'US industrial launderers', base: 35e9, elec: 36.2e9, tGal: 33.2e9, tElec: null, color: '#6a8eab', on: false },  // EPA CI water; ~2.5 TWh est × 0.47 = 1.2B
   { name: 'US breweries (modeled)', base: 32e9, elec: 33.6e9, tGal: 24e9, tElec: null, color: '#c49a3e', on: false },  // 5.4B gal beer × 6; ~3.4 TWh est × 0.47 = 1.6B; 75% public-supply
-  { name: 'US bottled water mfg (total only)', base: 22.8e9, elec: 23.5e9, tGal: null, tElec: null, color: '#5eaab8', on: false },  // 16.4B gal × 1.39; ~1.5 TWh est × 0.47 = 0.7B; potable split unknown
+  { name: 'US bottled water mfg (total only)', base: 22.8e9, elec: 23.5e9, tGal: 22.8e9, tElec: null, color: '#5eaab8', on: false },  // 16.4B gal × 1.39; ~1.5 TWh est × 0.47 = 0.7B; all potable-quality water
 ];
 
 // Agriculture — estimated CONSUMPTIVE use (evapotranspiration from irrigation water)
