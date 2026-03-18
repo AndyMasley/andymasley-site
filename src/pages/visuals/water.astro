@@ -108,15 +108,21 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
 
   <header>
     <h1>How thirsty is AI?</h1>
-    <div style="font-size: 0.85rem; line-height: 1.7; color: var(--text-secondary, #6B6B60); margin-top: 0.75rem; max-width: 680px;">
-      <p style="margin-bottom: 0.6rem;">Select items on the left to compare how much water data centers use relative to farms, cities, industries, and more. Toggle between boxes (proportional area) and bars. All figures show water <strong style="color: var(--text, #1A1A18);">consumed</strong> — evaporated, incorporated into products, or not returned to source — because consumptive use is the core concern with AI water impact. For example, New York City's water system <a href="https://www.nyc.gov/site/dep/water/drinking-water.page" style="color: var(--accent, #8b3a3a); text-decoration: underline; text-underline-offset: 2px;">delivers 364 billion gallons per year</a>, but roughly <a href="https://pubs.usgs.gov/publication/sir20145176" style="color: var(--accent, #8b3a3a); text-decoration: underline; text-underline-offset: 2px;">88% of that returns</a> through the sewer system. Only the ~45 billion gallons actually consumed — lost to landscape evaporation, leaks, and other non-return uses — is shown here. Similarly, irrigated farmland applies far more water than crops actually consume: roughly <a href="https://extensionpubs.unl.edu/publication/g2345/2023/html/view" style="color: var(--accent, #8b3a3a); text-decoration: underline; text-underline-offset: 2px;">25–30% of applied irrigation water</a> percolates back into aquifers or runs off into streams rather than being consumed by the crop, so the farmland numbers here show only the estimated consumptive portion.</p>
-      <p style="margin-bottom: 0.4rem;">Comparing data center water is tricky for three reasons:</p>
-      <ol style="padding-left: 1.25rem; margin-bottom: 0.6rem;">
-        <li style="margin-bottom: 0.3rem;">Data centers predominantly use <strong style="color: var(--text, #1A1A18);">public-supply potable water</strong> onsite, while most comparable users (farms, refineries, power plants) draw untreated water from rivers and wells. Use the <em>All source water / Public-supply potable</em> toggle to see this distinction — in potable mode, items that rely entirely on non-municipal water are crossed out, and items that use a mix are reduced to show only their public-supply portion.</li>
-        <li style="margin-bottom: 0.3rem;">Most of the water "used" by data centers is actually <strong style="color: var(--text, #1A1A18);">non-potable freshwater</strong> consumed at nearby <strong style="color: var(--text, #1A1A18);">power plants</strong> generating their electricity. The <em>+ elec</em> buttons on data center items add this upstream water cost.</li>
-        <li style="margin-bottom: 0.3rem;">Data center water use is <strong style="color: var(--text, #1A1A18);">growing rapidly</strong> and will continue through 2030. The data centers category includes both current figures and 2030 projections.</li>
-      </ol>
-      <p>All values explained in the <a href="#methodology" style="color: var(--accent, #8b3a3a); text-decoration: underline; text-underline-offset: 2px;">methodology</a>. I did my best to figure out what each is, but I'm just some guy, and some of these might be off by orders of magnitude. If you think I'm getting something wrong, please email me at <a href="mailto:AndyMasley@gmail.com" style="color: var(--accent, #8b3a3a); text-decoration: underline; text-underline-offset: 2px;">AndyMasley@gmail.com</a>.</p>
+    <div class="wv-intro">
+      <p class="wv-intro-lede">Select items to compare how much water data centers use relative to farms, cities, industries, and more. All figures show water <strong>consumed</strong> — evaporated, incorporated into products, or not returned to source.</p>
+      <details class="wv-intro-details">
+        <summary>How to read this visualization</summary>
+        <div class="wv-intro-body">
+          <p>Toggle between squares (proportional area) and bars. Consumptive use is the core concern with AI water impact. For example, New York City's water system <a href="https://www.nyc.gov/site/dep/water/drinking-water.page">delivers 364 billion gallons per year</a>, but roughly <a href="https://pubs.usgs.gov/publication/sir20145176">88% of that returns</a> through the sewer system. Only the ~45 billion gallons actually consumed is shown here. Similarly, roughly <a href="https://extensionpubs.unl.edu/publication/g2345/2023/html/view">25&ndash;30% of applied irrigation water</a> percolates back into aquifers, so the farmland numbers show only the estimated consumptive portion.</p>
+          <p>Comparing data center water is tricky for three reasons:</p>
+          <ol>
+            <li>Data centers predominantly use <strong>public-supply potable water</strong> onsite, while most comparable users draw untreated water. Use the <em>All source water / Public-supply potable</em> toggle to see this distinction.</li>
+            <li>Most of the water &ldquo;used&rdquo; by data centers is actually <strong>non-potable freshwater</strong> consumed at nearby <strong>power plants</strong>. The <em>+ elec</em> buttons add this upstream water cost.</li>
+            <li>Data center water use is <strong>growing rapidly</strong> through 2030. The data centers category includes both current figures and 2030 projections.</li>
+          </ol>
+        </div>
+      </details>
+      <p class="wv-intro-contact">All values explained in the <a href="#methodology">methodology</a>. I did my best to figure out what each is, but I'm just some guy, and some of these might be off by orders of magnitude. If you think I'm getting something wrong, please email me at <a href="mailto:AndyMasley@gmail.com">AndyMasley@gmail.com</a>.</p>
     </div>
   </header>
 
@@ -135,6 +141,7 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
           <div class="wv-cat" data-cat="dc">
             <button class="wv-cat-head" data-open="true">
               <span class="wv-cat-chevron">&#9662;</span>
+              <span class="wv-cat-color" style="background:#4A90D9"></span>
               <span class="wv-cat-title">Data centers</span>
               <span class="wv-cat-count">{dcFlat.length}</span>
               <span class="wv-cat-active"></span>
@@ -164,6 +171,7 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
           <div class="wv-cat" data-cat="industry">
             <button class="wv-cat-head" data-open="false">
               <span class="wv-cat-chevron">&#9656;</span>
+              <span class="wv-cat-color" style="background:#D97A4A"></span>
               <span class="wv-cat-title">Other industries</span>
               <span class="wv-cat-count">{indFlat.length}</span>
               <span class="wv-cat-active"></span>
@@ -193,6 +201,7 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
           <div class="wv-cat" data-cat="city">
             <button class="wv-cat-head" data-open="false">
               <span class="wv-cat-chevron">&#9656;</span>
+              <span class="wv-cat-color" style="background:#5BA4CF"></span>
               <span class="wv-cat-title">City water systems</span>
               <span class="wv-cat-count">{cityFlat.length}</span>
               <span class="wv-cat-active"></span>
@@ -219,6 +228,7 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
           <div class="wv-cat" data-cat="farm">
             <button class="wv-cat-head" data-open="false">
               <span class="wv-cat-chevron">&#9656;</span>
+              <span class="wv-cat-color" style="background:#4CAF78"></span>
               <span class="wv-cat-title">Irrigated farmland</span>
               <span class="wv-cat-count">{farmFlat.length}</span>
               <span class="wv-cat-active"></span>
@@ -249,6 +259,7 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
           <div class="wv-cat" data-cat="turf">
             <button class="wv-cat-head" data-open="false">
               <span class="wv-cat-chevron">&#9656;</span>
+              <span class="wv-cat-color" style="background:#6BBF84"></span>
               <span class="wv-cat-title">Lawns & turf</span>
               <span class="wv-cat-count">{turfFlat.length}</span>
               <span class="wv-cat-active"></span>
@@ -278,6 +289,7 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
           <div class="wv-cat" data-cat="national">
             <button class="wv-cat-head" data-open="false">
               <span class="wv-cat-chevron">&#9656;</span>
+              <span class="wv-cat-color" style="background:#8B8FA8"></span>
               <span class="wv-cat-title">National totals</span>
               <span class="wv-cat-count">{natFlat.length}</span>
               <span class="wv-cat-active"></span>
@@ -306,7 +318,7 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
       <div class="wv-chart-panel">
         <div class="wv-chart-header">
           <div class="wv-header-left">
-            <div style="display:flex;align-items:center;gap:6px"><span class="wv-chart-count" id="wv-count">Comparing 3 items</span><button class="wv-share-btn" id="wv-share" style="font-family:inherit;font-size:0.65rem;color:var(--text-secondary);background:none;border:1px solid var(--divider);border-radius:4px;padding:2px 8px;cursor:pointer;transition:color 0.12s">Copy link</button></div>
+            <div style="display:flex;align-items:center;gap:6px"><span class="wv-chart-count" id="wv-count">Comparing 3 items</span><button class="wv-share-btn" id="wv-share"><svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M6 10l4-4"/><path d="M7 3l1-1a3 3 0 014.2 4.2l-1 1"/><path d="M9 13l-1 1a3 3 0 01-4.2-4.2l1-1"/></svg>Copy link</button></div>
             <div class="wv-treated-helper" id="wv-treated-helper" style="display:none;opacity:0">Showing only water from public water supply systems. Crossed-out items use non-municipal sources.</div>
           </div>
           <div class="wv-header-controls">
@@ -337,7 +349,7 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
     <p class="w-meth-intro">This visualization mixes different water metrics: on-site consumptive use (data centers), estimated consumptive use from applied irrigation × efficiency ratios (farms), estimated consumptive use from deliveries minus sewer returns (cities), plausible modeled estimates from withdrawal × consumption ratios (industries), and total withdrawals (national). Items within the same metric type are comparable; cross-type comparisons show scale but are not like-for-like. It also mixes U.S.-only totals (LBNL, USDA) with global corporate totals (Microsoft, Google). Every figure is year-stamped. All numbers, formulas, and sources are documented in the sections below.</p>
 
     <details class="w-meth-section" open>
-      <summary>Data centers — direct cooling</summary>
+      <summary><span class="w-meth-dot" style="background:#4A90D9"></span>Data centers — direct cooling</summary>
       <div class="w-meth-body">
         <p><strong>All US data centers, 2023: 17.4B gal/yr.</strong> LBNL's 2024 report: 66 billion liters direct site water. 66B L / 3.785 = 17.4B gal.</p>
         <p class="w-meth-src">Source: <a href="https://eta.lbl.gov/publications/2024-united-states-data-center-energy" target="_blank" rel="noopener">LBNL — 2024 United States Data Center Energy Usage Report</a></p>
@@ -377,7 +389,7 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
     </details>
 
     <details class="w-meth-section">
-      <summary>Data centers — 2030 estimates</summary>
+      <summary><span class="w-meth-dot" style="background:#4A90D9"></span>Data centers — 2030 estimates</summary>
       <div class="w-meth-body">
         <p>These are modeled estimates based on the best public data available, not official 2030 forecasts. All figures are <strong>direct on-site water consumption</strong> at the data center or serving layer. They do not include the much larger attributed water used to generate electricity, because that broader footprint is far more sensitive to assumptions about the 2030 grid.</p>
 
@@ -403,7 +415,7 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
     </details>
 
     <details class="w-meth-section">
-      <summary>Data centers — including electricity generation</summary>
+      <summary><span class="w-meth-dot" style="background:#4A90D9"></span>Data centers — including electricity generation</summary>
       <div class="w-meth-body">
         <p><strong>Two conventions are used.</strong> <strong>LBNL factor: 1.19 gal/kWh</strong> — LBNL's location-based factor for U.S. data center electricity, used for historical aggregate US items (All US AI 2024, All US data centers 2023) to match the source literature. <strong>Thermoelectric-only: 0.47 gal/kWh</strong> — excludes hydro reservoir evaporation, used for all other items. As <a href="https://www.construction-physics.com/p/i-was-wrong-about-data-center-water" target="_blank" rel="noopener">Brian Potter argues</a>, LBNL's factor is inflated by hydroelectric reservoir evaporation (~18.27 gal/kWh for hydro alone), which would occur regardless of data center electricity demand.</p>
         <table class="w-meth-table">
@@ -426,7 +438,7 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
     </details>
 
     <details class="w-meth-section">
-      <summary>Other industries — consumptive use estimates</summary>
+      <summary><span class="w-meth-dot" style="background:#D97A4A"></span>Other industries — consumptive use estimates</summary>
       <div class="w-meth-body">
         <p>Industry figures are modeled estimates derived from withdrawal data × estimated consumption ratios. The consumption ratios do most of the work and carry significant uncertainty. Auto manufacturing and steel production were removed due to obsolete or unreliable source data.</p>
         <table class="w-meth-table">
@@ -444,7 +456,7 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
     </details>
 
     <details class="w-meth-section">
-      <summary>Treated-water-heavy industries</summary>
+      <summary><span class="w-meth-dot" style="background:#D97A4A"></span>Treated-water-heavy industries</summary>
       <div class="w-meth-body">
         <p>These sectors use unusually large amounts of <strong>treated/public-supply potable water</strong> because food-contact, pharmaceutical, or sanitation regulations require it. The best public federal numbers for these sectors are usually <strong>wastewater-generated or process-water-discharge totals</strong>, used here as a proxy for freshwater handled. This means these figures are closer to water throughput than to strict consumptive use. Public-supply potable fractions are modeled from regulatory requirements, facility siting patterns, and federal guidance on typical water sources — not directly reported.</p>
 
@@ -477,7 +489,7 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
     </details>
 
     <details class="w-meth-section">
-      <summary>Agriculture & land use</summary>
+      <summary><span class="w-meth-dot" style="background:#4CAF78"></span>Agriculture & land use</summary>
       <div class="w-meth-body">
         <p>Crop water shows estimated <strong>consumptive use</strong> — the portion of applied irrigation water that is actually consumed via evapotranspiration (ET). Applied irrigation always exceeds consumptive use because of runoff, deep percolation, and system inefficiency.</p>
         <table class="w-meth-table">
@@ -500,7 +512,7 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
     </details>
 
     <details class="w-meth-section">
-      <summary>City water systems & national totals</summary>
+      <summary><span class="w-meth-dot" style="background:#5BA4CF"></span>City water systems & national totals</summary>
       <div class="w-meth-body">
         <p>City figures show estimated <strong>consumptive use</strong> — water evaporated, incorporated, or otherwise not returned to source. Most delivered water returns via sewer; the consumed fraction depends heavily on climate and outdoor use.</p>
         <table class="w-meth-table">
@@ -522,7 +534,7 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
     </details>
 
     <details class="w-meth-section">
-      <summary>Electricity-related water across all categories</summary>
+      <summary><span class="w-meth-dot" style="background:#8B8FA8"></span>Electricity-related water across all categories</summary>
       <div class="w-meth-body">
         <p>Every category now has a <strong>+ elec</strong> option on items where electricity consumption data is available. This adds the water consumed at power plants to generate the electricity used by that sector, using the thermoelectric-only factor of <strong>0.47 gal/kWh</strong> (NREL, excluding hydro reservoir evaporation). For data centers, electricity water is a major share of the total; for farms and cities, it is negligible (&lt;0.1%).</p>
         <table class="w-meth-table">
@@ -554,7 +566,7 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
     </details>
 
     <details class="w-meth-section">
-      <summary>Key caveats</summary>
+      <summary><span class="w-meth-dot" style="background:#8B8FA8"></span>Key caveats</summary>
       <div class="w-meth-body">
         <ul>
           <li><strong>This visualization mixes incompatible metrics.</strong> Data center figures are on-site consumptive use. City figures are estimated consumptive use (delivered minus sewer returns). Farm figures are estimated consumptive use (applied irrigation × efficiency ratio). National totals are estimated consumptive use (USGS 1995 sector-level fractions applied to newer withdrawal data). All figures aim to show consumptive use, but the estimation methods differ across categories.</li>
@@ -1322,7 +1334,124 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
     .wv2 { padding: 0 0 2rem; }
     .wv-bar-name { width: 90px; font-size: 0.65rem; }
     .wv-bar-val { width: 60px; font-size: 0.6rem; }
+    .wv-header-controls { flex-direction: column; gap: 4px; }
+    .wv-water-btn { font-size: 0.68rem !important; padding: 5px 10px !important; }
   }
+
+  /* ─── #1 Intro restructure ─── */
+  .wv-intro {
+    font-size: 0.85rem; line-height: 1.7; color: var(--text-secondary, #6B6B60);
+    margin-top: 0.75rem; max-width: 680px;
+  }
+  .wv-intro-lede { font-size: 0.95rem; color: var(--text); line-height: 1.6; margin-bottom: 0.5rem; }
+  .wv-intro-details { margin-bottom: 0.6rem; }
+  .wv-intro-details summary {
+    font-size: 0.78rem; font-weight: 500; color: var(--text-secondary); cursor: pointer;
+    list-style: none; display: flex; align-items: center; gap: 6px; padding: 4px 0;
+    user-select: none; transition: color 0.15s;
+  }
+  .wv-intro-details summary::-webkit-details-marker { display: none; }
+  .wv-intro-details summary::before { content: '\25B8'; font-size: 0.6rem; transition: transform 0.2s; }
+  .wv-intro-details[open] summary::before { transform: rotate(90deg); }
+  .wv-intro-details summary:hover { color: var(--text); }
+  .wv-intro-body { padding: 0.5rem 0 0 0.25rem; font-size: 0.82rem; line-height: 1.65; }
+  .wv-intro-body p { margin-bottom: 0.5rem; }
+  .wv-intro-body ol { padding-left: 1.25rem; margin-bottom: 0.5rem; }
+  .wv-intro-body li { margin-bottom: 0.3rem; }
+  .wv-intro-body strong { color: var(--text, #1A1A18); }
+  [data-theme="dark"] .wv-intro-body strong { color: var(--text, #F0EDE6); }
+  .wv-intro-contact { font-size: 0.82rem; }
+  .wv-intro-contact a, .wv-intro-body a {
+    color: var(--accent, #8b3a3a); text-decoration: underline; text-underline-offset: 2px;
+  }
+
+  /* ─── #2 Category color indicator ─── */
+  .wv-cat-color { width: 3px; height: 14px; border-radius: 2px; flex-shrink: 0; }
+
+  /* ─── #3 Squares stagger animation ─── */
+  @keyframes wv-sq-pop {
+    from { transform: scale(0.5); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
+  .wv-sq-item.wv-sq-entering { animation: wv-sq-pop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+
+  /* ─── #4 Square hover ─── */
+  .wv-sq-item { cursor: default; }
+  .wv-sq-item:hover .wv-sq-box { filter: brightness(1.15); transform: scale(1.03); transition: filter 0.15s, transform 0.15s !important; }
+  .wv-sq-item:hover .wv-sq-name { color: var(--accent); transition: color 0.15s; }
+
+  /* ─── #5 Empty state ─── */
+  .wv-empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 3rem 1rem; color: var(--text-secondary); }
+  .wv-empty-state svg { opacity: 0.15; }
+  .wv-empty-state p { font-size: 0.85rem; text-align: center; max-width: 280px; line-height: 1.5; }
+
+  /* ─── #6 Copy link button ─── */
+  .wv-share-btn { font-family: inherit !important; font-size: 0.65rem !important; color: var(--text-secondary) !important; background: var(--panel) !important; border: 1px solid var(--divider) !important; border-radius: 4px !important; padding: 3px 10px !important; cursor: pointer !important; transition: all 0.15s !important; display: inline-flex !important; align-items: center !important; gap: 4px !important; }
+  .wv-share-btn:hover { color: var(--text) !important; border-color: var(--text-secondary) !important; }
+
+  /* ─── #7 Gridline fade ─── */
+  @keyframes wv-fade-in { from { opacity: 0; } to { opacity: 1; } }
+  .wv-gridline-labels { animation: wv-fade-in 0.4s ease 0.15s both; }
+
+  /* ─── #8 Ratio callout pill ─── */
+  .wv-ratio-callout { font-size: 0.75rem !important; color: var(--text-secondary) !important; font-style: italic !important; padding: 5px 14px !important; background: var(--panel) !important; border-radius: 20px !important; display: inline-block !important; margin: 4px 16px !important; border: 1px solid var(--divider) !important; }
+
+  /* ─── #9 Accordion transitions ─── */
+  .wv-cat-list { display: block !important; max-height: 0; overflow: hidden !important; transition: max-height 0.3s ease, padding 0.2s ease; padding: 0 !important; }
+  .wv-cat-list[data-visible="true"] { max-height: 350px; overflow-y: auto !important; padding: 2px 0 !important; }
+
+  /* ─── #10 Sticky chart header ─── */
+  .wv-chart-header { position: sticky !important; top: 0; z-index: 10; background: var(--bg-elevated, #ffffff) !important; }
+  [data-theme="dark"] .wv-chart-header { background: var(--bg-elevated, #1c1c1a) !important; }
+
+  /* ─── #11 Elec chip active glow ─── */
+  .wv-elec-chip[data-elec-on="true"] { box-shadow: 0 0 8px rgba(74, 124, 89, 0.4) !important; border: 1px solid rgba(74, 124, 89, 0.5) !important; }
+
+  /* ─── #12 Bar entry animation ─── */
+  @keyframes wv-bar-slide { from { opacity: 0; transform: translateX(-12px); } to { opacity: 1; transform: translateX(0); } }
+  .wv-bar-row { animation: wv-bar-slide 0.3s ease both; }
+
+  /* ─── #13 Custom tooltip ─── */
+  .wv-tip-popup { position: fixed; z-index: 1000; background: var(--text, #1A1A18); color: var(--bg-elevated, #fff); font-size: 0.72rem; font-family: inherit; font-weight: 500; padding: 5px 10px; border-radius: 5px; pointer-events: none; opacity: 0; transition: opacity 0.12s; white-space: nowrap; max-width: 320px; line-height: 1.3; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+  .wv-tip-popup.wv-tip-visible { opacity: 1; }
+
+  /* ─── #14 Mobile improvements ─── */
+  @media (max-width: 850px) {
+    .wv-toggles { max-height: 320px !important; }
+    .wv-chart-panel { min-height: 400px; }
+    .wv-header-controls { flex-wrap: wrap; gap: 4px; }
+    .wv-water-btn, .wv-view-btn { font-size: 0.68rem !important; padding: 5px 10px !important; }
+    .wv-bar-name { min-width: 0 !important; word-break: break-word; }
+    .wv-intro-lede { font-size: 0.88rem; }
+  }
+
+  /* ─── #15 Dot grid background ─── */
+  .wv-squares-area { background-image: radial-gradient(circle, var(--divider) 0.5px, transparent 0.5px) !important; background-size: 24px 24px !important; }
+
+  /* ─── #16 Methodology category dots ─── */
+  .w-meth-dot { display: inline-block; width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
+
+  /* ─── #17 Clear all flash ─── */
+  @keyframes wv-clear-check { 0% { transform: scale(1); } 50% { transform: scale(1.2); color: var(--green); } 100% { transform: scale(1); } }
+  .wv-clear-all.wv-clearing, .wv-bulk-btn.wv-clearing { animation: wv-clear-check 0.4s ease; display: inline-block; }
+
+  /* ─── #19 Sliding pill toggles ─── */
+  .wv-view-toggle, .wv-water-toggle { position: relative !important; }
+  .wv-view-pill, .wv-water-pill {
+    position: absolute; top: 2px; height: calc(100% - 4px); border-radius: 4px;
+    background: var(--bg-elevated, #fff); box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+    transition: left 0.2s cubic-bezier(0.4, 0, 0.2, 1), width 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 0; pointer-events: none;
+  }
+  .wv-water-pill { border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+  [data-theme="dark"] .wv-view-pill, [data-theme="dark"] .wv-water-pill { background: var(--bg-elevated, #1c1c1a); }
+  .wv-view-btn, .wv-water-btn { position: relative !important; z-index: 1 !important; }
+  .wv-view-btn[data-active="true"], .wv-water-btn[data-active="true"] { background: transparent !important; }
+
+  /* ─── #20 Orientation callout ─── */
+  @keyframes wv-orient-fade { 0% { opacity: 0; transform: translateY(6px); } 12% { opacity: 1; transform: translateY(0); } 80% { opacity: 1; } 100% { opacity: 0; transform: translateY(-4px); } }
+  .wv-orient-callout { position: absolute; z-index: 5; background: var(--text, #1A1A18); color: var(--bg-elevated, #fff); font-size: 0.72rem; font-weight: 500; padding: 6px 12px; border-radius: 6px; pointer-events: none; animation: wv-orient-fade 4.5s ease both; white-space: nowrap; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+  .wv-orient-callout::after { content: ''; position: absolute; bottom: -4px; left: 20px; width: 8px; height: 8px; background: var(--text, #1A1A18); transform: rotate(45deg); }
 </style>
 
 <script is:inline>
@@ -1703,8 +1832,9 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
         row.dataset.on = 'false';
       });
       render();
+      clearBtn.classList.add('wv-clearing');
       clearBtn.textContent = 'Cleared!';
-      setTimeout(function() { clearBtn.textContent = 'Clear all'; }, 1500);
+      setTimeout(function() { clearBtn.textContent = 'Clear all'; clearBtn.classList.remove('wv-clearing'); }, 1500);
     });
   }
 
@@ -1844,8 +1974,9 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
     });
 
     if (active.length === 0) {
-      barsArea.innerHTML = '<div class="wv-bars-empty">Expand a category on the left and click items to add them to the comparison.</div>';
-      squaresArea.innerHTML = '<div class="wv-bars-empty">Toggle items on the left to see their water use as proportional squares.</div>';
+      var emptyIcon = '<svg width="48" height="48" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M24 4C24 4 12 18 12 28a12 12 0 0024 0c0-10-12-24-12-24z"/><path d="M18 30a6 6 0 006 6" opacity="0.4"/></svg>';
+      barsArea.innerHTML = '<div class="wv-empty-state">' + emptyIcon + '<p>Expand a category and click items to compare.</p></div>';
+      squaresArea.innerHTML = '<div class="wv-empty-state">' + emptyIcon + '<p>Toggle items on the left to see proportional squares.</p></div>';
       return;
     }
 
@@ -1871,8 +2002,8 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
         if (isProj) {
           fillStyle += ';background-image:repeating-linear-gradient(45deg,transparent,transparent 3px,rgba(0,0,0,0.03) 3px,rgba(0,0,0,0.03) 6px)';
         }
-        html += '<div class="wv-bar-row" data-idx="' + it.idx + '" title="' + it.squareName + ': ' + val + '" style="border-left:3px solid ' + it.color + ';padding-left:8px">';
-        html += '<span class="wv-bar-name" title="' + it.squareName + '">' + it.squareName + '</span>';
+        html += '<div class="wv-bar-row" data-idx="' + it.idx + '" title="' + it.squareName + ': ' + val + '" data-tip="' + it.squareName + ': ' + val + '" style="border-left:3px solid ' + it.color + ';padding-left:8px;animation-delay:' + (j * 0.04) + 's">';
+        html += '<span class="wv-bar-name">' + it.squareName + '</span>';
         html += '<div class="wv-bar-track"><div class="wv-bar-fill" style="' + fillStyle + '"></div></div>';
         html += '<span class="wv-bar-val">' + val + '<span class="wv-bar-pct">' + pctText + '</span></span>';
         html += '</div>';
@@ -1971,14 +2102,12 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
         var el = existing[key];
         if (!el) {
           el = document.createElement('div');
-          el.className = 'wv-sq-item';
+          el.className = 'wv-sq-item wv-sq-entering';
           el.dataset.sqIdx = key;
           el.innerHTML = '<div class="wv-sq-box"></div><div class="wv-sq-color-bar"></div><div class="wv-sq-label"><span class="wv-sq-name"></span><span class="wv-sq-val"></span></div>';
           el.style.position = 'absolute';
-          el.style.opacity = '0';
+          el.style.animationDelay = (p * 0.06) + 's';
           container.appendChild(el);
-          el.offsetHeight;
-          el.style.opacity = '1';
         }
 
         // (#5) Projected items: dashed border
@@ -2190,6 +2319,70 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
   observer.observe(squaresArea, { childList: true, subtree: true, attributes: true, attributeFilter: ['title'] });
 
   render();
+
+  // ─── #13 Custom tooltip ───
+  var tooltipEl = document.createElement('div');
+  tooltipEl.className = 'wv-tip-popup';
+  document.body.appendChild(tooltipEl);
+  function showTooltip(e, text) {
+    tooltipEl.textContent = text;
+    tooltipEl.classList.add('wv-tip-visible');
+    var x = e.clientX + 12, y = e.clientY - 32;
+    if (x + 220 > window.innerWidth) x = e.clientX - 220;
+    if (y < 4) y = e.clientY + 16;
+    tooltipEl.style.left = x + 'px';
+    tooltipEl.style.top = y + 'px';
+  }
+  function hideTooltip() { tooltipEl.classList.remove('wv-tip-visible'); }
+  barsArea.addEventListener('mousemove', function(e) {
+    var row = e.target.closest('.wv-bar-row');
+    if (row && row.dataset.tip) { showTooltip(e, row.dataset.tip); } else { hideTooltip(); }
+  });
+  barsArea.addEventListener('mouseleave', hideTooltip);
+  squaresArea.addEventListener('mousemove', function(e) {
+    var item = e.target.closest('.wv-sq-item');
+    if (item && item.dataset.tip) { showTooltip(e, item.dataset.tip); } else { hideTooltip(); }
+  });
+  squaresArea.addEventListener('mouseleave', hideTooltip);
+
+  // ─── #19 Sliding pills ───
+  function setupPill(toggleEl, pillClass) {
+    var pill = document.createElement('div');
+    pill.className = pillClass;
+    toggleEl.insertBefore(pill, toggleEl.firstChild);
+    function update() {
+      var activeBtn = toggleEl.querySelector('[data-active="true"]');
+      if (activeBtn) { pill.style.left = activeBtn.offsetLeft + 'px'; pill.style.width = activeBtn.offsetWidth + 'px'; }
+    }
+    update();
+    var obs = new MutationObserver(update);
+    toggleEl.querySelectorAll('button').forEach(function(b) { obs.observe(b, { attributes: true, attributeFilter: ['data-active'] }); });
+  }
+  var viewToggle = document.querySelector('.wv-view-toggle');
+  var waterToggle = document.querySelector('.wv-water-toggle');
+  if (viewToggle) setupPill(viewToggle, 'wv-view-pill');
+  if (waterToggle) setupPill(waterToggle, 'wv-water-pill');
+
+  // ─── #20 Orientation callout ───
+  setTimeout(function() {
+    var container = squaresArea.querySelector('.wv-sq-container');
+    if (!container) return;
+    var firstItem = container.querySelector('.wv-sq-item');
+    if (!firstItem) return;
+    var nameEl = firstItem.querySelector('.wv-sq-name');
+    var valEl = firstItem.querySelector('.wv-sq-val');
+    if (!nameEl || !valEl || !nameEl.textContent) return;
+    var callout = document.createElement('div');
+    callout.className = 'wv-orient-callout';
+    callout.textContent = nameEl.textContent + ': ' + valEl.textContent;
+    var top = parseInt(firstItem.style.top || 0) - 36;
+    callout.style.left = (parseInt(firstItem.style.left || 0)) + 'px';
+    callout.style.top = (top < 0 ? 0 : top) + 'px';
+    container.appendChild(callout);
+    function removeCallout() { if (callout.parentNode) callout.parentNode.removeChild(callout); document.removeEventListener('click', removeCallout); }
+    setTimeout(removeCallout, 4500);
+    document.addEventListener('click', removeCallout);
+  }, 600);
 })();
 </script>
 </Base>
