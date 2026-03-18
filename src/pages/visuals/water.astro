@@ -1330,79 +1330,119 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
     .wv-bar-val { width: 60px; font-size: 0.6rem; }
   }
 
-  /* ── Professional polish ── */
+  /*
+   * ── Design system overrides ──
+   * Goal: data-journalism aesthetic (Our World in Data, Bloomberg).
+   * Every rule here is intentional — no decoration, just hierarchy.
+   */
 
-  /* Layout: clean lines, no rounded corners, tighter border */
-  .wv-layout {
-    border-radius: 0 !important;
-    box-shadow: none !important;
-  }
+  /* Layout frame */
+  .wv-layout { border-radius: 0 !important; box-shadow: none !important; max-height: 720px; }
 
-  /* Typography tightening */
-  .wv-cat-head { font-size: 0.72rem; letter-spacing: 0.02em; text-transform: uppercase; font-weight: 700; color: var(--text-secondary); padding: 9px 16px; }
+  /* Left panel */
+  .wv-panel-title { font-size: 0.58rem; letter-spacing: 0.12em; opacity: 0.3; padding: 12px 14px 2px; }
+  .wv-bulk-actions { padding: 4px 14px 6px; gap: 4px; }
+  .wv-bulk-btn { border-radius: 0; font-size: 0.58rem; padding: 2px 7px; text-transform: uppercase; letter-spacing: 0.04em; }
+
+  /* Category headers */
+  .wv-cat-head { font-size: 0.68rem; letter-spacing: 0.03em; text-transform: uppercase; font-weight: 700; color: var(--text-secondary); padding: 8px 14px; }
   .wv-cat-head:hover { color: var(--text); }
-  .wv-cat-title { font-size: inherit; }
-  .wv-row-name { font-weight: 400; font-size: 0.75rem; }
-  .wv-toggle-row[data-on="true"] .wv-row-name { font-weight: 500; }
-  .wv-toggle-row[data-on="false"] .wv-row-name { opacity: 0.55; }
-  .wv-row-val { font-size: 0.62rem; letter-spacing: 0.01em; }
+  .wv-cat-chevron { font-size: 0.5rem; width: 10px; }
+  .wv-cat-count { font-size: 0.58rem; }
+  .wv-cat-active { font-size: 0.55rem; font-weight: 400; letter-spacing: 0; text-transform: none; }
+  .wv-cat-controls { font-size: 0.55rem; }
 
-  /* Panel header: smaller, more utilitarian */
-  .wv-panel-title { font-size: 0.55rem; letter-spacing: 0.14em; opacity: 0.35; padding: 10px 16px 0; }
+  /* Toggle rows */
+  .wv-toggle-row { padding: 5px 14px; gap: 8px; min-height: 28px; }
+  .wv-toggle-row[data-on="true"] { background: rgba(74, 124, 89, 0.04); }
+  .wv-dot { width: 8px; height: 8px; border-radius: 1px; border-width: 1px; margin-top: 4px; }
+  .wv-row-name { font-size: 0.74rem; font-weight: 400; line-height: 1.3; }
+  .wv-toggle-row[data-on="true"] .wv-row-name { font-weight: 500; color: var(--text); }
+  .wv-toggle-row[data-on="false"] .wv-row-name { opacity: 0.5; }
+  .wv-row-val { font-size: 0.6rem; opacity: 0.5; }
+  .wv-toggle-row[data-on="true"] .wv-row-val { opacity: 0.7; }
 
-  /* Bar chart: tighter rows, sharper tracks */
-  .wv-bar-track { height: 18px; border-radius: 0; }
-  .wv-bar-fill { border-radius: 0; }
-  .wv-bar-row { border-radius: 0; margin-bottom: 4px; padding: 1px 0; }
-  .wv-bar-name { font-size: 0.72rem; font-weight: 400; width: 220px; }
-  .wv-bar-val { font-size: 0.68rem; font-weight: 400; }
-  .wv-bar-pct { font-size: 0.58rem; }
+  /* Elec chip */
+  .wv-elec-chip { border-radius: 1px; font-size: 0.48rem; padding: 1px 5px; letter-spacing: 0.04em; }
 
-  /* Squares: no bounce on hover, just a subtle indicator */
-  .wv-sq-item:hover .wv-sq-box { filter: brightness(1.06); transition: filter 0.1s; }
-  .wv-sq-name { font-weight: 400; }
+  /* Section dividers */
+  .wv-proj-divider { font-size: 0.52rem; text-transform: uppercase; letter-spacing: 0.08em; font-style: normal; opacity: 0.3; padding: 10px 14px 2px; }
 
-  /* Toggle controls: flatter, less bubbly */
-  .wv-view-toggle, .wv-water-toggle { border-radius: 0; }
-  .wv-view-btn, .wv-water-btn { border-radius: 0; font-size: 0.7rem; }
-  .wv-water-btn { font-size: 0.7rem !important; padding: 5px 14px !important; }
-  .wv-water-btn[data-active="true"] { font-weight: 600; }
-  .wv-view-btn[data-active="true"], .wv-water-btn[data-active="true"] { box-shadow: none; }
+  /* Chart panel header */
+  .wv-chart-header { padding: 8px 14px; border-bottom: 1px solid var(--divider); }
+  .wv-chart-count { font-size: 0.65rem; font-variant-numeric: tabular-nums; }
 
-  /* Chart header: cleaner separation */
-  .wv-chart-header { border-bottom-width: 1px; padding: 10px 16px; }
-  .wv-chart-count { font-size: 0.68rem; font-variant-numeric: tabular-nums; }
+  /* Segmented controls — underline style instead of pill */
+  .wv-view-toggle, .wv-water-toggle {
+    background: transparent; border-radius: 0; padding: 0; gap: 0;
+    border-bottom: 1px solid var(--divider);
+  }
+  .wv-view-btn, .wv-water-btn {
+    border-radius: 0; font-size: 0.65rem; font-weight: 400;
+    padding: 5px 12px 6px; border-bottom: 2px solid transparent;
+    margin-bottom: -1px; background: transparent !important;
+    box-shadow: none !important; color: var(--text-secondary);
+    transition: color 0.1s, border-color 0.1s;
+  }
+  .wv-view-btn:hover, .wv-water-btn:hover { color: var(--text); }
+  .wv-view-btn[data-active="true"], .wv-water-btn[data-active="true"] {
+    color: var(--text) !important; font-weight: 600;
+    border-bottom-color: var(--text) !important;
+  }
+  .wv-water-btn { font-size: 0.65rem !important; padding: 5px 12px 6px !important; }
+  .wv-water-btn[data-active="true"] { color: var(--text) !important; border-bottom-color: var(--text) !important; }
 
-  /* Bulk action buttons: tighter */
-  .wv-bulk-btn { border-radius: 0; font-size: 0.6rem; padding: 2px 8px; text-transform: uppercase; letter-spacing: 0.06em; }
+  /* Bar chart */
+  .wv-bar-row { border-radius: 0; margin-bottom: 3px; padding: 2px 0; }
+  .wv-bar-row:hover { background: transparent; }
+  .wv-bar-row:hover .wv-bar-name { color: var(--text); }
+  .wv-bar-row:hover .wv-bar-fill { opacity: 0.9; }
+  .wv-bar-name { font-size: 0.7rem; font-weight: 400; width: 200px; line-height: 1.25; color: var(--text-secondary); }
+  .wv-bar-track { height: 16px; border-radius: 0; background: transparent; border-bottom: 1px solid var(--divider); }
+  .wv-bar-fill { border-radius: 0; opacity: 0.75; }
+  .wv-bar-val { font-size: 0.65rem; font-weight: 400; width: 100px; }
+  .wv-bar-pct { font-size: 0.55rem; opacity: 0.35; }
+  [data-theme="dark"] .wv-bar-row:hover { background: transparent; }
 
-  /* Checkbox dot: smaller, crisper */
-  .wv-dot { width: 8px; height: 8px; border-radius: 2px; border-width: 1px; margin-top: 4px; }
+  /* Squares */
+  .wv-sq-item:hover .wv-sq-box { filter: brightness(1.08); transition: filter 0.1s; }
+  .wv-sq-name { font-weight: 400; font-size: 0.62rem !important; }
+  .wv-sq-val { font-size: 0.55rem !important; opacity: 0.6; }
 
-  /* Elec chip: tighter */
-  .wv-elec-chip { border-radius: 0; font-size: 0.5rem; padding: 1px 5px; letter-spacing: 0.05em; }
+  /* Scale reference */
+  .wv-scale-ref { border-radius: 0; font-size: 0.52rem; padding: 3px 6px; opacity: 0.6; }
+  .wv-scale-ref-box { border-radius: 0 !important; opacity: 0.5; }
 
-  /* Dividers: subtler */
-  .wv-proj-divider { font-size: 0.55rem; text-transform: uppercase; letter-spacing: 0.08em; font-style: normal; opacity: 0.35; padding: 10px 16px 2px; }
+  /* Ratio callout */
+  .wv-ratio-callout { font-size: 0.68rem; }
 
-  /* Ratio callout: just text */
-  .wv-ratio-callout { font-size: 0.7rem; }
+  /* Treated helper */
+  .wv-treated-helper { font-size: 0.58rem; }
 
-  /* Scrollbar: thinner */
+  /* Scrollbars: nearly invisible */
   .wv-toggles-scroll::-webkit-scrollbar { width: 1px; }
   .wv-cat-list::-webkit-scrollbar { width: 1px; }
 
-  /* Category active badge: tighter */
-  .wv-cat-active { font-size: 0.55rem; text-transform: none; font-weight: 400; letter-spacing: 0; }
+  /* Tooltip: sharper */
+  .wv-tooltip { border-radius: 2px; font-size: 0.7rem; max-width: 340px; padding: 10px 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.1); }
 
-  /* Scale reference: cleaner */
-  .wv-scale-ref { border-radius: 0; font-size: 0.55rem; padding: 3px 6px; }
-
-  /* Treated helper: tighter */
-  .wv-treated-helper { font-size: 0.6rem; }
-
-  /* Remove loading skeleton shimmer — just show blank */
+  /* No loading shimmer */
   .wv-bars-area:empty, .wv-squares-area:empty { background-image: none !important; animation: none !important; }
+
+  /* Methodology: tighter, editorial */
+  .w-methodology h2 { font-size: 1.2rem; letter-spacing: -0.01em; margin-top: 2rem; }
+  .w-meth-section summary { font-size: 0.82rem; }
+  .w-meth-section summary::before { font-size: 0.55rem; }
+  .w-meth-section summary:hover { color: var(--text); }
+  .w-meth-table th { font-size: 0.64rem; text-transform: uppercase; letter-spacing: 0.04em; }
+  .w-meth-calc { border-radius: 0; }
+  .w-meth-caveat { border-left-width: 1px; }
+
+  /* Focus: understated */
+  .wv2 *:focus-visible { outline: 1px solid var(--text-secondary); outline-offset: 1px; }
+
+  /* Empty state */
+  .wv-bars-empty { font-size: 0.78rem; opacity: 0.4; }
 </style>
 
 <script is:inline>
