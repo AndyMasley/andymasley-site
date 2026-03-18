@@ -1470,7 +1470,6 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
   var waterMode = 'all';
   var items = [];
   var lastCount = -1;
-  var prevSelectionState = null; // #12 double-click isolate
 
   // (#4) Mark sub-items (state-level) vs "All US..." items
   document.querySelectorAll('.wv-toggle-row').forEach(function(row) {
@@ -1670,47 +1669,6 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
       if (e.target.closest('.wv-elec-chip')) return;
       items[idx].on = !items[idx].on;
       row.dataset.on = items[idx].on ? 'true' : 'false';
-      render();
-    });
-
-    // (#12) Double-click to isolate
-    row.addEventListener('dblclick', function(e) {
-      e.preventDefault();
-      if (e.target.closest('.wv-elec-chip')) return;
-      var it = items[idx];
-      // Check if this item is currently the only one on (restore previous state)
-      var onCount = 0;
-      var onlyThisOn = true;
-      for (var ci = 0; ci < items.length; ci++) {
-        if (items[ci] && items[ci].on) {
-          onCount++;
-          if (ci !== idx) onlyThisOn = false;
-        }
-      }
-      if (onCount === 1 && onlyThisOn && prevSelectionState) {
-        // Restore previous state
-        for (var ri = 0; ri < items.length; ri++) {
-          if (items[ri]) {
-            items[ri].on = prevSelectionState[ri] || false;
-            var rRow = document.querySelector('.wv-toggle-row[data-idx="' + ri + '"]');
-            if (rRow) rRow.dataset.on = items[ri].on ? 'true' : 'false';
-          }
-        }
-        prevSelectionState = null;
-      } else {
-        // Save current state and isolate
-        prevSelectionState = {};
-        for (var si = 0; si < items.length; si++) {
-          if (items[si]) prevSelectionState[si] = items[si].on;
-        }
-        for (var ti = 0; ti < items.length; ti++) {
-          if (items[ti]) {
-            items[ti].on = (ti === idx);
-            var tRow = document.querySelector('.wv-toggle-row[data-idx="' + ti + '"]');
-            if (tRow) tRow.dataset.on = items[ti].on ? 'true' : 'false';
-          }
-        }
-      }
       render();
     });
 
@@ -2319,31 +2277,6 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
   observer.observe(squaresArea, { childList: true, subtree: true, attributes: true, attributeFilter: ['title'] });
 
   render();
-
-  // ─── #13 Custom tooltip ───
-  var tooltipEl = document.createElement('div');
-  tooltipEl.className = 'wv-tip-popup';
-  document.body.appendChild(tooltipEl);
-  function showTooltip(e, text) {
-    tooltipEl.textContent = text;
-    tooltipEl.classList.add('wv-tip-visible');
-    var x = e.clientX + 12, y = e.clientY - 32;
-    if (x + 220 > window.innerWidth) x = e.clientX - 220;
-    if (y < 4) y = e.clientY + 16;
-    tooltipEl.style.left = x + 'px';
-    tooltipEl.style.top = y + 'px';
-  }
-  function hideTooltip() { tooltipEl.classList.remove('wv-tip-visible'); }
-  barsArea.addEventListener('mousemove', function(e) {
-    var row = e.target.closest('.wv-bar-row');
-    if (row && row.dataset.tip) { showTooltip(e, row.dataset.tip); } else { hideTooltip(); }
-  });
-  barsArea.addEventListener('mouseleave', hideTooltip);
-  squaresArea.addEventListener('mousemove', function(e) {
-    var item = e.target.closest('.wv-sq-item');
-    if (item && item.dataset.tip) { showTooltip(e, item.dataset.tip); } else { hideTooltip(); }
-  });
-  squaresArea.addEventListener('mouseleave', hideTooltip);
 
   // ─── #19 Sliding pills ───
   function setupPill(toggleEl, pillClass) {
