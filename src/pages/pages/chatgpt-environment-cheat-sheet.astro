@@ -46,6 +46,10 @@ const readingTime = Math.ceil(wordCount / 200);
     padding-left: 32px;
     padding-right: 32px;
   }
+  /* Keep the site header/nav at normal width */
+  :global(.main-content:has(.cheat-sheet-page) > .header) {
+    max-width: 640px;
+  }
 
   /* ═══ Page wrapper ═══ */
   .cheat-sheet-page {
@@ -54,7 +58,6 @@ const readingTime = Math.ceil(wordCount / 200);
 
   /* ═══ Header ═══ */
   .originally-on {
-    max-width: 640px;
     font-size: 0.78rem;
     color: var(--dim);
     margin-bottom: var(--space-sm);
@@ -65,7 +68,6 @@ const readingTime = Math.ceil(wordCount / 200);
     text-underline-offset: var(--underline-offset);
   }
   .article-header {
-    max-width: 640px;
     margin-bottom: var(--space-xl);
   }
   .article-header__title {
