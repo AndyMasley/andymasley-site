@@ -23,31 +23,26 @@ const totalVideos = getTotalVideoCount();
   </div>
 
   {physicsTopics.map(topic => (
-    <details class="unit-dropdown">
-      <summary>
+    <section class="unit">
+      <h2 class="unit__title">
         {topic.name}
-        <span class="count">({topic.subtopics.reduce((sum, s) => sum + s.videos.length, 0)})</span>
-      </summary>
+        <span class="unit__count">{topic.subtopics.reduce((sum, s) => sum + s.videos.length, 0)} videos</span>
+      </h2>
 
-      <div class="unit-content">
-        {topic.subtopics.map(subtopic => (
-          <details class="topic-dropdown">
-            <summary>
-              {subtopic.name}
-              <span class="count">({subtopic.videos.length})</span>
-            </summary>
-
-            <div class="topic-content">
-              {subtopic.videos.map(video => (
-                <a href={video.url} target="_blank" rel="noopener" class="video-item">
-                  {video.title}
-                </a>
-              ))}
-            </div>
-          </details>
-        ))}
-      </div>
-    </details>
+      {topic.subtopics.map(subtopic => (
+        <div class="subtopic">
+          <h3 class="subtopic__title">{subtopic.name}</h3>
+          <div class="video-grid">
+            {subtopic.videos.map(video => (
+              <a href={video.url} target="_blank" rel="noopener" class="video-item">
+                <svg class="video-item__icon" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                <span class="video-item__title">{video.title}</span>
+              </a>
+            ))}
+          </div>
+        </div>
+      ))}
+    </section>
   ))}
 
   <div class="divider"><div class="divider-diamond"></div></div>
@@ -123,105 +118,84 @@ const totalVideos = getTotalVideoCount();
     text-decoration: none;
   }
 
-  /* Unit dropdowns (outer) */
-  .unit-dropdown {
-    margin-bottom: 4px;
+  /* Units */
+  .unit {
+    margin-bottom: var(--space-2xl);
   }
 
-  .unit-dropdown > summary {
-    padding: 8px 0;
-    font-size: 0.95rem;
+  .unit__title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    line-height: 1.3;
+    color: var(--text);
+    padding-bottom: var(--space-xs);
+    border-bottom: 2px solid var(--accent);
+    margin-bottom: var(--space-lg);
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-sm);
+  }
+
+  .unit__count {
+    font-size: 0.65rem;
+    font-weight: 500;
+    color: var(--dim);
+    font-family: var(--font-mono);
+    letter-spacing: 0.02em;
+  }
+
+  /* Subtopics */
+  .subtopic {
+    margin-bottom: var(--space-lg);
+  }
+
+  .subtopic__title {
+    font-size: 0.85rem;
     font-weight: 600;
-    color: var(--text);
-    cursor: pointer;
-    list-style: none;
-  }
-
-  .unit-dropdown > summary::-webkit-details-marker {
-    display: none;
-  }
-
-  .unit-dropdown > summary::before {
-    content: '▶';
-    display: inline-block;
-    font-size: 0.6rem;
-    margin-right: 10px;
-    color: var(--dim);
-    transition: transform 0.2s ease;
-  }
-
-  .unit-dropdown[open] > summary::before {
-    transform: rotate(90deg);
-  }
-
-  .unit-dropdown > summary:hover {
     color: var(--accent);
+    margin-bottom: var(--space-sm);
+    letter-spacing: 0.01em;
   }
 
-  .unit-content {
-    margin-left: 20px;
-    padding-bottom: 8px;
-  }
-
-  /* Topic dropdowns (inner) */
-  .topic-dropdown {
-    margin-bottom: 2px;
-  }
-
-  .topic-dropdown > summary {
-    padding: 6px 0;
-    font-size: 0.8rem;
-    color: var(--text);
-    cursor: pointer;
-    list-style: none;
-  }
-
-  .topic-dropdown > summary::-webkit-details-marker {
-    display: none;
-  }
-
-  .topic-dropdown > summary::before {
-    content: '▶';
-    display: inline-block;
-    font-size: 0.5rem;
-    margin-right: 8px;
-    color: var(--dim);
-    transition: transform 0.2s ease;
-  }
-
-  .topic-dropdown[open] > summary::before {
-    transform: rotate(90deg);
-  }
-
-  .topic-dropdown > summary:hover {
-    color: var(--accent);
-  }
-
-  .topic-content {
-    margin-left: 20px;
-    padding-bottom: 8px;
+  /* Video grid */
+  .video-grid {
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 2px;
   }
 
-  .topic-content a {
-    display: block;
-    font-size: 0.8rem;
-    color: var(--accent);
-    text-decoration: underline;
-    text-underline-offset: 2px;
-  }
-
-  .topic-content a:hover {
+  .video-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    border-radius: 6px;
     text-decoration: none;
+    color: var(--text);
+    font-size: 0.8rem;
+    line-height: 1.4;
+    transition: background 0.15s, color 0.15s;
   }
 
-  .count {
-    font-size: 0.65rem;
-    font-weight: normal;
+  .video-item:hover {
+    background: var(--accent-subtle);
+    color: var(--accent);
+  }
+
+  .video-item__icon {
+    flex-shrink: 0;
     color: var(--dim);
-    margin-left: 4px;
+    opacity: 0.4;
+    transition: opacity 0.15s, color 0.15s;
+  }
+
+  .video-item:hover .video-item__icon {
+    color: var(--accent);
+    opacity: 0.8;
+  }
+
+  .video-item__title {
+    flex: 1;
   }
 
   /* Advice content */
@@ -267,12 +241,14 @@ const totalVideos = getTotalVideoCount();
 
   /* Responsive */
   @media (max-width: 600px) {
-    .unit-content {
-      margin-left: 12px;
+    .unit__title {
+      font-size: 1.1rem;
+      flex-direction: column;
+      gap: 2px;
     }
 
-    .topic-content {
-      margin-left: 12px;
+    .video-item {
+      padding: 6px 6px;
     }
 
     .advice-content {
