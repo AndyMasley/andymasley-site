@@ -3,11 +3,26 @@ import Base from '@/layouts/Base.astro';
 ---
 
 <Base title="Contact" description="Get in touch with Andy Masley" ogImage="/images/og/og-contact.png">
-  <div class="contact-content">
-    <ul>
-      <li><a href="mailto:AndyMasley@gmail.com">AndyMasley@gmail.com</a></li>
-      <li><a href="https://docs.google.com/forms/d/e/1FAIpQLSfeuR0zagnxjzyNQvh6OkI8pRd9Vtq26D8RzJ2h8WZYlaz8Sw/viewform?usp=send_form" target="_blank" rel="noopener">Anonymous feedback</a></li>
-    </ul>
-  </div>
+  <ul class="contact-index">
+    <li><a href="mailto:AndyMasley@gmail.com">AndyMasley@gmail.com</a></li>
+    <li><a href="https://docs.google.com/forms/d/e/1FAIpQLSfeuR0zagnxjzyNQvh6OkI8pRd9Vtq26D8RzJ2h8WZYlaz8Sw/viewform?usp=send_form" target="_blank" rel="noopener">Anonymous feedback</a></li>
+  </ul>
 
 </Base>
+
+<style>
+  .contact-index {
+    list-style: disc;
+    padding-left: var(--space-lg);
+  }
+
+  .contact-index li {
+    margin-bottom: var(--space-sm);
+  }
+
+  .contact-index a {
+    color: var(--accent);
+    text-decoration: underline;
+    text-underline-offset: var(--underline-offset);
+  }
+</style>
