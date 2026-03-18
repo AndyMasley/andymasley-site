@@ -227,5 +227,22 @@ export function processEAForumContent(html: string, currentSlug?: string): strin
     }
   );
 
+  // Add ID attributes to headings so anchor links and TOC work
+  const usedIds = new Set<string>();
+  processed = processed.replace(
+    /<(h[1-6])([^>]*)>([\s\S]*?)<\/\1>/gi,
+    (match, tag, attrs, innerHtml) => {
+      if (/\bid\s*=/i.test(attrs)) return match;
+      const plainText = innerHtml.replace(/<[^>]*>/g, '').trim();
+      let id = plainText.toLowerCase().replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+      if (!id) return match;
+      let uniqueId = id;
+      let counter = 1;
+      while (usedIds.has(uniqueId)) { uniqueId = `${id}-${counter}`; counter++; }
+      usedIds.add(uniqueId);
+      return `<${tag}${attrs} id="${uniqueId}">${innerHtml}</${tag}>`;
+    }
+  );
+
   return processed;
 }

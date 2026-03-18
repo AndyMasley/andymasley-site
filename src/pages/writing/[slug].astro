@@ -5,6 +5,8 @@ import { fetchSubstackPosts, fetchPostContent, processPostContent, type Substack
 import { fetchEAForumPosts, fetchEAForumPostContent, processEAForumContent, type EAForumPost } from '@/lib/eaforum';
 import { getMetaPostSlugs } from '@/lib/meta-posts';
 import { CheatSheetExplorer } from '@/components/CheatSheetExplorer';
+import { ArticleTOC } from '@/components/ArticleTOC';
+import { extractHeadingsFromHtml, type TOCHeading } from '@/lib/extract-headings';
 
 // Union type for all post sources
 type PostSource = 'local' | 'substack' | 'eaforum';
@@ -141,16 +143,26 @@ function getReadingTime(content: string): number {
 // Get content and metadata based on source
 let Content: any = null;
 let readingTime = 0;
+let tocHeadings: TOCHeading[] = [];
+let displayHtml = '';
 
 if (post.source === 'local') {
   const rendered = await post.render();
   Content = rendered.Content;
   readingTime = Math.ceil(post.body.split(/\s+/).length / 200);
+  // Map Astro headings to TOC format
+  tocHeadings = (rendered.headings || [])
+    .filter((h: any) => h.depth === 2 || h.depth === 3)
+    .map((h: any) => ({ id: h.slug, text: h.text, level: h.depth === 2 ? 'section' as const : 'sub' as const }));
 } else {
   readingTime = getReadingTime(post.htmlContent);
+  const extracted = extractHeadingsFromHtml(post.htmlContent);
+  tocHeadings = extracted.headings;
+  displayHtml = extracted.cleanedHtml;
 }
 
 const isCheatSheet = post.slug === 'a-cheat-sheet-for-conversations-about';
+const hasTOC = !isCheatSheet && tocHeadings.filter(h => h.level === 'section').length >= 3;
 const wordCount = post.source === 'local'
   ? post.body.split(/\s+/).length
   : (post.htmlContent.replace(/<[^>]*>/g, '').split(/\s+/).length);
@@ -176,6 +188,44 @@ const wordCount = post.source === 'local'
     <footer class="article-footer">
       <a href="/writing" class="article-nav__link">&larr; Back to all writing</a>
     </footer>
+  </div>
+</Base>
+) : hasTOC ? (
+<Base
+  title={post.title}
+  description={post.description}
+  activeNav="/writing"
+>
+  <div class="toc-page">
+    {post.source !== 'local' && (
+      <p class="originally-on">
+        Originally on <a href={post.url} target="_blank" rel="noopener">{post.sourceName}</a>
+      </p>
+    )}
+
+    <header class="article-header">
+      <h1 class="article-header__title">{post.title}</h1>
+      <div class="article-header__meta">
+        <span class="article-header__date">{formatDate(post.date)}</span>
+        <span class="article-header__reading-time">{readingTime} min read</span>
+      </div>
+    </header>
+
+    <div class="cse-layout">
+      <ArticleTOC client:load headings={tocHeadings} />
+      <article class="cse-content">
+        <div class="prose">
+          {post.source === 'local' ? (
+            <Content />
+          ) : (
+            <Fragment set:html={displayHtml || post.htmlContent} />
+          )}
+        </div>
+        <footer class="article-footer">
+          <a href="/writing" class="article-nav__link">&larr; Back to all writing</a>
+        </footer>
+      </article>
+    </div>
   </div>
 </Base>
 ) : (
@@ -449,10 +499,17 @@ const wordCount = post.source === 'local'
     margin-bottom: var(--space-sm);
   }
 
-  /* ═══ Cheat Sheet Layout ═══ */
+  /* ═══ TOC / Wide Layout ═══ */
+  .toc-page,
   .cheat-sheet-page {
     width: min(1200px, 100vw - 48px);
     margin-left: calc((min(1200px, 100vw - 48px) - 100%) / -2);
+  }
+
+  .toc-page .prose :global(h1),
+  .toc-page .prose :global(h2),
+  .toc-page .prose :global(h3) {
+    scroll-margin-top: 24px;
   }
 
   :global(.cse-progress-bar) {

@@ -517,17 +517,20 @@ function addHeadingIds(html: string): string {
   // Track used IDs to avoid duplicates
   const usedIds = new Set<string>();
 
-  // Match h1, h2, h3, h4, h5, h6 tags and add IDs based on their content
+  // Match h1-h6 tags, allowing inner HTML tags (e.g. <strong>)
   return html.replace(
-    /<(h[1-6])([^>]*)>([^<]+)<\/h[1-6]>/gi,
-    (match, tag, attrs, content) => {
+    /<(h[1-6])([^>]*)>([\s\S]*?)<\/\1>/gi,
+    (match, tag, attrs, innerHtml) => {
       // Skip if already has an id attribute
       if (/\bid\s*=/i.test(attrs)) {
         return match;
       }
 
+      // Strip inner HTML tags to get plain text for ID generation
+      const plainText = innerHtml.replace(/<[^>]*>/g, '').trim();
+
       // Generate ID from content
-      let id = generateHeadingId(content.trim());
+      let id = generateHeadingId(plainText);
       if (!id) return match;
 
       // Handle duplicate IDs by appending numbers
@@ -539,7 +542,7 @@ function addHeadingIds(html: string): string {
       }
       usedIds.add(uniqueId);
 
-      return `<${tag}${attrs} id="${uniqueId}">${content}</${tag}>`;
+      return `<${tag}${attrs} id="${uniqueId}">${innerHtml}</${tag}>`;
     }
   );
 }
