@@ -110,7 +110,7 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
     <h1>How thirsty is AI?</h1>
     <div class="wv-intro-cols">
       <div class="wv-intro-col">
-        <p>Select items on the left to compare how much water data centers use relative to farms, cities, industries, and more. Toggle between <strong>squares</strong> (proportional area) and <strong>bars</strong>. All figures show water <strong>consumed</strong> &mdash; evaporated, incorporated into products, or not returned to source.</p>
+        <p>Select items on the left to compare how much water data centers use relative to farms, cities, industries, and more. Toggle between <strong>squares</strong> (proportional area) and <strong>bars</strong>. All figures show water <strong>consumed</strong> &mdash; evaporated, incorporated into products, or not returned to source. City and farm numbers are also consumptive: e.g., NYC delivers 364B gal/yr but only ~45B is consumed (the rest returns via sewers), and 25&ndash;30% of irrigation water percolates back into aquifers.</p>
       </div>
       <div class="wv-intro-col">
         <p>Use <em>All source water / Public-supply potable</em> to filter by water type &mdash; data centers mostly draw potable municipal water, while farms and power plants use untreated water. The <em>+ elec</em> buttons on data center items add upstream water consumed at power plants generating their electricity &mdash; this upstream water is non-potable.</p>
@@ -1487,7 +1487,9 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
   .wv-cat-head[data-open="true"] { border-bottom: none; }
   .wv-cat-chevron { font-size: 0.55rem; width: 12px; }
   .wv-cat-count { font-size: 0.65rem; opacity: 0.35; }
-  .wv-cat-active { font-size: 0.6rem; font-weight: 400; letter-spacing: 0; text-transform: none; opacity: 0.45; }
+  .wv-cat-active { font-size: 0.6rem; font-weight: 500; letter-spacing: 0; text-transform: none; color: var(--text-secondary); opacity: 0.7; }
+  .wv-cat-active:not(:empty) { background: var(--bg-elevated, #fff); padding: 1px 6px; border-radius: 3px; }
+  [data-theme="dark"] .wv-cat-active:not(:empty) { background: var(--bg-elevated, #1c1c1a); }
   .wv-cat-controls { font-size: 0.6rem; }
 
   /* Open category list: white/elevated background */
@@ -1514,7 +1516,8 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
   .wv-proj-divider { font-size: 0.55rem; text-transform: uppercase; letter-spacing: 0.06em; font-style: normal; color: var(--text-secondary); opacity: 0.35; padding: 10px 14px 3px; }
 
   /* Chart panel header */
-  .wv-chart-header { padding: 8px 14px; border-bottom: 1px solid var(--divider); }
+  .wv-chart-header { padding: 8px 14px; border-bottom: 1px solid var(--divider); background: var(--panel); }
+  [data-theme="dark"] .wv-chart-header { background: var(--panel); }
   .wv-chart-count { font-size: 0.65rem; font-variant-numeric: tabular-nums; }
 
   /* Segmented controls — underline style instead of pill */
