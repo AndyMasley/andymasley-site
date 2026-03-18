@@ -112,6 +112,7 @@ export function ImpactChart({
 }: ImpactChartProps) {
   const [activePresetId, setActivePresetId] = useState<string | null>(null);
   const [openCategory, setOpenCategory] = useState<string | null>('Transport');
+  const [expandedExplainer, setExpandedExplainer] = useState<string | null>(null);
 
   const presetTotals = useMemo(() => {
     const totals: Record<string, number> = {};
@@ -528,7 +529,7 @@ export function ImpactChart({
         {/* RIGHT: SYSTEMIC ACTIONS */}
         <div className="cf-impact-col" style={{ borderRight: 'none' }}>
           <div style={colHead}>
-            Systemic actions
+            Grid changes
             <div style={colSub}>Estimate your leverage on big problems</div>
           </div>
           <div className="cf-impact-scroll">
@@ -539,12 +540,25 @@ export function ImpactChart({
               const mult = result.leverageMultiple.central;
               const pct = Math.round(result.case.probabilityOfSuccess.central * 100);
               const pctStr = pct < 1 ? `${(result.case.probabilityOfSuccess.central * 100).toFixed(1)}%` : `${pct}%`;
+              const isExplainerOpen = expandedExplainer === result.case.name;
               return (
                 <div key={result.case.name}>
                   <button onClick={() => toggleSystemic(result.case.name)} className="cf-toggle-row" data-on={isOn} aria-pressed={isOn}>
                     <Dot on={isOn} />
                     <span style={{ flex: 1, fontWeight: isOn ? 600 : 400, fontSize: '0.72rem', lineHeight: 1.25, textAlign: 'left' }}>
-                      {result.case.name}
+                      {result.case.namePrefix}{' '}
+                      <span
+                        onClick={e => { e.stopPropagation(); setExpandedExplainer(isExplainerOpen ? null : result.case.name); }}
+                        style={{
+                          borderBottom: '1.5px dashed var(--accent, #8B2E2E)',
+                          cursor: 'pointer',
+                          color: 'var(--accent, #8B2E2E)',
+                        }}
+                        role="button"
+                        aria-expanded={isExplainerOpen}
+                      >
+                        {result.case.nameExpandable}
+                      </span>
                     </span>
                     <span style={{ fontSize: '0.58rem', color: MUTED, opacity: 0.7, whiteSpace: 'nowrap', flexShrink: 0 }} onClick={e => e.stopPropagation()}>
                       <span style={{ fontSize: '0.85rem', opacity: 0.5, fontWeight: 300 }}>×</span> <InlineNum
@@ -569,6 +583,19 @@ export function ImpactChart({
                       {sigFigs(central)} <span style={{ fontSize: '0.6em', fontWeight: 400 }}>kg/person</span>
                     </span>
                   </button>
+                  {isExplainerOpen && (
+                    <div className="cf-explainer" style={{
+                      fontSize: '0.72rem',
+                      lineHeight: 1.6,
+                      color: MUTED,
+                      padding: '8px 10px 8px 28px',
+                      borderLeft: `2.5px solid var(--accent, #8B2E2E)`,
+                      marginLeft: '12px',
+                      marginBottom: '4px',
+                    }}>
+                      <span dangerouslySetInnerHTML={{ __html: result.case.explainer }} />
+                    </div>
+                  )}
                 </div>
               );
             })}
@@ -732,7 +759,7 @@ function SystemicIntro() {
   return (
     <div style={{ marginBottom: '0.5rem' }}>
       <div style={{ fontSize: '0.62rem', color: MUTED, lineHeight: 1.45, marginBottom: '4px' }}>
-        Each number is how much carbon would be saved <em>per person working on the problem</em>, calculated as the amount of carbon saved if the action succeeds × the probability of success ÷ the number of people working together on it. All numbers explained in <a href="#methodology-systemic" style={{ color: 'var(--accent, #8B2E2E)' }} onClick={e => e.stopPropagation()}>methodology</a> below.
+        Each number is how much carbon would be saved <em>per person working on the problem</em>, calculated as the amount of carbon saved if the action succeeds × the probability of success ÷ the number of people working together on it. All numbers explained in <a href="#methodology-grid-changes" style={{ color: 'var(--accent, #8B2E2E)' }} onClick={e => e.stopPropagation()}>methodology</a> below.
       </div>
       <ExampleDropdown />
     </div>
@@ -759,7 +786,7 @@ function ExampleDropdown() {
         <div style={{ fontSize: '0.68rem', color: MUTED, lineHeight: 1.5, padding: '8px 0 8px 12px', marginTop: '4px', borderLeft: `1px solid ${DIVIDER}` }}>
           Say 3,000 people work to stop a nuclear plant from closing. The plant generates 7.9 million MWh of zero-carbon electricity per year. If it closes, it's replaced by a mix of gas and renewables, adding about 2.4 million tonnes of CO₂ per year (net). If the campaign has a 5% chance of succeeding and the plant runs for 15 more years:<br /><br />
           <code style={{ fontSize: '0.63rem' }}>2,400,000,000 kg/yr × 15 yr × 5% ÷ 3,000 people = 591,300 kg per person</code><br /><br />
-          That's <strong style={{ color: GREEN }}>~590 tonnes</strong> per person — roughly <strong style={{ color: GREEN }}>37 years</strong> of a typical American's annual footprint. Even at 2% probability, it's still 7 years' worth. That's why systemic action has such high leverage.
+          That's <strong style={{ color: GREEN }}>~590 tonnes</strong> per person — roughly <strong style={{ color: GREEN }}>37 years</strong> of a typical American's annual footprint. Even at 2% probability, it's still 7 years' worth. That's why grid change has such high leverage.
         </div>
       )}
     </div>

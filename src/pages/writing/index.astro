@@ -177,7 +177,7 @@ function formatBylineDate(dateStr: string): string {
 
 <Base title="Writing">
   <p class="page-intro">
-    I write a lot on <a href="https://andymasley.substack.com/">Substack</a> and elsewhere. I started blogging consistently in 2025. I built a big audience doing a lot of deep dives on AI and the environment. I also write about AI more broadly, animal welfare, philosophy, political liberalism, and miscellaneous ideas and advice. Since March 2026 I've been writing full-time on a grant from <a href="https://coefficientgiving.org/">Coefficient Giving</a>.
+    I write a lot on <a href="https://andymasley.substack.com/">Substack</a> and elsewhere. I started blogging consistently in 2025. I built a big audience doing a lot of deep dives on AI and the environment. I also write about AI more broadly, animal welfare, philosophy, political liberalism, and miscellaneous ideas and advice. Since March 2026 I've been writing full-time on a grant from <a href="https://coefficientgiving.org/" target="_blank" rel="noopener">Coefficient Giving</a>.
   </p>
   <p class="page-intro">
     My thinking's been broadly influenced by EA since I was a teenager. I'm also pretty influenced by philosophical liberalism, Quine, and naturalism, and want to popularize key ideas from each.
@@ -203,11 +203,11 @@ function formatBylineDate(dateStr: string): string {
 
   <!-- BLOG DROPDOWN -->
   <div class="top-dropdown">
-    <button class="top-toggle" aria-expanded="true" data-section="blog">
-      <span class="top-arrow">&#9660;</span>
+    <button class="top-toggle" aria-expanded="false" data-section="blog">
+      <span class="top-arrow">&#9654;</span>
       <span class="top-title">Blog</span>
     </button>
-    <div class="top-content" data-content="blog">
+    <div class="top-content" data-content="blog" hidden>
       <!-- META SUBSECTION -->
       <div class="section-header">Meta</div>
       <div class="meta-section">
@@ -248,12 +248,12 @@ function formatBylineDate(dateStr: string): string {
           data-subcategory="start-here"
           data-posts={JSON.stringify([
             'a-short-summary-of-my-argument-that',
-            'chatgpt-cheat-sheet',
+            'a-cheat-sheet-for-conversations-about',
             'for-the-climate-little-things-dont',
             'mapping-the-ai-and-environment-debate',
             'computing-is-efficient',
             'what-a-data-center-is',
-            'requests-for-journalists-covering-ai',
+            'requests-for-journalists-covering',
             'the-ai-water-issue-is-fake'
           ])}
           data-custom-order="true"

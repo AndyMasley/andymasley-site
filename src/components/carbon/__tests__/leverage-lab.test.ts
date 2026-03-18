@@ -9,6 +9,9 @@ describe('Leverage Lab — Phase 4 requirements', () => {
   it('every case has required LeverageCase fields', () => {
     LEVERAGE_CASES.forEach(c => {
       expect(c.name).toBeTruthy();
+      expect(c.namePrefix).toBeTruthy();
+      expect(c.nameExpandable).toBeTruthy();
+      expect(c.explainer).toBeTruthy();
       expect(c.description).toBeTruthy();
       expect(c.probabilityOfSuccess.low).toBeLessThanOrEqual(c.probabilityOfSuccess.central);
       expect(c.probabilityOfSuccess.central).toBeLessThanOrEqual(c.probabilityOfSuccess.high);

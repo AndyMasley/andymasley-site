@@ -5,108 +5,118 @@ function fG(g: number) {
   return g >= 1e12 ? (g/1e12).toFixed(1)+'T gal/yr' : g >= 1e9 ? (g/1e9).toFixed(1)+'B gal/yr' : (g/1e6).toFixed(0)+'M gal/yr';
 }
 
-// ChatGPT scenarios: 2.5B messages/day × 365
-// Scenario A (Altman): 0.322 mL/query on-site, 0.34 Wh/query → 77.6M direct, 447M w/ elec
-// Scenario B (Ren et al.): 2.2 mL/query on-site, 4 Wh/query → 530M direct, 4,874M w/ elec
+// ChatGPT: ~3.25B messages/day (scaled from OpenAI July 2025 → Feb 2026 WAU growth).
+// Direct on-site: 0.31 mL/msg → ~97M gal/yr. With elec (thermoelectric-only 1.8 L/kWh): ~290M gal/yr total.
 // tGal = public-supply potable gallons. null = cross out in potable mode.
 // tElec = potable with electricity. null = cross out.
 // DC direct cooling: mostly municipal but shifting; tGal shown as upper bound.
 // DC electricity: power plants use untreated river water, so tElec = null (cross out).
 // Microsoft/Google: global ops, no +elec (US factor on global electricity not defensible).
 const dcItems = [
-  { name: 'ChatGPT (Scenario A — Altman)', base: 77.6e6, elec: 447e6, tGal: 77.6e6, tElec: null, color: '#7ec8f0', on: false },
-  { name: 'ChatGPT (Scenario B — Ren et al.)', base: 530e6, elec: 4874e6, tGal: 530e6, tElec: null, color: '#1a6fa0', on: false },
+  { name: 'ChatGPT (current est.)', base: 97e6, elec: 290e6, tGal: 97e6, tElec: null, color: '#3ba0d8', on: false },
   { name: 'All US AI workloads (2024)', base: 4e9, elec: 52e9, tGal: 4e9, tElec: null, color: '#4a69aa', on: false },
-  { name: 'Microsoft operations (FY24)', base: 2.26e9, elec: null, tGal: null, tElec: null, color: '#6a9dc8', on: true },
-  { name: 'Google operations (2024)', base: 7.03e9, elec: null, tGal: null, tElec: null, color: '#5088b8', on: true },
+  { name: 'Microsoft operations (FY24)', base: 1.53e9, elec: 15.5e9, tGal: 1.53e9, tElec: null, color: '#6a9dc8', on: true },   // 5,807 ML = 1.53B gal; ~29.8 TWh global × 0.47 = 14.0B; predominantly municipal
+  { name: 'Google operations (2024)', base: 7.03e9, elec: 21.5e9, tGal: 7.03e9, tElec: null, color: '#5088b8', on: true },     // ~30.8 TWh DC electricity × 0.47 = 14.5B; predominantly municipal
   { name: 'All US data centers (2023)', base: 17.4e9, elec: 227e9, tGal: 17.4e9, tElec: null, color: '#7b72ab', on: true },
+  { name: 'ChatGPT (2030 est.)', base: 250e6, elec: 830e6, tGal: 250e6, tElec: null, color: '#e8a44a', on: false },          // ~1.24 TWh × 0.47 = 583M
+  { name: 'US AI workloads (2030 est.)', base: 45e9, elec: 180e9, tGal: 45e9, tElec: null, color: '#d4893a', on: false },     // ~288 TWh × 0.47 = 135B
+  { name: 'All US data centers (2030 est.)', base: 80e9, elec: 315e9, tGal: 80e9, tElec: null, color: '#c07030', on: false }, // ~500 TWh × 0.47 = 235B
 ];
 
 // Industries: mixed water sources. tGal = fraction from public-supply potable.
+// Elec: EIA MECS 2018 net electricity × 0.47 gal/kWh thermoelectric water factor.
 // Semis: predominantly municipal but exact % unknown. Food: potable-quality required but not necessarily municipal.
 // Oil/paper: almost entirely self-supplied from rivers. Auto/steel: removed (unreliable data).
 const industryItems = [
-  { name: 'US semiconductor fabs', gal: 9e9, tGal: 9e9, color: '#d4825e', on: false },     // predominantly municipal, exact % unknown — shown as upper bound
-  { name: 'US oil refining', gal: 22e9, tGal: null, color: '#b86844', on: false },          // ~5% — negligible
-  { name: 'US food & beverage', gal: 150e9, tGal: null, color: '#984e30', on: false },      // potable-quality ≠ municipal source — unknown
-  { name: 'US paper & pulp mills', gal: 175e9, tGal: null, color: '#884228', on: false },   // ~0% — all river water
+  { name: 'US semiconductor fabs', base: 9e9, elec: 14.6e9, tGal: 9e9, tElec: null, color: '#d4825e', on: false },     // 12 TWh × 0.47 = 5.6B
+  { name: 'US oil refining', base: 22e9, elec: 44.8e9, tGal: null, tElec: null, color: '#b86844', on: false },          // 48.5 TWh × 0.47 = 22.8B
+  { name: 'US food & beverage', base: 150e9, elec: 200e9, tGal: 150e9, tElec: null, color: '#984e30', on: false },      // 106 TWh × 0.47 = 49.9B; potable share uncertain but shown (food processing requires potable-quality water)
+  { name: 'US paper & pulp mills', base: 175e9, elec: 199e9, tGal: null, tElec: null, color: '#884228', on: false },    // 51 TWh net grid × 0.47 = 24B
+  { name: 'US meat & poultry processing', base: 179e9, elec: 193.9e9, tGal: 108e9, tElec: null, color: '#c45a3e', on: false },  // EPA 2023 TDD; 31.7 TWh (MECS 3116) × 0.47 = 14.9B; 60% public-supply
+  { name: 'US pharmaceutical manufacturing', base: 97.2e9, elec: 102.1e9, tGal: 82.7e9, tElec: null, color: '#a84878', on: false },  // EPA 1998 pharma TDD; 10.4 TWh (MECS 3254) × 0.47 = 4.9B; 85% public-supply
+  { name: 'US dairy processing', base: 45e9, elec: 50.4e9, tGal: 31.5e9, tElec: null, color: '#d4a05e', on: false },  // USDA milk × EPA; 11.5 TWh (MECS 3115) × 0.47 = 5.4B; 70% public-supply
+  { name: 'US industrial launderers', base: 35e9, elec: 36.2e9, tGal: 33.2e9, tElec: null, color: '#6a8eab', on: false },  // EPA CI water; ~2.5 TWh est × 0.47 = 1.2B
+  { name: 'US breweries (modeled)', base: 32e9, elec: 33.6e9, tGal: 24e9, tElec: null, color: '#c49a3e', on: false },  // 5.4B gal beer × 6; ~3.4 TWh est × 0.47 = 1.6B; 75% public-supply
+  { name: 'US bottled water mfg (total only)', base: 22.8e9, elec: 23.5e9, tGal: null, tElec: null, color: '#5eaab8', on: false },  // 16.4B gal × 1.39; ~1.5 TWh est × 0.47 = 0.7B; potable split unknown
 ];
 
-// Agriculture — irrigation water applied (NOT consumptive use)
-// Crop rates from USDA 2023 IWMS Table 39 (applied irrigation, national avg):
-//   Corn: 1.0 ac-ft/ac = 325,851 gal/ac. Alfalfa: 2.3 ac-ft/ac = 749,457 gal/ac.
+// Agriculture — estimated CONSUMPTIVE use (evapotranspiration from irrigation water)
+// Applied irrigation from USDA 2023 IWMS Table 39 × consumptive use ratio:
+//   Corn: 1.0 ac-ft/ac applied × 0.75 CU ratio = 0.75 ac-ft/ac consumed. Center-pivot dominant (70-85% efficiency).
+//   Alfalfa: 2.3 ac-ft/ac applied × 0.70 CU ratio = 1.6 ac-ft/ac consumed. Flood-irrigated dominant (60-75% efficiency).
 // Acreage from USDA 2023 IWMS Table 38.
-// Berries removed: no single USDA rate for aggregate category.
+// Elec: irrigation pumping electricity (~22 TWh US total, proportioned by irrigated acreage share) × 0.47 gal/kWh.
 // Agriculture: untreated irrigation water from wells/rivers. tGal = null (cross out).
 const farmItems = [
-  { name: 'All US corn (2023)', gal: 3.79e12, tGal: null, color: '#6aaa58', on: true },
-  { name: 'Nebraska corn', gal: 1.45e12, tGal: null, color: '#82c06e', on: false },
-  { name: 'Kansas corn', gal: 374e9, tGal: null, color: '#82c06e', on: false },
-  { name: 'Arkansas corn', gal: 232e9, tGal: null, color: '#82c06e', on: false },
-  { name: 'Texas corn', gal: 184e9, tGal: null, color: '#82c06e', on: false },
-  { name: 'All US alfalfa (2023)', gal: 4.05e12, tGal: null, color: '#4a8840', on: false },
-  { name: 'Idaho alfalfa', gal: 627e9, tGal: null, color: '#5e9c50', on: false },
-  { name: 'California alfalfa', gal: 460e9, tGal: null, color: '#5e9c50', on: false },
-  { name: 'Montana alfalfa', gal: 419e9, tGal: null, color: '#5e9c50', on: false },
-  { name: 'Colorado alfalfa', gal: 399e9, tGal: null, color: '#5e9c50', on: false },
+  { name: 'All US corn (2023)', base: 2.84e12, elec: 2.842e12, tGal: null, tElec: null, color: '#6aaa58', on: true },     // 0.75 ac-ft/ac × 11.64M ac; 4.4 TWh × 0.47 = 2.1B
+  { name: 'Nebraska corn', base: 1.09e12, elec: null, tGal: null, tElec: null, color: '#82c06e', on: false },              // 38.3% of national
+  { name: 'Kansas corn', base: 280e9, elec: null, tGal: null, tElec: null, color: '#82c06e', on: false },                  // 9.9%
+  { name: 'Arkansas corn', base: 174e9, elec: null, tGal: null, tElec: null, color: '#82c06e', on: false },                // 6.1%
+  { name: 'Texas corn', base: 138e9, elec: null, tGal: null, tElec: null, color: '#82c06e', on: false },                   // 4.9%
+  { name: 'All US alfalfa (2023)', base: 2.84e12, elec: 2.841e12, tGal: null, tElec: null, color: '#4a8840', on: false },  // 1.6 ac-ft/ac × 5.41M ac; 2.0 TWh × 0.47 = 940M
+  { name: 'Idaho alfalfa', base: 440e9, elec: null, tGal: null, tElec: null, color: '#5e9c50', on: false },                // 15.5%
+  { name: 'California alfalfa', base: 323e9, elec: null, tGal: null, tElec: null, color: '#5e9c50', on: false },            // 11.4%
+  { name: 'Montana alfalfa', base: 293e9, elec: null, tGal: null, tElec: null, color: '#5e9c50', on: false },               // 10.3%
+  { name: 'Colorado alfalfa', base: 280e9, elec: null, tGal: null, tElec: null, color: '#5e9c50', on: false },              // 9.9%
 ];
 
 // Lawns: EPA landscape irrigation ~9B gal/day = ~3.3T/yr total.
 // Municipal lawn: 13.1T × 0.60 × 0.30 × 0.70 = 1.65T from public supply.
 // State figures are modeled proportional estimates.
+// Elec: lawn ~5 TWh (pump energy), golf ~1.4 TWh (GCSAA), × 0.47 gal/kWh.
 // Golf: GCSAA Phase 4 (2024), total 1.63M acre-feet = 531B gal. ~9% municipal (not 15%).
 // Arizona golf: SW regional rate 3.3 ac-ft/ac, midpoint estimate 14.4B.
 const turfItems = [
-  { name: 'All US lawn irrigation (est.)', gal: 3e12, tGal: 1.65e12, color: '#27ae60', on: false },
-  { name: 'Florida lawns', gal: 350e9, tGal: 175e9, color: '#2ecc71', on: false },
-  { name: 'California lawns', gal: 400e9, tGal: 240e9, color: '#2ecc71', on: false },
-  { name: 'Texas lawns', gal: 320e9, tGal: 176e9, color: '#2ecc71', on: false },
-  { name: 'All US golf courses (2024)', gal: 531e9, tGal: 48e9, color: '#1abc9c', on: false },
-  { name: 'Arizona golf courses', gal: 14.4e9, tGal: 1e9, color: '#1abc9c', on: false },
+  { name: 'All US lawn irrigation (est.)', base: 3e12, elec: 3.002e12, tGal: 1.65e12, tElec: null, color: '#27ae60', on: false },  // ~5 TWh × 0.47 = 2.4B
+  { name: 'Florida lawns', base: 350e9, elec: null, tGal: 175e9, tElec: null, color: '#2ecc71', on: false },
+  { name: 'California lawns', base: 400e9, elec: null, tGal: 240e9, tElec: null, color: '#2ecc71', on: false },
+  { name: 'Texas lawns', base: 320e9, elec: null, tGal: 176e9, tElec: null, color: '#2ecc71', on: false },
+  { name: 'All US golf courses (2024)', base: 531e9, elec: 531.7e9, tGal: 48e9, tElec: null, color: '#1abc9c', on: false },     // ~1.4 TWh × 0.47 = 660M
+  { name: 'Arizona golf courses', base: 14.4e9, elec: null, tGal: 1e9, tElec: null, color: '#1abc9c', on: false },
 ];
 
-// City water systems — base = water delivered; elec = base + water cost of electricity
-// for pumping, treatment, and distribution. Electricity intensity varies by city:
-// NYC/Chicago: ~1.5 kWh/1000 gal (gravity-fed or lake). LA/Phoenix/Vegas: ~5 kWh/1000 gal
-// (long-distance import over mountains or desert pumping). × 1.19 gal water/kWh.
-// Cities: 100% treated municipal water. tGal = same as gal.
+// City water systems — base = estimated CONSUMPTIVE use (evaporated/not returned).
+// Cool/wet cities return ~88% via sewer; hot/dry cities consume 35-50% (landscape evapotranspiration).
+// Elec: pumping/treatment electricity × 0.47 gal/kWh thermoelectric water factor.
+// Cities: 100% treated municipal water. tGal = same as base.
 const cityItems = [
-  { name: 'New York City', gal: 364e9, tGal: 364e9, color: '#3498db', on: false },
-  { name: 'Chicago metro system', gal: 274e9, tGal: 274e9, color: '#2e86c1', on: false },
-  { name: 'Los Angeles', gal: 146e9, tGal: 146e9, color: '#2471a3', on: false },
-  { name: 'Phoenix', gal: 95.5e9, tGal: 95.5e9, color: '#1a5276', on: false },
-  { name: 'Las Vegas metro (SNWA, consumptive)', gal: 77e9, tGal: 77e9, color: '#154360', on: false },
+  { name: 'New York City (consumptive est.)', base: 45e9, elec: 45.3e9, tGal: 45e9, tElec: null, color: '#3498db', on: false },                  // ~12% of 364B delivered; 0.55 TWh × 0.47 = 257M
+  { name: 'Chicago metro (consumptive est.)', base: 33e9, elec: 33.2e9, tGal: 33e9, tElec: null, color: '#2e86c1', on: false },                   // ~12% of 274B delivered; 0.41 TWh × 0.47 = 193M
+  { name: 'Los Angeles (consumptive est.)', base: 51e9, elec: 51.3e9, tGal: 51e9, tElec: null, color: '#2471a3', on: false },                     // ~35% of 146B delivered; 0.73 TWh × 0.47 = 343M
+  { name: 'Phoenix (consumptive est.)', base: 48e9, elec: 48.2e9, tGal: 48e9, tElec: null, color: '#1a5276', on: false },                         // ~50% of 95.5B delivered; 0.48 TWh × 0.47 = 224M
+  { name: 'Las Vegas metro (SNWA, consumptive)', base: 69e9, elec: 69.2e9, tGal: 69e9, tElec: null, color: '#154360', on: false },                 // SNWA reported net of return-flow credits; 0.39 TWh × 0.47 = 181M
 ];
 
 // National: freshwater withdrawals includes untreated (cross out in treated mode).
 // Public water supply IS treated water.
+// Elec: freshwater withdrawals ~70 TWh pumping, public supply ~39 TWh (EPRI), × 0.47 gal/kWh.
 const nationalItems = [
-  { name: 'Total US freshwater withdrawals', gal: 102.6e12, tGal: null, color: '#1a3c5e', on: false },
-  { name: 'Total US public water supply', gal: 13.1e12, tGal: 13.1e12, color: '#2a5f8f', on: false },
+  { name: 'Total US freshwater withdrawals', base: 102.6e12, elec: 102.6e12 + 33e9, tGal: null, tElec: null, color: '#1a3c5e', on: false },  // ~70 TWh × 0.47 = 33B
+  { name: 'Total US public water supply', base: 13.1e12, elec: 13.1e12 + 18.3e9, tGal: 13.1e12, tElec: null, color: '#2a5f8f', on: false },  // ~39 TWh × 0.47 = 18.3B
 ];
 
 let idx = 0;
 const dcFlat = dcItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
-const indFlat = industryItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
-const cityFlat = cityItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
-const natFlat = nationalItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
-const farmFlat = farmItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
-const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
+const indFlat = industryItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
+const cityFlat = cityItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
+const natFlat = nationalItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
+const farmFlat = farmItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
+const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
 ---
 
-<Base title="AI Water Usage" description="How much water does AI use?">
+<Base title="How thirsty is AI?" description="How much water does AI use?">
 
   <header>
     <h1>How thirsty is AI?</h1>
     <div style="font-size: 0.85rem; line-height: 1.7; color: var(--text-secondary, #6B6B60); margin-top: 0.75rem; max-width: 680px;">
-      <p style="margin-bottom: 0.6rem;">Select items on the left to compare how much water data centers use relative to farms, cities, industries, and more. Toggle between boxes (proportional area) and bars. All figures show water <strong style="color: var(--text, #1A1A18);">consumed</strong> — evaporated, incorporated into products, or not returned to source — because consumptive use is the core concern with AI water impact.</p>
+      <p style="margin-bottom: 0.6rem;">Select items on the left to compare how much water data centers use relative to farms, cities, industries, and more. Toggle between boxes (proportional area) and bars. All figures show water <strong style="color: var(--text, #1A1A18);">consumed</strong> — evaporated, incorporated into products, or not returned to source — because consumptive use is the core concern with AI water impact. For example, New York City's water system <a href="https://www.nyc.gov/site/dep/water/drinking-water.page" style="color: var(--accent, #8b3a3a); text-decoration: underline; text-underline-offset: 2px;">delivers 364 billion gallons per year</a>, but roughly <a href="https://pubs.usgs.gov/publication/sir20145176" style="color: var(--accent, #8b3a3a); text-decoration: underline; text-underline-offset: 2px;">88% of that returns</a> through the sewer system. Only the ~45 billion gallons actually consumed — lost to landscape evaporation, leaks, and other non-return uses — is shown here. Similarly, irrigated farmland applies far more water than crops actually consume: roughly <a href="https://extensionpubs.unl.edu/publication/g2345/2023/html/view" style="color: var(--accent, #8b3a3a); text-decoration: underline; text-underline-offset: 2px;">25–30% of applied irrigation water</a> percolates back into aquifers or runs off into streams rather than being consumed by the crop, so the farmland numbers here show only the estimated consumptive portion.</p>
       <p style="margin-bottom: 0.4rem;">Comparing data center water is tricky for three reasons:</p>
       <ol style="padding-left: 1.25rem; margin-bottom: 0.6rem;">
-        <li style="margin-bottom: 0.3rem;">AI data centers predominantly use <strong style="color: var(--text, #1A1A18);">public-supply potable water</strong>, while most comparable users (farms, refineries, power plants) draw untreated water from rivers and wells. Use the <em>All source water / Public-supply potable</em> toggle to see this distinction — in potable mode, items that rely entirely on non-municipal water are crossed out, and items that use a mix are reduced to show only their public-supply portion.</li>
-        <li style="margin-bottom: 0.3rem;">Most of the water "used" by data centers is actually consumed at nearby <strong style="color: var(--text, #1A1A18);">power plants</strong> generating their electricity. The <em>+ elec</em> buttons on data center items add this upstream water cost.</li>
+        <li style="margin-bottom: 0.3rem;">Data centers predominantly use <strong style="color: var(--text, #1A1A18);">public-supply potable water</strong> onsite, while most comparable users (farms, refineries, power plants) draw untreated water from rivers and wells. Use the <em>All source water / Public-supply potable</em> toggle to see this distinction — in potable mode, items that rely entirely on non-municipal water are crossed out, and items that use a mix are reduced to show only their public-supply portion.</li>
+        <li style="margin-bottom: 0.3rem;">Most of the water "used" by data centers is actually <strong style="color: var(--text, #1A1A18);">non-potable freshwater</strong> consumed at nearby <strong style="color: var(--text, #1A1A18);">power plants</strong> generating their electricity. The <em>+ elec</em> buttons on data center items add this upstream water cost.</li>
         <li style="margin-bottom: 0.3rem;">Data center water use is <strong style="color: var(--text, #1A1A18);">growing rapidly</strong> and will continue through 2030. The data centers category includes both current figures and 2030 projections.</li>
       </ol>
-      <p>All values explained in the <a href="#methodology" style="color: var(--accent, #8b3a3a); text-decoration: underline; text-underline-offset: 2px;">methodology</a>. I did my best to figure out what each is, but I'm just some guy. If you think I'm getting something wrong, please email me at <a href="mailto:AndyMasley@gmail.com" style="color: var(--accent, #8b3a3a); text-decoration: underline; text-underline-offset: 2px;">AndyMasley@gmail.com</a>.</p>
+      <p>All values explained in the <a href="#methodology" style="color: var(--accent, #8b3a3a); text-decoration: underline; text-underline-offset: 2px;">methodology</a>. I did my best to figure out what each is, but I'm just some guy, and some of these might be off by orders of magnitude. If you think I'm getting something wrong, please email me at <a href="mailto:AndyMasley@gmail.com" style="color: var(--accent, #8b3a3a); text-decoration: underline; text-underline-offset: 2px;">AndyMasley@gmail.com</a>.</p>
     </div>
   </header>
 
@@ -130,6 +140,7 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
             <div class="wv-cat-list" data-visible="true">
               {dcFlat.map((d, i) => (
                 <div class="wv-dc-group">
+                  {i === 5 && <div class="wv-proj-divider">2030 estimates</div>}
                   <button class="wv-toggle-row" data-idx={d.idx} data-on={d.on ? 'true' : 'false'}
                     data-gal-base={d.base} data-gal-elec={d.elec} data-elec="false"
                     data-tgal={d.tGal !== null && d.tGal !== undefined ? d.tGal : 'null'}
@@ -156,14 +167,21 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
               <span class="wv-cat-controls"><span class="wv-cat-toggle" data-action="all">all</span> / <span class="wv-cat-toggle" data-action="none">none</span></span>
             </button>
             <div class="wv-cat-list" data-visible="false">
-              {indFlat.map(d => (
-                <button class="wv-toggle-row" data-idx={d.idx} data-on={d.on ? 'true' : 'false'} data-gal-industry={d.gal} data-tgal={d.tGal !== null && d.tGal !== undefined ? d.tGal : 'null'}>
-                  <span class="wv-dot"></span>
-                  <span class="wv-row-text">
-                    <span class="wv-row-name">{d.name}</span>
-                    <span class="wv-row-val">{d.sub}</span>
-                  </span>
-                </button>
+              {indFlat.map((d, i) => (
+                <div>
+                  {i === 4 && <div class="wv-proj-divider">Treated-water-heavy</div>}
+                  <button class="wv-toggle-row" data-idx={d.idx} data-on={d.on ? 'true' : 'false'}
+                    data-gal-base={d.base} data-gal-elec={d.elec} data-elec="false"
+                    data-tgal={d.tGal !== null && d.tGal !== undefined ? d.tGal : 'null'}
+                    data-telec={d.tElec !== null && d.tElec !== undefined ? d.tElec : 'null'}>
+                    <span class="wv-dot"></span>
+                    <span class="wv-row-text">
+                      <span class="wv-row-name">{d.name}</span>
+                      <span class="wv-row-val">{d.sub}</span>
+                      {d.elec !== null && <span class="wv-elec-chip" data-parent-idx={d.idx} title="Include water consumed to generate electricity powering this operation (0.47 gal/kWh thermoelectric)">+ elec</span>}
+                    </span>
+                  </button>
+                </div>
               ))}
             </div>
           </div>
@@ -179,11 +197,15 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
             </button>
             <div class="wv-cat-list" data-visible="false">
               {cityFlat.map(d => (
-                <button class="wv-toggle-row" data-idx={d.idx} data-on={d.on ? 'true' : 'false'} data-gal-industry={d.gal} data-tgal={d.tGal !== null && d.tGal !== undefined ? d.tGal : 'null'}>
+                <button class="wv-toggle-row" data-idx={d.idx} data-on={d.on ? 'true' : 'false'}
+                  data-gal-base={d.base} data-gal-elec={d.elec} data-elec="false"
+                  data-tgal={d.tGal !== null && d.tGal !== undefined ? d.tGal : 'null'}
+                  data-telec={d.tElec !== null && d.tElec !== undefined ? d.tElec : 'null'}>
                   <span class="wv-dot"></span>
                   <span class="wv-row-text">
                     <span class="wv-row-name">{d.name}</span>
                     <span class="wv-row-val">{d.sub}</span>
+                    {d.elec !== null && <span class="wv-elec-chip" data-parent-idx={d.idx} title="Include water consumed to generate electricity for pumping and treatment (0.47 gal/kWh thermoelectric)">+ elec</span>}
                   </span>
                 </button>
               ))}
@@ -205,11 +227,15 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
                   {i === 1 && <div class="wv-proj-divider">Corn by state</div>}
                   {i === 5 && <div class="wv-proj-divider">Alfalfa (US & states)</div>}
                   {i === 6 && <div class="wv-proj-divider">Alfalfa by state</div>}
-                  <button class="wv-toggle-row" data-idx={d.idx} data-on={d.on ? 'true' : 'false'} data-gal-industry={d.gal} data-tgal={d.tGal !== null && d.tGal !== undefined ? d.tGal : 'null'}>
+                  <button class="wv-toggle-row" data-idx={d.idx} data-on={d.on ? 'true' : 'false'}
+                    data-gal-base={d.base} data-gal-elec={d.elec} data-elec="false"
+                    data-tgal={d.tGal !== null && d.tGal !== undefined ? d.tGal : 'null'}
+                    data-telec={d.tElec !== null && d.tElec !== undefined ? d.tElec : 'null'}>
                     <span class="wv-dot"></span>
                     <span class="wv-row-text">
                       <span class="wv-row-name">{d.name}</span>
                       <span class="wv-row-val">{d.sub}</span>
+                      {d.elec !== null && <span class="wv-elec-chip" data-parent-idx={d.idx} title="Include water consumed to generate electricity for irrigation pumping (0.47 gal/kWh thermoelectric)">+ elec</span>}
                     </span>
                   </button>
                 </div>
@@ -231,11 +257,15 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
                 <div>
                   {i === 1 && <div class="wv-proj-divider">Lawns by state</div>}
                   {i === 4 && <div class="wv-proj-divider">Golf courses</div>}
-                  <button class="wv-toggle-row" data-idx={d.idx} data-on={d.on ? 'true' : 'false'} data-gal-industry={d.gal} data-tgal={d.tGal !== null && d.tGal !== undefined ? d.tGal : 'null'}>
+                  <button class="wv-toggle-row" data-idx={d.idx} data-on={d.on ? 'true' : 'false'}
+                    data-gal-base={d.base} data-gal-elec={d.elec} data-elec="false"
+                    data-tgal={d.tGal !== null && d.tGal !== undefined ? d.tGal : 'null'}
+                    data-telec={d.tElec !== null && d.tElec !== undefined ? d.tElec : 'null'}>
                     <span class="wv-dot"></span>
                     <span class="wv-row-text">
                       <span class="wv-row-name">{d.name}</span>
                       <span class="wv-row-val">{d.sub}</span>
+                      {d.elec !== null && <span class="wv-elec-chip" data-parent-idx={d.idx} title="Include water consumed to generate electricity for irrigation pumping (0.47 gal/kWh thermoelectric)">+ elec</span>}
                     </span>
                   </button>
                 </div>
@@ -254,11 +284,15 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
             </button>
             <div class="wv-cat-list" data-visible="false">
               {natFlat.map(d => (
-                <button class="wv-toggle-row" data-idx={d.idx} data-on={d.on ? 'true' : 'false'} data-gal-industry={d.gal} data-tgal={d.tGal !== null && d.tGal !== undefined ? d.tGal : 'null'}>
+                <button class="wv-toggle-row" data-idx={d.idx} data-on={d.on ? 'true' : 'false'}
+                  data-gal-base={d.base} data-gal-elec={d.elec} data-elec="false"
+                  data-tgal={d.tGal !== null && d.tGal !== undefined ? d.tGal : 'null'}
+                  data-telec={d.tElec !== null && d.tElec !== undefined ? d.tElec : 'null'}>
                   <span class="wv-dot"></span>
                   <span class="wv-row-text">
                     <span class="wv-row-name">{d.name}</span>
                     <span class="wv-row-val">{d.sub}</span>
+                    {d.elec !== null && <span class="wv-elec-chip" data-parent-idx={d.idx} title="Include water consumed to generate electricity for pumping and distribution (0.47 gal/kWh thermoelectric)">+ elec</span>}
                   </span>
                 </button>
               ))}
@@ -296,58 +330,105 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
     </div>
   </article>
 
+  <div class="wv-tooltip" id="wv-tooltip" style="display:none"></div>
+
   <div class="w-methodology" id="methodology">
     <h2>Methodology</h2>
-    <p class="w-meth-intro">This visualization mixes different water metrics: on-site consumptive use (data centers), irrigation water applied (farms), utility deliveries (cities), and national withdrawals. Items within the same metric type are comparable; cross-type comparisons show scale but are not like-for-like. It also mixes U.S.-only totals (LBNL, USDA) with global corporate totals (Microsoft, Google). Every figure is year-stamped. Full methodology with formulas, sources, and uncertainty notes: <a href="https://github.com/AndyMasley/andymasley-site/blob/main/WATER-VIZ-METHODOLOGY.md" target="_blank" rel="noopener">WATER-VIZ-METHODOLOGY.md</a>.</p>
+    <p class="w-meth-intro">This visualization mixes different water metrics: on-site consumptive use (data centers), estimated consumptive use from applied irrigation × efficiency ratios (farms), estimated consumptive use from deliveries minus sewer returns (cities), plausible modeled estimates from withdrawal × consumption ratios (industries), and total withdrawals (national). Items within the same metric type are comparable; cross-type comparisons show scale but are not like-for-like. It also mixes U.S.-only totals (LBNL, USDA) with global corporate totals (Microsoft, Google). Every figure is year-stamped. All numbers, formulas, and sources are documented in the sections below.</p>
 
     <details class="w-meth-section" open>
       <summary>Data centers — direct cooling</summary>
       <div class="w-meth-body">
-        <p><strong>All US data centers, 2023: 17.4B gal/yr.</strong> LBNL's 2024 report: 66 billion liters direct site water. 66B L / 3.785 = 17.4B gal. This is the strongest number in the visualization.</p>
+        <p><strong>All US data centers, 2023: 17.4B gal/yr.</strong> LBNL's 2024 report: 66 billion liters direct site water. 66B L / 3.785 = 17.4B gal.</p>
         <p class="w-meth-src">Source: <a href="https://eta.lbl.gov/publications/2024-united-states-data-center-energy" target="_blank" rel="noopener">LBNL — 2024 United States Data Center Energy Usage Report</a></p>
 
-        <p><strong>ChatGPT — two named scenarios.</strong> Both use OpenAI's "more than 2.5 billion messages per day" (2025). These are NOT confidence intervals — they use different energy assumptions, workloads, and water factors.</p>
+        <p><strong>All US AI workloads, 2024: 4B gal/yr.</strong> This is a share-allocation estimate, not an AI-specific direct-water measurement. It allocates AI a share of total fleet-average direct water based on electricity share (~23% of 176 TWh). The implied water intensity (~0.37 L/kWh) is the fleet-average LBNL site WUE, which is lower than the ~0.95 L/kWh implied by product-specific AI-serving measurements (Altman, Google Gemini).</p>
+
+        <p><strong>ChatGPT (current est.): ~97M gal/yr direct, ~580M gal/yr total.</strong> This is a modeled estimate, not an OpenAI-disclosed total. It covers current ChatGPT message serving as reflected in public per-message data — not model training, not all OpenAI API traffic, and not unusually heavy multimodal or long-running agent workflows.</p>
+
+        <p><strong>Traffic.</strong> In July 2025, OpenAI said users were sending more than 2.5 billion messages per day, and a separate OpenAI research paper reported 700 million weekly active users and 18 billion messages per week. In February 2026, OpenAI said ChatGPT had more than 900 million weekly active users. Scaling July 2025 message volume by WAU growth gives roughly 3.2–3.3 billion messages per day. This is slightly conservative — OpenAI also says inquiries per user are rising.</p>
+
+        <p><strong>Electricity per message.</strong> Sam Altman states an average ChatGPT query uses about 0.34 Wh. Google's Gemini Apps paper reports 0.24 Wh for a median text prompt (May 2025). Altman's number is explicitly an average ChatGPT query (including coding, data analysis, and agentic workflows), so it should sit above a median text-only prompt. Ren et al.'s GPT-3 estimate of ~4 Wh per request (~12× Altman's figure) is a heavier scenario, not a good stand-in for today's average ChatGPT message. Using ~3.25B messages/day × 0.34 Wh gives ~1.1 GWh/day, ~0.40 TWh/year, and an average continuous load of ~46 MW.</p>
+
+        <p><strong>Direct on-site water.</strong> Altman's figure is 0.000085 gal (0.322 mL) per query. Google's Gemini Apps measurement is 0.26 mL for a median text prompt, with Google reporting fleet WUE of 1.15 L/kWh. LBNL says average US data center site WUE was just over 0.36 L/kWh in 2023, expected to rise as hyperscale and liquid-cooled AI servers grow. Altman's own water-energy pair implies ~0.95 L/kWh, much closer to Google's AI-serving value than generic fleet averages. Because Altman's 0.322 mL is also close to Google's 0.26 mL, the most defensible center is about 0.30–0.32 mL per average message. Using 0.31 mL × 3.25B messages/day gives ~266,000 gal/day or ~97M gal/yr.</p>
+
+        <p><strong>Electricity-related water.</strong> LBNL's estimate for US data-center locations is 4.52 L/kWh of indirect water consumption in 2023, based on balancing-authority grid mixes. However, as Brian Potter argues in <a href="https://www.construction-physics.com/p/i-was-wrong-about-data-center-water" target="_blank" rel="noopener">Construction Physics</a>, LBNL's factor is inflated because it includes water evaporated from hydroelectric reservoirs — and NREL estimates hydro plants "consume" about 18.27 gal/kWh via evaporation, roughly 40× thermoelectric consumption. That reservoir evaporation would occur whether or not a data center existed; dams serve water storage purposes independent of power generation. Excluding hydro evaporation and using a thermoelectric-only factor of ~1.8 L/kWh (NREL) is more defensible. At 0.34 Wh/query × 1.8 L/kWh this gives ~0.61 mL/query of electricity-related water, or ~525K gal/day, ~192M gal/yr. The LBNL-inclusive convention (4.52 L/kWh) would give ~482M gal/yr instead — I use the thermoelectric-only number as the default because attributing reservoir evaporation to individual electricity consumers overstates the actionable water impact.</p>
+
         <table class="w-meth-table">
-          <thead><tr><th>Scenario</th><th>On-site mL/query</th><th>Energy/query</th><th>Direct gal/yr</th><th>+ Electricity</th><th>Total</th></tr></thead>
+          <thead><tr><th></th><th>Per message</th><th>Per day</th><th>Per year</th></tr></thead>
           <tbody>
-            <tr><td>A (Altman)</td><td>0.322 mL</td><td>0.34 Wh</td><td>77.6M</td><td>369M</td><td>447M</td></tr>
-            <tr><td>B (Ren et al.)</td><td>2.2 mL</td><td>4 Wh</td><td>530M</td><td>4,344M</td><td>4,874M</td></tr>
+            <tr><td>Messages</td><td>—</td><td>~3.25B</td><td>—</td></tr>
+            <tr><td>Electricity</td><td>0.34 Wh</td><td>~1.1 GWh</td><td>~0.40 TWh</td></tr>
+            <tr><td>Direct on-site water</td><td>0.31 mL</td><td>~266K gal</td><td>~97M gal</td></tr>
+            <tr><td>Electricity water (thermo-only)</td><td>0.61 mL</td><td>~525K gal</td><td>~192M gal</td></tr>
+            <tr><td><strong>Total attributable</strong></td><td><strong>0.92 mL</strong></td><td><strong>~791K gal</strong></td><td><strong>~290M gal</strong></td></tr>
+            <tr><td>Total (LBNL incl. hydro evap.)</td><td>1.85 mL</td><td>—</td><td>~580M gal</td></tr>
           </tbody>
         </table>
-        <p><strong>Scenario A:</strong> Sam Altman's stated 0.000085 gal (0.322 mL) and 0.34 Wh per query. May capture only marginal inference cost, not full facility overhead.</p>
-        <p><strong>Scenario B:</strong> Ren et al. (2023) model a GPT-3-class request (800 words in, 150-300 out) at 2.2 mL on-site and 4 Wh energy (U.S. avg). Uses Ren's own energy figure for internal consistency — not mixed with Altman's 0.34 Wh.</p>
-        <p class="w-meth-src">Sources: <a href="https://openai.com/global-affairs/new-economic-analysis/" target="_blank" rel="noopener">OpenAI (2025)</a>, <a href="https://arxiv.org/abs/2304.03271" target="_blank" rel="noopener">Ren et al. 2023 (arXiv)</a></p>
 
-        <p><strong>Microsoft operations, FY24: 2.26B gal/yr.</strong> 8,573 megaliters total water consumption under operational control, <em>global</em> facilities and datacenters. No +electricity shown (US factor on global electricity not defensible). Public-supply potable share: unknown — Microsoft's Quincy WA facility reduced potable use by 97% through recycling.</p>
-        <p class="w-meth-src">Source: <a href="https://www.microsoft.com/en-us/corporate-responsibility/sustainability/report" target="_blank" rel="noopener">Microsoft 2024 Environmental Sustainability Report</a></p>
+        <p class="w-meth-src">Sources: <a href="https://openai.com/global-affairs/new-economic-analysis/" target="_blank" rel="noopener">OpenAI (2025)</a>, <a href="https://blog.samaltman.com/the-gentle-singularity" target="_blank" rel="noopener">Sam Altman — The Gentle Singularity</a>, <a href="https://eta-publications.lbl.gov/sites/default/files/2024-12/lbnl-2024-united-states-data-center-energy-usage-report.pdf" target="_blank" rel="noopener">LBNL 2024 Report</a></p>
 
-        <p><strong>Google operations, 2024: 7.03B gal/yr.</strong> Google reports 4.5B gal replenished = 64% of freshwater consumption, implying 4.5/0.64 = 7.03B total. <em>Global</em> operations. No +electricity shown. Public-supply potable share: unknown.</p>
-        <p class="w-meth-src">Source: <a href="https://sustainability.google/operations/" target="_blank" rel="noopener">Google — Sustainability Operations</a></p>
+        <p><strong>Microsoft operations, FY24: 1.53B gal/yr direct, ~15.5B with electricity.</strong> Microsoft's official FY24 environmental data fact sheet reports 5,807 megaliters total water consumption (updated estimation approach; prior years not restated). 5,807 ML / 3.785 = 1.53B gal. <em>Global</em> facilities and datacenters. Electricity: ~29.8 TWh from fact sheet × 0.47 gal/kWh (thermoelectric) = ~14.0B gal. Predominantly municipal water, though some facilities use recycled/reclaimed water.</p>
+        <p class="w-meth-src">Source: <a href="https://cdn-dynmedia-1.microsoft.com/is/content/microsoftcorp/microsoft/msc/documents/presentations/CSR/2025-Microsoft-Environmental-Data-Fact-Sheet-PDF.pdf" target="_blank" rel="noopener">Microsoft FY24 Environmental Data Fact Sheet</a></p>
+
+        <p><strong>Google operations, 2024: 7.03B gal/yr direct (freshwater consumption), ~21.5B with electricity.</strong> Google reports 4.5B gal replenished = 64% of freshwater consumption, implying 4.5/0.64 = 7.03B total. Note: this is specifically <em>freshwater consumption</em>, which may not be identical in boundary to Microsoft's <em>total operational water consumption</em>. <em>Global</em> operations. Electricity: Google's 2025 environmental report puts 2024 data-center electricity at ~30.8 TWh (27% year-over-year increase) × 0.47 gal/kWh = ~14.5B gal. Predominantly municipal water, though Google is expanding use of recycled and non-potable sources at some sites.</p>
+        <p class="w-meth-src">Source: <a href="https://sustainability.google/operations/" target="_blank" rel="noopener">Google — Sustainability Operations</a>, <a href="https://sustainability.google/reports/google-2025-environmental-report/" target="_blank" rel="noopener">Google 2025 Environmental Report</a></p>
+      </div>
+    </details>
+
+    <details class="w-meth-section">
+      <summary>Data centers — 2030 estimates</summary>
+      <div class="w-meth-body">
+        <p>These are modeled estimates based on the best public data available, not official 2030 forecasts. All figures are <strong>direct on-site water consumption</strong> at the data center or serving layer. They do not include the much larger attributed water used to generate electricity, because that broader footprint is far more sensitive to assumptions about the 2030 grid.</p>
+
+        <table class="w-meth-table">
+          <thead><tr><th>Item</th><th>Central estimate</th><th>Range</th></tr></thead>
+          <tbody>
+            <tr><td>All US data centers</td><td>~80B gal/yr</td><td>50–110B</td></tr>
+            <tr><td>US AI workloads</td><td>~45B gal/yr</td><td>25–70B</td></tr>
+            <tr><td>ChatGPT</td><td>~250M gal/yr</td><td>70M–500M</td></tr>
+          </tbody>
+        </table>
+
+        <p><strong>All US data centers (~80B gal/yr, range 50–110B).</strong> DOE/LBNL's 2024 report puts 2023 US data center electricity at 176 TWh with 17.4B gal direct site water, and projects 325–580 TWh by 2028 with average site WUE rising to ~0.45–0.48 L/kWh. EPRI's Feb 2026 outlook extends US data center electricity to ~380–790 TWh by 2030. The IEA's 2025 base case implies ~425 TWh US by decade end. The 80B central pairs ~500 TWh (above IEA base case) with ~0.61 L/kWh implied WUE (above LBNL's near-term projected range of 0.45–0.48). A March 2026 preprint extending these frameworks lands at ~47.3B gal (optimistic efficiency), ~73.8B gal (LBNL reference), and ~89.0B gal (no improvement baseline), with a headline band of ~60–110B gal consumed annually.</p>
+
+        <p><strong>US AI workloads (~45B gal/yr, range 25–70B).</strong> No official 2030 water number exists for US AI alone. In 2023, LBNL says GPU-accelerated AI servers used &gt;40 TWh of 176 TWh total. EPRI says AI currently accounts for ~15–25% of data center electricity. By 2028, LBNL's equipment mix suggests AI-specialized servers at roughly half or more of total. The IEA says electricity demand from accelerated servers grows ~30%/yr globally to 2030. A 55–60% AI share of US data center direct water by 2030 is the central assumption (50–65% broader band), applied to the total US data center estimate.</p>
+
+        <p><strong>ChatGPT (~250M gal/yr, range 70M–500M).</strong> This is global product demand mapped onto serving infrastructure, not US-only. OpenAI's 2025 usage paper reports &gt;700M weekly active users, &gt;2.5B messages/day by July 2025, with 5x message growth from July 2024–2025. Altman reports ~0.34 Wh and ~0.000085 gal per query. Google's 2025 Gemini Apps paper gives ~0.24 Wh and 0.26 mL per median text prompt. Central modeling: ~10B messages/day in 2030 (range 5–15B), ~0.25 mL direct water per message (range 0.15–0.35 mL), for average text-dominant interactions.</p>
+
+        <p class="w-meth-caveat">The biggest uncertainty for all US data centers is water usage effectiveness (WUE). LBNL expects average WUE to rise as hyperscale and liquid-cooled AI facilities grow, but Microsoft is deploying zero-water cooling designs for some next-gen AI data centers, and Google says water use in high-stress areas should trend lower as older assets retire. For ChatGPT, the main swing factor is whether average 2030 usage still looks like text assistance or shifts into more compute-intensive agentic and multimodal work. All figures are water consumption, not withdrawals — withdrawals would be higher (~80–150B gal/yr for all US data centers in 2030).</p>
+
+        <p class="w-meth-src">Sources: <a href="https://eta.lbl.gov/publications/2024-united-states-data-center-energy" target="_blank" rel="noopener">LBNL 2024</a>, <a href="https://www.epri.com/research/products/000000003002028905" target="_blank" rel="noopener">EPRI Feb 2026</a>, <a href="https://www.iea.org/reports/electricity-2025" target="_blank" rel="noopener">IEA Electricity 2025</a>, <a href="https://openai.com/global-affairs/new-economic-analysis/" target="_blank" rel="noopener">OpenAI 2025</a></p>
       </div>
     </details>
 
     <details class="w-meth-section">
       <summary>Data centers — including electricity generation</summary>
       <div class="w-meth-body">
-        <p><strong>Mainline: 1.19 gal/kWh.</strong> LBNL's location-based factor for U.S. DC electricity. <strong>Sensitivity: 0.47 gal/kWh</strong> (thermoelectric only, excludes hydro reservoir evaporation — reduces all +elec figures by ~60%).</p>
-        <p class="w-meth-caveat">LBNL's factor includes hydroelectric reservoir evaporation, which is methodologically unsettled. The +electricity toggle is available only for US-scoped items. Microsoft and Google +electricity was removed because applying a US factor to global electricity is not defensible.</p>
+        <p><strong>Two conventions are used.</strong> <strong>LBNL factor: 1.19 gal/kWh</strong> — LBNL's location-based factor for U.S. data center electricity, used for historical aggregate US items (All US AI 2024, All US data centers 2023) to match the source literature. <strong>Thermoelectric-only: 0.47 gal/kWh</strong> — excludes hydro reservoir evaporation, used for all other items. As <a href="https://www.construction-physics.com/p/i-was-wrong-about-data-center-water" target="_blank" rel="noopener">Brian Potter argues</a>, LBNL's factor is inflated by hydroelectric reservoir evaporation (~18.27 gal/kWh for hydro alone), which would occur regardless of data center electricity demand.</p>
         <table class="w-meth-table">
-          <thead><tr><th></th><th>Electricity</th><th>x 1.19 gal/kWh</th><th>+ Direct</th><th>= Total</th></tr></thead>
+          <thead><tr><th></th><th>Electricity</th><th>Factor</th><th>Elec water</th><th>+ Direct</th><th>= Total</th></tr></thead>
           <tbody>
-            <tr><td>ChatGPT Scenario A</td><td>310 GWh</td><td>369M</td><td>77.6M</td><td>447M gal/yr</td></tr>
-            <tr><td>ChatGPT Scenario B</td><td>3,650 GWh</td><td>4,344M</td><td>530M</td><td>4,874M gal/yr</td></tr>
-            <tr><td>All US AI (2024)</td><td>~40.5 TWh</td><td>48.2B</td><td>4B</td><td>52B gal/yr</td></tr>
-            <tr><td>All US data centers (2023)</td><td>176 TWh</td><td>209B</td><td>17.4B</td><td>227B gal/yr</td></tr>
+            <tr><td>ChatGPT (current est.)</td><td>~0.40 TWh</td><td>0.47 (thermo)</td><td>192M</td><td>97M</td><td>290M gal/yr</td></tr>
+            <tr><td>Microsoft (FY24)</td><td>~29.8 TWh</td><td>0.47 (thermo)</td><td>14.0B</td><td>1.53B</td><td>15.5B gal/yr</td></tr>
+            <tr><td>Google (2024)</td><td>~30.8 TWh</td><td>0.47 (thermo)</td><td>14.5B</td><td>7.03B</td><td>21.5B gal/yr</td></tr>
+            <tr><td>All US AI (2024)</td><td>~40.5 TWh</td><td>1.19 (LBNL)</td><td>48.2B</td><td>4B</td><td>52B gal/yr</td></tr>
+            <tr><td>All US data centers (2023)</td><td>176 TWh</td><td>1.19 (LBNL)</td><td>209B</td><td>17.4B</td><td>227B gal/yr</td></tr>
+            <tr><td>ChatGPT (2030 est.)</td><td>~1.24 TWh</td><td>0.47 (thermo)</td><td>583M</td><td>250M</td><td>830M gal/yr</td></tr>
+            <tr><td>US AI workloads (2030 est.)</td><td>~288 TWh</td><td>0.47 (thermo)</td><td>135B</td><td>45B</td><td>180B gal/yr</td></tr>
+            <tr><td>All US DCs (2030 est.)</td><td>~500 TWh</td><td>0.47 (thermo)</td><td>235B</td><td>80B</td><td>315B gal/yr</td></tr>
           </tbody>
         </table>
-        <p class="w-meth-src">Sources: <a href="https://eta.lbl.gov/publications/2024-united-states-data-center-energy" target="_blank" rel="noopener">LBNL 2024 Report</a>, <a href="https://www.nrel.gov/docs/fy04osti/33905.pdf" target="_blank" rel="noopener">NREL (0.47 sensitivity)</a></p>
+        <p><strong>Microsoft & Google:</strong> These are <em>global</em> operations — the thermoelectric factor (0.47 gal/kWh) is used as a rough global approximation since LBNL's US-specific 1.19 factor is not defensible for global electricity. Microsoft: ~29.8 TWh from <a href="https://cdn-dynmedia-1.microsoft.com/is/content/microsoftcorp/microsoft/msc/documents/presentations/CSR/2025-Microsoft-Environmental-Data-Fact-Sheet-PDF.pdf" target="_blank" rel="noopener">FY24 Environmental Data Fact Sheet</a> (updated estimation approach; prior years not restated). Google: ~30.8 TWh data-center electricity from <a href="https://sustainability.google/reports/google-2025-environmental-report/" target="_blank" rel="noopener">2025 Environmental Report</a>. Note that Microsoft reports <em>total operational water consumption</em> while Google reports <em>freshwater consumption</em>; these scopes may not be identical.</p>
+        <p><strong>2030 estimates:</strong> ChatGPT 2030 electricity assumes ~10B messages/day × 0.34 Wh per message = ~1.24 TWh/yr. US AI workloads estimated at ~57.5% of ~500 TWh total US DC electricity (based on EPRI 380–790 TWh range and IEA's ~425 TWh base case, with central ~500 TWh). All use the thermoelectric factor (0.47) rather than LBNL (1.19) because the 2030 grid will have substantially more renewables, making the current LBNL factor — which already includes hydro evaporation — even less applicable.</p>
+        <p class="w-meth-src">Sources: <a href="https://eta.lbl.gov/publications/2024-united-states-data-center-energy" target="_blank" rel="noopener">LBNL 2024 Report</a>, <a href="https://www.nrel.gov/docs/fy04osti/33905.pdf" target="_blank" rel="noopener">NREL</a>, <a href="https://www.construction-physics.com/p/i-was-wrong-about-data-center-water" target="_blank" rel="noopener">Construction Physics</a></p>
       </div>
     </details>
 
     <details class="w-meth-section">
       <summary>Other industries — consumptive use estimates</summary>
       <div class="w-meth-body">
-        <p>Industry figures are derived from withdrawal data x estimated consumption ratios. These are the weakest figures in the visualization. Auto manufacturing and steel production were removed due to obsolete or unreliable source data (US steel has shifted to EAF; auto data lacks rebuildable sources).</p>
+        <p>Industry figures are modeled estimates derived from withdrawal data × estimated consumption ratios. The consumption ratios do most of the work and carry significant uncertainty. Auto manufacturing and steel production were removed due to obsolete or unreliable source data.</p>
         <table class="w-meth-table">
           <thead><tr><th>Industry</th><th>Withdrawal</th><th>Consumption ratio</th><th>Consumed</th></tr></thead>
           <tbody>
@@ -357,29 +438,63 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
             <tr><td>Paper & pulp</td><td>~1,460B</td><td>~12%</td><td>175B</td></tr>
           </tbody>
         </table>
-        <p class="w-meth-caveat">Food & beverage has the widest uncertainty (~100-275B). Semiconductor public-supply share is predominantly municipal but exact percentage is unknown.</p>
+        <p class="w-meth-caveat">Food & beverage has wide uncertainty (~100–275B) and is shown in potable mode because food processing requires potable-quality water, though the actual municipal vs. self-supplied share is uncertain. Semiconductor public-supply share is predominantly municipal but exact percentage is unknown.</p>
         <p class="w-meth-src">Sources: <a href="https://www.construction-physics.com/p/how-does-the-us-use-water" target="_blank" rel="noopener">Construction Physics</a>, <a href="https://greet.anl.gov/files/refineries-water-2016" target="_blank" rel="noopener">Argonne GREET</a></p>
+      </div>
+    </details>
+
+    <details class="w-meth-section">
+      <summary>Treated-water-heavy industries</summary>
+      <div class="w-meth-body">
+        <p>These sectors use unusually large amounts of <strong>treated/public-supply potable water</strong> because food-contact, pharmaceutical, or sanitation regulations require it. The best public federal numbers for these sectors are usually <strong>wastewater-generated or process-water-discharge totals</strong>, used here as a proxy for freshwater handled. This means these figures are closer to water throughput than to strict consumptive use. Public-supply potable fractions are modeled from regulatory requirements, facility siting patterns, and federal guidance on typical water sources — not directly reported.</p>
+
+        <table class="w-meth-table">
+          <thead><tr><th>Sector</th><th>Total freshwater</th><th>Public-supply potable (central)</th><th>Potable share</th><th>Confidence</th></tr></thead>
+          <tbody>
+            <tr><td>Meat & poultry processing</td><td>179B</td><td>108B</td><td>~60% (range 45–75%)</td><td>Moderate-high</td></tr>
+            <tr><td>Pharmaceutical manufacturing</td><td>97.2B</td><td>82.7B</td><td>~85% (range 70–95%)</td><td>High-moderate</td></tr>
+            <tr><td>Dairy processing / milk plants</td><td>45B</td><td>31.5B</td><td>~70% (range 50–85%)</td><td>Moderate</td></tr>
+            <tr><td>Industrial launderers</td><td>~35B</td><td>33.2B</td><td>~95%</td><td>Moderate</td></tr>
+            <tr><td>Breweries (modeled)</td><td>32B</td><td>24B</td><td>~75% (range 60–85%)</td><td>Moderate-low</td></tr>
+            <tr><td>Bottled water mfg</td><td>22.8B</td><td>—</td><td>Unknown</td><td>Low-moderate</td></tr>
+          </tbody>
+        </table>
+
+        <p><strong>Meat & poultry processing: 179B gal/yr.</strong> <a href="https://www.epa.gov/eg/meat-and-poultry-products-effluent-guidelines" target="_blank" rel="noopener">EPA's 2023 meat and poultry products technical development document</a> provides national production totals and average wastewater generation rates per unit of production for four segments: meat first processing (149B lb × 0.319 gal/lb = 47.6B), meat further processing (51.4B lb × 0.970 gal/lb = 49.8B), poultry first processing (105.9B lb × 0.645 gal/lb = 68.3B), poultry further processing (13.0B lb × 1.05 gal/lb = 13.7B). Total = 179B. <a href="https://www.fsis.usda.gov/policy/fsis-directives/7120.1" target="_blank" rel="noopener">FSIS requires</a> that all food-contact water be potable. EPA says most facilities use drinking-water sources (public supplies or well water). Public-supply share ~60% central because slaughter/primary processing is often in rural areas with private wells.</p>
+
+        <p><strong>Pharmaceutical manufacturing: 97.2B gal/yr.</strong> <a href="https://www.epa.gov/eg/pharmaceutical-manufacturing-effluent-guidelines" target="_blank" rel="noopener">EPA's 1998 pharmaceutical manufacturing development document</a> reports 297 facilities generating 266.42 MGD total wastewater (113.78 MGD noncontact cooling + 24.03 MGD ancillary + 9.29 MGD sanitary + 9.48 MGD other + remainder). 266.42 × 365 = 97.2B gal/yr. <a href="https://www.fda.gov/drugs/pharmaceutical-quality-resources/water-pharmaceutical-use" target="_blank" rel="noopener">FDA states</a> potable water is obtained "primarily from municipal water systems" and large volumes of purified water and WFI must be generated. Public-supply share ~85% central. EPA source is older but remains the best public national baseline.</p>
+
+        <p><strong>Dairy processing: 45B gal/yr.</strong> <a href="https://www.nass.usda.gov/Publications/Todays_Reports/reports/mkpr0425.pdf" target="_blank" rel="noopener">USDA 2024: 225B lb milk marketed</a> × <a href="https://www.epa.gov/eg/dairy-products-processing-effluent-guidelines" target="_blank" rel="noopener">EPA benchmark 200 gal/1000 lb milk equivalent</a> = 45B gal/yr. The <a href="https://www.fda.gov/food/guidance-regulation-food-and-dietary-supplements/grade-a-pasteurized-milk-ordinance-pmo" target="_blank" rel="noopener">Pasteurized Milk Ordinance</a> requires safe/sanitary water. EPA says raw water can come from wells or municipal systems. This is a central BOTEC — real plants vary widely by product mix, CIP design, and water reuse. Public-supply share ~70% central.</p>
+
+        <p><strong>Industrial launderers: ~35B gal/yr.</strong> <a href="https://www.census.gov/naics/?input=812332" target="_blank" rel="noopener">Census reports 1,421 employer establishments (NAICS 812332)</a>. <a href="https://www.epa.gov/watersense/commercial-and-institutional-sector" target="_blank" rel="noopener">EPA's commercial water study</a> benchmarks 64,090 gal/day average per establishment, with 84% going to cleaning/sanitation. 1,421 × 64,090 × 365 = 33.2B gal/yr. Nearly all from public supply (establishments are overwhelmingly on municipal water and sewer). Total freshwater ~33–37B with slight cushion for self-supplied sites.</p>
+
+        <p><strong>Breweries: 32B gal/yr (modeled).</strong> <a href="https://www.brewersassociation.org/statistics-and-data/national-beer-stats/" target="_blank" rel="noopener">Brewers Association 2024: 23.1M barrels craft at 13.3% market share</a> → ~173.7M total barrels → ~5.4B gal beer. <a href="https://www.epa.gov/sites/default/files/2019-11/documents/nwrap-action-plan-final-2019-11-27.pdf" target="_blank" rel="noopener">EPA/NWRAP: 4–12 gal water per gal beer</a>; central estimate uses 6. 5.4B × 6 = 32B gal/yr (range 22–65B). No authoritative national source-mix split exists; public-supply ~75% central is a rough estimate. This row is clearly a BOTEC.</p>
+
+        <p><strong>Bottled water manufacturing: 22.8B gal/yr (total only).</strong> <a href="https://bottledwater.org/economics-of-bottled-water/" target="_blank" rel="noopener">2024 consumption: 16.4B gal product</a> × <a href="https://bottledwater.org/economics-of-bottled-water/" target="_blank" rel="noopener">1.39 gal water used per gal bottled (IBWA 2022)</a> = 22.8B gal/yr total. <a href="https://www.gao.gov/products/gao-09-610" target="_blank" rel="noopener">FDA/GAO: sources include wells, springs, and public drinking-water systems</a>. No defensible national public-supply split is available, so no potable figure is shown.</p>
+
+        <p class="w-meth-caveat">These rows are less uniform than the data-center rows. For meat, dairy, and pharmaceuticals, the federal numbers are wastewater-generated or process-water-discharge totals used as freshwater-handled proxies. Public-supply potable fractions are modeled, not disclosed. Bottled water has no potable split. Breweries are a BOTEC from trade data + EPA process coefficients.</p>
       </div>
     </details>
 
     <details class="w-meth-section">
       <summary>Agriculture & land use</summary>
       <div class="w-meth-body">
-        <p>Crop water = irrigated acres x applied irrigation rate. These are <strong>irrigation water applied</strong>, NOT consumptive use — 20-50% of applied water returns to aquifers or streams. <strong>Rates from USDA 2023 IWMS Table 39</strong> (national averages):</p>
+        <p>Crop water shows estimated <strong>consumptive use</strong> — the portion of applied irrigation water that is actually consumed via evapotranspiration (ET). Applied irrigation always exceeds consumptive use because of runoff, deep percolation, and system inefficiency.</p>
         <table class="w-meth-table">
-          <thead><tr><th>Crop</th><th>Applied rate</th><th>Gal/acre/yr</th><th>US irrigated acres</th><th>Total gal/yr</th></tr></thead>
+          <thead><tr><th>Crop</th><th>Applied rate (FRIS)</th><th>CU ratio</th><th>Consumptive rate</th><th>Irrigated acres</th><th>Consumed (gal/yr)</th></tr></thead>
           <tbody>
-            <tr><td>Corn for grain</td><td>1.0 ac-ft/ac</td><td>325,851</td><td>11.64M (Table 38)</td><td>3.79T</td></tr>
-            <tr><td>Alfalfa</td><td>2.3 ac-ft/ac</td><td>749,457</td><td>5.41M (Table 38)</td><td>4.05T</td></tr>
+            <tr><td>Corn for grain</td><td>1.0 ac-ft/ac</td><td>×0.75</td><td>0.75 ac-ft/ac</td><td>11.64M</td><td>2.84T</td></tr>
+            <tr><td>Alfalfa</td><td>2.3 ac-ft/ac</td><td>×0.70</td><td>1.6 ac-ft/ac</td><td>5.41M</td><td>2.84T</td></tr>
           </tbody>
         </table>
-        <p class="w-meth-caveat">State rows use national average rates because USDA does not publish state-specific crop rates with adequate sample sizes. Berries were removed — no single USDA rate exists for the aggregate category.</p>
-        <p class="w-meth-src">Source: <a href="https://www.nass.usda.gov/Publications/AgCensus/2022/Online_Resources/Farm_and_Ranch_Irrigation_Survey/" target="_blank" rel="noopener">USDA NASS 2023 IWMS Tables 38 & 39</a></p>
+        <p><strong>Consumptive use ratios:</strong> Corn is predominantly center-pivot irrigated in the Great Plains with application efficiencies of 70–85% (Nebraska Extension G2345); using 0.75 as a national average. Alfalfa is disproportionately flood/surface irrigated in the West with efficiencies of 60–75%; using 0.70. These ratios are consistent with Kukal et al. (2024) and the USDA NRCS irrigation efficiency guidance.</p>
+        <p class="w-meth-caveat">State rows are <strong>illustrative modeled breakouts</strong> proportioned from the national consumptive total by each state's share of national applied irrigation. They should not be treated as state-validated estimates.</p>
+        <p class="w-meth-src">Sources: <a href="https://www.nass.usda.gov/Publications/AgCensus/2022/Online_Resources/Farm_and_Ranch_Irrigation_Survey/" target="_blank" rel="noopener">USDA NASS 2023 IWMS Tables 38 & 39</a>, <a href="https://agupubs.onlinelibrary.wiley.com/doi/full/10.1029/2024WR037434" target="_blank" rel="noopener">Kukal et al. 2024 — Consumptive Water Use of Irrigated U.S. Corn</a>, <a href="https://extensionpubs.unl.edu/publication/g2345/2023/html/view" target="_blank" rel="noopener">Nebraska Extension G2345</a></p>
 
         <p><strong>Golf courses (2024): 531B gal/yr.</strong> GCSAA Phase 4 reports 1.63 million acre-feet total. Water sources: ~45% wells, ~25% surface, ~21% reclaimed, ~9% municipal. Arizona uses Southwest regional rate (3.3 ac-ft/ac vs. 1.1 national median).</p>
         <p class="w-meth-src">Source: <a href="https://www.gcsaa.org/docs/default-source/what-we-do/gcep-phase-4-water-report.pdf" target="_blank" rel="noopener">GCSAA Phase 4 Water Report (2024)</a></p>
 
-        <p><strong>Residential lawns (est.): ~3T gal/yr, ~1.65T from public supply.</strong> EPA reports landscape irrigation at ~9B gal/day nationally. Municipal lawn portion: 13.1T x 0.60 x 0.30 x 0.70 = 1.65T. State figures are <em>modeled</em> proportional estimates.</p>
+        <p><strong>Residential lawns (est.): ~3T gal/yr, ~1.65T from public supply.</strong> EPA reports landscape irrigation at ~9B gal/day nationally. Municipal lawn portion: 13.1T × 0.60 × 0.30 × 0.70 = 1.65T. State figures are <strong>illustrative modeled breakouts</strong>, not state-validated estimates.</p>
         <p class="w-meth-src">Sources: <a href="https://www.epa.gov/watersense/how-we-use-water" target="_blank" rel="noopener">EPA WaterSense</a>, <a href="https://pubs.usgs.gov/publication/pp1894D" target="_blank" rel="noopener">USGS PP 1894D</a></p>
       </div>
     </details>
@@ -387,19 +502,52 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
     <details class="w-meth-section">
       <summary>City water systems & national totals</summary>
       <div class="w-meth-body">
-        <p>City figures are total annual water <strong>delivered</strong> by the municipal system (metric category D). Most delivered water returns via sewer — these overstate consumptive use.</p>
+        <p>City figures show estimated <strong>consumptive use</strong> — water evaporated, incorporated, or otherwise not returned to source. Most delivered water returns via sewer; the consumed fraction depends heavily on climate and outdoor use.</p>
         <table class="w-meth-table">
-          <thead><tr><th>System</th><th>Annual delivery</th><th>Year</th><th>Note</th></tr></thead>
+          <thead><tr><th>System</th><th>Delivered</th><th>Consumed (est.)</th><th>% consumed</th><th>Method</th></tr></thead>
           <tbody>
-            <tr><td>New York City</td><td>364B gal (997 MGD)</td><td>2023</td><td>NYC DEP</td></tr>
-            <tr><td>Chicago metro</td><td>274B gal (750 MGD)</td><td>~2023</td><td>Incl. suburban wholesale</td></tr>
-            <tr><td>Los Angeles</td><td>146B gal</td><td>FY 2023-24</td><td>LADWP</td></tr>
-            <tr><td>Phoenix</td><td>95.5B gal</td><td>FY 2023-24</td><td>Billed deliveries</td></tr>
-            <tr><td>Las Vegas metro</td><td>77B gal</td><td>2024</td><td><strong>Consumptive use</strong>, not delivery (SNWA 89 GPCD is net of return-flow credits)</td></tr>
+            <tr><td>New York City</td><td>364B gal</td><td>~45B gal</td><td>~12%</td><td>Extremely dense, minimal outdoor use. USGS NE Illinois study found 13% in similar climate/urbanization; Illinois official Lake Michigan rate is 10%.</td></tr>
+            <tr><td>Chicago metro</td><td>274B gal</td><td>~33B gal</td><td>~12%</td><td>USGS mass-balance study of suburban Chicago sewershed (Elk Grove Village) measured 13%. Illinois DNR uses 10% for Lake Michigan diversion accounting.</td></tr>
+            <tr><td>Los Angeles</td><td>146B gal</td><td>~51B gal</td><td>~35%</td><td>Semi-arid; UCLA research finds 54% of single-family residential use goes outdoors. City-wide outdoor fraction ~35-40% after multi-family and commercial dilution.</td></tr>
+            <tr><td>Phoenix</td><td>95.5B gal</td><td>~48B gal</td><td>~50%</td><td>ADWR Multi-City Water Use Study: 57-70% of residential use is outdoor. Extreme heat means nearly all outdoor water is consumed via evapotranspiration.</td></tr>
+            <tr><td>Las Vegas metro</td><td>~150B (diverted)</td><td>~69B gal</td><td>~46%</td><td>SNWA 2024: 212,400 acre-feet consumptive use. Directly reported net of return-flow credits to Lake Mead.</td></tr>
           </tbody>
         </table>
+        <p class="w-meth-caveat">NYC and Chicago estimates use consumption ratios validated by USGS field studies. LA and Phoenix estimates infer consumption from outdoor-use fractions (nearly all outdoor use is consumed; ~80-90% of indoor use returns via sewer). Las Vegas is the only city that directly reports consumptive use. Climate is the dominant factor: cool/wet cities consume ~10-15% of deliveries; hot/dry cities consume 35-50%.</p>
         <p><strong>US national totals:</strong> Total freshwater withdrawals: 102.6T gal/yr (USGS 2015). Total public water supply: 13.1T gal/yr (USGS 2020).</p>
         <p class="w-meth-src">Sources: <a href="https://pubs.usgs.gov/publication/cir1441" target="_blank" rel="noopener">USGS Circular 1441 (2015)</a>, <a href="https://pubs.usgs.gov/publication/pp1894D" target="_blank" rel="noopener">USGS Professional Paper 1894D (2020)</a></p>
+      </div>
+    </details>
+
+    <details class="w-meth-section">
+      <summary>Electricity-related water across all categories</summary>
+      <div class="w-meth-body">
+        <p>Every category now has a <strong>+ elec</strong> option on items where electricity consumption data is available. This adds the water consumed at power plants to generate the electricity used by that sector, using the thermoelectric-only factor of <strong>0.47 gal/kWh</strong> (NREL, excluding hydro reservoir evaporation). For data centers, electricity water is a major share of the total; for farms and cities, it is negligible (&lt;0.1%).</p>
+        <table class="w-meth-table">
+          <thead><tr><th>Sector</th><th>Electricity</th><th>Elec water (0.47 gal/kWh)</th><th>% of base water</th></tr></thead>
+          <tbody>
+            <tr><td>US semiconductor fabs</td><td>~12 TWh</td><td>5.6B gal</td><td>+62%</td></tr>
+            <tr><td>US oil refining</td><td>~48.5 TWh</td><td>22.8B gal</td><td>+104%</td></tr>
+            <tr><td>US food & beverage</td><td>~106 TWh</td><td>49.9B gal</td><td>+33%</td></tr>
+            <tr><td>US paper & pulp (net grid)</td><td>~51 TWh</td><td>24.0B gal</td><td>+14%</td></tr>
+            <tr><td>US meat & poultry</td><td>~31.7 TWh</td><td>14.9B gal</td><td>+8%</td></tr>
+            <tr><td>US pharmaceutical mfg</td><td>~10.4 TWh</td><td>4.9B gal</td><td>+5%</td></tr>
+            <tr><td>US dairy processing</td><td>~11.5 TWh</td><td>5.4B gal</td><td>+12%</td></tr>
+            <tr><td>US industrial launderers</td><td>~2.5 TWh</td><td>1.2B gal</td><td>+3%</td></tr>
+            <tr><td>US breweries</td><td>~3.4 TWh</td><td>1.6B gal</td><td>+5%</td></tr>
+            <tr><td>US bottled water mfg</td><td>~1.5 TWh</td><td>0.7B gal</td><td>+3%</td></tr>
+            <tr><td>All US corn (pumping)</td><td>~4.4 TWh</td><td>2.1B gal</td><td>&lt;0.1%</td></tr>
+            <tr><td>All US alfalfa (pumping)</td><td>~2.0 TWh</td><td>940M gal</td><td>&lt;0.1%</td></tr>
+
+            <tr><td>All US lawn irrigation</td><td>~5 TWh</td><td>2.4B gal</td><td>&lt;0.1%</td></tr>
+            <tr><td>All US golf courses</td><td>~1.4 TWh</td><td>660M gal</td><td>+0.1%</td></tr>
+            <tr><td>NYC water system</td><td>0.55 TWh</td><td>257M gal</td><td>&lt;1%</td></tr>
+            <tr><td>LA water system</td><td>0.73 TWh</td><td>343M gal</td><td>&lt;1%</td></tr>
+            <tr><td>Total US public water supply</td><td>~39 TWh</td><td>18.3B gal</td><td>+0.1%</td></tr>
+            <tr><td>Total US freshwater withdrawals</td><td>~70 TWh</td><td>33B gal</td><td>&lt;0.1%</td></tr>
+          </tbody>
+        </table>
+        <p class="w-meth-caveat">Industry electricity from <a href="https://www.eia.gov/consumption/manufacturing/data/2018/" target="_blank" rel="noopener">EIA MECS 2018</a> (net electricity = grid purchases, excludes on-site combustion generation) for manufacturing sectors: semis (NAICS 334413), oil (324110), food & bev (311+312), paper (322), meat & poultry (3116), pharma (3254), dairy (3115). Paper & pulp generates ~66-75% of its electricity from biomass; 51 TWh is net grid only. Industrial launderers (~2.5 TWh), breweries (~3.4 TWh), and bottled water (~1.5 TWh) are rough estimates — MECS does not break out below 4-digit NAICS for beverages, and does not cover service industries. Farm pumping (~22 TWh total) proportioned by acreage share. City electricity: NYC/Chicago ~1.5 kWh/1000 gal; LA/Phoenix/Vegas ~5 kWh/1000 gal. Public water supply: <a href="https://www.epri.com/research/products/000000003002001433" target="_blank" rel="noopener">~39 TWh (EPRI 2013)</a>.</p>
       </div>
     </details>
 
@@ -407,12 +555,12 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
       <summary>Key caveats</summary>
       <div class="w-meth-body">
         <ul>
-          <li><strong>This visualization mixes incompatible metrics.</strong> Data center figures are consumptive use. City figures are utility deliveries. Farm figures are irrigation applied. National totals are withdrawals. Cross-category comparisons show scale but are not like-for-like.</li>
-          <li><strong>ChatGPT scenarios are not confidence intervals.</strong> Scenario A (Altman) and Scenario B (Ren et al.) use different energy assumptions, workloads, and water factors. The ~7x gap in direct water and ~11x gap in +electricity reflects genuinely different measurement approaches.</li>
-          <li><strong>Microsoft and Google are global operational totals</strong>, not U.S.-only or datacenter-only. No +electricity is shown for them because applying a US factor to global electricity is not defensible.</li>
-          <li><strong>The electricity-water factor (1.19 gal/kWh) includes hydro reservoir evaporation.</strong> A thermoelectric-only case at 0.47 gal/kWh would reduce "+electricity" figures by ~60%.</li>
-          <li><strong>Public-supply potable fractions are uncertain.</strong> For data centers, semiconductors, and food processing, the true municipal share is unknown and changing. We replaced false precision with "unknown" or bounded estimates.</li>
-          <li><strong>Crop rates use USDA applied irrigation</strong>, not consumptive use. 20-50% of applied water returns to the hydrologic system.</li>
+          <li><strong>This visualization mixes incompatible metrics.</strong> Data center figures are on-site consumptive use. City figures are estimated consumptive use (delivered minus sewer returns). Farm figures are estimated consumptive use (applied irrigation × efficiency ratio). National totals are withdrawals. Cross-category comparisons show scale but are not like-for-like.</li>
+          <li><strong>The ChatGPT estimate is modeled, not disclosed.</strong> It is built from OpenAI's per-query energy and water figures, scaled by traffic growth implied by WAU data, and cross-checked against Google's first-party Gemini Apps measurements. The direct on-site number (~97M gal/yr) is the more defensible piece. The electricity-related piece uses a thermoelectric-only factor (~192M gal/yr) because, <a href="https://www.construction-physics.com/p/i-was-wrong-about-data-center-water" target="_blank" rel="noopener">as Construction Physics argues</a>, including hydroelectric reservoir evaporation overstates the actionable water impact. Under the LBNL convention (which includes hydro), the electricity piece would be ~482M gal/yr instead.</li>
+          <li><strong>Microsoft and Google are global operational totals</strong>, not U.S.-only or datacenter-only. Microsoft reports <em>total operational water consumption</em>; Google reports <em>freshwater consumption</em> — these scopes may not be identical. Their +electricity uses the thermoelectric factor (0.47 gal/kWh) as a rough global approximation.</li>
+          <li><strong>Two electricity-water factors are used, which makes +elec totals hard to compare.</strong> Historical aggregate US items (All US AI 2024, All US DCs 2023) use LBNL's 1.19 gal/kWh to match source literature. All other items use the thermoelectric-only 0.47 gal/kWh. This is a ~2.5× convention difference: All US DCs would be ~100B total (not 227B) at 0.47, and All US AI would be ~23B (not 52B). The convention effect is too large to ignore when comparing +elec totals across items.</li>
+          <li><strong>Public-supply potable fractions are uncertain.</strong> For data centers, semiconductors, and food processing, the true municipal share is unknown and changing. Food & beverage is shown in potable mode because it requires potable-quality water, but the actual municipal vs. self-supplied share is uncertain.</li>
+          <li><strong>Crop figures are estimated consumptive use</strong>, derived from USDA applied irrigation rates × consumptive use ratios (0.75 for corn, 0.70 for alfalfa). The ratios are based on typical irrigation system efficiencies and are national averages — actual consumption varies by region, soil, and method.</li>
           <li><strong>Year mixing is unavoidable.</strong> 2023 LBNL, 2023 USDA, 2024 corporate, 2025 AI usage. Every figure is year-stamped.</li>
         </ul>
       </div>
@@ -985,26 +1133,9 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
   .wv-cat-list::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.08); border-radius: 2px; }
   .wv-cat-list::-webkit-scrollbar-track { background: transparent; }
 
-  /* #17 Bar gridlines */
+  /* #17 Bar area */
   .wv-bars-area {
-    background: repeating-linear-gradient(90deg, transparent, transparent calc(25% - 0.5px), rgba(0,0,0,0.04) calc(25% - 0.5px), rgba(0,0,0,0.04) calc(25% + 0.5px));
     position: relative;
-  }
-  .wv-gridline-labels {
-    position: absolute;
-    top: 4px;
-    left: 260px;  /* past name column (240px + gap) */
-    right: 120px; /* before value column (110px + gap) */
-    height: 0;
-    pointer-events: none;
-  }
-  .wv-gridline-label {
-    position: absolute;
-    top: 0;
-    font-size: 0.55rem;
-    color: var(--text-secondary);
-    opacity: 0.4;
-    transform: translateX(-50%);
   }
 
   /* #3 Two-item ratio callout */
@@ -1111,6 +1242,30 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
   }
 
   /* Methodology */
+  .wv-tooltip {
+    position: fixed;
+    z-index: 9999;
+    max-width: 360px;
+    padding: 12px 14px;
+    background: var(--bg, #FAF9F7);
+    border: 1px solid var(--border, #e5e2df);
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+    font-size: 0.72rem;
+    line-height: 1.55;
+    color: var(--text-secondary, #6B6B60);
+    pointer-events: none;
+  }
+  [data-theme="dark"] .wv-tooltip {
+    background: var(--bg, #141413);
+    border-color: var(--border, #2e2d2b);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+  }
+  .wv-tooltip strong { color: var(--text, #1A1A18); }
+  [data-theme="dark"] .wv-tooltip strong { color: var(--text, #e8e6e1); }
+  .wv-tooltip hr { border: none; border-top: 1px solid var(--border, #e5e2df); margin: 8px 0; }
+  .wv-tooltip a { color: var(--accent, #8b3a3a); text-decoration: underline; text-underline-offset: 2px; pointer-events: auto; }
+
   .w-methodology { max-width: 760px; padding-bottom: 3rem; }
   .w-methodology h2 { font-size: 1.4rem; font-weight: 700; margin-bottom: 0.25rem; letter-spacing: -0.02em; }
   .w-meth-intro { font-size: 0.82rem; color: var(--dim); line-height: 1.6; margin-bottom: 1.5rem; }
@@ -1269,9 +1424,13 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
           }
           if (!isCrossed) {
             it.gallons = parseFloat(tg);
+            it.name = it.baseName;
+            it.squareName = it.baseSquareName;
             it.sub = fG(it.gallons);
             var valEl = row.querySelector('.wv-row-val');
             if (valEl) valEl.textContent = it.sub;
+            var nameEl = row.querySelector('.wv-row-name');
+            if (nameEl) nameEl.textContent = it.baseName;
           }
           var chip = row.querySelector('.wv-elec-chip');
           if (chip) {
@@ -1280,12 +1439,15 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
             chip.dataset.crossed = elecCrossed ? 'true' : 'false';
             if (elecCrossed && it.elecOn) {
               it.elecOn = false;
-              it.gallons = it.galBase;
               chip.dataset.elecOn = 'false';
               it.gallons = parseFloat(row.dataset.tgal);
+              it.name = it.baseName;
+              it.squareName = it.baseSquareName;
               it.sub = fG(it.gallons);
               var valEl2 = row.querySelector('.wv-row-val');
               if (valEl2) valEl2.textContent = it.sub;
+              var nameEl2 = row.querySelector('.wv-row-name');
+              if (nameEl2) nameEl2.textContent = it.baseName;
             }
           }
         } else {
@@ -1349,12 +1511,22 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
       }
     }
 
+    // For farm items, insert "irrigated" before crop name on square labels (not nav)
+    var squareName = baseName;
+    if (catName === 'farm' && baseName.indexOf('irrigated') < 0 && baseName.indexOf('Irrigated') < 0) {
+      // "All US corn (2023)" → "All US irrigated corn (2023)"
+      // "Nebraska corn" → "Nebraska irrigated corn"
+      squareName = baseName.replace(/(corn|alfalfa)/, 'irrigated $1');
+    }
+
     items[idx] = {
       idx: idx,
       gallons: gallons,
       on: row.dataset.on === 'true',
       color: color,
       name: baseName,
+      squareName: squareName,
+      baseSquareName: squareName,
       sub: fG(gallons),
       baseName: baseName,
       elecOn: false,
@@ -1444,6 +1616,7 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
       it.elecOn = nowChecked;
       it.gallons = nowChecked ? it.galElec : it.galBase;
       it.name = nowChecked ? it.baseName + ' + electricity' : it.baseName;
+      it.squareName = nowChecked ? it.baseSquareName + ' + electricity' : it.baseSquareName;
       it.sub = fG(it.gallons);
 
       // (#7) Update value text with struck-through original
@@ -1658,7 +1831,7 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
 
     // ── Bar view ──
     if (currentView === 'bars') {
-      var html = '<div class="wv-gridline-labels"><span class="wv-gridline-label" style="left:25%">25%</span><span class="wv-gridline-label" style="left:50%">50%</span><span class="wv-gridline-label" style="left:75%">75%</span></div>';
+      var html = '';
       for (var j = 0; j < active.length; j++) {
         var it = active[j];
         var pct = maxG > 0 ? (it.gallons / maxG) * 100 : 0;
@@ -1674,8 +1847,8 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
         if (isProj) {
           fillStyle += ';background-image:repeating-linear-gradient(45deg,transparent,transparent 3px,rgba(0,0,0,0.03) 3px,rgba(0,0,0,0.03) 6px)';
         }
-        html += '<div class="wv-bar-row" data-idx="' + it.idx + '" title="' + it.name + ': ' + val + '" style="border-left:3px solid ' + it.color + ';padding-left:8px">';
-        html += '<span class="wv-bar-name" title="' + it.name + '">' + it.name + '</span>';
+        html += '<div class="wv-bar-row" data-idx="' + it.idx + '" title="' + it.squareName + ': ' + val + '" style="border-left:3px solid ' + it.color + ';padding-left:8px">';
+        html += '<span class="wv-bar-name" title="' + it.squareName + '">' + it.squareName + '</span>';
         html += '<div class="wv-bar-track"><div class="wv-bar-fill" style="' + fillStyle + '"></div></div>';
         html += '<span class="wv-bar-val">' + val + '<span class="wv-bar-pct">' + pctText + '</span></span>';
         html += '</div>';
@@ -1696,7 +1869,7 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
       var sized = [];
       for (var k = 0; k < active.length; k++) {
         var sq = active[k];
-        var side = Math.max(2, Math.round(maxSide * Math.sqrt(sq.gallons / maxG)));
+        var side = Math.max(12, Math.round(maxSide * Math.sqrt(sq.gallons / maxG)));
         var isP = sq.name.indexOf('2030') >= 0;
         var eTag = sq.elecOn ? ' +elec' : '';
         var pre = isP ? '~' : '';
@@ -1715,8 +1888,8 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
         placed = [];
         var shelfX = 0, shelfY = 0, shelfH = 0;
         for (var s = 0; s < sized.length; s++) {
-          var scaledSide = Math.max(2, Math.round(sized[s].side * scale));
-          var textW = ctx.measureText(sized[s].sq.name).width + 8;
+          var scaledSide = Math.max(12, Math.round(sized[s].side * scale));
+          var textW = ctx.measureText(sized[s].sq.squareName).width + 8;
           var labelBelowPack = scaledSide >= 60;
           var nameW = textW;
           var itemW, itemH;
@@ -1792,8 +1965,7 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
           el.classList.remove('wv-proj-item');
         }
 
-        // (#13) Square hover tooltip
-        el.title = d.sq.name + ': ' + d.val;
+        // (#13) Square hover — handled by rich tooltip system
 
         var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
         var fillOpacity = isDark ? '0.55' : '0.5';
@@ -1841,8 +2013,8 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
           colorBar.style.flexShrink = '0';
         }
         var nameEl = el.querySelector('.wv-sq-name');
-        nameEl.textContent = showName ? d.sq.name : '';
-        nameEl.title = d.sq.name;
+        nameEl.textContent = showName ? d.sq.squareName : '';
+        nameEl.title = d.sq.squareName;
         nameEl.style.fontSize = fontSize;
         nameEl.style.textAlign = labelBelow ? 'center' : 'left';
         var valEl = el.querySelector('.wv-sq-val');
@@ -1862,7 +2034,7 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
         refEl.className = 'wv-scale-ref';
         container.appendChild(refEl);
       }
-      var refSide = Math.max(2, Math.round(maxSide * scale * Math.sqrt(1e9 / maxG)));
+      var refSide = Math.max(12, Math.round(maxSide * scale * Math.sqrt(1e9 / maxG)));
       if (refSide >= 2 && refSide <= 60) {
         refEl.innerHTML = '<div class="wv-scale-ref-box" style="width:' + refSide + 'px;height:' + refSide + 'px"></div> 1B gal/yr';
         refEl.style.display = '';
@@ -1894,6 +2066,114 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.gal) }));
       render();
     }
   });
+
+  // ── Rich tooltips ──────────────────────────────
+  var TIPS = {
+    'ChatGPT (current est.)': 'ChatGPT runs on <a href="https://azure.microsoft.com/">Azure data centers</a> that consume water primarily through <a href="https://eta.lbl.gov/publications/2024-united-states-data-center-energy">cooling systems</a> (evaporative cooling, chillers, or hybrid approaches) to dissipate heat from GPU inference. This estimate covers average message serving — not <a href="https://openai.com/index/new-and-improved-embedding-model/">training</a>, API traffic, or heavy multimodal workloads.<hr><strong>Method:</strong> <a href="https://openai.com/global-affairs/new-economic-analysis/">~3.25B messages/day</a> (scaled from <a href="https://openai.com/global-affairs/new-economic-analysis/">700M → 900M weekly active users</a>) × <a href="https://blog.samaltman.com/the-gentle-singularity">0.31 mL/message</a> direct on-site water (triangulated from <a href="https://blog.samaltman.com/the-gentle-singularity">Altman\'s 0.322 mL</a> and <a href="https://sustainability.google/reports/google-2025-environmental-report/">Google Gemini\'s 0.26 mL</a>). Electricity water uses <a href="https://www.nrel.gov/docs/fy04osti/33905.pdf">thermoelectric-only factor (0.47 gal/kWh)</a>, <a href="https://www.construction-physics.com/p/i-was-wrong-about-data-center-water">excluding hydro reservoir evaporation</a>.',
+    'All US AI workloads (2024)': 'AI-specialized <a href="https://www.nvidia.com/en-us/data-center/">GPU servers</a> require more intensive cooling than traditional compute. This is a share-allocation estimate — it gives AI its share of total fleet-average water, not an AI-specific water intensity measurement.<hr><strong>Method:</strong> <a href="https://eta.lbl.gov/publications/2024-united-states-data-center-energy">AI servers used ~40 TWh of 176 TWh total</a> US data center electricity (~23%). That share of <a href="https://eta.lbl.gov/publications/2024-united-states-data-center-energy">17.4B gal total</a> = ~4B gal. Electricity water uses <a href="https://eta-publications.lbl.gov/sites/default/files/2024-12/lbnl-2024-united-states-data-center-energy-usage-report.pdf">LBNL\'s 1.19 gal/kWh</a> (data-center grid-mix factor).',
+    'Microsoft operations (FY24)': 'Microsoft\'s global cloud and data center operations, including <a href="https://azure.microsoft.com/">Azure</a>, Office 365, and AI services. Predominantly municipal water, though some facilities <a href="https://blogs.microsoft.com/on-the-issues/2023/09/21/microsoft-water-positive-2030-water-replenishment/">use recycled water</a>.<hr><strong>Method:</strong> <a href="https://cdn-dynmedia-1.microsoft.com/is/content/microsoftcorp/microsoft/msc/documents/presentations/CSR/2025-Microsoft-Environmental-Data-Fact-Sheet-PDF.pdf">5,807 ML total water consumption</a> from FY24 fact sheet (updated estimation approach; prior years not restated). Electricity: <a href="https://cdn-dynmedia-1.microsoft.com/is/content/microsoftcorp/microsoft/msc/documents/presentations/CSR/2025-Microsoft-Environmental-Data-Fact-Sheet-PDF.pdf">~29.8 TWh</a> × <a href="https://www.nrel.gov/docs/fy04osti/33905.pdf">0.47 gal/kWh</a>. Note: global operations, so the US thermoelectric factor is approximate.',
+    'Google operations (2024)': 'Google\'s global <a href="https://www.google.com/about/datacenters/">data center</a> and office operations. Google reports <em>freshwater consumption</em>, which <a href="https://sustainability.google/reports/google-2025-environmental-report/">may differ in boundary</a> from Microsoft\'s <em>total operational water consumption</em>.<hr><strong>Method:</strong> <a href="https://sustainability.google/operations/">4.5B gal replenished = 64% of freshwater consumption</a>, implying 7.03B total. Electricity: <a href="https://sustainability.google/reports/google-2025-environmental-report/">~30.8 TWh DC electricity</a> (<a href="https://sustainability.google/reports/google-2025-environmental-report/">27% YoY increase</a>) × <a href="https://www.nrel.gov/docs/fy04osti/33905.pdf">0.47 gal/kWh</a>.',
+    'All US data centers (2023)': 'U.S. data centers consume water primarily through <a href="https://www.techtarget.com/searchdatacenter/tip/Data-center-cooling-systems-and-technologies-and-how-they-work">cooling systems</a> — evaporative cooling towers, chillers, and increasingly <a href="https://datacenters.lbl.gov/liquid-cooling">liquid cooling</a> for AI workloads. Some newer facilities, like <a href="https://www.microsoft.com/en-us/microsoft-cloud/blog/2024/12/09/sustainable-by-design-next-generation-datacenters-consume-zero-water-for-cooling/">Microsoft\'s next-gen designs</a>, use zero-water closed-loop systems. From <a href="https://eta.lbl.gov/publications/2024-united-states-data-center-energy">LBNL\'s 2024 survey</a> of the entire US data center industry.<hr><strong>Method:</strong> <a href="https://eta-publications.lbl.gov/sites/default/files/2024-12/lbnl-2024-united-states-data-center-energy-usage-report.pdf">LBNL reports 66 billion liters</a> direct site water consumption at <a href="https://eta-publications.lbl.gov/sites/default/files/2024-12/lbnl-2024-united-states-data-center-energy-usage-report.pdf">176 TWh electricity</a> in 2023. 66B L ÷ 3.785 = 17.4B gal. Electricity water uses <a href="https://eta-publications.lbl.gov/sites/default/files/2024-12/lbnl-2024-united-states-data-center-energy-usage-report.pdf">LBNL\'s location-based 1.19 gal/kWh</a>.',
+    'ChatGPT (2030 est.)': 'Projected ChatGPT water if average usage remains text-dominant. Not for a future where the average interaction is a long-running <a href="https://openai.com/index/introducing-chatgpt-pro/">agent</a> or heavy video generation — in that world, the upper end of the range matters more.<hr><strong>Method:</strong> ~10B messages/day (range 5–15B) × ~0.25 mL/message (range 0.15–0.35 mL). Based on <a href="https://openai.com/global-affairs/new-economic-analysis/">OpenAI\'s 5× message growth</a> from July 2024–2025 and efficiency gains implied by <a href="https://blog.samaltman.com/the-gentle-singularity">Altman\'s per-query figures</a>. Range: 70M–500M gal/yr.',
+    'US AI workloads (2030 est.)': 'Projected water for all AI workloads in US data centers by 2030.<hr><strong>Method:</strong> ~55–60% AI share of <a href="https://www.epri.com/research/products/000000003002028905">~500 TWh total US DC electricity</a> (from <a href="https://www.epri.com/research/products/000000003002028905">EPRI\'s 380–790 TWh range</a>) = ~288 TWh for AI. Direct water from applying the total DC estimate\'s share. Range: 25–70B gal/yr.',
+    'All US data centers (2030 est.)': 'Projected total US data center water. The implied ~0.61 L/kWh WUE is above <a href="https://eta-publications.lbl.gov/sites/default/files/2024-12/lbnl-2024-united-states-data-center-energy-usage-report.pdf">LBNL\'s near-term projected range</a> of 0.45–0.48 L/kWh.<hr><strong>Method:</strong> <a href="https://www.epri.com/research/products/000000003002028905">EPRI projects 380–790 TWh</a> by 2030; <a href="https://www.iea.org/reports/electricity-2025">IEA base case ~425 TWh</a>. Central pairs ~500 TWh with WUE trends. Range: 50–110B gal/yr.',
+
+    'US semiconductor fabs': 'Chip fabrication requires <a href="https://www.semiconductors.org/water-and-semiconductors/">ultra-pure water (UPW)</a> for wafer rinsing — each wafer goes through hundreds of rinse cycles. Predominantly municipal water. The <a href="https://www.semiconductors.org/strengthening-the-global-semiconductor-supply-chain/">US produces about 12% of global semiconductors</a> by revenue.<hr><strong>Method:</strong> <a href="https://www.construction-physics.com/p/how-does-the-us-use-water">~29B gal/yr withdrawal × ~30% consumption ratio</a> = 9B gal consumed. Electricity: <a href="https://www.eia.gov/consumption/manufacturing/data/2018/">~12 TWh (EIA MECS 2018, NAICS 334413)</a> × <a href="https://www.nrel.gov/docs/fy04osti/33905.pdf">0.47 gal/kWh</a>.',
+    'US oil refining': 'Refineries use water for cooling, steam generation, and crude processing. The US refines about <a href="https://www.eia.gov/dnav/pet/pet_pnp_wiup_dcu_nus_w.htm">17 million barrels of crude per day</a>. Almost all refinery water is self-supplied from rivers, not municipal systems.<hr><strong>Method:</strong> <a href="https://greet.anl.gov/files/refineries-water-2016">~100B gal/yr withdrawal × ~22% consumption ratio</a> (Argonne GREET). Electricity: <a href="https://www.eia.gov/consumption/manufacturing/data/2018/">~48.5 TWh (EIA MECS 2018, NAICS 324110)</a> × <a href="https://www.nrel.gov/docs/fy04osti/33905.pdf">0.47 gal/kWh</a>.',
+    'US food & beverage': 'Food processing requires potable-quality water for washing, cooking, cleaning, and as an ingredient. This estimate has wide uncertainty (<a href="https://www.construction-physics.com/p/how-does-the-us-use-water">~100–275B gal range</a>). Municipal vs. self-supplied share is uncertain.<hr><strong>Method:</strong> <a href="https://www.construction-physics.com/p/how-does-the-us-use-water">~700B gal/yr withdrawal × ~25% consumption ratio</a> = ~150B gal consumed. Electricity: <a href="https://www.eia.gov/consumption/manufacturing/data/2018/">~106 TWh (EIA MECS 2018, NAICS 311+312)</a> × <a href="https://www.nrel.gov/docs/fy04osti/33905.pdf">0.47 gal/kWh</a>.',
+    'US paper & pulp mills': 'Paper mills use enormous volumes of water for pulping, washing, and bleaching. Almost entirely <a href="https://www.construction-physics.com/p/how-does-the-us-use-water">self-supplied from rivers</a>. The industry generates <a href="https://www.eia.gov/consumption/manufacturing/data/2018/">~66–75% of its own electricity from biomass</a> (black liquor), so the grid draw is relatively small.<hr><strong>Method:</strong> <a href="https://www.construction-physics.com/p/how-does-the-us-use-water">~1,460B gal/yr withdrawal × ~12% consumption ratio</a> = ~175B gal consumed. Electricity: <a href="https://www.eia.gov/consumption/manufacturing/data/2018/">~51 TWh net grid (EIA MECS 2018, NAICS 322)</a> × <a href="https://www.nrel.gov/docs/fy04osti/33905.pdf">0.47 gal/kWh</a>.',
+    'US meat & poultry processing': 'The US processes about <a href="https://www.epa.gov/eg/meat-and-poultry-products-effluent-guidelines">149B lb of meat (live weight) and 106B lb of poultry</a> per year. Water is used for carcass washing, scalding, chilling, cleaning, and sanitation — all of which must use <a href="https://www.fsis.usda.gov/policy/fsis-directives/7120.1">potable water by FSIS regulation</a>. Most facilities use <a href="https://www.fsis.usda.gov/policy/fsis-directives/7120.1">public water supplies or well water</a>.<hr><strong>Method:</strong> Four segments calculated from <a href="https://www.epa.gov/eg/meat-and-poultry-products-effluent-guidelines">EPA 2023 technical development document</a>: meat first processing (47.6B), meat further processing (49.8B), poultry first processing (68.3B), poultry further processing (13.7B) = 179B total. Public-supply potable: ~60% central estimate (range 45–75%) = 108B. This is a <strong>water-throughput proxy</strong> based on wastewater generation rates, not strict consumptive use.',
+    'US pharmaceutical manufacturing': '<a href="https://www.fda.gov/drugs/pharmaceutical-quality-resources/water-pharmaceutical-use">FDA states</a> that pharmaceutical water systems rely on potable feedwater, and large volumes of <a href="https://www.fda.gov/drugs/pharmaceutical-quality-resources/water-pharmaceutical-use">purified water and Water for Injection (WFI)</a> must be generated. Potable water is obtained <a href="https://www.fda.gov/drugs/pharmaceutical-quality-resources/water-pharmaceutical-use">primarily from municipal water systems</a>.<hr><strong>Method:</strong> <a href="https://www.epa.gov/eg/pharmaceutical-manufacturing-effluent-guidelines">EPA 1998 pharmaceutical TDD</a>: 297 facilities generated 266.42 MGD total wastewater = 97.2B gal/yr. Public-supply potable: ~85% central (range 70–95%) = 82.7B, based on FDA\'s "primarily municipal" statement. This is a <strong>wastewater-generated proxy</strong> for freshwater handled.',
+    'US dairy processing': 'Dairy plants use water for <a href="https://www.fda.gov/food/guidance-regulation-food-and-dietary-supplements/grade-a-pasteurized-milk-ordinance-pmo">cleaning-in-place (CIP), product contact, and sanitation</a> — all requiring safe/sanitary water under the <a href="https://www.fda.gov/food/guidance-regulation-food-and-dietary-supplements/grade-a-pasteurized-milk-ordinance-pmo">Pasteurized Milk Ordinance</a>. Water can come from <a href="https://www.epa.gov/eg/dairy-products-processing-effluent-guidelines">wells or municipal systems</a>.<hr><strong>Method:</strong> <a href="https://www.nass.usda.gov/Publications/Todays_Reports/reports/mkpr0425.pdf">USDA 2024: 225B lb milk marketed</a> × <a href="https://www.epa.gov/eg/dairy-products-processing-effluent-guidelines">EPA benchmark 200 gal/1000 lb</a> = 45B gal/yr. Public-supply potable: ~70% central (range 50–85%) = 31.5B. This is a <strong>central BOTEC</strong>, not a measured industry census total — real plants vary widely by product mix and water reuse.',
+    'US industrial launderers': 'Industrial launderers (uniforms, linens, shop towels) are overwhelmingly connected to <a href="https://www.epa.gov/watersense/commercial-and-institutional-sector">public water and sewer systems</a>. About <a href="https://www.epa.gov/watersense/commercial-and-institutional-sector">84% of water use</a> goes to cleaning and sanitation.<hr><strong>Method:</strong> <a href="https://www.census.gov/naics/?input=812332">1,421 employer establishments (Census, NAICS 812332)</a> × <a href="https://www.epa.gov/watersense/commercial-and-institutional-sector">64,090 gal/day average</a> (EPA commercial water study) × 365 = 33.2B gal/yr public-supply. Total freshwater ~33–37B (slight cushion for any self-supplied sites).',
+    'US breweries (modeled)': 'Brewing requires high-quality source water for mashing, lautering, boiling, cooling, and cleaning. Water-to-beer ratios vary from <a href="https://www.epa.gov/sites/default/files/2019-11/documents/nwrap-action-plan-final-2019-11-27.pdf">4 to 12 gallons of water per gallon of beer</a>. Many breweries use municipal water, but some use wells or springs.<hr><strong>Method:</strong> <a href="https://www.brewersassociation.org/statistics-and-data/national-beer-stats/">23.1M barrels craft</a> at <a href="https://www.brewersassociation.org/statistics-and-data/national-beer-stats/">13.3% market share</a> → ~173.7M barrels total → ~5.4B gal beer × 6 gal water/gal beer (central) = 32B gal/yr. Public-supply: ~75% central = 24B. Range: 22–65B.',
+    'US bottled water mfg (total only)': 'Bottled water manufacturing uses water as both ingredient and process water. <a href="https://www.fda.gov/food/resources-you-food/bottled-water">FDA requires</a> that bottled water meet specific quality standards. Sources may include <a href="https://www.gao.gov/products/gao-09-610">wells, springs, and public drinking-water systems</a> — the national source mix is not publicly reported.<hr><strong>Method:</strong> <a href="https://bottledwater.org/economics-of-bottled-water/">16.4B gal product volume (2024)</a> × <a href="https://bottledwater.org/economics-of-bottled-water/">1.39 gal water used per gal bottled (IBWA)</a> = 22.8B gal/yr total. <strong>No public-supply split shown</strong> because the national share from municipal vs. self-supplied sources is not defensibly known.',
+
+    'All US corn (2023)': 'Irrigated corn accounts for about <a href="https://www.nass.usda.gov/Publications/AgCensus/2022/Online_Resources/Farm_and_Ranch_Irrigation_Survey/">20% of total US corn acreage</a> but produces a disproportionate share of yield. The <a href="https://www.usgs.gov/mission-areas/water-resources/science/high-plains-aquifer">Great Plains</a> (especially Nebraska) dominates irrigated corn, drawing heavily from the <a href="https://www.usgs.gov/mission-areas/water-resources/science/high-plains-aquifer">Ogallala Aquifer</a>. This shows estimated <strong>consumptive use</strong> — water consumed via <a href="https://www.ers.usda.gov/topics/farm-practices-management/irrigation-water-use/">evapotranspiration</a>, not total applied irrigation.<hr><strong>Method:</strong> <a href="https://www.nass.usda.gov/Publications/AgCensus/2022/Online_Resources/Farm_and_Ranch_Irrigation_Survey/">11.64M irrigated acres × 1.0 ac-ft/ac applied</a> (USDA 2023 IWMS Table 39) × <a href="https://extensionpubs.unl.edu/publication/g2345/2023/html/view">0.75 consumptive use ratio</a> (center-pivot efficiency 70–85%) = 2.84T gal consumed.',
+    'Nebraska corn': 'Nebraska is the <a href="https://www.nass.usda.gov/Publications/AgCensus/2022/Online_Resources/Farm_and_Ranch_Irrigation_Survey/">#1 irrigated corn state</a>, with about 38% of all US irrigated corn acreage. Heavily dependent on the <a href="https://www.usgs.gov/mission-areas/water-resources/science/high-plains-aquifer">Ogallala Aquifer</a> for groundwater pumping. This is an <strong>illustrative modeled breakout</strong> using national average irrigation rates.<hr><strong>Method:</strong> State acreage × <a href="https://www.nass.usda.gov/Publications/AgCensus/2022/Online_Resources/Farm_and_Ranch_Irrigation_Survey/">national avg rate (1.0 ac-ft/ac)</a> × <a href="https://extensionpubs.unl.edu/publication/g2345/2023/html/view">0.75 CU ratio</a> from USDA 2023 IWMS.',
+    'Kansas corn': 'Kansas is a major irrigated corn state, drawing primarily from the <a href="https://www.usgs.gov/mission-areas/water-resources/science/high-plains-aquifer">declining Ogallala Aquifer</a> in western Kansas. This is an <strong>illustrative modeled breakout</strong>.<hr><strong>Method:</strong> State acreage × <a href="https://www.nass.usda.gov/Publications/AgCensus/2022/Online_Resources/Farm_and_Ranch_Irrigation_Survey/">national avg rate</a> × <a href="https://extensionpubs.unl.edu/publication/g2345/2023/html/view">0.75 CU ratio</a>.',
+    'Arkansas corn': 'Arkansas irrigates corn primarily from the <a href="https://pubs.usgs.gov/publication/sir20195100">Mississippi River alluvial aquifer</a>. This is an <strong>illustrative modeled breakout</strong>.<hr><strong>Method:</strong> State acreage × <a href="https://www.nass.usda.gov/Publications/AgCensus/2022/Online_Resources/Farm_and_Ranch_Irrigation_Survey/">national avg rate</a> × <a href="https://extensionpubs.unl.edu/publication/g2345/2023/html/view">0.75 CU ratio</a>.',
+    'Texas corn': 'Texas irrigated corn draws from the <a href="https://www.usgs.gov/mission-areas/water-resources/science/high-plains-aquifer">Ogallala Aquifer</a> in the Panhandle and from the <a href="https://www.ibwc.gov/">Rio Grande</a>. This is an <strong>illustrative modeled breakout</strong>.<hr><strong>Method:</strong> State acreage × <a href="https://www.nass.usda.gov/Publications/AgCensus/2022/Online_Resources/Farm_and_Ranch_Irrigation_Survey/">national avg rate</a> × <a href="https://extensionpubs.unl.edu/publication/g2345/2023/html/view">0.75 CU ratio</a>.',
+    'All US alfalfa (2023)': 'Alfalfa is one of the thirstiest crops — it needs about <a href="https://www.nass.usda.gov/Publications/AgCensus/2022/Online_Resources/Farm_and_Ranch_Irrigation_Survey/">2.3× as much applied water per acre as corn</a>. Grown primarily in western states for <a href="https://www.ers.usda.gov/topics/crops/hay/">livestock feed</a>. Almost all irrigation water comes from rivers and wells, not municipal supply. This shows estimated <strong>consumptive use</strong>.<hr><strong>Method:</strong> <a href="https://www.nass.usda.gov/Publications/AgCensus/2022/Online_Resources/Farm_and_Ranch_Irrigation_Survey/">5.41M irrigated acres × 2.3 ac-ft/ac applied</a> (USDA 2023 IWMS Table 39) × 0.70 consumptive use ratio (<a href="https://alfalfa.ucdavis.edu/sites/g/files/dgvnsk12586/files/media/documents/UCAlfalfa8293Irrigation-reg.pdf">flood irrigation dominant</a> at 60–75% efficiency) = 2.84T gal consumed.',
+    'Idaho alfalfa': 'Idaho is a top alfalfa-producing state, with extensive irrigation from the <a href="https://www.usbr.gov/pn/snakeriver/">Snake River system</a>. This is an <strong>illustrative modeled breakout</strong>.<hr><strong>Method:</strong> State acreage × <a href="https://www.nass.usda.gov/Publications/AgCensus/2022/Online_Resources/Farm_and_Ranch_Irrigation_Survey/">national avg rate</a> × 0.70 CU ratio.',
+    'California alfalfa': 'California grows alfalfa primarily in the <a href="https://www.usbr.gov/lc/region/pao/feis/ch3_03.html">Imperial</a> and <a href="https://water.ca.gov/Programs/State-Water-Project">Central Valleys</a> using Colorado River and groundwater. This is an <strong>illustrative modeled breakout</strong>.<hr><strong>Method:</strong> State acreage × <a href="https://www.nass.usda.gov/Publications/AgCensus/2022/Online_Resources/Farm_and_Ranch_Irrigation_Survey/">national avg rate</a> × 0.70 CU ratio.',
+    'Montana alfalfa': 'Montana irrigates alfalfa primarily through <a href="https://alfalfa.ucdavis.edu/sites/g/files/dgvnsk12586/files/media/documents/UCAlfalfa8293Irrigation-reg.pdf">flood irrigation</a> from surface water sources. This is an <strong>illustrative modeled breakout</strong>.<hr><strong>Method:</strong> State acreage × <a href="https://www.nass.usda.gov/Publications/AgCensus/2022/Online_Resources/Farm_and_Ranch_Irrigation_Survey/">national avg rate</a> × 0.70 CU ratio.',
+    'Colorado alfalfa': 'Colorado alfalfa is irrigated primarily from the <a href="https://www.usbr.gov/uc/">Colorado River system</a> and South Platte tributaries. This is an <strong>illustrative modeled breakout</strong>.<hr><strong>Method:</strong> State acreage × <a href="https://www.nass.usda.gov/Publications/AgCensus/2022/Online_Resources/Farm_and_Ranch_Irrigation_Survey/">national avg rate</a> × 0.70 CU ratio.',
+
+    'All US lawn irrigation (est.)': 'Residential and commercial landscape irrigation is one of the largest uses of <a href="https://www.epa.gov/watersense/how-we-use-water">treated municipal water</a>. About <a href="https://www.epa.gov/watersense/how-we-use-water">30% of household water goes outdoors</a>, and lawns account for roughly 70% of that. State figures are <strong>illustrative modeled breakouts</strong>.<hr><strong>Method:</strong> <a href="https://www.epa.gov/watersense/how-we-use-water">EPA reports ~9B gal/day</a> landscape irrigation nationally. Municipal portion: <a href="https://pubs.usgs.gov/publication/pp1894D">13.1T total public supply</a> × 0.60 residential × 0.30 outdoor × 0.70 lawn = 1.65T from public supply.',
+    'Florida lawns': 'Florida\'s warm, humid climate drives year-round lawn irrigation. <a href="https://edis.ifas.ufl.edu/publication/AE220">High water tables and sandy soils</a> increase irrigation needs. This is an <strong>illustrative modeled breakout</strong>.<hr><strong>Method:</strong> Proportional estimate from national lawn total based on <a href="https://www.epa.gov/watersense/how-we-use-water">state outdoor water use</a>.',
+    'California lawns': 'California lawns are a major <a href="https://www.ppic.org/publication/water-use-in-california/">water policy issue</a> — <a href="https://www.waterboards.ca.gov/water_issues/programs/conservation_portal/">outdoor water use restrictions</a> have been a key drought response tool. This is an <strong>illustrative modeled breakout</strong>.<hr><strong>Method:</strong> Proportional estimate from national lawn total based on <a href="https://www.epa.gov/watersense/how-we-use-water">state outdoor water use</a>.',
+    'Texas lawns': 'Texas lawn irrigation peaks in the summer heat, drawing heavily from municipal systems in <a href="https://www.twdb.texas.gov/waterplanning/">metro areas</a>. This is an <strong>illustrative modeled breakout</strong>.<hr><strong>Method:</strong> Proportional estimate from national lawn total based on <a href="https://www.epa.gov/watersense/how-we-use-water">state outdoor water use</a>.',
+    'All US golf courses (2024)': 'The US has about <a href="https://www.gcsaa.org/docs/default-source/what-we-do/gcep-phase-4-water-report.pdf">15,200 golf facilities</a>. Water sources: <a href="https://www.gcsaa.org/docs/default-source/what-we-do/gcep-phase-4-water-report.pdf">~45% wells, ~25% surface water, ~21% reclaimed/recycled, ~9% municipal</a>. Golf course water use has <a href="https://www.gcsaa.org/docs/default-source/what-we-do/gcep-phase-4-water-report.pdf">dropped ~31% since 2005</a> due to conservation efforts.<hr><strong>Method:</strong> <a href="https://www.gcsaa.org/docs/default-source/what-we-do/gcep-phase-4-water-report.pdf">GCSAA Phase 4 reports 1.63 million acre-feet</a> total = 531B gal. <a href="https://www.gcsaa.org/docs/default-source/what-we-do/gcep-phase-4-water-report.pdf">~9% from municipal supply</a> = 48B gal in potable mode. Pumping: ~1.4 TWh × <a href="https://www.nrel.gov/docs/fy04osti/33905.pdf">0.47 gal/kWh</a>.',
+    'Arizona golf courses': 'Arizona golf courses use the <a href="https://www.gcsaa.org/docs/default-source/what-we-do/gcep-phase-4-water-report.pdf">Southwest regional irrigation rate of 3.3 ac-ft/acre</a> — about 3× the national median — due to extreme heat and low humidity.<hr><strong>Method:</strong> Midpoint estimate using SW regional rate from <a href="https://www.gcsaa.org/docs/default-source/what-we-do/gcep-phase-4-water-report.pdf">GCSAA Phase 4</a>. <a href="https://www.gcsaa.org/docs/default-source/what-we-do/gcep-phase-4-water-report.pdf">~1B gal from municipal supply</a> in potable mode.',
+
+    'New York City (consumptive est.)': 'NYC\'s water is <a href="https://www.nyc.gov/site/dep/water/drinking-water.page">gravity-fed from the Catskill and Delaware watersheds</a> — one of the most efficient municipal systems in the US. <a href="https://www.census.gov/quickfacts/newyorkcitynewyork">Extremely dense housing</a> means minimal outdoor/landscape use. About <a href="https://pubs.usgs.gov/publication/sir20145176">88% of delivered water returns</a> via the combined sewer system.<hr><strong>Method:</strong> <a href="https://www.nyc.gov/site/dep/water/drinking-water.page">364B gal delivered</a> × <a href="https://pubs.usgs.gov/publication/sir20145176">~12% consumed</a> = ~45B gal. Consumption ratio from <a href="https://pubs.usgs.gov/publication/sir20145176">USGS NE Illinois study</a> (13%) and <a href="https://dnr.illinois.gov/waterresources/lakemichiganwaterallocation.html">Illinois official Lake Michigan rate</a> (10%). Electricity: ~1.5 kWh/1000 gal × <a href="https://www.nrel.gov/docs/fy04osti/33905.pdf">0.47 gal/kWh</a>.',
+    'Chicago metro (consumptive est.)': 'Chicago draws from <a href="https://www.chicago.gov/city/en/depts/water.html">Lake Michigan</a> with relatively short distribution distances. Cold climate and moderate density mean modest outdoor water use. The <a href="https://pubs.usgs.gov/publication/sir20145176">USGS field-measured 13% consumption rate</a> in a suburban Chicago sewershed is one of the strongest city-level estimates available.<hr><strong>Method:</strong> 274B gal delivered × <a href="https://pubs.usgs.gov/publication/sir20145176">~12% consumed</a> = ~33B gal. <a href="https://pubs.usgs.gov/publication/sir20145176">USGS mass-balance study</a> measured 13% at Elk Grove Village. <a href="https://dnr.illinois.gov/waterresources/lakemichiganwaterallocation.html">Illinois DNR uses 10%</a> for Lake Michigan diversion accounting.',
+    'Los Angeles (consumptive est.)': 'LA imports water over long distances from the <a href="https://www.usbr.gov/lc/region/g4000/4200Rpts/DecreeRpt/2023/2023.pdf">Colorado River</a> and <a href="https://www.ladwp.com/who-we-are/water-system/sources-supply/la-aqueduct">Sierra Nevada</a>, making its water system unusually energy-intensive (~5 kWh/1000 gal). <a href="https://www.sciencedirect.com/science/article/abs/pii/S0169204614000917">UCLA research shows 54% of single-family residential use goes outdoors</a>, though the city-wide average is lower after including apartments and commercial use.<hr><strong>Method:</strong> <a href="https://www.ladwp.com/who-we-are/water-system">146B gal delivered</a> × ~35% consumed = ~51B gal. Outdoor fraction drives consumption: nearly all outdoor water is consumed via evapotranspiration; <a href="https://pubs.usgs.gov/publication/sir20145176">~85–90% of indoor water returns via sewer</a>.',
+    'Phoenix (consumptive est.)': 'Phoenix has among the highest outdoor water use fractions of any US city. The <a href="https://www.cap-az.com/">Central Arizona Project</a> pumps Colorado River water uphill ~2,900 feet to reach Phoenix. In extreme summer heat, <a href="https://www.azwater.gov/sites/default/files/2024-09/2019-3073_CityofPhoenix_MultiCityWaterUseStudy_ExecutiveReport.pdf">60–70% of residential water goes to landscape irrigation</a>, and nearly all of it evaporates.<hr><strong>Method:</strong> <a href="https://www.phoenix.gov/water">95.5B gal delivered</a> × ~50% consumed = ~48B gal. <a href="https://www.azwater.gov/sites/default/files/2024-09/2019-3073_CityofPhoenix_MultiCityWaterUseStudy_ExecutiveReport.pdf">ADWR Multi-City Water Use Study</a>: 57–70% of residential use is outdoor.',
+    'Las Vegas metro (SNWA, consumptive)': '<a href="https://www.snwa.com/">Las Vegas</a> has the most sophisticated water accounting of any US city. Every gallon used indoors flows through the sewer, gets treated, and is <a href="https://www.snwa.com/water-resources/where-water-comes-from/index.html">returned to Lake Mead</a> — earning a return-flow credit against <a href="https://www.usbr.gov/lc/region/g4000/4200Rpts/DecreeRpt/2023/2023.pdf">Nevada\'s Colorado River allocation</a>. Only outdoor water is truly consumed. <a href="https://www.snwa.com/water-resources/drought-and-shortage/index.html">SNWA has cut per-capita consumption by 47% since 2002</a>.<hr><strong>Method:</strong> <a href="https://www.snwa.com/water-resources/where-water-comes-from/index.html">SNWA 2024: 212,400 acre-feet</a> consumptive use (directly reported net of return-flow credits) = ~69B gal.',
+
+    'Total US freshwater withdrawals': 'All freshwater removed from surface and groundwater sources across all sectors: <a href="https://pubs.usgs.gov/publication/cir1441">thermoelectric power</a> (largest by volume), <a href="https://www.ers.usda.gov/topics/farm-practices-management/irrigation-water-use/">irrigation</a>, <a href="https://pubs.usgs.gov/publication/pp1894D">public supply</a>, industrial, mining, and other. Most withdrawn water is returned — <a href="https://pubs.usgs.gov/publication/cir1441">withdrawals far exceed consumptive use</a>.<hr><strong>Method:</strong> <a href="https://pubs.usgs.gov/publication/cir1441">USGS Circular 1441</a>: 281 Bgal/day in 2015 = ~102.6T gal/yr. Pumping electricity: ~70 TWh × <a href="https://www.nrel.gov/docs/fy04osti/33905.pdf">0.47 gal/kWh</a>.',
+    'Total US public water supply': 'All water delivered by municipal and public water systems, serving about <a href="https://pubs.usgs.gov/publication/pp1894D">87% of the US population</a>. Includes residential, commercial, institutional, and industrial use from public supply. Almost all of this is <a href="https://www.epa.gov/sdwa">treated potable water</a>.<hr><strong>Method:</strong> <a href="https://pubs.usgs.gov/publication/pp1894D">USGS PP 1894D (2020)</a>: ~13.1T gal/yr. Pumping/treatment electricity: <a href="https://www.epri.com/research/products/000000003002001433">~39 TWh (EPRI 2013)</a> × <a href="https://www.nrel.gov/docs/fy04osti/33905.pdf">0.47 gal/kWh</a>.',
+  };
+
+  var tooltipEl = document.getElementById('wv-tooltip');
+  var tipTimer = null;
+
+  var ELEC_EXPLAINER = '<hr><strong style="color:var(--accent, #8b3a3a)">+ electricity water</strong><br>Generating electricity requires cooling at thermoelectric power plants, which evaporates water from rivers and lakes. This adds the water consumed at those plants to generate the electricity this operation uses. Calculated as total electricity (TWh) × <a href="https://www.nrel.gov/docs/fy04osti/33905.pdf">0.47 gal/kWh</a> (NREL thermoelectric-only factor, excluding <a href="https://www.construction-physics.com/p/i-was-wrong-about-data-center-water">hydro reservoir evaporation</a>). This water is non-potable freshwater drawn directly from rivers and lakes — not from public water supply systems.';
+
+  function showTip(item, x, y) {
+    var html = TIPS[item.baseName];
+    if (!html) return;
+    var displayName = item.elecOn ? item.baseName + ' + electricity' : item.baseName;
+    var elecHtml = item.elecOn ? ELEC_EXPLAINER : '';
+    tooltipEl.innerHTML = '<strong style="font-size:0.78rem;display:block;margin-bottom:4px">' + displayName + '</strong>' + html + elecHtml;
+    tooltipEl.style.display = 'block';
+    // Position: try right of cursor, fall back left if near edge
+    var w = tooltipEl.offsetWidth;
+    var h = tooltipEl.offsetHeight;
+    var vw = window.innerWidth;
+    var vh = window.innerHeight;
+    var left = x + 16;
+    var top = y - 10;
+    if (left + w > vw - 12) left = x - w - 16;
+    if (top + h > vh - 12) top = vh - h - 12;
+    if (top < 12) top = 12;
+    tooltipEl.style.left = left + 'px';
+    tooltipEl.style.top = top + 'px';
+  }
+
+  function hideTip() {
+    tooltipEl.style.display = 'none';
+  }
+
+  // Attach to squares
+  squaresArea.addEventListener('mousemove', function(e) {
+    var sqEl = e.target.closest('.wv-sq-item');
+    if (!sqEl) { hideTip(); return; }
+    var idx = parseInt(sqEl.dataset.sqIdx);
+    var it = items[idx];
+    if (it) showTip(it, e.clientX, e.clientY);
+  });
+  squaresArea.addEventListener('mouseleave', hideTip);
+
+  // Attach to bars
+  barsArea.addEventListener('mousemove', function(e) {
+    var barRow = e.target.closest('.wv-bar-row');
+    if (!barRow) { hideTip(); return; }
+    var idx = parseInt(barRow.dataset.idx);
+    var it = items[idx];
+    if (it) showTip(it, e.clientX, e.clientY);
+  });
+  barsArea.addEventListener('mouseleave', hideTip);
+
+  // Remove default title tooltips from squares (we handle it now)
+  var observer = new MutationObserver(function() {
+    squaresArea.querySelectorAll('.wv-sq-item[title]').forEach(function(el) {
+      el.removeAttribute('title');
+    });
+  });
+  observer.observe(squaresArea, { childList: true, subtree: true, attributes: true, attributeFilter: ['title'] });
 
   render();
 })();

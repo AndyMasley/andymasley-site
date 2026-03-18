@@ -34,7 +34,7 @@ const CAR_LABELS: Record<string, string> = { gas: 'gas car', hybrid: 'hybrid', e
 const FILTER_OPTIONS = [
   { value: null, label: 'All' },
   { value: 'personal' as const, label: 'Personal' },
-  { value: 'systemic' as const, label: 'Systemic' },
+  { value: 'systemic' as const, label: 'Grid' },
 ];
 
 export function ComparingCuts({ personalActions, enabledPersonal, actionParamOverrides, leverageCases, enabledSystemic, carOwnership, footprintKg }: ComparingCutsProps) {
@@ -98,26 +98,31 @@ export function ComparingCuts({ personalActions, enabledPersonal, actionParamOve
           Comparing your cuts
         </h2>
         <div style={{ display: 'flex', gap: '2px' }}>
-          {FILTER_OPTIONS.map(opt => (
-            <button
-              key={opt.label}
-              onClick={() => setFilter(opt.value)}
-              style={{
-                fontSize: '0.62rem', fontWeight: filter === opt.value ? 600 : 400,
-                padding: '3px 10px', border: `1px solid ${filter === opt.value ? ACCENT : DIVIDER}`,
-                borderRadius: '10px', cursor: 'pointer', fontFamily: 'inherit',
-                background: filter === opt.value ? ACCENT : 'transparent',
-                color: filter === opt.value ? 'white' : MUTED,
-                transition: 'all 0.12s',
-              }}
-            >
-              {opt.label}
-            </button>
-          ))}
-          {items.length > 0 && (
+          {FILTER_OPTIONS.map(opt => {
+            const activeColor = opt.value === null ? 'var(--bar-track, #E2DFD9)' : opt.value === 'personal' ? ACCENT : GREEN;
+            const isActive = filter === opt.value;
+            const textOnActive = opt.value === null ? 'var(--text, #1A1A18)' : 'white';
+            return (
+              <button
+                key={opt.label}
+                onClick={() => setFilter(opt.value)}
+                style={{
+                  fontSize: '0.62rem', fontWeight: isActive ? 600 : 400,
+                  padding: '3px 10px', border: `1px solid ${isActive ? activeColor : DIVIDER}`,
+                  borderRadius: '10px', cursor: 'pointer', fontFamily: 'inherit',
+                  background: isActive ? activeColor : 'transparent',
+                  color: isActive ? textOnActive : MUTED,
+                  transition: 'all 0.12s',
+                }}
+              >
+                {opt.label}
+              </button>
+            );
+          })}
+          {filter === null && items.length > 0 && (
             <span style={{ fontSize: '0.62rem', color: MUTED, marginLeft: '8px', alignSelf: 'center' }}>
               <span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '2px', background: ACCENT, marginRight: '3px', verticalAlign: 'middle' }} />personal
-              <span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '2px', background: GREEN, marginLeft: '8px', marginRight: '3px', verticalAlign: 'middle' }} />systemic
+              <span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '2px', background: GREEN, marginLeft: '8px', marginRight: '3px', verticalAlign: 'middle' }} />grid
             </span>
           )}
         </div>

@@ -149,6 +149,12 @@ export interface DetailedInputs {
 /** One leverage case study. */
 export interface LeverageCase {
   name: string;
+  /** The fixed prefix of the name (e.g., "Keep a"). */
+  namePrefix: string;
+  /** The expandable/clickable portion of the name (e.g., "nuclear plant open"). */
+  nameExpandable: string;
+  /** Plain-language explainer of what this action is and how much carbon the full project prevents. */
+  explainer: string;
   description: string;
   probabilityOfSuccess: { low: number; central: number; high: number };
   coalitionSize: number;

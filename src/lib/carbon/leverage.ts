@@ -23,6 +23,9 @@ import type { LeverageCase, LeverageModel, LeverageResult } from './types';
 export const LEVERAGE_CASES: LeverageCase[] = [
   {
     name: 'Keep a nuclear plant open',
+    namePrefix: 'Keep a',
+    nameExpandable: 'nuclear plant open',
+    explainer: 'A single <a href="https://www.eia.gov/electricity/monthly/" target="_blank" rel="noopener">1 GW nuclear plant</a> running at 90% capacity factor generates about 7.9 million MWh of zero-carbon electricity per year. If it closes, the replacement is typically a mix of ~60% natural gas and ~40% renewables — not 100% gas. That mix emits about <a href="https://www.epa.gov/egrid" target="_blank" rel="noopener">0.30 kg CO₂e per kWh</a> that the nuclear plant would have avoided. Over 15 years, keeping the plant open prevents roughly 35.5 million metric tons of CO₂e in total.',
     description: 'A 1 GW plant kept online instead of replaced by gas + renewables. Coalition of ~3,000 advocates over 2 years.',
     // Diablo Canyon campaign involved thousands of advocates. P(success) is low —
     // most nuclear closure campaigns fail to reverse the decision.
@@ -38,6 +41,9 @@ export const LEVERAGE_CASES: LeverageCase[] = [
   },
   {
     name: 'Pass a state clean energy law',
+    namePrefix: 'Pass a',
+    nameExpandable: 'state clean energy law',
+    explainer: 'A mid-size state consumes roughly <a href="https://www.eia.gov/electricity/state/" target="_blank" rel="noopener">60 million MWh of electricity per year</a>. A clean energy standard accelerates the displacement of remaining fossil generation at a net rate of about <a href="https://www.epa.gov/egrid" target="_blank" rel="noopener">0.25 kg CO₂e per kWh</a> — lower than the full grid average because many states already have partial clean energy. Over 10 years, that prevents roughly 150 million metric tons of CO₂e.',
     description: 'Advocating for legislation that accelerates a mid-size state\'s electricity decarbonization.',
     // State-level campaigns involve thousands of people across organizations,
     // lobbyists, grassroots groups. P(success) is very low for any individual campaign.
@@ -52,6 +58,9 @@ export const LEVERAGE_CASES: LeverageCase[] = [
   },
   {
     name: 'Retire a coal plant early',
+    namePrefix: 'Retire a',
+    nameExpandable: 'coal plant early',
+    explainer: 'A <a href="https://www.sierraclub.org/coal" target="_blank" rel="noopener">500 MW coal plant</a> at 45% capacity factor generates about 1.97 million MWh per year. Coal emits roughly <a href="https://www.epa.gov/egrid" target="_blank" rel="noopener">0.95 kg CO₂e per kWh</a>, but its replacement isn\'t zero-carbon — it\'s a mix of gas and renewables averaging about 0.45 kg/kWh. The net avoided rate is about 0.50 kg CO₂e per kWh. Over 10 years of early retirement, that prevents roughly 9.9 million metric tons of CO₂e.',
     description: 'A 500 MW coal plant retired 10 years early. Local + national organizing.',
     probabilityOfSuccess: { low: 0.01, central: 0.03, high: 0.10 },
     coalitionSize: 2000,
@@ -65,6 +74,9 @@ export const LEVERAGE_CASES: LeverageCase[] = [
   },
   {
     name: 'Get a 500 MW solar farm approved',
+    namePrefix: 'Get a',
+    nameExpandable: '500 MW solar farm approved',
+    explainer: 'A utility-scale 500 MW solar farm at <a href="https://atb.nrel.gov/electricity/2024/utility-scale_pv" target="_blank" rel="noopener">25% capacity factor</a> generates about 1.1 million MWh per year. Each MWh displaces marginal grid generation at roughly <a href="https://www.epa.gov/egrid" target="_blank" rel="noopener">0.35 kg CO₂e per kWh</a>. Over a 25-year project lifetime, that prevents roughly 9.6 million metric tons of CO₂e.',
     description: 'Community engagement and permitting support for a 500 MW utility-scale solar farm.',
     // The broader advocacy ecosystem around a utility-scale project includes
     // developers, lobbyists, community supporters, and local officials.
@@ -79,6 +91,9 @@ export const LEVERAGE_CASES: LeverageCase[] = [
   },
   {
     name: 'Workplace clean energy PPA',
+    namePrefix: 'Workplace',
+    nameExpandable: 'clean energy PPA',
+    explainer: 'A <a href="https://cebuyers.org/" target="_blank" rel="noopener">power purchase agreement</a> (PPA) commits your employer to buy ~5,000 MWh per year of renewable electricity, displacing <a href="https://www.epa.gov/egrid" target="_blank" rel="noopener">grid-average generation</a> at about 0.375 kg CO₂e per kWh. Over a typical 12-year contract, that prevents roughly 22,500 metric tons of CO₂e.',
     description: 'Persuade an employer to sign a PPA for ~5,000 MWh/yr of renewable electricity.',
     probabilityOfSuccess: { low: 0.05, central: 0.15, high: 0.40 },
     coalitionSize: 15,
@@ -90,6 +105,9 @@ export const LEVERAGE_CASES: LeverageCase[] = [
   },
   {
     name: 'Advocate for grid reform',
+    namePrefix: 'Advocate for',
+    nameExpandable: 'grid reform',
+    explainer: 'Transmission bottlenecks delay roughly <a href="https://emp.lbl.gov/queues" target="_blank" rel="noopener">100 million MWh per year</a> of clean energy that\'s already in interconnection queues. Each MWh stuck behind the queue is replaced by gas generation at about <a href="https://www.epa.gov/egrid" target="_blank" rel="noopener">0.35 kg CO₂e per kWh</a>. Over 15 years, unblocking these queues prevents roughly 525 million metric tons of CO₂e. <a href="https://www.ferc.gov/electric-transmission" target="_blank" rel="noopener">Federal transmission reform</a> is the main policy lever.',
     description: 'Support regional or federal transmission planning to unblock clean energy queues.',
     // National-scale advocacy involves tens of thousands of people.
     probabilityOfSuccess: { low: 0.001, central: 0.005, high: 0.02 },

@@ -88,7 +88,7 @@ export function LeverageLab({ userMaxPersonalReduction, userFootprint }: Leverag
   return (
     <section>
       {/* Header */}
-      <div className="cf-section-label">SYSTEMIC CHANGE OPTIONS</div>
+      <div className="cf-section-label">GRID CHANGE OPTIONS</div>
       <p style={{ fontSize: '0.95rem', lineHeight: 1.7, maxWidth: 640, marginBottom: '0.5rem' }}>
         The calculator above shows what emissions are associated with your life.
         This section explores a different question: what if the same hours you'd spend optimizing your own footprint went toward changing systems that affect millions of people?
@@ -237,6 +237,7 @@ export function LeverageLab({ userMaxPersonalReduction, userFootprint }: Leverag
 // ---------------------------------------------------------------------------
 
 function CaseCard({ result, viewMode }: { result: LeverageResult; viewMode: 'annual' | 'lifetime' }) {
+  const [expanded, setExpanded] = useState(false);
   const values = viewMode === 'annual' ? result.expectedKgCO2ePerYear : result.expectedKgCO2eLifetime;
   const unit = viewMode === 'annual' ? 'kg/yr' : 'kg lifetime';
   const mult = result.leverageMultiple;
@@ -260,8 +261,38 @@ function CaseCard({ result, viewMode }: { result: LeverageResult; viewMode: 'ann
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px', marginBottom: '6px' }}>
         <div>
           <div style={{ fontWeight: 600, fontSize: '0.88rem', marginBottom: '2px' }}>
-            {result.case.name}
+            {result.case.namePrefix}{' '}
+            <span
+              onClick={() => setExpanded(!expanded)}
+              style={{
+                borderBottom: '1.5px dashed var(--accent, #8B2E2E)',
+                cursor: 'pointer',
+                color: 'var(--accent, #8B2E2E)',
+                transition: 'opacity 0.15s',
+              }}
+              role="button"
+              aria-expanded={expanded}
+              tabIndex={0}
+              onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setExpanded(!expanded); } }}
+            >
+              {result.case.nameExpandable}
+            </span>
           </div>
+          {expanded && (
+            <div style={{
+              fontSize: '0.78rem',
+              lineHeight: 1.65,
+              color: 'var(--text-secondary, #6B6B60)',
+              marginTop: '6px',
+              marginBottom: '4px',
+              padding: '8px 12px',
+              background: 'var(--bg, #FAF9F7)',
+              borderRadius: '4px',
+              borderLeft: '2.5px solid var(--accent, #8B2E2E)',
+            }}>
+              {result.case.explainer}
+            </div>
+          )}
           <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary, #6B6B60)', lineHeight: 1.4 }}>
             {result.case.description}
           </div>

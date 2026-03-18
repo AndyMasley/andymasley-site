@@ -149,8 +149,8 @@ export async function GET() {
     },
     {
       title: 'Carbon Footprint Calculator',
-      description: 'Interactive carbon footprint calculator with systemic action comparisons',
-      content: 'carbon footprint calculator emissions CO2 climate change personal cuts systemic actions grid energy nuclear solar coal transport diet food electricity EV electric vehicle heat pump vegan vegetarian flights',
+      description: 'Interactive carbon footprint calculator with grid change comparisons',
+      content: 'carbon footprint calculator emissions CO2 climate change personal cuts grid changes grid energy nuclear solar coal transport diet food electricity EV electric vehicle heat pump vegan vegetarian flights',
       type: 'visual',
       url: '/visuals/carbon-footprint',
       tags: ['climate', 'calculator'],

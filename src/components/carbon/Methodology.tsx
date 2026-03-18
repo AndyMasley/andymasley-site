@@ -243,7 +243,7 @@ export function Methodology() {
             <Note>All digital actions are well under 0.5% of a typical footprint — included because frequently asked about.</Note>
           </Section>
 
-          <Section title="Systemic Actions (Expected Values)" id="methodology-systemic-actions">
+          <Section title="Grid Changes (Expected Values)" id="methodology-grid-changes">
             <p>
               <strong>Formula:</strong> <Val>expectedKg = totalCarbon × chance ÷ coalitionSize</Val><br />
               where <Val>totalCarbon = annualGeneration(MWh) × emissionRate(kg/MWh) × timeHorizon(yr)</Val>
@@ -264,17 +264,17 @@ export function Methodology() {
               <li style={{ marginBottom: '10px' }}>
                 <strong>Retire a coal plant early</strong><br />
                 500 MW at 45% CF → 1,971,000 MWh/yr (US coal fleet averaged ~45% CF in 2023, down from ~67% a decade ago). Coal at 0.95 minus replacement at 0.45 = 0.50 kg/kWh net. 10 years: <Val>9.9 billion kg</Val>.<br />
-                <Src href="https://www.sierraclub.org/campaign/beyond-coal">Sierra Club Beyond Coal</Src>
+                <Src href="https://www.sierraclub.org/coal">Sierra Club Beyond Coal</Src>
               </li>
               <li style={{ marginBottom: '10px' }}>
                 <strong>Get a 500 MW solar farm approved</strong><br />
                 25% CF → 1,095,000 MWh/yr. Displaces marginal grid at 0.35 kg/kWh. 25-year lifetime: <Val>9.6 billion kg</Val>.<br />
-                <Src href="https://atb.nrel.gov/">NREL ATB</Src>
+                <Src href="https://atb.nrel.gov/electricity/2024/utility-scale_pv">NREL ATB</Src>
               </li>
               <li style={{ marginBottom: '10px' }}>
                 <strong>Workplace clean energy PPA</strong><br />
                 5,000 MWh/yr displacing grid avg at 0.375 kg/kWh. 12-year contract: <Val>22.5 million kg</Val>.<br />
-                <Src href="https://rebuyers.org/">Renewable Energy Buyers Alliance</Src>
+                <Src href="https://cebuyers.org/">Renewable Energy Buyers Alliance</Src>
               </li>
               <li style={{ marginBottom: '10px' }}>
                 <strong>Advocate for grid reform</strong><br />

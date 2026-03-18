@@ -20,7 +20,7 @@ import Base from '@/layouts/Base.astro';
 import { Calculator } from '@/components/carbon/Calculator';
 ---
 
-<Base title="Carbon Footprint Calculator" description="Estimate your carbon footprint from a credible baseline, then explore what systemic actions have the highest expected leverage">
+<Base title="Carbon footprint: lifestyle cuts vs changing the grid" description="Estimate your carbon footprint from a credible baseline, then explore what changes you can make to the energy grid">
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -28,8 +28,8 @@ import { Calculator } from '@/components/carbon/Calculator';
 
   <!-- Hero (outside the breakout container so it aligns with the header) -->
   <header>
-    <h1>Carbon Footprint</h1>
-    <p style="font-size: 0.85rem; line-height: 1.65; color: var(--text-secondary, #6B6B60); margin-top: 0.75rem; max-width: 640px;">A carbon footprint calculator that includes systemic changes to the energy grid, because those often dwarf personal lifestyle changes, even after dividing by the number of people involved and multiplying by a low probability of success. Take all numbers with a grain of salt. Methodology at the bottom.</p>
+    <h1>Carbon footprint: lifestyle cuts vs changing the grid</h1>
+    <p style="font-size: 0.85rem; line-height: 1.65; color: var(--text-secondary, #6B6B60); margin-top: 0.75rem; max-width: 640px;">A carbon footprint calculator that includes changes you can make to the energy grid, because those often dwarf personal lifestyle changes, even after dividing by the number of people involved and multiplying by a low probability of success. Take all numbers with a grain of salt. Methodology at the bottom.</p>
   </header>
 
   <article class="cfv2" id="cfv2">
@@ -88,6 +88,15 @@ import { Calculator } from '@/components/carbon/Calculator';
     border: none;
     border-top: 1px solid var(--divider);
     margin: 3rem 0;
+  }
+
+  .cf-explainer a {
+    color: var(--accent, #8B2E2E);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+  .cf-explainer a:hover {
+    opacity: 0.75;
   }
 
   /* Section label pattern */
