@@ -29,6 +29,8 @@ const totalVideos = getTotalVideoCount();
         <a href={`#unit-${topic.id}`} class="unit-nav__link">{topic.id === 'lab' ? 'Lab' : topic.id.toUpperCase()}</a>
       </>
     ))}
+    <span class="unit-nav__sep">·</span>
+    <a href="#advice" class="unit-nav__link">Advice</a>
   </nav>
 
   {physicsTopics.map(topic => (
@@ -59,7 +61,7 @@ const totalVideos = getTotalVideoCount();
 
   <div class="divider"><div class="divider-diamond"></div></div>
 
-  <div class="section-title">Advice and resources</div>
+  <div class="section-title" id="advice">Advice and resources</div>
 
   <details class="unit-dropdown">
     <summary>How to learn physics</summary>
@@ -108,7 +110,7 @@ const totalVideos = getTotalVideoCount();
     const nav = document.getElementById('unit-nav');
     if (!nav) return;
     const links = nav.querySelectorAll<HTMLAnchorElement>('.unit-nav__link');
-    const units = document.querySelectorAll<HTMLElement>('.unit[id]');
+    const units = document.querySelectorAll<HTMLElement>('.unit[id], #advice');
 
     // Smooth scroll on click
     links.forEach(link => {
@@ -147,6 +149,7 @@ const totalVideos = getTotalVideoCount();
     font-size: 1rem;
     font-weight: 600;
     margin-bottom: 12px;
+    scroll-margin-top: 48px;
   }
 
   .physics-intro {
