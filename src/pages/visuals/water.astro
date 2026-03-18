@@ -1984,24 +1984,14 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
         el.style.top = pl.y + 'px';
         el.style.width = labelBelow ? pl.w + 'px' : '';
         var box = el.querySelector('.wv-sq-box');
-        if (ss < 10) {
-          box.style.width = '6px';
-          box.style.height = '6px';
-          box.style.borderRadius = '50%';
-          box.style.background = d.sq.color;
-          box.style.opacity = fillOpacity;
-          box.style.border = 'none';
-          box.style.flexShrink = '0';
-        } else {
-          box.style.width = ss + 'px';
-          box.style.height = ss + 'px';
-          box.style.borderRadius = '3px';
-          box.style.background = d.sq.color;
-          box.style.opacity = fillOpacity;
-          box.style.border = '2px solid ' + d.sq.color;
-          box.style.borderColor = d.sq.color;
-          box.style.flexShrink = '0';
-        }
+        box.style.width = ss + 'px';
+        box.style.height = ss + 'px';
+        box.style.borderRadius = '0';
+        box.style.background = d.sq.color;
+        box.style.opacity = fillOpacity;
+        box.style.border = ss >= 10 ? '2px solid ' + d.sq.color : 'none';
+        box.style.borderColor = d.sq.color;
+        box.style.flexShrink = '0';
         var colorBar = el.querySelector('.wv-sq-color-bar');
         if (colorBar) {
           colorBar.style.width = '20px';
