@@ -6,13 +6,18 @@ interface Props {
   title: string;
   description?: string;
   showReadingProgress?: boolean;
+  ogImage?: string;
+  ogTitle?: string;
 }
 
 const {
   title,
   description = "When the going gets weird the weird turn pro",
   showReadingProgress = false,
+  ogImage,
+  ogTitle,
 } = Astro.props;
+const resolvedOgTitle = ogTitle || title;
 const currentPath = Astro.url.pathname;
 const isHexagonPage = currentPath === '/hexagon' || currentPath === '/hexagon/';
 
@@ -47,6 +52,14 @@ function isActive(href: string): boolean {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content={description}>
+  <meta property="og:title" content={resolvedOgTitle}>
+  <meta property="og:description" content={description}>
+  <meta property="og:type" content="website">
+  {ogImage && <meta property="og:image" content={new URL(ogImage, Astro.site || Astro.url.origin).href}>}
+  <meta name="twitter:card" content={ogImage ? "summary_large_image" : "summary"}>
+  <meta name="twitter:title" content={resolvedOgTitle}>
+  <meta name="twitter:description" content={description}>
+  {ogImage && <meta name="twitter:image" content={new URL(ogImage, Astro.site || Astro.url.origin).href}>}
   <title>{title} — Andy Masley</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
