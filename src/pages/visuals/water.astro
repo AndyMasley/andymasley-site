@@ -782,9 +782,9 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
   /* Toggle rows */
   .wv-toggle-row {
     display: flex;
-    align-items: flex-start;
-    gap: 10px;
-    padding: 6px 16px;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 16px;
     border: none;
     border-radius: 0;
     cursor: pointer;
@@ -814,7 +814,7 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
     height: 10px;
     border-radius: 3px;
     flex-shrink: 0;
-    margin-top: 3px;
+    margin-top: 0;
     border: 1.5px solid var(--divider);
     background: transparent;
     transition: all 0.12s;
@@ -828,8 +828,10 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
     flex: 1;
     min-width: 0;
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
+    align-items: baseline;
     gap: 0;
+    flex-wrap: wrap;
   }
   .wv-row-name {
     font-size: 0.78rem;
@@ -842,12 +844,14 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
     opacity: 0.7;
   }
   .wv-row-val {
-    font-size: 0.65rem;
+    font-size: 0.62rem;
     font-weight: 400;
     color: var(--text-secondary);
     opacity: 0.6;
     font-variant-numeric: tabular-nums;
     line-height: 1.2;
+    margin-left: 6px;
+    white-space: nowrap;
   }
   .wv-toggle-row[data-on="true"] .wv-row-val {
     opacity: 0.8;
@@ -868,8 +872,9 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
     cursor: pointer;
     white-space: nowrap;
     transition: all 0.15s;
-    margin-top: 3px;
-    align-self: flex-start;
+    margin-top: 0;
+    margin-left: 4px;
+    align-self: baseline;
     width: fit-content;
     text-transform: uppercase;
   }
@@ -1441,21 +1446,23 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
   .wv-cat-active { font-size: 0.55rem; font-weight: 400; letter-spacing: 0; text-transform: none; }
   .wv-cat-controls { font-size: 0.55rem; }
 
-  /* Toggle rows */
-  .wv-toggle-row { padding: 5px 14px; gap: 8px; min-height: 28px; }
+  /* Toggle rows: compact single-line layout */
+  .wv-toggle-row { padding: 4px 14px; gap: 7px; min-height: 24px; align-items: center; }
   .wv-toggle-row[data-on="true"] { background: rgba(74, 124, 89, 0.04); }
-  .wv-dot { width: 8px; height: 8px; border-radius: 1px; border-width: 1px; margin-top: 4px; }
-  .wv-row-name { font-size: 0.74rem; font-weight: 400; line-height: 1.3; }
+  .wv-dot { width: 10px; height: 10px; border-radius: 2px; border-width: 1.5px; margin-top: 0; }
+  .wv-row-text { flex-direction: row !important; align-items: baseline; gap: 0 !important; flex-wrap: wrap; }
+  .wv-row-name { font-size: 0.72rem; font-weight: 400; line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .wv-row-val { font-size: 0.6rem; margin-left: 6px; white-space: nowrap; flex-shrink: 0; }
   .wv-toggle-row[data-on="true"] .wv-row-name { font-weight: 500; color: var(--text); }
-  .wv-toggle-row[data-on="false"] .wv-row-name { opacity: 0.5; }
-  .wv-row-val { font-size: 0.6rem; opacity: 0.5; }
-  .wv-toggle-row[data-on="true"] .wv-row-val { opacity: 0.7; }
+  .wv-toggle-row[data-on="false"] .wv-row-name { opacity: 0.65; }
+  .wv-toggle-row[data-on="false"] .wv-row-val { opacity: 0.45; }
+  .wv-toggle-row[data-on="true"] .wv-row-val { opacity: 0.6; }
 
-  /* Elec chip */
-  .wv-elec-chip { border-radius: 1px; font-size: 0.48rem; padding: 1px 5px; letter-spacing: 0.04em; }
+  /* Elec chip: inline after value */
+  .wv-elec-chip { border-radius: 1px; font-size: 0.48rem; padding: 1px 5px; letter-spacing: 0.04em; margin-left: 4px; margin-top: 0; align-self: baseline; }
 
   /* Section dividers */
-  .wv-proj-divider { font-size: 0.52rem; text-transform: uppercase; letter-spacing: 0.08em; font-style: normal; opacity: 0.3; padding: 10px 14px 2px; }
+  .wv-proj-divider { font-size: 0.52rem; text-transform: uppercase; letter-spacing: 0.08em; font-style: normal; opacity: 0.3; padding: 8px 14px 2px; border-top: 1px solid var(--divider); margin-top: 2px; }
 
   /* Chart panel header */
   .wv-chart-header { padding: 8px 14px; border-bottom: 1px solid var(--divider); }
