@@ -57,6 +57,11 @@ const readingTime = Math.ceil(wordCount / 200);
     max-width: 100%;
   }
 
+  /* Disable the Astro view-transition fade so it doesn't clash */
+  :global(.main-content:has(.cheat-sheet-page)) {
+    view-transition-name: none;
+  }
+
   .cheat-sheet-page .originally-on,
   .cheat-sheet-page .article-header,
   .cheat-sheet-page :global(.cse-layout) {
