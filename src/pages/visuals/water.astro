@@ -1330,11 +1330,79 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
     .wv-bar-val { width: 60px; font-size: 0.6rem; }
   }
 
-  /* #1 Layout: sharp corners, no shadow (#1) */
-  .wv-layout { border-radius: 0 !important; box-shadow: none !important; border-width: 2px !important; }
+  /* ── Professional polish ── */
 
-  /* #9 Square hover: just brightness, nothing else */
-  .wv-sq-item:hover .wv-sq-box { filter: brightness(1.08); transition: filter 0.15s; }
+  /* Layout: clean lines, no rounded corners, tighter border */
+  .wv-layout {
+    border-radius: 0 !important;
+    box-shadow: none !important;
+  }
+
+  /* Typography tightening */
+  .wv-cat-head { font-size: 0.72rem; letter-spacing: 0.02em; text-transform: uppercase; font-weight: 700; color: var(--text-secondary); padding: 9px 16px; }
+  .wv-cat-head:hover { color: var(--text); }
+  .wv-cat-title { font-size: inherit; }
+  .wv-row-name { font-weight: 400; font-size: 0.75rem; }
+  .wv-toggle-row[data-on="true"] .wv-row-name { font-weight: 500; }
+  .wv-toggle-row[data-on="false"] .wv-row-name { opacity: 0.55; }
+  .wv-row-val { font-size: 0.62rem; letter-spacing: 0.01em; }
+
+  /* Panel header: smaller, more utilitarian */
+  .wv-panel-title { font-size: 0.55rem; letter-spacing: 0.14em; opacity: 0.35; padding: 10px 16px 0; }
+
+  /* Bar chart: tighter rows, sharper tracks */
+  .wv-bar-track { height: 18px; border-radius: 0; }
+  .wv-bar-fill { border-radius: 0; }
+  .wv-bar-row { border-radius: 0; margin-bottom: 4px; padding: 1px 0; }
+  .wv-bar-name { font-size: 0.72rem; font-weight: 400; width: 220px; }
+  .wv-bar-val { font-size: 0.68rem; font-weight: 400; }
+  .wv-bar-pct { font-size: 0.58rem; }
+
+  /* Squares: no bounce on hover, just a subtle indicator */
+  .wv-sq-item:hover .wv-sq-box { filter: brightness(1.06); transition: filter 0.1s; }
+  .wv-sq-name { font-weight: 400; }
+
+  /* Toggle controls: flatter, less bubbly */
+  .wv-view-toggle, .wv-water-toggle { border-radius: 0; }
+  .wv-view-btn, .wv-water-btn { border-radius: 0; font-size: 0.7rem; }
+  .wv-water-btn { font-size: 0.7rem !important; padding: 5px 14px !important; }
+  .wv-water-btn[data-active="true"] { font-weight: 600; }
+  .wv-view-btn[data-active="true"], .wv-water-btn[data-active="true"] { box-shadow: none; }
+
+  /* Chart header: cleaner separation */
+  .wv-chart-header { border-bottom-width: 1px; padding: 10px 16px; }
+  .wv-chart-count { font-size: 0.68rem; font-variant-numeric: tabular-nums; }
+
+  /* Bulk action buttons: tighter */
+  .wv-bulk-btn { border-radius: 0; font-size: 0.6rem; padding: 2px 8px; text-transform: uppercase; letter-spacing: 0.06em; }
+
+  /* Checkbox dot: smaller, crisper */
+  .wv-dot { width: 8px; height: 8px; border-radius: 2px; border-width: 1px; margin-top: 4px; }
+
+  /* Elec chip: tighter */
+  .wv-elec-chip { border-radius: 0; font-size: 0.5rem; padding: 1px 5px; letter-spacing: 0.05em; }
+
+  /* Dividers: subtler */
+  .wv-proj-divider { font-size: 0.55rem; text-transform: uppercase; letter-spacing: 0.08em; font-style: normal; opacity: 0.35; padding: 10px 16px 2px; }
+
+  /* Ratio callout: just text */
+  .wv-ratio-callout { font-size: 0.7rem; }
+
+  /* Scrollbar: thinner */
+  .wv-toggles-scroll::-webkit-scrollbar { width: 1px; }
+  .wv-cat-list::-webkit-scrollbar { width: 1px; }
+
+  /* Category active badge: tighter */
+  .wv-cat-active { font-size: 0.55rem; text-transform: none; font-weight: 400; letter-spacing: 0; }
+
+  /* Scale reference: cleaner */
+  .wv-scale-ref { border-radius: 0; font-size: 0.55rem; padding: 3px 6px; }
+
+  /* Treated helper: tighter */
+  .wv-treated-helper { font-size: 0.6rem; }
+
+  /* Remove loading skeleton shimmer — just show blank */
+  .wv-bars-area:empty, .wv-squares-area:empty { background-image: none !important; animation: none !important; }
 </style>
 
 <script is:inline>
