@@ -1322,7 +1322,7 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
     .wv-toggles {
       border-right: none;
       border-bottom: 1px solid var(--divider);
-      max-height: 280px;
+      max-height: 300px;
     }
     .wv-chart-panel {
       min-height: 420px;
@@ -1400,12 +1400,14 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
     /* Scale ref: bottom-right instead of top-left to not block content */
     .wv-scale-ref { top: auto !important; bottom: 4px; right: 4px; left: auto !important; }
 
-    /* Intro: tighter on mobile */
-    header h1 { font-size: 1.4rem; }
-    header > div { font-size: 0.78rem !important; line-height: 1.6 !important; margin-top: 0.5rem !important; }
-    header > div p { margin-bottom: 0.4rem !important; }
-    header > div ol { margin-bottom: 0.4rem !important; }
-    header > div li { margin-bottom: 0.2rem !important; }
+    /* Presets: tighter on mobile */
+    .wv-presets { padding: 4px 10px 6px; }
+    .wv-preset-btn { padding: 3px 8px; font-size: 0.6rem; }
+
+    /* Category headers: smaller on mobile */
+    .wv-cat-head { font-size: 0.8rem !important; padding: 9px 10px !important; }
+    .wv-cat-count { font-size: 0.6rem; }
+    .wv-cat-active { font-size: 0.55rem; }
 
     /* Methodology: tighter */
     .w-methodology { padding-bottom: 1.5rem; }
@@ -1427,6 +1429,11 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
     .wv-squares-area { padding: 8px; }
     .wv-water-btn { font-size: 0.55rem !important; }
     .wv-view-btn { font-size: 0.55rem; }
+    .wv-intro-cols { padding: 0.6rem 0.75rem; gap: 0.5rem; font-size: 0.75rem; }
+    .wv-header h1 { font-size: 1.25rem; }
+    .wv-presets { padding: 3px 8px 5px; }
+    .wv-preset-btn { font-size: 0.55rem; }
+    .wv-cat-head { font-size: 0.75rem !important; padding: 8px 8px !important; }
   }
 
   /* ── Intro columns ── */
@@ -1465,7 +1472,9 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
     .wv-intro-cols { grid-template-columns: 1fr 1fr; }
   }
   @media (max-width: 560px) {
-    .wv-intro-cols { grid-template-columns: 1fr; gap: 0.75rem; }
+    .wv-intro-cols { grid-template-columns: 1fr; gap: 0.75rem; padding: 0.75rem 1rem; font-size: 0.78rem; }
+    .wv-header { margin-bottom: 1rem; }
+    .wv-header h1 { font-size: 1.4rem; margin-bottom: 0.5rem; }
   }
 
   /*
