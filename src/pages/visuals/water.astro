@@ -106,23 +106,18 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
 
 <Base title="How thirsty is AI?" description="How much water does AI use?" ogTitle="How thirsty is AI?" ogImage="/images/og-water.png">
 
-  <header>
+  <header class="wv-header">
     <h1>How thirsty is AI?</h1>
-    <div class="wv-intro">
-      <p class="wv-intro-lede">Select items to compare how much water data centers use relative to farms, cities, industries, and more. All figures show water <strong>consumed</strong> — evaporated, incorporated into products, or not returned to source.</p>
-      <details class="wv-intro-details">
-        <summary>How to read this visualization</summary>
-        <div class="wv-intro-body">
-          <p>Toggle between squares (proportional area) and bars. Consumptive use is the core concern with AI water impact. For example, New York City's water system <a href="https://www.nyc.gov/site/dep/water/drinking-water.page">delivers 364 billion gallons per year</a>, but roughly <a href="https://pubs.usgs.gov/publication/sir20145176">88% of that returns</a> through the sewer system. Only the ~45 billion gallons actually consumed is shown here. Similarly, roughly <a href="https://extensionpubs.unl.edu/publication/g2345/2023/html/view">25&ndash;30% of applied irrigation water</a> percolates back into aquifers, so the farmland numbers show only the estimated consumptive portion.</p>
-          <p>Comparing data center water is tricky for three reasons:</p>
-          <ol>
-            <li>Data centers predominantly use <strong>public-supply potable water</strong> onsite, while most comparable users draw untreated water. Use the <em>All source water / Public-supply potable</em> toggle to see this distinction.</li>
-            <li>Most of the water &ldquo;used&rdquo; by data centers is actually <strong>non-potable freshwater</strong> consumed at nearby <strong>power plants</strong>. The <em>+ elec</em> buttons add this upstream water cost.</li>
-            <li>Data center water use is <strong>growing rapidly</strong> through 2030. The data centers category includes both current figures and 2030 projections.</li>
-          </ol>
-        </div>
-      </details>
-      <p class="wv-intro-contact">All values explained in the <a href="#methodology">methodology</a>. I did my best to figure out what each is, but I'm just some guy, and some of these might be off by orders of magnitude. If you think I'm getting something wrong, please email me at <a href="mailto:AndyMasley@gmail.com">AndyMasley@gmail.com</a>.</p>
+    <div class="wv-intro-cols">
+      <div class="wv-intro-col">
+        <p>Select items on the left to compare how much water data centers use relative to farms, cities, industries, and more. Toggle between <strong>squares</strong> (proportional area) and <strong>bars</strong>. All figures show water <strong>consumed</strong> &mdash; evaporated, incorporated into products, or not returned to source.</p>
+      </div>
+      <div class="wv-intro-col">
+        <p>Use <em>All source water / Public-supply potable</em> to filter by water type &mdash; data centers mostly draw potable municipal water, while farms and power plants use untreated water. The <em>+ elec</em> buttons on data center items add upstream water consumed at power plants generating their electricity.</p>
+      </div>
+      <div class="wv-intro-col">
+        <p>Data center water use is <strong>growing rapidly</strong> &mdash; the data centers category includes both current figures and 2030 projections. All values explained in the <a href="#methodology">methodology</a>. Some of these might be off by orders of magnitude &mdash; if you think I'm getting something wrong, <a href="mailto:AndyMasley@gmail.com">email me</a>.</p>
+      </div>
     </div>
   </header>
 
@@ -1345,6 +1340,7 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
   /* ── Responsive: phone ── */
   @media (max-width: 560px) {
     .wv2 { width: calc(100vw - 16px); padding: 0 0 1.5rem; }
+    .wv-header { width: calc(100vw - 16px); }
 
     .wv-layout { height: auto; max-height: none; }
 
@@ -1415,6 +1411,7 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
   /* ── Responsive: very small phone ── */
   @media (max-width: 380px) {
     .wv2 { width: calc(100vw - 8px); }
+    .wv-header { width: calc(100vw - 8px); }
     .wv-bar-name { width: 80px; font-size: 0.58rem; }
     .wv-bar-val { font-size: 0.54rem; min-width: 45px; }
     .wv-toggle-row { padding: 6px 8px; }
@@ -1426,31 +1423,34 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
     .wv-view-btn { font-size: 0.55rem; }
   }
 
-  /* ── Intro section ── */
-  .wv-intro {
-    font-size: 0.85rem; line-height: 1.7; color: var(--text-secondary, #6B6B60);
-    margin-top: 0.75rem; max-width: 680px;
+  /* ── Intro columns ── */
+  .wv-header {
+    width: calc(100vw - 48px);
+    position: relative;
+    left: 50%;
+    transform: translateX(-50%);
+    max-width: 1500px;
   }
-  .wv-intro-lede { font-size: 0.95rem; color: var(--text); line-height: 1.6; margin-bottom: 0.5rem; }
-  .wv-intro-details { margin-bottom: 0.6rem; }
-  .wv-intro-details summary {
-    font-size: 0.78rem; font-weight: 500; color: var(--text-secondary); cursor: pointer;
-    list-style: none; display: flex; align-items: center; gap: 6px; padding: 4px 0;
-    user-select: none; transition: color 0.15s;
+  .wv-header h1 { margin-bottom: 0.6rem; }
+  .wv-intro-cols {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 1.5rem;
+    font-size: 0.82rem;
+    line-height: 1.65;
+    color: var(--text-secondary, #6B6B60);
   }
-  .wv-intro-details summary::-webkit-details-marker { display: none; }
-  .wv-intro-details summary::before { content: '\25B8'; font-size: 0.6rem; transition: transform 0.2s; }
-  .wv-intro-details[open] summary::before { transform: rotate(90deg); }
-  .wv-intro-details summary:hover { color: var(--text); }
-  .wv-intro-body { padding: 0.5rem 0 0 0.25rem; font-size: 0.82rem; line-height: 1.65; }
-  .wv-intro-body p { margin-bottom: 0.5rem; }
-  .wv-intro-body ol { padding-left: 1.25rem; margin-bottom: 0.5rem; }
-  .wv-intro-body li { margin-bottom: 0.3rem; }
-  .wv-intro-body strong { color: var(--text, #1A1A18); }
-  [data-theme="dark"] .wv-intro-body strong { color: var(--text, #F0EDE6); }
-  .wv-intro-contact { font-size: 0.82rem; }
-  .wv-intro-contact a, .wv-intro-body a {
+  .wv-intro-col p { margin: 0; }
+  .wv-intro-col strong { color: var(--text, #1A1A18); }
+  [data-theme="dark"] .wv-intro-col strong { color: var(--text, #F0EDE6); }
+  .wv-intro-col a {
     color: var(--accent, #8b3a3a); text-decoration: underline; text-underline-offset: 2px;
+  }
+  @media (max-width: 850px) {
+    .wv-intro-cols { grid-template-columns: 1fr 1fr; }
+  }
+  @media (max-width: 560px) {
+    .wv-intro-cols { grid-template-columns: 1fr; gap: 0.75rem; }
   }
 
   /*
