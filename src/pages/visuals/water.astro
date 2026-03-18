@@ -126,7 +126,10 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
       <div class="wv-toggles">
         <div class="wv-toggles-scroll">
           <div class="wv-panel-title">ITEMS</div>
-          <button class="wv-clear-all" id="wv-clear-all">Clear all</button>
+          <div class="wv-bulk-actions">
+            <button class="wv-bulk-btn" id="wv-clear-all">Clear all</button>
+            <button class="wv-bulk-btn" id="wv-add-all">Add all</button>
+          </div>
 
           <!-- Data centers -->
           <div class="wv-cat" data-cat="dc">
@@ -1162,21 +1165,26 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
     padding: 12px 16px 0;
   }
 
-  /* #8 Clear all button */
-  .wv-clear-all {
-    font-family: inherit;
-    font-size: 0.62rem;
-    color: var(--text-secondary);
-    opacity: 0.4;
-    background: none;
-    border: none;
-    cursor: pointer;
+  /* Bulk action buttons */
+  .wv-bulk-actions {
+    display: flex;
+    gap: 6px;
     padding: 4px 16px 8px;
-    transition: opacity 0.1s, color 0.1s;
   }
-  .wv-clear-all:hover {
-    opacity: 0.8;
+  .wv-bulk-btn {
+    font-family: inherit;
+    font-size: 0.65rem;
+    color: var(--text-secondary);
+    background: none;
+    border: 1px solid var(--divider);
+    border-radius: 3px;
+    cursor: pointer;
+    padding: 3px 10px;
+    transition: color 0.12s, border-color 0.12s;
+  }
+  .wv-bulk-btn:hover {
     color: var(--accent);
+    border-color: var(--accent);
   }
 
   /* #19 Mini-bars in panel — hidden for cleaner look */
@@ -1697,6 +1705,24 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
       render();
       clearBtn.textContent = 'Cleared!';
       setTimeout(function() { clearBtn.textContent = 'Clear all'; }, 1500);
+    });
+  }
+
+  // Add all button
+  var addAllBtn = document.getElementById('wv-add-all');
+  if (addAllBtn) {
+    addAllBtn.addEventListener('click', function() {
+      for (var ai = 0; ai < items.length; ai++) {
+        if (items[ai]) {
+          items[ai].on = true;
+        }
+      }
+      document.querySelectorAll('.wv-toggle-row').forEach(function(row) {
+        row.dataset.on = 'true';
+      });
+      render();
+      addAllBtn.textContent = 'Added!';
+      setTimeout(function() { addAllBtn.textContent = 'Add all'; }, 1500);
     });
   }
 
