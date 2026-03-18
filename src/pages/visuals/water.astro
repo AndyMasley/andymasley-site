@@ -2318,7 +2318,8 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
     if (!html) return;
     var displayName = item.elecOn ? item.baseName + ' + electricity' : item.baseName;
     var elecHtml = item.elecOn ? ELEC_EXPLAINER : '';
-    tooltipEl.innerHTML = '<strong style="font-size:0.78rem;display:block;margin-bottom:4px">' + displayName + '</strong>' + html + elecHtml;
+    tooltipEl.innerHTML = '<button class="wv-tip-close" style="position:absolute;top:6px;right:6px;background:none;border:none;cursor:pointer;color:var(--text-secondary);font-size:1.1rem;line-height:1;padding:2px 5px;opacity:0.4">&times;</button><strong style="font-size:0.78rem;display:block;margin-bottom:4px;padding-right:20px">' + displayName + '</strong>' + html + elecHtml;
+    tooltipEl.querySelector('.wv-tip-close').addEventListener('click', function(e) { e.stopPropagation(); hideTip(); });
     tooltipEl.style.display = 'block';
     tipOpen = true;
 
