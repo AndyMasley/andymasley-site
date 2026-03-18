@@ -8,6 +8,7 @@ interface Props {
   showReadingProgress?: boolean;
   ogImage?: string;
   ogTitle?: string;
+  activeNav?: string;
 }
 
 const {
@@ -16,6 +17,7 @@ const {
   showReadingProgress = false,
   ogImage,
   ogTitle,
+  activeNav,
 } = Astro.props;
 const resolvedOgTitle = ogTitle || title;
 const resolvedOgImage = ogImage || "/images/og-default.png";
@@ -33,6 +35,7 @@ const navLinks = [
 ];
 
 function isActive(href: string): boolean {
+  if (activeNav) return href === activeNav;
   if (href === '/') return currentPath === '/';
   return currentPath.startsWith(href);
 }
