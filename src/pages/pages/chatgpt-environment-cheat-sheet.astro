@@ -40,20 +40,10 @@ const readingTime = Math.ceil(wordCount / 200);
 </Base>
 
 <style>
-  /* Override the Base layout's narrow container */
-  :global(.main-content:has(.cheat-sheet-page)) {
-    max-width: 1200px;
-    padding-left: 32px;
-    padding-right: 32px;
-  }
-  /* Keep the site header/nav at normal width */
-  :global(.main-content:has(.cheat-sheet-page) > .header) {
-    max-width: 640px;
-  }
-
-  /* ═══ Page wrapper ═══ */
+  /* Break out of the 640px container so the two-column layout has room */
   .cheat-sheet-page {
-    max-width: 100%;
+    width: min(1200px, 100vw - 48px);
+    margin-left: calc((min(1200px, 100vw - 48px) - 100%) / -2);
   }
 
   /* ═══ Header ═══ */
