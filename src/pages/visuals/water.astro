@@ -292,7 +292,6 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
                   <span class="wv-row-text">
                     <span class="wv-row-name">{d.name}</span>
                     <span class="wv-row-val">{d.sub}</span>
-                    {d.elec !== null && <span class="wv-elec-chip" data-parent-idx={d.idx} title="Include water consumed to generate electricity for pumping and distribution (0.47 gal/kWh thermoelectric)">+ elec</span>}
                   </span>
                 </button>
               ))}
