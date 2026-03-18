@@ -162,10 +162,6 @@ const wordCount = post.source === 'local'
   description="Every environmental objection to using ChatGPT, answered with data and sources."
 >
   <div class="cheat-sheet-page">
-    <p class="originally-on">
-      Originally on <a href={post.url} target="_blank" rel="noopener">{post.sourceName}</a>
-    </p>
-
     <header class="article-header">
       <h1 class="article-header__title">{post.title}</h1>
       <div class="article-header__meta">
@@ -454,12 +450,10 @@ const wordCount = post.source === 'local'
   }
 
   /* ═══ Cheat Sheet Layout ═══ */
-  :global(.main-content:has(.cheat-sheet-page)) {
-    max-width: 1200px;
-    padding-left: 32px;
-    padding-right: 32px;
+  .cheat-sheet-page {
+    width: min(1200px, 100vw - 48px);
+    margin-left: calc((min(1200px, 100vw - 48px) - 100%) / -2);
   }
-  .cheat-sheet-page { max-width: 100%; }
 
   :global(.cse-progress-bar) {
     position: fixed; top: 0; left: 0; right: 0; height: 3px;
