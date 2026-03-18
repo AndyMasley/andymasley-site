@@ -22,16 +22,28 @@ const totalVideos = getTotalVideoCount();
     </p>
   </div>
 
+  <nav class="unit-nav" id="unit-nav">
+    {physicsTopics.map((topic, i) => (
+      <>
+        {i > 0 && <span class="unit-nav__sep">·</span>}
+        <a href={`#unit-${topic.id}`} class="unit-nav__link">{topic.id === 'lab' ? 'Lab' : topic.id.toUpperCase()}</a>
+      </>
+    ))}
+  </nav>
+
   {physicsTopics.map(topic => (
-    <section class="unit">
+    <section class="unit" id={`unit-${topic.id}`}>
       <h2 class="unit__title">
         {topic.name}
         <span class="unit__count">{topic.subtopics.reduce((sum, s) => sum + s.videos.length, 0)} videos</span>
       </h2>
 
       {topic.subtopics.map(subtopic => (
-        <div class="subtopic">
-          <h3 class="subtopic__title">{subtopic.name}</h3>
+        <details class="subtopic">
+          <summary class="subtopic__title">
+            {subtopic.name}
+            <span class="subtopic__count">{subtopic.videos.length}</span>
+          </summary>
           <div class="video-grid">
             {subtopic.videos.map(video => (
               <a href={video.url} target="_blank" rel="noopener" class="video-item">
@@ -40,7 +52,7 @@ const totalVideos = getTotalVideoCount();
               </a>
             ))}
           </div>
-        </div>
+        </details>
       ))}
     </section>
   ))}
@@ -91,6 +103,45 @@ const totalVideos = getTotalVideoCount();
 
 </Base>
 
+<script>
+  function initPhysicsNav() {
+    const nav = document.getElementById('unit-nav');
+    if (!nav) return;
+    const links = nav.querySelectorAll<HTMLAnchorElement>('.unit-nav__link');
+    const units = document.querySelectorAll<HTMLElement>('.unit[id]');
+
+    // Smooth scroll on click
+    links.forEach(link => {
+      link.addEventListener('click', (e) => {
+        e.preventDefault();
+        const id = link.getAttribute('href')?.slice(1);
+        const target = id ? document.getElementById(id) : null;
+        target?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    });
+
+    // Highlight active unit in nav on scroll
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            const id = entry.target.id;
+            links.forEach(l => {
+              l.classList.toggle('unit-nav__link--active', l.getAttribute('href') === `#${id}`);
+            });
+          }
+        });
+      },
+      { rootMargin: '-48px 0px -70% 0px', threshold: 0 }
+    );
+
+    units.forEach(u => observer.observe(u));
+  }
+
+  initPhysicsNav();
+  document.addEventListener('astro:page-load', initPhysicsNav);
+</script>
+
 <style>
   .section-title {
     font-size: 1rem;
@@ -118,9 +169,45 @@ const totalVideos = getTotalVideoCount();
     text-decoration: none;
   }
 
+  /* Jump nav */
+  .unit-nav {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: var(--bg);
+    padding: var(--space-sm) 0;
+    margin-bottom: var(--space-lg);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.8rem;
+  }
+
+  .unit-nav__link {
+    color: var(--dim);
+    text-decoration: none;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-weight: 600;
+    transition: color 0.15s, background 0.15s;
+  }
+
+  .unit-nav__link:hover,
+  .unit-nav__link--active {
+    color: var(--accent);
+    background: var(--accent-subtle);
+  }
+
+  .unit-nav__sep {
+    color: var(--dim);
+    opacity: 0.3;
+  }
+
   /* Units */
   .unit {
     margin-bottom: var(--space-2xl);
+    scroll-margin-top: 48px;
   }
 
   .unit__title {
@@ -130,7 +217,7 @@ const totalVideos = getTotalVideoCount();
     color: var(--text);
     padding-bottom: var(--space-xs);
     border-bottom: 2px solid var(--accent);
-    margin-bottom: var(--space-lg);
+    margin-bottom: var(--space-md);
     display: flex;
     align-items: baseline;
     gap: var(--space-sm);
@@ -144,17 +231,52 @@ const totalVideos = getTotalVideoCount();
     letter-spacing: 0.02em;
   }
 
-  /* Subtopics */
+  /* Subtopics (collapsible) */
   .subtopic {
-    margin-bottom: var(--space-lg);
+    margin-bottom: 2px;
   }
 
   .subtopic__title {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: 8px 10px;
     font-size: 0.85rem;
     font-weight: 600;
+    color: var(--text);
+    cursor: pointer;
+    list-style: none;
+    border-radius: 6px;
+    transition: background 0.15s, color 0.15s;
+  }
+
+  .subtopic__title::-webkit-details-marker {
+    display: none;
+  }
+
+  .subtopic__title::before {
+    content: '▶';
+    font-size: 0.5rem;
+    color: var(--dim);
+    transition: transform 0.2s ease;
+    flex-shrink: 0;
+  }
+
+  .subtopic[open] > .subtopic__title::before {
+    transform: rotate(90deg);
+  }
+
+  .subtopic__title:hover {
+    background: var(--accent-subtle);
     color: var(--accent);
-    margin-bottom: var(--space-sm);
-    letter-spacing: 0.01em;
+  }
+
+  .subtopic__count {
+    font-size: 0.6rem;
+    font-weight: 500;
+    color: var(--dim);
+    font-family: var(--font-mono);
+    margin-left: auto;
   }
 
   /* Video grid */
@@ -162,13 +284,14 @@ const totalVideos = getTotalVideoCount();
     display: flex;
     flex-direction: column;
     gap: 2px;
+    padding: 4px 0 8px 22px;
   }
 
   .video-item {
     display: flex;
     align-items: center;
     gap: 8px;
-    padding: 6px 10px;
+    padding: 5px 10px;
     border-radius: 6px;
     text-decoration: none;
     color: var(--text);
