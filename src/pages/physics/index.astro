@@ -22,45 +22,28 @@ const totalVideos = getTotalVideoCount();
     </p>
   </div>
 
-  <div class="video-layout" id="video-layout">
-    <div class="video-list">
-      {physicsTopics.map(topic => (
-        <section class="unit">
-          <h2 class="unit__title">
-            {topic.name}
-            <span class="unit__count">{topic.subtopics.reduce((sum, s) => sum + s.videos.length, 0)} videos</span>
-          </h2>
+  {physicsTopics.map(topic => (
+    <section class="unit">
+      <h2 class="unit__title">
+        {topic.name}
+        <span class="unit__count">{topic.subtopics.reduce((sum, s) => sum + s.videos.length, 0)} videos</span>
+      </h2>
 
-          {topic.subtopics.map(subtopic => (
-            <div class="subtopic">
-              <h3 class="subtopic__title">{subtopic.name}</h3>
-              <div class="video-grid">
-                {subtopic.videos.map(video => {
-                  const vidMatch = video.url.match(/[?&]v=([^&]+)/);
-                  const vidId = vidMatch ? vidMatch[1] : '';
-                  return (
-                    <a href={video.url} target="_blank" rel="noopener" class="video-item" data-vid={vidId}>
-                      <svg class="video-item__icon" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
-                      <span class="video-item__title">{video.title}</span>
-                    </a>
-                  );
-                })}
-              </div>
-            </div>
-          ))}
-        </section>
-      ))}
-    </div>
-
-    <div class="player-panel" id="player-panel">
-      <div class="player-panel__inner" id="player-inner">
-        <div class="player-panel__placeholder">
-          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 5v14l11-7z"/></svg>
-          <p>Click a video to play it here</p>
+      {topic.subtopics.map(subtopic => (
+        <div class="subtopic">
+          <h3 class="subtopic__title">{subtopic.name}</h3>
+          <div class="video-grid">
+            {subtopic.videos.map(video => (
+              <a href={video.url} target="_blank" rel="noopener" class="video-item">
+                <svg class="video-item__icon" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                <span class="video-item__title">{video.title}</span>
+              </a>
+            ))}
+          </div>
         </div>
-      </div>
-    </div>
-  </div>
+      ))}
+    </section>
+  ))}
 
   <div class="divider"><div class="divider-diamond"></div></div>
 
@@ -108,56 +91,6 @@ const totalVideos = getTotalVideoCount();
 
 </Base>
 
-<script>
-  function initVideoPlayer() {
-    const inner = document.getElementById('player-inner');
-    const layout = document.getElementById('video-layout');
-    if (!inner || !layout) return;
-
-    let activeLink: HTMLElement | null = null;
-
-    layout.addEventListener('click', (e) => {
-      const link = (e.target as HTMLElement).closest<HTMLAnchorElement>('.video-item[data-vid]');
-      if (!link) return;
-
-      const vid = link.dataset.vid;
-      if (!vid) return;
-
-      e.preventDefault();
-
-      // Update active state
-      if (activeLink) activeLink.classList.remove('video-item--active');
-      link.classList.add('video-item--active');
-      activeLink = link;
-
-      const title = link.querySelector('.video-item__title')?.textContent || '';
-
-      inner.innerHTML = `
-        <div class="player-panel__header">
-          <span class="player-panel__title">${title.replace(/</g, '&lt;')}</span>
-          <a href="${link.href}" target="_blank" rel="noopener" class="player-panel__yt-link">open on YouTube</a>
-        </div>
-        <div class="player-panel__embed">
-          <iframe
-            src="https://www.youtube.com/embed/${vid}?autoplay=1"
-            frameborder="0"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowfullscreen
-          ></iframe>
-        </div>
-      `;
-
-      // On mobile, scroll to player
-      if (window.innerWidth <= 900) {
-        inner.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
-    });
-  }
-
-  initVideoPlayer();
-  document.addEventListener('astro:page-load', initVideoPlayer);
-</script>
-
 <style>
   .section-title {
     font-size: 1rem;
@@ -183,106 +116,6 @@ const totalVideos = getTotalVideoCount();
 
   .physics-intro a:hover {
     text-decoration: none;
-  }
-
-  /* Two-column layout: video list + player */
-  .video-layout {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: var(--space-xl);
-    align-items: start;
-    /* Break out of the 640px container */
-    width: min(1100px, 100vw - 48px);
-    margin-left: calc((min(1100px, 100vw - 48px) - 100%) / -2);
-  }
-
-  .video-list {
-    min-width: 0;
-  }
-
-  /* Player panel */
-  .player-panel {
-    position: sticky;
-    top: 24px;
-  }
-
-  .player-panel__inner {
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    overflow: hidden;
-    background: var(--bg-elevated, var(--bg));
-  }
-
-  .player-panel__placeholder {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: var(--space-sm);
-    padding: var(--space-2xl) var(--space-lg);
-    color: var(--dim);
-    text-align: center;
-    font-size: 0.8rem;
-  }
-
-  .player-panel__placeholder svg {
-    opacity: 0.25;
-  }
-
-  .player-panel__header {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    padding: var(--space-sm) var(--space-md);
-    border-bottom: 1px solid var(--border);
-    gap: var(--space-sm);
-  }
-
-  .player-panel__title {
-    font-size: 0.78rem;
-    font-weight: 600;
-    color: var(--text);
-    line-height: 1.35;
-    flex: 1;
-    min-width: 0;
-  }
-
-  .player-panel__yt-link {
-    font-size: 0.65rem;
-    color: var(--dim);
-    text-decoration: underline;
-    text-underline-offset: 2px;
-    white-space: nowrap;
-    flex-shrink: 0;
-  }
-
-  .player-panel__yt-link:hover {
-    color: var(--accent);
-  }
-
-  .player-panel__embed {
-    position: relative;
-    padding-bottom: 56.25%; /* 16:9 */
-    height: 0;
-  }
-
-  .player-panel__embed iframe {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-  }
-
-  /* Active video item */
-  .video-item--active {
-    background: var(--accent-subtle);
-    color: var(--accent);
-  }
-
-  .video-item--active .video-item__icon {
-    color: var(--accent);
-    opacity: 0.8;
   }
 
   /* Units */
@@ -407,19 +240,6 @@ const totalVideos = getTotalVideoCount();
   }
 
   /* Responsive */
-  @media (max-width: 900px) {
-    .video-layout {
-      grid-template-columns: 1fr;
-      width: 100%;
-      margin-left: 0;
-    }
-
-    .player-panel {
-      position: static;
-      order: -1;
-    }
-  }
-
   @media (max-width: 600px) {
     .unit__title {
       font-size: 1.1rem;
