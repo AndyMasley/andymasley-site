@@ -1097,10 +1097,8 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
     font-weight: 500;
     color: var(--text);
     line-height: 1.2;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    max-width: 200px;
+    white-space: normal;
+    word-wrap: break-word;
   }
   .wv-sq-val {
     display: block;
