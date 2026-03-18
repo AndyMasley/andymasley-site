@@ -38,6 +38,21 @@ const readingTime = Math.ceil(wordCount / 200);
   </div>
 </Base>
 
+<script>
+  document.addEventListener('astro:before-preparation', (e: any) => {
+    const page = document.querySelector('.cheat-sheet-page');
+    if (!page) return;
+
+    page.classList.add('is-leaving');
+
+    const originalLoader = e.loader;
+    e.loader = async () => {
+      await new Promise(r => setTimeout(r, 450));
+      await originalLoader();
+    };
+  });
+</script>
+
 <style>
   /* Override the Base layout's narrow container */
   :global(.main-content:has(.cheat-sheet-page)) {
@@ -74,6 +89,27 @@ const readingTime = Math.ceil(wordCount / 200);
   @keyframes fadeUp {
     from { opacity: 0; transform: translateY(8px); }
     to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ═══ Exit animation ═══ */
+  .cheat-sheet-page.is-leaving .originally-on,
+  .cheat-sheet-page.is-leaving .article-header,
+  .cheat-sheet-page.is-leaving :global(.cse-layout) {
+    animation: fadeDown 0.35s cubic-bezier(0.55, 0, 1, 0.45) forwards;
+  }
+  .cheat-sheet-page.is-leaving :global(.cse-layout) { animation-delay: 0s; }
+  .cheat-sheet-page.is-leaving .article-header { animation-delay: 0.08s; }
+  .cheat-sheet-page.is-leaving .originally-on { animation-delay: 0.12s; }
+
+  :global(.main-content:has(.cheat-sheet-page.is-leaving)) {
+    animation: shrinkContainer 0.4s cubic-bezier(0.55, 0, 1, 0.45) 0.1s forwards;
+  }
+
+  @keyframes fadeDown {
+    to { opacity: 0; transform: translateY(8px); }
+  }
+  @keyframes shrinkContainer {
+    to { max-width: 640px; }
   }
 
   /* ═══ Header ═══ */
