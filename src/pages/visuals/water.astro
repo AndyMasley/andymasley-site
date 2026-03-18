@@ -1430,15 +1430,24 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
     left: 50%;
     transform: translateX(-50%);
     max-width: 1500px;
+    margin-bottom: 1.5rem;
   }
-  .wv-header h1 { margin-bottom: 0.6rem; }
+  .wv-header h1 { margin-bottom: 0.75rem; }
   .wv-intro-cols {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
-    gap: 1.5rem;
+    gap: 2.5rem;
     font-size: 0.82rem;
-    line-height: 1.65;
+    line-height: 1.7;
     color: var(--text-secondary, #6B6B60);
+    padding: 1rem 1.25rem;
+    border: 1px solid var(--border, #DDD9D0);
+    border-radius: 6px;
+    background: var(--bg-subtle, #f5f4f2);
+  }
+  [data-theme="dark"] .wv-intro-cols {
+    background: var(--bg-subtle, #1a1918);
+    border-color: var(--border, #3A3733);
   }
   .wv-intro-col p { margin: 0; }
   .wv-intro-col strong { color: var(--text, #1A1A18); }
