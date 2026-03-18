@@ -1415,10 +1415,6 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
           var tg = row.dataset.tgal;
           var isCrossed = tg === 'null' || tg === '';
           row.dataset.crossed = isCrossed ? 'true' : 'false';
-          if (isCrossed && it.on) {
-            it.on = false;
-            row.dataset.on = 'false';
-          }
           if (!isCrossed) {
             it.gallons = parseFloat(tg);
             it.name = it.baseName;
@@ -1771,7 +1767,12 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
   function render() {
     var active = [];
     for (var i = 0; i < items.length; i++) {
-      if (items[i] && items[i].on) active.push(items[i]);
+      if (!items[i] || !items[i].on) continue;
+      if (waterMode === 'treated') {
+        var row = document.querySelector('.wv-toggle-row[data-idx="' + i + '"]');
+        if (row && row.dataset.crossed === 'true') continue;
+      }
+      active.push(items[i]);
     }
 
     updateCategoryBadges();
