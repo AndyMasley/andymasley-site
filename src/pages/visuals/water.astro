@@ -108,21 +108,15 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
 
   <header>
     <h1>How thirsty is AI?</h1>
-    <div class="wv-intro">
-      <p class="wv-intro-lede">Select items to compare how much water data centers use relative to farms, cities, industries, and more. All figures show water <strong>consumed</strong> — evaporated, incorporated into products, or not returned to source.</p>
-      <details class="wv-intro-details">
-        <summary>How to read this visualization</summary>
-        <div class="wv-intro-body">
-          <p>Toggle between squares (proportional area) and bars. Consumptive use is the core concern with AI water impact. For example, New York City's water system <a href="https://www.nyc.gov/site/dep/water/drinking-water.page">delivers 364 billion gallons per year</a>, but roughly <a href="https://pubs.usgs.gov/publication/sir20145176">88% of that returns</a> through the sewer system. Only the ~45 billion gallons actually consumed is shown here. Similarly, roughly <a href="https://extensionpubs.unl.edu/publication/g2345/2023/html/view">25&ndash;30% of applied irrigation water</a> percolates back into aquifers, so the farmland numbers show only the estimated consumptive portion.</p>
-          <p>Comparing data center water is tricky for three reasons:</p>
-          <ol>
-            <li>Data centers predominantly use <strong>public-supply potable water</strong> onsite, while most comparable users draw untreated water. Use the <em>All source water / Public-supply potable</em> toggle to see this distinction.</li>
-            <li>Most of the water &ldquo;used&rdquo; by data centers is actually <strong>non-potable freshwater</strong> consumed at nearby <strong>power plants</strong>. The <em>+ elec</em> buttons add this upstream water cost.</li>
-            <li>Data center water use is <strong>growing rapidly</strong> through 2030. The data centers category includes both current figures and 2030 projections.</li>
-          </ol>
-        </div>
-      </details>
-      <p class="wv-intro-contact">All values explained in the <a href="#methodology">methodology</a>. I did my best to figure out what each is, but I'm just some guy, and some of these might be off by orders of magnitude. If you think I'm getting something wrong, please email me at <a href="mailto:AndyMasley@gmail.com">AndyMasley@gmail.com</a>.</p>
+    <div style="font-size: 0.85rem; line-height: 1.7; color: var(--text-secondary, #6B6B60); margin-top: 0.75rem; max-width: 680px;">
+      <p style="margin-bottom: 0.6rem;">Select items on the left to compare how much water data centers use relative to farms, cities, industries, and more. Toggle between squares (proportional area) and bars. All figures show water <strong style="color: var(--text, #1A1A18);">consumed</strong> — evaporated, incorporated into products, or not returned to source — because consumptive use is the core concern with AI water impact. For example, New York City's water system <a href="https://www.nyc.gov/site/dep/water/drinking-water.page" style="color: var(--accent, #8b3a3a); text-decoration: underline; text-underline-offset: 2px;">delivers 364 billion gallons per year</a>, but roughly <a href="https://pubs.usgs.gov/publication/sir20145176" style="color: var(--accent, #8b3a3a); text-decoration: underline; text-underline-offset: 2px;">88% of that returns</a> through the sewer system. Only the ~45 billion gallons actually consumed is shown here. Similarly, roughly <a href="https://extensionpubs.unl.edu/publication/g2345/2023/html/view" style="color: var(--accent, #8b3a3a); text-decoration: underline; text-underline-offset: 2px;">25–30% of applied irrigation water</a> percolates back into aquifers, so the farmland numbers show only the estimated consumptive portion.</p>
+      <p style="margin-bottom: 0.4rem;">Comparing data center water is tricky for three reasons:</p>
+      <ol style="padding-left: 1.25rem; margin-bottom: 0.6rem;">
+        <li style="margin-bottom: 0.3rem;">Data centers predominantly use <strong style="color: var(--text, #1A1A18);">public-supply potable water</strong> onsite, while most comparable users (farms, refineries, power plants) draw untreated water from rivers and wells. Use the <em>All source water / Public-supply potable</em> toggle to see this distinction — in potable mode, items that rely entirely on non-municipal water are crossed out, and items that use a mix are reduced to show only their public-supply portion.</li>
+        <li style="margin-bottom: 0.3rem;">Most of the water "used" by data centers is actually <strong style="color: var(--text, #1A1A18);">non-potable freshwater</strong> consumed at nearby <strong style="color: var(--text, #1A1A18);">power plants</strong> generating their electricity. The <em>+ elec</em> buttons on data center items add this upstream water cost.</li>
+        <li style="margin-bottom: 0.3rem;">Data center water use is <strong style="color: var(--text, #1A1A18);">growing rapidly</strong> and will continue through 2030. The data centers category includes both current figures and 2030 projections.</li>
+      </ol>
+      <p>All values explained in the <a href="#methodology" style="color: var(--accent, #8b3a3a); text-decoration: underline; text-underline-offset: 2px;">methodology</a>. I did my best to figure out what each is, but I'm just some guy, and some of these might be off by orders of magnitude. If you think I'm getting something wrong, please email me at <a href="mailto:AndyMasley@gmail.com" style="color: var(--accent, #8b3a3a); text-decoration: underline; text-underline-offset: 2px;">AndyMasley@gmail.com</a>.</p>
     </div>
   </header>
 
@@ -141,7 +135,7 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
           <div class="wv-cat" data-cat="dc">
             <button class="wv-cat-head" data-open="true">
               <span class="wv-cat-chevron">&#9662;</span>
-              <span class="wv-cat-color" style="background:#4A90D9"></span>
+
               <span class="wv-cat-title">Data centers</span>
               <span class="wv-cat-count">{dcFlat.length}</span>
               <span class="wv-cat-active"></span>
@@ -171,7 +165,7 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
           <div class="wv-cat" data-cat="industry">
             <button class="wv-cat-head" data-open="false">
               <span class="wv-cat-chevron">&#9656;</span>
-              <span class="wv-cat-color" style="background:#D97A4A"></span>
+
               <span class="wv-cat-title">Other industries</span>
               <span class="wv-cat-count">{indFlat.length}</span>
               <span class="wv-cat-active"></span>
@@ -201,7 +195,7 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
           <div class="wv-cat" data-cat="city">
             <button class="wv-cat-head" data-open="false">
               <span class="wv-cat-chevron">&#9656;</span>
-              <span class="wv-cat-color" style="background:#5BA4CF"></span>
+
               <span class="wv-cat-title">City water systems</span>
               <span class="wv-cat-count">{cityFlat.length}</span>
               <span class="wv-cat-active"></span>
@@ -228,7 +222,7 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
           <div class="wv-cat" data-cat="farm">
             <button class="wv-cat-head" data-open="false">
               <span class="wv-cat-chevron">&#9656;</span>
-              <span class="wv-cat-color" style="background:#4CAF78"></span>
+
               <span class="wv-cat-title">Irrigated farmland</span>
               <span class="wv-cat-count">{farmFlat.length}</span>
               <span class="wv-cat-active"></span>
@@ -259,7 +253,7 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
           <div class="wv-cat" data-cat="turf">
             <button class="wv-cat-head" data-open="false">
               <span class="wv-cat-chevron">&#9656;</span>
-              <span class="wv-cat-color" style="background:#6BBF84"></span>
+
               <span class="wv-cat-title">Lawns & turf</span>
               <span class="wv-cat-count">{turfFlat.length}</span>
               <span class="wv-cat-active"></span>
@@ -289,7 +283,7 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
           <div class="wv-cat" data-cat="national">
             <button class="wv-cat-head" data-open="false">
               <span class="wv-cat-chevron">&#9656;</span>
-              <span class="wv-cat-color" style="background:#8B8FA8"></span>
+
               <span class="wv-cat-title">National totals</span>
               <span class="wv-cat-count">{natFlat.length}</span>
               <span class="wv-cat-active"></span>
@@ -318,7 +312,7 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
       <div class="wv-chart-panel">
         <div class="wv-chart-header">
           <div class="wv-header-left">
-            <div style="display:flex;align-items:center;gap:6px"><span class="wv-chart-count" id="wv-count">Comparing 3 items</span><button class="wv-share-btn" id="wv-share"><svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M6 10l4-4"/><path d="M7 3l1-1a3 3 0 014.2 4.2l-1 1"/><path d="M9 13l-1 1a3 3 0 01-4.2-4.2l1-1"/></svg>Copy link</button></div>
+            <div style="display:flex;align-items:center;gap:6px"><span class="wv-chart-count" id="wv-count">Comparing 3 items</span><button class="wv-share-btn" id="wv-share" style="font-family:inherit;font-size:0.65rem;color:var(--text-secondary);background:none;border:1px solid var(--divider);border-radius:4px;padding:2px 8px;cursor:pointer;transition:color 0.12s">Copy link</button></div>
             <div class="wv-treated-helper" id="wv-treated-helper" style="display:none;opacity:0">Showing only water from public water supply systems. Crossed-out items use non-municipal sources.</div>
           </div>
           <div class="wv-header-controls">
@@ -349,7 +343,7 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
     <p class="w-meth-intro">This visualization mixes different water metrics: on-site consumptive use (data centers), estimated consumptive use from applied irrigation × efficiency ratios (farms), estimated consumptive use from deliveries minus sewer returns (cities), plausible modeled estimates from withdrawal × consumption ratios (industries), and total withdrawals (national). Items within the same metric type are comparable; cross-type comparisons show scale but are not like-for-like. It also mixes U.S.-only totals (LBNL, USDA) with global corporate totals (Microsoft, Google). Every figure is year-stamped. All numbers, formulas, and sources are documented in the sections below.</p>
 
     <details class="w-meth-section" open>
-      <summary><span class="w-meth-dot" style="background:#4A90D9"></span>Data centers — direct cooling</summary>
+      <summary>Data centers — direct cooling</summary>
       <div class="w-meth-body">
         <p><strong>All US data centers, 2023: 17.4B gal/yr.</strong> LBNL's 2024 report: 66 billion liters direct site water. 66B L / 3.785 = 17.4B gal.</p>
         <p class="w-meth-src">Source: <a href="https://eta.lbl.gov/publications/2024-united-states-data-center-energy" target="_blank" rel="noopener">LBNL — 2024 United States Data Center Energy Usage Report</a></p>
@@ -389,7 +383,7 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
     </details>
 
     <details class="w-meth-section">
-      <summary><span class="w-meth-dot" style="background:#4A90D9"></span>Data centers — 2030 estimates</summary>
+      <summary>Data centers — 2030 estimates</summary>
       <div class="w-meth-body">
         <p>These are modeled estimates based on the best public data available, not official 2030 forecasts. All figures are <strong>direct on-site water consumption</strong> at the data center or serving layer. They do not include the much larger attributed water used to generate electricity, because that broader footprint is far more sensitive to assumptions about the 2030 grid.</p>
 
@@ -415,7 +409,7 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
     </details>
 
     <details class="w-meth-section">
-      <summary><span class="w-meth-dot" style="background:#4A90D9"></span>Data centers — including electricity generation</summary>
+      <summary>Data centers — including electricity generation</summary>
       <div class="w-meth-body">
         <p>All electricity-related water estimates use the <strong>thermoelectric-only factor of 0.47 gal/kWh</strong> (NREL), which excludes water evaporated from hydroelectric reservoirs. As <a href="https://www.construction-physics.com/p/i-was-wrong-about-data-center-water" target="_blank" rel="noopener">Brian Potter argues</a>, LBNL's higher factor (1.19 gal/kWh) is inflated by hydroelectric reservoir evaporation (~18.27 gal/kWh for hydro alone), which would occur regardless of data center electricity demand.</p>
         <table class="w-meth-table">
@@ -438,7 +432,7 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
     </details>
 
     <details class="w-meth-section">
-      <summary><span class="w-meth-dot" style="background:#D97A4A"></span>Other industries — consumptive use estimates</summary>
+      <summary>Other industries — consumptive use estimates</summary>
       <div class="w-meth-body">
         <p>Industry figures are modeled estimates derived from withdrawal data × estimated consumption ratios. The consumption ratios do most of the work and carry significant uncertainty. Auto manufacturing and steel production were removed due to obsolete or unreliable source data.</p>
         <table class="w-meth-table">
@@ -456,7 +450,7 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
     </details>
 
     <details class="w-meth-section">
-      <summary><span class="w-meth-dot" style="background:#D97A4A"></span>Treated-water-heavy industries</summary>
+      <summary>Treated-water-heavy industries</summary>
       <div class="w-meth-body">
         <p>These sectors use unusually large amounts of <strong>treated/public-supply potable water</strong> because food-contact, pharmaceutical, or sanitation regulations require it. The best public federal numbers for these sectors are usually <strong>wastewater-generated or process-water-discharge totals</strong>, used here as a proxy for freshwater handled. This means these figures are closer to water throughput than to strict consumptive use. Public-supply potable fractions are modeled from regulatory requirements, facility siting patterns, and federal guidance on typical water sources — not directly reported.</p>
 
@@ -489,7 +483,7 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
     </details>
 
     <details class="w-meth-section">
-      <summary><span class="w-meth-dot" style="background:#4CAF78"></span>Agriculture & land use</summary>
+      <summary>Agriculture & land use</summary>
       <div class="w-meth-body">
         <p>Crop water shows estimated <strong>consumptive use</strong> — the portion of applied irrigation water that is actually consumed via evapotranspiration (ET). Applied irrigation always exceeds consumptive use because of runoff, deep percolation, and system inefficiency.</p>
         <table class="w-meth-table">
@@ -512,7 +506,7 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
     </details>
 
     <details class="w-meth-section">
-      <summary><span class="w-meth-dot" style="background:#5BA4CF"></span>City water systems & national totals</summary>
+      <summary>City water systems & national totals</summary>
       <div class="w-meth-body">
         <p>City figures show estimated <strong>consumptive use</strong> — water evaporated, incorporated, or otherwise not returned to source. Most delivered water returns via sewer; the consumed fraction depends heavily on climate and outdoor use.</p>
         <table class="w-meth-table">
@@ -534,7 +528,7 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
     </details>
 
     <details class="w-meth-section">
-      <summary><span class="w-meth-dot" style="background:#8B8FA8"></span>Electricity-related water across all categories</summary>
+      <summary>Electricity-related water across all categories</summary>
       <div class="w-meth-body">
         <p>Every category now has a <strong>+ elec</strong> option on items where electricity consumption data is available. This adds the water consumed at power plants to generate the electricity used by that sector, using the thermoelectric-only factor of <strong>0.47 gal/kWh</strong> (NREL, excluding hydro reservoir evaporation). For data centers, electricity water is a major share of the total; for farms and cities, it is negligible (&lt;0.1%).</p>
         <table class="w-meth-table">
@@ -566,7 +560,7 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
     </details>
 
     <details class="w-meth-section">
-      <summary><span class="w-meth-dot" style="background:#8B8FA8"></span>Key caveats</summary>
+      <summary>Key caveats</summary>
       <div class="w-meth-body">
         <ul>
           <li><strong>This visualization mixes incompatible metrics.</strong> Data center figures are on-site consumptive use. City figures are estimated consumptive use (delivered minus sewer returns). Farm figures are estimated consumptive use (applied irrigation × efficiency ratio). National totals are estimated consumptive use (USGS 1995 sector-level fractions applied to newer withdrawal data). All figures aim to show consumptive use, but the estimation methods differ across categories.</li>
@@ -694,7 +688,7 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    background: transparent;
+    background: var(--panel);
   }
   .wv-toggles-scroll {
     flex: 1;
@@ -789,8 +783,8 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
   .wv-toggle-row {
     display: flex;
     align-items: flex-start;
-    gap: 10px;
-    padding: 6px 16px;
+    gap: 8px;
+    padding: 5px 16px;
     border: none;
     border-radius: 0;
     cursor: pointer;
@@ -820,14 +814,14 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
     height: 10px;
     border-radius: 3px;
     flex-shrink: 0;
-    margin-top: 3px;
+    margin-top: 4px;
     border: 1.5px solid var(--divider);
     background: transparent;
     transition: all 0.12s;
   }
   .wv-toggle-row[data-on="true"] .wv-dot {
-    background: var(--green);
-    border-color: var(--green);
+    background: var(--cat-color, var(--green));
+    border-color: var(--cat-color, var(--green));
   }
 
   .wv-row-text {
@@ -835,28 +829,27 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
     min-width: 0;
     display: flex;
     flex-direction: column;
-    gap: 0;
+    gap: 1px;
   }
   .wv-row-name {
-    font-size: 0.78rem;
-    font-weight: 450;
-    line-height: 1.35;
+    font-size: 0.76rem;
+    font-weight: 400;
+    line-height: 1.25;
     color: var(--text);
   }
   .wv-toggle-row[data-on="false"] .wv-row-name {
     color: var(--text-secondary);
-    opacity: 0.7;
   }
   .wv-row-val {
-    font-size: 0.65rem;
+    font-size: 0.6rem;
     font-weight: 400;
     color: var(--text-secondary);
-    opacity: 0.6;
+    opacity: 0.5;
     font-variant-numeric: tabular-nums;
     line-height: 1.2;
   }
   .wv-toggle-row[data-on="true"] .wv-row-val {
-    opacity: 0.8;
+    opacity: 0.7;
   }
 
   /* Electricity chip */
@@ -874,7 +867,7 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
     cursor: pointer;
     white-space: nowrap;
     transition: all 0.15s;
-    margin-top: 3px;
+    margin-top: 2px;
     align-self: flex-start;
     width: fit-content;
     text-transform: uppercase;
@@ -1271,7 +1264,9 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
     font-size: 0.72rem;
     line-height: 1.55;
     color: var(--text-secondary, #6B6B60);
-    pointer-events: none;
+    pointer-events: auto;
+    overflow-y: auto;
+    max-height: calc(100vh - 40px);
   }
   [data-theme="dark"] .wv-tooltip {
     background: var(--bg, #141413);
@@ -1309,149 +1304,249 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
   .w-meth-table th { text-align: left; font-weight: 600; color: var(--text); padding: 4px 8px; border-bottom: 2px solid var(--border); font-size: 0.68rem; }
   .w-meth-table td { padding: 3px 8px; border-bottom: 1px solid var(--border-subtle); color: var(--text-secondary); font-variant-numeric: tabular-nums; }
 
-  /* Responsive */
+  /* ── Responsive: tablet ── */
   @media (max-width: 850px) {
     .wv-layout {
       grid-template-columns: 1fr;
+      height: auto;
+      max-height: none;
       min-height: auto;
     }
     .wv-toggles {
       border-right: none;
       border-bottom: 1px solid var(--divider);
-      max-height: 400px;
+      max-height: 280px;
     }
-    .wv-bar-name {
-      width: 120px;
-      font-size: 0.7rem;
+    .wv-chart-panel {
+      min-height: 420px;
+      height: 60vh;
+      max-height: 600px;
     }
-    .wv-bar-val {
-      width: 70px;
-      font-size: 0.65rem;
+    .wv-chart-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 8px;
     }
+    .wv-header-controls {
+      width: 100%;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .wv-bar-name { width: 130px; font-size: 0.66rem; }
+    .wv-bar-val { width: 75px; font-size: 0.6rem; }
   }
 
-  @media (max-width: 480px) {
-    .wv2 { padding: 0 0 2rem; }
-    .wv-bar-name { width: 90px; font-size: 0.65rem; }
-    .wv-bar-val { width: 60px; font-size: 0.6rem; }
-    .wv-header-controls { flex-direction: column; gap: 4px; }
-    .wv-water-btn { font-size: 0.68rem !important; padding: 5px 10px !important; }
+  /* ── Responsive: phone ── */
+  @media (max-width: 560px) {
+    .wv2 { width: calc(100vw - 16px); padding: 0 0 1.5rem; }
+
+    .wv-layout { height: auto; max-height: none; }
+
+    /* Toggle panel: compact, scrollable */
+    .wv-toggles { max-height: 220px; }
+    .wv-cat-list[data-visible="true"] { max-height: 200px; }
+
+    /* Chart: fill remaining viewport */
+    .wv-chart-panel { min-height: 360px; height: 55vh; max-height: 520px; }
+    .wv-squares-area { padding: 10px; }
+    .wv-bars-area { padding: 8px 10px; }
+
+    /* Chart header: stack everything vertically */
+    .wv-chart-header {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 6px;
+      padding: 8px 10px;
+    }
+    .wv-header-left { flex-direction: row; justify-content: space-between; align-items: center; }
+    .wv-header-controls {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 6px;
+      width: 100%;
+    }
+
+    /* Segmented controls: full width water toggle, compact view toggle */
+    .wv-water-toggle { flex: 1; }
+    .wv-water-btn { flex: 1; text-align: center; font-size: 0.6rem !important; padding: 5px 6px 6px !important; }
+    .wv-view-btn { font-size: 0.6rem; padding: 5px 8px 6px; }
+
+    /* Bar chart: ultra compact */
+    .wv-bar-row { gap: 6px; margin-bottom: 2px; }
+    .wv-bar-name { width: 100px; font-size: 0.62rem; -webkit-line-clamp: 1; white-space: nowrap; }
+    .wv-bar-track { height: 14px; }
+    .wv-bar-val { width: auto; flex-shrink: 1; font-size: 0.58rem; min-width: 55px; }
+    .wv-bar-pct { display: none; }
+
+    /* Toggle rows: tighter for touch */
+    .wv-toggle-row { padding: 6px 10px; min-height: 36px; }
+    .wv-cat-head { padding: 9px 10px; }
+
+    /* Bulk actions */
+    .wv-bulk-actions { padding: 4px 10px 6px; }
+    .wv-panel-title { padding: 10px 10px 2px; }
+
+    /* Tooltip: full width on mobile */
+    .wv-tooltip { max-width: calc(100vw - 24px); left: 12px !important; right: 12px; }
+
+    /* Scale ref: bottom-right instead of top-left to not block content */
+    .wv-scale-ref { top: auto !important; bottom: 4px; right: 4px; left: auto !important; }
+
+    /* Intro: tighter on mobile */
+    header h1 { font-size: 1.4rem; }
+    header > div { font-size: 0.78rem !important; line-height: 1.6 !important; margin-top: 0.5rem !important; }
+    header > div p { margin-bottom: 0.4rem !important; }
+    header > div ol { margin-bottom: 0.4rem !important; }
+    header > div li { margin-bottom: 0.2rem !important; }
+
+    /* Methodology: tighter */
+    .w-methodology { padding-bottom: 1.5rem; }
+    .w-meth-body { padding-left: 10px; }
+    .w-meth-table { font-size: 0.65rem; }
+    .w-meth-table th, .w-meth-table td { padding: 2px 4px; }
   }
 
-  /* ─── #1 Intro restructure ─── */
-  .wv-intro {
-    font-size: 0.85rem; line-height: 1.7; color: var(--text-secondary, #6B6B60);
-    margin-top: 0.75rem; max-width: 680px;
-  }
-  .wv-intro-lede { font-size: 0.95rem; color: var(--text); line-height: 1.6; margin-bottom: 0.5rem; }
-  .wv-intro-details { margin-bottom: 0.6rem; }
-  .wv-intro-details summary {
-    font-size: 0.78rem; font-weight: 500; color: var(--text-secondary); cursor: pointer;
-    list-style: none; display: flex; align-items: center; gap: 6px; padding: 4px 0;
-    user-select: none; transition: color 0.15s;
-  }
-  .wv-intro-details summary::-webkit-details-marker { display: none; }
-  .wv-intro-details summary::before { content: '\25B8'; font-size: 0.6rem; transition: transform 0.2s; }
-  .wv-intro-details[open] summary::before { transform: rotate(90deg); }
-  .wv-intro-details summary:hover { color: var(--text); }
-  .wv-intro-body { padding: 0.5rem 0 0 0.25rem; font-size: 0.82rem; line-height: 1.65; }
-  .wv-intro-body p { margin-bottom: 0.5rem; }
-  .wv-intro-body ol { padding-left: 1.25rem; margin-bottom: 0.5rem; }
-  .wv-intro-body li { margin-bottom: 0.3rem; }
-  .wv-intro-body strong { color: var(--text, #1A1A18); }
-  [data-theme="dark"] .wv-intro-body strong { color: var(--text, #F0EDE6); }
-  .wv-intro-contact { font-size: 0.82rem; }
-  .wv-intro-contact a, .wv-intro-body a {
-    color: var(--accent, #8b3a3a); text-decoration: underline; text-underline-offset: 2px;
+  /* ── Responsive: very small phone ── */
+  @media (max-width: 380px) {
+    .wv2 { width: calc(100vw - 8px); }
+    .wv-bar-name { width: 80px; font-size: 0.58rem; }
+    .wv-bar-val { font-size: 0.54rem; min-width: 45px; }
+    .wv-toggle-row { padding: 6px 8px; }
+    .wv-cat-head { padding: 9px 8px; }
+    .wv-chart-header { padding: 6px 8px; }
+    .wv-bars-area { padding: 6px 8px; }
+    .wv-squares-area { padding: 8px; }
+    .wv-water-btn { font-size: 0.55rem !important; }
+    .wv-view-btn { font-size: 0.55rem; }
   }
 
-  /* ─── #2 Category color indicator ─── */
-  .wv-cat-color { width: 3px; height: 14px; border-radius: 2px; flex-shrink: 0; }
+  /*
+   * ── Design system overrides ──
+   * Goal: data-journalism aesthetic (Our World in Data, Bloomberg).
+   * Every rule here is intentional — no decoration, just hierarchy.
+   */
 
-  /* ─── #3 Squares stagger animation ─── */
-  @keyframes wv-sq-pop {
-    from { transform: scale(0.5); opacity: 0; }
-    to { transform: scale(1); opacity: 1; }
+  /* Layout frame */
+  .wv-layout { border-radius: 0 !important; box-shadow: none !important; max-height: 720px; }
+
+  /* Left panel */
+  .wv-panel-title { display: none; }
+  .wv-bulk-actions { padding: 8px 14px 4px; gap: 4px; }
+  .wv-bulk-btn { border-radius: 0; font-size: 0.6rem; padding: 3px 8px; letter-spacing: 0; text-transform: none; }
+
+  /* Category headers: bigger, acts as section label */
+  .wv-cat-head {
+    font-size: 0.88rem; letter-spacing: 0; text-transform: none; font-weight: 600;
+    color: var(--text); padding: 11px 14px;
+    background: var(--panel);
   }
-  .wv-sq-item.wv-sq-entering { animation: wv-sq-pop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+  [data-theme="dark"] .wv-cat-head { background: var(--panel); }
+  .wv-cat-head:hover { color: var(--text); }
+  .wv-cat-head[data-open="true"] { border-bottom: none; }
+  .wv-cat-chevron { font-size: 0.55rem; width: 12px; }
+  .wv-cat-count { font-size: 0.65rem; opacity: 0.35; }
+  .wv-cat-active { font-size: 0.6rem; font-weight: 400; letter-spacing: 0; text-transform: none; opacity: 0.45; }
+  .wv-cat-controls { font-size: 0.6rem; }
 
-  /* ─── #4 Square hover ─── */
-  .wv-sq-item { cursor: default; }
-  .wv-sq-item:hover .wv-sq-box { filter: brightness(1.15); transform: scale(1.03); transition: filter 0.15s, transform 0.15s !important; }
-  .wv-sq-item:hover .wv-sq-name { color: var(--accent); transition: color 0.15s; }
-
-  /* ─── #5 Empty state ─── */
-  .wv-empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 3rem 1rem; color: var(--text-secondary); }
-  .wv-empty-state svg { opacity: 0.15; }
-  .wv-empty-state p { font-size: 0.85rem; text-align: center; max-width: 280px; line-height: 1.5; }
-
-  /* ─── #6 Copy link button ─── */
-  .wv-share-btn { font-family: inherit !important; font-size: 0.65rem !important; color: var(--text-secondary) !important; background: var(--panel) !important; border: 1px solid var(--divider) !important; border-radius: 4px !important; padding: 3px 10px !important; cursor: pointer !important; transition: all 0.15s !important; display: inline-flex !important; align-items: center !important; gap: 4px !important; }
-  .wv-share-btn:hover { color: var(--text) !important; border-color: var(--text-secondary) !important; }
-
-  /* ─── #7 Gridline fade ─── */
-  @keyframes wv-fade-in { from { opacity: 0; } to { opacity: 1; } }
-  .wv-gridline-labels { animation: wv-fade-in 0.4s ease 0.15s both; }
-
-  /* ─── #8 Ratio callout pill ─── */
-  .wv-ratio-callout { font-size: 0.75rem !important; color: var(--text-secondary) !important; font-style: italic !important; padding: 5px 14px !important; background: var(--panel) !important; border-radius: 20px !important; display: inline-block !important; margin: 4px 16px !important; border: 1px solid var(--divider) !important; }
-
-  /* ─── #9 Accordion transitions ─── */
-  .wv-cat-list { display: block !important; max-height: 0; overflow: hidden !important; transition: max-height 0.3s ease, padding 0.2s ease; padding: 0 !important; }
-  .wv-cat-list[data-visible="true"] { max-height: 350px; overflow-y: auto !important; padding: 2px 0 !important; }
-
-  /* ─── #10 Sticky chart header ─── */
-  .wv-chart-header { position: sticky !important; top: 0; z-index: 10; background: var(--bg-elevated, #ffffff) !important; }
-  [data-theme="dark"] .wv-chart-header { background: var(--bg-elevated, #1c1c1a) !important; }
-
-  /* ─── #11 Elec chip active glow ─── */
-  .wv-elec-chip[data-elec-on="true"] { box-shadow: 0 0 8px rgba(74, 124, 89, 0.4) !important; border: 1px solid rgba(74, 124, 89, 0.5) !important; }
-
-  /* ─── #12 Bar entry animation ─── */
-  @keyframes wv-bar-slide { from { opacity: 0; transform: translateX(-12px); } to { opacity: 1; transform: translateX(0); } }
-  .wv-bar-row { animation: wv-bar-slide 0.3s ease both; }
-
-  /* ─── #13 Custom tooltip ─── */
-  .wv-tip-popup { position: fixed; z-index: 1000; background: var(--text, #1A1A18); color: var(--bg-elevated, #fff); font-size: 0.72rem; font-family: inherit; font-weight: 500; padding: 5px 10px; border-radius: 5px; pointer-events: none; opacity: 0; transition: opacity 0.12s; white-space: nowrap; max-width: 320px; line-height: 1.3; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
-  .wv-tip-popup.wv-tip-visible { opacity: 1; }
-
-  /* ─── #14 Mobile improvements ─── */
-  @media (max-width: 850px) {
-    .wv-toggles { max-height: 320px !important; }
-    .wv-chart-panel { min-height: 400px; }
-    .wv-header-controls { flex-wrap: wrap; gap: 4px; }
-    .wv-water-btn, .wv-view-btn { font-size: 0.68rem !important; padding: 5px 10px !important; }
-    .wv-bar-name { min-width: 0 !important; word-break: break-word; }
-    .wv-intro-lede { font-size: 0.88rem; }
+  /* Open category list: white/elevated background */
+  .wv-cat-list[data-visible="true"] {
+    background: var(--bg-elevated, #fff);
+  }
+  [data-theme="dark"] .wv-cat-list[data-visible="true"] {
+    background: var(--bg-elevated, #1c1c1a);
   }
 
-  /* ─── #15 Dot grid background ─── */
-  .wv-squares-area { background-image: radial-gradient(circle, var(--divider) 0.5px, transparent 0.5px) !important; background-size: 24px 24px !important; }
+  /* Toggle rows: on white/elevated background when list is open */
+  .wv-toggle-row { padding: 5px 14px; gap: 8px; min-height: auto; align-items: flex-start; background: transparent; }
+  .wv-toggle-row[data-on="true"] { border-left: 2px solid var(--cat-color, var(--green)); padding-left: 12px; }
+  .wv-toggle-row[data-on="false"] { border-left: 2px solid transparent; padding-left: 12px; }
+  .wv-dot { width: 9px; height: 9px; border-radius: 2px; border-width: 1.5px; margin-top: 4px; }
+  .wv-row-name { font-size: 0.74rem; font-weight: 400; line-height: 1.3; }
+  .wv-toggle-row[data-on="true"] .wv-row-name { color: var(--text); }
+  .wv-toggle-row[data-on="false"] .wv-row-name { color: var(--text-secondary); opacity: 0.7; }
 
-  /* ─── #16 Methodology category dots ─── */
-  .w-meth-dot { display: inline-block; width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
+  /* Elec chip */
+  .wv-elec-chip { border-radius: 1px; font-size: 0.5rem; padding: 1px 5px; letter-spacing: 0.04em; margin-top: 2px; }
 
-  /* ─── #17 Clear all flash ─── */
-  @keyframes wv-clear-check { 0% { transform: scale(1); } 50% { transform: scale(1.2); color: var(--green); } 100% { transform: scale(1); } }
-  .wv-clear-all.wv-clearing, .wv-bulk-btn.wv-clearing { animation: wv-clear-check 0.4s ease; display: inline-block; }
+  /* Section dividers */
+  .wv-proj-divider { font-size: 0.55rem; text-transform: uppercase; letter-spacing: 0.06em; font-style: normal; color: var(--text-secondary); opacity: 0.35; padding: 10px 14px 3px; }
 
-  /* ─── #19 Sliding pill toggles ─── */
-  .wv-view-toggle, .wv-water-toggle { position: relative !important; }
-  .wv-view-pill, .wv-water-pill {
-    position: absolute; top: 2px; height: calc(100% - 4px); border-radius: 4px;
-    background: var(--bg-elevated, #fff); box-shadow: 0 1px 2px rgba(0,0,0,0.06);
-    transition: left 0.2s cubic-bezier(0.4, 0, 0.2, 1), width 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    z-index: 0; pointer-events: none;
+  /* Chart panel header */
+  .wv-chart-header { padding: 8px 14px; border-bottom: 1px solid var(--divider); }
+  .wv-chart-count { font-size: 0.65rem; font-variant-numeric: tabular-nums; }
+
+  /* Segmented controls — underline style instead of pill */
+  .wv-view-toggle, .wv-water-toggle {
+    background: transparent; border-radius: 0; padding: 0; gap: 0;
+    border-bottom: 1px solid var(--divider);
   }
-  .wv-water-pill { border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
-  [data-theme="dark"] .wv-view-pill, [data-theme="dark"] .wv-water-pill { background: var(--bg-elevated, #1c1c1a); }
-  .wv-view-btn, .wv-water-btn { position: relative !important; z-index: 1 !important; }
-  .wv-view-btn[data-active="true"], .wv-water-btn[data-active="true"] { background: transparent !important; }
+  .wv-view-btn, .wv-water-btn {
+    border-radius: 0; font-size: 0.65rem; font-weight: 400;
+    padding: 5px 12px 6px; border-bottom: 2px solid transparent;
+    margin-bottom: -1px; background: transparent !important;
+    box-shadow: none !important; color: var(--text-secondary);
+    transition: color 0.1s, border-color 0.1s;
+  }
+  .wv-view-btn:hover, .wv-water-btn:hover { color: var(--text); }
+  .wv-view-btn[data-active="true"], .wv-water-btn[data-active="true"] {
+    color: var(--text) !important; font-weight: 600;
+    border-bottom-color: var(--text) !important;
+  }
+  .wv-water-btn { font-size: 0.65rem !important; padding: 5px 12px 6px !important; }
+  .wv-water-btn[data-active="true"] { color: var(--text) !important; border-bottom-color: var(--text) !important; }
 
-  /* ─── #20 Orientation callout ─── */
-  @keyframes wv-orient-fade { 0% { opacity: 0; transform: translateY(6px); } 12% { opacity: 1; transform: translateY(0); } 80% { opacity: 1; } 100% { opacity: 0; transform: translateY(-4px); } }
-  .wv-orient-callout { position: absolute; z-index: 5; background: var(--text, #1A1A18); color: var(--bg-elevated, #fff); font-size: 0.72rem; font-weight: 500; padding: 6px 12px; border-radius: 6px; pointer-events: none; animation: wv-orient-fade 4.5s ease both; white-space: nowrap; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
-  .wv-orient-callout::after { content: ''; position: absolute; bottom: -4px; left: 20px; width: 8px; height: 8px; background: var(--text, #1A1A18); transform: rotate(45deg); }
+  /* Bar chart */
+  .wv-bar-row { border-radius: 0; margin-bottom: 3px; padding: 2px 0; cursor: pointer; }
+  .wv-bar-row:hover { background: transparent; }
+  .wv-bar-row:hover .wv-bar-name { color: var(--text); }
+  .wv-bar-row:hover .wv-bar-fill { opacity: 0.9; }
+  .wv-bar-name { font-size: 0.7rem; font-weight: 400; width: 200px; line-height: 1.25; color: var(--text-secondary); }
+  .wv-bar-track { height: 16px; border-radius: 0; background: transparent; border-bottom: 1px solid var(--divider); }
+  .wv-bar-fill { border-radius: 0; opacity: 0.75; }
+  .wv-bar-val { font-size: 0.65rem; font-weight: 400; width: 100px; }
+  .wv-bar-pct { font-size: 0.55rem; opacity: 0.35; }
+  [data-theme="dark"] .wv-bar-row:hover { background: transparent; }
+
+  /* Squares: clickable */
+  .wv-sq-item { cursor: pointer; }
+  .wv-sq-item:hover .wv-sq-box { filter: brightness(1.08); transition: filter 0.1s; }
+  .wv-sq-name { font-weight: 400; font-size: 0.62rem !important; }
+  .wv-sq-val { font-size: 0.55rem !important; opacity: 0.6; }
+
+  /* Scale reference */
+  .wv-scale-ref { border-radius: 0; font-size: 0.52rem; padding: 3px 6px; opacity: 0.6; }
+  .wv-scale-ref-box { border-radius: 0 !important; opacity: 0.5; }
+
+  /* Ratio callout */
+  .wv-ratio-callout { font-size: 0.68rem; }
+
+  /* Treated helper */
+  .wv-treated-helper { font-size: 0.58rem; }
+
+  /* Scrollbars: nearly invisible */
+  .wv-toggles-scroll::-webkit-scrollbar { width: 1px; }
+  .wv-cat-list::-webkit-scrollbar { width: 1px; }
+
+  /* Tooltip: sharper */
+  .wv-tooltip { border-radius: 2px; font-size: 0.7rem; max-width: 340px; padding: 10px 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.1); }
+
+  /* No loading shimmer */
+  .wv-bars-area:empty, .wv-squares-area:empty { background-image: none !important; animation: none !important; }
+
+  /* Methodology: tighter, editorial */
+  .w-methodology h2 { font-size: 1.2rem; letter-spacing: -0.01em; margin-top: 2rem; }
+  .w-meth-section summary { font-size: 0.82rem; }
+  .w-meth-section summary::before { font-size: 0.55rem; }
+  .w-meth-section summary:hover { color: var(--text); }
+  .w-meth-table th { font-size: 0.64rem; text-transform: uppercase; letter-spacing: 0.04em; }
+  .w-meth-calc { border-radius: 0; }
+  .w-meth-caveat { border-left-width: 1px; }
+
+  /* Focus: understated */
+  .wv2 *:focus-visible { outline: 1px solid var(--text-secondary); outline-offset: 1px; }
+
+  /* Empty state */
+  .wv-bars-empty { font-size: 0.78rem; opacity: 0.4; }
 </style>
 
 <script is:inline>
@@ -1621,6 +1716,7 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
       national: '#8B8FA8'
     };
     color = catColors[catName] || color;
+    row.style.setProperty('--cat-color', color);
 
     var tGalRaw = row.dataset.tgal;
     var tGal = (tGalRaw === 'null' || !tGalRaw) ? null : parseFloat(tGalRaw);
@@ -1790,9 +1886,8 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
         row.dataset.on = 'false';
       });
       render();
-      clearBtn.classList.add('wv-clearing');
       clearBtn.textContent = 'Cleared!';
-      setTimeout(function() { clearBtn.textContent = 'Clear all'; clearBtn.classList.remove('wv-clearing'); }, 1500);
+      setTimeout(function() { clearBtn.textContent = 'Clear all'; }, 1500);
     });
   }
 
@@ -1932,9 +2027,8 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
     });
 
     if (active.length === 0) {
-      var emptyIcon = '<svg width="48" height="48" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M24 4C24 4 12 18 12 28a12 12 0 0024 0c0-10-12-24-12-24z"/><path d="M18 30a6 6 0 006 6" opacity="0.4"/></svg>';
-      barsArea.innerHTML = '<div class="wv-empty-state">' + emptyIcon + '<p>Expand a category and click items to compare.</p></div>';
-      squaresArea.innerHTML = '<div class="wv-empty-state">' + emptyIcon + '<p>Toggle items on the left to see proportional squares.</p></div>';
+      barsArea.innerHTML = '<div class="wv-bars-empty">Expand a category on the left and click items to add them to the comparison.</div>';
+      squaresArea.innerHTML = '<div class="wv-bars-empty">Toggle items on the left to see their water use as proportional squares.</div>';
       return;
     }
 
@@ -1960,8 +2054,8 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
         if (isProj) {
           fillStyle += ';background-image:repeating-linear-gradient(45deg,transparent,transparent 3px,rgba(0,0,0,0.03) 3px,rgba(0,0,0,0.03) 6px)';
         }
-        html += '<div class="wv-bar-row" data-idx="' + it.idx + '" title="' + it.squareName + ': ' + val + '" data-tip="' + it.squareName + ': ' + val + '" style="border-left:3px solid ' + it.color + ';padding-left:8px;animation-delay:' + (j * 0.04) + 's">';
-        html += '<span class="wv-bar-name">' + it.squareName + '</span>';
+        html += '<div class="wv-bar-row" data-idx="' + it.idx + '" title="' + it.squareName + ': ' + val + '" style="border-left:3px solid ' + it.color + ';padding-left:8px">';
+        html += '<span class="wv-bar-name" title="' + it.squareName + '">' + it.squareName + '</span>';
         html += '<div class="wv-bar-track"><div class="wv-bar-fill" style="' + fillStyle + '"></div></div>';
         html += '<span class="wv-bar-val">' + val + '<span class="wv-bar-pct">' + pctText + '</span></span>';
         html += '</div>';
@@ -1971,10 +2065,11 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
 
     // ── Square view ──
     if (currentView === 'squares') {
-      var panelW = squaresArea.clientWidth - 32;
-      var panelH = squaresArea.clientHeight - 32;
-      if (panelW < 100) panelW = 600;
-      if (panelH < 100) panelH = 500;
+      var pad = window.innerWidth < 560 ? 20 : 32;
+      var panelW = squaresArea.clientWidth - pad;
+      var panelH = squaresArea.clientHeight - pad;
+      if (panelW < 50) panelW = Math.min(window.innerWidth - 40, 600);
+      if (panelH < 50) panelH = Math.min(window.innerHeight * 0.4, 500);
 
       var maxSide = Math.round(Math.min(panelW, panelH) * 0.8);
       var labelH = 32;
@@ -2060,12 +2155,14 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
         var el = existing[key];
         if (!el) {
           el = document.createElement('div');
-          el.className = 'wv-sq-item wv-sq-entering';
+          el.className = 'wv-sq-item';
           el.dataset.sqIdx = key;
           el.innerHTML = '<div class="wv-sq-box"></div><div class="wv-sq-color-bar"></div><div class="wv-sq-label"><span class="wv-sq-name"></span><span class="wv-sq-val"></span></div>';
           el.style.position = 'absolute';
-          el.style.animationDelay = (p * 0.06) + 's';
+          el.style.opacity = '0';
           container.appendChild(el);
+          el.offsetHeight;
+          el.style.opacity = '1';
         }
 
         // (#5) Projected items: dashed border
@@ -2155,17 +2252,9 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
     }
   }
 
-  // (#13) Click bar rows to toggle items off
+  // Click bar rows — tooltip handles this now, no toggle
   barsArea.addEventListener('click', function(e) {
-    var barRow = e.target.closest('.wv-bar-row');
-    if (!barRow) return;
-    var idx = parseInt(barRow.dataset.idx);
-    if (items[idx]) {
-      items[idx].on = !items[idx].on;
-      var panelRow = document.querySelector('.wv-toggle-row[data-idx="' + idx + '"]');
-      if (panelRow) panelRow.dataset.on = items[idx].on ? 'true' : 'false';
-      render();
-    }
+    // Bar clicks are handled by the tooltip click handler above
   });
 
   // ── Rich tooltips ──────────────────────────────
@@ -2223,50 +2312,95 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
 
   var ELEC_EXPLAINER = '<hr><strong style="color:var(--accent, #8b3a3a)">+ electricity water</strong><br>Generating electricity requires cooling at thermoelectric power plants, which evaporates water from rivers and lakes. This adds the water consumed at those plants to generate the electricity this operation uses. Calculated as total electricity (TWh) × <a href="https://www.nrel.gov/docs/fy04osti/33905.pdf">0.47 gal/kWh</a> (NREL thermoelectric-only factor, excluding <a href="https://www.construction-physics.com/p/i-was-wrong-about-data-center-water">hydro reservoir evaporation</a>). This water is non-potable freshwater drawn directly from rivers and lakes — not from public water supply systems.';
 
+  var tipOpen = false;
+
   function showTip(item, x, y) {
     var html = TIPS[item.baseName];
     if (!html) return;
     var displayName = item.elecOn ? item.baseName + ' + electricity' : item.baseName;
     var elecHtml = item.elecOn ? ELEC_EXPLAINER : '';
-    tooltipEl.innerHTML = '<strong style="font-size:0.78rem;display:block;margin-bottom:4px">' + displayName + '</strong>' + html + elecHtml;
+    tooltipEl.innerHTML = '<button class="wv-tip-close" style="position:absolute;top:6px;right:6px;background:none;border:none;cursor:pointer;color:var(--text-secondary);font-size:1.1rem;line-height:1;padding:2px 5px;opacity:0.4">&times;</button><strong style="font-size:0.78rem;display:block;margin-bottom:4px;padding-right:20px">' + displayName + '</strong>' + html + elecHtml;
+    tooltipEl.querySelector('.wv-tip-close').addEventListener('click', function(e) { e.stopPropagation(); hideTip(); });
     tooltipEl.style.display = 'block';
-    // Position: try right of cursor, fall back left if near edge
-    var w = tooltipEl.offsetWidth;
-    var h = tooltipEl.offsetHeight;
+    tipOpen = true;
+
     var vw = window.innerWidth;
     var vh = window.innerHeight;
-    var left = x + 16;
-    var top = y - 10;
-    if (left + w > vw - 12) left = x - w - 16;
-    if (top + h > vh - 12) top = vh - h - 12;
-    if (top < 12) top = 12;
-    tooltipEl.style.left = left + 'px';
-    tooltipEl.style.top = top + 'px';
+
+    // Mobile: pin to bottom
+    if (vw < 560) {
+      tooltipEl.style.left = '8px';
+      tooltipEl.style.right = '8px';
+      tooltipEl.style.width = 'auto';
+      tooltipEl.style.bottom = '8px';
+      tooltipEl.style.top = 'auto';
+      tooltipEl.style.maxHeight = '40vh';
+    } else {
+      // Desktop: position at click point
+      tooltipEl.style.right = '';
+      tooltipEl.style.width = '';
+      tooltipEl.style.bottom = '';
+      tooltipEl.style.maxHeight = 'calc(100vh - 40px)';
+      // Show first, measure, then position
+      var w = tooltipEl.offsetWidth;
+      var h = tooltipEl.offsetHeight;
+      var left = x;
+      var top = y;
+      if (left + w > vw - 12) left = vw - w - 12;
+      if (left < 12) left = 12;
+      if (top + h > vh - 12) top = vh - h - 12;
+      if (top < 12) top = 12;
+      tooltipEl.style.left = left + 'px';
+      tooltipEl.style.top = top + 'px';
+    }
   }
 
   function hideTip() {
     tooltipEl.style.display = 'none';
+    tipOpen = false;
   }
 
-  // Attach to squares
-  squaresArea.addEventListener('mousemove', function(e) {
+  // Click to show tooltip on squares
+  squaresArea.addEventListener('click', function(e) {
+    // Don't interfere with links inside tooltip
+    if (e.target.closest('.wv-tooltip')) return;
     var sqEl = e.target.closest('.wv-sq-item');
-    if (!sqEl) { hideTip(); return; }
+    if (!sqEl) return;
     var idx = parseInt(sqEl.dataset.sqIdx);
     var it = items[idx];
-    if (it) showTip(it, e.clientX, e.clientY);
+    if (it) {
+      e.stopPropagation();
+      showTip(it, e.clientX, e.clientY);
+    }
   });
-  squaresArea.addEventListener('mouseleave', hideTip);
 
-  // Attach to bars
-  barsArea.addEventListener('mousemove', function(e) {
+  // Click to show tooltip on bars
+  barsArea.addEventListener('click', function(e) {
+    if (e.target.closest('.wv-tooltip')) return;
     var barRow = e.target.closest('.wv-bar-row');
-    if (!barRow) { hideTip(); return; }
+    if (!barRow) return;
     var idx = parseInt(barRow.dataset.idx);
     var it = items[idx];
-    if (it) showTip(it, e.clientX, e.clientY);
+    if (it) {
+      e.stopPropagation();
+      showTip(it, e.clientX, e.clientY);
+    }
   });
-  barsArea.addEventListener('mouseleave', hideTip);
+
+  // Click outside tooltip to dismiss
+  document.addEventListener('click', function(e) {
+    if (!tipOpen) return;
+    // If clicking inside the tooltip (including links), keep it open
+    if (e.target.closest('.wv-tooltip')) return;
+    // If clicking a square or bar, the handlers above will open a new tip
+    if (e.target.closest('.wv-sq-item') || e.target.closest('.wv-bar-row')) return;
+    hideTip();
+  });
+
+  // Escape to dismiss
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && tipOpen) hideTip();
+  });
 
   // Remove default title tooltips from squares (we handle it now)
   var observer = new MutationObserver(function() {
@@ -2278,44 +2412,6 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
 
   render();
 
-  // ─── #19 Sliding pills ───
-  function setupPill(toggleEl, pillClass) {
-    var pill = document.createElement('div');
-    pill.className = pillClass;
-    toggleEl.insertBefore(pill, toggleEl.firstChild);
-    function update() {
-      var activeBtn = toggleEl.querySelector('[data-active="true"]');
-      if (activeBtn) { pill.style.left = activeBtn.offsetLeft + 'px'; pill.style.width = activeBtn.offsetWidth + 'px'; }
-    }
-    update();
-    var obs = new MutationObserver(update);
-    toggleEl.querySelectorAll('button').forEach(function(b) { obs.observe(b, { attributes: true, attributeFilter: ['data-active'] }); });
-  }
-  var viewToggle = document.querySelector('.wv-view-toggle');
-  var waterToggle = document.querySelector('.wv-water-toggle');
-  if (viewToggle) setupPill(viewToggle, 'wv-view-pill');
-  if (waterToggle) setupPill(waterToggle, 'wv-water-pill');
-
-  // ─── #20 Orientation callout ───
-  setTimeout(function() {
-    var container = squaresArea.querySelector('.wv-sq-container');
-    if (!container) return;
-    var firstItem = container.querySelector('.wv-sq-item');
-    if (!firstItem) return;
-    var nameEl = firstItem.querySelector('.wv-sq-name');
-    var valEl = firstItem.querySelector('.wv-sq-val');
-    if (!nameEl || !valEl || !nameEl.textContent) return;
-    var callout = document.createElement('div');
-    callout.className = 'wv-orient-callout';
-    callout.textContent = nameEl.textContent + ': ' + valEl.textContent;
-    var top = parseInt(firstItem.style.top || 0) - 36;
-    callout.style.left = (parseInt(firstItem.style.left || 0)) + 'px';
-    callout.style.top = (top < 0 ? 0 : top) + 'px';
-    container.appendChild(callout);
-    function removeCallout() { if (callout.parentNode) callout.parentNode.removeChild(callout); document.removeEventListener('click', removeCallout); }
-    setTimeout(removeCallout, 4500);
-    document.addEventListener('click', removeCallout);
-  }, 600);
 })();
 </script>
 </Base>
