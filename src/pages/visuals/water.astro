@@ -1264,7 +1264,9 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
     font-size: 0.72rem;
     line-height: 1.55;
     color: var(--text-secondary, #6B6B60);
-    pointer-events: none;
+    pointer-events: auto;
+    overflow-y: auto;
+    max-height: calc(100vh - 40px);
   }
   [data-theme="dark"] .wv-tooltip {
     background: var(--bg, #141413);
@@ -1494,7 +1496,7 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
   .wv-water-btn[data-active="true"] { color: var(--text) !important; border-bottom-color: var(--text) !important; }
 
   /* Bar chart */
-  .wv-bar-row { border-radius: 0; margin-bottom: 3px; padding: 2px 0; }
+  .wv-bar-row { border-radius: 0; margin-bottom: 3px; padding: 2px 0; cursor: pointer; }
   .wv-bar-row:hover { background: transparent; }
   .wv-bar-row:hover .wv-bar-name { color: var(--text); }
   .wv-bar-row:hover .wv-bar-fill { opacity: 0.9; }
@@ -1505,7 +1507,8 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
   .wv-bar-pct { font-size: 0.55rem; opacity: 0.35; }
   [data-theme="dark"] .wv-bar-row:hover { background: transparent; }
 
-  /* Squares */
+  /* Squares: clickable */
+  .wv-sq-item { cursor: pointer; }
   .wv-sq-item:hover .wv-sq-box { filter: brightness(1.08); transition: filter 0.1s; }
   .wv-sq-name { font-weight: 400; font-size: 0.62rem !important; }
   .wv-sq-val { font-size: 0.55rem !important; opacity: 0.6; }
@@ -2248,17 +2251,9 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
     }
   }
 
-  // (#13) Click bar rows to toggle items off
+  // Click bar rows — tooltip handles this now, no toggle
   barsArea.addEventListener('click', function(e) {
-    var barRow = e.target.closest('.wv-bar-row');
-    if (!barRow) return;
-    var idx = parseInt(barRow.dataset.idx);
-    if (items[idx]) {
-      items[idx].on = !items[idx].on;
-      var panelRow = document.querySelector('.wv-toggle-row[data-idx="' + idx + '"]');
-      if (panelRow) panelRow.dataset.on = items[idx].on ? 'true' : 'false';
-      render();
-    }
+    // Bar clicks are handled by the tooltip click handler above
   });
 
   // ── Rich tooltips ──────────────────────────────
@@ -2316,6 +2311,8 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
 
   var ELEC_EXPLAINER = '<hr><strong style="color:var(--accent, #8b3a3a)">+ electricity water</strong><br>Generating electricity requires cooling at thermoelectric power plants, which evaporates water from rivers and lakes. This adds the water consumed at those plants to generate the electricity this operation uses. Calculated as total electricity (TWh) × <a href="https://www.nrel.gov/docs/fy04osti/33905.pdf">0.47 gal/kWh</a> (NREL thermoelectric-only factor, excluding <a href="https://www.construction-physics.com/p/i-was-wrong-about-data-center-water">hydro reservoir evaporation</a>). This water is non-potable freshwater drawn directly from rivers and lakes — not from public water supply systems.';
 
+  var tipOpen = false;
+
   function showTip(item, x, y) {
     var html = TIPS[item.baseName];
     if (!html) return;
@@ -2323,11 +2320,12 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
     var elecHtml = item.elecOn ? ELEC_EXPLAINER : '';
     tooltipEl.innerHTML = '<strong style="font-size:0.78rem;display:block;margin-bottom:4px">' + displayName + '</strong>' + html + elecHtml;
     tooltipEl.style.display = 'block';
-    var w = tooltipEl.offsetWidth;
-    var h = tooltipEl.offsetHeight;
+    tipOpen = true;
+
     var vw = window.innerWidth;
     var vh = window.innerHeight;
-    // Mobile: fixed to bottom of viewport
+
+    // Mobile: pin to bottom
     if (vw < 560) {
       tooltipEl.style.left = '8px';
       tooltipEl.style.right = '8px';
@@ -2335,18 +2333,19 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
       tooltipEl.style.bottom = '8px';
       tooltipEl.style.top = 'auto';
       tooltipEl.style.maxHeight = '40vh';
-      tooltipEl.style.overflowY = 'auto';
-      tooltipEl.style.pointerEvents = 'auto';
     } else {
+      // Desktop: position at click point
       tooltipEl.style.right = '';
       tooltipEl.style.width = '';
       tooltipEl.style.bottom = '';
-      tooltipEl.style.maxHeight = '';
-      tooltipEl.style.overflowY = '';
-      tooltipEl.style.pointerEvents = 'none';
-      var left = x + 16;
-      var top = y - 10;
-      if (left + w > vw - 12) left = x - w - 16;
+      tooltipEl.style.maxHeight = 'calc(100vh - 40px)';
+      // Show first, measure, then position
+      var w = tooltipEl.offsetWidth;
+      var h = tooltipEl.offsetHeight;
+      var left = x;
+      var top = y;
+      if (left + w > vw - 12) left = vw - w - 12;
+      if (left < 12) left = 12;
       if (top + h > vh - 12) top = vh - h - 12;
       if (top < 12) top = 12;
       tooltipEl.style.left = left + 'px';
@@ -2356,50 +2355,49 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
 
   function hideTip() {
     tooltipEl.style.display = 'none';
+    tipOpen = false;
   }
 
-  // Attach to squares (mouse + touch)
-  squaresArea.addEventListener('mousemove', function(e) {
+  // Click to show tooltip on squares
+  squaresArea.addEventListener('click', function(e) {
+    // Don't interfere with links inside tooltip
+    if (e.target.closest('.wv-tooltip')) return;
     var sqEl = e.target.closest('.wv-sq-item');
-    if (!sqEl) { hideTip(); return; }
+    if (!sqEl) return;
     var idx = parseInt(sqEl.dataset.sqIdx);
     var it = items[idx];
-    if (it) showTip(it, e.clientX, e.clientY);
+    if (it) {
+      e.stopPropagation();
+      showTip(it, e.clientX, e.clientY);
+    }
   });
-  squaresArea.addEventListener('mouseleave', hideTip);
 
-  // Attach to bars (mouse + touch)
-  barsArea.addEventListener('mousemove', function(e) {
+  // Click to show tooltip on bars
+  barsArea.addEventListener('click', function(e) {
+    if (e.target.closest('.wv-tooltip')) return;
     var barRow = e.target.closest('.wv-bar-row');
-    if (!barRow) { hideTip(); return; }
+    if (!barRow) return;
     var idx = parseInt(barRow.dataset.idx);
     var it = items[idx];
-    if (it) showTip(it, e.clientX, e.clientY);
-  });
-  barsArea.addEventListener('mouseleave', hideTip);
-
-  // Touch support: tap to show tooltip, tap elsewhere to dismiss
-  var tipVisible = false;
-  function handleTouch(area, selector, getIdx) {
-    area.addEventListener('touchstart', function(e) {
-      var el = e.target.closest(selector);
-      if (!el) return;
-      e.preventDefault();
-      var idx = getIdx(el);
-      var it = items[idx];
-      if (!it) return;
-      var touch = e.touches[0];
-      showTip(it, touch.clientX, touch.clientY);
-      tipVisible = true;
-    }, { passive: false });
-  }
-  handleTouch(squaresArea, '.wv-sq-item', function(el) { return parseInt(el.dataset.sqIdx); });
-  handleTouch(barsArea, '.wv-bar-row', function(el) { return parseInt(el.dataset.idx); });
-  document.addEventListener('touchstart', function(e) {
-    if (tipVisible && !e.target.closest('.wv-tooltip') && !e.target.closest('.wv-sq-item') && !e.target.closest('.wv-bar-row')) {
-      hideTip();
-      tipVisible = false;
+    if (it) {
+      e.stopPropagation();
+      showTip(it, e.clientX, e.clientY);
     }
+  });
+
+  // Click outside tooltip to dismiss
+  document.addEventListener('click', function(e) {
+    if (!tipOpen) return;
+    // If clicking inside the tooltip (including links), keep it open
+    if (e.target.closest('.wv-tooltip')) return;
+    // If clicking a square or bar, the handlers above will open a new tip
+    if (e.target.closest('.wv-sq-item') || e.target.closest('.wv-bar-row')) return;
+    hideTip();
+  });
+
+  // Escape to dismiss
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && tipOpen) hideTip();
   });
 
   // Remove default title tooltips from squares (we handle it now)
