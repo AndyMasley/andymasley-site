@@ -10,7 +10,7 @@ const OUTPUT_DIR = join(ROOT, "public", "images", "og");
 const FONT_PATH = join(__dirname, "fonts", "Inter-Medium.ttf");
 
 const pages = [
-  { filename: "og-default.png", title: "Andy Masley" },
+  { filename: "og-default.png", title: "Andy Masley", hexagon: true },
   { filename: "og-writing.png", title: "Writing" },
   { filename: "og-physics.png", title: "IB Physics" },
   { filename: "og-lists.png", title: "Lists" },
@@ -31,9 +31,113 @@ const pages = [
 const WIDTH = 1200;
 const HEIGHT = 630;
 
-function buildMarkup(title) {
+// Hexagon SVG path scaled for OG images
+const HEXAGON_PATH = "M 150 10 L 280 85 L 280 235 L 150 310 L 20 235 L 20 85 Z";
+
+function buildMarkup(title, { showHexagon = false } = {}) {
   // Use smaller font for longer titles
   const fontSize = title.length > 25 ? 52 : 64;
+
+  const children = [
+    // Thin decorative line near top
+    {
+      type: "div",
+      props: {
+        style: {
+          width: "100%",
+          height: "1px",
+          backgroundColor: "#DDD9D0",
+          marginBottom: "auto",
+        },
+      },
+    },
+    // Title
+    {
+      type: "div",
+      props: {
+        style: {
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "center",
+          flexGrow: 1,
+        },
+        children: {
+          type: "div",
+          props: {
+            style: {
+              fontSize: `${fontSize}px`,
+              fontFamily: "Inter",
+              fontWeight: 500,
+              color: "#1A1A18",
+              lineHeight: 1.2,
+            },
+            children: title,
+          },
+        },
+      },
+    },
+    // Site URL at bottom
+    {
+      type: "div",
+      props: {
+        style: {
+          fontSize: "20px",
+          fontFamily: "Inter",
+          fontWeight: 500,
+          color: "#8b3a3a",
+          marginTop: "auto",
+        },
+        children: "andymasley.com",
+      },
+    },
+  ];
+
+  // Hexagon watermark on the right
+  if (showHexagon) {
+    children.push({
+      type: "div",
+      props: {
+        style: {
+          display: "flex",
+          position: "absolute",
+          right: "-40px",
+          top: "50%",
+          transform: "translateY(-50%)",
+        },
+        children: {
+          type: "svg",
+          props: {
+            width: 440,
+            height: 470,
+            viewBox: "0 0 300 320",
+            children: [
+              {
+                type: "path",
+                props: {
+                  d: HEXAGON_PATH,
+                  fill: "none",
+                  stroke: "#8b3a3a",
+                  strokeWidth: "1.5",
+                  opacity: "0.12",
+                },
+              },
+              {
+                type: "path",
+                props: {
+                  d: HEXAGON_PATH,
+                  fill: "none",
+                  stroke: "#8b3a3a",
+                  strokeWidth: "2.5",
+                  opacity: "0.3",
+                  transform: "scale(0.7) translate(64, 68)",
+                },
+              },
+            ],
+          },
+        },
+      },
+    });
+  }
 
   return {
     type: "div",
@@ -45,60 +149,10 @@ function buildMarkup(title) {
         height: "100%",
         backgroundColor: "#faf9f7",
         padding: "80px",
+        position: "relative",
+        overflow: "hidden",
       },
-      children: [
-        // Thin decorative line near top
-        {
-          type: "div",
-          props: {
-            style: {
-              width: "100%",
-              height: "1px",
-              backgroundColor: "#DDD9D0",
-              marginBottom: "auto",
-            },
-          },
-        },
-        // Title
-        {
-          type: "div",
-          props: {
-            style: {
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "center",
-              flexGrow: 1,
-            },
-            children: {
-              type: "div",
-              props: {
-                style: {
-                  fontSize: `${fontSize}px`,
-                  fontFamily: "Inter",
-                  fontWeight: 500,
-                  color: "#1A1A18",
-                  lineHeight: 1.2,
-                },
-                children: title,
-              },
-            },
-          },
-        },
-        // Site URL at bottom
-        {
-          type: "div",
-          props: {
-            style: {
-              fontSize: "20px",
-              fontFamily: "Inter",
-              fontWeight: 500,
-              color: "#8b3a3a",
-              marginTop: "auto",
-            },
-            children: "andymasley.com",
-          },
-        },
-      ],
+      children,
     },
   };
 }
@@ -118,7 +172,7 @@ async function main() {
   ];
 
   for (const page of pages) {
-    const markup = buildMarkup(page.title);
+    const markup = buildMarkup(page.title, { showHexagon: page.hexagon });
     const svg = await satori(markup, { width: WIDTH, height: HEIGHT, fonts });
     const resvg = new Resvg(svg, {
       fitTo: { mode: "width", value: WIDTH },
