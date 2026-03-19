@@ -1690,6 +1690,64 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
 
   /* Final mobile-only overrides live here so they win over the editorial defaults above. */
   @media (max-width: 560px) {
+    .wv2 {
+      width: calc(100% + 2rem);
+      margin-left: -1rem;
+      margin-right: -1rem;
+      left: auto;
+      transform: none;
+      max-width: none;
+      padding: 0 0 1.5rem;
+      overflow-x: clip;
+    }
+    .wv-header {
+      width: calc(100% + 2rem);
+      margin-left: -1rem;
+      margin-right: -1rem;
+      left: auto;
+      transform: none;
+      max-width: none;
+      margin-bottom: 0.75rem;
+    }
+    .wv-layout {
+      height: auto;
+      max-height: none;
+      overflow: visible;
+      border-radius: 0 !important;
+      border-left: none;
+      border-right: none;
+    }
+    .wv-toggles {
+      max-height: min(62vh, 34rem);
+    }
+    .wv-cat-list[data-visible="true"] {
+      max-height: none;
+      overflow: visible;
+    }
+    .wv-chart-panel {
+      min-height: 0;
+      height: auto;
+      max-height: none;
+      overflow: visible;
+    }
+    .wv-bars-area,
+    .wv-squares-area {
+      flex: none;
+      overflow: visible;
+      min-height: 0;
+    }
+    .wv-bars-area {
+      padding: 8px 10px 12px;
+    }
+    .wv-squares-area {
+      padding: 10px 12px 14px;
+    }
+    .wv-sq-container {
+      min-height: 0;
+    }
+    .wv-scale-ref {
+      display: none !important;
+    }
     .wv-chart-header {
       flex-direction: column;
       align-items: stretch;
@@ -1837,6 +1895,12 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
   }
 
   @media (max-width: 380px) {
+    .wv2,
+    .wv-header {
+      width: calc(100% + 1rem);
+      margin-left: -0.5rem;
+      margin-right: -0.5rem;
+    }
     .wv-chart-header {
       padding: 8px 10px;
     }
@@ -1876,6 +1940,7 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
 (function() {
   function fG(g) { return g >= 1e12 ? (g/1e12).toFixed(1)+'T gal/yr' : g >= 1e9 ? (g/1e9).toFixed(1)+'B gal/yr' : (g/1e6).toFixed(0)+'M gal/yr'; }
   function fGShort(g) { return g >= 1e12 ? (g/1e12).toFixed(1)+'T' : g >= 1e9 ? (g/1e9).toFixed(1)+'B' : (g/1e6).toFixed(0)+'M'; }
+  function isPhoneLayout() { return window.matchMedia('(max-width: 560px)').matches; }
 
   var barsArea = document.getElementById('wv-bars');
   var squaresArea = document.getElementById('wv-squares');
@@ -1884,10 +1949,36 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
   var ratioEl = document.getElementById('wv-ratio');
   var ratioWrap = document.getElementById('wv-ratio-wrap');
   var shareBtn = document.getElementById('wv-share');
-  var currentView = 'squares';
+  var currentView = isPhoneLayout() ? 'bars' : 'squares';
   var waterMode = 'all';
   var items = [];
   var lastCount = -1;
+  var resizeTimer = null;
+
+  function syncViewUI() {
+    document.querySelectorAll('.wv-view-btn').forEach(function(btn) {
+      btn.dataset.active = btn.dataset.view === currentView ? 'true' : 'false';
+    });
+    if (barsArea) {
+      barsArea.style.display = currentView === 'bars' ? '' : 'none';
+      barsArea.style.opacity = currentView === 'bars' ? '1' : '0';
+    }
+    if (squaresArea) {
+      squaresArea.style.display = currentView === 'squares' ? '' : 'none';
+      squaresArea.style.opacity = currentView === 'squares' ? '1' : '0';
+    }
+  }
+
+  function updateCollapseLabel(selectedCount) {
+    if (!collapseBtn || !togglesPanel || !isPhoneLayout()) return;
+    var textEl = collapseBtn.querySelector('.wv-panel-collapse-text');
+    if (!textEl) return;
+    if (togglesPanel.dataset.collapsed === 'true') {
+      textEl.textContent = selectedCount > 0 ? 'Items (' + selectedCount + ' selected)' : 'Items (tap to expand)';
+    } else {
+      textEl.textContent = 'Items';
+    }
+  }
 
   // (#4) Mark sub-items (state-level) vs "All US..." items
   document.querySelectorAll('.wv-toggle-row').forEach(function(row) {
@@ -1922,15 +2013,13 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
     btn.addEventListener('click', function() {
       var view = btn.dataset.view;
       if (view === currentView) return;
-      document.querySelectorAll('.wv-view-btn').forEach(function(b) {
-        b.dataset.active = b.dataset.view === view ? 'true' : 'false';
-      });
-      var outgoing = view === 'bars' ? squaresArea : barsArea;
+      var outgoing = currentView === 'bars' ? barsArea : squaresArea;
       var incoming = view === 'bars' ? barsArea : squaresArea;
       outgoing.style.opacity = '0';
       setTimeout(function() {
         outgoing.style.display = 'none';
         currentView = view;
+        syncViewUI();
         render();
         incoming.style.opacity = '0';
         incoming.style.display = '';
@@ -2210,6 +2299,10 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
       });
       render();
       clearBtn.textContent = 'Cleared!';
+      if (isPhoneLayout() && togglesPanel) {
+        togglesPanel.dataset.collapsed = 'true';
+        updateCollapseLabel(0);
+      }
       setTimeout(function() { clearBtn.textContent = 'Clear all'; }, 1500);
     });
   }
@@ -2228,6 +2321,10 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
       });
       render();
       addAllBtn.textContent = 'Added!';
+      if (isPhoneLayout() && togglesPanel) {
+        togglesPanel.dataset.collapsed = 'true';
+        updateCollapseLabel(items.length);
+      }
       setTimeout(function() { addAllBtn.textContent = 'Add all'; }, 1500);
     });
   }
@@ -2258,6 +2355,9 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
           row.dataset.on = 'true';
         }
       });
+      if (isPhoneLayout() && togglesPanel) {
+        togglesPanel.dataset.collapsed = 'true';
+      }
       render();
     });
   });
@@ -2269,16 +2369,14 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
     collapseBtn.addEventListener('click', function() {
       var isCollapsed = togglesPanel.dataset.collapsed === 'true';
       togglesPanel.dataset.collapsed = isCollapsed ? 'false' : 'true';
-      collapseBtn.querySelector('.wv-panel-collapse-text').textContent =
-        isCollapsed ? 'Items' : 'Items (tap to expand)';
+      updateCollapseLabel(lastCount === -1 ? 0 : lastCount);
     });
   }
 
   // Mobile: start with items panel collapsed so chart is visible first
   if (window.innerWidth <= 560 && togglesPanel && collapseBtn) {
     togglesPanel.dataset.collapsed = 'true';
-    var collapseText = collapseBtn.querySelector('.wv-panel-collapse-text');
-    if (collapseText) collapseText.textContent = 'Items (tap to expand)';
+    updateCollapseLabel(0);
   }
 
   // Mobile: auto-collapse other categories when one opens
@@ -2368,6 +2466,144 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
     });
   }
 
+  function renderSquaresMobile(active, maxG) {
+    var panelW = squaresArea.clientWidth - 24;
+    if (panelW < 120) panelW = Math.max(220, window.innerWidth - 32);
+
+    var maxSide = Math.max(110, Math.min(panelW - 24, 220));
+    var gapY = 18;
+    var topPad = 8;
+    var labelGap = 6;
+    var labelBaseH = 52;
+    var cursorY = topPad;
+    var placed = [];
+
+    for (var k = 0; k < active.length; k++) {
+      var sq = active[k];
+      var side = Math.max(18, Math.round(maxSide * Math.sqrt(sq.gallons / maxG)));
+      var isP = sq.name.indexOf('2030') >= 0;
+      var eTag = sq.elecOn ? ' +elec' : '';
+      var pre = isP ? '~' : '';
+      var v = pre + sq.sub + eTag;
+      var itemW = Math.min(panelW, Math.max(side + 12, 220));
+      placed.push({
+        sq: sq,
+        side: side,
+        val: v,
+        x: Math.max(0, Math.round((panelW - itemW) / 2)),
+        y: cursorY,
+        w: itemW
+      });
+      cursorY += side + labelGap + labelBaseH + gapY;
+    }
+
+    var fitH = cursorY + 8;
+    var container = squaresArea.querySelector('.wv-sq-container');
+    if (!container) {
+      container = document.createElement('div');
+      container.className = 'wv-sq-container';
+      container.style.position = 'relative';
+      container.style.width = '100%';
+      squaresArea.innerHTML = '';
+      squaresArea.appendChild(container);
+    }
+    container.style.height = fitH + 'px';
+
+    var existing = {};
+    container.querySelectorAll('.wv-sq-item').forEach(function(el) {
+      existing[el.dataset.sqIdx] = el;
+    });
+
+    var usedKeys = {};
+
+    for (var p = 0; p < placed.length; p++) {
+      var pl = placed[p];
+      var key = '' + pl.sq.idx;
+      usedKeys[key] = true;
+      var fontSize = Math.max(10, Math.min(13, pl.side * 0.12)) + 'px';
+      var valSize = Math.max(9, Math.min(11, pl.side * 0.09)) + 'px';
+
+      var el = existing[key];
+      if (!el) {
+        el = document.createElement('div');
+        el.className = 'wv-sq-item';
+        el.dataset.sqIdx = key;
+        el.innerHTML = '<div class="wv-sq-box"></div><div class="wv-sq-color-bar"></div><div class="wv-sq-label"><span class="wv-sq-name"></span><span class="wv-sq-val"></span></div>';
+        el.style.position = 'absolute';
+        el.style.opacity = '0';
+        container.appendChild(el);
+        el.offsetHeight;
+        el.style.opacity = '1';
+      }
+
+      if (pl.sq.name.indexOf('2030') >= 0) {
+        el.classList.add('wv-proj-item');
+      } else {
+        el.classList.remove('wv-proj-item');
+      }
+
+      var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+      var fillOpacity = isDark ? '0.55' : '0.5';
+
+      el.style.left = pl.x + 'px';
+      el.style.top = pl.y + 'px';
+      el.style.width = pl.w + 'px';
+      el.style.flexDirection = 'column';
+      el.style.alignItems = 'center';
+      el.style.gap = '6px';
+
+      var box = el.querySelector('.wv-sq-box');
+      box.style.width = pl.side + 'px';
+      box.style.height = pl.side + 'px';
+      box.style.borderRadius = '0';
+      box.style.background = pl.sq.color;
+      box.style.opacity = fillOpacity;
+      box.style.border = pl.side >= 10 ? '2px solid ' + pl.sq.color : 'none';
+      box.style.borderColor = pl.sq.color;
+      box.style.flexShrink = '0';
+
+      var colorBar = el.querySelector('.wv-sq-color-bar');
+      if (colorBar) {
+        colorBar.style.width = Math.max(18, Math.min(36, Math.round(pl.side * 0.22))) + 'px';
+        colorBar.style.height = '2px';
+        colorBar.style.background = pl.sq.color;
+        colorBar.style.borderRadius = '1px';
+        colorBar.style.flexShrink = '0';
+      }
+
+      var nameEl = el.querySelector('.wv-sq-name');
+      nameEl.textContent = pl.sq.squareName;
+      nameEl.title = pl.sq.squareName;
+      nameEl.style.fontSize = fontSize;
+      nameEl.style.textAlign = 'center';
+
+      var valEl = el.querySelector('.wv-sq-val');
+      valEl.textContent = pl.val;
+      valEl.style.fontSize = valSize;
+      valEl.style.textAlign = 'center';
+
+      var labelEl = el.querySelector('.wv-sq-label');
+      if (labelEl) {
+        labelEl.style.textAlign = 'center';
+        labelEl.style.width = '100%';
+      }
+    }
+
+    var refEl = container.querySelector('.wv-scale-ref');
+    if (refEl) {
+      refEl.style.display = 'none';
+    }
+
+    for (var eKey in existing) {
+      if (!usedKeys[eKey]) {
+        var removeEl = existing[eKey];
+        removeEl.style.opacity = '0';
+        removeEl.style.transition = 'opacity 0.3s ease';
+        setTimeout(function(el) { if (el.parentNode) el.parentNode.removeChild(el); }, 350, removeEl);
+      }
+    }
+  }
+
   function render() {
     var active = [];
     for (var i = 0; i < items.length; i++) {
@@ -2391,6 +2627,7 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
       }
       lastCount = newCount;
     }
+    updateCollapseLabel(newCount);
 
     // (#3) Two-item ratio callout
     if (ratioEl && ratioWrap) {
@@ -2460,6 +2697,11 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
 
     // ── Square view ──
     if (currentView === 'squares') {
+      if (isPhoneLayout()) {
+        renderSquaresMobile(active, maxG);
+        return;
+      }
+
       var pad = window.innerWidth < 560 ? 20 : 32;
       var panelW = squaresArea.clientWidth - pad;
       var panelH = squaresArea.clientHeight - pad;
@@ -2804,6 +3046,16 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
     });
   });
   observer.observe(squaresArea, { childList: true, subtree: true, attributes: true, attributeFilter: ['title'] });
+
+  syncViewUI();
+  window.addEventListener('resize', function() {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(function() {
+      hideTip();
+      syncViewUI();
+      render();
+    }, 120);
+  }, { passive: true });
 
   render();
 
