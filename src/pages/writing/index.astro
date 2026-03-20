@@ -1118,8 +1118,18 @@ function formatBylineDate(dateStr: string): string {
       previousCleanup();
     }
 
-    const controller = new AbortController();
-    const { signal } = controller;
+    const cleanupFns: Array<() => void> = [];
+
+    function on(
+      target: EventTarget | null | undefined,
+      type: string,
+      handler: EventListenerOrEventListenerObject,
+      options?: boolean | AddEventListenerOptions
+    ) {
+      if (!target) return;
+      target.addEventListener(type, handler, options);
+      cleanupFns.push(() => target.removeEventListener(type, handler, options));
+    }
 
     const bylinesToggle = document.querySelector('.top-toggle') as HTMLButtonElement | null;
     const bylinesContent = document.getElementById('bylines-content') as HTMLElement | null;
@@ -1376,33 +1386,36 @@ function formatBylineDate(dateStr: string): string {
       lastFocusedElement?.focus();
     }
 
-    bylinesToggle?.addEventListener('click', () => {
+    const handleBylinesToggle = () => {
       const expanded = bylinesToggle.getAttribute('aria-expanded') === 'true';
       bylinesToggle.setAttribute('aria-expanded', String(!expanded));
       if (bylinesContent) {
         bylinesContent.hidden = expanded;
       }
-    }, { signal });
+    };
+    on(bylinesToggle, 'click', handleBylinesToggle);
 
     metaLinks.forEach(button => {
-      button.addEventListener('click', () => {
+      const handleMetaClick = () => {
         const slug = button.getAttribute('data-slug');
         if (slug) {
           openPanel(slug, button);
         }
-      }, { signal });
+      };
+      on(button, 'click', handleMetaClick);
     });
 
-    panelClose?.addEventListener('click', closePanel, { signal });
-    backdrop?.addEventListener('click', closePanel, { signal });
+    on(panelClose, 'click', closePanel);
+    on(backdrop, 'click', closePanel);
 
-    document.addEventListener('keydown', event => {
-      if (event.key === 'Escape' && panel?.getAttribute('aria-hidden') === 'false') {
+    const handleKeydown = (event: Event) => {
+      const keyboardEvent = event as KeyboardEvent;
+      if (keyboardEvent.key === 'Escape' && panel?.getAttribute('aria-hidden') === 'false') {
         closePanel();
         return;
       }
 
-      if (event.key === 'Tab' && panel?.getAttribute('aria-hidden') === 'false') {
+      if (keyboardEvent.key === 'Tab' && panel?.getAttribute('aria-hidden') === 'false') {
         const focusables = getFocusableElements(panel);
         if (focusables.length === 0) return;
 
@@ -1410,55 +1423,61 @@ function formatBylineDate(dateStr: string): string {
         const last = focusables[focusables.length - 1];
         const activeElement = document.activeElement as HTMLElement | null;
 
-        if (event.shiftKey && activeElement === first) {
-          event.preventDefault();
+        if (keyboardEvent.shiftKey && activeElement === first) {
+          keyboardEvent.preventDefault();
           last.focus();
-        } else if (!event.shiftKey && activeElement === last) {
-          event.preventDefault();
+        } else if (!keyboardEvent.shiftKey && activeElement === last) {
+          keyboardEvent.preventDefault();
           first.focus();
         }
       }
-    }, { signal });
+    };
+    on(document, 'keydown', handleKeydown);
 
     yearToggles.forEach(toggle => {
-      toggle.addEventListener('click', () => {
+      const handleYearToggle = () => {
         const expanded = toggle.getAttribute('aria-expanded') === 'true';
         setYearExpanded(toggle, !expanded);
-      }, { signal });
+      };
+      on(toggle, 'click', handleYearToggle);
     });
 
-    expandYears?.addEventListener('click', () => {
+    const handleExpandYears = () => {
       expandVisibleYears();
-    }, { signal });
+    };
+    on(expandYears, 'click', handleExpandYears);
 
-    collapseYears?.addEventListener('click', () => {
+    const handleCollapseYears = () => {
       yearGroups.forEach(group => {
         if (!group.classList.contains('hidden')) {
           const toggle = group.querySelector('.year-toggle') as HTMLButtonElement | null;
           if (toggle) setYearExpanded(toggle, false);
         }
       });
-    }, { signal });
+    };
+    on(collapseYears, 'click', handleCollapseYears);
 
     filterButtons.forEach(button => {
-      button.addEventListener('click', () => {
+      const handleFilterClick = () => {
         state.topic = button.getAttribute('data-filter') || 'all';
         setPressed(filterButtons, state.topic, 'data-filter');
         updateSubcategoryVisibility();
         renderArchive();
-      }, { signal });
+      };
+      on(button, 'click', handleFilterClick);
     });
 
     sourceButtons.forEach(button => {
-      button.addEventListener('click', () => {
+      const handleSourceClick = () => {
         state.source = button.getAttribute('data-source') || 'all';
         setPressed(sourceButtons, state.source, 'data-source');
         renderArchive();
-      }, { signal });
+      };
+      on(button, 'click', handleSourceClick);
     });
 
     subcategoryButtons.forEach(button => {
-      button.addEventListener('click', () => {
+      const handleSubcategoryClick = () => {
         const subcategory = button.getAttribute('data-subcategory') || '';
         if (state.subcategory === subcategory) {
           resetSubcategories();
@@ -1471,23 +1490,26 @@ function formatBylineDate(dateStr: string): string {
         state.subcategoryPosts = postsJson ? JSON.parse(postsJson) : [];
         setPressed(subcategoryButtons, subcategory, 'data-subcategory');
         renderArchive();
-      }, { signal });
+      };
+      on(button, 'click', handleSubcategoryClick);
     });
 
-    searchInput?.addEventListener('input', () => {
+    const handleSearchInput = () => {
       state.query = searchInput.value.trim().toLowerCase();
       renderArchive();
-    }, { signal });
+    };
+    on(searchInput, 'input', handleSearchInput);
 
-    searchClear?.addEventListener('click', () => {
+    const handleSearchClear = () => {
       if (!searchInput) return;
       searchInput.value = '';
       state.query = '';
       renderArchive();
       searchInput.focus();
-    }, { signal });
+    };
+    on(searchClear, 'click', handleSearchClear);
 
-    clearAll?.addEventListener('click', clearFilters, { signal });
+    on(clearAll, 'click', clearFilters);
 
     restoreDefaultYearState();
     updateSubcategoryVisibility();
@@ -1496,7 +1518,7 @@ function formatBylineDate(dateStr: string): string {
     renderArchive();
 
     (window as any).__writingPageCleanup = () => {
-      controller.abort();
+      cleanupFns.forEach(cleanup => cleanup());
       document.body.style.overflow = '';
       if (panel && backdrop) {
         panel.classList.remove('open');
