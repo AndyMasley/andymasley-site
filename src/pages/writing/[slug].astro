@@ -379,6 +379,8 @@ const standfirst = post.description?.trim() || '';
   .article-grid--wide > :global(.article-toc-shell) {
     grid-column: 1;
     align-self: start;
+    position: sticky;
+    top: 1.5rem;
   }
 
   .article-main {
@@ -788,8 +790,6 @@ const standfirst = post.description?.trim() || '';
   }
 
   :global(.article-toc) {
-    position: sticky;
-    top: 1.5rem;
     display: flex;
     flex-direction: column;
     gap: 1rem;
@@ -1012,6 +1012,11 @@ const standfirst = post.description?.trim() || '';
     .article-grid--wide > :global(.article-toc-shell) {
       grid-column: 1;
       grid-row: auto;
+    }
+
+    .article-grid--wide > :global(.article-toc-shell) {
+      position: static;
+      top: auto;
     }
 
     :global(.article-toc) {
