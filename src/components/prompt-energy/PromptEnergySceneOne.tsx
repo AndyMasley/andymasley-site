@@ -1,0 +1,307 @@
+import { useEffect, useMemo, useRef, useState } from 'react';
+import {
+  BOUNDARY_OPTIONS,
+  GHOST_REQUESTS,
+  HERO_PROMPT,
+  HERO_TOKENS,
+  SCENE_ONE_BEATS,
+  type BoundaryKey,
+} from './sceneOneData';
+
+function formatPower(value: number): string {
+  return `${Math.round(value)} W`;
+}
+
+function formatEnergyWh(value: number): string {
+  if (value === 0) return '0.000 Wh';
+  return `${value.toFixed(3)} Wh`;
+}
+
+function formatHeat(valueWh: number): string {
+  const joules = valueWh * 3600;
+  return `${Math.round(joules)} J`;
+}
+
+export function PromptEnergySceneOne() {
+  const [activeBeatIndex, setActiveBeatIndex] = useState(0);
+  const [boundary, setBoundary] = useState<BoundaryKey>('facility');
+  const stepRefs = useRef<Array<HTMLElement | null>>([]);
+  const visibility = useRef<Record<number, number>>({});
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      entries => {
+        for (const entry of entries) {
+          const index = Number((entry.target as HTMLElement).dataset.stepIndex);
+          visibility.current[index] = entry.isIntersecting ? entry.intersectionRatio : 0;
+        }
+
+        let bestIndex = 0;
+        let bestRatio = -1;
+        for (const [index, ratio] of Object.entries(visibility.current)) {
+          if (ratio > bestRatio) {
+            bestRatio = ratio;
+            bestIndex = Number(index);
+          }
+        }
+        setActiveBeatIndex(bestIndex);
+      },
+      {
+        threshold: [0.2, 0.4, 0.6, 0.8],
+        rootMargin: '-15% 0px -35% 0px',
+      }
+    );
+
+    for (const step of stepRefs.current) {
+      if (step) observer.observe(step);
+    }
+
+    return () => observer.disconnect();
+  }, []);
+
+  const activeBeat = SCENE_ONE_BEATS[activeBeatIndex] ?? SCENE_ONE_BEATS[0];
+  const boundaryOption = BOUNDARY_OPTIONS.find(option => option.key === boundary) ?? BOUNDARY_OPTIONS[2];
+
+  const includedPowerSegments = useMemo(() => {
+    const segments = [
+      {
+        key: 'chip',
+        label: 'Accelerator',
+        value: activeBeat.instantPower.chip,
+        colorClass: 'pe-ledger__segment--chip',
+      },
+      {
+        key: 'host',
+        label: 'Host CPU + memory',
+        value: activeBeat.instantPower.host,
+        colorClass: 'pe-ledger__segment--host',
+      },
+      {
+        key: 'reserve',
+        label: 'Reserved capacity',
+        value: activeBeat.instantPower.reserve,
+        colorClass: 'pe-ledger__segment--reserve',
+      },
+      {
+        key: 'overhead',
+        label: 'Facility overhead',
+        value: activeBeat.instantPower.overhead,
+        colorClass: 'pe-ledger__segment--overhead',
+      },
+    ];
+
+    if (boundary === 'chip') return segments.slice(0, 1);
+    if (boundary === 'server') return segments.slice(0, 2);
+    return segments;
+  }, [activeBeat, boundary]);
+
+  const totalPower = includedPowerSegments.reduce((sum, segment) => sum + segment.value, 0);
+
+  const cumulativeWh = boundary === 'chip'
+    ? activeBeat.cumulativeWh.chip
+    : boundary === 'server'
+      ? activeBeat.cumulativeWh.server
+      : activeBeat.cumulativeWh.facility;
+
+  const progressLabel = `Beat ${activeBeatIndex + 1} of ${SCENE_ONE_BEATS.length}`;
+
+  return (
+    <section className="pe-scene-one" aria-labelledby="pe-scene-one-title">
+      <div className="pe-scene-one__intro">
+        <div className="pe-scene-one__eyebrow">Scene 1 of 8</div>
+        <h2 className="pe-scene-one__title" id="pe-scene-one-title">
+          How your question enters an AI system
+        </h2>
+        <p className="pe-scene-one__lede">
+          Before the model answers, your text is packaged, scheduled, and routed into already running hardware.
+        </p>
+      </div>
+
+      <div className="pe-scene-one__layout">
+        <div className="pe-scene-one__steps">
+          {SCENE_ONE_BEATS.map((beat, index) => (
+            <section
+              key={beat.id}
+              ref={node => {
+                stepRefs.current[index] = node;
+              }}
+              className={`pe-step ${index === activeBeatIndex ? 'pe-step--active' : ''}`}
+              data-step-index={index}
+              aria-labelledby={`pe-step-title-${beat.id}`}
+            >
+              <div className="pe-step__meta">{beat.label}</div>
+              <h3 className="pe-step__title" id={`pe-step-title-${beat.id}`}>
+                {beat.title}
+              </h3>
+              <p className="pe-step__body">{beat.body}</p>
+            </section>
+          ))}
+        </div>
+
+        <div className="pe-scene-one__sticky">
+          <div className="pe-stage" data-beat={activeBeat.id}>
+            <div className="pe-stage__topline">
+              <div className="pe-stage__progress">
+                <span className="pe-stage__progress-label">{progressLabel}</span>
+                <div className="pe-stage__progress-dots" aria-hidden="true">
+                  {SCENE_ONE_BEATS.map((beat, index) => (
+                    <span
+                      key={beat.id}
+                      className={`pe-stage__progress-dot ${index === activeBeatIndex ? 'pe-stage__progress-dot--active' : ''}`}
+                    />
+                  ))}
+                </div>
+              </div>
+              <div className="pe-stage__caption">{activeBeat.caption}</div>
+            </div>
+
+            <div className="pe-stage__map" aria-hidden="true">
+              <div className="pe-stage__connector pe-stage__connector--prompt" />
+              <div className="pe-stage__connector pe-stage__connector--scheduler" />
+              <div className="pe-stage__connector pe-stage__connector--dispatch" />
+
+              <section className="pe-chat">
+                <div className="pe-node-label">Question</div>
+                <div className="pe-chat__bubble">
+                  <span className="pe-chat__text">{HERO_PROMPT}</span>
+                </div>
+                <div className="pe-chat__status">Live service, warm path</div>
+              </section>
+
+              <section className="pe-token-tray">
+                <div className="pe-node-label">Tokens</div>
+                <div className="pe-token-tray__chips">
+                  {HERO_TOKENS.map(token => (
+                    <span key={token} className="pe-token-chip">
+                      {token}
+                    </span>
+                  ))}
+                </div>
+                <div className="pe-token-tray__count">Input tokens: {HERO_TOKENS.length}</div>
+              </section>
+
+              <div className="pe-request" role="presentation">
+                <div className="pe-request__header">
+                  <span>REQ-014</span>
+                  <span>ready</span>
+                </div>
+                <div className="pe-request__tokens">
+                  {HERO_TOKENS.slice(0, 4).map(token => (
+                    <span key={token} className="pe-request__token">
+                      {token}
+                    </span>
+                  ))}
+                  <span className="pe-request__more">+{HERO_TOKENS.length - 4}</span>
+                </div>
+                <div className="pe-request__footer">service: text chat</div>
+              </div>
+
+              <section className="pe-scheduler">
+                <div className="pe-node-label">Scheduler lane</div>
+                <div className="pe-scheduler__lane">
+                  {GHOST_REQUESTS.map((ghost, index) => (
+                    <span
+                      key={ghost}
+                      className={`pe-scheduler__ghost pe-scheduler__ghost--${index + 1}`}
+                    />
+                  ))}
+                  <div className="pe-scheduler__hint">Merge and route live traffic</div>
+                </div>
+              </section>
+
+              <section className="pe-rack">
+                <div className="pe-rack__label">Serving rack silhouette</div>
+                <div className="pe-rack__frame">
+                  <div className="pe-rack__node pe-rack__node--host">
+                    <div className="pe-node-label">Host system</div>
+                    <div className="pe-rack__title">CPU + memory dispatch</div>
+                    <div className="pe-rack__copy">prepares and routes work</div>
+                  </div>
+                  <div className="pe-rack__node pe-rack__node--accelerator" id="pe-scene-one-accelerator-target">
+                    <div className="pe-node-label">Accelerator target</div>
+                    <div className="pe-rack__title">Parallel math begins here</div>
+                    <div className="pe-rack__copy">future zoom target</div>
+                    <div className="pe-rack__phase-markers">
+                      <span>Prompt processing</span>
+                      <span>Answer generation</span>
+                    </div>
+                    <div className="pe-rack__zoom-ring" />
+                  </div>
+                </div>
+              </section>
+            </div>
+
+            <aside className="pe-ledger" aria-label="Boundary-aware energy ledger">
+              <div className="pe-ledger__header">
+                <div>
+                  <div className="pe-ledger__eyebrow">Energy ledger</div>
+                  <div className="pe-ledger__phase">{activeBeat.phase}</div>
+                </div>
+                <div className="pe-ledger__boundary-copy">{boundaryOption.summary}</div>
+              </div>
+
+              <div className="pe-ledger__toggle" role="tablist" aria-label="Measurement boundary">
+                {BOUNDARY_OPTIONS.map(option => (
+                  <button
+                    key={option.key}
+                    type="button"
+                    role="tab"
+                    aria-selected={option.key === boundary}
+                    className={`pe-ledger__toggle-button ${option.key === boundary ? 'pe-ledger__toggle-button--active' : ''}`}
+                    onClick={() => setBoundary(option.key)}
+                    title={option.description}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+
+              <div className="pe-ledger__metrics">
+                <div className="pe-ledger__metric">
+                  <div className="pe-ledger__metric-label">Instantaneous power</div>
+                  <div className="pe-ledger__metric-value">{formatPower(totalPower)}</div>
+                </div>
+                <div className="pe-ledger__metric">
+                  <div className="pe-ledger__metric-label">Cumulative prompt energy</div>
+                  <div className="pe-ledger__metric-value">{formatEnergyWh(cumulativeWh)}</div>
+                </div>
+                <div className="pe-ledger__metric">
+                  <div className="pe-ledger__metric-label">Heat to remove</div>
+                  <div className="pe-ledger__metric-value">{formatHeat(cumulativeWh)}</div>
+                </div>
+              </div>
+
+              <div className="pe-ledger__bar" aria-hidden="true">
+                {includedPowerSegments.map(segment => (
+                  <span
+                    key={segment.key}
+                    className={`pe-ledger__segment ${segment.colorClass}`}
+                    style={{ width: `${totalPower === 0 ? 0 : (segment.value / totalPower) * 100}%` }}
+                  />
+                ))}
+              </div>
+
+              <ul className="pe-ledger__legend">
+                {includedPowerSegments.map(segment => (
+                  <li key={segment.key} className="pe-ledger__legend-item">
+                    <span className={`pe-ledger__legend-swatch ${segment.colorClass}`} />
+                    <span className="pe-ledger__legend-label">{segment.label}</span>
+                    <span className="pe-ledger__legend-value">{formatPower(segment.value)}</span>
+                  </li>
+                ))}
+              </ul>
+
+              <div className="pe-ledger__note">
+                Illustrative first-pass values. Later scenes can calibrate these to a specific hardware story.
+              </div>
+            </aside>
+
+            <div className="pe-scene-one__sr" aria-live="polite">
+              {activeBeat.title}. {activeBeat.body} {boundaryOption.summary}
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
