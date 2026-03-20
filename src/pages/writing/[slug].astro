@@ -36,6 +36,12 @@ interface ExternalPost {
 
 type Post = LocalPost | ExternalPost;
 
+interface AdjacentPost {
+  slug: string;
+  title: string;
+  date: Date;
+}
+
 export async function getStaticPaths() {
   const paths: Array<{ params: { slug: string }; props: { post: Post } }> = [];
 
@@ -119,14 +125,39 @@ export async function getStaticPaths() {
   });
   paths.push(...eaForumPaths);
 
-  return paths;
+  const sortedPaths = [...paths].sort(
+    (a, b) => b.props.post.date.getTime() - a.props.post.date.getTime()
+  );
+
+  return sortedPaths.map((path, index) => ({
+    ...path,
+    props: {
+      ...path.props,
+      newerPost: index > 0
+        ? {
+            slug: sortedPaths[index - 1].props.post.slug,
+            title: sortedPaths[index - 1].props.post.title,
+            date: sortedPaths[index - 1].props.post.date,
+          }
+        : undefined,
+      olderPost: index < sortedPaths.length - 1
+        ? {
+            slug: sortedPaths[index + 1].props.post.slug,
+            title: sortedPaths[index + 1].props.post.title,
+            date: sortedPaths[index + 1].props.post.date,
+          }
+        : undefined,
+    }
+  }));
 }
 
 interface Props {
   post: Post;
+  newerPost?: AdjacentPost;
+  olderPost?: AdjacentPost;
 }
 
-const { post } = Astro.props;
+const { post, newerPost, olderPost } = Astro.props;
 
 // Format date as MM.DD.YYYY
 function formatDate(date: Date): string {
@@ -169,6 +200,7 @@ const hasTOC = !isCheatSheet && tocHeadings.filter(h => h.level === 'section').l
 const wordCount = post.source === 'local'
   ? post.body.split(/\s+/).length
   : (post.htmlContent.replace(/<[^>]*>/g, '').split(/\s+/).length);
+const standfirst = post.description?.trim() || '';
 ---
 
 {isCheatSheet && post.source !== 'local' ? (
@@ -199,25 +231,25 @@ const wordCount = post.source === 'local'
   description={post.description}
   activeNav="/writing"
 >
-  <div class="toc-page">
-    {post.source !== 'local' && (
-      <p class="originally-on">
-        Originally on <a href={post.url} target="_blank" rel="noopener">{post.sourceName}</a>
-      </p>
-    )}
+  <div class="article-page article-page--wide">
+    <div class="article-grid article-grid--wide">
+      <header class="article-header article-grid__header">
+        <div class="article-header__meta">
+          <span class="article-header__meta-item">{formatDate(post.date)}</span>
+          <span class="article-header__meta-item">{readingTime} min read</span>
+          {post.source !== 'local' && (
+            <span class="article-header__meta-item">
+              Originally published on <a href={post.url} target="_blank" rel="noopener">{post.sourceName}</a>
+            </span>
+          )}
+        </div>
+        <h1 class="article-header__title">{post.title}</h1>
+        {standfirst && <p class="article-header__standfirst">{standfirst}</p>}
+      </header>
 
-    <header class="article-header">
-      <h1 class="article-header__title">{post.title}</h1>
-      <div class="article-header__meta">
-        <span class="article-header__date">{formatDate(post.date)}</span>
-        <span class="article-header__reading-time">{readingTime} min read</span>
-      </div>
-    </header>
-
-    <div class="cse-layout">
       <ArticleTOC client:load headings={tocHeadings} />
-      <article class="cse-content">
-        <div class="prose">
+      <article class="article-body">
+        <div class="article-prose prose">
           {post.source === 'local' ? (
             <Content />
           ) : (
@@ -225,7 +257,29 @@ const wordCount = post.source === 'local'
           )}
         </div>
         <footer class="article-footer">
-          <a href="/writing" class="article-nav__link">&larr; Back to all writing</a>
+          <div class="article-footer__back">
+            <a href="/writing" class="article-nav__link">&larr; Back to all writing</a>
+          </div>
+          {(newerPost || olderPost) && (
+            <nav class="article-pagination" aria-label="More writing">
+              {newerPost ? (
+                <a href={`/writing/${newerPost.slug}`} class="article-pagination__link">
+                  <span class="article-pagination__label">Newer</span>
+                  <span class="article-pagination__title">{newerPost.title}</span>
+                  <span class="article-pagination__date">{formatDate(newerPost.date)}</span>
+                </a>
+              ) : (
+                <span class="article-pagination__link article-pagination__link--empty" aria-hidden="true"></span>
+              )}
+              {olderPost && (
+                <a href={`/writing/${olderPost.slug}`} class="article-pagination__link article-pagination__link--align-end">
+                  <span class="article-pagination__label">Older</span>
+                  <span class="article-pagination__title">{olderPost.title}</span>
+                  <span class="article-pagination__date">{formatDate(olderPost.date)}</span>
+                </a>
+              )}
+            </nav>
+          )}
         </footer>
       </article>
     </div>
@@ -235,221 +289,423 @@ const wordCount = post.source === 'local'
 <Base
   title={post.title}
   description={post.description}
+  activeNav="/writing"
 >
-  <article class="container container--narrow">
-
-    {post.source !== 'local' && (
-      <p class="originally-on">
-        Originally on <a href={post.url} target="_blank" rel="noopener">{post.sourceName}</a>
-      </p>
-    )}
-
+  <article class="article-page article-page--standard">
     <header class="article-header">
-      <h1 class="article-header__title">{post.title}</h1>
       <div class="article-header__meta">
-        <span class="article-header__date">{formatDate(post.date)}</span>
-        <span class="article-header__reading-time">{readingTime} min read</span>
+        <span class="article-header__meta-item">{formatDate(post.date)}</span>
+        <span class="article-header__meta-item">{readingTime} min read</span>
+        {post.source !== 'local' && (
+          <span class="article-header__meta-item">
+            Originally published on <a href={post.url} target="_blank" rel="noopener">{post.sourceName}</a>
+          </span>
+        )}
       </div>
+      <h1 class="article-header__title">{post.title}</h1>
+      {standfirst && <p class="article-header__standfirst">{standfirst}</p>}
     </header>
 
-    <div class="prose">
-      {post.source === 'local' ? (
-        <Content />
-      ) : (
-        <Fragment set:html={post.htmlContent} />
-      )}
+    <div class="article-body">
+      <div class="article-prose prose">
+        {post.source === 'local' ? (
+          <Content />
+        ) : (
+          <Fragment set:html={post.htmlContent} />
+        )}
+      </div>
     </div>
 
     <footer class="article-footer">
-      <nav class="article-nav">
+      <div class="article-footer__back">
         <a href="/writing" class="article-nav__link">
           ← Back to all writing
         </a>
-      </nav>
+      </div>
+      {(newerPost || olderPost) && (
+        <nav class="article-pagination" aria-label="More writing">
+          {newerPost ? (
+            <a href={`/writing/${newerPost.slug}`} class="article-pagination__link">
+              <span class="article-pagination__label">Newer</span>
+              <span class="article-pagination__title">{newerPost.title}</span>
+              <span class="article-pagination__date">{formatDate(newerPost.date)}</span>
+            </a>
+          ) : (
+            <span class="article-pagination__link article-pagination__link--empty" aria-hidden="true"></span>
+          )}
+          {olderPost && (
+            <a href={`/writing/${olderPost.slug}`} class="article-pagination__link article-pagination__link--align-end">
+              <span class="article-pagination__label">Older</span>
+              <span class="article-pagination__title">{olderPost.title}</span>
+              <span class="article-pagination__date">{formatDate(olderPost.date)}</span>
+            </a>
+          )}
+        </nav>
+      )}
     </footer>
   </article>
 </Base>
 )}
 
 <style>
-  .originally-on {
-    font-size: var(--font-size-ui);
-    color: var(--dim);
-    margin-bottom: var(--space-lg);
+  .article-page {
+    width: 100%;
   }
 
-  .originally-on a {
-    color: var(--accent);
-    text-decoration: underline;
-    text-underline-offset: var(--underline-offset);
+  .article-page--standard {
+    max-width: 720px;
+    margin: 0 auto;
+  }
+
+  .article-page--wide {
+    --article-shell-width: min(var(--max-width-wide), calc(100vw - 48px));
+    width: var(--article-shell-width);
+    margin-left: calc((var(--article-shell-width) - 100%) / -2);
+  }
+
+  .article-grid--wide {
+    display: grid;
+    grid-template-columns: minmax(200px, 220px) minmax(0, 760px);
+    column-gap: clamp(2.5rem, 4vw, 4.5rem);
+    align-items: start;
+  }
+
+  .article-grid__header {
+    grid-column: 2;
+  }
+
+  .article-grid--wide > :global(.article-toc-shell) {
+    grid-column: 1;
+    grid-row: 2;
+    align-self: start;
+  }
+
+  .article-body {
+    min-width: 0;
+  }
+
+  .article-grid--wide .article-body {
+    grid-column: 2;
   }
 
   .article-header {
-    margin-bottom: var(--space-xl);
+    margin-bottom: clamp(2.5rem, 5vw, 4rem);
+    padding-bottom: clamp(1.5rem, 3vw, 2rem);
+    border-bottom: 1px solid var(--border);
   }
 
   .article-header__title {
-    font-size: 2.25rem;   /* 36px */
-    font-weight: 700;
-    line-height: 1.15;
+    font-family: var(--font-editorial);
+    font-size: clamp(2.5rem, 4vw, 4.25rem);
+    font-weight: 600;
+    line-height: 1.03;
     letter-spacing: -0.03em;
-    margin-bottom: var(--space-md);
-  }
-
-  @media (max-width: 600px) {
-    .article-header__title {
-      font-size: 1.75rem;   /* 28px */
-    }
+    text-wrap: balance;
+    margin: 0;
   }
 
   .article-header__meta {
     display: flex;
-    gap: var(--space-md);
-    font-size: var(--font-size-mono);
-    font-family: var(--font-mono);
+    flex-wrap: wrap;
+    gap: 0.5rem 0.875rem;
+    margin-bottom: 1rem;
+    font-size: 0.76rem;
+    font-family: var(--font-body);
+    letter-spacing: 0.045em;
+    text-transform: uppercase;
     color: var(--dim);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .article-header__meta-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.875rem;
+    line-height: 1.4;
+  }
+
+  .article-header__meta-item:not(:last-child)::after {
+    content: '';
+    width: 1px;
+    height: 0.85em;
+    background: var(--border-strong);
+  }
+
+  .article-header__meta-item a {
+    color: inherit;
+    text-decoration-color: color-mix(in srgb, var(--accent) 55%, transparent);
+  }
+
+  .article-header__standfirst {
+    max-width: 36rem;
+    margin: 1.5rem 0 0;
+    font-family: var(--font-editorial);
+    font-size: clamp(1.2rem, 1.05rem + 0.4vw, 1.45rem);
+    line-height: 1.58;
+    color: var(--text-secondary);
   }
 
   .article-footer {
-    margin-top: var(--space-2xl);
-    padding-top: var(--space-xl);
+    margin-top: clamp(3rem, 6vw, 4.5rem);
+    padding-top: 1.75rem;
     border-top: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .article-footer__back {
+    display: flex;
   }
 
   .article-nav__link {
-    font-size: var(--font-size-ui);
-    color: var(--accent);
+    font-size: 0.9rem;
+    color: var(--dim);
     text-decoration: underline;
     text-underline-offset: var(--underline-offset);
   }
 
-  /* Prose styles for external content */
-  .prose :global(img) {
+  .article-nav__link:hover {
+    color: var(--text);
+  }
+
+  .article-pagination {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+  }
+
+  .article-pagination__link {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    min-height: 100%;
+    padding: 1rem 1.125rem;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    background: color-mix(in srgb, var(--bg-elevated) 84%, var(--bg) 16%);
+    text-decoration: none;
+    color: var(--text);
+    transition: border-color var(--transition-fast), background-color var(--transition-fast);
+  }
+
+  .article-pagination__link:hover {
+    color: var(--text);
+    border-color: var(--border-strong);
+    background: var(--bg-elevated);
+  }
+
+  .article-pagination__link--align-end {
+    text-align: right;
+    align-items: flex-end;
+  }
+
+  .article-pagination__link--empty {
+    visibility: hidden;
+    pointer-events: none;
+  }
+
+  .article-pagination__label,
+  .article-pagination__date {
+    font-size: 0.75rem;
+    font-family: var(--font-body);
+    letter-spacing: 0.045em;
+    text-transform: uppercase;
+    color: var(--dim);
+  }
+
+  .article-pagination__title {
+    font-family: var(--font-editorial);
+    font-size: 1.12rem;
+    line-height: 1.3;
+  }
+
+  .article-prose {
+    font-family: var(--font-editorial);
+    font-size: clamp(1.05rem, 0.98rem + 0.24vw, 1.12rem);
+    line-height: 1.82;
+    color: var(--text);
+  }
+
+  .article-prose > :global(p:first-child) {
+    font-size: 1.18em;
+    line-height: 1.68;
+    color: var(--text);
+    margin-bottom: 1.75rem;
+  }
+
+  .article-prose :global(p) {
+    margin-bottom: 1.45rem;
+  }
+
+  .article-prose :global(img) {
     max-width: 100%;
     height: auto;
-    margin: var(--space-lg) 0;
+    margin: 2.25rem 0 0;
+    border-radius: 14px;
+    border: 1px solid var(--border-subtle);
+    background: var(--bg-elevated);
+    box-shadow: var(--shadow-xs);
   }
 
-  .prose :global(figure) {
-    margin: var(--space-lg) 0;
+  .article-prose :global(figure) {
+    margin: 2.5rem 0;
   }
 
-  .prose :global(figcaption) {
-    font-size: var(--font-size-ui);
+  .article-prose :global(figcaption) {
+    margin-top: 0.85rem;
+    max-width: 38rem;
+    font-size: 0.85rem;
+    font-family: var(--font-body);
+    line-height: 1.6;
     color: var(--dim);
-    text-align: center;
-    margin-top: var(--space-sm);
+    text-align: left;
   }
 
-  .prose :global(blockquote) {
-    border-left: 3px solid var(--accent);
-    padding-left: var(--space-md);
-    margin: var(--space-lg) 0;
-    color: var(--dim);
-    font-style: italic;
+  .article-prose :global(blockquote) {
+    margin: 2.25rem 0;
+    padding: 0.25rem 0 0.25rem 1.25rem;
+    border-left: 1.5px solid var(--border-strong);
+    color: var(--text-secondary);
+    font-style: normal;
   }
 
-  .prose :global(pre) {
-    background: var(--border);
-    padding: var(--space-md);
-    border-radius: 4px;
+  .article-prose :global(pre) {
+    margin: 2rem 0;
+    padding: 1rem 1.125rem;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--bg-subtle);
     overflow-x: auto;
     font-family: var(--font-mono);
-    font-size: var(--font-size-mono);
+    font-size: 0.84rem;
+    line-height: 1.65;
+    color: var(--text-secondary);
   }
 
-  .prose :global(code) {
+  .article-prose :global(code) {
     font-family: var(--font-mono);
-    font-size: var(--font-size-mono);
-    background: var(--border);
-    padding: 0.1em 0.3em;
-    border-radius: 2px;
+    font-size: 0.84rem;
+    background: var(--bg-subtle);
+    padding: 0.14em 0.36em;
+    border-radius: 4px;
   }
 
-  .prose :global(pre code) {
+  .article-prose :global(pre code) {
     background: none;
     padding: 0;
   }
 
-  .prose :global(a) {
-    color: var(--accent);
+  .article-prose :global(a) {
+    color: inherit;
     text-decoration: underline;
+    text-decoration-color: color-mix(in srgb, var(--accent) 60%, transparent);
+    text-decoration-thickness: 1px;
     text-underline-offset: var(--underline-offset);
   }
 
-  .prose :global(h2) {
-    font-size: 1.5rem;      /* 24px */
+  .article-prose :global(a:hover) {
+    color: var(--text);
+    text-decoration-color: var(--accent);
+  }
+
+  .article-prose :global(h1),
+  .article-prose :global(h2) {
+    font-family: var(--font-editorial);
+    font-size: clamp(1.75rem, 1.55rem + 0.5vw, 2rem);
+    font-weight: 600;
+    line-height: 1.18;
+    letter-spacing: -0.025em;
+    color: var(--text);
+    margin-top: 4rem;
+    margin-bottom: 1rem;
+  }
+
+  .article-prose :global(h1),
+  .article-prose :global(h2),
+  .article-prose :global(h3) {
+    scroll-margin-top: 24px;
+  }
+
+  .article-prose :global(h3) {
+    font-family: var(--font-editorial);
+    font-size: clamp(1.24rem, 1.12rem + 0.25vw, 1.4rem);
     font-weight: 600;
     line-height: 1.3;
-    margin-top: 2.5rem;     /* 40px - clear section break */
-    margin-bottom: 1rem;    /* 16px - breathable but connected */
+    letter-spacing: -0.015em;
+    color: var(--text-secondary);
+    margin-top: 2.5rem;
+    margin-bottom: 0.75rem;
   }
 
-  .prose :global(h3) {
-    font-size: 1.25rem;     /* 20px */
+  .article-prose :global(h4) {
+    font-family: var(--font-body);
+    font-size: 0.86rem;
     font-weight: 600;
-    line-height: 1.35;
-    margin-top: 2rem;       /* 32px */
-    margin-bottom: 0.75rem; /* 12px */
+    line-height: 1.5;
+    letter-spacing: 0.045em;
+    text-transform: uppercase;
+    color: var(--dim);
+    margin-top: 2rem;
+    margin-bottom: 0.65rem;
   }
 
-  .prose :global(h4) {
-    font-size: 1.125rem;    /* 18px */
-    font-weight: 600;
-    line-height: 1.4;
-    margin-top: 1.5rem;     /* 24px */
-    margin-bottom: 0.5rem;  /* 8px */
+  .article-prose :global(h1:first-child),
+  .article-prose :global(h2:first-child) {
+    margin-top: 0;
   }
 
-  .prose :global(p) {
-    margin-bottom: var(--space-md);
+  .article-prose :global(ul),
+  .article-prose :global(ol) {
+    margin-bottom: 1.5rem;
+    padding-left: 1.35rem;
   }
 
-  .prose :global(ul),
-  .prose :global(ol) {
-    margin-bottom: var(--space-md);
-    padding-left: var(--space-lg);
+  .article-prose :global(li) {
+    margin-bottom: 0.45rem;
+    padding-left: 0.2rem;
   }
 
-  .prose :global(li) {
-    margin-bottom: var(--space-sm);
+  .article-prose :global(hr) {
+    margin: 3rem 0;
+    border: none;
+    border-top: 1px solid var(--border);
   }
 
-  /* Substack-specific styles */
-  .prose :global(.image-link),
-  .prose :global(.image2) {
+  .article-prose :global(.image-link),
+  .article-prose :global(.image2) {
     display: block;
-    margin: var(--space-lg) 0;
+    margin: 2.25rem 0;
   }
 
-  .prose :global(.image-link img),
-  .prose :global(.image2 img) {
+  .article-prose :global(.image-link img),
+  .article-prose :global(.image2 img) {
     max-width: 100%;
     height: auto;
   }
 
-  .prose :global(.captioned-image-container) {
-    margin: var(--space-lg) 0;
+  .article-prose :global(.captioned-image-container) {
+    margin: 2.25rem 0;
   }
 
-  .prose :global(.image-caption) {
-    font-size: var(--font-size-ui);
+  .article-prose :global(.image-caption) {
+    margin-top: 0.85rem;
+    font-size: 0.85rem;
+    font-family: var(--font-body);
+    line-height: 1.6;
     color: var(--dim);
-    text-align: center;
-    margin-top: var(--space-sm);
+    text-align: left;
   }
 
-  /* Hide Substack subscription widgets and image controls */
-  .prose :global(.subscription-widget-wrap),
-  .prose :global(.subscribe-widget),
-  .prose :global(.subscription-widget),
-  .prose :global(.image-link-expand),
-  .prose :global(.icon-container) {
+  .article-prose :global(.subscription-widget-wrap),
+  .article-prose :global(.subscribe-widget),
+  .article-prose :global(.subscription-widget),
+  .article-prose :global(.image-link-expand),
+  .article-prose :global(.icon-container) {
     display: none !important;
   }
 
-  /* Footnote styling - inline references */
-  .prose :global(sup) {
+  .article-prose :global(sup) {
     font-size: 0.7em;
     line-height: 0;
     vertical-align: baseline;
@@ -457,18 +713,17 @@ const wordCount = post.source === 'local'
     top: -0.4em;
   }
 
-  .prose :global(sup a) {
+  .article-prose :global(sup a) {
     font-size: inherit;
     text-decoration: none;
     color: var(--accent);
   }
 
-  .prose :global(sup a:hover) {
+  .article-prose :global(sup a:hover) {
     text-decoration: underline;
   }
 
-  /* Substack-specific footnote anchors (inline "1" references) */
-  .prose :global(.footnote-anchor) {
+  .article-prose :global(.footnote-anchor) {
     font-size: 0.7em;
     vertical-align: super;
     line-height: 0;
@@ -476,34 +731,390 @@ const wordCount = post.source === 'local'
     color: var(--accent);
   }
 
-  .prose :global(.footnote-anchor:hover) {
+  .article-prose :global(.footnote-anchor:hover) {
     text-decoration: underline;
   }
 
-  /* Footnote section at bottom */
-  .prose :global(.footnotes),
-  .prose :global(.footnote) {
-    font-size: var(--font-size-ui);
+  .article-prose :global(.footnotes),
+  .article-prose :global(.footnote) {
+    margin-top: 3rem;
+    padding-top: 1.25rem;
+    font-size: 0.92rem;
+    font-family: var(--font-body);
+    line-height: 1.65;
     color: var(--dim);
-    margin-top: var(--space-xl);
-    padding-top: var(--space-md);
     border-top: 1px solid var(--border);
   }
 
-  .prose :global(.footnote .footnote-number) {
+  .article-prose :global(.footnote .footnote-number) {
     font-size: 0.85em;
-    margin-right: var(--space-sm);
+    margin-right: 0.5rem;
     color: var(--accent);
     text-decoration: none;
   }
 
-  .prose :global(.footnotes li),
-  .prose :global(.footnote li) {
-    margin-bottom: var(--space-sm);
+  .article-prose :global(.footnotes li),
+  .article-prose :global(.footnote li) {
+    margin-bottom: 0.5rem;
+    padding-left: 0;
+  }
+
+  :global([data-theme="dark"]) .article-header__standfirst {
+    color: #c9c2b6;
+  }
+
+  :global([data-theme="dark"]) .article-pagination__link,
+  :global([data-theme="dark"]) :global(.article-toc-mobilebar__button),
+  :global([data-theme="dark"]) :global(.article-toc-drawer) {
+    background: color-mix(in srgb, var(--bg-elevated) 88%, var(--bg) 12%);
+  }
+
+  :global([data-theme="dark"]) .article-prose :global(pre) {
+    background: #191816;
+    color: #ddd7ce;
+  }
+
+  :global([data-theme="dark"]) .article-prose :global(code) {
+    background: #22211e;
+  }
+
+  :global([data-theme="dark"]) .article-prose :global(a) {
+    text-decoration-color: rgba(194, 132, 122, 0.62);
+  }
+
+  :global(.article-toc-shell) {
+    min-width: 0;
+  }
+
+  :global(.article-toc) {
+    position: sticky;
+    top: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    max-height: calc(100vh - 3rem);
+    padding-right: 1rem;
+    overflow-y: auto;
+  }
+
+  :global(.article-toc__header) {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 1rem;
+    padding-bottom: 0.85rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  :global(.article-toc__eyebrow),
+  :global(.article-toc__progress),
+  :global(.article-toc__footer a),
+  :global(.article-toc-mobilebar__progress),
+  :global(.article-toc-drawer__eyebrow),
+  :global(.article-toc-drawer__progress) {
+    font-size: 0.74rem;
+    font-family: var(--font-body);
+    letter-spacing: 0.045em;
+    text-transform: uppercase;
+    color: var(--dim);
+  }
+
+  :global(.article-toc__entries) {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+  }
+
+  :global(.article-toc__group) {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+  }
+
+  :global(.article-toc__section),
+  :global(.article-toc__sub) {
+    width: 100%;
+    border: none;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+    text-align: left;
+    transition: color var(--transition-fast), border-color var(--transition-fast);
+  }
+
+  :global(.article-toc__section) {
+    padding: 0 0 0 0.9rem;
+    border-left: 2px solid transparent;
+    font-family: var(--font-body);
+    font-size: 0.9rem;
+    font-weight: 500;
+    line-height: 1.45;
+    color: var(--text-secondary);
+  }
+
+  :global(.article-toc__section:hover),
+  :global(.article-toc__section--active) {
+    color: var(--text);
+    border-left-color: var(--accent);
+  }
+
+  :global(.article-toc__subs) {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    margin-left: 0.9rem;
+    padding-left: 0.9rem;
+    border-left: 1px solid var(--border);
+  }
+
+  :global(.article-toc__sub) {
+    font-family: var(--font-editorial);
+    font-size: 0.98rem;
+    line-height: 1.4;
+    color: var(--dim);
+  }
+
+  :global(.article-toc__sub:hover),
+  :global(.article-toc__sub--active) {
+    color: var(--text);
+  }
+
+  :global(.article-toc__footer) {
+    padding-top: 0.9rem;
+    border-top: 1px solid var(--border);
+  }
+
+  :global(.article-toc__footer a) {
+    text-decoration: none;
+  }
+
+  :global(.article-toc__footer a:hover) {
+    color: var(--text);
+    text-decoration: underline;
+  }
+
+  :global(.article-toc-mobilebar) {
+    display: none;
+  }
+
+  :global(.article-toc-overlay) {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    background: rgba(0, 0, 0, 0.35);
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding: 1rem;
+  }
+
+  :global(.article-toc-drawer) {
+    width: min(100%, 40rem);
+    max-height: min(78vh, 42rem);
+    overflow-y: auto;
+    border-radius: 18px 18px 0 0;
+    background: var(--bg);
+    padding: 1.25rem 1rem 1.5rem;
+    box-shadow: var(--shadow-xl);
+  }
+
+  :global(.article-toc-drawer__header) {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    padding-bottom: 0.9rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  :global(.article-toc-drawer__close) {
+    border: none;
+    background: transparent;
+    color: var(--dim);
+    cursor: pointer;
+    padding: 0.25rem;
+  }
+
+  :global(.article-toc-drawer__entries) {
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+  }
+
+  :global(.article-toc-drawer__group) {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  :global(.article-toc-drawer__section),
+  :global(.article-toc-drawer__sub) {
+    width: 100%;
+    border: none;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+    text-align: left;
+  }
+
+  :global(.article-toc-drawer__section) {
+    padding: 0.55rem 0.7rem;
+    border-radius: 10px;
+    font-family: var(--font-body);
+    font-size: 0.98rem;
+    font-weight: 600;
+    line-height: 1.4;
+    color: var(--text);
+  }
+
+  :global(.article-toc-drawer__section--active) {
+    background: var(--accent-subtle);
+  }
+
+  :global(.article-toc-drawer__sub) {
+    padding: 0.2rem 0.7rem 0.2rem 1.4rem;
+    font-family: var(--font-editorial);
+    font-size: 1rem;
+    line-height: 1.42;
+    color: var(--text-secondary);
+  }
+
+  :global(.article-toc-drawer__sub--active) {
+    color: var(--accent);
+  }
+
+  :global(.article-toc-drawer__footer) {
+    margin-top: 1.25rem;
+    padding-top: 0.9rem;
+    border-top: 1px solid var(--border);
+  }
+
+  :global(.article-toc-drawer__footer a) {
+    font-size: 0.9rem;
+    color: var(--dim);
+    text-decoration: underline;
+  }
+
+  @media (max-width: 900px) {
+    .article-page--wide {
+      width: 100%;
+      margin-left: 0;
+    }
+
+    .article-grid--wide {
+      grid-template-columns: 1fr;
+      row-gap: 1.75rem;
+    }
+
+    .article-grid__header,
+    .article-grid--wide .article-body,
+    .article-grid--wide > :global(.article-toc-shell) {
+      grid-column: 1;
+    }
+
+    :global(.article-toc) {
+      display: none;
+    }
+
+    :global(.article-toc-mobilebar) {
+      display: block;
+      position: sticky;
+      top: 0.75rem;
+      z-index: 20;
+    }
+
+    :global(.article-toc-mobilebar__button) {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+      padding: 0.8rem 0.95rem;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: color-mix(in srgb, var(--bg) 94%, var(--bg-elevated) 6%);
+      box-shadow: var(--shadow-xs);
+      color: var(--text);
+      cursor: pointer;
+    }
+
+    :global(.article-toc-mobilebar__label) {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.88rem;
+      font-family: var(--font-body);
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+    }
+  }
+
+  @media (max-width: 600px) {
+    .article-page--standard {
+      max-width: 100%;
+    }
+
+    .article-header {
+      margin-bottom: 2rem;
+      padding-bottom: 1.25rem;
+    }
+
+    .article-header__title {
+      font-size: 2.15rem;
+      line-height: 1.06;
+    }
+
+    .article-header__meta {
+      gap: 0.45rem 0.75rem;
+      font-size: 0.72rem;
+    }
+
+    .article-header__meta-item {
+      gap: 0.75rem;
+    }
+
+    .article-header__standfirst {
+      font-size: 1.14rem;
+      line-height: 1.56;
+      margin-top: 1.15rem;
+    }
+
+    .article-prose {
+      font-size: 1.05rem;
+      line-height: 1.8;
+    }
+
+    .article-prose > :global(p:first-child) {
+      font-size: 1.12em;
+    }
+
+    .article-prose :global(h1),
+    .article-prose :global(h2) {
+      font-size: 1.6rem;
+      margin-top: 3rem;
+    }
+
+    .article-prose :global(h3) {
+      font-size: 1.22rem;
+      margin-top: 2rem;
+    }
+
+    .article-pagination {
+      grid-template-columns: 1fr;
+    }
+
+    .article-pagination__link--empty {
+      display: none;
+    }
+
+    .article-pagination__link--align-end {
+      text-align: left;
+      align-items: flex-start;
+    }
   }
 
   /* ═══ TOC / Wide Layout ═══ */
-  .toc-page,
   .cheat-sheet-page {
     width: min(1200px, 100vw - 48px);
     margin-left: calc((min(1200px, 100vw - 48px) - 100%) / -2);

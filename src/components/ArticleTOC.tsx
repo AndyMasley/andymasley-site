@@ -32,17 +32,15 @@ function groupHeadings(headings: TOCHeading[]): SectionGroup[] {
 export function ArticleTOC({ headings }: { headings: TOCHeading[] }) {
   const groups = useMemo(() => groupHeadings(headings), [headings]);
   const [activeId, setActiveId] = useState('');
-  const [showBackToTop, setShowBackToTop] = useState(false);
   const [progress, setProgress] = useState(0);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
-  // Scroll progress + back-to-top
+  // Scroll progress
   useEffect(() => {
     const handleScroll = () => {
       const scrollTop = window.scrollY;
       const docHeight = document.documentElement.scrollHeight - window.innerHeight;
       setProgress(docHeight > 0 ? Math.min(scrollTop / docHeight, 1) : 0);
-      setShowBackToTop(scrollTop > 600);
     };
     window.addEventListener('scroll', handleScroll, { passive: true });
     handleScroll();
@@ -86,60 +84,129 @@ export function ArticleTOC({ headings }: { headings: TOCHeading[] }) {
     }
   }, []);
 
+  useEffect(() => {
+    if (!mobileNavOpen) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setMobileNavOpen(false);
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    document.body.style.overflow = 'hidden';
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      document.body.style.removeProperty('overflow');
+    };
+  }, [mobileNavOpen]);
+
   const pct = Math.round(progress * 100);
 
   return (
     <>
-      {/* Progress bar */}
-      <div className="cse-progress-bar">
-        <div className="cse-progress-fill" style={{ width: `${progress * 100}%` }} />
-      </div>
+      <div className="article-toc-shell">
+        <div className="article-toc-mobilebar">
+          <button
+            className="article-toc-mobilebar__button"
+            onClick={() => setMobileNavOpen(true)}
+            aria-label="Open table of contents"
+          >
+            <span className="article-toc-mobilebar__label">
+              <svg width="16" height="16" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+                <path d="M2 4h14M2 9h14M2 14h14" />
+              </svg>
+              Contents
+            </span>
+            <span className="article-toc-mobilebar__progress">{pct}% read</span>
+          </button>
+        </div>
 
-      {/* Back to top */}
-      {showBackToTop && (
-        <button
-          className="cse-back-to-top"
-          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-          aria-label="Back to top"
-        >
-          ↑
-        </button>
-      )}
+        <nav className="article-toc" aria-label="Article sections">
+          <div className="article-toc__header">
+            <span className="article-toc__eyebrow">On this page</span>
+            <span className="article-toc__progress">{pct}% read</span>
+          </div>
 
-      {/* Mobile TOC toggle */}
-      <button
-        className="cse-mobile-toggle"
-        onClick={() => setMobileNavOpen(true)}
-        aria-label="Table of contents"
-      >
-        <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="2"><path d="M2 4h14M2 9h14M2 14h14"/></svg>
-        <span className="cse-mobile-pct">{pct}%</span>
-      </button>
-
-      {/* Mobile TOC overlay */}
-      {mobileNavOpen && (
-        <div className="cse-mobile-overlay" onClick={() => setMobileNavOpen(false)}>
-          <div className="cse-mobile-toc" onClick={e => e.stopPropagation()}>
-            <div className="cse-mobile-toc__header">
-              <span>Jump to section</span>
-              <button onClick={() => setMobileNavOpen(false)} className="cse-mobile-toc__close" aria-label="Close">
-                <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 4l10 10M14 4L4 14"/></svg>
-              </button>
-            </div>
-            <div className="cse-mobile-toc__entries">
-              {groups.map(group => (
-                <div key={group.id} className="cse-mobile-toc__group">
+          <div className="article-toc__entries">
+            {groups.map(group => {
+              const groupActive = activeId === group.id || group.subs.some(sub => activeId === sub.id);
+              return (
+                <div key={group.id} className="article-toc__group">
                   <button
-                    className={`cse-mobile-toc__section ${activeId === group.id ? 'cse-mobile-toc__section--active' : ''}`}
-                    onClick={() => { navigateTo(group.id); setMobileNavOpen(false); }}
+                    className={`article-toc__section ${groupActive ? 'article-toc__section--active' : ''}`}
+                    onClick={() => navigateTo(group.id)}
+                    title={group.text}
                   >
                     {group.text}
                   </button>
+
+                  {group.subs.length > 0 && (
+                    <div className="article-toc__subs">
+                      {group.subs.map(sub => (
+                        <button
+                          key={sub.id}
+                          className={`article-toc__sub ${activeId === sub.id ? 'article-toc__sub--active' : ''}`}
+                          onClick={() => navigateTo(sub.id)}
+                          title={sub.text}
+                        >
+                          {sub.text}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="article-toc__footer">
+            <a href="/writing">Browse all writing</a>
+          </div>
+        </nav>
+      </div>
+
+      {mobileNavOpen && (
+        <div className="article-toc-overlay" onClick={() => setMobileNavOpen(false)}>
+          <div className="article-toc-drawer" onClick={e => e.stopPropagation()}>
+            <div className="article-toc-drawer__header">
+              <div>
+                <div className="article-toc-drawer__eyebrow">Contents</div>
+                <div className="article-toc-drawer__progress">{pct}% through article</div>
+              </div>
+              <button
+                onClick={() => setMobileNavOpen(false)}
+                className="article-toc-drawer__close"
+                aria-label="Close table of contents"
+              >
+                <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+                  <path d="M4 4l10 10M14 4L4 14" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="article-toc-drawer__entries">
+              {groups.map(group => (
+                <div key={group.id} className="article-toc-drawer__group">
+                  <button
+                    className={`article-toc-drawer__section ${activeId === group.id ? 'article-toc-drawer__section--active' : ''}`}
+                    onClick={() => {
+                      navigateTo(group.id);
+                      setMobileNavOpen(false);
+                    }}
+                  >
+                    {group.text}
+                  </button>
+
                   {group.subs.map(sub => (
                     <button
                       key={sub.id}
-                      className={`cse-mobile-toc__sub ${activeId === sub.id ? 'cse-mobile-toc__sub--active' : ''}`}
-                      onClick={() => { navigateTo(sub.id); setMobileNavOpen(false); }}
+                      className={`article-toc-drawer__sub ${activeId === sub.id ? 'article-toc-drawer__sub--active' : ''}`}
+                      onClick={() => {
+                        navigateTo(sub.id);
+                        setMobileNavOpen(false);
+                      }}
                     >
                       {sub.text}
                     </button>
@@ -147,46 +214,13 @@ export function ArticleTOC({ headings }: { headings: TOCHeading[] }) {
                 </div>
               ))}
             </div>
+
+            <div className="article-toc-drawer__footer">
+              <a href="/writing">All writing</a>
+            </div>
           </div>
         </div>
       )}
-
-      {/* Desktop sidebar */}
-      <nav className="cse-sidebar" aria-label="Article sections">
-        <div className="cse-sidebar__header">Navigate</div>
-        <div className="cse-sidebar__entries">
-          {groups.map(group => {
-            const groupActive = activeId === group.id || group.subs.some(s => activeId === s.id);
-            return (
-              <div key={group.id} className="cse-sidebar__group">
-                <button
-                  className={`cse-sidebar__section ${groupActive ? 'cse-sidebar__section--active' : ''}`}
-                  onClick={() => navigateTo(group.id)}
-                >
-                  {group.text}
-                </button>
-                {group.subs.length > 0 && (
-                  <div className="cse-sidebar__subs">
-                    {group.subs.map(sub => (
-                      <button
-                        key={sub.id}
-                        className={`cse-sidebar__sub ${activeId === sub.id ? 'cse-sidebar__sub--active' : ''}`}
-                        onClick={() => navigateTo(sub.id)}
-                        title={sub.text}
-                      >
-                        {sub.text}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-        <div className="cse-sidebar__back">
-          <a href="/writing">&larr; All writing</a>
-        </div>
-      </nav>
     </>
   );
 }

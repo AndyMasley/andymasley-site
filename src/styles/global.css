@@ -33,6 +33,7 @@
 
   /* Typography */
   --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-editorial: 'Source Serif 4', Georgia, serif;
   --font-mono: 'SF Mono', 'Fira Code', 'Consolas', monospace;
 
   /* Font sizes - refined scale for Inter */
@@ -51,6 +52,7 @@
 
   /* Layout */
   --max-width: 640px;
+  --max-width-wide: 1120px;
 
   /* Transitions */
   --transition-fast: 0.15s ease;
