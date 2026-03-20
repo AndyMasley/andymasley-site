@@ -187,9 +187,15 @@ const defaultExpandedYear = postsByYear.some(group => group.year === currentYear
   <section class="writing-section writing-section--archive" id="writing-archive" aria-label="Writing archive">
     <div class="archive-controls">
       <div class="archive-control archive-control--search">
-        <label class="archive-control__label" for="archive-search">Search titles</label>
         <div class="archive-search">
-          <input id="archive-search" class="archive-search__input" type="search" placeholder="Search posts by title" autocomplete="off" />
+          <input
+            id="archive-search"
+            class="archive-search__input"
+            type="search"
+            placeholder="Search posts by title or content"
+            aria-label="Search posts by title or content"
+            autocomplete="off"
+          />
           <button id="archive-search-clear" class="archive-inline-action" type="button" hidden>Clear</button>
         </div>
       </div>
@@ -826,6 +832,10 @@ const defaultExpandedYear = postsByYear.some(group => group.year === currentYear
       themePosts: [] as string[],
     };
 
+    let archiveSearchIndex: Map<string, string> | null = null;
+    let archiveSearchIndexPromise: Promise<Map<string, string>> | null = null;
+    let searchRequestId = 0;
+
     const validTopics = new Set(
       topicSelect ? Array.from(topicSelect.options).map(option => option.value) : []
     );
@@ -838,6 +848,62 @@ const defaultExpandedYear = postsByYear.some(group => group.year === currentYear
 
     function countLabel(count: number, noun: string) {
       return `${count} ${noun}${count === 1 ? '' : 's'}`;
+    }
+
+    function getWritingSlug(url: string) {
+      const match = url.match(/^\/writing\/([^/?#]+)/);
+      return match ? decodeURIComponent(match[1]) : '';
+    }
+
+    async function loadArchiveSearchIndex() {
+      if (archiveSearchIndex) {
+        return archiveSearchIndex;
+      }
+
+      if (!archiveSearchIndexPromise) {
+        archiveSearchIndexPromise = fetch('/search.json')
+          .then(async response => {
+            if (!response.ok) {
+              throw new Error(`Search index request failed with ${response.status}`);
+            }
+            return response.json();
+          })
+          .then(entries => {
+            const nextIndex = new Map<string, string>();
+
+            if (Array.isArray(entries)) {
+              entries.forEach(entry => {
+                if (!entry || typeof entry.url !== 'string') return;
+
+                const slug = getWritingSlug(entry.url);
+                if (!slug) return;
+
+                const searchableText = [
+                  entry.description,
+                  entry.headers,
+                  entry.content,
+                ]
+                  .filter(value => typeof value === 'string' && value.length > 0)
+                  .join(' ')
+                  .toLowerCase();
+
+                if (searchableText) {
+                  nextIndex.set(slug, searchableText);
+                }
+              });
+            }
+
+            archiveSearchIndex = nextIndex;
+            return nextIndex;
+          })
+          .catch(error => {
+            console.error('Failed to load archive search index:', error);
+            archiveSearchIndexPromise = null;
+            throw error;
+          });
+      }
+
+      return archiveSearchIndexPromise;
     }
 
     function hasActiveFilters() {
@@ -969,10 +1035,11 @@ const defaultExpandedYear = postsByYear.some(group => group.year === currentYear
         const rowSource = row.getAttribute('data-source') || '';
         const rowSlug = row.getAttribute('data-slug') || '';
         const rowText = row.getAttribute('data-search-text') || '';
+        const rowContent = archiveSearchIndex?.get(rowSlug) || '';
 
         const topicMatch = state.topic === 'all' || rowTopic === state.topic;
         const sourceMatch = state.source === 'all' || rowSource === state.source;
-        const searchMatch = state.query === '' || rowText.includes(state.query);
+        const searchMatch = state.query === '' || rowText.includes(state.query) || rowContent.includes(state.query);
         const themeMatch = state.theme === '' || state.themePosts.includes(rowSlug);
         const visible = topicMatch && sourceMatch && searchMatch && themeMatch;
 
@@ -1049,7 +1116,19 @@ const defaultExpandedYear = postsByYear.some(group => group.year === currentYear
 
     on(searchInput, 'input', () => {
       state.query = searchInput?.value.trim().toLowerCase() || '';
+      const requestId = ++searchRequestId;
       renderArchive();
+
+      if (state.query === '') {
+        return;
+      }
+
+      void loadArchiveSearchIndex()
+        .then(() => {
+          if (requestId !== searchRequestId) return;
+          renderArchive();
+        })
+        .catch(() => {});
     });
 
     on(searchClear, 'click', () => {
@@ -1097,6 +1176,14 @@ const defaultExpandedYear = postsByYear.some(group => group.year === currentYear
 
     restoreDefaultYears();
     renderArchive();
+
+    void loadArchiveSearchIndex()
+      .then(() => {
+        if (state.query !== '') {
+          renderArchive();
+        }
+      })
+      .catch(() => {});
 
     (window as any).__writingPageCleanup = () => {
       cleanupFns.forEach(cleanup => cleanup());
