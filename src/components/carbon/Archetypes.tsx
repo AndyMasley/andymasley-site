@@ -165,7 +165,7 @@ export function Archetypes({ activeArchetypeId, onSelect }: ArchetypesProps) {
       <div style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))',
-        gap: '8px',
+        gap: '10px',
       }}>
         {ARCHETYPES.map(arch => (
           <ArchetypeCard
@@ -204,18 +204,19 @@ function ArchetypeCard({
         flexDirection: 'column',
         gap: '6px',
         padding: '14px 16px',
-        background: isActive ? 'rgba(139, 46, 46, 0.08)' : 'var(--panel, #EFECE5)',
-        border: isActive ? '2px solid var(--accent, #8B2E2E)' : '2px solid transparent',
-        borderRadius: '8px',
+        background: 'transparent',
+        border: '1px solid var(--divider, #DDD9D0)',
+        borderLeft: isActive ? '2px solid var(--accent, #8B2E2E)' : '1px solid var(--divider, #DDD9D0)',
+        borderRadius: '0',
         cursor: 'pointer',
         textAlign: 'left',
         fontFamily: 'inherit',
         color: 'var(--text, #1A1A18)',
-        transition: 'all 0.15s',
+        transition: 'border-color 0.15s, color 0.15s',
       }}
       aria-pressed={isActive}
     >
-      <div style={{ fontWeight: 700, fontSize: '0.88rem' }}>
+      <div style={{ fontWeight: 700, fontSize: '0.88rem', fontFamily: 'var(--font-editorial, Georgia, serif)' }}>
         {archetype.name}
       </div>
       <div style={{

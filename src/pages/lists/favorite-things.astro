@@ -761,7 +761,7 @@ import Base from '@/layouts/Base.astro';
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 allowfullscreen
                 loading="lazy"
-                style="border-radius: 12px;"
+                style="border-radius: 0;"
               ></iframe>
             `;
           } else if (spotifyId) {
@@ -773,7 +773,7 @@ import Base from '@/layouts/Base.astro';
                 frameborder="0"
                 allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
                 loading="lazy"
-                style="border-radius: 12px;"
+                style="border-radius: 0;"
               ></iframe>
             `;
           }
@@ -800,10 +800,12 @@ import Base from '@/layouts/Base.astro';
 
 <style>
   .page-title {
-    font-family: var(--font-serif);
-    font-size: 1.25rem;
-    font-weight: normal;
-    margin: 0 0 1rem 0;
+    font-family: var(--font-editorial);
+    font-size: clamp(1.9rem, 1.65rem + 0.5vw, 2.3rem);
+    font-weight: 600;
+    line-height: 1.08;
+    letter-spacing: -0.03em;
+    margin: 0 0 0.9rem 0;
     color: var(--text);
   }
 
@@ -1023,10 +1025,10 @@ import Base from '@/layouts/Base.astro';
     z-index: 1000;
     width: 320px;
     max-width: calc(100vw - 2rem);
-    background: #fff;
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    background: var(--bg);
+    border: 1px solid var(--border-strong);
+    border-radius: 0;
+    box-shadow: var(--shadow-lg);
     padding: var(--space-md);
     opacity: 0;
     visibility: hidden;
@@ -1060,7 +1062,7 @@ import Base from '@/layouts/Base.astro';
     height: 0;
     border-left: 7px solid transparent;
     border-right: 7px solid transparent;
-    border-bottom: 7px solid #fff;
+    border-bottom: 7px solid var(--bg);
   }
 
   .popout-close {
@@ -1106,11 +1108,12 @@ import Base from '@/layouts/Base.astro';
       position: fixed;
       width: 100%;
       max-width: 100%;
-      border-radius: 12px 12px 0 0;
+      border-radius: 0;
       border-bottom: none;
+      border-top: 1px solid var(--border-strong);
       padding: var(--space-lg);
       padding-top: var(--space-md);
-      box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
+      box-shadow: none;
     }
 
     .popout-card.mobile .popout-arrow {
@@ -1129,7 +1132,7 @@ import Base from '@/layouts/Base.astro';
   /* Dark mode support */
   :global([data-theme="dark"]) .popout-card {
     background: var(--bg);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    box-shadow: var(--shadow-lg);
   }
 
   :global([data-theme="dark"]) .popout-arrow {
@@ -1151,9 +1154,11 @@ import Base from '@/layouts/Base.astro';
   }
 
   .movie-item {
-    margin-bottom: var(--space-xs);
-    border-radius: 4px;
-    transition: background 0.15s ease, color 0.15s ease;
+    margin-bottom: 0;
+    padding: 0.28rem 0;
+    border-bottom: 1px solid var(--border-subtle);
+    border-radius: 0;
+    transition: color 0.15s ease, border-color 0.15s ease;
   }
 
   .movie-item.has-link {
@@ -1162,11 +1167,8 @@ import Base from '@/layouts/Base.astro';
   }
 
   .movie-item.has-link:hover {
-    background: rgba(139, 58, 58, 0.08);
-  }
-
-  :global([data-theme="dark"]) .movie-item.has-link:hover {
-    background: rgba(194, 132, 122, 0.1);
+    background: transparent;
+    border-bottom-color: var(--accent);
   }
 
   .movie-item.has-link:hover .movie-title {
@@ -1189,12 +1191,13 @@ import Base from '@/layouts/Base.astro';
 
   .album-item {
     cursor: default;
-    padding: 0 8px;
-    margin-left: -8px;
-    margin-right: -8px;
-    margin-bottom: var(--space-xs);
-    border-radius: 4px;
-    transition: background 0.15s ease, color 0.15s ease;
+    padding: 0.35rem 0;
+    margin-left: 0;
+    margin-right: 0;
+    margin-bottom: 0;
+    border-bottom: 1px solid var(--border-subtle);
+    border-radius: 0;
+    transition: color 0.15s ease, border-color 0.15s ease;
   }
 
   .album-item.has-spotify {
@@ -1202,19 +1205,13 @@ import Base from '@/layouts/Base.astro';
   }
 
   .album-item.has-spotify:hover {
-    background: rgba(139, 58, 58, 0.08);
-  }
-
-  :global([data-theme="dark"]) .album-item.has-spotify:hover {
-    background: rgba(194, 132, 122, 0.1);
+    background: transparent;
+    border-bottom-color: var(--accent);
   }
 
   .album-item.active {
-    background: rgba(139, 58, 58, 0.15);
-  }
-
-  :global([data-theme="dark"]) .album-item.active {
-    background: rgba(194, 132, 122, 0.15);
+    background: transparent;
+    border-bottom-color: var(--accent);
   }
 
   .album-item.active .album-title {
@@ -1239,7 +1236,7 @@ import Base from '@/layouts/Base.astro';
 
   .item-link {
     display: block;
-    padding: 0 8px;
+    padding: 0;
     text-decoration: none !important;
     color: inherit !important;
   }
@@ -1250,12 +1247,8 @@ import Base from '@/layouts/Base.astro';
 
   .album-item.has-link:hover,
   .track-item.has-link:hover {
-    background: rgba(139, 58, 58, 0.08);
-  }
-
-  :global([data-theme="dark"]) .album-item.has-link:hover,
-  :global([data-theme="dark"]) .track-item.has-link:hover {
-    background: rgba(194, 132, 122, 0.1);
+    background: transparent;
+    border-bottom-color: var(--accent);
   }
 
   .album-item.has-link:hover .album-title,
@@ -1280,12 +1273,13 @@ import Base from '@/layouts/Base.astro';
 
   .track-item {
     cursor: default;
-    padding: 0 8px;
-    margin-left: -8px;
-    margin-right: -8px;
-    margin-bottom: var(--space-xs);
-    border-radius: 4px;
-    transition: background 0.15s ease, color 0.15s ease;
+    padding: 0.35rem 0;
+    margin-left: 0;
+    margin-right: 0;
+    margin-bottom: 0;
+    border-bottom: 1px solid var(--border-subtle);
+    border-radius: 0;
+    transition: color 0.15s ease, border-color 0.15s ease;
   }
 
   .track-item.has-spotify {
@@ -1293,19 +1287,13 @@ import Base from '@/layouts/Base.astro';
   }
 
   .track-item.has-spotify:hover {
-    background: rgba(139, 58, 58, 0.08);
-  }
-
-  :global([data-theme="dark"]) .track-item.has-spotify:hover {
-    background: rgba(194, 132, 122, 0.1);
+    background: transparent;
+    border-bottom-color: var(--accent);
   }
 
   .track-item.active {
-    background: rgba(139, 58, 58, 0.15);
-  }
-
-  :global([data-theme="dark"]) .track-item.active {
-    background: rgba(194, 132, 122, 0.15);
+    background: transparent;
+    border-bottom-color: var(--accent);
   }
 
   .track-item.active .track-title {
@@ -1343,7 +1331,7 @@ import Base from '@/layouts/Base.astro';
     height: 24px;
     background: var(--bg);
     border: 1px solid var(--border);
-    border-radius: 50%;
+    border-radius: 0;
     font-size: 16px;
     line-height: 1;
     color: var(--dim);
@@ -1369,10 +1357,10 @@ import Base from '@/layouts/Base.astro';
       right: 24px;
       transform: none;
       width: 300px;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+      box-shadow: var(--shadow-lg);
       background: var(--bg);
       padding: 16px;
-      border-radius: 12px;
+      border-radius: 0;
       border: 1px solid var(--border);
     }
   }

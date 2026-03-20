@@ -3,26 +3,20 @@ import Base from '@/layouts/Base.astro';
 ---
 
 <Base title="Contact" description="Get in touch with Andy Masley" ogImage="/images/og/og-contact.png">
-  <ul class="contact-index">
-    <li><a href="mailto:AndyMasley@gmail.com">AndyMasley@gmail.com</a></li>
-    <li><a href="https://docs.google.com/forms/d/e/1FAIpQLSfeuR0zagnxjzyNQvh6OkI8pRd9Vtq26D8RzJ2h8WZYlaz8Sw/viewform?usp=send_form" target="_blank" rel="noopener">Anonymous feedback</a></li>
-  </ul>
+  <section class="simple-directory">
+    <p class="simple-directory__intro">
+      The easiest way to reach me directly is by email. If you want to send something more candid, anonymous feedback is open too.
+    </p>
 
+    <ul class="simple-directory__list">
+      <li class="simple-directory__item simple-directory__item--stacked">
+        <a href="mailto:AndyMasley@gmail.com" class="simple-directory__link">AndyMasley@gmail.com</a>
+        <p class="simple-directory__note">For interviews, comments, questions, corrections, or general contact.</p>
+      </li>
+      <li class="simple-directory__item simple-directory__item--stacked">
+        <a href="https://docs.google.com/forms/d/e/1FAIpQLSfeuR0zagnxjzyNQvh6OkI8pRd9Vtq26D8RzJ2h8WZYlaz8Sw/viewform?usp=send_form" target="_blank" rel="noopener" class="simple-directory__link">Anonymous feedback</a>
+        <p class="simple-directory__note">For comments you would rather send without attaching your name.</p>
+      </li>
+    </ul>
+  </section>
 </Base>
-
-<style>
-  .contact-index {
-    list-style: disc;
-    padding-left: var(--space-lg);
-  }
-
-  .contact-index li {
-    margin-bottom: var(--space-sm);
-  }
-
-  .contact-index a {
-    color: var(--accent);
-    text-decoration: underline;
-    text-underline-offset: var(--underline-offset);
-  }
-</style>

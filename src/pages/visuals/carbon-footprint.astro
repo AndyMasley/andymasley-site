@@ -21,15 +21,10 @@ import { Calculator } from '@/components/carbon/Calculator';
 ---
 
 <Base title="Carbon footprint: lifestyle cuts vs changing the grid" description="Estimate your carbon footprint from a credible baseline, then explore what changes you can make to the energy grid" ogImage="/images/og/og-carbon-footprint.png">
-
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Playfair+Display:ital,wght@0,700;1,400&display=swap" rel="stylesheet" />
-
   <!-- Hero (outside the breakout container so it aligns with the header) -->
-  <header>
-    <h1>Carbon footprint: lifestyle cuts vs changing the grid</h1>
-    <p style="font-size: 0.85rem; line-height: 1.65; color: var(--text-secondary, #6B6B60); margin-top: 0.75rem; max-width: 640px;">A carbon footprint calculator that includes changes you can make to the energy grid, because those often dwarf personal lifestyle changes, even after dividing by the number of people involved and multiplying by a low probability of success. Take all numbers with a grain of salt. Methodology at the bottom.</p>
+  <header class="cfv2-header">
+    <h1 class="cfv2-header-title">Carbon footprint: lifestyle cuts vs changing the grid</h1>
+    <p class="cfv2-header-intro">A carbon footprint calculator that includes changes you can make to the energy grid, because those often dwarf personal lifestyle changes, even after dividing by the number of people involved and multiplying by a low probability of success. Take all numbers with a grain of salt. Methodology at the bottom.</p>
   </header>
 
   <article class="cfv2" id="cfv2">
@@ -58,10 +53,32 @@ import { Calculator } from '@/components/carbon/Calculator';
     --divider: var(--border, #DDD9D0);
     --panel: var(--bg-subtle, #f5f4f2);
     --bar-track: #D4CFCA;
-    font-family: 'DM Sans', sans-serif;
+    font-family: var(--font-body);
     color: var(--text);
     padding: 0 0 3rem;
     max-width: 1600px;
+  }
+
+  .cfv2-header {
+    max-width: 44rem;
+    margin-bottom: 1.75rem;
+  }
+
+  .cfv2-header-title {
+    font-family: var(--font-editorial);
+    font-size: clamp(2rem, 1.65rem + 1vw, 3rem);
+    line-height: 1.04;
+    letter-spacing: -0.04em;
+    margin: 0 0 0.75rem;
+  }
+
+  .cfv2-header-intro {
+    max-width: 42rem;
+    margin: 0;
+    font-family: var(--font-editorial);
+    font-size: 1rem;
+    line-height: 1.78;
+    color: var(--text-secondary);
   }
 
 
@@ -164,9 +181,9 @@ import { Calculator } from '@/components/carbon/Calculator';
   }
 
   .cfv2-section-title {
-    font-family: 'Playfair Display', Georgia, serif;
+    font-family: var(--font-editorial);
     font-size: clamp(1.4rem, 3vw, 2rem);
-    font-weight: 700;
+    font-weight: 600;
     margin: 0 0 0.75rem;
   }
 
@@ -198,9 +215,9 @@ import { Calculator } from '@/components/carbon/Calculator';
   /* Three-panel + bar layout */
   .cf-impact-layout {
     border: 1px solid var(--divider);
-    border-radius: 10px;
+    border-radius: 0;
     overflow: hidden;
-    background: var(--panel);
+    background: transparent;
   }
 
   .cf-impact-panels {
@@ -210,15 +227,15 @@ import { Calculator } from '@/components/carbon/Calculator';
   }
 
   .cf-impact-col {
-    padding: 1.25rem;
+    padding: 1.1rem 1.25rem;
     border-right: 1px solid var(--divider);
     display: flex;
     flex-direction: column;
-    background: var(--bg-elevated, #ffffff);
+    background: var(--bg, #faf9f7);
     overflow: hidden;
   }
   [data-theme="dark"] .cf-impact-col {
-    background: var(--bg-elevated, #1c1c1a);
+    background: var(--bg, #141413);
   }
 
   .cf-impact-scroll {
@@ -229,12 +246,12 @@ import { Calculator } from '@/components/carbon/Calculator';
   }
 
   .cf-impact-bars {
-    padding: 1.5rem 1.25rem 2rem;
+    padding: 1.2rem 1.25rem 1.8rem;
     border-top: 1px solid var(--divider);
-    background: var(--bg-elevated, #ffffff);
+    background: var(--bg, #faf9f7);
   }
   [data-theme="dark"] .cf-impact-bars {
-    background: var(--bg-elevated, #1c1c1a);
+    background: var(--bg, #141413);
   }
 
   /* Toggle row */
@@ -242,25 +259,27 @@ import { Calculator } from '@/components/carbon/Calculator';
     display: flex;
     align-items: center;
     gap: 8px;
-    padding: 5px 6px;
-    border: 1.5px solid transparent;
-    border-radius: 5px;
+    padding: 8px 0;
+    border: none;
+    border-bottom: 1px solid var(--divider);
+    border-radius: 0;
     cursor: pointer;
     font-family: inherit;
     font-size: 0.85rem;
     color: var(--text);
     text-align: left;
-    transition: all 0.12s;
-    min-height: 36px;
+    transition: color 0.12s, border-color 0.12s;
+    min-height: 0;
     background: transparent;
     width: 100%;
   }
   .cf-toggle-row[data-on="true"] {
-    background: rgba(74, 124, 89, 0.08);
-    border-color: rgba(74, 124, 89, 0.2);
+    background: transparent;
+    border-color: var(--accent);
   }
   .cf-toggle-row:hover {
-    background: rgba(74, 124, 89, 0.04);
+    background: transparent;
+    color: var(--accent);
   }
 
   @media (max-width: 900px) {

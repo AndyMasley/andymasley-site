@@ -3,37 +3,33 @@ import Base from '@/layouts/Base.astro';
 ---
 
 <Base title="Appearances" description="Podcasts and other appearances" ogImage="/images/og/og-appearances.png">
-  <div class="prose">
-    <p>
-      I've been interviewed a few times about my writing on AI and the environment:
+  <section class="simple-directory">
+    <p class="simple-directory__intro">
+      Podcasts, interviews, and a few places where my work has shown up outside the site itself.
     </p>
-    <ul>
-      <li><a href="https://open.spotify.com/episode/2E3Yfi24OUyHxz67BtzhHB?si=8110a29fe7034cf5">Conspicuous Cognition</a></li>
-      <li><a href="https://open.spotify.com/episode/1Lzt9pMcqOcjfE3WLxNy3j?si=fdb4604af43d40e9">Chain of Thought</a></li>
-      <li><a href="https://open.spotify.com/episode/0UaOQ0DcP9c8OG5IfAgfnT?si=5d00e4bce6aa43f0">NYT Hard Fork</a></li>
-      <li><a href="https://open.spotify.com/episode/0RBBVeGb5yfHsFWnKkDgD0?si=15d8b610374544b0">The Cognitive Revolution</a></li>
-      <li>I show up for about 5 seconds in <a href="https://www.youtube.com/watch?v=_Ird91qfPZs">this Good Morning America segment</a> to say data centers run and store what we do online.</li>
-      <li><a href="https://www.azfamily.com/2026/02/26/data-centers-arent-water-villains-you-think-they-are-environmentalist-says/">Arizona's Family</a></li>
-    </ul>
 
-    <p>
-      I've also been interviewed about EA more broadly:
-    </p>
-    <ul>
-      <li><a href="https://www.youtube.com/watch?v=qzNZfa2jSE8">Expected Volume</a></li>
-      <li><a href="https://benthams.substack.com/p/chatting-with-andy-masley-about-ea">Bentham's Bulldog</a></li>
-      <li><a href="https://www.machineculture.io/p/model-convo-andy-masley">Model Convos</a></li>
-    </ul>
-  </div>
+    <div class="simple-directory__group">
+      <h2 class="simple-directory__heading">AI and the environment</h2>
+      <ul class="simple-directory__list">
+        <li class="simple-directory__item"><a href="https://open.spotify.com/episode/2E3Yfi24OUyHxz67BtzhHB?si=8110a29fe7034cf5" class="simple-directory__link">Conspicuous Cognition</a></li>
+        <li class="simple-directory__item"><a href="https://open.spotify.com/episode/1Lzt9pMcqOcjfE3WLxNy3j?si=fdb4604af43d40e9" class="simple-directory__link">Chain of Thought</a></li>
+        <li class="simple-directory__item"><a href="https://open.spotify.com/episode/0UaOQ0DcP9c8OG5IfAgfnT?si=5d00e4bce6aa43f0" class="simple-directory__link">NYT Hard Fork</a></li>
+        <li class="simple-directory__item"><a href="https://open.spotify.com/episode/0RBBVeGb5yfHsFWnKkDgD0?si=15d8b610374544b0" class="simple-directory__link">The Cognitive Revolution</a></li>
+        <li class="simple-directory__item simple-directory__item--stacked">
+          <a href="https://www.youtube.com/watch?v=_Ird91qfPZs" class="simple-directory__link">Good Morning America</a>
+          <p class="simple-directory__note">A brief appearance explaining that data centers run and store what we do online.</p>
+        </li>
+        <li class="simple-directory__item"><a href="https://www.azfamily.com/2026/02/26/data-centers-arent-water-villains-you-think-they-are-environmentalist-says/" class="simple-directory__link">Arizona's Family</a></li>
+      </ul>
+    </div>
+
+    <div class="simple-directory__group">
+      <h2 class="simple-directory__heading">Effective altruism</h2>
+      <ul class="simple-directory__list">
+        <li class="simple-directory__item"><a href="https://www.youtube.com/watch?v=qzNZfa2jSE8" class="simple-directory__link">Expected Volume</a></li>
+        <li class="simple-directory__item"><a href="https://benthams.substack.com/p/chatting-with-andy-masley-about-ea" class="simple-directory__link">Bentham's Bulldog</a></li>
+        <li class="simple-directory__item"><a href="https://www.machineculture.io/p/model-convo-andy-masley" class="simple-directory__link">Model Convos</a></li>
+      </ul>
+    </div>
+  </section>
 </Base>
-
-<style>
-  .prose ul {
-    margin: var(--space-md) 0 var(--space-lg) 0;
-    padding-left: var(--space-xl);
-  }
-
-  .prose li {
-    margin-bottom: var(--space-sm);
-  }
-</style>

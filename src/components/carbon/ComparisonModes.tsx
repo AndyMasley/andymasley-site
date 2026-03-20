@@ -218,18 +218,23 @@ export function ComparisonModes({
             key={c.id}
             onClick={() => onModeChange(activeMode === c.id ? null : c.id)}
             style={{
-              padding: '5px 12px',
+              padding: '6px 0 7px',
               fontSize: '0.68rem',
               fontFamily: 'inherit',
-              fontWeight: 600,
-              border: '1px solid',
-              borderColor: activeMode === c.id ? 'var(--accent, #8B2E2E)' : 'var(--divider, #DDD9D0)',
-              borderRadius: '4px',
-              background: activeMode === c.id ? 'var(--accent, #8B2E2E)' : 'transparent',
-              color: activeMode === c.id ? 'white' : 'var(--text-secondary, #6B6B60)',
+              fontWeight: activeMode === c.id ? 600 : 500,
+              letterSpacing: '0.06em',
+              textTransform: 'uppercase',
+              border: 'none',
+              borderBottom: '1px solid',
+              borderColor: activeMode === c.id ? 'var(--accent, #8B2E2E)' : 'transparent',
+              borderRadius: '0',
+              background: 'transparent',
+              color: activeMode === c.id ? 'var(--accent, #8B2E2E)' : 'var(--text-secondary, #6B6B60)',
               cursor: 'pointer',
-              transition: 'all 0.15s',
+              transition: 'color 0.15s, border-color 0.15s',
               minHeight: '44px',
+              marginRight: '14px',
+              flexShrink: 0,
             }}
             aria-pressed={activeMode === c.id}
           >
@@ -273,9 +278,11 @@ function ComparisonBar({ userKg, datum }: { userKg: number; datum: ComparisonDat
 
   return (
     <div style={{
-      background: 'var(--panel, #EFECE5)',
-      borderRadius: '8px',
-      padding: '14px 18px',
+      background: 'transparent',
+      border: '1px solid var(--divider, #DDD9D0)',
+      borderLeft: `2px solid ${isLeverageMode ? 'var(--green, #4A7C59)' : 'var(--accent, #8B2E2E)'}`,
+      borderRadius: '0',
+      padding: '14px 16px',
       minHeight: '120px',
     }}>
       <div style={{ fontSize: '0.82rem', fontWeight: 600, marginBottom: '10px' }}>
@@ -292,12 +299,12 @@ function ComparisonBar({ userKg, datum }: { userKg: number; datum: ComparisonDat
             {userKg.toLocaleString()} kg
           </span>
         </div>
-        <div style={{ height: '14px', background: 'var(--divider, #DDD9D0)', borderRadius: '3px', overflow: 'hidden' }}>
+        <div style={{ height: '14px', background: 'var(--divider, #DDD9D0)', borderRadius: '0', overflow: 'hidden' }}>
           <div style={{
             height: '100%',
             width: `${(userKg / maxKg) * 100}%`,
             background: 'var(--accent, #8B2E2E)',
-            borderRadius: '3px',
+            borderRadius: '0',
             transition: 'width 0.4s ease',
             minWidth: '4px',
           }} />
@@ -312,12 +319,12 @@ function ComparisonBar({ userKg, datum }: { userKg: number; datum: ComparisonDat
             {datum.referenceKg.toLocaleString()} kg
           </span>
         </div>
-        <div style={{ height: '14px', background: 'var(--divider, #DDD9D0)', borderRadius: '3px', overflow: 'hidden' }}>
+        <div style={{ height: '14px', background: 'var(--divider, #DDD9D0)', borderRadius: '0', overflow: 'hidden' }}>
           <div style={{
             height: '100%',
             width: `${(datum.referenceKg / maxKg) * 100}%`,
             background: isLeverageMode ? 'var(--green, #4A7C59)' : 'var(--text-secondary, #6B6B60)',
-            borderRadius: '3px',
+            borderRadius: '0',
             transition: 'width 0.4s ease',
             minWidth: '4px',
           }} />

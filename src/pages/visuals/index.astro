@@ -3,33 +3,24 @@ import Base from '@/layouts/Base.astro';
 ---
 
 <Base title="Visuals" description="Interactive data visualizations on factory farming, carbon footprints, and AI water usage." ogImage="/images/og/og-visuals.png">
-  <ul class="viz-index">
-    <li>
-      <a href="/visuals/factory-farmed-chickens">Factory-farmed chickens</a>
-    </li>
-    <li>
-      <a href="/visuals/carbon-footprint">Carbon footprint: lifestyle cuts vs changing the grid</a>
-    </li>
-    <li>
-      <a href="/visuals/water">How thirsty is AI?</a>
-    </li>
-  </ul>
+  <section class="simple-directory">
+    <p class="simple-directory__intro">
+      Interactive companions to the writing: argument maps, comparisons, and visual explanations for topics that are easier to grasp when you can move around inside them.
+    </p>
 
+    <ul class="simple-directory__list">
+      <li class="simple-directory__item simple-directory__item--stacked">
+        <a href="/visuals/factory-farmed-chickens" class="simple-directory__link">Factory-farmed chickens</a>
+        <p class="simple-directory__note">A scale-based visualization of how many chickens are raised and killed each year.</p>
+      </li>
+      <li class="simple-directory__item simple-directory__item--stacked">
+        <a href="/visuals/carbon-footprint" class="simple-directory__link">Carbon footprint: lifestyle cuts vs changing the grid</a>
+        <p class="simple-directory__note">A calculator that compares personal emissions cuts with higher-leverage changes to the energy system.</p>
+      </li>
+      <li class="simple-directory__item simple-directory__item--stacked">
+        <a href="/visuals/water" class="simple-directory__link">How thirsty is AI?</a>
+        <p class="simple-directory__note">A data-backed comparison of AI water claims against other common uses of water.</p>
+      </li>
+    </ul>
+  </section>
 </Base>
-
-<style>
-  .viz-index {
-    list-style: disc;
-    padding-left: var(--space-lg);
-  }
-
-  .viz-index li {
-    margin-bottom: var(--space-sm);
-  }
-
-  .viz-index a {
-    color: var(--accent);
-    text-decoration: underline;
-    text-underline-offset: var(--underline-offset);
-  }
-</style>

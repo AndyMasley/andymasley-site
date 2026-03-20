@@ -73,16 +73,19 @@ const { Content } = await item.render();
     text-transform: uppercase;
     letter-spacing: 0.1em;
     color: var(--accent);
-    background: var(--accent-subtle);
-    padding: 4px 8px;
-    border-radius: 4px;
+    background: none;
+    padding: 0 0 2px;
+    border-bottom: 1px solid var(--accent);
+    border-radius: 0;
     margin-bottom: var(--space-md);
   }
 
   .physics-header__title {
-    font-size: var(--font-size-h1);
-    font-weight: var(--font-weight-heading);
-    line-height: var(--line-height-h1);
+    font-family: var(--font-editorial);
+    font-size: clamp(2rem, 1.7rem + 0.65vw, 2.55rem);
+    font-weight: 600;
+    line-height: 1.08;
+    letter-spacing: -0.03em;
     margin: 0 0 var(--space-sm) 0;
   }
 
@@ -100,18 +103,20 @@ const { Content } = await item.render();
     display: inline-flex;
     align-items: center;
     gap: var(--space-sm);
-    padding: var(--space-md) var(--space-lg);
-    background: var(--accent);
-    color: white;
+    padding: 0.75rem 1rem;
+    background: transparent;
+    color: var(--accent);
     text-decoration: none;
-    border-radius: 8px;
+    border: 1px solid var(--accent);
+    border-radius: 0;
     font-weight: 500;
-    transition: background-color var(--transition-fast);
+    transition: color var(--transition-fast), background-color var(--transition-fast), border-color var(--transition-fast);
   }
 
   .video-link:hover {
-    background: var(--accent-hover);
-    color: white;
+    background: var(--accent-subtle);
+    color: var(--accent-hover);
+    border-color: var(--accent-hover);
   }
 
   .article-footer {
@@ -127,14 +132,15 @@ const { Content } = await item.render();
     font-size: var(--font-size-ui);
     color: var(--text-secondary);
     text-decoration: none;
-    padding: var(--space-sm) var(--space-md);
-    margin-left: calc(-1 * var(--space-md));
-    border-radius: 6px;
-    transition: background-color var(--transition-fast), color var(--transition-fast);
+    padding: 0;
+    margin-left: 0;
+    border-radius: 0;
+    border-bottom: 1px solid transparent;
+    transition: color var(--transition-fast), border-color var(--transition-fast);
   }
   
   .article-nav__link:hover {
-    background: var(--bg-tertiary);
     color: var(--text-primary);
+    border-bottom-color: var(--accent);
   }
 </style>

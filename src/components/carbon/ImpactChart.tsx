@@ -76,7 +76,7 @@ function InlineNum({ value, onChange, min, max, step }: {
         border: 'none',
         borderBottom: '1px dashed currentColor',
         background: 'rgba(0,0,0,0.04)',
-        borderRadius: '2px 2px 0 0',
+        borderRadius: '0',
         font: 'inherit',
         fontSize: 'inherit',
         color: 'inherit',
@@ -198,8 +198,8 @@ export function ImpactChart({
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '6px' }}>
               <span style={{ fontSize: '0.72rem', color: MUTED }}>{Math.round(footprintKg / 17600 * 100)}% of US avg</span>
-              <div style={{ width: '60px', height: '5px', background: DIVIDER, borderRadius: '3px', overflow: 'hidden' }}>
-                <div style={{ width: `${Math.min(footprintKg / 17600 * 100, 100)}%`, height: '100%', background: footprintKg > 17600 ? ACCENT : GREEN, borderRadius: '3px', transition: 'width 0.4s ease' }} />
+              <div style={{ width: '60px', height: '5px', background: DIVIDER, borderRadius: '0', overflow: 'hidden' }}>
+                <div style={{ width: `${Math.min(footprintKg / 17600 * 100, 100)}%`, height: '100%', background: footprintKg > 17600 ? ACCENT : GREEN, borderRadius: '0', transition: 'width 0.4s ease' }} />
               </div>
             </div>
             {customFootprintKg !== null ? (
@@ -235,10 +235,10 @@ export function ImpactChart({
                   style={{
                     fontSize: '0.68rem',
                     padding: '5px 12px',
-                    borderRadius: '14px',
+                    borderRadius: '0',
                     border: `1px solid ${activePresetId === p.id ? ACCENT : 'var(--text-secondary, #6B6B60)'}`,
-                    background: activePresetId === p.id ? ACCENT : 'transparent',
-                    color: activePresetId === p.id ? 'white' : 'var(--text, #1A1A18)',
+                    background: 'transparent',
+                    color: activePresetId === p.id ? ACCENT : 'var(--text, #1A1A18)',
                     fontFamily: 'inherit',
                     fontWeight: activePresetId === p.id ? 600 : 500,
                     cursor: 'pointer',
@@ -296,7 +296,7 @@ export function ImpactChart({
                     onClick={() => setOpenCategory(isOpen ? null : group.category)}
                     style={{
                       display: 'flex', alignItems: 'center', gap: '6px', width: '100%',
-                      padding: '6px 8px', border: 'none', borderRadius: '5px',
+                      padding: '6px 8px', border: 'none', borderRadius: '0',
                       cursor: 'pointer', fontFamily: 'inherit', fontSize: '0.72rem',
                       fontWeight: 700, textTransform: 'capitalize',
                       color: 'var(--text, #1A1A18)', textAlign: 'left', minHeight: '32px',
@@ -312,8 +312,8 @@ export function ImpactChart({
                     )}
                     {enabledCount === 0 && <span style={{ fontSize: '0.62rem', color: MUTED, fontWeight: 400, textTransform: 'none' }}>{group.actions.length} action{group.actions.length !== 1 ? 's' : ''} · up to <strong style={{ fontWeight: 600, color: 'var(--text, #1A1A18)' }}>{maxSavings.toLocaleString()}</strong> kg</span>}
                     {enabledCount > 0 && maxSavings > 0 && (
-                      <div style={{ width: '32px', height: '3px', background: DIVIDER, borderRadius: '2px', overflow: 'hidden', flexShrink: 0 }}>
-                        <div style={{ width: `${Math.min((groupSaved / maxSavings) * 100, 100)}%`, height: '100%', background: GREEN, borderRadius: '2px', transition: 'width 0.3s ease' }} />
+                      <div style={{ width: '32px', height: '3px', background: DIVIDER, borderRadius: '0', overflow: 'hidden', flexShrink: 0 }}>
+                        <div style={{ width: `${Math.min((groupSaved / maxSavings) * 100, 100)}%`, height: '100%', background: GREEN, borderRadius: '0', transition: 'width 0.3s ease' }} />
                       </div>
                     )}
                   </button>
@@ -600,7 +600,7 @@ export function ImpactChart({
               );
             })}
             {hasSystemic && (
-              <div style={{ marginTop: '0.75rem', padding: '8px 10px', background: GREEN_BG, borderLeft: `3px solid ${GREEN}`, borderRadius: '0 4px 4px 0', fontSize: '0.75rem', lineHeight: 1.4 }}>
+              <div style={{ marginTop: '0.75rem', padding: '8px 10px', background: 'transparent', borderLeft: `1px solid ${GREEN}`, borderRadius: '0', fontSize: '0.75rem', lineHeight: 1.4 }}>
                 <strong style={{ color: GREEN }}>{sigFigs(totalSystemic)} kg</strong> prevented
                 {totalSaved > 0 && <> — <strong>{Math.round(totalSystemic / Math.max(totalSaved, 1))}x</strong> your personal cuts</>}
               </div>
@@ -730,7 +730,7 @@ function BarRow({ label, kg, pctWidth, color, opacity, ghostWidth, ghostOpacity,
     <div style={{ marginBottom: '6px', opacity: dimmed ? 0.25 : 1, transition: 'opacity 0.3s ease' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', fontSize: '0.72rem', marginBottom: '3px' }}>
         <span style={{ fontWeight: bold ? 700 : 600, color: labelColor, display: 'flex', alignItems: 'center', gap: '5px' }}>
-          {dotColor && <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: dotColor, flexShrink: 0, display: 'inline-block', position: 'relative', top: '0.5px' }} />}
+          {dotColor && <span style={{ width: '6px', height: '6px', borderRadius: '0', background: dotColor, flexShrink: 0, display: 'inline-block', position: 'relative', top: '0.5px' }} />}
           {label}
         </span>
         <span style={{ fontVariantNumeric: 'tabular-nums', fontWeight: 700, color: labelColor, whiteSpace: 'nowrap' }}>
@@ -738,13 +738,13 @@ function BarRow({ label, kg, pctWidth, color, opacity, ghostWidth, ghostOpacity,
           {!dimmed && suffix && <span style={{ fontWeight: 800, marginLeft: '6px' }}>{suffix}</span>}
         </span>
       </div>
-      <div style={{ position: 'relative', height: '24px', background: 'var(--bar-track, #E2DFD9)', borderRadius: '4px', overflow: 'hidden' }}>
+      <div style={{ position: 'relative', height: '24px', background: 'var(--bar-track, #E2DFD9)', borderRadius: '0', overflow: 'hidden' }}>
         {ghostWidth !== undefined && (
-          <div style={{ position: 'absolute', height: '100%', width: `${ghostWidth}%`, background: ACCENT, opacity: ghostOpacity ?? 0.15, borderRadius: '4px' }} />
+          <div style={{ position: 'absolute', height: '100%', width: `${ghostWidth}%`, background: ACCENT, opacity: ghostOpacity ?? 0.15, borderRadius: '0' }} />
         )}
         <div style={{
           height: '100%', width: `${pctWidth}%`, background: color,
-          opacity: opacity ?? 1, borderRadius: '4px', position: 'relative', zIndex: 1,
+          opacity: opacity ?? 1, borderRadius: '0', position: 'relative', zIndex: 1,
           transition: 'width 0.5s cubic-bezier(0.25,0.46,0.45,0.94)',
         }} />
       </div>
@@ -785,7 +785,7 @@ function ExampleDropdown() {
       {open && (
         <div style={{ fontSize: '0.68rem', color: MUTED, lineHeight: 1.5, padding: '8px 0 8px 12px', marginTop: '4px', borderLeft: `1px solid ${DIVIDER}` }}>
           Say 3,000 people work to stop a nuclear plant from closing. The plant generates 7.9 million MWh of zero-carbon electricity per year. If it closes, it's replaced by a mix of gas and renewables, adding about 2.4 million tonnes of CO₂ per year (net). If the campaign has a 5% chance of succeeding and the plant runs for 15 more years:<br /><br />
-          <code style={{ fontSize: '0.63rem' }}>2,400,000,000 kg/yr × 15 yr × 5% ÷ 3,000 people = 591,300 kg per person</code><br /><br />
+          <code style={{ fontSize: '0.63rem', borderRadius: '0' }}>2,400,000,000 kg/yr × 15 yr × 5% ÷ 3,000 people = 591,300 kg per person</code><br /><br />
           That's <strong style={{ color: GREEN }}>~590 tonnes</strong> per person — roughly <strong style={{ color: GREEN }}>37 years</strong> of a typical American's annual footprint. Even at 2% probability, it's still 7 years' worth. That's why grid change has such high leverage.
         </div>
       )}
@@ -796,7 +796,7 @@ function ExampleDropdown() {
 function Dot({ on }: { on: boolean }) {
   return (
     <span style={{
-      width: '16px', height: '16px', borderRadius: '5px', flexShrink: 0,
+      width: '16px', height: '16px', borderRadius: '0', flexShrink: 0,
       border: `2px solid ${on ? GREEN : DIVIDER}`, background: on ? GREEN : 'transparent',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       transition: 'all 0.15s ease', color: 'white', fontSize: '0.6rem', fontWeight: 700,
@@ -805,9 +805,10 @@ function Dot({ on }: { on: boolean }) {
 }
 
 const colHead: React.CSSProperties = {
-  fontSize: '1rem', fontWeight: 700,
+  fontFamily: 'var(--font-editorial, Georgia, serif)',
+  fontSize: '1.05rem', fontWeight: 600,
   color: 'var(--text, #1A1A18)', paddingBottom: '0.75rem',
-  borderBottom: `2px solid var(--divider, #DDD9D0)`, marginBottom: '0.85rem',
+  borderBottom: `1px solid var(--divider, #DDD9D0)`, marginBottom: '0.85rem',
 };
 const colSub: React.CSSProperties = {
   fontSize: '0.65rem', fontWeight: 400,

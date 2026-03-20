@@ -96,11 +96,11 @@ export function LeverageLab({ userMaxPersonalReduction, userFootprint }: Leverag
 
       {/* Expected value explainer */}
       <div style={{
-        background: 'var(--panel, #EFECE5)',
-        borderRadius: '6px',
+        background: 'transparent',
+        borderRadius: '0',
         padding: '12px 16px',
         marginBottom: '2rem',
-        borderLeft: '3px solid var(--accent, #8B2E2E)',
+        borderLeft: '1px solid var(--accent, #8B2E2E)',
         fontSize: '0.85rem',
         lineHeight: 1.6,
       }}>
@@ -119,9 +119,9 @@ export function LeverageLab({ userMaxPersonalReduction, userFootprint }: Leverag
             fontWeight: 600,
             border: '1px solid',
             borderColor: skepticMode ? 'var(--accent, #8B2E2E)' : 'var(--divider, #DDD9D0)',
-            borderRadius: '6px',
-            background: skepticMode ? 'var(--accent, #8B2E2E)' : 'transparent',
-            color: skepticMode ? 'white' : 'var(--text-secondary, #6B6B60)',
+            borderRadius: '0',
+            background: 'transparent',
+            color: skepticMode ? 'var(--accent, #8B2E2E)' : 'var(--text-secondary, #6B6B60)',
             cursor: 'pointer',
             transition: 'all 0.15s',
             minHeight: '44px',
@@ -132,7 +132,7 @@ export function LeverageLab({ userMaxPersonalReduction, userFootprint }: Leverag
         </button>
 
         {/* Annual / Lifetime toggle */}
-        <div style={{ display: 'inline-flex', border: '1px solid var(--divider, #DDD9D0)', borderRadius: '6px', overflow: 'hidden' }}>
+        <div style={{ display: 'inline-flex', border: '1px solid var(--divider, #DDD9D0)', borderRadius: '0', overflow: 'hidden' }}>
           {(['annual', 'lifetime'] as const).map(mode => (
             <button
               key={mode}
@@ -144,8 +144,8 @@ export function LeverageLab({ userMaxPersonalReduction, userFootprint }: Leverag
                 fontWeight: 600,
                 border: 'none',
                 borderLeft: mode === 'lifetime' ? '1px solid var(--divider, #DDD9D0)' : 'none',
-                background: viewMode === mode ? 'var(--accent, #8B2E2E)' : 'transparent',
-                color: viewMode === mode ? 'white' : 'var(--text-secondary, #6B6B60)',
+                background: 'transparent',
+                color: viewMode === mode ? 'var(--accent, #8B2E2E)' : 'var(--text-secondary, #6B6B60)',
                 cursor: 'pointer',
                 transition: 'all 0.15s',
                 minHeight: '44px',
@@ -184,7 +184,7 @@ export function LeverageLab({ userMaxPersonalReduction, userFootprint }: Leverag
         <div className="cf-section-label" style={{ marginBottom: '1rem' }}>ADVERSARIAL FAQ</div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
           {FAQ_ITEMS.map((item, i) => (
-            <div key={i} style={{ background: 'var(--panel, #EFECE5)', borderRadius: '6px', overflow: 'hidden' }}>
+            <div key={i} style={{ background: 'transparent', border: '1px solid var(--divider, #DDD9D0)', borderRadius: '0', overflow: 'hidden' }}>
               <button
                 onClick={() => setExpandedFaq(expandedFaq === i ? null : i)}
                 style={{
@@ -252,8 +252,9 @@ function CaseCard({ result, viewMode }: { result: LeverageResult; viewMode: 'ann
   return (
     <div
       style={{
-        background: 'var(--panel, #EFECE5)',
-        borderRadius: '6px',
+        background: 'transparent',
+        border: '1px solid var(--divider, #DDD9D0)',
+        borderRadius: '0',
         padding: '14px 16px',
       }}
       aria-describedby={valuesId}

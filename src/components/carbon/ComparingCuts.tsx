@@ -101,7 +101,6 @@ export function ComparingCuts({ personalActions, enabledPersonal, actionParamOve
           {FILTER_OPTIONS.map(opt => {
             const activeColor = opt.value === null ? 'var(--bar-track, #E2DFD9)' : opt.value === 'personal' ? ACCENT : GREEN;
             const isActive = filter === opt.value;
-            const textOnActive = opt.value === null ? 'var(--text, #1A1A18)' : 'white';
             return (
               <button
                 key={opt.label}
@@ -109,9 +108,9 @@ export function ComparingCuts({ personalActions, enabledPersonal, actionParamOve
                 style={{
                   fontSize: '0.62rem', fontWeight: isActive ? 600 : 400,
                   padding: '3px 10px', border: `1px solid ${isActive ? activeColor : DIVIDER}`,
-                  borderRadius: '10px', cursor: 'pointer', fontFamily: 'inherit',
-                  background: isActive ? activeColor : 'transparent',
-                  color: isActive ? textOnActive : MUTED,
+                  borderRadius: '0', cursor: 'pointer', fontFamily: 'inherit',
+                  background: 'transparent',
+                  color: isActive ? activeColor : MUTED,
                   transition: 'all 0.12s',
                 }}
               >
@@ -121,8 +120,8 @@ export function ComparingCuts({ personalActions, enabledPersonal, actionParamOve
           })}
           {filter === null && items.length > 0 && (
             <span style={{ fontSize: '0.62rem', color: MUTED, marginLeft: '8px', alignSelf: 'center' }}>
-              <span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '2px', background: ACCENT, marginRight: '3px', verticalAlign: 'middle' }} />personal
-              <span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '2px', background: GREEN, marginLeft: '8px', marginRight: '3px', verticalAlign: 'middle' }} />grid
+              <span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '0', background: ACCENT, marginRight: '3px', verticalAlign: 'middle' }} />personal
+              <span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '0', background: GREEN, marginLeft: '8px', marginRight: '3px', verticalAlign: 'middle' }} />grid
             </span>
           )}
         </div>
@@ -145,7 +144,7 @@ export function ComparingCuts({ personalActions, enabledPersonal, actionParamOve
               onMouseEnter={() => setHoveredIdx(idx)}
               onMouseLeave={() => setHoveredIdx(null)}
               style={{
-                padding: '4px 6px', borderRadius: '4px',
+                padding: '4px 6px', borderRadius: '0',
                 background: isHovered ? 'rgba(0,0,0,0.02)' : 'transparent',
                 transition: 'background 0.12s',
               }}
@@ -169,10 +168,10 @@ export function ComparingCuts({ personalActions, enabledPersonal, actionParamOve
                   )}
                 </span>
               </div>
-              <div style={{ height: '14px', background: `var(--bar-track, #E2DFD9)`, borderRadius: '3px', overflow: 'hidden' }}>
+              <div style={{ height: '14px', background: `var(--bar-track, #E2DFD9)`, borderRadius: '0', overflow: 'hidden' }}>
                 <div style={{
                   height: '100%', width: `${pct}%`, background: item.color,
-                  borderRadius: '3px', transition: 'width 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+                  borderRadius: '0', transition: 'width 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
                   minWidth: '2px',
                 }} />
               </div>

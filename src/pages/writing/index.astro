@@ -189,11 +189,11 @@ function formatBylineDate(dateStr: string): string {
   <div class="top-dropdown">
     <button class="top-toggle" aria-expanded="false" data-section="blog">
       <span class="top-arrow">&#9654;</span>
-      <span class="top-title">Blog</span>
+      <span class="top-title">Writing archive</span>
     </button>
     <div class="top-content" data-content="blog" hidden>
       <!-- META SUBSECTION -->
-      <div class="section-header">Meta</div>
+      <div class="section-header">Guides</div>
       <div class="meta-section">
         {metaPostsWithContent.map((meta) => (
           <button class="meta-link" data-slug={meta.slug}>
@@ -315,31 +315,34 @@ function formatBylineDate(dateStr: string): string {
 <style>
   /* Top-level dropdowns */
   .top-dropdown {
-    margin-bottom: 8px;
+    margin-bottom: 1.25rem;
+    border-top: 1px solid var(--border);
+    padding-top: 0.25rem;
   }
 
   .top-toggle {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
     width: 100%;
-    padding: 10px 0;
+    padding: 12px 0 10px;
     background: none;
     border: none;
-    font-family: inherit;
-    font-size: 1rem;
+    font-family: var(--font-editorial);
+    font-size: clamp(1.1rem, 1.02rem + 0.2vw, 1.25rem);
     font-weight: 600;
+    letter-spacing: -0.02em;
     color: var(--text);
     cursor: pointer;
     text-align: left;
   }
 
   .top-toggle:hover {
-    color: var(--accent);
+    color: var(--text);
   }
 
   .top-arrow {
-    font-size: 0.65rem;
+    font-size: 0.55rem;
     transition: transform 0.2s ease;
     color: var(--dim);
     width: 12px;
@@ -359,60 +362,63 @@ function formatBylineDate(dateStr: string): string {
 
   .top-content {
     padding-left: 22px;
-    padding-bottom: 16px;
+    padding-bottom: 20px;
+    max-width: 46rem;
   }
 
   /* Section headers */
   .section-header {
-    font-size: 0.7rem;
+    font-size: 0.65rem;
     text-transform: uppercase;
-    letter-spacing: 1.5px;
+    letter-spacing: 0.12em;
     color: var(--dim);
-    margin: 16px 0 12px;
+    margin: 20px 0 10px;
   }
 
   .section-header:first-child {
-    margin-top: 8px;
+    margin-top: 10px;
   }
 
   /* Meta section */
   .meta-section {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 0;
     margin-bottom: 20px;
+    border-top: 1px solid var(--border-subtle);
   }
 
   .meta-link {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
     width: 100%;
-    padding: 10px 14px;
+    padding: 10px 0;
     background: none;
-    border: 1px solid var(--border);
-    font-family: inherit;
-    font-size: 0.875rem;
+    border: none;
+    border-bottom: 1px solid var(--border-subtle);
+    font-family: var(--font-editorial);
+    font-size: 0.98rem;
     color: var(--text);
     cursor: pointer;
     text-align: left;
-    transition: all 0.15s ease;
+    transition: color 0.15s ease;
   }
 
   .meta-link:hover {
-    border-color: var(--accent);
     color: var(--accent);
   }
 
   .meta-link .meta-arrow {
-    font-size: 0.8rem;
+    font-size: 0.65rem;
     color: var(--dim);
     transition: transform 0.2s ease;
+    width: 12px;
   }
 
   .meta-link:hover .meta-arrow {
     color: var(--accent);
-    transform: translateX(3px);
+    transform: translateX(2px);
   }
 
   .meta-link .meta-title {
@@ -423,7 +429,7 @@ function formatBylineDate(dateStr: string): string {
   .panel-backdrop {
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.3);
+    background: rgba(20, 18, 17, 0.22);
     z-index: 100;
     opacity: 0;
     visibility: hidden;
@@ -447,6 +453,7 @@ function formatBylineDate(dateStr: string): string {
     transform: translateX(100%);
     transition: transform 0.3s cubic-bezier(0.19, 1, 0.22, 1);
     box-shadow: var(--shadow-lg);
+    border-left: 1px solid var(--border);
     display: flex;
     flex-direction: column;
   }
@@ -457,50 +464,55 @@ function formatBylineDate(dateStr: string): string {
 
   .panel-close {
     position: absolute;
-    top: 12px;
-    right: 12px;
-    width: 32px;
-    height: 32px;
+    top: 18px;
+    right: 18px;
+    width: auto;
+    height: auto;
     background: none;
-    border: 1px solid var(--border);
-    border-radius: 0;
-    font-size: 1.25rem;
+    border: none;
+    font-size: 1.5rem;
+    line-height: 1;
     color: var(--dim);
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.15s ease;
+    transition: color 0.15s ease;
     z-index: 10;
+    padding: 0;
   }
 
   .panel-close:hover {
-    border-color: var(--accent);
     color: var(--accent);
   }
 
   .panel-content {
     flex: 1;
     overflow-y: auto;
-    padding: 48px 32px 32px;
+    padding: 52px 30px 32px;
   }
 
   .panel-header {
-    margin-bottom: 24px;
-    padding-bottom: 16px;
+    margin-bottom: 22px;
+    padding-bottom: 14px;
     border-bottom: 1px solid var(--border);
   }
 
   .panel-title {
-    font-family: var(--font-serif);
-    font-size: 1.25rem;
-    font-weight: normal;
+    font-family: var(--font-editorial);
+    font-size: 1.65rem;
+    font-weight: 600;
+    line-height: 1.08;
+    letter-spacing: -0.03em;
     margin: 0 0 8px;
     color: var(--text);
   }
 
   .panel-source {
-    font-size: 0.75rem;
+    font-size: 0.68rem;
+    font-family: var(--font-mono);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
     color: var(--dim);
     margin: 0;
   }
@@ -516,15 +528,18 @@ function formatBylineDate(dateStr: string): string {
   }
 
   .panel-body {
-    font-size: 0.85rem;
-    line-height: 1.6;
+    font-family: var(--font-editorial);
+    font-size: 0.98rem;
+    line-height: 1.8;
+    color: var(--text-secondary);
   }
 
   .panel-body :global(h1),
   .panel-body :global(h2),
   .panel-body :global(h3) {
-    font-family: var(--font-serif);
-    font-weight: normal;
+    font-family: var(--font-editorial);
+    font-weight: 600;
+    letter-spacing: -0.02em;
     margin: 1.2em 0 0.5em;
   }
 
@@ -604,41 +619,43 @@ function formatBylineDate(dateStr: string): string {
   .timeline-filters {
     display: flex;
     flex-wrap: wrap;
-    gap: 6px;
-    margin-bottom: 16px;
+    gap: 0.4rem 0.6rem;
+    margin-bottom: 0.85rem;
   }
 
   .filter-btn {
     background: none;
-    border: 1px solid var(--border);
-    padding: 3px 10px;
-    font-family: inherit;
-    font-size: 0.75rem;
+    border: none;
+    border-bottom: 1px solid transparent;
+    padding: 0 0 2px;
+    font-family: var(--font-body);
+    font-size: 0.74rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
     color: var(--dim);
     cursor: pointer;
-    border-radius: 0;
-    transition: border-color 0.15s ease, color 0.15s ease, background-color 0.15s ease;
+    transition: border-color 0.15s ease, color 0.15s ease;
   }
 
   .filter-btn:hover {
-    border-color: var(--accent);
     color: var(--accent);
+    border-color: var(--accent);
   }
 
   .filter-btn.active {
     background: transparent;
-    border-color: var(--accent);
     color: var(--accent);
+    border-color: var(--accent);
   }
 
   /* Subcategory filters */
   .subcategory-filters {
     display: flex;
     flex-wrap: wrap;
-    gap: 6px;
-    margin-left: 12px;
-    padding-left: 12px;
-    border-left: 2px solid var(--border);
+    gap: 0.4rem 0.6rem;
+    margin-left: 0;
+    padding-left: 14px;
+    border-left: 1px solid var(--border-strong);
     max-height: 0;
     overflow: hidden;
     opacity: 0;
@@ -656,14 +673,16 @@ function formatBylineDate(dateStr: string): string {
 
   .subcategory-btn {
     background: none;
-    border: 1px solid var(--border);
-    padding: 2px 8px;
-    font-family: inherit;
-    font-size: 0.7rem;
+    border: none;
+    border-bottom: 1px solid transparent;
+    padding: 0 0 2px;
+    font-family: var(--font-body);
+    font-size: 0.73rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
     color: var(--dim);
     cursor: pointer;
-    border-radius: 0;
-    transition: all 0.15s ease, transform 0.25s ease, opacity 0.25s ease;
+    transition: color 0.15s ease, border-color 0.15s ease, transform 0.25s ease, opacity 0.25s ease;
     opacity: 0;
     transform: translateY(-4px);
   }
@@ -684,21 +703,21 @@ function formatBylineDate(dateStr: string): string {
   .subcategory-filters.visible .subcategory-btn:nth-child(8) { transition-delay: 0.16s; }
 
   .subcategory-btn:hover {
-    border-color: var(--accent);
     color: var(--accent);
+    border-color: var(--accent);
   }
 
   .subcategory-btn.active {
     background: transparent;
-    border-color: var(--accent);
     color: var(--accent);
+    border-color: var(--accent);
   }
 
   /* Timeline */
   .timeline {
     display: flex;
     flex-direction: column;
-    gap: 24px;
+    gap: 2rem;
   }
 
   .year-group.hidden {
@@ -706,11 +725,14 @@ function formatBylineDate(dateStr: string): string {
   }
 
   .year-header {
-    font-size: 0.85rem;
+    font-size: 0.68rem;
+    font-family: var(--font-mono);
     font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
     color: var(--dim);
-    margin-bottom: 10px;
-    padding-bottom: 4px;
+    margin-bottom: 0.55rem;
+    padding-bottom: 0.45rem;
     border-bottom: 1px solid var(--border);
   }
 
@@ -722,10 +744,12 @@ function formatBylineDate(dateStr: string): string {
 
   .timeline-row {
     display: grid;
-    grid-template-columns: 32px 24px 1fr auto;
-    gap: 8px;
-    font-size: 0.8rem;
+    grid-template-columns: 42px 28px 1fr auto;
+    gap: 10px;
+    font-size: 0.86rem;
     align-items: baseline;
+    padding: 0.28rem 0;
+    border-bottom: 1px solid var(--border-subtle);
   }
 
   .timeline-row.hidden {
@@ -733,39 +757,50 @@ function formatBylineDate(dateStr: string): string {
   }
 
   .timeline-month {
-    font-size: 0.7rem;
+    font-size: 0.68rem;
+    font-family: var(--font-mono);
     color: var(--dim);
     text-align: left;
   }
 
   .timeline-day {
     font-family: var(--font-mono);
-    font-size: 0.7rem;
+    font-size: 0.68rem;
     color: var(--dim);
     text-align: right;
   }
 
   .timeline-link {
-    color: var(--accent);
-    text-decoration: underline;
-    text-underline-offset: 2px;
+    color: var(--text);
+    text-decoration: none;
+    font-family: var(--font-editorial);
+    font-size: 0.98rem;
+    line-height: 1.35;
     min-width: 0;
   }
 
   .timeline-link:hover {
-    text-decoration: none;
+    color: var(--accent);
+    text-decoration: underline;
+    text-underline-offset: 2px;
   }
 
   .timeline-cat {
-    font-size: 0.65rem;
+    font-size: 0.62rem;
+    font-family: var(--font-mono);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
     color: var(--dim);
     white-space: nowrap;
   }
 
   .post-count {
-    font-size: 0.7rem;
+    font-size: 0.68rem;
+    font-family: var(--font-mono);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
     color: var(--dim);
-    margin-top: 16px;
+    margin-top: 1rem;
   }
 
   /* Bylines */
@@ -779,35 +814,44 @@ function formatBylineDate(dateStr: string): string {
   .bylines-list {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 0;
+    border-top: 1px solid var(--border-subtle);
   }
 
   .byline-row {
     display: grid;
-    grid-template-columns: 80px 1fr auto;
-    gap: 12px;
+    grid-template-columns: 72px 1fr auto;
+    gap: 14px;
     font-size: 0.8rem;
     align-items: baseline;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--border-subtle);
   }
 
   .byline-date {
     font-family: var(--font-mono);
-    font-size: 0.7rem;
+    font-size: 0.68rem;
     color: var(--dim);
   }
 
   .byline-link {
+    color: var(--text);
+    text-decoration: none;
+    font-family: var(--font-editorial);
+    font-size: 0.95rem;
+  }
+
+  .byline-link:hover {
     color: var(--accent);
     text-decoration: underline;
     text-underline-offset: 2px;
   }
 
-  .byline-link:hover {
-    text-decoration: none;
-  }
-
   .byline-pub {
-    font-size: 0.7rem;
+    font-size: 0.64rem;
+    font-family: var(--font-mono);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
     color: var(--dim);
     white-space: nowrap;
   }
@@ -842,6 +886,7 @@ function formatBylineDate(dateStr: string): string {
 
     .top-content {
       padding-left: 12px;
+      max-width: none;
     }
 
     .stacked-panel {

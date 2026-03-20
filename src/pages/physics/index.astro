@@ -145,20 +145,27 @@ const totalVideos = getTotalVideoCount();
 
 <style>
   .section-title {
-    font-size: 1rem;
-    font-weight: 600;
-    margin-bottom: 12px;
+    font-size: 0.7rem;
+    font-family: var(--font-mono);
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--dim);
+    margin-bottom: 0.75rem;
     scroll-margin-top: 48px;
   }
 
   .physics-intro {
-    font-size: 0.875rem;
-    color: var(--text);
-    margin-bottom: 1.5rem;
+    max-width: 42rem;
+    font-family: var(--font-editorial);
+    font-size: 1rem;
+    line-height: 1.75;
+    color: var(--text-secondary);
+    margin-bottom: 2rem;
   }
 
   .physics-intro p {
-    margin-bottom: 0.75em;
+    margin-bottom: 0.9rem;
   }
 
   .physics-intro a {
@@ -177,8 +184,8 @@ const totalVideos = getTotalVideoCount();
     top: 0;
     z-index: 10;
     background: var(--bg);
-    padding: var(--space-sm) 0;
-    margin-bottom: var(--space-lg);
+    padding: 0.55rem 0 0.75rem;
+    margin-bottom: var(--space-xl);
     border-bottom: 1px solid var(--border);
     display: flex;
     align-items: center;
@@ -192,7 +199,10 @@ const totalVideos = getTotalVideoCount();
     padding: 2px 0;
     border-radius: 0;
     border-bottom: 1px solid transparent;
-    font-weight: 600;
+    font-size: 0.72rem;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
     transition: color 0.15s, border-color 0.15s;
   }
 
@@ -210,17 +220,19 @@ const totalVideos = getTotalVideoCount();
 
   /* Units */
   .unit {
-    margin-bottom: var(--space-2xl);
+    margin-bottom: var(--space-xl);
     scroll-margin-top: 48px;
   }
 
   .unit__title {
-    font-size: 1.25rem;
-    font-weight: 700;
-    line-height: 1.3;
+    font-family: var(--font-editorial);
+    font-size: clamp(1.45rem, 1.2rem + 0.35vw, 1.75rem);
+    font-weight: 600;
+    line-height: 1.12;
+    letter-spacing: -0.025em;
     color: var(--text);
-    padding-bottom: var(--space-xs);
-    border-bottom: 2px solid var(--accent);
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border);
     margin-bottom: var(--space-md);
     display: flex;
     align-items: baseline;
@@ -228,24 +240,25 @@ const totalVideos = getTotalVideoCount();
   }
 
   .unit__count {
-    font-size: 0.65rem;
+    font-size: 0.62rem;
     font-weight: 500;
     color: var(--dim);
     font-family: var(--font-mono);
-    letter-spacing: 0.02em;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
   }
 
   /* Subtopics (collapsible) */
   .subtopic {
-    margin-bottom: 2px;
+    margin-bottom: 0.25rem;
   }
 
   .subtopic__title {
     display: flex;
     align-items: center;
     gap: var(--space-sm);
-    padding: 8px 0;
-    font-size: 0.85rem;
+    padding: 10px 0;
+    font-size: 0.9rem;
     font-weight: 600;
     color: var(--text);
     cursor: pointer;
@@ -277,29 +290,34 @@ const totalVideos = getTotalVideoCount();
   }
 
   .subtopic__count {
-    font-size: 0.6rem;
+    font-size: 0.62rem;
     font-weight: 500;
     color: var(--dim);
     font-family: var(--font-mono);
     margin-left: auto;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
   }
 
   /* Video grid */
   .video-grid {
     display: flex;
     flex-direction: column;
-    gap: 2px;
-    padding: 4px 0 8px 22px;
+    gap: 0;
+    padding: 0 0 0.6rem 18px;
+    border-left: 1px solid var(--border-subtle);
+    margin-left: 6px;
   }
 
   .video-item {
     display: block;
-    padding: 5px 0;
+    padding: 8px 0;
     border-radius: 0;
     border-bottom: 1px solid var(--border-subtle);
     text-decoration: none;
     color: var(--text);
-    font-size: 0.8rem;
+    font-family: var(--font-editorial);
+    font-size: 0.95rem;
     line-height: 1.4;
     transition: color 0.15s, border-color 0.15s;
   }
@@ -309,12 +327,46 @@ const totalVideos = getTotalVideoCount();
     border-bottom-color: var(--accent);
   }
 
+  .unit-dropdown {
+    border-top: 1px solid var(--border);
+    margin-top: 0.5rem;
+  }
+
+  .unit-dropdown summary {
+    list-style: none;
+    cursor: pointer;
+    padding: 0.85rem 0;
+    font-family: var(--font-editorial);
+    font-size: 1rem;
+    border-bottom: 1px solid var(--border-subtle);
+  }
+
+  .unit-dropdown summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .unit-dropdown summary::before {
+    content: '▶';
+    display: inline-block;
+    margin-right: 0.55rem;
+    font-size: 0.55rem;
+    color: var(--dim);
+    transition: transform 0.2s ease;
+  }
+
+  .unit-dropdown[open] summary::before {
+    transform: rotate(90deg);
+  }
+
   /* Advice content */
   .advice-content {
-    margin-left: 20px;
-    padding-bottom: 8px;
-    font-size: 0.85rem;
-    line-height: 1.6;
+    margin-left: 0;
+    padding: 0.75rem 0 1rem 18px;
+    border-left: 1px solid var(--border-subtle);
+    max-width: 44rem;
+    font-family: var(--font-editorial);
+    font-size: 0.98rem;
+    line-height: 1.75;
   }
 
   .advice-content p {
@@ -331,8 +383,11 @@ const totalVideos = getTotalVideoCount();
   }
 
   .advice-content h4 {
-    font-size: 0.9rem;
+    font-size: 0.72rem;
+    font-family: var(--font-body);
     font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
     margin: 1em 0 0.5em 0;
   }
 

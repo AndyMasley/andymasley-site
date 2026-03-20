@@ -1499,7 +1499,7 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
     color: var(--text-secondary, #6B6B60);
     padding: 1rem 1.25rem;
     border: 1px solid var(--border, #DDD9D0);
-    border-radius: 6px;
+    border-radius: 0;
     background: #edecea;
   }
   [data-theme="dark"] .wv-intro-cols {
@@ -1550,7 +1550,7 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
   .wv-preset-btn {
     font-family: inherit; font-size: 0.58rem; font-weight: 400;
     color: var(--accent, #8b3a3a); background: none;
-    border: 1px solid var(--divider); border-radius: 3px;
+    border: 1px solid var(--divider); border-radius: 0;
     padding: 2px 7px; cursor: pointer; transition: all 0.12s;
   }
   .wv-preset-btn:hover { background: var(--bg-elevated, #fff); border-color: var(--accent, #8b3a3a); }
@@ -1576,8 +1576,8 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
   .wv-cat-chevron { font-size: 0.55rem; width: 12px; }
   .wv-cat-count { font-size: 0.65rem; opacity: 0.35; }
   .wv-cat-active { font-size: 0.6rem; font-weight: 500; letter-spacing: 0; text-transform: none; color: var(--text-secondary); opacity: 0.7; }
-  .wv-cat-active:not(:empty) { background: var(--bg-elevated, #fff); padding: 1px 6px; border-radius: 3px; }
-  [data-theme="dark"] .wv-cat-active:not(:empty) { background: var(--bg-elevated, #1c1c1a); }
+  .wv-cat-active:not(:empty) { background: transparent; padding: 0 0 1px; border-radius: 0; border-bottom: 1px solid var(--divider); }
+  [data-theme="dark"] .wv-cat-active:not(:empty) { background: transparent; }
   .wv-cat-controls { font-size: 0.6rem; }
 
   /* Open category list: white/elevated background */
@@ -1599,8 +1599,8 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
   .wv-toggle-row[data-on="true"] .wv-row-name { color: var(--text); font-weight: 500; }
   .wv-toggle-row[data-on="false"] .wv-row-name { color: var(--text); }
   .wv-toggle-row[data-on="false"]:hover .wv-dot { border-color: var(--cat-color, var(--green)); opacity: 0.8; }
-  .wv-toggle-row[data-on="false"]:hover { background: rgba(0, 0, 0, 0.04); }
-  [data-theme="dark"] .wv-toggle-row[data-on="false"]:hover { background: rgba(255, 255, 255, 0.04); }
+  .wv-toggle-row[data-on="false"]:hover { background: transparent; }
+  [data-theme="dark"] .wv-toggle-row[data-on="false"]:hover { background: transparent; }
   .wv-toggle-row[data-on="false"] .wv-row-val { opacity: 0.6; }
   .wv-toggle-row[data-on="true"] .wv-row-val { opacity: 0.8; }
 
@@ -1668,7 +1668,7 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
   .wv-cat-list::-webkit-scrollbar { width: 1px; }
 
   /* Tooltip: sharper */
-  .wv-tooltip { border-radius: 2px; font-size: 0.7rem; max-width: 340px; padding: 10px 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.1); }
+  .wv-tooltip { border-radius: 0; font-size: 0.7rem; max-width: 340px; padding: 10px 12px; box-shadow: var(--shadow-lg); }
 
   /* No loading shimmer */
   .wv-bars-area:empty, .wv-squares-area:empty { background-image: none !important; animation: none !important; }
