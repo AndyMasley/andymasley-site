@@ -22,6 +22,65 @@ function formatHeat(valueWh: number): string {
   return `${Math.round(joules)} J`;
 }
 
+function usePrefersReducedMotion() {
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const updatePreference = () => setPrefersReducedMotion(mediaQuery.matches);
+    updatePreference();
+
+    mediaQuery.addEventListener('change', updatePreference);
+    return () => mediaQuery.removeEventListener('change', updatePreference);
+  }, []);
+
+  return prefersReducedMotion;
+}
+
+function useTweenedNumber(target: number, duration = 360) {
+  const prefersReducedMotion = usePrefersReducedMotion();
+  const [value, setValue] = useState(target);
+  const valueRef = useRef(target);
+
+  useEffect(() => {
+    valueRef.current = value;
+  }, [value]);
+
+  useEffect(() => {
+    if (prefersReducedMotion) {
+      setValue(target);
+      valueRef.current = target;
+      return;
+    }
+
+    const start = performance.now();
+    const initial = valueRef.current;
+    const delta = target - initial;
+
+    if (Math.abs(delta) < 0.0001) {
+      setValue(target);
+      return;
+    }
+
+    let frame = 0;
+
+    const tick = (now: number) => {
+      const elapsed = Math.min(1, (now - start) / duration);
+      const eased = 1 - Math.pow(1 - elapsed, 3);
+      setValue(initial + delta * eased);
+
+      if (elapsed < 1) {
+        frame = window.requestAnimationFrame(tick);
+      }
+    };
+
+    frame = window.requestAnimationFrame(tick);
+    return () => window.cancelAnimationFrame(frame);
+  }, [duration, prefersReducedMotion, target]);
+
+  return value;
+}
+
 export function PromptEnergySceneOne() {
   const [activeBeatIndex, setActiveBeatIndex] = useState(0);
   const [boundary, setBoundary] = useState<BoundaryKey>('facility');
@@ -103,6 +162,8 @@ export function PromptEnergySceneOne() {
       ? activeBeat.cumulativeWh.server
       : activeBeat.cumulativeWh.facility;
 
+  const displayedPower = useTweenedNumber(totalPower);
+  const displayedWh = useTweenedNumber(cumulativeWh, 420);
   const progressLabel = `Beat ${activeBeatIndex + 1} of ${SCENE_ONE_BEATS.length}`;
 
   return (
@@ -163,13 +224,14 @@ export function PromptEnergySceneOne() {
               <section className="pe-chat">
                 <div className="pe-node-label">Question</div>
                 <div className="pe-chat__bubble">
-                  <span className="pe-chat__text">{HERO_PROMPT}</span>
+                  <span className="pe-chat__text pe-chat__text--primary">{HERO_PROMPT}</span>
                 </div>
                 <div className="pe-chat__status">Live service, warm path</div>
               </section>
 
               <section className="pe-token-tray">
                 <div className="pe-node-label">Tokens</div>
+                <div className="pe-token-tray__sentence">{HERO_PROMPT}</div>
                 <div className="pe-token-tray__chips">
                   {HERO_TOKENS.map(token => (
                     <span key={token} className="pe-token-chip">
@@ -183,7 +245,7 @@ export function PromptEnergySceneOne() {
               <div className="pe-request" role="presentation">
                 <div className="pe-request__header">
                   <span>REQ-014</span>
-                  <span>ready</span>
+                  <span>low latency</span>
                 </div>
                 <div className="pe-request__tokens">
                   {HERO_TOKENS.slice(0, 4).map(token => (
@@ -193,7 +255,10 @@ export function PromptEnergySceneOne() {
                   ))}
                   <span className="pe-request__more">+{HERO_TOKENS.length - 4}</span>
                 </div>
-                <div className="pe-request__footer">service: text chat</div>
+                <div className="pe-request__footer">
+                  <span>service: text chat</span>
+                  <span>13:04:22</span>
+                </div>
               </div>
 
               <section className="pe-scheduler">
@@ -240,6 +305,10 @@ export function PromptEnergySceneOne() {
                 <div className="pe-ledger__boundary-copy">{boundaryOption.summary}</div>
               </div>
 
+              <div className="pe-ledger__interpretation">
+                Different measurement boundaries give different prompt energy totals.
+              </div>
+
               <div className="pe-ledger__toggle" role="tablist" aria-label="Measurement boundary">
                 {BOUNDARY_OPTIONS.map(option => (
                   <button
@@ -259,15 +328,15 @@ export function PromptEnergySceneOne() {
               <div className="pe-ledger__metrics">
                 <div className="pe-ledger__metric">
                   <div className="pe-ledger__metric-label">Instantaneous power</div>
-                  <div className="pe-ledger__metric-value">{formatPower(totalPower)}</div>
+                  <div className="pe-ledger__metric-value">{formatPower(displayedPower)}</div>
                 </div>
                 <div className="pe-ledger__metric">
                   <div className="pe-ledger__metric-label">Cumulative prompt energy</div>
-                  <div className="pe-ledger__metric-value">{formatEnergyWh(cumulativeWh)}</div>
+                  <div className="pe-ledger__metric-value">{formatEnergyWh(displayedWh)}</div>
                 </div>
                 <div className="pe-ledger__metric">
                   <div className="pe-ledger__metric-label">Heat to remove</div>
-                  <div className="pe-ledger__metric-value">{formatHeat(cumulativeWh)}</div>
+                  <div className="pe-ledger__metric-value">{formatHeat(displayedWh)}</div>
                 </div>
               </div>
 

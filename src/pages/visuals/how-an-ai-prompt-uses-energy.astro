@@ -216,6 +216,7 @@ import { PromptEnergySceneOne } from '@/components/prompt-energy/PromptEnergySce
     position: absolute;
     border-top: 1px solid var(--border-strong);
     opacity: 0.55;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease, opacity 0.3s ease;
   }
 
   .pe-stage__connector--prompt {
@@ -255,6 +256,7 @@ import { PromptEnergySceneOne } from '@/components/prompt-energy/PromptEnergySce
     border: 1px solid var(--border-strong);
     background: var(--bg);
     box-shadow: none;
+    transition: border-color 0.3s ease, opacity 0.3s ease;
   }
 
   .pe-chat__text {
@@ -262,6 +264,7 @@ import { PromptEnergySceneOne } from '@/components/prompt-energy/PromptEnergySce
     font-family: var(--font-editorial);
     font-size: 1rem;
     line-height: 1.55;
+    transition: opacity 0.3s ease, transform 0.3s ease;
   }
 
   .pe-chat__status {
@@ -275,6 +278,20 @@ import { PromptEnergySceneOne } from '@/components/prompt-energy/PromptEnergySce
     top: 10rem;
     left: 0.25rem;
     width: 15rem;
+    opacity: 0.18;
+    transform: translateY(0.35rem);
+    transition: opacity 0.35s ease, transform 0.35s ease;
+  }
+
+  .pe-token-tray__sentence {
+    margin-top: 0.55rem;
+    font-family: var(--font-editorial);
+    font-size: 0.9rem;
+    line-height: 1.55;
+    color: var(--text-secondary);
+    opacity: 0;
+    transform: translateY(-0.2rem);
+    transition: opacity 0.3s ease, transform 0.3s ease;
   }
 
   .pe-token-tray__chips {
@@ -282,6 +299,9 @@ import { PromptEnergySceneOne } from '@/components/prompt-energy/PromptEnergySce
     flex-wrap: wrap;
     gap: 0.45rem;
     margin-top: 0.55rem;
+    opacity: 0;
+    transform: translateY(0.25rem);
+    transition: opacity 0.35s ease, transform 0.35s ease;
   }
 
   .pe-token-chip,
@@ -303,6 +323,9 @@ import { PromptEnergySceneOne } from '@/components/prompt-energy/PromptEnergySce
     margin-top: 0.55rem;
     font-size: 0.82rem;
     color: var(--dim);
+    opacity: 0;
+    transform: translateY(0.2rem);
+    transition: opacity 0.35s ease, transform 0.35s ease;
   }
 
   .pe-request {
@@ -359,6 +382,7 @@ import { PromptEnergySceneOne } from '@/components/prompt-energy/PromptEnergySce
       linear-gradient(90deg, color-mix(in srgb, var(--pe-blue) 7%, transparent), transparent 32%),
       var(--bg);
     overflow: hidden;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease, background 0.3s ease;
   }
 
   .pe-scheduler__ghost {
@@ -416,6 +440,17 @@ import { PromptEnergySceneOne } from '@/components/prompt-energy/PromptEnergySce
     border: 1px solid var(--border);
     background: color-mix(in srgb, var(--bg) 92%, var(--border-subtle) 8%);
     transition: border-color 0.25s ease, box-shadow 0.25s ease, transform 0.25s ease;
+    overflow: hidden;
+  }
+
+  .pe-rack__node::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    pointer-events: none;
+    background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--pe-gold) 14%, transparent), transparent);
+    transition: opacity 0.3s ease;
   }
 
   .pe-rack__node--host {
@@ -425,6 +460,20 @@ import { PromptEnergySceneOne } from '@/components/prompt-energy/PromptEnergySce
 
   .pe-rack__node--accelerator {
     min-height: 7.5rem;
+  }
+
+  .pe-rack__node--accelerator::before {
+    content: '';
+    position: absolute;
+    left: 12%;
+    right: 12%;
+    bottom: -1.1rem;
+    height: 2.2rem;
+    opacity: 0;
+    pointer-events: none;
+    background: radial-gradient(circle at center, color-mix(in srgb, var(--pe-heat) 38%, transparent), transparent 70%);
+    filter: blur(10px);
+    transition: opacity 0.3s ease;
   }
 
   .pe-rack__title {
@@ -492,6 +541,13 @@ import { PromptEnergySceneOne } from '@/components/prompt-energy/PromptEnergySce
     color: var(--text-secondary);
   }
 
+  .pe-ledger__interpretation {
+    margin-top: 0.9rem;
+    font-size: 0.8rem;
+    line-height: 1.55;
+    color: var(--text-secondary);
+  }
+
   .pe-ledger__toggle {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -534,6 +590,7 @@ import { PromptEnergySceneOne } from '@/components/prompt-energy/PromptEnergySce
     font-family: var(--font-editorial);
     font-size: 1.35rem;
     line-height: 1.05;
+    font-variant-numeric: tabular-nums;
   }
 
   .pe-ledger__bar {
@@ -547,6 +604,7 @@ import { PromptEnergySceneOne } from '@/components/prompt-energy/PromptEnergySce
   .pe-ledger__segment {
     display: block;
     height: 100%;
+    transition: width 0.35s ease;
   }
 
   .pe-ledger__segment--chip,
@@ -629,15 +687,57 @@ import { PromptEnergySceneOne } from '@/components/prompt-energy/PromptEnergySce
     opacity: 0.72;
   }
 
+  .pe-stage[data-beat="warm"] .pe-stage__connector {
+    opacity: 0.18;
+  }
+
   .pe-stage[data-beat="question"] .pe-chat__bubble,
   .pe-stage[data-beat="question"] .pe-chat__text {
     color: var(--text);
     border-color: color-mix(in srgb, var(--pe-blue) 35%, var(--border-strong));
   }
 
+  .pe-stage[data-beat="tokens"] .pe-chat__text--primary {
+    opacity: 0.28;
+  }
+
   .pe-stage[data-beat="tokens"] .pe-token-tray,
-  .pe-stage[data-beat="tokens"] .pe-token-chip {
+  .pe-stage[data-beat="capsule"] .pe-token-tray,
+  .pe-stage[data-beat="scheduler"] .pe-token-tray,
+  .pe-stage[data-beat="host"] .pe-token-tray,
+  .pe-stage[data-beat="accelerator"] .pe-token-tray,
+  .pe-stage[data-beat="zoom"] .pe-token-tray {
     opacity: 1;
+    transform: translateY(0);
+  }
+
+  .pe-stage[data-beat="tokens"] .pe-token-tray__sentence {
+    opacity: 0.28;
+    transform: translateY(0);
+  }
+
+  .pe-stage[data-beat="tokens"] .pe-token-tray__chips,
+  .pe-stage[data-beat="tokens"] .pe-token-tray__count,
+  .pe-stage[data-beat="capsule"] .pe-token-tray__chips,
+  .pe-stage[data-beat="capsule"] .pe-token-tray__count,
+  .pe-stage[data-beat="scheduler"] .pe-token-tray__chips,
+  .pe-stage[data-beat="scheduler"] .pe-token-tray__count,
+  .pe-stage[data-beat="host"] .pe-token-tray__chips,
+  .pe-stage[data-beat="host"] .pe-token-tray__count,
+  .pe-stage[data-beat="accelerator"] .pe-token-tray__chips,
+  .pe-stage[data-beat="accelerator"] .pe-token-tray__count,
+  .pe-stage[data-beat="zoom"] .pe-token-tray__chips,
+  .pe-stage[data-beat="zoom"] .pe-token-tray__count {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .pe-stage[data-beat="capsule"] .pe-token-tray__sentence,
+  .pe-stage[data-beat="scheduler"] .pe-token-tray__sentence,
+  .pe-stage[data-beat="host"] .pe-token-tray__sentence,
+  .pe-stage[data-beat="accelerator"] .pe-token-tray__sentence,
+  .pe-stage[data-beat="zoom"] .pe-token-tray__sentence {
+    opacity: 0;
   }
 
   .pe-stage[data-beat="capsule"] .pe-request,
@@ -647,6 +747,34 @@ import { PromptEnergySceneOne } from '@/components/prompt-energy/PromptEnergySce
   .pe-stage[data-beat="zoom"] .pe-request {
     opacity: 1;
     transform: translateY(0);
+  }
+
+  .pe-stage[data-beat="tokens"] .pe-stage__connector--prompt,
+  .pe-stage[data-beat="capsule"] .pe-stage__connector--prompt,
+  .pe-stage[data-beat="scheduler"] .pe-stage__connector--prompt,
+  .pe-stage[data-beat="host"] .pe-stage__connector--prompt,
+  .pe-stage[data-beat="accelerator"] .pe-stage__connector--prompt,
+  .pe-stage[data-beat="zoom"] .pe-stage__connector--prompt {
+    border-top-color: color-mix(in srgb, var(--pe-blue) 72%, transparent);
+    box-shadow: 0 0 0.8rem color-mix(in srgb, var(--pe-blue) 22%, transparent);
+    opacity: 0.9;
+  }
+
+  .pe-stage[data-beat="scheduler"] .pe-stage__connector--scheduler,
+  .pe-stage[data-beat="host"] .pe-stage__connector--scheduler,
+  .pe-stage[data-beat="accelerator"] .pe-stage__connector--scheduler,
+  .pe-stage[data-beat="zoom"] .pe-stage__connector--scheduler {
+    border-top-color: color-mix(in srgb, var(--pe-blue) 72%, transparent);
+    box-shadow: 0 0 0.8rem color-mix(in srgb, var(--pe-blue) 22%, transparent);
+    opacity: 0.9;
+  }
+
+  .pe-stage[data-beat="host"] .pe-stage__connector--dispatch,
+  .pe-stage[data-beat="accelerator"] .pe-stage__connector--dispatch,
+  .pe-stage[data-beat="zoom"] .pe-stage__connector--dispatch {
+    border-top-color: color-mix(in srgb, var(--pe-blue) 72%, transparent);
+    box-shadow: 0 0 0.8rem color-mix(in srgb, var(--pe-blue) 22%, transparent);
+    opacity: 0.9;
   }
 
   .pe-stage[data-beat="capsule"] .pe-request {
@@ -677,6 +805,7 @@ import { PromptEnergySceneOne } from '@/components/prompt-energy/PromptEnergySce
   .pe-stage[data-beat="accelerator"] .pe-scheduler__lane,
   .pe-stage[data-beat="zoom"] .pe-scheduler__lane {
     border-color: color-mix(in srgb, var(--pe-blue) 40%, var(--border-strong));
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--pe-blue) 12%, transparent);
   }
 
   .pe-stage[data-beat="host"] .pe-rack__node--host,
@@ -686,10 +815,33 @@ import { PromptEnergySceneOne } from '@/components/prompt-energy/PromptEnergySce
     box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--pe-blue) 12%, transparent);
   }
 
+  .pe-stage[data-beat="host"] .pe-rack__node--host::after,
+  .pe-stage[data-beat="accelerator"] .pe-rack__node--host::after,
+  .pe-stage[data-beat="zoom"] .pe-rack__node--host::after {
+    opacity: 0.55;
+    background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--pe-blue) 16%, transparent), transparent);
+  }
+
   .pe-stage[data-beat="accelerator"] .pe-rack__node--accelerator,
   .pe-stage[data-beat="zoom"] .pe-rack__node--accelerator {
     border-color: color-mix(in srgb, var(--pe-gold) 45%, var(--border));
     box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--pe-gold) 16%, transparent);
+  }
+
+  .pe-stage[data-beat="accelerator"] .pe-rack__node--accelerator::after,
+  .pe-stage[data-beat="zoom"] .pe-rack__node--accelerator::after {
+    opacity: 0.8;
+  }
+
+  .pe-stage[data-beat="accelerator"] .pe-rack__node--accelerator::before,
+  .pe-stage[data-beat="zoom"] .pe-rack__node--accelerator::before {
+    opacity: 0.9;
+  }
+
+  .pe-stage[data-beat="accelerator"] .pe-stage__connector--dispatch,
+  .pe-stage[data-beat="zoom"] .pe-stage__connector--dispatch {
+    border-top-color: color-mix(in srgb, var(--pe-gold) 72%, transparent);
+    box-shadow: 0 0 1rem color-mix(in srgb, var(--pe-gold) 28%, transparent);
   }
 
   .pe-stage[data-beat="zoom"] .pe-rack__zoom-ring {
