@@ -17,6 +17,14 @@ interface SectionGroup {
   subs: TOCHeading[];
 }
 
+interface ArticleMeta {
+  date: string;
+  readingTime: string;
+  length: string;
+  sourceName?: string;
+  sourceUrl?: string;
+}
+
 function groupHeadings(headings: TOCHeading[]): SectionGroup[] {
   const groups: SectionGroup[] = [];
   for (const h of headings) {
@@ -29,8 +37,9 @@ function groupHeadings(headings: TOCHeading[]): SectionGroup[] {
   return groups;
 }
 
-export function ArticleTOC({ headings }: { headings: TOCHeading[] }) {
+export function ArticleTOC({ headings, meta }: { headings: TOCHeading[]; meta: ArticleMeta }) {
   const groups = useMemo(() => groupHeadings(headings), [headings]);
+  const hasSections = groups.length > 0;
   const [activeId, setActiveId] = useState('');
   const [progress, setProgress] = useState(0);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
@@ -138,6 +147,47 @@ export function ArticleTOC({ headings }: { headings: TOCHeading[] }) {
   }, [mobileNavOpen]);
 
   const pct = Math.round(progress * 100);
+
+  if (!hasSections) {
+    return (
+      <div className="article-toc-shell">
+        <aside className="article-toc article-toc--meta" aria-label="Article information">
+          <div className="article-toc__header">
+            <span className="article-toc__eyebrow">About this post</span>
+          </div>
+
+          <div className="article-toc__entries article-toc__entries--meta">
+            <div className="article-toc__meta-row">
+              <span className="article-toc__meta-label">Date</span>
+              <span className="article-toc__meta-value">{meta.date}</span>
+            </div>
+            <div className="article-toc__meta-row">
+              <span className="article-toc__meta-label">Reading time</span>
+              <span className="article-toc__meta-value">{meta.readingTime}</span>
+            </div>
+            <div className="article-toc__meta-row">
+              <span className="article-toc__meta-label">Length</span>
+              <span className="article-toc__meta-value">{meta.length}</span>
+            </div>
+            {meta.sourceName && meta.sourceUrl && (
+              <div className="article-toc__meta-row">
+                <span className="article-toc__meta-label">Original publication</span>
+                <span className="article-toc__meta-value">
+                  <a href={meta.sourceUrl} target="_blank" rel="noopener">
+                    {meta.sourceName}
+                  </a>
+                </span>
+              </div>
+            )}
+          </div>
+
+          <div className="article-toc__footer">
+            <a href="/writing">Browse all writing</a>
+          </div>
+        </aside>
+      </div>
+    );
+  }
 
   return (
     <>

@@ -196,7 +196,7 @@ if (post.source === 'local') {
 }
 
 const isCheatSheet = post.slug === 'a-cheat-sheet-for-conversations-about';
-const hasTOC = !isCheatSheet && tocHeadings.filter(h => h.level === 'section').length >= 3;
+const hasTOC = !isCheatSheet;
 const wordCount = post.source === 'local'
   ? post.body.split(/\s+/).length
   : (post.htmlContent.replace(/<[^>]*>/g, '').split(/\s+/).length);
@@ -234,7 +234,17 @@ const standfirst = post.description?.trim() || '';
   <div class="article-page article-page--wide">
     <div class="article-grid article-grid--wide">
       <aside class="article-grid__toc">
-        <ArticleTOC client:load headings={tocHeadings} />
+        <ArticleTOC
+          client:load
+          headings={tocHeadings}
+          meta={{
+            date: formatDate(post.date),
+            readingTime: `${readingTime} min read`,
+            length: `${Math.round(wordCount / 100) / 10}k words`,
+            sourceName: post.source !== 'local' ? post.sourceName : undefined,
+            sourceUrl: post.source !== 'local' ? post.url : undefined,
+          }}
+        />
       </aside>
       <div class="article-main article-grid__main">
         <header class="article-header">
@@ -802,6 +812,11 @@ const standfirst = post.description?.trim() || '';
     overflow-y: auto;
   }
 
+  :global(.article-toc--meta) {
+    overflow-y: visible;
+    max-height: none;
+  }
+
   :global(.article-toc__header) {
     display: flex;
     justify-content: space-between;
@@ -828,6 +843,43 @@ const standfirst = post.description?.trim() || '';
     display: flex;
     flex-direction: column;
     gap: 0.85rem;
+  }
+
+  :global(.article-toc__entries--meta) {
+    gap: 1rem;
+  }
+
+  :global(.article-toc__meta-row) {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+  }
+
+  :global(.article-toc__meta-label) {
+    font-size: 0.74rem;
+    font-family: var(--font-body);
+    letter-spacing: 0.045em;
+    text-transform: uppercase;
+    color: var(--dim);
+  }
+
+  :global(.article-toc__meta-value) {
+    font-family: var(--font-editorial);
+    font-size: 1rem;
+    line-height: 1.45;
+    color: var(--text-secondary);
+  }
+
+  :global(.article-toc__meta-value a) {
+    color: inherit;
+    text-decoration: underline;
+    text-decoration-color: color-mix(in srgb, var(--accent) 60%, transparent);
+    text-underline-offset: var(--underline-offset);
+  }
+
+  :global(.article-toc__meta-value a:hover) {
+    color: var(--text);
+    text-decoration-color: var(--accent);
   }
 
   :global(.article-toc__group) {
