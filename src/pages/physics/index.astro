@@ -189,16 +189,18 @@ const totalVideos = getTotalVideoCount();
   .unit-nav__link {
     color: var(--dim);
     text-decoration: none;
-    padding: 4px 8px;
-    border-radius: 4px;
+    padding: 2px 0;
+    border-radius: 0;
+    border-bottom: 1px solid transparent;
     font-weight: 600;
-    transition: color 0.15s, background 0.15s;
+    transition: color 0.15s, border-color 0.15s;
   }
 
   .unit-nav__link:hover,
   .unit-nav__link--active {
     color: var(--accent);
-    background: var(--accent-subtle);
+    background: none;
+    border-bottom-color: var(--accent);
   }
 
   .unit-nav__sep {
@@ -242,14 +244,15 @@ const totalVideos = getTotalVideoCount();
     display: flex;
     align-items: center;
     gap: var(--space-sm);
-    padding: 8px 10px;
+    padding: 8px 0;
     font-size: 0.85rem;
     font-weight: 600;
     color: var(--text);
     cursor: pointer;
     list-style: none;
-    border-radius: 6px;
-    transition: background 0.15s, color 0.15s;
+    border-radius: 0;
+    border-bottom: 1px solid var(--border-subtle);
+    transition: color 0.15s, border-color 0.15s;
   }
 
   .subtopic__title::-webkit-details-marker {
@@ -269,8 +272,8 @@ const totalVideos = getTotalVideoCount();
   }
 
   .subtopic__title:hover {
-    background: var(--accent-subtle);
     color: var(--accent);
+    border-bottom-color: var(--accent);
   }
 
   .subtopic__count {
@@ -291,18 +294,19 @@ const totalVideos = getTotalVideoCount();
 
   .video-item {
     display: block;
-    padding: 5px 10px;
-    border-radius: 6px;
+    padding: 5px 0;
+    border-radius: 0;
+    border-bottom: 1px solid var(--border-subtle);
     text-decoration: none;
     color: var(--text);
     font-size: 0.8rem;
     line-height: 1.4;
-    transition: background 0.15s, color 0.15s;
+    transition: color 0.15s, border-color 0.15s;
   }
 
   .video-item:hover {
-    background: var(--accent-subtle);
     color: var(--accent);
+    border-bottom-color: var(--accent);
   }
 
   /* Advice content */
@@ -363,4 +367,3 @@ const totalVideos = getTotalVideoCount();
     }
   }
 </style>
-

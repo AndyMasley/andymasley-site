@@ -54,7 +54,7 @@ const maxCount = Math.max(...tagCounts.values());
   .tags-cloud {
     display: flex;
     flex-wrap: wrap;
-    gap: var(--space-md);
+    gap: 0.5rem 1rem;
     align-items: center;
   }
   
@@ -62,22 +62,23 @@ const maxCount = Math.max(...tagCounts.values());
     display: inline-flex;
     align-items: center;
     gap: var(--space-xs);
-    padding: var(--space-sm) var(--space-md);
-    background: var(--bg-secondary);
-    border: 1px solid var(--border-subtle);
-    border-radius: 6px;
-    color: var(--text-primary);
+    padding: 0 0 1px;
+    background: none;
+    border: none;
+    border-bottom: 1px solid transparent;
+    border-radius: 0;
+    color: var(--text);
     text-decoration: none;
-    transition: border-color var(--transition-fast), background-color var(--transition-fast);
+    transition: border-color var(--transition-fast), color var(--transition-fast);
   }
   
   .tag-item:hover {
     border-color: var(--accent);
-    background: var(--accent-subtle);
+    color: var(--accent);
   }
   
   .tag-count {
     font-size: 0.75em;
-    color: var(--text-tertiary);
+    color: var(--dim);
   }
 </style>

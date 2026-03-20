@@ -91,9 +91,10 @@ function formatDate(date: Date): string {
     letter-spacing: 0.1em;
     font-weight: var(--font-weight-heading);
     color: var(--accent);
-    background: var(--accent-subtle);
-    padding: 4px 8px;
-    border-radius: 4px;
+    background: none;
+    padding: 0 0 2px;
+    border-bottom: 1px solid var(--accent);
+    border-radius: 0;
   }
 
   .note-header__date {
@@ -129,14 +130,15 @@ function formatDate(date: Date): string {
     font-size: var(--font-size-ui);
     color: var(--text-secondary);
     text-decoration: none;
-    padding: var(--space-sm) var(--space-md);
-    margin-left: calc(-1 * var(--space-md));
-    border-radius: 6px;
-    transition: background-color var(--transition-fast), color var(--transition-fast);
+    padding: 0;
+    margin-left: 0;
+    border-radius: 0;
+    border-bottom: 1px solid transparent;
+    transition: color var(--transition-fast), border-color var(--transition-fast);
   }
   
   .article-nav__link:hover {
-    background: var(--bg-tertiary);
     color: var(--text-primary);
+    border-bottom-color: var(--accent);
   }
 </style>

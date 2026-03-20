@@ -98,16 +98,16 @@ function formatDate(date: Date): string {
     height: 120px;
     object-fit: cover;
     margin: 0 28px 16px 0;
-    border-radius: 10px;
-    box-shadow: var(--shadow-lg);
-    border: 2px solid var(--bg-elevated);
-    outline: 1px solid var(--border);
-    transition: transform var(--transition-medium), box-shadow var(--transition-medium);
+    border-radius: 0;
+    box-shadow: none;
+    border: 1px solid var(--border-strong);
+    outline: 1px solid var(--border-subtle);
+    transition: opacity var(--transition-fast), border-color var(--transition-fast);
   }
 
   .headshot:hover {
-    transform: scale(1.02);
-    box-shadow: var(--shadow-xl);
+    opacity: 0.92;
+    border-color: var(--accent);
   }
 
   .home-intro sup {
