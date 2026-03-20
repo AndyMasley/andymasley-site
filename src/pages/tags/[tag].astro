@@ -1,10 +1,10 @@
 ---
 import Base from '@/layouts/Base.astro';
-import { getCollection } from 'astro:content';
+import { getOptionalCollection } from '@/lib/optional-collection';
 
 export async function getStaticPaths() {
-  const writing = await getCollection('writing');
-  const notes = await getCollection('notes');
+  const writing = await getOptionalCollection('writing');
+  const notes = await getOptionalCollection('notes');
 
   // Collect all unique tags
   const allTags = new Set<string>();
@@ -25,8 +25,8 @@ interface Props {
 const { tag } = Astro.props;
 
 // Get all content with this tag
-const writing = await getCollection('writing', ({ data }) => !data.draft && data.tags.includes(tag));
-const notes = await getCollection('notes', ({ data }) => !data.draft && data.tags.includes(tag));
+const writing = await getOptionalCollection('writing', ({ data }) => !data.draft && data.tags.includes(tag));
+const notes = await getOptionalCollection('notes', ({ data }) => !data.draft && data.tags.includes(tag));
 
 // Combine and sort by date
 const allItems = [

@@ -1,18 +1,15 @@
 ---
 import Base from '@/layouts/Base.astro';
-import { getCollection } from 'astro:content';
+import { getOptionalCollection } from '@/lib/optional-collection';
 
 // Get all content with tags
-const writing = await getCollection('writing', ({ data }) => !data.draft);
-const music = await getCollection('music', ({ data }) => !data.draft);
-const film = await getCollection('film', ({ data }) => !data.draft);
-const books = await getCollection('books', ({ data }) => !data.draft);
-const notes = await getCollection('notes', ({ data }) => !data.draft);
+const writing = await getOptionalCollection('writing', ({ data }) => !data.draft);
+const notes = await getOptionalCollection('notes', ({ data }) => !data.draft);
 
 // Combine all tags with counts
 const tagCounts = new Map<string, number>();
 
-[...writing, ...music, ...film, ...books, ...notes].forEach(item => {
+[...writing, ...notes].forEach(item => {
   item.data.tags.forEach(tag => {
     tagCounts.set(tag, (tagCounts.get(tag) || 0) + 1);
   });
@@ -31,7 +28,7 @@ const maxCount = Math.max(...tagCounts.values());
 <Base title="Tags" description="Browse all content by tag" ogImage="/images/og/og-tags.png">
   <div class="container container--wide">
     <p class="page-intro">
-      Browse content by topic. {tagCounts.size} tags across {writing.length + music.length + film.length + books.length + notes.length} items.
+      Browse content by topic. {tagCounts.size} tags across {writing.length + notes.length} items.
     </p>
 
     <div class="tags-cloud stagger-in">

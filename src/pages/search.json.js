@@ -2,6 +2,7 @@ import { getCollection } from 'astro:content';
 import { fetchSubstackPosts, fetchPostContent } from '@/lib/substack';
 import { fetchEAForumPosts, fetchEAForumPostContent } from '@/lib/eaforum';
 import { getMetaPostSlugs } from '@/lib/meta-posts';
+import { getOptionalCollection } from '@/lib/optional-collection';
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -74,7 +75,7 @@ function extractAstroContent(filePath, maxLength = 2000) {
 }
 
 export async function GET() {
-  const writing = await getCollection('writing', ({ data }) => !data.draft);
+  const writing = await getOptionalCollection('writing', ({ data }) => !data.draft);
   const notes = await getCollection('notes', ({ data }) => !data.draft);
   const physics = await getCollection('physics', ({ data }) => !data.draft);
 
@@ -83,8 +84,11 @@ export async function GET() {
   const metaSlugs = getMetaPostSlugs();
 
   // Fetch external posts
-  const substackPosts = await fetchSubstackPosts();
-  const eaForumPosts = await fetchEAForumPosts();
+  const [substackPosts, eaForumPosts] = await Promise.all([
+    fetchSubstackPosts(),
+    fetchEAForumPosts()
+  ]);
+  const substackSlugSet = new Set(substackPosts.map(post => post.slug));
 
   // Build search index with content
   const searchIndex = [];
@@ -220,7 +224,7 @@ export async function GET() {
 
   // EA Forum posts with cached content
   for (const item of eaForumPosts) {
-    if (localWritingSlugs.includes(item.slug) || substackPosts.some(s => s.slug === item.slug)) continue;
+    if (localWritingSlugs.includes(item.slug) || substackSlugSet.has(item.slug)) continue;
 
     const htmlContent = await fetchEAForumPostContent(item.postId);
     searchIndex.push({

@@ -49,6 +49,10 @@ const GRAPHQL_ENDPOINT = 'https://forum-bots.effectivealtruism.org/graphql';
 // In-memory cache for current build
 let memoryCache: EAForumPost[] | null = null;
 
+function restoreCachedPosts(cached: CachedPosts): EAForumPost[] {
+  return cached.posts.map(post => ({ ...post, date: new Date(post.date) }));
+}
+
 export async function fetchEAForumPosts(): Promise<EAForumPost[]> {
   // Return memory cache if available (same build)
   if (memoryCache !== null) {
@@ -57,16 +61,16 @@ export async function fetchEAForumPosts(): Promise<EAForumPost[]> {
 
   ensureCacheDir();
 
-  // Check file cache
+  // Load existing cache for freshness check and stale fallback
+  let existingCache: CachedPosts | null = null;
   if (existsSync(POSTS_CACHE_FILE)) {
     try {
-      const cached: CachedPosts = JSON.parse(readFileSync(POSTS_CACHE_FILE, 'utf-8'));
-      const age = Date.now() - cached.timestamp;
+      existingCache = JSON.parse(readFileSync(POSTS_CACHE_FILE, 'utf-8'));
+      const age = Date.now() - existingCache.timestamp;
 
       if (age < CACHE_TTL) {
         console.log(`Using cached EA Forum posts list (${Math.round(age / 1000)}s old)`);
-        // Restore Date objects
-        const posts = cached.posts.map(p => ({ ...p, date: new Date(p.date) }));
+        const posts = restoreCachedPosts(existingCache);
         memoryCache = posts;
         return posts;
       }
@@ -75,55 +79,90 @@ export async function fetchEAForumPosts(): Promise<EAForumPost[]> {
     }
   }
 
-  // Inline the user ID directly in the query (simpler, avoids variable issues)
-  const query = `{
-    posts(input: {
-      terms: {
-        userId: "${USER_ID}",
-        view: "userPosts",
-        limit: 50
-      }
-    }) {
-      results {
-        _id
-        title
-        slug
-        postedAt
-        isEvent
-      }
-    }
-  }`;
-
   try {
     console.log('Fetching posts list from EA Forum API...');
-    const response = await fetch(GRAPHQL_ENDPOINT, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ query })
-    });
+    const eaForumPosts: EAForumPost[] = [];
+    const limit = 50;
+    let offset = 0;
+    let hasMore = true;
 
-    if (!response.ok) {
-      console.error(`EA Forum API error: ${response.status}`);
-      return [];
+    while (hasMore) {
+      const query = `{
+        posts(input: {
+          terms: {
+            userId: "${USER_ID}",
+            view: "userPosts",
+            limit: ${limit},
+            offset: ${offset}
+          }
+        }) {
+          results {
+            _id
+            title
+            slug
+            postedAt
+            isEvent
+          }
+        }
+      }`;
+
+      const response = await fetch(GRAPHQL_ENDPOINT, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ query })
+      });
+
+      if (!response.ok) {
+        console.error(`EA Forum API error: ${response.status}`);
+        break;
+      }
+
+      const data = await response.json();
+      if (Array.isArray(data?.errors) && data.errors.length > 0) {
+        console.error('EA Forum GraphQL returned errors');
+        break;
+      }
+
+      const posts: GraphQLPost[] = data?.data?.posts?.results || [];
+      if (!Array.isArray(posts) || posts.length === 0) {
+        hasMore = false;
+        break;
+      }
+
+      eaForumPosts.push(
+        ...posts
+          .filter(post => !post.isEvent)
+          .map(post => ({
+            title: post.title,
+            slug: post.slug,
+            date: new Date(post.postedAt),
+            url: `https://forum.effectivealtruism.org/posts/${post._id}/${post.slug}`,
+            postId: post._id,
+            isEvent: post.isEvent,
+            source: 'eaforum' as const,
+          }))
+      );
+
+      offset += limit;
+      if (posts.length < limit) {
+        hasMore = false;
+      }
     }
 
-    const data = await response.json();
-    const posts: GraphQLPost[] = data?.data?.posts?.results || [];
+    eaForumPosts.sort((a, b) => b.date.getTime() - a.date.getTime());
 
-    // Filter out events and return posts
-    const eaForumPosts = posts
-      .filter(post => !post.isEvent)
-      .map(post => ({
-        title: post.title,
-        slug: post.slug,
-        date: new Date(post.postedAt),
-        url: `https://forum.effectivealtruism.org/posts/${post._id}/${post.slug}`,
-        postId: post._id,
-        isEvent: post.isEvent,
-        source: 'eaforum' as const,
-      }));
+    if (eaForumPosts.length === 0) {
+      if (existingCache && existingCache.posts.length > 0) {
+        console.warn('EA Forum API returned 0 posts, using stale cache');
+        const posts = restoreCachedPosts(existingCache);
+        memoryCache = posts;
+        return posts;
+      }
+      console.error('EA Forum API returned 0 posts and no cache available');
+      return [];
+    }
 
     // Save to file cache
     const cacheData: CachedPosts = {
@@ -138,6 +177,14 @@ export async function fetchEAForumPosts(): Promise<EAForumPost[]> {
     return eaForumPosts;
   } catch (error) {
     console.error('Failed to fetch EA Forum posts:', error);
+
+    if (existingCache && existingCache.posts.length > 0) {
+      console.log(`Using stale EA Forum cache (${existingCache.posts.length} posts) after API failure`);
+      const posts = restoreCachedPosts(existingCache);
+      memoryCache = posts;
+      return posts;
+    }
+
     return [];
   }
 }

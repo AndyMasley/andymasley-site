@@ -1,12 +1,12 @@
 ---
 import Base from '@/layouts/Base.astro';
-import { getCollection } from 'astro:content';
 import { fetchSubstackPosts, fetchPostContent, processPostContent, type SubstackPost } from '@/lib/substack';
 import { fetchEAForumPosts, fetchEAForumPostContent, processEAForumContent, type EAForumPost } from '@/lib/eaforum';
 import { getMetaPostSlugs } from '@/lib/meta-posts';
 import { CheatSheetExplorer } from '@/components/CheatSheetExplorer';
 import { ArticleTOC } from '@/components/ArticleTOC';
 import { extractHeadingsFromHtml, type TOCHeading } from '@/lib/extract-headings';
+import { getOptionalCollection } from '@/lib/optional-collection';
 
 // Union type for all post sources
 type PostSource = 'local' | 'substack' | 'eaforum';
@@ -38,8 +38,13 @@ type Post = LocalPost | ExternalPost;
 export async function getStaticPaths() {
   const paths: Array<{ params: { slug: string }; props: { post: Post } }> = [];
 
-  // 1. Get local content collection posts
-  const localPosts = await getCollection('writing');
+  // 1. Get post lists from all sources
+  const [localPosts, substackPosts, eaForumPosts] = await Promise.all([
+    getOptionalCollection('writing'),
+    fetchSubstackPosts(),
+    fetchEAForumPosts()
+  ]);
+
   for (const post of localPosts) {
     paths.push({
       params: { slug: post.slug },
@@ -60,7 +65,6 @@ export async function getStaticPaths() {
 
   // 2. Get Substack posts
   const metaSlugs = getMetaPostSlugs();
-  const substackPosts = await fetchSubstackPosts();
 
   for (const post of substackPosts) {
     // Skip meta posts and posts that conflict with local content
@@ -89,8 +93,6 @@ export async function getStaticPaths() {
   }
 
   // 3. Get EA Forum posts
-  const eaForumPosts = await fetchEAForumPosts();
-
   for (const post of eaForumPosts) {
     // Skip posts that conflict with existing paths
     if (paths.some(p => p.params.slug === post.slug)) continue;
