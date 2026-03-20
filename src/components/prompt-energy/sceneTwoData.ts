@@ -19,6 +19,7 @@ export interface SceneTwoBeat {
   body: string;
   caption: string;
   viewMode: RackViewMode;
+  overlayMode: 'row' | 'request' | 'fabric' | 'power' | 'rear-service' | 'coolant' | 'hybrid' | 'tray';
   highlighted: RackSubsystem;
   rackPowerKw: number;
   rackFact: string;
@@ -84,6 +85,7 @@ export const SCENE_TWO_BEATS: SceneTwoBeat[] = [
     body: 'The accelerator from Scene 1 turns out to live inside one rack of a much larger serving aisle.',
     caption: 'The chosen rack emerges from a larger row.',
     viewMode: 'front',
+    overlayMode: 'row',
     highlighted: 'row',
     rackPowerKw: 118,
     rackFact: 'Rack-scale AI system class.',
@@ -95,6 +97,7 @@ export const SCENE_TWO_BEATS: SceneTwoBeat[] = [
     body: 'The rack holds compute trays, switch fabric, power conversion, and cooling infrastructure as one coordinated machine boundary.',
     caption: 'This is not just a cabinet around the machine.',
     viewMode: 'front',
+    overlayMode: 'request',
     highlighted: 'rack',
     rackPowerKw: 120,
     rackFact: 'Roughly 120 kW rack power class.',
@@ -106,6 +109,7 @@ export const SCENE_TWO_BEATS: SceneTwoBeat[] = [
     body: 'The serving path targets one highlighted tray. The top management modules are visible, but they are not carrying the main request.',
     caption: 'The selected tray is the first true hardware landing point.',
     viewMode: 'front',
+    overlayMode: 'request',
     highlighted: 'tray',
     rackPowerKw: 120,
     rackFact: 'One tray highlighted inside one rack.',
@@ -117,6 +121,7 @@ export const SCENE_TWO_BEATS: SceneTwoBeat[] = [
     body: 'Once the tray is active, the rack-scale fabric around it matters too. The tray is part of a broader high-bandwidth internal network.',
     caption: 'The selected tray participates in a larger compute fabric.',
     viewMode: 'split',
+    overlayMode: 'fabric',
     highlighted: 'fabric',
     rackPowerKw: 120,
     rackFact: 'Compute trays and switch trays work together.',
@@ -128,6 +133,7 @@ export const SCENE_TWO_BEATS: SceneTwoBeat[] = [
     body: 'External power reaches the shelves first, converts into the rack’s internal distribution path, and then spreads through the bus bar before the selected tray uses its share.',
     caption: 'Power is broad and infrastructural, not a narrow request line.',
     viewMode: 'xray',
+    overlayMode: 'power',
     highlighted: 'power',
     rackPowerKw: 120,
     rackFact: 'Power shelves feed a shared bus-bar path.',
@@ -139,6 +145,7 @@ export const SCENE_TWO_BEATS: SceneTwoBeat[] = [
     body: 'The back of the rack is where the manifolds, cable service paths, cable cartridges, and bus-bar access become visible.',
     caption: 'The cooling and service truth lives at the rear.',
     viewMode: 'rear',
+    overlayMode: 'rear-service',
     highlighted: 'manifold',
     rackPowerKw: 120,
     rackFact: 'Rear manifolds distribute coolant through the rack.',
@@ -150,6 +157,7 @@ export const SCENE_TWO_BEATS: SceneTwoBeat[] = [
     body: 'Coolant is routed through the manifold and into the selected tray, then returned through the rack-side loop instead of touching electronics directly.',
     caption: 'Closed-loop coolant path through the rear manifold.',
     viewMode: 'rear',
+    overlayMode: 'coolant',
     highlighted: 'coolant',
     rackPowerKw: 120,
     rackFact: 'Rack-side coolant loop, not immersion.',
@@ -161,6 +169,7 @@ export const SCENE_TWO_BEATS: SceneTwoBeat[] = [
     body: 'The tray’s hottest compute hardware gets liquid attention, while power, networking, and support hardware still rely on airflow.',
     caption: 'Hybrid liquid plus air cooling, not a fully wet rack.',
     viewMode: 'xray',
+    overlayMode: 'hybrid',
     highlighted: 'hybrid',
     rackPowerKw: 120,
     rackFact: 'Hybrid cooling keeps the hottest zones targeted.',
@@ -172,6 +181,7 @@ export const SCENE_TWO_BEATS: SceneTwoBeat[] = [
     body: 'The rack has done its job. One compute tray becomes the obvious next zoom target for board, package, and chip-level detail.',
     caption: 'Next: pull out the tray and open the hardware.',
     viewMode: 'split',
+    overlayMode: 'tray',
     highlighted: 'tray',
     rackPowerKw: 120,
     rackFact: 'Scene 3 starts from the selected tray.',
