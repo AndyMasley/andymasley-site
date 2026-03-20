@@ -295,21 +295,13 @@ const defaultExpandedYear = postsByYear.some(group => group.year === currentYear
   </section>
 
   {guideCards.length > 0 && (
-    <section class="writing-section writing-section--guides" aria-labelledby="guides-heading">
-      <header class="writing-section__header">
-        <div>
-          <h2 class="writing-section__title" id="guides-heading">Guides</h2>
-          <p class="writing-section__description">Longer overview pieces that map the themes I return to most often.</p>
-        </div>
-      </header>
-
+    <section class="writing-section writing-section--guides" aria-label="Guides">
       <ul class="guide-list">
         {guideCards.map(guide => (
           <li class="guide-list__item">
             <h3 class="guide-list__title">
               <a href={guide.url}>{guide.title}</a>
             </h3>
-            <p class="guide-list__summary">{guide.preview}</p>
           </li>
         ))}
       </ul>
@@ -648,11 +640,10 @@ const defaultExpandedYear = postsByYear.some(group => group.year === currentYear
     margin: 0;
     padding: 0;
     list-style: none;
-    border-top: 1px solid var(--border-subtle);
   }
 
   .guide-list__item {
-    padding: 0.95rem 0 1rem;
+    padding: 0;
     border-bottom: 1px solid var(--border-subtle);
   }
 
@@ -673,11 +664,6 @@ const defaultExpandedYear = postsByYear.some(group => group.year === currentYear
 
   .guide-list__title a:hover {
     color: var(--accent);
-  }
-
-  .guide-list__summary {
-    margin: 0.45rem 0 0;
-    color: var(--text-secondary);
   }
 
   .bylines-list {
