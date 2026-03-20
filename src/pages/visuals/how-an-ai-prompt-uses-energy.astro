@@ -1,6 +1,6 @@
 ---
 import Base from '@/layouts/Base.astro';
-import { PromptEnergySceneOne } from '@/components/prompt-energy/PromptEnergySceneOne';
+import { PromptEnergyStory } from '@/components/prompt-energy/PromptEnergyStory';
 ---
 
 <Base
@@ -12,11 +12,11 @@ import { PromptEnergySceneOne } from '@/components/prompt-energy/PromptEnergySce
     <header class="pe-page__header">
       <h1 class="pe-page__title">How an AI prompt uses energy</h1>
       <p class="pe-page__intro">
-        A zoomable story about how one prompt moves through a live AI serving system. This first scene tracks the request from chat box to accelerator handoff and keeps the measurement boundary visible the whole time.
+        A zoomable story about how one prompt moves through a live AI serving system. The first two scenes track the request from chat box to accelerator handoff and then into the rack that holds the tray, power path, and cooling loop around it.
       </p>
     </header>
 
-    <PromptEnergySceneOne client:load />
+    <PromptEnergyStory client:load />
   </article>
 </Base>
 
@@ -1111,6 +1111,981 @@ import { PromptEnergySceneOne } from '@/components/prompt-energy/PromptEnergySce
     }
   }
 
+  .pe-scene-two {
+    --pe2-blue: #5e8dd7;
+    --pe2-gold: #b8892f;
+    --pe2-heat: #bf6c4a;
+    --pe2-cool: #5e9fb0;
+    --pe2-air: #b8bbb9;
+    --pe2-panel: color-mix(in srgb, var(--bg-subtle) 92%, transparent);
+    --pe2-shadow: 0 14px 34px -28px rgba(26, 25, 24, 0.35);
+    margin-top: 4rem;
+    padding-top: 2.4rem;
+    border-top: 1px solid var(--border);
+  }
+
+  [data-theme="dark"] .pe-scene-two {
+    --pe2-blue: #8fb4ec;
+    --pe2-gold: #d4ab57;
+    --pe2-heat: #d48b69;
+    --pe2-cool: #7abfd1;
+    --pe2-air: #b2b6b3;
+    --pe2-shadow: 0 18px 40px -30px rgba(0, 0, 0, 0.72);
+  }
+
+  .pe2-intro {
+    max-width: 42rem;
+    margin-bottom: 2rem;
+  }
+
+  .pe2-eyebrow,
+  .pe2-step__meta,
+  .pe2-stage__progress-label,
+  .pe2-ledger__eyebrow,
+  .pe2-stage__spotlight-kicker,
+  .pe2-stage__handoff-title,
+  .pe2-air-compare__eyebrow {
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--dim);
+    font-family: var(--font-body);
+  }
+
+  .pe2-title {
+    margin: 0 0 0.75rem;
+    font-family: var(--font-editorial);
+    font-size: clamp(1.85rem, 1.55rem + 0.9vw, 2.8rem);
+    line-height: 1.08;
+    letter-spacing: -0.035em;
+  }
+
+  .pe2-lede {
+    max-width: 40rem;
+    margin: 0;
+    font-family: var(--font-editorial);
+    font-size: 1rem;
+    line-height: 1.72;
+    color: var(--text-secondary);
+  }
+
+  .pe2-layout {
+    display: grid;
+    grid-template-columns: minmax(16rem, 21rem) minmax(0, 1fr);
+    gap: clamp(1.25rem, 2.3vw, 2.5rem);
+    align-items: start;
+  }
+
+  .pe2-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+
+  .pe2-step {
+    min-height: 68vh;
+    padding: 1.1rem 1rem 1.25rem 0;
+    border-top: 1px solid var(--border);
+    opacity: 0.52;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+  }
+
+  .pe2-step--active {
+    opacity: 1;
+    transform: translateX(0);
+  }
+
+  .pe2-step__title {
+    margin: 0.4rem 0 0.65rem;
+    font-family: var(--font-editorial);
+    font-size: clamp(1.35rem, 1.2rem + 0.35vw, 1.7rem);
+    line-height: 1.16;
+    letter-spacing: -0.025em;
+  }
+
+  .pe2-step__body {
+    margin: 0;
+    max-width: 27rem;
+    font-family: var(--font-editorial);
+    font-size: 1rem;
+    line-height: 1.76;
+    color: var(--text-secondary);
+  }
+
+  .pe2-sticky {
+    position: sticky;
+    top: 1.25rem;
+    min-width: 0;
+  }
+
+  .pe2-stage {
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 18rem;
+    gap: 1rem;
+    padding: 1rem;
+    border: 1px solid var(--border);
+    background: var(--pe2-panel);
+    box-shadow: var(--pe2-shadow);
+    overflow: hidden;
+  }
+
+  .pe2-stage__topline,
+  .pe2-stage__legend,
+  .pe2-stage__controls,
+  .pe2-stage__map,
+  .pe2-stage__spotlight,
+  .pe2-stage__handoff {
+    grid-column: 1 / 2;
+  }
+
+  .pe2-ledger {
+    grid-column: 2 / 3;
+    grid-row: 1 / span 6;
+    align-self: start;
+    padding: 0.9rem;
+    border: 1px solid var(--border);
+    background: var(--bg);
+  }
+
+  .pe2-stage__topline {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    align-items: flex-start;
+    padding-bottom: 0.8rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .pe2-stage__progress {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .pe2-stage__progress-dots {
+    display: inline-flex;
+    gap: 0.35rem;
+  }
+
+  .pe2-stage__progress-dot {
+    width: 0.4rem;
+    height: 0.4rem;
+    border: 1px solid var(--border-strong);
+    background: transparent;
+  }
+
+  .pe2-stage__progress-dot--active {
+    background: var(--accent);
+    border-color: var(--accent);
+  }
+
+  .pe2-stage__caption {
+    max-width: 26rem;
+    font-size: 0.88rem;
+    line-height: 1.6;
+    color: var(--text-secondary);
+  }
+
+  .pe2-stage__legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.85rem 1.1rem;
+    padding: 0.85rem 0 0.25rem;
+  }
+
+  .pe2-stage__legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-size: 0.8rem;
+    line-height: 1.4;
+    color: var(--text-secondary);
+  }
+
+  .pe2-stage__legend-swatch {
+    width: 0.8rem;
+    height: 0.8rem;
+    border: 1px solid transparent;
+  }
+
+  .pe2-stage__legend-swatch--data {
+    background: color-mix(in srgb, var(--pe2-blue) 22%, transparent);
+    border-color: color-mix(in srgb, var(--pe2-blue) 65%, transparent);
+  }
+
+  .pe2-stage__legend-swatch--power {
+    background: color-mix(in srgb, var(--pe2-gold) 22%, transparent);
+    border-color: color-mix(in srgb, var(--pe2-gold) 70%, transparent);
+  }
+
+  .pe2-stage__legend-swatch--heat {
+    background: color-mix(in srgb, var(--pe2-heat) 22%, transparent);
+    border-color: color-mix(in srgb, var(--pe2-heat) 68%, transparent);
+  }
+
+  .pe2-stage__legend-swatch--coolant {
+    background: color-mix(in srgb, var(--pe2-cool) 22%, transparent);
+    border-color: color-mix(in srgb, var(--pe2-cool) 68%, transparent);
+  }
+
+  .pe2-stage__legend-swatch--air {
+    background: color-mix(in srgb, var(--pe2-air) 25%, transparent);
+    border-color: color-mix(in srgb, var(--pe2-air) 68%, transparent);
+  }
+
+  .pe2-stage__controls {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    align-items: center;
+    padding-top: 0.2rem;
+  }
+
+  .pe2-stage__view-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+
+  .pe2-stage__view-button,
+  .pe2-stage__compare-button {
+    padding: 0.5rem 0.7rem;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 0.76rem;
+    line-height: 1.2;
+    font-family: var(--font-body);
+  }
+
+  .pe2-stage__view-button.is-active,
+  .pe2-stage__compare-button.is-active {
+    border-color: var(--accent);
+    color: var(--text);
+    box-shadow: inset 0 -1px 0 var(--accent);
+  }
+
+  .pe2-stage__view-button--ghost {
+    color: var(--dim);
+  }
+
+  .pe2-stage__map {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .pe2-aisle {
+    display: flex;
+    gap: 0.85rem;
+    padding: 0.2rem 0 0.35rem;
+    opacity: 0.7;
+  }
+
+  .pe2-aisle__rack {
+    width: 4.3rem;
+    height: 8.8rem;
+    border: 1px solid var(--border);
+    background: linear-gradient(180deg, color-mix(in srgb, var(--bg-subtle) 94%, transparent), transparent 55%), var(--bg);
+  }
+
+  .pe2-aisle__rack--muted {
+    opacity: 0.34;
+  }
+
+  .pe2-aisle__rack--hero,
+  .pe2-aisle.is-active .pe2-aisle__rack--hero {
+    border-color: color-mix(in srgb, var(--pe2-blue) 45%, var(--border));
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--pe2-blue) 14%, transparent);
+  }
+
+  .pe2-stage__hero {
+    display: flex;
+    gap: 1rem;
+    align-items: stretch;
+  }
+
+  .pe2-rack-shell {
+    position: relative;
+    width: 24rem;
+    height: 43rem;
+    flex-shrink: 0;
+    border: 1px solid var(--border-strong);
+    background: linear-gradient(180deg, color-mix(in srgb, var(--bg-subtle) 90%, transparent), transparent 30%), var(--bg);
+    overflow: hidden;
+  }
+
+  .pe2-rack-shell--compact {
+    width: 18rem;
+    height: 32rem;
+  }
+
+  .pe2-rack-shell--front::after,
+  .pe2-rack-shell--rear::after,
+  .pe2-rack-shell--xray::after {
+    content: '';
+    position: absolute;
+    inset: 0.7rem;
+    border: 1px solid color-mix(in srgb, var(--border) 75%, transparent);
+    pointer-events: none;
+  }
+
+  .pe2-rack-shell__cap,
+  .pe2-rack-shell__switch-band,
+  .pe2-rack-shell__power-band {
+    position: absolute;
+    left: 1.2rem;
+    right: 1.2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--dim);
+    border: 1px solid var(--border);
+    background: color-mix(in srgb, var(--bg) 94%, transparent);
+  }
+
+  .pe2-rack-shell__cap {
+    top: 1.2rem;
+    height: 3.6rem;
+  }
+
+  .pe2-rack-shell__switch-band {
+    top: 5.6rem;
+    height: 4.4rem;
+  }
+
+  .pe2-rack-shell__compute {
+    position: absolute;
+    left: 1.2rem;
+    right: 1.2rem;
+    top: 10.8rem;
+    bottom: 7.4rem;
+    display: grid;
+    gap: 0.6rem;
+    grid-template-rows: repeat(8, 1fr);
+  }
+
+  .pe2-rack-shell__tray {
+    position: relative;
+    border: 1px solid var(--border);
+    background: color-mix(in srgb, var(--bg) 93%, transparent);
+  }
+
+  .pe2-rack-shell__tray span {
+    position: absolute;
+    inset: 0.55rem 0.75rem;
+    border: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
+    display: block;
+  }
+
+  .pe2-rack-shell__tray--selected {
+    border-color: color-mix(in srgb, var(--pe2-blue) 45%, var(--border));
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--pe2-blue) 15%, transparent);
+  }
+
+  .pe2-rack-shell__tray--pulled {
+    transform: translateX(0.55rem);
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--pe2-gold) 18%, transparent), 0 10px 18px -16px rgba(0, 0, 0, 0.35);
+  }
+
+  .pe2-rack-shell__power-band {
+    bottom: 1.2rem;
+    height: 4.5rem;
+  }
+
+  .pe2-zone {
+    position: absolute;
+    border: 1px solid transparent;
+    background: transparent;
+    cursor: pointer;
+  }
+
+  .pe2-zone.is-active {
+    border-color: var(--accent);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 24%, transparent);
+  }
+
+  .pe2-zone:focus-visible {
+    outline: 1px solid var(--accent);
+    outline-offset: 1px;
+  }
+
+  .pe2-zone--management {
+    left: 1.1rem;
+    right: 1.1rem;
+    top: 1.1rem;
+    height: 3.8rem;
+  }
+
+  .pe2-zone--fabric {
+    left: 1.1rem;
+    right: 1.1rem;
+    top: 5.5rem;
+    height: 4.6rem;
+  }
+
+  .pe2-zone--tray {
+    left: 1.1rem;
+    right: 1.1rem;
+    top: 23.3rem;
+    height: 3.8rem;
+  }
+
+  .pe2-zone--power {
+    left: 1.1rem;
+    right: 1.1rem;
+    bottom: 1.1rem;
+    height: 4.7rem;
+  }
+
+  .pe2-rear__manifold,
+  .pe2-rear__busbar,
+  .pe2-rear__spine {
+    position: absolute;
+    top: 1.3rem;
+    bottom: 1.3rem;
+  }
+
+  .pe2-rear__manifold {
+    width: 1rem;
+    background: color-mix(in srgb, var(--pe2-cool) 22%, var(--bg));
+    border: 1px solid color-mix(in srgb, var(--pe2-cool) 50%, var(--border));
+  }
+
+  .pe2-rear__manifold--left {
+    left: 1.6rem;
+  }
+
+  .pe2-rear__manifold--right {
+    right: 1.6rem;
+  }
+
+  .pe2-rear__busbar {
+    right: 4.2rem;
+    width: 0.55rem;
+    background: color-mix(in srgb, var(--pe2-gold) 35%, var(--bg));
+    border: 1px solid color-mix(in srgb, var(--pe2-gold) 60%, var(--border));
+  }
+
+  .pe2-rear__spine {
+    width: 1.1rem;
+    background: color-mix(in srgb, var(--border) 42%, transparent);
+    border: 1px solid var(--border);
+  }
+
+  .pe2-rear__spine--one {
+    left: 6rem;
+  }
+
+  .pe2-rear__spine--two {
+    left: 8rem;
+  }
+
+  .pe2-rear__modules {
+    position: absolute;
+    left: 10rem;
+    right: 5.4rem;
+    top: 1.8rem;
+    bottom: 1.8rem;
+    display: grid;
+    grid-template-rows: repeat(8, 1fr);
+    gap: 0.55rem;
+  }
+
+  .pe2-rear__module {
+    border: 1px solid var(--border);
+    background: color-mix(in srgb, var(--bg) 93%, transparent);
+  }
+
+  .pe2-rear__module--selected {
+    border-color: color-mix(in srgb, var(--pe2-blue) 48%, var(--border));
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--pe2-blue) 16%, transparent);
+  }
+
+  .pe2-zone--manifold {
+    left: 1.2rem;
+    width: 2rem;
+    top: 1.1rem;
+    bottom: 1.1rem;
+  }
+
+  .pe2-zone--coolant {
+    left: 0.9rem;
+    right: 0.9rem;
+    top: 22.8rem;
+    height: 4.6rem;
+  }
+
+  .pe2-zone--rear-power {
+    right: 3.2rem;
+    width: 1.8rem;
+    top: 1.1rem;
+    bottom: 1.1rem;
+  }
+
+  .pe2-zone--rear-tray {
+    left: 9.8rem;
+    right: 5rem;
+    top: 23rem;
+    height: 3.8rem;
+  }
+
+  .pe2-xray__shell,
+  .pe2-xray__switches,
+  .pe2-xray__compute,
+  .pe2-xray__power,
+  .pe2-xray__manifold,
+  .pe2-xray__heat,
+  .pe2-xray__air {
+    position: absolute;
+  }
+
+  .pe2-xray__shell {
+    inset: 1.2rem;
+    border: 1px solid color-mix(in srgb, var(--border) 55%, transparent);
+    background: color-mix(in srgb, var(--bg) 60%, transparent);
+    opacity: 0.76;
+  }
+
+  .pe2-xray__switches {
+    left: 3.2rem;
+    right: 3.2rem;
+    top: 5.8rem;
+    height: 4.2rem;
+    border: 1px solid color-mix(in srgb, var(--pe2-blue) 38%, var(--border));
+    background: color-mix(in srgb, var(--pe2-blue) 10%, transparent);
+  }
+
+  .pe2-xray__compute {
+    left: 4rem;
+    right: 4rem;
+    height: 5.5rem;
+    border: 1px solid color-mix(in srgb, var(--pe2-blue) 35%, var(--border));
+    background: color-mix(in srgb, var(--pe2-blue) 8%, transparent);
+  }
+
+  .pe2-xray__compute--one { top: 13rem; }
+  .pe2-xray__compute--two { top: 19.3rem; }
+  .pe2-xray__compute--three { top: 25.6rem; }
+  .pe2-xray__compute--four { top: 31.9rem; }
+
+  .pe2-xray__power {
+    left: 3.2rem;
+    right: 3.2rem;
+    bottom: 2rem;
+    height: 4.6rem;
+    border: 1px solid color-mix(in srgb, var(--pe2-gold) 42%, var(--border));
+    background: color-mix(in srgb, var(--pe2-gold) 12%, transparent);
+  }
+
+  .pe2-xray__manifold {
+    top: 1.8rem;
+    bottom: 1.8rem;
+    width: 0.9rem;
+    border: 1px solid color-mix(in srgb, var(--pe2-cool) 50%, var(--border));
+    background: color-mix(in srgb, var(--pe2-cool) 14%, transparent);
+  }
+
+  .pe2-xray__manifold--left { left: 1.8rem; }
+  .pe2-xray__manifold--right { right: 1.8rem; }
+
+  .pe2-xray__heat {
+    left: 6rem;
+    right: 6rem;
+    top: 25.3rem;
+    height: 6.2rem;
+    opacity: 0;
+    background: radial-gradient(circle at center, color-mix(in srgb, var(--pe2-heat) 40%, transparent), transparent 72%);
+    filter: blur(10px);
+  }
+
+  .pe2-xray__heat.is-hot {
+    opacity: 1;
+  }
+
+  .pe2-xray__air {
+    left: 1.7rem;
+    right: 1.7rem;
+    top: 1.7rem;
+    bottom: 1.7rem;
+    opacity: 0;
+    background:
+      linear-gradient(90deg, transparent 0, color-mix(in srgb, var(--pe2-air) 18%, transparent) 14%, transparent 28%),
+      linear-gradient(90deg, transparent 62%, color-mix(in srgb, var(--pe2-air) 18%, transparent) 74%, transparent 88%);
+  }
+
+  .pe2-xray__air.is-active {
+    opacity: 1;
+  }
+
+  .pe2-zone--xray-tray {
+    left: 3.8rem;
+    right: 3.8rem;
+    top: 25.3rem;
+    height: 6rem;
+  }
+
+  .pe2-zone--xray-fabric {
+    left: 3rem;
+    right: 3rem;
+    top: 5.6rem;
+    height: 4.5rem;
+  }
+
+  .pe2-zone--xray-power {
+    left: 3rem;
+    right: 3rem;
+    bottom: 1.8rem;
+    height: 4.8rem;
+  }
+
+  .pe2-zone--xray-hybrid {
+    left: 1.4rem;
+    right: 1.4rem;
+    top: 1.4rem;
+    bottom: 1.4rem;
+  }
+
+  .pe2-overlay {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+  }
+
+  .pe2-overlay__frame {
+    fill: none;
+    stroke: color-mix(in srgb, var(--border) 58%, transparent);
+    stroke-width: 1.5;
+  }
+
+  .pe2-overlay__frame--ghost {
+    stroke-dasharray: 6 6;
+  }
+
+  .pe2-overlay__node {
+    fill: var(--bg);
+    stroke-width: 2;
+  }
+
+  .pe2-overlay__node--data {
+    stroke: var(--pe2-blue);
+  }
+
+  .pe2-overlay__node--coolant {
+    stroke: var(--pe2-cool);
+  }
+
+  .pe2-overlay__label {
+    font-size: 11px;
+    fill: var(--dim);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .pe2-overlay__label--right {
+    text-anchor: end;
+  }
+
+  .pe2-overlay__path {
+    fill: none;
+    stroke-width: 3;
+    opacity: 0.12;
+  }
+
+  .pe2-overlay__path.is-active {
+    opacity: 0.95;
+  }
+
+  .pe2-overlay__path.is-faint {
+    opacity: 0.45;
+  }
+
+  .pe2-overlay__path--data {
+    stroke: var(--pe2-blue);
+  }
+
+  .pe2-overlay__path--power {
+    stroke: var(--pe2-gold);
+  }
+
+  .pe2-overlay__path--coolant {
+    stroke: var(--pe2-cool);
+  }
+
+  .pe2-overlay__path--air {
+    stroke: var(--pe2-air);
+  }
+
+  .pe2-split {
+    display: flex;
+    gap: 1rem;
+    align-items: stretch;
+  }
+
+  .pe2-air-compare {
+    width: 14.5rem;
+    padding: 0.8rem;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    flex-shrink: 0;
+  }
+
+  .pe2-air-compare__rack {
+    position: relative;
+    height: 18.8rem;
+    margin-top: 0.55rem;
+    border: 1px solid var(--border-strong);
+    background: linear-gradient(180deg, color-mix(in srgb, var(--bg-subtle) 92%, transparent), transparent 42%), var(--bg);
+    overflow: hidden;
+  }
+
+  .pe2-air-compare__fanwall,
+  .pe2-air-compare__server {
+    position: absolute;
+    left: 0.9rem;
+    right: 0.9rem;
+    border: 1px solid var(--border);
+    background: color-mix(in srgb, var(--bg) 94%, transparent);
+  }
+
+  .pe2-air-compare__fanwall {
+    top: 1rem;
+    height: 2.4rem;
+  }
+
+  .pe2-air-compare__server {
+    top: 4.5rem;
+    height: 5.2rem;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.45rem;
+    padding: 0.55rem;
+  }
+
+  .pe2-air-compare__server--lower {
+    top: 10.7rem;
+  }
+
+  .pe2-air-compare__server span {
+    border: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
+    background: color-mix(in srgb, var(--bg-subtle) 82%, transparent);
+  }
+
+  .pe2-air-compare__airflow {
+    position: absolute;
+    inset: 0;
+  }
+
+  .pe2-air-compare__airflow span {
+    position: absolute;
+    left: 0.6rem;
+    right: 0.6rem;
+    height: 0;
+    border-top: 2px dashed color-mix(in srgb, var(--pe2-air) 72%, transparent);
+  }
+
+  .pe2-air-compare__airflow span:nth-child(1) { top: 6.6rem; }
+  .pe2-air-compare__airflow span:nth-child(2) { top: 8.9rem; }
+  .pe2-air-compare__airflow span:nth-child(3) { top: 13rem; }
+
+  .pe2-air-compare__copy {
+    margin: 0.75rem 0 0;
+    font-size: 0.8rem;
+    line-height: 1.55;
+    color: var(--text-secondary);
+  }
+
+  .pe2-stage__spotlight {
+    padding: 0.95rem 1rem;
+    border: 1px solid var(--border);
+    background: color-mix(in srgb, var(--bg) 94%, transparent);
+  }
+
+  .pe2-stage__spotlight-title {
+    margin-top: 0.25rem;
+    font-family: var(--font-editorial);
+    font-size: 1.2rem;
+    line-height: 1.2;
+  }
+
+  .pe2-stage__spotlight-copy {
+    margin: 0.4rem 0 0;
+    font-size: 0.9rem;
+    line-height: 1.65;
+    color: var(--text-secondary);
+  }
+
+  .pe2-ledger__boundary,
+  .pe2-ledger__currently,
+  .pe2-ledger__metric-copy,
+  .pe2-ledger__fact {
+    font-size: 0.82rem;
+    line-height: 1.55;
+    color: var(--text-secondary);
+  }
+
+  .pe2-ledger__boundary {
+    margin-top: 0.35rem;
+  }
+
+  .pe2-ledger__currently {
+    margin-top: 0.7rem;
+  }
+
+  .pe2-ledger__metrics {
+    margin-top: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+  }
+
+  .pe2-ledger__metric-label {
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--dim);
+  }
+
+  .pe2-ledger__metric-value {
+    margin-top: 0.18rem;
+    font-family: var(--font-editorial);
+    font-size: 1.35rem;
+    line-height: 1.05;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .pe2-ledger__metric-copy {
+    margin-top: 0.18rem;
+  }
+
+  .pe2-ledger__fact {
+    margin-top: 0.95rem;
+    padding-top: 0.85rem;
+    border-top: 1px solid var(--border);
+  }
+
+  .pe2-stage__handoff {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    padding-top: 0.9rem;
+    margin-top: 0.3rem;
+    border-top: 1px solid var(--border);
+  }
+
+  .pe2-stage__handoff-copy {
+    font-size: 0.88rem;
+    line-height: 1.55;
+    color: var(--text-secondary);
+  }
+
+  .pe2-sr {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    clip-path: inset(50%);
+    border: 0;
+    white-space: nowrap;
+  }
+
+  @media (max-width: 1500px) {
+    .pe2-layout {
+      grid-template-columns: 1fr;
+      gap: 1.5rem;
+    }
+
+    .pe2-steps {
+      max-width: 42rem;
+      margin-top: 0.25rem;
+    }
+
+    .pe2-sticky {
+      order: -1;
+    }
+  }
+
+  @media (max-width: 1180px) {
+    .pe2-stage {
+      grid-template-columns: 1fr;
+    }
+
+    .pe2-stage__topline,
+    .pe2-stage__legend,
+    .pe2-stage__controls,
+    .pe2-stage__map,
+    .pe2-stage__spotlight,
+    .pe2-stage__handoff,
+    .pe2-ledger {
+      grid-column: 1 / -1;
+    }
+
+    .pe2-ledger {
+      grid-row: auto;
+    }
+
+    .pe2-rack-shell {
+      width: min(100%, 24rem);
+    }
+
+    .pe2-stage__hero {
+      flex-direction: column;
+    }
+  }
+
+  @media (max-width: 900px) {
+    .pe2-sticky {
+      position: static;
+    }
+
+    .pe2-step {
+      min-height: auto;
+      padding-right: 0;
+    }
+  }
+
+  @media (max-width: 720px) {
+    .pe2-stage {
+      padding: 0.9rem;
+    }
+
+    .pe2-stage__topline,
+    .pe2-stage__controls {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .pe2-stage__legend {
+      gap: 0.55rem 0.9rem;
+    }
+
+    .pe2-split {
+      flex-direction: column;
+    }
+
+    .pe2-rack-shell,
+    .pe2-rack-shell--compact {
+      width: 100%;
+      max-width: 21rem;
+      height: 34rem;
+    }
+
+    .pe2-air-compare {
+      width: 100%;
+      max-width: 21rem;
+    }
+  }
+
   @media (prefers-reduced-motion: reduce) {
     .pe-step,
     .pe-stage__connector,
@@ -1128,7 +2103,15 @@ import { PromptEnergySceneOne } from '@/components/prompt-energy/PromptEnergySce
     .pe-rack__node::before,
     .pe-rack__zoom-ring,
     .pe-stage__progress-dot,
-    .pe-ledger__toggle-button {
+    .pe-ledger__toggle-button,
+    .pe2-step,
+    .pe2-stage__progress-dot,
+    .pe2-stage__view-button,
+    .pe2-stage__compare-button,
+    .pe2-rack-shell__tray,
+    .pe2-xray__heat,
+    .pe2-xray__air,
+    .pe2-overlay__path {
       transition: none !important;
       animation: none !important;
     }

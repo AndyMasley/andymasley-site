@@ -8,6 +8,11 @@ import {
   type BoundaryKey,
 } from './sceneOneData';
 
+interface SceneOneProps {
+  boundary: BoundaryKey;
+  onBoundaryChange: (boundary: BoundaryKey) => void;
+}
+
 function formatPower(value: number): string {
   return `${Math.round(value)} W`;
 }
@@ -81,9 +86,8 @@ function useTweenedNumber(target: number, duration = 360) {
   return value;
 }
 
-export function PromptEnergySceneOne() {
+export function PromptEnergySceneOne({ boundary, onBoundaryChange }: SceneOneProps) {
   const [activeBeatIndex, setActiveBeatIndex] = useState(0);
-  const [boundary, setBoundary] = useState<BoundaryKey>('facility');
   const stepRefs = useRef<Array<HTMLElement | null>>([]);
   const visibility = useRef<Record<number, number>>({});
   const stageRef = useRef<HTMLElement | null>(null);
@@ -416,7 +420,7 @@ export function PromptEnergySceneOne() {
                     type="button"
                     aria-pressed={option.key === boundary}
                     className={`pe-ledger__toggle-button ${option.key === boundary ? 'pe-ledger__toggle-button--active' : ''}`}
-                    onClick={() => setBoundary(option.key)}
+                    onClick={() => onBoundaryChange(option.key)}
                     title={option.description}
                   >
                     {option.label}
