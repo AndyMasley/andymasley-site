@@ -12,7 +12,7 @@ import { PromptEnergyStory } from '@/components/prompt-energy/PromptEnergyStory'
     <header class="pe-page__header">
       <h1 class="pe-page__title">How an AI prompt uses energy</h1>
       <p class="pe-page__intro">
-        A zoomable story about how one prompt moves through a live AI serving system. The first three scenes track the request from chat box to accelerator handoff, into the rack that holds the tray, and then down into the tray, board, package, and cooling stack around one selected accelerator.
+        A zoomable story about how one prompt moves through a live AI serving system. The first four scenes track the request from chat box to accelerator handoff, into the rack that holds the tray, then down into one tray, board, package, and finally the die map inside a modern accelerator.
       </p>
     </header>
 
@@ -3349,6 +3349,926 @@ import { PromptEnergyStory } from '@/components/prompt-energy/PromptEnergyStory'
     }
   }
 
+  .pe-scene-four {
+    --pe4-blue: #5e8dd7;
+    --pe4-gold: #b8892f;
+    --pe4-heat: #bf6c4a;
+    --pe4-memory: #6b73c7;
+    --pe4-ghost: #8c8a84;
+    --pe4-panel: color-mix(in srgb, var(--bg-subtle) 92%, transparent);
+    --pe4-shadow: 0 14px 34px -28px rgba(26, 25, 24, 0.35);
+  }
+
+  [data-theme="dark"] .pe-scene-four {
+    --pe4-blue: #8fb4ec;
+    --pe4-gold: #d4ab57;
+    --pe4-heat: #d48b69;
+    --pe4-memory: #9ca4f3;
+    --pe4-ghost: #8a8378;
+    --pe4-shadow: 0 18px 40px -30px rgba(0, 0, 0, 0.72);
+  }
+
+  .pe4-intro {
+    max-width: 42rem;
+    margin: 4.6rem 0 2rem;
+  }
+
+  .pe4-eyebrow,
+  .pe4-step__meta,
+  .pe4-stage__progress-label,
+  .pe4-ledger__eyebrow,
+  .pe4-stage__spotlight-kicker,
+  .pe4-stage__handoff-title,
+  .pe4-map-pane__title,
+  .pe4-sm-pane__title,
+  .pe4-layer-stack__eyebrow,
+  .pe4-stage__plane-note-kicker {
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--dim);
+    font-family: var(--font-body);
+  }
+
+  .pe4-title {
+    margin: 0 0 0.75rem;
+    font-family: var(--font-editorial);
+    font-size: clamp(1.85rem, 1.55rem + 0.9vw, 2.8rem);
+    line-height: 1.08;
+    letter-spacing: -0.035em;
+  }
+
+  .pe4-lede {
+    max-width: 42rem;
+    margin: 0;
+    font-family: var(--font-editorial);
+    font-size: 1rem;
+    line-height: 1.76;
+    color: var(--text-secondary);
+  }
+
+  .pe4-layout {
+    display: grid;
+    grid-template-columns: minmax(16rem, 21rem) minmax(0, 1fr);
+    gap: clamp(1.25rem, 2.3vw, 2.5rem);
+    align-items: start;
+  }
+
+  .pe4-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+
+  .pe4-step {
+    min-height: 68vh;
+    padding: 1.1rem 1rem 1.25rem 0;
+    border-top: 1px solid var(--border);
+    opacity: 0.5;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+  }
+
+  .pe4-step--active {
+    opacity: 1;
+  }
+
+  .pe4-step__title {
+    margin: 0.4rem 0 0.65rem;
+    font-family: var(--font-editorial);
+    font-size: clamp(1.35rem, 1.2rem + 0.35vw, 1.7rem);
+    line-height: 1.16;
+    letter-spacing: -0.025em;
+  }
+
+  .pe4-step__body {
+    margin: 0;
+    max-width: 27rem;
+    font-family: var(--font-editorial);
+    font-size: 1rem;
+    line-height: 1.76;
+    color: var(--text-secondary);
+  }
+
+  .pe4-sticky {
+    position: sticky;
+    top: 1.25rem;
+    min-width: 0;
+  }
+
+  .pe4-stage {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 17rem;
+    gap: 1rem;
+    padding: 1rem;
+    border: 1px solid var(--border);
+    background: var(--pe4-panel);
+    box-shadow: var(--pe4-shadow);
+  }
+
+  .pe4-stage__topline,
+  .pe4-stage__legend,
+  .pe4-stage__controls,
+  .pe4-stage__plane-note,
+  .pe4-stage__hardware,
+  .pe4-stage__handoff {
+    grid-column: 1 / -1;
+  }
+
+  .pe4-stage__topline {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    align-items: flex-start;
+    padding-bottom: 0.8rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .pe4-stage__progress {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .pe4-stage__progress-dots {
+    display: inline-flex;
+    gap: 0.35rem;
+  }
+
+  .pe4-stage__progress-dot {
+    width: 0.4rem;
+    height: 0.4rem;
+    border: 1px solid var(--border-strong);
+    background: transparent;
+    transition: background 0.25s ease, border-color 0.25s ease;
+  }
+
+  .pe4-stage__progress-dot--active {
+    background: var(--accent);
+    border-color: var(--accent);
+  }
+
+  .pe4-stage__caption {
+    max-width: 26rem;
+    font-size: 0.88rem;
+    line-height: 1.6;
+    color: var(--text-secondary);
+  }
+
+  .pe4-stage__legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.85rem 1.1rem;
+    padding: 0.15rem 0 0.1rem;
+  }
+
+  .pe4-stage__legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-size: 0.8rem;
+    line-height: 1.4;
+    color: var(--text-secondary);
+  }
+
+  .pe4-stage__legend-swatch {
+    width: 0.8rem;
+    height: 0.8rem;
+    border: 1px solid transparent;
+  }
+
+  .pe4-stage__legend-swatch--data {
+    background: color-mix(in srgb, var(--pe4-blue) 22%, transparent);
+    border-color: color-mix(in srgb, var(--pe4-blue) 65%, transparent);
+  }
+
+  .pe4-stage__legend-swatch--power {
+    background: color-mix(in srgb, var(--pe4-gold) 22%, transparent);
+    border-color: color-mix(in srgb, var(--pe4-gold) 70%, transparent);
+  }
+
+  .pe4-stage__legend-swatch--heat {
+    background: color-mix(in srgb, var(--pe4-heat) 22%, transparent);
+    border-color: color-mix(in srgb, var(--pe4-heat) 68%, transparent);
+  }
+
+  .pe4-stage__legend-swatch--memory {
+    background: color-mix(in srgb, var(--pe4-memory) 20%, transparent);
+    border-color: color-mix(in srgb, var(--pe4-memory) 65%, transparent);
+  }
+
+  .pe4-stage__legend-swatch--ghost {
+    background: color-mix(in srgb, var(--pe4-ghost) 18%, transparent);
+    border-color: color-mix(in srgb, var(--pe4-ghost) 55%, transparent);
+  }
+
+  .pe4-stage__controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.85rem;
+    align-items: flex-start;
+  }
+
+  .pe4-stage__toggle-group {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 0.55rem;
+  }
+
+  .pe4-stage__toggle {
+    border: 1px solid var(--border);
+    background: var(--bg-base);
+    color: var(--text-primary);
+    padding: 0.45rem 0.75rem;
+    font-size: 0.82rem;
+    line-height: 1.3;
+    cursor: pointer;
+    transition: border-color 0.25s ease, background 0.25s ease, color 0.25s ease;
+  }
+
+  .pe4-stage__toggle.is-active {
+    border-color: color-mix(in srgb, var(--accent) 72%, var(--border));
+    background: color-mix(in srgb, var(--accent) 12%, transparent);
+  }
+
+  .pe4-stage__toggle--secondary.is-active {
+    border-color: color-mix(in srgb, var(--pe4-memory) 72%, var(--border));
+    background: color-mix(in srgb, var(--pe4-memory) 12%, transparent);
+  }
+
+  .pe4-stage__plane-note {
+    padding: 0.95rem 1rem;
+    border: 1px solid var(--border);
+    background: var(--bg-base);
+  }
+
+  .pe4-stage__plane-note-title {
+    margin-top: 0.25rem;
+    font-family: var(--font-editorial);
+    font-size: 1.1rem;
+    line-height: 1.22;
+  }
+
+  .pe4-stage__plane-note-copy {
+    margin: 0.45rem 0 0;
+    font-size: 0.92rem;
+    line-height: 1.65;
+    color: var(--text-secondary);
+  }
+
+  .pe4-stage__hardware {
+    display: grid;
+    grid-template-columns: minmax(0, 1.55fr) minmax(18rem, 0.9fr);
+    gap: 1rem;
+  }
+
+  .pe4-stage__detail-column,
+  .pe4-map-pane,
+  .pe4-sm-pane,
+  .pe4-facts-card,
+  .pe4-stage__spotlight,
+  .pe4-ledger {
+    border: 1px solid var(--border);
+    background: var(--bg-base);
+  }
+
+  .pe4-stage__detail-column {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    border: 0;
+    background: transparent;
+  }
+
+  .pe4-map-pane,
+  .pe4-sm-pane,
+  .pe4-facts-card {
+    padding: 0.95rem;
+  }
+
+  .pe4-map-pane__header,
+  .pe4-sm-pane__header {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    margin-bottom: 0.85rem;
+  }
+
+  .pe4-map-pane__caption,
+  .pe4-sm-pane__caption,
+  .pe4-facts-card__footer,
+  .pe4-ledger__boundary,
+  .pe4-ledger__currently,
+  .pe4-ledger__metric-copy,
+  .pe4-ledger__fact,
+  .pe4-stage__spotlight-copy {
+    font-size: 0.88rem;
+    line-height: 1.62;
+    color: var(--text-secondary);
+  }
+
+  .pe4-map-shell {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.85rem;
+  }
+
+  .pe4-map-shell__model {
+    order: 2;
+  }
+
+  .pe4-die-wrap {
+    position: relative;
+    min-height: 30rem;
+  }
+
+  .pe4-package-ghost {
+    position: absolute;
+    border: 1px solid color-mix(in srgb, var(--pe4-ghost) 44%, var(--border));
+    background: color-mix(in srgb, var(--pe4-ghost) 10%, transparent);
+    opacity: 0.55;
+    pointer-events: none;
+  }
+
+  .pe4-die {
+    position: relative;
+    z-index: 1;
+    aspect-ratio: 1000 / 450;
+    border: 1px solid color-mix(in srgb, var(--pe4-ghost) 18%, var(--border));
+    background:
+      radial-gradient(circle at 50% 50%, color-mix(in srgb, var(--pe4-blue) 5%, var(--bg-subtle)) 0%, var(--bg-subtle) 68%),
+      linear-gradient(180deg, color-mix(in srgb, var(--text-primary) 4%, transparent), transparent 24%);
+    overflow: hidden;
+  }
+
+  .pe4-die__svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+
+  .pe4-die__slab {
+    fill: color-mix(in srgb, var(--bg-subtle) 94%, transparent);
+    stroke: color-mix(in srgb, var(--pe4-ghost) 38%, var(--border));
+    stroke-width: 1.4;
+  }
+
+  .pe4-die__io,
+  .pe4-die__gpc,
+  .pe4-die__tpc,
+  .pe4-die__sm,
+  .pe4-die__l2-segment,
+  .pe4-die__memory-gateway,
+  .pe4-die__nvlink-port,
+  .pe4-die__mig-slice {
+    transition: opacity 0.28s ease, fill 0.28s ease, stroke 0.28s ease, transform 0.28s ease;
+  }
+
+  .pe4-die__io {
+    fill: color-mix(in srgb, var(--pe4-ghost) 14%, transparent);
+    stroke: color-mix(in srgb, var(--pe4-ghost) 30%, transparent);
+  }
+
+  .pe4-die__gpc {
+    fill: color-mix(in srgb, var(--pe4-blue) 5%, transparent);
+    stroke: color-mix(in srgb, var(--pe4-blue) 26%, transparent);
+    stroke-width: 1.2;
+    opacity: 0.55;
+  }
+
+  .pe4-die__gpc.is-visible {
+    opacity: 0.95;
+  }
+
+  .pe4-die__gpc.is-selected {
+    fill: color-mix(in srgb, var(--pe4-blue) 10%, transparent);
+    stroke: color-mix(in srgb, var(--pe4-blue) 48%, transparent);
+  }
+
+  .pe4-die__tpc {
+    fill: color-mix(in srgb, var(--pe4-blue) 8%, transparent);
+    stroke: color-mix(in srgb, var(--pe4-blue) 26%, transparent);
+    stroke-width: 0.8;
+    opacity: 0;
+  }
+
+  .pe4-die__tpc.is-visible {
+    opacity: 0.94;
+  }
+
+  .pe4-die__tpc.is-disabled {
+    fill: color-mix(in srgb, var(--pe4-ghost) 10%, transparent);
+    stroke: color-mix(in srgb, var(--pe4-ghost) 28%, transparent);
+    opacity: 0.42;
+  }
+
+  .pe4-die__sm {
+    fill: color-mix(in srgb, var(--pe4-gold) 6%, transparent);
+    stroke: color-mix(in srgb, var(--pe4-gold) 20%, transparent);
+    stroke-width: 0.55;
+    opacity: 0;
+  }
+
+  .pe4-die__sm.is-visible {
+    opacity: 0.86;
+  }
+
+  .pe4-die__sm.is-disabled {
+    fill: color-mix(in srgb, var(--pe4-ghost) 10%, transparent);
+    stroke: color-mix(in srgb, var(--pe4-ghost) 20%, transparent);
+    opacity: 0.3;
+  }
+
+  .pe4-die__sm.is-selected {
+    fill: color-mix(in srgb, var(--pe4-gold) 18%, transparent);
+    stroke: color-mix(in srgb, var(--pe4-gold) 58%, transparent);
+  }
+
+  .pe4-die__l2-corridor {
+    fill: color-mix(in srgb, var(--pe4-memory) 8%, transparent);
+    stroke: color-mix(in srgb, var(--pe4-memory) 22%, transparent);
+    stroke-width: 1.2;
+  }
+
+  .pe4-die__l2-segment {
+    fill: color-mix(in srgb, var(--pe4-memory) 10%, transparent);
+    stroke: color-mix(in srgb, var(--pe4-memory) 30%, transparent);
+    stroke-width: 0.8;
+    opacity: 0.7;
+  }
+
+  .pe4-die__l2-segment.is-active {
+    fill: color-mix(in srgb, var(--pe4-memory) 18%, transparent);
+    opacity: 0.92;
+  }
+
+  .pe4-die__l2-segment.is-disabled {
+    fill: color-mix(in srgb, var(--pe4-ghost) 10%, transparent);
+    stroke: color-mix(in srgb, var(--pe4-ghost) 22%, transparent);
+    opacity: 0.34;
+  }
+
+  .pe4-die__memory-gateway {
+    fill: color-mix(in srgb, var(--pe4-memory) 12%, transparent);
+    stroke: color-mix(in srgb, var(--pe4-memory) 30%, transparent);
+    stroke-width: 1;
+    opacity: 0.72;
+  }
+
+  .pe4-die__memory-gateway.is-active {
+    fill: color-mix(in srgb, var(--pe4-memory) 22%, transparent);
+    opacity: 0.96;
+  }
+
+  .pe4-die__memory-gateway.is-disabled {
+    fill: color-mix(in srgb, var(--pe4-ghost) 10%, transparent);
+    stroke: color-mix(in srgb, var(--pe4-ghost) 22%, transparent);
+    opacity: 0.3;
+  }
+
+  .pe4-die__disabled-hatch {
+    fill: url(#pe4-hatch);
+    color: color-mix(in srgb, var(--pe4-ghost) 42%, transparent);
+    opacity: 0.28;
+  }
+
+  .pe4-die__nvlink-strip {
+    fill: color-mix(in srgb, var(--pe4-blue) 6%, transparent);
+    stroke: color-mix(in srgb, var(--pe4-blue) 18%, transparent);
+    stroke-width: 1;
+  }
+
+  .pe4-die__nvlink-strip.is-active {
+    fill: color-mix(in srgb, var(--pe4-blue) 12%, transparent);
+  }
+
+  .pe4-die__nvlink-port {
+    fill: color-mix(in srgb, var(--pe4-blue) 10%, transparent);
+    stroke: color-mix(in srgb, var(--pe4-blue) 24%, transparent);
+    stroke-width: 0.8;
+    opacity: 0.4;
+  }
+
+  .pe4-die__nvlink-port.is-active {
+    fill: color-mix(in srgb, var(--pe4-blue) 26%, transparent);
+    opacity: 1;
+  }
+
+  .pe4-die__activity {
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-dasharray: 7 8;
+    opacity: 0;
+    transition: opacity 0.28s ease;
+  }
+
+  .pe4-die__activity.is-active {
+    opacity: 0.95;
+  }
+
+  .pe4-die__activity--compute {
+    stroke: color-mix(in srgb, var(--pe4-gold) 66%, transparent);
+    stroke-width: 10;
+  }
+
+  .pe4-die__activity--l2,
+  .pe4-die__activity--memory {
+    stroke: color-mix(in srgb, var(--pe4-memory) 72%, transparent);
+    stroke-width: 8;
+  }
+
+  .pe4-die__activity--interconnect {
+    stroke: color-mix(in srgb, var(--pe4-blue) 78%, transparent);
+    stroke-width: 8;
+  }
+
+  .pe4-die__mig-slice {
+    fill: color-mix(in srgb, var(--accent) 8%, transparent);
+    stroke: color-mix(in srgb, var(--accent) 30%, transparent);
+    stroke-width: 1;
+  }
+
+  .pe4-die__facts,
+  .pe4-die__transformer-note {
+    position: absolute;
+    z-index: 2;
+    background: color-mix(in srgb, var(--bg-base) 88%, transparent);
+    border: 1px solid var(--border);
+    padding: 0.45rem 0.6rem;
+    font-size: 0.76rem;
+    line-height: 1.5;
+    color: var(--text-secondary);
+  }
+
+  .pe4-die__facts {
+    top: 0.7rem;
+    right: 0.7rem;
+    display: inline-flex;
+    gap: 0.75rem;
+  }
+
+  .pe4-die__transformer-note {
+    left: 0.7rem;
+    bottom: 0.7rem;
+    max-width: 16rem;
+  }
+
+  .pe4-zone {
+    position: absolute;
+    z-index: 3;
+    border: 1px solid transparent;
+    background: transparent;
+    cursor: pointer;
+    transition: border-color 0.22s ease, background 0.22s ease;
+  }
+
+  .pe4-zone.is-active {
+    border-color: color-mix(in srgb, var(--accent) 74%, transparent);
+    background: color-mix(in srgb, var(--accent) 7%, transparent);
+  }
+
+  .pe4-zone:focus-visible {
+    outline: 2px solid color-mix(in srgb, var(--accent) 80%, transparent);
+    outline-offset: 2px;
+  }
+
+  .pe4-zone--die { inset: 9% 10%; }
+  .pe4-zone--districts { left: 16%; right: 16%; top: 13%; height: 50%; }
+  .pe4-zone--l2 { left: 15%; right: 15%; top: 43%; height: 16%; }
+  .pe4-zone--memory { left: 9%; right: 9%; top: 15%; bottom: 19%; }
+  .pe4-zone--tensor { left: 52%; width: 18%; top: 61%; height: 14%; }
+  .pe4-zone--interconnect { left: 18%; right: 18%; bottom: 10%; height: 10%; }
+  .pe4-zone--product { right: 0.7rem; top: 0.7rem; width: 10rem; height: 2.4rem; }
+  .pe4-zone--mig { left: 14%; right: 14%; top: 14%; bottom: 21%; }
+  .pe4-zone--layer-stack { inset: 0; }
+  .pe4-zone--sm { inset: 0.6rem; }
+  .pe4-zone--sm-tensor { left: 34%; right: 20%; top: 1.8rem; height: 2.2rem; }
+
+  .pe4-layer-stack {
+    position: relative;
+    padding: 0.85rem;
+    border: 1px solid var(--border);
+    background: var(--bg-base);
+  }
+
+  .pe4-layer-stack__title {
+    margin: 0.2rem 0 0.75rem;
+    font-family: var(--font-editorial);
+    font-size: 1rem;
+    line-height: 1.2;
+  }
+
+  .pe4-layer-stack__items {
+    display: flex;
+    flex-direction: column;
+    gap: 0.32rem;
+  }
+
+  .pe4-layer-stack__item {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    font-size: 0.82rem;
+    line-height: 1.4;
+    color: var(--text-secondary);
+  }
+
+  .pe4-layer-stack__item.is-active {
+    color: var(--text-primary);
+  }
+
+  .pe4-layer-stack__tick {
+    width: 0.65rem;
+    height: 0.65rem;
+    border: 1px solid var(--border-strong);
+    background: transparent;
+  }
+
+  .pe4-layer-stack__item.is-active .pe4-layer-stack__tick {
+    border-color: color-mix(in srgb, var(--pe4-blue) 72%, transparent);
+    background: color-mix(in srgb, var(--pe4-blue) 24%, transparent);
+  }
+
+  .pe4-sm {
+    position: relative;
+    border: 1px solid var(--border);
+    background: color-mix(in srgb, var(--bg-subtle) 92%, transparent);
+    padding: 0.75rem;
+  }
+
+  .pe4-sm__svg {
+    width: 100%;
+    display: block;
+  }
+
+  .pe4-sm__shared,
+  .pe4-sm__cell,
+  .pe4-sm__math,
+  .pe4-sm__tensor,
+  .pe4-sm__scheduler,
+  .pe4-sm__flow {
+    transition: opacity 0.28s ease, fill 0.28s ease, stroke 0.28s ease;
+  }
+
+  .pe4-sm__shared--control {
+    fill: color-mix(in srgb, var(--pe4-ghost) 18%, transparent);
+    stroke: color-mix(in srgb, var(--pe4-ghost) 40%, transparent);
+    stroke-width: 1;
+  }
+
+  .pe4-sm__shared--memory {
+    fill: color-mix(in srgb, var(--pe4-memory) 12%, transparent);
+    stroke: color-mix(in srgb, var(--pe4-memory) 36%, transparent);
+    stroke-width: 1;
+  }
+
+  .pe4-sm__cell {
+    fill: color-mix(in srgb, var(--pe4-blue) 6%, transparent);
+    stroke: color-mix(in srgb, var(--pe4-blue) 24%, transparent);
+    stroke-width: 1;
+  }
+
+  .pe4-sm__math {
+    fill: color-mix(in srgb, var(--pe4-gold) 12%, transparent);
+    stroke: color-mix(in srgb, var(--pe4-gold) 32%, transparent);
+    stroke-width: 0.8;
+  }
+
+  .pe4-sm__tensor {
+    fill: color-mix(in srgb, var(--pe4-memory) 14%, transparent);
+    stroke: color-mix(in srgb, var(--pe4-memory) 40%, transparent);
+    stroke-width: 0.8;
+  }
+
+  .pe4-sm.is-transformer .pe4-sm__tensor {
+    fill: color-mix(in srgb, var(--pe4-gold) 24%, transparent);
+    stroke: color-mix(in srgb, var(--pe4-gold) 62%, transparent);
+  }
+
+  .pe4-sm__scheduler {
+    fill: color-mix(in srgb, var(--pe4-blue) 9%, transparent);
+    stroke: color-mix(in srgb, var(--pe4-blue) 28%, transparent);
+    stroke-width: 0.8;
+  }
+
+  .pe4-sm__flow {
+    fill: none;
+    stroke: color-mix(in srgb, var(--pe4-blue) 72%, transparent);
+    stroke-width: 3;
+    stroke-dasharray: 5 6;
+    opacity: 0.22;
+  }
+
+  .pe4-sm.is-async .pe4-sm__flow {
+    opacity: 0.95;
+  }
+
+  .pe4-sm__labels {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem 0.8rem;
+    margin-top: 0.75rem;
+    font-size: 0.74rem;
+    line-height: 1.4;
+    color: var(--text-secondary);
+  }
+
+  .pe4-sm__notes {
+    display: grid;
+    gap: 0.6rem;
+    margin-top: 0.85rem;
+  }
+
+  .pe4-sm__note {
+    display: grid;
+    gap: 0.15rem;
+    font-size: 0.82rem;
+    line-height: 1.5;
+    color: var(--text-secondary);
+  }
+
+  .pe4-sm__note strong {
+    font-size: 0.74rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-primary);
+  }
+
+  .pe4-facts-card__title,
+  .pe4-stage__spotlight-title,
+  .pe4-stage__handoff-copy {
+    font-family: var(--font-editorial);
+  }
+
+  .pe4-facts-card__title {
+    font-size: 1rem;
+    line-height: 1.22;
+    margin-bottom: 0.7rem;
+  }
+
+  .pe4-facts-card__grid {
+    display: grid;
+    gap: 0.8rem;
+    margin: 0;
+  }
+
+  .pe4-facts-card__grid dt {
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--dim);
+    margin-bottom: 0.2rem;
+  }
+
+  .pe4-facts-card__grid dd {
+    margin: 0;
+    font-size: 0.88rem;
+    line-height: 1.6;
+    color: var(--text-secondary);
+  }
+
+  .pe4-facts-card__footer {
+    margin-top: 0.8rem;
+    padding-top: 0.8rem;
+    border-top: 1px solid var(--border);
+  }
+
+  .pe4-stage__spotlight {
+    grid-column: 1 / 2;
+    padding: 0.95rem 1rem;
+  }
+
+  .pe4-stage__spotlight-title {
+    margin-top: 0.22rem;
+    font-size: 1.1rem;
+    line-height: 1.24;
+  }
+
+  .pe4-ledger {
+    padding: 0.95rem;
+  }
+
+  .pe4-ledger__currently {
+    margin-top: 0.2rem;
+  }
+
+  .pe4-ledger__metrics {
+    display: grid;
+    gap: 0.8rem;
+    margin-top: 0.85rem;
+  }
+
+  .pe4-ledger__metric-label {
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--dim);
+  }
+
+  .pe4-ledger__metric-value {
+    margin-top: 0.2rem;
+    font-family: var(--font-editorial);
+    font-size: 1.1rem;
+    line-height: 1.1;
+    letter-spacing: -0.03em;
+  }
+
+  .pe4-ledger__fact {
+    margin-top: 0.85rem;
+  }
+
+  .pe4-stage__handoff {
+    padding: 0.95rem 1rem;
+    border: 1px solid var(--border);
+    background: var(--bg-base);
+  }
+
+  .pe4-stage__handoff-copy {
+    margin-top: 0.25rem;
+    font-size: 1.05rem;
+    line-height: 1.46;
+  }
+
+  .pe4-sr {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  @media (max-width: 1260px) {
+    .pe4-stage {
+      grid-template-columns: 1fr;
+    }
+
+    .pe4-stage__spotlight,
+    .pe4-ledger {
+      grid-column: 1 / -1;
+    }
+  }
+
+  @media (max-width: 1080px) {
+    .pe4-layout {
+      grid-template-columns: 1fr;
+    }
+
+    .pe4-steps {
+      order: 2;
+    }
+
+    .pe4-sticky {
+      position: static;
+      order: 1;
+    }
+
+    .pe4-step {
+      min-height: auto;
+      padding-right: 0;
+    }
+  }
+
+  @media (max-width: 900px) {
+    .pe4-stage__hardware {
+      grid-template-columns: 1fr;
+    }
+
+    .pe4-map-shell__model {
+      order: 0;
+    }
+  }
+
+  @media (max-width: 720px) {
+    .pe4-stage {
+      padding: 0.9rem;
+    }
+
+    .pe4-stage__topline,
+    .pe4-stage__controls {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .pe4-die-wrap {
+      min-height: 24rem;
+    }
+
+    .pe4-die__facts {
+      position: static;
+      margin: 0.7rem;
+      width: fit-content;
+    }
+
+    .pe4-die__transformer-note {
+      position: static;
+      margin: 0 0.7rem 0.7rem;
+    }
+  }
+
   @media (prefers-reduced-motion: reduce) {
     .pe-step,
     .pe-stage__connector,
@@ -3386,7 +4306,25 @@ import { PromptEnergyStory } from '@/components/prompt-energy/PromptEnergyStory'
     .pe3-cutaway__die,
     .pe3-cutaway__hbm,
     .pe3-cutaway__coldplate,
-    .pe3-cutaway__fins {
+    .pe3-cutaway__fins,
+    .pe4-step,
+    .pe4-stage__progress-dot,
+    .pe4-stage__toggle,
+    .pe4-die__io,
+    .pe4-die__gpc,
+    .pe4-die__tpc,
+    .pe4-die__sm,
+    .pe4-die__l2-segment,
+    .pe4-die__memory-gateway,
+    .pe4-die__nvlink-port,
+    .pe4-die__mig-slice,
+    .pe4-die__activity,
+    .pe4-sm__shared,
+    .pe4-sm__cell,
+    .pe4-sm__math,
+    .pe4-sm__tensor,
+    .pe4-sm__scheduler,
+    .pe4-sm__flow {
       transition: none !important;
       animation: none !important;
     }
