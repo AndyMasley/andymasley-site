@@ -210,14 +210,7 @@ const defaultExpandedYear = postsByYear.some(group => group.year === currentYear
 
   <div class="divider"><div class="divider-diamond"></div></div>
 
-  <section class="writing-section writing-section--archive" id="writing-archive" aria-labelledby="archive-heading">
-    <header class="writing-section__header writing-section__header--archive">
-      <div>
-        <h2 class="writing-section__title" id="archive-heading">Archive</h2>
-        <p class="writing-section__description">Search the full archive, narrow it by topic or source, and open the years you want.</p>
-      </div>
-    </header>
-
+  <section class="writing-section writing-section--archive" id="writing-archive" aria-label="Writing archive">
     <div class="archive-controls">
       <div class="archive-control archive-control--search">
         <label class="archive-control__label" for="archive-search">Search titles</label>
@@ -647,6 +640,10 @@ const defaultExpandedYear = postsByYear.some(group => group.year === currentYear
 
   .year-summary::-webkit-details-marker {
     display: none;
+  }
+
+  .year-summary::marker {
+    content: '';
   }
 
   .year-summary:hover {
