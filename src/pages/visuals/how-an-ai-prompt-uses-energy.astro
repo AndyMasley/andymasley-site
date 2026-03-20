@@ -5,7 +5,7 @@ import { PromptEnergySceneOne } from '@/components/prompt-energy/PromptEnergySce
 
 <Base
   title="How an AI prompt uses energy"
-  description="A forthcoming visualization about how an AI prompt uses energy."
+  description="A zoomable visualization about how an AI prompt moves through a live serving system and begins using energy."
   activeNav="/visuals"
 >
   <article class="pe-page">
@@ -206,6 +206,44 @@ import { PromptEnergySceneOne } from '@/components/prompt-energy/PromptEnergySce
     color: var(--text-secondary);
   }
 
+  .pe-stage__legend {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.85rem 1.1rem;
+    padding: 0.85rem 0 0.25rem;
+  }
+
+  .pe-stage__legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-size: 0.8rem;
+    line-height: 1.4;
+    color: var(--text-secondary);
+  }
+
+  .pe-stage__legend-swatch {
+    width: 0.8rem;
+    height: 0.8rem;
+    border: 1px solid transparent;
+  }
+
+  .pe-stage__legend-swatch--data {
+    background: color-mix(in srgb, var(--pe-blue) 22%, transparent);
+    border-color: color-mix(in srgb, var(--pe-blue) 65%, transparent);
+  }
+
+  .pe-stage__legend-swatch--power {
+    background: color-mix(in srgb, var(--pe-gold) 24%, transparent);
+    border-color: color-mix(in srgb, var(--pe-gold) 70%, transparent);
+  }
+
+  .pe-stage__legend-swatch--heat {
+    background: color-mix(in srgb, var(--pe-heat) 22%, transparent);
+    border-color: color-mix(in srgb, var(--pe-heat) 68%, transparent);
+  }
+
   .pe-stage__map {
     position: relative;
     min-height: 34rem;
@@ -317,6 +355,16 @@ import { PromptEnergySceneOne } from '@/components/prompt-energy/PromptEnergySce
     color: var(--text);
     font-size: 0.82rem;
     line-height: 1;
+  }
+
+  .pe-token-tray__explain {
+    margin-top: 0.55rem;
+    font-size: 0.8rem;
+    line-height: 1.5;
+    color: var(--text-secondary);
+    opacity: 0;
+    transform: translateY(0.2rem);
+    transition: opacity 0.35s ease, transform 0.35s ease;
   }
 
   .pe-token-tray__count {
@@ -513,6 +561,29 @@ import { PromptEnergySceneOne } from '@/components/prompt-energy/PromptEnergySce
     pointer-events: none;
   }
 
+  .pe-stage__handoff {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    padding-top: 0.9rem;
+    margin-top: 0.3rem;
+    border-top: 1px solid var(--border);
+  }
+
+  .pe-stage__handoff-title {
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--dim);
+  }
+
+  .pe-stage__handoff-copy {
+    font-size: 0.88rem;
+    line-height: 1.55;
+    color: var(--text-secondary);
+  }
+
   .pe-ledger {
     align-self: start;
     padding: 0.9rem;
@@ -548,11 +619,19 @@ import { PromptEnergySceneOne } from '@/components/prompt-energy/PromptEnergySce
     color: var(--text-secondary);
   }
 
+  .pe-ledger__toggle-label {
+    margin-top: 1rem;
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--dim);
+  }
+
   .pe-ledger__toggle {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 0.4rem;
-    margin: 1rem 0;
+    margin: 0.55rem 0 1rem;
   }
 
   .pe-ledger__toggle-button {
@@ -718,16 +797,22 @@ import { PromptEnergySceneOne } from '@/components/prompt-energy/PromptEnergySce
 
   .pe-stage[data-beat="tokens"] .pe-token-tray__chips,
   .pe-stage[data-beat="tokens"] .pe-token-tray__count,
+  .pe-stage[data-beat="tokens"] .pe-token-tray__explain,
   .pe-stage[data-beat="capsule"] .pe-token-tray__chips,
   .pe-stage[data-beat="capsule"] .pe-token-tray__count,
+  .pe-stage[data-beat="capsule"] .pe-token-tray__explain,
   .pe-stage[data-beat="scheduler"] .pe-token-tray__chips,
   .pe-stage[data-beat="scheduler"] .pe-token-tray__count,
+  .pe-stage[data-beat="scheduler"] .pe-token-tray__explain,
   .pe-stage[data-beat="host"] .pe-token-tray__chips,
   .pe-stage[data-beat="host"] .pe-token-tray__count,
+  .pe-stage[data-beat="host"] .pe-token-tray__explain,
   .pe-stage[data-beat="accelerator"] .pe-token-tray__chips,
   .pe-stage[data-beat="accelerator"] .pe-token-tray__count,
+  .pe-stage[data-beat="accelerator"] .pe-token-tray__explain,
   .pe-stage[data-beat="zoom"] .pe-token-tray__chips,
-  .pe-stage[data-beat="zoom"] .pe-token-tray__count {
+  .pe-stage[data-beat="zoom"] .pe-token-tray__count,
+  .pe-stage[data-beat="zoom"] .pe-token-tray__explain {
     opacity: 1;
     transform: translateY(0);
   }
@@ -848,6 +933,10 @@ import { PromptEnergySceneOne } from '@/components/prompt-energy/PromptEnergySce
     border-color: color-mix(in srgb, var(--pe-gold) 65%, transparent);
   }
 
+  .pe-stage[data-beat="zoom"] .pe-stage__handoff {
+    border-top-color: color-mix(in srgb, var(--pe-gold) 28%, var(--border));
+  }
+
   @media (max-width: 1120px) {
     .pe-scene-one__layout {
       grid-template-columns: minmax(0, 20rem) minmax(0, 1fr);
@@ -933,6 +1022,10 @@ import { PromptEnergySceneOne } from '@/components/prompt-energy/PromptEnergySce
       flex-direction: column;
     }
 
+    .pe-stage__legend {
+      gap: 0.55rem 0.9rem;
+    }
+
     .pe-stage__map {
       min-height: auto;
       display: grid;
@@ -957,7 +1050,6 @@ import { PromptEnergySceneOne } from '@/components/prompt-energy/PromptEnergySce
     .pe-request {
       display: block;
       margin: 0;
-      opacity: 1;
       transform: none;
       pointer-events: none;
       box-shadow: none;
@@ -981,8 +1073,20 @@ import { PromptEnergySceneOne } from '@/components/prompt-energy/PromptEnergySce
 
   @media (prefers-reduced-motion: reduce) {
     .pe-step,
+    .pe-stage__connector,
+    .pe-chat__bubble,
+    .pe-chat__text,
+    .pe-token-tray,
+    .pe-token-tray__sentence,
+    .pe-token-tray__chips,
+    .pe-token-tray__explain,
+    .pe-token-tray__count,
+    .pe-scheduler__lane,
     .pe-request,
     .pe-rack__node,
+    .pe-rack__node::after,
+    .pe-rack__node::before,
+    .pe-rack__zoom-ring,
     .pe-stage__progress-dot,
     .pe-ledger__toggle-button {
       transition: none !important;

@@ -86,6 +86,8 @@ export function PromptEnergySceneOne() {
   const [boundary, setBoundary] = useState<BoundaryKey>('facility');
   const stepRefs = useRef<Array<HTMLElement | null>>([]);
   const visibility = useRef<Record<number, number>>({});
+  const stageRef = useRef<HTMLElement | null>(null);
+  const acceleratorRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -166,8 +168,71 @@ export function PromptEnergySceneOne() {
   const displayedWh = useTweenedNumber(cumulativeWh, 420);
   const progressLabel = `Beat ${activeBeatIndex + 1} of ${SCENE_ONE_BEATS.length}`;
 
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent('prompt-energy:scene-ready', {
+      detail: {
+        scene: 'scene-1',
+        beats: SCENE_ONE_BEATS.length,
+      },
+    }));
+  }, []);
+
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent('prompt-energy:scene-state', {
+      detail: {
+        scene: 'scene-1',
+        beat: activeBeat.id,
+        boundary,
+        instantaneousPower: totalPower,
+        cumulativeWh,
+      },
+    }));
+  }, [activeBeat.id, boundary, cumulativeWh, totalPower]);
+
+  useEffect(() => {
+    const updateZoomTarget = () => {
+      const stage = stageRef.current;
+      const accelerator = acceleratorRef.current;
+      if (!stage || !accelerator) return;
+
+      const stageRect = stage.getBoundingClientRect();
+      const acceleratorRect = accelerator.getBoundingClientRect();
+      const left = acceleratorRect.left - stageRect.left;
+      const top = acceleratorRect.top - stageRect.top;
+      const width = acceleratorRect.width;
+      const height = acceleratorRect.height;
+
+      stage.style.setProperty('--pe-zoom-target-left', `${left}px`);
+      stage.style.setProperty('--pe-zoom-target-top', `${top}px`);
+      stage.style.setProperty('--pe-zoom-target-width', `${width}px`);
+      stage.style.setProperty('--pe-zoom-target-height', `${height}px`);
+
+      window.dispatchEvent(new CustomEvent('prompt-energy:zoom-target', {
+        detail: {
+          scene: 'scene-1',
+          left,
+          top,
+          width,
+          height,
+        },
+      }));
+    };
+
+    updateZoomTarget();
+    const resizeObserver = new ResizeObserver(updateZoomTarget);
+
+    if (stageRef.current) resizeObserver.observe(stageRef.current);
+    if (acceleratorRef.current) resizeObserver.observe(acceleratorRef.current);
+    window.addEventListener('resize', updateZoomTarget);
+
+    return () => {
+      resizeObserver.disconnect();
+      window.removeEventListener('resize', updateZoomTarget);
+    };
+  }, []);
+
   return (
-    <section className="pe-scene-one" aria-labelledby="pe-scene-one-title">
+    <section className="pe-scene-one" aria-labelledby="pe-scene-one-title" data-scene="scene-1">
       <div className="pe-scene-one__intro">
         <div className="pe-scene-one__eyebrow">Scene 1 of 8</div>
         <h2 className="pe-scene-one__title" id="pe-scene-one-title">
@@ -200,7 +265,13 @@ export function PromptEnergySceneOne() {
         </div>
 
         <div className="pe-scene-one__sticky">
-          <div className="pe-stage" data-beat={activeBeat.id}>
+          <div
+            className="pe-stage"
+            data-beat={activeBeat.id}
+            data-boundary={boundary}
+            data-exit-ready={activeBeat.id === 'zoom' ? 'true' : 'false'}
+            ref={stageRef}
+          >
             <div className="pe-stage__topline">
               <div className="pe-stage__progress">
                 <span className="pe-stage__progress-label">{progressLabel}</span>
@@ -214,6 +285,21 @@ export function PromptEnergySceneOne() {
                 </div>
               </div>
               <div className="pe-stage__caption">{activeBeat.caption}</div>
+            </div>
+
+            <div className="pe-stage__legend" aria-label="Visual legend">
+              <span className="pe-stage__legend-item">
+                <span className="pe-stage__legend-swatch pe-stage__legend-swatch--data" />
+                Data flow
+              </span>
+              <span className="pe-stage__legend-item">
+                <span className="pe-stage__legend-swatch pe-stage__legend-swatch--power" />
+                Electrical power
+              </span>
+              <span className="pe-stage__legend-item">
+                <span className="pe-stage__legend-swatch pe-stage__legend-swatch--heat" />
+                Heat leaving hardware
+              </span>
             </div>
 
             <div className="pe-stage__map" aria-hidden="true">
@@ -239,6 +325,7 @@ export function PromptEnergySceneOne() {
                     </span>
                   ))}
                 </div>
+                <div className="pe-token-tray__explain">Sentence split into token-like chunks.</div>
                 <div className="pe-token-tray__count">Input tokens: {HERO_TOKENS.length}</div>
               </section>
 
@@ -282,7 +369,11 @@ export function PromptEnergySceneOne() {
                     <div className="pe-rack__title">CPU + memory dispatch</div>
                     <div className="pe-rack__copy">prepares and routes work</div>
                   </div>
-                  <div className="pe-rack__node pe-rack__node--accelerator" id="pe-scene-one-accelerator-target">
+                  <div
+                    className="pe-rack__node pe-rack__node--accelerator"
+                    id="pe-scene-one-accelerator-target"
+                    ref={acceleratorRef}
+                  >
                     <div className="pe-node-label">Accelerator target</div>
                     <div className="pe-rack__title">Parallel math begins here</div>
                     <div className="pe-rack__copy">future zoom target</div>
@@ -294,6 +385,13 @@ export function PromptEnergySceneOne() {
                   </div>
                 </div>
               </section>
+            </div>
+
+            <div className="pe-stage__handoff">
+              <div className="pe-stage__handoff-title">Scene 2 handoff</div>
+              <div className="pe-stage__handoff-copy">
+                Keep this accelerator frame and zoom inward to the rack and tray hardware.
+              </div>
             </div>
 
             <aside className="pe-ledger" aria-label="Boundary-aware energy ledger">
@@ -309,13 +407,14 @@ export function PromptEnergySceneOne() {
                 Different measurement boundaries give different prompt energy totals.
               </div>
 
-              <div className="pe-ledger__toggle" role="tablist" aria-label="Measurement boundary">
+              <div className="pe-ledger__toggle-label">Measurement boundary</div>
+
+              <div className="pe-ledger__toggle" role="group" aria-label="Measurement boundary">
                 {BOUNDARY_OPTIONS.map(option => (
                   <button
                     key={option.key}
                     type="button"
-                    role="tab"
-                    aria-selected={option.key === boundary}
+                    aria-pressed={option.key === boundary}
                     className={`pe-ledger__toggle-button ${option.key === boundary ? 'pe-ledger__toggle-button--active' : ''}`}
                     onClick={() => setBoundary(option.key)}
                     title={option.description}
