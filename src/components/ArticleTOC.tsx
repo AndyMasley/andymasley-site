@@ -45,7 +45,22 @@ export function ArticleTOC({ headings }: { headings: TOCHeading[] }) {
       if (!container) return;
 
       const activeEntry = container.querySelector<HTMLElement>(`[data-toc-id="${escapedId}"]`);
-      activeEntry?.scrollIntoView({ block: 'nearest' });
+      if (!activeEntry) return;
+
+      const padding = 20;
+      const containerRect = container.getBoundingClientRect();
+      const entryRect = activeEntry.getBoundingClientRect();
+      const currentScrollTop = container.scrollTop;
+      const entryTop = entryRect.top - containerRect.top + currentScrollTop;
+      const entryBottom = entryRect.bottom - containerRect.top + currentScrollTop;
+      const visibleTop = currentScrollTop + padding;
+      const visibleBottom = currentScrollTop + container.clientHeight - padding;
+
+      if (entryTop < visibleTop) {
+        container.scrollTo({ top: Math.max(0, entryTop - padding) });
+      } else if (entryBottom > visibleBottom) {
+        container.scrollTo({ top: Math.max(0, entryBottom - container.clientHeight + padding) });
+      }
     };
 
     syncActiveEntry('.article-toc');
