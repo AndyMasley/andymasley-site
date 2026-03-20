@@ -372,11 +372,12 @@ const standfirst = post.description?.trim() || '';
 
   .article-grid__header {
     grid-column: 2;
+    grid-row: 1;
   }
 
   .article-grid--wide > :global(.article-toc-shell) {
     grid-column: 1;
-    grid-row: 2;
+    grid-row: 1 / span 2;
     align-self: start;
   }
 
@@ -386,6 +387,7 @@ const standfirst = post.description?.trim() || '';
 
   .article-grid--wide .article-body {
     grid-column: 2;
+    grid-row: 2;
   }
 
   .article-header {
@@ -1011,6 +1013,7 @@ const standfirst = post.description?.trim() || '';
     .article-grid--wide .article-body,
     .article-grid--wide > :global(.article-toc-shell) {
       grid-column: 1;
+      grid-row: auto;
     }
 
     :global(.article-toc) {
