@@ -661,16 +661,26 @@ const standfirst = post.description?.trim() || '';
     text-decoration-color: var(--accent);
   }
 
-  .article-prose :global(h1),
-  .article-prose :global(h2) {
+  .article-prose :global(h1) {
     font-family: var(--font-editorial);
-    font-size: clamp(1.95rem, 1.72rem + 0.55vw, 2.2rem);
+    font-size: clamp(2.05rem, 1.82rem + 0.62vw, 2.35rem);
     font-weight: 600;
-    line-height: 1.14;
+    line-height: 1.12;
     letter-spacing: -0.028em;
     color: var(--text);
     margin-top: 4rem;
     margin-bottom: 1rem;
+  }
+
+  .article-prose :global(h2) {
+    font-family: var(--font-editorial);
+    font-size: clamp(1.48rem, 1.34rem + 0.36vw, 1.7rem);
+    font-weight: 600;
+    line-height: 1.22;
+    letter-spacing: -0.022em;
+    color: var(--text);
+    margin-top: 3rem;
+    margin-bottom: 0.85rem;
   }
 
   .article-prose :global(h1),
@@ -681,12 +691,12 @@ const standfirst = post.description?.trim() || '';
 
   .article-prose :global(h3) {
     font-family: var(--font-editorial);
-    font-size: clamp(1.08rem, 1rem + 0.22vw, 1.2rem);
+    font-size: clamp(1.08rem, 1rem + 0.16vw, 1.18rem);
     font-weight: 600;
     line-height: 1.38;
     letter-spacing: -0.01em;
     color: var(--text-secondary);
-    margin-top: 2.35rem;
+    margin-top: 2.2rem;
     margin-bottom: 0.7rem;
   }
 
@@ -1188,15 +1198,19 @@ const standfirst = post.description?.trim() || '';
       font-size: 1.12em;
     }
 
-    .article-prose :global(h1),
-    .article-prose :global(h2) {
-      font-size: 1.72rem;
+    .article-prose :global(h1) {
+      font-size: 1.88rem;
       margin-top: 3rem;
     }
 
+    .article-prose :global(h2) {
+      font-size: 1.42rem;
+      margin-top: 2.4rem;
+    }
+
     .article-prose :global(h3) {
-      font-size: 1.08rem;
-      margin-top: 2rem;
+      font-size: 1.02rem;
+      margin-top: 1.85rem;
     }
 
     .article-pagination {
@@ -1419,30 +1433,37 @@ const standfirst = post.description?.trim() || '';
   .cheat-sheet-page :global(.prose h1),
   .cheat-sheet-page :global(.prose h2),
   .cheat-sheet-page :global(.prose h3) { scroll-margin-top: 20px; color: var(--text); }
-  .cheat-sheet-page :global(.prose h1),
-  .cheat-sheet-page :global(.prose h2) {
-    font-size: clamp(1.95rem, 1.72rem + 0.55vw, 2.2rem);
+  .cheat-sheet-page :global(.prose h1) {
+    font-size: clamp(2.05rem, 1.82rem + 0.62vw, 2.35rem);
     font-weight: 600;
-    line-height: 1.14;
+    line-height: 1.12;
     letter-spacing: -0.028em;
     margin-top: 4rem;
     margin-bottom: 1rem;
   }
+  .cheat-sheet-page :global(.prose h2) {
+    font-size: clamp(1.48rem, 1.34rem + 0.36vw, 1.7rem);
+    font-weight: 600;
+    line-height: 1.22;
+    letter-spacing: -0.022em;
+    margin-top: 3rem;
+    margin-bottom: 0.85rem;
+  }
   .cheat-sheet-page :global(.prose h3) {
-    font-size: clamp(1.08rem, 1rem + 0.22vw, 1.2rem);
+    font-size: clamp(1.08rem, 1rem + 0.16vw, 1.18rem);
     font-weight: 600;
     line-height: 1.38;
     letter-spacing: -0.01em;
     color: var(--text-secondary);
-    margin-top: 2.35rem;
+    margin-top: 2.2rem;
     margin-bottom: 0.7rem;
   }
   .cheat-sheet-page :global(.prose h1:first-child),
   .cheat-sheet-page :global(.prose h2:first-child) { margin-top: 0; }
   @media (max-width: 600px) {
-    .cheat-sheet-page :global(.prose h1),
-    .cheat-sheet-page :global(.prose h2) { font-size: 1.72rem; }
-    .cheat-sheet-page :global(.prose h3) { font-size: 1.08rem; margin-top: 2rem; }
+    .cheat-sheet-page :global(.prose h1) { font-size: 1.88rem; margin-top: 3rem; }
+    .cheat-sheet-page :global(.prose h2) { font-size: 1.42rem; margin-top: 2.4rem; }
+    .cheat-sheet-page :global(.prose h3) { font-size: 1.02rem; margin-top: 1.85rem; }
   }
   .cheat-sheet-page :global(.prose p) { margin-bottom: var(--space-md); }
   .cheat-sheet-page :global(.prose ul),
