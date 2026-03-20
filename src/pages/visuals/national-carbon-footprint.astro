@@ -1,0 +1,703 @@
+---
+import Base from '@/layouts/Base.astro';
+
+const grossTotalMmt = 6343.2;
+const netTotalMmt = 5489.0;
+const population2022 = 333_287_557;
+
+const dailyGrossMmt = grossTotalMmt / 365;
+const perCapitaTotalTonnes = grossTotalMmt * 1e6 / population2022;
+const dailyPerCapitaKg = grossTotalMmt * 1e9 / population2022 / 365;
+const netSinkOffsetMmt = grossTotalMmt - netTotalMmt;
+
+const baseSectors = [
+  {
+    key: 'transport',
+    label: 'Moving people and freight',
+    detail: 'Cars, trucks, buses, aviation, rail, and off-road equipment',
+    totalMmt: 1801.5,
+    color: 'var(--transport)',
+    inferred: false,
+  },
+  {
+    key: 'power',
+    label: 'Generating electricity',
+    detail: 'Power plants, grid combustion, and the electricity system',
+    totalMmt: 1577.5,
+    color: 'var(--power)',
+    inferred: false,
+  },
+  {
+    key: 'industry',
+    label: 'Making materials and goods',
+    detail: 'Steel, cement, chemicals, refining, industrial heat, and process emissions',
+    totalMmt: 1452.5,
+    color: 'var(--industry)',
+    inferred: false,
+  },
+  {
+    key: 'buildings',
+    label: 'Running homes and businesses',
+    detail: 'Heating, cooling, cooking, appliances, buildings, and refrigerants',
+    totalMmt: +(grossTotalMmt * 0.13).toFixed(1),
+    color: 'var(--buildings)',
+    inferred: true,
+  },
+  {
+    key: 'agriculture',
+    label: 'Growing food and managing farms',
+    detail: 'Livestock methane, agricultural soils, manure, and farm energy use',
+    totalMmt: +(grossTotalMmt * 0.094).toFixed(1),
+    color: 'var(--agriculture)',
+    inferred: true,
+  },
+];
+
+const otherTotalMmt = +(grossTotalMmt - baseSectors.reduce((sum, sector) => sum + sector.totalMmt, 0)).toFixed(1);
+
+const sectors = [
+  ...baseSectors,
+  {
+    key: 'other',
+    label: 'Waste, refrigerants, and smaller sources',
+    detail: 'Residual direct sources so the rows sum cleanly to the national total',
+    totalMmt: otherTotalMmt,
+    color: 'var(--other)',
+    inferred: true,
+  },
+].map((sector) => ({
+  ...sector,
+  sharePct: +(sector.totalMmt / grossTotalMmt * 100).toFixed(1),
+  perCapitaTonnes: +(sector.totalMmt * 1e6 / population2022).toFixed(2),
+  totalLabel: `${sector.totalMmt.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })} MMT CO2e / yr`,
+  perCapitaLabel: `${(sector.totalMmt * 1e6 / population2022).toFixed(2)} t CO2e / person / yr`,
+}));
+
+const biggestSector = sectors.reduce((largest, sector) => sector.totalMmt > largest.totalMmt ? sector : largest, sectors[0]);
+const powerAndBuildingsMmt = sectors
+  .filter((sector) => sector.key === 'power' || sector.key === 'buildings')
+  .reduce((sum, sector) => sum + sector.totalMmt, 0);
+
+const totalBarLabel = `${grossTotalMmt.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })} MMT CO2e / yr`;
+const totalPerCapitaLabel = `${perCapitaTotalTonnes.toFixed(1)} t CO2e / person / yr`;
+
+const modeCopy = {
+  total: {
+    totalLabel: "America's annual footprint",
+    totalValue: (grossTotalMmt / 1000).toFixed(2),
+    totalUnit: 'billion metric tons CO2e / yr',
+    subline: `About ${dailyGrossMmt.toFixed(1)} million metric tons every day.`,
+    context: `Gross emissions before subtracting land sinks. EPA reports ${netTotalMmt.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })} MMT net in 2022, so forests and soils offset about ${netSinkOffsetMmt.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })} MMT.`,
+  },
+  perCapita: {
+    totalLabel: 'Per person, per year',
+    totalValue: perCapitaTotalTonnes.toFixed(1),
+    totalUnit: 'metric tons CO2e / person / yr',
+    subline: `About ${dailyPerCapitaKg.toFixed(1)} kg per person per day.`,
+    context: `Per-capita mode divides the same 2022 national total by the U.S. Census resident population estimate of ${population2022.toLocaleString()}.`,
+  },
+};
+---
+
+<Base
+  title="The national carbon footprint"
+  description="A horizontal-bar view of the United States' annual carbon footprint, with total-U.S. and per-person modes."
+  ogImage="/images/og/og-carbon-footprint.png"
+>
+  <article class="ncfp" id="ncfp">
+    <header class="ncfp-hero">
+      <div class="ncfp-kicker">United States, 2022</div>
+      <h1 class="ncfp-title">The national carbon footprint</h1>
+      <p class="ncfp-intro">
+        A country-scale cousin of the personal carbon footprint visual: the same horizontal graph language, but focused on what the whole United States does in a year. Toggle between the country total and the per-person version of that same footprint.
+      </p>
+
+      <div class="ncfp-toggle" role="group" aria-label="Footprint scale">
+        <button type="button" class="ncfp-toggle-btn active" data-mode="total" aria-pressed="true">Total U.S.</button>
+        <button type="button" class="ncfp-toggle-btn" data-mode="perCapita" aria-pressed="false">Per person</button>
+      </div>
+
+      <details class="ncfp-methodology">
+        <summary>Sources and methodology</summary>
+        <p>
+          This page uses EPA's <a href="https://www.epa.gov/ghgemissions/inventory-us-greenhouse-gas-emissions-and-sinks">Inventory of U.S. Greenhouse Gas Emissions and Sinks</a> and its
+          <a href="https://www.epa.gov/system/files/documents/2024-04/data-highlights-1990-2022.pdf">2022 data highlights</a>, plus the U.S. Census
+          <a href="https://www.census.gov/quickfacts/fact/table/US/PST045224">resident population estimate</a> for July 1, 2022. Units are CO2e because a footprint combines CO2, methane, nitrous oxide,
+          and fluorinated gases into one number. Transportation, electric power, industry, gross total, and net total come directly from EPA inventory totals. Buildings and agriculture are inferred from EPA's published sector shares, and the small remainder is grouped as &quot;Other&quot; so the rows sum to the national total.
+        </p>
+      </details>
+    </header>
+
+    <section class="ncfp-dashboard" aria-live="polite">
+      <div class="ncfp-total-label" id="ncfp-total-label">{modeCopy.total.totalLabel}</div>
+      <div class="ncfp-total">
+        <span class="ncfp-total-num" id="ncfp-total-value">{modeCopy.total.totalValue}</span>
+        <span class="ncfp-total-unit" id="ncfp-total-unit">{modeCopy.total.totalUnit}</span>
+      </div>
+      <div class="ncfp-subline" id="ncfp-subline">{modeCopy.total.subline}</div>
+      <div class="ncfp-context" id="ncfp-context">{modeCopy.total.context}</div>
+
+      <div class="ncfp-chip-row">
+        <span class="ncfp-chip"><strong>{biggestSector.sharePct}%</strong> comes from transport</span>
+        <span class="ncfp-chip"><strong>{(powerAndBuildingsMmt / 1000).toFixed(2)}B tons</strong> come from electricity plus buildings</span>
+        <span class="ncfp-chip"><strong>{netSinkOffsetMmt.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })} MMT</strong> are absorbed by land sinks</span>
+      </div>
+    </section>
+
+    <section class="ncfp-chart-wrap">
+      <div class="ncfp-chart">
+        <div class="ncfp-scale-labels">
+          <span style="left: 0">0</span>
+          <span style="left: 25%">25%</span>
+          <span style="left: 50%">50%</span>
+          <span style="left: 75%">75%</span>
+          <span style="left: 100%">100%</span>
+        </div>
+
+        <div class="ncfp-bar-row ncfp-bar-row--total">
+          <div class="ncfp-bar-header">
+            <div class="ncfp-bar-copy">
+              <span class="ncfp-bar-name">Total U.S. footprint</span>
+              <span class="ncfp-bar-detail">Gross emissions before land sinks are subtracted</span>
+            </div>
+            <div class="ncfp-bar-metrics">
+              <span class="ncfp-bar-value" data-total={totalBarLabel} data-percapita={totalPerCapitaLabel}>{totalBarLabel}</span>
+              <span class="ncfp-bar-share">100% of national total</span>
+            </div>
+          </div>
+          <div class="ncfp-bar-track">
+            <div class="ncfp-bar-fill ncfp-bar-fill--total" style="width: 100%"></div>
+          </div>
+        </div>
+
+        {sectors.map((sector) => (
+          <div class="ncfp-bar-row">
+            <div class="ncfp-bar-header">
+              <div class="ncfp-bar-copy">
+                <span class="ncfp-bar-name">
+                  {sector.label}
+                  {sector.inferred && <span class="ncfp-bar-badge">share-based</span>}
+                </span>
+                <span class="ncfp-bar-detail">{sector.detail}</span>
+              </div>
+              <div class="ncfp-bar-metrics">
+                <span class="ncfp-bar-value" data-total={sector.totalLabel} data-percapita={sector.perCapitaLabel}>{sector.totalLabel}</span>
+                <span class="ncfp-bar-share">{sector.sharePct.toFixed(1)}% of national total</span>
+              </div>
+            </div>
+            <div class="ncfp-bar-track">
+              <div class="ncfp-bar-fill" style={`width: ${sector.sharePct}%; background: ${sector.color};`}></div>
+            </div>
+          </div>
+        ))}
+
+        <div class="ncfp-chart-note">
+          Bar lengths show each category's share of the national total, so the geometry stays fixed when you switch to per-person mode.
+        </div>
+      </div>
+    </section>
+
+    <div class="ncfp-story">
+      <div class="ncfp-story-label">How to read it</div>
+      <p>
+        Total mode makes the scale visible. Per-person mode keeps the same proportions, but asks how much of that country-sized footprint the average American effectively carries.
+      </p>
+    </div>
+  </article>
+</Base>
+
+<style is:global>
+  body:has(.ncfp) {
+    background: #f5f2ec !important;
+  }
+
+  [data-theme="dark"] body:has(.ncfp) {
+    background: #1a1917 !important;
+  }
+
+  body:has(.ncfp) .main-content {
+    max-width: 100%;
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  body:has(.ncfp) .main-content > .header {
+    max-width: var(--max-width);
+    margin: 0 auto;
+    padding-left: 24px;
+    padding-right: 24px;
+  }
+
+  .ncfp {
+    --bg: #f5f2ec;
+    --panel: #efece5;
+    --text: #1a1a18;
+    --text2: #6b6b60;
+    --accent: #8b2e2e;
+    --div: #ddd9d0;
+    --transport: #8b2e2e;
+    --power: #a0522d;
+    --industry: #6b7c3a;
+    --buildings: #7a5c3a;
+    --agriculture: #4a7c59;
+    --other: #9a9a8a;
+    color: var(--text);
+    font-family: var(--font-body);
+    font-variant-numeric: tabular-nums;
+    max-width: 100%;
+    margin: 0;
+    padding: 3rem 4vw 5rem;
+    box-sizing: border-box;
+  }
+
+  [data-theme="dark"] .ncfp {
+    --bg: #1c1a17;
+    --panel: #252320;
+    --text: #f0ede6;
+    --text2: #9a9485;
+    --accent: #b85555;
+    --div: #3a3733;
+    --transport: #c47058;
+    --power: #c4935a;
+    --industry: #90a35d;
+    --buildings: #a98558;
+    --agriculture: #5a9b6e;
+    --other: #7e786f;
+  }
+
+  .ncfp-hero,
+  .ncfp-dashboard,
+  .ncfp-chart-wrap,
+  .ncfp-story {
+    animation: ncfp-fade-up 0.45s ease both;
+  }
+
+  .ncfp-dashboard {
+    animation-delay: 60ms;
+  }
+
+  .ncfp-chart-wrap {
+    animation-delay: 120ms;
+  }
+
+  .ncfp-story {
+    animation-delay: 180ms;
+  }
+
+  @keyframes ncfp-fade-up {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .ncfp-kicker {
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--text2);
+    margin-bottom: 0.65rem;
+  }
+
+  .ncfp-title {
+    font-family: var(--font-editorial);
+    font-size: clamp(3rem, 7vw, 6rem);
+    line-height: 0.95;
+    letter-spacing: -0.04em;
+    margin: 0 0 1rem;
+  }
+
+  .ncfp-intro {
+    max-width: 46rem;
+    margin: 0 0 1.4rem;
+    font-family: var(--font-editorial);
+    font-size: 1rem;
+    line-height: 1.82;
+    color: var(--text2);
+  }
+
+  .ncfp-toggle {
+    display: inline-flex;
+    border-bottom: 1px solid var(--div);
+  }
+
+  .ncfp-toggle-btn {
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    margin-right: 18px;
+    padding: 8px 0 6px;
+    color: var(--text2);
+    cursor: pointer;
+    font: inherit;
+    font-size: 0.74rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    transition: color 0.15s ease, border-color 0.15s ease;
+  }
+
+  .ncfp-toggle-btn.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+  }
+
+  .ncfp-toggle-btn:not(.active):hover {
+    color: var(--text);
+  }
+
+  .ncfp-methodology {
+    max-width: 46rem;
+    margin-top: 1rem;
+  }
+
+  .ncfp-methodology summary {
+    cursor: pointer;
+    list-style: none;
+    font-size: 0.74rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text2);
+  }
+
+  .ncfp-methodology summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .ncfp-methodology p {
+    margin: 0.6rem 0 0;
+    font-size: 0.82rem;
+    line-height: 1.72;
+    color: var(--text2);
+  }
+
+  .ncfp-methodology a {
+    color: var(--accent);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  .ncfp-dashboard {
+    margin: 2.8rem 0 3rem;
+  }
+
+  .ncfp-total-label {
+    margin-bottom: 0.25rem;
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--text2);
+  }
+
+  .ncfp-total {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 0.55rem;
+    flex-wrap: wrap;
+  }
+
+  .ncfp-total-num {
+    font-size: clamp(4rem, 8vw, 8.5rem);
+    font-weight: 700;
+    line-height: 0.95;
+    letter-spacing: -0.04em;
+  }
+
+  .ncfp-total-unit {
+    font-size: 1rem;
+    color: var(--text2);
+  }
+
+  .ncfp-subline {
+    margin-bottom: 0.35rem;
+    font-size: 1.2rem;
+    font-weight: 600;
+  }
+
+  .ncfp-context {
+    max-width: 52rem;
+    font-size: 0.88rem;
+    line-height: 1.72;
+    color: var(--text2);
+  }
+
+  .ncfp-chip-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 1rem;
+  }
+
+  .ncfp-chip {
+    display: inline-flex;
+    gap: 0.35rem;
+    align-items: center;
+    border: 1px solid var(--div);
+    padding: 5px 10px;
+    font-size: 0.72rem;
+    color: var(--text2);
+    background: rgba(255, 255, 255, 0.18);
+  }
+
+  [data-theme="dark"] .ncfp-chip {
+    background: rgba(255, 255, 255, 0.03);
+  }
+
+  .ncfp-chip strong {
+    color: var(--text);
+  }
+
+  .ncfp-chart {
+    margin-bottom: 1.5rem;
+  }
+
+  .ncfp-scale-labels {
+    position: relative;
+    height: 18px;
+    margin-bottom: 8px;
+  }
+
+  .ncfp-scale-labels span {
+    position: absolute;
+    transform: translateX(-50%);
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    color: var(--text2);
+  }
+
+  .ncfp-scale-labels span:first-child {
+    transform: none;
+  }
+
+  .ncfp-bar-row {
+    margin-bottom: 1rem;
+  }
+
+  .ncfp-bar-row--total {
+    margin-bottom: 1.35rem;
+  }
+
+  .ncfp-bar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 18px;
+    margin-bottom: 6px;
+  }
+
+  .ncfp-bar-copy {
+    min-width: 0;
+  }
+
+  .ncfp-bar-name {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    line-height: 1.35;
+  }
+
+  .ncfp-bar-badge {
+    display: inline-block;
+    padding: 1px 6px;
+    border: 1px solid var(--div);
+    font-size: 0.52rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text2);
+  }
+
+  .ncfp-bar-detail {
+    display: block;
+    margin-top: 2px;
+    font-size: 0.72rem;
+    line-height: 1.5;
+    color: var(--text2);
+    font-style: italic;
+  }
+
+  .ncfp-bar-metrics {
+    text-align: right;
+    flex-shrink: 0;
+  }
+
+  .ncfp-bar-value {
+    display: block;
+    font-size: 0.77rem;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .ncfp-bar-share {
+    display: block;
+    margin-top: 1px;
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text2);
+  }
+
+  .ncfp-bar-track {
+    position: relative;
+    height: 52px;
+    overflow: visible;
+    background: rgba(0, 0, 0, 0.03);
+    background-image: linear-gradient(to right, var(--div) 1px, transparent 1px);
+    background-size: 25% 100%;
+  }
+
+  [data-theme="dark"] .ncfp-bar-track {
+    background-color: rgba(255, 255, 255, 0.03);
+  }
+
+  .ncfp-bar-track::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 1px;
+    background: var(--div);
+  }
+
+  .ncfp-bar-fill {
+    height: 100%;
+    transition: width 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  }
+
+  .ncfp-bar-fill--total {
+    background: linear-gradient(90deg, var(--accent) 0%, color-mix(in srgb, var(--accent) 80%, white) 100%);
+  }
+
+  .ncfp-chart-note {
+    margin-top: 0.55rem;
+    font-size: 0.78rem;
+    line-height: 1.6;
+    color: var(--text2);
+  }
+
+  .ncfp-story {
+    max-width: 52rem;
+    padding: 1.2rem 0 1.2rem 1.5rem;
+    border-left: 1px solid var(--accent);
+  }
+
+  .ncfp-story-label {
+    margin-bottom: 0.45rem;
+    font-size: 0.58rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text2);
+  }
+
+  .ncfp-story p {
+    margin: 0;
+    font-family: var(--font-editorial);
+    font-size: 1rem;
+    line-height: 1.78;
+    font-style: italic;
+  }
+
+  .ncfp *:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+  }
+
+  @media (max-width: 720px) {
+    .ncfp {
+      padding: 2rem 1.25rem 4rem;
+    }
+
+    .ncfp-title {
+      font-size: clamp(2.7rem, 15vw, 4.5rem);
+    }
+
+    .ncfp-total {
+      gap: 6px;
+    }
+
+    .ncfp-subline {
+      font-size: 1rem;
+    }
+
+    .ncfp-bar-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 6px;
+    }
+
+    .ncfp-bar-metrics {
+      text-align: left;
+    }
+
+    .ncfp-bar-track {
+      height: 42px;
+    }
+
+    .ncfp-story {
+      padding-left: 1rem;
+    }
+  }
+</style>
+
+<script define:vars={{ modeCopy }}>
+  document.addEventListener('astro:page-load', initNationalCarbonFootprint);
+
+  function initNationalCarbonFootprint() {
+    const root = document.getElementById('ncfp');
+    if (!root || root.dataset.ready === 'true') return;
+    root.dataset.ready = 'true';
+
+    const buttons = root.querySelectorAll('.ncfp-toggle-btn');
+    const totalLabel = document.getElementById('ncfp-total-label');
+    const totalValue = document.getElementById('ncfp-total-value');
+    const totalUnit = document.getElementById('ncfp-total-unit');
+    const subline = document.getElementById('ncfp-subline');
+    const context = document.getElementById('ncfp-context');
+    const swapEls = root.querySelectorAll('[data-total][data-percapita]');
+
+    function setMode(mode) {
+      const copy = modeCopy[mode];
+      if (!copy) return;
+
+      totalLabel.textContent = copy.totalLabel;
+      totalValue.textContent = copy.totalValue;
+      totalUnit.textContent = copy.totalUnit;
+      subline.textContent = copy.subline;
+      context.textContent = copy.context;
+
+      swapEls.forEach((el) => {
+        el.textContent = mode === 'total' ? el.dataset.total : el.dataset.percapita;
+      });
+
+      buttons.forEach((button) => {
+        const active = button.dataset.mode === mode;
+        button.classList.toggle('active', active);
+        button.setAttribute('aria-pressed', active ? 'true' : 'false');
+      });
+    }
+
+    root.querySelector('.ncfp-toggle')?.addEventListener('click', (event) => {
+      if (!(event.target instanceof Element)) return;
+      const button = event.target.closest('.ncfp-toggle-btn');
+      if (!button) return;
+      setMode(button.dataset.mode);
+    });
+
+    setMode('total');
+  }
+</script>
