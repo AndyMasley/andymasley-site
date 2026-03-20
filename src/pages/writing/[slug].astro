@@ -233,55 +233,57 @@ const standfirst = post.description?.trim() || '';
 >
   <div class="article-page article-page--wide">
     <div class="article-grid article-grid--wide">
-      <header class="article-header article-grid__header">
-        <div class="article-header__meta">
-          <span class="article-header__meta-item">{formatDate(post.date)}</span>
-          <span class="article-header__meta-item">{readingTime} min read</span>
-          {post.source !== 'local' && (
-            <span class="article-header__meta-item">
-              Originally published on <a href={post.url} target="_blank" rel="noopener">{post.sourceName}</a>
-            </span>
-          )}
-        </div>
-        <h1 class="article-header__title">{post.title}</h1>
-        {standfirst && <p class="article-header__standfirst">{standfirst}</p>}
-      </header>
-
       <ArticleTOC client:load headings={tocHeadings} />
-      <article class="article-body">
-        <div class="article-prose prose">
-          {post.source === 'local' ? (
-            <Content />
-          ) : (
-            <Fragment set:html={displayHtml || post.htmlContent} />
-          )}
-        </div>
-        <footer class="article-footer">
-          <div class="article-footer__back">
-            <a href="/writing" class="article-nav__link">&larr; Back to all writing</a>
+      <div class="article-main article-grid__main">
+        <header class="article-header">
+          <div class="article-header__meta">
+            <span class="article-header__meta-item">{formatDate(post.date)}</span>
+            <span class="article-header__meta-item">{readingTime} min read</span>
+            {post.source !== 'local' && (
+              <span class="article-header__meta-item">
+                Originally published on <a href={post.url} target="_blank" rel="noopener">{post.sourceName}</a>
+              </span>
+            )}
           </div>
-          {(newerPost || olderPost) && (
-            <nav class="article-pagination" aria-label="More writing">
-              {olderPost ? (
-                <a href={`/writing/${olderPost.slug}`} class="article-pagination__link">
-                  <span class="article-pagination__label">Older</span>
-                  <span class="article-pagination__title">{olderPost.title}</span>
-                  <span class="article-pagination__date">{formatDate(olderPost.date)}</span>
-                </a>
-              ) : (
-                <span class="article-pagination__link article-pagination__link--empty" aria-hidden="true"></span>
-              )}
-              {newerPost && (
-                <a href={`/writing/${newerPost.slug}`} class="article-pagination__link article-pagination__link--align-end">
-                  <span class="article-pagination__label">Newer</span>
-                  <span class="article-pagination__title">{newerPost.title}</span>
-                  <span class="article-pagination__date">{formatDate(newerPost.date)}</span>
-                </a>
-              )}
-            </nav>
-          )}
-        </footer>
-      </article>
+          <h1 class="article-header__title">{post.title}</h1>
+          {standfirst && <p class="article-header__standfirst">{standfirst}</p>}
+        </header>
+
+        <article class="article-body">
+          <div class="article-prose prose">
+            {post.source === 'local' ? (
+              <Content />
+            ) : (
+              <Fragment set:html={displayHtml || post.htmlContent} />
+            )}
+          </div>
+          <footer class="article-footer">
+            <div class="article-footer__back">
+              <a href="/writing" class="article-nav__link">&larr; Back to all writing</a>
+            </div>
+            {(newerPost || olderPost) && (
+              <nav class="article-pagination" aria-label="More writing">
+                {olderPost ? (
+                  <a href={`/writing/${olderPost.slug}`} class="article-pagination__link">
+                    <span class="article-pagination__label">Older</span>
+                    <span class="article-pagination__title">{olderPost.title}</span>
+                    <span class="article-pagination__date">{formatDate(olderPost.date)}</span>
+                  </a>
+                ) : (
+                  <span class="article-pagination__link article-pagination__link--empty" aria-hidden="true"></span>
+                )}
+                {newerPost && (
+                  <a href={`/writing/${newerPost.slug}`} class="article-pagination__link article-pagination__link--align-end">
+                    <span class="article-pagination__label">Newer</span>
+                    <span class="article-pagination__title">{newerPost.title}</span>
+                    <span class="article-pagination__date">{formatDate(newerPost.date)}</span>
+                  </a>
+                )}
+              </nav>
+            )}
+          </footer>
+        </article>
+      </div>
     </div>
   </div>
 </Base>
@@ -370,24 +372,21 @@ const standfirst = post.description?.trim() || '';
     align-items: start;
   }
 
-  .article-grid__header {
+  .article-grid__main {
     grid-column: 2;
-    grid-row: 1;
   }
 
   .article-grid--wide > :global(.article-toc-shell) {
     grid-column: 1;
-    grid-row: 1 / span 2;
     align-self: start;
+  }
+
+  .article-main {
+    min-width: 0;
   }
 
   .article-body {
     min-width: 0;
-  }
-
-  .article-grid--wide .article-body {
-    grid-column: 2;
-    grid-row: 2;
   }
 
   .article-header {
@@ -1009,8 +1008,7 @@ const standfirst = post.description?.trim() || '';
       row-gap: 1.75rem;
     }
 
-    .article-grid__header,
-    .article-grid--wide .article-body,
+    .article-grid__main,
     .article-grid--wide > :global(.article-toc-shell) {
       grid-column: 1;
       grid-row: auto;
