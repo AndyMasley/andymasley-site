@@ -603,6 +603,11 @@ const defaultExpandedYear = postsByYear.some(group => group.year === currentYear
     color: var(--dim);
   }
 
+  .timeline--topic-selected .timeline-cat,
+  .timeline--topic-selected .timeline-separator {
+    display: none;
+  }
+
   .timeline-separator {
     color: var(--border-strong);
   }
@@ -953,6 +958,10 @@ const defaultExpandedYear = postsByYear.some(group => group.year === currentYear
 
     function renderArchive() {
       let visibleCount = 0;
+
+      if (timeline) {
+        timeline.classList.toggle('timeline--topic-selected', state.topic !== 'all');
+      }
 
       timelineRows.forEach(row => {
         const rowTopic = row.getAttribute('data-cat') || '';
