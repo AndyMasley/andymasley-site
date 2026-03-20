@@ -233,7 +233,9 @@ const standfirst = post.description?.trim() || '';
 >
   <div class="article-page article-page--wide">
     <div class="article-grid article-grid--wide">
-      <ArticleTOC client:load headings={tocHeadings} />
+      <aside class="article-grid__toc">
+        <ArticleTOC client:load headings={tocHeadings} />
+      </aside>
       <div class="article-main article-grid__main">
         <header class="article-header">
           <div class="article-header__meta">
@@ -376,8 +378,9 @@ const standfirst = post.description?.trim() || '';
     grid-column: 2;
   }
 
-  .article-grid--wide > :global(.article-toc-shell) {
+  .article-grid__toc {
     grid-column: 1;
+    min-width: 0;
     align-self: start;
     position: sticky;
     top: 1.5rem;
@@ -1009,12 +1012,12 @@ const standfirst = post.description?.trim() || '';
     }
 
     .article-grid__main,
-    .article-grid--wide > :global(.article-toc-shell) {
+    .article-grid__toc {
       grid-column: 1;
       grid-row: auto;
     }
 
-    .article-grid--wide > :global(.article-toc-shell) {
+    .article-grid__toc {
       position: static;
       top: auto;
     }
