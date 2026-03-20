@@ -1233,6 +1233,7 @@ import { PromptEnergyStory } from '@/components/prompt-energy/PromptEnergyStory'
   .pe2-stage__topline,
   .pe2-stage__legend,
   .pe2-stage__controls,
+  .pe2-stage__plane-note,
   .pe2-stage__map,
   .pe2-stage__spotlight,
   .pe2-stage__handoff {
@@ -1345,6 +1346,33 @@ import { PromptEnergyStory } from '@/components/prompt-energy/PromptEnergyStory'
   .pe2-stage__mobile-hint {
     font-size: 0.78rem;
     line-height: 1.55;
+    color: var(--text-secondary);
+  }
+
+  .pe2-stage__plane-note {
+    padding: 0.9rem 1rem;
+    border: 1px solid var(--border);
+    background: color-mix(in srgb, var(--bg) 94%, transparent);
+  }
+
+  .pe2-stage__plane-note-kicker {
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--dim);
+  }
+
+  .pe2-stage__plane-note-title {
+    margin-top: 0.25rem;
+    font-family: var(--font-editorial);
+    font-size: 1.12rem;
+    line-height: 1.22;
+  }
+
+  .pe2-stage__plane-note-copy {
+    margin: 0.4rem 0 0;
+    font-size: 0.88rem;
+    line-height: 1.62;
     color: var(--text-secondary);
   }
 
@@ -1507,6 +1535,29 @@ import { PromptEnergyStory } from '@/components/prompt-energy/PromptEnergyStory'
     box-shadow: 0 0 0 1px color-mix(in srgb, var(--pe2-gold) 18%, transparent), 0 10px 18px -16px rgba(0, 0, 0, 0.35);
   }
 
+  .pe2-inline-label {
+    position: absolute;
+    z-index: 2;
+    padding: 0.2rem 0.4rem;
+    border: 1px solid color-mix(in srgb, var(--border) 82%, transparent);
+    background: color-mix(in srgb, var(--bg) 94%, transparent);
+    font-size: 0.67rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--dim);
+    pointer-events: none;
+  }
+
+  .pe2-inline-label--front-compute {
+    top: 11rem;
+    right: 1.55rem;
+  }
+
+  .pe2-rack-shell--compact .pe2-inline-label {
+    font-size: 0.6rem;
+    padding: 0.15rem 0.28rem;
+  }
+
   .pe2-rack-shell.is-mobile-tray-focus .pe2-rack-shell__tray:not(.pe2-rack-shell__tray--selected),
   .pe2-rack-shell.is-mobile-tray-focus .pe2-rear__module:not(.pe2-rear__module--selected),
   .pe2-rack-shell.is-mobile-tray-focus .pe2-xray__compute:not(.pe2-xray__compute--three) {
@@ -1647,6 +1698,7 @@ import { PromptEnergyStory } from '@/components/prompt-energy/PromptEnergyStory'
   }
 
   .pe2-rear__module {
+    position: relative;
     border: 1px solid var(--border);
     background: color-mix(in srgb, var(--bg) 93%, transparent);
   }
@@ -1654,6 +1706,36 @@ import { PromptEnergyStory } from '@/components/prompt-energy/PromptEnergyStory'
   .pe2-rear__module--selected {
     border-color: color-mix(in srgb, var(--pe2-blue) 48%, var(--border));
     box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--pe2-blue) 16%, transparent);
+  }
+
+  .pe2-rear__module-tag {
+    position: absolute;
+    right: 0.45rem;
+    bottom: 0.35rem;
+    font-size: 0.6rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--dim);
+  }
+
+  .pe2-inline-label--rear-manifold {
+    top: 1.9rem;
+    left: 3.2rem;
+  }
+
+  .pe2-inline-label--rear-cartridge {
+    top: 10.3rem;
+    right: 7.9rem;
+  }
+
+  .pe2-inline-label--rear-spine {
+    top: 18rem;
+    left: 7.3rem;
+  }
+
+  .pe2-inline-label--rear-busbar {
+    bottom: 2rem;
+    right: 5.4rem;
   }
 
   .pe2-zone--manifold {
@@ -1770,6 +1852,26 @@ import { PromptEnergyStory } from '@/components/prompt-energy/PromptEnergyStory'
 
   .pe2-xray__air.is-active {
     opacity: 1;
+  }
+
+  .pe2-inline-label--xray-switches {
+    top: 6rem;
+    right: 3.25rem;
+  }
+
+  .pe2-inline-label--xray-compute {
+    top: 13.3rem;
+    right: 3.25rem;
+  }
+
+  .pe2-inline-label--xray-power {
+    bottom: 2.2rem;
+    right: 3.25rem;
+  }
+
+  .pe2-inline-label--xray-manifold {
+    top: 2rem;
+    left: 3.15rem;
   }
 
   .pe2-zone--xray-tray {
@@ -2085,6 +2187,7 @@ import { PromptEnergyStory } from '@/components/prompt-energy/PromptEnergyStory'
     .pe2-stage__topline,
     .pe2-stage__legend,
     .pe2-stage__controls,
+    .pe2-stage__plane-note,
     .pe2-stage__map,
     .pe2-stage__spotlight,
     .pe2-stage__handoff,

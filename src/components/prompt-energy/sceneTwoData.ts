@@ -25,6 +25,12 @@ export interface SceneTwoBeat {
   rackFact: string;
 }
 
+export interface SceneTwoPlaneNote {
+  kicker: string;
+  title: string;
+  copy: string;
+}
+
 export const SCENE_TWO_VIEW_OPTIONS: Array<{ key: RackViewMode; label: string }> = [
   { key: 'front', label: 'Front' },
   { key: 'rear', label: 'Rear' },
@@ -75,6 +81,49 @@ export const SCENE_TWO_BOUNDARY_COPY: Record<BoundaryKey, string> = {
   chip: 'Boundary: chip only.',
   server: 'Boundary: active server.',
   facility: 'Boundary: full facility.',
+};
+
+export const SCENE_TWO_PLANE_NOTES: Record<SceneTwoBeat['overlayMode'], SceneTwoPlaneNote> = {
+  row: {
+    kicker: 'Rack row context',
+    title: 'One small request inside a much larger aisle',
+    copy: 'The serving system already spans multiple racks. This scene isolates one rack so the prompt still feels tiny relative to the surrounding infrastructure.',
+  },
+  request: {
+    kicker: 'Serving path',
+    title: 'The main request lands on one selected compute tray',
+    copy: 'The blue serving path targets the highlighted tray. The management switches above it are a separate control plane for health and orchestration, not the main serving path.',
+  },
+  fabric: {
+    kicker: 'Internal fabric',
+    title: 'One tray joins a shared rack-scale network',
+    copy: 'After the selected tray receives the request, the internal fabric matters too. Compute trays and switch trays work together as one rack-scale machine.',
+  },
+  power: {
+    kicker: 'Power chain',
+    title: 'External power becomes rack power before the tray uses its share',
+    copy: 'The gold path is infrastructural: incoming power reaches the shelves first, then moves through the bus-bar path before the selected compute hardware draws from it.',
+  },
+  'rear-service': {
+    kicker: 'Rear service side',
+    title: 'The rack back holds manifolds, bus bar access, and service structure',
+    copy: 'The rear view exposes the service truth of the machine: manifolds, cable cartridges, service spines, and bus-bar access all sit behind the compute-facing front.',
+  },
+  coolant: {
+    kicker: 'Closed loop coolant',
+    title: 'Coolant moves through the rack, not directly onto chips',
+    copy: 'The cyan loop runs from the rack-side CDU link into the manifolds, branches into the selected tray, and returns through a closed path instead of touching electronics directly.',
+  },
+  hybrid: {
+    kicker: 'Hybrid cooling',
+    title: 'Liquid for the hottest compute, airflow for the rest',
+    copy: 'Liquid targets the highest power-density compute zones. Air still sweeps power shelves, networking, and other lower-power subsystems through the rack.',
+  },
+  tray: {
+    kicker: 'Scene 3 handoff',
+    title: 'The selected tray becomes the next zoom target',
+    copy: 'The rack has now done its explanatory job. From here the story narrows to one tray, then one board, one package, and one chip interface.',
+  },
 };
 
 export const SCENE_TWO_BEATS: SceneTwoBeat[] = [
