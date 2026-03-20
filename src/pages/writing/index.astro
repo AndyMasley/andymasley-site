@@ -21,6 +21,7 @@ const [allSubstackPosts, eaForumPosts] = await Promise.all([
 ]);
 
 const metaSlugs = getMetaPostSlugs();
+const currentYear = new Date().getFullYear();
 
 // Filter out meta posts from Substack timeline
 const substackPosts: TimelinePost[] = allSubstackPosts
@@ -107,6 +108,9 @@ for (const [year, monthMap] of yearMap) {
 
 // Sort years descending
 postsByYear.sort((a, b) => b.year - a.year);
+const defaultExpandedYear = postsByYear.some(group => group.year === currentYear)
+  ? currentYear
+  : postsByYear[0]?.year;
 
 // Get day only
 function getDay(date: Date): string {
@@ -189,7 +193,7 @@ function formatBylineDate(dateStr: string): string {
   <div class="top-dropdown">
     <button class="top-toggle" aria-expanded="false" data-section="blog">
       <span class="top-arrow">&#9654;</span>
-      <span class="top-title">Writing archive</span>
+      <span class="top-title">Blog</span>
     </button>
     <div class="top-content" data-content="blog" hidden>
       <!-- META SUBSECTION -->
@@ -254,8 +258,15 @@ function formatBylineDate(dateStr: string): string {
       <div class="timeline">
         {postsByYear.map(yearGroup => (
           <div class="year-group" data-year={yearGroup.year}>
-            <div class="year-header">{yearGroup.year}</div>
-            <div class="year-posts">
+            <button
+              class="year-toggle"
+              type="button"
+              aria-expanded={String(yearGroup.year === defaultExpandedYear)}
+            >
+              <span class="year-arrow">▶</span>
+              <span class="year-label">{yearGroup.year}</span>
+            </button>
+            <div class="year-posts" hidden={yearGroup.year !== defaultExpandedYear}>
               {yearGroup.months.map(monthGroup => (
                 <>
                   {monthGroup.posts.map((post, i) => (
@@ -281,11 +292,11 @@ function formatBylineDate(dateStr: string): string {
 
   <!-- BYLINES DROPDOWN -->
   <div class="top-dropdown">
-    <button class="top-toggle" aria-expanded="false" data-section="bylines">
+    <button class="top-toggle" aria-expanded="true" data-section="bylines">
       <span class="top-arrow">&#9654;</span>
       <span class="top-title">Bylines</span>
     </button>
-    <div class="top-content" data-content="bylines" hidden>
+    <div class="top-content" data-content="bylines">
       {bylines.length > 0 ? (
         <div class="bylines-list">
           {bylines.map(byline => (
@@ -724,16 +735,40 @@ function formatBylineDate(dateStr: string): string {
     display: none;
   }
 
-  .year-header {
+  .year-toggle {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+    padding: 0 0 0.45rem;
+    margin-bottom: 0.55rem;
+    border: none;
+    border-bottom: 1px solid var(--border);
+    background: none;
+    color: var(--dim);
+    cursor: pointer;
+    text-align: left;
+  }
+
+  .year-toggle:hover {
+    color: var(--text);
+  }
+
+  .year-arrow {
+    font-size: 0.55rem;
+    transition: transform 0.2s ease;
+  }
+
+  .year-toggle[aria-expanded="true"] .year-arrow {
+    transform: rotate(90deg);
+  }
+
+  .year-label {
     font-size: 0.68rem;
     font-family: var(--font-mono);
     font-weight: 500;
     letter-spacing: 0.12em;
     text-transform: uppercase;
-    color: var(--dim);
-    margin-bottom: 0.55rem;
-    padding-bottom: 0.45rem;
-    border-bottom: 1px solid var(--border);
   }
 
   .year-posts {
@@ -969,6 +1004,25 @@ function formatBylineDate(dateStr: string): string {
     // Timeline filtering
     const subcategoryFilters = document.getElementById('subcategory-filters');
 
+    function bindYearToggles(scope: ParentNode = document) {
+      scope.querySelectorAll('.year-toggle').forEach(toggle => {
+        const newToggle = toggle.cloneNode(true) as HTMLButtonElement;
+        toggle.parentNode?.replaceChild(newToggle, toggle);
+
+        newToggle.addEventListener('click', () => {
+          const expanded = newToggle.getAttribute('aria-expanded') === 'true';
+          newToggle.setAttribute('aria-expanded', String(!expanded));
+
+          const yearPosts = newToggle.parentElement?.querySelector('.year-posts') as HTMLElement | null;
+          if (yearPosts) {
+            yearPosts.hidden = expanded;
+          }
+        });
+      });
+    }
+
+    bindYearToggles();
+
     function updateTimelineDisplay() {
       // Hide empty years
       document.querySelectorAll('.year-group').forEach(group => {
@@ -1066,10 +1120,7 @@ function formatBylineDate(dateStr: string): string {
             subcategoryFilters.classList.remove('visible');
           }
           // Restore timeline order before filtering
-          const timeline = document.querySelector('.timeline') as HTMLElement;
-          if (timeline && (window as any).originalTimelineHTML) {
-            timeline.innerHTML = (window as any).originalTimelineHTML;
-          }
+          restoreTimelineOrder();
           filterByCategory('all');
           return;
         }
@@ -1080,10 +1131,7 @@ function formatBylineDate(dateStr: string): string {
         newBtn.classList.add('active');
 
         // Restore timeline order before filtering
-        const timeline = document.querySelector('.timeline') as HTMLElement;
-        if (timeline && (window as any).originalTimelineHTML) {
-          timeline.innerHTML = (window as any).originalTimelineHTML;
-        }
+        restoreTimelineOrder();
 
         // Show/hide subcategories
         if (hasSubcategories && subcategoryFilters) {
@@ -1108,6 +1156,7 @@ function formatBylineDate(dateStr: string): string {
     function restoreTimelineOrder() {
       if (timeline && (window as any).originalTimelineHTML) {
         timeline.innerHTML = (window as any).originalTimelineHTML;
+        bindYearToggles(timeline);
       }
     }
 
@@ -1133,7 +1182,7 @@ function formatBylineDate(dateStr: string): string {
       timeline.innerHTML = '';
       const orderedContainer = document.createElement('div');
       orderedContainer.className = 'year-group';
-      orderedContainer.innerHTML = '<div class="year-header">Start Here</div><div class="year-posts"></div>';
+      orderedContainer.innerHTML = '<button class="year-toggle" type="button" aria-expanded="true"><span class="year-arrow">▶</span><span class="year-label">Start Here</span></button><div class="year-posts"></div>';
       const yearPosts = orderedContainer.querySelector('.year-posts') as HTMLElement;
 
       matchingRows.forEach((row, i) => {
@@ -1149,6 +1198,7 @@ function formatBylineDate(dateStr: string): string {
       });
 
       timeline.appendChild(orderedContainer);
+      bindYearToggles(timeline);
 
       // Hide category column
       document.querySelectorAll('.timeline-cat').forEach(cat => {
