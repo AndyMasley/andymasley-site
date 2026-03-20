@@ -1419,8 +1419,30 @@ const standfirst = post.description?.trim() || '';
   .cheat-sheet-page :global(.prose h1),
   .cheat-sheet-page :global(.prose h2),
   .cheat-sheet-page :global(.prose h3) { scroll-margin-top: 20px; color: var(--text); }
+  .cheat-sheet-page :global(.prose h1),
+  .cheat-sheet-page :global(.prose h2) {
+    font-size: clamp(1.95rem, 1.72rem + 0.55vw, 2.2rem);
+    font-weight: 600;
+    line-height: 1.14;
+    letter-spacing: -0.028em;
+    margin-top: 4rem;
+    margin-bottom: 1rem;
+  }
   .cheat-sheet-page :global(.prose h3) {
-    font-size: 1.05rem; font-weight: 600; line-height: 1.35; margin-top: 1.75rem; margin-bottom: 0.5rem;
+    font-size: clamp(1.08rem, 1rem + 0.22vw, 1.2rem);
+    font-weight: 600;
+    line-height: 1.38;
+    letter-spacing: -0.01em;
+    color: var(--text-secondary);
+    margin-top: 2.35rem;
+    margin-bottom: 0.7rem;
+  }
+  .cheat-sheet-page :global(.prose h1:first-child),
+  .cheat-sheet-page :global(.prose h2:first-child) { margin-top: 0; }
+  @media (max-width: 600px) {
+    .cheat-sheet-page :global(.prose h1),
+    .cheat-sheet-page :global(.prose h2) { font-size: 1.72rem; }
+    .cheat-sheet-page :global(.prose h3) { font-size: 1.08rem; margin-top: 2rem; }
   }
   .cheat-sheet-page :global(.prose p) { margin-bottom: var(--space-md); }
   .cheat-sheet-page :global(.prose ul),
