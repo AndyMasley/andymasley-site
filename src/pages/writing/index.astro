@@ -226,8 +226,7 @@ const defaultExpandedYear = postsByYear.some(group => group.year === currentYear
         </div>
 
         <div class="archive-control" id="archive-theme-wrap" hidden>
-          <label class="archive-control__label" for="archive-theme">AI & environment theme</label>
-          <select id="archive-theme" class="archive-select">
+          <select id="archive-theme" class="archive-select" aria-label="AI and environment theme">
             <option value="">All themes</option>
             {aiEnvSubcategories.map(theme => (
               <option value={theme.slug} data-posts={JSON.stringify(theme.postSlugs)}>
@@ -411,14 +410,6 @@ const defaultExpandedYear = postsByYear.some(group => group.year === currentYear
 
   .archive-control-grid.archive-control-grid--with-theme {
     grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-
-  .archive-control__label {
-    font-size: 0.68rem;
-    font-family: var(--font-mono);
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--dim);
   }
 
   .archive-search {
