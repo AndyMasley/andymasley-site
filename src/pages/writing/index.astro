@@ -181,11 +181,9 @@ const defaultExpandedYear = postsByYear.some(group => group.year === currentYear
 ---
 
 <Base title="Writing" description="Essays on AI and the environment, animal welfare, effective altruism, political liberalism, and more. Published on Substack and elsewhere." ogImage="/images/og/og-writing.png">
-  <section class="writing-hero" aria-labelledby="writing-title">
-    <p class="writing-kicker">Writing</p>
-    <h1 class="writing-title" id="writing-title">Blog</h1>
+  <section class="writing-hero" aria-label="Writing">
     <p class="page-intro">
-      I write on <a href="https://andymasley.substack.com/">Substack</a> and elsewhere about AI and the environment, AI more broadly, animal welfare, philosophy, political liberalism, and assorted recommendations and advice. Since March 2026 I've been writing full-time on a grant from <a href="https://coefficientgiving.org/" target="_blank" rel="noopener">Coefficient Giving</a>.
+      I write on <a href="https://andymasley.substack.com/">Substack</a> and elsewhere about AI and the environment, AI more broadly, animal welfare, philosophy, and political liberalism. Since March 2026 I've been writing full-time on a grant from <a href="https://coefficientgiving.org/" target="_blank" rel="noopener">Coefficient Giving</a>.
     </p>
   </section>
 
@@ -352,24 +350,6 @@ const defaultExpandedYear = postsByYear.some(group => group.year === currentYear
 <style>
   .writing-hero {
     margin-bottom: 2.4rem;
-  }
-
-  .writing-kicker {
-    margin-bottom: 0.45rem;
-    font-size: 0.7rem;
-    font-family: var(--font-mono);
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--dim);
-  }
-
-  .writing-title {
-    margin-bottom: 0.8rem;
-    font-family: var(--font-editorial);
-    font-size: clamp(2.35rem, 2rem + 0.95vw, 3rem);
-    font-weight: 600;
-    line-height: 0.96;
-    letter-spacing: -0.04em;
   }
 
   .page-intro {
