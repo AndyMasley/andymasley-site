@@ -97,6 +97,9 @@ export function ComparingCuts({ personalActions, enabledPersonal, actionParamOve
         <h2 style={{ fontSize: '1.3rem', fontWeight: 700, margin: '0 0 0.5rem', color: 'var(--text, #1A1A18)' }}>
           Comparing your cuts
         </h2>
+        <p style={{ margin: '0 0 0.65rem', fontSize: '0.72rem', lineHeight: 1.5, color: MUTED, maxWidth: '34rem' }}>
+          Each personal cut here means one year of that change. So <em>go vegan</em> means one year of veganism.
+        </p>
         <div style={{ display: 'flex', gap: '2px' }}>
           {FILTER_OPTIONS.map(opt => {
             const activeColor = opt.value === null ? 'var(--bar-track, #E2DFD9)' : opt.value === 'personal' ? ACCENT : GREEN;
