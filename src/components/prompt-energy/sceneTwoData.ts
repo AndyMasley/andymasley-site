@@ -50,15 +50,15 @@ export const SCENE_TWO_SUBSYSTEMS: Record<RackSubsystem, { label: string; descri
   },
   management: {
     label: 'Management plane',
-    description: 'These small top modules handle control and health traffic. They are not the main serving path for the user request.',
+    description: 'Control and health traffic, not the main serving path.',
   },
   power: {
     label: 'Power conversion and bus bar',
-    description: 'External power is converted and then distributed across the rack before the active tray uses its share.',
+    description: 'External power feeds the shelves, is converted, and then flows across the rack bus-bar path before the selected tray uses its share.',
   },
   manifold: {
     label: 'Rear manifold zone',
-    description: 'The back of the rack holds the service infrastructure: manifolds, cable spines, and bus-bar access paths.',
+    description: 'The back of the rack holds the service infrastructure: manifolds, cable spines, cable cartridges, and bus-bar access paths.',
   },
   coolant: {
     label: 'Closed coolant loop',
@@ -125,7 +125,7 @@ export const SCENE_TWO_BEATS: SceneTwoBeat[] = [
     id: 'power',
     label: 'Beat 4',
     title: 'Power is converted and distributed across the rack.',
-    body: 'Electrical power arrives as infrastructure first, then flows through conversion and rack distribution before the selected tray uses its share.',
+    body: 'External power reaches the shelves first, converts into the rack’s internal distribution path, and then spreads through the bus bar before the selected tray uses its share.',
     caption: 'Power is broad and infrastructural, not a narrow request line.',
     viewMode: 'xray',
     highlighted: 'power',
@@ -136,7 +136,7 @@ export const SCENE_TWO_BEATS: SceneTwoBeat[] = [
     id: 'rear',
     label: 'Beat 5',
     title: 'The rear of the rack holds the liquid and service infrastructure.',
-    body: 'The back of the rack is where the manifolds, cable service paths, and bus-bar access become visible.',
+    body: 'The back of the rack is where the manifolds, cable service paths, cable cartridges, and bus-bar access become visible.',
     caption: 'The cooling and service truth lives at the rear.',
     viewMode: 'rear',
     highlighted: 'manifold',

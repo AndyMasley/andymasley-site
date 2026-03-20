@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type RefObject } from 'react';
+import { useEffect, useMemo, useRef, useState, type RefObject, type TouchEvent } from 'react';
 import { BOUNDARY_OPTIONS, type BoundaryKey } from './sceneOneData';
 import {
   SCENE_TWO_BEATS,
@@ -11,6 +11,20 @@ import {
 
 function formatRackPower(value: number) {
   return `~${value} kW`;
+}
+
+function useSmallScreen(query = '(max-width: 720px)') {
+  const [matches, setMatches] = useState(false);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia(query);
+    const update = () => setMatches(mediaQuery.matches);
+    update();
+    mediaQuery.addEventListener('change', update);
+    return () => mediaQuery.removeEventListener('change', update);
+  }, [query]);
+
+  return matches;
 }
 
 interface SceneTwoProps {
@@ -50,6 +64,8 @@ export function PromptEnergySceneTwo({ boundary }: SceneTwoProps) {
   const visibility = useRef<Record<number, number>>({});
   const stageRef = useRef<HTMLElement | null>(null);
   const trayRef = useRef<HTMLButtonElement | null>(null);
+  const touchStartXRef = useRef<number | null>(null);
+  const isSmallScreen = useSmallScreen();
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -151,14 +167,39 @@ export function PromptEnergySceneTwo({ boundary }: SceneTwoProps) {
   const selectedSubsystemCopy = SCENE_TWO_SUBSYSTEMS[activeSubsystem];
   const showRequestPath = beatAtLeast('tray');
   const showFabricPath = beatAtLeast('fabric');
+  const showManagementPath = beatAtLeast('rack');
   const showPowerPath = beatAtLeast('power');
   const showRear = beatAtLeast('rear');
   const showCoolant = beatAtLeast('coolant');
   const showHybrid = beatAtLeast('hybrid');
   const showTrayFocus = beatAtLeast('tray-pull');
 
+  const cycleSwipeView = (direction: 'next' | 'prev') => {
+    const views: RackViewMode[] = ['front', 'rear', 'xray'];
+    const currentIndex = views.indexOf(currentView === 'split' ? 'front' : currentView);
+    const safeIndex = currentIndex === -1 ? 0 : currentIndex;
+    const nextIndex = direction === 'next'
+      ? (safeIndex + 1) % views.length
+      : (safeIndex - 1 + views.length) % views.length;
+    setViewOverride(views[nextIndex]);
+  };
+
+  const handleTouchStart = (event: TouchEvent<HTMLDivElement>) => {
+    touchStartXRef.current = event.changedTouches[0]?.clientX ?? null;
+  };
+
+  const handleTouchEnd = (event: TouchEvent<HTMLDivElement>) => {
+    if (!isSmallScreen || touchStartXRef.current === null) return;
+    const endX = event.changedTouches[0]?.clientX ?? null;
+    if (endX === null) return;
+    const delta = endX - touchStartXRef.current;
+    if (Math.abs(delta) < 36) return;
+    cycleSwipeView(delta < 0 ? 'next' : 'prev');
+    touchStartXRef.current = null;
+  };
+
   const renderFrontRack = (size: 'full' | 'compact' = 'full') => (
-    <div className={`pe2-rack-shell pe2-rack-shell--front pe2-rack-shell--${size}`}>
+    <div className={`pe2-rack-shell pe2-rack-shell--front pe2-rack-shell--${size} ${activeSubsystem === 'rack' ? 'is-rack-active' : ''}`}>
       <div className="pe2-rack-shell__cap">management</div>
       <div className="pe2-rack-shell__switch-band">fabric switch trays</div>
       <div className="pe2-rack-shell__compute">
@@ -173,6 +214,12 @@ export function PromptEnergySceneTwo({ boundary }: SceneTwoProps) {
       </div>
       <div className="pe2-rack-shell__power-band">power conversion</div>
 
+      <RackZone
+        subsystem="rack"
+        className="pe2-zone pe2-zone--rack-front"
+        onHover={setHoveredSubsystem}
+        activeSubsystem={activeSubsystem}
+      />
       <RackZone
         subsystem="management"
         className="pe2-zone pe2-zone--management"
@@ -203,7 +250,12 @@ export function PromptEnergySceneTwo({ boundary }: SceneTwoProps) {
         <rect x="68" y="26" width="284" height="708" className="pe2-overlay__frame" />
         <circle cx="22" cy="386" r="12" className="pe2-overlay__node pe2-overlay__node--data" />
         <text x="44" y="390" className="pe2-overlay__label">request</text>
+        <circle cx="22" cy="110" r="9" className="pe2-overlay__node pe2-overlay__node--control" />
+        <text x="40" y="114" className="pe2-overlay__label">control</text>
+        <circle cx="22" cy="706" r="12" className="pe2-overlay__node pe2-overlay__node--power" />
+        <text x="44" y="710" className="pe2-overlay__label">external power</text>
         <path d="M34 386 H82 H155" className={`pe2-overlay__path pe2-overlay__path--data ${showRequestPath ? 'is-active' : ''}`} />
+        <path d="M32 110 H78 H142" className={`pe2-overlay__path pe2-overlay__path--control ${showManagementPath ? 'is-active' : ''}`} />
         <path d="M210 455 V172" className={`pe2-overlay__path pe2-overlay__path--data pe2-overlay__path--fabric ${showFabricPath ? 'is-active' : ''}`} />
         <path d="M26 706 H98 H210 V504" className={`pe2-overlay__path pe2-overlay__path--power ${showPowerPath ? 'is-active' : ''}`} />
         <path d="M210 504 H332" className={`pe2-overlay__path pe2-overlay__path--power ${showPowerPath ? 'is-active' : ''}`} />
@@ -212,18 +264,26 @@ export function PromptEnergySceneTwo({ boundary }: SceneTwoProps) {
   );
 
   const renderRearRack = (size: 'full' | 'compact' = 'full') => (
-    <div className={`pe2-rack-shell pe2-rack-shell--rear pe2-rack-shell--${size}`}>
+    <div className={`pe2-rack-shell pe2-rack-shell--rear pe2-rack-shell--${size} ${activeSubsystem === 'rack' ? 'is-rack-active' : ''}`}>
       <div className="pe2-rear__manifold pe2-rear__manifold--left" />
       <div className="pe2-rear__manifold pe2-rear__manifold--right" />
       <div className="pe2-rear__busbar" />
       <div className="pe2-rear__spine pe2-rear__spine--one" />
       <div className="pe2-rear__spine pe2-rear__spine--two" />
+      <div className="pe2-rear__cartridge pe2-rear__cartridge--one" />
+      <div className="pe2-rear__cartridge pe2-rear__cartridge--two" />
       <div className="pe2-rear__modules">
         {Array.from({ length: 8 }).map((_, index) => (
           <div key={`rear-tray-${size}-${index}`} className={`pe2-rear__module ${index === 4 ? 'pe2-rear__module--selected' : ''}`} />
         ))}
       </div>
 
+      <RackZone
+        subsystem="rack"
+        className="pe2-zone pe2-zone--rack-rear"
+        onHover={setHoveredSubsystem}
+        activeSubsystem={activeSubsystem}
+      />
       <RackZone
         subsystem="manifold"
         className="pe2-zone pe2-zone--manifold"
@@ -254,15 +314,17 @@ export function PromptEnergySceneTwo({ boundary }: SceneTwoProps) {
         <rect x="68" y="26" width="284" height="708" className="pe2-overlay__frame" />
         <circle cx="388" cy="104" r="12" className="pe2-overlay__node pe2-overlay__node--coolant" />
         <text x="278" y="108" className="pe2-overlay__label pe2-overlay__label--right">rack CDU link</text>
+        <circle cx="48" cy="712" r="12" className="pe2-overlay__node pe2-overlay__node--power" />
+        <text x="66" y="716" className="pe2-overlay__label">bus bar feed</text>
         <path d="M376 104 H348 V126 V454 H298" className={`pe2-overlay__path pe2-overlay__path--coolant ${showCoolant ? 'is-active' : showRear ? 'is-faint' : ''}`} />
         <path d="M298 454 H160 V126 H92" className={`pe2-overlay__path pe2-overlay__path--coolant ${showCoolant ? 'is-active' : showRear ? 'is-faint' : ''}`} />
-        <path d="M118 712 H200 V504" className={`pe2-overlay__path pe2-overlay__path--power ${showPowerPath ? 'is-active' : ''}`} />
+        <path d="M60 712 H122 H200 V504" className={`pe2-overlay__path pe2-overlay__path--power ${showPowerPath ? 'is-active' : ''}`} />
       </svg>
     </div>
   );
 
   const renderXRayRack = () => (
-    <div className="pe2-rack-shell pe2-rack-shell--xray pe2-rack-shell--full">
+    <div className={`pe2-rack-shell pe2-rack-shell--xray pe2-rack-shell--full ${activeSubsystem === 'rack' ? 'is-rack-active' : ''}`}>
       <div className="pe2-xray__shell" />
       <div className="pe2-xray__switches" />
       <div className="pe2-xray__compute pe2-xray__compute--one" />
@@ -275,6 +337,12 @@ export function PromptEnergySceneTwo({ boundary }: SceneTwoProps) {
       <div className={`pe2-xray__heat ${showHybrid ? 'is-hot' : ''}`} />
       <div className={`pe2-xray__air ${showHybrid ? 'is-active' : ''}`} />
 
+      <RackZone
+        subsystem="rack"
+        className="pe2-zone pe2-zone--xray-rack"
+        onHover={setHoveredSubsystem}
+        activeSubsystem={activeSubsystem}
+      />
       <RackZone
         subsystem="tray"
         className="pe2-zone pe2-zone--xray-tray"
@@ -304,6 +372,7 @@ export function PromptEnergySceneTwo({ boundary }: SceneTwoProps) {
       <svg className="pe2-overlay pe2-overlay--xray" viewBox="0 0 420 760" aria-hidden="true">
         <rect x="68" y="26" width="284" height="708" className="pe2-overlay__frame pe2-overlay__frame--ghost" />
         <path d="M34 386 H88 H155" className={`pe2-overlay__path pe2-overlay__path--data ${showRequestPath ? 'is-active' : ''}`} />
+        <path d="M36 110 H82 H144" className={`pe2-overlay__path pe2-overlay__path--control ${showManagementPath ? 'is-active' : ''}`} />
         <path d="M210 454 V182" className={`pe2-overlay__path pe2-overlay__path--data ${showFabricPath ? 'is-active' : ''}`} />
         <path d="M26 712 H110 H210 V504" className={`pe2-overlay__path pe2-overlay__path--power ${showPowerPath ? 'is-active' : ''}`} />
         <path d="M378 104 H342 V454 H264" className={`pe2-overlay__path pe2-overlay__path--coolant ${showCoolant || showHybrid ? 'is-active' : ''}`} />
@@ -393,8 +462,8 @@ export function PromptEnergySceneTwo({ boundary }: SceneTwoProps) {
               <span className="pe2-stage__legend-item"><span className="pe2-stage__legend-swatch pe2-stage__legend-swatch--air" />Airflow</span>
             </div>
 
-            <div className="pe2-stage__controls">
-              <div className="pe2-stage__view-controls" role="group" aria-label="Scene two view mode">
+              <div className="pe2-stage__controls">
+                <div className="pe2-stage__view-controls" role="group" aria-label="Scene two view mode">
                 {SCENE_TWO_VIEW_OPTIONS.map(option => (
                   <button
                     key={option.key}
@@ -426,8 +495,14 @@ export function PromptEnergySceneTwo({ boundary }: SceneTwoProps) {
                 >
                   {compareAir ? 'Hide air-cooled compare' : 'Air-cooled compare'}
                 </button>
+                </div>
               </div>
-            </div>
+
+              {isSmallScreen && (
+                <div className="pe2-stage__mobile-hint">
+                  Swipe the rack to move between front, rear, and x-ray views.
+                </div>
+              )}
 
             <div className="pe2-stage__map">
               <div className={`pe2-aisle ${activeSubsystem === 'row' ? 'is-active' : ''}`} aria-hidden="true">
@@ -437,7 +512,7 @@ export function PromptEnergySceneTwo({ boundary }: SceneTwoProps) {
                 <span className="pe2-aisle__rack pe2-aisle__rack--muted" />
               </div>
 
-              <div className="pe2-stage__hero">
+              <div className="pe2-stage__hero" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
                 {renderRackStage()}
                 {compareAir && (
                   <aside className="pe2-air-compare">
@@ -478,6 +553,7 @@ export function PromptEnergySceneTwo({ boundary }: SceneTwoProps) {
               <div className="pe2-ledger__eyebrow">Mini ledger</div>
               <div className="pe2-ledger__boundary">{SCENE_TWO_BOUNDARY_COPY[boundary]}</div>
               <div className="pe2-ledger__currently">Currently highlighted: one tray inside one rack.</div>
+              <div className="pe2-ledger__currently">Selected rack: one shared machine boundary around that tray.</div>
 
               <div className="pe2-ledger__metrics">
                 <div className="pe2-ledger__metric">

@@ -1342,6 +1342,12 @@ import { PromptEnergyStory } from '@/components/prompt-energy/PromptEnergyStory'
     padding-top: 0.2rem;
   }
 
+  .pe2-stage__mobile-hint {
+    font-size: 0.78rem;
+    line-height: 1.55;
+    color: var(--text-secondary);
+  }
+
   .pe2-stage__view-controls {
     display: flex;
     flex-wrap: wrap;
@@ -1415,6 +1421,14 @@ import { PromptEnergyStory } from '@/components/prompt-energy/PromptEnergyStory'
     border: 1px solid var(--border-strong);
     background: linear-gradient(180deg, color-mix(in srgb, var(--bg-subtle) 90%, transparent), transparent 30%), var(--bg);
     overflow: hidden;
+  }
+
+  .pe2-rack-shell.is-rack-active::before {
+    content: '';
+    position: absolute;
+    inset: 0.45rem;
+    border: 1px solid color-mix(in srgb, var(--accent) 55%, transparent);
+    pointer-events: none;
   }
 
   .pe2-rack-shell--compact {
@@ -1522,6 +1536,12 @@ import { PromptEnergyStory } from '@/components/prompt-energy/PromptEnergyStory'
     height: 3.8rem;
   }
 
+  .pe2-zone--rack-front,
+  .pe2-zone--rack-rear,
+  .pe2-zone--xray-rack {
+    inset: 0.75rem;
+  }
+
   .pe2-zone--fabric {
     left: 1.1rem;
     right: 1.1rem;
@@ -1576,6 +1596,23 @@ import { PromptEnergyStory } from '@/components/prompt-energy/PromptEnergyStory'
     width: 1.1rem;
     background: color-mix(in srgb, var(--border) 42%, transparent);
     border: 1px solid var(--border);
+  }
+
+  .pe2-rear__cartridge {
+    position: absolute;
+    right: 5.8rem;
+    width: 1.8rem;
+    height: 4.6rem;
+    border: 1px solid var(--border);
+    background: color-mix(in srgb, var(--bg-subtle) 88%, transparent);
+  }
+
+  .pe2-rear__cartridge--one {
+    top: 10rem;
+  }
+
+  .pe2-rear__cartridge--two {
+    top: 26.5rem;
   }
 
   .pe2-rear__spine--one {
@@ -1782,6 +1819,14 @@ import { PromptEnergyStory } from '@/components/prompt-energy/PromptEnergyStory'
     stroke: var(--pe2-cool);
   }
 
+  .pe2-overlay__node--control {
+    stroke: var(--pe2-air);
+  }
+
+  .pe2-overlay__node--power {
+    stroke: var(--pe2-gold);
+  }
+
   .pe2-overlay__label {
     font-size: 11px;
     fill: var(--dim);
@@ -1821,6 +1866,11 @@ import { PromptEnergyStory } from '@/components/prompt-energy/PromptEnergyStory'
 
   .pe2-overlay__path--air {
     stroke: var(--pe2-air);
+  }
+
+  .pe2-overlay__path--control {
+    stroke: var(--pe2-air);
+    stroke-dasharray: 5 5;
   }
 
   .pe2-split {
@@ -2065,6 +2115,10 @@ import { PromptEnergyStory } from '@/components/prompt-energy/PromptEnergyStory'
       align-items: flex-start;
     }
 
+    .pe2-stage__controls {
+      width: 100%;
+    }
+
     .pe2-stage__legend {
       gap: 0.55rem 0.9rem;
     }
@@ -2078,6 +2132,14 @@ import { PromptEnergyStory } from '@/components/prompt-energy/PromptEnergyStory'
       width: 100%;
       max-width: 21rem;
       height: 34rem;
+    }
+
+    .pe2-stage__view-controls {
+      width: 100%;
+      overflow-x: auto;
+      padding-bottom: 0.2rem;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: thin;
     }
 
     .pe2-air-compare {
