@@ -192,8 +192,8 @@ const defaultExpandedYear = postsByYear.some(group => group.year === currentYear
             id="archive-search"
             class="archive-search__input"
             type="search"
-            placeholder="Search posts by title or content"
-            aria-label="Search posts by title or content"
+            placeholder="Search"
+            aria-label="Search blog posts"
             autocomplete="off"
           />
           <button id="archive-search-clear" class="archive-inline-action" type="button" hidden>Clear</button>
@@ -236,7 +236,6 @@ const defaultExpandedYear = postsByYear.some(group => group.year === currentYear
       </div>
 
       <div class="archive-toolbar">
-        <p class="archive-summary" id="archive-summary" aria-live="polite">{posts.length} posts across all topics and sources.</p>
         <button class="archive-inline-action" id="archive-clear" type="button" disabled>Clear filters</button>
       </div>
     </div>
@@ -252,7 +251,6 @@ const defaultExpandedYear = postsByYear.some(group => group.year === currentYear
           open={yearGroup.year === defaultExpandedYear}
         >
           <summary class="year-summary">
-            <span class="year-arrow" aria-hidden="true">▶</span>
             <span class="year-label">{yearGroup.year}</span>
             <span class="year-count">{yearGroup.posts.length} {yearGroup.posts.length === 1 ? 'post' : 'posts'}</span>
           </summary>
@@ -486,11 +484,10 @@ const defaultExpandedYear = postsByYear.some(group => group.year === currentYear
   }
 
   .archive-toolbar {
-    display: grid;
-    gap: 0.5rem;
+    display: flex;
+    justify-content: flex-start;
   }
 
-  .archive-summary,
   .archive-empty {
     margin: 0;
     font-size: 0.76rem;
@@ -546,30 +543,11 @@ const defaultExpandedYear = postsByYear.some(group => group.year === currentYear
     gap: 0.6rem;
     padding: 0.72rem 0;
     cursor: pointer;
-    list-style: none;
     color: var(--text);
-  }
-
-  .year-summary::-webkit-details-marker {
-    display: none;
-  }
-
-  .year-summary::marker {
-    content: '';
   }
 
   .year-summary:hover {
     color: var(--accent);
-  }
-
-  .year-arrow {
-    font-size: 0.58rem;
-    color: var(--dim);
-    transition: transform 0.2s ease;
-  }
-
-  .year-group[open] .year-arrow {
-    transform: rotate(90deg);
   }
 
   .year-label,
@@ -816,7 +794,6 @@ const defaultExpandedYear = postsByYear.some(group => group.year === currentYear
     const searchInput = document.getElementById('archive-search') as HTMLInputElement | null;
     const searchClear = document.getElementById('archive-search-clear') as HTMLButtonElement | null;
     const clearAll = document.getElementById('archive-clear') as HTMLButtonElement | null;
-    const summary = document.getElementById('archive-summary') as HTMLElement | null;
     const emptyState = document.getElementById('archive-empty') as HTMLElement | null;
     const timeline = document.querySelector('.timeline') as HTMLElement | null;
     const yearGroups = Array.from(document.querySelectorAll('.year-group')) as HTMLDetailsElement[];
@@ -947,39 +924,6 @@ const defaultExpandedYear = postsByYear.some(group => group.year === currentYear
       }
     }
 
-    function buildSummary(count: number) {
-      if (count === 0) {
-        return 'No posts match the current filters.';
-      }
-
-      const parts: string[] = [];
-      const topicLabel = topicSelect?.selectedOptions[0]?.textContent?.trim();
-      const sourceLabel = sourceSelect?.selectedOptions[0]?.textContent?.trim();
-      const themeLabel = themeSelect?.selectedOptions[0]?.textContent?.trim();
-
-      if (state.topic !== 'all' && topicLabel) {
-        parts.push(topicLabel);
-      }
-
-      if (state.theme !== '' && themeLabel) {
-        parts.push(themeLabel);
-      }
-
-      if (state.source !== 'all' && sourceLabel) {
-        parts.push(sourceLabel);
-      }
-
-      if (state.query !== '') {
-        parts.push(`matching "${searchInput?.value.trim() || state.query}"`);
-      }
-
-      if (parts.length === 0) {
-        return `Showing all ${count} posts across all topics and sources.`;
-      }
-
-      return `Showing ${count} posts for ${parts.join(' · ')}.`;
-    }
-
     function syncUrlState() {
       const params = new URLSearchParams(window.location.search);
 
@@ -1057,10 +1001,6 @@ const defaultExpandedYear = postsByYear.some(group => group.year === currentYear
         expandVisibleYears();
       } else {
         restoreDefaultYears();
-      }
-
-      if (summary) {
-        summary.textContent = buildSummary(visibleCount);
       }
 
       if (emptyState) {
