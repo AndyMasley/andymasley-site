@@ -3,6 +3,7 @@
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
 import { join } from 'path';
+import { getMetaPostSlugs } from '@/lib/meta-posts';
 
 // Cache configuration
 const CACHE_DIR = join(process.cwd(), '.cache', 'substack');
@@ -140,6 +141,11 @@ interface CachedPosts {
 // In-memory cache for current build
 let memoryCache: SubstackPost[] | null = null;
 
+function hasRequiredMetaPosts(posts: Array<{ slug: string }>): boolean {
+  const requiredMetaSlugs = getMetaPostSlugs();
+  return requiredMetaSlugs.every(slug => posts.some(post => post.slug === slug));
+}
+
 export async function fetchSubstackPosts(): Promise<SubstackPost[]> {
   // Return memory cache if available (same build)
   if (memoryCache !== null) {
@@ -159,11 +165,13 @@ export async function fetchSubstackPosts(): Promise<SubstackPost[]> {
   }
 
   // If cache is fresh, use it
-  if (existingCache && (Date.now() - existingCache.timestamp) < CACHE_TTL) {
+  if (existingCache && (Date.now() - existingCache.timestamp) < CACHE_TTL && hasRequiredMetaPosts(existingCache.posts)) {
     console.log(`Using cached posts list (${Math.round((Date.now() - existingCache.timestamp) / 1000)}s old)`);
     const posts = existingCache.posts.map(p => ({ ...p, date: new Date(p.date) }));
     memoryCache = posts;
     return posts;
+  } else if (existingCache && !hasRequiredMetaPosts(existingCache.posts)) {
+    console.log('Cached posts list is missing required guide slugs, fetching fresh data');
   }
 
   // Cache is stale or missing — try to fetch fresh data
@@ -197,8 +205,8 @@ export async function fetchSubstackPosts(): Promise<SubstackPost[]> {
         // Skip non-newsletter posts (like hub pages)
         if (post.type !== 'newsletter' || !post.is_published) continue;
 
-        // Skip special pages (links, hub pages, etc.)
-        if (['links', 'ai-and-the-environment'].includes(post.slug)) continue;
+        // Skip special utility pages that should never become writing posts
+        if (post.slug === 'links') continue;
 
         allPosts.push({
           title: post.title,

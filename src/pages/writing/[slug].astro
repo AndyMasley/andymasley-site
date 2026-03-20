@@ -2,7 +2,7 @@
 import Base from '@/layouts/Base.astro';
 import { fetchSubstackPosts, fetchPostContent, processPostContent, type SubstackPost } from '@/lib/substack';
 import { fetchEAForumPosts, fetchEAForumPostContent, processEAForumContent, type EAForumPost } from '@/lib/eaforum';
-import { getMetaPostSlugs } from '@/lib/meta-posts';
+import { metaPosts, getMetaPostSlugs } from '@/lib/meta-posts';
 import { CheatSheetExplorer } from '@/components/CheatSheetExplorer';
 import { ArticleTOC } from '@/components/ArticleTOC';
 import { extractHeadingsFromHtml, type TOCHeading } from '@/lib/extract-headings';
@@ -76,7 +76,7 @@ export async function getStaticPaths() {
   // 2. Get Substack posts
   const metaSlugSet = new Set(getMetaPostSlugs());
   const substackCandidates = substackPosts.filter(
-    post => !metaSlugSet.has(post.slug) && !existingSlugs.has(post.slug)
+    post => !existingSlugs.has(post.slug)
   );
   const substackPaths = await mapWithConcurrency(substackCandidates, async post => {
     const rawContent = await fetchPostContent(post.slug);
@@ -100,6 +100,30 @@ export async function getStaticPaths() {
   });
   paths.push(...substackPaths);
   substackCandidates.forEach(post => existingSlugs.add(post.slug));
+
+  const missingMetaPosts = metaPosts.filter(post => !existingSlugs.has(post.slug));
+  const missingMetaPaths = await mapWithConcurrency(missingMetaPosts, async post => {
+    const rawContent = await fetchPostContent(post.slug);
+    const htmlContent = processPostContent(rawContent, post.slug);
+
+    return {
+      params: { slug: post.slug },
+      props: {
+        post: {
+          source: 'substack' as const,
+          slug: post.slug,
+          title: post.title,
+          date: new Date(0),
+          description: '',
+          url: post.url,
+          htmlContent,
+          sourceName: 'Substack',
+        }
+      }
+    };
+  });
+  paths.push(...missingMetaPaths);
+  missingMetaPosts.forEach(post => existingSlugs.add(post.slug));
 
   // 3. Get EA Forum posts
   const eaForumCandidates = eaForumPosts.filter(post => !existingSlugs.has(post.slug));
@@ -129,24 +153,34 @@ export async function getStaticPaths() {
     (a, b) => b.props.post.date.getTime() - a.props.post.date.getTime()
   );
 
+  const navigablePaths = sortedPaths.filter(path => !metaSlugSet.has(path.props.post.slug));
+
   return sortedPaths.map((path, index) => ({
     ...path,
     props: {
       ...path.props,
-      newerPost: index > 0
-        ? {
-            slug: sortedPaths[index - 1].props.post.slug,
-            title: sortedPaths[index - 1].props.post.title,
-            date: sortedPaths[index - 1].props.post.date,
-          }
-        : undefined,
-      olderPost: index < sortedPaths.length - 1
-        ? {
-            slug: sortedPaths[index + 1].props.post.slug,
-            title: sortedPaths[index + 1].props.post.title,
-            date: sortedPaths[index + 1].props.post.date,
-          }
-        : undefined,
+      newerPost: (() => {
+        if (metaSlugSet.has(path.props.post.slug)) return undefined;
+        const navIndex = navigablePaths.findIndex(item => item.props.post.slug === path.props.post.slug);
+        return navIndex > 0
+          ? {
+              slug: navigablePaths[navIndex - 1].props.post.slug,
+              title: navigablePaths[navIndex - 1].props.post.title,
+              date: navigablePaths[navIndex - 1].props.post.date,
+            }
+          : undefined;
+      })(),
+      olderPost: (() => {
+        if (metaSlugSet.has(path.props.post.slug)) return undefined;
+        const navIndex = navigablePaths.findIndex(item => item.props.post.slug === path.props.post.slug);
+        return navIndex >= 0 && navIndex < navigablePaths.length - 1
+          ? {
+              slug: navigablePaths[navIndex + 1].props.post.slug,
+              title: navigablePaths[navIndex + 1].props.post.title,
+              date: navigablePaths[navIndex + 1].props.post.date,
+            }
+          : undefined;
+      })(),
     }
   }));
 }
@@ -158,6 +192,7 @@ interface Props {
 }
 
 const { post, newerPost, olderPost } = Astro.props;
+const isMetaPost = new Set(getMetaPostSlugs()).has(post.slug);
 
 // Format date as MM.DD.YYYY
 function formatDate(date: Date): string {
@@ -238,7 +273,7 @@ const standfirst = post.description?.trim() || '';
           client:load
           headings={tocHeadings}
           meta={{
-            date: formatDate(post.date),
+            date: isMetaPost ? undefined : formatDate(post.date),
             readingTime: `${readingTime} min read`,
             length: `${Math.round(wordCount / 100) / 10}k words`,
             sourceName: post.source !== 'local' ? post.sourceName : undefined,
@@ -249,7 +284,7 @@ const standfirst = post.description?.trim() || '';
       <div class="article-main article-grid__main">
         <header class="article-header">
           <div class="article-header__meta">
-            <span class="article-header__meta-item">{formatDate(post.date)}</span>
+            {!isMetaPost && <span class="article-header__meta-item">{formatDate(post.date)}</span>}
             <span class="article-header__meta-item">{readingTime} min read</span>
             {post.source !== 'local' && (
               <span class="article-header__meta-item">
@@ -308,7 +343,7 @@ const standfirst = post.description?.trim() || '';
   <article class="article-page article-page--standard">
     <header class="article-header">
       <div class="article-header__meta">
-        <span class="article-header__meta-item">{formatDate(post.date)}</span>
+        {!isMetaPost && <span class="article-header__meta-item">{formatDate(post.date)}</span>}
         <span class="article-header__meta-item">{readingTime} min read</span>
         {post.source !== 'local' && (
           <span class="article-header__meta-item">

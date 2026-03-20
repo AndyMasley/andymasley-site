@@ -18,7 +18,7 @@ interface SectionGroup {
 }
 
 interface ArticleMeta {
-  date: string;
+  date?: string;
   readingTime: string;
   length: string;
   sourceName?: string;
@@ -157,10 +157,12 @@ export function ArticleTOC({ headings, meta }: { headings: TOCHeading[]; meta: A
           </div>
 
           <div className="article-toc__entries article-toc__entries--meta">
-            <div className="article-toc__meta-row">
-              <span className="article-toc__meta-label">Date</span>
-              <span className="article-toc__meta-value">{meta.date}</span>
-            </div>
+            {meta.date && (
+              <div className="article-toc__meta-row">
+                <span className="article-toc__meta-label">Date</span>
+                <span className="article-toc__meta-value">{meta.date}</span>
+              </div>
+            )}
             <div className="article-toc__meta-row">
               <span className="article-toc__meta-label">Reading time</span>
               <span className="article-toc__meta-value">{meta.readingTime}</span>
