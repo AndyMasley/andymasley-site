@@ -262,20 +262,20 @@ const standfirst = post.description?.trim() || '';
           </div>
           {(newerPost || olderPost) && (
             <nav class="article-pagination" aria-label="More writing">
-              {newerPost ? (
-                <a href={`/writing/${newerPost.slug}`} class="article-pagination__link">
-                  <span class="article-pagination__label">Newer</span>
-                  <span class="article-pagination__title">{newerPost.title}</span>
-                  <span class="article-pagination__date">{formatDate(newerPost.date)}</span>
+              {olderPost ? (
+                <a href={`/writing/${olderPost.slug}`} class="article-pagination__link">
+                  <span class="article-pagination__label">Older</span>
+                  <span class="article-pagination__title">{olderPost.title}</span>
+                  <span class="article-pagination__date">{formatDate(olderPost.date)}</span>
                 </a>
               ) : (
                 <span class="article-pagination__link article-pagination__link--empty" aria-hidden="true"></span>
               )}
-              {olderPost && (
-                <a href={`/writing/${olderPost.slug}`} class="article-pagination__link article-pagination__link--align-end">
-                  <span class="article-pagination__label">Older</span>
-                  <span class="article-pagination__title">{olderPost.title}</span>
-                  <span class="article-pagination__date">{formatDate(olderPost.date)}</span>
+              {newerPost && (
+                <a href={`/writing/${newerPost.slug}`} class="article-pagination__link article-pagination__link--align-end">
+                  <span class="article-pagination__label">Newer</span>
+                  <span class="article-pagination__title">{newerPost.title}</span>
+                  <span class="article-pagination__date">{formatDate(newerPost.date)}</span>
                 </a>
               )}
             </nav>
@@ -324,20 +324,20 @@ const standfirst = post.description?.trim() || '';
       </div>
       {(newerPost || olderPost) && (
         <nav class="article-pagination" aria-label="More writing">
-          {newerPost ? (
-            <a href={`/writing/${newerPost.slug}`} class="article-pagination__link">
-              <span class="article-pagination__label">Newer</span>
-              <span class="article-pagination__title">{newerPost.title}</span>
-              <span class="article-pagination__date">{formatDate(newerPost.date)}</span>
+          {olderPost ? (
+            <a href={`/writing/${olderPost.slug}`} class="article-pagination__link">
+              <span class="article-pagination__label">Older</span>
+              <span class="article-pagination__title">{olderPost.title}</span>
+              <span class="article-pagination__date">{formatDate(olderPost.date)}</span>
             </a>
           ) : (
             <span class="article-pagination__link article-pagination__link--empty" aria-hidden="true"></span>
           )}
-          {olderPost && (
-            <a href={`/writing/${olderPost.slug}`} class="article-pagination__link article-pagination__link--align-end">
-              <span class="article-pagination__label">Older</span>
-              <span class="article-pagination__title">{olderPost.title}</span>
-              <span class="article-pagination__date">{formatDate(olderPost.date)}</span>
+          {newerPost && (
+            <a href={`/writing/${newerPost.slug}`} class="article-pagination__link article-pagination__link--align-end">
+              <span class="article-pagination__label">Newer</span>
+              <span class="article-pagination__title">{newerPost.title}</span>
+              <span class="article-pagination__date">{formatDate(newerPost.date)}</span>
             </a>
           )}
         </nav>
