@@ -209,8 +209,7 @@ const defaultExpandedYear = postsByYear.some(group => group.year === currentYear
 
       <div class="archive-control-grid">
         <div class="archive-control">
-          <label class="archive-control__label" for="archive-topic">Topic</label>
-          <select id="archive-topic" class="archive-select">
+          <select id="archive-topic" class="archive-select" aria-label="Topic">
             <option value="all">All topics</option>
             {activeCategories.map(topic => (
               <option value={topic.slug}>{getFilterName(topic.name)}</option>
@@ -219,8 +218,7 @@ const defaultExpandedYear = postsByYear.some(group => group.year === currentYear
         </div>
 
         <div class="archive-control">
-          <label class="archive-control__label" for="archive-source">Source</label>
-          <select id="archive-source" class="archive-select">
+          <select id="archive-source" class="archive-select" aria-label="Source">
             <option value="all">All sources</option>
             <option value="substack">Substack</option>
             {eaForumTimelinePosts.length > 0 && (
