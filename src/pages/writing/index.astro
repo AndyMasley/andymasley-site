@@ -12,6 +12,7 @@ interface TimelinePost {
   date: Date;
   url: string;
   category: string;
+  source: 'substack' | 'eaforum';
 }
 
 // Fetch posts from both sources
@@ -31,7 +32,8 @@ const substackPosts: TimelinePost[] = allSubstackPosts
     slug: p.slug,
     date: p.date,
     url: p.url,
-    category: p.category
+    category: p.category,
+    source: 'substack' as const,
   }));
 
 // Convert EA Forum posts to timeline format
@@ -40,7 +42,8 @@ const eaForumTimelinePosts: TimelinePost[] = eaForumPosts.map(p => ({
   slug: p.slug,
   date: p.date,
   url: p.url,
-  category: 'EA Forum'
+  category: 'EA Forum',
+  source: 'eaforum' as const,
 }));
 
 // Combine all posts
@@ -132,6 +135,19 @@ function getShortName(categoryName: string): string {
   return shortNames[categoryName] || categoryName;
 }
 
+function getFilterName(categoryName: string): string {
+  const names: Record<string, string> = {
+    'AI & the Environment': 'AI & environment',
+    'Artificial Intelligence': 'Artificial intelligence',
+    'Animal Welfare': 'Animal welfare',
+    'Charity': 'Effective altruism',
+    'Politics': 'Politics',
+    'Recs & Advice': 'Recs & advice',
+    'Misc': 'Miscellaneous',
+  };
+  return names[categoryName] || categoryName;
+}
+
 // Get category slug
 function getCategorySlug(categoryName: string): string {
   if (categoryName === 'EA Forum') return 'ea-forum';
@@ -150,12 +166,8 @@ function normalizeCapitalization(text: string): string {
   }).join(' ');
 }
 
-// Filter categories to show (only ones with posts)
-// Include both Substack categories and EA Forum
-const activeCategories = [
-  ...categoryConfigs.filter(c => posts.some(p => p.category === c.name)),
-  ...(eaForumTimelinePosts.length > 0 ? [{ name: 'EA Forum', slug: 'ea-forum', overview: '', sectionIds: [] }] : [])
-];
+// Filter categories to show (only topical categories with posts)
+const activeCategories = categoryConfigs.filter(c => substackPosts.some(p => p.category === c.name));
 
 // Process HTML content - fix internal links and normalize h3 capitalization
 function processContent(html: string): string {
@@ -183,120 +195,160 @@ function formatBylineDate(dateStr: string): string {
   <p class="page-intro">
     I write a lot on <a href="https://andymasley.substack.com/">Substack</a> and elsewhere. I started blogging consistently in 2025. I built a big audience doing a lot of deep dives on AI and the environment. I also write about AI more broadly, animal welfare, philosophy, political liberalism, and miscellaneous ideas and advice. Since March 2026 I've been writing full-time on a grant from <a href="https://coefficientgiving.org/" target="_blank" rel="noopener">Coefficient Giving</a>.
   </p>
-  <p class="page-intro">
-    My thinking's been broadly influenced by EA since I was a teenager. I'm also pretty influenced by philosophical liberalism, Quine, and naturalism, and want to popularize key ideas from each.
+  <p class="page-intro page-intro--secondary">
+    This page is organized so you can browse by topic, source, title, or date. The guides map the bigger themes; the archive below is the full chronological record.
   </p>
 
   <div class="divider"><div class="divider-diamond"></div></div>
 
-  <!-- BLOG DROPDOWN -->
-  <div class="top-dropdown">
-    <button class="top-toggle" aria-expanded="false" data-section="blog">
-      <span class="top-arrow">&#9654;</span>
-      <span class="top-title">Blog</span>
-    </button>
-    <div class="top-content" data-content="blog" hidden>
-      <!-- META SUBSECTION -->
-      <div class="section-header">Guides</div>
-      <div class="meta-section">
-        {metaPostsWithContent.map((meta) => (
-          <button class="meta-link" data-slug={meta.slug}>
-            <span class="meta-arrow">&rarr;</span>
-            <span class="meta-title">{meta.title}</span>
-          </button>
-        ))}
+  <section class="writing-section" aria-labelledby="guides-heading">
+    <header class="writing-section__header">
+      <div>
+        <h2 class="writing-section__title" id="guides-heading">Guides</h2>
+        <p class="writing-section__description">Longer overview pieces that map the main topics I keep returning to.</p>
       </div>
+    </header>
 
-      <!-- Hidden templates for panel content -->
+    <div class="meta-section">
       {metaPostsWithContent.map((meta) => (
-        <template id={`content-${meta.slug}`}>
-          <div class="panel-header">
-            <h3 class="panel-title">{meta.title}</h3>
-            <p class="panel-source">
-              <a href={meta.url} target="_blank" rel="noopener">Originally published on Substack</a>
-            </p>
-          </div>
-          <div class="panel-body prose" set:html={processContent(meta.content)} />
-        </template>
-      ))}
-
-      <!-- TIMELINE SUBSECTION -->
-      <div class="section-header">Timeline</div>
-      <div class="timeline-filters">
-        {activeCategories.map(cat => (
-          <button class="filter-btn" data-filter={cat.slug} data-has-subcategories={cat.slug === 'ai-environment' ? 'true' : undefined}>
-            {getShortName(cat.name)}
-          </button>
-        ))}
-      </div>
-
-      <div class="subcategory-filters" id="subcategory-filters">
-        <button
-          class="subcategory-btn"
-          data-subcategory="start-here"
-          data-posts={JSON.stringify([
-            'a-short-summary-of-my-argument-that',
-            'a-cheat-sheet-for-conversations-about',
-            'for-the-climate-little-things-dont',
-            'mapping-the-ai-and-environment-debate',
-            'computing-is-efficient',
-            'what-a-data-center-is',
-            'requests-for-journalists-covering',
-            'the-ai-water-issue-is-fake'
-          ])}
-          data-custom-order="true"
-        >
-          Start Here
+        <button class="meta-link" data-slug={meta.slug} type="button" aria-haspopup="dialog" aria-controls="stacked-panel">
+          <span class="meta-arrow">&rarr;</span>
+          <span class="meta-title">{meta.title}</span>
         </button>
-        {aiEnvSubcategories.map(sub => (
-          <button class="subcategory-btn" data-subcategory={sub.slug} data-posts={JSON.stringify(sub.postSlugs)}>
-            {normalizeCapitalization(sub.name)}
-          </button>
-        ))}
+      ))}
+    </div>
+  </section>
+
+  {metaPostsWithContent.map((meta) => (
+    <template id={`content-${meta.slug}`}>
+      <div class="panel-header">
+        <h3 class="panel-title" id={`panel-title-${meta.slug}`}>{meta.title}</h3>
+        <p class="panel-source">
+          <a href={meta.url} target="_blank" rel="noopener">Originally published on Substack</a>
+        </p>
+      </div>
+      <div class="panel-body prose" set:html={processContent(meta.content)} />
+    </template>
+  ))}
+
+  <section class="writing-section writing-section--archive" aria-labelledby="blog-heading">
+    <header class="writing-section__header writing-section__header--archive">
+      <div>
+        <h2 class="writing-section__title" id="blog-heading">Blog</h2>
+        <p class="writing-section__description">Browse essays and shorter posts by topic, source, title, or date.</p>
+      </div>
+      <div class="archive-actions" aria-label="Archive actions">
+        <button class="archive-action" id="archive-expand-years" type="button">Expand all years</button>
+        <button class="archive-action" id="archive-collapse-years" type="button">Collapse all years</button>
+      </div>
+    </header>
+
+    <div class="archive-controls">
+      <div class="archive-search" role="search">
+        <label class="archive-search__label" for="archive-search">Search titles</label>
+        <div class="archive-search__field">
+          <input id="archive-search" class="archive-search__input" type="search" placeholder="Search posts by title" autocomplete="off" />
+          <button id="archive-search-clear" class="archive-search__clear" type="button" hidden>Clear</button>
+        </div>
       </div>
 
-      <div class="timeline">
-        {postsByYear.map(yearGroup => (
-          <div class="year-group" data-year={yearGroup.year}>
-            <button
-              class="year-toggle"
-              type="button"
-              aria-expanded={String(yearGroup.year === defaultExpandedYear)}
-            >
-              <span class="year-arrow">▶</span>
-              <span class="year-label">{yearGroup.year}</span>
-            </button>
-            <div class="year-posts" hidden={yearGroup.year !== defaultExpandedYear}>
-              {yearGroup.months.map(monthGroup => (
-                <>
-                  {monthGroup.posts.map((post, i) => (
-                    <div class="timeline-row" data-cat={getCategorySlug(post.category)} data-slug={post.slug} data-month={`${yearGroup.year}-${monthGroup.month}`} data-month-label={monthGroup.label}>
+      <div class="archive-filter-grid">
+        <div class="filter-group">
+          <h3 class="filter-group__title">Topics</h3>
+          <div class="timeline-filters" role="group" aria-label="Filter by topic">
+            <button class="filter-btn active" type="button" data-filter="all" aria-pressed="true">All topics</button>
+            {activeCategories.map(cat => (
+              <button
+                class="filter-btn"
+                type="button"
+                data-filter={cat.slug}
+                aria-pressed="false"
+              >
+                {getFilterName(cat.name)}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div class="filter-group filter-group--subcategories" id="subcategory-section" hidden>
+          <h3 class="filter-group__title">AI & environment themes</h3>
+          <div class="subcategory-filters" id="subcategory-filters" role="group" aria-label="Filter AI and environment posts by theme">
+            {aiEnvSubcategories.map(sub => (
+              <button class="subcategory-btn" type="button" data-subcategory={sub.slug} data-posts={JSON.stringify(sub.postSlugs)} aria-pressed="false">
+                {normalizeCapitalization(sub.name)}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div class="filter-group">
+          <h3 class="filter-group__title">Sources</h3>
+          <div class="source-filters" role="group" aria-label="Filter by source">
+            <button class="source-btn active" type="button" data-source="all" aria-pressed="true">All sources</button>
+            <button class="source-btn" type="button" data-source="substack" aria-pressed="false">Substack</button>
+            {eaForumTimelinePosts.length > 0 && (
+              <button class="source-btn" type="button" data-source="eaforum" aria-pressed="false">EA Forum</button>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <button class="archive-clear" id="archive-clear" type="button" disabled>Clear filters</button>
+    </div>
+
+    <p class="archive-summary" id="archive-summary" aria-live="polite">{posts.length} posts across all topics and sources.</p>
+    <p class="archive-empty" id="archive-empty" hidden>No posts match the current filters.</p>
+
+    <div class="timeline" data-default-year={defaultExpandedYear ?? ''}>
+      {postsByYear.map(yearGroup => (
+        <div class="year-group" data-year={yearGroup.year}>
+          <button
+            class="year-toggle"
+            type="button"
+            aria-expanded={String(yearGroup.year === defaultExpandedYear)}
+            aria-controls={`year-posts-${yearGroup.year}`}
+          >
+            <span class="year-arrow">▶</span>
+            <span class="year-label">{yearGroup.year}</span>
+          </button>
+          <div class="year-posts" id={`year-posts-${yearGroup.year}`} hidden={yearGroup.year !== defaultExpandedYear}>
+            {yearGroup.months.map(monthGroup => (
+              <>
+                {monthGroup.posts.map((post, i) => (
+                  <div
+                    class="timeline-row"
+                    data-cat={getCategorySlug(post.category)}
+                    data-source={post.source}
+                    data-slug={post.slug}
+                    data-month={`${yearGroup.year}-${monthGroup.month}`}
+                    data-month-label={monthGroup.label}
+                    data-search-text={post.title.toLowerCase()}
+                  >
+                    <div class="timeline-date">
                       <span class="timeline-month">{i === 0 ? monthGroup.label : ''}</span>
                       <span class="timeline-day">{getDay(post.date)}</span>
-                      <a href={`/writing/${post.slug}`} class="timeline-link">
-                        {post.title}
-                      </a>
-                      <span class="timeline-cat">{getShortName(post.category)}</span>
                     </div>
-                  ))}
-                </>
-              ))}
-            </div>
+                    <a href={`/writing/${post.slug}`} class="timeline-link">
+                      {post.title}
+                    </a>
+                    <span class="timeline-cat">{getShortName(post.category)}</span>
+                  </div>
+                ))}
+              </>
+            ))}
           </div>
-        ))}
-      </div>
-
-      <p class="post-count" id="post-count">{posts.length} posts</p>
+        </div>
+      ))}
     </div>
-  </div>
+  </section>
 
-  <!-- BYLINES DROPDOWN -->
-  <div class="top-dropdown">
-    <button class="top-toggle" aria-expanded="true" data-section="bylines">
+  <section class="top-dropdown writing-section writing-section--bylines" aria-labelledby="bylines-heading">
+    <button class="top-toggle" aria-expanded="false" aria-controls="bylines-content" data-section="bylines" type="button">
       <span class="top-arrow">&#9654;</span>
-      <span class="top-title">Bylines</span>
+      <span class="top-title" id="bylines-heading">Bylines</span>
     </button>
-    <div class="top-content" data-content="bylines">
+    <div class="top-content top-content--bylines" id="bylines-content" data-content="bylines" hidden>
+      <p class="writing-section__description writing-section__description--bylines">Published pieces elsewhere.</p>
       {bylines.length > 0 ? (
         <div class="bylines-list">
           {bylines.map(byline => (
@@ -313,30 +365,398 @@ function formatBylineDate(dateStr: string): string {
         <p class="bylines-placeholder">Coming soon.</p>
       )}
     </div>
-  </div>
+  </section>
 
-  <!-- Stacked panel overlay -->
-  <div class="panel-backdrop" id="panel-backdrop"></div>
-  <div class="stacked-panel" id="stacked-panel">
+  <div class="panel-backdrop" id="panel-backdrop" hidden></div>
+  <div class="stacked-panel" id="stacked-panel" role="dialog" aria-modal="true" aria-hidden="true" hidden tabindex="-1">
     <button class="panel-close" id="panel-close" aria-label="Close panel">&times;</button>
     <div class="panel-content" id="panel-content"></div>
   </div>
 </Base>
 
 <style>
-  /* Top-level dropdowns */
-  .top-dropdown {
+  .page-intro--secondary {
+    color: var(--text-secondary);
+  }
+
+  .writing-section {
+    margin-bottom: 2.5rem;
+  }
+
+  .writing-section__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: end;
+    gap: 1rem 2rem;
+    margin-bottom: 1rem;
+  }
+
+  .writing-section__header--archive {
     margin-bottom: 1.25rem;
+  }
+
+  .writing-section__title {
+    margin: 0;
+    font-family: var(--font-editorial);
+    font-size: clamp(1.35rem, 1.2rem + 0.45vw, 1.75rem);
+    font-weight: 600;
+    line-height: 1.1;
+    letter-spacing: -0.025em;
+    color: var(--text);
+  }
+
+  .writing-section__description {
+    max-width: 42rem;
+    margin: 0.4rem 0 0;
+    font-size: 0.95rem;
+    line-height: 1.7;
+    color: var(--text-secondary);
+  }
+
+  .writing-section__description--bylines {
+    margin-bottom: 1rem;
+  }
+
+  .writing-section--archive {
     border-top: 1px solid var(--border);
-    padding-top: 0.25rem;
+    padding-top: 1rem;
+  }
+
+  .archive-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 0.75rem;
+  }
+
+  .archive-action,
+  .archive-clear {
+    background: none;
+    border: none;
+    border-bottom: 1px solid transparent;
+    padding: 0 0 2px;
+    font-family: var(--font-body);
+    font-size: 0.72rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--dim);
+    cursor: pointer;
+    transition: color 0.15s ease, border-color 0.15s ease;
+  }
+
+  .archive-action:hover,
+  .archive-clear:hover {
+    color: var(--accent);
+    border-color: var(--accent);
+  }
+
+  .archive-clear[disabled] {
+    color: var(--border-strong);
+    border-color: transparent;
+    cursor: default;
+  }
+
+  .archive-controls {
+    display: grid;
+    gap: 1.1rem;
+    margin-bottom: 1rem;
+    padding: 1rem 0 1.1rem;
+    border-top: 1px solid var(--border-subtle);
+    border-bottom: 1px solid var(--border-subtle);
+  }
+
+  .archive-search {
+    display: grid;
+    gap: 0.4rem;
+  }
+
+  .archive-search__label,
+  .filter-group__title {
+    margin: 0;
+    font-size: 0.68rem;
+    font-family: var(--font-body);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--dim);
+  }
+
+  .archive-search__field {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .archive-search__input {
+    flex: 1;
+    min-width: 0;
+    padding: 0.75rem 0 0.55rem;
+    border: none;
+    border-bottom: 1px solid var(--border);
+    border-radius: 0;
+    background: transparent;
+    color: var(--text);
+    font-family: var(--font-editorial);
+    font-size: 1.03rem;
+    line-height: 1.4;
+  }
+
+  .archive-search__input::placeholder {
+    color: var(--dim);
+  }
+
+  .archive-search__input:focus {
+    outline: none;
+    border-bottom-color: var(--accent);
+  }
+
+  .archive-search__clear {
+    flex-shrink: 0;
+    background: none;
+    border: none;
+    border-bottom: 1px solid transparent;
+    padding: 0 0 2px;
+    font-size: 0.72rem;
+    font-family: var(--font-body);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--dim);
+    cursor: pointer;
+  }
+
+  .archive-search__clear:hover {
+    color: var(--accent);
+    border-color: var(--accent);
+  }
+
+  .archive-filter-grid {
+    display: grid;
+    gap: 1rem;
+  }
+
+  .filter-group {
+    display: grid;
+    gap: 0.5rem;
+  }
+
+  .filter-group--subcategories {
+    padding-left: 0.9rem;
+    border-left: 1px solid var(--border);
+  }
+
+  .timeline-filters,
+  .subcategory-filters,
+  .source-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem 0.7rem;
+  }
+
+  .filter-btn,
+  .subcategory-btn,
+  .source-btn {
+    background: none;
+    border: none;
+    border-bottom: 1px solid transparent;
+    padding: 0 0 2px;
+    font-family: var(--font-body);
+    font-size: 0.76rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--dim);
+    cursor: pointer;
+    transition: border-color 0.15s ease, color 0.15s ease;
+  }
+
+  .filter-btn:hover,
+  .subcategory-btn:hover,
+  .source-btn:hover {
+    color: var(--accent);
+    border-color: var(--accent);
+  }
+
+  .filter-btn.active,
+  .subcategory-btn.active,
+  .source-btn.active {
+    color: var(--accent);
+    border-color: var(--accent);
+  }
+
+  .archive-summary,
+  .archive-empty {
+    margin: 0 0 1rem;
+    font-size: 0.74rem;
+    font-family: var(--font-body);
+    letter-spacing: 0.04em;
+    color: var(--dim);
+  }
+
+  .archive-empty {
+    color: var(--text-secondary);
+  }
+
+  .meta-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    border-top: 1px solid var(--border-subtle);
+  }
+
+  .meta-link {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    width: 100%;
+    padding: 0.85rem 0;
+    background: none;
+    border: none;
+    border-bottom: 1px solid var(--border-subtle);
+    font-family: var(--font-editorial);
+    font-size: 1rem;
+    color: var(--text);
+    cursor: pointer;
+    text-align: left;
+    transition: color 0.15s ease;
+  }
+
+  .meta-link:hover {
+    color: var(--accent);
+  }
+
+  .meta-link .meta-arrow {
+    width: 12px;
+    font-size: 0.65rem;
+    color: var(--dim);
+    transition: transform 0.2s ease, color 0.2s ease;
+  }
+
+  .meta-link:hover .meta-arrow {
+    color: var(--accent);
+    transform: translateX(2px);
+  }
+
+  .meta-link .meta-title {
+    flex: 1;
+  }
+
+  .timeline {
+    display: flex;
+    flex-direction: column;
+    gap: 1.9rem;
+  }
+
+  .year-group.hidden {
+    display: none;
+  }
+
+  .year-toggle {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+    padding: 0 0 0.55rem;
+    margin-bottom: 0.55rem;
+    border: none;
+    border-bottom: 1px solid var(--border);
+    background: none;
+    color: var(--dim);
+    cursor: pointer;
+    text-align: left;
+  }
+
+  .year-toggle:hover {
+    color: var(--text);
+  }
+
+  .year-arrow {
+    font-size: 0.55rem;
+    transition: transform 0.2s ease;
+  }
+
+  .year-toggle[aria-expanded="true"] .year-arrow {
+    transform: rotate(90deg);
+  }
+
+  .year-label {
+    font-size: 0.68rem;
+    font-family: var(--font-mono);
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .year-posts {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .timeline-row {
+    display: grid;
+    grid-template-columns: 58px minmax(0, 1fr) auto;
+    grid-template-areas: 'date title cat';
+    gap: 0.85rem 1rem;
+    align-items: start;
+    padding: 0.55rem 0;
+    border-bottom: 1px solid var(--border-subtle);
+  }
+
+  .timeline-row.hidden {
+    display: none;
+  }
+
+  .timeline-date {
+    grid-area: date;
+    display: flex;
+    flex-direction: column;
+    gap: 0.08rem;
+    min-width: 0;
+  }
+
+  .timeline-month,
+  .timeline-day {
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    color: var(--dim);
+  }
+
+  .timeline-link {
+    grid-area: title;
+    color: var(--text);
+    text-decoration: none;
+    font-family: var(--font-editorial);
+    font-size: 1.02rem;
+    line-height: 1.38;
+    min-width: 0;
+  }
+
+  .timeline-link:hover {
+    color: var(--accent);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  .timeline-cat {
+    grid-area: cat;
+    align-self: start;
+    margin-top: 0.16rem;
+    font-size: 0.62rem;
+    font-family: var(--font-mono);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--dim);
+    white-space: nowrap;
+  }
+
+  .top-dropdown {
+    border-top: 1px solid var(--border);
+    padding-top: 0.35rem;
   }
 
   .top-toggle {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 0.75rem;
     width: 100%;
-    padding: 12px 0 10px;
+    padding: 0.8rem 0 0.75rem;
     background: none;
     border: none;
     font-family: var(--font-editorial);
@@ -348,15 +768,11 @@ function formatBylineDate(dateStr: string): string {
     text-align: left;
   }
 
-  .top-toggle:hover {
-    color: var(--text);
-  }
-
   .top-arrow {
-    font-size: 0.55rem;
-    transition: transform 0.2s ease;
-    color: var(--dim);
     width: 12px;
+    font-size: 0.55rem;
+    color: var(--dim);
+    transition: transform 0.2s ease;
   }
 
   .top-toggle[aria-expanded="true"] .top-arrow {
@@ -373,70 +789,62 @@ function formatBylineDate(dateStr: string): string {
 
   .top-content {
     padding-left: 22px;
-    padding-bottom: 20px;
+    padding-bottom: 0.4rem;
     max-width: 46rem;
   }
 
-  /* Section headers */
-  .section-header {
-    font-size: 0.65rem;
-    text-transform: uppercase;
-    letter-spacing: 0.12em;
+  .bylines-placeholder {
+    font-size: 0.875rem;
     color: var(--dim);
-    margin: 20px 0 10px;
+    font-style: italic;
+    margin: 0.25rem 0 0;
   }
 
-  .section-header:first-child {
-    margin-top: 10px;
-  }
-
-  /* Meta section */
-  .meta-section {
+  .bylines-list {
     display: flex;
     flex-direction: column;
     gap: 0;
-    margin-bottom: 20px;
     border-top: 1px solid var(--border-subtle);
   }
 
-  .meta-link {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    width: 100%;
-    padding: 10px 0;
-    background: none;
-    border: none;
+  .byline-row {
+    display: grid;
+    grid-template-columns: 72px 1fr auto;
+    gap: 14px;
+    font-size: 0.8rem;
+    align-items: baseline;
+    padding: 0.55rem 0;
     border-bottom: 1px solid var(--border-subtle);
-    font-family: var(--font-editorial);
-    font-size: 0.98rem;
-    color: var(--text);
-    cursor: pointer;
-    text-align: left;
-    transition: color 0.15s ease;
   }
 
-  .meta-link:hover {
-    color: var(--accent);
-  }
-
-  .meta-link .meta-arrow {
-    font-size: 0.65rem;
+  .byline-date {
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
     color: var(--dim);
-    transition: transform 0.2s ease;
-    width: 12px;
   }
 
-  .meta-link:hover .meta-arrow {
+  .byline-link {
+    color: var(--text);
+    text-decoration: none;
+    font-family: var(--font-editorial);
+    font-size: 0.95rem;
+  }
+
+  .byline-link:hover {
     color: var(--accent);
-    transform: translateX(2px);
+    text-decoration: underline;
+    text-underline-offset: 2px;
   }
 
-  .meta-link .meta-title {
-    flex: 1;
+  .byline-pub {
+    font-size: 0.64rem;
+    font-family: var(--font-mono);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--dim);
+    white-space: nowrap;
   }
 
-  /* Stacked panel */
   .panel-backdrop {
     position: fixed;
     inset: 0;
@@ -578,13 +986,11 @@ function formatBylineDate(dateStr: string): string {
     font-weight: 500;
   }
 
-  /* Style standalone strong tags as sub-headings */
   .panel-body :global(p:has(> strong:only-child)) {
     margin: 1em 0 0.4em 0;
     font-size: 0.8rem;
   }
 
-  /* Ensure all text in panel-body is not faded */
   .panel-body :global(p),
   .panel-body :global(li),
   .panel-body :global(span) {
@@ -626,280 +1032,55 @@ function formatBylineDate(dateStr: string): string {
     margin-top: 0.4em;
   }
 
-  /* Timeline filters */
-  .timeline-filters {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.4rem 0.6rem;
-    margin-bottom: 0.85rem;
+  .meta-link:focus-visible,
+  .filter-btn:focus-visible,
+  .subcategory-btn:focus-visible,
+  .source-btn:focus-visible,
+  .archive-action:focus-visible,
+  .archive-clear:focus-visible,
+  .archive-search__clear:focus-visible,
+  .top-toggle:focus-visible,
+  .year-toggle:focus-visible,
+  .panel-close:focus-visible,
+  .timeline-link:focus-visible,
+  .byline-link:focus-visible {
+    outline: 1px solid var(--accent);
+    outline-offset: 4px;
   }
 
-  .filter-btn {
-    background: none;
-    border: none;
-    border-bottom: 1px solid transparent;
-    padding: 0 0 2px;
-    font-family: var(--font-body);
-    font-size: 0.74rem;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: var(--dim);
-    cursor: pointer;
-    transition: border-color 0.15s ease, color 0.15s ease;
-  }
-
-  .filter-btn:hover {
-    color: var(--accent);
-    border-color: var(--accent);
-  }
-
-  .filter-btn.active {
-    background: transparent;
-    color: var(--accent);
-    border-color: var(--accent);
-  }
-
-  /* Subcategory filters */
-  .subcategory-filters {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.4rem 0.6rem;
-    margin-left: 0;
-    padding-left: 14px;
-    border-left: 1px solid var(--border-strong);
-    max-height: 0;
-    overflow: hidden;
-    opacity: 0;
-    margin-bottom: 0;
-    transform: translateY(-8px);
-    transition: max-height 0.3s ease, opacity 0.25s ease, margin-bottom 0.3s ease, transform 0.25s ease;
-  }
-
-  .subcategory-filters.visible {
-    max-height: 200px;
-    opacity: 1;
-    margin-bottom: 16px;
-    transform: translateY(0);
-  }
-
-  .subcategory-btn {
-    background: none;
-    border: none;
-    border-bottom: 1px solid transparent;
-    padding: 0 0 2px;
-    font-family: var(--font-body);
-    font-size: 0.73rem;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    color: var(--dim);
-    cursor: pointer;
-    transition: color 0.15s ease, border-color 0.15s ease, transform 0.25s ease, opacity 0.25s ease;
-    opacity: 0;
-    transform: translateY(-4px);
-  }
-
-  .subcategory-filters.visible .subcategory-btn {
-    opacity: 1;
-    transform: translateY(0);
-  }
-
-  /* Stagger the button animations */
-  .subcategory-filters.visible .subcategory-btn:nth-child(1) { transition-delay: 0.02s; }
-  .subcategory-filters.visible .subcategory-btn:nth-child(2) { transition-delay: 0.04s; }
-  .subcategory-filters.visible .subcategory-btn:nth-child(3) { transition-delay: 0.06s; }
-  .subcategory-filters.visible .subcategory-btn:nth-child(4) { transition-delay: 0.08s; }
-  .subcategory-filters.visible .subcategory-btn:nth-child(5) { transition-delay: 0.10s; }
-  .subcategory-filters.visible .subcategory-btn:nth-child(6) { transition-delay: 0.12s; }
-  .subcategory-filters.visible .subcategory-btn:nth-child(7) { transition-delay: 0.14s; }
-  .subcategory-filters.visible .subcategory-btn:nth-child(8) { transition-delay: 0.16s; }
-
-  .subcategory-btn:hover {
-    color: var(--accent);
-    border-color: var(--accent);
-  }
-
-  .subcategory-btn.active {
-    background: transparent;
-    color: var(--accent);
-    border-color: var(--accent);
-  }
-
-  /* Timeline */
-  .timeline {
-    display: flex;
-    flex-direction: column;
-    gap: 2rem;
-  }
-
-  .year-group.hidden {
-    display: none;
-  }
-
-  .year-toggle {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    width: 100%;
-    padding: 0 0 0.45rem;
-    margin-bottom: 0.55rem;
-    border: none;
-    border-bottom: 1px solid var(--border);
-    background: none;
-    color: var(--dim);
-    cursor: pointer;
-    text-align: left;
-  }
-
-  .year-toggle:hover {
-    color: var(--text);
-  }
-
-  .year-arrow {
-    font-size: 0.55rem;
-    transition: transform 0.2s ease;
-  }
-
-  .year-toggle[aria-expanded="true"] .year-arrow {
-    transform: rotate(90deg);
-  }
-
-  .year-label {
-    font-size: 0.68rem;
-    font-family: var(--font-mono);
-    font-weight: 500;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-  }
-
-  .year-posts {
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
-  }
-
-  .timeline-row {
-    display: grid;
-    grid-template-columns: 42px 28px 1fr auto;
-    gap: 10px;
-    font-size: 0.86rem;
-    align-items: baseline;
-    padding: 0.28rem 0;
-    border-bottom: 1px solid var(--border-subtle);
-  }
-
-  .timeline-row.hidden {
-    display: none;
-  }
-
-  .timeline-month {
-    font-size: 0.68rem;
-    font-family: var(--font-mono);
-    color: var(--dim);
-    text-align: left;
-  }
-
-  .timeline-day {
-    font-family: var(--font-mono);
-    font-size: 0.68rem;
-    color: var(--dim);
-    text-align: right;
-  }
-
-  .timeline-link {
-    color: var(--text);
-    text-decoration: none;
-    font-family: var(--font-editorial);
-    font-size: 0.98rem;
-    line-height: 1.35;
-    min-width: 0;
-  }
-
-  .timeline-link:hover {
-    color: var(--accent);
-    text-decoration: underline;
-    text-underline-offset: 2px;
-  }
-
-  .timeline-cat {
-    font-size: 0.62rem;
-    font-family: var(--font-mono);
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--dim);
-    white-space: nowrap;
-  }
-
-  .post-count {
-    font-size: 0.68rem;
-    font-family: var(--font-mono);
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: var(--dim);
-    margin-top: 1rem;
-  }
-
-  /* Bylines */
-  .bylines-placeholder {
-    font-size: 0.875rem;
-    color: var(--dim);
-    font-style: italic;
-    margin: 8px 0;
-  }
-
-  .bylines-list {
-    display: flex;
-    flex-direction: column;
-    gap: 0;
-    border-top: 1px solid var(--border-subtle);
-  }
-
-  .byline-row {
-    display: grid;
-    grid-template-columns: 72px 1fr auto;
-    gap: 14px;
-    font-size: 0.8rem;
-    align-items: baseline;
-    padding: 0.5rem 0;
-    border-bottom: 1px solid var(--border-subtle);
-  }
-
-  .byline-date {
-    font-family: var(--font-mono);
-    font-size: 0.68rem;
-    color: var(--dim);
-  }
-
-  .byline-link {
-    color: var(--text);
-    text-decoration: none;
-    font-family: var(--font-editorial);
-    font-size: 0.95rem;
-  }
-
-  .byline-link:hover {
-    color: var(--accent);
-    text-decoration: underline;
-    text-underline-offset: 2px;
-  }
-
-  .byline-pub {
-    font-size: 0.64rem;
-    font-family: var(--font-mono);
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: var(--dim);
-    white-space: nowrap;
-  }
-
-  /* Responsive */
-  @media (max-width: 600px) {
-    .timeline-row {
-      grid-template-columns: 24px 1fr;
+  @media (max-width: 700px) {
+    .writing-section__header {
+      flex-direction: column;
+      align-items: start;
     }
 
-    .timeline-month,
+    .archive-actions {
+      justify-content: flex-start;
+    }
+
+    .top-content {
+      padding-left: 12px;
+      max-width: none;
+    }
+  }
+
+  @media (max-width: 600px) {
+    .archive-search__field {
+      align-items: flex-start;
+      flex-direction: column;
+    }
+
+    .timeline-row {
+      grid-template-columns: 46px minmax(0, 1fr);
+      grid-template-areas:
+        'date title'
+        'date cat';
+      gap: 0.2rem 0.85rem;
+      align-items: start;
+    }
+
     .timeline-cat {
-      display: none;
+      white-space: normal;
     }
 
     .byline-row {
@@ -919,11 +1100,6 @@ function formatBylineDate(dateStr: string): string {
       order: 3;
     }
 
-    .top-content {
-      padding-left: 12px;
-      max-width: none;
-    }
-
     .stacked-panel {
       width: 100vw;
       max-width: 100vw;
@@ -937,320 +1113,405 @@ function formatBylineDate(dateStr: string): string {
 
 <script>
   function initWritingPage() {
-    // Top-level dropdown toggle
-    document.querySelectorAll('.top-toggle').forEach(btn => {
-      const newBtn = btn.cloneNode(true) as HTMLElement;
-      btn.parentNode?.replaceChild(newBtn, btn);
+    const previousCleanup = (window as any).__writingPageCleanup;
+    if (typeof previousCleanup === 'function') {
+      previousCleanup();
+    }
 
-      newBtn.addEventListener('click', () => {
-        const expanded = newBtn.getAttribute('aria-expanded') === 'true';
-        newBtn.setAttribute('aria-expanded', String(!expanded));
+    const controller = new AbortController();
+    const { signal } = controller;
 
-        const section = newBtn.getAttribute('data-section');
-        const content = document.querySelector(`[data-content="${section}"]`) as HTMLElement;
-        if (content) {
-          content.hidden = expanded;
+    const bylinesToggle = document.querySelector('.top-toggle') as HTMLButtonElement | null;
+    const bylinesContent = document.getElementById('bylines-content') as HTMLElement | null;
+    const metaLinks = Array.from(document.querySelectorAll('.meta-link')) as HTMLButtonElement[];
+    const backdrop = document.getElementById('panel-backdrop') as HTMLElement | null;
+    const panel = document.getElementById('stacked-panel') as HTMLElement | null;
+    const panelContent = document.getElementById('panel-content') as HTMLElement | null;
+    const panelClose = document.getElementById('panel-close') as HTMLButtonElement | null;
+    const timeline = document.querySelector('.timeline') as HTMLElement | null;
+    const yearGroups = Array.from(document.querySelectorAll('.year-group')) as HTMLElement[];
+    const yearToggles = Array.from(document.querySelectorAll('.year-toggle')) as HTMLButtonElement[];
+    const timelineRows = Array.from(document.querySelectorAll('.timeline-row')) as HTMLElement[];
+    const filterButtons = Array.from(document.querySelectorAll('.filter-btn')) as HTMLButtonElement[];
+    const subcategorySection = document.getElementById('subcategory-section') as HTMLElement | null;
+    const subcategoryButtons = Array.from(document.querySelectorAll('.subcategory-btn')) as HTMLButtonElement[];
+    const sourceButtons = Array.from(document.querySelectorAll('.source-btn')) as HTMLButtonElement[];
+    const searchInput = document.getElementById('archive-search') as HTMLInputElement | null;
+    const searchClear = document.getElementById('archive-search-clear') as HTMLButtonElement | null;
+    const summary = document.getElementById('archive-summary') as HTMLElement | null;
+    const emptyState = document.getElementById('archive-empty') as HTMLElement | null;
+    const clearAll = document.getElementById('archive-clear') as HTMLButtonElement | null;
+    const expandYears = document.getElementById('archive-expand-years') as HTMLButtonElement | null;
+    const collapseYears = document.getElementById('archive-collapse-years') as HTMLButtonElement | null;
+
+    const defaultYear = timeline?.getAttribute('data-default-year') || '';
+    let lastFocusedElement: HTMLElement | null = null;
+
+    const state = {
+      topic: 'all',
+      source: 'all',
+      query: '',
+      subcategory: '',
+      subcategoryPosts: [] as string[],
+    };
+
+    function setPressed(buttons: HTMLButtonElement[], activeValue: string, attr: 'data-filter' | 'data-source' | 'data-subcategory') {
+      buttons.forEach(button => {
+        const isActive = button.getAttribute(attr) === activeValue;
+        button.classList.toggle('active', isActive);
+        button.setAttribute('aria-pressed', String(isActive));
+      });
+    }
+
+    function setYearExpanded(toggle: HTMLButtonElement, expanded: boolean) {
+      toggle.setAttribute('aria-expanded', String(expanded));
+      const controlsId = toggle.getAttribute('aria-controls');
+      const posts = controlsId ? document.getElementById(controlsId) : toggle.parentElement?.querySelector('.year-posts');
+      if (posts) {
+        (posts as HTMLElement).hidden = !expanded;
+      }
+    }
+
+    function restoreDefaultYearState() {
+      yearGroups.forEach(group => {
+        const toggle = group.querySelector('.year-toggle') as HTMLButtonElement | null;
+        if (!toggle) return;
+        setYearExpanded(toggle, group.getAttribute('data-year') === defaultYear);
+      });
+    }
+
+    function expandVisibleYears() {
+      yearGroups.forEach(group => {
+        if (!group.classList.contains('hidden')) {
+          const toggle = group.querySelector('.year-toggle') as HTMLButtonElement | null;
+          if (toggle) setYearExpanded(toggle, true);
         }
       });
-    });
+    }
 
-    // Stacked panel functionality
-    const backdrop = document.getElementById('panel-backdrop');
-    const panel = document.getElementById('stacked-panel');
-    const panelContent = document.getElementById('panel-content');
-    const panelClose = document.getElementById('panel-close');
+    function hasActiveFilters() {
+      return state.topic !== 'all' || state.source !== 'all' || state.query !== '' || state.subcategory !== '';
+    }
 
-    function openPanel(slug: string) {
-      const template = document.getElementById(`content-${slug}`) as HTMLTemplateElement;
-      if (template && panelContent) {
-        panelContent.innerHTML = '';
-        panelContent.appendChild(template.content.cloneNode(true));
-        backdrop?.classList.add('open');
-        panel?.classList.add('open');
-        document.body.style.overflow = 'hidden';
+    function updateMonthLabels() {
+      yearGroups.forEach(group => {
+        const seenMonths = new Set<string>();
+        const rows = Array.from(group.querySelectorAll('.timeline-row')) as HTMLElement[];
+        rows.forEach(row => {
+          const monthLabel = row.querySelector('.timeline-month') as HTMLElement | null;
+          const month = row.getAttribute('data-month');
+          const label = row.getAttribute('data-month-label') || '';
+          if (!monthLabel || !month) return;
+
+          if (row.classList.contains('hidden')) {
+            monthLabel.textContent = '';
+          } else if (!seenMonths.has(month)) {
+            seenMonths.add(month);
+            monthLabel.textContent = label;
+          } else {
+            monthLabel.textContent = '';
+          }
+        });
+      });
+    }
+
+    function buildSummary(count: number) {
+      if (count === 0) {
+        return 'No posts match the current filters.';
       }
+
+      const parts: string[] = [];
+      const activeTopic = filterButtons.find(button => button.classList.contains('active'));
+      const activeSource = sourceButtons.find(button => button.classList.contains('active'));
+      const activeSubcategory = subcategoryButtons.find(button => button.classList.contains('active'));
+
+      if (activeTopic && activeTopic.getAttribute('data-filter') !== 'all') {
+        parts.push(activeTopic.textContent?.trim() || '');
+      }
+
+      if (activeSubcategory) {
+        parts.push(activeSubcategory.textContent?.trim() || '');
+      }
+
+      if (activeSource && activeSource.getAttribute('data-source') !== 'all') {
+        parts.push(activeSource.textContent?.trim() || '');
+      }
+
+      if (state.query) {
+        parts.push(`matching "${searchInput?.value.trim()}"`);
+      }
+
+      if (parts.length === 0) {
+        return `Showing all ${count} posts across all topics and sources.`;
+      }
+
+      return `Showing ${count} posts for ${parts.join(' • ')}.`;
+    }
+
+    function renderArchive() {
+      let visibleCount = 0;
+
+      timelineRows.forEach(row => {
+        const rowTopic = row.getAttribute('data-cat') || '';
+        const rowSource = row.getAttribute('data-source') || '';
+        const rowSlug = row.getAttribute('data-slug') || '';
+        const rowText = row.getAttribute('data-search-text') || '';
+
+        const topicMatch = state.topic === 'all' || rowTopic === state.topic;
+        const sourceMatch = state.source === 'all' || rowSource === state.source;
+        const searchMatch = state.query === '' || rowText.includes(state.query);
+        const subcategoryMatch = state.subcategory === '' || state.subcategoryPosts.includes(rowSlug);
+        const visible = topicMatch && sourceMatch && searchMatch && subcategoryMatch;
+
+        row.classList.toggle('hidden', !visible);
+        if (visible) visibleCount += 1;
+      });
+
+      yearGroups.forEach(group => {
+        const visibleRows = group.querySelectorAll('.timeline-row:not(.hidden)');
+        group.classList.toggle('hidden', visibleRows.length === 0);
+      });
+
+      updateMonthLabels();
+
+      if (hasActiveFilters()) {
+        expandVisibleYears();
+      } else {
+        restoreDefaultYearState();
+      }
+
+      if (summary) {
+        summary.textContent = buildSummary(visibleCount);
+      }
+
+      if (emptyState) {
+        emptyState.hidden = visibleCount !== 0;
+      }
+
+      if (clearAll) {
+        clearAll.disabled = !hasActiveFilters();
+      }
+
+      if (searchClear) {
+        searchClear.hidden = state.query === '';
+      }
+    }
+
+    function resetSubcategories() {
+      state.subcategory = '';
+      state.subcategoryPosts = [];
+      setPressed(subcategoryButtons, '__none__', 'data-subcategory');
+    }
+
+    function updateSubcategoryVisibility() {
+      if (!subcategorySection) return;
+      const show = state.topic === 'ai-environment';
+      subcategorySection.hidden = !show;
+      if (!show) {
+        resetSubcategories();
+      }
+    }
+
+    function clearFilters() {
+      state.topic = 'all';
+      state.source = 'all';
+      state.query = '';
+      resetSubcategories();
+      updateSubcategoryVisibility();
+      setPressed(filterButtons, 'all', 'data-filter');
+      setPressed(sourceButtons, 'all', 'data-source');
+      if (searchInput) {
+        searchInput.value = '';
+      }
+      renderArchive();
+    }
+
+    function getFocusableElements(container: HTMLElement) {
+      return Array.from(
+        container.querySelectorAll<HTMLElement>('a[href], button:not([disabled]), textarea, input, select, [tabindex]:not([tabindex="-1"])')
+      ).filter(el => !el.hasAttribute('hidden') && el.getAttribute('aria-hidden') !== 'true');
+    }
+
+    function openPanel(slug: string, trigger: HTMLElement) {
+      const template = document.getElementById(`content-${slug}`) as HTMLTemplateElement | null;
+      if (!template || !panel || !panelContent || !backdrop) return;
+
+      lastFocusedElement = trigger;
+      panelContent.innerHTML = '';
+      panelContent.appendChild(template.content.cloneNode(true));
+
+      const panelTitle = panelContent.querySelector('.panel-title') as HTMLElement | null;
+      if (panelTitle?.id) {
+        panel.setAttribute('aria-labelledby', panelTitle.id);
+      }
+
+      backdrop.hidden = false;
+      panel.hidden = false;
+      panel.setAttribute('aria-hidden', 'false');
+
+      requestAnimationFrame(() => {
+        backdrop.classList.add('open');
+        panel.classList.add('open');
+      });
+
+      document.body.style.overflow = 'hidden';
+      panelClose?.focus();
     }
 
     function closePanel() {
-      backdrop?.classList.remove('open');
-      panel?.classList.remove('open');
+      if (!panel || !backdrop) return;
+
+      backdrop.classList.remove('open');
+      panel.classList.remove('open');
+      panel.setAttribute('aria-hidden', 'true');
       document.body.style.overflow = '';
+
+      window.setTimeout(() => {
+        if (panel.getAttribute('aria-hidden') === 'true') {
+          panel.hidden = true;
+          backdrop.hidden = true;
+        }
+      }, 300);
+
+      lastFocusedElement?.focus();
     }
 
-    // Meta link click handler
-    document.querySelectorAll('.meta-link').forEach(btn => {
-      const newBtn = btn.cloneNode(true) as HTMLElement;
-      btn.parentNode?.replaceChild(newBtn, btn);
+    bylinesToggle?.addEventListener('click', () => {
+      const expanded = bylinesToggle.getAttribute('aria-expanded') === 'true';
+      bylinesToggle.setAttribute('aria-expanded', String(!expanded));
+      if (bylinesContent) {
+        bylinesContent.hidden = expanded;
+      }
+    }, { signal });
 
-      newBtn.addEventListener('click', () => {
-        const slug = newBtn.getAttribute('data-slug');
+    metaLinks.forEach(button => {
+      button.addEventListener('click', () => {
+        const slug = button.getAttribute('data-slug');
         if (slug) {
-          openPanel(slug);
+          openPanel(slug, button);
         }
-      });
+      }, { signal });
     });
 
-    // Close panel handlers
-    panelClose?.addEventListener('click', closePanel);
-    backdrop?.addEventListener('click', closePanel);
+    panelClose?.addEventListener('click', closePanel, { signal });
+    backdrop?.addEventListener('click', closePanel, { signal });
 
-    // Close on escape key
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && panel?.classList.contains('open')) {
+    document.addEventListener('keydown', event => {
+      if (event.key === 'Escape' && panel?.getAttribute('aria-hidden') === 'false') {
         closePanel();
+        return;
       }
+
+      if (event.key === 'Tab' && panel?.getAttribute('aria-hidden') === 'false') {
+        const focusables = getFocusableElements(panel);
+        if (focusables.length === 0) return;
+
+        const first = focusables[0];
+        const last = focusables[focusables.length - 1];
+        const activeElement = document.activeElement as HTMLElement | null;
+
+        if (event.shiftKey && activeElement === first) {
+          event.preventDefault();
+          last.focus();
+        } else if (!event.shiftKey && activeElement === last) {
+          event.preventDefault();
+          first.focus();
+        }
+      }
+    }, { signal });
+
+    yearToggles.forEach(toggle => {
+      toggle.addEventListener('click', () => {
+        const expanded = toggle.getAttribute('aria-expanded') === 'true';
+        setYearExpanded(toggle, !expanded);
+      }, { signal });
     });
 
-    // Timeline filtering
-    const subcategoryFilters = document.getElementById('subcategory-filters');
+    expandYears?.addEventListener('click', () => {
+      expandVisibleYears();
+    }, { signal });
 
-    function bindYearToggles(scope: ParentNode = document) {
-      scope.querySelectorAll('.year-toggle').forEach(toggle => {
-        const newToggle = toggle.cloneNode(true) as HTMLButtonElement;
-        toggle.parentNode?.replaceChild(newToggle, toggle);
-
-        newToggle.addEventListener('click', () => {
-          const expanded = newToggle.getAttribute('aria-expanded') === 'true';
-          newToggle.setAttribute('aria-expanded', String(!expanded));
-
-          const yearPosts = newToggle.parentElement?.querySelector('.year-posts') as HTMLElement | null;
-          if (yearPosts) {
-            yearPosts.hidden = expanded;
-          }
-        });
-      });
-    }
-
-    bindYearToggles();
-
-    function updateTimelineDisplay() {
-      // Hide empty years
-      document.querySelectorAll('.year-group').forEach(group => {
-        const visiblePosts = group.querySelectorAll('.timeline-row:not(.hidden)');
-        if (visiblePosts.length === 0) {
-          group.classList.add('hidden');
-        } else {
-          group.classList.remove('hidden');
+    collapseYears?.addEventListener('click', () => {
+      yearGroups.forEach(group => {
+        if (!group.classList.contains('hidden')) {
+          const toggle = group.querySelector('.year-toggle') as HTMLButtonElement | null;
+          if (toggle) setYearExpanded(toggle, false);
         }
       });
+    }, { signal });
 
-      // Update month labels (show on first visible post of each month)
-      document.querySelectorAll('.year-group').forEach(yearGroup => {
-        const seenMonths = new Set();
-        yearGroup.querySelectorAll('.timeline-row').forEach(row => {
-          const monthLabel = row.querySelector('.timeline-month') as HTMLElement;
-          const month = row.getAttribute('data-month');
-          const label = row.getAttribute('data-month-label') || '';
-          if (monthLabel && month) {
-            if (row.classList.contains('hidden')) {
-              monthLabel.textContent = '';
-            } else if (!seenMonths.has(month)) {
-              seenMonths.add(month);
-              monthLabel.textContent = label;
-            } else {
-              monthLabel.textContent = '';
-            }
-          }
-        });
-      });
+    filterButtons.forEach(button => {
+      button.addEventListener('click', () => {
+        state.topic = button.getAttribute('data-filter') || 'all';
+        setPressed(filterButtons, state.topic, 'data-filter');
+        updateSubcategoryVisibility();
+        renderArchive();
+      }, { signal });
+    });
 
-      // Update post count
-      const visibleCount = document.querySelectorAll('.timeline-row:not(.hidden)').length;
-      const postCountEl = document.getElementById('post-count');
-      if (postCountEl) {
-        postCountEl.textContent = `${visibleCount} posts`;
-      }
-    }
+    sourceButtons.forEach(button => {
+      button.addEventListener('click', () => {
+        state.source = button.getAttribute('data-source') || 'all';
+        setPressed(sourceButtons, state.source, 'data-source');
+        renderArchive();
+      }, { signal });
+    });
 
-    function filterByCategory(filter: string) {
-      document.querySelectorAll('.timeline-row').forEach(row => {
-        const cat = row.getAttribute('data-cat');
-        if (filter === 'all' || cat === filter) {
-          row.classList.remove('hidden');
-        } else {
-          row.classList.add('hidden');
-        }
-      });
-
-      // Hide category column when filtering by specific category
-      document.querySelectorAll('.timeline-cat').forEach(cat => {
-        if (filter === 'all') {
-          (cat as HTMLElement).style.display = '';
-        } else {
-          (cat as HTMLElement).style.display = 'none';
-        }
-      });
-
-      updateTimelineDisplay();
-    }
-
-    function filterByPostSlugs(slugs: string[]) {
-      document.querySelectorAll('.timeline-row').forEach(row => {
-        const slug = row.getAttribute('data-slug');
-        if (slug && slugs.includes(slug)) {
-          row.classList.remove('hidden');
-        } else {
-          row.classList.add('hidden');
-        }
-      });
-
-      // Hide category column when filtering by subcategory
-      document.querySelectorAll('.timeline-cat').forEach(cat => {
-        (cat as HTMLElement).style.display = 'none';
-      });
-
-      updateTimelineDisplay();
-    }
-
-    // Main category filter buttons
-    document.querySelectorAll('.filter-btn').forEach(btn => {
-      const newBtn = btn.cloneNode(true) as HTMLElement;
-      btn.parentNode?.replaceChild(newBtn, btn);
-
-      newBtn.addEventListener('click', () => {
-        const filter = newBtn.getAttribute('data-filter');
-        const hasSubcategories = newBtn.getAttribute('data-has-subcategories') === 'true';
-        const isActive = newBtn.classList.contains('active');
-
-        // If already active, deselect and show all posts
-        if (isActive) {
-          newBtn.classList.remove('active');
-          document.querySelectorAll('.subcategory-btn').forEach(b => b.classList.remove('active'));
-          if (subcategoryFilters) {
-            subcategoryFilters.classList.remove('visible');
-          }
-          // Restore timeline order before filtering
-          restoreTimelineOrder();
-          filterByCategory('all');
+    subcategoryButtons.forEach(button => {
+      button.addEventListener('click', () => {
+        const subcategory = button.getAttribute('data-subcategory') || '';
+        if (state.subcategory === subcategory) {
+          resetSubcategories();
+          renderArchive();
           return;
         }
 
-        // Update active button
-        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-        document.querySelectorAll('.subcategory-btn').forEach(b => b.classList.remove('active'));
-        newBtn.classList.add('active');
-
-        // Restore timeline order before filtering
-        restoreTimelineOrder();
-
-        // Show/hide subcategories
-        if (hasSubcategories && subcategoryFilters) {
-          subcategoryFilters.classList.add('visible');
-        } else if (subcategoryFilters) {
-          subcategoryFilters.classList.remove('visible');
-        }
-
-        // Filter posts
-        if (filter) {
-          filterByCategory(filter);
-        }
-      });
+        const postsJson = button.getAttribute('data-posts');
+        state.subcategory = subcategory;
+        state.subcategoryPosts = postsJson ? JSON.parse(postsJson) : [];
+        setPressed(subcategoryButtons, subcategory, 'data-subcategory');
+        renderArchive();
+      }, { signal });
     });
 
-    // Subcategory filter buttons
-    const timeline = document.querySelector('.timeline') as HTMLElement;
-    if (timeline && !(window as any).originalTimelineHTML) {
-      (window as any).originalTimelineHTML = timeline.innerHTML;
-    }
+    searchInput?.addEventListener('input', () => {
+      state.query = searchInput.value.trim().toLowerCase();
+      renderArchive();
+    }, { signal });
 
-    function restoreTimelineOrder() {
-      if (timeline && (window as any).originalTimelineHTML) {
-        timeline.innerHTML = (window as any).originalTimelineHTML;
-        bindYearToggles(timeline);
+    searchClear?.addEventListener('click', () => {
+      if (!searchInput) return;
+      searchInput.value = '';
+      state.query = '';
+      renderArchive();
+      searchInput.focus();
+    }, { signal });
+
+    clearAll?.addEventListener('click', clearFilters, { signal });
+
+    restoreDefaultYearState();
+    updateSubcategoryVisibility();
+    setPressed(filterButtons, 'all', 'data-filter');
+    setPressed(sourceButtons, 'all', 'data-source');
+    renderArchive();
+
+    (window as any).__writingPageCleanup = () => {
+      controller.abort();
+      document.body.style.overflow = '';
+      if (panel && backdrop) {
+        panel.classList.remove('open');
+        backdrop.classList.remove('open');
+        panel.hidden = true;
+        backdrop.hidden = true;
+        panel.setAttribute('aria-hidden', 'true');
       }
-    }
-
-    function filterByPostSlugsWithOrder(slugs: string[]) {
-      if (!timeline) return;
-
-      // Get all timeline rows
-      const allRows = Array.from(document.querySelectorAll('.timeline-row')) as HTMLElement[];
-
-      // Filter to matching rows and sort by the slug order
-      const matchingRows = allRows
-        .filter(row => {
-          const slug = row.getAttribute('data-slug');
-          return slug && slugs.includes(slug);
-        })
-        .sort((a, b) => {
-          const slugA = a.getAttribute('data-slug') || '';
-          const slugB = b.getAttribute('data-slug') || '';
-          return slugs.indexOf(slugA) - slugs.indexOf(slugB);
-        });
-
-      // Clear timeline and add a simple ordered list
-      timeline.innerHTML = '';
-      const orderedContainer = document.createElement('div');
-      orderedContainer.className = 'year-group';
-      orderedContainer.innerHTML = '<button class="year-toggle" type="button" aria-expanded="true"><span class="year-arrow">▶</span><span class="year-label">Start Here</span></button><div class="year-posts"></div>';
-      const yearPosts = orderedContainer.querySelector('.year-posts') as HTMLElement;
-
-      matchingRows.forEach((row, i) => {
-        const clone = row.cloneNode(true) as HTMLElement;
-        clone.classList.remove('hidden');
-        // Clear month label except for first
-        const monthLabel = clone.querySelector('.timeline-month') as HTMLElement;
-        if (monthLabel) monthLabel.textContent = '';
-        // Add order number instead of day
-        const dayLabel = clone.querySelector('.timeline-day') as HTMLElement;
-        if (dayLabel) dayLabel.textContent = String(i + 1).padStart(2, '0');
-        yearPosts.appendChild(clone);
-      });
-
-      timeline.appendChild(orderedContainer);
-      bindYearToggles(timeline);
-
-      // Hide category column
-      document.querySelectorAll('.timeline-cat').forEach(cat => {
-        (cat as HTMLElement).style.display = 'none';
-      });
-
-      // Update post count
-      const postCountEl = document.getElementById('post-count');
-      if (postCountEl) {
-        postCountEl.textContent = `${matchingRows.length} posts`;
-      }
-    }
-
-    document.querySelectorAll('.subcategory-btn').forEach(btn => {
-      const newBtn = btn.cloneNode(true) as HTMLElement;
-      btn.parentNode?.replaceChild(newBtn, btn);
-
-      newBtn.addEventListener('click', () => {
-        const isActive = newBtn.classList.contains('active');
-        const hasCustomOrder = newBtn.getAttribute('data-custom-order') === 'true';
-
-        // If already active, deselect and show all AI & environment posts
-        if (isActive) {
-          newBtn.classList.remove('active');
-          restoreTimelineOrder();
-          filterByCategory('ai-environment');
-          return;
-        }
-
-        const postsJson = newBtn.getAttribute('data-posts');
-        if (!postsJson) return;
-
-        const postSlugs = JSON.parse(postsJson) as string[];
-
-        // Update active subcategory button
-        document.querySelectorAll('.subcategory-btn').forEach(b => b.classList.remove('active'));
-        newBtn.classList.add('active');
-
-        // Filter by post slugs (with custom order if specified)
-        if (hasCustomOrder) {
-          filterByPostSlugsWithOrder(postSlugs);
-        } else {
-          restoreTimelineOrder();
-          filterByPostSlugs(postSlugs);
-        }
-      });
-    });
+    };
   }
 
-  // Initialize on first load
   initWritingPage();
 
-  // Re-initialize after view transitions
-  document.addEventListener('astro:page-load', initWritingPage);
+  if (!(window as any).__writingPageLoadBound) {
+    document.addEventListener('astro:page-load', initWritingPage);
+    (window as any).__writingPageLoadBound = true;
+  }
 </script>
