@@ -22,12 +22,17 @@ import { PromptEnergySceneOne } from '@/components/prompt-energy/PromptEnergySce
 
 <style is:global>
   .pe-page {
-    width: 100%;
+    width: calc(100vw - 48px);
+    position: relative;
+    left: 50%;
+    transform: translateX(-50%);
+    max-width: 1760px;
+    padding: 0 0 3rem;
   }
 
   .pe-page__header {
     max-width: 44rem;
-    margin-bottom: 2.5rem;
+    margin-bottom: 1.9rem;
   }
 
   .pe-page__title {
@@ -108,8 +113,8 @@ import { PromptEnergySceneOne } from '@/components/prompt-energy/PromptEnergySce
 
   .pe-scene-one__layout {
     display: grid;
-    grid-template-columns: minmax(0, 25rem) minmax(0, 1fr);
-    gap: clamp(1.5rem, 3vw, 3rem);
+    grid-template-columns: minmax(16rem, 21rem) minmax(0, 1fr);
+    gap: clamp(1.25rem, 2.3vw, 2.5rem);
     align-items: start;
   }
 
@@ -152,6 +157,7 @@ import { PromptEnergySceneOne } from '@/components/prompt-energy/PromptEnergySce
   .pe-scene-one__sticky {
     position: sticky;
     top: 1.25rem;
+    min-width: 0;
   }
 
   .pe-stage {
@@ -937,9 +943,25 @@ import { PromptEnergySceneOne } from '@/components/prompt-energy/PromptEnergySce
     border-top-color: color-mix(in srgb, var(--pe-gold) 28%, var(--border));
   }
 
+  @media (max-width: 1500px) {
+    .pe-scene-one__layout {
+      grid-template-columns: 1fr;
+      gap: 1.5rem;
+    }
+
+    .pe-scene-one__steps {
+      max-width: 42rem;
+      margin-top: 0.25rem;
+    }
+
+    .pe-scene-one__sticky {
+      order: -1;
+    }
+  }
+
   @media (max-width: 1120px) {
     .pe-scene-one__layout {
-      grid-template-columns: minmax(0, 20rem) minmax(0, 1fr);
+      grid-template-columns: 1fr;
     }
 
     .pe-stage {
@@ -989,6 +1011,10 @@ import { PromptEnergySceneOne } from '@/components/prompt-energy/PromptEnergySce
   }
 
   @media (max-width: 900px) {
+    .pe-page {
+      width: calc(100vw - 24px);
+    }
+
     .pe-scene-one__layout {
       grid-template-columns: 1fr;
     }
@@ -1010,6 +1036,20 @@ import { PromptEnergySceneOne } from '@/components/prompt-energy/PromptEnergySce
   }
 
   @media (max-width: 720px) {
+    .pe-page {
+      width: 100vw;
+      left: auto;
+      transform: none;
+      padding-bottom: 2rem;
+      margin-left: calc(-50vw + 50%);
+    }
+
+    .pe-page__header {
+      width: calc(100vw - 24px);
+      margin-left: auto;
+      margin-right: auto;
+    }
+
     .pe-stage {
       position: static;
     }
