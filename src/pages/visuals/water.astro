@@ -2634,7 +2634,7 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
       if (active.length === 2) {
         var sorted = active.slice().sort(function(a, b) { return b.gallons - a.gallons; });
         var ratio = (sorted[0].gallons / sorted[1].gallons).toFixed(1);
-        ratioEl.textContent = sorted[0].baseName + ' is ' + ratio + '\u00d7 larger than ' + sorted[1].baseName;
+        ratioEl.textContent = sorted[0].squareName + ' is ' + ratio + '\u00d7 larger than ' + sorted[1].squareName;
         ratioWrap.classList.add('wv-ratio-visible');
       } else {
         ratioWrap.classList.remove('wv-ratio-visible');
