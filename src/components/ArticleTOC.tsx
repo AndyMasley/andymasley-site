@@ -35,6 +35,26 @@ export function ArticleTOC({ headings }: { headings: TOCHeading[] }) {
   const [progress, setProgress] = useState(0);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
+  useEffect(() => {
+    if (!activeId) return;
+
+    const escapedId = window.CSS?.escape ? window.CSS.escape(activeId) : activeId.replace(/"/g, '\\"');
+
+    const syncActiveEntry = (containerSelector: string) => {
+      const container = document.querySelector<HTMLElement>(containerSelector);
+      if (!container) return;
+
+      const activeEntry = container.querySelector<HTMLElement>(`[data-toc-id="${escapedId}"]`);
+      activeEntry?.scrollIntoView({ block: 'nearest' });
+    };
+
+    syncActiveEntry('.article-toc');
+
+    if (mobileNavOpen) {
+      syncActiveEntry('.article-toc-drawer');
+    }
+  }, [activeId, mobileNavOpen]);
+
   // Scroll progress
   useEffect(() => {
     const handleScroll = () => {
@@ -135,6 +155,7 @@ export function ArticleTOC({ headings }: { headings: TOCHeading[] }) {
               return (
                 <div key={group.id} className="article-toc__group">
                   <button
+                    data-toc-id={group.id}
                     className={`article-toc__section ${groupActive ? 'article-toc__section--active' : ''}`}
                     onClick={() => navigateTo(group.id)}
                     title={group.text}
@@ -147,6 +168,7 @@ export function ArticleTOC({ headings }: { headings: TOCHeading[] }) {
                       {group.subs.map(sub => (
                         <button
                           key={sub.id}
+                          data-toc-id={sub.id}
                           className={`article-toc__sub ${activeId === sub.id ? 'article-toc__sub--active' : ''}`}
                           onClick={() => navigateTo(sub.id)}
                           title={sub.text}
@@ -190,6 +212,7 @@ export function ArticleTOC({ headings }: { headings: TOCHeading[] }) {
               {groups.map(group => (
                 <div key={group.id} className="article-toc-drawer__group">
                   <button
+                    data-toc-id={group.id}
                     className={`article-toc-drawer__section ${activeId === group.id ? 'article-toc-drawer__section--active' : ''}`}
                     onClick={() => {
                       navigateTo(group.id);
@@ -202,6 +225,7 @@ export function ArticleTOC({ headings }: { headings: TOCHeading[] }) {
                   {group.subs.map(sub => (
                     <button
                       key={sub.id}
+                      data-toc-id={sub.id}
                       className={`article-toc-drawer__sub ${activeId === sub.id ? 'article-toc-drawer__sub--active' : ''}`}
                       onClick={() => {
                         navigateTo(sub.id);
