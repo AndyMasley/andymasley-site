@@ -2,6 +2,7 @@ import { getCollection } from 'astro:content';
 import { fetchSubstackPosts, fetchPostContent } from '@/lib/substack';
 import { fetchEAForumPosts, fetchEAForumPostContent } from '@/lib/eaforum';
 import { getMetaPostSlugs } from '@/lib/meta-posts';
+import { mapWithConcurrency } from '@/lib/map-with-concurrency';
 import { getOptionalCollection } from '@/lib/optional-collection';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -80,8 +81,8 @@ export async function GET() {
   const physics = await getCollection('physics', ({ data }) => !data.draft);
 
   // Get local writing slugs to avoid duplicates
-  const localWritingSlugs = writing.map(w => w.slug);
-  const metaSlugs = getMetaPostSlugs();
+  const localWritingSlugSet = new Set(writing.map(w => w.slug));
+  const metaSlugSet = new Set(getMetaPostSlugs());
 
   // Fetch external posts
   const [substackPosts, eaForumPosts] = await Promise.all([
@@ -207,11 +208,12 @@ export async function GET() {
   }
 
   // Substack posts with cached content
-  for (const item of substackPosts) {
-    if (metaSlugs.includes(item.slug) || localWritingSlugs.includes(item.slug)) continue;
-
+  const substackCandidates = substackPosts.filter(
+    item => !metaSlugSet.has(item.slug) && !localWritingSlugSet.has(item.slug)
+  );
+  const substackEntries = await mapWithConcurrency(substackCandidates, async item => {
     const htmlContent = await fetchPostContent(item.slug);
-    searchIndex.push({
+    return {
       title: item.title,
       description: item.description || '',
       headers: extractHeaders(htmlContent),
@@ -219,15 +221,17 @@ export async function GET() {
       type: 'article',
       url: `/writing/${item.slug}`,
       tags: [],
-    });
-  }
+    };
+  });
+  searchIndex.push(...substackEntries);
 
   // EA Forum posts with cached content
-  for (const item of eaForumPosts) {
-    if (localWritingSlugs.includes(item.slug) || substackSlugSet.has(item.slug)) continue;
-
+  const eaForumCandidates = eaForumPosts.filter(
+    item => !localWritingSlugSet.has(item.slug) && !substackSlugSet.has(item.slug)
+  );
+  const eaForumEntries = await mapWithConcurrency(eaForumCandidates, async item => {
     const htmlContent = await fetchEAForumPostContent(item.postId);
-    searchIndex.push({
+    return {
       title: item.title,
       description: '',
       headers: extractHeaders(htmlContent),
@@ -235,8 +239,9 @@ export async function GET() {
       type: 'article',
       url: `/writing/${item.slug}`,
       tags: [],
-    });
-  }
+    };
+  });
+  searchIndex.push(...eaForumEntries);
 
   // Other collections with body content
   for (const item of notes) {

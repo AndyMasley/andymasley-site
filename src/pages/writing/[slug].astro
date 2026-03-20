@@ -6,6 +6,7 @@ import { getMetaPostSlugs } from '@/lib/meta-posts';
 import { CheatSheetExplorer } from '@/components/CheatSheetExplorer';
 import { ArticleTOC } from '@/components/ArticleTOC';
 import { extractHeadingsFromHtml, type TOCHeading } from '@/lib/extract-headings';
+import { mapWithConcurrency } from '@/lib/map-with-concurrency';
 import { getOptionalCollection } from '@/lib/optional-collection';
 
 // Union type for all post sources
@@ -45,6 +46,8 @@ export async function getStaticPaths() {
     fetchEAForumPosts()
   ]);
 
+  const existingSlugs = new Set<string>();
+
   for (const post of localPosts) {
     paths.push({
       params: { slug: post.slug },
@@ -61,21 +64,19 @@ export async function getStaticPaths() {
         }
       }
     });
+    existingSlugs.add(post.slug);
   }
 
   // 2. Get Substack posts
-  const metaSlugs = getMetaPostSlugs();
-
-  for (const post of substackPosts) {
-    // Skip meta posts and posts that conflict with local content
-    if (metaSlugs.includes(post.slug)) continue;
-    if (paths.some(p => p.params.slug === post.slug)) continue;
-
-    // Fetch full content
+  const metaSlugSet = new Set(getMetaPostSlugs());
+  const substackCandidates = substackPosts.filter(
+    post => !metaSlugSet.has(post.slug) && !existingSlugs.has(post.slug)
+  );
+  const substackPaths = await mapWithConcurrency(substackCandidates, async post => {
     const rawContent = await fetchPostContent(post.slug);
     const htmlContent = processPostContent(rawContent, post.slug);
 
-    paths.push({
+    return {
       params: { slug: post.slug },
       props: {
         post: {
@@ -89,19 +90,18 @@ export async function getStaticPaths() {
           sourceName: 'Substack',
         }
       }
-    });
-  }
+    };
+  });
+  paths.push(...substackPaths);
+  substackCandidates.forEach(post => existingSlugs.add(post.slug));
 
   // 3. Get EA Forum posts
-  for (const post of eaForumPosts) {
-    // Skip posts that conflict with existing paths
-    if (paths.some(p => p.params.slug === post.slug)) continue;
-
-    // Fetch full content
+  const eaForumCandidates = eaForumPosts.filter(post => !existingSlugs.has(post.slug));
+  const eaForumPaths = await mapWithConcurrency(eaForumCandidates, async post => {
     const rawContent = await fetchEAForumPostContent(post.postId);
     const htmlContent = processEAForumContent(rawContent, post.slug);
 
-    paths.push({
+    return {
       params: { slug: post.slug },
       props: {
         post: {
@@ -115,8 +115,9 @@ export async function getStaticPaths() {
           sourceName: 'EA Forum',
         }
       }
-    });
-  }
+    };
+  });
+  paths.push(...eaForumPaths);
 
   return paths;
 }
