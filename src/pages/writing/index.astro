@@ -25,11 +25,6 @@ interface GuideCard {
   preview: string;
 }
 
-interface TopicBrowseLink {
-  slug: string;
-  label: string;
-}
-
 const [allSubstackPosts, eaForumPosts] = await Promise.all([
   fetchSubstackPosts(),
   fetchEAForumPosts()
@@ -157,11 +152,6 @@ const guideCards: GuideCard[] = metaPostsWithContent.map(meta => ({
   preview: getGuidePreview(meta.content),
 }));
 
-const topicBrowseLinks: TopicBrowseLink[] = activeCategories.map(config => ({
-  slug: config.slug,
-  label: getFilterName(config.name),
-}));
-
 const yearMap = new Map<number, TimelinePost[]>();
 for (const post of posts) {
   const year = post.date.getFullYear();
@@ -190,22 +180,6 @@ const defaultExpandedYear = postsByYear.some(group => group.year === currentYear
     <p class="page-intro">
       I write on <a href="https://andymasley.substack.com/">Substack</a> and elsewhere about AI and the environment, AI more broadly, animal welfare, philosophy, political liberalism, and assorted recommendations and advice. Since March 2026 I've been writing full-time on a grant from <a href="https://coefficientgiving.org/" target="_blank" rel="noopener">Coefficient Giving</a>.
     </p>
-    <p class="page-intro page-intro--secondary">
-      Browse by topic below, or search the full archive directly.
-    </p>
-
-    {topicBrowseLinks.length > 0 && (
-      <nav class="writing-topics" aria-label="Writing topics">
-        <span class="writing-topics__label">Topics</span>
-        <ul class="writing-topics__list">
-          {topicBrowseLinks.map(topic => (
-            <li class="writing-topics__item">
-              <a href="#writing-archive" data-topic-target={topic.slug}>{topic.label}</a>
-            </li>
-          ))}
-        </ul>
-      </nav>
-    )}
   </section>
 
   <div class="divider"><div class="divider-diamond"></div></div>
@@ -257,14 +231,7 @@ const defaultExpandedYear = postsByYear.some(group => group.year === currentYear
 
       <div class="archive-toolbar">
         <p class="archive-summary" id="archive-summary" aria-live="polite">{posts.length} posts across all topics and sources.</p>
-        <div class="archive-toolbar__actions">
-          <button class="archive-inline-action" id="archive-clear" type="button" disabled>Clear filters</button>
-          <div class="archive-year-controls" role="group" aria-label="Year visibility">
-            <button class="archive-inline-action" id="archive-default-years" type="button">Current year</button>
-            <button class="archive-inline-action" id="archive-expand-years" type="button">Open visible</button>
-            <button class="archive-inline-action" id="archive-collapse-years" type="button">Close visible</button>
-          </div>
-        </div>
+        <button class="archive-inline-action" id="archive-clear" type="button" disabled>Clear filters</button>
       </div>
     </div>
 
@@ -404,50 +371,6 @@ const defaultExpandedYear = postsByYear.some(group => group.year === currentYear
     max-width: 42rem;
   }
 
-  .page-intro--secondary {
-    color: var(--text-secondary);
-  }
-
-  .writing-topics {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.55rem 0.95rem;
-    margin-top: 1.35rem;
-  }
-
-  .writing-topics__label {
-    font-size: 0.68rem;
-    font-family: var(--font-mono);
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--dim);
-  }
-
-  .writing-topics__list {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.25rem 0.8rem;
-    margin: 0;
-    padding: 0;
-    list-style: none;
-  }
-
-  .writing-topics__item {
-    display: flex;
-    align-items: baseline;
-  }
-
-  .writing-topics__item a {
-    color: var(--text);
-    text-decoration: underline;
-    text-decoration-thickness: 1px;
-    text-underline-offset: 2px;
-  }
-
-  .writing-topics__item a:hover {
-    color: var(--accent);
-  }
-
   .writing-section {
     margin-bottom: 2.75rem;
   }
@@ -477,7 +400,6 @@ const defaultExpandedYear = postsByYear.some(group => group.year === currentYear
     color: var(--text-secondary);
   }
 
-  .writing-section--archive,
   .writing-section--guides,
   .writing-section--elsewhere {
     border-top: 1px solid var(--border);
@@ -488,9 +410,7 @@ const defaultExpandedYear = postsByYear.some(group => group.year === currentYear
     display: grid;
     gap: 0.95rem;
     margin-bottom: 1rem;
-    padding: 0.95rem 0 1.05rem;
-    border-top: 1px solid var(--border-subtle);
-    border-bottom: 1px solid var(--border-subtle);
+    padding: 0.2rem 0 0.1rem;
   }
 
   .archive-control {
@@ -564,14 +484,6 @@ const defaultExpandedYear = postsByYear.some(group => group.year === currentYear
     gap: 0.5rem;
   }
 
-  .archive-toolbar__actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.75rem 1rem;
-    align-items: center;
-    justify-content: space-between;
-  }
-
   .archive-summary,
   .archive-empty {
     margin: 0;
@@ -581,12 +493,6 @@ const defaultExpandedYear = postsByYear.some(group => group.year === currentYear
 
   .archive-empty {
     color: var(--text-secondary);
-  }
-
-  .archive-year-controls {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.75rem 1rem;
   }
 
   .archive-inline-action {
@@ -836,7 +742,6 @@ const defaultExpandedYear = postsByYear.some(group => group.year === currentYear
     margin-top: 0.9rem;
   }
 
-  .writing-topics__item a:focus-visible,
   .guide-list__title a:focus-visible,
   .byline-link:focus-visible,
   .archive-inline-action:focus-visible,
@@ -855,11 +760,6 @@ const defaultExpandedYear = postsByYear.some(group => group.year === currentYear
       grid-template-columns: 1fr;
     }
 
-    .archive-toolbar__actions {
-      align-items: start;
-      justify-content: start;
-    }
-
     .archive-search {
       flex-direction: column;
       align-items: start;
@@ -867,11 +767,6 @@ const defaultExpandedYear = postsByYear.some(group => group.year === currentYear
   }
 
   @media (max-width: 620px) {
-    .writing-topics {
-      flex-direction: column;
-      align-items: start;
-    }
-
     .byline-row {
       grid-template-columns: 1fr;
       gap: 0.2rem;
@@ -908,7 +803,6 @@ const defaultExpandedYear = postsByYear.some(group => group.year === currentYear
       cleanupFns.push(() => target.removeEventListener(type, handler, options));
     }
 
-    const topicLinks = Array.from(document.querySelectorAll('[data-topic-target]')) as HTMLAnchorElement[];
     const topicSelect = document.getElementById('archive-topic') as HTMLSelectElement | null;
     const themeWrap = document.getElementById('archive-theme-wrap') as HTMLElement | null;
     const themeSelect = document.getElementById('archive-theme') as HTMLSelectElement | null;
@@ -918,9 +812,6 @@ const defaultExpandedYear = postsByYear.some(group => group.year === currentYear
     const clearAll = document.getElementById('archive-clear') as HTMLButtonElement | null;
     const summary = document.getElementById('archive-summary') as HTMLElement | null;
     const emptyState = document.getElementById('archive-empty') as HTMLElement | null;
-    const defaultYears = document.getElementById('archive-default-years') as HTMLButtonElement | null;
-    const expandYears = document.getElementById('archive-expand-years') as HTMLButtonElement | null;
-    const collapseYears = document.getElementById('archive-collapse-years') as HTMLButtonElement | null;
     const timeline = document.querySelector('.timeline') as HTMLElement | null;
     const yearGroups = Array.from(document.querySelectorAll('.year-group')) as HTMLDetailsElement[];
     const timelineRows = Array.from(document.querySelectorAll('.timeline-row')) as HTMLElement[];
@@ -1172,23 +1063,6 @@ const defaultExpandedYear = postsByYear.some(group => group.year === currentYear
     on(clearAll, 'click', () => {
       clearFilters();
       searchInput?.focus();
-    });
-
-    on(defaultYears, 'click', restoreDefaultYears);
-    on(expandYears, 'click', expandVisibleYears);
-    on(collapseYears, 'click', collapseVisibleYears);
-
-    topicLinks.forEach(link => {
-      on(link, 'click', () => {
-        const topic = link.getAttribute('data-topic-target') || 'all';
-        if (!validTopics.has(topic)) return;
-        state.topic = topic;
-        if (topicSelect) {
-          topicSelect.value = topic;
-        }
-        updateThemeVisibility();
-        renderArchive();
-      });
     });
 
     const params = new URLSearchParams(window.location.search);
