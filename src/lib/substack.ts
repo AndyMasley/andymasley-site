@@ -345,6 +345,10 @@ export interface Subcategory {
   postSlugs: string[];
 }
 
+const subcategoryPostOverrides: Record<string, string[]> = {
+  'Meta': ['a-call-for-more-specific-and-numerate'],
+};
+
 // Parse subcategories from meta post HTML
 // Expects structure: <h3>Category Name</h3> followed by <ul> with post links
 export function parseSubcategoriesFromHTML(html: string): Subcategory[] {
@@ -367,7 +371,7 @@ export function parseSubcategoriesFromHTML(html: string): Subcategory[] {
     const name = nameMatch[1].trim();
 
     // Skip certain sections that aren't real categories
-    if (['Start here', 'Misc', 'Podcast appearances'].includes(name)) continue;
+    if (['Misc', 'Podcast appearances'].includes(name)) continue;
 
     // Find all post slugs in this section (until next h3 or end)
     const postSlugs: string[] = [];
@@ -383,6 +387,13 @@ export function parseSubcategoriesFromHTML(html: string): Subcategory[] {
         postSlugs.push(slug);
       }
     }
+
+    const overrides = subcategoryPostOverrides[name] || [];
+    overrides.forEach(slug => {
+      if (slug !== 'ai-and-the-environment' && !postSlugs.includes(slug)) {
+        postSlugs.push(slug);
+      }
+    });
 
     if (postSlugs.length > 0) {
       subcategories.push({
