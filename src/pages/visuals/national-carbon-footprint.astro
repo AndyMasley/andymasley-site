@@ -14,39 +14,15 @@ import { NationalCarbonExplorer } from '@/components/national/NationalCarbonExpl
 </Base>
 
 <style is:global>
-  body:has(.ncfx) {
-    background: #f5f2ec !important;
-  }
-
-  [data-theme="dark"] body:has(.ncfx) {
-    background: #1a1917 !important;
-  }
-
-  body:has(.ncfx) .main-content {
-    max-width: 100%;
-    padding-left: 0;
-    padding-right: 0;
-  }
-
-  body:has(.ncfx) .main-content > .header {
-    max-width: var(--max-width);
-    margin: 0 auto;
-    padding-left: 24px;
-    padding-right: 24px;
-  }
-
   .ncfx {
-    --ncfx-bg: #f5f2ec;
-    --ncfx-panel: #efe9df;
-    --ncfx-panel-strong: #ebe3d6;
-    --ncfx-card: rgba(255, 255, 255, 0.35);
-    --ncfx-card-strong: rgba(255, 255, 255, 0.5);
-    --ncfx-text: #1a1a18;
-    --ncfx-text-2: #6b6b60;
+    --ncfx-panel: var(--bg-subtle, #f5f4f2);
+    --ncfx-card: var(--bg-subtle, #f5f4f2);
+    --ncfx-text: var(--text, #1a1a18);
+    --ncfx-text-2: var(--dim, #6b6560);
     --ncfx-accent: #8b2e2e;
-    --ncfx-divider: #d8d1c6;
-    --ncfx-bar-track: #d9d1c6;
-    --ncfx-remaining: #b4a997;
+    --ncfx-divider: var(--border, #e5e2df);
+    --ncfx-bar-track: var(--border-strong, #d1ccc8);
+    --ncfx-remaining: #b3aca4;
     --ncfx-current: #8b2e2e;
     --ncfx-lifestyle: #4a7c59;
     --ncfx-systemic: #a0522d;
@@ -54,26 +30,26 @@ import { NationalCarbonExplorer } from '@/components/national/NationalCarbonExpl
     --ncfx-industry: #6b7c3a;
     --ncfx-buildings: #7a5c3a;
     --ncfx-other: #979183;
-    width: min(1600px, calc(100vw - 48px));
-    margin: 0 auto;
-    padding: 1.1rem 0 2.25rem;
+    width: calc(100vw - 48px);
+    max-width: 1600px;
+    position: relative;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 0 0 2.75rem;
     color: var(--ncfx-text);
     font-family: var(--font-body);
     font-variant-numeric: tabular-nums;
   }
 
   [data-theme="dark"] .ncfx {
-    --ncfx-bg: #1a1917;
-    --ncfx-panel: #23201d;
-    --ncfx-panel-strong: #2a2622;
-    --ncfx-card: rgba(255, 255, 255, 0.03);
-    --ncfx-card-strong: rgba(255, 255, 255, 0.06);
-    --ncfx-text: #f0ede6;
-    --ncfx-text-2: #a39b8d;
-    --ncfx-accent: #ba6059;
-    --ncfx-divider: #3a362f;
-    --ncfx-bar-track: #37322d;
-    --ncfx-remaining: #71675c;
+    --ncfx-panel: var(--bg-subtle, #1a1918);
+    --ncfx-card: var(--bg-subtle, #1a1918);
+    --ncfx-text: var(--text, #f0ede6);
+    --ncfx-text-2: var(--dim, #8a8a8a);
+    --ncfx-accent: #b85555;
+    --ncfx-divider: var(--border, #2e2d2b);
+    --ncfx-bar-track: var(--border-strong, #3d3c39);
+    --ncfx-remaining: #6f6860;
     --ncfx-current: #c47058;
     --ncfx-lifestyle: #5d9b71;
     --ncfx-systemic: #c48a5a;
@@ -131,8 +107,7 @@ import { NationalCarbonExplorer } from '@/components/national/NationalCarbonExpl
     z-index: 40;
     margin-bottom: 1rem;
     border-bottom: 1px solid var(--ncfx-divider);
-    background: color-mix(in srgb, var(--ncfx-bg) 84%, transparent);
-    backdrop-filter: blur(14px);
+    background: var(--bg, #faf9f7);
   }
 
   .ncfx-sticky-inner {
@@ -152,8 +127,7 @@ import { NationalCarbonExplorer } from '@/components/national/NationalCarbonExpl
     z-index: 50;
     padding: 0.8rem 1rem;
     border-top: 1px solid var(--ncfx-divider);
-    background: color-mix(in srgb, var(--ncfx-bg) 94%, transparent);
-    backdrop-filter: blur(16px);
+    background: var(--bg, #faf9f7);
     justify-content: space-between;
     gap: 0.75rem;
   }
@@ -172,10 +146,10 @@ import { NationalCarbonExplorer } from '@/components/national/NationalCarbonExpl
 
   .ncfx-construction {
     display: inline-block;
-    margin-bottom: 0.7rem;
+    margin-bottom: 0.85rem;
     padding: 0.34rem 0.56rem 0.3rem;
     border: 1px solid var(--ncfx-accent);
-    background: color-mix(in srgb, var(--ncfx-accent) 6%, transparent);
+    background: transparent;
     color: var(--ncfx-accent);
     font-size: 0.63rem;
     font-weight: 700;
@@ -184,11 +158,9 @@ import { NationalCarbonExplorer } from '@/components/national/NationalCarbonExpl
   }
 
   .ncfx-hero {
-    display: flex;
-    align-items: flex-end;
-    justify-content: space-between;
-    gap: 1.5rem;
-    margin-bottom: 0.95rem;
+    display: block;
+    max-width: 44rem;
+    margin-bottom: 1.5rem;
   }
 
   .ncfx-kicker,
@@ -206,18 +178,19 @@ import { NationalCarbonExplorer } from '@/components/national/NationalCarbonExpl
   }
 
   .ncfx-title {
-    margin: 0;
+    margin: 0 0 0.75rem;
     font-family: var(--font-editorial);
-    font-size: clamp(2.2rem, 4.5vw, 3.35rem);
-    line-height: 0.98;
+    font-size: clamp(2rem, 1.65rem + 1vw, 3rem);
+    line-height: 1.04;
     letter-spacing: -0.045em;
   }
 
   .ncfx-intro {
-    max-width: 30rem;
-    margin: 0 0 0.18rem auto;
-    font-size: 0.86rem;
-    line-height: 1.6;
+    max-width: 42rem;
+    margin: 0;
+    font-family: var(--font-editorial);
+    font-size: 1rem;
+    line-height: 1.78;
     color: var(--ncfx-text-2);
   }
 
@@ -229,7 +202,7 @@ import { NationalCarbonExplorer } from '@/components/national/NationalCarbonExpl
     display: grid;
     grid-template-rows: minmax(0, 1fr) auto;
     border: 1px solid var(--ncfx-divider);
-    background: color-mix(in srgb, var(--ncfx-panel) 84%, transparent);
+    background: transparent;
     overflow: hidden;
     height: min(690px, calc(100vh - 210px));
   }
@@ -244,11 +217,9 @@ import { NationalCarbonExplorer } from '@/components/national/NationalCarbonExpl
     min-width: 0;
     display: flex;
     flex-direction: column;
-    padding: 0.95rem 1rem;
+    padding: 1.1rem 1.25rem;
     border-right: 1px solid var(--ncfx-divider);
-    background:
-      linear-gradient(180deg, color-mix(in srgb, var(--ncfx-panel-strong) 76%, transparent), transparent 22rem),
-      color-mix(in srgb, var(--ncfx-panel) 88%, transparent);
+    background: var(--bg, #faf9f7);
     overflow: hidden;
   }
 
@@ -402,7 +373,7 @@ import { NationalCarbonExplorer } from '@/components/national/NationalCarbonExpl
 
   .ncfx-preset-pill.active {
     border-color: var(--ncfx-accent);
-    background: color-mix(in srgb, var(--ncfx-accent) 8%, transparent);
+    background: var(--ncfx-panel);
     color: var(--ncfx-accent);
   }
 
@@ -656,9 +627,9 @@ import { NationalCarbonExplorer } from '@/components/national/NationalCarbonExpl
   }
 
   .ncfx-results {
-    padding: 0.85rem 1rem 0.95rem;
+    padding: 1.2rem 1.25rem 1.1rem;
     border-top: 1px solid var(--ncfx-divider);
-    background: color-mix(in srgb, var(--ncfx-panel-strong) 88%, transparent);
+    background: var(--bg, #faf9f7);
   }
 
   .ncfx-results-head {
@@ -702,7 +673,8 @@ import { NationalCarbonExplorer } from '@/components/national/NationalCarbonExpl
     top: 0.95rem;
     bottom: 0;
     left: 0;
-    border-left: 1px dotted color-mix(in srgb, var(--ncfx-text-2) 72%, transparent);
+    border-left: 1px dotted var(--ncfx-text-2);
+    opacity: 0.7;
   }
 
   .ncfx-goal-label,
@@ -959,15 +931,10 @@ import { NationalCarbonExplorer } from '@/components/national/NationalCarbonExpl
       padding-top: 1.5rem;
     }
 
-    body:has(.ncfx) .main-content > .header {
-      padding-left: 12px;
-      padding-right: 12px;
-    }
-
     .ncfx-col,
     .ncfx-results {
-      padding-left: 0.9rem;
-      padding-right: 0.9rem;
+      padding-left: 0.875rem;
+      padding-right: 0.875rem;
     }
 
     .ncfx-intro {
