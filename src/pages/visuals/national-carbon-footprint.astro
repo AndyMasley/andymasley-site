@@ -224,6 +224,8 @@ const cutGroups = (Object.entries(cutGroupMeta) as Array<[keyof typeof cutGroupM
   ogImage="/images/og/og-carbon-footprint.png"
 >
   <article class="ncfp" id="ncfp">
+    <div class="ncfp-construction">THIS PAGE IS UNDER CONSTRUCTION</div>
+
     <header class="ncfp-hero">
       <div class="ncfp-kicker">United States, 2022</div>
       <h1 class="ncfp-title">The national carbon footprint</h1>
@@ -561,6 +563,23 @@ const cutGroups = (Object.entries(cutGroupMeta) as Array<[keyof typeof cutGroupM
     text-transform: uppercase;
     color: var(--text2);
     margin-bottom: 0.65rem;
+  }
+
+  .ncfp-construction {
+    display: inline-block;
+    margin-bottom: 1.2rem;
+    padding: 0.45rem 0.7rem 0.38rem;
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    background: rgba(139, 46, 46, 0.05);
+  }
+
+  [data-theme="dark"] .ncfp-construction {
+    background: rgba(184, 85, 85, 0.08);
   }
 
   .ncfp-title {
