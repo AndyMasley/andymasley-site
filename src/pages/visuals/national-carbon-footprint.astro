@@ -97,6 +97,125 @@ const modeCopy = {
     context: `Per-capita mode divides the same 2022 national total by the U.S. Census resident population estimate of ${population2022.toLocaleString()}.`,
   },
 };
+
+const cutGroupMeta = {
+  lifestyle: {
+    label: 'Lifestyle changes',
+    intro: 'Millions of household decisions about diets, driving, flying, homes, and purchases.',
+    color: 'var(--agriculture)',
+  },
+  systemic: {
+    label: 'Systemic changes',
+    intro: 'Grid, industry, transit, methane, and standards that move whole sectors at once.',
+    color: 'var(--power)',
+  },
+} as const;
+
+const cutOptionSeed = [
+  {
+    key: 'diet-shift',
+    cat: 'lifestyle',
+    label: 'Eat much less beef and dairy',
+    detail: 'A broad dietary shift across households, food service, schools, and grocery demand',
+    totalMmt: 260,
+  },
+  {
+    key: 'drive-less',
+    cat: 'lifestyle',
+    label: 'Drive less and buy smaller cars',
+    detail: 'Shorter trips, mode shifts, lighter vehicles, and less fuel burned overall',
+    totalMmt: 280,
+  },
+  {
+    key: 'home-electrify',
+    cat: 'lifestyle',
+    label: 'Electrify homes with heat pumps',
+    detail: 'Replace millions of furnaces, boilers, and water heaters with electric equipment',
+    totalMmt: 220,
+  },
+  {
+    key: 'fly-less',
+    cat: 'lifestyle',
+    label: 'Fly less',
+    detail: 'Fewer leisure and business flights, especially on short-haul routes',
+    totalMmt: 120,
+  },
+  {
+    key: 'food-waste',
+    cat: 'lifestyle',
+    label: 'Waste less food',
+    detail: 'Less spoilage at home, in restaurants, and across the retail chain',
+    totalMmt: 100,
+  },
+  {
+    key: 'buy-less',
+    cat: 'lifestyle',
+    label: 'Buy fewer new goods',
+    detail: 'Longer product lifetimes, less turnover, and lower material throughput',
+    totalMmt: 180,
+  },
+  {
+    key: 'clean-grid',
+    cat: 'systemic',
+    label: 'Clean up the grid',
+    detail: 'Retire fossil generation and expand clean electricity at national scale',
+    totalMmt: 900,
+  },
+  {
+    key: 'industrial-decarb',
+    cat: 'systemic',
+    label: 'Decarbonize heavy industry',
+    detail: 'Cleaner steel, cement, chemicals, industrial heat, and process emissions',
+    totalMmt: 450,
+  },
+  {
+    key: 'methane-rules',
+    cat: 'systemic',
+    label: 'Slash methane and other super-pollutants',
+    detail: 'Tighter leak rules, better waste management, and stronger agricultural controls',
+    totalMmt: 230,
+  },
+  {
+    key: 'transit-housing',
+    cat: 'systemic',
+    label: 'Build transit and housing around it',
+    detail: 'Land use and transport systems that reduce car dependence for years',
+    totalMmt: 180,
+  },
+  {
+    key: 'efficiency-standards',
+    cat: 'systemic',
+    label: 'Tighten building and appliance standards',
+    detail: 'Codes and standards that lock in lower energy use across the stock',
+    totalMmt: 160,
+  },
+  {
+    key: 'transmission-storage',
+    cat: 'systemic',
+    label: 'Build more transmission and storage',
+    detail: 'Infrastructure that lets cleaner power displace dirtier generation faster',
+    totalMmt: 240,
+  },
+];
+
+const cutMaxByCat = cutOptionSeed.reduce((acc, option) => {
+  acc[option.cat] = Math.max(acc[option.cat] ?? 0, option.totalMmt);
+  return acc;
+}, {} as Record<string, number>);
+
+const cutOptions = cutOptionSeed.map((option) => ({
+  ...option,
+  totalLabel: `${option.totalMmt.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })} MMT CO2e / yr`,
+  perCapitaLabel: `${(option.totalMmt * 1e6 / population2022).toFixed(2)} t CO2e / person / yr`,
+  meterPct: +(option.totalMmt / cutMaxByCat[option.cat] * 100).toFixed(1),
+}));
+
+const cutGroups = (Object.entries(cutGroupMeta) as Array<[keyof typeof cutGroupMeta, (typeof cutGroupMeta)[keyof typeof cutGroupMeta]]>)
+  .map(([key, meta]) => ({
+    key,
+    ...meta,
+    options: cutOptions.filter((option) => option.cat === key),
+  }));
 ---
 
 <Base
@@ -197,6 +316,140 @@ const modeCopy = {
       </div>
     </section>
 
+    <section class="ncfp-cut-explorer" aria-labelledby="ncfp-cut-title">
+      <div class="ncfp-cut-kicker">Cut explorer</div>
+      <h2 class="ncfp-cut-title" id="ncfp-cut-title">Two ways to cut it</h2>
+      <p class="ncfp-cut-intro">
+        This works like the older checkbox-heavy carbon page, but compressed into two buckets: lifestyle changes and systemic changes. Check any options you want to count, then compare what happens if you do only the lifestyle cuts, only the systemic cuts, or both together.
+      </p>
+
+      <div class="ncfp-cut-bars">
+        <div class="ncfp-scale-labels">
+          <span style="left: 0">0</span>
+          <span style="left: 25%">25%</span>
+          <span style="left: 50%">50%</span>
+          <span style="left: 75%">75%</span>
+          <span style="left: 100%">100%</span>
+        </div>
+
+        <div class="ncfp-cut-row">
+          <div class="ncfp-bar-header">
+            <div class="ncfp-bar-copy">
+              <span class="ncfp-bar-name">Current U.S. footprint</span>
+              <span class="ncfp-bar-detail">Reference line before any selected cuts</span>
+            </div>
+            <div class="ncfp-bar-metrics">
+              <span class="ncfp-bar-value" id="ncfp-row-current-remaining"></span>
+              <span class="ncfp-bar-share" id="ncfp-row-current-saved">No cuts yet</span>
+            </div>
+          </div>
+          <div class="ncfp-cut-track">
+            <div class="ncfp-cut-track-remaining ncfp-cut-track-remaining--current" id="ncfp-bar-current-remaining"></div>
+            <div class="ncfp-cut-track-saved ncfp-cut-track-saved--current" id="ncfp-bar-current-saved"></div>
+          </div>
+        </div>
+
+        <div class="ncfp-cut-row">
+          <div class="ncfp-bar-header">
+            <div class="ncfp-bar-copy">
+              <span class="ncfp-bar-name">After lifestyle changes</span>
+              <span class="ncfp-bar-detail">Only the household-scale cuts checked below</span>
+            </div>
+            <div class="ncfp-bar-metrics">
+              <span class="ncfp-bar-value" id="ncfp-row-lifestyle-remaining"></span>
+              <span class="ncfp-bar-share" id="ncfp-row-lifestyle-saved"></span>
+            </div>
+          </div>
+          <div class="ncfp-cut-track">
+            <div class="ncfp-cut-track-remaining" id="ncfp-bar-lifestyle-remaining"></div>
+            <div class="ncfp-cut-track-saved ncfp-cut-track-saved--lifestyle" id="ncfp-bar-lifestyle-saved"></div>
+          </div>
+        </div>
+
+        <div class="ncfp-cut-row">
+          <div class="ncfp-bar-header">
+            <div class="ncfp-bar-copy">
+              <span class="ncfp-bar-name">After systemic changes</span>
+              <span class="ncfp-bar-detail">Only the system-scale changes checked below</span>
+            </div>
+            <div class="ncfp-bar-metrics">
+              <span class="ncfp-bar-value" id="ncfp-row-systemic-remaining"></span>
+              <span class="ncfp-bar-share" id="ncfp-row-systemic-saved"></span>
+            </div>
+          </div>
+          <div class="ncfp-cut-track">
+            <div class="ncfp-cut-track-remaining" id="ncfp-bar-systemic-remaining"></div>
+            <div class="ncfp-cut-track-saved ncfp-cut-track-saved--systemic" id="ncfp-bar-systemic-saved"></div>
+          </div>
+        </div>
+
+        <div class="ncfp-cut-row">
+          <div class="ncfp-bar-header">
+            <div class="ncfp-bar-copy">
+              <span class="ncfp-bar-name">After both together</span>
+              <span class="ncfp-bar-detail">Lifestyle plus systemic selections, capped at the national total</span>
+            </div>
+            <div class="ncfp-bar-metrics">
+              <span class="ncfp-bar-value" id="ncfp-row-combined-remaining"></span>
+              <span class="ncfp-bar-share" id="ncfp-row-combined-saved"></span>
+            </div>
+          </div>
+          <div class="ncfp-cut-track">
+            <div class="ncfp-cut-track-remaining" id="ncfp-bar-combined-remaining"></div>
+            <div class="ncfp-cut-track-saved ncfp-cut-track-saved--combined" id="ncfp-bar-combined-saved"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="ncfp-cut-summary" id="ncfp-cut-summary" aria-live="polite"></div>
+
+      <div class="ncfp-cut-toolbar">
+        <button type="button" class="ncfp-cut-toolbar-btn" id="ncfp-select-all">All</button>
+        <button type="button" class="ncfp-cut-toolbar-btn" id="ncfp-clear-all">None</button>
+      </div>
+
+      <div class="ncfp-cut-grid" id="ncfp-cut-grid">
+        {cutGroups.map((group) => (
+          <section class="ncfp-cut-group" data-cut-cat={group.key}>
+            <div class="ncfp-cut-group-header">
+              <div>
+                <div class="ncfp-cut-group-label">{group.label}</div>
+                <p class="ncfp-cut-group-intro">{group.intro}</p>
+              </div>
+              <div class="ncfp-cut-group-total" id={`ncfp-cut-total-${group.key}`}></div>
+            </div>
+
+            <div class="ncfp-cut-list">
+              {group.options.map((option) => (
+                <label class="ncfp-cut-item" data-cut-key={option.key} data-cut-cat={option.cat}>
+                  <input type="checkbox" />
+                  <span class="ncfp-cut-check">
+                    <svg viewBox="0 0 10 10">
+                      <polyline points="1.5,5.5 4,8 8.5,2"></polyline>
+                    </svg>
+                  </span>
+                  <span class="ncfp-cut-body">
+                    <span class="ncfp-cut-top">
+                      <span class="ncfp-cut-name">{option.label}</span>
+                      <span class="ncfp-cut-value" data-total={option.totalLabel} data-percapita={option.perCapitaLabel}>{option.totalLabel}</span>
+                    </span>
+                    <span class="ncfp-cut-detail">{option.detail}</span>
+                    <span class="ncfp-cut-meter">
+                      <span class="ncfp-cut-meter-fill" style={`width: ${option.meterPct}%`}></span>
+                    </span>
+                  </span>
+                </label>
+              ))}
+            </div>
+          </section>
+        ))}
+      </div>
+
+      <p class="ncfp-cut-note">
+        These are rough, overlapping scenario cuts anchored to the 2022 national total. They are meant to compare scale, not to function as an exact additive decarbonization plan.
+      </p>
+    </section>
+
     <div class="ncfp-story">
       <div class="ncfp-story-label">How to read it</div>
       <p>
@@ -268,6 +521,7 @@ const modeCopy = {
   .ncfp-hero,
   .ncfp-dashboard,
   .ncfp-chart-wrap,
+  .ncfp-cut-explorer,
   .ncfp-story {
     animation: ncfp-fade-up 0.45s ease both;
   }
@@ -282,6 +536,10 @@ const modeCopy = {
 
   .ncfp-story {
     animation-delay: 180ms;
+  }
+
+  .ncfp-cut-explorer {
+    animation-delay: 160ms;
   }
 
   @keyframes ncfp-fade-up {
@@ -589,6 +847,348 @@ const modeCopy = {
     color: var(--text2);
   }
 
+  .ncfp-cut-explorer {
+    margin: 3rem 0;
+  }
+
+  .ncfp-cut-kicker {
+    margin-bottom: 0.4rem;
+    font-size: 0.58rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text2);
+  }
+
+  .ncfp-cut-title {
+    margin: 0 0 0.65rem;
+    font-family: var(--font-editorial);
+    font-size: clamp(1.55rem, 3vw, 2.2rem);
+    font-weight: 700;
+    line-height: 1.08;
+  }
+
+  .ncfp-cut-intro {
+    max-width: 52rem;
+    margin: 0 0 1.4rem;
+    font-size: 0.92rem;
+    line-height: 1.78;
+    color: var(--text2);
+  }
+
+  .ncfp-cut-bars {
+    margin-bottom: 1rem;
+  }
+
+  .ncfp-cut-row {
+    margin-bottom: 1rem;
+  }
+
+  .ncfp-cut-track {
+    position: relative;
+    height: 52px;
+    overflow: hidden;
+    background: rgba(0, 0, 0, 0.03);
+    background-image: linear-gradient(to right, var(--div) 1px, transparent 1px);
+    background-size: 25% 100%;
+  }
+
+  [data-theme="dark"] .ncfp-cut-track {
+    background-color: rgba(255, 255, 255, 0.03);
+  }
+
+  .ncfp-cut-track::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 1px;
+    background: var(--div);
+  }
+
+  .ncfp-cut-track-remaining,
+  .ncfp-cut-track-saved {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    transition: width 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  }
+
+  .ncfp-cut-track-remaining {
+    left: 0;
+    width: 100%;
+    background: rgba(26, 26, 24, 0.16);
+  }
+
+  [data-theme="dark"] .ncfp-cut-track-remaining {
+    background: rgba(240, 237, 230, 0.18);
+  }
+
+  .ncfp-cut-track-remaining--current {
+    background: linear-gradient(90deg, var(--accent) 0%, color-mix(in srgb, var(--accent) 80%, white) 100%);
+  }
+
+  .ncfp-cut-track-saved {
+    right: 0;
+    width: 0;
+  }
+
+  .ncfp-cut-track-saved--lifestyle {
+    background: var(--agriculture);
+  }
+
+  .ncfp-cut-track-saved--systemic {
+    background: var(--power);
+  }
+
+  .ncfp-cut-track-saved--combined {
+    background: var(--accent);
+  }
+
+  .ncfp-cut-summary {
+    min-height: 1.4rem;
+    margin-bottom: 0.9rem;
+    font-size: 0.88rem;
+    line-height: 1.7;
+    color: var(--text2);
+  }
+
+  .ncfp-cut-toolbar {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-bottom: 1rem;
+  }
+
+  .ncfp-cut-toolbar-btn {
+    background: transparent;
+    border: 1px solid var(--div);
+    color: var(--text2);
+    cursor: pointer;
+    font: inherit;
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 4px 11px;
+    transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+  }
+
+  .ncfp-cut-toolbar-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  .ncfp-cut-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.6rem 3vw;
+  }
+
+  .ncfp-cut-group-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 12px;
+    padding-top: 0.75rem;
+    padding-bottom: 0.55rem;
+    margin-bottom: 0.95rem;
+    border-bottom: 1px solid var(--div);
+    border-top: 2.5px solid var(--accent);
+  }
+
+  .ncfp-cut-group[data-cut-cat="lifestyle"] .ncfp-cut-group-header {
+    border-top-color: var(--agriculture);
+  }
+
+  .ncfp-cut-group[data-cut-cat="systemic"] .ncfp-cut-group-header {
+    border-top-color: var(--power);
+  }
+
+  .ncfp-cut-group-label {
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--text2);
+  }
+
+  .ncfp-cut-group-intro {
+    margin: 0.45rem 0 0;
+    font-size: 0.74rem;
+    line-height: 1.58;
+    color: var(--text2);
+  }
+
+  .ncfp-cut-group-total {
+    flex-shrink: 0;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .ncfp-cut-list {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .ncfp-cut-item {
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    min-height: 52px;
+    padding: 10px 10px;
+    cursor: pointer;
+    transition: background 0.15s ease;
+    user-select: none;
+    background: transparent;
+  }
+
+  .ncfp-cut-item:hover {
+    background: rgba(139, 46, 46, 0.04);
+  }
+
+  [data-theme="dark"] .ncfp-cut-item:hover {
+    background: rgba(212, 165, 154, 0.05);
+  }
+
+  .ncfp-cut-item.checked {
+    background: rgba(139, 46, 46, 0.06);
+    border-left: 2.5px solid var(--accent);
+  }
+
+  [data-theme="dark"] .ncfp-cut-item.checked {
+    background: rgba(212, 165, 154, 0.08);
+  }
+
+  .ncfp-cut-item.checked[data-cut-cat="lifestyle"] {
+    border-left-color: var(--agriculture);
+  }
+
+  .ncfp-cut-item.checked[data-cut-cat="systemic"] {
+    border-left-color: var(--power);
+  }
+
+  .ncfp-cut-item input[type="checkbox"] {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+
+  .ncfp-cut-check {
+    flex-shrink: 0;
+    width: 18px;
+    height: 18px;
+    margin-top: 1px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1.5px solid #c8c3b8;
+    transition: border-color 0.15s ease, background 0.15s ease, transform 0.15s ease;
+  }
+
+  .ncfp-cut-check svg {
+    width: 10px;
+    height: 10px;
+    fill: none;
+    stroke: #fff;
+    stroke-width: 2.5;
+    opacity: 0;
+    transform: scale(0.5);
+    transition: opacity 0.15s ease, transform 0.15s ease;
+  }
+
+  .ncfp-cut-item.checked .ncfp-cut-check {
+    background: var(--accent);
+    border-color: var(--accent);
+    transform: scale(1.06);
+  }
+
+  .ncfp-cut-item.checked[data-cut-cat="lifestyle"] .ncfp-cut-check {
+    background: var(--agriculture);
+    border-color: var(--agriculture);
+  }
+
+  .ncfp-cut-item.checked[data-cut-cat="systemic"] .ncfp-cut-check {
+    background: var(--power);
+    border-color: var(--power);
+  }
+
+  .ncfp-cut-item.checked .ncfp-cut-check svg {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  .ncfp-cut-body {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .ncfp-cut-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .ncfp-cut-name {
+    font-size: 0.88rem;
+    font-weight: 500;
+    line-height: 1.32;
+  }
+
+  .ncfp-cut-value {
+    flex-shrink: 0;
+    min-width: 88px;
+    text-align: right;
+    font-size: 0.75rem;
+    color: var(--text2);
+    line-height: 1.32;
+  }
+
+  .ncfp-cut-detail {
+    font-size: 0.72rem;
+    font-style: italic;
+    line-height: 1.4;
+    color: var(--text2);
+  }
+
+  .ncfp-cut-meter {
+    width: 88px;
+    height: 6px;
+    margin-top: 4px;
+    overflow: hidden;
+    background: var(--div);
+  }
+
+  .ncfp-cut-meter-fill {
+    display: block;
+    height: 100%;
+    background: var(--accent);
+    transition: width 0.3s ease;
+  }
+
+  .ncfp-cut-item[data-cut-cat="lifestyle"] .ncfp-cut-meter-fill {
+    background: var(--agriculture);
+  }
+
+  .ncfp-cut-item[data-cut-cat="systemic"] .ncfp-cut-meter-fill {
+    background: var(--power);
+  }
+
+  .ncfp-cut-note {
+    max-width: 52rem;
+    margin: 1rem 0 0;
+    font-size: 0.78rem;
+    line-height: 1.65;
+    color: var(--text2);
+  }
+
   .ncfp-story {
     max-width: 52rem;
     padding: 1.2rem 0 1.2rem 1.5rem;
@@ -648,13 +1248,37 @@ const modeCopy = {
       height: 42px;
     }
 
+    .ncfp-cut-track {
+      height: 42px;
+    }
+
+    .ncfp-cut-grid {
+      grid-template-columns: 1fr;
+      gap: 1.4rem;
+    }
+
+    .ncfp-cut-group-header {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .ncfp-cut-top {
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .ncfp-cut-value {
+      min-width: 0;
+      text-align: left;
+    }
+
     .ncfp-story {
       padding-left: 1rem;
     }
   }
 </style>
 
-<script define:vars={{ modeCopy }}>
+<script define:vars={{ modeCopy, cutOptions, grossTotalMmt, population2022 }}>
   document.addEventListener('astro:page-load', initNationalCarbonFootprint);
 
   function initNationalCarbonFootprint() {
@@ -669,10 +1293,117 @@ const modeCopy = {
     const subline = document.getElementById('ncfp-subline');
     const context = document.getElementById('ncfp-context');
     const swapEls = root.querySelectorAll('[data-total][data-percapita]');
+    const cutItems = [...root.querySelectorAll('.ncfp-cut-item')];
+    const cutSummary = document.getElementById('ncfp-cut-summary');
+    const cutTotals = {
+      lifestyle: document.getElementById('ncfp-cut-total-lifestyle'),
+      systemic: document.getElementById('ncfp-cut-total-systemic'),
+    };
+    const cutRows = {
+      current: {
+        remainingText: document.getElementById('ncfp-row-current-remaining'),
+        savedText: document.getElementById('ncfp-row-current-saved'),
+        remainingBar: document.getElementById('ncfp-bar-current-remaining'),
+        savedBar: document.getElementById('ncfp-bar-current-saved'),
+      },
+      lifestyle: {
+        remainingText: document.getElementById('ncfp-row-lifestyle-remaining'),
+        savedText: document.getElementById('ncfp-row-lifestyle-saved'),
+        remainingBar: document.getElementById('ncfp-bar-lifestyle-remaining'),
+        savedBar: document.getElementById('ncfp-bar-lifestyle-saved'),
+      },
+      systemic: {
+        remainingText: document.getElementById('ncfp-row-systemic-remaining'),
+        savedText: document.getElementById('ncfp-row-systemic-saved'),
+        remainingBar: document.getElementById('ncfp-bar-systemic-remaining'),
+        savedBar: document.getElementById('ncfp-bar-systemic-saved'),
+      },
+      combined: {
+        remainingText: document.getElementById('ncfp-row-combined-remaining'),
+        savedText: document.getElementById('ncfp-row-combined-saved'),
+        remainingBar: document.getElementById('ncfp-bar-combined-remaining'),
+        savedBar: document.getElementById('ncfp-bar-combined-saved'),
+      },
+    };
+    let currentMode = 'total';
+
+    function formatScenarioValue(mmt) {
+      if (currentMode === 'total') {
+        return `${mmt.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })} MMT CO2e / yr`;
+      }
+
+      const perCapita = mmt * 1e6 / population2022;
+      const digits = perCapita >= 10 ? 1 : 2;
+      return `${perCapita.toLocaleString(undefined, { minimumFractionDigits: digits, maximumFractionDigits: digits })} t CO2e / person / yr`;
+    }
+
+    function formatCompactCut(mmt) {
+      if (currentMode === 'total') {
+        if (mmt >= 1000) return `${(mmt / 1000).toFixed(2)}B tons`;
+        return `${mmt.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })} MMT`;
+      }
+
+      const perCapita = mmt * 1e6 / population2022;
+      const digits = perCapita >= 10 ? 1 : 2;
+      return `${perCapita.toLocaleString(undefined, { minimumFractionDigits: digits, maximumFractionDigits: digits })} t/person`;
+    }
+
+    function getSelectedCuts() {
+      return cutItems
+        .filter((item) => item.querySelector('input[type="checkbox"]')?.checked)
+        .map((item) => cutOptions.find((option) => option.key === item.dataset.cutKey))
+        .filter(Boolean);
+    }
+
+    function updateCutRow(rowKey, remaining, saved) {
+      const row = cutRows[rowKey];
+      if (!row) return;
+
+      row.remainingText.textContent = formatScenarioValue(remaining);
+      row.savedText.textContent = saved > 0 ? `Cut: ${formatCompactCut(saved)}` : 'No cuts yet';
+      row.remainingBar.style.width = `${Math.max(remaining / grossTotalMmt * 100, 0)}%`;
+      row.savedBar.style.width = `${Math.max(saved / grossTotalMmt * 100, 0)}%`;
+    }
+
+    function renderCuts() {
+      cutItems.forEach((item) => {
+        const checked = item.querySelector('input[type="checkbox"]')?.checked;
+        item.classList.toggle('checked', Boolean(checked));
+      });
+
+      const selected = getSelectedCuts();
+      const lifestyleSaved = selected
+        .filter((option) => option.cat === 'lifestyle')
+        .reduce((sum, option) => sum + option.totalMmt, 0);
+      const systemicSaved = selected
+        .filter((option) => option.cat === 'systemic')
+        .reduce((sum, option) => sum + option.totalMmt, 0);
+
+      const lifestyleApplied = Math.min(lifestyleSaved, grossTotalMmt);
+      const systemicApplied = Math.min(systemicSaved, grossTotalMmt);
+      const combinedApplied = Math.min(lifestyleSaved + systemicSaved, grossTotalMmt);
+
+      cutTotals.lifestyle.textContent = lifestyleSaved > 0 ? `Selected: ${formatCompactCut(lifestyleSaved)}` : 'Selected: none';
+      cutTotals.systemic.textContent = systemicSaved > 0 ? `Selected: ${formatCompactCut(systemicSaved)}` : 'Selected: none';
+
+      updateCutRow('current', grossTotalMmt, 0);
+      cutRows.current.savedText.textContent = 'Reference line';
+      updateCutRow('lifestyle', grossTotalMmt - lifestyleApplied, lifestyleApplied);
+      updateCutRow('systemic', grossTotalMmt - systemicApplied, systemicApplied);
+      updateCutRow('combined', grossTotalMmt - combinedApplied, combinedApplied);
+
+      if (combinedApplied === 0) {
+        cutSummary.textContent = 'No cuts selected yet. Check items in either column to compare household-scale change with system-scale change.';
+        return;
+      }
+
+      cutSummary.textContent = `Selected lifestyle changes cut ${formatCompactCut(lifestyleSaved)}. Selected systemic changes cut ${formatCompactCut(systemicSaved)}. Together they remove ${formatCompactCut(combinedApplied)}, leaving ${formatCompactCut(grossTotalMmt - combinedApplied)} of the national footprint.`;
+    }
 
     function setMode(mode) {
       const copy = modeCopy[mode];
       if (!copy) return;
+      currentMode = mode;
 
       totalLabel.textContent = copy.totalLabel;
       totalValue.textContent = copy.totalValue;
@@ -689,6 +1420,8 @@ const modeCopy = {
         button.classList.toggle('active', active);
         button.setAttribute('aria-pressed', active ? 'true' : 'false');
       });
+
+      renderCuts();
     }
 
     root.querySelector('.ncfp-toggle')?.addEventListener('click', (event) => {
@@ -696,6 +1429,24 @@ const modeCopy = {
       const button = event.target.closest('.ncfp-toggle-btn');
       if (!button) return;
       setMode(button.dataset.mode);
+    });
+
+    root.querySelectorAll('.ncfp-cut-item input[type="checkbox"]').forEach((checkbox) => {
+      checkbox.addEventListener('change', renderCuts);
+    });
+
+    document.getElementById('ncfp-select-all')?.addEventListener('click', () => {
+      root.querySelectorAll('.ncfp-cut-item input[type="checkbox"]').forEach((checkbox) => {
+        checkbox.checked = true;
+      });
+      renderCuts();
+    });
+
+    document.getElementById('ncfp-clear-all')?.addEventListener('click', () => {
+      root.querySelectorAll('.ncfp-cut-item input[type="checkbox"]').forEach((checkbox) => {
+        checkbox.checked = false;
+      });
+      renderCuts();
     });
 
     setMode('total');
