@@ -286,6 +286,10 @@ import { Calculator } from '@/components/carbon/Calculator';
     background: var(--bg, #141413);
   }
 
+  .cf-reference-label-short {
+    display: none;
+  }
+
   /* Toggle row */
   .cf-toggle-row {
     display: flex;
@@ -421,6 +425,36 @@ import { Calculator } from '@/components/carbon/Calculator';
       width: 100%;
       text-align: right;
       line-height: 1.35;
+    }
+
+    .cf-reference-label {
+      font-size: 0.5rem !important;
+      letter-spacing: 0.01em !important;
+    }
+
+    .cf-reference-label-row {
+      height: 28px !important;
+      margin-bottom: 6px !important;
+    }
+
+    .cf-reference-label[data-row="1"] {
+      top: 11px;
+    }
+
+    .cf-reference-label-full {
+      display: none;
+    }
+
+    .cf-reference-label-short {
+      display: inline;
+    }
+
+    .cf-reference-line-layer {
+      top: 34px !important;
+    }
+
+    .cf-reference-line {
+      opacity: 0.45 !important;
     }
   }
 

@@ -652,9 +652,9 @@ export function ImpactChart({
 // --- Reference lines ---
 
 const REFERENCE_MARKS = [
-  { kg: 17600, label: 'US avg', color: '#8B2E2E', weight: 700, opacity: 0.5 },
-  { kg: 8500,  label: 'EU avg', color: '#6B6B60', weight: 500, opacity: 0.3 },
-  { kg: 6500,  label: 'Global avg', color: '#6B6B60', weight: 500, opacity: 0.3 },
+  { kg: 17600, label: 'US avg', shortLabel: 'US', color: '#8B2E2E', weight: 700, opacity: 0.5 },
+  { kg: 8500,  label: 'EU avg', shortLabel: 'EU', color: '#6B6B60', weight: 500, opacity: 0.3 },
+  { kg: 6500,  label: 'Global avg', shortLabel: 'World', color: '#6B6B60', weight: 500, opacity: 0.3 },
 ];
 
 function ReferenceLines({ scaleMax }: { scaleMax: number }) {
@@ -679,11 +679,15 @@ function ReferenceLines({ scaleMax }: { scaleMax: number }) {
   return (
     <>
       {/* Labels row above the bars */}
-      <div style={{ position: 'relative', height: '16px', marginBottom: '4px' }}>
-        {visible.map(mark => {
+      <div className="cf-reference-label-row" style={{ position: 'relative', height: '16px', marginBottom: '4px' }}>
+        {visible.map((mark, index) => {
           if (!showLabel[mark.label]) return null;
           return (
-            <span key={mark.label} style={{
+            <span
+              key={mark.label}
+              className="cf-reference-label"
+              data-row={index % 2}
+              style={{
               position: 'absolute',
               left: `${mark.pct}%`,
               transform: 'translateX(-50%)',
@@ -692,25 +696,32 @@ function ReferenceLines({ scaleMax }: { scaleMax: number }) {
               color: mark.color,
               whiteSpace: 'nowrap',
               letterSpacing: '0.02em',
-            }}>
-              {mark.label}
+            }}
+            >
+              <span className="cf-reference-label-full">{mark.label}</span>
+              <span className="cf-reference-label-short" aria-hidden="true">{mark.shortLabel}</span>
             </span>
           );
         })}
       </div>
       {/* Vertical lines spanning the bar area */}
-      <div style={{ position: 'absolute', left: 0, right: 0, top: '20px', bottom: '12px', pointerEvents: 'none', zIndex: 2 }}>
+      <div className="cf-reference-line-layer" style={{ position: 'absolute', left: 0, right: 0, top: '20px', bottom: '12px', pointerEvents: 'none', zIndex: 2 }}>
         {visible.map(mark => (
-            <div key={mark.label} style={{
+            <div
+              key={mark.label}
+              className="cf-reference-line"
+              style={{
               position: 'absolute',
               left: `${mark.pct}%`,
               top: 0,
               bottom: 0,
-              width: 0,
-              borderLeft: `1.5px dashed ${mark.color}`,
+              width: '2px',
+              transform: 'translateX(-50%)',
+              background: `repeating-linear-gradient(to bottom, ${mark.color} 0 6px, transparent 6px 10px)`,
               opacity: mark.opacity,
               transition: 'left 0.5s cubic-bezier(0.25,0.46,0.45,0.94)',
-            }} />
+            }}
+            />
         ))}
       </div>
     </>
