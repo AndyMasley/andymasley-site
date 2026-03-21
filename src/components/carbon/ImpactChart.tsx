@@ -191,12 +191,12 @@ export function ImpactChart({
             Your footprint
           </div>
           {/* Footprint number — always visible at top */}
-          <div style={{ marginBottom: '1rem' }}>
-            <div style={{ fontSize: 'clamp(2rem, 4vw, 3rem)', fontWeight: 700, letterSpacing: '-0.02em', fontVariantNumeric: 'tabular-nums', lineHeight: 1 }}>
+          <div className="cf-footprint-summary" style={{ marginBottom: '1rem' }}>
+            <div className="cf-footprint-total" style={{ fontSize: 'clamp(2rem, 4vw, 3rem)', fontWeight: 700, letterSpacing: '-0.02em', fontVariantNumeric: 'tabular-nums', lineHeight: 1 }}>
               {footprintKg.toLocaleString()}
-              <span style={{ fontSize: '0.4em', fontWeight: 400, color: MUTED, marginLeft: '6px' }} title="kilograms of carbon dioxide equivalent per year">kg CO₂e/yr</span>
+              <span className="cf-footprint-unit" style={{ fontSize: '0.4em', fontWeight: 400, color: MUTED, marginLeft: '6px' }} title="kilograms of carbon dioxide equivalent per year">kg CO₂e/yr</span>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '6px' }}>
+            <div className="cf-footprint-benchmark" style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '6px' }}>
               <span style={{ fontSize: '0.72rem', color: MUTED }}>{Math.round(footprintKg / 17600 * 100)}% of US avg</span>
               <div style={{ width: '60px', height: '5px', background: DIVIDER, borderRadius: '0', overflow: 'hidden' }}>
                 <div style={{ width: `${Math.min(footprintKg / 17600 * 100, 100)}%`, height: '100%', background: footprintKg > 17600 ? ACCENT : GREEN, borderRadius: '0', transition: 'width 0.4s ease' }} />
@@ -226,7 +226,7 @@ export function ImpactChart({
           <div className="cf-impact-scroll">
             {/* Lifestyle preset pills */}
             <div style={{ fontSize: '0.62rem', fontWeight: 500, color: MUTED, marginBottom: '5px' }}>Presets</div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '0.75rem' }}>
+            <div className="cf-presets-list">
               {LIFESTYLE_PRESETS.map(p => (
                 <button
                   key={p.id}
@@ -303,16 +303,16 @@ export function ImpactChart({
                     }}
                     aria-expanded={isOpen}
                   >
-                    <span style={{ fontSize: '0.6rem', color: MUTED, width: '10px', flexShrink: 0, transition: 'transform 0.15s' }}>{isOpen ? '▾' : '▸'}</span>
-                    <span style={{ flex: 1 }}>{group.category}</span>
+                    <span className="cf-category-icon" style={{ fontSize: '0.6rem', color: MUTED, width: '10px', flexShrink: 0, transition: 'transform 0.15s' }}>{isOpen ? '▾' : '▸'}</span>
+                    <span className="cf-category-title" style={{ flex: 1 }}>{group.category}</span>
                     {enabledCount > 0 && (
-                      <span style={{ fontSize: '0.62rem', fontWeight: 700, color: GREEN, fontVariantNumeric: 'tabular-nums', textTransform: 'none' }}>
+                      <span className="cf-category-stats" style={{ fontSize: '0.62rem', fontWeight: 700, color: GREEN, fontVariantNumeric: 'tabular-nums', textTransform: 'none' }}>
                         −{groupSaved.toLocaleString()} <span style={{ fontWeight: 400, color: MUTED }}>of {maxSavings.toLocaleString()} kg</span>
                       </span>
                     )}
-                    {enabledCount === 0 && <span style={{ fontSize: '0.62rem', color: MUTED, fontWeight: 400, textTransform: 'none' }}>{group.actions.length} action{group.actions.length !== 1 ? 's' : ''} · up to <strong style={{ fontWeight: 600, color: 'var(--text, #1A1A18)' }}>{maxSavings.toLocaleString()}</strong> kg</span>}
+                    {enabledCount === 0 && <span className="cf-category-stats" style={{ fontSize: '0.62rem', color: MUTED, fontWeight: 400, textTransform: 'none' }}>{group.actions.length} action{group.actions.length !== 1 ? 's' : ''} · up to <strong style={{ fontWeight: 600, color: 'var(--text, #1A1A18)' }}>{maxSavings.toLocaleString()}</strong> kg</span>}
                     {enabledCount > 0 && maxSavings > 0 && (
-                      <div style={{ width: '32px', height: '3px', background: DIVIDER, borderRadius: '0', overflow: 'hidden', flexShrink: 0 }}>
+                      <div className="cf-category-progress" style={{ width: '32px', height: '3px', background: DIVIDER, borderRadius: '0', overflow: 'hidden', flexShrink: 0 }}>
                         <div style={{ width: `${Math.min((groupSaved / maxSavings) * 100, 100)}%`, height: '100%', background: GREEN, borderRadius: '0', transition: 'width 0.3s ease' }} />
                       </div>
                     )}
@@ -472,7 +472,7 @@ export function ImpactChart({
                           <div key={action.name}>
                             <button onClick={handleToggle} className="cf-toggle-row" data-on={isOn} aria-pressed={isOn}>
                               <Dot on={isOn} />
-                              <span style={{ flex: 1, fontWeight: isOn ? 600 : 400, fontSize: '0.72rem' }}>
+                              <span className="cf-toggle-label" style={{ flex: 1, fontWeight: isOn ? 600 : 400, fontSize: '0.72rem' }}>
                                 {action.inlineParam ? (
                                   <>
                                     {action.inlineParam.before}
@@ -497,7 +497,7 @@ export function ImpactChart({
                                   </>
                                 ) : action.name}
                               </span>
-                              <span style={{ fontWeight: 700, color: isOn ? GREEN : MUTED, fontVariantNumeric: 'tabular-nums', fontSize: '0.72rem', whiteSpace: 'nowrap' }}>
+                              <span className="cf-toggle-value" style={{ fontWeight: 700, color: isOn ? GREEN : MUTED, fontVariantNumeric: 'tabular-nums', fontSize: '0.72rem' }}>
                                   −{Math.round(action.savingsKg * (actionParamOverrides[action.name] ?? 1)).toLocaleString()} <span style={{ fontSize: '0.6em', fontWeight: 400 }}>kg</span>
                               </span>
                             </button>
@@ -545,7 +545,7 @@ export function ImpactChart({
                 <div key={result.case.name}>
                   <button onClick={() => toggleSystemic(result.case.name)} className="cf-toggle-row" data-on={isOn} aria-pressed={isOn}>
                     <Dot on={isOn} />
-                    <span style={{ flex: 1, fontWeight: isOn ? 600 : 400, fontSize: '0.72rem', lineHeight: 1.25, textAlign: 'left' }}>
+                    <span className="cf-toggle-label" style={{ flex: 1, fontWeight: isOn ? 600 : 400, fontSize: '0.72rem', lineHeight: 1.25, textAlign: 'left' }}>
                       {result.case.namePrefix}{' '}
                       <span
                         onClick={e => { e.stopPropagation(); setExpandedExplainer(isExplainerOpen ? null : result.case.name); }}
@@ -560,7 +560,7 @@ export function ImpactChart({
                         {result.case.nameExpandable}
                       </span>
                     </span>
-                    <span style={{ fontSize: '0.58rem', color: MUTED, opacity: 0.7, whiteSpace: 'nowrap', flexShrink: 0 }} onClick={e => e.stopPropagation()}>
+                    <span className="cf-toggle-meta" style={{ fontSize: '0.58rem', color: MUTED, opacity: 0.7, flexShrink: 0 }} onClick={e => e.stopPropagation()}>
                       <span style={{ fontSize: '0.85rem', opacity: 0.5, fontWeight: 300 }}>×</span> <InlineNum
                         value={Math.round((systemicOverrides[result.case.name]?.probability ?? result.case.probabilityOfSuccess.central) * 1000) / 10}
                         onChange={v => {
@@ -579,7 +579,7 @@ export function ImpactChart({
                         min={1}
                       /> people <span style={{ fontSize: '0.85rem', opacity: 0.5, fontWeight: 300 }}>=</span>
                     </span>
-                    <span style={{ fontWeight: 700, color: isOn ? GREEN : MUTED, fontVariantNumeric: 'tabular-nums', fontSize: '0.7rem', whiteSpace: 'nowrap', flexShrink: 0, marginLeft: '4px' }}>
+                    <span className="cf-toggle-value" style={{ fontWeight: 700, color: isOn ? GREEN : MUTED, fontVariantNumeric: 'tabular-nums', fontSize: '0.7rem', flexShrink: 0, marginLeft: '4px' }}>
                       {sigFigs(central)} <span style={{ fontSize: '0.6em', fontWeight: 400 }}>kg/person</span>
                     </span>
                   </button>
@@ -728,12 +728,12 @@ function BarRow({ label, kg, pctWidth, color, opacity, ghostWidth, ghostOpacity,
   const kgStr = useSigFigs ? sigFigs(kg) : kg.toLocaleString();
   return (
     <div style={{ marginBottom: '6px', opacity: dimmed ? 0.25 : 1, transition: 'opacity 0.3s ease' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', fontSize: '0.72rem', marginBottom: '3px' }}>
-        <span style={{ fontWeight: bold ? 700 : 600, color: labelColor, display: 'flex', alignItems: 'center', gap: '5px' }}>
+      <div className="cf-bar-row-head" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', fontSize: '0.72rem', marginBottom: '3px' }}>
+        <span className="cf-bar-row-label" style={{ fontWeight: bold ? 700 : 600, color: labelColor, display: 'flex', alignItems: 'center', gap: '5px' }}>
           {dotColor && <span style={{ width: '6px', height: '6px', borderRadius: '0', background: dotColor, flexShrink: 0, display: 'inline-block', position: 'relative', top: '0.5px' }} />}
           {label}
         </span>
-        <span style={{ fontVariantNumeric: 'tabular-nums', fontWeight: 700, color: labelColor, whiteSpace: 'nowrap' }}>
+        <span className="cf-bar-row-value" style={{ fontVariantNumeric: 'tabular-nums', fontWeight: 700, color: labelColor }}>
           {dimmed ? '—' : `${kgStr} ${unit ?? 'kg/yr'}`}
           {!dimmed && suffix && <span style={{ fontWeight: 800, marginLeft: '6px' }}>{suffix}</span>}
         </span>
@@ -785,7 +785,7 @@ function ExampleDropdown() {
       {open && (
         <div style={{ fontSize: '0.68rem', color: MUTED, lineHeight: 1.5, padding: '8px 0 8px 12px', marginTop: '4px', borderLeft: `1px solid ${DIVIDER}` }}>
           Say 3,000 people work to stop a nuclear plant from closing. The plant generates 7.9 million MWh of zero-carbon electricity per year. If it closes, it's replaced by a mix of gas and renewables, adding about 2.4 million tonnes of CO₂ per year (net). If the campaign has a 5% chance of succeeding and the plant runs for 15 more years:<br /><br />
-          <code style={{ fontSize: '0.63rem', borderRadius: '0' }}>2,400,000,000 kg/yr × 15 yr × 5% ÷ 3,000 people = 591,300 kg per person</code><br /><br />
+          <code className="cf-example-formula" style={{ fontSize: '0.63rem', borderRadius: '0' }}>2,400,000,000 kg/yr × 15 yr × 5% ÷ 3,000 people = 591,300 kg per person</code><br /><br />
           That's <strong style={{ color: GREEN }}>~590 tonnes</strong> per person — roughly <strong style={{ color: GREEN }}>37 years</strong> of a typical American's annual footprint. Even at 2% probability, it's still 7 years' worth. That's why grid change has such high leverage.
         </div>
       )}

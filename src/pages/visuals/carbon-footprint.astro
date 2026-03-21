@@ -220,6 +220,37 @@ import { Calculator } from '@/components/carbon/Calculator';
     background: transparent;
   }
 
+  .cf-baseline-form {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.35rem 0.5rem;
+  }
+
+  .cf-baseline-field,
+  .cf-category-title,
+  .cf-category-stats,
+  .cf-toggle-label,
+  .cf-toggle-meta,
+  .cf-toggle-value,
+  .cf-bar-row-label,
+  .cf-bar-row-value {
+    min-width: 0;
+  }
+
+  .cf-presets-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 0.75rem;
+  }
+
+  .cf-example-formula {
+    display: inline-block;
+    max-width: 100%;
+    overflow-x: auto;
+    vertical-align: top;
+  }
+
   .cf-impact-panels {
     display: grid;
     grid-template-columns: 7fr 5fr 8fr;
@@ -233,6 +264,7 @@ import { Calculator } from '@/components/carbon/Calculator';
     flex-direction: column;
     background: var(--bg, #faf9f7);
     overflow: hidden;
+    min-width: 0;
   }
   [data-theme="dark"] .cf-impact-col {
     background: var(--bg, #141413);
@@ -297,6 +329,101 @@ import { Calculator } from '@/components/carbon/Calculator';
     }
   }
 
+  @media (max-width: 640px) {
+    .cfv2 {
+      width: calc(100vw - 24px);
+    }
+
+    .cf-impact-col,
+    .cf-impact-bars {
+      padding-left: 0.875rem;
+      padding-right: 0.875rem;
+    }
+
+    .cf-footprint-unit {
+      display: block;
+      margin-left: 0 !important;
+      margin-top: 0.18rem;
+      font-size: 0.34em !important;
+    }
+
+    .cf-footprint-benchmark {
+      flex-wrap: wrap;
+    }
+
+    .cf-baseline-form {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .cf-category-flash {
+      flex-wrap: wrap;
+      row-gap: 4px;
+    }
+
+    .cf-category-stats {
+      width: calc(100% - 16px);
+      padding-left: 16px;
+      order: 3;
+      line-height: 1.35;
+    }
+
+    .cf-category-progress {
+      order: 4;
+      margin-left: auto;
+    }
+
+    .cf-toggle-row {
+      display: grid;
+      grid-template-columns: 16px minmax(0, 1fr);
+      align-items: start;
+      column-gap: 8px;
+      row-gap: 4px;
+      padding: 10px 0;
+    }
+
+    .cf-toggle-row > span:first-child {
+      grid-column: 1;
+      grid-row: 1 / span 3;
+      margin-top: 2px;
+    }
+
+    .cf-toggle-label,
+    .cf-toggle-meta,
+    .cf-toggle-value {
+      grid-column: 2;
+    }
+
+    .cf-toggle-label {
+      line-height: 1.35;
+    }
+
+    .cf-toggle-meta {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 3px 6px;
+      line-height: 1.35;
+    }
+
+    .cf-toggle-value {
+      justify-self: end;
+      text-align: right;
+      line-height: 1.2;
+    }
+
+    .cf-bar-row-head {
+      flex-direction: column;
+      align-items: flex-start !important;
+      gap: 4px;
+    }
+
+    .cf-bar-row-value {
+      width: 100%;
+      text-align: right;
+      line-height: 1.35;
+    }
+  }
+
   /* Focus states */
   .cfv2 *:focus-visible {
     outline: 2px solid var(--accent);
@@ -357,7 +484,20 @@ import { Calculator } from '@/components/carbon/Calculator';
   }
 
   @media (max-width: 480px) {
-    .cfv2 { padding: 1.5rem 0 3rem; }
+    .cfv2 {
+      width: calc(100vw - 16px);
+      padding: 1.5rem 0 3rem;
+    }
+
+    .cf-baseline-form {
+      grid-template-columns: 1fr;
+    }
+
+    .cf-preset-pill {
+      flex: 1 1 calc(50% - 0.4rem);
+      white-space: normal !important;
+      text-align: center;
+    }
   }
 
 </style>

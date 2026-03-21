@@ -3,11 +3,12 @@ import type { BaselineInputs, HousingType, UrbanForm, DietType, CarOwnership } f
 
 /** Number input that uses local string state so users can freely type/delete.
  *  Only commits to parent on blur or Enter. */
-function NumInput({ value, onChange, min, max, step, style, id, placeholder, inputMode }: {
+function NumInput({ value, onChange, min, max, step, style, id, placeholder, inputMode, className }: {
   value: number; onChange: (n: number) => void;
   min?: number; max?: number; step?: string | number;
   style?: React.CSSProperties; id?: string; placeholder?: string;
   inputMode?: 'numeric' | 'decimal';
+  className?: string;
 }) {
   const [local, setLocal] = useState(String(value));
   useEffect(() => { setLocal(String(value)); }, [value]);
@@ -28,6 +29,7 @@ function NumInput({ value, onChange, min, max, step, style, id, placeholder, inp
       id={id}
       type="text"
       inputMode={inputMode ?? 'numeric'}
+      className={className}
       style={style}
       value={local}
       placeholder={placeholder}
@@ -104,12 +106,13 @@ export function BaselineForm({ value, onChange }: BaselineFormProps) {
   };
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.35rem 0.5rem' }}>
+    <div className="cf-baseline-form">
 
-      <div style={FIELD_STYLE}>
+      <div className="cf-baseline-field" style={FIELD_STYLE}>
         <label style={LABEL_STYLE} htmlFor="cf-state">Location</label>
         <select
           id="cf-state"
+          className="cf-baseline-control"
           style={SELECT_STYLE}
           value={value.state}
           onChange={e => update('state', e.target.value)}
@@ -120,10 +123,11 @@ export function BaselineForm({ value, onChange }: BaselineFormProps) {
         </select>
       </div>
 
-      <div style={FIELD_STYLE}>
+      <div className="cf-baseline-field" style={FIELD_STYLE}>
         <label style={LABEL_STYLE} htmlFor="cf-housing">Housing</label>
         <select
           id="cf-housing"
+          className="cf-baseline-control"
           style={SELECT_STYLE}
           value={value.housingType}
           onChange={e => update('housingType', e.target.value as HousingType)}
@@ -135,10 +139,11 @@ export function BaselineForm({ value, onChange }: BaselineFormProps) {
         </select>
       </div>
 
-      <div style={FIELD_STYLE}>
+      <div className="cf-baseline-field" style={FIELD_STYLE}>
         <label style={LABEL_STYLE} htmlFor="cf-car">Car</label>
         <select
           id="cf-car"
+          className="cf-baseline-control"
           style={SELECT_STYLE}
           value={value.carOwnership}
           onChange={e => {
@@ -161,10 +166,11 @@ export function BaselineForm({ value, onChange }: BaselineFormProps) {
         </select>
       </div>
 
-      <div style={FIELD_STYLE}>
+      <div className="cf-baseline-field" style={FIELD_STYLE}>
         <label style={LABEL_STYLE} htmlFor="cf-household">Household</label>
         <NumInput
           id="cf-household"
+          className="cf-baseline-control"
           min={1}
           max={10}
           inputMode="decimal"
@@ -174,10 +180,11 @@ export function BaselineForm({ value, onChange }: BaselineFormProps) {
         />
       </div>
 
-      <div style={FIELD_STYLE}>
+      <div className="cf-baseline-field" style={FIELD_STYLE}>
         <label style={LABEL_STYLE} htmlFor="cf-area">Area</label>
         <select
           id="cf-area"
+          className="cf-baseline-control"
           style={SELECT_STYLE}
           value={value.urbanForm}
           onChange={e => {
@@ -198,10 +205,11 @@ export function BaselineForm({ value, onChange }: BaselineFormProps) {
         </select>
       </div>
 
-      <div style={FIELD_STYLE}>
+      <div className="cf-baseline-field" style={FIELD_STYLE}>
         <label style={LABEL_STYLE} htmlFor="cf-diet">Diet</label>
         <select
           id="cf-diet"
+          className="cf-baseline-control"
           style={SELECT_STYLE}
           value={value.dietType}
           onChange={e => update('dietType', e.target.value as DietType)}
@@ -215,10 +223,11 @@ export function BaselineForm({ value, onChange }: BaselineFormProps) {
         </select>
       </div>
 
-      <div style={FIELD_STYLE}>
+      <div className="cf-baseline-field" style={FIELD_STYLE}>
         <label style={LABEL_STYLE} htmlFor="cf-miles">Miles driven/yr</label>
         <NumInput
           id="cf-miles"
+          className="cf-baseline-control"
           min={0}
           max={100000}
           style={INPUT_STYLE}
@@ -227,10 +236,11 @@ export function BaselineForm({ value, onChange }: BaselineFormProps) {
         />
       </div>
 
-      <div style={FIELD_STYLE}>
+      <div className="cf-baseline-field" style={FIELD_STYLE}>
         <label style={LABEL_STYLE} htmlFor="cf-flights">Flights/yr</label>
         <NumInput
           id="cf-flights"
+          className="cf-baseline-control"
           min={0}
           max={100}
           style={INPUT_STYLE}
@@ -255,12 +265,13 @@ export function BaselineForm({ value, onChange }: BaselineFormProps) {
         />
       </div>
 
-      <div style={FIELD_STYLE}>
+      <div className="cf-baseline-field" style={FIELD_STYLE}>
         <label style={LABEL_STYLE} htmlFor="cf-spending">Spend/mo <span style={{ fontWeight: 400, opacity: 0.7 }}>(excl. rent)</span></label>
-        <div style={{ position: 'relative' }}>
+        <div className="cf-baseline-currency" style={{ position: 'relative' }}>
           <span style={{ position: 'absolute', left: '8px', top: '50%', transform: 'translateY(-50%)', fontSize: '0.75rem', color: 'var(--text-secondary, #6B6B60)', pointerEvents: 'none' }}>$</span>
           <NumInput
             id="cf-spending"
+            className="cf-baseline-control"
             min={0}
             max={50000}
             style={{ ...INPUT_STYLE, paddingLeft: '18px' }}
