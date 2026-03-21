@@ -12,7 +12,7 @@ import { PromptEnergyStory } from '@/components/prompt-energy/PromptEnergyStory'
     <header class="pe-page__header">
       <h1 class="pe-page__title">How an AI prompt uses energy</h1>
       <p class="pe-page__intro">
-        A zoomable story about how one prompt moves through a live AI serving system. The first six scenes track the request from chat box to accelerator handoff, into the rack that holds the tray, down into one tray and package, into the die map inside a modern accelerator, through the full prefill sweep, and then into the repeated decode loop that grows the answer one token at a time.
+        A zoomable story about how one prompt moves through a live AI serving system. The first seven scenes track the request from chat box to accelerator handoff, into the rack that holds the tray, down into one tray and package, into the die map inside a modern accelerator, through the full prefill sweep, into the repeated decode loop, and then out through the cooling path that has to carry the heat away.
       </p>
     </header>
 
@@ -6118,6 +6118,848 @@ import { PromptEnergyStory } from '@/components/prompt-energy/PromptEnergyStory'
     }
   }
 
+  .pe-scene-seven {
+    --pe7-heat: #c87954;
+    --pe7-coolant: #5f9dc0;
+    --pe7-air: #a4b5be;
+    --pe7-facility: #7d78b8;
+    --pe7-ghost: #8b857b;
+    --pe7-panel: color-mix(in srgb, var(--bg-subtle) 92%, transparent);
+    --pe7-shadow: 0 14px 34px -28px rgba(26, 25, 24, 0.35);
+  }
+
+  [data-theme="dark"] .pe-scene-seven {
+    --pe7-heat: #e0906b;
+    --pe7-coolant: #86bedc;
+    --pe7-air: #bcc9cf;
+    --pe7-facility: #a29de6;
+    --pe7-ghost: #87806f;
+    --pe7-shadow: 0 18px 40px -30px rgba(0, 0, 0, 0.72);
+  }
+
+  .pe7-intro {
+    max-width: 44rem;
+    margin: 4rem 0 1.8rem;
+  }
+
+  .pe7-eyebrow,
+  .pe7-step__meta,
+  .pe7-stage__progress-label,
+  .pe7-stage__spotlight-kicker,
+  .pe7-ledger__eyebrow,
+  .pe7-stage__handoff-title,
+  .pe7-heatbar__eyebrow,
+  .pe7-stack-pane__title,
+  .pe7-rack-pane__title,
+  .pe7-loop-pane__title,
+  .pe7-engineer__title,
+  .pe7-fault__title,
+  .pe7-stage__plane-note-kicker {
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--dim);
+    font-family: var(--font-body);
+  }
+
+  .pe7-title {
+    margin: 0 0 0.75rem;
+    font-family: var(--font-editorial);
+    font-size: clamp(1.85rem, 1.55rem + 0.9vw, 2.8rem);
+    line-height: 1.08;
+    letter-spacing: -0.035em;
+  }
+
+  .pe7-lede {
+    max-width: 40rem;
+    margin: 0;
+    font-family: var(--font-editorial);
+    font-size: 1rem;
+    line-height: 1.72;
+    color: var(--text-secondary);
+  }
+
+  .pe7-layout {
+    display: grid;
+    grid-template-columns: minmax(16rem, 21rem) minmax(0, 1fr);
+    gap: clamp(1.25rem, 2.3vw, 2.5rem);
+    align-items: start;
+  }
+
+  .pe7-steps {
+    display: grid;
+    gap: 1rem;
+  }
+
+  .pe7-step {
+    min-height: 58vh;
+    padding-right: 1rem;
+    padding-left: 1rem;
+    border-left: 1px solid color-mix(in srgb, var(--border) 78%, transparent);
+    opacity: 0.68;
+    transition: border-color 180ms ease, opacity 180ms ease;
+  }
+
+  .pe7-step--active {
+    opacity: 1;
+    border-color: color-mix(in srgb, var(--pe7-facility) 34%, var(--border));
+  }
+
+  .pe7-step__title {
+    margin: 0.3rem 0 0.5rem;
+    font-family: var(--font-editorial);
+    font-size: clamp(1.45rem, 1.2rem + 0.4vw, 1.9rem);
+    line-height: 1.12;
+    letter-spacing: -0.03em;
+  }
+
+  .pe7-step__body {
+    margin: 0;
+    font-family: var(--font-editorial);
+    font-size: 1rem;
+    line-height: 1.68;
+    color: var(--text-secondary);
+  }
+
+  .pe7-sticky {
+    position: sticky;
+    top: 5rem;
+  }
+
+  .pe7-stage {
+    display: grid;
+    gap: 1rem;
+    padding: 1rem;
+    border-radius: 1.35rem;
+    border: 1px solid color-mix(in srgb, var(--border) 84%, transparent);
+    background: var(--pe7-panel);
+    box-shadow: var(--pe7-shadow);
+    backdrop-filter: blur(12px);
+  }
+
+  .pe7-stage__topline,
+  .pe7-stage__legend,
+  .pe7-stage__controls,
+  .pe7-stage__plane-note,
+  .pe7-stage__hardware,
+  .pe7-stage__handoff {
+    display: grid;
+    gap: 0.75rem;
+  }
+
+  .pe7-stage__topline {
+    grid-template-columns: minmax(0, 16rem) minmax(0, 1fr);
+    align-items: end;
+    gap: 1rem;
+  }
+
+  .pe7-stage__progress {
+    display: grid;
+    gap: 0.45rem;
+  }
+
+  .pe7-stage__progress-dots {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+  }
+
+  .pe7-stage__progress-dot {
+    width: 0.46rem;
+    height: 0.46rem;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--pe7-ghost) 26%, transparent);
+    transition: transform 180ms ease, background-color 180ms ease;
+  }
+
+  .pe7-stage__progress-dot--active {
+    transform: scale(1.15);
+    background: color-mix(in srgb, var(--pe7-heat) 74%, transparent);
+  }
+
+  .pe7-stage__caption,
+  .pe7-heatbar__status,
+  .pe7-stack-pane__caption,
+  .pe7-rack-pane__caption,
+  .pe7-loop-pane__caption,
+  .pe7-engineer__caption,
+  .pe7-fault__caption,
+  .pe7-stage__plane-note-copy,
+  .pe7-stage__spotlight-copy,
+  .pe7-ledger__boundary,
+  .pe7-ledger__currently,
+  .pe7-ledger__metric-copy,
+  .pe7-ledger__fact,
+  .pe7-stage__handoff-copy,
+  .pe7-heatbar__legend,
+  .pe7-answer__note {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    line-height: 1.55;
+  }
+
+  .pe7-heatbar,
+  .pe7-stack-pane,
+  .pe7-rack-pane,
+  .pe7-loop-pane,
+  .pe7-engineer,
+  .pe7-fault,
+  .pe7-stage__spotlight,
+  .pe7-ledger,
+  .pe7-stage__plane-note,
+  .pe7-stage__handoff {
+    border-radius: 1rem;
+    border: 1px solid color-mix(in srgb, var(--border) 78%, transparent);
+    background: color-mix(in srgb, var(--bg) 78%, transparent);
+    padding: 0.9rem;
+  }
+
+  .pe7-heatbar.is-active,
+  .pe7-engineer.is-active,
+  .pe7-fault.is-active {
+    border-color: color-mix(in srgb, var(--pe7-facility) 44%, var(--border));
+  }
+
+  .pe7-heatbar__header,
+  .pe7-stack-pane__header,
+  .pe7-rack-pane__header,
+  .pe7-loop-pane__header,
+  .pe7-engineer__header,
+  .pe7-fault__header {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.75rem;
+    align-items: flex-start;
+  }
+
+  .pe7-heatbar__title,
+  .pe7-stage__spotlight-title,
+  .pe7-stage__plane-note-title,
+  .pe7-stage__handoff-copy {
+    margin: 0;
+    font-family: var(--font-editorial);
+    font-size: 1.15rem;
+    line-height: 1.2;
+  }
+
+  .pe7-heatbar__bar {
+    display: flex;
+    height: 0.95rem;
+    overflow: hidden;
+    border-radius: 999px;
+    border: 1px solid color-mix(in srgb, var(--border) 82%, transparent);
+    background: color-mix(in srgb, var(--bg-subtle) 60%, transparent);
+  }
+
+  .pe7-heatbar__segment {
+    display: block;
+    height: 100%;
+  }
+
+  .pe7-heatbar__segment--liquid {
+    background: color-mix(in srgb, var(--pe7-coolant) 58%, transparent);
+  }
+
+  .pe7-heatbar__segment--air {
+    background: color-mix(in srgb, var(--pe7-air) 62%, transparent);
+  }
+
+  .pe7-heatbar__segment--facility {
+    background: color-mix(in srgb, var(--pe7-facility) 56%, transparent);
+  }
+
+  .pe7-heatbar__legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem 1rem;
+  }
+
+  .pe7-stage__legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem 1rem;
+  }
+
+  .pe7-stage__legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+  }
+
+  .pe7-stage__legend-swatch {
+    width: 0.9rem;
+    height: 0.9rem;
+    border-radius: 0.28rem;
+    border: 1px solid transparent;
+  }
+
+  .pe7-stage__legend-swatch--heat {
+    background: color-mix(in srgb, var(--pe7-heat) 20%, transparent);
+    border-color: color-mix(in srgb, var(--pe7-heat) 58%, transparent);
+  }
+
+  .pe7-stage__legend-swatch--coolant {
+    background: color-mix(in srgb, var(--pe7-coolant) 22%, transparent);
+    border-color: color-mix(in srgb, var(--pe7-coolant) 58%, transparent);
+  }
+
+  .pe7-stage__legend-swatch--air {
+    background: color-mix(in srgb, var(--pe7-air) 20%, transparent);
+    border-color: color-mix(in srgb, var(--pe7-air) 58%, transparent);
+  }
+
+  .pe7-stage__legend-swatch--facility {
+    background: color-mix(in srgb, var(--pe7-facility) 20%, transparent);
+    border-color: color-mix(in srgb, var(--pe7-facility) 58%, transparent);
+  }
+
+  .pe7-stage__controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    align-items: center;
+  }
+
+  .pe7-stage__toggle-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.55rem;
+  }
+
+  .pe7-stage__toggle,
+  .pe7-stage__follow {
+    border: 1px solid color-mix(in srgb, var(--border) 82%, transparent);
+    background: color-mix(in srgb, var(--bg-subtle) 68%, transparent);
+    color: var(--text);
+    padding: 0.52rem 0.8rem;
+    border-radius: 999px;
+    font: inherit;
+    cursor: pointer;
+    transition: border-color 180ms ease, transform 180ms ease;
+  }
+
+  .pe7-stage__toggle.is-active {
+    border-color: color-mix(in srgb, var(--pe7-coolant) 58%, var(--border));
+    transform: translateY(-1px);
+  }
+
+  .pe7-stage__hardware {
+    display: grid;
+    grid-template-columns: minmax(0, 1.45fr) minmax(19rem, 1fr);
+    gap: 1rem;
+    align-items: start;
+  }
+
+  .pe7-stage__main,
+  .pe7-stage__side {
+    display: grid;
+    gap: 1rem;
+  }
+
+  .pe7-stack,
+  .pe7-rack,
+  .pe7-loop,
+  .pe7-fault__panel {
+    position: relative;
+    border-radius: 1rem;
+    overflow: hidden;
+    border: 1px solid color-mix(in srgb, var(--border) 82%, transparent);
+    background:
+      radial-gradient(circle at 50% 50%, color-mix(in srgb, var(--pe7-coolant) 5%, var(--bg-subtle)) 0%, var(--bg-subtle) 70%),
+      linear-gradient(180deg, color-mix(in srgb, var(--bg-subtle) 88%, transparent), color-mix(in srgb, var(--bg) 88%, transparent));
+  }
+
+  .pe7-stack {
+    aspect-ratio: 420 / 340;
+  }
+
+  .pe7-rack {
+    aspect-ratio: 1000 / 340;
+  }
+
+  .pe7-loop {
+    aspect-ratio: 1000 / 320;
+  }
+
+  .pe7-stack__svg,
+  .pe7-rack__svg,
+  .pe7-loop__svg,
+  .pe7-fault__svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+
+  .pe7-stack__ghost {
+    position: absolute;
+    border-radius: 0.55rem;
+    border: 1px solid color-mix(in srgb, var(--pe7-ghost) 34%, var(--border));
+    background: color-mix(in srgb, var(--pe7-ghost) 8%, transparent);
+    opacity: 0.7;
+  }
+
+  .pe7-stack__board,
+  .pe7-stack__attach,
+  .pe7-stack__substrate,
+  .pe7-stack__lid,
+  .pe7-stack__tim,
+  .pe7-stack__coldplate-base,
+  .pe7-stack__coldplate-cover,
+  .pe7-stack__fin-base,
+  .pe7-stack__fin,
+  .pe7-stack__channel,
+  .pe7-stack__microchannel,
+  .pe7-stack__connector,
+  .pe7-stack__die,
+  .pe7-stack__hbm,
+  .pe7-stack__heat-path,
+  .pe7-stack__coolant-path,
+  .pe7-stack__airflow,
+  .pe7-rack__tray,
+  .pe7-rack__compute-zone,
+  .pe7-rack__support-zone,
+  .pe7-rack__fan-zone,
+  .pe7-rack__qd-zone,
+  .pe7-rack__rear-frame,
+  .pe7-rack__manifold,
+  .pe7-rack__busbar,
+  .pe7-rack__cable,
+  .pe7-rack__power-zone,
+  .pe7-rack__coolant,
+  .pe7-rack__air,
+  .pe7-rack__ghost-zone,
+  .pe7-loop__tcs,
+  .pe7-loop__cdu,
+  .pe7-loop__fws,
+  .pe7-loop__plant,
+  .pe7-loop__path,
+  .pe7-fault__branch,
+  .pe7-fault__sensor {
+    transition: opacity 220ms ease, fill 220ms ease, stroke 220ms ease;
+  }
+
+  .pe7-stack__board {
+    fill: color-mix(in srgb, var(--bg) 86%, transparent);
+    stroke: color-mix(in srgb, var(--pe7-ghost) 30%, transparent);
+    stroke-width: 2;
+  }
+
+  .pe7-stack__attach,
+  .pe7-stack__substrate,
+  .pe7-stack__lid,
+  .pe7-stack__coldplate-base,
+  .pe7-stack__coldplate-cover,
+  .pe7-stack__fin-base,
+  .pe7-stack__fin {
+    fill: color-mix(in srgb, var(--bg-subtle) 64%, transparent);
+    stroke: color-mix(in srgb, var(--pe7-ghost) 36%, transparent);
+    stroke-width: 1.6;
+  }
+
+  .pe7-stack__tim {
+    fill: color-mix(in srgb, var(--pe7-heat) 18%, transparent);
+    stroke: color-mix(in srgb, var(--pe7-heat) 34%, transparent);
+    stroke-width: 1.2;
+  }
+
+  .pe7-stack__die,
+  .pe7-stack__hbm {
+    fill: color-mix(in srgb, var(--pe7-heat) 18%, transparent);
+    stroke: color-mix(in srgb, var(--pe7-heat) 48%, transparent);
+    stroke-width: 1.4;
+  }
+
+  .pe7-stack__channel,
+  .pe7-stack__microchannel,
+  .pe7-stack__connector {
+    fill: color-mix(in srgb, var(--pe7-coolant) 18%, transparent);
+    stroke: color-mix(in srgb, var(--pe7-coolant) 54%, transparent);
+    stroke-width: 1.4;
+    opacity: 0.12;
+  }
+
+  .pe7-stack__channel.is-visible,
+  .pe7-stack__microchannel,
+  .pe7-stack__connector {
+    opacity: 1;
+  }
+
+  .pe7-stack__heat-path,
+  .pe7-stack__coolant-path,
+  .pe7-stack__airflow,
+  .pe7-rack__coolant,
+  .pe7-rack__air,
+  .pe7-loop__path,
+  .pe7-fault__branch {
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    opacity: 0.16;
+  }
+
+  .pe7-stack__heat-path {
+    stroke: color-mix(in srgb, var(--pe7-heat) 72%, transparent);
+    stroke-width: 10;
+  }
+
+  .pe7-stack__coolant-path,
+  .pe7-rack__coolant,
+  .pe7-loop__path--tcs {
+    stroke: color-mix(in srgb, var(--pe7-coolant) 76%, transparent);
+    stroke-width: 8;
+  }
+
+  .pe7-stack__airflow,
+  .pe7-rack__air {
+    stroke: color-mix(in srgb, var(--pe7-air) 78%, transparent);
+    stroke-width: 8;
+  }
+
+  .pe7-loop__path--fws {
+    stroke: color-mix(in srgb, var(--pe7-facility) 72%, transparent);
+    stroke-width: 8;
+  }
+
+  .pe7-stack__heat-path.is-visible,
+  .pe7-stack__coolant-path.is-visible,
+  .pe7-stack__airflow.is-visible,
+  .pe7-rack__coolant.is-visible,
+  .pe7-rack__air.is-visible,
+  .pe7-loop__path.is-visible {
+    opacity: 1;
+  }
+
+  .pe7-rack__tray,
+  .pe7-rack__rear-frame {
+    fill: color-mix(in srgb, var(--bg) 86%, transparent);
+    stroke: color-mix(in srgb, var(--pe7-ghost) 34%, transparent);
+    stroke-width: 2;
+  }
+
+  .pe7-rack__compute-zone {
+    fill: color-mix(in srgb, var(--pe7-heat) 14%, transparent);
+    stroke: color-mix(in srgb, var(--pe7-heat) 44%, transparent);
+    stroke-width: 1.6;
+  }
+
+  .pe7-rack__support-zone,
+  .pe7-rack__fan-zone,
+  .pe7-rack__power-zone {
+    fill: color-mix(in srgb, var(--pe7-air) 10%, transparent);
+    stroke: color-mix(in srgb, var(--pe7-air) 34%, transparent);
+    stroke-width: 1.6;
+  }
+
+  .pe7-rack__qd-zone,
+  .pe7-rack__manifold,
+  .pe7-rack__busbar,
+  .pe7-rack__cable {
+    fill: color-mix(in srgb, var(--pe7-coolant) 10%, transparent);
+    stroke: color-mix(in srgb, var(--pe7-coolant) 34%, transparent);
+    stroke-width: 1.6;
+    opacity: 0.78;
+  }
+
+  .pe7-rack__manifold.is-visible {
+    opacity: 1;
+  }
+
+  .pe7-rack__busbar {
+    fill: color-mix(in srgb, var(--pe7-ghost) 10%, transparent);
+    stroke: color-mix(in srgb, var(--pe7-ghost) 34%, transparent);
+  }
+
+  .pe7-rack__ghost-zone {
+    fill: none;
+    stroke: color-mix(in srgb, var(--pe7-ghost) 14%, transparent);
+    stroke-dasharray: 5 7;
+    stroke-width: 1.2;
+  }
+
+  .pe7-loop__tcs,
+  .pe7-loop__cdu,
+  .pe7-loop__fws,
+  .pe7-loop__plant {
+    fill: color-mix(in srgb, var(--bg) 86%, transparent);
+    stroke-width: 1.8;
+  }
+
+  .pe7-loop__tcs {
+    stroke: color-mix(in srgb, var(--pe7-coolant) 34%, transparent);
+  }
+
+  .pe7-loop__cdu {
+    stroke: color-mix(in srgb, var(--pe7-facility) 34%, transparent);
+    opacity: 0.18;
+  }
+
+  .pe7-loop__cdu.is-visible,
+  .pe7-loop__fws.is-visible {
+    opacity: 1;
+  }
+
+  .pe7-loop__fws {
+    stroke: color-mix(in srgb, var(--pe7-facility) 34%, transparent);
+    opacity: 0.18;
+  }
+
+  .pe7-loop__plant {
+    stroke: color-mix(in srgb, var(--pe7-ghost) 34%, transparent);
+  }
+
+  .pe7-loop__shares {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.7rem;
+    margin-top: 0.8rem;
+  }
+
+  .pe7-loop__share,
+  .pe7-engineer__metric,
+  .pe7-fault__item {
+    display: grid;
+    gap: 0.2rem;
+    padding: 0.65rem 0.7rem;
+    border-radius: 0.85rem;
+    border: 1px solid color-mix(in srgb, var(--border) 82%, transparent);
+    background: color-mix(in srgb, var(--bg-subtle) 62%, transparent);
+  }
+
+  .pe7-loop__share span,
+  .pe7-engineer__metric span,
+  .pe7-fault__item span {
+    font-size: 0.72rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--dim);
+  }
+
+  .pe7-loop__share strong,
+  .pe7-engineer__metric strong,
+  .pe7-fault__item strong {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .pe7-engineer__metrics {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.65rem;
+  }
+
+  .pe7-engineer__meter {
+    height: 0.7rem;
+    border-radius: 999px;
+    overflow: hidden;
+    border: 1px solid color-mix(in srgb, var(--border) 82%, transparent);
+    background: color-mix(in srgb, var(--bg-subtle) 52%, transparent);
+  }
+
+  .pe7-engineer__meter span {
+    display: block;
+    height: 100%;
+    background: linear-gradient(90deg, color-mix(in srgb, var(--pe7-coolant) 58%, transparent), color-mix(in srgb, var(--pe7-facility) 46%, transparent));
+  }
+
+  .pe7-engineer__metric small {
+    font-size: 0.72rem;
+    color: var(--dim);
+  }
+
+  .pe7-engineer__formula {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.75rem;
+    align-items: center;
+    padding: 0.8rem;
+    border-radius: 0.9rem;
+    border: 1px solid color-mix(in srgb, var(--pe7-facility) 22%, var(--border));
+    background: color-mix(in srgb, var(--pe7-facility) 8%, transparent);
+  }
+
+  .pe7-engineer__formula span {
+    font-size: 0.74rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--dim);
+  }
+
+  .pe7-engineer__formula strong {
+    font-family: var(--font-editorial);
+    font-size: 1rem;
+  }
+
+  .pe7-fault__panel {
+    display: grid;
+    gap: 0.8rem;
+    padding: 0.8rem;
+  }
+
+  .pe7-fault__svg {
+    aspect-ratio: 1000 / 160;
+  }
+
+  .pe7-fault__branch {
+    stroke: color-mix(in srgb, var(--pe7-coolant) 68%, transparent);
+    stroke-width: 8;
+    opacity: 0.7;
+  }
+
+  .pe7-fault__sensor {
+    fill: color-mix(in srgb, var(--pe7-heat) 10%, transparent);
+    stroke: color-mix(in srgb, var(--pe7-heat) 32%, transparent);
+    stroke-width: 2;
+  }
+
+  .pe7-fault__sensor.is-live,
+  .pe7-fault__item.is-live {
+    border-color: color-mix(in srgb, var(--pe7-heat) 44%, var(--border));
+  }
+
+  .pe7-fault__sensor.is-live {
+    fill: color-mix(in srgb, var(--pe7-heat) 18%, transparent);
+    stroke: color-mix(in srgb, var(--pe7-heat) 56%, transparent);
+  }
+
+  .pe7-fault__list {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.6rem;
+  }
+
+  .pe7-zone {
+    position: absolute;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+  }
+
+  .pe7-zone.is-active {
+    outline: 1px dashed color-mix(in srgb, var(--pe7-coolant) 48%, transparent);
+    outline-offset: 0.24rem;
+    border-radius: 1rem;
+  }
+
+  .pe7-zone:focus-visible {
+    outline: 2px solid color-mix(in srgb, var(--pe7-coolant) 58%, var(--border));
+    outline-offset: 0.24rem;
+    border-radius: 1rem;
+  }
+
+  .pe7-zone--stack { left: 19%; right: 19%; top: 32%; height: 38%; }
+  .pe7-zone--coldplate { left: 14%; right: 14%; top: 60%; height: 27%; }
+  .pe7-zone--plumbing { left: 3%; top: 10%; width: 49%; height: 38%; }
+  .pe7-zone--air { left: 24%; top: 14%; width: 28%; height: 56%; }
+  .pe7-zone--manifold { left: 69%; top: 7%; width: 20%; height: 73%; }
+  .pe7-zone--support { left: 67%; top: 72%; width: 22%; height: 20%; }
+  .pe7-zone--cdu { left: 84%; top: 27%; width: 10%; height: 29%; }
+  .pe7-zone--facility { left: 84%; top: 56%; width: 14%; height: 36%; }
+
+  .pe7-stage__spotlight-title {
+    font-family: var(--font-editorial);
+    font-size: 1.12rem;
+    line-height: 1.18;
+  }
+
+  .pe7-ledger__currently {
+    margin-top: 0.2rem;
+  }
+
+  .pe7-ledger__metrics {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.65rem;
+    margin-top: 0.7rem;
+  }
+
+  .pe7-ledger__metric {
+    display: grid;
+    gap: 0.18rem;
+  }
+
+  .pe7-ledger__metric-label {
+    font-size: 0.7rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--dim);
+  }
+
+  .pe7-ledger__metric-value {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .pe7-ledger__fact {
+    margin-top: 0.7rem;
+  }
+
+  .pe7-sr {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  @media (max-width: 1120px) {
+    .pe7-layout {
+      grid-template-columns: 1fr;
+    }
+
+    .pe7-steps {
+      order: 2;
+    }
+
+    .pe7-sticky {
+      position: static;
+      order: 1;
+    }
+
+    .pe7-step {
+      min-height: auto;
+      padding-right: 0;
+    }
+  }
+
+  @media (max-width: 980px) {
+    .pe7-stage__hardware,
+    .pe7-engineer__metrics,
+    .pe7-fault__list,
+    .pe7-loop__shares {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 720px) {
+    .pe7-stage {
+      padding: 0.9rem;
+    }
+
+    .pe7-stage__topline,
+    .pe7-stage__controls,
+    .pe7-heatbar__header,
+    .pe7-stack-pane__header,
+    .pe7-rack-pane__header,
+    .pe7-loop-pane__header,
+    .pe7-engineer__header,
+    .pe7-fault__header {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .pe7-ledger__metrics {
+      grid-template-columns: 1fr;
+    }
+  }
+
   @media (prefers-reduced-motion: reduce) {
     .pe-step,
     .pe-stage__connector,
@@ -6214,7 +7056,49 @@ import { PromptEnergyStory } from '@/components/prompt-energy/PromptEnergyStory'
     .pe6-scheduler__execution span,
     .pe6-spec__track span,
     .pe6-spec__window,
-    .pe6-medusa__branch-track span {
+    .pe6-medusa__branch-track span,
+    .pe7-step,
+    .pe7-stage__progress-dot,
+    .pe7-stage__toggle,
+    .pe7-stage__follow,
+    .pe7-stack__board,
+    .pe7-stack__attach,
+    .pe7-stack__substrate,
+    .pe7-stack__lid,
+    .pe7-stack__tim,
+    .pe7-stack__coldplate-base,
+    .pe7-stack__coldplate-cover,
+    .pe7-stack__fin-base,
+    .pe7-stack__fin,
+    .pe7-stack__channel,
+    .pe7-stack__microchannel,
+    .pe7-stack__connector,
+    .pe7-stack__die,
+    .pe7-stack__hbm,
+    .pe7-stack__heat-path,
+    .pe7-stack__coolant-path,
+    .pe7-stack__airflow,
+    .pe7-rack__tray,
+    .pe7-rack__compute-zone,
+    .pe7-rack__support-zone,
+    .pe7-rack__fan-zone,
+    .pe7-rack__qd-zone,
+    .pe7-rack__rear-frame,
+    .pe7-rack__manifold,
+    .pe7-rack__busbar,
+    .pe7-rack__cable,
+    .pe7-rack__power-zone,
+    .pe7-rack__coolant,
+    .pe7-rack__air,
+    .pe7-rack__ghost-zone,
+    .pe7-loop__tcs,
+    .pe7-loop__cdu,
+    .pe7-loop__fws,
+    .pe7-loop__plant,
+    .pe7-loop__path,
+    .pe7-fault__branch,
+    .pe7-fault__sensor,
+    .pe7-engineer__meter span {
       transition: none !important;
       animation: none !important;
     }
