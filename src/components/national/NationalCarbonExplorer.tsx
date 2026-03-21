@@ -288,6 +288,21 @@ function formatPercent(valueMmt: number): string {
   return `${Math.round((valueMmt / GROSS_TOTAL_MMT) * 100)}%`;
 }
 
+function CheckDot({ checked, color }: { checked: boolean; color: string }) {
+  return (
+    <span
+      className="ncfx-checkdot"
+      style={{
+        borderColor: checked ? color : 'var(--ncfx-divider)',
+        background: checked ? color : 'transparent',
+      }}
+      aria-hidden="true"
+    >
+      {checked ? '\u2713' : ''}
+    </span>
+  );
+}
+
 export function NationalCarbonExplorer() {
   const defaultPreset = PRESETS[0];
   const [mode, setMode] = useState<Mode>('total');
@@ -603,11 +618,7 @@ export function NationalCarbonExplorer() {
                               checked={checked}
                               onChange={() => toggleCut(option.key)}
                             />
-                            <span className="ncfx-cut-check" aria-hidden="true">
-                              <svg viewBox="0 0 10 10">
-                                <polyline points="1.5,5.5 4,8 8.5,2" />
-                              </svg>
-                            </span>
+                            <CheckDot checked={checked} color={group.color} />
                             <span className="ncfx-cut-body">
                               <span className="ncfx-cut-top">
                                 <span className="ncfx-cut-name">{option.label}</span>
