@@ -28,6 +28,8 @@ const DAILY_GROSS_MMT = GROSS_TOTAL_MMT / 365;
 const PER_CAPITA_TOTAL_TONNES = GROSS_TOTAL_MMT * 1e6 / POPULATION_2022;
 const DAILY_PER_CAPITA_KG = GROSS_TOTAL_MMT * 1e9 / POPULATION_2022 / 365;
 const NET_SINK_OFFSET_MMT = GROSS_TOTAL_MMT - NET_TOTAL_MMT;
+const PARIS_2005_NET_MMT = +(NET_TOTAL_MMT / 0.83).toFixed(1);
+const PARIS_2030_TARGET_MID_MMT = +(PARIS_2005_NET_MMT * 0.49).toFixed(1);
 
 const MODE_COPY = {
   total: {
@@ -387,6 +389,23 @@ export function NationalCarbonExplorer() {
     },
   ];
 
+  const goalGuides = [
+    {
+      key: '2050',
+      label: '2050 goal',
+      subline: 'Net-zero',
+      pct: 0,
+      align: 'start',
+    },
+    {
+      key: '2030',
+      label: '2030 goal',
+      subline: formatCompact(PARIS_2030_TARGET_MID_MMT, mode),
+      pct: +(PARIS_2030_TARGET_MID_MMT / GROSS_TOTAL_MMT * 100).toFixed(1),
+      align: 'center',
+    },
+  ] as const;
+
   function applyPreset(id: PresetId) {
     const preset = PRESETS.find((entry) => entry.id === id);
     if (!preset) return;
@@ -625,36 +644,52 @@ export function NationalCarbonExplorer() {
               <span style={{ left: '100%' }}>100%</span>
             </div>
 
-            {scenarioRows.map((row) => (
-              <div key={row.key} className="ncfx-result-row">
-                <div className="ncfx-result-head">
-                  <div className="ncfx-result-copy">
-                    <span className="ncfx-result-name">{row.label}</span>
-                    <span className="ncfx-result-detail">{row.detail}</span>
-                  </div>
-                  <div className="ncfx-result-metrics">
-                    <span className="ncfx-result-value">{formatScenarioValue(row.remaining, mode)}</span>
-                    <span className="ncfx-result-saved">
-                      {row.saved > 0 ? `Cut: ${formatCompact(row.saved, mode)}` : 'Reference line'}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="ncfx-result-track">
+            <div className="ncfx-results-chart">
+              <div className="ncfx-goal-guides" aria-hidden="true">
+                {goalGuides.map((guide) => (
                   <div
-                    className={`ncfx-result-remaining ncfx-result-remaining--${row.key}`}
-                    style={{ width: `${Math.max((row.remaining / GROSS_TOTAL_MMT) * 100, 0)}%` }}
-                  />
-                  <div
-                    className={`ncfx-result-saved-fill ncfx-result-saved-fill--${row.savedColorClass}`}
-                    style={{ width: `${Math.max((row.saved / GROSS_TOTAL_MMT) * 100, 0)}%` }}
-                  />
-                </div>
+                    key={guide.key}
+                    className={`ncfx-goal-guide ncfx-goal-guide--${guide.align}`}
+                    style={{ left: `${guide.pct}%` }}
+                  >
+                    <span className="ncfx-goal-label">{guide.label}</span>
+                    <span className="ncfx-goal-subline">{guide.subline}</span>
+                    <span className="ncfx-goal-line" />
+                  </div>
+                ))}
               </div>
-            ))}
+
+              {scenarioRows.map((row) => (
+                <div key={row.key} className="ncfx-result-row">
+                  <div className="ncfx-result-head">
+                    <div className="ncfx-result-copy">
+                      <span className="ncfx-result-name">{row.label}</span>
+                      <span className="ncfx-result-detail">{row.detail}</span>
+                    </div>
+                    <div className="ncfx-result-metrics">
+                      <span className="ncfx-result-value">{formatScenarioValue(row.remaining, mode)}</span>
+                      <span className="ncfx-result-saved">
+                        {row.saved > 0 ? `Cut: ${formatCompact(row.saved, mode)}` : 'Reference line'}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="ncfx-result-track">
+                    <div
+                      className={`ncfx-result-remaining ncfx-result-remaining--${row.key}`}
+                      style={{ width: `${Math.max((row.remaining / GROSS_TOTAL_MMT) * 100, 0)}%` }}
+                    />
+                    <div
+                      className={`ncfx-result-saved-fill ncfx-result-saved-fill--${row.savedColorClass}`}
+                      style={{ width: `${Math.max((row.saved / GROSS_TOTAL_MMT) * 100, 0)}%` }}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
 
             <div className="ncfx-results-note">
-              The bars always use the current national total as the ruler, so switching modes changes the labels without changing the geometry.
+              The bars always use the current national total as the ruler, so switching modes changes the labels without changing the geometry. The 2030 dotted guide is plotted at the midpoint of the official U.S. target range of 50-52% below 2005 net emissions; the 2050 guide is net-zero.
             </div>
           </div>
         </div>

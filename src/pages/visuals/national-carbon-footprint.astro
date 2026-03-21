@@ -694,6 +694,68 @@ import { NationalCarbonExplorer } from '@/components/national/NationalCarbonExpl
     color: var(--ncfx-text-2);
   }
 
+  .ncfx-results-chart {
+    position: relative;
+    padding-top: 1.2rem;
+  }
+
+  .ncfx-goal-guides {
+    position: absolute;
+    inset: 0 0 0 0;
+    pointer-events: none;
+  }
+
+  .ncfx-goal-guide {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 0;
+    transform: translateX(-50%);
+  }
+
+  .ncfx-goal-guide--start {
+    transform: none;
+  }
+
+  .ncfx-goal-line {
+    position: absolute;
+    top: 0.95rem;
+    bottom: 0;
+    left: 0;
+    border-left: 1px dotted color-mix(in srgb, var(--ncfx-text-2) 72%, transparent);
+  }
+
+  .ncfx-goal-label,
+  .ncfx-goal-subline {
+    position: absolute;
+    left: 0;
+    white-space: nowrap;
+    transform: translateX(-50%);
+    line-height: 1.2;
+  }
+
+  .ncfx-goal-label {
+    top: 0;
+    font-size: 0.52rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ncfx-text-2);
+  }
+
+  .ncfx-goal-subline {
+    top: 0.5rem;
+    font-size: 0.5rem;
+    color: var(--ncfx-text-2);
+    opacity: 0.9;
+  }
+
+  .ncfx-goal-guide--start .ncfx-goal-label,
+  .ncfx-goal-guide--start .ncfx-goal-subline {
+    transform: none;
+    text-align: left;
+  }
+
   .ncfx-scale-labels {
     position: relative;
     height: 14px;
@@ -934,6 +996,10 @@ import { NationalCarbonExplorer } from '@/components/national/NationalCarbonExpl
       margin-left: 0;
     }
 
+    .ncfx-results-chart {
+      padding-top: 1rem;
+    }
+
     .ncfx-stat-grid {
       grid-template-columns: 1fr;
     }
@@ -959,6 +1025,14 @@ import { NationalCarbonExplorer } from '@/components/national/NationalCarbonExpl
   @media (max-width: 480px) {
     .ncfx {
       width: calc(100vw - 16px);
+    }
+
+    .ncfx-goal-subline {
+      display: none;
+    }
+
+    .ncfx-goal-line {
+      top: 0.72rem;
     }
 
     .ncfx-construction {
