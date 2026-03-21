@@ -232,8 +232,6 @@ const sectors = [
   sharePct: +(sector.totalMmt / GROSS_TOTAL_MMT * 100).toFixed(1),
 }));
 
-const biggestSector = sectors.reduce((largest, sector) => sector.totalMmt > largest.totalMmt ? sector : largest, sectors[0]);
-
 const cutMaxByCategory = CUT_OPTION_SEED.reduce((acc, option) => {
   acc[option.cat] = Math.max(acc[option.cat] ?? 0, option.totalMmt);
   return acc;
@@ -446,23 +444,17 @@ export function NationalCarbonExplorer() {
         <div className="ncfx-kicker">United States, 2022</div>
         <h1 className="ncfx-title">The national carbon footprint</h1>
         <p className="ncfx-intro">
-          This is the country-scale sibling of the personal carbon footprint calculator: one shared workspace for the national baseline, the lifestyle changes people can make directly, and the systemic changes that can move whole sectors at once.
+          One-screen explorer of the national baseline, the lifestyle cuts people can make directly, and the systemic changes that move entire sectors at once.
         </p>
       </header>
 
-      <section className="ncfx-workspace" aria-labelledby="ncfx-workspace-title">
-        <div className="ncfx-section-label">Interactive workspace</div>
-        <h2 className="ncfx-section-title" id="ncfx-workspace-title">Edit the baseline, then compare the two kinds of change</h2>
-        <p className="ncfx-section-desc">
-          Pick a starter path or toggle cards in either column. The shared bars below stay anchored to the current national footprint, so you can see immediately whether the weight is coming from lifestyle change, systemic change, or both.
-        </p>
-
+      <section className="ncfx-workspace" aria-label="National carbon footprint explorer">
         <div className="ncfx-impact-layout">
           <div className="ncfx-panels">
             <section className="ncfx-col ncfx-col--summary">
               <div className="ncfx-col-head">
                 National baseline
-                <div className="ncfx-col-sub">The frame that everything else is being compared against</div>
+                <div className="ncfx-col-sub">The full-country footprint and where it comes from</div>
               </div>
 
               <div className="ncfx-summary-total">
@@ -492,15 +484,6 @@ export function NationalCarbonExplorer() {
                 >
                   Per person
                 </button>
-              </div>
-
-              <div className="ncfx-howto">
-                <div className="ncfx-mini-label">How to use it</div>
-                <ol className="ncfx-howto-list">
-                  <li>Choose a scale: total U.S. or per person.</li>
-                  <li>Start with a preset or check cards in either bucket.</li>
-                  <li>Use the shared bars below to compare what each kind of change does.</li>
-                </ol>
               </div>
 
               <div className="ncfx-presets">
@@ -534,9 +517,32 @@ export function NationalCarbonExplorer() {
                 ))}
               </div>
 
-              <div className="ncfx-chip-row">
-                <span className="ncfx-chip"><strong>{biggestSector.sharePct}%</strong> of the baseline comes from transport</span>
-                <span className="ncfx-chip"><strong>{formatMmt(NET_SINK_OFFSET_MMT, 1)} MMT</strong> are absorbed by land sinks</span>
+              <div className="ncfx-sector-summary">
+                <div className="ncfx-mini-label">Where it comes from</div>
+                <div className="ncfx-sector-list">
+                  {sectors.map((sector) => (
+                    <div key={sector.key} className="ncfx-sector-row">
+                      <div className="ncfx-sector-top">
+                        <span className="ncfx-sector-name">
+                          {sector.label}
+                          {sector.inferred ? <span className="ncfx-badge">share-based</span> : null}
+                        </span>
+                        <span className="ncfx-sector-meta">
+                          {sector.sharePct.toFixed(1)}% · {formatCompact(sector.totalMmt, mode)}
+                        </span>
+                      </div>
+                      <span className="ncfx-sector-track">
+                        <span
+                          className="ncfx-sector-fill"
+                          style={{ width: `${sector.sharePct}%`, background: sector.color }}
+                        />
+                      </span>
+                    </div>
+                  ))}
+                </div>
+                <div className="ncfx-sector-note">
+                  Land sinks absorb about {formatMmt(NET_SINK_OFFSET_MMT, 1)} MMT, so net emissions are lower than the gross baseline shown here.
+                </div>
               </div>
             </section>
 
@@ -567,7 +573,12 @@ export function NationalCarbonExplorer() {
                         const checked = selectedKeys.has(option.key);
 
                         return (
-                          <label key={option.key} className={`ncfx-cut-item ${checked ? 'checked' : ''}`} data-cut-cat={option.cat}>
+                          <label
+                            key={option.key}
+                            className={`ncfx-cut-item ${checked ? 'checked' : ''}`}
+                            data-cut-cat={option.cat}
+                            title={option.detail}
+                          >
                             <input
                               type="checkbox"
                               checked={checked}
@@ -583,7 +594,6 @@ export function NationalCarbonExplorer() {
                                 <span className="ncfx-cut-name">{option.label}</span>
                                 <span className="ncfx-cut-value">{formatScenarioValue(option.totalMmt, mode)}</span>
                               </span>
-                              <span className="ncfx-cut-detail">{option.detail}</span>
                               <span className="ncfx-cut-meta">
                                 <span className="ncfx-cut-meta-label">{formatPercent(option.totalMmt)} of the current national total</span>
                                 <span className="ncfx-cut-meter">
@@ -644,77 +654,10 @@ export function NationalCarbonExplorer() {
             ))}
 
             <div className="ncfx-results-note">
-              The bars always use the current national total as the ruler. That keeps the geometry stable while you switch between total-U.S. and per-person readouts.
+              The bars always use the current national total as the ruler, so switching modes changes the labels without changing the geometry.
             </div>
           </div>
         </div>
-      </section>
-
-      <section className="ncfx-secondary" aria-labelledby="ncfx-breakdown-title">
-        <div className="ncfx-section-label">Where the emissions come from</div>
-        <h2 className="ncfx-section-title" id="ncfx-breakdown-title">The baseline you’re editing</h2>
-        <p className="ncfx-section-desc">
-          The national cut explorer works best when the baseline is visible underneath it. This section keeps the whole-country emissions picture on screen, but moves it below the main workspace so it supports the interaction instead of competing with it.
-        </p>
-
-        <div className="ncfx-breakdown-card">
-          <div className="ncfx-scale-labels">
-            <span style={{ left: 0 }}>0</span>
-            <span style={{ left: '25%' }}>25%</span>
-            <span style={{ left: '50%' }}>50%</span>
-            <span style={{ left: '75%' }}>75%</span>
-            <span style={{ left: '100%' }}>100%</span>
-          </div>
-
-          <div className="ncfx-result-row ncfx-result-row--baseline">
-            <div className="ncfx-result-head">
-              <div className="ncfx-result-copy">
-                <span className="ncfx-result-name">Total U.S. footprint</span>
-                <span className="ncfx-result-detail">Gross emissions before land sinks are subtracted</span>
-              </div>
-              <div className="ncfx-result-metrics">
-                <span className="ncfx-result-value">{formatScenarioValue(GROSS_TOTAL_MMT, mode)}</span>
-                <span className="ncfx-result-saved">100% of national total</span>
-              </div>
-            </div>
-
-            <div className="ncfx-result-track">
-              <div className="ncfx-result-remaining ncfx-result-remaining--current" style={{ width: '100%' }} />
-            </div>
-          </div>
-
-          {sectors.map((sector) => (
-            <div key={sector.key} className="ncfx-result-row">
-              <div className="ncfx-result-head">
-                <div className="ncfx-result-copy">
-                  <span className="ncfx-result-name">
-                    {sector.label}
-                    {sector.inferred ? <span className="ncfx-badge">share-based</span> : null}
-                  </span>
-                  <span className="ncfx-result-detail">{sector.detail}</span>
-                </div>
-                <div className="ncfx-result-metrics">
-                  <span className="ncfx-result-value">{formatScenarioValue(sector.totalMmt, mode)}</span>
-                  <span className="ncfx-result-saved">{sector.sharePct.toFixed(1)}% of national total</span>
-                </div>
-              </div>
-
-              <div className="ncfx-result-track">
-                <div
-                  className="ncfx-breakdown-fill"
-                  style={{ width: `${sector.sharePct}%`, background: sector.color }}
-                />
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <section className="ncfx-editorial">
-        <div className="ncfx-section-label">Reading guide</div>
-        <p>
-          The most important design choice on this page is that lifestyle and systemic changes share the same ruler. Household choices matter, but once both kinds of change are shown in one place, it becomes easier to see when system-level moves are simply operating on much larger chunks of the national total.
-        </p>
       </section>
 
       <section className="ncfx-methodology">
