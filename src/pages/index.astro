@@ -9,6 +9,32 @@ const metaSlugs = getMetaPostSlugs();
 const recentPosts = allPosts
   .filter(p => !metaSlugs.includes(p.slug))
   .slice(0, 4);
+const homeStructuredData = [
+  {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    name: 'Andy Masley',
+    url: 'https://andymasley.com/',
+    inLanguage: 'en-US',
+  },
+  {
+    '@context': 'https://schema.org',
+    '@type': 'Person',
+    name: 'Andy Masley',
+    url: 'https://andymasley.com/',
+    image: 'https://andymasley.com/images/headshot.jpg',
+    description: 'Writer and researcher exploring AI, the environment, animal welfare, and effective altruism.',
+    sameAs: [
+      'https://x.com/AndyMasley',
+      'https://bsky.app/profile/andymasley.bsky.social',
+      'https://www.linkedin.com/in/andrew-masley/',
+      'https://www.youtube.com/@andymasley',
+      'https://andymasley.substack.com/',
+      'https://www.goodreads.com/andymasley',
+      'https://letterboxd.com/andymasley/',
+    ],
+  },
+];
 
 function formatDate(date: Date): string {
   const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -17,7 +43,14 @@ function formatDate(date: Date): string {
 }
 ---
 
-<Base title="Andy Masley" ogTitle="Andy Masley" description="Writer and researcher exploring AI, the environment, animal welfare, and effective altruism. Former physics teacher turned full-time writer." ogImage="/images/og/og-default.png">
+<Base
+  title="Andy Masley"
+  ogTitle="Andy Masley"
+  description="Writer and researcher exploring AI, the environment, animal welfare, and effective altruism. Former physics teacher turned full-time writer."
+  ogImage="/images/og/og-default.png"
+  ogImageAlt="Social preview for Andy Masley's website"
+  structuredData={homeStructuredData}
+>
   <div class="home-intro">
     <img
       src="/images/headshot.jpg"

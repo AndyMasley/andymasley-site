@@ -18,13 +18,81 @@
  */
 import Base from '@/layouts/Base.astro';
 import { Calculator } from '@/components/carbon/Calculator';
+
+const pageTitle = 'Carbon Footprint Calculator: Lifestyle Changes vs Changing the Grid';
+const pageDescription = 'Estimate your personal carbon footprint from a credible baseline, compare diet, driving, flights, EVs, and heat pumps, and see how lifestyle changes compare with cleaning up the grid.';
+const pageUrl = 'https://andymasley.com/visuals/carbon-footprint';
+const ogImage = 'https://andymasley.com/images/og/og-carbon-footprint.png';
+const structuredData = [
+  {
+    '@context': 'https://schema.org',
+    '@type': 'WebPage',
+    name: pageTitle,
+    description: pageDescription,
+    url: pageUrl,
+    inLanguage: 'en-US',
+    primaryImageOfPage: {
+      '@type': 'ImageObject',
+      url: ogImage,
+      width: 1200,
+      height: 630,
+    },
+    isPartOf: {
+      '@type': 'WebSite',
+      name: 'Andy Masley',
+      url: 'https://andymasley.com',
+    },
+    author: {
+      '@type': 'Person',
+      name: 'Andy Masley',
+      url: 'https://andymasley.com/',
+    },
+    about: [
+      { '@type': 'Thing', name: 'Carbon footprint' },
+      { '@type': 'Thing', name: 'Climate change' },
+      { '@type': 'Thing', name: 'Electric grid decarbonization' },
+    ],
+  },
+  {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      {
+        '@type': 'ListItem',
+        position: 1,
+        name: 'Home',
+        item: 'https://andymasley.com/',
+      },
+      {
+        '@type': 'ListItem',
+        position: 2,
+        name: 'Visuals',
+        item: 'https://andymasley.com/visuals',
+      },
+      {
+        '@type': 'ListItem',
+        position: 3,
+        name: 'Carbon Footprint Calculator',
+        item: pageUrl,
+      },
+    ],
+  },
+];
 ---
 
-<Base title="Carbon footprint: lifestyle cuts vs changing the grid" description="Estimate your carbon footprint from a credible baseline, then explore what changes you can make to the energy grid" ogImage="/images/og/og-carbon-footprint.png">
+<Base
+  title={pageTitle}
+  description={pageDescription}
+  canonicalUrl={pageUrl}
+  ogTitle="Carbon Footprint Calculator: Lifestyle Changes vs the Grid"
+  ogImage="/images/og/og-carbon-footprint.png"
+  ogImageAlt="Social preview for Andy Masley's carbon footprint calculator comparing personal lifestyle cuts with changing the electric grid"
+  structuredData={structuredData}
+>
   <!-- Hero (outside the breakout container so it aligns with the header) -->
   <header class="cfv2-header">
-    <h1 class="cfv2-header-title">Carbon footprint: lifestyle cuts vs changing the grid</h1>
-    <p class="cfv2-header-intro">This carbon footprint calculator includes changes you can make to the energy grid, because those often dwarf personal lifestyle changes, even after dividing by the number of people involved and multiplying by a low probability of success. Take all numbers with a grain of salt. Methodology at the bottom.</p>
+    <h1 class="cfv2-header-title">Carbon footprint calculator: lifestyle changes vs changing the grid</h1>
+    <p class="cfv2-header-intro">Estimate your personal carbon footprint from a credible baseline, then compare common lifestyle changes with actions that help clean up the electric grid. The goal is not false precision; it is to make the scale of different climate choices easier to see. Methodology is below.</p>
   </header>
 
   <article class="cfv2" id="cfv2">

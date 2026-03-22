@@ -8,6 +8,12 @@ interface Props {
   showReadingProgress?: boolean;
   ogImage?: string;
   ogTitle?: string;
+  ogImageAlt?: string;
+  ogType?: string;
+  canonicalUrl?: string;
+  robots?: string;
+  noindex?: boolean;
+  structuredData?: unknown | unknown[];
   activeNav?: string;
 }
 
@@ -17,11 +23,31 @@ const {
   showReadingProgress = false,
   ogImage,
   ogTitle,
+  ogImageAlt,
+  ogType = 'website',
+  canonicalUrl,
+  robots,
+  noindex = false,
+  structuredData,
   activeNav,
 } = Astro.props;
 const resolvedOgTitle = ogTitle || title;
-const resolvedOgImage = ogImage || "/images/og-default.png";
+const siteOrigin = Astro.site || Astro.url.origin;
 const currentPath = Astro.url.pathname;
+const resolvedOgImagePath = ogImage || "/images/og-default.png";
+const resolvedOgImage = new URL(resolvedOgImagePath, siteOrigin).href;
+const resolvedOgImageAlt = ogImageAlt || resolvedOgTitle;
+const canonicalHref = canonicalUrl
+  ? new URL(canonicalUrl, siteOrigin).href
+  : new URL(currentPath, siteOrigin).href;
+const resolvedRobots = noindex
+  ? 'noindex, follow, max-image-preview:large'
+  : robots || 'index, follow, max-image-preview:large';
+const structuredDataItems = Array.isArray(structuredData)
+  ? structuredData
+  : structuredData
+    ? [structuredData]
+    : [];
 const isHexagonPage = currentPath === '/hexagon' || currentPath === '/hexagon/';
 
 const navLinks = [
@@ -56,15 +82,30 @@ function isActive(href: string): boolean {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content={description}>
+  <meta name="author" content="Andy Masley">
+  <meta name="robots" content={resolvedRobots}>
+  <link rel="canonical" href={canonicalHref}>
   <meta property="og:title" content={resolvedOgTitle}>
   <meta property="og:description" content={description}>
-  <meta property="og:type" content="website">
-  <meta property="og:image" content={new URL(resolvedOgImage, Astro.site || Astro.url.origin).href}>
+  <meta property="og:type" content={ogType}>
+  <meta property="og:site_name" content="Andy Masley">
+  <meta property="og:url" content={canonicalHref}>
+  <meta property="og:image" content={resolvedOgImage}>
+  <meta property="og:image:alt" content={resolvedOgImageAlt}>
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
   <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:site" content="@AndyMasley">
+  <meta name="twitter:creator" content="@AndyMasley">
   <meta name="twitter:title" content={resolvedOgTitle}>
   <meta name="twitter:description" content={description}>
-  <meta name="twitter:image" content={new URL(resolvedOgImage, Astro.site || Astro.url.origin).href}>
+  <meta name="twitter:image" content={resolvedOgImage}>
+  <meta name="twitter:image:alt" content={resolvedOgImageAlt}>
   <title>{title === "Andy Masley" ? title : `${title} — Andy Masley`}</title>
+  <slot name="head" />
+  {structuredDataItems.map((item) => (
+    <script type="application/ld+json" set:html={JSON.stringify(item)} />
+  ))}
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
