@@ -6,6 +6,7 @@ import { PromptEnergySceneFour } from './PromptEnergySceneFour';
 import { PromptEnergySceneFive } from './PromptEnergySceneFive';
 import { PromptEnergySceneSix } from './PromptEnergySceneSix';
 import { PromptEnergySceneSeven } from './PromptEnergySceneSeven';
+import { PromptEnergySceneEight } from './PromptEnergySceneEight';
 import type { BoundaryKey } from './sceneOneData';
 
 export function PromptEnergyStory() {
@@ -20,6 +21,7 @@ export function PromptEnergyStory() {
       <PromptEnergySceneFive boundary={boundary} />
       <PromptEnergySceneSix boundary={boundary} />
       <PromptEnergySceneSeven boundary={boundary} />
+      <PromptEnergySceneEight boundary={boundary} onBoundaryChange={setBoundary} />
     </>
   );
 }
