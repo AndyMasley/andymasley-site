@@ -16,7 +16,7 @@ import { PromptEnergyStory } from '@/components/prompt-energy/PromptEnergyStory'
       </p>
     </header>
 
-    <PromptEnergyStory client:load />
+    <PromptEnergyStory client:idle />
   </article>
 </Base>
 
@@ -52,6 +52,18 @@ import { PromptEnergyStory } from '@/components/prompt-energy/PromptEnergyStory'
     font-size: 1rem;
     line-height: 1.78;
     color: var(--text-secondary);
+  }
+
+  .pe-scene-one__sticky,
+  .pe2-sticky,
+  .pe3-sticky,
+  .pe4-sticky,
+  .pe5-sticky,
+  .pe6-sticky,
+  .pe7-sticky,
+  .pe8-sticky {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 1800px;
   }
 
   .pe-scene-one {
