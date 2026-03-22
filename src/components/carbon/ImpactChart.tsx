@@ -94,6 +94,8 @@ const GREEN_BG = 'rgba(74, 124, 89, 0.08)';
 const ACCENT = 'var(--accent, #8B2E2E)';
 const MUTED = 'var(--text-secondary, #6B6B60)';
 const DIVIDER = 'var(--divider, #DDD9D0)';
+const AI_TRAINING_URL = 'https://www.andymasley.com/writing/whats-the-full-hidden-climate-cost/';
+const AI_PROMPT_ACTION_NAME = 'Stop using AI chatbots';
 
 const LIFESTYLE_PRESETS: { id: string; label: string; baseline: BaselineInputs }[] = [
   { id: 'us-average', label: 'Average', baseline: { state: 'US', householdSize: 2.3, housingType: 'single-family-small', urbanForm: 'suburban', dietType: 'average', carOwnership: 'gas', milesPerYear: 13500, flightsPerYear: 2, transatlanticFlightsPerYear: 0, transpacificFlightsPerYear: 0, domesticFlightsPerYear: 2, monthlySpending: 1800 } },
@@ -468,39 +470,86 @@ export function ImpactChart({
                           onActionParamOverridesChange(newOverrides);
                         };
 
+                        const isAiPromptAction = action.name === AI_PROMPT_ACTION_NAME;
+                        const rowInner = (
+                          <>
+                            <Dot on={isOn} />
+                            <span className="cf-toggle-label" style={{ flex: 1, fontWeight: isOn ? 600 : 400, fontSize: '0.72rem' }}>
+                              {action.inlineParam ? (
+                                <>
+                                  {action.inlineParam.before}
+                                  <InlineNum
+                                    value={Math.round((actionParamOverrides[action.name] ?? 1) * action.inlineParam.defaultVal)}
+                                    onChange={handleInlineChange}
+                                    min={0}
+                                    max={action.inlineParam.max}
+                                  />
+                                  {action.inlineParam.after}
+                                  {isAiPromptAction && (
+                                    <>
+                                      {' '}
+                                      <a
+                                        href={AI_TRAINING_URL}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        onClick={e => e.stopPropagation()}
+                                        style={{
+                                          color: MUTED,
+                                          fontWeight: 400,
+                                          fontSize: '0.92em',
+                                          textDecoration: 'underline',
+                                          textUnderlineOffset: '2px',
+                                          textDecorationColor: 'currentColor',
+                                        }}
+                                      >
+                                        (includes training)
+                                      </a>
+                                    </>
+                                  )}
+                                  {action.inlineParam2 && (
+                                    <>
+                                      {action.inlineParam2.before}
+                                      <InlineNum
+                                        value={action.inlineParam2.defaultVal}
+                                        onChange={handleInlineParam2Change}
+                                        min={0}
+                                      />
+                                      {action.inlineParam2.after}
+                                    </>
+                                  )}
+                                </>
+                              ) : action.name}
+                            </span>
+                            <span className="cf-toggle-value" style={{ fontWeight: 700, color: isOn ? GREEN : MUTED, fontVariantNumeric: 'tabular-nums', fontSize: '0.72rem' }}>
+                                −{Math.round(action.savingsKg * (actionParamOverrides[action.name] ?? 1)).toLocaleString()} <span style={{ fontSize: '0.6em', fontWeight: 400 }}>kg</span>
+                            </span>
+                          </>
+                        );
+
                         return (
                           <div key={action.name}>
-                            <button onClick={handleToggle} className="cf-toggle-row" data-on={isOn} aria-pressed={isOn}>
-                              <Dot on={isOn} />
-                              <span className="cf-toggle-label" style={{ flex: 1, fontWeight: isOn ? 600 : 400, fontSize: '0.72rem' }}>
-                                {action.inlineParam ? (
-                                  <>
-                                    {action.inlineParam.before}
-                                    <InlineNum
-                                      value={Math.round((actionParamOverrides[action.name] ?? 1) * action.inlineParam.defaultVal)}
-                                      onChange={handleInlineChange}
-                                      min={0}
-                                      max={action.inlineParam.max}
-                                    />
-                                    {action.inlineParam.after}
-                                    {action.inlineParam2 && (
-                                      <>
-                                        {action.inlineParam2.before}
-                                        <InlineNum
-                                          value={action.inlineParam2.defaultVal}
-                                          onChange={handleInlineParam2Change}
-                                          min={0}
-                                        />
-                                        {action.inlineParam2.after}
-                                      </>
-                                    )}
-                                  </>
-                                ) : action.name}
-                              </span>
-                              <span className="cf-toggle-value" style={{ fontWeight: 700, color: isOn ? GREEN : MUTED, fontVariantNumeric: 'tabular-nums', fontSize: '0.72rem' }}>
-                                  −{Math.round(action.savingsKg * (actionParamOverrides[action.name] ?? 1)).toLocaleString()} <span style={{ fontSize: '0.6em', fontWeight: 400 }}>kg</span>
-                              </span>
-                            </button>
+                            {isAiPromptAction ? (
+                              <div
+                                onClick={handleToggle}
+                                onKeyDown={e => {
+                                  if (e.key === 'Enter' || e.key === ' ') {
+                                    e.preventDefault();
+                                    handleToggle();
+                                  }
+                                }}
+                                className="cf-toggle-row"
+                                data-on={isOn}
+                                aria-pressed={isOn}
+                                role="button"
+                                tabIndex={0}
+                              >
+                                {rowInner}
+                              </div>
+                            ) : (
+                              <button onClick={handleToggle} className="cf-toggle-row" data-on={isOn} aria-pressed={isOn}>
+                                {rowInner}
+                              </button>
+                            )}
                             {isOn && action.name === 'Cut beef by half' && (
                               <div style={{ fontSize: '0.65rem', color: MUTED, lineHeight: 1.45, padding: '4px 8px 8px 34px', opacity: 0.8 }}>
                                 Please don't substitute chicken for beef. Replacing half your beef with chicken means ~<a href="https://animalclock.org/" target="_blank" rel="noopener noreferrer" style={{ color: ACCENT }}>8 more chickens</a> per year go through <a href="https://thehumaneleague.org/article/how-many-chickens-are-in-the-world" target="_blank" rel="noopener noreferrer" style={{ color: ACCENT }}>factory farms</a>, versus ~<a href="https://sentientmedia.org/meat-consumption-in-the-us/" target="_blank" rel="noopener noreferrer" style={{ color: ACCENT }}>1/15th of a cow</a>. Substitute plants instead.

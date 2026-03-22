@@ -21,12 +21,15 @@ const ACCENT = 'var(--accent, #8B2E2E)';
 const GREEN = 'var(--green, #4A7C59)';
 const MUTED = 'var(--text-secondary, #6B6B60)';
 const DIVIDER = 'var(--divider, #DDD9D0)';
+const AI_TRAINING_URL = 'https://www.andymasley.com/writing/whats-the-full-hidden-climate-cost/';
+const AI_PROMPT_ACTION_NAME = 'Stop using AI chatbots';
 
 interface BarItem {
   name: string;
   kg: number;
   color: string;
   type: 'personal' | 'systemic';
+  sourceName?: string;
 }
 
 const CAR_LABELS: Record<string, string> = { gas: 'gas car', hybrid: 'hybrid', ev: 'EV' };
@@ -72,7 +75,7 @@ export function ComparingCuts({ personalActions, enabledPersonal, actionParamOve
           displayName = displayName.replace(/trips/, `${carLabel} trips`);
         }
       }
-      bars.push({ name: displayName, kg, color: ACCENT, type: 'personal' });
+      bars.push({ name: displayName, kg, color: ACCENT, type: 'personal', sourceName: action.name });
     }
 
     // Systemic actions
@@ -141,6 +144,7 @@ export function ComparingCuts({ personalActions, enabledPersonal, actionParamOve
           const pct = (item.kg / maxKg) * 100;
           const pctOfFootprint = footprintKg > 0 ? Math.round((item.kg / footprintKg) * 100) : 0;
           const isHovered = hoveredIdx === idx;
+          const isAiPromptItem = item.sourceName === AI_PROMPT_ACTION_NAME;
           return (
             <div
               key={`${item.type}-${item.name}`}
@@ -178,6 +182,11 @@ export function ComparingCuts({ personalActions, enabledPersonal, actionParamOve
                   minWidth: '2px',
                 }} />
               </div>
+              {isAiPromptItem && (
+                <div style={{ fontSize: '0.64rem', color: MUTED, lineHeight: 1.45, marginTop: '5px', opacity: 0.85, maxWidth: '42rem' }}>
+                  This estimate includes the <a href={AI_TRAINING_URL} target="_blank" rel="noopener noreferrer" style={{ color: 'inherit', textDecoration: 'underline', textUnderlineOffset: '2px', textDecorationColor: 'currentColor' }}>cost of training</a>. While each prompt uses different amounts of energy, the law of large numbers says the total will converge to the average.
+                </div>
+              )}
             </div>
           );
         })}
