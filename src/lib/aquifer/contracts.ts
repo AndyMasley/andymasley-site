@@ -7,7 +7,7 @@ export type SourceType =
   | 'heuristic_estimate'
   | 'low_confidence_estimate';
 
-export type MetricMode = 'total' | 'categories' | 'industry';
+export type MetricMode = 'stress' | 'categories' | 'industry';
 
 export interface DisplayAquifer {
   display_aquifer_id: string;
@@ -51,7 +51,7 @@ export interface GeometryMetadata {
   county_footprint_count: number | null;
 }
 
-export interface WithdrawalMetricValue {
+export interface MetricValue {
   value: number;
   units: string;
   is_estimate: boolean;
@@ -60,6 +60,13 @@ export interface WithdrawalMetricValue {
   methodology_key: string;
   methodology_version: string;
   notes: string;
+}
+
+export interface RechargeStressMetrics {
+  estimated_natural_recharge: MetricValue;
+  net_withdrawal_minus_recharge: MetricValue;
+  withdrawal_to_recharge_ratio: MetricValue;
+  balance_index: MetricValue;
 }
 
 export interface CategoryBreakdown {
@@ -96,7 +103,8 @@ export interface IndustryEstimate {
 export interface AquiferMetricRecord {
   display_aquifer_id: string;
   year: number;
-  total_withdrawal: WithdrawalMetricValue;
+  total_withdrawal: MetricValue;
+  recharge_stress: RechargeStressMetrics;
   categories: CategoryBreakdown[];
   industry_estimates: IndustryEstimate[];
   provenance_source_ids: string[];

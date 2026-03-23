@@ -12,11 +12,14 @@ import type {
 import {
   confidenceMeta,
   formatFlowMgalPerDay,
+  formatRatio,
+  formatSignedPercent,
   formatShare,
   geometryMethodMeta,
   normalizeQuery,
   sortCategories,
   sortIndustryEstimates,
+  stressLabel,
   sourceTypeLabel,
 } from '@/lib/aquifer/format';
 import { projectAquiferFeatures } from '@/lib/aquifer/geometry';
@@ -25,19 +28,32 @@ interface Props {
   data: AquiferDataBundle;
 }
 
-type SortMode = 'withdrawal' | 'alphabetical' | 'region';
+type SortMode = 'stress' | 'withdrawal' | 'alphabetical' | 'region';
 type GeometryScope = 'all' | 'official' | 'fallback';
 
 function mixChannel(start: number, end: number, t: number): number {
   return Math.round(start + (end - start) * t);
 }
 
-function colorForValue(value: number, min: number, max: number): string {
-  const span = Math.max(max - min, 1);
-  const t = Math.max(0, Math.min(1, (value - min) / span));
-  const start = [211, 224, 212];
-  const end = [31, 94, 97];
+function colorForBalance(value: number, maxAbs: number): string {
+  const span = Math.max(maxAbs, 0.25);
+  const normalized = Math.sign(value) * (Math.log1p(Math.abs(value)) / Math.log1p(span));
+
+  if (normalized >= 0) {
+    const t = Math.max(0, Math.min(1, normalized));
+    const start = [235, 227, 213];
+    const end = [165, 73, 53];
+    return `rgb(${mixChannel(start[0], end[0], t)}, ${mixChannel(start[1], end[1], t)}, ${mixChannel(start[2], end[2], t)})`;
+  }
+
+  const t = Math.max(0, Math.min(1, Math.abs(normalized)));
+  const start = [235, 227, 213];
+  const end = [56, 104, 121];
   return `rgb(${mixChannel(start[0], end[0], t)}, ${mixChannel(start[1], end[1], t)}, ${mixChannel(start[2], end[2], t)})`;
+}
+
+function balanceValue(record: AquiferMetricRecord): number {
+  return record.recharge_stress.balance_index.value;
 }
 
 function byId<T extends { display_aquifer_id: string }>(records: T[]): Map<string, T> {
@@ -76,8 +92,8 @@ function isGeometryVisible(
 export function AquiferStressExplorer({ data }: Props) {
   const { collection, geometry, metrics, provenance } = data;
   const [query, setQuery] = useState('');
-  const [metricMode, setMetricMode] = useState<MetricMode>('total');
-  const [sortMode, setSortMode] = useState<SortMode>('withdrawal');
+  const [metricMode, setMetricMode] = useState<MetricMode>('stress');
+  const [sortMode, setSortMode] = useState<SortMode>('stress');
   const [geometryScope, setGeometryScope] = useState<GeometryScope>('all');
   const [selectedId, setSelectedId] = useState<string | null>(collection.aquifers[0]?.display_aquifer_id ?? null);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
@@ -96,6 +112,13 @@ export function AquiferStressExplorer({ data }: Props) {
     () => [...collection.aquifers].sort((left, right) => left.sort_order - right.sort_order),
     [collection.aquifers],
   );
+  const stressRankById = useMemo(() => {
+    return new Map(
+      [...metrics.records]
+        .sort((left, right) => balanceValue(right) - balanceValue(left))
+        .map((record, index) => [record.display_aquifer_id, index + 1]),
+    );
+  }, [metrics.records]);
   const withdrawalRankById = useMemo(() => {
     return new Map(
       [...metrics.records]
@@ -122,6 +145,12 @@ export function AquiferStressExplorer({ data }: Props) {
     });
 
     return visible.sort((left, right) => {
+      if (sortMode === 'stress') {
+        return (
+          (stressRankById.get(left.display_aquifer_id) ?? Number.MAX_SAFE_INTEGER) -
+          (stressRankById.get(right.display_aquifer_id) ?? Number.MAX_SAFE_INTEGER)
+        );
+      }
       if (sortMode === 'alphabetical') {
         return left.display_name.localeCompare(right.display_name);
       }
@@ -137,7 +166,7 @@ export function AquiferStressExplorer({ data }: Props) {
         (withdrawalRankById.get(right.display_aquifer_id) ?? Number.MAX_SAFE_INTEGER)
       );
     });
-  }, [aquifers, geometryById, geometryScope, searchQuery, sortMode, withdrawalRankById]);
+  }, [aquifers, geometryById, geometryScope, searchQuery, sortMode, stressRankById, withdrawalRankById]);
 
   const filteredIds = useMemo(() => new Set(filteredAquifers.map((aquifer) => aquifer.display_aquifer_id)), [filteredAquifers]);
 
@@ -157,12 +186,11 @@ export function AquiferStressExplorer({ data }: Props) {
   const metricValues = useMemo(
     () =>
       metrics.records
-        .map((record) => record.total_withdrawal.value)
+        .map((record) => record.recharge_stress.balance_index.value)
         .filter((value) => Number.isFinite(value)),
     [metrics.records],
   );
-  const minValue = metricValues.length ? Math.min(...metricValues) : 0;
-  const maxValue = metricValues.length ? Math.max(...metricValues) : 0;
+  const maxAbsBalance = metricValues.length ? Math.max(...metricValues.map((value) => Math.abs(value))) : 1;
 
   const selectedAquifer = aquifers.find((aquifer) => aquifer.display_aquifer_id === selectedId);
   const selectedMetrics = selectedId ? metricsByAquifer.get(selectedId) ?? null : null;
@@ -171,7 +199,7 @@ export function AquiferStressExplorer({ data }: Props) {
   const hoveredGeometry = hoveredId ? geometryById.get(hoveredId) ?? null : null;
   const activeAquifer = hoveredAquifer ?? selectedAquifer ?? null;
   const activeGeometry = hoveredGeometry ?? selectedGeometry ?? null;
-  const relatedAquifers = getRelatedAquifers(aquifers, selectedAquifer, withdrawalRankById);
+  const relatedAquifers = getRelatedAquifers(aquifers, selectedAquifer, stressRankById);
 
   const officialGeometryCount = geometry.features.filter(
     (feature) => feature.properties.geometry_method === 'usgs_principal_aquifer_polygon',
@@ -202,9 +230,9 @@ export function AquiferStressExplorer({ data }: Props) {
       <div className="aqs-toolbar">
         <div className="aqs-toolbar-copy">
           <p className="aqs-eyebrow">Aquifer stress</p>
-          <h2 className="aqs-title">Estimated groundwater withdrawals across mainland U.S. principal aquifers</h2>
+          <h2 className="aqs-title">Recharge-based groundwater stress across conterminous U.S. principal aquifers</h2>
           <p className="aqs-intro">
-            This version keeps direct-source totals separate from modeled layers and makes the geometry compromises visible. Alaska and Hawaii are intentionally excluded from the public view. Most aquifers use published USGS polygons; dashed footprints mark the handful that require a county-based display fallback.
+            This version combines direct-source 2015 USGS withdrawals with a USGS long-term natural recharge raster to show where mapped aquifer footprints appear most pressure-loaded. It keeps source totals separate from modeled layers, makes geometry compromises visible, and avoids pretending a national aquifer-volume denominator exists when it does not.
           </p>
         </div>
 
@@ -220,9 +248,9 @@ export function AquiferStressExplorer({ data }: Props) {
             />
           </label>
 
-          <div className="aqs-mode-switch" role="tablist" aria-label="Metric mode">
+          <div className="aqs-mode-switch" role="tablist" aria-label="Detail mode">
             {[
-              { key: 'total', label: 'Total withdrawals' },
+              { key: 'stress', label: 'Stress summary' },
               { key: 'categories', label: 'Broad sectors' },
               { key: 'industry', label: 'Industry-type estimates' },
             ].map((mode) => (
@@ -273,6 +301,7 @@ export function AquiferStressExplorer({ data }: Props) {
               <span className="aqs-control-label">Sort</span>
               <div className="aqs-chip-switch">
                 {[
+                  { key: 'stress', label: 'By stress' },
                   { key: 'withdrawal', label: 'By withdrawal' },
                   { key: 'alphabetical', label: 'A-Z' },
                   { key: 'region', label: 'By region' },
@@ -291,7 +320,7 @@ export function AquiferStressExplorer({ data }: Props) {
           </div>
 
           <p className="aqs-list-note">
-            A compact aquifer directory. Search, sort, or tap a row to focus the map and open the detail panel.
+            A compact aquifer directory ranked by recharge pressure. Search, sort, or tap a row to focus the map and open the detail panel.
           </p>
 
           {filteredAquifers.length ? (
@@ -309,7 +338,7 @@ export function AquiferStressExplorer({ data }: Props) {
                       className={`aqs-list-item ${selectedId === aquifer.display_aquifer_id ? 'is-active' : ''}`}
                       onClick={() => selectAquifer(aquifer.display_aquifer_id)}
                     >
-                      <span className="aqs-list-rank">#{withdrawalRankById.get(aquifer.display_aquifer_id) ?? '–'}</span>
+                      <span className="aqs-list-rank">#{stressRankById.get(aquifer.display_aquifer_id) ?? '–'}</span>
                       <span className="aqs-list-body">
                         <span className="aqs-list-name">{aquifer.short_name}</span>
                         <span className="aqs-list-meta">
@@ -319,8 +348,8 @@ export function AquiferStressExplorer({ data }: Props) {
                       </span>
                       {aquiferMetrics ? (
                         <span className="aqs-list-metric">
-                          <strong>{formatFlowMgalPerDay(aquiferMetrics.total_withdrawal.value)}</strong>
-                          <span>{sourceTypeLabel(aquiferMetrics.total_withdrawal.source_type)}</span>
+                          <strong>{formatSignedPercent(aquiferMetrics.recharge_stress.balance_index.value)}</strong>
+                          <span>{stressLabel(aquiferMetrics.recharge_stress.balance_index.value)}</span>
                         </span>
                       ) : (
                         <span className="aqs-list-metric aqs-list-metric--pending">Awaiting derived data</span>
@@ -340,14 +369,14 @@ export function AquiferStressExplorer({ data }: Props) {
             <div>
               <p className="aqs-map-kicker">Map legend</p>
               <p className="aqs-map-caption">
-                Mainland-focused public view of the 2015 USGS county-aquifer release. Fill shows total estimated withdrawal. Dashed outlines mark county-footprint fallbacks where the polygon dataset has no standalone aquifer outline.
+                Conterminous-U.S. public view of the 2015 USGS county-aquifer release overlaid with the USGS mean annual natural recharge raster. Fill shows recharge-based stress using <code>(withdrawals - recharge) / recharge</code>. Dashed outlines mark county-footprint fallbacks where the polygon dataset has no standalone aquifer outline.
               </p>
             </div>
             <div className="aqs-map-legend-wrap">
               <div className="aqs-legend" aria-label="Map legend">
-                <span>Lower</span>
+                <span>Recharge-led</span>
                 <div className="aqs-legend-bar" />
-                <span>Higher</span>
+                <span>Most stressed</span>
               </div>
               <div className="aqs-outline-key">
                 <span className="aqs-outline-key-line" />
@@ -359,12 +388,12 @@ export function AquiferStressExplorer({ data }: Props) {
           {projectedFeatures.length ? (
             <div className="aqs-map-wrap">
               <svg className="aqs-map" viewBox="0 0 880 620" role="img" aria-labelledby="aqs-map-title aqs-map-desc">
-                <title id="aqs-map-title">Map of mainland U.S. principal aquifers</title>
+                <title id="aqs-map-title">Map of conterminous U.S. principal aquifers</title>
                 <desc id="aqs-map-desc">Click or focus an aquifer polygon to open the detail panel.</desc>
                 {projectedFeatures.map((feature) => {
                   const aquiferMetrics = metricsByAquifer.get(feature.id);
-                  const value = aquiferMetrics?.total_withdrawal.value ?? minValue;
-                  const fill = colorForValue(value, minValue, maxValue);
+                  const value = aquiferMetrics?.recharge_stress.balance_index.value ?? 0;
+                  const fill = colorForBalance(value, maxAbsBalance);
                   const isSelected = selectedId === feature.id;
                   const isHovered = hoveredId === feature.id;
                   const isFilteredOut = !filteredIds.has(feature.id);
@@ -381,7 +410,7 @@ export function AquiferStressExplorer({ data }: Props) {
                       }}
                       tabIndex={0}
                       role="button"
-                      aria-label={`${feature.displayName}${aquiferMetrics ? `, ${formatFlowMgalPerDay(aquiferMetrics.total_withdrawal.value)}` : ''}, ${geometryMetaUi.label}`}
+                      aria-label={`${feature.displayName}${aquiferMetrics ? `, ${formatSignedPercent(aquiferMetrics.recharge_stress.balance_index.value)} versus recharge` : ''}, ${geometryMetaUi.label}`}
                       onMouseEnter={() => setHoveredId(feature.id)}
                       onMouseLeave={() => setHoveredId(null)}
                       onFocus={() => setHoveredId(feature.id)}
@@ -404,7 +433,7 @@ export function AquiferStressExplorer({ data }: Props) {
                   <strong>{activeAquifer.short_name}</strong>
                   <span>
                     {metricsByAquifer.get(activeAquifer.display_aquifer_id)
-                      ? formatFlowMgalPerDay(metricsByAquifer.get(activeAquifer.display_aquifer_id)!.total_withdrawal.value)
+                      ? formatSignedPercent(metricsByAquifer.get(activeAquifer.display_aquifer_id)!.recharge_stress.balance_index.value)
                       : 'Select for details'}
                   </span>
                   <small>{geometryMethodMeta(activeGeometry.geometry_method, activeGeometry.county_footprint_count).label}</small>
@@ -427,7 +456,7 @@ export function AquiferStressExplorer({ data }: Props) {
               geometryMeta={selectedGeometry}
               metrics={selectedMetrics}
               metricMode={metricMode}
-              rank={withdrawalRankById.get(selectedAquifer.display_aquifer_id) ?? null}
+              rank={stressRankById.get(selectedAquifer.display_aquifer_id) ?? null}
               aquiferCount={aquifers.length}
               sources={renderSources(selectedMetrics.provenance_source_ids)}
               relatedAquifers={relatedAquifers}
@@ -468,11 +497,50 @@ function AquiferDetail({
   relatedAquifers: DisplayAquifer[];
   onSelect: (id: string) => void;
 }) {
-  const confidence = confidenceMeta(metrics.total_withdrawal.confidence_grade);
-  const geometrySummary = geometryMethodMeta(geometryMeta.geometry_method, geometryMeta.county_footprint_count);
+  const stress = metrics.recharge_stress;
+  const stressConfidence = confidenceMeta(stress.balance_index.confidence_grade);
   const sortedCategories = sortCategories(metrics.categories);
   const sortedIndustry = sortIndustryEstimates(metrics.industry_estimates);
-  const dominantCategory = sortedCategories[0];
+  const balanceScale = Math.max(
+    metrics.total_withdrawal.value,
+    stress.estimated_natural_recharge.value,
+    Math.abs(stress.net_withdrawal_minus_recharge.value),
+    1,
+  );
+  const balanceRows: Array<{
+    key: string;
+    label: string;
+    value: number;
+    note: string;
+    kind: 'withdrawal' | 'recharge' | 'stress';
+    displayValue?: string;
+  }> = [
+    {
+      key: 'withdrawal',
+      label: 'Total withdrawal',
+      value: metrics.total_withdrawal.value,
+      note: sourceTypeLabel(metrics.total_withdrawal.source_type),
+      kind: 'withdrawal',
+    },
+    {
+      key: 'recharge',
+      label: 'Estimated natural recharge',
+      value: stress.estimated_natural_recharge.value,
+      note: confidenceMeta(stress.estimated_natural_recharge.confidence_grade).label,
+      kind: 'recharge',
+    },
+    {
+      key: 'net',
+      label: 'Net withdrawal minus recharge',
+      value: Math.abs(stress.net_withdrawal_minus_recharge.value),
+      displayValue: formatFlowMgalPerDay(Math.abs(stress.net_withdrawal_minus_recharge.value)),
+      note:
+        stress.net_withdrawal_minus_recharge.value >= 0
+          ? 'Withdrawals above recharge'
+          : 'Recharge above withdrawals',
+      kind: stress.net_withdrawal_minus_recharge.value >= 0 ? 'stress' : 'recharge',
+    },
+  ];
 
   return (
     <div className="aqs-detail">
@@ -483,42 +551,49 @@ function AquiferDetail({
       </header>
 
       <div className="aqs-stat">
-        <span className="aqs-stat-label">Total estimated withdrawal</span>
-        <strong className="aqs-stat-value">{formatFlowMgalPerDay(metrics.total_withdrawal.value)}</strong>
+        <span className="aqs-stat-label">Recharge balance</span>
+        <strong className="aqs-stat-value">{formatSignedPercent(stress.balance_index.value)}</strong>
         <span className="aqs-stat-subline">
-          {metrics.year} · {metrics.total_withdrawal.units}
+          {formatRatio(stress.withdrawal_to_recharge_ratio.value)} of estimated recharge · {metrics.year}
         </span>
       </div>
 
       <div className="aqs-kpi-grid">
         <div className="aqs-kpi-card">
           <strong>{rank ? `#${rank}` : '—'}</strong>
-          <span>Withdrawal rank out of {aquiferCount}</span>
+          <span>Stress rank out of {aquiferCount}</span>
         </div>
         <div className="aqs-kpi-card">
-          <strong>{dominantCategory?.category_label ?? '—'}</strong>
-          <span>{dominantCategory ? formatShare(dominantCategory.share_of_total) : '—'} of total</span>
+          <strong>{formatFlowMgalPerDay(metrics.total_withdrawal.value)}</strong>
+          <span>Total estimated withdrawal</span>
         </div>
         <div className="aqs-kpi-card">
-          <strong>{geometrySummary.label}</strong>
-          <span>{geometrySummary.description}</span>
+          <strong>{formatFlowMgalPerDay(stress.estimated_natural_recharge.value)}</strong>
+          <span>Estimated natural recharge</span>
+        </div>
+        <div className="aqs-kpi-card">
+          <strong>
+            {stress.net_withdrawal_minus_recharge.value >= 0 ? '+' : '-'}
+            {formatFlowMgalPerDay(Math.abs(stress.net_withdrawal_minus_recharge.value)).replace(' Mgal/d', '')} Mgal/d
+          </strong>
+          <span>{stress.net_withdrawal_minus_recharge.value >= 0 ? 'Net deficit' : 'Recharge cushion'}</span>
         </div>
       </div>
 
       <div className="aqs-meta-row">
-        <div className="aqs-badge" aria-label={confidence.description}>
-          <strong>{confidence.label}</strong>
-          <span>{confidence.description}</span>
+        <div className="aqs-badge" aria-label={stressConfidence.description}>
+          <strong>{stressConfidence.label}</strong>
+          <span>{stressConfidence.description}</span>
         </div>
         <div className="aqs-source-line">
-          <strong>{sourceTypeLabel(metrics.total_withdrawal.source_type)}</strong>
-          <span>{metrics.total_withdrawal.methodology_key}</span>
+          <strong>{sourceTypeLabel(stress.balance_index.source_type)}</strong>
+          <span>{stress.balance_index.methodology_key}</span>
         </div>
       </div>
 
       <section className="aqs-section">
         <h4 className="aqs-section-title">
-          {metricMode === 'industry' ? 'Modeled industry allocation' : 'Breakdown'}
+          {metricMode === 'industry' ? 'Modeled industry allocation' : metricMode === 'stress' ? 'Hydrologic balance' : 'Broad sectors'}
         </h4>
 
         {metricMode === 'industry' ? (
@@ -548,6 +623,27 @@ function AquiferDetail({
               </p>
             </div>
           )
+        ) : metricMode === 'stress' ? (
+          <ul className="aqs-bars">
+            {balanceRows.map((row) => (
+              <li key={row.key} className="aqs-bar-row">
+                <div className="aqs-bar-copy">
+                  <span>{row.label}</span>
+                  <small>{row.note}</small>
+                </div>
+                <div className="aqs-bar-track">
+                  <span
+                    className={`aqs-bar-fill aqs-bar-fill--${row.kind}`}
+                    style={{ width: `${Math.max(6, (row.value / balanceScale) * 100)}%` }}
+                  />
+                </div>
+                <div className="aqs-bar-value">
+                  <strong>{row.displayValue ?? formatFlowMgalPerDay(row.value)}</strong>
+                  <span>{row.key === 'recharge' ? `${formatSignedPercent(stress.balance_index.value)} balance` : row.note}</span>
+                </div>
+              </li>
+            ))}
+          </ul>
         ) : (
           <ul className="aqs-bars">
             {sortedCategories.map((category) => (
@@ -578,6 +674,10 @@ function AquiferDetail({
         <summary>Methodology, uncertainty, and caveats</summary>
         <div className="aqs-methodology-copy">
           <p>{metrics.methodology_summary}</p>
+          <p>
+            Stress label: <strong>{stressLabel(stress.balance_index.value)}</strong>. The public map uses a recharge-based comparison because a
+            nationally consistent aquifer-volume denominator is not yet available across all displayed aquifers.
+          </p>
           {metrics.caveats.length ? (
             <ul className="aqs-caveats">
               {metrics.caveats.map((caveat) => (
@@ -587,6 +687,7 @@ function AquiferDetail({
           ) : null}
           <p>Source aquifer code: {aquifer.source_aquifer_codes.length ? aquifer.source_aquifer_codes.join(', ') : 'Pending crosswalk'}</p>
           <p>{aquifer.geometry_notes}</p>
+          <p>{geometryMethodMeta(geometryMeta.geometry_method, geometryMeta.county_footprint_count).description}</p>
         </div>
       </details>
 

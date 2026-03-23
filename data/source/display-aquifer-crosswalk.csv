@@ -1,5 +1,5 @@
 source_aquifer_code,source_aquifer_name,display_aquifer_id,allocation_weight,crosswalk_method,crosswalk_notes,reviewer_note
-N100AKUNCD,Alaska unconsolidated-deposit aquifers,excluded_non_mainland_scope,1.0,excluded_non_mainland_public_scope,Excluded from the public mainland view because this aquifer sits outside the contiguous U.S. map scope.,
+N100AKUNCD,Alaska unconsolidated-deposit aquifers,excluded_non_mainland_scope,1.0,excluded_non_mainland_public_scope,Excluded from the public conterminous-U.S. view because this aquifer sits outside the recharge study area used in the stress map.,
 N100ALLUVL,Alluvial aquifers,alluvial_aquifers,1.0,county_footprint_fallback,"No standalone polygon was available in the USGS principal-aquifer shapefile, so the display layer uses a county-footprint fallback built from 2015 county boundaries carrying withdrawal rows for this source aquifer.",Review county-footprint fallback before any local-scale interpretation.
 N100BSNRGB,Basin and Range basin-fill aquifers,basin_and_range_basin_fill_aquifers,1.0,usgs_principal_aquifer_polygon,,
 N100CACSTL,California Coastal Basin aquifers,california_coastal_basin_aquifers,1.0,usgs_principal_aquifer_polygon,,
@@ -23,7 +23,7 @@ N300MRSHLL,Marshall aquifer,marshall_aquifer,1.0,usgs_principal_aquifer_polygon,
 N300NYSDSN,New York sandstone aquifers,new_york_sandstone_aquifers,1.0,usgs_principal_aquifer_polygon,,
 N300PNSLVN,Pennsylvanian aquifers,pennsylvanian_aquifers,1.0,usgs_principal_aquifer_polygon,,
 N300RSHSPG,Rush Springs aquifer,rush_springs_aquifer,1.0,usgs_principal_aquifer_polygon,,
-N300STHCST,South Coast aquifer (Puerto Rico),puerto_rico_south_coast_aquifer,1.0,usgs_principal_aquifer_polygon,Mapped source label 'South Coast aquifer (Puerto Rico)' to display geometry label 'Puerto Rico south coast aquifer'.,Display label normalized to the published geometry label.
+N300STHCST,South Coast aquifer (Puerto Rico),excluded_non_mainland_scope,1.0,excluded_non_mainland_public_scope,Excluded from the public conterminous-U.S. view because this aquifer sits outside the recharge study area used in the stress map.,
 N300UPCTCS,Upper Cretaceous aquifers,upper_cretaceous_aquifers,1.0,usgs_principal_aquifer_polygon,,
 N300WYTRTR,Wyoming Tertiary aquifers,wyoming_tertiary_aquifers,1.0,county_footprint_fallback,"No standalone polygon was available in the USGS principal-aquifer shapefile, so the display layer uses a county-footprint fallback built from 2015 county boundaries carrying withdrawal rows for this source aquifer.",Review county-footprint fallback before any local-scale interpretation.
 N400ABKSMP,Arbuckle-Simpson aquifer,arbuckle_simpson_aquifer,1.0,usgs_principal_aquifer_polygon,,
@@ -31,8 +31,8 @@ N400BISCYN,Biscayne aquifer,biscayne_aquifer,1.0,usgs_principal_aquifer_polygon,
 N400BLAINE,Blaine aquifer,blaine_aquifer,1.0,usgs_principal_aquifer_polygon,,
 N400BSNRGC,Basin and Range carbonate-rock aquifers,basin_and_range_carbonate_rock_aquifers,1.0,usgs_principal_aquifer_polygon,,
 N400CSLHYN,Castle Hayne aquifer,castle_hayne_aquifer,1.0,usgs_principal_aquifer_polygon,,
-N400KNGSHL,Kingshill aquifer (Virgin Islands),kingshill_aquifer,1.0,usgs_principal_aquifer_polygon,Mapped source label 'Kingshill aquifer (Virgin Islands)' to display geometry label 'Kingshill aquifer'.,Display label normalized to the published geometry label.
-N400NCSTLM,North Coast Limestone aquifer system (Puerto Rico),puerto_rico_north_coast_limestone_aquifer_system,1.0,usgs_principal_aquifer_polygon,Mapped source label 'North Coast Limestone aquifer system (Puerto Rico)' to display geometry label 'Puerto Rico North Coast Limestone aquifer system'.,Display label normalized to the published geometry label.
+N400KNGSHL,Kingshill aquifer (Virgin Islands),excluded_non_mainland_scope,1.0,excluded_non_mainland_public_scope,Excluded from the public conterminous-U.S. view because this aquifer sits outside the recharge study area used in the stress map.,
+N400NCSTLM,North Coast Limestone aquifer system (Puerto Rico),excluded_non_mainland_scope,1.0,excluded_non_mainland_public_scope,Excluded from the public conterminous-U.S. view because this aquifer sits outside the recharge study area used in the stress map.,
 N400NYNECB,New York and New England carbonate-rock aquifers,new_york_and_new_england_carbonate_rock_aquifers,1.0,usgs_principal_aquifer_polygon,,
 N400ORDVCN,Ordovician aquifers,ordovician_aquifers,1.0,usgs_principal_aquifer_polygon,,
 N400PDMBRC,Piedmont and Blue Ridge carbonate-rock aquifers,piedmont_and_blue_ridge_carbonate_rock_aquifers,1.0,usgs_principal_aquifer_polygon,,
@@ -43,7 +43,7 @@ N500MSSPPI,Mississippian aquifers,mississippian_aquifers,1.0,usgs_principal_aqui
 N500PLOZOC,Paleozoic aquifers,paleozoic_aquifers,1.0,usgs_principal_aquifer_polygon,,
 N500VLYRDG,Valley and Ridge aquifers,valley_and_ridge_aquifers,1.0,usgs_principal_aquifer_polygon,,
 N600CMBPLV,Columbia Plateau basaltic-rock aquifers,columbia_plateau_basaltic_rock_aquifers,1.0,usgs_principal_aquifer_polygon,,
-N600HIVLCC,Hawaii volcanic-rock aquifers,excluded_non_mainland_scope,1.0,excluded_non_mainland_public_scope,Excluded from the public mainland view because this aquifer sits outside the contiguous U.S. map scope.,
+N600HIVLCC,Hawaii volcanic-rock aquifers,excluded_non_mainland_scope,1.0,excluded_non_mainland_public_scope,Excluded from the public conterminous-U.S. view because this aquifer sits outside the recharge study area used in the stress map.,
 N600NECRSN,New York and New England crystalline-rock aquifers,new_york_and_new_england_crystalline_rock_aquifers,1.0,county_footprint_fallback,"No standalone polygon was available in the USGS principal-aquifer shapefile, so the display layer uses a county-footprint fallback built from 2015 county boundaries carrying withdrawal rows for this source aquifer.",Review county-footprint fallback before any local-scale interpretation.
 N600SKRVPB,Snake River Plain basin-fill aquifers,snake_river_plain_basin_fill_aquifers,1.0,usgs_principal_aquifer_polygon,,
 N600SKRVPV,Snake River Plain basaltic-rock aquifers,snake_river_plain_basaltic_rock_aquifers,1.0,usgs_principal_aquifer_polygon,,

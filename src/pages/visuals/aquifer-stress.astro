@@ -5,7 +5,7 @@ import { loadAquiferBundle } from '@/lib/aquifer/loader';
 
 const data = loadAquiferBundle();
 const pageTitle = 'Aquifer stress';
-const pageDescription = 'An interactive mainland U.S. aquifer map based on the 2015 USGS county-aquifer release, showing groundwater withdrawals, broad sectors, and clearly labeled modeled layers.';
+const pageDescription = 'An interactive conterminous U.S. aquifer map combining 2015 USGS withdrawals with a USGS mean annual natural recharge raster to show recharge-based groundwater stress.';
 const pageUrl = 'https://andymasley.com/visuals/aquifer-stress';
 ---
 
@@ -22,7 +22,7 @@ const pageUrl = 'https://andymasley.com/visuals/aquifer-stress';
       <p class="aqs-hero-kicker">Groundwater</p>
       <h1 class="aqs-hero-title">Aquifer stress</h1>
       <p class="aqs-hero-copy">
-        A mainland-focused explainer for how groundwater withdrawals concentrate across principal aquifers in the USGS county-aquifer release. Alaska and Hawaii are intentionally excluded from this public view. The goal is not false precision. It is to make the source data, uncertainty, and tradeoffs legible.
+        A conterminous-U.S. explainer for how direct-source 2015 groundwater withdrawals compare with long-term estimated natural recharge across principal aquifers. The goal is not false precision. It is to make the source data, uncertainty, and tradeoffs legible.
       </p>
     </header>
 
@@ -41,6 +41,8 @@ const pageUrl = 'https://andymasley.com/visuals/aquifer-stress';
     --aqs-ink: #163334;
     --aqs-sea: #1f5e61;
     --aqs-moss: #6f8d6d;
+    --aqs-river: #4b8191;
+    --aqs-clay: #a54935;
     --aqs-sand: #ebe3d4;
     --aqs-panel: #f5f1e8;
     --aqs-border: rgba(22, 51, 52, 0.16);
@@ -410,7 +412,7 @@ const pageUrl = 'https://andymasley.com/visuals/aquifer-stress';
   .aqs-legend-bar {
     width: 7rem;
     height: 0.7rem;
-    background: linear-gradient(90deg, rgb(211, 224, 212), rgb(31, 94, 97));
+    background: linear-gradient(90deg, var(--aqs-river), var(--aqs-sand) 50%, var(--aqs-clay));
     border: 1px solid var(--aqs-border);
   }
 
@@ -528,7 +530,7 @@ const pageUrl = 'https://andymasley.com/visuals/aquifer-stress';
 
   .aqs-kpi-grid {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 0.7rem;
     margin-top: 1rem;
   }
@@ -631,6 +633,18 @@ const pageUrl = 'https://andymasley.com/visuals/aquifer-stress';
     position: absolute;
     inset: 0 auto 0 0;
     background: linear-gradient(90deg, var(--aqs-moss), var(--aqs-sea));
+  }
+
+  .aqs-bar-fill--withdrawal {
+    background: linear-gradient(90deg, #cc9762, #b06c45);
+  }
+
+  .aqs-bar-fill--recharge {
+    background: linear-gradient(90deg, #9ec1cd, var(--aqs-river));
+  }
+
+  .aqs-bar-fill--stress {
+    background: linear-gradient(90deg, #d98d70, var(--aqs-clay));
   }
 
   .aqs-bar-value {

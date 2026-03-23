@@ -10,6 +10,9 @@ from pathlib import Path
 from typing import Any, Optional
 
 import shapefile
+import rasterio
+from rasterio.mask import mask
+from rasterio.warp import transform_geom
 
 from etl.config.constants import (
     CATEGORY_COLUMNS,
@@ -28,6 +31,7 @@ from etl.config.constants import (
     INDUSTRY_ESTIMATES_PATH,
     METHOD_CODES_PATH,
     METHODOLOGY_VERSION,
+    RECHARGE_SOURCE_PATH,
     NON_MAINLAND_EXCLUDED_SOURCE_CODES,
     PROVENANCE_PATH,
     RESIDUAL_EXCLUDED_SOURCE_CODES,
@@ -51,6 +55,15 @@ COUNTY_BOUNDARY_SCALE_NOTE = (
     "County-footprint fallback geometry is for national visualization only. It shows the counties carrying "
     "withdrawal rows for a source aquifer when the USGS principal-aquifer shapefile does not expose a standalone polygon."
 )
+RECHARGE_SOURCE_LABEL = (
+    "USGS estimated mean annual natural groundwater recharge grid for the conterminous United States "
+    "(ScienceBase item 63140610d34e36012efa3838)"
+)
+RECHARGE_NOTES = (
+    "Recharge values come from the USGS 1-kilometer mean annual natural groundwater recharge raster. "
+    "The grid reflects broad long-term regional patterns for the conterminous United States, not site-scale conditions."
+)
+RECHARGE_METHOD_KEY = "overlay_usgs_recharge_grid_on_display_aquifer_v1"
 OFFICIAL_GEOMETRY_METHOD = "usgs_principal_aquifer_polygon"
 COUNTY_FOOTPRINT_METHOD = "county_footprint_fallback"
 RESIDUAL_EXCLUDED_DISPLAY_ID = "excluded_other_aquifers_bucket"
@@ -138,6 +151,22 @@ def _state_sentence(state_totals: dict[str, float]) -> str:
 
 def _round_number(value: float) -> float:
     return round(value, 2)
+
+
+def _signed_round(value: float) -> float:
+    return round(value, 2)
+
+
+def _recharge_label(balance_index: float) -> str:
+    if balance_index >= 1:
+        return "Withdrawals far exceed recharge"
+    if balance_index >= 0.25:
+        return "Withdrawals exceed recharge"
+    if balance_index >= -0.25:
+        return "Withdrawals sit near recharge balance"
+    if balance_index >= -0.75:
+        return "Recharge exceeds withdrawals"
+    return "Recharge strongly exceeds withdrawals"
 
 
 def _round_coords(obj: Any, digits: int = 4) -> Any:
@@ -268,6 +297,30 @@ def _combine_shape_records(shape_records: list[Any]) -> dict[str, Any]:
     if len(polygons) == 1:
         return {"type": "Polygon", "coordinates": polygons[0]}
     return {"type": "MultiPolygon", "coordinates": polygons}
+
+
+def _calculate_recharge_stats(
+    raster: rasterio.io.DatasetReader,
+    geometry: dict[str, Any],
+) -> dict[str, float]:
+    projected_geometry = transform_geom("EPSG:4326", raster.crs, geometry)
+    data, _ = mask(raster, [projected_geometry], crop=True, filled=False)
+    valid_cells = data[0].compressed()
+    if not valid_cells.size:
+        raise SystemExit("Recharge raster overlay produced no valid cells for a displayed aquifer")
+
+    cell_area_sq_m = abs(raster.transform.a * raster.transform.e)
+    mm_to_mgal_per_day = (
+        cell_area_sq_m * 0.001 * 264.1720523581484 / 1_000_000 / 365.25
+    )
+    total_recharge_mgald = float(valid_cells.sum()) * mm_to_mgal_per_day
+    mean_recharge_mm_per_year = float(valid_cells.mean())
+
+    return {
+        "cell_count": int(valid_cells.size),
+        "mean_recharge_mm_per_year": round(mean_recharge_mm_per_year, 2),
+        "total_recharge_mgald": round(total_recharge_mgald, 2),
+    }
 
 
 def _common_suffix(token_lists: list[list[str]]) -> list[str]:
@@ -481,7 +534,7 @@ def _write_crosswalk(
                     else "excluded_other_aquifers_residual_bucket"
                 ),
                 (
-                    "Excluded from the public mainland view because this aquifer sits outside the contiguous U.S. map scope."
+                    "Excluded from the public conterminous-U.S. view because this aquifer sits outside the recharge study area used in the stress map."
                     if source_code in NON_MAINLAND_EXCLUDED_SOURCE_CODES
                     else "Residual 'Other aquifers' rows remain excluded from the public map because they do not identify a single principal aquifer."
                 ),
@@ -516,202 +569,280 @@ def _build_outputs(
     features: list[dict[str, Any]] = []
     records: list[dict[str, Any]] = []
     qa_features: list[dict[str, Any]] = []
+    with tempfile.TemporaryDirectory() as recharge_tmp_dir:
+        with zipfile.ZipFile(RECHARGE_SOURCE_PATH) as archive:
+            archive.extractall(recharge_tmp_dir)
 
-    for sort_order, item in enumerate(selected_systems, start=1):
-        source_code = item["source_aquifer_code"]
-        payload = withdrawal_data[source_code]
-        source_name = item["source_name"]
-        display_name = item["display_name"]
-        display_id = item["display_aquifer_id"]
-        total = payload["total"]
-        state_totals = dict(payload["states"])
-        category_totals = {key: payload["categories"].get(key, 0.0) for key in CATEGORY_COLUMNS}
-        dominant_category_key, dominant_category_total = max(
-            category_totals.items(), key=lambda pair: pair[1]
-        )
-        dominant_category_label = CATEGORY_COLUMNS[dominant_category_key][0]
-        dominant_share = dominant_category_total / total if total else 0.0
-        state_label = _state_label(state_totals)
-        state_sentence = _state_sentence(state_totals)
-        county_count = len(payload["counties"])
-
-        if item["geometry_method"] == OFFICIAL_GEOMETRY_METHOD:
-            raw_geometry = _combine_shape_records(geometry_records[item["geometry_name"]])
-            simplified_geometry = _simplify_geometry(raw_geometry, tolerance=0.025)
-            geometry_source = GEOMETRY_SOURCE_LABEL
-            geometry_note = (
-                "USGS principal aquifer geometry shown for national-scale display only. It represents the "
-                "shallowest principal aquifer extent and not the full underground system."
-            )
-            geometry_scale_note = GEOMETRY_SCALE_NOTE
-            geometry_source_ids = ["usgs_principal_aquifers_geometry"]
-        else:
-            missing_counties = [geoid for geoid in payload["counties"] if geoid not in county_records]
-            if missing_counties:
-                raise SystemExit(
-                    f"County-footprint fallback missing county geometry for {source_code}: {missing_counties[:6]}"
+        with rasterio.open(str(Path(recharge_tmp_dir) / "rech48grd")) as recharge_raster:
+            for sort_order, item in enumerate(selected_systems, start=1):
+                source_code = item["source_aquifer_code"]
+                payload = withdrawal_data[source_code]
+                source_name = item["source_name"]
+                display_name = item["display_name"]
+                display_id = item["display_aquifer_id"]
+                total = payload["total"]
+                state_totals = dict(payload["states"])
+                category_totals = {key: payload["categories"].get(key, 0.0) for key in CATEGORY_COLUMNS}
+                dominant_category_key, dominant_category_total = max(
+                    category_totals.items(), key=lambda pair: pair[1]
                 )
-            raw_geometry = _combine_shape_records(
-                [county_records[geoid] for geoid in payload["counties"]]
-            )
-            simplified_geometry = _simplify_geometry(raw_geometry, tolerance=0.08)
-            geometry_source = COUNTY_BOUNDARY_SOURCE_LABEL
-            geometry_note = (
-                f"County-footprint fallback shown for national display only. The USGS principal-aquifer "
-                f"shapefile does not expose a standalone polygon for this source aquifer, so the map uses the "
-                f"{county_count} counties that carry 2015 withdrawal rows instead."
-            )
-            geometry_scale_note = COUNTY_BOUNDARY_SCALE_NOTE
-            geometry_source_ids = ["census_cartographic_county_boundaries_2015"]
+                dominant_category_label = CATEGORY_COLUMNS[dominant_category_key][0]
+                dominant_share = dominant_category_total / total if total else 0.0
+                state_label = _state_label(state_totals)
+                state_sentence = _state_sentence(state_totals)
+                county_count = len(payload["counties"])
 
-        bbox = _bbox_of_coordinates(raw_geometry["coordinates"])
-        feature_area_sqkm = round(_geometry_area_sqkm(raw_geometry), 2)
+                if item["geometry_method"] == OFFICIAL_GEOMETRY_METHOD:
+                    raw_geometry = _combine_shape_records(geometry_records[item["geometry_name"]])
+                    simplified_geometry = _simplify_geometry(raw_geometry, tolerance=0.025)
+                    geometry_source = GEOMETRY_SOURCE_LABEL
+                    geometry_note = (
+                        "USGS principal aquifer geometry shown for national-scale display only. It represents the "
+                        "shallowest principal aquifer extent and not the full underground system."
+                    )
+                    geometry_scale_note = GEOMETRY_SCALE_NOTE
+                    geometry_source_ids = ["usgs_principal_aquifers_geometry"]
+                else:
+                    missing_counties = [geoid for geoid in payload["counties"] if geoid not in county_records]
+                    if missing_counties:
+                        raise SystemExit(
+                            f"County-footprint fallback missing county geometry for {source_code}: {missing_counties[:6]}"
+                        )
+                    raw_geometry = _combine_shape_records(
+                        [county_records[geoid] for geoid in payload["counties"]]
+                    )
+                    simplified_geometry = _simplify_geometry(raw_geometry, tolerance=0.08)
+                    geometry_source = COUNTY_BOUNDARY_SOURCE_LABEL
+                    geometry_note = (
+                        f"County-footprint fallback shown for national display only. The USGS principal-aquifer "
+                        f"shapefile does not expose a standalone polygon for this source aquifer, so the map uses the "
+                        f"{county_count} counties that carry 2015 withdrawal rows instead."
+                    )
+                    geometry_scale_note = COUNTY_BOUNDARY_SCALE_NOTE
+                    geometry_source_ids = ["census_cartographic_county_boundaries_2015"]
 
-        description_short = (
-            f"A major groundwater system with {dominant_category_label.lower()} dominating withdrawals across "
-            f"{state_sentence}."
-        )
-        if item["geometry_method"] == COUNTY_FOOTPRINT_METHOD:
-            description_short += " The map uses a county-footprint fallback for display."
+                recharge_stats = _calculate_recharge_stats(recharge_raster, raw_geometry)
+                total_recharge = recharge_stats["total_recharge_mgald"]
+                if total_recharge <= 0:
+                    raise SystemExit(f"Recharge overlay produced a nonpositive value for {display_name}")
 
-        description_long = (
-            f"In 2015, the USGS estimated about {_round_number(total)} Mgal/d of groundwater withdrawals "
-            f"associated with the {display_name}. {dominant_category_label} accounted for about "
-            f"{round(dominant_share * 100)} percent of the total, with the largest shares concentrated in {state_sentence}."
-        )
-        if item["geometry_method"] == COUNTY_FOOTPRINT_METHOD:
-            description_long += (
-                f" Because the official principal-aquifer shapefile does not expose a standalone polygon for "
-                f"this aquifer, the map footprint shows the set of {county_count} counties attached to source rows."
-            )
+                net_withdrawal_minus_recharge = total - total_recharge
+                withdrawal_to_recharge_ratio = total / total_recharge
+                balance_index = net_withdrawal_minus_recharge / total_recharge
+                recharge_label = _recharge_label(balance_index)
 
-        aquifers.append(
-            {
-                "display_aquifer_id": display_id,
-                "display_name": display_name,
-                "short_name": _short_name(display_name),
-                "sort_order": sort_order,
-                "region_label": state_label,
-                "description_short": description_short,
-                "description_long": description_long,
-                "geometry_source": geometry_source,
-                "geometry_notes": geometry_note,
-                "source_aquifer_codes": [source_code],
-                "is_grouped_system": False,
-                "default_year": 2015,
-                "default_units": "Mgal/d",
-                "methodology_version": METHODOLOGY_VERSION,
-                "status": "active",
-                "confidence_summary": "A",
-            }
-        )
+                bbox = _bbox_of_coordinates(raw_geometry["coordinates"])
+                feature_area_sqkm = round(_geometry_area_sqkm(raw_geometry), 2)
 
-        feature_properties = {
-            "display_aquifer_id": display_id,
-            "display_name": display_name,
-            "short_name": _short_name(display_name),
-            "region_label": state_label,
-            "geometry_version": DISPLAY_AQUIFER_VERSION,
-            "source_dataset": geometry_source,
-            "source_scale_note": geometry_scale_note,
-            "is_simplified": True,
-            "topology_valid": True,
-            "bbox": bbox,
-            "feature_area_sqkm": feature_area_sqkm,
-            "display_zoom_min": 2,
-            "display_zoom_max": 7,
-            "geometry_method": item["geometry_method"],
-            "county_footprint_count": county_count if item["geometry_method"] == COUNTY_FOOTPRINT_METHOD else None,
-        }
-        features.append(
-            {
-                "type": "Feature",
-                "properties": feature_properties,
-                "geometry": simplified_geometry,
-            }
-        )
-        qa_features.append(
-            {
-                "type": "Feature",
-                "properties": {
-                    **feature_properties,
-                    "is_simplified": False,
-                },
-                "geometry": raw_geometry,
-            }
-        )
+                description_short = (
+                    f"A principal aquifer where {dominant_category_label.lower()} drives most withdrawals across "
+                    f"{state_sentence}. {recharge_label} over the mapped footprint."
+                )
+                if item["geometry_method"] == COUNTY_FOOTPRINT_METHOD:
+                    description_short += " The map uses a county-footprint fallback for display."
 
-        categories = []
-        for category_key, (category_label, _) in CATEGORY_COLUMNS.items():
-            category_value = _round_number(category_totals.get(category_key, 0.0))
-            categories.append(
-                {
+                balance_sentence = (
+                    f"That leaves withdrawals about {_round_number(net_withdrawal_minus_recharge)} Mgal/d above "
+                    "the long-term estimated natural recharge over the mapped footprint."
+                    if net_withdrawal_minus_recharge >= 0
+                    else f"That leaves estimated natural recharge about {_round_number(abs(net_withdrawal_minus_recharge))} Mgal/d "
+                    "above withdrawals over the mapped footprint."
+                )
+                description_long = (
+                    f"In 2015, the USGS estimated about {_round_number(total)} Mgal/d of groundwater withdrawals "
+                    f"associated with the {display_name}. {dominant_category_label} accounted for about "
+                    f"{round(dominant_share * 100)} percent of the total, with the largest shares concentrated in {state_sentence}. "
+                    f"Overlaying the mapped aquifer footprint with the USGS mean annual natural recharge grid suggests "
+                    f"about {_round_number(total_recharge)} Mgal/d of long-term natural recharge. {balance_sentence}"
+                )
+                if item["geometry_method"] == COUNTY_FOOTPRINT_METHOD:
+                    description_long += (
+                        f" Because the official principal-aquifer shapefile does not expose a standalone polygon for "
+                        f"this aquifer, the map footprint shows the set of {county_count} counties attached to source rows."
+                    )
+
+                aquifers.append(
+                    {
+                        "display_aquifer_id": display_id,
+                        "display_name": display_name,
+                        "short_name": _short_name(display_name),
+                        "sort_order": sort_order,
+                        "region_label": state_label,
+                        "description_short": description_short,
+                        "description_long": description_long,
+                        "geometry_source": geometry_source,
+                        "geometry_notes": geometry_note,
+                        "source_aquifer_codes": [source_code],
+                        "is_grouped_system": False,
+                        "default_year": 2015,
+                        "default_units": "Mgal/d",
+                        "methodology_version": METHODOLOGY_VERSION,
+                        "status": "active",
+                        "confidence_summary": "A-B",
+                    }
+                )
+
+                feature_properties = {
                     "display_aquifer_id": display_id,
-                    "year": 2015,
-                    "category_key": category_key,
-                    "category_label": category_label,
-                    "value": category_value,
-                    "units": "Mgal/d",
-                    "share_of_total": round(category_value / total if total else 0.0, 4),
-                    "confidence_grade": "A",
-                    "source_type": "direct_source_aggregate",
-                    "methodology_key": "aggregate_usgs_2015_category_totals_v1",
+                    "display_name": display_name,
+                    "short_name": _short_name(display_name),
+                    "region_label": state_label,
+                    "geometry_version": DISPLAY_AQUIFER_VERSION,
+                    "source_dataset": geometry_source,
+                    "source_scale_note": geometry_scale_note,
+                    "is_simplified": True,
+                    "topology_valid": True,
+                    "bbox": bbox,
+                    "feature_area_sqkm": feature_area_sqkm,
+                    "display_zoom_min": 2,
+                    "display_zoom_max": 7,
+                    "geometry_method": item["geometry_method"],
+                    "county_footprint_count": county_count if item["geometry_method"] == COUNTY_FOOTPRINT_METHOD else None,
                 }
-            )
+                features.append(
+                    {
+                        "type": "Feature",
+                        "properties": feature_properties,
+                        "geometry": simplified_geometry,
+                    }
+                )
+                qa_features.append(
+                    {
+                        "type": "Feature",
+                        "properties": {
+                            **feature_properties,
+                            "is_simplified": False,
+                        },
+                        "geometry": raw_geometry,
+                    }
+                )
 
-        caveats = [
-            "Broad sector totals come directly from the published 2015 USGS county-aquifer release.",
-            "Geometry is shown for national and regional visualization only; it does not represent the full underground extent of an aquifer.",
-            "Industry subtype estimates remain scaffolded but unpublished in this build to avoid false precision.",
-        ]
-        if source_name != display_name:
-            caveats.append(
-                f"The source withdrawal label '{source_name}' is mapped to the published display label '{display_name}'."
-            )
-        if item["geometry_method"] == COUNTY_FOOTPRINT_METHOD:
-            caveats.append(
-                f"The map footprint is a fallback built from {county_count} counties with 2015 source rows because no standalone USGS polygon is published for this aquifer."
-            )
+                categories = []
+                for category_key, (category_label, _) in CATEGORY_COLUMNS.items():
+                    category_value = _round_number(category_totals.get(category_key, 0.0))
+                    categories.append(
+                        {
+                            "display_aquifer_id": display_id,
+                            "year": 2015,
+                            "category_key": category_key,
+                            "category_label": category_label,
+                            "value": category_value,
+                            "units": "Mgal/d",
+                            "share_of_total": round(category_value / total if total else 0.0, 4),
+                            "confidence_grade": "A",
+                            "source_type": "direct_source_aggregate",
+                            "methodology_key": "aggregate_usgs_2015_category_totals_v1",
+                        }
+                    )
 
-        methodology_summary = (
-            f"Totals aggregate all 2015 USGS county rows assigned to the {source_name}. Broad categories come "
-            f"directly from the published water-use fields."
-        )
-        if item["geometry_method"] == OFFICIAL_GEOMETRY_METHOD:
-            methodology_summary += " The display geometry uses the published USGS principal-aquifer polygon."
-        else:
-            methodology_summary += (
-                " The display geometry uses a county-footprint fallback built from 2015 Census cartographic "
-                "county boundaries because the official aquifer polygon is unavailable."
-            )
+                caveats = [
+                    "Broad sector totals come directly from the published 2015 USGS county-aquifer release.",
+                    "Recharge-based stress values come from overlaying a USGS 1-kilometer long-term natural recharge raster on the mapped aquifer footprint.",
+                    "The stress color uses (withdrawals - estimated natural recharge) / estimated natural recharge because a consistent national aquifer-volume denominator is not available for all displayed principal aquifers in this build.",
+                    "The recharge source reflects long-term mean natural recharge patterns, not current annual recharge or site-specific conditions.",
+                    "Geometry is shown for national and regional visualization only; it does not represent the full underground extent of an aquifer.",
+                    "Industry subtype estimates remain scaffolded but unpublished in this build to avoid false precision.",
+                ]
+                if source_name != display_name:
+                    caveats.append(
+                        f"The source withdrawal label '{source_name}' is mapped to the published display label '{display_name}'."
+                    )
+                if item["geometry_method"] == COUNTY_FOOTPRINT_METHOD:
+                    caveats.append(
+                        f"The map footprint is a fallback built from {county_count} counties with 2015 source rows because no standalone USGS polygon is published for this aquifer."
+                    )
 
-        records.append(
-            {
-                "display_aquifer_id": display_id,
-                "year": 2015,
-                "total_withdrawal": {
-                    "value": _round_number(total),
-                    "units": "Mgal/d",
-                    "is_estimate": True,
-                    "confidence_grade": "A",
-                    "source_type": "direct_source_aggregate",
-                    "methodology_key": "aggregate_usgs_2015_county_aquifer_rows_v1",
-                    "methodology_version": METHODOLOGY_VERSION,
-                    "notes": (
-                        "Aggregated from county-level principal-aquifer rows in the 2015 USGS release. "
-                        "These are authoritative published estimates, not measured well-by-well withdrawals."
-                    ),
-                },
-                "categories": categories,
-                "industry_estimates": [],
-                "provenance_source_ids": [
-                    "usgs_county_aquifer_withdrawals_2015",
-                    *geometry_source_ids,
-                ],
-                "methodology_summary": methodology_summary,
-                "caveats": caveats,
-            }
-        )
+                methodology_summary = (
+                    f"Totals aggregate all 2015 USGS county rows assigned to the {source_name}. Broad categories come "
+                    f"directly from the published water-use fields. Recharge-based stress overlays the USGS 1-kilometer "
+                    f"mean annual natural groundwater recharge grid on the mapped aquifer footprint and compares that "
+                    f"long-term recharge volume to 2015 withdrawals using the balance metric (withdrawals - recharge) / recharge."
+                )
+                if item["geometry_method"] == OFFICIAL_GEOMETRY_METHOD:
+                    methodology_summary += " The display geometry uses the published USGS principal-aquifer polygon."
+                else:
+                    methodology_summary += (
+                        " The display geometry uses a county-footprint fallback built from 2015 Census cartographic "
+                        "county boundaries because the official aquifer polygon is unavailable."
+                    )
+
+                records.append(
+                    {
+                        "display_aquifer_id": display_id,
+                        "year": 2015,
+                        "total_withdrawal": {
+                            "value": _round_number(total),
+                            "units": "Mgal/d",
+                            "is_estimate": True,
+                            "confidence_grade": "A",
+                            "source_type": "direct_source_aggregate",
+                            "methodology_key": "aggregate_usgs_2015_county_aquifer_rows_v1",
+                            "methodology_version": METHODOLOGY_VERSION,
+                            "notes": (
+                                "Aggregated from county-level principal-aquifer rows in the 2015 USGS release. "
+                                "These are authoritative published estimates, not measured well-by-well withdrawals."
+                            ),
+                        },
+                        "recharge_stress": {
+                            "estimated_natural_recharge": {
+                                "value": _round_number(total_recharge),
+                                "units": "Mgal/d",
+                                "is_estimate": True,
+                                "confidence_grade": "B",
+                                "source_type": "official_proxy_estimate",
+                                "methodology_key": RECHARGE_METHOD_KEY,
+                                "methodology_version": METHODOLOGY_VERSION,
+                                "notes": (
+                                    f"Area-weighted overlay of the USGS mean annual natural recharge raster across "
+                                    f"{recharge_stats['cell_count']} one-kilometer cells with a mean recharge of "
+                                    f"{recharge_stats['mean_recharge_mm_per_year']} mm/year."
+                                ),
+                            },
+                            "net_withdrawal_minus_recharge": {
+                                "value": _signed_round(net_withdrawal_minus_recharge),
+                                "units": "Mgal/d",
+                                "is_estimate": True,
+                                "confidence_grade": "B",
+                                "source_type": "official_proxy_estimate",
+                                "methodology_key": RECHARGE_METHOD_KEY,
+                                "methodology_version": METHODOLOGY_VERSION,
+                                "notes": "Positive values indicate withdrawals above estimated natural recharge.",
+                            },
+                            "withdrawal_to_recharge_ratio": {
+                                "value": round(withdrawal_to_recharge_ratio, 3),
+                                "units": "ratio",
+                                "is_estimate": True,
+                                "confidence_grade": "B",
+                                "source_type": "official_proxy_estimate",
+                                "methodology_key": RECHARGE_METHOD_KEY,
+                                "methodology_version": METHODOLOGY_VERSION,
+                                "notes": "Dimensionless ratio of 2015 withdrawals to estimated natural recharge.",
+                            },
+                            "balance_index": {
+                                "value": round(balance_index, 3),
+                                "units": "fraction",
+                                "is_estimate": True,
+                                "confidence_grade": "B",
+                                "source_type": "official_proxy_estimate",
+                                "methodology_key": RECHARGE_METHOD_KEY,
+                                "methodology_version": METHODOLOGY_VERSION,
+                                "notes": (
+                                    "Recharge-based balance index computed as (withdrawals - estimated natural recharge) / "
+                                    "estimated natural recharge. Positive values indicate withdrawals above recharge."
+                                ),
+                            },
+                        },
+                        "categories": categories,
+                        "industry_estimates": [],
+                        "provenance_source_ids": [
+                            "usgs_county_aquifer_withdrawals_2015",
+                            "usgs_mean_annual_natural_recharge_conus",
+                            *geometry_source_ids,
+                        ],
+                        "methodology_summary": methodology_summary,
+                        "caveats": caveats,
+                    }
+                )
 
     collection = {
         "version": DISPLAY_AQUIFER_VERSION,
@@ -771,6 +902,17 @@ def _write_provenance(generated_at: str, citation: str) -> None:
                 "retrieved_at": generated_at,
                 "license": "Public domain",
                 "usage_notes": citation,
+            },
+            {
+                "source_id": "usgs_mean_annual_natural_recharge_conus",
+                "title": "Estimated mean annual natural ground-water recharge in the conterminous United States",
+                "publisher": "U.S. Geological Survey",
+                "year": 2003,
+                "dataset_or_report": "ScienceBase data release / Open-File Report 2003-311",
+                "doi_or_identifier": "https://doi.org/10.3133/ofr03311",
+                "retrieved_at": generated_at,
+                "license": "Public domain",
+                "usage_notes": RECHARGE_NOTES,
             },
             {
                 "source_id": "usgs_withdrawals_data_dictionary",

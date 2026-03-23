@@ -36,7 +36,17 @@ This project is built around a strict source hierarchy so the UI can distinguish
 - Status: direct source
 - Limitation: supports documentation, not user-facing totals by itself
 
-## Tier B: official proxy datasets planned for subtype modeling
+## Tier B: official proxy data used in the published stress layer
+
+### Mean annual natural groundwater recharge raster
+- Owner: U.S. Geological Survey
+- Year: 2003 release, based on long-term runoff and base-flow inputs
+- Use: recharge-based stress metric for the conterminous public map
+- Update cadence: infrequent
+- Status: official proxy estimate once overlaid on aquifer footprints
+- Limitation: represents long-term mean natural recharge patterns for the conterminous United States; not current annual recharge, not site-level recharge, and not a full aquifer-storage estimate
+
+## Tier C: official proxy datasets planned for subtype modeling
 
 ### County Business Patterns
 - Owner: U.S. Census Bureau
@@ -64,5 +74,6 @@ This project is built around a strict source hierarchy so the UI can distinguish
 
 ## Notes
 - V1 should ship with direct-source totals and broad categories first.
-- The public map now uses a mainland-focused scope: Alaska and Hawaii are excluded even though they remain in the source release and crosswalk.
+- The public map now uses a conterminous-U.S. scope so the recharge layer is consistent across all displayed aquifers. Alaska, Hawaii, Puerto Rico, and the U.S. Virgin Islands remain in the source release and crosswalk but are excluded from this public map.
+- The stress color is recharge-based, not storage-volume based. A nationally consistent aquifer-volume denominator is not currently published across all displayed principal aquifers in this build.
 - Industry subtype mode should remain visibly modeled and may be sparse or empty until proxy recipes are validated.

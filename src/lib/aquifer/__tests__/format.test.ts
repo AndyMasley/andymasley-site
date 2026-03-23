@@ -3,14 +3,23 @@ import { describe, expect, it } from 'vitest';
 import {
   confidenceMeta,
   formatFlowMgalPerDay,
+  formatRatio,
+  formatSignedPercent,
   geometryMethodMeta,
   normalizeQuery,
   sortCategories,
+  stressLabel,
 } from '@/lib/aquifer/format';
 
 describe('aquifer format helpers', () => {
   it('formats Mgal/d values', () => {
     expect(formatFlowMgalPerDay(1234.56)).toBe('1,234.6 Mgal/d');
+  });
+
+  it('formats stress helpers', () => {
+    expect(formatSignedPercent(0.42)).toBe('+42%');
+    expect(formatRatio(1.42)).toBe('1.42x');
+    expect(stressLabel(0.42)).toBe('Withdrawals exceed recharge');
   });
 
   it('normalizes search query text', () => {

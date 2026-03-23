@@ -27,12 +27,47 @@ const percentFormatter = new Intl.NumberFormat('en-US', {
   maximumFractionDigits: 0,
 });
 
+const signedPercentFormatter = new Intl.NumberFormat('en-US', {
+  style: 'percent',
+  maximumFractionDigits: 0,
+  signDisplay: 'always',
+});
+
+const ratioFormatter = new Intl.NumberFormat('en-US', {
+  maximumFractionDigits: 2,
+  minimumFractionDigits: 0,
+});
+
 export function formatFlowMgalPerDay(value: number): string {
   return `${flowFormatter.format(value)} Mgal/d`;
 }
 
 export function formatShare(value: number): string {
   return percentFormatter.format(value);
+}
+
+export function formatSignedPercent(value: number): string {
+  return signedPercentFormatter.format(value);
+}
+
+export function formatRatio(value: number): string {
+  return `${ratioFormatter.format(value)}x`;
+}
+
+export function stressLabel(value: number): string {
+  if (value >= 1) {
+    return 'Withdrawals far exceed recharge';
+  }
+  if (value >= 0.25) {
+    return 'Withdrawals exceed recharge';
+  }
+  if (value >= -0.25) {
+    return 'Near recharge balance';
+  }
+  if (value >= -0.75) {
+    return 'Recharge exceeds withdrawals';
+  }
+  return 'Recharge strongly exceeds withdrawals';
 }
 
 export function normalizeQuery(value: string): string {

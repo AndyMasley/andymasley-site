@@ -1,17 +1,18 @@
 # Aquifer Stress Methodology
 
-## V1 scope
+## V1.1 scope
 
-The launch version prioritizes direct-source honesty over false precision.
+The current version prioritizes direct-source honesty over false precision.
 
 1. Use USGS principal aquifer geometry for national visualization.
 2. Use the 2015 USGS county-aquifer withdrawal release for total and category values.
-3. Expose a mainland-focused public map of 64 principal aquifers from the 2015 USGS county-aquifer release, excluding Alaska, Hawaii, and the residual `Other aquifers` bucket from the public map.
-4. Keep modeled subtype estimates separate from direct-source totals.
+3. Use the USGS mean annual natural groundwater recharge raster for the conterminous United States to build a recharge-based stress layer.
+4. Expose a conterminous-U.S. public map of 61 principal aquifers from the 2015 USGS county-aquifer release, excluding Alaska, Hawaii, Puerto Rico, the U.S. Virgin Islands, and the residual `Other aquifers` bucket from the public map.
+5. Keep modeled subtype estimates separate from direct-source totals.
 
 ## Display aquifers
 
-The product surface is aligned directly to the principal aquifers represented in the 2015 USGS county-aquifer release, but the public map now uses a mainland-only scope. Each public display record maps one principal aquifer code to one display aquifer. Alaska, Hawaii, and the residual `Other aquifers` bucket remain in the crosswalk as explicit exclusions. The crosswalk file is the contract between those layers.
+The product surface is aligned directly to the principal aquifers represented in the 2015 USGS county-aquifer release, but the public map now uses a conterminous-U.S. scope so every displayed aquifer can share the same recharge basis. Each public display record maps one principal aquifer code to one display aquifer. Alaska, Hawaii, Puerto Rico, the U.S. Virgin Islands, and the residual `Other aquifers` bucket remain in the crosswalk as explicit exclusions. The crosswalk file is the contract between those layers.
 
 Each display system records:
 - the source aquifer codes it contains
@@ -25,12 +26,28 @@ When the withdrawal label and geometry label differ, the crosswalk preserves bot
 
 Direct-source totals are created by summing county-level rows by principal aquifer code and category for the source year. V1 uses the source release year directly and keeps units in million gallons per day.
 
+## Recharge-based stress
+
+The public map color is now driven by a recharge-based stress comparison rather than total withdrawal alone.
+
+1. Overlay each display aquifer footprint on the USGS 1-kilometer mean annual natural groundwater recharge raster for the conterminous United States.
+2. Convert raster depth values in millimeters per year into estimated recharge volume over the mapped footprint.
+3. Compare that estimated recharge volume with the 2015 withdrawal total.
+
+The published stress formula is:
+
+`(withdrawals - estimated natural recharge) / estimated natural recharge`
+
+Positive values indicate withdrawals above estimated recharge. Negative values indicate recharge above withdrawals.
+
+This is not the same thing as a storage-depletion rate. A consistent national principal-aquifer `total volume` denominator is not available across all displayed aquifers in this build, so the public map does not pretend to calculate a nationally comparable volume-normalized drain rate.
+
 ## Confidence
 
 Confidence is deterministic, not aesthetic:
 
 - `A`: direct-source value or direct-source aggregate
-- `B`: county-level official-proxy allocation
+- `B`: official proxy or spatial overlay anchored in authoritative source data
 - `C`: state or regional fallback allocation
 - `D`: sparse or weakly supported estimate
 
@@ -43,3 +60,5 @@ The industry view exists as a stable contract, but v1 should only expose subtype
 Geometry is shown for national visualization. It does not represent the full underground extent of an aquifer and should not be interpreted as site-specific hydrogeologic guidance.
 
 Most display records use the published USGS principal-aquifer polygon. A small subset of source aquifers does not have a standalone polygon in the published shapefile. For those cases, the public map uses a clearly labeled county-footprint fallback built from 2015 Census cartographic county boundaries. This fallback affects only map display, not the direct-source withdrawal totals.
+
+The recharge overlay inherits the same display-footprint limitation. It estimates recharge over the mapped footprint shown in the public app, not the full hydrogeologic extent or total stored groundwater volume of the aquifer system.

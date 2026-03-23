@@ -56,6 +56,29 @@ def main() -> None:
         if record["total_withdrawal"]["confidence_grade"] not in ALLOWED_CONFIDENCE:
             raise SystemExit(f"Invalid confidence grade for {record['display_aquifer_id']}")
 
+        stress = record.get("recharge_stress")
+        if not stress:
+            raise SystemExit(f"Missing recharge stress block for {record['display_aquifer_id']}")
+        recharge = stress["estimated_natural_recharge"]
+        net_balance = stress["net_withdrawal_minus_recharge"]
+        ratio = stress["withdrawal_to_recharge_ratio"]
+        balance_index = stress["balance_index"]
+        if recharge["value"] < 0:
+            raise SystemExit(f"Negative estimated recharge for {record['display_aquifer_id']}")
+        if ratio["value"] <= 0:
+            raise SystemExit(f"Nonpositive withdrawal-to-recharge ratio for {record['display_aquifer_id']}")
+        if recharge["confidence_grade"] not in ALLOWED_CONFIDENCE:
+            raise SystemExit(f"Invalid recharge confidence grade for {record['display_aquifer_id']}")
+        if net_balance["confidence_grade"] not in ALLOWED_CONFIDENCE:
+            raise SystemExit(f"Invalid net-balance confidence grade for {record['display_aquifer_id']}")
+        if balance_index["confidence_grade"] not in ALLOWED_CONFIDENCE:
+            raise SystemExit(f"Invalid balance-index confidence grade for {record['display_aquifer_id']}")
+        expected_balance = record["total_withdrawal"]["value"] - recharge["value"]
+        if abs(net_balance["value"] - expected_balance) > 0.05:
+            raise SystemExit(
+                f"Net balance does not match withdrawal minus recharge for {record['display_aquifer_id']}"
+            )
+
         share_sum = sum(category["share_of_total"] for category in record.get("categories", []))
         if record.get("categories") and not 0.99 <= share_sum <= 1.01:
             raise SystemExit(f"Category shares do not sum to ~1 for {record['display_aquifer_id']}: {share_sum}")

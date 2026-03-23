@@ -1,7 +1,7 @@
 {
-  "version": "2026.03.0",
-  "generated_at": "2026-03-23T04:04:33.470151+00:00",
-  "methodology_version": "v1",
+  "version": "2026.03.1",
+  "generated_at": "2026-03-23T04:42:45.558765+00:00",
+  "methodology_version": "v1.1",
   "build_status": "ready",
   "aquifers": [
     {
@@ -10,8 +10,8 @@
       "short_name": "High Plains",
       "sort_order": 1,
       "region_label": "Nebraska \u00b7 Texas \u00b7 Kansas",
-      "description_short": "A major groundwater system with irrigation dominating withdrawals across Nebraska, Texas, and Kansas.",
-      "description_long": "In 2015, the USGS estimated about 12300.91 Mgal/d of groundwater withdrawals associated with the High Plains aquifer. Irrigation accounted for about 95 percent of the total, with the largest shares concentrated in Nebraska, Texas, and Kansas.",
+      "description_short": "A principal aquifer where irrigation drives most withdrawals across Nebraska, Texas, and Kansas. Withdrawals far exceed recharge over the mapped footprint.",
+      "description_long": "In 2015, the USGS estimated about 12300.91 Mgal/d of groundwater withdrawals associated with the High Plains aquifer. Irrigation accounted for about 95 percent of the total, with the largest shares concentrated in Nebraska, Texas, and Kansas. Overlaying the mapped aquifer footprint with the USGS mean annual natural recharge grid suggests about 5073.07 Mgal/d of long-term natural recharge. That leaves withdrawals about 7227.84 Mgal/d above the long-term estimated natural recharge over the mapped footprint.",
       "geometry_source": "USGS principal aquifers shapefile (ScienceBase item 63140610d34e36012efa385d)",
       "geometry_notes": "USGS principal aquifer geometry shown for national-scale display only. It represents the shallowest principal aquifer extent and not the full underground system.",
       "source_aquifer_codes": [
@@ -20,9 +20,9 @@
       "is_grouped_system": false,
       "default_year": 2015,
       "default_units": "Mgal/d",
-      "methodology_version": "v1",
+      "methodology_version": "v1.1",
       "status": "active",
-      "confidence_summary": "A"
+      "confidence_summary": "A-B"
     },
     {
       "display_aquifer_id": "mississippi_river_valley_alluvial_aquifer",
@@ -30,8 +30,8 @@
       "short_name": "Mississippi River Valley alluvial",
       "sort_order": 2,
       "region_label": "Arkansas \u00b7 Mississippi \u00b7 Missouri",
-      "description_short": "A major groundwater system with irrigation dominating withdrawals across Arkansas, Mississippi, and Missouri.",
-      "description_long": "In 2015, the USGS estimated about 12141.03 Mgal/d of groundwater withdrawals associated with the Mississippi River Valley alluvial aquifer. Irrigation accounted for about 97 percent of the total, with the largest shares concentrated in Arkansas, Mississippi, and Missouri.",
+      "description_short": "A principal aquifer where irrigation drives most withdrawals across Arkansas, Mississippi, and Missouri. Withdrawals exceed recharge over the mapped footprint.",
+      "description_long": "In 2015, the USGS estimated about 12141.03 Mgal/d of groundwater withdrawals associated with the Mississippi River Valley alluvial aquifer. Irrigation accounted for about 97 percent of the total, with the largest shares concentrated in Arkansas, Mississippi, and Missouri. Overlaying the mapped aquifer footprint with the USGS mean annual natural recharge grid suggests about 8448.38 Mgal/d of long-term natural recharge. That leaves withdrawals about 3692.65 Mgal/d above the long-term estimated natural recharge over the mapped footprint.",
       "geometry_source": "USGS principal aquifers shapefile (ScienceBase item 63140610d34e36012efa385d)",
       "geometry_notes": "USGS principal aquifer geometry shown for national-scale display only. It represents the shallowest principal aquifer extent and not the full underground system.",
       "source_aquifer_codes": [
@@ -40,9 +40,9 @@
       "is_grouped_system": false,
       "default_year": 2015,
       "default_units": "Mgal/d",
-      "methodology_version": "v1",
+      "methodology_version": "v1.1",
       "status": "active",
-      "confidence_summary": "A"
+      "confidence_summary": "A-B"
     },
     {
       "display_aquifer_id": "central_valley_aquifer_system",
@@ -50,8 +50,8 @@
       "short_name": "Central Valley",
       "sort_order": 3,
       "region_label": "California",
-      "description_short": "A major groundwater system with irrigation dominating withdrawals across California.",
-      "description_long": "In 2015, the USGS estimated about 11116.8 Mgal/d of groundwater withdrawals associated with the Central Valley aquifer system. Irrigation accounted for about 91 percent of the total, with the largest shares concentrated in California.",
+      "description_short": "A principal aquifer where irrigation drives most withdrawals across California. Withdrawals far exceed recharge over the mapped footprint.",
+      "description_long": "In 2015, the USGS estimated about 11116.8 Mgal/d of groundwater withdrawals associated with the Central Valley aquifer system. Irrigation accounted for about 91 percent of the total, with the largest shares concentrated in California. Overlaying the mapped aquifer footprint with the USGS mean annual natural recharge grid suggests about 771.35 Mgal/d of long-term natural recharge. That leaves withdrawals about 10345.45 Mgal/d above the long-term estimated natural recharge over the mapped footprint.",
       "geometry_source": "USGS principal aquifers shapefile (ScienceBase item 63140610d34e36012efa385d)",
       "geometry_notes": "USGS principal aquifer geometry shown for national-scale display only. It represents the shallowest principal aquifer extent and not the full underground system.",
       "source_aquifer_codes": [
@@ -60,9 +60,9 @@
       "is_grouped_system": false,
       "default_year": 2015,
       "default_units": "Mgal/d",
-      "methodology_version": "v1",
+      "methodology_version": "v1.1",
       "status": "active",
-      "confidence_summary": "A"
+      "confidence_summary": "A-B"
     },
     {
       "display_aquifer_id": "basin_and_range_basin_fill_aquifers",
@@ -70,8 +70,8 @@
       "short_name": "Basin and Range basin-fill",
       "sort_order": 4,
       "region_label": "Arizona \u00b7 California \u00b7 Nevada",
-      "description_short": "A major groundwater system with irrigation dominating withdrawals across Arizona, California, and Nevada.",
-      "description_long": "In 2015, the USGS estimated about 7389.83 Mgal/d of groundwater withdrawals associated with the Basin and Range basin-fill aquifers. Irrigation accounted for about 74 percent of the total, with the largest shares concentrated in Arizona, California, and Nevada.",
+      "description_short": "A principal aquifer where irrigation drives most withdrawals across Arizona, California, and Nevada. Withdrawals far exceed recharge over the mapped footprint.",
+      "description_long": "In 2015, the USGS estimated about 7389.83 Mgal/d of groundwater withdrawals associated with the Basin and Range basin-fill aquifers. Irrigation accounted for about 74 percent of the total, with the largest shares concentrated in Arizona, California, and Nevada. Overlaying the mapped aquifer footprint with the USGS mean annual natural recharge grid suggests about 3480.31 Mgal/d of long-term natural recharge. That leaves withdrawals about 3909.52 Mgal/d above the long-term estimated natural recharge over the mapped footprint.",
       "geometry_source": "USGS principal aquifers shapefile (ScienceBase item 63140610d34e36012efa385d)",
       "geometry_notes": "USGS principal aquifer geometry shown for national-scale display only. It represents the shallowest principal aquifer extent and not the full underground system.",
       "source_aquifer_codes": [
@@ -80,9 +80,9 @@
       "is_grouped_system": false,
       "default_year": 2015,
       "default_units": "Mgal/d",
-      "methodology_version": "v1",
+      "methodology_version": "v1.1",
       "status": "active",
-      "confidence_summary": "A"
+      "confidence_summary": "A-B"
     },
     {
       "display_aquifer_id": "sand_and_gravel_aquifers_glaciated_regions",
@@ -90,8 +90,8 @@
       "short_name": "Sand and gravel aquifers (glaciated regions)",
       "sort_order": 5,
       "region_label": "Michigan \u00b7 Illinois \u00b7 Ohio",
-      "description_short": "A major groundwater system with public supply dominating withdrawals across Michigan, Illinois, and Ohio. The map uses a county-footprint fallback for display.",
-      "description_long": "In 2015, the USGS estimated about 4691.51 Mgal/d of groundwater withdrawals associated with the Sand and gravel aquifers (glaciated regions). Public supply accounted for about 43 percent of the total, with the largest shares concentrated in Michigan, Illinois, and Ohio. Because the official principal-aquifer shapefile does not expose a standalone polygon for this aquifer, the map footprint shows the set of 1018 counties attached to source rows.",
+      "description_short": "A principal aquifer where public supply drives most withdrawals across Michigan, Illinois, and Ohio. Recharge strongly exceeds withdrawals over the mapped footprint. The map uses a county-footprint fallback for display.",
+      "description_long": "In 2015, the USGS estimated about 4691.51 Mgal/d of groundwater withdrawals associated with the Sand and gravel aquifers (glaciated regions). Public supply accounted for about 43 percent of the total, with the largest shares concentrated in Michigan, Illinois, and Ohio. Overlaying the mapped aquifer footprint with the USGS mean annual natural recharge grid suggests about 161382.32 Mgal/d of long-term natural recharge. That leaves estimated natural recharge about 156690.81 Mgal/d above withdrawals over the mapped footprint. Because the official principal-aquifer shapefile does not expose a standalone polygon for this aquifer, the map footprint shows the set of 1018 counties attached to source rows.",
       "geometry_source": "2015 Census cartographic county boundaries (5m)",
       "geometry_notes": "County-footprint fallback shown for national display only. The USGS principal-aquifer shapefile does not expose a standalone polygon for this source aquifer, so the map uses the 1018 counties that carry 2015 withdrawal rows instead.",
       "source_aquifer_codes": [
@@ -100,9 +100,9 @@
       "is_grouped_system": false,
       "default_year": 2015,
       "default_units": "Mgal/d",
-      "methodology_version": "v1",
+      "methodology_version": "v1.1",
       "status": "active",
-      "confidence_summary": "A"
+      "confidence_summary": "A-B"
     },
     {
       "display_aquifer_id": "floridan_aquifer_system",
@@ -110,8 +110,8 @@
       "short_name": "Floridan",
       "sort_order": 6,
       "region_label": "Florida \u00b7 Georgia \u00b7 South Carolina",
-      "description_short": "A major groundwater system with public supply dominating withdrawals across Florida, Georgia, and South Carolina.",
-      "description_long": "In 2015, the USGS estimated about 3184.94 Mgal/d of groundwater withdrawals associated with the Floridan aquifer system. Public supply accounted for about 41 percent of the total, with the largest shares concentrated in Florida, Georgia, and South Carolina.",
+      "description_short": "A principal aquifer where public supply drives most withdrawals across Florida, Georgia, and South Carolina. Recharge exceeds withdrawals over the mapped footprint.",
+      "description_long": "In 2015, the USGS estimated about 3184.94 Mgal/d of groundwater withdrawals associated with the Floridan aquifer system. Public supply accounted for about 41 percent of the total, with the largest shares concentrated in Florida, Georgia, and South Carolina. Overlaying the mapped aquifer footprint with the USGS mean annual natural recharge grid suggests about 5354.5 Mgal/d of long-term natural recharge. That leaves estimated natural recharge about 2169.56 Mgal/d above withdrawals over the mapped footprint.",
       "geometry_source": "USGS principal aquifers shapefile (ScienceBase item 63140610d34e36012efa385d)",
       "geometry_notes": "USGS principal aquifer geometry shown for national-scale display only. It represents the shallowest principal aquifer extent and not the full underground system.",
       "source_aquifer_codes": [
@@ -120,9 +120,9 @@
       "is_grouped_system": false,
       "default_year": 2015,
       "default_units": "Mgal/d",
-      "methodology_version": "v1",
+      "methodology_version": "v1.1",
       "status": "active",
-      "confidence_summary": "A"
+      "confidence_summary": "A-B"
     },
     {
       "display_aquifer_id": "alluvial_aquifers",
@@ -130,8 +130,8 @@
       "short_name": "Alluvial",
       "sort_order": 7,
       "region_label": "Kansas \u00b7 Nebraska \u00b7 Arkansas",
-      "description_short": "A major groundwater system with irrigation dominating withdrawals across Kansas, Nebraska, and Arkansas. The map uses a county-footprint fallback for display.",
-      "description_long": "In 2015, the USGS estimated about 2959.75 Mgal/d of groundwater withdrawals associated with the Alluvial aquifers. Irrigation accounted for about 66 percent of the total, with the largest shares concentrated in Kansas, Nebraska, and Arkansas. Because the official principal-aquifer shapefile does not expose a standalone polygon for this aquifer, the map footprint shows the set of 901 counties attached to source rows.",
+      "description_short": "A principal aquifer where irrigation drives most withdrawals across Kansas, Nebraska, and Arkansas. Recharge strongly exceeds withdrawals over the mapped footprint. The map uses a county-footprint fallback for display.",
+      "description_long": "In 2015, the USGS estimated about 2959.75 Mgal/d of groundwater withdrawals associated with the Alluvial aquifers. Irrigation accounted for about 66 percent of the total, with the largest shares concentrated in Kansas, Nebraska, and Arkansas. Overlaying the mapped aquifer footprint with the USGS mean annual natural recharge grid suggests about 128826.78 Mgal/d of long-term natural recharge. That leaves estimated natural recharge about 125867.03 Mgal/d above withdrawals over the mapped footprint. Because the official principal-aquifer shapefile does not expose a standalone polygon for this aquifer, the map footprint shows the set of 901 counties attached to source rows.",
       "geometry_source": "2015 Census cartographic county boundaries (5m)",
       "geometry_notes": "County-footprint fallback shown for national display only. The USGS principal-aquifer shapefile does not expose a standalone polygon for this source aquifer, so the map uses the 901 counties that carry 2015 withdrawal rows instead.",
       "source_aquifer_codes": [
@@ -140,9 +140,9 @@
       "is_grouped_system": false,
       "default_year": 2015,
       "default_units": "Mgal/d",
-      "methodology_version": "v1",
+      "methodology_version": "v1.1",
       "status": "active",
-      "confidence_summary": "A"
+      "confidence_summary": "A-B"
     },
     {
       "display_aquifer_id": "snake_river_plain_basaltic_rock_aquifers",
@@ -150,8 +150,8 @@
       "short_name": "Snake River Plain basaltic-rock",
       "sort_order": 8,
       "region_label": "Idaho \u00b7 Oregon",
-      "description_short": "A major groundwater system with irrigation dominating withdrawals across Idaho and Oregon.",
-      "description_long": "In 2015, the USGS estimated about 2928.81 Mgal/d of groundwater withdrawals associated with the Snake River Plain basaltic-rock aquifers. Irrigation accounted for about 95 percent of the total, with the largest shares concentrated in Idaho and Oregon.",
+      "description_short": "A principal aquifer where irrigation drives most withdrawals across Idaho and Oregon. Withdrawals far exceed recharge over the mapped footprint.",
+      "description_long": "In 2015, the USGS estimated about 2928.81 Mgal/d of groundwater withdrawals associated with the Snake River Plain basaltic-rock aquifers. Irrigation accounted for about 95 percent of the total, with the largest shares concentrated in Idaho and Oregon. Overlaying the mapped aquifer footprint with the USGS mean annual natural recharge grid suggests about 316.74 Mgal/d of long-term natural recharge. That leaves withdrawals about 2612.07 Mgal/d above the long-term estimated natural recharge over the mapped footprint.",
       "geometry_source": "USGS principal aquifers shapefile (ScienceBase item 63140610d34e36012efa385d)",
       "geometry_notes": "USGS principal aquifer geometry shown for national-scale display only. It represents the shallowest principal aquifer extent and not the full underground system.",
       "source_aquifer_codes": [
@@ -160,9 +160,9 @@
       "is_grouped_system": false,
       "default_year": 2015,
       "default_units": "Mgal/d",
-      "methodology_version": "v1",
+      "methodology_version": "v1.1",
       "status": "active",
-      "confidence_summary": "A"
+      "confidence_summary": "A-B"
     },
     {
       "display_aquifer_id": "coastal_lowlands_aquifer_system",
@@ -170,8 +170,8 @@
       "short_name": "Coastal lowlands",
       "sort_order": 9,
       "region_label": "Louisiana \u00b7 Texas \u00b7 Mississippi",
-      "description_short": "A major groundwater system with irrigation dominating withdrawals across Louisiana, Texas, and Mississippi.",
-      "description_long": "In 2015, the USGS estimated about 2287.96 Mgal/d of groundwater withdrawals associated with the Coastal lowlands aquifer system. Irrigation accounted for about 33 percent of the total, with the largest shares concentrated in Louisiana, Texas, and Mississippi.",
+      "description_short": "A principal aquifer where irrigation drives most withdrawals across Louisiana, Texas, and Mississippi. Recharge strongly exceeds withdrawals over the mapped footprint.",
+      "description_long": "In 2015, the USGS estimated about 2287.96 Mgal/d of groundwater withdrawals associated with the Coastal lowlands aquifer system. Irrigation accounted for about 33 percent of the total, with the largest shares concentrated in Louisiana, Texas, and Mississippi. Overlaying the mapped aquifer footprint with the USGS mean annual natural recharge grid suggests about 22178.87 Mgal/d of long-term natural recharge. That leaves estimated natural recharge about 19890.91 Mgal/d above withdrawals over the mapped footprint.",
       "geometry_source": "USGS principal aquifers shapefile (ScienceBase item 63140610d34e36012efa385d)",
       "geometry_notes": "USGS principal aquifer geometry shown for national-scale display only. It represents the shallowest principal aquifer extent and not the full underground system.",
       "source_aquifer_codes": [
@@ -180,9 +180,9 @@
       "is_grouped_system": false,
       "default_year": 2015,
       "default_units": "Mgal/d",
-      "methodology_version": "v1",
+      "methodology_version": "v1.1",
       "status": "active",
-      "confidence_summary": "A"
+      "confidence_summary": "A-B"
     },
     {
       "display_aquifer_id": "california_coastal_basin_aquifers",
@@ -190,8 +190,8 @@
       "short_name": "California Coastal Basin",
       "sort_order": 10,
       "region_label": "California",
-      "description_short": "A major groundwater system with public supply dominating withdrawals across California.",
-      "description_long": "In 2015, the USGS estimated about 2033.51 Mgal/d of groundwater withdrawals associated with the California Coastal Basin aquifers. Public supply accounted for about 47 percent of the total, with the largest shares concentrated in California.",
+      "description_short": "A principal aquifer where public supply drives most withdrawals across California. Withdrawals exceed recharge over the mapped footprint.",
+      "description_long": "In 2015, the USGS estimated about 2033.51 Mgal/d of groundwater withdrawals associated with the California Coastal Basin aquifers. Public supply accounted for about 47 percent of the total, with the largest shares concentrated in California. Overlaying the mapped aquifer footprint with the USGS mean annual natural recharge grid suggests about 1018.66 Mgal/d of long-term natural recharge. That leaves withdrawals about 1014.85 Mgal/d above the long-term estimated natural recharge over the mapped footprint.",
       "geometry_source": "USGS principal aquifers shapefile (ScienceBase item 63140610d34e36012efa385d)",
       "geometry_notes": "USGS principal aquifer geometry shown for national-scale display only. It represents the shallowest principal aquifer extent and not the full underground system.",
       "source_aquifer_codes": [
@@ -200,9 +200,9 @@
       "is_grouped_system": false,
       "default_year": 2015,
       "default_units": "Mgal/d",
-      "methodology_version": "v1",
+      "methodology_version": "v1.1",
       "status": "active",
-      "confidence_summary": "A"
+      "confidence_summary": "A-B"
     },
     {
       "display_aquifer_id": "pacific_northwest_basin_fill_aquifers",
@@ -210,8 +210,8 @@
       "short_name": "Pacific Northwest basin-fill",
       "sort_order": 11,
       "region_label": "Idaho \u00b7 California \u00b7 Oregon",
-      "description_short": "A major groundwater system with irrigation dominating withdrawals across Idaho, California, and Oregon.",
-      "description_long": "In 2015, the USGS estimated about 1390.8 Mgal/d of groundwater withdrawals associated with the Pacific Northwest basin-fill aquifers. Irrigation accounted for about 84 percent of the total, with the largest shares concentrated in Idaho, California, and Oregon.",
+      "description_short": "A principal aquifer where irrigation drives most withdrawals across Idaho, California, and Oregon. Recharge strongly exceeds withdrawals over the mapped footprint.",
+      "description_long": "In 2015, the USGS estimated about 1390.8 Mgal/d of groundwater withdrawals associated with the Pacific Northwest basin-fill aquifers. Irrigation accounted for about 84 percent of the total, with the largest shares concentrated in Idaho, California, and Oregon. Overlaying the mapped aquifer footprint with the USGS mean annual natural recharge grid suggests about 10710.73 Mgal/d of long-term natural recharge. That leaves estimated natural recharge about 9319.93 Mgal/d above withdrawals over the mapped footprint.",
       "geometry_source": "USGS principal aquifers shapefile (ScienceBase item 63140610d34e36012efa385d)",
       "geometry_notes": "USGS principal aquifer geometry shown for national-scale display only. It represents the shallowest principal aquifer extent and not the full underground system.",
       "source_aquifer_codes": [
@@ -220,9 +220,9 @@
       "is_grouped_system": false,
       "default_year": 2015,
       "default_units": "Mgal/d",
-      "methodology_version": "v1",
+      "methodology_version": "v1.1",
       "status": "active",
-      "confidence_summary": "A"
+      "confidence_summary": "A-B"
     },
     {
       "display_aquifer_id": "northern_atlantic_coastal_plain_aquifer_system",
@@ -230,8 +230,8 @@
       "short_name": "Northern Atlantic Coastal Plain",
       "sort_order": 12,
       "region_label": "New Jersey \u00b7 New York \u00b7 Maryland",
-      "description_short": "A major groundwater system with public supply dominating withdrawals across New Jersey, New York, and Maryland.",
-      "description_long": "In 2015, the USGS estimated about 1344.63 Mgal/d of groundwater withdrawals associated with the Northern Atlantic Coastal Plain aquifer system. Public supply accounted for about 57 percent of the total, with the largest shares concentrated in New Jersey, New York, and Maryland.",
+      "description_short": "A principal aquifer where public supply drives most withdrawals across New Jersey, New York, and Maryland. Recharge strongly exceeds withdrawals over the mapped footprint.",
+      "description_long": "In 2015, the USGS estimated about 1344.63 Mgal/d of groundwater withdrawals associated with the Northern Atlantic Coastal Plain aquifer system. Public supply accounted for about 57 percent of the total, with the largest shares concentrated in New Jersey, New York, and Maryland. Overlaying the mapped aquifer footprint with the USGS mean annual natural recharge grid suggests about 13294.66 Mgal/d of long-term natural recharge. That leaves estimated natural recharge about 11950.03 Mgal/d above withdrawals over the mapped footprint.",
       "geometry_source": "USGS principal aquifers shapefile (ScienceBase item 63140610d34e36012efa385d)",
       "geometry_notes": "USGS principal aquifer geometry shown for national-scale display only. It represents the shallowest principal aquifer extent and not the full underground system.",
       "source_aquifer_codes": [
@@ -240,9 +240,9 @@
       "is_grouped_system": false,
       "default_year": 2015,
       "default_units": "Mgal/d",
-      "methodology_version": "v1",
+      "methodology_version": "v1.1",
       "status": "active",
-      "confidence_summary": "A"
+      "confidence_summary": "A-B"
     },
     {
       "display_aquifer_id": "columbia_plateau_basaltic_rock_aquifers",
@@ -250,8 +250,8 @@
       "short_name": "Columbia Plateau basaltic-rock",
       "sort_order": 13,
       "region_label": "Washington \u00b7 Oregon \u00b7 Idaho",
-      "description_short": "A major groundwater system with irrigation dominating withdrawals across Washington, Oregon, and Idaho.",
-      "description_long": "In 2015, the USGS estimated about 1078.72 Mgal/d of groundwater withdrawals associated with the Columbia Plateau basaltic-rock aquifers. Irrigation accounted for about 81 percent of the total, with the largest shares concentrated in Washington, Oregon, and Idaho.",
+      "description_short": "A principal aquifer where irrigation drives most withdrawals across Washington, Oregon, and Idaho. Recharge strongly exceeds withdrawals over the mapped footprint.",
+      "description_long": "In 2015, the USGS estimated about 1078.72 Mgal/d of groundwater withdrawals associated with the Columbia Plateau basaltic-rock aquifers. Irrigation accounted for about 81 percent of the total, with the largest shares concentrated in Washington, Oregon, and Idaho. Overlaying the mapped aquifer footprint with the USGS mean annual natural recharge grid suggests about 6251.57 Mgal/d of long-term natural recharge. That leaves estimated natural recharge about 5172.85 Mgal/d above withdrawals over the mapped footprint.",
       "geometry_source": "USGS principal aquifers shapefile (ScienceBase item 63140610d34e36012efa385d)",
       "geometry_notes": "USGS principal aquifer geometry shown for national-scale display only. It represents the shallowest principal aquifer extent and not the full underground system.",
       "source_aquifer_codes": [
@@ -260,9 +260,9 @@
       "is_grouped_system": false,
       "default_year": 2015,
       "default_units": "Mgal/d",
-      "methodology_version": "v1",
+      "methodology_version": "v1.1",
       "status": "active",
-      "confidence_summary": "A"
+      "confidence_summary": "A-B"
     },
     {
       "display_aquifer_id": "rio_grande_aquifer_system",
@@ -270,8 +270,8 @@
       "short_name": "Rio Grande",
       "sort_order": 14,
       "region_label": "New Mexico \u00b7 Colorado \u00b7 Texas",
-      "description_short": "A major groundwater system with irrigation dominating withdrawals across New Mexico, Colorado, and Texas.",
-      "description_long": "In 2015, the USGS estimated about 949.08 Mgal/d of groundwater withdrawals associated with the Rio Grande aquifer system. Irrigation accounted for about 74 percent of the total, with the largest shares concentrated in New Mexico, Colorado, and Texas.",
+      "description_short": "A principal aquifer where irrigation drives most withdrawals across New Mexico, Colorado, and Texas. Withdrawals sit near recharge balance over the mapped footprint.",
+      "description_long": "In 2015, the USGS estimated about 949.08 Mgal/d of groundwater withdrawals associated with the Rio Grande aquifer system. Irrigation accounted for about 74 percent of the total, with the largest shares concentrated in New Mexico, Colorado, and Texas. Overlaying the mapped aquifer footprint with the USGS mean annual natural recharge grid suggests about 779.09 Mgal/d of long-term natural recharge. That leaves withdrawals about 169.99 Mgal/d above the long-term estimated natural recharge over the mapped footprint.",
       "geometry_source": "USGS principal aquifers shapefile (ScienceBase item 63140610d34e36012efa385d)",
       "geometry_notes": "USGS principal aquifer geometry shown for national-scale display only. It represents the shallowest principal aquifer extent and not the full underground system.",
       "source_aquifer_codes": [
@@ -280,9 +280,9 @@
       "is_grouped_system": false,
       "default_year": 2015,
       "default_units": "Mgal/d",
-      "methodology_version": "v1",
+      "methodology_version": "v1.1",
       "status": "active",
-      "confidence_summary": "A"
+      "confidence_summary": "A-B"
     },
     {
       "display_aquifer_id": "mississippi_embayment_aquifer_system",
@@ -290,8 +290,8 @@
       "short_name": "Mississippi embayment",
       "sort_order": 15,
       "region_label": "Arkansas \u00b7 Tennessee \u00b7 Mississippi",
-      "description_short": "A major groundwater system with public supply dominating withdrawals across Arkansas, Tennessee, and Mississippi.",
-      "description_long": "In 2015, the USGS estimated about 928.63 Mgal/d of groundwater withdrawals associated with the Mississippi embayment aquifer system. Public supply accounted for about 54 percent of the total, with the largest shares concentrated in Arkansas, Tennessee, and Mississippi.",
+      "description_short": "A principal aquifer where public supply drives most withdrawals across Arkansas, Tennessee, and Mississippi. Recharge strongly exceeds withdrawals over the mapped footprint.",
+      "description_long": "In 2015, the USGS estimated about 928.63 Mgal/d of groundwater withdrawals associated with the Mississippi embayment aquifer system. Public supply accounted for about 54 percent of the total, with the largest shares concentrated in Arkansas, Tennessee, and Mississippi. Overlaying the mapped aquifer footprint with the USGS mean annual natural recharge grid suggests about 9215.71 Mgal/d of long-term natural recharge. That leaves estimated natural recharge about 8287.08 Mgal/d above withdrawals over the mapped footprint.",
       "geometry_source": "USGS principal aquifers shapefile (ScienceBase item 63140610d34e36012efa385d)",
       "geometry_notes": "USGS principal aquifer geometry shown for national-scale display only. It represents the shallowest principal aquifer extent and not the full underground system.",
       "source_aquifer_codes": [
@@ -300,9 +300,9 @@
       "is_grouped_system": false,
       "default_year": 2015,
       "default_units": "Mgal/d",
-      "methodology_version": "v1",
+      "methodology_version": "v1.1",
       "status": "active",
-      "confidence_summary": "A"
+      "confidence_summary": "A-B"
     },
     {
       "display_aquifer_id": "cambrian_ordovician_aquifer_system",
@@ -310,8 +310,8 @@
       "short_name": "Cambrian-Ordovician",
       "sort_order": 16,
       "region_label": "Minnesota \u00b7 Wisconsin \u00b7 Illinois",
-      "description_short": "A major groundwater system with public supply dominating withdrawals across Minnesota, Wisconsin, and Illinois.",
-      "description_long": "In 2015, the USGS estimated about 921.31 Mgal/d of groundwater withdrawals associated with the Cambrian-Ordovician aquifer system. Public supply accounted for about 61 percent of the total, with the largest shares concentrated in Minnesota, Wisconsin, and Illinois.",
+      "description_short": "A principal aquifer where public supply drives most withdrawals across Minnesota, Wisconsin, and Illinois. Recharge strongly exceeds withdrawals over the mapped footprint.",
+      "description_long": "In 2015, the USGS estimated about 921.31 Mgal/d of groundwater withdrawals associated with the Cambrian-Ordovician aquifer system. Public supply accounted for about 61 percent of the total, with the largest shares concentrated in Minnesota, Wisconsin, and Illinois. Overlaying the mapped aquifer footprint with the USGS mean annual natural recharge grid suggests about 11211.74 Mgal/d of long-term natural recharge. That leaves estimated natural recharge about 10290.43 Mgal/d above withdrawals over the mapped footprint.",
       "geometry_source": "USGS principal aquifers shapefile (ScienceBase item 63140610d34e36012efa385d)",
       "geometry_notes": "USGS principal aquifer geometry shown for national-scale display only. It represents the shallowest principal aquifer extent and not the full underground system.",
       "source_aquifer_codes": [
@@ -320,9 +320,9 @@
       "is_grouped_system": false,
       "default_year": 2015,
       "default_units": "Mgal/d",
-      "methodology_version": "v1",
+      "methodology_version": "v1.1",
       "status": "active",
-      "confidence_summary": "A"
+      "confidence_summary": "A-B"
     },
     {
       "display_aquifer_id": "southeastern_coastal_plain_aquifer_system",
@@ -330,8 +330,8 @@
       "short_name": "Southeastern Coastal Plain",
       "sort_order": 17,
       "region_label": "Georgia \u00b7 South Carolina \u00b7 Alabama",
-      "description_short": "A major groundwater system with public supply dominating withdrawals across Georgia, South Carolina, and Alabama.",
-      "description_long": "In 2015, the USGS estimated about 725.1 Mgal/d of groundwater withdrawals associated with the Southeastern Coastal Plain aquifer system. Public supply accounted for about 43 percent of the total, with the largest shares concentrated in Georgia, South Carolina, and Alabama.",
+      "description_short": "A principal aquifer where public supply drives most withdrawals across Georgia, South Carolina, and Alabama. Recharge strongly exceeds withdrawals over the mapped footprint.",
+      "description_long": "In 2015, the USGS estimated about 725.1 Mgal/d of groundwater withdrawals associated with the Southeastern Coastal Plain aquifer system. Public supply accounted for about 43 percent of the total, with the largest shares concentrated in Georgia, South Carolina, and Alabama. Overlaying the mapped aquifer footprint with the USGS mean annual natural recharge grid suggests about 15471.81 Mgal/d of long-term natural recharge. That leaves estimated natural recharge about 14746.71 Mgal/d above withdrawals over the mapped footprint.",
       "geometry_source": "USGS principal aquifers shapefile (ScienceBase item 63140610d34e36012efa385d)",
       "geometry_notes": "USGS principal aquifer geometry shown for national-scale display only. It represents the shallowest principal aquifer extent and not the full underground system.",
       "source_aquifer_codes": [
@@ -340,9 +340,9 @@
       "is_grouped_system": false,
       "default_year": 2015,
       "default_units": "Mgal/d",
-      "methodology_version": "v1",
+      "methodology_version": "v1.1",
       "status": "active",
-      "confidence_summary": "A"
+      "confidence_summary": "A-B"
     },
     {
       "display_aquifer_id": "biscayne_aquifer",
@@ -350,8 +350,8 @@
       "short_name": "Biscayne",
       "sort_order": 18,
       "region_label": "Florida",
-      "description_short": "A major groundwater system with public supply dominating withdrawals across Florida.",
-      "description_long": "In 2015, the USGS estimated about 679.33 Mgal/d of groundwater withdrawals associated with the Biscayne aquifer. Public supply accounted for about 87 percent of the total, with the largest shares concentrated in Florida.",
+      "description_short": "A principal aquifer where public supply drives most withdrawals across Florida. Withdrawals sit near recharge balance over the mapped footprint.",
+      "description_long": "In 2015, the USGS estimated about 679.33 Mgal/d of groundwater withdrawals associated with the Biscayne aquifer. Public supply accounted for about 87 percent of the total, with the largest shares concentrated in Florida. Overlaying the mapped aquifer footprint with the USGS mean annual natural recharge grid suggests about 555.92 Mgal/d of long-term natural recharge. That leaves withdrawals about 123.41 Mgal/d above the long-term estimated natural recharge over the mapped footprint.",
       "geometry_source": "USGS principal aquifers shapefile (ScienceBase item 63140610d34e36012efa385d)",
       "geometry_notes": "USGS principal aquifer geometry shown for national-scale display only. It represents the shallowest principal aquifer extent and not the full underground system.",
       "source_aquifer_codes": [
@@ -360,9 +360,9 @@
       "is_grouped_system": false,
       "default_year": 2015,
       "default_units": "Mgal/d",
-      "methodology_version": "v1",
+      "methodology_version": "v1.1",
       "status": "active",
-      "confidence_summary": "A"
+      "confidence_summary": "A-B"
     },
     {
       "display_aquifer_id": "edwards_trinity_aquifer_system",
@@ -370,8 +370,8 @@
       "short_name": "Edwards-Trinity",
       "sort_order": 19,
       "region_label": "Texas \u00b7 Oklahoma \u00b7 Arkansas",
-      "description_short": "A major groundwater system with public supply dominating withdrawals across Texas, Oklahoma, and Arkansas.",
-      "description_long": "In 2015, the USGS estimated about 661.1 Mgal/d of groundwater withdrawals associated with the Edwards-Trinity aquifer system. Public supply accounted for about 51 percent of the total, with the largest shares concentrated in Texas, Oklahoma, and Arkansas.",
+      "description_short": "A principal aquifer where public supply drives most withdrawals across Texas, Oklahoma, and Arkansas. Recharge exceeds withdrawals over the mapped footprint.",
+      "description_long": "In 2015, the USGS estimated about 661.1 Mgal/d of groundwater withdrawals associated with the Edwards-Trinity aquifer system. Public supply accounted for about 51 percent of the total, with the largest shares concentrated in Texas, Oklahoma, and Arkansas. Overlaying the mapped aquifer footprint with the USGS mean annual natural recharge grid suggests about 1315.94 Mgal/d of long-term natural recharge. That leaves estimated natural recharge about 654.84 Mgal/d above withdrawals over the mapped footprint.",
       "geometry_source": "USGS principal aquifers shapefile (ScienceBase item 63140610d34e36012efa385d)",
       "geometry_notes": "USGS principal aquifer geometry shown for national-scale display only. It represents the shallowest principal aquifer extent and not the full underground system.",
       "source_aquifer_codes": [
@@ -380,9 +380,9 @@
       "is_grouped_system": false,
       "default_year": 2015,
       "default_units": "Mgal/d",
-      "methodology_version": "v1",
+      "methodology_version": "v1.1",
       "status": "active",
-      "confidence_summary": "A"
+      "confidence_summary": "A-B"
     },
     {
       "display_aquifer_id": "northern_rocky_mountains_intermontane_basins_aquifer_system",
@@ -390,8 +390,8 @@
       "short_name": "Northern Rocky Mountains Intermontane Basins",
       "sort_order": 20,
       "region_label": "Idaho \u00b7 Montana \u00b7 Washington",
-      "description_short": "A major groundwater system with irrigation dominating withdrawals across Idaho, Montana, and Washington.",
-      "description_long": "In 2015, the USGS estimated about 609.99 Mgal/d of groundwater withdrawals associated with the Northern Rocky Mountains Intermontane Basins aquifer system. Irrigation accounted for about 78 percent of the total, with the largest shares concentrated in Idaho, Montana, and Washington.",
+      "description_short": "A principal aquifer where irrigation drives most withdrawals across Idaho, Montana, and Washington. Recharge strongly exceeds withdrawals over the mapped footprint.",
+      "description_long": "In 2015, the USGS estimated about 609.99 Mgal/d of groundwater withdrawals associated with the Northern Rocky Mountains Intermontane Basins aquifer system. Irrigation accounted for about 78 percent of the total, with the largest shares concentrated in Idaho, Montana, and Washington. Overlaying the mapped aquifer footprint with the USGS mean annual natural recharge grid suggests about 5030.95 Mgal/d of long-term natural recharge. That leaves estimated natural recharge about 4420.96 Mgal/d above withdrawals over the mapped footprint.",
       "geometry_source": "USGS principal aquifers shapefile (ScienceBase item 63140610d34e36012efa385d)",
       "geometry_notes": "USGS principal aquifer geometry shown for national-scale display only. It represents the shallowest principal aquifer extent and not the full underground system.",
       "source_aquifer_codes": [
@@ -400,9 +400,9 @@
       "is_grouped_system": false,
       "default_year": 2015,
       "default_units": "Mgal/d",
-      "methodology_version": "v1",
+      "methodology_version": "v1.1",
       "status": "active",
-      "confidence_summary": "A"
+      "confidence_summary": "A-B"
     },
     {
       "display_aquifer_id": "piedmont_and_blue_ridge_crystalline_rock_aquifers",
@@ -410,8 +410,8 @@
       "short_name": "Piedmont and Blue Ridge crystalline-rock",
       "sort_order": 21,
       "region_label": "North Carolina \u00b7 Georgia \u00b7 Virginia",
-      "description_short": "A major groundwater system with domestic dominating withdrawals across North Carolina, Georgia, and Virginia.",
-      "description_long": "In 2015, the USGS estimated about 591.68 Mgal/d of groundwater withdrawals associated with the Piedmont and Blue Ridge crystalline-rock aquifers. Domestic accounted for about 63 percent of the total, with the largest shares concentrated in North Carolina, Georgia, and Virginia.",
+      "description_short": "A principal aquifer where domestic drives most withdrawals across North Carolina, Georgia, and Virginia. Recharge strongly exceeds withdrawals over the mapped footprint.",
+      "description_long": "In 2015, the USGS estimated about 591.68 Mgal/d of groundwater withdrawals associated with the Piedmont and Blue Ridge crystalline-rock aquifers. Domestic accounted for about 63 percent of the total, with the largest shares concentrated in North Carolina, Georgia, and Virginia. Overlaying the mapped aquifer footprint with the USGS mean annual natural recharge grid suggests about 40508.58 Mgal/d of long-term natural recharge. That leaves estimated natural recharge about 39916.9 Mgal/d above withdrawals over the mapped footprint.",
       "geometry_source": "USGS principal aquifers shapefile (ScienceBase item 63140610d34e36012efa385d)",
       "geometry_notes": "USGS principal aquifer geometry shown for national-scale display only. It represents the shallowest principal aquifer extent and not the full underground system.",
       "source_aquifer_codes": [
@@ -420,9 +420,9 @@
       "is_grouped_system": false,
       "default_year": 2015,
       "default_units": "Mgal/d",
-      "methodology_version": "v1",
+      "methodology_version": "v1.1",
       "status": "active",
-      "confidence_summary": "A"
+      "confidence_summary": "A-B"
     },
     {
       "display_aquifer_id": "surficial_aquifer_system",
@@ -430,8 +430,8 @@
       "short_name": "Surficial",
       "sort_order": 22,
       "region_label": "Florida \u00b7 South Carolina \u00b7 North Carolina",
-      "description_short": "A major groundwater system with public supply dominating withdrawals across Florida, South Carolina, and North Carolina.",
-      "description_long": "In 2015, the USGS estimated about 557.27 Mgal/d of groundwater withdrawals associated with the Surficial aquifer system. Public supply accounted for about 49 percent of the total, with the largest shares concentrated in Florida, South Carolina, and North Carolina.",
+      "description_short": "A principal aquifer where public supply drives most withdrawals across Florida, South Carolina, and North Carolina. Recharge strongly exceeds withdrawals over the mapped footprint.",
+      "description_long": "In 2015, the USGS estimated about 557.27 Mgal/d of groundwater withdrawals associated with the Surficial aquifer system. Public supply accounted for about 49 percent of the total, with the largest shares concentrated in Florida, South Carolina, and North Carolina. Overlaying the mapped aquifer footprint with the USGS mean annual natural recharge grid suggests about 19676.94 Mgal/d of long-term natural recharge. That leaves estimated natural recharge about 19119.67 Mgal/d above withdrawals over the mapped footprint.",
       "geometry_source": "USGS principal aquifers shapefile (ScienceBase item 63140610d34e36012efa385d)",
       "geometry_notes": "USGS principal aquifer geometry shown for national-scale display only. It represents the shallowest principal aquifer extent and not the full underground system.",
       "source_aquifer_codes": [
@@ -440,9 +440,9 @@
       "is_grouped_system": false,
       "default_year": 2015,
       "default_units": "Mgal/d",
-      "methodology_version": "v1",
+      "methodology_version": "v1.1",
       "status": "active",
-      "confidence_summary": "A"
+      "confidence_summary": "A-B"
     },
     {
       "display_aquifer_id": "valley_and_ridge_aquifers",
@@ -450,8 +450,8 @@
       "short_name": "Valley and Ridge",
       "sort_order": 23,
       "region_label": "Pennsylvania \u00b7 Virginia \u00b7 Alabama",
-      "description_short": "A major groundwater system with public supply dominating withdrawals across Pennsylvania, Virginia, and Alabama.",
-      "description_long": "In 2015, the USGS estimated about 551.24 Mgal/d of groundwater withdrawals associated with the Valley and Ridge aquifers. Public supply accounted for about 44 percent of the total, with the largest shares concentrated in Pennsylvania, Virginia, and Alabama.",
+      "description_short": "A principal aquifer where public supply drives most withdrawals across Pennsylvania, Virginia, and Alabama. Recharge strongly exceeds withdrawals over the mapped footprint.",
+      "description_long": "In 2015, the USGS estimated about 551.24 Mgal/d of groundwater withdrawals associated with the Valley and Ridge aquifers. Public supply accounted for about 44 percent of the total, with the largest shares concentrated in Pennsylvania, Virginia, and Alabama. Overlaying the mapped aquifer footprint with the USGS mean annual natural recharge grid suggests about 13521.23 Mgal/d of long-term natural recharge. That leaves estimated natural recharge about 12969.99 Mgal/d above withdrawals over the mapped footprint.",
       "geometry_source": "USGS principal aquifers shapefile (ScienceBase item 63140610d34e36012efa385d)",
       "geometry_notes": "USGS principal aquifer geometry shown for national-scale display only. It represents the shallowest principal aquifer extent and not the full underground system.",
       "source_aquifer_codes": [
@@ -460,9 +460,9 @@
       "is_grouped_system": false,
       "default_year": 2015,
       "default_units": "Mgal/d",
-      "methodology_version": "v1",
+      "methodology_version": "v1.1",
       "status": "active",
-      "confidence_summary": "A"
+      "confidence_summary": "A-B"
     },
     {
       "display_aquifer_id": "silurian_devonian_aquifers",
@@ -470,8 +470,8 @@
       "short_name": "Silurian-Devonian",
       "sort_order": 24,
       "region_label": "Ohio \u00b7 Iowa \u00b7 Indiana",
-      "description_short": "A major groundwater system with public supply dominating withdrawals across Ohio, Iowa, and Indiana.",
-      "description_long": "In 2015, the USGS estimated about 473.94 Mgal/d of groundwater withdrawals associated with the Silurian-Devonian aquifers. Public supply accounted for about 32 percent of the total, with the largest shares concentrated in Ohio, Iowa, and Indiana.",
+      "description_short": "A principal aquifer where public supply drives most withdrawals across Ohio, Iowa, and Indiana. Recharge strongly exceeds withdrawals over the mapped footprint.",
+      "description_long": "In 2015, the USGS estimated about 473.94 Mgal/d of groundwater withdrawals associated with the Silurian-Devonian aquifers. Public supply accounted for about 32 percent of the total, with the largest shares concentrated in Ohio, Iowa, and Indiana. Overlaying the mapped aquifer footprint with the USGS mean annual natural recharge grid suggests about 11171.63 Mgal/d of long-term natural recharge. That leaves estimated natural recharge about 10697.69 Mgal/d above withdrawals over the mapped footprint.",
       "geometry_source": "USGS principal aquifers shapefile (ScienceBase item 63140610d34e36012efa385d)",
       "geometry_notes": "USGS principal aquifer geometry shown for national-scale display only. It represents the shallowest principal aquifer extent and not the full underground system.",
       "source_aquifer_codes": [
@@ -480,9 +480,9 @@
       "is_grouped_system": false,
       "default_year": 2015,
       "default_units": "Mgal/d",
-      "methodology_version": "v1",
+      "methodology_version": "v1.1",
       "status": "active",
-      "confidence_summary": "A"
+      "confidence_summary": "A-B"
     },
     {
       "display_aquifer_id": "pacific_northwest_basaltic_rock_aquifers",
@@ -490,8 +490,8 @@
       "short_name": "Pacific Northwest basaltic-rock",
       "sort_order": 25,
       "region_label": "Oregon \u00b7 Idaho \u00b7 California",
-      "description_short": "A major groundwater system with irrigation dominating withdrawals across Oregon, Idaho, and California.",
-      "description_long": "In 2015, the USGS estimated about 472.74 Mgal/d of groundwater withdrawals associated with the Pacific Northwest basaltic-rock aquifers. Irrigation accounted for about 84 percent of the total, with the largest shares concentrated in Oregon, Idaho, and California.",
+      "description_short": "A principal aquifer where irrigation drives most withdrawals across Oregon, Idaho, and California. Recharge strongly exceeds withdrawals over the mapped footprint.",
+      "description_long": "In 2015, the USGS estimated about 472.74 Mgal/d of groundwater withdrawals associated with the Pacific Northwest basaltic-rock aquifers. Irrigation accounted for about 84 percent of the total, with the largest shares concentrated in Oregon, Idaho, and California. Overlaying the mapped aquifer footprint with the USGS mean annual natural recharge grid suggests about 26502.42 Mgal/d of long-term natural recharge. That leaves estimated natural recharge about 26029.68 Mgal/d above withdrawals over the mapped footprint.",
       "geometry_source": "USGS principal aquifers shapefile (ScienceBase item 63140610d34e36012efa385d)",
       "geometry_notes": "USGS principal aquifer geometry shown for national-scale display only. It represents the shallowest principal aquifer extent and not the full underground system.",
       "source_aquifer_codes": [
@@ -500,9 +500,9 @@
       "is_grouped_system": false,
       "default_year": 2015,
       "default_units": "Mgal/d",
-      "methodology_version": "v1",
+      "methodology_version": "v1.1",
       "status": "active",
-      "confidence_summary": "A"
+      "confidence_summary": "A-B"
     },
     {
       "display_aquifer_id": "willamette_lowland_basin_fill_aquifers",
@@ -510,8 +510,8 @@
       "short_name": "Willamette Lowland basin-fill",
       "sort_order": 26,
       "region_label": "Oregon \u00b7 Washington",
-      "description_short": "A major groundwater system with irrigation dominating withdrawals across Oregon and Washington.",
-      "description_long": "In 2015, the USGS estimated about 465.61 Mgal/d of groundwater withdrawals associated with the Willamette Lowland basin-fill aquifers. Irrigation accounted for about 72 percent of the total, with the largest shares concentrated in Oregon and Washington.",
+      "description_short": "A principal aquifer where irrigation drives most withdrawals across Oregon and Washington. Recharge strongly exceeds withdrawals over the mapped footprint.",
+      "description_long": "In 2015, the USGS estimated about 465.61 Mgal/d of groundwater withdrawals associated with the Willamette Lowland basin-fill aquifers. Irrigation accounted for about 72 percent of the total, with the largest shares concentrated in Oregon and Washington. Overlaying the mapped aquifer footprint with the USGS mean annual natural recharge grid suggests about 3032.86 Mgal/d of long-term natural recharge. That leaves estimated natural recharge about 2567.25 Mgal/d above withdrawals over the mapped footprint.",
       "geometry_source": "USGS principal aquifers shapefile (ScienceBase item 63140610d34e36012efa385d)",
       "geometry_notes": "USGS principal aquifer geometry shown for national-scale display only. It represents the shallowest principal aquifer extent and not the full underground system.",
       "source_aquifer_codes": [
@@ -520,9 +520,9 @@
       "is_grouped_system": false,
       "default_year": 2015,
       "default_units": "Mgal/d",
-      "methodology_version": "v1",
+      "methodology_version": "v1.1",
       "status": "active",
-      "confidence_summary": "A"
+      "confidence_summary": "A-B"
     },
     {
       "display_aquifer_id": "lower_cretaceous_aquifers",
@@ -530,8 +530,8 @@
       "short_name": "Lower Cretaceous",
       "sort_order": 27,
       "region_label": "Kansas \u00b7 Nebraska \u00b7 Iowa",
-      "description_short": "A major groundwater system with irrigation dominating withdrawals across Kansas, Nebraska, and Iowa.",
-      "description_long": "In 2015, the USGS estimated about 445.83 Mgal/d of groundwater withdrawals associated with the Lower Cretaceous aquifers. Irrigation accounted for about 67 percent of the total, with the largest shares concentrated in Kansas, Nebraska, and Iowa.",
+      "description_short": "A principal aquifer where irrigation drives most withdrawals across Kansas, Nebraska, and Iowa. Recharge strongly exceeds withdrawals over the mapped footprint.",
+      "description_long": "In 2015, the USGS estimated about 445.83 Mgal/d of groundwater withdrawals associated with the Lower Cretaceous aquifers. Irrigation accounted for about 67 percent of the total, with the largest shares concentrated in Kansas, Nebraska, and Iowa. Overlaying the mapped aquifer footprint with the USGS mean annual natural recharge grid suggests about 2861.26 Mgal/d of long-term natural recharge. That leaves estimated natural recharge about 2415.43 Mgal/d above withdrawals over the mapped footprint.",
       "geometry_source": "USGS principal aquifers shapefile (ScienceBase item 63140610d34e36012efa385d)",
       "geometry_notes": "USGS principal aquifer geometry shown for national-scale display only. It represents the shallowest principal aquifer extent and not the full underground system.",
       "source_aquifer_codes": [
@@ -540,9 +540,9 @@
       "is_grouped_system": false,
       "default_year": 2015,
       "default_units": "Mgal/d",
-      "methodology_version": "v1",
+      "methodology_version": "v1.1",
       "status": "active",
-      "confidence_summary": "A"
+      "confidence_summary": "A-B"
     },
     {
       "display_aquifer_id": "snake_river_plain_basin_fill_aquifers",
@@ -550,8 +550,8 @@
       "short_name": "Snake River Plain basin-fill",
       "sort_order": 28,
       "region_label": "Idaho \u00b7 Oregon",
-      "description_short": "A major groundwater system with irrigation dominating withdrawals across Idaho and Oregon.",
-      "description_long": "In 2015, the USGS estimated about 424.86 Mgal/d of groundwater withdrawals associated with the Snake River Plain basin-fill aquifers. Irrigation accounted for about 81 percent of the total, with the largest shares concentrated in Idaho and Oregon.",
+      "description_short": "A principal aquifer where irrigation drives most withdrawals across Idaho and Oregon. Withdrawals far exceed recharge over the mapped footprint.",
+      "description_long": "In 2015, the USGS estimated about 424.86 Mgal/d of groundwater withdrawals associated with the Snake River Plain basin-fill aquifers. Irrigation accounted for about 81 percent of the total, with the largest shares concentrated in Idaho and Oregon. Overlaying the mapped aquifer footprint with the USGS mean annual natural recharge grid suggests about 194.63 Mgal/d of long-term natural recharge. That leaves withdrawals about 230.23 Mgal/d above the long-term estimated natural recharge over the mapped footprint.",
       "geometry_source": "USGS principal aquifers shapefile (ScienceBase item 63140610d34e36012efa385d)",
       "geometry_notes": "USGS principal aquifer geometry shown for national-scale display only. It represents the shallowest principal aquifer extent and not the full underground system.",
       "source_aquifer_codes": [
@@ -560,9 +560,9 @@
       "is_grouped_system": false,
       "default_year": 2015,
       "default_units": "Mgal/d",
-      "methodology_version": "v1",
+      "methodology_version": "v1.1",
       "status": "active",
-      "confidence_summary": "A"
+      "confidence_summary": "A-B"
     },
     {
       "display_aquifer_id": "columbia_plateau_basin_fill_aquifers",
@@ -570,8 +570,8 @@
       "short_name": "Columbia Plateau basin-fill",
       "sort_order": 29,
       "region_label": "Washington \u00b7 Oregon \u00b7 Idaho",
-      "description_short": "A major groundwater system with irrigation dominating withdrawals across Washington, Oregon, and Idaho.",
-      "description_long": "In 2015, the USGS estimated about 391.26 Mgal/d of groundwater withdrawals associated with the Columbia Plateau basin-fill aquifers. Irrigation accounted for about 54 percent of the total, with the largest shares concentrated in Washington, Oregon, and Idaho.",
+      "description_short": "A principal aquifer where irrigation drives most withdrawals across Washington, Oregon, and Idaho. Recharge exceeds withdrawals over the mapped footprint.",
+      "description_long": "In 2015, the USGS estimated about 391.26 Mgal/d of groundwater withdrawals associated with the Columbia Plateau basin-fill aquifers. Irrigation accounted for about 54 percent of the total, with the largest shares concentrated in Washington, Oregon, and Idaho. Overlaying the mapped aquifer footprint with the USGS mean annual natural recharge grid suggests about 940.35 Mgal/d of long-term natural recharge. That leaves estimated natural recharge about 549.09 Mgal/d above withdrawals over the mapped footprint.",
       "geometry_source": "USGS principal aquifers shapefile (ScienceBase item 63140610d34e36012efa385d)",
       "geometry_notes": "USGS principal aquifer geometry shown for national-scale display only. It represents the shallowest principal aquifer extent and not the full underground system.",
       "source_aquifer_codes": [
@@ -580,9 +580,9 @@
       "is_grouped_system": false,
       "default_year": 2015,
       "default_units": "Mgal/d",
-      "methodology_version": "v1",
+      "methodology_version": "v1.1",
       "status": "active",
-      "confidence_summary": "A"
+      "confidence_summary": "A-B"
     },
     {
       "display_aquifer_id": "texas_coastal_uplands_aquifer_system",
@@ -590,8 +590,8 @@
       "short_name": "Texas coastal uplands",
       "sort_order": 30,
       "region_label": "Texas",
-      "description_short": "A major groundwater system with public supply dominating withdrawals across Texas.",
-      "description_long": "In 2015, the USGS estimated about 376.19 Mgal/d of groundwater withdrawals associated with the Texas coastal uplands aquifer system. Public supply accounted for about 47 percent of the total, with the largest shares concentrated in Texas.",
+      "description_short": "A principal aquifer where public supply drives most withdrawals across Texas. Recharge strongly exceeds withdrawals over the mapped footprint.",
+      "description_long": "In 2015, the USGS estimated about 376.19 Mgal/d of groundwater withdrawals associated with the Texas coastal uplands aquifer system. Public supply accounted for about 47 percent of the total, with the largest shares concentrated in Texas. Overlaying the mapped aquifer footprint with the USGS mean annual natural recharge grid suggests about 2170.22 Mgal/d of long-term natural recharge. That leaves estimated natural recharge about 1794.03 Mgal/d above withdrawals over the mapped footprint.",
       "geometry_source": "USGS principal aquifers shapefile (ScienceBase item 63140610d34e36012efa385d)",
       "geometry_notes": "USGS principal aquifer geometry shown for national-scale display only. It represents the shallowest principal aquifer extent and not the full underground system.",
       "source_aquifer_codes": [
@@ -600,9 +600,9 @@
       "is_grouped_system": false,
       "default_year": 2015,
       "default_units": "Mgal/d",
-      "methodology_version": "v1",
+      "methodology_version": "v1.1",
       "status": "active",
-      "confidence_summary": "A"
+      "confidence_summary": "A-B"
     },
     {
       "display_aquifer_id": "colorado_plateaus_aquifers",
@@ -610,8 +610,8 @@
       "short_name": "Colorado Plateaus",
       "sort_order": 31,
       "region_label": "Utah \u00b7 Wyoming \u00b7 Arizona",
-      "description_short": "A major groundwater system with irrigation dominating withdrawals across Utah, Wyoming, and Arizona.",
-      "description_long": "In 2015, the USGS estimated about 364.99 Mgal/d of groundwater withdrawals associated with the Colorado Plateaus aquifers. Irrigation accounted for about 34 percent of the total, with the largest shares concentrated in Utah, Wyoming, and Arizona.",
+      "description_short": "A principal aquifer where irrigation drives most withdrawals across Utah, Wyoming, and Arizona. Recharge strongly exceeds withdrawals over the mapped footprint.",
+      "description_long": "In 2015, the USGS estimated about 364.99 Mgal/d of groundwater withdrawals associated with the Colorado Plateaus aquifers. Irrigation accounted for about 34 percent of the total, with the largest shares concentrated in Utah, Wyoming, and Arizona. Overlaying the mapped aquifer footprint with the USGS mean annual natural recharge grid suggests about 8980.68 Mgal/d of long-term natural recharge. That leaves estimated natural recharge about 8615.69 Mgal/d above withdrawals over the mapped footprint.",
       "geometry_source": "USGS principal aquifers shapefile (ScienceBase item 63140610d34e36012efa385d)",
       "geometry_notes": "USGS principal aquifer geometry shown for national-scale display only. It represents the shallowest principal aquifer extent and not the full underground system.",
       "source_aquifer_codes": [
@@ -620,9 +620,9 @@
       "is_grouped_system": false,
       "default_year": 2015,
       "default_units": "Mgal/d",
-      "methodology_version": "v1",
+      "methodology_version": "v1.1",
       "status": "active",
-      "confidence_summary": "A"
+      "confidence_summary": "A-B"
     },
     {
       "display_aquifer_id": "pennsylvanian_aquifers",
@@ -630,8 +630,8 @@
       "short_name": "Pennsylvanian",
       "sort_order": 32,
       "region_label": "Pennsylvania \u00b7 West Virginia \u00b7 Michigan",
-      "description_short": "A major groundwater system with domestic dominating withdrawals across Pennsylvania, West Virginia, and Michigan.",
-      "description_long": "In 2015, the USGS estimated about 351.35 Mgal/d of groundwater withdrawals associated with the Pennsylvanian aquifers. Domestic accounted for about 34 percent of the total, with the largest shares concentrated in Pennsylvania, West Virginia, and Michigan.",
+      "description_short": "A principal aquifer where domestic drives most withdrawals across Pennsylvania, West Virginia, and Michigan. Recharge strongly exceeds withdrawals over the mapped footprint.",
+      "description_long": "In 2015, the USGS estimated about 351.35 Mgal/d of groundwater withdrawals associated with the Pennsylvanian aquifers. Domestic accounted for about 34 percent of the total, with the largest shares concentrated in Pennsylvania, West Virginia, and Michigan. Overlaying the mapped aquifer footprint with the USGS mean annual natural recharge grid suggests about 23945.25 Mgal/d of long-term natural recharge. That leaves estimated natural recharge about 23593.9 Mgal/d above withdrawals over the mapped footprint.",
       "geometry_source": "USGS principal aquifers shapefile (ScienceBase item 63140610d34e36012efa385d)",
       "geometry_notes": "USGS principal aquifer geometry shown for national-scale display only. It represents the shallowest principal aquifer extent and not the full underground system.",
       "source_aquifer_codes": [
@@ -640,9 +640,9 @@
       "is_grouped_system": false,
       "default_year": 2015,
       "default_units": "Mgal/d",
-      "methodology_version": "v1",
+      "methodology_version": "v1.1",
       "status": "active",
-      "confidence_summary": "A"
+      "confidence_summary": "A-B"
     },
     {
       "display_aquifer_id": "puget_sound_aquifer_system",
@@ -650,8 +650,8 @@
       "short_name": "Puget Sound",
       "sort_order": 33,
       "region_label": "Washington",
-      "description_short": "A major groundwater system with public supply dominating withdrawals across Washington.",
-      "description_long": "In 2015, the USGS estimated about 319.32 Mgal/d of groundwater withdrawals associated with the Puget Sound aquifer system. Public supply accounted for about 49 percent of the total, with the largest shares concentrated in Washington.",
+      "description_short": "A principal aquifer where public supply drives most withdrawals across Washington. Recharge strongly exceeds withdrawals over the mapped footprint.",
+      "description_long": "In 2015, the USGS estimated about 319.32 Mgal/d of groundwater withdrawals associated with the Puget Sound aquifer system. Public supply accounted for about 49 percent of the total, with the largest shares concentrated in Washington. Overlaying the mapped aquifer footprint with the USGS mean annual natural recharge grid suggests about 5557.23 Mgal/d of long-term natural recharge. That leaves estimated natural recharge about 5237.91 Mgal/d above withdrawals over the mapped footprint.",
       "geometry_source": "USGS principal aquifers shapefile (ScienceBase item 63140610d34e36012efa385d)",
       "geometry_notes": "USGS principal aquifer geometry shown for national-scale display only. It represents the shallowest principal aquifer extent and not the full underground system.",
       "source_aquifer_codes": [
@@ -660,9 +660,9 @@
       "is_grouped_system": false,
       "default_year": 2015,
       "default_units": "Mgal/d",
-      "methodology_version": "v1",
+      "methodology_version": "v1.1",
       "status": "active",
-      "confidence_summary": "A"
+      "confidence_summary": "A-B"
     },
     {
       "display_aquifer_id": "ozark_plateaus_aquifer_system",
@@ -670,8 +670,8 @@
       "short_name": "Ozark Plateaus",
       "sort_order": 34,
       "region_label": "Missouri \u00b7 Arkansas \u00b7 Oklahoma",
-      "description_short": "A major groundwater system with public supply dominating withdrawals across Missouri, Arkansas, and Oklahoma.",
-      "description_long": "In 2015, the USGS estimated about 304.79 Mgal/d of groundwater withdrawals associated with the Ozark Plateaus aquifer system. Public supply accounted for about 46 percent of the total, with the largest shares concentrated in Missouri, Arkansas, and Oklahoma.",
+      "description_short": "A principal aquifer where public supply drives most withdrawals across Missouri, Arkansas, and Oklahoma. Recharge strongly exceeds withdrawals over the mapped footprint.",
+      "description_long": "In 2015, the USGS estimated about 304.79 Mgal/d of groundwater withdrawals associated with the Ozark Plateaus aquifer system. Public supply accounted for about 46 percent of the total, with the largest shares concentrated in Missouri, Arkansas, and Oklahoma. Overlaying the mapped aquifer footprint with the USGS mean annual natural recharge grid suggests about 8866.89 Mgal/d of long-term natural recharge. That leaves estimated natural recharge about 8562.1 Mgal/d above withdrawals over the mapped footprint.",
       "geometry_source": "USGS principal aquifers shapefile (ScienceBase item 63140610d34e36012efa385d)",
       "geometry_notes": "USGS principal aquifer geometry shown for national-scale display only. It represents the shallowest principal aquifer extent and not the full underground system.",
       "source_aquifer_codes": [
@@ -680,9 +680,9 @@
       "is_grouped_system": false,
       "default_year": 2015,
       "default_units": "Mgal/d",
-      "methodology_version": "v1",
+      "methodology_version": "v1.1",
       "status": "active",
-      "confidence_summary": "A"
+      "confidence_summary": "A-B"
     },
     {
       "display_aquifer_id": "mississippian_aquifers",
@@ -690,8 +690,8 @@
       "short_name": "Mississippian",
       "sort_order": 35,
       "region_label": "Alabama \u00b7 Tennessee \u00b7 Ohio",
-      "description_short": "A major groundwater system with public supply dominating withdrawals across Alabama, Tennessee, and Ohio.",
-      "description_long": "In 2015, the USGS estimated about 247.28 Mgal/d of groundwater withdrawals associated with the Mississippian aquifers. Public supply accounted for about 40 percent of the total, with the largest shares concentrated in Alabama, Tennessee, and Ohio.",
+      "description_short": "A principal aquifer where public supply drives most withdrawals across Alabama, Tennessee, and Ohio. Recharge strongly exceeds withdrawals over the mapped footprint.",
+      "description_long": "In 2015, the USGS estimated about 247.28 Mgal/d of groundwater withdrawals associated with the Mississippian aquifers. Public supply accounted for about 40 percent of the total, with the largest shares concentrated in Alabama, Tennessee, and Ohio. Overlaying the mapped aquifer footprint with the USGS mean annual natural recharge grid suggests about 11460.45 Mgal/d of long-term natural recharge. That leaves estimated natural recharge about 11213.17 Mgal/d above withdrawals over the mapped footprint.",
       "geometry_source": "USGS principal aquifers shapefile (ScienceBase item 63140610d34e36012efa385d)",
       "geometry_notes": "USGS principal aquifer geometry shown for national-scale display only. It represents the shallowest principal aquifer extent and not the full underground system.",
       "source_aquifer_codes": [
@@ -700,9 +700,9 @@
       "is_grouped_system": false,
       "default_year": 2015,
       "default_units": "Mgal/d",
-      "methodology_version": "v1",
+      "methodology_version": "v1.1",
       "status": "active",
-      "confidence_summary": "A"
+      "confidence_summary": "A-B"
     },
     {
       "display_aquifer_id": "intermediate_aquifer_system",
@@ -710,8 +710,8 @@
       "short_name": "Intermediate",
       "sort_order": 36,
       "region_label": "Florida",
-      "description_short": "A major groundwater system with irrigation dominating withdrawals across Florida. The map uses a county-footprint fallback for display.",
-      "description_long": "In 2015, the USGS estimated about 223.44 Mgal/d of groundwater withdrawals associated with the Intermediate aquifer system. Irrigation accounted for about 79 percent of the total, with the largest shares concentrated in Florida. Because the official principal-aquifer shapefile does not expose a standalone polygon for this aquifer, the map footprint shows the set of 25 counties attached to source rows.",
+      "description_short": "A principal aquifer where irrigation drives most withdrawals across Florida. Recharge strongly exceeds withdrawals over the mapped footprint. The map uses a county-footprint fallback for display.",
+      "description_long": "In 2015, the USGS estimated about 223.44 Mgal/d of groundwater withdrawals associated with the Intermediate aquifer system. Irrigation accounted for about 79 percent of the total, with the largest shares concentrated in Florida. Overlaying the mapped aquifer footprint with the USGS mean annual natural recharge grid suggests about 5202.22 Mgal/d of long-term natural recharge. That leaves estimated natural recharge about 4978.78 Mgal/d above withdrawals over the mapped footprint. Because the official principal-aquifer shapefile does not expose a standalone polygon for this aquifer, the map footprint shows the set of 25 counties attached to source rows.",
       "geometry_source": "2015 Census cartographic county boundaries (5m)",
       "geometry_notes": "County-footprint fallback shown for national display only. The USGS principal-aquifer shapefile does not expose a standalone polygon for this source aquifer, so the map uses the 25 counties that carry 2015 withdrawal rows instead.",
       "source_aquifer_codes": [
@@ -720,9 +720,9 @@
       "is_grouped_system": false,
       "default_year": 2015,
       "default_units": "Mgal/d",
-      "methodology_version": "v1",
+      "methodology_version": "v1.1",
       "status": "active",
-      "confidence_summary": "A"
+      "confidence_summary": "A-B"
     },
     {
       "display_aquifer_id": "new_york_and_new_england_crystalline_rock_aquifers",
@@ -730,8 +730,8 @@
       "short_name": "New York and New England crystalline-rock",
       "sort_order": 37,
       "region_label": "Massachusetts \u00b7 New Hampshire \u00b7 Maine",
-      "description_short": "A major groundwater system with domestic dominating withdrawals across Massachusetts, New Hampshire, and Maine. The map uses a county-footprint fallback for display.",
-      "description_long": "In 2015, the USGS estimated about 221.84 Mgal/d of groundwater withdrawals associated with the New York and New England crystalline-rock aquifers. Domestic accounted for about 63 percent of the total, with the largest shares concentrated in Massachusetts, New Hampshire, and Maine. Because the official principal-aquifer shapefile does not expose a standalone polygon for this aquifer, the map footprint shows the set of 88 counties attached to source rows.",
+      "description_short": "A principal aquifer where domestic drives most withdrawals across Massachusetts, New Hampshire, and Maine. Recharge strongly exceeds withdrawals over the mapped footprint. The map uses a county-footprint fallback for display.",
+      "description_long": "In 2015, the USGS estimated about 221.84 Mgal/d of groundwater withdrawals associated with the New York and New England crystalline-rock aquifers. Domestic accounted for about 63 percent of the total, with the largest shares concentrated in Massachusetts, New Hampshire, and Maine. Overlaying the mapped aquifer footprint with the USGS mean annual natural recharge grid suggests about 50435.58 Mgal/d of long-term natural recharge. That leaves estimated natural recharge about 50213.74 Mgal/d above withdrawals over the mapped footprint. Because the official principal-aquifer shapefile does not expose a standalone polygon for this aquifer, the map footprint shows the set of 88 counties attached to source rows.",
       "geometry_source": "2015 Census cartographic county boundaries (5m)",
       "geometry_notes": "County-footprint fallback shown for national display only. The USGS principal-aquifer shapefile does not expose a standalone polygon for this source aquifer, so the map uses the 88 counties that carry 2015 withdrawal rows instead.",
       "source_aquifer_codes": [
@@ -740,9 +740,9 @@
       "is_grouped_system": false,
       "default_year": 2015,
       "default_units": "Mgal/d",
-      "methodology_version": "v1",
+      "methodology_version": "v1.1",
       "status": "active",
-      "confidence_summary": "A"
+      "confidence_summary": "A-B"
     },
     {
       "display_aquifer_id": "early_mesozoic_basin_aquifers",
@@ -750,8 +750,8 @@
       "short_name": "Early Mesozoic basin",
       "sort_order": 38,
       "region_label": "Pennsylvania \u00b7 New Jersey \u00b7 Connecticut",
-      "description_short": "A major groundwater system with public supply dominating withdrawals across Pennsylvania, New Jersey, and Connecticut.",
-      "description_long": "In 2015, the USGS estimated about 205.01 Mgal/d of groundwater withdrawals associated with the Early Mesozoic basin aquifers. Public supply accounted for about 45 percent of the total, with the largest shares concentrated in Pennsylvania, New Jersey, and Connecticut.",
+      "description_short": "A principal aquifer where public supply drives most withdrawals across Pennsylvania, New Jersey, and Connecticut. Recharge strongly exceeds withdrawals over the mapped footprint.",
+      "description_long": "In 2015, the USGS estimated about 205.01 Mgal/d of groundwater withdrawals associated with the Early Mesozoic basin aquifers. Public supply accounted for about 45 percent of the total, with the largest shares concentrated in Pennsylvania, New Jersey, and Connecticut. Overlaying the mapped aquifer footprint with the USGS mean annual natural recharge grid suggests about 3095.76 Mgal/d of long-term natural recharge. That leaves estimated natural recharge about 2890.75 Mgal/d above withdrawals over the mapped footprint.",
       "geometry_source": "USGS principal aquifers shapefile (ScienceBase item 63140610d34e36012efa385d)",
       "geometry_notes": "USGS principal aquifer geometry shown for national-scale display only. It represents the shallowest principal aquifer extent and not the full underground system.",
       "source_aquifer_codes": [
@@ -760,9 +760,9 @@
       "is_grouped_system": false,
       "default_year": 2015,
       "default_units": "Mgal/d",
-      "methodology_version": "v1",
+      "methodology_version": "v1.1",
       "status": "active",
-      "confidence_summary": "A"
+      "confidence_summary": "A-B"
     },
     {
       "display_aquifer_id": "roswell_basin_aquifer_system",
@@ -770,8 +770,8 @@
       "short_name": "Roswell Basin",
       "sort_order": 39,
       "region_label": "New Mexico",
-      "description_short": "A major groundwater system with irrigation dominating withdrawals across New Mexico.",
-      "description_long": "In 2015, the USGS estimated about 199.19 Mgal/d of groundwater withdrawals associated with the Roswell Basin aquifer system. Irrigation accounted for about 88 percent of the total, with the largest shares concentrated in New Mexico.",
+      "description_short": "A principal aquifer where irrigation drives most withdrawals across New Mexico. Withdrawals far exceed recharge over the mapped footprint.",
+      "description_long": "In 2015, the USGS estimated about 199.19 Mgal/d of groundwater withdrawals associated with the Roswell Basin aquifer system. Irrigation accounted for about 88 percent of the total, with the largest shares concentrated in New Mexico. Overlaying the mapped aquifer footprint with the USGS mean annual natural recharge grid suggests about 15.05 Mgal/d of long-term natural recharge. That leaves withdrawals about 184.14 Mgal/d above the long-term estimated natural recharge over the mapped footprint.",
       "geometry_source": "USGS principal aquifers shapefile (ScienceBase item 63140610d34e36012efa385d)",
       "geometry_notes": "USGS principal aquifer geometry shown for national-scale display only. It represents the shallowest principal aquifer extent and not the full underground system.",
       "source_aquifer_codes": [
@@ -780,9 +780,9 @@
       "is_grouped_system": false,
       "default_year": 2015,
       "default_units": "Mgal/d",
-      "methodology_version": "v1",
+      "methodology_version": "v1.1",
       "status": "active",
-      "confidence_summary": "A"
+      "confidence_summary": "A-B"
     },
     {
       "display_aquifer_id": "basin_and_range_carbonate_rock_aquifers",
@@ -790,8 +790,8 @@
       "short_name": "Basin and Range carbonate-rock",
       "sort_order": 40,
       "region_label": "Utah \u00b7 Nevada \u00b7 California",
-      "description_short": "A major groundwater system with public supply dominating withdrawals across Utah, Nevada, and California.",
-      "description_long": "In 2015, the USGS estimated about 140.47 Mgal/d of groundwater withdrawals associated with the Basin and Range carbonate-rock aquifers. Public supply accounted for about 44 percent of the total, with the largest shares concentrated in Utah, Nevada, and California.",
+      "description_short": "A principal aquifer where public supply drives most withdrawals across Utah, Nevada, and California. Recharge strongly exceeds withdrawals over the mapped footprint.",
+      "description_long": "In 2015, the USGS estimated about 140.47 Mgal/d of groundwater withdrawals associated with the Basin and Range carbonate-rock aquifers. Public supply accounted for about 44 percent of the total, with the largest shares concentrated in Utah, Nevada, and California. Overlaying the mapped aquifer footprint with the USGS mean annual natural recharge grid suggests about 1256.47 Mgal/d of long-term natural recharge. That leaves estimated natural recharge about 1116.0 Mgal/d above withdrawals over the mapped footprint.",
       "geometry_source": "USGS principal aquifers shapefile (ScienceBase item 63140610d34e36012efa385d)",
       "geometry_notes": "USGS principal aquifer geometry shown for national-scale display only. It represents the shallowest principal aquifer extent and not the full underground system.",
       "source_aquifer_codes": [
@@ -800,9 +800,9 @@
       "is_grouped_system": false,
       "default_year": 2015,
       "default_units": "Mgal/d",
-      "methodology_version": "v1",
+      "methodology_version": "v1.1",
       "status": "active",
-      "confidence_summary": "A"
+      "confidence_summary": "A-B"
     },
     {
       "display_aquifer_id": "seymour_aquifer",
@@ -810,8 +810,8 @@
       "short_name": "Seymour",
       "sort_order": 41,
       "region_label": "Texas",
-      "description_short": "A major groundwater system with irrigation dominating withdrawals across Texas.",
-      "description_long": "In 2015, the USGS estimated about 99.34 Mgal/d of groundwater withdrawals associated with the Seymour aquifer. Irrigation accounted for about 94 percent of the total, with the largest shares concentrated in Texas.",
+      "description_short": "A principal aquifer where irrigation drives most withdrawals across Texas. Withdrawals far exceed recharge over the mapped footprint.",
+      "description_long": "In 2015, the USGS estimated about 99.34 Mgal/d of groundwater withdrawals associated with the Seymour aquifer. Irrigation accounted for about 94 percent of the total, with the largest shares concentrated in Texas. Overlaying the mapped aquifer footprint with the USGS mean annual natural recharge grid suggests about 23.82 Mgal/d of long-term natural recharge. That leaves withdrawals about 75.52 Mgal/d above the long-term estimated natural recharge over the mapped footprint.",
       "geometry_source": "USGS principal aquifers shapefile (ScienceBase item 63140610d34e36012efa385d)",
       "geometry_notes": "USGS principal aquifer geometry shown for national-scale display only. It represents the shallowest principal aquifer extent and not the full underground system.",
       "source_aquifer_codes": [
@@ -820,9 +820,9 @@
       "is_grouped_system": false,
       "default_year": 2015,
       "default_units": "Mgal/d",
-      "methodology_version": "v1",
+      "methodology_version": "v1.1",
       "status": "active",
-      "confidence_summary": "A"
+      "confidence_summary": "A-B"
     },
     {
       "display_aquifer_id": "new_york_and_new_england_carbonate_rock_aquifers",
@@ -830,8 +830,8 @@
       "short_name": "New York and New England carbonate-rock",
       "sort_order": 42,
       "region_label": "New York \u00b7 Vermont \u00b7 Massachusetts",
-      "description_short": "A major groundwater system with public supply dominating withdrawals across New York, Vermont, and Massachusetts.",
-      "description_long": "In 2015, the USGS estimated about 92.62 Mgal/d of groundwater withdrawals associated with the New York and New England carbonate-rock aquifers. Public supply accounted for about 42 percent of the total, with the largest shares concentrated in New York, Vermont, and Massachusetts.",
+      "description_short": "A principal aquifer where public supply drives most withdrawals across New York, Vermont, and Massachusetts. Recharge strongly exceeds withdrawals over the mapped footprint.",
+      "description_long": "In 2015, the USGS estimated about 92.62 Mgal/d of groundwater withdrawals associated with the New York and New England carbonate-rock aquifers. Public supply accounted for about 42 percent of the total, with the largest shares concentrated in New York, Vermont, and Massachusetts. Overlaying the mapped aquifer footprint with the USGS mean annual natural recharge grid suggests about 4162.23 Mgal/d of long-term natural recharge. That leaves estimated natural recharge about 4069.61 Mgal/d above withdrawals over the mapped footprint.",
       "geometry_source": "USGS principal aquifers shapefile (ScienceBase item 63140610d34e36012efa385d)",
       "geometry_notes": "USGS principal aquifer geometry shown for national-scale display only. It represents the shallowest principal aquifer extent and not the full underground system.",
       "source_aquifer_codes": [
@@ -840,9 +840,9 @@
       "is_grouped_system": false,
       "default_year": 2015,
       "default_units": "Mgal/d",
-      "methodology_version": "v1",
+      "methodology_version": "v1.1",
       "status": "active",
-      "confidence_summary": "A"
+      "confidence_summary": "A-B"
     },
     {
       "display_aquifer_id": "rush_springs_aquifer",
@@ -850,8 +850,8 @@
       "short_name": "Rush Springs",
       "sort_order": 43,
       "region_label": "Oklahoma",
-      "description_short": "A major groundwater system with irrigation dominating withdrawals across Oklahoma.",
-      "description_long": "In 2015, the USGS estimated about 90.94 Mgal/d of groundwater withdrawals associated with the Rush Springs aquifer. Irrigation accounted for about 90 percent of the total, with the largest shares concentrated in Oklahoma.",
+      "description_short": "A principal aquifer where irrigation drives most withdrawals across Oklahoma. Withdrawals far exceed recharge over the mapped footprint.",
+      "description_long": "In 2015, the USGS estimated about 90.94 Mgal/d of groundwater withdrawals associated with the Rush Springs aquifer. Irrigation accounted for about 90 percent of the total, with the largest shares concentrated in Oklahoma. Overlaying the mapped aquifer footprint with the USGS mean annual natural recharge grid suggests about 34.43 Mgal/d of long-term natural recharge. That leaves withdrawals about 56.51 Mgal/d above the long-term estimated natural recharge over the mapped footprint.",
       "geometry_source": "USGS principal aquifers shapefile (ScienceBase item 63140610d34e36012efa385d)",
       "geometry_notes": "USGS principal aquifer geometry shown for national-scale display only. It represents the shallowest principal aquifer extent and not the full underground system.",
       "source_aquifer_codes": [
@@ -860,9 +860,9 @@
       "is_grouped_system": false,
       "default_year": 2015,
       "default_units": "Mgal/d",
-      "methodology_version": "v1",
+      "methodology_version": "v1.1",
       "status": "active",
-      "confidence_summary": "A"
+      "confidence_summary": "A-B"
     },
     {
       "display_aquifer_id": "pecos_river_basin_alluvial_aquifer",
@@ -870,8 +870,8 @@
       "short_name": "Pecos River Basin alluvial",
       "sort_order": 44,
       "region_label": "Texas \u00b7 New Mexico",
-      "description_short": "A major groundwater system with irrigation dominating withdrawals across Texas and New Mexico.",
-      "description_long": "In 2015, the USGS estimated about 88.33 Mgal/d of groundwater withdrawals associated with the Pecos River Basin alluvial aquifer. Irrigation accounted for about 75 percent of the total, with the largest shares concentrated in Texas and New Mexico.",
+      "description_short": "A principal aquifer where irrigation drives most withdrawals across Texas and New Mexico. Withdrawals far exceed recharge over the mapped footprint.",
+      "description_long": "In 2015, the USGS estimated about 88.33 Mgal/d of groundwater withdrawals associated with the Pecos River Basin alluvial aquifer. Irrigation accounted for about 75 percent of the total, with the largest shares concentrated in Texas and New Mexico. Overlaying the mapped aquifer footprint with the USGS mean annual natural recharge grid suggests about 36.96 Mgal/d of long-term natural recharge. That leaves withdrawals about 51.37 Mgal/d above the long-term estimated natural recharge over the mapped footprint.",
       "geometry_source": "USGS principal aquifers shapefile (ScienceBase item 63140610d34e36012efa385d)",
       "geometry_notes": "USGS principal aquifer geometry shown for national-scale display only. It represents the shallowest principal aquifer extent and not the full underground system.",
       "source_aquifer_codes": [
@@ -880,9 +880,9 @@
       "is_grouped_system": false,
       "default_year": 2015,
       "default_units": "Mgal/d",
-      "methodology_version": "v1",
+      "methodology_version": "v1.1",
       "status": "active",
-      "confidence_summary": "A"
+      "confidence_summary": "A-B"
     },
     {
       "display_aquifer_id": "marshall_aquifer",
@@ -890,8 +890,8 @@
       "short_name": "Marshall",
       "sort_order": 45,
       "region_label": "Michigan",
-      "description_short": "A major groundwater system with public supply dominating withdrawals across Michigan.",
-      "description_long": "In 2015, the USGS estimated about 83.41 Mgal/d of groundwater withdrawals associated with the Marshall aquifer. Public supply accounted for about 38 percent of the total, with the largest shares concentrated in Michigan.",
+      "description_short": "A principal aquifer where public supply drives most withdrawals across Michigan. Recharge strongly exceeds withdrawals over the mapped footprint.",
+      "description_long": "In 2015, the USGS estimated about 83.41 Mgal/d of groundwater withdrawals associated with the Marshall aquifer. Public supply accounted for about 38 percent of the total, with the largest shares concentrated in Michigan. Overlaying the mapped aquifer footprint with the USGS mean annual natural recharge grid suggests about 1748.83 Mgal/d of long-term natural recharge. That leaves estimated natural recharge about 1665.42 Mgal/d above withdrawals over the mapped footprint.",
       "geometry_source": "USGS principal aquifers shapefile (ScienceBase item 63140610d34e36012efa385d)",
       "geometry_notes": "USGS principal aquifer geometry shown for national-scale display only. It represents the shallowest principal aquifer extent and not the full underground system.",
       "source_aquifer_codes": [
@@ -900,9 +900,9 @@
       "is_grouped_system": false,
       "default_year": 2015,
       "default_units": "Mgal/d",
-      "methodology_version": "v1",
+      "methodology_version": "v1.1",
       "status": "active",
-      "confidence_summary": "A"
+      "confidence_summary": "A-B"
     },
     {
       "display_aquifer_id": "piedmont_and_blue_ridge_carbonate_rock_aquifers",
@@ -910,8 +910,8 @@
       "short_name": "Piedmont and Blue Ridge carbonate-rock",
       "sort_order": 46,
       "region_label": "Pennsylvania \u00b7 New Jersey \u00b7 Maryland",
-      "description_short": "A major groundwater system with public supply dominating withdrawals across Pennsylvania, New Jersey, and Maryland.",
-      "description_long": "In 2015, the USGS estimated about 82.77 Mgal/d of groundwater withdrawals associated with the Piedmont and Blue Ridge carbonate-rock aquifers. Public supply accounted for about 45 percent of the total, with the largest shares concentrated in Pennsylvania, New Jersey, and Maryland.",
+      "description_short": "A principal aquifer where public supply drives most withdrawals across Pennsylvania, New Jersey, and Maryland. Recharge strongly exceeds withdrawals over the mapped footprint.",
+      "description_long": "In 2015, the USGS estimated about 82.77 Mgal/d of groundwater withdrawals associated with the Piedmont and Blue Ridge carbonate-rock aquifers. Public supply accounted for about 45 percent of the total, with the largest shares concentrated in Pennsylvania, New Jersey, and Maryland. Overlaying the mapped aquifer footprint with the USGS mean annual natural recharge grid suggests about 653.48 Mgal/d of long-term natural recharge. That leaves estimated natural recharge about 570.71 Mgal/d above withdrawals over the mapped footprint.",
       "geometry_source": "USGS principal aquifers shapefile (ScienceBase item 63140610d34e36012efa385d)",
       "geometry_notes": "USGS principal aquifer geometry shown for national-scale display only. It represents the shallowest principal aquifer extent and not the full underground system.",
       "source_aquifer_codes": [
@@ -920,9 +920,9 @@
       "is_grouped_system": false,
       "default_year": 2015,
       "default_units": "Mgal/d",
-      "methodology_version": "v1",
+      "methodology_version": "v1.1",
       "status": "active",
-      "confidence_summary": "A"
+      "confidence_summary": "A-B"
     },
     {
       "display_aquifer_id": "lower_tertiary_aquifers",
@@ -930,8 +930,8 @@
       "short_name": "Lower Tertiary",
       "sort_order": 47,
       "region_label": "Wyoming \u00b7 Montana \u00b7 North Dakota",
-      "description_short": "A major groundwater system with mining dominating withdrawals across Wyoming, Montana, and North Dakota.",
-      "description_long": "In 2015, the USGS estimated about 67.19 Mgal/d of groundwater withdrawals associated with the Lower Tertiary aquifers. Mining accounted for about 60 percent of the total, with the largest shares concentrated in Wyoming, Montana, and North Dakota.",
+      "description_short": "A principal aquifer where mining drives most withdrawals across Wyoming, Montana, and North Dakota. Recharge strongly exceeds withdrawals over the mapped footprint.",
+      "description_long": "In 2015, the USGS estimated about 67.19 Mgal/d of groundwater withdrawals associated with the Lower Tertiary aquifers. Mining accounted for about 60 percent of the total, with the largest shares concentrated in Wyoming, Montana, and North Dakota. Overlaying the mapped aquifer footprint with the USGS mean annual natural recharge grid suggests about 2027.7 Mgal/d of long-term natural recharge. That leaves estimated natural recharge about 1960.51 Mgal/d above withdrawals over the mapped footprint.",
       "geometry_source": "USGS principal aquifers shapefile (ScienceBase item 63140610d34e36012efa385d)",
       "geometry_notes": "USGS principal aquifer geometry shown for national-scale display only. It represents the shallowest principal aquifer extent and not the full underground system.",
       "source_aquifer_codes": [
@@ -940,9 +940,9 @@
       "is_grouped_system": false,
       "default_year": 2015,
       "default_units": "Mgal/d",
-      "methodology_version": "v1",
+      "methodology_version": "v1.1",
       "status": "active",
-      "confidence_summary": "A"
+      "confidence_summary": "A-B"
     },
     {
       "display_aquifer_id": "denver_basin_aquifer_system",
@@ -950,8 +950,8 @@
       "short_name": "Denver Basin",
       "sort_order": 48,
       "region_label": "Colorado",
-      "description_short": "A major groundwater system with public supply dominating withdrawals across Colorado.",
-      "description_long": "In 2015, the USGS estimated about 64.59 Mgal/d of groundwater withdrawals associated with the Denver Basin aquifer system. Public supply accounted for about 64 percent of the total, with the largest shares concentrated in Colorado.",
+      "description_short": "A principal aquifer where public supply drives most withdrawals across Colorado. Recharge exceeds withdrawals over the mapped footprint.",
+      "description_long": "In 2015, the USGS estimated about 64.59 Mgal/d of groundwater withdrawals associated with the Denver Basin aquifer system. Public supply accounted for about 64 percent of the total, with the largest shares concentrated in Colorado. Overlaying the mapped aquifer footprint with the USGS mean annual natural recharge grid suggests about 140.7 Mgal/d of long-term natural recharge. That leaves estimated natural recharge about 76.11 Mgal/d above withdrawals over the mapped footprint.",
       "geometry_source": "USGS principal aquifers shapefile (ScienceBase item 63140610d34e36012efa385d)",
       "geometry_notes": "USGS principal aquifer geometry shown for national-scale display only. It represents the shallowest principal aquifer extent and not the full underground system.",
       "source_aquifer_codes": [
@@ -960,9 +960,9 @@
       "is_grouped_system": false,
       "default_year": 2015,
       "default_units": "Mgal/d",
-      "methodology_version": "v1",
+      "methodology_version": "v1.1",
       "status": "active",
-      "confidence_summary": "A"
+      "confidence_summary": "A-B"
     },
     {
       "display_aquifer_id": "castle_hayne_aquifer",
@@ -970,8 +970,8 @@
       "short_name": "Castle Hayne",
       "sort_order": 49,
       "region_label": "North Carolina",
-      "description_short": "A major groundwater system with public supply dominating withdrawals across North Carolina.",
-      "description_long": "In 2015, the USGS estimated about 64.52 Mgal/d of groundwater withdrawals associated with the Castle Hayne aquifer. Public supply accounted for about 60 percent of the total, with the largest shares concentrated in North Carolina.",
+      "description_short": "A principal aquifer where public supply drives most withdrawals across North Carolina. Recharge strongly exceeds withdrawals over the mapped footprint.",
+      "description_long": "In 2015, the USGS estimated about 64.52 Mgal/d of groundwater withdrawals associated with the Castle Hayne aquifer. Public supply accounted for about 60 percent of the total, with the largest shares concentrated in North Carolina. Overlaying the mapped aquifer footprint with the USGS mean annual natural recharge grid suggests about 1013.5 Mgal/d of long-term natural recharge. That leaves estimated natural recharge about 948.98 Mgal/d above withdrawals over the mapped footprint.",
       "geometry_source": "USGS principal aquifers shapefile (ScienceBase item 63140610d34e36012efa385d)",
       "geometry_notes": "USGS principal aquifer geometry shown for national-scale display only. It represents the shallowest principal aquifer extent and not the full underground system.",
       "source_aquifer_codes": [
@@ -980,9 +980,9 @@
       "is_grouped_system": false,
       "default_year": 2015,
       "default_units": "Mgal/d",
-      "methodology_version": "v1",
+      "methodology_version": "v1.1",
       "status": "active",
-      "confidence_summary": "A"
+      "confidence_summary": "A-B"
     },
     {
       "display_aquifer_id": "blaine_aquifer",
@@ -990,8 +990,8 @@
       "short_name": "Blaine",
       "sort_order": 50,
       "region_label": "Texas \u00b7 Oklahoma",
-      "description_short": "A major groundwater system with irrigation dominating withdrawals across Texas and Oklahoma.",
-      "description_long": "In 2015, the USGS estimated about 64.3 Mgal/d of groundwater withdrawals associated with the Blaine aquifer. Irrigation accounted for about 98 percent of the total, with the largest shares concentrated in Texas and Oklahoma.",
+      "description_short": "A principal aquifer where irrigation drives most withdrawals across Texas and Oklahoma. Withdrawals far exceed recharge over the mapped footprint.",
+      "description_long": "In 2015, the USGS estimated about 64.3 Mgal/d of groundwater withdrawals associated with the Blaine aquifer. Irrigation accounted for about 98 percent of the total, with the largest shares concentrated in Texas and Oklahoma. Overlaying the mapped aquifer footprint with the USGS mean annual natural recharge grid suggests about 29.58 Mgal/d of long-term natural recharge. That leaves withdrawals about 34.72 Mgal/d above the long-term estimated natural recharge over the mapped footprint.",
       "geometry_source": "USGS principal aquifers shapefile (ScienceBase item 63140610d34e36012efa385d)",
       "geometry_notes": "USGS principal aquifer geometry shown for national-scale display only. It represents the shallowest principal aquifer extent and not the full underground system.",
       "source_aquifer_codes": [
@@ -1000,9 +1000,9 @@
       "is_grouped_system": false,
       "default_year": 2015,
       "default_units": "Mgal/d",
-      "methodology_version": "v1",
+      "methodology_version": "v1.1",
       "status": "active",
-      "confidence_summary": "A"
+      "confidence_summary": "A-B"
     },
     {
       "display_aquifer_id": "central_oklahoma_aquifer",
@@ -1010,8 +1010,8 @@
       "short_name": "Central Oklahoma",
       "sort_order": 51,
       "region_label": "Oklahoma",
-      "description_short": "A major groundwater system with public supply dominating withdrawals across Oklahoma.",
-      "description_long": "In 2015, the USGS estimated about 38.89 Mgal/d of groundwater withdrawals associated with the Central Oklahoma aquifer. Public supply accounted for about 60 percent of the total, with the largest shares concentrated in Oklahoma.",
+      "description_short": "A principal aquifer where public supply drives most withdrawals across Oklahoma. Recharge exceeds withdrawals over the mapped footprint.",
+      "description_long": "In 2015, the USGS estimated about 38.89 Mgal/d of groundwater withdrawals associated with the Central Oklahoma aquifer. Public supply accounted for about 60 percent of the total, with the largest shares concentrated in Oklahoma. Overlaying the mapped aquifer footprint with the USGS mean annual natural recharge grid suggests about 110.44 Mgal/d of long-term natural recharge. That leaves estimated natural recharge about 71.55 Mgal/d above withdrawals over the mapped footprint.",
       "geometry_source": "USGS principal aquifers shapefile (ScienceBase item 63140610d34e36012efa385d)",
       "geometry_notes": "USGS principal aquifer geometry shown for national-scale display only. It represents the shallowest principal aquifer extent and not the full underground system.",
       "source_aquifer_codes": [
@@ -1020,58 +1020,18 @@
       "is_grouped_system": false,
       "default_year": 2015,
       "default_units": "Mgal/d",
-      "methodology_version": "v1",
+      "methodology_version": "v1.1",
       "status": "active",
-      "confidence_summary": "A"
-    },
-    {
-      "display_aquifer_id": "puerto_rico_north_coast_limestone_aquifer_system",
-      "display_name": "Puerto Rico North Coast Limestone aquifer system",
-      "short_name": "Puerto Rico North Coast Limestone",
-      "sort_order": 52,
-      "region_label": "Puerto Rico",
-      "description_short": "A major groundwater system with public supply dominating withdrawals across Puerto Rico.",
-      "description_long": "In 2015, the USGS estimated about 36.04 Mgal/d of groundwater withdrawals associated with the Puerto Rico North Coast Limestone aquifer system. Public supply accounted for about 82 percent of the total, with the largest shares concentrated in Puerto Rico.",
-      "geometry_source": "USGS principal aquifers shapefile (ScienceBase item 63140610d34e36012efa385d)",
-      "geometry_notes": "USGS principal aquifer geometry shown for national-scale display only. It represents the shallowest principal aquifer extent and not the full underground system.",
-      "source_aquifer_codes": [
-        "N400NCSTLM"
-      ],
-      "is_grouped_system": false,
-      "default_year": 2015,
-      "default_units": "Mgal/d",
-      "methodology_version": "v1",
-      "status": "active",
-      "confidence_summary": "A"
-    },
-    {
-      "display_aquifer_id": "puerto_rico_south_coast_aquifer",
-      "display_name": "Puerto Rico south coast aquifer",
-      "short_name": "Puerto Rico south coast",
-      "sort_order": 53,
-      "region_label": "Puerto Rico",
-      "description_short": "A major groundwater system with irrigation dominating withdrawals across Puerto Rico.",
-      "description_long": "In 2015, the USGS estimated about 35.11 Mgal/d of groundwater withdrawals associated with the Puerto Rico south coast aquifer. Irrigation accounted for about 55 percent of the total, with the largest shares concentrated in Puerto Rico.",
-      "geometry_source": "USGS principal aquifers shapefile (ScienceBase item 63140610d34e36012efa385d)",
-      "geometry_notes": "USGS principal aquifer geometry shown for national-scale display only. It represents the shallowest principal aquifer extent and not the full underground system.",
-      "source_aquifer_codes": [
-        "N300STHCST"
-      ],
-      "is_grouped_system": false,
-      "default_year": 2015,
-      "default_units": "Mgal/d",
-      "methodology_version": "v1",
-      "status": "active",
-      "confidence_summary": "A"
+      "confidence_summary": "A-B"
     },
     {
       "display_aquifer_id": "paleozoic_aquifers",
       "display_name": "Paleozoic aquifers",
       "short_name": "Paleozoic",
-      "sort_order": 54,
+      "sort_order": 52,
       "region_label": "Wyoming \u00b7 South Dakota \u00b7 Montana",
-      "description_short": "A major groundwater system with irrigation dominating withdrawals across Wyoming, South Dakota, and Montana.",
-      "description_long": "In 2015, the USGS estimated about 24.05 Mgal/d of groundwater withdrawals associated with the Paleozoic aquifers. Irrigation accounted for about 42 percent of the total, with the largest shares concentrated in Wyoming, South Dakota, and Montana.",
+      "description_short": "A principal aquifer where irrigation drives most withdrawals across Wyoming, South Dakota, and Montana. Recharge strongly exceeds withdrawals over the mapped footprint.",
+      "description_long": "In 2015, the USGS estimated about 24.05 Mgal/d of groundwater withdrawals associated with the Paleozoic aquifers. Irrigation accounted for about 42 percent of the total, with the largest shares concentrated in Wyoming, South Dakota, and Montana. Overlaying the mapped aquifer footprint with the USGS mean annual natural recharge grid suggests about 1261.73 Mgal/d of long-term natural recharge. That leaves estimated natural recharge about 1237.68 Mgal/d above withdrawals over the mapped footprint.",
       "geometry_source": "USGS principal aquifers shapefile (ScienceBase item 63140610d34e36012efa385d)",
       "geometry_notes": "USGS principal aquifer geometry shown for national-scale display only. It represents the shallowest principal aquifer extent and not the full underground system.",
       "source_aquifer_codes": [
@@ -1080,18 +1040,18 @@
       "is_grouped_system": false,
       "default_year": 2015,
       "default_units": "Mgal/d",
-      "methodology_version": "v1",
+      "methodology_version": "v1.1",
       "status": "active",
-      "confidence_summary": "A"
+      "confidence_summary": "A-B"
     },
     {
       "display_aquifer_id": "upper_cretaceous_aquifers",
       "display_name": "Upper Cretaceous aquifers",
       "short_name": "Upper Cretaceous",
-      "sort_order": 55,
+      "sort_order": 53,
       "region_label": "Montana \u00b7 Wyoming \u00b7 North Dakota",
-      "description_short": "A major groundwater system with public supply dominating withdrawals across Montana, Wyoming, and North Dakota.",
-      "description_long": "In 2015, the USGS estimated about 21.09 Mgal/d of groundwater withdrawals associated with the Upper Cretaceous aquifers. Public supply accounted for about 30 percent of the total, with the largest shares concentrated in Montana, Wyoming, and North Dakota.",
+      "description_short": "A principal aquifer where public supply drives most withdrawals across Montana, Wyoming, and North Dakota. Recharge strongly exceeds withdrawals over the mapped footprint.",
+      "description_long": "In 2015, the USGS estimated about 21.09 Mgal/d of groundwater withdrawals associated with the Upper Cretaceous aquifers. Public supply accounted for about 30 percent of the total, with the largest shares concentrated in Montana, Wyoming, and North Dakota. Overlaying the mapped aquifer footprint with the USGS mean annual natural recharge grid suggests about 540.34 Mgal/d of long-term natural recharge. That leaves estimated natural recharge about 519.25 Mgal/d above withdrawals over the mapped footprint.",
       "geometry_source": "USGS principal aquifers shapefile (ScienceBase item 63140610d34e36012efa385d)",
       "geometry_notes": "USGS principal aquifer geometry shown for national-scale display only. It represents the shallowest principal aquifer extent and not the full underground system.",
       "source_aquifer_codes": [
@@ -1100,18 +1060,18 @@
       "is_grouped_system": false,
       "default_year": 2015,
       "default_units": "Mgal/d",
-      "methodology_version": "v1",
+      "methodology_version": "v1.1",
       "status": "active",
-      "confidence_summary": "A"
+      "confidence_summary": "A-B"
     },
     {
       "display_aquifer_id": "ordovician_aquifers",
       "display_name": "Ordovician aquifers",
       "short_name": "Ordovician",
-      "sort_order": 56,
+      "sort_order": 54,
       "region_label": "Tennessee \u00b7 Kentucky",
-      "description_short": "A major groundwater system with domestic dominating withdrawals across Tennessee and Kentucky.",
-      "description_long": "In 2015, the USGS estimated about 20.63 Mgal/d of groundwater withdrawals associated with the Ordovician aquifers. Domestic accounted for about 28 percent of the total, with the largest shares concentrated in Tennessee and Kentucky.",
+      "description_short": "A principal aquifer where domestic drives most withdrawals across Tennessee and Kentucky. Recharge strongly exceeds withdrawals over the mapped footprint.",
+      "description_long": "In 2015, the USGS estimated about 20.63 Mgal/d of groundwater withdrawals associated with the Ordovician aquifers. Domestic accounted for about 28 percent of the total, with the largest shares concentrated in Tennessee and Kentucky. Overlaying the mapped aquifer footprint with the USGS mean annual natural recharge grid suggests about 1464.08 Mgal/d of long-term natural recharge. That leaves estimated natural recharge about 1443.45 Mgal/d above withdrawals over the mapped footprint.",
       "geometry_source": "USGS principal aquifers shapefile (ScienceBase item 63140610d34e36012efa385d)",
       "geometry_notes": "USGS principal aquifer geometry shown for national-scale display only. It represents the shallowest principal aquifer extent and not the full underground system.",
       "source_aquifer_codes": [
@@ -1120,18 +1080,18 @@
       "is_grouped_system": false,
       "default_year": 2015,
       "default_units": "Mgal/d",
-      "methodology_version": "v1",
+      "methodology_version": "v1.1",
       "status": "active",
-      "confidence_summary": "A"
+      "confidence_summary": "A-B"
     },
     {
       "display_aquifer_id": "upper_carbonate_aquifer",
       "display_name": "Upper carbonate aquifer",
       "short_name": "Upper carbonate",
-      "sort_order": 57,
+      "sort_order": 55,
       "region_label": "Minnesota \u00b7 Iowa",
-      "description_short": "A major groundwater system with public supply dominating withdrawals across Minnesota and Iowa.",
-      "description_long": "In 2015, the USGS estimated about 12.36 Mgal/d of groundwater withdrawals associated with the Upper carbonate aquifer. Public supply accounted for about 52 percent of the total, with the largest shares concentrated in Minnesota and Iowa.",
+      "description_short": "A principal aquifer where public supply drives most withdrawals across Minnesota and Iowa. Recharge strongly exceeds withdrawals over the mapped footprint.",
+      "description_long": "In 2015, the USGS estimated about 12.36 Mgal/d of groundwater withdrawals associated with the Upper carbonate aquifer. Public supply accounted for about 52 percent of the total, with the largest shares concentrated in Minnesota and Iowa. Overlaying the mapped aquifer footprint with the USGS mean annual natural recharge grid suggests about 888.96 Mgal/d of long-term natural recharge. That leaves estimated natural recharge about 876.6 Mgal/d above withdrawals over the mapped footprint.",
       "geometry_source": "USGS principal aquifers shapefile (ScienceBase item 63140610d34e36012efa385d)",
       "geometry_notes": "USGS principal aquifer geometry shown for national-scale display only. It represents the shallowest principal aquifer extent and not the full underground system.",
       "source_aquifer_codes": [
@@ -1140,18 +1100,18 @@
       "is_grouped_system": false,
       "default_year": 2015,
       "default_units": "Mgal/d",
-      "methodology_version": "v1",
+      "methodology_version": "v1.1",
       "status": "active",
-      "confidence_summary": "A"
+      "confidence_summary": "A-B"
     },
     {
       "display_aquifer_id": "new_york_sandstone_aquifers",
       "display_name": "New York sandstone aquifers",
       "short_name": "New York sandstone",
-      "sort_order": 58,
+      "sort_order": 56,
       "region_label": "New York",
-      "description_short": "A major groundwater system with domestic dominating withdrawals across New York.",
-      "description_long": "In 2015, the USGS estimated about 11.61 Mgal/d of groundwater withdrawals associated with the New York sandstone aquifers. Domestic accounted for about 51 percent of the total, with the largest shares concentrated in New York.",
+      "description_short": "A principal aquifer where domestic drives most withdrawals across New York. Recharge strongly exceeds withdrawals over the mapped footprint.",
+      "description_long": "In 2015, the USGS estimated about 11.61 Mgal/d of groundwater withdrawals associated with the New York sandstone aquifers. Domestic accounted for about 51 percent of the total, with the largest shares concentrated in New York. Overlaying the mapped aquifer footprint with the USGS mean annual natural recharge grid suggests about 1917.71 Mgal/d of long-term natural recharge. That leaves estimated natural recharge about 1906.1 Mgal/d above withdrawals over the mapped footprint.",
       "geometry_source": "USGS principal aquifers shapefile (ScienceBase item 63140610d34e36012efa385d)",
       "geometry_notes": "USGS principal aquifer geometry shown for national-scale display only. It represents the shallowest principal aquifer extent and not the full underground system.",
       "source_aquifer_codes": [
@@ -1160,18 +1120,18 @@
       "is_grouped_system": false,
       "default_year": 2015,
       "default_units": "Mgal/d",
-      "methodology_version": "v1",
+      "methodology_version": "v1.1",
       "status": "active",
-      "confidence_summary": "A"
+      "confidence_summary": "A-B"
     },
     {
       "display_aquifer_id": "jacobsville_aquifer",
       "display_name": "Jacobsville aquifer",
       "short_name": "Jacobsville",
-      "sort_order": 59,
+      "sort_order": 57,
       "region_label": "Michigan \u00b7 Wisconsin",
-      "description_short": "A major groundwater system with public supply dominating withdrawals across Michigan and Wisconsin.",
-      "description_long": "In 2015, the USGS estimated about 6.53 Mgal/d of groundwater withdrawals associated with the Jacobsville aquifer. Public supply accounted for about 41 percent of the total, with the largest shares concentrated in Michigan and Wisconsin.",
+      "description_short": "A principal aquifer where public supply drives most withdrawals across Michigan and Wisconsin. Recharge strongly exceeds withdrawals over the mapped footprint.",
+      "description_long": "In 2015, the USGS estimated about 6.53 Mgal/d of groundwater withdrawals associated with the Jacobsville aquifer. Public supply accounted for about 41 percent of the total, with the largest shares concentrated in Michigan and Wisconsin. Overlaying the mapped aquifer footprint with the USGS mean annual natural recharge grid suggests about 1136.59 Mgal/d of long-term natural recharge. That leaves estimated natural recharge about 1130.06 Mgal/d above withdrawals over the mapped footprint.",
       "geometry_source": "USGS principal aquifers shapefile (ScienceBase item 63140610d34e36012efa385d)",
       "geometry_notes": "USGS principal aquifer geometry shown for national-scale display only. It represents the shallowest principal aquifer extent and not the full underground system.",
       "source_aquifer_codes": [
@@ -1180,18 +1140,18 @@
       "is_grouped_system": false,
       "default_year": 2015,
       "default_units": "Mgal/d",
-      "methodology_version": "v1",
+      "methodology_version": "v1.1",
       "status": "active",
-      "confidence_summary": "A"
+      "confidence_summary": "A-B"
     },
     {
       "display_aquifer_id": "ada_vamoosa_aquifer",
       "display_name": "Ada-Vamoosa aquifer",
       "short_name": "Ada-Vamoosa",
-      "sort_order": 60,
+      "sort_order": 58,
       "region_label": "Oklahoma",
-      "description_short": "A major groundwater system with public supply dominating withdrawals across Oklahoma.",
-      "description_long": "In 2015, the USGS estimated about 6.22 Mgal/d of groundwater withdrawals associated with the Ada-Vamoosa aquifer. Public supply accounted for about 72 percent of the total, with the largest shares concentrated in Oklahoma.",
+      "description_short": "A principal aquifer where public supply drives most withdrawals across Oklahoma. Recharge strongly exceeds withdrawals over the mapped footprint.",
+      "description_long": "In 2015, the USGS estimated about 6.22 Mgal/d of groundwater withdrawals associated with the Ada-Vamoosa aquifer. Public supply accounted for about 72 percent of the total, with the largest shares concentrated in Oklahoma. Overlaying the mapped aquifer footprint with the USGS mean annual natural recharge grid suggests about 65.57 Mgal/d of long-term natural recharge. That leaves estimated natural recharge about 59.35 Mgal/d above withdrawals over the mapped footprint.",
       "geometry_source": "USGS principal aquifers shapefile (ScienceBase item 63140610d34e36012efa385d)",
       "geometry_notes": "USGS principal aquifer geometry shown for national-scale display only. It represents the shallowest principal aquifer extent and not the full underground system.",
       "source_aquifer_codes": [
@@ -1200,18 +1160,18 @@
       "is_grouped_system": false,
       "default_year": 2015,
       "default_units": "Mgal/d",
-      "methodology_version": "v1",
+      "methodology_version": "v1.1",
       "status": "active",
-      "confidence_summary": "A"
+      "confidence_summary": "A-B"
     },
     {
       "display_aquifer_id": "arbuckle_simpson_aquifer",
       "display_name": "Arbuckle-Simpson aquifer",
       "short_name": "Arbuckle-Simpson",
-      "sort_order": 61,
+      "sort_order": 59,
       "region_label": "Oklahoma",
-      "description_short": "A major groundwater system with public supply dominating withdrawals across Oklahoma.",
-      "description_long": "In 2015, the USGS estimated about 4.67 Mgal/d of groundwater withdrawals associated with the Arbuckle-Simpson aquifer. Public supply accounted for about 75 percent of the total, with the largest shares concentrated in Oklahoma.",
+      "description_short": "A principal aquifer where public supply drives most withdrawals across Oklahoma. Recharge strongly exceeds withdrawals over the mapped footprint.",
+      "description_long": "In 2015, the USGS estimated about 4.67 Mgal/d of groundwater withdrawals associated with the Arbuckle-Simpson aquifer. Public supply accounted for about 75 percent of the total, with the largest shares concentrated in Oklahoma. Overlaying the mapped aquifer footprint with the USGS mean annual natural recharge grid suggests about 32.02 Mgal/d of long-term natural recharge. That leaves estimated natural recharge about 27.35 Mgal/d above withdrawals over the mapped footprint.",
       "geometry_source": "USGS principal aquifers shapefile (ScienceBase item 63140610d34e36012efa385d)",
       "geometry_notes": "USGS principal aquifer geometry shown for national-scale display only. It represents the shallowest principal aquifer extent and not the full underground system.",
       "source_aquifer_codes": [
@@ -1220,18 +1180,18 @@
       "is_grouped_system": false,
       "default_year": 2015,
       "default_units": "Mgal/d",
-      "methodology_version": "v1",
+      "methodology_version": "v1.1",
       "status": "active",
-      "confidence_summary": "A"
+      "confidence_summary": "A-B"
     },
     {
       "display_aquifer_id": "wyoming_tertiary_aquifers",
       "display_name": "Wyoming Tertiary aquifers",
       "short_name": "Wyoming Tertiary",
-      "sort_order": 62,
+      "sort_order": 60,
       "region_label": "Wyoming",
-      "description_short": "A major groundwater system with irrigation dominating withdrawals across Wyoming. The map uses a county-footprint fallback for display.",
-      "description_long": "In 2015, the USGS estimated about 3.76 Mgal/d of groundwater withdrawals associated with the Wyoming Tertiary aquifers. Irrigation accounted for about 57 percent of the total, with the largest shares concentrated in Wyoming. Because the official principal-aquifer shapefile does not expose a standalone polygon for this aquifer, the map footprint shows the set of 6 counties attached to source rows.",
+      "description_short": "A principal aquifer where irrigation drives most withdrawals across Wyoming. Recharge strongly exceeds withdrawals over the mapped footprint. The map uses a county-footprint fallback for display.",
+      "description_long": "In 2015, the USGS estimated about 3.76 Mgal/d of groundwater withdrawals associated with the Wyoming Tertiary aquifers. Irrigation accounted for about 57 percent of the total, with the largest shares concentrated in Wyoming. Overlaying the mapped aquifer footprint with the USGS mean annual natural recharge grid suggests about 4487.14 Mgal/d of long-term natural recharge. That leaves estimated natural recharge about 4483.38 Mgal/d above withdrawals over the mapped footprint. Because the official principal-aquifer shapefile does not expose a standalone polygon for this aquifer, the map footprint shows the set of 6 counties attached to source rows.",
       "geometry_source": "2015 Census cartographic county boundaries (5m)",
       "geometry_notes": "County-footprint fallback shown for national display only. The USGS principal-aquifer shapefile does not expose a standalone polygon for this source aquifer, so the map uses the 6 counties that carry 2015 withdrawal rows instead.",
       "source_aquifer_codes": [
@@ -1240,18 +1200,18 @@
       "is_grouped_system": false,
       "default_year": 2015,
       "default_units": "Mgal/d",
-      "methodology_version": "v1",
+      "methodology_version": "v1.1",
       "status": "active",
-      "confidence_summary": "A"
+      "confidence_summary": "A-B"
     },
     {
       "display_aquifer_id": "southern_nevada_volcanic_rock_aquifers",
       "display_name": "Southern Nevada volcanic-rock aquifers",
       "short_name": "Southern Nevada volcanic-rock",
-      "sort_order": 63,
+      "sort_order": 61,
       "region_label": "Nevada",
-      "description_short": "A major groundwater system with irrigation dominating withdrawals across Nevada.",
-      "description_long": "In 2015, the USGS estimated about 0.34 Mgal/d of groundwater withdrawals associated with the Southern Nevada volcanic-rock aquifers. Irrigation accounted for about 82 percent of the total, with the largest shares concentrated in Nevada.",
+      "description_short": "A principal aquifer where irrigation drives most withdrawals across Nevada. Recharge strongly exceeds withdrawals over the mapped footprint.",
+      "description_long": "In 2015, the USGS estimated about 0.34 Mgal/d of groundwater withdrawals associated with the Southern Nevada volcanic-rock aquifers. Irrigation accounted for about 82 percent of the total, with the largest shares concentrated in Nevada. Overlaying the mapped aquifer footprint with the USGS mean annual natural recharge grid suggests about 10.79 Mgal/d of long-term natural recharge. That leaves estimated natural recharge about 10.45 Mgal/d above withdrawals over the mapped footprint.",
       "geometry_source": "USGS principal aquifers shapefile (ScienceBase item 63140610d34e36012efa385d)",
       "geometry_notes": "USGS principal aquifer geometry shown for national-scale display only. It represents the shallowest principal aquifer extent and not the full underground system.",
       "source_aquifer_codes": [
@@ -1260,29 +1220,9 @@
       "is_grouped_system": false,
       "default_year": 2015,
       "default_units": "Mgal/d",
-      "methodology_version": "v1",
+      "methodology_version": "v1.1",
       "status": "active",
-      "confidence_summary": "A"
-    },
-    {
-      "display_aquifer_id": "kingshill_aquifer",
-      "display_name": "Kingshill aquifer",
-      "short_name": "Kingshill",
-      "sort_order": 64,
-      "region_label": "U.S. Virgin Islands",
-      "description_short": "A major groundwater system with domestic dominating withdrawals across U.S. Virgin Islands.",
-      "description_long": "In 2015, the USGS estimated about 0.32 Mgal/d of groundwater withdrawals associated with the Kingshill aquifer. Domestic accounted for about 47 percent of the total, with the largest shares concentrated in U.S. Virgin Islands.",
-      "geometry_source": "USGS principal aquifers shapefile (ScienceBase item 63140610d34e36012efa385d)",
-      "geometry_notes": "USGS principal aquifer geometry shown for national-scale display only. It represents the shallowest principal aquifer extent and not the full underground system.",
-      "source_aquifer_codes": [
-        "N400KNGSHL"
-      ],
-      "is_grouped_system": false,
-      "default_year": 2015,
-      "default_units": "Mgal/d",
-      "methodology_version": "v1",
-      "status": "active",
-      "confidence_summary": "A"
+      "confidence_summary": "A-B"
     }
   ]
 }
