@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { BOUNDARY_OPTIONS, type BoundaryKey } from './sceneOneData';
 import {
   SANDBOX_ARCHITECTURE_OPTIONS,
@@ -14,6 +14,10 @@ import {
   type SandboxPromptPresetKey,
   type SandboxServiceMode,
 } from './promptEnergySandboxData';
+import {
+  PromptEnergyScenePrimer,
+  PromptEnergySceneTakeaway,
+} from './PromptEnergyLearningLayer';
 
 interface PromptEnergySandboxProps {
   boundary: BoundaryKey;
@@ -55,6 +59,7 @@ export function PromptEnergySandbox({
   boundary,
   onBoundaryChange,
 }: PromptEnergySandboxProps) {
+  const sectionRef = useRef<HTMLElement | null>(null);
   const [promptPreset, setPromptPreset] = useState<SandboxPromptPresetKey>('short');
   const [outputPreset, setOutputPreset] = useState<SandboxOutputPresetKey>('brief');
   const [serviceMode, setServiceMode] = useState<SandboxServiceMode>('balanced');
@@ -200,15 +205,59 @@ export function PromptEnergySandbox({
   const inputWidth = Math.min(44, 10 + promptConfig.inputTokens * 0.015);
   const outputWidth = Math.min(64, 10 + outputConfig.outputTokens * 0.035);
 
+  useEffect(() => {
+    const node = sectionRef.current;
+    if (!node) return;
+
+    const observer = new IntersectionObserver(
+      entries => {
+        const isVisible = entries.some(entry => entry.isIntersecting && entry.intersectionRatio > 0.3);
+        if (!isVisible) return;
+
+        window.dispatchEvent(
+          new CustomEvent('prompt-energy:scene-state', {
+            detail: {
+              scene: 'sandbox',
+              boundary,
+              promptPreset,
+              outputPreset,
+              serviceMode,
+              architectureMode,
+              deploymentMode,
+              totalWh: derived.totalWh,
+            },
+          })
+        );
+      },
+      { threshold: [0.3, 0.6], rootMargin: '-10% 0px -35% 0px' }
+    );
+
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [
+    architectureMode,
+    boundary,
+    deploymentMode,
+    derived.totalWh,
+    outputPreset,
+    promptPreset,
+    serviceMode,
+  ]);
+
   return (
-    <section className="pe-sandbox" aria-labelledby="pe-sandbox-title">
+    <section className="pe-sandbox" aria-labelledby="pe-sandbox-title" data-scene="sandbox" ref={sectionRef}>
       <div className="pe-sandbox__intro">
         <div className="pe-sandbox__eyebrow">{SANDBOX_EXPLAINER_COPY.eyebrow}</div>
         <h2 className="pe-sandbox__title" id="pe-sandbox-title">
           {SANDBOX_EXPLAINER_COPY.title}
         </h2>
-        <p className="pe-sandbox__lede">{SANDBOX_EXPLAINER_COPY.subtitle}</p>
+        <p className="pe-sandbox__lede">
+          {SANDBOX_EXPLAINER_COPY.subtitle} Use the controls below to see how prompt shape,
+          sharing, architecture, and accounting boundary change the size of the slice.
+        </p>
       </div>
+
+      <PromptEnergyScenePrimer scene="sandbox" />
 
       <div className="pe-sandbox__layout">
         <div className="pe-sandbox__controls">
@@ -429,6 +478,8 @@ export function PromptEnergySandbox({
           <div className="pe-sandbox__note">{SANDBOX_EXPLAINER_COPY.note}</div>
         </div>
       </div>
+
+      <PromptEnergySceneTakeaway scene="sandbox" />
     </section>
   );
 }

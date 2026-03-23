@@ -20,6 +20,10 @@ import {
   SchedulerCompareView,
   TBTBarView,
 } from './PromptEnergySceneSixViews';
+import {
+  PromptEnergyScenePrimer,
+  PromptEnergySceneTakeaway,
+} from './PromptEnergyLearningLayer';
 
 interface SceneSixProps {
   boundary: BoundaryKey;
@@ -207,9 +211,11 @@ export function PromptEnergySceneSix({ boundary }: SceneSixProps) {
           The answer loop
         </h2>
         <p className="pe6-lede">
-          After the first token, the model repeats a narrow memory-heavy loop for every new token. This is where longer answers turn into more waiting, more cache growth, and more energy.
+          After the first token, the model starts a repeating loop: read the stored history, produce one new token, save that new state, and repeat. This is why long answers often matter so much.
         </p>
       </div>
+
+      <PromptEnergyScenePrimer scene="scene-6" />
 
       <div className="pe6-layout">
         <div className="pe6-steps">
@@ -432,6 +438,8 @@ export function PromptEnergySceneSix({ boundary }: SceneSixProps) {
           </div>
         </div>
       </div>
+
+      <PromptEnergySceneTakeaway scene="scene-6" />
     </section>
   );
 }

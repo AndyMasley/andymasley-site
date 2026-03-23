@@ -19,6 +19,10 @@ import {
   RackRearView,
   RackXRayView,
 } from './PromptEnergySceneTwoViews';
+import {
+  PromptEnergyScenePrimer,
+  PromptEnergySceneTakeaway,
+} from './PromptEnergyLearningLayer';
 
 function formatRackPower(value: number) {
   return `~${value} kW`;
@@ -293,9 +297,11 @@ export function PromptEnergySceneTwo({ boundary }: SceneTwoProps) {
           Inside the rack
         </h2>
         <p className="pe2-lede">
-          Your request reaches one tray inside a much larger machine of networking, power, and cooling.
+          Your request has now reached one tray inside a much larger shared machine. This scene shows the rack around it: networking, power, airflow, and liquid plumbing.
         </p>
       </div>
+
+      <PromptEnergyScenePrimer scene="scene-2" />
 
       <div className="pe2-layout">
         <div className="pe2-steps">
@@ -454,6 +460,8 @@ export function PromptEnergySceneTwo({ boundary }: SceneTwoProps) {
           </div>
         </div>
       </div>
+
+      <PromptEnergySceneTakeaway scene="scene-2" />
     </section>
   );
 }

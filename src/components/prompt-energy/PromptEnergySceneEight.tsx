@@ -18,6 +18,10 @@ import {
   SharedMachineTimelineView,
   SummaryStripView,
 } from './PromptEnergySceneEightViews';
+import {
+  PromptEnergyScenePrimer,
+  PromptEnergySceneTakeaway,
+} from './PromptEnergyLearningLayer';
 
 interface SceneEightProps {
   boundary: BoundaryKey;
@@ -145,10 +149,11 @@ export function PromptEnergySceneEight({
           Why one prompt is cheap
         </h2>
         <p className="pe8-lede">
-          A prompt is not paying for an entire machine. It is paying for a short, shared,
-          optimized slice of work inside a much larger serving system.
+          The machine stays huge, but your prompt only uses a short shared slice of it. This scene explains why that can still add up to a small per-prompt number.
         </p>
       </div>
+
+      <PromptEnergyScenePrimer scene="scene-8" />
 
       <div className="pe8-layout">
         <div className="pe8-steps">
@@ -341,6 +346,8 @@ export function PromptEnergySceneEight({
           </div>
         </div>
       </div>
+
+      <PromptEnergySceneTakeaway scene="scene-8" />
     </section>
   );
 }

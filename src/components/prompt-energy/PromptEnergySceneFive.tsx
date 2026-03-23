@@ -18,6 +18,10 @@ import {
   TTFTTimeline,
   TokenLayerGridView,
 } from './PromptEnergySceneFiveViews';
+import {
+  PromptEnergyScenePrimer,
+  PromptEnergySceneTakeaway,
+} from './PromptEnergyLearningLayer';
 
 interface SceneFiveProps {
   boundary: BoundaryKey;
@@ -165,9 +169,11 @@ export function PromptEnergySceneFive({ boundary }: SceneFiveProps) {
           The prompt sweep
         </h2>
         <p className="pe5-lede">
-          Before the first answer token appears, the whole prompt crosses every layer and fills the key and value cache. This is the wide prefill pass.
+          Before the first answer token appears, the model has to read the whole prompt. That wide pass is called prefill, and it also builds the key-value cache used later.
         </p>
       </div>
+
+      <PromptEnergyScenePrimer scene="scene-5" />
 
       <div className="pe5-layout">
         <div className="pe5-steps">
@@ -350,6 +356,8 @@ export function PromptEnergySceneFive({ boundary }: SceneFiveProps) {
           </div>
         </div>
       </div>
+
+      <PromptEnergySceneTakeaway scene="scene-5" />
     </section>
   );
 }

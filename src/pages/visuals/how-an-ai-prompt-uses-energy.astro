@@ -1,5 +1,9 @@
 ---
 import Base from '@/layouts/Base.astro';
+import {
+  PromptEnergyBeginnerOverview,
+  PromptEnergyStoryGuideBar,
+} from '@/components/prompt-energy/PromptEnergyLearningLayer';
 import { PromptEnergyStory } from '@/components/prompt-energy/PromptEnergyStory';
 ---
 
@@ -12,10 +16,12 @@ import { PromptEnergyStory } from '@/components/prompt-energy/PromptEnergyStory'
     <header class="pe-page__header">
       <h1 class="pe-page__title">How an AI prompt uses energy</h1>
       <p class="pe-page__intro">
-        A zoomable story about how one prompt moves through a live AI serving system. The first eight scenes track the request from chat box to accelerator handoff, into the rack that holds the tray, down into one tray and package, into the die map inside a modern accelerator, through the full prefill sweep, into the repeated decode loop, out through the cooling path that has to carry the heat away, and finally into the economics of why one prompt can still amount to a tiny shared slice of such a large machine. It now ends with a live sandbox so the same prompt-slice model can be explored directly.
+        This is a beginner-friendly, zoomable story about what really happens after you type a question into an AI system. It follows one prompt from the chat box into shared hardware, down into the chip that does the work, through the waiting and memory loops that produce the answer, out through the cooling system that removes the heat, and finally into the accounting story of why one prompt can still be a very small slice of such a large machine.
       </p>
     </header>
 
+    <PromptEnergyBeginnerOverview client:idle />
+    <PromptEnergyStoryGuideBar client:idle />
     <PromptEnergyStory client:idle />
   </article>
 </Base>
@@ -52,6 +58,384 @@ import { PromptEnergyStory } from '@/components/prompt-energy/PromptEnergyStory'
     font-size: 1rem;
     line-height: 1.78;
     color: var(--text-secondary);
+  }
+
+  .pe-learn {
+    margin: 0 0 2rem;
+    padding: 1.25rem;
+    border: 1px solid var(--border);
+    background: color-mix(in srgb, var(--bg-subtle) 90%, transparent);
+    box-shadow: 0 20px 48px -34px rgba(26, 25, 24, 0.24);
+  }
+
+  .pe-learn__intro {
+    max-width: 54rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .pe-learn__eyebrow,
+  .pe-guidebar__eyebrow,
+  .pe-learn__panel-eyebrow,
+  .pe-learning-card__eyebrow {
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--dim);
+    font-family: var(--font-body);
+  }
+
+  .pe-learn__title {
+    margin: 0.3rem 0 0.75rem;
+    font-family: var(--font-editorial);
+    font-size: clamp(1.8rem, 1.55rem + 0.9vw, 2.6rem);
+    line-height: 1.08;
+    letter-spacing: -0.03em;
+  }
+
+  .pe-learn__lede {
+    max-width: 48rem;
+    margin: 0;
+    font-family: var(--font-editorial);
+    font-size: 1rem;
+    line-height: 1.72;
+    color: var(--text-secondary);
+  }
+
+  .pe-learn__card-grid,
+  .pe-learn__two-up,
+  .pe-learning-card__grid {
+    display: grid;
+    gap: 0.9rem;
+  }
+
+  .pe-learn__card-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    margin-bottom: 1rem;
+  }
+
+  .pe-learn__card,
+  .pe-learn__callout,
+  .pe-learn__panel,
+  .pe-learning-card {
+    padding: 0.95rem 1rem;
+    border-radius: 1rem;
+    border: 1px solid color-mix(in srgb, var(--border) 86%, transparent);
+    background: color-mix(in srgb, var(--bg-subtle) 64%, transparent);
+  }
+
+  .pe-learn__card h3,
+  .pe-learn__panel h3,
+  .pe-learning-card h3 {
+    margin: 0 0 0.45rem;
+    font-family: var(--font-editorial);
+    font-size: 1.05rem;
+    line-height: 1.2;
+  }
+
+  .pe-learn__card p,
+  .pe-learn__callout p,
+  .pe-learn__panel p,
+  .pe-learning-card p {
+    margin: 0;
+    font-size: 0.95rem;
+    line-height: 1.68;
+    color: var(--text-secondary);
+  }
+
+  .pe-learn__callout {
+    margin-bottom: 1rem;
+    background:
+      linear-gradient(90deg, color-mix(in srgb, var(--accent) 10%, transparent), transparent 40%),
+      color-mix(in srgb, var(--bg-subtle) 68%, transparent);
+  }
+
+  .pe-learn__callout-title {
+    margin-bottom: 0.4rem;
+    font-size: 0.84rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text);
+  }
+
+  .pe-learn__two-up {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    margin-bottom: 1rem;
+  }
+
+  .pe-learn__journey {
+    display: grid;
+    gap: 0.75rem;
+    margin: 0.8rem 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .pe-learn__journey li {
+    padding-top: 0.7rem;
+    border-top: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
+  }
+
+  .pe-learn__journey strong,
+  .pe-guidebar__step strong {
+    display: block;
+    font-size: 0.86rem;
+    line-height: 1.4;
+  }
+
+  .pe-learn__journey span,
+  .pe-guidebar__step span,
+  .pe-learning-card__scale {
+    display: block;
+    margin-top: 0.15rem;
+    font-size: 0.75rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--dim);
+  }
+
+  .pe-learn__journey p {
+    margin-top: 0.28rem;
+    font-size: 0.87rem;
+  }
+
+  .pe-learn__nest {
+    display: grid;
+    justify-items: center;
+    gap: 0.45rem;
+    margin-top: 0.9rem;
+  }
+
+  .pe-learn__nest-level {
+    display: grid;
+    place-items: center;
+    min-height: 2rem;
+    border-radius: 999px;
+    border: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
+    background: color-mix(in srgb, var(--bg-subtle) 46%, transparent);
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+  }
+
+  .pe-learn__list {
+    display: grid;
+    gap: 0.6rem;
+    margin: 0.8rem 0 0;
+    padding-left: 1.2rem;
+  }
+
+  .pe-learn__list li {
+    font-size: 0.93rem;
+    line-height: 1.6;
+    color: var(--text-secondary);
+  }
+
+  .pe-learn__power-card {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 0.55rem;
+    align-items: center;
+    margin-top: 0.9rem;
+  }
+
+  .pe-learn__power-rate {
+    display: grid;
+    gap: 0.12rem;
+    padding: 0.75rem 0.8rem;
+    border-radius: 1rem;
+    border: 1px solid color-mix(in srgb, var(--border) 82%, transparent);
+    background: color-mix(in srgb, var(--bg-subtle) 54%, transparent);
+  }
+
+  .pe-learn__power-rate span {
+    font-size: 0.72rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--dim);
+  }
+
+  .pe-learn__power-rate strong {
+    font-size: 1.15rem;
+    line-height: 1.1;
+  }
+
+  .pe-learn__power-rate small {
+    font-size: 0.8rem;
+    line-height: 1.45;
+    color: var(--text-secondary);
+  }
+
+  .pe-learn__power-rate--result {
+    background:
+      linear-gradient(180deg, color-mix(in srgb, var(--accent) 12%, transparent), transparent 76%),
+      color-mix(in srgb, var(--bg-subtle) 54%, transparent);
+  }
+
+  .pe-learn__power-math {
+    display: grid;
+    place-items: center;
+    font-size: 1.4rem;
+    color: var(--dim);
+  }
+
+  .pe-glossary {
+    border: 1px solid color-mix(in srgb, var(--border) 86%, transparent);
+    background: color-mix(in srgb, var(--bg-subtle) 66%, transparent);
+  }
+
+  .pe-glossary summary {
+    display: flex;
+    flex-direction: column;
+    gap: 0.18rem;
+    cursor: pointer;
+    padding: 0.95rem 1rem;
+    list-style: none;
+  }
+
+  .pe-glossary summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .pe-glossary summary span {
+    font-family: var(--font-editorial);
+    font-size: 1.05rem;
+  }
+
+  .pe-glossary summary small {
+    font-size: 0.84rem;
+    color: var(--text-secondary);
+  }
+
+  .pe-glossary__grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.85rem;
+    padding: 0 1rem 1rem;
+  }
+
+  .pe-glossary__item {
+    padding: 0.85rem;
+    border-radius: 0.9rem;
+    border: 1px solid color-mix(in srgb, var(--border) 82%, transparent);
+    background: color-mix(in srgb, var(--bg-subtle) 60%, transparent);
+  }
+
+  .pe-glossary__item h3 {
+    margin: 0 0 0.35rem;
+    font-size: 0.95rem;
+    line-height: 1.25;
+  }
+
+  .pe-glossary__item p {
+    margin: 0;
+    font-size: 0.84rem;
+    line-height: 1.56;
+    color: var(--text-secondary);
+  }
+
+  .pe-glossary__short {
+    margin-bottom: 0.45rem !important;
+    color: var(--text) !important;
+  }
+
+  .pe-guidebar {
+    position: sticky;
+    top: 0.4rem;
+    z-index: 6;
+    margin: 0 0 1.5rem;
+    padding: 0.9rem 1rem;
+    border: 1px solid var(--border);
+    background: color-mix(in srgb, var(--bg-subtle) 92%, transparent);
+    backdrop-filter: blur(12px);
+    box-shadow: 0 18px 42px -36px rgba(26, 25, 24, 0.28);
+  }
+
+  .pe-guidebar__header {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    align-items: flex-start;
+    margin-bottom: 0.75rem;
+  }
+
+  .pe-guidebar__title {
+    margin-top: 0.25rem;
+    font-family: var(--font-editorial);
+    font-size: 1.05rem;
+    line-height: 1.2;
+  }
+
+  .pe-guidebar__current {
+    padding: 0.35rem 0.65rem;
+    border-radius: 999px;
+    border: 1px solid color-mix(in srgb, var(--border) 82%, transparent);
+    background: color-mix(in srgb, var(--bg-subtle) 62%, transparent);
+    font-size: 0.8rem;
+  }
+
+  .pe-guidebar__steps {
+    display: grid;
+    grid-template-columns: repeat(9, minmax(0, 1fr));
+    gap: 0.55rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .pe-guidebar__step {
+    padding: 0.65rem 0.7rem;
+    border-radius: 0.9rem;
+    border: 1px solid color-mix(in srgb, var(--border) 82%, transparent);
+    background: color-mix(in srgb, var(--bg-subtle) 56%, transparent);
+    opacity: 0.72;
+  }
+
+  .pe-guidebar__step.is-active {
+    opacity: 1;
+    border-color: color-mix(in srgb, var(--accent) 46%, transparent);
+    background:
+      linear-gradient(180deg, color-mix(in srgb, var(--accent) 12%, transparent), transparent 80%),
+      color-mix(in srgb, var(--bg-subtle) 56%, transparent);
+  }
+
+  .pe-learning-card {
+    margin: 0 0 1.35rem;
+    box-shadow: 0 16px 36px -34px rgba(26, 25, 24, 0.24);
+  }
+
+  .pe-learning-card--takeaway {
+    margin-top: 1.2rem;
+  }
+
+  .pe-learning-card__header {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    align-items: flex-start;
+    margin-bottom: 0.75rem;
+  }
+
+  .pe-learning-card__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .pe-learning-card__grid--two {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .pe-learning-card__block {
+    padding: 0.8rem 0.85rem;
+    border-radius: 0.85rem;
+    border: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
+    background: color-mix(in srgb, var(--bg-subtle) 54%, transparent);
+  }
+
+  .pe-learning-card__block strong {
+    display: block;
+    margin-bottom: 0.35rem;
+    font-size: 0.8rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
   }
 
   .pe-scene-one__sticky,
@@ -8152,10 +8536,16 @@ import { PromptEnergyStory } from '@/components/prompt-energy/PromptEnergyStory'
   }
 
   @media (max-width: 1120px) {
+    .pe-learn__card-grid,
+    .pe-glossary__grid,
     .pe-sandbox__layout,
     .pe8-layout,
     .pe7-layout {
       grid-template-columns: 1fr;
+    }
+
+    .pe-guidebar__steps {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
     }
 
     .pe8-steps,
@@ -8182,6 +8572,9 @@ import { PromptEnergyStory } from '@/components/prompt-energy/PromptEnergyStory'
   }
 
   @media (max-width: 980px) {
+    .pe-learn__two-up,
+    .pe-learning-card__grid,
+    .pe-learning-card__grid--two,
     .pe-sandbox__microstats,
     .pe-sandbox__metrics,
     .pe8-stage__metrics,
@@ -8198,16 +8591,19 @@ import { PromptEnergyStory } from '@/components/prompt-energy/PromptEnergyStory'
   }
 
   @media (max-width: 720px) {
+    .pe-learn,
+    .pe-guidebar,
     .pe-sandbox {
       padding: 1rem;
     }
 
-    .pe-sandbox__hero-topline,
     .pe8-stage,
     .pe7-stage {
       padding: 0.9rem;
     }
 
+    .pe-guidebar__header,
+    .pe-learning-card__header,
     .pe-sandbox__button-row,
     .pe8-stage__topline,
     .pe8-stage__controls,
@@ -8226,6 +8622,8 @@ import { PromptEnergyStory } from '@/components/prompt-energy/PromptEnergyStory'
       align-items: flex-start;
     }
 
+    .pe-learn__power-card,
+    .pe-guidebar__steps,
     .pe-sandbox__microstats,
     .pe-sandbox__metrics,
     .pe8-stage__metrics,

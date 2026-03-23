@@ -14,6 +14,10 @@ import {
   SideCutawayView,
   TrayMiniMap,
 } from './PromptEnergySceneThreeViews';
+import {
+  PromptEnergyScenePrimer,
+  PromptEnergySceneTakeaway,
+} from './PromptEnergyLearningLayer';
 
 interface SceneThreeProps {
   boundary: BoundaryKey;
@@ -150,9 +154,11 @@ export function PromptEnergySceneThree({ boundary }: SceneThreeProps) {
           Open the tray
         </h2>
         <p className="pe3-lede">
-          This is where the board, the package, and the cooling hardware finally come into view.
+          This is the first scene where the physical layers become obvious: the board, the package, the nearby memory, and the cooling hardware above them.
         </p>
       </div>
+
+      <PromptEnergyScenePrimer scene="scene-3" />
 
       <div className="pe3-layout">
         <div className="pe3-steps">
@@ -345,6 +351,8 @@ export function PromptEnergySceneThree({ boundary }: SceneThreeProps) {
           </div>
         </div>
       </div>
+
+      <PromptEnergySceneTakeaway scene="scene-3" />
     </section>
   );
 }

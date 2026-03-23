@@ -7,6 +7,10 @@ import {
   SCENE_ONE_BEATS,
   type BoundaryKey,
 } from './sceneOneData';
+import {
+  PromptEnergyScenePrimer,
+  PromptEnergySceneTakeaway,
+} from './PromptEnergyLearningLayer';
 
 interface SceneOneProps {
   boundary: BoundaryKey;
@@ -243,9 +247,11 @@ export function PromptEnergySceneOne({ boundary, onBoundaryChange }: SceneOnePro
           How your question enters an AI system
         </h2>
         <p className="pe-scene-one__lede">
-          Before the model answers, your text is packaged, scheduled, and routed into already running hardware.
+          Before the model can answer, your text has to become a machine-ready request. This scene shows that first handoff from chat interface to live hardware.
         </p>
       </div>
+
+      <PromptEnergyScenePrimer scene="scene-1" />
 
       <div className="pe-scene-one__layout">
         <div className="pe-scene-one__steps">
@@ -474,6 +480,8 @@ export function PromptEnergySceneOne({ boundary, onBoundaryChange }: SceneOnePro
           </div>
         </div>
       </div>
+
+      <PromptEnergySceneTakeaway scene="scene-1" />
     </section>
   );
 }

@@ -14,6 +14,10 @@ import {
   SceneFourFactsCard,
   SMCameoView,
 } from './PromptEnergySceneFourViews';
+import {
+  PromptEnergyScenePrimer,
+  PromptEnergySceneTakeaway,
+} from './PromptEnergyLearningLayer';
 import { SCENE_FOUR_MODEL_LAYERS } from './sceneFourLayoutData';
 
 interface SceneFourProps {
@@ -172,9 +176,11 @@ export function PromptEnergySceneFour({ boundary }: SceneFourProps) {
           Inside the die
         </h2>
         <p className="pe4-lede">
-          This is the silicon map that the model’s layers keep reusing. The die is a structured landscape of compute neighborhoods, shared cache, memory gateways, and edge links.
+          This is the silicon chip itself. The key beginner lesson here is that the model keeps reusing the same hardware map instead of having one physical region per model layer.
         </p>
       </div>
+
+      <PromptEnergyScenePrimer scene="scene-4" />
 
       <div className="pe4-layout">
         <div className="pe4-steps">
@@ -355,7 +361,8 @@ export function PromptEnergySceneFour({ boundary }: SceneFourProps) {
           </div>
         </div>
       </div>
+
+      <PromptEnergySceneTakeaway scene="scene-4" />
     </section>
   );
 }
-

@@ -17,6 +17,10 @@ import {
   LoopSystemView,
   TrayRackView,
 } from './PromptEnergySceneSevenViews';
+import {
+  PromptEnergyScenePrimer,
+  PromptEnergySceneTakeaway,
+} from './PromptEnergyLearningLayer';
 
 interface SceneSevenProps {
   boundary: BoundaryKey;
@@ -186,9 +190,11 @@ export function PromptEnergySceneSeven({ boundary }: SceneSevenProps) {
           Follow the heat
         </h2>
         <p className="pe7-lede">
-          The chip does not cool itself. Heat moves through the package, into a cold plate or heatsink, through a rack loop, and out toward the facility.
+          All the work from the earlier scenes became heat. This scene shows the plain physical path that heat takes as it leaves the package, enters cooling hardware, and gets carried out of the machine.
         </p>
       </div>
+
+      <PromptEnergyScenePrimer scene="scene-7" />
 
       <div className="pe7-layout">
         <div className="pe7-steps">
@@ -402,6 +408,8 @@ export function PromptEnergySceneSeven({ boundary }: SceneSevenProps) {
           </div>
         </div>
       </div>
+
+      <PromptEnergySceneTakeaway scene="scene-7" />
     </section>
   );
 }
