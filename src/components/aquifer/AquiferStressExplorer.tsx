@@ -23,6 +23,7 @@ import {
   sourceTypeLabel,
 } from '@/lib/aquifer/format';
 import { projectAquiferFeatures } from '@/lib/aquifer/geometry';
+import { EXPLORER_LAYER_MODES, explorerLayerMeta, type ExplorerLayerMode } from '@/lib/aquifer/layers';
 
 interface Props {
   data: AquiferDataBundle;
@@ -182,11 +183,13 @@ function isGeometryVisible(
 export function AquiferStressExplorer({ data }: Props) {
   const { collection, geometry, metrics, provenance } = data;
   const [query, setQuery] = useState('');
+  const [layerMode, setLayerMode] = useState<ExplorerLayerMode>('regional_baseline');
   const [metricMode, setMetricMode] = useState<MetricMode>('stress');
   const [sortMode, setSortMode] = useState<SortMode>('stress');
   const [geometryScope, setGeometryScope] = useState<GeometryScope>('all');
   const [selectedId, setSelectedId] = useState<string | null>(collection.aquifers[0]?.display_aquifer_id ?? null);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const activeLayerMeta = explorerLayerMeta(layerMode);
 
   const metricsByAquifer = useMemo(() => byId(metrics.records), [metrics.records]);
   const geometryById = useMemo(
@@ -334,14 +337,33 @@ export function AquiferStressExplorer({ data }: Props) {
     <section className="aqs-shell">
       <div className="aqs-toolbar">
         <div className="aqs-toolbar-copy">
-          <p className="aqs-eyebrow">Aquifer stress</p>
-          <h2 className="aqs-title">Recharge-based groundwater stress across conterminous U.S. principal aquifers</h2>
+          <p className="aqs-eyebrow">Aquifer evidence atlas</p>
+          <h2 className="aqs-title">Regional aquifer baselines, source evidence, and uncertainty in one layered view</h2>
           <p className="aqs-intro">
-            This version combines direct-source 2015 USGS withdrawals with a USGS long-term natural recharge raster to show where mapped aquifer footprints appear most pressure-loaded. It keeps source totals separate from modeled layers, makes geometry compromises visible, and avoids pretending a national aquifer-volume denominator exists when it does not.
+            The public build now treats the national map as a parent-system baseline, not a facility-level conclusion. Regional structural pressure is published now, evidence and uncertainty are centered in their own layer, and the local source-routing layers are made explicit as scoped work instead of being implied by a single national score.
           </p>
         </div>
 
         <div className="aqs-toolbar-controls">
+          <div className="aqs-layer-switch" role="tablist" aria-label="Evidence layers">
+            {EXPLORER_LAYER_MODES.map((mode) => (
+              <button
+                key={mode.key}
+                className={`aqs-layer-button ${layerMode === mode.key ? 'is-active' : ''}`}
+                type="button"
+                role="tab"
+                aria-selected={layerMode === mode.key}
+                onClick={() => setLayerMode(mode.key)}
+              >
+                <span className="aqs-layer-button-copy">
+                  <strong>{mode.label}</strong>
+                  <small>{mode.description}</small>
+                </span>
+                <span className={`aqs-layer-button-status is-${mode.availability}`}>{mode.status_label}</span>
+              </button>
+            ))}
+          </div>
+
           <label className="aqs-search">
             <span className="aqs-search-label">Search aquifers</span>
             <input
@@ -353,24 +375,34 @@ export function AquiferStressExplorer({ data }: Props) {
             />
           </label>
 
-          <div className="aqs-mode-switch" role="tablist" aria-label="Detail mode">
-            {[
-              { key: 'stress', label: 'Stress summary' },
-              { key: 'categories', label: 'Broad sectors' },
-              { key: 'industry', label: 'Industry-type estimates' },
-            ].map((mode) => (
-              <button
-                key={mode.key}
-                className={`aqs-mode-button ${metricMode === mode.key ? 'is-active' : ''}`}
-                type="button"
-                role="tab"
-                aria-selected={metricMode === mode.key}
-                onClick={() => setMetricMode(mode.key as MetricMode)}
-              >
-                {mode.label}
-              </button>
-            ))}
-          </div>
+          {layerMode === 'regional_baseline' ? (
+            <div className="aqs-mode-panel">
+              <span className="aqs-search-label">Regional baseline detail</span>
+              <div className="aqs-mode-switch" role="tablist" aria-label="Regional baseline detail mode">
+                {[
+                  { key: 'stress', label: 'Baseline balance' },
+                  { key: 'categories', label: 'Broad sectors' },
+                  { key: 'industry', label: 'Industry estimates' },
+                ].map((mode) => (
+                  <button
+                    key={mode.key}
+                    className={`aqs-mode-button ${metricMode === mode.key ? 'is-active' : ''}`}
+                    type="button"
+                    role="tab"
+                    aria-selected={metricMode === mode.key}
+                    onClick={() => setMetricMode(mode.key as MetricMode)}
+                  >
+                    {mode.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="aqs-layer-summary-card">
+              <strong>{activeLayerMeta.panel_title}</strong>
+              <span>{activeLayerMeta.panel_summary}</span>
+            </div>
+          )}
         </div>
       </div>
 
@@ -385,7 +417,9 @@ export function AquiferStressExplorer({ data }: Props) {
               {selectedAquifer && selectedMetrics ? (
                 <div className="aqs-directory-spotlight">
                   <div className="aqs-directory-spotlight-copy">
-                    <p className="aqs-directory-kicker">Selected aquifer</p>
+                    <p className="aqs-directory-kicker">
+                      {layerMode === 'regional_baseline' ? 'Selected baseline' : 'Parent-system context'}
+                    </p>
                     <h3>{selectedAquifer.short_name}</h3>
                     <p>{selectedAquifer.region_label}</p>
                   </div>
@@ -419,7 +453,9 @@ export function AquiferStressExplorer({ data }: Props) {
               <div className="aqs-quick-picks">
                 <div className="aqs-quick-picks-header">
                   <span className="aqs-control-label">Quick picks</span>
-                  <span className="aqs-quick-picks-note">Highest stress</span>
+                  <span className="aqs-quick-picks-note">
+                    {layerMode === 'regional_baseline' ? 'Highest baseline pressure' : 'Highest parent-system pressure'}
+                  </span>
                 </div>
                 <div className="aqs-quick-pick-grid">
                   {quickPickAquifers.map((aquifer) => {
@@ -488,7 +524,11 @@ export function AquiferStressExplorer({ data }: Props) {
               </div>
             </div>
 
-            <p className="aqs-list-note">Grouped to match the active sort so the directory reads more like an atlas.</p>
+            <p className="aqs-list-note">
+              {layerMode === 'regional_baseline'
+                ? 'Grouped to match the active sort so the published baseline reads more like an atlas.'
+                : 'The directory still reflects parent-system context while this evidence layer is being built out.'}
+            </p>
           </div>
 
           <div className="aqs-directory-scroll">
@@ -573,9 +613,11 @@ export function AquiferStressExplorer({ data }: Props) {
         <section className="aqs-map-panel" aria-label="Aquifer map">
           <div className="aqs-map-meta">
             <div>
-              <p className="aqs-map-kicker">Map legend</p>
+              <p className="aqs-map-kicker">{activeLayerMeta.label}</p>
               <p className="aqs-map-caption">
-                Conterminous-U.S. public view of the 2015 USGS county-aquifer release overlaid with the USGS mean annual natural recharge raster. Fill shows recharge-based stress using <code>(withdrawals - recharge) / recharge</code>. Dashed outlines mark county-footprint fallbacks where the polygon dataset has no standalone aquifer outline.
+                {activeLayerMeta.map_caption}{' '}
+                Fill continues to show the regional recharge baseline using <code>(withdrawals - recharge) / recharge</code>. Dashed
+                outlines mark county-footprint fallbacks where the polygon dataset has no standalone aquifer outline.
               </p>
             </div>
             <div className="aqs-map-legend-wrap">
@@ -657,17 +699,27 @@ export function AquiferStressExplorer({ data }: Props) {
 
         <aside className="aqs-detail-panel" aria-live="polite">
           {selectedAquifer && selectedMetrics && selectedGeometry ? (
-            <AquiferDetail
-              aquifer={selectedAquifer}
-              geometryMeta={selectedGeometry}
-              metrics={selectedMetrics}
-              metricMode={metricMode}
-              rank={stressRankById.get(selectedAquifer.display_aquifer_id) ?? null}
-              aquiferCount={aquifers.length}
-              sources={renderSources(selectedMetrics.provenance_source_ids)}
-              relatedAquifers={relatedAquifers}
-              onSelect={selectAquifer}
-            />
+            layerMode === 'regional_baseline' ? (
+              <AquiferDetail
+                aquifer={selectedAquifer}
+                geometryMeta={selectedGeometry}
+                metrics={selectedMetrics}
+                metricMode={metricMode}
+                rank={stressRankById.get(selectedAquifer.display_aquifer_id) ?? null}
+                aquiferCount={aquifers.length}
+                sources={renderSources(selectedMetrics.provenance_source_ids)}
+                relatedAquifers={relatedAquifers}
+                onSelect={selectAquifer}
+              />
+            ) : (
+              <EvidenceLayerDetail
+                aquifer={selectedAquifer}
+                geometryMeta={selectedGeometry}
+                metrics={selectedMetrics}
+                layerMode={layerMode}
+                sources={renderSources(selectedMetrics.provenance_source_ids)}
+              />
+            )
           ) : (
             <div className="aqs-empty-state aqs-empty-state--detail">
               <h3>No derived aquifer record yet</h3>
@@ -757,7 +809,7 @@ function AquiferDetail({
       </header>
 
       <div className="aqs-stat">
-        <span className="aqs-stat-label">Recharge balance</span>
+        <span className="aqs-stat-label">Regional baseline</span>
         <strong className="aqs-stat-value">{formatSignedPercent(stress.balance_index.value)}</strong>
         <span className="aqs-stat-subline">
           {formatRatio(stress.withdrawal_to_recharge_ratio.value)} of estimated recharge · {metrics.year}
@@ -795,11 +847,22 @@ function AquiferDetail({
           <strong>{sourceTypeLabel(stress.balance_index.source_type)}</strong>
           <span>{stress.balance_index.methodology_key}</span>
         </div>
+        <div className="aqs-mode-note">
+          <strong>What this view does not prove</strong>
+          <p>
+            The national polygon is a parent-system context layer. It does not, by itself, identify a campus wellfield, utility source mix,
+            or local subaquifer connection.
+          </p>
+        </div>
       </div>
 
       <section className="aqs-section">
         <h4 className="aqs-section-title">
-          {metricMode === 'industry' ? 'Modeled industry allocation' : metricMode === 'stress' ? 'Hydrologic balance' : 'Broad sectors'}
+          {metricMode === 'industry'
+            ? 'Modeled industry allocation'
+            : metricMode === 'stress'
+              ? 'Regional baseline balance'
+              : 'Broad sectors'}
         </h4>
 
         {metricMode === 'industry' ? (
@@ -881,7 +944,7 @@ function AquiferDetail({
         <div className="aqs-methodology-copy">
           <p>{metrics.methodology_summary}</p>
           <p>
-            Stress label: <strong>{stressLabel(stress.balance_index.value)}</strong>. The public map uses a recharge-based comparison because a
+            Baseline label: <strong>{stressLabel(stress.balance_index.value)}</strong>. The public map uses a recharge-based comparison because a
             nationally consistent aquifer-volume denominator is not yet available across all displayed aquifers.
           </p>
           {metrics.caveats.length ? (
@@ -930,6 +993,130 @@ function AquiferDetail({
           </div>
         </section>
       ) : null}
+    </div>
+  );
+}
+
+function EvidenceLayerDetail({
+  aquifer,
+  geometryMeta,
+  metrics,
+  layerMode,
+  sources,
+}: {
+  aquifer: DisplayAquifer;
+  geometryMeta: DisplayAquiferFeature['properties'];
+  metrics: AquiferMetricRecord;
+  layerMode: ExplorerLayerMode;
+  sources: ProvenanceRecord[];
+}) {
+  const layerMeta = explorerLayerMeta(layerMode);
+  const geometryUi = geometryMethodMeta(geometryMeta.geometry_method, geometryMeta.county_footprint_count);
+  const stress = metrics.recharge_stress;
+  const stressConfidence = confidenceMeta(stress.balance_index.confidence_grade);
+  const evidenceRows = [
+    {
+      label: 'Parent-system baseline',
+      value: formatSignedPercent(stress.balance_index.value),
+      note: 'Regional recharge comparison only',
+    },
+    {
+      label: 'Direct-source withdrawal',
+      value: formatFlowMgalPerDay(metrics.total_withdrawal.value),
+      note: `${metrics.year} principal-aquifer total`,
+    },
+    {
+      label: 'Geometry state',
+      value: geometryUi.label,
+      note: geometryUi.description,
+    },
+    {
+      label: 'Current confidence',
+      value: stressConfidence.label,
+      note: stressConfidence.description,
+    },
+  ];
+
+  return (
+    <div className="aqs-detail">
+      <header className="aqs-detail-header">
+        <p className="aqs-detail-region">{aquifer.region_label}</p>
+        <h3 className="aqs-detail-title">{aquifer.display_name}</h3>
+        <p className="aqs-detail-summary">{layerMeta.panel_summary}</p>
+      </header>
+
+      <div className="aqs-stat">
+        <span className="aqs-stat-label">{layerMeta.label}</span>
+        <strong className="aqs-stat-value">{layerMeta.status_label}</strong>
+        <span className="aqs-stat-subline">{layerMeta.description}</span>
+      </div>
+
+      <div className="aqs-layer-checklist-grid">
+        <div className="aqs-layer-card">
+          <strong>Published now</strong>
+          <ul className="aqs-layer-list">
+            {layerMeta.published_now.map((item) => (
+              <li key={item}>{item}</li>
+            ))}
+          </ul>
+        </div>
+        <div className="aqs-layer-card">
+          <strong>Needed next</strong>
+          <ul className="aqs-layer-list">
+            {layerMeta.needs_next.map((item) => (
+              <li key={item}>{item}</li>
+            ))}
+          </ul>
+        </div>
+      </div>
+
+      <section className="aqs-section">
+        <h4 className="aqs-section-title">Evidence ledger</h4>
+        <ul className="aqs-bars">
+          {evidenceRows.map((row) => (
+            <li key={row.label} className="aqs-evidence-row">
+              <div className="aqs-bar-copy">
+                <span>{row.label}</span>
+                <small>{row.note}</small>
+              </div>
+              <div className="aqs-bar-value aqs-bar-value--inline">
+                <strong>{row.value}</strong>
+              </div>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <section className="aqs-section">
+        <h4 className="aqs-section-title">What this view does not prove</h4>
+        <div className="aqs-mode-note">
+          <strong>Local source attribution is still missing.</strong>
+          <p>
+            This layer does not yet identify specific campuses, utilities, service areas, wellfields, permits, or subaquifers. The public
+            map still provides parent-system context, not a one-step path from facility to groundwater source.
+          </p>
+        </div>
+      </section>
+
+      <section className="aqs-section">
+        <h4 className="aqs-section-title">Sources</h4>
+        {sources.length ? (
+          <ul className="aqs-sources">
+            {sources.map((source) => (
+              <li key={source.source_id}>
+                <strong>{source.title}</strong>
+                <span>
+                  {source.publisher}
+                  {source.year ? `, ${source.year}` : ''}
+                </span>
+                <small>{source.usage_notes}</small>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="aqs-mode-note">Source registry is in place; layer-specific evidence bindings will populate as the source graph is built.</p>
+        )}
+      </section>
     </div>
   );
 }

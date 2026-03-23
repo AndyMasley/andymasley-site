@@ -4,8 +4,8 @@ import { AquiferStressExplorer } from '@/components/aquifer/AquiferStressExplore
 import { loadAquiferBundle } from '@/lib/aquifer/loader';
 
 const data = loadAquiferBundle();
-const pageTitle = 'Aquifer stress';
-const pageDescription = 'An interactive conterminous U.S. aquifer map combining 2015 USGS withdrawals with a USGS mean annual natural recharge raster to show recharge-based groundwater stress.';
+const pageTitle = 'Aquifer evidence atlas';
+const pageDescription = 'A layered conterminous U.S. aquifer explorer that separates regional baseline pressure, evidence, and future local source-routing layers.';
 const pageUrl = 'https://andymasley.com/visuals/aquifer-stress';
 ---
 
@@ -13,16 +13,16 @@ const pageUrl = 'https://andymasley.com/visuals/aquifer-stress';
   title={pageTitle}
   description={pageDescription}
   canonicalUrl={pageUrl}
-  ogTitle="Aquifer stress"
+  ogTitle="Aquifer evidence atlas"
   ogImage="/images/og/og-visuals.png"
   ogImageAlt="Aquifer stress map preview for Andy Masley"
 >
   <article class="aqs-page">
     <header class="aqs-hero">
-      <p class="aqs-hero-kicker">Groundwater</p>
-      <h1 class="aqs-hero-title">Aquifer stress</h1>
+      <p class="aqs-hero-kicker">Groundwater evidence</p>
+      <h1 class="aqs-hero-title">Aquifer evidence atlas</h1>
       <p class="aqs-hero-copy">
-        A conterminous-U.S. explainer for how direct-source 2015 groundwater withdrawals compare with long-term estimated natural recharge across principal aquifers. The goal is not false precision. It is to make the source data, uncertainty, and tradeoffs legible.
+        A layered conterminous-U.S. explainer for regional aquifer pressure, evidence quality, and the local source questions that the national baseline cannot answer by itself. The goal is not false precision. It is to make the source data, uncertainty, and missing links legible.
       </p>
     </header>
 
@@ -131,7 +131,83 @@ const pageUrl = 'https://andymasley.com/visuals/aquifer-stress';
   .aqs-toolbar-controls {
     display: grid;
     gap: 1rem;
-    min-width: min(100%, 24rem);
+    min-width: min(100%, 28rem);
+  }
+
+  .aqs-layer-switch {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.55rem;
+  }
+
+  .aqs-layer-button {
+    border: 1px solid var(--aqs-border);
+    background: rgba(255, 255, 255, 0.4);
+    color: inherit;
+    font: inherit;
+    padding: 0.7rem 0.78rem;
+    text-align: left;
+    display: grid;
+    gap: 0.55rem;
+    align-content: space-between;
+    min-height: 6.1rem;
+    transition: border-color 0.18s ease, background 0.18s ease, transform 0.18s ease;
+  }
+
+  [data-theme="dark"] .aqs-layer-button {
+    background: rgba(255, 255, 255, 0.03);
+  }
+
+  .aqs-layer-button:hover {
+    transform: translateY(-1px);
+  }
+
+  .aqs-layer-button.is-active {
+    border-color: rgba(31, 94, 97, 0.45);
+    background: rgba(31, 94, 97, 0.1);
+  }
+
+  .aqs-layer-button-copy {
+    display: grid;
+    gap: 0.24rem;
+  }
+
+  .aqs-layer-button-copy strong {
+    font-size: 0.92rem;
+    line-height: 1.1;
+  }
+
+  .aqs-layer-button-copy small {
+    color: var(--text-secondary);
+    font-size: 0.72rem;
+    line-height: 1.35;
+  }
+
+  .aqs-layer-button-status {
+    width: fit-content;
+    border-radius: 999px;
+    padding: 0.22rem 0.5rem;
+    font-size: 0.66rem;
+    line-height: 1;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    border: 1px solid var(--aqs-border);
+  }
+
+  .aqs-layer-button-status.is-published {
+    background: rgba(31, 94, 97, 0.14);
+    color: var(--aqs-sea);
+  }
+
+  .aqs-layer-button-status.is-scoped {
+    background: rgba(111, 141, 109, 0.12);
+    color: #5f735e;
+  }
+
+  .aqs-mode-panel,
+  .aqs-layer-summary-card {
+    display: grid;
+    gap: 0.5rem;
   }
 
   .aqs-search {
@@ -160,6 +236,7 @@ const pageUrl = 'https://andymasley.com/visuals/aquifer-stress';
   }
 
   .aqs-mode-button,
+  .aqs-layer-summary-card,
   .aqs-related-button,
   .aqs-list-item {
     border: 1px solid var(--aqs-border);
@@ -169,6 +246,7 @@ const pageUrl = 'https://andymasley.com/visuals/aquifer-stress';
   }
 
   [data-theme="dark"] .aqs-mode-button,
+  [data-theme="dark"] .aqs-layer-summary-card,
   [data-theme="dark"] .aqs-related-button,
   [data-theme="dark"] .aqs-list-item {
     background: rgba(255, 255, 255, 0.03);
@@ -182,6 +260,23 @@ const pageUrl = 'https://andymasley.com/visuals/aquifer-stress';
     background: var(--aqs-sea);
     border-color: var(--aqs-sea);
     color: #f8f7f3;
+  }
+
+  .aqs-layer-summary-card {
+    padding: 0.75rem 0.85rem;
+  }
+
+  .aqs-layer-summary-card strong {
+    font-size: 0.86rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--aqs-sea);
+  }
+
+  .aqs-layer-summary-card span {
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    line-height: 1.45;
   }
 
   .aqs-grid {
@@ -840,6 +935,13 @@ const pageUrl = 'https://andymasley.com/visuals/aquifer-stress';
     margin-top: 1rem;
   }
 
+  .aqs-layer-checklist-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.7rem;
+    margin-top: 1rem;
+  }
+
   .aqs-kpi-card {
     border: 1px solid var(--aqs-border);
     background: rgba(255, 255, 255, 0.45);
@@ -850,6 +952,35 @@ const pageUrl = 'https://andymasley.com/visuals/aquifer-stress';
 
   [data-theme="dark"] .aqs-kpi-card {
     background: rgba(255, 255, 255, 0.03);
+  }
+
+  .aqs-layer-card {
+    border: 1px solid var(--aqs-border);
+    background: rgba(255, 255, 255, 0.45);
+    padding: 0.85rem;
+    display: grid;
+    gap: 0.55rem;
+  }
+
+  [data-theme="dark"] .aqs-layer-card {
+    background: rgba(255, 255, 255, 0.03);
+  }
+
+  .aqs-layer-card strong {
+    font-size: 0.84rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--aqs-sea);
+  }
+
+  .aqs-layer-list {
+    margin: 0;
+    padding-left: 1rem;
+    display: grid;
+    gap: 0.42rem;
+    color: var(--text-secondary);
+    font-size: 0.84rem;
+    line-height: 1.45;
   }
 
   .aqs-kpi-card strong {
@@ -914,6 +1045,20 @@ const pageUrl = 'https://andymasley.com/visuals/aquifer-stress';
     align-items: center;
   }
 
+  .aqs-evidence-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    align-items: start;
+    padding: 0.75rem 0;
+    border-top: 1px solid rgba(22, 51, 52, 0.08);
+  }
+
+  .aqs-evidence-row:first-child {
+    border-top: none;
+    padding-top: 0;
+  }
+
   .aqs-bar-copy {
     display: grid;
     gap: 0.15rem;
@@ -955,6 +1100,10 @@ const pageUrl = 'https://andymasley.com/visuals/aquifer-stress';
   .aqs-bar-value {
     display: grid;
     justify-items: end;
+  }
+
+  .aqs-bar-value--inline {
+    min-width: 9rem;
   }
 
   .aqs-methodology {
@@ -1022,6 +1171,7 @@ const pageUrl = 'https://andymasley.com/visuals/aquifer-stress';
       grid-template-rows: auto auto;
     }
 
+    .aqs-layer-switch,
     .aqs-list-controls {
       grid-template-columns: 1fr;
     }
@@ -1047,7 +1197,8 @@ const pageUrl = 'https://andymasley.com/visuals/aquifer-stress';
 
     .aqs-map-meta,
     .aqs-bar-row,
-    .aqs-kpi-grid {
+    .aqs-kpi-grid,
+    .aqs-layer-checklist-grid {
       grid-template-columns: 1fr;
     }
 
@@ -1060,12 +1211,21 @@ const pageUrl = 'https://andymasley.com/visuals/aquifer-stress';
       grid-auto-columns: minmax(11rem, 1fr);
     }
 
+    .aqs-layer-switch {
+      grid-template-columns: 1fr;
+    }
+
     .aqs-list-headline,
     .aqs-list-meta-row,
     .aqs-list-subline,
     .aqs-directory-spotlight {
       display: grid;
       justify-items: start;
+    }
+
+    .aqs-evidence-row {
+      display: grid;
+      gap: 0.35rem;
     }
 
     .aqs-tooltip {

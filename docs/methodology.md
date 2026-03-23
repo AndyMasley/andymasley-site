@@ -1,6 +1,6 @@
-# Aquifer Stress Methodology
+# Aquifer Evidence Methodology
 
-## V1.1 scope
+## V1.2 scope
 
 The current version prioritizes direct-source honesty over false precision.
 
@@ -9,6 +9,20 @@ The current version prioritizes direct-source honesty over false precision.
 3. Use the USGS mean annual natural groundwater recharge raster for the conterminous United States to build a recharge-based stress layer.
 4. Expose a conterminous-U.S. public map of 61 principal aquifers from the 2015 USGS county-aquifer release, excluding Alaska, Hawaii, Puerto Rico, the U.S. Virgin Islands, and the residual `Other aquifers` bucket from the public map.
 5. Keep modeled subtype estimates separate from direct-source totals.
+6. Treat the national map as a `Regional baseline` layer, not as a facility-level answer.
+7. Keep `Current local conditions`, `Data-center sources`, and `Public-supply dependence` as explicit scoped layers until source-routing and local evidence are published.
+
+## Layer model
+
+The product is now framed as a layered evidence system rather than a single national stress score.
+
+- `Regional baseline`: published now. Parent-system context built from principal-aquifer withdrawals plus long-run recharge.
+- `Evidence`: published now. Confidence, provenance, geometry state, and caveats that explain what the baseline can and cannot prove.
+- `Current local conditions`: scoped next. Intended for monitoring wells, seasonal recharge, drought, and other recent local indicators.
+- `Data-center sources`: scoped next. Intended for facility-to-utility-to-source attribution.
+- `Public-supply dependence`: scoped next. Intended for groundwater delivered through community systems and documented source-water inventories.
+
+The central rule is simple: never let the national principal-aquifer polygon imply a local campus or utility source by itself.
 
 ## Display aquifers
 
@@ -26,9 +40,9 @@ When the withdrawal label and geometry label differ, the crosswalk preserves bot
 
 Direct-source totals are created by summing county-level rows by principal aquifer code and category for the source year. V1 uses the source release year directly and keeps units in million gallons per day.
 
-## Recharge-based stress
+## Regional baseline
 
-The public map color is now driven by a recharge-based stress comparison rather than total withdrawal alone.
+The published national fill is driven by a recharge-based structural baseline rather than total withdrawal alone.
 
 1. Overlay each display aquifer footprint on the USGS 1-kilometer mean annual natural groundwater recharge raster for the conterminous United States.
 2. Convert raster depth values in millimeters per year into estimated recharge volume over the mapped footprint.
@@ -41,6 +55,8 @@ The published stress formula is:
 Positive values indicate withdrawals above estimated recharge. Negative values indicate recharge above withdrawals.
 
 This is not the same thing as a storage-depletion rate. A consistent national principal-aquifer `total volume` denominator is not available across all displayed aquifers in this build, so the public map does not pretend to calculate a nationally comparable volume-normalized drain rate.
+
+It is also not a facility-level source conclusion. The baseline is a parent-system regional lens that helps users see broad structural pressure while the source-routing and local-condition layers are still being built.
 
 ## Confidence
 
