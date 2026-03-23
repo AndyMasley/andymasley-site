@@ -47,6 +47,8 @@ export interface GeometryMetadata {
   feature_area_sqkm: number;
   display_zoom_min: number;
   display_zoom_max: number;
+  geometry_method: 'usgs_principal_aquifer_polygon' | 'county_footprint_fallback';
+  county_footprint_count: number | null;
 }
 
 export interface WithdrawalMetricValue {

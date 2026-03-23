@@ -12,6 +12,14 @@ This project is built around a strict source hierarchy so the UI can distinguish
 - Status: direct source
 - Limitation: intended for publication scales around 1:2,500,000 or smaller; not parcel-level hydrogeology
 
+### 2015 cartographic county boundaries
+- Owner: U.S. Census Bureau
+- Year: 2015
+- Use: fallback display geometry for source aquifers that do not have a standalone polygon in the published USGS aquifer shapefile
+- Update cadence: decennial and release-based
+- Status: direct source for fallback geometry only
+- Limitation: counties are not aquifer boundaries; this layer is used only to show the footprint of counties carrying source rows
+
 ### County-level groundwater withdrawals by principal aquifer and category
 - Owner: U.S. Geological Survey
 - Year: 2015
@@ -56,4 +64,5 @@ This project is built around a strict source hierarchy so the UI can distinguish
 
 ## Notes
 - V1 should ship with direct-source totals and broad categories first.
+- The map now shows all 66 principal aquifers from the 2015 source release, with explicit county-footprint fallback geometry where the published aquifer polygon file lacks a standalone shape.
 - Industry subtype mode should remain visibly modeled and may be sparse or empty until proxy recipes are validated.

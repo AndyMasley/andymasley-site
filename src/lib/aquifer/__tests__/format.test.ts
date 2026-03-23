@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
-import { confidenceMeta, formatFlowMgalPerDay, normalizeQuery, sortCategories } from '@/lib/aquifer/format';
+import {
+  confidenceMeta,
+  formatFlowMgalPerDay,
+  geometryMethodMeta,
+  normalizeQuery,
+  sortCategories,
+} from '@/lib/aquifer/format';
 
 describe('aquifer format helpers', () => {
   it('formats Mgal/d values', () => {
@@ -13,6 +19,10 @@ describe('aquifer format helpers', () => {
 
   it('returns confidence metadata', () => {
     expect(confidenceMeta('A').label).toContain('Direct');
+  });
+
+  it('returns geometry metadata labels', () => {
+    expect(geometryMethodMeta('county_footprint_fallback', 12).label).toBe('County footprint');
   });
 
   it('sorts categories using product order', () => {

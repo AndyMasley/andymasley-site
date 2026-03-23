@@ -6,11 +6,13 @@ DERIVED_DIR = PROJECT_ROOT / "data" / "derived" / "aquifer-stress"
 
 DISPLAY_AQUIFER_VERSION = "2026.03.0"
 METHODOLOGY_VERSION = "v1"
+DISPLAY_AQUIFER_TARGET_COUNT = 66
 
 WITHDRAWALS_SOURCE_PATH = SOURCE_DIR / "uscopa2015v1.0.csv"
 DATA_DICTIONARY_PATH = SOURCE_DIR / "data_dictionary.csv"
 METHOD_CODES_PATH = SOURCE_DIR / "method_codes.csv"
 GEOMETRY_SOURCE_PATH = SOURCE_DIR / "aquifers_us.zip"
+COUNTY_BOUNDARY_SOURCE_PATH = SOURCE_DIR / "cb_2015_us_county_5m.zip"
 
 DISPLAY_COLLECTION_PATH = DERIVED_DIR / "display-aquifers.json"
 DISPLAY_GEOMETRY_PATH = DERIVED_DIR / "display-aquifers.geojson"
@@ -25,15 +27,12 @@ EXPECTED_SOURCE_FILES = [
     DATA_DICTIONARY_PATH,
     METHOD_CODES_PATH,
     GEOMETRY_SOURCE_PATH,
+    COUNTY_BOUNDARY_SOURCE_PATH,
 ]
 
 ALLOWED_CONFIDENCE = {"A", "B", "C", "D"}
 
-EXCLUDED_SOURCE_NAMES = {
-    "Other aquifers",
-    "Alluvial aquifers",
-    "Sand and gravel aquifers (glaciated regions)",
-}
+EXCLUDED_SOURCE_CODES = {"N9999OTHER"}
 
 CATEGORY_COLUMNS = {
     "public_supply": ("Public supply", "PS-WGWTo"),

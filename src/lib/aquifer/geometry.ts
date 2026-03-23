@@ -10,6 +10,8 @@ export interface ProjectedAquiferFeature {
   displayName: string;
   shortName: string;
   regionLabel: string;
+  geometryMethod: DisplayAquiferFeature['properties']['geometry_method'];
+  countyFootprintCount: number | null;
   path: string;
   centroid: [number, number];
   valueBox: [number, number, number, number];
@@ -93,6 +95,8 @@ export function projectAquiferFeatures(
       displayName: feature.properties.display_name,
       shortName: feature.properties.short_name,
       regionLabel: feature.properties.region_label,
+      geometryMethod: feature.properties.geometry_method,
+      countyFootprintCount: feature.properties.county_footprint_count,
       path: pathFromRings(geometryRings(feature.geometry), projectPoint),
       centroid: [
         (projectedMinX + projectedMaxX) / 2,

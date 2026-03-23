@@ -1,6 +1,7 @@
 import type {
   CategoryBreakdown,
   ConfidenceGrade,
+  GeometryMetadata,
   IndustryEstimate,
   SourceType,
 } from '@/lib/aquifer/contracts';
@@ -83,6 +84,25 @@ export function confidenceMeta(grade: ConfidenceGrade): { label: string; descrip
         description: 'Confidence metadata unavailable.',
       };
   }
+}
+
+export function geometryMethodMeta(
+  method: GeometryMetadata['geometry_method'],
+  countyFootprintCount: number | null,
+): { label: string; description: string } {
+  if (method === 'county_footprint_fallback') {
+    return {
+      label: 'County footprint',
+      description: countyFootprintCount
+        ? `Fallback footprint built from ${countyFootprintCount} counties with 2015 source rows.`
+        : 'Fallback footprint built from county boundaries carrying source rows.',
+    };
+  }
+
+  return {
+    label: 'Official polygon',
+    description: 'Published USGS principal-aquifer polygon for national and regional display.',
+  };
 }
 
 export function sortCategories(categories: CategoryBreakdown[]): CategoryBreakdown[] {

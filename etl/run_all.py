@@ -7,23 +7,27 @@ import zipfile
 from collections import defaultdict
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional
 
 import shapefile
 
 from etl.config.constants import (
+    ALLOWED_CONFIDENCE,
     CATEGORY_COLUMNS,
+    COUNTY_BOUNDARY_SOURCE_PATH,
     CROSSWALK_PATH,
     DATA_DICTIONARY_PATH,
     DERIVED_DIR,
+    DISPLAY_AQUIFER_TARGET_COUNT,
     DISPLAY_AQUIFER_VERSION,
     DISPLAY_COLLECTION_PATH,
     DISPLAY_GEOMETRY_PATH,
     DISPLAY_GEOMETRY_QA_PATH,
-    EXCLUDED_SOURCE_NAMES,
+    EXCLUDED_SOURCE_CODES,
     EXPECTED_SOURCE_FILES,
     GEOMETRY_SOURCE_PATH,
     INDUSTRY_ESTIMATES_PATH,
+    METHOD_CODES_PATH,
     METHODOLOGY_VERSION,
     PROVENANCE_PATH,
     WITHDRAWALS_PATH,
@@ -40,6 +44,38 @@ GEOMETRY_SOURCE_LABEL = (
 )
 WITHDRAWALS_SOURCE_LABEL = (
     "USGS county-aquifer groundwater withdrawals release for 2015 (ScienceBase item 5d4a3c3ee4b01d82ce8dedc6)"
+)
+COUNTY_BOUNDARY_SOURCE_LABEL = "2015 Census cartographic county boundaries (5m)"
+COUNTY_BOUNDARY_SCALE_NOTE = (
+    "County-footprint fallback geometry is for national visualization only. It shows the counties carrying "
+    "withdrawal rows for a source aquifer when the USGS principal-aquifer shapefile does not expose a standalone polygon."
+)
+OFFICIAL_GEOMETRY_METHOD = "usgs_principal_aquifer_polygon"
+COUNTY_FOOTPRINT_METHOD = "county_footprint_fallback"
+EXCLUDED_DISPLAY_ID = "excluded_other_aquifers_bucket"
+
+SOURCE_NAME_OVERRIDES = {
+    "N400BISCYN": "Biscayne aquifer",
+    "S100SURFCL": "Surficial aquifer system",
+    "S400FLORDN": "Floridan aquifer system",
+    "N400KNGSHL": "Kingshill aquifer (Virgin Islands)",
+    "N400NCSTLM": "North Coast Limestone aquifer system (Puerto Rico)",
+    "N300STHCST": "South Coast aquifer (Puerto Rico)",
+    "N100PCFNWV": "Pacific Northwest volcanic-rock aquifers",
+    "N600HIVLCC": "Hawaii volcanic-rock aquifers",
+}
+
+GEOMETRY_NAME_OVERRIDES = {
+    "pacific northwest volcanic-rock aquifer": "Pacific Northwest basaltic-rock aquifers",
+    "kingshill aquifer virgin islands": "Kingshill aquifer",
+    "north coast limestone aquifer system puerto rico": "Puerto Rico North Coast Limestone aquifer system",
+    "south coast aquifer puerto rico": "Puerto Rico south coast aquifer",
+    "hawaii volcanic-rock aquifer": "Hawaiian Volcanic-rock aquifers",
+}
+
+COUNTY_PREFIX_PATTERN = re.compile(
+    r"^(.*?(?:County|Parish|Borough|Census Area|Municipio|Municipality|District))-(.+)$",
+    flags=re.IGNORECASE,
 )
 
 
@@ -63,24 +99,11 @@ def _write_json(path: Path, payload: Any, *, pretty: bool = True) -> None:
     path.write_text(serialized, encoding="utf-8")
 
 
-def _clean_source_name(full_name: str) -> str:
-    parts = full_name.split("-", 2)
-    return parts[2].strip() if len(parts) == 3 else full_name.strip()
-
-
 def _normalize_name(value: str) -> str:
-    normalized = value.lower().replace("(", "").replace(")", "")
-    replacements = {
-        "systems": "system",
-        "aquifers": "aquifer",
-        "volcanic-rock": "basaltic-rock",
-        "dade county-biscayne aquifer": "biscayne aquifer",
-        "northern rocky mountains intermontane basins aquifer systems": (
-            "northern rocky mountains intermontane basins aquifer system"
-        ),
-    }
-    for old, new in replacements.items():
-        normalized = normalized.replace(old, new)
+    normalized = value.lower()
+    normalized = normalized.replace("&", "and")
+    normalized = re.sub(r"[(),.]", "", normalized)
+    normalized = normalized.replace("systems", "system").replace("aquifers", "aquifer")
     return " ".join(normalized.split())
 
 
@@ -155,9 +178,7 @@ def _ring_area_sqkm(ring: list[list[float]]) -> float:
     return abs(area) / 2.0
 
 
-def _perpendicular_distance(
-    point: list[float], start: list[float], end: list[float]
-) -> float:
+def _perpendicular_distance(point: list[float], start: list[float], end: list[float]) -> float:
     if start == end:
         return math.hypot(point[0] - start[0], point[1] - start[1])
     numerator = abs(
@@ -206,7 +227,7 @@ def _simplify_ring(ring: list[list[float]], tolerance: float) -> list[list[float
     return [[round(point[0], 3), round(point[1], 3)] for point in simplified]
 
 
-def _simplify_geometry(geometry: dict[str, Any], tolerance: float = 0.025) -> dict[str, Any]:
+def _simplify_geometry(geometry: dict[str, Any], tolerance: float) -> dict[str, Any]:
     if geometry["type"] == "Polygon":
         return {
             "type": "Polygon",
@@ -247,16 +268,41 @@ def _combine_shape_records(shape_records: list[Any]) -> dict[str, Any]:
     return {"type": "MultiPolygon", "coordinates": polygons}
 
 
-def _load_withdrawal_rows() -> tuple[str, dict[str, Any]]:
+def _common_suffix(token_lists: list[list[str]]) -> list[str]:
+    if not token_lists:
+        return []
+    reversed_lists = [list(reversed(tokens)) for tokens in token_lists if tokens]
+    suffix: list[str] = []
+    for tokens in zip(*reversed_lists):
+        if len(set(tokens)) != 1:
+            break
+        suffix.append(tokens[0])
+    return list(reversed(suffix))
+
+
+def _derive_source_name(code: str, token_lists: list[list[str]]) -> str:
+    if code in SOURCE_NAME_OVERRIDES:
+        return SOURCE_NAME_OVERRIDES[code]
+
+    suffix = _common_suffix(token_lists)
+    label = "-".join(suffix).strip() if suffix else "-".join(token_lists[0]).strip()
+    prefix_match = COUNTY_PREFIX_PATTERN.match(label)
+    if prefix_match:
+        return prefix_match.group(2).strip()
+    return label
+
+
+def _load_withdrawal_rows() -> tuple[str, dict[str, dict[str, Any]]]:
     citation = ""
-    source_name_totals: defaultdict[str, float] = defaultdict(float)
-    source_name_state_totals: defaultdict[str, defaultdict[str, float]] = defaultdict(
-        lambda: defaultdict(float)
+    by_code: defaultdict[str, dict[str, Any]] = defaultdict(
+        lambda: {
+            "total": 0.0,
+            "states": defaultdict(float),
+            "categories": defaultdict(float),
+            "counties": set(),
+            "name_tokens": [],
+        }
     )
-    source_name_category_totals: defaultdict[str, defaultdict[str, float]] = defaultdict(
-        lambda: defaultdict(float)
-    )
-    source_name_codes: defaultdict[str, set[str]] = defaultdict(set)
 
     with WITHDRAWALS_SOURCE_PATH.open(newline="", encoding="cp1252") as handle:
         reader = csv.reader(handle)
@@ -265,26 +311,35 @@ def _load_withdrawal_rows() -> tuple[str, dict[str, Any]]:
 
         for row in reader:
             record = dict(zip(header, row))
-            source_name = _clean_source_name(record["CountyAquifer Name"])
-            source_code = record["CountyAquifer"].split("-")[-1]
+            state_fips, county_fips, source_code = record["CountyAquifer"].split("-")
+            county_geoid = f"{state_fips.zfill(2)}{county_fips.zfill(3)}"
             total_value = record.get("TO-WGWTo", "--")
             total = 0.0 if total_value in ("--", "") else float(total_value)
 
-            source_name_totals[source_name] += total
-            source_name_state_totals[source_name][record["State"]] += total
-            source_name_codes[source_name].add(source_code)
+            payload = by_code[source_code]
+            payload["total"] += total
+            payload["states"][record["State"]] += total
+            payload["counties"].add(county_geoid)
+            payload["name_tokens"].append(record["CountyAquifer Name"].split("-")[1:])
 
             for category_key, (_, column_name) in CATEGORY_COLUMNS.items():
                 value = record.get(column_name, "--")
                 if value not in ("--", ""):
-                    source_name_category_totals[source_name][category_key] += float(value)
+                    payload["categories"][category_key] += float(value)
 
-    return citation, {
-        "totals": source_name_totals,
-        "states": source_name_state_totals,
-        "categories": source_name_category_totals,
-        "codes": source_name_codes,
-    }
+    finalized: dict[str, dict[str, Any]] = {}
+    for source_code, payload in by_code.items():
+        source_name = _derive_source_name(source_code, payload["name_tokens"])
+        finalized[source_code] = {
+            "source_aquifer_code": source_code,
+            "source_aquifer_name": source_name,
+            "total": payload["total"],
+            "states": dict(payload["states"]),
+            "categories": dict(payload["categories"]),
+            "counties": sorted(payload["counties"]),
+        }
+
+    return citation, finalized
 
 
 def _load_geometry_records() -> tuple[dict[str, list[Any]], dict[str, str]]:
@@ -303,86 +358,122 @@ def _load_geometry_records() -> tuple[dict[str, list[Any]], dict[str, str]]:
     return geometry_records, geometry_by_normalized_name
 
 
+def _load_county_records() -> dict[str, Any]:
+    county_records: dict[str, Any] = {}
+
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        with zipfile.ZipFile(COUNTY_BOUNDARY_SOURCE_PATH) as archive:
+            archive.extractall(tmp_dir)
+        reader = shapefile.Reader(str(Path(tmp_dir) / "cb_2015_us_county_5m.shp"))
+        for shape_record in reader.iterShapeRecords():
+            county_records[shape_record.record["GEOID"]] = shape_record
+
+    return county_records
+
+
+def _resolve_geometry_name(
+    source_name: str, geometry_by_normalized_name: dict[str, str]
+) -> Optional[str]:
+    normalized_name = _normalize_name(source_name)
+    override_name = GEOMETRY_NAME_OVERRIDES.get(normalized_name)
+    if override_name:
+        return override_name
+    return geometry_by_normalized_name.get(normalized_name)
+
+
 def _select_display_systems(
-    withdrawal_data: dict[str, Any],
+    withdrawal_data: dict[str, dict[str, Any]],
     geometry_by_normalized_name: dict[str, str],
 ) -> list[dict[str, Any]]:
     selected: list[dict[str, Any]] = []
-    used_geometry_names: set[str] = set()
+    used_display_ids: set[str] = set()
 
-    for source_name, total in sorted(
-        withdrawal_data["totals"].items(), key=lambda item: item[1], reverse=True
+    for source_code, payload in sorted(
+        withdrawal_data.items(), key=lambda item: item[1]["total"], reverse=True
     ):
-        if source_name in EXCLUDED_SOURCE_NAMES:
-            continue
-        geometry_name = geometry_by_normalized_name.get(_normalize_name(source_name))
-        if not geometry_name or geometry_name in used_geometry_names:
+        if source_code in EXCLUDED_SOURCE_CODES:
             continue
 
-        display_name = geometry_name
+        source_name = payload["source_aquifer_name"]
+        geometry_name = _resolve_geometry_name(source_name, geometry_by_normalized_name)
+        display_name = geometry_name or source_name
         display_id = _slugify(display_name)
-        used_geometry_names.add(geometry_name)
+        if display_id in used_display_ids:
+            display_id = f"{display_id}_{source_code.lower()}"
+        used_display_ids.add(display_id)
+
         selected.append(
             {
                 "display_aquifer_id": display_id,
                 "display_name": display_name,
+                "source_aquifer_code": source_code,
                 "source_name": source_name,
                 "geometry_name": geometry_name,
-                "total": total,
+                "geometry_method": (
+                    OFFICIAL_GEOMETRY_METHOD if geometry_name else COUNTY_FOOTPRINT_METHOD
+                ),
             }
         )
-        if len(selected) == 30:
-            break
 
     return selected
 
 
 def _write_crosswalk(
     selected_systems: list[dict[str, Any]],
-    source_name_codes: dict[str, set[str]],
+    withdrawal_data: dict[str, dict[str, Any]],
 ) -> None:
-    selected_lookup = {item["source_name"]: item for item in selected_systems}
+    selected_lookup = {
+        item["source_aquifer_code"]: item for item in selected_systems
+    }
     rows: list[list[str]] = []
 
-    for source_name in sorted(source_name_codes):
-        selection = selected_lookup.get(source_name)
-        for source_code in sorted(source_name_codes[source_name]):
-            if selection:
-                note = ""
-                reviewer_note = ""
-                if selection["source_name"] != selection["geometry_name"]:
-                    note = (
-                        f"Mapped source label '{selection['source_name']}' to geometry label "
-                        f"'{selection['geometry_name']}' for the display layer."
-                    )
-                    reviewer_note = "Name normalized to the USGS geometry label."
-                rows.append(
-                    [
-                        source_code,
-                        source_name,
-                        selection["display_aquifer_id"],
-                        "1.0",
-                        "top_30_matchable_principal_aquifers_2015",
-                        note,
-                        reviewer_note,
-                    ]
+    for source_code in sorted(withdrawal_data):
+        payload = withdrawal_data[source_code]
+        selection = selected_lookup.get(source_code)
+
+        if selection:
+            note_parts: list[str] = []
+            reviewer_note = ""
+
+            if selection["source_name"] != selection["display_name"]:
+                note_parts.append(
+                    f"Mapped source label '{selection['source_name']}' to display geometry label "
+                    f"'{selection['display_name']}'."
                 )
-            else:
-                reason = (
-                    "Excluded from the v1 display layer because it is either outside the top 30 matched "
-                    "aquifers by 2015 withdrawals or does not map cleanly to a single renderable principal-aquifer geometry."
+                reviewer_note = "Display label normalized to the published geometry label."
+
+            if selection["geometry_method"] == COUNTY_FOOTPRINT_METHOD:
+                note_parts.append(
+                    "No standalone polygon was available in the USGS principal-aquifer shapefile, so the "
+                    "display layer uses a county-footprint fallback built from 2015 county boundaries carrying "
+                    "withdrawal rows for this source aquifer."
                 )
-                rows.append(
-                    [
-                        source_code,
-                        source_name,
-                        "excluded_not_in_v1_display",
-                        "1.0",
-                        "excluded_from_v1_display_top_30",
-                        reason,
-                        "",
-                    ]
-                )
+                reviewer_note = "Review county-footprint fallback before any local-scale interpretation."
+
+            rows.append(
+                [
+                    source_code,
+                    payload["source_aquifer_name"],
+                    selection["display_aquifer_id"],
+                    "1.0",
+                    selection["geometry_method"],
+                    " ".join(note_parts),
+                    reviewer_note,
+                ]
+            )
+            continue
+
+        rows.append(
+            [
+                source_code,
+                payload["source_aquifer_name"],
+                EXCLUDED_DISPLAY_ID,
+                "1.0",
+                "excluded_other_aquifers_residual_bucket",
+                "Residual 'Other aquifers' rows remain excluded from the public map because they do not identify a single principal aquifer.",
+                "",
+            ]
+        )
 
     with CROSSWALK_PATH.open("w", newline="", encoding="utf-8") as handle:
         writer = csv.writer(handle)
@@ -402,8 +493,9 @@ def _write_crosswalk(
 
 def _build_outputs(
     selected_systems: list[dict[str, Any]],
-    withdrawal_data: dict[str, Any],
+    withdrawal_data: dict[str, dict[str, Any]],
     geometry_records: dict[str, list[Any]],
+    county_records: dict[str, Any],
     generated_at: str,
 ) -> tuple[dict[str, Any], dict[str, Any], dict[str, Any], dict[str, Any], dict[str, Any]]:
     aquifers: list[dict[str, Any]] = []
@@ -412,12 +504,14 @@ def _build_outputs(
     qa_features: list[dict[str, Any]] = []
 
     for sort_order, item in enumerate(selected_systems, start=1):
+        source_code = item["source_aquifer_code"]
+        payload = withdrawal_data[source_code]
         source_name = item["source_name"]
         display_name = item["display_name"]
         display_id = item["display_aquifer_id"]
-        total = withdrawal_data["totals"][source_name]
-        state_totals = dict(withdrawal_data["states"][source_name])
-        category_totals = dict(withdrawal_data["categories"][source_name])
+        total = payload["total"]
+        state_totals = dict(payload["states"])
+        category_totals = {key: payload["categories"].get(key, 0.0) for key in CATEGORY_COLUMNS}
         dominant_category_key, dominant_category_total = max(
             category_totals.items(), key=lambda pair: pair[1]
         )
@@ -425,25 +519,57 @@ def _build_outputs(
         dominant_share = dominant_category_total / total if total else 0.0
         state_label = _state_label(state_totals)
         state_sentence = _state_sentence(state_totals)
-        raw_geometry = _combine_shape_records(geometry_records[item["geometry_name"]])
-        geometry = _simplify_geometry(raw_geometry)
+        county_count = len(payload["counties"])
+
+        if item["geometry_method"] == OFFICIAL_GEOMETRY_METHOD:
+            raw_geometry = _combine_shape_records(geometry_records[item["geometry_name"]])
+            simplified_geometry = _simplify_geometry(raw_geometry, tolerance=0.025)
+            geometry_source = GEOMETRY_SOURCE_LABEL
+            geometry_note = (
+                "USGS principal aquifer geometry shown for national-scale display only. It represents the "
+                "shallowest principal aquifer extent and not the full underground system."
+            )
+            geometry_scale_note = GEOMETRY_SCALE_NOTE
+            geometry_source_ids = ["usgs_principal_aquifers_geometry"]
+        else:
+            missing_counties = [geoid for geoid in payload["counties"] if geoid not in county_records]
+            if missing_counties:
+                raise SystemExit(
+                    f"County-footprint fallback missing county geometry for {source_code}: {missing_counties[:6]}"
+                )
+            raw_geometry = _combine_shape_records(
+                [county_records[geoid] for geoid in payload["counties"]]
+            )
+            simplified_geometry = _simplify_geometry(raw_geometry, tolerance=0.08)
+            geometry_source = COUNTY_BOUNDARY_SOURCE_LABEL
+            geometry_note = (
+                f"County-footprint fallback shown for national display only. The USGS principal-aquifer "
+                f"shapefile does not expose a standalone polygon for this source aquifer, so the map uses the "
+                f"{county_count} counties that carry 2015 withdrawal rows instead."
+            )
+            geometry_scale_note = COUNTY_BOUNDARY_SCALE_NOTE
+            geometry_source_ids = ["census_cartographic_county_boundaries_2015"]
+
         bbox = _bbox_of_coordinates(raw_geometry["coordinates"])
         feature_area_sqkm = round(_geometry_area_sqkm(raw_geometry), 2)
-        source_codes = sorted(withdrawal_data["codes"][source_name])
 
-        geometry_note = (
-            "USGS principal aquifer geometry shown for national-scale display only. "
-            "It represents the shallowest principal aquifers and not the full underground extent."
-        )
         description_short = (
-            f"A major groundwater system with {dominant_category_label.lower()} dominating withdrawals "
-            f"across {state_sentence}."
+            f"A major groundwater system with {dominant_category_label.lower()} dominating withdrawals across "
+            f"{state_sentence}."
         )
+        if item["geometry_method"] == COUNTY_FOOTPRINT_METHOD:
+            description_short += " The map uses a county-footprint fallback for display."
+
         description_long = (
             f"In 2015, the USGS estimated about {_round_number(total)} Mgal/d of groundwater withdrawals "
             f"associated with the {display_name}. {dominant_category_label} accounted for about "
             f"{round(dominant_share * 100)} percent of the total, with the largest shares concentrated in {state_sentence}."
         )
+        if item["geometry_method"] == COUNTY_FOOTPRINT_METHOD:
+            description_long += (
+                f" Because the official principal-aquifer shapefile does not expose a standalone polygon for "
+                f"this aquifer, the map footprint shows the set of {county_count} counties attached to source rows."
+            )
 
         aquifers.append(
             {
@@ -454,9 +580,9 @@ def _build_outputs(
                 "region_label": state_label,
                 "description_short": description_short,
                 "description_long": description_long,
-                "geometry_source": GEOMETRY_SOURCE_LABEL,
+                "geometry_source": geometry_source,
                 "geometry_notes": geometry_note,
-                "source_aquifer_codes": source_codes,
+                "source_aquifer_codes": [source_code],
                 "is_grouped_system": False,
                 "default_year": 2015,
                 "default_units": "Mgal/d",
@@ -466,44 +592,36 @@ def _build_outputs(
             }
         )
 
+        feature_properties = {
+            "display_aquifer_id": display_id,
+            "display_name": display_name,
+            "short_name": _short_name(display_name),
+            "region_label": state_label,
+            "geometry_version": DISPLAY_AQUIFER_VERSION,
+            "source_dataset": geometry_source,
+            "source_scale_note": geometry_scale_note,
+            "is_simplified": True,
+            "topology_valid": True,
+            "bbox": bbox,
+            "feature_area_sqkm": feature_area_sqkm,
+            "display_zoom_min": 2,
+            "display_zoom_max": 7,
+            "geometry_method": item["geometry_method"],
+            "county_footprint_count": county_count if item["geometry_method"] == COUNTY_FOOTPRINT_METHOD else None,
+        }
         features.append(
             {
                 "type": "Feature",
-                "properties": {
-                    "display_aquifer_id": display_id,
-                    "display_name": display_name,
-                    "short_name": _short_name(display_name),
-                    "region_label": state_label,
-                    "geometry_version": DISPLAY_AQUIFER_VERSION,
-                    "source_dataset": GEOMETRY_SOURCE_LABEL,
-                    "source_scale_note": GEOMETRY_SCALE_NOTE,
-                    "is_simplified": True,
-                    "topology_valid": True,
-                    "bbox": bbox,
-                    "feature_area_sqkm": feature_area_sqkm,
-                    "display_zoom_min": 2,
-                    "display_zoom_max": 7,
-                },
-                "geometry": geometry,
+                "properties": feature_properties,
+                "geometry": simplified_geometry,
             }
         )
         qa_features.append(
             {
                 "type": "Feature",
                 "properties": {
-                    "display_aquifer_id": display_id,
-                    "display_name": display_name,
-                    "short_name": _short_name(display_name),
-                    "region_label": state_label,
-                    "geometry_version": DISPLAY_AQUIFER_VERSION,
-                    "source_dataset": GEOMETRY_SOURCE_LABEL,
-                    "source_scale_note": GEOMETRY_SCALE_NOTE,
+                    **feature_properties,
                     "is_simplified": False,
-                    "topology_valid": True,
-                    "bbox": bbox,
-                    "feature_area_sqkm": feature_area_sqkm,
-                    "display_zoom_min": 2,
-                    "display_zoom_max": 7,
                 },
                 "geometry": raw_geometry,
             }
@@ -528,13 +646,29 @@ def _build_outputs(
             )
 
         caveats = [
-            "Geometry is shown for national and regional visualization only; it does not represent full underground extent.",
-            "V1 defines the display layer as the 30 highest-withdrawal aquifer systems from the 2015 USGS release that map cleanly to principal-aquifer geometry.",
-            "Industry subtype estimates are intentionally withheld in this release until proxy recipes are documented and validated.",
+            "Broad sector totals come directly from the published 2015 USGS county-aquifer release.",
+            "Geometry is shown for national and regional visualization only; it does not represent the full underground extent of an aquifer.",
+            "Industry subtype estimates remain scaffolded but unpublished in this build to avoid false precision.",
         ]
         if source_name != display_name:
             caveats.append(
-                f"The source withdrawal label '{source_name}' is mapped to the geometry label '{display_name}' in the display crosswalk."
+                f"The source withdrawal label '{source_name}' is mapped to the published display label '{display_name}'."
+            )
+        if item["geometry_method"] == COUNTY_FOOTPRINT_METHOD:
+            caveats.append(
+                f"The map footprint is a fallback built from {county_count} counties with 2015 source rows because no standalone USGS polygon is published for this aquifer."
+            )
+
+        methodology_summary = (
+            f"Totals aggregate all 2015 USGS county rows assigned to the {source_name}. Broad categories come "
+            f"directly from the published water-use fields."
+        )
+        if item["geometry_method"] == OFFICIAL_GEOMETRY_METHOD:
+            methodology_summary += " The display geometry uses the published USGS principal-aquifer polygon."
+        else:
+            methodology_summary += (
+                " The display geometry uses a county-footprint fallback built from 2015 Census cartographic "
+                "county boundaries because the official aquifer polygon is unavailable."
             )
 
         records.append(
@@ -558,13 +692,9 @@ def _build_outputs(
                 "industry_estimates": [],
                 "provenance_source_ids": [
                     "usgs_county_aquifer_withdrawals_2015",
-                    "usgs_principal_aquifers_geometry",
+                    *geometry_source_ids,
                 ],
-                "methodology_summary": (
-                    f"Totals aggregate all 2015 USGS county rows assigned to the {display_name} through the "
-                    "display-aquifer crosswalk. Categories come directly from the published broad water-use fields. "
-                    "Industry subtype estimates remain scaffolded but unpublished in v1."
-                ),
+                "methodology_summary": methodology_summary,
                 "caveats": caveats,
             }
         )
@@ -645,10 +775,21 @@ def _write_provenance(generated_at: str, citation: str) -> None:
                 "publisher": "U.S. Geological Survey",
                 "year": 2020,
                 "dataset_or_report": "ScienceBase attachment",
-                "doi_or_identifier": str(Path("method_codes.csv")),
+                "doi_or_identifier": str(METHOD_CODES_PATH.name),
                 "retrieved_at": generated_at,
                 "license": "Public domain",
                 "usage_notes": "Method-code definitions for the 2015 county-aquifer withdrawals release.",
+            },
+            {
+                "source_id": "census_cartographic_county_boundaries_2015",
+                "title": "2015 Cartographic Boundary County Shapefile",
+                "publisher": "U.S. Census Bureau",
+                "year": 2015,
+                "dataset_or_report": "Cartographic boundary shapefile",
+                "doi_or_identifier": str(COUNTY_BOUNDARY_SOURCE_PATH.name),
+                "retrieved_at": generated_at,
+                "license": "Public domain",
+                "usage_notes": COUNTY_BOUNDARY_SCALE_NOTE,
             },
         ],
     }
@@ -667,6 +808,7 @@ def _write_pending_placeholders(generated_at: str) -> None:
         },
     )
     _write_json(DISPLAY_GEOMETRY_PATH, {"type": "FeatureCollection", "features": []})
+    _write_json(DISPLAY_GEOMETRY_QA_PATH, {"type": "FeatureCollection", "features": []})
     _write_json(
         WITHDRAWALS_PATH,
         {
@@ -703,15 +845,19 @@ def main() -> None:
 
     citation, withdrawal_data = _load_withdrawal_rows()
     geometry_records, geometry_by_normalized_name = _load_geometry_records()
+    county_records = _load_county_records()
     selected_systems = _select_display_systems(withdrawal_data, geometry_by_normalized_name)
-    if len(selected_systems) != 30:
-        raise SystemExit(f"Expected 30 display systems, found {len(selected_systems)}")
+    if len(selected_systems) != DISPLAY_AQUIFER_TARGET_COUNT:
+        raise SystemExit(
+            f"Expected {DISPLAY_AQUIFER_TARGET_COUNT} display aquifers, found {len(selected_systems)}"
+        )
 
-    _write_crosswalk(selected_systems, withdrawal_data["codes"])
+    _write_crosswalk(selected_systems, withdrawal_data)
     collection, geometry, geometry_qa, withdrawals, industry_estimates = _build_outputs(
         selected_systems,
         withdrawal_data,
         geometry_records,
+        county_records,
         generated_at,
     )
 
@@ -722,8 +868,12 @@ def main() -> None:
     _write_json(INDUSTRY_ESTIMATES_PATH, industry_estimates)
     _write_provenance(generated_at, citation)
 
+    fallback_count = sum(
+        1 for feature in geometry["features"] if feature["properties"]["geometry_method"] == COUNTY_FOOTPRINT_METHOD
+    )
     print(
         f"Generated {len(collection['aquifers'])} display aquifers, "
+        f"{fallback_count} county-footprint fallbacks, "
         f"{len(geometry['features'])} geometry features, and {len(withdrawals['records'])} metric records."
     )
 

@@ -4,14 +4,14 @@
 
 1. The existing site stack remains Astro plus React islands rather than introducing a second application framework.
 2. The first release should privilege direct-source totals and broad sectors over speculative industry subtype splits.
-3. The v1 display layer is the 30 highest-withdrawal systems from the 2015 USGS county-aquifer release that map cleanly to a single renderable principal-aquifer geometry after explicit exclusions.
+3. The public map should expose all 66 principal aquifers represented in the 2015 USGS county-aquifer release, while keeping the residual `Other aquifers` bucket explicitly excluded from the display layer.
 4. Geometry is used for national explanation, not local decision-making.
-5. The display layer is intentionally decoupled from source aquifer codes through a crosswalk so the editorial grouping can evolve without breaking the UI contract.
+5. When the USGS polygon dataset lacks a standalone shape for a source aquifer, a clearly labeled county-footprint fallback is preferable to pretending the aquifer does not exist.
 
 ## Known open questions
 
-1. Whether a later public release should keep the top-30-by-withdrawal definition or move to a more editorial grouped-system framing.
-2. Which selected systems should eventually be grouped into broader display systems even if the source data is cleaner as individual principal aquifers.
+1. Whether a later public release should keep the one-code-per-aquifer framing or add an alternate grouped-system view on top of it.
+2. Which county-footprint fallback geometries deserve more manual review or a better published source geometry if one becomes available.
 3. Which proxy datasets deserve first inclusion in modeled subtype recipes after the direct-source launch.
 
 ## Non-negotiables

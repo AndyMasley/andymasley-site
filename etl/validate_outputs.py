@@ -5,6 +5,7 @@ from pathlib import Path
 from etl.config.constants import (
     ALLOWED_CONFIDENCE,
     CROSSWALK_PATH,
+    DISPLAY_AQUIFER_TARGET_COUNT,
     DISPLAY_COLLECTION_PATH,
     DISPLAY_GEOMETRY_PATH,
     INDUSTRY_ESTIMATES_PATH,
@@ -36,8 +37,10 @@ def main() -> None:
         raise SystemExit("display-aquifers.geojson must be a FeatureCollection")
 
     if collection.get("build_status") == "ready":
-        if len(collection.get("aquifers", [])) != 30:
-            raise SystemExit("Ready build must contain exactly 30 display aquifers")
+        if len(collection.get("aquifers", [])) != DISPLAY_AQUIFER_TARGET_COUNT:
+            raise SystemExit(
+                f"Ready build must contain exactly {DISPLAY_AQUIFER_TARGET_COUNT} display aquifers"
+            )
         if len(geometry.get("features", [])) != len(collection.get("aquifers", [])):
             raise SystemExit("Ready build must have one geometry feature per display aquifer")
         if len(withdrawals.get("records", [])) != len(collection.get("aquifers", [])):
@@ -78,14 +81,35 @@ def main() -> None:
     if industry_estimates.get("build_status") == "ready" and industry_estimates.get("records") is None:
         raise SystemExit("Industry estimates file must contain a records array")
 
+    for feature in geometry.get("features", []):
+        properties = feature.get("properties", {})
+        geometry_method = properties.get("geometry_method")
+        if geometry_method not in {
+            "usgs_principal_aquifer_polygon",
+            "county_footprint_fallback",
+        }:
+            raise SystemExit(
+                f"Invalid geometry method for {properties.get('display_aquifer_id')}: {geometry_method}"
+            )
+        if geometry_method == "county_footprint_fallback" and not properties.get("county_footprint_count"):
+            raise SystemExit(
+                f"Fallback geometry missing county footprint count for {properties.get('display_aquifer_id')}"
+            )
+
     if CROSSWALK_PATH.exists():
         with CROSSWALK_PATH.open(newline="", encoding="utf-8") as handle:
             rows = list(csv.DictReader(handle))
         if collection.get("build_status") == "ready":
-            mapped_ids = {row["display_aquifer_id"] for row in rows}
+            mapped_ids = {
+                row["display_aquifer_id"]
+                for row in rows
+                if not row["display_aquifer_id"].startswith("excluded_")
+            }
             missing = [aquifer_id for aquifer_id in aquifer_ids if aquifer_id not in mapped_ids]
             if missing:
                 raise SystemExit(f"Display aquifers missing crosswalk rows: {missing}")
+            if "excluded_other_aquifers_bucket" not in {row["display_aquifer_id"] for row in rows}:
+                raise SystemExit("Crosswalk must explicitly include the excluded other-aquifers bucket")
 
     print("Aquifer stress derived outputs validated.")
 

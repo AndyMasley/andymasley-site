@@ -24,6 +24,8 @@ describe('aquifer geometry projection', () => {
             feature_area_sqkm: 1,
             display_zoom_min: 2,
             display_zoom_max: 8,
+            geometry_method: 'usgs_principal_aquifer_polygon',
+            county_footprint_count: null,
           },
           geometry: {
             type: 'Polygon',
@@ -43,5 +45,6 @@ describe('aquifer geometry projection', () => {
     expect(projected).toHaveLength(1);
     expect(projected[0].path.startsWith('M')).toBe(true);
     expect(projected[0].centroid[0]).toBeGreaterThan(0);
+    expect(projected[0].geometryMethod).toBe('usgs_principal_aquifer_polygon');
   });
 });
