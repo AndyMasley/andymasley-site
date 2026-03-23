@@ -290,12 +290,15 @@ export function AquiferStressExplorer({ data }: Props) {
             </div>
           </div>
 
+          <p className="aqs-list-note">
+            A compact aquifer directory. Search, sort, or tap a row to focus the map and open the detail panel.
+          </p>
+
           {filteredAquifers.length ? (
             <ul className="aqs-list">
               {filteredAquifers.map((aquifer) => {
                 const aquiferMetrics = metricsByAquifer.get(aquifer.display_aquifer_id);
                 const geometryMeta = geometryById.get(aquifer.display_aquifer_id);
-                const confidence = aquiferMetrics ? confidenceMeta(aquiferMetrics.total_withdrawal.confidence_grade) : null;
                 const geometryMetaUi = geometryMeta
                   ? geometryMethodMeta(geometryMeta.geometry_method, geometryMeta.county_footprint_count)
                   : null;
@@ -306,19 +309,13 @@ export function AquiferStressExplorer({ data }: Props) {
                       className={`aqs-list-item ${selectedId === aquifer.display_aquifer_id ? 'is-active' : ''}`}
                       onClick={() => selectAquifer(aquifer.display_aquifer_id)}
                     >
-                      <span className="aqs-list-item-top">
+                      <span className="aqs-list-rank">#{withdrawalRankById.get(aquifer.display_aquifer_id) ?? '–'}</span>
+                      <span className="aqs-list-body">
                         <span className="aqs-list-name">{aquifer.short_name}</span>
-                        <span className="aqs-list-rank">#{withdrawalRankById.get(aquifer.display_aquifer_id) ?? '–'}</span>
-                      </span>
-                      <span className="aqs-list-region">{aquifer.region_label}</span>
-                      <span className="aqs-list-summary">{aquifer.description_short}</span>
-                      <span className="aqs-list-tags">
-                        {geometryMetaUi ? (
-                          <span className={`aqs-inline-chip ${geometryMeta?.geometry_method === 'county_footprint_fallback' ? 'is-fallback' : ''}`}>
-                            {geometryMetaUi.label}
-                          </span>
-                        ) : null}
-                        {confidence ? <span className="aqs-inline-chip">{confidence.label}</span> : null}
+                        <span className="aqs-list-meta">
+                          {aquifer.region_label}
+                          {geometryMetaUi ? ` · ${geometryMetaUi.label}` : ''}
+                        </span>
                       </span>
                       {aquiferMetrics ? (
                         <span className="aqs-list-metric">
