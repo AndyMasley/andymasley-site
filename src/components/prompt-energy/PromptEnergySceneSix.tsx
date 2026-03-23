@@ -25,6 +25,7 @@ import {
   PromptEnergyInlineHelp,
   PromptEnergySceneBridge,
   PromptEnergyScenePrimer,
+  PromptEnergySceneSrSummary,
   PromptEnergySceneTakeaway,
 } from './PromptEnergyLearningLayer';
 
@@ -207,7 +208,12 @@ export function PromptEnergySceneSix({ boundary }: SceneSixProps) {
   }, [activeBeat.generatedTokens, activeBeat.heatResidue]);
 
   return (
-    <section className="pe-scene-six" aria-labelledby="pe-scene-six-title" data-scene="scene-6">
+    <section
+      className="pe-scene-six"
+      id="pe-scene-6"
+      aria-labelledby="pe-scene-six-title"
+      data-scene="scene-6"
+    >
       <div className="pe6-intro">
         <div className="pe6-eyebrow">Scene 6 of 8</div>
         <h2 className="pe6-title" id="pe-scene-six-title">
@@ -220,6 +226,7 @@ export function PromptEnergySceneSix({ boundary }: SceneSixProps) {
 
       <PromptEnergyScenePrimer scene="scene-6" />
       <PromptEnergySceneBridge scene="scene-6" />
+      <PromptEnergySceneSrSummary scene="scene-6" />
 
       <div className="pe6-layout">
         <div className="pe6-steps">

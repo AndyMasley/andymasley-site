@@ -18,6 +18,7 @@ import {
   PromptEnergyInlineHelp,
   PromptEnergySceneBridge,
   PromptEnergyScenePrimer,
+  PromptEnergySceneSrSummary,
   PromptEnergySceneTakeaway,
 } from './PromptEnergyLearningLayer';
 
@@ -247,7 +248,13 @@ export function PromptEnergySandbox({
   ]);
 
   return (
-    <section className="pe-sandbox" aria-labelledby="pe-sandbox-title" data-scene="sandbox" ref={sectionRef}>
+    <section
+      className="pe-sandbox"
+      id="pe-sandbox"
+      aria-labelledby="pe-sandbox-title"
+      data-scene="sandbox"
+      ref={sectionRef}
+    >
       <div className="pe-sandbox__intro">
         <div className="pe-sandbox__eyebrow">{SANDBOX_EXPLAINER_COPY.eyebrow}</div>
         <h2 className="pe-sandbox__title" id="pe-sandbox-title">
@@ -261,6 +268,7 @@ export function PromptEnergySandbox({
 
       <PromptEnergyScenePrimer scene="sandbox" />
       <PromptEnergySceneBridge scene="sandbox" />
+      <PromptEnergySceneSrSummary scene="sandbox" />
 
       <div className="pe-sandbox__layout">
         <div className="pe-sandbox__controls">

@@ -18,6 +18,7 @@ import {
   PromptEnergyInlineHelp,
   PromptEnergySceneBridge,
   PromptEnergyScenePrimer,
+  PromptEnergySceneSrSummary,
   PromptEnergySceneTakeaway,
 } from './PromptEnergyLearningLayer';
 
@@ -159,7 +160,12 @@ export function PromptEnergySceneThree({ boundary }: SceneThreeProps) {
   };
 
   return (
-    <section className="pe-scene-three" aria-labelledby="pe-scene-three-title" data-scene="scene-3">
+    <section
+      className="pe-scene-three"
+      id="pe-scene-3"
+      aria-labelledby="pe-scene-three-title"
+      data-scene="scene-3"
+    >
       <div className="pe3-intro">
         <div className="pe3-eyebrow">Scene 3 of 8</div>
         <h2 className="pe3-title" id="pe-scene-three-title">
@@ -172,6 +178,7 @@ export function PromptEnergySceneThree({ boundary }: SceneThreeProps) {
 
       <PromptEnergyScenePrimer scene="scene-3" />
       <PromptEnergySceneBridge scene="scene-3" />
+      <PromptEnergySceneSrSummary scene="scene-3" />
 
       <div className="pe3-layout">
         <div className="pe3-steps">

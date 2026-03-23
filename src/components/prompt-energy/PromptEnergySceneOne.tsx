@@ -10,6 +10,7 @@ import {
 import {
   PromptEnergyInlineHelp,
   PromptEnergyScenePrimer,
+  PromptEnergySceneSrSummary,
   PromptEnergySceneTakeaway,
 } from './PromptEnergyLearningLayer';
 
@@ -241,7 +242,12 @@ export function PromptEnergySceneOne({ boundary, onBoundaryChange }: SceneOnePro
   }, []);
 
   return (
-    <section className="pe-scene-one" aria-labelledby="pe-scene-one-title" data-scene="scene-1">
+    <section
+      className="pe-scene-one"
+      id="pe-scene-1"
+      aria-labelledby="pe-scene-one-title"
+      data-scene="scene-1"
+    >
       <div className="pe-scene-one__intro">
         <div className="pe-scene-one__eyebrow">Scene 1 of 8</div>
         <h2 className="pe-scene-one__title" id="pe-scene-one-title">
@@ -253,6 +259,7 @@ export function PromptEnergySceneOne({ boundary, onBoundaryChange }: SceneOnePro
       </div>
 
       <PromptEnergyScenePrimer scene="scene-1" />
+      <PromptEnergySceneSrSummary scene="scene-1" />
 
       <div className="pe-scene-one__layout">
         <div className="pe-scene-one__steps">

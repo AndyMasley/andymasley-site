@@ -5,7 +5,9 @@ import {
   BEGINNER_OVERVIEW_CARDS,
   BEGINNER_READING_RULES,
   BEGINNER_SUPPORT_NOTES,
+  DISCUSSION_PROMPTS,
   LEARNING_FAQ_BLOCKS,
+  SCENE_SECTION_IDS,
   SCENE_BRIDGE_CARDS,
   SCENE_LEARNING_CARDS,
   STORY_META_FACTS,
@@ -15,6 +17,146 @@ import {
   type FAQBlock,
   type LearningSceneKey,
 } from './promptEnergyLearningData';
+
+type LearningMode = 'simple' | 'advanced';
+type MotionMode = 'system' | 'slow' | 'reduce';
+
+function speakText(text: string, onEnd?: () => void) {
+  if (typeof window === 'undefined' || !('speechSynthesis' in window)) return false;
+  window.speechSynthesis.cancel();
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.rate = 1;
+  utterance.pitch = 1;
+  utterance.lang = 'en-US';
+  if (onEnd) {
+    utterance.onend = onEnd;
+    utterance.onerror = onEnd;
+  }
+  window.speechSynthesis.speak(utterance);
+  return true;
+}
+
+export function PromptEnergyAccessibilityControls() {
+  const [learningMode, setLearningMode] = useState<LearningMode>('simple');
+  const [motionMode, setMotionMode] = useState<MotionMode>('system');
+  const [isNarrating, setIsNarrating] = useState(false);
+
+  useEffect(() => {
+    document.documentElement.dataset.peLearningMode = learningMode;
+    return () => {
+      delete document.documentElement.dataset.peLearningMode;
+    };
+  }, [learningMode]);
+
+  useEffect(() => {
+    document.documentElement.dataset.peMotion = motionMode;
+    return () => {
+      delete document.documentElement.dataset.peMotion;
+    };
+  }, [motionMode]);
+
+  useEffect(() => {
+    return () => {
+      window.speechSynthesis?.cancel();
+    };
+  }, []);
+
+  return (
+    <section className="pe-a11y" aria-labelledby="pe-a11y-title">
+      <div className="pe-a11y__header">
+        <div className="pe-a11y__eyebrow">Reading controls</div>
+        <h2 id="pe-a11y-title">Choose the pace and support level that fits you</h2>
+        <p>
+          Simple mode keeps the beginner help layer visible. Advanced mode trims those helper cards back. The motion controls let you keep the same story while making the pacing gentler.
+        </p>
+      </div>
+
+      <div className="pe-a11y__grid">
+        <fieldset className="pe-a11y__group">
+          <legend>Reading mode</legend>
+          <div className="pe-a11y__choices">
+            <button
+              type="button"
+              className={`pe-a11y__choice ${learningMode === 'simple' ? 'is-active' : ''}`}
+              onClick={() => setLearningMode('simple')}
+              aria-pressed={learningMode === 'simple'}
+            >
+              <strong>Simple mode</strong>
+              <span>Keep primers, bridges, FAQs, and the fuller beginner layer visible.</span>
+            </button>
+            <button
+              type="button"
+              className={`pe-a11y__choice ${learningMode === 'advanced' ? 'is-active' : ''}`}
+              onClick={() => setLearningMode('advanced')}
+              aria-pressed={learningMode === 'advanced'}
+            >
+              <strong>Advanced mode</strong>
+              <span>Trim the helper layer and leave the core visual story more exposed.</span>
+            </button>
+          </div>
+        </fieldset>
+
+        <fieldset className="pe-a11y__group">
+          <legend>Motion and pacing</legend>
+          <div className="pe-a11y__choices">
+            <button
+              type="button"
+              className={`pe-a11y__choice ${motionMode === 'system' ? 'is-active' : ''}`}
+              onClick={() => setMotionMode('system')}
+              aria-pressed={motionMode === 'system'}
+            >
+              <strong>Use system setting</strong>
+              <span>Follow your browser or device preference for motion.</span>
+            </button>
+            <button
+              type="button"
+              className={`pe-a11y__choice ${motionMode === 'slow' ? 'is-active' : ''}`}
+              onClick={() => setMotionMode('slow')}
+              aria-pressed={motionMode === 'slow'}
+            >
+              <strong>Slow it down</strong>
+              <span>Keep animation, but stretch transitions and make the story easier to track.</span>
+            </button>
+            <button
+              type="button"
+              className={`pe-a11y__choice ${motionMode === 'reduce' ? 'is-active' : ''}`}
+              onClick={() => setMotionMode('reduce')}
+              aria-pressed={motionMode === 'reduce'}
+            >
+              <strong>Reduce motion</strong>
+              <span>Minimize animation and rely more on the readable state-to-state story.</span>
+            </button>
+          </div>
+        </fieldset>
+      </div>
+
+      <div className="pe-a11y__footer">
+        <div className="pe-a11y__note">
+          <strong>Need audio support?</strong>
+          <span>The text companion below can be read aloud section by section with built-in browser speech.</span>
+        </div>
+        <button
+          type="button"
+          className="pe-a11y__speak"
+          onClick={() => {
+            if (isNarrating) {
+              window.speechSynthesis?.cancel();
+              setIsNarrating(false);
+              return;
+            }
+            const didSpeak = speakText(
+              'This story follows one AI prompt from the chat box into shared hardware, through the chip, through the answer loop, through the cooling path, and finally into the cost story.',
+              () => setIsNarrating(false)
+            );
+            setIsNarrating(didSpeak);
+          }}
+        >
+          {isNarrating ? 'Stop read aloud' : 'Read the overview aloud'}
+        </button>
+      </div>
+    </section>
+  );
+}
 
 function ScaleNestDiagram() {
   const levels = ['Chat app', 'Rack', 'Tray', 'Board', 'Package', 'Die'];
@@ -148,6 +290,8 @@ export function PromptEnergyVisualLegend() {
 }
 
 export function PromptEnergyTextCompanion() {
+  const [speakingKey, setSpeakingKey] = useState<string | null>(null);
+
   return (
     <section className="pe-text-companion" id="pe-text-companion" aria-labelledby="pe-text-companion-title">
       <div className="pe-text-companion__header">
@@ -160,9 +304,37 @@ export function PromptEnergyTextCompanion() {
 
       <div className="pe-text-companion__sections">
         {TEXT_COMPANION_SECTIONS.map(section => (
-          <article key={section.key} className="pe-text-companion__section">
+          <article
+            key={section.key}
+            className="pe-text-companion__section"
+            id={`pe-text-${section.key}`}
+          >
             <h3>{section.title}</h3>
             <p>{section.summary}</p>
+            <div className="pe-text-companion__actions">
+              <button
+                type="button"
+                className="pe-text-companion__speak"
+                onClick={() => {
+                  if (speakingKey === section.key) {
+                    window.speechSynthesis?.cancel();
+                    setSpeakingKey(null);
+                    return;
+                  }
+
+                  const didSpeak = speakText(
+                    `${section.title}. ${section.summary} Remember: ${section.whatToRemember}`,
+                    () => setSpeakingKey(null)
+                  );
+                  setSpeakingKey(didSpeak ? section.key : null);
+                }}
+              >
+                {speakingKey === section.key ? 'Stop read aloud' : 'Read this section aloud'}
+              </button>
+              <a href={`#${SCENE_SECTION_IDS[section.key]}`} className="pe-text-companion__jump">
+                Jump to this scene
+              </a>
+            </div>
             <div className="pe-text-companion__remember">
               <strong>Remember:</strong> {section.whatToRemember}
             </div>
@@ -357,8 +529,13 @@ export function PromptEnergyStoryGuideBar() {
             key={step.key}
             className={`pe-guidebar__step ${activeScene === step.key ? 'is-active' : ''}`}
           >
-            <strong>{step.label}</strong>
-            <span>{step.scale}</span>
+            <a
+              href={`#${SCENE_SECTION_IDS[step.key]}`}
+              aria-current={activeScene === step.key ? 'step' : undefined}
+            >
+              <strong>{step.label}</strong>
+              <span>{step.scale}</span>
+            </a>
           </li>
         ))}
       </ol>
@@ -449,6 +626,16 @@ export function PromptEnergySceneTakeaway({ scene }: PromptEnergyScenePrimerProp
   );
 }
 
+export function PromptEnergySceneSrSummary({ scene }: PromptEnergyScenePrimerProps) {
+  const card = SCENE_LEARNING_CARDS[scene];
+
+  return (
+    <p className="pe-visually-hidden">
+      {card.label}. {card.plainLanguage} Watch for this: {card.watchFor} By the end of this scene you should understand: {card.takeaway}
+    </p>
+  );
+}
+
 export function PromptEnergySceneBridge({ scene }: PromptEnergyScenePrimerProps) {
   const card = SCENE_BRIDGE_CARDS[scene];
 
@@ -505,6 +692,30 @@ export function PromptEnergyFAQBlock({ block }: PromptEnergyFAQBlockProps) {
         ))}
       </div>
     </section>
+  );
+}
+
+export function PromptEnergyDiscussionQuestions() {
+  return (
+    <details className="pe-discuss" aria-labelledby="pe-discuss-title">
+      <summary id="pe-discuss-title">
+        <span>Teacher mode and discussion prompts</span>
+        <small>Open if you want classroom prompts, reflection questions, or a guided discussion version.</small>
+      </summary>
+
+      <div className="pe-discuss__grid">
+        {Object.entries(DISCUSSION_PROMPTS).map(([scene, block]) => (
+          <article key={scene} className="pe-discuss__card">
+            <h3>{block.title}</h3>
+            <ul>
+              {block.prompts.map(prompt => (
+                <li key={prompt}>{prompt}</li>
+              ))}
+            </ul>
+          </article>
+        ))}
+      </div>
+    </details>
   );
 }
 

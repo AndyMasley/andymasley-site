@@ -76,6 +76,11 @@ export interface TextCompanionSection {
   whatToRemember: string;
 }
 
+export interface DiscussionPromptSet {
+  title: string;
+  prompts: readonly string[];
+}
+
 export const BEGINNER_OVERVIEW_CARDS = [
   {
     title: 'Who this is for',
@@ -325,6 +330,18 @@ export const STORY_JOURNEY_STEPS: StoryJourneyStep[] = [
     lesson: 'Change the prompt, output, architecture, and accounting boundary to see the slice change shape.',
   },
 ] as const;
+
+export const SCENE_SECTION_IDS: Record<LearningSceneKey, string> = {
+  'scene-1': 'pe-scene-1',
+  'scene-2': 'pe-scene-2',
+  'scene-3': 'pe-scene-3',
+  'scene-4': 'pe-scene-4',
+  'scene-5': 'pe-scene-5',
+  'scene-6': 'pe-scene-6',
+  'scene-7': 'pe-scene-7',
+  'scene-8': 'pe-scene-8',
+  sandbox: 'pe-sandbox',
+} as const;
 
 export const BEGINNER_GLOSSARY: BeginnerGlossaryTerm[] = [
   {
@@ -769,3 +786,69 @@ export const LEARNING_FAQ_BLOCKS: Record<
     ],
   },
 };
+
+export const DISCUSSION_PROMPTS: Record<LearningSceneKey, DiscussionPromptSet> = {
+  'scene-1': {
+    title: 'After Scene 1',
+    prompts: [
+      'What changed when the user’s sentence stopped being ordinary text and became a machine request?',
+      'Why is it helpful to separate the chat interface from the serving system behind it?',
+    ],
+  },
+  'scene-2': {
+    title: 'After Scene 2',
+    prompts: [
+      'How does the rack view change your intuition about how much hardware one prompt is really using?',
+      'Which rack subsystems are easy to forget if you only imagine “a GPU answering a question”?',
+    ],
+  },
+  'scene-3': {
+    title: 'After Scene 3',
+    prompts: [
+      'Can you explain the difference between tray, board, package, and die in plain language?',
+      'Why is it useful to know where memory and cooling sit relative to the die?',
+    ],
+  },
+  'scene-4': {
+    title: 'After Scene 4',
+    prompts: [
+      'Why is it misleading to imagine one model layer living in one fixed place on the chip?',
+      'What are the main repeated parts of the die map that matter for the rest of the story?',
+    ],
+  },
+  'scene-5': {
+    title: 'After Scene 5',
+    prompts: [
+      'Why does the first answer token have to wait until the full prompt pass is done?',
+      'What two things are being built during prefill besides “the model thinking”?',
+    ],
+  },
+  'scene-6': {
+    title: 'After Scene 6',
+    prompts: [
+      'Why can a long answer cost much more than a short answer even after the prompt is already processed?',
+      'What is the difference between the answer the user sees and the growing cache history the system keeps?',
+    ],
+  },
+  'scene-7': {
+    title: 'After Scene 7',
+    prompts: [
+      'Where is the coolant relative to the silicon, and where is the air relative to the rack?',
+      'How would you explain the difference between the rack loop and the building loop to a new learner?',
+    ],
+  },
+  'scene-8': {
+    title: 'After Scene 8',
+    prompts: [
+      'Why can one prompt be cheap even on very large, hot, expensive hardware?',
+      'What is the difference between prompt energy, infrastructure allocation, and product price?',
+    ],
+  },
+  sandbox: {
+    title: 'After the sandbox',
+    prompts: [
+      'Which single control changed the slice the most, and why?',
+      'If you wanted a cheaper answer, which levers would you reach for first and which tradeoffs would you expect?',
+    ],
+  },
+} as const;

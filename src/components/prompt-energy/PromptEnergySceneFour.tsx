@@ -18,6 +18,7 @@ import {
   PromptEnergyInlineHelp,
   PromptEnergySceneBridge,
   PromptEnergyScenePrimer,
+  PromptEnergySceneSrSummary,
   PromptEnergySceneTakeaway,
 } from './PromptEnergyLearningLayer';
 import { SCENE_FOUR_MODEL_LAYERS } from './sceneFourLayoutData';
@@ -187,7 +188,12 @@ const [showMigToggle, setShowMigToggle] = useState(false);
   }, [activeBeat.id, productMode, showMemoryRoutes]);
 
   return (
-    <section className="pe-scene-four" aria-labelledby="pe-scene-four-title" data-scene="scene-4">
+    <section
+      className="pe-scene-four"
+      id="pe-scene-4"
+      aria-labelledby="pe-scene-four-title"
+      data-scene="scene-4"
+    >
       <div className="pe4-intro">
         <div className="pe4-eyebrow">Scene 4 of 8</div>
         <h2 className="pe4-title" id="pe-scene-four-title">
@@ -200,6 +206,7 @@ const [showMigToggle, setShowMigToggle] = useState(false);
 
       <PromptEnergyScenePrimer scene="scene-4" />
       <PromptEnergySceneBridge scene="scene-4" />
+      <PromptEnergySceneSrSummary scene="scene-4" />
 
       <div className="pe4-layout">
         <div className="pe4-steps">

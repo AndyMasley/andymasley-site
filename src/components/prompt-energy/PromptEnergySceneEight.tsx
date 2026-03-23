@@ -22,6 +22,7 @@ import {
   PromptEnergyInlineHelp,
   PromptEnergySceneBridge,
   PromptEnergyScenePrimer,
+  PromptEnergySceneSrSummary,
   PromptEnergySceneTakeaway,
 } from './PromptEnergyLearningLayer';
 
@@ -144,7 +145,12 @@ export function PromptEnergySceneEight({
   ]);
 
   return (
-    <section className="pe-scene-eight" aria-labelledby="pe-scene-eight-title" data-scene="scene-8">
+    <section
+      className="pe-scene-eight"
+      id="pe-scene-8"
+      aria-labelledby="pe-scene-eight-title"
+      data-scene="scene-8"
+    >
       <div className="pe8-intro">
         <div className="pe8-eyebrow">Scene 8 of 8</div>
         <h2 className="pe8-title" id="pe-scene-eight-title">
@@ -157,6 +163,7 @@ export function PromptEnergySceneEight({
 
       <PromptEnergyScenePrimer scene="scene-8" />
       <PromptEnergySceneBridge scene="scene-8" />
+      <PromptEnergySceneSrSummary scene="scene-8" />
 
       <div className="pe8-layout">
         <div className="pe8-steps">
