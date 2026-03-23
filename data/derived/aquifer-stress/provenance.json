@@ -1,6 +1,6 @@
 {
   "version": "2026.03.0",
-  "generated_at": "2026-03-23T03:50:28.937699+00:00",
+  "generated_at": "2026-03-23T04:04:33.470151+00:00",
   "sources": [
     {
       "source_id": "usgs_principal_aquifers_geometry",
@@ -9,7 +9,7 @@
       "year": 2022,
       "dataset_or_report": "ScienceBase data release",
       "doi_or_identifier": "ScienceBase item 63140610d34e36012efa385d",
-      "retrieved_at": "2026-03-23T03:50:28.937699+00:00",
+      "retrieved_at": "2026-03-23T04:04:33.470151+00:00",
       "license": "Public domain",
       "usage_notes": "USGS principal aquifer geometry is intended for national and regional visualization at publication scales around 1:2,500,000 or smaller, and does not represent the full underground extent."
     },
@@ -20,7 +20,7 @@
       "year": 2020,
       "dataset_or_report": "ScienceBase data release",
       "doi_or_identifier": "https://doi.org/10.5066/P9EI0KMR",
-      "retrieved_at": "2026-03-23T03:50:28.937699+00:00",
+      "retrieved_at": "2026-03-23T04:04:33.470151+00:00",
       "license": "Public domain",
       "usage_notes": "Citation:  Lovelace, J.K., Nielsen, M.G., Read, A.L., and Murphy, C.J., 2020, Estimated Groundwater Withdrawals from Principal Aquifers in the United States\u2014County Level Data for 2015: U.S. Geological Survey data release, https://doi.org/10.5066/P9EI0KMR.\n[--, no data]"
     },
@@ -31,7 +31,7 @@
       "year": 2020,
       "dataset_or_report": "ScienceBase attachment",
       "doi_or_identifier": "data_dictionary.csv",
-      "retrieved_at": "2026-03-23T03:50:28.937699+00:00",
+      "retrieved_at": "2026-03-23T04:04:33.470151+00:00",
       "license": "Public domain",
       "usage_notes": "Field definitions for the 2015 county-aquifer withdrawals release."
     },
@@ -42,7 +42,7 @@
       "year": 2020,
       "dataset_or_report": "ScienceBase attachment",
       "doi_or_identifier": "method_codes.csv",
-      "retrieved_at": "2026-03-23T03:50:28.937699+00:00",
+      "retrieved_at": "2026-03-23T04:04:33.470151+00:00",
       "license": "Public domain",
       "usage_notes": "Method-code definitions for the 2015 county-aquifer withdrawals release."
     },
@@ -53,7 +53,7 @@
       "year": 2015,
       "dataset_or_report": "Cartographic boundary shapefile",
       "doi_or_identifier": "cb_2015_us_county_5m.zip",
-      "retrieved_at": "2026-03-23T03:50:28.937699+00:00",
+      "retrieved_at": "2026-03-23T04:04:33.470151+00:00",
       "license": "Public domain",
       "usage_notes": "County-footprint fallback geometry is for national visualization only. It shows the counties carrying withdrawal rows for a source aquifer when the USGS principal-aquifer shapefile does not expose a standalone polygon."
     }

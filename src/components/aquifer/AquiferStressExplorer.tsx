@@ -202,9 +202,9 @@ export function AquiferStressExplorer({ data }: Props) {
       <div className="aqs-toolbar">
         <div className="aqs-toolbar-copy">
           <p className="aqs-eyebrow">Aquifer stress</p>
-          <h2 className="aqs-title">Estimated groundwater withdrawals across all 66 principal aquifers in the 2015 USGS release</h2>
+          <h2 className="aqs-title">Estimated groundwater withdrawals across mainland U.S. principal aquifers</h2>
           <p className="aqs-intro">
-            This version keeps direct-source totals separate from modeled layers and makes the geometry compromises visible. Most aquifers use published USGS polygons; dashed footprints mark the handful that require a county-based display fallback.
+            This version keeps direct-source totals separate from modeled layers and makes the geometry compromises visible. Alaska and Hawaii are intentionally excluded from the public view. Most aquifers use published USGS polygons; dashed footprints mark the handful that require a county-based display fallback.
           </p>
         </div>
 
@@ -343,7 +343,7 @@ export function AquiferStressExplorer({ data }: Props) {
             <div>
               <p className="aqs-map-kicker">Map legend</p>
               <p className="aqs-map-caption">
-                All 66 principal aquifers in the 2015 USGS county-aquifer release. Fill shows total estimated withdrawal. Dashed outlines mark county-footprint fallbacks where the polygon dataset has no standalone aquifer outline.
+                Mainland-focused public view of the 2015 USGS county-aquifer release. Fill shows total estimated withdrawal. Dashed outlines mark county-footprint fallbacks where the polygon dataset has no standalone aquifer outline.
               </p>
             </div>
             <div className="aqs-map-legend-wrap">
@@ -362,7 +362,7 @@ export function AquiferStressExplorer({ data }: Props) {
           {projectedFeatures.length ? (
             <div className="aqs-map-wrap">
               <svg className="aqs-map" viewBox="0 0 880 620" role="img" aria-labelledby="aqs-map-title aqs-map-desc">
-                <title id="aqs-map-title">Map of principal aquifers in the United States</title>
+                <title id="aqs-map-title">Map of mainland U.S. principal aquifers</title>
                 <desc id="aqs-map-desc">Click or focus an aquifer polygon to open the detail panel.</desc>
                 {projectedFeatures.map((feature) => {
                   const aquiferMetrics = metricsByAquifer.get(feature.id);

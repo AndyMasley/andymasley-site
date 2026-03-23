@@ -4,7 +4,7 @@
 
 1. The existing site stack remains Astro plus React islands rather than introducing a second application framework.
 2. The first release should privilege direct-source totals and broad sectors over speculative industry subtype splits.
-3. The public map should expose all 66 principal aquifers represented in the 2015 USGS county-aquifer release, while keeping the residual `Other aquifers` bucket explicitly excluded from the display layer.
+3. The public map should stay mainland-focused, so Alaska, Hawaii, and the residual `Other aquifers` bucket remain explicitly excluded from the display layer.
 4. Geometry is used for national explanation, not local decision-making.
 5. When the USGS polygon dataset lacks a standalone shape for a source aquifer, a clearly labeled county-footprint fallback is preferable to pretending the aquifer does not exist.
 

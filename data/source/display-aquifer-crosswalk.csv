@@ -1,5 +1,5 @@
 source_aquifer_code,source_aquifer_name,display_aquifer_id,allocation_weight,crosswalk_method,crosswalk_notes,reviewer_note
-N100AKUNCD,Alaska unconsolidated-deposit aquifers,alaska_unconsolidated_deposit_aquifers,1.0,county_footprint_fallback,"No standalone polygon was available in the USGS principal-aquifer shapefile, so the display layer uses a county-footprint fallback built from 2015 county boundaries carrying withdrawal rows for this source aquifer.",Review county-footprint fallback before any local-scale interpretation.
+N100AKUNCD,Alaska unconsolidated-deposit aquifers,excluded_non_mainland_scope,1.0,excluded_non_mainland_public_scope,Excluded from the public mainland view because this aquifer sits outside the contiguous U.S. map scope.,
 N100ALLUVL,Alluvial aquifers,alluvial_aquifers,1.0,county_footprint_fallback,"No standalone polygon was available in the USGS principal-aquifer shapefile, so the display layer uses a county-footprint fallback built from 2015 county boundaries carrying withdrawal rows for this source aquifer.",Review county-footprint fallback before any local-scale interpretation.
 N100BSNRGB,Basin and Range basin-fill aquifers,basin_and_range_basin_fill_aquifers,1.0,usgs_principal_aquifer_polygon,,
 N100CACSTL,California Coastal Basin aquifers,california_coastal_basin_aquifers,1.0,usgs_principal_aquifer_polygon,,
@@ -43,7 +43,7 @@ N500MSSPPI,Mississippian aquifers,mississippian_aquifers,1.0,usgs_principal_aqui
 N500PLOZOC,Paleozoic aquifers,paleozoic_aquifers,1.0,usgs_principal_aquifer_polygon,,
 N500VLYRDG,Valley and Ridge aquifers,valley_and_ridge_aquifers,1.0,usgs_principal_aquifer_polygon,,
 N600CMBPLV,Columbia Plateau basaltic-rock aquifers,columbia_plateau_basaltic_rock_aquifers,1.0,usgs_principal_aquifer_polygon,,
-N600HIVLCC,Hawaii volcanic-rock aquifers,hawaiian_volcanic_rock_aquifers,1.0,usgs_principal_aquifer_polygon,Mapped source label 'Hawaii volcanic-rock aquifers' to display geometry label 'Hawaiian Volcanic-rock aquifers'.,Display label normalized to the published geometry label.
+N600HIVLCC,Hawaii volcanic-rock aquifers,excluded_non_mainland_scope,1.0,excluded_non_mainland_public_scope,Excluded from the public mainland view because this aquifer sits outside the contiguous U.S. map scope.,
 N600NECRSN,New York and New England crystalline-rock aquifers,new_york_and_new_england_crystalline_rock_aquifers,1.0,county_footprint_fallback,"No standalone polygon was available in the USGS principal-aquifer shapefile, so the display layer uses a county-footprint fallback built from 2015 county boundaries carrying withdrawal rows for this source aquifer.",Review county-footprint fallback before any local-scale interpretation.
 N600SKRVPB,Snake River Plain basin-fill aquifers,snake_river_plain_basin_fill_aquifers,1.0,usgs_principal_aquifer_polygon,,
 N600SKRVPV,Snake River Plain basaltic-rock aquifers,snake_river_plain_basaltic_rock_aquifers,1.0,usgs_principal_aquifer_polygon,,

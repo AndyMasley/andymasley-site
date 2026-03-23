@@ -64,5 +64,5 @@ This project is built around a strict source hierarchy so the UI can distinguish
 
 ## Notes
 - V1 should ship with direct-source totals and broad categories first.
-- The map now shows all 66 principal aquifers from the 2015 source release, with explicit county-footprint fallback geometry where the published aquifer polygon file lacks a standalone shape.
+- The public map now uses a mainland-focused scope: Alaska and Hawaii are excluded even though they remain in the source release and crosswalk.
 - Industry subtype mode should remain visibly modeled and may be sparse or empty until proxy recipes are validated.

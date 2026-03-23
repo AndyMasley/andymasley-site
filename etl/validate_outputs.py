@@ -108,8 +108,11 @@ def main() -> None:
             missing = [aquifer_id for aquifer_id in aquifer_ids if aquifer_id not in mapped_ids]
             if missing:
                 raise SystemExit(f"Display aquifers missing crosswalk rows: {missing}")
-            if "excluded_other_aquifers_bucket" not in {row["display_aquifer_id"] for row in rows}:
+            crosswalk_ids = {row["display_aquifer_id"] for row in rows}
+            if "excluded_other_aquifers_bucket" not in crosswalk_ids:
                 raise SystemExit("Crosswalk must explicitly include the excluded other-aquifers bucket")
+            if "excluded_non_mainland_scope" not in crosswalk_ids:
+                raise SystemExit("Crosswalk must explicitly include the excluded non-mainland scope")
 
     print("Aquifer stress derived outputs validated.")
 

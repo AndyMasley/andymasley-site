@@ -6,12 +6,12 @@ The launch version prioritizes direct-source honesty over false precision.
 
 1. Use USGS principal aquifer geometry for national visualization.
 2. Use the 2015 USGS county-aquifer withdrawal release for total and category values.
-3. Expose all 66 principal aquifers in the 2015 USGS county-aquifer release, excluding only the residual `Other aquifers` bucket from the public map.
+3. Expose a mainland-focused public map of 64 principal aquifers from the 2015 USGS county-aquifer release, excluding Alaska, Hawaii, and the residual `Other aquifers` bucket from the public map.
 4. Keep modeled subtype estimates separate from direct-source totals.
 
 ## Display aquifers
 
-The product surface is now aligned directly to the 66 principal aquifers represented in the 2015 USGS county-aquifer release. Each public display record maps one principal aquifer code to one display aquifer. The residual `Other aquifers` bucket remains in the crosswalk as an explicit exclusion because it does not identify a single principal aquifer. The crosswalk file is the contract between those layers.
+The product surface is aligned directly to the principal aquifers represented in the 2015 USGS county-aquifer release, but the public map now uses a mainland-only scope. Each public display record maps one principal aquifer code to one display aquifer. Alaska, Hawaii, and the residual `Other aquifers` bucket remain in the crosswalk as explicit exclusions. The crosswalk file is the contract between those layers.
 
 Each display system records:
 - the source aquifer codes it contains

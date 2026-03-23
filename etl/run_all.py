@@ -12,7 +12,6 @@ from typing import Any, Optional
 import shapefile
 
 from etl.config.constants import (
-    ALLOWED_CONFIDENCE,
     CATEGORY_COLUMNS,
     COUNTY_BOUNDARY_SOURCE_PATH,
     CROSSWALK_PATH,
@@ -29,7 +28,9 @@ from etl.config.constants import (
     INDUSTRY_ESTIMATES_PATH,
     METHOD_CODES_PATH,
     METHODOLOGY_VERSION,
+    NON_MAINLAND_EXCLUDED_SOURCE_CODES,
     PROVENANCE_PATH,
+    RESIDUAL_EXCLUDED_SOURCE_CODES,
     WITHDRAWALS_PATH,
     WITHDRAWALS_SOURCE_PATH,
 )
@@ -52,7 +53,8 @@ COUNTY_BOUNDARY_SCALE_NOTE = (
 )
 OFFICIAL_GEOMETRY_METHOD = "usgs_principal_aquifer_polygon"
 COUNTY_FOOTPRINT_METHOD = "county_footprint_fallback"
-EXCLUDED_DISPLAY_ID = "excluded_other_aquifers_bucket"
+RESIDUAL_EXCLUDED_DISPLAY_ID = "excluded_other_aquifers_bucket"
+NON_MAINLAND_EXCLUDED_DISPLAY_ID = "excluded_non_mainland_scope"
 
 SOURCE_NAME_OVERRIDES = {
     "N400BISCYN": "Biscayne aquifer",
@@ -467,10 +469,22 @@ def _write_crosswalk(
             [
                 source_code,
                 payload["source_aquifer_name"],
-                EXCLUDED_DISPLAY_ID,
+                (
+                    NON_MAINLAND_EXCLUDED_DISPLAY_ID
+                    if source_code in NON_MAINLAND_EXCLUDED_SOURCE_CODES
+                    else RESIDUAL_EXCLUDED_DISPLAY_ID
+                ),
                 "1.0",
-                "excluded_other_aquifers_residual_bucket",
-                "Residual 'Other aquifers' rows remain excluded from the public map because they do not identify a single principal aquifer.",
+                (
+                    "excluded_non_mainland_public_scope"
+                    if source_code in NON_MAINLAND_EXCLUDED_SOURCE_CODES
+                    else "excluded_other_aquifers_residual_bucket"
+                ),
+                (
+                    "Excluded from the public mainland view because this aquifer sits outside the contiguous U.S. map scope."
+                    if source_code in NON_MAINLAND_EXCLUDED_SOURCE_CODES
+                    else "Residual 'Other aquifers' rows remain excluded from the public map because they do not identify a single principal aquifer."
+                ),
                 "",
             ]
         )
