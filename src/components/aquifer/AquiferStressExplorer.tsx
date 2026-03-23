@@ -377,112 +377,118 @@ export function AquiferStressExplorer({ data }: Props) {
       <div className="aqs-grid">
         <aside className="aqs-list-panel" aria-label="Aquifer systems">
           <div className="aqs-list-top">
-            <div className="aqs-list-top-grid">
-              <div className="aqs-directory-hero">
-                <div className="aqs-list-header">
-                  <span>{aquifers.length} principal aquifers</span>
-                  <span>{filteredAquifers.length} shown</span>
-                </div>
-                {selectedAquifer && selectedMetrics ? (
-                  <div className="aqs-directory-spotlight">
-                    <div className="aqs-directory-spotlight-copy">
-                      <p className="aqs-directory-kicker">Selected aquifer</p>
-                      <h3>{selectedAquifer.short_name}</h3>
-                      <p>{selectedAquifer.region_label}</p>
-                    </div>
-                    <div className="aqs-directory-spotlight-stat">
-                      <strong>{formatSignedPercent(selectedMetrics.recharge_stress.balance_index.value)}</strong>
-                      <span>{stressLabel(selectedMetrics.recharge_stress.balance_index.value)}</span>
-                    </div>
-                  </div>
-                ) : null}
-                <div className="aqs-directory-meta">
-                  <div className="aqs-directory-meta-card">
-                    <strong>{officialGeometryCount}</strong>
-                    <span>Published polygons</span>
-                  </div>
-                  <div className="aqs-directory-meta-card">
-                    <strong>{fallbackGeometryCount}</strong>
-                    <span>Fallback footprints</span>
-                  </div>
-                </div>
+            <div className="aqs-directory-hero">
+              <div className="aqs-list-header">
+                <span>{filteredAquifers.length} shown</span>
+                <span>{aquifers.length} total</span>
               </div>
-
-              <div className="aqs-list-top-stack">
-                {quickPickAquifers.length ? (
-                  <div className="aqs-quick-picks">
-                    <div className="aqs-control-label">Quick picks</div>
-                    <div className="aqs-quick-pick-grid">
-                      {quickPickAquifers.map((aquifer) => {
-                        const aquiferMetrics = metricsByAquifer.get(aquifer.display_aquifer_id);
-                        if (!aquiferMetrics) {
-                          return null;
-                        }
-
-                        return (
-                          <button
-                            key={aquifer.display_aquifer_id}
-                            type="button"
-                            className={`aqs-quick-pick ${selectedId === aquifer.display_aquifer_id ? 'is-active' : ''}`}
-                            onClick={() => selectAquifer(aquifer.display_aquifer_id)}
-                          >
-                            <span>{aquifer.short_name}</span>
-                            <strong>{formatSignedPercent(aquiferMetrics.recharge_stress.balance_index.value)}</strong>
-                          </button>
-                        );
-                      })}
-                    </div>
+              {selectedAquifer && selectedMetrics ? (
+                <div className="aqs-directory-spotlight">
+                  <div className="aqs-directory-spotlight-copy">
+                    <p className="aqs-directory-kicker">Selected aquifer</p>
+                    <h3>{selectedAquifer.short_name}</h3>
+                    <p>{selectedAquifer.region_label}</p>
                   </div>
-                ) : null}
-
-                <div className="aqs-list-controls">
-                  <div className="aqs-control-group">
-                    <span className="aqs-control-label">Geometry</span>
-                    <div className="aqs-chip-switch">
-                      {[
-                        { key: 'all', label: 'All' },
-                        { key: 'official', label: `Official (${officialGeometryCount})` },
-                        { key: 'fallback', label: `Fallback (${fallbackGeometryCount})` },
-                      ].map((option) => (
-                        <button
-                          key={option.key}
-                          type="button"
-                          className={`aqs-chip-button ${geometryScope === option.key ? 'is-active' : ''}`}
-                          onClick={() => setGeometryScope(option.key as GeometryScope)}
-                        >
-                          {option.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="aqs-control-group">
-                    <span className="aqs-control-label">Directory</span>
-                    <div className="aqs-chip-switch">
-                      {[
-                        { key: 'stress', label: 'By stress' },
-                        { key: 'withdrawal', label: 'By withdrawal' },
-                        { key: 'alphabetical', label: 'A-Z' },
-                        { key: 'region', label: 'By region' },
-                      ].map((option) => (
-                        <button
-                          key={option.key}
-                          type="button"
-                          className={`aqs-chip-button ${sortMode === option.key ? 'is-active' : ''}`}
-                          onClick={() => setSortMode(option.key as SortMode)}
-                        >
-                          {option.label}
-                        </button>
-                      ))}
-                    </div>
+                  <div className="aqs-directory-spotlight-stat">
+                    <strong>{formatSignedPercent(selectedMetrics.recharge_stress.balance_index.value)}</strong>
+                    <span>{stressLabel(selectedMetrics.recharge_stress.balance_index.value)}</span>
                   </div>
                 </div>
-
-                <p className="aqs-list-note">
-                  Grouped to match the active sort, so browsing feels more like an atlas than a list.
-                </p>
+              ) : null}
+              <div className="aqs-directory-meta">
+                <div className="aqs-directory-meta-card">
+                  <strong>{aquifers.length}</strong>
+                  <span>Principal aquifers</span>
+                </div>
+                <div className="aqs-directory-meta-card">
+                  <strong>{filteredAquifers.length}</strong>
+                  <span>Visible now</span>
+                </div>
+                <div className="aqs-directory-meta-card">
+                  <strong>{officialGeometryCount}</strong>
+                  <span>Published polygons</span>
+                </div>
+                <div className="aqs-directory-meta-card">
+                  <strong>{fallbackGeometryCount}</strong>
+                  <span>Fallback footprints</span>
+                </div>
               </div>
             </div>
+
+            {quickPickAquifers.length ? (
+              <div className="aqs-quick-picks">
+                <div className="aqs-quick-picks-header">
+                  <span className="aqs-control-label">Quick picks</span>
+                  <span className="aqs-quick-picks-note">Highest stress</span>
+                </div>
+                <div className="aqs-quick-pick-grid">
+                  {quickPickAquifers.map((aquifer) => {
+                    const aquiferMetrics = metricsByAquifer.get(aquifer.display_aquifer_id);
+                    if (!aquiferMetrics) {
+                      return null;
+                    }
+
+                    return (
+                      <button
+                        key={aquifer.display_aquifer_id}
+                        type="button"
+                        className={`aqs-quick-pick ${selectedId === aquifer.display_aquifer_id ? 'is-active' : ''}`}
+                        onClick={() => selectAquifer(aquifer.display_aquifer_id)}
+                      >
+                        <span className="aqs-quick-pick-name">{aquifer.short_name}</span>
+                        <span className="aqs-quick-pick-meta">{primaryRegion(aquifer.region_label)}</span>
+                        <strong>{formatSignedPercent(aquiferMetrics.recharge_stress.balance_index.value)}</strong>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ) : null}
+
+            <div className="aqs-list-controls">
+              <div className="aqs-control-group">
+                <span className="aqs-control-label">Geometry</span>
+                <div className="aqs-chip-switch">
+                  {[
+                    { key: 'all', label: 'All' },
+                    { key: 'official', label: `Official (${officialGeometryCount})` },
+                    { key: 'fallback', label: `Fallback (${fallbackGeometryCount})` },
+                  ].map((option) => (
+                    <button
+                      key={option.key}
+                      type="button"
+                      className={`aqs-chip-button ${geometryScope === option.key ? 'is-active' : ''}`}
+                      onClick={() => setGeometryScope(option.key as GeometryScope)}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="aqs-control-group">
+                <span className="aqs-control-label">Directory</span>
+                <div className="aqs-chip-switch">
+                  {[
+                    { key: 'stress', label: 'By stress' },
+                    { key: 'withdrawal', label: 'By withdrawal' },
+                    { key: 'alphabetical', label: 'A-Z' },
+                    { key: 'region', label: 'By region' },
+                  ].map((option) => (
+                    <button
+                      key={option.key}
+                      type="button"
+                      className={`aqs-chip-button ${sortMode === option.key ? 'is-active' : ''}`}
+                      onClick={() => setSortMode(option.key as SortMode)}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <p className="aqs-list-note">Grouped to match the active sort so the directory reads more like an atlas.</p>
           </div>
 
           <div className="aqs-directory-scroll">
