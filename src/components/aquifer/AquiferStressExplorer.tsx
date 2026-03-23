@@ -30,6 +30,12 @@ interface Props {
 
 type SortMode = 'stress' | 'withdrawal' | 'alphabetical' | 'region';
 type GeometryScope = 'all' | 'official' | 'fallback';
+type DirectorySection = {
+  key: string;
+  label: string;
+  note: string;
+  aquifers: DisplayAquifer[];
+};
 
 function mixChannel(start: number, end: number, t: number): number {
   return Math.round(start + (end - start) * t);
@@ -54,6 +60,90 @@ function colorForBalance(value: number, maxAbs: number): string {
 
 function balanceValue(record: AquiferMetricRecord): number {
   return record.recharge_stress.balance_index.value;
+}
+
+function stressTone(value: number): 'critical' | 'pressure' | 'balanced' | 'recharge' {
+  if (value >= 1) {
+    return 'critical';
+  }
+  if (value >= 0.25) {
+    return 'pressure';
+  }
+  if (value >= -0.25) {
+    return 'balanced';
+  }
+  return 'recharge';
+}
+
+function primaryRegion(regionLabel: string): string {
+  return regionLabel.split(' · ')[0] ?? regionLabel;
+}
+
+function buildDirectorySections(
+  aquifers: DisplayAquifer[],
+  sortMode: SortMode,
+  metricsByAquifer: Map<string, AquiferMetricRecord>,
+  withdrawalRankById: Map<string, number>,
+): DirectorySection[] {
+  const sections = new Map<string, DirectorySection>();
+
+  for (const aquifer of aquifers) {
+    let key = 'all';
+    let label = 'Aquifers';
+    let note = '';
+
+    if (sortMode === 'alphabetical') {
+      key = aquifer.short_name.slice(0, 1).toUpperCase();
+      label = key;
+      note = 'Alphabetical';
+    } else if (sortMode === 'region') {
+      key = primaryRegion(aquifer.region_label);
+      label = key;
+      note = 'Primary geography';
+    } else if (sortMode === 'withdrawal') {
+      const rank = withdrawalRankById.get(aquifer.display_aquifer_id) ?? 999;
+      if (rank <= 10) {
+        key = 'top-withdrawals';
+        label = 'Top 10 withdrawals';
+        note = 'Largest direct-source totals';
+      } else if (rank <= 30) {
+        key = 'mid-withdrawals';
+        label = 'Next 20';
+        note = 'Still high totals';
+      } else {
+        key = 'lower-withdrawals';
+        label = 'Remaining systems';
+        note = 'Lower withdrawal totals';
+      }
+    } else {
+      const metric = metricsByAquifer.get(aquifer.display_aquifer_id);
+      const tone = stressTone(metric ? balanceValue(metric) : 0);
+      if (tone === 'critical') {
+        key = 'critical';
+        label = 'Heavy drawdown pressure';
+        note = 'Withdrawals far exceed recharge';
+      } else if (tone === 'pressure') {
+        key = 'pressure';
+        label = 'Recharge under pressure';
+        note = 'Withdrawals exceed recharge';
+      } else if (tone === 'balanced') {
+        key = 'balanced';
+        label = 'Near recharge balance';
+        note = 'Closer to parity';
+      } else {
+        key = 'recharge';
+        label = 'Recharge-led systems';
+        note = 'Recharge exceeds withdrawals';
+      }
+    }
+
+    if (!sections.has(key)) {
+      sections.set(key, { key, label, note, aquifers: [] });
+    }
+    sections.get(key)!.aquifers.push(aquifer);
+  }
+
+  return [...sections.values()];
 }
 
 function byId<T extends { display_aquifer_id: string }>(records: T[]): Map<string, T> {
@@ -200,6 +290,21 @@ export function AquiferStressExplorer({ data }: Props) {
   const activeAquifer = hoveredAquifer ?? selectedAquifer ?? null;
   const activeGeometry = hoveredGeometry ?? selectedGeometry ?? null;
   const relatedAquifers = getRelatedAquifers(aquifers, selectedAquifer, stressRankById);
+  const directorySections = useMemo(
+    () => buildDirectorySections(filteredAquifers, sortMode, metricsByAquifer, withdrawalRankById),
+    [filteredAquifers, metricsByAquifer, sortMode, withdrawalRankById],
+  );
+  const quickPickAquifers = useMemo(
+    () =>
+      [...filteredAquifers]
+        .sort(
+          (left, right) =>
+            (stressRankById.get(left.display_aquifer_id) ?? Number.MAX_SAFE_INTEGER) -
+            (stressRankById.get(right.display_aquifer_id) ?? Number.MAX_SAFE_INTEGER),
+        )
+        .slice(0, 3),
+    [filteredAquifers, stressRankById],
+  );
 
   const officialGeometryCount = geometry.features.filter(
     (feature) => feature.properties.geometry_method === 'usgs_principal_aquifer_polygon',
@@ -271,97 +376,188 @@ export function AquiferStressExplorer({ data }: Props) {
 
       <div className="aqs-grid">
         <aside className="aqs-list-panel" aria-label="Aquifer systems">
-          <div className="aqs-list-header">
-            <span>{aquifers.length} principal aquifers</span>
-            <span>{filteredAquifers.length} shown</span>
-          </div>
-
-          <div className="aqs-list-controls">
-            <div className="aqs-control-group">
-              <span className="aqs-control-label">Geometry</span>
-              <div className="aqs-chip-switch">
-                {[
-                  { key: 'all', label: 'All' },
-                  { key: 'official', label: `Official (${officialGeometryCount})` },
-                  { key: 'fallback', label: `Fallback (${fallbackGeometryCount})` },
-                ].map((option) => (
-                  <button
-                    key={option.key}
-                    type="button"
-                    className={`aqs-chip-button ${geometryScope === option.key ? 'is-active' : ''}`}
-                    onClick={() => setGeometryScope(option.key as GeometryScope)}
-                  >
-                    {option.label}
-                  </button>
-                ))}
+          <div className="aqs-list-top">
+            <div className="aqs-directory-hero">
+              <div className="aqs-list-header">
+                <span>{aquifers.length} principal aquifers</span>
+                <span>{filteredAquifers.length} shown</span>
+              </div>
+              {selectedAquifer && selectedMetrics ? (
+                <div className="aqs-directory-spotlight">
+                  <div className="aqs-directory-spotlight-copy">
+                    <p className="aqs-directory-kicker">Selected</p>
+                    <h3>{selectedAquifer.short_name}</h3>
+                    <p>{selectedAquifer.region_label}</p>
+                  </div>
+                  <div className="aqs-directory-spotlight-stat">
+                    <strong>{formatSignedPercent(selectedMetrics.recharge_stress.balance_index.value)}</strong>
+                    <span>{stressLabel(selectedMetrics.recharge_stress.balance_index.value)}</span>
+                  </div>
+                </div>
+              ) : null}
+              <div className="aqs-directory-meta">
+                <div className="aqs-directory-meta-card">
+                  <strong>{officialGeometryCount}</strong>
+                  <span>Published polygons</span>
+                </div>
+                <div className="aqs-directory-meta-card">
+                  <strong>{fallbackGeometryCount}</strong>
+                  <span>Fallback footprints</span>
+                </div>
               </div>
             </div>
 
-            <div className="aqs-control-group">
-              <span className="aqs-control-label">Sort</span>
-              <div className="aqs-chip-switch">
-                {[
-                  { key: 'stress', label: 'By stress' },
-                  { key: 'withdrawal', label: 'By withdrawal' },
-                  { key: 'alphabetical', label: 'A-Z' },
-                  { key: 'region', label: 'By region' },
-                ].map((option) => (
-                  <button
-                    key={option.key}
-                    type="button"
-                    className={`aqs-chip-button ${sortMode === option.key ? 'is-active' : ''}`}
-                    onClick={() => setSortMode(option.key as SortMode)}
-                  >
-                    {option.label}
-                  </button>
-                ))}
+            {quickPickAquifers.length ? (
+              <div className="aqs-quick-picks">
+                <div className="aqs-control-label">Quick picks</div>
+                <div className="aqs-quick-pick-grid">
+                  {quickPickAquifers.map((aquifer) => {
+                    const aquiferMetrics = metricsByAquifer.get(aquifer.display_aquifer_id);
+                    if (!aquiferMetrics) {
+                      return null;
+                    }
+
+                    return (
+                      <button
+                        key={aquifer.display_aquifer_id}
+                        type="button"
+                        className={`aqs-quick-pick ${selectedId === aquifer.display_aquifer_id ? 'is-active' : ''}`}
+                        onClick={() => selectAquifer(aquifer.display_aquifer_id)}
+                      >
+                        <span>{aquifer.short_name}</span>
+                        <strong>{formatSignedPercent(aquiferMetrics.recharge_stress.balance_index.value)}</strong>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
-          </div>
+            ) : null}
 
-          <p className="aqs-list-note">
-            A compact aquifer directory ranked by recharge pressure. Search, sort, or tap a row to focus the map and open the detail panel.
-          </p>
-
-          {filteredAquifers.length ? (
-            <ul className="aqs-list">
-              {filteredAquifers.map((aquifer) => {
-                const aquiferMetrics = metricsByAquifer.get(aquifer.display_aquifer_id);
-                const geometryMeta = geometryById.get(aquifer.display_aquifer_id);
-                const geometryMetaUi = geometryMeta
-                  ? geometryMethodMeta(geometryMeta.geometry_method, geometryMeta.county_footprint_count)
-                  : null;
-                return (
-                  <li key={aquifer.display_aquifer_id}>
+            <div className="aqs-list-controls">
+              <div className="aqs-control-group">
+                <span className="aqs-control-label">Geometry</span>
+                <div className="aqs-chip-switch">
+                  {[
+                    { key: 'all', label: 'All' },
+                    { key: 'official', label: `Official (${officialGeometryCount})` },
+                    { key: 'fallback', label: `Fallback (${fallbackGeometryCount})` },
+                  ].map((option) => (
                     <button
+                      key={option.key}
                       type="button"
-                      className={`aqs-list-item ${selectedId === aquifer.display_aquifer_id ? 'is-active' : ''}`}
-                      onClick={() => selectAquifer(aquifer.display_aquifer_id)}
+                      className={`aqs-chip-button ${geometryScope === option.key ? 'is-active' : ''}`}
+                      onClick={() => setGeometryScope(option.key as GeometryScope)}
                     >
-                      <span className="aqs-list-rank">#{stressRankById.get(aquifer.display_aquifer_id) ?? '–'}</span>
-                      <span className="aqs-list-body">
-                        <span className="aqs-list-name">{aquifer.short_name}</span>
-                        <span className="aqs-list-meta">
-                          {aquifer.region_label}
-                          {geometryMetaUi ? ` · ${geometryMetaUi.label}` : ''}
-                        </span>
-                      </span>
-                      {aquiferMetrics ? (
-                        <span className="aqs-list-metric">
-                          <strong>{formatSignedPercent(aquiferMetrics.recharge_stress.balance_index.value)}</strong>
-                          <span>{stressLabel(aquiferMetrics.recharge_stress.balance_index.value)}</span>
-                        </span>
-                      ) : (
-                        <span className="aqs-list-metric aqs-list-metric--pending">Awaiting derived data</span>
-                      )}
+                      {option.label}
                     </button>
-                  </li>
-                );
-              })}
-            </ul>
-          ) : (
-            <div className="aqs-empty-state">No aquifers match that search or filter yet.</div>
-          )}
+                  ))}
+                </div>
+              </div>
+
+              <div className="aqs-control-group">
+                <span className="aqs-control-label">Directory</span>
+                <div className="aqs-chip-switch">
+                  {[
+                    { key: 'stress', label: 'By stress' },
+                    { key: 'withdrawal', label: 'By withdrawal' },
+                    { key: 'alphabetical', label: 'A-Z' },
+                    { key: 'region', label: 'By region' },
+                  ].map((option) => (
+                    <button
+                      key={option.key}
+                      type="button"
+                      className={`aqs-chip-button ${sortMode === option.key ? 'is-active' : ''}`}
+                      onClick={() => setSortMode(option.key as SortMode)}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <p className="aqs-list-note">
+              The atlas is grouped to match the current sort, so it is easier to browse than one long directory.
+            </p>
+          </div>
+
+          <div className="aqs-directory-scroll">
+            {filteredAquifers.length ? (
+              directorySections.map((section) => (
+                <section key={section.key} className="aqs-directory-section">
+                  <div className="aqs-directory-section-header">
+                    <div>
+                      <strong>{section.label}</strong>
+                      <span>{section.note}</span>
+                    </div>
+                    <small>{section.aquifers.length}</small>
+                  </div>
+                  <ul className="aqs-list">
+                    {section.aquifers.map((aquifer) => {
+                      const aquiferMetrics = metricsByAquifer.get(aquifer.display_aquifer_id);
+                      const geometryMeta = geometryById.get(aquifer.display_aquifer_id);
+                      const geometryMetaUi = geometryMeta
+                        ? geometryMethodMeta(geometryMeta.geometry_method, geometryMeta.county_footprint_count)
+                        : null;
+                      const balance = aquiferMetrics?.recharge_stress.balance_index.value ?? 0;
+                      const ratio = aquiferMetrics?.recharge_stress.withdrawal_to_recharge_ratio.value ?? 0;
+                      const barWidth = Math.max(8, Math.min(100, (Math.abs(balance) / Math.max(maxAbsBalance, 0.01)) * 100));
+
+                      return (
+                        <li key={aquifer.display_aquifer_id}>
+                          <button
+                            type="button"
+                            className={`aqs-list-item ${selectedId === aquifer.display_aquifer_id ? 'is-active' : ''}`}
+                            onClick={() => selectAquifer(aquifer.display_aquifer_id)}
+                          >
+                            <span className="aqs-list-rank">#{stressRankById.get(aquifer.display_aquifer_id) ?? '–'}</span>
+                            <span className="aqs-list-body">
+                              <span className="aqs-list-headline">
+                                <span className="aqs-list-name">{aquifer.short_name}</span>
+                                {aquiferMetrics ? (
+                                  <span className={`aqs-list-stress aqs-list-stress--${stressTone(balance)}`}>
+                                    {formatSignedPercent(balance)}
+                                  </span>
+                                ) : null}
+                              </span>
+                              <span className="aqs-list-meta-row">
+                                <span className="aqs-list-meta">{primaryRegion(aquifer.region_label)}</span>
+                                {geometryMetaUi ? (
+                                  <span className={`aqs-inline-chip ${geometryMeta?.geometry_method === 'county_footprint_fallback' ? 'is-fallback' : ''}`}>
+                                    {geometryMetaUi.label}
+                                  </span>
+                                ) : null}
+                              </span>
+                              {aquiferMetrics ? (
+                                <>
+                                  <span className="aqs-list-track">
+                                    <span
+                                      className={`aqs-list-track-fill aqs-list-track-fill--${stressTone(balance)}`}
+                                      style={{ width: `${barWidth}%` }}
+                                    />
+                                  </span>
+                                  <span className="aqs-list-subline">
+                                    <span>{stressLabel(balance)}</span>
+                                    <span>{formatRatio(ratio)}</span>
+                                  </span>
+                                </>
+                              ) : (
+                                <span className="aqs-list-subline">
+                                  <span>Awaiting derived data</span>
+                                </span>
+                              )}
+                            </span>
+                          </button>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </section>
+              ))
+            ) : (
+              <div className="aqs-empty-state">No aquifers match that search or filter yet.</div>
+            )}
+          </div>
         </aside>
 
         <section className="aqs-map-panel" aria-label="Aquifer map">
