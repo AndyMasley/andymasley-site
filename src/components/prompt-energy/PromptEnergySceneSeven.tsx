@@ -396,16 +396,16 @@ export function PromptEnergySceneSeven({ boundary }: SceneSevenProps) {
                   <div className="pe7-ledger__metric-copy">{boundaryOption.summary}</div>
                 </div>
                 <div className="pe7-ledger__metric">
-                  <div className="pe7-ledger__metric-label">Heat path</div>
+                  <div className="pe7-ledger__metric-label">Heat removed so far</div>
                   <div className="pe7-ledger__metric-value">{Math.round(activeBeat.heatRemoved * 100)}%</div>
                 </div>
                 <div className="pe7-ledger__metric">
                   <div className="pe7-ledger__metric-label">Liquid share</div>
-                  <div className="pe7-ledger__metric-copy">{Math.round(activeBeat.liquidShare * 100)}%</div>
+                  <div className="pe7-ledger__metric-copy">{Math.round(activeBeat.liquidShare * 100)}% of the heat path</div>
                 </div>
                 <div className="pe7-ledger__metric">
                   <div className="pe7-ledger__metric-label">Air share</div>
-                  <div className="pe7-ledger__metric-copy">{Math.round(activeBeat.airShare * 100)}%</div>
+                  <div className="pe7-ledger__metric-copy">{Math.round(activeBeat.airShare * 100)}% of the heat path</div>
                 </div>
               </div>
 

@@ -64,6 +64,18 @@ export interface VisualLegendItem {
   detail: string;
 }
 
+export interface SupportNoteCard {
+  title: string;
+  body: string;
+}
+
+export interface TextCompanionSection {
+  key: LearningSceneKey;
+  title: string;
+  summary: string;
+  whatToRemember: string;
+}
+
 export const BEGINNER_OVERVIEW_CARDS = [
   {
     title: 'Who this is for',
@@ -156,6 +168,104 @@ export const VISUAL_LEGEND_ITEMS: VisualLegendItem[] = [
     key: 'cost',
     label: 'Green means accounting or cost',
     detail: 'This marks the parts of the story where energy, infrastructure allocation, and product economics are being counted.',
+  },
+] as const;
+
+export const BEGINNER_SUPPORT_NOTES: SupportNoteCard[] = [
+  {
+    title: 'What you do not need to know already',
+    body:
+      'You do not need a background in machine learning, semiconductors, electrical engineering, or data-center design. The story introduces those layers as it goes.',
+  },
+  {
+    title: 'What this includes',
+    body:
+      'It includes the request path, shared hardware, chip reuse, prompt processing, answer generation, cooling, and why the final accounting number changes with the chosen boundary.',
+  },
+  {
+    title: 'What this does not include',
+    body:
+      'It does not try to explain model training, every possible model architecture, or every vendor-specific rack design. It focuses on one truthful modern inference path.',
+  },
+  {
+    title: 'Accessibility notes',
+    body:
+      'If the animated story feels dense, use the glossary, the FAQ blocks, and the text-only companion below. The story is designed to still make sense as a sequence of readable states.',
+  },
+] as const;
+
+export const TEXT_COMPANION_SECTIONS: TextCompanionSection[] = [
+  {
+    key: 'scene-1',
+    title: 'Scene 1: Your question becomes a request',
+    summary:
+      'You type a question into a chat interface. The system turns it into token-like chunks, wraps those chunks into a machine-ready request, and routes that request toward the hardware that will answer it.',
+    whatToRemember:
+      'The chat box is only the front door. The real compute happens later in a shared service that is already running.',
+  },
+  {
+    key: 'scene-2',
+    title: 'Scene 2: One request inside a rack',
+    summary:
+      'The request lands inside a rack, which is a tall cabinet full of compute trays, networking, power equipment, and cooling infrastructure. Your prompt is using one part of a much larger shared machine.',
+    whatToRemember:
+      'A single prompt is not paying for an entire rack by itself. It is a tiny part of a shared physical system.',
+  },
+  {
+    key: 'scene-3',
+    title: 'Scene 3: Open the tray and package',
+    summary:
+      'The story zooms from the rack into one tray, then into the board, module, package, and cooling stack around the chosen accelerator. This scene teaches where the chip actually sits inside the larger machine.',
+    whatToRemember:
+      'Rack, tray, board, package, and die are nested physical objects, not interchangeable names for the same thing.',
+  },
+  {
+    key: 'scene-4',
+    title: 'Scene 4: Open the die',
+    summary:
+      'The package fades back and the die becomes the main object. The die is a reusable hardware map with repeated compute regions, shared cache, and memory gateways, not one physical zone per model layer.',
+    whatToRemember:
+      'The same chip hardware is reused again and again while the model’s logical layers move through it over time.',
+  },
+  {
+    key: 'scene-5',
+    title: 'Scene 5: Prefill is the wide prompt pass',
+    summary:
+      'Before the answer starts, the system processes the whole prompt, pushes all prompt tokens through every layer, and builds the key-value cache. The first answer token appears only after that full pass finishes.',
+    whatToRemember:
+      'Prefill is wide, front-loaded, and responsible for the wait before the first visible answer token.',
+  },
+  {
+    key: 'scene-6',
+    title: 'Scene 6: Decode is the repeated answer loop',
+    summary:
+      'After the first token, the model switches to a repeated loop: read the stored history, produce one new token, save new state, and repeat. The answer grows one token at a time, and the saved history grows with it.',
+    whatToRemember:
+      'Long answers usually matter a lot because the decode loop runs again and again for each new output token.',
+  },
+  {
+    key: 'scene-7',
+    title: 'Scene 7: Follow the heat out of the machine',
+    summary:
+      'The earlier electrical work becomes heat. That heat first moves through the package stack, then into a cold plate or heatsink, then into liquid loops or airflow, and finally into rack and facility cooling equipment.',
+    whatToRemember:
+      'The coolant is in sealed hardware above the package, not touching bare silicon, and air still cools many support zones.',
+  },
+  {
+    key: 'scene-8',
+    title: 'Scene 8: Why one prompt can still be cheap',
+    summary:
+      'The hardware is huge, but one prompt is only a small slice of machine time and infrastructure. The final number depends on prompt shape, answer length, sharing, reuse, software efficiency, architecture, and what boundary you choose to count.',
+    whatToRemember:
+      'Prompt energy, infrastructure allocation, and product price are related but not the same thing.',
+  },
+  {
+    key: 'sandbox',
+    title: 'Sandbox: Change the slice yourself',
+    summary:
+      'The sandbox lets you vary prompt length, answer length, service target, architecture, deployment, and accounting boundary. It exists to show how those choices thicken or thin the slice of shared machine work.',
+    whatToRemember:
+      'The sandbox numbers are explanatory, not universal provider promises, and they work best as a way to compare levers rather than chase one “true” number.',
   },
 ] as const;
 

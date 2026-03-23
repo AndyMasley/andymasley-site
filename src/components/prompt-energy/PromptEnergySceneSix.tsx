@@ -7,6 +7,7 @@ import {
   SCENE_SIX_FOCUS_COPY,
   SCENE_SIX_OUTPUT_PRESETS,
   SCENE_SIX_PLANE_NOTES,
+  SCENE_SIX_STOP_LABELS,
   type DecodeCompareMode,
   type DecodeOutputPresetKey,
   type SceneSixFocus,
@@ -432,7 +433,9 @@ export function PromptEnergySceneSix({ boundary }: SceneSixProps) {
                 </div>
                 <div className="pe6-ledger__metric">
                   <div className="pe6-ledger__metric-label">Stop condition</div>
-                  <div className="pe6-ledger__metric-copy">{activeBeat.stopCondition ?? 'running'}</div>
+                  <div className="pe6-ledger__metric-copy">
+                    {activeBeat.stopCondition ? SCENE_SIX_STOP_LABELS[activeBeat.stopCondition] : 'still generating'}
+                  </div>
                 </div>
               </div>
 

@@ -101,7 +101,7 @@ export const SANDBOX_OUTPUT_PRESETS: SandboxOutputPreset[] = [
 export const SANDBOX_SERVICE_OPTIONS: SandboxServiceOption[] = [
   {
     key: 'fast',
-    label: 'Low latency',
+    label: 'Fast answer',
     batchSize: 32,
     energyFactor: 1.18,
     powerFactor: 0.92,
@@ -119,7 +119,7 @@ export const SANDBOX_SERVICE_OPTIONS: SandboxServiceOption[] = [
   },
   {
     key: 'efficient',
-    label: 'High utilization',
+    label: 'Cheaper sharing',
     batchSize: 256,
     energyFactor: 0.74,
     powerFactor: 1.16,
@@ -131,7 +131,7 @@ export const SANDBOX_SERVICE_OPTIONS: SandboxServiceOption[] = [
 export const SANDBOX_ARCHITECTURE_OPTIONS: SandboxArchitectureOption[] = [
   {
     key: 'dense',
-    label: 'Dense',
+    label: 'Dense model',
     energyFactor: 1,
     powerFactor: 1,
     ttftFactor: 1,
@@ -140,7 +140,7 @@ export const SANDBOX_ARCHITECTURE_OPTIONS: SandboxArchitectureOption[] = [
   },
   {
     key: 'moe',
-    label: 'MoE',
+    label: 'Sparse experts',
     energyFactor: 0.42,
     powerFactor: 0.78,
     ttftFactor: 0.94,
@@ -152,7 +152,7 @@ export const SANDBOX_ARCHITECTURE_OPTIONS: SandboxArchitectureOption[] = [
 export const SANDBOX_DEPLOYMENT_OPTIONS: SandboxDeploymentOption[] = [
   {
     key: 'single',
-    label: 'One accelerator',
+    label: 'One chip',
     energyFactor: 1,
     powerFactor: 1,
     ttftFactor: 1,
@@ -161,7 +161,7 @@ export const SANDBOX_DEPLOYMENT_OPTIONS: SandboxDeploymentOption[] = [
   },
   {
     key: 'sharded',
-    label: 'Sharded across GPUs',
+    label: 'Across several chips',
     energyFactor: 1.18,
     powerFactor: 1.44,
     ttftFactor: 1.14,

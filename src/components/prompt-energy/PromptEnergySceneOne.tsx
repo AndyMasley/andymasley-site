@@ -8,6 +8,7 @@ import {
   type BoundaryKey,
 } from './sceneOneData';
 import {
+  PromptEnergyInlineHelp,
   PromptEnergyScenePrimer,
   PromptEnergySceneTakeaway,
 } from './PromptEnergyLearningLayer';
@@ -322,7 +323,7 @@ export function PromptEnergySceneOne({ boundary, onBoundaryChange }: SceneOnePro
                 <div className="pe-chat__bubble">
                   <span className="pe-chat__text pe-chat__text--primary">{HERO_PROMPT}</span>
                 </div>
-                <div className="pe-chat__status">Live service, warm path</div>
+                <div className="pe-chat__status">Service already running</div>
               </section>
 
               <section className="pe-token-tray">
@@ -335,14 +336,14 @@ export function PromptEnergySceneOne({ boundary, onBoundaryChange }: SceneOnePro
                     </span>
                   ))}
                 </div>
-                <div className="pe-token-tray__explain">Sentence split into token-like chunks.</div>
+                <div className="pe-token-tray__explain">Sentence split into smaller model-friendly pieces.</div>
                 <div className="pe-token-tray__count">Input tokens: {HERO_TOKENS.length}</div>
               </section>
 
               <div className="pe-request" role="presentation">
                 <div className="pe-request__header">
-                  <span>REQ-014</span>
-                  <span>low latency</span>
+                  <span>request object</span>
+                  <span>ready to route</span>
                 </div>
                 <div className="pe-request__tokens">
                   {HERO_TOKENS.slice(0, 4).map(token => (
@@ -353,8 +354,8 @@ export function PromptEnergySceneOne({ boundary, onBoundaryChange }: SceneOnePro
                   <span className="pe-request__more">+{HERO_TOKENS.length - 4}</span>
                 </div>
                 <div className="pe-request__footer">
-                  <span>service: text chat</span>
-                  <span>13:04:22</span>
+                  <span>service metadata</span>
+                  <span>live traffic</span>
                 </div>
               </div>
 
@@ -367,7 +368,7 @@ export function PromptEnergySceneOne({ boundary, onBoundaryChange }: SceneOnePro
                       className={`pe-scheduler__ghost pe-scheduler__ghost--${index + 1}`}
                     />
                   ))}
-                  <div className="pe-scheduler__hint">Merge and route live traffic</div>
+                  <div className="pe-scheduler__hint">Blend and route many live requests</div>
                 </div>
               </section>
 
@@ -473,6 +474,25 @@ export function PromptEnergySceneOne({ boundary, onBoundaryChange }: SceneOnePro
                 Illustrative first-pass values. Later scenes can calibrate these to a specific hardware story.
               </div>
             </aside>
+
+            <PromptEnergyInlineHelp
+              rows={[
+                {
+                  label: 'What boundary means here',
+                  copy:
+                    boundary === 'chip'
+                      ? 'Right now you are counting only the main accelerator chip.'
+                      : boundary === 'server'
+                        ? 'Right now you are counting the chip plus the nearby host computer that helps run it.'
+                        : 'Right now you are counting the full service around the prompt, including spare capacity and facility overhead.',
+                },
+                {
+                  label: 'Main lesson in this scene',
+                  copy:
+                    'Your prompt is still near the front door of the system. It has become a machine-ready request, but we have not opened the physical hardware yet.',
+                },
+              ]}
+            />
 
             <div className="pe-scene-one__sr" aria-live="polite">
               {activeBeat.title}. {activeBeat.body} {boundaryOption.summary}

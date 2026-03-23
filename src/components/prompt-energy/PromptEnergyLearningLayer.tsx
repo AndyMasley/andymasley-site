@@ -4,11 +4,13 @@ import {
   BEGINNER_GLOSSARY,
   BEGINNER_OVERVIEW_CARDS,
   BEGINNER_READING_RULES,
+  BEGINNER_SUPPORT_NOTES,
   LEARNING_FAQ_BLOCKS,
   SCENE_BRIDGE_CARDS,
   SCENE_LEARNING_CARDS,
   STORY_META_FACTS,
   STORY_JOURNEY_STEPS,
+  TEXT_COMPANION_SECTIONS,
   VISUAL_LEGEND_ITEMS,
   type FAQBlock,
   type LearningSceneKey,
@@ -73,6 +75,48 @@ export function PromptEnergyPageFacts() {
   );
 }
 
+export function PromptEnergyQuickNav() {
+  return (
+    <nav className="pe-quicknav" aria-label="Prompt energy quick navigation">
+      <a href="#pe-glossary" className="pe-quicknav__link">
+        <strong>Open the glossary</strong>
+        <span>Jump straight to the beginner definitions if terms like token, rack, prefill, or MoE are unfamiliar.</span>
+      </a>
+      <a href="#pe-story-start" className="pe-quicknav__link">
+        <strong>Start the story</strong>
+        <span>Jump to Scene 1 and begin the main walkthrough.</span>
+      </a>
+      <a href="#pe-text-companion" className="pe-quicknav__link">
+        <strong>Read the text-only companion</strong>
+        <span>Use the plain-language written version if you want less animation and more prose.</span>
+      </a>
+      <a href="#pe-sandbox-title" className="pe-quicknav__link">
+        <strong>Jump to the sandbox</strong>
+        <span>Go straight to the hands-on controls if you want to experiment with the levers yourself.</span>
+      </a>
+    </nav>
+  );
+}
+
+export function PromptEnergySupportNotes() {
+  return (
+    <section className="pe-support" aria-labelledby="pe-support-title">
+      <div className="pe-support__header">
+        <div className="pe-support__eyebrow">Scope and accessibility</div>
+        <h2 id="pe-support-title">A few things to know before you dive in</h2>
+      </div>
+      <div className="pe-support__grid">
+        {BEGINNER_SUPPORT_NOTES.map(note => (
+          <article key={note.title} className="pe-support__card">
+            <h3>{note.title}</h3>
+            <p>{note.body}</p>
+          </article>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 export function PromptEnergyVisualLegend() {
   return (
     <section className="pe-vlegend" aria-labelledby="pe-vlegend-title">
@@ -98,6 +142,32 @@ export function PromptEnergyVisualLegend() {
 
       <div className="pe-vlegend__note">
         <strong>One more reading rule:</strong> the hardware drawings are the physical truth anchors, while the glowing paths, grids, labels, and lane overlays are teaching aids layered on top of that hardware.
+      </div>
+    </section>
+  );
+}
+
+export function PromptEnergyTextCompanion() {
+  return (
+    <section className="pe-text-companion" id="pe-text-companion" aria-labelledby="pe-text-companion-title">
+      <div className="pe-text-companion__header">
+        <div className="pe-text-companion__eyebrow">Text-only companion</div>
+        <h2 id="pe-text-companion-title">Prefer a written walkthrough?</h2>
+        <p>
+          This is the same story in plain prose. It is useful if you want a lower-motion version, a classroom handout style summary, or a quick refresher after the interactive.
+        </p>
+      </div>
+
+      <div className="pe-text-companion__sections">
+        {TEXT_COMPANION_SECTIONS.map(section => (
+          <article key={section.key} className="pe-text-companion__section">
+            <h3>{section.title}</h3>
+            <p>{section.summary}</p>
+            <div className="pe-text-companion__remember">
+              <strong>Remember:</strong> {section.whatToRemember}
+            </div>
+          </article>
+        ))}
       </div>
     </section>
   );
@@ -186,7 +256,7 @@ export function PromptEnergyBeginnerOverview() {
         </ul>
       </article>
 
-      <details className="pe-glossary">
+      <details className="pe-glossary" id="pe-glossary">
         <summary>
           <span>Core glossary</span>
           <small>Open if terms like token, prefill, rack, or MoE are unfamiliar.</small>

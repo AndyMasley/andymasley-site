@@ -30,7 +30,7 @@ export function PromptEnergySceneFour({ boundary }: SceneFourProps) {
   const [activeBeatIndex, setActiveBeatIndex] = useState(0);
   const [productMode, setProductMode] = useState<DieProductMode>('shipping');
   const [showInterconnectToggle, setShowInterconnectToggle] = useState(false);
-  const [showMigToggle, setShowMigToggle] = useState(false);
+const [showMigToggle, setShowMigToggle] = useState(false);
   const [hoveredFocus, setHoveredFocus] = useState<SceneFourFocus | null>(null);
   const [reducedMotion, setReducedMotion] = useState(false);
   const [layerPulse, setLayerPulse] = useState(0);
@@ -82,6 +82,22 @@ export function PromptEnergySceneFour({ boundary }: SceneFourProps) {
   const activeFocus = hoveredFocus ?? activeBeat.highlighted;
   const focusCopy = SCENE_FOUR_FOCUS_COPY[activeFocus];
   const planeNote = SCENE_FOUR_PLANE_NOTES[activeBeat.overlayMode];
+  const hardwareFocusLabel =
+    activeBeat.hardwareFocus === 'die'
+      ? 'the die itself'
+      : activeBeat.hardwareFocus === 'districts'
+        ? 'the repeated compute districts'
+        : activeBeat.hardwareFocus === 'sm'
+          ? 'one compute tile up close'
+          : 'the shipped product mask';
+  const heatModeLabel =
+    activeBeat.heatMode === 'low'
+      ? 'quiet map view'
+      : activeBeat.heatMode === 'broad'
+        ? 'broad compute activity'
+        : activeBeat.heatMode === 'memory'
+          ? 'memory-heavy activity'
+          : 'multi-chip link activity';
   const boundaryOption = BOUNDARY_OPTIONS.find(option => option.key === boundary) ?? BOUNDARY_OPTIONS[2];
   const progressLabel = `Step ${activeBeatIndex + 1} of ${SCENE_FOUR_BEATS.length}`;
   const beatOrder = useMemo(() => SCENE_FOUR_BEATS.map(beat => beat.id), []);
@@ -340,7 +356,7 @@ export function PromptEnergySceneFour({ boundary }: SceneFourProps) {
             <aside className="pe4-ledger" aria-label="Scene four mini ledger">
               <div className="pe4-ledger__eyebrow">Quick facts</div>
               <div className="pe4-ledger__boundary">{SCENE_FOUR_BOUNDARY_COPY[boundary]}</div>
-              <div className="pe4-ledger__currently">Current hardware focus: {activeBeat.hardwareFocus}.</div>
+              <div className="pe4-ledger__currently">Current hardware focus: {hardwareFocusLabel}.</div>
               <div className="pe4-ledger__currently">Product mode: {productMode === 'shipping' ? 'shipping H100 SXM view' : 'full physical GH100 view'}.</div>
 
               <div className="pe4-ledger__metrics">
@@ -353,12 +369,12 @@ export function PromptEnergySceneFour({ boundary }: SceneFourProps) {
                   <div className="pe4-ledger__metric-value">{activeLayerIndex + 1}</div>
                 </div>
                 <div className="pe4-ledger__metric">
-                  <div className="pe4-ledger__metric-label">Overlay now</div>
-                  <div className="pe4-ledger__metric-copy">{activeBeat.overlayMode}</div>
+                  <div className="pe4-ledger__metric-label">Current lesson</div>
+                  <div className="pe4-ledger__metric-copy">{planeNote.kicker}</div>
                 </div>
                 <div className="pe4-ledger__metric">
                   <div className="pe4-ledger__metric-label">Heat mode</div>
-                  <div className="pe4-ledger__metric-copy">{activeBeat.heatMode}</div>
+                  <div className="pe4-ledger__metric-copy">{heatModeLabel}</div>
                 </div>
               </div>
 

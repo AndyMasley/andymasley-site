@@ -70,6 +70,16 @@ export function PromptEnergySceneThree({ boundary }: SceneThreeProps) {
   const activeFocus = hoveredFocus ?? activeBeat.highlighted;
   const focusCopy = SCENE_THREE_FOCUS_COPY[activeFocus];
   const planeNote = SCENE_THREE_PLANE_NOTES[activeBeat.overlayMode];
+  const hardwareFocusLabel =
+    activeBeat.hardwareFocus === 'tray'
+      ? 'the tray'
+      : activeBeat.hardwareFocus === 'board'
+        ? 'the board'
+        : activeBeat.hardwareFocus === 'module'
+          ? 'one accelerator module'
+          : activeBeat.hardwareFocus === 'package'
+            ? 'the package'
+            : 'the die target';
   const boundaryOption = BOUNDARY_OPTIONS.find(option => option.key === boundary) ?? BOUNDARY_OPTIONS[2];
   const progressLabel = `Step ${activeBeatIndex + 1} of ${SCENE_THREE_BEATS.length}`;
   const beatOrder = useMemo(() => SCENE_THREE_BEATS.map(beat => beat.id), []);
@@ -333,7 +343,7 @@ export function PromptEnergySceneThree({ boundary }: SceneThreeProps) {
             <aside className="pe3-ledger" aria-label="Scene three mini ledger">
               <div className="pe3-ledger__eyebrow">Quick facts</div>
               <div className="pe3-ledger__boundary">{SCENE_THREE_BOUNDARY_COPY[boundary]}</div>
-              <div className="pe3-ledger__currently">Current hardware focus: {activeBeat.hardwareFocus}.</div>
+              <div className="pe3-ledger__currently">Current hardware focus: {hardwareFocusLabel}.</div>
               <div className="pe3-ledger__currently">Cooling mode: {coolingMode === 'liquid' ? 'liquid cold plate' : 'passive fin stack + airflow'}.</div>
 
               <div className="pe3-ledger__metrics">
@@ -350,8 +360,8 @@ export function PromptEnergySceneThree({ boundary }: SceneThreeProps) {
                   <div className="pe3-ledger__metric-copy">{xrayDepth.toFixed(2)}</div>
                 </div>
                 <div className="pe3-ledger__metric">
-                  <div className="pe3-ledger__metric-label">Overlay now</div>
-                  <div className="pe3-ledger__metric-copy">{activeBeat.overlayMode}</div>
+                  <div className="pe3-ledger__metric-label">Current lesson</div>
+                  <div className="pe3-ledger__metric-copy">{planeNote.kicker}</div>
                 </div>
               </div>
 

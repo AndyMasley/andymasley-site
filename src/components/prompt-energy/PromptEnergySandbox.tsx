@@ -15,6 +15,7 @@ import {
   type SandboxServiceMode,
 } from './promptEnergySandboxData';
 import {
+  PromptEnergyInlineHelp,
   PromptEnergySceneBridge,
   PromptEnergyScenePrimer,
   PromptEnergySceneTakeaway,
@@ -369,6 +370,21 @@ export function PromptEnergySandbox({
             </div>
             <p className="pe-sandbox__hint">{deploymentConfig.description}</p>
           </fieldset>
+
+          <PromptEnergyInlineHelp
+            rows={[
+              {
+                label: 'How to use this sandbox',
+                copy:
+                  'Change one control at a time and watch which output moves most. The goal is to compare causes, not to treat these numbers as one universal provider bill.',
+              },
+              {
+                label: 'What the numbers mean',
+                copy:
+                  'These outputs are explanatory estimates built from the story’s example assumptions. They are best used to compare shapes and tradeoffs, not as exact promises for every model or provider.',
+              },
+            ]}
+          />
         </div>
 
         <div className="pe-sandbox__stage">
@@ -378,7 +394,7 @@ export function PromptEnergySandbox({
                 <div className="pe-sandbox__panel-eyebrow">Shared service slice</div>
                 <div className="pe-sandbox__hero-title">The machine stays huge. Your slice changes.</div>
               </div>
-              <div className="pe-sandbox__hero-badge">batch {derived.batchSize}</div>
+              <div className="pe-sandbox__hero-badge">shared batch ~{derived.batchSize}</div>
             </div>
 
             <div className="pe-sandbox__machine" aria-hidden="true">
@@ -417,7 +433,7 @@ export function PromptEnergySandbox({
                 <strong>{outputConfig.outputTokens} tokens</strong>
               </div>
               <div className="pe-sandbox__microstat">
-                <span>Active work</span>
+                <span>Model active now</span>
                 <strong>{Math.round(derived.activeParameterShare * 100)}%</strong>
               </div>
             </div>

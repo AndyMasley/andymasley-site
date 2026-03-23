@@ -20,6 +20,7 @@ import {
   RackXRayView,
 } from './PromptEnergySceneTwoViews';
 import {
+  PromptEnergyInlineHelp,
   PromptEnergySceneBridge,
   PromptEnergyScenePrimer,
   PromptEnergySceneTakeaway,
@@ -382,10 +383,33 @@ export function PromptEnergySceneTwo({ boundary }: SceneTwoProps) {
                   onClick={() => setCompareAir(value => !value)}
                   aria-pressed={compareAir}
                 >
-                  {compareAir ? 'Hide air-cooled compare' : 'Air-cooled compare'}
+                  {compareAir ? 'Hide air-cooling compare' : 'Show air-cooling compare'}
                 </button>
                 </div>
               </div>
+
+            <PromptEnergyInlineHelp
+              rows={[
+                {
+                  label: 'Selected rack view',
+                  copy:
+                    currentView === 'front'
+                      ? 'You are looking at the front of the rack, where the compute side is easiest to see.'
+                      : currentView === 'rear'
+                        ? 'You are looking at the rear service side, where plumbing, cables, and power access are easier to see.'
+                        : currentView === 'split'
+                          ? 'You are looking at front and rear together so the machine reads as one object.'
+                          : 'You are looking through the rack to see the important internal paths more clearly.',
+                },
+                {
+                  label: 'Air-cooled compare',
+                  copy:
+                    compareAir
+                      ? 'The compare panel is open so you can see what changes when more of the cooling burden falls on airflow.'
+                      : 'The air-cooled compare is hidden, so the main rack view stays focused on the default hybrid story.',
+                },
+              ]}
+            />
 
             <div className="pe2-stage__plane-note">
               <div className="pe2-stage__plane-note-kicker">{planeNote.kicker}</div>
@@ -395,7 +419,7 @@ export function PromptEnergySceneTwo({ boundary }: SceneTwoProps) {
 
               {isSmallScreen && (
                 <div className="pe2-stage__mobile-hint">
-                  Swipe the rack to move between front, rear, and x-ray views.
+                  Swipe the rack to move between front, rear, and inside views.
                 </div>
               )}
 
@@ -441,8 +465,8 @@ export function PromptEnergySceneTwo({ boundary }: SceneTwoProps) {
                   <div className="pe2-ledger__metric-copy">{currentViewLabel}</div>
                 </div>
                 <div className="pe2-ledger__metric">
-                  <div className="pe2-ledger__metric-label">Overlay now</div>
-                  <div className="pe2-ledger__metric-copy">{activeBeat.overlayMode}</div>
+                  <div className="pe2-ledger__metric-label">Current lesson</div>
+                  <div className="pe2-ledger__metric-copy">{planeNote.kicker}</div>
                 </div>
               </div>
 
