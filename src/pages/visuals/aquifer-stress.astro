@@ -207,24 +207,39 @@ const pageUrl = 'https://andymasley.com/visuals/aquifer-stress';
 
   .aqs-list-panel {
     display: grid;
-    grid-template-rows: auto minmax(0, 1fr);
+    grid-template-rows: minmax(0, 44%) minmax(0, 56%);
     overflow: hidden;
   }
 
   .aqs-list-top {
-    display: grid;
-    gap: 0.85rem;
-    padding: 1rem;
+    padding: 0.85rem;
     border-bottom: 1px solid var(--aqs-border);
     background:
       radial-gradient(circle at top left, rgba(122, 195, 196, 0.08), transparent 36%),
       linear-gradient(180deg, rgba(255, 255, 255, 0.28), transparent 92%);
+    overflow: hidden;
+  }
+
+  .aqs-list-top-grid {
+    height: 100%;
+    display: grid;
+    grid-template-columns: minmax(0, 0.94fr) minmax(0, 1.06fr);
+    gap: 0.7rem;
+    align-items: stretch;
+  }
+
+  .aqs-list-top-stack {
+    min-width: 0;
+    display: grid;
+    grid-template-rows: auto auto auto;
+    gap: 0.55rem;
+    align-content: start;
   }
 
   .aqs-directory-hero {
     display: grid;
-    gap: 0.85rem;
-    padding: 1rem;
+    gap: 0.65rem;
+    padding: 0.8rem;
     border: 1px solid var(--aqs-border);
     background:
       linear-gradient(160deg, rgba(255, 255, 255, 0.75), rgba(255, 255, 255, 0.3)),
@@ -241,13 +256,13 @@ const pageUrl = 'https://andymasley.com/visuals/aquifer-stress';
   .aqs-directory-spotlight {
     display: flex;
     justify-content: space-between;
-    gap: 0.9rem;
-    align-items: end;
+    gap: 0.7rem;
+    align-items: start;
   }
 
   .aqs-directory-kicker {
     margin: 0 0 0.25rem;
-    font-size: 0.72rem;
+    font-size: 0.68rem;
     line-height: 1;
     font-weight: 700;
     letter-spacing: 0.14em;
@@ -262,49 +277,49 @@ const pageUrl = 'https://andymasley.com/visuals/aquifer-stress';
 
   .aqs-directory-spotlight-copy h3 {
     font-family: var(--font-editorial);
-    font-size: 1.35rem;
+    font-size: 1.18rem;
     line-height: 0.98;
     letter-spacing: -0.03em;
   }
 
   .aqs-directory-spotlight-copy p {
-    margin-top: 0.35rem;
+    margin-top: 0.22rem;
     color: var(--text-secondary);
-    font-size: 0.84rem;
-    line-height: 1.4;
+    font-size: 0.76rem;
+    line-height: 1.35;
   }
 
   .aqs-directory-spotlight-stat {
     display: grid;
     justify-items: end;
-    gap: 0.22rem;
+    gap: 0.16rem;
     text-align: right;
   }
 
   .aqs-directory-spotlight-stat strong {
     font-family: var(--font-editorial);
-    font-size: 1.5rem;
+    font-size: 1.28rem;
     line-height: 0.95;
   }
 
   .aqs-directory-spotlight-stat span {
     color: var(--text-secondary);
-    font-size: 0.76rem;
-    max-width: 8rem;
+    font-size: 0.7rem;
+    max-width: 6.4rem;
   }
 
   .aqs-directory-meta {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0.55rem;
+    gap: 0.4rem;
   }
 
   .aqs-directory-meta-card {
     border: 1px solid var(--aqs-border);
     background: rgba(255, 255, 255, 0.48);
-    padding: 0.7rem 0.75rem;
+    padding: 0.52rem 0.6rem;
     display: grid;
-    gap: 0.15rem;
+    gap: 0.1rem;
   }
 
   [data-theme="dark"] .aqs-directory-meta-card {
@@ -313,13 +328,13 @@ const pageUrl = 'https://andymasley.com/visuals/aquifer-stress';
 
   .aqs-directory-meta-card strong {
     font-family: var(--font-editorial);
-    font-size: 1.05rem;
+    font-size: 0.94rem;
   }
 
   .aqs-directory-meta-card span {
     color: var(--text-secondary);
-    font-size: 0.76rem;
-    line-height: 1.4;
+    font-size: 0.7rem;
+    line-height: 1.25;
   }
 
   .aqs-list-header {
@@ -341,7 +356,9 @@ const pageUrl = 'https://andymasley.com/visuals/aquifer-stress';
   .aqs-list-controls {
     border: 1px solid var(--aqs-border);
     background: rgba(255, 255, 255, 0.38);
-    padding: 0.85rem;
+    padding: 0.6rem;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.55rem;
   }
 
   [data-theme="dark"] .aqs-list-controls {
@@ -351,19 +368,20 @@ const pageUrl = 'https://andymasley.com/visuals/aquifer-stress';
   .aqs-list-note {
     margin: 0;
     color: var(--text-secondary);
-    font-size: 0.8rem;
-    line-height: 1.5;
+    font-size: 0.72rem;
+    line-height: 1.35;
+    padding-inline: 0.05rem;
   }
 
   .aqs-quick-picks {
     display: grid;
-    gap: 0.45rem;
+    gap: 0.35rem;
   }
 
   .aqs-quick-pick-grid {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 0.45rem;
+    gap: 0.35rem;
   }
 
   .aqs-quick-pick {
@@ -371,9 +389,9 @@ const pageUrl = 'https://andymasley.com/visuals/aquifer-stress';
     background: rgba(255, 255, 255, 0.5);
     color: inherit;
     font: inherit;
-    padding: 0.7rem 0.6rem;
+    padding: 0.5rem 0.48rem;
     display: grid;
-    gap: 0.18rem;
+    gap: 0.1rem;
     text-align: left;
     transition: transform 0.18s ease, background 0.18s ease, border-color 0.18s ease;
   }
@@ -388,19 +406,19 @@ const pageUrl = 'https://andymasley.com/visuals/aquifer-stress';
   }
 
   .aqs-quick-pick span {
-    font-size: 0.76rem;
+    font-size: 0.68rem;
     color: var(--text-secondary);
-    line-height: 1.35;
+    line-height: 1.2;
   }
 
   .aqs-quick-pick strong {
     font-family: var(--font-editorial);
-    font-size: 1.02rem;
+    font-size: 0.92rem;
     line-height: 0.95;
   }
 
   .aqs-control-label {
-    font-size: 0.76rem;
+    font-size: 0.68rem;
     text-transform: uppercase;
     letter-spacing: 0.12em;
     color: var(--text-secondary);
@@ -428,7 +446,8 @@ const pageUrl = 'https://andymasley.com/visuals/aquifer-stress';
   }
 
   .aqs-chip-button {
-    padding: 0.45rem 0.65rem;
+    padding: 0.38rem 0.5rem;
+    font-size: 0.69rem;
   }
 
   .aqs-chip-button.is-active {
@@ -448,8 +467,8 @@ const pageUrl = 'https://andymasley.com/visuals/aquifer-stress';
   .aqs-directory-scroll {
     overflow: auto;
     display: grid;
-    gap: 1rem;
-    padding: 0.85rem;
+    gap: 0.9rem;
+    padding: 0.7rem 0.85rem 0.85rem;
   }
 
   .aqs-directory-section {
@@ -499,13 +518,13 @@ const pageUrl = 'https://andymasley.com/visuals/aquifer-stress';
     padding: 0;
     margin: 0;
     display: grid;
-    gap: 0.55rem;
+    gap: 0.45rem;
   }
 
   .aqs-list-item {
     width: 100%;
     text-align: left;
-    padding: 0.78rem 0.82rem 0.74rem;
+    padding: 0.7rem 0.74rem 0.68rem;
     display: grid;
     grid-template-columns: auto minmax(0, 1fr);
     gap: 0.75rem;
@@ -549,14 +568,14 @@ const pageUrl = 'https://andymasley.com/visuals/aquifer-stress';
     border: 1px solid rgba(31, 94, 97, 0.2);
     background: rgba(31, 94, 97, 0.08);
     color: var(--aqs-sea);
-    font-size: 0.78rem;
+    font-size: 0.72rem;
     font-weight: 700;
     letter-spacing: 0.08em;
   }
 
   .aqs-list-body {
     display: grid;
-    gap: 0.35rem;
+    gap: 0.28rem;
     min-width: 0;
   }
 
@@ -582,15 +601,15 @@ const pageUrl = 'https://andymasley.com/visuals/aquifer-stress';
   }
 
   .aqs-list-name {
-    font-size: 1rem;
+    font-size: 0.94rem;
     line-height: 1.05;
     letter-spacing: -0.02em;
   }
 
   .aqs-list-stress {
     border-radius: 999px;
-    padding: 0.18rem 0.48rem;
-    font-size: 0.72rem;
+    padding: 0.16rem 0.44rem;
+    font-size: 0.66rem;
     line-height: 1;
     font-weight: 700;
     letter-spacing: 0.08em;
@@ -646,7 +665,7 @@ const pageUrl = 'https://andymasley.com/visuals/aquifer-stress';
 
   .aqs-list-subline {
     color: var(--text-secondary);
-    font-size: 0.74rem;
+    font-size: 0.68rem;
   }
 
   .aqs-map-panel {
@@ -988,6 +1007,15 @@ const pageUrl = 'https://andymasley.com/visuals/aquifer-stress';
       grid-template-columns: 1fr;
     }
 
+    .aqs-list-panel {
+      grid-template-rows: auto auto;
+    }
+
+    .aqs-list-top-grid,
+    .aqs-list-controls {
+      grid-template-columns: 1fr;
+    }
+
     .aqs-list-panel,
     .aqs-detail-panel {
       max-height: none;
@@ -1010,7 +1038,9 @@ const pageUrl = 'https://andymasley.com/visuals/aquifer-stress';
     }
 
     .aqs-quick-pick-grid,
-    .aqs-directory-meta {
+    .aqs-directory-meta,
+    .aqs-list-top-grid,
+    .aqs-list-controls {
       grid-template-columns: 1fr;
     }
 
