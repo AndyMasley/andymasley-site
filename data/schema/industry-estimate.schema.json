@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://andymasley.com/schema/industry-estimate.schema.json",
+  "title": "Industry Estimate",
+  "type": "object",
+  "required": [
+    "display_aquifer_id",
+    "year",
+    "parent_category_key",
+    "industry_subtype_key",
+    "industry_subtype_label",
+    "naics_codes",
+    "value",
+    "units",
+    "allocation_basis",
+    "allocation_geo_level",
+    "confidence_grade",
+    "is_modeled",
+    "methodology_key",
+    "source_ids",
+    "notes"
+  ],
+  "properties": {
+    "display_aquifer_id": { "type": "string" },
+    "year": { "type": "integer" },
+    "parent_category_key": { "type": "string" },
+    "industry_subtype_key": { "type": "string" },
+    "industry_subtype_label": { "type": "string" },
+    "naics_codes": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "value": { "type": "number", "minimum": 0 },
+    "units": { "type": "string" },
+    "allocation_basis": { "type": "string" },
+    "allocation_geo_level": { "type": "string" },
+    "confidence_grade": {
+      "type": "string",
+      "enum": ["A", "B", "C", "D"]
+    },
+    "is_modeled": { "type": "boolean" },
+    "methodology_key": { "type": "string" },
+    "source_ids": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "notes": { "type": "string" }
+  },
+  "additionalProperties": false
+}

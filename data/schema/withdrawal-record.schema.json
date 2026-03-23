@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://andymasley.com/schema/withdrawal-record.schema.json",
+  "title": "Withdrawal Record",
+  "type": "object",
+  "required": [
+    "display_aquifer_id",
+    "year",
+    "metric_key",
+    "metric_group",
+    "metric_label",
+    "units",
+    "value",
+    "is_estimate",
+    "confidence_grade",
+    "source_type",
+    "source_ids",
+    "methodology_key",
+    "methodology_version",
+    "notes"
+  ],
+  "properties": {
+    "display_aquifer_id": { "type": "string" },
+    "year": { "type": "integer" },
+    "metric_key": { "type": "string" },
+    "metric_group": { "type": "string" },
+    "metric_label": { "type": "string" },
+    "units": { "type": "string" },
+    "value": { "type": "number", "minimum": 0 },
+    "is_estimate": { "type": "boolean" },
+    "confidence_grade": {
+      "type": "string",
+      "enum": ["A", "B", "C", "D"]
+    },
+    "source_type": {
+      "type": "string",
+      "enum": [
+        "direct_source",
+        "direct_source_aggregate",
+        "official_proxy_estimate",
+        "heuristic_estimate",
+        "low_confidence_estimate"
+      ]
+    },
+    "source_ids": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "methodology_key": { "type": "string" },
+    "methodology_version": { "type": "string" },
+    "notes": { "type": "string" }
+  },
+  "additionalProperties": false
+}

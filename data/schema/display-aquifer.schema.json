@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://andymasley.com/schema/display-aquifer.schema.json",
+  "title": "Display Aquifer",
+  "type": "object",
+  "required": [
+    "display_aquifer_id",
+    "display_name",
+    "short_name",
+    "sort_order",
+    "region_label",
+    "description_short",
+    "description_long",
+    "geometry_source",
+    "geometry_notes",
+    "source_aquifer_codes",
+    "is_grouped_system",
+    "default_year",
+    "default_units",
+    "methodology_version",
+    "status"
+  ],
+  "properties": {
+    "display_aquifer_id": { "type": "string" },
+    "display_name": { "type": "string" },
+    "short_name": { "type": "string" },
+    "sort_order": { "type": "integer" },
+    "region_label": { "type": "string" },
+    "description_short": { "type": "string" },
+    "description_long": { "type": "string" },
+    "geometry_source": { "type": "string" },
+    "geometry_notes": { "type": "string" },
+    "source_aquifer_codes": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "is_grouped_system": { "type": "boolean" },
+    "default_year": { "type": "integer" },
+    "default_units": { "type": "string" },
+    "methodology_version": { "type": "string" },
+    "status": {
+      "type": "string",
+      "enum": ["active", "draft", "excluded"]
+    }
+  },
+  "additionalProperties": false
+}

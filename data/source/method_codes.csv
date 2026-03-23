@@ -1,0 +1,312 @@
+Method Code,Method Code Description,Class,Source,Type,Subtype
+SUTU,"Reported site-specific, Water user, Capacity or flow rate, Unmodified",S,U,T,U
+AUTU,"Areal aggregate, Water user, Capacity or flow rate, Unmodified",A,U,T,U
+SGTU,"Reported site-specific, USGS, Capacity or flow rate, Unmodified",S,G,T,U
+AGTU,"Areal aggregate, USGS, Capacity or flow rate, Unmodified",A,G,T,U
+EGTU,"Estimated, USGS, Capacity or flow rate, Unmodified",E,G,T,U
+SFTU,"Reported site-specific, Federal agency, Capacity or flow rate, Unmodified",S,F,T,U
+AFTU,"Areal aggregate, Federal agency, Capacity or flow rate, Unmodified",A,F,T,U
+SSTU,"Reported site-specific, State agency, Capacity or flow rate, Unmodified",S,S,T,U
+ASTU,"Areal aggregate, State agency, Capacity or flow rate, Unmodified",A,S,T,U
+ESTU,"Estimated, State agency, Capacity or flow rate, Unmodified",E,S,T,U
+SLTU,"Reported site-specific, Other government agency, Capacity or flow rate, Unmodified",S,L,T,U
+ALTU,"Areal aggregate, Other government agency, Capacity or flow rate, Unmodified",A,L,T,U
+SNTU,"Reported site-specific, NGO or academic institution, Capacity or flow rate, Unmodified",S,N,T,U
+ANTU,"Areal aggregate, NGO or academic institution, Capacity or flow rate, Unmodified",A,N,T,U
+SUMU,"Reported site-specific, Water user, Model, Unmodified",S,U,M,U
+AUMU,"Areal aggregate, Water user, Model, Unmodified",A,U,M,U
+SGMU,"Reported site-specific, USGS, Model, Unmodified",S,G,M,U
+AGMU,"Areal aggregate, USGS, Model, Unmodified",A,G,M,U
+EGMU,"Estimated, USGS, Model, Unmodified",E,G,M,U
+SFMU,"Reported site-specific, Federal agency, Model, Unmodified",S,F,M,U
+AFMU,"Areal aggregate, Federal agency, Model, Unmodified",A,F,M,U
+SSMU,"Reported site-specific, State agency, Model, Unmodified",S,S,M,U
+ASMU,"Areal aggregate, State agency, Model, Unmodified",A,S,M,U
+ESMU,"Estimated, State agency, Model, Unmodified",E,S,M,U
+SLMU,"Reported site-specific, Other government agency, Model, Unmodified",S,L,M,U
+ALMU,"Areal aggregate, Other government agency, Model, Unmodified",A,L,M,U
+SNMU,"Reported site-specific, NGO or academic institution, Model, Unmodified",S,N,M,U
+ANMU,"Areal aggregate, NGO or academic institution, Model, Unmodified",A,N,M,U
+SUPU,"Reported site-specific, Water user, Permit, Unmodified",S,U,P,U
+AUPU,"Areal aggregate, Water user, Permit, Unmodified",A,U,P,U
+SGPU,"Reported site-specific, USGS, Permit, Unmodified",S,G,P,U
+AGPU,"Areal aggregate, USGS, Permit, Unmodified",A,G,P,U
+EGPU,"Estimated, USGS, Permit, Unmodified",E,G,P,U
+SFPU,"Reported site-specific, Federal agency, Permit, Unmodified",S,F,P,U
+AFPU,"Areal aggregate, Federal agency, Permit, Unmodified",A,F,P,U
+SSPU,"Reported site-specific, State agency, Permit, Unmodified",S,S,P,U
+ASPU,"Areal aggregate, State agency, Permit, Unmodified",A,S,P,U
+ESPU,"Estimated, State agency, Permit, Unmodified",E,S,P,U
+SLPU,"Reported site-specific, Other government agency, Permit, Unmodified",S,L,P,U
+ALPU,"Areal aggregate, Other government agency, Permit, Unmodified",A,L,P,U
+SNPU,"Reported site-specific, NGO or academic institution, Permit, Unmodified",S,N,P,U
+ANPU,"Areal aggregate, NGO or academic institution, Permit, Unmodified",A,N,P,U
+SUGU,"Reported site-specific, Water user, Geospatial analysis, Unmodified",S,U,G,U
+AUGU,"Areal aggregate, Water user, Geospatial analysis, Unmodified",A,U,G,U
+SGGU,"Reported site-specific, USGS, Geospatial analysis, Unmodified",S,G,G,U
+AGGU,"Areal aggregate, USGS, Geospatial analysis, Unmodified",A,G,G,U
+EGGU,"Estimated, USGS, Geospatial analysis, Unmodified",E,G,G,U
+SFGU,"Reported site-specific, Federal agency, Geospatial analysis, Unmodified",S,F,G,U
+AFGU,"Areal aggregate, Federal agency, Geospatial analysis, Unmodified",A,F,G,U
+SSGU,"Reported site-specific, State agency, Geospatial analysis, Unmodified",S,S,G,U
+ASGU,"Areal aggregate, State agency, Geospatial analysis, Unmodified",A,S,G,U
+ESGU,"Estimated, State agency, Geospatial analysis, Unmodified",E,S,G,U
+SLGU,"Reported site-specific, Other government agency, Geospatial analysis, Unmodified",S,L,G,U
+ALGU,"Areal aggregate, Other government agency, Geospatial analysis, Unmodified",A,L,G,U
+SNGU,"Reported site-specific, NGO or academic institution, Geospatial analysis, Unmodified",S,N,G,U
+ANGU,"Areal aggregate, NGO or academic institution, Geospatial analysis, Unmodified",A,N,G,U
+SUAU,"Reported site-specific, Water user, Disaggregated, Unmodified",S,U,A,U
+AUAU,"Areal aggregate, Water user, Disaggregated, Unmodified",A,U,A,U
+SGAU,"Reported site-specific, USGS, Disaggregated, Unmodified",S,G,A,U
+AGAU,"Areal aggregate, USGS, Disaggregated, Unmodified",A,G,A,U
+EGAU,"Estimated, USGS, Disaggregated, Unmodified",E,G,A,U
+SFAU,"Reported site-specific, Federal agency, Disaggregated, Unmodified",S,F,A,U
+AFAU,"Areal aggregate, Federal agency, Disaggregated, Unmodified",A,F,A,U
+SSAU,"Reported site-specific, State agency, Disaggregated, Unmodified",S,S,A,U
+ASAU,"Areal aggregate, State agency, Disaggregated, Unmodified",A,S,A,U
+ESAU,"Estimated, State agency, Disaggregated, Unmodified",E,S,A,U
+SLAU,"Reported site-specific, Other government agency, Disaggregated, Unmodified",S,L,A,U
+ALAU,"Areal aggregate, Other government agency, Disaggregated, Unmodified",A,L,A,U
+SNAU,"Reported site-specific, NGO or academic institution, Disaggregated, Unmodified",S,N,A,U
+ANAU,"Areal aggregate, NGO or academic institution, Disaggregated, Unmodified",A,N,A,U
+SUBU,"Reported site-specific, Water user, Publicly available resource, Unmodified",S,U,B,U
+AUBU,"Areal aggregate, Water user, Publicly available resource, Unmodified",A,U,B,U
+SGBU,"Reported site-specific, USGS, Publicly available resource, Unmodified",S,G,B,U
+AGBU,"Areal aggregate, USGS, Publicly available resource, Unmodified",A,G,B,U
+EGBU,"Estimated, USGS, Publicly available resource, Unmodified",E,G,B,U
+SFBU,"Reported site-specific, Federal agency, Publicly available resource, Unmodified",S,F,B,U
+AFBU,"Areal aggregate, Federal agency, Publicly available resource, Unmodified",A,F,B,U
+SSBU,"Reported site-specific, State agency, Publicly available resource, Unmodified",S,S,B,U
+ASBU,"Areal aggregate, State agency, Publicly available resource, Unmodified",A,S,B,U
+ESBU,"Estimated, State agency, Publicly available resource, Unmodified",E,S,B,U
+SLBU,"Reported site-specific, Other government agency, Publicly available resource, Unmodified",S,L,B,U
+ALBU,"Areal aggregate, Other government agency, Publicly available resource, Unmodified",A,L,B,U
+SNBU,"Reported site-specific, NGO or academic institution, Publicly available resource, Unmodified",S,N,B,U
+ANBU,"Areal aggregate, NGO or academic institution, Publicly available resource, Unmodified",A,N,B,U
+SUDU,"Reported site-specific, Water user, Restricted-access dataset, Unmodified",S,U,D,U
+AUDU,"Areal aggregate, Water user, Restricted-access dataset, Unmodified",A,U,D,U
+SGDU,"Reported site-specific, USGS, Restricted-access dataset, Unmodified",S,G,D,U
+AGDU,"Areal aggregate, USGS, Restricted-access dataset, Unmodified",A,G,D,U
+EGDU,"Estimated, USGS, Restricted-access dataset, Unmodified",E,G,D,U
+SFDU,"Reported site-specific, Federal agency, Restricted-access dataset, Unmodified",S,F,D,U
+AFDU,"Areal aggregate, Federal agency, Restricted-access dataset, Unmodified",A,F,D,U
+SSDU,"Reported site-specific, State agency, Restricted-access dataset, Unmodified",S,S,D,U
+ASDU,"Areal aggregate, State agency, Restricted-access dataset, Unmodified",A,S,D,U
+ESDU,"Estimated, State agency, Restricted-access dataset, Unmodified",E,S,D,U
+SLDU,"Reported site-specific, Other government agency, Restricted-access dataset, Unmodified",S,L,D,U
+ALDU,"Areal aggregate, Other government agency, Restricted-access dataset, Unmodified",A,L,D,U
+SNDU,"Reported site-specific, NGO or academic institution, Restricted-access dataset, Unmodified",S,N,D,U
+ANDU,"Areal aggregate, NGO or academic institution, Restricted-access dataset, Unmodified",A,N,D,U
+SUIU,"Reported site-specific, Water user, Communication, Unmodified",S,U,I,U
+AUIU,"Areal aggregate, Water user, Communication, Unmodified",A,U,I,U
+SGIU,"Reported site-specific, USGS, Communication, Unmodified",S,G,I,U
+AGIU,"Areal aggregate, USGS, Communication, Unmodified",A,G,I,U
+EGIU,"Estimated, USGS, Communication, Unmodified",E,G,I,U
+SFIU,"Reported site-specific, Federal agency, Communication, Unmodified",S,F,I,U
+AFIU,"Areal aggregate, Federal agency, Communication, Unmodified",A,F,I,U
+SSIU,"Reported site-specific, State agency, Communication, Unmodified",S,S,I,U
+ASIU,"Areal aggregate, State agency, Communication, Unmodified",A,S,I,U
+ESIU,"Estimated, State agency, Communication, Unmodified",E,S,I,U
+SLIU,"Reported site-specific, Other government agency, Communication, Unmodified",S,L,I,U
+ALIU,"Areal aggregate, Other government agency, Communication, Unmodified",A,L,I,U
+SNIU,"Reported site-specific, NGO or academic institution, Communication, Unmodified",S,N,I,U
+ANIU,"Areal aggregate, NGO or academic institution, Communication, Unmodified",A,N,I,U
+SUTM,"Reported site-specific, Water user, Capacity or flow rate, Modified",S,U,T,M
+AUTM,"Areal aggregate, Water user, Capacity or flow rate, Modified",A,U,T,M
+SGTM,"Reported site-specific, USGS, Capacity or flow rate, Modified",S,G,T,M
+AGTM,"Areal aggregate, USGS, Capacity or flow rate, Modified",A,G,T,M
+EGTM,"Estimated, USGS, Capacity or flow rate, Modified",E,G,T,M
+SFTM,"Reported site-specific, Federal agency, Capacity or flow rate, Modified",S,F,T,M
+AFTM,"Areal aggregate, Federal agency, Capacity or flow rate, Modified",A,F,T,M
+SSTM,"Reported site-specific, State agency, Capacity or flow rate, Modified",S,S,T,M
+ASTM,"Areal aggregate, State agency, Capacity or flow rate, Modified",A,S,T,M
+ESTM,"Estimated, State agency, Capacity or flow rate, Modified",E,S,T,M
+SLTM,"Reported site-specific, Other government agency, Capacity or flow rate, Modified",S,L,T,M
+ALTM,"Areal aggregate, Other government agency, Capacity or flow rate, Modified",A,L,T,M
+SNTM,"Reported site-specific, NGO or academic institution, Capacity or flow rate, Modified",S,N,T,M
+ANTM,"Areal aggregate, NGO or academic institution, Capacity or flow rate, Modified",A,N,T,M
+SUMM,"Reported site-specific, Water user, Model, Modified",S,U,M,M
+AUMM,"Areal aggregate, Water user, Model, Modified",A,U,M,M
+SGMM,"Reported site-specific, USGS, Model, Modified",S,G,M,M
+AGMM,"Areal aggregate, USGS, Model, Modified",A,G,M,M
+EGMM,"Estimated, USGS, Model, Modified",E,G,M,M
+SFMM,"Reported site-specific, Federal agency, Model, Modified",S,F,M,M
+AFMM,"Areal aggregate, Federal agency, Model, Modified",A,F,M,M
+SSMM,"Reported site-specific, State agency, Model, Modified",S,S,M,M
+ASMM,"Areal aggregate, State agency, Model, Modified",A,S,M,M
+ESMM,"Estimated, State agency, Model, Modified",E,S,M,M
+SLMM,"Reported site-specific, Other government agency, Model, Modified",S,L,M,M
+ALMM,"Areal aggregate, Other government agency, Model, Modified",A,L,M,M
+SNMM,"Reported site-specific, NGO or academic institution, Model, Modified",S,N,M,M
+ANMM,"Areal aggregate, NGO or academic institution, Model, Modified",A,N,M,M
+SUPM,"Reported site-specific, Water user, Permit, Modified",S,U,P,M
+AUPM,"Areal aggregate, Water user, Permit, Modified",A,U,P,M
+SGPM,"Reported site-specific, USGS, Permit, Modified",S,G,P,M
+AGPM,"Areal aggregate, USGS, Permit, Modified",A,G,P,M
+EGPM,"Estimated, USGS, Permit, Modified",E,G,P,M
+SFPM,"Reported site-specific, Federal agency, Permit, Modified",S,F,P,M
+AFPM,"Areal aggregate, Federal agency, Permit, Modified",A,F,P,M
+SSPM,"Reported site-specific, State agency, Permit, Modified",S,S,P,M
+ASPM,"Areal aggregate, State agency, Permit, Modified",A,S,P,M
+ESPM,"Estimated, State agency, Permit, Modified",E,S,P,M
+SLPM,"Reported site-specific, Other government agency, Permit, Modified",S,L,P,M
+ALPM,"Areal aggregate, Other government agency, Permit, Modified",A,L,P,M
+SNPM,"Reported site-specific, NGO or academic institution, Permit, Modified",S,N,P,M
+ANPM,"Areal aggregate, NGO or academic institution, Permit, Modified",A,N,P,M
+SUGM,"Reported site-specific, Water user, Geospatial analysis, Modified",S,U,G,M
+AUGM,"Areal aggregate, Water user, Geospatial analysis, Modified",A,U,G,M
+SGGM,"Reported site-specific, USGS, Geospatial analysis, Modified",S,G,G,M
+AGGM,"Areal aggregate, USGS, Geospatial analysis, Modified",A,G,G,M
+EGGM,"Estimated, USGS, Geospatial analysis, Modified",E,G,G,M
+SFGM,"Reported site-specific, Federal agency, Geospatial analysis, Modified",S,F,G,M
+AFGM,"Areal aggregate, Federal agency, Geospatial analysis, Modified",A,F,G,M
+SSGM,"Reported site-specific, State agency, Geospatial analysis, Modified",S,S,G,M
+ASGM,"Areal aggregate, State agency, Geospatial analysis, Modified",A,S,G,M
+ESGM,"Estimated, State agency, Geospatial analysis, Modified",E,S,G,M
+SLGM,"Reported site-specific, Other government agency, Geospatial analysis, Modified",S,L,G,M
+ALGM,"Areal aggregate, Other government agency, Geospatial analysis, Modified",A,L,G,M
+SNGM,"Reported site-specific, NGO or academic institution, Geospatial analysis, Modified",S,N,G,M
+ANGM,"Areal aggregate, NGO or academic institution, Geospatial analysis, Modified",A,N,G,M
+SUAM,"Reported site-specific, Water user, Disaggregated, Modified",S,U,A,M
+AUAM,"Areal aggregate, Water user, Disaggregated, Modified",A,U,A,M
+SGAM,"Reported site-specific, USGS, Disaggregated, Modified",S,G,A,M
+AGAM,"Areal aggregate, USGS, Disaggregated, Modified",A,G,A,M
+EGAM,"Estimated, USGS, Disaggregated, Modified",E,G,A,M
+SFAM,"Reported site-specific, Federal agency, Disaggregated, Modified",S,F,A,M
+AFAM,"Areal aggregate, Federal agency, Disaggregated, Modified",A,F,A,M
+SSAM,"Reported site-specific, State agency, Disaggregated, Modified",S,S,A,M
+ASAM,"Areal aggregate, State agency, Disaggregated, Modified",A,S,A,M
+ESAM,"Estimated, State agency, Disaggregated, Modified",E,S,A,M
+SLAM,"Reported site-specific, Other government agency, Disaggregated, Modified",S,L,A,M
+ALAM,"Areal aggregate, Other government agency, Disaggregated, Modified",A,L,A,M
+SNAM,"Reported site-specific, NGO or academic institution, Disaggregated, Modified",S,N,A,M
+ANAM,"Areal aggregate, NGO or academic institution, Disaggregated, Modified",A,N,A,M
+SUBM,"Reported site-specific, Water user, Publicly available resource, Modified",S,U,B,M
+AUBM,"Areal aggregate, Water user, Publicly available resource, Modified",A,U,B,M
+SGBM,"Reported site-specific, USGS, Publicly available resource, Modified",S,G,B,M
+AGBM,"Areal aggregate, USGS, Publicly available resource, Modified",A,G,B,M
+EGBM,"Estimated, USGS, Publicly available resource, Modified",E,G,B,M
+SFBM,"Reported site-specific, Federal agency, Publicly available resource, Modified",S,F,B,M
+AFBM,"Areal aggregate, Federal agency, Publicly available resource, Modified",A,F,B,M
+SSBM,"Reported site-specific, State agency, Publicly available resource, Modified",S,S,B,M
+ASBM,"Areal aggregate, State agency, Publicly available resource, Modified",A,S,B,M
+ESBM,"Estimated, State agency, Publicly available resource, Modified",E,S,B,M
+SLBM,"Reported site-specific, Other government agency, Publicly available resource, Modified",S,L,B,M
+ALBM,"Areal aggregate, Other government agency, Publicly available resource, Modified",A,L,B,M
+SNBM,"Reported site-specific, NGO or academic institution, Publicly available resource, Modified",S,N,B,M
+ANBM,"Areal aggregate, NGO or academic institution, Publicly available resource, Modified",A,N,B,M
+SUDM,"Reported site-specific, Water user, Restricted-access dataset, Modified",S,U,D,M
+AUDM,"Areal aggregate, Water user, Restricted-access dataset, Modified",A,U,D,M
+SGDM,"Reported site-specific, USGS, Restricted-access dataset, Modified",S,G,D,M
+AGDM,"Areal aggregate, USGS, Restricted-access dataset, Modified",A,G,D,M
+EGDM,"Estimated, USGS, Restricted-access dataset, Modified",E,G,D,M
+SFDM,"Reported site-specific, Federal agency, Restricted-access dataset, Modified",S,F,D,M
+AFDM,"Areal aggregate, Federal agency, Restricted-access dataset, Modified",A,F,D,M
+SSDM,"Reported site-specific, State agency, Restricted-access dataset, Modified",S,S,D,M
+ASDM,"Areal aggregate, State agency, Restricted-access dataset, Modified",A,S,D,M
+ESDM,"Estimated, State agency, Restricted-access dataset, Modified",E,S,D,M
+SLDM,"Reported site-specific, Other government agency, Restricted-access dataset, Modified",S,L,D,M
+ALDM,"Areal aggregate, Other government agency, Restricted-access dataset, Modified",A,L,D,M
+SNDM,"Reported site-specific, NGO or academic institution, Restricted-access dataset, Modified",S,N,D,M
+ANDM,"Areal aggregate, NGO or academic institution, Restricted-access dataset, Modified",A,N,D,M
+SUIM,"Reported site-specific, Water user, Communication, Modified",S,U,I,M
+AUIM,"Areal aggregate, Water user, Communication, Modified",A,U,I,M
+SGIM,"Reported site-specific, USGS, Communication, Modified",S,G,I,M
+AGIM,"Areal aggregate, USGS, Communication, Modified",A,G,I,M
+EGIM,"Estimated, USGS, Communication, Modified",E,G,I,M
+SFIM,"Reported site-specific, Federal agency, Communication, Modified",S,F,I,M
+AFIM,"Areal aggregate, Federal agency, Communication, Modified",A,F,I,M
+SSIM,"Reported site-specific, State agency, Communication, Modified",S,S,I,M
+ASIM,"Areal aggregate, State agency, Communication, Modified",A,S,I,M
+ESIM,"Estimated, State agency, Communication, Modified",E,S,I,M
+SLIM,"Reported site-specific, Other government agency, Communication, Modified",S,L,I,M
+ALIM,"Areal aggregate, Other government agency, Communication, Modified",A,L,I,M
+SNIM,"Reported site-specific, NGO or academic institution, Communication, Modified",S,N,I,M
+ANIM,"Areal aggregate, NGO or academic institution, Communication, Modified",A,N,I,M
+SUCC,"Reported site-specific, Water user, Coefficient, Per capita rate",S,U,C,C
+AUCC,"Areal aggregate, Water user, Coefficient, Per capita rate",A,U,C,C
+SGCC,"Reported site-specific, USGS, Coefficient, Per capita rate",S,G,C,C
+AGCC,"Areal aggregate, USGS, Coefficient, Per capita rate",A,G,C,C
+EGCC,"Estimated, USGS, Coefficient, Per capita rate",E,G,C,C
+SFCC,"Reported site-specific, Federal agency, Coefficient, Per capita rate",S,F,C,C
+AFCC,"Areal aggregate, Federal agency, Coefficient, Per capita rate",A,F,C,C
+SSCC,"Reported site-specific, State agency, Coefficient, Per capita rate",S,S,C,C
+ASCC,"Areal aggregate, State agency, Coefficient, Per capita rate",A,S,C,C
+ESCC,"Estimated, State agency, Coefficient, Per capita rate",E,S,C,C
+SLCC,"Reported site-specific, Other government agency, Coefficient, Per capita rate",S,L,C,C
+ALCC,"Areal aggregate, Other government agency, Coefficient, Per capita rate",A,L,C,C
+SNCC,"Reported site-specific, NGO or academic institution, Coefficient, Per capita rate",S,N,C,C
+ANCC,"Areal aggregate, NGO or academic institution, Coefficient, Per capita rate",A,N,C,C
+SUCA,"Reported site-specific, Water user, Coefficient, Application rate",S,U,C,A
+AUCA,"Areal aggregate, Water user, Coefficient, Application rate",A,U,C,A
+SGCA,"Reported site-specific, USGS, Coefficient, Application rate",S,G,C,A
+AGCA,"Areal aggregate, USGS, Coefficient, Application rate",A,G,C,A
+EGCA,"Estimated, USGS, Coefficient, Application rate",E,G,C,A
+SFCA,"Reported site-specific, Federal agency, Coefficient, Application rate",S,F,C,A
+AFCA,"Areal aggregate, Federal agency, Coefficient, Application rate",A,F,C,A
+SSCA,"Reported site-specific, State agency, Coefficient, Application rate",S,S,C,A
+ASCA,"Areal aggregate, State agency, Coefficient, Application rate",A,S,C,A
+ESCA,"Estimated, State agency, Coefficient, Application rate",E,S,C,A
+SLCA,"Reported site-specific, Other government agency, Coefficient, Application rate",S,L,C,A
+ALCA,"Areal aggregate, Other government agency, Coefficient, Application rate",A,L,C,A
+SNCA,"Reported site-specific, NGO or academic institution, Coefficient, Application rate",S,N,C,A
+ANCA,"Areal aggregate, NGO or academic institution, Coefficient, Application rate",A,N,C,A
+SUCP,"Reported site-specific, Water user, Coefficient, Power consumption rate",S,U,C,P
+AUCP,"Areal aggregate, Water user, Coefficient, Power consumption rate",A,U,C,P
+SGCP,"Reported site-specific, USGS, Coefficient, Power consumption rate",S,G,C,P
+AGCP,"Areal aggregate, USGS, Coefficient, Power consumption rate",A,G,C,P
+EGCP,"Estimated, USGS, Coefficient, Power consumption rate",E,G,C,P
+SFCP,"Reported site-specific, Federal agency, Coefficient, Power consumption rate",S,F,C,P
+AFCP,"Areal aggregate, Federal agency, Coefficient, Power consumption rate",A,F,C,P
+SSCP,"Reported site-specific, State agency, Coefficient, Power consumption rate",S,S,C,P
+ASCP,"Areal aggregate, State agency, Coefficient, Power consumption rate",A,S,C,P
+ESCP,"Estimated, State agency, Coefficient, Power consumption rate",E,S,C,P
+SLCP,"Reported site-specific, Other government agency, Coefficient, Power consumption rate",S,L,C,P
+ALCP,"Areal aggregate, Other government agency, Coefficient, Power consumption rate",A,L,C,P
+SNCP,"Reported site-specific, NGO or academic institution, Coefficient, Power consumption rate",S,N,C,P
+ANCP,"Areal aggregate, NGO or academic institution, Coefficient, Power consumption rate",A,N,C,P
+SUCD,"Reported site-specific, Water user, Coefficient, Production rate",S,U,C,D
+AUCD,"Areal aggregate, Water user, Coefficient, Production rate",A,U,C,D
+SGCD,"Reported site-specific, USGS, Coefficient, Production rate",S,G,C,D
+AGCD,"Areal aggregate, USGS, Coefficient, Production rate",A,G,C,D
+EGCD,"Estimated, USGS, Coefficient, Production rate",E,G,C,D
+SFCD,"Reported site-specific, Federal agency, Coefficient, Production rate",S,F,C,D
+AFCD,"Areal aggregate, Federal agency, Coefficient, Production rate",A,F,C,D
+SSCD,"Reported site-specific, State agency, Coefficient, Production rate",S,S,C,D
+ASCD,"Areal aggregate, State agency, Coefficient, Production rate",A,S,C,D
+ESCD,"Estimated, State agency, Coefficient, Production rate",E,S,C,D
+SLCD,"Reported site-specific, Other government agency, Coefficient, Production rate",S,L,C,D
+ALCD,"Areal aggregate, Other government agency, Coefficient, Production rate",A,L,C,D
+SNCD,"Reported site-specific, NGO or academic institution, Coefficient, Production rate",S,N,C,D
+ANCD,"Areal aggregate, NGO or academic institution, Coefficient, Production rate",A,N,C,D
+SUCV,"Reported site-specific, Water user, Coefficient, Consumptive use rate",S,U,C,V
+AUCV,"Areal aggregate, Water user, Coefficient, Consumptive use rate",A,U,C,V
+SGCV,"Reported site-specific, USGS, Coefficient, Consumptive use rate",S,G,C,V
+AGCV,"Areal aggregate, USGS, Coefficient, Consumptive use rate",A,G,C,V
+EGCV,"Estimated, USGS, Coefficient, Consumptive use rate",E,G,C,V
+SFCV,"Reported site-specific, Federal agency, Coefficient, Consumptive use rate",S,F,C,V
+AFCV,"Areal aggregate, Federal agency, Coefficient, Consumptive use rate",A,F,C,V
+SSCV,"Reported site-specific, State agency, Coefficient, Consumptive use rate",S,S,C,V
+ASCV,"Areal aggregate, State agency, Coefficient, Consumptive use rate",A,S,C,V
+ESCV,"Estimated, State agency, Coefficient, Consumptive use rate",E,S,C,V
+SLCV,"Reported site-specific, Other government agency, Coefficient, Consumptive use rate",S,L,C,V
+ALCV,"Areal aggregate, Other government agency, Coefficient, Consumptive use rate",A,L,C,V
+SNCV,"Reported site-specific, NGO or academic institution, Coefficient, Consumptive use rate",S,N,C,V
+ANCV,"Areal aggregate, NGO or academic institution, Coefficient, Consumptive use rate",A,N,C,V
+SUCF,"Reported site-specific, Water user, Coefficient, Facility characteristic",S,U,C,F
+AUCF,"Areal aggregate, Water user, Coefficient, Facility characteristic",A,U,C,F
+SGCF,"Reported site-specific, USGS, Coefficient, Facility characteristic",S,G,C,F
+AGCF,"Areal aggregate, USGS, Coefficient, Facility characteristic",A,G,C,F
+EGCF,"Estimated, USGS, Coefficient, Facility characteristic",E,G,C,F
+SFCF,"Reported site-specific, Federal agency, Coefficient, Facility characteristic",S,F,C,F
+AFCF,"Areal aggregate, Federal agency, Coefficient, Facility characteristic",A,F,C,F
+SSCF,"Reported site-specific, State agency, Coefficient, Facility characteristic",S,S,C,F
+ASCF,"Areal aggregate, State agency, Coefficient, Facility characteristic",A,S,C,F
+ESCF,"Estimated, State agency, Coefficient, Facility characteristic",E,S,C,F
+SLCF,"Reported site-specific, Other government agency, Coefficient, Facility characteristic",S,L,C,F
+ALCF,"Areal aggregate, Other government agency, Coefficient, Facility characteristic",A,L,C,F
+SNCF,"Reported site-specific, NGO or academic institution, Coefficient, Facility characteristic",S,N,C,F
+ANCF,"Areal aggregate, NGO or academic institution, Coefficient, Facility characteristic",A,N,C,F
+NZZZ,"Unknown, Not applicable, Not applicable, Not applicable",N,Z,Z,Z
+EGHU,"Estimated, USGS, Previous water-use compilation, Unmodified",E,G,H,U
+EGHM,"Estimated, USGS, Previous water-use compilation, Modified",E,G,H,M

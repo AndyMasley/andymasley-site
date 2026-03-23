@@ -1,0 +1,3701 @@
+{
+  "version": "2026.03.0",
+  "generated_at": "2026-03-23T02:26:58.097278+00:00",
+  "methodology_version": "v1",
+  "build_status": "ready",
+  "records": [
+    {
+      "display_aquifer_id": "high_plains_aquifer",
+      "year": 2015,
+      "total_withdrawal": {
+        "value": 12300.91,
+        "units": "Mgal/d",
+        "is_estimate": true,
+        "confidence_grade": "A",
+        "source_type": "direct_source_aggregate",
+        "methodology_key": "aggregate_usgs_2015_county_aquifer_rows_v1",
+        "methodology_version": "v1",
+        "notes": "Aggregated from county-level principal-aquifer rows in the 2015 USGS release. These are authoritative published estimates, not measured well-by-well withdrawals."
+      },
+      "categories": [
+        {
+          "display_aquifer_id": "high_plains_aquifer",
+          "year": 2015,
+          "category_key": "public_supply",
+          "category_label": "Public supply",
+          "value": 257.64,
+          "units": "Mgal/d",
+          "share_of_total": 0.0209,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "high_plains_aquifer",
+          "year": 2015,
+          "category_key": "domestic",
+          "category_label": "Domestic",
+          "value": 40.06,
+          "units": "Mgal/d",
+          "share_of_total": 0.0033,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "high_plains_aquifer",
+          "year": 2015,
+          "category_key": "irrigation",
+          "category_label": "Irrigation",
+          "value": 11632.34,
+          "units": "Mgal/d",
+          "share_of_total": 0.9456,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "high_plains_aquifer",
+          "year": 2015,
+          "category_key": "thermoelectric_power",
+          "category_label": "Thermoelectric power",
+          "value": 21.77,
+          "units": "Mgal/d",
+          "share_of_total": 0.0018,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "high_plains_aquifer",
+          "year": 2015,
+          "category_key": "industrial",
+          "category_label": "Industrial",
+          "value": 65.28,
+          "units": "Mgal/d",
+          "share_of_total": 0.0053,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "high_plains_aquifer",
+          "year": 2015,
+          "category_key": "mining",
+          "category_label": "Mining",
+          "value": 51.63,
+          "units": "Mgal/d",
+          "share_of_total": 0.0042,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "high_plains_aquifer",
+          "year": 2015,
+          "category_key": "livestock",
+          "category_label": "Livestock",
+          "value": 221.03,
+          "units": "Mgal/d",
+          "share_of_total": 0.018,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "high_plains_aquifer",
+          "year": 2015,
+          "category_key": "aquaculture",
+          "category_label": "Aquaculture",
+          "value": 11.16,
+          "units": "Mgal/d",
+          "share_of_total": 0.0009,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        }
+      ],
+      "industry_estimates": [],
+      "provenance_source_ids": [
+        "usgs_county_aquifer_withdrawals_2015",
+        "usgs_principal_aquifers_geometry"
+      ],
+      "methodology_summary": "Totals aggregate all 2015 USGS county rows assigned to the High Plains aquifer through the display-aquifer crosswalk. Categories come directly from the published broad water-use fields. Industry subtype estimates remain scaffolded but unpublished in v1.",
+      "caveats": [
+        "Geometry is shown for national and regional visualization only; it does not represent full underground extent.",
+        "V1 defines the display layer as the 30 highest-withdrawal aquifer systems from the 2015 USGS release that map cleanly to principal-aquifer geometry.",
+        "Industry subtype estimates are intentionally withheld in this release until proxy recipes are documented and validated."
+      ]
+    },
+    {
+      "display_aquifer_id": "mississippi_river_valley_alluvial_aquifer",
+      "year": 2015,
+      "total_withdrawal": {
+        "value": 12141.03,
+        "units": "Mgal/d",
+        "is_estimate": true,
+        "confidence_grade": "A",
+        "source_type": "direct_source_aggregate",
+        "methodology_key": "aggregate_usgs_2015_county_aquifer_rows_v1",
+        "methodology_version": "v1",
+        "notes": "Aggregated from county-level principal-aquifer rows in the 2015 USGS release. These are authoritative published estimates, not measured well-by-well withdrawals."
+      },
+      "categories": [
+        {
+          "display_aquifer_id": "mississippi_river_valley_alluvial_aquifer",
+          "year": 2015,
+          "category_key": "public_supply",
+          "category_label": "Public supply",
+          "value": 30.69,
+          "units": "Mgal/d",
+          "share_of_total": 0.0025,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "mississippi_river_valley_alluvial_aquifer",
+          "year": 2015,
+          "category_key": "domestic",
+          "category_label": "Domestic",
+          "value": 7.34,
+          "units": "Mgal/d",
+          "share_of_total": 0.0006,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "mississippi_river_valley_alluvial_aquifer",
+          "year": 2015,
+          "category_key": "irrigation",
+          "category_label": "Irrigation",
+          "value": 11745.61,
+          "units": "Mgal/d",
+          "share_of_total": 0.9674,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "mississippi_river_valley_alluvial_aquifer",
+          "year": 2015,
+          "category_key": "thermoelectric_power",
+          "category_label": "Thermoelectric power",
+          "value": 27.39,
+          "units": "Mgal/d",
+          "share_of_total": 0.0023,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "mississippi_river_valley_alluvial_aquifer",
+          "year": 2015,
+          "category_key": "industrial",
+          "category_label": "Industrial",
+          "value": 36.25,
+          "units": "Mgal/d",
+          "share_of_total": 0.003,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "mississippi_river_valley_alluvial_aquifer",
+          "year": 2015,
+          "category_key": "mining",
+          "category_label": "Mining",
+          "value": 1.26,
+          "units": "Mgal/d",
+          "share_of_total": 0.0001,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "mississippi_river_valley_alluvial_aquifer",
+          "year": 2015,
+          "category_key": "livestock",
+          "category_label": "Livestock",
+          "value": 1.9,
+          "units": "Mgal/d",
+          "share_of_total": 0.0002,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "mississippi_river_valley_alluvial_aquifer",
+          "year": 2015,
+          "category_key": "aquaculture",
+          "category_label": "Aquaculture",
+          "value": 290.59,
+          "units": "Mgal/d",
+          "share_of_total": 0.0239,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        }
+      ],
+      "industry_estimates": [],
+      "provenance_source_ids": [
+        "usgs_county_aquifer_withdrawals_2015",
+        "usgs_principal_aquifers_geometry"
+      ],
+      "methodology_summary": "Totals aggregate all 2015 USGS county rows assigned to the Mississippi River Valley alluvial aquifer through the display-aquifer crosswalk. Categories come directly from the published broad water-use fields. Industry subtype estimates remain scaffolded but unpublished in v1.",
+      "caveats": [
+        "Geometry is shown for national and regional visualization only; it does not represent full underground extent.",
+        "V1 defines the display layer as the 30 highest-withdrawal aquifer systems from the 2015 USGS release that map cleanly to principal-aquifer geometry.",
+        "Industry subtype estimates are intentionally withheld in this release until proxy recipes are documented and validated."
+      ]
+    },
+    {
+      "display_aquifer_id": "central_valley_aquifer_system",
+      "year": 2015,
+      "total_withdrawal": {
+        "value": 11116.8,
+        "units": "Mgal/d",
+        "is_estimate": true,
+        "confidence_grade": "A",
+        "source_type": "direct_source_aggregate",
+        "methodology_key": "aggregate_usgs_2015_county_aquifer_rows_v1",
+        "methodology_version": "v1",
+        "notes": "Aggregated from county-level principal-aquifer rows in the 2015 USGS release. These are authoritative published estimates, not measured well-by-well withdrawals."
+      },
+      "categories": [
+        {
+          "display_aquifer_id": "central_valley_aquifer_system",
+          "year": 2015,
+          "category_key": "public_supply",
+          "category_label": "Public supply",
+          "value": 523.89,
+          "units": "Mgal/d",
+          "share_of_total": 0.0471,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "central_valley_aquifer_system",
+          "year": 2015,
+          "category_key": "domestic",
+          "category_label": "Domestic",
+          "value": 49.06,
+          "units": "Mgal/d",
+          "share_of_total": 0.0044,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "central_valley_aquifer_system",
+          "year": 2015,
+          "category_key": "irrigation",
+          "category_label": "Irrigation",
+          "value": 10120.08,
+          "units": "Mgal/d",
+          "share_of_total": 0.9103,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "central_valley_aquifer_system",
+          "year": 2015,
+          "category_key": "thermoelectric_power",
+          "category_label": "Thermoelectric power",
+          "value": 3.63,
+          "units": "Mgal/d",
+          "share_of_total": 0.0003,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "central_valley_aquifer_system",
+          "year": 2015,
+          "category_key": "industrial",
+          "category_label": "Industrial",
+          "value": 123.47,
+          "units": "Mgal/d",
+          "share_of_total": 0.0111,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "central_valley_aquifer_system",
+          "year": 2015,
+          "category_key": "mining",
+          "category_label": "Mining",
+          "value": 68.84,
+          "units": "Mgal/d",
+          "share_of_total": 0.0062,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "central_valley_aquifer_system",
+          "year": 2015,
+          "category_key": "livestock",
+          "category_label": "Livestock",
+          "value": 52.31,
+          "units": "Mgal/d",
+          "share_of_total": 0.0047,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "central_valley_aquifer_system",
+          "year": 2015,
+          "category_key": "aquaculture",
+          "category_label": "Aquaculture",
+          "value": 175.52,
+          "units": "Mgal/d",
+          "share_of_total": 0.0158,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        }
+      ],
+      "industry_estimates": [],
+      "provenance_source_ids": [
+        "usgs_county_aquifer_withdrawals_2015",
+        "usgs_principal_aquifers_geometry"
+      ],
+      "methodology_summary": "Totals aggregate all 2015 USGS county rows assigned to the Central Valley aquifer system through the display-aquifer crosswalk. Categories come directly from the published broad water-use fields. Industry subtype estimates remain scaffolded but unpublished in v1.",
+      "caveats": [
+        "Geometry is shown for national and regional visualization only; it does not represent full underground extent.",
+        "V1 defines the display layer as the 30 highest-withdrawal aquifer systems from the 2015 USGS release that map cleanly to principal-aquifer geometry.",
+        "Industry subtype estimates are intentionally withheld in this release until proxy recipes are documented and validated."
+      ]
+    },
+    {
+      "display_aquifer_id": "basin_and_range_basin_fill_aquifers",
+      "year": 2015,
+      "total_withdrawal": {
+        "value": 7389.83,
+        "units": "Mgal/d",
+        "is_estimate": true,
+        "confidence_grade": "A",
+        "source_type": "direct_source_aggregate",
+        "methodology_key": "aggregate_usgs_2015_county_aquifer_rows_v1",
+        "methodology_version": "v1",
+        "notes": "Aggregated from county-level principal-aquifer rows in the 2015 USGS release. These are authoritative published estimates, not measured well-by-well withdrawals."
+      },
+      "categories": [
+        {
+          "display_aquifer_id": "basin_and_range_basin_fill_aquifers",
+          "year": 2015,
+          "category_key": "public_supply",
+          "category_label": "Public supply",
+          "value": 1303.86,
+          "units": "Mgal/d",
+          "share_of_total": 0.1764,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "basin_and_range_basin_fill_aquifers",
+          "year": 2015,
+          "category_key": "domestic",
+          "category_label": "Domestic",
+          "value": 58.59,
+          "units": "Mgal/d",
+          "share_of_total": 0.0079,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "basin_and_range_basin_fill_aquifers",
+          "year": 2015,
+          "category_key": "irrigation",
+          "category_label": "Irrigation",
+          "value": 5447.67,
+          "units": "Mgal/d",
+          "share_of_total": 0.7372,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "basin_and_range_basin_fill_aquifers",
+          "year": 2015,
+          "category_key": "thermoelectric_power",
+          "category_label": "Thermoelectric power",
+          "value": 139.2,
+          "units": "Mgal/d",
+          "share_of_total": 0.0188,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "basin_and_range_basin_fill_aquifers",
+          "year": 2015,
+          "category_key": "industrial",
+          "category_label": "Industrial",
+          "value": 60.25,
+          "units": "Mgal/d",
+          "share_of_total": 0.0082,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "basin_and_range_basin_fill_aquifers",
+          "year": 2015,
+          "category_key": "mining",
+          "category_label": "Mining",
+          "value": 243.82,
+          "units": "Mgal/d",
+          "share_of_total": 0.033,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "basin_and_range_basin_fill_aquifers",
+          "year": 2015,
+          "category_key": "livestock",
+          "category_label": "Livestock",
+          "value": 47.08,
+          "units": "Mgal/d",
+          "share_of_total": 0.0064,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "basin_and_range_basin_fill_aquifers",
+          "year": 2015,
+          "category_key": "aquaculture",
+          "category_label": "Aquaculture",
+          "value": 89.36,
+          "units": "Mgal/d",
+          "share_of_total": 0.0121,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        }
+      ],
+      "industry_estimates": [],
+      "provenance_source_ids": [
+        "usgs_county_aquifer_withdrawals_2015",
+        "usgs_principal_aquifers_geometry"
+      ],
+      "methodology_summary": "Totals aggregate all 2015 USGS county rows assigned to the Basin and Range basin-fill aquifers through the display-aquifer crosswalk. Categories come directly from the published broad water-use fields. Industry subtype estimates remain scaffolded but unpublished in v1.",
+      "caveats": [
+        "Geometry is shown for national and regional visualization only; it does not represent full underground extent.",
+        "V1 defines the display layer as the 30 highest-withdrawal aquifer systems from the 2015 USGS release that map cleanly to principal-aquifer geometry.",
+        "Industry subtype estimates are intentionally withheld in this release until proxy recipes are documented and validated."
+      ]
+    },
+    {
+      "display_aquifer_id": "floridan_aquifer_system",
+      "year": 2015,
+      "total_withdrawal": {
+        "value": 3144.44,
+        "units": "Mgal/d",
+        "is_estimate": true,
+        "confidence_grade": "A",
+        "source_type": "direct_source_aggregate",
+        "methodology_key": "aggregate_usgs_2015_county_aquifer_rows_v1",
+        "methodology_version": "v1",
+        "notes": "Aggregated from county-level principal-aquifer rows in the 2015 USGS release. These are authoritative published estimates, not measured well-by-well withdrawals."
+      },
+      "categories": [
+        {
+          "display_aquifer_id": "floridan_aquifer_system",
+          "year": 2015,
+          "category_key": "public_supply",
+          "category_label": "Public supply",
+          "value": 1307.47,
+          "units": "Mgal/d",
+          "share_of_total": 0.4158,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "floridan_aquifer_system",
+          "year": 2015,
+          "category_key": "domestic",
+          "category_label": "Domestic",
+          "value": 182.19,
+          "units": "Mgal/d",
+          "share_of_total": 0.0579,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "floridan_aquifer_system",
+          "year": 2015,
+          "category_key": "irrigation",
+          "category_label": "Irrigation",
+          "value": 1218.53,
+          "units": "Mgal/d",
+          "share_of_total": 0.3875,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "floridan_aquifer_system",
+          "year": 2015,
+          "category_key": "thermoelectric_power",
+          "category_label": "Thermoelectric power",
+          "value": 25.16,
+          "units": "Mgal/d",
+          "share_of_total": 0.008,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "floridan_aquifer_system",
+          "year": 2015,
+          "category_key": "industrial",
+          "category_label": "Industrial",
+          "value": 296.91,
+          "units": "Mgal/d",
+          "share_of_total": 0.0944,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "floridan_aquifer_system",
+          "year": 2015,
+          "category_key": "mining",
+          "category_label": "Mining",
+          "value": 53.91,
+          "units": "Mgal/d",
+          "share_of_total": 0.0171,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "floridan_aquifer_system",
+          "year": 2015,
+          "category_key": "livestock",
+          "category_label": "Livestock",
+          "value": 35.31,
+          "units": "Mgal/d",
+          "share_of_total": 0.0112,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "floridan_aquifer_system",
+          "year": 2015,
+          "category_key": "aquaculture",
+          "category_label": "Aquaculture",
+          "value": 24.96,
+          "units": "Mgal/d",
+          "share_of_total": 0.0079,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        }
+      ],
+      "industry_estimates": [],
+      "provenance_source_ids": [
+        "usgs_county_aquifer_withdrawals_2015",
+        "usgs_principal_aquifers_geometry"
+      ],
+      "methodology_summary": "Totals aggregate all 2015 USGS county rows assigned to the Floridan aquifer system through the display-aquifer crosswalk. Categories come directly from the published broad water-use fields. Industry subtype estimates remain scaffolded but unpublished in v1.",
+      "caveats": [
+        "Geometry is shown for national and regional visualization only; it does not represent full underground extent.",
+        "V1 defines the display layer as the 30 highest-withdrawal aquifer systems from the 2015 USGS release that map cleanly to principal-aquifer geometry.",
+        "Industry subtype estimates are intentionally withheld in this release until proxy recipes are documented and validated."
+      ]
+    },
+    {
+      "display_aquifer_id": "snake_river_plain_basaltic_rock_aquifers",
+      "year": 2015,
+      "total_withdrawal": {
+        "value": 2928.81,
+        "units": "Mgal/d",
+        "is_estimate": true,
+        "confidence_grade": "A",
+        "source_type": "direct_source_aggregate",
+        "methodology_key": "aggregate_usgs_2015_county_aquifer_rows_v1",
+        "methodology_version": "v1",
+        "notes": "Aggregated from county-level principal-aquifer rows in the 2015 USGS release. These are authoritative published estimates, not measured well-by-well withdrawals."
+      },
+      "categories": [
+        {
+          "display_aquifer_id": "snake_river_plain_basaltic_rock_aquifers",
+          "year": 2015,
+          "category_key": "public_supply",
+          "category_label": "Public supply",
+          "value": 79.11,
+          "units": "Mgal/d",
+          "share_of_total": 0.027,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "snake_river_plain_basaltic_rock_aquifers",
+          "year": 2015,
+          "category_key": "domestic",
+          "category_label": "Domestic",
+          "value": 27.87,
+          "units": "Mgal/d",
+          "share_of_total": 0.0095,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "snake_river_plain_basaltic_rock_aquifers",
+          "year": 2015,
+          "category_key": "irrigation",
+          "category_label": "Irrigation",
+          "value": 2779.18,
+          "units": "Mgal/d",
+          "share_of_total": 0.9489,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "snake_river_plain_basaltic_rock_aquifers",
+          "year": 2015,
+          "category_key": "thermoelectric_power",
+          "category_label": "Thermoelectric power",
+          "value": 0.0,
+          "units": "Mgal/d",
+          "share_of_total": 0.0,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "snake_river_plain_basaltic_rock_aquifers",
+          "year": 2015,
+          "category_key": "industrial",
+          "category_label": "Industrial",
+          "value": 1.97,
+          "units": "Mgal/d",
+          "share_of_total": 0.0007,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "snake_river_plain_basaltic_rock_aquifers",
+          "year": 2015,
+          "category_key": "mining",
+          "category_label": "Mining",
+          "value": 0.12,
+          "units": "Mgal/d",
+          "share_of_total": 0.0,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "snake_river_plain_basaltic_rock_aquifers",
+          "year": 2015,
+          "category_key": "livestock",
+          "category_label": "Livestock",
+          "value": 27.14,
+          "units": "Mgal/d",
+          "share_of_total": 0.0093,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "snake_river_plain_basaltic_rock_aquifers",
+          "year": 2015,
+          "category_key": "aquaculture",
+          "category_label": "Aquaculture",
+          "value": 13.42,
+          "units": "Mgal/d",
+          "share_of_total": 0.0046,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        }
+      ],
+      "industry_estimates": [],
+      "provenance_source_ids": [
+        "usgs_county_aquifer_withdrawals_2015",
+        "usgs_principal_aquifers_geometry"
+      ],
+      "methodology_summary": "Totals aggregate all 2015 USGS county rows assigned to the Snake River Plain basaltic-rock aquifers through the display-aquifer crosswalk. Categories come directly from the published broad water-use fields. Industry subtype estimates remain scaffolded but unpublished in v1.",
+      "caveats": [
+        "Geometry is shown for national and regional visualization only; it does not represent full underground extent.",
+        "V1 defines the display layer as the 30 highest-withdrawal aquifer systems from the 2015 USGS release that map cleanly to principal-aquifer geometry.",
+        "Industry subtype estimates are intentionally withheld in this release until proxy recipes are documented and validated."
+      ]
+    },
+    {
+      "display_aquifer_id": "coastal_lowlands_aquifer_system",
+      "year": 2015,
+      "total_withdrawal": {
+        "value": 2287.96,
+        "units": "Mgal/d",
+        "is_estimate": true,
+        "confidence_grade": "A",
+        "source_type": "direct_source_aggregate",
+        "methodology_key": "aggregate_usgs_2015_county_aquifer_rows_v1",
+        "methodology_version": "v1",
+        "notes": "Aggregated from county-level principal-aquifer rows in the 2015 USGS release. These are authoritative published estimates, not measured well-by-well withdrawals."
+      },
+      "categories": [
+        {
+          "display_aquifer_id": "coastal_lowlands_aquifer_system",
+          "year": 2015,
+          "category_key": "public_supply",
+          "category_label": "Public supply",
+          "value": 744.23,
+          "units": "Mgal/d",
+          "share_of_total": 0.3253,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "coastal_lowlands_aquifer_system",
+          "year": 2015,
+          "category_key": "domestic",
+          "category_label": "Domestic",
+          "value": 99.41,
+          "units": "Mgal/d",
+          "share_of_total": 0.0434,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "coastal_lowlands_aquifer_system",
+          "year": 2015,
+          "category_key": "irrigation",
+          "category_label": "Irrigation",
+          "value": 760.32,
+          "units": "Mgal/d",
+          "share_of_total": 0.3323,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "coastal_lowlands_aquifer_system",
+          "year": 2015,
+          "category_key": "thermoelectric_power",
+          "category_label": "Thermoelectric power",
+          "value": 52.53,
+          "units": "Mgal/d",
+          "share_of_total": 0.023,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "coastal_lowlands_aquifer_system",
+          "year": 2015,
+          "category_key": "industrial",
+          "category_label": "Industrial",
+          "value": 322.05,
+          "units": "Mgal/d",
+          "share_of_total": 0.1408,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "coastal_lowlands_aquifer_system",
+          "year": 2015,
+          "category_key": "mining",
+          "category_label": "Mining",
+          "value": 12.17,
+          "units": "Mgal/d",
+          "share_of_total": 0.0053,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "coastal_lowlands_aquifer_system",
+          "year": 2015,
+          "category_key": "livestock",
+          "category_label": "Livestock",
+          "value": 21.01,
+          "units": "Mgal/d",
+          "share_of_total": 0.0092,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "coastal_lowlands_aquifer_system",
+          "year": 2015,
+          "category_key": "aquaculture",
+          "category_label": "Aquaculture",
+          "value": 276.24,
+          "units": "Mgal/d",
+          "share_of_total": 0.1207,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        }
+      ],
+      "industry_estimates": [],
+      "provenance_source_ids": [
+        "usgs_county_aquifer_withdrawals_2015",
+        "usgs_principal_aquifers_geometry"
+      ],
+      "methodology_summary": "Totals aggregate all 2015 USGS county rows assigned to the Coastal lowlands aquifer system through the display-aquifer crosswalk. Categories come directly from the published broad water-use fields. Industry subtype estimates remain scaffolded but unpublished in v1.",
+      "caveats": [
+        "Geometry is shown for national and regional visualization only; it does not represent full underground extent.",
+        "V1 defines the display layer as the 30 highest-withdrawal aquifer systems from the 2015 USGS release that map cleanly to principal-aquifer geometry.",
+        "Industry subtype estimates are intentionally withheld in this release until proxy recipes are documented and validated."
+      ]
+    },
+    {
+      "display_aquifer_id": "california_coastal_basin_aquifers",
+      "year": 2015,
+      "total_withdrawal": {
+        "value": 2033.51,
+        "units": "Mgal/d",
+        "is_estimate": true,
+        "confidence_grade": "A",
+        "source_type": "direct_source_aggregate",
+        "methodology_key": "aggregate_usgs_2015_county_aquifer_rows_v1",
+        "methodology_version": "v1",
+        "notes": "Aggregated from county-level principal-aquifer rows in the 2015 USGS release. These are authoritative published estimates, not measured well-by-well withdrawals."
+      },
+      "categories": [
+        {
+          "display_aquifer_id": "california_coastal_basin_aquifers",
+          "year": 2015,
+          "category_key": "public_supply",
+          "category_label": "Public supply",
+          "value": 962.79,
+          "units": "Mgal/d",
+          "share_of_total": 0.4735,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "california_coastal_basin_aquifers",
+          "year": 2015,
+          "category_key": "domestic",
+          "category_label": "Domestic",
+          "value": 16.77,
+          "units": "Mgal/d",
+          "share_of_total": 0.0082,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "california_coastal_basin_aquifers",
+          "year": 2015,
+          "category_key": "irrigation",
+          "category_label": "Irrigation",
+          "value": 751.14,
+          "units": "Mgal/d",
+          "share_of_total": 0.3694,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "california_coastal_basin_aquifers",
+          "year": 2015,
+          "category_key": "thermoelectric_power",
+          "category_label": "Thermoelectric power",
+          "value": 4.42,
+          "units": "Mgal/d",
+          "share_of_total": 0.0022,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "california_coastal_basin_aquifers",
+          "year": 2015,
+          "category_key": "industrial",
+          "category_label": "Industrial",
+          "value": 225.41,
+          "units": "Mgal/d",
+          "share_of_total": 0.1108,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "california_coastal_basin_aquifers",
+          "year": 2015,
+          "category_key": "mining",
+          "category_label": "Mining",
+          "value": 62.16,
+          "units": "Mgal/d",
+          "share_of_total": 0.0306,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "california_coastal_basin_aquifers",
+          "year": 2015,
+          "category_key": "livestock",
+          "category_label": "Livestock",
+          "value": 5.06,
+          "units": "Mgal/d",
+          "share_of_total": 0.0025,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "california_coastal_basin_aquifers",
+          "year": 2015,
+          "category_key": "aquaculture",
+          "category_label": "Aquaculture",
+          "value": 5.76,
+          "units": "Mgal/d",
+          "share_of_total": 0.0028,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        }
+      ],
+      "industry_estimates": [],
+      "provenance_source_ids": [
+        "usgs_county_aquifer_withdrawals_2015",
+        "usgs_principal_aquifers_geometry"
+      ],
+      "methodology_summary": "Totals aggregate all 2015 USGS county rows assigned to the California Coastal Basin aquifers through the display-aquifer crosswalk. Categories come directly from the published broad water-use fields. Industry subtype estimates remain scaffolded but unpublished in v1.",
+      "caveats": [
+        "Geometry is shown for national and regional visualization only; it does not represent full underground extent.",
+        "V1 defines the display layer as the 30 highest-withdrawal aquifer systems from the 2015 USGS release that map cleanly to principal-aquifer geometry.",
+        "Industry subtype estimates are intentionally withheld in this release until proxy recipes are documented and validated."
+      ]
+    },
+    {
+      "display_aquifer_id": "pacific_northwest_basin_fill_aquifers",
+      "year": 2015,
+      "total_withdrawal": {
+        "value": 1390.8,
+        "units": "Mgal/d",
+        "is_estimate": true,
+        "confidence_grade": "A",
+        "source_type": "direct_source_aggregate",
+        "methodology_key": "aggregate_usgs_2015_county_aquifer_rows_v1",
+        "methodology_version": "v1",
+        "notes": "Aggregated from county-level principal-aquifer rows in the 2015 USGS release. These are authoritative published estimates, not measured well-by-well withdrawals."
+      },
+      "categories": [
+        {
+          "display_aquifer_id": "pacific_northwest_basin_fill_aquifers",
+          "year": 2015,
+          "category_key": "public_supply",
+          "category_label": "Public supply",
+          "value": 137.46,
+          "units": "Mgal/d",
+          "share_of_total": 0.0988,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "pacific_northwest_basin_fill_aquifers",
+          "year": 2015,
+          "category_key": "domestic",
+          "category_label": "Domestic",
+          "value": 36.41,
+          "units": "Mgal/d",
+          "share_of_total": 0.0262,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "pacific_northwest_basin_fill_aquifers",
+          "year": 2015,
+          "category_key": "irrigation",
+          "category_label": "Irrigation",
+          "value": 1173.71,
+          "units": "Mgal/d",
+          "share_of_total": 0.8439,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "pacific_northwest_basin_fill_aquifers",
+          "year": 2015,
+          "category_key": "thermoelectric_power",
+          "category_label": "Thermoelectric power",
+          "value": 3.71,
+          "units": "Mgal/d",
+          "share_of_total": 0.0027,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "pacific_northwest_basin_fill_aquifers",
+          "year": 2015,
+          "category_key": "industrial",
+          "category_label": "Industrial",
+          "value": 15.02,
+          "units": "Mgal/d",
+          "share_of_total": 0.0108,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "pacific_northwest_basin_fill_aquifers",
+          "year": 2015,
+          "category_key": "mining",
+          "category_label": "Mining",
+          "value": 2.48,
+          "units": "Mgal/d",
+          "share_of_total": 0.0018,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "pacific_northwest_basin_fill_aquifers",
+          "year": 2015,
+          "category_key": "livestock",
+          "category_label": "Livestock",
+          "value": 8.08,
+          "units": "Mgal/d",
+          "share_of_total": 0.0058,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "pacific_northwest_basin_fill_aquifers",
+          "year": 2015,
+          "category_key": "aquaculture",
+          "category_label": "Aquaculture",
+          "value": 13.93,
+          "units": "Mgal/d",
+          "share_of_total": 0.01,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        }
+      ],
+      "industry_estimates": [],
+      "provenance_source_ids": [
+        "usgs_county_aquifer_withdrawals_2015",
+        "usgs_principal_aquifers_geometry"
+      ],
+      "methodology_summary": "Totals aggregate all 2015 USGS county rows assigned to the Pacific Northwest basin-fill aquifers through the display-aquifer crosswalk. Categories come directly from the published broad water-use fields. Industry subtype estimates remain scaffolded but unpublished in v1.",
+      "caveats": [
+        "Geometry is shown for national and regional visualization only; it does not represent full underground extent.",
+        "V1 defines the display layer as the 30 highest-withdrawal aquifer systems from the 2015 USGS release that map cleanly to principal-aquifer geometry.",
+        "Industry subtype estimates are intentionally withheld in this release until proxy recipes are documented and validated."
+      ]
+    },
+    {
+      "display_aquifer_id": "northern_atlantic_coastal_plain_aquifer_system",
+      "year": 2015,
+      "total_withdrawal": {
+        "value": 1344.63,
+        "units": "Mgal/d",
+        "is_estimate": true,
+        "confidence_grade": "A",
+        "source_type": "direct_source_aggregate",
+        "methodology_key": "aggregate_usgs_2015_county_aquifer_rows_v1",
+        "methodology_version": "v1",
+        "notes": "Aggregated from county-level principal-aquifer rows in the 2015 USGS release. These are authoritative published estimates, not measured well-by-well withdrawals."
+      },
+      "categories": [
+        {
+          "display_aquifer_id": "northern_atlantic_coastal_plain_aquifer_system",
+          "year": 2015,
+          "category_key": "public_supply",
+          "category_label": "Public supply",
+          "value": 767.33,
+          "units": "Mgal/d",
+          "share_of_total": 0.5707,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "northern_atlantic_coastal_plain_aquifer_system",
+          "year": 2015,
+          "category_key": "domestic",
+          "category_label": "Domestic",
+          "value": 178.5,
+          "units": "Mgal/d",
+          "share_of_total": 0.1328,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "northern_atlantic_coastal_plain_aquifer_system",
+          "year": 2015,
+          "category_key": "irrigation",
+          "category_label": "Irrigation",
+          "value": 228.77,
+          "units": "Mgal/d",
+          "share_of_total": 0.1701,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "northern_atlantic_coastal_plain_aquifer_system",
+          "year": 2015,
+          "category_key": "thermoelectric_power",
+          "category_label": "Thermoelectric power",
+          "value": 13.2,
+          "units": "Mgal/d",
+          "share_of_total": 0.0098,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "northern_atlantic_coastal_plain_aquifer_system",
+          "year": 2015,
+          "category_key": "industrial",
+          "category_label": "Industrial",
+          "value": 88.91,
+          "units": "Mgal/d",
+          "share_of_total": 0.0661,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "northern_atlantic_coastal_plain_aquifer_system",
+          "year": 2015,
+          "category_key": "mining",
+          "category_label": "Mining",
+          "value": 16.35,
+          "units": "Mgal/d",
+          "share_of_total": 0.0122,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "northern_atlantic_coastal_plain_aquifer_system",
+          "year": 2015,
+          "category_key": "livestock",
+          "category_label": "Livestock",
+          "value": 38.62,
+          "units": "Mgal/d",
+          "share_of_total": 0.0287,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "northern_atlantic_coastal_plain_aquifer_system",
+          "year": 2015,
+          "category_key": "aquaculture",
+          "category_label": "Aquaculture",
+          "value": 12.95,
+          "units": "Mgal/d",
+          "share_of_total": 0.0096,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        }
+      ],
+      "industry_estimates": [],
+      "provenance_source_ids": [
+        "usgs_county_aquifer_withdrawals_2015",
+        "usgs_principal_aquifers_geometry"
+      ],
+      "methodology_summary": "Totals aggregate all 2015 USGS county rows assigned to the Northern Atlantic Coastal Plain aquifer system through the display-aquifer crosswalk. Categories come directly from the published broad water-use fields. Industry subtype estimates remain scaffolded but unpublished in v1.",
+      "caveats": [
+        "Geometry is shown for national and regional visualization only; it does not represent full underground extent.",
+        "V1 defines the display layer as the 30 highest-withdrawal aquifer systems from the 2015 USGS release that map cleanly to principal-aquifer geometry.",
+        "Industry subtype estimates are intentionally withheld in this release until proxy recipes are documented and validated."
+      ]
+    },
+    {
+      "display_aquifer_id": "columbia_plateau_basaltic_rock_aquifers",
+      "year": 2015,
+      "total_withdrawal": {
+        "value": 1078.72,
+        "units": "Mgal/d",
+        "is_estimate": true,
+        "confidence_grade": "A",
+        "source_type": "direct_source_aggregate",
+        "methodology_key": "aggregate_usgs_2015_county_aquifer_rows_v1",
+        "methodology_version": "v1",
+        "notes": "Aggregated from county-level principal-aquifer rows in the 2015 USGS release. These are authoritative published estimates, not measured well-by-well withdrawals."
+      },
+      "categories": [
+        {
+          "display_aquifer_id": "columbia_plateau_basaltic_rock_aquifers",
+          "year": 2015,
+          "category_key": "public_supply",
+          "category_label": "Public supply",
+          "value": 129.46,
+          "units": "Mgal/d",
+          "share_of_total": 0.12,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "columbia_plateau_basaltic_rock_aquifers",
+          "year": 2015,
+          "category_key": "domestic",
+          "category_label": "Domestic",
+          "value": 36.37,
+          "units": "Mgal/d",
+          "share_of_total": 0.0337,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "columbia_plateau_basaltic_rock_aquifers",
+          "year": 2015,
+          "category_key": "irrigation",
+          "category_label": "Irrigation",
+          "value": 876.2,
+          "units": "Mgal/d",
+          "share_of_total": 0.8123,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "columbia_plateau_basaltic_rock_aquifers",
+          "year": 2015,
+          "category_key": "thermoelectric_power",
+          "category_label": "Thermoelectric power",
+          "value": 1.19,
+          "units": "Mgal/d",
+          "share_of_total": 0.0011,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "columbia_plateau_basaltic_rock_aquifers",
+          "year": 2015,
+          "category_key": "industrial",
+          "category_label": "Industrial",
+          "value": 20.01,
+          "units": "Mgal/d",
+          "share_of_total": 0.0185,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "columbia_plateau_basaltic_rock_aquifers",
+          "year": 2015,
+          "category_key": "mining",
+          "category_label": "Mining",
+          "value": 2.29,
+          "units": "Mgal/d",
+          "share_of_total": 0.0021,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "columbia_plateau_basaltic_rock_aquifers",
+          "year": 2015,
+          "category_key": "livestock",
+          "category_label": "Livestock",
+          "value": 11.18,
+          "units": "Mgal/d",
+          "share_of_total": 0.0104,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "columbia_plateau_basaltic_rock_aquifers",
+          "year": 2015,
+          "category_key": "aquaculture",
+          "category_label": "Aquaculture",
+          "value": 2.02,
+          "units": "Mgal/d",
+          "share_of_total": 0.0019,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        }
+      ],
+      "industry_estimates": [],
+      "provenance_source_ids": [
+        "usgs_county_aquifer_withdrawals_2015",
+        "usgs_principal_aquifers_geometry"
+      ],
+      "methodology_summary": "Totals aggregate all 2015 USGS county rows assigned to the Columbia Plateau basaltic-rock aquifers through the display-aquifer crosswalk. Categories come directly from the published broad water-use fields. Industry subtype estimates remain scaffolded but unpublished in v1.",
+      "caveats": [
+        "Geometry is shown for national and regional visualization only; it does not represent full underground extent.",
+        "V1 defines the display layer as the 30 highest-withdrawal aquifer systems from the 2015 USGS release that map cleanly to principal-aquifer geometry.",
+        "Industry subtype estimates are intentionally withheld in this release until proxy recipes are documented and validated."
+      ]
+    },
+    {
+      "display_aquifer_id": "rio_grande_aquifer_system",
+      "year": 2015,
+      "total_withdrawal": {
+        "value": 949.08,
+        "units": "Mgal/d",
+        "is_estimate": true,
+        "confidence_grade": "A",
+        "source_type": "direct_source_aggregate",
+        "methodology_key": "aggregate_usgs_2015_county_aquifer_rows_v1",
+        "methodology_version": "v1",
+        "notes": "Aggregated from county-level principal-aquifer rows in the 2015 USGS release. These are authoritative published estimates, not measured well-by-well withdrawals."
+      },
+      "categories": [
+        {
+          "display_aquifer_id": "rio_grande_aquifer_system",
+          "year": 2015,
+          "category_key": "public_supply",
+          "category_label": "Public supply",
+          "value": 197.44,
+          "units": "Mgal/d",
+          "share_of_total": 0.208,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "rio_grande_aquifer_system",
+          "year": 2015,
+          "category_key": "domestic",
+          "category_label": "Domestic",
+          "value": 15.67,
+          "units": "Mgal/d",
+          "share_of_total": 0.0165,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "rio_grande_aquifer_system",
+          "year": 2015,
+          "category_key": "irrigation",
+          "category_label": "Irrigation",
+          "value": 698.19,
+          "units": "Mgal/d",
+          "share_of_total": 0.7356,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "rio_grande_aquifer_system",
+          "year": 2015,
+          "category_key": "thermoelectric_power",
+          "category_label": "Thermoelectric power",
+          "value": 4.05,
+          "units": "Mgal/d",
+          "share_of_total": 0.0043,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "rio_grande_aquifer_system",
+          "year": 2015,
+          "category_key": "industrial",
+          "category_label": "Industrial",
+          "value": 4.54,
+          "units": "Mgal/d",
+          "share_of_total": 0.0048,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "rio_grande_aquifer_system",
+          "year": 2015,
+          "category_key": "mining",
+          "category_label": "Mining",
+          "value": 4.78,
+          "units": "Mgal/d",
+          "share_of_total": 0.005,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "rio_grande_aquifer_system",
+          "year": 2015,
+          "category_key": "livestock",
+          "category_label": "Livestock",
+          "value": 5.85,
+          "units": "Mgal/d",
+          "share_of_total": 0.0062,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "rio_grande_aquifer_system",
+          "year": 2015,
+          "category_key": "aquaculture",
+          "category_label": "Aquaculture",
+          "value": 18.56,
+          "units": "Mgal/d",
+          "share_of_total": 0.0196,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        }
+      ],
+      "industry_estimates": [],
+      "provenance_source_ids": [
+        "usgs_county_aquifer_withdrawals_2015",
+        "usgs_principal_aquifers_geometry"
+      ],
+      "methodology_summary": "Totals aggregate all 2015 USGS county rows assigned to the Rio Grande aquifer system through the display-aquifer crosswalk. Categories come directly from the published broad water-use fields. Industry subtype estimates remain scaffolded but unpublished in v1.",
+      "caveats": [
+        "Geometry is shown for national and regional visualization only; it does not represent full underground extent.",
+        "V1 defines the display layer as the 30 highest-withdrawal aquifer systems from the 2015 USGS release that map cleanly to principal-aquifer geometry.",
+        "Industry subtype estimates are intentionally withheld in this release until proxy recipes are documented and validated."
+      ]
+    },
+    {
+      "display_aquifer_id": "mississippi_embayment_aquifer_system",
+      "year": 2015,
+      "total_withdrawal": {
+        "value": 928.63,
+        "units": "Mgal/d",
+        "is_estimate": true,
+        "confidence_grade": "A",
+        "source_type": "direct_source_aggregate",
+        "methodology_key": "aggregate_usgs_2015_county_aquifer_rows_v1",
+        "methodology_version": "v1",
+        "notes": "Aggregated from county-level principal-aquifer rows in the 2015 USGS release. These are authoritative published estimates, not measured well-by-well withdrawals."
+      },
+      "categories": [
+        {
+          "display_aquifer_id": "mississippi_embayment_aquifer_system",
+          "year": 2015,
+          "category_key": "public_supply",
+          "category_label": "Public supply",
+          "value": 498.25,
+          "units": "Mgal/d",
+          "share_of_total": 0.5365,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "mississippi_embayment_aquifer_system",
+          "year": 2015,
+          "category_key": "domestic",
+          "category_label": "Domestic",
+          "value": 32.38,
+          "units": "Mgal/d",
+          "share_of_total": 0.0349,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "mississippi_embayment_aquifer_system",
+          "year": 2015,
+          "category_key": "irrigation",
+          "category_label": "Irrigation",
+          "value": 233.58,
+          "units": "Mgal/d",
+          "share_of_total": 0.2515,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "mississippi_embayment_aquifer_system",
+          "year": 2015,
+          "category_key": "thermoelectric_power",
+          "category_label": "Thermoelectric power",
+          "value": 14.36,
+          "units": "Mgal/d",
+          "share_of_total": 0.0155,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "mississippi_embayment_aquifer_system",
+          "year": 2015,
+          "category_key": "industrial",
+          "category_label": "Industrial",
+          "value": 126.95,
+          "units": "Mgal/d",
+          "share_of_total": 0.1367,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "mississippi_embayment_aquifer_system",
+          "year": 2015,
+          "category_key": "mining",
+          "category_label": "Mining",
+          "value": 5.66,
+          "units": "Mgal/d",
+          "share_of_total": 0.0061,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "mississippi_embayment_aquifer_system",
+          "year": 2015,
+          "category_key": "livestock",
+          "category_label": "Livestock",
+          "value": 6.07,
+          "units": "Mgal/d",
+          "share_of_total": 0.0065,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "mississippi_embayment_aquifer_system",
+          "year": 2015,
+          "category_key": "aquaculture",
+          "category_label": "Aquaculture",
+          "value": 11.38,
+          "units": "Mgal/d",
+          "share_of_total": 0.0123,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        }
+      ],
+      "industry_estimates": [],
+      "provenance_source_ids": [
+        "usgs_county_aquifer_withdrawals_2015",
+        "usgs_principal_aquifers_geometry"
+      ],
+      "methodology_summary": "Totals aggregate all 2015 USGS county rows assigned to the Mississippi embayment aquifer system through the display-aquifer crosswalk. Categories come directly from the published broad water-use fields. Industry subtype estimates remain scaffolded but unpublished in v1.",
+      "caveats": [
+        "Geometry is shown for national and regional visualization only; it does not represent full underground extent.",
+        "V1 defines the display layer as the 30 highest-withdrawal aquifer systems from the 2015 USGS release that map cleanly to principal-aquifer geometry.",
+        "Industry subtype estimates are intentionally withheld in this release until proxy recipes are documented and validated."
+      ]
+    },
+    {
+      "display_aquifer_id": "cambrian_ordovician_aquifer_system",
+      "year": 2015,
+      "total_withdrawal": {
+        "value": 921.31,
+        "units": "Mgal/d",
+        "is_estimate": true,
+        "confidence_grade": "A",
+        "source_type": "direct_source_aggregate",
+        "methodology_key": "aggregate_usgs_2015_county_aquifer_rows_v1",
+        "methodology_version": "v1",
+        "notes": "Aggregated from county-level principal-aquifer rows in the 2015 USGS release. These are authoritative published estimates, not measured well-by-well withdrawals."
+      },
+      "categories": [
+        {
+          "display_aquifer_id": "cambrian_ordovician_aquifer_system",
+          "year": 2015,
+          "category_key": "public_supply",
+          "category_label": "Public supply",
+          "value": 560.82,
+          "units": "Mgal/d",
+          "share_of_total": 0.6087,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "cambrian_ordovician_aquifer_system",
+          "year": 2015,
+          "category_key": "domestic",
+          "category_label": "Domestic",
+          "value": 61.51,
+          "units": "Mgal/d",
+          "share_of_total": 0.0668,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "cambrian_ordovician_aquifer_system",
+          "year": 2015,
+          "category_key": "irrigation",
+          "category_label": "Irrigation",
+          "value": 109.64,
+          "units": "Mgal/d",
+          "share_of_total": 0.119,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "cambrian_ordovician_aquifer_system",
+          "year": 2015,
+          "category_key": "thermoelectric_power",
+          "category_label": "Thermoelectric power",
+          "value": 3.61,
+          "units": "Mgal/d",
+          "share_of_total": 0.0039,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "cambrian_ordovician_aquifer_system",
+          "year": 2015,
+          "category_key": "industrial",
+          "category_label": "Industrial",
+          "value": 109.05,
+          "units": "Mgal/d",
+          "share_of_total": 0.1184,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "cambrian_ordovician_aquifer_system",
+          "year": 2015,
+          "category_key": "mining",
+          "category_label": "Mining",
+          "value": 2.12,
+          "units": "Mgal/d",
+          "share_of_total": 0.0023,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "cambrian_ordovician_aquifer_system",
+          "year": 2015,
+          "category_key": "livestock",
+          "category_label": "Livestock",
+          "value": 58.1,
+          "units": "Mgal/d",
+          "share_of_total": 0.0631,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "cambrian_ordovician_aquifer_system",
+          "year": 2015,
+          "category_key": "aquaculture",
+          "category_label": "Aquaculture",
+          "value": 16.46,
+          "units": "Mgal/d",
+          "share_of_total": 0.0179,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        }
+      ],
+      "industry_estimates": [],
+      "provenance_source_ids": [
+        "usgs_county_aquifer_withdrawals_2015",
+        "usgs_principal_aquifers_geometry"
+      ],
+      "methodology_summary": "Totals aggregate all 2015 USGS county rows assigned to the Cambrian-Ordovician aquifer system through the display-aquifer crosswalk. Categories come directly from the published broad water-use fields. Industry subtype estimates remain scaffolded but unpublished in v1.",
+      "caveats": [
+        "Geometry is shown for national and regional visualization only; it does not represent full underground extent.",
+        "V1 defines the display layer as the 30 highest-withdrawal aquifer systems from the 2015 USGS release that map cleanly to principal-aquifer geometry.",
+        "Industry subtype estimates are intentionally withheld in this release until proxy recipes are documented and validated."
+      ]
+    },
+    {
+      "display_aquifer_id": "southeastern_coastal_plain_aquifer_system",
+      "year": 2015,
+      "total_withdrawal": {
+        "value": 725.1,
+        "units": "Mgal/d",
+        "is_estimate": true,
+        "confidence_grade": "A",
+        "source_type": "direct_source_aggregate",
+        "methodology_key": "aggregate_usgs_2015_county_aquifer_rows_v1",
+        "methodology_version": "v1",
+        "notes": "Aggregated from county-level principal-aquifer rows in the 2015 USGS release. These are authoritative published estimates, not measured well-by-well withdrawals."
+      },
+      "categories": [
+        {
+          "display_aquifer_id": "southeastern_coastal_plain_aquifer_system",
+          "year": 2015,
+          "category_key": "public_supply",
+          "category_label": "Public supply",
+          "value": 308.43,
+          "units": "Mgal/d",
+          "share_of_total": 0.4254,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "southeastern_coastal_plain_aquifer_system",
+          "year": 2015,
+          "category_key": "domestic",
+          "category_label": "Domestic",
+          "value": 62.03,
+          "units": "Mgal/d",
+          "share_of_total": 0.0855,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "southeastern_coastal_plain_aquifer_system",
+          "year": 2015,
+          "category_key": "irrigation",
+          "category_label": "Irrigation",
+          "value": 181.72,
+          "units": "Mgal/d",
+          "share_of_total": 0.2506,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "southeastern_coastal_plain_aquifer_system",
+          "year": 2015,
+          "category_key": "thermoelectric_power",
+          "category_label": "Thermoelectric power",
+          "value": 5.28,
+          "units": "Mgal/d",
+          "share_of_total": 0.0073,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "southeastern_coastal_plain_aquifer_system",
+          "year": 2015,
+          "category_key": "industrial",
+          "category_label": "Industrial",
+          "value": 100.34,
+          "units": "Mgal/d",
+          "share_of_total": 0.1384,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "southeastern_coastal_plain_aquifer_system",
+          "year": 2015,
+          "category_key": "mining",
+          "category_label": "Mining",
+          "value": 23.9,
+          "units": "Mgal/d",
+          "share_of_total": 0.033,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "southeastern_coastal_plain_aquifer_system",
+          "year": 2015,
+          "category_key": "livestock",
+          "category_label": "Livestock",
+          "value": 11.88,
+          "units": "Mgal/d",
+          "share_of_total": 0.0164,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "southeastern_coastal_plain_aquifer_system",
+          "year": 2015,
+          "category_key": "aquaculture",
+          "category_label": "Aquaculture",
+          "value": 31.52,
+          "units": "Mgal/d",
+          "share_of_total": 0.0435,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        }
+      ],
+      "industry_estimates": [],
+      "provenance_source_ids": [
+        "usgs_county_aquifer_withdrawals_2015",
+        "usgs_principal_aquifers_geometry"
+      ],
+      "methodology_summary": "Totals aggregate all 2015 USGS county rows assigned to the Southeastern Coastal Plain aquifer system through the display-aquifer crosswalk. Categories come directly from the published broad water-use fields. Industry subtype estimates remain scaffolded but unpublished in v1.",
+      "caveats": [
+        "Geometry is shown for national and regional visualization only; it does not represent full underground extent.",
+        "V1 defines the display layer as the 30 highest-withdrawal aquifer systems from the 2015 USGS release that map cleanly to principal-aquifer geometry.",
+        "Industry subtype estimates are intentionally withheld in this release until proxy recipes are documented and validated."
+      ]
+    },
+    {
+      "display_aquifer_id": "edwards_trinity_aquifer_system",
+      "year": 2015,
+      "total_withdrawal": {
+        "value": 661.1,
+        "units": "Mgal/d",
+        "is_estimate": true,
+        "confidence_grade": "A",
+        "source_type": "direct_source_aggregate",
+        "methodology_key": "aggregate_usgs_2015_county_aquifer_rows_v1",
+        "methodology_version": "v1",
+        "notes": "Aggregated from county-level principal-aquifer rows in the 2015 USGS release. These are authoritative published estimates, not measured well-by-well withdrawals."
+      },
+      "categories": [
+        {
+          "display_aquifer_id": "edwards_trinity_aquifer_system",
+          "year": 2015,
+          "category_key": "public_supply",
+          "category_label": "Public supply",
+          "value": 336.64,
+          "units": "Mgal/d",
+          "share_of_total": 0.5092,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "edwards_trinity_aquifer_system",
+          "year": 2015,
+          "category_key": "domestic",
+          "category_label": "Domestic",
+          "value": 46.69,
+          "units": "Mgal/d",
+          "share_of_total": 0.0706,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "edwards_trinity_aquifer_system",
+          "year": 2015,
+          "category_key": "irrigation",
+          "category_label": "Irrigation",
+          "value": 243.19,
+          "units": "Mgal/d",
+          "share_of_total": 0.3679,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "edwards_trinity_aquifer_system",
+          "year": 2015,
+          "category_key": "thermoelectric_power",
+          "category_label": "Thermoelectric power",
+          "value": 0.0,
+          "units": "Mgal/d",
+          "share_of_total": 0.0,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "edwards_trinity_aquifer_system",
+          "year": 2015,
+          "category_key": "industrial",
+          "category_label": "Industrial",
+          "value": 11.55,
+          "units": "Mgal/d",
+          "share_of_total": 0.0175,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "edwards_trinity_aquifer_system",
+          "year": 2015,
+          "category_key": "mining",
+          "category_label": "Mining",
+          "value": 10.39,
+          "units": "Mgal/d",
+          "share_of_total": 0.0157,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "edwards_trinity_aquifer_system",
+          "year": 2015,
+          "category_key": "livestock",
+          "category_label": "Livestock",
+          "value": 11.81,
+          "units": "Mgal/d",
+          "share_of_total": 0.0179,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "edwards_trinity_aquifer_system",
+          "year": 2015,
+          "category_key": "aquaculture",
+          "category_label": "Aquaculture",
+          "value": 0.83,
+          "units": "Mgal/d",
+          "share_of_total": 0.0013,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        }
+      ],
+      "industry_estimates": [],
+      "provenance_source_ids": [
+        "usgs_county_aquifer_withdrawals_2015",
+        "usgs_principal_aquifers_geometry"
+      ],
+      "methodology_summary": "Totals aggregate all 2015 USGS county rows assigned to the Edwards-Trinity aquifer system through the display-aquifer crosswalk. Categories come directly from the published broad water-use fields. Industry subtype estimates remain scaffolded but unpublished in v1.",
+      "caveats": [
+        "Geometry is shown for national and regional visualization only; it does not represent full underground extent.",
+        "V1 defines the display layer as the 30 highest-withdrawal aquifer systems from the 2015 USGS release that map cleanly to principal-aquifer geometry.",
+        "Industry subtype estimates are intentionally withheld in this release until proxy recipes are documented and validated."
+      ]
+    },
+    {
+      "display_aquifer_id": "northern_rocky_mountains_intermontane_basins_aquifer_system",
+      "year": 2015,
+      "total_withdrawal": {
+        "value": 609.99,
+        "units": "Mgal/d",
+        "is_estimate": true,
+        "confidence_grade": "A",
+        "source_type": "direct_source_aggregate",
+        "methodology_key": "aggregate_usgs_2015_county_aquifer_rows_v1",
+        "methodology_version": "v1",
+        "notes": "Aggregated from county-level principal-aquifer rows in the 2015 USGS release. These are authoritative published estimates, not measured well-by-well withdrawals."
+      },
+      "categories": [
+        {
+          "display_aquifer_id": "northern_rocky_mountains_intermontane_basins_aquifer_system",
+          "year": 2015,
+          "category_key": "public_supply",
+          "category_label": "Public supply",
+          "value": 90.21,
+          "units": "Mgal/d",
+          "share_of_total": 0.1479,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "northern_rocky_mountains_intermontane_basins_aquifer_system",
+          "year": 2015,
+          "category_key": "domestic",
+          "category_label": "Domestic",
+          "value": 27.41,
+          "units": "Mgal/d",
+          "share_of_total": 0.0449,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "northern_rocky_mountains_intermontane_basins_aquifer_system",
+          "year": 2015,
+          "category_key": "irrigation",
+          "category_label": "Irrigation",
+          "value": 473.45,
+          "units": "Mgal/d",
+          "share_of_total": 0.7762,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "northern_rocky_mountains_intermontane_basins_aquifer_system",
+          "year": 2015,
+          "category_key": "thermoelectric_power",
+          "category_label": "Thermoelectric power",
+          "value": 0.78,
+          "units": "Mgal/d",
+          "share_of_total": 0.0013,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "northern_rocky_mountains_intermontane_basins_aquifer_system",
+          "year": 2015,
+          "category_key": "industrial",
+          "category_label": "Industrial",
+          "value": 3.78,
+          "units": "Mgal/d",
+          "share_of_total": 0.0062,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "northern_rocky_mountains_intermontane_basins_aquifer_system",
+          "year": 2015,
+          "category_key": "mining",
+          "category_label": "Mining",
+          "value": 1.52,
+          "units": "Mgal/d",
+          "share_of_total": 0.0025,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "northern_rocky_mountains_intermontane_basins_aquifer_system",
+          "year": 2015,
+          "category_key": "livestock",
+          "category_label": "Livestock",
+          "value": 3.29,
+          "units": "Mgal/d",
+          "share_of_total": 0.0054,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "northern_rocky_mountains_intermontane_basins_aquifer_system",
+          "year": 2015,
+          "category_key": "aquaculture",
+          "category_label": "Aquaculture",
+          "value": 9.55,
+          "units": "Mgal/d",
+          "share_of_total": 0.0157,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        }
+      ],
+      "industry_estimates": [],
+      "provenance_source_ids": [
+        "usgs_county_aquifer_withdrawals_2015",
+        "usgs_principal_aquifers_geometry"
+      ],
+      "methodology_summary": "Totals aggregate all 2015 USGS county rows assigned to the Northern Rocky Mountains Intermontane Basins aquifer system through the display-aquifer crosswalk. Categories come directly from the published broad water-use fields. Industry subtype estimates remain scaffolded but unpublished in v1.",
+      "caveats": [
+        "Geometry is shown for national and regional visualization only; it does not represent full underground extent.",
+        "V1 defines the display layer as the 30 highest-withdrawal aquifer systems from the 2015 USGS release that map cleanly to principal-aquifer geometry.",
+        "Industry subtype estimates are intentionally withheld in this release until proxy recipes are documented and validated.",
+        "The source withdrawal label 'Northern Rocky Mountains Intermontane Basins aquifer systems' is mapped to the geometry label 'Northern Rocky Mountains Intermontane Basins aquifer system' in the display crosswalk."
+      ]
+    },
+    {
+      "display_aquifer_id": "piedmont_and_blue_ridge_crystalline_rock_aquifers",
+      "year": 2015,
+      "total_withdrawal": {
+        "value": 591.68,
+        "units": "Mgal/d",
+        "is_estimate": true,
+        "confidence_grade": "A",
+        "source_type": "direct_source_aggregate",
+        "methodology_key": "aggregate_usgs_2015_county_aquifer_rows_v1",
+        "methodology_version": "v1",
+        "notes": "Aggregated from county-level principal-aquifer rows in the 2015 USGS release. These are authoritative published estimates, not measured well-by-well withdrawals."
+      },
+      "categories": [
+        {
+          "display_aquifer_id": "piedmont_and_blue_ridge_crystalline_rock_aquifers",
+          "year": 2015,
+          "category_key": "public_supply",
+          "category_label": "Public supply",
+          "value": 95.23,
+          "units": "Mgal/d",
+          "share_of_total": 0.1609,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "piedmont_and_blue_ridge_crystalline_rock_aquifers",
+          "year": 2015,
+          "category_key": "domestic",
+          "category_label": "Domestic",
+          "value": 370.37,
+          "units": "Mgal/d",
+          "share_of_total": 0.626,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "piedmont_and_blue_ridge_crystalline_rock_aquifers",
+          "year": 2015,
+          "category_key": "irrigation",
+          "category_label": "Irrigation",
+          "value": 47.63,
+          "units": "Mgal/d",
+          "share_of_total": 0.0805,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "piedmont_and_blue_ridge_crystalline_rock_aquifers",
+          "year": 2015,
+          "category_key": "thermoelectric_power",
+          "category_label": "Thermoelectric power",
+          "value": 0.09,
+          "units": "Mgal/d",
+          "share_of_total": 0.0002,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "piedmont_and_blue_ridge_crystalline_rock_aquifers",
+          "year": 2015,
+          "category_key": "industrial",
+          "category_label": "Industrial",
+          "value": 16.32,
+          "units": "Mgal/d",
+          "share_of_total": 0.0276,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "piedmont_and_blue_ridge_crystalline_rock_aquifers",
+          "year": 2015,
+          "category_key": "mining",
+          "category_label": "Mining",
+          "value": 28.21,
+          "units": "Mgal/d",
+          "share_of_total": 0.0477,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "piedmont_and_blue_ridge_crystalline_rock_aquifers",
+          "year": 2015,
+          "category_key": "livestock",
+          "category_label": "Livestock",
+          "value": 32.44,
+          "units": "Mgal/d",
+          "share_of_total": 0.0548,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "piedmont_and_blue_ridge_crystalline_rock_aquifers",
+          "year": 2015,
+          "category_key": "aquaculture",
+          "category_label": "Aquaculture",
+          "value": 1.39,
+          "units": "Mgal/d",
+          "share_of_total": 0.0023,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        }
+      ],
+      "industry_estimates": [],
+      "provenance_source_ids": [
+        "usgs_county_aquifer_withdrawals_2015",
+        "usgs_principal_aquifers_geometry"
+      ],
+      "methodology_summary": "Totals aggregate all 2015 USGS county rows assigned to the Piedmont and Blue Ridge crystalline-rock aquifers through the display-aquifer crosswalk. Categories come directly from the published broad water-use fields. Industry subtype estimates remain scaffolded but unpublished in v1.",
+      "caveats": [
+        "Geometry is shown for national and regional visualization only; it does not represent full underground extent.",
+        "V1 defines the display layer as the 30 highest-withdrawal aquifer systems from the 2015 USGS release that map cleanly to principal-aquifer geometry.",
+        "Industry subtype estimates are intentionally withheld in this release until proxy recipes are documented and validated."
+      ]
+    },
+    {
+      "display_aquifer_id": "surficial_aquifer_system",
+      "year": 2015,
+      "total_withdrawal": {
+        "value": 557.27,
+        "units": "Mgal/d",
+        "is_estimate": true,
+        "confidence_grade": "A",
+        "source_type": "direct_source_aggregate",
+        "methodology_key": "aggregate_usgs_2015_county_aquifer_rows_v1",
+        "methodology_version": "v1",
+        "notes": "Aggregated from county-level principal-aquifer rows in the 2015 USGS release. These are authoritative published estimates, not measured well-by-well withdrawals."
+      },
+      "categories": [
+        {
+          "display_aquifer_id": "surficial_aquifer_system",
+          "year": 2015,
+          "category_key": "public_supply",
+          "category_label": "Public supply",
+          "value": 271.12,
+          "units": "Mgal/d",
+          "share_of_total": 0.4865,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "surficial_aquifer_system",
+          "year": 2015,
+          "category_key": "domestic",
+          "category_label": "Domestic",
+          "value": 57.43,
+          "units": "Mgal/d",
+          "share_of_total": 0.1031,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "surficial_aquifer_system",
+          "year": 2015,
+          "category_key": "irrigation",
+          "category_label": "Irrigation",
+          "value": 201.97,
+          "units": "Mgal/d",
+          "share_of_total": 0.3624,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "surficial_aquifer_system",
+          "year": 2015,
+          "category_key": "thermoelectric_power",
+          "category_label": "Thermoelectric power",
+          "value": 2.52,
+          "units": "Mgal/d",
+          "share_of_total": 0.0045,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "surficial_aquifer_system",
+          "year": 2015,
+          "category_key": "industrial",
+          "category_label": "Industrial",
+          "value": 4.47,
+          "units": "Mgal/d",
+          "share_of_total": 0.008,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "surficial_aquifer_system",
+          "year": 2015,
+          "category_key": "mining",
+          "category_label": "Mining",
+          "value": 11.93,
+          "units": "Mgal/d",
+          "share_of_total": 0.0214,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "surficial_aquifer_system",
+          "year": 2015,
+          "category_key": "livestock",
+          "category_label": "Livestock",
+          "value": 5.23,
+          "units": "Mgal/d",
+          "share_of_total": 0.0094,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "surficial_aquifer_system",
+          "year": 2015,
+          "category_key": "aquaculture",
+          "category_label": "Aquaculture",
+          "value": 2.6,
+          "units": "Mgal/d",
+          "share_of_total": 0.0047,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        }
+      ],
+      "industry_estimates": [],
+      "provenance_source_ids": [
+        "usgs_county_aquifer_withdrawals_2015",
+        "usgs_principal_aquifers_geometry"
+      ],
+      "methodology_summary": "Totals aggregate all 2015 USGS county rows assigned to the Surficial aquifer system through the display-aquifer crosswalk. Categories come directly from the published broad water-use fields. Industry subtype estimates remain scaffolded but unpublished in v1.",
+      "caveats": [
+        "Geometry is shown for national and regional visualization only; it does not represent full underground extent.",
+        "V1 defines the display layer as the 30 highest-withdrawal aquifer systems from the 2015 USGS release that map cleanly to principal-aquifer geometry.",
+        "Industry subtype estimates are intentionally withheld in this release until proxy recipes are documented and validated."
+      ]
+    },
+    {
+      "display_aquifer_id": "valley_and_ridge_aquifers",
+      "year": 2015,
+      "total_withdrawal": {
+        "value": 551.24,
+        "units": "Mgal/d",
+        "is_estimate": true,
+        "confidence_grade": "A",
+        "source_type": "direct_source_aggregate",
+        "methodology_key": "aggregate_usgs_2015_county_aquifer_rows_v1",
+        "methodology_version": "v1",
+        "notes": "Aggregated from county-level principal-aquifer rows in the 2015 USGS release. These are authoritative published estimates, not measured well-by-well withdrawals."
+      },
+      "categories": [
+        {
+          "display_aquifer_id": "valley_and_ridge_aquifers",
+          "year": 2015,
+          "category_key": "public_supply",
+          "category_label": "Public supply",
+          "value": 242.4,
+          "units": "Mgal/d",
+          "share_of_total": 0.4397,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "valley_and_ridge_aquifers",
+          "year": 2015,
+          "category_key": "domestic",
+          "category_label": "Domestic",
+          "value": 128.24,
+          "units": "Mgal/d",
+          "share_of_total": 0.2326,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "valley_and_ridge_aquifers",
+          "year": 2015,
+          "category_key": "irrigation",
+          "category_label": "Irrigation",
+          "value": 13.31,
+          "units": "Mgal/d",
+          "share_of_total": 0.0241,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "valley_and_ridge_aquifers",
+          "year": 2015,
+          "category_key": "thermoelectric_power",
+          "category_label": "Thermoelectric power",
+          "value": 4.48,
+          "units": "Mgal/d",
+          "share_of_total": 0.0081,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "valley_and_ridge_aquifers",
+          "year": 2015,
+          "category_key": "industrial",
+          "category_label": "Industrial",
+          "value": 55.23,
+          "units": "Mgal/d",
+          "share_of_total": 0.1002,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "valley_and_ridge_aquifers",
+          "year": 2015,
+          "category_key": "mining",
+          "category_label": "Mining",
+          "value": 29.82,
+          "units": "Mgal/d",
+          "share_of_total": 0.0541,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "valley_and_ridge_aquifers",
+          "year": 2015,
+          "category_key": "livestock",
+          "category_label": "Livestock",
+          "value": 26.68,
+          "units": "Mgal/d",
+          "share_of_total": 0.0484,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "valley_and_ridge_aquifers",
+          "year": 2015,
+          "category_key": "aquaculture",
+          "category_label": "Aquaculture",
+          "value": 51.08,
+          "units": "Mgal/d",
+          "share_of_total": 0.0927,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        }
+      ],
+      "industry_estimates": [],
+      "provenance_source_ids": [
+        "usgs_county_aquifer_withdrawals_2015",
+        "usgs_principal_aquifers_geometry"
+      ],
+      "methodology_summary": "Totals aggregate all 2015 USGS county rows assigned to the Valley and Ridge aquifers through the display-aquifer crosswalk. Categories come directly from the published broad water-use fields. Industry subtype estimates remain scaffolded but unpublished in v1.",
+      "caveats": [
+        "Geometry is shown for national and regional visualization only; it does not represent full underground extent.",
+        "V1 defines the display layer as the 30 highest-withdrawal aquifer systems from the 2015 USGS release that map cleanly to principal-aquifer geometry.",
+        "Industry subtype estimates are intentionally withheld in this release until proxy recipes are documented and validated."
+      ]
+    },
+    {
+      "display_aquifer_id": "silurian_devonian_aquifers",
+      "year": 2015,
+      "total_withdrawal": {
+        "value": 473.94,
+        "units": "Mgal/d",
+        "is_estimate": true,
+        "confidence_grade": "A",
+        "source_type": "direct_source_aggregate",
+        "methodology_key": "aggregate_usgs_2015_county_aquifer_rows_v1",
+        "methodology_version": "v1",
+        "notes": "Aggregated from county-level principal-aquifer rows in the 2015 USGS release. These are authoritative published estimates, not measured well-by-well withdrawals."
+      },
+      "categories": [
+        {
+          "display_aquifer_id": "silurian_devonian_aquifers",
+          "year": 2015,
+          "category_key": "public_supply",
+          "category_label": "Public supply",
+          "value": 151.79,
+          "units": "Mgal/d",
+          "share_of_total": 0.3203,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "silurian_devonian_aquifers",
+          "year": 2015,
+          "category_key": "domestic",
+          "category_label": "Domestic",
+          "value": 90.87,
+          "units": "Mgal/d",
+          "share_of_total": 0.1917,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "silurian_devonian_aquifers",
+          "year": 2015,
+          "category_key": "irrigation",
+          "category_label": "Irrigation",
+          "value": 28.75,
+          "units": "Mgal/d",
+          "share_of_total": 0.0607,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "silurian_devonian_aquifers",
+          "year": 2015,
+          "category_key": "thermoelectric_power",
+          "category_label": "Thermoelectric power",
+          "value": 7.22,
+          "units": "Mgal/d",
+          "share_of_total": 0.0152,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "silurian_devonian_aquifers",
+          "year": 2015,
+          "category_key": "industrial",
+          "category_label": "Industrial",
+          "value": 80.55,
+          "units": "Mgal/d",
+          "share_of_total": 0.17,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "silurian_devonian_aquifers",
+          "year": 2015,
+          "category_key": "mining",
+          "category_label": "Mining",
+          "value": 60.76,
+          "units": "Mgal/d",
+          "share_of_total": 0.1282,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "silurian_devonian_aquifers",
+          "year": 2015,
+          "category_key": "livestock",
+          "category_label": "Livestock",
+          "value": 48.15,
+          "units": "Mgal/d",
+          "share_of_total": 0.1016,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "silurian_devonian_aquifers",
+          "year": 2015,
+          "category_key": "aquaculture",
+          "category_label": "Aquaculture",
+          "value": 5.85,
+          "units": "Mgal/d",
+          "share_of_total": 0.0123,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        }
+      ],
+      "industry_estimates": [],
+      "provenance_source_ids": [
+        "usgs_county_aquifer_withdrawals_2015",
+        "usgs_principal_aquifers_geometry"
+      ],
+      "methodology_summary": "Totals aggregate all 2015 USGS county rows assigned to the Silurian-Devonian aquifers through the display-aquifer crosswalk. Categories come directly from the published broad water-use fields. Industry subtype estimates remain scaffolded but unpublished in v1.",
+      "caveats": [
+        "Geometry is shown for national and regional visualization only; it does not represent full underground extent.",
+        "V1 defines the display layer as the 30 highest-withdrawal aquifer systems from the 2015 USGS release that map cleanly to principal-aquifer geometry.",
+        "Industry subtype estimates are intentionally withheld in this release until proxy recipes are documented and validated."
+      ]
+    },
+    {
+      "display_aquifer_id": "pacific_northwest_basaltic_rock_aquifers",
+      "year": 2015,
+      "total_withdrawal": {
+        "value": 472.74,
+        "units": "Mgal/d",
+        "is_estimate": true,
+        "confidence_grade": "A",
+        "source_type": "direct_source_aggregate",
+        "methodology_key": "aggregate_usgs_2015_county_aquifer_rows_v1",
+        "methodology_version": "v1",
+        "notes": "Aggregated from county-level principal-aquifer rows in the 2015 USGS release. These are authoritative published estimates, not measured well-by-well withdrawals."
+      },
+      "categories": [
+        {
+          "display_aquifer_id": "pacific_northwest_basaltic_rock_aquifers",
+          "year": 2015,
+          "category_key": "public_supply",
+          "category_label": "Public supply",
+          "value": 54.5,
+          "units": "Mgal/d",
+          "share_of_total": 0.1153,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "pacific_northwest_basaltic_rock_aquifers",
+          "year": 2015,
+          "category_key": "domestic",
+          "category_label": "Domestic",
+          "value": 13.68,
+          "units": "Mgal/d",
+          "share_of_total": 0.0289,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "pacific_northwest_basaltic_rock_aquifers",
+          "year": 2015,
+          "category_key": "irrigation",
+          "category_label": "Irrigation",
+          "value": 394.81,
+          "units": "Mgal/d",
+          "share_of_total": 0.8352,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "pacific_northwest_basaltic_rock_aquifers",
+          "year": 2015,
+          "category_key": "thermoelectric_power",
+          "category_label": "Thermoelectric power",
+          "value": 0.0,
+          "units": "Mgal/d",
+          "share_of_total": 0.0,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "pacific_northwest_basaltic_rock_aquifers",
+          "year": 2015,
+          "category_key": "industrial",
+          "category_label": "Industrial",
+          "value": 3.0,
+          "units": "Mgal/d",
+          "share_of_total": 0.0063,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "pacific_northwest_basaltic_rock_aquifers",
+          "year": 2015,
+          "category_key": "mining",
+          "category_label": "Mining",
+          "value": 4.07,
+          "units": "Mgal/d",
+          "share_of_total": 0.0086,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "pacific_northwest_basaltic_rock_aquifers",
+          "year": 2015,
+          "category_key": "livestock",
+          "category_label": "Livestock",
+          "value": 1.09,
+          "units": "Mgal/d",
+          "share_of_total": 0.0023,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "pacific_northwest_basaltic_rock_aquifers",
+          "year": 2015,
+          "category_key": "aquaculture",
+          "category_label": "Aquaculture",
+          "value": 1.59,
+          "units": "Mgal/d",
+          "share_of_total": 0.0034,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        }
+      ],
+      "industry_estimates": [],
+      "provenance_source_ids": [
+        "usgs_county_aquifer_withdrawals_2015",
+        "usgs_principal_aquifers_geometry"
+      ],
+      "methodology_summary": "Totals aggregate all 2015 USGS county rows assigned to the Pacific Northwest basaltic-rock aquifers through the display-aquifer crosswalk. Categories come directly from the published broad water-use fields. Industry subtype estimates remain scaffolded but unpublished in v1.",
+      "caveats": [
+        "Geometry is shown for national and regional visualization only; it does not represent full underground extent.",
+        "V1 defines the display layer as the 30 highest-withdrawal aquifer systems from the 2015 USGS release that map cleanly to principal-aquifer geometry.",
+        "Industry subtype estimates are intentionally withheld in this release until proxy recipes are documented and validated.",
+        "The source withdrawal label 'Pacific Northwest volcanic-rock aquifers' is mapped to the geometry label 'Pacific Northwest basaltic-rock aquifers' in the display crosswalk."
+      ]
+    },
+    {
+      "display_aquifer_id": "willamette_lowland_basin_fill_aquifers",
+      "year": 2015,
+      "total_withdrawal": {
+        "value": 465.61,
+        "units": "Mgal/d",
+        "is_estimate": true,
+        "confidence_grade": "A",
+        "source_type": "direct_source_aggregate",
+        "methodology_key": "aggregate_usgs_2015_county_aquifer_rows_v1",
+        "methodology_version": "v1",
+        "notes": "Aggregated from county-level principal-aquifer rows in the 2015 USGS release. These are authoritative published estimates, not measured well-by-well withdrawals."
+      },
+      "categories": [
+        {
+          "display_aquifer_id": "willamette_lowland_basin_fill_aquifers",
+          "year": 2015,
+          "category_key": "public_supply",
+          "category_label": "Public supply",
+          "value": 84.97,
+          "units": "Mgal/d",
+          "share_of_total": 0.1825,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "willamette_lowland_basin_fill_aquifers",
+          "year": 2015,
+          "category_key": "domestic",
+          "category_label": "Domestic",
+          "value": 22.17,
+          "units": "Mgal/d",
+          "share_of_total": 0.0476,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "willamette_lowland_basin_fill_aquifers",
+          "year": 2015,
+          "category_key": "irrigation",
+          "category_label": "Irrigation",
+          "value": 336.31,
+          "units": "Mgal/d",
+          "share_of_total": 0.7223,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "willamette_lowland_basin_fill_aquifers",
+          "year": 2015,
+          "category_key": "thermoelectric_power",
+          "category_label": "Thermoelectric power",
+          "value": 4.15,
+          "units": "Mgal/d",
+          "share_of_total": 0.0089,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "willamette_lowland_basin_fill_aquifers",
+          "year": 2015,
+          "category_key": "industrial",
+          "category_label": "Industrial",
+          "value": 15.84,
+          "units": "Mgal/d",
+          "share_of_total": 0.034,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "willamette_lowland_basin_fill_aquifers",
+          "year": 2015,
+          "category_key": "mining",
+          "category_label": "Mining",
+          "value": 1.01,
+          "units": "Mgal/d",
+          "share_of_total": 0.0022,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "willamette_lowland_basin_fill_aquifers",
+          "year": 2015,
+          "category_key": "livestock",
+          "category_label": "Livestock",
+          "value": 1.01,
+          "units": "Mgal/d",
+          "share_of_total": 0.0022,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "willamette_lowland_basin_fill_aquifers",
+          "year": 2015,
+          "category_key": "aquaculture",
+          "category_label": "Aquaculture",
+          "value": 0.15,
+          "units": "Mgal/d",
+          "share_of_total": 0.0003,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        }
+      ],
+      "industry_estimates": [],
+      "provenance_source_ids": [
+        "usgs_county_aquifer_withdrawals_2015",
+        "usgs_principal_aquifers_geometry"
+      ],
+      "methodology_summary": "Totals aggregate all 2015 USGS county rows assigned to the Willamette Lowland basin-fill aquifers through the display-aquifer crosswalk. Categories come directly from the published broad water-use fields. Industry subtype estimates remain scaffolded but unpublished in v1.",
+      "caveats": [
+        "Geometry is shown for national and regional visualization only; it does not represent full underground extent.",
+        "V1 defines the display layer as the 30 highest-withdrawal aquifer systems from the 2015 USGS release that map cleanly to principal-aquifer geometry.",
+        "Industry subtype estimates are intentionally withheld in this release until proxy recipes are documented and validated."
+      ]
+    },
+    {
+      "display_aquifer_id": "lower_cretaceous_aquifers",
+      "year": 2015,
+      "total_withdrawal": {
+        "value": 445.83,
+        "units": "Mgal/d",
+        "is_estimate": true,
+        "confidence_grade": "A",
+        "source_type": "direct_source_aggregate",
+        "methodology_key": "aggregate_usgs_2015_county_aquifer_rows_v1",
+        "methodology_version": "v1",
+        "notes": "Aggregated from county-level principal-aquifer rows in the 2015 USGS release. These are authoritative published estimates, not measured well-by-well withdrawals."
+      },
+      "categories": [
+        {
+          "display_aquifer_id": "lower_cretaceous_aquifers",
+          "year": 2015,
+          "category_key": "public_supply",
+          "category_label": "Public supply",
+          "value": 64.92,
+          "units": "Mgal/d",
+          "share_of_total": 0.1456,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "lower_cretaceous_aquifers",
+          "year": 2015,
+          "category_key": "domestic",
+          "category_label": "Domestic",
+          "value": 7.4,
+          "units": "Mgal/d",
+          "share_of_total": 0.0166,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "lower_cretaceous_aquifers",
+          "year": 2015,
+          "category_key": "irrigation",
+          "category_label": "Irrigation",
+          "value": 299.15,
+          "units": "Mgal/d",
+          "share_of_total": 0.671,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "lower_cretaceous_aquifers",
+          "year": 2015,
+          "category_key": "thermoelectric_power",
+          "category_label": "Thermoelectric power",
+          "value": 12.58,
+          "units": "Mgal/d",
+          "share_of_total": 0.0282,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "lower_cretaceous_aquifers",
+          "year": 2015,
+          "category_key": "industrial",
+          "category_label": "Industrial",
+          "value": 20.22,
+          "units": "Mgal/d",
+          "share_of_total": 0.0454,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "lower_cretaceous_aquifers",
+          "year": 2015,
+          "category_key": "mining",
+          "category_label": "Mining",
+          "value": 1.9,
+          "units": "Mgal/d",
+          "share_of_total": 0.0043,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "lower_cretaceous_aquifers",
+          "year": 2015,
+          "category_key": "livestock",
+          "category_label": "Livestock",
+          "value": 35.21,
+          "units": "Mgal/d",
+          "share_of_total": 0.079,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "lower_cretaceous_aquifers",
+          "year": 2015,
+          "category_key": "aquaculture",
+          "category_label": "Aquaculture",
+          "value": 4.45,
+          "units": "Mgal/d",
+          "share_of_total": 0.01,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        }
+      ],
+      "industry_estimates": [],
+      "provenance_source_ids": [
+        "usgs_county_aquifer_withdrawals_2015",
+        "usgs_principal_aquifers_geometry"
+      ],
+      "methodology_summary": "Totals aggregate all 2015 USGS county rows assigned to the Lower Cretaceous aquifers through the display-aquifer crosswalk. Categories come directly from the published broad water-use fields. Industry subtype estimates remain scaffolded but unpublished in v1.",
+      "caveats": [
+        "Geometry is shown for national and regional visualization only; it does not represent full underground extent.",
+        "V1 defines the display layer as the 30 highest-withdrawal aquifer systems from the 2015 USGS release that map cleanly to principal-aquifer geometry.",
+        "Industry subtype estimates are intentionally withheld in this release until proxy recipes are documented and validated."
+      ]
+    },
+    {
+      "display_aquifer_id": "snake_river_plain_basin_fill_aquifers",
+      "year": 2015,
+      "total_withdrawal": {
+        "value": 424.86,
+        "units": "Mgal/d",
+        "is_estimate": true,
+        "confidence_grade": "A",
+        "source_type": "direct_source_aggregate",
+        "methodology_key": "aggregate_usgs_2015_county_aquifer_rows_v1",
+        "methodology_version": "v1",
+        "notes": "Aggregated from county-level principal-aquifer rows in the 2015 USGS release. These are authoritative published estimates, not measured well-by-well withdrawals."
+      },
+      "categories": [
+        {
+          "display_aquifer_id": "snake_river_plain_basin_fill_aquifers",
+          "year": 2015,
+          "category_key": "public_supply",
+          "category_label": "Public supply",
+          "value": 16.04,
+          "units": "Mgal/d",
+          "share_of_total": 0.0378,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "snake_river_plain_basin_fill_aquifers",
+          "year": 2015,
+          "category_key": "domestic",
+          "category_label": "Domestic",
+          "value": 6.59,
+          "units": "Mgal/d",
+          "share_of_total": 0.0155,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "snake_river_plain_basin_fill_aquifers",
+          "year": 2015,
+          "category_key": "irrigation",
+          "category_label": "Irrigation",
+          "value": 342.86,
+          "units": "Mgal/d",
+          "share_of_total": 0.807,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "snake_river_plain_basin_fill_aquifers",
+          "year": 2015,
+          "category_key": "thermoelectric_power",
+          "category_label": "Thermoelectric power",
+          "value": 1.01,
+          "units": "Mgal/d",
+          "share_of_total": 0.0024,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "snake_river_plain_basin_fill_aquifers",
+          "year": 2015,
+          "category_key": "industrial",
+          "category_label": "Industrial",
+          "value": 32.18,
+          "units": "Mgal/d",
+          "share_of_total": 0.0757,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "snake_river_plain_basin_fill_aquifers",
+          "year": 2015,
+          "category_key": "mining",
+          "category_label": "Mining",
+          "value": 0.37,
+          "units": "Mgal/d",
+          "share_of_total": 0.0009,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "snake_river_plain_basin_fill_aquifers",
+          "year": 2015,
+          "category_key": "livestock",
+          "category_label": "Livestock",
+          "value": 4.65,
+          "units": "Mgal/d",
+          "share_of_total": 0.0109,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "snake_river_plain_basin_fill_aquifers",
+          "year": 2015,
+          "category_key": "aquaculture",
+          "category_label": "Aquaculture",
+          "value": 21.16,
+          "units": "Mgal/d",
+          "share_of_total": 0.0498,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        }
+      ],
+      "industry_estimates": [],
+      "provenance_source_ids": [
+        "usgs_county_aquifer_withdrawals_2015",
+        "usgs_principal_aquifers_geometry"
+      ],
+      "methodology_summary": "Totals aggregate all 2015 USGS county rows assigned to the Snake River Plain basin-fill aquifers through the display-aquifer crosswalk. Categories come directly from the published broad water-use fields. Industry subtype estimates remain scaffolded but unpublished in v1.",
+      "caveats": [
+        "Geometry is shown for national and regional visualization only; it does not represent full underground extent.",
+        "V1 defines the display layer as the 30 highest-withdrawal aquifer systems from the 2015 USGS release that map cleanly to principal-aquifer geometry.",
+        "Industry subtype estimates are intentionally withheld in this release until proxy recipes are documented and validated."
+      ]
+    },
+    {
+      "display_aquifer_id": "biscayne_aquifer",
+      "year": 2015,
+      "total_withdrawal": {
+        "value": 409.06,
+        "units": "Mgal/d",
+        "is_estimate": true,
+        "confidence_grade": "A",
+        "source_type": "direct_source_aggregate",
+        "methodology_key": "aggregate_usgs_2015_county_aquifer_rows_v1",
+        "methodology_version": "v1",
+        "notes": "Aggregated from county-level principal-aquifer rows in the 2015 USGS release. These are authoritative published estimates, not measured well-by-well withdrawals."
+      },
+      "categories": [
+        {
+          "display_aquifer_id": "biscayne_aquifer",
+          "year": 2015,
+          "category_key": "public_supply",
+          "category_label": "Public supply",
+          "value": 338.88,
+          "units": "Mgal/d",
+          "share_of_total": 0.8284,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "biscayne_aquifer",
+          "year": 2015,
+          "category_key": "domestic",
+          "category_label": "Domestic",
+          "value": 2.07,
+          "units": "Mgal/d",
+          "share_of_total": 0.0051,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "biscayne_aquifer",
+          "year": 2015,
+          "category_key": "irrigation",
+          "category_label": "Irrigation",
+          "value": 34.56,
+          "units": "Mgal/d",
+          "share_of_total": 0.0845,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "biscayne_aquifer",
+          "year": 2015,
+          "category_key": "thermoelectric_power",
+          "category_label": "Thermoelectric power",
+          "value": 1.28,
+          "units": "Mgal/d",
+          "share_of_total": 0.0031,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "biscayne_aquifer",
+          "year": 2015,
+          "category_key": "industrial",
+          "category_label": "Industrial",
+          "value": 2.98,
+          "units": "Mgal/d",
+          "share_of_total": 0.0073,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "biscayne_aquifer",
+          "year": 2015,
+          "category_key": "mining",
+          "category_label": "Mining",
+          "value": 28.66,
+          "units": "Mgal/d",
+          "share_of_total": 0.0701,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "biscayne_aquifer",
+          "year": 2015,
+          "category_key": "livestock",
+          "category_label": "Livestock",
+          "value": 0.01,
+          "units": "Mgal/d",
+          "share_of_total": 0.0,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "biscayne_aquifer",
+          "year": 2015,
+          "category_key": "aquaculture",
+          "category_label": "Aquaculture",
+          "value": 0.62,
+          "units": "Mgal/d",
+          "share_of_total": 0.0015,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        }
+      ],
+      "industry_estimates": [],
+      "provenance_source_ids": [
+        "usgs_county_aquifer_withdrawals_2015",
+        "usgs_principal_aquifers_geometry"
+      ],
+      "methodology_summary": "Totals aggregate all 2015 USGS county rows assigned to the Biscayne aquifer through the display-aquifer crosswalk. Categories come directly from the published broad water-use fields. Industry subtype estimates remain scaffolded but unpublished in v1.",
+      "caveats": [
+        "Geometry is shown for national and regional visualization only; it does not represent full underground extent.",
+        "V1 defines the display layer as the 30 highest-withdrawal aquifer systems from the 2015 USGS release that map cleanly to principal-aquifer geometry.",
+        "Industry subtype estimates are intentionally withheld in this release until proxy recipes are documented and validated.",
+        "The source withdrawal label 'Dade County-Biscayne aquifer' is mapped to the geometry label 'Biscayne aquifer' in the display crosswalk."
+      ]
+    },
+    {
+      "display_aquifer_id": "columbia_plateau_basin_fill_aquifers",
+      "year": 2015,
+      "total_withdrawal": {
+        "value": 391.26,
+        "units": "Mgal/d",
+        "is_estimate": true,
+        "confidence_grade": "A",
+        "source_type": "direct_source_aggregate",
+        "methodology_key": "aggregate_usgs_2015_county_aquifer_rows_v1",
+        "methodology_version": "v1",
+        "notes": "Aggregated from county-level principal-aquifer rows in the 2015 USGS release. These are authoritative published estimates, not measured well-by-well withdrawals."
+      },
+      "categories": [
+        {
+          "display_aquifer_id": "columbia_plateau_basin_fill_aquifers",
+          "year": 2015,
+          "category_key": "public_supply",
+          "category_label": "Public supply",
+          "value": 136.04,
+          "units": "Mgal/d",
+          "share_of_total": 0.3477,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "columbia_plateau_basin_fill_aquifers",
+          "year": 2015,
+          "category_key": "domestic",
+          "category_label": "Domestic",
+          "value": 6.95,
+          "units": "Mgal/d",
+          "share_of_total": 0.0178,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "columbia_plateau_basin_fill_aquifers",
+          "year": 2015,
+          "category_key": "irrigation",
+          "category_label": "Irrigation",
+          "value": 210.98,
+          "units": "Mgal/d",
+          "share_of_total": 0.5392,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "columbia_plateau_basin_fill_aquifers",
+          "year": 2015,
+          "category_key": "thermoelectric_power",
+          "category_label": "Thermoelectric power",
+          "value": 0.0,
+          "units": "Mgal/d",
+          "share_of_total": 0.0,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "columbia_plateau_basin_fill_aquifers",
+          "year": 2015,
+          "category_key": "industrial",
+          "category_label": "Industrial",
+          "value": 11.18,
+          "units": "Mgal/d",
+          "share_of_total": 0.0286,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "columbia_plateau_basin_fill_aquifers",
+          "year": 2015,
+          "category_key": "mining",
+          "category_label": "Mining",
+          "value": 0.43,
+          "units": "Mgal/d",
+          "share_of_total": 0.0011,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "columbia_plateau_basin_fill_aquifers",
+          "year": 2015,
+          "category_key": "livestock",
+          "category_label": "Livestock",
+          "value": 4.26,
+          "units": "Mgal/d",
+          "share_of_total": 0.0109,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "columbia_plateau_basin_fill_aquifers",
+          "year": 2015,
+          "category_key": "aquaculture",
+          "category_label": "Aquaculture",
+          "value": 21.42,
+          "units": "Mgal/d",
+          "share_of_total": 0.0547,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        }
+      ],
+      "industry_estimates": [],
+      "provenance_source_ids": [
+        "usgs_county_aquifer_withdrawals_2015",
+        "usgs_principal_aquifers_geometry"
+      ],
+      "methodology_summary": "Totals aggregate all 2015 USGS county rows assigned to the Columbia Plateau basin-fill aquifers through the display-aquifer crosswalk. Categories come directly from the published broad water-use fields. Industry subtype estimates remain scaffolded but unpublished in v1.",
+      "caveats": [
+        "Geometry is shown for national and regional visualization only; it does not represent full underground extent.",
+        "V1 defines the display layer as the 30 highest-withdrawal aquifer systems from the 2015 USGS release that map cleanly to principal-aquifer geometry.",
+        "Industry subtype estimates are intentionally withheld in this release until proxy recipes are documented and validated."
+      ]
+    },
+    {
+      "display_aquifer_id": "texas_coastal_uplands_aquifer_system",
+      "year": 2015,
+      "total_withdrawal": {
+        "value": 376.19,
+        "units": "Mgal/d",
+        "is_estimate": true,
+        "confidence_grade": "A",
+        "source_type": "direct_source_aggregate",
+        "methodology_key": "aggregate_usgs_2015_county_aquifer_rows_v1",
+        "methodology_version": "v1",
+        "notes": "Aggregated from county-level principal-aquifer rows in the 2015 USGS release. These are authoritative published estimates, not measured well-by-well withdrawals."
+      },
+      "categories": [
+        {
+          "display_aquifer_id": "texas_coastal_uplands_aquifer_system",
+          "year": 2015,
+          "category_key": "public_supply",
+          "category_label": "Public supply",
+          "value": 175.79,
+          "units": "Mgal/d",
+          "share_of_total": 0.4673,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "texas_coastal_uplands_aquifer_system",
+          "year": 2015,
+          "category_key": "domestic",
+          "category_label": "Domestic",
+          "value": 17.62,
+          "units": "Mgal/d",
+          "share_of_total": 0.0468,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "texas_coastal_uplands_aquifer_system",
+          "year": 2015,
+          "category_key": "irrigation",
+          "category_label": "Irrigation",
+          "value": 128.98,
+          "units": "Mgal/d",
+          "share_of_total": 0.3429,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "texas_coastal_uplands_aquifer_system",
+          "year": 2015,
+          "category_key": "thermoelectric_power",
+          "category_label": "Thermoelectric power",
+          "value": 8.03,
+          "units": "Mgal/d",
+          "share_of_total": 0.0213,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "texas_coastal_uplands_aquifer_system",
+          "year": 2015,
+          "category_key": "industrial",
+          "category_label": "Industrial",
+          "value": 6.93,
+          "units": "Mgal/d",
+          "share_of_total": 0.0184,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "texas_coastal_uplands_aquifer_system",
+          "year": 2015,
+          "category_key": "mining",
+          "category_label": "Mining",
+          "value": 14.48,
+          "units": "Mgal/d",
+          "share_of_total": 0.0385,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "texas_coastal_uplands_aquifer_system",
+          "year": 2015,
+          "category_key": "livestock",
+          "category_label": "Livestock",
+          "value": 23.95,
+          "units": "Mgal/d",
+          "share_of_total": 0.0637,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "texas_coastal_uplands_aquifer_system",
+          "year": 2015,
+          "category_key": "aquaculture",
+          "category_label": "Aquaculture",
+          "value": 0.41,
+          "units": "Mgal/d",
+          "share_of_total": 0.0011,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        }
+      ],
+      "industry_estimates": [],
+      "provenance_source_ids": [
+        "usgs_county_aquifer_withdrawals_2015",
+        "usgs_principal_aquifers_geometry"
+      ],
+      "methodology_summary": "Totals aggregate all 2015 USGS county rows assigned to the Texas coastal uplands aquifer system through the display-aquifer crosswalk. Categories come directly from the published broad water-use fields. Industry subtype estimates remain scaffolded but unpublished in v1.",
+      "caveats": [
+        "Geometry is shown for national and regional visualization only; it does not represent full underground extent.",
+        "V1 defines the display layer as the 30 highest-withdrawal aquifer systems from the 2015 USGS release that map cleanly to principal-aquifer geometry.",
+        "Industry subtype estimates are intentionally withheld in this release until proxy recipes are documented and validated."
+      ]
+    },
+    {
+      "display_aquifer_id": "colorado_plateaus_aquifers",
+      "year": 2015,
+      "total_withdrawal": {
+        "value": 364.99,
+        "units": "Mgal/d",
+        "is_estimate": true,
+        "confidence_grade": "A",
+        "source_type": "direct_source_aggregate",
+        "methodology_key": "aggregate_usgs_2015_county_aquifer_rows_v1",
+        "methodology_version": "v1",
+        "notes": "Aggregated from county-level principal-aquifer rows in the 2015 USGS release. These are authoritative published estimates, not measured well-by-well withdrawals."
+      },
+      "categories": [
+        {
+          "display_aquifer_id": "colorado_plateaus_aquifers",
+          "year": 2015,
+          "category_key": "public_supply",
+          "category_label": "Public supply",
+          "value": 77.89,
+          "units": "Mgal/d",
+          "share_of_total": 0.2134,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "colorado_plateaus_aquifers",
+          "year": 2015,
+          "category_key": "domestic",
+          "category_label": "Domestic",
+          "value": 17.95,
+          "units": "Mgal/d",
+          "share_of_total": 0.0492,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "colorado_plateaus_aquifers",
+          "year": 2015,
+          "category_key": "irrigation",
+          "category_label": "Irrigation",
+          "value": 123.33,
+          "units": "Mgal/d",
+          "share_of_total": 0.3379,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "colorado_plateaus_aquifers",
+          "year": 2015,
+          "category_key": "thermoelectric_power",
+          "category_label": "Thermoelectric power",
+          "value": 39.38,
+          "units": "Mgal/d",
+          "share_of_total": 0.1079,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "colorado_plateaus_aquifers",
+          "year": 2015,
+          "category_key": "industrial",
+          "category_label": "Industrial",
+          "value": 8.6,
+          "units": "Mgal/d",
+          "share_of_total": 0.0236,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "colorado_plateaus_aquifers",
+          "year": 2015,
+          "category_key": "mining",
+          "category_label": "Mining",
+          "value": 32.6,
+          "units": "Mgal/d",
+          "share_of_total": 0.0893,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "colorado_plateaus_aquifers",
+          "year": 2015,
+          "category_key": "livestock",
+          "category_label": "Livestock",
+          "value": 5.91,
+          "units": "Mgal/d",
+          "share_of_total": 0.0162,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "colorado_plateaus_aquifers",
+          "year": 2015,
+          "category_key": "aquaculture",
+          "category_label": "Aquaculture",
+          "value": 59.33,
+          "units": "Mgal/d",
+          "share_of_total": 0.1626,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        }
+      ],
+      "industry_estimates": [],
+      "provenance_source_ids": [
+        "usgs_county_aquifer_withdrawals_2015",
+        "usgs_principal_aquifers_geometry"
+      ],
+      "methodology_summary": "Totals aggregate all 2015 USGS county rows assigned to the Colorado Plateaus aquifers through the display-aquifer crosswalk. Categories come directly from the published broad water-use fields. Industry subtype estimates remain scaffolded but unpublished in v1.",
+      "caveats": [
+        "Geometry is shown for national and regional visualization only; it does not represent full underground extent.",
+        "V1 defines the display layer as the 30 highest-withdrawal aquifer systems from the 2015 USGS release that map cleanly to principal-aquifer geometry.",
+        "Industry subtype estimates are intentionally withheld in this release until proxy recipes are documented and validated."
+      ]
+    },
+    {
+      "display_aquifer_id": "pennsylvanian_aquifers",
+      "year": 2015,
+      "total_withdrawal": {
+        "value": 351.35,
+        "units": "Mgal/d",
+        "is_estimate": true,
+        "confidence_grade": "A",
+        "source_type": "direct_source_aggregate",
+        "methodology_key": "aggregate_usgs_2015_county_aquifer_rows_v1",
+        "methodology_version": "v1",
+        "notes": "Aggregated from county-level principal-aquifer rows in the 2015 USGS release. These are authoritative published estimates, not measured well-by-well withdrawals."
+      },
+      "categories": [
+        {
+          "display_aquifer_id": "pennsylvanian_aquifers",
+          "year": 2015,
+          "category_key": "public_supply",
+          "category_label": "Public supply",
+          "value": 102.81,
+          "units": "Mgal/d",
+          "share_of_total": 0.2926,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "pennsylvanian_aquifers",
+          "year": 2015,
+          "category_key": "domestic",
+          "category_label": "Domestic",
+          "value": 117.99,
+          "units": "Mgal/d",
+          "share_of_total": 0.3358,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "pennsylvanian_aquifers",
+          "year": 2015,
+          "category_key": "irrigation",
+          "category_label": "Irrigation",
+          "value": 36.48,
+          "units": "Mgal/d",
+          "share_of_total": 0.1038,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "pennsylvanian_aquifers",
+          "year": 2015,
+          "category_key": "thermoelectric_power",
+          "category_label": "Thermoelectric power",
+          "value": 2.1,
+          "units": "Mgal/d",
+          "share_of_total": 0.006,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "pennsylvanian_aquifers",
+          "year": 2015,
+          "category_key": "industrial",
+          "category_label": "Industrial",
+          "value": 34.1,
+          "units": "Mgal/d",
+          "share_of_total": 0.0971,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "pennsylvanian_aquifers",
+          "year": 2015,
+          "category_key": "mining",
+          "category_label": "Mining",
+          "value": 37.58,
+          "units": "Mgal/d",
+          "share_of_total": 0.107,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "pennsylvanian_aquifers",
+          "year": 2015,
+          "category_key": "livestock",
+          "category_label": "Livestock",
+          "value": 15.42,
+          "units": "Mgal/d",
+          "share_of_total": 0.0439,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        },
+        {
+          "display_aquifer_id": "pennsylvanian_aquifers",
+          "year": 2015,
+          "category_key": "aquaculture",
+          "category_label": "Aquaculture",
+          "value": 4.87,
+          "units": "Mgal/d",
+          "share_of_total": 0.0139,
+          "confidence_grade": "A",
+          "source_type": "direct_source_aggregate",
+          "methodology_key": "aggregate_usgs_2015_category_totals_v1"
+        }
+      ],
+      "industry_estimates": [],
+      "provenance_source_ids": [
+        "usgs_county_aquifer_withdrawals_2015",
+        "usgs_principal_aquifers_geometry"
+      ],
+      "methodology_summary": "Totals aggregate all 2015 USGS county rows assigned to the Pennsylvanian aquifers through the display-aquifer crosswalk. Categories come directly from the published broad water-use fields. Industry subtype estimates remain scaffolded but unpublished in v1.",
+      "caveats": [
+        "Geometry is shown for national and regional visualization only; it does not represent full underground extent.",
+        "V1 defines the display layer as the 30 highest-withdrawal aquifer systems from the 2015 USGS release that map cleanly to principal-aquifer geometry.",
+        "Industry subtype estimates are intentionally withheld in this release until proxy recipes are documented and validated."
+      ]
+    }
+  ]
+}

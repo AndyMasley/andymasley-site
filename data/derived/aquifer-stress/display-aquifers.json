@@ -1,0 +1,608 @@
+{
+  "version": "2026.03.0",
+  "generated_at": "2026-03-23T02:26:58.097278+00:00",
+  "methodology_version": "v1",
+  "build_status": "ready",
+  "aquifers": [
+    {
+      "display_aquifer_id": "high_plains_aquifer",
+      "display_name": "High Plains aquifer",
+      "short_name": "High Plains",
+      "sort_order": 1,
+      "region_label": "Nebraska \u00b7 Texas \u00b7 Kansas",
+      "description_short": "A major groundwater system with irrigation dominating withdrawals across Nebraska, Texas, and Kansas.",
+      "description_long": "In 2015, the USGS estimated about 12300.91 Mgal/d of groundwater withdrawals associated with the High Plains aquifer. Irrigation accounted for about 95 percent of the total, with the largest shares concentrated in Nebraska, Texas, and Kansas.",
+      "geometry_source": "USGS principal aquifers shapefile (ScienceBase item 63140610d34e36012efa385d)",
+      "geometry_notes": "USGS principal aquifer geometry shown for national-scale display only. It represents the shallowest principal aquifers and not the full underground extent.",
+      "source_aquifer_codes": [
+        "N100HGHPLN"
+      ],
+      "is_grouped_system": false,
+      "default_year": 2015,
+      "default_units": "Mgal/d",
+      "methodology_version": "v1",
+      "status": "active",
+      "confidence_summary": "A"
+    },
+    {
+      "display_aquifer_id": "mississippi_river_valley_alluvial_aquifer",
+      "display_name": "Mississippi River Valley alluvial aquifer",
+      "short_name": "Mississippi River Valley alluvial",
+      "sort_order": 2,
+      "region_label": "Arkansas \u00b7 Mississippi \u00b7 Missouri",
+      "description_short": "A major groundwater system with irrigation dominating withdrawals across Arkansas, Mississippi, and Missouri.",
+      "description_long": "In 2015, the USGS estimated about 12141.03 Mgal/d of groundwater withdrawals associated with the Mississippi River Valley alluvial aquifer. Irrigation accounted for about 97 percent of the total, with the largest shares concentrated in Arkansas, Mississippi, and Missouri.",
+      "geometry_source": "USGS principal aquifers shapefile (ScienceBase item 63140610d34e36012efa385d)",
+      "geometry_notes": "USGS principal aquifer geometry shown for national-scale display only. It represents the shallowest principal aquifers and not the full underground extent.",
+      "source_aquifer_codes": [
+        "N100MSRVVL"
+      ],
+      "is_grouped_system": false,
+      "default_year": 2015,
+      "default_units": "Mgal/d",
+      "methodology_version": "v1",
+      "status": "active",
+      "confidence_summary": "A"
+    },
+    {
+      "display_aquifer_id": "central_valley_aquifer_system",
+      "display_name": "Central Valley aquifer system",
+      "short_name": "Central Valley",
+      "sort_order": 3,
+      "region_label": "California",
+      "description_short": "A major groundwater system with irrigation dominating withdrawals across California.",
+      "description_long": "In 2015, the USGS estimated about 11116.8 Mgal/d of groundwater withdrawals associated with the Central Valley aquifer system. Irrigation accounted for about 91 percent of the total, with the largest shares concentrated in California.",
+      "geometry_source": "USGS principal aquifers shapefile (ScienceBase item 63140610d34e36012efa385d)",
+      "geometry_notes": "USGS principal aquifer geometry shown for national-scale display only. It represents the shallowest principal aquifers and not the full underground extent.",
+      "source_aquifer_codes": [
+        "S100CNRLVL"
+      ],
+      "is_grouped_system": false,
+      "default_year": 2015,
+      "default_units": "Mgal/d",
+      "methodology_version": "v1",
+      "status": "active",
+      "confidence_summary": "A"
+    },
+    {
+      "display_aquifer_id": "basin_and_range_basin_fill_aquifers",
+      "display_name": "Basin and Range basin-fill aquifers",
+      "short_name": "Basin and Range basin-fill",
+      "sort_order": 4,
+      "region_label": "Arizona \u00b7 California \u00b7 Nevada",
+      "description_short": "A major groundwater system with irrigation dominating withdrawals across Arizona, California, and Nevada.",
+      "description_long": "In 2015, the USGS estimated about 7389.83 Mgal/d of groundwater withdrawals associated with the Basin and Range basin-fill aquifers. Irrigation accounted for about 74 percent of the total, with the largest shares concentrated in Arizona, California, and Nevada.",
+      "geometry_source": "USGS principal aquifers shapefile (ScienceBase item 63140610d34e36012efa385d)",
+      "geometry_notes": "USGS principal aquifer geometry shown for national-scale display only. It represents the shallowest principal aquifers and not the full underground extent.",
+      "source_aquifer_codes": [
+        "N100BSNRGB"
+      ],
+      "is_grouped_system": false,
+      "default_year": 2015,
+      "default_units": "Mgal/d",
+      "methodology_version": "v1",
+      "status": "active",
+      "confidence_summary": "A"
+    },
+    {
+      "display_aquifer_id": "floridan_aquifer_system",
+      "display_name": "Floridan aquifer system",
+      "short_name": "Floridan",
+      "sort_order": 5,
+      "region_label": "Florida \u00b7 Georgia \u00b7 South Carolina",
+      "description_short": "A major groundwater system with public supply dominating withdrawals across Florida, Georgia, and South Carolina.",
+      "description_long": "In 2015, the USGS estimated about 3144.44 Mgal/d of groundwater withdrawals associated with the Floridan aquifer system. Public supply accounted for about 42 percent of the total, with the largest shares concentrated in Florida, Georgia, and South Carolina.",
+      "geometry_source": "USGS principal aquifers shapefile (ScienceBase item 63140610d34e36012efa385d)",
+      "geometry_notes": "USGS principal aquifer geometry shown for national-scale display only. It represents the shallowest principal aquifers and not the full underground extent.",
+      "source_aquifer_codes": [
+        "S400FLORDN"
+      ],
+      "is_grouped_system": false,
+      "default_year": 2015,
+      "default_units": "Mgal/d",
+      "methodology_version": "v1",
+      "status": "active",
+      "confidence_summary": "A"
+    },
+    {
+      "display_aquifer_id": "snake_river_plain_basaltic_rock_aquifers",
+      "display_name": "Snake River Plain basaltic-rock aquifers",
+      "short_name": "Snake River Plain basaltic-rock",
+      "sort_order": 6,
+      "region_label": "Idaho \u00b7 Oregon",
+      "description_short": "A major groundwater system with irrigation dominating withdrawals across Idaho and Oregon.",
+      "description_long": "In 2015, the USGS estimated about 2928.81 Mgal/d of groundwater withdrawals associated with the Snake River Plain basaltic-rock aquifers. Irrigation accounted for about 95 percent of the total, with the largest shares concentrated in Idaho and Oregon.",
+      "geometry_source": "USGS principal aquifers shapefile (ScienceBase item 63140610d34e36012efa385d)",
+      "geometry_notes": "USGS principal aquifer geometry shown for national-scale display only. It represents the shallowest principal aquifers and not the full underground extent.",
+      "source_aquifer_codes": [
+        "N600SKRVPV"
+      ],
+      "is_grouped_system": false,
+      "default_year": 2015,
+      "default_units": "Mgal/d",
+      "methodology_version": "v1",
+      "status": "active",
+      "confidence_summary": "A"
+    },
+    {
+      "display_aquifer_id": "coastal_lowlands_aquifer_system",
+      "display_name": "Coastal lowlands aquifer system",
+      "short_name": "Coastal lowlands",
+      "sort_order": 7,
+      "region_label": "Louisiana \u00b7 Texas \u00b7 Mississippi",
+      "description_short": "A major groundwater system with irrigation dominating withdrawals across Louisiana, Texas, and Mississippi.",
+      "description_long": "In 2015, the USGS estimated about 2287.96 Mgal/d of groundwater withdrawals associated with the Coastal lowlands aquifer system. Irrigation accounted for about 33 percent of the total, with the largest shares concentrated in Louisiana, Texas, and Mississippi.",
+      "geometry_source": "USGS principal aquifers shapefile (ScienceBase item 63140610d34e36012efa385d)",
+      "geometry_notes": "USGS principal aquifer geometry shown for national-scale display only. It represents the shallowest principal aquifers and not the full underground extent.",
+      "source_aquifer_codes": [
+        "S100CSLLWD"
+      ],
+      "is_grouped_system": false,
+      "default_year": 2015,
+      "default_units": "Mgal/d",
+      "methodology_version": "v1",
+      "status": "active",
+      "confidence_summary": "A"
+    },
+    {
+      "display_aquifer_id": "california_coastal_basin_aquifers",
+      "display_name": "California Coastal Basin aquifers",
+      "short_name": "California Coastal Basin",
+      "sort_order": 8,
+      "region_label": "California",
+      "description_short": "A major groundwater system with public supply dominating withdrawals across California.",
+      "description_long": "In 2015, the USGS estimated about 2033.51 Mgal/d of groundwater withdrawals associated with the California Coastal Basin aquifers. Public supply accounted for about 47 percent of the total, with the largest shares concentrated in California.",
+      "geometry_source": "USGS principal aquifers shapefile (ScienceBase item 63140610d34e36012efa385d)",
+      "geometry_notes": "USGS principal aquifer geometry shown for national-scale display only. It represents the shallowest principal aquifers and not the full underground extent.",
+      "source_aquifer_codes": [
+        "N100CACSTL"
+      ],
+      "is_grouped_system": false,
+      "default_year": 2015,
+      "default_units": "Mgal/d",
+      "methodology_version": "v1",
+      "status": "active",
+      "confidence_summary": "A"
+    },
+    {
+      "display_aquifer_id": "pacific_northwest_basin_fill_aquifers",
+      "display_name": "Pacific Northwest basin-fill aquifers",
+      "short_name": "Pacific Northwest basin-fill",
+      "sort_order": 9,
+      "region_label": "Idaho \u00b7 California \u00b7 Oregon",
+      "description_short": "A major groundwater system with irrigation dominating withdrawals across Idaho, California, and Oregon.",
+      "description_long": "In 2015, the USGS estimated about 1390.8 Mgal/d of groundwater withdrawals associated with the Pacific Northwest basin-fill aquifers. Irrigation accounted for about 84 percent of the total, with the largest shares concentrated in Idaho, California, and Oregon.",
+      "geometry_source": "USGS principal aquifers shapefile (ScienceBase item 63140610d34e36012efa385d)",
+      "geometry_notes": "USGS principal aquifer geometry shown for national-scale display only. It represents the shallowest principal aquifers and not the full underground extent.",
+      "source_aquifer_codes": [
+        "N100PCFNWB"
+      ],
+      "is_grouped_system": false,
+      "default_year": 2015,
+      "default_units": "Mgal/d",
+      "methodology_version": "v1",
+      "status": "active",
+      "confidence_summary": "A"
+    },
+    {
+      "display_aquifer_id": "northern_atlantic_coastal_plain_aquifer_system",
+      "display_name": "Northern Atlantic Coastal Plain aquifer system",
+      "short_name": "Northern Atlantic Coastal Plain",
+      "sort_order": 10,
+      "region_label": "New Jersey \u00b7 New York \u00b7 Maryland",
+      "description_short": "A major groundwater system with public supply dominating withdrawals across New Jersey, New York, and Maryland.",
+      "description_long": "In 2015, the USGS estimated about 1344.63 Mgal/d of groundwater withdrawals associated with the Northern Atlantic Coastal Plain aquifer system. Public supply accounted for about 57 percent of the total, with the largest shares concentrated in New Jersey, New York, and Maryland.",
+      "geometry_source": "USGS principal aquifers shapefile (ScienceBase item 63140610d34e36012efa385d)",
+      "geometry_notes": "USGS principal aquifer geometry shown for national-scale display only. It represents the shallowest principal aquifers and not the full underground extent.",
+      "source_aquifer_codes": [
+        "S100NATLCP"
+      ],
+      "is_grouped_system": false,
+      "default_year": 2015,
+      "default_units": "Mgal/d",
+      "methodology_version": "v1",
+      "status": "active",
+      "confidence_summary": "A"
+    },
+    {
+      "display_aquifer_id": "columbia_plateau_basaltic_rock_aquifers",
+      "display_name": "Columbia Plateau basaltic-rock aquifers",
+      "short_name": "Columbia Plateau basaltic-rock",
+      "sort_order": 11,
+      "region_label": "Washington \u00b7 Oregon \u00b7 Idaho",
+      "description_short": "A major groundwater system with irrigation dominating withdrawals across Washington, Oregon, and Idaho.",
+      "description_long": "In 2015, the USGS estimated about 1078.72 Mgal/d of groundwater withdrawals associated with the Columbia Plateau basaltic-rock aquifers. Irrigation accounted for about 81 percent of the total, with the largest shares concentrated in Washington, Oregon, and Idaho.",
+      "geometry_source": "USGS principal aquifers shapefile (ScienceBase item 63140610d34e36012efa385d)",
+      "geometry_notes": "USGS principal aquifer geometry shown for national-scale display only. It represents the shallowest principal aquifers and not the full underground extent.",
+      "source_aquifer_codes": [
+        "N600CMBPLV"
+      ],
+      "is_grouped_system": false,
+      "default_year": 2015,
+      "default_units": "Mgal/d",
+      "methodology_version": "v1",
+      "status": "active",
+      "confidence_summary": "A"
+    },
+    {
+      "display_aquifer_id": "rio_grande_aquifer_system",
+      "display_name": "Rio Grande aquifer system",
+      "short_name": "Rio Grande",
+      "sort_order": 12,
+      "region_label": "New Mexico \u00b7 Colorado \u00b7 Texas",
+      "description_short": "A major groundwater system with irrigation dominating withdrawals across New Mexico, Colorado, and Texas.",
+      "description_long": "In 2015, the USGS estimated about 949.08 Mgal/d of groundwater withdrawals associated with the Rio Grande aquifer system. Irrigation accounted for about 74 percent of the total, with the largest shares concentrated in New Mexico, Colorado, and Texas.",
+      "geometry_source": "USGS principal aquifers shapefile (ScienceBase item 63140610d34e36012efa385d)",
+      "geometry_notes": "USGS principal aquifer geometry shown for national-scale display only. It represents the shallowest principal aquifers and not the full underground extent.",
+      "source_aquifer_codes": [
+        "S100RIOGRD"
+      ],
+      "is_grouped_system": false,
+      "default_year": 2015,
+      "default_units": "Mgal/d",
+      "methodology_version": "v1",
+      "status": "active",
+      "confidence_summary": "A"
+    },
+    {
+      "display_aquifer_id": "mississippi_embayment_aquifer_system",
+      "display_name": "Mississippi embayment aquifer system",
+      "short_name": "Mississippi embayment",
+      "sort_order": 13,
+      "region_label": "Arkansas \u00b7 Tennessee \u00b7 Mississippi",
+      "description_short": "A major groundwater system with public supply dominating withdrawals across Arkansas, Tennessee, and Mississippi.",
+      "description_long": "In 2015, the USGS estimated about 928.63 Mgal/d of groundwater withdrawals associated with the Mississippi embayment aquifer system. Public supply accounted for about 54 percent of the total, with the largest shares concentrated in Arkansas, Tennessee, and Mississippi.",
+      "geometry_source": "USGS principal aquifers shapefile (ScienceBase item 63140610d34e36012efa385d)",
+      "geometry_notes": "USGS principal aquifer geometry shown for national-scale display only. It represents the shallowest principal aquifers and not the full underground extent.",
+      "source_aquifer_codes": [
+        "S100MSEMBM"
+      ],
+      "is_grouped_system": false,
+      "default_year": 2015,
+      "default_units": "Mgal/d",
+      "methodology_version": "v1",
+      "status": "active",
+      "confidence_summary": "A"
+    },
+    {
+      "display_aquifer_id": "cambrian_ordovician_aquifer_system",
+      "display_name": "Cambrian-Ordovician aquifer system",
+      "short_name": "Cambrian-Ordovician",
+      "sort_order": 14,
+      "region_label": "Minnesota \u00b7 Wisconsin \u00b7 Illinois",
+      "description_short": "A major groundwater system with public supply dominating withdrawals across Minnesota, Wisconsin, and Illinois.",
+      "description_long": "In 2015, the USGS estimated about 921.31 Mgal/d of groundwater withdrawals associated with the Cambrian-Ordovician aquifer system. Public supply accounted for about 61 percent of the total, with the largest shares concentrated in Minnesota, Wisconsin, and Illinois.",
+      "geometry_source": "USGS principal aquifers shapefile (ScienceBase item 63140610d34e36012efa385d)",
+      "geometry_notes": "USGS principal aquifer geometry shown for national-scale display only. It represents the shallowest principal aquifers and not the full underground extent.",
+      "source_aquifer_codes": [
+        "S300CAMORD"
+      ],
+      "is_grouped_system": false,
+      "default_year": 2015,
+      "default_units": "Mgal/d",
+      "methodology_version": "v1",
+      "status": "active",
+      "confidence_summary": "A"
+    },
+    {
+      "display_aquifer_id": "southeastern_coastal_plain_aquifer_system",
+      "display_name": "Southeastern Coastal Plain aquifer system",
+      "short_name": "Southeastern Coastal Plain",
+      "sort_order": 15,
+      "region_label": "Georgia \u00b7 South Carolina \u00b7 Alabama",
+      "description_short": "A major groundwater system with public supply dominating withdrawals across Georgia, South Carolina, and Alabama.",
+      "description_long": "In 2015, the USGS estimated about 725.1 Mgal/d of groundwater withdrawals associated with the Southeastern Coastal Plain aquifer system. Public supply accounted for about 43 percent of the total, with the largest shares concentrated in Georgia, South Carolina, and Alabama.",
+      "geometry_source": "USGS principal aquifers shapefile (ScienceBase item 63140610d34e36012efa385d)",
+      "geometry_notes": "USGS principal aquifer geometry shown for national-scale display only. It represents the shallowest principal aquifers and not the full underground extent.",
+      "source_aquifer_codes": [
+        "S100SECSLP"
+      ],
+      "is_grouped_system": false,
+      "default_year": 2015,
+      "default_units": "Mgal/d",
+      "methodology_version": "v1",
+      "status": "active",
+      "confidence_summary": "A"
+    },
+    {
+      "display_aquifer_id": "edwards_trinity_aquifer_system",
+      "display_name": "Edwards-Trinity aquifer system",
+      "short_name": "Edwards-Trinity",
+      "sort_order": 16,
+      "region_label": "Texas \u00b7 Oklahoma \u00b7 Arkansas",
+      "description_short": "A major groundwater system with public supply dominating withdrawals across Texas, Oklahoma, and Arkansas.",
+      "description_long": "In 2015, the USGS estimated about 661.1 Mgal/d of groundwater withdrawals associated with the Edwards-Trinity aquifer system. Public supply accounted for about 51 percent of the total, with the largest shares concentrated in Texas, Oklahoma, and Arkansas.",
+      "geometry_source": "USGS principal aquifers shapefile (ScienceBase item 63140610d34e36012efa385d)",
+      "geometry_notes": "USGS principal aquifer geometry shown for national-scale display only. It represents the shallowest principal aquifers and not the full underground extent.",
+      "source_aquifer_codes": [
+        "S500EDRTRN"
+      ],
+      "is_grouped_system": false,
+      "default_year": 2015,
+      "default_units": "Mgal/d",
+      "methodology_version": "v1",
+      "status": "active",
+      "confidence_summary": "A"
+    },
+    {
+      "display_aquifer_id": "northern_rocky_mountains_intermontane_basins_aquifer_system",
+      "display_name": "Northern Rocky Mountains Intermontane Basins aquifer system",
+      "short_name": "Northern Rocky Mountains Intermontane Basins",
+      "sort_order": 17,
+      "region_label": "Idaho \u00b7 Montana \u00b7 Washington",
+      "description_short": "A major groundwater system with irrigation dominating withdrawals across Idaho, Montana, and Washington.",
+      "description_long": "In 2015, the USGS estimated about 609.99 Mgal/d of groundwater withdrawals associated with the Northern Rocky Mountains Intermontane Basins aquifer system. Irrigation accounted for about 78 percent of the total, with the largest shares concentrated in Idaho, Montana, and Washington.",
+      "geometry_source": "USGS principal aquifers shapefile (ScienceBase item 63140610d34e36012efa385d)",
+      "geometry_notes": "USGS principal aquifer geometry shown for national-scale display only. It represents the shallowest principal aquifers and not the full underground extent.",
+      "source_aquifer_codes": [
+        "S100NRMTIB"
+      ],
+      "is_grouped_system": false,
+      "default_year": 2015,
+      "default_units": "Mgal/d",
+      "methodology_version": "v1",
+      "status": "active",
+      "confidence_summary": "A"
+    },
+    {
+      "display_aquifer_id": "piedmont_and_blue_ridge_crystalline_rock_aquifers",
+      "display_name": "Piedmont and Blue Ridge crystalline-rock aquifers",
+      "short_name": "Piedmont and Blue Ridge crystalline-rock",
+      "sort_order": 18,
+      "region_label": "North Carolina \u00b7 Georgia \u00b7 Virginia",
+      "description_short": "A major groundwater system with domestic dominating withdrawals across North Carolina, Georgia, and Virginia.",
+      "description_long": "In 2015, the USGS estimated about 591.68 Mgal/d of groundwater withdrawals associated with the Piedmont and Blue Ridge crystalline-rock aquifers. Domestic accounted for about 63 percent of the total, with the largest shares concentrated in North Carolina, Georgia, and Virginia.",
+      "geometry_source": "USGS principal aquifers shapefile (ScienceBase item 63140610d34e36012efa385d)",
+      "geometry_notes": "USGS principal aquifer geometry shown for national-scale display only. It represents the shallowest principal aquifers and not the full underground extent.",
+      "source_aquifer_codes": [
+        "N400PDMBRX"
+      ],
+      "is_grouped_system": false,
+      "default_year": 2015,
+      "default_units": "Mgal/d",
+      "methodology_version": "v1",
+      "status": "active",
+      "confidence_summary": "A"
+    },
+    {
+      "display_aquifer_id": "surficial_aquifer_system",
+      "display_name": "Surficial aquifer system",
+      "short_name": "Surficial",
+      "sort_order": 19,
+      "region_label": "Florida \u00b7 South Carolina \u00b7 North Carolina",
+      "description_short": "A major groundwater system with public supply dominating withdrawals across Florida, South Carolina, and North Carolina.",
+      "description_long": "In 2015, the USGS estimated about 557.27 Mgal/d of groundwater withdrawals associated with the Surficial aquifer system. Public supply accounted for about 49 percent of the total, with the largest shares concentrated in Florida, South Carolina, and North Carolina.",
+      "geometry_source": "USGS principal aquifers shapefile (ScienceBase item 63140610d34e36012efa385d)",
+      "geometry_notes": "USGS principal aquifer geometry shown for national-scale display only. It represents the shallowest principal aquifers and not the full underground extent.",
+      "source_aquifer_codes": [
+        "S100SURFCL"
+      ],
+      "is_grouped_system": false,
+      "default_year": 2015,
+      "default_units": "Mgal/d",
+      "methodology_version": "v1",
+      "status": "active",
+      "confidence_summary": "A"
+    },
+    {
+      "display_aquifer_id": "valley_and_ridge_aquifers",
+      "display_name": "Valley and Ridge aquifers",
+      "short_name": "Valley and Ridge",
+      "sort_order": 20,
+      "region_label": "Pennsylvania \u00b7 Virginia \u00b7 Alabama",
+      "description_short": "A major groundwater system with public supply dominating withdrawals across Pennsylvania, Virginia, and Alabama.",
+      "description_long": "In 2015, the USGS estimated about 551.24 Mgal/d of groundwater withdrawals associated with the Valley and Ridge aquifers. Public supply accounted for about 44 percent of the total, with the largest shares concentrated in Pennsylvania, Virginia, and Alabama.",
+      "geometry_source": "USGS principal aquifers shapefile (ScienceBase item 63140610d34e36012efa385d)",
+      "geometry_notes": "USGS principal aquifer geometry shown for national-scale display only. It represents the shallowest principal aquifers and not the full underground extent.",
+      "source_aquifer_codes": [
+        "N500VLYRDG"
+      ],
+      "is_grouped_system": false,
+      "default_year": 2015,
+      "default_units": "Mgal/d",
+      "methodology_version": "v1",
+      "status": "active",
+      "confidence_summary": "A"
+    },
+    {
+      "display_aquifer_id": "silurian_devonian_aquifers",
+      "display_name": "Silurian-Devonian aquifers",
+      "short_name": "Silurian-Devonian",
+      "sort_order": 21,
+      "region_label": "Ohio \u00b7 Iowa \u00b7 Indiana",
+      "description_short": "A major groundwater system with public supply dominating withdrawals across Ohio, Iowa, and Indiana.",
+      "description_long": "In 2015, the USGS estimated about 473.94 Mgal/d of groundwater withdrawals associated with the Silurian-Devonian aquifers. Public supply accounted for about 32 percent of the total, with the largest shares concentrated in Ohio, Iowa, and Indiana.",
+      "geometry_source": "USGS principal aquifers shapefile (ScienceBase item 63140610d34e36012efa385d)",
+      "geometry_notes": "USGS principal aquifer geometry shown for national-scale display only. It represents the shallowest principal aquifers and not the full underground extent.",
+      "source_aquifer_codes": [
+        "N400SLRDVN"
+      ],
+      "is_grouped_system": false,
+      "default_year": 2015,
+      "default_units": "Mgal/d",
+      "methodology_version": "v1",
+      "status": "active",
+      "confidence_summary": "A"
+    },
+    {
+      "display_aquifer_id": "pacific_northwest_basaltic_rock_aquifers",
+      "display_name": "Pacific Northwest basaltic-rock aquifers",
+      "short_name": "Pacific Northwest basaltic-rock",
+      "sort_order": 22,
+      "region_label": "Oregon \u00b7 Idaho \u00b7 California",
+      "description_short": "A major groundwater system with irrigation dominating withdrawals across Oregon, Idaho, and California.",
+      "description_long": "In 2015, the USGS estimated about 472.74 Mgal/d of groundwater withdrawals associated with the Pacific Northwest basaltic-rock aquifers. Irrigation accounted for about 84 percent of the total, with the largest shares concentrated in Oregon, Idaho, and California.",
+      "geometry_source": "USGS principal aquifers shapefile (ScienceBase item 63140610d34e36012efa385d)",
+      "geometry_notes": "USGS principal aquifer geometry shown for national-scale display only. It represents the shallowest principal aquifers and not the full underground extent.",
+      "source_aquifer_codes": [
+        "N100PCFNWV"
+      ],
+      "is_grouped_system": false,
+      "default_year": 2015,
+      "default_units": "Mgal/d",
+      "methodology_version": "v1",
+      "status": "active",
+      "confidence_summary": "A"
+    },
+    {
+      "display_aquifer_id": "willamette_lowland_basin_fill_aquifers",
+      "display_name": "Willamette Lowland basin-fill aquifers",
+      "short_name": "Willamette Lowland basin-fill",
+      "sort_order": 23,
+      "region_label": "Oregon \u00b7 Washington",
+      "description_short": "A major groundwater system with irrigation dominating withdrawals across Oregon and Washington.",
+      "description_long": "In 2015, the USGS estimated about 465.61 Mgal/d of groundwater withdrawals associated with the Willamette Lowland basin-fill aquifers. Irrigation accounted for about 72 percent of the total, with the largest shares concentrated in Oregon and Washington.",
+      "geometry_source": "USGS principal aquifers shapefile (ScienceBase item 63140610d34e36012efa385d)",
+      "geometry_notes": "USGS principal aquifer geometry shown for national-scale display only. It represents the shallowest principal aquifers and not the full underground extent.",
+      "source_aquifer_codes": [
+        "N100WLMLWD"
+      ],
+      "is_grouped_system": false,
+      "default_year": 2015,
+      "default_units": "Mgal/d",
+      "methodology_version": "v1",
+      "status": "active",
+      "confidence_summary": "A"
+    },
+    {
+      "display_aquifer_id": "lower_cretaceous_aquifers",
+      "display_name": "Lower Cretaceous aquifers",
+      "short_name": "Lower Cretaceous",
+      "sort_order": 24,
+      "region_label": "Kansas \u00b7 Nebraska \u00b7 Iowa",
+      "description_short": "A major groundwater system with irrigation dominating withdrawals across Kansas, Nebraska, and Iowa.",
+      "description_long": "In 2015, the USGS estimated about 445.83 Mgal/d of groundwater withdrawals associated with the Lower Cretaceous aquifers. Irrigation accounted for about 67 percent of the total, with the largest shares concentrated in Kansas, Nebraska, and Iowa.",
+      "geometry_source": "USGS principal aquifers shapefile (ScienceBase item 63140610d34e36012efa385d)",
+      "geometry_notes": "USGS principal aquifer geometry shown for national-scale display only. It represents the shallowest principal aquifers and not the full underground extent.",
+      "source_aquifer_codes": [
+        "N300LCRTCS"
+      ],
+      "is_grouped_system": false,
+      "default_year": 2015,
+      "default_units": "Mgal/d",
+      "methodology_version": "v1",
+      "status": "active",
+      "confidence_summary": "A"
+    },
+    {
+      "display_aquifer_id": "snake_river_plain_basin_fill_aquifers",
+      "display_name": "Snake River Plain basin-fill aquifers",
+      "short_name": "Snake River Plain basin-fill",
+      "sort_order": 25,
+      "region_label": "Idaho \u00b7 Oregon",
+      "description_short": "A major groundwater system with irrigation dominating withdrawals across Idaho and Oregon.",
+      "description_long": "In 2015, the USGS estimated about 424.86 Mgal/d of groundwater withdrawals associated with the Snake River Plain basin-fill aquifers. Irrigation accounted for about 81 percent of the total, with the largest shares concentrated in Idaho and Oregon.",
+      "geometry_source": "USGS principal aquifers shapefile (ScienceBase item 63140610d34e36012efa385d)",
+      "geometry_notes": "USGS principal aquifer geometry shown for national-scale display only. It represents the shallowest principal aquifers and not the full underground extent.",
+      "source_aquifer_codes": [
+        "N600SKRVPB"
+      ],
+      "is_grouped_system": false,
+      "default_year": 2015,
+      "default_units": "Mgal/d",
+      "methodology_version": "v1",
+      "status": "active",
+      "confidence_summary": "A"
+    },
+    {
+      "display_aquifer_id": "biscayne_aquifer",
+      "display_name": "Biscayne aquifer",
+      "short_name": "Biscayne",
+      "sort_order": 26,
+      "region_label": "Florida",
+      "description_short": "A major groundwater system with public supply dominating withdrawals across Florida.",
+      "description_long": "In 2015, the USGS estimated about 409.06 Mgal/d of groundwater withdrawals associated with the Biscayne aquifer. Public supply accounted for about 83 percent of the total, with the largest shares concentrated in Florida.",
+      "geometry_source": "USGS principal aquifers shapefile (ScienceBase item 63140610d34e36012efa385d)",
+      "geometry_notes": "USGS principal aquifer geometry shown for national-scale display only. It represents the shallowest principal aquifers and not the full underground extent.",
+      "source_aquifer_codes": [
+        "N400BISCYN"
+      ],
+      "is_grouped_system": false,
+      "default_year": 2015,
+      "default_units": "Mgal/d",
+      "methodology_version": "v1",
+      "status": "active",
+      "confidence_summary": "A"
+    },
+    {
+      "display_aquifer_id": "columbia_plateau_basin_fill_aquifers",
+      "display_name": "Columbia Plateau basin-fill aquifers",
+      "short_name": "Columbia Plateau basin-fill",
+      "sort_order": 27,
+      "region_label": "Washington \u00b7 Oregon \u00b7 Idaho",
+      "description_short": "A major groundwater system with irrigation dominating withdrawals across Washington, Oregon, and Idaho.",
+      "description_long": "In 2015, the USGS estimated about 391.26 Mgal/d of groundwater withdrawals associated with the Columbia Plateau basin-fill aquifers. Irrigation accounted for about 54 percent of the total, with the largest shares concentrated in Washington, Oregon, and Idaho.",
+      "geometry_source": "USGS principal aquifers shapefile (ScienceBase item 63140610d34e36012efa385d)",
+      "geometry_notes": "USGS principal aquifer geometry shown for national-scale display only. It represents the shallowest principal aquifers and not the full underground extent.",
+      "source_aquifer_codes": [
+        "N100CMBPLB"
+      ],
+      "is_grouped_system": false,
+      "default_year": 2015,
+      "default_units": "Mgal/d",
+      "methodology_version": "v1",
+      "status": "active",
+      "confidence_summary": "A"
+    },
+    {
+      "display_aquifer_id": "texas_coastal_uplands_aquifer_system",
+      "display_name": "Texas coastal uplands aquifer system",
+      "short_name": "Texas coastal uplands",
+      "sort_order": 28,
+      "region_label": "Texas",
+      "description_short": "A major groundwater system with public supply dominating withdrawals across Texas.",
+      "description_long": "In 2015, the USGS estimated about 376.19 Mgal/d of groundwater withdrawals associated with the Texas coastal uplands aquifer system. Public supply accounted for about 47 percent of the total, with the largest shares concentrated in Texas.",
+      "geometry_source": "USGS principal aquifers shapefile (ScienceBase item 63140610d34e36012efa385d)",
+      "geometry_notes": "USGS principal aquifer geometry shown for national-scale display only. It represents the shallowest principal aquifers and not the full underground extent.",
+      "source_aquifer_codes": [
+        "S100TXCLUP"
+      ],
+      "is_grouped_system": false,
+      "default_year": 2015,
+      "default_units": "Mgal/d",
+      "methodology_version": "v1",
+      "status": "active",
+      "confidence_summary": "A"
+    },
+    {
+      "display_aquifer_id": "colorado_plateaus_aquifers",
+      "display_name": "Colorado Plateaus aquifers",
+      "short_name": "Colorado Plateaus",
+      "sort_order": 29,
+      "region_label": "Utah \u00b7 Wyoming \u00b7 Arizona",
+      "description_short": "A major groundwater system with irrigation dominating withdrawals across Utah, Wyoming, and Arizona.",
+      "description_long": "In 2015, the USGS estimated about 364.99 Mgal/d of groundwater withdrawals associated with the Colorado Plateaus aquifers. Irrigation accounted for about 34 percent of the total, with the largest shares concentrated in Utah, Wyoming, and Arizona.",
+      "geometry_source": "USGS principal aquifers shapefile (ScienceBase item 63140610d34e36012efa385d)",
+      "geometry_notes": "USGS principal aquifer geometry shown for national-scale display only. It represents the shallowest principal aquifers and not the full underground extent.",
+      "source_aquifer_codes": [
+        "N300COPLTS"
+      ],
+      "is_grouped_system": false,
+      "default_year": 2015,
+      "default_units": "Mgal/d",
+      "methodology_version": "v1",
+      "status": "active",
+      "confidence_summary": "A"
+    },
+    {
+      "display_aquifer_id": "pennsylvanian_aquifers",
+      "display_name": "Pennsylvanian aquifers",
+      "short_name": "Pennsylvanian",
+      "sort_order": 30,
+      "region_label": "Pennsylvania \u00b7 West Virginia \u00b7 Michigan",
+      "description_short": "A major groundwater system with domestic dominating withdrawals across Pennsylvania, West Virginia, and Michigan.",
+      "description_long": "In 2015, the USGS estimated about 351.35 Mgal/d of groundwater withdrawals associated with the Pennsylvanian aquifers. Domestic accounted for about 34 percent of the total, with the largest shares concentrated in Pennsylvania, West Virginia, and Michigan.",
+      "geometry_source": "USGS principal aquifers shapefile (ScienceBase item 63140610d34e36012efa385d)",
+      "geometry_notes": "USGS principal aquifer geometry shown for national-scale display only. It represents the shallowest principal aquifers and not the full underground extent.",
+      "source_aquifer_codes": [
+        "N300PNSLVN"
+      ],
+      "is_grouped_system": false,
+      "default_year": 2015,
+      "default_units": "Mgal/d",
+      "methodology_version": "v1",
+      "status": "active",
+      "confidence_summary": "A"
+    }
+  ]
+}
