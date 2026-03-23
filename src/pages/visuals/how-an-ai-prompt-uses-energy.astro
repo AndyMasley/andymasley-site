@@ -12,7 +12,7 @@ import { PromptEnergyStory } from '@/components/prompt-energy/PromptEnergyStory'
     <header class="pe-page__header">
       <h1 class="pe-page__title">How an AI prompt uses energy</h1>
       <p class="pe-page__intro">
-        A zoomable story about how one prompt moves through a live AI serving system. The first eight scenes track the request from chat box to accelerator handoff, into the rack that holds the tray, down into one tray and package, into the die map inside a modern accelerator, through the full prefill sweep, into the repeated decode loop, out through the cooling path that has to carry the heat away, and finally into the economics of why one prompt can still amount to a tiny shared slice of such a large machine.
+        A zoomable story about how one prompt moves through a live AI serving system. The first eight scenes track the request from chat box to accelerator handoff, into the rack that holds the tray, down into one tray and package, into the die map inside a modern accelerator, through the full prefill sweep, into the repeated decode loop, out through the cooling path that has to carry the heat away, and finally into the economics of why one prompt can still amount to a tiny shared slice of such a large machine. It now ends with a live sandbox so the same prompt-slice model can be explored directly.
       </p>
     </header>
 
@@ -7785,7 +7785,374 @@ import { PromptEnergyStory } from '@/components/prompt-energy/PromptEnergyStory'
     border: 0;
   }
 
+  .pe-sandbox {
+    --pesb-blue: #6d92d8;
+    --pesb-gold: #c08d2f;
+    --pesb-host: #96714c;
+    --pesb-reserve: #7e8a8c;
+    --pesb-overhead: #a99a8c;
+    --pesb-ghost: #b8b1a9;
+    margin-top: 4rem;
+    padding: 1.25rem;
+    border: 1px solid var(--border);
+    background: color-mix(in srgb, var(--bg-subtle) 92%, transparent);
+    box-shadow: 0 20px 48px -34px rgba(26, 25, 24, 0.3);
+  }
+
+  [data-theme="dark"] .pe-sandbox {
+    --pesb-blue: #95b7ef;
+    --pesb-gold: #ddaf58;
+    --pesb-host: #bf8d61;
+    --pesb-reserve: #95a3a6;
+    --pesb-overhead: #8b8177;
+    --pesb-ghost: #6d6760;
+    box-shadow: 0 24px 54px -34px rgba(0, 0, 0, 0.74);
+  }
+
+  .pe-sandbox__intro {
+    max-width: 48rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .pe-sandbox__eyebrow,
+  .pe-sandbox__panel-eyebrow {
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--dim);
+    font-family: var(--font-body);
+  }
+
+  .pe-sandbox__title {
+    margin: 0.25rem 0 0.7rem;
+    font-family: var(--font-editorial);
+    font-size: clamp(1.7rem, 1.45rem + 0.8vw, 2.5rem);
+    line-height: 1.08;
+    letter-spacing: -0.03em;
+  }
+
+  .pe-sandbox__lede,
+  .pe-sandbox__hint,
+  .pe-sandbox__explanation p,
+  .pe-sandbox__note {
+    margin: 0;
+    font-size: 0.95rem;
+    line-height: 1.68;
+    color: var(--text-secondary);
+  }
+
+  .pe-sandbox__layout {
+    display: grid;
+    grid-template-columns: minmax(18rem, 22rem) minmax(0, 1fr);
+    gap: 1rem;
+    align-items: start;
+  }
+
+  .pe-sandbox__controls,
+  .pe-sandbox__stage {
+    display: grid;
+    gap: 0.9rem;
+  }
+
+  .pe-sandbox__group,
+  .pe-sandbox__hero,
+  .pe-sandbox__breakdown,
+  .pe-sandbox__explanation,
+  .pe-sandbox__note {
+    margin: 0;
+    padding: 0.9rem 1rem;
+    border-radius: 1rem;
+    border: 1px solid color-mix(in srgb, var(--border) 84%, transparent);
+    background: color-mix(in srgb, var(--bg-subtle) 60%, transparent);
+  }
+
+  .pe-sandbox__group legend {
+    padding: 0;
+    margin-bottom: 0.65rem;
+    font-size: 0.82rem;
+    font-weight: 600;
+  }
+
+  .pe-sandbox__button-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .pe-sandbox__button {
+    border: 1px solid color-mix(in srgb, var(--border) 92%, transparent);
+    background: color-mix(in srgb, var(--bg-subtle) 48%, transparent);
+    color: var(--text);
+    padding: 0.45rem 0.8rem;
+    font: inherit;
+    font-size: 0.82rem;
+    line-height: 1.3;
+    cursor: pointer;
+    transition: border-color 0.24s ease, background 0.24s ease, transform 0.24s ease;
+  }
+
+  .pe-sandbox__button.is-active {
+    border-color: color-mix(in srgb, var(--pesb-blue) 56%, transparent);
+    background: color-mix(in srgb, var(--pesb-blue) 12%, transparent);
+  }
+
+  .pe-sandbox__button:hover {
+    transform: translateY(-1px);
+  }
+
+  .pe-sandbox__hint {
+    margin-top: 0.65rem;
+    font-size: 0.84rem;
+  }
+
+  .pe-sandbox__hero {
+    padding: 1rem;
+  }
+
+  .pe-sandbox__hero-topline {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    align-items: flex-start;
+  }
+
+  .pe-sandbox__hero-title {
+    font-family: var(--font-editorial);
+    font-size: 1.12rem;
+    line-height: 1.18;
+  }
+
+  .pe-sandbox__hero-badge {
+    padding: 0.35rem 0.65rem;
+    border-radius: 999px;
+    border: 1px solid color-mix(in srgb, var(--border) 84%, transparent);
+    background: color-mix(in srgb, var(--bg-subtle) 56%, transparent);
+    font-size: 0.78rem;
+  }
+
+  .pe-sandbox__machine {
+    position: relative;
+    min-height: 14rem;
+    margin-top: 0.75rem;
+    border-radius: 1.15rem;
+    border: 1px solid color-mix(in srgb, var(--border) 84%, transparent);
+    background:
+      linear-gradient(180deg, color-mix(in srgb, var(--pesb-gold) 8%, transparent), transparent 44%),
+      color-mix(in srgb, var(--bg-subtle) 58%, transparent);
+    overflow: hidden;
+  }
+
+  .pe-sandbox__rack-ghost {
+    position: absolute;
+    inset: 12% 6% 28%;
+    border-radius: 1.15rem;
+    background:
+      linear-gradient(90deg, transparent, color-mix(in srgb, var(--pesb-ghost) 10%, transparent) 26%, transparent 52%, color-mix(in srgb, var(--pesb-ghost) 10%, transparent) 78%, transparent),
+      linear-gradient(180deg, color-mix(in srgb, var(--pesb-ghost) 8%, transparent), transparent 72%);
+    opacity: 0.42;
+  }
+
+  .pe-sandbox__chip-ghost {
+    position: absolute;
+    left: 8%;
+    right: 8%;
+    bottom: 30%;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: 0.9rem;
+    opacity: 0.66;
+    pointer-events: none;
+  }
+
+  .pe-sandbox__chip-package {
+    display: grid;
+    place-items: center;
+    width: clamp(8rem, 18vw, 12rem);
+    aspect-ratio: 1.8 / 1;
+    border-radius: 1rem;
+    border: 1px solid color-mix(in srgb, var(--pesb-ghost) 30%, transparent);
+    background:
+      linear-gradient(180deg, color-mix(in srgb, var(--pesb-ghost) 10%, transparent), transparent 72%),
+      color-mix(in srgb, var(--bg-subtle) 48%, transparent);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--border) 30%, transparent);
+  }
+
+  .pe-sandbox__chip-die {
+    width: 44%;
+    aspect-ratio: 1.25 / 1;
+    border-radius: 0.55rem;
+    border: 1px solid color-mix(in srgb, var(--pesb-gold) 34%, transparent);
+    background:
+      linear-gradient(180deg, color-mix(in srgb, var(--pesb-gold) 14%, transparent), transparent 76%),
+      color-mix(in srgb, var(--pesb-blue) 12%, transparent);
+  }
+
+  .pe-sandbox__chip-hbm {
+    display: block;
+    height: 1.2rem;
+    border-radius: 999px;
+    border: 1px solid color-mix(in srgb, var(--pesb-blue) 28%, transparent);
+    background:
+      linear-gradient(90deg, color-mix(in srgb, var(--pesb-blue) 18%, transparent), transparent),
+      color-mix(in srgb, var(--bg-subtle) 40%, transparent);
+  }
+
+  .pe-sandbox__chip-hbm--left {
+    justify-self: end;
+    width: clamp(4rem, 12vw, 7rem);
+  }
+
+  .pe-sandbox__chip-hbm--right {
+    justify-self: start;
+    width: clamp(4rem, 12vw, 7rem);
+  }
+
+  .pe-sandbox__slice {
+    position: absolute;
+    top: 14%;
+    bottom: 20%;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--pesb-blue) 24%, transparent);
+    border: 1px solid color-mix(in srgb, var(--pesb-blue) 26%, transparent);
+    transition: opacity 0.24s ease, width 0.24s ease;
+  }
+
+  .pe-sandbox__slice.is-highlight {
+    background: linear-gradient(180deg, color-mix(in srgb, var(--pesb-gold) 34%, transparent), color-mix(in srgb, var(--pesb-blue) 26%, transparent));
+    border-color: color-mix(in srgb, var(--pesb-gold) 32%, transparent);
+  }
+
+  .pe-sandbox__request {
+    position: absolute;
+    left: 6%;
+    right: 6%;
+    bottom: 12%;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+  }
+
+  .pe-sandbox__request-input,
+  .pe-sandbox__request-output {
+    display: block;
+    height: 0.95rem;
+    border-radius: 999px;
+  }
+
+  .pe-sandbox__request-input {
+    background: color-mix(in srgb, var(--pesb-blue) 26%, transparent);
+    border: 1px solid color-mix(in srgb, var(--pesb-blue) 36%, transparent);
+  }
+
+  .pe-sandbox__request-output {
+    background: color-mix(in srgb, var(--pesb-gold) 26%, transparent);
+    border: 1px solid color-mix(in srgb, var(--pesb-gold) 36%, transparent);
+  }
+
+  .pe-sandbox__microstats,
+  .pe-sandbox__metrics {
+    display: grid;
+    gap: 0.75rem;
+  }
+
+  .pe-sandbox__microstats {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    margin-top: 0.75rem;
+  }
+
+  .pe-sandbox__microstat,
+  .pe-sandbox__metric {
+    display: grid;
+    gap: 0.2rem;
+    padding: 0.75rem 0.85rem;
+    border-radius: 1rem;
+    border: 1px solid color-mix(in srgb, var(--border) 84%, transparent);
+    background: color-mix(in srgb, var(--bg-subtle) 60%, transparent);
+  }
+
+  .pe-sandbox__microstat span,
+  .pe-sandbox__metric span {
+    font-size: 0.72rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--dim);
+  }
+
+  .pe-sandbox__microstat strong,
+  .pe-sandbox__metric strong {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .pe-sandbox__metrics {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .pe-sandbox__breakdown-bar {
+    display: flex;
+    height: 0.8rem;
+    margin-top: 0.75rem;
+    overflow: hidden;
+    border-radius: 999px;
+    border: 1px solid color-mix(in srgb, var(--border) 82%, transparent);
+    background: color-mix(in srgb, var(--bg-subtle) 52%, transparent);
+  }
+
+  .pe-sandbox__segment {
+    display: block;
+    height: 100%;
+  }
+
+  .pe-sandbox__segment--chip {
+    background: color-mix(in srgb, var(--pesb-gold) 58%, transparent);
+  }
+
+  .pe-sandbox__segment--host {
+    background: color-mix(in srgb, var(--pesb-host) 58%, transparent);
+  }
+
+  .pe-sandbox__segment--reserve {
+    background: color-mix(in srgb, var(--pesb-reserve) 58%, transparent);
+  }
+
+  .pe-sandbox__segment--overhead {
+    background: color-mix(in srgb, var(--pesb-overhead) 62%, transparent);
+  }
+
+  .pe-sandbox__breakdown-list {
+    display: grid;
+    gap: 0.55rem;
+    margin: 0.75rem 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .pe-sandbox__breakdown-list li {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 0.55rem;
+    align-items: center;
+    font-size: 0.84rem;
+  }
+
+  .pe-sandbox__breakdown-list strong {
+    font-size: 0.88rem;
+  }
+
+  .pe-sandbox__breakdown-swatch {
+    width: 0.85rem;
+    height: 0.85rem;
+    border-radius: 0.2rem;
+  }
+
+  .pe-sandbox__note {
+    font-size: 0.82rem;
+  }
+
   @media (max-width: 1120px) {
+    .pe-sandbox__layout,
     .pe8-layout,
     .pe7-layout {
       grid-template-columns: 1fr;
@@ -7815,6 +8182,8 @@ import { PromptEnergyStory } from '@/components/prompt-energy/PromptEnergyStory'
   }
 
   @media (max-width: 980px) {
+    .pe-sandbox__microstats,
+    .pe-sandbox__metrics,
     .pe8-stage__metrics,
     .pe8-boundary__cards,
     .pe8-compare__cards--three,
@@ -7829,11 +8198,17 @@ import { PromptEnergyStory } from '@/components/prompt-energy/PromptEnergyStory'
   }
 
   @media (max-width: 720px) {
+    .pe-sandbox {
+      padding: 1rem;
+    }
+
+    .pe-sandbox__hero-topline,
     .pe8-stage,
     .pe7-stage {
       padding: 0.9rem;
     }
 
+    .pe-sandbox__button-row,
     .pe8-stage__topline,
     .pe8-stage__controls,
     .pe8-stage__plane-note,
@@ -7851,6 +8226,8 @@ import { PromptEnergyStory } from '@/components/prompt-energy/PromptEnergyStory'
       align-items: flex-start;
     }
 
+    .pe-sandbox__microstats,
+    .pe-sandbox__metrics,
     .pe8-stage__metrics,
     .pe8-ledger__metrics,
     .pe8-compare__cards--two,
@@ -8007,6 +8384,7 @@ import { PromptEnergyStory } from '@/components/prompt-energy/PromptEnergyStory'
     .pe8-stage__toggle,
     .pe8-stage__follow,
     .pe8-boundary__toggle,
+    .pe-sandbox__button,
     .pe8-timeline__slice,
     .pe8-timeline__prompt-input,
     .pe8-timeline__prompt-output,
@@ -8016,7 +8394,8 @@ import { PromptEnergyStory } from '@/components/prompt-energy/PromptEnergyStory'
     .pe8-frontier__path,
     .pe8-frontier__point,
     .pe8-cost__bar span,
-    .pe8-summary__chip {
+    .pe8-summary__chip,
+    .pe-sandbox__slice {
       transition: none !important;
       animation: none !important;
     }
