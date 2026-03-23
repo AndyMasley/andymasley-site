@@ -20,6 +20,7 @@ import {
   RackXRayView,
 } from './PromptEnergySceneTwoViews';
 import {
+  PromptEnergySceneBridge,
   PromptEnergyScenePrimer,
   PromptEnergySceneTakeaway,
 } from './PromptEnergyLearningLayer';
@@ -97,7 +98,7 @@ export function PromptEnergySceneTwo({ boundary }: SceneTwoProps) {
   ));
   const boundaryOption = BOUNDARY_OPTIONS.find(option => option.key === boundary) ?? BOUNDARY_OPTIONS[2];
   const currentViewLabel = SCENE_TWO_VIEW_OPTIONS.find(option => option.key === currentView)?.label ?? currentView;
-  const progressLabel = `Beat ${activeBeatIndex + 1} of ${SCENE_TWO_BEATS.length}`;
+  const progressLabel = `Step ${activeBeatIndex + 1} of ${SCENE_TWO_BEATS.length}`;
   const beatOrder = useMemo(() => SCENE_TWO_BEATS.map(beat => beat.id), []);
   const planeNote = SCENE_TWO_PLANE_NOTES[activeBeat.overlayMode];
 
@@ -302,6 +303,7 @@ export function PromptEnergySceneTwo({ boundary }: SceneTwoProps) {
       </div>
 
       <PromptEnergyScenePrimer scene="scene-2" />
+      <PromptEnergySceneBridge scene="scene-2" />
 
       <div className="pe2-layout">
         <div className="pe2-steps">
@@ -315,7 +317,7 @@ export function PromptEnergySceneTwo({ boundary }: SceneTwoProps) {
               data-step-index={index}
               aria-labelledby={`pe2-step-title-${beat.id}`}
             >
-              <div className="pe2-step__meta">{beat.label}</div>
+              <div className="pe2-step__meta">{beat.label.replace('Beat', 'Step')}</div>
               <h3 className="pe2-step__title" id={`pe2-step-title-${beat.id}`}>
                 {beat.title}
               </h3>

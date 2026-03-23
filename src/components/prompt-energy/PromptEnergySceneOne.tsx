@@ -174,7 +174,7 @@ export function PromptEnergySceneOne({ boundary, onBoundaryChange }: SceneOnePro
 
   const displayedPower = useTweenedNumber(totalPower);
   const displayedWh = useTweenedNumber(cumulativeWh, 420);
-  const progressLabel = `Beat ${activeBeatIndex + 1} of ${SCENE_ONE_BEATS.length}`;
+  const progressLabel = `Step ${activeBeatIndex + 1} of ${SCENE_ONE_BEATS.length}`;
 
   useEffect(() => {
     window.dispatchEvent(new CustomEvent('prompt-energy:scene-ready', {
@@ -265,7 +265,7 @@ export function PromptEnergySceneOne({ boundary, onBoundaryChange }: SceneOnePro
               data-step-index={index}
               aria-labelledby={`pe-step-title-${beat.id}`}
             >
-              <div className="pe-step__meta">{beat.label}</div>
+              <div className="pe-step__meta">{beat.label.replace('Beat', 'Step')}</div>
               <h3 className="pe-step__title" id={`pe-step-title-${beat.id}`}>
                 {beat.title}
               </h3>

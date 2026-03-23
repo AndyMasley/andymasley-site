@@ -21,6 +21,7 @@ import {
   TBTBarView,
 } from './PromptEnergySceneSixViews';
 import {
+  PromptEnergySceneBridge,
   PromptEnergyScenePrimer,
   PromptEnergySceneTakeaway,
 } from './PromptEnergyLearningLayer';
@@ -90,7 +91,7 @@ export function PromptEnergySceneSix({ boundary }: SceneSixProps) {
   const focusCopy = SCENE_SIX_FOCUS_COPY[activeFocus];
   const planeNote = SCENE_SIX_PLANE_NOTES[activeBeat.overlayMode];
   const boundaryOption = BOUNDARY_OPTIONS.find(option => option.key === boundary) ?? BOUNDARY_OPTIONS[2];
-  const progressLabel = `Beat ${activeBeatIndex + 1} of ${SCENE_SIX_BEATS.length}`;
+  const progressLabel = `Step ${activeBeatIndex + 1} of ${SCENE_SIX_BEATS.length}`;
   const beatOrder = useMemo(() => SCENE_SIX_BEATS.map(beat => beat.id), []);
 
   const beatAtLeast = (beatId: string) => beatOrder.indexOf(activeBeat.id) >= beatOrder.indexOf(beatId);
@@ -216,6 +217,7 @@ export function PromptEnergySceneSix({ boundary }: SceneSixProps) {
       </div>
 
       <PromptEnergyScenePrimer scene="scene-6" />
+      <PromptEnergySceneBridge scene="scene-6" />
 
       <div className="pe6-layout">
         <div className="pe6-steps">
@@ -229,7 +231,7 @@ export function PromptEnergySceneSix({ boundary }: SceneSixProps) {
               data-step-index={index}
               aria-labelledby={`pe6-step-title-${beat.id}`}
             >
-              <div className="pe6-step__meta">{beat.label}</div>
+              <div className="pe6-step__meta">{beat.label.replace('Beat', 'Step')}</div>
               <h3 className="pe6-step__title" id={`pe6-step-title-${beat.id}`}>
                 {beat.title}
               </h3>

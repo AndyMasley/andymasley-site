@@ -438,6 +438,86 @@ import { PromptEnergyStory } from '@/components/prompt-energy/PromptEnergyStory'
     text-transform: uppercase;
   }
 
+  .pe-bridge,
+  .pe-faq {
+    margin: 0 0 1.35rem;
+    padding: 0.95rem 1rem;
+    border-radius: 1rem;
+    border: 1px solid color-mix(in srgb, var(--border) 86%, transparent);
+    background: color-mix(in srgb, var(--bg-subtle) 64%, transparent);
+    box-shadow: 0 16px 36px -34px rgba(26, 25, 24, 0.22);
+  }
+
+  .pe-bridge__header,
+  .pe-faq__header {
+    max-width: 48rem;
+    margin-bottom: 0.8rem;
+  }
+
+  .pe-bridge__eyebrow,
+  .pe-faq__eyebrow {
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--dim);
+    font-family: var(--font-body);
+  }
+
+  .pe-bridge__header h3,
+  .pe-faq__header h2 {
+    margin: 0.3rem 0 0.45rem;
+    font-family: var(--font-editorial);
+    font-size: clamp(1.2rem, 1.08rem + 0.35vw, 1.55rem);
+    line-height: 1.16;
+  }
+
+  .pe-bridge__header p,
+  .pe-faq__header p,
+  .pe-bridge__block p,
+  .pe-faq__item p {
+    margin: 0;
+    font-size: 0.94rem;
+    line-height: 1.66;
+    color: var(--text-secondary);
+  }
+
+  .pe-bridge__grid,
+  .pe-faq__grid {
+    display: grid;
+    gap: 0.8rem;
+  }
+
+  .pe-bridge__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .pe-faq__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .pe-bridge__block,
+  .pe-faq__item {
+    padding: 0.8rem 0.85rem;
+    border-radius: 0.9rem;
+    border: 1px solid color-mix(in srgb, var(--border) 82%, transparent);
+    background: color-mix(in srgb, var(--bg-subtle) 56%, transparent);
+  }
+
+  .pe-bridge__block strong {
+    display: block;
+    margin-bottom: 0.35rem;
+    font-size: 0.8rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  .pe-faq__item h3 {
+    margin: 0 0 0.4rem;
+    font-family: var(--font-editorial);
+    font-size: 1rem;
+    line-height: 1.2;
+  }
+
   .pe-scene-one__sticky,
   .pe2-sticky,
   .pe3-sticky,
@@ -8573,6 +8653,8 @@ import { PromptEnergyStory } from '@/components/prompt-energy/PromptEnergyStory'
 
   @media (max-width: 980px) {
     .pe-learn__two-up,
+    .pe-bridge__grid,
+    .pe-faq__grid,
     .pe-learning-card__grid,
     .pe-learning-card__grid--two,
     .pe-sandbox__microstats,

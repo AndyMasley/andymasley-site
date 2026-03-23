@@ -18,6 +18,7 @@ import {
   TrayRackView,
 } from './PromptEnergySceneSevenViews';
 import {
+  PromptEnergySceneBridge,
   PromptEnergyScenePrimer,
   PromptEnergySceneTakeaway,
 } from './PromptEnergyLearningLayer';
@@ -85,7 +86,7 @@ export function PromptEnergySceneSeven({ boundary }: SceneSevenProps) {
   const focusCopy = SCENE_SEVEN_FOCUS_COPY[activeFocus];
   const planeNote = SCENE_SEVEN_PLANE_NOTES[activeBeat.overlayMode];
   const boundaryOption = BOUNDARY_OPTIONS.find(option => option.key === boundary) ?? BOUNDARY_OPTIONS[2];
-  const progressLabel = `Beat ${activeBeatIndex + 1} of ${SCENE_SEVEN_BEATS.length}`;
+  const progressLabel = `Step ${activeBeatIndex + 1} of ${SCENE_SEVEN_BEATS.length}`;
   const beatOrder = useMemo(() => SCENE_SEVEN_BEATS.map(beat => beat.id), []);
 
   const beatAtLeast = (beatId: string) => beatOrder.indexOf(activeBeat.id) >= beatOrder.indexOf(beatId);
@@ -195,6 +196,7 @@ export function PromptEnergySceneSeven({ boundary }: SceneSevenProps) {
       </div>
 
       <PromptEnergyScenePrimer scene="scene-7" />
+      <PromptEnergySceneBridge scene="scene-7" />
 
       <div className="pe7-layout">
         <div className="pe7-steps">
@@ -208,7 +210,7 @@ export function PromptEnergySceneSeven({ boundary }: SceneSevenProps) {
               data-step-index={index}
               aria-labelledby={`pe7-step-title-${beat.id}`}
             >
-              <div className="pe7-step__meta">{beat.label}</div>
+              <div className="pe7-step__meta">{beat.label.replace('Beat', 'Step')}</div>
               <h3 className="pe7-step__title" id={`pe7-step-title-${beat.id}`}>
                 {beat.title}
               </h3>

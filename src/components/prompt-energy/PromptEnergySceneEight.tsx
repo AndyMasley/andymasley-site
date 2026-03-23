@@ -19,6 +19,7 @@ import {
   SummaryStripView,
 } from './PromptEnergySceneEightViews';
 import {
+  PromptEnergySceneBridge,
   PromptEnergyScenePrimer,
   PromptEnergySceneTakeaway,
 } from './PromptEnergyLearningLayer';
@@ -96,7 +97,7 @@ export function PromptEnergySceneEight({
   const activeFocus = hoveredFocus ?? activeBeat.highlighted;
   const focusCopy = SCENE_EIGHT_FOCUS_COPY[activeFocus];
   const planeNote = SCENE_EIGHT_PLANE_NOTES[activeBeat.overlayMode];
-  const progressLabel = `Beat ${activeBeatIndex + 1} of ${SCENE_EIGHT_BEATS.length}`;
+  const progressLabel = `Step ${activeBeatIndex + 1} of ${SCENE_EIGHT_BEATS.length}`;
   const inheritedBoundary = sceneSevenSeed?.boundary ?? boundary;
   const boundaryMetricLabel =
     activeBeat.overlayMode === 'boundary'
@@ -154,6 +155,7 @@ export function PromptEnergySceneEight({
       </div>
 
       <PromptEnergyScenePrimer scene="scene-8" />
+      <PromptEnergySceneBridge scene="scene-8" />
 
       <div className="pe8-layout">
         <div className="pe8-steps">
@@ -167,7 +169,7 @@ export function PromptEnergySceneEight({
               data-step-index={index}
               aria-labelledby={`pe8-step-title-${beat.id}`}
             >
-              <div className="pe8-step__meta">{beat.label}</div>
+              <div className="pe8-step__meta">{beat.label.replace('Beat', 'Step')}</div>
               <h3 className="pe8-step__title" id={`pe8-step-title-${beat.id}`}>
                 {beat.title}
               </h3>

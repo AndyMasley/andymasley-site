@@ -19,6 +19,7 @@ import {
   TokenLayerGridView,
 } from './PromptEnergySceneFiveViews';
 import {
+  PromptEnergySceneBridge,
   PromptEnergyScenePrimer,
   PromptEnergySceneTakeaway,
 } from './PromptEnergyLearningLayer';
@@ -85,7 +86,7 @@ export function PromptEnergySceneFive({ boundary }: SceneFiveProps) {
   const focusCopy = SCENE_FIVE_FOCUS_COPY[activeFocus];
   const planeNote = SCENE_FIVE_PLANE_NOTES[activeBeat.overlayMode];
   const boundaryOption = BOUNDARY_OPTIONS.find(option => option.key === boundary) ?? BOUNDARY_OPTIONS[2];
-  const progressLabel = `Beat ${activeBeatIndex + 1} of ${SCENE_FIVE_BEATS.length}`;
+  const progressLabel = `Step ${activeBeatIndex + 1} of ${SCENE_FIVE_BEATS.length}`;
   const beatOrder = useMemo(() => SCENE_FIVE_BEATS.map(beat => beat.id), []);
 
   const beatAtLeast = (beatId: string) => beatOrder.indexOf(activeBeat.id) >= beatOrder.indexOf(beatId);
@@ -174,6 +175,7 @@ export function PromptEnergySceneFive({ boundary }: SceneFiveProps) {
       </div>
 
       <PromptEnergyScenePrimer scene="scene-5" />
+      <PromptEnergySceneBridge scene="scene-5" />
 
       <div className="pe5-layout">
         <div className="pe5-steps">
@@ -187,7 +189,7 @@ export function PromptEnergySceneFive({ boundary }: SceneFiveProps) {
               data-step-index={index}
               aria-labelledby={`pe5-step-title-${beat.id}`}
             >
-              <div className="pe5-step__meta">{beat.label}</div>
+              <div className="pe5-step__meta">{beat.label.replace('Beat', 'Step')}</div>
               <h3 className="pe5-step__title" id={`pe5-step-title-${beat.id}`}>
                 {beat.title}
               </h3>

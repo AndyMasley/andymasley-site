@@ -4,8 +4,11 @@ import {
   BEGINNER_GLOSSARY,
   BEGINNER_OVERVIEW_CARDS,
   BEGINNER_READING_RULES,
+  LEARNING_FAQ_BLOCKS,
+  SCENE_BRIDGE_CARDS,
   SCENE_LEARNING_CARDS,
   STORY_JOURNEY_STEPS,
+  type FAQBlock,
   type LearningSceneKey,
 } from './promptEnergyLearningData';
 
@@ -286,3 +289,64 @@ export function PromptEnergySceneTakeaway({ scene }: PromptEnergyScenePrimerProp
     </aside>
   );
 }
+
+export function PromptEnergySceneBridge({ scene }: PromptEnergyScenePrimerProps) {
+  const card = SCENE_BRIDGE_CARDS[scene];
+
+  if (!card) return null;
+
+  return (
+    <aside className="pe-bridge" aria-label="Scene transition guide">
+      <div className="pe-bridge__header">
+        <div className="pe-bridge__eyebrow">What changed in this scene</div>
+        <h3>This scene shifts the scale and the kind of truth you are looking at.</h3>
+      </div>
+
+      <div className="pe-bridge__grid">
+        <div className="pe-bridge__block">
+          <strong>What changed</strong>
+          <p>{card.changed}</p>
+        </div>
+        <div className="pe-bridge__block">
+          <strong>What is real hardware here</strong>
+          <p>{card.realHardware}</p>
+        </div>
+        <div className="pe-bridge__block">
+          <strong>What is a teaching overlay</strong>
+          <p>{card.conceptualOverlay}</p>
+        </div>
+        <div className="pe-bridge__block">
+          <strong>Why this matters</strong>
+          <p>{card.whyItMatters}</p>
+        </div>
+      </div>
+    </aside>
+  );
+}
+
+interface PromptEnergyFAQBlockProps {
+  block: FAQBlock;
+}
+
+export function PromptEnergyFAQBlock({ block }: PromptEnergyFAQBlockProps) {
+  return (
+    <section className="pe-faq" aria-labelledby={`pe-faq-${block.title}`}>
+      <div className="pe-faq__header">
+        <div className="pe-faq__eyebrow">{block.eyebrow}</div>
+        <h2 id={`pe-faq-${block.title}`}>{block.title}</h2>
+        <p>{block.intro}</p>
+      </div>
+
+      <div className="pe-faq__grid">
+        {block.items.map(item => (
+          <article key={item.question} className="pe-faq__item">
+            <h3>{item.question}</h3>
+            <p>{item.answer}</p>
+          </article>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+export const PROMPT_ENERGY_FAQ_BLOCKS = LEARNING_FAQ_BLOCKS;

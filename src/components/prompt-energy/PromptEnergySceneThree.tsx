@@ -15,6 +15,7 @@ import {
   TrayMiniMap,
 } from './PromptEnergySceneThreeViews';
 import {
+  PromptEnergySceneBridge,
   PromptEnergyScenePrimer,
   PromptEnergySceneTakeaway,
 } from './PromptEnergyLearningLayer';
@@ -69,7 +70,7 @@ export function PromptEnergySceneThree({ boundary }: SceneThreeProps) {
   const focusCopy = SCENE_THREE_FOCUS_COPY[activeFocus];
   const planeNote = SCENE_THREE_PLANE_NOTES[activeBeat.overlayMode];
   const boundaryOption = BOUNDARY_OPTIONS.find(option => option.key === boundary) ?? BOUNDARY_OPTIONS[2];
-  const progressLabel = `Beat ${activeBeatIndex + 1} of ${SCENE_THREE_BEATS.length}`;
+  const progressLabel = `Step ${activeBeatIndex + 1} of ${SCENE_THREE_BEATS.length}`;
   const beatOrder = useMemo(() => SCENE_THREE_BEATS.map(beat => beat.id), []);
   const xrayDepth = depthOverride ?? activeBeat.xrayDepth;
   const moduleEnvelopeW = activeBeat.moduleEnvelopeW[coolingMode];
@@ -159,6 +160,7 @@ export function PromptEnergySceneThree({ boundary }: SceneThreeProps) {
       </div>
 
       <PromptEnergyScenePrimer scene="scene-3" />
+      <PromptEnergySceneBridge scene="scene-3" />
 
       <div className="pe3-layout">
         <div className="pe3-steps">
@@ -172,7 +174,7 @@ export function PromptEnergySceneThree({ boundary }: SceneThreeProps) {
               data-step-index={index}
               aria-labelledby={`pe3-step-title-${beat.id}`}
             >
-              <div className="pe3-step__meta">{beat.label}</div>
+              <div className="pe3-step__meta">{beat.label.replace('Beat', 'Step')}</div>
               <h3 className="pe3-step__title" id={`pe3-step-title-${beat.id}`}>
                 {beat.title}
               </h3>

@@ -15,6 +15,7 @@ import {
   type SandboxServiceMode,
 } from './promptEnergySandboxData';
 import {
+  PromptEnergySceneBridge,
   PromptEnergyScenePrimer,
   PromptEnergySceneTakeaway,
 } from './PromptEnergyLearningLayer';
@@ -258,6 +259,7 @@ export function PromptEnergySandbox({
       </div>
 
       <PromptEnergyScenePrimer scene="sandbox" />
+      <PromptEnergySceneBridge scene="sandbox" />
 
       <div className="pe-sandbox__layout">
         <div className="pe-sandbox__controls">

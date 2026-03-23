@@ -34,6 +34,25 @@ export interface SceneLearningCard {
   takeaway: string;
 }
 
+export interface SceneBridgeCard {
+  changed: string;
+  realHardware: string;
+  conceptualOverlay: string;
+  whyItMatters: string;
+}
+
+export interface FAQItem {
+  question: string;
+  answer: string;
+}
+
+export interface FAQBlock {
+  eyebrow: string;
+  title: string;
+  intro: string;
+  items: FAQItem[];
+}
+
 export const BEGINNER_OVERVIEW_CARDS = [
   {
     title: 'Who this is for',
@@ -369,5 +388,206 @@ export const SCENE_LEARNING_CARDS: Record<LearningSceneKey, SceneLearningCard> =
       'The sandbox is a teaching model built from published examples. It is meant to show direction and mechanism, not promise one universal number.',
     takeaway:
       'By the end of the sandbox, you should be able to explain why short shared work can be cheap and long repeated work can become expensive.',
+  },
+};
+
+export const SCENE_BRIDGE_CARDS: Partial<Record<LearningSceneKey, SceneBridgeCard>> = {
+  'scene-2': {
+    changed:
+      'We just moved from the app-side request path into the first big physical object: the rack that contains the shared serving hardware.',
+    realHardware:
+      'The rack, trays, networking, power equipment, manifolds, and service side are all real physical hardware.',
+    conceptualOverlay:
+      'The colored paths simplify how data, power, airflow, and coolant move. They are teaching overlays, not literal wiring diagrams.',
+    whyItMatters:
+      'This is the first time the user can see how tiny one prompt is compared with the larger machine that answers it.',
+  },
+  'scene-3': {
+    changed:
+      'We zoomed from the rack into one tray and then into the board, package, memory stacks, and cooling stack around one selected module.',
+    realHardware:
+      'The tray, board, package, HBM stacks, lid, thermal interface, and cold plate or heatsink are real physical layers.',
+    conceptualOverlay:
+      'The x-ray depth and the colored paths help separate those layers visually. They are meant to explain the stack, not mimic every hidden trace.',
+    whyItMatters:
+      'Beginners usually struggle most with package versus die. This scene makes the nesting physically legible before the die opens.',
+  },
+  'scene-4': {
+    changed:
+      'We left the package context behind and opened the die itself, which is the actual silicon chip inside the package.',
+    realHardware:
+      'The die floorplan, repeated compute districts, shared cache region, memory gateways, and edge links are hardware structure.',
+    conceptualOverlay:
+      'The model-layer overlay is a software view placed next to the hardware map so the user can see hardware reuse without confusing the two.',
+    whyItMatters:
+      'This scene fixes the wrong mental model that one model layer lives in one physical place on the chip.',
+  },
+  'scene-5': {
+    changed:
+      'The static die map now comes alive as the full prompt passes through every layer before the answer begins.',
+    realHardware:
+      'The same die map and memory hierarchy from Scene 4 are still the hardware truth underneath this scene.',
+    conceptualOverlay:
+      'The token-by-layer grid and attention inset are logical views that explain model behavior rather than literal etched structures on the chip.',
+    whyItMatters:
+      'This is where users first feel why the system does a lot of work before showing the first answer token.',
+  },
+  'scene-6': {
+    changed:
+      'The wide prompt pass collapses into a repeated one-token loop, and the stored cache becomes the star of the scene.',
+    realHardware:
+      'The die, cache growth, and memory-heavy paths are still hardware and systems behavior, even though the answer ribbon is now the most visible object.',
+    conceptualOverlay:
+      'The answer ribbon and token chooser explain what the user sees, while the cache wall and die pulses explain what the system is doing underneath.',
+    whyItMatters:
+      'This is the key step for understanding why long answers often cost more than people expect.',
+  },
+  'scene-7': {
+    changed:
+      'The electrical work from the earlier scenes is now being followed as heat moving out through the hardware stack and cooling loops.',
+    realHardware:
+      'The cold plate, tubing, quick disconnects, rack manifold, CDU, and facility loop are real physical equipment in the cooling path.',
+    conceptualOverlay:
+      'The heat field stays relative on purpose. It shows where the heat goes without pretending to know exact public per-zone temperatures.',
+    whyItMatters:
+      'This scene answers where the coolant is, where the air is, and how the heat actually leaves the machine.',
+  },
+  'scene-8': {
+    changed:
+      'The physical story becomes an allocation story: the same machine remains large, but the prompt is now shown as one shared economic slice.',
+    realHardware:
+      'The rack, chip, and cooling system are still the real foundation underneath the economics. The story has not stopped being physical.',
+    conceptualOverlay:
+      'The prompt slice, stacked bars, and boundary cards are accounting views built on top of the earlier hardware scenes.',
+    whyItMatters:
+      'Without this step, the earlier hardware detail can feel disconnected from the final question of why one prompt is often cheap.',
+  },
+  sandbox: {
+    changed:
+      'The fixed story turns into a live model you can manipulate directly by changing prompt shape, sharing, architecture, and accounting boundary.',
+    realHardware:
+      'The chip silhouette and service slice keep the sandbox tied to the same machine story you just learned.',
+    conceptualOverlay:
+      'The numbers are a teaching model synthesized from published examples. They show mechanism and direction, not a universal provider promise.',
+    whyItMatters:
+      'A beginner can finally test the story instead of just reading it.',
+  },
+};
+
+export const LEARNING_FAQ_BLOCKS: Record<
+  'basics' | 'silicon' | 'serving' | 'economics',
+  FAQBlock
+> = {
+  basics: {
+    eyebrow: 'Quick FAQ',
+    title: 'Basic hardware questions so far',
+    intro:
+      'These are the beginner questions most people still have after the first rack and tray scenes.',
+    items: [
+      {
+        question: 'What is a rack?',
+        answer:
+          'A rack is a tall cabinet full of computing equipment. It is the big shared machine frame that holds trays, power hardware, networking, and cooling connections.',
+      },
+      {
+        question: 'What is a tray?',
+        answer:
+          'A tray is a shelf-like unit that slides into the rack. It holds boards and the compute hardware used by the request.',
+      },
+      {
+        question: 'What is the difference between a package and a die?',
+        answer:
+          'The package is the larger physical module the cooler touches. The die is the actual silicon chip inside that package.',
+      },
+      {
+        question: 'What is HBM?',
+        answer:
+          'HBM is very fast memory placed very close to the compute die so the chip can move data quickly.',
+      },
+    ],
+  },
+  silicon: {
+    eyebrow: 'Quick FAQ',
+    title: 'Questions about the chip and the prompt pass',
+    intro:
+      'These answers help beginners bridge the jump from hardware layout to model behavior.',
+    items: [
+      {
+        question: 'Are model layers physically etched into different parts of the chip?',
+        answer:
+          'No. The model’s layers are software structure. The same hardware districts on the chip are reused again and again as each layer runs.',
+      },
+      {
+        question: 'Why does the first token take longer?',
+        answer:
+          'Because the system has to process the full prompt first. That wide prefill pass happens before the first answer token can appear.',
+      },
+      {
+        question: 'What is the KV cache in plain language?',
+        answer:
+          'It is saved attention state. The model stores it so later answer tokens can reuse earlier work instead of recomputing the whole prompt history every time.',
+      },
+      {
+        question: 'Why do long prompts feel heavier?',
+        answer:
+          'Long prompts widen prefill because the whole prompt has to cross every layer before the answer begins.',
+      },
+    ],
+  },
+  serving: {
+    eyebrow: 'Quick FAQ',
+    title: 'Questions about answer generation and memory',
+    intro:
+      'This is where beginners usually start asking why long answers feel slow or expensive.',
+    items: [
+      {
+        question: 'Why do long answers cost more?',
+        answer:
+          'Because the model repeats the decode loop once per emitted token. More output tokens mean more repeated passes through the model.',
+      },
+      {
+        question: 'Is the GPU only working on my answer?',
+        answer:
+          'Often no. Serving systems commonly batch and multiplex several users’ work together so the hardware stays busy.',
+      },
+      {
+        question: 'What is time-between-tokens?',
+        answer:
+          'It is the gap between one answer token and the next. It is what makes an answer stream feel smooth or choppy.',
+      },
+      {
+        question: 'Why does the cache keep growing?',
+        answer:
+          'Because each new answer token becomes part of the history the model will use on the next step.',
+      },
+    ],
+  },
+  economics: {
+    eyebrow: 'Quick FAQ',
+    title: 'Questions about cost, sharing, and accounting',
+    intro:
+      'These are the last beginner questions the economics scene is trying to answer.',
+    items: [
+      {
+        question: 'How can a giant machine make one prompt cheap?',
+        answer:
+          'Because one prompt is only a short slice of machine time inside a shared service, not the full cost of owning the whole machine by itself.',
+      },
+      {
+        question: 'Does product price equal electricity cost?',
+        answer:
+          'No. Electricity matters, but service price also depends on hardware cost, maintenance, reserve capacity, networking, software, and product decisions.',
+      },
+      {
+        question: 'What does the accounting boundary change?',
+        answer:
+          'It changes what you count: just the accelerator, the whole server, or the fuller service including reserve capacity and facility overhead.',
+      },
+      {
+        question: 'Why does batching help?',
+        answer:
+          'Because more requests can share the same machine moment, which spreads some fixed background work across more users and tokens.',
+      },
+    ],
   },
 };
