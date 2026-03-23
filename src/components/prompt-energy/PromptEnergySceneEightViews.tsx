@@ -108,8 +108,8 @@ export function BoundaryLedgerView({
       <div className="pe8-panel__eyebrow">Production boundary example</div>
       <div className="pe8-boundary__header">
         <div>
-          <div className="pe8-boundary__title">Gemini median text prompt</div>
-          <div className="pe8-boundary__caption">Same prompt, different accounting boundary.</div>
+          <div className="pe8-boundary__title">One measured production example</div>
+          <div className="pe8-boundary__caption">Same prompt, wider or narrower counting boundary.</div>
         </div>
         <div className="pe8-boundary__total">{SCENE_EIGHT_BOUNDARY_TOTALS[boundary].toFixed(2)} Wh</div>
       </div>
@@ -173,8 +173,8 @@ export function BoundaryLedgerView({
       </div>
 
       <div className="pe8-boundary__note">
-        Narrow accelerator-only estimate: {SCENE_EIGHT_GOOGLE_PRODUCTION_LEDGER.narrowWh.toFixed(2)} Wh.
-        Comprehensive production total: {SCENE_EIGHT_GOOGLE_PRODUCTION_LEDGER.comprehensiveWh.toFixed(2)} Wh.
+        Narrow chip-side estimate: {SCENE_EIGHT_GOOGLE_PRODUCTION_LEDGER.narrowWh.toFixed(2)} Wh.
+        Full production total: {SCENE_EIGHT_GOOGLE_PRODUCTION_LEDGER.comprehensiveWh.toFixed(2)} Wh.
       </div>
     </FocusCard>
   );
@@ -306,7 +306,7 @@ export function SharedMachineTimelineView({
           onFocus={() => onHover('shape')}
           onBlur={() => onHover(null)}
         >
-          <span>Prompt shape</span>
+          <span>Prompt and answer size</span>
           <strong>
             {inputTokens} in / {outputTokens} out
           </strong>
@@ -319,7 +319,7 @@ export function SharedMachineTimelineView({
           onFocus={() => onHover('sharing')}
           onBlur={() => onHover(null)}
         >
-          <span>Batch / sharing</span>
+          <span>Shared machine time</span>
           <strong>
             batch {batchSize}, {concurrencySlices} live slices
           </strong>
@@ -332,7 +332,7 @@ export function SharedMachineTimelineView({
           onFocus={() => onHover('reuse')}
           onBlur={() => onHover(null)}
         >
-          <span>Reuse</span>
+          <span>Already reused</span>
           <strong>{Math.round(prefixReuse * 100)}% prefix already computed</strong>
         </button>
         <button
@@ -343,7 +343,7 @@ export function SharedMachineTimelineView({
           onFocus={() => onHover('architecture')}
           onBlur={() => onHover(null)}
         >
-          <span>Active work</span>
+          <span>Model work active now</span>
           <strong>{Math.round(activeParameterShare * 100)}% of model active per token</strong>
         </button>
         <button
@@ -354,7 +354,7 @@ export function SharedMachineTimelineView({
           onFocus={() => onHover('latency')}
           onBlur={() => onHover(null)}
         >
-          <span>Latency reserve</span>
+          <span>Readiness for fast answers</span>
           <strong>{Math.round(latencyReserve * 100)}% readiness pressure</strong>
         </button>
       </div>
@@ -427,8 +427,8 @@ export function FactorCompareView({
             <span>Fresh suffix</span>
           </div>
           <p className="pe8-compare__note">
-            Shared system prompts, templates, and document prefixes can reuse precomputed KV
-            blocks instead of paying full prompt compute again.
+            Shared system prompts, templates, and document prefixes can reuse already-built
+            saved-history blocks instead of paying full prompt compute again.
           </p>
         </div>
       </FocusCard>
@@ -441,11 +441,11 @@ export function FactorCompareView({
         className="pe8-compare"
         focus="architecture"
         activeFocus={activeFocus}
-        label="Dense versus Mixture-of-Experts comparison."
+        label="Dense versus sparse-expert comparison."
         onHover={onHover}
       >
         <div className="pe8-panel__eyebrow">Architecture compare</div>
-        <div className="pe8-compare__title">Same big model story, different active work per token</div>
+        <div className="pe8-compare__title">Same big model story, different amount of work active on each token</div>
         <div className="pe8-compare__cards pe8-compare__cards--two">
           {SCENE_EIGHT_ARCHITECTURE_EXAMPLES.map(example => (
             <div key={example.key} className="pe8-compare__card">
@@ -616,14 +616,14 @@ export function FactorCompareView({
       <div className="pe8-compare__title">One prompt stays small even under a comprehensive boundary</div>
       <div className="pe8-compare__cards pe8-compare__cards--two">
         <div className="pe8-compare__card">
-          <strong>Active accelerators</strong>
+          <strong>Chip-side energy</strong>
           <div className="pe8-compare__metric">
             {SCENE_EIGHT_GOOGLE_PRODUCTION_LEDGER.activeAcceleratorsWh.toFixed(2)} Wh
           </div>
           <div className="pe8-compare__note">The narrowest chip-side part of the serving story.</div>
         </div>
         <div className="pe8-compare__card">
-          <strong>Full production total</strong>
+          <strong>Full production energy</strong>
           <div className="pe8-compare__metric">
             {SCENE_EIGHT_GOOGLE_PRODUCTION_LEDGER.comprehensiveWh.toFixed(2)} Wh
           </div>
@@ -685,7 +685,7 @@ export function ServiceCostView({
       onHover={onHover}
     >
       <div className="pe8-panel__eyebrow">Cost composition</div>
-      <div className="pe8-cost__title">Do not collapse these into one number</div>
+      <div className="pe8-cost__title">Do not treat these as the same number</div>
       <div className="pe8-cost__bars">
         {bars.map(bar => (
           <div key={bar.key} className="pe8-cost__bar-wrap">
@@ -719,7 +719,7 @@ export function SummaryStripView({
       onHover={onHover}
     >
       <div className="pe8-panel__eyebrow">Final assembled formula</div>
-      <div className="pe8-summary__title">Prompt cost is shaped by all of these together</div>
+      <div className="pe8-summary__title">This one slice changes for several reasons at once</div>
       <div className="pe8-summary__chips">
         {SCENE_EIGHT_SUMMARY_FACTORS.map(factor => (
           <span key={factor} className="pe8-summary__chip">

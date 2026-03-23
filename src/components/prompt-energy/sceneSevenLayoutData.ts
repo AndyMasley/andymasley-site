@@ -3,12 +3,12 @@ export const SCENE_SEVEN_STACK_SEGMENTS = [
   { id: 'attach', label: 'attach', y: 112, height: 16 },
   { id: 'substrate', label: 'substrate', y: 130, height: 24 },
   { id: 'die', label: 'die', y: 156, height: 34 },
-  { id: 'hbm-left', label: 'hbm', y: 154, height: 28 },
-  { id: 'hbm-right', label: 'hbm', y: 154, height: 28 },
+  { id: 'hbm-left', label: 'fast memory', y: 154, height: 28 },
+  { id: 'hbm-right', label: 'fast memory', y: 154, height: 28 },
   { id: 'lid', label: 'lid', y: 194, height: 24 },
-  { id: 'tim', label: 'tim', y: 220, height: 10 },
-  { id: 'coldplate-base', label: 'coldplate base', y: 232, height: 22 },
-  { id: 'coldplate-cover', label: 'coldplate cover', y: 256, height: 34 },
+  { id: 'tim', label: 'thermal layer', y: 220, height: 10 },
+  { id: 'coldplate-base', label: 'cold plate base', y: 232, height: 22 },
+  { id: 'coldplate-cover', label: 'cold plate cover', y: 256, height: 34 },
 ] as const;
 
 export const SCENE_SEVEN_CHANNELS = [
@@ -64,16 +64,16 @@ export const SCENE_SEVEN_RACK_ZONES = [
 ] as const;
 
 export const SCENE_SEVEN_CDU_ZONES = [
-  { id: 'cdu', label: 'CDU', x: 844, y: 88, width: 94, height: 92 },
-  { id: 'tcs-loop', label: 'technology cooling loop', x: 618, y: 18, width: 228, height: 132 },
-  { id: 'fws-loop', label: 'facility loop', x: 844, y: 182, width: 126, height: 116 },
-  { id: 'plant', label: 'facility plant', x: 902, y: 236, width: 78, height: 64 },
+  { id: 'cdu', label: 'cooling handoff box', x: 844, y: 88, width: 94, height: 92 },
+  { id: 'tcs-loop', label: 'rack cooling loop', x: 618, y: 18, width: 228, height: 132 },
+  { id: 'fws-loop', label: 'building loop', x: 844, y: 182, width: 126, height: 116 },
+  { id: 'plant', label: 'building cooling plant', x: 902, y: 236, width: 78, height: 64 },
 ] as const;
 
 export const SCENE_SEVEN_ENGINEER_METRICS = [
   { id: 'inlet-temp', label: 'inlet temperature', unit: 'C' },
   { id: 'outlet-temp', label: 'outlet temperature', unit: 'C' },
-  { id: 'delta-t', label: 'delta T', unit: 'C' },
+  { id: 'delta-t', label: 'temperature rise', unit: 'C' },
   { id: 'flow', label: 'flow rate', unit: 'L/min' },
   { id: 'supply-pressure', label: 'supply pressure', unit: 'kPa' },
   { id: 'return-pressure', label: 'return pressure', unit: 'kPa' },
@@ -81,7 +81,7 @@ export const SCENE_SEVEN_ENGINEER_METRICS = [
 ] as const;
 
 export const SCENE_SEVEN_LEAK_POINTS = [
-  { id: 'leak-qd', label: 'QD branch', x: 440, y: 58 },
-  { id: 'leak-cdu', label: 'CDU differential', x: 876, y: 66 },
+  { id: 'leak-qd', label: 'quick-disconnect branch', x: 440, y: 58 },
+  { id: 'leak-cdu', label: 'handoff-box pressure check', x: 876, y: 66 },
   { id: 'leak-rack', label: 'rack drip sensor', x: 734, y: 126 },
 ] as const;

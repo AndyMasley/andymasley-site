@@ -144,7 +144,7 @@ export function PromptEnergySandbox({
 
     const architectureStory =
       architectureMode === 'moe'
-        ? 'MoE reduces the active work per token because only a routed subset of experts lights up on each step.'
+        ? 'Sparse-expert mode reduces the active work per token because only a routed subset of the model lights up on each step.'
         : 'Dense mode keeps most of the model active on every token.';
 
     const deploymentStory =

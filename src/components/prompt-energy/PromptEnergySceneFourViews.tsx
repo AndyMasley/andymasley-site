@@ -305,7 +305,7 @@ export function DieFloorplanView({
               className="pe4-zone pe4-zone--memory"
               focus="memory"
               activeFocus={activeFocus}
-              label="Memory gateways at the die edge leading to on-package HBM."
+              label="Memory gateways at the die edge leading to the fast nearby memory on the package."
               onHover={onHover}
             />
             <FocusZone
@@ -334,7 +334,7 @@ export function DieFloorplanView({
                 className="pe4-zone pe4-zone--mig"
                 focus="mig"
                 activeFocus={activeFocus}
-                label="Optional MIG partition overlay."
+                label="Optional chip partition overlay."
                 onHover={onHover}
               />
             )}
@@ -361,7 +361,7 @@ export function SMCameoView({
   return (
     <div className="pe4-sm-pane">
       <div className="pe4-sm-pane__header">
-        <div className="pe4-sm-pane__title">SM cameo</div>
+        <div className="pe4-sm-pane__title">One small work tile</div>
         <div className="pe4-sm-pane__caption">One local worksite: control, tensor math, general math, scratchpad, and data movers.</div>
       </div>
 
@@ -390,12 +390,12 @@ export function SMCameoView({
 
         <div className="pe4-sm__notes">
           <div className="pe4-sm__note">
-            <strong>TMA</strong>
-            <span>Large tensor moves into shared memory.</span>
+            <strong>Fast data mover</strong>
+            <span>Large math inputs are staged into nearby fast memory.</span>
           </div>
           <div className="pe4-sm__note">
-            <strong>DSMEM</strong>
-            <span>Nearby sharing keeps cooperating blocks local.</span>
+            <strong>Local sharing</strong>
+            <span>Nearby work blocks can share data without leaving the neighborhood.</span>
           </div>
         </div>
 
@@ -403,14 +403,14 @@ export function SMCameoView({
           className="pe4-zone pe4-zone--sm"
           focus="sm"
           activeFocus={activeFocus}
-          label="One streaming multiprocessor with local control, tensor math, and scratchpad."
+          label="One small compute tile with local control, tensor math, general math, and fast nearby memory."
           onHover={onHover}
         />
         <FocusZone
           className="pe4-zone pe4-zone--sm-tensor"
           focus="tensor"
           activeFocus={activeFocus}
-          label="Tensor-heavy regions inside the SM cameo."
+          label="Tensor-heavy regions inside the small work tile."
           onHover={onHover}
         />
       </div>
@@ -431,22 +431,22 @@ export function SceneFourFactsCard({ productMode, showInterconnect, showMIG }: S
       <dl className="pe4-facts-card__grid">
         <div>
           <dt>Physical GH100</dt>
-          <dd>8 GPCs, 72 TPCs, 144 SMs, 6 HBM interfaces, 60 MB L2.</dd>
+          <dd>8 large districts, 72 medium tiles, 144 small work tiles, 6 fast-memory links, and 60 MB of shared on-chip cache.</dd>
         </div>
         <div>
           <dt>Shipping H100 SXM</dt>
-          <dd>132 SMs, 5 HBM3 stacks, 50 MB L2, over 3 TB/s HBM bandwidth.</dd>
+          <dd>132 small work tiles, 5 nearby memory stacks, 50 MB of shared cache, and over 3 TB/s of memory bandwidth.</dd>
         </div>
         {showInterconnect && (
           <div>
             <dt>Edge links</dt>
-            <dd>18 NVLink links, 900 GB/s total bandwidth when off-chip coordination matters.</dd>
+            <dd>18 high-speed chip-to-chip links, with up to 900 GB/s total bandwidth when work has to span several chips.</dd>
           </div>
         )}
         {showMIG && (
           <div>
             <dt>Partition overlay</dt>
-            <dd>Optional MIG slices show service carving without changing die geometry.</dd>
+            <dd>Optional chip slices show service carving without changing the die geometry.</dd>
           </div>
         )}
       </dl>

@@ -113,7 +113,7 @@ export function PromptStripView({ modeConfig, activeMode, showDecodeLane }: Prom
 
       {showDecodeLane && (
         <div className="pe5-prompt-pane__decode-lane">
-          <div className="pe5-prompt-pane__decode-label">decode lane can keep running between chunks</div>
+          <div className="pe5-prompt-pane__decode-label">answer generation can keep running between prompt blocks</div>
           <div className="pe5-prompt-pane__decode-track" aria-hidden="true">
             {SCENE_FIVE_DECODE_LANE_TICKS.map(tick => (
               <span key={tick.id} style={{ left: tick.left }} />
@@ -227,7 +227,7 @@ export function LayerInspectorView({ attentionMode, expanded }: LayerInspectorVi
   return (
     <div className={`pe5-inspector ${expanded ? 'is-expanded' : ''}`}>
       <div className="pe5-inspector__header">
-        <div className="pe5-inspector__title">Representative decoder layer</div>
+        <div className="pe5-inspector__title">One layer up close</div>
         <div className="pe5-inspector__caption">One layer, then collapse back into the full prompt sweep.</div>
       </div>
 
@@ -241,7 +241,7 @@ export function LayerInspectorView({ attentionMode, expanded }: LayerInspectorVi
       </div>
 
       <div className="pe5-attention">
-        <div className="pe5-attention__title">Causal attention inset</div>
+        <div className="pe5-attention__title">Backward-looking attention</div>
         <div className={`pe5-attention__matrix ${attentionMode === 'tiled' ? 'is-tiled' : ''}`}>
           {SCENE_FIVE_ATTENTION_CELLS.map(cell => (
             <span
@@ -263,7 +263,7 @@ export function LayerInspectorView({ attentionMode, expanded }: LayerInspectorVi
           ))}
         </div>
         <div className="pe5-attention__note">
-          Each position can attend to earlier positions and itself, not future ones. The tiled view hints at execution without pretending the whole matrix lives in HBM.
+          Each position can look at earlier positions and itself, not future ones. The tiled view hints at the real work without pretending the whole picture lives in memory as one giant object.
         </div>
       </div>
     </div>
@@ -294,8 +294,8 @@ export function CacheWallView({
   return (
     <div className="pe5-cache-pane">
       <div className="pe5-cache-pane__header">
-        <div className="pe5-cache-pane__title">KV-cache wall</div>
-        <div className="pe5-cache-pane__caption">Stored key and value state that later decode will reuse.</div>
+        <div className="pe5-cache-pane__title">Saved history wall</div>
+        <div className="pe5-cache-pane__caption">Saved key-and-value state that later answer steps will reuse.</div>
       </div>
 
       <div
@@ -352,8 +352,8 @@ export function PrefillDieView({
   return (
     <div className="pe5-die-pane">
       <div className="pe5-die-pane__header">
-        <div className="pe5-die-pane__title">Die activity during prefill</div>
-        <div className="pe5-die-pane__caption">The same die map from Scene 4, now used as a broad workload stage.</div>
+        <div className="pe5-die-pane__title">Chip activity during the prompt sweep</div>
+        <div className="pe5-die-pane__caption">The same chip map from Scene 4, now used as a broad workload stage.</div>
       </div>
 
       <div className="pe5-die-wrap">
@@ -436,7 +436,7 @@ export function PrefillDieView({
             className="pe5-zone pe5-zone--cache"
             focus="cache"
             activeFocus={activeFocus}
-            label="KV-cache build connected to the die activity and prompt sweep."
+            label="Saved key-value history being built during the wide prompt sweep."
             onHover={onHover}
           />
         </div>
@@ -453,7 +453,7 @@ interface FirstTokenBubbleProps {
 export function FirstTokenBubble({ answerToken, showFirstToken }: FirstTokenBubbleProps) {
   return (
     <div className={`pe5-answer ${showFirstToken ? 'is-visible' : ''}`}>
-      <div className="pe5-answer__eyebrow">first answer token</div>
+      <div className="pe5-answer__eyebrow">first visible answer piece</div>
       <div className="pe5-answer__bubble">{showFirstToken ? answerToken : '...'}</div>
     </div>
   );

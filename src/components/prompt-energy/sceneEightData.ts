@@ -117,11 +117,11 @@ export const SCENE_EIGHT_COMPARE_OPTIONS: EconomicsCompareConfig[] = [
   {
     key: 'prefix',
     label: 'Reused prefix',
-    description: 'Show repeated prefixes arriving already partly computed through cached KV blocks.',
+    description: 'Show repeated prefixes arriving already partly computed through saved-history blocks.',
   },
   {
     key: 'architecture',
-    label: 'Dense vs sparse',
+    label: 'Dense vs sparse expert',
     description: 'Separate total parameter headlines from the active work touched on each token.',
   },
   {
@@ -168,12 +168,12 @@ export const SCENE_EIGHT_FOCUS_COPY: Record<
   reuse: {
     label: 'Prefix reuse',
     description:
-      'Repeated system prompts, templates, and other shared prefixes can reuse already computed KV blocks instead of paying full prefill cost again.',
+      'Repeated system prompts, templates, and other shared prefixes can reuse already computed saved-history blocks instead of paying full prefill cost again.',
   },
   architecture: {
     label: 'Active work per token',
     description:
-      'Headline parameter count is not always the active work done for every token. Sparse routing can light up only part of the model at each step.',
+      'Headline parameter count is not always the active work done for every token. Sparse routing can wake up only part of the model at each step.',
   },
   software: {
     label: 'Software efficiency',
@@ -235,13 +235,13 @@ export const SCENE_EIGHT_PLANE_NOTES: Record<
     kicker: 'Reuse',
     title: 'Repeated prefixes can skip redundant prompt work',
     copy:
-      'If a large prefix is already in cache, only the fresh suffix needs to pay the full prefill cost again.',
+      'If a large prefix is already saved from earlier work, only the fresh suffix needs to pay the full prompt-processing cost again.',
   },
   architecture: {
     kicker: 'Architecture',
     title: 'Total parameters are not the same as active work',
     copy:
-      'Dense models light up almost everything on each token. Sparse expert routing can touch a much smaller active subset without changing the headline parameter count.',
+      'Dense models light up almost everything on each token. Sparse-expert routing can touch a much smaller active subset without changing the headline parameter count.',
   },
   software: {
     kicker: 'Serving stack',
@@ -313,7 +313,7 @@ export const SCENE_EIGHT_ARCHITECTURE_EXAMPLES = [
   },
   {
     key: 'moe',
-    label: '30B A3B MoE',
+    label: '30B sparse-expert example',
     totalParameterStory: 'Only a routed subset is active on each token.',
     activeParameterShare: 0.28,
     energyIndex: 0.28,
@@ -485,7 +485,7 @@ export const SCENE_EIGHT_BEATS: SceneEightBeat[] = [
     label: 'Beat 3',
     title: 'The same machine serves many prompts at once.',
     body:
-      'Prompt slices stack up on the same machine timeline. Efficient batching at scale is one reason production serving can look better than benchmark intuition alone.',
+      'Prompt slices stack up on the same machine timeline. Efficient batching at scale is one reason real production serving can look better than one-request benchmark intuition alone.',
     caption: 'One prompt is not paying for an entire lonely machine cycle.',
     overlayMode: 'sharing',
     highlighted: 'sharing',
@@ -537,7 +537,7 @@ export const SCENE_EIGHT_BEATS: SceneEightBeat[] = [
     label: 'Beat 5',
     title: 'Reuse can make a large-looking prompt much cheaper.',
     body:
-      'If a repeated system prompt or shared document prefix is already in cache, the request does not need to pay full prompt computation again for that part.',
+      'If a repeated system prompt or shared document prefix is already saved from earlier work, the request does not need to pay full prompt computation again for that part.',
     caption: 'Already-computed prefixes can arrive half paid.',
     overlayMode: 'prefix',
     highlighted: 'reuse',
@@ -563,7 +563,7 @@ export const SCENE_EIGHT_BEATS: SceneEightBeat[] = [
     label: 'Beat 6',
     title: 'Total parameters are not always the active work per token.',
     body:
-      'Dense and MoE models tell different economics stories. Active parameters matter heavily for token energy, even when total parameters still matter for memory footprint and deployment shape.',
+      'Dense and sparse-expert models tell different economics stories. Active parameters matter heavily for token energy, even when total parameters still matter for memory footprint and deployment shape.',
     caption: 'Headline parameters are not the whole per-token bill.',
     overlayMode: 'architecture',
     highlighted: 'architecture',

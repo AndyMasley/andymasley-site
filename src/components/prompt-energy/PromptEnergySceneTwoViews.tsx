@@ -215,7 +215,7 @@ export function RackRearView({
       <svg className="pe2-overlay pe2-overlay--rear" viewBox="0 0 420 760" aria-hidden="true">
         <rect x="68" y="26" width="284" height="708" className="pe2-overlay__frame" />
         <circle cx="388" cy="104" r="12" className="pe2-overlay__node pe2-overlay__node--coolant" />
-        <text x="278" y="108" className="pe2-overlay__label pe2-overlay__label--right">rack CDU link</text>
+        <text x="248" y="108" className="pe2-overlay__label pe2-overlay__label--right">rack cooling handoff</text>
         <circle cx="94" cy="128" r="8" className="pe2-overlay__node pe2-overlay__node--coolant" />
         <text x="112" y="132" className="pe2-overlay__label">inlet</text>
         <circle cx="94" cy="458" r="8" className="pe2-overlay__node pe2-overlay__node--coolant" />

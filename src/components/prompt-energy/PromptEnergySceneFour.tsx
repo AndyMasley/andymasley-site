@@ -291,7 +291,7 @@ const [showMigToggle, setShowMigToggle] = useState(false);
                   onClick={() => setShowMigToggle(value => !value)}
                   aria-pressed={showMigToggle}
                 >
-                  MIG overlay
+                  Chip partitions
                 </button>
               </div>
             </div>

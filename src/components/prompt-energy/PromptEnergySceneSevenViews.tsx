@@ -244,7 +244,7 @@ export function TrayRackView({
     <div className="pe7-rack-pane">
       <div className="pe7-rack-pane__header">
         <div className="pe7-rack-pane__title">Tray and rack branch</div>
-        <div className="pe7-rack-pane__caption">The selected tray joins a rack-scale service spine rather than dumping heat straight into the room.</div>
+        <div className="pe7-rack-pane__caption">The selected tray joins the rack’s shared cooling spine rather than dumping heat straight into the room.</div>
       </div>
 
       <div className={`pe7-rack ${showRackRear ? 'is-rear' : ''}`}>
@@ -357,8 +357,8 @@ export function LoopSystemView({
   return (
     <div className="pe7-loop-pane">
       <div className="pe7-loop-pane__header">
-        <div className="pe7-loop-pane__title">Rack loop and facility split</div>
-        <div className="pe7-loop-pane__caption">The CDU is the exchange boundary between the technology cooling loop and the facility-side loop.</div>
+        <div className="pe7-loop-pane__title">Rack loop and building loop</div>
+        <div className="pe7-loop-pane__caption">The cooling handoff box is where the rack loop passes heat into the separate building loop.</div>
       </div>
 
       <div className="pe7-loop">
@@ -379,11 +379,11 @@ export function LoopSystemView({
 
         <div className="pe7-loop__shares">
           <div className="pe7-loop__share">
-            <span>liquid-side share</span>
+            <span>heat carried on the liquid side</span>
             <strong>{Math.round(liquidShare * 100)}%</strong>
           </div>
           <div className="pe7-loop__share">
-            <span>facility-side scope</span>
+            <span>heat counted after the rack</span>
             <strong>{Math.round(facilityShare * 100)}%</strong>
           </div>
         </div>
@@ -392,14 +392,14 @@ export function LoopSystemView({
           className="pe7-zone pe7-zone--cdu"
           focus="cdu"
           activeFocus={activeFocus}
-          label="The coolant distribution unit separating TCS and FWS."
+          label="The cooling handoff box separating the rack loop from the building loop."
           onHover={onHover}
         />
         <FocusZone
           className="pe7-zone pe7-zone--facility"
           focus="facility"
           activeFocus={activeFocus}
-          label="The separate facility loop carrying heat away after the CDU boundary."
+          label="The separate building-side loop carrying heat away after the cooling handoff box."
           onHover={onHover}
         />
       </div>
@@ -435,11 +435,11 @@ export function EngineerModeView({
       onBlur={() => onHover(null)}
     >
       <div className="pe7-engineer__header">
-        <div className="pe7-engineer__title">Engineer mode</div>
+        <div className="pe7-engineer__title">Engineer measurements</div>
         <div className="pe7-engineer__caption">
           {engineerMode
-            ? 'Cooling telemetry is visible for the current loop state.'
-            : 'Engineer mode is available for flow, temperature, pressure, and thermal-resistance overlays.'}
+            ? 'Cooling measurements are visible for the current loop state.'
+            : 'This optional panel shows flow, temperature, pressure, and thermal-resistance style overlays.'}
         </div>
       </div>
 

@@ -123,7 +123,7 @@ export const SCENE_FIVE_MODE_OPTIONS: PromptPresetConfig[] = [
   {
     key: 'cached',
     label: 'Reused prefix',
-    description: 'A shared prefix is already in the KV cache, so only the new suffix needs a fresh wide pass.',
+    description: 'A shared prefix is already in saved key-and-value state, so only the new suffix needs a fresh wide pass.',
     promptLabel: 'Repeated system prompt + fresh suffix',
     visualTokens: ['system', 'policy', 'style', 'context', 'shared', 'brief', 'doc', 'prefix', 'new', 'user', 'question', 'today'],
     logicalTokenCount: 96,
@@ -147,15 +147,15 @@ export const SCENE_FIVE_FOCUS_COPY: Record<SceneFiveFocus, { label: string; desc
   },
   layer: {
     label: 'One layer up close',
-    description: 'One layer inspector shows normalization, QKV projections, masked attention, output projection, and feed-forward work before collapsing back into the broader sweep.',
+    description: 'One layer card shows the basic jobs inside a layer before collapsing back into the wider prompt sweep.',
   },
   attention: {
     label: 'Backward-looking attention',
-    description: 'Each position can attend backward to earlier tokens and itself, not forward. The advanced view then shows tiled execution rather than one giant matrix parked in HBM.',
+    description: 'Each position can look backward to earlier tokens and itself, not forward. The advanced view then shows the work happening in smaller tiles instead of one giant stored matrix.',
   },
   compute: {
     label: 'Wide compute pass',
-    description: 'Prefill is a wide, compute-heavy pass. The die glows broadly across many tensor-heavy districts instead of following one narrow token path.',
+    description: 'Prefill is a wide, compute-heavy pass. The chip glows broadly across many math-heavy districts instead of following one narrow token path.',
   },
   staging: {
     label: 'On-chip staging and cache traffic',
@@ -166,16 +166,16 @@ export const SCENE_FIVE_FOCUS_COPY: Record<SceneFiveFocus, { label: string; desc
     description: 'As each layer finishes the prompt sweep, the scene stores key and value state for the full prompt width so later decode can reuse it.',
   },
   ttft: {
-    label: 'Time to first token',
-    description: 'This is the user-facing latency for prefill: queue, full prompt processing, and sampling all have to finish before the first output token appears.',
+    label: 'Wait until the first answer token',
+    description: 'This is the wait that matters in prefill: queueing, full prompt processing, and token picking all have to finish before the first answer token appears.',
   },
   token: {
     label: 'First output token',
     description: 'The answer begins only after the prompt sweep and KV-cache build are complete. That first token is the payoff for the whole scene.',
   },
   compare: {
-    label: 'Advanced prefill compares',
-    description: 'Long prompts widen the work, chunked prefill reshapes it for coexistence with decode, and cached prefixes shrink it by skipping repeated prompt prefixes.',
+    label: 'Optional prompt compares',
+    description: 'Long prompts widen the work, split prompt processing reshapes it for coexistence with answer generation, and reused prefixes shrink it by skipping repeated prompt work.',
   },
 };
 
@@ -197,8 +197,8 @@ export const SCENE_FIVE_PLANE_NOTES: Record<SceneFiveOverlayMode, SceneFivePlane
   },
   inspector: {
     kicker: 'Representative layer',
-    title: 'One decoder layer contains more than attention',
-    copy: 'Normalization, projections, masked self-attention, output projection, and feed-forward work all belong in the prefill pass. Attention matters, but it is not the whole runtime story.',
+    title: 'One layer contains more than just attention',
+    copy: 'The layer does several jobs in sequence. Attention matters, but it is only one part of the wider prompt pass.',
   },
   sweep: {
     kicker: 'Wide pass',
@@ -212,8 +212,8 @@ export const SCENE_FIVE_PLANE_NOTES: Record<SceneFiveOverlayMode, SceneFivePlane
   },
   tensor: {
     kicker: 'Dense matrix work',
-    title: 'Broad projection and feed-forward work still dominate',
-    copy: 'The die stays broadly busy because linear operators remain the workhorse of prefill even when attention becomes more expensive on longer prompts.',
+    title: 'The biggest work is still the broad math pass',
+    copy: 'The chip stays broadly busy because large projection and feed-forward math still do most of the heavy lifting, even when attention grows on longer prompts.',
   },
   staging: {
     kicker: 'Data motion',
@@ -222,13 +222,13 @@ export const SCENE_FIVE_PLANE_NOTES: Record<SceneFiveOverlayMode, SceneFivePlane
   },
   cache: {
     kicker: 'Persistent state',
-    title: 'The KV cache is built row by row',
-    copy: 'As each layer finishes the full prompt width, the corresponding KV-cache row fills. That stored state is exactly what Scene 6 will reuse.',
+    title: 'The saved history is built row by row',
+    copy: 'As each layer finishes the full prompt width, one more row of saved key-and-value state fills in. That stored history is exactly what Scene 6 will reuse.',
   },
   ttft: {
     kicker: 'User-facing latency',
-    title: 'Time to first token is the metric that matches this feeling',
-    copy: 'The meter does not stop until queue, prefill, and sampling are done. That is why the wait before the first token feels different from later token cadence.',
+    title: 'This whole wait belongs to the first-token delay',
+    copy: 'The meter does not stop until queueing, prompt processing, and token picking are done. That is why the first wait feels different from later answer rhythm.',
   },
   token: {
     kicker: 'First answer token',
@@ -237,18 +237,18 @@ export const SCENE_FIVE_PLANE_NOTES: Record<SceneFiveOverlayMode, SceneFivePlane
   },
   long: {
     kicker: 'Long prompt compare',
-    title: 'Longer prompts widen the sweep and grow the attention field',
-    copy: 'The prompt strip gets wider, the causal triangle expands, and TTFT rises. The compute pass stays broad, but the attention inset becomes visibly heavier too.',
+    title: 'Longer prompts make the first pass heavier',
+    copy: 'The prompt strip gets wider, the attention picture grows, and the wait until the first answer token rises too.',
   },
   chunked: {
-    kicker: 'Chunked prefill',
-    title: 'The prompt is split so prefill can coexist more smoothly with decode',
-    copy: 'Chunked mode shows prefill arriving in smaller blocks with decode slices interleaving above. It protects responsiveness, but it is not free.',
+    kicker: 'Split prompt processing',
+    title: 'The prompt can be split into blocks so it coexists better with answer generation',
+    copy: 'This mode shows the prompt arriving in smaller blocks with answer-generation slices interleaving above. It can help responsiveness, but it is not free.',
   },
   cached: {
     kicker: 'Cached prefix',
-    title: 'A repeated prefix can skip fresh prefill work',
-    copy: 'The left part of the prompt starts already present in the KV cache wall, so only the uncached suffix needs to sweep through the layer stack.',
+    title: 'A repeated start can skip fresh prompt work',
+    copy: 'The left part of the prompt starts already saved, so only the new suffix needs the full-width sweep through the layer stack.',
   },
   handoff: {
     kicker: 'Scene 6 handoff',
@@ -310,7 +310,7 @@ export const SCENE_FIVE_BEATS: SceneFiveBeat[] = [
     id: 'layer-inspector',
     label: 'Beat 3',
     title: 'Open one representative decoder layer.',
-    body: 'The layer inspector briefly opens so the scene can show normalization, QKV projections, masked attention, output projection, and feed-forward work in one place.',
+    body: 'The layer inspector briefly opens so the scene can show cleanup, the three attention ingredients, backward-looking attention, the mix-back step, and the broad dense math that follows.',
     caption: 'Attention matters, but it is not the whole layer.',
     overlayMode: 'inspector',
     highlighted: 'layer',
@@ -359,7 +359,7 @@ export const SCENE_FIVE_BEATS: SceneFiveBeat[] = [
     label: 'Beat 6',
     title: 'The die stays broadly bright because dense matrix work still dominates.',
     body: 'The broad projection and feed-forward stages keep tensor-heavy districts busy across the whole prompt width, not just the attention inset.',
-    caption: 'Broad matmul work remains the visual center of prefill.',
+    caption: 'Broad matrix work remains the visual center of prefill.',
     overlayMode: 'tensor',
     highlighted: 'compute',
     prefillMode: 'full',
@@ -391,7 +391,7 @@ export const SCENE_FIVE_BEATS: SceneFiveBeat[] = [
     label: 'Beat 8',
     title: 'This pass builds the key and value cache.',
     body: 'The cache wall fills row by row across the full prompt width so Scene 6 can later reuse the stored attention state instead of recomputing the prompt.',
-    caption: 'The KV cache becomes visible, layered, and persistent.',
+    caption: 'The saved key-and-value history becomes visible, layered, and persistent.',
     overlayMode: 'cache',
     highlighted: 'cache',
     prefillMode: 'full',
@@ -406,8 +406,8 @@ export const SCENE_FIVE_BEATS: SceneFiveBeat[] = [
     id: 'ttft-meter',
     label: 'Beat 9',
     title: 'Time to first token is the user-facing latency for this whole scene.',
-    body: 'The TTFT bar keeps running until queue, prefill, and sampling are done, which is why the wait before the first token feels meaningfully different from later cadence.',
-    caption: 'Queue, prefill, and sample all belong to TTFT.',
+    body: 'The first-token wait bar keeps running until queueing, prompt processing, and token picking are done, which is why the wait before the first token feels meaningfully different from later answer rhythm.',
+    caption: 'Queueing, prompt processing, and token picking all belong to the first-token wait.',
     overlayMode: 'ttft',
     highlighted: 'ttft',
     prefillMode: 'full',
@@ -438,7 +438,7 @@ export const SCENE_FIVE_BEATS: SceneFiveBeat[] = [
     id: 'long-prompt',
     label: 'Beat 11',
     title: 'Longer prompts make this step heavier.',
-    body: 'The prompt strip widens, the attention field grows, and TTFT rises more steeply before the first token arrives. The broad compute sweep still remains prominent.',
+    body: 'The prompt strip widens, the attention field grows, and the wait for the first token rises more steeply before the answer begins. The broad compute sweep still remains prominent.',
     caption: 'Long prompts widen the work and the wait.',
     overlayMode: 'long',
     highlighted: 'compare',
@@ -471,7 +471,7 @@ export const SCENE_FIVE_BEATS: SceneFiveBeat[] = [
     label: 'Beat 13',
     title: 'A cached prefix can skip recomputing repeated prompt work.',
     body: 'The left part of the prompt starts already present in the cache wall, so only the fresh suffix needs a full-width prefill sweep.',
-    caption: 'Prefix reuse shrinks TTFT by skipping repeated work.',
+    caption: 'Prefix reuse shrinks the first-token wait by skipping repeated work.',
     overlayMode: 'cached',
     highlighted: 'compare',
     prefillMode: 'cached',

@@ -152,7 +152,7 @@ export const VISUAL_LEGEND_ITEMS: VisualLegendItem[] = [
   {
     key: 'cache',
     label: 'Muted purple means stored state',
-    detail: 'This usually marks the saved memory the system reuses later, especially cache and KV history.',
+    detail: 'This usually marks the saved memory the system reuses later, especially cache and saved key-value history.',
   },
   {
     key: 'heat',
@@ -487,8 +487,8 @@ export const SCENE_LEARNING_CARDS: Record<LearningSceneKey, SceneLearningCard> =
     plainLanguage:
       'Inside the rack is a tray. Inside the tray is a board. On the board is a package. Inside the package is the die that actually computes.',
     watchFor:
-      'Watch the selected module stay in context while the shell, board, package, HBM, and cooling stack separate into layers.',
-    newWords: ['board', 'package', 'die', 'HBM', 'TIM'],
+      'Watch the selected module stay in context while the shell, board, package, fast nearby memory, and cooling stack separate into layers.',
+    newWords: ['board', 'package', 'die', 'high-bandwidth memory (HBM)', 'thermal interface layer'],
     commonConfusion:
       'A package is not the same thing as the die. The package is the larger object that contains the die and nearby memory.',
     takeaway:
@@ -503,7 +503,7 @@ export const SCENE_LEARNING_CARDS: Record<LearningSceneKey, SceneLearningCard> =
       'The chip is made of repeated compute neighborhoods, shared cache, and memory gateways. The model keeps reusing the same hardware instead of having one physical chip region per layer.',
     watchFor:
       'Watch the model-layer overlay move while the hardware map stays fixed. That is the key lesson of this scene.',
-    newWords: ['die', 'SM', 'cache', 'memory controller', 'Transformer Engine'],
+    newWords: ['die', 'small work tile', 'shared cache', 'memory controller', 'low-precision tensor math mode'],
     commonConfusion:
       'The model’s layers are software structure. They are not physically etched into separate districts of the silicon.',
     takeaway:
@@ -515,10 +515,10 @@ export const SCENE_LEARNING_CARDS: Record<LearningSceneKey, SceneLearningCard> =
     scale: 'Scale: full prompt pass',
     goal: 'Understand why the system does a lot of work before the first answer token appears.',
     plainLanguage:
-      'Before the answer starts, the whole prompt has to move through every layer. The system also builds saved attention state, called the KV cache, during this pass.',
+      'Before the answer starts, the whole prompt has to move through every layer. The system also builds the saved key-value history it will reuse later during this pass.',
     watchFor:
       'Watch the full width of the prompt stay active, the cache wall fill row by row, and the first answer token wait until the end.',
-    newWords: ['prefill', 'KV cache', 'attention', 'TTFT'],
+    newWords: ['prefill', 'saved key-value history', 'attention', 'time to first token'],
     commonConfusion:
       'Beginners often imagine the answer starts the moment the prompt enters the model. In reality, the full prompt pass comes first.',
     takeaway:
@@ -533,7 +533,7 @@ export const SCENE_LEARNING_CARDS: Record<LearningSceneKey, SceneLearningCard> =
       'After the first token, the model enters a loop. Each step reads the model and stored history, produces one new token, appends it to the answer, and repeats.',
     watchFor:
       'Watch one new token appear, the cache grow by one more slice, and the timing meter tick between tokens.',
-    newWords: ['decode', 'TBT', 'paged memory', 'batching'],
+    newWords: ['decode', 'time between tokens', 'paged memory', 'batching'],
     commonConfusion:
       'Decode is narrower than prefill, but it is not trivial. Long answers repeat this loop many times, which is why they can dominate the total bill.',
     takeaway:
@@ -547,8 +547,8 @@ export const SCENE_LEARNING_CARDS: Record<LearningSceneKey, SceneLearningCard> =
     plainLanguage:
       'Heat first moves through solid hardware, then into a cold plate or heatsink, then into moving liquid or air, then into rack plumbing and facility equipment.',
     watchFor:
-      'Watch the local chip stack first, then the tray plumbing, then the rack manifold, then the CDU and building-side loop.',
-    newWords: ['cold plate', 'manifold', 'CDU', 'TCS', 'FWS'],
+      'Watch the local chip stack first, then the tray plumbing, then the rack manifold, then the cooling handoff box and building-side loop.',
+    newWords: ['cold plate', 'manifold', 'cooling distribution unit', 'rack cooling loop', 'building cooling loop'],
     commonConfusion:
       'The coolant is not touching the silicon. It is sealed inside the cold plate above the package.',
     takeaway:
@@ -563,7 +563,7 @@ export const SCENE_LEARNING_CARDS: Record<LearningSceneKey, SceneLearningCard> =
       'The machine stays huge. Your prompt stays small. The number changes depending on how long the work lasts, how much is shared, what part is reused, and what boundary you count.',
     watchFor:
       'Watch the same prompt slice stay fixed while the boundary grows, batches get larger, outputs get longer, and reuse makes some work cheaper.',
-    newWords: ['power', 'energy', 'batch', 'prefix reuse', 'MoE'],
+    newWords: ['power', 'energy', 'batch', 'prefix reuse', 'sparse-expert model'],
     commonConfusion:
       'Prompt energy, infrastructure allocation, and product price are related, but they are not the same number.',
     takeaway:
@@ -601,7 +601,7 @@ export const SCENE_BRIDGE_CARDS: Partial<Record<LearningSceneKey, SceneBridgeCar
     changed:
       'We zoomed from the rack into one tray and then into the board, package, memory stacks, and cooling stack around one selected module.',
     realHardware:
-      'The tray, board, package, HBM stacks, lid, thermal interface, and cold plate or heatsink are real physical layers.',
+      'The tray, board, package, nearby memory stacks, lid, thermal interface, and cold plate or heatsink are real physical layers.',
     conceptualOverlay:
       'The x-ray depth and the colored paths help separate those layers visually. They are meant to explain the stack, not mimic every hidden trace.',
     whyItMatters:
@@ -641,7 +641,7 @@ export const SCENE_BRIDGE_CARDS: Partial<Record<LearningSceneKey, SceneBridgeCar
     changed:
       'The electrical work from the earlier scenes is now being followed as heat moving out through the hardware stack and cooling loops.',
     realHardware:
-      'The cold plate, tubing, quick disconnects, rack manifold, CDU, and facility loop are real physical equipment in the cooling path.',
+      'The cold plate, tubing, quick disconnects, rack manifold, cooling handoff box, and facility loop are real physical equipment in the cooling path.',
     conceptualOverlay:
       'The heat field stays relative on purpose. It shows where the heat goes without pretending to know exact public per-zone temperatures.',
     whyItMatters:

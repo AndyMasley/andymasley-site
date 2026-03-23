@@ -111,7 +111,7 @@ export const SCENE_SEVEN_FOCUS_COPY: Record<SceneSevenFocus, { label: string; de
     description: 'The coolant is above the package, sealed inside machined channels within the cold plate. It is not touching the silicon or bathing the package.',
   },
   plumbing: {
-    label: 'Tray plumbing and QDs',
+    label: 'Tray plumbing and quick disconnects',
     description: 'The tray-level tubing, quick disconnects, and branch routing make the liquid side serviceable and realistic instead of looking like a decorative hose.',
   },
   air: {
@@ -123,12 +123,12 @@ export const SCENE_SEVEN_FOCUS_COPY: Record<SceneSevenFocus, { label: string; de
     description: 'The rack rear is the liquid distribution spine: manifold, inlets and outlets, cable cartridges, and the power bus bar all live there together.',
   },
   cdu: {
-    label: 'Rack loop meets building loop',
-    description: 'The CDU is the control and exchange boundary between the rack-side technology cooling loop and the separate facility-side loop.',
+    label: 'Cooling handoff box',
+    description: 'This handoff box is where the rack-side cooling loop passes heat into the separate building-side loop.',
   },
   facility: {
-    label: 'Facility loop',
-    description: 'Heat leaves the rack loop through a heat exchanger and then travels into a separate building-side loop toward chillers, towers, or dry coolers.',
+    label: 'Building-side cooling loop',
+    description: 'Heat leaves the rack loop through a heat exchanger and then travels into a separate building-side loop toward the larger cooling plant.',
   },
   support: {
     label: 'Air-cooled support heat',
@@ -139,16 +139,16 @@ export const SCENE_SEVEN_FOCUS_COPY: Record<SceneSevenFocus, { label: string; de
     description: 'Hybrid, full-liquid, and passive-air designs change where heat is captured and how airflow participates, but the thermal path still has to stay physically truthful.',
   },
   telemetry: {
-    label: 'Engineer-mode telemetry',
-    description: 'Inlet and outlet temperatures, delta T, flow, pressure, and cooling-subsystem power are the right kinds of measurements here, not fake per-zone wattage on the die.',
+    label: 'Engineer measurements',
+    description: 'Inlet and outlet temperatures, temperature rise, flow, pressure, and cooling-system power are the right kinds of measurements here, not fake per-zone wattage on the die.',
   },
   fault: {
     label: 'Leak and flow fault overlay',
-    description: 'Leak detection and abnormal-flow sensing belong at the QD, rack branch, CDU, and under-rack levels, which is why industrial liquid cooling also looks instrumented.',
+    description: 'Leak detection and abnormal-flow sensing belong at the quick-disconnect, rack branch, handoff-box, and under-rack levels, which is why industrial liquid cooling also looks instrumented.',
   },
   economics: {
     label: 'Boundary-aware heat removal',
-    description: 'At chip scope the story stops at the local stack, at server scope it includes air-cooled support hardware, and at facility scope it extends through the CDU and building loop.',
+    description: 'At chip scope the story stops at the local stack, at server scope it includes air-cooled support hardware, and at facility scope it extends through the cooling handoff box and building loop.',
   },
 };
 
@@ -161,17 +161,17 @@ export const SCENE_SEVEN_PLANE_NOTES: Record<SceneSevenOverlayMode, SceneSevenPl
   stack: {
     kicker: 'Local transfer',
     title: 'Heat rises through solids before fluid ever carries it away',
-    copy: 'The die, lid, TIM, and cold-plate base are the first thermal path. This is the immediate answer to where the coolant actually is relative to the chip.',
+    copy: 'The die, lid, thin heat-transfer layer, and cold-plate base are the first thermal path. This is the immediate answer to where the coolant actually is relative to the chip.',
   },
   coldplate: {
     kicker: 'Cold plate',
     title: 'The coolant is sealed inside the cold plate',
-    copy: 'The cold plate is a metal heat exchanger with internal channels. The chip sees metal and TIM, not free liquid.',
+    copy: 'The cold plate is a metal heat exchanger with internal channels. The chip sees metal and a thin heat-transfer layer, not free liquid.',
   },
   plumbing: {
     kicker: 'Tray branch',
     title: 'The tray sends that heat to the rack through serviceable plumbing',
-    copy: 'Tubing, QDs, and branch routing move the local heat into a tray-level loop while still allowing the module to be serviced safely.',
+    copy: 'Tubing, quick disconnects, and branch routing move the local heat into a tray-level loop while still allowing the module to be serviced safely.',
   },
   air: {
     kicker: 'Hybrid truth',
@@ -185,13 +185,13 @@ export const SCENE_SEVEN_PLANE_NOTES: Record<SceneSevenOverlayMode, SceneSevenPl
   },
   cdu: {
     kicker: 'Loop split',
-    title: 'The CDU separates the rack loop from the building loop',
-    copy: 'The CDU is not just a vague cooler box. It is the boundary where the rack-side TCS hands heat off to the facility-side loop.',
+    title: 'The cooling handoff box separates the rack loop from the building loop',
+    copy: 'This is not just a vague cooler box. It is the real handoff point where the rack-side loop passes heat into the separate building-side loop.',
   },
   facility: {
     kicker: 'Building side',
-    title: 'Heat leaves the rack through a separate facility path',
-    copy: 'After the CDU boundary, the facility loop carries the heat toward broader plant equipment instead of sending one magical pipe directly over the chip.',
+    title: 'Heat leaves the rack through a separate building-side path',
+    copy: 'After the handoff box, the building-side loop carries the heat toward larger cooling equipment instead of sending one magical pipe directly over the chip.',
   },
   support: {
     kicker: 'Support hardware',
@@ -211,12 +211,12 @@ export const SCENE_SEVEN_PLANE_NOTES: Record<SceneSevenOverlayMode, SceneSevenPl
   engineer: {
     kicker: 'Engineer mode',
     title: 'Cooling loops are described by temperatures, pressures, and flow',
-    copy: 'The right detailed variables here are inlet and outlet temperatures, delta T, supply and return pressure, flow rate, and cooling-subsystem power.',
+    copy: 'The right detailed variables here are inlet and outlet temperatures, temperature rise, supply and return pressure, flow rate, and cooling-system power.',
   },
   fault: {
     kicker: 'Fault overlay',
     title: 'Leak detection is part of a real liquid-cooling system',
-    copy: 'A branch can be isolated and diagnosed through QD sensors, pressure deltas, flow anomalies, or under-rack leak sensing without turning the scene into disaster theater.',
+    copy: 'A branch can be isolated and diagnosed through quick-disconnect sensors, pressure changes, flow anomalies, or under-rack leak sensing without turning the scene into disaster theater.',
   },
   handoff: {
     kicker: 'Scene 8 handoff',
@@ -253,8 +253,8 @@ export const SCENE_SEVEN_BEATS: SceneSevenBeat[] = [
   {
     id: 'local-stack',
     label: 'Beat 1',
-    title: 'The immediate thermal stack answers where the coolant really is.',
-    body: 'The local side cutaway shows die, lid, TIM, cold-plate base, and then the sealed channels above, so the user can see that the coolant is above the package rather than on the silicon.',
+    title: 'Start with the local stack above the chip.',
+    body: 'The local side cutaway shows the die, lid, thin heat-transfer layer, cold-plate base, and then the sealed channels above, so you can see that the coolant is above the package rather than on the silicon.',
     caption: 'First the solids, then the fluid.',
     overlayMode: 'stack',
     highlighted: 'stack',
@@ -301,9 +301,9 @@ export const SCENE_SEVEN_BEATS: SceneSevenBeat[] = [
   {
     id: 'tray-plumbing',
     label: 'Beat 3',
-    title: 'The tray sends that heat into a serviceable branch of the loop.',
+    title: 'Now the heat enters a tray branch that can still be serviced.',
     body: 'Tubing leaves the selected cold plate, passes through quick disconnects, and joins the tray branch so the liquid path looks maintainable rather than magical.',
-    caption: 'Tray plumbing, tubing, and QDs make the liquid side real.',
+    caption: 'Tray plumbing, tubing, and quick disconnects make the liquid side real.',
     overlayMode: 'plumbing',
     highlighted: 'plumbing',
     compareMode: 'hybrid',
@@ -373,9 +373,9 @@ export const SCENE_SEVEN_BEATS: SceneSevenBeat[] = [
   {
     id: 'cdu-boundary',
     label: 'Beat 6',
-    title: 'The CDU is the real split between the rack loop and the building loop.',
-    body: 'The scene now follows the selected branch to the CDU so the user can see that the rack-side technology cooling loop and facility-side loop are separate systems.',
-    caption: 'TCS and FWS are not the same pipe.',
+    title: 'The cooling handoff box is where the rack loop meets the building loop.',
+    body: 'The scene now follows the selected branch to the cooling handoff box so you can see that the rack-side cooling loop and the building-side loop are separate systems.',
+    caption: 'The rack loop and the building loop are not the same pipe.',
     overlayMode: 'cdu',
     highlighted: 'cdu',
     compareMode: 'hybrid',
@@ -397,8 +397,8 @@ export const SCENE_SEVEN_BEATS: SceneSevenBeat[] = [
   {
     id: 'facility-loop',
     label: 'Beat 7',
-    title: 'After the CDU, the heat moves into a separate facility-side loop.',
-    body: 'A simplified plant-side path appears so the user can see that the hottest compute heat does not jump straight into “the room,” but moves through a dedicated facility loop.',
+    title: 'After that handoff, the heat moves into a separate building loop.',
+    body: 'A simplified building-side path appears so you can see that the hottest compute heat does not jump straight into “the room,” but moves through a dedicated building loop.',
     caption: 'Local transfer, rack transport, then facility transport.',
     overlayMode: 'facility',
     highlighted: 'facility',
@@ -493,9 +493,9 @@ export const SCENE_SEVEN_BEATS: SceneSevenBeat[] = [
   {
     id: 'engineer-mode',
     label: 'Beat 11',
-    title: 'Engineer mode reveals the right cooling variables.',
-    body: 'Temperatures, delta T, pressure, flow, and cooling-subsystem power appear in a separate telemetry layer so the scene can get more technical without pretending to know exact die-zone temperatures.',
-    caption: 'Flow, pressure, and delta T describe the loop more honestly than fake precision heat maps.',
+    title: 'Engineer mode reveals the right cooling measurements.',
+    body: 'Temperatures, temperature rise, pressure, flow, and cooling-system power appear in a separate telemetry layer so the scene can get more technical without pretending to know exact die-zone temperatures.',
+    caption: 'Flow, pressure, and temperature rise describe the loop more honestly than fake precision heat maps.',
     overlayMode: 'engineer',
     highlighted: 'telemetry',
     compareMode: 'hybrid',
@@ -518,7 +518,7 @@ export const SCENE_SEVEN_BEATS: SceneSevenBeat[] = [
     id: 'fault-overlay',
     label: 'Beat 12',
     title: 'Leak detection and abnormal-flow sensing are part of a real liquid-cooling system.',
-    body: 'A restrained service overlay highlights one QD branch, one CDU sensing zone, and one under-rack sensor area instead of turning the scene into a disaster animation.',
+    body: 'A restrained service overlay highlights one quick-disconnect branch, one handoff-box sensing zone, and one under-rack sensor area instead of turning the scene into a disaster animation.',
     caption: 'Liquid cooling looks believable when it also looks monitorable.',
     overlayMode: 'fault',
     highlighted: 'fault',

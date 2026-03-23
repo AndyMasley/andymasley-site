@@ -222,7 +222,7 @@ export function PromptEnergyQuickNav() {
     <nav className="pe-quicknav" aria-label="Prompt energy quick navigation">
       <a href="#pe-glossary" className="pe-quicknav__link">
         <strong>Open the glossary</strong>
-        <span>Jump straight to the beginner definitions if terms like token, rack, prefill, or MoE are unfamiliar.</span>
+        <span>Jump straight to the beginner definitions if terms like token, rack, prefill, or sparse experts are unfamiliar.</span>
       </a>
       <a href="#pe-story-start" className="pe-quicknav__link">
         <strong>Start the story</strong>
@@ -431,7 +431,7 @@ export function PromptEnergyBeginnerOverview() {
       <details className="pe-glossary" id="pe-glossary">
         <summary>
           <span>Core glossary</span>
-          <small>Open if terms like token, prefill, rack, or MoE are unfamiliar.</small>
+          <small>Open if terms like token, prefill, rack, or sparse experts are unfamiliar.</small>
         </summary>
         <div className="pe-glossary__grid">
           {BEGINNER_GLOSSARY.map(entry => (
@@ -491,6 +491,7 @@ export function PromptEnergyStoryGuideBar() {
   const activeStep =
     STORY_JOURNEY_STEPS.find(step => step.key === activeScene) ?? STORY_JOURNEY_STEPS[0];
   const activeCard = SCENE_LEARNING_CARDS[activeScene];
+  const activeBridge = SCENE_BRIDGE_CARDS[activeScene];
 
   return (
     <nav className="pe-guidebar" aria-label="Prompt energy story progress">
@@ -518,8 +519,27 @@ export function PromptEnergyStoryGuideBar() {
           <p>{activeCard.watchFor}</p>
         </article>
         <article className="pe-guidebar__context-card">
-          <div className="pe-guidebar__context-label">If you are lost</div>
+          <div className="pe-guidebar__context-label">If this feels abstract</div>
           <p>{activeCard.plainLanguage}</p>
+        </article>
+      </div>
+
+      <div className="pe-guidebar__details">
+        {activeBridge && (
+          <>
+            <article className="pe-guidebar__detail-card">
+              <div className="pe-guidebar__context-label">Real hardware now</div>
+              <p>{activeBridge.realHardware}</p>
+            </article>
+            <article className="pe-guidebar__detail-card">
+              <div className="pe-guidebar__context-label">Teaching overlay now</div>
+              <p>{activeBridge.conceptualOverlay}</p>
+            </article>
+          </>
+        )}
+        <article className="pe-guidebar__detail-card">
+          <div className="pe-guidebar__context-label">This scene is not saying</div>
+          <p>{activeCard.commonConfusion}</p>
         </article>
       </div>
 
@@ -614,7 +634,7 @@ export function PromptEnergySceneTakeaway({ scene }: PromptEnergyScenePrimerProp
 
       <div className="pe-learning-card__grid pe-learning-card__grid--two">
         <div className="pe-learning-card__block">
-          <strong>Common confusion</strong>
+          <strong>This scene is not saying</strong>
           <p>{card.commonConfusion}</p>
         </div>
         <div className="pe-learning-card__block">

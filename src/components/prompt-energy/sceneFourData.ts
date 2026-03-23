@@ -77,8 +77,8 @@ export const SCENE_FOUR_FOCUS_COPY: Record<SceneFourFocus, { label: string; desc
     description: 'The die is mostly many copies of the same kind of compute district. It is a reusable hardware landscape, not one giant special-purpose AI blob.',
   },
   sm: {
-    label: 'One compute tile up close',
-    description: 'Inside one neighborhood, an SM combines control logic, general math lanes, tensor math, local scratchpad, and data-movement support.',
+    label: 'One small compute tile up close',
+    description: 'Inside one small work tile, the chip combines control logic, different kinds of math hardware, local fast memory, and data-moving support.',
   },
   model: {
     label: 'Model layers reusing hardware',
@@ -94,7 +94,7 @@ export const SCENE_FOUR_FOCUS_COPY: Record<SceneFourFocus, { label: string; desc
   },
   tensor: {
     label: 'Tensor-heavy regions',
-    description: 'Transformer workloads brighten existing tensor-heavy compute regions. The Transformer Engine is a way those regions operate, not a separate island on the die.',
+    description: 'Transformer workloads brighten existing math-heavy regions. The special low-precision math mode is a way those regions operate, not a separate island on the die.',
   },
   interconnect: {
     label: 'Edges for multi-chip links',
@@ -106,7 +106,7 @@ export const SCENE_FOUR_FOCUS_COPY: Record<SceneFourFocus, { label: string; desc
   },
   mig: {
     label: 'Optional chip partition view',
-    description: 'MIG is a service partitioning overlay on the same die, not a second physical floorplan. It is optional here because the main story is about one prompt on one chip.',
+    description: 'This optional view shows that the same die can be carved into service slices. It is an allocation overlay, not a different physical chip.',
   },
 };
 
@@ -123,13 +123,13 @@ export const SCENE_FOUR_PLANE_NOTES: Record<SceneFourOverlayMode, SceneFourPlane
   },
   tessellation: {
     kicker: 'Repeated hierarchy',
-    title: 'GPCs, TPCs, and SMs repeat across the die',
-    copy: 'The repeated tile logic matters more than memorizing acronyms. The point is that the chip is built from many copies of the same neighborhood type.',
+    title: 'Large districts, medium tiles, and small work units repeat across the die',
+    copy: 'The important point is repetition, not memorizing acronyms. The chip is built from many copies of the same neighborhood pattern.',
   },
   sm: {
-    kicker: 'SM cameo',
-    title: 'One compute neighborhood contains several kinds of work hardware',
-    copy: 'Control logic, tensor math, general math, local scratchpad, and data movers coexist inside one SM. This is the first true hardware worksite inside the die.',
+    kicker: 'One small work tile',
+    title: 'One small compute tile contains several different jobs',
+    copy: 'Control logic, math hardware, fast local memory, and data movers all live together inside one small tile. This is the first true worksite inside the die.',
   },
   reuse: {
     kicker: 'Hardware versus model',
@@ -143,13 +143,13 @@ export const SCENE_FOUR_PLANE_NOTES: Record<SceneFourOverlayMode, SceneFourPlane
   },
   async: {
     kicker: 'Data motion',
-    title: 'Data movers and local sharing keep the math units fed',
-    copy: 'The die uses asynchronous staging, local scratchpad, and nearby sharing so tensor-heavy regions do not stall waiting for data.',
+    title: 'Data movement keeps the math hardware fed',
+    copy: 'The chip stages data through nearby fast memory and short local routes so the math hardware does not sit idle waiting for inputs.',
   },
   transformer: {
     kicker: 'Transformer workload mode',
-    title: 'Tensor-heavy regions brighten without inventing a new die island',
-    copy: 'Transformer Engine behavior is shown as an operating mode layered on top of existing compute districts, not as a separate block glued somewhere else on the die.',
+    title: 'Transformer work brightens existing math-heavy regions',
+    copy: 'This is still the same die map. The scene is showing a different kind of workload on the same existing hardware, not inventing a new region.',
   },
   interconnect: {
     kicker: 'Perimeter links',
@@ -164,7 +164,7 @@ export const SCENE_FOUR_PLANE_NOTES: Record<SceneFourOverlayMode, SceneFourPlane
   mig: {
     kicker: 'Optional partitioning',
     title: 'The same die can be partitioned without changing its geometry',
-    copy: 'MIG is shown as a service overlay because it changes how the chip is allocated, not what the physical floorplan is.',
+    copy: 'This partition view changes how the chip is allocated to services, not what the physical floorplan is.',
   },
   handoff: {
     kicker: 'Scene 5 handoff',
@@ -202,7 +202,7 @@ export const SCENE_FOUR_BEATS: SceneFourBeat[] = [
     id: 'tessellation',
     label: 'Beat 2',
     title: 'The map is built from repeated hierarchy.',
-    body: 'Macro districts break into smaller tiled neighborhoods so the user feels repetition rather than one monolithic AI region.',
+    body: 'Large districts break into smaller repeated tiles so the chip feels like a reusable grid, not one big mysterious AI zone.',
     caption: 'The die is mostly copies of similar work sites.',
     overlayMode: 'tessellation',
     highlighted: 'districts',
@@ -213,8 +213,8 @@ export const SCENE_FOUR_BEATS: SceneFourBeat[] = [
   {
     id: 'sm-cameo',
     label: 'Beat 3',
-    title: 'Zoom into one compute neighborhood.',
-    body: 'One SM becomes a cameo view showing local control, tensor math, general math, scratchpad, and explicit data movement support.',
+    title: 'Zoom into one small work tile.',
+    body: 'One local tile opens up so you can see control logic, math hardware, fast local memory, and data-moving support in one place.',
     caption: 'One local work site inside the larger city.',
     overlayMode: 'sm',
     highlighted: 'sm',
@@ -226,7 +226,7 @@ export const SCENE_FOUR_BEATS: SceneFourBeat[] = [
     id: 'hardware-reuse',
     label: 'Beat 4',
     title: 'The model has many layers. The chip reuses the same hardware for every one.',
-    body: 'A compact transformer layer stack steps through the same die map repeatedly so the logical model structure and reusable hardware stay separate in the user’s mind.',
+    body: 'A compact layer stack steps through the same die map again and again so the model structure and the physical hardware stay separate in your mind.',
     caption: 'Logical layers move. Hardware stays.',
     overlayMode: 'reuse',
     highlighted: 'model',
@@ -238,7 +238,7 @@ export const SCENE_FOUR_BEATS: SceneFourBeat[] = [
     id: 'memory-gates',
     label: 'Beat 5',
     title: 'Cache and HBM traffic matter as much as raw math.',
-    body: 'The shared L2 corridor and edge memory gateways brighten so the user can see that inference is also a memory movement story.',
+    body: 'The shared cache corridor and the doors to nearby memory brighten so you can see that this is also a memory-movement story, not just a math story.',
     caption: 'The center corridor and edge gateways stay active.',
     overlayMode: 'memory',
     highlighted: 'memory',
@@ -250,7 +250,7 @@ export const SCENE_FOUR_BEATS: SceneFourBeat[] = [
     id: 'async-data',
     label: 'Beat 6',
     title: 'The chip carefully stages data so the math units stay fed.',
-    body: 'Local scratchpad, asynchronous data motion, and nearby sharing get their own moment so the chip does not read like “math only.”',
+    body: 'Fast local memory and short data routes get their own moment so the chip does not read like “math only.”',
     caption: 'Data staging keeps compute neighborhoods productive.',
     overlayMode: 'async',
     highlighted: 'l2',
@@ -261,9 +261,9 @@ export const SCENE_FOUR_BEATS: SceneFourBeat[] = [
   {
     id: 'transformer-mode',
     label: 'Beat 7',
-    title: 'Transformer work lights up tensor-heavy regions.',
-    body: 'Tensor-dense areas brighten while a small note clarifies that Transformer Engine behavior is an operating mode layered over existing regions.',
-    caption: 'Tensor-heavy districts brighten in transformer mode.',
+    title: 'This workload brightens the chip’s math-heavy regions.',
+    body: 'The math-heavy areas brighten, but the hardware map does not change. The scene is showing a different workload on the same chip.',
+    caption: 'The same chip, now with a more active math pattern.',
     overlayMode: 'transformer',
     highlighted: 'tensor',
     hardwareFocus: 'districts',
@@ -274,7 +274,7 @@ export const SCENE_FOUR_BEATS: SceneFourBeat[] = [
     id: 'interconnect',
     label: 'Beat 8',
     title: 'Perimeter links matter only when work spans devices.',
-    body: 'The edge interconnect wakes up only in the multi-GPU view so the user does not overgeneralize off-chip traffic from every prompt.',
+    body: 'The edge links wake up only when work is spread across several chips, so you do not leave thinking every prompt always has heavy off-chip traffic.',
     caption: 'Perimeter links activate only when the workload needs them.',
     overlayMode: 'interconnect',
     highlighted: 'interconnect',
@@ -285,8 +285,8 @@ export const SCENE_FOUR_BEATS: SceneFourBeat[] = [
   {
     id: 'product-mask',
     label: 'Beat 9',
-    title: 'The shipping H100 product is one enabled view of a larger physical silicon template.',
-    body: 'The physical floorplan stays fixed while the product mask changes, so inactive regions can be ghosted instead of deleted.',
+    title: 'The shipped product is one enabled version of a larger physical chip.',
+    body: 'The physical floorplan stays fixed while the enabled regions change, so quieter parts can be ghosted instead of pretending they never existed.',
     caption: 'One silicon template, multiple enabled truths.',
     overlayMode: 'product',
     highlighted: 'product',
@@ -298,7 +298,7 @@ export const SCENE_FOUR_BEATS: SceneFourBeat[] = [
     id: 'mig-optional',
     label: 'Beat 10',
     title: 'Optional: the die can also be partitioned into service slices.',
-    body: 'A light MIG overlay shows that the same geometry can be carved into isolated service partitions without redrawing the chip.',
+    body: 'An optional partition overlay shows that the same chip can be split into service slices without redrawing the physical chip.',
     caption: 'Partitioning is an overlay, not a different floorplan.',
     overlayMode: 'mig',
     highlighted: 'mig',

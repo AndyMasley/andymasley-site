@@ -4,11 +4,11 @@ export const SCENE_FIVE_LAYER_ROWS = Array.from({ length: 12 }, (_, index) => ({
 }));
 
 export const SCENE_FIVE_LAYER_INSPECTOR_STAGES = [
-  { id: 'norm', label: 'Norm', description: 'Normalize token representations before the heavy projections.' },
-  { id: 'qkv', label: 'QKV proj', description: 'Create queries, keys, and values for attention.' },
-  { id: 'attn', label: 'Masked attn', description: 'Backward-looking attention over the prompt so far.' },
-  { id: 'out', label: 'Output proj', description: 'Project attention results back into the residual stream.' },
-  { id: 'ffn', label: 'Feed-forward', description: 'Broad dense matrix work that stays prominent in runtime.' },
+  { id: 'norm', label: 'Normalize', description: 'Clean up the token state before the heavy math begins.' },
+  { id: 'qkv', label: 'Make Q/K/V', description: 'Create the three attention ingredients called queries, keys, and values.' },
+  { id: 'attn', label: 'Look backward', description: 'Backward-looking attention over the prompt so far.' },
+  { id: 'out', label: 'Mix back in', description: 'Project the attention result back into the main running stream.' },
+  { id: 'ffn', label: 'Dense math', description: 'Broad matrix work that stays prominent in runtime.' },
 ] as const;
 
 export const SCENE_FIVE_ATTENTION_DIM = 10;
@@ -33,4 +33,3 @@ export const SCENE_FIVE_DECODE_LANE_TICKS = Array.from({ length: 6 }, (_, index)
   id: `decode-${index + 1}`,
   left: `${12 + index * 14}%`,
 }));
-

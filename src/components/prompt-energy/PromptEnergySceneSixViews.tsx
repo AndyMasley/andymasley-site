@@ -89,10 +89,10 @@ export function TBTBarView({
     >
       <div className="pe6-tbt__header">
         <div>
-          <div className="pe6-tbt__eyebrow">Time-between-tokens</div>
+          <div className="pe6-tbt__eyebrow">Streaming smoothness</div>
           <div className="pe6-tbt__title">Gap between answer tokens</div>
         </div>
-        <div className="pe6-tbt__status">{tbtFactor.toFixed(2)}x baseline cadence</div>
+        <div className="pe6-tbt__status">{tbtFactor.toFixed(2)}x usual rhythm</div>
       </div>
 
       <div className="pe6-tbt__bar" aria-hidden="true">
@@ -104,23 +104,23 @@ export function TBTBarView({
 
       <div className="pe6-tbt__metrics">
         <div className="pe6-tbt__metric">
-          <span>Output so far</span>
+          <span>Answer so far</span>
           <strong>{generatedTokens} tokens</strong>
         </div>
         <div className="pe6-tbt__metric">
-          <span>History consulted</span>
+          <span>History used now</span>
           <strong>{contextTokens} tokens</strong>
         </div>
         <div className="pe6-tbt__metric">
-          <span>Response energy</span>
+          <span>Energy so far</span>
           <strong>{cumulativeEnergy.toFixed(2)}x</strong>
         </div>
         <div className="pe6-tbt__metric">
-          <span>Energy per token</span>
+          <span>Per token</span>
           <strong>{energyPerToken.toFixed(2)}x</strong>
         </div>
         <div className="pe6-tbt__metric">
-          <span>Active requests</span>
+          <span>Requests sharing this moment</span>
           <strong>{activeRequests}</strong>
         </div>
       </div>
@@ -167,7 +167,7 @@ export function AnswerStreamView({
       onBlur={() => onHover(null)}
     >
       <div className="pe6-answer-pane__header">
-        <div className="pe6-answer-pane__title">Answer stream</div>
+        <div className="pe6-answer-pane__title">Growing answer</div>
         <div className="pe6-answer-pane__caption">
           {outputConfig.label} answer preset · target {outputConfig.logicalOutputTokens} output tokens
         </div>
@@ -194,7 +194,7 @@ export function AnswerStreamView({
       )}
 
       <div className="pe6-answer-pane__chooser">
-        <span>next-token chooser</span>
+        <span>next token chooser</span>
         <strong>{stopCondition ? 'loop closed' : 'choose one token'}</strong>
       </div>
 
@@ -266,7 +266,7 @@ export function LogicalCacheView({
       onBlur={() => onHover(null)}
     >
       <div className="pe6-cache-pane__header">
-        <div className="pe6-cache-pane__title">Logical KV-cache wall</div>
+        <div className="pe6-cache-pane__title">Saved history wall</div>
         <div className="pe6-cache-pane__caption">
           Prompt history on the left, answer growth on the right. {generatedTokens} output tokens emitted so far.
         </div>
@@ -338,13 +338,13 @@ export function PhysicalCacheView({
       onBlur={() => onHover(null)}
     >
       <div className="pe6-physical__header">
-        <div className="pe6-physical__title">Physical KV memory</div>
-        <div className="pe6-physical__caption">Logical history on top, physical blocks underneath.</div>
+        <div className="pe6-physical__title">How the saved history sits in real memory</div>
+        <div className="pe6-physical__caption">Clean history on top, real memory blocks underneath.</div>
       </div>
 
       <div className="pe6-physical__compare">
         <div className="pe6-physical__panel">
-          <div className="pe6-physical__label">naive contiguous growth</div>
+          <div className="pe6-physical__label">simple contiguous idea</div>
           <div className="pe6-physical__naive">
             {SCENE_SIX_NAIVE_BLOCK_SLOTS.map((slot, index) => {
               let state = 'future';
@@ -364,7 +364,7 @@ export function PhysicalCacheView({
         </div>
 
         <div className="pe6-physical__panel">
-          <div className="pe6-physical__label">paged blocks</div>
+          <div className="pe6-physical__label">paged blocks in real memory</div>
           <div className="pe6-physical__pool">
             <div className="pe6-physical__logical-strip" aria-hidden="true">
               {SCENE_SIX_LOGICAL_MEMORY_ANCHORS.map(anchor => (
@@ -434,8 +434,8 @@ export function DecodeDieView({
   return (
     <div className="pe6-die-pane">
       <div className="pe6-die-pane__header">
-        <div className="pe6-die-pane__title">Die activity during decode</div>
-        <div className="pe6-die-pane__caption">Narrower than prefill, but more persistent on the cache corridor and memory gateways.</div>
+        <div className="pe6-die-pane__title">Chip activity during answer generation</div>
+        <div className="pe6-die-pane__caption">Narrower than the prompt sweep, but more persistent on the cache corridor and memory gateways.</div>
       </div>
 
       <div className="pe6-die-wrap">
@@ -518,7 +518,7 @@ export function DecodeDieView({
             className="pe6-zone pe6-zone--memory"
             focus="memory"
             activeFocus={activeFocus}
-            label="Memory-heavy activity on the cache corridor and HBM gateways during decode."
+            label="Memory-heavy activity on the cache corridor and nearby memory gateways during answer generation."
             onHover={onHover}
           />
           <FocusZone
@@ -550,8 +550,8 @@ export function SchedulerCompareView({ activeFocus, onHover }: SchedulerCompareV
       onBlur={() => onHover(null)}
     >
       <div className="pe6-scheduler__header">
-        <div className="pe6-scheduler__title">Scheduler compare</div>
-        <div className="pe6-scheduler__caption">The same decode loop, but very different streaming smoothness.</div>
+        <div className="pe6-scheduler__title">Same chip, different streaming smoothness</div>
+        <div className="pe6-scheduler__caption">The same answer loop can feel very different depending on scheduling.</div>
       </div>
 
       <div className="pe6-scheduler__cards">
@@ -608,7 +608,7 @@ export function AccelerationCompareView({
     >
       <div className="pe6-accel__header">
         <div className="pe6-accel__title">
-          {mode === 'speculative' ? 'Speculative decode compare' : 'Medusa compare'}
+          {mode === 'speculative' ? 'Draft-and-verify compare' : 'Extra-head compare'}
         </div>
         <div className="pe6-accel__caption">
           {mode === 'speculative'

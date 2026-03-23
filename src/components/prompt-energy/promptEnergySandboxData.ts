@@ -145,7 +145,7 @@ export const SANDBOX_ARCHITECTURE_OPTIONS: SandboxArchitectureOption[] = [
     powerFactor: 0.78,
     ttftFactor: 0.94,
     activeParameterShare: 0.3,
-    description: 'Sparse routing touches a smaller active subset per token.',
+    description: 'Sparse routing touches a smaller active subset of the model on each token.',
   },
 ];
 

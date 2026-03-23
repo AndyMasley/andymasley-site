@@ -287,7 +287,7 @@ export function PromptEnergySceneSix({ boundary }: SceneSixProps) {
             <div className="pe6-stage__legend" aria-label="Scene six legend">
               <span className="pe6-stage__legend-item"><span className="pe6-stage__legend-swatch pe6-stage__legend-swatch--data" />Data traffic</span>
               <span className="pe6-stage__legend-item"><span className="pe6-stage__legend-swatch pe6-stage__legend-swatch--power" />Decode compute</span>
-              <span className="pe6-stage__legend-item"><span className="pe6-stage__legend-swatch pe6-stage__legend-swatch--cache" />KV history</span>
+              <span className="pe6-stage__legend-item"><span className="pe6-stage__legend-swatch pe6-stage__legend-swatch--cache" />Saved history</span>
               <span className="pe6-stage__legend-item"><span className="pe6-stage__legend-swatch pe6-stage__legend-swatch--heat" />Accumulated heat</span>
             </div>
 

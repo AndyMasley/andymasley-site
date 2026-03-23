@@ -234,7 +234,7 @@ export function PromptEnergySceneFive({ boundary }: SceneFiveProps) {
             <div className="pe5-stage__legend" aria-label="Scene five legend">
               <span className="pe5-stage__legend-item"><span className="pe5-stage__legend-swatch pe5-stage__legend-swatch--data" />Data traffic</span>
               <span className="pe5-stage__legend-item"><span className="pe5-stage__legend-swatch pe5-stage__legend-swatch--power" />Compute-heavy sweep</span>
-              <span className="pe5-stage__legend-item"><span className="pe5-stage__legend-swatch pe5-stage__legend-swatch--cache" />KV-cache state</span>
+              <span className="pe5-stage__legend-item"><span className="pe5-stage__legend-swatch pe5-stage__legend-swatch--cache" />Saved history state</span>
               <span className="pe5-stage__legend-item"><span className="pe5-stage__legend-swatch pe5-stage__legend-swatch--ghost" />Cached / ghosted prefix</span>
             </div>
 

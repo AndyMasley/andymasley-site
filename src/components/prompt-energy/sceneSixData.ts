@@ -184,7 +184,7 @@ export const SCENE_SIX_OUTPUT_PRESETS: DecodeOutputPresetConfig[] = [
 export const SCENE_SIX_FOCUS_COPY: Record<SceneSixFocus, { label: string; description: string }> = {
   loop: {
     label: 'One-token answer loop',
-    description: 'Each decode iteration reads the current state, runs one autoregressive pass, emits one token, appends new KV state, and then repeats.',
+    description: 'Each answer step uses the saved history, runs one model pass, emits one token, saves new key-and-value state, and then repeats.',
   },
   memory: {
     label: 'Memory-heavy chip path',
@@ -200,11 +200,11 @@ export const SCENE_SIX_FOCUS_COPY: Record<SceneSixFocus, { label: string; descri
   },
   physical: {
     label: 'Clean sequence versus real memory blocks',
-    description: 'Logically the history is one clean sequence, but physically KV blocks can live in non-contiguous memory so the runtime grows the cache with far less waste.',
+    description: 'Logically the history looks like one clean sequence, but in real memory the saved blocks can live in separate places so the runtime wastes less space.',
   },
   tbt: {
-    label: 'Gap between tokens',
-    description: 'After TTFT, the key user-facing latency is the gap between one emitted token and the next because that gap controls whether the answer feels smooth or choppy.',
+    label: 'Gap between answer tokens',
+    description: 'After the first token, the key user-facing delay is the gap between one answer token and the next because that gap controls whether the stream feels smooth or choppy.',
   },
   length: {
     label: 'Output length control',
@@ -223,8 +223,8 @@ export const SCENE_SIX_FOCUS_COPY: Record<SceneSixFocus, { label: string; descri
     description: 'A faster draft lane proposes multiple tokens and the heavier target lane verifies them together, reducing how many serial target-model passes are needed.',
   },
   medusa: {
-    label: 'Same-model multi-head decode',
-    description: 'Medusa-style decoding keeps one model but adds several forward-looking heads that propose more than one future token at a time.',
+    label: 'Extra same-model heads',
+    description: 'This keeps one model but adds several forward-looking heads that propose more than one future token at a time.',
   },
   prefix: {
     label: 'Warm prefix start',
@@ -248,13 +248,13 @@ export const SCENE_SIX_PLANE_NOTES: Record<SceneSixOverlayMode, SceneSixPlaneNot
   },
   loop: {
     kicker: 'Master unit',
-    title: 'One decode iteration is the new rhythm',
-    copy: 'Read the current state, run one autoregressive pass, choose the next token, append its cache state, and repeat. That cycle is the heartbeat of Scene 6.',
+    title: 'One answer step is the new rhythm',
+    copy: 'Use the saved history, run one model pass, choose the next token, save the new state, and repeat. That cycle is the heartbeat of Scene 6.',
   },
   memory: {
     kicker: 'Physical path',
-    title: 'Narrower than prefill, heavier on memory',
-    copy: 'Decode still reuses the full model stack, but the die now looks like a commuter route through cache and memory gateways rather than a citywide parade.',
+    title: 'Narrower than the prompt sweep, heavier on memory',
+    copy: 'Answer generation still reuses the full model stack, but the chip now looks like a tighter route through cache and memory doors rather than a broad citywide sweep.',
   },
   answer: {
     kicker: 'Visible result',
@@ -263,17 +263,17 @@ export const SCENE_SIX_PLANE_NOTES: Record<SceneSixOverlayMode, SceneSixPlaneNot
   },
   cache: {
     kicker: 'Persistent memory',
-    title: 'The KV cache becomes append-only history',
-    copy: 'Every new token adds another narrow slice across all layers, so long answers widen the cache wall even after the prompt has already been processed.',
+    title: 'The saved history keeps growing',
+    copy: 'Every new token adds another narrow slice across all layers, so long answers widen the saved history wall even after the prompt has already been processed.',
   },
   physical: {
     kicker: 'Paged memory',
-    title: 'Logical history is clean. Physical allocation is not.',
-    copy: 'The runtime can grow the logical sequence with non-contiguous blocks underneath so KV memory wastes far less space than a naive contiguous slab would.',
+    title: 'The clean history view is not how memory literally looks underneath',
+    copy: 'The runtime can grow the logical sequence with separate blocks underneath so the saved history wastes far less space than one naive contiguous slab would.',
   },
   tbt: {
     kicker: 'User-facing latency',
-    title: 'TBT replaces TTFT as the main decode metric',
+    title: 'Now the important question is the gap before the next token',
     copy: 'The question is no longer “when will the first token appear?” It is “how long is the gap before the next one arrives?”',
   },
   length: {
@@ -298,8 +298,8 @@ export const SCENE_SIX_PLANE_NOTES: Record<SceneSixOverlayMode, SceneSixPlaneNot
   },
   paged: {
     kicker: 'KV memory',
-    title: 'PagedAttention makes cache growth more practical',
-    copy: 'Logical history keeps extending token by token while physical KV blocks are allocated in small pieces with far less waste and duplication.',
+    title: 'Paged memory makes longer answer runs more practical',
+    copy: 'The clean logical history keeps extending token by token while the real saved blocks underneath are allocated in smaller pieces with far less waste.',
   },
   prefix: {
     kicker: 'Starting condition',
@@ -313,8 +313,8 @@ export const SCENE_SIX_PLANE_NOTES: Record<SceneSixOverlayMode, SceneSixPlaneNot
   },
   medusa: {
     kicker: 'Same-model acceleration',
-    title: 'Medusa proposes several future tokens from one model',
-    copy: 'Instead of a separate draft model, extra heads on the same model propose multiple continuations that can be verified together.',
+    title: 'Extra heads on the same model can propose several future tokens',
+    copy: 'Instead of using a separate draft model, this approach adds extra heads on the same model so several continuations can be checked together.',
   },
   energy: {
     kicker: 'Economics',
@@ -364,9 +364,9 @@ export const SCENE_SIX_BEATS: SceneSixBeat[] = [
   {
     id: 'one-iteration',
     label: 'Beat 1',
-    title: 'One decode iteration becomes the master unit of the scene.',
-    body: 'The loop is now explicit: use the current cache state, run one autoregressive pass, choose one token, append new KV state, and repeat.',
-    caption: 'One decode step now defines the rhythm.',
+    title: 'One answer step becomes the master unit of the scene.',
+    body: 'The loop is now explicit: use the saved history, run one model pass, choose one token, save new key-and-value state, and repeat.',
+    caption: 'One answer step now defines the rhythm.',
     overlayMode: 'loop',
     highlighted: 'loop',
     compareMode: 'standard',
@@ -392,7 +392,7 @@ export const SCENE_SIX_BEATS: SceneSixBeat[] = [
     id: 'die-memory',
     label: 'Beat 2',
     title: 'The die activity gets narrower and more memory-heavy.',
-    body: 'The compute districts still pulse because the full model is still involved, but the cache corridor and memory gateways stay much more prominent than they were during prefill.',
+    body: 'The math districts still pulse because the full model is still involved, but the cache corridor and memory doors stand out much more than they did during the prompt sweep.',
     caption: 'Decode looks narrower, not smaller.',
     overlayMode: 'memory',
     highlighted: 'memory',
@@ -445,8 +445,8 @@ export const SCENE_SIX_BEATS: SceneSixBeat[] = [
   {
     id: 'cache-append',
     label: 'Beat 4',
-    title: 'The KV cache wall becomes append-only history.',
-    body: 'Each emitted token adds one new vertical slice across all layers, making the cache feel alive and making long answers visibly more expensive in memory and work.',
+    title: 'The saved history wall keeps widening.',
+    body: 'Each emitted token adds one new vertical slice across all layers, making the history feel alive and making long answers visibly more expensive in memory and work.',
     caption: 'Every token widens the history that future tokens will consult.',
     overlayMode: 'cache',
     highlighted: 'cache',
@@ -472,9 +472,9 @@ export const SCENE_SIX_BEATS: SceneSixBeat[] = [
   {
     id: 'logical-physical',
     label: 'Beat 5',
-    title: 'Logical cache history and physical memory layout should not look the same.',
-    body: 'The logical cache wall stays neat and sequential, while the physical memory panel below it shows fixed-size blocks allocated non-contiguously underneath.',
-    caption: 'Logical history on top, physical blocks underneath.',
+    title: 'The clean history view and the real memory layout should not look the same.',
+    body: 'The logical history wall stays neat and sequential, while the physical memory panel below it shows smaller saved blocks placed in separate spots underneath.',
+    caption: 'Clean history on top, real blocks underneath.',
     overlayMode: 'physical',
     highlighted: 'physical',
     compareMode: 'paged',
@@ -499,7 +499,7 @@ export const SCENE_SIX_BEATS: SceneSixBeat[] = [
   {
     id: 'tbt-metric',
     label: 'Beat 6',
-    title: 'Time-between-tokens replaces time-to-first-token as the hero latency metric.',
+    title: 'After the first token, the main metric becomes the gap before the next token.',
     body: 'The user now cares about the gap between one emitted token and the next because that is what determines whether the answer feels fluid or choppy.',
     caption: 'Decode cadence is the new user-facing latency story.',
     overlayMode: 'tbt',
@@ -634,9 +634,9 @@ export const SCENE_SIX_BEATS: SceneSixBeat[] = [
   {
     id: 'paged-memory',
     label: 'Beat 11',
-    title: 'Paged KV memory makes longer decode runs more practical.',
-    body: 'The cache keeps growing one token at a time, but the physical block pool below shows how the runtime can allocate that growth in smaller non-contiguous pieces.',
-    caption: 'Paged blocks keep logical growth and physical waste from being the same thing.',
+    title: 'Paged saved-memory blocks make longer answer runs more practical.',
+    body: 'The history keeps growing one token at a time, but the physical block pool below shows how the runtime can allocate that growth in smaller separate pieces.',
+    caption: 'Smaller blocks keep clean logical growth and physical waste from being the same thing.',
     overlayMode: 'paged',
     highlighted: 'physical',
     compareMode: 'paged',
@@ -715,7 +715,7 @@ export const SCENE_SIX_BEATS: SceneSixBeat[] = [
   {
     id: 'medusa-decode',
     label: 'Beat 14',
-    title: 'Medusa is a different kind of acceleration: several future tokens are proposed from the same model.',
+    title: 'A second speedup uses extra heads on the same model.',
     body: 'Instead of a separate draft model, extra heads on the main model fan forward into several candidate continuations that can be checked together.',
     caption: 'Same-model heads, several future-token proposals.',
     overlayMode: 'medusa',
