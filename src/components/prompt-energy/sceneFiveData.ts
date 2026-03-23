@@ -80,8 +80,8 @@ export const SCENE_FIVE_BOUNDARY_COPY: Record<BoundaryKey, string> = {
 export const SCENE_FIVE_MODE_OPTIONS: PromptPresetConfig[] = [
   {
     key: 'full',
-    label: 'Full prefill',
-    description: 'Short prompt, full-width prompt sweep, no prefix reuse.',
+    label: 'Short prompt',
+    description: 'A short prompt with the normal full-width prefill sweep and no prefix reuse.',
     promptLabel: 'Short question',
     visualTokens: ['Why', 'is', 'a', 'single', 'AI', 'prompt', 'so', 'cheap?'],
     logicalTokenCount: 8,
@@ -95,7 +95,7 @@ export const SCENE_FIVE_MODE_OPTIONS: PromptPresetConfig[] = [
   {
     key: 'long',
     label: 'Long prompt',
-    description: 'Longer context widens the prompt sweep and grows the causal attention field.',
+    description: 'A longer context makes the prompt sweep wider and the attention pattern heavier.',
     promptLabel: 'System prompt + long document',
     visualTokens: ['system', 'goal', 'style', 'context', 'source', 'quote', 'history', 'constraints', 'doc', 'section', 'notes', 'citations', 'example', 'follow-up', 'user', 'ask'],
     logicalTokenCount: 680,
@@ -108,8 +108,8 @@ export const SCENE_FIVE_MODE_OPTIONS: PromptPresetConfig[] = [
   },
   {
     key: 'chunked',
-    label: 'Chunked prefill',
-    description: 'Split the prompt into smaller chunks so prefill can coexist more smoothly with ongoing decode.',
+    label: 'Split prompt',
+    description: 'The prompt is split into smaller chunks so prefill can coexist more smoothly with ongoing decode.',
     promptLabel: 'Chunked serving prompt',
     visualTokens: ['system', 'brief', 'context', 'quote', 'section', 'note', 'evidence', 'ask', 'scope', 'constraint', 'example', 'citation'],
     logicalTokenCount: 144,
@@ -122,8 +122,8 @@ export const SCENE_FIVE_MODE_OPTIONS: PromptPresetConfig[] = [
   },
   {
     key: 'cached',
-    label: 'Cached prefix',
-    description: 'A shared prefix is already in the KV cache, so only the uncached suffix needs a fresh wide pass.',
+    label: 'Reused prefix',
+    description: 'A shared prefix is already in the KV cache, so only the new suffix needs a fresh wide pass.',
     promptLabel: 'Repeated system prompt + fresh suffix',
     visualTokens: ['system', 'policy', 'style', 'context', 'shared', 'brief', 'doc', 'prefix', 'new', 'user', 'question', 'today'],
     logicalTokenCount: 96,
@@ -142,19 +142,19 @@ export const SCENE_FIVE_FOCUS_COPY: Record<SceneFiveFocus, { label: string; desc
     description: 'The prompt reappears as an ordered sequence of input tokens. Their left-to-right order matters because attention states depend on position.',
   },
   grid: {
-    label: 'Token-by-layer work grid',
+    label: 'Prompt work grid',
     description: 'Every prompt token crosses every decoder layer before the first output token appears. The full width is active during prefill.',
   },
   layer: {
-    label: 'Representative decoder layer',
+    label: 'One layer up close',
     description: 'One layer inspector shows normalization, QKV projections, masked attention, output projection, and feed-forward work before collapsing back into the broader sweep.',
   },
   attention: {
-    label: 'Causal attention inset',
+    label: 'Backward-looking attention',
     description: 'Each position can attend backward to earlier tokens and itself, not forward. The advanced view then shows tiled execution rather than one giant matrix parked in HBM.',
   },
   compute: {
-    label: 'Broad compute-heavy die activity',
+    label: 'Wide compute pass',
     description: 'Prefill is a wide, compute-heavy pass. The die glows broadly across many tensor-heavy districts instead of following one narrow token path.',
   },
   staging: {
@@ -162,7 +162,7 @@ export const SCENE_FIVE_FOCUS_COPY: Record<SceneFiveFocus, { label: string; desc
     description: 'The chip keeps math units busy by staging data through shared cache and local scratchpad rather than treating inference as math alone.',
   },
   cache: {
-    label: 'KV-cache wall',
+    label: 'Saved memory for later',
     description: 'As each layer finishes the prompt sweep, the scene stores key and value state for the full prompt width so later decode can reuse it.',
   },
   ttft: {
@@ -499,4 +499,3 @@ export const SCENE_FIVE_BEATS: SceneFiveBeat[] = [
     narrowColumn: true,
   },
 ];
-

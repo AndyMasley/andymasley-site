@@ -15,6 +15,7 @@ import {
   SMCameoView,
 } from './PromptEnergySceneFourViews';
 import {
+  PromptEnergyInlineHelp,
   PromptEnergySceneBridge,
   PromptEnergyScenePrimer,
   PromptEnergySceneTakeaway,
@@ -237,7 +238,7 @@ export function PromptEnergySceneFour({ boundary }: SceneFourProps) {
             </div>
 
             <div className="pe4-stage__controls">
-              <div className="pe4-stage__toggle-group" role="group" aria-label="Product view">
+              <div className="pe4-stage__toggle-group" role="group" aria-label="Chip view">
                 {SCENE_FOUR_PRODUCT_OPTIONS.map(option => (
                   <button
                     key={option.key}
@@ -252,7 +253,7 @@ export function PromptEnergySceneFour({ boundary }: SceneFourProps) {
                 ))}
               </div>
 
-              <div className="pe4-stage__toggle-group pe4-stage__toggle-group--secondary" role="group" aria-label="Optional overlays">
+              <div className="pe4-stage__toggle-group pe4-stage__toggle-group--secondary" role="group" aria-label="Optional teaching overlays">
                 <button
                   type="button"
                   className={`pe4-stage__toggle pe4-stage__toggle--secondary ${showInterconnectToggle ? 'is-active' : ''}`}
@@ -271,6 +272,22 @@ export function PromptEnergySceneFour({ boundary }: SceneFourProps) {
                 </button>
               </div>
             </div>
+
+            <PromptEnergyInlineHelp
+              rows={[
+                {
+                  label: 'Selected chip view',
+                  copy: SCENE_FOUR_PRODUCT_OPTIONS.find(option => option.key === productMode)?.description ?? '',
+                },
+                {
+                  label: 'Optional overlays',
+                  copy:
+                    showInterconnectToggle || showMigToggle
+                      ? 'You have extra teaching overlays turned on. They show multi-chip links or chip partitioning, not a different physical die.'
+                      : 'The optional overlays are off, so the scene stays focused on one prompt using one chip.',
+                },
+              ]}
+            />
 
             <div className="pe4-stage__plane-note">
               <div className="pe4-stage__plane-note-kicker">{planeNote.kicker}</div>
@@ -315,13 +332,13 @@ export function PromptEnergySceneFour({ boundary }: SceneFourProps) {
             </div>
 
             <div className="pe4-stage__spotlight">
-              <div className="pe4-stage__spotlight-kicker">Spotlight</div>
+              <div className="pe4-stage__spotlight-kicker">What you are looking at</div>
               <div className="pe4-stage__spotlight-title">{focusCopy.label}</div>
               <p className="pe4-stage__spotlight-copy">{focusCopy.description}</p>
             </div>
 
             <aside className="pe4-ledger" aria-label="Scene four mini ledger">
-              <div className="pe4-ledger__eyebrow">Mini ledger</div>
+              <div className="pe4-ledger__eyebrow">Quick facts</div>
               <div className="pe4-ledger__boundary">{SCENE_FOUR_BOUNDARY_COPY[boundary]}</div>
               <div className="pe4-ledger__currently">Current hardware focus: {activeBeat.hardwareFocus}.</div>
               <div className="pe4-ledger__currently">Product mode: {productMode === 'shipping' ? 'shipping H100 SXM view' : 'full physical GH100 view'}.</div>

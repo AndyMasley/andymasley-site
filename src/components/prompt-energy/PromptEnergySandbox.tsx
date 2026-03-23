@@ -437,15 +437,15 @@ export function PromptEnergySandbox({
               <strong>{formatHeat(derived.totalWh)}</strong>
             </div>
             <div className="pe-sandbox__metric">
-              <span>Illustrative TTFT</span>
+              <span>Time until first token</span>
               <strong>{formatTtft(derived.ttftMs)}</strong>
             </div>
             <div className="pe-sandbox__metric">
-              <span>Energy / output token</span>
+              <span>Energy per output token</span>
               <strong>{formatMWhPerToken(derived.totalWh, outputConfig.outputTokens)}</strong>
             </div>
             <div className="pe-sandbox__metric">
-              <span>Infrastructure beyond chip</span>
+              <span>Infrastructure beyond the chip</span>
               <strong>{formatWh(derived.infrastructureWh)}</strong>
             </div>
           </div>

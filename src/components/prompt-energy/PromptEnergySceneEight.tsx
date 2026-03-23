@@ -19,6 +19,7 @@ import {
   SummaryStripView,
 } from './PromptEnergySceneEightViews';
 import {
+  PromptEnergyInlineHelp,
   PromptEnergySceneBridge,
   PromptEnergyScenePrimer,
   PromptEnergySceneTakeaway,
@@ -197,21 +198,21 @@ export function PromptEnergySceneEight({
 
             <div className="pe8-stage__metrics">
               <div className="pe8-stage__metric">
-                <span>Current prompt energy</span>
+                <span>Prompt energy now</span>
                 <strong>{boundaryMetricLabel}</strong>
               </div>
               <div className="pe8-stage__metric">
-                <span>Infrastructure allocation</span>
+                <span>Shared infrastructure counted</span>
                 <strong>{activeBeat.heroInfrastructureLabel}</strong>
               </div>
               <div className="pe8-stage__metric">
-                <span>Why this changes</span>
+                <span>Main reason it changed</span>
                 <strong>{activeBeat.heroWhy}</strong>
               </div>
             </div>
 
             <div className="pe8-stage__controls">
-              <div className="pe8-stage__toggle-group" role="group" aria-label="Economics compare mode">
+              <div className="pe8-stage__toggle-group" role="group" aria-label="Economics compare">
                 {SCENE_EIGHT_COMPARE_OPTIONS.map(option => (
                   <button
                     key={option.key}
@@ -236,6 +237,19 @@ export function PromptEnergySceneEight({
                 </button>
               )}
             </div>
+
+            <PromptEnergyInlineHelp
+              rows={[
+                {
+                  label: 'Selected economics compare',
+                  copy: compareConfig.description,
+                },
+                {
+                  label: 'Current boundary',
+                  copy: SCENE_EIGHT_BOUNDARY_COPY[boundary],
+                },
+              ]}
+            />
 
             <div className="pe8-stage__plane-note">
               <div className="pe8-stage__plane-note-kicker">{planeNote.kicker}</div>
@@ -290,18 +304,18 @@ export function PromptEnergySceneEight({
             <SummaryStripView activeFocus={activeFocus} onHover={setHoveredFocus} />
 
             <div className="pe8-stage__spotlight">
-              <div className="pe8-stage__spotlight-kicker">Spotlight</div>
+              <div className="pe8-stage__spotlight-kicker">What you are looking at</div>
               <div className="pe8-stage__spotlight-title">{focusCopy.label}</div>
               <p className="pe8-stage__spotlight-copy">{focusCopy.description}</p>
             </div>
 
             <aside className="pe8-ledger" aria-label="Scene eight mini ledger">
-              <div className="pe8-ledger__eyebrow">Mini ledger</div>
+              <div className="pe8-ledger__eyebrow">Quick facts</div>
               <div className="pe8-ledger__boundary">{SCENE_EIGHT_BOUNDARY_COPY[boundary]}</div>
               <div className="pe8-ledger__currently">
                 Inherited from Scene 7: {SCENE_EIGHT_BOUNDARY_COPY[inheritedBoundary]}
               </div>
-              <div className="pe8-ledger__currently">Mode now: {compareConfig.label.toLowerCase()}.</div>
+              <div className="pe8-ledger__currently">Current view: {compareConfig.label.toLowerCase()}.</div>
 
               <div className="pe8-ledger__metrics">
                 <div className="pe8-ledger__metric">

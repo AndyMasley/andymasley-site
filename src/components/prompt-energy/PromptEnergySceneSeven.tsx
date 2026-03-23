@@ -18,6 +18,7 @@ import {
   TrayRackView,
 } from './PromptEnergySceneSevenViews';
 import {
+  PromptEnergyInlineHelp,
   PromptEnergySceneBridge,
   PromptEnergyScenePrimer,
   PromptEnergySceneTakeaway,
@@ -260,7 +261,7 @@ export function PromptEnergySceneSeven({ boundary }: SceneSevenProps) {
             </div>
 
             <div className="pe7-stage__controls">
-              <div className="pe7-stage__toggle-group" role="group" aria-label="Cooling compare mode">
+              <div className="pe7-stage__toggle-group" role="group" aria-label="Cooling layout compare">
                 {SCENE_SEVEN_COMPARE_OPTIONS.map(option => (
                   <button
                     key={option.key}
@@ -275,7 +276,7 @@ export function PromptEnergySceneSeven({ boundary }: SceneSevenProps) {
                 ))}
               </div>
 
-              <div className="pe7-stage__toggle-group" role="group" aria-label="Thermal overlays">
+              <div className="pe7-stage__toggle-group" role="group" aria-label="Extra thermal overlays">
                 <button
                   type="button"
                   className={`pe7-stage__toggle ${engineerMode ? 'is-active' : ''}`}
@@ -308,6 +309,22 @@ export function PromptEnergySceneSeven({ boundary }: SceneSevenProps) {
                 </button>
               )}
             </div>
+
+            <PromptEnergyInlineHelp
+              rows={[
+                {
+                  label: 'Selected cooling layout',
+                  copy: compareConfig.description,
+                },
+                {
+                  label: 'Extra overlays',
+                  copy:
+                    engineerMode || leakDetectionMode
+                      ? 'You have extra engineer overlays turned on, so the scene is showing temperatures, pressures, flow, or fault sensing on top of the main cooling path.'
+                      : 'The optional engineer overlays are off, so this is the simplest physical cooling view.',
+                },
+              ]}
+            />
 
             <div className="pe7-stage__plane-note">
               <div className="pe7-stage__plane-note-kicker">{planeNote.kicker}</div>
@@ -362,15 +379,15 @@ export function PromptEnergySceneSeven({ boundary }: SceneSevenProps) {
             </div>
 
             <div className="pe7-stage__spotlight">
-              <div className="pe7-stage__spotlight-kicker">Spotlight</div>
+              <div className="pe7-stage__spotlight-kicker">What you are looking at</div>
               <div className="pe7-stage__spotlight-title">{focusCopy.label}</div>
               <p className="pe7-stage__spotlight-copy">{focusCopy.description}</p>
             </div>
 
             <aside className="pe7-ledger" aria-label="Scene seven mini ledger">
-              <div className="pe7-ledger__eyebrow">Mini ledger</div>
+              <div className="pe7-ledger__eyebrow">Quick facts</div>
               <div className="pe7-ledger__boundary">{SCENE_SEVEN_BOUNDARY_COPY[boundary]}</div>
-              <div className="pe7-ledger__currently">Mode now: {compareConfig.label.toLowerCase()}.</div>
+              <div className="pe7-ledger__currently">Current view: {compareConfig.label.toLowerCase()}.</div>
               <div className="pe7-ledger__currently">Local stack: {compareConfig.localCoolingLabel}.</div>
 
               <div className="pe7-ledger__metrics">

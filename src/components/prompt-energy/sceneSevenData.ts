@@ -80,21 +80,21 @@ export const SCENE_SEVEN_BOUNDARY_COPY: Record<BoundaryKey, string> = {
 export const SCENE_SEVEN_COMPARE_OPTIONS: CoolingModeConfig[] = [
   {
     key: 'hybrid',
-    label: 'Hybrid cooling',
+    label: 'Liquid + air',
     description: 'Direct liquid cooling on the hottest compute plus airflow on support hardware and power electronics.',
     localCoolingLabel: 'sealed cold plate',
     supportCoolingLabel: 'fan-cooled support zones',
   },
   {
     key: 'full-liquid',
-    label: 'Full liquid',
+    label: 'Mostly liquid',
     description: 'A more aggressively liquid-cooled reference where the liquid side captures almost all heat removal.',
     localCoolingLabel: 'full liquid branch',
     supportCoolingLabel: 'minimal remaining air cleanup',
   },
   {
     key: 'air-passive',
-    label: 'Passive air',
+    label: 'Air only',
     description: 'Passive fin stack over the package with strong chassis airflow instead of a cold plate.',
     localCoolingLabel: 'passive fin stack',
     supportCoolingLabel: 'chassis airflow everywhere',
@@ -103,11 +103,11 @@ export const SCENE_SEVEN_COMPARE_OPTIONS: CoolingModeConfig[] = [
 
 export const SCENE_SEVEN_FOCUS_COPY: Record<SceneSevenFocus, { label: string; description: string }> = {
   stack: {
-    label: 'Immediate thermal stack',
+    label: 'First heat path above the chip',
     description: 'Heat leaves the die by conduction through the package stack first. The local thermal story starts with solids, not with flowing liquid.',
   },
   coldplate: {
-    label: 'Cold-plate interior',
+    label: 'Inside the cold plate',
     description: 'The coolant is above the package, sealed inside machined channels within the cold plate. It is not touching the silicon or bathing the package.',
   },
   plumbing: {
@@ -119,11 +119,11 @@ export const SCENE_SEVEN_FOCUS_COPY: Record<SceneSevenFocus, { label: string; de
     description: 'Liquid dominates the hottest compute zones, but networking, storage, management, and other lower-power hardware still rely on air movement.',
   },
   manifold: {
-    label: 'Rack rear manifold',
+    label: 'Rack plumbing spine',
     description: 'The rack rear is the liquid distribution spine: manifold, inlets and outlets, cable cartridges, and the power bus bar all live there together.',
   },
   cdu: {
-    label: 'CDU boundary',
+    label: 'Rack loop meets building loop',
     description: 'The CDU is the control and exchange boundary between the rack-side technology cooling loop and the separate facility-side loop.',
   },
   facility: {

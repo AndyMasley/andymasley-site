@@ -7,7 +7,9 @@ import {
   LEARNING_FAQ_BLOCKS,
   SCENE_BRIDGE_CARDS,
   SCENE_LEARNING_CARDS,
+  STORY_META_FACTS,
   STORY_JOURNEY_STEPS,
+  VISUAL_LEGEND_ITEMS,
   type FAQBlock,
   type LearningSceneKey,
 } from './promptEnergyLearningData';
@@ -55,6 +57,49 @@ function PowerEnergyPrimer() {
         <small>total used</small>
       </div>
     </div>
+  );
+}
+
+export function PromptEnergyPageFacts() {
+  return (
+    <section className="pe-page-facts" aria-label="Story facts">
+      {STORY_META_FACTS.map(fact => (
+        <article key={fact.label} className="pe-page-facts__item">
+          <div className="pe-page-facts__label">{fact.label}</div>
+          <p>{fact.detail}</p>
+        </article>
+      ))}
+    </section>
+  );
+}
+
+export function PromptEnergyVisualLegend() {
+  return (
+    <section className="pe-vlegend" aria-labelledby="pe-vlegend-title">
+      <div className="pe-vlegend__header">
+        <div className="pe-vlegend__eyebrow">Visual legend</div>
+        <h2 id="pe-vlegend-title">How to read the colors and overlays</h2>
+        <p>
+          The same color rules stay in place across the whole story. When the visuals become abstract, use this legend as the translation key.
+        </p>
+      </div>
+
+      <div className="pe-vlegend__grid">
+        {VISUAL_LEGEND_ITEMS.map(item => (
+          <article key={item.key} className="pe-vlegend__item">
+            <div className="pe-vlegend__swatch-row">
+              <span className={`pe-vlegend__swatch pe-vlegend__swatch--${item.key}`} aria-hidden="true" />
+              <h3>{item.label}</h3>
+            </div>
+            <p>{item.detail}</p>
+          </article>
+        ))}
+      </div>
+
+      <div className="pe-vlegend__note">
+        <strong>One more reading rule:</strong> the hardware drawings are the physical truth anchors, while the glowing paths, grids, labels, and lane overlays are teaching aids layered on top of that hardware.
+      </div>
+    </section>
   );
 }
 
@@ -201,6 +246,10 @@ export function PromptEnergyStoryGuideBar() {
     return () => observer.disconnect();
   }, []);
 
+  const activeStep =
+    STORY_JOURNEY_STEPS.find(step => step.key === activeScene) ?? STORY_JOURNEY_STEPS[0];
+  const activeCard = SCENE_LEARNING_CARDS[activeScene];
+
   return (
     <nav className="pe-guidebar" aria-label="Prompt energy story progress">
       <div className="pe-guidebar__header">
@@ -209,9 +258,29 @@ export function PromptEnergyStoryGuideBar() {
           <div className="pe-guidebar__title">Track the scale and lesson as you scroll</div>
         </div>
         <div className="pe-guidebar__current">
-          {STORY_JOURNEY_STEPS.find(step => step.key === activeScene)?.label ?? '1. Chat to request'}
+          {activeStep.label}
         </div>
       </div>
+
+      <div className="pe-guidebar__context">
+        <article className="pe-guidebar__context-card">
+          <div className="pe-guidebar__context-label">Scale now</div>
+          <strong>{activeStep.scale}</strong>
+        </article>
+        <article className="pe-guidebar__context-card">
+          <div className="pe-guidebar__context-label">Main lesson</div>
+          <p>{activeStep.lesson}</p>
+        </article>
+        <article className="pe-guidebar__context-card">
+          <div className="pe-guidebar__context-label">Watch for this</div>
+          <p>{activeCard.watchFor}</p>
+        </article>
+        <article className="pe-guidebar__context-card">
+          <div className="pe-guidebar__context-label">If you are lost</div>
+          <p>{activeCard.plainLanguage}</p>
+        </article>
+      </div>
+
       <ol className="pe-guidebar__steps">
         {STORY_JOURNEY_STEPS.map(step => (
           <li
@@ -224,6 +293,26 @@ export function PromptEnergyStoryGuideBar() {
         ))}
       </ol>
     </nav>
+  );
+}
+
+interface PromptEnergyInlineHelpProps {
+  rows: Array<{
+    label: string;
+    copy: string;
+  }>;
+}
+
+export function PromptEnergyInlineHelp({ rows }: PromptEnergyInlineHelpProps) {
+  return (
+    <aside className="pe-inline-help" aria-label="Extra scene guidance">
+      {rows.map(row => (
+        <div key={row.label} className="pe-inline-help__row">
+          <strong>{row.label}</strong>
+          <p>{row.copy}</p>
+        </div>
+      ))}
+    </aside>
   );
 }
 

@@ -57,13 +57,13 @@ export const SCENE_FOUR_BOUNDARY_COPY: Record<BoundaryKey, string> = {
 export const SCENE_FOUR_PRODUCT_OPTIONS: Array<{ key: DieProductMode; label: string; description: string }> = [
   {
     key: 'shipping',
-    label: 'This H100 SXM product',
-    description: 'Active overlay emphasizes the shipping 132-SM, 5-stack H100 SXM configuration.',
+    label: 'Shipped chip view',
+    description: 'Shows the shipping H100 SXM configuration, not every region on the full physical silicon.',
   },
   {
     key: 'physical',
-    label: 'Full physical GH100 silicon',
-    description: 'Show the full public physical floorplan, then ghost the product-disabled regions back in.',
+    label: 'Full silicon view',
+    description: 'Shows the larger physical GH100 floorplan, then ghosts the product-disabled regions back in.',
   },
 ];
 
@@ -77,19 +77,19 @@ export const SCENE_FOUR_FOCUS_COPY: Record<SceneFourFocus, { label: string; desc
     description: 'The die is mostly many copies of the same kind of compute district. It is a reusable hardware landscape, not one giant special-purpose AI blob.',
   },
   sm: {
-    label: 'One streaming multiprocessor cameo',
-    description: 'Inside one neighborhood, an SM combines control, general math lanes, tensor math, local scratchpad, and explicit data-movement support.',
+    label: 'One compute tile up close',
+    description: 'Inside one neighborhood, an SM combines control logic, general math lanes, tensor math, local scratchpad, and data-movement support.',
   },
   model: {
     label: 'Model layers reusing hardware',
     description: 'The logical transformer layers change over time, but the same hardware districts keep lighting up again and again. The layers are not etched one-for-one into silicon.',
   },
   l2: {
-    label: 'Shared L2 corridor',
+    label: 'Shared on-chip cache',
     description: 'The central L2 corridor is a shared on-chip cache highway. It reduces trips to HBM and keeps nearby compute neighborhoods fed.',
   },
   memory: {
-    label: 'HBM memory gateways',
+    label: 'Doors to nearby HBM',
     description: 'The memory controllers live on the die edge and connect outward to on-package HBM. Memory traffic is part of the main plot, not a side detail.',
   },
   tensor: {
@@ -97,16 +97,16 @@ export const SCENE_FOUR_FOCUS_COPY: Record<SceneFourFocus, { label: string; desc
     description: 'Transformer workloads brighten existing tensor-heavy compute regions. The Transformer Engine is a way those regions operate, not a separate island on the die.',
   },
   interconnect: {
-    label: 'Edge interconnect',
-    description: 'The perimeter links matter when work spans multiple GPUs. In single-device views they stay quiet so the die does not imply off-chip traffic all the time.',
+    label: 'Edges for multi-chip links',
+    description: 'The perimeter links matter when work spans multiple GPUs. In the single-device view they stay quiet so the die does not imply off-chip traffic all the time.',
   },
   product: {
     label: 'Physical silicon versus shipping product',
     description: 'The physical GH100 floorplan is larger than the enabled shipping H100 SXM product. Ghosted regions teach that distinction instead of hiding it.',
   },
   mig: {
-    label: 'Optional partition overlay',
-    description: 'MIG is a service partitioning overlay on the same die, not a second physical floorplan. It is optional here because the main storyline is about one prompt on one chip.',
+    label: 'Optional chip partition view',
+    description: 'MIG is a service partitioning overlay on the same die, not a second physical floorplan. It is optional here because the main story is about one prompt on one chip.',
   },
 };
 
@@ -319,4 +319,3 @@ export const SCENE_FOUR_BEATS: SceneFourBeat[] = [
     modelLayerIndex: 14,
   },
 ];
-

@@ -101,12 +101,12 @@ export const SCENE_EIGHT_BOUNDARY_COPY: Record<BoundaryKey, string> = {
 export const SCENE_EIGHT_COMPARE_OPTIONS: EconomicsCompareConfig[] = [
   {
     key: 'baseline',
-    label: 'Baseline',
+    label: 'Base case',
     description: 'Keep the shared machine visible and focus on the core power-versus-energy and boundary lessons.',
   },
   {
     key: 'sharing',
-    label: 'Batching',
+    label: 'Shared batches',
     description: 'Show how many prompt slices can share the same machine timeline at once.',
   },
   {
@@ -116,27 +116,27 @@ export const SCENE_EIGHT_COMPARE_OPTIONS: EconomicsCompareConfig[] = [
   },
   {
     key: 'prefix',
-    label: 'Prefix reuse',
+    label: 'Reused prefix',
     description: 'Show repeated prefixes arriving already partly computed through cached KV blocks.',
   },
   {
     key: 'architecture',
-    label: 'Dense vs MoE',
+    label: 'Dense vs sparse',
     description: 'Separate total parameter headlines from the active work touched on each token.',
   },
   {
     key: 'software',
-    label: 'Software stack',
+    label: 'Serving software',
     description: 'Compare the same request under different serving and quantization choices.',
   },
   {
     key: 'latency',
-    label: 'Latency target',
+    label: 'Fast vs cheap',
     description: 'Show the frontier between fast answers, reserved capacity, and lower-cost sharing.',
   },
   {
     key: 'reasoning',
-    label: 'Reasoning budget',
+    label: 'Extra thinking',
     description: 'Reveal how optional extra test-time compute can dominate the bill.',
   },
 ];
@@ -161,7 +161,7 @@ export const SCENE_EIGHT_FOCUS_COPY: Record<
       'A prompt is not paying for an entire lonely machine cycle. Many requests share the same serving system, which spreads fixed work across more tokens.',
   },
   shape: {
-    label: 'Prompt geometry',
+    label: 'Prompt shape',
     description:
       'Input length matters, but long outputs often dominate because decode repeats one token at a time after prefill has already finished.',
   },

@@ -53,6 +53,17 @@ export interface FAQBlock {
   items: FAQItem[];
 }
 
+export interface StoryMetaFact {
+  label: string;
+  detail: string;
+}
+
+export interface VisualLegendItem {
+  key: string;
+  label: string;
+  detail: string;
+}
+
 export const BEGINNER_OVERVIEW_CARDS = [
   {
     title: 'Who this is for',
@@ -89,6 +100,63 @@ export const BEGINNER_READING_RULES = [
   'Rack, tray, board, package, and die are nested physical objects, each inside the next.',
   'Power is an instantaneous rate. Energy is the total over time.',
   'Prefill is the full prompt pass before the first answer token. Decode is the repeated loop that adds the answer token by token.',
+] as const;
+
+export const STORY_META_FACTS: StoryMetaFact[] = [
+  {
+    label: 'Estimated time',
+    detail: 'About 12 to 15 minutes if you read the helper cards too.',
+  },
+  {
+    label: 'Story size',
+    detail: '8 scenes plus a hands-on sandbox at the end.',
+  },
+  {
+    label: 'Skill level',
+    detail: 'Written for first-time readers, with advanced detail still available.',
+  },
+  {
+    label: 'Scope',
+    detail: 'This follows inference, not model training.',
+  },
+] as const;
+
+export const VISUAL_LEGEND_ITEMS: VisualLegendItem[] = [
+  {
+    key: 'data',
+    label: 'Blue means data moving',
+    detail: 'This usually marks requests, weights, cached state, or other information traveling through the system.',
+  },
+  {
+    key: 'compute',
+    label: 'Gold means active compute work',
+    detail: 'This is where the chip is doing the main matrix math for the model.',
+  },
+  {
+    key: 'cache',
+    label: 'Muted purple means stored state',
+    detail: 'This usually marks the saved memory the system reuses later, especially cache and KV history.',
+  },
+  {
+    key: 'heat',
+    label: 'Red means heat',
+    detail: 'This is thermal residue or heat being carried away after the electrical work is done.',
+  },
+  {
+    key: 'coolant',
+    label: 'Cyan means coolant',
+    detail: 'This marks sealed liquid paths in cold plates, tray plumbing, rack manifolds, and cooling loops.',
+  },
+  {
+    key: 'air',
+    label: 'White means airflow or support context',
+    detail: 'This usually marks air-cooled support zones, chassis airflow, or supporting system context around the main action.',
+  },
+  {
+    key: 'cost',
+    label: 'Green means accounting or cost',
+    detail: 'This marks the parts of the story where energy, infrastructure allocation, and product economics are being counted.',
+  },
 ] as const;
 
 export const STORY_JOURNEY_STEPS: StoryJourneyStep[] = [

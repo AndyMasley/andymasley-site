@@ -21,6 +21,7 @@ import {
   TBTBarView,
 } from './PromptEnergySceneSixViews';
 import {
+  PromptEnergyInlineHelp,
   PromptEnergySceneBridge,
   PromptEnergyScenePrimer,
   PromptEnergySceneTakeaway,
@@ -283,7 +284,7 @@ export function PromptEnergySceneSix({ boundary }: SceneSixProps) {
             </div>
 
             <div className="pe6-stage__controls">
-              <div className="pe6-stage__toggle-group" role="group" aria-label="Decode compare mode">
+              <div className="pe6-stage__toggle-group" role="group" aria-label="Decode loop compare">
                 {SCENE_SIX_COMPARE_OPTIONS.map(option => (
                   <button
                     key={option.key}
@@ -298,7 +299,7 @@ export function PromptEnergySceneSix({ boundary }: SceneSixProps) {
                 ))}
               </div>
 
-              <div className="pe6-stage__toggle-group" role="group" aria-label="Output length preset">
+              <div className="pe6-stage__toggle-group" role="group" aria-label="Answer length preset">
                 {SCENE_SIX_OUTPUT_PRESETS.map(option => (
                   <button
                     key={option.key}
@@ -326,6 +327,19 @@ export function PromptEnergySceneSix({ boundary }: SceneSixProps) {
                 </button>
               )}
             </div>
+
+            <PromptEnergyInlineHelp
+              rows={[
+                {
+                  label: 'Selected compare',
+                  copy: compareConfig.description,
+                },
+                {
+                  label: 'Selected answer length',
+                  copy: outputConfig.description,
+                },
+              ]}
+            />
 
             <div className="pe6-stage__plane-note">
               <div className="pe6-stage__plane-note-kicker">{planeNote.kicker}</div>
@@ -392,16 +406,16 @@ export function PromptEnergySceneSix({ boundary }: SceneSixProps) {
             </div>
 
             <div className="pe6-stage__spotlight">
-              <div className="pe6-stage__spotlight-kicker">Spotlight</div>
+              <div className="pe6-stage__spotlight-kicker">What you are looking at</div>
               <div className="pe6-stage__spotlight-title">{focusCopy.label}</div>
               <p className="pe6-stage__spotlight-copy">{focusCopy.description}</p>
             </div>
 
             <aside className="pe6-ledger" aria-label="Scene six mini ledger">
-              <div className="pe6-ledger__eyebrow">Mini ledger</div>
+              <div className="pe6-ledger__eyebrow">Quick facts</div>
               <div className="pe6-ledger__boundary">{SCENE_SIX_BOUNDARY_COPY[boundary]}</div>
-              <div className="pe6-ledger__currently">Mode now: {compareConfig.label.toLowerCase()}.</div>
-              <div className="pe6-ledger__currently">Output target: {outputConfig.logicalOutputTokens} tokens.</div>
+              <div className="pe6-ledger__currently">Current view: {compareConfig.label.toLowerCase()}.</div>
+              <div className="pe6-ledger__currently">Answer target: {outputConfig.logicalOutputTokens} tokens.</div>
 
               <div className="pe6-ledger__metrics">
                 <div className="pe6-ledger__metric">
@@ -409,7 +423,7 @@ export function PromptEnergySceneSix({ boundary }: SceneSixProps) {
                   <div className="pe6-ledger__metric-copy">{boundaryOption.summary}</div>
                 </div>
                 <div className="pe6-ledger__metric">
-                  <div className="pe6-ledger__metric-label">TBT</div>
+                  <div className="pe6-ledger__metric-label">Token gap</div>
                   <div className="pe6-ledger__metric-value">{activeBeat.tbtFactor.toFixed(2)}x</div>
                 </div>
                 <div className="pe6-ledger__metric">

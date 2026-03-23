@@ -19,6 +19,7 @@ import {
   TokenLayerGridView,
 } from './PromptEnergySceneFiveViews';
 import {
+  PromptEnergyInlineHelp,
   PromptEnergySceneBridge,
   PromptEnergyScenePrimer,
   PromptEnergySceneTakeaway,
@@ -231,7 +232,7 @@ export function PromptEnergySceneFive({ boundary }: SceneFiveProps) {
             </div>
 
             <div className="pe5-stage__controls">
-              <div className="pe5-stage__toggle-group" role="group" aria-label="Prefill compare mode">
+              <div className="pe5-stage__toggle-group" role="group" aria-label="Prompt case compare">
                 {SCENE_FIVE_MODE_OPTIONS.map(option => (
                   <button
                     key={option.key}
@@ -256,6 +257,26 @@ export function PromptEnergySceneFive({ boundary }: SceneFiveProps) {
                 </button>
               )}
             </div>
+
+            <PromptEnergyInlineHelp
+              rows={[
+                {
+                  label: 'Selected prompt case',
+                  copy: modeConfig.description,
+                },
+                {
+                  label: 'Why this compare matters',
+                  copy:
+                    activeMode === 'full'
+                      ? 'This is the default mental model: the whole prompt is processed before the first answer token appears.'
+                      : activeMode === 'long'
+                        ? 'This shows why longer prompts stretch the wait before the answer starts.'
+                        : activeMode === 'chunked'
+                          ? 'This shows how serving systems split prompt work to protect responsiveness.'
+                          : 'This shows how repeated prefixes can skip fresh work instead of being recomputed every time.',
+                },
+              ]}
+            />
 
             <div className="pe5-stage__plane-note">
               <div className="pe5-stage__plane-note-kicker">{planeNote.kicker}</div>
@@ -310,15 +331,15 @@ export function PromptEnergySceneFive({ boundary }: SceneFiveProps) {
             </div>
 
             <div className="pe5-stage__spotlight">
-              <div className="pe5-stage__spotlight-kicker">Spotlight</div>
+              <div className="pe5-stage__spotlight-kicker">What you are looking at</div>
               <div className="pe5-stage__spotlight-title">{focusCopy.label}</div>
               <p className="pe5-stage__spotlight-copy">{focusCopy.description}</p>
             </div>
 
             <aside className="pe5-ledger" aria-label="Scene five mini ledger">
-              <div className="pe5-ledger__eyebrow">Mini ledger</div>
+              <div className="pe5-ledger__eyebrow">Quick facts</div>
               <div className="pe5-ledger__boundary">{SCENE_FIVE_BOUNDARY_COPY[boundary]}</div>
-              <div className="pe5-ledger__currently">Mode now: {modeConfig.label.toLowerCase()}.</div>
+              <div className="pe5-ledger__currently">Current view: {modeConfig.label.toLowerCase()}.</div>
               <div className="pe5-ledger__currently">Prompt size: {modeConfig.logicalTokenCount} tokens.</div>
 
               <div className="pe5-ledger__metrics">

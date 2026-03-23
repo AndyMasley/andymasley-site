@@ -416,13 +416,13 @@ export function PromptEnergySceneTwo({ boundary }: SceneTwoProps) {
             </div>
 
             <div className="pe2-stage__spotlight">
-              <div className="pe2-stage__spotlight-kicker">Spotlight</div>
+              <div className="pe2-stage__spotlight-kicker">What you are looking at</div>
               <div className="pe2-stage__spotlight-title">{selectedSubsystemCopy.label}</div>
               <p className="pe2-stage__spotlight-copy">{selectedSubsystemCopy.description}</p>
             </div>
 
             <aside className="pe2-ledger" aria-label="Rack scene mini ledger">
-              <div className="pe2-ledger__eyebrow">Mini ledger</div>
+              <div className="pe2-ledger__eyebrow">Quick facts</div>
               <div className="pe2-ledger__boundary">{SCENE_TWO_BOUNDARY_COPY[boundary]}</div>
               <div className="pe2-ledger__currently">Currently highlighted: one tray inside one rack.</div>
               <div className="pe2-ledger__currently">Selected rack: one shared machine boundary around that tray.</div>

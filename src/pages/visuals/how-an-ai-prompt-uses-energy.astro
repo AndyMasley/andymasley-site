@@ -2,7 +2,9 @@
 import Base from '@/layouts/Base.astro';
 import {
   PromptEnergyBeginnerOverview,
+  PromptEnergyPageFacts,
   PromptEnergyStoryGuideBar,
+  PromptEnergyVisualLegend,
 } from '@/components/prompt-energy/PromptEnergyLearningLayer';
 import { PromptEnergyStory } from '@/components/prompt-energy/PromptEnergyStory';
 ---
@@ -20,8 +22,10 @@ import { PromptEnergyStory } from '@/components/prompt-energy/PromptEnergyStory'
       </p>
     </header>
 
+    <PromptEnergyPageFacts />
     <PromptEnergyBeginnerOverview client:idle />
     <PromptEnergyStoryGuideBar client:idle />
+    <PromptEnergyVisualLegend />
     <PromptEnergyStory client:idle />
   </article>
 </Base>
@@ -57,6 +61,34 @@ import { PromptEnergyStory } from '@/components/prompt-energy/PromptEnergyStory'
     font-family: var(--font-editorial);
     font-size: 1rem;
     line-height: 1.78;
+    color: var(--text-secondary);
+  }
+
+  .pe-page-facts {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.9rem;
+    margin: 0 0 1.15rem;
+  }
+
+  .pe-page-facts__item {
+    padding: 0.85rem 0.9rem;
+    border-radius: 1rem;
+    border: 1px solid color-mix(in srgb, var(--border) 84%, transparent);
+    background: color-mix(in srgb, var(--bg-subtle) 76%, transparent);
+  }
+
+  .pe-page-facts__label {
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--dim);
+  }
+
+  .pe-page-facts__item p {
+    margin: 0.35rem 0 0;
+    font-size: 0.92rem;
+    line-height: 1.56;
     color: var(--text-secondary);
   }
 
@@ -373,6 +405,41 @@ import { PromptEnergyStory } from '@/components/prompt-energy/PromptEnergyStory'
     font-size: 0.8rem;
   }
 
+  .pe-guidebar__context {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.75rem;
+    margin: 0 0 0.95rem;
+  }
+
+  .pe-guidebar__context-card {
+    padding: 0.75rem 0.85rem;
+    border-radius: 0.9rem;
+    border: 1px solid color-mix(in srgb, var(--border) 82%, transparent);
+    background: color-mix(in srgb, var(--bg-subtle) 58%, transparent);
+  }
+
+  .pe-guidebar__context-label {
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--dim);
+  }
+
+  .pe-guidebar__context-card strong {
+    display: block;
+    margin-top: 0.24rem;
+    font-size: 0.9rem;
+    line-height: 1.35;
+  }
+
+  .pe-guidebar__context-card p {
+    margin: 0.28rem 0 0;
+    font-size: 0.84rem;
+    line-height: 1.55;
+    color: var(--text-secondary);
+  }
+
   .pe-guidebar__steps {
     display: grid;
     grid-template-columns: repeat(9, minmax(0, 1fr));
@@ -396,6 +463,139 @@ import { PromptEnergyStory } from '@/components/prompt-energy/PromptEnergyStory'
     background:
       linear-gradient(180deg, color-mix(in srgb, var(--accent) 12%, transparent), transparent 80%),
       color-mix(in srgb, var(--bg-subtle) 56%, transparent);
+  }
+
+  .pe-vlegend {
+    margin: 0 0 1.25rem;
+    padding: 1rem;
+    border-radius: 1.1rem;
+    border: 1px solid color-mix(in srgb, var(--border) 86%, transparent);
+    background: color-mix(in srgb, var(--bg-subtle) 72%, transparent);
+    box-shadow: 0 18px 42px -36px rgba(26, 25, 24, 0.24);
+  }
+
+  .pe-vlegend__header {
+    max-width: 52rem;
+    margin-bottom: 0.9rem;
+  }
+
+  .pe-vlegend__eyebrow {
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--dim);
+  }
+
+  .pe-vlegend__header h2 {
+    margin: 0.25rem 0 0.4rem;
+    font-family: var(--font-editorial);
+    font-size: 1.4rem;
+    line-height: 1.14;
+  }
+
+  .pe-vlegend__header p,
+  .pe-vlegend__item p,
+  .pe-vlegend__note {
+    margin: 0;
+    font-size: 0.93rem;
+    line-height: 1.62;
+    color: var(--text-secondary);
+  }
+
+  .pe-vlegend__grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.8rem;
+  }
+
+  .pe-vlegend__item {
+    padding: 0.85rem 0.9rem;
+    border-radius: 0.95rem;
+    border: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
+    background: color-mix(in srgb, var(--bg) 40%, var(--bg-subtle));
+  }
+
+  .pe-vlegend__swatch-row {
+    display: flex;
+    gap: 0.65rem;
+    align-items: center;
+    margin-bottom: 0.45rem;
+  }
+
+  .pe-vlegend__swatch-row h3 {
+    margin: 0;
+    font-size: 0.95rem;
+    line-height: 1.2;
+    font-family: var(--font-editorial);
+  }
+
+  .pe-vlegend__swatch {
+    width: 0.9rem;
+    height: 0.9rem;
+    border-radius: 999px;
+    flex: none;
+  }
+
+  .pe-vlegend__swatch--data {
+    background: #5ea8ff;
+  }
+
+  .pe-vlegend__swatch--compute {
+    background: #f3bf61;
+  }
+
+  .pe-vlegend__swatch--cache {
+    background: #a98dff;
+  }
+
+  .pe-vlegend__swatch--heat {
+    background: #ef766a;
+  }
+
+  .pe-vlegend__swatch--coolant {
+    background: #65d4e7;
+  }
+
+  .pe-vlegend__swatch--air {
+    background: #e8e9ec;
+    border: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
+  }
+
+  .pe-vlegend__swatch--cost {
+    background: #69b38d;
+  }
+
+  .pe-vlegend__note {
+    margin-top: 0.9rem;
+    padding: 0.85rem 0.9rem;
+    border-radius: 0.95rem;
+    background:
+      linear-gradient(90deg, color-mix(in srgb, var(--accent) 8%, transparent), transparent 32%),
+      color-mix(in srgb, var(--bg-subtle) 58%, transparent);
+  }
+
+  .pe-inline-help {
+    display: grid;
+    gap: 0.7rem;
+    margin-top: 0.8rem;
+    padding: 0.8rem 0.9rem;
+    border-radius: 0.95rem;
+    border: 1px solid color-mix(in srgb, var(--border) 84%, transparent);
+    background: color-mix(in srgb, var(--bg-subtle) 66%, transparent);
+  }
+
+  .pe-inline-help strong {
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--dim);
+  }
+
+  .pe-inline-help__row p {
+    margin: 0.2rem 0 0;
+    font-size: 0.9rem;
+    line-height: 1.58;
+    color: var(--text-secondary);
   }
 
   .pe-learning-card {
@@ -8652,7 +8852,10 @@ import { PromptEnergyStory } from '@/components/prompt-energy/PromptEnergyStory'
   }
 
   @media (max-width: 980px) {
+    .pe-page-facts,
     .pe-learn__two-up,
+    .pe-guidebar__context,
+    .pe-vlegend__grid,
     .pe-bridge__grid,
     .pe-faq__grid,
     .pe-learning-card__grid,
@@ -8675,6 +8878,7 @@ import { PromptEnergyStory } from '@/components/prompt-energy/PromptEnergyStory'
   @media (max-width: 720px) {
     .pe-learn,
     .pe-guidebar,
+    .pe-vlegend,
     .pe-sandbox {
       padding: 1rem;
     }
@@ -8705,6 +8909,7 @@ import { PromptEnergyStory } from '@/components/prompt-energy/PromptEnergyStory'
     }
 
     .pe-learn__power-card,
+    .pe-page-facts,
     .pe-guidebar__steps,
     .pe-sandbox__microstats,
     .pe-sandbox__metrics,

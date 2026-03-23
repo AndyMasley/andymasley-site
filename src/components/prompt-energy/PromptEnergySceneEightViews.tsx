@@ -664,7 +664,7 @@ export function ServiceCostView({
     },
     {
       key: 'infra',
-      label: 'Infrastructure allocation',
+      label: 'Shared infrastructure counted',
       value: infrastructureLabel,
       scale: Math.max(infrastructureScale, serviceCostScale * 0.72),
     },

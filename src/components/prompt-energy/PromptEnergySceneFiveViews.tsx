@@ -68,7 +68,7 @@ export function TTFTTimeline({ modeConfig, progress }: TTFTTimelineProps) {
       <div className="pe5-ttft__header">
         <div>
           <div className="pe5-ttft__eyebrow">Time to first token</div>
-          <div className="pe5-ttft__title">Estimated TTFT</div>
+          <div className="pe5-ttft__title">Time until the first answer token</div>
         </div>
         <div className="pe5-ttft__status">{Math.round(progress * 100)}% to first token</div>
       </div>
@@ -86,9 +86,9 @@ export function TTFTTimeline({ modeConfig, progress }: TTFTTimelineProps) {
       </div>
 
       <div className="pe5-ttft__legend">
-        <span>queue</span>
-        <span>prefill</span>
-        <span>sample</span>
+        <span>waiting</span>
+        <span>prompt sweep</span>
+        <span>token pick</span>
       </div>
     </div>
   );

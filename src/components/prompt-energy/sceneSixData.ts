@@ -110,8 +110,8 @@ export const SCENE_SIX_BOUNDARY_COPY: Record<BoundaryKey, string> = {
 export const SCENE_SIX_COMPARE_OPTIONS: DecodeCompareConfig[] = [
   {
     key: 'standard',
-    label: 'Standard decode',
-    description: 'One request, one repeated decode loop, no advanced memory or acceleration overlay.',
+    label: 'Basic loop',
+    description: 'One request, one repeated decode loop, with no advanced memory or speedup overlay.',
   },
   {
     key: 'batched',
@@ -120,27 +120,27 @@ export const SCENE_SIX_COMPARE_OPTIONS: DecodeCompareConfig[] = [
   },
   {
     key: 'scheduler',
-    label: 'Scheduler compare',
-    description: 'Compare request-level, prefill-priority, and stall-free decode scheduling.',
+    label: 'Scheduling',
+    description: 'Compare different serving policies that trade smooth streaming against broader throughput.',
   },
   {
     key: 'paged',
-    label: 'Paged KV',
+    label: 'Paged memory',
     description: 'Show logical cache history on top and non-contiguous physical KV blocks underneath.',
   },
   {
     key: 'prefix',
-    label: 'Warm prefix',
+    label: 'Warm start',
     description: 'Begin with shared prefix blocks already mapped from an earlier request.',
   },
   {
     key: 'speculative',
-    label: 'Speculative',
-    description: 'A draft model runs ahead and the target model verifies several tokens together.',
+    label: 'Draft + verify',
+    description: 'A smaller draft model runs ahead and the target model verifies several tokens together.',
   },
   {
     key: 'medusa',
-    label: 'Medusa',
+    label: 'Extra heads',
     description: 'Extra heads on the same model propose several future tokens in parallel.',
   },
 ];
@@ -148,8 +148,8 @@ export const SCENE_SIX_COMPARE_OPTIONS: DecodeCompareConfig[] = [
 export const SCENE_SIX_OUTPUT_PRESETS: DecodeOutputPresetConfig[] = [
   {
     key: 'brief',
-    label: 'Brief',
-    description: 'Short answer that hits EOS early.',
+    label: 'Short answer',
+    description: 'A short answer that reaches its end early.',
     promptHistoryTokens: 96,
     logicalOutputTokens: 24,
     visualTokens: ['Because', 'the', 'loop', 'reuses', 'cache', 'and', 'stops', 'early', '.'],
@@ -160,7 +160,7 @@ export const SCENE_SIX_OUTPUT_PRESETS: DecodeOutputPresetConfig[] = [
   {
     key: 'paragraph',
     label: 'Paragraph',
-    description: 'Longer answer that keeps adding decode iterations and cache width.',
+    description: 'A medium-length answer that keeps adding decode iterations and cache width.',
     promptHistoryTokens: 96,
     logicalOutputTokens: 120,
     visualTokens: ['A', 'longer', 'answer', 'keeps', 'reading', 'weights', 'and', 'cache', 'for', 'each', 'new', 'token', '.'],
@@ -171,7 +171,7 @@ export const SCENE_SIX_OUTPUT_PRESETS: DecodeOutputPresetConfig[] = [
   {
     key: 'reasoning',
     label: 'Long reasoning',
-    description: 'Extended answer where response length and duration dominate the repeated decode loop.',
+    description: 'An extended answer where response length and duration dominate the repeated decode loop.',
     promptHistoryTokens: 96,
     logicalOutputTokens: 320,
     visualTokens: ['Step', '1', ':', 'read', 'cache', 'again', 'for', 'each', 'new', 'token', 'until', 'the', 'user', 'stops'],
@@ -183,11 +183,11 @@ export const SCENE_SIX_OUTPUT_PRESETS: DecodeOutputPresetConfig[] = [
 
 export const SCENE_SIX_FOCUS_COPY: Record<SceneSixFocus, { label: string; description: string }> = {
   loop: {
-    label: 'One-token decode loop',
+    label: 'One-token answer loop',
     description: 'Each decode iteration reads the current state, runs one autoregressive pass, emits one token, appends new KV state, and then repeats.',
   },
   memory: {
-    label: 'Memory-heavy die path',
+    label: 'Memory-heavy chip path',
     description: 'Decode is narrower than prefill but leans much harder on the cache corridor and HBM gateways because parameter and KV reads dominate the loop.',
   },
   answer: {
@@ -195,15 +195,15 @@ export const SCENE_SIX_FOCUS_COPY: Record<SceneSixFocus, { label: string; descri
     description: 'The answer grows one token at a time so the user can feel the cadence of decode instead of seeing one smooth blur.',
   },
   cache: {
-    label: 'Append-only KV history',
+    label: 'Growing saved history',
     description: 'Each emitted token adds one new vertical slice across all layers, turning the cache wall into a living memory structure rather than a frozen artifact from prefill.',
   },
   physical: {
-    label: 'Logical history versus physical blocks',
+    label: 'Clean sequence versus real memory blocks',
     description: 'Logically the history is one clean sequence, but physically KV blocks can live in non-contiguous memory so the runtime grows the cache with far less waste.',
   },
   tbt: {
-    label: 'Time-between-tokens',
+    label: 'Gap between tokens',
     description: 'After TTFT, the key user-facing latency is the gap between one emitted token and the next because that gap controls whether the answer feels smooth or choppy.',
   },
   length: {
@@ -211,7 +211,7 @@ export const SCENE_SIX_FOCUS_COPY: Record<SceneSixFocus, { label: string; descri
     description: 'Longer answers repeat the same decode loop more times, widen the cache wall, and drive up both latency and cumulative response energy.',
   },
   batching: {
-    label: 'Iteration-level batching',
+    label: 'Shared token clock',
     description: 'Several users can advance one token at a time on the same shared execution rhythm, which is why your next token does not imply the GPU is only doing your work.',
   },
   scheduler: {

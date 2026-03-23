@@ -451,9 +451,8 @@ export function SceneFourFactsCard({ productMode, showInterconnect, showMIG }: S
         )}
       </dl>
       <div className="pe4-facts-card__footer">
-        Mode now: {productMode === 'shipping' ? 'this H100 SXM product' : 'full physical GH100 silicon'}.
+        Current view: {productMode === 'shipping' ? 'the shipped H100 SXM product' : 'the full physical GH100 silicon'}.
       </div>
     </div>
   );
 }
-

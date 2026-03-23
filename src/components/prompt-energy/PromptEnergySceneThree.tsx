@@ -15,6 +15,7 @@ import {
   TrayMiniMap,
 } from './PromptEnergySceneThreeViews';
 import {
+  PromptEnergyInlineHelp,
   PromptEnergySceneBridge,
   PromptEnergyScenePrimer,
   PromptEnergySceneTakeaway,
@@ -209,7 +210,7 @@ export function PromptEnergySceneThree({ boundary }: SceneThreeProps) {
             </div>
 
             <div className="pe3-stage__controls">
-              <div className="pe3-stage__toggle-group" role="group" aria-label="Cooling compare mode">
+              <div className="pe3-stage__toggle-group" role="group" aria-label="Cooling compare">
                 <button
                   type="button"
                   className={`pe3-stage__toggle ${coolingMode === 'liquid' ? 'is-active' : ''}`}
@@ -256,6 +257,25 @@ export function PromptEnergySceneThree({ boundary }: SceneThreeProps) {
                 )}
               </div>
             </div>
+
+            <PromptEnergyInlineHelp
+              rows={[
+                {
+                  label: 'Selected cooling view',
+                  copy:
+                    coolingMode === 'liquid'
+                      ? 'This shows the usual liquid-cooled stack for the hottest compute hardware.'
+                      : 'This compare swaps the cold plate for fins and chassis airflow so you can see what air cooling changes.',
+                },
+                {
+                  label: 'X-ray depth',
+                  copy:
+                    depthOverride === null
+                      ? 'The cutaway depth is following the current step automatically.'
+                      : 'You are manually peeling deeper into the tray and package layers.',
+                },
+              ]}
+            />
 
             <div className="pe3-stage__plane-note">
               <div className="pe3-stage__plane-note-kicker">{planeNote.kicker}</div>
@@ -305,13 +325,13 @@ export function PromptEnergySceneThree({ boundary }: SceneThreeProps) {
             </div>
 
             <div className="pe3-stage__spotlight">
-              <div className="pe3-stage__spotlight-kicker">Spotlight</div>
+              <div className="pe3-stage__spotlight-kicker">What you are looking at</div>
               <div className="pe3-stage__spotlight-title">{focusCopy.label}</div>
               <p className="pe3-stage__spotlight-copy">{focusCopy.description}</p>
             </div>
 
             <aside className="pe3-ledger" aria-label="Scene three mini ledger">
-              <div className="pe3-ledger__eyebrow">Mini ledger</div>
+              <div className="pe3-ledger__eyebrow">Quick facts</div>
               <div className="pe3-ledger__boundary">{SCENE_THREE_BOUNDARY_COPY[boundary]}</div>
               <div className="pe3-ledger__currently">Current hardware focus: {activeBeat.hardwareFocus}.</div>
               <div className="pe3-ledger__currently">Cooling mode: {coolingMode === 'liquid' ? 'liquid cold plate' : 'passive fin stack + airflow'}.</div>

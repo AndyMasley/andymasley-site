@@ -90,7 +90,7 @@ export function TBTBarView({
       <div className="pe6-tbt__header">
         <div>
           <div className="pe6-tbt__eyebrow">Time-between-tokens</div>
-          <div className="pe6-tbt__title">Illustrative TBT</div>
+          <div className="pe6-tbt__title">Gap between answer tokens</div>
         </div>
         <div className="pe6-tbt__status">{tbtFactor.toFixed(2)}x baseline cadence</div>
       </div>
@@ -116,7 +116,7 @@ export function TBTBarView({
           <strong>{cumulativeEnergy.toFixed(2)}x</strong>
         </div>
         <div className="pe6-tbt__metric">
-          <span>Energy / token</span>
+          <span>Energy per token</span>
           <strong>{energyPerToken.toFixed(2)}x</strong>
         </div>
         <div className="pe6-tbt__metric">
