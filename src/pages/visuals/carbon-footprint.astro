@@ -19,7 +19,7 @@
 import Base from '@/layouts/Base.astro';
 import { Calculator } from '@/components/carbon/Calculator';
 
-const pageTitle = 'Carbon Footprint Calculator: Lifestyle Changes vs Changing the Grid';
+const pageTitle = 'Carbon Footprint Calculator';
 const pageDescription = 'Estimate your personal carbon footprint from a credible baseline, compare diet, driving, flights, EVs, and heat pumps, and see how lifestyle changes compare with cleaning up the grid.';
 const pageUrl = 'https://andymasley.com/visuals/carbon-footprint';
 const ogImage = 'https://andymasley.com/images/og/og-carbon-footprint.png';
@@ -84,14 +84,14 @@ const structuredData = [
   title={pageTitle}
   description={pageDescription}
   canonicalUrl={pageUrl}
-  ogTitle="Carbon Footprint Calculator: Lifestyle Changes vs the Grid"
+  ogTitle={pageTitle}
   ogImage="/images/og/og-carbon-footprint.png"
   ogImageAlt="Social preview for Andy Masley's carbon footprint calculator comparing personal lifestyle cuts with changing the electric grid"
   structuredData={structuredData}
 >
   <!-- Hero (outside the breakout container so it aligns with the header) -->
   <header class="cfv2-header">
-    <h1 class="cfv2-header-title">Carbon footprint calculator: lifestyle changes vs changing the grid</h1>
+    <h1 class="cfv2-header-title">Carbon Footprint Calculator</h1>
     <p class="cfv2-header-intro">Estimate your personal carbon footprint from a credible baseline, then compare common lifestyle changes with actions that help clean up the electric grid. The goal is not false precision; it is to make the scale of different climate choices easier to see. Methodology is below.</p>
   </header>
 
