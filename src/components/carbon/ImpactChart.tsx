@@ -333,17 +333,14 @@ export function ImpactChart({
                         const domAction = group.actions.find(a => a.name === 'Eliminate one domestic flight');
                         const isAllFlights = action.name === 'Eliminate all flights';
                         let isOn = enabledPersonal.has(action.name);
-                        if (isAllFlights && transAction && pacAction && domAction) {
-                          const transElim = Math.round((actionParamOverrides['Eliminate one transatlantic flight'] ?? 1) * transAction.inlineParam!.defaultVal);
-                          const pacElim = Math.round((actionParamOverrides['Eliminate one transpacific flight'] ?? 1) * pacAction.inlineParam!.defaultVal);
-                          const domElim = Math.round((actionParamOverrides['Eliminate one domestic flight'] ?? 1) * domAction.inlineParam!.defaultVal);
-                          const allTransEliminated = enabledPersonal.has('Eliminate one transatlantic flight') && transElim >= baseline.transatlanticFlightsPerYear && baseline.transatlanticFlightsPerYear > 0;
-                          const allPacEliminated = enabledPersonal.has('Eliminate one transpacific flight') && pacElim >= baseline.transpacificFlightsPerYear && baseline.transpacificFlightsPerYear > 0;
-                          const allDomEliminated = enabledPersonal.has('Eliminate one domestic flight') && domElim >= baseline.domesticFlightsPerYear && baseline.domesticFlightsPerYear > 0;
-                          const noTrans = baseline.transatlanticFlightsPerYear === 0;
-                          const noPac = baseline.transpacificFlightsPerYear === 0;
-                          const noDom = baseline.domesticFlightsPerYear === 0;
-                          if ((allTransEliminated || noTrans) && (allPacEliminated || noPac) && (allDomEliminated || noDom) && baseline.flightsPerYear > 0) {
+                        if (isAllFlights) {
+                          const transElim = transAction ? Math.round((actionParamOverrides['Eliminate one transatlantic flight'] ?? 1) * transAction.inlineParam!.defaultVal) : 0;
+                          const pacElim = pacAction ? Math.round((actionParamOverrides['Eliminate one transpacific flight'] ?? 1) * pacAction.inlineParam!.defaultVal) : 0;
+                          const domElim = domAction ? Math.round((actionParamOverrides['Eliminate one domestic flight'] ?? 1) * domAction.inlineParam!.defaultVal) : 0;
+                          const allTransEliminated = baseline.transatlanticFlightsPerYear === 0 || (enabledPersonal.has('Eliminate one transatlantic flight') && transElim >= baseline.transatlanticFlightsPerYear);
+                          const allPacEliminated = baseline.transpacificFlightsPerYear === 0 || (enabledPersonal.has('Eliminate one transpacific flight') && pacElim >= baseline.transpacificFlightsPerYear);
+                          const allDomEliminated = baseline.domesticFlightsPerYear === 0 || (enabledPersonal.has('Eliminate one domestic flight') && domElim >= baseline.domesticFlightsPerYear);
+                          if (allTransEliminated && allPacEliminated && allDomEliminated && baseline.flightsPerYear > 0) {
                             isOn = true;
                           }
                         }
