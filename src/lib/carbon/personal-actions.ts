@@ -24,6 +24,23 @@ export interface PersonalAction {
   excludeFromTotal?: boolean;
 }
 
+export function getPersonalActionMultiplier(action: PersonalAction, actionParamOverrides: Record<string, number>): number {
+  const override = actionParamOverrides[action.name];
+  if (!action.inlineParam) return Math.max(override ?? 1, 0);
+  if (action.inlineParam.defaultVal === 0) return Math.max(Math.round(override ?? 0), 0);
+  return Math.max(override ?? 1, 0);
+}
+
+export function getPersonalActionCurrentValue(action: PersonalAction, actionParamOverrides: Record<string, number>): number {
+  if (!action.inlineParam) return getPersonalActionMultiplier(action, actionParamOverrides);
+  if (action.inlineParam.defaultVal === 0) return Math.max(Math.round(actionParamOverrides[action.name] ?? 0), 0);
+  return Math.max(Math.round((actionParamOverrides[action.name] ?? 1) * action.inlineParam.defaultVal), 0);
+}
+
+export function getPersonalActionSavedKg(action: PersonalAction, actionParamOverrides: Record<string, number>): number {
+  return Math.round(action.savingsKg * getPersonalActionMultiplier(action, actionParamOverrides));
+}
+
 export function computePersonalActions(baseline: BaselineInputs, footprint: FootprintModel): PersonalAction[] {
   const gridRate = getGridIntensity(baseline.state);
 
@@ -329,7 +346,7 @@ export function computePersonalActions(baseline: BaselineInputs, footprint: Foot
       name: 'Eliminate one transatlantic flight',
       savingsKg: Math.round(6900 * 0.255),
       category: 'Flights',
-      applicable: baseline.transatlanticFlightsPerYear > 0,
+      applicable: baseline.flightsPerYear > 0,
       note: 'One of the highest-impact single actions',
       inlineParam: { before: 'Eliminate ', defaultVal: Math.min(1, baseline.transatlanticFlightsPerYear), after: '' },
       inlineParam2: { before: ' of ', defaultVal: baseline.transatlanticFlightsPerYear, after: ` transatlantic flight${baseline.transatlanticFlightsPerYear !== 1 ? 's' : ''}` },
@@ -338,7 +355,7 @@ export function computePersonalActions(baseline: BaselineInputs, footprint: Foot
       name: 'Eliminate one transpacific flight',
       savingsKg: Math.round(12400 * 0.255),
       category: 'Flights',
-      applicable: baseline.transpacificFlightsPerYear > 0,
+      applicable: baseline.flightsPerYear > 0,
       note: 'Average transpacific round-trip: ~12,400 miles (e.g. LAX–Tokyo)',
       inlineParam: { before: 'Eliminate ', defaultVal: Math.min(1, baseline.transpacificFlightsPerYear), after: '' },
       inlineParam2: { before: ' of ', defaultVal: baseline.transpacificFlightsPerYear, after: ` transpacific flight${baseline.transpacificFlightsPerYear !== 1 ? 's' : ''}` },
@@ -347,7 +364,7 @@ export function computePersonalActions(baseline: BaselineInputs, footprint: Foot
       name: 'Eliminate one domestic flight',
       savingsKg: Math.round(2200 * 0.255),
       category: 'Flights',
-      applicable: baseline.domesticFlightsPerYear > 0,
+      applicable: baseline.flightsPerYear > 0,
       note: 'Average domestic round-trip: ~2,200 miles',
       inlineParam: { before: 'Eliminate ', defaultVal: Math.min(1, baseline.domesticFlightsPerYear), after: '' },
       inlineParam2: { before: ' of ', defaultVal: baseline.domesticFlightsPerYear, after: ` domestic flight${baseline.domesticFlightsPerYear !== 1 ? 's' : ''}` },

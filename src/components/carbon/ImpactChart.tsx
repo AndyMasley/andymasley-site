@@ -12,6 +12,7 @@ import { useState, useMemo, useEffect, useRef } from 'react';
 import { computeFootprint } from '@/lib/carbon/baseline';
 import type { BaselineInputs } from '@/lib/carbon/types';
 import type { PersonalAction } from '@/lib/carbon/personal-actions';
+import { getPersonalActionCurrentValue, getPersonalActionSavedKg } from '@/lib/carbon/personal-actions';
 import type { LeverageResult, BucketResult } from '@/lib/carbon/types';
 import { BaselineForm } from './BaselineForm';
 
@@ -131,8 +132,7 @@ export function ImpactChart({
   };
 
   const totalSaved = useMemo(() => personalActions.filter(a => enabledPersonal.has(a.name) && !a.excludeFromTotal).reduce((s, a) => {
-    const mult = actionParamOverrides[a.name] ?? 1;
-    return s + Math.round(a.savingsKg * mult);
+    return s + getPersonalActionSavedKg(a, actionParamOverrides);
   }, 0), [personalActions, enabledPersonal, actionParamOverrides]);
   const afterPersonal = Math.max(footprintKg - totalSaved, 0);
 
@@ -267,8 +267,7 @@ export function ImpactChart({
               const isOpen = openCategory === group.category;
               const enabledCount = group.actions.filter(a => enabledPersonal.has(a.name) && !a.excludeFromTotal).length;
               const groupSaved = group.actions.filter(a => enabledPersonal.has(a.name) && !a.excludeFromTotal).reduce((s, a) => {
-                const mult = actionParamOverrides[a.name] ?? 1;
-                return s + Math.round(a.savingsKg * mult);
+                return s + getPersonalActionSavedKg(a, actionParamOverrides);
               }, 0);
               // Compute realistic max: respect exclusive groups + user's inline param overrides
               const maxSavings = (() => {
@@ -276,8 +275,7 @@ export function ImpactChart({
                 const exclusiveGroups = new Map<string, number>();
                 let total = 0;
                 for (const a of eligible) {
-                  const mult = actionParamOverrides[a.name] ?? 1;
-                  const kg = Math.round(a.savingsKg * mult);
+                  const kg = getPersonalActionSavedKg(a, actionParamOverrides);
                   if (a.exclusiveGroup) {
                     const best = exclusiveGroups.get(a.exclusiveGroup) ?? 0;
                     exclusiveGroups.set(a.exclusiveGroup, Math.max(best, kg));
@@ -328,17 +326,20 @@ export function ImpactChart({
                       )}
                       {group.actions.map(action => {
                         // For "eliminate all flights", auto-check when all available flight types are fully eliminated
+                        const transAction = group.actions.find(a => a.name === 'Eliminate one transatlantic flight');
+                        const pacAction = group.actions.find(a => a.name === 'Eliminate one transpacific flight');
+                        const domAction = group.actions.find(a => a.name === 'Eliminate one domestic flight');
                         const isAllFlights = action.name === 'Eliminate all flights';
                         let isOn = enabledPersonal.has(action.name);
                         if (isAllFlights) {
-                          const transElim = enabledPersonal.has('Eliminate one transatlantic flight')
-                            ? Math.round(actionParamOverrides['Eliminate one transatlantic flight'] ?? 1)
+                          const transElim = enabledPersonal.has('Eliminate one transatlantic flight') && transAction
+                            ? getPersonalActionCurrentValue(transAction, actionParamOverrides)
                             : 0;
-                          const pacElim = enabledPersonal.has('Eliminate one transpacific flight')
-                            ? Math.round(actionParamOverrides['Eliminate one transpacific flight'] ?? 1)
+                          const pacElim = enabledPersonal.has('Eliminate one transpacific flight') && pacAction
+                            ? getPersonalActionCurrentValue(pacAction, actionParamOverrides)
                             : 0;
-                          const domElim = enabledPersonal.has('Eliminate one domestic flight')
-                            ? Math.round(actionParamOverrides['Eliminate one domestic flight'] ?? 1)
+                          const domElim = enabledPersonal.has('Eliminate one domestic flight') && domAction
+                            ? getPersonalActionCurrentValue(domAction, actionParamOverrides)
                             : 0;
                           const allTransEliminated = transElim >= baseline.transatlanticFlightsPerYear;
                           const allPacEliminated = pacElim >= baseline.transpacificFlightsPerYear;
@@ -383,8 +384,10 @@ export function ImpactChart({
 
                         const handleInlineChange = (v: number) => {
                           const clamped = action.inlineParam!.max ? Math.min(v, action.inlineParam!.max) : v;
-                          const ratio = clamped / action.inlineParam!.defaultVal;
-                          const newOverrides = { ...actionParamOverrides, [action.name]: ratio };
+                          const storedValue = action.inlineParam!.defaultVal === 0
+                            ? Math.max(Math.round(clamped), 0)
+                            : clamped / action.inlineParam!.defaultVal;
+                          const newOverrides = { ...actionParamOverrides, [action.name]: storedValue };
 
                           // If left number (eliminate count) exceeds right number (total of that type),
                           // bump the baseline up so left never exceeds right
@@ -445,25 +448,25 @@ export function ImpactChart({
                           if (action.name === 'Eliminate one transatlantic flight') {
                             const newTotal = newCount + baseline.transpacificFlightsPerYear + baseline.domesticFlightsPerYear;
                             onBaselineChange({ ...baseline, transatlanticFlightsPerYear: newCount, flightsPerYear: newTotal });
-                            const currentElim = Math.round((actionParamOverrides[action.name] ?? 1) * action.inlineParam!.defaultVal);
+                            const currentElim = getPersonalActionCurrentValue(action, actionParamOverrides);
                             if (currentElim > newCount) {
-                              newOverrides[action.name] = newCount / action.inlineParam!.defaultVal;
+                              newOverrides[action.name] = action.inlineParam!.defaultVal === 0 ? newCount : newCount / action.inlineParam!.defaultVal;
                             }
                             delete newOverrides['Eliminate all flights'];
                           } else if (action.name === 'Eliminate one transpacific flight') {
                             const newTotal = baseline.transatlanticFlightsPerYear + newCount + baseline.domesticFlightsPerYear;
                             onBaselineChange({ ...baseline, transpacificFlightsPerYear: newCount, flightsPerYear: newTotal });
-                            const currentElim = Math.round((actionParamOverrides[action.name] ?? 1) * action.inlineParam!.defaultVal);
+                            const currentElim = getPersonalActionCurrentValue(action, actionParamOverrides);
                             if (currentElim > newCount) {
-                              newOverrides[action.name] = newCount / action.inlineParam!.defaultVal;
+                              newOverrides[action.name] = action.inlineParam!.defaultVal === 0 ? newCount : newCount / action.inlineParam!.defaultVal;
                             }
                             delete newOverrides['Eliminate all flights'];
                           } else if (action.name === 'Eliminate one domestic flight') {
                             const newTotal = baseline.transatlanticFlightsPerYear + baseline.transpacificFlightsPerYear + newCount;
                             onBaselineChange({ ...baseline, domesticFlightsPerYear: newCount, flightsPerYear: newTotal });
-                            const currentElim = Math.round((actionParamOverrides[action.name] ?? 1) * action.inlineParam!.defaultVal);
+                            const currentElim = getPersonalActionCurrentValue(action, actionParamOverrides);
                             if (currentElim > newCount) {
-                              newOverrides[action.name] = newCount / action.inlineParam!.defaultVal;
+                              newOverrides[action.name] = action.inlineParam!.defaultVal === 0 ? newCount : newCount / action.inlineParam!.defaultVal;
                             }
                             delete newOverrides['Eliminate all flights'];
                           }
@@ -479,7 +482,7 @@ export function ImpactChart({
                                 <>
                                   {action.inlineParam.before}
                                   <InlineNum
-                                    value={Math.round((actionParamOverrides[action.name] ?? 1) * action.inlineParam.defaultVal)}
+                                    value={getPersonalActionCurrentValue(action, actionParamOverrides)}
                                     onChange={handleInlineChange}
                                     min={0}
                                     max={action.inlineParam.max}
@@ -521,7 +524,7 @@ export function ImpactChart({
                               ) : action.name}
                             </span>
                             <span className="cf-toggle-value" style={{ fontWeight: 700, color: isOn ? GREEN : MUTED, fontVariantNumeric: 'tabular-nums', fontSize: '0.72rem' }}>
-                                −{Math.round(action.savingsKg * (actionParamOverrides[action.name] ?? 1)).toLocaleString()} <span style={{ fontSize: '0.6em', fontWeight: 400 }}>kg</span>
+                                −{getPersonalActionSavedKg(action, actionParamOverrides).toLocaleString()} <span style={{ fontSize: '0.6em', fontWeight: 400 }}>kg</span>
                             </span>
                           </>
                         );

@@ -5,6 +5,7 @@
 
 import { useMemo, useState } from 'react';
 import type { PersonalAction } from '@/lib/carbon/personal-actions';
+import { getPersonalActionCurrentValue, getPersonalActionSavedKg } from '@/lib/carbon/personal-actions';
 import type { LeverageResult } from '@/lib/carbon/types';
 
 interface ComparingCutsProps {
@@ -50,12 +51,11 @@ export function ComparingCuts({ personalActions, enabledPersonal, actionParamOve
     // Personal cuts
     for (const action of personalActions) {
       if (!enabledPersonal.has(action.name) || action.excludeFromTotal) continue;
-      const mult = actionParamOverrides[action.name] ?? 1;
-      const kg = Math.round(action.savingsKg * mult);
+      const kg = getPersonalActionSavedKg(action, actionParamOverrides);
       if (kg <= 0) continue;
       let displayName = action.name;
       if (action.inlineParam) {
-        const currentVal = Math.round(action.inlineParam.defaultVal * mult);
+        const currentVal = getPersonalActionCurrentValue(action, actionParamOverrides);
         displayName = `${action.inlineParam.before}${currentVal}${action.inlineParam.after}`;
         if (action.inlineParam2) {
           displayName += action.inlineParam2.after;

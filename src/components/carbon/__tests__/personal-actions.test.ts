@@ -1,10 +1,10 @@
 import { describe, it, expect } from 'vitest';
 import { computeFootprint } from '@/lib/carbon/baseline';
-import { computePersonalActions } from '@/lib/carbon/personal-actions';
+import { computePersonalActions, getPersonalActionCurrentValue, getPersonalActionSavedKg } from '@/lib/carbon/personal-actions';
 import { DEFAULT_BASELINE } from '@/lib/carbon/types';
 
 describe('computePersonalActions', () => {
-  it('does not offer impossible zero-count flight-type cuts', () => {
+  it('keeps zero-count flight types editable without adding fake savings', () => {
     const baseline = {
       ...DEFAULT_BASELINE,
       flightsPerYear: 2,
@@ -14,12 +14,19 @@ describe('computePersonalActions', () => {
     };
 
     const actions = computePersonalActions(baseline, computeFootprint(baseline));
-    const names = actions.map(action => action.name);
+    const transatlantic = actions.find(action => action.name === 'Eliminate one transatlantic flight');
+    const transpacific = actions.find(action => action.name === 'Eliminate one transpacific flight');
+    const domestic = actions.find(action => action.name === 'Eliminate one domestic flight');
 
-    expect(names).not.toContain('Eliminate one transatlantic flight');
-    expect(names).not.toContain('Eliminate one transpacific flight');
-    expect(names).toContain('Eliminate one domestic flight');
-    expect(names).toContain('Eliminate all flights');
+    expect(transatlantic).toBeDefined();
+    expect(transpacific).toBeDefined();
+    expect(domestic).toBeDefined();
+    expect(getPersonalActionCurrentValue(transatlantic!, {})).toBe(0);
+    expect(getPersonalActionCurrentValue(transpacific!, {})).toBe(0);
+    expect(getPersonalActionSavedKg(transatlantic!, {})).toBe(0);
+    expect(getPersonalActionSavedKg(transpacific!, {})).toBe(0);
+    expect(getPersonalActionCurrentValue(domestic!, {})).toBe(1);
+    expect(getPersonalActionSavedKg(domestic!, {})).toBe(domestic!.savingsKg);
   });
 
   it('keeps total flight savings equal to the sum of the available flight cuts', () => {
