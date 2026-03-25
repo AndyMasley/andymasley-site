@@ -1,6 +1,6 @@
 # How Thirsty Is AI? — Complete Methodology
 
-This document details every number used in the water usage visualization at [andymasley.com/visuals/water](https://andymasley.com/visuals/water). Every figure has its derivation, source, uncertainty, and (where applicable) its public-supply potable water fraction explained.
+This document details every number used in the water usage visualization at [andymasley.com/visuals/water](https://andymasley.com/visuals/water/). Every figure has its derivation, source, uncertainty, and (where applicable) its public-supply potable water fraction explained.
 
 The visualization has two modes:
 - **All source water**: total water use from any source (municipal, wells, rivers, reclaimed)
@@ -83,7 +83,7 @@ LBNL's 2024 report estimates 66 billion liters of direct site water consumed by 
 
 **Public-supply potable fraction: Unknown (bounded).** Data centers predominantly use municipal potable water for cooling systems, but the industry is shifting. Some newer facilities use reclaimed water (e.g., Microsoft's Quincy WA facility reduced potable use by 97% through water recycling). LBNL does not break out source type. We display the full 17.4B in potable mode as an upper bound, but the true public-supply fraction is likely 80-95% and declining.
 
-**Source:** [LBNL — 2024 United States Data Center Energy Usage Report](https://eta.lbl.gov/publications/2024-united-states-data-center-energy) ([PDF via eScholarship](https://escholarship.org/uc/item/32d6m0d1))
+**Source:** [LBNL — 2024 United States Data Center Energy Usage Report](https://eta.lbl.gov/publications/2024-lbnl-data-center-energy-usage-report)
 
 #### ChatGPT — named scenarios
 
@@ -131,6 +131,7 @@ Total (B):    530M + 4,344M = 4,874M ≈ 4.9B gal/yr
 
 **Sources:**
 - [OpenAI — New Economic Analysis (2025)](https://openai.com/global-affairs/new-economic-analysis/) — 2.5B messages/day, resource-per-query figures
+- [Google Cloud — Measuring the Environmental Impact of AI Inference](https://cloud.google.com/blog/products/infrastructure/measuring-the-environmental-impact-of-ai-inference/) — Gemini Apps median text prompt energy/water figures
 - [Ren et al. 2023 — Making AI Less "Thirsty" (arXiv)](https://arxiv.org/abs/2304.03271) — independent per-query water model
 
 #### All US AI workloads (2024): 4 billion gal/yr
@@ -225,7 +226,7 @@ We use LBNL's 1.19 as the mainline factor because the rest of the visualization 
 | All US DCs | 176 TWh | 209B | 17.4B | **227B** |
 
 **Sources:**
-- [LBNL 2024 Report](https://eta.lbl.gov/publications/2024-united-states-data-center-energy)
+- [LBNL 2024 Report](https://eta.lbl.gov/publications/2024-lbnl-data-center-energy-usage-report)
 - [NREL — Consumptive Water Use for U.S. Power Production (PDF)](https://www.nrel.gov/docs/fy04osti/33905.pdf)
 
 ---
@@ -333,25 +334,25 @@ Important: utility deliveries overstate consumptive use. Most delivered water re
 
 | System | Annual delivery | Year | Source |
 |---|---|---|---|
-| New York City | 364B gal (997 MGD) | 2023 | NYC DEP |
-| Chicago metro | 274B gal (750 MGD) | ~2023 | City of Chicago (includes ~125 suburban wholesale customers) |
+| New York City | 364.9B gal | 2024 | NYC DEP drinking water supply report |
+| Chicago metro | 274B gal (750 MGD) | ~2023 | Official City of Chicago materials |
 | Los Angeles | 146B gal | FY 2023-24 | LADWP |
-| Phoenix | 95.5B gal | FY 2023-24 | City billing data (billed deliveries, not total production) |
-| Las Vegas metro (SNWA) | 77B gal (consumptive use, not delivery) | 2024 | Derived from SNWA data |
+| Phoenix | ~110B gal | current | City of Phoenix sustainability page |
+| Las Vegas metro (SNWA) | 69.2B gal (consumptive use, not delivery) | 2024 | SNWA direct reporting |
 
-**Las Vegas note:** The SNWA figure requires special attention. SNWA reports 89 GPCD, but this is **consumptive use** (total use minus return-flow credits to Lake Mead), not gross delivery. Las Vegas returns approximately 40% of its indoor water use to Lake Mead via treated wastewater discharge, earning return-flow credits. The gross delivery figure would be higher. This means Las Vegas is measured on a different basis than the other cities (which report gross delivery). We retain the row but label it explicitly as consumptive use.
+**Las Vegas note:** The page now uses SNWA's direct 2024 consumptive-use figure rather than backing into it from GPCD. This is **consumptive use** (net of return-flow credits to Lake Mead), not gross delivery. Las Vegas therefore remains measured on a different basis than the other city rows.
 
 ```
-Las Vegas derivation: 89 GPCD × 2,370,000 population × 365 = 77,018,550,000 ≈ 77B gal/yr (consumptive)
-Cross-check: SNWA reports 212,400 acre-feet Colorado River consumptive use in 2024
-212,400 AF × 325,851 gal/AF = 69.2B gal (close but not identical — GPCD-based estimate includes non-Colorado sources)
+SNWA direct figure: 212,400 acre-feet Colorado River consumptive use in 2024
+212,400 AF × 325,851 gal/AF = 69.2B gal/yr
 ```
 
 **Sources:**
-- [NYC DEP — History of Drought & Water Consumption](https://www.nyc.gov/site/dep/water/history-of-drought-water-consumption.page)
-- [City of Chicago — Water Supply](https://www.chicago.gov/city/en/depts/water/provdrs/supply.html)
+- [NYC DEP — 2024 Drinking Water Supply and Quality Report (PDF)](https://www.nyc.gov/assets/dep/downloads/pdf/water/drinking-water/drinking-water-supply-quality-report/2024-drinking-water-supply-quality-report.pdf)
+- [City of Chicago — Moving Chicago Forward (PDF)](https://movingforward.chicago.gov/download/Moving%20Chicago%20Forward.pdf)
 - [LADWP — Water System](https://www.ladwp.com/who-we-are/water-system)
-- [SNWA — Water Conservation Plan 2024](https://www.snwa.com/assets/pdf/reports-conservation-plan-2024.pdf)
+- [City of Phoenix — 2050 Water Goals](https://www.phoenix.gov/administration/departments/sustainability/2050-sustainability-goals/2050-water-goals.html)
+- [SNWA — Drought and Shortage](https://www.snwa.com/water-resources/drought-and-shortage/index.html)
 
 ---
 
@@ -619,8 +620,8 @@ The "Public-supply potable water" toggle shows only water sourced from a public 
 | New York City: 364B | **Keep** | NYC DEP direct reporting | D | Low |
 | Chicago metro: 274B | **Keep** | City of Chicago direct reporting | D | Low |
 | Los Angeles: 146B | **Keep** | LADWP direct reporting | D | Low |
-| Phoenix: 95.5B | **Keep** | City billing data | D | Low |
-| Las Vegas (SNWA): 77B | **Revise label** | Relabel as consumptive use, not delivery. 89 GPCD is net of return-flow credits. | D (but actually closer to A) | Medium |
+| Phoenix: 110B | **Keep** | City of Phoenix direct reporting | D | Low |
+| Las Vegas (SNWA): 69B | **Keep** | Use SNWA's direct acre-foot consumptive-use figure. | D (but actually closer to A) | Medium |
 
 ### Agriculture
 

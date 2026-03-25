@@ -11,7 +11,6 @@
 
 import type {
   BaselineInputs,
-  BucketId,
   BucketResult,
   Confidence,
   DetailedInputs,
@@ -325,14 +324,35 @@ function sanitizeNumber(value: number, fallback: number, min?: number, max?: num
 }
 
 function sanitizeBaseline(raw: BaselineInputs): BaselineInputs {
+  const flightsPerYear = sanitizeNumber(raw.flightsPerYear, DEFAULT_BASELINE.flightsPerYear, 0, 200);
+  const rawTransatlantic = sanitizeNumber(raw.transatlanticFlightsPerYear ?? 0, 0, 0, 200);
+  const rawTranspacific = sanitizeNumber(raw.transpacificFlightsPerYear ?? 0, 0, 0, 200);
+  const rawDomestic = sanitizeNumber(raw.domesticFlightsPerYear ?? 0, 0, 0, 200);
+
+  let transatlanticFlightsPerYear = 0;
+  let transpacificFlightsPerYear = 0;
+  let domesticFlightsPerYear = 0;
+
+  if (flightsPerYear > 0) {
+    const subtypeSum = rawTransatlantic + rawTranspacific + rawDomestic;
+    if (subtypeSum > 0) {
+      const scale = flightsPerYear / subtypeSum;
+      transatlanticFlightsPerYear = Math.round(rawTransatlantic * scale);
+      transpacificFlightsPerYear = Math.round(rawTranspacific * scale);
+      domesticFlightsPerYear = Math.max(flightsPerYear - transatlanticFlightsPerYear - transpacificFlightsPerYear, 0);
+    } else {
+      domesticFlightsPerYear = flightsPerYear;
+    }
+  }
+
   return {
     ...raw,
     householdSize: sanitizeNumber(raw.householdSize, DEFAULT_BASELINE.householdSize, 1, 20),
     milesPerYear: sanitizeNumber(raw.milesPerYear ?? TRANSPORT_MILES[raw.urbanForm] ?? DEFAULT_BASELINE.milesPerYear, DEFAULT_BASELINE.milesPerYear, 0, 100000),
-    flightsPerYear: sanitizeNumber(raw.flightsPerYear, DEFAULT_BASELINE.flightsPerYear, 0, 200),
-    transatlanticFlightsPerYear: sanitizeNumber(raw.transatlanticFlightsPerYear ?? 0, 0, 0, 200),
-    transpacificFlightsPerYear: sanitizeNumber(raw.transpacificFlightsPerYear ?? 0, 0, 0, 200),
-    domesticFlightsPerYear: sanitizeNumber(raw.domesticFlightsPerYear ?? raw.flightsPerYear, DEFAULT_BASELINE.domesticFlightsPerYear, 0, 200),
+    flightsPerYear,
+    transatlanticFlightsPerYear,
+    transpacificFlightsPerYear,
+    domesticFlightsPerYear,
     monthlySpending: sanitizeNumber(raw.monthlySpending, DEFAULT_BASELINE.monthlySpending, 0, 50000),
     state: raw.state || DEFAULT_BASELINE.state,
     housingType: HOUSING_ENERGY[raw.housingType] ? raw.housingType : DEFAULT_BASELINE.housingType,
