@@ -36,15 +36,31 @@ This project is built around a strict source hierarchy so the UI can distinguish
 - Status: direct source
 - Limitation: supports documentation, not user-facing totals by itself
 
-## Tier B: official proxy data used in the published stress layer
+## Tier B: proxy and modeled context data used in the published baseline
 
 ### Mean annual natural groundwater recharge raster
 - Owner: U.S. Geological Survey
 - Year: 2003 release, based on long-term runoff and base-flow inputs
-- Use: recharge-based stress metric for the conterminous public map
+- Use: secondary recharge-context metric in the conterminous public map
 - Update cadence: infrequent
 - Status: official proxy estimate once overlaid on aquifer footprints
 - Limitation: represents long-term mean natural recharge patterns for the conterminous United States; not current annual recharge, not site-level recharge, and not a full aquifer-storage estimate
+
+### Princeton modeled mean water-table depth raster
+- Owner: Princeton HydroFrame / Nature Communications Earth & Environment release
+- Year: 2026
+- Use: modeled storage remaining and modeled storage volume context
+- Update cadence: release-specific
+- Status: heuristic estimate when sampled over aquifer footprints
+- Limitation: not a published USGS aquifer-storage total, not a predevelopment baseline, and not a direct measure of facility-level pumping
+
+### GLHYMPS porosity polygons
+- Owner: GLHYMPS contributors / Borealis
+- Year: public archive release
+- Use: sampled porosity input for modeled storage context
+- Update cadence: release-specific
+- Status: heuristic estimate when paired with water-table depth and aquifer footprints
+- Limitation: global hydrogeology proxy, not an aquifer-specific USGS storage denominator
 
 ## Tier C: official proxy datasets planned for subtype modeling
 
@@ -75,5 +91,5 @@ This project is built around a strict source hierarchy so the UI can distinguish
 ## Notes
 - V1 should ship with direct-source totals and broad categories first.
 - The public map now uses a conterminous-U.S. scope so the recharge layer is consistent across all displayed aquifers. Alaska, Hawaii, Puerto Rico, and the U.S. Virgin Islands remain in the source release and crosswalk but are excluded from this public map.
-- The stress color is recharge-based, not storage-volume based. A nationally consistent aquifer-volume denominator is not currently published across all displayed principal aquifers in this build.
+- The public percentage is now modeled storage remaining, not recharge balance. Recharge remains available as a secondary regional lens in the detail view.
 - Industry subtype mode should remain visibly modeled and may be sparse or empty until proxy recipes are validated.

@@ -69,6 +69,16 @@ export interface RechargeStressMetrics {
   balance_index: MetricValue;
 }
 
+export interface StorageMetrics {
+  modeled_current_storage: MetricValue;
+  remaining_storage_fraction: MetricValue;
+  annual_withdrawal_share_of_storage: MetricValue;
+  annual_net_balance_share_of_storage: MetricValue;
+  mean_water_table_depth: MetricValue;
+  mean_saturated_thickness: MetricValue;
+  mean_porosity: MetricValue;
+}
+
 export interface CategoryBreakdown {
   display_aquifer_id: string;
   year: number;
@@ -104,6 +114,7 @@ export interface AquiferMetricRecord {
   display_aquifer_id: string;
   year: number;
   total_withdrawal: MetricValue;
+  storage_metrics: StorageMetrics;
   recharge_stress: RechargeStressMetrics;
   categories: CategoryBreakdown[];
   industry_estimates: IndustryEstimate[];

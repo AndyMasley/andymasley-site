@@ -1,18 +1,25 @@
 import csv
 import json
 import math
+import os
 import re
 import tempfile
+import warnings
 import zipfile
 from collections import defaultdict
+from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, Iterator, Optional
 
+import geopandas as gpd
 import shapefile
 import rasterio
 from rasterio.mask import mask
-from rasterio.warp import transform_geom
+from rasterio.warp import transform, transform_geom
+from pyproj import Transformer
+from shapely.geometry import Point, shape
+from shapely.ops import transform as shapely_transform
 
 from etl.config.constants import (
     CATEGORY_COLUMNS,
@@ -28,13 +35,19 @@ from etl.config.constants import (
     EXCLUDED_SOURCE_CODES,
     EXPECTED_SOURCE_FILES,
     GEOMETRY_SOURCE_PATH,
+    GLHYMPS_DIRECT_DOWNLOAD_URL,
+    GLHYMPS_LAYER_NAME,
+    GLHYMPS_SOURCE_PATH,
     INDUSTRY_ESTIMATES_PATH,
+    MAX_ACCESSIBLE_GROUNDWATER_DEPTH_METERS,
     METHOD_CODES_PATH,
     METHODOLOGY_VERSION,
     RECHARGE_SOURCE_PATH,
     NON_MAINLAND_EXCLUDED_SOURCE_CODES,
     PROVENANCE_PATH,
     RESIDUAL_EXCLUDED_SOURCE_CODES,
+    STORAGE_SAMPLE_POINT_TARGET,
+    STORAGE_WTD_SOURCE_URL,
     WITHDRAWALS_PATH,
     WITHDRAWALS_SOURCE_PATH,
 )
@@ -64,6 +77,20 @@ RECHARGE_NOTES = (
     "The grid reflects broad long-term regional patterns for the conterminous United States, not site-scale conditions."
 )
 RECHARGE_METHOD_KEY = "overlay_usgs_recharge_grid_on_display_aquifer_v1"
+STORAGE_WTD_SOURCE_LABEL = (
+    "Ma et al. 2026 modeled conterminous-U.S. mean water-table depth raster "
+    "(Princeton HydroFrame public COG viewer endpoint)"
+)
+STORAGE_POROSITY_SOURCE_LABEL = (
+    "GLHYMPS 2.0 global hydrogeology map porosity polygons "
+    "(Borealis datafile 72026)"
+)
+STORAGE_NOTES = (
+    "Storage values are modeled estimates, not direct USGS aquifer-storage totals. They combine the 2026 Princeton "
+    "mean water-table depth surface with sampled GLHYMPS porosity values and assume a 392-meter accessible "
+    "groundwater column for national comparison."
+)
+STORAGE_METHOD_KEY = "sampled_ma2026_wtd_glhymps_porosity_accessible_storage_v1"
 OFFICIAL_GEOMETRY_METHOD = "usgs_principal_aquifer_polygon"
 COUNTY_FOOTPRINT_METHOD = "county_footprint_fallback"
 RESIDUAL_EXCLUDED_DISPLAY_ID = "excluded_other_aquifers_bucket"
@@ -92,6 +119,9 @@ COUNTY_PREFIX_PATTERN = re.compile(
     r"^(.*?(?:County|Parish|Borough|Census Area|Municipio|Municipality|District))-(.+)$",
     flags=re.IGNORECASE,
 )
+
+LONLAT_TO_EQUAL_AREA = Transformer.from_crs("EPSG:4326", "ESRI:54034", always_xy=True)
+EQUAL_AREA_TO_LONLAT = Transformer.from_crs("ESRI:54034", "EPSG:4326", always_xy=True)
 
 
 def _source_file_is_valid(path: Path) -> bool:
@@ -167,6 +197,15 @@ def _recharge_label(balance_index: float) -> str:
     if balance_index >= -0.75:
         return "Recharge exceeds withdrawals"
     return "Recharge strongly exceeds withdrawals"
+
+
+def _format_percentage_sentence(value: float) -> str:
+    percentage = value * 100
+    if abs(percentage) >= 10:
+        return f"{round(percentage)} percent"
+    if abs(percentage) >= 1:
+        return f"{round(percentage, 1)} percent"
+    return f"{round(percentage, 2)} percent"
 
 
 def _round_coords(obj: Any, digits: int = 4) -> Any:
@@ -320,6 +359,193 @@ def _calculate_recharge_stats(
         "cell_count": int(valid_cells.size),
         "mean_recharge_mm_per_year": round(mean_recharge_mm_per_year, 2),
         "total_recharge_mgald": round(total_recharge_mgald, 2),
+    }
+
+
+def _mgald_to_cubic_km_per_year(value: float) -> float:
+    return value * 365.25 * 3_785.411784 / 1_000_000_000
+
+
+def _resolve_glhymps_source() -> Path:
+    env_path = os.environ.get("AQUIFER_GLHYMPS_SOURCE")
+    candidates = [
+        Path(env_path).expanduser() if env_path else None,
+        GLHYMPS_SOURCE_PATH,
+        GLHYMPS_SOURCE_PATH.with_suffix(".gdb"),
+        GLHYMPS_SOURCE_PATH.parent / "GLHYMPS" / "GLHYMPS.gdb",
+        Path("/tmp/GLHYMPS/GLHYMPS/GLHYMPS.gdb"),
+        Path("/tmp/GLHYMPS.zip"),
+    ]
+
+    seen: set[str] = set()
+    for candidate in candidates:
+        if candidate is None:
+            continue
+        key = str(candidate)
+        if key in seen:
+            continue
+        seen.add(key)
+        if candidate.exists():
+            return candidate
+
+    raise SystemExit(
+        "GLHYMPS porosity source not found. Set AQUIFER_GLHYMPS_SOURCE or place GLHYMPS.zip / "
+        "GLHYMPS.gdb under data/source or /tmp."
+    )
+
+
+@contextmanager
+def _open_glhymps_geodatabase() -> Iterator[Path]:
+    source_path = _resolve_glhymps_source()
+
+    if source_path.is_file() and source_path.suffix.lower() == ".zip":
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            with zipfile.ZipFile(source_path) as archive:
+                archive.extractall(tmp_dir)
+            geodatabases = sorted(Path(tmp_dir).rglob("*.gdb"))
+            if not geodatabases:
+                raise SystemExit("GLHYMPS zip did not contain a geodatabase")
+            yield geodatabases[0]
+        return
+
+    if source_path.is_dir() and source_path.name.endswith(".gdb"):
+        yield source_path
+        return
+
+    if source_path.is_dir():
+        geodatabases = sorted(source_path.rglob("*.gdb"))
+        if geodatabases:
+            yield geodatabases[0]
+            return
+
+    raise SystemExit(f"Unsupported GLHYMPS source path: {source_path}")
+
+
+def _build_storage_sample_plan(geometry: dict[str, Any]) -> dict[str, Any]:
+    equal_area_geometry = shapely_transform(LONLAT_TO_EQUAL_AREA.transform, shape(geometry))
+    if not equal_area_geometry.is_valid:
+        equal_area_geometry = equal_area_geometry.buffer(0)
+    if equal_area_geometry.is_empty:
+        raise SystemExit("Storage sampling received an empty projected geometry")
+    area_sq_m = float(equal_area_geometry.area)
+    minx, miny, maxx, maxy = equal_area_geometry.bounds
+    spacing = math.sqrt(max(area_sq_m, 1.0) / STORAGE_SAMPLE_POINT_TARGET)
+
+    points_equal_area: list[Point] = []
+    y = miny + (spacing / 2)
+    while y <= maxy and len(points_equal_area) < STORAGE_SAMPLE_POINT_TARGET * 3:
+        x = minx + (spacing / 2)
+        while x <= maxx and len(points_equal_area) < STORAGE_SAMPLE_POINT_TARGET * 3:
+            point = Point(x, y)
+            if equal_area_geometry.covers(point):
+                points_equal_area.append(point)
+            x += spacing
+        y += spacing
+
+    if not points_equal_area:
+        points_equal_area = [equal_area_geometry.representative_point()]
+
+    if len(points_equal_area) > STORAGE_SAMPLE_POINT_TARGET:
+        points_equal_area = points_equal_area[:STORAGE_SAMPLE_POINT_TARGET]
+
+    points_lonlat = [
+        EQUAL_AREA_TO_LONLAT.transform(point.x, point.y)
+        for point in points_equal_area
+    ]
+
+    return {
+        "area_sq_m": area_sq_m,
+        "bbox_equal_area": (minx, miny, maxx, maxy),
+        "points_equal_area": points_equal_area,
+        "points_lonlat": points_lonlat,
+    }
+
+
+def _sample_porosity_stats(
+    glhymps_geodatabase: Path,
+    sample_points_equal_area: list[Point],
+    bbox_equal_area: tuple[float, float, float, float],
+) -> dict[str, float]:
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", RuntimeWarning)
+        porosity_polygons = gpd.read_file(
+            glhymps_geodatabase,
+            layer=GLHYMPS_LAYER_NAME,
+            bbox=bbox_equal_area,
+            engine="pyogrio",
+        )[["Porosity", "geometry"]]
+
+    if porosity_polygons.empty:
+        raise SystemExit("GLHYMPS porosity lookup returned no polygons for a displayed aquifer")
+
+    sample_gdf = gpd.GeoDataFrame(
+        {"geometry": sample_points_equal_area},
+        crs="ESRI:54034",
+    )
+    joined = gpd.sjoin(sample_gdf, porosity_polygons, how="left", predicate="within")
+    porosity_values = joined["Porosity"].dropna()
+    if porosity_values.empty:
+        raise SystemExit("GLHYMPS porosity lookup returned no valid sampled values for a displayed aquifer")
+
+    return {
+        "sample_count": float(len(sample_points_equal_area)),
+        "coverage_fraction": round(float(joined["Porosity"].notna().mean()), 3),
+        "mean_porosity": round(float(porosity_values.mean()), 4),
+    }
+
+
+def _calculate_storage_stats(
+    water_table_raster: rasterio.io.DatasetReader,
+    geometry: dict[str, Any],
+    glhymps_geodatabase: Path,
+) -> dict[str, float]:
+    sample_plan = _build_storage_sample_plan(geometry)
+    porosity_stats = _sample_porosity_stats(
+        glhymps_geodatabase,
+        sample_plan["points_equal_area"],
+        sample_plan["bbox_equal_area"],
+    )
+
+    longitudes = [point[0] for point in sample_plan["points_lonlat"]]
+    latitudes = [point[1] for point in sample_plan["points_lonlat"]]
+    xs, ys = transform("EPSG:4326", water_table_raster.crs, longitudes, latitudes)
+    sampled_values = [
+        float(value[0]) for value in water_table_raster.sample(list(zip(xs, ys)))
+    ]
+    valid_values = [
+        value
+        for value in sampled_values
+        if math.isfinite(value)
+        and value < 1e20
+        and (water_table_raster.nodata is None or value != float(water_table_raster.nodata))
+    ]
+    if not valid_values:
+        raise SystemExit("Water-table raster lookup returned no valid sampled values for a displayed aquifer")
+
+    saturated_thicknesses = [
+        max(MAX_ACCESSIBLE_GROUNDWATER_DEPTH_METERS - value, 0.0)
+        for value in valid_values
+    ]
+    mean_water_table_depth_m = sum(valid_values) / len(valid_values)
+    mean_saturated_thickness_m = sum(saturated_thicknesses) / len(saturated_thicknesses)
+    remaining_fraction = mean_saturated_thickness_m / MAX_ACCESSIBLE_GROUNDWATER_DEPTH_METERS
+    modeled_storage_km3 = (
+        sample_plan["area_sq_m"]
+        * mean_saturated_thickness_m
+        * porosity_stats["mean_porosity"]
+        / 1_000_000_000
+    )
+    if modeled_storage_km3 <= 0:
+        raise SystemExit("Storage model produced a nonpositive value for a displayed aquifer")
+
+    return {
+        "sample_count": len(valid_values),
+        "porosity_coverage_fraction": porosity_stats["coverage_fraction"],
+        "mean_porosity": round(porosity_stats["mean_porosity"], 4),
+        "mean_water_table_depth_m": round(mean_water_table_depth_m, 2),
+        "mean_saturated_thickness_m": round(mean_saturated_thickness_m, 2),
+        "remaining_fraction": round(remaining_fraction, 4),
+        "modeled_storage_km3": round(modeled_storage_km3, 2),
     }
 
 
@@ -569,11 +795,13 @@ def _build_outputs(
     features: list[dict[str, Any]] = []
     records: list[dict[str, Any]] = []
     qa_features: list[dict[str, Any]] = []
-    with tempfile.TemporaryDirectory() as recharge_tmp_dir:
+    with tempfile.TemporaryDirectory() as recharge_tmp_dir, _open_glhymps_geodatabase() as glhymps_geodatabase:
         with zipfile.ZipFile(RECHARGE_SOURCE_PATH) as archive:
             archive.extractall(recharge_tmp_dir)
 
-        with rasterio.open(str(Path(recharge_tmp_dir) / "rech48grd")) as recharge_raster:
+        with rasterio.open(str(Path(recharge_tmp_dir) / "rech48grd")) as recharge_raster, rasterio.open(
+            STORAGE_WTD_SOURCE_URL
+        ) as storage_wtd_raster:
             for sort_order, item in enumerate(selected_systems, start=1):
                 source_code = item["source_aquifer_code"]
                 payload = withdrawal_data[source_code]
@@ -625,18 +853,32 @@ def _build_outputs(
                 total_recharge = recharge_stats["total_recharge_mgald"]
                 if total_recharge <= 0:
                     raise SystemExit(f"Recharge overlay produced a nonpositive value for {display_name}")
+                storage_stats = _calculate_storage_stats(
+                    storage_wtd_raster,
+                    raw_geometry,
+                    glhymps_geodatabase,
+                )
 
                 net_withdrawal_minus_recharge = total - total_recharge
                 withdrawal_to_recharge_ratio = total / total_recharge
                 balance_index = net_withdrawal_minus_recharge / total_recharge
                 recharge_label = _recharge_label(balance_index)
+                annual_withdrawal_share_of_storage = (
+                    _mgald_to_cubic_km_per_year(total) / storage_stats["modeled_storage_km3"]
+                )
+                annual_net_balance_share_of_storage = (
+                    _mgald_to_cubic_km_per_year(net_withdrawal_minus_recharge)
+                    / storage_stats["modeled_storage_km3"]
+                )
 
                 bbox = _bbox_of_coordinates(raw_geometry["coordinates"])
                 feature_area_sqkm = round(_geometry_area_sqkm(raw_geometry), 2)
 
                 description_short = (
                     f"A principal aquifer where {dominant_category_label.lower()} drives most withdrawals across "
-                    f"{state_sentence}. {recharge_label} over the mapped footprint."
+                    f"{state_sentence}. Modeled storage sampling suggests about "
+                    f"{round(storage_stats['remaining_fraction'] * 100)} percent of the 392-meter accessible "
+                    f"groundwater column remains saturated over the mapped footprint."
                 )
                 if item["geometry_method"] == COUNTY_FOOTPRINT_METHOD:
                     description_short += " The map uses a county-footprint fallback for display."
@@ -648,12 +890,18 @@ def _build_outputs(
                     else f"That leaves estimated natural recharge about {_round_number(abs(net_withdrawal_minus_recharge))} Mgal/d "
                     "above withdrawals over the mapped footprint."
                 )
+                storage_sentence = (
+                    f"Sampled storage modeling suggests about {round(storage_stats['remaining_fraction'] * 100)} percent "
+                    f"of the 392-meter accessible groundwater column remains saturated, with annual withdrawals equal to "
+                    f"about {_format_percentage_sentence(annual_withdrawal_share_of_storage)} of modeled current storage."
+                )
                 description_long = (
                     f"In 2015, the USGS estimated about {_round_number(total)} Mgal/d of groundwater withdrawals "
                     f"associated with the {display_name}. {dominant_category_label} accounted for about "
                     f"{round(dominant_share * 100)} percent of the total, with the largest shares concentrated in {state_sentence}. "
                     f"Overlaying the mapped aquifer footprint with the USGS mean annual natural recharge grid suggests "
-                    f"about {_round_number(total_recharge)} Mgal/d of long-term natural recharge. {balance_sentence}"
+                    f"about {_round_number(total_recharge)} Mgal/d of long-term natural recharge. {balance_sentence} "
+                    f"{storage_sentence}"
                 )
                 if item["geometry_method"] == COUNTY_FOOTPRINT_METHOD:
                     description_long += (
@@ -678,7 +926,7 @@ def _build_outputs(
                         "default_units": "Mgal/d",
                         "methodology_version": METHODOLOGY_VERSION,
                         "status": "active",
-                        "confidence_summary": "A-B",
+                        "confidence_summary": "A-C",
                     }
                 )
 
@@ -738,7 +986,9 @@ def _build_outputs(
                 caveats = [
                     "Broad sector totals come directly from the published 2015 USGS county-aquifer release.",
                     "Recharge-based stress values come from overlaying a USGS 1-kilometer long-term natural recharge raster on the mapped aquifer footprint.",
-                    "The stress color uses (withdrawals - estimated natural recharge) / estimated natural recharge because a consistent national aquifer-volume denominator is not available for all displayed principal aquifers in this build.",
+                    "Modeled storage values come from sampled water-table depth and sampled porosity, not from published aquifer-specific USGS storage totals.",
+                    "The public percentage now reflects the modeled share of a 392-meter accessible groundwater column that remains saturated, not the share of original predevelopment storage remaining.",
+                    "The storage-based pressure metric compares annual withdrawal or annual net balance to modeled current storage, which is a heuristic national comparison rather than a direct USGS depletion rate.",
                     "The recharge source reflects long-term mean natural recharge patterns, not current annual recharge or site-specific conditions.",
                     "Geometry is shown for national and regional visualization only; it does not represent the full underground extent of an aquifer.",
                     "Industry subtype estimates remain scaffolded but unpublished in this build to avoid false precision.",
@@ -756,7 +1006,10 @@ def _build_outputs(
                     f"Totals aggregate all 2015 USGS county rows assigned to the {source_name}. Broad categories come "
                     f"directly from the published water-use fields. Recharge-based stress overlays the USGS 1-kilometer "
                     f"mean annual natural groundwater recharge grid on the mapped aquifer footprint and compares that "
-                    f"long-term recharge volume to 2015 withdrawals using the balance metric (withdrawals - recharge) / recharge."
+                    f"long-term recharge volume to 2015 withdrawals using the balance metric (withdrawals - recharge) / recharge. "
+                    f"Storage estimates sample the 2026 Princeton mean water-table depth raster and GLHYMPS porosity polygons "
+                    f"across the mapped aquifer footprint, then estimate modeled current groundwater storage as mean saturated "
+                    f"thickness times mean porosity across a 392-meter accessible groundwater column."
                 )
                 if item["geometry_method"] == OFFICIAL_GEOMETRY_METHOD:
                     methodology_summary += " The display geometry uses the published USGS principal-aquifer polygon."
@@ -782,6 +1035,97 @@ def _build_outputs(
                                 "Aggregated from county-level principal-aquifer rows in the 2015 USGS release. "
                                 "These are authoritative published estimates, not measured well-by-well withdrawals."
                             ),
+                        },
+                        "storage_metrics": {
+                            "modeled_current_storage": {
+                                "value": storage_stats["modeled_storage_km3"],
+                                "units": "km3",
+                                "is_estimate": True,
+                                "confidence_grade": "C",
+                                "source_type": "heuristic_estimate",
+                                "methodology_key": STORAGE_METHOD_KEY,
+                                "methodology_version": METHODOLOGY_VERSION,
+                                "notes": (
+                                    "Modeled current groundwater storage estimated from sampled mean saturated thickness "
+                                    f"and sampled mean porosity over a {MAX_ACCESSIBLE_GROUNDWATER_DEPTH_METERS:.0f}-meter "
+                                    "accessible groundwater column."
+                                ),
+                            },
+                            "remaining_storage_fraction": {
+                                "value": storage_stats["remaining_fraction"],
+                                "units": "fraction",
+                                "is_estimate": True,
+                                "confidence_grade": "C",
+                                "source_type": "heuristic_estimate",
+                                "methodology_key": STORAGE_METHOD_KEY,
+                                "methodology_version": METHODOLOGY_VERSION,
+                                "notes": (
+                                    "Modeled share of the 392-meter accessible groundwater column that remains saturated "
+                                    "after sampling local water-table depth."
+                                ),
+                            },
+                            "annual_withdrawal_share_of_storage": {
+                                "value": round(annual_withdrawal_share_of_storage, 6),
+                                "units": "fraction_per_year",
+                                "is_estimate": True,
+                                "confidence_grade": "C",
+                                "source_type": "heuristic_estimate",
+                                "methodology_key": STORAGE_METHOD_KEY,
+                                "methodology_version": METHODOLOGY_VERSION,
+                                "notes": "Annual withdrawal volume divided by modeled current groundwater storage.",
+                            },
+                            "annual_net_balance_share_of_storage": {
+                                "value": round(annual_net_balance_share_of_storage, 6),
+                                "units": "fraction_per_year",
+                                "is_estimate": True,
+                                "confidence_grade": "C",
+                                "source_type": "heuristic_estimate",
+                                "methodology_key": STORAGE_METHOD_KEY,
+                                "methodology_version": METHODOLOGY_VERSION,
+                                "notes": (
+                                    "Annual net balance divided by modeled current groundwater storage. Positive values "
+                                    "indicate annual withdrawals above recharge; negative values indicate recharge above withdrawals."
+                                ),
+                            },
+                            "mean_water_table_depth": {
+                                "value": storage_stats["mean_water_table_depth_m"],
+                                "units": "m",
+                                "is_estimate": True,
+                                "confidence_grade": "C",
+                                "source_type": "heuristic_estimate",
+                                "methodology_key": STORAGE_METHOD_KEY,
+                                "methodology_version": METHODOLOGY_VERSION,
+                                "notes": (
+                                    f"Mean of {storage_stats['sample_count']} sampled water-table depth values from the "
+                                    "Princeton modeled CONUS water-table depth surface."
+                                ),
+                            },
+                            "mean_saturated_thickness": {
+                                "value": storage_stats["mean_saturated_thickness_m"],
+                                "units": "m",
+                                "is_estimate": True,
+                                "confidence_grade": "C",
+                                "source_type": "heuristic_estimate",
+                                "methodology_key": STORAGE_METHOD_KEY,
+                                "methodology_version": METHODOLOGY_VERSION,
+                                "notes": (
+                                    f"Modeled mean saturated thickness remaining within the {MAX_ACCESSIBLE_GROUNDWATER_DEPTH_METERS:.0f}-meter "
+                                    "accessible groundwater column."
+                                ),
+                            },
+                            "mean_porosity": {
+                                "value": storage_stats["mean_porosity"],
+                                "units": "fraction",
+                                "is_estimate": True,
+                                "confidence_grade": "C",
+                                "source_type": "heuristic_estimate",
+                                "methodology_key": STORAGE_METHOD_KEY,
+                                "methodology_version": METHODOLOGY_VERSION,
+                                "notes": (
+                                    f"Mean sampled GLHYMPS porosity across the mapped footprint with "
+                                    f"{round(storage_stats['porosity_coverage_fraction'] * 100)} percent sample coverage."
+                                ),
+                            },
                         },
                         "recharge_stress": {
                             "estimated_natural_recharge": {
@@ -837,6 +1181,8 @@ def _build_outputs(
                         "provenance_source_ids": [
                             "usgs_county_aquifer_withdrawals_2015",
                             "usgs_mean_annual_natural_recharge_conus",
+                            "ma_2026_mean_water_table_depth_conus",
+                            "glhymps_porosity",
                             *geometry_source_ids,
                         ],
                         "methodology_summary": methodology_summary,
@@ -913,6 +1259,31 @@ def _write_provenance(generated_at: str, citation: str) -> None:
                 "retrieved_at": generated_at,
                 "license": "Public domain",
                 "usage_notes": RECHARGE_NOTES,
+            },
+            {
+                "source_id": "ma_2026_mean_water_table_depth_conus",
+                "title": "High resolution US water table depth estimates reveal quantity of accessible groundwater",
+                "publisher": "Nature Communications Earth & Environment / Princeton HydroFrame",
+                "year": 2026,
+                "dataset_or_report": "Modeled mean water-table depth raster (public viewer COG)",
+                "doi_or_identifier": STORAGE_WTD_SOURCE_URL,
+                "retrieved_at": generated_at,
+                "license": "Research / viewer endpoint",
+                "usage_notes": STORAGE_NOTES,
+            },
+            {
+                "source_id": "glhymps_porosity",
+                "title": "GLobal HYdrogeology MaPS 2.0",
+                "publisher": "GLHYMPS contributors / Borealis",
+                "year": 2018,
+                "dataset_or_report": "Global hydrogeology polygon dataset",
+                "doi_or_identifier": GLHYMPS_DIRECT_DOWNLOAD_URL,
+                "retrieved_at": generated_at,
+                "license": "Open data",
+                "usage_notes": (
+                    "Porosity values are sampled as a national proxy layer for the modeled storage calculation. "
+                    "This is not a published USGS aquifer-specific storage denominator."
+                ),
             },
             {
                 "source_id": "usgs_withdrawals_data_dictionary",

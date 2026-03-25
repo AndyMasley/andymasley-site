@@ -4,8 +4,8 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 SOURCE_DIR = PROJECT_ROOT / "data" / "source"
 DERIVED_DIR = PROJECT_ROOT / "data" / "derived" / "aquifer-stress"
 
-DISPLAY_AQUIFER_VERSION = "2026.03.1"
-METHODOLOGY_VERSION = "v1.1"
+DISPLAY_AQUIFER_VERSION = "2026.03.2"
+METHODOLOGY_VERSION = "v1.2"
 DISPLAY_AQUIFER_TARGET_COUNT = 61
 
 WITHDRAWALS_SOURCE_PATH = SOURCE_DIR / "uscopa2015v1.0.csv"
@@ -14,6 +14,7 @@ METHOD_CODES_PATH = SOURCE_DIR / "method_codes.csv"
 GEOMETRY_SOURCE_PATH = SOURCE_DIR / "aquifers_us.zip"
 COUNTY_BOUNDARY_SOURCE_PATH = SOURCE_DIR / "cb_2015_us_county_5m.zip"
 RECHARGE_SOURCE_PATH = SOURCE_DIR / "rech48grd.zip"
+GLHYMPS_SOURCE_PATH = SOURCE_DIR / "GLHYMPS.zip"
 
 DISPLAY_COLLECTION_PATH = DERIVED_DIR / "display-aquifers.json"
 DISPLAY_GEOMETRY_PATH = DERIVED_DIR / "display-aquifers.geojson"
@@ -54,3 +55,9 @@ CATEGORY_COLUMNS = {
     "livestock": ("Livestock", "LI-WGWFr"),
     "aquaculture": ("Aquaculture", "AQ-WGWTo"),
 }
+
+STORAGE_WTD_SOURCE_URL = "https://hydrogen.princeton.edu/api/cog?ma_2025=true"
+GLHYMPS_DIRECT_DOWNLOAD_URL = "https://borealisdata.ca/api/access/datafile/72026"
+GLHYMPS_LAYER_NAME = "Final_GLHYMPS_Polygon"
+STORAGE_SAMPLE_POINT_TARGET = 225
+MAX_ACCESSIBLE_GROUNDWATER_DEPTH_METERS = 392.0

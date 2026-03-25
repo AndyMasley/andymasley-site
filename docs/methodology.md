@@ -6,17 +6,18 @@ The current version prioritizes direct-source honesty over false precision.
 
 1. Use USGS principal aquifer geometry for national visualization.
 2. Use the 2015 USGS county-aquifer withdrawal release for total and category values.
-3. Use the USGS mean annual natural groundwater recharge raster for the conterminous United States to build a recharge-based stress layer.
-4. Expose a conterminous-U.S. public map of 61 principal aquifers from the 2015 USGS county-aquifer release, excluding Alaska, Hawaii, Puerto Rico, the U.S. Virgin Islands, and the residual `Other aquifers` bucket from the public map.
-5. Keep modeled subtype estimates separate from direct-source totals.
-6. Treat the national map as a `Regional baseline` layer, not as a facility-level answer.
-7. Keep `Current local conditions`, `Data-center sources`, and `Public-supply dependence` as explicit scoped layers until source-routing and local evidence are published.
+3. Use sampled modeled water-table depth plus sampled porosity to estimate current storage context for each displayed aquifer.
+4. Keep the USGS mean annual natural groundwater recharge raster as a secondary regional baseline lens.
+5. Expose a conterminous-U.S. public map of 61 principal aquifers from the 2015 USGS county-aquifer release, excluding Alaska, Hawaii, Puerto Rico, the U.S. Virgin Islands, and the residual `Other aquifers` bucket from the public map.
+6. Keep modeled subtype estimates separate from direct-source totals.
+7. Treat the national map as a `Regional baseline` layer, not as a facility-level answer.
+8. Keep `Current local conditions`, `Data-center sources`, and `Public-supply dependence` as explicit scoped layers until source-routing and local evidence are published.
 
 ## Layer model
 
 The product is now framed as a layered evidence system rather than a single national stress score.
 
-- `Regional baseline`: published now. Parent-system context built from principal-aquifer withdrawals plus long-run recharge.
+- `Regional baseline`: published now. Parent-system context built from principal-aquifer withdrawals, modeled storage remaining, and long-run recharge.
 - `Evidence`: published now. Confidence, provenance, geometry state, and caveats that explain what the baseline can and cannot prove.
 - `Current local conditions`: scoped next. Intended for monitoring wells, seasonal recharge, drought, and other recent local indicators.
 - `Data-center sources`: scoped next. Intended for facility-to-utility-to-source attribution.
@@ -42,21 +43,23 @@ Direct-source totals are created by summing county-level rows by principal aquif
 
 ## Regional baseline
 
-The published national fill is driven by a recharge-based structural baseline rather than total withdrawal alone.
+The published national fill is now driven by modeled storage remaining rather than recharge balance alone.
 
-1. Overlay each display aquifer footprint on the USGS 1-kilometer mean annual natural groundwater recharge raster for the conterminous United States.
-2. Convert raster depth values in millimeters per year into estimated recharge volume over the mapped footprint.
-3. Compare that estimated recharge volume with the 2015 withdrawal total.
+1. Sample each display aquifer footprint on the Princeton 2026 mean water-table depth surface.
+2. Sample GLHYMPS porosity across the same mapped footprint.
+3. Estimate mean saturated thickness remaining within a 392-meter accessible groundwater column.
+4. Estimate modeled current storage volume as footprint area times mean saturated thickness times mean porosity.
+5. Express the public headline percentage as the modeled share of that 392-meter column that remains saturated.
 
-The published stress formula is:
+This is not the same thing as a published USGS aquifer-storage total, and it is not a predevelopment “percent of original water left” measure. It is a modeled current-storage context layer built for national comparison.
+
+The recharge comparison remains in the detail view as a secondary baseline:
 
 `(withdrawals - estimated natural recharge) / estimated natural recharge`
 
 Positive values indicate withdrawals above estimated recharge. Negative values indicate recharge above withdrawals.
 
-This is not the same thing as a storage-depletion rate. A consistent national principal-aquifer `total volume` denominator is not available across all displayed aquifers in this build, so the public map does not pretend to calculate a nationally comparable volume-normalized drain rate.
-
-It is also not a facility-level source conclusion. The baseline is a parent-system regional lens that helps users see broad structural pressure while the source-routing and local-condition layers are still being built.
+It is also not a facility-level source conclusion. The baseline is still a parent-system regional lens that helps users see broad structural context while the source-routing and local-condition layers are still being built.
 
 ## Confidence
 
@@ -77,4 +80,4 @@ Geometry is shown for national visualization. It does not represent the full und
 
 Most display records use the published USGS principal-aquifer polygon. A small subset of source aquifers does not have a standalone polygon in the published shapefile. For those cases, the public map uses a clearly labeled county-footprint fallback built from 2015 Census cartographic county boundaries. This fallback affects only map display, not the direct-source withdrawal totals.
 
-The recharge overlay inherits the same display-footprint limitation. It estimates recharge over the mapped footprint shown in the public app, not the full hydrogeologic extent or total stored groundwater volume of the aquifer system.
+Both the storage sampling and the recharge overlay inherit the same display-footprint limitation. They estimate conditions over the mapped footprint shown in the public app, not the full hydrogeologic extent or total original stored groundwater volume of the aquifer system.

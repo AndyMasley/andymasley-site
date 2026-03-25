@@ -29,14 +29,15 @@ export const EXPLORER_LAYER_MODES: LayerModeMeta[] = [
     status_label: 'Published now',
     availability: 'published',
     description:
-      'Parent-system structural pressure using 2015 withdrawals and long-run recharge over mapped principal-aquifer footprints.',
+      'Parent-system storage context using modeled storage remaining, direct-source 2015 withdrawals, and long-run recharge over mapped principal-aquifer footprints.',
     map_caption:
-      'This is the parent-system context layer. It shows regional structural pressure, not a facility-level source conclusion.',
-    panel_title: 'Regional structural pressure baseline',
+      'This is the parent-system context layer. It shows modeled storage remaining and recharge context, not a facility-level source conclusion.',
+    panel_title: 'Regional storage baseline',
     panel_summary:
       'Use this view to understand the parent aquifer context. It does not prove what a local campus or utility is actually pumping.',
     published_now: [
       '2015 direct-source withdrawal totals by principal aquifer',
+      'Modeled storage remaining based on sampled water-table depth and porosity',
       'Long-run recharge overlay across mapped aquifer footprints',
       'Geometry-state labeling for official polygons versus county-footprint fallbacks',
       'Category totals and provenance metadata',
@@ -131,6 +132,7 @@ export const EXPLORER_LAYER_MODES: LayerModeMeta[] = [
       'This view is designed to keep unknowns visible. It centers evidence class, caveats, and what would be needed before making a local source claim.',
     published_now: [
       'Direct-source USGS aquifer withdrawals and broad categories',
+      'Modeled storage remaining with explicit heuristic confidence labeling',
       'Geometry method and fallback status for each displayed aquifer',
       'Confidence grades, methodology keys, and provenance records',
       'Caveats explaining what the map does not prove',

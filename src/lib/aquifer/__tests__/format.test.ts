@@ -5,9 +5,11 @@ import {
   formatFlowMgalPerDay,
   formatRatio,
   formatSignedPercent,
+  formatStorageVolumeKm3,
   geometryMethodMeta,
   normalizeQuery,
   sortCategories,
+  storageRemainingLabel,
   stressLabel,
 } from '@/lib/aquifer/format';
 
@@ -18,8 +20,14 @@ describe('aquifer format helpers', () => {
 
   it('formats stress helpers', () => {
     expect(formatSignedPercent(0.42)).toBe('+42%');
+    expect(formatSignedPercent(0.00053)).toBe('+0.05%');
     expect(formatRatio(1.42)).toBe('1.42x');
     expect(stressLabel(0.42)).toBe('Withdrawals exceed recharge');
+  });
+
+  it('formats storage helpers', () => {
+    expect(formatStorageVolumeKm3(31994.2)).toBe('31,994 km3');
+    expect(storageRemainingLabel(0.93)).toBe('High modeled storage remaining');
   });
 
   it('normalizes search query text', () => {

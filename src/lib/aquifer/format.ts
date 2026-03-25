@@ -27,15 +27,13 @@ const percentFormatter = new Intl.NumberFormat('en-US', {
   maximumFractionDigits: 0,
 });
 
-const signedPercentFormatter = new Intl.NumberFormat('en-US', {
-  style: 'percent',
-  maximumFractionDigits: 0,
-  signDisplay: 'always',
-});
-
 const ratioFormatter = new Intl.NumberFormat('en-US', {
   maximumFractionDigits: 2,
   minimumFractionDigits: 0,
+});
+
+const storageVolumeFormatter = new Intl.NumberFormat('en-US', {
+  maximumFractionDigits: 0,
 });
 
 export function formatFlowMgalPerDay(value: number): string {
@@ -47,11 +45,20 @@ export function formatShare(value: number): string {
 }
 
 export function formatSignedPercent(value: number): string {
-  return signedPercentFormatter.format(value);
+  const formatter = new Intl.NumberFormat('en-US', {
+    style: 'percent',
+    maximumFractionDigits: Math.abs(value) < 0.01 ? 2 : 0,
+    signDisplay: 'always',
+  });
+  return formatter.format(value);
 }
 
 export function formatRatio(value: number): string {
   return `${ratioFormatter.format(value)}x`;
+}
+
+export function formatStorageVolumeKm3(value: number): string {
+  return `${storageVolumeFormatter.format(value)} km3`;
 }
 
 export function stressLabel(value: number): string {
@@ -68,6 +75,32 @@ export function stressLabel(value: number): string {
     return 'Recharge exceeds withdrawals';
   }
   return 'Recharge strongly exceeds withdrawals';
+}
+
+export function storagePressureLabel(value: number): string {
+  if (value >= 0.0025) {
+    return 'Fast annual drawdown relative to modeled storage';
+  }
+  if (value >= 0.001) {
+    return 'Annual drawdown is elevated relative to modeled storage';
+  }
+  if (value >= 0) {
+    return 'Near storage balance';
+  }
+  return 'Recharge exceeds annual withdrawals';
+}
+
+export function storageRemainingLabel(value: number): string {
+  if (value >= 0.95) {
+    return 'Most modeled storage remains';
+  }
+  if (value >= 0.85) {
+    return 'High modeled storage remaining';
+  }
+  if (value >= 0.7) {
+    return 'Moderate modeled storage remaining';
+  }
+  return 'Lower modeled storage remaining';
 }
 
 export function normalizeQuery(value: string): string {

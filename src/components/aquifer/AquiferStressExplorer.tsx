@@ -12,13 +12,15 @@ import type {
 import {
   confidenceMeta,
   formatFlowMgalPerDay,
-  formatRatio,
   formatSignedPercent,
+  formatStorageVolumeKm3,
   formatShare,
   geometryMethodMeta,
   normalizeQuery,
   sortCategories,
   sortIndustryEstimates,
+  storagePressureLabel,
+  storageRemainingLabel,
   stressLabel,
   sourceTypeLabel,
 } from '@/lib/aquifer/format';
@@ -42,35 +44,26 @@ function mixChannel(start: number, end: number, t: number): number {
   return Math.round(start + (end - start) * t);
 }
 
-function colorForBalance(value: number, maxAbs: number): string {
-  const span = Math.max(maxAbs, 0.25);
-  const normalized = Math.sign(value) * (Math.log1p(Math.abs(value)) / Math.log1p(span));
-
-  if (normalized >= 0) {
-    const t = Math.max(0, Math.min(1, normalized));
-    const start = [235, 227, 213];
-    const end = [165, 73, 53];
-    return `rgb(${mixChannel(start[0], end[0], t)}, ${mixChannel(start[1], end[1], t)}, ${mixChannel(start[2], end[2], t)})`;
-  }
-
-  const t = Math.max(0, Math.min(1, Math.abs(normalized)));
-  const start = [235, 227, 213];
+function colorForRemaining(value: number, minValue: number, maxValue: number): string {
+  const span = Math.max(maxValue - minValue, 0.05);
+  const normalized = Math.max(0, Math.min(1, (value - minValue) / span));
+  const start = [165, 73, 53];
   const end = [56, 104, 121];
-  return `rgb(${mixChannel(start[0], end[0], t)}, ${mixChannel(start[1], end[1], t)}, ${mixChannel(start[2], end[2], t)})`;
+  return `rgb(${mixChannel(start[0], end[0], normalized)}, ${mixChannel(start[1], end[1], normalized)}, ${mixChannel(start[2], end[2], normalized)})`;
 }
 
-function balanceValue(record: AquiferMetricRecord): number {
-  return record.recharge_stress.balance_index.value;
+function remainingValue(record: AquiferMetricRecord): number {
+  return record.storage_metrics.remaining_storage_fraction.value;
 }
 
-function stressTone(value: number): 'critical' | 'pressure' | 'balanced' | 'recharge' {
-  if (value >= 1) {
+function storageTone(value: number): 'critical' | 'pressure' | 'balanced' | 'recharge' {
+  if (value < 0.8) {
     return 'critical';
   }
-  if (value >= 0.25) {
+  if (value < 0.9) {
     return 'pressure';
   }
-  if (value >= -0.25) {
+  if (value < 0.96) {
     return 'balanced';
   }
   return 'recharge';
@@ -118,23 +111,23 @@ function buildDirectorySections(
       }
     } else {
       const metric = metricsByAquifer.get(aquifer.display_aquifer_id);
-      const tone = stressTone(metric ? balanceValue(metric) : 0);
+      const tone = storageTone(metric ? remainingValue(metric) : 1);
       if (tone === 'critical') {
         key = 'critical';
-        label = 'Heavy drawdown pressure';
-        note = 'Withdrawals far exceed recharge';
+        label = 'Lowest modeled storage remaining';
+        note = 'Less of the sampled storage column remains saturated';
       } else if (tone === 'pressure') {
         key = 'pressure';
-        label = 'Recharge under pressure';
-        note = 'Withdrawals exceed recharge';
+        label = 'Storage under pressure';
+        note = 'Remaining modeled storage is lower than most systems';
       } else if (tone === 'balanced') {
         key = 'balanced';
-        label = 'Near recharge balance';
-        note = 'Closer to parity';
+        label = 'Higher modeled storage remaining';
+        note = 'Most of the sampled storage column still appears saturated';
       } else {
         key = 'recharge';
-        label = 'Recharge-led systems';
-        note = 'Recharge exceeds withdrawals';
+        label = 'Highest modeled storage remaining';
+        note = 'The sampled storage column remains broadly saturated';
       }
     }
 
@@ -208,7 +201,7 @@ export function AquiferStressExplorer({ data }: Props) {
   const stressRankById = useMemo(() => {
     return new Map(
       [...metrics.records]
-        .sort((left, right) => balanceValue(right) - balanceValue(left))
+        .sort((left, right) => remainingValue(left) - remainingValue(right))
         .map((record, index) => [record.display_aquifer_id, index + 1]),
     );
   }, [metrics.records]);
@@ -279,11 +272,12 @@ export function AquiferStressExplorer({ data }: Props) {
   const metricValues = useMemo(
     () =>
       metrics.records
-        .map((record) => record.recharge_stress.balance_index.value)
+        .map((record) => record.storage_metrics.remaining_storage_fraction.value)
         .filter((value) => Number.isFinite(value)),
     [metrics.records],
   );
-  const maxAbsBalance = metricValues.length ? Math.max(...metricValues.map((value) => Math.abs(value))) : 1;
+  const minRemaining = metricValues.length ? Math.min(...metricValues) : 0;
+  const maxRemaining = metricValues.length ? Math.max(...metricValues) : 1;
 
   const selectedAquifer = aquifers.find((aquifer) => aquifer.display_aquifer_id === selectedId);
   const selectedMetrics = selectedId ? metricsByAquifer.get(selectedId) ?? null : null;
@@ -340,7 +334,7 @@ export function AquiferStressExplorer({ data }: Props) {
           <p className="aqs-eyebrow">Aquifer evidence atlas</p>
           <h2 className="aqs-title">Regional aquifer baselines, source evidence, and uncertainty in one layered view</h2>
           <p className="aqs-intro">
-            The public build now treats the national map as a parent-system baseline, not a facility-level conclusion. Regional structural pressure is published now, evidence and uncertainty are centered in their own layer, and the local source-routing layers are made explicit as scoped work instead of being implied by a single national score.
+            The public build now treats the national map as a parent-system baseline, not a facility-level conclusion. The main percentage shows modeled storage remaining, recharge context is still visible as a secondary lens, and evidence plus uncertainty are centered instead of being implied by a single national score.
           </p>
         </div>
 
@@ -377,10 +371,10 @@ export function AquiferStressExplorer({ data }: Props) {
 
           {layerMode === 'regional_baseline' ? (
             <div className="aqs-mode-panel">
-              <span className="aqs-search-label">Regional baseline detail</span>
+              <span className="aqs-search-label">Published baseline detail</span>
               <div className="aqs-mode-switch" role="tablist" aria-label="Regional baseline detail mode">
                 {[
-                  { key: 'stress', label: 'Baseline balance' },
+                  { key: 'stress', label: 'Recharge balance' },
                   { key: 'categories', label: 'Broad sectors' },
                   { key: 'industry', label: 'Industry estimates' },
                 ].map((mode) => (
@@ -418,14 +412,14 @@ export function AquiferStressExplorer({ data }: Props) {
                 <div className="aqs-directory-spotlight">
                   <div className="aqs-directory-spotlight-copy">
                     <p className="aqs-directory-kicker">
-                      {layerMode === 'regional_baseline' ? 'Selected baseline' : 'Parent-system context'}
+                      {layerMode === 'regional_baseline' ? 'Selected system' : 'Parent-system context'}
                     </p>
                     <h3>{selectedAquifer.short_name}</h3>
                     <p>{selectedAquifer.region_label}</p>
                   </div>
                   <div className="aqs-directory-spotlight-stat">
-                    <strong>{formatSignedPercent(selectedMetrics.recharge_stress.balance_index.value)}</strong>
-                    <span>{stressLabel(selectedMetrics.recharge_stress.balance_index.value)}</span>
+                    <strong>{formatShare(selectedMetrics.storage_metrics.remaining_storage_fraction.value)}</strong>
+                    <span>{storageRemainingLabel(selectedMetrics.storage_metrics.remaining_storage_fraction.value)}</span>
                   </div>
                 </div>
               ) : null}
@@ -454,7 +448,7 @@ export function AquiferStressExplorer({ data }: Props) {
                 <div className="aqs-quick-picks-header">
                   <span className="aqs-control-label">Quick picks</span>
                   <span className="aqs-quick-picks-note">
-                    {layerMode === 'regional_baseline' ? 'Highest baseline pressure' : 'Highest parent-system pressure'}
+                    {layerMode === 'regional_baseline' ? 'Lowest modeled storage remaining' : 'Parent-system context'}
                   </span>
                 </div>
                 <div className="aqs-quick-pick-grid">
@@ -473,7 +467,7 @@ export function AquiferStressExplorer({ data }: Props) {
                       >
                         <span className="aqs-quick-pick-name">{aquifer.short_name}</span>
                         <span className="aqs-quick-pick-meta">{primaryRegion(aquifer.region_label)}</span>
-                        <strong>{formatSignedPercent(aquiferMetrics.recharge_stress.balance_index.value)}</strong>
+                        <strong>{formatShare(aquiferMetrics.storage_metrics.remaining_storage_fraction.value)}</strong>
                       </button>
                     );
                   })}
@@ -506,7 +500,7 @@ export function AquiferStressExplorer({ data }: Props) {
                 <span className="aqs-control-label">Directory</span>
                 <div className="aqs-chip-switch">
                   {[
-                    { key: 'stress', label: 'By stress' },
+                    { key: 'stress', label: 'By remaining' },
                     { key: 'withdrawal', label: 'By withdrawal' },
                     { key: 'alphabetical', label: 'A-Z' },
                     { key: 'region', label: 'By region' },
@@ -549,9 +543,9 @@ export function AquiferStressExplorer({ data }: Props) {
                       const geometryMetaUi = geometryMeta
                         ? geometryMethodMeta(geometryMeta.geometry_method, geometryMeta.county_footprint_count)
                         : null;
-                      const balance = aquiferMetrics?.recharge_stress.balance_index.value ?? 0;
-                      const ratio = aquiferMetrics?.recharge_stress.withdrawal_to_recharge_ratio.value ?? 0;
-                      const barWidth = Math.max(8, Math.min(100, (Math.abs(balance) / Math.max(maxAbsBalance, 0.01)) * 100));
+                      const remaining = aquiferMetrics?.storage_metrics.remaining_storage_fraction.value ?? 0;
+                      const annualPressure = aquiferMetrics?.storage_metrics.annual_net_balance_share_of_storage.value ?? 0;
+                      const barWidth = Math.max(8, Math.min(100, remaining * 100));
 
                       return (
                         <li key={aquifer.display_aquifer_id}>
@@ -565,8 +559,8 @@ export function AquiferStressExplorer({ data }: Props) {
                               <span className="aqs-list-headline">
                                 <span className="aqs-list-name">{aquifer.short_name}</span>
                                 {aquiferMetrics ? (
-                                  <span className={`aqs-list-stress aqs-list-stress--${stressTone(balance)}`}>
-                                    {formatSignedPercent(balance)}
+                                  <span className={`aqs-list-stress aqs-list-stress--${storageTone(remaining)}`}>
+                                    {formatShare(remaining)}
                                   </span>
                                 ) : null}
                               </span>
@@ -582,13 +576,13 @@ export function AquiferStressExplorer({ data }: Props) {
                                 <>
                                   <span className="aqs-list-track">
                                     <span
-                                      className={`aqs-list-track-fill aqs-list-track-fill--${stressTone(balance)}`}
+                                      className={`aqs-list-track-fill aqs-list-track-fill--${storageTone(remaining)}`}
                                       style={{ width: `${barWidth}%` }}
                                     />
                                   </span>
                                   <span className="aqs-list-subline">
-                                    <span>{stressLabel(balance)}</span>
-                                    <span>{formatRatio(ratio)}</span>
+                                    <span>{storageRemainingLabel(remaining)}</span>
+                                    <span>{formatSignedPercent(annualPressure)}/yr</span>
                                   </span>
                                 </>
                               ) : (
@@ -616,15 +610,16 @@ export function AquiferStressExplorer({ data }: Props) {
               <p className="aqs-map-kicker">{activeLayerMeta.label}</p>
               <p className="aqs-map-caption">
                 {activeLayerMeta.map_caption}{' '}
-                Fill continues to show the regional recharge baseline using <code>(withdrawals - recharge) / recharge</code>. Dashed
-                outlines mark county-footprint fallbacks where the polygon dataset has no standalone aquifer outline.
+                Fill now reflects modeled storage remaining within a sampled 392-meter accessible groundwater column. The detail
+                panel also shows annual net balance as a share of modeled current storage. Dashed outlines mark county-footprint
+                fallbacks where the polygon dataset has no standalone aquifer outline.
               </p>
             </div>
             <div className="aqs-map-legend-wrap">
               <div className="aqs-legend" aria-label="Map legend">
-                <span>Recharge-led</span>
+                <span>Lower remaining</span>
                 <div className="aqs-legend-bar" />
-                <span>Most stressed</span>
+                <span>Higher remaining</span>
               </div>
               <div className="aqs-outline-key">
                 <span className="aqs-outline-key-line" />
@@ -640,8 +635,8 @@ export function AquiferStressExplorer({ data }: Props) {
                 <desc id="aqs-map-desc">Click or focus an aquifer polygon to open the detail panel.</desc>
                 {projectedFeatures.map((feature) => {
                   const aquiferMetrics = metricsByAquifer.get(feature.id);
-                  const value = aquiferMetrics?.recharge_stress.balance_index.value ?? 0;
-                  const fill = colorForBalance(value, maxAbsBalance);
+                  const value = aquiferMetrics?.storage_metrics.remaining_storage_fraction.value ?? 0;
+                  const fill = colorForRemaining(value, minRemaining, maxRemaining);
                   const isSelected = selectedId === feature.id;
                   const isHovered = hoveredId === feature.id;
                   const isFilteredOut = !filteredIds.has(feature.id);
@@ -658,7 +653,7 @@ export function AquiferStressExplorer({ data }: Props) {
                       }}
                       tabIndex={0}
                       role="button"
-                      aria-label={`${feature.displayName}${aquiferMetrics ? `, ${formatSignedPercent(aquiferMetrics.recharge_stress.balance_index.value)} versus recharge` : ''}, ${geometryMetaUi.label}`}
+                      aria-label={`${feature.displayName}${aquiferMetrics ? `, ${formatShare(aquiferMetrics.storage_metrics.remaining_storage_fraction.value)} modeled storage remaining` : ''}, ${geometryMetaUi.label}`}
                       onMouseEnter={() => setHoveredId(feature.id)}
                       onMouseLeave={() => setHoveredId(null)}
                       onFocus={() => setHoveredId(feature.id)}
@@ -681,7 +676,7 @@ export function AquiferStressExplorer({ data }: Props) {
                   <strong>{activeAquifer.short_name}</strong>
                   <span>
                     {metricsByAquifer.get(activeAquifer.display_aquifer_id)
-                      ? formatSignedPercent(metricsByAquifer.get(activeAquifer.display_aquifer_id)!.recharge_stress.balance_index.value)
+                      ? formatShare(metricsByAquifer.get(activeAquifer.display_aquifer_id)!.storage_metrics.remaining_storage_fraction.value)
                       : 'Select for details'}
                   </span>
                   <small>{geometryMethodMeta(activeGeometry.geometry_method, activeGeometry.county_footprint_count).label}</small>
@@ -755,8 +750,9 @@ function AquiferDetail({
   relatedAquifers: DisplayAquifer[];
   onSelect: (id: string) => void;
 }) {
+  const storage = metrics.storage_metrics;
   const stress = metrics.recharge_stress;
-  const stressConfidence = confidenceMeta(stress.balance_index.confidence_grade);
+  const storageConfidence = confidenceMeta(storage.remaining_storage_fraction.confidence_grade);
   const sortedCategories = sortCategories(metrics.categories);
   const sortedIndustry = sortIndustryEstimates(metrics.industry_estimates);
   const balanceScale = Math.max(
@@ -809,43 +805,40 @@ function AquiferDetail({
       </header>
 
       <div className="aqs-stat">
-        <span className="aqs-stat-label">Regional baseline</span>
-        <strong className="aqs-stat-value">{formatSignedPercent(stress.balance_index.value)}</strong>
+        <span className="aqs-stat-label">Modeled storage remaining</span>
+        <strong className="aqs-stat-value">{formatShare(storage.remaining_storage_fraction.value)}</strong>
         <span className="aqs-stat-subline">
-          {formatRatio(stress.withdrawal_to_recharge_ratio.value)} of estimated recharge · {metrics.year}
+          {storageRemainingLabel(storage.remaining_storage_fraction.value)} · {formatSignedPercent(storage.annual_net_balance_share_of_storage.value)}/yr net balance
         </span>
       </div>
 
       <div className="aqs-kpi-grid">
         <div className="aqs-kpi-card">
           <strong>{rank ? `#${rank}` : '—'}</strong>
-          <span>Stress rank out of {aquiferCount}</span>
+          <span>Storage-remaining rank out of {aquiferCount}</span>
         </div>
         <div className="aqs-kpi-card">
-          <strong>{formatFlowMgalPerDay(metrics.total_withdrawal.value)}</strong>
-          <span>Total estimated withdrawal</span>
+          <strong>{formatStorageVolumeKm3(storage.modeled_current_storage.value)}</strong>
+          <span>Modeled current storage</span>
         </div>
         <div className="aqs-kpi-card">
-          <strong>{formatFlowMgalPerDay(stress.estimated_natural_recharge.value)}</strong>
-          <span>Estimated natural recharge</span>
+          <strong>{formatSignedPercent(storage.annual_withdrawal_share_of_storage.value)}/yr</strong>
+          <span>Annual withdrawals as share of storage</span>
         </div>
         <div className="aqs-kpi-card">
-          <strong>
-            {stress.net_withdrawal_minus_recharge.value >= 0 ? '+' : '-'}
-            {formatFlowMgalPerDay(Math.abs(stress.net_withdrawal_minus_recharge.value)).replace(' Mgal/d', '')} Mgal/d
-          </strong>
-          <span>{stress.net_withdrawal_minus_recharge.value >= 0 ? 'Net deficit' : 'Recharge cushion'}</span>
+          <strong>{storage.mean_water_table_depth.value} m</strong>
+          <span>Mean modeled water-table depth</span>
         </div>
       </div>
 
       <div className="aqs-meta-row">
-        <div className="aqs-badge" aria-label={stressConfidence.description}>
-          <strong>{stressConfidence.label}</strong>
-          <span>{stressConfidence.description}</span>
+        <div className="aqs-badge" aria-label={storageConfidence.description}>
+          <strong>{storageConfidence.label}</strong>
+          <span>{storageConfidence.description}</span>
         </div>
         <div className="aqs-source-line">
-          <strong>{sourceTypeLabel(stress.balance_index.source_type)}</strong>
-          <span>{stress.balance_index.methodology_key}</span>
+          <strong>{sourceTypeLabel(storage.remaining_storage_fraction.source_type)}</strong>
+          <span>{storage.remaining_storage_fraction.methodology_key}</span>
         </div>
         <div className="aqs-mode-note">
           <strong>What this view does not prove</strong>
@@ -861,7 +854,7 @@ function AquiferDetail({
           {metricMode === 'industry'
             ? 'Modeled industry allocation'
             : metricMode === 'stress'
-              ? 'Regional baseline balance'
+              ? 'Recharge baseline context'
               : 'Broad sectors'}
         </h4>
 
@@ -944,8 +937,9 @@ function AquiferDetail({
         <div className="aqs-methodology-copy">
           <p>{metrics.methodology_summary}</p>
           <p>
-            Baseline label: <strong>{stressLabel(stress.balance_index.value)}</strong>. The public map uses a recharge-based comparison because a
-            nationally consistent aquifer-volume denominator is not yet available across all displayed aquifers.
+            Storage view: <strong>{storageRemainingLabel(storage.remaining_storage_fraction.value)}</strong>. The public atlas now
+            uses a modeled storage denominator for the main percentage, while the recharge comparison remains available here as
+            parent-system context: <strong>{stressLabel(stress.balance_index.value)}</strong>.
           </p>
           {metrics.caveats.length ? (
             <ul className="aqs-caveats">
@@ -1012,13 +1006,18 @@ function EvidenceLayerDetail({
 }) {
   const layerMeta = explorerLayerMeta(layerMode);
   const geometryUi = geometryMethodMeta(geometryMeta.geometry_method, geometryMeta.county_footprint_count);
-  const stress = metrics.recharge_stress;
-  const stressConfidence = confidenceMeta(stress.balance_index.confidence_grade);
+  const storage = metrics.storage_metrics;
+  const storageConfidence = confidenceMeta(storage.remaining_storage_fraction.confidence_grade);
   const evidenceRows = [
     {
-      label: 'Parent-system baseline',
-      value: formatSignedPercent(stress.balance_index.value),
-      note: 'Regional recharge comparison only',
+      label: 'Modeled storage remaining',
+      value: formatShare(storage.remaining_storage_fraction.value),
+      note: 'Sampled 392-meter accessible groundwater column',
+    },
+    {
+      label: 'Annual net balance vs storage',
+      value: `${formatSignedPercent(storage.annual_net_balance_share_of_storage.value)}/yr`,
+      note: storagePressureLabel(storage.annual_net_balance_share_of_storage.value),
     },
     {
       label: 'Direct-source withdrawal',
@@ -1032,8 +1031,8 @@ function EvidenceLayerDetail({
     },
     {
       label: 'Current confidence',
-      value: stressConfidence.label,
-      note: stressConfidence.description,
+      value: storageConfidence.label,
+      note: storageConfidence.description,
     },
   ];
 

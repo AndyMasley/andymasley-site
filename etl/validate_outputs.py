@@ -56,6 +56,40 @@ def main() -> None:
         if record["total_withdrawal"]["confidence_grade"] not in ALLOWED_CONFIDENCE:
             raise SystemExit(f"Invalid confidence grade for {record['display_aquifer_id']}")
 
+        storage = record.get("storage_metrics")
+        if not storage:
+            raise SystemExit(f"Missing storage metrics block for {record['display_aquifer_id']}")
+        modeled_storage = storage["modeled_current_storage"]
+        remaining_storage = storage["remaining_storage_fraction"]
+        withdrawal_share = storage["annual_withdrawal_share_of_storage"]
+        net_share = storage["annual_net_balance_share_of_storage"]
+        mean_wtd = storage["mean_water_table_depth"]
+        mean_saturated = storage["mean_saturated_thickness"]
+        mean_porosity = storage["mean_porosity"]
+        if modeled_storage["value"] <= 0:
+            raise SystemExit(f"Nonpositive modeled storage for {record['display_aquifer_id']}")
+        if not 0 <= remaining_storage["value"] <= 1:
+            raise SystemExit(f"Remaining storage fraction outside 0-1 for {record['display_aquifer_id']}")
+        if withdrawal_share["value"] < 0:
+            raise SystemExit(f"Negative annual withdrawal share of storage for {record['display_aquifer_id']}")
+        if mean_wtd["value"] < 0:
+            raise SystemExit(f"Negative mean water-table depth for {record['display_aquifer_id']}")
+        if mean_saturated["value"] < 0:
+            raise SystemExit(f"Negative mean saturated thickness for {record['display_aquifer_id']}")
+        if not 0 < mean_porosity["value"] <= 1:
+            raise SystemExit(f"Invalid mean porosity for {record['display_aquifer_id']}")
+        for block in (
+            modeled_storage,
+            remaining_storage,
+            withdrawal_share,
+            net_share,
+            mean_wtd,
+            mean_saturated,
+            mean_porosity,
+        ):
+            if block["confidence_grade"] not in ALLOWED_CONFIDENCE:
+                raise SystemExit(f"Invalid storage confidence grade for {record['display_aquifer_id']}")
+
         stress = record.get("recharge_stress")
         if not stress:
             raise SystemExit(f"Missing recharge stress block for {record['display_aquifer_id']}")
