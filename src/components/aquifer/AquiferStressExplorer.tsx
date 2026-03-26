@@ -1,4 +1,4 @@
-import { useDeferredValue, useEffect, useMemo, useState } from 'react';
+import { useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import type { KeyboardEvent as ReactKeyboardEvent } from 'react';
 
 import type {
@@ -9,6 +9,20 @@ import type {
   MetricMode,
   ProvenanceRecord,
 } from '@/lib/aquifer/contracts';
+import {
+  MAP_METRIC_OPTIONS,
+  bandIndexForValue,
+  buildMetricBands,
+  compareAquiferSimilarity,
+  compareRecordsByMapMetric,
+  confidenceLimitations,
+  mapMetricMeta,
+  mapMetricValue,
+  nextEvidenceSteps,
+  regionTokens,
+  topCategoriesByValue,
+  type MapMetricMode,
+} from '@/lib/aquifer/explorer';
 import {
   confidenceMeta,
   formatDateLabel,
@@ -42,6 +56,14 @@ type DirectorySection = {
   aquifers: DisplayAquifer[];
 };
 
+type MapLabel = {
+  id: string;
+  text: string;
+  x: number;
+  y: number;
+  tone: 'selected' | 'compare' | 'context';
+};
+
 const FAVORITES_STORAGE_KEY = 'aquifer-atlas-favorites';
 
 function mixChannel(start: number, end: number, t: number): number {
@@ -54,6 +76,37 @@ function colorForRemaining(value: number, minValue: number, maxValue: number): s
   const start = [165, 73, 53];
   const end = [56, 104, 121];
   return `rgb(${mixChannel(start[0], end[0], normalized)}, ${mixChannel(start[1], end[1], normalized)}, ${mixChannel(start[2], end[2], normalized)})`;
+}
+
+function colorForSequential(value: number, minValue: number, maxValue: number, start: [number, number, number], end: [number, number, number]): string {
+  const span = Math.max(maxValue - minValue, Number.EPSILON);
+  const normalized = Math.max(0, Math.min(1, (value - minValue) / span));
+  return `rgb(${mixChannel(start[0], end[0], normalized)}, ${mixChannel(start[1], end[1], normalized)}, ${mixChannel(start[2], end[2], normalized)})`;
+}
+
+function colorForDiverging(
+  value: number,
+  minValue: number,
+  maxValue: number,
+  negative: [number, number, number],
+  neutral: [number, number, number],
+  positive: [number, number, number],
+): string {
+  if (minValue >= 0) {
+    return colorForSequential(value, 0, maxValue, neutral, positive);
+  }
+
+  if (maxValue <= 0) {
+    return colorForSequential(value, minValue, 0, negative, neutral);
+  }
+
+  if (value <= 0) {
+    const ratio = Math.max(0, Math.min(1, value / minValue));
+    return `rgb(${mixChannel(neutral[0], negative[0], ratio)}, ${mixChannel(neutral[1], negative[1], ratio)}, ${mixChannel(neutral[2], negative[2], ratio)})`;
+  }
+
+  const ratio = Math.max(0, Math.min(1, value / maxValue));
+  return `rgb(${mixChannel(neutral[0], positive[0], ratio)}, ${mixChannel(neutral[1], positive[1], ratio)}, ${mixChannel(neutral[2], positive[2], ratio)})`;
 }
 
 function remainingValue(record: AquiferMetricRecord): number {
@@ -221,11 +274,94 @@ function percentileLabel(rank: number | null, total: number): string {
   return `${percentile}th percentile`;
 }
 
+function formatPerYear(value: number): string {
+  return `${formatSignedPercent(value)}/yr`;
+}
+
+function formatMapMetricValue(value: number, mode: MapMetricMode): string {
+  if (!Number.isFinite(value)) {
+    return 'No data';
+  }
+
+  switch (mode) {
+    case 'annual_drawdown':
+      return formatPerYear(value);
+    case 'withdrawal':
+      return formatFlowMgalPerDay(value);
+    case 'recharge_balance':
+      return formatSignedPercent(value);
+    case 'remaining_storage':
+    default:
+      return formatShare(value);
+  }
+}
+
+function formatMapMetricRange(start: number, end: number, mode: MapMetricMode): string {
+  if (Math.abs(start - end) < Number.EPSILON) {
+    return formatMapMetricValue(start, mode);
+  }
+
+  return `${formatMapMetricValue(start, mode)} to ${formatMapMetricValue(end, mode)}`;
+}
+
+function mapMetricExplanation(record: AquiferMetricRecord, mode: MapMetricMode): string {
+  switch (mode) {
+    case 'annual_drawdown':
+      return `${formatPerYear(record.storage_metrics.annual_net_balance_share_of_storage.value)} annual net balance relative to modeled storage.`;
+    case 'withdrawal':
+      return `${formatFlowMgalPerDay(record.total_withdrawal.value)} direct-source withdrawals in ${record.year}.`;
+    case 'recharge_balance':
+      return `${formatSignedPercent(record.recharge_stress.balance_index.value)} recharge-balance pressure relative to long-run estimated natural recharge.`;
+    case 'remaining_storage':
+    default:
+      return `${formatShare(record.storage_metrics.remaining_storage_fraction.value)} of the sampled accessible groundwater column still appears saturated.`;
+  }
+}
+
+function colorForMapMetric(value: number, mode: MapMetricMode, minValue: number, maxValue: number): string {
+  switch (mode) {
+    case 'annual_drawdown':
+      return colorForDiverging(value, minValue, maxValue, [56, 104, 121], [235, 227, 212], [165, 73, 53]);
+    case 'withdrawal':
+      return colorForSequential(value, minValue, maxValue, [233, 220, 196], [165, 73, 53]);
+    case 'recharge_balance':
+      return colorForDiverging(value, minValue, maxValue, [75, 129, 145], [235, 227, 212], [165, 73, 53]);
+    case 'remaining_storage':
+    default:
+      return colorForRemaining(value, minValue, maxValue);
+  }
+}
+
+function dataVintageSummary(sources: ProvenanceRecord[], withdrawalsYear: number): Array<{ label: string; value: string; note: string }> {
+  const rechargeSource = sources.find((source) => source.source_id === 'usgs_mean_annual_natural_recharge_conus');
+  const storageSource = sources.find((source) => source.source_id === 'ma_2026_mean_water_table_depth_conus');
+  const porositySource = sources.find((source) => source.source_id === 'glhymps_porosity');
+
+  return [
+    {
+      label: 'Withdrawals basis',
+      value: String(withdrawalsYear),
+      note: 'Direct-source USGS county-aquifer release',
+    },
+    {
+      label: 'Recharge context',
+      value: rechargeSource?.year ? String(rechargeSource.year) : 'Long-run mean',
+      note: 'Regional natural recharge raster',
+    },
+    {
+      label: 'Storage model',
+      value: storageSource?.year ? String(storageSource.year) : 'Modeled',
+      note: porositySource?.year ? `Water-table model + ${porositySource.year} porosity proxy` : 'Water-table model + porosity proxy',
+    },
+  ];
+}
+
 export function AquiferStressExplorer({ data }: Props) {
   const { collection, geometry, metrics, provenance } = data;
   const [query, setQuery] = useState('');
   const [layerMode, setLayerMode] = useState<ExplorerLayerMode>('regional_baseline');
   const [metricMode, setMetricMode] = useState<MetricMode>('stress');
+  const [mapMetricMode, setMapMetricMode] = useState<MapMetricMode>('remaining_storage');
   const [sortMode, setSortMode] = useState<SortMode>('stress');
   const [geometryScope, setGeometryScope] = useState<GeometryScope>('all');
   const [filterMode, setFilterMode] = useState<FilterMode>('all');
@@ -233,7 +369,11 @@ export function AquiferStressExplorer({ data }: Props) {
   const [compareId, setCompareId] = useState<string | null>(null);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [favoriteIds, setFavoriteIds] = useState<string[]>([]);
+  const [legendHoveredIndex, setLegendHoveredIndex] = useState<number | null>(null);
+  const [legendLockedIndex, setLegendLockedIndex] = useState<number | null>(null);
+  const searchInputRef = useRef<HTMLInputElement | null>(null);
   const activeLayerMeta = explorerLayerMeta(layerMode);
+  const activeMapMetric = mapMetricMeta(mapMetricMode);
   const deferredQuery = useDeferredValue(query);
 
   const metricsByAquifer = useMemo(() => byId(metrics.records), [metrics.records]);
@@ -344,6 +484,10 @@ export function AquiferStressExplorer({ data }: Props) {
   }, [aquifers, favoriteIdSet, filterMode, geometryById, geometryScope, searchQuery, sortMode, stressRankById, surpriseRankById, withdrawalRankById]);
 
   const filteredIds = useMemo(() => new Set(filteredAquifers.map((aquifer) => aquifer.display_aquifer_id)), [filteredAquifers]);
+  const favoriteAquifers = useMemo(
+    () => aquifers.filter((aquifer) => favoriteIdSet.has(aquifer.display_aquifer_id)),
+    [aquifers, favoriteIdSet],
+  );
 
   useEffect(() => {
     if (typeof window === 'undefined') {
@@ -389,6 +533,19 @@ export function AquiferStressExplorer({ data }: Props) {
     }
   }, [compareId, selectedId]);
 
+  useEffect(() => {
+    setLegendHoveredIndex(null);
+    setLegendLockedIndex(null);
+  }, [mapMetricMode]);
+
+  const selectedIndex = useMemo(
+    () => filteredAquifers.findIndex((aquifer) => aquifer.display_aquifer_id === selectedId),
+    [filteredAquifers, selectedId],
+  );
+  const previousAquifer = selectedIndex > 0 ? filteredAquifers[selectedIndex - 1] : null;
+  const nextAquifer =
+    selectedIndex >= 0 && selectedIndex < filteredAquifers.length - 1 ? filteredAquifers[selectedIndex + 1] : null;
+
   const projectedFeatures = useMemo(() => projectAquiferFeatures(geometry), [geometry]);
   const projectedById = useMemo(() => new Map(projectedFeatures.map((feature) => [feature.id, feature])), [projectedFeatures]);
 
@@ -413,6 +570,50 @@ export function AquiferStressExplorer({ data }: Props) {
   const compareMetrics = compareId ? metricsByAquifer.get(compareId) ?? null : null;
   const compareGeometry = compareId ? geometryById.get(compareId) ?? null : null;
   const relatedAquifers = getRelatedAquifers(aquifers, selectedAquifer, stressRankById);
+  const visibleMetricRecords = useMemo(
+    () =>
+      filteredAquifers
+        .map((aquifer) => metricsByAquifer.get(aquifer.display_aquifer_id))
+        .filter((record): record is AquiferMetricRecord => Boolean(record)),
+    [filteredAquifers, metricsByAquifer],
+  );
+  const mapMetricBands = useMemo(
+    () => buildMetricBands(visibleMetricRecords.map((record) => mapMetricValue(record, mapMetricMode)), 5),
+    [mapMetricMode, visibleMetricRecords],
+  );
+  const currentMapMetricRankById = useMemo(
+    () =>
+      new Map(
+        [...visibleMetricRecords]
+          .sort((left, right) => compareRecordsByMapMetric(left, right, mapMetricMode))
+          .map((record, index) => [record.display_aquifer_id, index + 1]),
+      ),
+    [mapMetricMode, visibleMetricRecords],
+  );
+  const mapMetricMin = mapMetricBands[0]?.start ?? 0;
+  const mapMetricMax = mapMetricBands[mapMetricBands.length - 1]?.end ?? 1;
+  const legendBandById = useMemo(
+    () =>
+      new Map(
+        visibleMetricRecords.map((record) => [
+          record.display_aquifer_id,
+          bandIndexForValue(mapMetricValue(record, mapMetricMode), mapMetricBands),
+        ]),
+      ),
+    [mapMetricBands, mapMetricMode, visibleMetricRecords],
+  );
+  const activeLegendIndex = legendLockedIndex ?? legendHoveredIndex;
+  const legendEmphasisIds = useMemo(() => {
+    if (activeLegendIndex === null) {
+      return null;
+    }
+
+    return new Set(
+      [...legendBandById.entries()]
+        .filter(([, bandIndex]) => bandIndex === activeLegendIndex)
+        .map(([displayAquiferId]) => displayAquiferId),
+    );
+  }, [activeLegendIndex, legendBandById]);
   const directorySections = useMemo(
     () => buildDirectorySections(filteredAquifers, sortMode, metricsByAquifer, withdrawalRankById, surpriseRankById),
     [filteredAquifers, metricsByAquifer, sortMode, surpriseRankById, withdrawalRankById],
@@ -420,14 +621,95 @@ export function AquiferStressExplorer({ data }: Props) {
   const quickPickAquifers = useMemo(
     () =>
       [...filteredAquifers]
-        .sort(
-          (left, right) =>
-            (stressRankById.get(left.display_aquifer_id) ?? Number.MAX_SAFE_INTEGER) -
-            (stressRankById.get(right.display_aquifer_id) ?? Number.MAX_SAFE_INTEGER),
+        .filter(
+          (aquifer) =>
+            Boolean(metricsByAquifer.get(aquifer.display_aquifer_id)) &&
+            (legendEmphasisIds ? legendEmphasisIds.has(aquifer.display_aquifer_id) : true),
+        )
+        .sort((left, right) =>
+          compareRecordsByMapMetric(
+            metricsByAquifer.get(left.display_aquifer_id)!,
+            metricsByAquifer.get(right.display_aquifer_id)!,
+            mapMetricMode,
+          ),
         )
         .slice(0, 3),
-    [filteredAquifers, stressRankById],
+    [filteredAquifers, legendEmphasisIds, mapMetricMode, metricsByAquifer],
   );
+  const similarAquifers = useMemo(() => {
+    if (!selectedMetrics) {
+      return [];
+    }
+
+    return aquifers
+      .filter((aquifer) => aquifer.display_aquifer_id !== selectedMetrics.display_aquifer_id)
+      .map((aquifer) => ({
+        aquifer,
+        score: compareAquiferSimilarity(selectedMetrics, metricsByAquifer.get(aquifer.display_aquifer_id)!),
+      }))
+      .sort((left, right) => left.score - right.score)
+      .slice(0, 3)
+      .map((row) => row.aquifer);
+  }, [aquifers, metricsByAquifer, selectedMetrics]);
+  const mapLabels = useMemo(() => {
+    const labels: MapLabel[] = [];
+    const taken: Array<{ x: number; y: number }> = [];
+
+    function tryAddLabel(displayAquiferId: string, tone: MapLabel['tone']) {
+      const feature = projectedById.get(displayAquiferId);
+      if (!feature) {
+        return;
+      }
+
+      const [minX, minY, maxX, maxY] = feature.valueBox;
+      const area = Math.max((maxX - minX) * (maxY - minY), 0);
+      if (tone === 'context' && area < 4500) {
+        return;
+      }
+
+      const [x, y] = feature.centroid;
+      const overlaps = taken.some((point) => Math.abs(point.x - x) < 82 && Math.abs(point.y - y) < 22);
+      if (overlaps) {
+        return;
+      }
+
+      labels.push({
+        id: displayAquiferId,
+        text: feature.shortName,
+        x,
+        y,
+        tone,
+      });
+      taken.push({ x, y });
+    }
+
+    if (selectedId) {
+      tryAddLabel(selectedId, 'selected');
+    }
+    if (compareId) {
+      tryAddLabel(compareId, 'compare');
+    }
+
+    const contextCandidates = filteredAquifers
+      .filter((aquifer) => aquifer.display_aquifer_id !== selectedId && aquifer.display_aquifer_id !== compareId)
+      .filter((aquifer) => (legendEmphasisIds ? legendEmphasisIds.has(aquifer.display_aquifer_id) : true))
+      .filter((aquifer) => currentMapMetricRankById.get(aquifer.display_aquifer_id))
+      .sort(
+        (left, right) =>
+          (currentMapMetricRankById.get(left.display_aquifer_id) ?? Number.MAX_SAFE_INTEGER) -
+          (currentMapMetricRankById.get(right.display_aquifer_id) ?? Number.MAX_SAFE_INTEGER),
+      )
+      .slice(0, 12);
+
+    for (const aquifer of contextCandidates) {
+      if (labels.length >= 8) {
+        break;
+      }
+      tryAddLabel(aquifer.display_aquifer_id, 'context');
+    }
+
+    return labels;
+  }, [compareId, currentMapMetricRankById, filteredAquifers, legendEmphasisIds, projectedById, selectedId]);
 
   const officialGeometryCount = geometry.features.filter(
     (feature) => feature.properties.geometry_method === 'usgs_principal_aquifer_polygon',
@@ -523,6 +805,19 @@ export function AquiferStressExplorer({ data }: Props) {
     setSelectedId(nextId);
   }
 
+  function selectAdjacent(step: -1 | 1) {
+    if (selectedIndex < 0) {
+      return;
+    }
+
+    const nextIndex = selectedIndex + step;
+    if (nextIndex < 0 || nextIndex >= filteredAquifers.length) {
+      return;
+    }
+
+    setSelectedId(filteredAquifers[nextIndex]!.display_aquifer_id);
+  }
+
   function toggleFavorite(aquiferId: string) {
     setFavoriteIds((current) =>
       current.includes(aquiferId) ? current.filter((id) => id !== aquiferId) : [...current, aquiferId],
@@ -541,6 +836,67 @@ export function AquiferStressExplorer({ data }: Props) {
       .map((sourceId) => provenanceById.get(sourceId))
       .filter((record): record is ProvenanceRecord => Boolean(record));
   }
+
+  useEffect(() => {
+    if (!selectedId || typeof document === 'undefined') {
+      return;
+    }
+
+    const selectedRow = document.querySelector<HTMLElement>(`[data-aquifer-row-id="${selectedId}"]`);
+    selectedRow?.scrollIntoView({ block: 'nearest' });
+  }, [selectedId]);
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null;
+      const isTypingTarget =
+        target instanceof HTMLInputElement ||
+        target instanceof HTMLTextAreaElement ||
+        target instanceof HTMLSelectElement ||
+        Boolean(target?.isContentEditable);
+
+      if (event.metaKey || event.ctrlKey || event.altKey) {
+        return;
+      }
+
+      if (event.key === '/' && !isTypingTarget) {
+        event.preventDefault();
+        searchInputRef.current?.focus();
+        searchInputRef.current?.select();
+        return;
+      }
+
+      if (isTypingTarget) {
+        return;
+      }
+
+      if ((event.key === 'ArrowDown' || event.key.toLowerCase() === 'j') && nextAquifer) {
+        event.preventDefault();
+        selectAdjacent(1);
+        return;
+      }
+
+      if ((event.key === 'ArrowUp' || event.key.toLowerCase() === 'k') && previousAquifer) {
+        event.preventDefault();
+        selectAdjacent(-1);
+        return;
+      }
+
+      if (event.key.toLowerCase() === 'f' && selectedId) {
+        event.preventDefault();
+        toggleFavorite(selectedId);
+        return;
+      }
+
+      if (event.key === 'Escape') {
+        setLegendHoveredIndex(null);
+        setLegendLockedIndex(null);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [nextAquifer, previousAquifer, selectedId, selectedIndex]);
 
   return (
     <section className="aqs-shell">
@@ -576,6 +932,7 @@ export function AquiferStressExplorer({ data }: Props) {
           <label className="aqs-search">
             <span className="aqs-search-label">Search aquifers</span>
             <input
+              ref={searchInputRef}
               className="aqs-search-input"
               type="search"
               value={query}
@@ -594,6 +951,7 @@ export function AquiferStressExplorer({ data }: Props) {
               </a>
             ) : null}
           </div>
+          <p className="aqs-shortcuts-note">Shortcuts: <kbd>/</kbd> search · <kbd>j</kbd>/<kbd>k</kbd> or arrows move · <kbd>f</kbd> favorite</p>
 
           {layerMode === 'regional_baseline' ? (
             <div className="aqs-mode-panel">
@@ -680,10 +1038,20 @@ export function AquiferStressExplorer({ data }: Props) {
                     </p>
                     <h3>{selectedAquifer.short_name}</h3>
                     <p>{selectedAquifer.region_label}</p>
+                    <div className="aqs-state-row">
+                      {regionTokens(selectedAquifer.region_label).map((token) => (
+                        <span key={token} className="aqs-inline-chip">
+                          {token}
+                        </span>
+                      ))}
+                    </div>
                   </div>
                   <div className="aqs-directory-spotlight-stat">
                     <strong>{formatShare(selectedMetrics.storage_metrics.remaining_storage_fraction.value)}</strong>
                     <span>{storageRemainingLabel(selectedMetrics.storage_metrics.remaining_storage_fraction.value)}</span>
+                    <small>
+                      Map color: {formatMapMetricValue(mapMetricValue(selectedMetrics, mapMetricMode), mapMetricMode)}
+                    </small>
                     <button
                       type="button"
                       className={`aqs-mini-toggle ${favoriteIdSet.has(selectedAquifer.display_aquifer_id) ? 'is-active' : ''}`}
@@ -694,6 +1062,20 @@ export function AquiferStressExplorer({ data }: Props) {
                   </div>
                 </div>
               ) : null}
+              <div className="aqs-selection-strip">
+                <button type="button" className="aqs-mini-toggle" onClick={() => selectAdjacent(-1)} disabled={!previousAquifer}>
+                  Previous
+                </button>
+                <div className="aqs-selection-copy">
+                  <strong>
+                    {selectedIndex >= 0 ? `${selectedIndex + 1} of ${filteredAquifers.length}` : `${filteredAquifers.length} visible`}
+                  </strong>
+                  <span>{activeMapMetric.label} is live on the map</span>
+                </div>
+                <button type="button" className="aqs-mini-toggle" onClick={() => selectAdjacent(1)} disabled={!nextAquifer}>
+                  Next
+                </button>
+              </div>
               <div className="aqs-directory-meta">
                 <div className="aqs-directory-meta-card">
                   <strong>{aquifers.length}</strong>
@@ -714,12 +1096,45 @@ export function AquiferStressExplorer({ data }: Props) {
               </div>
             </div>
 
+            {compareAquifer || favoriteAquifers.length ? (
+              <div className="aqs-compare-tray">
+                {compareAquifer ? (
+                  <div className="aqs-compare-tray-card">
+                    <strong>Compare tray</strong>
+                    <span>
+                      {selectedAquifer?.short_name ?? 'Selected'} vs {compareAquifer.short_name}
+                    </span>
+                    <button type="button" className="aqs-mini-toggle" onClick={() => setCompareId(null)}>
+                      Clear compare
+                    </button>
+                  </div>
+                ) : null}
+                {favoriteAquifers.length ? (
+                  <div className="aqs-favorite-strip">
+                    <span className="aqs-control-label">Favorites</span>
+                    <div className="aqs-favorite-strip-buttons">
+                      {favoriteAquifers.slice(0, 4).map((aquifer) => (
+                        <button
+                          key={aquifer.display_aquifer_id}
+                          type="button"
+                          className={`aqs-inline-chip ${selectedId === aquifer.display_aquifer_id ? 'is-compare' : ''}`}
+                          onClick={() => selectAquifer(aquifer.display_aquifer_id)}
+                        >
+                          {aquifer.short_name}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
+
             {quickPickAquifers.length ? (
               <div className="aqs-quick-picks">
                 <div className="aqs-quick-picks-header">
                   <span className="aqs-control-label">Quick picks</span>
                   <span className="aqs-quick-picks-note">
-                    {layerMode === 'regional_baseline' ? 'Lowest modeled storage remaining' : 'Parent-system context'}
+                    {layerMode === 'regional_baseline' ? activeMapMetric.description : 'Parent-system context'}
                   </span>
                 </div>
                 <div className="aqs-quick-pick-grid">
@@ -738,7 +1153,7 @@ export function AquiferStressExplorer({ data }: Props) {
                       >
                         <span className="aqs-quick-pick-name">{aquifer.short_name}</span>
                         <span className="aqs-quick-pick-meta">{primaryRegion(aquifer.region_label)}</span>
-                        <strong>{formatShare(aquiferMetrics.storage_metrics.remaining_storage_fraction.value)}</strong>
+                        <strong>{formatMapMetricValue(mapMetricValue(aquiferMetrics, mapMetricMode), mapMetricMode)}</strong>
                       </button>
                     );
                   })}
@@ -815,7 +1230,7 @@ export function AquiferStressExplorer({ data }: Props) {
 
             <p className="aqs-list-note">
               {layerMode === 'regional_baseline'
-                ? 'Grouped to match the active sort so the published baseline reads more like an atlas. Favorites, fallback footprints, and “surprising” mismatches are filterable above.'
+                ? 'Grouped to match the active sort so the published baseline reads more like an atlas. Favorites, fallback footprints, legend bands, keyboard navigation, and “surprising” mismatches are all usable together.'
                 : 'The directory still reflects parent-system context while this evidence layer is being built out.'}
             </p>
           </div>
@@ -846,7 +1261,8 @@ export function AquiferStressExplorer({ data }: Props) {
                         <li key={aquifer.display_aquifer_id}>
                           <button
                             type="button"
-                            className={`aqs-list-item ${selectedId === aquifer.display_aquifer_id ? 'is-active' : ''} ${compareId === aquifer.display_aquifer_id ? 'is-compare' : ''}`}
+                            data-aquifer-row-id={aquifer.display_aquifer_id}
+                            className={`aqs-list-item ${selectedId === aquifer.display_aquifer_id ? 'is-active' : ''} ${compareId === aquifer.display_aquifer_id ? 'is-compare' : ''} ${legendEmphasisIds && !legendEmphasisIds.has(aquifer.display_aquifer_id) ? 'is-muted' : ''}`}
                             onClick={() => selectAquifer(aquifer.display_aquifer_id)}
                           >
                             <span className="aqs-list-rank">#{stressRankById.get(aquifer.display_aquifer_id) ?? '–'}</span>
@@ -861,6 +1277,11 @@ export function AquiferStressExplorer({ data }: Props) {
                               </span>
                               <span className="aqs-list-meta-row">
                                 <span className="aqs-list-meta">{primaryRegion(aquifer.region_label)}</span>
+                                {aquiferMetrics ? (
+                                  <span className="aqs-inline-chip aqs-inline-chip--metric">
+                                    {activeMapMetric.short_label}: {formatMapMetricValue(mapMetricValue(aquiferMetrics, mapMetricMode), mapMetricMode)}
+                                  </span>
+                                ) : null}
                                 {geometryMetaUi ? (
                                   <span className={`aqs-inline-chip ${geometryMeta?.geometry_method === 'county_footprint_fallback' ? 'is-fallback' : ''}`}>
                                     {geometryMetaUi.label}
@@ -909,16 +1330,49 @@ export function AquiferStressExplorer({ data }: Props) {
               <p className="aqs-map-kicker">{activeLayerMeta.label}</p>
               <p className="aqs-map-caption">
                 {activeLayerMeta.map_caption}{' '}
-                Fill now reflects modeled storage remaining within a sampled 392-meter accessible groundwater column. The detail
-                panel also shows annual net balance as a share of modeled current storage. Dashed outlines mark county-footprint
+                The current map color is <strong>{activeMapMetric.label.toLowerCase()}</strong>. Dashed outlines mark county-footprint
                 fallbacks where the polygon dataset has no standalone aquifer outline.
               </p>
             </div>
             <div className="aqs-map-legend-wrap">
-              <div className="aqs-legend" aria-label="Map legend">
-                <span>Lower remaining</span>
-                <div className="aqs-legend-bar" />
-                <span>Higher remaining</span>
+              <div className="aqs-map-metric-switch" role="tablist" aria-label="Map metric">
+                {MAP_METRIC_OPTIONS.map((option) => (
+                  <button
+                    key={option.key}
+                    type="button"
+                    role="tab"
+                    aria-selected={mapMetricMode === option.key}
+                    className={`aqs-chip-button ${mapMetricMode === option.key ? 'is-active' : ''}`}
+                    onClick={() => setMapMetricMode(option.key)}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+              <p className="aqs-legend-note">{activeMapMetric.description}</p>
+              <div className="aqs-legend-grid" aria-label={`${activeMapMetric.label} legend`}>
+                {mapMetricBands.map((band) => {
+                  const midpoint = (band.start + band.end) / 2;
+                  const fill = colorForMapMetric(midpoint, mapMetricMode, mapMetricMin, mapMetricMax);
+                  const isActive = activeLegendIndex === band.index;
+
+                  return (
+                    <button
+                      key={`${mapMetricMode}-${band.index}`}
+                      type="button"
+                      className={`aqs-legend-segment ${isActive ? 'is-active' : ''}`}
+                      onMouseEnter={() => setLegendHoveredIndex(band.index)}
+                      onMouseLeave={() => setLegendHoveredIndex(null)}
+                      onFocus={() => setLegendHoveredIndex(band.index)}
+                      onBlur={() => setLegendHoveredIndex(null)}
+                      onClick={() => setLegendLockedIndex((current) => (current === band.index ? null : band.index))}
+                    >
+                      <span className="aqs-legend-swatch" style={{ background: fill }} />
+                      <strong>{formatMapMetricRange(band.start, band.end, mapMetricMode)}</strong>
+                      <small>{band.count} aquifers</small>
+                    </button>
+                  );
+                })}
               </div>
               <div className="aqs-outline-key">
                 <span className="aqs-outline-key-line" />
@@ -934,12 +1388,13 @@ export function AquiferStressExplorer({ data }: Props) {
                 <desc id="aqs-map-desc">Click or focus an aquifer polygon to open the detail panel.</desc>
                 {projectedFeatures.map((feature) => {
                   const aquiferMetrics = metricsByAquifer.get(feature.id);
-                  const value = aquiferMetrics?.storage_metrics.remaining_storage_fraction.value ?? 0;
-                  const fill = colorForRemaining(value, minRemaining, maxRemaining);
+                  const value = aquiferMetrics ? mapMetricValue(aquiferMetrics, mapMetricMode) : 0;
+                  const fill = colorForMapMetric(value, mapMetricMode, mapMetricMin, mapMetricMax);
                   const isSelected = selectedId === feature.id;
                   const isCompare = compareId === feature.id;
                   const isHovered = hoveredId === feature.id;
                   const isFilteredOut = !filteredIds.has(feature.id);
+                  const isLegendMuted = legendEmphasisIds ? !legendEmphasisIds.has(feature.id) : false;
                   const geometryMetaUi = geometryMethodMeta(feature.geometryMethod, feature.countyFootprintCount);
 
                   return (
@@ -949,11 +1404,11 @@ export function AquiferStressExplorer({ data }: Props) {
                       className={`aqs-map-feature ${isSelected ? 'is-selected' : ''} ${isCompare ? 'is-compare' : ''} ${isHovered ? 'is-hovered' : ''} ${feature.geometryMethod === 'county_footprint_fallback' ? 'is-fallback' : ''}`}
                       style={{
                         fill,
-                        opacity: isFilteredOut ? 0.12 : feature.geometryMethod === 'county_footprint_fallback' ? 0.9 : 1,
+                        opacity: isFilteredOut ? 0.12 : isLegendMuted ? 0.22 : feature.geometryMethod === 'county_footprint_fallback' ? 0.9 : 1,
                       }}
                       tabIndex={0}
                       role="button"
-                      aria-label={`${feature.displayName}${aquiferMetrics ? `, ${formatShare(aquiferMetrics.storage_metrics.remaining_storage_fraction.value)} modeled storage remaining` : ''}, ${geometryMetaUi.label}`}
+                      aria-label={`${feature.displayName}${aquiferMetrics ? `, ${formatMapMetricValue(mapMetricValue(aquiferMetrics, mapMetricMode), mapMetricMode)} ${activeMapMetric.label.toLowerCase()}` : ''}, ${geometryMetaUi.label}`}
                       onMouseEnter={() => setHoveredId(feature.id)}
                       onMouseLeave={() => setHoveredId(null)}
                       onFocus={() => setHoveredId(feature.id)}
@@ -963,6 +1418,18 @@ export function AquiferStressExplorer({ data }: Props) {
                     />
                   );
                 })}
+                {mapLabels.map((label) => (
+                  <text
+                    key={`label-${label.id}`}
+                    x={label.x}
+                    y={label.y}
+                    textAnchor="middle"
+                    dominantBaseline="middle"
+                    className={`aqs-map-label aqs-map-label--${label.tone}`}
+                  >
+                    {label.text}
+                  </text>
+                ))}
               </svg>
 
               {activeAquifer && activeGeometry && projectedById.get(activeAquifer.display_aquifer_id) ? (
@@ -976,7 +1443,7 @@ export function AquiferStressExplorer({ data }: Props) {
                   <strong>{activeAquifer.short_name}</strong>
                   <span>
                     {metricsByAquifer.get(activeAquifer.display_aquifer_id)
-                      ? formatShare(metricsByAquifer.get(activeAquifer.display_aquifer_id)!.storage_metrics.remaining_storage_fraction.value)
+                      ? formatMapMetricValue(mapMetricValue(metricsByAquifer.get(activeAquifer.display_aquifer_id)!, mapMetricMode), mapMetricMode)
                       : 'Select for details'}
                   </span>
                   <small>{geometryMethodMeta(activeGeometry.geometry_method, activeGeometry.county_footprint_count).label}</small>
@@ -1002,10 +1469,13 @@ export function AquiferStressExplorer({ data }: Props) {
                 geometryMeta={selectedGeometry}
                 metrics={selectedMetrics}
                 metricMode={metricMode}
+                mapMetricMode={mapMetricMode}
+                mapMetricRank={currentMapMetricRankById.get(selectedAquifer.display_aquifer_id) ?? null}
                 rank={stressRankById.get(selectedAquifer.display_aquifer_id) ?? null}
                 aquiferCount={aquifers.length}
                 sources={renderSources(selectedMetrics.provenance_source_ids)}
                 relatedAquifers={relatedAquifers}
+                similarAquifers={similarAquifers}
                 compareId={compareId}
                 compareAquifer={compareAquifer}
                 compareMetrics={compareMetrics}
@@ -1048,10 +1518,13 @@ function AquiferDetail({
   geometryMeta,
   metrics,
   metricMode,
+  mapMetricMode,
+  mapMetricRank,
   rank,
   aquiferCount,
   sources,
   relatedAquifers,
+  similarAquifers,
   compareId,
   compareAquifer,
   compareMetrics,
@@ -1068,10 +1541,13 @@ function AquiferDetail({
   geometryMeta: DisplayAquiferFeature['properties'];
   metrics: AquiferMetricRecord;
   metricMode: MetricMode;
+  mapMetricMode: MapMetricMode;
+  mapMetricRank: number | null;
   rank: number | null;
   aquiferCount: number;
   sources: ProvenanceRecord[];
   relatedAquifers: DisplayAquifer[];
+  similarAquifers: DisplayAquifer[];
   compareId: string | null;
   compareAquifer: DisplayAquifer | null;
   compareMetrics: AquiferMetricRecord | null;
@@ -1088,8 +1564,13 @@ function AquiferDetail({
   const stress = metrics.recharge_stress;
   const storageConfidence = confidenceMeta(storage.remaining_storage_fraction.confidence_grade);
   const sortedCategories = sortCategories(metrics.categories);
+  const topCategories = topCategoriesByValue(metrics.categories);
   const sortedIndustry = sortIndustryEstimates(metrics.industry_estimates);
   const dominantCategory = sortedCategories[0] ?? null;
+  const regionBadges = regionTokens(aquifer.region_label);
+  const vintageRows = dataVintageSummary(sources, metrics.year);
+  const limitations = confidenceLimitations(metrics, geometryMeta.geometry_method);
+  const improvementSteps = nextEvidenceSteps(geometryMeta.geometry_method);
   const balanceScale = Math.max(
     metrics.total_withdrawal.value,
     stress.estimated_natural_recharge.value,
@@ -1166,11 +1647,49 @@ function AquiferDetail({
         <p>{takeaway}</p>
       </div>
 
+      <div className="aqs-topline-grid">
+        <div className="aqs-topline-card">
+          <span className="aqs-control-label">Map color right now</span>
+          <strong>{mapMetricMeta(mapMetricMode).label}</strong>
+          <small>
+            {formatMapMetricValue(mapMetricValue(metrics, mapMetricMode), mapMetricMode)}
+            {mapMetricRank ? ` · rank #${mapMetricRank}` : ''}
+          </small>
+          <p>{mapMetricExplanation(metrics, mapMetricMode)}</p>
+        </div>
+        <div className="aqs-topline-card">
+          <span className="aqs-control-label">Top direct-source uses</span>
+          <div className="aqs-pill-row">
+            {topCategories.map((category) => (
+              <span key={category.category_key} className="aqs-inline-chip aqs-inline-chip--metric">
+                {category.category_label} · {formatShare(category.share_of_total)}
+              </span>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="aqs-state-row">
+        {regionBadges.map((token) => (
+          <span key={token} className="aqs-inline-chip">
+            {token}
+          </span>
+        ))}
+      </div>
+
       <div className="aqs-kpi-grid">
         <div className="aqs-kpi-card">
-          <strong>{rank ? `#${rank}` : '—'}</strong>
-          <span>{rank ? `${percentileLabel(rank, aquiferCount)} · remaining rank` : 'Storage-remaining rank'}</span>
+          <strong>{mapMetricRank ? `#${mapMetricRank}` : '—'}</strong>
+          <span>
+            {mapMetricRank ? `${percentileLabel(mapMetricRank, aquiferCount)} · ${mapMetricMeta(mapMetricMode).short_label.toLowerCase()} rank` : 'Current map-metric rank'}
+          </span>
         </div>
+        {mapMetricMode !== 'remaining_storage' ? (
+          <div className="aqs-kpi-card">
+            <strong>{rank ? `#${rank}` : '—'}</strong>
+            <span>{rank ? `${percentileLabel(rank, aquiferCount)} · remaining rank` : 'Storage-remaining rank'}</span>
+          </div>
+        ) : null}
         <div className="aqs-kpi-card">
           <strong>{formatStorageVolumeKm3(storage.modeled_current_storage.value)}</strong>
           <span>Modeled current storage</span>
@@ -1194,9 +1713,13 @@ function AquiferDetail({
         {dominantCategory ? (
           <div className="aqs-kpi-card">
             <strong>{dominantCategory.category_label}</strong>
-            <span>{formatShare(dominantCategory.share_of_total)} of withdrawals</span>
-          </div>
+          <span>{formatShare(dominantCategory.share_of_total)} of withdrawals</span>
+        </div>
         ) : null}
+        <div className="aqs-kpi-card">
+          <strong>{Math.max(1, Math.round(3.65 / Math.max(storage.annual_withdrawal_share_of_storage.value, 0.000001)))}</strong>
+          <span>2015-withdrawal days per 1% of modeled storage</span>
+        </div>
       </div>
 
       <div className="aqs-meta-row">
@@ -1220,6 +1743,19 @@ function AquiferDetail({
           </p>
         </div>
       </div>
+
+      <section className="aqs-section">
+        <h4 className="aqs-section-title">Data vintages</h4>
+        <div className="aqs-vintage-grid">
+          {vintageRows.map((row) => (
+            <div key={row.label} className="aqs-kpi-card">
+              <strong>{row.value}</strong>
+              <span>{row.label}</span>
+              <small>{row.note}</small>
+            </div>
+          ))}
+        </div>
+      </section>
 
       <section className="aqs-section">
         <h4 className="aqs-section-title">
@@ -1302,6 +1838,24 @@ function AquiferDetail({
             ))}
           </ul>
         )}
+      </section>
+
+      <section className="aqs-section">
+        <h4 className="aqs-section-title">Why confidence is limited</h4>
+        <ul className="aqs-caveats">
+          {limitations.map((item) => (
+            <li key={item}>{item}</li>
+          ))}
+        </ul>
+      </section>
+
+      <section className="aqs-section">
+        <h4 className="aqs-section-title">What would improve this estimate next</h4>
+        <ul className="aqs-caveats">
+          {improvementSteps.map((item) => (
+            <li key={item}>{item}</li>
+          ))}
+        </ul>
       </section>
 
       <section className="aqs-section">
@@ -1462,6 +2016,20 @@ function AquiferDetail({
           </div>
         </section>
       ) : null}
+
+      {similarAquifers.length ? (
+        <section className="aqs-section">
+          <h4 className="aqs-section-title">Comparable patterns</h4>
+          <div className="aqs-related">
+            {similarAquifers.map((similar) => (
+              <button key={similar.display_aquifer_id} type="button" className="aqs-related-button" onClick={() => onSelect(similar.display_aquifer_id)}>
+                <strong>{similar.short_name}</strong>
+                <span>{similar.region_label}</span>
+              </button>
+            ))}
+          </div>
+        </section>
+      ) : null}
     </div>
   );
 }
@@ -1483,6 +2051,8 @@ function EvidenceLayerDetail({
   const geometryUi = geometryMethodMeta(geometryMeta.geometry_method, geometryMeta.county_footprint_count);
   const storage = metrics.storage_metrics;
   const storageConfidence = confidenceMeta(storage.remaining_storage_fraction.confidence_grade);
+  const limitations = confidenceLimitations(metrics, geometryMeta.geometry_method);
+  const improvementSteps = nextEvidenceSteps(geometryMeta.geometry_method);
   const evidenceRows = [
     {
       label: 'Modeled storage remaining',
@@ -1570,6 +2140,24 @@ function EvidenceLayerDetail({
             map still provides parent-system context, not a one-step path from facility to groundwater source.
           </p>
         </div>
+      </section>
+
+      <section className="aqs-section">
+        <h4 className="aqs-section-title">Why confidence is still limited</h4>
+        <ul className="aqs-caveats">
+          {limitations.map((item) => (
+            <li key={item}>{item}</li>
+          ))}
+        </ul>
+      </section>
+
+      <section className="aqs-section">
+        <h4 className="aqs-section-title">What needs to be added next</h4>
+        <ul className="aqs-caveats">
+          {improvementSteps.map((item) => (
+            <li key={item}>{item}</li>
+          ))}
+        </ul>
       </section>
 
       <section className="aqs-section">
