@@ -36,6 +36,12 @@ const storageVolumeFormatter = new Intl.NumberFormat('en-US', {
   maximumFractionDigits: 0,
 });
 
+const dateFormatter = new Intl.DateTimeFormat('en-US', {
+  month: 'short',
+  day: 'numeric',
+  year: 'numeric',
+});
+
 export function formatFlowMgalPerDay(value: number): string {
   return `${flowFormatter.format(value)} Mgal/d`;
 }
@@ -59,6 +65,19 @@ export function formatRatio(value: number): string {
 
 export function formatStorageVolumeKm3(value: number): string {
   return `${storageVolumeFormatter.format(value)} km3`;
+}
+
+export function formatDateLabel(value: string | null | undefined): string {
+  if (!value) {
+    return 'Unknown date';
+  }
+
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    return value;
+  }
+
+  return dateFormatter.format(parsed);
 }
 
 export function stressLabel(value: number): string {

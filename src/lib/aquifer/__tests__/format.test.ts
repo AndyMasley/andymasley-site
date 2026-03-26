@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   confidenceMeta,
+  formatDateLabel,
   formatFlowMgalPerDay,
   formatRatio,
   formatSignedPercent,
@@ -28,6 +29,7 @@ describe('aquifer format helpers', () => {
   it('formats storage helpers', () => {
     expect(formatStorageVolumeKm3(31994.2)).toBe('31,994 km3');
     expect(storageRemainingLabel(0.93)).toBe('High modeled storage remaining');
+    expect(formatDateLabel('2026-03-25T00:00:00Z')).toContain('2026');
   });
 
   it('normalizes search query text', () => {

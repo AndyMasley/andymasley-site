@@ -5,7 +5,7 @@ import { loadAquiferBundle } from '@/lib/aquifer/loader';
 
 const data = loadAquiferBundle();
 const pageTitle = 'Aquifer evidence atlas';
-const pageDescription = 'A layered conterminous U.S. aquifer explorer that separates regional baseline pressure, evidence, and future local source-routing layers.';
+const pageDescription = 'A layered conterminous U.S. aquifer atlas with modeled storage remaining, recharge context, comparison tools, source evidence, and future local source-routing layers.';
 const pageUrl = 'https://andymasley.com/visuals/aquifer-stress';
 ---
 
@@ -22,7 +22,7 @@ const pageUrl = 'https://andymasley.com/visuals/aquifer-stress';
       <p class="aqs-hero-kicker">Groundwater evidence</p>
       <h1 class="aqs-hero-title">Aquifer evidence atlas</h1>
       <p class="aqs-hero-copy">
-        A layered conterminous-U.S. explainer for regional aquifer pressure, evidence quality, and the local source questions that the national baseline cannot answer by itself. The goal is not false precision. It is to make the source data, uncertainty, and missing links legible.
+        A layered conterminous-U.S. explainer for regional aquifer pressure, evidence quality, and the local source questions that the national baseline cannot answer by itself. The goal is not false precision. It is to make the source data, uncertainty, missing links, and useful comparisons legible.
       </p>
     </header>
 
@@ -1157,6 +1157,237 @@ const pageUrl = 'https://andymasley.com/visuals/aquifer-stress';
     place-content: center;
   }
 
+  .aqs-export-row,
+  .aqs-overview-strip,
+  .aqs-reference-strip,
+  .aqs-header-actions,
+  .aqs-section-heading,
+  .aqs-compare-controls,
+  .aqs-caveat-grid,
+  .aqs-source-headline {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    align-items: center;
+  }
+
+  .aqs-export-row {
+    justify-content: flex-start;
+  }
+
+  .aqs-export-button,
+  .aqs-mini-toggle,
+  .aqs-compare-select {
+    border: 1px solid var(--aqs-border);
+    background: rgba(255, 255, 255, 0.55);
+    color: inherit;
+    font: inherit;
+  }
+
+  [data-theme="dark"] .aqs-export-button,
+  [data-theme="dark"] .aqs-mini-toggle,
+  [data-theme="dark"] .aqs-compare-select {
+    background: rgba(255, 255, 255, 0.03);
+  }
+
+  .aqs-export-button,
+  .aqs-mini-toggle {
+    padding: 0.55rem 0.75rem;
+    text-decoration: none;
+    cursor: pointer;
+  }
+
+  .aqs-mini-toggle.is-active,
+  .aqs-inline-chip.is-compare {
+    background: rgba(31, 94, 97, 0.12);
+    border-color: rgba(31, 94, 97, 0.3);
+    color: var(--aqs-sea);
+  }
+
+  .aqs-overview-strip,
+  .aqs-reference-strip {
+    margin: 0 0 1.15rem;
+  }
+
+  .aqs-overview-strip {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.8rem;
+  }
+
+  .aqs-overview-card,
+  .aqs-reference-card,
+  .aqs-takeaway-card,
+  .aqs-caveat-card,
+  .aqs-compare-card {
+    border: 1px solid var(--aqs-border);
+    background: rgba(255, 255, 255, 0.45);
+    padding: 0.9rem;
+  }
+
+  [data-theme="dark"] .aqs-overview-card,
+  [data-theme="dark"] .aqs-reference-card,
+  [data-theme="dark"] .aqs-takeaway-card,
+  [data-theme="dark"] .aqs-caveat-card,
+  [data-theme="dark"] .aqs-compare-card {
+    background: rgba(255, 255, 255, 0.03);
+  }
+
+  .aqs-overview-card {
+    display: grid;
+    gap: 0.2rem;
+  }
+
+  .aqs-overview-card span,
+  .aqs-overview-card small,
+  .aqs-reference-copy p,
+  .aqs-compare-card small,
+  .aqs-source-headline a,
+  .aqs-raw-record {
+    color: var(--text-secondary);
+  }
+
+  .aqs-overview-card strong {
+    font-size: 1.1rem;
+  }
+
+  .aqs-reference-strip {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.8rem;
+  }
+
+  .aqs-reference-card summary {
+    cursor: pointer;
+    font-weight: 600;
+  }
+
+  .aqs-reference-copy {
+    margin-top: 0.65rem;
+    display: grid;
+    gap: 0.5rem;
+  }
+
+  .aqs-header-actions {
+    margin-top: 0.6rem;
+  }
+
+  .aqs-takeaway-card {
+    margin-top: 1rem;
+    display: grid;
+    gap: 0.35rem;
+  }
+
+  .aqs-takeaway-card strong {
+    color: var(--aqs-sea);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: 0.72rem;
+  }
+
+  .aqs-takeaway-card p {
+    margin: 0;
+  }
+
+  .aqs-section-heading {
+    justify-content: space-between;
+    margin-bottom: 0.7rem;
+  }
+
+  .aqs-compare-controls {
+    justify-content: flex-end;
+  }
+
+  .aqs-compare-select {
+    min-width: 14rem;
+    padding: 0.55rem 0.7rem;
+  }
+
+  .aqs-compare-grid {
+    display: grid;
+    gap: 0.75rem;
+  }
+
+  .aqs-compare-grid,
+  .aqs-caveat-grid {
+    margin-top: 0.75rem;
+  }
+
+  .aqs-compare-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .aqs-compare-card {
+    display: grid;
+    gap: 0.2rem;
+  }
+
+  .aqs-compare-label {
+    color: var(--aqs-sea);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: 0.72rem;
+  }
+
+  .aqs-compare-table {
+    grid-column: 1 / -1;
+    display: grid;
+    gap: 0.45rem;
+  }
+
+  .aqs-compare-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1.1fr) minmax(8rem, auto) minmax(8rem, auto);
+    gap: 0.75rem;
+    align-items: center;
+    border-top: 1px solid rgba(22, 51, 52, 0.08);
+    padding-top: 0.55rem;
+  }
+
+  .aqs-compare-row:first-child {
+    border-top: none;
+    padding-top: 0;
+  }
+
+  .aqs-caveat-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.7rem;
+  }
+
+  .aqs-caveat-card {
+    font-size: 0.92rem;
+    line-height: 1.5;
+  }
+
+  .aqs-source-headline {
+    justify-content: space-between;
+  }
+
+  .aqs-source-headline a {
+    text-decoration: underline;
+    text-underline-offset: 0.16em;
+  }
+
+  .aqs-raw-record {
+    margin: 0.8rem 0 0;
+    padding: 0.9rem;
+    background: rgba(22, 51, 52, 0.05);
+    overflow: auto;
+    font-size: 0.78rem;
+    line-height: 1.55;
+  }
+
+  .aqs-list-item.is-compare {
+    border-color: rgba(31, 94, 97, 0.3);
+  }
+
+  .aqs-map-feature.is-compare {
+    stroke: var(--aqs-sea);
+    stroke-width: 2.4;
+    stroke-dasharray: 8 4;
+  }
+
   @media (max-width: 1100px) {
     .aqs-toolbar {
       flex-direction: column;
@@ -1180,6 +1411,13 @@ const pageUrl = 'https://andymasley.com/visuals/aquifer-stress';
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
+    .aqs-overview-strip,
+    .aqs-reference-strip,
+    .aqs-caveat-grid,
+    .aqs-compare-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
     .aqs-list-panel,
     .aqs-detail-panel {
       max-height: none;
@@ -1198,7 +1436,12 @@ const pageUrl = 'https://andymasley.com/visuals/aquifer-stress';
     .aqs-map-meta,
     .aqs-bar-row,
     .aqs-kpi-grid,
-    .aqs-layer-checklist-grid {
+    .aqs-layer-checklist-grid,
+    .aqs-overview-strip,
+    .aqs-reference-strip,
+    .aqs-caveat-grid,
+    .aqs-compare-grid,
+    .aqs-compare-row {
       grid-template-columns: 1fr;
     }
 
@@ -1226,6 +1469,12 @@ const pageUrl = 'https://andymasley.com/visuals/aquifer-stress';
     .aqs-evidence-row {
       display: grid;
       gap: 0.35rem;
+    }
+
+    .aqs-section-heading,
+    .aqs-compare-controls {
+      align-items: stretch;
+      justify-content: stretch;
     }
 
     .aqs-tooltip {
