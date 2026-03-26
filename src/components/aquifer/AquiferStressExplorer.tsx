@@ -10,17 +10,20 @@ import type {
   ProvenanceRecord,
 } from '@/lib/aquifer/contracts';
 import {
+  ATLAS_PRESETS,
   MAP_METRIC_OPTIONS,
   bandIndexForValue,
   buildMetricBands,
   compareAquiferSimilarity,
   compareRecordsByMapMetric,
   confidenceLimitations,
+  dominantCategory,
   mapMetricMeta,
   mapMetricValue,
   nextEvidenceSteps,
   regionTokens,
   topCategoriesByValue,
+  uniqueDominantCategories,
   type MapMetricMode,
 } from '@/lib/aquifer/explorer';
 import {
@@ -46,15 +49,18 @@ interface Props {
   data: AquiferDataBundle;
 }
 
-type SortMode = 'stress' | 'withdrawal' | 'alphabetical' | 'region' | 'surprising';
+type SortMode = 'stress' | 'drawdown' | 'withdrawal' | 'alphabetical' | 'region' | 'surprising';
 type GeometryScope = 'all' | 'official' | 'fallback';
 type FilterMode = 'all' | 'low_remaining' | 'high_withdrawal' | 'fallback' | 'surprising' | 'favorites';
+type DominantCategoryFilter = 'all' | string;
 type DirectorySection = {
   key: string;
   label: string;
   note: string;
   aquifers: DisplayAquifer[];
 };
+
+type ShareState = 'idle' | 'copied' | 'error';
 
 type MapLabel = {
   id: string;
@@ -134,6 +140,7 @@ function buildDirectorySections(
   aquifers: DisplayAquifer[],
   sortMode: SortMode,
   metricsByAquifer: Map<string, AquiferMetricRecord>,
+  drawdownRankById: Map<string, number>,
   withdrawalRankById: Map<string, number>,
   surpriseRankById: Map<string, number>,
 ): DirectorySection[] {
@@ -152,6 +159,21 @@ function buildDirectorySections(
       key = primaryRegion(aquifer.region_label);
       label = key;
       note = 'Primary geography';
+    } else if (sortMode === 'drawdown') {
+      const rank = drawdownRankById.get(aquifer.display_aquifer_id) ?? 999;
+      if (rank <= 10) {
+        key = 'top-drawdown';
+        label = 'Top 10 annual drawdown';
+        note = 'Largest annual net balance relative to modeled storage';
+      } else if (rank <= 30) {
+        key = 'mid-drawdown';
+        label = 'Next 20';
+        note = 'Elevated annual net balance pressure';
+      } else {
+        key = 'lower-drawdown';
+        label = 'Remaining systems';
+        note = 'Lower annual net balance relative to modeled storage';
+      }
     } else if (sortMode === 'withdrawal') {
       const rank = withdrawalRankById.get(aquifer.display_aquifer_id) ?? 999;
       if (rank <= 10) {
@@ -365,13 +387,16 @@ export function AquiferStressExplorer({ data }: Props) {
   const [sortMode, setSortMode] = useState<SortMode>('stress');
   const [geometryScope, setGeometryScope] = useState<GeometryScope>('all');
   const [filterMode, setFilterMode] = useState<FilterMode>('all');
+  const [dominantCategoryFilter, setDominantCategoryFilter] = useState<DominantCategoryFilter>('all');
   const [selectedId, setSelectedId] = useState<string | null>(collection.aquifers[0]?.display_aquifer_id ?? null);
   const [compareId, setCompareId] = useState<string | null>(null);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [favoriteIds, setFavoriteIds] = useState<string[]>([]);
   const [legendHoveredIndex, setLegendHoveredIndex] = useState<number | null>(null);
   const [legendLockedIndex, setLegendLockedIndex] = useState<number | null>(null);
+  const [shareState, setShareState] = useState<ShareState>('idle');
   const searchInputRef = useRef<HTMLInputElement | null>(null);
+  const hydratedUrlRef = useRef(false);
   const activeLayerMeta = explorerLayerMeta(layerMode);
   const activeMapMetric = mapMetricMeta(mapMetricMode);
   const deferredQuery = useDeferredValue(query);
@@ -404,6 +429,17 @@ export function AquiferStressExplorer({ data }: Props) {
         .map((record, index) => [record.display_aquifer_id, index + 1]),
     );
   }, [metrics.records]);
+  const drawdownRankById = useMemo(() => {
+    return new Map(
+      [...metrics.records]
+        .sort(
+          (left, right) =>
+            right.storage_metrics.annual_net_balance_share_of_storage.value -
+            left.storage_metrics.annual_net_balance_share_of_storage.value,
+        )
+        .map((record, index) => [record.display_aquifer_id, index + 1]),
+    );
+  }, [metrics.records]);
   const surpriseRankById = useMemo(() => {
     const rows = [...metrics.records]
       .map((record) => ({
@@ -420,11 +456,18 @@ export function AquiferStressExplorer({ data }: Props) {
 
   const searchQuery = normalizeQuery(deferredQuery);
   const favoriteIdSet = useMemo(() => new Set(favoriteIds), [favoriteIds]);
+  const dominantCategoryOptions = useMemo(() => uniqueDominantCategories(metrics.records), [metrics.records]);
   const filteredAquifers = useMemo(() => {
     const visible = aquifers.filter((aquifer) => {
       const geometryMeta = geometryById.get(aquifer.display_aquifer_id);
       if (!isGeometryVisible(geometryMeta?.geometry_method, geometryScope)) {
         return false;
+      }
+      const aquiferMetrics = metricsByAquifer.get(aquifer.display_aquifer_id);
+      if (dominantCategoryFilter !== 'all') {
+        if (!aquiferMetrics || dominantCategory(aquiferMetrics)?.category_key !== dominantCategoryFilter) {
+          return false;
+        }
       }
 
       if (filterMode === 'favorites' && !favoriteIdSet.has(aquifer.display_aquifer_id)) {
@@ -460,6 +503,12 @@ export function AquiferStressExplorer({ data }: Props) {
           (stressRankById.get(right.display_aquifer_id) ?? Number.MAX_SAFE_INTEGER)
         );
       }
+      if (sortMode === 'drawdown') {
+        return (
+          (drawdownRankById.get(left.display_aquifer_id) ?? Number.MAX_SAFE_INTEGER) -
+          (drawdownRankById.get(right.display_aquifer_id) ?? Number.MAX_SAFE_INTEGER)
+        );
+      }
       if (sortMode === 'alphabetical') {
         return left.display_name.localeCompare(right.display_name);
       }
@@ -481,7 +530,7 @@ export function AquiferStressExplorer({ data }: Props) {
         (withdrawalRankById.get(right.display_aquifer_id) ?? Number.MAX_SAFE_INTEGER)
       );
     });
-  }, [aquifers, favoriteIdSet, filterMode, geometryById, geometryScope, searchQuery, sortMode, stressRankById, surpriseRankById, withdrawalRankById]);
+  }, [aquifers, dominantCategoryFilter, drawdownRankById, favoriteIdSet, filterMode, geometryById, geometryScope, metrics.records, metricsByAquifer, searchQuery, sortMode, stressRankById, surpriseRankById, withdrawalRankById]);
 
   const filteredIds = useMemo(() => new Set(filteredAquifers.map((aquifer) => aquifer.display_aquifer_id)), [filteredAquifers]);
   const favoriteAquifers = useMemo(
@@ -534,9 +583,93 @@ export function AquiferStressExplorer({ data }: Props) {
   }, [compareId, selectedId]);
 
   useEffect(() => {
+    if (typeof window === 'undefined' || hydratedUrlRef.current) {
+      return;
+    }
+
+    const params = new URLSearchParams(window.location.search);
+    const nextQuery = params.get('q');
+    const nextAquifer = params.get('aquifer');
+    const nextCompare = params.get('compare');
+    const nextLayer = params.get('layer');
+    const nextDetail = params.get('detail');
+    const nextMap = params.get('map');
+    const nextSort = params.get('sort');
+    const nextFocus = params.get('focus');
+    const nextGeometry = params.get('geometry');
+    const nextSector = params.get('sector');
+
+    if (nextQuery) {
+      setQuery(nextQuery);
+    }
+    if (nextAquifer && aquifers.some((aquifer) => aquifer.display_aquifer_id === nextAquifer)) {
+      setSelectedId(nextAquifer);
+    }
+    if (nextCompare && aquifers.some((aquifer) => aquifer.display_aquifer_id === nextCompare)) {
+      setCompareId(nextCompare);
+    }
+    if (nextLayer && EXPLORER_LAYER_MODES.some((mode) => mode.key === nextLayer)) {
+      setLayerMode(nextLayer as ExplorerLayerMode);
+    }
+    if (nextDetail && ['stress', 'categories', 'industry'].includes(nextDetail)) {
+      setMetricMode(nextDetail as MetricMode);
+    }
+    if (nextMap && MAP_METRIC_OPTIONS.some((option) => option.key === nextMap)) {
+      setMapMetricMode(nextMap as MapMetricMode);
+    }
+    if (nextSort && ['stress', 'drawdown', 'withdrawal', 'alphabetical', 'region', 'surprising'].includes(nextSort)) {
+      setSortMode(nextSort as SortMode);
+    }
+    if (nextFocus && ['all', 'low_remaining', 'high_withdrawal', 'fallback', 'surprising'].includes(nextFocus)) {
+      setFilterMode(nextFocus as FilterMode);
+    }
+    if (nextGeometry && ['all', 'official', 'fallback'].includes(nextGeometry)) {
+      setGeometryScope(nextGeometry as GeometryScope);
+    }
+    if (
+      nextSector &&
+      dominantCategoryOptions.some((category) => category.category_key === nextSector)
+    ) {
+      setDominantCategoryFilter(nextSector);
+    }
+
+    hydratedUrlRef.current = true;
+  }, [aquifers, dominantCategoryOptions]);
+
+  useEffect(() => {
     setLegendHoveredIndex(null);
     setLegendLockedIndex(null);
   }, [mapMetricMode]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !hydratedUrlRef.current) {
+      return;
+    }
+
+    const url = new URL(window.location.href);
+    const params = url.searchParams;
+
+    const setParam = (key: string, value: string | null) => {
+      if (value && value.length) {
+        params.set(key, value);
+      } else {
+        params.delete(key);
+      }
+    };
+
+    setParam('aquifer', selectedId);
+    setParam('compare', compareId);
+    setParam('q', query || null);
+    setParam('layer', layerMode === 'regional_baseline' ? null : layerMode);
+    setParam('detail', metricMode === 'stress' ? null : metricMode);
+    setParam('map', mapMetricMode === 'remaining_storage' ? null : mapMetricMode);
+    setParam('sort', sortMode === 'stress' ? null : sortMode);
+    setParam('focus', filterMode === 'all' || filterMode === 'favorites' ? null : filterMode);
+    setParam('geometry', geometryScope === 'all' ? null : geometryScope);
+    setParam('sector', dominantCategoryFilter === 'all' ? null : dominantCategoryFilter);
+
+    window.history.replaceState({}, '', `${url.pathname}${params.toString() ? `?${params.toString()}` : ''}`);
+  }, [compareId, dominantCategoryFilter, filterMode, geometryScope, layerMode, mapMetricMode, metricMode, query, selectedId, sortMode]);
 
   const selectedIndex = useMemo(
     () => filteredAquifers.findIndex((aquifer) => aquifer.display_aquifer_id === selectedId),
@@ -615,8 +748,8 @@ export function AquiferStressExplorer({ data }: Props) {
     );
   }, [activeLegendIndex, legendBandById]);
   const directorySections = useMemo(
-    () => buildDirectorySections(filteredAquifers, sortMode, metricsByAquifer, withdrawalRankById, surpriseRankById),
-    [filteredAquifers, metricsByAquifer, sortMode, surpriseRankById, withdrawalRankById],
+    () => buildDirectorySections(filteredAquifers, sortMode, metricsByAquifer, drawdownRankById, withdrawalRankById, surpriseRankById),
+    [drawdownRankById, filteredAquifers, metricsByAquifer, sortMode, surpriseRankById, withdrawalRankById],
   );
   const quickPickAquifers = useMemo(
     () =>
@@ -735,9 +868,9 @@ export function AquiferStressExplorer({ data }: Props) {
       note: `${EXPLORER_LAYER_MODES.length - publishedLayerCount} still scoped next`,
     },
     {
-      label: 'Headline metric',
-      value: 'Storage remaining',
-      note: 'Recharge remains a secondary context lens',
+      label: 'Map metric',
+      value: activeMapMetric.label,
+      note: activeMapMetric.description,
     },
   ];
   const visibleCsvHref = useMemo(() => {
@@ -800,6 +933,32 @@ export function AquiferStressExplorer({ data }: Props) {
     () => (selectedRawRecord ? toDataUri(JSON.stringify(selectedRawRecord, null, 2), 'application/json') : null),
     [selectedRawRecord],
   );
+  const activeFilterTags = useMemo(() => {
+    const tags: string[] = [];
+    if (query) {
+      tags.push(`Search: ${query}`);
+    }
+    if (filterMode !== 'all' && filterMode !== 'favorites') {
+      tags.push(`Focus: ${filterMode.replaceAll('_', ' ')}`);
+    }
+    if (geometryScope !== 'all') {
+      tags.push(`Geometry: ${geometryScope}`);
+    }
+    if (dominantCategoryFilter !== 'all') {
+      const match = dominantCategoryOptions.find((category) => category.category_key === dominantCategoryFilter);
+      tags.push(`Dominant use: ${match?.category_label ?? dominantCategoryFilter}`);
+    }
+    if (sortMode !== 'stress') {
+      tags.push(`Sort: ${sortMode.replaceAll('_', ' ')}`);
+    }
+    if (mapMetricMode !== 'remaining_storage') {
+      tags.push(`Map: ${mapMetricMeta(mapMetricMode).label}`);
+    }
+    if (layerMode !== 'regional_baseline') {
+      tags.push(`Layer: ${activeLayerMeta.label}`);
+    }
+    return tags;
+  }, [activeLayerMeta.label, dominantCategoryFilter, dominantCategoryOptions, filterMode, geometryScope, layerMode, mapMetricMode, query, sortMode]);
 
   function selectAquifer(nextId: string) {
     setSelectedId(nextId);
@@ -835,6 +994,106 @@ export function AquiferStressExplorer({ data }: Props) {
     return sourceIds
       .map((sourceId) => provenanceById.get(sourceId))
       .filter((record): record is ProvenanceRecord => Boolean(record));
+  }
+
+  function applyAtlasPreset(presetKey: string) {
+    setLayerMode('regional_baseline');
+    setCompareId(null);
+    setLegendHoveredIndex(null);
+    setLegendLockedIndex(null);
+    setQuery('');
+
+    if (presetKey === 'storage_remaining') {
+      setMapMetricMode('remaining_storage');
+      setMetricMode('stress');
+      setSortMode('stress');
+      setFilterMode('low_remaining');
+      setGeometryScope('all');
+      setDominantCategoryFilter('all');
+      return;
+    }
+
+    if (presetKey === 'annual_drawdown') {
+      setMapMetricMode('annual_drawdown');
+      setMetricMode('stress');
+      setSortMode('drawdown');
+      setFilterMode('all');
+      setGeometryScope('all');
+      setDominantCategoryFilter('all');
+      return;
+    }
+
+    if (presetKey === 'largest_withdrawals') {
+      setMapMetricMode('withdrawal');
+      setMetricMode('categories');
+      setSortMode('withdrawal');
+      setFilterMode('high_withdrawal');
+      setGeometryScope('all');
+      setDominantCategoryFilter('all');
+      return;
+    }
+
+    if (presetKey === 'irrigation_heavy') {
+      setMapMetricMode('withdrawal');
+      setMetricMode('categories');
+      setSortMode('withdrawal');
+      setFilterMode('all');
+      setGeometryScope('all');
+      setDominantCategoryFilter('irrigation');
+      return;
+    }
+
+    if (presetKey === 'public_supply_heavy') {
+      setMapMetricMode('withdrawal');
+      setMetricMode('categories');
+      setSortMode('withdrawal');
+      setFilterMode('all');
+      setGeometryScope('all');
+      setDominantCategoryFilter('public_supply');
+      return;
+    }
+
+    if (presetKey === 'fallback_geometry') {
+      setMapMetricMode('remaining_storage');
+      setMetricMode('stress');
+      setSortMode('alphabetical');
+      setFilterMode('fallback');
+      setGeometryScope('fallback');
+      setDominantCategoryFilter('all');
+    }
+  }
+
+  function resetAtlasView() {
+    setQuery('');
+    setLayerMode('regional_baseline');
+    setMetricMode('stress');
+    setMapMetricMode('remaining_storage');
+    setSortMode('stress');
+    setFilterMode('all');
+    setGeometryScope('all');
+    setDominantCategoryFilter('all');
+    setCompareId(null);
+    setLegendHoveredIndex(null);
+    setLegendLockedIndex(null);
+  }
+
+  async function copyShareLink() {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    const url = window.location.href;
+
+    try {
+      await window.navigator.clipboard.writeText(url);
+      setShareState('copied');
+    } catch {
+      setShareState('error');
+    }
+
+    window.setTimeout(() => {
+      setShareState('idle');
+    }, 1800);
   }
 
   useEffect(() => {
@@ -945,6 +1204,9 @@ export function AquiferStressExplorer({ data }: Props) {
             <a className="aqs-export-button" href={visibleCsvHref} download="aquifer-directory.csv">
               Export visible CSV
             </a>
+            <button type="button" className="aqs-export-button" onClick={() => copyShareLink()}>
+              {shareState === 'copied' ? 'Link copied' : shareState === 'error' ? 'Copy failed' : 'Copy share link'}
+            </button>
             {selectedJsonHref ? (
               <a className="aqs-export-button" href={selectedJsonHref} download={`${selectedId ?? 'aquifer'}-record.json`}>
                 Download selected JSON
@@ -994,6 +1256,15 @@ export function AquiferStressExplorer({ data }: Props) {
         ))}
       </div>
 
+      <div className="aqs-preset-strip">
+        {ATLAS_PRESETS.map((preset) => (
+          <button key={preset.key} type="button" className="aqs-preset-card" onClick={() => applyAtlasPreset(preset.key)}>
+            <strong>{preset.label}</strong>
+            <span>{preset.note}</span>
+          </button>
+        ))}
+      </div>
+
       <div className="aqs-reference-strip">
         <details className="aqs-reference-card" open>
           <summary>How to read this atlas</summary>
@@ -1021,6 +1292,24 @@ export function AquiferStressExplorer({ data }: Props) {
           </div>
         </details>
       </div>
+
+      {activeFilterTags.length ? (
+        <div className="aqs-active-strip">
+          <div className="aqs-active-strip-copy">
+            <strong>Active atlas view</strong>
+            <div className="aqs-pill-row">
+              {activeFilterTags.map((tag) => (
+                <span key={tag} className="aqs-inline-chip aqs-inline-chip--metric">
+                  {tag}
+                </span>
+              ))}
+            </div>
+          </div>
+          <button type="button" className="aqs-mini-toggle" onClick={() => resetAtlasView()}>
+            Reset atlas view
+          </button>
+        </div>
+      ) : null}
 
       <div className="aqs-grid">
         <aside className="aqs-list-panel" aria-label="Aquifer systems">
@@ -1206,10 +1495,34 @@ export function AquiferStressExplorer({ data }: Props) {
               </div>
 
               <div className="aqs-control-group">
+                <span className="aqs-control-label">Dominant use</span>
+                <div className="aqs-chip-switch">
+                  <button
+                    type="button"
+                    className={`aqs-chip-button ${dominantCategoryFilter === 'all' ? 'is-active' : ''}`}
+                    onClick={() => setDominantCategoryFilter('all')}
+                  >
+                    All
+                  </button>
+                  {dominantCategoryOptions.map((category) => (
+                    <button
+                      key={category.category_key}
+                      type="button"
+                      className={`aqs-chip-button ${dominantCategoryFilter === category.category_key ? 'is-active' : ''}`}
+                      onClick={() => setDominantCategoryFilter(category.category_key)}
+                    >
+                      {category.category_label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="aqs-control-group">
                 <span className="aqs-control-label">Directory</span>
                 <div className="aqs-chip-switch">
                   {[
                     { key: 'stress', label: 'By remaining' },
+                    { key: 'drawdown', label: 'By drawdown' },
                     { key: 'withdrawal', label: 'By withdrawal' },
                     { key: 'surprising', label: 'By surprise' },
                     { key: 'alphabetical', label: 'A-Z' },
@@ -1249,6 +1562,7 @@ export function AquiferStressExplorer({ data }: Props) {
                   <ul className="aqs-list">
                     {section.aquifers.map((aquifer) => {
                       const aquiferMetrics = metricsByAquifer.get(aquifer.display_aquifer_id);
+                      const dominantUse = aquiferMetrics ? dominantCategory(aquiferMetrics) : null;
                       const geometryMeta = geometryById.get(aquifer.display_aquifer_id);
                       const geometryMetaUi = geometryMeta
                         ? geometryMethodMeta(geometryMeta.geometry_method, geometryMeta.county_footprint_count)
@@ -1277,6 +1591,11 @@ export function AquiferStressExplorer({ data }: Props) {
                               </span>
                               <span className="aqs-list-meta-row">
                                 <span className="aqs-list-meta">{primaryRegion(aquifer.region_label)}</span>
+                                {dominantUse ? (
+                                  <span className="aqs-inline-chip aqs-inline-chip--metric">
+                                    {dominantUse.category_label}
+                                  </span>
+                                ) : null}
                                 {aquiferMetrics ? (
                                   <span className="aqs-inline-chip aqs-inline-chip--metric">
                                     {activeMapMetric.short_label}: {formatMapMetricValue(mapMetricValue(aquiferMetrics, mapMetricMode), mapMetricMode)}
@@ -1489,6 +1808,8 @@ export function AquiferStressExplorer({ data }: Props) {
                 isFavorite={favoriteIdSet.has(selectedAquifer.display_aquifer_id)}
                 selectedJsonHref={selectedJsonHref}
                 selectedJsonPreview={selectedRawRecord ? JSON.stringify(selectedRawRecord, null, 2) : null}
+                shareState={shareState}
+                onCopyShareLink={copyShareLink}
               />
             ) : (
               <EvidenceLayerDetail
@@ -1533,6 +1854,8 @@ function AquiferDetail({
   isFavorite,
   selectedJsonHref,
   selectedJsonPreview,
+  shareState,
+  onCopyShareLink,
   onCompare,
   onSelect,
   onToggleFavorite,
@@ -1556,6 +1879,8 @@ function AquiferDetail({
   isFavorite: boolean;
   selectedJsonHref: string | null;
   selectedJsonPreview: string | null;
+  shareState: ShareState;
+  onCopyShareLink: () => void;
   onCompare: (id: string | null) => void;
   onSelect: (id: string) => void;
   onToggleFavorite: (id: string) => void;
@@ -1623,6 +1948,9 @@ function AquiferDetail({
         <h3 className="aqs-detail-title">{aquifer.display_name}</h3>
         <p className="aqs-detail-summary">{aquifer.description_short}</p>
         <div className="aqs-header-actions">
+          <button type="button" className="aqs-mini-toggle" onClick={() => onCopyShareLink()}>
+            {shareState === 'copied' ? 'Link copied' : shareState === 'error' ? 'Copy failed' : 'Share view'}
+          </button>
           <button type="button" className={`aqs-mini-toggle ${isFavorite ? 'is-active' : ''}`} onClick={() => onToggleFavorite(aquifer.display_aquifer_id)}>
             {isFavorite ? 'Favorited' : 'Add favorite'}
           </button>
@@ -1645,6 +1973,15 @@ function AquiferDetail({
       <div className="aqs-takeaway-card">
         <strong>Takeaway</strong>
         <p>{takeaway}</p>
+      </div>
+
+      <div className="aqs-pill-row">
+        <span className="aqs-inline-chip aqs-inline-chip--metric">{sourceTypeLabel(metrics.total_withdrawal.source_type)}</span>
+        <span className="aqs-inline-chip aqs-inline-chip--metric">{sourceTypeLabel(storage.remaining_storage_fraction.source_type)}</span>
+        <span className="aqs-inline-chip aqs-inline-chip--metric">
+          {geometryMethodMeta(geometryMeta.geometry_method, geometryMeta.county_footprint_count).label}
+        </span>
+        <span className="aqs-inline-chip aqs-inline-chip--metric">{storageConfidence.label}</span>
       </div>
 
       <div className="aqs-topline-grid">

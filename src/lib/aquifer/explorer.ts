@@ -20,6 +20,12 @@ export interface MetricBand {
   count: number;
 }
 
+export interface AtlasPreset {
+  key: string;
+  label: string;
+  note: string;
+}
+
 export const MAP_METRIC_OPTIONS: MapMetricOption[] = [
   {
     key: 'remaining_storage',
@@ -44,6 +50,39 @@ export const MAP_METRIC_OPTIONS: MapMetricOption[] = [
     label: 'Recharge balance',
     short_label: 'Recharge',
     description: 'Recharge-based balance index computed as (withdrawals - recharge) / recharge.',
+  },
+];
+
+export const ATLAS_PRESETS: AtlasPreset[] = [
+  {
+    key: 'storage_remaining',
+    label: 'Lowest remaining',
+    note: 'Show aquifers where less of the modeled storage column remains saturated.',
+  },
+  {
+    key: 'annual_drawdown',
+    label: 'Fastest drawdown',
+    note: 'Show the biggest annual net balance pressure relative to modeled storage.',
+  },
+  {
+    key: 'largest_withdrawals',
+    label: 'Largest withdrawals',
+    note: 'Show the biggest direct-source 2015 withdrawal totals.',
+  },
+  {
+    key: 'irrigation_heavy',
+    label: 'Irrigation-heavy',
+    note: 'Focus on aquifers where irrigation is the dominant direct-source use.',
+  },
+  {
+    key: 'public_supply_heavy',
+    label: 'Public supply',
+    note: 'Focus on aquifers dominated by public-supply withdrawals.',
+  },
+  {
+    key: 'fallback_geometry',
+    label: 'Fallback geometry',
+    note: 'Review the systems that still rely on county-footprint fallback display geometry.',
   },
 ];
 
@@ -138,6 +177,25 @@ export function regionTokens(regionLabel: string): string[] {
 
 export function topCategoriesByValue(categories: CategoryBreakdown[], limit = 3): CategoryBreakdown[] {
   return [...categories].sort((left, right) => right.value - left.value).slice(0, limit);
+}
+
+export function dominantCategory(record: AquiferMetricRecord): CategoryBreakdown | null {
+  return topCategoriesByValue(record.categories, 1)[0] ?? null;
+}
+
+export function uniqueDominantCategories(records: AquiferMetricRecord[]): CategoryBreakdown[] {
+  const seen = new Set<string>();
+
+  return records
+    .map((record) => dominantCategory(record))
+    .filter((category): category is CategoryBreakdown => Boolean(category))
+    .filter((category) => {
+      if (seen.has(category.category_key)) {
+        return false;
+      }
+      seen.add(category.category_key);
+      return true;
+    });
 }
 
 export function compareAquiferSimilarity(left: AquiferMetricRecord, right: AquiferMetricRecord): number {

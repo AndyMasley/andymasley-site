@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 
 import type { AquiferMetricRecord } from '@/lib/aquifer/contracts';
 import {
+  dominantCategory,
+  ATLAS_PRESETS,
   bandIndexForValue,
   buildMetricBands,
   compareAquiferSimilarity,
@@ -11,6 +13,7 @@ import {
   nextEvidenceSteps,
   regionTokens,
   topCategoriesByValue,
+  uniqueDominantCategories,
 } from '@/lib/aquifer/explorer';
 
 const baseRecord: AquiferMetricRecord = {
@@ -217,6 +220,28 @@ describe('aquifer explorer helpers', () => {
     ]);
   });
 
+  it('returns dominant categories and unique dominant category list', () => {
+    expect(dominantCategory(baseRecord)?.category_key).toBe('irrigation');
+
+    const otherRecord = {
+      ...baseRecord,
+      display_aquifer_id: 'beta',
+      categories: [
+        {
+          ...baseRecord.categories[1],
+          display_aquifer_id: 'beta',
+          value: 90,
+          share_of_total: 0.9,
+        },
+      ],
+    };
+
+    expect(uniqueDominantCategories([baseRecord, otherRecord]).map((category) => category.category_key)).toEqual([
+      'irrigation',
+      'public_supply',
+    ]);
+  });
+
   it('scores more similar aquifers with lower values', () => {
     const nearMatch = {
       ...baseRecord,
@@ -271,5 +296,18 @@ describe('aquifer explorer helpers', () => {
       expect.arrayContaining(['The displayed footprint is a county-based fallback because no standalone published aquifer polygon is available in the current map layer.']),
     );
     expect(nextEvidenceSteps('usgs_principal_aquifer_polygon')[0]).toContain('local hydrogeologic framework');
+  });
+
+  it('defines atlas presets for the main browsing modes', () => {
+    expect(ATLAS_PRESETS.map((preset) => preset.key)).toEqual(
+      expect.arrayContaining([
+        'storage_remaining',
+        'annual_drawdown',
+        'largest_withdrawals',
+        'irrigation_heavy',
+        'public_supply_heavy',
+        'fallback_geometry',
+      ]),
+    );
   });
 });
