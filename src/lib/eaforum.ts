@@ -134,6 +134,7 @@ export async function fetchEAForumPosts(): Promise<EAForumPost[]> {
       eaForumPosts.push(
         ...posts
           .filter(post => !post.isEvent)
+          .filter(post => post.slug !== 'alcohol-is-so-bad-for-society-that-you-should-probably-stop')
           .map(post => ({
             title: post.title,
             slug: post.slug,

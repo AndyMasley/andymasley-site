@@ -68,9 +68,7 @@ const aiEnvSubcategories = aiEnvMeta ? parseSubcategoriesFromHTML(aiEnvMeta.cont
 const activeCategories = categoryConfigs.filter(config => posts.some(post => post.category === config.name));
 const hasBylines = bylines.length > 0;
 const bylinesPreviewCount = 5;
-const archivePostsWithoutVisibleCategory = new Set([
-  'alcohol-is-so-bad-for-society-that-you-should-probably-stop',
-]);
+const archivePostsWithoutVisibleCategory = new Set<string>([]);
 
 function getShortName(categoryName: string): string {
   const shortNames: Record<string, string> = {
