@@ -208,6 +208,9 @@ export async function fetchSubstackPosts(): Promise<SubstackPost[]> {
         // Skip special utility pages that should never become writing posts
         if (post.slug === 'links') continue;
 
+        // Skip unpublished-from-site posts
+        if (post.slug === 'i-cant-find-any-instances-of-data') continue;
+
         allPosts.push({
           title: post.title,
           slug: post.slug,
