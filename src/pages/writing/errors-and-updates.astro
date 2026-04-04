@@ -1,0 +1,44 @@
+---
+import Base from '@/layouts/Base.astro';
+---
+
+<Base title="Errors and updates" activeNav="/writing">
+  <div class="errors-page">
+    <h1 class="page-title">Errors and updates</h1>
+    <p class="empty-state">No errors or updates yet.</p>
+    <div class="back-link"><a href="/writing">&larr; back to writing</a></div>
+  </div>
+</Base>
+
+<style>
+  .errors-page {
+    max-width: var(--max-width);
+    margin: 0 auto;
+    padding: 2rem 1rem;
+  }
+
+  .page-title {
+    font-family: var(--font-serif);
+    font-size: 1.25rem;
+    font-weight: normal;
+    margin-bottom: 1.5rem;
+  }
+
+  .empty-state {
+    color: var(--dim);
+  }
+
+  .back-link {
+    margin-top: 2rem;
+  }
+
+  .back-link a {
+    color: var(--dim);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  .back-link a:hover {
+    text-decoration-color: var(--accent);
+  }
+</style>
