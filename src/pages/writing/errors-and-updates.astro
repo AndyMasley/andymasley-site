@@ -12,7 +12,14 @@ import Base from '@/layouts/Base.astro';
     <div class="divider"><div class="divider-diamond"></div></div>
 
     <h2 class="section-title">Updates</h2>
-    <p class="empty-state">None yet.</p>
+
+    <h3 class="entry-date">April 4th, 2026</h3>
+    <div class="entry-body">
+      <p>While hunting for errors on my blog, I finally found one place where data centers have now contributed to water price increases: Newton County, Georgia.</p>
+      <p>The county's budget documents cite Meta's second data center as giving "impetus" to accelerated capital spending that's partly driving rate hikes. I've edited my earlier posts that said data centers hadn't raised water costs anywhere, and temporarily unpublished the one titled <em>Data centers haven't raised water prices anywhere</em>, because that's not technically true anymore.</p>
+      <p>The increase isn't mainly driven by the data center. The county also cites housing market uncertainty and inflation. Meta uses ~2% of the county water, less than a local pharmaceutical plant (~4%) and about the same as a local electric car factory. An industrial wastewater reclamation plant is expected to open in 2026, and the county's water infrastructure was already strained by deferred maintenance and residential growth. The data center accelerated an inevitable upgrade, but this does count as raising a cost.</p>
+      <p>This is the one counterexample I've found after a lot of searching, and importantly it's caused exclusively by new infrastructure demand rather than cooling demand overwhelming the water supply. None of this changes my overall argument: data centers use a tiny fraction of US water, per-prompt costs are vanishingly small, and media coverage remains overwhelmingly misleading.</p>
+    </div>
 
     <div class="back-link"><a href="/writing">&larr; back to writing</a></div>
   </div>
@@ -36,6 +43,21 @@ import Base from '@/layouts/Base.astro';
     font-family: var(--font-serif);
     font-size: 1.1rem;
     font-weight: 600;
+    margin-bottom: 0.75rem;
+  }
+
+  .entry-date {
+    font-family: var(--font-serif);
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+  }
+
+  .entry-body {
+    margin-bottom: 2rem;
+  }
+
+  .entry-body p {
     margin-bottom: 0.75rem;
   }
 
