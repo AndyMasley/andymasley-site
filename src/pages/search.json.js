@@ -147,7 +147,7 @@ export async function GET() {
     {
       title: 'Visuals',
       description: 'Interactive data visualizations',
-      content: 'visuals interactive data visualization carbon footprint national carbon footprint factory farmed chickens',
+      content: 'visuals interactive data visualization carbon footprint factory farmed chickens',
       type: 'page',
       url: '/visuals',
       tags: [],
@@ -159,14 +159,6 @@ export async function GET() {
       type: 'visual',
       url: '/visuals/carbon-footprint',
       tags: ['climate', 'calculator'],
-    },
-    {
-      title: 'The National Carbon Footprint',
-      description: 'A horizontal bar chart of America\'s annual carbon footprint in total and per-person terms',
-      content: 'national carbon footprint United States America annual emissions greenhouse gas emissions CO2 CO2e per capita transportation electricity industry buildings agriculture horizontal bar chart',
-      type: 'visual',
-      url: '/visuals/national-carbon-footprint',
-      tags: ['climate', 'emissions'],
     },
     {
       title: 'Factory-Farmed Chickens',

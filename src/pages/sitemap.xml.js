@@ -57,7 +57,6 @@ export async function GET() {
     '/visuals/carbon-boundary-crosswalk',
     '/visuals/carbon-footprint',
     '/visuals/factory-farmed-chickens',
-    '/visuals/national-carbon-footprint',
     '/visuals/water',
     '/writing',
     ...writing.map((item) => `/writing/${item.slug}`),
