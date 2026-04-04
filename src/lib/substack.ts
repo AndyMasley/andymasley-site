@@ -347,6 +347,7 @@ export interface Subcategory {
 
 const subcategoryPostOverrides: Record<string, string[]> = {
   'Meta': ['a-call-for-more-specific-and-numerate'],
+  'Data Centers': ['data-centers-heat-exhaust-is-not'],
 };
 
 // Parse subcategories from meta post HTML
