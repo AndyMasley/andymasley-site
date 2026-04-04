@@ -7,7 +7,13 @@ import Base from '@/layouts/Base.astro';
     <h1 class="page-title">Errors and updates</h1>
 
     <h2 class="section-title">Errors</h2>
-    <p class="empty-state">None yet.</p>
+
+    <h3 class="subsection-title">Caught by other people</h3>
+
+    <h4 class="entry-date">April 3rd, 2026</h4>
+    <ul class="entry-list">
+      <li>The original version of my <a href="/writing/alcohol-is-so-bad-for-society-that">post on why alcohol is bad</a> linked a BVS literature index page as the source for the claim that "COVID caused 3.7% of the global disease burden in the first year of the pandemic." That source did not actually contain or support the 3.7% figure. A reader identified the problem by having an AI model scan my writing. I agreed the sourcing error was real but we disagreed about how much it invalidated the core claims of the article. We decided this was an edge case where it was unclear whether "Alcohol caused slightly more or slightly less of the disease burden" was a core claim, and it was obvious the reasonableness of the claim was due to me getting lucky with a misreading. I paid $150 (half the normal bounty of $300). The paragraph has been updated to use the GBD 2021 figure from The Lancet: COVID-19 accounted for 7.4% of total global DALYs in 2021, its worst year. The alcohol figure (5.1% of global DALYs) was already well-sourced. The comparison flipped — alcohol's annual burden is now shown as lower than COVID's peak rather than slightly higher — but the core point stands: alcohol does every year what COVID did at its worst, and we don't treat it as an emergency.</li>
+    </ul>
 
     <div class="divider"><div class="divider-diamond"></div></div>
 
@@ -46,11 +52,28 @@ import Base from '@/layouts/Base.astro';
     margin-bottom: 0.75rem;
   }
 
+  .subsection-title {
+    font-family: var(--font-serif);
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+  }
+
   .entry-date {
     font-family: var(--font-serif);
     font-size: 0.95rem;
     font-weight: 600;
     margin-bottom: 0.5rem;
+  }
+
+  .entry-list {
+    margin-bottom: 2rem;
+    padding-left: 1.25rem;
+  }
+
+  .entry-list li {
+    margin-bottom: 0.75rem;
+    line-height: 1.75;
   }
 
   .entry-body {
