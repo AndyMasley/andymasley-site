@@ -163,8 +163,19 @@ const defaultExpandedYear = postsByYear.some(group => group.year === currentYear
       I write on <a href="https://andymasley.substack.com/">Substack</a> and elsewhere about AI and the environment, AI more broadly, animal welfare, philosophy, and political liberalism. Since March 2026 I've been writing full-time on a grant from <a href="https://coefficientgiving.org/" target="_blank" rel="noopener">Coefficient Giving</a>.
     </p>
     <p class="error-bounty">
-      I have a bounty on errors. If you find a significant error I make in my writing, either misreading/misrepresenting a source or using a bad source where experts believe it's unreliable, and this undermines a core claim I'm making in the post, I will send you $50 if you let me know at <a href="mailto:AndyMasley@gmail.com">AndyMasley@gmail.com</a>.
+      I have a $300 bounty on errors. If you find a significant error I make in my writing, either misreading/misrepresenting a source or using a bad source where experts believe it's unreliable, and this undermines a core claim I'm making in the post, let me know at <a href="mailto:AndyMasley@gmail.com">AndyMasley@gmail.com</a>.
     </p>
+    <details class="bounty-rules">
+      <summary>Rules for claiming</summary>
+      <ul>
+        <li>A legitimate source for a statistic I cite where I get the number wrong, which invalidates a core argument I'm making.</li>
+        <li>A source for a number I cite that's illegitimate, and that most legitimate sources disagree with, and this updated information invalidates a core argument I'm making.</li>
+        <li>All claims need to be analyzed by when I said them. If I make a claim about ChatGPT in June, and a new model comes out in December that's 100x as energy intensive, my claim in June isn't wrong, just outdated.</li>
+        <li>I'm vetoing very specific disagreements of what counts as "using" water. Whether to count rainfall on crops or into lakes dammed by hydroelectric power stations turns out to be very relevant for the water debates, and reasonable people land on both extremes.</li>
+        <li>If I don't cite a source in a newer post but I had cited the source for it previously, and the source is legit, that doesn't count.</li>
+        <li>If the error is trivial (e.g. 0.0000102% should be 0.0000103%), that doesn't count. But if a number is off by orders of magnitude and invalidates a core claim, it does.</li>
+      </ul>
+    </details>
   </section>
 
   <div class="divider"><div class="divider-diamond"></div></div>
@@ -338,9 +349,38 @@ const defaultExpandedYear = postsByYear.some(group => group.year === currentYear
   .error-bounty {
     max-width: 42rem;
     margin-top: 0.6rem;
+    margin-bottom: 0;
     font-size: 0.82rem;
     line-height: 1.65;
     color: var(--text-secondary);
+  }
+
+  .bounty-rules {
+    max-width: 42rem;
+    margin-top: 0.35rem;
+    font-size: 0.78rem;
+    line-height: 1.6;
+    color: var(--text-secondary);
+  }
+
+  .bounty-rules summary {
+    cursor: pointer;
+    color: var(--dim);
+    font-size: 0.72rem;
+    letter-spacing: 0.04em;
+  }
+
+  .bounty-rules summary:hover {
+    color: var(--accent);
+  }
+
+  .bounty-rules ul {
+    margin: 0.5rem 0 0;
+    padding-left: 1.2rem;
+  }
+
+  .bounty-rules li {
+    margin-bottom: 0.35rem;
   }
 
   .writing-section {
