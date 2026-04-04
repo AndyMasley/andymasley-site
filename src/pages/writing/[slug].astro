@@ -236,13 +236,40 @@ const wordCount = post.source === 'local'
   ? post.body.split(/\s+/).length
   : (post.htmlContent.replace(/<[^>]*>/g, '').split(/\s+/).length);
 const standfirst = post.description?.trim() || '';
+
+const articleStructuredData = {
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": post.title,
+  "author": {
+    "@type": "Person",
+    "name": "Andy Masley",
+    "url": "https://andymasley.com"
+  },
+  "datePublished": post.date.toISOString(),
+  "description": post.description || '',
+  "wordCount": wordCount,
+  "url": `https://andymasley.com/writing/${post.slug}`,
+  "publisher": {
+    "@type": "Person",
+    "name": "Andy Masley"
+  },
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": `https://andymasley.com/writing/${post.slug}`
+  }
+};
 ---
 
 {isCheatSheet && post.source !== 'local' ? (
 <Base
   title={post.title}
   description="Every environmental objection to using ChatGPT, answered with data and sources."
+  ogType="article"
+  structuredData={articleStructuredData}
 >
+  <meta slot="head" property="article:published_time" content={post.date.toISOString()} />
+  <meta slot="head" property="article:author" content="Andy Masley" />
   <div class="cheat-sheet-page">
     <header class="article-header">
       <h1 class="article-header__title">{post.title}</h1>
@@ -265,7 +292,11 @@ const standfirst = post.description?.trim() || '';
   title={post.title}
   description={post.description}
   activeNav="/writing"
+  ogType="article"
+  structuredData={articleStructuredData}
 >
+  <meta slot="head" property="article:published_time" content={post.date.toISOString()} />
+  <meta slot="head" property="article:author" content="Andy Masley" />
   <div class="article-page article-page--wide">
     <div class="article-grid article-grid--wide">
       <aside class="article-grid__toc">
@@ -339,7 +370,11 @@ const standfirst = post.description?.trim() || '';
   title={post.title}
   description={post.description}
   activeNav="/writing"
+  ogType="article"
+  structuredData={articleStructuredData}
 >
+  <meta slot="head" property="article:published_time" content={post.date.toISOString()} />
+  <meta slot="head" property="article:author" content="Andy Masley" />
   <article class="article-page article-page--standard">
     <header class="article-header">
       <div class="article-header__meta">
