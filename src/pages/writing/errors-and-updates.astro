@@ -5,7 +5,15 @@ import Base from '@/layouts/Base.astro';
 <Base title="Errors and updates" activeNav="/writing">
   <div class="errors-page">
     <h1 class="page-title">Errors and updates</h1>
-    <p class="empty-state">No errors or updates yet.</p>
+
+    <h2 class="section-title">Errors</h2>
+    <p class="empty-state">None yet.</p>
+
+    <div class="divider"><div class="divider-diamond"></div></div>
+
+    <h2 class="section-title">Updates</h2>
+    <p class="empty-state">None yet.</p>
+
     <div class="back-link"><a href="/writing">&larr; back to writing</a></div>
   </div>
 </Base>
@@ -22,6 +30,13 @@ import Base from '@/layouts/Base.astro';
     font-size: 1.25rem;
     font-weight: normal;
     margin-bottom: 1.5rem;
+  }
+
+  .section-title {
+    font-family: var(--font-serif);
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
   }
 
   .empty-state {
