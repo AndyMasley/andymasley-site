@@ -210,6 +210,7 @@ export async function fetchSubstackPosts(): Promise<SubstackPost[]> {
 
         // Skip unpublished-from-site posts
         if (post.slug === 'i-cant-find-any-instances-of-data') continue;
+        if (post.slug === 'stories-of-ai-turning-users-delusional') continue;
 
         allPosts.push({
           title: post.title,
