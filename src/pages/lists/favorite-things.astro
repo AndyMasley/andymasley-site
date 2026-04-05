@@ -183,17 +183,17 @@ import Base from '@/layouts/Base.astro';
     <div class="category" data-category="movies">
       <button class="category-title">Movies</button>
       <div class="category-content">
-        <ul class="movies-list">
-          <li class="movie-item has-link"><a href="https://letterboxd.com/film/spirited-away/" target="_blank" rel="noopener noreferrer" class="item-link"><span class="movie-title">Spirited Away</span></a></li>
-          <li class="movie-item has-link"><a href="https://letterboxd.com/film/love-streams/" target="_blank" rel="noopener noreferrer" class="item-link"><span class="movie-title">Love Streams</span></a></li>
-          <li class="movie-item has-link"><a href="https://letterboxd.com/film/fanny-and-alexander/" target="_blank" rel="noopener noreferrer" class="item-link"><span class="movie-title">Fanny and Alexander</span></a></li>
-          <li class="movie-item has-link"><a href="https://letterboxd.com/film/the-green-ray/" target="_blank" rel="noopener noreferrer" class="item-link"><span class="movie-title">The Green Ray</span></a></li>
-          <li class="movie-item has-link"><a href="https://letterboxd.com/film/the-lord-of-the-rings-the-fellowship-of-the-ring/" target="_blank" rel="noopener noreferrer" class="item-link"><span class="movie-title">The Lord of the Rings</span></a></li>
-          <li class="movie-item has-link"><a href="https://letterboxd.com/film/mulholland-drive/" target="_blank" rel="noopener noreferrer" class="item-link"><span class="movie-title">Mulholland Drive</span></a></li>
-          <li class="movie-item has-link"><a href="https://letterboxd.com/film/tampopo/" target="_blank" rel="noopener noreferrer" class="item-link"><span class="movie-title">Tampopo</span></a></li>
-          <li class="movie-item has-link"><a href="https://letterboxd.com/film/only-yesterday/" target="_blank" rel="noopener noreferrer" class="item-link"><span class="movie-title">Only Yesterday</span></a></li>
-          <li class="movie-item has-link"><a href="https://letterboxd.com/film/come-and-see/" target="_blank" rel="noopener noreferrer" class="item-link"><span class="movie-title">Come and See</span></a></li>
-          <li class="movie-item has-link"><a href="https://letterboxd.com/film/werckmeister-harmonies/" target="_blank" rel="noopener noreferrer" class="item-link"><span class="movie-title">Werckmeister Harmonies</span></a></li>
+        <ul>
+          <li><a href="https://letterboxd.com/film/spirited-away/">Spirited Away</a></li>
+          <li><a href="https://letterboxd.com/film/love-streams/">Love Streams</a></li>
+          <li><a href="https://letterboxd.com/film/fanny-and-alexander/">Fanny and Alexander</a></li>
+          <li><a href="https://letterboxd.com/film/the-green-ray/">The Green Ray</a></li>
+          <li><a href="https://letterboxd.com/film/the-lord-of-the-rings-the-fellowship-of-the-ring/">The Lord of the Rings</a></li>
+          <li><a href="https://letterboxd.com/film/mulholland-drive/">Mulholland Drive</a></li>
+          <li><a href="https://letterboxd.com/film/tampopo/">Tampopo</a></li>
+          <li><a href="https://letterboxd.com/film/only-yesterday/">Only Yesterday</a></li>
+          <li><a href="https://letterboxd.com/film/come-and-see/">Come and See</a></li>
+          <li><a href="https://letterboxd.com/film/werckmeister-harmonies/">Werckmeister Harmonies</a></li>
         </ul>
         <p><a href="https://letterboxd.com/andymasley/films/by/entry-rating/">More on my Letterboxd</a></p>
       </div>
@@ -1142,39 +1142,6 @@ import Base from '@/layouts/Base.astro';
 
   :global([data-theme="dark"]) .popout-body {
     color: var(--text);
-  }
-
-  /* Movies list */
-  .movies-list {
-    padding-left: var(--space-lg);
-    margin-bottom: var(--space-sm);
-  }
-
-  .movie-item {
-    margin-bottom: 0;
-    padding: 0.28rem 0;
-    border-bottom: 1px solid var(--border-subtle);
-    border-radius: 0;
-    transition: color 0.15s ease, border-color 0.15s ease;
-  }
-
-  .movie-item.has-link {
-    padding: 0;
-    cursor: pointer;
-  }
-
-  .movie-item.has-link:hover {
-    background: transparent;
-    border-bottom-color: var(--accent);
-  }
-
-  .movie-item.has-link:hover .movie-title {
-    color: var(--accent);
-  }
-
-  .movie-title {
-    color: var(--text);
-    transition: color 0.15s ease;
   }
 
   /* Albums layout with breakout player panel */
