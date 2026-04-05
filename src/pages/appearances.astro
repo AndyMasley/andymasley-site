@@ -3,33 +3,77 @@ import Base from '@/layouts/Base.astro';
 ---
 
 <Base title="Appearances" description="Podcasts and other appearances" ogImage="/images/og/og-appearances.png">
-  <section class="simple-directory">
-    <p class="simple-directory__intro">
+  <div class="appearances-page">
+    <h1 class="page-title">Appearances</h1>
+    <p class="page-intro">
       Podcasts, interviews, and a few places where my work has shown up outside the site itself.
     </p>
 
-    <div class="simple-directory__group">
-      <h2 class="simple-directory__heading">AI and the environment</h2>
-      <ul class="simple-directory__list">
-        <li class="simple-directory__item"><a href="https://open.spotify.com/episode/2E3Yfi24OUyHxz67BtzhHB?si=8110a29fe7034cf5" class="simple-directory__link">Conspicuous Cognition</a></li>
-        <li class="simple-directory__item"><a href="https://open.spotify.com/episode/1Lzt9pMcqOcjfE3WLxNy3j?si=fdb4604af43d40e9" class="simple-directory__link">Chain of Thought</a></li>
-        <li class="simple-directory__item"><a href="https://open.spotify.com/episode/0UaOQ0DcP9c8OG5IfAgfnT?si=5d00e4bce6aa43f0" class="simple-directory__link">NYT Hard Fork</a></li>
-        <li class="simple-directory__item"><a href="https://open.spotify.com/episode/0RBBVeGb5yfHsFWnKkDgD0?si=15d8b610374544b0" class="simple-directory__link">The Cognitive Revolution</a></li>
-        <li class="simple-directory__item simple-directory__item--stacked">
-          <a href="https://www.youtube.com/watch?v=_Ird91qfPZs" class="simple-directory__link">Good Morning America</a>
-          <p class="simple-directory__note">I show up for about 5 seconds in this segment to say data centers run and store what we do online.</p>
-        </li>
-        <li class="simple-directory__item"><a href="https://www.azfamily.com/2026/02/26/data-centers-arent-water-villains-you-think-they-are-environmentalist-says/" class="simple-directory__link">Arizona's Family</a></li>
-      </ul>
-    </div>
+    <h2 class="section-heading">AI and the environment</h2>
+    <ul>
+      <li><a href="https://open.spotify.com/episode/2E3Yfi24OUyHxz67BtzhHB?si=8110a29fe7034cf5">Conspicuous Cognition</a></li>
+      <li><a href="https://open.spotify.com/episode/1Lzt9pMcqOcjfE3WLxNy3j?si=fdb4604af43d40e9">Chain of Thought</a></li>
+      <li><a href="https://open.spotify.com/episode/0UaOQ0DcP9c8OG5IfAgfnT?si=5d00e4bce6aa43f0">NYT Hard Fork</a></li>
+      <li><a href="https://open.spotify.com/episode/0RBBVeGb5yfHsFWnKkDgD0?si=15d8b610374544b0">The Cognitive Revolution</a></li>
+      <li><a href="https://www.youtube.com/watch?v=_Ird91qfPZs">Good Morning America</a>
+        <ul>
+          <li>I show up for about 5 seconds in this segment to say data centers run and store what we do online.</li>
+        </ul>
+      </li>
+      <li><a href="https://www.azfamily.com/2026/02/26/data-centers-arent-water-villains-you-think-they-are-environmentalist-says/">Arizona's Family</a></li>
+    </ul>
 
-    <div class="simple-directory__group">
-      <h2 class="simple-directory__heading">Effective altruism</h2>
-      <ul class="simple-directory__list">
-        <li class="simple-directory__item"><a href="https://www.youtube.com/watch?v=qzNZfa2jSE8" class="simple-directory__link">Expected Volume</a></li>
-        <li class="simple-directory__item"><a href="https://benthams.substack.com/p/chatting-with-andy-masley-about-ea" class="simple-directory__link">Bentham's Bulldog</a></li>
-        <li class="simple-directory__item"><a href="https://www.machineculture.io/p/model-convo-andy-masley" class="simple-directory__link">Model Convos</a></li>
-      </ul>
-    </div>
-  </section>
+    <h2 class="section-heading">Effective altruism</h2>
+    <ul>
+      <li><a href="https://www.youtube.com/watch?v=qzNZfa2jSE8">Expected Volume</a></li>
+      <li><a href="https://benthams.substack.com/p/chatting-with-andy-masley-about-ea">Bentham's Bulldog</a></li>
+      <li><a href="https://www.machineculture.io/p/model-convo-andy-masley">Model Convos</a></li>
+    </ul>
+  </div>
 </Base>
+
+<style>
+  .appearances-page {
+    max-width: var(--max-width);
+    margin: 0 auto;
+    padding: 2rem 1rem;
+  }
+
+  .page-title {
+    font-family: var(--font-serif);
+    font-size: 1.25rem;
+    font-weight: normal;
+    margin-bottom: 1rem;
+  }
+
+  .page-intro {
+    margin-bottom: 1.5rem;
+  }
+
+  .section-heading {
+    font-family: var(--font-serif);
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-top: 1.5rem;
+    margin-bottom: 0.5rem;
+  }
+
+  ul {
+    padding-left: 1.25rem;
+    margin-bottom: 1rem;
+  }
+
+  li {
+    margin-bottom: 0.25rem;
+  }
+
+  li ul {
+    margin-top: 0.25rem;
+    margin-bottom: 0.5rem;
+  }
+
+  li ul li {
+    color: var(--dim);
+    font-size: 0.95rem;
+  }
+</style>
