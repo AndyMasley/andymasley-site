@@ -60,7 +60,16 @@ import Base from '@/layouts/Base.astro';
       </div>
     </div>
 
-    <p class="aps-stack-note">NOx and VOCs combine in sunlight to form ground-level ozone. Hover any segment or row to highlight it.</p>
+    <p class="aps-stack-note">NOx and VOCs combine in sunlight to form ground-level ozone. Hover any segment or legend row for details.</p>
+
+    <div class="aps-tip" id="aps-tip" style="display:none" role="tooltip" aria-hidden="true">
+      <div class="aps-tip-header">
+        <span class="aps-tip-swatch" id="aps-tip-swatch"></span>
+        <span class="aps-tip-name" id="aps-tip-name"></span>
+      </div>
+      <div class="aps-tip-stats" id="aps-tip-stats"></div>
+      <div class="aps-tip-desc" id="aps-tip-desc"></div>
+    </div>
 
     <table class="aps-legend" id="aps-legend">
       <thead>
@@ -314,6 +323,52 @@ import Base from '@/layouts/Base.astro';
     flex-shrink: 0;
   }
 
+  .aps-tip {
+    position: fixed;
+    z-index: 50;
+    max-width: 320px;
+    padding: 10px 12px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-strong);
+    border-radius: 6px;
+    box-shadow: var(--shadow-md);
+    pointer-events: none;
+    font-size: var(--font-size-small);
+    line-height: 1.4;
+    color: var(--text);
+  }
+
+  .aps-tip-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+
+  .aps-tip-swatch {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+
+  .aps-tip-stats {
+    color: var(--accent);
+    font-variant-numeric: tabular-nums;
+    margin-bottom: 6px;
+    font-weight: 500;
+  }
+
+  .aps-tip-stats:empty {
+    display: none;
+  }
+
+  .aps-tip-desc {
+    color: var(--text-secondary);
+  }
+
   .aps-legend tbody tr[data-natural="true"] td.aps-legend-source {
     font-style: italic;
   }
@@ -363,20 +418,34 @@ import Base from '@/layouts/Base.astro';
 <script is:inline>
   (function () {
     const BUCKETS = [
-      { name: "On-road vehicles",                  color: "#B95945" },
-      { name: "Off-road equipment",                color: "#D27A52" },
-      { name: "Aircraft, ships, trains",           color: "#E5A776" },
-      { name: "Power plants",                      color: "#8B5A3A" },
-      { name: "Industrial fuel combustion",        color: "#B68250" },
-      { name: "Residential heating",               color: "#D6AE82" },
-      { name: "Industrial processes",              color: "#7E5567" },
-      { name: "Oil & gas production",              color: "#4F3743" },
-      { name: "Wildfires & prescribed burns",      color: "#6E4F40" },
-      { name: "Dust",                              color: "#C5B498" },
-      { name: "Agriculture",                       color: "#8B9968" },
-      { name: "Solvents & coatings",               color: "#5F7B5C" },
-      { name: "Other",                             color: "#A0958A" },
-      { name: "Natural background (trees & soil)", color: "#4C7150", natural: true },
+      { name: "On-road vehicles",                  color: "#B95945",
+        desc: "Cars, pickups, vans, SUVs, motorcycles, and heavy-duty trucks driving on public roads. Combines diesel and gasoline, light- and heavy-duty." },
+      { name: "Off-road equipment",                color: "#D27A52",
+        desc: "Construction equipment, lawn and garden tools, forklifts, agricultural tractors, ATVs, and other engines that don't drive on highways." },
+      { name: "Aircraft, ships, trains",           color: "#E5A776",
+        desc: "Commercial and general aviation aircraft (including airport ground operations), freight and passenger locomotives, and commercial marine vessels in port and offshore." },
+      { name: "Power plants",                      color: "#8B5A3A",
+        desc: "Utility-scale electricity generation from coal, natural gas, oil, biomass, and other fuels. Doesn't include backup generators or rooftop solar." },
+      { name: "Industrial fuel combustion",        color: "#B68250",
+        desc: "Boilers, internal combustion engines, and process heaters burning fuel at industrial, commercial, and institutional facilities — factories, hospitals, universities, office buildings — for heat, process steam, or backup power." },
+      { name: "Residential heating",               color: "#D6AE82",
+        desc: "Home furnaces, water heaters, fireplaces, and wood stoves burning natural gas, oil, wood, or other fuels. Wood-burning is a major PM2.5 source in cold regions." },
+      { name: "Industrial processes",              color: "#7E5567",
+        desc: "Emissions from the chemistry of industrial processes themselves (not from burning fuel for heat): cement, chemicals, metals, mining, pulp & paper, petroleum refining, and bulk material storage and transfer." },
+      { name: "Oil & gas production",              color: "#4F3743",
+        desc: "Upstream oil and gas: wellheads, gathering lines, processing plants, and storage. Mostly fugitive leaks of VOCs and methane, plus combustion at pumps and compressors." },
+      { name: "Wildfires & prescribed burns",      color: "#6E4F40",
+        desc: "Wildfires, prescribed forest burns, and agricultural field burning. Highly variable year to year — 2020 was an extreme fire year, especially on the West Coast." },
+      { name: "Dust",                              color: "#C5B498",
+        desc: "Dust kicked up from paved and unpaved roads and from construction sites. A major PM2.5 source in arid regions and along unpaved rural roads." },
+      { name: "Agriculture",                       color: "#8B9968",
+        desc: "Crop and livestock dust, manure handling, and fertilizer application. Excludes farm equipment (counted under 'Off-road equipment') and field burning (under 'Wildfires & prescribed burns')." },
+      { name: "Solvents & coatings",               color: "#5F7B5C",
+        desc: "Paints, varnishes, adhesives, dry cleaning, degreasing, printing inks, and consumer products like hairspray and cleaning sprays. The largest VOC source in many cities." },
+      { name: "Other",                             color: "#A0958A",
+        desc: "Smaller anthropogenic sources grouped together: gas stations and gasoline terminals, commercial cooking, waste disposal (including landfills), and miscellaneous non-industrial activity." },
+      { name: "Natural background (trees & soil)", color: "#4C7150", natural: true,
+        desc: "Biogenic VOCs — isoprene, terpenes, and others — released by trees, plants, and soils. Often dwarfs human VOC emissions in forested counties. Not directly actionable through policy, shown for context." },
     ];
     const BUCKET_BY_NAME = Object.fromEntries(BUCKETS.map(b => [b.name, b]));
     const POLLUTANTS = ["pm25", "nox", "voc"];
@@ -475,14 +544,16 @@ import Base from '@/layouts/Base.astro';
 
       if (total === 0) return;
 
+      segs.sort((a, b) => b.value - a.value);
+
       for (const s of segs) {
         const seg = document.createElement("div");
         seg.className = "aps-seg";
         seg.dataset.bucket = s.name;
+        seg.dataset.value = String(s.value);
+        seg.dataset.pct = ((s.value / total) * 100).toFixed(1);
         seg.style.width = ((s.value / total) * 100).toFixed(3) + "%";
         seg.style.background = s.color;
-        const pct = ((s.value / total) * 100).toFixed(1);
-        seg.title = `${s.name}: ${fmt(s.value)} ${mode === "percap" ? "tons/yr per 100K" : "tons/yr"} (${pct}%)`;
         bar.appendChild(seg);
       }
     }
@@ -542,19 +613,89 @@ import Base from '@/layouts/Base.astro';
       });
     }
 
+    function showTip(bucketName, statsText, x, y) {
+      const tip = document.getElementById("aps-tip");
+      const bucket = BUCKET_BY_NAME[bucketName];
+      if (!bucket) return;
+      document.getElementById("aps-tip-name").textContent = bucket.name;
+      document.getElementById("aps-tip-swatch").style.background = bucket.color;
+      document.getElementById("aps-tip-stats").textContent = statsText || "";
+      document.getElementById("aps-tip-desc").textContent = bucket.desc || "";
+      tip.style.display = "block";
+      tip.setAttribute("aria-hidden", "false");
+      positionTip(x, y);
+    }
+
+    function hideTip() {
+      const tip = document.getElementById("aps-tip");
+      tip.style.display = "none";
+      tip.setAttribute("aria-hidden", "true");
+    }
+
+    function positionTip(x, y) {
+      const tip = document.getElementById("aps-tip");
+      const w = tip.offsetWidth;
+      const h = tip.offsetHeight;
+      const pad = 12;
+      let left = x + 14;
+      let top = y + 14;
+      if (left + w + pad > window.innerWidth) left = x - w - 14;
+      if (top + h + pad > window.innerHeight) top = y - h - 14;
+      if (left < pad) left = pad;
+      if (top < pad) top = pad;
+      tip.style.left = left + "px";
+      tip.style.top = top + "px";
+    }
+
+    function statsForSeg(seg) {
+      const value = parseFloat(seg.dataset.value);
+      const pct = seg.dataset.pct;
+      const row = seg.closest(".aps-stack-row");
+      const poll = row && row.dataset.poll;
+      const pollLabel = poll === "pm25" ? "PM2.5" : poll === "nox" ? "NOx" : "VOC";
+      const unit = state.mode === "percap" ? "tons / yr per 100K residents" : "tons / yr";
+      return `${pollLabel}: ${fmt(value)} ${unit} (${pct}%)`;
+    }
+
     function bindHover() {
       const stacked = document.querySelector(".aps-stacked");
       const legend = document.getElementById("aps-legend");
+
       stacked.addEventListener("mouseover", (e) => {
         const seg = e.target.closest(".aps-seg");
-        if (seg) setHover(seg.dataset.bucket);
+        if (seg) {
+          setHover(seg.dataset.bucket);
+          showTip(seg.dataset.bucket, statsForSeg(seg), e.clientX, e.clientY);
+        }
       });
-      stacked.addEventListener("mouseleave", () => setHover(null));
+      stacked.addEventListener("mousemove", (e) => {
+        const seg = e.target.closest(".aps-seg");
+        if (seg) {
+          showTip(seg.dataset.bucket, statsForSeg(seg), e.clientX, e.clientY);
+        }
+      });
+      stacked.addEventListener("mouseleave", () => {
+        setHover(null);
+        hideTip();
+      });
+
       legend.addEventListener("mouseover", (e) => {
         const tr = e.target.closest("tr[data-bucket]");
-        if (tr) setHover(tr.dataset.bucket);
+        if (tr) {
+          setHover(tr.dataset.bucket);
+          showTip(tr.dataset.bucket, "", e.clientX, e.clientY);
+        }
       });
-      legend.addEventListener("mouseleave", () => setHover(null));
+      legend.addEventListener("mousemove", (e) => {
+        const tr = e.target.closest("tr[data-bucket]");
+        if (tr) {
+          showTip(tr.dataset.bucket, "", e.clientX, e.clientY);
+        }
+      });
+      legend.addEventListener("mouseleave", () => {
+        setHover(null);
+        hideTip();
+      });
     }
 
     async function render(fips5) {
