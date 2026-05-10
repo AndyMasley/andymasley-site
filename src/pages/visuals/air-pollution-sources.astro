@@ -1,0 +1,523 @@
+---
+import Base from '@/layouts/Base.astro';
+---
+
+<Base
+  title="Air pollution sources by county"
+  description="Look up the sources of fine particulate (PM2.5) and ozone-forming pollutants (NOx, VOCs) in any U.S. county. Built from the EPA's 2020 National Emissions Inventory."
+>
+  <article class="aps">
+    <h1>Air pollution sources in your county</h1>
+
+    <div class="prose aps-intro">
+      <p>This is every reported source of <strong>PM2.5</strong> (fine particulate matter that lodges in your lungs) and the two main <strong>ozone precursors</strong> — <strong>nitrogen oxides (NOx)</strong> and <strong>volatile organic compounds (VOCs)</strong> — in any U.S. county, drawn from the EPA's <a href="https://www.epa.gov/air-emissions-inventories/2020-national-emissions-inventory-nei-data" target="_blank" rel="noopener">2020 National Emissions Inventory</a>.</p>
+
+      <p>The EPA's 59 source sectors are rolled up into 13 readable buckets. Ozone itself isn't directly emitted — it forms in the atmosphere when NOx and VOCs react in sunlight, so the ozone panels show what's emitted, not the ozone you breathe. <strong>Biogenic VOCs</strong> from trees and soils are shown as a separate "natural background" bar — they often dwarf human sources, which is itself worth knowing.</p>
+
+      <p>Pick a state and county below. The chart loads with your county based on your IP location.</p>
+    </div>
+
+    <div class="aps-controls">
+      <div class="aps-selects">
+        <label class="aps-label">
+          <span>State</span>
+          <select id="aps-state"></select>
+        </label>
+        <label class="aps-label">
+          <span>County</span>
+          <select id="aps-county"></select>
+        </label>
+      </div>
+      <div class="aps-mode">
+        <button class="aps-mode-btn" data-mode="raw" data-active="true">Tons / year</button>
+        <button class="aps-mode-btn" data-mode="percap" data-active="false">Per 100K residents</button>
+      </div>
+    </div>
+
+    <div class="aps-county-info" id="aps-county-info"></div>
+
+    <section class="aps-panel">
+      <h2 class="aps-panel-title">PM<sub>2.5</sub> emissions <span class="aps-unit" id="aps-unit-pm25"></span></h2>
+      <div class="aps-bars" id="aps-bars-pm25"></div>
+    </section>
+
+    <section class="aps-panel">
+      <h2 class="aps-panel-title">Nitrogen oxides (NOx) <span class="aps-unit" id="aps-unit-nox"></span></h2>
+      <p class="aps-panel-sub">Reacts with VOCs and sunlight to form ground-level ozone. Also a direct lung irritant.</p>
+      <div class="aps-bars" id="aps-bars-nox"></div>
+    </section>
+
+    <section class="aps-panel">
+      <h2 class="aps-panel-title">Volatile organic compounds (VOCs) <span class="aps-unit" id="aps-unit-voc"></span></h2>
+      <p class="aps-panel-sub">The other half of ozone formation. Trees emit a lot of these naturally — shown as "natural background."</p>
+      <div class="aps-bars" id="aps-bars-voc"></div>
+    </section>
+
+    <details class="aps-meth">
+      <summary>Methodology &amp; caveats</summary>
+      <div class="aps-meth-body">
+        <p><strong>Data source.</strong> EPA 2020 National Emissions Inventory (NEI), released March 2023. The 2023 NEI has not yet been published. Population estimates are from the U.S. Census Bureau's 2024 county population estimates.</p>
+        <p><strong>What's a "source sector"?</strong> The EPA classifies every emission down to a specific equipment/activity code (SCC). The NEI's 59 published sectors aggregate those codes into recognizable categories like "On-Road Diesel Heavy Duty Vehicles" or "Industrial Processes - Petroleum Refineries." This page rolls those 59 sectors up into 13 buckets for readability.</p>
+        <p><strong>Why split out oil &amp; gas production?</strong> It's politically distinct from other industrial processes and disproportionately concentrated in a few counties.</p>
+        <p><strong>Per-capita caveat.</strong> Per-capita figures use 2024 county population. A rural county with one refinery or a large wildfire will look catastrophically high per resident — that's accurate, but it's not the same as exposure. PM2.5 and ozone disperse across regions; emitted-here doesn't mean breathed-here.</p>
+        <p><strong>Tribal lands.</strong> The NEI reports some emissions against tribal areas separately from the surrounding county. Those tribal-area rows are excluded here; the county totals you see are the non-tribal portion only.</p>
+        <p><strong>Wildfires.</strong> 2020 was an extreme fire year on the West Coast. Wildfire emissions vary enormously year to year — a county's wildfire bar in 2020 may look very different in 2023 or 2024.</p>
+        <p><strong>Biogenic VOCs.</strong> Vegetation and soils emit isoprene, terpenes, and other VOCs. These are shown as "natural background" because they aren't actionable through policy and would dominate any anthropogenic comparison if mixed in.</p>
+        <p><strong>Source code:</strong> <a href="https://github.com/AndyMasley/andymasley-site" target="_blank" rel="noopener">on GitHub</a>. The preprocessing script lives at <code>scripts/build-air-pollution-data.py</code>.</p>
+      </div>
+    </details>
+  </article>
+</Base>
+
+<style>
+  .aps h1 {
+    font-size: 1.75rem;
+    line-height: 1.15;
+    letter-spacing: -0.03em;
+    font-weight: 700;
+    margin-bottom: var(--space-lg);
+  }
+
+  .aps-intro { margin-bottom: var(--space-lg); }
+  .aps-intro p { margin-bottom: 0.75em; }
+
+  .aps-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-md);
+    align-items: flex-end;
+    justify-content: space-between;
+    padding: var(--space-md);
+    background: var(--bg-subtle);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    margin-bottom: var(--space-md);
+  }
+
+  .aps-selects {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-md);
+    flex: 1;
+  }
+
+  .aps-label {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: var(--font-size-small);
+    color: var(--dim);
+    flex: 1;
+    min-width: 160px;
+  }
+
+  .aps-label select {
+    font-family: inherit;
+    font-size: var(--font-size-base);
+    color: var(--text);
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px 10px;
+    cursor: pointer;
+  }
+
+  .aps-label select:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: var(--shadow-glow);
+  }
+
+  .aps-mode {
+    display: flex;
+    gap: 2px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 2px;
+  }
+
+  .aps-mode-btn {
+    font-family: inherit;
+    font-size: var(--font-size-small);
+    font-weight: 500;
+    padding: 6px 14px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    background: transparent;
+    color: var(--dim);
+    transition: all var(--transition-fast);
+  }
+
+  .aps-mode-btn[data-active="true"] {
+    background: var(--accent-subtle);
+    color: var(--accent);
+  }
+
+  .aps-mode-btn:hover:not([data-active="true"]) {
+    color: var(--text);
+  }
+
+  .aps-county-info {
+    font-size: var(--font-size-small);
+    color: var(--dim);
+    margin-bottom: var(--space-lg);
+    min-height: 1.4em;
+  }
+
+  .aps-panel {
+    margin-bottom: var(--space-xl);
+  }
+
+  .aps-panel-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 0;
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 0.5em;
+  }
+
+  .aps-unit {
+    font-size: var(--font-size-small);
+    font-weight: 400;
+    color: var(--dim);
+  }
+
+  .aps-panel-sub {
+    font-size: var(--font-size-small);
+    color: var(--dim);
+    margin: 4px 0 var(--space-md);
+  }
+
+  .aps-bars {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .aps-bar-row {
+    display: grid;
+    grid-template-columns: 12em 1fr 6em;
+    gap: var(--space-sm);
+    align-items: center;
+    font-size: var(--font-size-small);
+    line-height: 1.3;
+  }
+
+  .aps-bar-name {
+    color: var(--text);
+    text-align: right;
+  }
+
+  .aps-bar-track {
+    height: 18px;
+    background: var(--bg-subtle);
+    border-radius: 3px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .aps-bar-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 3px;
+    transition: width 0.4s cubic-bezier(.4,0,.2,1);
+  }
+
+  .aps-bar-fill[data-natural="true"] {
+    background: var(--dim);
+    opacity: 0.55;
+  }
+
+  .aps-bar-value {
+    color: var(--text);
+    font-variant-numeric: tabular-nums;
+    text-align: left;
+  }
+
+  .aps-bar-row[data-zero="true"] {
+    opacity: 0.45;
+  }
+
+  .aps-meth {
+    margin-top: var(--space-xl);
+    padding: var(--space-md);
+    background: var(--bg-subtle);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+  }
+
+  .aps-meth summary {
+    cursor: pointer;
+    font-weight: 600;
+    user-select: none;
+  }
+
+  .aps-meth-body {
+    margin-top: var(--space-md);
+    font-size: var(--font-size-small);
+    color: var(--text-secondary);
+  }
+
+  .aps-meth-body p { margin-bottom: 0.75em; }
+
+  @media (max-width: 600px) {
+    .aps-bar-row {
+      grid-template-columns: 1fr;
+      gap: 2px;
+      padding-bottom: 4px;
+    }
+    .aps-bar-name { text-align: left; }
+    .aps-bar-value { text-align: left; }
+  }
+</style>
+
+<script is:inline>
+  (function () {
+    const BUCKET_ORDER = [
+      "On-road vehicles",
+      "Off-road equipment",
+      "Aircraft, ships, trains",
+      "Power plants",
+      "Industrial fuel combustion",
+      "Residential heating",
+      "Industrial processes",
+      "Oil & gas production",
+      "Wildfires & prescribed burns",
+      "Dust",
+      "Agriculture",
+      "Solvents & coatings",
+      "Other",
+      "Natural background (trees & soil)",
+    ];
+    const NATURAL_BUCKET = "Natural background (trees & soil)";
+
+    const FALLBACK_FIPS = "06037"; // LA County
+
+    const state = {
+      counties: null,
+      currentState: null,
+      currentCounty: null,
+      stateEmissions: {},
+      mode: "raw",
+    };
+
+    function fmt(n) {
+      if (n === 0) return "0";
+      if (n < 0.1) return n.toFixed(2);
+      if (n < 10) return n.toFixed(1);
+      return Math.round(n).toLocaleString("en-US");
+    }
+
+    function compactPop(n) {
+      if (n >= 1_000_000) return (n / 1_000_000).toFixed(2) + "M";
+      if (n >= 1_000) return (n / 1_000).toFixed(0) + "K";
+      return String(n);
+    }
+
+    async function loadCounties() {
+      const r = await fetch("/data/air-pollution/counties.json");
+      state.counties = await r.json();
+    }
+
+    async function loadStateEmissions(ss) {
+      if (state.stateEmissions[ss]) return state.stateEmissions[ss];
+      const r = await fetch(`/data/air-pollution/emissions/${ss}.json`);
+      const data = await r.json();
+      state.stateEmissions[ss] = data;
+      return data;
+    }
+
+    function populateStates() {
+      const sel = document.getElementById("aps-state");
+      sel.innerHTML = "";
+      for (const s of state.counties.states) {
+        const o = document.createElement("option");
+        o.value = s.fips;
+        o.textContent = s.name;
+        sel.appendChild(o);
+      }
+    }
+
+    function populateCounties(ss, preferFips) {
+      const sel = document.getElementById("aps-county");
+      sel.innerHTML = "";
+      const list = state.counties.counties[ss] || [];
+      for (const c of list) {
+        const o = document.createElement("option");
+        o.value = c.fips;
+        o.textContent = c.name;
+        sel.appendChild(o);
+      }
+      if (preferFips && list.some(c => c.fips === preferFips)) {
+        sel.value = preferFips;
+      } else if (list[0]) {
+        sel.value = list[0].fips;
+      }
+    }
+
+    function findCountyMeta(fips5) {
+      const ss = fips5.slice(0, 2);
+      const list = state.counties.counties[ss] || [];
+      return list.find(c => c.fips === fips5) || null;
+    }
+
+    function findStateMeta(ss) {
+      return state.counties.states.find(s => s.fips === ss) || null;
+    }
+
+    function renderBars(panelId, unitId, valuesByBucket, mode, pop) {
+      const panel = document.getElementById(panelId);
+      const unitLabel = document.getElementById(unitId);
+      panel.innerHTML = "";
+
+      const buckets = BUCKET_ORDER
+        .filter(b => valuesByBucket[b] !== undefined)
+        .map(b => ({ name: b, raw: valuesByBucket[b] }));
+
+      const transform = (v) =>
+        mode === "percap" && pop > 0 ? (v / pop) * 100000 : v;
+
+      for (const b of buckets) b.value = transform(b.raw);
+
+      const max = Math.max(...buckets.map(b => b.value), 0.0001);
+      buckets.sort((a, b) => b.value - a.value);
+
+      const unitText = mode === "percap"
+        ? "(tons / year per 100,000 residents)"
+        : "(tons / year)";
+      unitLabel.textContent = unitText;
+
+      for (const b of buckets) {
+        const row = document.createElement("div");
+        row.className = "aps-bar-row";
+        if (b.value === 0) row.dataset.zero = "true";
+
+        const name = document.createElement("div");
+        name.className = "aps-bar-name";
+        name.textContent = b.name;
+
+        const track = document.createElement("div");
+        track.className = "aps-bar-track";
+
+        const fill = document.createElement("div");
+        fill.className = "aps-bar-fill";
+        fill.style.width = (Math.max(b.value / max, 0) * 100) + "%";
+        if (b.name === NATURAL_BUCKET) fill.dataset.natural = "true";
+
+        track.appendChild(fill);
+
+        const value = document.createElement("div");
+        value.className = "aps-bar-value";
+        value.textContent = fmt(b.value);
+
+        row.appendChild(name);
+        row.appendChild(track);
+        row.appendChild(value);
+        panel.appendChild(row);
+      }
+    }
+
+    async function render(fips5) {
+      const ss = fips5.slice(0, 2);
+      const data = await loadStateEmissions(ss);
+      const county = data[fips5];
+      if (!county) return;
+
+      const meta = findCountyMeta(fips5);
+      const stateMeta = findStateMeta(ss);
+      const info = document.getElementById("aps-county-info");
+      const popText = meta && meta.pop ? ` · population ${compactPop(meta.pop)}` : "";
+      info.textContent = `${meta ? meta.name : fips5} County, ${stateMeta ? stateMeta.name : ss}${popText} · 2020 emissions`;
+
+      const pop = meta ? meta.pop : 0;
+      renderBars("aps-bars-pm25", "aps-unit-pm25", county.pm25 || {}, state.mode, pop);
+      renderBars("aps-bars-nox", "aps-unit-nox", county.nox || {}, state.mode, pop);
+      renderBars("aps-bars-voc", "aps-unit-voc", county.voc || {}, state.mode, pop);
+    }
+
+    async function selectCounty(fips5) {
+      state.currentCounty = fips5;
+      state.currentState = fips5.slice(0, 2);
+      await render(fips5);
+    }
+
+    async function geolocate() {
+      try {
+        const r = await fetch("/api/geolocate", { cache: "no-store" });
+        if (!r.ok) return null;
+        return await r.json();
+      } catch {
+        return null;
+      }
+    }
+
+    async function reverseGeocodeCounty(lat, lng) {
+      try {
+        const url = `https://geocoding.geo.census.gov/geocoder/geographies/coordinates?x=${lng}&y=${lat}&benchmark=Public_AR_Current&vintage=Current_Current&format=json&layers=Counties`;
+        const r = await fetch(url);
+        if (!r.ok) return null;
+        const j = await r.json();
+        const co = j?.result?.geographies?.["Counties"]?.[0];
+        if (!co) return null;
+        const ss = String(co.STATE).padStart(2, "0");
+        const ccc = String(co.COUNTY).padStart(3, "0");
+        return ss + ccc;
+      } catch {
+        return null;
+      }
+    }
+
+    function bindControls() {
+      document.getElementById("aps-state").addEventListener("change", async (e) => {
+        const ss = e.target.value;
+        populateCounties(ss);
+        const firstFips = (state.counties.counties[ss] || [])[0]?.fips;
+        if (firstFips) await selectCounty(firstFips);
+      });
+      document.getElementById("aps-county").addEventListener("change", async (e) => {
+        await selectCounty(e.target.value);
+      });
+      document.querySelectorAll(".aps-mode-btn").forEach(btn => {
+        btn.addEventListener("click", async () => {
+          const mode = btn.dataset.mode;
+          if (mode === state.mode) return;
+          state.mode = mode;
+          document.querySelectorAll(".aps-mode-btn").forEach(b => {
+            b.dataset.active = b.dataset.mode === mode ? "true" : "false";
+          });
+          if (state.currentCounty) await render(state.currentCounty);
+        });
+      });
+    }
+
+    async function init() {
+      if (!document.getElementById("aps-state")) return;
+      await loadCounties();
+      populateStates();
+      bindControls();
+
+      // Try IP geolocation; fall back to LA
+      const geo = await geolocate();
+      let targetFips = null;
+      if (geo && geo.lat != null && geo.lng != null) {
+        targetFips = await reverseGeocodeCounty(geo.lat, geo.lng);
+      }
+      if (!targetFips) targetFips = FALLBACK_FIPS;
+
+      const ss = targetFips.slice(0, 2);
+      const stateExists = state.counties.states.some(s => s.fips === ss);
+      const useFips = stateExists ? targetFips : FALLBACK_FIPS;
+      const useSS = useFips.slice(0, 2);
+
+      document.getElementById("aps-state").value = useSS;
+      populateCounties(useSS, useFips);
+      await selectCounty(document.getElementById("aps-county").value);
+    }
+
+    document.addEventListener("astro:page-load", init);
+  })();
+</script>
