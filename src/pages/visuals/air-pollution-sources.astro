@@ -36,22 +36,43 @@ import Base from '@/layouts/Base.astro';
 
     <div class="aps-county-info" id="aps-county-info"></div>
 
-    <section class="aps-panel">
-      <h2 class="aps-panel-title">PM<sub>2.5</sub> emissions <span class="aps-unit" id="aps-unit-pm25"></span></h2>
-      <div class="aps-bars" id="aps-bars-pm25"></div>
-    </section>
+    <div class="aps-stacked">
+      <div class="aps-stack-row" data-poll="pm25">
+        <div class="aps-stack-label">
+          <span class="aps-stack-name">PM<sub>2.5</sub></span>
+          <span class="aps-stack-total" id="aps-total-pm25"></span>
+        </div>
+        <div class="aps-stack-bar" id="aps-bar-pm25"></div>
+      </div>
+      <div class="aps-stack-row" data-poll="nox">
+        <div class="aps-stack-label">
+          <span class="aps-stack-name">NOx</span>
+          <span class="aps-stack-total" id="aps-total-nox"></span>
+        </div>
+        <div class="aps-stack-bar" id="aps-bar-nox"></div>
+      </div>
+      <div class="aps-stack-row" data-poll="voc">
+        <div class="aps-stack-label">
+          <span class="aps-stack-name">VOC</span>
+          <span class="aps-stack-total" id="aps-total-voc"></span>
+        </div>
+        <div class="aps-stack-bar" id="aps-bar-voc"></div>
+      </div>
+    </div>
 
-    <section class="aps-panel">
-      <h2 class="aps-panel-title">Nitrogen oxides (NOx) <span class="aps-unit" id="aps-unit-nox"></span></h2>
-      <p class="aps-panel-sub">Reacts with VOCs and sunlight to form ground-level ozone. Also a direct lung irritant.</p>
-      <div class="aps-bars" id="aps-bars-nox"></div>
-    </section>
+    <p class="aps-stack-note">NOx and VOCs combine in sunlight to form ground-level ozone. Hover any segment or row to highlight it.</p>
 
-    <section class="aps-panel">
-      <h2 class="aps-panel-title">Volatile organic compounds (VOCs) <span class="aps-unit" id="aps-unit-voc"></span></h2>
-      <p class="aps-panel-sub">The other half of ozone formation. Trees emit a lot of these naturally — shown as "natural background."</p>
-      <div class="aps-bars" id="aps-bars-voc"></div>
-    </section>
+    <table class="aps-legend" id="aps-legend">
+      <thead>
+        <tr>
+          <th class="aps-legend-source">Source</th>
+          <th class="aps-legend-num">PM<sub>2.5</sub></th>
+          <th class="aps-legend-num">NOx</th>
+          <th class="aps-legend-num">VOC</th>
+        </tr>
+      </thead>
+      <tbody id="aps-legend-body"></tbody>
+    </table>
 
     <details class="aps-meth">
       <summary>Methodology &amp; caveats</summary>
@@ -166,80 +187,135 @@ import Base from '@/layouts/Base.astro';
     min-height: 1.4em;
   }
 
-  .aps-panel {
-    margin-bottom: var(--space-xl);
-  }
-
-  .aps-panel-title {
-    font-size: 1.1rem;
-    font-weight: 600;
-    margin-bottom: 0;
-    display: flex;
-    align-items: baseline;
-    flex-wrap: wrap;
-    gap: 0.5em;
-  }
-
-  .aps-unit {
-    font-size: var(--font-size-small);
-    font-weight: 400;
-    color: var(--dim);
-  }
-
-  .aps-panel-sub {
-    font-size: var(--font-size-small);
-    color: var(--dim);
-    margin: 4px 0 var(--space-md);
-  }
-
-  .aps-bars {
+  .aps-stacked {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: var(--space-md);
+    margin-bottom: var(--space-md);
   }
 
-  .aps-bar-row {
+  .aps-stack-row {
     display: grid;
-    grid-template-columns: 12em 1fr 6em;
-    gap: var(--space-sm);
+    grid-template-columns: 7em 1fr;
+    gap: var(--space-md);
     align-items: center;
+  }
+
+  .aps-stack-label {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 2px;
+    line-height: 1.1;
+  }
+
+  .aps-stack-name {
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .aps-stack-total {
     font-size: var(--font-size-small);
-    line-height: 1.3;
-  }
-
-  .aps-bar-name {
-    color: var(--text);
-    text-align: right;
-  }
-
-  .aps-bar-track {
-    height: 18px;
-    background: var(--bg-subtle);
-    border-radius: 3px;
-    position: relative;
-    overflow: hidden;
-  }
-
-  .aps-bar-fill {
-    height: 100%;
-    background: var(--accent);
-    border-radius: 3px;
-    transition: width 0.4s cubic-bezier(.4,0,.2,1);
-  }
-
-  .aps-bar-fill[data-natural="true"] {
-    background: var(--dim);
-    opacity: 0.55;
-  }
-
-  .aps-bar-value {
-    color: var(--text);
+    color: var(--dim);
     font-variant-numeric: tabular-nums;
+  }
+
+  .aps-stack-bar {
+    height: 28px;
+    display: flex;
+    background: var(--bg-subtle);
+    border-radius: 4px;
+    overflow: hidden;
+    box-shadow: inset 0 0 0 1px var(--border-subtle);
+  }
+
+  .aps-seg {
+    height: 100%;
+    transition: width 0.45s cubic-bezier(.4,0,.2,1), filter 0.15s ease;
+    border-right: 1px solid rgba(255, 255, 255, 0.55);
+    cursor: default;
+  }
+
+  [data-theme="dark"] .aps-seg {
+    border-right-color: rgba(0, 0, 0, 0.35);
+  }
+
+  .aps-seg:last-child { border-right: none; }
+
+  .aps-stacked[data-hover] .aps-seg:not([data-active="true"]) {
+    filter: saturate(0.25) brightness(0.95);
+    opacity: 0.45;
+  }
+
+  .aps-stack-note {
+    font-size: var(--font-size-small);
+    color: var(--dim);
+    margin: 0 0 var(--space-lg);
+  }
+
+  .aps-legend {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: var(--font-size-small);
+    margin-bottom: var(--space-lg);
+  }
+
+  .aps-legend thead th {
+    text-align: right;
+    font-weight: 500;
+    color: var(--dim);
+    padding: 6px 8px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .aps-legend th.aps-legend-source {
     text-align: left;
   }
 
-  .aps-bar-row[data-zero="true"] {
-    opacity: 0.45;
+  .aps-legend tbody tr {
+    border-bottom: 1px solid var(--border-subtle);
+    transition: background 0.15s ease;
+  }
+
+  .aps-legend tbody tr:hover,
+  .aps-legend tbody tr[data-active="true"] {
+    background: var(--bg-subtle);
+  }
+
+  .aps-legend td {
+    padding: 6px 8px;
+    color: var(--text);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .aps-legend td.aps-legend-source {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-secondary);
+  }
+
+  .aps-legend td.aps-legend-num {
+    text-align: right;
+    color: var(--text);
+  }
+
+  .aps-legend td.aps-legend-num[data-zero="true"] {
+    color: var(--dim);
+    opacity: 0.5;
+  }
+
+  .aps-swatch {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+
+  .aps-legend tbody tr[data-natural="true"] td.aps-legend-source {
+    font-style: italic;
   }
 
   .aps-meth {
@@ -265,35 +341,45 @@ import Base from '@/layouts/Base.astro';
   .aps-meth-body p { margin-bottom: 0.75em; }
 
   @media (max-width: 600px) {
-    .aps-bar-row {
+    .aps-stack-row {
       grid-template-columns: 1fr;
-      gap: 2px;
-      padding-bottom: 4px;
+      gap: 4px;
     }
-    .aps-bar-name { text-align: left; }
-    .aps-bar-value { text-align: left; }
+    .aps-stack-label {
+      flex-direction: row;
+      align-items: baseline;
+      justify-content: space-between;
+      width: 100%;
+    }
+    .aps-legend {
+      font-size: 0.75rem;
+    }
+    .aps-legend th, .aps-legend td {
+      padding: 4px 4px;
+    }
   }
 </style>
 
 <script is:inline>
   (function () {
-    const BUCKET_ORDER = [
-      "On-road vehicles",
-      "Off-road equipment",
-      "Aircraft, ships, trains",
-      "Power plants",
-      "Industrial fuel combustion",
-      "Residential heating",
-      "Industrial processes",
-      "Oil & gas production",
-      "Wildfires & prescribed burns",
-      "Dust",
-      "Agriculture",
-      "Solvents & coatings",
-      "Other",
-      "Natural background (trees & soil)",
+    const BUCKETS = [
+      { name: "On-road vehicles",                  color: "#B95945" },
+      { name: "Off-road equipment",                color: "#D27A52" },
+      { name: "Aircraft, ships, trains",           color: "#E5A776" },
+      { name: "Power plants",                      color: "#8B5A3A" },
+      { name: "Industrial fuel combustion",        color: "#B68250" },
+      { name: "Residential heating",               color: "#D6AE82" },
+      { name: "Industrial processes",              color: "#7E5567" },
+      { name: "Oil & gas production",              color: "#4F3743" },
+      { name: "Wildfires & prescribed burns",      color: "#6E4F40" },
+      { name: "Dust",                              color: "#C5B498" },
+      { name: "Agriculture",                       color: "#8B9968" },
+      { name: "Solvents & coatings",               color: "#5F7B5C" },
+      { name: "Other",                             color: "#A0958A" },
+      { name: "Natural background (trees & soil)", color: "#4C7150", natural: true },
     ];
-    const NATURAL_BUCKET = "Natural background (trees & soil)";
+    const BUCKET_BY_NAME = Object.fromEntries(BUCKETS.map(b => [b.name, b]));
+    const POLLUTANTS = ["pm25", "nox", "voc"];
 
     const FALLBACK_FIPS = "06037"; // LA County
 
@@ -369,56 +455,106 @@ import Base from '@/layouts/Base.astro';
       return state.counties.states.find(s => s.fips === ss) || null;
     }
 
-    function renderBars(panelId, unitId, valuesByBucket, mode, pop) {
-      const panel = document.getElementById(panelId);
-      const unitLabel = document.getElementById(unitId);
-      panel.innerHTML = "";
+    function transformValue(v, mode, pop) {
+      return mode === "percap" && pop > 0 ? (v / pop) * 100000 : v;
+    }
 
-      const buckets = BUCKET_ORDER
-        .filter(b => valuesByBucket[b] !== undefined)
-        .map(b => ({ name: b, raw: valuesByBucket[b] }));
+    function renderStackedBar(barId, totalId, valuesByBucket, mode, pop) {
+      const bar = document.getElementById(barId);
+      const totalEl = document.getElementById(totalId);
+      bar.innerHTML = "";
 
-      const transform = (v) =>
-        mode === "percap" && pop > 0 ? (v / pop) * 100000 : v;
+      const segs = BUCKETS
+        .filter(b => valuesByBucket[b.name] !== undefined && valuesByBucket[b.name] > 0)
+        .map(b => ({ ...b, value: transformValue(valuesByBucket[b.name], mode, pop) }));
 
-      for (const b of buckets) b.value = transform(b.raw);
+      const total = segs.reduce((s, x) => s + x.value, 0);
+      totalEl.textContent = total > 0
+        ? `${fmt(total)} ${mode === "percap" ? "/100K" : "tons"}`
+        : "—";
 
-      const max = Math.max(...buckets.map(b => b.value), 0.0001);
-      buckets.sort((a, b) => b.value - a.value);
+      if (total === 0) return;
 
-      const unitText = mode === "percap"
-        ? "(tons / year per 100,000 residents)"
-        : "(tons / year)";
-      unitLabel.textContent = unitText;
-
-      for (const b of buckets) {
-        const row = document.createElement("div");
-        row.className = "aps-bar-row";
-        if (b.value === 0) row.dataset.zero = "true";
-
-        const name = document.createElement("div");
-        name.className = "aps-bar-name";
-        name.textContent = b.name;
-
-        const track = document.createElement("div");
-        track.className = "aps-bar-track";
-
-        const fill = document.createElement("div");
-        fill.className = "aps-bar-fill";
-        fill.style.width = (Math.max(b.value / max, 0) * 100) + "%";
-        if (b.name === NATURAL_BUCKET) fill.dataset.natural = "true";
-
-        track.appendChild(fill);
-
-        const value = document.createElement("div");
-        value.className = "aps-bar-value";
-        value.textContent = fmt(b.value);
-
-        row.appendChild(name);
-        row.appendChild(track);
-        row.appendChild(value);
-        panel.appendChild(row);
+      for (const s of segs) {
+        const seg = document.createElement("div");
+        seg.className = "aps-seg";
+        seg.dataset.bucket = s.name;
+        seg.style.width = ((s.value / total) * 100).toFixed(3) + "%";
+        seg.style.background = s.color;
+        const pct = ((s.value / total) * 100).toFixed(1);
+        seg.title = `${s.name}: ${fmt(s.value)} ${mode === "percap" ? "tons/yr per 100K" : "tons/yr"} (${pct}%)`;
+        bar.appendChild(seg);
       }
+    }
+
+    function renderLegend(county, mode, pop) {
+      const tbody = document.getElementById("aps-legend-body");
+      tbody.innerHTML = "";
+
+      for (const b of BUCKETS) {
+        const values = POLLUTANTS.map(p => {
+          const raw = county[p] ? county[p][b.name] : undefined;
+          return raw !== undefined ? transformValue(raw, mode, pop) : null;
+        });
+        const anyPresent = values.some(v => v !== null && v > 0);
+        if (!anyPresent) continue;
+
+        const tr = document.createElement("tr");
+        tr.dataset.bucket = b.name;
+        if (b.natural) tr.dataset.natural = "true";
+
+        const tdSrc = document.createElement("td");
+        tdSrc.className = "aps-legend-source";
+        const sw = document.createElement("span");
+        sw.className = "aps-swatch";
+        sw.style.background = b.color;
+        const label = document.createElement("span");
+        label.textContent = b.name;
+        tdSrc.appendChild(sw);
+        tdSrc.appendChild(label);
+        tr.appendChild(tdSrc);
+
+        for (const v of values) {
+          const td = document.createElement("td");
+          td.className = "aps-legend-num";
+          if (v === null || v === 0) {
+            td.dataset.zero = "true";
+            td.textContent = v === null ? "—" : "0";
+          } else {
+            td.textContent = fmt(v);
+          }
+          tr.appendChild(td);
+        }
+        tbody.appendChild(tr);
+      }
+    }
+
+    function setHover(bucketName) {
+      const stacked = document.querySelector(".aps-stacked");
+      if (bucketName) stacked.dataset.hover = "true";
+      else delete stacked.dataset.hover;
+
+      document.querySelectorAll(".aps-seg").forEach(el => {
+        el.dataset.active = el.dataset.bucket === bucketName ? "true" : "false";
+      });
+      document.querySelectorAll("#aps-legend-body tr").forEach(el => {
+        el.dataset.active = el.dataset.bucket === bucketName ? "true" : "false";
+      });
+    }
+
+    function bindHover() {
+      const stacked = document.querySelector(".aps-stacked");
+      const legend = document.getElementById("aps-legend");
+      stacked.addEventListener("mouseover", (e) => {
+        const seg = e.target.closest(".aps-seg");
+        if (seg) setHover(seg.dataset.bucket);
+      });
+      stacked.addEventListener("mouseleave", () => setHover(null));
+      legend.addEventListener("mouseover", (e) => {
+        const tr = e.target.closest("tr[data-bucket]");
+        if (tr) setHover(tr.dataset.bucket);
+      });
+      legend.addEventListener("mouseleave", () => setHover(null));
     }
 
     async function render(fips5) {
@@ -434,9 +570,10 @@ import Base from '@/layouts/Base.astro';
       info.textContent = `${meta ? meta.name : fips5} County, ${stateMeta ? stateMeta.name : ss}${popText} · 2020 emissions`;
 
       const pop = meta ? meta.pop : 0;
-      renderBars("aps-bars-pm25", "aps-unit-pm25", county.pm25 || {}, state.mode, pop);
-      renderBars("aps-bars-nox", "aps-unit-nox", county.nox || {}, state.mode, pop);
-      renderBars("aps-bars-voc", "aps-unit-voc", county.voc || {}, state.mode, pop);
+      renderStackedBar("aps-bar-pm25", "aps-total-pm25", county.pm25 || {}, state.mode, pop);
+      renderStackedBar("aps-bar-nox",  "aps-total-nox",  county.nox  || {}, state.mode, pop);
+      renderStackedBar("aps-bar-voc",  "aps-total-voc",  county.voc  || {}, state.mode, pop);
+      renderLegend(county, state.mode, pop);
     }
 
     async function selectCounty(fips5) {
@@ -499,6 +636,7 @@ import Base from '@/layouts/Base.astro';
       await loadCounties();
       populateStates();
       bindControls();
+      bindHover();
 
       // Try IP geolocation; fall back to LA
       const geo = await geolocate();
