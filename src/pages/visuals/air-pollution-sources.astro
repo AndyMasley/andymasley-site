@@ -49,31 +49,9 @@ import Base from '@/layouts/Base.astro';
 
     <h2 class="aps-section-title" id="aps-section-title">Emissions by source <span class="aps-aq-sub" id="aps-section-sub">— EPA 2020 NEI, tick marks show the national county average</span></h2>
 
-    <div class="aps-stacked">
-      <div class="aps-stack-row" data-poll="pm25">
-        <div class="aps-stack-label">
-          <span class="aps-stack-name">PM<sub>2.5</sub></span>
-          <span class="aps-stack-total" id="aps-total-pm25"></span>
-        </div>
-        <div class="aps-stack-bar" id="aps-bar-pm25"></div>
-      </div>
-      <div class="aps-stack-row" data-poll="nox">
-        <div class="aps-stack-label">
-          <span class="aps-stack-name">NOx</span>
-          <span class="aps-stack-total" id="aps-total-nox"></span>
-        </div>
-        <div class="aps-stack-bar" id="aps-bar-nox"></div>
-      </div>
-      <div class="aps-stack-row" data-poll="voc">
-        <div class="aps-stack-label">
-          <span class="aps-stack-name">VOC</span>
-          <span class="aps-stack-total" id="aps-total-voc"></span>
-        </div>
-        <div class="aps-stack-bar" id="aps-bar-voc"></div>
-      </div>
-    </div>
+    <div class="aps-chart" id="aps-chart"></div>
 
-    <p class="aps-stack-note">NOx and VOCs combine in sunlight to form ground-level ozone. Hover any segment or legend row for details.</p>
+    <p class="aps-stack-note" id="aps-chart-note">NOx and VOCs combine in sunlight to form ground-level ozone. Hover any slice or legend row for details.</p>
 
     <div class="aps-tip" id="aps-tip" style="display:none" role="tooltip" aria-hidden="true">
       <div class="aps-tip-header">
@@ -342,6 +320,75 @@ import Base from '@/layouts/Base.astro';
   .aps-aq-flag[data-status="exceeds"]   { background: #B95945; }
   .aps-aq-flag[data-status="elevated"]  { background: #D6AE82; }
   .aps-aq-flag[data-status="below"]     { background: #8B9968; }
+
+  .aps-chart {
+    margin-bottom: var(--space-md);
+  }
+
+  .aps-chart[data-layout="donuts"] {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--space-md);
+    align-items: start;
+  }
+
+  .aps-chart[data-layout="bars"] {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+  }
+
+  .aps-donut-cell {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    text-align: center;
+  }
+
+  .aps-donut {
+    width: 100%;
+    max-width: 180px;
+    height: auto;
+    display: block;
+  }
+
+  .aps-donut .aps-seg {
+    transition: filter 0.15s ease, opacity 0.15s ease;
+  }
+
+  .aps-chart[data-hover] .aps-seg:not([data-active="true"]) {
+    filter: saturate(0.25) brightness(0.95);
+    opacity: 0.45;
+  }
+
+  .aps-donut-center {
+    font-family: inherit;
+    fill: var(--text);
+    font-size: 13px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .aps-donut-center-name { font-weight: 600; font-size: 14px; }
+  .aps-donut-center-total { font-size: 11px; fill: var(--dim); }
+
+  .aps-donut-caption {
+    font-size: var(--font-size-small);
+    color: var(--dim);
+    line-height: 1.25;
+  }
+
+  .aps-donut-caption strong {
+    color: var(--text);
+    font-weight: 600;
+  }
+
+  @media (max-width: 720px) {
+    .aps-chart[data-layout="donuts"] {
+      grid-template-columns: 1fr;
+      gap: var(--space-lg);
+    }
+  }
 
   .aps-stacked {
     display: flex;
@@ -965,29 +1012,26 @@ import Base from '@/layouts/Base.astro';
       return fmt(v);
     }
 
-    function renderStackedBar(barId, totalId, pollutant, valuesByBucket, mode, pop) {
-      const bar = document.getElementById(barId);
-      const totalEl = document.getElementById(totalId);
-      bar.innerHTML = "";
+    const POLL_LABEL = { pm25: "PM₂.₅", nox: "NOx", voc: "VOC" };
 
+    function segsForPollutant(pollutant, valuesByBucket, mode, pop) {
       const segs = BUCKETS
         .filter(b => valuesByBucket[b.name] !== undefined && valuesByBucket[b.name] > 0)
         .map(b => ({ ...b, value: transformValue(valuesByBucket[b.name], mode, pop, pollutant, b.name) }))
         .filter(s => s.value > 0);
-
-      const total = segs.reduce((s, x) => s + x.value, 0);
-      if (total > 0) {
-        if (mode === "damage") totalEl.textContent = `${fmtDollars(total)} damage/yr`;
-        else if (mode === "percap") totalEl.textContent = `${fmt(total)} /100K`;
-        else totalEl.textContent = `${fmt(total)} tons`;
-      } else {
-        totalEl.textContent = "—";
-      }
-
-      if (total === 0) return;
-
       segs.sort((a, b) => b.value - a.value);
+      return segs;
+    }
 
+    function totalLabel(total, mode) {
+      if (total <= 0) return "—";
+      if (mode === "damage") return `${fmtDollars(total)} damage/yr`;
+      if (mode === "percap") return `${fmt(total)} tons/yr per 100K`;
+      return `${fmt(total)} tons/yr`;
+    }
+
+    function buildBarSegments(barEl, pollutant, segs, total) {
+      barEl.innerHTML = "";
       for (const s of segs) {
         const seg = document.createElement("div");
         seg.className = "aps-seg";
@@ -1012,7 +1056,161 @@ import Base from '@/layouts/Base.astro';
           seg.appendChild(tick);
         }
 
-        bar.appendChild(seg);
+        barEl.appendChild(seg);
+      }
+    }
+
+    function donutSliceD(cx, cy, rOuter, rInner, start, end) {
+      if (end - start >= 0.999999) {
+        return `M ${cx + rOuter} ${cy}
+                A ${rOuter} ${rOuter} 0 1 1 ${cx - rOuter} ${cy}
+                A ${rOuter} ${rOuter} 0 1 1 ${cx + rOuter} ${cy}
+                M ${cx + rInner} ${cy}
+                A ${rInner} ${rInner} 0 1 0 ${cx - rInner} ${cy}
+                A ${rInner} ${rInner} 0 1 0 ${cx + rInner} ${cy} Z`;
+      }
+      const sA = start * 2 * Math.PI - Math.PI / 2;
+      const eA = end   * 2 * Math.PI - Math.PI / 2;
+      const largeArc = (end - start) > 0.5 ? 1 : 0;
+      const x1 = cx + rOuter * Math.cos(sA);
+      const y1 = cy + rOuter * Math.sin(sA);
+      const x2 = cx + rOuter * Math.cos(eA);
+      const y2 = cy + rOuter * Math.sin(eA);
+      const x3 = cx + rInner * Math.cos(eA);
+      const y3 = cy + rInner * Math.sin(eA);
+      const x4 = cx + rInner * Math.cos(sA);
+      const y4 = cy + rInner * Math.sin(sA);
+      return `M ${x1.toFixed(2)} ${y1.toFixed(2)}
+              A ${rOuter} ${rOuter} 0 ${largeArc} 1 ${x2.toFixed(2)} ${y2.toFixed(2)}
+              L ${x3.toFixed(2)} ${y3.toFixed(2)}
+              A ${rInner} ${rInner} 0 ${largeArc} 0 ${x4.toFixed(2)} ${y4.toFixed(2)} Z`;
+    }
+
+    function buildDonut(pollutant, segs, total) {
+      const W = 180, H = 180;
+      const cx = W / 2, cy = H / 2;
+      const rOuter = 78, rInner = 42;
+      const NS = "http://www.w3.org/2000/svg";
+      const svg = document.createElementNS(NS, "svg");
+      svg.setAttribute("class", "aps-donut");
+      svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+      svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
+      svg.setAttribute("role", "img");
+      svg.setAttribute("aria-label", `${POLL_LABEL[pollutant]} source breakdown`);
+
+      if (total > 0) {
+        let cumulative = 0;
+        for (const s of segs) {
+          const start = cumulative / total;
+          const end = (cumulative + s.value) / total;
+          cumulative += s.value;
+          const path = document.createElementNS(NS, "path");
+          path.setAttribute("d", donutSliceD(cx, cy, rOuter, rInner, start, end));
+          path.setAttribute("fill", s.color);
+          path.setAttribute("stroke", "var(--bg)");
+          path.setAttribute("stroke-width", "1");
+          path.classList.add("aps-seg");
+          path.dataset.bucket = s.name;
+          path.dataset.value = String(s.value);
+          path.dataset.pct = ((s.value / total) * 100).toFixed(1);
+          const natAvg = nationalAvgForBucket(s.name, pollutant);
+          if (natAvg != null) path.dataset.natavg = String(natAvg);
+          svg.appendChild(path);
+        }
+      }
+
+      const text = document.createElementNS(NS, "text");
+      text.setAttribute("class", "aps-donut-center");
+      text.setAttribute("x", cx);
+      text.setAttribute("y", cy);
+      text.setAttribute("text-anchor", "middle");
+      text.setAttribute("dominant-baseline", "central");
+
+      const t1 = document.createElementNS(NS, "tspan");
+      t1.setAttribute("x", cx);
+      t1.setAttribute("dy", "-0.45em");
+      t1.setAttribute("class", "aps-donut-center-name");
+      t1.textContent = POLL_LABEL[pollutant];
+      text.appendChild(t1);
+
+      const t2 = document.createElementNS(NS, "tspan");
+      t2.setAttribute("x", cx);
+      t2.setAttribute("dy", "1.4em");
+      t2.setAttribute("class", "aps-donut-center-total");
+      t2.textContent = total > 0 ? totalLabel(total, state.mode) : "no data";
+      text.appendChild(t2);
+
+      svg.appendChild(text);
+      return svg;
+    }
+
+    function renderChart(county, pop) {
+      const chart = document.getElementById("aps-chart");
+      chart.innerHTML = "";
+      delete chart.dataset.hover;
+
+      const datas = POLLUTANTS.map(p => {
+        const segs = segsForPollutant(p, county[p] || {}, state.mode, pop);
+        const total = segs.reduce((s, x) => s + x.value, 0);
+        return { pollutant: p, segs, total };
+      });
+
+      if (state.mode === "damage") {
+        chart.dataset.layout = "bars";
+        const globalMax = Math.max(0.0001, ...datas.map(d => d.total));
+
+        for (const d of datas) {
+          const row = document.createElement("div");
+          row.className = "aps-stack-row";
+          row.dataset.poll = d.pollutant;
+
+          const label = document.createElement("div");
+          label.className = "aps-stack-label";
+          const name = document.createElement("span");
+          name.className = "aps-stack-name";
+          name.innerHTML = d.pollutant === "pm25" ? "PM<sub>2.5</sub>" : (d.pollutant === "nox" ? "NOx" : "VOC");
+          const totalSpan = document.createElement("span");
+          totalSpan.className = "aps-stack-total";
+          totalSpan.textContent = totalLabel(d.total, state.mode);
+          label.appendChild(name);
+          label.appendChild(totalSpan);
+
+          const bar = document.createElement("div");
+          bar.className = "aps-stack-bar";
+          if (d.total > 0) {
+            const widthPct = (d.total / globalMax) * 100;
+            bar.style.width = Math.max(widthPct, 4).toFixed(2) + "%";
+            buildBarSegments(bar, d.pollutant, d.segs, d.total);
+          } else {
+            bar.style.width = "4%";
+            bar.style.opacity = "0.35";
+          }
+
+          row.appendChild(label);
+          row.appendChild(bar);
+          chart.appendChild(row);
+        }
+      } else {
+        chart.dataset.layout = "donuts";
+        for (const d of datas) {
+          const cell = document.createElement("div");
+          cell.className = "aps-donut-cell";
+          cell.dataset.poll = d.pollutant;
+          cell.appendChild(buildDonut(d.pollutant, d.segs, d.total));
+
+          const caption = document.createElement("div");
+          caption.className = "aps-donut-caption";
+          if (d.total > 0 && d.segs.length) {
+            const top = d.segs[0];
+            const topPct = ((top.value / d.total) * 100).toFixed(0);
+            caption.innerHTML = `Largest source: <strong>${top.name}</strong> (${topPct}%)`;
+          } else {
+            caption.textContent = "No reported emissions";
+          }
+          cell.appendChild(caption);
+
+          chart.appendChild(cell);
+        }
       }
     }
 
@@ -1059,12 +1257,18 @@ import Base from '@/layouts/Base.astro';
     }
 
     function setHover(bucketName) {
-      const stacked = document.querySelector(".aps-stacked");
-      if (bucketName) stacked.dataset.hover = "true";
-      else delete stacked.dataset.hover;
+      const chart = document.getElementById("aps-chart");
+      if (chart) {
+        if (bucketName) chart.dataset.hover = "true";
+        else delete chart.dataset.hover;
+      }
 
       document.querySelectorAll(".aps-seg").forEach(el => {
-        el.dataset.active = el.dataset.bucket === bucketName ? "true" : "false";
+        if (el.dataset.bucket === bucketName) {
+          el.dataset.active = "true";
+        } else {
+          el.dataset.active = "false";
+        }
       });
       document.querySelectorAll("#aps-legend-body tr").forEach(el => {
         el.dataset.active = el.dataset.bucket === bucketName ? "true" : "false";
@@ -1109,8 +1313,8 @@ import Base from '@/layouts/Base.astro';
     function statsForSeg(seg) {
       const value = parseFloat(seg.dataset.value);
       const pct = seg.dataset.pct;
-      const row = seg.closest(".aps-stack-row");
-      const poll = row && row.dataset.poll;
+      const parent = seg.closest("[data-poll]");
+      const poll = parent && parent.dataset.poll;
       const pollLabel = poll === "pm25" ? "PM2.5" : poll === "nox" ? "NOx" : "VOC";
       if (state.mode === "damage") {
         return `${pollLabel}: ${fmtDollars(value)} estimated health damage/yr (${pct}% of bar)`;
@@ -1140,23 +1344,23 @@ import Base from '@/layouts/Base.astro';
     }
 
     function bindHover() {
-      const stacked = document.querySelector(".aps-stacked");
+      const chart = document.getElementById("aps-chart");
       const legend = document.getElementById("aps-legend");
 
-      stacked.addEventListener("mouseover", (e) => {
+      chart.addEventListener("mouseover", (e) => {
         const seg = e.target.closest(".aps-seg");
         if (seg) {
           setHover(seg.dataset.bucket);
           showTip(seg.dataset.bucket, statsForSeg(seg), cmpForSeg(seg), e.clientX, e.clientY);
         }
       });
-      stacked.addEventListener("mousemove", (e) => {
+      chart.addEventListener("mousemove", (e) => {
         const seg = e.target.closest(".aps-seg");
         if (seg) {
           showTip(seg.dataset.bucket, statsForSeg(seg), cmpForSeg(seg), e.clientX, e.clientY);
         }
       });
-      stacked.addEventListener("mouseleave", () => {
+      chart.addEventListener("mouseleave", () => {
         setHover(null);
         hideTip();
       });
@@ -1193,9 +1397,7 @@ import Base from '@/layouts/Base.astro';
       info.textContent = `${meta ? meta.name : fips5} County, ${stateMeta ? stateMeta.name : ss}${popText} · 2020 emissions`;
 
       const pop = meta ? meta.pop : 0;
-      renderStackedBar("aps-bar-pm25", "aps-total-pm25", "pm25", county.pm25 || {}, state.mode, pop);
-      renderStackedBar("aps-bar-nox",  "aps-total-nox",  "nox",  county.nox  || {}, state.mode, pop);
-      renderStackedBar("aps-bar-voc",  "aps-total-voc",  "voc",  county.voc  || {}, state.mode, pop);
+      renderChart(county, pop);
       renderLegend(county, state.mode, pop);
       renderAirQuality(fips5);
     }
@@ -1258,13 +1460,17 @@ import Base from '@/layouts/Base.astro';
 
     function updateSectionSub() {
       const sub = document.getElementById("aps-section-sub");
+      const note = document.getElementById("aps-chart-note");
       if (!sub) return;
       if (state.mode === "damage") {
-        sub.textContent = "— bars weighted by source-specific health damage ($/ton). The same ton from different sources can cause very different harm.";
+        sub.textContent = "— bars weighted by source-specific health damage ($/ton). Bar widths are proportional to each other: dollars of harm are directly comparable across pollutants.";
+        if (note) note.textContent = "Each ton from different sources causes very different harm. Ticks mark the national county average. Hover any slice or legend row for details.";
       } else if (state.mode === "percap") {
-        sub.textContent = "— tons emitted per 100,000 residents. Ticks show national county average.";
+        sub.textContent = "— each donut is one pollutant's source mix, normalized to 100%. Tons of PM₂.₅ and NOx and VOC aren't directly comparable to each other.";
+        if (note) note.textContent = "Per-100K-residents view. Hover any slice or legend row for details.";
       } else {
-        sub.textContent = "— EPA 2020 NEI, tick marks show the national county average";
+        sub.textContent = "— each donut is one pollutant's source mix, normalized to 100%. Tons of PM₂.₅ and NOx and VOC aren't directly comparable to each other.";
+        if (note) note.textContent = "Hover any slice or legend row for details. Switch to 'Health damage ($)' to see the harms compared on a common scale.";
       }
     }
 
