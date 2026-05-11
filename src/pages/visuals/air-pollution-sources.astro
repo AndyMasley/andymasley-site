@@ -36,6 +36,16 @@ import Base from '@/layouts/Base.astro';
 
     <div class="aps-county-info" id="aps-county-info"></div>
 
+    <section class="aps-aq" id="aps-aq">
+      <div class="aps-aq-header">
+        <h2 class="aps-aq-title">What's actually in the air <span class="aps-aq-sub">— 2025 EPA monitor readings</span></h2>
+      </div>
+      <div class="aps-aq-grid" id="aps-aq-grid"></div>
+      <p class="aps-aq-note" id="aps-aq-note"></p>
+    </section>
+
+    <h2 class="aps-section-title">Emissions by source <span class="aps-aq-sub">— EPA 2020 NEI, tick marks show the national county average</span></h2>
+
     <div class="aps-stacked">
       <div class="aps-stack-row" data-poll="pm25">
         <div class="aps-stack-label">
@@ -68,6 +78,7 @@ import Base from '@/layouts/Base.astro';
         <span class="aps-tip-name" id="aps-tip-name"></span>
       </div>
       <div class="aps-tip-stats" id="aps-tip-stats"></div>
+      <div class="aps-tip-cmp" id="aps-tip-cmp"></div>
       <div class="aps-tip-desc" id="aps-tip-desc"></div>
     </div>
 
@@ -86,7 +97,10 @@ import Base from '@/layouts/Base.astro';
     <details class="aps-meth">
       <summary>Methodology &amp; caveats</summary>
       <div class="aps-meth-body">
-        <p><strong>Data source.</strong> EPA 2020 National Emissions Inventory (NEI), released March 2023. The 2023 NEI has not yet been published. Population estimates are from the U.S. Census Bureau's 2024 county population estimates.</p>
+        <p><strong>Emissions data.</strong> EPA 2020 National Emissions Inventory (NEI), released March 2023. The 2023 NEI has not yet been published. Population estimates: U.S. Census Bureau's 2024 county population estimates.</p>
+        <p><strong>Air-quality measurements.</strong> EPA Air Quality System (AQS) 2025 annual concentration summaries (released November 2025). For each pollutant, the value shown is the maximum across all monitors in the county — this matches how the EPA evaluates NAAQS compliance (the standard applies to the most-polluted monitor). About 640 counties have a PM2.5 monitor, 740 have ozone, and 240 have NO2; the rest are "Not monitored." NAAQS thresholds: PM2.5 9 µg/m³ annual (2024 revision), ozone 70 ppb 8-hr (2015), NO2 53 ppb annual (1971).</p>
+        <p><strong>Emissions vs. concentration.</strong> The stacked bars show what's <em>emitted</em> from sources inside your county. The "What's in the air" cards show what's actually <em>measured</em> in the air. These can differ a lot: smoke from distant wildfires, ozone formed downwind from upwind NOx sources, and PM2.5 that drifted in from neighboring counties all show up in the monitors without appearing in local emissions. EPA's National Emissions Inventory is the best public picture of where pollutants come from; the monitors are the best picture of what you actually breathe.</p>
+        <p><strong>Reference ticks.</strong> The dashed tick on each bar segment marks where the segment would end if that source emitted at the national county average. A tick near the left edge means your county emits many times the national average for that source. A tick at the right edge with a dotted indicator means your county is below the national average for that source.</p>
         <p><strong>What's a "source sector"?</strong> The EPA classifies every emission down to a specific equipment/activity code (SCC). The NEI's 59 published sectors aggregate those codes into recognizable categories like "On-Road Diesel Heavy Duty Vehicles" or "Industrial Processes - Petroleum Refineries." This page rolls those 59 sectors up into 13 buckets for readability.</p>
         <p><strong>Why split out oil &amp; gas production?</strong> It's politically distinct from other industrial processes and disproportionately concentrated in a few counties.</p>
         <p><strong>Per-capita caveat.</strong> Per-capita figures use 2024 county population. A rural county with one refinery or a large wildfire will look catastrophically high per resident — that's accurate, but it's not the same as exposure. PM2.5 and ozone disperse across regions; emitted-here doesn't mean breathed-here.</p>
@@ -196,6 +210,104 @@ import Base from '@/layouts/Base.astro';
     min-height: 1.4em;
   }
 
+  .aps-aq {
+    margin-bottom: var(--space-xl);
+  }
+
+  .aps-aq-header { margin-bottom: var(--space-sm); }
+
+  .aps-aq-title,
+  .aps-section-title {
+    font-size: 1.05rem;
+    font-weight: 600;
+    margin: 0 0 var(--space-sm);
+    color: var(--text);
+  }
+
+  .aps-section-title {
+    margin-top: var(--space-lg);
+  }
+
+  .aps-aq-sub {
+    font-size: var(--font-size-small);
+    font-weight: 400;
+    color: var(--dim);
+  }
+
+  .aps-aq-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--space-sm);
+  }
+
+  .aps-aq-card {
+    padding: 10px 12px;
+    background: var(--bg-subtle);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .aps-aq-card[data-status="exceeds"] {
+    border-color: #B95945;
+    background: rgba(185, 89, 69, 0.06);
+  }
+
+  .aps-aq-card-label {
+    font-size: var(--font-size-small);
+    color: var(--dim);
+    line-height: 1.2;
+  }
+
+  .aps-aq-card-value {
+    font-size: 1.35rem;
+    font-weight: 600;
+    color: var(--text);
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+  }
+
+  .aps-aq-card-value sup {
+    font-size: 0.7em;
+    font-weight: 400;
+    color: var(--dim);
+    margin-left: 2px;
+  }
+
+  .aps-aq-card-cmp {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    line-height: 1.3;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .aps-aq-card[data-status="none"] .aps-aq-card-value {
+    color: var(--dim);
+    font-size: 1rem;
+    font-weight: 500;
+  }
+
+  .aps-aq-note {
+    font-size: var(--font-size-small);
+    color: var(--dim);
+    margin: var(--space-sm) 0 0;
+  }
+
+  .aps-aq-flag {
+    display: inline-block;
+    width: 0.6em;
+    height: 0.6em;
+    border-radius: 1px;
+    margin-right: 4px;
+    vertical-align: 0.05em;
+  }
+
+  .aps-aq-flag[data-status="exceeds"]   { background: #B95945; }
+  .aps-aq-flag[data-status="elevated"]  { background: #D6AE82; }
+  .aps-aq-flag[data-status="below"]     { background: #8B9968; }
+
   .aps-stacked {
     display: flex;
     flex-direction: column;
@@ -251,6 +363,29 @@ import Base from '@/layouts/Base.astro';
   }
 
   .aps-seg:last-child { border-right: none; }
+
+  .aps-seg-tick {
+    position: absolute;
+    top: -3px;
+    bottom: -3px;
+    width: 0;
+    border-left: 2px dashed rgba(26, 25, 24, 0.55);
+    pointer-events: none;
+  }
+
+  [data-theme="dark"] .aps-seg-tick {
+    border-left-color: rgba(255, 250, 240, 0.7);
+  }
+
+  .aps-seg {
+    position: relative;
+  }
+
+  .aps-seg-tick[data-overflow="true"] {
+    border-left-style: solid;
+    border-left-width: 0;
+    border-right: 2px dotted rgba(26, 25, 24, 0.5);
+  }
 
   .aps-stacked[data-hover] .aps-seg:not([data-active="true"]) {
     filter: saturate(0.25) brightness(0.95);
@@ -357,11 +492,22 @@ import Base from '@/layouts/Base.astro';
   .aps-tip-stats {
     color: var(--accent);
     font-variant-numeric: tabular-nums;
-    margin-bottom: 6px;
+    margin-bottom: 4px;
     font-weight: 500;
   }
 
   .aps-tip-stats:empty {
+    display: none;
+  }
+
+  .aps-tip-cmp {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    margin-bottom: 6px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .aps-tip-cmp:empty {
     display: none;
   }
 
@@ -452,12 +598,20 @@ import Base from '@/layouts/Base.astro';
 
     const FALLBACK_FIPS = "06037"; // LA County
 
+    const AQ_METRICS = [
+      { key: "pm25_annual", label: "PM2.5",  long: "PM₂.₅ (annual mean)",       unit: "µg/m³" },
+      { key: "ozone_8hr",   label: "Ozone",  long: "Ozone (4⁺th-max 8-hr daily)",     unit: "ppb" },
+      { key: "no2_annual",  label: "NO₂", long: "NO₂ (annual mean)",              unit: "ppb" },
+    ];
+
     const state = {
       counties: null,
       currentState: null,
       currentCounty: null,
       stateEmissions: {},
       mode: "raw",
+      nationalAvg: null,
+      airQuality: null,
     };
 
     function fmt(n) {
@@ -476,6 +630,116 @@ import Base from '@/layouts/Base.astro';
     async function loadCounties() {
       const r = await fetch("/data/air-pollution/counties.json");
       state.counties = await r.json();
+    }
+
+    async function loadStaticExtras() {
+      try {
+        const [na, aq] = await Promise.all([
+          fetch("/data/air-pollution/national_avg.json").then(r => r.json()),
+          fetch("/data/air-pollution/air_quality.json").then(r => r.json()),
+        ]);
+        state.nationalAvg = na;
+        state.airQuality = aq;
+      } catch (e) {
+        state.nationalAvg = null;
+        state.airQuality = null;
+      }
+    }
+
+    function fmtAqValue(v, unit) {
+      if (v == null) return "—";
+      const digits = unit === "µg/m³" ? 1 : 0;
+      return v.toFixed(digits);
+    }
+
+    function aqStatus(v, naaqs) {
+      if (v == null || naaqs == null) return "none";
+      if (v >= naaqs) return "exceeds";
+      if (v >= 0.75 * naaqs) return "elevated";
+      return "below";
+    }
+
+    function aqStatusLabel(status) {
+      if (status === "exceeds") return "above NAAQS";
+      if (status === "elevated") return "near NAAQS";
+      if (status === "below") return "below NAAQS";
+      return "";
+    }
+
+    function renderAirQuality(fips5) {
+      const grid = document.getElementById("aps-aq-grid");
+      const note = document.getElementById("aps-aq-note");
+      grid.innerHTML = "";
+      note.textContent = "";
+
+      const aq = state.airQuality;
+      if (!aq) {
+        note.textContent = "Monitor data unavailable.";
+        return;
+      }
+
+      const countyMetrics = aq.counties[fips5] || {};
+      let anyMonitor = false;
+
+      for (const m of AQ_METRICS) {
+        const v = countyMetrics[m.key];
+        const naaqs = aq.naaqs[m.key]?.value;
+        const natAvg = aq.national_avg[m.key];
+        const status = aqStatus(v, naaqs);
+        if (v != null) anyMonitor = true;
+
+        const card = document.createElement("div");
+        card.className = "aps-aq-card";
+        card.dataset.status = status;
+
+        const label = document.createElement("div");
+        label.className = "aps-aq-card-label";
+        label.innerHTML = m.long;
+
+        const value = document.createElement("div");
+        value.className = "aps-aq-card-value";
+        if (v == null) {
+          value.textContent = "Not monitored";
+        } else {
+          value.innerHTML = `${fmtAqValue(v, m.unit)}<sup>${m.unit}</sup>`;
+        }
+
+        const cmp = document.createElement("div");
+        cmp.className = "aps-aq-card-cmp";
+        if (v != null) {
+          const flag = document.createElement("span");
+          flag.className = "aps-aq-flag";
+          flag.dataset.status = status;
+          cmp.appendChild(flag);
+          const txt = document.createElement("span");
+          txt.textContent = `${aqStatusLabel(status)} (${naaqs} ${m.unit}) · nat. avg ${fmtAqValue(natAvg, m.unit)}`;
+          cmp.appendChild(txt);
+        } else {
+          const txt = document.createElement("span");
+          txt.textContent = `Nat. avg ${fmtAqValue(natAvg, m.unit)}, NAAQS ${naaqs} ${m.unit}`;
+          cmp.appendChild(txt);
+        }
+
+        card.appendChild(label);
+        card.appendChild(value);
+        card.appendChild(cmp);
+        grid.appendChild(card);
+      }
+
+      if (!anyMonitor) {
+        const monStr = AQ_METRICS
+          .map(m => `${m.label} ${aq.n_monitored[m.key]}`)
+          .join(" · ");
+        note.textContent = `No EPA air-quality monitors in this county. Nationally, only ${monStr} counties have monitors (of 3,245).`;
+      }
+    }
+
+    function nationalAvgForBucket(bucket, pollutant) {
+      const na = state.nationalAvg;
+      if (!na) return null;
+      const table = state.mode === "percap" ? na.percap : na.raw;
+      const v = table?.[pollutant]?.[bucket];
+      return v == null ? null : v;
     }
 
     async function loadStateEmissions(ss) {
@@ -528,7 +792,7 @@ import Base from '@/layouts/Base.astro';
       return mode === "percap" && pop > 0 ? (v / pop) * 100000 : v;
     }
 
-    function renderStackedBar(barId, totalId, valuesByBucket, mode, pop) {
+    function renderStackedBar(barId, totalId, pollutant, valuesByBucket, mode, pop) {
       const bar = document.getElementById(barId);
       const totalEl = document.getElementById(totalId);
       bar.innerHTML = "";
@@ -554,6 +818,22 @@ import Base from '@/layouts/Base.astro';
         seg.dataset.pct = ((s.value / total) * 100).toFixed(1);
         seg.style.width = ((s.value / total) * 100).toFixed(3) + "%";
         seg.style.background = s.color;
+
+        const natAvg = nationalAvgForBucket(s.name, pollutant);
+        if (natAvg != null && natAvg > 0 && s.value > 0) {
+          const ratio = natAvg / s.value;
+          const tick = document.createElement("div");
+          tick.className = "aps-seg-tick";
+          if (ratio <= 1) {
+            tick.style.left = (ratio * 100).toFixed(2) + "%";
+          } else {
+            tick.style.left = "calc(100% - 2px)";
+            tick.dataset.overflow = "true";
+          }
+          seg.dataset.natavg = String(natAvg);
+          seg.appendChild(tick);
+        }
+
         bar.appendChild(seg);
       }
     }
@@ -613,13 +893,14 @@ import Base from '@/layouts/Base.astro';
       });
     }
 
-    function showTip(bucketName, statsText, x, y) {
+    function showTip(bucketName, statsText, cmpText, x, y) {
       const tip = document.getElementById("aps-tip");
       const bucket = BUCKET_BY_NAME[bucketName];
       if (!bucket) return;
       document.getElementById("aps-tip-name").textContent = bucket.name;
       document.getElementById("aps-tip-swatch").style.background = bucket.color;
       document.getElementById("aps-tip-stats").textContent = statsText || "";
+      document.getElementById("aps-tip-cmp").textContent = cmpText || "";
       document.getElementById("aps-tip-desc").textContent = bucket.desc || "";
       tip.style.display = "block";
       tip.setAttribute("aria-hidden", "false");
@@ -654,7 +935,27 @@ import Base from '@/layouts/Base.astro';
       const poll = row && row.dataset.poll;
       const pollLabel = poll === "pm25" ? "PM2.5" : poll === "nox" ? "NOx" : "VOC";
       const unit = state.mode === "percap" ? "tons / yr per 100K residents" : "tons / yr";
-      return `${pollLabel}: ${fmt(value)} ${unit} (${pct}%)`;
+      return `${pollLabel}: ${fmt(value)} ${unit} (${pct}% of bar)`;
+    }
+
+    function cmpForSeg(seg) {
+      const natAvg = seg.dataset.natavg ? parseFloat(seg.dataset.natavg) : null;
+      const value = parseFloat(seg.dataset.value);
+      if (natAvg == null || !isFinite(natAvg)) return "";
+      const unit = state.mode === "percap" ? "tons/yr per 100K" : "tons/yr";
+      if (natAvg === 0) {
+        return value === 0
+          ? `Avg county: 0 ${unit} (no emissions nationally)`
+          : `Avg county: 0 ${unit} — your county has reported emissions`;
+      }
+      const ratio = value / natAvg;
+      const ratioStr = ratio >= 10
+        ? `${ratio.toFixed(0)}×`
+        : ratio >= 1
+          ? `${ratio.toFixed(1)}×`
+          : `${(ratio * 100).toFixed(0)}% of`;
+      const direction = ratio >= 1 ? "above" : "below";
+      return `${ratioStr} the national county avg (${fmt(natAvg)} ${unit}) — ${direction} average`;
     }
 
     function bindHover() {
@@ -665,13 +966,13 @@ import Base from '@/layouts/Base.astro';
         const seg = e.target.closest(".aps-seg");
         if (seg) {
           setHover(seg.dataset.bucket);
-          showTip(seg.dataset.bucket, statsForSeg(seg), e.clientX, e.clientY);
+          showTip(seg.dataset.bucket, statsForSeg(seg), cmpForSeg(seg), e.clientX, e.clientY);
         }
       });
       stacked.addEventListener("mousemove", (e) => {
         const seg = e.target.closest(".aps-seg");
         if (seg) {
-          showTip(seg.dataset.bucket, statsForSeg(seg), e.clientX, e.clientY);
+          showTip(seg.dataset.bucket, statsForSeg(seg), cmpForSeg(seg), e.clientX, e.clientY);
         }
       });
       stacked.addEventListener("mouseleave", () => {
@@ -683,13 +984,13 @@ import Base from '@/layouts/Base.astro';
         const tr = e.target.closest("tr[data-bucket]");
         if (tr) {
           setHover(tr.dataset.bucket);
-          showTip(tr.dataset.bucket, "", e.clientX, e.clientY);
+          showTip(tr.dataset.bucket, "", "", e.clientX, e.clientY);
         }
       });
       legend.addEventListener("mousemove", (e) => {
         const tr = e.target.closest("tr[data-bucket]");
         if (tr) {
-          showTip(tr.dataset.bucket, "", e.clientX, e.clientY);
+          showTip(tr.dataset.bucket, "", "", e.clientX, e.clientY);
         }
       });
       legend.addEventListener("mouseleave", () => {
@@ -711,10 +1012,11 @@ import Base from '@/layouts/Base.astro';
       info.textContent = `${meta ? meta.name : fips5} County, ${stateMeta ? stateMeta.name : ss}${popText} · 2020 emissions`;
 
       const pop = meta ? meta.pop : 0;
-      renderStackedBar("aps-bar-pm25", "aps-total-pm25", county.pm25 || {}, state.mode, pop);
-      renderStackedBar("aps-bar-nox",  "aps-total-nox",  county.nox  || {}, state.mode, pop);
-      renderStackedBar("aps-bar-voc",  "aps-total-voc",  county.voc  || {}, state.mode, pop);
+      renderStackedBar("aps-bar-pm25", "aps-total-pm25", "pm25", county.pm25 || {}, state.mode, pop);
+      renderStackedBar("aps-bar-nox",  "aps-total-nox",  "nox",  county.nox  || {}, state.mode, pop);
+      renderStackedBar("aps-bar-voc",  "aps-total-voc",  "voc",  county.voc  || {}, state.mode, pop);
       renderLegend(county, state.mode, pop);
+      renderAirQuality(fips5);
     }
 
     async function selectCounty(fips5) {
@@ -774,7 +1076,7 @@ import Base from '@/layouts/Base.astro';
 
     async function init() {
       if (!document.getElementById("aps-state")) return;
-      await loadCounties();
+      await Promise.all([loadCounties(), loadStaticExtras()]);
       populateStates();
       bindControls();
       bindHover();

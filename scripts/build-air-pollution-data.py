@@ -15,8 +15,16 @@ from pathlib import Path
 
 NEI_CSV = Path("/tmp/nei/esg_cty_sector_23951.csv")
 POP_CSV = Path("/tmp/nei/co-est2024.csv")
+AQS_CSV = Path("/tmp/nei/annual_conc_by_monitor_2025.csv")
 OUT_DIR = Path(__file__).resolve().parent.parent / "public" / "data" / "air-pollution"
 EMIT_DIR = OUT_DIR / "emissions"
+
+NAAQS = {
+    # primary NAAQS standards as currently in effect
+    "pm25_annual": {"value": 9.0, "unit": "µg/m³", "label": "annual mean"},
+    "ozone_8hr":   {"value": 70.0, "unit": "ppb",   "label": "4th-max 8-hr daily, ppb"},
+    "no2_annual":  {"value": 53.0, "unit": "ppb",   "label": "annual mean"},
+}
 
 POLLUTANTS = {"PM25-PRI": "pm25", "NOX": "nox", "VOC": "voc"}
 
@@ -96,6 +104,52 @@ SECTOR_BUCKETS = {
 }
 
 
+def load_air_quality():
+    """Aggregate AQS monitor data to county-level NAAQS-style design values.
+
+    Returns {fips5: {"pm25_annual": x, "ozone_8hr": ppb, "no2_annual": ppb}}.
+    Each metric uses the max across monitors in the county to match NAAQS
+    primary-standard comparison.
+    """
+    out = {}
+    with AQS_CSV.open(newline="") as f:
+        for row in csv.DictReader(f):
+            ss = row["State Code"].zfill(2)
+            ccc = row["County Code"].zfill(3)
+            if not ss.isdigit() or not ccc.isdigit():
+                continue
+            fips5 = ss + ccc
+            pcode = row["Parameter Code"]
+            pstd = row["Pollutant Standard"]
+            metric = row["Metric Used"]
+            dur = row["Sample Duration"]
+
+            key = None
+            value = None
+            if pcode == "88101" and pstd == "PM25 Annual 2024" and metric == "Quarterly Means of Daily Means":
+                key = "pm25_annual"
+                value = float(row["Arithmetic Mean"])
+            elif pcode == "44201" and pstd == "Ozone 8-hour 2015":
+                key = "ozone_8hr"
+                # 4th Max 8-hr (ppm) -> ppb
+                v = row.get("4th Max Value") or row.get("1st Max Value")
+                if v in (None, ""):
+                    continue
+                value = float(v) * 1000.0
+            elif pcode == "42602" and pstd == "NO2 Annual 1971":
+                key = "no2_annual"
+                value = float(row["Arithmetic Mean"])
+
+            if key is None or value is None:
+                continue
+
+            entry = out.setdefault(fips5, {})
+            prev = entry.get(key)
+            if prev is None or value > prev:
+                entry[key] = value
+    return out
+
+
 def load_population():
     """Return {fips5: int_pop, ss: state_name} from Census 2024 estimates."""
     counties = {}
@@ -152,6 +206,70 @@ def main():
 
     if unknown_sectors:
         sys.exit(f"Unknown sectors (update SECTOR_BUCKETS): {unknown_sectors}")
+
+    air_quality = load_air_quality() if AQS_CSV.exists() else {}
+
+    # National per-county averages: avg(tons/yr) and avg(tons/yr per 100K residents)
+    # across all counties (including counties where bucket = 0, so we average over n_counties).
+    bucket_set = set()
+    for ss in emissions:
+        for fips5 in emissions[ss]:
+            for poll in emissions[ss][fips5]:
+                for b in emissions[ss][fips5][poll]:
+                    bucket_set.add(b)
+    buckets = sorted(bucket_set)
+
+    pollutants = ("pm25", "nox", "voc")
+    total_raw = {p: {b: 0.0 for b in buckets} for p in pollutants}
+    total_percap = {p: {b: 0.0 for b in buckets} for p in pollutants}
+    n_counties = 0
+    n_counties_with_pop = 0
+    for ss, by_county in emissions.items():
+        for fips5, by_poll in by_county.items():
+            n_counties += 1
+            pop = populations.get(fips5, 0)
+            has_pop = pop > 0
+            if has_pop:
+                n_counties_with_pop += 1
+            for p in pollutants:
+                bv = by_poll.get(p, {})
+                for b in buckets:
+                    v = bv.get(b, 0.0)
+                    total_raw[p][b] += v
+                    if has_pop:
+                        total_percap[p][b] += (v / pop) * 100000
+
+    national_avg = {
+        "n_counties": n_counties,
+        "n_counties_with_pop": n_counties_with_pop,
+        "raw": {p: {b: total_raw[p][b] / n_counties for b in buckets} for p in pollutants},
+        "percap": {p: {b: total_percap[p][b] / n_counties_with_pop for b in buckets} for p in pollutants},
+    }
+    with (OUT_DIR / "national_avg.json").open("w") as f:
+        json.dump(national_avg, f, separators=(",", ":"))
+
+    # Air quality: per-county measurements + national means + NAAQS
+    aq_means = {}
+    if air_quality:
+        for key in ("pm25_annual", "ozone_8hr", "no2_annual"):
+            vals = [v[key] for v in air_quality.values() if key in v]
+            if vals:
+                aq_means[key] = sum(vals) / len(vals)
+
+        aq_out = {
+            "naaqs": NAAQS,
+            "national_avg": aq_means,
+            "n_monitored": {
+                key: sum(1 for v in air_quality.values() if key in v)
+                for key in ("pm25_annual", "ozone_8hr", "no2_annual")
+            },
+            "counties": {
+                fips5: {k: round(v, 2) for k, v in metrics.items()}
+                for fips5, metrics in air_quality.items()
+            },
+        }
+        with (OUT_DIR / "air_quality.json").open("w") as f:
+            json.dump(aq_out, f, separators=(",", ":"))
 
     # counties.json
     states_out = []
