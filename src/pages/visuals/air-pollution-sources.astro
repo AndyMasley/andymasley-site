@@ -33,6 +33,7 @@ import Base from '@/layouts/Base.astro';
       <div class="aps-mode">
         <button class="aps-mode-btn" data-mode="raw" data-active="true">Tons / year</button>
         <button class="aps-mode-btn" data-mode="percap" data-active="false">Per 100K residents</button>
+        <button class="aps-mode-btn" data-mode="damage" data-active="false">Health damage ($)</button>
       </div>
     </div>
 
@@ -46,7 +47,7 @@ import Base from '@/layouts/Base.astro';
       <p class="aps-aq-note" id="aps-aq-note"></p>
     </section>
 
-    <h2 class="aps-section-title">Emissions by source <span class="aps-aq-sub">— EPA 2020 NEI, tick marks show the national county average</span></h2>
+    <h2 class="aps-section-title" id="aps-section-title">Emissions by source <span class="aps-aq-sub" id="aps-section-sub">— EPA 2020 NEI, tick marks show the national county average</span></h2>
 
     <div class="aps-stacked">
       <div class="aps-stack-row" data-poll="pm25">
@@ -111,6 +112,13 @@ import Base from '@/layouts/Base.astro';
         </ul>
         <p style="font-size:var(--font-size-small);color:var(--text-secondary);">These metrics use the maximum monitor value in the county, which is consistent with NAAQS evaluation but biases toward the most-polluted area. Real exposure varies by neighborhood, time spent indoors, and indoor air quality (cooking, smoking, ventilation) — often more than the outdoor reading itself.</p>
         <p><strong>Reference ticks.</strong> The dashed tick on each bar segment marks where the segment would end if that source emitted at the national county average. A tick near the left edge means your county emits many times the national average for that source. A tick at the right edge with a dotted indicator means your county is below the national average for that source.</p>
+        <p><strong>Health-damage mode.</strong> The "Health damage ($)" toggle re-weights each bar segment by the estimated marginal health cost of that source. Not all tons are equal — a ton of ground-level urban diesel exhaust causes roughly 50× the health damage of a ton of road dust, because diesel particles are smaller, more toxic, and emitted right next to people, while dust is coarser, less harmful, and dispersed in arid rural air. Per-ton damage factors used (national averages, 2019 USD, mortality at 3% discount):</p>
+        <ul style="font-size:var(--font-size-small);color:var(--text-secondary);margin:0 0 0.75em 1.25em;padding:0;">
+          <li>PM₂.₅: on-road ~$2.2M/ton, off-road ~$1.7M, residential heating ~$1.4M, industrial fuel comb ~$900K, industrial processes ~$700K, solvents ~$400K, aircraft/ships/trains ~$400K, oil &amp; gas ~$150K, wildfires ~$130K, power plants ~$110K, agriculture ~$100K, dust ~$40K.</li>
+          <li>NOx: ~$10K–$20K/ton depending on source (forms secondary PM₂.₅ and ozone).</li>
+          <li>VOC: ~$1.5K–$4.5K/ton depending on source (ozone precursor; small contribution to secondary PM₂.₅).</li>
+        </ul>
+        <p style="font-size:var(--font-size-small);color:var(--text-secondary);">These factors are derived from EPA OAQPS Benefit-per-Ton memos (used in EPA Regulatory Impact Analyses) and <a href="https://www.pnas.org/doi/10.1073/pnas.1816102116" target="_blank" rel="noopener">Goodkind et al. 2019 (PNAS)</a>, which uses the InMAP source-receptor model to derive county-resolved marginal damages. The values here are national averages by source category — the actual marginal damage of a real emission depends strongly on stack height, season, prevailing winds, and proximity to population. A coal plant in rural Wyoming has a much lower per-ton impact than the same emissions in suburban New Jersey. Damages are dominated by attributable mortality (value of statistical life ~$10M); morbidity (asthma, ER visits) adds maybe 5–10%. Treat the dollar figures as order-of-magnitude rankings, not exact predictions.</p>
         <p><strong>What's a "source sector"?</strong> The EPA classifies every emission down to a specific equipment/activity code (SCC). The NEI's 59 published sectors aggregate those codes into recognizable categories like "On-Road Diesel Heavy Duty Vehicles" or "Industrial Processes - Petroleum Refineries." This page rolls those 59 sectors up into 13 buckets for readability.</p>
         <p><strong>Why split out oil &amp; gas production?</strong> It's politically distinct from other industrial processes and disproportionately concentrated in a few counties.</p>
         <p><strong>Per-capita caveat.</strong> Per-capita figures use 2024 county population. A rural county with one refinery or a large wildfire will look catastrophically high per resident — that's accurate, but it's not the same as exposure. PM2.5 and ozone disperse across regions; emitted-here doesn't mean breathed-here.</p>
@@ -623,6 +631,77 @@ import Base from '@/layouts/Base.astro';
     const BUCKET_BY_NAME = Object.fromEntries(BUCKETS.map(b => [b.name, b]));
     const POLLUTANTS = ["pm25", "nox", "voc"];
 
+    // Marginal health damage per ton, US national averages (2019 USD, mortality
+    // at 3% discount). Derived from EPA OAQPS Benefit-per-Ton memos (2018-2024)
+    // and Goodkind et al. 2019 (PNAS) county-resolved estimates. These reflect
+    // source-specific differences: ground-level urban sources (on-road, wood
+    // heat) are far more harmful per ton than elevated rural stacks (power
+    // plants) or remote wildfires; dust and ag PM are coarser and less toxic.
+    const DAMAGE_FACTORS = {
+      pm25: {
+        "On-road vehicles":                  2_200_000,
+        "Off-road equipment":                1_700_000,
+        "Aircraft, ships, trains":             400_000,
+        "Power plants":                        110_000,
+        "Industrial fuel combustion":          900_000,
+        "Residential heating":               1_400_000,
+        "Industrial processes":                700_000,
+        "Oil & gas production":                150_000,
+        "Wildfires & prescribed burns":        130_000,
+        "Dust":                                 40_000,
+        "Agriculture":                         100_000,
+        "Solvents & coatings":                 400_000,
+        "Other":                               700_000,
+        "Natural background (trees & soil)":         0,
+      },
+      nox: {
+        "On-road vehicles":                     20_000,
+        "Off-road equipment":                   17_000,
+        "Aircraft, ships, trains":              10_000,
+        "Power plants":                         13_000,
+        "Industrial fuel combustion":           17_000,
+        "Residential heating":                  18_000,
+        "Industrial processes":                 15_000,
+        "Oil & gas production":                 11_000,
+        "Wildfires & prescribed burns":          6_000,
+        "Dust":                                      0,
+        "Agriculture":                           8_000,
+        "Solvents & coatings":                       0,
+        "Other":                                13_000,
+        "Natural background (trees & soil)":         0,
+      },
+      voc: {
+        "On-road vehicles":                      4_500,
+        "Off-road equipment":                    4_000,
+        "Aircraft, ships, trains":               2_500,
+        "Power plants":                          2_000,
+        "Industrial fuel combustion":            3_000,
+        "Residential heating":                   4_000,
+        "Industrial processes":                  3_000,
+        "Oil & gas production":                  2_500,
+        "Wildfires & prescribed burns":          1_500,
+        "Dust":                                      0,
+        "Agriculture":                           1_500,
+        "Solvents & coatings":                   3_500,
+        "Other":                                 3_000,
+        "Natural background (trees & soil)":         0,
+      },
+    };
+
+    function damageFactor(pollutant, bucket) {
+      return DAMAGE_FACTORS[pollutant]?.[bucket] ?? 0;
+    }
+
+    function fmtDollars(v) {
+      if (!isFinite(v) || v === 0) return "$0";
+      if (v >= 1_000_000_000) return `$${(v / 1_000_000_000).toFixed(1)}B`;
+      if (v >= 100_000_000)   return `$${Math.round(v / 1_000_000)}M`;
+      if (v >= 1_000_000)     return `$${(v / 1_000_000).toFixed(1)}M`;
+      if (v >= 100_000)       return `$${Math.round(v / 1_000)}K`;
+      if (v >= 1_000)         return `$${(v / 1_000).toFixed(0)}K`;
+      return `$${Math.round(v)}`;
+    }
+
     const FALLBACK_FIPS = "06037"; // LA County
 
     const AQ_METRICS = [
@@ -813,6 +892,11 @@ import Base from '@/layouts/Base.astro';
     function nationalAvgForBucket(bucket, pollutant) {
       const na = state.nationalAvg;
       if (!na) return null;
+      if (state.mode === "damage") {
+        const rawAvg = na.raw?.[pollutant]?.[bucket];
+        if (rawAvg == null) return null;
+        return rawAvg * damageFactor(pollutant, bucket);
+      }
       const table = state.mode === "percap" ? na.percap : na.raw;
       const v = table?.[pollutant]?.[bucket];
       return v == null ? null : v;
@@ -864,8 +948,21 @@ import Base from '@/layouts/Base.astro';
       return state.counties.states.find(s => s.fips === ss) || null;
     }
 
-    function transformValue(v, mode, pop) {
-      return mode === "percap" && pop > 0 ? (v / pop) * 100000 : v;
+    function transformValue(v, mode, pop, pollutant, bucket) {
+      if (mode === "damage") return v * damageFactor(pollutant, bucket);
+      if (mode === "percap" && pop > 0) return (v / pop) * 100000;
+      return v;
+    }
+
+    function modeUnit(mode) {
+      if (mode === "damage") return "$";
+      if (mode === "percap") return "tons/yr per 100K";
+      return "tons/yr";
+    }
+
+    function fmtByMode(v, mode) {
+      if (mode === "damage") return fmtDollars(v);
+      return fmt(v);
     }
 
     function renderStackedBar(barId, totalId, pollutant, valuesByBucket, mode, pop) {
@@ -875,12 +972,17 @@ import Base from '@/layouts/Base.astro';
 
       const segs = BUCKETS
         .filter(b => valuesByBucket[b.name] !== undefined && valuesByBucket[b.name] > 0)
-        .map(b => ({ ...b, value: transformValue(valuesByBucket[b.name], mode, pop) }));
+        .map(b => ({ ...b, value: transformValue(valuesByBucket[b.name], mode, pop, pollutant, b.name) }))
+        .filter(s => s.value > 0);
 
       const total = segs.reduce((s, x) => s + x.value, 0);
-      totalEl.textContent = total > 0
-        ? `${fmt(total)} ${mode === "percap" ? "/100K" : "tons"}`
-        : "—";
+      if (total > 0) {
+        if (mode === "damage") totalEl.textContent = `${fmtDollars(total)} damage/yr`;
+        else if (mode === "percap") totalEl.textContent = `${fmt(total)} /100K`;
+        else totalEl.textContent = `${fmt(total)} tons`;
+      } else {
+        totalEl.textContent = "—";
+      }
 
       if (total === 0) return;
 
@@ -921,7 +1023,7 @@ import Base from '@/layouts/Base.astro';
       for (const b of BUCKETS) {
         const values = POLLUTANTS.map(p => {
           const raw = county[p] ? county[p][b.name] : undefined;
-          return raw !== undefined ? transformValue(raw, mode, pop) : null;
+          return raw !== undefined ? transformValue(raw, mode, pop, p, b.name) : null;
         });
         const anyPresent = values.some(v => v !== null && v > 0);
         if (!anyPresent) continue;
@@ -948,7 +1050,7 @@ import Base from '@/layouts/Base.astro';
             td.dataset.zero = "true";
             td.textContent = v === null ? "—" : "0";
           } else {
-            td.textContent = fmt(v);
+            td.textContent = fmtByMode(v, mode);
           }
           tr.appendChild(td);
         }
@@ -1010,6 +1112,9 @@ import Base from '@/layouts/Base.astro';
       const row = seg.closest(".aps-stack-row");
       const poll = row && row.dataset.poll;
       const pollLabel = poll === "pm25" ? "PM2.5" : poll === "nox" ? "NOx" : "VOC";
+      if (state.mode === "damage") {
+        return `${pollLabel}: ${fmtDollars(value)} estimated health damage/yr (${pct}% of bar)`;
+      }
       const unit = state.mode === "percap" ? "tons / yr per 100K residents" : "tons / yr";
       return `${pollLabel}: ${fmt(value)} ${unit} (${pct}% of bar)`;
     }
@@ -1018,11 +1123,11 @@ import Base from '@/layouts/Base.astro';
       const natAvg = seg.dataset.natavg ? parseFloat(seg.dataset.natavg) : null;
       const value = parseFloat(seg.dataset.value);
       if (natAvg == null || !isFinite(natAvg)) return "";
-      const unit = state.mode === "percap" ? "tons/yr per 100K" : "tons/yr";
+      const fmtV = (x) => state.mode === "damage" ? fmtDollars(x) : `${fmt(x)} ${state.mode === "percap" ? "tons/yr per 100K" : "tons/yr"}`;
       if (natAvg === 0) {
         return value === 0
-          ? `Avg county: 0 ${unit} (no emissions nationally)`
-          : `Avg county: 0 ${unit} — your county has reported emissions`;
+          ? `Avg county: 0 (no contribution nationally)`
+          : `Avg county: 0 — your county has reported emissions`;
       }
       const ratio = value / natAvg;
       const ratioStr = ratio >= 10
@@ -1031,7 +1136,7 @@ import Base from '@/layouts/Base.astro';
           ? `${ratio.toFixed(1)}×`
           : `${(ratio * 100).toFixed(0)}% of`;
       const direction = ratio >= 1 ? "above" : "below";
-      return `${ratioStr} the national county avg (${fmt(natAvg)} ${unit}) — ${direction} average`;
+      return `${ratioStr} the national county avg (${fmtV(natAvg)}) — ${direction} average`;
     }
 
     function bindHover() {
@@ -1145,9 +1250,22 @@ import Base from '@/layouts/Base.astro';
           document.querySelectorAll(".aps-mode-btn").forEach(b => {
             b.dataset.active = b.dataset.mode === mode ? "true" : "false";
           });
+          updateSectionSub();
           if (state.currentCounty) await render(state.currentCounty);
         });
       });
+    }
+
+    function updateSectionSub() {
+      const sub = document.getElementById("aps-section-sub");
+      if (!sub) return;
+      if (state.mode === "damage") {
+        sub.textContent = "— bars weighted by source-specific health damage ($/ton). The same ton from different sources can cause very different harm.";
+      } else if (state.mode === "percap") {
+        sub.textContent = "— tons emitted per 100,000 residents. Ticks show national county average.";
+      } else {
+        sub.textContent = "— EPA 2020 NEI, tick marks show the national county average";
+      }
     }
 
     async function init() {
@@ -1156,6 +1274,7 @@ import Base from '@/layouts/Base.astro';
       populateStates();
       bindControls();
       bindHover();
+      updateSectionSub();
 
       // Try IP geolocation; fall back to LA
       const geo = await geolocate();
