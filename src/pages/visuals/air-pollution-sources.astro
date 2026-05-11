@@ -14,6 +14,8 @@ import Base from '@/layouts/Base.astro';
 
       <p>The EPA's 59 source sectors are rolled up into 13 readable buckets. Ozone itself isn't directly emitted — it forms in the atmosphere when NOx and VOCs react in sunlight, so the ozone panels show what's emitted, not the ozone you breathe. <strong>Biogenic VOCs</strong> from trees and soils are shown as a separate "natural background" bar — they often dwarf human sources, which is itself worth knowing.</p>
 
+      <p>The "What's in the air" panel also translates each measured concentration into something more tangible: a passive-smoking equivalent for PM2.5, plus the WHO-guideline-baseline excess mortality and asthma risks for ozone and NO₂. These are coarse calibrations from peer-reviewed studies, not personal predictions — see the methodology section for the formulas and citations.</p>
+
       <p>Pick a state and county below. The chart loads with your county based on your IP location.</p>
     </div>
 
@@ -100,6 +102,14 @@ import Base from '@/layouts/Base.astro';
         <p><strong>Emissions data.</strong> EPA 2020 National Emissions Inventory (NEI), released March 2023. The 2023 NEI has not yet been published. Population estimates: U.S. Census Bureau's 2024 county population estimates.</p>
         <p><strong>Air-quality measurements.</strong> EPA Air Quality System (AQS) 2025 annual concentration summaries (released November 2025). For each pollutant, the value shown is the maximum across all monitors in the county — this matches how the EPA evaluates NAAQS compliance (the standard applies to the most-polluted monitor). About 640 counties have a PM2.5 monitor, 740 have ozone, and 240 have NO2; the rest are "Not monitored." NAAQS thresholds: PM2.5 9 µg/m³ annual (2024 revision), ozone 70 ppb 8-hr (2015), NO2 53 ppb annual (1971).</p>
         <p><strong>Emissions vs. concentration.</strong> The stacked bars show what's <em>emitted</em> from sources inside your county. The "What's in the air" cards show what's actually <em>measured</em> in the air. These can differ a lot: smoke from distant wildfires, ozone formed downwind from upwind NOx sources, and PM2.5 that drifted in from neighboring counties all show up in the monitors without appearing in local emissions. EPA's National Emissions Inventory is the best public picture of where pollutants come from; the monitors are the best picture of what you actually breathe.</p>
+        <p><strong>Health-impact framing.</strong> The italicized line under each air-quality card converts the measured concentration into a tangible harm metric. These are coarse population-level calibrations, not predictions for any individual:</p>
+        <ul style="font-size:var(--font-size-small);color:var(--text-secondary);margin:0 0 0.75em 1.25em;padding:0;">
+          <li><em>PM₂.₅ → cigarettes/day equivalent.</em> Berkeley Earth's calibration: ~22 µg/m³ of sustained outdoor PM₂.₅ produces roughly the same all-cause mortality risk as smoking one cigarette per day, based on Pope, Burnett, &amp; Krewski's pooled exposure-response curves (<a href="https://berkeleyearth.org/air-pollution-and-cigarette-equivalence/" target="_blank" rel="noopener">link</a>). The cigarette equivalent shown is concentration ÷ 22.</li>
+          <li><em>PM₂.₅ → life expectancy.</em> Air Quality Life Index (Greenstone &amp; Pande, EPIC at U Chicago): each 1 µg/m³ above the WHO 5 µg/m³ guideline corresponds to ~0.098 years (≈36 days) of lost life expectancy if sustained over a lifetime (<a href="https://aqli.epic.uchicago.edu/" target="_blank" rel="noopener">aqli.epic.uchicago.edu</a>).</li>
+          <li><em>Ozone → respiratory mortality risk.</em> Jerrett et al. 2009 (<em>NEJM</em>): each 10 ppb increase in long-term 8-hr ozone is associated with roughly a 4% increase in respiratory mortality. Baseline is the WHO 60 ppb peak-season guideline.</li>
+          <li><em>NO₂ → pediatric asthma risk.</em> Khreis et al. 2017 (<em>Environment International</em>) meta-analysis: each 4 µg/m³ (≈2 ppb) of NO₂ is associated with roughly a 5% increase in pediatric asthma incidence. Baseline is the WHO 10 µg/m³ annual guideline (≈5 ppb).</li>
+        </ul>
+        <p style="font-size:var(--font-size-small);color:var(--text-secondary);">These metrics use the maximum monitor value in the county, which is consistent with NAAQS evaluation but biases toward the most-polluted area. Real exposure varies by neighborhood, time spent indoors, and indoor air quality (cooking, smoking, ventilation) — often more than the outdoor reading itself.</p>
         <p><strong>Reference ticks.</strong> The dashed tick on each bar segment marks where the segment would end if that source emitted at the national county average. A tick near the left edge means your county emits many times the national average for that source. A tick at the right edge with a dotted indicator means your county is below the national average for that source.</p>
         <p><strong>What's a "source sector"?</strong> The EPA classifies every emission down to a specific equipment/activity code (SCC). The NEI's 59 published sectors aggregate those codes into recognizable categories like "On-Road Diesel Heavy Duty Vehicles" or "Industrial Processes - Petroleum Refineries." This page rolls those 59 sectors up into 13 buckets for readability.</p>
         <p><strong>Why split out oil &amp; gas production?</strong> It's politically distinct from other industrial processes and disproportionately concentrated in a few counties.</p>
@@ -281,6 +291,23 @@ import Base from '@/layouts/Base.astro';
     color: var(--text-secondary);
     line-height: 1.3;
     font-variant-numeric: tabular-nums;
+  }
+
+  .aps-aq-card-harm {
+    margin-top: 4px;
+    padding-top: 6px;
+    border-top: 1px solid var(--border-subtle);
+    font-size: 0.8rem;
+    font-weight: 500;
+    line-height: 1.35;
+    color: var(--accent);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .aps-aq-card[data-status="below"] .aps-aq-card-harm,
+  .aps-aq-card[data-status="none"] .aps-aq-card-harm {
+    color: var(--text-secondary);
+    font-weight: 400;
   }
 
   .aps-aq-card[data-status="none"] .aps-aq-card-value {
@@ -604,6 +631,46 @@ import Base from '@/layouts/Base.astro';
       { key: "no2_annual",  label: "NO₂", long: "NO₂ (annual mean)",              unit: "ppb" },
     ];
 
+    function healthImpact(metricKey, value) {
+      if (value == null || !isFinite(value)) return null;
+      if (metricKey === "pm25_annual") {
+        // Berkeley Earth: ~22 µg/m³ continuous exposure ≈ 1 cig/day mortality-risk equivalent.
+        // AQLI (Greenstone & Pande, EPIC at U Chicago): each 1 µg/m³ above 5 µg/m³ WHO
+        // guideline ≈ 0.098 years (~36 days) of lost life expectancy if sustained.
+        const cig = value / 22;
+        const aboveWho = Math.max(0, value - 5);
+        const monthsLost = aboveWho * 0.098 * 12;
+        const cigStr = cig >= 1
+          ? `≈ ${cig.toFixed(1)} cig/day equivalent`
+          : `≈ ${cig.toFixed(2)} cig/day equivalent`;
+        const lifeStr = monthsLost < 0.5
+          ? "below the WHO guideline (5 µg/m³)"
+          : monthsLost >= 24
+            ? `~${(monthsLost / 12).toFixed(1)} years of life expectancy lost vs WHO`
+            : `~${Math.round(monthsLost)} months of life expectancy lost vs WHO`;
+        return `${cigStr} · ${lifeStr}`;
+      }
+      if (metricKey === "ozone_8hr") {
+        // Jerrett et al. 2009 NEJM: each 10 ppb increase in long-term 8-hr ozone ≈
+        // ~4% increase in respiratory mortality risk. Referenced against the WHO
+        // peak-season guideline of 60 ppb.
+        const above = value - 60;
+        if (above <= 0) return "below the WHO guideline (60 ppb)";
+        const pct = (above / 10) * 4;
+        return `+${pct.toFixed(0)}% respiratory mortality risk vs WHO guideline (60 ppb)`;
+      }
+      if (metricKey === "no2_annual") {
+        // Khreis et al. 2017 Environment International meta-analysis: each 4 µg/m³
+        // (~2 ppb) of NO2 ≈ 5% increase in pediatric asthma incidence. WHO annual
+        // guideline: 10 µg/m³ ≈ 5 ppb.
+        const above = value - 5;
+        if (above <= 0) return "below the WHO guideline (10 µg/m³ ≈ 5 ppb)";
+        const pct = (above / 2) * 5;
+        return `+${pct.toFixed(0)}% pediatric asthma risk vs WHO guideline (10 µg/m³)`;
+      }
+      return null;
+    }
+
     const state = {
       counties: null,
       currentState: null,
@@ -723,6 +790,15 @@ import Base from '@/layouts/Base.astro';
         card.appendChild(label);
         card.appendChild(value);
         card.appendChild(cmp);
+
+        const harmText = healthImpact(m.key, v);
+        if (harmText) {
+          const harm = document.createElement("div");
+          harm.className = "aps-aq-card-harm";
+          harm.textContent = harmText;
+          card.appendChild(harm);
+        }
+
         grid.appendChild(card);
       }
 
