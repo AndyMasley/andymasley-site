@@ -339,12 +339,16 @@ import Base from '@/layouts/Base.astro';
   }
 
   .pm25-hero {
-    max-width: min(1800px, 96vw);
-    margin: 0 auto;
+    width: calc(100vw - 48px);
+    position: relative;
+    left: 50%;
+    transform: translateX(-50%);
+    max-width: 1800px;
     padding: 1.5rem 1rem 0.5rem;
   }
   .pm25-hero-inner {
     max-width: 900px;
+    margin: 0 auto;
   }
   .pm25-hero-title {
     font-family: 'Source Serif 4', Georgia, serif;
@@ -369,12 +373,16 @@ import Base from '@/layouts/Base.astro';
   }
 
   .pm25 {
-    max-width: min(1800px, 96vw);
-    margin: 0 auto;
+    width: calc(100vw - 48px);
+    position: relative;
+    left: 50%;
+    transform: translateX(-50%);
+    max-width: 1800px;
     padding: 0.5rem 1rem 3rem;
   }
   .pm25-prose {
     max-width: 900px;
+    margin: 0 auto;
   }
 
   #pm25-chart-root { padding: 0; }
