@@ -1030,6 +1030,22 @@ import Base from '@/layouts/Base.astro';
       return `${fmt(total)} tons/yr`;
     }
 
+    function compactTons(n) {
+      if (!isFinite(n) || n <= 0) return "0";
+      if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
+      if (n >= 100_000) return `${Math.round(n / 1_000)}K`;
+      if (n >= 10_000) return `${(n / 1_000).toFixed(1)}K`;
+      if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
+      return Math.round(n).toLocaleString("en-US");
+    }
+
+    function donutCenterLabel(total, mode) {
+      if (total <= 0) return "no data";
+      if (mode === "damage") return `${fmtDollars(total)}/yr`;
+      if (mode === "percap") return `${compactTons(total)} /100K`;
+      return `${compactTons(total)} tons/yr`;
+    }
+
     function buildBarSegments(barEl, pollutant, segs, total) {
       barEl.innerHTML = "";
       for (const s of segs) {
@@ -1137,7 +1153,7 @@ import Base from '@/layouts/Base.astro';
       t2.setAttribute("x", cx);
       t2.setAttribute("dy", "1.4em");
       t2.setAttribute("class", "aps-donut-center-total");
-      t2.textContent = total > 0 ? totalLabel(total, state.mode) : "no data";
+      t2.textContent = donutCenterLabel(total, state.mode);
       text.appendChild(t2);
 
       svg.appendChild(text);
@@ -1218,14 +1234,37 @@ import Base from '@/layouts/Base.astro';
       const tbody = document.getElementById("aps-legend-body");
       tbody.innerHTML = "";
 
-      for (const b of BUCKETS) {
+      const totals = {};
+      for (const p of POLLUTANTS) {
+        let t = 0;
+        for (const b of BUCKETS) {
+          const raw = county[p] ? county[p][b.name] : undefined;
+          if (raw !== undefined) t += transformValue(raw, mode, pop, p, b.name);
+        }
+        totals[p] = t;
+      }
+
+      const rows = BUCKETS.map(b => {
         const values = POLLUTANTS.map(p => {
           const raw = county[p] ? county[p][b.name] : undefined;
           return raw !== undefined ? transformValue(raw, mode, pop, p, b.name) : null;
         });
         const anyPresent = values.some(v => v !== null && v > 0);
-        if (!anyPresent) continue;
+        let share = 0;
+        for (let i = 0; i < POLLUTANTS.length; i++) {
+          const t = totals[POLLUTANTS[i]];
+          if (t > 0 && values[i] != null) share += values[i] / t;
+        }
+        return { bucket: b, values, anyPresent, share };
+      })
+        .filter(r => r.anyPresent)
+        .sort((a, b) => {
+          if (a.bucket.natural && !b.bucket.natural) return 1;
+          if (!a.bucket.natural && b.bucket.natural) return -1;
+          return b.share - a.share;
+        });
 
+      for (const { bucket: b, values } of rows) {
         const tr = document.createElement("tr");
         tr.dataset.bucket = b.name;
         if (b.natural) tr.dataset.natural = "true";
