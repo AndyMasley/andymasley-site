@@ -7,9 +7,11 @@ import Base from '@/layouts/Base.astro';
   description="Every U.S. county as a bar — width = population, height = annual mean PM2.5. Hover for the top emission sources, click for the full sector breakdown."
 >
   <header class="pm25-hero">
-    <h1 class="pm25-hero-title">US population-weighted PM2.5 exposure, by county</h1>
-    <p class="pm25-hero-sub">Each bar is one U.S. county. Bar width is its population; bar height is its annual mean PM<sub>2.5</sub> in µg/m³. Counties are sorted from highest exposure on the left to lowest on the right.</p>
-    <p class="pm25-hero-source">PM<sub>2.5</sub> and population: County Health Rankings 2024 release (CDC EPHT, data year 2019). Source breakdown on hover/click: EPA's 2020 National Emissions Inventory.</p>
+    <div class="pm25-hero-inner">
+      <h1 class="pm25-hero-title">US population-weighted PM2.5 exposure, by county</h1>
+      <p class="pm25-hero-sub">Each bar is one U.S. county. Bar width is its population; bar height is its annual mean PM<sub>2.5</sub> in µg/m³. Counties are sorted from highest exposure on the left to lowest on the right.</p>
+      <p class="pm25-hero-source">PM<sub>2.5</sub> and population: County Health Rankings 2024 release (CDC EPHT, data year 2019). Source breakdown on hover/click: EPA's 2020 National Emissions Inventory.</p>
+    </div>
   </header>
 
   <article class="pm25">
@@ -24,7 +26,7 @@ import Base from '@/layouts/Base.astro';
       <p class="pm25-axis-note">Click any bar for a full source breakdown. The pop-weighted mean line shows what the average American actually breathes.</p>
     </div>
 
-    <section class="pm25-caveats" aria-labelledby="pm25-cav-title">
+    <section class="pm25-caveats pm25-prose" aria-labelledby="pm25-cav-title">
       <h3 id="pm25-cav-title">A note on what the colors mean</h3>
       <p>The source breakdown shown on hover and click is <strong>primary PM<sub>2.5</sub> emitted inside that county</strong>, in tons per year, from the EPA's National Emissions Inventory. That is <em>not</em> the same as what determines the concentration on the y-axis.</p>
       <ul>
@@ -88,7 +90,8 @@ import Base from '@/layouts/Base.astro';
       const wrapNode = document.getElementById("pm25-chart-wrap");
       const totalW = wrapNode.clientWidth || 1100;
       const W = Math.max(700, totalW);
-      const H = Math.round(W * 0.56);
+      const aspect = W >= 1200 ? 0.38 : 0.52;
+      const H = Math.round(W * aspect);
       svg.attr("viewBox", `0 0 ${W} ${H}`).attr("preserveAspectRatio", "xMidYMid meet");
       svg.selectAll("*").remove();
 
@@ -336,9 +339,12 @@ import Base from '@/layouts/Base.astro';
   }
 
   .pm25-hero {
-    max-width: 1100px;
+    max-width: min(1800px, 96vw);
     margin: 0 auto;
     padding: 1.5rem 1rem 0.5rem;
+  }
+  .pm25-hero-inner {
+    max-width: 900px;
   }
   .pm25-hero-title {
     font-family: 'Source Serif 4', Georgia, serif;
@@ -363,9 +369,12 @@ import Base from '@/layouts/Base.astro';
   }
 
   .pm25 {
-    max-width: 1100px;
+    max-width: min(1800px, 96vw);
     margin: 0 auto;
     padding: 0.5rem 1rem 3rem;
+  }
+  .pm25-prose {
+    max-width: 900px;
   }
 
   #pm25-chart-root { padding: 0; }
