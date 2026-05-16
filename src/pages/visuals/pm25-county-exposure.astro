@@ -1,0 +1,568 @@
+---
+import Base from '@/layouts/Base.astro';
+---
+
+<Base
+  title="PM2.5 exposure by county"
+  description="Every U.S. county as a bar — width = population, height = annual mean PM2.5. Hover for the top emission sources, click for the full sector breakdown."
+>
+  <header class="pm25-hero">
+    <h1 class="pm25-hero-title">US population-weighted PM2.5 exposure, by county</h1>
+    <p class="pm25-hero-sub">Each bar is one U.S. county. Bar width is its population; bar height is its annual mean PM<sub>2.5</sub> in µg/m³. Counties are sorted from highest exposure on the left to lowest on the right.</p>
+    <p class="pm25-hero-source">PM<sub>2.5</sub> and population: County Health Rankings 2024 release (CDC EPHT, data year 2019). Source breakdown on hover/click: EPA's 2020 National Emissions Inventory.</p>
+  </header>
+
+  <article class="pm25">
+    <div id="pm25-chart-root">
+      <div id="pm25-subtitle"></div>
+
+      <div id="pm25-chart-wrap">
+        <svg id="pm25-chart" role="img" aria-label="PM2.5 exposure chart"></svg>
+        <div id="pm25-tooltip" class="pm25-tooltip" aria-hidden="true"></div>
+      </div>
+
+      <p class="pm25-axis-note">Click any bar for a full source breakdown. The pop-weighted mean line shows what the average American actually breathes.</p>
+    </div>
+
+    <section class="pm25-caveats" aria-labelledby="pm25-cav-title">
+      <h3 id="pm25-cav-title">A note on what the colors mean</h3>
+      <p>The source breakdown shown on hover and click is <strong>primary PM<sub>2.5</sub> emitted inside that county</strong>, in tons per year, from the EPA's National Emissions Inventory. That is <em>not</em> the same as what determines the concentration on the y-axis.</p>
+      <ul>
+        <li><strong>Secondary PM<sub>2.5</sub></strong> — sulfates, nitrates, and organic aerosols formed in the atmosphere from SO<sub>2</sub>, NO<sub>x</sub>, ammonia, and VOC precursors — is a large share of ambient PM<sub>2.5</sub> across most of the US but doesn't appear in primary-emissions inventories.</li>
+        <li><strong>Long-range transport</strong> moves smoke and aerosols across state lines. A county's local emissions can be a minor share of the air people in that county actually breathe.</li>
+        <li><strong>Fire/dust years</strong> swing the "Wildfires &amp; prescribed burns" and "Dust" categories enormously year over year. The PM<sub>2.5</sub> values shown are for 2019 — a pre-COVID, pre-2020-wildfire-surge baseline.</li>
+      </ul>
+    </section>
+  </article>
+
+  <aside id="pm25-panel" class="pm25-panel" aria-hidden="true">
+    <button id="pm25-panel-close" aria-label="Close">×</button>
+    <h2 id="pm25-panel-county"></h2>
+    <div id="pm25-panel-meta"></div>
+    <div id="pm25-panel-caption">
+      Primary PM<sub>2.5</sub> emissions inside this county, by sector (EPA NEI 2020). These are tons emitted per year — not the same as the source's contribution to the ambient concentration on the y-axis.
+    </div>
+    <svg id="pm25-panel-chart" role="img" aria-label="Sector emissions chart"></svg>
+    <div id="pm25-panel-notes"></div>
+  </aside>
+
+  <div id="pm25-panel-backdrop"></div>
+</Base>
+
+<script is:inline src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
+
+<script is:inline define:vars={{ dataUrl: "/data/pm25-exposure/data.json" }}>
+  (function () {
+    const SECTOR_NOTES = {
+      "Agriculture": "Tilling, livestock dust, and other crop/animal production emissions.",
+      "Aircraft, ships, trains": "Aviation, commercial marine, and rail — all diesel- or jet-fuel heavy.",
+      "Dust": "Paved-road dust, unpaved-road dust, construction and windblown dust.",
+      "Industrial fuel combustion": "Boilers, furnaces, and process heaters at industrial facilities.",
+      "Industrial processes": "Chemical manufacturing, metals, petroleum refining, cement, and other industrial processes — separate from combustion.",
+      "Off-road equipment": "Construction equipment, agricultural tractors, lawn equipment — mostly diesel.",
+      "Oil & gas production": "Drilling, flaring, processing, and storage at oil and gas sites.",
+      "On-road vehicles": "Cars, trucks, and buses — tailpipe exhaust plus brake and tire wear.",
+      "Other": "Smaller miscellaneous source categories not large enough to break out individually.",
+      "Power plants": "Electric utility fuel combustion — overwhelmingly coal (gas combustion contributes little primary PM).",
+      "Residential heating": "Home heating: wood stoves and fireplaces, fuel-oil furnaces, commercial boilers. Wood-burning drives the highest residential PM2.5 (interior Alaska, Mountain West).",
+      "Solvents & coatings": "Paint, industrial coatings, solvent use, consumer products.",
+      "Wildfires & prescribed burns": "Wildfires, prescribed burns, and agricultural fires. Highly variable year-to-year.",
+    };
+
+    const BAR_COLOR = "#4d5a1f";
+    const BAR_HOVER = "#7a8c33";
+    const BAR_ACTIVE = "#a8b94a";
+    const NAAQS_COLOR = "#c0392b";
+    const MEAN_COLOR = "#e67e22";
+
+    const fmtPM = (d) => d.toFixed(1);
+    const fmtPop = (d) => d.toLocaleString();
+    const fmtTons = (d) => d < 10 ? d.toFixed(1) : Math.round(d).toLocaleString();
+
+    async function render() {
+      const data = await d3.json(dataUrl);
+      const meta = data.meta;
+      const counties = data.counties;
+
+      const svg = d3.select("#pm25-chart");
+      const wrapNode = document.getElementById("pm25-chart-wrap");
+      const totalW = wrapNode.clientWidth || 1100;
+      const W = Math.max(700, totalW);
+      const H = Math.round(W * 0.56);
+      svg.attr("viewBox", `0 0 ${W} ${H}`).attr("preserveAspectRatio", "xMidYMid meet");
+      svg.selectAll("*").remove();
+
+      const margin = { top: 20, right: 240, bottom: 50, left: 60 };
+      const innerW = W - margin.left - margin.right;
+      const innerH = H - margin.top - margin.bottom;
+
+      const totalPopM = meta.total_population / 1e6;
+      const maxPM = d3.max(counties, (d) => d.pm25);
+
+      const x = d3.scaleLinear().domain([0, totalPopM]).range([0, innerW]);
+      const yMax = Math.max(16, Math.ceil(maxPM));
+      const y = d3.scaleLinear().domain([0, yMax]).range([innerH, 0]);
+
+      let cum = 0;
+      const bars = counties.map((c) => {
+        const x0 = cum;
+        cum += c.pop / 1e6;
+        return { ...c, x0, x1: cum };
+      });
+
+      const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
+
+      g.append("g")
+        .attr("class", "pm25-grid")
+        .call(d3.axisLeft(y).ticks(8).tickSize(-innerW).tickFormat(""))
+        .selectAll("line")
+        .attr("stroke", "var(--pm25-grid)");
+      g.select(".pm25-grid .domain").remove();
+
+      const barG = g.append("g").attr("class", "pm25-bars");
+      barG.selectAll("rect")
+        .data(bars)
+        .enter().append("rect")
+        .attr("class", "pm25-bar")
+        .attr("x", (d) => x(d.x0))
+        .attr("y", (d) => y(d.pm25))
+        .attr("width", (d) => Math.max(0.4, x(d.x1) - x(d.x0)))
+        .attr("height", (d) => innerH - y(d.pm25))
+        .attr("fill", BAR_COLOR)
+        .attr("data-fips", (d) => d.fips)
+        .on("mouseenter", function (event, d) {
+          d3.select(this).attr("fill", BAR_HOVER);
+          showTooltip(event, d);
+        })
+        .on("mousemove", moveTooltip)
+        .on("mouseleave", function () {
+          const self = this;
+          d3.select(self).attr("fill", function () {
+            return self.classList.contains("active") ? BAR_ACTIVE : BAR_COLOR;
+          });
+          hideTooltip();
+        })
+        .on("click", function (event, d) {
+          d3.selectAll(".pm25-bar.active").classed("active", false).attr("fill", BAR_COLOR);
+          d3.select(this).classed("active", true).attr("fill", BAR_ACTIVE);
+          openPanel(d);
+        });
+
+      function refLine(value, color, dash, label) {
+        g.append("line")
+          .attr("x1", 0).attr("x2", innerW)
+          .attr("y1", y(value)).attr("y2", y(value))
+          .attr("stroke", color)
+          .attr("stroke-width", 1.6)
+          .attr("stroke-dasharray", dash);
+        g.append("text")
+          .attr("x", innerW + 8).attr("y", y(value))
+          .attr("dominant-baseline", "middle")
+          .attr("fill", color)
+          .attr("font-size", 12)
+          .attr("font-weight", 600)
+          .text(label);
+      }
+      refLine(12, NAAQS_COLOR, "2 4", "EPA NAAQS (pre-2024) · 12 µg/m³");
+      refLine(9, NAAQS_COLOR, "8 6", "EPA NAAQS (2024) · 9 µg/m³");
+      refLine(meta.pop_weighted_mean, MEAN_COLOR, null,
+        `Pop-weighted mean · ${fmtPM(meta.pop_weighted_mean)} µg/m³`);
+
+      g.append("g").attr("class", "pm25-axis")
+        .attr("transform", `translate(0,${innerH})`)
+        .call(d3.axisBottom(x).tickFormat((d) => d === 0 ? "0M" : `${d}M`));
+      g.append("g").attr("class", "pm25-axis")
+        .call(d3.axisLeft(y).ticks(8));
+
+      g.append("text")
+        .attr("class", "pm25-axis-label")
+        .attr("x", innerW / 2).attr("y", innerH + 38)
+        .attr("text-anchor", "middle")
+        .text("Cumulative US population (millions), sorted most-exposed → least-exposed");
+      g.append("text")
+        .attr("class", "pm25-axis-label")
+        .attr("transform", `translate(-44,${innerH / 2}) rotate(-90)`)
+        .attr("text-anchor", "middle")
+        .text("Annual mean PM₂.₅ (µg/m³)");
+
+      d3.select("#pm25-subtitle").text(
+        `${fmtPop(meta.n_counties)} counties · ${Math.round(meta.total_population / 1e6)}M people `
+        + `· sorted by PM₂.₅ (highest → lowest) · bar width = county population`
+      );
+
+      const tooltip = d3.select("#pm25-tooltip");
+
+      function topSectors(c, n = 3) {
+        return Object.entries(c.sectors)
+          .filter(([, v]) => v > 0)
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, n);
+      }
+
+      function showTooltip(event, d) {
+        const top = topSectors(d);
+        const rows = top.map(([k, v]) =>
+          `<li><span class="pm25-tt-sector">${k}</span> <span class="pm25-tt-val">${fmtTons(v)} t/yr</span></li>`
+        ).join("");
+        tooltip.html(
+          `<div class="pm25-tt-name">${d.name}</div>`
+          + `<div class="pm25-tt-stat"><b>PM₂.₅:</b> ${fmtPM(d.pm25)} µg/m³</div>`
+          + `<div class="pm25-tt-stat"><b>Population:</b> ${fmtPop(d.pop)}</div>`
+          + `<div class="pm25-tt-stat pm25-tt-sub">Top local sources (primary PM₂.₅, tons/yr):</div>`
+          + `<ul class="pm25-tt-list">${rows || "<li>(no data)</li>"}</ul>`
+          + `<div class="pm25-tt-hint">Click for full breakdown</div>`
+        ).attr("aria-hidden", "false").style("opacity", 1);
+        moveTooltip(event);
+      }
+
+      function moveTooltip(event) {
+        const pad = 14;
+        const ttNode = tooltip.node();
+        const wrapRect = wrapNode.getBoundingClientRect();
+        const xx = event.clientX - wrapRect.left + pad;
+        const yy = event.clientY - wrapRect.top + pad;
+        const maxX = wrapRect.width - ttNode.offsetWidth - 8;
+        const maxY = wrapRect.height - ttNode.offsetHeight - 8;
+        tooltip.style("left", Math.min(xx, maxX) + "px")
+               .style("top", Math.min(yy, maxY) + "px");
+      }
+
+      function hideTooltip() {
+        tooltip.style("opacity", 0).attr("aria-hidden", "true");
+      }
+
+      const panel = d3.select("#pm25-panel");
+      const backdrop = d3.select("#pm25-panel-backdrop");
+
+      function openPanel(d) {
+        panel.classed("open", true).attr("aria-hidden", "false");
+        backdrop.classed("open", true);
+        d3.select("#pm25-panel-county").text(d.name);
+        d3.select("#pm25-panel-meta").html(
+          `<span><b>PM₂.₅:</b> ${fmtPM(d.pm25)} µg/m³</span>`
+          + `<span><b>Population:</b> ${fmtPop(d.pop)}</span>`
+          + `<span><b>FIPS:</b> ${d.fips}</span>`
+        );
+        renderPanelChart(d);
+      }
+
+      function closePanel() {
+        panel.classed("open", false).attr("aria-hidden", "true");
+        backdrop.classed("open", false);
+        d3.selectAll(".pm25-bar.active").classed("active", false).attr("fill", BAR_COLOR);
+      }
+
+      d3.select("#pm25-panel-close").on("click", closePanel);
+      backdrop.on("click", closePanel);
+      d3.select("body").on("keyup.pm25", (e) => { if (e.key === "Escape") closePanel(); });
+
+      function renderPanelChart(d) {
+        const entries = Object.entries(d.sectors)
+          .filter(([, v]) => v > 0)
+          .sort((a, b) => b[1] - a[1]);
+        const sectorMax = d3.max(entries, (e) => e[1]) || 1;
+
+        const pw = panel.node().clientWidth - 48;
+        const rowH = 30;
+        const labelW = 170;
+        const ph = entries.length * rowH + 10;
+        const psvg = d3.select("#pm25-panel-chart")
+          .attr("viewBox", `0 0 ${pw} ${ph}`)
+          .attr("preserveAspectRatio", "xMidYMid meet")
+          .style("height", ph + "px");
+        psvg.selectAll("*").remove();
+
+        const px = d3.scaleLinear().domain([0, sectorMax]).range([0, pw - labelW - 80]);
+
+        const rows = psvg.selectAll("g").data(entries).enter().append("g")
+          .attr("transform", (_, i) => `translate(0,${i * rowH + 4})`);
+
+        rows.append("text")
+          .attr("x", labelW - 8).attr("y", rowH / 2)
+          .attr("text-anchor", "end").attr("dominant-baseline", "middle")
+          .attr("class", "pm25-panel-row-label")
+          .text(([k]) => k);
+
+        rows.append("rect")
+          .attr("x", labelW).attr("y", 4)
+          .attr("width", ([, v]) => Math.max(0.5, px(v)))
+          .attr("height", rowH - 10)
+          .attr("fill", BAR_COLOR)
+          .append("title").text(([k]) => SECTOR_NOTES[k] || k);
+
+        rows.append("text")
+          .attr("x", ([, v]) => labelW + px(v) + 6).attr("y", rowH / 2)
+          .attr("dominant-baseline", "middle")
+          .attr("class", "pm25-panel-row-val")
+          .text(([, v]) => `${fmtTons(v)} t/yr`);
+      }
+
+      let resizeTimer;
+      window.addEventListener("resize", () => {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(() => {
+          if (document.getElementById("pm25-chart-wrap")) render();
+        }, 200);
+      });
+    }
+
+    function start() {
+      if (!document.getElementById("pm25-chart")) return;
+      if (typeof d3 === "undefined") {
+        setTimeout(start, 50);
+        return;
+      }
+      render().catch((err) => {
+        console.error("PM2.5 chart failed to render:", err);
+      });
+    }
+
+    document.addEventListener("astro:page-load", start);
+    if (document.readyState !== "loading") start();
+    else document.addEventListener("DOMContentLoaded", start);
+  })();
+</script>
+
+<style>
+  :root {
+    --pm25-grid: rgba(0, 0, 0, 0.08);
+    --pm25-axis: var(--text-dim);
+    --pm25-tooltip-bg: var(--bg-elevated);
+    --pm25-tooltip-border: rgba(0, 0, 0, 0.15);
+  }
+  [data-theme="dark"] {
+    --pm25-grid: rgba(255, 255, 255, 0.10);
+    --pm25-tooltip-border: rgba(255, 255, 255, 0.18);
+  }
+
+  .pm25-hero {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 1.5rem 1rem 0.5rem;
+  }
+  .pm25-hero-title {
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: clamp(1.5rem, 3vw, 2rem);
+    font-weight: 600;
+    line-height: 1.2;
+    color: var(--text);
+    margin: 0 0 0.6rem;
+  }
+  .pm25-hero-sub {
+    font-size: 0.95rem;
+    line-height: 1.55;
+    color: var(--text-secondary);
+    margin: 0 0 0.4rem;
+  }
+  .pm25-hero-source {
+    font-size: 0.82rem;
+    line-height: 1.5;
+    color: var(--text-dim);
+    margin: 0;
+    font-style: italic;
+  }
+
+  .pm25 {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0.5rem 1rem 3rem;
+  }
+
+  #pm25-chart-root { padding: 0; }
+  #pm25-subtitle {
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    margin: 0.5rem 0 0.75rem;
+  }
+  #pm25-chart-wrap {
+    position: relative;
+    width: 100%;
+  }
+  #pm25-chart {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+
+  .pm25-axis-note {
+    font-size: 0.82rem;
+    color: var(--text-dim);
+    margin: 0.5rem 0 0;
+    font-style: italic;
+  }
+
+  :global(.pm25-bar) {
+    cursor: pointer;
+    transition: fill 80ms ease-out;
+  }
+  :global(.pm25-grid path),
+  :global(.pm25-grid line) {
+    stroke: var(--pm25-grid);
+  }
+  :global(.pm25-grid text) { display: none; }
+  :global(.pm25-axis text) {
+    fill: var(--text-dim);
+    font-size: 11px;
+  }
+  :global(.pm25-axis path),
+  :global(.pm25-axis line) {
+    stroke: var(--pm25-grid);
+  }
+  :global(.pm25-axis-label) {
+    fill: var(--text-dim);
+    font-size: 12px;
+  }
+  :global(.pm25-panel-row-label) {
+    fill: var(--text);
+    font-size: 12px;
+  }
+  :global(.pm25-panel-row-val) {
+    fill: var(--text-dim);
+    font-size: 12px;
+  }
+
+  .pm25-tooltip {
+    position: absolute;
+    pointer-events: none;
+    background: var(--pm25-tooltip-bg);
+    color: var(--text);
+    border: 1px solid var(--pm25-tooltip-border);
+    padding: 8px 10px;
+    font-size: 12px;
+    line-height: 1.4;
+    opacity: 0;
+    transition: opacity 120ms ease-out;
+    max-width: 300px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+    z-index: 10;
+  }
+  :global(.pm25-tt-name) {
+    font-weight: 700;
+    font-size: 13px;
+    margin-bottom: 4px;
+  }
+  :global(.pm25-tt-stat) { color: var(--text-secondary); }
+  :global(.pm25-tt-stat.pm25-tt-sub) {
+    color: var(--text-dim);
+    margin-top: 6px;
+    font-size: 11px;
+  }
+  :global(.pm25-tt-list) {
+    margin: 4px 0 0;
+    padding-left: 18px;
+    color: var(--text-secondary);
+  }
+  :global(.pm25-tt-list li) { margin: 1px 0; }
+  :global(.pm25-tt-val) { color: var(--text-dim); }
+  :global(.pm25-tt-hint) {
+    margin-top: 6px;
+    color: var(--text-dim);
+    font-size: 11px;
+    font-style: italic;
+  }
+
+  .pm25-panel {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 460px;
+    max-width: 92vw;
+    background: var(--bg-elevated);
+    color: var(--text);
+    border-left: 1px solid var(--pm25-tooltip-border);
+    padding: 24px;
+    overflow-y: auto;
+    transform: translateX(100%);
+    transition: transform 180ms ease-out;
+    z-index: 20;
+  }
+  .pm25-panel.open { transform: translateX(0); }
+  .pm25-panel h2 {
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: 1.25rem;
+    margin: 0 0 6px;
+    color: var(--text);
+  }
+  #pm25-panel-meta {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    margin-bottom: 12px;
+  }
+  #pm25-panel-meta span {
+    display: inline-block;
+    margin-right: 10px;
+  }
+  #pm25-panel-caption {
+    font-size: 0.78rem;
+    color: var(--text-dim);
+    font-style: italic;
+    margin-bottom: 12px;
+    line-height: 1.5;
+  }
+  #pm25-panel-chart { width: 100%; }
+  #pm25-panel-notes {
+    margin-top: 12px;
+    font-size: 0.78rem;
+    color: var(--text-dim);
+  }
+  #pm25-panel-close {
+    position: absolute;
+    top: 8px;
+    right: 12px;
+    background: none;
+    border: none;
+    font-size: 1.4rem;
+    line-height: 1;
+    color: var(--text-dim);
+    cursor: pointer;
+    padding: 4px 8px;
+  }
+  #pm25-panel-close:hover { color: var(--text); }
+
+  #pm25-panel-backdrop {
+    position: fixed;
+    top: 0; right: 0; bottom: 0; left: 0;
+    background: rgba(0, 0, 0, 0.08);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 180ms ease-out;
+    z-index: 19;
+  }
+  [data-theme="dark"] #pm25-panel-backdrop {
+    background: rgba(0, 0, 0, 0.35);
+  }
+  #pm25-panel-backdrop.open {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .pm25-caveats {
+    margin-top: 2rem;
+    padding: 1rem 1.25rem;
+    border: 1px solid var(--pm25-tooltip-border);
+    background: var(--bg-subtle);
+  }
+  .pm25-caveats h3 {
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: 1rem;
+    margin: 0 0 0.5rem;
+    color: var(--text);
+  }
+  .pm25-caveats p,
+  .pm25-caveats li {
+    font-size: 0.88rem;
+    line-height: 1.55;
+    color: var(--text-secondary);
+  }
+  .pm25-caveats ul {
+    margin: 0.4rem 0 0;
+    padding-left: 1.1rem;
+  }
+  .pm25-caveats li { margin: 0.3rem 0; }
+
+  @media (max-width: 700px) {
+    .pm25-hero-title { font-size: 1.4rem; }
+    .pm25-panel { width: 100%; padding: 16px; }
+  }
+</style>
