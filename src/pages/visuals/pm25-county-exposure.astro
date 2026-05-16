@@ -129,9 +129,26 @@ import Base from '@/layouts/Base.astro';
     const fmtTons = (d) => d < 10 ? d.toFixed(1) : Math.round(d).toLocaleString();
 
     let selectedFips = null;
+    let selectedState = null;
     let countiesByFips = new Map();
     let dropdownsInitialized = false;
     let resizeAttached = false;
+
+    function fillForBar(node, d) {
+      if (d.fips === selectedFips) return { fill: SELECTED_COLOR, opacity: 1 };
+      if (selectedState && d.name.endsWith(", " + selectedState)) {
+        return { fill: SELECTED_COLOR, opacity: 0.5 };
+      }
+      if (node.classList.contains("active")) return { fill: BAR_ACTIVE, opacity: 1 };
+      return { fill: BAR_COLOR, opacity: 1 };
+    }
+
+    function applyAllBarFills() {
+      d3.selectAll(".pm25-bar").each(function (d) {
+        const f = fillForBar(this, d);
+        d3.select(this).attr("fill", f.fill).attr("opacity", f.opacity);
+      });
+    }
 
     async function render() {
       const data = await d3.json(dataUrl);
@@ -192,29 +209,31 @@ import Base from '@/layouts/Base.astro';
         .attr("fill", BAR_COLOR)
         .attr("data-fips", (d) => d.fips)
         .on("mouseenter", function (event, d) {
-          d3.select(this).attr("fill", BAR_HOVER);
+          const f = fillForBar(this, d);
+          if (f.fill === BAR_COLOR) {
+            d3.select(this).attr("fill", BAR_HOVER);
+          }
+          d3.select(this).attr("opacity", 1);
           const cx = (x(d.x0) + x(d.x1)) / 2;
           crosshair.attr("x1", cx).attr("x2", cx).style("opacity", 1);
           showTooltip(event, d);
         })
         .on("mousemove", moveTooltip)
-        .on("mouseleave", function () {
-          const self = this;
-          d3.select(self).attr("fill", function () {
-            if (self.classList.contains("selected")) return SELECTED_COLOR;
-            if (self.classList.contains("active")) return BAR_ACTIVE;
-            return BAR_COLOR;
-          });
+        .on("mouseleave", function (event, d) {
+          const f = fillForBar(this, d);
+          d3.select(this).attr("fill", f.fill).attr("opacity", f.opacity);
           crosshair.style("opacity", 0);
           hideTooltip();
         })
         .on("click", function (event, d) {
-          d3.selectAll(".pm25-bar.active").classed("active", false).attr("fill", function () {
-            return this.classList.contains("selected") ? SELECTED_COLOR : BAR_COLOR;
+          d3.selectAll(".pm25-bar.active").classed("active", false).each(function () {
+            const dd = d3.select(this).datum();
+            const ff = fillForBar(this, dd);
+            d3.select(this).attr("fill", ff.fill).attr("opacity", ff.opacity);
           });
-          d3.select(this).classed("active", true).attr("fill", function () {
-            return this.classList.contains("selected") ? SELECTED_COLOR : BAR_ACTIVE;
-          });
+          this.classList.add("active");
+          const f = fillForBar(this, d);
+          d3.select(this).attr("fill", f.fill).attr("opacity", f.opacity);
           openPanel(d);
         });
 
@@ -424,10 +443,8 @@ import Base from '@/layouts/Base.astro';
 
       countiesByFips = new Map(counties.map((c) => [c.fips, c]));
 
+      applyAllBarFills();
       if (selectedFips) {
-        d3.select(`.pm25-bar[data-fips="${selectedFips}"]`)
-          .classed("selected", true)
-          .attr("fill", SELECTED_COLOR);
         const c = countiesByFips.get(selectedFips);
         if (c) renderSelectedBreakdown(c);
       }
@@ -460,28 +477,28 @@ import Base from '@/layouts/Base.astro';
       });
     }
 
+    function selectState(state) {
+      selectedState = state || null;
+      applyAllBarFills();
+    }
+
     function selectCounty(fips) {
-      d3.selectAll(".pm25-bar.selected")
-        .classed("selected", false)
-        .attr("fill", function () {
-          return this.classList.contains("active") ? BAR_ACTIVE : BAR_COLOR;
-        });
       selectedFips = fips || null;
       const panel = document.getElementById("pm25-selected");
       if (!selectedFips) {
         panel.hidden = true;
+        applyAllBarFills();
         return;
       }
       const c = countiesByFips.get(selectedFips);
       if (!c) {
         panel.hidden = true;
+        applyAllBarFills();
         return;
       }
-      d3.select(`.pm25-bar[data-fips="${selectedFips}"]`)
-        .classed("selected", true)
-        .attr("fill", SELECTED_COLOR);
       renderSelectedBreakdown(c);
       panel.hidden = false;
+      applyAllBarFills();
     }
 
     function renderSelectedBreakdown(c) {
@@ -567,6 +584,7 @@ import Base from '@/layouts/Base.astro';
         countySel.disabled = filtered.length === 0;
         countySel.value = "";
         selectCounty(null);
+        selectState(state || null);
         updateClear();
       });
 
@@ -580,6 +598,7 @@ import Base from '@/layouts/Base.astro';
         countySel.innerHTML = '<option value="">— Select —</option>';
         countySel.disabled = true;
         selectCounty(null);
+        selectState(null);
         updateClear();
       });
     }
