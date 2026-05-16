@@ -15,6 +15,23 @@ import Base from '@/layouts/Base.astro';
   </header>
 
   <article class="pm25">
+    <section class="pm25-controls" aria-label="Find your county">
+      <span class="pm25-controls-label">Find your county</span>
+      <label class="pm25-control">
+        <span>State</span>
+        <select id="pm25-state-select" aria-label="Select state">
+          <option value="">— Select —</option>
+        </select>
+      </label>
+      <label class="pm25-control">
+        <span>County</span>
+        <select id="pm25-county-select" aria-label="Select county" disabled>
+          <option value="">— Select —</option>
+        </select>
+      </label>
+      <button id="pm25-clear" type="button" class="pm25-clear" hidden>Clear</button>
+    </section>
+
     <div id="pm25-chart-root">
       <div id="pm25-subtitle"></div>
 
@@ -25,6 +42,18 @@ import Base from '@/layouts/Base.astro';
 
       <p class="pm25-axis-note">Click any bar for a full source breakdown. The pop-weighted mean line shows what the average American actually breathes.</p>
     </div>
+
+    <section id="pm25-selected" class="pm25-selected" hidden aria-live="polite">
+      <header class="pm25-selected-head">
+        <h2 id="pm25-selected-name"></h2>
+        <div id="pm25-selected-meta"></div>
+      </header>
+      <p class="pm25-selected-caption">
+        Local primary PM<sub>2.5</sub> emissions inside this county, in tons per year (EPA NEI 2020).
+        Note: these are sources <em>emitted</em> within the county — not the same as what determines the ambient concentration on the chart above.
+      </p>
+      <svg id="pm25-selected-chart" role="img" aria-label="Local PM2.5 emission sources"></svg>
+    </section>
 
     <section class="pm25-caveats pm25-prose" aria-labelledby="pm25-cav-title">
       <h3 id="pm25-cav-title">A note on what the colors mean</h3>
@@ -74,12 +103,35 @@ import Base from '@/layouts/Base.astro';
     const BAR_COLOR = "#4d5a1f";
     const BAR_HOVER = "#7a8c33";
     const BAR_ACTIVE = "#a8b94a";
+    const SELECTED_COLOR = "#c0392b";
     const NAAQS_COLOR = "#a83a2c";
     const MEAN_COLOR = "#bd7b1a";
+
+    const STATE_NAMES = {
+      AL: "Alabama", AK: "Alaska", AZ: "Arizona", AR: "Arkansas",
+      CA: "California", CO: "Colorado", CT: "Connecticut", DE: "Delaware",
+      DC: "District of Columbia", FL: "Florida", GA: "Georgia", HI: "Hawaii",
+      ID: "Idaho", IL: "Illinois", IN: "Indiana", IA: "Iowa",
+      KS: "Kansas", KY: "Kentucky", LA: "Louisiana", ME: "Maine",
+      MD: "Maryland", MA: "Massachusetts", MI: "Michigan", MN: "Minnesota",
+      MS: "Mississippi", MO: "Missouri", MT: "Montana", NE: "Nebraska",
+      NV: "Nevada", NH: "New Hampshire", NJ: "New Jersey", NM: "New Mexico",
+      NY: "New York", NC: "North Carolina", ND: "North Dakota", OH: "Ohio",
+      OK: "Oklahoma", OR: "Oregon", PA: "Pennsylvania", RI: "Rhode Island",
+      SC: "South Carolina", SD: "South Dakota", TN: "Tennessee", TX: "Texas",
+      UT: "Utah", VT: "Vermont", VA: "Virginia", WA: "Washington",
+      WV: "West Virginia", WI: "Wisconsin", WY: "Wyoming",
+      PR: "Puerto Rico", GU: "Guam", VI: "U.S. Virgin Islands",
+    };
 
     const fmtPM = (d) => d.toFixed(1);
     const fmtPop = (d) => d.toLocaleString();
     const fmtTons = (d) => d < 10 ? d.toFixed(1) : Math.round(d).toLocaleString();
+
+    let selectedFips = null;
+    let countiesByFips = new Map();
+    let dropdownsInitialized = false;
+    let resizeAttached = false;
 
     async function render() {
       const data = await d3.json(dataUrl);
@@ -149,14 +201,20 @@ import Base from '@/layouts/Base.astro';
         .on("mouseleave", function () {
           const self = this;
           d3.select(self).attr("fill", function () {
-            return self.classList.contains("active") ? BAR_ACTIVE : BAR_COLOR;
+            if (self.classList.contains("selected")) return SELECTED_COLOR;
+            if (self.classList.contains("active")) return BAR_ACTIVE;
+            return BAR_COLOR;
           });
           crosshair.style("opacity", 0);
           hideTooltip();
         })
         .on("click", function (event, d) {
-          d3.selectAll(".pm25-bar.active").classed("active", false).attr("fill", BAR_COLOR);
-          d3.select(this).classed("active", true).attr("fill", BAR_ACTIVE);
+          d3.selectAll(".pm25-bar.active").classed("active", false).attr("fill", function () {
+            return this.classList.contains("selected") ? SELECTED_COLOR : BAR_COLOR;
+          });
+          d3.select(this).classed("active", true).attr("fill", function () {
+            return this.classList.contains("selected") ? SELECTED_COLOR : BAR_ACTIVE;
+          });
           openPanel(d);
         });
 
@@ -211,7 +269,7 @@ import Base from '@/layouts/Base.astro';
       });
 
       const ANNOTATIONS = [
-        { fips: "02090", label: "Fairbanks, AK", anchor: "start" },
+        { fips: "06037", label: "Los Angeles", anchor: "middle" },
         { fips: "17031", label: "Cook County, IL", anchor: "middle" },
       ];
       ANNOTATIONS.forEach((a) => {
@@ -364,13 +422,31 @@ import Base from '@/layouts/Base.astro';
           .text(([, v]) => `${fmtTons(v)} t/yr`);
       }
 
-      let resizeTimer;
-      window.addEventListener("resize", () => {
-        clearTimeout(resizeTimer);
-        resizeTimer = setTimeout(() => {
-          if (document.getElementById("pm25-chart-wrap")) render();
-        }, 200);
-      });
+      countiesByFips = new Map(counties.map((c) => [c.fips, c]));
+
+      if (selectedFips) {
+        d3.select(`.pm25-bar[data-fips="${selectedFips}"]`)
+          .classed("selected", true)
+          .attr("fill", SELECTED_COLOR);
+        const c = countiesByFips.get(selectedFips);
+        if (c) renderSelectedBreakdown(c);
+      }
+
+      if (!dropdownsInitialized) {
+        initDropdowns(counties);
+        dropdownsInitialized = true;
+      }
+
+      if (!resizeAttached) {
+        let resizeTimer;
+        window.addEventListener("resize", () => {
+          clearTimeout(resizeTimer);
+          resizeTimer = setTimeout(() => {
+            if (document.getElementById("pm25-chart-wrap")) render();
+          }, 200);
+        });
+        resizeAttached = true;
+      }
     }
 
     function start() {
@@ -381,6 +457,130 @@ import Base from '@/layouts/Base.astro';
       }
       render().catch((err) => {
         console.error("PM2.5 chart failed to render:", err);
+      });
+    }
+
+    function selectCounty(fips) {
+      d3.selectAll(".pm25-bar.selected")
+        .classed("selected", false)
+        .attr("fill", function () {
+          return this.classList.contains("active") ? BAR_ACTIVE : BAR_COLOR;
+        });
+      selectedFips = fips || null;
+      const panel = document.getElementById("pm25-selected");
+      if (!selectedFips) {
+        panel.hidden = true;
+        return;
+      }
+      const c = countiesByFips.get(selectedFips);
+      if (!c) {
+        panel.hidden = true;
+        return;
+      }
+      d3.select(`.pm25-bar[data-fips="${selectedFips}"]`)
+        .classed("selected", true)
+        .attr("fill", SELECTED_COLOR);
+      renderSelectedBreakdown(c);
+      panel.hidden = false;
+    }
+
+    function renderSelectedBreakdown(c) {
+      const panel = document.getElementById("pm25-selected");
+      document.getElementById("pm25-selected-name").textContent = c.name;
+      document.getElementById("pm25-selected-meta").innerHTML =
+        `<span><b>PM₂.₅:</b> ${fmtPM(c.pm25)} µg/m³</span>`
+        + `<span><b>Population:</b> ${fmtPop(c.pop)}</span>`
+        + `<span><b>FIPS:</b> ${c.fips}</span>`;
+
+      const entries = Object.entries(c.sectors)
+        .filter(([, v]) => v > 0)
+        .sort((a, b) => b[1] - a[1]);
+
+      const sw = Math.max(360, panel.clientWidth - 48);
+      const rowH = 32;
+      const labelW = 200;
+      const valW = 90;
+      const sh = entries.length * rowH + 12;
+      const ssvg = d3.select("#pm25-selected-chart")
+        .attr("viewBox", `0 0 ${sw} ${sh}`)
+        .attr("preserveAspectRatio", "xMidYMid meet")
+        .style("height", sh + "px");
+      ssvg.selectAll("*").remove();
+
+      const sectorMax = d3.max(entries, (e) => e[1]) || 1;
+      const px = d3.scaleLinear().domain([0, sectorMax]).range([0, sw - labelW - valW]);
+
+      const rows = ssvg.selectAll("g").data(entries).enter().append("g")
+        .attr("transform", (_, i) => `translate(0,${i * rowH + 6})`);
+
+      rows.append("text")
+        .attr("x", labelW - 10).attr("y", rowH / 2)
+        .attr("text-anchor", "end").attr("dominant-baseline", "middle")
+        .attr("class", "pm25-panel-row-label")
+        .text(([k]) => k);
+
+      rows.append("rect")
+        .attr("x", labelW).attr("y", 4)
+        .attr("width", ([, v]) => Math.max(0.5, px(v)))
+        .attr("height", rowH - 12)
+        .attr("fill", SELECTED_COLOR)
+        .attr("opacity", 0.88)
+        .append("title").text(([k]) => SECTOR_NOTES[k] || k);
+
+      rows.append("text")
+        .attr("x", ([, v]) => labelW + px(v) + 8).attr("y", rowH / 2)
+        .attr("dominant-baseline", "middle")
+        .attr("class", "pm25-panel-row-val")
+        .text(([, v]) => `${fmtTons(v)} t/yr`);
+    }
+
+    function initDropdowns(counties) {
+      const stateSel = document.getElementById("pm25-state-select");
+      const countySel = document.getElementById("pm25-county-select");
+      const clearBtn = document.getElementById("pm25-clear");
+      if (!stateSel || !countySel) return;
+
+      const states = Array.from(new Set(
+        counties.map((c) => c.name.split(",").pop().trim())
+      )).sort((a, b) => (STATE_NAMES[a] || a).localeCompare(STATE_NAMES[b] || b));
+
+      stateSel.innerHTML =
+        '<option value="">— Select —</option>'
+        + states.map((s) => `<option value="${s}">${STATE_NAMES[s] || s}</option>`).join("");
+
+      function updateClear() {
+        clearBtn.hidden = !(stateSel.value || countySel.value);
+      }
+
+      stateSel.addEventListener("change", (e) => {
+        const state = e.target.value;
+        const filtered = state
+          ? counties.filter((c) => c.name.endsWith(", " + state))
+                    .sort((a, b) => a.name.localeCompare(b.name))
+          : [];
+        countySel.innerHTML =
+          '<option value="">— Select —</option>'
+          + filtered.map((c) => {
+              const short = c.name.replace(", " + state, "");
+              return `<option value="${c.fips}">${short}</option>`;
+            }).join("");
+        countySel.disabled = filtered.length === 0;
+        countySel.value = "";
+        selectCounty(null);
+        updateClear();
+      });
+
+      countySel.addEventListener("change", (e) => {
+        selectCounty(e.target.value || null);
+        updateClear();
+      });
+
+      clearBtn.addEventListener("click", () => {
+        stateSel.value = "";
+        countySel.innerHTML = '<option value="">— Select —</option>';
+        countySel.disabled = true;
+        selectCounty(null);
+        updateClear();
       });
     }
 
@@ -456,11 +656,119 @@ import Base from '@/layouts/Base.astro';
     margin: 0 auto;
   }
 
+  .pm25-controls {
+    display: flex;
+    align-items: flex-end;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    margin: 0.25rem 0 1rem;
+    padding: 0.85rem 1rem;
+    background: var(--pm25-card-bg);
+    border: 1px solid var(--pm25-card-border);
+  }
+  .pm25-controls-label {
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: 0.95rem;
+    color: var(--text);
+    align-self: center;
+    margin-right: 0.25rem;
+  }
+  .pm25-control {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: 0.72rem;
+    color: var(--text-dim);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .pm25-control select {
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: 0.9rem;
+    color: var(--text);
+    background: var(--bg);
+    border: 1px solid var(--pm25-card-border);
+    padding: 0.4rem 0.6rem;
+    min-width: 13rem;
+    text-transform: none;
+    letter-spacing: normal;
+    cursor: pointer;
+  }
+  .pm25-control select:disabled {
+    color: var(--text-dim);
+    cursor: not-allowed;
+    opacity: 0.7;
+  }
+  .pm25-clear {
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+    background: transparent;
+    border: 1px solid var(--pm25-card-border);
+    padding: 0.45rem 0.85rem;
+    cursor: pointer;
+    align-self: end;
+  }
+  .pm25-clear:hover {
+    color: var(--text);
+    border-color: var(--text-dim);
+  }
+
   #pm25-chart-root {
     background: var(--pm25-card-bg);
     border: 1px solid var(--pm25-card-border);
     padding: 1.25rem 1.5rem 1.4rem;
     margin-top: 0.25rem;
+  }
+
+  .pm25-selected {
+    margin: 1.25rem 0 0;
+    padding: 1.25rem 1.5rem 1.4rem;
+    background: var(--pm25-card-bg);
+    border: 1px solid var(--pm25-card-border);
+    border-left: 3px solid var(--pm25-selected, #c0392b);
+  }
+  :root {
+    --pm25-selected: #c0392b;
+  }
+  .pm25-selected-head {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 0.5rem 1.25rem;
+    margin-bottom: 0.5rem;
+  }
+  .pm25-selected-head h2 {
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text);
+    margin: 0;
+  }
+  #pm25-selected-meta {
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+  }
+  #pm25-selected-meta span {
+    display: inline-block;
+    margin-right: 1rem;
+  }
+  .pm25-selected-caption {
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    font-style: italic;
+    margin: 0 0 0.9rem;
+    line-height: 1.5;
+    max-width: 64ch;
+  }
+  #pm25-selected-chart {
+    width: 100%;
+    height: auto;
+    display: block;
+    overflow: visible;
   }
   #pm25-subtitle {
     font-family: 'Inter', system-ui, sans-serif;
