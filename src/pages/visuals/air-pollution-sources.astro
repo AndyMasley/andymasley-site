@@ -6,53 +6,117 @@ import Base from '@/layouts/Base.astro';
   title="Air pollution sources by county"
   description="Look up the sources of fine particulate (PM2.5) and ozone-forming pollutants (NOx, VOCs) in any U.S. county. Built from the EPA's 2020 National Emissions Inventory."
 >
-  <article class="aps">
-    <h1>Air pollution sources in your county</h1>
+  <header class="aps-hero">
+    <h1 class="aps-hero-title">Air pollution sources in your county</h1>
+    <p class="aps-hero-sub">See where PM<sub>2.5</sub>, NO<sub>x</sub>, and VOC emissions come from, how your county compares with health guidelines, and which sources cause the most estimated harm.</p>
+    <p class="aps-hero-source">Data from the EPA's 2020 National Emissions Inventory and 2025 EPA monitor readings. Your county is estimated from your location — you can change it below.</p>
+  </header>
 
-    <div class="prose aps-intro">
-      <p>This is every reported source of <strong>PM2.5</strong> (fine particulate matter that lodges in your lungs) and the two main <strong>ozone precursors</strong> — <strong>nitrogen oxides (NOx)</strong> and <strong>volatile organic compounds (VOCs)</strong> — in any U.S. county, drawn from the EPA's <a href="https://www.epa.gov/air-emissions-inventories/2020-national-emissions-inventory-nei-data" target="_blank" rel="noopener">2020 National Emissions Inventory</a>.</p>
+  <article class="aps" id="aps">
 
-      <p>The EPA's 59 source sectors are rolled up into 13 readable buckets. Ozone itself isn't directly emitted — it forms in the atmosphere when NOx and VOCs react in sunlight, so the ozone panels show what's emitted, not the ozone you breathe. <strong>Biogenic VOCs</strong> from trees and soils are shown as a separate "natural background" bar — they often dwarf human sources, which is itself worth knowing.</p>
-
-      <p>The "What's in the air" panel also translates each measured concentration into something more tangible: a passive-smoking equivalent for PM2.5, plus the WHO-guideline-baseline excess mortality and asthma risks for ozone and NO₂. These are coarse calibrations from peer-reviewed studies, not personal predictions — see the methodology section for the formulas and citations.</p>
-
-      <p>Pick a state and county below. The chart loads with your county based on your IP location.</p>
-    </div>
-
-    <div class="aps-controls">
-      <div class="aps-selects">
-        <label class="aps-label">
-          <span>State</span>
-          <select id="aps-state"></select>
-        </label>
-        <label class="aps-label">
-          <span>County</span>
-          <select id="aps-county"></select>
-        </label>
+    <!-- County picker card -->
+    <section class="aps-card aps-picker" aria-labelledby="aps-picker-title">
+      <div class="aps-picker-head">
+        <h2 class="aps-card-title" id="aps-picker-title">Choose a county</h2>
+        <div class="aps-picker-current" id="aps-picker-current" aria-live="polite"></div>
       </div>
-      <div class="aps-mode">
-        <button class="aps-mode-btn" data-mode="raw" data-active="true">Tons / year</button>
-        <button class="aps-mode-btn" data-mode="percap" data-active="false">Per 100K residents</button>
-        <button class="aps-mode-btn" data-mode="damage" data-active="false">Health damage ($)</button>
+      <div class="aps-picker-controls">
+        <label class="aps-field">
+          <span class="aps-field-label">State</span>
+          <select id="aps-state" aria-label="Select state"></select>
+        </label>
+        <label class="aps-field">
+          <span class="aps-field-label">County</span>
+          <select id="aps-county" aria-label="Select county" disabled></select>
+        </label>
+        <div class="aps-picker-actions">
+          <button class="aps-btn" type="button" id="aps-locate" title="Use my location">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
+            <span>Use my location</span>
+          </button>
+          <button class="aps-btn aps-btn-ghost" type="button" id="aps-share" title="Copy link to this county">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+            <span id="aps-share-label">Copy link</span>
+          </button>
+        </div>
       </div>
-    </div>
+    </section>
 
-    <div class="aps-county-info" id="aps-county-info"></div>
+    <!-- County summary strip -->
+    <section class="aps-summary" id="aps-summary" aria-live="polite">
+      <div class="aps-summary-loading">Loading county data…</div>
+    </section>
 
-    <section class="aps-aq" id="aps-aq">
-      <div class="aps-aq-header">
-        <h2 class="aps-aq-title">What's actually in the air <span class="aps-aq-sub">— 2025 EPA monitor readings</span></h2>
+    <!-- Air quality metric cards -->
+    <section class="aps-section" aria-labelledby="aps-aq-title">
+      <div class="aps-section-head">
+        <div>
+          <h2 class="aps-section-title" id="aps-aq-title">What you're breathing</h2>
+          <p class="aps-section-desc">2025 EPA monitor readings, compared with the EPA's NAAQS limits and the stricter WHO guidelines.</p>
+        </div>
       </div>
       <div class="aps-aq-grid" id="aps-aq-grid"></div>
       <p class="aps-aq-note" id="aps-aq-note"></p>
     </section>
 
-    <h2 class="aps-section-title" id="aps-section-title">Emissions by source <span class="aps-aq-sub" id="aps-section-sub">— EPA 2020 NEI, tick marks show the national county average</span></h2>
+    <!-- Explainer: emissions vs concentration -->
+    <aside class="aps-explainer" aria-label="Emissions are not the same as what you breathe">
+      <h3>Emissions are not the same as what you breathe</h3>
+      <p>Emissions show what local sources release. Air monitor readings above show what was actually measured. Smoke and ozone drift across county lines — and ozone isn't directly emitted at all. It forms when NO<sub>x</sub> and VOCs react in sunlight, so the ozone chart below shows precursor emissions.</p>
+    </aside>
 
-    <div class="aps-chart" id="aps-chart"></div>
+    <!-- Emissions section -->
+    <section class="aps-section" aria-labelledby="aps-em-title">
+      <div class="aps-section-head aps-section-head-row">
+        <div>
+          <h2 class="aps-section-title" id="aps-em-title">Where emissions come from</h2>
+          <p class="aps-section-desc" id="aps-em-desc">Top source categories for the selected county. Switch the metric to compare total emissions, emissions per person, or estimated dollars of health harm.</p>
+        </div>
+        <div class="aps-mode" role="tablist" aria-label="Emissions metric">
+          <button class="aps-mode-btn" role="tab" aria-selected="true" data-mode="raw" data-active="true">Total emissions</button>
+          <button class="aps-mode-btn" role="tab" aria-selected="false" data-mode="percap" data-active="false">Per person</button>
+          <button class="aps-mode-btn" role="tab" aria-selected="false" data-mode="damage" data-active="false">Health cost</button>
+        </div>
+      </div>
 
-    <p class="aps-stack-note" id="aps-chart-note">NOx and VOCs combine in sunlight to form ground-level ozone. Hover any slice or legend row for details.</p>
+      <p class="aps-mode-note" id="aps-mode-note"></p>
 
+      <div class="aps-charts" id="aps-charts"></div>
+
+      <!-- Sortable source table -->
+      <div class="aps-table-wrap">
+        <div class="aps-table-head">
+          <h3 class="aps-table-title">All sources by pollutant</h3>
+          <span class="aps-table-hint">Click a column header to sort. Hover a row to highlight matching bars.</span>
+        </div>
+        <div class="aps-table-scroll">
+          <table class="aps-table" id="aps-table">
+            <thead>
+              <tr>
+                <th scope="col" data-col="source" class="aps-th-source">Source</th>
+                <th scope="col" data-col="pm25" class="aps-th-num">PM<sub>2.5</sub><span class="aps-th-unit" id="aps-unit-pm25">t/yr</span></th>
+                <th scope="col" data-col="nox" class="aps-th-num">NO<sub>x</sub><span class="aps-th-unit" id="aps-unit-nox">t/yr</span></th>
+                <th scope="col" data-col="voc" class="aps-th-num">VOC<span class="aps-th-unit" id="aps-unit-voc">t/yr</span></th>
+              </tr>
+            </thead>
+            <tbody id="aps-table-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- Caveats -->
+    <aside class="aps-caveats" aria-labelledby="aps-cav-title">
+      <h3 id="aps-cav-title">Important caveats</h3>
+      <ul>
+        <li>Emissions inventories estimate what sources <em>release</em>, not exactly what residents breathe.</li>
+        <li>Ozone is not directly emitted — NO<sub>x</sub> and VOCs are shown as its precursors.</li>
+        <li>Health-cost values are approximate national averages by source category, not exact medical predictions.</li>
+        <li>"Per person" divides local emissions by the county population — it doesn't mean each person personally caused that amount.</li>
+      </ul>
+    </aside>
+
+    <!-- Tooltip -->
     <div class="aps-tip" id="aps-tip" style="display:none" role="tooltip" aria-hidden="true">
       <div class="aps-tip-header">
         <span class="aps-tip-swatch" id="aps-tip-swatch"></span>
@@ -63,231 +127,525 @@ import Base from '@/layouts/Base.astro';
       <div class="aps-tip-desc" id="aps-tip-desc"></div>
     </div>
 
-    <table class="aps-legend" id="aps-legend">
-      <thead>
-        <tr>
-          <th class="aps-legend-source">Source</th>
-          <th class="aps-legend-num">PM<sub>2.5</sub></th>
-          <th class="aps-legend-num">NOx</th>
-          <th class="aps-legend-num">VOC</th>
-        </tr>
-      </thead>
-      <tbody id="aps-legend-body"></tbody>
-    </table>
-
+    <!-- Methodology accordion -->
     <details class="aps-meth">
-      <summary>Methodology &amp; caveats</summary>
+      <summary>
+        <span class="aps-meth-title">Methodology and caveats</span>
+        <svg class="aps-meth-chev" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><polyline points="6 9 12 15 18 9"></polyline></svg>
+      </summary>
       <div class="aps-meth-body">
-        <p><strong>Emissions data.</strong> EPA 2020 National Emissions Inventory (NEI), released March 2023. The 2023 NEI has not yet been published. Population estimates: U.S. Census Bureau's 2024 county population estimates.</p>
-        <p><strong>Air-quality measurements.</strong> EPA Air Quality System (AQS) 2025 annual concentration summaries (released November 2025). For each pollutant, the value shown is the maximum across all monitors in the county — this matches how the EPA evaluates NAAQS compliance (the standard applies to the most-polluted monitor). About 640 counties have a PM2.5 monitor, 740 have ozone, and 240 have NO2; the rest are "Not monitored." NAAQS thresholds: PM2.5 9 µg/m³ annual (2024 revision), ozone 70 ppb 8-hr (2015), NO2 53 ppb annual (1971).</p>
-        <p><strong>Emissions vs. concentration.</strong> The stacked bars show what's <em>emitted</em> from sources inside your county. The "What's in the air" cards show what's actually <em>measured</em> in the air. These can differ a lot: smoke from distant wildfires, ozone formed downwind from upwind NOx sources, and PM2.5 that drifted in from neighboring counties all show up in the monitors without appearing in local emissions. EPA's National Emissions Inventory is the best public picture of where pollutants come from; the monitors are the best picture of what you actually breathe.</p>
-        <p><strong>Health-impact framing.</strong> The italicized line under each air-quality card converts the measured concentration into a tangible harm metric. These are coarse population-level calibrations, not predictions for any individual:</p>
-        <ul style="font-size:var(--font-size-small);color:var(--text-secondary);margin:0 0 0.75em 1.25em;padding:0;">
-          <li><em>PM₂.₅ → cigarettes/day equivalent.</em> Berkeley Earth's calibration: ~22 µg/m³ of sustained outdoor PM₂.₅ produces roughly the same all-cause mortality risk as smoking one cigarette per day, based on Pope, Burnett, &amp; Krewski's pooled exposure-response curves (<a href="https://berkeleyearth.org/air-pollution-and-cigarette-equivalence/" target="_blank" rel="noopener">link</a>). The cigarette equivalent shown is concentration ÷ 22.</li>
-          <li><em>PM₂.₅ → life expectancy.</em> Air Quality Life Index (Greenstone &amp; Pande, EPIC at U Chicago): each 1 µg/m³ above the WHO 5 µg/m³ guideline corresponds to ~0.098 years (≈36 days) of lost life expectancy if sustained over a lifetime (<a href="https://aqli.epic.uchicago.edu/" target="_blank" rel="noopener">aqli.epic.uchicago.edu</a>).</li>
-          <li><em>Ozone → respiratory mortality risk.</em> Jerrett et al. 2009 (<em>NEJM</em>): each 10 ppb increase in long-term 8-hr ozone is associated with roughly a 4% increase in respiratory mortality. Baseline is the WHO 60 ppb peak-season guideline.</li>
-          <li><em>NO₂ → pediatric asthma risk.</em> Khreis et al. 2017 (<em>Environment International</em>) meta-analysis: each 4 µg/m³ (≈2 ppb) of NO₂ is associated with roughly a 5% increase in pediatric asthma incidence. Baseline is the WHO 10 µg/m³ annual guideline (≈5 ppb).</li>
+        <h4>Data sources</h4>
+        <p>EPA 2020 National Emissions Inventory (NEI), released March 2023. The 2023 NEI has not yet been published. Population estimates: U.S. Census Bureau's 2024 county population estimates. Air-quality measurements: EPA Air Quality System (AQS) 2025 annual concentration summaries (released November 2025).</p>
+
+        <h4>Pollutants and monitor coverage</h4>
+        <p>For each pollutant, the value shown is the maximum across all monitors in the county — this matches how the EPA evaluates NAAQS compliance. About 640 counties have a PM<sub>2.5</sub> monitor, 740 have ozone, and 240 have NO<sub>2</sub>; the rest are listed as "Not monitored." NAAQS thresholds: PM<sub>2.5</sub> 9 µg/m³ annual (2024 revision), ozone 70 ppb 8-hr (2015), NO<sub>2</sub> 53 ppb annual (1971).</p>
+
+        <h4>Emissions vs. concentration</h4>
+        <p>The bar charts show what's emitted from sources <em>inside</em> your county. The "What you're breathing" cards show what's actually measured in the air. These can differ substantially: distant wildfire smoke, ozone formed downwind from upwind NO<sub>x</sub> sources, and PM<sub>2.5</sub> that drifted in from neighboring counties show up at the monitors without appearing in local emissions.</p>
+
+        <h4>Source categories</h4>
+        <p>The EPA's 59 published source sectors are rolled up here into 13 readable buckets: on-road vehicles; off-road equipment; aircraft, ships, trains; power plants; industrial fuel combustion; residential heating; industrial processes; oil &amp; gas production; wildfires and prescribed burns; dust; agriculture; solvents and coatings; other; plus natural background (biogenic VOCs).</p>
+
+        <h4>How "per person" is calculated</h4>
+        <p>Total county emissions divided by 2024 population. This is a normalization, not an exposure metric — pollution disperses across regions, and a rural county with one refinery or a major wildfire can look catastrophically high per resident even though most people don't breathe those emissions directly.</p>
+
+        <h4>How health cost is estimated</h4>
+        <p>Each ton is multiplied by a source-specific marginal damage value (2019 USD, mortality at 3% discount). Not all tons are equal — a ton of urban diesel exhaust causes roughly 50× the health damage of a ton of road dust. Per-ton damage factors used (national averages):</p>
+        <ul>
+          <li>PM<sub>2.5</sub>: on-road ~$2.2M/ton, off-road ~$1.7M, residential heating ~$1.4M, industrial fuel combustion ~$900K, industrial processes ~$700K, solvents ~$400K, aircraft/ships/trains ~$400K, oil &amp; gas ~$150K, wildfires ~$130K, power plants ~$110K, agriculture ~$100K, dust ~$40K.</li>
+          <li>NO<sub>x</sub>: ~$10K–$20K/ton depending on source (forms secondary PM<sub>2.5</sub> and ozone).</li>
+          <li>VOC: ~$1.5K–$4.5K/ton depending on source (ozone precursor; small contribution to secondary PM<sub>2.5</sub>).</li>
         </ul>
-        <p style="font-size:var(--font-size-small);color:var(--text-secondary);">These metrics use the maximum monitor value in the county, which is consistent with NAAQS evaluation but biases toward the most-polluted area. Real exposure varies by neighborhood, time spent indoors, and indoor air quality (cooking, smoking, ventilation) — often more than the outdoor reading itself.</p>
-        <p><strong>Reference ticks.</strong> The dashed tick on each bar segment marks where the segment would end if that source emitted at the national county average. A tick near the left edge means your county emits many times the national average for that source. A tick at the right edge with a dotted indicator means your county is below the national average for that source.</p>
-        <p><strong>Health-damage mode.</strong> The "Health damage ($)" toggle re-weights each bar segment by the estimated marginal health cost of that source. Not all tons are equal — a ton of ground-level urban diesel exhaust causes roughly 50× the health damage of a ton of road dust, because diesel particles are smaller, more toxic, and emitted right next to people, while dust is coarser, less harmful, and dispersed in arid rural air. Per-ton damage factors used (national averages, 2019 USD, mortality at 3% discount):</p>
-        <ul style="font-size:var(--font-size-small);color:var(--text-secondary);margin:0 0 0.75em 1.25em;padding:0;">
-          <li>PM₂.₅: on-road ~$2.2M/ton, off-road ~$1.7M, residential heating ~$1.4M, industrial fuel comb ~$900K, industrial processes ~$700K, solvents ~$400K, aircraft/ships/trains ~$400K, oil &amp; gas ~$150K, wildfires ~$130K, power plants ~$110K, agriculture ~$100K, dust ~$40K.</li>
-          <li>NOx: ~$10K–$20K/ton depending on source (forms secondary PM₂.₅ and ozone).</li>
-          <li>VOC: ~$1.5K–$4.5K/ton depending on source (ozone precursor; small contribution to secondary PM₂.₅).</li>
+        <p>Derived from EPA OAQPS Benefit-per-Ton memos and <a href="https://www.pnas.org/doi/10.1073/pnas.1816102116" target="_blank" rel="noopener">Goodkind et al. 2019 (PNAS)</a>. Real marginal damage depends on stack height, season, prevailing winds, and proximity to population. Treat dollar figures as order-of-magnitude rankings.</p>
+
+        <h4>Health-impact framing in air-quality cards</h4>
+        <ul>
+          <li><em>PM<sub>2.5</sub> → cigarettes/day equivalent.</em> Berkeley Earth: ~22 µg/m³ continuous PM<sub>2.5</sub> ≈ one cigarette/day mortality-risk equivalent (<a href="https://berkeleyearth.org/air-pollution-and-cigarette-equivalence/" target="_blank" rel="noopener">link</a>).</li>
+          <li><em>PM<sub>2.5</sub> → life expectancy.</em> Air Quality Life Index (Greenstone &amp; Pande, EPIC): each 1 µg/m³ above the WHO 5 µg/m³ guideline ≈ 0.098 years (≈36 days) lost (<a href="https://aqli.epic.uchicago.edu/" target="_blank" rel="noopener">aqli.epic.uchicago.edu</a>).</li>
+          <li><em>Ozone → respiratory mortality risk.</em> Jerrett et al. 2009 (<em>NEJM</em>): each 10 ppb increase ≈ +4% respiratory mortality. Baseline: WHO 60 ppb.</li>
+          <li><em>NO<sub>2</sub> → pediatric asthma risk.</em> Khreis et al. 2017 (<em>Environment International</em>) meta-analysis: each 4 µg/m³ (~2 ppb) ≈ +5% pediatric asthma incidence. Baseline: WHO 10 µg/m³ (~5 ppb).</li>
         </ul>
-        <p style="font-size:var(--font-size-small);color:var(--text-secondary);">These factors are derived from EPA OAQPS Benefit-per-Ton memos (used in EPA Regulatory Impact Analyses) and <a href="https://www.pnas.org/doi/10.1073/pnas.1816102116" target="_blank" rel="noopener">Goodkind et al. 2019 (PNAS)</a>, which uses the InMAP source-receptor model to derive county-resolved marginal damages. The values here are national averages by source category — the actual marginal damage of a real emission depends strongly on stack height, season, prevailing winds, and proximity to population. A coal plant in rural Wyoming has a much lower per-ton impact than the same emissions in suburban New Jersey. Damages are dominated by attributable mortality (value of statistical life ~$10M); morbidity (asthma, ER visits) adds maybe 5–10%. Treat the dollar figures as order-of-magnitude rankings, not exact predictions.</p>
-        <p><strong>What's a "source sector"?</strong> The EPA classifies every emission down to a specific equipment/activity code (SCC). The NEI's 59 published sectors aggregate those codes into recognizable categories like "On-Road Diesel Heavy Duty Vehicles" or "Industrial Processes - Petroleum Refineries." This page rolls those 59 sectors up into 13 buckets for readability.</p>
-        <p><strong>Why split out oil &amp; gas production?</strong> It's politically distinct from other industrial processes and disproportionately concentrated in a few counties.</p>
-        <p><strong>Per-capita caveat.</strong> Per-capita figures use 2024 county population. A rural county with one refinery or a large wildfire will look catastrophically high per resident — that's accurate, but it's not the same as exposure. PM2.5 and ozone disperse across regions; emitted-here doesn't mean breathed-here.</p>
-        <p><strong>Tribal lands.</strong> The NEI reports some emissions against tribal areas separately from the surrounding county. Those tribal-area rows are excluded here; the county totals you see are the non-tribal portion only.</p>
-        <p><strong>Wildfires.</strong> 2020 was an extreme fire year on the West Coast. Wildfire emissions vary enormously year to year — a county's wildfire bar in 2020 may look very different in 2023 or 2024.</p>
-        <p><strong>Biogenic VOCs.</strong> Vegetation and soils emit isoprene, terpenes, and other VOCs. These are shown as "natural background" because they aren't actionable through policy and would dominate any anthropogenic comparison if mixed in.</p>
-        <p><strong>Source code:</strong> <a href="https://github.com/AndyMasley/andymasley-site" target="_blank" rel="noopener">on GitHub</a>. The preprocessing script lives at <code>scripts/build-air-pollution-data.py</code>.</p>
+
+        <h4>Known limitations</h4>
+        <ul>
+          <li>Tribal-area rows are excluded from county totals.</li>
+          <li>2020 was an extreme wildfire year on the West Coast; bars vary substantially year to year.</li>
+          <li>Biogenic VOCs from vegetation and soils are shown as "natural background" — not actionable through policy.</li>
+          <li>Health impact metrics use the maximum monitor in the county, which is consistent with NAAQS evaluation but biases toward the most-polluted area.</li>
+        </ul>
+
+        <p class="aps-meth-foot">Source code: <a href="https://github.com/AndyMasley/andymasley-site" target="_blank" rel="noopener">on GitHub</a>. Preprocessing script: <code>scripts/build-air-pollution-data.py</code>.</p>
       </div>
     </details>
+
+    <!-- Hidden a11y summary, updated by JS -->
+    <div class="aps-sr-only" id="aps-sr-summary" aria-live="polite"></div>
   </article>
 </Base>
 
 <style>
-  .aps h1 {
-    font-size: 1.75rem;
-    line-height: 1.15;
-    letter-spacing: -0.03em;
-    font-weight: 700;
+  /* Break out of the 640px main-content width */
+  .aps-hero,
+  .aps {
+    width: calc(100vw - 48px);
+    max-width: 1120px;
+    position: relative;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+
+  @media (max-width: 720px) {
+    .aps-hero,
+    .aps {
+      width: calc(100vw - 32px);
+    }
+  }
+
+  /* ---------------- Hero ---------------- */
+  .aps-hero {
     margin-bottom: var(--space-lg);
   }
 
-  .aps-intro { margin-bottom: var(--space-lg); }
-  .aps-intro p { margin-bottom: 0.75em; }
+  .aps-hero-title {
+    font-size: clamp(1.875rem, 1.45rem + 1.6vw, 2.75rem);
+    line-height: 1.08;
+    letter-spacing: -0.03em;
+    font-weight: 700;
+    margin: 0 0 0.6rem;
+    color: var(--text);
+    text-wrap: balance;
+  }
 
-  .aps-controls {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-md);
-    align-items: flex-end;
-    justify-content: space-between;
-    padding: var(--space-md);
-    background: var(--bg-subtle);
+  .aps-hero-sub {
+    font-size: clamp(1rem, 0.95rem + 0.25vw, 1.125rem);
+    line-height: 1.5;
+    color: var(--text-secondary);
+    max-width: 56rem;
+    margin: 0 0 0.5rem;
+  }
+
+  .aps-hero-source {
+    font-size: var(--font-size-small);
+    color: var(--dim);
+    margin: 0;
+    max-width: 56rem;
+  }
+
+  /* ---------------- Cards ---------------- */
+  .aps-card {
+    background: var(--bg-elevated);
     border: 1px solid var(--border);
-    border-radius: 8px;
-    margin-bottom: var(--space-md);
+    border-radius: 14px;
+    padding: 1.25rem 1.25rem 1.1rem;
+    box-shadow: var(--shadow-sm);
   }
 
-  .aps-selects {
+  .aps-card-title {
+    font-size: 1rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    margin: 0;
+    color: var(--text);
+  }
+
+  /* ---------------- Picker ---------------- */
+  .aps-picker {
+    margin-bottom: 1rem;
+  }
+
+  .aps-picker-head {
     display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 0.85rem;
     flex-wrap: wrap;
-    gap: var(--space-md);
-    flex: 1;
   }
 
-  .aps-label {
+  .aps-picker-current {
+    font-size: var(--font-size-small);
+    color: var(--dim);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .aps-picker-current strong {
+    color: var(--text);
+    font-weight: 600;
+  }
+
+  .aps-picker-controls {
+    display: grid;
+    grid-template-columns: 1fr 1.4fr auto;
+    gap: 0.75rem;
+    align-items: end;
+  }
+
+  .aps-field {
     display: flex;
     flex-direction: column;
     gap: 4px;
-    font-size: var(--font-size-small);
-    color: var(--dim);
-    flex: 1;
-    min-width: 160px;
+    min-width: 0;
   }
 
-  .aps-label select {
+  .aps-field-label {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--dim);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .aps-field select {
     font-family: inherit;
     font-size: var(--font-size-base);
     color: var(--text);
     background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 8px 10px;
+    border: 1px solid var(--border-strong);
+    border-radius: 8px;
+    padding: 10px 12px;
     cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' fill='none' stroke='%236b6560' stroke-width='1.6'%3e%3cpolyline points='3 5 6 8 9 5'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 12px;
+    padding-right: 28px;
+    transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
   }
 
-  .aps-label select:focus {
+  .aps-field select:hover:not(:disabled) {
+    border-color: var(--accent);
+  }
+
+  .aps-field select:focus-visible {
     outline: none;
     border-color: var(--accent);
-    box-shadow: var(--shadow-glow);
+    box-shadow: 0 0 0 3px var(--accent-subtle);
   }
 
-  .aps-mode {
+  .aps-field select:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+
+  .aps-picker-actions {
     display: flex;
-    gap: 2px;
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 2px;
+    gap: 0.5rem;
+    flex-wrap: wrap;
   }
 
-  .aps-mode-btn {
+  .aps-btn {
     font-family: inherit;
     font-size: var(--font-size-small);
     font-weight: 500;
-    padding: 6px 14px;
-    border: none;
-    border-radius: 4px;
+    background: var(--bg);
+    color: var(--text);
+    border: 1px solid var(--border-strong);
+    border-radius: 8px;
+    padding: 9px 13px;
     cursor: pointer;
-    background: transparent;
-    color: var(--dim);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    line-height: 1;
     transition: all var(--transition-fast);
+    white-space: nowrap;
   }
 
-  .aps-mode-btn[data-active="true"] {
-    background: var(--accent-subtle);
+  .aps-btn:hover {
+    border-color: var(--accent);
     color: var(--accent);
   }
 
-  .aps-mode-btn:hover:not([data-active="true"]) {
-    color: var(--text);
+  .aps-btn:focus-visible {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-subtle);
   }
 
-  .aps-county-info {
-    font-size: var(--font-size-small);
-    color: var(--dim);
-    margin-bottom: var(--space-lg);
-    min-height: 1.4em;
-  }
-
-  .aps-aq {
-    margin-bottom: var(--space-xl);
-  }
-
-  .aps-aq-header { margin-bottom: var(--space-sm); }
-
-  .aps-aq-title,
-  .aps-section-title {
-    font-size: 1.05rem;
-    font-weight: 600;
-    margin: 0 0 var(--space-sm);
-    color: var(--text);
-  }
-
-  .aps-section-title {
-    margin-top: var(--space-lg);
-  }
-
-  .aps-aq-sub {
-    font-size: var(--font-size-small);
-    font-weight: 400;
+  .aps-btn-ghost {
+    background: transparent;
+    border-color: var(--border);
     color: var(--dim);
   }
 
-  .aps-aq-grid {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: var(--space-sm);
+  .aps-btn[data-copied="true"] {
+    border-color: var(--accent);
+    color: var(--accent);
   }
 
-  .aps-aq-card {
-    padding: 10px 12px;
-    background: var(--bg-subtle);
-    border: 1px solid var(--border);
-    border-radius: 6px;
+  /* ---------------- Summary strip ---------------- */
+  .aps-summary {
+    margin: 0 0 1.5rem;
     display: flex;
-    flex-direction: column;
-    gap: 4px;
-  }
-
-  .aps-aq-card[data-status="exceeds"] {
-    border-color: #B95945;
-    background: rgba(185, 89, 69, 0.06);
-  }
-
-  .aps-aq-card-label {
+    flex-wrap: wrap;
+    gap: 0.75rem 1.5rem;
+    align-items: center;
+    padding: 0.85rem 1.1rem;
+    border-radius: 10px;
+    background: var(--bg-subtle);
+    border: 1px solid var(--border-subtle);
     font-size: var(--font-size-small);
+  }
+
+  .aps-summary-loading {
     color: var(--dim);
+    font-style: italic;
+  }
+
+  .aps-summary-name {
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: var(--text);
+  }
+
+  .aps-summary-fact {
+    color: var(--text-secondary);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .aps-summary-fact strong {
+    color: var(--text);
+    font-weight: 600;
+  }
+
+  .aps-summary-badges {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-left: auto;
+  }
+
+  .aps-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 9px;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    border: 1px solid transparent;
+    background: var(--bg);
+    color: var(--text-secondary);
+    white-space: nowrap;
+  }
+
+  .aps-badge[data-status="exceeds"] {
+    color: #8a3a2a;
+    background: rgba(185, 89, 69, 0.08);
+    border-color: rgba(185, 89, 69, 0.35);
+  }
+
+  .aps-badge[data-status="elevated"] {
+    color: #7a5826;
+    background: rgba(214, 174, 130, 0.18);
+    border-color: rgba(214, 174, 130, 0.55);
+  }
+
+  .aps-badge[data-status="below"] {
+    color: #4a6235;
+    background: rgba(139, 153, 104, 0.15);
+    border-color: rgba(139, 153, 104, 0.45);
+  }
+
+  .aps-badge[data-status="none"] {
+    color: var(--dim);
+    background: var(--bg-subtle);
+    border-color: var(--border);
+  }
+
+  [data-theme="dark"] .aps-badge[data-status="exceeds"] { color: #e8a690; }
+  [data-theme="dark"] .aps-badge[data-status="elevated"] { color: #e2c895; }
+  [data-theme="dark"] .aps-badge[data-status="below"] { color: #b3c490; }
+
+  .aps-badge-dot {
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+  }
+
+  .aps-badge[data-status="exceeds"] .aps-badge-dot { background: #b95945; }
+  .aps-badge[data-status="elevated"] .aps-badge-dot { background: #d6ae82; }
+  .aps-badge[data-status="below"] .aps-badge-dot { background: #8b9968; }
+  .aps-badge[data-status="none"] .aps-badge-dot { background: #b8b3ad; }
+
+  /* ---------------- Sections ---------------- */
+  .aps-section {
+    margin: 0 0 2.25rem;
+  }
+
+  .aps-section-head {
+    margin-bottom: 1.1rem;
+  }
+
+  .aps-section-head-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem 1.5rem;
+    align-items: flex-end;
+    justify-content: space-between;
+  }
+
+  .aps-section-title {
+    font-size: 1.4rem;
+    font-weight: 650;
+    letter-spacing: -0.02em;
+    margin: 0 0 4px;
+    color: var(--text);
     line-height: 1.2;
   }
 
-  .aps-aq-card-value {
-    font-size: 1.35rem;
+  .aps-section-desc {
+    font-size: var(--font-size-small);
+    color: var(--dim);
+    margin: 0;
+    max-width: 52rem;
+    line-height: 1.5;
+  }
+
+  /* ---------------- Air-quality metric cards ---------------- */
+  .aps-aq-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1rem;
+  }
+
+  .aps-aq-card {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1.1rem 1.15rem 1.05rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+    box-shadow: var(--shadow-sm);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .aps-aq-card::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: var(--border-strong);
+  }
+
+  .aps-aq-card[data-status="exceeds"]::before { background: #b95945; }
+  .aps-aq-card[data-status="elevated"]::before { background: #d6ae82; }
+  .aps-aq-card[data-status="below"]::before { background: #8b9968; }
+
+  .aps-aq-card-title {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.5rem;
+  }
+
+  .aps-aq-card-name {
+    font-size: 0.95rem;
     font-weight: 600;
+    color: var(--text);
+    letter-spacing: -0.01em;
+  }
+
+  .aps-aq-card-plain {
+    font-size: 0.78rem;
+    color: var(--dim);
+    line-height: 1.3;
+    margin: -2px 0 0;
+  }
+
+  .aps-aq-card-value {
+    font-size: 2.25rem;
+    font-weight: 700;
     color: var(--text);
     font-variant-numeric: tabular-nums;
     line-height: 1;
+    letter-spacing: -0.02em;
+    margin-top: 0.15rem;
   }
 
   .aps-aq-card-value sup {
-    font-size: 0.7em;
-    font-weight: 400;
+    font-size: 0.46em;
+    font-weight: 500;
     color: var(--dim);
-    margin-left: 2px;
+    margin-left: 4px;
+    vertical-align: 0.4em;
   }
 
-  .aps-aq-card-cmp {
-    font-size: 0.75rem;
+  .aps-aq-card-status {
+    font-size: 0.82rem;
     color: var(--text-secondary);
-    line-height: 1.3;
+    line-height: 1.4;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .aps-aq-card-status strong {
+    color: var(--text);
+    font-weight: 600;
+  }
+
+  /* Mini benchmark bar */
+  .aps-aq-bench {
+    margin-top: 0.25rem;
+  }
+
+  .aps-aq-bench-track {
+    position: relative;
+    height: 6px;
+    background: var(--bg-subtle);
+    border-radius: 3px;
+    overflow: visible;
+  }
+
+  .aps-aq-bench-fill {
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    background: linear-gradient(90deg, #8b9968 0%, #d6ae82 65%, #b95945 100%);
+    border-radius: 3px;
+    transition: width 0.4s ease;
+  }
+
+  .aps-aq-bench-marker {
+    position: absolute;
+    top: -3px;
+    bottom: -3px;
+    width: 2px;
+    background: var(--text);
+  }
+
+  .aps-aq-bench-marker[data-kind="who"] {
+    background: rgba(74, 98, 53, 0.85);
+  }
+  .aps-aq-bench-marker[data-kind="naaqs"] {
+    background: rgba(185, 89, 69, 0.85);
+  }
+
+  .aps-aq-bench-labels {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 4px;
+    font-size: 0.7rem;
+    color: var(--dim);
     font-variant-numeric: tabular-nums;
   }
 
   .aps-aq-card-harm {
-    margin-top: 4px;
-    padding-top: 6px;
+    margin-top: 0.45rem;
+    padding-top: 0.55rem;
     border-top: 1px solid var(--border-subtle);
-    font-size: 0.8rem;
-    font-weight: 500;
-    line-height: 1.35;
+    font-size: 0.82rem;
+    line-height: 1.4;
     color: var(--accent);
     font-variant-numeric: tabular-nums;
+    font-weight: 500;
   }
 
   .aps-aq-card[data-status="below"] .aps-aq-card-harm,
@@ -298,256 +656,404 @@ import Base from '@/layouts/Base.astro';
 
   .aps-aq-card[data-status="none"] .aps-aq-card-value {
     color: var(--dim);
-    font-size: 1rem;
+    font-size: 1.05rem;
     font-weight: 500;
   }
 
   .aps-aq-note {
+    margin: 0.85rem 0 0;
     font-size: var(--font-size-small);
     color: var(--dim);
-    margin: var(--space-sm) 0 0;
+    line-height: 1.5;
   }
 
-  .aps-aq-flag {
-    display: inline-block;
-    width: 0.6em;
-    height: 0.6em;
-    border-radius: 1px;
-    margin-right: 4px;
-    vertical-align: 0.05em;
+  /* ---------------- Explainer ---------------- */
+  .aps-explainer {
+    margin: 1.5rem 0 2rem;
+    padding: 0.95rem 1.1rem;
+    background: var(--accent-subtle);
+    border-left: 3px solid var(--accent);
+    border-radius: 0 10px 10px 0;
   }
 
-  .aps-aq-flag[data-status="exceeds"]   { background: #B95945; }
-  .aps-aq-flag[data-status="elevated"]  { background: #D6AE82; }
-  .aps-aq-flag[data-status="below"]     { background: #8B9968; }
-
-  .aps-chart {
-    margin-bottom: var(--space-md);
+  .aps-explainer h3 {
+    margin: 0 0 0.35rem;
+    font-size: 0.92rem;
+    font-weight: 600;
+    color: var(--text);
+    letter-spacing: -0.01em;
   }
 
-  .aps-chart[data-layout="donuts"] {
+  .aps-explainer p {
+    margin: 0;
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    line-height: 1.55;
+  }
+
+  /* ---------------- Mode switch ---------------- */
+  .aps-mode {
+    display: inline-flex;
+    background: var(--bg-subtle);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 3px;
+    gap: 2px;
+    flex-shrink: 0;
+  }
+
+  .aps-mode-btn {
+    font-family: inherit;
+    font-size: var(--font-size-small);
+    font-weight: 500;
+    padding: 7px 14px;
+    border: none;
+    border-radius: 7px;
+    cursor: pointer;
+    background: transparent;
+    color: var(--dim);
+    transition: all var(--transition-fast);
+    white-space: nowrap;
+  }
+
+  .aps-mode-btn[data-active="true"] {
+    background: var(--bg-elevated);
+    color: var(--accent);
+    box-shadow: var(--shadow-xs);
+  }
+
+  .aps-mode-btn:hover:not([data-active="true"]) {
+    color: var(--text);
+  }
+
+  .aps-mode-btn:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px var(--accent-subtle);
+  }
+
+  .aps-mode-note {
+    margin: 0 0 1.1rem;
+    font-size: 0.82rem;
+    color: var(--dim);
+    line-height: 1.5;
+    max-width: 60rem;
+  }
+
+  /* ---------------- Ranked bar charts ---------------- */
+  .aps-charts {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: var(--space-md);
-    align-items: start;
+    gap: 1rem;
+    margin-bottom: 2rem;
   }
 
-  .aps-chart[data-layout="bars"] {
+  .aps-chart-card {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1.1rem 1.15rem 1.15rem;
+    box-shadow: var(--shadow-sm);
     display: flex;
     flex-direction: column;
-    gap: var(--space-md);
+    gap: 0.8rem;
   }
 
-  .aps-donut-cell {
+  .aps-chart-head {
     display: flex;
     flex-direction: column;
-    align-items: center;
-    gap: 8px;
-    text-align: center;
+    gap: 0.15rem;
   }
 
-  .aps-donut {
-    width: 100%;
-    max-width: 180px;
-    height: auto;
-    display: block;
-  }
-
-  .aps-donut .aps-seg {
-    transition: filter 0.15s ease, opacity 0.15s ease;
-  }
-
-  .aps-chart[data-hover] .aps-seg:not([data-active="true"]) {
-    filter: saturate(0.25) brightness(0.95);
-    opacity: 0.45;
-  }
-
-  .aps-donut-center {
-    font-family: inherit;
-    fill: var(--text);
-    font-size: 13px;
-    font-variant-numeric: tabular-nums;
-  }
-
-  .aps-donut-center-name { font-weight: 600; font-size: 14px; }
-  .aps-donut-center-total { font-size: 11px; fill: var(--dim); }
-
-  .aps-donut-caption {
-    font-size: var(--font-size-small);
-    color: var(--dim);
-    line-height: 1.25;
-  }
-
-  .aps-donut-caption strong {
-    color: var(--text);
+  .aps-chart-name {
+    font-size: 0.95rem;
     font-weight: 600;
+    color: var(--text);
+    letter-spacing: -0.01em;
   }
 
-  @media (max-width: 720px) {
-    .aps-chart[data-layout="donuts"] {
-      grid-template-columns: 1fr;
-      gap: var(--space-lg);
-    }
-  }
-
-  .aps-stacked {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-md);
-    margin-bottom: var(--space-md);
-  }
-
-  .aps-stack-row {
-    display: grid;
-    grid-template-columns: 7em 1fr;
-    gap: var(--space-md);
-    align-items: center;
-  }
-
-  .aps-stack-label {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 2px;
+  .aps-chart-total {
+    font-size: 1.45rem;
+    font-weight: 700;
+    color: var(--text);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.02em;
     line-height: 1.1;
   }
 
-  .aps-stack-name {
-    font-size: 1.05rem;
-    font-weight: 600;
-    color: var(--text);
-  }
-
-  .aps-stack-total {
-    font-size: var(--font-size-small);
+  .aps-chart-total-unit {
+    font-size: 0.75rem;
+    font-weight: 500;
     color: var(--dim);
-    font-variant-numeric: tabular-nums;
+    margin-left: 4px;
   }
 
-  .aps-stack-bar {
-    height: 28px;
+  .aps-chart-top {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    line-height: 1.4;
+  }
+
+  .aps-chart-top strong {
+    color: var(--text);
+    font-weight: 600;
+  }
+
+  .aps-bars {
     display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+    margin-top: 0.2rem;
+  }
+
+  .aps-bar-row {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 3px;
+    cursor: default;
+    padding: 4px 6px;
+    border-radius: 6px;
+    margin: -4px -6px;
+    transition: background-color var(--transition-fast);
+  }
+
+  .aps-bar-row:hover,
+  .aps-bar-row[data-active="true"],
+  .aps-bar-row:focus-visible {
+    background: var(--bg-subtle);
+    outline: none;
+  }
+
+  .aps-chart-card[data-hover] .aps-bar-row:not([data-active="true"]) .aps-bar-fill {
+    opacity: 0.35;
+    filter: saturate(0.5);
+  }
+
+  .aps-bar-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 0.5rem;
+    font-size: 0.8rem;
+    line-height: 1.25;
+  }
+
+  .aps-bar-name {
+    color: var(--text);
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .aps-bar-value {
+    color: var(--text-secondary);
+    font-variant-numeric: tabular-nums;
+    font-size: 0.78rem;
+    flex-shrink: 0;
+  }
+
+  .aps-bar-pct {
+    color: var(--dim);
+    margin-left: 0.25rem;
+  }
+
+  .aps-bar-track {
+    height: 8px;
     background: var(--bg-subtle);
     border-radius: 4px;
     overflow: hidden;
-    box-shadow: inset 0 0 0 1px var(--border-subtle);
   }
 
-  .aps-seg {
+  .aps-bar-fill {
     height: 100%;
-    transition: width 0.45s cubic-bezier(.4,0,.2,1), filter 0.15s ease;
-    border-right: 1px solid rgba(255, 255, 255, 0.55);
-    cursor: default;
+    border-radius: 4px;
+    transition: width 0.4s ease, opacity var(--transition-fast), filter var(--transition-fast);
   }
 
-  [data-theme="dark"] .aps-seg {
-    border-right-color: rgba(0, 0, 0, 0.35);
+  .aps-bar-row[data-natural="true"] .aps-bar-name {
+    font-style: italic;
+    color: var(--text-secondary);
   }
 
-  .aps-seg:last-child { border-right: none; }
-
-  .aps-seg-tick {
-    position: absolute;
-    top: -3px;
-    bottom: -3px;
-    width: 0;
-    border-left: 2px dashed rgba(26, 25, 24, 0.55);
-    pointer-events: none;
-  }
-
-  [data-theme="dark"] .aps-seg-tick {
-    border-left-color: rgba(255, 250, 240, 0.7);
-  }
-
-  .aps-seg {
-    position: relative;
-  }
-
-  .aps-seg-tick[data-overflow="true"] {
-    border-left-style: solid;
-    border-left-width: 0;
-    border-right: 2px dotted rgba(26, 25, 24, 0.5);
-  }
-
-  .aps-stacked[data-hover] .aps-seg:not([data-active="true"]) {
-    filter: saturate(0.25) brightness(0.95);
-    opacity: 0.45;
-  }
-
-  .aps-stack-note {
-    font-size: var(--font-size-small);
+  .aps-chart-empty {
+    font-size: 0.85rem;
     color: var(--dim);
-    margin: 0 0 var(--space-lg);
+    font-style: italic;
+    padding: 1rem 0;
+    text-align: center;
   }
 
-  .aps-legend {
+  /* ---------------- Source table ---------------- */
+  .aps-table-wrap {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    box-shadow: var(--shadow-sm);
+    padding: 1.1rem 0 0.3rem;
+    margin-top: 1rem;
+  }
+
+  .aps-table-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0 1.25rem 0.85rem;
+    flex-wrap: wrap;
+  }
+
+  .aps-table-title {
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0;
+    color: var(--text);
+    letter-spacing: -0.01em;
+  }
+
+  .aps-table-hint {
+    font-size: 0.78rem;
+    color: var(--dim);
+  }
+
+  .aps-table-scroll {
+    overflow-x: auto;
+  }
+
+  .aps-table {
     width: 100%;
     border-collapse: collapse;
-    font-size: var(--font-size-small);
-    margin-bottom: var(--space-lg);
+    font-size: 0.875rem;
   }
 
-  .aps-legend thead th {
+  .aps-table thead th {
     text-align: right;
     font-weight: 500;
     color: var(--dim);
-    padding: 6px 8px;
+    padding: 0.55rem 1.1rem;
     border-bottom: 1px solid var(--border);
+    background: var(--bg-elevated);
+    cursor: pointer;
+    user-select: none;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    transition: color var(--transition-fast);
   }
 
-  .aps-legend th.aps-legend-source {
+  .aps-table thead th:hover {
+    color: var(--text);
+  }
+
+  .aps-table th.aps-th-source {
     text-align: left;
+    padding-left: 1.25rem;
   }
 
-  .aps-legend tbody tr {
+  .aps-th-unit {
+    display: block;
+    font-size: 0.65rem;
+    color: var(--dim);
+    font-weight: 400;
+    letter-spacing: 0.02em;
+    margin-top: 1px;
+    text-transform: none;
+  }
+
+  .aps-table thead th[data-sort="asc"]::after,
+  .aps-table thead th[data-sort="desc"]::after {
+    content: "";
+    display: inline-block;
+    margin-left: 5px;
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+    vertical-align: middle;
+  }
+
+  .aps-table thead th[data-sort="asc"]::after {
+    border-bottom: 5px solid var(--accent);
+  }
+
+  .aps-table thead th[data-sort="desc"]::after {
+    border-top: 5px solid var(--accent);
+  }
+
+  .aps-table tbody tr {
     border-bottom: 1px solid var(--border-subtle);
-    transition: background 0.15s ease;
+    transition: background var(--transition-fast);
   }
 
-  .aps-legend tbody tr:hover,
-  .aps-legend tbody tr[data-active="true"] {
+  .aps-table tbody tr:last-child {
+    border-bottom: none;
+  }
+
+  .aps-table tbody tr:hover,
+  .aps-table tbody tr[data-active="true"] {
     background: var(--bg-subtle);
   }
 
-  .aps-legend td {
-    padding: 6px 8px;
+  .aps-table td {
+    padding: 0.55rem 1.1rem;
     color: var(--text);
     font-variant-numeric: tabular-nums;
   }
 
-  .aps-legend td.aps-legend-source {
-    display: flex;
-    align-items: center;
-    gap: 8px;
+  .aps-table td.aps-td-source {
+    text-align: left;
+    padding-left: 1.25rem;
     color: var(--text-secondary);
   }
 
-  .aps-legend td.aps-legend-num {
+  .aps-table td.aps-td-source-inner {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+  }
+
+  .aps-table td.aps-td-num {
     text-align: right;
     color: var(--text);
   }
 
-  .aps-legend td.aps-legend-num[data-zero="true"] {
+  .aps-table td .aps-td-share {
     color: var(--dim);
-    opacity: 0.5;
+    font-size: 0.74rem;
+    margin-left: 6px;
+  }
+
+  .aps-table td.aps-td-zero {
+    color: var(--dim);
+    opacity: 0.55;
+  }
+
+  .aps-table tbody tr[data-natural="true"] td.aps-td-source {
+    font-style: italic;
+  }
+
+  .aps-table tbody tr[data-top="true"] td.aps-td-num[data-top-here="true"] {
+    color: var(--accent);
+    font-weight: 600;
   }
 
   .aps-swatch {
     display: inline-block;
-    width: 12px;
-    height: 12px;
-    border-radius: 2px;
+    width: 11px;
+    height: 11px;
+    border-radius: 3px;
     flex-shrink: 0;
   }
 
+  /* ---------------- Tooltip ---------------- */
   .aps-tip {
     position: fixed;
     z-index: 50;
     max-width: 320px;
-    padding: 10px 12px;
+    padding: 0.7rem 0.85rem;
     background: var(--bg-elevated);
     border: 1px solid var(--border-strong);
-    border-radius: 6px;
+    border-radius: 8px;
     box-shadow: var(--shadow-md);
     pointer-events: none;
     font-size: var(--font-size-small);
@@ -565,9 +1071,9 @@ import Base from '@/layouts/Base.astro';
 
   .aps-tip-swatch {
     display: inline-block;
-    width: 12px;
-    height: 12px;
-    border-radius: 2px;
+    width: 11px;
+    height: 11px;
+    border-radius: 3px;
     flex-shrink: 0;
   }
 
@@ -578,9 +1084,7 @@ import Base from '@/layouts/Base.astro';
     font-weight: 500;
   }
 
-  .aps-tip-stats:empty {
-    display: none;
-  }
+  .aps-tip-stats:empty { display: none; }
 
   .aps-tip-cmp {
     font-size: 0.75rem;
@@ -589,56 +1093,230 @@ import Base from '@/layouts/Base.astro';
     font-variant-numeric: tabular-nums;
   }
 
-  .aps-tip-cmp:empty {
-    display: none;
-  }
+  .aps-tip-cmp:empty { display: none; }
 
   .aps-tip-desc {
     color: var(--text-secondary);
+    font-size: 0.78rem;
   }
 
-  .aps-legend tbody tr[data-natural="true"] td.aps-legend-source {
-    font-style: italic;
-  }
-
-  .aps-meth {
-    margin-top: var(--space-xl);
-    padding: var(--space-md);
+  /* ---------------- Caveats ---------------- */
+  .aps-caveats {
+    margin: 0 0 1.75rem;
+    padding: 1rem 1.2rem 0.85rem;
     background: var(--bg-subtle);
+    border: 1px solid var(--border-subtle);
+    border-radius: 10px;
+  }
+
+  .aps-caveats h3 {
+    margin: 0 0 0.5rem;
+    font-size: 0.92rem;
+    font-weight: 600;
+    color: var(--text);
+    letter-spacing: -0.01em;
+  }
+
+  .aps-caveats ul {
+    margin: 0;
+    padding-left: 1.15rem;
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    line-height: 1.55;
+  }
+
+  .aps-caveats li {
+    margin-bottom: 0.3rem;
+  }
+
+  /* ---------------- Methodology ---------------- */
+  .aps-meth {
+    margin: 0 0 2rem;
     border: 1px solid var(--border);
-    border-radius: 8px;
+    border-radius: 12px;
+    background: var(--bg-elevated);
+    overflow: hidden;
   }
 
   .aps-meth summary {
     cursor: pointer;
+    padding: 0.95rem 1.25rem;
     font-weight: 600;
     user-select: none;
+    color: var(--text);
+    list-style: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    transition: background var(--transition-fast);
+  }
+
+  .aps-meth summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .aps-meth summary:hover {
+    background: var(--bg-subtle);
+  }
+
+  .aps-meth-title {
+    font-size: 0.95rem;
+    letter-spacing: -0.01em;
+  }
+
+  .aps-meth-chev {
+    color: var(--dim);
+    transition: transform 0.2s ease;
+  }
+
+  .aps-meth[open] .aps-meth-chev {
+    transform: rotate(180deg);
   }
 
   .aps-meth-body {
-    margin-top: var(--space-md);
-    font-size: var(--font-size-small);
+    padding: 0.25rem 1.25rem 1.25rem;
+    font-size: 0.875rem;
     color: var(--text-secondary);
+    line-height: 1.6;
+    border-top: 1px solid var(--border-subtle);
   }
 
-  .aps-meth-body p { margin-bottom: 0.75em; }
+  .aps-meth-body h4 {
+    margin: 1rem 0 0.4rem;
+    font-size: 0.92rem;
+    font-weight: 600;
+    color: var(--text);
+    letter-spacing: -0.01em;
+  }
 
-  @media (max-width: 600px) {
-    .aps-stack-row {
+  .aps-meth-body h4:first-of-type {
+    margin-top: 0.85rem;
+  }
+
+  .aps-meth-body p {
+    margin: 0 0 0.6rem;
+  }
+
+  .aps-meth-body ul {
+    margin: 0 0 0.6rem;
+    padding-left: 1.2rem;
+  }
+
+  .aps-meth-body li {
+    margin-bottom: 0.3rem;
+  }
+
+  .aps-meth-foot {
+    margin-top: 1rem !important;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--border-subtle);
+    font-size: 0.8rem;
+    color: var(--dim);
+  }
+
+  /* ---------------- a11y ---------------- */
+  .aps-sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  /* ---------------- Mobile ---------------- */
+  @media (max-width: 900px) {
+    .aps-charts {
       grid-template-columns: 1fr;
-      gap: 4px;
+      gap: 0.85rem;
     }
-    .aps-stack-label {
-      flex-direction: row;
-      align-items: baseline;
-      justify-content: space-between;
+
+    .aps-aq-grid {
+      grid-template-columns: 1fr;
+      gap: 0.75rem;
+    }
+
+    .aps-picker-controls {
+      grid-template-columns: 1fr;
+      gap: 0.85rem;
+    }
+
+    .aps-section-head-row {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .aps-mode {
+      align-self: flex-start;
+    }
+  }
+
+  @media (max-width: 560px) {
+    .aps-hero-title {
+      font-size: 1.85rem;
+    }
+
+    .aps-card,
+    .aps-aq-card,
+    .aps-chart-card,
+    .aps-table-wrap {
+      border-radius: 12px;
+    }
+
+    .aps-card,
+    .aps-aq-card,
+    .aps-chart-card {
+      padding: 0.95rem 1rem 0.9rem;
+    }
+
+    .aps-table-head {
+      padding: 0 1rem 0.75rem;
+    }
+
+    .aps-table td,
+    .aps-table thead th {
+      padding: 0.5rem 0.7rem;
+    }
+
+    .aps-table th.aps-th-source,
+    .aps-table td.aps-td-source {
+      padding-left: 1rem;
+    }
+
+    .aps-aq-card-value {
+      font-size: 2rem;
+    }
+
+    .aps-chart-total {
+      font-size: 1.3rem;
+    }
+
+    .aps-summary {
+      padding: 0.75rem 0.9rem;
+    }
+
+    .aps-summary-badges {
+      margin-left: 0;
       width: 100%;
     }
-    .aps-legend {
-      font-size: 0.75rem;
+
+    .aps-mode-btn {
+      padding: 7px 11px;
+      font-size: 0.78rem;
     }
-    .aps-legend th, .aps-legend td {
-      padding: 4px 4px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .aps-bar-fill,
+    .aps-aq-bench-fill,
+    .aps-meth-chev,
+    .aps-field select,
+    .aps-mode-btn {
+      transition: none !important;
     }
   }
 </style>
@@ -646,99 +1324,105 @@ import Base from '@/layouts/Base.astro';
 <script is:inline>
   (function () {
     const BUCKETS = [
-      { name: "On-road vehicles",                  color: "#B95945",
-        desc: "Cars, pickups, vans, SUVs, motorcycles, and heavy-duty trucks driving on public roads. Combines diesel and gasoline, light- and heavy-duty." },
-      { name: "Off-road equipment",                color: "#D27A52",
+      { name: "On-road vehicles",                  display: "On-road vehicles",                  color: "#B95945",
+        desc: "Cars, pickups, vans, SUVs, motorcycles, and heavy-duty trucks driving on public roads." },
+      { name: "Off-road equipment",                display: "Off-road equipment",                color: "#D27A52",
         desc: "Construction equipment, lawn and garden tools, forklifts, agricultural tractors, ATVs, and other engines that don't drive on highways." },
-      { name: "Aircraft, ships, trains",           color: "#E5A776",
-        desc: "Commercial and general aviation aircraft (including airport ground operations), freight and passenger locomotives, and commercial marine vessels in port and offshore." },
-      { name: "Power plants",                      color: "#8B5A3A",
-        desc: "Utility-scale electricity generation from coal, natural gas, oil, biomass, and other fuels. Doesn't include backup generators or rooftop solar." },
-      { name: "Industrial fuel combustion",        color: "#B68250",
-        desc: "Boilers, internal combustion engines, and process heaters burning fuel at industrial, commercial, and institutional facilities — factories, hospitals, universities, office buildings — for heat, process steam, or backup power." },
-      { name: "Residential heating",               color: "#D6AE82",
-        desc: "Home furnaces, water heaters, fireplaces, and wood stoves burning natural gas, oil, wood, or other fuels. Wood-burning is a major PM2.5 source in cold regions." },
-      { name: "Industrial processes",              color: "#7E5567",
-        desc: "Emissions from the chemistry of industrial processes themselves (not from burning fuel for heat): cement, chemicals, metals, mining, pulp & paper, petroleum refining, and bulk material storage and transfer." },
-      { name: "Oil & gas production",              color: "#4F3743",
-        desc: "Upstream oil and gas: wellheads, gathering lines, processing plants, and storage. Mostly fugitive leaks of VOCs and methane, plus combustion at pumps and compressors." },
-      { name: "Wildfires & prescribed burns",      color: "#6E4F40",
-        desc: "Wildfires, prescribed forest burns, and agricultural field burning. Highly variable year to year — 2020 was an extreme fire year, especially on the West Coast." },
-      { name: "Dust",                              color: "#C5B498",
-        desc: "Dust kicked up from paved and unpaved roads and from construction sites. A major PM2.5 source in arid regions and along unpaved rural roads." },
-      { name: "Agriculture",                       color: "#8B9968",
-        desc: "Crop and livestock dust, manure handling, and fertilizer application. Excludes farm equipment (counted under 'Off-road equipment') and field burning (under 'Wildfires & prescribed burns')." },
-      { name: "Solvents & coatings",               color: "#5F7B5C",
-        desc: "Paints, varnishes, adhesives, dry cleaning, degreasing, printing inks, and consumer products like hairspray and cleaning sprays. The largest VOC source in many cities." },
-      { name: "Other",                             color: "#A0958A",
-        desc: "Smaller anthropogenic sources grouped together: gas stations and gasoline terminals, commercial cooking, waste disposal (including landfills), and miscellaneous non-industrial activity." },
-      { name: "Natural background (trees & soil)", color: "#4C7150", natural: true,
-        desc: "Biogenic VOCs — isoprene, terpenes, and others — released by trees, plants, and soils. Often dwarfs human VOC emissions in forested counties. Not directly actionable through policy, shown for context." },
+      { name: "Aircraft, ships, trains",           display: "Aircraft, ships, and trains",       color: "#E5A776",
+        desc: "Commercial and general aviation, freight and passenger locomotives, and commercial marine vessels in port and offshore." },
+      { name: "Power plants",                      display: "Power plants",                      color: "#8B5A3A",
+        desc: "Utility-scale electricity generation from coal, natural gas, oil, biomass, and other fuels." },
+      { name: "Industrial fuel combustion",        display: "Industrial fuel combustion",        color: "#B68250",
+        desc: "Boilers, internal-combustion engines, and process heaters burning fuel at factories, hospitals, universities, and office buildings." },
+      { name: "Residential heating",               display: "Residential heating",               color: "#D6AE82",
+        desc: "Home furnaces, water heaters, fireplaces, and wood stoves. Wood-burning is a major PM2.5 source in cold regions." },
+      { name: "Industrial processes",              display: "Industrial processes",              color: "#7E5567",
+        desc: "Emissions from the chemistry of industrial processes themselves: cement, chemicals, metals, mining, pulp & paper, refining." },
+      { name: "Oil & gas production",              display: "Oil and gas production",            color: "#4F3743",
+        desc: "Upstream oil and gas: wellheads, gathering lines, processing plants, and storage. Mostly fugitive leaks plus combustion at pumps." },
+      { name: "Wildfires & prescribed burns",      display: "Wildfires and prescribed burns",    color: "#6E4F40",
+        desc: "Wildfires, prescribed forest burns, and agricultural field burning. Highly variable year to year." },
+      { name: "Dust",                              display: "Dust",                              color: "#C5B498",
+        desc: "Dust kicked up from paved and unpaved roads and from construction sites. A major PM2.5 source in arid regions." },
+      { name: "Agriculture",                       display: "Agriculture",                       color: "#8B9968",
+        desc: "Crop and livestock dust, manure handling, and fertilizer application." },
+      { name: "Solvents & coatings",               display: "Solvents and coatings",             color: "#5F7B5C",
+        desc: "Paints, varnishes, adhesives, dry cleaning, printing inks, and consumer products like hairspray and cleaning sprays." },
+      { name: "Other",                             display: "Other sources",                     color: "#A0958A",
+        desc: "Smaller anthropogenic sources grouped together: gas stations, commercial cooking, waste disposal, and miscellaneous activity." },
+      { name: "Natural background (trees & soil)", display: "Natural background (trees & soil)", color: "#4C7150", natural: true,
+        desc: "Biogenic VOCs — isoprene, terpenes, and others — released by trees, plants, and soils. Not actionable through policy." },
     ];
     const BUCKET_BY_NAME = Object.fromEntries(BUCKETS.map(b => [b.name, b]));
     const POLLUTANTS = ["pm25", "nox", "voc"];
+    const POLL_LABEL = { pm25: "PM₂.₅", nox: "NOₓ", voc: "VOC" };
+    const POLL_LONG = {
+      pm25: "Fine particulate matter",
+      nox: "Nitrogen oxides",
+      voc: "Volatile organic compounds",
+    };
+    const POLL_BLURB = {
+      pm25: "Tiny particles that lodge deep in lungs and enter the bloodstream.",
+      nox: "Combustion exhaust. Reacts with VOCs to form ground-level ozone.",
+      voc: "Evaporative chemicals. Ozone precursor and minor PM₂.₅ contributor.",
+    };
+    const TOP_N = 5;
 
-    // Marginal health damage per ton, US national averages (2019 USD, mortality
-    // at 3% discount). Derived from EPA OAQPS Benefit-per-Ton memos (2018-2024)
-    // and Goodkind et al. 2019 (PNAS) county-resolved estimates. These reflect
-    // source-specific differences: ground-level urban sources (on-road, wood
-    // heat) are far more harmful per ton than elevated rural stacks (power
-    // plants) or remote wildfires; dust and ag PM are coarser and less toxic.
     const DAMAGE_FACTORS = {
       pm25: {
-        "On-road vehicles":                  2_200_000,
-        "Off-road equipment":                1_700_000,
-        "Aircraft, ships, trains":             400_000,
-        "Power plants":                        110_000,
-        "Industrial fuel combustion":          900_000,
-        "Residential heating":               1_400_000,
-        "Industrial processes":                700_000,
-        "Oil & gas production":                150_000,
-        "Wildfires & prescribed burns":        130_000,
-        "Dust":                                 40_000,
-        "Agriculture":                         100_000,
-        "Solvents & coatings":                 400_000,
-        "Other":                               700_000,
-        "Natural background (trees & soil)":         0,
+        "On-road vehicles": 2_200_000, "Off-road equipment": 1_700_000,
+        "Aircraft, ships, trains": 400_000, "Power plants": 110_000,
+        "Industrial fuel combustion": 900_000, "Residential heating": 1_400_000,
+        "Industrial processes": 700_000, "Oil & gas production": 150_000,
+        "Wildfires & prescribed burns": 130_000, "Dust": 40_000,
+        "Agriculture": 100_000, "Solvents & coatings": 400_000,
+        "Other": 700_000, "Natural background (trees & soil)": 0,
       },
       nox: {
-        "On-road vehicles":                     20_000,
-        "Off-road equipment":                   17_000,
-        "Aircraft, ships, trains":              10_000,
-        "Power plants":                         13_000,
-        "Industrial fuel combustion":           17_000,
-        "Residential heating":                  18_000,
-        "Industrial processes":                 15_000,
-        "Oil & gas production":                 11_000,
-        "Wildfires & prescribed burns":          6_000,
-        "Dust":                                      0,
-        "Agriculture":                           8_000,
-        "Solvents & coatings":                       0,
-        "Other":                                13_000,
-        "Natural background (trees & soil)":         0,
+        "On-road vehicles": 20_000, "Off-road equipment": 17_000,
+        "Aircraft, ships, trains": 10_000, "Power plants": 13_000,
+        "Industrial fuel combustion": 17_000, "Residential heating": 18_000,
+        "Industrial processes": 15_000, "Oil & gas production": 11_000,
+        "Wildfires & prescribed burns": 6_000, "Dust": 0,
+        "Agriculture": 8_000, "Solvents & coatings": 0,
+        "Other": 13_000, "Natural background (trees & soil)": 0,
       },
       voc: {
-        "On-road vehicles":                      4_500,
-        "Off-road equipment":                    4_000,
-        "Aircraft, ships, trains":               2_500,
-        "Power plants":                          2_000,
-        "Industrial fuel combustion":            3_000,
-        "Residential heating":                   4_000,
-        "Industrial processes":                  3_000,
-        "Oil & gas production":                  2_500,
-        "Wildfires & prescribed burns":          1_500,
-        "Dust":                                      0,
-        "Agriculture":                           1_500,
-        "Solvents & coatings":                   3_500,
-        "Other":                                 3_000,
-        "Natural background (trees & soil)":         0,
+        "On-road vehicles": 4_500, "Off-road equipment": 4_000,
+        "Aircraft, ships, trains": 2_500, "Power plants": 2_000,
+        "Industrial fuel combustion": 3_000, "Residential heating": 4_000,
+        "Industrial processes": 3_000, "Oil & gas production": 2_500,
+        "Wildfires & prescribed burns": 1_500, "Dust": 0,
+        "Agriculture": 1_500, "Solvents & coatings": 3_500,
+        "Other": 3_000, "Natural background (trees & soil)": 0,
       },
     };
 
-    function damageFactor(pollutant, bucket) {
-      return DAMAGE_FACTORS[pollutant]?.[bucket] ?? 0;
-    }
+    function damageFactor(p, b) { return DAMAGE_FACTORS[p]?.[b] ?? 0; }
 
+    const AQ_METRICS = [
+      { key: "pm25_annual", short: "PM₂.₅", long: "PM₂.₅",       plain: "Fine particulate matter, annual mean", unit: "µg/m³", whoLimit: 5,  whoUnit: "µg/m³" },
+      { key: "ozone_8hr",   short: "Ozone", long: "Ozone",         plain: "4th-max daily 8-hour average",         unit: "ppb",   whoLimit: 60, whoUnit: "ppb" },
+      { key: "no2_annual",  short: "NO₂",   long: "NO₂",           plain: "Nitrogen dioxide, annual mean",        unit: "ppb",   whoLimit: 5,  whoUnit: "ppb (≈10 µg/m³)" },
+    ];
+
+    const FALLBACK_FIPS = "06037"; // LA County
+
+    // ---------- Formatting helpers ----------
+    function fmtNum(n) {
+      if (n === 0) return "0";
+      if (!isFinite(n)) return "—";
+      if (n < 0.1) return n.toFixed(2);
+      if (n < 10) return n.toFixed(1);
+      return Math.round(n).toLocaleString("en-US");
+    }
+    function fmtCompact(n) {
+      if (!isFinite(n) || n <= 0) return "0";
+      if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
+      if (n >= 10_000)    return `${(n / 1_000).toFixed(0)}K`;
+      if (n >= 1_000)     return `${(n / 1_000).toFixed(1)}K`;
+      return Math.round(n).toLocaleString("en-US");
+    }
     function fmtDollars(v) {
       if (!isFinite(v) || v === 0) return "$0";
       if (v >= 1_000_000_000) return `$${(v / 1_000_000_000).toFixed(1)}B`;
@@ -748,21 +1432,164 @@ import Base from '@/layouts/Base.astro';
       if (v >= 1_000)         return `$${(v / 1_000).toFixed(0)}K`;
       return `$${Math.round(v)}`;
     }
+    function fmtPop(n) {
+      if (!n) return "—";
+      if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(2)} million`;
+      if (n >= 100_000)   return `${Math.round(n / 1_000)}K`;
+      return n.toLocaleString("en-US");
+    }
+    function fmtAq(v, unit) {
+      if (v == null) return "—";
+      const digits = unit === "µg/m³" ? 1 : 0;
+      return v.toFixed(digits);
+    }
 
-    const FALLBACK_FIPS = "06037"; // LA County
+    // Per-person formatting: emissions in tons/yr per county may be tiny per person.
+    // Convert to lbs/yr per person (1 ton ≈ 2000 lb) for legibility.
+    function transformValue(v, mode, pop, pollutant, bucket) {
+      if (mode === "damage") return v * damageFactor(pollutant, bucket);
+      if (mode === "percap" && pop > 0) return (v * 2000) / pop; // lbs / person / yr
+      return v;
+    }
 
-    const AQ_METRICS = [
-      { key: "pm25_annual", label: "PM2.5",  long: "PM₂.₅ (annual mean)",       unit: "µg/m³" },
-      { key: "ozone_8hr",   label: "Ozone",  long: "Ozone (4⁺th-max 8-hr daily)",     unit: "ppb" },
-      { key: "no2_annual",  label: "NO₂", long: "NO₂ (annual mean)",              unit: "ppb" },
-    ];
+    function fmtByMode(v, mode) {
+      if (v === 0) return "0";
+      if (mode === "damage") return fmtDollars(v);
+      if (mode === "percap") {
+        if (v < 0.01) return v.toFixed(3);
+        if (v < 1) return v.toFixed(2);
+        if (v < 100) return v.toFixed(1);
+        return Math.round(v).toLocaleString("en-US");
+      }
+      return fmtNum(v);
+    }
+
+    function fmtTotal(v, mode) {
+      if (mode === "damage") return fmtDollars(v);
+      if (mode === "percap") {
+        if (v < 1) return v.toFixed(2);
+        if (v < 100) return v.toFixed(1);
+        return Math.round(v).toLocaleString("en-US");
+      }
+      // Total emissions: compact for readability
+      return fmtCompact(v);
+    }
+
+    function unitFor(mode) {
+      if (mode === "damage") return "/yr in health cost";
+      if (mode === "percap") return "lbs/person/yr";
+      return "tons/yr";
+    }
+
+    function shortUnitFor(mode) {
+      if (mode === "damage") return "$";
+      if (mode === "percap") return "lb/person/yr";
+      return "t/yr";
+    }
+
+    // ---------- State ----------
+    const state = {
+      counties: null,
+      currentState: null,
+      currentCounty: null,
+      stateEmissions: {},
+      mode: "raw",
+      airQuality: null,
+      currentCountyData: null,
+      currentPop: 0,
+      sortCol: "default",  // default = pm25 descending; otherwise the col key
+      sortDir: "desc",
+      loaded: false,
+    };
+
+    // ---------- Data loading ----------
+    async function loadCounties() {
+      const r = await fetch("/data/air-pollution/counties.json");
+      state.counties = await r.json();
+    }
+    async function loadStaticExtras() {
+      try {
+        const aq = await fetch("/data/air-pollution/air_quality.json").then(r => r.json());
+        state.airQuality = aq;
+      } catch (e) {
+        state.airQuality = null;
+      }
+    }
+    async function loadStateEmissions(ss) {
+      if (state.stateEmissions[ss]) return state.stateEmissions[ss];
+      const r = await fetch(`/data/air-pollution/emissions/${ss}.json`);
+      const data = await r.json();
+      state.stateEmissions[ss] = data;
+      return data;
+    }
+
+    function findCountyMeta(fips5) {
+      const ss = fips5.slice(0, 2);
+      const list = state.counties.counties[ss] || [];
+      return list.find(c => c.fips === fips5) || null;
+    }
+    function findStateMeta(ss) {
+      return state.counties.states.find(s => s.fips === ss) || null;
+    }
+
+    // ---------- Selector ----------
+    function populateStates() {
+      const sel = document.getElementById("aps-state");
+      sel.innerHTML = "";
+      const placeholder = document.createElement("option");
+      placeholder.value = "";
+      placeholder.textContent = "Select a state…";
+      placeholder.disabled = true;
+      placeholder.selected = true;
+      sel.appendChild(placeholder);
+      for (const s of state.counties.states) {
+        const o = document.createElement("option");
+        o.value = s.fips;
+        o.textContent = s.name;
+        sel.appendChild(o);
+      }
+    }
+
+    function populateCounties(ss, preferFips) {
+      const sel = document.getElementById("aps-county");
+      sel.innerHTML = "";
+      const list = state.counties.counties[ss] || [];
+      if (!list.length) {
+        sel.disabled = true;
+        return;
+      }
+      sel.disabled = false;
+      for (const c of list) {
+        const o = document.createElement("option");
+        o.value = c.fips;
+        o.textContent = c.name;
+        sel.appendChild(o);
+      }
+      if (preferFips && list.some(c => c.fips === preferFips)) {
+        sel.value = preferFips;
+      } else if (list[0]) {
+        sel.value = list[0].fips;
+      }
+    }
+
+    // ---------- Air quality cards ----------
+    function aqStatus(v, naaqs) {
+      if (v == null || naaqs == null) return "none";
+      if (v >= naaqs) return "exceeds";
+      if (v >= 0.75 * naaqs) return "elevated";
+      return "below";
+    }
+
+    function statusBadge(metric, status) {
+      if (status === "none") return { text: "Not monitored", status: "none" };
+      if (status === "exceeds") return { text: `${metric}: above NAAQS`, status: "exceeds" };
+      if (status === "elevated") return { text: `${metric}: near NAAQS`, status: "elevated" };
+      return { text: `${metric}: below NAAQS`, status: "below" };
+    }
 
     function healthImpact(metricKey, value) {
       if (value == null || !isFinite(value)) return null;
       if (metricKey === "pm25_annual") {
-        // Berkeley Earth: ~22 µg/m³ continuous exposure ≈ 1 cig/day mortality-risk equivalent.
-        // AQLI (Greenstone & Pande, EPIC at U Chicago): each 1 µg/m³ above 5 µg/m³ WHO
-        // guideline ≈ 0.098 years (~36 days) of lost life expectancy if sustained.
         const cig = value / 22;
         const aboveWho = Math.max(0, value - 5);
         const monthsLost = aboveWho * 0.098 * 12;
@@ -777,86 +1604,18 @@ import Base from '@/layouts/Base.astro';
         return `${cigStr} · ${lifeStr}`;
       }
       if (metricKey === "ozone_8hr") {
-        // Jerrett et al. 2009 NEJM: each 10 ppb increase in long-term 8-hr ozone ≈
-        // ~4% increase in respiratory mortality risk. Referenced against the WHO
-        // peak-season guideline of 60 ppb.
         const above = value - 60;
         if (above <= 0) return "below the WHO guideline (60 ppb)";
         const pct = (above / 10) * 4;
-        return `+${pct.toFixed(0)}% respiratory mortality risk vs WHO guideline (60 ppb)`;
+        return `+${pct.toFixed(0)}% respiratory mortality risk vs WHO (60 ppb)`;
       }
       if (metricKey === "no2_annual") {
-        // Khreis et al. 2017 Environment International meta-analysis: each 4 µg/m³
-        // (~2 ppb) of NO2 ≈ 5% increase in pediatric asthma incidence. WHO annual
-        // guideline: 10 µg/m³ ≈ 5 ppb.
         const above = value - 5;
         if (above <= 0) return "below the WHO guideline (10 µg/m³ ≈ 5 ppb)";
         const pct = (above / 2) * 5;
-        return `+${pct.toFixed(0)}% pediatric asthma risk vs WHO guideline (10 µg/m³)`;
+        return `+${pct.toFixed(0)}% pediatric asthma risk vs WHO (10 µg/m³)`;
       }
       return null;
-    }
-
-    const state = {
-      counties: null,
-      currentState: null,
-      currentCounty: null,
-      stateEmissions: {},
-      mode: "raw",
-      nationalAvg: null,
-      airQuality: null,
-    };
-
-    function fmt(n) {
-      if (n === 0) return "0";
-      if (n < 0.1) return n.toFixed(2);
-      if (n < 10) return n.toFixed(1);
-      return Math.round(n).toLocaleString("en-US");
-    }
-
-    function compactPop(n) {
-      if (n >= 1_000_000) return (n / 1_000_000).toFixed(2) + "M";
-      if (n >= 1_000) return (n / 1_000).toFixed(0) + "K";
-      return String(n);
-    }
-
-    async function loadCounties() {
-      const r = await fetch("/data/air-pollution/counties.json");
-      state.counties = await r.json();
-    }
-
-    async function loadStaticExtras() {
-      try {
-        const [na, aq] = await Promise.all([
-          fetch("/data/air-pollution/national_avg.json").then(r => r.json()),
-          fetch("/data/air-pollution/air_quality.json").then(r => r.json()),
-        ]);
-        state.nationalAvg = na;
-        state.airQuality = aq;
-      } catch (e) {
-        state.nationalAvg = null;
-        state.airQuality = null;
-      }
-    }
-
-    function fmtAqValue(v, unit) {
-      if (v == null) return "—";
-      const digits = unit === "µg/m³" ? 1 : 0;
-      return v.toFixed(digits);
-    }
-
-    function aqStatus(v, naaqs) {
-      if (v == null || naaqs == null) return "none";
-      if (v >= naaqs) return "exceeds";
-      if (v >= 0.75 * naaqs) return "elevated";
-      return "below";
-    }
-
-    function aqStatusLabel(status) {
-      if (status === "exceeds") return "above NAAQS";
-      if (status === "elevated") return "near NAAQS";
-      if (status === "below") return "below NAAQS";
-      return "";
     }
 
     function renderAirQuality(fips5) {
@@ -864,14 +1623,13 @@ import Base from '@/layouts/Base.astro';
       const note = document.getElementById("aps-aq-note");
       grid.innerHTML = "";
       note.textContent = "";
-
       const aq = state.airQuality;
       if (!aq) {
         note.textContent = "Monitor data unavailable.";
-        return;
+        return [];
       }
-
       const countyMetrics = aq.counties[fips5] || {};
+      const out = [];
       let anyMonitor = false;
 
       for (const m of AQ_METRICS) {
@@ -881,42 +1639,92 @@ import Base from '@/layouts/Base.astro';
         const status = aqStatus(v, naaqs);
         if (v != null) anyMonitor = true;
 
-        const card = document.createElement("div");
+        const card = document.createElement("article");
         card.className = "aps-aq-card";
         card.dataset.status = status;
 
-        const label = document.createElement("div");
-        label.className = "aps-aq-card-label";
-        label.innerHTML = m.long;
+        // Title row
+        const title = document.createElement("div");
+        title.className = "aps-aq-card-title";
+        const name = document.createElement("span");
+        name.className = "aps-aq-card-name";
+        name.innerHTML = m.long;
+        title.appendChild(name);
+        card.appendChild(title);
 
+        const plain = document.createElement("div");
+        plain.className = "aps-aq-card-plain";
+        plain.textContent = m.plain;
+        card.appendChild(plain);
+
+        // Main value
         const value = document.createElement("div");
         value.className = "aps-aq-card-value";
         if (v == null) {
           value.textContent = "Not monitored";
         } else {
-          value.innerHTML = `${fmtAqValue(v, m.unit)}<sup>${m.unit}</sup>`;
+          value.innerHTML = `${fmtAq(v, m.unit)}<sup>${m.unit}</sup>`;
         }
-
-        const cmp = document.createElement("div");
-        cmp.className = "aps-aq-card-cmp";
-        if (v != null) {
-          const flag = document.createElement("span");
-          flag.className = "aps-aq-flag";
-          flag.dataset.status = status;
-          cmp.appendChild(flag);
-          const txt = document.createElement("span");
-          txt.textContent = `${aqStatusLabel(status)} (${naaqs} ${m.unit}) · nat. avg ${fmtAqValue(natAvg, m.unit)}`;
-          cmp.appendChild(txt);
-        } else {
-          const txt = document.createElement("span");
-          txt.textContent = `Nat. avg ${fmtAqValue(natAvg, m.unit)}, NAAQS ${naaqs} ${m.unit}`;
-          cmp.appendChild(txt);
-        }
-
-        card.appendChild(label);
         card.appendChild(value);
-        card.appendChild(cmp);
 
+        // Status / comparison line
+        const statusLine = document.createElement("div");
+        statusLine.className = "aps-aq-card-status";
+        if (v != null) {
+          const cmp = v >= naaqs ? "above" : v >= 0.75 * naaqs ? "near" : "below";
+          statusLine.innerHTML = `<strong>${cmp.charAt(0).toUpperCase() + cmp.slice(1)} NAAQS</strong> (${naaqs} ${m.unit}) · national avg ${fmtAq(natAvg, m.unit)} ${m.unit}`;
+        } else {
+          statusLine.innerHTML = `No monitor in this county · NAAQS ${naaqs} ${m.unit} · national avg ${fmtAq(natAvg, m.unit)}`;
+        }
+        card.appendChild(statusLine);
+
+        // Mini benchmark bar
+        if (v != null) {
+          const bench = document.createElement("div");
+          bench.className = "aps-aq-bench";
+
+          const track = document.createElement("div");
+          track.className = "aps-aq-bench-track";
+
+          // Scale: 0 to max(naaqs * 1.5, value * 1.1, naaqs * 1.05)
+          const scaleMax = Math.max(naaqs * 1.5, v * 1.1, naaqs * 1.05);
+          const fill = document.createElement("div");
+          fill.className = "aps-aq-bench-fill";
+          fill.style.width = `${Math.min(100, (v / scaleMax) * 100).toFixed(1)}%`;
+          track.appendChild(fill);
+
+          // WHO marker
+          const whoPct = (m.whoLimit / scaleMax) * 100;
+          if (whoPct > 0 && whoPct < 100) {
+            const whoMk = document.createElement("div");
+            whoMk.className = "aps-aq-bench-marker";
+            whoMk.dataset.kind = "who";
+            whoMk.style.left = `${whoPct.toFixed(1)}%`;
+            whoMk.title = `WHO guideline: ${m.whoLimit} ${m.whoUnit}`;
+            track.appendChild(whoMk);
+          }
+          // NAAQS marker
+          const naaqsPct = (naaqs / scaleMax) * 100;
+          if (naaqsPct > 0 && naaqsPct < 100) {
+            const naMk = document.createElement("div");
+            naMk.className = "aps-aq-bench-marker";
+            naMk.dataset.kind = "naaqs";
+            naMk.style.left = `${naaqsPct.toFixed(1)}%`;
+            naMk.title = `NAAQS limit: ${naaqs} ${m.unit}`;
+            track.appendChild(naMk);
+          }
+
+          bench.appendChild(track);
+
+          const labels = document.createElement("div");
+          labels.className = "aps-aq-bench-labels";
+          labels.innerHTML = `<span>WHO ${m.whoLimit}</span><span>NAAQS ${naaqs}</span>`;
+          bench.appendChild(labels);
+
+          card.appendChild(bench);
+        }
+
+        // Health interpretation
         const harmText = healthImpact(m.key, v);
         if (harmText) {
           const harm = document.createElement("div");
@@ -926,314 +1734,209 @@ import Base from '@/layouts/Base.astro';
         }
 
         grid.appendChild(card);
+        out.push({ metric: m, status, value: v });
       }
 
       if (!anyMonitor) {
         const monStr = AQ_METRICS
-          .map(m => `${m.label} ${aq.n_monitored[m.key]}`)
+          .map(m => `${m.short} ${aq.n_monitored[m.key]}`)
           .join(" · ");
         note.textContent = `No EPA air-quality monitors in this county. Nationally, only ${monStr} counties have monitors (of 3,245).`;
       }
+      return out;
     }
 
-    function nationalAvgForBucket(bucket, pollutant) {
-      const na = state.nationalAvg;
-      if (!na) return null;
-      if (state.mode === "damage") {
-        const rawAvg = na.raw?.[pollutant]?.[bucket];
-        if (rawAvg == null) return null;
-        return rawAvg * damageFactor(pollutant, bucket);
+    // ---------- Summary strip ----------
+    function renderSummary(fips5, aqResults) {
+      const el = document.getElementById("aps-summary");
+      el.innerHTML = "";
+
+      const meta = findCountyMeta(fips5);
+      const stateMeta = findStateMeta(fips5.slice(0, 2));
+
+      const name = document.createElement("div");
+      name.className = "aps-summary-name";
+      name.textContent = `${meta ? meta.name : fips5} County, ${stateMeta ? stateMeta.name : ""}`;
+      el.appendChild(name);
+
+      if (meta && meta.pop) {
+        const pop = document.createElement("div");
+        pop.className = "aps-summary-fact";
+        pop.innerHTML = `<strong>${fmtPop(meta.pop)}</strong> residents`;
+        el.appendChild(pop);
       }
-      const table = state.mode === "percap" ? na.percap : na.raw;
-      const v = table?.[pollutant]?.[bucket];
-      return v == null ? null : v;
-    }
 
-    async function loadStateEmissions(ss) {
-      if (state.stateEmissions[ss]) return state.stateEmissions[ss];
-      const r = await fetch(`/data/air-pollution/emissions/${ss}.json`);
-      const data = await r.json();
-      state.stateEmissions[ss] = data;
-      return data;
-    }
+      const src = document.createElement("div");
+      src.className = "aps-summary-fact";
+      src.innerHTML = `EPA NEI 2020 emissions · AQS 2025 monitors`;
+      el.appendChild(src);
 
-    function populateStates() {
-      const sel = document.getElementById("aps-state");
-      sel.innerHTML = "";
-      for (const s of state.counties.states) {
-        const o = document.createElement("option");
-        o.value = s.fips;
-        o.textContent = s.name;
-        sel.appendChild(o);
+      const badges = document.createElement("div");
+      badges.className = "aps-summary-badges";
+      for (const r of aqResults) {
+        const b = document.createElement("span");
+        b.className = "aps-badge";
+        b.dataset.status = r.status;
+        const dot = document.createElement("span");
+        dot.className = "aps-badge-dot";
+        b.appendChild(dot);
+        const txt = document.createElement("span");
+        if (r.status === "none") {
+          txt.textContent = `${r.metric.short}: not monitored`;
+        } else if (r.status === "exceeds") {
+          txt.textContent = `${r.metric.short}: above NAAQS`;
+        } else if (r.status === "elevated") {
+          txt.textContent = `${r.metric.short}: near NAAQS`;
+        } else {
+          txt.textContent = `${r.metric.short}: below NAAQS`;
+        }
+        b.appendChild(txt);
+        badges.appendChild(b);
       }
+      el.appendChild(badges);
     }
 
-    function populateCounties(ss, preferFips) {
-      const sel = document.getElementById("aps-county");
-      sel.innerHTML = "";
-      const list = state.counties.counties[ss] || [];
-      for (const c of list) {
-        const o = document.createElement("option");
-        o.value = c.fips;
-        o.textContent = c.name;
-        sel.appendChild(o);
-      }
-      if (preferFips && list.some(c => c.fips === preferFips)) {
-        sel.value = preferFips;
-      } else if (list[0]) {
-        sel.value = list[0].fips;
-      }
-    }
-
-    function findCountyMeta(fips5) {
-      const ss = fips5.slice(0, 2);
-      const list = state.counties.counties[ss] || [];
-      return list.find(c => c.fips === fips5) || null;
-    }
-
-    function findStateMeta(ss) {
-      return state.counties.states.find(s => s.fips === ss) || null;
-    }
-
-    function transformValue(v, mode, pop, pollutant, bucket) {
-      if (mode === "damage") return v * damageFactor(pollutant, bucket);
-      if (mode === "percap" && pop > 0) return (v / pop) * 100000;
-      return v;
-    }
-
-    function modeUnit(mode) {
-      if (mode === "damage") return "$";
-      if (mode === "percap") return "tons/yr per 100K";
-      return "tons/yr";
-    }
-
-    function fmtByMode(v, mode) {
-      if (mode === "damage") return fmtDollars(v);
-      return fmt(v);
-    }
-
-    const POLL_LABEL = { pm25: "PM₂.₅", nox: "NOx", voc: "VOC" };
-
-    function segsForPollutant(pollutant, valuesByBucket, mode, pop) {
+    // ---------- Ranked bar charts ----------
+    function segsForPollutant(p, valuesByBucket, mode, pop) {
       const segs = BUCKETS
         .filter(b => valuesByBucket[b.name] !== undefined && valuesByBucket[b.name] > 0)
-        .map(b => ({ ...b, value: transformValue(valuesByBucket[b.name], mode, pop, pollutant, b.name) }))
+        .map(b => ({
+          name: b.name, display: b.display, color: b.color, natural: !!b.natural,
+          value: transformValue(valuesByBucket[b.name], mode, pop, p, b.name),
+        }))
         .filter(s => s.value > 0);
       segs.sort((a, b) => b.value - a.value);
       return segs;
     }
 
-    function totalLabel(total, mode) {
-      if (total <= 0) return "—";
-      if (mode === "damage") return `${fmtDollars(total)} damage/yr`;
-      if (mode === "percap") return `${fmt(total)} tons/yr per 100K`;
-      return `${fmt(total)} tons/yr`;
+    function topSegments(segs) {
+      if (segs.length <= TOP_N) return { rows: segs, hasOther: false };
+      const top = segs.slice(0, TOP_N);
+      const rest = segs.slice(TOP_N);
+      const otherTotal = rest.reduce((s, x) => s + x.value, 0);
+      const rows = [...top, {
+        name: "_other_aggregate",
+        display: `Other (${rest.length} sources)`,
+        color: "#a8a39b",
+        natural: false,
+        value: otherTotal,
+        aggregate: true,
+      }];
+      return { rows, hasOther: true };
     }
 
-    function compactTons(n) {
-      if (!isFinite(n) || n <= 0) return "0";
-      if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
-      if (n >= 100_000) return `${Math.round(n / 1_000)}K`;
-      if (n >= 10_000) return `${(n / 1_000).toFixed(1)}K`;
-      if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
-      return Math.round(n).toLocaleString("en-US");
-    }
+    function renderCharts(county, pop) {
+      const wrap = document.getElementById("aps-charts");
+      wrap.innerHTML = "";
 
-    function donutCenterLabel(total, mode) {
-      if (total <= 0) return "no data";
-      if (mode === "damage") return `${fmtDollars(total)}/yr`;
-      if (mode === "percap") return `${compactTons(total)} /100K`;
-      return `${compactTons(total)} tons/yr`;
-    }
+      const summaries = [];
 
-    function buildBarSegments(barEl, pollutant, segs, total) {
-      barEl.innerHTML = "";
-      for (const s of segs) {
-        const seg = document.createElement("div");
-        seg.className = "aps-seg";
-        seg.dataset.bucket = s.name;
-        seg.dataset.value = String(s.value);
-        seg.dataset.pct = ((s.value / total) * 100).toFixed(1);
-        seg.style.width = ((s.value / total) * 100).toFixed(3) + "%";
-        seg.style.background = s.color;
-
-        const natAvg = nationalAvgForBucket(s.name, pollutant);
-        if (natAvg != null && natAvg > 0 && s.value > 0) {
-          const ratio = natAvg / s.value;
-          const tick = document.createElement("div");
-          tick.className = "aps-seg-tick";
-          if (ratio <= 1) {
-            tick.style.left = (ratio * 100).toFixed(2) + "%";
-          } else {
-            tick.style.left = "calc(100% - 2px)";
-            tick.dataset.overflow = "true";
-          }
-          seg.dataset.natavg = String(natAvg);
-          seg.appendChild(tick);
-        }
-
-        barEl.appendChild(seg);
-      }
-    }
-
-    function donutSliceD(cx, cy, rOuter, rInner, start, end) {
-      if (end - start >= 0.999999) {
-        return `M ${cx + rOuter} ${cy}
-                A ${rOuter} ${rOuter} 0 1 1 ${cx - rOuter} ${cy}
-                A ${rOuter} ${rOuter} 0 1 1 ${cx + rOuter} ${cy}
-                M ${cx + rInner} ${cy}
-                A ${rInner} ${rInner} 0 1 0 ${cx - rInner} ${cy}
-                A ${rInner} ${rInner} 0 1 0 ${cx + rInner} ${cy} Z`;
-      }
-      const sA = start * 2 * Math.PI - Math.PI / 2;
-      const eA = end   * 2 * Math.PI - Math.PI / 2;
-      const largeArc = (end - start) > 0.5 ? 1 : 0;
-      const x1 = cx + rOuter * Math.cos(sA);
-      const y1 = cy + rOuter * Math.sin(sA);
-      const x2 = cx + rOuter * Math.cos(eA);
-      const y2 = cy + rOuter * Math.sin(eA);
-      const x3 = cx + rInner * Math.cos(eA);
-      const y3 = cy + rInner * Math.sin(eA);
-      const x4 = cx + rInner * Math.cos(sA);
-      const y4 = cy + rInner * Math.sin(sA);
-      return `M ${x1.toFixed(2)} ${y1.toFixed(2)}
-              A ${rOuter} ${rOuter} 0 ${largeArc} 1 ${x2.toFixed(2)} ${y2.toFixed(2)}
-              L ${x3.toFixed(2)} ${y3.toFixed(2)}
-              A ${rInner} ${rInner} 0 ${largeArc} 0 ${x4.toFixed(2)} ${y4.toFixed(2)} Z`;
-    }
-
-    function buildDonut(pollutant, segs, total) {
-      const W = 180, H = 180;
-      const cx = W / 2, cy = H / 2;
-      const rOuter = 78, rInner = 42;
-      const NS = "http://www.w3.org/2000/svg";
-      const svg = document.createElementNS(NS, "svg");
-      svg.setAttribute("class", "aps-donut");
-      svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
-      svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
-      svg.setAttribute("role", "img");
-      svg.setAttribute("aria-label", `${POLL_LABEL[pollutant]} source breakdown`);
-
-      if (total > 0) {
-        let cumulative = 0;
-        for (const s of segs) {
-          const start = cumulative / total;
-          const end = (cumulative + s.value) / total;
-          cumulative += s.value;
-          const path = document.createElementNS(NS, "path");
-          path.setAttribute("d", donutSliceD(cx, cy, rOuter, rInner, start, end));
-          path.setAttribute("fill", s.color);
-          path.setAttribute("stroke", "var(--bg)");
-          path.setAttribute("stroke-width", "1");
-          path.classList.add("aps-seg");
-          path.dataset.bucket = s.name;
-          path.dataset.value = String(s.value);
-          path.dataset.pct = ((s.value / total) * 100).toFixed(1);
-          const natAvg = nationalAvgForBucket(s.name, pollutant);
-          if (natAvg != null) path.dataset.natavg = String(natAvg);
-          svg.appendChild(path);
-        }
-      }
-
-      const text = document.createElementNS(NS, "text");
-      text.setAttribute("class", "aps-donut-center");
-      text.setAttribute("x", cx);
-      text.setAttribute("y", cy);
-      text.setAttribute("text-anchor", "middle");
-      text.setAttribute("dominant-baseline", "central");
-
-      const t1 = document.createElementNS(NS, "tspan");
-      t1.setAttribute("x", cx);
-      t1.setAttribute("dy", "-0.45em");
-      t1.setAttribute("class", "aps-donut-center-name");
-      t1.textContent = POLL_LABEL[pollutant];
-      text.appendChild(t1);
-
-      const t2 = document.createElementNS(NS, "tspan");
-      t2.setAttribute("x", cx);
-      t2.setAttribute("dy", "1.4em");
-      t2.setAttribute("class", "aps-donut-center-total");
-      t2.textContent = donutCenterLabel(total, state.mode);
-      text.appendChild(t2);
-
-      svg.appendChild(text);
-      return svg;
-    }
-
-    function renderChart(county, pop) {
-      const chart = document.getElementById("aps-chart");
-      chart.innerHTML = "";
-      delete chart.dataset.hover;
-
-      const datas = POLLUTANTS.map(p => {
+      for (const p of POLLUTANTS) {
         const segs = segsForPollutant(p, county[p] || {}, state.mode, pop);
         const total = segs.reduce((s, x) => s + x.value, 0);
-        return { pollutant: p, segs, total };
-      });
 
-      if (state.mode === "damage") {
-        chart.dataset.layout = "bars";
-        const globalMax = Math.max(0.0001, ...datas.map(d => d.total));
+        const card = document.createElement("article");
+        card.className = "aps-chart-card";
+        card.dataset.poll = p;
 
-        for (const d of datas) {
-          const row = document.createElement("div");
-          row.className = "aps-stack-row";
-          row.dataset.poll = d.pollutant;
+        const head = document.createElement("div");
+        head.className = "aps-chart-head";
 
-          const label = document.createElement("div");
-          label.className = "aps-stack-label";
-          const name = document.createElement("span");
-          name.className = "aps-stack-name";
-          name.innerHTML = d.pollutant === "pm25" ? "PM<sub>2.5</sub>" : (d.pollutant === "nox" ? "NOx" : "VOC");
-          const totalSpan = document.createElement("span");
-          totalSpan.className = "aps-stack-total";
-          totalSpan.textContent = totalLabel(d.total, state.mode);
-          label.appendChild(name);
-          label.appendChild(totalSpan);
+        const namEl = document.createElement("div");
+        namEl.className = "aps-chart-name";
+        namEl.innerHTML = `${POLL_LABEL[p]} <span style="color:var(--dim);font-weight:500;font-size:0.78rem;margin-left:4px;">${POLL_LONG[p]}</span>`;
+        head.appendChild(namEl);
 
-          const bar = document.createElement("div");
-          bar.className = "aps-stack-bar";
-          if (d.total > 0) {
-            const widthPct = (d.total / globalMax) * 100;
-            bar.style.width = Math.max(widthPct, 4).toFixed(2) + "%";
-            buildBarSegments(bar, d.pollutant, d.segs, d.total);
-          } else {
-            bar.style.width = "4%";
-            bar.style.opacity = "0.35";
-          }
-
-          row.appendChild(label);
-          row.appendChild(bar);
-          chart.appendChild(row);
+        const totEl = document.createElement("div");
+        totEl.className = "aps-chart-total";
+        if (total > 0) {
+          totEl.innerHTML = `${fmtTotal(total, state.mode)}<span class="aps-chart-total-unit">${unitFor(state.mode)}</span>`;
+        } else {
+          totEl.innerHTML = `<span style="color:var(--dim);font-size:1rem;font-weight:500;">No reported emissions</span>`;
         }
-      } else {
-        chart.dataset.layout = "donuts";
-        for (const d of datas) {
-          const cell = document.createElement("div");
-          cell.className = "aps-donut-cell";
-          cell.dataset.poll = d.pollutant;
-          cell.appendChild(buildDonut(d.pollutant, d.segs, d.total));
+        head.appendChild(totEl);
 
-          const caption = document.createElement("div");
-          caption.className = "aps-donut-caption";
-          if (d.total > 0 && d.segs.length) {
-            const top = d.segs[0];
-            const topPct = ((top.value / d.total) * 100).toFixed(0);
-            caption.innerHTML = `Largest source: <strong>${top.name}</strong> (${topPct}%)`;
-          } else {
-            caption.textContent = "No reported emissions";
+        const blurb = document.createElement("div");
+        blurb.className = "aps-chart-top";
+        if (segs.length) {
+          const top = segs[0];
+          const topPct = ((top.value / total) * 100).toFixed(0);
+          blurb.innerHTML = `Top source: <strong>${top.display}</strong> · ${topPct}%`;
+        } else {
+          blurb.innerHTML = POLL_BLURB[p];
+        }
+        head.appendChild(blurb);
+
+        card.appendChild(head);
+
+        // Bars
+        if (segs.length === 0) {
+          const empty = document.createElement("div");
+          empty.className = "aps-chart-empty";
+          empty.textContent = "No reported emissions for this pollutant.";
+          card.appendChild(empty);
+        } else {
+          const bars = document.createElement("div");
+          bars.className = "aps-bars";
+
+          const { rows } = topSegments(segs);
+          const maxVal = rows.reduce((m, r) => Math.max(m, r.value), 0);
+
+          for (const r of rows) {
+            const row = document.createElement("div");
+            row.className = "aps-bar-row";
+            if (!r.aggregate) row.dataset.bucket = r.name;
+            if (r.natural) row.dataset.natural = "true";
+            row.setAttribute("tabindex", "0");
+            row.setAttribute("role", "button");
+            const pct = total > 0 ? ((r.value / total) * 100) : 0;
+            const ariaTxt = `${r.display}: ${fmtByMode(r.value, state.mode)} ${shortUnitFor(state.mode)}, ${pct.toFixed(0)} percent`;
+            row.setAttribute("aria-label", ariaTxt);
+
+            const label = document.createElement("div");
+            label.className = "aps-bar-label";
+            const nm = document.createElement("span");
+            nm.className = "aps-bar-name";
+            nm.textContent = r.display;
+            const vv = document.createElement("span");
+            vv.className = "aps-bar-value";
+            vv.innerHTML = `${fmtByMode(r.value, state.mode)}<span class="aps-bar-pct">${pct.toFixed(0)}%</span>`;
+            label.appendChild(nm);
+            label.appendChild(vv);
+
+            const track = document.createElement("div");
+            track.className = "aps-bar-track";
+            const fill = document.createElement("div");
+            fill.className = "aps-bar-fill";
+            fill.style.width = `${maxVal > 0 ? (r.value / maxVal) * 100 : 0}%`;
+            fill.style.background = r.color;
+            track.appendChild(fill);
+
+            row.appendChild(label);
+            row.appendChild(track);
+            bars.appendChild(row);
           }
-          cell.appendChild(caption);
 
-          chart.appendChild(cell);
+          card.appendChild(bars);
+        }
+
+        wrap.appendChild(card);
+
+        // Build a11y summary for this chart
+        if (segs.length) {
+          const top3 = segs.slice(0, 3).map(s => `${s.display} at ${fmtByMode(s.value, state.mode)} ${shortUnitFor(state.mode)}`).join(", ");
+          summaries.push(`${POLL_LABEL[p]} emissions total ${fmtTotal(total, state.mode)} ${unitFor(state.mode)}. Largest sources: ${top3}.`);
+        } else {
+          summaries.push(`${POLL_LABEL[p]}: no reported emissions for this county.`);
         }
       }
+
+      const sr = document.getElementById("aps-sr-summary");
+      if (sr) sr.textContent = summaries.join(" ");
     }
 
-    function renderLegend(county, mode, pop) {
-      const tbody = document.getElementById("aps-legend-body");
-      tbody.innerHTML = "";
-
+    // ---------- Source table ----------
+    function buildTableRows(county, mode, pop) {
       const totals = {};
       for (const p of POLLUTANTS) {
         let t = 0;
@@ -1243,97 +1946,181 @@ import Base from '@/layouts/Base.astro';
         }
         totals[p] = t;
       }
-
-      const rows = BUCKETS.map(b => {
-        const values = POLLUTANTS.map(p => {
+      const tops = {};
+      for (const p of POLLUTANTS) {
+        let bestName = null, bestV = 0;
+        for (const b of BUCKETS) {
           const raw = county[p] ? county[p][b.name] : undefined;
-          return raw !== undefined ? transformValue(raw, mode, pop, p, b.name) : null;
-        });
-        const anyPresent = values.some(v => v !== null && v > 0);
-        let share = 0;
-        for (let i = 0; i < POLLUTANTS.length; i++) {
-          const t = totals[POLLUTANTS[i]];
-          if (t > 0 && values[i] != null) share += values[i] / t;
+          if (raw === undefined) continue;
+          const v = transformValue(raw, mode, pop, p, b.name);
+          if (v > bestV) { bestV = v; bestName = b.name; }
         }
-        return { bucket: b, values, anyPresent, share };
-      })
-        .filter(r => r.anyPresent)
-        .sort((a, b) => {
+        tops[p] = bestName;
+      }
+      const rows = BUCKETS.map(b => {
+        const values = {};
+        const shares = {};
+        let anyPresent = false;
+        for (const p of POLLUTANTS) {
+          const raw = county[p] ? county[p][b.name] : undefined;
+          if (raw === undefined) { values[p] = null; shares[p] = null; continue; }
+          const v = transformValue(raw, mode, pop, p, b.name);
+          values[p] = v;
+          shares[p] = totals[p] > 0 ? v / totals[p] : 0;
+          if (v > 0) anyPresent = true;
+        }
+        return { bucket: b, values, shares, anyPresent };
+      }).filter(r => r.anyPresent);
+
+      return { rows, totals, tops };
+    }
+
+    function sortRows(rows) {
+      const col = state.sortCol;
+      const dir = state.sortDir === "asc" ? 1 : -1;
+      if (col === "source") {
+        rows.sort((a, b) => a.bucket.display.localeCompare(b.bucket.display) * dir);
+      } else if (col === "default") {
+        // Default: natural background last, otherwise by combined share desc
+        rows.sort((a, b) => {
           if (a.bucket.natural && !b.bucket.natural) return 1;
           if (!a.bucket.natural && b.bucket.natural) return -1;
-          return b.share - a.share;
+          const aShare = POLLUTANTS.reduce((s, p) => s + (a.shares[p] ?? 0), 0);
+          const bShare = POLLUTANTS.reduce((s, p) => s + (b.shares[p] ?? 0), 0);
+          return bShare - aShare;
         });
+      } else {
+        // Sort by pollutant value
+        rows.sort((a, b) => {
+          const av = a.values[col] ?? -1;
+          const bv = b.values[col] ?? -1;
+          return (av - bv) * dir;
+        });
+      }
+      return rows;
+    }
 
-      for (const { bucket: b, values } of rows) {
+    function renderTable(county, mode, pop) {
+      const { rows, tops } = buildTableRows(county, mode, pop);
+      sortRows(rows);
+
+      const tbody = document.getElementById("aps-table-body");
+      tbody.innerHTML = "";
+
+      for (const r of rows) {
         const tr = document.createElement("tr");
-        tr.dataset.bucket = b.name;
-        if (b.natural) tr.dataset.natural = "true";
+        tr.dataset.bucket = r.bucket.name;
+        if (r.bucket.natural) tr.dataset.natural = "true";
 
         const tdSrc = document.createElement("td");
-        tdSrc.className = "aps-legend-source";
+        tdSrc.className = "aps-td-source";
+        const inner = document.createElement("span");
+        inner.className = "aps-td-source-inner";
+        inner.style.display = "inline-flex";
+        inner.style.alignItems = "center";
+        inner.style.gap = "9px";
         const sw = document.createElement("span");
         sw.className = "aps-swatch";
-        sw.style.background = b.color;
-        const label = document.createElement("span");
-        label.textContent = b.name;
-        tdSrc.appendChild(sw);
-        tdSrc.appendChild(label);
+        sw.style.background = r.bucket.color;
+        const nm = document.createElement("span");
+        nm.textContent = r.bucket.display;
+        inner.appendChild(sw);
+        inner.appendChild(nm);
+        tdSrc.appendChild(inner);
         tr.appendChild(tdSrc);
 
-        for (const v of values) {
+        for (const p of POLLUTANTS) {
           const td = document.createElement("td");
-          td.className = "aps-legend-num";
-          if (v === null || v === 0) {
-            td.dataset.zero = "true";
-            td.textContent = v === null ? "—" : "0";
+          td.className = "aps-td-num";
+          const v = r.values[p];
+          const isTop = tops[p] === r.bucket.name && v != null && v > 0;
+          if (isTop) td.dataset.topHere = "true";
+          if (v === null) {
+            td.textContent = "—";
+            td.classList.add("aps-td-zero");
+          } else if (v === 0) {
+            td.textContent = "0";
+            td.classList.add("aps-td-zero");
           } else {
-            td.textContent = fmtByMode(v, mode);
+            const share = r.shares[p];
+            const sharePct = share != null && share > 0 ? `${(share * 100).toFixed(0)}%` : null;
+            td.innerHTML = `${fmtByMode(v, mode)}${sharePct ? `<span class="aps-td-share">${sharePct}</span>` : ""}`;
           }
           tr.appendChild(td);
         }
+        // Mark any row that's the top for any pollutant
+        if (POLLUTANTS.some(p => tops[p] === r.bucket.name)) {
+          tr.dataset.top = "true";
+        }
         tbody.appendChild(tr);
       }
-    }
 
-    function setHover(bucketName) {
-      const chart = document.getElementById("aps-chart");
-      if (chart) {
-        if (bucketName) chart.dataset.hover = "true";
-        else delete chart.dataset.hover;
-      }
-
-      document.querySelectorAll(".aps-seg").forEach(el => {
-        if (el.dataset.bucket === bucketName) {
-          el.dataset.active = "true";
+      // Sort indicators on headers
+      document.querySelectorAll("#aps-table thead th").forEach(th => {
+        const col = th.dataset.col;
+        if (col === state.sortCol) {
+          th.dataset.sort = state.sortDir;
         } else {
-          el.dataset.active = "false";
+          delete th.dataset.sort;
         }
       });
-      document.querySelectorAll("#aps-legend-body tr").forEach(el => {
+
+      // Update unit labels
+      const u = shortUnitFor(state.mode);
+      const display = state.mode === "damage" ? "$/yr" : (state.mode === "percap" ? "lb/person/yr" : "t/yr");
+      const pmU = document.getElementById("aps-unit-pm25");
+      const noU = document.getElementById("aps-unit-nox");
+      const vU = document.getElementById("aps-unit-voc");
+      if (pmU) pmU.textContent = display;
+      if (noU) noU.textContent = display;
+      if (vU) vU.textContent = display;
+    }
+
+    // ---------- Hover/highlight ----------
+    function setHover(bucketName) {
+      document.querySelectorAll(".aps-chart-card").forEach(card => {
+        if (bucketName) card.dataset.hover = "true";
+        else delete card.dataset.hover;
+      });
+      document.querySelectorAll(".aps-bar-row").forEach(el => {
+        el.dataset.active = el.dataset.bucket === bucketName ? "true" : "false";
+      });
+      document.querySelectorAll("#aps-table-body tr").forEach(el => {
         el.dataset.active = el.dataset.bucket === bucketName ? "true" : "false";
       });
     }
 
-    function showTip(bucketName, statsText, cmpText, x, y) {
+    function statsForBar(row) {
+      const bucketName = row.dataset.bucket;
+      if (!bucketName) return "";
+      const card = row.closest(".aps-chart-card");
+      const poll = card && card.dataset.poll;
+      const pollLabel = POLL_LABEL[poll] || "";
+      const aria = row.getAttribute("aria-label") || "";
+      // aria has "Name: value unit, X percent"
+      const m = aria.match(/: (.+?), (\d+)/);
+      if (!m) return aria;
+      return `${pollLabel}: ${m[1]} (${m[2]}% of bar)`;
+    }
+
+    function showTip(bucketName, statsText, x, y) {
       const tip = document.getElementById("aps-tip");
       const bucket = BUCKET_BY_NAME[bucketName];
       if (!bucket) return;
-      document.getElementById("aps-tip-name").textContent = bucket.name;
+      document.getElementById("aps-tip-name").textContent = bucket.display;
       document.getElementById("aps-tip-swatch").style.background = bucket.color;
       document.getElementById("aps-tip-stats").textContent = statsText || "";
-      document.getElementById("aps-tip-cmp").textContent = cmpText || "";
+      document.getElementById("aps-tip-cmp").textContent = "";
       document.getElementById("aps-tip-desc").textContent = bucket.desc || "";
       tip.style.display = "block";
       tip.setAttribute("aria-hidden", "false");
       positionTip(x, y);
     }
-
     function hideTip() {
       const tip = document.getElementById("aps-tip");
       tip.style.display = "none";
       tip.setAttribute("aria-hidden", "true");
     }
-
     function positionTip(x, y) {
       const tip = document.getElementById("aps-tip");
       const w = tip.offsetWidth;
@@ -1349,96 +2136,122 @@ import Base from '@/layouts/Base.astro';
       tip.style.top = top + "px";
     }
 
-    function statsForSeg(seg) {
-      const value = parseFloat(seg.dataset.value);
-      const pct = seg.dataset.pct;
-      const parent = seg.closest("[data-poll]");
-      const poll = parent && parent.dataset.poll;
-      const pollLabel = poll === "pm25" ? "PM2.5" : poll === "nox" ? "NOx" : "VOC";
-      if (state.mode === "damage") {
-        return `${pollLabel}: ${fmtDollars(value)} estimated health damage/yr (${pct}% of bar)`;
-      }
-      const unit = state.mode === "percap" ? "tons / yr per 100K residents" : "tons / yr";
-      return `${pollLabel}: ${fmt(value)} ${unit} (${pct}% of bar)`;
-    }
-
-    function cmpForSeg(seg) {
-      const natAvg = seg.dataset.natavg ? parseFloat(seg.dataset.natavg) : null;
-      const value = parseFloat(seg.dataset.value);
-      if (natAvg == null || !isFinite(natAvg)) return "";
-      const fmtV = (x) => state.mode === "damage" ? fmtDollars(x) : `${fmt(x)} ${state.mode === "percap" ? "tons/yr per 100K" : "tons/yr"}`;
-      if (natAvg === 0) {
-        return value === 0
-          ? `Avg county: 0 (no contribution nationally)`
-          : `Avg county: 0 — your county has reported emissions`;
-      }
-      const ratio = value / natAvg;
-      const ratioStr = ratio >= 10
-        ? `${ratio.toFixed(0)}×`
-        : ratio >= 1
-          ? `${ratio.toFixed(1)}×`
-          : `${(ratio * 100).toFixed(0)}% of`;
-      const direction = ratio >= 1 ? "above" : "below";
-      return `${ratioStr} the national county avg (${fmtV(natAvg)}) — ${direction} average`;
-    }
-
     function bindHover() {
-      const chart = document.getElementById("aps-chart");
-      const legend = document.getElementById("aps-legend");
+      const charts = document.getElementById("aps-charts");
+      const table = document.getElementById("aps-table");
 
-      chart.addEventListener("mouseover", (e) => {
-        const seg = e.target.closest(".aps-seg");
-        if (seg) {
-          setHover(seg.dataset.bucket);
-          showTip(seg.dataset.bucket, statsForSeg(seg), cmpForSeg(seg), e.clientX, e.clientY);
+      charts.addEventListener("mouseover", (e) => {
+        const row = e.target.closest(".aps-bar-row[data-bucket]");
+        if (row) {
+          setHover(row.dataset.bucket);
+          showTip(row.dataset.bucket, statsForBar(row), e.clientX, e.clientY);
         }
       });
-      chart.addEventListener("mousemove", (e) => {
-        const seg = e.target.closest(".aps-seg");
-        if (seg) {
-          showTip(seg.dataset.bucket, statsForSeg(seg), cmpForSeg(seg), e.clientX, e.clientY);
+      charts.addEventListener("mousemove", (e) => {
+        const row = e.target.closest(".aps-bar-row[data-bucket]");
+        if (row) showTip(row.dataset.bucket, statsForBar(row), e.clientX, e.clientY);
+      });
+      charts.addEventListener("mouseleave", () => { setHover(null); hideTip(); });
+      charts.addEventListener("focusin", (e) => {
+        const row = e.target.closest(".aps-bar-row[data-bucket]");
+        if (row) {
+          setHover(row.dataset.bucket);
+          const rect = row.getBoundingClientRect();
+          showTip(row.dataset.bucket, statsForBar(row), rect.left + rect.width / 2, rect.bottom);
         }
       });
-      chart.addEventListener("mouseleave", () => {
-        setHover(null);
-        hideTip();
-      });
+      charts.addEventListener("focusout", () => { setHover(null); hideTip(); });
 
-      legend.addEventListener("mouseover", (e) => {
+      table.addEventListener("mouseover", (e) => {
         const tr = e.target.closest("tr[data-bucket]");
         if (tr) {
           setHover(tr.dataset.bucket);
-          showTip(tr.dataset.bucket, "", "", e.clientX, e.clientY);
+          showTip(tr.dataset.bucket, "", e.clientX, e.clientY);
         }
       });
-      legend.addEventListener("mousemove", (e) => {
+      table.addEventListener("mousemove", (e) => {
         const tr = e.target.closest("tr[data-bucket]");
-        if (tr) {
-          showTip(tr.dataset.bucket, "", "", e.clientX, e.clientY);
-        }
+        if (tr) showTip(tr.dataset.bucket, "", e.clientX, e.clientY);
       });
-      legend.addEventListener("mouseleave", () => {
-        setHover(null);
-        hideTip();
+      table.addEventListener("mouseleave", () => { setHover(null); hideTip(); });
+
+      // Header sort
+      table.querySelectorAll("thead th").forEach(th => {
+        th.addEventListener("click", () => {
+          const col = th.dataset.col;
+          if (state.sortCol === col) {
+            state.sortDir = state.sortDir === "desc" ? "asc" : "desc";
+          } else {
+            state.sortCol = col;
+            state.sortDir = col === "source" ? "asc" : "desc";
+          }
+          if (state.currentCountyData) {
+            renderTable(state.currentCountyData, state.mode, state.currentPop);
+          }
+        });
       });
     }
 
+    // ---------- URL ----------
+    function updateUrl() {
+      if (!state.currentCounty) return;
+      const params = new URLSearchParams(window.location.search);
+      params.set("fips", state.currentCounty);
+      if (state.mode !== "raw") params.set("mode", state.mode);
+      else params.delete("mode");
+      const newUrl = `${window.location.pathname}?${params.toString()}`;
+      window.history.replaceState({}, "", newUrl);
+    }
+
+    function parseUrlParams() {
+      const params = new URLSearchParams(window.location.search);
+      const fips = params.get("fips");
+      const mode = params.get("mode");
+      return {
+        fips: fips && /^\d{5}$/.test(fips) ? fips : null,
+        mode: ["raw", "percap", "damage"].includes(mode) ? mode : null,
+      };
+    }
+
+    // ---------- Main render ----------
     async function render(fips5) {
       const ss = fips5.slice(0, 2);
-      const data = await loadStateEmissions(ss);
+      let data;
+      try {
+        data = await loadStateEmissions(ss);
+      } catch (e) {
+        showError("Couldn't load emissions data for this state.");
+        return;
+      }
       const county = data[fips5];
-      if (!county) return;
+      if (!county) {
+        showError("No emissions data for the selected county.");
+        return;
+      }
 
       const meta = findCountyMeta(fips5);
-      const stateMeta = findStateMeta(ss);
-      const info = document.getElementById("aps-county-info");
-      const popText = meta && meta.pop ? ` · population ${compactPop(meta.pop)}` : "";
-      info.textContent = `${meta ? meta.name : fips5} County, ${stateMeta ? stateMeta.name : ss}${popText} · 2020 emissions`;
-
       const pop = meta ? meta.pop : 0;
-      renderChart(county, pop);
-      renderLegend(county, state.mode, pop);
-      renderAirQuality(fips5);
+      state.currentCountyData = county;
+      state.currentPop = pop;
+
+      const aqResults = renderAirQuality(fips5);
+      renderSummary(fips5, aqResults);
+      renderCharts(county, pop);
+      renderTable(county, state.mode, pop);
+      updateModeNote();
+      updateUrl();
+
+      // Picker current
+      const stateMeta = findStateMeta(ss);
+      const cur = document.getElementById("aps-picker-current");
+      if (cur && meta) {
+        cur.innerHTML = `Showing <strong>${meta.name} County, ${stateMeta ? stateMeta.name : ""}</strong>`;
+      }
+    }
+
+    function showError(msg) {
+      const el = document.getElementById("aps-summary");
+      if (el) el.innerHTML = `<div class="aps-summary-loading" style="color:#b95945;">${msg}</div>`;
     }
 
     async function selectCounty(fips5) {
@@ -1447,16 +2260,14 @@ import Base from '@/layouts/Base.astro';
       await render(fips5);
     }
 
+    // ---------- Geolocation ----------
     async function geolocate() {
       try {
         const r = await fetch("/api/geolocate", { cache: "no-store" });
         if (!r.ok) return null;
         return await r.json();
-      } catch {
-        return null;
-      }
+      } catch { return null; }
     }
-
     async function reverseGeocodeCounty(lat, lng) {
       try {
         const url = `https://geocoding.geo.census.gov/geocoder/geographies/coordinates?x=${lng}&y=${lat}&benchmark=Public_AR_Current&vintage=Current_Current&format=json&layers=Counties`;
@@ -1468,20 +2279,32 @@ import Base from '@/layouts/Base.astro';
         const ss = String(co.STATE).padStart(2, "0");
         const ccc = String(co.COUNTY).padStart(3, "0");
         return ss + ccc;
-      } catch {
-        return null;
+      } catch { return null; }
+    }
+
+    // ---------- Mode + controls ----------
+    function updateModeNote() {
+      const note = document.getElementById("aps-mode-note");
+      if (!note) return;
+      if (state.mode === "damage") {
+        note.textContent = "Health-cost mode multiplies each ton by a source-specific marginal damage value. Dollars are directly comparable across pollutants and source types — a useful single-axis way to compare what actually causes harm.";
+      } else if (state.mode === "percap") {
+        note.textContent = "Per-person mode divides local emissions by the county population (shown in pounds per resident per year). This is a normalization for comparison — it doesn't mean each person personally caused that amount.";
+      } else {
+        note.textContent = "Total emissions show tons per year released by sources in this county. PM₂.₅ and NOₓ and VOC tons aren't directly comparable — switch to Health cost for a single common scale.";
       }
     }
 
     function bindControls() {
       document.getElementById("aps-state").addEventListener("change", async (e) => {
         const ss = e.target.value;
+        if (!ss) return;
         populateCounties(ss);
         const firstFips = (state.counties.counties[ss] || [])[0]?.fips;
         if (firstFips) await selectCounty(firstFips);
       });
       document.getElementById("aps-county").addEventListener("change", async (e) => {
-        await selectCounty(e.target.value);
+        if (e.target.value) await selectCounty(e.target.value);
       });
       document.querySelectorAll(".aps-mode-btn").forEach(btn => {
         btn.addEventListener("click", async () => {
@@ -1489,45 +2312,91 @@ import Base from '@/layouts/Base.astro';
           if (mode === state.mode) return;
           state.mode = mode;
           document.querySelectorAll(".aps-mode-btn").forEach(b => {
-            b.dataset.active = b.dataset.mode === mode ? "true" : "false";
+            const active = b.dataset.mode === mode;
+            b.dataset.active = active ? "true" : "false";
+            b.setAttribute("aria-selected", active ? "true" : "false");
           });
-          updateSectionSub();
           if (state.currentCounty) await render(state.currentCounty);
         });
       });
-    }
 
-    function updateSectionSub() {
-      const sub = document.getElementById("aps-section-sub");
-      const note = document.getElementById("aps-chart-note");
-      if (!sub) return;
-      if (state.mode === "damage") {
-        sub.textContent = "— bars weighted by source-specific health damage ($/ton). Bar widths are proportional to each other: dollars of harm are directly comparable across pollutants.";
-        if (note) note.textContent = "Each ton from different sources causes very different harm. Ticks mark the national county average. Hover any slice or legend row for details.";
-      } else if (state.mode === "percap") {
-        sub.textContent = "— each donut is one pollutant's source mix, normalized to 100%. Tons of PM₂.₅ and NOx and VOC aren't directly comparable to each other.";
-        if (note) note.textContent = "Per-100K-residents view. Hover any slice or legend row for details.";
-      } else {
-        sub.textContent = "— each donut is one pollutant's source mix, normalized to 100%. Tons of PM₂.₅ and NOx and VOC aren't directly comparable to each other.";
-        if (note) note.textContent = "Hover any slice or legend row for details. Switch to 'Health damage ($)' to see the harms compared on a common scale.";
+      // Use my location
+      const locBtn = document.getElementById("aps-locate");
+      if (locBtn) {
+        locBtn.addEventListener("click", async () => {
+          locBtn.disabled = true;
+          locBtn.textContent = "Locating…";
+          const geo = await geolocate();
+          let fips = null;
+          if (geo && geo.lat != null && geo.lng != null) {
+            fips = await reverseGeocodeCounty(geo.lat, geo.lng);
+          }
+          if (fips) {
+            const ss = fips.slice(0, 2);
+            document.getElementById("aps-state").value = ss;
+            populateCounties(ss, fips);
+            await selectCounty(fips);
+          }
+          locBtn.disabled = false;
+          locBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg><span>Use my location</span>`;
+        });
+      }
+
+      // Share link
+      const shareBtn = document.getElementById("aps-share");
+      const shareLabel = document.getElementById("aps-share-label");
+      if (shareBtn) {
+        shareBtn.addEventListener("click", async () => {
+          updateUrl();
+          try {
+            await navigator.clipboard.writeText(window.location.href);
+            shareLabel.textContent = "Copied!";
+            shareBtn.dataset.copied = "true";
+            setTimeout(() => {
+              shareLabel.textContent = "Copy link";
+              delete shareBtn.dataset.copied;
+            }, 1800);
+          } catch {
+            shareLabel.textContent = window.location.href;
+          }
+        });
       }
     }
 
+    // ---------- Init ----------
     async function init() {
       if (!document.getElementById("aps-state")) return;
-      await Promise.all([loadCounties(), loadStaticExtras()]);
+      try {
+        await Promise.all([loadCounties(), loadStaticExtras()]);
+      } catch (e) {
+        showError("Couldn't load county data. Please refresh the page.");
+        return;
+      }
+
       populateStates();
       bindControls();
       bindHover();
-      updateSectionSub();
 
-      // Try IP geolocation; fall back to LA
-      const geo = await geolocate();
-      let targetFips = null;
-      if (geo && geo.lat != null && geo.lng != null) {
-        targetFips = await reverseGeocodeCounty(geo.lat, geo.lng);
+      // URL params take priority
+      const urlParams = parseUrlParams();
+      if (urlParams.mode) {
+        state.mode = urlParams.mode;
+        document.querySelectorAll(".aps-mode-btn").forEach(b => {
+          const active = b.dataset.mode === state.mode;
+          b.dataset.active = active ? "true" : "false";
+          b.setAttribute("aria-selected", active ? "true" : "false");
+        });
       }
-      if (!targetFips) targetFips = FALLBACK_FIPS;
+      updateModeNote();
+
+      let targetFips = urlParams.fips;
+      if (!targetFips) {
+        const geo = await geolocate();
+        if (geo && geo.lat != null && geo.lng != null) {
+          targetFips = await reverseGeocodeCounty(geo.lat, geo.lng);
+        }
+        if (!targetFips) targetFips = FALLBACK_FIPS;
+      }
 
       const ss = targetFips.slice(0, 2);
       const stateExists = state.counties.states.some(s => s.fips === ss);
@@ -1537,6 +2406,7 @@ import Base from '@/layouts/Base.astro';
       document.getElementById("aps-state").value = useSS;
       populateCounties(useSS, useFips);
       await selectCounty(document.getElementById("aps-county").value);
+      state.loaded = true;
     }
 
     document.addEventListener("astro:page-load", init);
