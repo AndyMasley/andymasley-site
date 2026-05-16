@@ -74,8 +74,8 @@ import Base from '@/layouts/Base.astro';
     const BAR_COLOR = "#4d5a1f";
     const BAR_HOVER = "#7a8c33";
     const BAR_ACTIVE = "#a8b94a";
-    const NAAQS_COLOR = "#c0392b";
-    const MEAN_COLOR = "#e67e22";
+    const NAAQS_COLOR = "#a83a2c";
+    const MEAN_COLOR = "#bd7b1a";
 
     const fmtPM = (d) => d.toFixed(1);
     const fmtPop = (d) => d.toLocaleString();
@@ -122,6 +122,12 @@ import Base from '@/layouts/Base.astro';
         .attr("stroke", "var(--pm25-grid)");
       g.select(".pm25-grid .domain").remove();
 
+      const crosshair = g.append("line")
+        .attr("class", "pm25-crosshair")
+        .attr("y1", 0).attr("y2", innerH)
+        .style("opacity", 0)
+        .attr("pointer-events", "none");
+
       const barG = g.append("g").attr("class", "pm25-bars");
       barG.selectAll("rect")
         .data(bars)
@@ -135,6 +141,8 @@ import Base from '@/layouts/Base.astro';
         .attr("data-fips", (d) => d.fips)
         .on("mouseenter", function (event, d) {
           d3.select(this).attr("fill", BAR_HOVER);
+          const cx = (x(d.x0) + x(d.x1)) / 2;
+          crosshair.attr("x1", cx).attr("x2", cx).style("opacity", 1);
           showTooltip(event, d);
         })
         .on("mousemove", moveTooltip)
@@ -143,6 +151,7 @@ import Base from '@/layouts/Base.astro';
           d3.select(self).attr("fill", function () {
             return self.classList.contains("active") ? BAR_ACTIVE : BAR_COLOR;
           });
+          crosshair.style("opacity", 0);
           hideTooltip();
         })
         .on("click", function (event, d) {
@@ -151,37 +160,92 @@ import Base from '@/layouts/Base.astro';
           openPanel(d);
         });
 
-      function refLine(value, color, dash, label) {
-        g.append("line")
-          .attr("x1", 0).attr("x2", innerW)
-          .attr("y1", y(value)).attr("y2", y(value))
-          .attr("stroke", color)
-          .attr("stroke-width", 1.6)
-          .attr("stroke-dasharray", dash);
-        g.append("text")
-          .attr("x", innerW + 8).attr("y", y(value))
-          .attr("dominant-baseline", "middle")
-          .attr("fill", color)
-          .attr("font-size", 12)
-          .attr("font-weight", 600)
-          .text(label);
+      const refs = [
+        { value: 12, color: NAAQS_COLOR, dash: "3 4", label: "EPA NAAQS · pre-2024", val: "12 µg/m³", focal: false },
+        { value: 9, color: NAAQS_COLOR, dash: "6 5", label: "EPA NAAQS · 2024", val: "9 µg/m³", focal: false },
+        { value: meta.pop_weighted_mean, color: MEAN_COLOR, dash: null, label: "Pop-weighted mean", val: `${fmtPM(meta.pop_weighted_mean)} µg/m³`, focal: true },
+      ].sort((a, b) => b.value - a.value);
+
+      const MIN_GAP = 28;
+      const labelYs = refs.map((r) => y(r.value));
+      for (let i = 1; i < labelYs.length; i++) {
+        if (labelYs[i] - labelYs[i - 1] < MIN_GAP) {
+          labelYs[i] = labelYs[i - 1] + MIN_GAP;
+        }
       }
-      refLine(12, NAAQS_COLOR, "2 4", "EPA NAAQS (pre-2024) · 12 µg/m³");
-      refLine(9, NAAQS_COLOR, "8 6", "EPA NAAQS (2024) · 9 µg/m³");
-      refLine(meta.pop_weighted_mean, MEAN_COLOR, null,
-        `Pop-weighted mean · ${fmtPM(meta.pop_weighted_mean)} µg/m³`);
+
+      refs.forEach((r, i) => {
+        g.append("line")
+          .attr("class", "pm25-refline")
+          .attr("x1", 0).attr("x2", innerW)
+          .attr("y1", y(r.value)).attr("y2", y(r.value))
+          .attr("stroke", r.color)
+          .attr("stroke-width", r.focal ? 1.4 : 1.1)
+          .attr("stroke-dasharray", r.dash || null)
+          .attr("opacity", r.focal ? 1 : 0.78);
+
+        const trueY = y(r.value);
+        if (Math.abs(trueY - labelYs[i]) > 1) {
+          g.append("path")
+            .attr("d", `M ${innerW} ${trueY} L ${innerW + 6} ${trueY} L ${innerW + 12} ${labelYs[i]}`)
+            .attr("fill", "none")
+            .attr("stroke", r.color)
+            .attr("stroke-width", 0.7)
+            .attr("opacity", 0.55);
+        }
+
+        const lg = g.append("g")
+          .attr("transform", `translate(${innerW + 16}, ${labelYs[i]})`);
+        lg.append("text")
+          .attr("class", "pm25-ref-label")
+          .attr("dominant-baseline", "middle")
+          .attr("dy", -6)
+          .attr("fill", r.color)
+          .attr("font-weight", r.focal ? 700 : 600)
+          .text(r.label);
+        lg.append("text")
+          .attr("class", "pm25-ref-value")
+          .attr("dominant-baseline", "middle")
+          .attr("dy", 8)
+          .text(r.val);
+      });
+
+      const ANNOTATIONS = [
+        { fips: "02090", label: "Fairbanks, AK", anchor: "start" },
+        { fips: "17031", label: "Cook County, IL", anchor: "middle" },
+      ];
+      ANNOTATIONS.forEach((a) => {
+        const bar = bars.find((b) => b.fips === a.fips);
+        if (!bar) return;
+        const cx = (x(bar.x0) + x(bar.x1)) / 2;
+        const cy = y(bar.pm25);
+        const labelY = Math.max(14, cy - 22);
+        const labelX = a.anchor === "start" ? cx + 6 : cx;
+
+        g.append("line")
+          .attr("class", "pm25-annotation-leader")
+          .attr("x1", cx).attr("y1", cy - 2)
+          .attr("x2", cx).attr("y2", labelY + 4);
+        g.append("text")
+          .attr("class", "pm25-annotation")
+          .attr("x", labelX).attr("y", labelY)
+          .attr("text-anchor", a.anchor)
+          .text(a.label);
+      });
 
       g.append("g").attr("class", "pm25-axis")
         .attr("transform", `translate(0,${innerH})`)
-        .call(d3.axisBottom(x).tickFormat((d) => d === 0 ? "0M" : `${d}M`));
+        .call(d3.axisBottom(x).tickSize(4).tickFormat((d) => d === 0 ? "0M" : `${d}M`))
+        .call((sel) => sel.select(".domain").remove());
       g.append("g").attr("class", "pm25-axis")
-        .call(d3.axisLeft(y).ticks(8));
+        .call(d3.axisLeft(y).ticks(8).tickSize(4))
+        .call((sel) => sel.select(".domain").remove());
 
       g.append("text")
         .attr("class", "pm25-axis-label")
-        .attr("x", innerW / 2).attr("y", innerH + 38)
+        .attr("x", innerW / 2).attr("y", innerH + 40)
         .attr("text-anchor", "middle")
-        .text("Cumulative US population (millions), sorted most-exposed → least-exposed");
+        .text("Cumulative US population (millions) — most-exposed at left, least-exposed at right");
       g.append("text")
         .attr("class", "pm25-axis-label")
         .attr("transform", `translate(-44,${innerH / 2}) rotate(-90)`)
@@ -328,14 +392,21 @@ import Base from '@/layouts/Base.astro';
 
 <style>
   :root {
-    --pm25-grid: rgba(0, 0, 0, 0.08);
+    --pm25-grid: rgba(0, 0, 0, 0.06);
     --pm25-axis: var(--text-dim);
     --pm25-tooltip-bg: var(--bg-elevated);
-    --pm25-tooltip-border: rgba(0, 0, 0, 0.15);
+    --pm25-tooltip-border: rgba(0, 0, 0, 0.12);
+    --pm25-card-border: rgba(0, 0, 0, 0.09);
+    --pm25-card-bg: var(--bg-elevated);
+    --pm25-crosshair: rgba(0, 0, 0, 0.25);
+    --pm25-annotation-leader: rgba(0, 0, 0, 0.28);
   }
   [data-theme="dark"] {
-    --pm25-grid: rgba(255, 255, 255, 0.10);
-    --pm25-tooltip-border: rgba(255, 255, 255, 0.18);
+    --pm25-grid: rgba(255, 255, 255, 0.07);
+    --pm25-tooltip-border: rgba(255, 255, 255, 0.16);
+    --pm25-card-border: rgba(255, 255, 255, 0.10);
+    --pm25-crosshair: rgba(255, 255, 255, 0.30);
+    --pm25-annotation-leader: rgba(255, 255, 255, 0.32);
   }
 
   .pm25-hero {
@@ -385,11 +456,18 @@ import Base from '@/layouts/Base.astro';
     margin: 0 auto;
   }
 
-  #pm25-chart-root { padding: 0; }
+  #pm25-chart-root {
+    background: var(--pm25-card-bg);
+    border: 1px solid var(--pm25-card-border);
+    padding: 1.25rem 1.5rem 1.4rem;
+    margin-top: 0.25rem;
+  }
   #pm25-subtitle {
-    font-size: 0.85rem;
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: 0.82rem;
+    letter-spacing: 0.01em;
     color: var(--text-dim);
-    margin: 0.5rem 0 0.75rem;
+    margin: 0 0 1rem;
   }
   #pm25-chart-wrap {
     position: relative;
@@ -399,43 +477,80 @@ import Base from '@/layouts/Base.astro';
     width: 100%;
     height: auto;
     display: block;
+    overflow: visible;
   }
 
   .pm25-axis-note {
-    font-size: 0.82rem;
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: 0.78rem;
     color: var(--text-dim);
-    margin: 0.5rem 0 0;
+    margin: 0.9rem 0 0;
     font-style: italic;
   }
 
   :global(.pm25-bar) {
     cursor: pointer;
-    transition: fill 80ms ease-out;
+    transition: fill 100ms ease-out;
+  }
+  :global(.pm25-crosshair) {
+    stroke: var(--pm25-crosshair);
+    stroke-width: 0.7;
+    stroke-dasharray: 3 4;
+    transition: opacity 80ms ease-out;
   }
   :global(.pm25-grid path),
   :global(.pm25-grid line) {
     stroke: var(--pm25-grid);
+    stroke-dasharray: 2 3;
   }
   :global(.pm25-grid text) { display: none; }
   :global(.pm25-axis text) {
     fill: var(--text-dim);
-    font-size: 11px;
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: 10.5px;
+    font-feature-settings: "tnum";
   }
-  :global(.pm25-axis path),
   :global(.pm25-axis line) {
     stroke: var(--pm25-grid);
   }
   :global(.pm25-axis-label) {
+    fill: var(--text-secondary);
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: 12.5px;
+    font-style: italic;
+  }
+  :global(.pm25-ref-label) {
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: 11px;
+    letter-spacing: 0.01em;
+  }
+  :global(.pm25-ref-value) {
     fill: var(--text-dim);
-    font-size: 12px;
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: 10px;
+    font-feature-settings: "tnum";
+  }
+  :global(.pm25-annotation) {
+    fill: var(--text-secondary);
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: 10.5px;
+    font-weight: 500;
+    letter-spacing: 0.01em;
+  }
+  :global(.pm25-annotation-leader) {
+    stroke: var(--pm25-annotation-leader);
+    stroke-width: 0.7;
   }
   :global(.pm25-panel-row-label) {
     fill: var(--text);
+    font-family: 'Inter', system-ui, sans-serif;
     font-size: 12px;
   }
   :global(.pm25-panel-row-val) {
     fill: var(--text-dim);
+    font-family: 'Inter', system-ui, sans-serif;
     font-size: 12px;
+    font-feature-settings: "tnum";
   }
 
   .pm25-tooltip {
