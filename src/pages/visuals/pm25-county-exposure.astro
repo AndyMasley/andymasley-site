@@ -150,6 +150,34 @@ import Base from '@/layouts/Base.astro';
       });
     }
 
+    const NARROW_BAR_THRESHOLD = 4;
+
+    function updateSelectionMarker() {
+      const markerGroup = d3.select(".pm25-marker-group");
+      markerGroup.selectAll("*").remove();
+      if (!selectedFips) return;
+      const barNode = document.querySelector(`.pm25-bar[data-fips="${selectedFips}"]`);
+      if (!barNode) return;
+      const w = parseFloat(barNode.getAttribute("width"));
+      if (w >= NARROW_BAR_THRESHOLD) return;
+      const bx = parseFloat(barNode.getAttribute("x"));
+      const by = parseFloat(barNode.getAttribute("y"));
+      const cx = bx + w / 2;
+      const tipY = by - 4;
+      const baseY = tipY - 9;
+
+      markerGroup.append("path")
+        .attr("class", "pm25-marker-arrow")
+        .attr("d", `M ${cx - 4.5} ${baseY} L ${cx + 4.5} ${baseY} L ${cx} ${tipY} Z`)
+        .attr("fill", SELECTED_COLOR);
+      markerGroup.append("line")
+        .attr("class", "pm25-marker-stem")
+        .attr("x1", cx).attr("x2", cx)
+        .attr("y1", baseY - 6).attr("y2", baseY)
+        .attr("stroke", SELECTED_COLOR)
+        .attr("stroke-width", 1.4);
+    }
+
     async function render() {
       const data = await d3.json(dataUrl);
       const meta = data.meta;
@@ -236,6 +264,8 @@ import Base from '@/layouts/Base.astro';
           d3.select(this).attr("fill", f.fill).attr("opacity", f.opacity);
           openPanel(d);
         });
+
+      g.append("g").attr("class", "pm25-marker-group");
 
       const refs = [
         { value: 12, color: NAAQS_COLOR, dash: "3 4", label: "EPA NAAQS · pre-2024", val: "12 µg/m³", focal: false },
@@ -444,6 +474,7 @@ import Base from '@/layouts/Base.astro';
       countiesByFips = new Map(counties.map((c) => [c.fips, c]));
 
       applyAllBarFills();
+      updateSelectionMarker();
       if (selectedFips) {
         const c = countiesByFips.get(selectedFips);
         if (c) renderSelectedBreakdown(c);
@@ -480,6 +511,7 @@ import Base from '@/layouts/Base.astro';
     function selectState(state) {
       selectedState = state || null;
       applyAllBarFills();
+      updateSelectionMarker();
     }
 
     function selectCounty(fips) {
@@ -488,17 +520,20 @@ import Base from '@/layouts/Base.astro';
       if (!selectedFips) {
         panel.hidden = true;
         applyAllBarFills();
+        updateSelectionMarker();
         return;
       }
       const c = countiesByFips.get(selectedFips);
       if (!c) {
         panel.hidden = true;
         applyAllBarFills();
+        updateSelectionMarker();
         return;
       }
       renderSelectedBreakdown(c);
       panel.hidden = false;
       applyAllBarFills();
+      updateSelectionMarker();
     }
 
     function renderSelectedBreakdown(c) {
