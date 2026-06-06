@@ -75,7 +75,7 @@ export function BucketBar({ buckets, totalKg }: BucketBarProps) {
                 alignItems: 'center',
                 gap: '8px',
                 padding: '6px 0',
-                borderBottom: '1px solid var(--divider, #DDD9D0)',
+                borderBottom: '1px solid var(--divider, #E2E3DB)',
                 fontSize: '0.85rem',
               }}
             >

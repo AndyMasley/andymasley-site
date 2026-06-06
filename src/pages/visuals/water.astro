@@ -598,24 +598,24 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
   }
 
   .wv2 {
-    --text: var(--text-primary, #1A1A18);
-    --text-secondary: #6B6B60;
+    --text: var(--text-primary, #1C1E1B);
+    --text-secondary: #6B6E66;
     --accent: #8B2E2E;
     --green: #4A7C59;
-    --divider: var(--border, #DDD9D0);
-    --panel: #edecea;
-    --bar-track: #D4CFCA;
+    --divider: var(--border, #E2E3DB);
+    --panel: #F1F1EA;
+    --bar-track: #E2E3DB;
     color: var(--text);
   }
 
   [data-theme="dark"] .wv2 {
-    --text: var(--text-primary, #F0EDE6);
-    --text-secondary: #9A9485;
+    --text: var(--text-primary, #E6E4DD);
+    --text-secondary: #9AA39A;
     --accent: #B85555;
     --green: #5A9B6E;
-    --divider: var(--border, #3A3733);
-    --panel: #151413;
-    --bar-track: #3A3733;
+    --divider: var(--border, #2A302B);
+    --panel: #1C211D;
+    --bar-track: #2A302B;
   }
 
   /* Header controls row */
@@ -651,7 +651,7 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
     box-shadow: 0 1px 3px rgba(0,0,0,0.08);
   }
   [data-theme="dark"] .wv-water-btn[data-active="true"] {
-    background: var(--bg-elevated, #1c1c1a);
+    background: var(--bg-elevated, #20251F);
   }
   .wv-water-btn:hover:not([data-active="true"]) {
     color: var(--text);
@@ -689,7 +689,7 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
     box-shadow: 0 1px 4px rgba(0,0,0,0.05);
   }
   [data-theme="dark"] .wv-layout {
-    background: var(--bg-elevated, #1c1c1a);
+    background: var(--bg-elevated, #20251F);
   }
 
   /* Toggle panel */
@@ -979,7 +979,7 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
     box-shadow: 0 1px 2px rgba(0,0,0,0.06);
   }
   [data-theme="dark"] .wv-view-btn[data-active="true"] {
-    background: var(--bg-elevated, #1c1c1a);
+    background: var(--bg-elevated, #20251F);
   }
   .wv-view-btn:hover:not([data-active="true"]) {
     color: var(--text);
@@ -1270,7 +1270,7 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
     background: var(--bg-elevated, #fff);
   }
   [data-theme="dark"] .wv-scale-ref {
-    background: var(--bg-elevated, #1c1c1a);
+    background: var(--bg-elevated, #20251F);
   }
   .wv-scale-ref-box {
     border: 1.5px solid var(--text-secondary);
@@ -1284,26 +1284,26 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
     z-index: 9999;
     max-width: 360px;
     padding: 12px 14px;
-    background: var(--bg, #FAF9F7);
-    border: 1px solid var(--border, #e5e2df);
+    background: var(--bg, #FAFAF7);
+    border: 1px solid var(--border, #E2E3DB);
     border-radius: 8px;
     box-shadow: 0 4px 20px rgba(0,0,0,0.12);
     font-size: 0.72rem;
     line-height: 1.55;
-    color: var(--text-secondary, #6B6B60);
+    color: var(--text-secondary, #6B6E66);
     pointer-events: auto;
     overflow-y: auto;
     max-height: calc(100vh - 40px);
   }
   [data-theme="dark"] .wv-tooltip {
-    background: var(--bg, #141413);
-    border-color: var(--border, #2e2d2b);
+    background: var(--bg, #131614);
+    border-color: var(--border, #2A302B);
     box-shadow: 0 4px 20px rgba(0,0,0,0.4);
   }
-  .wv-tooltip strong { color: var(--text, #1A1A18); }
-  [data-theme="dark"] .wv-tooltip strong { color: var(--text, #e8e6e1); }
-  .wv-tooltip hr { border: none; border-top: 1px solid var(--border, #e5e2df); margin: 8px 0; }
-  .wv-tooltip a { color: var(--accent, #8b3a3a); text-decoration: underline; text-underline-offset: 2px; pointer-events: auto; }
+  .wv-tooltip strong { color: var(--text, #1C1E1B); }
+  [data-theme="dark"] .wv-tooltip strong { color: var(--text, #E6E4DD); }
+  .wv-tooltip hr { border: none; border-top: 1px solid var(--border, #E2E3DB); margin: 8px 0; }
+  .wv-tooltip a { color: var(--accent, #8B2E2E); text-decoration: underline; text-underline-offset: 2px; pointer-events: auto; }
 
   .w-methodology { max-width: 760px; padding-bottom: 3rem; }
   .w-methodology h2 { font-size: 1.4rem; font-weight: 700; margin-bottom: 0.25rem; letter-spacing: -0.02em; }
@@ -1495,21 +1495,21 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
     gap: 2.5rem;
     font-size: 0.82rem;
     line-height: 1.7;
-    color: var(--text-secondary, #6B6B60);
+    color: var(--text-secondary, #6B6E66);
     padding: 1rem 1.25rem;
-    border: 1px solid var(--border, #DDD9D0);
+    border: 1px solid var(--border, #E2E3DB);
     border-radius: 0;
-    background: #edecea;
+    background: #F1F1EA;
   }
   [data-theme="dark"] .wv-intro-cols {
-    background: #151413;
-    border-color: var(--border, #3A3733);
+    background: #1C211D;
+    border-color: var(--border, #2A302B);
   }
   .wv-intro-col p { margin: 0; }
-  .wv-intro-col strong { color: var(--text, #1A1A18); }
-  [data-theme="dark"] .wv-intro-col strong { color: var(--text, #F0EDE6); }
+  .wv-intro-col strong { color: var(--text, #1C1E1B); }
+  [data-theme="dark"] .wv-intro-col strong { color: var(--text, #E6E4DD); }
   .wv-intro-col a {
-    color: var(--accent, #8b3a3a); text-decoration: underline; text-underline-offset: 2px;
+    color: var(--accent, #8B2E2E); text-decoration: underline; text-underline-offset: 2px;
   }
   @media (max-width: 850px) {
     .wv-intro-cols { grid-template-columns: 1fr 1fr; }
@@ -1548,12 +1548,12 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
   .wv-presets-label { font-size: 0.58rem; color: var(--text-secondary); opacity: 0.6; margin-right: 2px; }
   .wv-preset-btn {
     font-family: inherit; font-size: 0.58rem; font-weight: 400;
-    color: var(--accent, #8b3a3a); background: none;
+    color: var(--accent, #8B2E2E); background: none;
     border: 1px solid var(--divider); border-radius: 0;
     padding: 2px 7px; cursor: pointer; transition: all 0.12s;
   }
-  .wv-preset-btn:hover { background: var(--bg-elevated, #fff); border-color: var(--accent, #8b3a3a); }
-  [data-theme="dark"] .wv-preset-btn:hover { background: var(--bg-elevated, #1c1c1a); }
+  .wv-preset-btn:hover { background: var(--bg-elevated, #fff); border-color: var(--accent, #8B2E2E); }
+  [data-theme="dark"] .wv-preset-btn:hover { background: var(--bg-elevated, #20251F); }
 
   /* Category headers: bigger, acts as section label */
   .wv-cat-head {
@@ -1584,7 +1584,7 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
     background: var(--bg-elevated, #fff);
   }
   [data-theme="dark"] .wv-cat-list[data-visible="true"] {
-    background: var(--bg-elevated, #1c1c1a);
+    background: var(--bg-elevated, #20251F);
   }
 
   /* Toggle rows: on white/elevated background when list is open */
@@ -2117,7 +2117,7 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
 
     var cat = row.closest('.wv-cat');
     var catName = cat ? cat.dataset.cat : '';
-    var color = '#6B6B60';
+    var color = '#6B6E66';
     var catColors = {
       dc: '#4A90D9',
       industry: '#D97A4A',
@@ -2946,7 +2946,7 @@ const turfFlat = turfItems.map(d => ({ idx: idx++, ...d, sub: fG(d.base) }));
   var tooltipEl = document.getElementById('wv-tooltip');
   var tipTimer = null;
 
-  var ELEC_EXPLAINER = '<hr><strong style="color:var(--accent, #8b3a3a)">+ electricity water</strong><br>Generating electricity requires cooling at thermoelectric power plants, which evaporates water from rivers and lakes. This adds the water consumed at those plants to generate the electricity this operation uses. Calculated as total electricity (TWh) × <a href="https://www.nrel.gov/docs/fy04osti/33905.pdf">0.47 gal/kWh</a> (NREL thermoelectric-only factor, excluding <a href="https://www.construction-physics.com/p/i-was-wrong-about-data-center-water">hydro reservoir evaporation</a>). This water is non-potable freshwater drawn directly from rivers and lakes — not from public water supply systems.';
+  var ELEC_EXPLAINER = '<hr><strong style="color:var(--accent, #8B2E2E)">+ electricity water</strong><br>Generating electricity requires cooling at thermoelectric power plants, which evaporates water from rivers and lakes. This adds the water consumed at those plants to generate the electricity this operation uses. Calculated as total electricity (TWh) × <a href="https://www.nrel.gov/docs/fy04osti/33905.pdf">0.47 gal/kWh</a> (NREL thermoelectric-only factor, excluding <a href="https://www.construction-physics.com/p/i-was-wrong-about-data-center-water">hydro reservoir evaporation</a>). This water is non-potable freshwater drawn directly from rivers and lakes — not from public water supply systems.';
 
   var tipOpen = false;
 

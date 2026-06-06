@@ -248,7 +248,7 @@ export function ComparisonModes({
         right: 0,
         bottom: '4px',
         width: '24px',
-        background: 'linear-gradient(to right, transparent, var(--bg, #F5F2EC))',
+        background: 'linear-gradient(to right, transparent, var(--bg, #FAFAF7))',
         pointerEvents: 'none',
       }} />
       </div>
@@ -279,7 +279,7 @@ function ComparisonBar({ userKg, datum }: { userKg: number; datum: ComparisonDat
   return (
     <div style={{
       background: 'transparent',
-      border: '1px solid var(--divider, #DDD9D0)',
+      border: '1px solid var(--divider, #E2E3DB)',
       borderLeft: `2px solid ${isLeverageMode ? 'var(--green, #4A7C59)' : 'var(--accent, #8B2E2E)'}`,
       borderRadius: '0',
       padding: '14px 16px',
@@ -299,7 +299,7 @@ function ComparisonBar({ userKg, datum }: { userKg: number; datum: ComparisonDat
             {userKg.toLocaleString()} kg
           </span>
         </div>
-        <div style={{ height: '14px', background: 'var(--divider, #DDD9D0)', borderRadius: '0', overflow: 'hidden' }}>
+        <div style={{ height: '14px', background: 'var(--divider, #E2E3DB)', borderRadius: '0', overflow: 'hidden' }}>
           <div style={{
             height: '100%',
             width: `${(userKg / maxKg) * 100}%`,
@@ -319,7 +319,7 @@ function ComparisonBar({ userKg, datum }: { userKg: number; datum: ComparisonDat
             {datum.referenceKg.toLocaleString()} kg
           </span>
         </div>
-        <div style={{ height: '14px', background: 'var(--divider, #DDD9D0)', borderRadius: '0', overflow: 'hidden' }}>
+        <div style={{ height: '14px', background: 'var(--divider, #E2E3DB)', borderRadius: '0', overflow: 'hidden' }}>
           <div style={{
             height: '100%',
             width: `${(datum.referenceKg / maxKg) * 100}%`,

@@ -91,9 +91,9 @@ export function ScenarioManager({ baseline, overrides, totalKg, onLoad }: Scenar
             padding: '6px 12px',
             fontSize: '0.82rem',
             fontFamily: 'inherit',
-            border: '1px solid var(--divider, #DDD9D0)',
+            border: '1px solid var(--divider, #E2E3DB)',
             borderRadius: '6px',
-            background: 'var(--panel, #EFECE5)',
+            background: 'var(--panel, #F1F1EA)',
             color: 'var(--text, #1A1A18)',
             outline: 'none',
             flex: '1',
@@ -127,7 +127,7 @@ export function ScenarioManager({ baseline, overrides, totalKg, onLoad }: Scenar
               fontSize: '0.78rem',
               fontFamily: 'inherit',
               fontWeight: 500,
-              border: '1px solid var(--divider, #DDD9D0)',
+              border: '1px solid var(--divider, #E2E3DB)',
               borderRadius: '6px',
               background: 'transparent',
               color: 'var(--text-secondary, #6B6B60)',
@@ -151,7 +151,7 @@ export function ScenarioManager({ baseline, overrides, totalKg, onLoad }: Scenar
                 alignItems: 'center',
                 gap: '10px',
                 padding: '8px 12px',
-                background: compareIdx === i ? 'rgba(74,124,89,0.08)' : 'var(--panel, #EFECE5)',
+                background: compareIdx === i ? 'rgba(74,124,89,0.08)' : 'var(--panel, #F1F1EA)',
                 borderRadius: '5px',
                 marginBottom: '2px',
                 fontSize: '0.82rem',
@@ -175,7 +175,7 @@ export function ScenarioManager({ baseline, overrides, totalKg, onLoad }: Scenar
       {/* Side-by-side comparison */}
       {compareScenario && (
         <div style={{
-          background: 'var(--panel, #EFECE5)',
+          background: 'var(--panel, #F1F1EA)',
           borderRadius: '8px',
           padding: '14px 18px',
           marginBottom: '1rem',
@@ -200,7 +200,7 @@ const smallBtn: React.CSSProperties = {
   fontSize: '0.68rem',
   fontFamily: 'inherit',
   fontWeight: 600,
-  border: '1px solid var(--divider, #DDD9D0)',
+  border: '1px solid var(--divider, #E2E3DB)',
   borderRadius: '4px',
   background: 'transparent',
   color: 'var(--text-secondary, #6B6B60)',
@@ -223,7 +223,7 @@ function ComparisonTable({
 
   return (
     <div style={{ overflowX: 'auto', fontSize: '0.82rem' }}>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 90px 90px 70px', gap: '4px', fontWeight: 600, borderBottom: '1px solid var(--divider, #DDD9D0)', paddingBottom: '6px', marginBottom: '4px', minWidth: '380px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 90px 90px 70px', gap: '4px', fontWeight: 600, borderBottom: '1px solid var(--divider, #E2E3DB)', paddingBottom: '6px', marginBottom: '4px', minWidth: '380px' }}>
         <span>Bucket</span>
         <span style={{ textAlign: 'right' }}>Current</span>
         <span style={{ textAlign: 'right' }}>{savedScenario.name}</span>
@@ -233,7 +233,7 @@ function ComparisonTable({
         const savedBucket = savedFP.buckets.find(sb => sb.bucketId === b.bucketId);
         const diff = b.kgCO2ePerYear - (savedBucket?.kgCO2ePerYear ?? 0);
         return (
-          <div key={b.bucketId} style={{ display: 'grid', gridTemplateColumns: '1fr 90px 90px 70px', gap: '4px', padding: '3px 0', borderBottom: '1px solid var(--divider, #DDD9D0)', minWidth: '380px' }}>
+          <div key={b.bucketId} style={{ display: 'grid', gridTemplateColumns: '1fr 90px 90px 70px', gap: '4px', padding: '3px 0', borderBottom: '1px solid var(--divider, #E2E3DB)', minWidth: '380px' }}>
             <span>{BUCKET_META[b.bucketId].label}</span>
             <span style={{ textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{b.kgCO2ePerYear.toLocaleString()}</span>
             <span style={{ textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{(savedBucket?.kgCO2ePerYear ?? 0).toLocaleString()}</span>

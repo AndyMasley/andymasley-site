@@ -36,7 +36,7 @@ export function Changelog() {
       <div className="cf-section-label">METHODOLOGY CHANGELOG</div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
         {ENTRIES.map((entry, i) => (
-          <div key={i} style={{ background: 'var(--panel, #EFECE5)', borderRadius: '6px', padding: '10px 14px' }}>
+          <div key={i} style={{ background: 'var(--panel, #F1F1EA)', borderRadius: '6px', padding: '10px 14px' }}>
             <div style={{ display: 'flex', gap: '10px', alignItems: 'baseline' }}>
               <span style={{ fontSize: '0.68rem', color: 'var(--text-secondary, #6B6B60)', fontVariantNumeric: 'tabular-nums', flexShrink: 0 }}>
                 {entry.date}

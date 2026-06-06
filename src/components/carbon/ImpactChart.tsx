@@ -94,7 +94,7 @@ const GREEN = 'var(--green, #4A7C59)';
 const GREEN_BG = 'rgba(74, 124, 89, 0.08)';
 const ACCENT = 'var(--accent, #8B2E2E)';
 const MUTED = 'var(--text-secondary, #6B6B60)';
-const DIVIDER = 'var(--divider, #DDD9D0)';
+const DIVIDER = 'var(--divider, #E2E3DB)';
 const AI_TRAINING_URL = 'https://www.andymasley.com/writing/whats-the-full-hidden-climate-cost/';
 const AI_PROMPT_ACTION_NAME = 'Stop using AI chatbots';
 
@@ -871,7 +871,7 @@ const colHead: React.CSSProperties = {
   fontFamily: 'var(--font-editorial, Georgia, serif)',
   fontSize: '1.05rem', fontWeight: 600,
   color: 'var(--text, #1A1A18)', paddingBottom: '0.75rem',
-  borderBottom: `1px solid var(--divider, #DDD9D0)`, marginBottom: '0.85rem',
+  borderBottom: `1px solid var(--divider, #E2E3DB)`, marginBottom: '0.85rem',
 };
 const colSub: React.CSSProperties = {
   fontSize: '0.65rem', fontWeight: 400,

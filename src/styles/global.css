@@ -8,20 +8,20 @@
    ============================================ */
 
 :root {
-  /* Light mode */
-  --bg: #faf9f7;
-  --bg-elevated: #ffffff;
-  --bg-subtle: #f5f4f2;
-  --text: #1a1918;
-  --text-secondary: #3d3a38;
-  --dim: #6b6560;
-  --text-dim: #6b6560;
-  --accent: #8b3a3a;
-  --accent-hover: #6d2d2d;
-  --accent-subtle: rgba(139, 58, 58, 0.08);
-  --border: #e5e2df;
-  --border-strong: #d1ccc8;
-  --border-subtle: #eeebe8;
+  /* Light mode — Pine palette */
+  --bg: #FAFAF7;
+  --bg-elevated: #FFFFFF;
+  --bg-subtle: #F1F1EA;
+  --text: #1C1E1B;
+  --text-secondary: #37403A;
+  --dim: #6B6E66;
+  --text-dim: #6B6E66;
+  --accent: #1E5C45;
+  --accent-hover: #14452F;
+  --accent-subtle: rgba(30, 92, 69, 0.10);
+  --border: #E2E3DB;
+  --border-strong: #CFD2C8;
+  --border-subtle: #ECEDE4;
 
   /* Restrained shadows to avoid glossy "card" UI */
   --shadow-xs: 0 1px 0 rgba(26, 25, 24, 0.05);
@@ -61,19 +61,20 @@
 
 /* Dark mode */
 [data-theme="dark"] {
-  --bg: #141413;
-  --bg-elevated: #1c1c1a;
-  --bg-subtle: #1a1918;
-  --text: #e8e6e1;
-  --text-secondary: #c5c3be;
-  --dim: #8a8a8a;
-  --text-dim: #8a8a8a;
-  --accent: #d4a59a;
-  --accent-hover: #e8c4bb;
-  --accent-subtle: rgba(212, 165, 154, 0.12);
-  --border: #2e2d2b;
-  --border-strong: #3d3c39;
-  --border-subtle: #252423;
+  /* Dark mode — Pine palette */
+  --bg: #131614;
+  --bg-elevated: #20251F;
+  --bg-subtle: #1C211D;
+  --text: #E6E4DD;
+  --text-secondary: #C7CDC4;
+  --dim: #9AA39A;
+  --text-dim: #9AA39A;
+  --accent: #7FC9A4;
+  --accent-hover: #9FDCBE;
+  --accent-subtle: rgba(127, 201, 164, 0.16);
+  --border: #2A302B;
+  --border-strong: #3A4239;
+  --border-subtle: #21261F;
 
   /* Dark mode shadows */
   --shadow-xs: 0 1px 0 rgba(0, 0, 0, 0.2);
@@ -125,11 +126,11 @@ body {
 }
 
 ::selection {
-  background: rgba(139, 58, 58, 0.15);
+  background: rgba(30, 92, 69, 0.18);
 }
 
 [data-theme="dark"] ::selection {
-  background: rgba(212, 165, 154, 0.25);
+  background: rgba(127, 201, 164, 0.28);
 }
 
 /* Focus states for accessibility */
@@ -494,11 +495,11 @@ a:active {
 }
 
 .logo-hexagon:hover path {
-  fill: rgba(139, 58, 58, 0.1);
+  fill: rgba(30, 92, 69, 0.1);
 }
 
 [data-theme="dark"] .logo-hexagon:hover path {
-  fill: rgba(212, 165, 154, 0.1);
+  fill: rgba(127, 201, 164, 0.1);
 }
 
 /* ============================================
@@ -1870,7 +1871,7 @@ details[open] summary::before {
 }
 
 [data-theme="dark"] .search-result-type {
-  background: rgba(212, 165, 154, 0.15);
+  background: rgba(127, 201, 164, 0.15);
 }
 
 .search-result-title {
@@ -1881,7 +1882,7 @@ details[open] summary::before {
 .search-result-title mark,
 .search-result-desc mark,
 .search-result-content mark {
-  background: rgba(139, 58, 58, 0.25);
+  background: rgba(30, 92, 69, 0.25);
   color: inherit;
   border-radius: 0;
   padding: 0 0.1em;
@@ -1890,7 +1891,7 @@ details[open] summary::before {
 [data-theme="dark"] .search-result-title mark,
 [data-theme="dark"] .search-result-desc mark,
 [data-theme="dark"] .search-result-content mark {
-  background: rgba(212, 165, 154, 0.3);
+  background: rgba(127, 201, 164, 0.3);
 }
 
 .search-result-desc {

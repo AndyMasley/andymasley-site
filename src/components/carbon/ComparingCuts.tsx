@@ -21,7 +21,7 @@ interface ComparingCutsProps {
 const ACCENT = 'var(--accent, #8B2E2E)';
 const GREEN = 'var(--green, #4A7C59)';
 const MUTED = 'var(--text-secondary, #6B6B60)';
-const DIVIDER = 'var(--divider, #DDD9D0)';
+const DIVIDER = 'var(--divider, #E2E3DB)';
 const AI_TRAINING_URL = 'https://www.andymasley.com/writing/whats-the-full-hidden-climate-cost/';
 const AI_PROMPT_ACTION_NAME = 'Stop using AI chatbots';
 

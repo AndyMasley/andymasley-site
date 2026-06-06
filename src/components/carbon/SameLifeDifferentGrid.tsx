@@ -136,7 +136,7 @@ export function SameLifeDifferentGrid({ baseline, overrides, todayFootprint }: S
         gap: '1rem',
         marginBottom: '1rem',
       }}>
-        <div style={{ background: 'var(--panel, #EFECE5)', borderRadius: '6px', padding: '14px' }}>
+        <div style={{ background: 'var(--panel, #F1F1EA)', borderRadius: '6px', padding: '14px' }}>
           <div style={{ fontSize: '0.6rem', letterSpacing: '0.1em', textTransform: 'uppercase', fontWeight: 700, color: 'var(--text-secondary, #6B6B60)', marginBottom: '4px' }}>
             TODAY (2024)
           </div>
@@ -144,7 +144,7 @@ export function SameLifeDifferentGrid({ baseline, overrides, todayFootprint }: S
             {todayTotal.toLocaleString()} kg
           </div>
         </div>
-        <div style={{ background: 'var(--panel, #EFECE5)', borderRadius: '6px', padding: '14px' }}>
+        <div style={{ background: 'var(--panel, #F1F1EA)', borderRadius: '6px', padding: '14px' }}>
           <div style={{ fontSize: '0.6rem', letterSpacing: '0.1em', textTransform: 'uppercase', fontWeight: 700, color: 'var(--text-secondary, #6B6B60)', marginBottom: '4px' }}>
             2035 CLEAN GRID
           </div>
@@ -152,7 +152,7 @@ export function SameLifeDifferentGrid({ baseline, overrides, todayFootprint }: S
             {futureTotal.toLocaleString()} kg
           </div>
         </div>
-        <div style={{ background: 'var(--panel, #EFECE5)', borderRadius: '6px', padding: '14px', borderLeft: '3px solid var(--green, #4A7C59)' }}>
+        <div style={{ background: 'var(--panel, #F1F1EA)', borderRadius: '6px', padding: '14px', borderLeft: '3px solid var(--green, #4A7C59)' }}>
           <div style={{ fontSize: '0.6rem', letterSpacing: '0.1em', textTransform: 'uppercase', fontWeight: 700, color: 'var(--text-secondary, #6B6B60)', marginBottom: '4px' }}>
             REDUCTION (NO LIFESTYLE CHANGE)
           </div>

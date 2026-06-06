@@ -65,8 +65,8 @@ export function ClickableValue({ value, unit = 'kg', label, formula, lineItems, 
             top: '100%',
             left: 0,
             zIndex: 40,
-            background: 'var(--panel, #EFECE5)',
-            border: '1px solid var(--divider, #DDD9D0)',
+            background: 'var(--panel, #F1F1EA)',
+            border: '1px solid var(--divider, #E2E3DB)',
             borderRadius: '8px',
             padding: '14px 18px',
             width: 'min(calc(100vw - 40px), 420px)',
@@ -85,7 +85,7 @@ export function ClickableValue({ value, unit = 'kg', label, formula, lineItems, 
             <div style={{ fontSize: '0.6rem', letterSpacing: '0.1em', textTransform: 'uppercase', fontWeight: 700, color: 'var(--text-secondary, #6B6B60)', marginBottom: '2px' }}>
               How this was calculated
             </div>
-            <code style={{ fontSize: '0.75rem', background: 'var(--divider, #DDD9D0)', padding: '2px 6px', borderRadius: '3px' }}>
+            <code style={{ fontSize: '0.75rem', background: 'var(--divider, #E2E3DB)', padding: '2px 6px', borderRadius: '3px' }}>
               {formula}
             </code>
           </div>
@@ -96,7 +96,7 @@ export function ClickableValue({ value, unit = 'kg', label, formula, lineItems, 
                 Components
               </div>
               {lineItems.map((li, i) => (
-                <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '3px 0', borderBottom: i < lineItems.length - 1 ? '1px solid var(--divider, #DDD9D0)' : 'none' }}>
+                <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '3px 0', borderBottom: i < lineItems.length - 1 ? '1px solid var(--divider, #E2E3DB)' : 'none' }}>
                   <span>{li.label}{li.isDefault ? ' (default)' : ''}</span>
                   <span style={{ fontVariantNumeric: 'tabular-nums', fontWeight: 600 }}>{li.kgCO2ePerYear.toLocaleString()} kg</span>
                 </div>

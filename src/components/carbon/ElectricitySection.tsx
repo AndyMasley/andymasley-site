@@ -133,7 +133,7 @@ export function ElectricitySection({ baseline }: ElectricitySectionProps) {
               fontSize: '0.75rem',
               fontFamily: 'inherit',
               fontWeight: activeView === view ? 600 : 400,
-              border: '1px solid var(--divider, #DDD9D0)',
+              border: '1px solid var(--divider, #E2E3DB)',
               borderRadius: '5px',
               background: activeView === view ? 'var(--accent, #8B2E2E)' : 'transparent',
               color: activeView === view ? 'white' : 'var(--text-secondary, #6B6B60)',
@@ -151,7 +151,7 @@ export function ElectricitySection({ baseline }: ElectricitySectionProps) {
       </div>
 
       {/* View content */}
-      <div style={{ background: 'var(--panel, #EFECE5)', borderRadius: '8px', padding: '1.5rem' }} role="tabpanel">
+      <div style={{ background: 'var(--panel, #F1F1EA)', borderRadius: '8px', padding: '1.5rem' }} role="tabpanel">
 
         {activeView === 'today' && (
           <div>
@@ -213,17 +213,17 @@ export function ElectricitySection({ baseline }: ElectricitySectionProps) {
             <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', fontSize: '0.85rem', borderCollapse: 'collapse' }}>
               <thead>
-                <tr style={{ borderBottom: '1px solid var(--divider, #DDD9D0)' }}>
+                <tr style={{ borderBottom: '1px solid var(--divider, #E2E3DB)' }}>
                   <th style={{ textAlign: 'left', padding: '6px 0', fontWeight: 600 }}>Action</th>
                   <th style={{ textAlign: 'right', padding: '6px 0', fontWeight: 600 }}>Annual savings</th>
                 </tr>
               </thead>
               <tbody>
-                <tr style={{ borderBottom: '1px solid var(--divider, #DDD9D0)' }}>
+                <tr style={{ borderBottom: '1px solid var(--divider, #E2E3DB)' }}>
                   <td style={{ padding: '8px 0' }}>Install rooftop solar (7 kW)</td>
                   <td style={{ textAlign: 'right', padding: '8px 0', color: 'var(--green, #4A7C59)', fontWeight: 600 }}>−{solarAccounting.toLocaleString()} kg</td>
                 </tr>
-                <tr style={{ borderBottom: '1px solid var(--divider, #DDD9D0)' }}>
+                <tr style={{ borderBottom: '1px solid var(--divider, #E2E3DB)' }}>
                   <td style={{ padding: '8px 0' }}>Replace gas furnace with heat pump</td>
                   <td style={{ textAlign: 'right', padding: '8px 0', color: heatPumpNetKg < 0 ? 'var(--green, #4A7C59)' : 'inherit', fontWeight: 600 }}>
                     {heatPumpNetKg < 0 ? `−${Math.abs(heatPumpNetKg).toLocaleString()}` : `+${heatPumpNetKg.toLocaleString()}`} kg
@@ -255,7 +255,7 @@ export function ElectricitySection({ baseline }: ElectricitySectionProps) {
               <strong>{(scenarios.cleaner.kgCO2ePerKwh * 1000).toFixed(0)} g/kWh</strong>,{' '}
               every EV, every heat pump, and every home on that grid gets cleaner — whether or not the owners did anything.
             </p>
-            <div style={{ background: 'var(--bg, #F5F2EC)', borderRadius: '6px', padding: '1rem', borderLeft: '3px solid var(--accent, #8B2E2E)' }}>
+            <div style={{ background: 'var(--bg, #FAFAF7)', borderRadius: '6px', padding: '1rem', borderLeft: '3px solid var(--accent, #8B2E2E)' }}>
               <div style={{ fontSize: '0.85rem', fontWeight: 600, marginBottom: '4px' }}>
                 Your footprint difference from grid cleaning alone
               </div>
