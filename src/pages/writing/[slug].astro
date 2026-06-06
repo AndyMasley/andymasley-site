@@ -8,6 +8,9 @@ import { ArticleTOC } from '@/components/ArticleTOC';
 import { extractHeadingsFromHtml, type TOCHeading } from '@/lib/extract-headings';
 import { mapWithConcurrency } from '@/lib/map-with-concurrency';
 import { getOptionalCollection } from '@/lib/optional-collection';
+import substackKeywords from '@/data/substack-keywords.json';
+
+const keywordsBySlug = substackKeywords as Record<string, string[]>;
 
 // Union type for all post sources
 type PostSource = 'local' | 'substack' | 'eaforum';
@@ -194,6 +197,10 @@ interface Props {
 const { post, newerPost, olderPost } = Astro.props;
 const isMetaPost = new Set(getMetaPostSlugs()).has(post.slug);
 
+const seoKeywords: string[] = post.source === 'local'
+  ? (post.tags || [])
+  : (keywordsBySlug[post.slug] || []);
+
 // Format date as MM.DD.YYYY
 function formatDate(date: Date): string {
   const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -267,6 +274,7 @@ const articleStructuredData = {
   description="Every environmental objection to using ChatGPT, answered with data and sources."
   ogType="article"
   structuredData={articleStructuredData}
+  keywords={seoKeywords}
 >
   <meta slot="head" property="article:published_time" content={post.date.toISOString()} />
   <meta slot="head" property="article:author" content="Andy Masley" />
@@ -294,6 +302,7 @@ const articleStructuredData = {
   activeNav="/writing"
   ogType="article"
   structuredData={articleStructuredData}
+  keywords={seoKeywords}
 >
   <meta slot="head" property="article:published_time" content={post.date.toISOString()} />
   <meta slot="head" property="article:author" content="Andy Masley" />
@@ -372,6 +381,7 @@ const articleStructuredData = {
   activeNav="/writing"
   ogType="article"
   structuredData={articleStructuredData}
+  keywords={seoKeywords}
 >
   <meta slot="head" property="article:published_time" content={post.date.toISOString()} />
   <meta slot="head" property="article:author" content="Andy Masley" />
