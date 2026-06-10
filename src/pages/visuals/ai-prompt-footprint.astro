@@ -1,0 +1,941 @@
+---
+/**
+ * AI prompt footprint calculator
+ *
+ * Lets a reader enter how many prompts they send per day of each AI model,
+ * then shows the combined daily carbon and water footprint as bars against a
+ * personal footprint the reader configures (where they live, their diet, how
+ * much they fly), plus how many prompts add up to 1% of that footprint.
+ *
+ * Per-model energy / carbon / water estimates are generated directly from the
+ * EcoLogits library (v0.10), the same engine behind the EcoLogits calculator
+ * at huggingface.co/spaces/genai-impact/ecologits-calculator. See the
+ * methodology section at the bottom of the page for all sources.
+ */
+import Base from '@/layouts/Base.astro';
+
+const pageTitle = 'What does your AI use cost?';
+const pageDescription =
+  'Enter how many prompts you send each day to GPT, Claude, Gemini, Mistral and more. See the combined daily carbon and water footprint, using EcoLogits per-model estimates, set against your own footprint from where you live, your diet, and how much you fly.';
+const pageUrl = 'https://andymasley.com/visuals/ai-prompt-footprint';
+
+const structuredData = [
+  {
+    '@context': 'https://schema.org',
+    '@type': 'WebPage',
+    name: pageTitle,
+    description: pageDescription,
+    url: pageUrl,
+    inLanguage: 'en-US',
+    isPartOf: { '@type': 'WebSite', name: 'Andy Masley', url: 'https://andymasley.com' },
+    author: { '@type': 'Person', name: 'Andy Masley', url: 'https://andymasley.com/' },
+    about: [
+      { '@type': 'Thing', name: 'Artificial intelligence' },
+      { '@type': 'Thing', name: 'Carbon footprint' },
+      { '@type': 'Thing', name: 'Water footprint' },
+    ],
+  },
+  {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://andymasley.com/' },
+      { '@type': 'ListItem', position: 2, name: 'Visuals', item: 'https://andymasley.com/visuals' },
+      { '@type': 'ListItem', position: 3, name: pageTitle, item: pageUrl },
+    ],
+  },
+];
+---
+
+<Base
+  title={pageTitle}
+  description={pageDescription}
+  canonicalUrl={pageUrl}
+  ogTitle={pageTitle}
+  structuredData={structuredData}
+>
+  <header class="aipf-header">
+    <h1 class="aipf-header-title">What does your AI use cost?</h1>
+    <p class="aipf-header-intro">
+      Enter how many prompts you send to each model on an average day. The panel adds up the
+      carbon and water that all of those prompts cost together, then sets it against your own
+      footprint from where you live, what you eat, and how much you fly. Per-model numbers come
+      from <a href="https://huggingface.co/spaces/genai-impact/ecologits-calculator" target="_blank" rel="noopener">EcoLogits</a>.
+      Methodology is at the bottom.
+    </p>
+  </header>
+
+  <article class="aipf" id="aipf">
+    <div class="aipf-grid">
+      <!-- LEFT: model inputs -->
+      <section class="aipf-models" aria-label="Your daily prompts">
+        <div class="aipf-panel-head">
+          <h2 class="aipf-h2">Your prompts</h2>
+          <div class="aipf-promptsize">
+            <label for="aipf-size">A typical prompt is</label>
+            <select id="aipf-size" aria-label="Typical prompt size"></select>
+          </div>
+        </div>
+
+        <div class="aipf-running" id="aipf-running" aria-live="polite"></div>
+
+        <div class="aipf-modellist" id="aipf-modellist"></div>
+
+        <button type="button" class="aipf-reset" id="aipf-reset">Reset all to zero</button>
+      </section>
+
+      <!-- RIGHT: comparison -->
+      <section class="aipf-compare" aria-label="How it compares">
+        <div class="aipf-sticky">
+          <div class="aipf-metric-toggle" role="tablist" aria-label="Footprint type">
+            <button type="button" class="aipf-metric is-active" data-metric="carbon" role="tab" aria-selected="true">Carbon</button>
+            <button type="button" class="aipf-metric" data-metric="water" role="tab" aria-selected="false">Water</button>
+          </div>
+
+          <div class="aipf-life">
+            <p class="aipf-life-lead">Set an average day of <em>your</em> life:</p>
+            <div class="aipf-life-row">
+              <label for="aipf-loc">Where you live</label>
+              <select id="aipf-loc"></select>
+            </div>
+            <div class="aipf-life-row">
+              <label for="aipf-diet">Your diet</label>
+              <select id="aipf-diet"></select>
+            </div>
+            <div class="aipf-life-row">
+              <label for="aipf-fly">How much you fly</label>
+              <select id="aipf-fly"></select>
+            </div>
+          </div>
+
+          <div class="aipf-headline" id="aipf-headline"></div>
+
+          <div class="aipf-onepct" id="aipf-onepct"></div>
+
+          <div class="aipf-bars-block">
+            <p class="aipf-bars-label">Your daily AI use, in everyday terms</p>
+            <div class="aipf-bars" id="aipf-bars"></div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- Methodology -->
+    <details class="aipf-method">
+      <summary>Methodology &amp; sources</summary>
+      <div class="aipf-method-body">
+        <p>
+          <strong>Per-model AI estimates.</strong> Energy, carbon, and water per prompt are
+          computed with the open-source <a href="https://ecologits.ai/" target="_blank" rel="noopener">EcoLogits</a>
+          library (v0.10), the engine behind the
+          <a href="https://huggingface.co/spaces/genai-impact/ecologits-calculator" target="_blank" rel="noopener">EcoLogits calculator</a>.
+          EcoLogits estimates electricity from each model's (active) parameter count and output
+          length, converts it to greenhouse gases using a grid mix (the global average,
+          ~0.59 kg CO<sub>2</sub>e/kWh), and adds embodied impacts from manufacturing the
+          hardware. Water is EcoLogits' water-consumption footprint (data-center cooling plus the
+          water used to generate the electricity). These are modeled estimates with wide
+          uncertainty, and parameter counts for closed models are themselves estimates.
+        </p>
+        <p>
+          <strong>Prompt size.</strong> The "typical prompt" selector maps to EcoLogits' example
+          prompts by output length: a tweet (50 output tokens), an email (170), an article
+          summary (250), a chatbot reply (400, the default), and a 5-page report (5,000). Reasoning
+          models and very long outputs cost far more than a short reply.
+        </p>
+        <p>
+          <strong>Your carbon footprint.</strong> Built from three pieces. <em>Where you live</em>
+          is an average per-person footprint for home energy, transport, and goods, excluding food
+          and flights to avoid double-counting (rough per-capita figures from Our World in Data).
+          <em>Diet</em> uses annual food footprints from Poore &amp; Nemecek (2018) and Scarborough
+          et al. (2023): roughly 1.05 t CO<sub>2</sub>e/yr for a vegan diet up to 3.2 t for a
+          heavy-meat diet. <em>Flying</em> uses ~0.255 kg CO<sub>2</sub>e per passenger-mile
+          including high-altitude effects.
+        </p>
+        <p>
+          <strong>Your water footprint.</strong> This is a full water footprint including the
+          "virtual" water embedded in food, which dominates it. Diet figures follow the water-
+          footprint literature (a heavy-meat diet is well over 1,000 gallons/day; a plant-based
+          diet far less). Note this is not the same kind of water as the AI figure: AI water is
+          mostly data-center cooling and power-plant water, while most of a personal water
+          footprint is agricultural. The comparison shows scale, not identical accounting.
+        </p>
+        <p>
+          <strong>Everyday comparisons.</strong> A beef burger ≈ 3 kg CO<sub>2</sub>e and ≈ 460
+          gallons of water; a mile in a gas car ≈ 0.40 kg; a 10-minute shower ≈ 25 gallons; a cup
+          of coffee ≈ 0.21 kg and ≈ 35 gallons (Water Footprint Network, Our World in Data).
+        </p>
+        <p class="aipf-method-caveat">
+          The point of this tool is scale. For almost everyone, day-to-day AI use is a rounding
+          error next to diet, driving, home energy, and especially flying. That doesn't mean AI's
+          total energy demand is small — but your individual prompts are.
+        </p>
+      </div>
+    </details>
+  </article>
+</Base>
+
+<script is:inline define:vars={{}}>
+  (function () {
+    'use strict';
+
+    // ---- Data (per-prompt model impacts from EcoLogits v0.10) ----
+    // sizes: { tweet|email|summary|chat|report : { wh, g (gCO2e), ml } }
+    const MODELS = [{"id":"gpt-5.2","name":"GPT-5.2","group":"OpenAI","sizes":{"tweet":{"wh":0.1277,"g":0.058,"ml":0.4606},"email":{"wh":0.3655,"g":0.1566,"ml":1.3183},"summary":{"wh":0.5241,"g":0.2223,"ml":1.89},"chat":{"wh":0.8214,"g":0.3455,"ml":2.9621},"report":{"wh":9.9381,"g":4.1235,"ml":35.8395}}},{"id":"gpt-5.1","name":"GPT-5.1","group":"OpenAI","sizes":{"tweet":{"wh":0.1051,"g":0.0474,"ml":0.3792},"email":{"wh":0.302,"g":0.1282,"ml":1.0891},"summary":{"wh":0.4332,"g":0.1821,"ml":1.5623},"chat":{"wh":0.6793,"g":0.2831,"ml":2.4497},"report":{"wh":8.2251,"g":3.3814,"ml":29.662}}},{"id":"gpt-5","name":"GPT-5","group":"OpenAI","sizes":{"tweet":{"wh":0.103,"g":0.0461,"ml":0.3714},"email":{"wh":0.3031,"g":0.1288,"ml":1.093},"summary":{"wh":0.4365,"g":0.184,"ml":1.574},"chat":{"wh":0.6866,"g":0.2874,"ml":2.4759},"report":{"wh":8.3563,"g":3.4592,"ml":30.1351}}},{"id":"gpt-5-mini","name":"GPT-5 mini","group":"OpenAI","sizes":{"tweet":{"wh":0.021,"g":0.0101,"ml":0.0758},"email":{"wh":0.0514,"g":0.0225,"ml":0.1854},"summary":{"wh":0.0717,"g":0.0307,"ml":0.2585},"chat":{"wh":0.1097,"g":0.0462,"ml":0.3955},"report":{"wh":1.2749,"g":0.5205,"ml":4.5975}}},{"id":"gpt-5-nano","name":"GPT-5 nano","group":"OpenAI","sizes":{"tweet":{"wh":0.005,"g":0.0024,"ml":0.0181},"email":{"wh":0.0128,"g":0.0056,"ml":0.0462},"summary":{"wh":0.018,"g":0.0077,"ml":0.0649},"chat":{"wh":0.0277,"g":0.0117,"ml":0.0999},"report":{"wh":0.3258,"g":0.1341,"ml":1.1748}}},{"id":"gpt-5.2-pro","name":"GPT-5.2 Pro","group":"OpenAI","sizes":{"tweet":{"wh":13.8373,"g":6.2354,"ml":49.9009},"email":{"wh":39.4531,"g":16.6994,"ml":142.2784},"summary":{"wh":56.5303,"g":23.6754,"ml":203.8634},"chat":{"wh":88.5501,"g":36.7554,"ml":319.3353},"report":{"wh":1070.4905,"g":437.8759,"ml":3860.474}}},{"id":"gpt-4.1","name":"GPT-4.1","group":"OpenAI","sizes":{"tweet":{"wh":0.1,"g":0.0432,"ml":0.3607},"email":{"wh":0.3212,"g":0.1355,"ml":1.1583},"summary":{"wh":0.4686,"g":0.1971,"ml":1.69},"chat":{"wh":0.7451,"g":0.3126,"ml":2.687},"report":{"wh":9.2231,"g":3.8534,"ml":33.2608}}},{"id":"o4-mini","name":"o4-mini","group":"OpenAI","sizes":{"tweet":{"wh":0.0065,"g":0.0032,"ml":0.0235},"email":{"wh":0.0148,"g":0.0066,"ml":0.0534},"summary":{"wh":0.0203,"g":0.0089,"ml":0.0734},"chat":{"wh":0.0307,"g":0.0131,"ml":0.1108},"report":{"wh":0.3486,"g":0.1432,"ml":1.2572}}},{"id":"claude-opus-4-8","name":"Claude Opus 4.8","group":"Anthropic","sizes":{"tweet":{"wh":0.2673,"g":0.1157,"ml":0.9982},"email":{"wh":0.818,"g":0.3382,"ml":3.0632},"summary":{"wh":1.1852,"g":0.4865,"ml":4.4398},"chat":{"wh":1.8735,"g":0.7646,"ml":7.0211},"report":{"wh":22.9837,"g":9.2924,"ml":86.179}}},{"id":"claude-sonnet-4-6","name":"Claude Sonnet 4.6","group":"Anthropic","sizes":{"tweet":{"wh":0.1135,"g":0.0508,"ml":0.4214},"email":{"wh":0.3424,"g":0.1464,"ml":1.2745},"summary":{"wh":0.495,"g":0.2101,"ml":1.8433},"chat":{"wh":0.7811,"g":0.3295,"ml":2.9097},"report":{"wh":9.5558,"g":3.9918,"ml":35.6133}}},{"id":"claude-haiku-4-5-20251001","name":"Claude Haiku 4.5","group":"Anthropic","sizes":{"tweet":{"wh":0.0062,"g":0.0027,"ml":0.0236},"email":{"wh":0.0194,"g":0.0082,"ml":0.0735},"summary":{"wh":0.0281,"g":0.0118,"ml":0.1068},"chat":{"wh":0.0446,"g":0.0187,"ml":0.1693},"report":{"wh":0.5485,"g":0.2282,"ml":2.084}}},{"id":"gemini-3-pro-preview","name":"Gemini 3 Pro","group":"Google","sizes":{"tweet":{"wh":0.8453,"g":0.3771,"ml":3.4225},"email":{"wh":2.4033,"g":0.9931,"ml":9.73},"summary":{"wh":3.4419,"g":1.4037,"ml":13.9349},"chat":{"wh":5.3893,"g":2.1737,"ml":21.8193},"report":{"wh":65.1103,"g":25.7869,"ml":263.6065}}},{"id":"gemini-3-flash-preview","name":"Gemini 3 Flash","group":"Google","sizes":{"tweet":{"wh":0.1564,"g":0.0651,"ml":0.6332},"email":{"wh":0.498,"g":0.2007,"ml":2.0162},"summary":{"wh":0.7257,"g":0.291,"ml":2.9382},"chat":{"wh":1.1527,"g":0.4604,"ml":4.6669},"report":{"wh":14.247,"g":5.656,"ml":57.6807}}},{"id":"gemini-2.5-pro","name":"Gemini 2.5 Pro","group":"Google","sizes":{"tweet":{"wh":1.0647,"g":0.4388,"ml":4.3106},"email":{"wh":3.3715,"g":1.3395,"ml":13.6498},"summary":{"wh":4.9093,"g":1.94,"ml":19.876},"chat":{"wh":7.7928,"g":3.0658,"ml":31.55},"report":{"wh":96.2192,"g":37.5917,"ml":389.5544}}},{"id":"gemini-2.5-flash","name":"Gemini 2.5 Flash","group":"Google","sizes":{"tweet":{"wh":0.1003,"g":0.0434,"ml":0.4061},"email":{"wh":0.3111,"g":0.1293,"ml":1.2595},"summary":{"wh":0.4516,"g":0.1865,"ml":1.8284},"chat":{"wh":0.7151,"g":0.2939,"ml":2.8951},"report":{"wh":8.7949,"g":3.5852,"ml":35.6072}}},{"id":"gemini-2.5-flash-lite","name":"Gemini 2.5 Flash-Lite","group":"Google","sizes":{"tweet":{"wh":0.0035,"g":0.0015,"ml":0.0141},"email":{"wh":0.011,"g":0.0046,"ml":0.0444},"summary":{"wh":0.0159,"g":0.0066,"ml":0.0646},"chat":{"wh":0.0253,"g":0.0105,"ml":0.1024},"report":{"wh":0.3122,"g":0.1282,"ml":1.2641}}},{"id":"mistral-large-latest","name":"Mistral Large","group":"Mistral","sizes":{"tweet":{"wh":0.0315,"g":0.0024,"ml":0.1926},"email":{"wh":0.1033,"g":0.0071,"ml":0.6309},"summary":{"wh":0.1511,"g":0.0103,"ml":0.9231},"chat":{"wh":0.2408,"g":0.0162,"ml":1.471},"report":{"wh":2.9911,"g":0.1973,"ml":18.2727}}},{"id":"mistral-medium-latest","name":"Mistral Medium","group":"Mistral","sizes":{"tweet":{"wh":0.0278,"g":0.0022,"ml":0.1695},"email":{"wh":0.0909,"g":0.0067,"ml":0.5556},"summary":{"wh":0.1331,"g":0.0097,"ml":0.813},"chat":{"wh":0.2121,"g":0.0153,"ml":1.2955},"report":{"wh":2.6345,"g":0.1876,"ml":16.0943}}},{"id":"mistral-small-latest","name":"Mistral Small","group":"Mistral","sizes":{"tweet":{"wh":0.0129,"g":0.001,"ml":0.0786},"email":{"wh":0.0416,"g":0.0028,"ml":0.2544},"summary":{"wh":0.0608,"g":0.004,"ml":0.3715},"chat":{"wh":0.0968,"g":0.0062,"ml":0.5913},"report":{"wh":1.1997,"g":0.0754,"ml":7.3292}}},{"id":"ministral-8b-2512","name":"Ministral 8B","group":"Mistral","sizes":{"tweet":{"wh":0.0037,"g":0.0004,"ml":0.0225},"email":{"wh":0.0121,"g":0.0011,"ml":0.0739},"summary":{"wh":0.0177,"g":0.0016,"ml":0.1082},"chat":{"wh":0.0282,"g":0.0026,"ml":0.1724},"report":{"wh":0.3508,"g":0.0316,"ml":2.143}}},{"id":"command-a-plus-05-2026","name":"Command A+","group":"Cohere","sizes":{"tweet":{"wh":0.0857,"g":0.0362,"ml":0.3471},"email":{"wh":0.2835,"g":0.118,"ml":1.1476},"summary":{"wh":0.4153,"g":0.1725,"ml":1.6813},"chat":{"wh":0.6624,"g":0.2748,"ml":2.6819},"report":{"wh":8.2417,"g":3.4118,"ml":33.3677}}}];
+
+    const PROMPT_SIZES = [
+      { id: 'tweet', label: 'a tweet', tokens: 50 },
+      { id: 'email', label: 'an email', tokens: 170 },
+      { id: 'summary', label: 'an article summary', tokens: 250 },
+      { id: 'chat', label: 'a chatbot reply', tokens: 400 },
+      { id: 'report', label: 'a 5-page report', tokens: 5000 },
+    ];
+
+    // ---- Personal footprint reference data ----
+    // Carbon in kg CO2e per YEAR. Water in US gallons per YEAR.
+    const LOCATIONS = [
+      // base = home energy + transport + goods, excludes food & flights
+      { id: 'us',    label: 'United States',  c: 11000, w: 91000 },
+      { id: 'eu',    label: 'European Union', c: 5000,  w: 55000 },
+      { id: 'uk',    label: 'United Kingdom', c: 4500,  w: 47000 },
+      { id: 'cn',    label: 'China',          c: 6000,  w: 55000 },
+      { id: 'in',    label: 'India',          c: 1600,  w: 44000 },
+      { id: 'world', label: 'World average',  c: 3500,  w: 55000 },
+    ];
+    const DIETS = [
+      { id: 'heavy', label: 'Heavy meat',         c: 3200, w: 547000 },
+      { id: 'avg',   label: 'Average (some meat)', c: 2500, w: 401000 },
+      { id: 'light', label: 'Light meat',          c: 2000, w: 328000 },
+      { id: 'pesc',  label: 'Pescatarian',         c: 1700, w: 292000 },
+      { id: 'veg',   label: 'Vegetarian',          c: 1500, w: 237000 },
+      { id: 'vegan', label: 'Vegan',               c: 1050, w: 164000 },
+    ];
+    const FLYING = [
+      { id: 'never', label: 'Never fly',                  c: 0,    w: 0 },
+      { id: 'rare',  label: 'Rarely (1 short flight/yr)', c: 560,  w: 0 },
+      { id: 'some',  label: 'Sometimes (a few/yr)',       c: 2300, w: 0 },
+      { id: 'often', label: 'Often (monthly flights)',    c: 8000, w: 0 },
+    ];
+
+    // Everyday single items. carbon in grams CO2e; water in US gallons.
+    const EVERYDAY = {
+      carbon: [
+        { label: 'A cup of coffee', v: 210 },
+        { label: '1 mile in a gas car', v: 400 },
+        { label: 'A beef burger', v: 3000 },
+      ],
+      water: [
+        { label: 'A 10-min shower', v: 25 },
+        { label: 'A cup of coffee', v: 35 },
+        { label: 'A beef burger', v: 460 },
+      ],
+    };
+
+    const GAL_TO_L = 3.785411784;
+
+    // ---- State ----
+    const state = {
+      size: 'chat',
+      counts: { 'gpt-5.1': 15, 'claude-sonnet-4-6': 8, 'gemini-2.5-flash': 5 },
+      metric: 'carbon', // 'carbon' | 'water'
+      loc: 'us',
+      diet: 'avg',
+      fly: 'some',
+    };
+
+    let root = null;
+
+    // ---- Formatting ----
+    function fmtNum(n) {
+      if (n >= 1000) return Math.round(n).toLocaleString('en-US');
+      if (n >= 100) return Math.round(n).toLocaleString('en-US');
+      if (n >= 10) return n.toFixed(1);
+      if (n >= 1) return n.toFixed(2);
+      if (n >= 0.01) return n.toFixed(3);
+      return n.toPrecision(2);
+    }
+    // carbon stored in grams -> adaptive
+    function fmtCarbon(g) {
+      if (g >= 1e6) return fmtNum(g / 1e6) + ' t CO₂e';
+      if (g >= 1000) return fmtNum(g / 1000) + ' kg CO₂e';
+      return fmtNum(g) + ' g CO₂e';
+    }
+    // water stored in liters -> adaptive
+    function fmtWater(l) {
+      if (l >= 3785) return fmtNum(l / GAL_TO_L) + ' gal';
+      if (l >= 1) return fmtNum(l) + ' L';
+      return fmtNum(l * 1000) + ' mL';
+    }
+    function fmtMetric(v) {
+      return state.metric === 'carbon' ? fmtCarbon(v) : fmtWater(v);
+    }
+    function metricWord() {
+      return state.metric === 'carbon' ? 'carbon' : 'water';
+    }
+
+    // ---- Core math (everything in base units: carbon grams, water liters) ----
+    function perPrompt(model, metric) {
+      const s = model.sizes[state.size];
+      if (metric === 'carbon') return s.g;            // grams
+      return s.ml / 1000;                              // mL -> liters
+    }
+    function totalPrompts() {
+      let n = 0;
+      for (const m of MODELS) n += state.counts[m.id] || 0;
+      return n;
+    }
+    // daily AI total for a metric, in base units
+    function aiDaily(metric) {
+      let t = 0;
+      for (const m of MODELS) {
+        const c = state.counts[m.id] || 0;
+        if (c) t += c * perPrompt(m, metric);
+      }
+      return t;
+    }
+    // personal footprint per DAY, base units
+    function dailyFootprint(metric) {
+      const loc = LOCATIONS.find((x) => x.id === state.loc);
+      const diet = DIETS.find((x) => x.id === state.diet);
+      const fly = FLYING.find((x) => x.id === state.fly);
+      if (metric === 'carbon') {
+        const kgYr = loc.c + diet.c + fly.c;
+        return (kgYr * 1000) / 365; // grams/day
+      }
+      const galYr = loc.w + diet.w + fly.w;
+      return (galYr * GAL_TO_L) / 365; // liters/day
+    }
+    function everydayBase(metric) {
+      // returns [{label, v(base units)}]
+      if (metric === 'carbon') return EVERYDAY.carbon.map((e) => ({ label: e.label, v: e.v }));
+      return EVERYDAY.water.map((e) => ({ label: e.label, v: e.v * GAL_TO_L }));
+    }
+
+    // ---- Rendering ----
+    function el(tag, cls, html) {
+      const e = document.createElement(tag);
+      if (cls) e.className = cls;
+      if (html != null) e.innerHTML = html;
+      return e;
+    }
+
+    function renderPromptSize() {
+      const sel = root.querySelector('#aipf-size');
+      sel.innerHTML = '';
+      for (const p of PROMPT_SIZES) {
+        const o = document.createElement('option');
+        o.value = p.id;
+        o.textContent = p.label + ' (' + p.tokens.toLocaleString('en-US') + ' words out)';
+        if (p.id === state.size) o.selected = true;
+        sel.appendChild(o);
+      }
+    }
+
+    function renderLifeSelects() {
+      function fill(id, list, cur) {
+        const sel = root.querySelector(id);
+        sel.innerHTML = '';
+        for (const x of list) {
+          const o = document.createElement('option');
+          o.value = x.id;
+          o.textContent = x.label;
+          if (x.id === cur) o.selected = true;
+          sel.appendChild(o);
+        }
+      }
+      fill('#aipf-loc', LOCATIONS, state.loc);
+      fill('#aipf-diet', DIETS, state.diet);
+      fill('#aipf-fly', FLYING, state.fly);
+    }
+
+    function renderModelList() {
+      const wrap = root.querySelector('#aipf-modellist');
+      wrap.innerHTML = '';
+      const groups = [];
+      for (const m of MODELS) {
+        let g = groups.find((x) => x.name === m.group);
+        if (!g) { g = { name: m.group, items: [] }; groups.push(g); }
+        g.items.push(m);
+      }
+      for (const g of groups) {
+        wrap.appendChild(el('div', 'aipf-group-name', g.name));
+        for (const m of g.items) {
+          const row = el('div', 'aipf-model-row');
+          row.dataset.id = m.id;
+
+          const info = el('div', 'aipf-model-info');
+          info.appendChild(el('span', 'aipf-model-name', m.name));
+          const pc = m.sizes[state.size].g;
+          const pw = m.sizes[state.size].ml;
+          info.appendChild(
+            el('span', 'aipf-model-per', fmtCarbon(pc) + ' · ' + fmtWater(pw / 1000) + ' each')
+          );
+          row.appendChild(info);
+
+          const ctrl = el('div', 'aipf-stepper');
+          const minus = el('button', 'aipf-step', '−');
+          minus.type = 'button';
+          minus.setAttribute('aria-label', 'Fewer ' + m.name + ' prompts');
+          const input = document.createElement('input');
+          input.type = 'text';
+          input.inputMode = 'numeric';
+          input.className = 'aipf-count';
+          input.value = String(state.counts[m.id] || 0);
+          input.setAttribute('aria-label', m.name + ' prompts per day');
+          const plus = el('button', 'aipf-step', '+');
+          plus.type = 'button';
+          plus.setAttribute('aria-label', 'More ' + m.name + ' prompts');
+
+          minus.addEventListener('click', () => bump(m.id, -1));
+          plus.addEventListener('click', () => bump(m.id, 1));
+          input.addEventListener('input', () => {
+            const v = Math.max(0, Math.min(100000, parseInt(input.value.replace(/[^0-9]/g, ''), 10) || 0));
+            state.counts[m.id] = v;
+            updateOutputs();
+          });
+          input.addEventListener('blur', () => { input.value = String(state.counts[m.id] || 0); });
+
+          ctrl_append(ctrl, minus, input, plus);
+          row.appendChild(ctrl);
+          wrap.appendChild(row);
+        }
+      }
+    }
+    function ctrl_append(ctrl, a, b, c) { ctrl.appendChild(a); ctrl.appendChild(b); ctrl.appendChild(c); }
+
+    function bump(id, dir) {
+      const cur = state.counts[id] || 0;
+      let step = 1;
+      if (cur >= 50) step = 10; else if (cur >= 20) step = 5;
+      let next = cur + dir * step;
+      if (dir < 0 && cur > 0 && cur <= step) next = 0;
+      next = Math.max(0, Math.min(100000, next));
+      state.counts[id] = next;
+      const row = root.querySelector('.aipf-model-row[data-id="' + cssEsc(id) + '"] .aipf-count');
+      if (row) row.value = String(next);
+      updateOutputs();
+    }
+    function cssEsc(s) { return s.replace(/"/g, '\\"'); }
+
+    function updateModelPerLabels() {
+      for (const m of MODELS) {
+        const row = root.querySelector('.aipf-model-row[data-id="' + cssEsc(m.id) + '"] .aipf-model-per');
+        if (row) {
+          const pc = m.sizes[state.size].g;
+          const pw = m.sizes[state.size].ml;
+          row.textContent = fmtCarbon(pc) + ' · ' + fmtWater(pw / 1000) + ' each';
+        }
+      }
+    }
+
+    function renderRunning() {
+      const box = root.querySelector('#aipf-running');
+      const n = totalPrompts();
+      const c = aiDaily('carbon');
+      const w = aiDaily('water');
+      const wh = (function () { let t = 0; for (const m of MODELS) { const k = state.counts[m.id] || 0; if (k) t += k * m.sizes[state.size].wh; } return t; })();
+      box.innerHTML =
+        '<div class="aipf-running-n">' + n.toLocaleString('en-US') + ' prompt' + (n === 1 ? '' : 's') + ' a day</div>' +
+        '<div class="aipf-running-stats">' +
+          '<span><strong>' + fmtNum(wh) + '</strong> Wh</span>' +
+          '<span><strong>' + fmtCarbon(c) + '</strong></span>' +
+          '<span><strong>' + fmtWater(w) + '</strong></span>' +
+        '</div>' +
+        '<div class="aipf-running-sub">energy · carbon · water, all your prompts combined, per day</div>';
+    }
+
+    function renderHeadline() {
+      const box = root.querySelector('#aipf-headline');
+      const ai = aiDaily(state.metric);
+      const day = dailyFootprint(state.metric);
+      const pct = day > 0 ? (ai / day) * 100 : 0;
+      let pctStr;
+      if (pct >= 1) pctStr = pct.toFixed(pct >= 10 ? 0 : 1) + '%';
+      else if (pct >= 0.01) pctStr = pct.toFixed(2) + '%';
+      else if (pct > 0) pctStr = '<0.01%';
+      else pctStr = '0%';
+
+      box.innerHTML =
+        '<p class="aipf-headline-lead">Your daily AI ' + metricWord() + ' is</p>' +
+        '<p class="aipf-headline-big">' + pctStr + '</p>' +
+        '<p class="aipf-headline-lead">of your daily ' + metricWord() + ' footprint (' + fmtMetric(day) + ').</p>' +
+        '<div class="aipf-prop"><div class="aipf-prop-fill" style="width:' + Math.max(0.4, Math.min(100, pct)).toFixed(2) + '%"></div></div>' +
+        '<p class="aipf-prop-cap">the full bar is one day of your life; the fill is your AI use</p>';
+    }
+
+    function renderOnePct() {
+      const box = root.querySelector('#aipf-onepct');
+      const day = dailyFootprint(state.metric);
+      const onePct = day * 0.01;
+      const n = totalPrompts();
+      const ai = aiDaily(state.metric);
+      const avgPer = n > 0 ? ai / n : null;
+      if (avgPer && avgPer > 0) {
+        const prompts = onePct / avgPer;
+        box.innerHTML =
+          '<span class="aipf-onepct-num">' + Math.round(prompts).toLocaleString('en-US') + '</span>' +
+          ' prompts at your current mix add up to <strong>1%</strong> of your daily ' + metricWord() + ' footprint.';
+        box.style.display = '';
+      } else {
+        // fall back to an illustrative model
+        const m = MODELS.find((x) => x.id === 'gpt-5.1') || MODELS[0];
+        const per = perPrompt(m, state.metric);
+        const prompts = onePct / per;
+        box.innerHTML =
+          'Add some prompts above. For reference, <span class="aipf-onepct-num">' +
+          Math.round(prompts).toLocaleString('en-US') + '</span> ' + m.name +
+          ' prompts would equal <strong>1%</strong> of your daily ' + metricWord() + ' footprint.';
+        box.style.display = '';
+      }
+    }
+
+    function renderBars() {
+      const box = root.querySelector('#aipf-bars');
+      box.innerHTML = '';
+      const ai = aiDaily(state.metric);
+      const rows = [{ label: 'Your daily AI use', v: ai, focal: true }];
+      for (const e of everydayBase(state.metric)) rows.push({ label: e.label, v: e.v, focal: false });
+      rows.sort((a, b) => b.v - a.v);
+      const max = Math.max.apply(null, rows.map((r) => r.v).concat([1e-9]));
+      for (const r of rows) {
+        const row = el('div', 'aipf-bar-row' + (r.focal ? ' is-focal' : ''));
+        row.appendChild(el('div', 'aipf-bar-label', r.label));
+        const track = el('div', 'aipf-bar-track');
+        const fill = el('div', 'aipf-bar-fill');
+        fill.style.width = Math.max(0.5, (r.v / max) * 100).toFixed(2) + '%';
+        track.appendChild(fill);
+        row.appendChild(track);
+        row.appendChild(el('div', 'aipf-bar-val', fmtMetric(r.v)));
+        box.appendChild(row);
+      }
+    }
+
+    function updateOutputs() {
+      renderRunning();
+      renderHeadline();
+      renderOnePct();
+      renderBars();
+    }
+
+    function renderMetricToggle() {
+      const btns = root.querySelectorAll('.aipf-metric');
+      btns.forEach((b) => {
+        const on = b.dataset.metric === state.metric;
+        b.classList.toggle('is-active', on);
+        b.setAttribute('aria-selected', on ? 'true' : 'false');
+      });
+    }
+
+    function bindEvents() {
+      root.querySelector('#aipf-size').addEventListener('change', (e) => {
+        state.size = e.target.value;
+        updateModelPerLabels();
+        updateOutputs();
+      });
+      root.querySelector('#aipf-loc').addEventListener('change', (e) => { state.loc = e.target.value; updateOutputs(); });
+      root.querySelector('#aipf-diet').addEventListener('change', (e) => { state.diet = e.target.value; updateOutputs(); });
+      root.querySelector('#aipf-fly').addEventListener('change', (e) => { state.fly = e.target.value; updateOutputs(); });
+      root.querySelectorAll('.aipf-metric').forEach((b) => {
+        b.addEventListener('click', () => {
+          state.metric = b.dataset.metric;
+          renderMetricToggle();
+          updateOutputs();
+        });
+      });
+      root.querySelector('#aipf-reset').addEventListener('click', () => {
+        state.counts = {};
+        renderModelList();
+        updateOutputs();
+      });
+    }
+
+    function init() {
+      root = document.getElementById('aipf');
+      if (!root || root.dataset.ready === '1') return;
+      root.dataset.ready = '1';
+      renderPromptSize();
+      renderLifeSelects();
+      renderMetricToggle();
+      renderModelList();
+      bindEvents();
+      updateOutputs();
+    }
+
+    document.addEventListener('astro:page-load', init);
+    if (document.readyState !== 'loading') init();
+    else document.addEventListener('DOMContentLoaded', init);
+  })();
+</script>
+
+<style is:global>
+  .aipf {
+    width: calc(100vw - 48px);
+    position: relative;
+    left: 50%;
+    transform: translateX(-50%);
+    max-width: 1180px;
+    font-family: var(--font-body);
+    color: var(--text);
+    padding: 0 0 3rem;
+  }
+
+  .aipf-header {
+    max-width: 44rem;
+    margin-bottom: 1.75rem;
+  }
+  .aipf-header-title {
+    font-family: var(--font-editorial);
+    font-size: clamp(2rem, 1.65rem + 1vw, 3rem);
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    margin: 0 0 0.75rem;
+  }
+  .aipf-header-intro {
+    max-width: 42rem;
+    margin: 0;
+    font-family: var(--font-editorial);
+    font-size: 1.05rem;
+    line-height: 1.7;
+    color: var(--text-secondary);
+  }
+  .aipf a { color: var(--accent); text-decoration: underline; text-underline-offset: 2px; }
+  .aipf a:hover { color: var(--accent-hover); }
+  .aipf-header-intro a { color: var(--accent); text-decoration: underline; text-underline-offset: 2px; }
+
+  .aipf-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    align-items: start;
+  }
+
+  .aipf-h2 {
+    font-family: var(--font-editorial);
+    font-size: 1.25rem;
+    margin: 0;
+    font-weight: 600;
+  }
+
+  /* ---- Left: models ---- */
+  .aipf-models {
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--bg-elevated);
+    padding: 1.1rem 1.15rem 1.25rem;
+  }
+  .aipf-panel-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    margin-bottom: 0.85rem;
+  }
+  .aipf-promptsize {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: var(--font-size-small);
+    color: var(--dim);
+  }
+  .aipf select {
+    font-family: var(--font-body);
+    font-size: var(--font-size-small);
+    color: var(--text);
+    background: var(--bg);
+    border: 1px solid var(--border-strong);
+    border-radius: 7px;
+    padding: 0.32rem 1.8rem 0.32rem 0.55rem;
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%236B6E66' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.55rem center;
+  }
+  .aipf select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  .aipf-running {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--bg-subtle);
+    padding: 0.75rem 0.85rem;
+    margin-bottom: 1rem;
+  }
+  .aipf-running-n {
+    font-family: var(--font-editorial);
+    font-size: 1.05rem;
+    font-weight: 600;
+    margin-bottom: 0.35rem;
+  }
+  .aipf-running-stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem 1.1rem;
+    font-size: var(--font-size-small);
+    font-variant-numeric: tabular-nums;
+  }
+  .aipf-running-stats strong { font-weight: 650; }
+  .aipf-running-sub {
+    margin-top: 0.4rem;
+    font-size: 0.72rem;
+    color: var(--dim);
+  }
+
+  .aipf-group-name {
+    font-size: 0.68rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: var(--dim);
+    margin: 1rem 0 0.25rem;
+    padding-bottom: 0.2rem;
+    border-bottom: 1px solid var(--border-subtle);
+  }
+  .aipf-group-name:first-child { margin-top: 0; }
+
+  .aipf-model-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.6rem;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--border-subtle);
+  }
+  .aipf-model-info { display: flex; flex-direction: column; min-width: 0; }
+  .aipf-model-name { font-size: 0.92rem; font-weight: 550; }
+  .aipf-model-per {
+    font-size: 0.72rem;
+    color: var(--dim);
+    font-variant-numeric: tabular-nums;
+    margin-top: 0.1rem;
+  }
+
+  .aipf-stepper {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    flex-shrink: 0;
+    border: 1px solid var(--border-strong);
+    border-radius: 7px;
+    overflow: hidden;
+  }
+  .aipf-step {
+    width: 30px;
+    height: 32px;
+    border: none;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 1.05rem;
+    line-height: 1;
+    cursor: pointer;
+    font-family: var(--font-body);
+    transition: background var(--transition-fast);
+  }
+  .aipf-step:hover { background: var(--accent-subtle); color: var(--accent); }
+  .aipf-step:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+  .aipf-count {
+    width: 46px;
+    height: 32px;
+    border: none;
+    border-left: 1px solid var(--border);
+    border-right: 1px solid var(--border);
+    background: var(--bg-elevated);
+    color: var(--text);
+    text-align: center;
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    -moz-appearance: textfield;
+  }
+  .aipf-count:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+
+  .aipf-reset {
+    margin-top: 1rem;
+    background: none;
+    border: 1px solid var(--border-strong);
+    color: var(--dim);
+    border-radius: 7px;
+    padding: 0.4rem 0.8rem;
+    font-size: var(--font-size-small);
+    font-family: var(--font-body);
+    cursor: pointer;
+  }
+  .aipf-reset:hover { color: var(--accent); border-color: var(--accent); }
+
+  /* ---- Right: compare ---- */
+  .aipf-compare { min-width: 0; }
+  .aipf-sticky {
+    position: sticky;
+    top: 1rem;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--bg-elevated);
+    padding: 1.1rem 1.15rem 1.25rem;
+  }
+
+  .aipf-metric-toggle {
+    display: inline-flex;
+    gap: 1.1rem;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 1rem;
+  }
+  .aipf-metric {
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    padding: 0.3rem 0.1rem 0.5rem;
+    font-family: var(--font-body);
+    font-size: 0.95rem;
+    color: var(--dim);
+    cursor: pointer;
+  }
+  .aipf-metric.is-active { color: var(--text); border-bottom-color: var(--accent); font-weight: 600; }
+  .aipf-metric:hover { color: var(--text); }
+
+  .aipf-life { margin-bottom: 1rem; }
+  .aipf-life-lead {
+    font-size: var(--font-size-small);
+    color: var(--dim);
+    margin: 0 0 0.5rem;
+  }
+  .aipf-life-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.6rem;
+    padding: 0.3rem 0;
+  }
+  .aipf-life-row label { font-size: 0.9rem; color: var(--text-secondary); }
+  .aipf-life-row select { min-width: 11rem; }
+
+  .aipf-headline {
+    text-align: center;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--bg-subtle);
+    padding: 1rem 0.9rem 1.1rem;
+    margin-bottom: 0.85rem;
+  }
+  .aipf-headline-lead {
+    font-size: var(--font-size-small);
+    color: var(--text-secondary);
+    margin: 0;
+    line-height: 1.5;
+  }
+  .aipf-headline-big {
+    font-family: var(--font-editorial);
+    font-size: clamp(2.4rem, 6vw, 3.4rem);
+    font-weight: 700;
+    line-height: 1;
+    margin: 0.2rem 0;
+    color: var(--accent);
+    letter-spacing: -0.02em;
+  }
+  .aipf-prop {
+    height: 12px;
+    border-radius: 6px;
+    background: var(--border);
+    overflow: hidden;
+    margin: 0.85rem 0 0.4rem;
+  }
+  .aipf-prop-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 6px;
+    min-width: 2px;
+    transition: width var(--transition-medium);
+  }
+  .aipf-prop-cap { font-size: 0.7rem; color: var(--dim); margin: 0; }
+
+  .aipf-onepct {
+    font-size: 0.92rem;
+    line-height: 1.55;
+    color: var(--text-secondary);
+    background: var(--accent-subtle);
+    border-radius: 8px;
+    padding: 0.7rem 0.85rem;
+    margin-bottom: 1.1rem;
+  }
+  .aipf-onepct-num {
+    font-family: var(--font-editorial);
+    font-weight: 700;
+    font-size: 1.15rem;
+    color: var(--accent);
+  }
+
+  .aipf-bars-label {
+    font-size: 0.68rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: var(--dim);
+    margin: 0 0 0.6rem;
+  }
+  .aipf-bar-row {
+    display: grid;
+    grid-template-columns: 9rem 1fr auto;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.28rem 0;
+  }
+  .aipf-bar-label { font-size: 0.82rem; color: var(--text-secondary); }
+  .aipf-bar-row.is-focal .aipf-bar-label { color: var(--text); font-weight: 650; }
+  .aipf-bar-track {
+    height: 16px;
+    background: var(--bg-subtle);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .aipf-bar-fill {
+    height: 100%;
+    background: var(--border-strong);
+    border-radius: 4px;
+    transition: width var(--transition-medium);
+  }
+  .aipf-bar-row.is-focal .aipf-bar-fill { background: var(--accent); }
+  .aipf-bar-val {
+    font-size: 0.76rem;
+    color: var(--dim);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+  .aipf-bar-row.is-focal .aipf-bar-val { color: var(--text); font-weight: 600; }
+
+  /* ---- Methodology ---- */
+  .aipf-method {
+    margin-top: 2.25rem;
+    border-top: 1px solid var(--border);
+    padding-top: 1.25rem;
+    max-width: 46rem;
+  }
+  .aipf-method summary {
+    cursor: pointer;
+    font-family: var(--font-editorial);
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--text);
+  }
+  .aipf-method summary:hover { color: var(--accent); }
+  .aipf-method-body { margin-top: 1rem; }
+  .aipf-method-body p {
+    font-size: 0.9rem;
+    line-height: 1.7;
+    color: var(--text-secondary);
+    margin: 0 0 0.9rem;
+  }
+  .aipf-method-body a { color: var(--accent); text-decoration: underline; text-underline-offset: 2px; }
+  .aipf-method-caveat { font-style: italic; color: var(--dim) !important; }
+
+  /* ---- Responsive ---- */
+  @media (max-width: 880px) {
+    .aipf { width: calc(100vw - 32px); }
+    .aipf-grid { grid-template-columns: 1fr; }
+    .aipf-sticky { position: static; }
+  }
+  @media (max-width: 520px) {
+    .aipf { width: calc(100vw - 20px); }
+    .aipf-bar-row { grid-template-columns: 6.5rem 1fr; grid-row-gap: 0.1rem; }
+    .aipf-bar-val { grid-column: 2; text-align: right; }
+    .aipf-life-row { flex-direction: column; align-items: stretch; gap: 0.2rem; }
+    .aipf-life-row select { min-width: 0; width: 100%; }
+  }
+</style>
