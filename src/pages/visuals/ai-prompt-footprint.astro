@@ -3,9 +3,9 @@
  * AI prompt footprint calculator
  *
  * Lets a reader enter how many prompts they send per day of each AI model,
- * then shows the combined daily carbon and water footprint as bars against a
- * personal footprint the reader configures (where they live, their diet, how
- * much they fly), plus how many prompts add up to 1% of that footprint.
+ * then shows the combined daily carbon and water footprint against a personal
+ * footprint the reader configures (where they live, their diet, how much they
+ * fly), plus how many prompts add up to 1% of that footprint.
  *
  * Per-model energy / carbon / water estimates are generated directly from the
  * EcoLogits library (v0.10), the same engine behind the EcoLogits calculator
@@ -16,7 +16,7 @@ import Base from '@/layouts/Base.astro';
 
 const pageTitle = 'What does your AI use cost?';
 const pageDescription =
-  'Enter how many prompts you send each day to GPT, Claude, Gemini, Mistral and more. See the combined daily carbon and water footprint, using EcoLogits per-model estimates, set against your own footprint from where you live, your diet, and how much you fly.';
+  'Enter how many prompts you send each day to GPT, Claude, and Gemini. See the combined daily carbon and water footprint, using EcoLogits per-model estimates, set against your own footprint from where you live, your diet, and how much you fly.';
 const pageUrl = 'https://andymasley.com/visuals/ai-prompt-footprint';
 
 const structuredData = [
@@ -70,7 +70,7 @@ const structuredData = [
       <!-- LEFT: model inputs -->
       <section class="aipf-models" aria-label="Your daily prompts">
         <div class="aipf-panel-head">
-          <h2 class="aipf-h2">Your prompts</h2>
+          <p class="aipf-eyebrow">Your prompts</p>
           <div class="aipf-promptsize">
             <label for="aipf-size">A typical prompt is</label>
             <select id="aipf-size" aria-label="Typical prompt size"></select>
@@ -92,8 +92,8 @@ const structuredData = [
             <button type="button" class="aipf-metric" data-metric="water" role="tab" aria-selected="false">Water</button>
           </div>
 
-          <div class="aipf-life">
-            <p class="aipf-life-lead">Set an average day of <em>your</em> life:</p>
+          <div class="aipf-section aipf-life">
+            <p class="aipf-eyebrow">An average day of your life</p>
             <div class="aipf-life-row">
               <label for="aipf-loc">Where you live</label>
               <select id="aipf-loc"></select>
@@ -108,12 +108,12 @@ const structuredData = [
             </div>
           </div>
 
-          <div class="aipf-headline" id="aipf-headline"></div>
+          <div class="aipf-result" id="aipf-headline"></div>
 
-          <div class="aipf-onepct" id="aipf-onepct"></div>
+          <p class="aipf-onepct" id="aipf-onepct"></p>
 
-          <div class="aipf-bars-block">
-            <p class="aipf-bars-label">Your daily AI use, in everyday terms</p>
+          <div class="aipf-section">
+            <p class="aipf-eyebrow">Your daily AI use, in everyday terms</p>
             <div class="aipf-bars" id="aipf-bars"></div>
           </div>
         </div>
@@ -180,7 +180,7 @@ const structuredData = [
 
     // ---- Data (per-prompt model impacts from EcoLogits v0.10) ----
     // sizes: { tweet|email|summary|chat|report : { wh, g (gCO2e), ml } }
-    const MODELS = [{"id":"gpt-5.2","name":"GPT-5.2","group":"OpenAI","sizes":{"tweet":{"wh":0.1277,"g":0.058,"ml":0.4606},"email":{"wh":0.3655,"g":0.1566,"ml":1.3183},"summary":{"wh":0.5241,"g":0.2223,"ml":1.89},"chat":{"wh":0.8214,"g":0.3455,"ml":2.9621},"report":{"wh":9.9381,"g":4.1235,"ml":35.8395}}},{"id":"gpt-5.1","name":"GPT-5.1","group":"OpenAI","sizes":{"tweet":{"wh":0.1051,"g":0.0474,"ml":0.3792},"email":{"wh":0.302,"g":0.1282,"ml":1.0891},"summary":{"wh":0.4332,"g":0.1821,"ml":1.5623},"chat":{"wh":0.6793,"g":0.2831,"ml":2.4497},"report":{"wh":8.2251,"g":3.3814,"ml":29.662}}},{"id":"gpt-5","name":"GPT-5","group":"OpenAI","sizes":{"tweet":{"wh":0.103,"g":0.0461,"ml":0.3714},"email":{"wh":0.3031,"g":0.1288,"ml":1.093},"summary":{"wh":0.4365,"g":0.184,"ml":1.574},"chat":{"wh":0.6866,"g":0.2874,"ml":2.4759},"report":{"wh":8.3563,"g":3.4592,"ml":30.1351}}},{"id":"gpt-5-mini","name":"GPT-5 mini","group":"OpenAI","sizes":{"tweet":{"wh":0.021,"g":0.0101,"ml":0.0758},"email":{"wh":0.0514,"g":0.0225,"ml":0.1854},"summary":{"wh":0.0717,"g":0.0307,"ml":0.2585},"chat":{"wh":0.1097,"g":0.0462,"ml":0.3955},"report":{"wh":1.2749,"g":0.5205,"ml":4.5975}}},{"id":"gpt-5-nano","name":"GPT-5 nano","group":"OpenAI","sizes":{"tweet":{"wh":0.005,"g":0.0024,"ml":0.0181},"email":{"wh":0.0128,"g":0.0056,"ml":0.0462},"summary":{"wh":0.018,"g":0.0077,"ml":0.0649},"chat":{"wh":0.0277,"g":0.0117,"ml":0.0999},"report":{"wh":0.3258,"g":0.1341,"ml":1.1748}}},{"id":"gpt-5.2-pro","name":"GPT-5.2 Pro","group":"OpenAI","sizes":{"tweet":{"wh":13.8373,"g":6.2354,"ml":49.9009},"email":{"wh":39.4531,"g":16.6994,"ml":142.2784},"summary":{"wh":56.5303,"g":23.6754,"ml":203.8634},"chat":{"wh":88.5501,"g":36.7554,"ml":319.3353},"report":{"wh":1070.4905,"g":437.8759,"ml":3860.474}}},{"id":"gpt-4.1","name":"GPT-4.1","group":"OpenAI","sizes":{"tweet":{"wh":0.1,"g":0.0432,"ml":0.3607},"email":{"wh":0.3212,"g":0.1355,"ml":1.1583},"summary":{"wh":0.4686,"g":0.1971,"ml":1.69},"chat":{"wh":0.7451,"g":0.3126,"ml":2.687},"report":{"wh":9.2231,"g":3.8534,"ml":33.2608}}},{"id":"o4-mini","name":"o4-mini","group":"OpenAI","sizes":{"tweet":{"wh":0.0065,"g":0.0032,"ml":0.0235},"email":{"wh":0.0148,"g":0.0066,"ml":0.0534},"summary":{"wh":0.0203,"g":0.0089,"ml":0.0734},"chat":{"wh":0.0307,"g":0.0131,"ml":0.1108},"report":{"wh":0.3486,"g":0.1432,"ml":1.2572}}},{"id":"claude-opus-4-8","name":"Claude Opus 4.8","group":"Anthropic","sizes":{"tweet":{"wh":0.2673,"g":0.1157,"ml":0.9982},"email":{"wh":0.818,"g":0.3382,"ml":3.0632},"summary":{"wh":1.1852,"g":0.4865,"ml":4.4398},"chat":{"wh":1.8735,"g":0.7646,"ml":7.0211},"report":{"wh":22.9837,"g":9.2924,"ml":86.179}}},{"id":"claude-sonnet-4-6","name":"Claude Sonnet 4.6","group":"Anthropic","sizes":{"tweet":{"wh":0.1135,"g":0.0508,"ml":0.4214},"email":{"wh":0.3424,"g":0.1464,"ml":1.2745},"summary":{"wh":0.495,"g":0.2101,"ml":1.8433},"chat":{"wh":0.7811,"g":0.3295,"ml":2.9097},"report":{"wh":9.5558,"g":3.9918,"ml":35.6133}}},{"id":"claude-haiku-4-5-20251001","name":"Claude Haiku 4.5","group":"Anthropic","sizes":{"tweet":{"wh":0.0062,"g":0.0027,"ml":0.0236},"email":{"wh":0.0194,"g":0.0082,"ml":0.0735},"summary":{"wh":0.0281,"g":0.0118,"ml":0.1068},"chat":{"wh":0.0446,"g":0.0187,"ml":0.1693},"report":{"wh":0.5485,"g":0.2282,"ml":2.084}}},{"id":"gemini-3-pro-preview","name":"Gemini 3 Pro","group":"Google","sizes":{"tweet":{"wh":0.8453,"g":0.3771,"ml":3.4225},"email":{"wh":2.4033,"g":0.9931,"ml":9.73},"summary":{"wh":3.4419,"g":1.4037,"ml":13.9349},"chat":{"wh":5.3893,"g":2.1737,"ml":21.8193},"report":{"wh":65.1103,"g":25.7869,"ml":263.6065}}},{"id":"gemini-3-flash-preview","name":"Gemini 3 Flash","group":"Google","sizes":{"tweet":{"wh":0.1564,"g":0.0651,"ml":0.6332},"email":{"wh":0.498,"g":0.2007,"ml":2.0162},"summary":{"wh":0.7257,"g":0.291,"ml":2.9382},"chat":{"wh":1.1527,"g":0.4604,"ml":4.6669},"report":{"wh":14.247,"g":5.656,"ml":57.6807}}},{"id":"gemini-2.5-pro","name":"Gemini 2.5 Pro","group":"Google","sizes":{"tweet":{"wh":1.0647,"g":0.4388,"ml":4.3106},"email":{"wh":3.3715,"g":1.3395,"ml":13.6498},"summary":{"wh":4.9093,"g":1.94,"ml":19.876},"chat":{"wh":7.7928,"g":3.0658,"ml":31.55},"report":{"wh":96.2192,"g":37.5917,"ml":389.5544}}},{"id":"gemini-2.5-flash","name":"Gemini 2.5 Flash","group":"Google","sizes":{"tweet":{"wh":0.1003,"g":0.0434,"ml":0.4061},"email":{"wh":0.3111,"g":0.1293,"ml":1.2595},"summary":{"wh":0.4516,"g":0.1865,"ml":1.8284},"chat":{"wh":0.7151,"g":0.2939,"ml":2.8951},"report":{"wh":8.7949,"g":3.5852,"ml":35.6072}}},{"id":"gemini-2.5-flash-lite","name":"Gemini 2.5 Flash-Lite","group":"Google","sizes":{"tweet":{"wh":0.0035,"g":0.0015,"ml":0.0141},"email":{"wh":0.011,"g":0.0046,"ml":0.0444},"summary":{"wh":0.0159,"g":0.0066,"ml":0.0646},"chat":{"wh":0.0253,"g":0.0105,"ml":0.1024},"report":{"wh":0.3122,"g":0.1282,"ml":1.2641}}},{"id":"mistral-large-latest","name":"Mistral Large","group":"Mistral","sizes":{"tweet":{"wh":0.0315,"g":0.0024,"ml":0.1926},"email":{"wh":0.1033,"g":0.0071,"ml":0.6309},"summary":{"wh":0.1511,"g":0.0103,"ml":0.9231},"chat":{"wh":0.2408,"g":0.0162,"ml":1.471},"report":{"wh":2.9911,"g":0.1973,"ml":18.2727}}},{"id":"mistral-medium-latest","name":"Mistral Medium","group":"Mistral","sizes":{"tweet":{"wh":0.0278,"g":0.0022,"ml":0.1695},"email":{"wh":0.0909,"g":0.0067,"ml":0.5556},"summary":{"wh":0.1331,"g":0.0097,"ml":0.813},"chat":{"wh":0.2121,"g":0.0153,"ml":1.2955},"report":{"wh":2.6345,"g":0.1876,"ml":16.0943}}},{"id":"mistral-small-latest","name":"Mistral Small","group":"Mistral","sizes":{"tweet":{"wh":0.0129,"g":0.001,"ml":0.0786},"email":{"wh":0.0416,"g":0.0028,"ml":0.2544},"summary":{"wh":0.0608,"g":0.004,"ml":0.3715},"chat":{"wh":0.0968,"g":0.0062,"ml":0.5913},"report":{"wh":1.1997,"g":0.0754,"ml":7.3292}}},{"id":"ministral-8b-2512","name":"Ministral 8B","group":"Mistral","sizes":{"tweet":{"wh":0.0037,"g":0.0004,"ml":0.0225},"email":{"wh":0.0121,"g":0.0011,"ml":0.0739},"summary":{"wh":0.0177,"g":0.0016,"ml":0.1082},"chat":{"wh":0.0282,"g":0.0026,"ml":0.1724},"report":{"wh":0.3508,"g":0.0316,"ml":2.143}}},{"id":"command-a-plus-05-2026","name":"Command A+","group":"Cohere","sizes":{"tweet":{"wh":0.0857,"g":0.0362,"ml":0.3471},"email":{"wh":0.2835,"g":0.118,"ml":1.1476},"summary":{"wh":0.4153,"g":0.1725,"ml":1.6813},"chat":{"wh":0.6624,"g":0.2748,"ml":2.6819},"report":{"wh":8.2417,"g":3.4118,"ml":33.3677}}}];
+    const MODELS = [{"id":"gpt-5.5","name":"GPT-5.5","group":"OpenAI","sizes":{"tweet":{"wh":0.4064,"g":0.1803,"ml":1.4658},"email":{"wh":1.1791,"g":0.4928,"ml":4.2522},"summary":{"wh":1.6942,"g":0.7011,"ml":6.1098},"chat":{"wh":2.6601,"g":1.0917,"ml":9.5929},"report":{"wh":32.279,"g":13.0703,"ml":116.4068}}},{"id":"gpt-5.5-pro","name":"GPT-5.5 Pro","group":"OpenAI","sizes":{"tweet":{"wh":20.758,"g":10.0424,"ml":74.859},"email":{"wh":48.4781,"g":21.0452,"ml":174.8249},"summary":{"wh":66.9581,"g":28.3804,"ml":241.4689},"chat":{"wh":101.6082,"g":42.1339,"ml":366.4263},"report":{"wh":1164.2105,"g":463.9084,"ml":4198.4535}}},{"id":"gpt-5.4-mini","name":"GPT-5.4 mini","group":"OpenAI","sizes":{"tweet":{"wh":0.041,"g":0.0168,"ml":0.1477},"email":{"wh":0.133,"g":0.0536,"ml":0.4795},"summary":{"wh":0.1943,"g":0.078,"ml":0.7008},"chat":{"wh":0.3093,"g":0.1239,"ml":1.1155},"report":{"wh":3.8366,"g":1.5311,"ml":13.8358}}},{"id":"claude-opus-4-8","name":"Claude Opus 4.8","group":"Anthropic","sizes":{"tweet":{"wh":0.2673,"g":0.1157,"ml":0.9982},"email":{"wh":0.818,"g":0.3382,"ml":3.0632},"summary":{"wh":1.1852,"g":0.4865,"ml":4.4398},"chat":{"wh":1.8735,"g":0.7646,"ml":7.0211},"report":{"wh":22.9837,"g":9.2924,"ml":86.179}}},{"id":"claude-sonnet-4-6","name":"Claude Sonnet 4.6","group":"Anthropic","sizes":{"tweet":{"wh":0.1135,"g":0.0508,"ml":0.4214},"email":{"wh":0.3424,"g":0.1464,"ml":1.2745},"summary":{"wh":0.495,"g":0.2101,"ml":1.8433},"chat":{"wh":0.7811,"g":0.3295,"ml":2.9097},"report":{"wh":9.5558,"g":3.9918,"ml":35.6133}}},{"id":"claude-haiku-4-5-20251001","name":"Claude Haiku 4.5","group":"Anthropic","sizes":{"tweet":{"wh":0.0062,"g":0.0027,"ml":0.0236},"email":{"wh":0.0194,"g":0.0082,"ml":0.0735},"summary":{"wh":0.0281,"g":0.0118,"ml":0.1068},"chat":{"wh":0.0446,"g":0.0187,"ml":0.1693},"report":{"wh":0.5485,"g":0.2282,"ml":2.084}}},{"id":"gemini-3.1-pro-preview","name":"Gemini 3.1 Pro","group":"Google","sizes":{"tweet":{"wh":0.8453,"g":0.3771,"ml":3.4225},"email":{"wh":2.4033,"g":0.9931,"ml":9.73},"summary":{"wh":3.4419,"g":1.4037,"ml":13.9349},"chat":{"wh":5.3893,"g":2.1737,"ml":21.8193},"report":{"wh":65.1103,"g":25.7869,"ml":263.6065}}},{"id":"gemini-3.5-flash","name":"Gemini 3.5 Flash","group":"Google","sizes":{"tweet":{"wh":0.305,"g":0.1334,"ml":1.2348},"email":{"wh":0.8888,"g":0.3626,"ml":3.5982},"summary":{"wh":1.2779,"g":0.5154,"ml":5.1738},"chat":{"wh":2.0076,"g":0.8018,"ml":8.1281},"report":{"wh":24.3849,"g":9.5871,"ml":98.7251}}},{"id":"gemini-3.1-flash-lite","name":"Gemini 3.1 Flash-Lite","group":"Google","sizes":{"tweet":{"wh":0.0159,"g":0.0069,"ml":0.0644},"email":{"wh":0.0478,"g":0.0196,"ml":0.1933},"summary":{"wh":0.069,"g":0.028,"ml":0.2793},"chat":{"wh":0.1088,"g":0.0438,"ml":0.4405},"report":{"wh":1.3299,"g":0.5295,"ml":5.3844}}}];
 
     const PROMPT_SIZES = [
       { id: 'tweet', label: 'a tweet', tokens: 50 },
@@ -202,12 +202,12 @@ const structuredData = [
       { id: 'world', label: 'World average',  c: 3500,  w: 55000 },
     ];
     const DIETS = [
-      { id: 'heavy', label: 'Heavy meat',         c: 3200, w: 547000 },
-      { id: 'avg',   label: 'Average (some meat)', c: 2500, w: 401000 },
-      { id: 'light', label: 'Light meat',          c: 2000, w: 328000 },
-      { id: 'pesc',  label: 'Pescatarian',         c: 1700, w: 292000 },
-      { id: 'veg',   label: 'Vegetarian',          c: 1500, w: 237000 },
-      { id: 'vegan', label: 'Vegan',               c: 1050, w: 164000 },
+      { id: 'heavy', label: 'Heavy meat',          c: 3200, w: 547000 },
+      { id: 'avg',   label: 'Average (some meat)',  c: 2500, w: 401000 },
+      { id: 'light', label: 'Light meat',           c: 2000, w: 328000 },
+      { id: 'pesc',  label: 'Pescatarian',          c: 1700, w: 292000 },
+      { id: 'veg',   label: 'Vegetarian',           c: 1500, w: 237000 },
+      { id: 'vegan', label: 'Vegan',                c: 1050, w: 164000 },
     ];
     const FLYING = [
       { id: 'never', label: 'Never fly',                  c: 0,    w: 0 },
@@ -235,7 +235,7 @@ const structuredData = [
     // ---- State ----
     const state = {
       size: 'chat',
-      counts: { 'gpt-5.1': 15, 'claude-sonnet-4-6': 8, 'gemini-2.5-flash': 5 },
+      counts: { 'gpt-5.5': 15, 'claude-sonnet-4-6': 8, 'gemini-3.5-flash': 5 },
       metric: 'carbon', // 'carbon' | 'water'
       loc: 'us',
       diet: 'avg',
@@ -246,7 +246,6 @@ const structuredData = [
 
     // ---- Formatting ----
     function fmtNum(n) {
-      if (n >= 1000) return Math.round(n).toLocaleString('en-US');
       if (n >= 100) return Math.round(n).toLocaleString('en-US');
       if (n >= 10) return n.toFixed(1);
       if (n >= 1) return n.toFixed(2);
@@ -278,6 +277,12 @@ const structuredData = [
       if (metric === 'carbon') return s.g;            // grams
       return s.ml / 1000;                              // mL -> liters
     }
+    function perPromptHint(model) {
+      const s = model.sizes[state.size];
+      return state.metric === 'carbon'
+        ? fmtCarbon(s.g) + ' each'
+        : fmtWater(s.ml / 1000) + ' each';
+    }
     function totalPrompts() {
       let n = 0;
       for (const m of MODELS) n += state.counts[m.id] || 0;
@@ -305,7 +310,6 @@ const structuredData = [
       return (galYr * GAL_TO_L) / 365; // liters/day
     }
     function everydayBase(metric) {
-      // returns [{label, v(base units)}]
       if (metric === 'carbon') return EVERYDAY.carbon.map((e) => ({ label: e.label, v: e.v }));
       return EVERYDAY.water.map((e) => ({ label: e.label, v: e.v * GAL_TO_L }));
     }
@@ -364,11 +368,7 @@ const structuredData = [
 
           const info = el('div', 'aipf-model-info');
           info.appendChild(el('span', 'aipf-model-name', m.name));
-          const pc = m.sizes[state.size].g;
-          const pw = m.sizes[state.size].ml;
-          info.appendChild(
-            el('span', 'aipf-model-per', fmtCarbon(pc) + ' · ' + fmtWater(pw / 1000) + ' each')
-          );
+          info.appendChild(el('span', 'aipf-model-per', perPromptHint(m)));
           row.appendChild(info);
 
           const ctrl = el('div', 'aipf-stepper');
@@ -394,13 +394,14 @@ const structuredData = [
           });
           input.addEventListener('blur', () => { input.value = String(state.counts[m.id] || 0); });
 
-          ctrl_append(ctrl, minus, input, plus);
+          ctrl.appendChild(minus);
+          ctrl.appendChild(input);
+          ctrl.appendChild(plus);
           row.appendChild(ctrl);
           wrap.appendChild(row);
         }
       }
     }
-    function ctrl_append(ctrl, a, b, c) { ctrl.appendChild(a); ctrl.appendChild(b); ctrl.appendChild(c); }
 
     function bump(id, dir) {
       const cur = state.counts[id] || 0;
@@ -419,11 +420,7 @@ const structuredData = [
     function updateModelPerLabels() {
       for (const m of MODELS) {
         const row = root.querySelector('.aipf-model-row[data-id="' + cssEsc(m.id) + '"] .aipf-model-per');
-        if (row) {
-          const pc = m.sizes[state.size].g;
-          const pw = m.sizes[state.size].ml;
-          row.textContent = fmtCarbon(pc) + ' · ' + fmtWater(pw / 1000) + ' each';
-        }
+        if (row) row.textContent = perPromptHint(m);
       }
     }
 
@@ -432,15 +429,15 @@ const structuredData = [
       const n = totalPrompts();
       const c = aiDaily('carbon');
       const w = aiDaily('water');
-      const wh = (function () { let t = 0; for (const m of MODELS) { const k = state.counts[m.id] || 0; if (k) t += k * m.sizes[state.size].wh; } return t; })();
+      let wh = 0;
+      for (const m of MODELS) { const k = state.counts[m.id] || 0; if (k) wh += k * m.sizes[state.size].wh; }
       box.innerHTML =
         '<div class="aipf-running-n">' + n.toLocaleString('en-US') + ' prompt' + (n === 1 ? '' : 's') + ' a day</div>' +
         '<div class="aipf-running-stats">' +
-          '<span><strong>' + fmtNum(wh) + '</strong> Wh</span>' +
-          '<span><strong>' + fmtCarbon(c) + '</strong></span>' +
-          '<span><strong>' + fmtWater(w) + '</strong></span>' +
-        '</div>' +
-        '<div class="aipf-running-sub">energy · carbon · water, all your prompts combined, per day</div>';
+          '<span class="aipf-stat"><span class="aipf-stat-v">' + fmtNum(wh) + '</span><span class="aipf-stat-u">Wh energy</span></span>' +
+          '<span class="aipf-stat"><span class="aipf-stat-v">' + fmtCarbon(c) + '</span><span class="aipf-stat-u">carbon</span></span>' +
+          '<span class="aipf-stat"><span class="aipf-stat-v">' + fmtWater(w) + '</span><span class="aipf-stat-u">water</span></span>' +
+        '</div>';
     }
 
     function renderHeadline() {
@@ -455,11 +452,11 @@ const structuredData = [
       else pctStr = '0%';
 
       box.innerHTML =
-        '<p class="aipf-headline-lead">Your daily AI ' + metricWord() + ' is</p>' +
-        '<p class="aipf-headline-big">' + pctStr + '</p>' +
-        '<p class="aipf-headline-lead">of your daily ' + metricWord() + ' footprint (' + fmtMetric(day) + ').</p>' +
+        '<p class="aipf-result-lead">Your daily AI ' + metricWord() + ' (' + fmtMetric(ai) + ') is</p>' +
+        '<p class="aipf-result-big">' + pctStr + '</p>' +
+        '<p class="aipf-result-lead">of your daily ' + metricWord() + ' footprint, ' + fmtMetric(day) + '.</p>' +
         '<div class="aipf-prop"><div class="aipf-prop-fill" style="width:' + Math.max(0.4, Math.min(100, pct)).toFixed(2) + '%"></div></div>' +
-        '<p class="aipf-prop-cap">the full bar is one day of your life; the fill is your AI use</p>';
+        '<p class="aipf-prop-cap">the bar is one day of your life; the fill is your AI use</p>';
     }
 
     function renderOnePct() {
@@ -473,18 +470,15 @@ const structuredData = [
         const prompts = onePct / avgPer;
         box.innerHTML =
           '<span class="aipf-onepct-num">' + Math.round(prompts).toLocaleString('en-US') + '</span>' +
-          ' prompts at your current mix add up to <strong>1%</strong> of your daily ' + metricWord() + ' footprint.';
-        box.style.display = '';
+          ' prompts at your current mix would add up to <strong>1%</strong> of your daily ' + metricWord() + ' footprint.';
       } else {
-        // fall back to an illustrative model
-        const m = MODELS.find((x) => x.id === 'gpt-5.1') || MODELS[0];
+        const m = MODELS.find((x) => x.id === 'gpt-5.5') || MODELS[0];
         const per = perPrompt(m, state.metric);
         const prompts = onePct / per;
         box.innerHTML =
           'Add some prompts above. For reference, <span class="aipf-onepct-num">' +
           Math.round(prompts).toLocaleString('en-US') + '</span> ' + m.name +
           ' prompts would equal <strong>1%</strong> of your daily ' + metricWord() + ' footprint.';
-        box.style.display = '';
       }
     }
 
@@ -538,6 +532,7 @@ const structuredData = [
         b.addEventListener('click', () => {
           state.metric = b.dataset.metric;
           renderMetricToggle();
+          updateModelPerLabels();
           updateOutputs();
         });
       });
@@ -572,7 +567,7 @@ const structuredData = [
     position: relative;
     left: 50%;
     transform: translateX(-50%);
-    max-width: 1180px;
+    max-width: 1100px;
     font-family: var(--font-body);
     color: var(--text);
     padding: 0 0 3rem;
@@ -580,7 +575,7 @@ const structuredData = [
 
   .aipf-header {
     max-width: 44rem;
-    margin-bottom: 1.75rem;
+    margin-bottom: 2.5rem;
   }
   .aipf-header-title {
     font-family: var(--font-editorial);
@@ -599,41 +594,41 @@ const structuredData = [
   }
   .aipf a { color: var(--accent); text-decoration: underline; text-underline-offset: 2px; }
   .aipf a:hover { color: var(--accent-hover); }
-  .aipf-header-intro a { color: var(--accent); text-decoration: underline; text-underline-offset: 2px; }
 
   .aipf-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 1.5rem;
+    gap: 0;
     align-items: start;
   }
+  .aipf-models { padding-right: 2.5rem; }
+  .aipf-compare { padding-left: 2.5rem; border-left: 1px solid var(--border); min-width: 0; }
 
-  .aipf-h2 {
-    font-family: var(--font-editorial);
-    font-size: 1.25rem;
-    margin: 0;
-    font-weight: 600;
+  /* Shared section + eyebrow rhythm */
+  .aipf-eyebrow {
+    font-size: 0.66rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: var(--dim);
+    margin: 0 0 0.85rem;
   }
+  .aipf-section { margin-bottom: 1.75rem; }
 
   /* ---- Left: models ---- */
-  .aipf-models {
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    background: var(--bg-elevated);
-    padding: 1.1rem 1.15rem 1.25rem;
-  }
   .aipf-panel-head {
     display: flex;
     justify-content: space-between;
-    align-items: center;
+    align-items: baseline;
     gap: 0.75rem;
     flex-wrap: wrap;
-    margin-bottom: 0.85rem;
+    margin-bottom: 1.1rem;
   }
+  .aipf-panel-head .aipf-eyebrow { margin-bottom: 0; }
   .aipf-promptsize {
     display: flex;
     align-items: center;
-    gap: 0.4rem;
+    gap: 0.45rem;
     font-size: var(--font-size-small);
     color: var(--dim);
   }
@@ -641,54 +636,59 @@ const structuredData = [
     font-family: var(--font-body);
     font-size: var(--font-size-small);
     color: var(--text);
-    background: var(--bg);
-    border: 1px solid var(--border-strong);
-    border-radius: 7px;
-    padding: 0.32rem 1.8rem 0.32rem 0.55rem;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid var(--border-strong);
+    border-radius: 0;
+    padding: 0.25rem 1.4rem 0.25rem 0.1rem;
     cursor: pointer;
     appearance: none;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%236B6E66' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
     background-repeat: no-repeat;
-    background-position: right 0.55rem center;
+    background-position: right 0.2rem center;
+    transition: border-color var(--transition-fast);
   }
+  .aipf select:hover { border-bottom-color: var(--accent); }
   .aipf select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
   .aipf-running {
-    border: 1px solid var(--border);
-    border-radius: 8px;
     background: var(--bg-subtle);
-    padding: 0.75rem 0.85rem;
-    margin-bottom: 1rem;
+    border-radius: 10px;
+    padding: 0.95rem 1.05rem;
+    margin-bottom: 1.6rem;
   }
   .aipf-running-n {
     font-family: var(--font-editorial);
-    font-size: 1.05rem;
+    font-size: 1.1rem;
     font-weight: 600;
-    margin-bottom: 0.35rem;
+    margin-bottom: 0.7rem;
   }
   .aipf-running-stats {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.35rem 1.1rem;
-    font-size: var(--font-size-small);
-    font-variant-numeric: tabular-nums;
+    gap: 0.5rem 1.6rem;
   }
-  .aipf-running-stats strong { font-weight: 650; }
-  .aipf-running-sub {
-    margin-top: 0.4rem;
-    font-size: 0.72rem;
+  .aipf-stat { display: flex; flex-direction: column; gap: 0.1rem; }
+  .aipf-stat-v {
+    font-family: var(--font-mono);
+    font-size: 0.9rem;
+    font-variant-numeric: tabular-nums;
+    color: var(--text);
+  }
+  .aipf-stat-u {
+    font-size: 0.66rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
     color: var(--dim);
   }
 
   .aipf-group-name {
-    font-size: 0.68rem;
-    letter-spacing: 0.12em;
+    font-size: 0.66rem;
+    letter-spacing: 0.1em;
     text-transform: uppercase;
     font-weight: 700;
-    color: var(--dim);
-    margin: 1rem 0 0.25rem;
-    padding-bottom: 0.2rem;
-    border-bottom: 1px solid var(--border-subtle);
+    color: var(--accent);
+    margin: 1.4rem 0 0.35rem;
   }
   .aipf-group-name:first-child { margin-top: 0; }
 
@@ -697,190 +697,173 @@ const structuredData = [
     align-items: center;
     justify-content: space-between;
     gap: 0.6rem;
-    padding: 0.5rem 0;
+    padding: 0.6rem 0;
     border-bottom: 1px solid var(--border-subtle);
   }
   .aipf-model-info { display: flex; flex-direction: column; min-width: 0; }
-  .aipf-model-name { font-size: 0.92rem; font-weight: 550; }
+  .aipf-model-name { font-size: 0.94rem; font-weight: 550; }
   .aipf-model-per {
-    font-size: 0.72rem;
+    font-size: 0.74rem;
     color: var(--dim);
     font-variant-numeric: tabular-nums;
-    margin-top: 0.1rem;
+    margin-top: 0.12rem;
   }
 
   .aipf-stepper {
     display: flex;
     align-items: center;
-    gap: 0;
     flex-shrink: 0;
-    border: 1px solid var(--border-strong);
-    border-radius: 7px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
     overflow: hidden;
+    background: var(--bg-elevated);
   }
   .aipf-step {
     width: 30px;
-    height: 32px;
+    height: 30px;
     border: none;
-    background: var(--bg);
-    color: var(--text);
+    background: transparent;
+    color: var(--dim);
     font-size: 1.05rem;
     line-height: 1;
     cursor: pointer;
     font-family: var(--font-body);
-    transition: background var(--transition-fast);
+    transition: background var(--transition-fast), color var(--transition-fast);
   }
   .aipf-step:hover { background: var(--accent-subtle); color: var(--accent); }
   .aipf-step:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
   .aipf-count {
-    width: 46px;
-    height: 32px;
+    width: 44px;
+    height: 30px;
     border: none;
     border-left: 1px solid var(--border);
     border-right: 1px solid var(--border);
-    background: var(--bg-elevated);
+    background: transparent;
     color: var(--text);
     text-align: center;
     font-family: var(--font-mono);
     font-size: 0.85rem;
-    -moz-appearance: textfield;
   }
   .aipf-count:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
 
   .aipf-reset {
-    margin-top: 1rem;
+    margin-top: 1.25rem;
     background: none;
-    border: 1px solid var(--border-strong);
+    border: none;
     color: var(--dim);
-    border-radius: 7px;
-    padding: 0.4rem 0.8rem;
+    padding: 0;
     font-size: var(--font-size-small);
     font-family: var(--font-body);
     cursor: pointer;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    text-decoration-color: var(--border-strong);
   }
-  .aipf-reset:hover { color: var(--accent); border-color: var(--accent); }
+  .aipf-reset:hover { color: var(--accent); text-decoration-color: var(--accent); }
 
   /* ---- Right: compare ---- */
-  .aipf-compare { min-width: 0; }
-  .aipf-sticky {
-    position: sticky;
-    top: 1rem;
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    background: var(--bg-elevated);
-    padding: 1.1rem 1.15rem 1.25rem;
-  }
+  .aipf-sticky { position: sticky; top: 1.5rem; }
 
   .aipf-metric-toggle {
     display: inline-flex;
-    gap: 1.1rem;
+    gap: 1.25rem;
     border-bottom: 1px solid var(--border);
-    margin-bottom: 1rem;
+    margin-bottom: 1.75rem;
   }
   .aipf-metric {
     background: none;
     border: none;
     border-bottom: 2px solid transparent;
     margin-bottom: -1px;
-    padding: 0.3rem 0.1rem 0.5rem;
+    padding: 0.3rem 0.1rem 0.55rem;
     font-family: var(--font-body);
     font-size: 0.95rem;
     color: var(--dim);
     cursor: pointer;
+    transition: color var(--transition-fast);
   }
   .aipf-metric.is-active { color: var(--text); border-bottom-color: var(--accent); font-weight: 600; }
   .aipf-metric:hover { color: var(--text); }
 
-  .aipf-life { margin-bottom: 1rem; }
-  .aipf-life-lead {
-    font-size: var(--font-size-small);
-    color: var(--dim);
-    margin: 0 0 0.5rem;
-  }
   .aipf-life-row {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 0.6rem;
-    padding: 0.3rem 0;
+    padding: 0.4rem 0;
+    border-bottom: 1px solid var(--border-subtle);
   }
+  .aipf-life-row:last-child { border-bottom: none; }
   .aipf-life-row label { font-size: 0.9rem; color: var(--text-secondary); }
-  .aipf-life-row select { min-width: 11rem; }
+  .aipf-life-row select { min-width: 10rem; text-align: right; }
 
-  .aipf-headline {
+  .aipf-result {
     text-align: center;
-    border: 1px solid var(--border);
-    border-radius: 8px;
     background: var(--bg-subtle);
-    padding: 1rem 0.9rem 1.1rem;
-    margin-bottom: 0.85rem;
+    border-radius: 12px;
+    padding: 1.5rem 1.25rem 1.6rem;
+    margin-bottom: 1.4rem;
   }
-  .aipf-headline-lead {
-    font-size: var(--font-size-small);
+  .aipf-result-lead {
+    font-family: var(--font-editorial);
+    font-size: 0.98rem;
     color: var(--text-secondary);
     margin: 0;
-    line-height: 1.5;
+    line-height: 1.55;
   }
-  .aipf-headline-big {
+  .aipf-result-big {
     font-family: var(--font-editorial);
-    font-size: clamp(2.4rem, 6vw, 3.4rem);
+    font-size: clamp(2.6rem, 7vw, 3.6rem);
     font-weight: 700;
     line-height: 1;
-    margin: 0.2rem 0;
+    margin: 0.35rem 0;
     color: var(--accent);
     letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums;
   }
   .aipf-prop {
-    height: 12px;
-    border-radius: 6px;
+    height: 8px;
+    border-radius: 5px;
     background: var(--border);
     overflow: hidden;
-    margin: 0.85rem 0 0.4rem;
+    margin: 1.2rem 0 0.5rem;
   }
   .aipf-prop-fill {
     height: 100%;
     background: var(--accent);
-    border-radius: 6px;
+    border-radius: 5px;
     min-width: 2px;
     transition: width var(--transition-medium);
   }
   .aipf-prop-cap { font-size: 0.7rem; color: var(--dim); margin: 0; }
 
   .aipf-onepct {
-    font-size: 0.92rem;
-    line-height: 1.55;
+    font-size: 0.95rem;
+    line-height: 1.6;
     color: var(--text-secondary);
-    background: var(--accent-subtle);
-    border-radius: 8px;
-    padding: 0.7rem 0.85rem;
-    margin-bottom: 1.1rem;
+    margin: 0 0 1.9rem;
+    padding-bottom: 1.9rem;
+    border-bottom: 1px solid var(--border);
   }
   .aipf-onepct-num {
     font-family: var(--font-editorial);
     font-weight: 700;
-    font-size: 1.15rem;
-    color: var(--accent);
+    font-size: 1.2rem;
+    color: var(--text);
   }
+  .aipf-onepct strong { color: var(--text); font-weight: 700; }
 
-  .aipf-bars-label {
-    font-size: 0.68rem;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    font-weight: 700;
-    color: var(--dim);
-    margin: 0 0 0.6rem;
-  }
   .aipf-bar-row {
     display: grid;
-    grid-template-columns: 9rem 1fr auto;
+    grid-template-columns: 8.5rem 1fr auto;
     align-items: center;
-    gap: 0.6rem;
-    padding: 0.28rem 0;
+    gap: 0.7rem;
+    padding: 0.32rem 0;
   }
-  .aipf-bar-label { font-size: 0.82rem; color: var(--text-secondary); }
+  .aipf-bar-label { font-size: 0.84rem; color: var(--text-secondary); }
   .aipf-bar-row.is-focal .aipf-bar-label { color: var(--text); font-weight: 650; }
   .aipf-bar-track {
-    height: 16px;
+    height: 12px;
     background: var(--bg-subtle);
     border-radius: 4px;
     overflow: hidden;
@@ -902,9 +885,9 @@ const structuredData = [
 
   /* ---- Methodology ---- */
   .aipf-method {
-    margin-top: 2.25rem;
+    margin-top: 3rem;
     border-top: 1px solid var(--border);
-    padding-top: 1.25rem;
+    padding-top: 1.5rem;
     max-width: 46rem;
   }
   .aipf-method summary {
@@ -922,13 +905,14 @@ const structuredData = [
     color: var(--text-secondary);
     margin: 0 0 0.9rem;
   }
-  .aipf-method-body a { color: var(--accent); text-decoration: underline; text-underline-offset: 2px; }
   .aipf-method-caveat { font-style: italic; color: var(--dim) !important; }
 
   /* ---- Responsive ---- */
   @media (max-width: 880px) {
     .aipf { width: calc(100vw - 32px); }
     .aipf-grid { grid-template-columns: 1fr; }
+    .aipf-models { padding-right: 0; margin-bottom: 2.5rem; }
+    .aipf-compare { padding-left: 0; border-left: none; border-top: 1px solid var(--border); padding-top: 2.25rem; }
     .aipf-sticky { position: static; }
   }
   @media (max-width: 520px) {
@@ -936,6 +920,6 @@ const structuredData = [
     .aipf-bar-row { grid-template-columns: 6.5rem 1fr; grid-row-gap: 0.1rem; }
     .aipf-bar-val { grid-column: 2; text-align: right; }
     .aipf-life-row { flex-direction: column; align-items: stretch; gap: 0.2rem; }
-    .aipf-life-row select { min-width: 0; width: 100%; }
+    .aipf-life-row select { min-width: 0; width: 100%; text-align: left; }
   }
 </style>
