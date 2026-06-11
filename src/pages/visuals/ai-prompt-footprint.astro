@@ -168,6 +168,7 @@ const structuredData = [
     <div class="aipf-tool">
       <div class="aipf-in" aria-label="Your daily AI usage">
         <div class="aipf-in-head"><span>Your AI use</span><span class="aipf-in-sub">per day</span></div>
+        <p class="aipf-hint">"Typical output" is how long each reply is. A "coding / agent session" means one long, automated run — like an AI coding assistant that writes and edits code across many steps (~75,000 words of output, much of it the model's own reasoning).</p>
         <div class="aipf-rows-head" aria-hidden="true">
           <span>Model</span><span>Typical output</span><span>Prompts/day</span><span></span>
         </div>
@@ -1002,6 +1003,7 @@ const structuredData = [
 
   .aipf-in-head { display: flex; align-items: baseline; gap: 0.5rem; margin-bottom: 0.7rem; font-weight: 600; font-size: 1rem; }
   .aipf-in-sub { font-family: var(--font-body); font-size: 0.7rem; color: var(--dim); letter-spacing: 0.02em; }
+  .aipf-hint { font-family: var(--font-body); font-size: 0.78rem; line-height: 1.5; color: var(--dim); margin: 0 0 0.9rem; }
 
   .aipf-rows-head {
     display: grid; grid-template-columns: 1fr 1.3fr auto 1.1rem; gap: 0.6rem;
