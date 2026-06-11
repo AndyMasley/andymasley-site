@@ -76,7 +76,7 @@ const structuredData = [
       </div>
       <button type="button" class="aipf-report-btn" id="aipf-report"
         title="Generate a report with citations of exactly how my AI use as entered here contributes to my carbon emissions.">
-        Generate a cited report of my AI emissions
+        Generate a personalized cited report of my AI emissions
       </button>
     </div>
 
@@ -739,9 +739,9 @@ const structuredData = [
       const fp = [['Where you live (' + loc.label + ')', loc.c], ['Home (' + home.label + ')', home.c], ['Driving (' + drive.label + ')', drive.c], ['Diet (' + diet.label + ')', diet.c], ['Flying (' + fly.label + ')', fly.c]];
       let fpHtml = '';
       for (const f of fp) fpHtml += '<tr><td>' + escXml(f[0]) + '</td><td class="n">' + fmtCarbon(f[1] * 1000) + ' / yr</td></tr>';
-      const dailyRows = [{ label: 'Your daily AI use', v: aiDay, focal: true }].concat(DAILY_ITEMS.map((it) => ({ label: it.label, v: it.c * 1000 })));
-      const addRows = [{ label: 'A year of your AI use', v: aiYr, focal: true }].concat(ANNUAL_ITEMS.filter((it) => it.dir === 'add').map((it) => ({ label: it.label, v: it.c * 1000 })));
-      const cutRows = [{ label: 'Cut your AI use', v: aiYr, focal: true }].concat(ANNUAL_ITEMS.filter((it) => it.dir === 'save').map((it) => ({ label: it.label, v: it.c * 1000 })));
+      const dailyRows = [{ label: 'My daily AI use', v: aiDay, focal: true }].concat(DAILY_ITEMS.map((it) => ({ label: it.label, v: it.c * 1000 })));
+      const addRows = [{ label: 'A year of my AI use', v: aiYr, focal: true }].concat(ANNUAL_ITEMS.filter((it) => it.dir === 'add').map((it) => ({ label: it.label, v: it.c * 1000 })));
+      const cutRows = [{ label: 'Cut my AI use', v: aiYr, focal: true }].concat(ANNUAL_ITEMS.filter((it) => it.dir === 'save').map((it) => ({ label: it.label, v: it.c * 1000 })));
       let refsHtml = '';
       REPORT_REFS.forEach((r, i) => { refsHtml += '<li id="ref' + (i + 1) + '">[' + (i + 1) + '] ' + escXml(r.label) + ' <a href="' + r.url + '">' + escXml(r.url) + '</a></li>'; });
       const fn = (n) => '<sup><a href="#ref' + n + '">[' + n + ']</a></sup>';
