@@ -471,6 +471,7 @@ const structuredData = [
       { url: 'https://iopscience.iop.org/article/10.1088/1748-9326/aa7541', label: 'Wynes & Nicholas 2017 — flights and lifestyle cuts.' },
       { url: 'https://iopscience.iop.org/article/10.1088/1748-9326/ab8589', label: 'Ivanova et al. 2020 — housing and transport mitigation options.' },
       { url: 'https://www.founderspledge.com/research/climate-and-lifestyle-report', label: 'Founders Pledge, Climate & Lifestyle report — the lifestyle-cut comparison.' },
+      { url: 'https://www.waterfootprint.org/', label: 'Water Footprint Network (Mekonnen & Hoekstra) and the Water Footprint Calculator — water-consumption figures and the personal water footprint.' },
     ];
 
     // Daily reference points (all things that emit, so no add/save direction)
@@ -861,7 +862,8 @@ const structuredData = [
     }
     // ---- Cited report ----
     function escXml(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
-    function reportBarsSVG(rows) {
+    function reportBarsSVG(rows, fmt) {
+      fmt = fmt || fmtCarbon;
       rows = rows.slice().sort((a, b) => b.v - a.v);
       const W = 700, padL = 250, padR = 90, rowH = 26, top = 8;
       const max = Math.max.apply(null, rows.map((r) => r.v).concat([1e-9]));
@@ -874,24 +876,29 @@ const structuredData = [
         const col = r.focal ? '#1E5C45' : '#bcbfb2';
         s += '<text x="' + (padL - 8) + '" y="' + (cy + 4) + '" text-anchor="end" font-size="12.5" fill="#1C1E1B">' + escXml(r.label) + '</text>';
         s += '<rect x="' + padL + '" y="' + (y + 5) + '" width="' + bw.toFixed(1) + '" height="' + (rowH - 12) + '" fill="' + col + '"/>';
-        s += '<text x="' + (padL + bw + 6).toFixed(1) + '" y="' + (cy + 4) + '" font-size="11.5" fill="#555">' + escXml(fmtCarbon(r.v)) + '</text>';
+        s += '<text x="' + (padL + bw + 6).toFixed(1) + '" y="' + (cy + 4) + '" font-size="11.5" fill="#555">' + escXml(fmt(r.v)) + '</text>';
       });
       return s + '</svg>';
     }
     function reportHTML() {
-      let rowsHtml = '', aiDay = 0, aiMin = 0, aiMax = 0, eD = 0;
+      let rowsHtml = '', aiDay = 0, aiMin = 0, aiMax = 0, eD = 0, wDay = 0, wMin = 0, wMax = 0;
       for (const r of state.rows) {
         if (!r.count) continue;
         const md = getModel(r.model);
         const ct = perPromptTriple(md, r.size, 'carbon');
+        const wt = perPromptTriple(md, r.size, 'water');
         const per = ct[0], d = r.count * per;
         aiDay += d; aiMin += r.count * ct[1]; aiMax += r.count * ct[2]; eD += r.count * md.sizes[r.size].wh;
-        rowsHtml += '<tr><td>' + escXml(md.name) + '</td><td>' + escXml(sizeLabel(r.model, SIZES.find((x) => x.id === r.size))) + '</td><td class="n">' + r.count + '</td><td class="n">' + fmtCarbon(per) + '</td><td class="n">' + fmtCarbon(d) + '</td></tr>';
+        wDay += r.count * wt[0]; wMin += r.count * wt[1]; wMax += r.count * wt[2];
+        rowsHtml += '<tr><td>' + escXml(md.name) + '</td><td>' + escXml(sizeLabel(r.model, SIZES.find((x) => x.id === r.size))) + '</td><td class="n">' + r.count + '</td><td class="n">' + fmtCarbon(d) + '</td><td class="n">' + fmtWater(r.count * wt[0]) + '</td></tr>';
       }
-      const aiYr = aiDay * DAYS;
+      const aiYr = aiDay * DAYS, wYr = wDay * DAYS;
       const day = dailyFootprint('carbon');
       const pct = day > 0 ? (aiDay / day) * 100 : 0;
       const pctStr = pct >= 1 ? pct.toFixed(pct >= 10 ? 0 : 1) + '%' : pct >= 0.01 ? pct.toFixed(2) + '%' : pct > 0 ? 'under 0.01%' : '0%';
+      const dayW = dailyFootprint('water');
+      const pctW = dayW > 0 ? (wDay / dayW) * 100 : 0;
+      const pctWStr = pctW >= 1 ? pctW.toFixed(pctW >= 10 ? 0 : 1) + '%' : pctW >= 0.01 ? pctW.toFixed(2) + '%' : pctW > 0 ? 'under 0.01%' : '0%';
       const loc = getLoc(), home = HOMES.find((x) => x.id === state.home), drive = DRIVING.find((x) => x.id === state.drive), diet = DIETS.find((x) => x.id === state.diet), fly = FLYING.find((x) => x.id === state.fly);
       const fp = [['Where I live (' + loc.label + ')', loc.c], ['Home (' + home.label + ')', home.c], ['Driving (' + drive.label + ')', drive.c], ['Diet (' + diet.label + ')', diet.c], ['Flying (' + fly.label + ')', fly.c]];
       let fpHtml = '';
@@ -899,12 +906,15 @@ const structuredData = [
       const dailyRows = [{ label: 'My daily AI use', v: aiDay, focal: true }].concat(DAILY_ITEMS.map((it) => ({ label: it.label, v: it.c * 1000 })));
       const addRows = [{ label: 'A year of my AI use', v: aiYr, focal: true }].concat(ANNUAL_ITEMS.filter((it) => it.dir === 'add').map((it) => ({ label: it.label, v: it.c * 1000 })));
       const cutRows = [{ label: 'Cut my AI use', v: aiYr, focal: true }].concat(ANNUAL_ITEMS.filter((it) => it.dir === 'save').map((it) => ({ label: it.label, v: it.c * 1000 })));
+      const dailyWaterRows = [{ label: 'My daily AI use', v: wDay, focal: true }].concat(DAILY_WATER_ITEMS.map((it) => ({ label: it.label, v: it.w * GAL_TO_L })));
+      const addWaterRows = [{ label: 'A year of my AI use', v: wYr, focal: true }].concat(ANNUAL_WATER_ITEMS.filter((it) => it.dir === 'add').map((it) => ({ label: it.label, v: it.w * GAL_TO_L })));
+      const cutWaterRows = [{ label: 'Cut my AI use', v: wYr, focal: true }].concat(ANNUAL_WATER_ITEMS.filter((it) => it.dir === 'save').map((it) => ({ label: it.label, v: it.w * GAL_TO_L })));
       let refsHtml = '';
       REPORT_REFS.forEach((r, i) => { refsHtml += '<li id="ref' + (i + 1) + '">[' + (i + 1) + '] ' + escXml(r.label) + ' <a href="' + r.url + '">' + escXml(r.url) + '</a></li>'; });
       const fn = (n) => '<sup><a href="#ref' + n + '">[' + n + ']</a></sup>';
       const date = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
       return '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">' +
-        '<title>How my AI use contributes to my carbon emissions</title><style>' +
+        '<title>How my AI use contributes to my carbon emissions and water use</title><style>' +
         'body{font-family:Georgia,"Times New Roman",serif;color:#1C1E1B;max-width:760px;margin:2.5rem auto;padding:0 1.25rem;line-height:1.55;}' +
         'h1{font-size:1.65rem;line-height:1.2;margin:0 0 .25rem;}.date{color:#6B6E66;font-size:.85rem;margin:0 0 1.5rem;}' +
         'h2{font-size:1.15rem;margin:2rem 0 .6rem;border-bottom:1px solid #ddd;padding-bottom:.25rem;}p{margin:.6rem 0;}' +
@@ -912,10 +922,10 @@ const structuredData = [
         'th{color:#6B6E66;font-weight:600;font-size:.72rem;text-transform:uppercase;letter-spacing:.03em;}td.n,th.n{text-align:right;font-variant-numeric:tabular-nums;}' +
         '.big{font-size:2.1rem;font-weight:700;}a{color:#1E5C45;}sup a{text-decoration:none;}ol.refs{font-size:.8rem;color:#444;padding-left:1.2rem;}ol.refs li{margin:.35rem 0;word-break:break-word;}' +
         '.muted{color:#6B6E66;font-size:.85rem;}@media print{a{color:#000;}body{margin:0;}}</style></head><body>' +
-        '<h1>How my AI use contributes to my carbon emissions</h1>' +
+        '<h1>How my AI use contributes to my carbon emissions and water use</h1>' +
         '<p class="date">Generated ' + date + ', based on exactly the inputs below.</p>' +
         '<h2>1. What I entered</h2>' +
-        '<table><thead><tr><th>Model</th><th>Typical output</th><th class="n">Prompts/day</th><th class="n">CO₂e each</th><th class="n">CO₂e/day</th></tr></thead><tbody>' +
+        '<table><thead><tr><th>Model</th><th>Typical output</th><th class="n">Prompts/day</th><th class="n">CO₂e/day</th><th class="n">Water/day</th></tr></thead><tbody>' +
         (rowsHtml || '<tr><td colspan="5">No usage entered.</td></tr>') + '</tbody></table>' +
         '<p class="muted">Per-prompt figures come from the EcoLogits model' + fn(1) + '; the electricity is costed on the ' + escXml(loc.label) + ' grid' + fn(2) + ', and EcoLogits’ embodied hardware emissions are kept.</p>' +
         '<h2>2. My AI carbon</h2>' +
@@ -929,6 +939,12 @@ const structuredData = [
         '<h2>5. In a year, ways I add emissions</h2>' + reportBarsSVG(addRows) +
         '<h2>6. In a year, ways I could cut emissions</h2>' + reportBarsSVG(cutRows) +
         '<p class="muted">Lifestyle-cut figures from the Founders Pledge comparison' + fn(9) + ', drawing on Wynes &amp; Nicholas' + fn(7) + ' and Ivanova et al.' + fn(8) + '</p>' +
+        '<h2>7. My AI water</h2>' +
+        '<p>The same prompts consume about <strong>' + fmtWater(wDay) + ' of water a day</strong> (range ' + fmtWater(wMin) + ' to ' + fmtWater(wMax) + '), or <strong>' + fmtWater(wYr) + ' a year</strong> — <span class="big">' + pctWStr + '</span> of my daily water footprint (' + fmtWater(dayW) + '), which is mostly the virtual water in food. This is water consumption (cooling and power-plant water for AI; virtual food and product water for everything else), not withdrawals.' + fn(1) + fn(10) + '</p>' +
+        '<h2>8. My daily AI water, next to everyday things</h2>' + reportBarsSVG(dailyWaterRows, fmtWater) +
+        '<h2>9. In a year, water I add</h2>' + reportBarsSVG(addWaterRows, fmtWater) +
+        '<h2>10. In a year, water I could cut</h2>' + reportBarsSVG(cutWaterRows, fmtWater) +
+        '<p class="muted">Water comparisons from EcoLogits' + fn(1) + ' and the Water Footprint Network' + fn(10) + '.</p>' +
         '<h2>References</h2><ol class="refs">' + refsHtml + '</ol>' +
         '</body></html>';
     }
