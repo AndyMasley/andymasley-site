@@ -248,8 +248,9 @@ const structuredData = [
         <p>
           <strong>Output, words, and code.</strong> Each row maps to an EcoLogits output-token count:
           tweet (50), short email (170), article summary (250), chatbot reply (400), 5-page report
-          (5,000), long document (15,000), coding or agent session (100,000), a long novel the length
-          of The Brothers Karamazov (500,000, about 375,000 words).
+          (5,000), long document (15,000), coding or agent session (100,000), and re-writing the
+          Lord of the Rings trilogy (500,000) — both EcoLogits benchmark tasks; the trilogy itself
+          runs about 480,000 words.
           The coding/agent session uses EcoLogits' 100,000-token "assist application development"
           benchmark, which represents one full run that writes and edits code across many steps.
           Cost scales with length, so long generations dominate. Counts are per day; annual figures
@@ -414,7 +415,7 @@ const structuredData = [
       { id: 'report',  label: 'A 5-page report',         words: '3,800 words',   w: 3750 },
       { id: 'long',    label: 'A long document',         words: '11,000 words',  w: 11250 },
       { id: 'agent',   label: 'A coding / agent session', words: '~100,000 tokens', w: 75000 }, // EcoLogits' 100k-token "assist application development" benchmark
-      { id: 'novel',   label: 'The Brothers Karamazov',   words: '375,000 words', w: 375000 },
+      { id: 'novel',   label: 'Re-write the Lord of the Rings trilogy', words: '~480,000 words', w: 480000 },
     ];
     const SIZE_LABEL_OVERRIDES = { 'gpt-5.5-pro': { agent: 'A very long answer' } };
     function sizeLabel(modelId, s) {
