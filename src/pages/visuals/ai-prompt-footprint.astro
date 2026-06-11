@@ -75,6 +75,10 @@ const structuredData = [
         <div class="aipf-rows" id="aipf-rows"></div>
         <button type="button" class="aipf-addrow" id="aipf-addrow">+ add another</button>
         <p class="aipf-running" id="aipf-running" aria-live="polite"></p>
+        <div class="aipf-writes">
+          <p class="aipf-writes-h">What it writes</p>
+          <p class="aipf-words" id="aipf-words" aria-live="polite"></p>
+        </div>
         <p class="aipf-tools">
           <button type="button" class="aipf-link" id="aipf-reset">Reset</button>
           <span class="aipf-tools-sep">·</span>
@@ -106,17 +110,11 @@ const structuredData = [
       </div>
     </div>
 
-    <!-- Below: a year + what it writes -->
-    <div class="aipf-below">
-      <div class="aipf-annual" aria-label="A year of your AI use vs bigger choices">
-        <h2 class="aipf-h2">A year of it, against bigger choices</h2>
-        <p class="aipf-sub" id="aipf-annual-sub"></p>
-        <div class="aipf-bars" id="aipf-annual-bars" aria-live="polite"></div>
-      </div>
-      <div class="aipf-words-box" aria-label="What it writes">
-        <h2 class="aipf-h2">What it writes</h2>
-        <p class="aipf-words" id="aipf-words" aria-live="polite"></p>
-      </div>
+    <!-- Below: a year against bigger choices -->
+    <div class="aipf-below" aria-label="A year of your AI use vs bigger choices">
+      <h2 class="aipf-h2">A year of it, against bigger choices</h2>
+      <p class="aipf-sub" id="aipf-annual-sub"></p>
+      <div class="aipf-bars" id="aipf-annual-bars" aria-live="polite"></div>
     </div>
 
     <details class="aipf-method">
@@ -605,7 +603,8 @@ const structuredData = [
   .aipf-dek { font-size: 0.95rem; line-height: 1.5; color: var(--text-secondary); margin: 0.5rem 0 0; }
 
   /* ---- Tool: two panes in one frame ---- */
-  .aipf-tool { display: grid; grid-template-columns: 1fr 1fr; border: 1px solid var(--border); }
+  .aipf-tool { display: grid; grid-template-columns: 1fr 1fr; border: 1px solid var(--border); background: var(--bg-elevated); }
+  .aipf-below { background: var(--bg-elevated); border: 1px solid var(--border); padding: 1.1rem 1.25rem; }
   .aipf-in { padding: 1.1rem 1.25rem; min-width: 0; }
   .aipf-out { padding: 1.1rem 1.25rem; border-left: 1px solid var(--border); min-width: 0; }
 
@@ -687,8 +686,12 @@ const structuredData = [
   .aipf-mini { margin-top: 1.1rem; padding-top: 0.9rem; border-top: 1px solid var(--border); }
   .aipf-mini-h { font-family: var(--font-body); font-size: 0.72rem; color: var(--dim); margin: 0 0 0.5rem; }
 
-  /* ---- Below: a year + what it writes ---- */
-  .aipf-below { display: grid; grid-template-columns: 1.55fr 1fr; gap: 1.75rem; margin-top: 1.75rem; }
+  /* ---- 'What it writes' under the totals ---- */
+  .aipf-writes { margin-top: 1rem; padding-top: 0.9rem; border-top: 1px solid var(--border); }
+  .aipf-writes-h { font-family: var(--font-body); font-size: 0.72rem; color: var(--dim); margin: 0 0 0.4rem; }
+
+  /* ---- Below: a year against bigger choices (full width) ---- */
+  .aipf-below { margin-top: 1.25rem; }
   .aipf-h2 { font-family: var(--font-editorial); font-weight: 600; font-size: 1.1rem; letter-spacing: -0.01em; margin: 0 0 0.6rem; }
   .aipf-sub { font-size: 0.85rem; line-height: 1.5; color: var(--text-secondary); margin: 0 0 0.9rem; }
   .aipf-sub strong, .aipf-running b { color: var(--text); }
