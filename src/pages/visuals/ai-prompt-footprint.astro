@@ -65,12 +65,20 @@ const structuredData = [
       </p>
     </header>
 
+    <div class="aipf-toggle" role="group" aria-label="Footprint type">
+      <span class="aipf-toggle-label">Show</span>
+      <div class="aipf-showing">
+        <button type="button" class="aipf-metric is-active" data-metric="carbon">💨 Carbon</button>
+        <button type="button" class="aipf-metric" data-metric="water">💧 Water</button>
+      </div>
+    </div>
+
     <!-- Tool: inputs on the left, the answer on the right -->
     <div class="aipf-tool">
       <div class="aipf-in" aria-label="Your daily AI usage">
         <div class="aipf-in-head"><span>Your AI use</span><span class="aipf-in-sub">per day</span></div>
         <div class="aipf-rows-head" aria-hidden="true">
-          <span>Model</span><span>Typical output</span><span>×/day</span><span></span>
+          <span>Model</span><span>Typical output</span><span>Prompts/day</span><span></span>
         </div>
         <div class="aipf-rows" id="aipf-rows"></div>
         <button type="button" class="aipf-addrow" id="aipf-addrow">+ add another</button>
@@ -90,14 +98,12 @@ const structuredData = [
         <div class="aipf-out-head">
           <p class="aipf-life">
             vs. a day for someone in
-            <select id="aipf-loc" aria-label="Where you live"></select> who eats
-            <select id="aipf-diet" aria-label="Your diet"></select> and flies
+            <select id="aipf-loc" aria-label="Where you live"></select> who lives in
+            <select id="aipf-home" aria-label="Your home"></select>, drives
+            <select id="aipf-drive" aria-label="How much you drive"></select>, eats
+            <select id="aipf-diet" aria-label="Your diet"></select>, and flies
             <select id="aipf-fly" aria-label="How much you fly"></select>
           </p>
-          <div class="aipf-showing" role="group" aria-label="Footprint type">
-            <button type="button" class="aipf-metric is-active" data-metric="carbon">carbon</button>
-            <button type="button" class="aipf-metric" data-metric="water">water</button>
-          </div>
         </div>
         <div class="aipf-verdict" id="aipf-headline" aria-live="polite"></div>
         <div class="aipf-mini">
@@ -147,9 +153,12 @@ const structuredData = [
           line, not as words to read.
         </p>
         <p>
-          <strong>Your footprint.</strong> Where you live is an average per-person footprint for
-          home energy, transport, and goods, leaving out food and flights to avoid double-counting
-          (Our World in Data). Diet uses annual food footprints from Poore and Nemecek (2018) and
+          <strong>Your footprint.</strong> Where you live is a regional baseline for goods,
+          services, and shared infrastructure (Our World in Data); home energy and driving are
+          separate so they do not double-count. Home runs from a small apartment (about 1.5 t
+          CO<sub>2</sub>e a year) to a big house (about 7 t). Driving uses about 0.40 kg
+          CO<sub>2</sub>e per mile, from a little (3,000 mi a year) to a lot (25,000 mi). Diet uses
+          annual food footprints from Poore and Nemecek (2018) and
           Scarborough et al. (2023): about 1.05 t CO<sub>2</sub>e a year for a vegan diet up to 3.2 t
           for a heavy-meat one. Flying uses about 0.255 kg CO<sub>2</sub>e per passenger-mile
           including high-altitude effects. The water footprint includes the virtual water in food,
@@ -208,13 +217,26 @@ const structuredData = [
     ];
 
     const WORLD_GRID = 590.4;
+    // location = regional baseline for goods, services, shared infrastructure
+    // (home energy and driving are separate knobs below, so they are excluded here)
     const LOCATIONS = [
-      { id: 'us',    label: 'the US',          c: 11000, w: 91000, grid: 380 },
-      { id: 'eu',    label: 'the EU',          c: 5000,  w: 55000, grid: 250 },
-      { id: 'uk',    label: 'the UK',          c: 4500,  w: 47000, grid: 200 },
-      { id: 'cn',    label: 'China',           c: 6000,  w: 55000, grid: 540 },
-      { id: 'in',    label: 'India',           c: 1600,  w: 44000, grid: 630 },
-      { id: 'world', label: 'the world',       c: 3500,  w: 55000, grid: WORLD_GRID },
+      { id: 'us',    label: 'the US',    c: 3000, w: 30000, grid: 380 },
+      { id: 'eu',    label: 'the EU',    c: 1800, w: 22000, grid: 250 },
+      { id: 'uk',    label: 'the UK',    c: 1700, w: 20000, grid: 200 },
+      { id: 'cn',    label: 'China',     c: 2500, w: 22000, grid: 540 },
+      { id: 'in',    label: 'India',     c: 900,  w: 18000, grid: 630 },
+      { id: 'world', label: 'the world', c: 1800, w: 22000, grid: WORLD_GRID },
+    ];
+    const HOMES = [
+      { id: 'apt', label: 'a small apartment', c: 1500, w: 15000 },
+      { id: 'med', label: 'a medium home',     c: 3500, w: 30000 },
+      { id: 'big', label: 'a big house',       c: 7000, w: 55000 },
+    ];
+    const DRIVING = [
+      { id: 'd0',   label: 'not at all',        c: 0,     w: 0 },
+      { id: 'dlo',  label: 'a little',          c: 1200,  w: 0 },
+      { id: 'davg', label: 'an average amount', c: 4800,  w: 0 },
+      { id: 'dhi',  label: 'a lot',             c: 10000, w: 0 },
     ];
     const DIETS = [
       { id: 'heavy', label: 'a lot of meat',   c: 3200, w: 547000 },
@@ -251,7 +273,7 @@ const structuredData = [
     const DAYS = 365;
 
     let uidSeq = 1;
-    const state = { rows: [], metric: 'carbon', loc: 'us', diet: 'avg', fly: 'some' };
+    const state = { rows: [], metric: 'carbon', loc: 'us', home: 'med', drive: 'davg', diet: 'avg', fly: 'some' };
 
     let root = null;
     const getModel = (id) => MODELS.find((m) => m.id === id) || MODELS[0];
@@ -302,9 +324,13 @@ const structuredData = [
     const aiDaily = (metric) => aiDailyTriple(metric)[0];
     function aiDailyEnergy() { let t = 0; for (const r of state.rows) if (r.count) t += r.count * getModel(r.model).sizes[r.size].wh; return t; }
     function dailyFootprint(metric) {
-      const loc = getLoc(), diet = DIETS.find((x) => x.id === state.diet), fly = FLYING.find((x) => x.id === state.fly);
-      if (metric === 'carbon') return ((loc.c + diet.c + fly.c) * 1000) / DAYS;
-      return ((loc.w + diet.w + fly.w) * GAL_TO_L) / DAYS;
+      const loc = getLoc();
+      const home = HOMES.find((x) => x.id === state.home) || HOMES[1];
+      const drive = DRIVING.find((x) => x.id === state.drive) || DRIVING[2];
+      const diet = DIETS.find((x) => x.id === state.diet);
+      const fly = FLYING.find((x) => x.id === state.fly);
+      if (metric === 'carbon') return ((loc.c + home.c + drive.c + diet.c + fly.c) * 1000) / DAYS;
+      return ((loc.w + home.w + drive.w + diet.w + fly.w) * GAL_TO_L) / DAYS;
     }
     function itemBase(item, metric) { return metric === 'carbon' ? item.c * 1000 : item.w * GAL_TO_L; }
 
@@ -348,7 +374,7 @@ const structuredData = [
       try {
         const r = state.rows.map((row) => MODELS.findIndex((m) => m.id === row.model) + '-' + SIZES.findIndex((s) => s.id === row.size) + '-' + (row.count || 0)).join('.');
         const p = new URLSearchParams();
-        p.set('k', state.metric); p.set('l', state.loc); p.set('d', state.diet); p.set('f', state.fly); p.set('r', r);
+        p.set('k', state.metric); p.set('l', state.loc); p.set('h', state.home); p.set('v', state.drive); p.set('d', state.diet); p.set('f', state.fly); p.set('r', r);
         history.replaceState(null, '', '#' + p.toString());
       } catch (e) { /* ignore */ }
     }
@@ -359,6 +385,8 @@ const structuredData = [
         const p = new URLSearchParams(h);
         const k = p.get('k'); if (k === 'carbon' || k === 'water') state.metric = k;
         const l = p.get('l'); if (l && LOCATIONS.some((x) => x.id === l)) state.loc = l;
+        const hh = p.get('h'); if (hh && HOMES.some((x) => x.id === hh)) state.home = hh;
+        const vv = p.get('v'); if (vv && DRIVING.some((x) => x.id === vv)) state.drive = vv;
         const d = p.get('d'); if (d && DIETS.some((x) => x.id === d)) state.diet = d;
         const f = p.get('f'); if (f && FLYING.some((x) => x.id === f)) state.fly = f;
         const r = p.get('r');
@@ -443,6 +471,8 @@ const structuredData = [
     function renderLifeSelects() {
       function fill(id, list, cur) { const sel = root.querySelector(id); sel.innerHTML = ''; for (const x of list) sel.appendChild(option(x.id, x.label, x.id === cur)); }
       fill('#aipf-loc', LOCATIONS, state.loc);
+      fill('#aipf-home', HOMES, state.home);
+      fill('#aipf-drive', DRIVING, state.drive);
       fill('#aipf-diet', DIETS, state.diet);
       fill('#aipf-fly', FLYING, state.fly);
     }
@@ -547,6 +577,8 @@ const structuredData = [
         try { if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(location.href).then(done, done); else done(); } catch (err) { done(); }
       });
       root.querySelector('#aipf-loc').addEventListener('change', (e) => { state.loc = e.target.value; updateOutputs(); });
+      root.querySelector('#aipf-home').addEventListener('change', (e) => { state.home = e.target.value; updateOutputs(); });
+      root.querySelector('#aipf-drive').addEventListener('change', (e) => { state.drive = e.target.value; updateOutputs(); });
       root.querySelector('#aipf-diet').addEventListener('change', (e) => { state.diet = e.target.value; updateOutputs(); });
       root.querySelector('#aipf-fly').addEventListener('change', (e) => { state.fly = e.target.value; updateOutputs(); });
       root.querySelectorAll('.aipf-metric').forEach((b) => { b.addEventListener('click', () => { state.metric = b.dataset.metric; renderMetricToggle(); updateOutputs(); }); });
@@ -597,8 +629,8 @@ const structuredData = [
 
   .aipf-rows-head {
     display: grid; grid-template-columns: 1fr 1.15fr auto 1.1rem; gap: 0.6rem;
-    font-family: var(--font-body); font-size: 0.62rem; letter-spacing: 0.03em;
-    color: var(--dim); padding-bottom: 0.4rem; border-bottom: 1px solid var(--border-strong);
+    font-family: var(--font-body); font-size: 0.72rem; font-weight: 600; letter-spacing: 0.01em;
+    color: var(--text-secondary); padding-bottom: 0.45rem; border-bottom: 1px solid var(--text);
   }
   .aipf-rows-head span:nth-child(3) { text-align: center; }
   .aipf-rowwrap { padding: 0.45rem 0; border-bottom: 1px solid var(--border); }
@@ -655,9 +687,11 @@ const structuredData = [
   }
   .aipf-life select:hover { background-color: var(--accent); color: var(--bg-elevated); }
 
-  /* Carbon / water as a real segmented toggle */
-  .aipf-showing { display: inline-flex; border: 1px solid var(--border-strong); border-radius: 5px; overflow: hidden; font-family: var(--font-body); }
-  .aipf-metric { background: none; border: none; padding: 0.3rem 0.7rem; font: inherit; font-size: 0.8rem; color: var(--dim); cursor: pointer; transition: background-color 0.12s, color 0.12s; }
+  /* Carbon / water as a prominent segmented toggle above the tool */
+  .aipf-toggle { display: flex; align-items: center; gap: 0.6rem; margin-bottom: 1rem; }
+  .aipf-toggle-label { font-family: var(--font-body); font-size: 0.8rem; color: var(--dim); }
+  .aipf-showing { display: inline-flex; border: 1px solid var(--border-strong); border-radius: 6px; overflow: hidden; font-family: var(--font-body); }
+  .aipf-metric { background: var(--bg-elevated); border: none; padding: 0.44rem 1.05rem; font: inherit; font-size: 0.9rem; color: var(--dim); cursor: pointer; transition: background-color 0.12s, color 0.12s; }
   .aipf-metric + .aipf-metric { border-left: 1px solid var(--border-strong); }
   .aipf-metric.is-active { background: var(--accent); color: var(--bg-elevated); font-weight: 600; }
   .aipf-metric:hover:not(.is-active) { color: var(--text); background: var(--bg-subtle); }
