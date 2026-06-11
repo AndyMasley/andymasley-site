@@ -845,7 +845,7 @@ const structuredData = [
         '.big{font-size:2.1rem;font-weight:700;}a{color:#1E5C45;}sup a{text-decoration:none;}ol.refs{font-size:.8rem;color:#444;padding-left:1.2rem;}ol.refs li{margin:.35rem 0;word-break:break-word;}' +
         '.muted{color:#6B6E66;font-size:.85rem;}@media print{a{color:#000;}body{margin:0;}}</style></head><body>' +
         '<h1>How my AI use contributes to my carbon emissions</h1>' +
-        '<p class="date">Generated ' + date + ' from the calculator at andymasley.com/visuals/ai-prompt-footprint, based on exactly the inputs below.</p>' +
+        '<p class="date">Generated ' + date + ', based on exactly the inputs below.</p>' +
         '<h2>1. What I entered</h2>' +
         '<table><thead><tr><th>Model</th><th>Typical output</th><th class="n">Prompts/day</th><th class="n">CO₂e each</th><th class="n">CO₂e/day</th></tr></thead><tbody>' +
         (rowsHtml || '<tr><td colspan="5">No usage entered.</td></tr>') + '</tbody></table>' +
@@ -862,7 +862,6 @@ const structuredData = [
         '<h2>6. In a year, ways I could cut emissions</h2>' + reportBarsSVG(cutRows) +
         '<p class="muted">Lifestyle-cut figures from the Founders Pledge comparison' + fn(9) + ', drawing on Wynes &amp; Nicholas' + fn(7) + ' and Ivanova et al.' + fn(8) + '</p>' +
         '<h2>References</h2><ol class="refs">' + refsHtml + '</ol>' +
-        '<p class="muted">Full methodology and all source links: andymasley.com/visuals/ai-prompt-footprint</p>' +
         '</body></html>';
     }
     function generateReport() {
