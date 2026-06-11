@@ -231,13 +231,10 @@ const structuredData = [
           page is consumptive, so they compare on the same basis.
         </p>
         <p>
-          <strong>Carbon on your grid.</strong> EcoLogits reports carbon on the global average grid,
-          about 0.59 kg CO<sub>2</sub>e/kWh. This page rescales the electricity to where you live
-          using grid carbon intensities from
-          <a href="https://ember-energy.org/latest-insights/global-electricity-review-2024/" target="_blank" rel="noopener">Ember's 2024 Global Electricity Review</a>
-          and <a href="https://ourworldindata.org/grapher/carbon-intensity-electricity" target="_blank" rel="noopener">Our World in Data</a>:
-          roughly 380 (US), 215 (EU), 125 (UK), 580 (China), 700 (India) g CO<sub>2</sub>e/kWh.
-          Water stays on the global basis.
+          <strong>Carbon basis.</strong> The AI carbon figures are EcoLogits' own, computed on its
+          global-average electricity grid (about 0.59 kg CO<sub>2</sub>e/kWh, from the
+          <a href="https://ecologits.ai/latest/" target="_blank" rel="noopener">EcoLogits methodology</a>).
+          We use those values directly rather than rescaling them to your region's grid.
         </p>
         <p>
           <strong>Output, words, and code.</strong> Each row maps to an EcoLogits output-token count:
@@ -412,7 +409,7 @@ const structuredData = [
     // Sources cited in the generated report (footnote order).
     const REPORT_REFS = [
       { url: 'https://ecologits.ai/', label: 'EcoLogits (v0.10) — per-prompt energy, carbon, and water for each model, behind the EcoLogits calculator.' },
-      { url: 'https://ember-energy.org/latest-insights/global-electricity-review-2024/', label: 'Ember, Global Electricity Review 2024, with Our World in Data — grid carbon intensity by region.' },
+      { url: 'https://ecologits.ai/latest/', label: 'EcoLogits methodology — carbon computed on the global-average electricity mix (~0.59 kg CO2e/kWh).' },
       { url: 'https://ourworldindata.org/co2-emissions', label: 'Our World in Data — consumption-based emissions, used for the regional baseline.' },
       { url: 'https://www.eia.gov/consumption/residential/', label: 'US EIA Residential Energy Consumption Survey, with Goldstein et al. 2020 (PNAS) — home energy.' },
       { url: 'https://www.epa.gov/greenvehicles/greenhouse-gas-emissions-typical-passenger-vehicle', label: 'US EPA (~400 g CO2 per vehicle-mile) and FHWA (annual mileage) — driving.' },
@@ -509,10 +506,8 @@ const structuredData = [
     // ---- Math (base units: carbon grams, water liters) ----
     function perPromptTriple(model, size, metric) {
       const s = model.sizes[size];
-      if (metric === 'carbon') {
-        const gf = gridFactor();
-        return [s.g * gf, s.gmin * gf, s.gmax * gf];
-      }
+      // Carbon is EcoLogits' own figure on its global-average grid (no regional rescaling).
+      if (metric === 'carbon') return [s.g, s.gmin, s.gmax];
       return [s.ml / 1000, s.mlmin / 1000, s.mlmax / 1000];
     }
     function totalPrompts() { let n = 0; for (const r of state.rows) n += r.count || 0; return n; }
@@ -712,7 +707,7 @@ const structuredData = [
 
     function renderGridNote() {
       const box = root.querySelector('#aipf-grid-note');
-      if (state.metric === 'carbon') { box.style.display = ''; box.textContent = 'AI carbon is figured on the ' + getLoc().label + ' electricity grid.'; }
+      if (state.metric === 'carbon') { box.style.display = ''; box.textContent = "AI carbon uses EcoLogits' global-average electricity grid (~0.59 kg CO₂e/kWh)."; }
       else box.style.display = 'none';
     }
 
@@ -805,13 +800,12 @@ const structuredData = [
       return s + '</svg>';
     }
     function reportHTML() {
-      const gf = gridFactor();
       let rowsHtml = '', aiDay = 0, aiMin = 0, aiMax = 0, eD = 0;
       for (const r of state.rows) {
         if (!r.count) continue;
         const md = getModel(r.model), sz = md.sizes[r.size];
-        const per = sz.g * gf, d = r.count * per;
-        aiDay += d; aiMin += r.count * sz.gmin * gf; aiMax += r.count * sz.gmax * gf; eD += r.count * sz.wh;
+        const per = sz.g, d = r.count * per;
+        aiDay += d; aiMin += r.count * sz.gmin; aiMax += r.count * sz.gmax; eD += r.count * sz.wh;
         rowsHtml += '<tr><td>' + escXml(md.name) + '</td><td>' + escXml(sizeLabel(r.model, SIZES.find((x) => x.id === r.size))) + '</td><td class="n">' + r.count + '</td><td class="n">' + fmtCarbon(per) + '</td><td class="n">' + fmtCarbon(d) + '</td></tr>';
       }
       const aiYr = aiDay * DAYS;
@@ -843,7 +837,7 @@ const structuredData = [
         '<h2>1. What I entered</h2>' +
         '<table><thead><tr><th>Model</th><th>Typical output</th><th class="n">Prompts/day</th><th class="n">CO₂e each</th><th class="n">CO₂e/day</th></tr></thead><tbody>' +
         (rowsHtml || '<tr><td colspan="5">No usage entered.</td></tr>') + '</tbody></table>' +
-        '<p class="muted">Per-prompt figures come from the EcoLogits model' + fn(1) + ', with the electricity rescaled to the ' + escXml(loc.label) + ' grid' + fn(2) + '.</p>' +
+        '<p class="muted">Per-prompt figures come from the EcoLogits model' + fn(1) + ', on its global-average electricity grid (~0.59 kg CO₂e/kWh)' + fn(2) + '.</p>' +
         '<h2>2. My AI carbon</h2>' +
         '<p>Across these prompts, my AI use comes to about <strong>' + fmtCarbon(aiDay) + ' per day</strong> (range ' + fmtCarbon(aiMin) + ' to ' + fmtCarbon(aiMax) + '), or <strong>' + fmtCarbon(aiYr) + ' per year</strong>, drawing about ' + fmtEnergy(eD) + ' of electricity a day.' + fn(1) + fn(2) + ' The range is EcoLogits’ 95% interval, mostly uncertainty in the parameter counts of closed models.' + fn(1) + '</p>' +
         '<h2>3. How that compares with the rest of my life</h2>' +
