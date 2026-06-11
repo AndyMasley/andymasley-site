@@ -306,9 +306,9 @@ const structuredData = [
           <a href="https://devera.ai/benchmarks/carbon-footprint-of-a-laptop" target="_blank" rel="noopener">laptop LCAs</a>);
           a round-trip US cross-country flight ≈ 1 t
           (<a href="https://co2.myclimate.org/en/flight_calculators/new" target="_blank" rel="noopener">myclimate</a>),
-          a transatlantic round trip ≈ 1.6 t, and a one-way European flight ≈ 180 kg; a year with a
-          medium dog ≈ 770 kg and a cat ≈ 310 kg, mostly pet food
-          (<a href="https://newsroom.ucla.edu/releases/the-truth-about-cats-and-dogs-environmental-impact" target="_blank" rel="noopener">UCLA / Okin 2017</a>);
+          a transatlantic round trip ≈ 1.6 t, and a one-way European flight ≈ 180 kg; a year of
+          average US driving (~12,000 mi) ≈ 4.8 t at ~0.40 kg/mile
+          (<a href="https://www.epa.gov/greenvehicles/greenhouse-gas-emissions-typical-passenger-vehicle" target="_blank" rel="noopener">EPA</a>);
           a year of daily coffee ≈ 77 kg, a cotton T-shirt ≈ 7 kg, a new smartphone ≈ 70 kg
           (<a href="https://www.apple.com/environment/" target="_blank" rel="noopener">Apple</a>), and a
           pair of jeans ≈ 33 kg (<a href="https://www.levistrauss.com/wp-content/uploads/2015/03/Full-LCA-Results-Deck-FINAL.pdf" target="_blank" rel="noopener">Levi's</a>).
@@ -476,11 +476,9 @@ const structuredData = [
       { label: 'A year of daily coffee',          c: 77,   w: 0,      dir: 'add' },
       { label: 'A one-way European flight',       c: 180,  w: 3,      dir: 'add' },
       { label: 'A new laptop',                    c: 250,  w: 0,      dir: 'add' },
-      { label: 'A year with a cat',               c: 310,  w: 0,      dir: 'add' },
-      { label: 'A year with a medium dog',        c: 770,  w: 0,      dir: 'add' },
       { label: 'A round-trip US cross-country flight', c: 1000, w: 0, dir: 'add' },
       { label: 'One transatlantic flight',        c: 1600, w: 5,      dir: 'add' },
-      { label: 'A year of driving',               c: 4800, w: 50,     dir: 'add' },
+      { label: 'A year of driving (12,000 mi)',   c: 4800, w: 50,     dir: 'add' },
       { label: 'Manufacturing a new car',         c: 6000, w: 0,      dir: 'add' },
       { label: 'Buying LED bulbs',                c: 30,   w: 0,      dir: 'save' },
       { label: 'Recycling for a year',            c: 140,  w: 0,      dir: 'save' },
