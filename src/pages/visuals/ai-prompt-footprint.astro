@@ -373,6 +373,16 @@ const structuredData = [
           freshwater a year, so letting it go unwatered or replacing it with native plants saves most
           of that (<a href="https://www.epa.gov/watersense/landscaping-tips" target="_blank" rel="noopener">EPA WaterSense</a>).
           Eating less meat barely moves the blue total, because almost all of meat's water is rain.
+          Energy and manufactured goods have a blue-water cost too: thermoelectric power plants
+          evaporate about
+          <a href="https://www.nrel.gov/docs/fy11osti/50900.pdf" target="_blank" rel="noopener">0.47 gal of freshwater per kWh</a>
+          (NREL, cooling/consumption only), so an hour of central air conditioning (~3 kWh) consumes
+          roughly 1.4 gal and a day of the
+          <a href="https://www.eia.gov/tools/faqs/faq.php?id=97" target="_blank" rel="noopener">average US home's electricity (~29 kWh)</a>
+          about 14 gal — the very same power-plant cooling water that makes up much of AI's footprint.
+          Printing a 300-page book uses on the order of ~5 gal of process freshwater
+          (<a href="https://waterfootprint.org/resources/Report64-WaterFootprint-Paper.pdf" target="_blank" rel="noopener">paper's water footprint</a>
+          is mostly rain on trees, with the blue mill water lower since most is returned to rivers).
         </p>
       </div>
     </details>
@@ -532,6 +542,9 @@ const structuredData = [
       { label: 'An egg',                 w: 4 },
       { label: 'A glass of milk',        w: 6 },
       { label: 'A bowl of rice',         w: 7 },
+      { label: 'An hour of air conditioning', w: 1.4 },
+      { label: 'Printing a book',        w: 5 },
+      { label: 'A day of home electricity',   w: 14 },
       { label: 'An avocado',             w: 16 },
       { label: 'A handful of almonds',   w: 32 },
     ];
