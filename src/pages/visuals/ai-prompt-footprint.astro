@@ -1093,17 +1093,31 @@ const structuredData = [
     .aipf-out { border-left: none; border-top: 1px solid var(--border); }
     .aipf-below { grid-template-columns: 1fr; gap: 1.5rem; }
   }
-  @media (max-width: 600px) {
-    .aipf-bar-row { grid-template-columns: 1fr auto; grid-template-areas: "label value" "bar bar"; gap: 0.12rem 0.5rem; }
+  @media (max-width: 640px) {
+    /* All bars stack so long labels and values fit; assign the grid areas the
+       stacked template needs (the base bars did not have them set). */
+    .aipf-bar-row { grid-template-columns: 1fr auto; grid-template-areas: "label value" "bar bar"; gap: 0.15rem 0.5rem; }
+    .aipf-bar-label { grid-area: label; }
+    .aipf-bar-val { grid-area: value; align-self: center; }
+    .aipf-bar-track { grid-area: bar; }
   }
-  @media (max-width: 480px) {
+  @media (max-width: 560px) {
     .aipf { width: calc(100vw - 24px); }
-    .aipf-row { grid-template-columns: 1fr 1fr; gap: 0.5rem 0.7rem; }
-    .aipf-row .aipf-rsel:first-child { grid-column: 1 / 2; }
-    .aipf-row .aipf-rsel:nth-child(2) { grid-column: 2 / 3; }
-    .aipf-row .aipf-stepper { grid-column: 1 / 2; }
-    .aipf-row .aipf-rowdel { grid-column: 2 / 3; justify-self: end; }
+    /* Usage rows: full-width model and output selects, with the counter and the
+       remove button on their own line, so nothing is squeezed or truncated. */
     .aipf-rows-head { display: none; }
+    .aipf-row { grid-template-columns: 1fr auto; grid-template-areas: "model model" "size size" "stepper del"; gap: 0.5rem 0.6rem; align-items: center; }
+    .aipf-row .aipf-rsel:first-child { grid-area: model; }
+    .aipf-row .aipf-rsel:nth-child(2) { grid-area: size; }
+    .aipf-row .aipf-stepper { grid-area: stepper; justify-self: start; }
+    .aipf-row .aipf-rowdel { grid-area: del; justify-self: end; }
+    /* Bigger touch targets */
+    .aipf-step { width: 2rem; height: 2rem; font-size: 1.15rem; }
+    .aipf-count { width: 3ch; height: 2rem; font-size: 0.95rem; }
+    .aipf-rowdel { width: 2rem; height: 2rem; font-size: 1.3rem; }
+    /* Report button: full width and easy to tap */
+    .aipf-report-btn { max-width: none; width: 100%; text-align: center; }
+    .aipf-cc0 { align-items: flex-start; }
   }
   @media (prefers-reduced-motion: reduce) { .aipf-prop-fill, .aipf select, .aipf-step, .aipf-metric, .aipf-link { transition: none; } }
 </style>
