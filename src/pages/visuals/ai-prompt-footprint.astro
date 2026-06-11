@@ -246,9 +246,10 @@ const structuredData = [
           read at
           <a href="https://biblio.ugent.be/publication/8647789" target="_blank" rel="noopener">238 words a minute (Brysbaert 2019)</a>.
           A coding session is counted as lines of code (~10 tokens a line) rather than words to
-          read, and only about a quarter of its output tokens are treated as actual code — the rest
-          is reasoning, tool calls, and explanation — so a 100,000-token session is roughly 2,500
-          lines, not 10,000.
+          read. Only about 15% of its output tokens are treated as actual code — the rest is
+          reasoning (which dominates for reasoning models), tool calls, file exploration, and
+          explanation — so a 100,000-token session is on the order of 1,500 lines, not 10,000. This
+          is a rough estimate with wide uncertainty.
         </p>
         <p>
           <strong>Your footprint.</strong> "Where you live" is a regional baseline for goods,
@@ -365,7 +366,7 @@ const structuredData = [
     const WPM = 238;
     const TOKENS_PER_WORD = 0.75;
     const TOKENS_PER_LINE = 10;   // rough tokens per line of code
-    const CODE_FRACTION = 0.25;   // only ~a quarter of an agent session's output is final code; the rest is reasoning, tool calls, and explanation
+    const CODE_FRACTION = 0.15;   // only ~15% of an agent session's output is final code; the rest is reasoning, tool calls, file exploration, and explanation (wide uncertainty)
 
     const DEFAULT_ROWS = [
       ['gpt-5.5', 'chat', 15],
