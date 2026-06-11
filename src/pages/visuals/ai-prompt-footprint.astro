@@ -140,40 +140,73 @@ const structuredData = [
         </p>
         <p>
           <strong>Carbon on your grid.</strong> EcoLogits reports carbon on the global average grid,
-          about 0.59 kg CO<sub>2</sub>e/kWh. This page rescales the electricity to the grid where
-          you live, roughly 0.38 (US), 0.25 (EU), 0.20 (UK), 0.54 (China), 0.63 (India) kg/kWh, so
-          the figure reflects your region. Water stays on the global basis.
+          about 0.59 kg CO<sub>2</sub>e/kWh. This page rescales the electricity to where you live
+          using grid carbon intensities from
+          <a href="https://ember-energy.org/latest-insights/global-electricity-review-2024/" target="_blank" rel="noopener">Ember's 2024 Global Electricity Review</a>
+          and <a href="https://ourworldindata.org/grapher/carbon-intensity-electricity" target="_blank" rel="noopener">Our World in Data</a>:
+          roughly 380 (US), 215 (EU), 125 (UK), 580 (China), 700 (India) g CO<sub>2</sub>e/kWh.
+          Water stays on the global basis.
         </p>
         <p>
-          <strong>Output length.</strong> Each row maps to an EcoLogits output-token count: a tweet
-          (50), short email (170), article summary (250), chatbot reply (400), 5-page report
-          (5,000), long document (15,000), coding or agent session (100,000), and a full novel
-          (500,000). Cost scales with length, so long generations dominate. Counts are per day;
-          annual figures multiply by 365. Words assume about 0.75 words per token, read at 238
-          words a minute (Brysbaert 2019). A coding session is counted as code, about 10 tokens a
-          line, not as words to read.
+          <strong>Output, words, and code.</strong> Each row maps to an EcoLogits output-token count:
+          tweet (50), short email (170), article summary (250), chatbot reply (400), 5-page report
+          (5,000), long document (15,000), coding or agent session (100,000), full novel (500,000).
+          Cost scales with length, so long generations dominate. Counts are per day; annual figures
+          multiply by 365. Words assume
+          <a href="https://help.openai.com/en/articles/4936856-what-are-tokens-and-how-to-count-them" target="_blank" rel="noopener">OpenAI's ~0.75 words per token</a>,
+          read at
+          <a href="https://biblio.ugent.be/publication/8647789" target="_blank" rel="noopener">238 words a minute (Brysbaert 2019)</a>.
+          A coding session is counted as code at about 10 tokens a line, not as prose.
         </p>
         <p>
-          <strong>Your footprint.</strong> Where you live is a regional baseline for goods,
-          services, and shared infrastructure (Our World in Data); home energy and driving are
-          separate so they do not double-count. Home runs from a small apartment (about 1.5 t
-          CO<sub>2</sub>e a year) to a big house (about 7 t). Driving uses about 0.40 kg
-          CO<sub>2</sub>e per mile, from a little (3,000 mi a year) to a lot (25,000 mi). Diet uses
-          annual food footprints from Poore and Nemecek (2018) and
-          Scarborough et al. (2023): about 1.05 t CO<sub>2</sub>e a year for a vegan diet up to 3.2 t
-          for a heavy-meat one. Flying uses about 0.255 kg CO<sub>2</sub>e per passenger-mile
-          including high-altitude effects. The water footprint includes the virtual water in food,
-          which dominates it, so it is not the same kind of water as the AI figure (mostly cooling).
-          The comparison shows scale, not identical accounting.
+          <strong>Your footprint.</strong> "Where you live" is a regional baseline for goods,
+          services, and shared infrastructure (per-capita consumption from
+          <a href="https://ourworldindata.org/co2-emissions" target="_blank" rel="noopener">Our World in Data</a>);
+          home energy and driving are separate so they do not double-count.
+          <strong>Home</strong> runs from a small apartment to a big house, about 1.5 to 7 t
+          CO<sub>2</sub>e a year (<a href="https://www.eia.gov/consumption/residential/" target="_blank" rel="noopener">EIA RECS</a>;
+          <a href="https://www.pnas.org/doi/10.1073/pnas.1922205117" target="_blank" rel="noopener">Goldstein et al. 2020</a>).
+          <strong>Driving</strong> uses
+          <a href="https://www.epa.gov/greenvehicles/greenhouse-gas-emissions-typical-passenger-vehicle" target="_blank" rel="noopener">EPA's ~400 g CO<sub>2</sub>/mile</a>
+          across roughly 3,000 to 25,000 miles a year (<a href="https://www.fhwa.dot.gov/policyinformation/statistics/2023/vm1.cfm" target="_blank" rel="noopener">FHWA</a>).
+          <strong>Diet</strong> uses food footprints from
+          <a href="https://www.science.org/doi/10.1126/science.aaq0216" target="_blank" rel="noopener">Poore &amp; Nemecek (2018)</a>
+          and <a href="https://www.nature.com/articles/s43016-023-00795-w" target="_blank" rel="noopener">Scarborough et al. (2023)</a>:
+          about 1.05 t CO<sub>2</sub>e a year for a vegan diet up to 3.2 t for a heavy-meat one.
+          <strong>Flying</strong> is anchored to a transatlantic round trip of about 1.6 t
+          (<a href="https://iopscience.iop.org/article/10.1088/1748-9326/aa7541" target="_blank" rel="noopener">Wynes &amp; Nicholas 2017</a>).
+          The <strong>water footprint</strong> includes the virtual water in food
+          (<a href="https://www.waterfootprint.org/" target="_blank" rel="noopener">Water Footprint Network</a>),
+          which dominates it and is not the same kind of water as the AI figure, so the comparison
+          shows scale, not identical accounting.
         </p>
         <p>
-          <strong>Everyday things and lifestyle changes.</strong> A cup of coffee, 0.21 kg
-          CO<sub>2</sub>e and 35 gal; an hour on a PS5, 0.08 kg; a mile in a gas car, 0.40 kg; a
-          10-minute hot shower, 0.5 kg and 25 gal; printing a 400-page book, 2.5 kg and 300 gal; a
-          beef burger, 3 kg and 460 gal. A pair of jeans, 33 kg and 2,100 gal; a new smartphone,
-          70 kg and 3,190 gal; switching from an average to a vegan diet, about 1.45 t and 237,000
-          gal saved a year; one transatlantic flight, 1.76 t; a year of average US driving,
-          4.8 t (Water Footprint Network, Our World in Data, manufacturer LCAs).
+          <strong>Lifestyle cuts (the yearly chart).</strong> The "saved" figures come from the
+          <a href="https://www.founderspledge.com/research/climate-and-lifestyle-report" target="_blank" rel="noopener">Founders Pledge Climate &amp; Lifestyle report</a>,
+          drawing on
+          <a href="https://iopscience.iop.org/article/10.1088/1748-9326/aa7541" target="_blank" rel="noopener">Wynes &amp; Nicholas (2017)</a>
+          (living car-free 2.4 t, avoiding a transatlantic flight 1.6 t, hang-drying, recycling, LED
+          bulbs) and
+          <a href="https://iopscience.iop.org/article/10.1088/1748-9326/ab8589" target="_blank" rel="noopener">Ivanova et al. (2020)</a>
+          (green electricity, heat-pump heating, a home retrofit, electric and hybrid cars).
+        </p>
+        <p>
+          <strong>Everyday things.</strong> A cup of coffee: ~0.21 kg CO<sub>2</sub>e and
+          <a href="https://www.weforum.org/stories/2019/03/hidden-water-in-your-cup-of-coffee/" target="_blank" rel="noopener">140 L of water</a>.
+          An hour on a <a href="https://www.playstation.com/en-us/legal/ecodesign/" target="_blank" rel="noopener">PS5 (~200 W)</a>;
+          3 minutes in a <a href="https://www.siliconvalleypower.com/residents/save-energy/appliance-energy-use-chart" target="_blank" rel="noopener">1,200 W microwave</a>;
+          a mile in a gas car (<a href="https://www.epa.gov/greenvehicles/greenhouse-gas-emissions-typical-passenger-vehicle" target="_blank" rel="noopener">EPA, ~0.40 kg</a>);
+          a 10-minute hot shower (<a href="https://www.epa.gov/watersense/showerheads" target="_blank" rel="noopener">~21 gal, EPA WaterSense</a>, plus water heating);
+          a <a href="https://www.energystar.gov/products/dishwashers" target="_blank" rel="noopener">dishwasher load (≤3.5 gal, ENERGY STAR)</a>;
+          a <a href="https://www.energystar.gov/products/clothes_dryers" target="_blank" rel="noopener">dryer load (~3 kWh)</a>;
+          <a href="https://onlinelibrary.wiley.com/doi/abs/10.1111/j.1530-9290.2011.00414.x" target="_blank" rel="noopener">printing a 400-page book (~2.7 kg, Wells 2012)</a>
+          with <a href="https://waterfootprint.org/resources/Report46-WaterFootprintPaper.pdf" target="_blank" rel="noopener">paper's water footprint</a>;
+          a beef burger (~3 kg, <a href="https://www.science.org/doi/10.1126/science.aaq0216" target="_blank" rel="noopener">Poore &amp; Nemecek</a>; ~1,700 L at
+          <a href="https://watercalculator.org/footprint/the-hidden-water-in-everyday-products/" target="_blank" rel="noopener">15,400 L/kg beef</a>);
+          a <a href="https://www.apple.com/environment/" target="_blank" rel="noopener">new smartphone (~70 kg, Apple)</a>
+          needing <a href="https://www.compareandrecycle.co.uk/blog/world-water-week-how-much-water-does-your-smartphone-use" target="_blank" rel="noopener">~12,800 L</a>;
+          a <a href="https://www.levistrauss.com/wp-content/uploads/2015/03/Full-LCA-Results-Deck-FINAL.pdf" target="_blank" rel="noopener">pair of jeans (~33 kg, Levi's)</a>
+          at ~10,000 L (<a href="https://watercalculator.org/footprint/the-hidden-water-in-everyday-products/" target="_blank" rel="noopener">Water Footprint Network</a>).
         </p>
         <p class="aipf-method-caveat">
           The point is scale. For almost anyone, daily AI use is a rounding error next to driving,
@@ -222,10 +255,10 @@ const structuredData = [
     // (home energy and driving are separate knobs below, so they are excluded here)
     const LOCATIONS = [
       { id: 'us',    label: 'the US',    c: 3000, w: 30000, grid: 380 },
-      { id: 'eu',    label: 'the EU',    c: 1800, w: 22000, grid: 250 },
-      { id: 'uk',    label: 'the UK',    c: 1700, w: 20000, grid: 200 },
-      { id: 'cn',    label: 'China',     c: 2500, w: 22000, grid: 540 },
-      { id: 'in',    label: 'India',     c: 900,  w: 18000, grid: 630 },
+      { id: 'eu',    label: 'the EU',    c: 1800, w: 22000, grid: 215 },
+      { id: 'uk',    label: 'the UK',    c: 1700, w: 20000, grid: 125 },
+      { id: 'cn',    label: 'China',     c: 2500, w: 22000, grid: 580 },
+      { id: 'in',    label: 'India',     c: 900,  w: 18000, grid: 700 },
       { id: 'world', label: 'the world', c: 1800, w: 22000, grid: WORLD_GRID },
     ];
     const HOMES = [
@@ -256,23 +289,23 @@ const structuredData = [
 
     // Daily reference points (all things that emit, so no add/save direction)
     const DAILY_ITEMS = [
-      { label: 'A cup of coffee',          c: 0.21, w: 35 },
+      { label: 'A cup of coffee',          c: 0.21, w: 37 },
       { label: 'An hour on a PS5',         c: 0.08, w: 0.1 },
       { label: '3 minutes in the microwave', c: 0.02, w: 0.05 },
       { label: 'A mile in a gas car',      c: 0.40, w: 0.1 },
-      { label: 'A 10-minute hot shower',   c: 0.5,  w: 25 },
-      { label: 'A dishwasher load',        c: 0.5,  w: 6 },
+      { label: 'A 10-minute hot shower',   c: 0.7,  w: 21 },
+      { label: 'A dishwasher load',        c: 0.5,  w: 3.5 },
       { label: 'A dryer load',             c: 1.2,  w: 0.1 },
-      { label: 'Printing a 400-page book', c: 2.5,  w: 300 },
+      { label: 'Printing a 400-page book', c: 2.7,  w: 300 },
       { label: 'A beef burger',            c: 3.0,  w: 460 },
     ];
     // Annual reference points. dir: 'add' = emissions you cause, 'save' = a cut you make.
     // Lifestyle-cut figures from Founders Pledge / Wynes & Nicholas via AndyMasley.Substack.com.
     const ANNUAL_ITEMS = [
       { label: 'A one-way European flight',       c: 180,  w: 3,      dir: 'add' },
-      { label: 'A new pair of jeans',             c: 33,   w: 2110,   dir: 'add' },
-      { label: 'A new smartphone',                c: 70,   w: 3190,   dir: 'add' },
-      { label: 'One transatlantic flight',        c: 1760, w: 5,      dir: 'add' },
+      { label: 'A new pair of jeans',             c: 33,   w: 2640,   dir: 'add' },
+      { label: 'A new smartphone',                c: 70,   w: 3370,   dir: 'add' },
+      { label: 'One transatlantic flight',        c: 1600, w: 5,      dir: 'add' },
       { label: 'A year of driving',               c: 4800, w: 50,     dir: 'add' },
       { label: 'Buying LED bulbs',                c: 30,   w: 0,      dir: 'save' },
       { label: 'Recycling for a year',            c: 140,  w: 0,      dir: 'save' },
