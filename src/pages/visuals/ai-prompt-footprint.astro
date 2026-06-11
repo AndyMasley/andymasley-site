@@ -353,13 +353,16 @@ const structuredData = [
           the carbon ones, all water-consumption figures (the green and blue virtual water used up,
           with grey pollution-dilution water a minor part) from the
           <a href="https://watercalculator.org/footprint/the-hidden-water-in-everyday-products/" target="_blank" rel="noopener">Water Footprint Network</a>:
-          a slice of bread (~40 L), an apple (~125 L), a cup of coffee (~140 L), an egg (~196 L), a
-          glass of milk (~255 L), a cotton T-shirt (~2,700 L), leather shoes (~8,000 L), a pair of
-          jeans (~10,000 L), and a beef burger (~1,700 L), plus a
+          a slice of bread (~40 L), an apple (~125 L), a cup of coffee (~140 L), a glass of wine
+          (~110 L), an avocado (~165 L), an egg (~196 L), a glass of milk (~255 L), a bottle of wine
+          (~660 L), a pizza (~1,220 L), a bar of chocolate (~1,700 L), a beef burger (~1,700 L), a
+          cotton T-shirt (~2,700 L), leather shoes (~8,000 L), a pair of jeans (~10,000 L), and a
           <a href="https://www.compareandrecycle.co.uk/blog/world-water-week-how-much-water-does-your-smartphone-use" target="_blank" rel="noopener">new smartphone (~12,800 L)</a>.
-          The savings are all dietary — eating one fewer burger a week, going vegetarian, or going
-          vegan — because almost all of the personal water footprint you can actually cut is the
-          consumptive water behind food, not water that runs down a drain and is treated and returned.
+          The savings are mostly dietary (eating one fewer burger a week, going vegetarian, or vegan)
+          plus outdoor watering: a typical lawn drinks roughly 20,000 gal a year, so letting it go
+          unwatered or replacing it with native plants saves most of that
+          (<a href="https://www.epa.gov/watersense/landscaping-tips" target="_blank" rel="noopener">EPA WaterSense</a>) —
+          and lawn irrigation, unlike water down a drain, is mostly consumed by evaporation.
         </p>
       </div>
     </details>
@@ -514,11 +517,18 @@ const structuredData = [
       { label: 'A beef burger',        w: 460 },
     ];
     const ANNUAL_WATER_ITEMS = [
+      { label: 'A glass of wine',                  w: 29,     dir: 'add' },
+      { label: 'An avocado',                       w: 44,     dir: 'add' },
+      { label: 'A bottle of wine',                 w: 174,    dir: 'add' },
+      { label: 'A pizza',                          w: 321,    dir: 'add' },
+      { label: 'A bar of chocolate',               w: 449,    dir: 'add' },
       { label: 'A cotton T-shirt',                 w: 713,    dir: 'add' },
       { label: 'A pair of leather shoes',          w: 2113,   dir: 'add' },
       { label: 'A new pair of jeans',              w: 2640,   dir: 'add' },
       { label: 'A new smartphone',                 w: 3370,   dir: 'add' },
       { label: 'A year of daily coffee',           w: 13505,  dir: 'add' },
+      { label: 'Replacing a lawn with native plants', w: 15000, dir: 'save' },
+      { label: 'Letting your lawn go unwatered (1 yr)', w: 20000, dir: 'save' },
       { label: 'A burger less each week (1 yr)',   w: 23900,  dir: 'save' },
       { label: 'Eating vegetarian for a year',     w: 195000, dir: 'save' },
       { label: 'Going vegan for a year',           w: 270000, dir: 'save' },
