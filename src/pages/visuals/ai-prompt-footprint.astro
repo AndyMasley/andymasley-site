@@ -15,10 +15,27 @@
  */
 import Base from '@/layouts/Base.astro';
 
-const pageTitle = 'What does your AI use cost?';
+const pageTitle = 'AI carbon & water footprint calculator (ChatGPT, Claude, Gemini)';
+const ogTitle = 'What does your AI use actually cost?';
 const pageDescription =
-  'Build up how many prompts you send each day to GPT, Claude, and Gemini, at any output length, and see the combined carbon and water cost set against your own footprint, everyday things, and bigger lifestyle changes.';
+  'A free calculator: enter your daily ChatGPT, Claude, and Gemini prompts to see the carbon and water footprint of your AI use, set against your real-world footprint, everyday things, and bigger lifestyle changes.';
 const pageUrl = 'https://andymasley.com/visuals/ai-prompt-footprint';
+const ogImage = '/images/og/og-visuals.png';
+const datePublished = '2026-06-10';
+const dateModified = '2026-06-10';
+const keywords = [
+  'AI carbon footprint',
+  'AI water footprint',
+  'ChatGPT carbon footprint',
+  'ChatGPT water usage',
+  'AI energy consumption',
+  'carbon footprint calculator',
+  'water footprint calculator',
+  'environmental impact of AI',
+  'EcoLogits',
+  'Claude',
+  'Gemini',
+];
 
 const structuredData = [
   {
@@ -28,12 +45,68 @@ const structuredData = [
     description: pageDescription,
     url: pageUrl,
     inLanguage: 'en-US',
+    datePublished,
+    dateModified,
+    keywords: keywords.join(', '),
+    primaryImageOfPage: { '@type': 'ImageObject', url: 'https://andymasley.com' + ogImage, width: 1200, height: 630 },
     isPartOf: { '@type': 'WebSite', name: 'Andy Masley', url: 'https://andymasley.com' },
     author: { '@type': 'Person', name: 'Andy Masley', url: 'https://andymasley.com/' },
     about: [
       { '@type': 'Thing', name: 'Artificial intelligence' },
       { '@type': 'Thing', name: 'Carbon footprint' },
       { '@type': 'Thing', name: 'Water footprint' },
+    ],
+  },
+  {
+    '@context': 'https://schema.org',
+    '@type': 'WebApplication',
+    name: 'AI prompt footprint calculator',
+    url: pageUrl,
+    applicationCategory: 'UtilityApplication',
+    operatingSystem: 'Any (web browser)',
+    browserRequirements: 'Requires JavaScript',
+    description: pageDescription,
+    isAccessibleForFree: true,
+    inLanguage: 'en-US',
+    author: { '@type': 'Person', name: 'Andy Masley', url: 'https://andymasley.com/' },
+    offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+  },
+  {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: [
+      {
+        '@type': 'Question',
+        name: 'How much carbon does one AI prompt produce?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'It depends on the model and how long the reply is. Using EcoLogits estimates, a typical chatbot reply ranges from under 0.02 g CO2e on a small model to a few grams on a large one, with reasoning models and long outputs much higher. For most people a full day of AI use is a tiny fraction of one percent of their daily carbon footprint.',
+        },
+      },
+      {
+        '@type': 'Question',
+        name: 'Does AI use a lot of water?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'A single text prompt consumes only a few milliliters to a few liters of water (data-center cooling plus power generation). Even heavy daily use is far less than the embodied water in everyday food and goods, such as a cup of coffee (about 140 liters) or a beef burger (about 1,700 liters).',
+        },
+      },
+      {
+        '@type': 'Question',
+        name: 'How does AI use compare to driving, flying, or diet?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'A year of typical AI use is dwarfed by a single transatlantic flight, a year of driving, or your diet. Cutting your AI use saves far less carbon than living car-free, switching to clean electricity, or eating less meat.',
+        },
+      },
+      {
+        '@type': 'Question',
+        name: 'Does this include the cost of training AI models?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'No. Training is excluded because it is uncertain and, divided across all the users of a model, adds very little to an individual person’s footprint.',
+        },
+      },
     ],
   },
   {
@@ -52,7 +125,10 @@ const structuredData = [
   title={pageTitle}
   description={pageDescription}
   canonicalUrl={pageUrl}
-  ogTitle={pageTitle}
+  ogTitle={ogTitle}
+  ogImage={ogImage}
+  ogImageAlt="Andy Masley's AI carbon and water footprint calculator"
+  keywords={keywords}
   structuredData={structuredData}
 >
   <article class="aipf" id="aipf">
