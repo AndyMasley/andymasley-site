@@ -1133,10 +1133,8 @@ const structuredData = [
   .aipf-prop { height: 16px; background: var(--border); margin-top: 0.85rem; overflow: hidden; }
   .aipf-prop-fill { height: 100%; background: var(--accent); min-width: 3px; transform-origin: left center; animation: aipf-grow-x 0.45s cubic-bezier(0.22, 1, 0.36, 1); }
   @keyframes aipf-grow-x { from { transform: scaleX(0); } to { transform: scaleX(1); } }
-  @keyframes aipf-fade-in { from { opacity: 0; } to { opacity: 1; } }
-  .aipf-verdict-fig { animation: aipf-fade-in 0.28s ease; }
   @media (prefers-reduced-motion: reduce) {
-    .aipf-prop-fill, .aipf-verdict-fig { animation: none; }
+    .aipf-prop-fill { animation: none; }
   }
   .aipf-prop-cap { display: flex; justify-content: space-between; font-family: var(--font-body); font-size: 0.62rem; letter-spacing: 0.04em; text-transform: uppercase; color: var(--dim); margin-top: 0.35rem; }
   .aipf-prop-cap .accent { color: var(--accent); font-weight: 600; }
