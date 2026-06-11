@@ -123,13 +123,13 @@ const structuredData = [
     </div>
 
     <!-- Below: a year, split into emissions added vs cuts you could make -->
-    <div class="aipf-below" aria-label="In a year, ways you add emissions">
-      <h2 class="aipf-h2">In a year, ways you add emissions</h2>
+    <div class="aipf-below" aria-label="In a year, ways you add">
+      <h2 class="aipf-h2" id="aipf-add-title">In a year, ways you add emissions</h2>
       <p class="aipf-sub" id="aipf-add-sub"></p>
       <div class="aipf-bars" id="aipf-add-bars" aria-live="polite"></div>
     </div>
-    <div class="aipf-below" aria-label="In a year, ways you can cut emissions">
-      <h2 class="aipf-h2">In a year, ways you can cut emissions</h2>
+    <div class="aipf-below" aria-label="In a year, ways you can cut">
+      <h2 class="aipf-h2" id="aipf-cut-title">In a year, ways you can cut emissions</h2>
       <p class="aipf-sub" id="aipf-cut-sub"></p>
       <div class="aipf-bars" id="aipf-cut-bars" aria-live="polite"></div>
     </div>
@@ -690,6 +690,9 @@ const structuredData = [
       const src = state.metric === 'water' ? ANNUAL_WATER_ITEMS : ANNUAL_ITEMS;
       const adds = src.filter((it) => it.dir === 'add').map(strip);
       const cuts = src.filter((it) => it.dir === 'save').map(strip);
+      const noun = state.metric === 'water' ? 'water' : 'emissions';
+      root.querySelector('#aipf-add-title').textContent = 'In a year, ways you add ' + noun;
+      root.querySelector('#aipf-cut-title').textContent = 'In a year, ways you can cut ' + noun;
       root.querySelector('#aipf-add-sub').innerHTML = 'Your AI use (green) is ' + fmtMetric(aiYr) + ' a year, next to other things that add to your footprint.';
       renderBars('#aipf-add-bars', 'A year of your AI use', aiYr, adds);
       root.querySelector('#aipf-cut-sub').innerHTML = 'Cutting your AI use (green) would save ' + fmtMetric(aiYr) + ' a year, next to the bigger cuts you could make.';
