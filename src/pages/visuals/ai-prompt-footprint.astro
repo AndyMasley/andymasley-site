@@ -106,9 +106,9 @@ const structuredData = [
           <p class="aipf-life">
             vs. a day for someone in
             <select id="aipf-loc" aria-label="Where you live"></select> who lives in
-            <select id="aipf-home" aria-label="Your home"></select>, drives
-            <select id="aipf-drive" aria-label="How much you drive"></select>, eats
-            <select id="aipf-diet" aria-label="Your diet"></select>, and flies
+            <span class="aipf-nw"><select id="aipf-home" aria-label="Your home"></select>,</span> drives
+            <span class="aipf-nw"><select id="aipf-drive" aria-label="How much you drive"></select>,</span> eats
+            <span class="aipf-nw"><select id="aipf-diet" aria-label="Your diet"></select>,</span> and flies
             <select id="aipf-fly" aria-label="How much you fly"></select>
           </p>
         </div>
@@ -863,6 +863,7 @@ const structuredData = [
   /* ---- Output pane ---- */
   .aipf-out-head { display: flex; align-items: baseline; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 0.85rem; }
   .aipf-life { font-size: 0.9rem; line-height: 2; color: var(--text-secondary); margin: 0; flex: 1 1 16rem; }
+  .aipf-nw { white-space: nowrap; }
   .aipf-life select {
     font-family: var(--font-body); font-size: 0.84rem; font-weight: 600; color: var(--accent);
     background-color: var(--accent-subtle); border: 1px solid var(--accent); border-radius: 5px;
