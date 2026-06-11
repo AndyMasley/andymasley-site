@@ -66,12 +66,18 @@ const structuredData = [
       </p>
     </header>
 
-    <div class="aipf-toggle" role="group" aria-label="Footprint type">
-      <span class="aipf-toggle-label">Show</span>
-      <div class="aipf-showing">
-        <button type="button" class="aipf-metric is-active" data-metric="carbon">💨 Carbon</button>
-        <button type="button" class="aipf-metric" data-metric="water">💧 Water</button>
+    <div class="aipf-toolbar-top">
+      <div class="aipf-toggle" role="group" aria-label="Footprint type">
+        <span class="aipf-toggle-label">Show</span>
+        <div class="aipf-showing">
+          <button type="button" class="aipf-metric is-active" data-metric="carbon">💨 Carbon</button>
+          <button type="button" class="aipf-metric" data-metric="water">💧 Water</button>
+        </div>
       </div>
+      <button type="button" class="aipf-report-btn" id="aipf-report"
+        title="Generate a report with citations of exactly how my AI use as entered here contributes to my carbon emissions.">
+        Generate a cited report of my AI emissions
+      </button>
     </div>
 
     <!-- Tool: inputs on the left, the answer on the right -->
@@ -225,11 +231,6 @@ const structuredData = [
           1.5 kg on electric resistance (we use ~0.7 kg). Where a single authority does not exist,
           figures are rounded mid-range estimates from the sources cited, not false precision.
         </p>
-        <p class="aipf-method-caveat">
-          The point is scale. For almost anyone, daily AI use is a rounding error next to driving,
-          home energy, and flying. The total energy that AI draws across the world is a real
-          question. Your own prompts are not.
-        </p>
       </div>
     </details>
   </article>
@@ -302,6 +303,21 @@ const structuredData = [
       { id: 'rare',  label: 'rarely',    c: 560,  w: 0 },
       { id: 'some',  label: 'sometimes', c: 2300, w: 0 },
       { id: 'often', label: 'often',     c: 8000, w: 0 },
+    ];
+    // Typical diet by region; the diet default follows the country you pick.
+    const COUNTRY_DIET = { us: 'avg', eu: 'light', uk: 'avg', cn: 'light', in: 'veg', world: 'light' };
+
+    // Sources cited in the generated report (footnote order).
+    const REPORT_REFS = [
+      { url: 'https://ecologits.ai/', label: 'EcoLogits (v0.10) — per-prompt energy, carbon, and water for each model, behind the EcoLogits calculator.' },
+      { url: 'https://ember-energy.org/latest-insights/global-electricity-review-2024/', label: 'Ember, Global Electricity Review 2024, with Our World in Data — grid carbon intensity by region.' },
+      { url: 'https://ourworldindata.org/co2-emissions', label: 'Our World in Data — consumption-based emissions, used for the regional baseline.' },
+      { url: 'https://www.eia.gov/consumption/residential/', label: 'US EIA Residential Energy Consumption Survey, with Goldstein et al. 2020 (PNAS) — home energy.' },
+      { url: 'https://www.epa.gov/greenvehicles/greenhouse-gas-emissions-typical-passenger-vehicle', label: 'US EPA (~400 g CO2 per vehicle-mile) and FHWA (annual mileage) — driving.' },
+      { url: 'https://www.science.org/doi/10.1126/science.aaq0216', label: 'Poore & Nemecek 2018 (Science) and Scarborough et al. 2023 (Nature Food) — diet footprints.' },
+      { url: 'https://iopscience.iop.org/article/10.1088/1748-9326/aa7541', label: 'Wynes & Nicholas 2017 — flights and lifestyle cuts.' },
+      { url: 'https://iopscience.iop.org/article/10.1088/1748-9326/ab8589', label: 'Ivanova et al. 2020 — housing and transport mitigation options.' },
+      { url: 'https://www.founderspledge.com/research/climate-and-lifestyle-report', label: 'Founders Pledge, Climate & Lifestyle report — the lifestyle-cut comparison.' },
     ];
 
     // Daily reference points (all things that emit, so no add/save direction)
@@ -436,13 +452,11 @@ const structuredData = [
     function option(value, text, selected) { const o = document.createElement('option'); o.value = value; o.textContent = text; if (selected) o.selected = true; return o; }
 
     // ---- URL state ----
-    function syncURL() {
-      try {
-        const r = state.rows.map((row) => MODELS.findIndex((m) => m.id === row.model) + '-' + SIZES.findIndex((s) => s.id === row.size) + '-' + (row.count || 0)).join('.');
-        const p = new URLSearchParams();
-        p.set('k', state.metric); p.set('l', state.loc); p.set('h', state.home); p.set('v', state.drive); p.set('d', state.diet); p.set('f', state.fly); p.set('r', r);
-        history.replaceState(null, '', '#' + p.toString());
-      } catch (e) { /* ignore */ }
+    function buildShareURL() {
+      const r = state.rows.map((row) => MODELS.findIndex((m) => m.id === row.model) + '-' + SIZES.findIndex((s) => s.id === row.size) + '-' + (row.count || 0)).join('.');
+      const p = new URLSearchParams();
+      p.set('k', state.metric); p.set('l', state.loc); p.set('h', state.home); p.set('v', state.drive); p.set('d', state.diet); p.set('f', state.fly); p.set('r', r);
+      return location.origin + location.pathname + '#' + p.toString();
     }
     function readURL() {
       try {
@@ -637,8 +651,87 @@ const structuredData = [
     }
 
     function updateOutputs() {
-      renderRunning(); updateRowMeta(); renderHeadline(); renderGridNote(); renderWords(); renderDaily(); renderAnnual(); syncURL();
+      renderRunning(); updateRowMeta(); renderHeadline(); renderGridNote(); renderWords(); renderDaily(); renderAnnual();
     }
+    // ---- Cited report ----
+    function escXml(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+    function reportBarsSVG(rows) {
+      rows = rows.slice().sort((a, b) => b.v - a.v);
+      const W = 700, padL = 250, padR = 90, rowH = 26, top = 8;
+      const max = Math.max.apply(null, rows.map((r) => r.v).concat([1e-9]));
+      const barMax = W - padL - padR;
+      const H = top * 2 + rows.length * rowH;
+      let s = '<svg viewBox="0 0 ' + W + ' ' + H + '" width="100%" style="max-width:' + W + 'px" role="img">';
+      rows.forEach((r, i) => {
+        const y = top + i * rowH, cy = y + rowH / 2;
+        const bw = Math.max(2, (r.v / max) * barMax);
+        const col = r.focal ? '#1E5C45' : '#bcbfb2';
+        s += '<text x="' + (padL - 8) + '" y="' + (cy + 4) + '" text-anchor="end" font-size="12.5" fill="#1C1E1B">' + escXml(r.label) + '</text>';
+        s += '<rect x="' + padL + '" y="' + (y + 5) + '" width="' + bw.toFixed(1) + '" height="' + (rowH - 12) + '" fill="' + col + '"/>';
+        s += '<text x="' + (padL + bw + 6).toFixed(1) + '" y="' + (cy + 4) + '" font-size="11.5" fill="#555">' + escXml(fmtCarbon(r.v)) + '</text>';
+      });
+      return s + '</svg>';
+    }
+    function reportHTML() {
+      const gf = gridFactor();
+      let rowsHtml = '', aiDay = 0, aiMin = 0, aiMax = 0, eD = 0;
+      for (const r of state.rows) {
+        if (!r.count) continue;
+        const md = getModel(r.model), sz = md.sizes[r.size];
+        const per = sz.g * gf, d = r.count * per;
+        aiDay += d; aiMin += r.count * sz.gmin * gf; aiMax += r.count * sz.gmax * gf; eD += r.count * sz.wh;
+        rowsHtml += '<tr><td>' + escXml(md.name) + '</td><td>' + escXml(sizeLabel(r.model, SIZES.find((x) => x.id === r.size))) + '</td><td class="n">' + r.count + '</td><td class="n">' + fmtCarbon(per) + '</td><td class="n">' + fmtCarbon(d) + '</td></tr>';
+      }
+      const aiYr = aiDay * DAYS;
+      const day = dailyFootprint('carbon');
+      const pct = day > 0 ? (aiDay / day) * 100 : 0;
+      const pctStr = pct >= 1 ? pct.toFixed(pct >= 10 ? 0 : 1) + '%' : pct >= 0.01 ? pct.toFixed(2) + '%' : pct > 0 ? 'under 0.01%' : '0%';
+      const loc = getLoc(), home = HOMES.find((x) => x.id === state.home), drive = DRIVING.find((x) => x.id === state.drive), diet = DIETS.find((x) => x.id === state.diet), fly = FLYING.find((x) => x.id === state.fly);
+      const fp = [['Where you live (' + loc.label + ')', loc.c], ['Home (' + home.label + ')', home.c], ['Driving (' + drive.label + ')', drive.c], ['Diet (' + diet.label + ')', diet.c], ['Flying (' + fly.label + ')', fly.c]];
+      let fpHtml = '';
+      for (const f of fp) fpHtml += '<tr><td>' + escXml(f[0]) + '</td><td class="n">' + fmtCarbon(f[1] * 1000) + ' / yr</td></tr>';
+      const dailyRows = [{ label: 'Your daily AI use', v: aiDay, focal: true }].concat(DAILY_ITEMS.map((it) => ({ label: it.label, v: it.c * 1000 })));
+      const annualRows = [{ label: 'A year of your AI use', v: aiYr, focal: true }].concat(ANNUAL_ITEMS.map((it) => ({ label: it.label + (it.dir === 'save' ? ' (saved)' : it.dir === 'add' ? ' (added)' : ''), v: it.c * 1000 })));
+      let refsHtml = '';
+      REPORT_REFS.forEach((r, i) => { refsHtml += '<li id="ref' + (i + 1) + '">[' + (i + 1) + '] ' + escXml(r.label) + ' <a href="' + r.url + '">' + escXml(r.url) + '</a></li>'; });
+      const fn = (n) => '<sup><a href="#ref' + n + '">[' + n + ']</a></sup>';
+      const date = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+      return '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">' +
+        '<title>How my AI use contributes to my carbon emissions</title><style>' +
+        'body{font-family:Georgia,"Times New Roman",serif;color:#1C1E1B;max-width:760px;margin:2.5rem auto;padding:0 1.25rem;line-height:1.55;}' +
+        'h1{font-size:1.65rem;line-height:1.2;margin:0 0 .25rem;}.date{color:#6B6E66;font-size:.85rem;margin:0 0 1.5rem;}' +
+        'h2{font-size:1.15rem;margin:2rem 0 .6rem;border-bottom:1px solid #ddd;padding-bottom:.25rem;}p{margin:.6rem 0;}' +
+        'table{border-collapse:collapse;width:100%;font-size:.85rem;margin:.5rem 0;}th,td{text-align:left;padding:.35rem .5rem;border-bottom:1px solid #eee;}' +
+        'th{color:#6B6E66;font-weight:600;font-size:.72rem;text-transform:uppercase;letter-spacing:.03em;}td.n,th.n{text-align:right;font-variant-numeric:tabular-nums;}' +
+        '.big{font-size:2.1rem;font-weight:700;}a{color:#1E5C45;}sup a{text-decoration:none;}ol.refs{font-size:.8rem;color:#444;padding-left:1.2rem;}ol.refs li{margin:.35rem 0;word-break:break-word;}' +
+        '.muted{color:#6B6E66;font-size:.85rem;}@media print{a{color:#000;}body{margin:0;}}</style></head><body>' +
+        '<h1>How my AI use contributes to my carbon emissions</h1>' +
+        '<p class="date">Generated ' + date + ' from the calculator at andymasley.com/visuals/ai-prompt-footprint, based on exactly the inputs below.</p>' +
+        '<h2>1. What I entered</h2>' +
+        '<table><thead><tr><th>Model</th><th>Typical output</th><th class="n">Prompts/day</th><th class="n">CO₂e each</th><th class="n">CO₂e/day</th></tr></thead><tbody>' +
+        (rowsHtml || '<tr><td colspan="5">No usage entered.</td></tr>') + '</tbody></table>' +
+        '<p class="muted">Per-prompt figures come from the EcoLogits model' + fn(1) + ', with the electricity rescaled to the ' + escXml(loc.label) + ' grid' + fn(2) + '.</p>' +
+        '<h2>2. My AI carbon</h2>' +
+        '<p>Across these prompts, my AI use comes to about <strong>' + fmtCarbon(aiDay) + ' per day</strong> (range ' + fmtCarbon(aiMin) + ' to ' + fmtCarbon(aiMax) + '), or <strong>' + fmtCarbon(aiYr) + ' per year</strong>, drawing about ' + fmtEnergy(eD) + ' of electricity a day.' + fn(1) + fn(2) + ' The range is EcoLogits’ 95% interval, mostly uncertainty in the parameter counts of closed models.' + fn(1) + '</p>' +
+        '<h2>3. How that compares with the rest of my life</h2>' +
+        '<p><span class="big">' + pctStr + '</span><br>of an average day of my own carbon footprint (' + fmtCarbon(day) + ' / day), built from:</p>' +
+        '<table><tbody>' + fpHtml + '</tbody></table>' +
+        '<p class="muted">Regional baseline' + fn(3) + '; home energy' + fn(4) + '; driving' + fn(5) + '; diet' + fn(6) + '; flying' + fn(7) + '.</p>' +
+        '<h2>4. My daily AI use, next to everyday things</h2>' + reportBarsSVG(dailyRows) +
+        '<p class="muted">Everyday comparisons from diet' + fn(6) + ', driving' + fn(5) + ', and product life-cycle studies listed on the source page.</p>' +
+        '<h2>5. A year of my AI use, next to bigger choices</h2>' + reportBarsSVG(annualRows) +
+        '<p class="muted">Lifestyle-cut figures from the Founders Pledge comparison' + fn(9) + ', drawing on Wynes &amp; Nicholas' + fn(7) + ' and Ivanova et al.' + fn(8) + '</p>' +
+        '<h2>References</h2><ol class="refs">' + refsHtml + '</ol>' +
+        '<p class="muted">Full methodology and all source links: andymasley.com/visuals/ai-prompt-footprint</p>' +
+        '</body></html>';
+    }
+    function generateReport() {
+      try {
+        const blob = new Blob([reportHTML()], { type: 'text/html' });
+        window.open(URL.createObjectURL(blob), '_blank');
+      } catch (e) { /* ignore */ }
+    }
+
     function renderMetricToggle() {
       root.querySelectorAll('.aipf-metric').forEach((b) => { const on = b.dataset.metric === state.metric; b.classList.toggle('is-active', on); b.setAttribute('aria-pressed', on ? 'true' : 'false'); });
     }
@@ -648,9 +741,15 @@ const structuredData = [
       root.querySelector('#aipf-share').addEventListener('click', (e) => {
         const btn = e.currentTarget;
         const done = () => { btn.textContent = 'Link copied'; setTimeout(() => { btn.textContent = 'Copy a link to this estimate'; }, 1800); };
-        try { if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(location.href).then(done, done); else done(); } catch (err) { done(); }
+        try { if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(buildShareURL()).then(done, done); else done(); } catch (err) { done(); }
       });
-      root.querySelector('#aipf-loc').addEventListener('change', (e) => { state.loc = e.target.value; updateOutputs(); });
+      const rb = root.querySelector('#aipf-report'); if (rb) rb.addEventListener('click', generateReport);
+      root.querySelector('#aipf-loc').addEventListener('change', (e) => {
+        state.loc = e.target.value;
+        const d = COUNTRY_DIET[state.loc];
+        if (d) { state.diet = d; const ds = root.querySelector('#aipf-diet'); if (ds) ds.value = d; }
+        updateOutputs();
+      });
       root.querySelector('#aipf-home').addEventListener('change', (e) => { state.home = e.target.value; updateOutputs(); });
       root.querySelector('#aipf-drive').addEventListener('change', (e) => { state.drive = e.target.value; updateOutputs(); });
       root.querySelector('#aipf-diet').addEventListener('change', (e) => { state.diet = e.target.value; updateOutputs(); });
@@ -761,8 +860,17 @@ const structuredData = [
   }
   .aipf-life select:hover { background-color: var(--accent); color: var(--bg-elevated); }
 
+  /* Top toolbar: metric toggle on the left, report button on the right */
+  .aipf-toolbar-top { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem 1rem; flex-wrap: wrap; margin-bottom: 1.1rem; }
+  .aipf-report-btn {
+    background: var(--accent); color: var(--bg-elevated); border: none; border-radius: 6px;
+    padding: 0.5rem 0.95rem; font-family: var(--font-body); font-size: 0.82rem; cursor: pointer;
+    transition: background-color 0.12s; max-width: 22rem; text-align: left;
+  }
+  .aipf-report-btn:hover { background: var(--accent-hover); }
+
   /* Carbon / water as a prominent segmented toggle above the tool */
-  .aipf-toggle { display: flex; align-items: center; gap: 0.6rem; margin-bottom: 1rem; }
+  .aipf-toggle { display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0; }
   .aipf-toggle-label { font-family: var(--font-body); font-size: 0.8rem; color: var(--dim); }
   .aipf-showing { display: inline-flex; border: 1px solid var(--border-strong); border-radius: 6px; overflow: hidden; font-family: var(--font-body); }
   .aipf-metric { background: var(--bg-elevated); border: none; padding: 0.44rem 1.05rem; font: inherit; font-size: 0.9rem; color: var(--dim); cursor: pointer; transition: background-color 0.12s, color 0.12s; }
