@@ -1034,7 +1034,7 @@ const structuredData = [
   .aipf-tool { display: grid; grid-template-columns: 1.35fr 1fr; border: 1px solid var(--border); background: var(--bg-elevated); }
   .aipf-below { background: var(--bg-elevated); border: 1px solid var(--border); padding: 1.1rem 1.25rem; }
   .aipf-in { padding: 1.1rem 1.25rem; min-width: 0; }
-  .aipf-out { padding: 1.1rem 1.25rem; border-left: 1px solid var(--border); min-width: 0; }
+  .aipf-out { padding: 1.1rem 1.25rem; border-left: 1px solid var(--border); min-width: 0; background: var(--bg-subtle); }
 
   .aipf-in-head { display: flex; align-items: baseline; gap: 0.5rem; margin-bottom: 0.7rem; font-weight: 600; font-size: 1rem; }
   .aipf-in-sub { font-family: var(--font-body); font-size: 0.7rem; color: var(--dim); letter-spacing: 0.02em; }
@@ -1131,7 +1131,13 @@ const structuredData = [
   .aipf-verdict-detail { font-family: var(--font-body); font-size: 0.78rem; line-height: 1.5; color: var(--dim); margin: 0.6rem 0 0; font-variant-numeric: tabular-nums; }
   .aipf-words-miles { display: block; margin-top: 0.9rem; padding-top: 0.9rem; border-top: 1px solid var(--border); }
   .aipf-prop { height: 16px; background: var(--border); margin-top: 0.85rem; overflow: hidden; }
-  .aipf-prop-fill { height: 100%; background: var(--accent); transition: width 0.3s ease; min-width: 3px; }
+  .aipf-prop-fill { height: 100%; background: var(--accent); min-width: 3px; transform-origin: left center; animation: aipf-grow-x 0.45s cubic-bezier(0.22, 1, 0.36, 1); }
+  @keyframes aipf-grow-x { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+  @keyframes aipf-fade-in { from { opacity: 0; } to { opacity: 1; } }
+  .aipf-verdict-fig { animation: aipf-fade-in 0.28s ease; }
+  @media (prefers-reduced-motion: reduce) {
+    .aipf-prop-fill, .aipf-verdict-fig { animation: none; }
+  }
   .aipf-prop-cap { display: flex; justify-content: space-between; font-family: var(--font-body); font-size: 0.62rem; letter-spacing: 0.04em; text-transform: uppercase; color: var(--dim); margin-top: 0.35rem; }
   .aipf-prop-cap .accent { color: var(--accent); font-weight: 600; }
 
