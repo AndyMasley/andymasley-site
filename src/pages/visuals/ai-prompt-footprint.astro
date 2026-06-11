@@ -1021,7 +1021,9 @@ const structuredData = [
   .aipf b { font-weight: 600; color: var(--text); }
 
   /* ---- Header ---- */
-  .aipf-header { max-width: 44rem; margin-bottom: 1.4rem; }
+  /* Align the title + intro with the site nav rule above (the 640px content column),
+     even though the calculator itself breaks out to full width. */
+  .aipf-header { max-width: calc(var(--max-width) - 48px); margin: 0 auto 1.4rem; }
   .aipf-title {
     font-family: var(--font-editorial); font-weight: 600;
     font-size: clamp(1.7rem, 1.2rem + 1.6vw, 2.4rem); line-height: 1.05;
