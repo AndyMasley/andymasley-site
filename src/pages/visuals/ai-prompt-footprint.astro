@@ -311,7 +311,6 @@ const structuredData = [
       return fmtNum(g) + ' g CO₂e';
     }
     function fmtWater(l) {
-      if (l >= 3785) return fmtNum(l / GAL_TO_L) + ' gal';
       if (l >= 1) return fmtNum(l) + ' L';
       return fmtNum(l * 1000) + ' mL';
     }
