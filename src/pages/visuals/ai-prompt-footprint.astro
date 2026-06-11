@@ -254,20 +254,36 @@ const structuredData = [
       { id: 'often', label: 'often',     c: 8000, w: 0 },
     ];
 
+    // Daily reference points (all things that emit, so no add/save direction)
     const DAILY_ITEMS = [
       { label: 'A cup of coffee',          c: 0.21, w: 35 },
       { label: 'An hour on a PS5',         c: 0.08, w: 0.1 },
+      { label: '3 minutes in the microwave', c: 0.02, w: 0.05 },
       { label: 'A mile in a gas car',      c: 0.40, w: 0.1 },
       { label: 'A 10-minute hot shower',   c: 0.5,  w: 25 },
+      { label: 'A dishwasher load',        c: 0.5,  w: 6 },
+      { label: 'A dryer load',             c: 1.2,  w: 0.1 },
       { label: 'Printing a 400-page book', c: 2.5,  w: 300 },
       { label: 'A beef burger',            c: 3.0,  w: 460 },
     ];
+    // Annual reference points. dir: 'add' = emissions you cause, 'save' = a cut you make.
+    // Lifestyle-cut figures from Founders Pledge / Wynes & Nicholas via AndyMasley.Substack.com.
     const ANNUAL_ITEMS = [
-      { label: 'A new pair of jeans',           c: 33,   w: 2110 },
-      { label: 'A new smartphone',              c: 70,   w: 3190 },
-      { label: 'Going vegan for a year',        c: 1450, w: 237000 },
-      { label: 'One transatlantic flight',      c: 1760, w: 5 },
-      { label: 'A year of driving',             c: 4800, w: 50 },
+      { label: 'A one-way European flight',       c: 180,  w: 3,      dir: 'add' },
+      { label: 'A new pair of jeans',             c: 33,   w: 2110,   dir: 'add' },
+      { label: 'A new smartphone',                c: 70,   w: 3190,   dir: 'add' },
+      { label: 'One transatlantic flight',        c: 1760, w: 5,      dir: 'add' },
+      { label: 'A year of driving',               c: 4800, w: 50,     dir: 'add' },
+      { label: 'Buying LED bulbs',                c: 30,   w: 0,      dir: 'save' },
+      { label: 'Recycling for a year',            c: 140,  w: 0,      dir: 'save' },
+      { label: 'Hang-drying your clothes',        c: 140,  w: 0,      dir: 'save' },
+      { label: 'Switching to a hybrid car',       c: 480,  w: 0,      dir: 'save' },
+      { label: 'Buying green electricity',        c: 1380, w: 0,      dir: 'save' },
+      { label: 'Switching to an electric car',    c: 1380, w: 0,      dir: 'save' },
+      { label: 'Going vegan for a year',          c: 1450, w: 237000, dir: 'save' },
+      { label: 'A deep retrofit of your home',    c: 1580, w: 0,      dir: 'save' },
+      { label: 'Switching to green heating',      c: 1990, w: 0,      dir: 'save' },
+      { label: 'Living car-free',                 c: 2400, w: 0,      dir: 'save' },
     ];
 
     const GAL_TO_L = 3.785411784;
@@ -534,16 +550,24 @@ const structuredData = [
       box.innerHTML = html;
     }
 
+    function esc(s) { return s.replace(/&/g, '&amp;').replace(/</g, '&lt;'); }
     function renderBars(targetId, focalLabel, focalVal, items) {
       const rows = [{ label: focalLabel, v: focalVal, focal: true }];
-      for (const it of items) rows.push({ label: it.label, v: itemBase(it, state.metric), focal: false });
+      for (const it of items) {
+        const v = itemBase(it, state.metric);
+        if (v <= 0) continue; // skip items with no impact in this metric (keeps the water view clean)
+        rows.push({ label: it.label, v: v, dir: it.dir });
+      }
       rows.sort((a, b) => b.v - a.v);
       const max = Math.max.apply(null, rows.map((r) => r.v).concat([1e-9]));
       const box = root.querySelector(targetId);
       box.innerHTML = '';
       for (const r of rows) {
         const row = el('div', 'aipf-bar-row' + (r.focal ? ' is-focal' : ''));
-        row.appendChild(el('div', 'aipf-bar-label', r.label));
+        let labelHtml = esc(r.label);
+        if (r.dir === 'save') labelHtml += ' <span class="aipf-tag aipf-tag--save">saved</span>';
+        else if (r.dir === 'add') labelHtml += ' <span class="aipf-tag aipf-tag--add">added</span>';
+        row.appendChild(el('div', 'aipf-bar-label', labelHtml));
         const track = el('div', 'aipf-bar-track');
         const fill = el('div', 'aipf-bar-fill'); fill.style.width = Math.max(0.4, (r.v / max) * 100).toFixed(2) + '%';
         track.appendChild(fill);
@@ -559,7 +583,7 @@ const structuredData = [
     }
     function renderAnnual() {
       const aiYr = aiDaily(state.metric) * DAYS;
-      root.querySelector('#aipf-annual-sub').innerHTML = 'A year of your AI use comes to ' + fmtMetric(aiYr) + ', set beside choices that are bigger and rarer.';
+      root.querySelector('#aipf-annual-sub').innerHTML = 'A year of your AI use (green) comes to ' + fmtMetric(aiYr) + ', shown against emissions you add and cuts you could make.';
       renderBars('#aipf-annual-bars', 'A year of your AI use', aiYr, ANNUAL_ITEMS);
     }
 
@@ -735,6 +759,10 @@ const structuredData = [
   .aipf-bar-row.is-focal .aipf-bar-fill { background: var(--accent); }
   .aipf-bar-val { font-family: var(--font-body); font-size: 0.76rem; color: var(--dim); font-variant-numeric: tabular-nums; white-space: nowrap; }
   .aipf-bar-row.is-focal .aipf-bar-val { color: var(--text); }
+  .aipf-tag { font-family: var(--font-body); font-size: 0.62rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; white-space: nowrap; }
+  .aipf-tag--save { color: var(--accent); }
+  .aipf-tag--add { color: #b05a37; }
+  [data-theme="dark"] .aipf-tag--add { color: #d98a63; }
 
   /* Compact bars (daily mini): name + value on top, bar beneath */
   .aipf-bars--compact .aipf-bar-row { grid-template-columns: 1fr auto; grid-template-areas: "label value" "bar bar"; gap: 0.12rem 0.5rem; padding: 0.28rem 0; }
