@@ -523,7 +523,7 @@ const structuredData = [
       if (wd > 0) {
         const wy = wd * DAYS;
         html += 'About <b>' + fmtWords(wd) + ' words a day</b>, roughly <b>' + fmtWords(wy) + ' a year</b>. At the average American reading pace of ' + WPM +
-          ' words a minute, that is ' + fmtReadingTime(wd / WPM) + ' of reading a day, or <b>' + fmtReadingTime(wy / WPM) + '</b> nonstop across the year.';
+          ' words a minute, that is <b>' + fmtReadingTime(wd / WPM) + '</b> of reading a day, or <b>' + fmtReadingTime(wy / WPM) + '</b> nonstop across the year.';
       } else {
         html += 'Almost all of your use is code, not prose to read.';
       }
