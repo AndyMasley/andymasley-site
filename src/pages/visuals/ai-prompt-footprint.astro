@@ -743,7 +743,7 @@ const structuredData = [
       const pct = day > 0 ? (aiDay / day) * 100 : 0;
       const pctStr = pct >= 1 ? pct.toFixed(pct >= 10 ? 0 : 1) + '%' : pct >= 0.01 ? pct.toFixed(2) + '%' : pct > 0 ? 'under 0.01%' : '0%';
       const loc = getLoc(), home = HOMES.find((x) => x.id === state.home), drive = DRIVING.find((x) => x.id === state.drive), diet = DIETS.find((x) => x.id === state.diet), fly = FLYING.find((x) => x.id === state.fly);
-      const fp = [['Where you live (' + loc.label + ')', loc.c], ['Home (' + home.label + ')', home.c], ['Driving (' + drive.label + ')', drive.c], ['Diet (' + diet.label + ')', diet.c], ['Flying (' + fly.label + ')', fly.c]];
+      const fp = [['Where I live (' + loc.label + ')', loc.c], ['Home (' + home.label + ')', home.c], ['Driving (' + drive.label + ')', drive.c], ['Diet (' + diet.label + ')', diet.c], ['Flying (' + fly.label + ')', fly.c]];
       let fpHtml = '';
       for (const f of fp) fpHtml += '<tr><td>' + escXml(f[0]) + '</td><td class="n">' + fmtCarbon(f[1] * 1000) + ' / yr</td></tr>';
       const dailyRows = [{ label: 'My daily AI use', v: aiDay, focal: true }].concat(DAILY_ITEMS.map((it) => ({ label: it.label, v: it.c * 1000 })));
