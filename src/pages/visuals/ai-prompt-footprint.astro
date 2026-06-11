@@ -146,8 +146,9 @@ const structuredData = [
           model's (active) parameter count and output length, and adds the embodied impact of
           building the hardware. The low to high range is EcoLogits' own 95% confidence interval,
           mostly uncertainty in the parameter counts of closed models. Water is its
-          water-consumption footprint: data-center cooling plus the water used to make the
-          electricity.
+          water-consumption footprint — water actually consumed (evaporated in data-center cooling
+          and in generating the electricity), not withdrawn and returned. Every water figure on this
+          page is consumptive, so they compare on the same basis.
         </p>
         <p>
           <strong>Carbon on your grid.</strong> EcoLogits reports carbon on the global average grid,
@@ -195,8 +196,11 @@ const structuredData = [
           <a href="https://www.pnas.org/doi/10.1073/pnas.1109936109" target="_blank" rel="noopener">92% food / 4% goods / 4% domestic</a>
           breakdown they report; a
           <a href="https://theconversation.com/meat-free-diets-could-cut-our-water-footprint-in-half-say-scientists-102926" target="_blank" rel="noopener">plant-based diet cuts the food share by about half</a>.
-          This is virtual water, mostly agricultural, and not the same kind of water as the AI figure
-          (mostly cooling), so the comparison shows scale, not identical accounting.
+          These are consumption figures, dominated by the green and blue water actually used up to
+          grow food and make goods (grey pollution-dilution water is a minor part), so they sit on
+          the same water-consumed basis as the AI figure, and pure withdrawals that return to the
+          system are left out. It is mostly virtual agricultural water rather than data-center
+          cooling, so the comparison shows scale, not identical accounting.
         </p>
         <p>
           <strong>Lifestyle cuts (the yearly chart).</strong> The "saved" figures come from the
@@ -238,16 +242,16 @@ const structuredData = [
         </p>
         <p>
           <strong>Water comparisons.</strong> The water charts use water-intensive items instead of
-          the carbon ones, mostly embodied (virtual) water from the
+          the carbon ones, all water-consumption figures (the green and blue virtual water used up,
+          with grey pollution-dilution water a minor part) from the
           <a href="https://watercalculator.org/footprint/the-hidden-water-in-everyday-products/" target="_blank" rel="noopener">Water Footprint Network</a>:
-          a slice of bread (~40 L), a cup of coffee (~140 L), an egg (~196 L), a glass of milk
-          (~255 L), a cotton T-shirt (~2,700 L), leather shoes (~8,000 L), a pair of jeans
-          (~10,000 L), and a beef burger (~1,700 L), plus a
+          a slice of bread (~40 L), an apple (~125 L), a cup of coffee (~140 L), an egg (~196 L), a
+          glass of milk (~255 L), a cotton T-shirt (~2,700 L), leather shoes (~8,000 L), a pair of
+          jeans (~10,000 L), and a beef burger (~1,700 L), plus a
           <a href="https://www.compareandrecycle.co.uk/blog/world-water-week-how-much-water-does-your-smartphone-use" target="_blank" rel="noopener">new smartphone (~12,800 L)</a>.
-          The savings come from
-          <a href="https://www.epa.gov/watersense/fix-leak-week" target="_blank" rel="noopener">fixing household leaks (~10,000 gal/yr)</a>,
-          a <a href="https://www.epa.gov/watersense/showerheads" target="_blank" rel="noopener">water-saving showerhead (~2,700 gal/yr)</a>,
-          and eating less meat (the diet figures above).
+          The savings are all dietary — eating one fewer burger a week, going vegetarian, or going
+          vegan — because almost all of the personal water footprint you can actually cut is the
+          consumptive water behind food, not water that runs down a drain and is treated and returned.
         </p>
       </div>
     </details>
@@ -373,7 +377,7 @@ const structuredData = [
     // Water has its own water-intensive comparisons (embodied / virtual water, gal).
     const DAILY_WATER_ITEMS = [
       { label: 'A slice of bread',     w: 11 },
-      { label: 'A 10-minute shower',   w: 21 },
+      { label: 'An apple',             w: 33 },
       { label: 'A cup of coffee',      w: 37 },
       { label: 'An egg',               w: 52 },
       { label: 'A glass of milk',      w: 53 },
@@ -385,8 +389,7 @@ const structuredData = [
       { label: 'A new pair of jeans',              w: 2640,   dir: 'add' },
       { label: 'A new smartphone',                 w: 3370,   dir: 'add' },
       { label: 'A year of daily coffee',           w: 13505,  dir: 'add' },
-      { label: 'A water-saving showerhead (1 yr)', w: 2700,   dir: 'save' },
-      { label: 'Fixing household leaks (1 yr)',    w: 10000,  dir: 'save' },
+      { label: 'A burger less each week (1 yr)',   w: 23900,  dir: 'save' },
       { label: 'Eating vegetarian for a year',     w: 195000, dir: 'save' },
       { label: 'Going vegan for a year',           w: 270000, dir: 'save' },
     ];
