@@ -174,11 +174,18 @@ const structuredData = [
           and <a href="https://www.nature.com/articles/s43016-023-00795-w" target="_blank" rel="noopener">Scarborough et al. (2023)</a>:
           about 1.05 t CO<sub>2</sub>e a year for a vegan diet up to 3.2 t for a heavy-meat one.
           <strong>Flying</strong> is anchored to a transatlantic round trip of about 1.6 t
-          (<a href="https://iopscience.iop.org/article/10.1088/1748-9326/aa7541" target="_blank" rel="noopener">Wynes &amp; Nicholas 2017</a>).
-          The <strong>water footprint</strong> includes the virtual water in food
-          (<a href="https://www.waterfootprint.org/" target="_blank" rel="noopener">Water Footprint Network</a>),
-          which dominates it and is not the same kind of water as the AI figure, so the comparison
-          shows scale, not identical accounting.
+          (<a href="https://iopscience.iop.org/article/10.1088/1748-9326/aa7541" target="_blank" rel="noopener">Wynes &amp; Nicholas 2017</a>);
+          the rarely / sometimes / often options are roughly 0.5, 1.5, and 5 such trips a year.
+          The <strong>water footprint</strong> is anchored to national per-capita totals from the
+          <a href="https://tools.waterfootprint.org/national-explorer/" target="_blank" rel="noopener">Water Footprint Network (Mekonnen &amp; Hoekstra 2011)</a>,
+          about 2,840 m<sup>3</sup>/yr for the US down to ~1,070 for China, and split into food (the
+          diet knob), goods and services (location), and direct household use (home) following the
+          roughly
+          <a href="https://www.pnas.org/doi/10.1073/pnas.1109936109" target="_blank" rel="noopener">92% food / 4% goods / 4% domestic</a>
+          breakdown they report; a
+          <a href="https://theconversation.com/meat-free-diets-could-cut-our-water-footprint-in-half-say-scientists-102926" target="_blank" rel="noopener">plant-based diet cuts the food share by about half</a>.
+          This is virtual water, mostly agricultural, and not the same kind of water as the AI figure
+          (mostly cooling), so the comparison shows scale, not identical accounting.
         </p>
         <p>
           <strong>Lifestyle cuts (the yearly chart).</strong> The "saved" figures come from the
@@ -207,6 +214,16 @@ const structuredData = [
           needing <a href="https://www.compareandrecycle.co.uk/blog/world-water-week-how-much-water-does-your-smartphone-use" target="_blank" rel="noopener">~12,800 L</a>;
           a <a href="https://www.levistrauss.com/wp-content/uploads/2015/03/Full-LCA-Results-Deck-FINAL.pdf" target="_blank" rel="noopener">pair of jeans (~33 kg, Levi's)</a>
           at ~10,000 L (<a href="https://watercalculator.org/footprint/the-hidden-water-in-everyday-products/" target="_blank" rel="noopener">Water Footprint Network</a>).
+        </p>
+        <p>
+          <strong>How the appliance figures are derived.</strong> The coffee, PS5, microwave, shower,
+          dishwasher, and dryer carbon numbers are each that item's measured electricity (cited
+          above) times the US grid (~0.38 kg CO<sub>2</sub>/kWh), so they fall on cleaner grids.
+          Two depend heavily on assumptions: a cup of coffee is
+          <a href="https://theconversation.com/coffee-heres-the-carbon-cost-of-your-daily-cup-and-how-to-make-it-climate-friendly-152629" target="_blank" rel="noopener">~0.05 kg black up to ~0.5 kg for a large latte</a>
+          (we use ~0.2 kg), and a 10-minute hot shower is roughly 0.2 kg on a gas water heater up to
+          1.5 kg on electric resistance (we use ~0.7 kg). Where a single authority does not exist,
+          figures are rounded mid-range estimates from the sources cited, not false precision.
         </p>
         <p class="aipf-method-caveat">
           The point is scale. For almost anyone, daily AI use is a rounding error next to driving,
@@ -254,17 +271,17 @@ const structuredData = [
     // location = regional baseline for goods, services, shared infrastructure
     // (home energy and driving are separate knobs below, so they are excluded here)
     const LOCATIONS = [
-      { id: 'us',    label: 'the US',    c: 3000, w: 30000, grid: 380 },
-      { id: 'eu',    label: 'the EU',    c: 1800, w: 22000, grid: 215 },
-      { id: 'uk',    label: 'the UK',    c: 1700, w: 20000, grid: 125 },
-      { id: 'cn',    label: 'China',     c: 2500, w: 22000, grid: 580 },
-      { id: 'in',    label: 'India',     c: 900,  w: 18000, grid: 700 },
-      { id: 'world', label: 'the world', c: 1800, w: 22000, grid: WORLD_GRID },
+      { id: 'us',    label: 'the US',    c: 3000, w: 220000, grid: 380 },
+      { id: 'eu',    label: 'the EU',    c: 1800, w: 110000, grid: 215 },
+      { id: 'uk',    label: 'the UK',    c: 1700, w: 100000, grid: 125 },
+      { id: 'cn',    label: 'China',     c: 2500, w: 90000,  grid: 580 },
+      { id: 'in',    label: 'India',     c: 900,  w: 70000,  grid: 700 },
+      { id: 'world', label: 'the world', c: 1800, w: 100000, grid: WORLD_GRID },
     ];
     const HOMES = [
-      { id: 'apt', label: 'a small apartment', c: 1500, w: 15000 },
-      { id: 'med', label: 'a medium home',     c: 3500, w: 30000 },
-      { id: 'big', label: 'a big house',       c: 7000, w: 55000 },
+      { id: 'apt', label: 'a small apartment', c: 1500, w: 12000 },
+      { id: 'med', label: 'a medium home',     c: 3500, w: 20000 },
+      { id: 'big', label: 'a big house',       c: 7000, w: 35000 },
     ];
     const DRIVING = [
       { id: 'd0',   label: 'not at all',        c: 0,     w: 0 },
@@ -273,12 +290,12 @@ const structuredData = [
       { id: 'dhi',  label: 'a lot',             c: 10000, w: 0 },
     ];
     const DIETS = [
-      { id: 'heavy', label: 'a lot of meat',   c: 3200, w: 547000 },
-      { id: 'avg',   label: 'an average diet', c: 2500, w: 401000 },
-      { id: 'light', label: 'little meat',     c: 2000, w: 328000 },
-      { id: 'pesc',  label: 'a pescatarian diet', c: 1700, w: 292000 },
-      { id: 'veg',   label: 'a vegetarian diet',  c: 1500, w: 237000 },
-      { id: 'vegan', label: 'a vegan diet',    c: 1050, w: 164000 },
+      { id: 'heavy', label: 'a lot of meat',   c: 3200, w: 650000 },
+      { id: 'avg',   label: 'an average diet', c: 2500, w: 500000 },
+      { id: 'light', label: 'little meat',     c: 2000, w: 420000 },
+      { id: 'pesc',  label: 'a pescatarian diet', c: 1700, w: 370000 },
+      { id: 'veg',   label: 'a vegetarian diet',  c: 1500, w: 305000 },
+      { id: 'vegan', label: 'a vegan diet',    c: 1050, w: 230000 },
     ];
     const FLYING = [
       { id: 'never', label: 'never',     c: 0,    w: 0 },
@@ -313,7 +330,7 @@ const structuredData = [
       { label: 'Switching to a hybrid car',       c: 480,  w: 0,      dir: 'save' },
       { label: 'Buying green electricity',        c: 1380, w: 0,      dir: 'save' },
       { label: 'Switching to an electric car',    c: 1380, w: 0,      dir: 'save' },
-      { label: 'Going vegan for a year',          c: 1450, w: 237000, dir: 'save' },
+      { label: 'Going vegan for a year',          c: 1450, w: 270000, dir: 'save' },
       { label: 'A deep retrofit of your home',    c: 1580, w: 0,      dir: 'save' },
       { label: 'Switching to green heating',      c: 1990, w: 0,      dir: 'save' },
       { label: 'Living car-free',                 c: 2400, w: 0,      dir: 'save' },
