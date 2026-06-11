@@ -282,19 +282,20 @@ const structuredData = [
           <strong>Flying</strong> is anchored to a transatlantic round trip of about 1.6 t
           (<a href="https://iopscience.iop.org/article/10.1088/1748-9326/aa7541" target="_blank" rel="noopener">Wynes &amp; Nicholas 2017</a>);
           the rarely / sometimes / often options are roughly 0.5, 1.5, and 5 such trips a year.
-          The <strong>water footprint</strong> is anchored to national per-capita totals from the
-          <a href="https://tools.waterfootprint.org/national-explorer/" target="_blank" rel="noopener">Water Footprint Network (Mekonnen &amp; Hoekstra 2011)</a>,
-          about 2,840 m<sup>3</sup>/yr for the US down to ~1,070 for China, and split into food (the
-          diet knob), goods and services (location), and direct household use (home) following the
-          roughly
-          <a href="https://www.pnas.org/doi/10.1073/pnas.1109936109" target="_blank" rel="noopener">92% food / 4% goods / 4% domestic</a>
-          breakdown they report; a
-          <a href="https://theconversation.com/meat-free-diets-could-cut-our-water-footprint-in-half-say-scientists-102926" target="_blank" rel="noopener">plant-based diet cuts the food share by about half</a>.
-          These are consumption figures, dominated by the green and blue water actually used up to
-          grow food and make goods (grey pollution-dilution water is a minor part), so they sit on
-          the same water-consumed basis as the AI figure, and pure withdrawals that return to the
-          system are left out. It is mostly virtual agricultural water rather than data-center
-          cooling, so the comparison shows scale, not identical accounting.
+          The <strong>water footprint</strong> uses <strong>blue water only</strong> — freshwater
+          actually drawn from rivers, lakes, and aquifers. We deliberately leave out
+          <em>green</em> water (rain that falls on farmland and would evaporate anyway, whether or
+          not a crop is grown) and <em>grey</em> water (a notional pollution-dilution volume),
+          because neither is a real draw on freshwater supplies. The AI figure is already blue
+          (data-center cooling and power-plant water), so both sides match. The per-person blue
+          footprint is from the
+          <a href="https://tools.waterfootprint.org/national-explorer/" target="_blank" rel="noopener">Water Footprint Network (Mekonnen &amp; Hoekstra)</a>:
+          about <a href="https://www.mdpi.com/2073-4441/12/11/3286" target="_blank" rel="noopener">450 m<sup>3</sup>/yr for the US</a>
+          and <a href="https://www.pnas.org/doi/10.1073/pnas.1109936109" target="_blank" rel="noopener">153 m<sup>3</sup> globally</a>
+          (the other regions are scaled by their irrigation intensity and are approximate). Removing
+          green water changes the picture a lot: most of a food's water is rain, so a beef burger
+          drops from ~1,700 L total to about <a href="https://theconversation.com/heres-how-much-water-it-takes-to-make-a-serving-of-beef-and-why-where-it-comes-from-is-so-important-208155" target="_blank" rel="noopener">6 L of freshwater</a>,
+          while irrigated crops stay high.
         </p>
         <p>
           <strong>Lifestyle cuts (the yearly chart).</strong> The "saved" figures come from the
@@ -357,20 +358,20 @@ const structuredData = [
           figures are rounded mid-range estimates from the sources cited, not false precision.
         </p>
         <p>
-          <strong>Water comparisons.</strong> The water charts use water-intensive items instead of
-          the carbon ones, all water-consumption figures (the green and blue virtual water used up,
-          with grey pollution-dilution water a minor part) from the
-          <a href="https://watercalculator.org/footprint/the-hidden-water-in-everyday-products/" target="_blank" rel="noopener">Water Footprint Network</a>:
-          a slice of bread (~40 L), an apple (~125 L), a cup of coffee (~140 L), a glass of wine
-          (~110 L), an avocado (~165 L), an egg (~196 L), a glass of milk (~255 L), a bottle of wine
-          (~660 L), a pizza (~1,220 L), a bar of chocolate (~1,700 L), a beef burger (~1,700 L), a
-          cotton T-shirt (~2,700 L), leather shoes (~8,000 L), a pair of jeans (~10,000 L), and a
-          <a href="https://www.compareandrecycle.co.uk/blog/world-water-week-how-much-water-does-your-smartphone-use" target="_blank" rel="noopener">new smartphone (~12,800 L)</a>.
-          The savings are mostly dietary (eating one fewer burger a week, going vegetarian, or vegan)
-          plus outdoor watering: a typical lawn drinks roughly 20,000 gal a year, so letting it go
-          unwatered or replacing it with native plants saves most of that
-          (<a href="https://www.epa.gov/watersense/landscaping-tips" target="_blank" rel="noopener">EPA WaterSense</a>) —
-          and lawn irrigation, unlike water down a drain, is mostly consumed by evaporation.
+          <strong>Water comparisons (blue water).</strong> The water charts use the
+          <strong>blue</strong> (freshwater) component only, so the comparison items are the
+          irrigation- and process-water heavy ones, from the
+          <a href="https://watercalculator.org/footprint/the-hidden-water-in-everyday-products/" target="_blank" rel="noopener">Water Footprint Network</a>
+          and crop studies: a beef burger (~6 L, since beef is ~90% rainwater), a cup of coffee
+          (~4 L), an avocado (~60 L), a handful of almonds (~120 L, as
+          <a href="https://www.almonds.org/sites/default/files/2020-05/Water_footprint_plus_almonds.pdf" target="_blank" rel="noopener">each California almond takes ~12 L of irrigation</a>),
+          a cotton T-shirt (~1,500 L of its 2,700 L total is blue), a pair of jeans (~5,000 L), and a
+          <a href="https://www.compareandrecycle.co.uk/blog/world-water-week-how-much-water-does-your-smartphone-use" target="_blank" rel="noopener">new smartphone</a>
+          (mostly ultrapure freshwater). The savings come from cutting irrigated products (a few
+          fewer cotton clothes) and outdoor watering: a typical lawn drinks roughly 20,000 gal of
+          freshwater a year, so letting it go unwatered or replacing it with native plants saves most
+          of that (<a href="https://www.epa.gov/watersense/landscaping-tips" target="_blank" rel="noopener">EPA WaterSense</a>).
+          Eating less meat barely moves the blue total, because almost all of meat's water is rain.
         </p>
       </div>
     </details>
@@ -424,18 +425,21 @@ const structuredData = [
     const WORLD_GRID = 480; // global-average grid carbon intensity, g CO2e/kWh (Ember)
     // location = regional baseline for goods, services, shared infrastructure
     // (home energy and driving are separate knobs below, so they are excluded here)
+    // w = BLUE water footprint per capita (freshwater from rivers/lakes/aquifers),
+    // gal/yr; green rainwater excluded. The full blue footprint sits on "location";
+    // home/diet water are folded in (set to 0) to avoid double-counting.
     const LOCATIONS = [
-      { id: 'us',    label: 'the US',    c: 3000, w: 220000, grid: 380 },
-      { id: 'eu',    label: 'the EU',    c: 1800, w: 110000, grid: 215 },
-      { id: 'uk',    label: 'the UK',    c: 1700, w: 100000, grid: 125 },
-      { id: 'cn',    label: 'China',     c: 2500, w: 90000,  grid: 580 },
-      { id: 'in',    label: 'India',     c: 900,  w: 70000,  grid: 700 },
-      { id: 'world', label: 'the world', c: 1800, w: 100000, grid: WORLD_GRID },
+      { id: 'us',    label: 'the US',    c: 3000, w: 119000, grid: 380 },
+      { id: 'eu',    label: 'the EU',    c: 1800, w: 66000,  grid: 215 },
+      { id: 'uk',    label: 'the UK',    c: 1700, w: 45000,  grid: 125 },
+      { id: 'cn',    label: 'China',     c: 2500, w: 79000,  grid: 580 },
+      { id: 'in',    label: 'India',     c: 900,  w: 106000, grid: 700 },
+      { id: 'world', label: 'the world', c: 1800, w: 40000,  grid: WORLD_GRID },
     ];
     const HOMES = [
-      { id: 'apt', label: 'a small apartment', c: 1500, w: 12000 },
-      { id: 'med', label: 'a medium home',     c: 3500, w: 20000 },
-      { id: 'big', label: 'a big house',       c: 7000, w: 35000 },
+      { id: 'apt', label: 'a small apartment', c: 1500, w: 0 },
+      { id: 'med', label: 'a medium home',     c: 3500, w: 0 },
+      { id: 'big', label: 'a big house',       c: 7000, w: 0 },
     ];
     const DRIVING = [
       { id: 'd0',   label: 'not at all',        c: 0,     w: 0 },
@@ -443,13 +447,15 @@ const structuredData = [
       { id: 'davg', label: 'an average amount', c: 4800,  w: 0 },
       { id: 'dhi',  label: 'a lot',             c: 10000, w: 0 },
     ];
+    // Diet water (w) set to 0: on a blue-water basis the personal footprint is
+    // dominated by irrigated agriculture and counted in the regional figure above.
     const DIETS = [
-      { id: 'heavy', label: 'a lot of meat',   c: 3200, w: 650000 },
-      { id: 'avg',   label: 'an average diet', c: 2500, w: 500000 },
-      { id: 'light', label: 'little meat',     c: 2000, w: 420000 },
-      { id: 'pesc',  label: 'a pescatarian diet', c: 1700, w: 370000 },
-      { id: 'veg',   label: 'a vegetarian diet',  c: 1500, w: 305000 },
-      { id: 'vegan', label: 'a vegan diet',    c: 1050, w: 230000 },
+      { id: 'heavy', label: 'a lot of meat',   c: 3200, w: 0 },
+      { id: 'avg',   label: 'an average diet', c: 2500, w: 0 },
+      { id: 'light', label: 'little meat',     c: 2000, w: 0 },
+      { id: 'pesc',  label: 'a pescatarian diet', c: 1700, w: 0 },
+      { id: 'veg',   label: 'a vegetarian diet',  c: 1500, w: 0 },
+      { id: 'vegan', label: 'a vegan diet',    c: 1050, w: 0 },
     ];
     const FLYING = [
       { id: 'never', label: 'never',     c: 0,    w: 0 },
@@ -516,31 +522,23 @@ const structuredData = [
       { label: 'Living car-free',                 c: 2400, w: 0,      dir: 'save' },
     ];
 
-    // Water has its own water-intensive comparisons (embodied / virtual water, gal).
+    // Blue-water comparisons (gal): freshwater actually withdrawn, green rain excluded.
+    // Irrigated crops (almonds, cotton) and lawns dominate; rain-fed foods nearly vanish.
     const DAILY_WATER_ITEMS = [
-      { label: 'A slice of bread',     w: 11 },
-      { label: 'An apple',             w: 33 },
-      { label: 'A cup of coffee',      w: 37 },
-      { label: 'An egg',               w: 52 },
-      { label: 'A glass of milk',      w: 53 },
-      { label: 'A beef burger',        w: 460 },
+      { label: 'A cup of coffee',        w: 1 },
+      { label: 'A beef burger',          w: 1.6 },
+      { label: 'An avocado',             w: 16 },
+      { label: 'A handful of almonds',   w: 32 },
     ];
     const ANNUAL_WATER_ITEMS = [
-      { label: 'A glass of wine',                  w: 29,     dir: 'add' },
-      { label: 'An avocado',                       w: 44,     dir: 'add' },
-      { label: 'A bottle of wine',                 w: 174,    dir: 'add' },
-      { label: 'A pizza',                          w: 321,    dir: 'add' },
-      { label: 'A bar of chocolate',               w: 449,    dir: 'add' },
-      { label: 'A cotton T-shirt',                 w: 713,    dir: 'add' },
-      { label: 'A pair of leather shoes',          w: 2113,   dir: 'add' },
-      { label: 'A new pair of jeans',              w: 2640,   dir: 'add' },
+      { label: 'A year of daily coffee',           w: 365,    dir: 'add' },
+      { label: 'A cotton T-shirt',                 w: 396,    dir: 'add' },
+      { label: 'A new pair of jeans',              w: 1321,   dir: 'add' },
       { label: 'A new smartphone',                 w: 3370,   dir: 'add' },
-      { label: 'A year of daily coffee',           w: 13505,  dir: 'add' },
+      { label: 'A year of daily almonds',          w: 11700,  dir: 'add' },
+      { label: 'Buying five fewer cotton garments (1 yr)', w: 2000, dir: 'save' },
       { label: 'Replacing a lawn with native plants', w: 15000, dir: 'save' },
       { label: 'Letting your lawn go unwatered (1 yr)', w: 20000, dir: 'save' },
-      { label: 'A burger less each week (1 yr)',   w: 23900,  dir: 'save' },
-      { label: 'Eating vegetarian for a year',     w: 195000, dir: 'save' },
-      { label: 'Going vegan for a year',           w: 270000, dir: 'save' },
     ];
 
     const GAL_TO_L = 3.785411784;
@@ -785,8 +783,9 @@ const structuredData = [
 
     function renderGridNote() {
       const box = root.querySelector('#aipf-grid-note');
-      if (state.metric === 'carbon') { box.style.display = ''; box.textContent = 'AI carbon uses the ' + getLoc().label + ' grid for electricity, plus EcoLogits’ embodied hardware emissions.'; }
-      else box.style.display = 'none';
+      box.style.display = '';
+      if (state.metric === 'carbon') box.textContent = 'AI carbon uses the ' + getLoc().label + ' grid for electricity, plus EcoLogits’ embodied hardware emissions.';
+      else box.textContent = 'Water is blue water only: freshwater drawn from rivers, lakes, and aquifers. Green rainwater (most of food’s footprint) is excluded.';
     }
 
     function renderWords() {
@@ -940,7 +939,7 @@ const structuredData = [
         '<h2>6. In a year, ways I could cut emissions</h2>' + reportBarsSVG(cutRows) +
         '<p class="muted">Lifestyle-cut figures from the Founders Pledge comparison' + fn(9) + ', drawing on Wynes &amp; Nicholas' + fn(7) + ' and Ivanova et al.' + fn(8) + '</p>' +
         '<h2>7. My AI water</h2>' +
-        '<p>The same prompts consume about <strong>' + fmtWater(wDay) + ' of water a day</strong> (range ' + fmtWater(wMin) + ' to ' + fmtWater(wMax) + '), or <strong>' + fmtWater(wYr) + ' a year</strong> — <span class="big">' + pctWStr + '</span> of my daily water footprint (' + fmtWater(dayW) + '), which is mostly the virtual water in food. This is water consumption (cooling and power-plant water for AI; virtual food and product water for everything else), not withdrawals.' + fn(1) + fn(10) + '</p>' +
+        '<p>The same prompts consume about <strong>' + fmtWater(wDay) + ' of water a day</strong> (range ' + fmtWater(wMin) + ' to ' + fmtWater(wMax) + '), or <strong>' + fmtWater(wYr) + ' a year</strong> — <span class="big">' + pctWStr + '</span> of my daily blue-water footprint (' + fmtWater(dayW) + '). All water figures here are blue water (freshwater drawn from rivers, lakes, and aquifers); green rainwater and grey pollution-dilution water are excluded, so the AI and lifestyle figures match.' + fn(1) + fn(10) + '</p>' +
         '<h2>8. My daily AI water, next to everyday things</h2>' + reportBarsSVG(dailyWaterRows, fmtWater) +
         '<h2>9. In a year, water I add</h2>' + reportBarsSVG(addWaterRows, fmtWater) +
         '<h2>10. In a year, water I could cut</h2>' + reportBarsSVG(cutWaterRows, fmtWater) +
