@@ -704,12 +704,14 @@ const structuredData = [
       else if (pct > 0) pctStr = 'under 0.01%';
       else pctStr = '0%';
       const tiny = pct > 0 && pct < 0.5;
+      const miles = Math.round(aiDaily('carbon') * DAYS / 400); // EPA ~400 g CO2 per vehicle-mile
       box.innerHTML =
         '<div class="aipf-verdict-fig">' + pctStr + '</div>' +
         '<p class="aipf-verdict-say">of your daily ' + metricWord() + ' footprint.</p>' +
         '<p class="aipf-verdict-detail">A day of your AI use is ' + fmtMetric(ai) + ' (' + fmtMetric(t[1]) + ' to ' + fmtMetric(t[2]) +
           '). A day of your life is ' + fmtMetric(day) + '.</p>' +
-        '<div class="aipf-prop"><div class="aipf-prop-fill" style="width:' + Math.max(tiny ? 0 : 0.4, Math.min(100, pct)).toFixed(2) + '%"></div></div>';
+        '<div class="aipf-prop"><div class="aipf-prop-fill" style="width:' + Math.max(tiny ? 0 : 0.4, Math.min(100, pct)).toFixed(2) + '%"></div></div>' +
+        '<p class="aipf-verdict-miles">If you use chatbots this much every day, your annual use emits as much as driving a sedan <strong>' + miles.toLocaleString('en-US') + '</strong> mile' + (miles === 1 ? '' : 's') + '.</p>';
     }
 
     function renderGridNote() {
@@ -1022,6 +1024,8 @@ const structuredData = [
   }
   .aipf-verdict-say { font-size: 0.98rem; line-height: 1.3; color: var(--text); margin: 0.3rem 0 0; }
   .aipf-verdict-detail { font-family: var(--font-body); font-size: 0.74rem; line-height: 1.45; color: var(--dim); margin: 0.45rem 0 0; font-variant-numeric: tabular-nums; }
+  .aipf-verdict-miles { font-family: var(--font-editorial); font-size: 0.92rem; line-height: 1.5; color: var(--text-secondary); margin: 1rem 0 0; padding-top: 0.9rem; border-top: 1px solid var(--border); }
+  .aipf-verdict-miles strong { color: var(--text); font-weight: 600; }
   .aipf-prop { height: 4px; background: var(--border); margin-top: 0.7rem; overflow: hidden; }
   .aipf-prop-fill { height: 100%; background: var(--accent); transition: width 0.3s ease; }
 
