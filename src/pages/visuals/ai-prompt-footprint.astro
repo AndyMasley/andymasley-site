@@ -361,9 +361,30 @@ const structuredData = [
     function itemBase(item, metric) {
       return metric === 'carbon' ? item.c * 1000 : item.w * GAL_TO_L;
     }
+    // A coding/agent session outputs code, not prose to read. Exclude it from the
+    // word count and tally it as lines of code instead — unless the model relabels
+    // that length to a non-coding answer (e.g. GPT-5.5 Pro -> "A very long answer").
+    const TOKENS_PER_WORD = 0.75; // SIZES.w = tokens * 0.75
+    const TOKENS_PER_LINE = 10;   // rough average tokens per line of code
+    function isCodeRow(row) {
+      if (row.size !== 'agent') return false;
+      const o = SIZE_LABEL_OVERRIDES[row.model];
+      return !(o && o.agent);
+    }
+    function linesForSize(s) { return Math.round((s.w / TOKENS_PER_WORD) / TOKENS_PER_LINE); }
     function dailyWords() {
       let n = 0;
-      for (const r of state.rows) if (r.count) n += r.count * (SIZES.find((s) => s.id === r.size) || { w: 0 }).w;
+      for (const r of state.rows) if (r.count && !isCodeRow(r)) n += r.count * (SIZES.find((s) => s.id === r.size) || { w: 0 }).w;
+      return n;
+    }
+    function dailyCodeLines() {
+      let n = 0;
+      for (const r of state.rows) {
+        if (r.count && isCodeRow(r)) {
+          const s = SIZES.find((x) => x.id === r.size);
+          if (s) n += r.count * linesForSize(s);
+        }
+      }
       return n;
     }
     function fmtWords(n) {
@@ -619,16 +640,27 @@ const structuredData = [
     function renderWords() {
       const box = root.querySelector('#aipf-words');
       const wd = dailyWords();
-      if (wd <= 0) {
-        box.innerHTML = 'Add some use to see how many words your AI is writing for you.';
+      const cd = dailyCodeLines();
+      if (wd <= 0 && cd <= 0) {
+        box.innerHTML = 'Add some use to see how much your AI is writing for you.';
         return;
       }
-      const wy = wd * DAYS;
-      box.innerHTML =
-        'Your AI writes about <strong>' + fmtWords(wd) + ' words a day</strong> for you — roughly <strong>' +
-        fmtWords(wy) + ' words a year</strong>. Read end to end at the average American pace (' + WPM +
-        ' words a minute), that is <strong>' + fmtReadingTime(wd / WPM) + '</strong> a day, or <strong>' +
-        fmtReadingTime(wy / WPM) + '</strong> of nonstop reading over a year.';
+      let html = '';
+      if (wd > 0) {
+        const wy = wd * DAYS;
+        html += 'Your AI writes about <strong>' + fmtWords(wd) + ' words a day</strong> for you — roughly <strong>' +
+          fmtWords(wy) + ' words a year</strong>. Read end to end at the average American pace (' + WPM +
+          ' words a minute), that is <strong>' + fmtReadingTime(wd / WPM) + '</strong> a day, or <strong>' +
+          fmtReadingTime(wy / WPM) + '</strong> of nonstop reading over a year.';
+      } else {
+        html += 'Almost all of your use is code rather than prose to read.';
+      }
+      if (cd > 0) {
+        const cy = cd * DAYS;
+        html += '<span class="aipf-words-code">It also writes roughly <strong>' + fmtWords(cd) +
+          ' lines of code a day</strong> — about <strong>' + fmtWords(cy) + '</strong> a year.</span>';
+      }
+      box.innerHTML = html;
     }
 
     function renderBars(targetId, focalLabel, focalVal, items) {
@@ -883,6 +915,7 @@ const structuredData = [
 
   .aipf-words-body { margin: 0; font-family: var(--font-editorial); font-size: 1.05rem; line-height: 1.7; color: var(--text-secondary); }
   .aipf-words-body strong { color: var(--text); font-weight: 600; }
+  .aipf-words-code { display: block; margin-top: 0.85rem; }
 
   /* ---- Full-width annual graph ---- */
   .aipf-graph { margin-top: 2.75rem; padding-top: 2.5rem; border-top: 1px solid var(--border); }
