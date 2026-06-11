@@ -135,17 +135,15 @@ const structuredData = [
     <header class="aipf-header">
       <h1 class="aipf-title">What your AI use actually costs</h1>
       <p class="aipf-dek">
-        Enter an average day of AI use. It adds up into one carbon and water cost, set against your
-        own footprint and the everyday things around it. Figures from
+        Enter an average day of AI use; it adds up into one carbon and water cost, set against your
+        own footprint and the everyday things around it. Figures come from
         <a href="https://huggingface.co/spaces/genai-impact/ecologits-calculator" target="_blank" rel="noopener">EcoLogits</a>,
-        an open-source project that estimates the energy, carbon, and water behind each AI model.
-        For carbon, I use the average grid intensity of the region you pick (rather than EcoLogits'
-        method of applying a single whole-world grid average), plus the hardware's embodied emissions. All other numbers are sourced in the methodology at the bottom. The cost of training is
-        excluded because it's uncertain, but it does not add meaningful emissions or water to your
-        personal footprint if you divide the cost by the number of users. See
-        <a href="https://blog.andymasley.com/p/training-ai-models-doesnt-emit-that" target="_blank" rel="noopener">here for my estimates of how much training adds to your footprint</a>.
-        To explore your carbon footprint in much more detail and to see why systematic changes to the
-        grid swamp everything else, see
+        an open-source estimator of the energy, carbon, and water behind each AI model. For carbon I
+        use the average grid intensity of the region you pick (not EcoLogits' single whole-world
+        average) plus the hardware's embodied emissions; everything else is sourced in the methodology
+        below. Training is excluded as too uncertain, but split across all users it
+        <a href="https://blog.andymasley.com/p/training-ai-models-doesnt-emit-that" target="_blank" rel="noopener">adds little to your personal footprint</a>.
+        For a fuller carbon picture, and why grid-level changes swamp everything else, see
         <a href="https://www.andymasley.com/visuals/carbon-footprint/" target="_blank" rel="noopener">my visual here</a>.
       </p>
     </header>
