@@ -318,12 +318,8 @@ const structuredData = [
           Two depend heavily on assumptions: a cup of coffee is
           <a href="https://theconversation.com/coffee-heres-the-carbon-cost-of-your-daily-cup-and-how-to-make-it-climate-friendly-152629" target="_blank" rel="noopener">~0.05 kg black up to ~0.5 kg for a large latte</a>
           (we use ~0.2 kg), and a 10-minute hot shower is roughly 0.2 kg on a gas water heater up to
-          1.5 kg on electric resistance (we use ~0.7 kg). An hour of Netflix counts only the
-          streaming data-centre energy — about 5% of the ~36 g CO<sub>2</sub>e per hour the
-          <a href="https://www.iea.org/commentaries/the-carbon-footprint-of-streaming-video-fact-checking-the-headlines" target="_blank" rel="noopener">IEA estimates for the whole chain</a>,
-          so roughly 1.8 g — leaving out the TV and the network (the large majority), which are not
-          comparable to the AI data-centre figure. Where a single authority does not exist, figures
-          are rounded mid-range estimates from the sources cited, not false precision.
+          1.5 kg on electric resistance (we use ~0.7 kg). Where a single authority does not exist,
+          figures are rounded mid-range estimates from the sources cited, not false precision.
         </p>
         <p>
           <strong>Water comparisons.</strong> The water charts use water-intensive items instead of
@@ -433,7 +429,6 @@ const structuredData = [
     // Daily reference points (all things that emit, so no add/save direction)
     const DAILY_ITEMS = [
       { label: 'A cup of coffee',          c: 0.21, w: 37 },
-      { label: 'An hour of Netflix (data centres)', c: 0.0018, w: 0.05 },
       { label: 'An hour on a PS5',         c: 0.08, w: 0.1 },
       { label: '3 minutes in the microwave', c: 0.02, w: 0.05 },
       { label: 'A mile in a gas car',      c: 0.40, w: 0.1 },
