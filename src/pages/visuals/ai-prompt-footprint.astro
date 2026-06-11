@@ -168,8 +168,6 @@ const structuredData = [
     <div class="aipf-tool">
       <div class="aipf-in" aria-label="Your daily AI usage">
         <div class="aipf-in-head"><span>Your AI use</span><span class="aipf-in-sub">per day</span></div>
-        <p class="aipf-hint">"Typical output" is how long each reply is. A "coding / agent session" means one typical run of an AI coding assistant that writes and edits code across many steps. It is sized at ~30,000 output tokens (~22,000 words, much of it the model's own reasoning), not EcoLogits' very large 100,000-token benchmark.</p>
-        <p class="aipf-hint">For context, the finished code for this page is about 29,000 tokens, and it took roughly 250,000 tokens of Opus 4.8 output to build it through all the drafts. About the energy of running a dishwasher.</p>
         <div class="aipf-rows-head" aria-hidden="true">
           <span>Model</span><span>Typical output</span><span>Prompts/day</span><span></span>
         </div>
@@ -180,6 +178,8 @@ const structuredData = [
           <p class="aipf-writes-h">What it writes</p>
           <p class="aipf-words" id="aipf-words" aria-live="polite"></p>
         </div>
+        <p class="aipf-hint">"Typical output" is how long each reply is. A "coding / agent session" means one typical run of an AI coding assistant that writes and edits code across many steps. It is sized at ~30,000 output tokens (~22,000 words, much of it the model's own reasoning), not EcoLogits' very large 100,000-token benchmark.</p>
+        <p class="aipf-hint">For context, the finished code for this page is about 29,000 tokens, and it took roughly 250,000 tokens of Opus 4.8 output to build it through all the drafts. About the energy of running a dishwasher.</p>
         <p class="aipf-tools">
           <button type="button" class="aipf-link" id="aipf-reset">Reset</button>
           <span class="aipf-tools-sep">·</span>
