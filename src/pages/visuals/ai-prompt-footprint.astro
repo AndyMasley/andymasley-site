@@ -854,7 +854,7 @@ const structuredData = [
     }
     function renderDaily() {
       const ai = aiDaily(state.metric);
-      root.querySelector('#aipf-daily-sub').innerHTML = 'A day of your AI use, in green, is ' + fmtMetric(ai) + '.';
+      root.querySelector('#aipf-daily-sub').innerHTML = 'A day of your AI use (highlighted below) is ' + fmtMetric(ai) + '.';
       const items = state.metric === 'water' ? DAILY_WATER_ITEMS : DAILY_ITEMS;
       renderBars('#aipf-daily-bars', 'Your daily AI use', ai, items);
     }
