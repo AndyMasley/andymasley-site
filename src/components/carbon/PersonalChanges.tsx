@@ -59,7 +59,7 @@ export function PersonalChanges({ baseline, footprint }: PersonalChangesProps) {
                 key={i}
                 style={{
                   padding: '10px 14px',
-                  background: 'var(--panel, #F1F1EA)',
+                  background: 'var(--panel, #EFECE5)',
                   borderRadius: '6px',
                   fontSize: '0.85rem',
                   marginBottom: '3px',
@@ -91,9 +91,9 @@ export function PersonalChanges({ baseline, footprint }: PersonalChangesProps) {
       <div style={{
         marginTop: '1rem',
         padding: '10px 14px',
-        background: 'var(--panel, #F1F1EA)',
+        background: 'var(--panel, #EFECE5)',
         borderRadius: '6px',
-        borderLeft: '3px solid var(--divider, #E2E3DB)',
+        borderLeft: '3px solid var(--divider, #DDD9D0)',
         fontSize: '0.78rem',
         color: 'var(--text-secondary, #6B6B60)',
         lineHeight: 1.6,

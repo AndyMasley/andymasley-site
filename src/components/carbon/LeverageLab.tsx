@@ -118,7 +118,7 @@ export function LeverageLab({ userMaxPersonalReduction, userFootprint }: Leverag
             fontFamily: 'inherit',
             fontWeight: 600,
             border: '1px solid',
-            borderColor: skepticMode ? 'var(--accent, #8B2E2E)' : 'var(--divider, #E2E3DB)',
+            borderColor: skepticMode ? 'var(--accent, #8B2E2E)' : 'var(--divider, #DDD9D0)',
             borderRadius: '0',
             background: 'transparent',
             color: skepticMode ? 'var(--accent, #8B2E2E)' : 'var(--text-secondary, #6B6B60)',
@@ -132,7 +132,7 @@ export function LeverageLab({ userMaxPersonalReduction, userFootprint }: Leverag
         </button>
 
         {/* Annual / Lifetime toggle */}
-        <div style={{ display: 'inline-flex', border: '1px solid var(--divider, #E2E3DB)', borderRadius: '0', overflow: 'hidden' }}>
+        <div style={{ display: 'inline-flex', border: '1px solid var(--divider, #DDD9D0)', borderRadius: '0', overflow: 'hidden' }}>
           {(['annual', 'lifetime'] as const).map(mode => (
             <button
               key={mode}
@@ -143,7 +143,7 @@ export function LeverageLab({ userMaxPersonalReduction, userFootprint }: Leverag
                 fontFamily: 'inherit',
                 fontWeight: 600,
                 border: 'none',
-                borderLeft: mode === 'lifetime' ? '1px solid var(--divider, #E2E3DB)' : 'none',
+                borderLeft: mode === 'lifetime' ? '1px solid var(--divider, #DDD9D0)' : 'none',
                 background: 'transparent',
                 color: viewMode === mode ? 'var(--accent, #8B2E2E)' : 'var(--text-secondary, #6B6B60)',
                 cursor: 'pointer',
@@ -184,7 +184,7 @@ export function LeverageLab({ userMaxPersonalReduction, userFootprint }: Leverag
         <div className="cf-section-label" style={{ marginBottom: '1rem' }}>ADVERSARIAL FAQ</div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
           {FAQ_ITEMS.map((item, i) => (
-            <div key={i} style={{ background: 'transparent', border: '1px solid var(--divider, #E2E3DB)', borderRadius: '0', overflow: 'hidden' }}>
+            <div key={i} style={{ background: 'transparent', border: '1px solid var(--divider, #DDD9D0)', borderRadius: '0', overflow: 'hidden' }}>
               <button
                 onClick={() => setExpandedFaq(expandedFaq === i ? null : i)}
                 style={{
@@ -253,7 +253,7 @@ function CaseCard({ result, viewMode }: { result: LeverageResult; viewMode: 'ann
     <div
       style={{
         background: 'transparent',
-        border: '1px solid var(--divider, #E2E3DB)',
+        border: '1px solid var(--divider, #DDD9D0)',
         borderRadius: '0',
         padding: '14px 16px',
       }}
@@ -287,7 +287,7 @@ function CaseCard({ result, viewMode }: { result: LeverageResult; viewMode: 'ann
               marginTop: '6px',
               marginBottom: '4px',
               padding: '8px 12px',
-              background: 'var(--bg, #FAFAF7)',
+              background: 'var(--bg, #FAF9F7)',
               borderRadius: '4px',
               borderLeft: '2.5px solid var(--accent, #8B2E2E)',
             }}>
@@ -320,7 +320,7 @@ function CaseCard({ result, viewMode }: { result: LeverageResult; viewMode: 'ann
           left: 0,
           right: 0,
           height: '4px',
-          background: 'var(--divider, #E2E3DB)',
+          background: 'var(--divider, #DDD9D0)',
           borderRadius: '2px',
         }} />
         {/* Range bar (low → high) */}
@@ -406,7 +406,7 @@ function CeilingComparison({
 
   return (
     <div style={{
-      background: 'var(--panel, #F1F1EA)',
+      background: 'var(--panel, #EFECE5)',
       borderRadius: '8px',
       padding: '1.25rem 1.5rem',
       marginBottom: '1.5rem',
@@ -421,7 +421,7 @@ function CeilingComparison({
           <span style={{ fontWeight: 600 }}>Max personal reduction</span>
           <span style={{ fontVariantNumeric: 'tabular-nums' }}>{personalMax.toLocaleString()} kg{viewMode === 'annual' ? '/yr' : ''}</span>
         </div>
-        <div style={{ height: '16px', background: 'var(--divider, #E2E3DB)', borderRadius: '3px', overflow: 'hidden' }}>
+        <div style={{ height: '16px', background: 'var(--divider, #DDD9D0)', borderRadius: '3px', overflow: 'hidden' }}>
           <div style={{
             height: '100%',
             width: `${(personalMax / maxBar) * 100}%`,
@@ -443,7 +443,7 @@ function CeilingComparison({
             {leverageValues.low.toLocaleString()}–{leverageValues.high.toLocaleString()} kg{viewMode === 'annual' ? '/yr' : ''}
           </span>
         </div>
-        <div style={{ position: 'relative', height: '16px', background: 'var(--divider, #E2E3DB)', borderRadius: '3px', overflow: 'hidden' }}>
+        <div style={{ position: 'relative', height: '16px', background: 'var(--divider, #DDD9D0)', borderRadius: '3px', overflow: 'hidden' }}>
           {/* Range */}
           <div style={{
             position: 'absolute',

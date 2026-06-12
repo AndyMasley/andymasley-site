@@ -83,7 +83,7 @@ const SELECT_STYLE: React.CSSProperties = {
   padding: '5px 8px',
   fontSize: '0.75rem',
   fontFamily: 'inherit',
-  border: '1px solid var(--divider, #E2E3DB)',
+  border: '1px solid var(--divider, #DDD9D0)',
   borderRadius: '0',
   background: 'var(--bg-elevated, #ffffff)',
   color: 'var(--text, #1A1A18)',

@@ -71,7 +71,7 @@ function ActionParam({ name, label, defaultVal, match, unit, max, actionParamOve
   );
 }
 const MUTED = 'var(--text-secondary, #6B6B60)';
-const DIVIDER = 'var(--divider, #E2E3DB)';
+const DIVIDER = 'var(--divider, #DDD9D0)';
 
 const FIELD_STYLE: React.CSSProperties = {
   display: 'flex',
@@ -92,7 +92,7 @@ const INPUT_STYLE: React.CSSProperties = {
   fontFamily: 'inherit',
   border: `1px solid ${DIVIDER}`,
   borderRadius: '5px',
-  background: 'var(--panel, #F1F1EA)',
+  background: 'var(--panel, #EFECE5)',
   color: 'var(--text, #1A1A18)',
   outline: 'none',
   width: '100%',

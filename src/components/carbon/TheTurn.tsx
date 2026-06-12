@@ -41,7 +41,7 @@ export function TheTurn({ userFootprintKg, topLeverageAnnualKg, leverageMultiple
       style={{
         margin: '3.5rem 0',
         padding: '3rem 0 2.5rem',
-        borderTop: '2px solid var(--divider, #E2E3DB)',
+        borderTop: '2px solid var(--divider, #DDD9D0)',
       }}
     >
       <div className="cf-section-label">THE BIGGER PICTURE</div>
@@ -170,7 +170,7 @@ export function TheTurn({ userFootprintKg, topLeverageAnnualKg, leverageMultiple
             key={action.title}
             style={{
               padding: '12px 16px',
-              background: 'var(--panel, #F1F1EA)',
+              background: 'var(--panel, #EFECE5)',
               borderRadius: '6px',
             }}
           >

@@ -21,9 +21,9 @@ const INPUT_STYLE: React.CSSProperties = {
   padding: '7px 10px',
   fontSize: '0.85rem',
   fontFamily: 'inherit',
-  border: '1px solid var(--divider, #E2E3DB)',
+  border: '1px solid var(--divider, #DDD9D0)',
   borderRadius: '6px',
-  background: 'var(--panel, #F1F1EA)',
+  background: 'var(--panel, #EFECE5)',
   color: 'var(--text, #1A1A18)',
   outline: 'none',
   width: 'min(120px, 40%)',
@@ -58,7 +58,7 @@ export function RefineSection({ buckets, overrides, onOverridesChange }: RefineS
             <div
               key={bucket.bucketId}
               style={{
-                background: 'var(--panel, #F1F1EA)',
+                background: 'var(--panel, #EFECE5)',
                 borderRadius: '6px',
                 overflow: 'hidden',
               }}
@@ -95,7 +95,7 @@ export function RefineSection({ buckets, overrides, onOverridesChange }: RefineS
               </button>
 
               {isOpen && (
-                <div style={{ padding: '0 16px 16px', borderTop: '1px solid var(--divider, #E2E3DB)' }}>
+                <div style={{ padding: '0 16px 16px', borderTop: '1px solid var(--divider, #DDD9D0)' }}>
                   {bucket.nextUpgrade && (
                     <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary, #6B6B60)', fontStyle: 'italic', margin: '12px 0' }}>
                       To improve: {bucket.nextUpgrade}
@@ -204,7 +204,7 @@ export function RefineSection({ buckets, overrides, onOverridesChange }: RefineS
                           fontSize: '0.78rem',
                           color: 'var(--text-secondary, #6B6B60)',
                           padding: '4px 0',
-                          borderBottom: i < bucket.lineItems.length - 1 ? '1px solid var(--divider, #E2E3DB)' : 'none',
+                          borderBottom: i < bucket.lineItems.length - 1 ? '1px solid var(--divider, #DDD9D0)' : 'none',
                         }}
                       >
                         <span>

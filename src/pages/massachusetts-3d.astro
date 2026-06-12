@@ -1,0 +1,479 @@
+---
+import Base from '@/layouts/Base.astro';
+
+// Google Maps Platform API key with the "Map Tiles API" enabled.
+// Set in .env at the project root:  PUBLIC_GOOGLE_MAPS_API_KEY=AIza...
+const googleMapsApiKey = import.meta.env.PUBLIC_GOOGLE_MAPS_API_KEY ?? '';
+
+const CESIUM_VERSION = '1.124';
+const CESIUM_BASE = `https://cesium.com/downloads/cesiumjs/releases/${CESIUM_VERSION}/Build/Cesium/`;
+
+// Preset locations across Massachusetts. height = meters above ellipsoid for the camera.
+const places = [
+  { name: 'Boston', lon: -71.0565, lat: 42.3555, height: 1800, heading: 20, pitch: -28 },
+  { name: 'Cambridge / MIT', lon: -71.0922, lat: 42.3601, height: 1200, heading: 50, pitch: -25 },
+  { name: 'Fenway Park', lon: -71.0972, lat: 42.3467, height: 700, heading: 0, pitch: -30 },
+  { name: 'Worcester', lon: -71.8023, lat: 42.2626, height: 2000, heading: 0, pitch: -28 },
+  { name: 'Springfield', lon: -72.5898, lat: 42.1015, height: 2200, heading: 0, pitch: -28 },
+  { name: 'Provincetown', lon: -70.1864, lat: 42.0584, height: 1800, heading: 200, pitch: -22 },
+  { name: "Martha's Vineyard", lon: -70.6093, lat: 41.3805, height: 4500, heading: 0, pitch: -30 },
+  { name: 'Nantucket', lon: -70.0995, lat: 41.2835, height: 3500, heading: 0, pitch: -28 },
+  { name: 'Mount Greylock', lon: -73.1662, lat: 42.6376, height: 2600, heading: 90, pitch: -18 },
+  { name: 'Salem', lon: -70.8967, lat: 42.5195, height: 1400, heading: 0, pitch: -28 },
+  { name: 'Plymouth', lon: -70.6620, lat: 41.9584, height: 1600, heading: 0, pitch: -28 },
+  { name: 'Statewide', lon: -71.8, lat: 42.2, height: 220000, heading: 0, pitch: -60 },
+];
+---
+
+<Base
+  title="Massachusetts in 3D"
+  description="A navigable, to-scale 3D flythrough of Massachusetts — every building and hill, at real elevation, powered by photorealistic satellite tiles."
+  robots="noindex, follow"
+>
+  <Fragment slot="head">
+    <link rel="stylesheet" href={`${CESIUM_BASE}Widgets/widgets.css`} />
+    <link rel="preconnect" href="https://cesium.com" />
+  </Fragment>
+
+  <div class="ma3d">
+    <div class="ma3d__intro">
+      <h1>Massachusetts in 3D</h1>
+      <p>
+        A to-scale, navigable flythrough of the whole state — terrain at real elevation
+        and photorealistic 3D buildings, streamed from Google's photogrammetry tiles.
+        <strong>Drag</strong> to look around, <strong>scroll</strong> to zoom,
+        <strong>right-drag</strong> to tilt, and <strong>W A S D</strong> / arrow keys to fly.
+      </p>
+    </div>
+
+    <div class="ma3d__stage" id="ma3d-stage">
+      <div id="cesiumContainer" class="ma3d__canvas"></div>
+
+      <div class="ma3d__hud" id="ma3d-hud">
+        <div class="ma3d__hud-row">
+          <span class="ma3d__hud-label">fly to</span>
+          <div class="ma3d__places" id="ma3d-places">
+            {places.map((p) => (
+              <button
+                class="ma3d__place"
+                data-lon={p.lon}
+                data-lat={p.lat}
+                data-height={p.height}
+                data-heading={p.heading}
+                data-pitch={p.pitch}
+              >{p.name}</button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <button class="ma3d__fullscreen" id="ma3d-fullscreen" title="Toggle fullscreen">⤢ fullscreen</button>
+
+      <div class="ma3d__status" id="ma3d-status" hidden></div>
+
+      {!googleMapsApiKey && (
+        <div class="ma3d__setup" id="ma3d-setup">
+          <div class="ma3d__setup-card">
+            <h2>One setup step: a Google Maps API key</h2>
+            <p>The photorealistic 3D tiles come from Google's Map Tiles API. To turn this on:</p>
+            <ol>
+              <li>Go to the <a href="https://console.cloud.google.com/google/maps-apis/" target="_blank" rel="noopener">Google Maps Platform console</a> and create / select a project.</li>
+              <li>Enable the <strong>Map Tiles API</strong>.</li>
+              <li>Create an <strong>API key</strong> (restrict it to your domain for production).</li>
+              <li>Add it to <code>.env</code> in the site root:<br/>
+                <code>PUBLIC_GOOGLE_MAPS_API_KEY=AIza...your-key...</code></li>
+              <li>Restart <code>npm run dev</code> (or rebuild) and reload.</li>
+            </ol>
+            <p class="ma3d__setup-note">
+              Google gives a monthly free allotment of Map Tiles requests; beyond that it's
+              usage-billed per session. Restrict the key to <code>andymasley.com</code> so it
+              can't be used elsewhere.
+            </p>
+          </div>
+        </div>
+      )}
+    </div>
+
+    <p class="ma3d__footnote">
+      Imagery © Google. Buildings, terrain, and trees are streamed photogrammetry — fidelity is
+      highest over cities and dense suburbs, and softens over open countryside and water.
+    </p>
+  </div>
+
+  <script
+    slot="head"
+    is:inline
+    define:vars={{ googleMapsApiKey, cesiumBase: CESIUM_BASE, cesiumVersion: CESIUM_VERSION }}
+  >
+    window.CESIUM_BASE_URL = cesiumBase;
+    window.__MA3D__ = { key: googleMapsApiKey, base: cesiumBase, version: cesiumVersion };
+  </script>
+
+  <script>
+    function loadScript(src) {
+      return new Promise((resolve, reject) => {
+        const existing = document.querySelector(`script[data-cesium]`);
+        if (existing) {
+          if (window.Cesium) return resolve();
+          existing.addEventListener('load', () => resolve());
+          existing.addEventListener('error', reject);
+          return;
+        }
+        const s = document.createElement('script');
+        s.src = src;
+        s.async = true;
+        s.dataset.cesium = 'true';
+        s.addEventListener('load', () => resolve());
+        s.addEventListener('error', reject);
+        document.head.appendChild(s);
+      });
+    }
+
+    let viewerRef = null;
+    let keyboardCleanup = null;
+
+    async function initMA3D() {
+      const cfg = window.__MA3D__;
+      const container = document.getElementById('cesiumContainer');
+      const status = document.getElementById('ma3d-status');
+      if (!container) return;
+      if (!cfg || !cfg.key) return; // setup card already shown
+      if (viewerRef) return; // already initialized
+
+      function showStatus(msg) {
+        if (!status) return;
+        status.textContent = msg;
+        status.hidden = false;
+      }
+      function hideStatus() {
+        if (status) status.hidden = true;
+      }
+
+      try {
+        showStatus('Loading the engine…');
+        await loadScript(`${cfg.base}Cesium.js`);
+        const Cesium = window.Cesium;
+        if (!Cesium) throw new Error('Cesium failed to load');
+
+        // No Cesium ion assets are used (Google tiles are streamed directly), so we
+        // suppress the default ion token to avoid unnecessary network calls.
+        Cesium.Ion.defaultAccessToken = undefined;
+        Cesium.GoogleMaps.defaultApiKey = cfg.key;
+
+        showStatus('Starting the viewer…');
+        const viewer = new Cesium.Viewer('cesiumContainer', {
+          // Google tiles supply their own terrain + imagery, so the default globe is hidden.
+          globe: false,
+          baseLayerPicker: false,
+          geocoder: false,
+          homeButton: false,
+          sceneModePicker: false,
+          navigationHelpButton: false,
+          animation: false,
+          timeline: false,
+          fullscreenButton: false,
+          infoBox: false,
+          selectionIndicator: false,
+          creditContainer: document.createElement('div'),
+        });
+        viewerRef = viewer;
+
+        const scene = viewer.scene;
+        scene.skyAtmosphere.show = true;
+        scene.fog.enabled = true;
+        scene.screenSpaceCameraController.enableCollisionDetection = true;
+        // Let the camera get close to street level without snapping back.
+        scene.screenSpaceCameraController.minimumZoomDistance = 8;
+
+        showStatus('Streaming Massachusetts…');
+        const tileset = await Cesium.createGooglePhotorealistic3DTileset();
+        scene.primitives.add(tileset);
+
+        hideStatus();
+
+        const flyTo = (lon, lat, height, heading, pitch, durationOverride) => {
+          viewer.camera.flyTo({
+            destination: Cesium.Cartesian3.fromDegrees(lon, lat, height),
+            orientation: {
+              heading: Cesium.Math.toRadians(heading || 0),
+              pitch: Cesium.Math.toRadians(pitch ?? -30),
+              roll: 0,
+            },
+            duration: durationOverride ?? 2.5,
+          });
+        };
+
+        // Opening shot: high oblique over eastern Massachusetts, then ease toward Boston.
+        viewer.camera.setView({
+          destination: Cesium.Cartesian3.fromDegrees(-71.4, 41.7, 90000),
+          orientation: {
+            heading: Cesium.Math.toRadians(0),
+            pitch: Cesium.Math.toRadians(-55),
+            roll: 0,
+          },
+        });
+        flyTo(-71.0565, 42.3555, 2400, 20, -28, 4.0);
+
+        // Place buttons.
+        const placesEl = document.getElementById('ma3d-places');
+        if (placesEl) {
+          placesEl.querySelectorAll('.ma3d__place').forEach((btn) => {
+            btn.addEventListener('click', () => {
+              flyTo(
+                parseFloat(btn.dataset.lon),
+                parseFloat(btn.dataset.lat),
+                parseFloat(btn.dataset.height),
+                parseFloat(btn.dataset.heading),
+                parseFloat(btn.dataset.pitch),
+              );
+            });
+          });
+        }
+
+        // --- Flight controls: WASD / arrows to fly relative to where you're looking ---
+        const pressed = new Set();
+        const onKeyDown = (e) => {
+          const k = e.key.toLowerCase();
+          if (['w', 'a', 's', 'd', 'q', 'e', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(k)) {
+            // Don't hijack typing in the site search box.
+            const tag = (e.target && e.target.tagName) || '';
+            if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+            pressed.add(k);
+            e.preventDefault();
+          }
+        };
+        const onKeyUp = (e) => pressed.delete(e.key.toLowerCase());
+        window.addEventListener('keydown', onKeyDown);
+        window.addEventListener('keyup', onKeyUp);
+
+        const moveHandler = viewer.clock.onTick.addEventListener(() => {
+          if (pressed.size === 0) return;
+          const cam = viewer.camera;
+          // Speed scales with altitude so it feels right both high up and at street level.
+          const carto = Cesium.Cartographic.fromCartesian(cam.positionWC);
+          const altitude = carto ? Math.max(carto.height, 5) : 1000;
+          const speed = Cesium.Math.clamp(altitude * 0.012, 1.5, 1600);
+          if (pressed.has('w') || pressed.has('arrowup')) cam.moveForward(speed);
+          if (pressed.has('s') || pressed.has('arrowdown')) cam.moveBackward(speed);
+          if (pressed.has('a') || pressed.has('arrowleft')) cam.moveLeft(speed);
+          if (pressed.has('d') || pressed.has('arrowright')) cam.moveRight(speed);
+          if (pressed.has('e')) cam.moveUp(speed);
+          if (pressed.has('q')) cam.moveDown(speed);
+        });
+
+        keyboardCleanup = () => {
+          window.removeEventListener('keydown', onKeyDown);
+          window.removeEventListener('keyup', onKeyUp);
+          if (moveHandler) moveHandler();
+        };
+      } catch (err) {
+        console.error('[MA3D]', err);
+        showStatus('Could not load the 3D scene. Check the API key and that the Map Tiles API is enabled.');
+      }
+    }
+
+    function initFullscreen() {
+      const btn = document.getElementById('ma3d-fullscreen');
+      const stage = document.getElementById('ma3d-stage');
+      if (!btn || !stage) return;
+      btn.addEventListener('click', () => {
+        if (!document.fullscreenElement) {
+          stage.requestFullscreen?.();
+        } else {
+          document.exitFullscreen?.();
+        }
+      });
+    }
+
+    function teardown() {
+      if (keyboardCleanup) {
+        keyboardCleanup();
+        keyboardCleanup = null;
+      }
+      if (viewerRef && !viewerRef.isDestroyed()) {
+        viewerRef.destroy();
+      }
+      viewerRef = null;
+    }
+
+    // Astro View Transitions: re-init on each navigation into this page, tear down on leave.
+    document.addEventListener('astro:page-load', () => {
+      if (document.getElementById('cesiumContainer')) {
+        initFullscreen();
+        initMA3D();
+      }
+    });
+    document.addEventListener('astro:before-swap', teardown);
+
+    // First load (in case page-load already fired).
+    if (document.getElementById('cesiumContainer')) {
+      initFullscreen();
+      initMA3D();
+    }
+  </script>
+
+  <style is:global>
+    /* Cesium widget overrides scoped to this page */
+    .ma3d__canvas .cesium-viewer-bottom { display: none; }
+    .ma3d__canvas .cesium-widget-credits { display: none !important; }
+  </style>
+
+  <style>
+    .ma3d {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 1.5rem 1rem 3rem;
+    }
+    .ma3d__intro h1 {
+      margin: 0 0 0.4rem;
+      font-size: clamp(1.7rem, 3vw, 2.4rem);
+    }
+    .ma3d__intro p {
+      margin: 0 0 1.2rem;
+      color: var(--text-secondary, #555);
+      max-width: 70ch;
+      line-height: 1.55;
+    }
+    .ma3d__intro strong { color: var(--text-primary, #1f2937); font-weight: 600; }
+
+    .ma3d__stage {
+      position: relative;
+      width: 100%;
+      height: min(72vh, 760px);
+      min-height: 460px;
+      border-radius: 12px;
+      overflow: hidden;
+      background: #0b1622;
+      box-shadow: 0 8px 40px rgba(0, 0, 0, 0.25);
+    }
+    .ma3d__stage:fullscreen { border-radius: 0; }
+    .ma3d__canvas { position: absolute; inset: 0; }
+    .ma3d__canvas :global(.cesium-viewer),
+    .ma3d__canvas :global(.cesium-widget),
+    .ma3d__canvas :global(.cesium-widget canvas) {
+      width: 100% !important;
+      height: 100% !important;
+    }
+
+    .ma3d__hud {
+      position: absolute;
+      left: 12px;
+      bottom: 12px;
+      right: 12px;
+      z-index: 5;
+      pointer-events: none;
+    }
+    .ma3d__hud-row {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+    .ma3d__hud-label {
+      font-size: 0.7rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: rgba(255, 255, 255, 0.75);
+      background: rgba(10, 20, 30, 0.55);
+      padding: 0.25rem 0.5rem;
+      border-radius: 6px;
+      backdrop-filter: blur(6px);
+      pointer-events: auto;
+    }
+    .ma3d__places {
+      display: flex;
+      gap: 0.35rem;
+      flex-wrap: wrap;
+      pointer-events: auto;
+    }
+    .ma3d__place {
+      font: inherit;
+      font-size: 0.8rem;
+      color: #fff;
+      background: rgba(10, 20, 30, 0.55);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      padding: 0.3rem 0.6rem;
+      border-radius: 999px;
+      cursor: pointer;
+      backdrop-filter: blur(6px);
+      transition: background 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+    }
+    .ma3d__place:hover {
+      background: rgba(220, 38, 38, 0.85);
+      border-color: rgba(255, 255, 255, 0.4);
+    }
+    .ma3d__place:active { transform: translateY(1px); }
+
+    .ma3d__fullscreen {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      z-index: 5;
+      font: inherit;
+      font-size: 0.78rem;
+      color: #fff;
+      background: rgba(10, 20, 30, 0.55);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      padding: 0.3rem 0.6rem;
+      border-radius: 8px;
+      cursor: pointer;
+      backdrop-filter: blur(6px);
+    }
+    .ma3d__fullscreen:hover { background: rgba(10, 20, 30, 0.8); }
+
+    .ma3d__status {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 4;
+      color: #fff;
+      font-size: 0.95rem;
+      background: rgba(10, 20, 30, 0.7);
+      padding: 0.6rem 1rem;
+      border-radius: 8px;
+      backdrop-filter: blur(6px);
+    }
+
+    .ma3d__setup {
+      position: absolute;
+      inset: 0;
+      z-index: 6;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+      background: radial-gradient(circle at 50% 30%, #14283c, #0b1622 70%);
+    }
+    .ma3d__setup-card {
+      max-width: 560px;
+      background: rgba(255, 255, 255, 0.96);
+      color: #1f2937;
+      border-radius: 12px;
+      padding: 1.5rem 1.75rem;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.35);
+    }
+    .ma3d__setup-card h2 { margin: 0 0 0.6rem; font-size: 1.2rem; }
+    .ma3d__setup-card ol { margin: 0.6rem 0; padding-left: 1.2rem; line-height: 1.7; }
+    .ma3d__setup-card code {
+      background: #f1f1ee;
+      padding: 0.1rem 0.35rem;
+      border-radius: 4px;
+      font-size: 0.85em;
+    }
+    .ma3d__setup-note { font-size: 0.85rem; color: #6b7280; margin: 0.8rem 0 0; }
+    .ma3d__setup-card a { color: #dc2626; }
+
+    .ma3d__footnote {
+      margin: 1rem 0 0;
+      font-size: 0.8rem;
+      color: var(--text-secondary, #777);
+      line-height: 1.5;
+    }
+
+    @media (max-width: 600px) {
+      .ma3d__stage { height: 70vh; min-height: 400px; }
+      .ma3d__hud-label { display: none; }
+    }
+  </style>
+</Base>

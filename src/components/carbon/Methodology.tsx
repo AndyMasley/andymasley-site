@@ -8,7 +8,7 @@ import { useState } from 'react';
 
 const ACCENT = 'var(--accent, #8B2E2E)';
 const MUTED = 'var(--text-secondary, #6B6860)';
-const DIVIDER = 'var(--divider, #E2E3DB)';
+const DIVIDER = 'var(--divider, #DDD9D0)';
 
 function Section({ title, id, children }: { title: string; id?: string; children: React.ReactNode }) {
   const [open, setOpen] = useState(false);

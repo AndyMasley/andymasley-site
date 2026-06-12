@@ -81,11 +81,11 @@ function downloadPNG(footprint: FootprintModel, comparisonContext: string) {
   ctx.scale(2, 2);
 
   // Background
-  ctx.fillStyle = '#F1F1EA';
+  ctx.fillStyle = '#F5F2EC';
   ctx.fillRect(0, 0, W, H);
 
   // Title
-  ctx.fillStyle = '#1C1E1B';
+  ctx.fillStyle = '#1A1A18';
   ctx.font = 'bold 28px system-ui, sans-serif';
   ctx.fillText('Carbon Footprint', 30, 50);
 
@@ -94,7 +94,7 @@ function downloadPNG(footprint: FootprintModel, comparisonContext: string) {
   ctx.fillText(`${footprint.totalKgCO2ePerYear.toLocaleString()} kg`, 30, 120);
 
   // Unit
-  ctx.fillStyle = '#6B6E66';
+  ctx.fillStyle = '#6B6B60';
   ctx.font = '16px system-ui, sans-serif';
   ctx.fillText('CO\u2082e per year', 30, 148);
 
@@ -109,7 +109,7 @@ function downloadPNG(footprint: FootprintModel, comparisonContext: string) {
     .sort((a, b) => b.kgCO2ePerYear - a.kgCO2ePerYear)[0];
 
   if (topDriver) {
-    ctx.fillStyle = '#6B6E66';
+    ctx.fillStyle = '#6B6B60';
     ctx.font = '14px system-ui, sans-serif';
     ctx.fillText(
       `Top driver: ${BUCKET_META[topDriver.bucketId].label} (${topDriver.kgCO2ePerYear.toLocaleString()} kg)`,
@@ -140,7 +140,7 @@ function downloadPNG(footprint: FootprintModel, comparisonContext: string) {
     ctx.fillStyle = COLORS[b.bucketId] || '#888';
     ctx.fillRect(30, y, barW, 20);
 
-    ctx.fillStyle = '#1C1E1B';
+    ctx.fillStyle = '#1A1A18';
     ctx.font = '13px system-ui, sans-serif';
     ctx.fillText(`${BUCKET_META[b.bucketId].label}: ${b.kgCO2ePerYear.toLocaleString()} kg`, barW + 40, y + 15);
     y += 28;
@@ -182,7 +182,7 @@ function ExportBtn({ label, onClick }: { label: string; onClick: () => void }) {
         fontSize: '0.72rem',
         fontFamily: 'inherit',
         fontWeight: 600,
-        border: '1px solid var(--divider, #E2E3DB)',
+        border: '1px solid var(--divider, #DDD9D0)',
         borderRadius: '5px',
         background: 'transparent',
         color: 'var(--text-secondary, #6B6B60)',

@@ -18,7 +18,7 @@ export function ResidualWedge({ totalKg, residualKg }: ResidualWedgeProps) {
           title={`${pctProvided}% based on your inputs`}
         />
         <div
-          style={{ width: `${pctResidual}%`, background: 'var(--divider, #E2E3DB)', borderRadius: '3px', transition: 'width 0.4s ease' }}
+          style={{ width: `${pctResidual}%`, background: 'var(--divider, #DDD9D0)', borderRadius: '3px', transition: 'width 0.4s ease' }}
           title={`${pctResidual}% estimated from defaults`}
         />
       </div>
