@@ -8,20 +8,25 @@
    ============================================ */
 
 :root {
-  /* Light mode */
-  --bg: #faf9f7;
+  /* Light mode — ink-on-paper palette */
+  --bg: #ffffff;            /* paper: pure white, never brown */
   --bg-elevated: #ffffff;
-  --bg-subtle: #f5f4f2;
-  --text: #1a1918;
-  --text-secondary: #3d3a38;
-  --dim: #6b6560;
-  --text-dim: #6b6560;
-  --accent: #8b3a3a;
-  --accent-hover: #6d2d2d;
-  --accent-subtle: rgba(139, 58, 58, 0.08);
-  --border: #e5e2df;
-  --border-strong: #d1ccc8;
-  --border-subtle: #eeebe8;
+  --bg-subtle: #f6f6f6;
+  --text: #1a1a1a;          /* ink */
+  --text-secondary: #333333;
+  --dim: #666666;           /* muted */
+  --text-dim: #666666;
+  --accent: #0645ad;        /* link: the one working color */
+  --accent-hover: #043d82;
+  --accent-subtle: rgba(6, 69, 173, 0.08);
+  --border: #e5e5e5;        /* rule */
+  --border-strong: #d4d4d4;
+  --border-subtle: #efefef;
+
+  /* Supporting cast */
+  --underline-quiet: #b8b8b8; /* nav + footer underlines */
+  --selection: #d6e4f7;
+  --mark: #6b2a35;            /* oxblood, quarantined to the hexagon mark only */
 
   /* Restrained shadows to avoid glossy "card" UI */
   --shadow-xs: 0 1px 0 rgba(26, 25, 24, 0.05);
@@ -61,19 +66,24 @@
 
 /* Dark mode */
 [data-theme="dark"] {
-  --bg: #141413;
-  --bg-elevated: #1c1c1a;
-  --bg-subtle: #1a1918;
-  --text: #e8e6e1;
-  --text-secondary: #c5c3be;
-  --dim: #8a8a8a;
-  --text-dim: #8a8a8a;
-  --accent: #d4a59a;
-  --accent-hover: #e8c4bb;
-  --accent-subtle: rgba(212, 165, 154, 0.12);
-  --border: #2e2d2b;
-  --border-strong: #3d3c39;
-  --border-subtle: #252423;
+  --bg: #121212;            /* paper: neutral near-black, never brown */
+  --bg-elevated: #1c1c1c;
+  --bg-subtle: #191919;
+  --text: #e6e6e6;          /* ink */
+  --text-secondary: #c4c4c4;
+  --dim: #9a9a9a;           /* muted */
+  --text-dim: #9a9a9a;
+  --accent: #8ab4f8;        /* link */
+  --accent-hover: #a9c8fa;
+  --accent-subtle: rgba(138, 180, 248, 0.14);
+  --border: #2a2a2a;        /* rule */
+  --border-strong: #3a3a3a;
+  --border-subtle: #222222;
+
+  /* Supporting cast */
+  --underline-quiet: #4a4a4a;
+  --selection: #2c4368;
+  --mark: #9e6570;
 
   /* Dark mode shadows */
   --shadow-xs: 0 1px 0 rgba(0, 0, 0, 0.2);
@@ -125,11 +135,11 @@ body {
 }
 
 ::selection {
-  background: rgba(139, 58, 58, 0.15);
+  background: var(--selection);
 }
 
 [data-theme="dark"] ::selection {
-  background: rgba(212, 165, 154, 0.25);
+  background: var(--selection);
 }
 
 /* Focus states for accessibility */
@@ -487,18 +497,18 @@ a:active {
 
 .hexagon path,
 .logo-hexagon path {
-  stroke: var(--accent);
+  stroke: var(--mark);
   stroke-width: 1.5;
   fill: none;
   transition: fill 0.3s ease;
 }
 
 .logo-hexagon:hover path {
-  fill: rgba(139, 58, 58, 0.1);
+  fill: rgba(107, 42, 53, 0.1);
 }
 
 [data-theme="dark"] .logo-hexagon:hover path {
-  fill: rgba(212, 165, 154, 0.1);
+  fill: rgba(158, 101, 112, 0.1);
 }
 
 /* ============================================
@@ -1870,7 +1880,7 @@ details[open] summary::before {
 }
 
 [data-theme="dark"] .search-result-type {
-  background: rgba(212, 165, 154, 0.15);
+  background: rgba(138, 180, 248, 0.15);
 }
 
 .search-result-title {
@@ -1881,7 +1891,7 @@ details[open] summary::before {
 .search-result-title mark,
 .search-result-desc mark,
 .search-result-content mark {
-  background: rgba(139, 58, 58, 0.25);
+  background: rgba(6, 69, 173, 0.18);
   color: inherit;
   border-radius: 0;
   padding: 0 0.1em;
@@ -1890,7 +1900,7 @@ details[open] summary::before {
 [data-theme="dark"] .search-result-title mark,
 [data-theme="dark"] .search-result-desc mark,
 [data-theme="dark"] .search-result-content mark {
-  background: rgba(212, 165, 154, 0.3);
+  background: rgba(138, 180, 248, 0.28);
 }
 
 .search-result-desc {
