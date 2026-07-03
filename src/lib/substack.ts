@@ -630,7 +630,8 @@ function injectSidenotes(html: string, slug: string): string {
 }
 
 // Process HTML content for display
-export function processPostContent(html: string, slug: string): string {
+export function processPostContent(html: string, slug: string, opts: { sidenotes?: boolean } = {}): string {
+  const { sidenotes = true } = opts;
   // Fix anchor links
   let processed = fixAnchorLinks(html, slug);
 
@@ -654,8 +655,12 @@ export function processPostContent(html: string, slug: string): string {
   // Scene breaks: bare <hr> inside post bodies become an asterism.
   processed = processed.replace(/<hr\b[^>]*>/gi, '<div class="asterism" role="separator">⁂</div>');
 
-  // Tufte sidenotes (inline-content footnotes only; block-content stays bottom-only)
-  processed = injectSidenotes(processed, slug);
+  // Tufte sidenotes (inline-content footnotes only; block-content stays bottom-only).
+  // Skipped for the RSS feed, where footnotes render at the bottom and inline
+  // sidenotes would duplicate them.
+  if (sidenotes) {
+    processed = injectSidenotes(processed, slug);
+  }
 
   return processed;
 }
