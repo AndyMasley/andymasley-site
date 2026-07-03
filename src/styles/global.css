@@ -597,6 +597,11 @@ a:active {
   color: var(--accent);
 }
 
+/* Visited purple on reading surfaces (Recent list + tag lists).
+   Literal colors: browsers restrict :visited styling and ignore var(). */
+.content-item__link:visited { color: #551a8b; }
+[data-theme="dark"] .content-item__link:visited { color: #c58af9; }
+
 /* Post item hover highlights */
 .post-item,
 .video-item {

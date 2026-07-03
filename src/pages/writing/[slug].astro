@@ -706,6 +706,10 @@ const articleStructuredData = {
     text-decoration-color: var(--accent);
   }
 
+  /* Visited purple (post prose). Literal colors: :visited ignores var(). */
+  .article-prose :global(a:visited) { color: #551a8b; }
+  :global([data-theme="dark"]) .article-prose :global(a:visited) { color: #c58af9; }
+
   .article-prose :global(h1) {
     font-family: var(--font-editorial);
     font-size: clamp(2.05rem, 1.82rem + 0.62vw, 2.35rem);

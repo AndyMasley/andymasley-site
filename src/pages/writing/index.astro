@@ -629,6 +629,10 @@ const defaultExpandedYear = postsByYear.some(group => group.year === currentYear
     color: var(--accent);
   }
 
+  /* Visited purple (archive). Literal colors: :visited ignores var(). */
+  .timeline-link:visited { color: #551a8b; }
+  :global([data-theme="dark"]) .timeline-link:visited { color: #c58af9; }
+
   .timeline-meta {
     display: flex;
     flex-wrap: wrap;
