@@ -1,0 +1,111 @@
+---
+import Base from '@/layouts/Base.astro';
+
+const palette = [
+  { name: 'Paper', hex: '#ffffff', role: 'page background' },
+  { name: 'Ink', hex: '#1a1a1a', role: 'text' },
+  { name: 'Muted', hex: '#666666', role: 'dates, captions' },
+  { name: 'Rule', hex: '#e5e5e5', role: 'hairlines' },
+  { name: 'Link', hex: '#0645ad', role: 'the one working color' },
+];
+---
+
+<Base title="Colophon" description="How this site is built.">
+  <section class="colophon">
+    <h1>Colophon</h1>
+
+    <p>
+      This site is built with <a href="https://astro.build">Astro</a> and hosted on
+      Cloudflare Pages. The source is on
+      <a href="https://github.com/AndyMasley/andymasley-site">GitHub</a>.
+      <!-- TODO: Andy — confirm DNS registrar (assumed Cloudflare). -->
+    </p>
+
+    <p>
+      Most posts mirror my <a href="https://andymasley.substack.com/">Substack</a>. A
+      GitHub Actions job rebuilds the site every six hours, so new posts appear here
+      without my touching anything.
+    </p>
+
+    <p>
+      The type is Georgia, with system serif fallbacks. No web fonts are downloaded —
+      the page renders in fonts your device already has.
+    </p>
+
+    <p>
+      There are no analytics and no trackers. The only things kept in your browser are
+      your light/dark theme preference and, on the carbon calculator, any scenarios you
+      choose to save. Both stay on your device.
+    </p>
+
+    <p>The whole site works from five colors:</p>
+
+    <ul class="colophon__palette">
+      {palette.map((c) => (
+        <li>
+          <span class="colophon__swatch" style={`background:${c.hex}`}></span>
+          <span class="colophon__name">{c.name}</span>
+          <span class="colophon__hex">{c.hex}</span>
+          <span class="colophon__role">{c.role}</span>
+        </li>
+      ))}
+    </ul>
+
+    <p>
+      A running list of changes lives in the <a href="/changelog">changelog</a>.
+    </p>
+  </section>
+</Base>
+
+<style>
+  .colophon {
+    max-width: 38rem;
+  }
+
+  .colophon h1 {
+    font-family: var(--font-editorial);
+    font-size: clamp(2rem, 4vw, 2.75rem);
+    letter-spacing: -0.02em;
+    margin: 0 0 1.5rem;
+  }
+
+  .colophon p {
+    font-family: var(--font-editorial);
+    font-size: 1.05rem;
+    line-height: 1.75;
+    color: var(--text);
+    margin: 0 0 1.25rem;
+  }
+
+  .colophon__palette {
+    list-style: none;
+    margin: 1.75rem 0 2rem;
+    padding: 0;
+  }
+
+  .colophon__palette li {
+    display: grid;
+    grid-template-columns: 1.1rem 5rem 6rem 1fr;
+    gap: 0.9rem;
+    align-items: center;
+    padding: 0.5rem 0;
+    border-top: 1px solid var(--border-subtle);
+    font-family: var(--font-body);
+    font-size: 0.85rem;
+  }
+
+  .colophon__swatch {
+    width: 1.1rem;
+    height: 1.1rem;
+    border: 1px solid var(--border);
+  }
+
+  .colophon__hex {
+    font-family: var(--font-mono);
+    color: var(--dim);
+  }
+
+  .colophon__role {
+    color: var(--dim);
+  }
+</style>

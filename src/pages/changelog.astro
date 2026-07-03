@@ -1,0 +1,74 @@
+---
+import Base from '@/layouts/Base.astro';
+
+// Reverse-chronological. Newest first. Format: MM.DD.YYYY — sentence.
+const entries = [
+  {
+    date: '2026-07-03',
+    display: '07.03.2026',
+    text: 'Repainted the site in an ink-on-paper palette, moved the type to Georgia (no downloaded fonts), and added Tufte-style sidenotes, per-post social cards, section anchors, scene breaks, and a print stylesheet.',
+  },
+];
+---
+
+<Base title="Changelog" description="Notable changes to this site.">
+  <section class="changelog">
+    <h1>Changelog</h1>
+    <ul class="changelog__list">
+      {entries.map((e) => (
+        <li>
+          <time datetime={e.date}>{e.display}</time>
+          <span>{e.text}</span>
+        </li>
+      ))}
+    </ul>
+  </section>
+</Base>
+
+<style>
+  .changelog {
+    max-width: 38rem;
+  }
+
+  .changelog h1 {
+    font-family: var(--font-editorial);
+    font-size: clamp(2rem, 4vw, 2.75rem);
+    letter-spacing: -0.02em;
+    margin: 0 0 1.5rem;
+  }
+
+  .changelog__list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .changelog__list li {
+    display: grid;
+    grid-template-columns: 6rem 1fr;
+    gap: 1rem;
+    align-items: baseline;
+    padding: 1rem 0;
+    border-top: 1px solid var(--border-subtle);
+  }
+
+  .changelog__list time {
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    color: var(--dim);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .changelog__list span {
+    font-family: var(--font-editorial);
+    font-size: 1.02rem;
+    line-height: 1.7;
+  }
+
+  @media (max-width: 480px) {
+    .changelog__list li {
+      grid-template-columns: 1fr;
+      gap: 0.35rem;
+    }
+  }
+</style>
