@@ -624,7 +624,15 @@ const articleStructuredData = {
     font-size: clamp(1.05rem, 0.98rem + 0.24vw, 1.12rem);
     line-height: 1.82;
     color: var(--text);
+    text-align: left;
+    hyphens: none;
   }
+
+  /* Micro-typography: balanced headings, pretty body paragraphs */
+  .article-prose :global(h1),
+  .article-prose :global(h2),
+  .article-prose :global(h3) { text-wrap: balance; }
+  .article-prose :global(p) { text-wrap: pretty; }
 
   .article-prose > :global(p:first-child) {
     font-size: 1.18em;
@@ -669,6 +677,36 @@ const articleStructuredData = {
     font-style: normal;
   }
 
+  /* Blockquote citations */
+  .article-prose :global(blockquote > footer),
+  .article-prose :global(blockquote cite) {
+    color: var(--dim);
+    font-style: normal;
+    font-size: 0.9em;
+  }
+  .article-prose :global(blockquote > footer::before) { content: "\2014\00a0"; }
+
+  /* Tables: ink rules top and bottom, hairline under the header, no zebra */
+  .article-prose :global(table) {
+    border-collapse: collapse;
+    margin: 1.5rem 0;
+    border-top: 1px solid var(--text);
+    border-bottom: 1px solid var(--text);
+  }
+  .article-prose :global(th) {
+    border-bottom: 1px solid var(--border);
+    text-align: left;
+  }
+  .article-prose :global(th),
+  .article-prose :global(td) {
+    padding: 0.4rem 1rem 0.4rem 0;
+    border-left: 0;
+    border-right: 0;
+  }
+  .article-prose :global(tbody tr) { background: none; }
+  .article-prose :global(td.num),
+  .article-prose :global(th.num) { text-align: right; }
+
   .article-prose :global(pre) {
     margin: 2rem 0;
     padding: 1rem 1.125rem;
@@ -712,6 +750,15 @@ const articleStructuredData = {
   /* Visited purple (post prose). Literal colors: :visited ignores var(). */
   .article-prose :global(a:visited) { color: #551a8b; }
   :global([data-theme="dark"]) .article-prose :global(a:visited) { color: #c58af9; }
+
+  /* External-link marker. Internal links are relative (/…), footnote and
+     section anchors are #…, so only off-site links match. Image links and
+     the arrow itself stay un-underlined via inline-block. */
+  .article-prose :global(a[href^="http"]:not([href*="andymasley.com"]):not(:has(img))::after) {
+    content: "\00a0\2197";
+    display: inline-block;
+    font-size: 0.8em;
+  }
 
   .article-prose :global(h1) {
     font-family: var(--font-editorial);
