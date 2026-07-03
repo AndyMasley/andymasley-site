@@ -109,7 +109,8 @@ export function extractHeadingsFromHtml(html: string): { headings: TOCHeading[];
     const tag = m[1].toLowerCase();
     const attrs = m[2];
     const innerHtml = m[3];
-    const text = stripTags(innerHtml);
+    // Drop the appended section anchor (§) so it never leaks into TOC labels.
+    const text = stripTags(innerHtml.replace(/<a class="h-anchor"[\s\S]*?<\/a>/gi, ''));
     if (!text) continue;
 
     // Get ID from attribute or generate one

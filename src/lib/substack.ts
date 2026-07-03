@@ -545,28 +545,39 @@ function addHeadingIds(html: string): string {
   return html.replace(
     /<(h[1-6])([^>]*)>([\s\S]*?)<\/\1>/gi,
     (match, tag, attrs, innerHtml) => {
-      // Skip if already has an id attribute
-      if (/\bid\s*=/i.test(attrs)) {
-        return match;
+      const level = tag.toLowerCase();
+      let outAttrs = attrs;
+      let id: string;
+
+      const existing = attrs.match(/\bid="([^"]*)"/i);
+      if (existing) {
+        id = existing[1];
+        usedIds.add(id);
+      } else {
+        // Strip inner HTML tags to get plain text for ID generation
+        const plainText = innerHtml.replace(/<[^>]*>/g, '').trim();
+        const base = generateHeadingId(plainText);
+        if (!base) return match;
+
+        // Handle duplicate IDs by appending numbers (deterministic per build)
+        let uniqueId = base;
+        let counter = 1;
+        while (usedIds.has(uniqueId)) {
+          uniqueId = `${base}-${counter}`;
+          counter++;
+        }
+        usedIds.add(uniqueId);
+        id = uniqueId;
+        outAttrs = `${attrs} id="${uniqueId}"`;
       }
 
-      // Strip inner HTML tags to get plain text for ID generation
-      const plainText = innerHtml.replace(/<[^>]*>/g, '').trim();
+      // Section anchor (§) on real section headings only. The TOC extractor
+      // strips .h-anchor so these never pollute sidebar labels.
+      const anchor = (level === 'h1' || level === 'h2' || level === 'h3')
+        ? `<a class="h-anchor" href="#${id}" aria-label="Link to this section">§</a>`
+        : '';
 
-      // Generate ID from content
-      let id = generateHeadingId(plainText);
-      if (!id) return match;
-
-      // Handle duplicate IDs by appending numbers
-      let uniqueId = id;
-      let counter = 1;
-      while (usedIds.has(uniqueId)) {
-        uniqueId = `${id}-${counter}`;
-        counter++;
-      }
-      usedIds.add(uniqueId);
-
-      return `<${tag}${attrs} id="${uniqueId}">${innerHtml}</${tag}>`;
+      return `<${tag}${outAttrs}>${innerHtml}${anchor}</${tag}>`;
     }
   );
 }
@@ -639,6 +650,9 @@ export function processPostContent(html: string, slug: string): string {
 
   // Remove subscription widget wraps (nested divs)
   processed = processed.replace(/<div[^>]*class="[^"]*subscription-widget-wrap[^"]*"[^>]*>[\s\S]*?<\/div>\s*<\/div>/gi, '');
+
+  // Scene breaks: bare <hr> inside post bodies become an asterism.
+  processed = processed.replace(/<hr\b[^>]*>/gi, '<div class="asterism" role="separator">⁂</div>');
 
   // Tufte sidenotes (inline-content footnotes only; block-content stays bottom-only)
   processed = injectSidenotes(processed, slug);
