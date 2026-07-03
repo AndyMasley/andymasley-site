@@ -1943,3 +1943,37 @@ details[open] summary::before {
   color: var(--dim);
   font-size: 0.85rem;
 }
+
+/* ============================================
+   Print
+   ============================================ */
+
+@media print {
+  @page { margin: 2cm; }
+
+  .header,
+  footer,
+  .search-widget,
+  .dark-toggle,
+  .h-anchor,
+  .article-grid__toc,
+  .article-toc-mobilebar,
+  .article-pagination { display: none !important; }
+
+  html, body { background: #fff; color: #000; }
+  a { color: #000 !important; }
+
+  /* Expand external links to their URL instead of the ↗ marker */
+  .article-prose a[href^="http"]::after {
+    content: " (" attr(href) ")" !important;
+    font-size: 0.85em;
+    word-break: break-all;
+  }
+
+  /* Sidenotes collapse; the full bottom footnote list returns */
+  .sidenote { display: none !important; }
+  .footnote.footnotes-list { display: block !important; }
+
+  h1, h2, h3 { break-after: avoid; }
+  figure, blockquote, table, pre { break-inside: avoid; }
+}

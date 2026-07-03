@@ -1,5 +1,14 @@
 ---
 import Base from '@/layouts/Base.astro';
+import { getAllWritingPostMetas } from '@/lib/all-writing-posts';
+
+const recent = (await getAllWritingPostMetas())
+  .filter((p) => p.date.getTime() !== 0)
+  .sort((a, b) => b.date.getTime() - a.date.getTime())
+  .slice(0, 5);
+
+const fmt = (d: Date) =>
+  `${String(d.getUTCMonth() + 1).padStart(2, '0')}.${String(d.getUTCDate()).padStart(2, '0')}.${d.getUTCFullYear()}`;
 ---
 
 <Base title="Page not found" description="The page you're looking for doesn't exist or has been moved." ogImage="/og/default.png">
@@ -8,7 +17,8 @@ import Base from '@/layouts/Base.astro';
       <span class="not-found__code">404</span>
       <h1 class="not-found__title">Page not found</h1>
       <p class="not-found__message">
-        The page you're looking for doesn't exist or has been moved.
+        The page you’re looking for doesn’t exist or has been moved. Try the
+        search in the header, or one of my recent posts.
       </p>
       <a href="/" class="not-found__link">
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -17,6 +27,20 @@ import Base from '@/layouts/Base.astro';
         </svg>
         Back to home
       </a>
+
+      {recent.length > 0 && (
+        <div class="not-found__recent">
+          <p class="not-found__recent-label">Recent writing</p>
+          <ul class="not-found__recent-list">
+            {recent.map((p) => (
+              <li>
+                <time datetime={p.date.toISOString()}>{fmt(p.date)}</time>
+                <a href={`/writing/${p.slug}`}>{p.title}</a>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </div>
   </div>
 </Base>
@@ -69,5 +93,40 @@ import Base from '@/layouts/Base.astro';
   .not-found__link:hover {
     color: var(--accent);
     border-bottom-color: var(--accent);
+  }
+
+  .not-found__recent {
+    margin-top: 3rem;
+  }
+
+  .not-found__recent-label {
+    font-family: var(--font-body);
+    font-size: 0.7rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--dim);
+    margin: 0 0 0.75rem;
+  }
+
+  .not-found__recent-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .not-found__recent-list li {
+    display: flex;
+    gap: 0.9rem;
+    align-items: baseline;
+    padding: 0.45rem 0;
+    border-top: 1px solid var(--border-subtle);
+  }
+
+  .not-found__recent-list time {
+    flex-shrink: 0;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--dim);
+    font-variant-numeric: tabular-nums;
   }
 </style>
