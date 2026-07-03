@@ -571,6 +571,53 @@ function addHeadingIds(html: string): string {
   );
 }
 
+// Inject Tufte-style sidenotes. For each bottom footnote whose content is
+// inline-only, place a .sidenote span immediately after its in-text reference
+// (inside the same paragraph, so the float lands near its line) and tag the
+// bottom footnote block so wide-screen CSS can hide it. Footnotes containing
+// block elements (lists, figures, etc.) can't live in an inline <span>, so
+// they are left bottom-only and logged.
+function injectSidenotes(html: string, slug: string): string {
+  const noteRe = /<div class="footnote" data-component-name="FootnoteToDOM"><a[^>]*class="footnote-number"[^>]*>(\d+)<\/a><div class="footnote-content">([\s\S]*?)<\/div><\/div>/g;
+  const skipped: string[] = [];
+  let out = html;
+  let m: RegExpExecArray | null;
+
+  const notes: { n: string; content: string; raw: string }[] = [];
+  while ((m = noteRe.exec(html)) !== null) {
+    notes.push({ n: m[1], content: m[2], raw: m[0] });
+  }
+
+  for (const { n, content, raw } of notes) {
+    // Block-level content can't be flattened into an inline span — leave bottom-only.
+    if (/<(img|figure|blockquote|ul|ol|table|h[1-6]|hr|pre)\b/i.test(content)) {
+      skipped.push(n);
+      continue;
+    }
+    // Flatten to inline: merge multiple <p> with a space, drop the <p> wrappers.
+    const inline = content
+      .replace(/<\/p>\s*<p[^>]*>/gi, ' ')
+      .replace(/<\/?p[^>]*>/gi, '')
+      .trim();
+
+    const sidenote = `<span class="sidenote" role="note"><span class="sidenote-number">${n}</span> ${inline}</span>`;
+
+    // Place the sidenote right after the in-text reference. If no in-text
+    // reference exists, leave the note bottom-only.
+    const anchorRe = new RegExp(`(<a class="footnote-anchor"[^>]*id="footnote-anchor-${n}"[^>]*>${n}<\\/a>)`);
+    if (!anchorRe.test(out)) continue;
+    out = out.replace(anchorRe, `$1${sidenote}`);
+
+    // Tag the bottom block so wide-screen CSS can hide just the converted notes.
+    out = out.replace(raw, raw.replace('<div class="footnote" ', '<div class="footnote footnotes-list" '));
+  }
+
+  if (skipped.length) {
+    console.log(`[sidenotes] ${slug}: left ${skipped.length} block-content footnote(s) bottom-only: ${skipped.join(', ')}`);
+  }
+  return out;
+}
+
 // Process HTML content for display
 export function processPostContent(html: string, slug: string): string {
   // Fix anchor links
@@ -592,6 +639,9 @@ export function processPostContent(html: string, slug: string): string {
 
   // Remove subscription widget wraps (nested divs)
   processed = processed.replace(/<div[^>]*class="[^"]*subscription-widget-wrap[^"]*"[^>]*>[\s\S]*?<\/div>\s*<\/div>/gi, '');
+
+  // Tufte sidenotes (inline-content footnotes only; block-content stays bottom-only)
+  processed = injectSidenotes(processed, slug);
 
   return processed;
 }
