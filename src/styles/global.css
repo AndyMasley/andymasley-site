@@ -36,8 +36,8 @@
   --shadow-glow: 0 0 0 3px var(--accent-subtle);
 
   /* Typography */
-  --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  --font-editorial: 'Source Serif 4', Georgia, serif;
+  --font-body: Georgia, Cambria, 'Times New Roman', Times, serif;
+  --font-editorial: Georgia, Cambria, 'Times New Roman', Times, serif;
   --font-mono: 'SF Mono', 'Fira Code', 'Consolas', monospace;
 
   /* Font sizes - refined scale for Inter */
