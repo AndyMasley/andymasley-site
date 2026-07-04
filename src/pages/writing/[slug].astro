@@ -197,7 +197,12 @@ interface Props {
 
 const { post, newerPost, olderPost } = Astro.props;
 const isMetaPost = new Set(getMetaPostSlugs()).has(post.slug);
+// Post pages self-canonicalize (Base falls back to the current andymasley.com
+// path). Substack declares its own canonical on the originals, so both copies
+// deliberately claim themselves — don't "fix" this by pointing ours at Substack.
 const permalink = new URL(`/writing/${post.slug}/`, Astro.site ?? 'https://andymasley.com').href;
+// Describes the generated /og/<slug>.png card (og-card.ts), not the page.
+const ogImageAlt = `Title card reading "${post.title}" on a plain white background, andymasley.com`;
 
 const seoKeywords: string[] = post.source === 'local'
   ? (post.tags || [])
@@ -268,6 +273,7 @@ const articleStructuredData = {
   description="Every environmental objection to using ChatGPT, answered with data and sources."
   ogType="article"
   ogImage={`/og/${post.slug}.png`}
+  ogImageAlt={ogImageAlt}
   structuredData={articleStructuredData}
   keywords={seoKeywords}
 >
@@ -297,6 +303,7 @@ const articleStructuredData = {
   activeNav="/writing"
   ogType="article"
   ogImage={`/og/${post.slug}.png`}
+  ogImageAlt={ogImageAlt}
   structuredData={articleStructuredData}
   keywords={seoKeywords}
 >
@@ -385,6 +392,7 @@ const articleStructuredData = {
   activeNav="/writing"
   ogType="article"
   ogImage={`/og/${post.slug}.png`}
+  ogImageAlt={ogImageAlt}
   structuredData={articleStructuredData}
   keywords={seoKeywords}
 >
