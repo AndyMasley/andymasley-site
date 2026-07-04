@@ -4,6 +4,7 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
 import { join } from 'path';
 import { getMetaPostSlugs } from '@/lib/meta-posts';
+import { lintPostContent } from './content-lint';
 
 // Cache configuration
 const CACHE_DIR = join(process.cwd(), '.cache', 'substack');
@@ -670,6 +671,10 @@ function injectSidenotes(html: string, slug: string): string {
 // Process HTML content for display
 export function processPostContent(html: string, slug: string, opts: { sidenotes?: boolean } = {}): string {
   const { sidenotes = true } = opts;
+  // Fail the build on TK/TKTK/TODO left in post content; warn on softer
+  // placeholder phrases.
+  lintPostContent(html, slug);
+
   // Demote body h1s and strip strong-in-heading before IDs are generated,
   // so ID slugs and § anchors see the final heading shape.
   let processed = normalizeHeadings(html, slug);

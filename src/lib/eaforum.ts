@@ -4,6 +4,7 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
 import { join } from 'path';
 import { normalizeHeadings } from './substack';
+import { lintPostContent } from './content-lint';
 
 // Cache configuration
 const CACHE_DIR = join(process.cwd(), '.cache', 'eaforum');
@@ -241,8 +242,9 @@ export async function fetchEAForumPostContent(postId: string): Promise<string> {
 // Process EA Forum HTML content for display
 // Fixes internal links to point to local pages where applicable
 export function processEAForumContent(html: string, currentSlug?: string): string {
-  // Same body-h1 demotion + strong-in-heading cleanup as Substack imports,
-  // so no post body carries an h1 regardless of source.
+  // Same placeholder lint and body-h1 demotion + strong-in-heading cleanup
+  // as Substack imports, so no post body carries an h1 regardless of source.
+  lintPostContent(html, currentSlug || 'eaforum-post');
   let processed = normalizeHeadings(html, currentSlug || 'eaforum-post');
 
   // Normalize slug for comparison
