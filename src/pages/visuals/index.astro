@@ -1,43 +1,12 @@
 ---
 import SectionPage from '@/layouts/SectionPage.astro';
 
-// Annotations drafted from each visual's own page copy — edit freely.
 const visuals = [
-  {
-    title: 'Factory-farmed chickens',
-    href: '/visuals/factory-farmed-chickens',
-    note: 'Visualizing the number of factory-farmed chickens alive in the United States at any given moment.',
-    date: 'Mar 2026',
-    interactive: true,
-  },
-  {
-    title: 'Carbon footprint calculator',
-    href: '/visuals/carbon-footprint',
-    note: 'Estimate your footprint from a credible baseline and see which lifestyle changes actually move it.',
-    date: 'Mar 2026',
-    interactive: true,
-  },
-  {
-    title: 'How thirsty is AI?',
-    href: '/visuals/water',
-    note: 'How much water AI uses, sized against everything else that uses water.',
-    date: 'Mar 2026',
-    interactive: true,
-  },
-  {
-    title: 'What does your AI use cost?',
-    href: '/visuals/ai-prompt-footprint',
-    note: 'Your own chatbot use, priced in energy and water against everyday activities.',
-    date: 'Jun 2026',
-    interactive: true,
-  },
-  {
-    title: 'PM2.5 exposure by county',
-    href: '/visuals/pm25-county-exposure',
-    note: 'Every US county as a bar — width is population, height is air pollution exposure, with the top emission sources on hover.',
-    date: 'May 2026',
-    interactive: true,
-  },
+  { title: 'Factory-farmed chickens', href: '/visuals/factory-farmed-chickens', date: 'Mar 2026', interactive: true },
+  { title: 'Carbon footprint calculator', href: '/visuals/carbon-footprint', date: 'Mar 2026', interactive: true },
+  { title: 'How thirsty is AI?', href: '/visuals/water', date: 'Mar 2026', interactive: true },
+  { title: 'What does your AI use cost?', href: '/visuals/ai-prompt-footprint', date: 'Jun 2026', interactive: true },
+  { title: 'PM2.5 exposure by county', href: '/visuals/pm25-county-exposure', date: 'May 2026', interactive: true },
 ];
 ---
 
@@ -53,7 +22,6 @@ const visuals = [
           <a href={v.href} class="annotated-list__title">{v.title}</a>
           <span class="annotated-list__meta">{v.date}{v.interactive && ' · interactive'}</span>
         </div>
-        <p class="annotated-list__note">{v.note}</p>
       </li>
     ))}
   </ul>

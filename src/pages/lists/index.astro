@@ -1,23 +1,10 @@
 ---
 import SectionPage from '@/layouts/SectionPage.astro';
 
-// Annotations drafted from each list page's own copy — edit freely.
 const lists = [
-  {
-    title: 'Favorite things',
-    href: '/lists/favorite-things',
-    note: 'Books, movies, albums, places, quotes, and ideas I come back to, with notes on why.',
-  },
-  {
-    title: 'Product recommendations',
-    href: '/lists/product-recommendations',
-    note: 'Products that have made my life better, from kitchen gear to software.',
-  },
-  {
-    title: 'Great DC restaurants for vegans',
-    href: '/lists/dc-vegan-dining',
-    note: 'My favorite vegan food and restaurants in the DC area.',
-  },
+  { title: 'Favorite things', href: '/lists/favorite-things' },
+  { title: 'Product recommendations', href: '/lists/product-recommendations' },
+  { title: 'Great DC restaurants for vegans', href: '/lists/dc-vegan-dining' },
 ];
 ---
 
@@ -32,7 +19,6 @@ const lists = [
         <div class="annotated-list__row">
           <a href={l.href} class="annotated-list__title">{l.title}</a>
         </div>
-        <p class="annotated-list__note">{l.note}</p>
       </li>
     ))}
   </ul>
