@@ -704,5 +704,24 @@ export function processPostContent(html: string, slug: string, opts: { sidenotes
     processed = injectSidenotes(processed, slug);
   }
 
+  // Accessible names on footnote links. Runs after injectSidenotes so the
+  // regexes there see untouched markup; idempotent (skips labeled links).
+  processed = processed.replace(
+    /<a([^>]*class="footnote-anchor"[^>]*)>/gi,
+    (match, attrs) => {
+      if (/aria-label=/i.test(attrs)) return match;
+      const n = attrs.match(/footnote-anchor-(\d+)/)?.[1];
+      return `<a${attrs} aria-label="Footnote${n ? ` ${n}` : ''}">`;
+    }
+  );
+  processed = processed.replace(
+    /<a([^>]*class="footnote-number"[^>]*)>/gi,
+    (match, attrs) => {
+      if (/aria-label=/i.test(attrs)) return match;
+      const n = attrs.match(/id="footnote-(\d+)"/)?.[1];
+      return `<a${attrs} aria-label="Back to reference${n ? ` ${n}` : ''}">`;
+    }
+  );
+
   return processed;
 }

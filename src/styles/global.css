@@ -1054,6 +1054,106 @@ details[open] summary::before {
 }
 
 /* ============================================
+   Components: Footnotes / Sidenotes
+   One markup shape sitewide — the Substack import shape:
+     in-text  <a class="footnote-anchor" id="footnote-anchor-N" href="#footnote-N">N</a>
+     bottom   <div class="footnote"><a id="footnote-N" href="#footnote-anchor-N"
+                class="footnote-number">N</a><div class="footnote-content">…</div></div>
+   The homepage bio note is hand-written in the same shape, so one ruleset
+   covers .prose (articles, cheat sheet) and .home-intro (homepage).
+   ============================================ */
+
+.prose .footnote-anchor,
+.home-intro .footnote-anchor {
+  font-size: 0.7em;
+  vertical-align: super;
+  line-height: 0;
+  text-decoration: none;
+  color: var(--accent);
+}
+
+.prose .footnote-anchor:hover,
+.home-intro .footnote-anchor:hover {
+  text-decoration: underline;
+}
+
+.prose .footnotes,
+.prose .footnote,
+.home-intro .footnote {
+  margin-top: 3rem;
+  padding-top: 1.25rem;
+  font-size: 0.92rem;
+  font-family: var(--font-body);
+  line-height: 1.65;
+  color: var(--dim);
+  border-top: 1px solid var(--border);
+}
+
+.prose .footnote .footnote-number,
+.home-intro .footnote .footnote-number {
+  font-size: 0.85em;
+  margin-right: 0.5rem;
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.prose .footnotes li,
+.prose .footnote li {
+  margin-bottom: 0.5rem;
+  padding-left: 0;
+}
+
+.footnote-content blockquote {
+  margin: var(--space-sm) 0;
+  padding-left: 1em;
+  border-left: 2px solid var(--border);
+  font-style: italic;
+}
+
+.footnote-return {
+  font-style: normal;
+  text-decoration: none;
+  opacity: 0.5;
+  transition: opacity var(--transition-fast);
+}
+
+.footnote-return:hover {
+  opacity: 1;
+}
+
+/* Tufte sidenotes: margin notes on wide screens, bottom footnotes elsewhere.
+   Hidden by default on every .prose surface; the float geometry applies only
+   inside the article grid (.article-prose) — the cheat-sheet page shares
+   .prose but has its own layout and keeps bottom footnotes at all widths.
+   Geometry: wide article layout is TOC (≤220px) + main (≤760px) in a shell
+   capped at --max-width-wide (1120px). Usable space right of the main column
+   at 1440px is ~240px, so W=180 / G=32 / margin-right=-(W+G)=-212. Recompute
+   these if the article grid changes. */
+.prose .sidenote { display: none; }
+
+@media (min-width: 1440px) {
+  .article-prose .sidenote {
+    display: block;
+    float: right;
+    clear: right;
+    width: 180px;
+    margin-right: -212px;
+    margin-top: 0.15rem;
+    margin-bottom: 0.8rem;
+    font-family: var(--font-body);
+    font-size: 0.8125rem;
+    line-height: 1.5;
+    color: var(--text);
+  }
+  .article-prose .sidenote-number {
+    color: var(--dim);
+    margin-right: 0.35em;
+  }
+  .article-prose .sidenote a { color: var(--accent); }
+  .article-prose .footnote.footnotes-list { display: none; }
+}
+
+/* ============================================
    Components: Search Modal
    ============================================ */
 

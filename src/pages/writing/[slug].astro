@@ -931,70 +931,8 @@ const articleStructuredData = {
     text-decoration: underline;
   }
 
-  .article-prose :global(.footnote-anchor) {
-    font-size: 0.7em;
-    vertical-align: super;
-    line-height: 0;
-    text-decoration: none;
-    color: var(--accent);
-  }
-
-  .article-prose :global(.footnote-anchor:hover) {
-    text-decoration: underline;
-  }
-
-  .article-prose :global(.footnotes),
-  .article-prose :global(.footnote) {
-    margin-top: 3rem;
-    padding-top: 1.25rem;
-    font-size: 0.92rem;
-    font-family: var(--font-body);
-    line-height: 1.65;
-    color: var(--dim);
-    border-top: 1px solid var(--border);
-  }
-
-  .article-prose :global(.footnote .footnote-number) {
-    font-size: 0.85em;
-    margin-right: 0.5rem;
-    color: var(--accent);
-    text-decoration: none;
-  }
-
-  .article-prose :global(.footnotes li),
-  .article-prose :global(.footnote li) {
-    margin-bottom: 0.5rem;
-    padding-left: 0;
-  }
-
-  /* Tufte sidenotes: margin notes on wide screens, bottom footnotes elsewhere.
-     The wide article layout is TOC (<=220px) + main (<=760px) inside a shell
-     capped at --max-width-wide (1120px). Usable space to the right of the main
-     column at 1440px is ~240px, so W=180 / G=32 / margin-right=-(W+G)=-212 with
-     a 1440px breakpoint. Recompute these if the grid geometry changes. */
-  .article-prose :global(.sidenote) { display: none; }
-
-  @media (min-width: 1440px) {
-    .article-prose :global(.sidenote) {
-      display: block;
-      float: right;
-      clear: right;
-      width: 180px;
-      margin-right: -212px;
-      margin-top: 0.15rem;
-      margin-bottom: 0.8rem;
-      font-family: var(--font-body);
-      font-size: 0.8125rem;
-      line-height: 1.5;
-      color: var(--text);
-    }
-    .article-prose :global(.sidenote-number) {
-      color: var(--dim);
-      margin-right: 0.35em;
-    }
-    .article-prose :global(.sidenote a) { color: var(--accent); }
-    .article-prose :global(.footnote.footnotes-list) { display: none; }
-  }
+  /* Footnote and sidenote styling is global (see global.css: Components:
+     Footnotes / Sidenotes) so the homepage bio note renders identically. */
 
   :global([data-theme="dark"]) .article-header__standfirst {
     color: #c9c2b6;
