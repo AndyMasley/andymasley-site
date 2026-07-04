@@ -4,6 +4,7 @@ import { fetchSubstackPosts, fetchPostContent, categoryConfigs, parseSubcategori
 import { metaPosts, getMetaPostSlugs } from '@/lib/meta-posts';
 import { bylines } from '@/lib/bylines';
 import { fetchEAForumPosts } from '@/lib/eaforum';
+import { formatDateOnly, formatMonthAbbrev, formatDayOfMonth } from '@/lib/format-date';
 
 interface TimelinePost {
   title: string;
@@ -115,18 +116,6 @@ function normalizeCapitalization(text: string): string {
     }
     return word.toLowerCase();
   }).join(' ');
-}
-
-function formatArchiveMonth(date: Date): string {
-  return date.toLocaleString('en-US', { month: 'short' });
-}
-
-function formatBylineDate(dateStr: string): string {
-  const date = new Date(dateStr);
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  const year = date.getFullYear();
-  return `${month}.${day}.${year}`;
 }
 
 const guideCards: GuideCard[] = metaPostsWithContent.map(meta => ({
@@ -257,8 +246,8 @@ const defaultExpandedYear = postsByYear.some(group => group.year === currentYear
                 data-search-text={post.title.toLowerCase()}
               >
                 <time class="timeline-date" datetime={post.date.toISOString()}>
-                  <span class="timeline-month">{formatArchiveMonth(post.date)}</span>
-                  <span class="timeline-day">{post.date.getDate()}</span>
+                  <span class="timeline-month">{formatMonthAbbrev(post.date)}</span>
+                  <span class="timeline-day">{formatDayOfMonth(post.date)}</span>
                 </time>
 
                 <div class="timeline-main">
@@ -307,7 +296,7 @@ const defaultExpandedYear = postsByYear.some(group => group.year === currentYear
       <div class="bylines-list">
         {bylines.slice(0, bylinesPreviewCount).map(byline => (
           <article class="byline-row">
-            <span class="byline-date">{formatBylineDate(byline.date)}</span>
+            <span class="byline-date">{formatDateOnly(byline.date)}</span>
             <a href={byline.url} target="_blank" rel="noopener" class="byline-link">
               {byline.title}
             </a>
@@ -322,7 +311,7 @@ const defaultExpandedYear = postsByYear.some(group => group.year === currentYear
           <div class="bylines-list bylines-list--extra">
             {bylines.slice(bylinesPreviewCount).map(byline => (
               <article class="byline-row">
-                <span class="byline-date">{formatBylineDate(byline.date)}</span>
+                <span class="byline-date">{formatDateOnly(byline.date)}</span>
                 <a href={byline.url} target="_blank" rel="noopener" class="byline-link">
                   {byline.title}
                 </a>

@@ -8,6 +8,7 @@ import { ArticleTOC } from '@/components/ArticleTOC';
 import { extractHeadingsFromHtml, type TOCHeading } from '@/lib/extract-headings';
 import { mapWithConcurrency } from '@/lib/map-with-concurrency';
 import { getOptionalCollection } from '@/lib/optional-collection';
+import { formatPostDate as formatDate } from '@/lib/format-date';
 import substackKeywords from '@/data/substack-keywords.json';
 
 const keywordsBySlug = substackKeywords as Record<string, string[]>;
@@ -201,14 +202,6 @@ const permalink = new URL(`/writing/${post.slug}/`, Astro.site ?? 'https://andym
 const seoKeywords: string[] = post.source === 'local'
   ? (post.tags || [])
   : (keywordsBySlug[post.slug] || []);
-
-// Format date as MM.DD.YYYY
-function formatDate(date: Date): string {
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  const year = date.getFullYear();
-  return `${month}.${day}.${year}`;
-}
 
 // Estimate reading time
 function getReadingTime(content: string): number {

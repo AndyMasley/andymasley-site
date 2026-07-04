@@ -1,14 +1,12 @@
 ---
 import Base from '@/layouts/Base.astro';
 import { getAllWritingPostMetas } from '@/lib/all-writing-posts';
+import { formatPostDate } from '@/lib/format-date';
 
 const recent = (await getAllWritingPostMetas())
   .filter((p) => p.date.getTime() !== 0)
   .sort((a, b) => b.date.getTime() - a.date.getTime())
   .slice(0, 5);
-
-const fmt = (d: Date) =>
-  `${String(d.getUTCMonth() + 1).padStart(2, '0')}.${String(d.getUTCDate()).padStart(2, '0')}.${d.getUTCFullYear()}`;
 ---
 
 <Base title="Page not found" description="The page you're looking for doesn't exist or has been moved." ogImage="/og/default.png">
@@ -34,7 +32,7 @@ const fmt = (d: Date) =>
           <ul class="not-found__recent-list">
             {recent.map((p) => (
               <li>
-                <time datetime={p.date.toISOString()}>{fmt(p.date)}</time>
+                <time datetime={p.date.toISOString()}>{formatPostDate(p.date)}</time>
                 <a href={`/writing/${p.slug}`}>{p.title}</a>
               </li>
             ))}

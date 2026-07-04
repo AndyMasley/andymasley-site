@@ -2,6 +2,7 @@
 import Base from '@/layouts/Base.astro';
 import { fetchSubstackPosts } from '@/lib/substack';
 import { getMetaPostSlugs } from '@/lib/meta-posts';
+import { formatCompactDate } from '@/lib/format-date';
 
 // Fetch recent blog posts from Substack
 const allPosts = await fetchSubstackPosts();
@@ -36,11 +37,6 @@ const homeStructuredData = [
   },
 ];
 
-function formatDate(date: Date): string {
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${month}.${day}`;
-}
 ---
 
 <Base
@@ -87,7 +83,7 @@ function formatDate(date: Date): string {
     <ul class="content-list">
       {recentPosts.map(post => (
         <li class="content-item post-item">
-          <span class="content-item__date">{formatDate(post.date)}</span>
+          <span class="content-item__date">{formatCompactDate(post.date)}</span>
           <a href={`/writing/${post.slug}`} class="content-item__link">
             {post.title}
           </a>

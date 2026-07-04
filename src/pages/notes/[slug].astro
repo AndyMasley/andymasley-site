@@ -1,6 +1,7 @@
 ---
 import Base from '@/layouts/Base.astro';
 import { getCollection, type CollectionEntry } from 'astro:content';
+import { formatPostDate as formatDate } from '@/lib/format-date';
 
 export async function getStaticPaths() {
   const items = await getCollection('notes');
@@ -16,14 +17,6 @@ interface Props {
 
 const { item } = Astro.props;
 const { Content } = await item.render();
-
-function formatDate(date: Date): string {
-  return date.toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-  });
-}
 ---
 
 <Base

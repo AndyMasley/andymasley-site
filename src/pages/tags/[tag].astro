@@ -1,6 +1,7 @@
 ---
 import Base from '@/layouts/Base.astro';
 import { getOptionalCollection } from '@/lib/optional-collection';
+import { formatPostDate as formatDate } from '@/lib/format-date';
 
 export async function getStaticPaths() {
   const writing = await getOptionalCollection('writing');
@@ -33,14 +34,6 @@ const allItems = [
   ...writing.map(item => ({ ...item, type: 'writing', url: `/writing/${item.slug}` })),
   ...notes.map(item => ({ ...item, type: 'notes', url: `/notes/${item.slug}` })),
 ].sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
-
-function formatDate(date: Date): string {
-  return date.toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric'
-  });
-}
 ---
 
 <Base title={`#${tag}`} description={`All content tagged "${tag}"`}>

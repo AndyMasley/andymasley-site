@@ -6,6 +6,7 @@ import satori from 'satori';
 import { Resvg } from '@resvg/resvg-js';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { formatPostDate } from './format-date';
 
 // Resolve from the project root: after bundling this module lives in
 // dist/chunks/, so an import.meta.url-relative path would miss. OG generation
@@ -21,12 +22,6 @@ const hexSvg =
   '</svg>';
 const hexDataUri = 'data:image/svg+xml;base64,' + Buffer.from(hexSvg).toString('base64');
 
-function formatDate(d: Date): string {
-  const mm = String(d.getUTCMonth() + 1).padStart(2, '0');
-  const dd = String(d.getUTCDate()).padStart(2, '0');
-  return `${mm}.${dd}.${d.getUTCFullYear()}`;
-}
-
 interface CardInput {
   title: string;
   date?: Date | null;
@@ -34,7 +29,7 @@ interface CardInput {
 
 export async function renderOgCard({ title, date }: CardInput): Promise<Buffer> {
   const titleSize = title.length > 90 ? 54 : 66;
-  const dateStr = date && date.getTime() !== 0 ? formatDate(date) : '';
+  const dateStr = date && date.getTime() !== 0 ? formatPostDate(date) : '';
 
   const tree = {
     type: 'div',
