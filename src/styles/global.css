@@ -2133,6 +2133,9 @@ details[open] summary::before {
   .h-anchor,
   .article-grid__toc,
   .article-toc-mobilebar,
+  .article-toc-overlay,
+  .article-bounty,
+  .article-nav__link,
   .article-pagination { display: none !important; }
 
   html, body { background: #fff; color: #000; }
@@ -2143,6 +2146,9 @@ details[open] summary::before {
     content: " (" attr(href) ")" !important;
     font-size: 0.85em;
     word-break: break-all;
+    color: #000;
+    vertical-align: baseline;
+    line-height: normal;
   }
 
   /* Sidenotes collapse; the full bottom footnote list returns */
