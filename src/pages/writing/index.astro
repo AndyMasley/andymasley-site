@@ -166,6 +166,21 @@ const defaultExpandedYear = postsByYear.some(group => group.year === currentYear
     </details>
   </section>
 
+  {guideCards.length > 0 && (
+    <section class="writing-section writing-section--guides" aria-label="Start here">
+      <div class="label">Start here</div>
+      <div class="guide-links">
+        <ul class="guide-list">
+          {guideCards.map(guide => (
+            <li class="guide-list__item">
+              <a href={guide.url} class="guide-link">{guide.title}</a>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </section>
+  )}
+
   <div class="divider"><div class="divider-diamond"></div></div>
 
   <section class="writing-section writing-section--archive" id="writing-archive" aria-label="Writing archive">
@@ -269,20 +284,6 @@ const defaultExpandedYear = postsByYear.some(group => group.year === currentYear
       ))}
     </div>
   </section>
-
-  {guideCards.length > 0 && (
-    <section class="writing-section writing-section--guides" aria-label="Guides">
-      <div class="guide-links">
-        <ul class="guide-list">
-          {guideCards.map(guide => (
-            <li class="guide-list__item">
-              <a href={guide.url} class="guide-link">{guide.title}</a>
-            </li>
-          ))}
-        </ul>
-      </div>
-    </section>
-  )}
 
   {hasBylines && (
     <section class="writing-section writing-section--elsewhere" aria-labelledby="elsewhere-heading">
