@@ -292,6 +292,7 @@ const articleStructuredData = {
     <CheatSheetExplorer client:load html={post.htmlContent} />
 
     <footer class="article-footer">
+      <p class="article-bounty">Spot an error? <a href="/writing/errors-and-updates">There's a bounty.</a></p>
       <a href="/writing" class="article-nav__link">&larr; Back to all writing</a>
     </footer>
   </div>
@@ -356,6 +357,7 @@ const articleStructuredData = {
             <p class="article-footer__author p-author h-card">
               By <a class="p-name u-url" href="https://andymasley.com">Andy Masley</a>
             </p>
+            <p class="article-bounty">Spot an error? <a href="/writing/errors-and-updates">There's a bounty.</a></p>
             <div class="article-footer__back">
               <a href="/writing" class="article-nav__link">&larr; Back to all writing</a>
             </div>
@@ -561,6 +563,12 @@ const articleStructuredData = {
     display: flex;
     flex-direction: column;
     gap: 1.5rem;
+  }
+
+  .article-bounty {
+    margin: 0;
+    font-size: 0.85rem;
+    color: var(--dim);
   }
 
   /* Visually hidden: kept in the DOM so the h-card microformat still parses */

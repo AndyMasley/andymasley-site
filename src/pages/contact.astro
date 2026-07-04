@@ -1,16 +1,35 @@
 ---
-import Base from '@/layouts/Base.astro';
+import SectionPage from '@/layouts/SectionPage.astro';
+
+const elsewhere = [
+  { label: 'Substack', href: 'https://substack.com/@andymasley' },
+  { label: 'Twitter', href: 'https://x.com/AndyMasley' },
+  { label: 'Bluesky', href: 'https://bsky.app/profile/andymasley.bsky.social' },
+  { label: 'LinkedIn', href: 'https://www.linkedin.com/in/andrew-masley/' },
+  { label: 'EA Forum', href: 'https://forum.effectivealtruism.org/users/andy-masley' },
+];
 ---
 
-<Base title="Contact" description="Get in touch with Andy Masley" ogImage="/images/og/og-contact.png">
-  <section class="simple-directory">
-    <ul class="simple-directory__list">
-      <li class="simple-directory__item">
-        <span class="simple-directory__text">AndyMasley@gmail.com</span>
-      </li>
-      <li class="simple-directory__item">
-        <a href="https://docs.google.com/forms/d/e/1FAIpQLSfeuR0zagnxjzyNQvh6OkI8pRd9Vtq26D8RzJ2h8WZYlaz8Sw/viewform?usp=send_form" target="_blank" rel="noopener" class="simple-directory__link">Anonymous feedback</a>
-      </li>
+<SectionPage
+  title="Contact"
+  description="Get in touch with Andy Masley"
+  ogImage="/images/og/og-contact.png"
+>
+  <p class="page-header__description" slot="lede">
+    Email me at <a href="mailto:AndyMasley@gmail.com">AndyMasley@gmail.com</a> if you'd like
+    to chat, or leave <a href="https://docs.google.com/forms/d/e/1FAIpQLSfeuR0zagnxjzyNQvh6OkI8pRd9Vtq26D8RzJ2h8WZYlaz8Sw/viewform?usp=send_form" target="_blank" rel="noopener">anonymous feedback</a>.
+  </p>
+
+  <section class="contact-elsewhere" aria-label="Elsewhere">
+    <div class="label">Elsewhere</div>
+    <ul class="annotated-list">
+      {elsewhere.map(e => (
+        <li class="annotated-list__item">
+          <div class="annotated-list__row">
+            <a href={e.href} target="_blank" rel="noopener" class="annotated-list__title">{e.label}</a>
+          </div>
+        </li>
+      ))}
     </ul>
   </section>
-</Base>
+</SectionPage>

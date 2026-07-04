@@ -1,70 +1,123 @@
 ---
-import Base from '@/layouts/Base.astro';
+import SectionPage from '@/layouts/SectionPage.astro';
+
+// Outlet notes and dates drafted from each episode's own page — edit freely.
+const aiEnvironment = [
+  {
+    title: 'Conspicuous Cognition',
+    href: 'https://open.spotify.com/episode/2E3Yfi24OUyHxz67BtzhHB?si=8110a29fe7034cf5',
+    date: 'Nov 2025',
+    note: "Dan Williams's podcast on cognition and misinformation, on the truth about AI and the environment.",
+  },
+  {
+    title: 'Chain of Thought',
+    href: 'https://open.spotify.com/episode/1Lzt9pMcqOcjfE3WLxNy3j?si=fdb4604af43d40e9',
+    date: 'Nov 2025',
+    note: "Podcast on AI agents and infrastructure, on AI's environmental panic.",
+  },
+  {
+    title: 'NYT Hard Fork',
+    href: 'https://open.spotify.com/episode/0UaOQ0DcP9c8OG5IfAgfnT?si=5d00e4bce6aa43f0',
+    date: 'Dec 2025',
+    note: 'The New York Times tech podcast, on whether the AI water issue is fake.',
+  },
+  {
+    title: 'The Cognitive Revolution',
+    href: 'https://open.spotify.com/episode/0RBBVeGb5yfHsFWnKkDgD0?si=15d8b610374544b0',
+    date: 'Dec 2025',
+    note: "Nathan Labenz's AI podcast, sorting fact from fiction on AI's energy and water demands.",
+  },
+  {
+    title: 'Good Morning America',
+    href: 'https://www.youtube.com/watch?v=_Ird91qfPZs',
+    date: 'Feb 2026',
+    note: "ABC's morning show — I show up for about 5 seconds to say data centers run and store what we do online.",
+  },
+  {
+    title: "Arizona's Family",
+    href: "https://www.azfamily.com/2026/02/26/data-centers-arent-water-villains-you-think-they-are-environmentalist-says/",
+    date: 'Feb 2026',
+    note: "Phoenix TV news, on why data centers aren't the water villains people think they are.",
+  },
+  {
+    title: 'David Ramms',
+    href: 'https://www.youtube.com/watch?v=FQCdwcW3wEw',
+    date: 'May 2026',
+    note: "David Ramms's vegan advocacy channel, on whether vegans are getting AI wrong.",
+  },
+  {
+    title: 'The New Liberal Podcast',
+    href: 'https://podcasts.apple.com/us/podcast/how-worried-are-you-about-data-centers-ft-andy-masley/id1390384827?i=1000766767353',
+    date: 'May 2026',
+    note: "The Center for New Liberalism's politics podcast, on how worried to be about data centers.",
+  },
+  {
+    title: 'AI Summer',
+    href: 'https://www.aisummer.org/p/andy-masley-on-the-data-center-backlash',
+    date: 'Jun 2026',
+    note: "Timothy B. Lee's AI policy newsletter and podcast, on the data center backlash.",
+  },
+  {
+    title: 'Looking Glass Universe',
+    href: 'https://www.youtube.com/watch?v=DNkZRt-X4RM',
+    date: 'Jun 2026',
+    note: "Mithuna Yoganathan's physics channel, on AI's water usage.",
+  },
+];
+
+const effectiveAltruism = [
+  {
+    title: 'Expected Volume',
+    href: 'https://www.youtube.com/watch?v=qzNZfa2jSE8',
+    date: 'May 2025',
+    note: "Matt Reardon's podcast of conversations from the EA and rationalist sphere.",
+  },
+  {
+    title: "Bentham's Bulldog",
+    href: 'https://benthams.substack.com/p/chatting-with-andy-masley-about-ea',
+    date: 'Jan 2026',
+    note: 'A written conversation about EA, animal welfare, and which concerns about AI are real.',
+  },
+  {
+    title: 'Model Convos',
+    href: 'https://www.machineculture.io/p/model-convo-andy-masley',
+    date: 'Mar 2026',
+    note: 'Interview series on the Machine Culture Substack.',
+  },
+  {
+    title: 'The World Can Be Better',
+    href: 'https://www.youtube.com/watch?v=QNQezP5uzeg',
+    date: 'Apr 2026',
+    note: "Toby Tremlett's podcast, on whether AI is drinking your water.",
+  },
+];
+
+const groups = [
+  { heading: 'AI and the environment', items: aiEnvironment },
+  { heading: 'Effective altruism', items: effectiveAltruism },
+];
 ---
 
-<Base title="Appearances" description="Podcasts and other appearances" ogImage="/images/og/og-appearances.png">
-  <div class="appearances-page">
-    <p class="page-intro">
-      Podcasts, interviews, and a few places where my work has shown up outside the site itself.
-    </p>
-
-    <h2 class="section-heading">AI and the environment</h2>
-    <ul>
-      <li><a href="https://open.spotify.com/episode/2E3Yfi24OUyHxz67BtzhHB?si=8110a29fe7034cf5">Conspicuous Cognition</a></li>
-      <li><a href="https://open.spotify.com/episode/1Lzt9pMcqOcjfE3WLxNy3j?si=fdb4604af43d40e9">Chain of Thought</a></li>
-      <li><a href="https://open.spotify.com/episode/0UaOQ0DcP9c8OG5IfAgfnT?si=5d00e4bce6aa43f0">NYT Hard Fork</a></li>
-      <li><a href="https://open.spotify.com/episode/0RBBVeGb5yfHsFWnKkDgD0?si=15d8b610374544b0">The Cognitive Revolution</a></li>
-      <li><a href="https://www.youtube.com/watch?v=_Ird91qfPZs">Good Morning America</a>
-        <ul>
-          <li>I show up for about 5 seconds in this segment to say data centers run and store what we do online.</li>
-        </ul>
-      </li>
-      <li><a href="https://www.azfamily.com/2026/02/26/data-centers-arent-water-villains-you-think-they-are-environmentalist-says/">Arizona's Family</a></li>
-      <li><a href="https://www.youtube.com/watch?v=FQCdwcW3wEw">David Ramms</a></li>
-      <li><a href="https://podcasts.apple.com/us/podcast/how-worried-are-you-about-data-centers-ft-andy-masley/id1390384827?i=1000766767353">The New Liberal Podcast</a></li>
-      <li><a href="https://www.aisummer.org/p/andy-masley-on-the-data-center-backlash">AI Summer</a></li>
-      <li><a href="https://www.youtube.com/watch?v=DNkZRt-X4RM">Looking Glass Universe</a></li>
-    </ul>
-
-    <h2 class="section-heading">Effective altruism</h2>
-    <ul>
-      <li><a href="https://www.youtube.com/watch?v=qzNZfa2jSE8">Expected Volume</a></li>
-      <li><a href="https://benthams.substack.com/p/chatting-with-andy-masley-about-ea">Bentham's Bulldog</a></li>
-      <li><a href="https://www.machineculture.io/p/model-convo-andy-masley">Model Convos</a></li>
-      <li><a href="https://www.youtube.com/watch?v=QNQezP5uzeg">The World Can Be Better</a></li>
-    </ul>
-  </div>
-</Base>
-
-<style>
-  .page-intro {
-    margin-bottom: 1.5rem;
-  }
-
-  .section-heading {
-    font-family: var(--font-editorial);
-    font-size: 1.1rem;
-    font-weight: 600;
-    margin-top: 1.5rem;
-    margin-bottom: 0.5rem;
-  }
-
-  ul {
-    padding-left: 1.25rem;
-    margin-bottom: 1rem;
-  }
-
-  li {
-    margin-bottom: 0.25rem;
-  }
-
-  li ul {
-    margin-top: 0.25rem;
-    margin-bottom: 0.5rem;
-  }
-
-  li ul li {
-    color: var(--dim);
-    font-size: 0.95rem;
-  }
-</style>
+<SectionPage
+  title="Appearances"
+  lede="Podcasts, interviews, and a few places where my work has shown up outside the site itself."
+  description="Podcasts and other appearances"
+  ogImage="/images/og/og-appearances.png"
+>
+  {groups.map(group => (
+    <section aria-label={group.heading}>
+      <h2 class="annotated-list__group">{group.heading}</h2>
+      <ul class="annotated-list">
+        {group.items.map(item => (
+          <li class="annotated-list__item">
+            <div class="annotated-list__row">
+              <a href={item.href} target="_blank" rel="noopener" class="annotated-list__title">{item.title}</a>
+              <span class="annotated-list__meta">{item.date}</span>
+            </div>
+            <p class="annotated-list__note">{item.note}</p>
+          </li>
+        ))}
+      </ul>
+    </section>
+  ))}
+</SectionPage>

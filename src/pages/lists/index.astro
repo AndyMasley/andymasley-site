@@ -1,19 +1,40 @@
 ---
-import Base from '@/layouts/Base.astro';
+import SectionPage from '@/layouts/SectionPage.astro';
+
+// Annotations drafted from each list page's own copy — edit freely.
+const lists = [
+  {
+    title: 'Favorite things',
+    href: '/lists/favorite-things',
+    note: 'Books, movies, albums, places, quotes, and ideas I come back to, with notes on why.',
+  },
+  {
+    title: 'Product recommendations',
+    href: '/lists/product-recommendations',
+    note: 'Products that have made my life better, from kitchen gear to software.',
+  },
+  {
+    title: 'Great DC restaurants for vegans',
+    href: '/lists/dc-vegan-dining',
+    note: 'My favorite vegan food and restaurants in the DC area.',
+  },
+];
 ---
 
-<Base title="Lists" description="Andy's curated lists — favorite things, product recommendations, and DC vegan dining." ogImage="/images/og/og-lists.png">
-  <section class="simple-directory">
-    <ul class="simple-directory__list">
-      <li class="simple-directory__item">
-        <a href="/lists/favorite-things" class="simple-directory__link">Favorite things</a>
+<SectionPage
+  title="Lists"
+  lede="Curated lists: favorite things, product recommendations, and where to eat vegan in DC."
+  description="Andy's curated lists — favorite things, product recommendations, and DC vegan dining."
+  ogImage="/images/og/og-lists.png"
+>
+  <ul class="annotated-list">
+    {lists.map(l => (
+      <li class="annotated-list__item">
+        <div class="annotated-list__row">
+          <a href={l.href} class="annotated-list__title">{l.title}</a>
+        </div>
+        <p class="annotated-list__note">{l.note}</p>
       </li>
-      <li class="simple-directory__item">
-        <a href="/lists/product-recommendations" class="simple-directory__link">Product recommendations</a>
-      </li>
-      <li class="simple-directory__item">
-        <a href="/lists/dc-vegan-dining" class="simple-directory__link">Great DC restaurants for vegans</a>
-      </li>
-    </ul>
-  </section>
-</Base>
+    ))}
+  </ul>
+</SectionPage>

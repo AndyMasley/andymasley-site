@@ -3,16 +3,34 @@ import Base from '@/layouts/Base.astro';
 import { physicsTopics, getTotalVideoCount } from '@/lib/physics-videos';
 
 const totalVideos = getTotalVideoCount();
+
+// Units render as collapsed <details> with "Unit N — Title" summaries and
+// videos numbered continuously within each unit.
+const units = physicsTopics.map(topic => {
+  let n = 0;
+  return {
+    id: topic.id,
+    label: topic.id === 'lab'
+      ? topic.name
+      : `Unit ${topic.id.toUpperCase()} — ${topic.name.replace(/^[A-E]:\s*/, '')}`,
+    count: topic.subtopics.reduce((sum, s) => sum + s.videos.length, 0),
+    subtopics: topic.subtopics.map(s => ({
+      name: s.name,
+      videos: s.videos.map(v => ({ title: v.title, url: v.url, n: ++n })),
+    })),
+  };
+});
 ---
 
 <Base title="IB physics" description="Teaching resources from my physics teaching years" ogImage="/images/og/og-physics.png">
+  <h1 class="page-header__title">IB physics</h1>
   <p class="page-intro">
     I taught high school physics for 7 years, and made and collected lots of online resources for my students. This page has everything useful I can share from my time teaching, most importantly the {totalVideos} animated video lectures I made for the IB Physics SL curriculum.
   </p>
 
   <div class="divider"><div class="divider-diamond"></div></div>
 
-  <div class="section-title">Video lectures</div>
+  <div class="section-title" id="lectures">Video lectures</div>
   <div class="physics-intro">
     <p>
       Below are all my IB physics videos, also hosted on <a href="https://www.youtube.com/@andymasley" target="_blank" rel="noopener">my YouTube channel</a>. I only taught IB physics SL and don't have time to make HL videos right now. If you're looking for HL resources <a href="https://www.youtube.com/@donerphysics" target="_blank" rel="noopener">Chris Doner</a> and <a href="https://www.youtube.com/@siriusrevision" target="_blank" rel="noopener">Sirius Revision</a> both have great videos on IB HL topics!
@@ -23,39 +41,45 @@ const totalVideos = getTotalVideoCount();
   </div>
 
   <nav class="unit-nav" id="unit-nav">
-    {physicsTopics.map((topic, i) => (
+    <a href="#lectures" class="unit-nav__link">Lectures</a>
+    <span class="unit-nav__sep">·</span>
+    {units.map((unit, i) => (
       <>
         {i > 0 && <span class="unit-nav__sep">·</span>}
-        <a href={`#unit-${topic.id}`} class="unit-nav__link">{topic.id === 'lab' ? 'Lab' : topic.id.toUpperCase()}</a>
+        <a href={`#unit-${unit.id}`} class="unit-nav__link">{unit.id === 'lab' ? 'Lab' : unit.id.toUpperCase()}</a>
       </>
     ))}
     <span class="unit-nav__sep">·</span>
     <a href="#advice" class="unit-nav__link">Advice</a>
   </nav>
 
-  {physicsTopics.map(topic => (
-    <section class="unit" id={`unit-${topic.id}`}>
-      <h2 class="unit__title">
-        {topic.name}
-        <span class="unit__count">{topic.subtopics.reduce((sum, s) => sum + s.videos.length, 0)} videos</span>
-      </h2>
+  {units.map(unit => (
+    <details class="unit" id={`unit-${unit.id}`}>
+      <summary class="unit__summary">
+        <h2 class="unit__title">
+          {unit.label}
+          <span class="unit__count">{unit.count} videos</span>
+        </h2>
+      </summary>
 
-      {topic.subtopics.map(subtopic => (
-        <details class="subtopic">
-          <summary class="subtopic__title">
-            {subtopic.name}
-            <span class="subtopic__count">{subtopic.videos.length}</span>
-          </summary>
-          <div class="video-grid">
-            {subtopic.videos.map(video => (
-              <a href={video.url} target="_blank" rel="noopener" class="video-item">
-                {video.title}
-              </a>
-            ))}
-          </div>
-        </details>
-      ))}
-    </section>
+      <div class="unit__body">
+        {unit.subtopics.map(subtopic => (
+          <details class="subtopic">
+            <summary class="subtopic__title">
+              {subtopic.name}
+              <span class="subtopic__count">{subtopic.videos.length}</span>
+            </summary>
+            <div class="video-grid">
+              {subtopic.videos.map(video => (
+                <a href={video.url} target="_blank" rel="noopener" class="video-item">
+                  <span class="video-item__num">{video.n}</span>{video.title}
+                </a>
+              ))}
+            </div>
+          </details>
+        ))}
+      </div>
+    </details>
   ))}
 
   <div class="divider"><div class="divider-diamond"></div></div>
@@ -105,19 +129,41 @@ const totalVideos = getTotalVideoCount();
 </Base>
 
 <script>
+  // Open every <details> between the element and the page root, so anchor
+  // navigation and deep links land on visible content.
+  function openDetailsChain(el: HTMLElement | null) {
+    let node: HTMLElement | null = el;
+    while (node) {
+      if (node instanceof HTMLDetailsElement) node.open = true;
+      node = node.parentElement;
+    }
+  }
+
+  function openHashTarget() {
+    const id = decodeURIComponent(location.hash.slice(1));
+    if (!id) return;
+    const target = document.getElementById(id);
+    if (!target) return;
+    openDetailsChain(target);
+    target.scrollIntoView({ block: 'start' });
+  }
+
   function initPhysicsNav() {
     const nav = document.getElementById('unit-nav');
     if (!nav) return;
     const links = nav.querySelectorAll<HTMLAnchorElement>('.unit-nav__link');
     const units = document.querySelectorAll<HTMLElement>('.unit[id], #advice');
 
-    // Smooth scroll on click
+    // Smooth scroll on click; open the unit first so there's something to see
     links.forEach(link => {
       link.addEventListener('click', (e) => {
         e.preventDefault();
         const id = link.getAttribute('href')?.slice(1);
         const target = id ? document.getElementById(id) : null;
-        target?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        if (!target) return;
+        openDetailsChain(target);
+        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        history.replaceState(null, '', `#${id}`);
       });
     });
 
@@ -140,7 +186,12 @@ const totalVideos = getTotalVideoCount();
   }
 
   initPhysicsNav();
-  document.addEventListener('astro:page-load', initPhysicsNav);
+  openHashTarget();
+  window.addEventListener('hashchange', openHashTarget);
+  document.addEventListener('astro:page-load', () => {
+    initPhysicsNav();
+    openHashTarget();
+  });
 </script>
 
 <style>
@@ -218,10 +269,25 @@ const totalVideos = getTotalVideoCount();
     opacity: 0.3;
   }
 
-  /* Units */
+  /* Units (collapsible) */
   .unit {
-    margin-bottom: var(--space-xl);
+    margin-bottom: var(--space-md);
     scroll-margin-top: 48px;
+  }
+
+  .unit__summary {
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+  }
+
+  .unit__summary:hover .unit__title {
+    color: var(--accent);
+  }
+
+  .unit__body {
+    padding-top: var(--space-md);
+    margin-bottom: var(--space-lg);
   }
 
   .unit__title {
@@ -231,12 +297,12 @@ const totalVideos = getTotalVideoCount();
     line-height: 1.12;
     letter-spacing: -0.025em;
     color: var(--text);
-    padding-bottom: 0.5rem;
-    border-bottom: 1px solid var(--border);
-    margin-bottom: var(--space-md);
+    margin: 0;
     display: flex;
     align-items: baseline;
     gap: var(--space-sm);
+    flex: 1;
+    transition: color 0.15s;
   }
 
   .unit__count {
@@ -307,6 +373,15 @@ const totalVideos = getTotalVideoCount();
     padding: 0 0 0.6rem 18px;
     border-left: 1px solid var(--border-subtle);
     margin-left: 6px;
+  }
+
+  .video-item__num {
+    display: inline-block;
+    min-width: 2.2em;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    color: var(--dim);
+    font-variant-numeric: tabular-nums;
   }
 
   .video-item {
