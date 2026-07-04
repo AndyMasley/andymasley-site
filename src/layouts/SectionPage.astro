@@ -1,8 +1,9 @@
 ---
 // Shared skeleton for section pages (/lists, /visuals, /appearances,
-// /contact): one h1, a one-sentence lede, then the page's annotated list in
-// the default slot. Pass lede as a prop for plain text, or use the named
-// slot "lede" when the sentence needs markup (links etc.).
+// /contact): optional one-sentence lede, then the page's annotated list in
+// the default slot. No visible page title — the active nav item identifies
+// the page (Andy's preference). Pass lede as a prop for plain text, or use
+// the named slot "lede" when the sentence needs markup (links etc.).
 import Base from '@/layouts/Base.astro';
 
 interface Props {
@@ -14,13 +15,15 @@ interface Props {
 }
 
 const { title, lede, description = lede, ogImage, activeNav } = Astro.props;
+const hasLede = Boolean(lede) || Astro.slots.has('lede');
 ---
 
 <Base title={title} description={description} ogImage={ogImage} activeNav={activeNav}>
-  <header class="page-header">
-    <h1 class="page-header__title">{title}</h1>
-    {lede && <p class="page-header__description">{lede}</p>}
-    <slot name="lede" />
-  </header>
+  {hasLede && (
+    <header class="page-header">
+      {lede && <p class="page-header__description">{lede}</p>}
+      <slot name="lede" />
+    </header>
+  )}
   <slot />
 </Base>

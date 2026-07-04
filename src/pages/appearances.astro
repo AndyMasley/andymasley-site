@@ -1,95 +1,24 @@
 ---
 import SectionPage from '@/layouts/SectionPage.astro';
 
-// Outlet notes and dates drafted from each episode's own page — edit freely.
 const aiEnvironment = [
-  {
-    title: 'Conspicuous Cognition',
-    href: 'https://open.spotify.com/episode/2E3Yfi24OUyHxz67BtzhHB?si=8110a29fe7034cf5',
-    date: 'Nov 2025',
-    note: "Dan Williams's podcast on cognition and misinformation, on the truth about AI and the environment.",
-  },
-  {
-    title: 'Chain of Thought',
-    href: 'https://open.spotify.com/episode/1Lzt9pMcqOcjfE3WLxNy3j?si=fdb4604af43d40e9',
-    date: 'Nov 2025',
-    note: "Podcast on AI agents and infrastructure, on AI's environmental panic.",
-  },
-  {
-    title: 'NYT Hard Fork',
-    href: 'https://open.spotify.com/episode/0UaOQ0DcP9c8OG5IfAgfnT?si=5d00e4bce6aa43f0',
-    date: 'Dec 2025',
-    note: 'The New York Times tech podcast, on whether the AI water issue is fake.',
-  },
-  {
-    title: 'The Cognitive Revolution',
-    href: 'https://open.spotify.com/episode/0RBBVeGb5yfHsFWnKkDgD0?si=15d8b610374544b0',
-    date: 'Dec 2025',
-    note: "Nathan Labenz's AI podcast, sorting fact from fiction on AI's energy and water demands.",
-  },
-  {
-    title: 'Good Morning America',
-    href: 'https://www.youtube.com/watch?v=_Ird91qfPZs',
-    date: 'Feb 2026',
-    note: "ABC's morning show — I show up for about 5 seconds to say data centers run and store what we do online.",
-  },
-  {
-    title: "Arizona's Family",
-    href: "https://www.azfamily.com/2026/02/26/data-centers-arent-water-villains-you-think-they-are-environmentalist-says/",
-    date: 'Feb 2026',
-    note: "Phoenix TV news, on why data centers aren't the water villains people think they are.",
-  },
-  {
-    title: 'David Ramms',
-    href: 'https://www.youtube.com/watch?v=FQCdwcW3wEw',
-    date: 'May 2026',
-    note: "David Ramms's vegan advocacy channel, on whether vegans are getting AI wrong.",
-  },
-  {
-    title: 'The New Liberal Podcast',
-    href: 'https://podcasts.apple.com/us/podcast/how-worried-are-you-about-data-centers-ft-andy-masley/id1390384827?i=1000766767353',
-    date: 'May 2026',
-    note: "The Center for New Liberalism's politics podcast, on how worried to be about data centers.",
-  },
-  {
-    title: 'AI Summer',
-    href: 'https://www.aisummer.org/p/andy-masley-on-the-data-center-backlash',
-    date: 'Jun 2026',
-    note: "Timothy B. Lee's AI policy newsletter and podcast, on the data center backlash.",
-  },
-  {
-    title: 'Looking Glass Universe',
-    href: 'https://www.youtube.com/watch?v=DNkZRt-X4RM',
-    date: 'Jun 2026',
-    note: "Mithuna Yoganathan's physics channel, on AI's water usage.",
-  },
+  { title: 'Conspicuous Cognition', href: 'https://open.spotify.com/episode/2E3Yfi24OUyHxz67BtzhHB?si=8110a29fe7034cf5', date: 'Nov 2025' },
+  { title: 'Chain of Thought', href: 'https://open.spotify.com/episode/1Lzt9pMcqOcjfE3WLxNy3j?si=fdb4604af43d40e9', date: 'Nov 2025' },
+  { title: 'NYT Hard Fork', href: 'https://open.spotify.com/episode/0UaOQ0DcP9c8OG5IfAgfnT?si=5d00e4bce6aa43f0', date: 'Dec 2025' },
+  { title: 'The Cognitive Revolution', href: 'https://open.spotify.com/episode/0RBBVeGb5yfHsFWnKkDgD0?si=15d8b610374544b0', date: 'Dec 2025' },
+  { title: 'Good Morning America', href: 'https://www.youtube.com/watch?v=_Ird91qfPZs', date: 'Feb 2026' },
+  { title: "Arizona's Family", href: "https://www.azfamily.com/2026/02/26/data-centers-arent-water-villains-you-think-they-are-environmentalist-says/", date: 'Feb 2026' },
+  { title: 'David Ramms', href: 'https://www.youtube.com/watch?v=FQCdwcW3wEw', date: 'May 2026' },
+  { title: 'The New Liberal Podcast', href: 'https://podcasts.apple.com/us/podcast/how-worried-are-you-about-data-centers-ft-andy-masley/id1390384827?i=1000766767353', date: 'May 2026' },
+  { title: 'AI Summer', href: 'https://www.aisummer.org/p/andy-masley-on-the-data-center-backlash', date: 'Jun 2026' },
+  { title: 'Looking Glass Universe', href: 'https://www.youtube.com/watch?v=DNkZRt-X4RM', date: 'Jun 2026' },
 ];
 
 const effectiveAltruism = [
-  {
-    title: 'Expected Volume',
-    href: 'https://www.youtube.com/watch?v=qzNZfa2jSE8',
-    date: 'May 2025',
-    note: "Matt Reardon's podcast of conversations from the EA and rationalist sphere.",
-  },
-  {
-    title: "Bentham's Bulldog",
-    href: 'https://benthams.substack.com/p/chatting-with-andy-masley-about-ea',
-    date: 'Jan 2026',
-    note: 'A written conversation about EA, animal welfare, and which concerns about AI are real.',
-  },
-  {
-    title: 'Model Convos',
-    href: 'https://www.machineculture.io/p/model-convo-andy-masley',
-    date: 'Mar 2026',
-    note: 'Interview series on the Machine Culture Substack.',
-  },
-  {
-    title: 'The World Can Be Better',
-    href: 'https://www.youtube.com/watch?v=QNQezP5uzeg',
-    date: 'Apr 2026',
-    note: "Toby Tremlett's podcast, on whether AI is drinking your water.",
-  },
+  { title: 'Expected Volume', href: 'https://www.youtube.com/watch?v=qzNZfa2jSE8', date: 'May 2025' },
+  { title: "Bentham's Bulldog", href: 'https://benthams.substack.com/p/chatting-with-andy-masley-about-ea', date: 'Jan 2026' },
+  { title: 'Model Convos', href: 'https://www.machineculture.io/p/model-convo-andy-masley', date: 'Mar 2026' },
+  { title: 'The World Can Be Better', href: 'https://www.youtube.com/watch?v=QNQezP5uzeg', date: 'Apr 2026' },
 ];
 
 const groups = [
@@ -114,7 +43,6 @@ const groups = [
               <a href={item.href} target="_blank" rel="noopener" class="annotated-list__title">{item.title}</a>
               <span class="annotated-list__meta">{item.date}</span>
             </div>
-            <p class="annotated-list__note">{item.note}</p>
           </li>
         ))}
       </ul>
