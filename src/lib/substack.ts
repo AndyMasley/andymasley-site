@@ -536,6 +536,43 @@ function generateHeadingId(text: string): string {
     .replace(/^-|-$/g, '');        // Remove leading/trailing hyphens
 }
 
+// Normalize heading structure in imported bodies. Substack (and some EA
+// Forum) posts use h1 for sections, but the layout's post title must stay the
+// page's only h1 — so when body h1s exist, the whole ladder demotes one level
+// (h1→h2 … h5→h6), preserving hierarchy. Also unwraps <strong>/<b> inside
+// headings (Substack export artifact — headings are already bold).
+// Idempotent: a normalized body has no h1s and no strong-in-heading, so a
+// second pass is a no-op. Remaining level skips (e.g. h2→h4) are logged for
+// manual review rather than auto-fixed — some skips are authorial.
+export function normalizeHeadings(html: string, slug: string): string {
+  let out = html.replace(
+    /<(h[1-6])([^>]*)>([\s\S]*?)<\/\1>/gi,
+    (_match, tag, attrs, inner) =>
+      `<${tag}${attrs}>${inner.replace(/<\/?(?:strong|b)\b[^>]*>/gi, '')}</${tag}>`
+  );
+
+  if (/<h1[\s>]/i.test(out)) {
+    out = out.replace(
+      /(<\/?)h([1-6])\b/gi,
+      (_m, bracket, n) => `${bracket}h${Math.min(6, Number(n) + 1)}`
+    );
+  }
+
+  const levels: number[] = [];
+  const headingRe = /<h([1-6])[\s>]/gi;
+  let m: RegExpExecArray | null;
+  while ((m = headingRe.exec(out)) !== null) levels.push(Number(m[1]));
+  const skips: string[] = [];
+  if (levels.length && levels[0] > 2) skips.push(`h1(title)→h${levels[0]}`);
+  for (let i = 1; i < levels.length; i++) {
+    if (levels[i] > levels[i - 1] + 1) skips.push(`h${levels[i - 1]}→h${levels[i]}`);
+  }
+  if (skips.length) {
+    console.log(`[headings] ${slug}: level skip(s) left as-is: ${skips.join(', ')}`);
+  }
+  return out;
+}
+
 // Add ID attributes to headings so anchor links can target them
 function addHeadingIds(html: string): string {
   // Track used IDs to avoid duplicates
@@ -572,8 +609,9 @@ function addHeadingIds(html: string): string {
       }
 
       // Section anchor (§) on real section headings only. The TOC extractor
-      // strips .h-anchor so these never pollute sidebar labels.
-      const anchor = (level === 'h1' || level === 'h2' || level === 'h3')
+      // strips .h-anchor so these never pollute sidebar labels. h4 is included
+      // because normalizeHeadings demotes former h3 subsections to h4.
+      const anchor = (level === 'h1' || level === 'h2' || level === 'h3' || level === 'h4')
         ? `<a class="h-anchor" href="#${id}" aria-label="Link to this section">§</a>`
         : '';
 
@@ -632,8 +670,12 @@ function injectSidenotes(html: string, slug: string): string {
 // Process HTML content for display
 export function processPostContent(html: string, slug: string, opts: { sidenotes?: boolean } = {}): string {
   const { sidenotes = true } = opts;
+  // Demote body h1s and strip strong-in-heading before IDs are generated,
+  // so ID slugs and § anchors see the final heading shape.
+  let processed = normalizeHeadings(html, slug);
+
   // Fix anchor links
-  let processed = fixAnchorLinks(html, slug);
+  processed = fixAnchorLinks(processed, slug);
 
   // Add IDs to headings so anchor links work
   processed = addHeadingIds(processed);

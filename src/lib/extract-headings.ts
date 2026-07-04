@@ -25,68 +25,54 @@ function generateId(text: string): string {
  * content until the next heading of the same level or end.
  */
 export function stripContentsSection(html: string): string {
-  // Match <h1>Contents</h1> or <h1><strong>Contents</strong></h1> etc.
-  // Remove everything from that heading to the next <h1
-  const contentsPattern = /<h1[^>]*>(?:<[^>]*>)*\s*(?:Table of )?Contents\s*(?:<[^>]*>)*<\/h1>/gi;
-  let match = contentsPattern.exec(html);
-  if (match) {
-    const start = match.index;
-    const afterHeading = start + match[0].length;
-    // Find the next <h1 after the Contents heading
-    const nextH1 = html.indexOf('<h1', afterHeading);
-    const end = nextH1 !== -1 ? nextH1 : afterHeading;
-    // Also consume any list/paragraph content between Contents and next h1
-    // by finding the actual content block end
-    let contentEnd = end;
-    if (nextH1 === -1) {
-      // No next h1 — just remove the heading and the list that follows
-      const listEnd = html.indexOf('</ul>', afterHeading);
-      contentEnd = listEnd !== -1 ? listEnd + 5 : afterHeading;
-    }
-    return html.slice(0, start) + html.slice(contentEnd);
-  }
+  // Matches at h1 or h2 (normalizeHeadings demotes Substack's body h1s to
+  // h2) and tolerates the literal § text of the appended h-anchor — the old
+  // tags-only pattern silently stopped matching once anchors were added.
+  const pattern = /<(h[12])[^>]*>(?:<[^>]*>|§|\s)*(?:Table of )?Contents:?(?:<[^>]*>|§|\s)*<\/\1>/i;
+  const match = pattern.exec(html);
+  if (!match) return html;
 
-  // Also try h2-level Contents sections
-  const h2ContentsPattern = /<h2[^>]*>(?:<[^>]*>)*\s*(?:Table of )?Contents\s*(?:<[^>]*>)*<\/h2>/gi;
-  match = h2ContentsPattern.exec(html);
-  if (match) {
-    const start = match.index;
-    const afterHeading = start + match[0].length;
-    const nextH2 = html.indexOf('<h2', afterHeading);
-    const nextH1 = html.indexOf('<h1', afterHeading);
-    const end = Math.min(
-      nextH2 !== -1 ? nextH2 : Infinity,
-      nextH1 !== -1 ? nextH1 : Infinity
-    );
-    const contentEnd = end !== Infinity ? end : afterHeading;
-    return html.slice(0, start) + html.slice(contentEnd);
+  const level = match[1].toLowerCase();
+  const start = match.index;
+  const afterHeading = start + match[0].length;
+  // Remove everything up to the next heading of the same or higher level.
+  const nextSame = html.indexOf(`<${level}`, afterHeading);
+  const nextHigher = level === 'h2' ? html.indexOf('<h1', afterHeading) : -1;
+  const candidates = [nextSame, nextHigher].filter(i => i !== -1);
+  let contentEnd = candidates.length ? Math.min(...candidates) : afterHeading;
+  if (!candidates.length) {
+    // No later heading — remove the heading plus the link list that follows.
+    const listEnd = html.indexOf('</ul>', afterHeading);
+    contentEnd = listEnd !== -1 ? listEnd + 5 : afterHeading;
   }
-
-  return html;
+  return html.slice(0, start) + html.slice(contentEnd);
 }
 
 /**
  * Also strip "This post in a nutshell" sections (common in Substack posts).
  */
 export function stripNutshellSection(html: string): string {
-  const pattern = /<h1[^>]*>(?:<[^>]*>)*\s*This post in a nutshell\s*(?:<[^>]*>)*<\/h1>/gi;
+  // Matches at h1 or h2: normalizeHeadings demotes Substack's body h1s to h2,
+  // and older un-normalized content may still carry the h1 form.
+  const pattern = /<(h[12])[^>]*>(?:<[^>]*>|§|\s)*This post in a nutshell(?:<[^>]*>|§|\s)*<\/\1>/i;
   const match = pattern.exec(html);
   if (!match) return html;
 
+  const level = match[1].toLowerCase();
   const start = match.index;
   const afterHeading = start + match[0].length;
-  const nextH1 = html.indexOf('<h1', afterHeading);
-  const end = nextH1 !== -1 ? nextH1 : afterHeading;
-  // Consume content until next h1
-  let contentEnd = end;
-  if (nextH1 === -1) {
+  // Consume content until the next heading of the same or higher level.
+  const nextSame = html.indexOf(`<${level}`, afterHeading);
+  const nextHigher = level === 'h2' ? html.indexOf('<h1', afterHeading) : -1;
+  const candidates = [nextSame, nextHigher].filter(i => i !== -1);
+  let contentEnd = candidates.length ? Math.min(...candidates) : afterHeading;
+  if (!candidates.length) {
     const listEnd = html.indexOf('</ul>', afterHeading);
     const olEnd = html.indexOf('</ol>', afterHeading);
-    const furthest = Math.max(
+    contentEnd = Math.max(
       listEnd !== -1 ? listEnd + 5 : afterHeading,
       olEnd !== -1 ? olEnd + 5 : afterHeading
     );
-    contentEnd = furthest;
   }
   return html.slice(0, start) + html.slice(contentEnd);
 }
