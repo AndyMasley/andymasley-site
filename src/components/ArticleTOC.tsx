@@ -41,8 +41,19 @@ export function ArticleTOC({ headings, meta }: { headings: TOCHeading[]; meta: A
   const groups = useMemo(() => groupHeadings(headings), [headings]);
   const hasSections = groups.length > 0;
   const [activeId, setActiveId] = useState('');
-  const [progress, setProgress] = useState(0);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  // null until mounted (SSR renders both variants; CSS hides the wrong one).
+  // After mount only the active variant stays in the DOM, so exactly one TOC
+  // exists in the accessibility tree per viewport.
+  const [isMobile, setIsMobile] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 900px)');
+    const update = () => setIsMobile(mq.matches);
+    update();
+    mq.addEventListener('change', update);
+    return () => mq.removeEventListener('change', update);
+  }, []);
 
   useEffect(() => {
     if (!activeId) return;
@@ -78,18 +89,6 @@ export function ArticleTOC({ headings, meta }: { headings: TOCHeading[]; meta: A
       syncActiveEntry('.article-toc-drawer');
     }
   }, [activeId, mobileNavOpen]);
-
-  // Scroll progress
-  useEffect(() => {
-    const handleScroll = () => {
-      const scrollTop = window.scrollY;
-      const docHeight = document.documentElement.scrollHeight - window.innerHeight;
-      setProgress(docHeight > 0 ? Math.min(scrollTop / docHeight, 1) : 0);
-    };
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    handleScroll();
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
 
   // Scroll-spy
   useEffect(() => {
@@ -146,8 +145,6 @@ export function ArticleTOC({ headings, meta }: { headings: TOCHeading[]; meta: A
     };
   }, [mobileNavOpen]);
 
-  const pct = Math.round(progress * 100);
-
   if (!hasSections) {
     return (
       <div className="article-toc-shell">
@@ -194,6 +191,7 @@ export function ArticleTOC({ headings, meta }: { headings: TOCHeading[]; meta: A
   return (
     <>
       <div className="article-toc-shell">
+        {isMobile !== false && (
         <div className="article-toc-mobilebar">
           <button
             className="article-toc-mobilebar__button"
@@ -206,14 +204,14 @@ export function ArticleTOC({ headings, meta }: { headings: TOCHeading[]; meta: A
               </svg>
               Contents
             </span>
-            <span className="article-toc-mobilebar__progress">{pct}% read</span>
           </button>
         </div>
+        )}
 
+        {isMobile !== true && (
         <nav className="article-toc" aria-label="Article sections">
           <div className="article-toc__header">
             <span className="article-toc__eyebrow">On this page</span>
-            <span className="article-toc__progress">{pct}% read</span>
           </div>
 
           <div className="article-toc__entries">
@@ -254,6 +252,7 @@ export function ArticleTOC({ headings, meta }: { headings: TOCHeading[]; meta: A
             <a href="/writing">Browse all writing</a>
           </div>
         </nav>
+        )}
       </div>
 
       {mobileNavOpen && (
@@ -262,7 +261,6 @@ export function ArticleTOC({ headings, meta }: { headings: TOCHeading[]; meta: A
             <div className="article-toc-drawer__header">
               <div>
                 <div className="article-toc-drawer__eyebrow">Contents</div>
-                <div className="article-toc-drawer__progress">{pct}% through article</div>
               </div>
               <button
                 onClick={() => setMobileNavOpen(false)}

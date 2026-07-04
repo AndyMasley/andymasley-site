@@ -19,6 +19,11 @@
   --accent: #0645ad;        /* link: the one working color */
   --accent-hover: #043d82;
   --accent-subtle: rgba(6, 69, 173, 0.08);
+  /* Link tokens. :visited rules must repeat these as literal hex — browsers
+     ignore var() inside :visited for privacy. Both pass AA on --bg:
+     #0645ad 8.5:1, #551a8b 11.0:1. */
+  --link: #0645ad;
+  --link-visited: #551a8b;
   --border: #e5e5e5;        /* rule */
   --border-strong: #d4d4d4;
   --border-subtle: #efefef;
@@ -75,6 +80,10 @@
   --accent: #8ab4f8;        /* link */
   --accent-hover: #a9c8fa;
   --accent-subtle: rgba(138, 180, 248, 0.14);
+  /* Same hue families as light mode, lightened to pass AA on #121212:
+     #8ab4f8 9.0:1, #c58af9 6.4:1. Keep the :visited literals in sync. */
+  --link: #8ab4f8;
+  --link-visited: #c58af9;
   --border: #2a2a2a;        /* rule */
   --border-strong: #3a3a3a;
   --border-subtle: #222222;
@@ -204,6 +213,15 @@ p {
   font-family: var(--font-body);
   font-size: var(--font-size-base);
   line-height: 1.7;
+  /* Georgia's default figures are already oldstyle; the declaration covers
+     fallback faces that ship the feature. */
+  font-variant-numeric: oldstyle-nums;
+}
+
+/* Data surfaces want uniform-height, column-aligned digits. Faces without
+   lnum/tnum (older Georgia builds) silently keep their defaults. */
+.prose table {
+  font-variant-numeric: lining-nums tabular-nums;
 }
 
 .prose h2 {
@@ -287,11 +305,11 @@ p {
    ============================================ */
 
 a {
-  color: var(--accent);
+  color: var(--link);
   text-decoration: underline;
   text-decoration-thickness: 1px;
   text-underline-offset: var(--underline-offset);
-  text-decoration-color: var(--accent);
+  text-decoration-color: var(--link);
   transition: color var(--transition-fast), text-decoration-color var(--transition-fast);
 }
 

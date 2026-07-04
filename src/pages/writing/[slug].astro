@@ -706,7 +706,11 @@ const articleStructuredData = {
     margin: 2.5rem 0;
   }
 
-  .article-prose :global(figcaption) {
+  /* Captions: secondary ink, smaller than body, hanging indent so wrapped
+     lines tuck under the leading "Source:" label. .image-caption is the
+     class Substack puts on its figcaptions — same treatment. */
+  .article-prose :global(figcaption),
+  .article-prose :global(.image-caption) {
     margin-top: 0.85rem;
     max-width: 38rem;
     font-size: 0.85rem;
@@ -714,6 +718,8 @@ const articleStructuredData = {
     line-height: 1.6;
     color: var(--dim);
     text-align: left;
+    padding-left: 1.1em;
+    text-indent: -1.1em;
   }
 
   .article-prose :global(blockquote) {
@@ -739,6 +745,7 @@ const articleStructuredData = {
     margin: 1.5rem 0;
     border-top: 1px solid var(--text);
     border-bottom: 1px solid var(--text);
+    font-variant-numeric: lining-nums tabular-nums;
   }
   .article-prose :global(th) {
     border-bottom: 1px solid var(--border);
@@ -798,13 +805,17 @@ const articleStructuredData = {
   .article-prose :global(a:visited) { color: #551a8b; }
   :global([data-theme="dark"]) .article-prose :global(a:visited) { color: #c58af9; }
 
-  /* External-link marker. Internal links are relative (/…), footnote and
-     section anchors are #…, so only off-site links match. Image links and
-     the arrow itself stay un-underlined via inline-block. */
+  /* External-link marker: superscript ↗, link-colored, scoped to the article
+     body. Internal links are relative (/…), footnote and section anchors are
+     #…, so only off-site links match; image links are excluded via :has.
+     The leading word joiner (U+2060) glues the marker to the last word so it
+     can't orphan onto its own line. */
   .article-prose :global(a[href^="http"]:not([href*="andymasley.com"]):not(:has(img))::after) {
-    content: "\00a0\2197";
-    display: inline-block;
-    font-size: 0.8em;
+    content: "\2060\2197";
+    font-size: 0.65em;
+    vertical-align: super;
+    line-height: 0;
+    color: var(--accent);
   }
 
   .article-prose :global(h1) {
@@ -896,15 +907,6 @@ const articleStructuredData = {
     margin: 2.25rem 0;
   }
 
-  .article-prose :global(.image-caption) {
-    margin-top: 0.85rem;
-    font-size: 0.85rem;
-    font-family: var(--font-body);
-    line-height: 1.6;
-    color: var(--dim);
-    text-align: left;
-  }
-
   .article-prose :global(.subscription-widget-wrap),
   .article-prose :global(.subscribe-widget),
   .article-prose :global(.subscription-widget),
@@ -968,6 +970,7 @@ const articleStructuredData = {
     max-height: calc(100vh - 3rem);
     padding-right: 1rem;
     overflow-y: auto;
+    font-variant-numeric: tabular-nums;
   }
 
   :global(.article-toc--meta) {
@@ -985,11 +988,8 @@ const articleStructuredData = {
   }
 
   :global(.article-toc__eyebrow),
-  :global(.article-toc__progress),
   :global(.article-toc__footer a),
-  :global(.article-toc-mobilebar__progress),
-  :global(.article-toc-drawer__eyebrow),
-  :global(.article-toc-drawer__progress) {
+  :global(.article-toc-drawer__eyebrow) {
     font-size: 0.74rem;
     font-family: var(--font-body);
     letter-spacing: 0.045em;
