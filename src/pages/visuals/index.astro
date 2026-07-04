@@ -2,11 +2,11 @@
 import SectionPage from '@/layouts/SectionPage.astro';
 
 const visuals = [
-  { title: 'Factory-farmed chickens', href: '/visuals/factory-farmed-chickens', date: 'Mar 2026', interactive: true },
-  { title: 'Carbon footprint calculator', href: '/visuals/carbon-footprint', date: 'Mar 2026', interactive: true },
-  { title: 'How thirsty is AI?', href: '/visuals/water', date: 'Mar 2026', interactive: true },
-  { title: 'What does your AI use cost?', href: '/visuals/ai-prompt-footprint', date: 'Jun 2026', interactive: true },
-  { title: 'PM2.5 exposure by county', href: '/visuals/pm25-county-exposure', date: 'May 2026', interactive: true },
+  { title: 'Factory-farmed chickens', href: '/visuals/factory-farmed-chickens' },
+  { title: 'Carbon footprint calculator', href: '/visuals/carbon-footprint' },
+  { title: 'How thirsty is AI?', href: '/visuals/water' },
+  { title: 'What does your AI use cost?', href: '/visuals/ai-prompt-footprint' },
+  { title: 'PM2.5 exposure by county', href: '/visuals/pm25-county-exposure' },
 ];
 ---
 
@@ -20,7 +20,6 @@ const visuals = [
       <li class="annotated-list__item">
         <div class="annotated-list__row">
           <a href={v.href} class="annotated-list__title">{v.title}</a>
-          <span class="annotated-list__meta">{v.date}{v.interactive && ' · interactive'}</span>
         </div>
       </li>
     ))}
