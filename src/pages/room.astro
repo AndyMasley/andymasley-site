@@ -7,94 +7,190 @@ import '@/styles/global.css';
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="The Hexagon Archive">
-  <title>room</title>
-  <!-- Immediate dark background to prevent flash -->
+  <meta name="description" content="The Library of Babel">
+  <title>The Library</title>
+  <!-- Immediate dark background to prevent flash / blend with the portal transition -->
   <style>html, body { background: #0a0806; }</style>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,500;0,8..60,600;1,8..60,400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,500;0,8..60,600;0,8..60,700;1,8..60,400;1,8..60,500&display=swap" rel="stylesheet">
 
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 
   <style is:global>
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
+    :root {
+      --gold: #d8b978;
+      --gold-dim: #b08d57;
+      --ink: #e8d5b0;
+      --paper: #efe3c8;
+      --paper-shadow: #d8c49b;
+      --paper-ink: #2a2016;
+      --void: #0a0806;
+      --oxblood: #6e2b25;
+    }
+
     body {
       overflow: hidden;
       background-color: #0a0806;
       font-family: 'Source Serif 4', Georgia, serif;
       cursor: none;
+      color: var(--ink);
     }
 
     canvas { display: block; }
 
+    /* ---------- CROSSHAIR ---------- */
     #crosshair {
       position: fixed;
       top: 50%;
       left: 50%;
+      width: 22px;
+      height: 22px;
       transform: translate(-50%, -50%);
       pointer-events: none;
       z-index: 50;
     }
-
     #crosshair::before {
       content: '';
-      display: block;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 3px;
+      height: 3px;
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(232, 213, 176, 0.55);
+      transition: background 0.18s ease, width 0.18s ease, height 0.18s ease;
+    }
+    /* the expanding ring */
+    #crosshair::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
       width: 4px;
       height: 4px;
-      background: #c9a87c;
-      transition: all 0.15s ease;
+      border-radius: 50%;
+      border: 1px solid rgba(216, 185, 120, 0);
+      transform: translate(-50%, -50%) scale(0.4);
+      transition: transform 0.2s cubic-bezier(0.34,1.56,0.64,1), border-color 0.2s ease;
     }
-
     #crosshair.hovering::before {
-      width: 8px;
-      height: 8px;
-      background: #e8d5b5;
+      width: 4px;
+      height: 4px;
+      background: rgba(240, 224, 190, 0.9);
+    }
+    #crosshair.hovering::after {
+      width: 20px;
+      height: 20px;
+      border-color: rgba(216, 185, 120, 0.9);
+      transform: translate(-50%, -50%) scale(1);
     }
 
+    /* ---------- HOVER LABEL ---------- */
     #object-label {
       position: fixed;
       top: 50%;
       left: 50%;
-      transform: translate(-50%, 24px);
-      color: #c9a87c;
-      font-size: 0.8rem;
-      font-style: italic;
+      transform: translate(-50%, 30px);
       pointer-events: none;
       z-index: 50;
       opacity: 0;
-      transition: opacity 0.2s ease;
+      transition: opacity 0.18s ease, transform 0.18s ease;
       text-align: center;
       white-space: nowrap;
     }
-
     #object-label.visible {
       opacity: 1;
+      transform: translate(-50%, 26px);
+    }
+    #object-label .label-inner {
+      display: inline-block;
+      padding: 5px 14px;
+      background: rgba(6, 4, 3, 0.72);
+      border: 1px solid rgba(216, 185, 120, 0.32);
+      border-radius: 2px;
+      color: var(--gold);
+      font-size: 0.72rem;
+      font-variant: small-caps;
+      letter-spacing: 0.16em;
+      text-transform: lowercase;
+      backdrop-filter: blur(3px);
+      -webkit-backdrop-filter: blur(3px);
+    }
+    #object-label.filler .label-inner {
+      color: rgba(176, 141, 87, 0.55);
+      font-variant: normal;
+      font-style: italic;
+      letter-spacing: 0.3em;
     }
 
+    /* ---------- CONTROLS HINT ---------- */
     #controls-hint {
       position: fixed;
-      bottom: 1.25rem;
+      bottom: 1.4rem;
       left: 50%;
       transform: translateX(-50%);
-      color: #c9a87c;
+      color: rgba(216, 185, 120, 0.5);
       font-family: 'SF Mono', SFMono-Regular, Menlo, monospace;
-      font-size: 0.65rem;
+      font-size: 0.62rem;
       pointer-events: none;
       text-align: center;
-      letter-spacing: 0.05em;
-      opacity: 0.6;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      z-index: 40;
+      transition: opacity 0.6s ease;
     }
+    #controls-hint.faded { opacity: 0; }
 
+    /* ---------- TITLE CARD ---------- */
+    #title-card {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+      pointer-events: none;
+      z-index: 45;
+      opacity: 0;
+      transition: opacity 1.1s ease;
+    }
+    #title-card.visible { opacity: 1; }
+    #title-card .tc-over {
+      font-size: 0.7rem;
+      letter-spacing: 0.44em;
+      text-transform: uppercase;
+      color: rgba(216, 185, 120, 0.6);
+      margin-bottom: 0.9rem;
+    }
+    #title-card .tc-main {
+      font-size: 2.5rem;
+      font-weight: 400;
+      font-variant: small-caps;
+      letter-spacing: 0.34em;
+      color: var(--gold);
+      text-shadow: 0 0 24px rgba(216, 185, 120, 0.35);
+      padding-right: 0.34em; /* balance the letter-spacing */
+    }
+    #title-card .tc-rule {
+      width: 0;
+      height: 1px;
+      margin: 1.1rem auto 0;
+      background: linear-gradient(90deg, transparent, rgba(216,185,120,0.5), transparent);
+      transition: width 1.4s ease 0.3s;
+    }
+    #title-card.visible .tc-rule { width: 260px; }
+
+    /* ---------- START / ESC MENU ---------- */
     #start-prompt {
       position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(10, 8, 6, 0.95);
+      inset: 0;
+      background: rgba(8, 6, 4, 0.82);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
       z-index: 250;
       display: flex;
       flex-direction: column;
@@ -102,286 +198,279 @@ import '@/styles/global.css';
       justify-content: center;
       opacity: 0;
       visibility: hidden;
-      transition: opacity 0.4s ease, visibility 0.4s ease;
+      transition: opacity 0.45s ease, visibility 0.45s ease;
       cursor: auto;
     }
-
-    #start-prompt.visible {
-      opacity: 1;
-      visibility: visible;
+    #start-prompt.visible { opacity: 1; visibility: visible; }
+    #start-prompt .menu-panel {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 3rem 4rem;
+      border: 1px solid rgba(216, 185, 120, 0.2);
+      background: linear-gradient(180deg, rgba(24,18,12,0.6), rgba(12,9,6,0.6));
+      box-shadow: 0 30px 80px rgba(0,0,0,0.6), inset 0 1px 0 rgba(216,185,120,0.08);
     }
-
+    #start-prompt .menu-eyebrow {
+      font-size: 0.64rem;
+      letter-spacing: 0.4em;
+      text-transform: uppercase;
+      color: rgba(216, 185, 120, 0.55);
+      margin-bottom: 1.6rem;
+    }
     #start-prompt .prompt-text {
-      color: #c9a87c;
-      font-size: 1rem;
-      letter-spacing: 0.1em;
-      margin-bottom: 2rem;
+      color: var(--gold);
+      font-size: 1.35rem;
+      font-variant: small-caps;
+      letter-spacing: 0.14em;
+      margin-bottom: 1.8rem;
       cursor: pointer;
-      transition: color 0.2s ease;
+      transition: color 0.2s ease, text-shadow 0.2s ease;
     }
-
     #start-prompt .prompt-text:hover {
-      color: #e8d5b5;
+      color: #f4e4bd;
+      text-shadow: 0 0 18px rgba(216, 185, 120, 0.45);
     }
-
     #start-prompt .prompt-instructions {
-      color: #c9a87c;
+      color: rgba(216, 185, 120, 0.6);
       font-family: 'SF Mono', SFMono-Regular, Menlo, monospace;
-      font-size: 0.65rem;
+      font-size: 0.64rem;
+      letter-spacing: 0.14em;
       text-align: center;
-      opacity: 0.6;
       margin-bottom: 2rem;
     }
-
     #start-prompt .prompt-home {
-      color: #c9a87c;
-      font-family: 'SF Mono', SFMono-Regular, Menlo, monospace;
-      font-size: 0.75rem;
+      color: rgba(216, 185, 120, 0.7);
+      font-size: 0.82rem;
+      font-variant: small-caps;
+      letter-spacing: 0.12em;
       text-decoration: none;
-      transition: color 0.2s ease;
+      border-bottom: 1px solid rgba(216, 185, 120, 0);
+      padding-bottom: 2px;
+      transition: color 0.2s ease, border-color 0.2s ease;
     }
-
     #start-prompt .prompt-home:hover {
-      color: #e8d5b5;
+      color: #f4e4bd;
+      border-color: rgba(216, 185, 120, 0.6);
     }
 
+    /* ---------- READING OVERLAY ---------- */
     #reading-overlay {
       position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: #0a0806;
+      inset: 0;
+      background: rgba(6, 4, 3, 0.62);
+      backdrop-filter: blur(7px);
+      -webkit-backdrop-filter: blur(7px);
       z-index: 200;
       display: flex;
       align-items: center;
       justify-content: center;
       opacity: 0;
       visibility: hidden;
-      transition: opacity 0.4s ease, visibility 0.4s ease;
+      transition: opacity 0.35s ease, visibility 0.35s ease;
       cursor: auto;
     }
+    #reading-overlay.visible { opacity: 1; visibility: visible; }
 
-    #reading-overlay.visible {
-      opacity: 1;
-      visibility: visible;
-    }
-
+    /* aged-paper quote card */
     #reading-content {
-      max-width: 520px;
-      max-height: 85vh;
-      padding: 2.5rem;
-      color: #c9a87c;
-      overflow-y: auto;
       position: relative;
-      border: 1px solid #c9a87c;
+      max-width: 560px;
+      max-height: 85vh;
+      padding: 3rem 3.2rem 2.4rem;
+      overflow-y: auto;
+      color: var(--paper-ink);
+      background:
+        radial-gradient(120% 80% at 15% 10%, rgba(255,250,235,0.55), transparent 60%),
+        radial-gradient(130% 90% at 85% 90%, rgba(150,120,80,0.22), transparent 55%),
+        radial-gradient(100% 120% at 50% 50%, #f3e8cd 0%, #e7d8b4 70%, #d8c49b 100%);
+      border: 1px solid #b6a279;
+      box-shadow:
+        0 40px 90px rgba(0,0,0,0.55),
+        inset 0 0 0 1px rgba(70,52,30,0.35),
+        inset 0 0 60px rgba(120,90,55,0.15);
+      transform: translateY(10px) scale(0.985) rotate(-0.4deg);
+      transition: transform 0.35s cubic-bezier(0.2,0.9,0.3,1);
     }
-
+    #reading-overlay.visible #reading-content {
+      transform: translateY(0) scale(1) rotate(-0.4deg);
+    }
+    /* double keyline frame */
+    #reading-content::before {
+      content: '';
+      position: absolute;
+      inset: 12px;
+      border: 1px solid rgba(70, 52, 30, 0.4);
+      pointer-events: none;
+    }
     #reading-content.full-book-view {
-      max-width: 950px;
+      max-width: 1000px;
+      width: 92vw;
       max-height: 90vh;
       display: flex;
       padding: 0;
+      transform: translateY(0) scale(1) rotate(0deg);
+      background:
+        radial-gradient(100% 120% at 50% 0%, #f3e8cd 0%, #e7d8b4 72%, #d3bf95 100%);
+    }
+    #reading-content.full-book-view::before { display: none; }
+
+    #reading-content::-webkit-scrollbar { width: 7px; }
+    #reading-content::-webkit-scrollbar-track { background: rgba(70,52,30,0.06); }
+    #reading-content::-webkit-scrollbar-thumb { background: rgba(120,90,55,0.4); border-radius: 4px; }
+
+    #reading-content .quote-text {
+      font-size: 1.4rem;
+      line-height: 1.7;
+      color: #2a2016;
+      margin-bottom: 1.6rem;
+      font-style: italic;
+      font-weight: 400;
+    }
+    #reading-content .quote-text::first-letter {
+      float: left;
+      font-size: 3.6rem;
+      line-height: 0.82;
+      padding: 0.05em 0.12em 0 0;
+      font-style: normal;
+      font-weight: 600;
+      color: var(--oxblood);
+    }
+    #reading-content .quote-source {
+      font-size: 0.78rem;
+      color: #5c4a2e;
+      text-align: right;
+      font-variant: small-caps;
+      letter-spacing: 0.14em;
+      padding-top: 0.9rem;
+      border-top: 1px solid rgba(70,52,30,0.25);
+      margin-top: 0.4rem;
+    }
+    #reading-content .close-hint {
+      display: block;
+      margin-top: 2.2rem;
+      color: rgba(70, 52, 30, 0.6);
+      font-family: 'SF Mono', SFMono-Regular, Menlo, monospace;
+      font-size: 0.6rem;
+      letter-spacing: 0.1em;
+      text-align: center;
     }
 
-    /* Chapter navigation sidebar */
+    /* ---------- FULL BOOK (codex) ---------- */
     .chapter-nav {
-      width: 240px;
-      min-width: 240px;
-      background: #0d0b09;
-      border-right: 1px solid rgba(201, 168, 124, 0.25);
-      padding: 1.25rem 0;
+      width: 250px;
+      min-width: 250px;
+      background: linear-gradient(180deg, #241a10, #17100a);
+      border-right: 1px solid rgba(216, 185, 120, 0.25);
+      padding: 1.5rem 0;
       overflow-y: auto;
       max-height: 90vh;
     }
-
-    .chapter-nav::-webkit-scrollbar {
-      width: 5px;
-    }
-
-    .chapter-nav::-webkit-scrollbar-track {
-      background: rgba(201, 168, 124, 0.05);
-    }
-
-    .chapter-nav::-webkit-scrollbar-thumb {
-      background: rgba(201, 168, 124, 0.4);
-      border-radius: 3px;
-    }
+    .chapter-nav::-webkit-scrollbar { width: 5px; }
+    .chapter-nav::-webkit-scrollbar-track { background: rgba(216,185,120,0.05); }
+    .chapter-nav::-webkit-scrollbar-thumb { background: rgba(216,185,120,0.35); border-radius: 3px; }
 
     .chapter-nav-title {
-      font-size: 0.7rem;
+      font-size: 0.66rem;
       text-transform: uppercase;
-      letter-spacing: 0.12em;
-      color: #c9a87c;
-      padding: 0.5rem 1.25rem 1rem;
-      margin-bottom: 0.25rem;
+      letter-spacing: 0.24em;
+      color: var(--gold);
+      padding: 0.5rem 1.5rem 1.1rem;
       font-weight: 600;
     }
-
     .chapter-nav-item {
       display: block;
-      padding: 0.6rem 1.25rem;
+      padding: 0.55rem 1.5rem;
       font-size: 0.8rem;
       line-height: 1.35;
-      color: #a89070;
+      color: rgba(216, 185, 120, 0.62);
       text-decoration: none;
       cursor: pointer;
       transition: all 0.12s ease;
-      border-left: 3px solid transparent;
-      margin: 0;
+      border-left: 2px solid transparent;
     }
-
     .chapter-nav-item:hover {
-      color: #f0e6d6;
-      background: rgba(201, 168, 124, 0.1);
-      border-left-color: rgba(201, 168, 124, 0.4);
+      color: #f4e4bd;
+      background: rgba(216, 185, 120, 0.08);
+      border-left-color: rgba(216, 185, 120, 0.4);
     }
-
     .chapter-nav-item.active {
-      color: #f0e6d6;
-      background: rgba(201, 168, 124, 0.15);
-      border-left-color: #c9a87c;
+      color: #f6e8c6;
+      background: rgba(216, 185, 120, 0.13);
+      border-left-color: var(--gold);
       font-weight: 500;
     }
+    .chapter-nav-item.section { font-style: italic; color: rgba(216,185,120,0.42); }
+    .chapter-nav-item.section.active { color: #e0cfa4; }
 
-    .chapter-nav-item.section {
-      font-style: italic;
-      color: #8a7a60;
-    }
-
-    .chapter-nav-item.section.active {
-      color: #d8c8a8;
-    }
-
-    /* Book content area */
     .book-main {
       flex: 1;
-      padding: 2rem 3rem;
+      padding: 3rem 3.5rem;
       overflow-y: auto;
       max-height: 90vh;
-      background: #0a0806;
+      color: #2a2016;
+      background:
+        radial-gradient(120% 60% at 50% 0%, rgba(255,250,235,0.5), transparent 55%),
+        linear-gradient(180deg, #efe3c8, #e3d3ac);
     }
+    .book-main::-webkit-scrollbar { width: 9px; }
+    .book-main::-webkit-scrollbar-track { background: rgba(70,52,30,0.06); }
+    .book-main::-webkit-scrollbar-thumb { background: rgba(120,90,55,0.4); border-radius: 4px; }
 
-    .book-main::-webkit-scrollbar {
-      width: 8px;
-    }
-
-    .book-main::-webkit-scrollbar-track {
-      background: rgba(201, 168, 124, 0.05);
-    }
-
-    .book-main::-webkit-scrollbar-thumb {
-      background: rgba(201, 168, 124, 0.3);
-      border-radius: 4px;
-    }
-
-    #reading-content .quote-text {
-      font-size: 1.15rem;
-      line-height: 1.85;
-      color: #c9a87c;
-      margin-bottom: 1.5rem;
-      font-style: italic;
-    }
-
-    #reading-content .quote-source {
-      font-size: 0.85rem;
-      color: #c9a87c;
-      opacity: 0.7;
-      text-align: right;
-    }
-
-    #reading-content .close-hint {
-      display: block;
-      margin-top: 2rem;
-      color: #c9a87c;
-      font-family: 'SF Mono', SFMono-Regular, Menlo, monospace;
-      font-size: 0.65rem;
-      text-align: center;
-      opacity: 0.6;
-    }
-
-    /* Full book styles */
-    .full-book {
-      text-align: left;
-    }
-
+    .full-book { text-align: left; }
     .full-book .book-title {
-      font-size: 1.75rem;
+      font-size: 1.9rem;
       font-weight: 700;
+      font-variant: small-caps;
       text-align: center;
-      margin-bottom: 0.75rem;
-      letter-spacing: 0.15em;
-      color: #f0e6d6;
-      text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
-      padding: 1rem 1.5rem;
-      background: linear-gradient(180deg, rgba(201, 168, 124, 0.3) 0%, rgba(201, 168, 124, 0.15) 100%);
-      border: 2px solid rgba(201, 168, 124, 0.5);
-      border-radius: 4px;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+      margin-bottom: 0.6rem;
+      letter-spacing: 0.1em;
+      color: #3a1512;
     }
-
     .full-book .book-author {
       font-size: 1rem;
       text-align: center;
+      color: #5c4a2e;
       margin-bottom: 0.25rem;
     }
-
     .full-book .book-subtitle {
       font-size: 0.85rem;
       text-align: center;
       font-style: italic;
-      opacity: 0.8;
-      margin-bottom: 2rem;
-      padding-bottom: 1.5rem;
-      border-bottom: 1px solid rgba(201, 168, 124, 0.3);
+      color: #6b5838;
+      margin-bottom: 2.2rem;
+      padding-bottom: 1.6rem;
+      border-bottom: 1px solid rgba(70,52,30,0.28);
     }
-
-    .full-book .book-content {
-      font-size: 0.95rem;
-      line-height: 1.85;
-    }
-
-    .full-book .book-content p {
-      margin-bottom: 1.25em;
-      text-align: justify;
-    }
-
+    .full-book .book-content { font-size: 0.98rem; line-height: 1.85; color: #2a2016; }
+    .full-book .book-content p { margin-bottom: 1.2em; text-align: justify; }
     .full-book .book-content h2.chapter-title {
       display: block;
-      font-size: 1rem;
+      font-size: 0.9rem;
       font-weight: 700;
-      margin: 3rem 0 1.5rem 0;
-      padding: 1.25rem 2rem;
+      font-variant: small-caps;
+      margin: 3rem 0 1.6rem 0;
+      padding: 1rem 1.5rem;
       text-align: center;
-      color: #fff;
-      background: linear-gradient(180deg, rgba(201, 168, 124, 0.25) 0%, rgba(201, 168, 124, 0.12) 100%);
-      border: 2px solid rgba(201, 168, 124, 0.5);
-      border-radius: 4px;
-      letter-spacing: 0.1em;
+      color: #3a1512;
+      background: linear-gradient(180deg, rgba(120,90,55,0.16), rgba(120,90,55,0.06));
+      border-top: 1px solid rgba(70,52,30,0.35);
+      border-bottom: 1px solid rgba(70,52,30,0.35);
+      letter-spacing: 0.14em;
       text-transform: uppercase;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255,255,255,0.1);
       scroll-margin-top: 1rem;
       white-space: normal;
     }
+    .full-book .book-content h2.chapter-title:first-of-type { margin-top: 0; }
 
-    .full-book .book-content h2.chapter-title:first-of-type {
-      margin-top: 0;
-    }
-
+    /* ---------- EYELID INTRO ---------- */
     #eye-opening {
       position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
+      inset: 0;
       z-index: 300;
       pointer-events: none;
     }
-
-    #eye-opening.hidden {
-      display: none;
-    }
-
+    #eye-opening.hidden { display: none; }
     #eyelid-top, #eyelid-bottom {
       position: absolute;
       left: 0;
@@ -389,28 +478,10 @@ import '@/styles/global.css';
       height: 50%;
       background: #0a0806;
     }
-
-    #eyelid-top {
-      top: 0;
-      transform-origin: top center;
-      animation: eyelidOpenTop 1.8s ease-out forwards;
-    }
-
-    #eyelid-bottom {
-      bottom: 0;
-      transform-origin: bottom center;
-      animation: eyelidOpenBottom 1.8s ease-out forwards;
-    }
-
-    @keyframes eyelidOpenTop {
-      0% { transform: scaleY(1); }
-      100% { transform: scaleY(0); }
-    }
-
-    @keyframes eyelidOpenBottom {
-      0% { transform: scaleY(1); }
-      100% { transform: scaleY(0); }
-    }
+    #eyelid-top { top: 0; transform-origin: top center; animation: eyelidOpenTop 1.8s ease-out forwards; }
+    #eyelid-bottom { bottom: 0; transform-origin: bottom center; animation: eyelidOpenBottom 1.8s ease-out forwards; }
+    @keyframes eyelidOpenTop { 0% { transform: scaleY(1); } 100% { transform: scaleY(0); } }
+    @keyframes eyelidOpenBottom { 0% { transform: scaleY(1); } 100% { transform: scaleY(0); } }
   </style>
 </head>
 <body>
@@ -419,15 +490,23 @@ import '@/styles/global.css';
     <div id="eyelid-bottom"></div>
   </div>
 
-
   <div id="crosshair"></div>
-  <div id="object-label"></div>
-  <div id="controls-hint">WASD/arrows move · mouse look · click to read · ESC menu</div>
+  <div id="object-label"><span class="label-inner"></span></div>
+  <div id="controls-hint">WASD / arrows move · mouse look · click to read · ESC menu</div>
+
+  <div id="title-card">
+    <div class="tc-over">La Biblioteca de Babel</div>
+    <div class="tc-main">The Library</div>
+    <div class="tc-rule"></div>
+  </div>
 
   <div id="start-prompt">
-    <div class="prompt-text" id="start-button">Click to continue</div>
-    <div class="prompt-instructions">WASD/arrows move · mouse look · click to read</div>
-    <a href="/" class="prompt-home">← Return to main website</a>
+    <div class="menu-panel">
+      <div class="menu-eyebrow">The Library of Babel</div>
+      <div class="prompt-text" id="start-button">Enter the gallery</div>
+      <div class="prompt-instructions">WASD / arrows move · mouse look · click to read</div>
+      <a href="/" class="prompt-home">← return to the main website</a>
+    </div>
   </div>
 
   <div id="reading-overlay">
@@ -436,7 +515,6 @@ import '@/styles/global.css';
       <span class="close-hint">click anywhere or press ESC to close</span>
     </div>
   </div>
-
     <script>
     // Plunkitt of Tammany Hall - Full Text
     window.plunkittText = `<h2 class="chapter-title">Preface</h2>
@@ -750,131 +828,328 @@ America</h2>
 <p>By these means the Tammany district leader reaches out into the homes of his district, keeps watch not only on the men, but also on the women and children; knows their needs, their likes and dislikes, their troubles and their hopes, and places himself in a position to use his knowledge for the benefit of his organization and himself. Is it any wonder that scandals do not permanently disable Tammany and that it speedily recovers from what seems to be crushing defeat?</p>`;
   </script>
 
-
   <script type="importmap">
     {
       "imports": {
-        "three": "https://unpkg.com/three@0.160.0/build/three.module.js"
+        "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
       }
     }
   </script>
 
   <script type="module">
     import * as THREE from 'three';
+    import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+    import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+    import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+    import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
+    import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
-    // --- COLORS ---
-    const DARK = 0x0a0806;
-    const LIGHT = 0xc9a87c;
-
-    // --- AUDIO ---
+    // ==================================================================
+    //  AUDIO  — everything synthesized, no external files
+    // ==================================================================
     let audioCtx = null;
+    let masterGain = null, dryGain = null, reverbSend = null, ambientBus = null;
+    let ambientStarted = false;
+    let currentReverbWet = 0.22, targetReverbWet = 0.22;
+
     function getAudioContext() {
-      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      if (!audioCtx) initAudioGraph();
       return audioCtx;
     }
 
-    // Footstep sound - soft tap
-    let lastFootstep = 0;
-    function playFootstep() {
-      const now = Date.now();
-      if (now - lastFootstep < 350) return; // limit frequency
-      lastFootstep = now;
+    function initAudioGraph() {
+      if (audioCtx) return;
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
-      const ctx = getAudioContext();
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      const filter = ctx.createBiquadFilter();
+      masterGain = audioCtx.createGain();
+      masterGain.gain.value = 0.9;
+      masterGain.connect(audioCtx.destination);
 
-      filter.type = 'lowpass';
-      filter.frequency.value = 150 + Math.random() * 100;
+      dryGain = audioCtx.createGain();
+      dryGain.gain.value = 1.0;
+      dryGain.connect(masterGain);
 
-      osc.type = 'sine';
-      osc.frequency.value = 60 + Math.random() * 40;
+      // Convolution reverb — procedurally generated stone-hall impulse
+      const convolver = audioCtx.createConvolver();
+      const len = Math.floor(audioCtx.sampleRate * 2.6);
+      const ir = audioCtx.createBuffer(2, len, audioCtx.sampleRate);
+      for (let ch = 0; ch < 2; ch++) {
+        const d = ir.getChannelData(ch);
+        for (let i = 0; i < len; i++) {
+          const t = i / len;
+          // exponential decay + progressive HF rolloff via smoothing
+          const env = Math.pow(1 - t, 2.6);
+          let s = (Math.random() * 2 - 1) * env;
+          if (i > 0) s = s * 0.6 + d[i - 1] * 0.4 * (0.3 + 0.7 * t); // darker tail
+          d[i] = s;
+        }
+      }
+      convolver.buffer = ir;
 
-      gain.gain.setValueAtTime(0.15, ctx.currentTime);
-      gain.gain.exponentialDecayTo && gain.gain.exponentialDecayTo(0.01, ctx.currentTime + 0.1);
-      gain.gain.setValueAtTime(0.15, ctx.currentTime);
-      gain.gain.linearRampToValueAtTime(0.01, ctx.currentTime + 0.08);
+      const wetGain = audioCtx.createGain();
+      wetGain.gain.value = 0.9;
+      reverbSend = audioCtx.createGain();
+      reverbSend.gain.value = currentReverbWet;
+      reverbSend.connect(convolver);
+      convolver.connect(wetGain);
+      wetGain.connect(masterGain);
 
-      osc.connect(filter);
-      filter.connect(gain);
-      gain.connect(ctx.destination);
-
-      osc.start(ctx.currentTime);
-      osc.stop(ctx.currentTime + 0.1);
+      ambientBus = audioCtx.createGain();
+      ambientBus.gain.value = 0.0; // fade in later
+      ambientBus.connect(dryGain);
+      ambientBus.connect(reverbSend);
     }
 
-    // Page turn sound - papery swoosh
+    // route a node to dry + reverb send
+    function routeWet(node, wetAmount = 1.0) {
+      node.connect(dryGain);
+      if (reverbSend) {
+        const s = audioCtx.createGain();
+        s.gain.value = wetAmount;
+        node.connect(s);
+        s.connect(reverbSend);
+      }
+    }
+
+    function startAmbient() {
+      if (ambientStarted) return;
+      ambientStarted = true;
+      initAudioGraph();
+      const ctx = audioCtx, now = ctx.currentTime;
+
+      // fade the ambient bus in over 4s
+      ambientBus.gain.setValueAtTime(0.0001, now);
+      ambientBus.gain.exponentialRampToValueAtTime(1.0, now + 4);
+
+      // (a) air — brown noise through a low lowpass
+      const airBuf = ctx.createBuffer(1, ctx.sampleRate * 4, ctx.sampleRate);
+      const ad = airBuf.getChannelData(0);
+      let last = 0;
+      for (let i = 0; i < ad.length; i++) {
+        const white = Math.random() * 2 - 1;
+        last = (last + 0.02 * white) / 1.02;
+        ad[i] = last * 3.0;
+      }
+      const air = ctx.createBufferSource();
+      air.buffer = airBuf; air.loop = true;
+      const airFilt = ctx.createBiquadFilter();
+      airFilt.type = 'lowpass'; airFilt.frequency.value = 220;
+      const airGain = ctx.createGain(); airGain.gain.value = 0.05;
+      air.connect(airFilt); airFilt.connect(airGain); airGain.connect(ambientBus);
+      air.start();
+
+      // (b) drone — two detuned sines with a slow gain LFO
+      [55, 82.5].forEach((f, i) => {
+        const osc = ctx.createOscillator();
+        osc.type = i === 0 ? 'sine' : 'triangle';
+        osc.frequency.value = f;
+        const dg = ctx.createGain(); dg.gain.value = 0.028;
+        const lfo = ctx.createOscillator(); lfo.frequency.value = 0.05 + i * 0.017;
+        const lfoGain = ctx.createGain(); lfoGain.gain.value = 0.014;
+        lfo.connect(lfoGain); lfoGain.connect(dg.gain);
+        const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 300;
+        osc.connect(lp); lp.connect(dg); dg.connect(ambientBus);
+        osc.start(); lfo.start();
+      });
+
+      scheduleDistantEvent();
+    }
+
+    function scheduleDistantEvent() {
+      if (!audioCtx) return;
+      const delay = 20000 + Math.random() * 25000;
+      setTimeout(() => {
+        if (ambientStarted) playDistantEvent();
+        scheduleDistantEvent();
+      }, delay);
+    }
+
+    // a far-off creak / closing book, sent mostly through reverb
+    function playDistantEvent() {
+      const ctx = audioCtx, now = ctx.currentTime;
+      if (Math.random() < 0.5) {
+        // wooden creak — sawtooth pitch bend
+        const osc = ctx.createOscillator();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(95, now);
+        osc.frequency.exponentialRampToValueAtTime(68, now + 0.45);
+        const g = ctx.createGain();
+        g.gain.setValueAtTime(0.0001, now);
+        g.gain.linearRampToValueAtTime(0.05, now + 0.06);
+        g.gain.exponentialRampToValueAtTime(0.0001, now + 0.5);
+        const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 500;
+        osc.connect(lp); lp.connect(g);
+        routeWet(g, 1.4);
+        osc.start(now); osc.stop(now + 0.55);
+      } else {
+        // distant page rustle / closing book — filtered noise burst
+        const buf = ctx.createBuffer(1, ctx.sampleRate * 0.35, ctx.sampleRate);
+        const d = buf.getChannelData(0);
+        for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / d.length, 2);
+        const src = ctx.createBufferSource(); src.buffer = buf;
+        const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 1800; bp.Q.value = 0.6;
+        const g = ctx.createGain(); g.gain.value = 0.06;
+        src.connect(bp); bp.connect(g);
+        routeWet(g, 1.6);
+        src.start();
+      }
+    }
+
+    function setReverbTarget(v) { targetReverbWet = v; }
+    function updateReverb() {
+      if (!reverbSend) return;
+      currentReverbWet += (targetReverbWet - currentReverbWet) * 0.05;
+      reverbSend.gain.value = currentReverbWet;
+    }
+
+    function duckAmbient(amount) {
+      if (!ambientBus || !audioCtx) return;
+      ambientBus.gain.cancelScheduledValues(audioCtx.currentTime);
+      ambientBus.gain.setTargetAtTime(amount, audioCtx.currentTime, 0.15);
+    }
+
+    // Footsteps — two-layer heel/toe on stone
+    let footstepPan = 1;
+    function playFootstep() {
+      const ctx = getAudioContext();
+      const now = ctx.currentTime;
+      footstepPan *= -1;
+      const panner = ctx.createStereoPanner ? ctx.createStereoPanner() : null;
+      if (panner) panner.pan.value = 0.15 * footstepPan;
+
+      // heel thump
+      const osc = ctx.createOscillator();
+      osc.type = 'sine';
+      const pitch = 55 * (1 + (Math.random() - 0.5) * 0.16);
+      osc.frequency.setValueAtTime(pitch * 1.6, now);
+      osc.frequency.exponentialRampToValueAtTime(pitch, now + 0.06);
+      const og = ctx.createGain();
+      og.gain.setValueAtTime(0.16, now);
+      og.gain.exponentialRampToValueAtTime(0.001, now + 0.11);
+
+      // toe scuff — bandpassed noise
+      const nb = ctx.createBuffer(1, ctx.sampleRate * 0.09, ctx.sampleRate);
+      const nd = nb.getChannelData(0);
+      for (let i = 0; i < nd.length; i++) nd[i] = (Math.random() * 2 - 1) * (1 - i / nd.length);
+      const nsrc = ctx.createBufferSource(); nsrc.buffer = nb;
+      const bp = ctx.createBiquadFilter();
+      bp.type = 'bandpass'; bp.frequency.value = 700 * (1 + (Math.random() - 0.5) * 0.3); bp.Q.value = 1.4;
+      const ng = ctx.createGain(); ng.gain.value = 0.09;
+
+      const out = ctx.createGain(); out.gain.value = 1;
+      osc.connect(og); og.connect(out);
+      nsrc.connect(bp); bp.connect(ng); ng.connect(out);
+      if (panner) { out.connect(panner); routeWet(panner, 0.25); } else { routeWet(out, 0.25); }
+
+      osc.start(now); osc.stop(now + 0.12);
+      nsrc.start(now + 0.012);
+    }
+
+    // Page turn — papery swoosh
     function playPageTurn() {
       const ctx = getAudioContext();
       const bufferSize = ctx.sampleRate * 0.4;
       const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
       const data = buffer.getChannelData(0);
-
       for (let i = 0; i < bufferSize; i++) {
         const t = i / bufferSize;
-        // Noise with envelope
         data[i] = (Math.random() * 2 - 1) * Math.sin(t * Math.PI) * 0.3 * (1 - t * 0.5);
       }
-
-      const source = ctx.createBufferSource();
-      source.buffer = buffer;
-
-      const filter = ctx.createBiquadFilter();
-      filter.type = 'bandpass';
-      filter.frequency.value = 3000;
-      filter.Q.value = 0.5;
-
-      const gain = ctx.createGain();
-      gain.gain.value = 0.08;
-
-      source.connect(filter);
-      filter.connect(gain);
-      gain.connect(ctx.destination);
+      const source = ctx.createBufferSource(); source.buffer = buffer;
+      const filter = ctx.createBiquadFilter(); filter.type = 'bandpass'; filter.frequency.value = 3000; filter.Q.value = 0.5;
+      const gain = ctx.createGain(); gain.gain.value = 0.09;
+      source.connect(filter); filter.connect(gain);
+      routeWet(gain, 0.5);
       source.start();
     }
 
-    // Book close sound - soft thud
+    // Book close — soft thud
     function playBookClose() {
       const ctx = getAudioContext();
-
-      // Low thump
+      const now = ctx.currentTime;
       const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-
       osc.type = 'sine';
-      osc.frequency.setValueAtTime(80, ctx.currentTime);
-      osc.frequency.linearRampToValueAtTime(40, ctx.currentTime + 0.15);
-
-      gain.gain.setValueAtTime(0.3, ctx.currentTime);
-      gain.gain.linearRampToValueAtTime(0.01, ctx.currentTime + 0.15);
-
+      osc.frequency.setValueAtTime(80, now);
+      osc.frequency.linearRampToValueAtTime(40, now + 0.15);
+      const gain = ctx.createGain();
+      gain.gain.setValueAtTime(0.3, now);
+      gain.gain.linearRampToValueAtTime(0.001, now + 0.15);
       osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.start(ctx.currentTime);
-      osc.stop(ctx.currentTime + 0.15);
+      routeWet(gain, 0.4);
+      osc.start(now); osc.stop(now + 0.15);
 
-      // Add noise component
       const bufferSize = ctx.sampleRate * 0.1;
       const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
       const data = buffer.getChannelData(0);
-      for (let i = 0; i < bufferSize; i++) {
-        const t = i / bufferSize;
-        data[i] = (Math.random() * 2 - 1) * (1 - t) * 0.15;
-      }
+      for (let i = 0; i < bufferSize; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / bufferSize) * 0.15;
+      const ns = ctx.createBufferSource(); ns.buffer = buffer;
+      const nf = ctx.createBiquadFilter(); nf.type = 'lowpass'; nf.frequency.value = 500;
+      const ng = ctx.createGain(); ng.gain.value = 0.2;
+      ns.connect(nf); nf.connect(ng);
+      routeWet(ng, 0.4);
+      ns.start();
+    }
 
-      const noiseSource = ctx.createBufferSource();
-      noiseSource.buffer = buffer;
-      const noiseFilter = ctx.createBiquadFilter();
-      noiseFilter.type = 'lowpass';
-      noiseFilter.frequency.value = 500;
-      const noiseGain = ctx.createGain();
-      noiseGain.gain.value = 0.2;
+    // Book pull-out — friction + soft wood tap
+    function playBookPull() {
+      const ctx = getAudioContext();
+      const now = ctx.currentTime;
+      const nb = ctx.createBuffer(1, ctx.sampleRate * 0.2, ctx.sampleRate);
+      const nd = nb.getChannelData(0);
+      for (let i = 0; i < nd.length; i++) nd[i] = (Math.random() * 2 - 1) * Math.sin((i / nd.length) * Math.PI) * 0.5;
+      const src = ctx.createBufferSource(); src.buffer = nb;
+      const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 1200; bp.Q.value = 0.8;
+      const g = ctx.createGain(); g.gain.value = 0.05;
+      src.connect(bp); bp.connect(g);
+      routeWet(g, 0.3);
+      src.start();
+    }
 
-      noiseSource.connect(noiseFilter);
-      noiseFilter.connect(noiseGain);
-      noiseGain.connect(ctx.destination);
-      noiseSource.start();
+    // Hover tick — near-silent tactility
+    function playHoverTick() {
+      const ctx = getAudioContext();
+      const now = ctx.currentTime;
+      const osc = ctx.createOscillator();
+      osc.type = 'square'; osc.frequency.value = 2000;
+      const g = ctx.createGain();
+      g.gain.setValueAtTime(0.02, now);
+      g.gain.exponentialRampToValueAtTime(0.0005, now + 0.02);
+      const hp = ctx.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 1500;
+      osc.connect(hp); hp.connect(g); g.connect(dryGain || ctx.destination);
+      osc.start(now); osc.stop(now + 0.03);
+    }
+
+    // Shrine open — deep page + pad swell
+    function playShrineOpen() {
+      const ctx = getAudioContext();
+      const now = ctx.currentTime;
+      playPageTurn();
+      [110, 165, 220].forEach((f) => {
+        const osc = ctx.createOscillator();
+        osc.type = 'sine'; osc.frequency.value = f;
+        const g = ctx.createGain();
+        g.gain.setValueAtTime(0.0001, now);
+        g.gain.linearRampToValueAtTime(0.04, now + 1.2);
+        g.gain.linearRampToValueAtTime(0.0001, now + 2.6);
+        osc.connect(g);
+        routeWet(g, 0.8);
+        osc.start(now); osc.stop(now + 2.7);
+      });
+    }
+
+    // dust-puff whisper for filler / shrine
+    function playDustPuff() {
+      const ctx = getAudioContext();
+      const nb = ctx.createBuffer(1, ctx.sampleRate * 0.25, ctx.sampleRate);
+      const nd = nb.getChannelData(0);
+      for (let i = 0; i < nd.length; i++) nd[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / nd.length, 1.5);
+      const src = ctx.createBufferSource(); src.buffer = nb;
+      const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 4200; bp.Q.value = 0.4;
+      const g = ctx.createGain(); g.gain.value = 0.04;
+      src.connect(bp); bp.connect(g);
+      routeWet(g, 0.7);
+      src.start();
     }
 
     // --- SEEDED RANDOM (for consistent book generation) ---
@@ -883,6 +1158,7 @@ America</h2>
       seed = (seed * 1103515245 + 12345) & 0x7fffffff;
       return seed / 0x7fffffff;
     }
+    function resetSeed(s) { seed = s; }
 
     // --- BORGES QUOTES (242 total) ---
     const borgesQuotes = [
@@ -1129,611 +1405,1002 @@ America</h2>
       { source: "Borges and I", quote: "The other one, the one called Borges, is the one things happen to." },
       { source: "Remorse", quote: "I have committed the worst of sins... I have not been happy." },
       { source: "About the Classics", quote: "A classic is a book that a nation or a group of people has decided to read as if everything in it were deliberate, fatal, profound." },
+      { source: "The Library of Babel", quote: "When it was proclaimed that the Library contained all books, the first impression was one of extravagant happiness. All men felt themselves the possessors of an intact and secret treasure." },
     ];
 
-    // --- SCENE ---
-    const scene = new THREE.Scene();
-    scene.background = new THREE.Color(DARK);
 
-    const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 100);
-    camera.position.set(0, 1.7, 0);
+    // ==================================================================
+    //  PALETTE
+    // ==================================================================
+    const COL = {
+      void: 0x0a0806,
+      lampAmber: 0xffd9a0,
+      bulbGlow: 0xffe6b8,
+      gold: 0xd8b978,
+      walnut: 0x5c3a22,
+      oxblood: 0x6e2b25,
+      plaster: 0x4a3f33,
+      brass: 0xb08d57,
+      stone: 0x6a5c48,
+    };
+    const BOOK_COLORS = [0x6e2b25, 0x4a5232, 0x6b4a2a, 0x33302b, 0xa08a63, 0x2f4440, 0x5a3a2a, 0x704a20];
 
-    const renderer = new THREE.WebGLRenderer({ antialias: true });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    document.body.appendChild(renderer.domElement);
-
-    // --- MATERIALS ---
-    const lineMat = new THREE.LineBasicMaterial({ color: LIGHT });
-    const dimMat = new THREE.LineBasicMaterial({ color: LIGHT, transparent: true, opacity: 0.3 });
-
-    const interactiveObjects = [];
-    let quoteIdx = 0;
-
-    function addLine(pts, dim = false) {
-      scene.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), dim ? dimMat : lineMat));
+    // ==================================================================
+    //  TEXTURE FACTORY — all canvas-generated, cached
+    // ==================================================================
+    function makeCanvas(size) {
+      const c = document.createElement('canvas');
+      c.width = c.height = size;
+      return c;
+    }
+    function texFromCanvas(c, repeat = 1) {
+      const t = new THREE.CanvasTexture(c);
+      t.wrapS = t.wrapT = THREE.RepeatWrapping;
+      t.repeat.set(repeat, repeat);
+      t.anisotropy = 4;
+      t.colorSpace = THREE.SRGBColorSpace; // authored in sRGB hex → linearize before lighting
+      return t;
+    }
+    function rgba(hex, a) {
+      const r = (hex >> 16) & 255, g = (hex >> 8) & 255, b = hex & 255;
+      return `rgba(${r},${g},${b},${a})`;
     }
 
-    // --- ROOM ---
-    const R = 5, H = 8;
+    // Stone floor / trim
+    function stoneTexture() {
+      const c = makeCanvas(1024), x = c.getContext('2d');
+      x.fillStyle = '#4a4033'; x.fillRect(0, 0, 1024, 1024);
+      // mottling
+      for (let i = 0; i < 500; i++) {
+        const px = Math.random() * 1024, py = Math.random() * 1024, r = 20 + Math.random() * 120;
+        const g = x.createRadialGradient(px, py, 0, px, py, r);
+        const lite = Math.random() > 0.5;
+        g.addColorStop(0, lite ? 'rgba(138,122,99,0.10)' : 'rgba(45,38,30,0.14)');
+        g.addColorStop(1, 'rgba(0,0,0,0)');
+        x.fillStyle = g; x.beginPath(); x.arc(px, py, r, 0, 7); x.fill();
+      }
+      // hex tiling grid
+      x.strokeStyle = 'rgba(20,16,10,0.55)'; x.lineWidth = 2.5;
+      const s = 128, h = s * Math.sqrt(3) / 2;
+      for (let row = -1; row < 1024 / h + 1; row++) {
+        for (let col = -1; col < 1024 / (s * 1.5) + 1; col++) {
+          const cx = col * s * 1.5;
+          const cy = row * h * 2 + (col % 2) * h;
+          x.beginPath();
+          for (let k = 0; k <= 6; k++) {
+            const a = (k / 6) * Math.PI * 2;
+            const vx = cx + Math.cos(a) * s * 0.5, vy = cy + Math.sin(a) * s * 0.5;
+            k === 0 ? x.moveTo(vx, vy) : x.lineTo(vx, vy);
+          }
+          x.stroke();
+        }
+      }
+      // AO vignette at edges
+      const vg = x.createRadialGradient(512, 512, 300, 512, 512, 720);
+      vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(0,0,0,0.5)');
+      x.fillStyle = vg; x.fillRect(0, 0, 1024, 1024);
+      return c;
+    }
+
+    // Aged plaster walls
+    function plasterTexture() {
+      const c = makeCanvas(512), x = c.getContext('2d');
+      x.fillStyle = '#453a2e'; x.fillRect(0, 0, 512, 512);
+      for (let i = 0; i < 6000; i++) {
+        const l = (Math.random() - 0.5) * 26;
+        x.fillStyle = `rgba(${74 + l},${63 + l},${51 + l},0.5)`;
+        x.fillRect(Math.random() * 512, Math.random() * 512, 1, 1);
+      }
+      // vertical drip streaks
+      for (let i = 0; i < 24; i++) {
+        const px = Math.random() * 512;
+        x.strokeStyle = `rgba(20,15,10,${0.03 + Math.random() * 0.05})`;
+        x.lineWidth = 1 + Math.random() * 3;
+        x.beginPath(); x.moveTo(px, 0);
+        for (let y = 0; y < 512; y += 20) x.lineTo(px + (Math.random() - 0.5) * 8, y);
+        x.stroke();
+      }
+      return c;
+    }
+
+    // Walnut wood grain
+    function woodTexture() {
+      const c = makeCanvas(512), x = c.getContext('2d');
+      x.fillStyle = '#4a2e1c'; x.fillRect(0, 0, 512, 512);
+      for (let y = 0; y < 512; y += 2) {
+        const warp = Math.sin(y * 0.04) * 10 + Math.sin(y * 0.11) * 4;
+        const l = (Math.random() - 0.5) * 18;
+        x.strokeStyle = `rgba(${92 + l},${58 + l},${34 + l},0.6)`;
+        x.lineWidth = 1 + Math.random();
+        x.beginPath(); x.moveTo(-20 + warp, y); x.lineTo(532 + warp, y + 2); x.stroke();
+      }
+      // knots
+      for (let i = 0; i < 6; i++) {
+        const px = Math.random() * 512, py = Math.random() * 512, r = 8 + Math.random() * 22;
+        const g = x.createRadialGradient(px, py, 0, px, py, r);
+        g.addColorStop(0, 'rgba(30,18,10,0.8)'); g.addColorStop(0.6, 'rgba(50,30,16,0.3)'); g.addColorStop(1, 'rgba(0,0,0,0)');
+        x.fillStyle = g; x.beginPath(); x.arc(px, py, r, 0, 7); x.fill();
+      }
+      return c;
+    }
+
+    // Bookcase interior back panel (dark AO gradient)
+    function backPanelTexture() {
+      const c = makeCanvas(256), x = c.getContext('2d');
+      const g = x.createLinearGradient(0, 0, 0, 256);
+      g.addColorStop(0, '#1a120a'); g.addColorStop(1, '#0d0906');
+      x.fillStyle = g; x.fillRect(0, 0, 256, 256);
+      for (let i = 0; i < 1500; i++) {
+        const l = Math.random() * 14;
+        x.fillStyle = `rgba(${30 + l},${20 + l},${12 + l},0.4)`;
+        x.fillRect(Math.random() * 256, Math.random() * 256, 1, 1);
+      }
+      return c;
+    }
+
+    // Grayscale book spine (multiplied by instanceColor)
+    function spineTexture() {
+      const c = makeCanvas(128), x = c.getContext('2d');
+      x.fillStyle = '#b8b8b8'; x.fillRect(0, 0, 128, 128);
+      // cloth noise
+      for (let i = 0; i < 2500; i++) {
+        const l = (Math.random() - 0.5) * 40;
+        x.fillStyle = `rgba(${184 + l},${184 + l},${184 + l},0.5)`;
+        x.fillRect(Math.random() * 128, Math.random() * 128, 1, 2);
+      }
+      // raised bands
+      x.strokeStyle = 'rgba(255,255,255,0.5)'; x.lineWidth = 3;
+      [22, 44, 84, 106].forEach(y => { x.beginPath(); x.moveTo(0, y); x.lineTo(128, y); x.stroke(); });
+      x.strokeStyle = 'rgba(60,60,60,0.5)'; x.lineWidth = 1;
+      [25, 47, 87, 109].forEach(y => { x.beginPath(); x.moveTo(0, y); x.lineTo(128, y); x.stroke(); });
+      // gilt title panel
+      x.fillStyle = 'rgba(235,225,190,0.85)'; x.fillRect(24, 55, 80, 22);
+      x.fillStyle = 'rgba(120,110,80,0.7)';
+      for (let i = 0; i < 4; i++) x.fillRect(30, 60 + i * 4, 60 - Math.random() * 30, 1.4);
+      return c;
+    }
+
+    // Sacred book leather + emissive title
+    function leatherTexture() {
+      const c = makeCanvas(512), x = c.getContext('2d');
+      x.fillStyle = '#5f1a17'; x.fillRect(0, 0, 512, 512);
+      for (let i = 0; i < 8000; i++) {
+        const l = (Math.random() - 0.5) * 34;
+        x.fillStyle = `rgba(${110 + l},${34 + l},${30 + l},0.5)`;
+        x.fillRect(Math.random() * 512, Math.random() * 512, 2, 2);
+      }
+      // tooled double border
+      x.strokeStyle = 'rgba(180,140,90,0.5)'; x.lineWidth = 4;
+      x.strokeRect(48, 48, 416, 416);
+      x.lineWidth = 2; x.strokeRect(64, 64, 384, 384);
+      return c;
+    }
+    function leatherEmissive() {
+      const c = makeCanvas(512), x = c.getContext('2d');
+      x.fillStyle = '#000'; x.fillRect(0, 0, 512, 512);
+      x.fillStyle = '#d8b978';
+      x.textAlign = 'center';
+      x.font = '700 54px "Source Serif 4", Georgia, serif';
+      x.fillText('PLUNKITT', 256, 210);
+      x.font = '400 26px "Source Serif 4", Georgia, serif';
+      x.fillText('OF', 256, 258);
+      x.font = '700 40px "Source Serif 4", Georgia, serif';
+      x.fillText('TAMMANY', 256, 306);
+      x.fillText('HALL', 256, 350);
+      // diamond
+      x.save(); x.translate(256, 410); x.rotate(Math.PI / 4);
+      x.strokeStyle = '#d8b978'; x.lineWidth = 3; x.strokeRect(-14, -14, 28, 28); x.restore();
+      return c;
+    }
+
+    // radial sprite (dust, halo)
+    function radialSprite(inner) {
+      const c = makeCanvas(64), x = c.getContext('2d');
+      const g = x.createRadialGradient(32, 32, 0, 32, 32, 32);
+      g.addColorStop(0, inner); g.addColorStop(1, 'rgba(255,255,255,0)');
+      x.fillStyle = g; x.fillRect(0, 0, 64, 64);
+      return c;
+    }
+
+    // vertical alpha gradient for beam cone
+    function beamTexture() {
+      const c = makeCanvas(64), x = c.getContext('2d');
+      const g = x.createLinearGradient(0, 0, 0, 64);
+      g.addColorStop(0, 'rgba(255,240,210,0.9)');
+      g.addColorStop(1, 'rgba(255,240,210,0)');
+      x.fillStyle = g; x.fillRect(0, 0, 64, 64);
+      return c;
+    }
+
+    // terminus cap for shaft ends
+    function terminusTexture(colorHex) {
+      const c = makeCanvas(256), x = c.getContext('2d');
+      const g = x.createRadialGradient(128, 128, 0, 128, 128, 128);
+      g.addColorStop(0, rgba(colorHex, 0.85));
+      g.addColorStop(0.5, rgba(colorHex, 0.4));
+      g.addColorStop(1, rgba(0x0a0806, 0));
+      x.fillStyle = g; x.fillRect(0, 0, 256, 256);
+      return c;
+    }
+
+    // Build shared textures
+    const texStone = texFromCanvas(stoneTexture());
+    const texStoneTrim = texFromCanvas(stoneTexture(), 2);
+    const texPlaster = texFromCanvas(plasterTexture());
+    const texWood = texFromCanvas(woodTexture());
+    const texBack = texFromCanvas(backPanelTexture());
+    const texSpine = new THREE.CanvasTexture(spineTexture());
+    texSpine.colorSpace = THREE.SRGBColorSpace;
+    const dustSprite = new THREE.CanvasTexture(radialSprite('rgba(232,217,176,0.9)'));
+    const haloSprite = new THREE.CanvasTexture(radialSprite('rgba(255,224,170,0.8)'));
+
+    // ==================================================================
+    //  SCENE / CAMERA / RENDERER
+    // ==================================================================
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(COL.void);
+    scene.fog = new THREE.FogExp2(COL.void, 0.07);
+
+    const camera = new THREE.PerspectiveCamera(70, innerWidth / innerHeight, 0.05, 120);
+    const CAM_EYE = 1.7;
+    camera.position.set(0, CAM_EYE, 3.4);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(innerWidth, innerHeight);
+    let curPixelRatio = Math.min(devicePixelRatio, 2);
+    renderer.setPixelRatio(curPixelRatio);
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 0.0; // ramped up during intro
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.shadowMap.autoUpdate = false; // static scene → freeze
+    document.body.appendChild(renderer.domElement);
+
+    // ==================================================================
+    //  PROCEDURAL ENVIRONMENT (PMREM) — warm equirect with lamp blobs
+    // ==================================================================
+    (function buildEnvironment() {
+      const c = makeCanvas(256); c.height = 128;
+      const x = c.getContext('2d');
+      const g = x.createLinearGradient(0, 0, 0, 128);
+      g.addColorStop(0, '#3a2c1a'); g.addColorStop(0.5, '#20180f'); g.addColorStop(1, '#0a0806');
+      x.fillStyle = g; x.fillRect(0, 0, 256, 128);
+      // two lamp blobs
+      [64, 192].forEach(px => {
+        const rg = x.createRadialGradient(px, 54, 0, px, 54, 40);
+        rg.addColorStop(0, 'rgba(255,225,170,0.9)'); rg.addColorStop(1, 'rgba(255,225,170,0)');
+        x.fillStyle = rg; x.fillRect(px - 40, 14, 80, 80);
+      });
+      const tex = new THREE.CanvasTexture(c);
+      tex.colorSpace = THREE.SRGBColorSpace;
+      tex.mapping = THREE.EquirectangularReflectionMapping;
+      const pmrem = new THREE.PMREMGenerator(renderer);
+      pmrem.compileEquirectangularShader();
+      const envRT = pmrem.fromEquirectangular(tex);
+      scene.environment = envRT.texture;
+      tex.dispose(); pmrem.dispose();
+    })();
+
+    // ==================================================================
+    //  POST PROCESSING
+    // ==================================================================
+    const composer = new EffectComposer(renderer);
+    composer.setPixelRatio(curPixelRatio);
+    composer.setSize(innerWidth, innerHeight);
+    composer.addPass(new RenderPass(scene, camera));
+
+    const bloom = new UnrealBloomPass(new THREE.Vector2(innerWidth / 2, innerHeight / 2), 1.2, 0.6, 0.82);
+    composer.addPass(bloom);
+
+    // combined grade: vignette + split-tone + grain + chromatic aberration
+    const GradeShader = {
+      uniforms: {
+        tDiffuse: { value: null },
+        uTime: { value: 0 },
+        uVignette: { value: 0.4 },
+        uGrain: { value: 0.035 },
+        uChroma: { value: 0.0016 },
+      },
+      vertexShader: `varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0);}`,
+      fragmentShader: `
+        varying vec2 vUv;
+        uniform sampler2D tDiffuse;
+        uniform float uTime, uVignette, uGrain, uChroma;
+        float rand(vec2 co){ return fract(sin(dot(co.xy, vec2(12.9898,78.233))) * 43758.5453); }
+        void main(){
+          vec2 uv = vUv;
+          vec2 d = uv - 0.5;
+          float dist = length(d);
+          // chromatic aberration, stronger at edges
+          float ca = uChroma * dist * 2.0;
+          vec3 col;
+          col.r = texture2D(tDiffuse, uv + d * ca).r;
+          col.g = texture2D(tDiffuse, uv).g;
+          col.b = texture2D(tDiffuse, uv - d * ca).b;
+          // split-tone: lift shadows cool, warm mids
+          float lum = dot(col, vec3(0.299,0.587,0.114));
+          vec3 shadowTint = vec3(0.047,0.039,0.070);
+          vec3 warm = vec3(1.04,1.0,0.94);
+          col = mix(col + shadowTint * (1.0 - smoothstep(0.0,0.35,lum)) * 0.6, col, 0.5) ;
+          col *= mix(vec3(1.0), warm, smoothstep(0.1,0.6,lum));
+          // vignette
+          float vig = smoothstep(0.8, 0.2, dist);
+          col *= mix(1.0 - uVignette, 1.0, vig);
+          // film grain
+          float g = (rand(uv * vec2(1920.0,1080.0) + uTime) - 0.5) * uGrain;
+          col += g * (0.4 + 0.6 * (1.0 - lum));
+          gl_FragColor = vec4(col, 1.0);
+        }`,
+    };
+    const gradePass = new ShaderPass(GradeShader);
+    composer.addPass(gradePass);
+    composer.addPass(new OutputPass());
+
+    // ==================================================================
+    //  LIGHTS
+    // ==================================================================
+    scene.add(new THREE.HemisphereLight(0x2a2016, 0x0a0806, 0.5));
+
+    const R = 5, H = 6.0;
     const apothem = R * Math.cos(Math.PI / 6);
 
-    function vtx(i, r = R, y = 0) {
-      const a = (i / 6) * Math.PI * 2 - Math.PI / 6;
+    function wallNormal(w) { const a = (w / 6) * Math.PI * 2; return new THREE.Vector3(Math.cos(a), 0, Math.sin(a)); }
+
+    // two gallery bulbs, crosswise (walls 1 & 4)
+    const bulbWalls = [1, 4];
+    const bulbLights = [];
+    bulbWalls.forEach(w => {
+      const n = wallNormal(w);
+      const p = new THREE.Vector3(n.x * (apothem - 0.5), 3.2, n.z * (apothem - 0.5));
+      const light = new THREE.PointLight(COL.lampAmber, 30, 15, 2);
+      light.position.copy(p);
+      scene.add(light);
+      bulbLights.push({ light, pos: p });
+    });
+
+    // spotlight from ceiling shaft onto the pedestal — the ONLY shadow caster
+    const spot = new THREE.SpotLight(0xfff2d6, 68, 18, 0.42, 0.6, 2);
+    spot.position.set(0, H - 0.2, 0);
+    spot.target.position.set(0, 1.2, 0);
+    spot.castShadow = true;
+    spot.shadow.mapSize.set(1024, 1024);
+    spot.shadow.bias = -0.0006;
+    spot.shadow.camera.near = 1; spot.shadow.camera.far = 12;
+    scene.add(spot); scene.add(spot.target);
+
+    // abyss glow — warm light rising from the floors below, and echoing above
+    const abyss = new THREE.PointLight(0x9a6a2e, 16, 14, 2);
+    abyss.position.set(0, -4.0, 0);
+    scene.add(abyss);
+    const abyssUp = new THREE.PointLight(0x8a6030, 10, 14, 2);
+    abyssUp.position.set(0, H + 4.0, 0);
+    scene.add(abyssUp);
+
+    // ==================================================================
+    //  MATERIALS
+    // ==================================================================
+    const matFloor = new THREE.MeshStandardMaterial({ map: texStone, roughness: 0.9, metalness: 0.0, envMapIntensity: 0.15 });
+    matFloor.map.repeat.set(2, 2);
+    const matWall = new THREE.MeshStandardMaterial({ map: texPlaster, roughness: 0.95, metalness: 0.0, envMapIntensity: 0.12 });
+    const matWood = new THREE.MeshStandardMaterial({ map: texWood, roughness: 0.65, metalness: 0.0, envMapIntensity: 0.2 });
+    const matBack = new THREE.MeshStandardMaterial({ map: texBack, roughness: 0.95, metalness: 0.0, envMapIntensity: 0.05 });
+    const matStone = new THREE.MeshStandardMaterial({ map: texStoneTrim, color: 0x9a8a70, roughness: 0.85, metalness: 0.0, envMapIntensity: 0.15 });
+    const matBrass = new THREE.MeshStandardMaterial({ color: COL.brass, roughness: 0.35, metalness: 0.85, envMapIntensity: 0.5 });
+    const matBulb = new THREE.MeshBasicMaterial({ color: COL.bulbGlow, toneMapped: true });
+
+    // ==================================================================
+    //  GEOMETRY HELPERS
+    // ==================================================================
+    function hexVtx(i, r, y) {
+      const a = (i / 6) * Math.PI * 2;
       return new THREE.Vector3(Math.cos(a) * r, y, Math.sin(a) * r);
     }
 
-    // Floor & ceiling outlines
-    const floor = [], ceil = [];
-    for (let i = 0; i <= 6; i++) { floor.push(vtx(i, R, 0)); ceil.push(vtx(i, R, H)); }
-    addLine(floor); addLine(ceil);
+    // ---- FLOOR: hexagon ring with central hole (ShapeGeometry) ----
+    const moatOuter = 2.15, islandOuter = 1.05, railingR = 2.15;
+    const matShaftWall = new THREE.MeshStandardMaterial({ color: 0x332c22, roughness: 0.95, metalness: 0, envMapIntensity: 0.05, side: THREE.BackSide });
+    const matPillar = new THREE.MeshStandardMaterial({ color: 0x4a4033, roughness: 0.9, metalness: 0, envMapIntensity: 0.08 });
+    (function buildFloorCeiling() {
+      // outer floor: hexagon with a central shaft hole
+      const outer = new THREE.Shape();
+      for (let i = 0; i <= 6; i++) { const v = hexVtx(i, R, 0); i === 0 ? outer.moveTo(v.x, v.z) : outer.lineTo(v.x, v.z); }
+      const hole = new THREE.Path();
+      for (let i = 0; i <= 6; i++) { const a = (i / 6) * Math.PI * 2; const hx = Math.cos(a) * moatOuter, hz = Math.sin(a) * moatOuter; i === 0 ? hole.moveTo(hx, hz) : hole.lineTo(hx, hz); }
+      outer.holes.push(hole);
+      const geo = new THREE.ShapeGeometry(outer);
+      geo.rotateX(-Math.PI / 2);
+      const floor = new THREE.Mesh(geo, matFloor);
+      floor.receiveShadow = true; scene.add(floor);
+      // ceiling with a matching hole → the shaft opens upward too
+      const ceil = new THREE.Mesh(geo.clone(), matWall);
+      ceil.position.y = H; ceil.rotation.x = Math.PI; scene.add(ceil);
 
-    // Vertical edges
-    for (let i = 0; i < 6; i++) { const v = vtx(i); addLine([v, new THREE.Vector3(v.x, H, v.z)]); }
+      // central island disk — solid ground the sacred book stands on
+      const island = new THREE.Mesh(new THREE.CylinderGeometry(islandOuter, islandOuter, 0.16, 6), matStone);
+      island.position.y = -0.02; island.receiveShadow = true; scene.add(island);
 
-    // Floor pattern
-    for (let i = 0; i < 6; i++) addLine([new THREE.Vector3(0,0,0), vtx(i)], true);
-    addLine([...Array(7)].map((_,i) => vtx(i, R*0.5, 0)), true);
+      // the infinite chasm: outer shaft wall + central pillar, plunging up & down
+      const shaftH = 64;
+      const outerDown = new THREE.Mesh(new THREE.CylinderGeometry(moatOuter, moatOuter, shaftH, 6, 1, true), matShaftWall);
+      outerDown.position.y = -shaftH / 2; scene.add(outerDown);
+      const outerUp = new THREE.Mesh(new THREE.CylinderGeometry(moatOuter, moatOuter, shaftH, 6, 1, true), matShaftWall);
+      outerUp.position.y = H + shaftH / 2; scene.add(outerUp);
+      const pillarDown = new THREE.Mesh(new THREE.CylinderGeometry(islandOuter, islandOuter, shaftH, 6, 1, true), matPillar);
+      pillarDown.position.y = -shaftH / 2; scene.add(pillarDown);
+      const pillarUp = new THREE.Mesh(new THREE.CylinderGeometry(islandOuter, islandOuter, shaftH, 6, 1, true), matPillar);
+      pillarUp.position.y = H + shaftH / 2; scene.add(pillarUp);
+    })();
 
-    // Ceiling beams
-    for (let i = 0; i < 6; i++) addLine([new THREE.Vector3(0,H,0), vtx(i,R,H)]);
-
-    // Central Shrine - Pedestal with Book
-    const pedestalR = 0.35;
-    const pedestalH = 1.0;
-    const topR = 0.45; // Slightly wider top
-
-    // Pedestal base (hexagonal)
-    const baseRing = [];
-    for (let i = 0; i <= 6; i++) {
-      const a = (i/6) * Math.PI * 2;
-      baseRing.push(new THREE.Vector3(Math.cos(a)*pedestalR, 0, Math.sin(a)*pedestalR));
-    }
-    addLine(baseRing);
-
-    // Pedestal middle ring
-    const midRing = [];
-    for (let i = 0; i <= 6; i++) {
-      const a = (i/6) * Math.PI * 2;
-      midRing.push(new THREE.Vector3(Math.cos(a)*(pedestalR*0.85), pedestalH*0.5, Math.sin(a)*(pedestalR*0.85)));
-    }
-    addLine(midRing, true);
-
-    // Pedestal top surface (wider)
-    const topRing = [];
-    for (let i = 0; i <= 6; i++) {
-      const a = (i/6) * Math.PI * 2;
-      topRing.push(new THREE.Vector3(Math.cos(a)*topR, pedestalH, Math.sin(a)*topR));
-    }
-    addLine(topRing);
-
-    // Vertical edges of pedestal
-    for (let i = 0; i < 6; i++) {
-      const a = (i/6) * Math.PI * 2;
-      addLine([
-        new THREE.Vector3(Math.cos(a)*pedestalR, 0, Math.sin(a)*pedestalR),
-        new THREE.Vector3(Math.cos(a)*(pedestalR*0.85), pedestalH*0.5, Math.sin(a)*(pedestalR*0.85))
-      ]);
-      addLine([
-        new THREE.Vector3(Math.cos(a)*(pedestalR*0.85), pedestalH*0.5, Math.sin(a)*(pedestalR*0.85)),
-        new THREE.Vector3(Math.cos(a)*topR, pedestalH, Math.sin(a)*topR)
-      ]);
-    }
-
-    // Decorative inner ring on top surface
-    const innerTopRing = [];
-    for (let i = 0; i <= 6; i++) {
-      const a = (i/6) * Math.PI * 2;
-      innerTopRing.push(new THREE.Vector3(Math.cos(a)*(topR*0.6), pedestalH + 0.005, Math.sin(a)*(topR*0.6)));
-    }
-    addLine(innerTopRing, true);
-
-    // The Sacred Book - Plunkitt of Tammany Hall
-    const bookW = 0.32;   // Width (larger than shelf books)
-    const bookH = 0.42;   // Height (standing)
-    const bookD = 0.07;   // Depth/thickness
-    const bookY = pedestalH + 0.01;
-
-    // Book stands slightly tilted, leaning back
-    const tiltAngle = 0.15; // Slight backward tilt
-
-    // Helper to create a point on the tilted book front cover
-    function coverPt(x, yRel, zOffset = 0) {
-      const y = bookY + yRel * bookH;
-      const z = -bookD/2 - Math.sin(tiltAngle) * yRel * bookH + zOffset;
-      return new THREE.Vector3(x, y, z);
-    }
-
-    // Book base (bottom edge)
-    const b1 = new THREE.Vector3(-bookW/2, bookY, -bookD/2);
-    const b2 = new THREE.Vector3(bookW/2, bookY, -bookD/2);
-    const b3 = new THREE.Vector3(bookW/2, bookY, bookD/2);
-    const b4 = new THREE.Vector3(-bookW/2, bookY, bookD/2);
-
-    // Book top (with tilt)
-    const t1 = new THREE.Vector3(-bookW/2, bookY + bookH, -bookD/2 - Math.sin(tiltAngle)*bookH);
-    const t2 = new THREE.Vector3(bookW/2, bookY + bookH, -bookD/2 - Math.sin(tiltAngle)*bookH);
-    const t3 = new THREE.Vector3(bookW/2, bookY + bookH, bookD/2 - Math.sin(tiltAngle)*bookH);
-    const t4 = new THREE.Vector3(-bookW/2, bookY + bookH, bookD/2 - Math.sin(tiltAngle)*bookH);
-
-    // Book outline - bottom
-    addLine([b1, b2, b3, b4, b1]);
-    // Book outline - top
-    addLine([t1, t2, t3, t4, t1]);
-    // Vertical edges
-    addLine([b1, t1]); addLine([b2, t2]); addLine([b3, t3]); addLine([b4, t4]);
-
-    // Spine detail - multiple lines for texture
-    const spineBottom = new THREE.Vector3(0, bookY, -bookD/2);
-    const spineTop = new THREE.Vector3(0, bookY + bookH, -bookD/2 - Math.sin(tiltAngle)*bookH);
-    addLine([spineBottom, spineTop]);
-    // Spine bands
-    for (let i = 1; i <= 5; i++) {
-      const yRel = i / 6;
-      const bandY = bookY + yRel * bookH;
-      const bandZ = -bookD/2 - Math.sin(tiltAngle) * yRel * bookH;
-      addLine([
-        new THREE.Vector3(-0.015, bandY, bandZ - 0.001),
-        new THREE.Vector3(0.015, bandY, bandZ - 0.001)
-      ], true);
-    }
-
-    // Pages effect - multiple layers for richness
-    const pageInset = 0.015;
-    for (let layer = 0; layer < 4; layer++) {
-      const offset = layer * 0.004;
-      const pz = bookD/2 - pageInset - offset;
-      const p1 = new THREE.Vector3(-bookW/2 + pageInset, bookY + 0.01, pz);
-      const p2 = new THREE.Vector3(bookW/2 - pageInset, bookY + 0.01, pz);
-      const p3 = new THREE.Vector3(bookW/2 - pageInset, bookY + bookH - 0.01, pz - Math.sin(tiltAngle)*(bookH-0.02));
-      const p4 = new THREE.Vector3(-bookW/2 + pageInset, bookY + bookH - 0.01, pz - Math.sin(tiltAngle)*(bookH-0.02));
-      addLine([p1, p2, p3, p4, p1], true);
-    }
-    // Horizontal page lines
-    for (let i = 1; i <= 8; i++) {
-      const yRel = i / 9;
-      const ly = bookY + yRel * bookH;
-      const lz = bookD/2 - pageInset - Math.sin(tiltAngle) * yRel * bookH;
-      addLine([
-        new THREE.Vector3(-bookW/2 + pageInset, ly, lz),
-        new THREE.Vector3(bookW/2 - pageInset, ly, lz)
-      ], true);
-    }
-
-    // Cover border/frame
-    const frameInset = 0.025;
-    const fb1 = coverPt(-bookW/2 + frameInset, 0.08);
-    const fb2 = coverPt(bookW/2 - frameInset, 0.08);
-    const ft1 = coverPt(-bookW/2 + frameInset, 0.92);
-    const ft2 = coverPt(bookW/2 - frameInset, 0.92);
-    addLine([fb1, fb2, ft2, ft1, fb1], true);
-    // Double border
-    const fi2 = 0.035;
-    const fb1i = coverPt(-bookW/2 + fi2, 0.12);
-    const fb2i = coverPt(bookW/2 - fi2, 0.12);
-    const ft1i = coverPt(-bookW/2 + fi2, 0.88);
-    const ft2i = coverPt(bookW/2 - fi2, 0.88);
-    addLine([fb1i, fb2i, ft2i, ft1i, fb1i], true);
-
-    // Corner decorations
-    const cd = 0.02;
-    // Top-left corner
-    addLine([coverPt(-bookW/2 + frameInset, 0.92 - cd), coverPt(-bookW/2 + frameInset + cd, 0.92)], true);
-    // Top-right corner
-    addLine([coverPt(bookW/2 - frameInset, 0.92 - cd), coverPt(bookW/2 - frameInset - cd, 0.92)], true);
-    // Bottom-left corner
-    addLine([coverPt(-bookW/2 + frameInset, 0.08 + cd), coverPt(-bookW/2 + frameInset + cd, 0.08)], true);
-    // Bottom-right corner
-    addLine([coverPt(bookW/2 - frameInset, 0.08 + cd), coverPt(bookW/2 - frameInset - cd, 0.08)], true);
-
-    // Title: "PLUNKITT" on cover using line-based letters
-    const titleY = 0.72; // Vertical position (relative 0-1)
-    const letterH = 0.055; // Letter height
-    const letterW = 0.022; // Letter width
-    const letterGap = 0.006; // Gap between letters
-    const titleText = "PLUNKITT";
-    const totalTitleW = titleText.length * letterW + (titleText.length - 1) * letterGap;
-    let letterX = -totalTitleW / 2;
-
-    // Simple wireframe letter drawing function
-    function drawLetter(char, x, yBase) {
-      const pts = [];
-      const w = letterW, h = letterH;
-      switch(char) {
-        case 'P':
-          pts.push([x, yBase, x, yBase + h]); // vertical
-          pts.push([x, yBase + h, x + w*0.8, yBase + h]); // top
-          pts.push([x + w*0.8, yBase + h, x + w*0.8, yBase + h*0.5]); // right top
-          pts.push([x + w*0.8, yBase + h*0.5, x, yBase + h*0.5]); // middle
-          break;
-        case 'L':
-          pts.push([x, yBase + h, x, yBase]); // vertical
-          pts.push([x, yBase, x + w, yBase]); // bottom
-          break;
-        case 'U':
-          pts.push([x, yBase + h, x, yBase + h*0.15]); // left
-          pts.push([x, yBase + h*0.15, x + w*0.5, yBase]); // bottom-left curve
-          pts.push([x + w*0.5, yBase, x + w, yBase + h*0.15]); // bottom-right curve
-          pts.push([x + w, yBase + h*0.15, x + w, yBase + h]); // right
-          break;
-        case 'N':
-          pts.push([x, yBase, x, yBase + h]); // left
-          pts.push([x, yBase + h, x + w, yBase]); // diagonal
-          pts.push([x + w, yBase, x + w, yBase + h]); // right
-          break;
-        case 'K':
-          pts.push([x, yBase, x, yBase + h]); // vertical
-          pts.push([x, yBase + h*0.5, x + w, yBase + h]); // upper diagonal
-          pts.push([x, yBase + h*0.5, x + w, yBase]); // lower diagonal
-          break;
-        case 'I':
-          pts.push([x + w*0.5, yBase, x + w*0.5, yBase + h]); // vertical
-          pts.push([x, yBase, x + w, yBase]); // bottom serif
-          pts.push([x, yBase + h, x + w, yBase + h]); // top serif
-          break;
-        case 'T':
-          pts.push([x + w*0.5, yBase, x + w*0.5, yBase + h]); // vertical
-          pts.push([x, yBase + h, x + w, yBase + h]); // top
-          break;
-      }
-      pts.forEach(([x1, y1, x2, y2]) => {
-        addLine([coverPt(x1, y1), coverPt(x2, y2)], true);
-      });
-    }
-
-    // Draw "PLUNKITT"
-    for (const char of titleText) {
-      drawLetter(char, letterX, titleY);
-      letterX += letterW + letterGap;
-    }
-
-    // Subtitle line decoration
-    const subY = 0.62;
-    addLine([coverPt(-bookW/4, subY), coverPt(bookW/4, subY)], true);
-
-    // "OF" text (smaller)
-    const ofY = 0.54;
-    const ofH = 0.03;
-    const ofW = 0.012;
-    // O
-    addLine([coverPt(-0.025, ofY), coverPt(-0.025, ofY + ofH), coverPt(-0.025 + ofW, ofY + ofH), coverPt(-0.025 + ofW, ofY), coverPt(-0.025, ofY)], true);
-    // F
-    addLine([coverPt(0.015, ofY), coverPt(0.015, ofY + ofH)], true);
-    addLine([coverPt(0.015, ofY + ofH), coverPt(0.015 + ofW, ofY + ofH)], true);
-    addLine([coverPt(0.015, ofY + ofH*0.5), coverPt(0.015 + ofW*0.8, ofY + ofH*0.5)], true);
-
-    // "TAMMANY HALL" text (smaller below)
-    const tamY = 0.42;
-    const tamH = 0.035;
-    const tamW = 0.014;
-    const tamGap = 0.004;
-    const tamText = "TAMMANY";
-    let tamX = -(tamText.length * tamW + (tamText.length - 1) * tamGap) / 2;
-
-    // Simplified smaller letters for TAMMANY
-    function drawSmallLetter(char, x, yBase, h, w) {
-      const pts = [];
-      switch(char) {
-        case 'T':
-          pts.push([x + w*0.5, yBase, x + w*0.5, yBase + h]);
-          pts.push([x, yBase + h, x + w, yBase + h]);
-          break;
-        case 'A':
-          pts.push([x, yBase, x + w*0.5, yBase + h]);
-          pts.push([x + w*0.5, yBase + h, x + w, yBase]);
-          pts.push([x + w*0.25, yBase + h*0.4, x + w*0.75, yBase + h*0.4]);
-          break;
-        case 'M':
-          pts.push([x, yBase, x, yBase + h]);
-          pts.push([x, yBase + h, x + w*0.5, yBase + h*0.5]);
-          pts.push([x + w*0.5, yBase + h*0.5, x + w, yBase + h]);
-          pts.push([x + w, yBase + h, x + w, yBase]);
-          break;
-        case 'N':
-          pts.push([x, yBase, x, yBase + h]);
-          pts.push([x, yBase + h, x + w, yBase]);
-          pts.push([x + w, yBase, x + w, yBase + h]);
-          break;
-        case 'Y':
-          pts.push([x, yBase + h, x + w*0.5, yBase + h*0.5]);
-          pts.push([x + w, yBase + h, x + w*0.5, yBase + h*0.5]);
-          pts.push([x + w*0.5, yBase + h*0.5, x + w*0.5, yBase]);
-          break;
-        case 'H':
-          pts.push([x, yBase, x, yBase + h]);
-          pts.push([x + w, yBase, x + w, yBase + h]);
-          pts.push([x, yBase + h*0.5, x + w, yBase + h*0.5]);
-          break;
-        case 'L':
-          pts.push([x, yBase + h, x, yBase]);
-          pts.push([x, yBase, x + w, yBase]);
-          break;
-      }
-      pts.forEach(([x1, y1, x2, y2]) => {
-        addLine([coverPt(x1, y1), coverPt(x2, y2)], true);
-      });
-    }
-
-    for (const char of tamText) {
-      drawSmallLetter(char, tamX, tamY, tamH, tamW);
-      tamX += tamW + tamGap;
-    }
-
-    // HALL below
-    const hallY = 0.34;
-    const hallText = "HALL";
-    let hallX = -(hallText.length * tamW + (hallText.length - 1) * tamGap) / 2;
-    for (const char of hallText) {
-      drawSmallLetter(char, hallX, hallY, tamH, tamW);
-      hallX += tamW + tamGap;
-    }
-
-    // Bottom decoration - small diamond
-    const diaY = 0.2;
-    const diaS = 0.015;
-    addLine([
-      coverPt(0, diaY - diaS),
-      coverPt(-diaS, diaY),
-      coverPt(0, diaY + diaS),
-      coverPt(diaS, diaY),
-      coverPt(0, diaY - diaS)
-    ], true);
-
-    // Interactive hitbox for the sacred book
-    const shrineHitGeo = new THREE.BoxGeometry(bookW + 0.1, bookH + 0.1, bookD + 0.1);
-    const shrineHitMat = new THREE.MeshBasicMaterial({ visible: false });
-    const shrineHitMesh = new THREE.Mesh(shrineHitGeo, shrineHitMat);
-    shrineHitMesh.position.set(0, bookY + bookH/2, -Math.sin(tiltAngle)*bookH*0.5);
-
-    // Create a visible highlight line for the shrine book
-    const shrineBookLine = new THREE.Line(
-      new THREE.BufferGeometry().setFromPoints([b1, b2, b3, b4, b1, t1, t4, t3, t2, t1]),
-      lineMat.clone()
-    );
-    scene.add(shrineBookLine);
-
-    shrineHitMesh.userData = {
-      isInteractive: true,
-      content: {
-        source: "Plunkitt of Tammany Hall",
-        isFullBook: true
-      },
-      line: shrineBookLine,
-      isShrine: true
-    };
-    interactiveObjects.push(shrineHitMesh);
-    scene.add(shrineHitMesh);
-
-    // --- BOOKSHELVES WITH EXACTLY 242 BOOKS ---
-    // 6 walls * 5 shelves = 30 shelves
-    // We need to distribute 242 books across these shelves
-    // Target: ~8 books per shelf
-
-    const totalBooks = 242;
-    const totalShelves = 30;
-    const booksPerShelf = [];
-
-    // Calculate how many books per shelf to hit exactly 242
-    let remaining = totalBooks;
-    for (let i = 0; i < totalShelves; i++) {
-      const avgRemaining = remaining / (totalShelves - i);
-      // Add some variation but keep it reasonable
-      const variation = Math.floor(seededRandom() * 3) - 1; // -1, 0, or 1
-      const count = Math.max(6, Math.min(10, Math.round(avgRemaining) + variation));
-      const actualCount = Math.min(count, remaining);
-      booksPerShelf.push(actualCount);
-      remaining -= actualCount;
-    }
-
-    // Distribute any remaining books
-    while (remaining > 0) {
-      for (let i = 0; i < totalShelves && remaining > 0; i++) {
-        if (booksPerShelf[i] < 10) {
-          booksPerShelf[i]++;
-          remaining--;
-        }
-      }
-    }
-
-    let shelfIndex = 0;
-
+    // ---- WALLS ---- (walls 0 & 3 are the free/vestibule walls; 1,2,4,5 carry bookcases)
+    const bookWalls = [1, 2, 4, 5];
     for (let w = 0; w < 6; w++) {
-      const wallAng = (w / 6) * Math.PI * 2;
-      const outX = Math.cos(wallAng), outZ = Math.sin(wallAng);
-      const tanX = -Math.sin(wallAng), tanZ = Math.cos(wallAng);
-
-      const shelfW = R * 0.7;
-      const shelfD = 0.25;
-      const wallDist = apothem - 0.1;
-
-      for (let s = 0; s < 5; s++) {
-        const shelfY = 0.8 + s * 1.2;
-
-        // Shelf corners
-        const bl = new THREE.Vector3(
-          outX * wallDist + tanX * (-shelfW/2),
-          shelfY,
-          outZ * wallDist + tanZ * (-shelfW/2)
-        );
-        const br = new THREE.Vector3(
-          outX * wallDist + tanX * (shelfW/2),
-          shelfY,
-          outZ * wallDist + tanZ * (shelfW/2)
-        );
-        const fl = new THREE.Vector3(
-          bl.x - outX * shelfD, shelfY, bl.z - outZ * shelfD
-        );
-        const fr = new THREE.Vector3(
-          br.x - outX * shelfD, shelfY, br.z - outZ * shelfD
-        );
-
-        // Shelf outline
-        addLine([bl, br]); addLine([fl, fr]); addLine([bl, fl], true); addLine([br, fr], true);
-
-        // Books for this shelf
-        const numBooks = booksPerShelf[shelfIndex];
-        shelfIndex++;
-
-        if (numBooks === 0) continue;
-
-        // Books with realistic varying widths, bunched in middle
-        const gap = 0.012;
-
-        // Pre-calculate book widths for centering
-        const bookWidths = [];
-        for (let b = 0; b < numBooks; b++) {
-          // Varying widths: thin (0.05) to thick (0.12)
-          bookWidths.push(0.05 + seededRandom() * 0.07);
+      const n = wallNormal(w);
+      const side = R; // hexagon side length equals the circumradius R
+      if (bookWalls.includes(w)) {
+        const wall = new THREE.Mesh(new THREE.PlaneGeometry(side, H), matWall);
+        wall.position.set(n.x * apothem, H / 2, n.z * apothem);
+        wall.lookAt(0, H / 2, 0);
+        wall.receiveShadow = true;
+        scene.add(wall);
+      } else {
+        // vestibule wall: two jambs + lintel + spandrel, opening in the middle
+        const openW = 1.7, openH = 2.7;
+        const jw = (side - openW) / 2;
+        // left jamb
+        const lj = new THREE.Mesh(new THREE.PlaneGeometry(jw, H), matWall);
+        // right jamb
+        const rj = new THREE.Mesh(new THREE.PlaneGeometry(jw, H), matWall);
+        // spandrel above opening
+        const sp = new THREE.Mesh(new THREE.PlaneGeometry(openW, H - openH), matWall);
+        const tan = new THREE.Vector3(-n.z, 0, n.x);
+        const base = new THREE.Vector3(n.x * apothem, 0, n.z * apothem);
+        function place(m, offX, cy, receive = true) {
+          m.position.set(base.x + tan.x * offX, cy, base.z + tan.z * offX);
+          m.lookAt(0, cy, 0); m.receiveShadow = receive; scene.add(m);
         }
-        const totalBooksWidth = bookWidths.reduce((a, b) => a + b, 0) + (numBooks - 1) * gap;
+        place(lj, -(openW / 2 + jw / 2), H / 2);
+        place(rj, (openW / 2 + jw / 2), H / 2);
+        place(sp, 0, openH + (H - openH) / 2);
+        // arch trim (stone) around opening
+        const trimMat = matStone;
+        const t1 = new THREE.Mesh(new THREE.BoxGeometry(0.12, openH, 0.18), trimMat);
+        const t2 = new THREE.Mesh(new THREE.BoxGeometry(0.12, openH, 0.18), trimMat);
+        const t3 = new THREE.Mesh(new THREE.BoxGeometry(openW + 0.24, 0.14, 0.18), trimMat);
+        function placeTrim(m, offX, cy) {
+          m.position.set(base.x + tan.x * offX, cy, base.z + tan.z * offX);
+          m.lookAt(0, cy, 0); scene.add(m);
+        }
+        placeTrim(t1, -openW / 2, openH / 2);
+        placeTrim(t2, openW / 2, openH / 2);
+        placeTrim(t3, 0, openH);
+      }
+    }
 
-        // Start position to center books on shelf
-        let bx = -totalBooksWidth / 2;
+    // ---- VESTIBULE ROOMS (behind walls 0 & 3) ----
+    function buildVestibule(w, withMirror) {
+      const n = wallNormal(w), tan = new THREE.Vector3(-n.z, 0, n.x);
+      const depth = 2.6, halfW = 1.1, vh = 3.2;
+      const outCenter = new THREE.Vector3(n.x * (apothem + depth / 2), 0, n.z * (apothem + depth / 2));
+      // back wall
+      const back = new THREE.Mesh(new THREE.PlaneGeometry(halfW * 2, vh), matWall);
+      back.position.set(n.x * (apothem + depth), vh / 2, n.z * (apothem + depth));
+      back.lookAt(outCenter.x - n.x, vh / 2, outCenter.z - n.z);
+      scene.add(back);
+      // side walls
+      [-1, 1].forEach(s => {
+        const sw = new THREE.Mesh(new THREE.PlaneGeometry(depth, vh), matWall);
+        sw.position.set(outCenter.x + tan.x * halfW * s, vh / 2, outCenter.z + tan.z * halfW * s);
+        sw.lookAt(outCenter.x, vh / 2, outCenter.z);
+        scene.add(sw);
+      });
+      // floor + ceiling
+      const vf = new THREE.Mesh(new THREE.PlaneGeometry(halfW * 2, depth), matFloor);
+      vf.rotation.x = -Math.PI / 2; vf.position.set(outCenter.x, 0.01, outCenter.z); vf.receiveShadow = true; scene.add(vf);
+      const vc = new THREE.Mesh(new THREE.PlaneGeometry(halfW * 2, depth), matWall);
+      vc.rotation.x = Math.PI / 2; vc.position.set(outCenter.x, vh, outCenter.z); scene.add(vc);
+      // small vestibule bulb
+      const vbLight = new THREE.PointLight(0xffcf90, 7, 7, 2);
+      vbLight.position.set(outCenter.x, 2.5, outCenter.z);
+      scene.add(vbLight);
+      const vb = new THREE.Mesh(new THREE.SphereGeometry(0.09, 12, 12), matBulb);
+      vb.position.copy(vbLight.position); scene.add(vb);
+      const vhalo = new THREE.Sprite(new THREE.SpriteMaterial({ map: haloSprite, color: 0xffcf90, blending: THREE.AdditiveBlending, transparent: true, opacity: 0.3, depthWrite: false }));
+      vhalo.scale.set(1.0, 1.0, 1); vhalo.position.copy(vbLight.position); scene.add(vhalo);
 
-        for (let b = 0; b < numBooks && quoteIdx < borgesQuotes.length; b++) {
-          const bw = bookWidths[b];
-          const bh = 0.28 + seededRandom() * 0.35; // varying heights too
+      // brass chain across the archway threshold (diegetic barrier)
+      const chainY = 1.0;
+      const chainMat = matBrass;
+      const ccount = 9;
+      for (let i = 0; i < ccount; i++) {
+        const link = new THREE.Mesh(new THREE.TorusGeometry(0.045, 0.014, 6, 10), chainMat);
+        const off = (i / (ccount - 1) - 0.5) * (halfW * 2 - 0.1);
+        const sag = Math.sin((i / (ccount - 1)) * Math.PI) * 0.12;
+        link.position.set(n.x * apothem + tan.x * off, chainY - sag, n.z * apothem + tan.z * off);
+        link.rotation.y = Math.atan2(tan.z, tan.x);
+        if (i % 2) link.rotation.x = Math.PI / 2;
+        scene.add(link);
+      }
 
-          const bc = bx + bw/2;
-          const bookX = outX * (wallDist - shelfD/2) + tanX * bc;
-          const bookZ = outZ * (wallDist - shelfD/2) + tanZ * bc;
-          const bookY = shelfY + 0.01;
+      if (withMirror) {
+        // tarnished antique glass — reflects the warm environment ("faithfully duplicates appearances")
+        const mirrorMat = new THREE.MeshStandardMaterial({ color: 0x2a2620, metalness: 1.0, roughness: 0.14, envMapIntensity: 1.3 });
+        const mirror = new THREE.Mesh(new THREE.PlaneGeometry(1.3, 2.2), mirrorMat);
+        mirror.position.set(outCenter.x + tan.x * (halfW - 0.02), 1.5, outCenter.z + tan.z * (halfW - 0.02));
+        mirror.lookAt(outCenter.x, 1.5, outCenter.z);
+        scene.add(mirror);
+        // walnut frame just behind the glass
+        const frame = new THREE.Mesh(new THREE.BoxGeometry(1.5, 2.4, 0.06), matWood);
+        frame.position.copy(mirror.position).addScaledVector(tan, 0.03);
+        frame.quaternion.copy(mirror.quaternion);
+        scene.add(frame);
+      }
+    }
+    buildVestibule(0, true);   // vestibule A — mirror
+    buildVestibule(3, false);  // vestibule B — opens to neighbor gallery
 
-          const hw = bw / 2;
-          const c1 = new THREE.Vector3(bookX + tanX*(-hw), bookY, bookZ + tanZ*(-hw));
-          const c2 = new THREE.Vector3(bookX + tanX*(hw), bookY, bookZ + tanZ*(hw));
-          const c3 = new THREE.Vector3(bookX + tanX*(hw), bookY + bh, bookZ + tanZ*(hw));
-          const c4 = new THREE.Vector3(bookX + tanX*(-hw), bookY + bh, bookZ + tanZ*(-hw));
+    // ---- NEIGHBOR GALLERY SHELL (seen through vestibule B) ----
+    (function neighborGallery() {
+      const n = wallNormal(3);
+      const pitch = 2 * apothem + 2.6 + 0.3; // one gallery + vestibule beyond
+      const g = new THREE.Group();
+      // a simplified hex wall ring + shelves silhouette + 2 emissive bulbs
+      for (let w = 0; w < 6; w++) {
+        const nn = wallNormal(w);
+        const wall = new THREE.Mesh(new THREE.PlaneGeometry(R, H), matWall);
+        wall.position.set(nn.x * apothem, H / 2, nn.z * apothem);
+        wall.lookAt(0, H / 2, 0);
+        g.add(wall);
+      }
+      // faint bulbs
+      [1, 4].forEach(w => {
+        const nn = wallNormal(w);
+        const b = new THREE.Mesh(new THREE.SphereGeometry(0.1, 10, 10), matBulb);
+        b.position.set(nn.x * (apothem - 0.5), 3.2, nn.z * (apothem - 0.5));
+        g.add(b);
+      });
+      const floorN = new THREE.Mesh(new THREE.CircleGeometry(apothem, 6), matFloor);
+      floorN.rotation.x = -Math.PI / 2; g.add(floorN);
+      g.position.set(n.x * pitch, 0, n.z * pitch);
+      g.rotation.y = Math.PI; // face back toward player
+      scene.add(g);
+    })();
 
-          const spineGeo = new THREE.BufferGeometry().setFromPoints([c1, c2, c3, c4, c1]);
-          const spineLine = new THREE.Line(spineGeo, lineMat.clone());
-          scene.add(spineLine);
+    // ---- CENTRAL SHAFT: rim, railing, bridge, pedestal island ----
+    const bridgeHalfZ = 0.55;
+    (function buildShaft() {
+      // stone rim (curb) around the chasm edge
+      const rim = new THREE.Mesh(new THREE.TorusGeometry(moatOuter + 0.05, 0.13, 8, 6), matStone);
+      rim.rotation.x = Math.PI / 2; rim.position.y = 0.06; scene.add(rim);
+      // matching curb around the central island
+      const curb = new THREE.Mesh(new THREE.TorusGeometry(islandOuter + 0.02, 0.08, 8, 6), matStone);
+      curb.rotation.x = Math.PI / 2; curb.position.y = 0.07; scene.add(curb);
 
-          const hitGeo = new THREE.PlaneGeometry(bw, bh);
-          const hitMat = new THREE.MeshBasicMaterial({ visible: false, side: THREE.DoubleSide });
-          const hitMesh = new THREE.Mesh(hitGeo, hitMat);
-          hitMesh.position.set(bookX, bookY + bh/2, bookZ);
-          hitMesh.rotation.y = wallAng;
+      // brass railing at the chasm edge, with a GAP on +X for the bridge
+      const postCount = 18;
+      const gapHalf = 0.36;
+      for (let i = 0; i < postCount; i++) {
+        const a = (i / postCount) * Math.PI * 2;
+        const da = Math.atan2(Math.sin(a), Math.cos(a));
+        if (Math.abs(da) < gapHalf) continue;
+        const post = new THREE.Mesh(new THREE.CylinderGeometry(0.026, 0.03, 0.95, 8), matBrass);
+        post.position.set(Math.cos(a) * railingR, 0.475, Math.sin(a) * railingR);
+        scene.add(post);
+      }
+      const rail = new THREE.Mesh(new THREE.TorusGeometry(railingR, 0.035, 8, 48, Math.PI * 2 - gapHalf * 2), matBrass);
+      rail.rotation.x = Math.PI / 2; rail.rotation.z = -gapHalf; rail.position.y = 0.95; scene.add(rail);
+      const railMid = rail.clone(); railMid.position.y = 0.5; scene.add(railMid);
 
-          hitMesh.userData = {
-            isInteractive: true,
-            content: borgesQuotes[quoteIdx],
-            line: spineLine
-          };
-          quoteIdx++;
-          interactiveObjects.push(hitMesh);
-          scene.add(hitMesh);
+      // stone bridge spanning the chasm from outer floor (+X) to the island
+      const bLen = moatOuter - islandOuter + 0.7;
+      const bridge = new THREE.Mesh(new THREE.BoxGeometry(bLen, 0.14, bridgeHalfZ * 2), matStone);
+      bridge.position.set(islandOuter + (moatOuter - islandOuter) / 2 + 0.05, 0.0, 0);
+      bridge.receiveShadow = true; scene.add(bridge);
+      // little side kerbs on the bridge
+      [-1, 1].forEach(s => {
+        const k = new THREE.Mesh(new THREE.BoxGeometry(bLen, 0.1, 0.06), matStone);
+        k.position.set(bridge.position.x, 0.09, s * bridgeHalfZ);
+        scene.add(k);
+      });
 
+      // pedestal on the island
+      const ped = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.32, 1.0, 6), matStone);
+      ped.position.y = 0.57; ped.receiveShadow = true; ped.castShadow = true; scene.add(ped);
+      const pedTop = new THREE.Mesh(new THREE.CylinderGeometry(0.46, 0.46, 0.06, 6), matWood);
+      pedTop.position.y = 1.09; pedTop.receiveShadow = true; pedTop.castShadow = true; scene.add(pedTop);
+    })();
+
+    // ---- SHAFT ECHO LEVELS (vertical infinity: balconies + lamps down & up) ----
+    (function echoLevels() {
+      const levels = 7, pitch = 4.0;
+      // balcony = thin hexagonal ring hugging the outer shaft wall
+      const balcGeo = new THREE.TorusGeometry(moatOuter - 0.12, 0.1, 6, 6);
+      balcGeo.rotateX(Math.PI / 2);
+      const balconies = new THREE.InstancedMesh(balcGeo, matStone, levels * 2);
+      const railGeo = new THREE.TorusGeometry(moatOuter - 0.12, 0.02, 6, 24);
+      railGeo.rotateX(Math.PI / 2);
+      const balcRails = new THREE.InstancedMesh(railGeo, matBrass, levels * 2);
+      const lampGeo = new THREE.SphereGeometry(0.1, 8, 8);
+      const lamps = new THREE.InstancedMesh(lampGeo, matBulb, levels * 2 * 2);
+      const m = new THREE.Matrix4(), mr = new THREE.Matrix4();
+      let ri = 0, li = 0;
+      for (let s = 1; s <= levels; s++) {
+        for (const dir of [1, -1]) {
+          const y = dir * pitch * s + (dir < 0 ? 0 : H);
+          m.makeTranslation(0, y, 0); balconies.setMatrixAt(ri, m);
+          mr.makeTranslation(0, y + 0.9, 0); balcRails.setMatrixAt(ri, mr);
+          ri++;
+          [1, 4].forEach(w => {
+            const nn = wallNormal(w);
+            m.makeTranslation(nn.x * (moatOuter - 0.5), y + 2.0, nn.z * (moatOuter - 0.5));
+            lamps.setMatrixAt(li++, m);
+          });
+        }
+      }
+      balconies.instanceMatrix.needsUpdate = true;
+      balcRails.instanceMatrix.needsUpdate = true;
+      lamps.instanceMatrix.needsUpdate = true;
+      scene.add(balconies); scene.add(balcRails); scene.add(lamps);
+
+      // terminus caps close the shaft ends
+      const capGeo = new THREE.CircleGeometry(moatOuter, 6);
+      const capTex = new THREE.CanvasTexture(terminusTexture(0x2a2016));
+      capTex.colorSpace = THREE.SRGBColorSpace;
+      const capUp = new THREE.Mesh(capGeo,
+        new THREE.MeshBasicMaterial({ map: capTex, transparent: true, depthWrite: false, side: THREE.DoubleSide }));
+      capUp.rotation.x = Math.PI / 2; capUp.position.y = H + pitch * levels + pitch; scene.add(capUp);
+      const capDn = capUp.clone(); capDn.position.y = -(pitch * levels + pitch); scene.add(capDn);
+    })();
+
+    // ---- LAMP GLOBES + ARMS + HALOS (main gallery bulbs) ----
+    bulbLights.forEach(({ pos }) => {
+      const globe = new THREE.Mesh(new THREE.SphereGeometry(0.16, 16, 16), matBulb);
+      globe.position.copy(pos); scene.add(globe);
+      // brass arm
+      const n = pos.clone().setY(0).normalize();
+      const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.4, 6), matBrass);
+      arm.position.copy(pos).addScaledVector(n, 0.25); arm.rotation.z = Math.PI / 2;
+      arm.lookAt(pos); scene.add(arm);
+      const halo = new THREE.Sprite(new THREE.SpriteMaterial({ map: haloSprite, color: 0xffe0aa, blending: THREE.AdditiveBlending, transparent: true, opacity: 0.35, depthWrite: false }));
+      halo.scale.set(1.6, 1.6, 1); halo.position.copy(pos); scene.add(halo);
+    });
+
+    // ==================================================================
+    //  BOOKCASES + BOOKS (single InstancedMesh)
+    // ==================================================================
+    resetSeed(1337);
+    const bookSlots = []; // {pos, scale, rotY, normal}
+    // build bookcases on the 4 book walls
+    bookWalls.forEach(w => {
+      const n = wallNormal(w), tan = new THREE.Vector3(-n.z, 0, n.x);
+      const wallDist = apothem - 0.05;
+      const caseW = R * 0.82, caseD = 0.4;
+      const base = new THREE.Vector3(n.x * wallDist, 0, n.z * wallDist);
+      // case frame: side stiles, plinth, cornice, back panel
+      function box(wd, ht, dp, offX, cy, mat) {
+        const m = new THREE.Mesh(new THREE.BoxGeometry(wd, ht, dp), mat);
+        m.position.set(base.x + tan.x * offX - n.x * dp / 2, cy, base.z + tan.z * offX - n.z * dp / 2);
+        m.rotation.y = Math.atan2(n.z, n.x);
+        m.receiveShadow = true; scene.add(m); return m;
+      }
+      box(0.12, 5.3, caseD, -caseW / 2, 2.85, matWood);      // left stile
+      box(0.12, 5.3, caseD, caseW / 2, 2.85, matWood);       // right stile
+      box(caseW, 0.35, caseD, 0, 0.18, matWood);             // plinth
+      box(caseW, 0.2, caseD + 0.06, 0, 5.55, matWood);       // cornice
+      // back panel (dark)
+      const backP = new THREE.Mesh(new THREE.PlaneGeometry(caseW, 5.3), matBack);
+      backP.position.set(base.x, 2.85, base.z); backP.lookAt(0, 2.85, 0); scene.add(backP);
+
+      const shelfYs = [0.55, 1.57, 2.59, 3.61, 4.63];
+      shelfYs.forEach(sy => {
+        // shelf board
+        box(caseW, 0.06, caseD, 0, sy - 0.03, matWood);
+        // books on this shelf
+        const usableW = caseW - 0.2;
+        let bx = -usableW / 2;
+        const gap = 0.01;
+        while (bx < usableW / 2 - 0.06) {
+          const bw = 0.045 + seededRandom() * 0.05;
+          if (bx + bw > usableW / 2) break;
+          const bh = 0.5 + seededRandom() * 0.42;
+          const bd = 0.2 + seededRandom() * 0.06;
+          const lean = seededRandom() < 0.12 ? (seededRandom() - 0.5) * 0.14 : 0;
+          const cx = bx + bw / 2;
+          const px = base.x + tan.x * cx - n.x * (caseD / 2 - bd / 2 - 0.02);
+          const pz = base.z + tan.z * cx - n.z * (caseD / 2 - bd / 2 - 0.02);
+          bookSlots.push({
+            x: px, y: sy + bh / 2, z: pz,
+            sx: bw, sy2: bh, sz: bd,
+            rotY: Math.atan2(n.z, n.x), lean,
+            nx: n.x, nz: n.z,
+          });
           bx += bw + gap;
         }
-      }
-    }
+      });
+    });
 
-    // --- CONTROLS ---
+    // decide which slots are interactive quote books vs filler
+    const nSlots = bookSlots.length;
+    const nQuotes = Math.min(borgesQuotes.length, 242);
+    resetSeed(99);
+    let quotesLeft = nQuotes, slotsLeft = nSlots, qi = 0;
+    // book instanced mesh: box with 3 materials would be multi-material; use single spine map + vertex...
+    // Simpler: single material spine map on all faces, instanceColor tints. Page edges faked by lighter top via emissive? keep spine map.
+    const bookGeo = new THREE.BoxGeometry(1, 1, 1);
+    const bookMat = new THREE.MeshStandardMaterial({ map: texSpine, roughness: 0.72, metalness: 0.0, envMapIntensity: 0.12 });
+    const books = new THREE.InstancedMesh(bookGeo, bookMat, nSlots);
+    books.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(nSlots * 3), 3);
+    const dummy = new THREE.Object3D();
+    const bookMeta = new Array(nSlots);
+    const color = new THREE.Color();
+    for (let i = 0; i < nSlots; i++) {
+      const s = bookSlots[i];
+      dummy.position.set(s.x, s.y, s.z);
+      dummy.rotation.set(0, s.rotY, s.lean);
+      dummy.scale.set(s.sz, s.sy2, s.sx); // box: x=depth into shelf, z=spine width
+      dummy.updateMatrix();
+      books.setMatrixAt(i, dummy.matrix);
+      const ci = Math.floor(seededRandom() * BOOK_COLORS.length);
+      color.setHex(BOOK_COLORS[ci]);
+      const jit = 0.9 + seededRandom() * 0.2;
+      color.multiplyScalar(jit);
+      books.setColorAt(i, color);
+      // assign interactive
+      let interactive = false, content = null;
+      if (quotesLeft > 0 && (seededRandom() < quotesLeft / slotsLeft)) {
+        interactive = true; content = borgesQuotes[qi++]; quotesLeft--;
+      }
+      slotsLeft--;
+      bookMeta[i] = {
+        interactive, content,
+        pos: new THREE.Vector3(s.x, s.y, s.z),
+        normal: new THREE.Vector3(s.nx, 0, s.nz),
+        rotY: s.rotY, lean: s.lean,
+        scale: new THREE.Vector3(s.sz, s.sy2, s.sx),
+      };
+    }
+    books.instanceMatrix.needsUpdate = true;
+    books.instanceColor.needsUpdate = true;
+    scene.add(books);
+
+    // hover proxy (a single pulled-out book) + highlight shell
+    const proxyMat = bookMat.clone(); proxyMat.emissive = new THREE.Color(0xffd9a0); proxyMat.emissiveIntensity = 0.0;
+    const proxy = new THREE.Mesh(bookGeo, proxyMat); proxy.visible = false; scene.add(proxy);
+    const shellMat = new THREE.MeshBasicMaterial({ color: 0xffd9a0, transparent: true, opacity: 0.22, blending: THREE.AdditiveBlending, depthWrite: false });
+    const shell = new THREE.Mesh(bookGeo, shellMat); shell.visible = false; scene.add(shell);
+
+    // ==================================================================
+    //  SACRED BOOK on pedestal
+    // ==================================================================
+    const shrineGroup = new THREE.Group();
+    const shrineLeatherMap = new THREE.CanvasTexture(leatherTexture());
+    shrineLeatherMap.colorSpace = THREE.SRGBColorSpace;
+    const shrineEmissiveMap = new THREE.CanvasTexture(leatherEmissive());
+    shrineEmissiveMap.colorSpace = THREE.SRGBColorSpace;
+    const shrineMat = new THREE.MeshStandardMaterial({
+      map: shrineLeatherMap,
+      emissiveMap: shrineEmissiveMap,
+      emissive: new THREE.Color(COL.gold), emissiveIntensity: 0.6,
+      roughness: 0.5, metalness: 0.05, envMapIntensity: 0.25,
+    });
+    const shrineBook = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.44, 0.08), shrineMat);
+    shrineBook.position.y = 1.09 + 0.22;
+    shrineBook.rotation.x = -0.15;
+    shrineBook.castShadow = true;
+    shrineGroup.add(shrineBook);
+    scene.add(shrineGroup);
+    const shrineHit = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.6, 0.3), new THREE.MeshBasicMaterial({ visible: false }));
+    shrineHit.position.copy(shrineBook.position);
+    scene.add(shrineHit);
+
+    // ==================================================================
+    //  VOLUMETRIC BEAM + DUST
+    // ==================================================================
+    const beamGeo = new THREE.ConeGeometry(1.15, H - 1.2, 24, 1, true);
+    const beamTex = new THREE.CanvasTexture(beamTexture());
+    beamTex.colorSpace = THREE.SRGBColorSpace;
+    const beamMat = new THREE.MeshBasicMaterial({
+      map: beamTex, color: 0xfff0d2,
+      transparent: true, opacity: 0.16, blending: THREE.AdditiveBlending,
+      side: THREE.BackSide, depthWrite: false,
+    });
+    const beam = new THREE.Mesh(beamGeo, beamMat);
+    beam.position.set(0, 1.3 + (H - 1.2) / 2, 0);
+    beam.rotation.x = Math.PI; // wide at bottom
+    scene.add(beam);
+
+    // dust motes with vertex-shader motion
+    const DUST = 420;
+    const dustGeo = new THREE.BufferGeometry();
+    const dpos = new Float32Array(DUST * 3), dseed = new Float32Array(DUST);
+    for (let i = 0; i < DUST; i++) {
+      if (i < DUST * 0.55) {
+        // in the beam cone
+        const r = Math.random() * 1.0, a = Math.random() * 7;
+        dpos[i * 3] = Math.cos(a) * r; dpos[i * 3 + 1] = 0.6 + Math.random() * (H - 1.4); dpos[i * 3 + 2] = Math.sin(a) * r;
+      } else {
+        const a = Math.random() * 7, r = 1.8 + Math.random() * (apothem - 2);
+        dpos[i * 3] = Math.cos(a) * r; dpos[i * 3 + 1] = 0.3 + Math.random() * (H - 0.6); dpos[i * 3 + 2] = Math.sin(a) * r;
+      }
+      dseed[i] = Math.random() * 6.28;
+    }
+    dustGeo.setAttribute('position', new THREE.BufferAttribute(dpos, 3));
+    dustGeo.setAttribute('aseed', new THREE.BufferAttribute(dseed, 1));
+    const dustMat = new THREE.PointsMaterial({ size: 0.018, map: dustSprite, transparent: true, opacity: 0.4, color: 0xe8d9b0, depthWrite: false, blending: THREE.AdditiveBlending, sizeAttenuation: true });
+    dustMat.onBeforeCompile = (sh) => {
+      sh.uniforms.uTime = { value: 0 };
+      dustMat.userData.shader = sh;
+      sh.vertexShader = 'uniform float uTime;\nattribute float aseed;\n' + sh.vertexShader.replace(
+        '#include <begin_vertex>',
+        `#include <begin_vertex>
+         transformed.x += sin(uTime*(0.2+aseed*0.05)+aseed)*0.08;
+         transformed.y += sin(uTime*0.15+aseed*1.7)*0.06;
+         transformed.z += cos(uTime*(0.18+aseed*0.04)+aseed*2.0)*0.08;`
+      );
+    };
+    const dust = new THREE.Points(dustGeo, dustMat);
+    scene.add(dust);
+
+    // ==================================================================
+    //  FREEZE SHADOWS (static scene) — one manual update
+    // ==================================================================
+    renderer.shadowMap.needsUpdate = true;
+
+    // ==================================================================
+    //  CONTROLS
+    // ==================================================================
     let locked = false, reading = false, menuOpen = false;
-    let yaw = 0, pitch = 0;
+    let yaw = 0, pitch = 0; // start looking across the shaft toward the sacred book
     const euler = new THREE.Euler(0, 0, 0, 'YXZ');
     const keys = {};
+    const vel = new THREE.Vector3();
+    let bobPhase = 0, lastBobSin = 0, curFov = 70;
 
-    document.addEventListener('keydown', e => {
+    addEventListener('keydown', e => {
       keys[e.code] = true;
-      if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) {
-        e.preventDefault();
-      }
+      if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space'].includes(e.code)) e.preventDefault();
     });
-    document.addEventListener('keyup', e => keys[e.code] = false);
+    addEventListener('keyup', e => keys[e.code] = false);
 
     const eyeOpening = document.getElementById('eye-opening');
     const startPrompt = document.getElementById('start-prompt');
     const startButton = document.getElementById('start-button');
+    const controlsHint = document.getElementById('controls-hint');
+    const titleCard = document.getElementById('title-card');
 
+    // Devices with no pointer lock (touch / coarse pointers) can't play the FPS controls.
+    const noPointerLock = !('requestPointerLock' in HTMLElement.prototype) ||
+      (navigator.maxTouchPoints || 0) > 0 ||
+      (window.matchMedia && window.matchMedia('(pointer: coarse)').matches);
+
+    // Intro sequence — pointer lock is only ever requested from a real user gesture (the menu button / a click),
+    // never from a timer, so browsers don't reject it.
+    let introDone = false, titleShown = false;
+    function runTitleCard() {
+      if (titleShown) return; titleShown = true;
+      setTimeout(() => { titleCard.classList.add('visible'); }, 400);
+      setTimeout(() => { titleCard.classList.remove('visible'); }, 4600);
+    }
     setTimeout(() => {
       eyeOpening.classList.add('hidden');
-      document.body.requestPointerLock();
+      if (noPointerLock) {
+        // touch / no-pointer-lock: present the menu with a note and a working "return" link so nobody is stuck
+        startButton.style.display = 'none';
+        const instr = startPrompt.querySelector('.prompt-instructions');
+        if (instr) instr.textContent = 'This gallery needs a desktop mouse and keyboard to explore.';
+        showMenu();
+      } else {
+        showMenu(); // "Enter the gallery" acquires pointer lock on click (a valid user gesture)
+      }
     }, 1900);
 
-    function showMenu() {
-      menuOpen = true;
-      document.exitPointerLock();
-      startPrompt.classList.add('visible');
-    }
-
-    function hideMenu() {
-      menuOpen = false;
-      startPrompt.classList.remove('visible');
-      document.body.requestPointerLock();
-    }
-
-    startButton.addEventListener('click', hideMenu);
+    function showMenu() { menuOpen = true; if (!noPointerLock) document.exitPointerLock(); startPrompt.classList.add('visible'); clearHover(); }
+    function hideMenu() { menuOpen = false; startPrompt.classList.remove('visible'); document.body.requestPointerLock(); }
+    startButton.addEventListener('click', () => {
+      initAudioGraph(); if (audioCtx.state === 'suspended') audioCtx.resume(); startAmbient();
+      if (noPointerLock) return; // can't lock — leave the menu up with the return link
+      hideMenu();
+      runTitleCard();
+    });
 
     document.addEventListener('pointerlockchange', () => {
-      const wasLocked = locked;
+      const was = locked;
       locked = document.pointerLockElement === document.body;
-      if (wasLocked && !locked && !reading) {
-        menuOpen = true;
-        startPrompt.classList.add('visible');
-      }
+      if (locked && !ambientStarted) { initAudioGraph(); if (audioCtx.state === 'suspended') audioCtx.resume(); startAmbient(); }
+      if (was && !locked && !reading) { menuOpen = true; startPrompt.classList.add('visible'); clearHover(); }
     });
 
     document.addEventListener('mousemove', e => {
       if (!locked || reading) return;
-      yaw -= e.movementX * 0.002;
-      pitch -= e.movementY * 0.002;
-      pitch = Math.max(-1.2, Math.min(1.2, pitch));
-      euler.set(pitch, yaw, 0);
-      camera.quaternion.setFromEuler(euler);
+      yaw -= e.movementX * 0.0022;
+      pitch -= e.movementY * 0.0022;
+      pitch = Math.max(-1.3, Math.min(1.3, pitch));
     });
 
-    // --- INTERACTION ---
+    // ==================================================================
+    //  INTERACTION
+    // ==================================================================
     const ray = new THREE.Raycaster();
-    const center = new THREE.Vector2(0, 0);
-    let hovered = null;
-
+    const centerV = new THREE.Vector2(0, 0);
+    let hovered = null; // {type, id/mesh, content, meta}
     const crosshair = document.getElementById('crosshair');
     const label = document.getElementById('object-label');
+    const labelInner = label.querySelector('.label-inner');
     const overlay = document.getElementById('reading-overlay');
-    const rText = document.getElementById('reading-text');
+    const readingContent = document.getElementById('reading-content');
+    let movedOnce = false;
 
+    let rayFrame = 0, proxyPull = 0;
+    const hoverColor = new THREE.Color();
+    function clearHover() {
+      crosshair.classList.remove('hovering');
+      label.classList.remove('visible');
+      proxy.visible = false;
+      shell.visible = false;
+      hovered = null;
+      proxyPull = 0;
+    }
     function checkHover() {
-      ray.setFromCamera(center, camera);
-      const hits = ray.intersectObjects(interactiveObjects);
+      ray.setFromCamera(centerV, camera);
+      ray.far = 6;
+      const bh = ray.intersectObject(books);
+      const sh = ray.intersectObject(shrineHit);
+      let newHover = null;
+      if (sh.length && (!bh.length || sh[0].distance <= bh[0].distance)) {
+        newHover = { type: 'shrine' };
+      } else if (bh.length) {
+        newHover = { type: 'book', id: bh[0].instanceId, meta: bookMeta[bh[0].instanceId] };
+      }
 
-      if (hovered?.userData.line) hovered.userData.line.material.color.setHex(LIGHT);
+      const sameAsBefore = hovered && newHover &&
+        ((hovered.type === 'shrine' && newHover.type === 'shrine') ||
+         (hovered.type === 'book' && newHover.type === 'book' && hovered.id === newHover.id));
+      if (sameAsBefore) return;
 
-      if (hits.length && hits[0].distance < 6) {
-        hovered = hits[0].object;
-        hovered.userData.line.material.color.setHex(0xffffff);
-        crosshair.classList.add('hovering');
-        // Show label - title for shrine book, truncated quote for others
-        if (hovered.userData.content.isFullBook) {
-          label.textContent = hovered.userData.content.source;
+      proxy.visible = false; shell.visible = false;
+      if (newHover) {
+        if (newHover.type === 'shrine') {
+          crosshair.classList.add('hovering');
+          label.classList.remove('filler');
+          labelInner.textContent = 'the book · Plunkitt of Tammany Hall';
         } else {
-          const q = hovered.userData.content.quote;
-          label.textContent = q.length > 40 ? q.substring(0, 40) + '...' : q;
+          const meta = newHover.meta;
+          crosshair.classList.add('hovering');
+          proxy.position.copy(meta.pos); proxy.rotation.set(0, meta.rotY, meta.lean); proxy.scale.copy(meta.scale);
+          proxy.material.color.copy(hoverColor.fromBufferAttribute(books.instanceColor, newHover.id));
+          proxy.visible = true;
+          shell.position.copy(meta.pos); shell.rotation.set(0, meta.rotY, meta.lean); shell.scale.copy(meta.scale).multiplyScalar(1.06); shell.visible = true;
+          if (meta.interactive) { label.classList.remove('filler'); labelInner.textContent = meta.content.source; }
+          else { label.classList.add('filler'); labelInner.textContent = fillerLabel(newHover.id); }
         }
         label.classList.add('visible');
+        playHoverTick();
       } else {
-        hovered = null;
         crosshair.classList.remove('hovering');
         label.classList.remove('visible');
       }
+      hovered = newHover;
+      proxyPull = 0;
+    }
+    function fillerLabel(id) {
+      // deterministic gibberish from Borges' orthography
+      const letters = 'MCVQXZ';
+      let s = '';
+      let n = id * 2654435761 % 4294967296;
+      for (let i = 0; i < 3; i++) { s += letters[n % letters.length] + '' + (n % 7); n = Math.floor(n / 7) + 13; if (i < 2) s += '. '; }
+      return s;
     }
 
-    const readingContent = document.getElementById('reading-content');
-    let isFullBook = false;
-    let bookMain = null;
-    let scrollRAF = null;
-
+    // ---- OPEN / CLOSE BOOK (preserves original overlay logic) ----
+    let isFullBook = false, bookMain = null, scrollRAF = null;
     function openBook(c) {
       reading = true;
+      clearHover();
       overlay.classList.add('visible');
       document.exitPointerLock();
-
+      duckAmbient(0.5);
       if (c.isFullBook) {
         isFullBook = true;
         readingContent.classList.add('full-book-view');
-
-        // Build the book with navigation sidebar
         readingContent.innerHTML = `
           <nav class="chapter-nav">
             <div class="chapter-nav-title">Contents</div>
@@ -1741,174 +2408,253 @@ America</h2>
           </nav>
           <div class="book-main" id="book-main">
             <div class="full-book">
-              <h1 class="book-title">PLUNKITT OF TAMMANY HALL</h1>
+              <h1 class="book-title">Plunkitt of Tammany Hall</h1>
               <p class="book-author">By George Washington Plunkitt</p>
               <p class="book-subtitle">A Series of Very Plain Talks on Very Practical Politics</p>
               <div class="book-content">${window.plunkittText}</div>
             </div>
-            <div style="margin-top:3rem;padding-top:1.5rem;border-top:1px solid rgba(201,168,124,0.2);text-align:center;color:rgba(201,168,124,0.5);font-size:0.7rem;font-family:monospace;">press ESC or click outside to close</div>
-          </div>
-        `;
-
-        // Get references
+            <div style="margin-top:3rem;padding-top:1.5rem;border-top:1px solid rgba(70,52,30,0.25);text-align:center;color:rgba(70,52,30,0.5);font-size:0.7rem;font-family:monospace;">press ESC or click outside to close</div>
+          </div>`;
         bookMain = document.getElementById('book-main');
         const navItems = document.getElementById('chapter-nav-items');
         const chapters = bookMain.querySelectorAll('.chapter-title');
-
-        // Build navigation
         chapters.forEach((ch, i) => {
           ch.id = 'chapter-' + i;
           const text = ch.textContent;
-          // Extract just the title part after "Chapter N."
-          let displayText = text;
-          if (text.match(/^Chapter \d+\./)) {
-            displayText = text.replace(/^Chapter \d+\.\s*/, '');
-          }
+          let displayText = text.match(/^Chapter \d+\./) ? text.replace(/^Chapter \d+\.\s*/, '') : text;
           const isSection = !text.startsWith('Chapter');
-
           const item = document.createElement('div');
           item.className = 'chapter-nav-item' + (isSection ? ' section' : '');
           item.textContent = displayText.length > 28 ? displayText.substring(0, 28) + '...' : displayText;
-          item.title = text; // Full title on hover
-          item.dataset.index = i;
-          item.addEventListener('click', () => {
-            ch.scrollIntoView({ behavior: 'smooth', block: 'start' });
-          });
+          item.title = text; item.dataset.index = i;
+          item.addEventListener('click', () => ch.scrollIntoView({ behavior: 'smooth', block: 'start' }));
           navItems.appendChild(item);
         });
-
-        // Scroll tracking
         function updateActiveChapter() {
-          const scrollTop = bookMain.scrollTop;
-          let activeIndex = 0;
-
-          chapters.forEach((ch, i) => {
-            if (ch.offsetTop - 120 <= scrollTop) {
-              activeIndex = i;
-            }
-          });
-
+          const scrollTop = bookMain.scrollTop; let activeIndex = 0;
+          chapters.forEach((ch, i) => { if (ch.offsetTop - 120 <= scrollTop) activeIndex = i; });
           const items = navItems.querySelectorAll('.chapter-nav-item');
           items.forEach((item, i) => {
             const wasActive = item.classList.contains('active');
             const isActive = i === activeIndex;
             item.classList.toggle('active', isActive);
-            // Scroll nav item into view when it becomes active
-            if (isActive && !wasActive) {
-              item.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-            }
+            if (isActive && !wasActive) item.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
           });
         }
-
-        bookMain.addEventListener('scroll', () => {
-          if (scrollRAF) cancelAnimationFrame(scrollRAF);
-          scrollRAF = requestAnimationFrame(updateActiveChapter);
-        });
-
-        // Initial highlight
+        bookMain.addEventListener('scroll', () => { if (scrollRAF) cancelAnimationFrame(scrollRAF); scrollRAF = requestAnimationFrame(updateActiveChapter); });
         setTimeout(updateActiveChapter, 100);
-
+        playShrineOpen();
       } else {
         isFullBook = false;
         readingContent.classList.remove('full-book-view');
         readingContent.innerHTML = `
           <div id="reading-text">
-            <p class="quote-text">"${c.quote}"</p>
+            <p class="quote-text">${c.quote}</p>
             <p class="quote-source">— ${c.source}</p>
           </div>
-          <span class="close-hint">click anywhere or press ESC to close</span>
-        `;
+          <span class="close-hint">click anywhere or press ESC to close</span>`;
+        playPageTurn();
       }
-      playPageTurn();
     }
-
     function closeBook() {
-      reading = false;
-      isFullBook = false;
+      reading = false; isFullBook = false;
       overlay.classList.remove('visible');
       readingContent.classList.remove('full-book-view');
-      if (bookMain) {
-        bookMain.scrollTop = 0;
-        bookMain = null;
-      }
-      if (scrollRAF) {
-        cancelAnimationFrame(scrollRAF);
-        scrollRAF = null;
-      }
+      if (bookMain) { bookMain.scrollTop = 0; bookMain = null; }
+      if (scrollRAF) { cancelAnimationFrame(scrollRAF); scrollRAF = null; }
+      duckAmbient(1.0);
       document.body.requestPointerLock();
       playBookClose();
     }
 
     document.addEventListener('click', e => {
       if (e.target.closest('#start-prompt a')) return;
-
       if (reading) {
-        // For full book, only close when clicking outside the content area
-        if (isFullBook && e.target.closest('#reading-content')) {
-          return; // Don't close, allow scrolling
-        }
+        if (isFullBook && e.target.closest('#reading-content')) return;
         closeBook();
       } else if (hovered && locked) {
-        openBook(hovered.userData.content);
+        if (hovered.type === 'shrine') openBook({ source: 'Plunkitt of Tammany Hall', isFullBook: true });
+        else if (hovered.meta.interactive) { playBookPull(); openBook(hovered.meta.content); }
+        else { playDustPuff(); label.animate([{ opacity: 0.55 }, { opacity: 1 }, { opacity: 0.55 }], { duration: 400 }); }
       } else if (!locked && !menuOpen) {
+        initAudioGraph(); if (audioCtx.state === 'suspended') audioCtx.resume(); startAmbient();
         document.body.requestPointerLock();
       }
     });
+    document.addEventListener('keydown', e => { if (e.code === 'Escape' && reading) closeBook(); });
 
-    document.addEventListener('keydown', e => {
-      if (e.code === 'Escape' && reading) {
-        closeBook();
+    // ==================================================================
+    //  COLLISION
+    // ==================================================================
+    const coreR = 0.55, outerR = apothem - 0.4;
+    const chasmOuter = moatOuter + 0.22;
+    function allowed(x, z) {
+      const d = Math.hypot(x, z);
+      if (d > outerR) return false;
+      // the chasm ring is only crossable on the bridge
+      if (d > islandOuter && d < chasmOuter) {
+        const onBridge = x > 0 && Math.abs(z) < 0.5;
+        if (!onBridge) return false;
       }
-    });
+      // don't stand on the pedestal itself
+      if (d <= islandOuter && d < coreR) return false;
+      return true;
+    }
 
-    // --- LOOP ---
+    // ==================================================================
+    //  MAIN LOOP
+    // ==================================================================
     const clock = new THREE.Clock();
+    let frameTimes = [], dprDropped = false, lastMs = 0;
+    const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const bobAmp = reduceMotion ? 0 : 0.035;
+    const rollAmp = reduceMotion ? 0 : 0.004;
+    const fovKick = reduceMotion ? 0 : 4;
 
     function loop() {
       requestAnimationFrame(loop);
-      const dt = clock.getDelta();
+      const dt = Math.min(clock.getDelta(), 0.05);
+      const t = clock.elapsedTime;
 
-      if (locked && !reading) {
-        const dir = new THREE.Vector3();
-        if (keys['KeyW'] || keys['ArrowUp']) dir.z = -1;
-        if (keys['KeyS'] || keys['ArrowDown']) dir.z = 1;
-        if (keys['KeyA'] || keys['ArrowLeft']) dir.x = -1;
-        if (keys['KeyD'] || keys['ArrowRight']) dir.x = 1;
-        dir.normalize();
-
-        const move = new THREE.Vector3(dir.x * 3 * dt, 0, dir.z * 3 * dt);
-        move.applyQuaternion(camera.quaternion);
-        move.y = 0;
-        camera.position.add(move);
-
-        // Play footstep if moving
-        if (dir.length() > 0) {
-          playFootstep();
-        }
-
-        const d = Math.hypot(camera.position.x, camera.position.z);
-        if (d > apothem - 0.5) {
-          const a = Math.atan2(camera.position.z, camera.position.x);
-          camera.position.x = Math.cos(a) * (apothem - 0.5);
-          camera.position.z = Math.sin(a) * (apothem - 0.5);
-        }
-        if (d < 0.65) {
-          const a = Math.atan2(camera.position.z, camera.position.x);
-          camera.position.x = Math.cos(a) * 0.65;
-          camera.position.z = Math.sin(a) * 0.65;
-        }
-
-        checkHover();
+      // intro exposure ramp + bloom settle
+      if (!introDone) {
+        renderer.toneMappingExposure = Math.min(1.35, renderer.toneMappingExposure + dt * 0.6);
+        bloom.strength = Math.max(0.55, bloom.strength - dt * 0.32);
+        if (renderer.toneMappingExposure >= 1.35 && bloom.strength <= 0.56) introDone = true;
       }
 
-      renderer.render(scene, camera);
+      if (locked && !reading) {
+        // movement
+        const wish = new THREE.Vector3();
+        if (keys['KeyW'] || keys['ArrowUp']) wish.z -= 1;
+        if (keys['KeyS'] || keys['ArrowDown']) wish.z += 1;
+        if (keys['KeyA'] || keys['ArrowLeft']) wish.x -= 1;
+        if (keys['KeyD'] || keys['ArrowRight']) wish.x += 1;
+        const moving = wish.lengthSq() > 0;
+        wish.normalize();
+        // to world using yaw
+        const forward = new THREE.Vector3(-Math.sin(yaw), 0, -Math.cos(yaw));
+        const right = new THREE.Vector3(Math.cos(yaw), 0, -Math.sin(yaw));
+        const wishWorld = new THREE.Vector3().addScaledVector(forward, -wish.z).addScaledVector(right, wish.x);
+        const accel = 40;
+        vel.addScaledVector(wishWorld, accel * dt);
+        // damping
+        const damp = Math.exp(-8 * dt);
+        vel.multiplyScalar(damp);
+        const maxSpd = 3.2;
+        if (vel.length() > maxSpd) vel.setLength(maxSpd);
+
+        // integrate with collision (slide)
+        let nx = camera.position.x + vel.x * dt;
+        let nz = camera.position.z + vel.z * dt;
+        // outer clamp
+        const nd = Math.hypot(nx, nz);
+        if (nd > outerR) { const a = Math.atan2(nz, nx); nx = Math.cos(a) * outerR; nz = Math.sin(a) * outerR; }
+        if (allowed(nx, nz)) { camera.position.x = nx; camera.position.z = nz; }
+        else if (allowed(nx, camera.position.z)) { camera.position.x = nx; vel.z = 0; }
+        else if (allowed(camera.position.x, nz)) { camera.position.z = nz; vel.x = 0; }
+        else { vel.set(0, vel.y, 0); }
+
+        // head bob
+        const spd = vel.length();
+        const speedFactor = Math.min(spd / maxSpd, 1);
+        if (moving) bobPhase += dt * 10 * (0.5 + speedFactor * 0.5);
+        const bobSin = Math.sin(bobPhase);
+        const bobY = bobSin * bobAmp * speedFactor;
+        const roll = Math.cos(bobPhase) * rollAmp * speedFactor;
+        camera.position.y = CAM_EYE + bobY;
+
+        // footstep at bob minima
+        if (moving && lastBobSin > -0.9 && bobSin <= -0.9) playFootstep();
+        lastBobSin = bobSin;
+
+        // FOV drift while moving forward
+        const targetFov = 70 + (moving && wish.z < 0 ? fovKick : 0) * speedFactor;
+        curFov += (targetFov - curFov) * 0.06;
+        if (Math.abs(camera.fov - curFov) > 0.01) { camera.fov = curFov; camera.updateProjectionMatrix(); }
+
+        euler.set(pitch, yaw, roll);
+        camera.quaternion.setFromEuler(euler);
+
+        // reverb swell near railing / in vestibule recesses
+        const distCenter = Math.hypot(camera.position.x, camera.position.z);
+        const nearRail = distCenter < railingR + 0.8;
+        const inVest = distCenter > apothem - 0.6;
+        setReverbTarget(nearRail || inVest ? 0.36 : 0.22);
+
+        if (moving && !movedOnce) { movedOnce = true; setTimeout(() => { controlsHint.classList.add('faded'); }, 2500); }
+
+        rayFrame++;
+        if (rayFrame % 3 === 0) checkHover();
+      }
+
+      // proxy pull-out easing (only while actually exploring)
+      if (!reading && !menuOpen && hovered && hovered.type === 'book') {
+        proxyPull += (1 - proxyPull) * 0.15;
+        const meta = hovered.meta;
+        const off = 0.04 * proxyPull;
+        proxy.position.set(meta.pos.x + meta.normal.x * off, meta.pos.y, meta.pos.z + meta.normal.z * off);
+        proxy.material.emissiveIntensity = 0.15 * proxyPull;
+      }
+
+      // shrine title glint + spotlight breathe + beam breathe
+      const breathe = Math.sin(t * 0.6) * 0.5 + 0.5;
+      shrineMat.emissiveIntensity = 0.5 + breathe * 0.3;
+      spot.intensity = 68 * (1 + Math.sin(t * 0.6) * 0.04);
+      beamMat.opacity = 0.16 + Math.sin(t * 0.6) * 0.025;
+
+      // dust animation
+      if (dustMat.userData.shader) dustMat.userData.shader.uniforms.uTime.value = t;
+      gradePass.uniforms.uTime.value = t;
+
+      updateReverb();
+
+      // adaptive DPR guard — measured against real wall-clock frame time (not clamped dt)
+      const nowMs = performance.now();
+      if (lastMs) frameTimes.push(nowMs - lastMs);
+      lastMs = nowMs;
+      if (frameTimes.length >= 45) {
+        const avg = frameTimes.reduce((a, b) => a + b, 0) / frameTimes.length;
+        frameTimes.length = 0;
+        const maxDpr = Math.min(devicePixelRatio, 2);
+        if (avg > 20 && curPixelRatio > 1.0) {
+          curPixelRatio = Math.max(1.0, curPixelRatio - 0.25); dprDropped = true;
+          renderer.setPixelRatio(curPixelRatio); composer.setPixelRatio(curPixelRatio);
+        } else if (avg < 12 && dprDropped && curPixelRatio < maxDpr) {
+          curPixelRatio = Math.min(maxDpr, curPixelRatio + 0.25);
+          renderer.setPixelRatio(curPixelRatio); composer.setPixelRatio(curPixelRatio);
+          if (curPixelRatio >= maxDpr) dprDropped = false;
+        }
+      }
+
+      composer.render();
     }
 
-    window.addEventListener('resize', () => {
-      camera.aspect = window.innerWidth / window.innerHeight;
+    addEventListener('resize', () => {
+      camera.aspect = innerWidth / innerHeight;
       camera.updateProjectionMatrix();
-      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setSize(innerWidth, innerHeight);
+      composer.setSize(innerWidth, innerHeight);
+      bloom.setSize(innerWidth / 2, innerHeight / 2);
     });
+
+    // Local-only inspection hooks — inert on the live site (this script is served inline, so it
+    // isn't tree-shaken at build time; a hostname gate keeps it off production).
+    if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
+      window.__dbg = {
+        look: (y, p) => { yaw = y; pitch = p == null ? 0 : p; locked = true; euler.set(pitch, yaw, 0); camera.quaternion.setFromEuler(euler); },
+        pos: (x, z, ay) => { camera.position.set(x, ay == null ? CAM_EYE : ay, z); },
+        lock: () => { locked = true; },
+        hover: () => checkHover(),
+        quote: () => openBook(borgesQuotes[0]),
+        full: () => openBook({ source: 'Plunkitt of Tammany Hall', isFullBook: true }),
+        close: () => closeBook(),
+        finishIntro: () => { renderer.toneMappingExposure = 1.35; bloom.strength = 0.55; introDone = true; composer.render(); },
+        exp: (v) => { renderer.toneMappingExposure = v; composer.render(); return v; },
+        render: () => composer.render(),
+        state: () => ({ hovered: hovered && (hovered.type + (hovered.meta ? ':' + (hovered.meta.interactive ? hovered.meta.content.source : 'filler') : '')), exposure: renderer.toneMappingExposure, bloom: bloom.strength, books: books.count }),
+      };
+    }
 
     loop();
   </script>
