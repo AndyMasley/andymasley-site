@@ -844,6 +844,7 @@ America</h2>
     import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
     import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
     import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+    import { Reflector } from 'three/addons/objects/Reflector.js';
 
     // ==================================================================
     //  AUDIO  — everything synthesized, no external files
@@ -1136,20 +1137,6 @@ America</h2>
         routeWet(g, 0.8);
         osc.start(now); osc.stop(now + 2.7);
       });
-    }
-
-    // dust-puff whisper for filler / shrine
-    function playDustPuff() {
-      const ctx = getAudioContext();
-      const nb = ctx.createBuffer(1, ctx.sampleRate * 0.25, ctx.sampleRate);
-      const nd = nb.getChannelData(0);
-      for (let i = 0; i < nd.length; i++) nd[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / nd.length, 1.5);
-      const src = ctx.createBufferSource(); src.buffer = nb;
-      const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 4200; bp.Q.value = 0.4;
-      const g = ctx.createGain(); g.gain.value = 0.04;
-      src.connect(bp); bp.connect(g);
-      routeWet(g, 0.7);
-      src.start();
     }
 
     // --- SEEDED RANDOM (for consistent book generation) ---
@@ -1643,7 +1630,7 @@ America</h2>
 
     const camera = new THREE.PerspectiveCamera(70, innerWidth / innerHeight, 0.05, 120);
     const CAM_EYE = 1.7;
-    camera.position.set(0, CAM_EYE, 3.4);
+    camera.position.set(3.35, CAM_EYE, 0); // spawn on the bridge axis — first view crosses the chasm to the book
 
     const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(innerWidth, innerHeight);
@@ -1791,8 +1778,10 @@ America</h2>
     // ==================================================================
     //  GEOMETRY HELPERS
     // ==================================================================
+    // Hexagon vertices offset +30° so FACE normals land at k·60° — matching wallNormal(w),
+    // the hex CylinderGeometry shaft walls, and the bridge axis (+X crosses a flat face).
     function hexVtx(i, r, y) {
-      const a = (i / 6) * Math.PI * 2;
+      const a = (i / 6) * Math.PI * 2 + Math.PI / 6;
       return new THREE.Vector3(Math.cos(a) * r, y, Math.sin(a) * r);
     }
 
@@ -1805,7 +1794,7 @@ America</h2>
       const outer = new THREE.Shape();
       for (let i = 0; i <= 6; i++) { const v = hexVtx(i, R, 0); i === 0 ? outer.moveTo(v.x, v.z) : outer.lineTo(v.x, v.z); }
       const hole = new THREE.Path();
-      for (let i = 0; i <= 6; i++) { const a = (i / 6) * Math.PI * 2; const hx = Math.cos(a) * moatOuter, hz = Math.sin(a) * moatOuter; i === 0 ? hole.moveTo(hx, hz) : hole.lineTo(hx, hz); }
+      for (let i = 0; i <= 6; i++) { const v = hexVtx(i, moatOuter, 0); i === 0 ? hole.moveTo(v.x, v.z) : hole.lineTo(v.x, v.z); }
       outer.holes.push(hole);
       const geo = new THREE.ShapeGeometry(outer);
       geo.rotateX(-Math.PI / 2);
@@ -1877,15 +1866,32 @@ America</h2>
     }
 
     // ---- VESTIBULE ROOMS (behind walls 0 & 3) ----
-    function buildVestibule(w, withMirror) {
+    function buildVestibule(w, withMirror, openBack) {
       const n = wallNormal(w), tan = new THREE.Vector3(-n.z, 0, n.x);
       const depth = 2.6, halfW = 1.1, vh = 3.2;
       const outCenter = new THREE.Vector3(n.x * (apothem + depth / 2), 0, n.z * (apothem + depth / 2));
-      // back wall
-      const back = new THREE.Mesh(new THREE.PlaneGeometry(halfW * 2, vh), matWall);
-      back.position.set(n.x * (apothem + depth), vh / 2, n.z * (apothem + depth));
-      back.lookAt(outCenter.x - n.x, vh / 2, outCenter.z - n.z);
-      scene.add(back);
+      const backBase = new THREE.Vector3(n.x * (apothem + depth), 0, n.z * (apothem + depth));
+      if (openBack) {
+        // arched opening in the back wall — the corridor to the next gallery
+        const ow = 1.5, oh = 2.5;
+        const bj = (halfW * 2 - ow) / 2;
+        function placeB(m, offX, cy) {
+          m.position.set(backBase.x + tan.x * offX, cy, backBase.z + tan.z * offX);
+          m.lookAt(m.position.x - n.x, cy, m.position.z - n.z); // face into the vestibule
+          scene.add(m);
+        }
+        placeB(new THREE.Mesh(new THREE.PlaneGeometry(bj, vh), matWall), -(ow / 2 + bj / 2), vh / 2);
+        placeB(new THREE.Mesh(new THREE.PlaneGeometry(bj, vh), matWall), (ow / 2 + bj / 2), vh / 2);
+        placeB(new THREE.Mesh(new THREE.PlaneGeometry(ow, vh - oh), matWall), 0, oh + (vh - oh) / 2);
+        placeB(new THREE.Mesh(new THREE.BoxGeometry(0.1, oh, 0.14), matStone), -ow / 2, oh / 2);
+        placeB(new THREE.Mesh(new THREE.BoxGeometry(0.1, oh, 0.14), matStone), ow / 2, oh / 2);
+        placeB(new THREE.Mesh(new THREE.BoxGeometry(ow + 0.2, 0.12, 0.14), matStone), 0, oh);
+      } else {
+        const back = new THREE.Mesh(new THREE.PlaneGeometry(halfW * 2, vh), matWall);
+        back.position.copy(backBase).setY(vh / 2);
+        back.lookAt(outCenter.x - n.x, vh / 2, outCenter.z - n.z);
+        scene.add(back);
+      }
       // side walls
       [-1, 1].forEach(s => {
         const sw = new THREE.Mesh(new THREE.PlaneGeometry(depth, vh), matWall);
@@ -1910,41 +1916,49 @@ America</h2>
       // brass chain across the archway threshold (diegetic barrier)
       const chainY = 1.0;
       const chainMat = matBrass;
-      const ccount = 9;
+      const ccount = 25; // close enough together that the links interlock
       for (let i = 0; i < ccount; i++) {
         const link = new THREE.Mesh(new THREE.TorusGeometry(0.045, 0.014, 6, 10), chainMat);
         const off = (i / (ccount - 1) - 0.5) * (halfW * 2 - 0.1);
         const sag = Math.sin((i / (ccount - 1)) * Math.PI) * 0.12;
         link.position.set(n.x * apothem + tan.x * off, chainY - sag, n.z * apothem + tan.z * off);
-        link.rotation.y = Math.atan2(tan.z, tan.x);
-        if (i % 2) link.rotation.x = Math.PI / 2;
+        link.rotation.y = Math.atan2(tan.z, tan.x); // ring plane faces along the archway
+        if (i % 2) link.rotateOnAxis(new THREE.Vector3(1, 0, 0), Math.PI / 2); // alternate links twist 90° around the chain
         scene.add(link);
       }
 
       if (withMirror) {
-        // tarnished antique glass — reflects the warm environment ("faithfully duplicates appearances")
-        const mirrorMat = new THREE.MeshStandardMaterial({ color: 0x2a2620, metalness: 1.0, roughness: 0.14, envMapIntensity: 1.3 });
-        const mirror = new THREE.Mesh(new THREE.PlaneGeometry(1.3, 2.2), mirrorMat);
-        mirror.position.set(outCenter.x + tan.x * (halfW - 0.02), 1.5, outCenter.z + tan.z * (halfW - 0.02));
-        mirror.lookAt(outCenter.x, 1.5, outCenter.z);
+        // a true mirror on the BACK wall, facing the archway — reflects the gallery beyond
+        // ("faithfully duplicates appearances"). Gated to render only when looked at.
+        const mirror = new Reflector(new THREE.PlaneGeometry(1.4, 2.3), {
+          color: 0x9a9184, textureWidth: 1024, textureHeight: 1024, clipBias: 0.003,
+        });
+        const mpos = new THREE.Vector3(n.x * (apothem + depth - 0.06), 1.55, n.z * (apothem + depth - 0.06));
+        mirror.position.copy(mpos);
+        mirror.lookAt(0, 1.55, 0); // glass normal points back toward the gallery/archway
         scene.add(mirror);
+        mirrorObj = mirror;
+        mirrorCenter = mpos.clone();
         // walnut frame just behind the glass
-        const frame = new THREE.Mesh(new THREE.BoxGeometry(1.5, 2.4, 0.06), matWood);
-        frame.position.copy(mirror.position).addScaledVector(tan, 0.03);
+        const frame = new THREE.Mesh(new THREE.BoxGeometry(1.6, 2.5, 0.06), matWood);
+        frame.position.copy(mpos).addScaledVector(n, 0.04);
         frame.quaternion.copy(mirror.quaternion);
         scene.add(frame);
       }
     }
-    buildVestibule(0, true);   // vestibule A — mirror
-    buildVestibule(3, false);  // vestibule B — opens to neighbor gallery
+    let mirrorObj = null, mirrorCenter = null;
+    buildVestibule(0, true, false);  // vestibule A — the mirror
+    buildVestibule(3, false, true);  // vestibule B — open corridor to the neighbor gallery
 
     // ---- NEIGHBOR GALLERY SHELL (seen through vestibule B) ----
     (function neighborGallery() {
       const n = wallNormal(3);
       const pitch = 2 * apothem + 2.6 + 0.3; // one gallery + vestibule beyond
       const g = new THREE.Group();
-      // a simplified hex wall ring + shelves silhouette + 2 emissive bulbs
+      // a simplified hex wall ring + shelves silhouette + 2 emissive bulbs.
+      // Skip the near wall (local w=3 after the y=PI flip) so the corridor reads through into it.
       for (let w = 0; w < 6; w++) {
+        if (w === 3) continue;
         const nn = wallNormal(w);
         const wall = new THREE.Mesh(new THREE.PlaneGeometry(R, H), matWall);
         wall.position.set(nn.x * apothem, H / 2, nn.z * apothem);
@@ -1958,7 +1972,7 @@ America</h2>
         b.position.set(nn.x * (apothem - 0.5), 3.2, nn.z * (apothem - 0.5));
         g.add(b);
       });
-      const floorN = new THREE.Mesh(new THREE.CircleGeometry(apothem, 6), matFloor);
+      const floorN = new THREE.Mesh(new THREE.CircleGeometry(R, 6, Math.PI / 6), matFloor);
       floorN.rotation.x = -Math.PI / 2; g.add(floorN);
       g.position.set(n.x * pitch, 0, n.z * pitch);
       g.rotation.y = Math.PI; // face back toward player
@@ -1968,26 +1982,41 @@ America</h2>
     // ---- CENTRAL SHAFT: rim, railing, bridge, pedestal island ----
     const bridgeHalfZ = 0.55;
     (function buildShaft() {
-      // stone rim (curb) around the chasm edge
-      const rim = new THREE.Mesh(new THREE.TorusGeometry(moatOuter + 0.05, 0.13, 8, 6), matStone);
-      rim.rotation.x = Math.PI / 2; rim.position.y = 0.06; scene.add(rim);
-      // matching curb around the central island
-      const curb = new THREE.Mesh(new THREE.TorusGeometry(islandOuter + 0.02, 0.08, 8, 6), matStone);
-      curb.rotation.x = Math.PI / 2; curb.position.y = 0.07; scene.add(curb);
+      // stone curbs along the hex chasm edge and around the island —
+      // built as straight box segments per hex face, skipping the +X face the bridge crosses
+      function hexCurb(circumR, extra, h, d, skipBridgeFace) {
+        const faceApothem = circumR * Math.cos(Math.PI / 6) + extra;
+        const len = circumR + 0.18; // face length ≈ circumradius, small miter overlap
+        for (let f = 0; f < 6; f++) {
+          if (skipBridgeFace && f === 0) continue; // +X face — the bridge lands here
+          const a = f * Math.PI / 3;
+          const curb = new THREE.Mesh(new THREE.BoxGeometry(len, h, d), matStone);
+          curb.position.set(Math.cos(a) * faceApothem, 0.06, Math.sin(a) * faceApothem);
+          curb.lookAt(0, 0.06, 0); // +Z (depth) toward center → length runs along the edge
+          curb.receiveShadow = true;
+          scene.add(curb);
+        }
+      }
+      hexCurb(moatOuter, 0.09, 0.12, 0.16, true);   // chasm edge
+      hexCurb(islandOuter, 0.06, 0.1, 0.12, true);  // island edge
 
-      // brass railing at the chasm edge, with a GAP on +X for the bridge
+      // brass railing at the chasm edge, with a GAP centered on +X for the bridge.
+      // The gap is baked into the geometry (rotateZ before rotateX) so it truly sits at +X.
       const postCount = 18;
       const gapHalf = 0.36;
       for (let i = 0; i < postCount; i++) {
         const a = (i / postCount) * Math.PI * 2;
         const da = Math.atan2(Math.sin(a), Math.cos(a));
-        if (Math.abs(da) < gapHalf) continue;
+        if (Math.abs(da) < gapHalf + 0.06) continue;
         const post = new THREE.Mesh(new THREE.CylinderGeometry(0.026, 0.03, 0.95, 8), matBrass);
         post.position.set(Math.cos(a) * railingR, 0.475, Math.sin(a) * railingR);
         scene.add(post);
       }
-      const rail = new THREE.Mesh(new THREE.TorusGeometry(railingR, 0.035, 8, 48, Math.PI * 2 - gapHalf * 2), matBrass);
-      rail.rotation.x = Math.PI / 2; rail.rotation.z = -gapHalf; rail.position.y = 0.95; scene.add(rail);
+      const railArcGeo = new THREE.TorusGeometry(railingR, 0.035, 8, 48, Math.PI * 2 - gapHalf * 2);
+      railArcGeo.rotateZ(gapHalf);        // arc now spans [gapHalf, 2π − gapHalf]
+      railArcGeo.rotateX(Math.PI / 2);    // lay flat: gap centered on +X
+      const rail = new THREE.Mesh(railArcGeo, matBrass);
+      rail.position.y = 0.95; scene.add(rail);
       const railMid = rail.clone(); railMid.position.y = 0.5; scene.add(railMid);
 
       // stone bridge spanning the chasm from outer floor (+X) to the island
@@ -2014,6 +2043,7 @@ America</h2>
       const levels = 7, pitch = 4.0;
       // balcony = thin hexagonal ring hugging the outer shaft wall
       const balcGeo = new THREE.TorusGeometry(moatOuter - 0.12, 0.1, 6, 6);
+      balcGeo.rotateZ(Math.PI / 6); // align hex balcony vertices with the shaft-wall vertices
       balcGeo.rotateX(Math.PI / 2);
       const balconies = new THREE.InstancedMesh(balcGeo, matStone, levels * 2);
       const railGeo = new THREE.TorusGeometry(moatOuter - 0.12, 0.02, 6, 24);
@@ -2042,7 +2072,7 @@ America</h2>
       scene.add(balconies); scene.add(balcRails); scene.add(lamps);
 
       // terminus caps close the shaft ends
-      const capGeo = new THREE.CircleGeometry(moatOuter, 6);
+      const capGeo = new THREE.CircleGeometry(moatOuter, 6, Math.PI / 6); // vertices aligned with shaft hex
       const capTex = new THREE.CanvasTexture(terminusTexture(0x2a2016));
       capTex.colorSpace = THREE.SRGBColorSpace;
       const capUp = new THREE.Mesh(capGeo,
@@ -2055,11 +2085,12 @@ America</h2>
     bulbLights.forEach(({ pos }) => {
       const globe = new THREE.Mesh(new THREE.SphereGeometry(0.16, 16, 16), matBulb);
       globe.position.copy(pos); scene.add(globe);
-      // brass arm
+      // brass arm — cylinder axis (local Y) rotated to run horizontally from wall to bulb
       const n = pos.clone().setY(0).normalize();
-      const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.4, 6), matBrass);
-      arm.position.copy(pos).addScaledVector(n, 0.25); arm.rotation.z = Math.PI / 2;
-      arm.lookAt(pos); scene.add(arm);
+      const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.55, 6), matBrass);
+      arm.position.copy(pos).addScaledVector(n, 0.27);
+      arm.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), n);
+      scene.add(arm);
       const halo = new THREE.Sprite(new THREE.SpriteMaterial({ map: haloSprite, color: 0xffe0aa, blending: THREE.AdditiveBlending, transparent: true, opacity: 0.35, depthWrite: false }));
       halo.scale.set(1.6, 1.6, 1); halo.position.copy(pos); scene.add(halo);
     });
@@ -2079,7 +2110,8 @@ America</h2>
       function box(wd, ht, dp, offX, cy, mat) {
         const m = new THREE.Mesh(new THREE.BoxGeometry(wd, ht, dp), mat);
         m.position.set(base.x + tan.x * offX - n.x * dp / 2, cy, base.z + tan.z * offX - n.z * dp / 2);
-        m.rotation.y = Math.atan2(n.z, n.x);
+        // depth (+Z) along the wall normal: R(+Z) = (sinθ, cosθ) = (n.x, n.z) → θ = atan2(n.x, n.z)
+        m.rotation.y = Math.atan2(n.x, n.z);
         m.receiveShadow = true; scene.add(m); return m;
       }
       box(0.12, 5.3, caseD, -caseW / 2, 2.85, matWood);      // left stile
@@ -2105,38 +2137,39 @@ America</h2>
           const bd = 0.2 + seededRandom() * 0.06;
           const lean = seededRandom() < 0.12 ? (seededRandom() - 0.5) * 0.14 : 0;
           const cx = bx + bw / 2;
-          const px = base.x + tan.x * cx - n.x * (caseD / 2 - bd / 2 - 0.02);
-          const pz = base.z + tan.z * cx - n.z * (caseD / 2 - bd / 2 - 0.02);
+          // seat spines ~8cm behind the case front, clear of the back panel
+          const inward = caseD - 0.08 - bd / 2;
+          const px = base.x + tan.x * cx - n.x * inward;
+          const pz = base.z + tan.z * cx - n.z * inward;
           bookSlots.push({
             x: px, y: sy + bh / 2, z: pz,
             sx: bw, sy2: bh, sz: bd,
-            rotY: Math.atan2(n.z, n.x), lean,
-            nx: n.x, nz: n.z,
+            // spine (+X face after scaling) must face the room: R(+X) = −n → θ = atan2(n.z, −n.x)
+            rotY: Math.atan2(n.z, -n.x), lean,
+            nx: -n.x, nz: -n.z, // pull-out direction: OUT of the shelf, toward the room
           });
           bx += bw + gap;
         }
       });
     });
 
-    // decide which slots are interactive quote books vs filler
+    // every single book opens a Borges quote — quotes cycle across the shelves
     const nSlots = bookSlots.length;
-    const nQuotes = Math.min(borgesQuotes.length, 242);
+    const nQuotes = borgesQuotes.length;
     resetSeed(99);
-    let quotesLeft = nQuotes, slotsLeft = nSlots, qi = 0;
-    // book instanced mesh: box with 3 materials would be multi-material; use single spine map + vertex...
-    // Simpler: single material spine map on all faces, instanceColor tints. Page edges faked by lighter top via emissive? keep spine map.
     const bookGeo = new THREE.BoxGeometry(1, 1, 1);
     const bookMat = new THREE.MeshStandardMaterial({ map: texSpine, roughness: 0.72, metalness: 0.0, envMapIntensity: 0.12 });
     const books = new THREE.InstancedMesh(bookGeo, bookMat, nSlots);
     books.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(nSlots * 3), 3);
     const dummy = new THREE.Object3D();
+    dummy.rotation.order = 'YXZ'; // yaw to the wall, then lean sideways around the (local X) depth axis
     const bookMeta = new Array(nSlots);
     const color = new THREE.Color();
     for (let i = 0; i < nSlots; i++) {
       const s = bookSlots[i];
       dummy.position.set(s.x, s.y, s.z);
-      dummy.rotation.set(0, s.rotY, s.lean);
-      dummy.scale.set(s.sz, s.sy2, s.sx); // box: x=depth into shelf, z=spine width
+      dummy.rotation.set(s.lean, s.rotY, 0);
+      dummy.scale.set(s.sz, s.sy2, s.sx); // box: x=depth into shelf, y=height, z=spine width
       dummy.updateMatrix();
       books.setMatrixAt(i, dummy.matrix);
       const ci = Math.floor(seededRandom() * BOOK_COLORS.length);
@@ -2144,14 +2177,8 @@ America</h2>
       const jit = 0.9 + seededRandom() * 0.2;
       color.multiplyScalar(jit);
       books.setColorAt(i, color);
-      // assign interactive
-      let interactive = false, content = null;
-      if (quotesLeft > 0 && (seededRandom() < quotesLeft / slotsLeft)) {
-        interactive = true; content = borgesQuotes[qi++]; quotesLeft--;
-      }
-      slotsLeft--;
       bookMeta[i] = {
-        interactive, content,
+        content: borgesQuotes[i % nQuotes],
         pos: new THREE.Vector3(s.x, s.y, s.z),
         normal: new THREE.Vector3(s.nx, 0, s.nz),
         rotY: s.rotY, lean: s.lean,
@@ -2164,9 +2191,9 @@ America</h2>
 
     // hover proxy (a single pulled-out book) + highlight shell
     const proxyMat = bookMat.clone(); proxyMat.emissive = new THREE.Color(0xffd9a0); proxyMat.emissiveIntensity = 0.0;
-    const proxy = new THREE.Mesh(bookGeo, proxyMat); proxy.visible = false; scene.add(proxy);
+    const proxy = new THREE.Mesh(bookGeo, proxyMat); proxy.visible = false; proxy.rotation.order = 'YXZ'; scene.add(proxy);
     const shellMat = new THREE.MeshBasicMaterial({ color: 0xffd9a0, transparent: true, opacity: 0.22, blending: THREE.AdditiveBlending, depthWrite: false });
-    const shell = new THREE.Mesh(bookGeo, shellMat); shell.visible = false; scene.add(shell);
+    const shell = new THREE.Mesh(bookGeo, shellMat); shell.visible = false; shell.rotation.order = 'YXZ'; scene.add(shell);
 
     // ==================================================================
     //  SACRED BOOK on pedestal
@@ -2182,11 +2209,20 @@ America</h2>
       emissive: new THREE.Color(COL.gold), emissiveIntensity: 0.6,
       roughness: 0.5, metalness: 0.05, envMapIntensity: 0.25,
     });
-    const shrineBook = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.44, 0.08), shrineMat);
+    // plain tooled leather for spine/edges/back — the gold title lives only on the front cover
+    const shrinePlainMat = new THREE.MeshStandardMaterial({
+      map: shrineLeatherMap, roughness: 0.5, metalness: 0.05, envMapIntensity: 0.25,
+    });
+    // box material order: +X, −X, +Y, −Y, +Z (front cover), −Z (back cover)
+    const shrineBook = new THREE.Mesh(
+      new THREE.BoxGeometry(0.34, 0.44, 0.08),
+      [shrinePlainMat, shrinePlainMat, shrinePlainMat, shrinePlainMat, shrineMat, shrinePlainMat]
+    );
     shrineBook.position.y = 1.09 + 0.22;
     shrineBook.rotation.x = -0.15;
     shrineBook.castShadow = true;
     shrineGroup.add(shrineBook);
+    shrineGroup.rotation.y = Math.PI / 2; // cover (+Z face) turns to face the bridge on +X
     scene.add(shrineGroup);
     const shrineHit = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.6, 0.3), new THREE.MeshBasicMaterial({ visible: false }));
     shrineHit.position.copy(shrineBook.position);
@@ -2249,10 +2285,13 @@ America</h2>
     //  CONTROLS
     // ==================================================================
     let locked = false, reading = false, menuOpen = false;
-    let yaw = 0, pitch = 0; // start looking across the shaft toward the sacred book
+    let yaw = Math.PI / 2, pitch = 0; // face −X: straight down the bridge to the sacred book
     const euler = new THREE.Euler(0, 0, 0, 'YXZ');
+    euler.set(0, yaw, 0);
+    camera.quaternion.setFromEuler(euler); // orient the pre-lock view too
     const keys = {};
     const vel = new THREE.Vector3();
+    const _wish = new THREE.Vector3(), _forward = new THREE.Vector3(), _right = new THREE.Vector3(), _wishWorld = new THREE.Vector3();
     let bobPhase = 0, lastBobSin = 0, curFov = 70;
 
     addEventListener('keydown', e => {
@@ -2360,17 +2399,15 @@ America</h2>
       if (newHover) {
         if (newHover.type === 'shrine') {
           crosshair.classList.add('hovering');
-          label.classList.remove('filler');
           labelInner.textContent = 'the book · Plunkitt of Tammany Hall';
         } else {
           const meta = newHover.meta;
           crosshair.classList.add('hovering');
-          proxy.position.copy(meta.pos); proxy.rotation.set(0, meta.rotY, meta.lean); proxy.scale.copy(meta.scale);
+          proxy.position.copy(meta.pos); proxy.rotation.set(meta.lean, meta.rotY, 0); proxy.scale.copy(meta.scale);
           proxy.material.color.copy(hoverColor.fromBufferAttribute(books.instanceColor, newHover.id));
           proxy.visible = true;
-          shell.position.copy(meta.pos); shell.rotation.set(0, meta.rotY, meta.lean); shell.scale.copy(meta.scale).multiplyScalar(1.06); shell.visible = true;
-          if (meta.interactive) { label.classList.remove('filler'); labelInner.textContent = meta.content.source; }
-          else { label.classList.add('filler'); labelInner.textContent = fillerLabel(newHover.id); }
+          shell.position.copy(meta.pos); shell.rotation.set(meta.lean, meta.rotY, 0); shell.scale.copy(meta.scale).multiplyScalar(1.06); shell.visible = true;
+          labelInner.textContent = meta.content.source;
         }
         label.classList.add('visible');
         playHoverTick();
@@ -2380,14 +2417,6 @@ America</h2>
       }
       hovered = newHover;
       proxyPull = 0;
-    }
-    function fillerLabel(id) {
-      // deterministic gibberish from Borges' orthography
-      const letters = 'MCVQXZ';
-      let s = '';
-      let n = id * 2654435761 % 4294967296;
-      for (let i = 0; i < 3; i++) { s += letters[n % letters.length] + '' + (n % 7); n = Math.floor(n / 7) + 13; if (i < 2) s += '. '; }
-      return s;
     }
 
     // ---- OPEN / CLOSE BOOK (preserves original overlay logic) ----
@@ -2474,8 +2503,7 @@ America</h2>
         closeBook();
       } else if (hovered && locked) {
         if (hovered.type === 'shrine') openBook({ source: 'Plunkitt of Tammany Hall', isFullBook: true });
-        else if (hovered.meta.interactive) { playBookPull(); openBook(hovered.meta.content); }
-        else { playDustPuff(); label.animate([{ opacity: 0.55 }, { opacity: 1 }, { opacity: 0.55 }], { duration: 400 }); }
+        else { playBookPull(); openBook(hovered.meta.content); }
       } else if (!locked && !menuOpen) {
         initAudioGraph(); if (audioCtx.state === 'suspended') audioCtx.resume(); startAmbient();
         document.body.requestPointerLock();
@@ -2486,18 +2514,27 @@ America</h2>
     // ==================================================================
     //  COLLISION
     // ==================================================================
-    const coreR = 0.55, outerR = apothem - 0.4;
+    const coreR = 0.55;
     const chasmOuter = moatOuter + 0.22;
+    // the island is a hexagon (circumradius islandOuter); its flat faces only reach the apothem,
+    // so treat solid ground as the inscribed circle to avoid standing over the void at the faces
+    const islandSolid = islandOuter * Math.cos(Math.PI / 6);
+    // hexagon-aware wall clamp: stay clear of the bookcase fronts (case front sits at apothem − 0.45),
+    // but allow closer approach to the two archway walls so the chains read as the barrier
+    const wallNs = [0, 1, 2, 3, 4, 5].map(w => wallNormal(w));
     function allowed(x, z) {
+      for (let w = 0; w < 6; w++) {
+        const lim = (w === 0 || w === 3) ? apothem - 0.25 : apothem - 0.7;
+        if (x * wallNs[w].x + z * wallNs[w].z > lim) return false;
+      }
       const d = Math.hypot(x, z);
-      if (d > outerR) return false;
       // the chasm ring is only crossable on the bridge
-      if (d > islandOuter && d < chasmOuter) {
+      if (d > islandSolid && d < chasmOuter) {
         const onBridge = x > 0 && Math.abs(z) < 0.5;
         if (!onBridge) return false;
       }
-      // don't stand on the pedestal itself
-      if (d <= islandOuter && d < coreR) return false;
+      // don't stand inside the pedestal itself
+      if (d < coreR) return false;
       return true;
     }
 
@@ -2524,8 +2561,8 @@ America</h2>
       }
 
       if (locked && !reading) {
-        // movement
-        const wish = new THREE.Vector3();
+        // movement (reuse hoisted scratch vectors — no per-frame allocation)
+        const wish = _wish.set(0, 0, 0);
         if (keys['KeyW'] || keys['ArrowUp']) wish.z -= 1;
         if (keys['KeyS'] || keys['ArrowDown']) wish.z += 1;
         if (keys['KeyA'] || keys['ArrowLeft']) wish.x -= 1;
@@ -2533,9 +2570,9 @@ America</h2>
         const moving = wish.lengthSq() > 0;
         wish.normalize();
         // to world using yaw
-        const forward = new THREE.Vector3(-Math.sin(yaw), 0, -Math.cos(yaw));
-        const right = new THREE.Vector3(Math.cos(yaw), 0, -Math.sin(yaw));
-        const wishWorld = new THREE.Vector3().addScaledVector(forward, -wish.z).addScaledVector(right, wish.x);
+        const forward = _forward.set(-Math.sin(yaw), 0, -Math.cos(yaw));
+        const right = _right.set(Math.cos(yaw), 0, -Math.sin(yaw));
+        const wishWorld = _wishWorld.set(0, 0, 0).addScaledVector(forward, -wish.z).addScaledVector(right, wish.x);
         const accel = 40;
         vel.addScaledVector(wishWorld, accel * dt);
         // damping
@@ -2548,8 +2585,6 @@ America</h2>
         let nx = camera.position.x + vel.x * dt;
         let nz = camera.position.z + vel.z * dt;
         // outer clamp
-        const nd = Math.hypot(nx, nz);
-        if (nd > outerR) { const a = Math.atan2(nz, nx); nx = Math.cos(a) * outerR; nz = Math.sin(a) * outerR; }
         if (allowed(nx, nz)) { camera.position.x = nx; camera.position.z = nz; }
         else if (allowed(nx, camera.position.z)) { camera.position.x = nx; vel.z = 0; }
         else if (allowed(camera.position.x, nz)) { camera.position.z = nz; vel.x = 0; }
@@ -2607,6 +2642,18 @@ America</h2>
       if (dustMat.userData.shader) dustMat.userData.shader.uniforms.uTime.value = t;
       gradePass.uniforms.uTime.value = t;
 
+      // gate the mirror's render pass: only when the player is close AND looking toward it
+      if (mirrorObj) {
+        const toM = mirrorCenter.clone().sub(camera.position);
+        const near = toM.lengthSq() < 49; // within 7m of the glass
+        let facing = false;
+        if (near) {
+          const fwd = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
+          facing = fwd.dot(toM.normalize()) > -0.25; // anything but looking hard away
+        }
+        mirrorObj.visible = near && facing;
+      }
+
       updateReverb();
 
       // adaptive DPR guard — measured against real wall-clock frame time (not clamped dt)
@@ -2619,15 +2666,23 @@ America</h2>
         const maxDpr = Math.min(devicePixelRatio, 2);
         if (avg > 20 && curPixelRatio > 1.0) {
           curPixelRatio = Math.max(1.0, curPixelRatio - 0.25); dprDropped = true;
-          renderer.setPixelRatio(curPixelRatio); composer.setPixelRatio(curPixelRatio);
+          applyPixelRatio(curPixelRatio);
         } else if (avg < 12 && dprDropped && curPixelRatio < maxDpr) {
           curPixelRatio = Math.min(maxDpr, curPixelRatio + 0.25);
-          renderer.setPixelRatio(curPixelRatio); composer.setPixelRatio(curPixelRatio);
+          applyPixelRatio(curPixelRatio);
           if (curPixelRatio >= maxDpr) dprDropped = false;
         }
       }
 
       composer.render();
+    }
+
+    // composer.setPixelRatio()/setSize() resets every pass to full effective resolution,
+    // so the intentionally half-res bloom target must be re-asserted afterward.
+    function applyPixelRatio(pr) {
+      renderer.setPixelRatio(pr);
+      composer.setPixelRatio(pr);
+      bloom.setSize(innerWidth / 2, innerHeight / 2);
     }
 
     addEventListener('resize', () => {
@@ -2652,7 +2707,7 @@ America</h2>
         finishIntro: () => { renderer.toneMappingExposure = 1.35; bloom.strength = 0.55; introDone = true; composer.render(); },
         exp: (v) => { renderer.toneMappingExposure = v; composer.render(); return v; },
         render: () => composer.render(),
-        state: () => ({ hovered: hovered && (hovered.type + (hovered.meta ? ':' + (hovered.meta.interactive ? hovered.meta.content.source : 'filler') : '')), exposure: renderer.toneMappingExposure, bloom: bloom.strength, books: books.count }),
+        state: () => ({ hovered: hovered && (hovered.type + (hovered.meta ? ':' + hovered.meta.content.source : '')), exposure: renderer.toneMappingExposure, bloom: bloom.strength, books: books.count }),
       };
     }
 
