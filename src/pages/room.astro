@@ -2867,6 +2867,10 @@ America</h2>
     function wireBook() {
       const stage = bookEls.stage;
       stage.addEventListener('click', ev => {
+        // a page turn replaces the well's innerHTML, detaching ev.target — if this click were
+        // allowed to bubble, the document close-handler's e.target.closest('#reading-content')
+        // would then be null and it would close the book. Keep book clicks inside the book.
+        ev.stopPropagation();
         if (flipping) return;
         const r = stage.getBoundingClientRect();
         const x = ev.clientX - r.left;
