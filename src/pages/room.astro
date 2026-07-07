@@ -463,6 +463,114 @@ import '@/styles/global.css';
     }
     .full-book .book-content h2.chapter-title:first-of-type { margin-top: 0; }
 
+    /* ---------- PAGINATED CODEX (page-turning reader) ---------- */
+    #reading-content.full-book-view { padding: 0; gap: 0; height: 90vh; }
+
+    .book-stage {
+      flex: 1; position: relative; display: flex; align-items: center; justify-content: center;
+      padding: 34px 30px; overflow: hidden;
+      perspective: 2400px; perspective-origin: 50% 42%;
+      background:
+        radial-gradient(120% 60% at 50% 0%, rgba(255,250,235,0.45), transparent 55%),
+        linear-gradient(180deg, #2a1e12, #1c130b);
+    }
+    .book-spread { position: relative; display: flex; transform-style: preserve-3d;
+      box-shadow: 0 30px 70px rgba(0,0,0,0.55), 0 6px 18px rgba(0,0,0,0.4); }
+    .book-spread::after { content: ''; position: absolute; top: 0; bottom: 0; left: 50%; width: 30px; transform: translateX(-50%);
+      background: linear-gradient(90deg, rgba(40,26,14,0) 0%, rgba(40,26,14,0.38) 42%, rgba(40,26,14,0.5) 50%, rgba(40,26,14,0.38) 58%, rgba(40,26,14,0) 100%);
+      pointer-events: none; z-index: 5; }
+    .book-stage.single .book-spread::after { display: none; }
+    .book-stage.single #well-left { display: none; }
+
+    .leaf-well { position: relative; overflow: hidden;
+      background: radial-gradient(120% 90% at 50% 0%, rgba(255,250,235,0.5), transparent 55%), linear-gradient(180deg, #efe3c8, #e3d3ac);
+      box-shadow: inset 0 0 60px rgba(120,90,55,0.14); }
+    .leaf-well--left  { border-radius: 3px 0 0 3px; box-shadow: inset 0 0 60px rgba(120,90,55,0.14), inset -22px 0 34px -18px rgba(40,26,14,0.55); }
+    .leaf-well--right { border-radius: 0 3px 3px 0; box-shadow: inset 0 0 60px rgba(120,90,55,0.14), inset  22px 0 34px -18px rgba(40,26,14,0.55); }
+
+    /* shared typography for live pages + offscreen measure box (identical metrics) */
+    .page-text, .book-measure { font-size: 0.98rem; line-height: 1.85; color: #2a2016;
+      text-align: justify; font-family: inherit; box-sizing: border-box; }
+    .page-text p, .book-measure p { margin: 0 0 1.2em 0; }
+    .page-text p.cont:first-child, .book-measure p.cont:first-child { margin-top: 0; }
+    .page-text h2.chapter-title, .book-measure h2.chapter-title {
+      display: block; font-size: 0.9rem; font-weight: 700; font-variant: small-caps;
+      margin: 0 0 1.4rem 0; padding: 0.8rem 1rem; text-align: center; color: #3a1512;
+      background: linear-gradient(180deg, rgba(120,90,55,0.16), rgba(120,90,55,0.06));
+      border-top: 1px solid rgba(70,52,30,0.35); border-bottom: 1px solid rgba(70,52,30,0.35);
+      letter-spacing: 0.14em; text-transform: uppercase; }
+    .book-measure { position: fixed; left: -99999px; top: 0; visibility: hidden; padding: 0; height: auto; }
+
+    .page-text { position: absolute; inset: 48px 42px 52px 42px; overflow: hidden; }
+    .page-text .book-title { font-size: 1.5rem; font-weight: 700; font-variant: small-caps; text-align: center;
+      letter-spacing: 0.1em; color: #3a1512; margin-top: 34%; }
+    .page-text .book-author { text-align: center; color: #5c4a2e; margin: 0.9rem 0 0.3rem; }
+    .page-text .book-subtitle { text-align: center; font-style: italic; color: #6b5838; font-size: 0.85rem;
+      padding-top: 1rem; margin-top: 0.6rem; border-top: 1px solid rgba(70,52,30,0.28); }
+    .page-folio { position: absolute; bottom: 16px; left: 0; right: 0; text-align: center;
+      font-variant: small-caps; letter-spacing: 0.18em; font-size: 0.62rem; color: rgba(70,52,30,0.55); }
+
+    /* the ONE reused animating leaf */
+    .leaf { position: absolute; top: 0; height: 100%; width: 50%; transform-style: preserve-3d; z-index: 20;
+      will-change: transform; display: none; contain: layout paint; }
+    .book-stage.single .leaf { width: 100%; }
+    .leaf.leaf--right { right: 0; left: auto; transform-origin: left center; }
+    .leaf.leaf--left  { left: 0;  right: auto; transform-origin: right center; }
+    .book-stage.single .leaf.leaf--right, .book-stage.single .leaf.leaf--left { left: 0; right: 0; transform-origin: left center; }
+
+    .leaf-face { position: absolute; inset: 0; overflow: hidden; backface-visibility: hidden;
+      background: radial-gradient(120% 90% at 50% 0%, rgba(255,250,235,0.5), transparent 55%), linear-gradient(180deg, #efe3c8, #e3d3ac); }
+    .leaf-face--front { transform: rotateY(0deg);   border-radius: 0 3px 3px 0; }
+    .leaf-face--back  { transform: rotateY(180deg); border-radius: 3px 0 0 3px; filter: brightness(0.985); }
+    .leaf-shade { position: absolute; inset: 0; pointer-events: none;
+      background: linear-gradient(90deg, rgba(30,18,8,0) 0%, rgba(30,18,8,0.35) 100%); opacity: 0; }
+    @media (prefers-reduced-motion: reduce) { .leaf-shade { display: none; } }
+
+    /* left tracker rail */
+    .book-rail { width: 232px; min-width: 232px; display: flex; flex-direction: column; padding: 1.4rem 0 1.1rem;
+      position: relative; background: linear-gradient(180deg, #241a10, #17100a);
+      border-right: 1px solid rgba(216,185,120,0.28); box-shadow: inset -14px 0 26px -18px rgba(0,0,0,0.7); }
+    .rail-title { font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.24em; color: var(--gold);
+      font-weight: 600; text-align: center; padding: 0 1.2rem 1rem; }
+    .rail-chapters { overflow-y: auto; flex: 1 1 auto; min-height: 0; }
+    .rail-chapters::-webkit-scrollbar { width: 5px; }
+    .rail-chapters::-webkit-scrollbar-thumb { background: rgba(216,185,120,0.35); border-radius: 3px; }
+
+    .rail-scrub { position: relative; flex: 0 0 auto; height: 170px; margin: 1.1rem 1.4rem 0.4rem; cursor: pointer; }
+    .rail-scrub-track { position: absolute; left: 50%; top: 0; bottom: 0; width: 2px; transform: translateX(-50%);
+      background: repeating-linear-gradient(180deg, rgba(216,185,120,0.16) 0 1px, transparent 1px 3px);
+      box-shadow: 0 0 0 1px rgba(216,185,120,0.10); border-radius: 2px; }
+    .rail-tick { position: absolute; left: calc(50% - 8px); width: 16px; height: 1px; background: rgba(176,141,87,0.6);
+      pointer-events: auto; cursor: pointer; }
+    .rail-tick:hover { background: var(--gold); box-shadow: 0 0 6px rgba(216,185,120,0.6); }
+    .rail-tick.active { background: var(--gold); width: 20px; height: 2px; }
+    .rail-tick-label { position: absolute; left: 16px; top: -0.6em; white-space: nowrap; font-size: 0.6rem; color: #f4e4bd;
+      background: rgba(20,14,8,0.94); border: 1px solid rgba(216,185,120,0.3); padding: 2px 7px; border-radius: 3px;
+      opacity: 0; transform: translateX(-4px); transition: opacity .12s, transform .12s; pointer-events: none; z-index: 6; }
+    .rail-tick:hover .rail-tick-label { opacity: 1; transform: translateX(0); }
+    .rail-ribbon { position: absolute; left: 50%; width: 18px; height: 18px; margin-left: -9px; transform: translateY(-50%);
+      z-index: 8; cursor: grab; border-radius: 50%;
+      background: radial-gradient(circle at 35% 30%, #f4e4bd, var(--gold) 55%, var(--gold-dim) 100%);
+      box-shadow: 0 1px 4px rgba(0,0,0,0.5), inset 0 0 0 1px rgba(80,55,20,0.6); transition: top .12s ease; }
+    .rail-ribbon.dragging { transition: none; cursor: grabbing; }
+    .rail-folio { text-align: center; font-variant: small-caps; letter-spacing: 0.16em; font-size: 0.72rem;
+      color: #f0deb0; padding: 0.6rem 0.6rem 0; }
+    .rail-folio b { color: var(--gold); font-weight: 600; }
+    .rail-nav { display: flex; justify-content: center; gap: 1.2rem; padding-top: 0.5rem; }
+    .rail-arrow { background: none; border: none; color: rgba(216,185,120,0.7); cursor: pointer; font-size: 1.2rem;
+      line-height: 1; padding: 2px 12px; border-radius: 3px; font-family: inherit; }
+    .rail-arrow:hover { color: #f6e8c6; background: rgba(216,185,120,0.1); }
+    .rail-arrow:disabled { opacity: 0.25; cursor: default; }
+
+    /* full text kept in the DOM for screen readers / find-in-page (the visual codex only holds
+       the current spread); visually hidden but present in the accessibility tree */
+    .book-sr-fulltext { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0;
+      overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; border: 0; }
+
+    /* narrow windows: shrink the rail so the page stage keeps enough width to paginate
+       (the FPS scene is desktop-only, so this only affects narrow desktop windows) */
+    @media (max-width: 700px) { .book-rail { width: 150px; min-width: 150px; } }
+
     /* ---------- EYELID INTRO ---------- */
     #eye-opening {
       position: fixed;
@@ -2420,8 +2528,20 @@ America</h2>
     }
 
     // ---- OPEN / CLOSE BOOK (preserves original overlay logic) ----
-    let isFullBook = false, bookMain = null, scrollRAF = null;
-    function openBook(c) {
+    // Paginated page-turning codex state (see the codex functions below)
+    let isFullBook = false;
+    let bookPages = [], chapterStartPage = [], chapterTitles = [];
+    let N = 0, leafCount = 0, PAGE_STEP = 2;
+    let curPage = 0, targetPage = 0;
+    let bookDims = null;
+    let flipping = false, animating = false, openToken = 0;
+    let bookEls = null;
+    let resizeObs = null, rebuildTimer = null;
+    let ribbonMove = null, ribbonUp = null, lastRibbonUp = 0;
+    let onBookKey = null;
+    let lastTurnSound = 0;
+    let _meas = null;
+    async function openBook(c) {
       reading = true;
       clearHover();
       overlay.classList.add('visible');
@@ -2431,48 +2551,27 @@ America</h2>
         isFullBook = true;
         readingContent.classList.add('full-book-view');
         readingContent.innerHTML = `
-          <nav class="chapter-nav">
-            <div class="chapter-nav-title">Contents</div>
-            <div id="chapter-nav-items"></div>
-          </nav>
-          <div class="book-main" id="book-main">
-            <div class="full-book">
-              <h1 class="book-title">Plunkitt of Tammany Hall</h1>
-              <p class="book-author">By George Washington Plunkitt</p>
-              <p class="book-subtitle">A Series of Very Plain Talks on Very Practical Politics</p>
-              <div class="book-content">${window.plunkittText}</div>
+          <aside class="book-rail">
+            <div class="rail-title">Contents</div>
+            <div class="rail-chapters" id="rail-chapters"></div>
+            <div class="rail-scrub" id="rail-scrub"><div class="rail-scrub-track"></div><div class="rail-ribbon" id="rail-ribbon"></div></div>
+            <div class="rail-folio" id="rail-folio"></div>
+            <div class="rail-nav"><button class="rail-arrow" id="rail-prev" aria-label="Previous page">‹</button><button class="rail-arrow" id="rail-next" aria-label="Next page">›</button></div>
+          </aside>
+          <div class="book-stage" id="book-stage" aria-hidden="true">
+            <div class="book-spread" id="book-spread">
+              <div class="leaf-well leaf-well--left"  id="well-left"></div>
+              <div class="leaf-well leaf-well--right" id="well-right"></div>
+              <div class="leaf" id="the-leaf"><div class="leaf-face leaf-face--front"></div><div class="leaf-face leaf-face--back"></div><div class="leaf-shade"></div></div>
             </div>
-            <div style="margin-top:3rem;padding-top:1.5rem;border-top:1px solid rgba(70,52,30,0.25);text-align:center;color:rgba(70,52,30,0.5);font-size:0.7rem;font-family:monospace;">press ESC or click outside to close</div>
-          </div>`;
-        bookMain = document.getElementById('book-main');
-        const navItems = document.getElementById('chapter-nav-items');
-        const chapters = bookMain.querySelectorAll('.chapter-title');
-        chapters.forEach((ch, i) => {
-          ch.id = 'chapter-' + i;
-          const text = ch.textContent;
-          let displayText = text.match(/^Chapter \d+\./) ? text.replace(/^Chapter \d+\.\s*/, '') : text;
-          const isSection = !text.startsWith('Chapter');
-          const item = document.createElement('div');
-          item.className = 'chapter-nav-item' + (isSection ? ' section' : '');
-          item.textContent = displayText.length > 28 ? displayText.substring(0, 28) + '...' : displayText;
-          item.title = text; item.dataset.index = i;
-          item.addEventListener('click', () => ch.scrollIntoView({ behavior: 'smooth', block: 'start' }));
-          navItems.appendChild(item);
-        });
-        function updateActiveChapter() {
-          const scrollTop = bookMain.scrollTop; let activeIndex = 0;
-          chapters.forEach((ch, i) => { if (ch.offsetTop - 120 <= scrollTop) activeIndex = i; });
-          const items = navItems.querySelectorAll('.chapter-nav-item');
-          items.forEach((item, i) => {
-            const wasActive = item.classList.contains('active');
-            const isActive = i === activeIndex;
-            item.classList.toggle('active', isActive);
-            if (isActive && !wasActive) item.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-          });
-        }
-        bookMain.addEventListener('scroll', () => { if (scrollRAF) cancelAnimationFrame(scrollRAF); scrollRAF = requestAnimationFrame(updateActiveChapter); });
-        setTimeout(updateActiveChapter, 100);
+          </div>
+          <div class="book-sr-fulltext"><h2>Plunkitt of Tammany Hall — full text</h2>${window.plunkittText}</div>`;
         playShrineOpen();
+        const myOpen = ++openToken;
+        // let the flex layout settle (two frames) before measuring for pagination
+        await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+        if (myOpen !== openToken) return;
+        await initPaginatedBook(myOpen);
       } else {
         isFullBook = false;
         readingContent.classList.remove('full-book-view');
@@ -2489,16 +2588,384 @@ America</h2>
       reading = false; isFullBook = false;
       overlay.classList.remove('visible');
       readingContent.classList.remove('full-book-view');
-      if (bookMain) { bookMain.scrollTop = 0; bookMain = null; }
-      if (scrollRAF) { cancelAnimationFrame(scrollRAF); scrollRAF = null; }
+      teardownBook();
+      // drop any arrow/space still physically held from page-turning, so it doesn't drive
+      // the camera once pointer lock is re-acquired
+      keys['ArrowLeft'] = keys['ArrowRight'] = keys['ArrowUp'] = keys['ArrowDown'] = keys['Space'] = false;
       duckAmbient(1.0);
       document.body.requestPointerLock();
       playBookClose();
     }
 
+    // =====================================================================
+    //  PAGINATED PAGE-TURNING CODEX
+    // =====================================================================
+    const SPINE_GUTTER = 30, PAGE_PAD_X = 42, PAGE_PAD_TOP = 48, PAGE_PAD_BOT = 52, MAX_SPREAD_H = 760;
+    const FLIP_FULL = 480, FLIP_MIN = 90, RIFFLE_CAP = 2400;
+    const FLIP_EASING = 'cubic-bezier(0.42,0,0.35,1)';
+
+    const snapToLeaf = p => { p = Math.max(0, Math.min(p, N - 1)); return p - (p % PAGE_STEP); };
+
+    function getMeasureBox(innerW) {
+      if (!_meas) { _meas = document.createElement('div'); _meas.className = 'book-measure'; document.body.appendChild(_meas); }
+      _meas.style.width = innerW + 'px'; _meas.innerHTML = '';
+      return _meas;
+    }
+    function fontsReady() { return (document.fonts && document.fonts.ready) ? document.fonts.ready : Promise.resolve(); }
+
+    async function paginate(rawHTML, innerW, contentH) {
+      await fontsReady();
+      const parse = document.createElement('div'); parse.innerHTML = rawHTML;
+      const nodes = Array.from(parse.children);
+      const meas = getMeasureBox(innerW);
+      const pages = [], starts = [], titles = [];
+      let cur = document.createElement('div');
+      const fits = () => meas.scrollHeight <= contentH + 0.5;
+      const remeasure = () => { meas.innerHTML = ''; meas.appendChild(cur.cloneNode(true)); };
+      const flush = () => { if (cur.childNodes.length) { pages.push(cur.innerHTML); cur = document.createElement('div'); } };
+      for (const node of nodes) {
+        if (node.tagName === 'H2') {
+          flush();
+          const raw = node.textContent;
+          const disp = raw.match(/^Chapter \d+\./) ? raw.replace(/^Chapter \d+\.\s*/, '') : raw;
+          starts.push(pages.length);
+          titles.push({ text: raw, disp, section: !raw.startsWith('Chapter') });
+          cur.appendChild(node.cloneNode(true));
+          continue;
+        }
+        cur.appendChild(node.cloneNode(true)); remeasure();
+        if (fits()) continue;
+        cur.removeChild(cur.lastChild);
+        splitParagraphAcrossPages(node, meas, contentH, pages, flush, () => cur);
+      }
+      flush();
+      return { pages, chapterStartPage: starts, titles };
+    }
+
+    // Fill the current page to the line, then continue the paragraph remainder onto fresh pages.
+    function splitParagraphAcrossPages(pNode, meas, contentH, pages, flush, getCur) {
+      const words = pNode.textContent.split(/(\s+)/);
+      let i = 0, firstFrag = true;
+      const fitsWith = frag => { const cur = getCur(); meas.innerHTML = ''; meas.appendChild(cur.cloneNode(true)); meas.appendChild(frag); return meas.scrollHeight <= contentH + 0.5; };
+      while (i < words.length) {
+        const cur = getCur();
+        const frag = document.createElement('p');
+        if (!firstFrag) frag.className = 'cont';
+        let lo = i + 1, hi = words.length, best = 0;
+        while (lo <= hi) {
+          const mid = (lo + hi) >> 1;
+          frag.textContent = words.slice(i, mid).join('');
+          if (fitsWith(frag.cloneNode(true))) { best = mid; lo = mid + 1; } else hi = mid - 1;
+        }
+        if (best === 0) {
+          if (cur.childNodes.length) { flush(); continue; }
+          best = i + 1;
+        }
+        frag.textContent = words.slice(i, best).join('').replace(/^\s+/, '').replace(/\s+$/, '');
+        cur.appendChild(frag);
+        firstFrag = false;
+        i = best;
+        if (i < words.length) flush();
+      }
+    }
+
+    function computeBookDims() {
+      const stage = bookEls ? bookEls.stage : document.getElementById('book-stage');
+      const cs = getComputedStyle(stage);
+      const padX = parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight);
+      const padY = parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom);
+      const stageW = stage.clientWidth - padX;
+      const stageH = stage.clientHeight - padY;
+      const single = PAGE_STEP === 1;
+      const spreadH = Math.min(stageH, MAX_SPREAD_H);
+      let pageW, spreadW;
+      if (single) { pageW = Math.floor(Math.min(stageW, spreadH * 0.72)); spreadW = pageW; }
+      else { pageW = Math.floor(Math.min(stageW, spreadH * 1.5) / 2); spreadW = pageW * 2; }
+      const pageH = Math.floor(spreadH);
+      const innerW = pageW - 2 * PAGE_PAD_X;
+      const contentH = pageH - PAGE_PAD_TOP - PAGE_PAD_BOT;
+      bookDims = { spreadW, spreadH: pageH, pageW, pageH, innerW, contentH };
+      const spread = document.getElementById('book-spread');
+      spread.style.width = spreadW + 'px'; spread.style.height = pageH + 'px';
+      document.querySelectorAll('.leaf-well').forEach(w => { w.style.width = pageW + 'px'; w.style.height = pageH + 'px'; });
+      const leaf = document.getElementById('the-leaf');
+      leaf.style.width = pageW + 'px'; leaf.style.height = pageH + 'px';
+      return innerW > 40 && contentH > 40;
+    }
+
+    function pageHTML(i) {
+      const body = (i >= 0 && i < N) ? bookPages[i] : '';
+      const folio = (i > 0 && i < N && body !== '') ? `<div class="page-folio">${i}</div>` : '';
+      return `<div class="page-text">${body}</div>${folio}`;
+    }
+    function renderSpread(p) {
+      if (PAGE_STEP === 2) { bookEls.wellL.innerHTML = pageHTML(p); bookEls.wellR.innerHTML = pageHTML(p + 1); }
+      else { bookEls.wellR.innerHTML = pageHTML(p); }
+    }
+
+    function turnSound() {
+      const now = performance.now();
+      if (now - lastTurnSound < 45) return;
+      lastTurnSound = now; playPageTurn();
+    }
+
+    function animateLeaf(leaf, shade, forward, dur) {
+      const kf = forward ? [{ transform: 'rotateY(0deg)' }, { transform: 'rotateY(-180deg)' }]
+                         : [{ transform: 'rotateY(0deg)' }, { transform: 'rotateY(180deg)' }];
+      const a = leaf.animate(kf, { duration: dur, easing: FLIP_EASING, fill: 'forwards' });
+      shade.animate([{ opacity: 0 }, { opacity: 0.5 }, { opacity: 0 }], { duration: dur, easing: 'linear' });
+      return a;
+    }
+
+    function flipOne(fromPage, dir, dur) {
+      return new Promise(resolve => {
+        const forward = dir > 0;
+        const toPage = fromPage + dir;
+        const { leaf, front, back, shade, wellL, wellR } = bookEls;
+        if (PAGE_STEP === 2) {
+          if (forward) {
+            front.innerHTML = pageHTML(fromPage + 1);   // old recto (leaf front, on right)
+            back.innerHTML  = pageHTML(toPage);          // new verso (leaf back, lands left)
+            wellR.innerHTML = pageHTML(toPage + 1);      // reveal new recto under the lifting leaf
+          } else {
+            front.innerHTML = pageHTML(fromPage);        // old verso (leaf front, on left)
+            back.innerHTML  = pageHTML(toPage + 1);      // new recto (leaf back, lands right)
+            wellL.innerHTML = pageHTML(toPage);          // reveal new verso under the lifting leaf
+          }
+        } else {
+          front.innerHTML = pageHTML(fromPage);
+          back.innerHTML  = pageHTML(toPage);
+        }
+        leaf.className = 'leaf ' + (forward ? 'leaf--right' : 'leaf--left');
+        leaf.style.display = 'block';
+        void leaf.offsetWidth;
+        const commitRest = () => {
+          if (PAGE_STEP === 2) { if (forward) wellL.innerHTML = pageHTML(toPage); else wellR.innerHTML = pageHTML(toPage + 1); }
+          else { wellR.innerHTML = pageHTML(toPage); }
+          leaf.style.display = 'none';
+        };
+        if (dur <= 0) { commitRest(); resolve(); return; }
+        const a = animateLeaf(leaf, shade, forward, dur);
+        bookEls.currentAnim = a;
+        const done = () => { if (bookEls) bookEls.currentAnim = null; commitRest(); resolve(); };
+        a.finished.then(done).catch(done);
+      });
+    }
+
+    // Target-chasing animator: exactly ONE loop ever runs (guarded by `animating`), so no two
+    // triggers can ever drive the single shared leaf at once. requestPage only moves the target;
+    // the animator turns leaves one at a time toward it, re-planning if the target moves mid-riffle.
+    // The exact leaf count between where you are and where you're going is always turned (and sounded).
+    function requestPage(p) {
+      if (!bookEls || !N) return;
+      p = snapToLeaf(p | 0);
+      targetPage = p;
+      if (reduceMotion) { const changed = p !== curPage; curPage = p; if (changed) turnSound(); renderSpread(curPage); updateRail(); return; }
+      updateRailTarget(targetPage);
+      if (!animating) runAnimator();
+    }
+    async function runAnimator() {
+      if (animating) return;
+      animating = true; flipping = true;
+      const myOpen = openToken;                                // a teardown/reopen bumps this → stale loop bails
+      const live = () => bookEls && isFullBook && openToken === myOpen;
+      try {
+        while (live() && curPage !== targetPage) {
+          const legTarget = targetPage;                        // plan a leg toward the current target
+          const dir = legTarget > curPage ? PAGE_STEP : -PAGE_STEP;
+          const n = Math.abs(legTarget - curPage) / PAGE_STEP;
+          const budget = Math.floor(RIFFLE_CAP / FLIP_MIN);    // ~26 visible flips affordable
+          const stride = n <= 1 ? 1 : Math.max(1, Math.ceil(n / budget));
+          const visible = Math.ceil(n / stride);
+          const per = n === 1 ? FLIP_FULL : Math.max(FLIP_MIN, Math.min(FLIP_FULL, RIFFLE_CAP / visible));
+          for (let i = 0; i < n; i++) {
+            if (!live()) return;
+            if (targetPage !== legTarget) break;                // re-targeted → re-plan in outer loop
+            turnSound();
+            const doAnim = (i % stride === 0) || (i === n - 1);
+            await flipOne(curPage, dir, doAnim ? per : 0);
+            if (!live()) return;
+            curPage += dir;
+            updateRail(true);
+          }
+        }
+      } finally {
+        if (openToken === myOpen) {                             // only reset flags if we still own this book
+          animating = false; flipping = false;
+          if (bookEls && isFullBook) { renderSpread(curPage); updateRail(); }
+        }
+      }
+    }
+    function nextLeaf() { requestPage((animating ? targetPage : curPage) + PAGE_STEP); }
+    function prevLeaf() { requestPage((animating ? targetPage : curPage) - PAGE_STEP); }
+
+    function buildRail() {
+      const list = document.getElementById('rail-chapters');
+      const scrub = document.getElementById('rail-scrub');
+      list.innerHTML = '';
+      scrub.querySelectorAll('.rail-tick').forEach(t => t.remove());
+      chapterTitles.forEach((t, i) => {
+        const item = document.createElement('div');
+        item.className = 'chapter-nav-item' + (t.section ? ' section' : '');
+        item.textContent = t.disp.length > 28 ? t.disp.slice(0, 28) + '…' : t.disp;
+        item.title = t.text; item.dataset.i = i;
+        item.addEventListener('click', () => requestPage(chapterStartPage[i]));
+        list.appendChild(item);
+        const tick = document.createElement('div'); tick.className = 'rail-tick'; tick.dataset.i = i;
+        tick.style.top = (N > 1 ? chapterStartPage[i] / (N - 1) : 0) * 100 + '%';
+        tick.innerHTML = `<span class="rail-tick-label">${t.disp}</span>`;
+        tick.addEventListener('click', ev => { ev.stopPropagation(); requestPage(chapterStartPage[i]); });
+        scrub.appendChild(tick);
+      });
+    }
+    function fracFromEvent(scrub, ev) { const r = scrub.getBoundingClientRect(); return Math.min(1, Math.max(0, (ev.clientY - r.top) / r.height)); }
+    function wireRibbon() {
+      const scrub = document.getElementById('rail-scrub');
+      const ribbon = document.getElementById('rail-ribbon');
+      let dragging = false;
+      ribbon.addEventListener('pointerdown', ev => { dragging = true; ribbon.classList.add('dragging'); ev.preventDefault(); ev.stopPropagation(); });
+      scrub.addEventListener('pointerdown', ev => { if (ev.target === ribbon || ev.target.classList.contains('rail-tick')) return; requestPage(Math.round(fracFromEvent(scrub, ev) * (N - 1))); });
+      // idempotent: drop any prior document listeners before re-adding (defends against a double-wire)
+      if (ribbonMove) document.removeEventListener('pointermove', ribbonMove);
+      if (ribbonUp) document.removeEventListener('pointerup', ribbonUp);
+      ribbonMove = ev => { if (!dragging) return; const f = fracFromEvent(scrub, ev); ribbon.style.top = (f * 100) + '%'; previewFolio(Math.round(f * (N - 1))); };
+      ribbonUp = ev => { if (!dragging) return; dragging = false; ribbon.classList.remove('dragging'); lastRibbonUp = performance.now(); ev.stopPropagation(); requestPage(Math.round(fracFromEvent(scrub, ev) * (N - 1))); };
+      document.addEventListener('pointermove', ribbonMove);
+      document.addEventListener('pointerup', ribbonUp);
+    }
+    function updateRail() {
+      const ribbon = document.getElementById('rail-ribbon');
+      const folio = document.getElementById('rail-folio');
+      const f = N > 1 ? curPage / (N - 1) : 0;
+      if (ribbon && !ribbon.classList.contains('dragging')) ribbon.style.top = (f * 100) + '%';
+      if (folio) folio.innerHTML = `Page <b>${curPage + 1}</b> of <b>${N}</b>`;
+      let active = 0; for (let i = 0; i < chapterStartPage.length; i++) { if (chapterStartPage[i] <= curPage + PAGE_STEP - 1) active = i; }
+      document.querySelectorAll('#rail-chapters .chapter-nav-item').forEach((el, i) => el.classList.toggle('active', i === active));
+      document.querySelectorAll('#rail-scrub .rail-tick').forEach((el, i) => el.classList.toggle('active', i === active));
+      const prev = document.getElementById('rail-prev'), next = document.getElementById('rail-next');
+      if (prev) prev.disabled = curPage <= 0;
+      if (next) next.disabled = curPage >= N - PAGE_STEP;
+    }
+    function updateRailTarget(p) { const ribbon = document.getElementById('rail-ribbon'); if (ribbon && N > 1) ribbon.style.top = (p / (N - 1) * 100) + '%'; }
+    function previewFolio(p) { const folio = document.getElementById('rail-folio'); if (folio) folio.innerHTML = `Page <b>${p + 1}</b> of <b>${N}</b>`; }
+
+    async function paginateAndPlace() {
+      if (!computeBookDims()) return null;
+      const r = await paginate(window.plunkittText, bookDims.innerW, bookDims.contentH);
+      const titlePage = `<h1 class="book-title">Plunkitt of Tammany Hall</h1><p class="book-author">By George Washington Plunkitt</p><p class="book-subtitle">A Series of Very Plain Talks on Very Practical Politics</p>`;
+      const pages = [titlePage, ...(PAGE_STEP === 2 ? [''] : []), ...r.pages];
+      const starts = r.chapterStartPage.map(p => p + (PAGE_STEP === 2 ? 2 : 1));
+      if (pages.length % PAGE_STEP) pages.push('');
+      return { pages, starts, titles: r.titles };
+    }
+    // commit paginated data into module state (only the current open/rebuild ever calls this)
+    function applyBookData(d) {
+      bookPages = d.pages; chapterStartPage = d.starts; chapterTitles = d.titles;
+      N = bookPages.length; leafCount = N / PAGE_STEP;
+    }
+
+    function wireBook() {
+      const stage = bookEls.stage;
+      stage.addEventListener('click', ev => {
+        if (flipping) return;
+        const r = stage.getBoundingClientRect();
+        const x = ev.clientX - r.left;
+        if (x > r.width * 0.62) nextLeaf();
+        else if (x < r.width * 0.38) prevLeaf();
+      });
+      document.getElementById('rail-prev').addEventListener('click', ev => { ev.stopPropagation(); prevLeaf(); });
+      document.getElementById('rail-next').addEventListener('click', ev => { ev.stopPropagation(); nextLeaf(); });
+      wireRibbon();
+      window.addEventListener('keydown', onBookKey);
+      // only re-paginate on a genuine size change (ResizeObserver fires once on observe())
+      let roW = stage.clientWidth, roH = stage.clientHeight;
+      resizeObs = new ResizeObserver(() => {
+        const w = stage.clientWidth, h = stage.clientHeight;
+        if (w === roW && h === roH) return;
+        roW = w; roH = h;
+        if (rebuildTimer) clearTimeout(rebuildTimer);
+        rebuildTimer = setTimeout(rebuildBook, 250);
+      });
+      resizeObs.observe(stage);
+    }
+    function rebuildBook() {
+      if (!isFullBook || !bookEls) return;
+      // never reflow while a riffle is running — the animator owns curPage/targetPage; defer until idle
+      if (animating) { rebuildTimer = setTimeout(rebuildBook, 250); return; }
+      const myOpen = openToken;
+      const frac = N > 1 ? curPage / (N - 1) : 0;
+      const stage = bookEls.stage;
+      const single = stage.clientWidth < 620 || (window.matchMedia && window.matchMedia('(max-width:680px)').matches);
+      stage.classList.toggle('single', single);
+      PAGE_STEP = single ? 1 : 2;
+      paginateAndPlace().then(d => {
+        if (myOpen !== openToken || !isFullBook || !bookEls || !d) return;
+        applyBookData(d);
+        curPage = targetPage = snapToLeaf(Math.round(frac * (N - 1)));
+        buildRail(); renderSpread(curPage); updateRail();
+      });
+    }
+
+    const NAV_KEYS = ['ArrowRight', 'ArrowLeft', 'Space', 'PageDown', 'PageUp', 'Home', 'End'];
+    onBookKey = e => {
+      if (!reading || !isFullBook || !N) return;
+      if (!NAV_KEYS.includes(e.code)) return;
+      e.preventDefault();
+      if (e.repeat) return;                       // discrete turns; tap repeatedly to riffle further
+      const base = animating ? targetPage : curPage;
+      if (e.code === 'ArrowRight') nextLeaf();
+      else if (e.code === 'ArrowLeft') prevLeaf();
+      else if (e.code === 'Space' || e.code === 'PageDown') requestPage(base + 10 * PAGE_STEP);
+      else if (e.code === 'PageUp') requestPage(base - 10 * PAGE_STEP);
+      else if (e.code === 'Home') requestPage(0);
+      else if (e.code === 'End') requestPage((leafCount - 1) * PAGE_STEP);
+    };
+
+    async function initPaginatedBook(myOpen) {
+      const stage = document.getElementById('book-stage');
+      const single = stage.clientWidth < 620 || (window.matchMedia && window.matchMedia('(max-width:680px)').matches);
+      stage.classList.toggle('single', single);
+      PAGE_STEP = single ? 1 : 2;
+      bookEls = {
+        stage,
+        spread: document.getElementById('book-spread'),
+        wellL: document.getElementById('well-left'),
+        wellR: document.getElementById('well-right'),
+        leaf: document.getElementById('the-leaf'),
+        front: document.querySelector('#the-leaf .leaf-face--front'),
+        back: document.querySelector('#the-leaf .leaf-face--back'),
+        shade: document.querySelector('#the-leaf .leaf-shade'),
+        currentAnim: null
+      };
+      curPage = 0; targetPage = 0;
+      wireBook();   // attach listeners + ResizeObserver first, so a later widen/rotate can recover
+                    // even if this initial measure is too narrow to paginate
+      let d = await paginateAndPlace();
+      if (myOpen !== openToken || !bookEls || !isFullBook) return;   // superseded/closed while paginating
+      if (!d) { await new Promise(r => requestAnimationFrame(r)); d = await paginateAndPlace(); if (myOpen !== openToken || !bookEls || !isFullBook || !d) return; }
+      applyBookData(d);
+      buildRail(); renderSpread(0); updateRail();
+    }
+
+    function teardownBook() {
+      openToken++; flipping = false; animating = false;
+      if (bookEls && bookEls.currentAnim) { try { bookEls.currentAnim.cancel(); } catch (e) {} }
+      if (resizeObs) { resizeObs.disconnect(); resizeObs = null; }
+      if (rebuildTimer) { clearTimeout(rebuildTimer); rebuildTimer = null; }
+      if (onBookKey) { window.removeEventListener('keydown', onBookKey); }
+      if (ribbonMove) { document.removeEventListener('pointermove', ribbonMove); ribbonMove = null; }
+      if (ribbonUp) { document.removeEventListener('pointerup', ribbonUp); ribbonUp = null; }
+      if (_meas) { _meas.remove(); _meas = null; }
+      bookPages = []; chapterStartPage = []; chapterTitles = []; N = 0; leafCount = 0;
+      curPage = 0; targetPage = 0; bookDims = null; bookEls = null;
+    }
+
     document.addEventListener('click', e => {
       if (e.target.closest('#start-prompt a')) return;
       if (reading) {
+        // swallow the stray click that can follow a ribbon drag-release (auto-expires, so it
+        // never eats a later genuine click)
+        if (performance.now() - lastRibbonUp < 220) return;
         if (isFullBook && e.target.closest('#reading-content')) return;
         closeBook();
       } else if (hovered && locked) {
