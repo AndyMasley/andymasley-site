@@ -37,7 +37,10 @@ const keywordsContent = keywords && keywords.length > 0 ? keywords.join(', ') : 
 const resolvedOgTitle = ogTitle || title;
 const siteOrigin = Astro.site || Astro.url.origin;
 const currentPath = Astro.url.pathname;
-const resolvedOgImagePath = ogImage || "/og/default.png";
+// ?v=2 busts social-platform scrape caches after the 2026 card redesign —
+// platforms cache og:image by URL, so a same-URL re-render would show the old
+// card indefinitely. Bump the version if the default card is redesigned again.
+const resolvedOgImagePath = ogImage || "/og/default.png?v=2";
 const resolvedOgImage = new URL(resolvedOgImagePath, siteOrigin).href;
 const resolvedOgImageAlt = ogImageAlt || resolvedOgTitle;
 const canonicalHref = canonicalUrl
