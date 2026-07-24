@@ -52,13 +52,12 @@ const units = physicsTopics.map(topic => {
     <a href="#advice" class="unit-nav__link">Advice</a>
   </nav>
 
+  <div class="units">
   {units.map(unit => (
     <details class="unit" id={`unit-${unit.id}`}>
       <summary class="unit__summary">
-        <h2 class="unit__title">
-          {unit.label}
-          <span class="unit__count">{unit.count} videos</span>
-        </h2>
+        <h2 class="unit__title">{unit.label}</h2>
+        <span class="unit__count">{unit.count} videos</span>
       </summary>
 
       <div class="unit__body">
@@ -66,7 +65,7 @@ const units = physicsTopics.map(topic => {
           <details class="subtopic">
             <summary class="subtopic__title">
               {subtopic.name}
-              <span class="subtopic__count">{subtopic.videos.length}</span>
+              <span class="subtopic__count">{subtopic.videos.length} {subtopic.videos.length === 1 ? 'video' : 'videos'}</span>
             </summary>
             <div class="video-grid">
               {subtopic.videos.map(video => (
@@ -80,6 +79,7 @@ const units = physicsTopics.map(topic => {
       </div>
     </details>
   ))}
+  </div>
 
   <div class="divider"><div class="divider-diamond"></div></div>
 
@@ -269,15 +269,46 @@ const units = physicsTopics.map(topic => {
   }
 
   /* Units (collapsible) */
+  .units {
+    border-bottom: 1px solid var(--border-subtle);
+    margin-bottom: var(--space-xl);
+  }
+
   .unit {
-    margin-bottom: var(--space-md);
+    border-top: 1px solid var(--border-subtle);
     scroll-margin-top: 48px;
+    margin-bottom: 0;
+  }
+
+  .subtopic {
+    margin-bottom: 0;
   }
 
   .unit__summary {
-    padding-bottom: 0.5rem;
-    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: baseline;
+    gap: 0.6rem;
+    padding: 0.85rem 0;
     cursor: pointer;
+    list-style: none;
+  }
+
+  .unit__summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .unit__summary::before {
+    content: '▸';
+    font-size: 0.85rem;
+    line-height: 1;
+    color: var(--dim);
+    flex-shrink: 0;
+    transition: transform 0.2s ease;
+    transform-origin: 50% 55%;
+  }
+
+  .unit[open] > .unit__summary::before {
+    transform: rotate(90deg);
   }
 
   .unit__summary:hover .unit__title {
@@ -285,52 +316,46 @@ const units = physicsTopics.map(topic => {
   }
 
   .unit__body {
-    padding-top: var(--space-md);
-    margin-bottom: var(--space-lg);
+    padding: 0 0 1rem 1.45rem;
   }
 
   .unit__title {
     font-family: var(--font-editorial);
-    font-size: clamp(1.45rem, 1.2rem + 0.35vw, 1.75rem);
+    font-size: 1.15rem;
     font-weight: 600;
-    line-height: 1.12;
-    letter-spacing: -0.025em;
+    line-height: 1.35;
+    letter-spacing: -0.01em;
     color: var(--text);
     margin: 0;
-    display: flex;
-    align-items: baseline;
-    gap: var(--space-sm);
     flex: 1;
     transition: color 0.15s;
   }
 
   .unit__count {
-    font-size: 0.62rem;
+    flex-shrink: 0;
+    white-space: nowrap;
+    font-size: 0.65rem;
     font-weight: 500;
     color: var(--dim);
     font-family: var(--font-mono);
     letter-spacing: 0.08em;
     text-transform: uppercase;
+    font-variant-numeric: tabular-nums;
   }
 
   /* Subtopics (collapsible) */
-  .subtopic {
-    margin-bottom: 0.25rem;
-  }
-
   .subtopic__title {
     display: flex;
-    align-items: center;
-    gap: var(--space-sm);
-    padding: 10px 0;
-    font-size: 0.9rem;
+    align-items: baseline;
+    gap: 0.6rem;
+    padding: 0.55rem 0;
+    font-size: 0.92rem;
     font-weight: 600;
     color: var(--text);
     cursor: pointer;
     list-style: none;
-    border-radius: 0;
-    border-bottom: 1px solid var(--border-subtle);
-    transition: color 0.15s, border-color 0.15s;
+    border-top: 1px solid var(--border-subtle);
+    transition: color 0.15s;
   }
 
   .subtopic__title::-webkit-details-marker {
@@ -338,10 +363,12 @@ const units = physicsTopics.map(topic => {
   }
 
   .subtopic__title::before {
-    content: '▶';
-    font-size: 0.5rem;
+    content: '▸';
+    font-size: 0.75rem;
+    line-height: 1;
     color: var(--dim);
     transition: transform 0.2s ease;
+    transform-origin: 50% 55%;
     flex-shrink: 0;
   }
 
@@ -351,17 +378,19 @@ const units = physicsTopics.map(topic => {
 
   .subtopic__title:hover {
     color: var(--accent);
-    border-bottom-color: var(--accent);
   }
 
   .subtopic__count {
-    font-size: 0.62rem;
+    flex-shrink: 0;
+    white-space: nowrap;
+    font-size: 0.65rem;
     font-weight: 500;
     color: var(--dim);
     font-family: var(--font-mono);
     margin-left: auto;
-    letter-spacing: 0.06em;
+    letter-spacing: 0.08em;
     text-transform: uppercase;
+    font-variant-numeric: tabular-nums;
   }
 
   /* Video grid */
@@ -369,9 +398,9 @@ const units = physicsTopics.map(topic => {
     display: flex;
     flex-direction: column;
     gap: 0;
-    padding: 0 0 0.6rem 18px;
+    padding: 0.1rem 0 0.75rem 1rem;
     border-left: 1px solid var(--border-subtle);
-    margin-left: 6px;
+    margin-left: 0.3rem;
   }
 
   .video-item__num {
@@ -385,20 +414,22 @@ const units = physicsTopics.map(topic => {
 
   .video-item {
     display: block;
-    padding: 8px 0;
+    padding: 7px 0;
     border-radius: 0;
-    border-bottom: 1px solid var(--border-subtle);
     text-decoration: none;
     color: var(--text);
     font-family: var(--font-editorial);
     font-size: 0.95rem;
     line-height: 1.4;
-    transition: color 0.15s, border-color 0.15s;
+    transition: color 0.15s;
+  }
+
+  .video-item + .video-item {
+    border-top: 1px solid var(--border-subtle);
   }
 
   .video-item:hover {
     color: var(--accent);
-    border-bottom-color: var(--accent);
   }
 
   .unit-dropdown {
@@ -420,10 +451,10 @@ const units = physicsTopics.map(topic => {
   }
 
   .unit-dropdown summary::before {
-    content: '▶';
+    content: '▸';
     display: inline-block;
     margin-right: 0.55rem;
-    font-size: 0.55rem;
+    font-size: 0.8rem;
     color: var(--dim);
     transition: transform 0.2s ease;
   }
@@ -482,13 +513,15 @@ const units = physicsTopics.map(topic => {
   /* Responsive */
   @media (max-width: 600px) {
     .unit__title {
-      font-size: 1.1rem;
-      flex-direction: column;
-      gap: 2px;
+      font-size: 1.02rem;
+    }
+
+    .unit__body {
+      padding-left: 0.9rem;
     }
 
     .video-item {
-      padding: 6px 6px;
+      padding: 6px 0;
     }
 
     .advice-content {
