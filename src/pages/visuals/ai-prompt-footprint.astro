@@ -138,7 +138,10 @@ const structuredData = [
         Enter an average day of AI use and this tool adds it up into one carbon and water cost, set
         against your own footprint and the everyday things around it. Numbers for AI's energy and water come from
         <a href="https://huggingface.co/spaces/genai-impact/ecologits-calculator" target="_blank" rel="noopener">EcoLogits</a>,
-        an open-source estimator of the energy, carbon, and water behind each AI model. For carbon I
+        an open-source estimator of the energy, carbon, and water behind each AI model. The Claude
+        numbers are the shakiest here: Anthropic hasn't said how Claude is built, so EcoLogits has
+        to guess, and its guess might run low
+        (<a href="#methodology" onclick="document.getElementById('methodology').open=true">more in the methodology</a>). For carbon I
         use the average grid intensity of the region you pick (not EcoLogits' single whole-world
         average) plus the hardware's embodied emissions; everything else is sourced in the methodology
         below. Training is excluded as too uncertain, but split across all users it
@@ -204,7 +207,7 @@ const structuredData = [
         </div>
         <p class="aipf-fine" id="aipf-grid-note"></p>
         <p class="aipf-fine">Excludes training, image and video generation, and retries.</p>
-        <p class="aipf-fine">*Anthropic has never published Claude's architecture. EcoLogits assumes the Claude Opus and Sonnet models are mixture-of-experts designs that activate only a fraction of their parameters per token; some analysts read the public evidence as pointing to dense models that use all of them on every token. If they're right, the Claude figures here are likely underestimates. More in the methodology below.</p>
+        <p class="aipf-fine">*A note on the Claude models: Anthropic has never said how Claude is built, so EcoLogits has to guess. Its guess is that Claude Opus and Sonnet only use a fraction of their parameters at a time. Some people who follow this closely think Claude actually uses all of them on every token, and if that's right, the Claude numbers here are too low. <a href="#methodology" onclick="document.getElementById('methodology').open=true">More in the methodology below</a>.</p>
       </div>
     </div>
 
@@ -220,30 +223,30 @@ const structuredData = [
       <div class="aipf-bars" id="aipf-cut-bars" aria-live="polite"></div>
     </div>
 
-    <details class="aipf-method">
+    <details class="aipf-method" id="methodology">
       <summary>How these numbers are made</summary>
       <div class="aipf-method-body">
         <p>
-          <strong>Per-model AI estimates.</strong> Energy, carbon, and water per prompt are
-          computed with the open-source <a href="https://ecologits.ai/" target="_blank" rel="noopener">EcoLogits</a>
-          library (v0.10), the engine behind the
-          <a href="https://huggingface.co/spaces/genai-impact/ecologits-calculator" target="_blank" rel="noopener">EcoLogits calculator</a>;
-          the model list is current as of June 2026. EcoLogits estimates electricity from each
-          model's (active) parameter count and output length, and adds the embodied impact of
-          building the hardware. The low to high range is EcoLogits' own 95% confidence interval,
-          mostly uncertainty in the parameter counts of closed models. One assumption worth
-          flagging: Anthropic has never published Claude's architecture, and
+          <strong>Per-model AI estimates.</strong> The energy, carbon, and water numbers for each
+          prompt come from the open-source <a href="https://ecologits.ai/" target="_blank" rel="noopener">EcoLogits</a>
+          library (v0.10), the same code that runs the
+          <a href="https://huggingface.co/spaces/genai-impact/ecologits-calculator" target="_blank" rel="noopener">EcoLogits calculator</a>.
+          The model list is current as of June 2026. EcoLogits estimates electricity from how big
+          each model is (really, how many parameters it uses on each token) and how long the reply
+          is, then adds the cost of manufacturing the hardware. The low and high ends are
+          EcoLogits' own 95% confidence interval, which mostly comes down to nobody outside these
+          companies knowing how big the closed models really are. One of its guesses matters a lot
+          here: Anthropic has never said how Claude is built, and
           <a href="https://github.com/genai-impact/ecologits/blob/main/ecologits/data/models.json" target="_blank" rel="noopener">EcoLogits' model data</a>
-          guesses that the Claude Opus and Sonnet models are mixture-of-experts designs that
-          activate only a fraction of their parameters for each token (every Claude entry is
-          flagged "model-arch-not-released"). Some analysts read the public evidence — latency
-          and pricing patterns, Anthropic's own framing — as pointing the other way, to dense
-          models that use all of their parameters on every token, while others guess they are
-          very large mixture-of-experts models. If the dense reading is right, EcoLogits'
-          Claude figures likely underestimate the real energy per prompt. Water is its
-          water-consumption footprint — water actually consumed (evaporated in data-center cooling
-          and in generating the electricity), not withdrawn and returned. Every water figure on this
-          page is consumptive, so they compare on the same basis.
+          assumes Claude Opus and Sonnet are mixture-of-experts models, which would mean they only
+          use a fraction of their parameters on any given token (it marks every Claude entry
+          "model-arch-not-released"). People who track this disagree. Some think the clues we do
+          have, like Claude's speed and pricing, point to dense models that use every parameter
+          every time. Others think Claude is a very large mixture-of-experts. If the dense camp is
+          right, the Claude numbers on this page are probably too low. The water numbers count
+          consumption, not withdrawal: water that is actually gone, evaporated cooling the data
+          center or generating its electricity, not water taken in and then returned. Every water
+          figure on this page works this way, so the comparisons are apples to apples.
         </p>
         <p>
           <strong>Carbon basis.</strong>
