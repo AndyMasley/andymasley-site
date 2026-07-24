@@ -204,6 +204,7 @@ const structuredData = [
         </div>
         <p class="aipf-fine" id="aipf-grid-note"></p>
         <p class="aipf-fine">Excludes training, image and video generation, and retries.</p>
+        <p class="aipf-fine">*Anthropic has never published Claude's architecture. EcoLogits assumes the Claude Opus and Sonnet models are mixture-of-experts designs that activate only a fraction of their parameters per token; some analysts read the public evidence as pointing to dense models that use all of them on every token. If they're right, the Claude figures here are likely underestimates. More in the methodology below.</p>
       </div>
     </div>
 
@@ -230,7 +231,16 @@ const structuredData = [
           the model list is current as of June 2026. EcoLogits estimates electricity from each
           model's (active) parameter count and output length, and adds the embodied impact of
           building the hardware. The low to high range is EcoLogits' own 95% confidence interval,
-          mostly uncertainty in the parameter counts of closed models. Water is its
+          mostly uncertainty in the parameter counts of closed models. One assumption worth
+          flagging: Anthropic has never published Claude's architecture, and
+          <a href="https://github.com/genai-impact/ecologits/blob/main/ecologits/data/models.json" target="_blank" rel="noopener">EcoLogits' model data</a>
+          guesses that the Claude Opus and Sonnet models are mixture-of-experts designs that
+          activate only a fraction of their parameters for each token (every Claude entry is
+          flagged "model-arch-not-released"). Some analysts read the public evidence — latency
+          and pricing patterns, Anthropic's own framing — as pointing the other way, to dense
+          models that use all of their parameters on every token, while others guess they are
+          very large mixture-of-experts models. If the dense reading is right, EcoLogits'
+          Claude figures likely underestimate the real energy per prompt. Water is its
           water-consumption footprint — water actually consumed (evaporated in data-center cooling
           and in generating the electricity), not withdrawn and returned. Every water figure on this
           page is consumptive, so they compare on the same basis.
