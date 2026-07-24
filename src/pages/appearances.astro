@@ -32,23 +32,94 @@ const groups = [
 
 <SectionPage
   title="Appearances"
-  lede="Podcasts, interviews, and a few places where my work has shown up outside the site itself."
   description="Podcasts and other appearances"
   ogImage="/og/page/appearances.png"
 >
-  {groups.map(group => (
-    <section aria-label={group.heading}>
-      <h2 class="annotated-list__group">{group.heading}</h2>
-      <ul class="annotated-list">
-        {group.items.map(item => (
-          <li class="annotated-list__item">
-            <div class="annotated-list__row">
-              <a href={item.href} target="_blank" rel="noopener" class="annotated-list__title">{item.title}</a>
+  <ul class="annotated-list">
+    {groups.map(group => (
+      <li class="annotated-list__item appearance-group">
+        <button type="button" class="appearance-group__toggle" aria-expanded="false">
+          <span class="annotated-list__title appearance-group__label">{group.heading}</span>
+          <span class="appearance-group__caret" aria-hidden="true">▸</span>
+        </button>
+        <ul class="appearance-group__list" hidden>
+          {group.items.map(item => (
+            <li class="appearance-group__item">
+              <a href={item.href} target="_blank" rel="noopener">{item.title}</a>
               <span class="annotated-list__meta">{item.date}</span>
-            </div>
-          </li>
-        ))}
-      </ul>
-    </section>
-  ))}
+            </li>
+          ))}
+        </ul>
+      </li>
+    ))}
+  </ul>
 </SectionPage>
+
+<style>
+  .appearance-group__toggle {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+    width: 100%;
+    background: none;
+    border: none;
+    padding: 0;
+    margin: 0;
+    text-align: left;
+    cursor: pointer;
+    font: inherit;
+  }
+
+  /* Match the link styling used on the Visuals list */
+  .appearance-group__label {
+    color: var(--link);
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: var(--underline-offset);
+    transition: color var(--transition-fast);
+  }
+
+  .appearance-group__toggle:hover .appearance-group__label {
+    color: var(--accent-hover);
+  }
+
+  .appearance-group__caret {
+    font-size: 0.8rem;
+    color: var(--dim);
+    transition: transform var(--transition-fast);
+  }
+
+  .appearance-group__toggle[aria-expanded="true"] .appearance-group__caret {
+    transform: rotate(90deg);
+  }
+
+  .appearance-group__list {
+    list-style: none;
+    margin: 0.5rem 0 0.15rem;
+    padding: 0;
+  }
+
+  .appearance-group__item {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.25rem 0.6rem;
+    padding: 0.3rem 0 0.3rem 1.1rem;
+  }
+
+  .appearance-group__item a {
+    font-size: 0.92rem;
+    line-height: 1.4;
+  }
+</style>
+
+<script>
+  document.querySelectorAll('.appearance-group__toggle').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const list = btn.nextElementSibling as HTMLElement;
+      const open = btn.getAttribute('aria-expanded') === 'true';
+      btn.setAttribute('aria-expanded', String(!open));
+      list.hidden = open;
+    });
+  });
+</script>
