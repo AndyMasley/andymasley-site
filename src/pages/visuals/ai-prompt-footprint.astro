@@ -405,6 +405,33 @@ const structuredData = [
 
     <p class="aipf-permission">All figures here are facts and estimates drawn from the sources cited in the methodology (mostly CC BY, public-domain, or MPL-licensed) and used as data, which copyright does not restrict. This page's own code, design, and writing are dedicated to the public domain. You can <a href="/visuals/ai-prompt-footprint-source.txt">copy this page's full source code here</a>.</p>
 
+    <details class="aipf-method" id="embed-details">
+      <summary>Embed this calculator on your site</summary>
+      <div class="aipf-method-body">
+        <p>
+          Paste this anywhere HTML is allowed and the whole calculator appears on your page, no
+          credit required. The small script keeps the frame matched to the calculator's height as
+          people use it; without it you just get a fixed-height scrolling frame, which also works.
+          By default the embed follows each visitor's light or dark system setting; add
+          <code>?theme=light</code> or <code>?theme=dark</code> to the address in
+          <code>src</code> to force one look.
+        </p>
+        <pre class="aipf-embed-pre"><code id="aipf-embed-code">&lt;iframe src="https://andymasley.com/visuals/ai-prompt-footprint/embed"
+  title="What does your AI use cost? An interactive calculator by Andy Masley"
+  style="width:100%;border:0;" height="3000" loading="lazy"&gt;&lt;/iframe&gt;
+&lt;script&gt;
+  window.addEventListener('message', function (e) &#123;
+    if (e.origin !== 'https://andymasley.com') return;
+    if (!e.data || e.data.type !== 'aipf:height') return;
+    document.querySelectorAll('iframe').forEach(function (f) &#123;
+      if (f.src.indexOf('https://andymasley.com/visuals/ai-prompt-footprint/embed') === 0) f.height = e.data.height;
+    &#125;);
+  &#125;);
+&lt;/script&gt;</code></pre>
+        <p class="aipf-tools"><button type="button" class="aipf-link" id="aipf-embed-copy">Copy the embed code</button></p>
+      </div>
+    </details>
+
     <p class="aipf-cc0">
       <a rel="license" href="https://creativecommons.org/publicdomain/zero/1.0/" target="_blank" rel="noopener license">
         <img src="https://licensebuttons.net/p/zero/1.0/88x31.png" alt="CC0 1.0 Universal Public Domain Dedication" width="88" height="31" loading="lazy">
@@ -1022,6 +1049,12 @@ const structuredData = [
         try { if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(buildShareURL()).then(done, done); else done(); } catch (err) { done(); }
       });
       const rb = root.querySelector('#aipf-report'); if (rb) rb.addEventListener('click', generateReport);
+      const eb = root.querySelector('#aipf-embed-copy');
+      if (eb) eb.addEventListener('click', () => {
+        const code = root.querySelector('#aipf-embed-code');
+        const done = () => { eb.textContent = 'Embed code copied'; setTimeout(() => { eb.textContent = 'Copy the embed code'; }, 1800); };
+        try { if (code && navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(code.textContent).then(done, done); else done(); } catch (err) { done(); }
+      });
       root.querySelector('#aipf-loc').addEventListener('change', (e) => {
         state.loc = e.target.value;
         const d = COUNTRY_DIET[state.loc];
@@ -1226,6 +1259,9 @@ const structuredData = [
   .aipf-method-body { margin-top: 1rem; }
   .aipf-method-body p { font-family: var(--font-body); font-size: 0.82rem; line-height: 1.65; color: var(--text-secondary); margin: 0 0 0.8rem; }
   .aipf-method-caveat { font-family: var(--font-editorial) !important; font-size: 0.95rem !important; font-style: italic; color: var(--text-secondary) !important; }
+  .aipf-method-body code { font-size: 0.78rem; background: var(--bg-subtle); border: 1px solid var(--border); border-radius: 3px; padding: 0.05rem 0.3rem; }
+  .aipf-embed-pre { background: var(--bg-subtle); border: 1px solid var(--border); border-radius: 5px; padding: 0.8rem 0.95rem; overflow-x: auto; margin: 0 0 0.8rem; }
+  .aipf-embed-pre code { font-size: 0.74rem; line-height: 1.55; background: none; border: none; border-radius: 0; padding: 0; color: var(--text-secondary); white-space: pre; }
   .aipf-buildnote { font-family: var(--font-editorial); font-style: italic; font-size: 0.92rem; line-height: 1.6; color: var(--text-secondary); margin: 2rem 0 0; max-width: 44rem; }
   .aipf-permission { font-family: var(--font-body); font-size: 0.62rem; line-height: 1.5; color: var(--dim); margin: 1.5rem 0 0; max-width: 44rem; }
   .aipf-cc0 { display: flex; align-items: center; gap: 0.7rem; margin: 0.7rem 0 0; max-width: 44rem; font-family: var(--font-body); font-size: 0.62rem; line-height: 1.5; color: var(--dim); }

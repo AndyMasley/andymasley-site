@@ -1,0 +1,144 @@
+---
+/**
+ * Embeddable version of the AI prompt footprint calculator.
+ *
+ * This page reuses the calculator at /visuals/ai-prompt-footprint verbatim: the
+ * article markup, script, and styles are sliced out of that file at build time
+ * via Vite's ?raw import, so the embed can never drift from the real page. If
+ * the markers below stop matching, the build fails loudly instead of shipping
+ * a stale embed.
+ *
+ * The page carries no site chrome, reports its height to the host page via
+ * postMessage ({ type: 'aipf:height', height }) so the iframe can size itself,
+ * and accepts ?theme=light or ?theme=dark to force a look (otherwise it
+ * follows the visitor's system setting). The copy-paste snippet lives in the
+ * "Embed this calculator" section of the main page.
+ */
+import '@/styles/global.css';
+import source from '../ai-prompt-footprint.astro?raw';
+
+function slice(re: RegExp, what: string): string {
+  const m = source.match(re);
+  if (!m) {
+    throw new Error(
+      'ai-prompt-footprint/embed.astro: could not find ' +
+        what +
+        ' in ai-prompt-footprint.astro — update the marker regexes to match the page.'
+    );
+  }
+  return m[1] !== undefined ? m[1] : m[0];
+}
+
+const articleHtml = slice(/<article class="aipf"[\s\S]*?<\/article>/, 'the calculator article');
+let scriptJs = slice(/<script is:inline define:vars=\{\{\}\}>([\s\S]*?)<\/script>/, 'the calculator script');
+const styleCss = slice(/<style is:global>([\s\S]*?)<\/style>/, 'the calculator styles');
+
+// "Copy link" inside the embed should hand out the full page's URL, not the embed's.
+const shareExpr = 'location.origin + location.pathname';
+if (!scriptJs.includes(shareExpr)) {
+  throw new Error(
+    'ai-prompt-footprint/embed.astro: buildShareURL no longer uses "' +
+      shareExpr +
+      '" — update the share-link rewrite here to match.'
+  );
+}
+scriptJs = scriptJs.replace(shareExpr, "location.origin + '/visuals/ai-prompt-footprint'");
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>What your chatbot use actually costs</title>
+    <meta name="robots" content="noindex" />
+    <link rel="canonical" href="https://andymasley.com/visuals/ai-prompt-footprint" />
+    <base target="_blank" />
+    <script is:inline>
+      // ?theme=light|dark wins; otherwise follow the visitor's system setting.
+      // (No localStorage here: inside a third-party iframe it is partitioned
+      // anyway, and the embed should not fight the host page's look.)
+      (function () {
+        var q = new URLSearchParams(location.search).get('theme');
+        var t =
+          q === 'dark' || q === 'light'
+            ? q
+            : window.matchMedia('(prefers-color-scheme: dark)').matches
+              ? 'dark'
+              : 'light';
+        document.documentElement.setAttribute('data-theme', t);
+      })();
+    </script>
+    <style>
+      /* global.css forces a permanent scrollbar for the full site; inside an
+         auto-resizing iframe that just paints an empty gutter. */
+      html {
+        overflow-y: auto;
+      }
+      .aipf {
+        padding-top: 1.25rem;
+      }
+      .aipf-embed-credit {
+        max-width: calc(var(--max-width) - 48px);
+        margin: 0 auto;
+        padding-bottom: 1.5rem;
+        font-family: var(--font-body);
+        font-size: 0.78rem;
+        color: var(--dim);
+      }
+      .aipf-embed-credit a {
+        color: var(--dim);
+        text-decoration: underline;
+        text-decoration-thickness: 1px;
+        text-underline-offset: 2px;
+      }
+      .aipf-embed-credit a:hover {
+        color: var(--accent);
+      }
+    </style>
+  </head>
+  <body>
+    <Fragment set:html={articleHtml} />
+    <p class="aipf-embed-credit">
+      An interactive by <a href="https://andymasley.com/">Andy Masley</a> ·
+      <a href="https://andymasley.com/visuals/ai-prompt-footprint">open the full page</a>
+    </p>
+    <Fragment set:html={'<script>' + scriptJs + '</script>'} />
+    <Fragment set:html={'<style>' + styleCss + '</style>'} />
+    <script is:inline>
+      (function () {
+        // <base target="_blank"> would send in-page anchors (like the
+        // methodology link) to a new tab; keep them inside the frame.
+        document.addEventListener('click', function (e) {
+          var a = e.target && e.target.closest ? e.target.closest('a[href^="#"]') : null;
+          if (!a) return;
+          e.preventDefault();
+          var el = document.getElementById(a.getAttribute('href').slice(1));
+          if (el) el.scrollIntoView();
+        });
+
+        // Report the document height to the host page so its iframe can match.
+        var raf = 0;
+        function send() {
+          raf = 0;
+          var h = Math.max(
+            document.documentElement.scrollHeight,
+            document.body ? document.body.scrollHeight : 0
+          );
+          window.parent.postMessage({ type: 'aipf:height', height: h }, '*');
+        }
+        function queue() {
+          if (!raf) raf = window.requestAnimationFrame(send);
+        }
+        if (window.ResizeObserver) {
+          new ResizeObserver(queue).observe(document.body);
+        } else {
+          window.addEventListener('resize', queue);
+          setInterval(queue, 1000);
+        }
+        window.addEventListener('load', queue);
+        queue();
+      })();
+    </script>
+  </body>
+</html>
