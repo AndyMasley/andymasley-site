@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { fixAnchorLinks } from '../substack';
+import { fixAnchorLinks, parseSubcategoriesFromHTML } from '../substack';
 
 const SLUG = 'empire-of-ai-is-wildly-misleading';
 
@@ -41,5 +41,29 @@ describe('fixAnchorLinks', () => {
   it('still handles relative post links', () => {
     const html = '<a href="/p/ai-and-the-environment">link</a>';
     expect(fixAnchorLinks(html, SLUG)).toContain('href="/writing/ai-and-the-environment"');
+  });
+});
+
+describe('parseSubcategoriesFromHTML', () => {
+  const section = (links: string) => `<h3>Water</h3><ul>${links}</ul>`;
+
+  it('collects bare post slugs', () => {
+    const html = section('<a href="https://andymasley.substack.com/p/foo">Foo</a>');
+    expect(parseSubcategoriesFromHTML(html)[0].postSlugs).toEqual(['foo']);
+  });
+
+  it('strips query strings from post links', () => {
+    const html = section('<a href="https://andymasley.substack.com/p/foo?utm_source=x">Foo</a>');
+    expect(parseSubcategoriesFromHTML(html)[0].postSlugs).toEqual(['foo']);
+  });
+
+  it('never produces slugs containing slashes', () => {
+    const html = section(`
+      <a href="https://andymasley.substack.com/p/foo/comment/123">comment</a>
+      <a href="https://andymasley.substack.com/p/bar#section">Bar</a>
+    `);
+    const slugs = parseSubcategoriesFromHTML(html)[0].postSlugs;
+    expect(slugs).toEqual(['foo', 'bar']);
+    slugs.forEach(slug => expect(slug).not.toContain('/'));
   });
 });

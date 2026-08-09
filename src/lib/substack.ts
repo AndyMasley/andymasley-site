@@ -22,6 +22,15 @@ function ensureCacheDir() {
   }
 }
 
+// When REQUIRE_CONTENT is set (the deploy workflow sets it), a build that
+// cannot get real content out of the APIs must fail loudly instead of
+// silently producing a site with missing posts or empty pages.
+export function requireContent(message: string): void {
+  if (process.env.REQUIRE_CONTENT) {
+    throw new Error(`${message} — REQUIRE_CONTENT is set, refusing to build an incomplete site`);
+  }
+}
+
 // Rate limiting helper
 let lastRequestTime = 0;
 const MIN_REQUEST_INTERVAL = 500; // ms between requests
@@ -242,6 +251,7 @@ export async function fetchSubstackPosts(): Promise<SubstackPost[]> {
         return posts;
       }
       console.error('Substack API returned 0 posts and no cache available');
+      requireContent('Substack API returned 0 posts and no cache available');
       return [];
     }
 
@@ -257,6 +267,8 @@ export async function fetchSubstackPosts(): Promise<SubstackPost[]> {
     memoryCache = allPosts;
     return allPosts;
   } catch (error) {
+    // Guard errors are intentional build failures, not fetch failures
+    if (error instanceof Error && error.message.includes('REQUIRE_CONTENT')) throw error;
     console.error('Failed to fetch Substack posts:', error);
 
     // Always fall back to stale cache rather than returning nothing
@@ -267,6 +279,7 @@ export async function fetchSubstackPosts(): Promise<SubstackPost[]> {
       return posts;
     }
 
+    requireContent(`Failed to fetch Substack posts and no cache available: ${error}`);
     return [];
   }
 }
@@ -324,6 +337,7 @@ export async function fetchPostContent(slug: string): Promise<string> {
     const response = await rateLimitedFetch(API_URL);
     if (!response.ok) {
       console.error(`Failed to fetch post ${slug}: ${response.status}`);
+      requireContent(`Failed to fetch post ${slug}: ${response.status}`);
       return '';
     }
 
@@ -336,9 +350,12 @@ export async function fetchPostContent(slug: string): Promise<string> {
       return post.body_html;
     }
 
+    requireContent(`Post ${slug} has no body_html`);
     return '';
   } catch (error) {
+    if (error instanceof Error && error.message.includes('REQUIRE_CONTENT')) throw error;
     console.error(`Failed to fetch content for ${slug}:`, error);
+    requireContent(`Failed to fetch content for ${slug}: ${error}`);
     return '';
   }
 }
@@ -362,7 +379,9 @@ export function parseSubcategoriesFromHTML(html: string): Subcategory[] {
 
   // Match h3 headers followed by ul lists
   // Regex to find h3 tags and capture their content
-  const linkRegex = /href="https:\/\/andymasley\.substack\.com\/p\/([^"]+)"/g;
+  // Capture stops at "/", "?" or "#" so query strings, anchors, and comment
+  // permalinks still register under the bare post slug
+  const linkRegex = /href="https:\/\/andymasley\.substack\.com\/p\/([^"#?\/]+)[^"]*"/g;
 
   // Split by h3 tags to process each section
   const sections = html.split(/<h3[^>]*>/i);

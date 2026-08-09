@@ -1,0 +1,23 @@
+name: Test
+
+# Catches broken installs and failing tests on branches before they reach
+# main - the deploy workflow only reveals breakage after merge
+on:
+  pull_request:
+  push:
+    branches-ignore: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - run: npm test
