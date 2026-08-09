@@ -418,6 +418,12 @@ export function parseSubcategoriesFromHTML(html: string): Subcategory[] {
 // - Same-post anchors become href="#heading"
 // - Other Substack posts become href="/writing/slug"
 // - Other Substack posts with anchors become href="/writing/slug#heading"
+//
+// Slug captures deliberately exclude "/" so that only bare post URLs are
+// rewritten. Substack URLs with extra path segments (/p/slug/comment/123,
+// /p/slug/comments, /p/slug/restacks) have no equivalent page on this site,
+// so they are left pointing at Substack instead of being turned into
+// /writing/slug/comment/123, which 404s.
 export function fixAnchorLinks(html: string, currentSlug: string): string {
   let fixed = html;
 
@@ -456,7 +462,7 @@ export function fixAnchorLinks(html: string, currentSlug: string): string {
   // 1. Handle URLs with query params AND anchors: ?open=false#anchor
   // href="https://andymasley.substack.com/p/slug?open=false#%C2%A7section" → href="#section"
   fixed = fixed.replace(
-    /href="https?:\/\/(?:www\.)?andymasley\.substack\.com\/p\/([^"#?]+)\?[^"#]*#([^"]+)"/gi,
+    /href="https?:\/\/(?:www\.)?andymasley\.substack\.com\/p\/([^"#?\/]+)\?[^"#]*#([^"]+)"/gi,
     (match, slug, anchor) => {
       const cleanedAnchor = cleanAnchor(anchor);
       if (isSamePost(slug)) {
@@ -469,7 +475,7 @@ export function fixAnchorLinks(html: string, currentSlug: string): string {
   // 2. Handle full URLs with anchor (no query params)
   // href="https://andymasley.substack.com/p/current-post#heading" → href="#heading"
   fixed = fixed.replace(
-    /href="https?:\/\/(?:www\.)?andymasley\.substack\.com\/p\/([^"#?]+)#([^"]+)"/gi,
+    /href="https?:\/\/(?:www\.)?andymasley\.substack\.com\/p\/([^"#?\/]+)#([^"]+)"/gi,
     (match, slug, anchor) => {
       const cleanedAnchor = cleanAnchor(anchor);
       if (isSamePost(slug)) {
@@ -481,7 +487,7 @@ export function fixAnchorLinks(html: string, currentSlug: string): string {
 
   // 3. Handle full URLs with query params but no anchor
   fixed = fixed.replace(
-    /href="https?:\/\/(?:www\.)?andymasley\.substack\.com\/p\/([^"#?]+)\?[^"]*"/gi,
+    /href="https?:\/\/(?:www\.)?andymasley\.substack\.com\/p\/([^"#?\/]+)\?[^"]*"/gi,
     (match, slug) => {
       if (isSamePost(slug)) {
         return 'href="#"';
@@ -492,7 +498,7 @@ export function fixAnchorLinks(html: string, currentSlug: string): string {
 
   // 4. Handle full URLs without anchor or query params
   fixed = fixed.replace(
-    /href="https?:\/\/(?:www\.)?andymasley\.substack\.com\/p\/([^"#?]+)"/gi,
+    /href="https?:\/\/(?:www\.)?andymasley\.substack\.com\/p\/([^"#?\/]+)"/gi,
     (match, slug) => {
       if (isSamePost(slug)) {
         return 'href="#"';
@@ -503,7 +509,7 @@ export function fixAnchorLinks(html: string, currentSlug: string): string {
 
   // 5. Handle relative URLs: /p/slug#anchor
   fixed = fixed.replace(
-    /href="\/p\/([^"#?]+)#([^"]+)"/gi,
+    /href="\/p\/([^"#?\/]+)#([^"]+)"/gi,
     (match, slug, anchor) => {
       const cleanedAnchor = cleanAnchor(anchor);
       if (isSamePost(slug)) {
@@ -515,13 +521,21 @@ export function fixAnchorLinks(html: string, currentSlug: string): string {
 
   // 6. Handle relative URLs without anchor: /p/slug
   fixed = fixed.replace(
-    /href="\/p\/([^"#?]+)"/gi,
+    /href="\/p\/([^"#?\/]+)"/gi,
     (match, slug) => {
       if (isSamePost(slug)) {
         return 'href="#"';
       }
       return `href="/writing/${slug}"`;
     }
+  );
+
+  // 7. Any relative Substack URL left over (comment permalinks, /comments,
+  // /restacks, query strings) has no page on this site, so point it back at
+  // Substack rather than leaving a relative link that 404s here.
+  fixed = fixed.replace(
+    /href="\/p\/([^"]+)"/gi,
+    (match, path) => `href="https://andymasley.substack.com/p/${path}"`
   );
 
   return fixed;
