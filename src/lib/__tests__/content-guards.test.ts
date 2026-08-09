@@ -51,6 +51,34 @@ describe('REQUIRE_CONTENT guard, Substack', () => {
     await expect(fetchSubstackPosts()).resolves.toEqual([]);
     await expect(fetchPostContent('some-post')).resolves.toBe('');
   });
+
+  it('fails the build on a partial posts list (page 2 fetch fails)', async () => {
+    const page = Array.from({ length: 50 }, (_, i) => ({
+      title: `Post ${i}`,
+      slug: `post-${i}`,
+      post_date: '2026-01-01',
+      description: '',
+      subtitle: '',
+      canonical_url: `https://andymasley.substack.com/p/post-${i}`,
+      section_id: null,
+      is_published: true,
+      type: 'newsletter',
+    }));
+    let call = 0;
+    vi.stubGlobal('fetch', vi.fn(() => {
+      call += 1;
+      return Promise.resolve({
+        ok: call === 1,
+        status: call === 1 ? 200 : 500,
+        json: () => Promise.resolve(page),
+      } as Response);
+    }));
+
+    process.env.REQUIRE_CONTENT = '1';
+    vi.resetModules();
+    const { fetchSubstackPosts } = await import('../substack');
+    await expect(fetchSubstackPosts()).rejects.toThrow(/offset 50/);
+  });
 });
 
 describe('REQUIRE_CONTENT guard, EA Forum', () => {
@@ -70,5 +98,18 @@ describe('REQUIRE_CONTENT guard, EA Forum', () => {
     const { fetchEAForumPosts, fetchEAForumPostContent } = await import('../eaforum');
     await expect(fetchEAForumPosts()).resolves.toEqual([]);
     await expect(fetchEAForumPostContent('abc123')).resolves.toBe('');
+  });
+
+  it('fails the build when GraphQL responds with errors', async () => {
+    vi.stubGlobal('fetch', vi.fn(() => Promise.resolve({
+      ok: true,
+      status: 200,
+      json: () => Promise.resolve({ errors: [{ message: 'rate limited' }] }),
+    } as Response)));
+
+    process.env.REQUIRE_CONTENT = '1';
+    vi.resetModules();
+    const { fetchEAForumPosts } = await import('../eaforum');
+    await expect(fetchEAForumPosts()).rejects.toThrow(/REQUIRE_CONTENT/);
   });
 });

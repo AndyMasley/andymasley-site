@@ -201,6 +201,9 @@ export async function fetchSubstackPosts(): Promise<SubstackPost[]> {
 
       if (!response.ok) {
         console.error(`Substack API returned ${response.status}`);
+        // A failure after the first page would otherwise produce a partial
+        // post list that passes the empty-list check below
+        requireContent(`Substack posts list fetch failed at offset ${offset}: ${response.status}`);
         break;
       }
 
