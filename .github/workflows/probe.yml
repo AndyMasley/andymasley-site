@@ -1,0 +1,30 @@
+name: Probe Substack access
+
+on:
+  push:
+    branches: [claude/andymasley-issue-fw8c2d]
+  workflow_dispatch:
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Probe API endpoints from a runner IP
+        run: |
+          UA_BROWSER="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36"
+          probe() {
+            echo "== $1"
+            shift
+            code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 20 "$@")
+            echo "   status: $code"
+          }
+          probe "substack posts, curl default UA" "https://andymasley.substack.com/api/v1/posts?limit=1"
+          probe "substack posts, no UA" -H "User-Agent:" "https://andymasley.substack.com/api/v1/posts?limit=1"
+          probe "substack posts, browser UA" -A "$UA_BROWSER" "https://andymasley.substack.com/api/v1/posts?limit=1"
+          probe "substack posts, browser UA + accept/lang" -A "$UA_BROWSER" -H "Accept: application/json" -H "Accept-Language: en-US,en;q=0.9" "https://andymasley.substack.com/api/v1/posts?limit=1"
+          probe "substack single post, browser UA" -A "$UA_BROWSER" "https://andymasley.substack.com/api/v1/posts/empire-of-ai-is-wildly-misleading"
+          probe "eaforum graphql, default UA" -X POST -H "Content-Type: application/json" -d '{"query":"{ posts(input: { terms: { limit: 1 } }) { results { _id } } }"}' "https://forum-bots.effectivealtruism.org/graphql"
+          echo "== node fetch (undici), default headers"
+          node -e 'fetch("https://andymasley.substack.com/api/v1/posts?limit=1").then(r => console.log("   status:", r.status)).catch(e => console.log("   error:", e.message))'
+          echo "== node fetch, browser UA"
+          node -e 'fetch("https://andymasley.substack.com/api/v1/posts?limit=1", {headers: {"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36", "Accept": "application/json", "Accept-Language": "en-US,en;q=0.9"}}).then(r => console.log("   status:", r.status)).catch(e => console.log("   error:", e.message))'
