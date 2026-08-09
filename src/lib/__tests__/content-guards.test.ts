@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { mkdtempSync } from 'fs';
+import { mkdtempSync, mkdirSync, writeFileSync } from 'fs';
 import { tmpdir } from 'os';
 import { join } from 'path';
 
@@ -78,6 +78,28 @@ describe('REQUIRE_CONTENT guard, Substack', () => {
     vi.resetModules();
     const { fetchSubstackPosts } = await import('../substack');
     await expect(fetchSubstackPosts()).rejects.toThrow(/offset 50/);
+  });
+
+  it('prefers a stale cache over failing when the fetch breaks mid-pagination', async () => {
+    mkdirSync(join(process.cwd(), '.cache', 'substack'), { recursive: true });
+    writeFileSync(join(process.cwd(), '.cache', 'substack', 'posts.json'), JSON.stringify({
+      timestamp: Date.now() - 2 * 60 * 60 * 1000,
+      posts: [{
+        title: 'Cached post',
+        slug: 'cached-post',
+        date: '2026-01-01T00:00:00.000Z',
+        description: '',
+        url: 'https://andymasley.substack.com/p/cached-post',
+        category: 'Misc',
+        source: 'substack',
+      }],
+    }));
+
+    process.env.REQUIRE_CONTENT = '1';
+    vi.resetModules();
+    const { fetchSubstackPosts } = await import('../substack');
+    const posts = await fetchSubstackPosts();
+    expect(posts.map(p => p.slug)).toEqual(['cached-post']);
   });
 });
 

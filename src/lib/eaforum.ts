@@ -117,18 +117,16 @@ export async function fetchEAForumPosts(): Promise<EAForumPost[]> {
       });
 
       if (!response.ok) {
-        console.error(`EA Forum API error: ${response.status}`);
-        // A failure after the first page would otherwise produce a partial
-        // post list that passes the empty-list check below
-        requireContent(`EA Forum posts list fetch failed at offset ${offset}: ${response.status}`);
-        break;
+        // Throw instead of breaking with a partial list: a failure after the
+        // first page would otherwise return (and cache) a truncated post
+        // list. The catch below falls back to the stale cache when one
+        // exists, and only hard-fails under REQUIRE_CONTENT when it doesn't.
+        throw new Error(`EA Forum posts list fetch failed at offset ${offset}: ${response.status}`);
       }
 
       const data = await response.json();
       if (Array.isArray(data?.errors) && data.errors.length > 0) {
-        console.error('EA Forum GraphQL returned errors');
-        requireContent('EA Forum GraphQL returned errors');
-        break;
+        throw new Error('EA Forum GraphQL returned errors');
       }
 
       const posts: GraphQLPost[] = data?.data?.posts?.results || [];
