@@ -3,7 +3,7 @@
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
 import { join } from 'path';
-import { normalizeHeadings } from './substack';
+import { normalizeHeadings, requireContent } from './substack';
 import { lintPostContent } from './content-lint';
 
 // Cache configuration
@@ -118,12 +118,16 @@ export async function fetchEAForumPosts(): Promise<EAForumPost[]> {
 
       if (!response.ok) {
         console.error(`EA Forum API error: ${response.status}`);
+        // A failure after the first page would otherwise produce a partial
+        // post list that passes the empty-list check below
+        requireContent(`EA Forum posts list fetch failed at offset ${offset}: ${response.status}`);
         break;
       }
 
       const data = await response.json();
       if (Array.isArray(data?.errors) && data.errors.length > 0) {
         console.error('EA Forum GraphQL returned errors');
+        requireContent('EA Forum GraphQL returned errors');
         break;
       }
 
@@ -164,6 +168,7 @@ export async function fetchEAForumPosts(): Promise<EAForumPost[]> {
         return posts;
       }
       console.error('EA Forum API returned 0 posts and no cache available');
+      requireContent('EA Forum API returned 0 posts and no cache available');
       return [];
     }
 
@@ -179,6 +184,8 @@ export async function fetchEAForumPosts(): Promise<EAForumPost[]> {
     memoryCache = eaForumPosts;
     return eaForumPosts;
   } catch (error) {
+    // Guard errors are intentional build failures, not fetch failures
+    if (error instanceof Error && error.message.includes('REQUIRE_CONTENT')) throw error;
     console.error('Failed to fetch EA Forum posts:', error);
 
     if (existingCache && existingCache.posts.length > 0) {
@@ -188,6 +195,7 @@ export async function fetchEAForumPosts(): Promise<EAForumPost[]> {
       return posts;
     }
 
+    requireContent(`Failed to fetch EA Forum posts and no cache available: ${error}`);
     return [];
   }
 }
@@ -221,6 +229,7 @@ export async function fetchEAForumPostContent(postId: string): Promise<string> {
 
     if (!response.ok) {
       console.error(`EA Forum API error: ${response.status}`);
+      requireContent(`EA Forum content fetch for ${postId} failed: ${response.status}`);
       return '';
     }
 
@@ -230,11 +239,15 @@ export async function fetchEAForumPostContent(postId: string): Promise<string> {
     if (htmlBody) {
       // Cache to file
       writeFileSync(cacheFile, htmlBody);
+    } else {
+      requireContent(`EA Forum post ${postId} has no htmlBody`);
     }
 
     return htmlBody;
   } catch (error) {
+    if (error instanceof Error && error.message.includes('REQUIRE_CONTENT')) throw error;
     console.error('Failed to fetch EA Forum post content:', error);
+    requireContent(`Failed to fetch EA Forum content for ${postId}: ${error}`);
     return '';
   }
 }
