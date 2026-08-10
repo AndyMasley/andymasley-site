@@ -8,20 +8,31 @@ on:
     - cron: '0 */6 * * *'
   workflow_dispatch: # Allow manual trigger
 
+# Never run two deploys at once; queue the newest and drop the rest
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
 
       - run: npm ci
 
+      - run: npm test
+
       - run: npm run build
+        env:
+          # Fail the build instead of deploying a site with missing posts
+          # when the Substack or EA Forum APIs are unreachable
+          REQUIRE_CONTENT: 1
 
       - name: Deploy to Cloudflare Pages
         uses: cloudflare/wrangler-action@v3
