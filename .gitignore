@@ -24,7 +24,14 @@ Thumbs.db
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-.cache
+
+# Build-time API caches. Substack blocks GitHub Actions runner IPs (403),
+# so the committed cache is what CI builds fall back to. Refresh it by
+# running a build locally (which fetches fresh content) and committing
+# the .cache changes.
+.cache/*
+!.cache/substack
+!.cache/eaforum
 
 # Large data caches
 data/source/GLHYMPS*

@@ -200,11 +200,11 @@ export async function fetchSubstackPosts(): Promise<SubstackPost[]> {
       const response = await rateLimitedFetch(`${BASE_URL}?offset=${offset}&limit=${limit}`);
 
       if (!response.ok) {
-        console.error(`Substack API returned ${response.status}`);
-        // A failure after the first page would otherwise produce a partial
-        // post list that passes the empty-list check below
-        requireContent(`Substack posts list fetch failed at offset ${offset}: ${response.status}`);
-        break;
+        // Throw instead of breaking with a partial list: a failure after the
+        // first page would otherwise return (and cache) a truncated post
+        // list. The catch below falls back to the stale cache when one
+        // exists, and only hard-fails under REQUIRE_CONTENT when it doesn't.
+        throw new Error(`Substack posts list fetch failed at offset ${offset}: ${response.status}`);
       }
 
       const posts: SubstackAPIPost[] = await response.json();
