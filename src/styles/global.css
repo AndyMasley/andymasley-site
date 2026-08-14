@@ -207,6 +207,7 @@ h4 {
 
 p {
   margin: 0 0 var(--space-lg) 0;
+  text-wrap: pretty;
 }
 
 /* Prose container for article content */
@@ -223,6 +224,34 @@ p {
    lnum/tnum (older Georgia builds) silently keep their defaults. */
 .prose table {
   font-variant-numeric: lining-nums tabular-nums;
+  width: 100%;
+  margin: var(--space-lg) 0;
+  border-collapse: collapse;
+  border-top: 1px solid var(--border-strong);
+  border-bottom: 1px solid var(--border-strong);
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.prose th {
+  font-family: var(--font-label);
+  font-size: 0.7rem;
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--dim);
+  text-align: left;
+}
+
+.prose th,
+.prose td {
+  padding: 0.5rem 1rem 0.5rem 0;
+  border-bottom: 1px solid var(--border-subtle);
+  vertical-align: top;
+}
+
+.prose tr > :last-child {
+  padding-right: 0;
 }
 
 .prose h2 {
@@ -700,15 +729,8 @@ a:active {
 .divider-diamond {
   width: 8px;
   height: 8px;
-  background: var(--accent);
-  opacity: 0.4;
+  background: var(--border-strong);
   clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
-  transition: opacity var(--transition-fast), transform var(--transition-fast);
-}
-
-.divider:hover .divider-diamond {
-  opacity: 0.7;
-  transform: rotate(45deg);
 }
 
 hr {
@@ -1409,8 +1431,7 @@ details[open] > summary::before {
   left: 0;
   width: 60px;
   height: 2px;
-  background: var(--accent);
-  border-radius: 1px;
+  background: var(--text);
 }
 
 .article-header__title {
