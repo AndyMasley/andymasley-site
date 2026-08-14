@@ -387,7 +387,7 @@ export function parseSubcategoriesFromHTML(html: string): Subcategory[] {
   // Regex to find h3 tags and capture their content
   // Capture stops at "/", "?" or "#" so query strings, anchors, and comment
   // permalinks still register under the bare post slug
-  const linkRegex = /href="https:\/\/andymasley\.substack\.com\/p\/([^"#?\/]+)[^"]*"/g;
+  const linkRegex = /href="https:\/\/(?:(?:www\.)?andymasley\.substack\.com|blog\.andymasley\.com)\/p\/([^"#?\/]+)[^"]*"/g;
 
   // Split by h3 tags to process each section
   const sections = html.split(/<h3[^>]*>/i);
@@ -477,7 +477,7 @@ export function fixAnchorLinks(html: string, currentSlug: string): string {
   // href="https://andymasley.substack.com/i/162196004/this-post-in-a-nutshell" → href="#this-post-in-a-nutshell"
   // These are always same-post anchors (used for table of contents)
   fixed = fixed.replace(
-    /href="https?:\/\/(?:www\.)?andymasley\.substack\.com\/i\/\d+\/([^"]+)"/gi,
+    /href="https?:\/\/(?:(?:www\.)?andymasley\.substack\.com|blog\.andymasley\.com)\/i\/\d+\/([^"]+)"/gi,
     (match, sectionSlug) => {
       const cleanedSlug = decodeURIComponent(sectionSlug);
       return `href="#${cleanedSlug}"`;
@@ -487,7 +487,7 @@ export function fixAnchorLinks(html: string, currentSlug: string): string {
   // 1. Handle URLs with query params AND anchors: ?open=false#anchor
   // href="https://andymasley.substack.com/p/slug?open=false#%C2%A7section" → href="#section"
   fixed = fixed.replace(
-    /href="https?:\/\/(?:www\.)?andymasley\.substack\.com\/p\/([^"#?\/]+)\?[^"#]*#([^"]+)"/gi,
+    /href="https?:\/\/(?:(?:www\.)?andymasley\.substack\.com|blog\.andymasley\.com)\/p\/([^"#?\/]+)\?[^"#]*#([^"]+)"/gi,
     (match, slug, anchor) => {
       const cleanedAnchor = cleanAnchor(anchor);
       if (isSamePost(slug)) {
@@ -500,7 +500,7 @@ export function fixAnchorLinks(html: string, currentSlug: string): string {
   // 2. Handle full URLs with anchor (no query params)
   // href="https://andymasley.substack.com/p/current-post#heading" → href="#heading"
   fixed = fixed.replace(
-    /href="https?:\/\/(?:www\.)?andymasley\.substack\.com\/p\/([^"#?\/]+)#([^"]+)"/gi,
+    /href="https?:\/\/(?:(?:www\.)?andymasley\.substack\.com|blog\.andymasley\.com)\/p\/([^"#?\/]+)#([^"]+)"/gi,
     (match, slug, anchor) => {
       const cleanedAnchor = cleanAnchor(anchor);
       if (isSamePost(slug)) {
@@ -512,7 +512,7 @@ export function fixAnchorLinks(html: string, currentSlug: string): string {
 
   // 3. Handle full URLs with query params but no anchor
   fixed = fixed.replace(
-    /href="https?:\/\/(?:www\.)?andymasley\.substack\.com\/p\/([^"#?\/]+)\?[^"]*"/gi,
+    /href="https?:\/\/(?:(?:www\.)?andymasley\.substack\.com|blog\.andymasley\.com)\/p\/([^"#?\/]+)\?[^"]*"/gi,
     (match, slug) => {
       if (isSamePost(slug)) {
         return 'href="#"';
@@ -523,7 +523,7 @@ export function fixAnchorLinks(html: string, currentSlug: string): string {
 
   // 4. Handle full URLs without anchor or query params
   fixed = fixed.replace(
-    /href="https?:\/\/(?:www\.)?andymasley\.substack\.com\/p\/([^"#?\/]+)"/gi,
+    /href="https?:\/\/(?:(?:www\.)?andymasley\.substack\.com|blog\.andymasley\.com)\/p\/([^"#?\/]+)"/gi,
     (match, slug) => {
       if (isSamePost(slug)) {
         return 'href="#"';

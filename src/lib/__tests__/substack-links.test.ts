@@ -42,6 +42,22 @@ describe('fixAnchorLinks', () => {
     const html = '<a href="/p/ai-and-the-environment">link</a>';
     expect(fixAnchorLinks(html, SLUG)).toContain('href="/writing/ai-and-the-environment"');
   });
+
+  it('rewrites custom-domain posts to /writing/slug', () => {
+    const html = '<a href="https://blog.andymasley.com/p/toward-environmental-liberalism">link</a>';
+    expect(fixAnchorLinks(html, SLUG)).toContain('href="/writing/toward-environmental-liberalism"');
+  });
+
+  it('turns custom-domain same-post anchors into local anchors', () => {
+    const html = `<a href="https://blog.andymasley.com/p/${SLUG}#the-error">link</a>`;
+    expect(fixAnchorLinks(html, SLUG)).toContain('href="#the-error"');
+  });
+
+  it('leaves custom-domain comment permalinks alone', () => {
+    const url = `https://blog.andymasley.com/p/${SLUG}/comment/162811993`;
+    const html = `<a href="${url}">comment</a>`;
+    expect(fixAnchorLinks(html, SLUG)).toContain(`href="${url}"`);
+  });
 });
 
 describe('parseSubcategoriesFromHTML', () => {
@@ -65,5 +81,10 @@ describe('parseSubcategoriesFromHTML', () => {
     const slugs = parseSubcategoriesFromHTML(html)[0].postSlugs;
     expect(slugs).toEqual(['foo', 'bar']);
     slugs.forEach(slug => expect(slug).not.toContain('/'));
+  });
+
+  it('collects custom-domain post slugs', () => {
+    const html = section('<a href="https://blog.andymasley.com/p/foo">Foo</a>');
+    expect(parseSubcategoriesFromHTML(html)[0].postSlugs).toEqual(['foo']);
   });
 });
