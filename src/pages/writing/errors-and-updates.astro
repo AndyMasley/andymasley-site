@@ -6,6 +6,24 @@ import Base from '@/layouts/Base.astro';
   <div class="errors-page">
     <h1 class="page-title">Errors and updates</h1>
 
+    <div class="bounty-intro">
+      <p>
+        I have a $300 bounty on errors. If you find a significant error I make in my writing, either misreading/misrepresenting a source or using a bad source where experts believe it's unreliable, and this undermines a core claim I'm making in the post, let me know at <a href="mailto:AndyMasley@gmail.com">AndyMasley@gmail.com</a>.
+      </p>
+      <details class="bounty-rules">
+        <summary>Rules for claiming</summary>
+        <ul>
+          <li>A legitimate source for a statistic I cite where I get the number wrong, which invalidates a core argument I'm making.</li>
+          <li>A source for a number I cite that's illegitimate, and that most legitimate sources disagree with, and this updated information invalidates a core argument I'm making.</li>
+          <li>All claims need to be analyzed by when I said them. If I make a claim about ChatGPT in June, and a new model comes out in December that's 100x as energy intensive, my claim in June isn't wrong, just outdated.</li>
+          <li>I'm vetoing very specific disagreements of what counts as "using" water. Whether to count rainfall on crops or into lakes dammed by hydroelectric power stations turns out to be very relevant for the water debates, and reasonable people land on both extremes.</li>
+          <li>If I don't cite a source in a newer post but I had cited the source for it previously, and the source is legit, that doesn't count.</li>
+          <li>If the error is trivial (e.g. 0.0000102% should be 0.0000103%), that doesn't count. But if a number is off by orders of magnitude and invalidates a core claim, it does.</li>
+          <li>The correction can't be something I've already spotted and noted. For example, my very first post on AI and the environment, <em>Using ChatGPT is not bad for the environment</em>, has some back of the envelope calculations that I now note are both outdated and unreliable around how much energy other services use. I note that in the post.</li>
+        </ul>
+      </details>
+    </div>
+
     <h2 class="section-title">Errors</h2>
 
     <h3 class="subsection-title">Caught by other people</h3>
@@ -43,6 +61,44 @@ import Base from '@/layouts/Base.astro';
     font-size: 1.25rem;
     font-weight: normal;
     margin-bottom: 1.5rem;
+  }
+
+  .bounty-intro {
+    margin-bottom: 2rem;
+    font-size: 0.82rem;
+    line-height: 1.65;
+    color: var(--text-secondary);
+  }
+
+  .bounty-intro p {
+    margin: 0;
+  }
+
+  .bounty-rules {
+    margin-top: 0.35rem;
+    font-size: 0.78rem;
+    line-height: 1.6;
+    color: var(--text-secondary);
+  }
+
+  .bounty-rules summary {
+    cursor: pointer;
+    color: var(--dim);
+    font-size: 0.72rem;
+    letter-spacing: 0.04em;
+  }
+
+  .bounty-rules summary:hover {
+    color: var(--accent);
+  }
+
+  .bounty-rules ul {
+    margin: 0.5rem 0 0;
+    padding-left: 1.2rem;
+  }
+
+  .bounty-rules li {
+    margin-bottom: 0.35rem;
   }
 
   .section-title {

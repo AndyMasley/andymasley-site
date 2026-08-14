@@ -21,11 +21,6 @@ interface YearGroup {
   posts: TimelinePost[];
 }
 
-interface GuideCard {
-  title: string;
-  url: string;
-}
-
 const [allSubstackPosts, eaForumPosts] = await Promise.all([
   fetchSubstackPosts(),
   fetchEAForumPosts()
@@ -136,11 +131,6 @@ function normalizeCapitalization(text: string): string {
   }).join(' ');
 }
 
-const guideCards: GuideCard[] = metaPostsWithContent.map(meta => ({
-  title: meta.title,
-  url: `/writing/${meta.slug}`,
-}));
-
 const yearMap = new Map<number, TimelinePost[]>();
 for (const post of posts) {
   const year = post.date.getFullYear();
@@ -160,44 +150,6 @@ const postsByYear: YearGroup[] = Array.from(yearMap.entries())
 ---
 
 <Base title="Writing" description="Essays on AI and the environment, animal welfare, effective altruism, political liberalism, and more. Published on Substack and elsewhere." ogImage="/og/page/writing.png">
-  <section class="writing-hero" aria-label="Writing">
-    <p class="page-intro">
-      I write on <a href="https://andymasley.substack.com/">Substack</a> and elsewhere about AI and the environment, AI more broadly, animal welfare, philosophy, and political liberalism. Since March 2026 I've been writing full-time on a grant from <a href="https://coefficientgiving.org/" target="_blank" rel="noopener">Coefficient Giving</a>.
-    </p>
-    <p class="error-bounty">
-      I have a $300 bounty on errors. If you find a significant error I make in my writing, either misreading/misrepresenting a source or using a bad source where experts believe it's unreliable, and this undermines a core claim I'm making in the post, let me know at <a href="mailto:AndyMasley@gmail.com">AndyMasley@gmail.com</a>. I have a log of errors and updates <a href="/writing/errors-and-updates">here</a>.
-    </p>
-    <details class="bounty-rules">
-      <summary>Rules for claiming</summary>
-      <ul>
-        <li>A legitimate source for a statistic I cite where I get the number wrong, which invalidates a core argument I'm making.</li>
-        <li>A source for a number I cite that's illegitimate, and that most legitimate sources disagree with, and this updated information invalidates a core argument I'm making.</li>
-        <li>All claims need to be analyzed by when I said them. If I make a claim about ChatGPT in June, and a new model comes out in December that's 100x as energy intensive, my claim in June isn't wrong, just outdated.</li>
-        <li>I'm vetoing very specific disagreements of what counts as "using" water. Whether to count rainfall on crops or into lakes dammed by hydroelectric power stations turns out to be very relevant for the water debates, and reasonable people land on both extremes.</li>
-        <li>If I don't cite a source in a newer post but I had cited the source for it previously, and the source is legit, that doesn't count.</li>
-        <li>If the error is trivial (e.g. 0.0000102% should be 0.0000103%), that doesn't count. But if a number is off by orders of magnitude and invalidates a core claim, it does.</li>
-        <li>The correction can't be something I've already spotted and noted. For example, my very first post on AI and the environment, <em>Using ChatGPT is not bad for the environment</em>, has some back of the envelope calculations that I now note are both outdated and unreliable around how much energy other services use. I note that in the post.</li>
-      </ul>
-    </details>
-  </section>
-
-  {guideCards.length > 0 && (
-    <section class="writing-section writing-section--guides" aria-label="Start here">
-      <div class="label">Start here</div>
-      <div class="guide-links">
-        <ul class="guide-list">
-          {guideCards.map(guide => (
-            <li class="guide-list__item">
-              <a href={guide.url} class="guide-link">{guide.title}</a>
-            </li>
-          ))}
-        </ul>
-      </div>
-    </section>
-  )}
-
-  <div class="divider"><div class="divider-diamond"></div></div>
-
   <section class="writing-section writing-section--archive" id="writing-archive" aria-label="Writing archive">
     <div class="archive-controls">
       <div class="archive-control archive-control--search">
@@ -211,6 +163,7 @@ const postsByYear: YearGroup[] = Array.from(yearMap.entries())
             autocomplete="off"
           />
           <button id="archive-search-clear" class="archive-inline-action" type="button" hidden>Clear</button>
+          <a class="archive-bounty-link" href="/writing/errors-and-updates">$300 error bounty</a>
         </div>
       </div>
 
@@ -250,6 +203,12 @@ const postsByYear: YearGroup[] = Array.from(yearMap.entries())
         <button class="archive-inline-action" id="archive-clear" type="button" disabled>Clear filters</button>
       </div>
     </div>
+
+    {aiEnvMeta && (
+      <p class="archive-overview" id="archive-overview" hidden>
+        Start here: <a href={`/writing/${aiEnvMeta.slug}`}>{aiEnvMeta.title}</a>
+      </p>
+    )}
 
     <p class="archive-empty" id="archive-empty" hidden>No posts match the current filters.</p>
 
@@ -365,51 +324,6 @@ const postsByYear: YearGroup[] = Array.from(yearMap.entries())
 </Base>
 
 <style>
-  .writing-hero {
-    margin-bottom: 2.4rem;
-  }
-
-  .page-intro {
-    max-width: 42rem;
-  }
-
-  .error-bounty {
-    max-width: 42rem;
-    margin-top: 0.6rem;
-    margin-bottom: 0;
-    font-size: 0.82rem;
-    line-height: 1.65;
-    color: var(--text-secondary);
-  }
-
-  .bounty-rules {
-    max-width: 42rem;
-    margin-top: 0.35rem;
-    font-size: 0.78rem;
-    line-height: 1.6;
-    color: var(--text-secondary);
-  }
-
-  .bounty-rules summary {
-    cursor: pointer;
-    color: var(--dim);
-    font-size: 0.72rem;
-    letter-spacing: 0.04em;
-  }
-
-  .bounty-rules summary:hover {
-    color: var(--accent);
-  }
-
-  .bounty-rules ul {
-    margin: 0.5rem 0 0;
-    padding-left: 1.2rem;
-  }
-
-  .bounty-rules li {
-    margin-bottom: 0.35rem;
-  }
-
   .writing-section {
     margin-bottom: 2.75rem;
   }
@@ -538,6 +452,46 @@ const postsByYear: YearGroup[] = Array.from(yearMap.entries())
 
   .archive-empty {
     color: var(--text-secondary);
+  }
+
+  .archive-bounty-link {
+    flex-shrink: 0;
+    white-space: nowrap;
+    font-size: 0.72rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--dim);
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 2px;
+    text-decoration-color: var(--border-strong);
+  }
+
+  .archive-bounty-link:hover {
+    color: var(--accent);
+    text-decoration-color: var(--accent);
+  }
+
+  .archive-overview {
+    margin: 0 0 1rem;
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+  }
+
+  .archive-overview a {
+    color: var(--text);
+    font-family: var(--font-editorial);
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 2px;
+  }
+
+  .archive-overview a:hover {
+    color: var(--accent);
+  }
+
+  .archive-overview[hidden] {
+    display: none;
   }
 
   .archive-inline-action {
@@ -687,37 +641,6 @@ const postsByYear: YearGroup[] = Array.from(yearMap.entries())
     display: none;
   }
 
-  .guide-links {
-    margin: 0 0 2.75rem;
-  }
-
-  .guide-list {
-    margin: 0;
-    padding: 0;
-    list-style: none;
-  }
-
-  .guide-list__item {
-    margin: 0;
-    padding: 0;
-    border-bottom: 1px solid var(--border-subtle);
-  }
-
-  .guide-link {
-    color: var(--text);
-    font-family: var(--font-editorial);
-    font-size: 1.12rem;
-    font-weight: 600;
-    line-height: 1.22;
-    text-decoration: underline;
-    text-decoration-thickness: 1px;
-    text-underline-offset: 2px;
-  }
-
-  .guide-link:hover {
-    color: var(--accent);
-  }
-
   .bylines-list {
     display: flex;
     flex-direction: column;
@@ -781,7 +704,7 @@ const postsByYear: YearGroup[] = Array.from(yearMap.entries())
     margin-top: 0.9rem;
   }
 
-  .guide-link:focus-visible,
+  .archive-bounty-link:focus-visible,
   .byline-link:focus-visible,
   .archive-inline-action:focus-visible,
   .post-card__link:focus-visible {
@@ -984,6 +907,11 @@ const postsByYear: YearGroup[] = Array.from(yearMap.entries())
 
       if (themeWrap) {
         themeWrap.hidden = !show;
+      }
+
+      const overview = document.getElementById('archive-overview');
+      if (overview) {
+        overview.hidden = state.topic !== 'ai-environment';
       }
 
       if (!show) {
