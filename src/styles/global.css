@@ -47,7 +47,7 @@
   --font-label: var(--font-body);
 
   /* Font sizes - refined scale for Inter */
-  --font-size-base: 0.9375rem;  /* 15px - optimal for Inter */
+  --font-size-base: 1rem;       /* 16px */
   --font-size-small: 0.8125rem; /* 13px */
   --font-size-mono: 0.8125rem;  /* 13px */
   --underline-offset: 2px;
@@ -1668,10 +1668,6 @@ details[open] > summary::before {
    * Mobile Dividers
    * Subtler, more zine-like
    */
-  .divider {
-    margin: 2.5rem 0;
-  }
-
   hr {
     margin: 2.5rem 0;
   }
@@ -2161,4 +2157,12 @@ details[open] > summary::before {
 
   h1, h2, h3 { break-after: avoid; }
   figure, blockquote, table, pre { break-inside: avoid; }
+}
+
+/* Dark mode: soften bright imagery against the near-black paper */
+[data-theme="dark"] .prose img,
+[data-theme="dark"] .post-card__frame img,
+[data-theme="dark"] .recent-item__thumblink img,
+[data-theme="dark"] .headshot {
+  filter: brightness(0.88);
 }
