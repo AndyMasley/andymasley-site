@@ -65,6 +65,7 @@ export interface SubstackPost {
   url: string;
   category: string;
   source: 'substack';
+  cover_image?: string;
 }
 
 // Category definitions with editable overviews
@@ -141,6 +142,7 @@ interface SubstackAPIPost {
   section_id: number | null;
   is_published: boolean;
   type: string;
+  cover_image: string | null;
 }
 
 interface CachedPosts {
@@ -233,6 +235,7 @@ export async function fetchSubstackPosts(): Promise<SubstackPost[]> {
           url: post.canonical_url,
           category: getSectionCategory(post.section_id),
           source: 'substack',
+          cover_image: post.cover_image || undefined,
         });
       }
 

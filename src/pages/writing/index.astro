@@ -13,6 +13,7 @@ interface TimelinePost {
   url: string;
   category: string;
   source: 'substack' | 'eaforum';
+  cover?: string;
 }
 
 interface YearGroup {
@@ -31,7 +32,6 @@ const [allSubstackPosts, eaForumPosts] = await Promise.all([
 ]);
 
 const metaSlugs = getMetaPostSlugs();
-const currentYear = new Date().getFullYear();
 
 const substackPosts: TimelinePost[] = allSubstackPosts
   .filter(post => !metaSlugs.includes(post.slug))
@@ -42,6 +42,7 @@ const substackPosts: TimelinePost[] = allSubstackPosts
     url: post.url,
     category: post.category,
     source: 'substack' as const,
+    cover: post.cover_image,
   }));
 
 const eaForumTimelinePosts: TimelinePost[] = eaForumPosts.map(post => ({
@@ -56,6 +57,23 @@ const eaForumTimelinePosts: TimelinePost[] = eaForumPosts.map(post => ({
 const posts: TimelinePost[] = [...substackPosts, ...eaForumTimelinePosts].sort(
   (a, b) => b.date.getTime() - a.date.getTime()
 );
+
+const RAW_COVER_PREFIX = 'https://substack-post-media.s3.amazonaws.com/public/images/';
+
+// Substack serves resized covers through its CDN fetch proxy. Only raw S3
+// URLs are safe to wrap: already-proxied URLs carry a $s_! signature that
+// covers their transform set, so those are used exactly as given.
+function sizedCover(cover: string, width: number): string {
+  if (cover.startsWith(RAW_COVER_PREFIX)) {
+    return `https://substackcdn.com/image/fetch/w_${width},c_limit,f_auto,q_auto:good/${encodeURIComponent(cover)}`;
+  }
+  return cover;
+}
+
+function coverSrcset(cover: string): string | undefined {
+  if (!cover.startsWith(RAW_COVER_PREFIX)) return undefined;
+  return [400, 600, 900].map(w => `${sizedCover(cover, w)} ${w}w`).join(', ');
+}
 
 const metaPostsWithContent = await Promise.all(
   metaPosts.map(async (meta) => {
@@ -139,9 +157,6 @@ const postsByYear: YearGroup[] = Array.from(yearMap.entries())
   }))
   .sort((a, b) => b.year - a.year);
 
-const defaultExpandedYear = postsByYear.some(group => group.year === currentYear)
-  ? currentYear
-  : postsByYear[0]?.year;
 ---
 
 <Base title="Writing" description="Essays on AI and the environment, animal welfare, effective altruism, political liberalism, and more. Published on Substack and elsewhere." ogImage="/og/page/writing.png">
@@ -238,50 +253,73 @@ const defaultExpandedYear = postsByYear.some(group => group.year === currentYear
 
     <p class="archive-empty" id="archive-empty" hidden>No posts match the current filters.</p>
 
-    <div class="timeline" data-default-year={defaultExpandedYear ?? ''}>
-      {postsByYear.map(yearGroup => (
-        <details
-          class="year-group"
-          data-year={yearGroup.year}
-          data-total-count={yearGroup.posts.length}
-          open={yearGroup.year === defaultExpandedYear}
-        >
-          <summary class="year-summary">
-            <span class="year-label">{yearGroup.year}</span>
-            <span class="year-count">{yearGroup.posts.length} {yearGroup.posts.length === 1 ? 'post' : 'posts'}</span>
-          </summary>
-
-          <ul class="year-posts">
+    <div class="grid-breakout">
+      <div class="post-grid" id="post-grid">
+        {postsByYear.map(yearGroup => (
+          <>
+            <div class="grid-year" data-year={yearGroup.year}>
+              <span>{yearGroup.year}</span>
+            </div>
             {yearGroup.posts.map(post => (
-              <li
-                class="timeline-row"
+              <article
+                class="post-card"
+                data-year={yearGroup.year}
                 data-cat={getCategorySlug(post.category)}
                 data-source={post.source}
                 data-slug={post.slug}
                 data-search-text={post.title.toLowerCase()}
               >
-                <time class="timeline-date" datetime={post.date.toISOString()}>
-                  <span class="timeline-month">{formatMonthAbbrev(post.date)}</span>
-                  <span class="timeline-day">{formatDayOfMonth(post.date)}</span>
-                </time>
-
-                <div class="timeline-main">
-                  <a href={`/writing/${post.slug}`} class="timeline-link">{post.title}</a>
-                  <p class="timeline-meta">
-                    {showArchiveCategory(post) && (
-                      <>
-                        <span class="timeline-cat">{getShortName(post.category)}</span>
-                        <span class="timeline-separator" aria-hidden="true">·</span>
-                      </>
+                <a
+                  class="post-card__imglink"
+                  href={`/writing/${post.slug}`}
+                  tabindex="-1"
+                  aria-hidden="true"
+                >
+                  <span class="post-card__frame">
+                    {post.cover ? (
+                      <img
+                        src={sizedCover(post.cover, 600)}
+                        srcset={coverSrcset(post.cover)}
+                        sizes="(max-width: 600px) 92px, (max-width: 940px) 46vw, 356px"
+                        alt=""
+                        loading="lazy"
+                        decoding="async"
+                        onerror={`this.onerror=null;this.src='/og/${post.slug}.png';this.removeAttribute('srcset');`}
+                      />
+                    ) : (
+                      <span class="post-card__placeholder" aria-hidden="true">
+                        <svg width="30" height="30" viewBox="0 0 24 24" fill="none">
+                          <polygon points="12,2 20.66,7 20.66,17 12,22 3.34,17 3.34,7" fill="none" stroke="currentColor" stroke-width="0.8" />
+                        </svg>
+                      </span>
                     )}
-                    <span class="timeline-source">{post.source === 'substack' ? 'Substack' : 'EA Forum'}</span>
-                  </p>
-                </div>
-              </li>
+                  </span>
+                </a>
+                <p class="post-card__meta">
+                  <time datetime={post.date.toISOString()}>
+                    {formatMonthAbbrev(post.date)} {formatDayOfMonth(post.date)}
+                  </time>
+                  {showArchiveCategory(post) && (
+                    <>
+                      <span class="post-card__separator post-card__separator--cat" aria-hidden="true">·</span>
+                      <span class="post-card__cat">{getShortName(post.category)}</span>
+                    </>
+                  )}
+                  {post.source === 'eaforum' && (
+                    <>
+                      <span class="post-card__separator" aria-hidden="true">·</span>
+                      <span>EA Forum</span>
+                    </>
+                  )}
+                </p>
+                <h3 class="post-card__title">
+                  <a href={`/writing/${post.slug}`} class="post-card__link">{post.title}</a>
+                </h3>
+              </article>
             ))}
-          </ul>
-        </details>
-      ))}
+          </>
+        ))}
+      </div>
     </div>
   </section>
 
@@ -527,118 +565,126 @@ const defaultExpandedYear = postsByYear.some(group => group.year === currentYear
     cursor: default;
   }
 
-  .timeline {
-    display: flex;
-    flex-direction: column;
-    gap: 0.9rem;
+  /* Cover grid archive. Breaks out of the 640px column to a centered
+     1120px band, the same full-bleed technique the visuals pages use. */
+  .grid-breakout {
+    width: min(1120px, calc(100vw - 48px));
+    margin-left: calc(50% - min(560px, 50vw - 24px));
+    margin-top: 1.4rem;
+  }
+
+  .post-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 2.1rem 1.6rem;
     min-height: 60vh;
   }
 
-  .year-group {
-    border-top: 1px solid var(--border-subtle);
-  }
-
-  .year-group.hidden {
-    display: none;
-  }
-
-  .year-summary {
+  .grid-year {
+    grid-column: 1 / -1;
     display: flex;
     align-items: center;
-    gap: 0.6rem;
-    padding: 0.72rem 0;
-    cursor: pointer;
-    color: var(--text);
+    gap: 0.9rem;
+    margin: 0.5rem 0 -0.6rem;
   }
 
-  .year-summary:hover {
-    color: var(--accent);
-  }
-
-  .year-label,
-  .year-count {
+  .grid-year span {
     font-family: var(--font-mono);
     font-size: 0.72rem;
     letter-spacing: 0.08em;
-    text-transform: uppercase;
-  }
-
-  .year-count {
-    margin-left: auto;
     color: var(--dim);
   }
 
-  .year-posts {
-    margin: 0;
-    padding: 0 0 0.35rem;
-    list-style: none;
-  }
-
-  .timeline-row {
-    display: grid;
-    grid-template-columns: 54px minmax(0, 1fr);
-    gap: 0.5rem 1rem;
-    align-items: start;
-    padding: 0.62rem 0;
+  .grid-year::after {
+    content: "";
+    flex: 1;
     border-top: 1px solid var(--border-subtle);
   }
 
-  .timeline-row.hidden {
+  .grid-year:first-child {
+    margin-top: 0;
+  }
+
+  .grid-year.hidden,
+  .post-card.hidden {
     display: none;
   }
 
-  .timeline-date {
+  .post-card {
+    min-width: 0;
+  }
+
+  .post-card__imglink {
+    display: block;
+  }
+
+  .post-card__frame {
+    display: block;
+    border: 1px solid var(--border);
+    background: var(--bg-subtle);
+    aspect-ratio: 3 / 2;
+    overflow: hidden;
+  }
+
+  .post-card__frame img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .post-card__placeholder {
     display: flex;
-    flex-direction: column;
-    gap: 0.08rem;
-    min-width: 0;
+    width: 100%;
+    height: 100%;
+    align-items: center;
+    justify-content: center;
+    color: var(--border-strong);
   }
 
-  .timeline-month,
-  .timeline-day {
-    font-family: var(--font-mono);
-    font-size: 0.68rem;
-    color: var(--dim);
-  }
-
-  .timeline-main {
-    min-width: 0;
-  }
-
-  .timeline-link {
-    color: var(--text);
-    font-family: var(--font-editorial);
-    font-size: 1rem;
-    line-height: 1.34;
-    text-decoration: underline;
-    text-decoration-thickness: 1px;
-    text-underline-offset: 2px;
-  }
-
-  .timeline-link:hover {
-    color: var(--accent);
-  }
-
-  /* Visited purple (archive). Literal colors: :visited ignores var(). */
-  .timeline-link:visited { color: #551a8b; }
-  :global([data-theme="dark"]) .timeline-link:visited { color: #c58af9; }
-
-  .timeline-meta {
+  .post-card__meta {
     display: flex;
     flex-wrap: wrap;
     gap: 0.3rem 0.45rem;
-    margin: 0.18rem 0 0;
-    font-size: 0.72rem;
+    margin: 0.55rem 0 0.12rem;
+    font-family: var(--font-mono);
+    font-size: 0.66rem;
+    letter-spacing: 0.05em;
     color: var(--dim);
   }
 
-  .timeline--topic-selected .timeline-cat,
-  .timeline--topic-selected .timeline-separator {
-    display: none;
+  .post-card__separator {
+    color: var(--border-strong);
   }
 
-  .timeline-separator {
-    color: var(--border-strong);
+  .post-card__title {
+    margin: 0;
+    font-family: var(--font-editorial);
+    font-size: 1rem;
+    font-weight: 400;
+    line-height: 1.34;
+  }
+
+  .post-card__link {
+    color: var(--text);
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 2px;
+    text-decoration-color: var(--border-strong);
+  }
+
+  .post-card:hover .post-card__link {
+    color: var(--accent);
+    text-decoration-color: var(--accent);
+  }
+
+  /* Visited purple (archive). Literal colors: :visited ignores var(). */
+  .post-card__link:visited { color: #551a8b; }
+  :global([data-theme="dark"]) .post-card__link:visited { color: #c58af9; }
+
+  .post-grid--topic-selected .post-card__cat,
+  .post-grid--topic-selected .post-card__separator--cat {
+    display: none;
   }
 
   .guide-links {
@@ -738,9 +784,16 @@ const defaultExpandedYear = postsByYear.some(group => group.year === currentYear
   .guide-link:focus-visible,
   .byline-link:focus-visible,
   .archive-inline-action:focus-visible,
-  .timeline-link:focus-visible {
+  .post-card__link:focus-visible {
     outline: 1px solid var(--accent);
     outline-offset: 4px;
+  }
+
+  @media (max-width: 940px) {
+    .post-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 1.8rem 1.4rem;
+    }
   }
 
   @media (max-width: 760px) {
@@ -764,14 +817,45 @@ const defaultExpandedYear = postsByYear.some(group => group.year === currentYear
       grid-template-columns: 1fr;
       gap: 0.2rem;
     }
+  }
 
-    .timeline-row {
-      grid-template-columns: 44px minmax(0, 1fr);
-      gap: 0.45rem 0.9rem;
+  @media (max-width: 600px) {
+    .post-grid {
+      display: block;
     }
 
-    .timeline-meta {
+    .grid-year {
+      margin: 1.3rem 0 0.4rem;
+    }
+
+    .grid-year:first-child {
+      margin-top: 0.2rem;
+    }
+
+    .post-card {
+      display: grid;
+      grid-template-columns: 92px minmax(0, 1fr);
+      gap: 0.12rem 0.9rem;
+      align-items: start;
+      padding: 0.6rem 0;
+      border-top: 1px solid var(--border-subtle);
+    }
+
+    .post-card__imglink {
+      grid-row: 1 / 3;
+    }
+
+    .post-card__frame {
+      aspect-ratio: 1 / 1;
+    }
+
+    .post-card__meta {
+      margin: 0;
       gap: 0.25rem 0.4rem;
+    }
+
+    .post-card__title {
+      font-size: 0.95rem;
     }
   }
 </style>
@@ -805,11 +889,9 @@ const defaultExpandedYear = postsByYear.some(group => group.year === currentYear
     const searchClear = document.getElementById('archive-search-clear') as HTMLButtonElement | null;
     const clearAll = document.getElementById('archive-clear') as HTMLButtonElement | null;
     const emptyState = document.getElementById('archive-empty') as HTMLElement | null;
-    const timeline = document.querySelector('.timeline') as HTMLElement | null;
-    const yearGroups = Array.from(document.querySelectorAll('.year-group')) as HTMLDetailsElement[];
-    const timelineRows = Array.from(document.querySelectorAll('.timeline-row')) as HTMLElement[];
-
-    const defaultYear = timeline?.getAttribute('data-default-year') || '';
+    const grid = document.getElementById('post-grid') as HTMLElement | null;
+    const yearRules = Array.from(document.querySelectorAll('.grid-year')) as HTMLElement[];
+    const cards = Array.from(document.querySelectorAll('.post-card')) as HTMLElement[];
 
     const state = {
       topic: 'all',
@@ -832,10 +914,6 @@ const defaultExpandedYear = postsByYear.some(group => group.year === currentYear
     const validThemes = new Set(
       themeSelect ? Array.from(themeSelect.options).map(option => option.value).filter(Boolean) : []
     );
-
-    function countLabel(count: number, noun: string) {
-      return `${count} ${noun}${count === 1 ? '' : 's'}`;
-    }
 
     function getWritingSlug(url: string) {
       const match = url.match(/^\/writing\/([^/?#]+)/);
@@ -897,28 +975,6 @@ const defaultExpandedYear = postsByYear.some(group => group.year === currentYear
       return state.topic !== 'all' || state.source !== 'all' || state.query !== '' || state.theme !== '';
     }
 
-    function restoreDefaultYears() {
-      yearGroups.forEach(group => {
-        group.open = group.getAttribute('data-year') === defaultYear;
-      });
-    }
-
-    function expandVisibleYears() {
-      yearGroups.forEach(group => {
-        if (!group.classList.contains('hidden')) {
-          group.open = true;
-        }
-      });
-    }
-
-    function collapseVisibleYears() {
-      yearGroups.forEach(group => {
-        if (!group.classList.contains('hidden')) {
-          group.open = false;
-        }
-      });
-    }
-
     function updateThemeVisibility() {
       const show = state.topic === 'ai-environment' && Boolean(themeSelect) && themeSelect.options.length > 1;
 
@@ -973,54 +1029,37 @@ const defaultExpandedYear = postsByYear.some(group => group.year === currentYear
       window.history.replaceState({}, '', nextUrl);
     }
 
-    function updateYearCount(group: HTMLDetailsElement, visibleCount: number) {
-      const countEl = group.querySelector('.year-count') as HTMLElement | null;
-      const totalCount = Number(group.getAttribute('data-total-count') || '0');
-      if (!countEl) return;
-
-      if (visibleCount === totalCount || !hasActiveFilters()) {
-        countEl.textContent = countLabel(totalCount, 'post');
-        return;
-      }
-
-      countEl.textContent = countLabel(visibleCount, 'matching post');
-    }
-
     function renderArchive() {
       let visibleCount = 0;
+      const visibleYears = new Set<string>();
 
-      if (timeline) {
-        timeline.classList.toggle('timeline--topic-selected', state.topic !== 'all');
+      if (grid) {
+        grid.classList.toggle('post-grid--topic-selected', state.topic !== 'all');
       }
 
-      timelineRows.forEach(row => {
-        const rowTopic = row.getAttribute('data-cat') || '';
-        const rowSource = row.getAttribute('data-source') || '';
-        const rowSlug = row.getAttribute('data-slug') || '';
-        const rowText = row.getAttribute('data-search-text') || '';
-        const rowContent = archiveSearchIndex?.get(rowSlug) || '';
+      cards.forEach(card => {
+        const cardTopic = card.getAttribute('data-cat') || '';
+        const cardSource = card.getAttribute('data-source') || '';
+        const cardSlug = card.getAttribute('data-slug') || '';
+        const cardText = card.getAttribute('data-search-text') || '';
+        const cardContent = archiveSearchIndex?.get(cardSlug) || '';
 
-        const topicMatch = state.topic === 'all' || rowTopic === state.topic;
-        const sourceMatch = state.source === 'all' || rowSource === state.source;
-        const searchMatch = state.query === '' || rowText.includes(state.query) || rowContent.includes(state.query);
-        const themeMatch = state.theme === '' || state.themePosts.includes(rowSlug);
+        const topicMatch = state.topic === 'all' || cardTopic === state.topic;
+        const sourceMatch = state.source === 'all' || cardSource === state.source;
+        const searchMatch = state.query === '' || cardText.includes(state.query) || cardContent.includes(state.query);
+        const themeMatch = state.theme === '' || state.themePosts.includes(cardSlug);
         const visible = topicMatch && sourceMatch && searchMatch && themeMatch;
 
-        row.classList.toggle('hidden', !visible);
-        if (visible) visibleCount += 1;
+        card.classList.toggle('hidden', !visible);
+        if (visible) {
+          visibleCount += 1;
+          visibleYears.add(card.getAttribute('data-year') || '');
+        }
       });
 
-      yearGroups.forEach(group => {
-        const visibleRows = group.querySelectorAll('.timeline-row:not(.hidden)').length;
-        group.classList.toggle('hidden', visibleRows === 0);
-        updateYearCount(group, visibleRows);
+      yearRules.forEach(rule => {
+        rule.classList.toggle('hidden', !visibleYears.has(rule.getAttribute('data-year') || ''));
       });
-
-      if (hasActiveFilters()) {
-        expandVisibleYears();
-      } else {
-        restoreDefaultYears();
-      }
 
       if (emptyState) {
         emptyState.hidden = visibleCount !== 0;
@@ -1133,7 +1172,6 @@ const defaultExpandedYear = postsByYear.some(group => group.year === currentYear
       state.themePosts = option?.dataset.posts ? JSON.parse(option.dataset.posts) : [];
     }
 
-    restoreDefaultYears();
     renderArchive();
 
     void loadArchiveSearchIndex()

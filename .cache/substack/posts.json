@@ -8,7 +8,8 @@
       "description": "The evidence we have is pretty weak",
       "url": "https://blog.andymasley.com/p/im-very-skeptical-that-china-has",
       "category": "AI & the Environment",
-      "source": "substack"
+      "source": "substack",
+      "cover_image": "https://substack-post-media.s3.amazonaws.com/public/images/ebe73459-9a2c-48db-9ded-8e41718b5f52_2688x1792.png"
     },
     {
       "title": "Toward liberal environmentalism",
@@ -17,7 +18,8 @@
       "description": "The underlying normative claim of my environmental writing",
       "url": "https://blog.andymasley.com/p/toward-environmental-liberalism",
       "category": "Politics",
-      "source": "substack"
+      "source": "substack",
+      "cover_image": "https://substack-post-media.s3.amazonaws.com/public/images/2b540861-4317-4af2-bc4c-e6984cccbd90_2944x1648.png"
     },
     {
       "title": "AI art as curation",
@@ -26,7 +28,8 @@
       "description": "Asking whether AI art involves real creativity mostly misses what's interesting about it",
       "url": "https://blog.andymasley.com/p/ai-art-as-curation",
       "category": "Artificial Intelligence",
-      "source": "substack"
+      "source": "substack",
+      "cover_image": "https://substackcdn.com/image/fetch/$s_!1eRq!,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2Fa725b782-795f-43a5-abe7-0875f4fde14b_2048x2048.png"
     },
     {
       "title": "What does it mean for AI to be democratic?",
@@ -35,7 +38,8 @@
       "description": "Some pushback on a specific fuzzy idea with some ominous implications",
       "url": "https://blog.andymasley.com/p/what-does-it-mean-for-ai-to-be-democratic",
       "category": "Artificial Intelligence",
-      "source": "substack"
+      "source": "substack",
+      "cover_image": "https://substack-post-media.s3.amazonaws.com/public/images/d94b2d33-dcdc-4b97-95e0-e9bc7a7e09f8_2030x1110.png"
     },
     {
       "title": "A plug for a tool I made to show how little most current AI chatbots add to your emissions and water use, with citations",
@@ -44,7 +48,8 @@
       "description": "Take this and share it, you don't need to mention me",
       "url": "https://blog.andymasley.com/p/a-plug-for-a-tool-i-made-to-show",
       "category": "AI & the Environment",
-      "source": "substack"
+      "source": "substack",
+      "cover_image": "https://substackcdn.com/image/fetch/$s_!hISU!,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2F1304195a-98cd-4bf5-bef1-cf6ad4e476e9_2024x1804.png"
     },
     {
       "title": "A simple trick to fix the data center debate",
@@ -53,7 +58,8 @@
       "description": "Remove the status quo bias by asking \"would we spend this much in tax revenue to avoid the externalities of the data center?\"",
       "url": "https://blog.andymasley.com/p/a-simple-trick-to-fix-the-data-center",
       "category": "AI & the Environment",
-      "source": "substack"
+      "source": "substack",
+      "cover_image": "https://substack-post-media.s3.amazonaws.com/public/images/f4088ab6-e1a8-4fb0-8e71-c0607eae9610_2944x1648.png"
     },
     {
       "title": "Why I think panic about local impacts of data centers is just a panic",
@@ -62,7 +68,8 @@
       "description": "A request for counterexamples",
       "url": "https://blog.andymasley.com/p/why-i-think-panic-about-local-impacts",
       "category": "AI & the Environment",
-      "source": "substack"
+      "source": "substack",
+      "cover_image": "https://substack-post-media.s3.amazonaws.com/public/images/9dd44558-7568-4760-9eaf-61934a5738a6_2944x1648.png"
     },
     {
       "title": "A history of the data center panic - part 1",
@@ -71,7 +78,8 @@
       "description": "The creation of common wisdom pre-ChatGPT",
       "url": "https://blog.andymasley.com/p/a-history-of-the-data-center-panic",
       "category": "AI & the Environment",
-      "source": "substack"
+      "source": "substack",
+      "cover_image": "https://substack-post-media.s3.amazonaws.com/public/images/d8c154e8-bc51-4d42-b870-57737e9c82ea_2688x1792.png"
     },
     {
       "title": "A crash course on US air pollution",
@@ -80,7 +88,8 @@
       "description": "Data centers and air pollution - part 1",
       "url": "https://blog.andymasley.com/p/a-crash-course-on-us-air-pollution",
       "category": "AI & the Environment",
-      "source": "substack"
+      "source": "substack",
+      "cover_image": "https://substack-post-media.s3.amazonaws.com/public/images/82879108-c319-4ddb-870e-b7235134a936_2944x1648.png"
     },
     {
       "title": "Let's not compare data center heat exhaust to nuclear bombs",
@@ -89,7 +98,8 @@
       "description": "Why dropping hundreds of nuclear bombs on Washington DC every day is pretty normal",
       "url": "https://blog.andymasley.com/p/lets-not-compare-data-center-heat",
       "category": "AI & the Environment",
-      "source": "substack"
+      "source": "substack",
+      "cover_image": "https://substackcdn.com/image/fetch/$s_!KAaj!,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2F08ec0ff6-5d0f-4467-be7e-55194876d977_2560x1238.jpeg"
     },
     {
       "title": "Data center land use issues are fake",
@@ -98,7 +108,8 @@
       "description": "We have plenty of land, data centers provide more revenue per unit area than any other building, and we should have way less farmland",
       "url": "https://blog.andymasley.com/p/data-center-land-use-issues-are-fake",
       "category": "AI & the Environment",
-      "source": "substack"
+      "source": "substack",
+      "cover_image": "https://substack-post-media.s3.amazonaws.com/public/images/9b9908ae-071b-4e51-ab03-5d34841ddc56_1448x1086.png"
     },
     {
       "title": "To be clear, I do understand how sound works",
@@ -107,7 +118,8 @@
       "description": "Replying to a criticism of my last post",
       "url": "https://blog.andymasley.com/p/to-be-clear-i-do-understand-how-sound",
       "category": "AI & the Environment",
-      "source": "substack"
+      "source": "substack",
+      "cover_image": "https://substack-post-media.s3.amazonaws.com/public/images/4dd94cef-ff65-477c-ac5c-50c8016541f3_2944x1648.png"
     },
     {
       "title": "Contra Benn Jordan, data center (and all) sub-audible infrasound issues are fake",
@@ -116,7 +128,8 @@
       "description": "One of the most popular videos ever made about data centers is a complete moment-by-moment disaster",
       "url": "https://blog.andymasley.com/p/contra-benn-jordan-data-center-and",
       "category": "AI & the Environment",
-      "source": "substack"
+      "source": "substack",
+      "cover_image": "https://substackcdn.com/image/fetch/$s_!yVLq!,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2F2786a35d-8f7e-46e7-9bcd-de8718fa7a7b_1816x862.png"
     },
     {
       "title": "Training AI models doesn't emit that much",
@@ -125,7 +138,8 @@
       "description": "If we just make reasonable comparisons instead of crazy ones",
       "url": "https://blog.andymasley.com/p/training-ai-models-doesnt-emit-that",
       "category": "AI & the Environment",
-      "source": "substack"
+      "source": "substack",
+      "cover_image": "https://substack-post-media.s3.amazonaws.com/public/images/bc6fa7e7-a88a-41da-a9cc-807a07b69267_2944x1648.png"
     },
     {
       "title": "What's blocking Waymo in DC and how can we fix it?",
@@ -134,7 +148,8 @@
       "description": "The very late DDOT report is only part of the story",
       "url": "https://blog.andymasley.com/p/whats-blocking-waymo-in-dc-and-how",
       "category": "Artificial Intelligence",
-      "source": "substack"
+      "source": "substack",
+      "cover_image": "https://substack-post-media.s3.amazonaws.com/public/images/3e82035c-63e4-44c2-8f73-9024f32965ad_2944x1648.png"
     },
     {
       "title": "Data centers' heat exhaust is not raising the land temperature around where they're built",
@@ -143,7 +158,8 @@
       "description": "A terrible paper and even worse interpretation is threatening to become common wisdom",
       "url": "https://blog.andymasley.com/p/data-centers-heat-exhaust-is-not",
       "category": "AI & the Environment",
-      "source": "substack"
+      "source": "substack",
+      "cover_image": "https://substack-post-media.s3.amazonaws.com/public/images/934c9a87-f0a7-4eb0-a5d5-9c900b962211_2944x1648.png"
     },
     {
       "title": "A call for more specific and numerate climate communication",
@@ -152,7 +168,8 @@
       "description": "There's too much low-hanging fruit going unpicked, and it's relatively easy to pick",
       "url": "https://blog.andymasley.com/p/a-call-for-more-specific-and-numerate",
       "category": "AI & the Environment",
-      "source": "substack"
+      "source": "substack",
+      "cover_image": "https://substack-post-media.s3.amazonaws.com/public/images/ba0b7708-81f4-461a-801c-632714004c26_2944x1648.png"
     },
     {
       "title": "AI can obviously create new knowledge",
@@ -161,7 +178,8 @@
       "description": "But maybe not new concepts",
       "url": "https://blog.andymasley.com/p/ai-can-obviously-create-new-knowledge",
       "category": "Artificial Intelligence",
-      "source": "substack"
+      "source": "substack",
+      "cover_image": "https://substack-post-media.s3.amazonaws.com/public/images/8a1528f8-af04-4302-9fe6-f4ee6990130f_2106x1274.png"
     },
     {
       "title": "Empire of AI is wildly misleading about AI water use",
@@ -170,7 +188,8 @@
       "description": "And the media environment that didn't catch this is getting this issue wrong",
       "url": "https://blog.andymasley.com/p/empire-of-ai-is-wildly-misleading",
       "category": "AI & the Environment",
-      "source": "substack"
+      "source": "substack",
+      "cover_image": "https://substack-post-media.s3.amazonaws.com/public/images/92b66b7a-4b99-4047-b5a2-cdff1c9c0879_526x290.png"
     },
     {
       "title": "A short summary of my argument that using ChatGPT isn't bad for the environment",
@@ -179,7 +198,8 @@
       "description": "To share with anyone still worried",
       "url": "https://blog.andymasley.com/p/a-short-summary-of-my-argument-that",
       "category": "AI & the Environment",
-      "source": "substack"
+      "source": "substack",
+      "cover_image": "https://substackcdn.com/image/fetch/$s_!UOMM!,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2F9eec33ce-3ea5-41a2-861d-9b89bb860eb6_1430x848.jpeg"
     },
     {
       "title": "The lump of cognition fallacy",
@@ -188,7 +208,8 @@
       "description": "The extended mind as the advance of civilization",
       "url": "https://blog.andymasley.com/p/the-lump-of-cognition-fallacy",
       "category": "Artificial Intelligence",
-      "source": "substack"
+      "source": "substack",
+      "cover_image": "https://substack-post-media.s3.amazonaws.com/public/images/7140b194-a956-4b14-a7a5-29a404ec9535_2944x1648.png"
     },
     {
       "title": "A list of other catastrophes that are probably fake",
@@ -197,7 +218,8 @@
       "description": "Adding to this over time",
       "url": "https://blog.andymasley.com/p/a-list-of-other-catastrophes-that",
       "category": "Misc",
-      "source": "substack"
+      "source": "substack",
+      "cover_image": "https://substack-post-media.s3.amazonaws.com/public/images/44456305-e3a4-44a8-88b3-8c84afbf652d_2944x1648.png"
     },
     {
       "title": "It's much easier to hold computers accountable than it is to hold humans accountable",
@@ -206,7 +228,8 @@
       "description": "Computers live in a totalitarian surveillance state",
       "url": "https://blog.andymasley.com/p/its-much-easier-to-hold-computers",
       "category": "Artificial Intelligence",
-      "source": "substack"
+      "source": "substack",
+      "cover_image": "https://substackcdn.com/image/fetch/$s_!kR5t!,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2Fb1bcc0e7-d41b-4e25-89fe-bce86dfa9193_1100x912.png"
     },
     {
       "title": "Data centers and low social trust",
@@ -215,7 +238,8 @@
       "description": "Why I was so compelled to post a lot about data centers",
       "url": "https://blog.andymasley.com/p/data-centers-and-low-social-trust",
       "category": "Artificial Intelligence",
-      "source": "substack"
+      "source": "substack",
+      "cover_image": "https://substack-post-media.s3.amazonaws.com/public/images/db8f9b0f-e1e3-41b6-ada5-51f010e2304a_2944x1648.png"
     },
     {
       "title": "An armchair diagnosis of the chatbot moral panic",
@@ -224,7 +248,8 @@
       "description": "It's... status!",
       "url": "https://blog.andymasley.com/p/an-armchair-diagnosis-of-the-chatbot",
       "category": "Artificial Intelligence",
-      "source": "substack"
+      "source": "substack",
+      "cover_image": "https://substack-post-media.s3.amazonaws.com/public/images/972e0a45-6c2e-4b47-af03-e56b2bedc2dd_1456x816.png"
     },
     {
       "title": "Always mask at airports",
@@ -233,7 +258,8 @@
       "description": "This might occasionally save you thousands of dollars",
       "url": "https://blog.andymasley.com/p/always-mask-in-airports",
       "category": "Recs & Advice",
-      "source": "substack"
+      "source": "substack",
+      "cover_image": "https://substack-post-media.s3.amazonaws.com/public/images/7ed48498-17fc-48e7-a435-68f2fb633132_2944x1648.png"
     },
     {
       "title": "A lot of arguments for legalizing autonomous vehicles in your city",
@@ -242,7 +268,8 @@
       "description": "Compare them to any other vehicle",
       "url": "https://blog.andymasley.com/p/please-please-please-do-not-ban-autonomous",
       "category": "Artificial Intelligence",
-      "source": "substack"
+      "source": "substack",
+      "cover_image": "https://substack-post-media.s3.amazonaws.com/public/images/5377439f-19a1-4521-91c2-fc4cd181ac2a_2944x1648.png"
     },
     {
       "title": "AI and Folk Cartesianism - Part 2: Problems for Cartesianism",
@@ -251,7 +278,8 @@
       "description": "The theater is empty, the screen is in another room",
       "url": "https://blog.andymasley.com/p/ai-and-folk-cartesianism-part-2-problems",
       "category": "Artificial Intelligence",
-      "source": "substack"
+      "source": "substack",
+      "cover_image": "https://substack-post-media.s3.amazonaws.com/public/images/0e8b6d68-873a-48a4-8d07-6062f2871742_1456x816.png"
     },
     {
       "title": "AI and Folk Cartesianism - Part 1: Defining the Problem",
@@ -260,7 +288,8 @@
       "description": "Why I'm scared of linear algebra",
       "url": "https://blog.andymasley.com/p/ai-and-folk-cartesianism-part-1-defining",
       "category": "Artificial Intelligence",
-      "source": "substack"
+      "source": "substack",
+      "cover_image": "https://substack-post-media.s3.amazonaws.com/public/images/0f61e22b-687c-4017-8e9e-102832575c2d_1456x816.png"
     },
     {
       "title": "Requests for journalists covering AI and the environment",
@@ -269,7 +298,8 @@
       "description": "Always aim to give your reader a full picture of the environmental issues a community and the world is facing",
       "url": "https://blog.andymasley.com/p/requests-for-journalists-covering",
       "category": "AI & the Environment",
-      "source": "substack"
+      "source": "substack",
+      "cover_image": "https://substack-post-media.s3.amazonaws.com/public/images/6c65e042-fd14-40db-8dd2-7accf615feeb_2944x1648.png"
     },
     {
       "title": "The main way I've seen people turn ideologically crazy",
@@ -278,7 +308,8 @@
       "description": "Don't update positively on your extremist beliefs whenever you hear a bad argument against them",
       "url": "https://blog.andymasley.com/p/the-main-way-ive-seen-people-turn",
       "category": "Recs & Advice",
-      "source": "substack"
+      "source": "substack",
+      "cover_image": "https://substack-post-media.s3.amazonaws.com/public/images/5e2b5331-29bd-400c-9da6-df6c0c8e0f65_2944x1648.png"
     },
     {
       "title": "A few meta points on my posts on AI and the environment",
@@ -287,7 +318,8 @@
       "description": "Some quick notes on what I'm doing",
       "url": "https://blog.andymasley.com/p/a-few-meta-points-on-my-posts-on",
       "category": "AI & the Environment",
-      "source": "substack"
+      "source": "substack",
+      "cover_image": "https://substack-post-media.s3.amazonaws.com/public/images/f5bb19d2-b23c-4718-88c9-6988770dce77_2944x1648.png"
     },
     {
       "title": "Slop implies capability",
@@ -296,7 +328,8 @@
       "description": "If the current paradigm can produce convincing, satisfying slop, it can also be useful",
       "url": "https://blog.andymasley.com/p/slop-implies-capability",
       "category": "Artificial Intelligence",
-      "source": "substack"
+      "source": "substack",
+      "cover_image": "https://substackcdn.com/image/youtube/w_728,c_limit/HCoOL1c1hfE"
     },
     {
       "title": "The AI water issue is fake",
@@ -305,7 +338,8 @@
       "description": "On the national, local, and personal level",
       "url": "https://blog.andymasley.com/p/the-ai-water-issue-is-fake",
       "category": "AI & the Environment",
-      "source": "substack"
+      "source": "substack",
+      "cover_image": "https://substack-post-media.s3.amazonaws.com/public/images/dcf8b781-d102-493b-bb7d-17568424fa9e_1456x816.png"
     },
     {
       "title": "Data centers & electricity - part 1: as of 2025 they haven't raised national prices",
@@ -314,7 +348,8 @@
       "description": "Yet, anyway, but they raised local costs in specific places like NOVA",
       "url": "https://blog.andymasley.com/p/data-centers-and-electricity-part",
       "category": "AI & the Environment",
-      "source": "substack"
+      "source": "substack",
+      "cover_image": "https://substack-post-media.s3.amazonaws.com/public/images/3757ffad-d3d0-47ea-9e56-e686e5c652a0_1980x990.png"
     },
     {
       "title": "What a data center is",
@@ -323,7 +358,8 @@
       "description": "A building-sized computer, and the most efficient type of building we've ever created",
       "url": "https://blog.andymasley.com/p/what-a-data-center-is",
       "category": "AI & the Environment",
-      "source": "substack"
+      "source": "substack",
+      "cover_image": "https://substack-post-media.s3.amazonaws.com/public/images/86b2c8ae-3b0c-4814-8ff8-9dbc948acd54_2688x1792.png"
     },
     {
       "title": "More Perfect Union videos are wildly deceptive on data center water use",
@@ -332,7 +368,8 @@
       "description": "They're misinforming their huge audience and making the data center debate much worse",
       "url": "https://blog.andymasley.com/p/more-perfect-union-is-deceptive",
       "category": "AI & the Environment",
-      "source": "substack"
+      "source": "substack",
+      "cover_image": "https://substack-post-media.s3.amazonaws.com/public/images/987e8879-be76-48d6-a638-44cb1f52760b_1416x930.png"
     },
     {
       "title": "For the climate, little things don't add up",
@@ -341,7 +378,8 @@
       "description": "We need to think seriously about collective action",
       "url": "https://blog.andymasley.com/p/for-the-climate-little-things-dont",
       "category": "AI & the Environment",
-      "source": "substack"
+      "source": "substack",
+      "cover_image": "https://substack-post-media.s3.amazonaws.com/public/images/538f3799-6597-456c-a3dd-bd3f3169e2bd_2944x1648.png"
     },
     {
       "title": "What's the full \"hidden\" climate cost of a ChatGPT prompt?",
@@ -350,7 +388,8 @@
       "description": "It's so tiny, and if we include \"all the hidden costs\" it might actually be a negative number",
       "url": "https://blog.andymasley.com/p/whats-the-full-hidden-climate-cost",
       "category": "AI & the Environment",
-      "source": "substack"
+      "source": "substack",
+      "cover_image": "https://substack-post-media.s3.amazonaws.com/public/images/97c091f0-e7e0-4e70-8fb9-088a0b5953f1_1456x816.png"
     },
     {
       "title": "Do data centers only seem bad for the climate because we can see them?",
@@ -359,7 +398,8 @@
       "description": "Most of your climate impacts are invisible",
       "url": "https://blog.andymasley.com/p/do-data-centers-only-seem-bad-for",
       "category": "AI & the Environment",
-      "source": "substack"
+      "source": "substack",
+      "cover_image": "https://substack-post-media.s3.amazonaws.com/public/images/6bbfaa07-1ddc-4176-84e0-2fc2df65a050_2944x1648.png"
     },
     {
       "title": "Jevons' Paradox is good sometimes",
@@ -368,7 +408,8 @@
       "description": "It might be good news for AI and the climate",
       "url": "https://blog.andymasley.com/p/jevons-paradox-isnt-always-bad",
       "category": "AI & the Environment",
-      "source": "substack"
+      "source": "substack",
+      "cover_image": "https://substackcdn.com/image/fetch/$s_!0ISu!,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2F43bd0ddd-a436-4b26-8f71-cc88a8ebc385_1346x1130.png"
     },
     {
       "title": "Mapping the AI & environment debate",
@@ -377,7 +418,8 @@
       "description": "And clarifying what I believe",
       "url": "https://blog.andymasley.com/p/mapping-the-ai-and-environment-debate",
       "category": "AI & the Environment",
-      "source": "substack"
+      "source": "substack",
+      "cover_image": "https://substack-post-media.s3.amazonaws.com/public/images/b6e18307-cb86-47c3-b834-4fd97e6bef62_2944x1648.png"
     },
     {
       "title": "The core simple reason I think AI is valuable",
@@ -386,7 +428,8 @@
       "description": "Why I don't think every Watt-hour or liter we spend on AI is wasted",
       "url": "https://blog.andymasley.com/p/the-core-simple-reason-i-think-ai",
       "category": "Artificial Intelligence",
-      "source": "substack"
+      "source": "substack",
+      "cover_image": "https://substack-post-media.s3.amazonaws.com/public/images/9942af51-a18e-4182-9b6e-8875e4e0cb19_1344x896.png"
     },
     {
       "title": "An example of what I consider a misleading article about AI and the environment",
@@ -395,7 +438,8 @@
       "description": "Just show the numbers!",
       "url": "https://blog.andymasley.com/p/an-example-of-what-i-consider-a-misleading",
       "category": "AI & the Environment",
-      "source": "substack"
+      "source": "substack",
+      "cover_image": "https://substack-post-media.s3.amazonaws.com/public/images/126ce48a-5210-4287-bf43-3df4cafa98f5_1574x1166.png"
     },
     {
       "title": "When making cuts for the climate, always consider the value you're getting per unit energy, not just the total energy used",
@@ -404,7 +448,8 @@
       "description": "This needs to be a basic part of our climate ethics",
       "url": "https://blog.andymasley.com/p/when-making-cuts-for-the-climate",
       "category": "AI & the Environment",
-      "source": "substack"
+      "source": "substack",
+      "cover_image": "https://substack-post-media.s3.amazonaws.com/public/images/6c6d5548-5cb6-4aad-90ac-cd92511abb3f_1736x936.png"
     },
     {
       "title": "A ton of AI images I've made that I've liked",
@@ -413,7 +458,8 @@
       "description": "I think people with my aesthetic taste have been underrepresented in presentations of AI art. Here I try to change that",
       "url": "https://blog.andymasley.com/p/a-ton-of-ai-images-ive-made-that",
       "category": "Artificial Intelligence",
-      "source": "substack"
+      "source": "substack",
+      "cover_image": "https://substackcdn.com/image/fetch/$s_!YhIS!,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2F18a605e0-270b-4066-a01e-a22b19a730f3_2688x1792.png"
     },
     {
       "title": "Contra the UK government, please don't delete your old photos and emails to save water",
@@ -422,7 +468,8 @@
       "description": "You'd need to delete hundreds of billions of emails to save as much water as fixing your toilet",
       "url": "https://blog.andymasley.com/p/contra-the-uk-government-please-dont",
       "category": "AI & the Environment",
-      "source": "substack"
+      "source": "substack",
+      "cover_image": "https://substack-post-media.s3.amazonaws.com/public/images/d4624dab-f5de-4cc1-8a9f-fe9a04e20458_1860x1222.png"
     },
     {
       "title": "Egalitarianism requires quantification",
@@ -431,7 +478,8 @@
       "description": "Adding up the number of lives saved respects dignity more than focusing on the particular vibes of the people involved",
       "url": "https://blog.andymasley.com/p/egalitarianism-requires-quantification",
       "category": "Charity",
-      "source": "substack"
+      "source": "substack",
+      "cover_image": "https://substack-post-media.s3.amazonaws.com/public/images/4c80b775-764e-45fc-aa92-e8d71a427908_2464x1856.png"
     },
     {
       "title": "My can of soup example of bad climate communication",
@@ -440,7 +488,8 @@
       "description": "Would you condemn my vegan chili?",
       "url": "https://blog.andymasley.com/p/my-can-of-soup-example-for-bad-climate",
       "category": "AI & the Environment",
-      "source": "substack"
+      "source": "substack",
+      "cover_image": "https://substackcdn.com/image/fetch/$s_!rclb!,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2F24fab78a-767e-4e89-9c43-ee8b1ba07735_1200x900.webp"
     },
     {
       "title": "Amazon deliveries are often better for the environment than driving to buy the stuff in a store",
@@ -449,7 +498,8 @@
       "description": "Driving is so bad for the climate that anything you can do to drive less is usually pretty good",
       "url": "https://blog.andymasley.com/p/ordering-amazon-deliveries-is-often",
       "category": "Misc",
-      "source": "substack"
+      "source": "substack",
+      "cover_image": "https://substack-post-media.s3.amazonaws.com/public/images/9ef90831-0446-4b9d-b92a-5eafa467d750_1536x1024.png"
     },
     {
       "title": "All my (vegan) fitness advice - Part 3: Products, mindset, and motivation",
@@ -458,7 +508,8 @@
       "description": "Demystify the gym to yourself, you're one of a small percentage of people using it",
       "url": "https://blog.andymasley.com/p/all-my-vegan-fitness-advice-part-b55",
       "category": "Recs & Advice",
-      "source": "substack"
+      "source": "substack",
+      "cover_image": "https://substack-post-media.s3.amazonaws.com/public/images/2164f2a3-8035-442f-bcca-c732d4f3c2ab_2472x1646.png"
     },
     {
       "title": "All my (vegan) fitness advice - Part 2: Diet, supplements, and optimization",
@@ -467,7 +518,8 @@
       "description": "Creatine!",
       "url": "https://blog.andymasley.com/p/all-my-vegan-fitness-advice-part-acf",
       "category": "Recs & Advice",
-      "source": "substack"
+      "source": "substack",
+      "cover_image": "https://substack-post-media.s3.amazonaws.com/public/images/570c2ef7-85a8-4972-a5e6-b54317429668_1696x1102.png"
     },
     {
       "title": "All my (vegan) fitness advice - Part 1: Exercise and etiquette ",
@@ -476,7 +528,8 @@
       "description": "Get big for the animals (redux)",
       "url": "https://blog.andymasley.com/p/all-my-vegan-fitness-advice-part",
       "category": "Recs & Advice",
-      "source": "substack"
+      "source": "substack",
+      "cover_image": "https://substackcdn.com/image/fetch/$s_!vuiv!,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2F690093bd-1e2d-4147-8f61-ef100bf86685_1530x992.png"
     },
     {
       "title": "AI can be bad without being useless",
@@ -485,7 +538,8 @@
       "description": "A common way conversations get tripped up",
       "url": "https://blog.andymasley.com/p/ai-can-be-bad-overall-without-being",
       "category": "Artificial Intelligence",
-      "source": "substack"
+      "source": "substack",
+      "cover_image": "https://substack-post-media.s3.amazonaws.com/public/images/558d47c5-0660-49d8-b01a-9101228ab37a_1536x1024.png"
     },
     {
       "title": "My \"Are you presuming most people are stupid?\" test",
@@ -494,7 +548,8 @@
       "description": "For AI criticism and everything else",
       "url": "https://blog.andymasley.com/p/my-are-you-presuming-most-people",
       "category": "Artificial Intelligence",
-      "source": "substack"
+      "source": "substack",
+      "cover_image": "https://substack-post-media.s3.amazonaws.com/public/images/2c277993-67c5-4222-b1fd-2c5cfb806354_1824x1212.png"
     },
     {
       "title": "Computing is efficient",
@@ -503,7 +558,8 @@
       "description": "The reason using ChatGPT isn't bad for the environment is that it's a computer program",
       "url": "https://blog.andymasley.com/p/computing-is-efficient",
       "category": "AI & the Environment",
-      "source": "substack"
+      "source": "substack",
+      "cover_image": "https://substack-post-media.s3.amazonaws.com/public/images/e2c6d56e-1a84-47c3-9a8e-d7be323a1786_1598x1004.png"
     },
     {
       "title": "Even with a perfect government, we'd still need a lot of private charity",
@@ -512,7 +568,8 @@
       "description": "Charity isn't always and only a distraction from political reform",
       "url": "https://blog.andymasley.com/p/even-with-a-perfect-government-wed",
       "category": "Charity",
-      "source": "substack"
+      "source": "substack",
+      "cover_image": "https://substack-post-media.s3.amazonaws.com/public/images/a8b6aa13-bac3-4e71-9e55-40eb098df2b2_2196x1422.png"
     },
     {
       "title": "Resource recs on AI catastrophic risk",
@@ -521,7 +578,8 @@
       "description": "If nothing magic is happening in the human brain, things could get weird",
       "url": "https://blog.andymasley.com/p/resource-recs-on-ai-catastrophic",
       "category": "Artificial Intelligence",
-      "source": "substack"
+      "source": "substack",
+      "cover_image": "https://substack-post-media.s3.amazonaws.com/public/images/ccba4e4d-7799-4dba-9bd4-a08d1676c94d_2096x1288.png"
     },
     {
       "title": "All the ways I want the AI debate to be better",
@@ -530,7 +588,8 @@
       "description": "Ground truths, useful rules, ideas I'd like taken seriously, and a rant",
       "url": "https://blog.andymasley.com/p/all-the-ways-i-want-the-ai-debate",
       "category": "Artificial Intelligence",
-      "source": "substack"
+      "source": "substack",
+      "cover_image": "https://substack-post-media.s3.amazonaws.com/public/images/f3e590fb-0f76-4a82-bea8-9829cfe9c2a7_2688x1792.png"
     },
     {
       "title": "Reactions to MIT Technology Review's report on AI and the environment",
@@ -539,7 +598,8 @@
       "description": "Interesting useful facts, and some framing I think is super misleading",
       "url": "https://blog.andymasley.com/p/reactions-to-mit-technology-reviews",
       "category": "AI & the Environment",
-      "source": "substack"
+      "source": "substack",
+      "cover_image": "https://substackcdn.com/image/fetch/f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2Fe65e71c7-4611-4032-bb91-1b954e1817e6_1666x1138.png"
     },
     {
       "title": "Things I got wrong in my ChatGPT/environment posts",
@@ -548,7 +608,8 @@
       "description": "Logging the errors",
       "url": "https://blog.andymasley.com/p/things-i-got-wrong-in-my-chatgptenvironment",
       "category": "AI & the Environment",
-      "source": "substack"
+      "source": "substack",
+      "cover_image": "https://substack-post-media.s3.amazonaws.com/public/images/26ed4ff9-3371-47e3-91c9-c9961c2712f2_2398x1598.png"
     },
     {
       "title": "Why goofy AI art almost never seems wasteful to me",
@@ -557,7 +618,8 @@
       "description": "Environmentalism is important, but shouldn't be used to squash pluralism",
       "url": "https://blog.andymasley.com/p/why-goofy-ai-art-almost-never-seems",
       "category": "AI & the Environment",
-      "source": "substack"
+      "source": "substack",
+      "cover_image": "https://substack-post-media.s3.amazonaws.com/public/images/9311e634-597b-4970-b7a4-6e5aa0d2665f_1312x858.png"
     },
     {
       "title": "Replies to criticisms of my posts on ChatGPT & the environment",
@@ -566,7 +628,8 @@
       "description": "Why I used 3 Wh, and why I don't say \"Every Watt-hour matters\"",
       "url": "https://blog.andymasley.com/p/replies-to-criticisms-of-my-chatgpt",
       "category": "AI & the Environment",
-      "source": "substack"
+      "source": "substack",
+      "cover_image": "https://substackcdn.com/image/fetch/f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2Fd9157760-9794-493e-ab21-c3ea309a53ba_3400x2400.png"
     },
     {
       "title": "Animal suffering isn't pretend",
@@ -575,7 +638,8 @@
       "description": "We evolved to think it is",
       "url": "https://blog.andymasley.com/p/animal-suffering-isnt-pretend",
       "category": "Animal Welfare",
-      "source": "substack"
+      "source": "substack",
+      "cover_image": "https://substack-post-media.s3.amazonaws.com/public/images/3d6ffabf-f063-465c-a73d-7eec404e866a_2078x1194.png"
     },
     {
       "title": "Using ChatGPT is not bad for the environment - a cheat sheet",
@@ -584,7 +648,8 @@
       "description": "The numbers clearly show that discouraging people from using chatbots is a pointless distraction for the climate movement",
       "url": "https://blog.andymasley.com/p/a-cheat-sheet-for-conversations-about",
       "category": "AI & the Environment",
-      "source": "substack"
+      "source": "substack",
+      "cover_image": "https://substack-post-media.s3.amazonaws.com/public/images/3b68aed4-58d2-4e52-aaa0-074a113240c6_1842x1216.png"
     },
     {
       "title": "ChatGPT on the lives of factory farmed pigs",
@@ -593,7 +658,8 @@
       "description": "An example of deep research",
       "url": "https://blog.andymasley.com/p/chatgpt-on-the-lives-of-pigs-in-us",
       "category": "Animal Welfare",
-      "source": "substack"
+      "source": "substack",
+      "cover_image": "https://substack-post-media.s3.amazonaws.com/public/images/5b8c1c63-d41d-403c-83e6-fe347d00bff4_2688x1792.png"
     },
     {
       "title": "Ideological moves that should be lower status",
@@ -602,7 +668,8 @@
       "description": "Light epistemic bullying",
       "url": "https://blog.andymasley.com/p/ideological-moves-that-should-be",
       "category": "Misc",
-      "source": "substack"
+      "source": "substack",
+      "cover_image": "https://substack-post-media.s3.amazonaws.com/public/images/35ce674e-f695-43c6-a1d4-ebedca9459c5_1344x896.png"
     },
     {
       "title": "Resource recs for energy literacy",
@@ -611,7 +678,8 @@
       "description": "It's easy to learn and it helps you understand society more than almost any other topic ",
       "url": "https://blog.andymasley.com/p/recommended-resources-for-energy",
       "category": "AI & the Environment",
-      "source": "substack"
+      "source": "substack",
+      "cover_image": "https://substack-post-media.s3.amazonaws.com/public/images/57ee7da0-87da-48c3-85e7-6c8223a39ebd_1108x754.png"
     },
     {
       "title": "How I use AI",
@@ -620,7 +688,8 @@
       "description": "LLMs in everyday life and work",
       "url": "https://blog.andymasley.com/p/how-i-use-ai",
       "category": "Artificial Intelligence",
-      "source": "substack"
+      "source": "substack",
+      "cover_image": "https://substack-post-media.s3.amazonaws.com/public/images/c30129c2-f47d-4716-812d-39380369507b_1024x1024.png"
     },
     {
       "title": "A defense of AI art",
@@ -629,7 +698,8 @@
       "description": "It's not just slop, it's not stolen, it's not bad for the environment, and we should want art to be easy to make",
       "url": "https://blog.andymasley.com/p/a-defense-of-ai-art",
       "category": "Artificial Intelligence",
-      "source": "substack"
+      "source": "substack",
+      "cover_image": "https://substack-post-media.s3.amazonaws.com/public/images/72e2bf8c-2097-4a4e-95dd-ade074af2927_2464x1856.png"
     },
     {
       "title": "People's deeply held beliefs are surprisingly surface-level",
@@ -638,7 +708,8 @@
       "description": "Try to change people's minds more",
       "url": "https://blog.andymasley.com/p/peoples-deeply-held-beliefs-are-surprisingly",
       "category": "Misc",
-      "source": "substack"
+      "source": "substack",
+      "cover_image": "https://substack-post-media.s3.amazonaws.com/public/images/97f9af20-4ed4-4d52-9522-f1a65265d5d2_1232x928.png"
     },
     {
       "title": "Ideas from philosophy I use to think about AI",
@@ -647,7 +718,8 @@
       "description": "Physicalism, functionalism, and lots of Quine",
       "url": "https://blog.andymasley.com/p/guiding-ideas-i-use-to-think-about",
       "category": "Artificial Intelligence",
-      "source": "substack"
+      "source": "substack",
+      "cover_image": "https://substack-post-media.s3.amazonaws.com/public/images/669d2696-7413-4ebb-99f8-7f336a418409_1024x1024.png"
     },
     {
       "title": "Using ChatGPT is not bad for the environment",
@@ -656,7 +728,8 @@
       "description": "And a plea to think seriously about climate change without getting distracted",
       "url": "https://blog.andymasley.com/p/individual-ai-use-is-not-bad-for",
       "category": "AI & the Environment",
-      "source": "substack"
+      "source": "substack",
+      "cover_image": "https://substackcdn.com/image/fetch/$s_!ZGkm!,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2Fc2132222-db1f-40bf-beae-1a84ee7ac700_1430x848.png"
     },
     {
       "title": "Strategies for learning",
@@ -665,7 +738,8 @@
       "description": "Mindset and tools",
       "url": "https://blog.andymasley.com/p/strategies-for-learning",
       "category": "Recs & Advice",
-      "source": "substack"
+      "source": "substack",
+      "cover_image": "https://substack-post-media.s3.amazonaws.com/public/images/064d363f-1122-4b03-bf92-a664febe6453_1224x868.png"
     },
     {
       "title": "The core idea of liberalism",
@@ -674,7 +748,8 @@
       "description": "Learning to mediate radical difference",
       "url": "https://blog.andymasley.com/p/liberalism",
       "category": "Politics",
-      "source": "substack"
+      "source": "substack",
+      "cover_image": "https://substack-post-media.s3.amazonaws.com/public/images/ccd05f0f-33da-4748-bbac-481ed177c52c_2688x1792.png"
     },
     {
       "title": "Product recommendations",
@@ -683,7 +758,8 @@
       "description": "Things I recommend you buy and use",
       "url": "https://blog.andymasley.com/p/product-recommendations",
       "category": "Recs & Advice",
-      "source": "substack"
+      "source": "substack",
+      "cover_image": "https://substackcdn.com/image/fetch/$s_!SIsC!,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2Fd3f16c92-4a07-4202-a58c-5d597a148552_1646x528.png"
     },
     {
       "title": "DC vegan food recs",
@@ -692,7 +768,8 @@
       "description": "If you're vegan and visiting DC, these are my recs for places to eat while you're in the area",
       "url": "https://blog.andymasley.com/p/andys-dc-area-vegan-dining-recs",
       "category": "Recs & Advice",
-      "source": "substack"
+      "source": "substack",
+      "cover_image": "https://substack-post-media.s3.amazonaws.com/public/images/2722d862-acba-4470-a6db-d2867b8eee0d_1246x556.png"
     },
     {
       "title": "Especially good audiobooks",
@@ -701,7 +778,8 @@
       "description": "I’ve been listening to audiobooks regularly since 2015.",
       "url": "https://blog.andymasley.com/p/especially-good-audiobooks",
       "category": "Recs & Advice",
-      "source": "substack"
+      "source": "substack",
+      "cover_image": "https://substack-post-media.s3.amazonaws.com/public/images/5a0a6a07-d140-43f5-bf0b-9db31a62c583_500x500.jpeg"
     },
     {
       "title": "Productivity advice that's worked for me",
@@ -710,7 +788,8 @@
       "description": "\"It is later than you think\"",
       "url": "https://blog.andymasley.com/p/productivity-stuff-thats-worked-for",
       "category": "Recs & Advice",
-      "source": "substack"
+      "source": "substack",
+      "cover_image": "https://substack-post-media.s3.amazonaws.com/public/images/7ab4103b-58e8-4909-8f61-140382c88d65_2688x1792.png"
     },
     {
       "title": "My favorite 80,000 Hours episodes",
@@ -719,7 +798,8 @@
       "description": "The first of a series of EA media rec posts",
       "url": "https://blog.andymasley.com/p/my-favorite-80000-hours-episodes",
       "category": "Recs & Advice",
-      "source": "substack"
+      "source": "substack",
+      "cover_image": "https://substack-post-media.s3.amazonaws.com/public/images/9c52cf86-aab6-4864-9005-40cffa935fde_1920x1080.png"
     },
     {
       "title": "Thinking seriously about violence",
@@ -728,7 +808,8 @@
       "description": "A failure to take violence seriously is bad",
       "url": "https://blog.andymasley.com/p/thinking-seriously-about-violence",
       "category": "Misc",
-      "source": "substack"
+      "source": "substack",
+      "cover_image": "https://substackcdn.com/image/fetch/$s_!nlHk!,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2F05d1c59d-3878-471e-8653-918c8ea1330e_1374x1048.png"
     },
     {
       "title": "My foundational philosophy beliefs",
@@ -737,7 +818,8 @@
       "description": "Stuff I feel especially confident about that shapes how I approach the world",
       "url": "https://blog.andymasley.com/p/my-foundational-philosophy-beliefs",
       "category": "Misc",
-      "source": "substack"
+      "source": "substack",
+      "cover_image": "https://substack-post-media.s3.amazonaws.com/public/images/c4469488-58eb-4b6c-97c7-4f87e3b0b59d_2688x1792.png"
     },
     {
       "title": "Electric cars are more massive, but not more dangerous to pedestrians",
@@ -746,7 +828,8 @@
       "description": "Or: A lot of people don't know what F = ma means",
       "url": "https://blog.andymasley.com/p/whats-the-deal-with-electric-cars",
       "category": "Misc",
-      "source": "substack"
+      "source": "substack",
+      "cover_image": "https://substackcdn.com/image/fetch/$s_!nofp!,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2F3e8a22f3-5bb2-4e70-a845-c7b3d260cdc7_1800x1013.jpeg"
     },
     {
       "title": "Alcohol is so bad for society that you should probably stop drinking",
@@ -755,7 +838,8 @@
       "description": "Not something I expected to write",
       "url": "https://blog.andymasley.com/p/alcohol-is-so-bad-for-society-that",
       "category": "Misc",
-      "source": "substack"
+      "source": "substack",
+      "cover_image": "https://substackcdn.com/image/fetch/$s_!YizY!,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2Fe9aedf65-f3f7-4dda-aea7-fd01cb0c1290_1194x796.png"
     },
     {
       "title": "All my (vegan) fitness advice",
@@ -764,7 +848,8 @@
       "description": "Get big for the animals",
       "url": "https://blog.andymasley.com/p/all-my-vegan-fitness-advice",
       "category": "Recs & Advice",
-      "source": "substack"
+      "source": "substack",
+      "cover_image": "https://substackcdn.com/image/fetch/$s_!jf_r!,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2F656e4ab7-2066-4cf5-b59d-60805b9dfb8d_1050x1050.jpeg"
     },
     {
       "title": "An intro to animal ethics",
@@ -773,7 +858,8 @@
       "description": "My attempt to summarize everything important I believe about animal ethics",
       "url": "https://blog.andymasley.com/p/animal-ethics",
       "category": "Animal Welfare",
-      "source": "substack"
+      "source": "substack",
+      "cover_image": "https://substack-post-media.s3.amazonaws.com/public/images/7f947040-4111-41b7-8249-6c029cb76437_2944x1648.png"
     }
   ]
 }
