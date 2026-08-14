@@ -44,6 +44,7 @@
   --font-body: Georgia, Cambria, 'Times New Roman', Times, serif;
   --font-editorial: Georgia, Cambria, 'Times New Roman', Times, serif;
   --font-mono: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+  --font-label: var(--font-body);
 
   /* Font sizes - refined scale for Inter */
   --font-size-base: 0.9375rem;  /* 15px - optimal for Inter */
@@ -566,7 +567,7 @@ a:active {
 .section__count {
   color: var(--dim);
   font-size: 0.72rem;
-  font-family: var(--font-mono);
+  font-family: var(--font-label);
   letter-spacing: 0.04em;
   margin-left: auto;
 }
@@ -598,8 +599,10 @@ a:active {
 
 .content-item__date {
   color: var(--dim);
-  font-family: var(--font-mono);
+  font-family: var(--font-label);
   font-size: var(--font-size-mono);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
 }
@@ -664,7 +667,7 @@ a:active {
 .tag {
   display: inline-block;
   font-size: var(--font-size-mono);
-  font-family: var(--font-mono);
+  font-family: var(--font-label);
   color: var(--dim);
   background: none;
   padding: 0;
@@ -863,7 +866,7 @@ hr {
 
 .page-header__meta {
   font-size: var(--font-size-mono);
-  font-family: var(--font-mono);
+  font-family: var(--font-label);
   color: var(--dim);
   font-variant-numeric: tabular-nums;
 }
@@ -904,7 +907,7 @@ hr {
 }
 
 .annotated-list__meta {
-  font-family: var(--font-mono);
+  font-family: var(--font-label);
   font-size: 0.72rem;
   letter-spacing: 0.04em;
   color: var(--dim);
@@ -1055,7 +1058,7 @@ hr {
 
 .simple-directory__meta {
   font-size: 0.68rem;
-  font-family: var(--font-mono);
+  font-family: var(--font-label);
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--dim);
@@ -1333,7 +1336,7 @@ details[open] > summary::before {
 .search-modal__result-type,
 .search-result__type {
   font-size: var(--font-size-mono);
-  font-family: var(--font-mono);
+  font-family: var(--font-label);
   color: var(--dim);
   margin-left: var(--space-md);
   text-transform: uppercase;
@@ -1351,7 +1354,7 @@ details[open] > summary::before {
 .search-hint {
   padding: var(--space-sm) var(--space-md);
   font-size: var(--font-size-mono);
-  font-family: var(--font-mono);
+  font-family: var(--font-label);
   color: var(--dim);
   text-align: right;
   border-top: 1px solid var(--border);
@@ -1422,7 +1425,7 @@ details[open] > summary::before {
 
 .article-header__meta {
   font-size: var(--font-size-mono);
-  font-family: var(--font-mono);
+  font-family: var(--font-label);
   color: var(--dim);
   font-variant-numeric: tabular-nums;
   display: flex;
@@ -2047,7 +2050,7 @@ details[open] > summary::before {
 }
 
 .search-result-type {
-  font-family: var(--font-mono);
+  font-family: var(--font-label);
   font-size: 0.6rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -2105,7 +2108,7 @@ details[open] > summary::before {
 }
 
 .search-tag {
-  font-family: var(--font-mono);
+  font-family: var(--font-label);
   font-size: 0.55rem;
   color: var(--dim);
   background: var(--border);
