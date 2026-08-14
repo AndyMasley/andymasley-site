@@ -1,0 +1,779 @@
+{
+  "timestamp": 1786407182247,
+  "posts": [
+    {
+      "title": "I'm very skeptical that China has played a meaningful role in the US data center backlash",
+      "slug": "im-very-skeptical-that-china-has",
+      "date": "2026-08-08T01:52:43.949Z",
+      "description": "The evidence we have is pretty weak",
+      "url": "https://blog.andymasley.com/p/im-very-skeptical-that-china-has",
+      "category": "AI & the Environment",
+      "source": "substack"
+    },
+    {
+      "title": "Toward liberal environmentalism",
+      "slug": "toward-environmental-liberalism",
+      "date": "2026-07-10T04:57:46.024Z",
+      "description": "The underlying normative claim of my environmental writing",
+      "url": "https://blog.andymasley.com/p/toward-environmental-liberalism",
+      "category": "Politics",
+      "source": "substack"
+    },
+    {
+      "title": "AI art as curation",
+      "slug": "ai-art-as-curation",
+      "date": "2026-07-03T05:10:47.837Z",
+      "description": "Asking whether AI art involves real creativity mostly misses what's interesting about it",
+      "url": "https://blog.andymasley.com/p/ai-art-as-curation",
+      "category": "Artificial Intelligence",
+      "source": "substack"
+    },
+    {
+      "title": "What does it mean for AI to be democratic?",
+      "slug": "what-does-it-mean-for-ai-to-be-democratic",
+      "date": "2026-06-21T01:00:29.784Z",
+      "description": "Some pushback on a specific fuzzy idea with some ominous implications",
+      "url": "https://blog.andymasley.com/p/what-does-it-mean-for-ai-to-be-democratic",
+      "category": "Artificial Intelligence",
+      "source": "substack"
+    },
+    {
+      "title": "A plug for a tool I made to show how little most current AI chatbots add to your emissions and water use, with citations",
+      "slug": "a-plug-for-a-tool-i-made-to-show",
+      "date": "2026-06-11T02:46:17.232Z",
+      "description": "Take this and share it, you don't need to mention me",
+      "url": "https://blog.andymasley.com/p/a-plug-for-a-tool-i-made-to-show",
+      "category": "AI & the Environment",
+      "source": "substack"
+    },
+    {
+      "title": "A simple trick to fix the data center debate",
+      "slug": "a-simple-trick-to-fix-the-data-center",
+      "date": "2026-06-06T16:03:12.306Z",
+      "description": "Remove the status quo bias by asking \"would we spend this much in tax revenue to avoid the externalities of the data center?\"",
+      "url": "https://blog.andymasley.com/p/a-simple-trick-to-fix-the-data-center",
+      "category": "AI & the Environment",
+      "source": "substack"
+    },
+    {
+      "title": "Why I think panic about local impacts of data centers is just a panic",
+      "slug": "why-i-think-panic-about-local-impacts",
+      "date": "2026-06-04T05:13:27.589Z",
+      "description": "A request for counterexamples",
+      "url": "https://blog.andymasley.com/p/why-i-think-panic-about-local-impacts",
+      "category": "AI & the Environment",
+      "source": "substack"
+    },
+    {
+      "title": "A history of the data center panic - part 1",
+      "slug": "a-history-of-the-data-center-panic",
+      "date": "2026-05-20T05:20:46.810Z",
+      "description": "The creation of common wisdom pre-ChatGPT",
+      "url": "https://blog.andymasley.com/p/a-history-of-the-data-center-panic",
+      "category": "AI & the Environment",
+      "source": "substack"
+    },
+    {
+      "title": "A crash course on US air pollution",
+      "slug": "a-crash-course-on-us-air-pollution",
+      "date": "2026-05-19T00:42:04.117Z",
+      "description": "Data centers and air pollution - part 1",
+      "url": "https://blog.andymasley.com/p/a-crash-course-on-us-air-pollution",
+      "category": "AI & the Environment",
+      "source": "substack"
+    },
+    {
+      "title": "Let's not compare data center heat exhaust to nuclear bombs",
+      "slug": "lets-not-compare-data-center-heat",
+      "date": "2026-05-11T06:46:08.425Z",
+      "description": "Why dropping hundreds of nuclear bombs on Washington DC every day is pretty normal",
+      "url": "https://blog.andymasley.com/p/lets-not-compare-data-center-heat",
+      "category": "AI & the Environment",
+      "source": "substack"
+    },
+    {
+      "title": "Data center land use issues are fake",
+      "slug": "data-center-land-use-issues-are-fake",
+      "date": "2026-05-02T12:17:50.631Z",
+      "description": "We have plenty of land, data centers provide more revenue per unit area than any other building, and we should have way less farmland",
+      "url": "https://blog.andymasley.com/p/data-center-land-use-issues-are-fake",
+      "category": "AI & the Environment",
+      "source": "substack"
+    },
+    {
+      "title": "To be clear, I do understand how sound works",
+      "slug": "to-be-clear-i-do-understand-how-sound",
+      "date": "2026-04-24T04:21:51.326Z",
+      "description": "Replying to a criticism of my last post",
+      "url": "https://blog.andymasley.com/p/to-be-clear-i-do-understand-how-sound",
+      "category": "AI & the Environment",
+      "source": "substack"
+    },
+    {
+      "title": "Contra Benn Jordan, data center (and all) sub-audible infrasound issues are fake",
+      "slug": "contra-benn-jordan-data-center-and",
+      "date": "2026-04-19T19:01:11.354Z",
+      "description": "One of the most popular videos ever made about data centers is a complete moment-by-moment disaster",
+      "url": "https://blog.andymasley.com/p/contra-benn-jordan-data-center-and",
+      "category": "AI & the Environment",
+      "source": "substack"
+    },
+    {
+      "title": "Training AI models doesn't emit that much",
+      "slug": "training-ai-models-doesnt-emit-that",
+      "date": "2026-04-12T17:39:46.594Z",
+      "description": "If we just make reasonable comparisons instead of crazy ones",
+      "url": "https://blog.andymasley.com/p/training-ai-models-doesnt-emit-that",
+      "category": "AI & the Environment",
+      "source": "substack"
+    },
+    {
+      "title": "What's blocking Waymo in DC and how can we fix it?",
+      "slug": "whats-blocking-waymo-in-dc-and-how",
+      "date": "2026-04-03T11:58:06.414Z",
+      "description": "The very late DDOT report is only part of the story",
+      "url": "https://blog.andymasley.com/p/whats-blocking-waymo-in-dc-and-how",
+      "category": "Artificial Intelligence",
+      "source": "substack"
+    },
+    {
+      "title": "Data centers' heat exhaust is not raising the land temperature around where they're built",
+      "slug": "data-centers-heat-exhaust-is-not",
+      "date": "2026-03-31T04:44:31.490Z",
+      "description": "A terrible paper and even worse interpretation is threatening to become common wisdom",
+      "url": "https://blog.andymasley.com/p/data-centers-heat-exhaust-is-not",
+      "category": "AI & the Environment",
+      "source": "substack"
+    },
+    {
+      "title": "A call for more specific and numerate climate communication",
+      "slug": "a-call-for-more-specific-and-numerate",
+      "date": "2026-03-11T01:17:18.274Z",
+      "description": "There's too much low-hanging fruit going unpicked, and it's relatively easy to pick",
+      "url": "https://blog.andymasley.com/p/a-call-for-more-specific-and-numerate",
+      "category": "AI & the Environment",
+      "source": "substack"
+    },
+    {
+      "title": "AI can obviously create new knowledge",
+      "slug": "ai-can-obviously-create-new-knowledge",
+      "date": "2025-12-08T19:01:11.862Z",
+      "description": "But maybe not new concepts",
+      "url": "https://blog.andymasley.com/p/ai-can-obviously-create-new-knowledge",
+      "category": "Artificial Intelligence",
+      "source": "substack"
+    },
+    {
+      "title": "Empire of AI is wildly misleading about AI water use",
+      "slug": "empire-of-ai-is-wildly-misleading",
+      "date": "2025-11-16T21:22:02.609Z",
+      "description": "And the media environment that didn't catch this is getting this issue wrong",
+      "url": "https://blog.andymasley.com/p/empire-of-ai-is-wildly-misleading",
+      "category": "AI & the Environment",
+      "source": "substack"
+    },
+    {
+      "title": "A short summary of my argument that using ChatGPT isn't bad for the environment",
+      "slug": "a-short-summary-of-my-argument-that",
+      "date": "2025-11-12T15:07:50.539Z",
+      "description": "To share with anyone still worried",
+      "url": "https://blog.andymasley.com/p/a-short-summary-of-my-argument-that",
+      "category": "AI & the Environment",
+      "source": "substack"
+    },
+    {
+      "title": "The lump of cognition fallacy",
+      "slug": "the-lump-of-cognition-fallacy",
+      "date": "2025-11-11T05:37:56.077Z",
+      "description": "The extended mind as the advance of civilization",
+      "url": "https://blog.andymasley.com/p/the-lump-of-cognition-fallacy",
+      "category": "Artificial Intelligence",
+      "source": "substack"
+    },
+    {
+      "title": "A list of other catastrophes that are probably fake",
+      "slug": "a-list-of-other-catastrophes-that",
+      "date": "2025-11-08T21:35:03.406Z",
+      "description": "Adding to this over time",
+      "url": "https://blog.andymasley.com/p/a-list-of-other-catastrophes-that",
+      "category": "Misc",
+      "source": "substack"
+    },
+    {
+      "title": "It's much easier to hold computers accountable than it is to hold humans accountable",
+      "slug": "its-much-easier-to-hold-computers",
+      "date": "2025-11-08T03:45:18.420Z",
+      "description": "Computers live in a totalitarian surveillance state",
+      "url": "https://blog.andymasley.com/p/its-much-easier-to-hold-computers",
+      "category": "Artificial Intelligence",
+      "source": "substack"
+    },
+    {
+      "title": "Data centers and low social trust",
+      "slug": "data-centers-and-low-social-trust",
+      "date": "2025-11-07T05:50:15.600Z",
+      "description": "Why I was so compelled to post a lot about data centers",
+      "url": "https://blog.andymasley.com/p/data-centers-and-low-social-trust",
+      "category": "Artificial Intelligence",
+      "source": "substack"
+    },
+    {
+      "title": "An armchair diagnosis of the chatbot moral panic",
+      "slug": "an-armchair-diagnosis-of-the-chatbot",
+      "date": "2025-11-04T03:50:20.468Z",
+      "description": "It's... status!",
+      "url": "https://blog.andymasley.com/p/an-armchair-diagnosis-of-the-chatbot",
+      "category": "Artificial Intelligence",
+      "source": "substack"
+    },
+    {
+      "title": "Always mask at airports",
+      "slug": "always-mask-in-airports",
+      "date": "2025-10-31T20:49:53.077Z",
+      "description": "This might occasionally save you thousands of dollars",
+      "url": "https://blog.andymasley.com/p/always-mask-in-airports",
+      "category": "Recs & Advice",
+      "source": "substack"
+    },
+    {
+      "title": "A lot of arguments for legalizing autonomous vehicles in your city",
+      "slug": "please-please-please-do-not-ban-autonomous",
+      "date": "2025-10-29T04:29:20.969Z",
+      "description": "Compare them to any other vehicle",
+      "url": "https://blog.andymasley.com/p/please-please-please-do-not-ban-autonomous",
+      "category": "Artificial Intelligence",
+      "source": "substack"
+    },
+    {
+      "title": "AI and Folk Cartesianism - Part 2: Problems for Cartesianism",
+      "slug": "ai-and-folk-cartesianism-part-2-problems",
+      "date": "2025-10-28T11:45:52.939Z",
+      "description": "The theater is empty, the screen is in another room",
+      "url": "https://blog.andymasley.com/p/ai-and-folk-cartesianism-part-2-problems",
+      "category": "Artificial Intelligence",
+      "source": "substack"
+    },
+    {
+      "title": "AI and Folk Cartesianism - Part 1: Defining the Problem",
+      "slug": "ai-and-folk-cartesianism-part-1-defining",
+      "date": "2025-10-27T00:59:07.914Z",
+      "description": "Why I'm scared of linear algebra",
+      "url": "https://blog.andymasley.com/p/ai-and-folk-cartesianism-part-1-defining",
+      "category": "Artificial Intelligence",
+      "source": "substack"
+    },
+    {
+      "title": "Requests for journalists covering AI and the environment",
+      "slug": "requests-for-journalists-covering",
+      "date": "2025-10-18T11:18:26.887Z",
+      "description": "Always aim to give your reader a full picture of the environmental issues a community and the world is facing",
+      "url": "https://blog.andymasley.com/p/requests-for-journalists-covering",
+      "category": "AI & the Environment",
+      "source": "substack"
+    },
+    {
+      "title": "The main way I've seen people turn ideologically crazy",
+      "slug": "the-main-way-ive-seen-people-turn",
+      "date": "2025-10-16T03:46:41.101Z",
+      "description": "Don't update positively on your extremist beliefs whenever you hear a bad argument against them",
+      "url": "https://blog.andymasley.com/p/the-main-way-ive-seen-people-turn",
+      "category": "Recs & Advice",
+      "source": "substack"
+    },
+    {
+      "title": "A few meta points on my posts on AI and the environment",
+      "slug": "a-few-meta-points-on-my-posts-on",
+      "date": "2025-10-15T04:00:07.619Z",
+      "description": "Some quick notes on what I'm doing",
+      "url": "https://blog.andymasley.com/p/a-few-meta-points-on-my-posts-on",
+      "category": "AI & the Environment",
+      "source": "substack"
+    },
+    {
+      "title": "Slop implies capability",
+      "slug": "slop-implies-capability",
+      "date": "2025-10-13T00:35:12.573Z",
+      "description": "If the current paradigm can produce convincing, satisfying slop, it can also be useful",
+      "url": "https://blog.andymasley.com/p/slop-implies-capability",
+      "category": "Artificial Intelligence",
+      "source": "substack"
+    },
+    {
+      "title": "The AI water issue is fake",
+      "slug": "the-ai-water-issue-is-fake",
+      "date": "2025-10-11T19:29:57.675Z",
+      "description": "On the national, local, and personal level",
+      "url": "https://blog.andymasley.com/p/the-ai-water-issue-is-fake",
+      "category": "AI & the Environment",
+      "source": "substack"
+    },
+    {
+      "title": "Data centers & electricity - part 1: as of 2025 they haven't raised national prices",
+      "slug": "data-centers-and-electricity-part",
+      "date": "2025-10-10T04:28:08.837Z",
+      "description": "Yet, anyway, but they raised local costs in specific places like NOVA",
+      "url": "https://blog.andymasley.com/p/data-centers-and-electricity-part",
+      "category": "AI & the Environment",
+      "source": "substack"
+    },
+    {
+      "title": "What a data center is",
+      "slug": "what-a-data-center-is",
+      "date": "2025-10-08T04:09:55.833Z",
+      "description": "A building-sized computer, and the most efficient type of building we've ever created",
+      "url": "https://blog.andymasley.com/p/what-a-data-center-is",
+      "category": "AI & the Environment",
+      "source": "substack"
+    },
+    {
+      "title": "More Perfect Union videos are wildly deceptive on data center water use",
+      "slug": "more-perfect-union-is-deceptive",
+      "date": "2025-09-28T11:02:57.941Z",
+      "description": "They're misinforming their huge audience and making the data center debate much worse",
+      "url": "https://blog.andymasley.com/p/more-perfect-union-is-deceptive",
+      "category": "AI & the Environment",
+      "source": "substack"
+    },
+    {
+      "title": "For the climate, little things don't add up",
+      "slug": "for-the-climate-little-things-dont",
+      "date": "2025-09-14T20:40:43.784Z",
+      "description": "We need to think seriously about collective action",
+      "url": "https://blog.andymasley.com/p/for-the-climate-little-things-dont",
+      "category": "AI & the Environment",
+      "source": "substack"
+    },
+    {
+      "title": "What's the full \"hidden\" climate cost of a ChatGPT prompt?",
+      "slug": "whats-the-full-hidden-climate-cost",
+      "date": "2025-09-08T19:35:06.292Z",
+      "description": "It's so tiny, and if we include \"all the hidden costs\" it might actually be a negative number",
+      "url": "https://blog.andymasley.com/p/whats-the-full-hidden-climate-cost",
+      "category": "AI & the Environment",
+      "source": "substack"
+    },
+    {
+      "title": "Do data centers only seem bad for the climate because we can see them?",
+      "slug": "do-data-centers-only-seem-bad-for",
+      "date": "2025-09-06T16:28:48.133Z",
+      "description": "Most of your climate impacts are invisible",
+      "url": "https://blog.andymasley.com/p/do-data-centers-only-seem-bad-for",
+      "category": "AI & the Environment",
+      "source": "substack"
+    },
+    {
+      "title": "Jevons' Paradox is good sometimes",
+      "slug": "jevons-paradox-isnt-always-bad",
+      "date": "2025-09-02T21:22:39.315Z",
+      "description": "It might be good news for AI and the climate",
+      "url": "https://blog.andymasley.com/p/jevons-paradox-isnt-always-bad",
+      "category": "AI & the Environment",
+      "source": "substack"
+    },
+    {
+      "title": "Mapping the AI & environment debate",
+      "slug": "mapping-the-ai-and-environment-debate",
+      "date": "2025-08-30T04:06:19.394Z",
+      "description": "And clarifying what I believe",
+      "url": "https://blog.andymasley.com/p/mapping-the-ai-and-environment-debate",
+      "category": "AI & the Environment",
+      "source": "substack"
+    },
+    {
+      "title": "The core simple reason I think AI is valuable",
+      "slug": "the-core-simple-reason-i-think-ai",
+      "date": "2025-08-29T13:32:47.688Z",
+      "description": "Why I don't think every Watt-hour or liter we spend on AI is wasted",
+      "url": "https://blog.andymasley.com/p/the-core-simple-reason-i-think-ai",
+      "category": "Artificial Intelligence",
+      "source": "substack"
+    },
+    {
+      "title": "An example of what I consider a misleading article about AI and the environment",
+      "slug": "an-example-of-what-i-consider-a-misleading",
+      "date": "2025-08-24T12:26:19.513Z",
+      "description": "Just show the numbers!",
+      "url": "https://blog.andymasley.com/p/an-example-of-what-i-consider-a-misleading",
+      "category": "AI & the Environment",
+      "source": "substack"
+    },
+    {
+      "title": "When making cuts for the climate, always consider the value you're getting per unit energy, not just the total energy used",
+      "slug": "when-making-cuts-for-the-climate",
+      "date": "2025-08-16T20:12:58.410Z",
+      "description": "This needs to be a basic part of our climate ethics",
+      "url": "https://blog.andymasley.com/p/when-making-cuts-for-the-climate",
+      "category": "AI & the Environment",
+      "source": "substack"
+    },
+    {
+      "title": "A ton of AI images I've made that I've liked",
+      "slug": "a-ton-of-ai-images-ive-made-that",
+      "date": "2025-08-14T01:59:10.353Z",
+      "description": "I think people with my aesthetic taste have been underrepresented in presentations of AI art. Here I try to change that",
+      "url": "https://blog.andymasley.com/p/a-ton-of-ai-images-ive-made-that",
+      "category": "Artificial Intelligence",
+      "source": "substack"
+    },
+    {
+      "title": "Contra the UK government, please don't delete your old photos and emails to save water",
+      "slug": "contra-the-uk-government-please-dont",
+      "date": "2025-08-13T16:45:44.091Z",
+      "description": "You'd need to delete hundreds of billions of emails to save as much water as fixing your toilet",
+      "url": "https://blog.andymasley.com/p/contra-the-uk-government-please-dont",
+      "category": "AI & the Environment",
+      "source": "substack"
+    },
+    {
+      "title": "Egalitarianism requires quantification",
+      "slug": "egalitarianism-requires-quantification",
+      "date": "2025-08-10T20:12:55.351Z",
+      "description": "Adding up the number of lives saved respects dignity more than focusing on the particular vibes of the people involved",
+      "url": "https://blog.andymasley.com/p/egalitarianism-requires-quantification",
+      "category": "Charity",
+      "source": "substack"
+    },
+    {
+      "title": "My can of soup example of bad climate communication",
+      "slug": "my-can-of-soup-example-for-bad-climate",
+      "date": "2025-07-28T02:25:11.185Z",
+      "description": "Would you condemn my vegan chili?",
+      "url": "https://blog.andymasley.com/p/my-can-of-soup-example-for-bad-climate",
+      "category": "AI & the Environment",
+      "source": "substack"
+    },
+    {
+      "title": "Amazon deliveries are often better for the environment than driving to buy the stuff in a store",
+      "slug": "ordering-amazon-deliveries-is-often",
+      "date": "2025-07-22T00:45:43.752Z",
+      "description": "Driving is so bad for the climate that anything you can do to drive less is usually pretty good",
+      "url": "https://blog.andymasley.com/p/ordering-amazon-deliveries-is-often",
+      "category": "Misc",
+      "source": "substack"
+    },
+    {
+      "title": "All my (vegan) fitness advice - Part 3: Products, mindset, and motivation",
+      "slug": "all-my-vegan-fitness-advice-part-b55",
+      "date": "2025-07-01T13:24:15.166Z",
+      "description": "Demystify the gym to yourself, you're one of a small percentage of people using it",
+      "url": "https://blog.andymasley.com/p/all-my-vegan-fitness-advice-part-b55",
+      "category": "Recs & Advice",
+      "source": "substack"
+    },
+    {
+      "title": "All my (vegan) fitness advice - Part 2: Diet, supplements, and optimization",
+      "slug": "all-my-vegan-fitness-advice-part-acf",
+      "date": "2025-07-01T12:04:23.025Z",
+      "description": "Creatine!",
+      "url": "https://blog.andymasley.com/p/all-my-vegan-fitness-advice-part-acf",
+      "category": "Recs & Advice",
+      "source": "substack"
+    },
+    {
+      "title": "All my (vegan) fitness advice - Part 1: Exercise and etiquette ",
+      "slug": "all-my-vegan-fitness-advice-part",
+      "date": "2025-07-01T04:39:08.203Z",
+      "description": "Get big for the animals (redux)",
+      "url": "https://blog.andymasley.com/p/all-my-vegan-fitness-advice-part",
+      "category": "Recs & Advice",
+      "source": "substack"
+    },
+    {
+      "title": "AI can be bad without being useless",
+      "slug": "ai-can-be-bad-overall-without-being",
+      "date": "2025-06-24T22:03:17.115Z",
+      "description": "A common way conversations get tripped up",
+      "url": "https://blog.andymasley.com/p/ai-can-be-bad-overall-without-being",
+      "category": "Artificial Intelligence",
+      "source": "substack"
+    },
+    {
+      "title": "My \"Are you presuming most people are stupid?\" test",
+      "slug": "my-are-you-presuming-most-people",
+      "date": "2025-06-24T16:20:25.342Z",
+      "description": "For AI criticism and everything else",
+      "url": "https://blog.andymasley.com/p/my-are-you-presuming-most-people",
+      "category": "Artificial Intelligence",
+      "source": "substack"
+    },
+    {
+      "title": "Computing is efficient",
+      "slug": "computing-is-efficient",
+      "date": "2025-06-14T18:23:48.092Z",
+      "description": "The reason using ChatGPT isn't bad for the environment is that it's a computer program",
+      "url": "https://blog.andymasley.com/p/computing-is-efficient",
+      "category": "AI & the Environment",
+      "source": "substack"
+    },
+    {
+      "title": "Even with a perfect government, we'd still need a lot of private charity",
+      "slug": "even-with-a-perfect-government-wed",
+      "date": "2025-06-09T22:54:02.479Z",
+      "description": "Charity isn't always and only a distraction from political reform",
+      "url": "https://blog.andymasley.com/p/even-with-a-perfect-government-wed",
+      "category": "Charity",
+      "source": "substack"
+    },
+    {
+      "title": "Resource recs on AI catastrophic risk",
+      "slug": "resource-recs-on-ai-catastrophic",
+      "date": "2025-06-04T17:13:39.337Z",
+      "description": "If nothing magic is happening in the human brain, things could get weird",
+      "url": "https://blog.andymasley.com/p/resource-recs-on-ai-catastrophic",
+      "category": "Artificial Intelligence",
+      "source": "substack"
+    },
+    {
+      "title": "All the ways I want the AI debate to be better",
+      "slug": "all-the-ways-i-want-the-ai-debate",
+      "date": "2025-05-26T04:53:27.981Z",
+      "description": "Ground truths, useful rules, ideas I'd like taken seriously, and a rant",
+      "url": "https://blog.andymasley.com/p/all-the-ways-i-want-the-ai-debate",
+      "category": "Artificial Intelligence",
+      "source": "substack"
+    },
+    {
+      "title": "Reactions to MIT Technology Review's report on AI and the environment",
+      "slug": "reactions-to-mit-technology-reviews",
+      "date": "2025-05-21T05:37:52.290Z",
+      "description": "Interesting useful facts, and some framing I think is super misleading",
+      "url": "https://blog.andymasley.com/p/reactions-to-mit-technology-reviews",
+      "category": "AI & the Environment",
+      "source": "substack"
+    },
+    {
+      "title": "Things I got wrong in my ChatGPT/environment posts",
+      "slug": "things-i-got-wrong-in-my-chatgptenvironment",
+      "date": "2025-05-16T01:52:27.598Z",
+      "description": "Logging the errors",
+      "url": "https://blog.andymasley.com/p/things-i-got-wrong-in-my-chatgptenvironment",
+      "category": "AI & the Environment",
+      "source": "substack"
+    },
+    {
+      "title": "Why goofy AI art almost never seems wasteful to me",
+      "slug": "why-goofy-ai-art-almost-never-seems",
+      "date": "2025-05-11T11:27:22.476Z",
+      "description": "Environmentalism is important, but shouldn't be used to squash pluralism",
+      "url": "https://blog.andymasley.com/p/why-goofy-ai-art-almost-never-seems",
+      "category": "AI & the Environment",
+      "source": "substack"
+    },
+    {
+      "title": "Replies to criticisms of my posts on ChatGPT & the environment",
+      "slug": "replies-to-criticisms-of-my-chatgpt",
+      "date": "2025-05-08T11:35:28.368Z",
+      "description": "Why I used 3 Wh, and why I don't say \"Every Watt-hour matters\"",
+      "url": "https://blog.andymasley.com/p/replies-to-criticisms-of-my-chatgpt",
+      "category": "AI & the Environment",
+      "source": "substack"
+    },
+    {
+      "title": "Animal suffering isn't pretend",
+      "slug": "animal-suffering-isnt-pretend",
+      "date": "2025-05-05T16:15:33.867Z",
+      "description": "We evolved to think it is",
+      "url": "https://blog.andymasley.com/p/animal-suffering-isnt-pretend",
+      "category": "Animal Welfare",
+      "source": "substack"
+    },
+    {
+      "title": "Using ChatGPT is not bad for the environment - a cheat sheet",
+      "slug": "a-cheat-sheet-for-conversations-about",
+      "date": "2025-04-28T03:25:56.052Z",
+      "description": "The numbers clearly show that discouraging people from using chatbots is a pointless distraction for the climate movement",
+      "url": "https://blog.andymasley.com/p/a-cheat-sheet-for-conversations-about",
+      "category": "AI & the Environment",
+      "source": "substack"
+    },
+    {
+      "title": "ChatGPT on the lives of factory farmed pigs",
+      "slug": "chatgpt-on-the-lives-of-pigs-in-us",
+      "date": "2025-04-22T23:51:47.621Z",
+      "description": "An example of deep research",
+      "url": "https://blog.andymasley.com/p/chatgpt-on-the-lives-of-pigs-in-us",
+      "category": "Animal Welfare",
+      "source": "substack"
+    },
+    {
+      "title": "Ideological moves that should be lower status",
+      "slug": "ideological-moves-that-should-be",
+      "date": "2025-04-17T23:45:32.239Z",
+      "description": "Light epistemic bullying",
+      "url": "https://blog.andymasley.com/p/ideological-moves-that-should-be",
+      "category": "Misc",
+      "source": "substack"
+    },
+    {
+      "title": "Resource recs for energy literacy",
+      "slug": "recommended-resources-for-energy",
+      "date": "2025-04-09T17:44:03.130Z",
+      "description": "It's easy to learn and it helps you understand society more than almost any other topic ",
+      "url": "https://blog.andymasley.com/p/recommended-resources-for-energy",
+      "category": "AI & the Environment",
+      "source": "substack"
+    },
+    {
+      "title": "How I use AI",
+      "slug": "how-i-use-ai",
+      "date": "2025-04-07T12:20:36.999Z",
+      "description": "LLMs in everyday life and work",
+      "url": "https://blog.andymasley.com/p/how-i-use-ai",
+      "category": "Artificial Intelligence",
+      "source": "substack"
+    },
+    {
+      "title": "A defense of AI art",
+      "slug": "a-defense-of-ai-art",
+      "date": "2025-03-20T01:38:21.963Z",
+      "description": "It's not just slop, it's not stolen, it's not bad for the environment, and we should want art to be easy to make",
+      "url": "https://blog.andymasley.com/p/a-defense-of-ai-art",
+      "category": "Artificial Intelligence",
+      "source": "substack"
+    },
+    {
+      "title": "People's deeply held beliefs are surprisingly surface-level",
+      "slug": "peoples-deeply-held-beliefs-are-surprisingly",
+      "date": "2025-03-09T11:35:39.477Z",
+      "description": "Try to change people's minds more",
+      "url": "https://blog.andymasley.com/p/peoples-deeply-held-beliefs-are-surprisingly",
+      "category": "Misc",
+      "source": "substack"
+    },
+    {
+      "title": "Ideas from philosophy I use to think about AI",
+      "slug": "guiding-ideas-i-use-to-think-about",
+      "date": "2025-02-11T12:31:26.110Z",
+      "description": "Physicalism, functionalism, and lots of Quine",
+      "url": "https://blog.andymasley.com/p/guiding-ideas-i-use-to-think-about",
+      "category": "Artificial Intelligence",
+      "source": "substack"
+    },
+    {
+      "title": "Using ChatGPT is not bad for the environment",
+      "slug": "individual-ai-use-is-not-bad-for",
+      "date": "2025-01-13T22:05:44.024Z",
+      "description": "And a plea to think seriously about climate change without getting distracted",
+      "url": "https://blog.andymasley.com/p/individual-ai-use-is-not-bad-for",
+      "category": "AI & the Environment",
+      "source": "substack"
+    },
+    {
+      "title": "Strategies for learning",
+      "slug": "strategies-for-learning",
+      "date": "2024-11-21T21:04:32.805Z",
+      "description": "Mindset and tools",
+      "url": "https://blog.andymasley.com/p/strategies-for-learning",
+      "category": "Recs & Advice",
+      "source": "substack"
+    },
+    {
+      "title": "The core idea of liberalism",
+      "slug": "liberalism",
+      "date": "2024-09-09T15:22:00.000Z",
+      "description": "Learning to mediate radical difference",
+      "url": "https://blog.andymasley.com/p/liberalism",
+      "category": "Politics",
+      "source": "substack"
+    },
+    {
+      "title": "Product recommendations",
+      "slug": "product-recommendations",
+      "date": "2024-08-27T01:32:29.956Z",
+      "description": "Things I recommend you buy and use",
+      "url": "https://blog.andymasley.com/p/product-recommendations",
+      "category": "Recs & Advice",
+      "source": "substack"
+    },
+    {
+      "title": "DC vegan food recs",
+      "slug": "andys-dc-area-vegan-dining-recs",
+      "date": "2024-07-08T01:05:55.445Z",
+      "description": "If you're vegan and visiting DC, these are my recs for places to eat while you're in the area",
+      "url": "https://blog.andymasley.com/p/andys-dc-area-vegan-dining-recs",
+      "category": "Recs & Advice",
+      "source": "substack"
+    },
+    {
+      "title": "Especially good audiobooks",
+      "slug": "especially-good-audiobooks",
+      "date": "2024-06-15T16:12:53.655Z",
+      "description": "I’ve been listening to audiobooks regularly since 2015.",
+      "url": "https://blog.andymasley.com/p/especially-good-audiobooks",
+      "category": "Recs & Advice",
+      "source": "substack"
+    },
+    {
+      "title": "Productivity advice that's worked for me",
+      "slug": "productivity-stuff-thats-worked-for",
+      "date": "2024-06-09T14:03:34.017Z",
+      "description": "\"It is later than you think\"",
+      "url": "https://blog.andymasley.com/p/productivity-stuff-thats-worked-for",
+      "category": "Recs & Advice",
+      "source": "substack"
+    },
+    {
+      "title": "My favorite 80,000 Hours episodes",
+      "slug": "my-favorite-80000-hours-episodes",
+      "date": "2024-03-13T18:30:16.721Z",
+      "description": "The first of a series of EA media rec posts",
+      "url": "https://blog.andymasley.com/p/my-favorite-80000-hours-episodes",
+      "category": "Recs & Advice",
+      "source": "substack"
+    },
+    {
+      "title": "Thinking seriously about violence",
+      "slug": "thinking-seriously-about-violence",
+      "date": "2023-10-11T04:54:36.584Z",
+      "description": "A failure to take violence seriously is bad",
+      "url": "https://blog.andymasley.com/p/thinking-seriously-about-violence",
+      "category": "Misc",
+      "source": "substack"
+    },
+    {
+      "title": "My foundational philosophy beliefs",
+      "slug": "my-foundational-philosophy-beliefs",
+      "date": "2023-09-11T13:01:15.297Z",
+      "description": "Stuff I feel especially confident about that shapes how I approach the world",
+      "url": "https://blog.andymasley.com/p/my-foundational-philosophy-beliefs",
+      "category": "Misc",
+      "source": "substack"
+    },
+    {
+      "title": "Electric cars are more massive, but not more dangerous to pedestrians",
+      "slug": "whats-the-deal-with-electric-cars",
+      "date": "2023-09-02T22:49:33.765Z",
+      "description": "Or: A lot of people don't know what F = ma means",
+      "url": "https://blog.andymasley.com/p/whats-the-deal-with-electric-cars",
+      "category": "Misc",
+      "source": "substack"
+    },
+    {
+      "title": "Alcohol is so bad for society that you should probably stop drinking",
+      "slug": "alcohol-is-so-bad-for-society-that",
+      "date": "2023-09-01T23:01:46.063Z",
+      "description": "Not something I expected to write",
+      "url": "https://blog.andymasley.com/p/alcohol-is-so-bad-for-society-that",
+      "category": "Misc",
+      "source": "substack"
+    },
+    {
+      "title": "All my (vegan) fitness advice",
+      "slug": "all-my-vegan-fitness-advice",
+      "date": "2023-09-01T22:53:21.494Z",
+      "description": "Get big for the animals",
+      "url": "https://blog.andymasley.com/p/all-my-vegan-fitness-advice",
+      "category": "Recs & Advice",
+      "source": "substack"
+    },
+    {
+      "title": "An intro to animal ethics",
+      "slug": "animal-ethics",
+      "date": "2023-09-01T22:48:09.145Z",
+      "description": "My attempt to summarize everything important I believe about animal ethics",
+      "url": "https://blog.andymasley.com/p/animal-ethics",
+      "category": "Animal Welfare",
+      "source": "substack"
+    }
+  ]
+}
