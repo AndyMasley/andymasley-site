@@ -56,16 +56,14 @@ const homeStructuredData = [
   structuredData={homeStructuredData}
 >
   <div class="home-intro">
-    <div class="home-lede">
-      <img
-        src="/images/headshot.jpg"
-        alt="Andy Masley"
-        class="headshot"
-      />
-      <p>
-        I’m an independent writer and researcher funded by a grant from <a href="https://coefficientgiving.org/" target="_blank" rel="noopener">Coefficient Giving</a> to explore topics in AI and other areas. All my writing is <a href="/writing/">linked here</a>. A lot of it is published on <a href="https://andymasley.substack.com/" target="_blank" rel="noopener">my Substack</a>. Before this I was the director of the <a href="https://www.effectivealtruismdc.org/" target="_blank" rel="noopener">effective altruism city group in Washington DC</a>, and before that I taught <a href="/physics/">high school physics for 7 years</a>. I made animated video lectures for each day of my 2 year IB physics course which I host on my <a href="https://www.youtube.com/@andymasley" target="_blank" rel="noopener">YouTube channel</a>. In college I double majored in philosophy and physics at Clark University in Worcester MA. I’ve lived in DC for 10 years and grew up in Webster MA.
-      </p>
-    </div>
+    <img
+      src="/images/headshot.jpg"
+      alt="Andy Masley"
+      class="headshot"
+    />
+    <p>
+      I’m an independent writer and researcher funded by a grant from <a href="https://coefficientgiving.org/" target="_blank" rel="noopener">Coefficient Giving</a> to explore topics in AI and other areas. All my writing is <a href="/writing/">linked here</a>. A lot of it is published on <a href="https://andymasley.substack.com/" target="_blank" rel="noopener">my Substack</a>. Before this I was the director of the <a href="https://www.effectivealtruismdc.org/" target="_blank" rel="noopener">effective altruism city group in Washington DC</a>, and before that I taught <a href="/physics/">high school physics for 7 years</a>. I made animated video lectures for each day of my 2 year IB physics course which I host on my <a href="https://www.youtube.com/@andymasley" target="_blank" rel="noopener">YouTube channel</a>. In college I double majored in philosophy and physics at Clark University in Worcester MA. I’ve lived in DC for 10 years and grew up in Webster MA.
+    </p>
     <details class="grant-note">
       <summary>About the grant</summary>
       <p>I am not employed by Coefficient Giving and my views don’t represent theirs. The grant does not obligate me to write from any specific perspective. The full text description of the grant’s purpose reads:</p>
@@ -139,22 +137,16 @@ const homeStructuredData = [
 </Base>
 
 <style>
-  .home-lede {
-    display: grid;
-    grid-template-columns: 120px minmax(0, 1fr);
-    gap: 0 28px;
-    align-items: start;
-    margin-bottom: 0.4rem;
-  }
-
-  .home-lede p {
-    margin: 0;
+  .home-intro {
+    overflow: hidden;
   }
 
   .headshot {
+    float: right;
     width: 120px;
     height: 120px;
     object-fit: cover;
+    margin: 0.35rem 0 14px 26px;
     border-radius: 0;
     box-shadow: none;
     border: 1px solid var(--border-strong);
@@ -262,9 +254,10 @@ const homeStructuredData = [
   }
 
   @media (max-width: 560px) {
-    .home-lede {
-      grid-template-columns: 1fr;
-      gap: 1rem 0;
+    .headshot {
+      width: 96px;
+      height: 96px;
+      margin: 0.2rem 0 10px 16px;
     }
   }
 

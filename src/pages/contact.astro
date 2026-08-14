@@ -21,16 +21,27 @@ const elsewhere = [
     I read everything, including the anonymous form.
   </p>
 
-  <section class="contact-elsewhere" aria-label="Elsewhere">
-    <div class="label">Elsewhere</div>
-    <ul class="annotated-list">
-      {elsewhere.map(e => (
-        <li class="annotated-list__item">
-          <div class="annotated-list__row">
-            <a href={e.href} target="_blank" rel="noopener" class="annotated-list__title">{e.label}</a>
-          </div>
-        </li>
-      ))}
-    </ul>
-  </section>
+  <p class="contact-elsewhere" aria-label="Elsewhere">
+    <span class="contact-elsewhere__label">Elsewhere: </span>
+    {elsewhere.map((e, i) => (
+      <>
+        {i > 0 && <span class="contact-elsewhere__sep"> · </span>}
+        <a href={e.href} target="_blank" rel="noopener">{e.label}</a>
+      </>
+    ))}
+  </p>
 </SectionPage>
+
+<style>
+  .contact-elsewhere {
+    margin: 2.2rem 0 0;
+  }
+
+  .contact-elsewhere__label {
+    color: var(--dim);
+  }
+
+  .contact-elsewhere__sep {
+    color: var(--border-strong);
+  }
+</style>
