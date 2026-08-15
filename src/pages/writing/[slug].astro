@@ -227,6 +227,34 @@ let readingTime = 0;
 let tocHeadings: TOCHeading[] = [];
 let displayHtml = '';
 
+// The guide/hub posts are directories, not essays: Substack's editor sets
+// every linked title in bold (bold + blue is double emphasis, and sixty of
+// them make a wall) and fakes subgroup headings as bold-only paragraphs.
+// Recompose both at build time so the CSS can set the guide like a
+// well-kept index: plain blue titles, spaced-caps subgroup labels.
+function refineGuideHtml(html: string): string {
+  let out = html;
+  // A paragraph that is exactly one bold run of plain text is a subgroup
+  // label, not prose.
+  out = out.replace(/<p><strong>([^<]{2,48}?)\s*<\/strong><\/p>/g, '<p class="guide-sublabel">$1</p>');
+  // Unbold linked titles and bare "Part N:" prefixes beside them.
+  out = out.replace(/<strong>\s*(<a[^>]*>[\s\S]*?<\/a>)(\s*)<\/strong>/g, '$1$2');
+  out = out.replace(/<strong>\s*(Part \d+:?)(\s*)<\/strong>/g, '$1$2');
+  // An item's annotation becomes a quiet note on its own line under the
+  // title, instead of running into the link text.
+  out = out.replace(
+    /(<li><p>)((?:Part \d+:?\s*)?<a[^>]*>[\s\S]*?<\/a>)([\s\S]*?)(<\/p>)/g,
+    (m: string, open: string, link: string, tail: string, close: string) => {
+      const note = tail.replace(/^[\s—–-]+/, '');
+      if (!note.replace(/<[^>]+>/g, '').trim()) return m;
+      return `${open}${link}<span class="guide-note">${note}</span>${close}`;
+    }
+  );
+  // House sentence case on the one Substack-era heading that breaks it.
+  out = out.replace(/Data Centers(?=\s*(?:<a\b|<\/h[1-6]>))/, 'Data centers');
+  return out;
+}
+
 if (post.source === 'local') {
   const rendered = await post.render();
   Content = rendered.Content;
@@ -235,6 +263,9 @@ if (post.source === 'local') {
   tocHeadings = (rendered.headings || [])
     .filter((h: any) => h.depth === 2 || h.depth === 3)
     .map((h: any) => ({ id: h.slug, text: h.text, level: h.depth === 2 ? 'section' as const : 'sub' as const }));
+} else if (isMetaPost) {
+  // Guides skip the essay chrome entirely — no TOC rail, no reading time.
+  displayHtml = refineGuideHtml(post.htmlContent);
 } else {
   readingTime = getReadingTime(post.htmlContent);
   const extracted = extractHeadingsFromHtml(post.htmlContent);
@@ -360,22 +391,24 @@ if (correction) {
   {correction && (
     <meta slot="head" property="article:modified_time" content={new Date(`${correction.date}T12:00:00Z`).toISOString()} />
   )}
-  <div class="article-page article-page--wide">
-    <div class="article-grid article-grid--wide">
-      <aside class="article-grid__toc">
-        <ArticleTOC
-          client:load
-          headings={tocHeadings}
-          meta={{
-            date: isMetaPost ? undefined : formatDate(post.date),
-            readingTime: `${readingTime} min read`,
-            length: `${Math.round(wordCount / 100) / 10}k words`,
-            sourceName: post.source !== 'local' ? post.sourceName : undefined,
-            sourceUrl: post.source !== 'local' ? post.url : undefined,
-          }}
-        />
-      </aside>
-      <div class="article-main article-grid__main h-entry">
+  <div class={isMetaPost ? 'article-page guide-page' : 'article-page article-page--wide'}>
+    <div class={isMetaPost ? 'article-plain' : 'article-grid article-grid--wide'}>
+      {!isMetaPost && (
+        <aside class="article-grid__toc">
+          <ArticleTOC
+            client:load
+            headings={tocHeadings}
+            meta={{
+              date: formatDate(post.date),
+              readingTime: `${readingTime} min read`,
+              length: `${Math.round(wordCount / 100) / 10}k words`,
+              sourceName: post.source !== 'local' ? post.sourceName : undefined,
+              sourceUrl: post.source !== 'local' ? post.url : undefined,
+            }}
+          />
+        </aside>
+      )}
+      <div class={isMetaPost ? 'article-main h-entry' : 'article-main article-grid__main h-entry'}>
         <a class="u-url" href={permalink} hidden aria-hidden="true"></a>
         <header class="article-header">
           <p class="article-print-attribution" aria-hidden="true">Andy Masley · andymasley.com/writing/{post.slug}</p>
@@ -385,8 +418,12 @@ if (correction) {
                 <time class="dt-published" datetime={post.date.toISOString()}>{formatDate(post.date)}</time>
               </span>
             )}
-            <span class="article-header__meta-item">{readingTime} min read</span>
-            {post.source !== 'local' && (
+            {isMetaPost ? (
+              <span class="article-header__meta-item">Guide</span>
+            ) : (
+              <span class="article-header__meta-item">{readingTime} min read</span>
+            )}
+            {post.source !== 'local' && !isMetaPost && (
               <span class="article-header__meta-item">
                 Originally published on <a href={post.url} target="_blank" rel="noopener">{post.sourceName}</a>
               </span>
@@ -435,6 +472,9 @@ if (correction) {
                   ? <>first published on {post.sourceName}, {formatDate(post.date)} — <a href={post.url} target="_blank" rel="noopener">discussion there</a></>
                   : <>published {formatDate(post.date)}</>}
                 </>
+              )}
+              {isMetaPost && post.source !== 'local' && (
+                <> · <a href={post.url} target="_blank" rel="noopener">also on {post.sourceName}</a></>
               )}
               {' '}· spot an error? <a href="/writing/errors-and-updates">there’s a $300 bounty</a>.
             </p>
@@ -589,6 +629,53 @@ if (correction) {
 
   .article-header__series a {
     color: var(--accent);
+  }
+
+  /* The guide (the flagship hub post) is a directory set like a well-kept
+     index, not an essay: plain centered measure, section headings at the
+     section scale, spaced-caps subgroup labels, comfortable list rhythm.
+     The unbolding itself happens at build (refineGuideHtml). */
+  /* The theme sections arrive as h4s (the heading normalizer shifts the
+     guide's ladder down one level); set them at the section scale. */
+  .guide-page .article-prose :global(h3),
+  .guide-page .article-prose :global(h4) {
+    font-size: var(--text-xl);
+    line-height: var(--leading-heading);
+    margin-top: var(--space-2xl);
+    margin-bottom: var(--space-md);
+  }
+
+  .guide-page .article-prose :global(.guide-sublabel) {
+    margin: var(--space-lg) 0 var(--space-sm);
+    font-family: var(--font-body);
+    font-size: var(--text-xs);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--dim);
+  }
+
+  .guide-page .article-prose :global(ul) {
+    margin-bottom: var(--space-lg);
+  }
+
+  .guide-page .article-prose :global(li) {
+    margin-bottom: 0.6rem;
+  }
+
+  .guide-page .article-prose :global(li > p) {
+    margin-bottom: 0;
+  }
+
+  .guide-page .article-prose :global(li > ul) {
+    margin: 0.45rem 0 0;
+  }
+
+  .guide-page .article-prose :global(.guide-note) {
+    display: block;
+    font-size: var(--text-base);
+    line-height: var(--leading-ui);
+    color: var(--text-secondary);
+    margin-top: 0.1rem;
   }
 
   /* The end matter is typography, not chrome: a diamond, one colophon

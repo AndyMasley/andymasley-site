@@ -159,7 +159,7 @@ const postsByYear: YearGroup[] = Array.from(yearMap.entries())
     </div>
 
     {aiEnvMeta && (
-      <p class="archive-overview" id="archive-overview">
+      <p class="archive-overview" id="archive-overview" hidden>
         Start here: <a href={`/writing/${aiEnvMeta.slug}`}>{aiEnvMeta.title}</a>
       </p>
     )}
@@ -869,6 +869,13 @@ const postsByYear: YearGroup[] = Array.from(yearMap.entries())
 
       if (themeWrap) {
         themeWrap.hidden = !show;
+      }
+
+      // The overview line surfaces only for readers browsing the topic it
+      // introduces (Andy's call — the homepage carries the general pointer).
+      const overview = document.getElementById('archive-overview');
+      if (overview) {
+        overview.hidden = state.topic !== 'ai-environment';
       }
 
       if (!show) {
