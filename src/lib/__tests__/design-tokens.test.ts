@@ -65,9 +65,6 @@ describe('design tokens', () => {
       'components/carbon/', 'components/prompt-energy/',
       'lib/og-card.ts', 'lib/physics-videos.ts', 'data/',
       'lib/__tests__/',
-      // /tags is retired by redirect; its pages are deleted with the
-      // taxonomy consolidation.
-      'pages/tags/',
     ];
     const files = walk(SRC).filter(p => {
       const rel = p.slice(SRC.length + 1);

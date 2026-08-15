@@ -2061,9 +2061,9 @@ details[open] > summary::before {
   .article-grid__toc,
   .article-toc-mobilebar,
   .article-toc-overlay,
-  .article-bounty,
-  .article-nav__link,
-  .article-pagination { display: none !important; }
+  .article-citedin,
+  .article-adjacent,
+  .article-backlink { display: none !important; }
 
   html, body { background: #fff; color: #000; }
   a { color: #000 !important; }

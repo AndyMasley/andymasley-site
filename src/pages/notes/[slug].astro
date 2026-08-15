@@ -22,13 +22,12 @@ const { Content } = await item.render();
 <Base
   title={item.data.title}
   description={item.data.description}
-  keywords={item.data.tags}
   ogType="article"
 >
   <meta slot="head" property="article:published_time" content={item.data.date.toISOString()} />
   <meta slot="head" property="article:author" content="Andy Masley" />
   <article class="container container--narrow">
-    
+
     <header class="note-header animate-in">
       <div class="note-header__top">
         {item.data.category && (
@@ -37,14 +36,6 @@ const { Content } = await item.render();
         <span class="note-header__date">{formatDate(item.data.date)}</span>
       </div>
       <h1 class="note-header__title">{item.data.title}</h1>
-      
-      {item.data.tags.length > 0 && (
-        <div class="tags">
-          {item.data.tags.map(tag => (
-            <a href={`/tags/${tag}`} class="tag">{tag}</a>
-          ))}
-        </div>
-      )}
     </header>
 
     <div class="prose animate-in">

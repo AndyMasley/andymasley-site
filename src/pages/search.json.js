@@ -4,6 +4,8 @@ import { fetchEAForumPosts, fetchEAForumPostContent } from '@/lib/eaforum';
 import { getMetaPostSlugs } from '@/lib/meta-posts';
 import { mapWithConcurrency } from '@/lib/map-with-concurrency';
 import { getOptionalCollection } from '@/lib/optional-collection';
+import { visuals } from '@/data/visuals';
+import { appearanceGroups } from '@/data/appearances';
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -107,7 +109,11 @@ export async function GET() {
     {
       title: 'Appearances',
       description: 'Podcasts and other appearances',
-      content: 'Podcasts Conspicuous Cognition Chain of Thought Hard Fork The Cognitive Revolution AI environment',
+      // The registry feeds venue names in, so "hard fork" or "good morning
+      // america" finds the page.
+      content: 'Podcasts appearances interviews ' + appearanceGroups
+        .flatMap(group => group.items.map(item => `${item.title} ${item.date}`))
+        .join(' '),
       type: 'page',
       url: '/appearances',
       tags: [],
@@ -147,26 +153,10 @@ export async function GET() {
     {
       title: 'Visuals',
       description: 'Interactive data visualizations',
-      content: 'visuals interactive data visualization carbon footprint factory farmed chickens',
+      content: 'visuals interactive data visualization ' + visuals.map(v => v.title).join(' '),
       type: 'page',
       url: '/visuals',
       tags: [],
-    },
-    {
-      title: 'Carbon Footprint Calculator',
-      description: 'Interactive carbon footprint calculator with grid change comparisons',
-      content: 'carbon footprint calculator emissions CO2 climate change personal cuts grid changes grid energy nuclear solar coal transport diet food electricity EV electric vehicle heat pump vegan vegetarian flights',
-      type: 'visual',
-      url: '/visuals/carbon-footprint',
-      tags: ['climate', 'calculator'],
-    },
-    {
-      title: 'Factory-Farmed Chickens',
-      description: 'Visualizing the scale of factory farming in the United States',
-      content: extractAstroContent('visuals/factory-farmed-chickens.astro', 10000),
-      type: 'visual',
-      url: '/visuals/factory-farmed-chickens',
-      tags: ['animal welfare'],
     },
     {
       title: 'Lists',
@@ -184,15 +174,26 @@ export async function GET() {
       url: '/lists/dc-vegan-dining',
       tags: ['vegan', 'food', 'DC'],
     },
-    {
-      title: 'DC Vegan Restaurants',
-      description: 'Vegan restaurants in Washington DC',
-      content: extractAstroContent('lists/dc-vegan-restaurants.astro', 10000),
-      type: 'list',
-      url: '/lists/dc-vegan-restaurants',
-      tags: ['vegan', 'food', 'DC'],
-    },
   );
+
+  // Every visual from the one registry — the hub, this index, and the
+  // sitemap import the same list, so a visual absent from search is a
+  // registry bug, not a drift bug.
+  for (const visual of visuals) {
+    const astroPath = visual.href.startsWith('/visuals/')
+      ? `visuals/${visual.href.split('/').pop()}.astro`
+      : `${visual.href.slice(1)}.astro`;
+    searchIndex.push({
+      title: visual.title,
+      description: visual.description,
+      content: [visual.description, visual.searchTerms || '', extractAstroContent(astroPath, 8000)]
+        .join(' ')
+        .trim(),
+      type: 'visual',
+      url: visual.href,
+      tags: [],
+    });
+  }
 
   // Local writing with body content
   for (const item of writing) {

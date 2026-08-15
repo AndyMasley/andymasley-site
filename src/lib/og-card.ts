@@ -136,7 +136,7 @@ export async function renderOgCard({ title, date }: CardInput): Promise<Buffer> 
   return rasterize(tree);
 }
 
-const DEFAULT_TAGLINE = 'Writing, data visualizations, physics lectures, and lists';
+const DEFAULT_TAGLINE = 'Essays on AI and the environment, animal welfare, effective altruism, and more';
 
 // The site-identity card (homepage, 404, and any page without its own image):
 // one oversized hairline hexagon bleeding off the right edge carries the

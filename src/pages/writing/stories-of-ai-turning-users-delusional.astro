@@ -1,0 +1,73 @@
+---
+import Base from '@/layouts/Base.astro';
+
+// Tombstone for a withdrawn essay — see the sibling tombstone for the
+// pattern. This one has no dated ledger entry; the note stays honest about
+// that rather than inventing a reason.
+---
+
+<Base
+  title="Stories of AI turning users delusional"
+  activeNav="/writing"
+  description="This post was withdrawn. Corrections and updates to my writing are logged on the errors ledger."
+  noindex={true}
+>
+  <div class="tombstone">
+    <p class="tombstone__meta">Withdrawn</p>
+    <h1 class="tombstone__title">Stories of AI turning users delusional</h1>
+    <p class="tombstone__note">
+      I unpublished this post after deciding it didn’t meet the bar I want my
+      writing to hold. Corrections and updates to my published writing are
+      logged <a href="/writing/errors-and-updates">on the errors ledger</a>,
+      and everything I currently stand behind is in
+      <a href="/writing">the archive</a>.
+    </p>
+    <p class="tombstone__back"><a href="/writing">&larr; back to writing</a></p>
+  </div>
+</Base>
+
+<style>
+  .tombstone {
+    padding: var(--space-2xl) 0 var(--space-3xl);
+  }
+
+  .tombstone__meta {
+    margin: 0 0 1rem;
+    font-family: var(--font-body);
+    font-size: var(--text-xs);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--dim);
+  }
+
+  .tombstone__title {
+    margin: 0 0 1.5rem;
+    font-family: var(--font-editorial);
+    font-size: var(--text-2xl);
+    font-weight: 700;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+    color: var(--text-secondary);
+  }
+
+  .tombstone__note {
+    margin: 0 0 var(--space-xl);
+    font-size: var(--text-md);
+    line-height: var(--leading-prose);
+  }
+
+  .tombstone__back {
+    margin: 0;
+    font-size: var(--text-sm);
+  }
+
+  .tombstone__back a {
+    color: var(--dim);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  .tombstone__back a:hover {
+    color: var(--text);
+  }
+</style>

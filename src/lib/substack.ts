@@ -374,8 +374,16 @@ export interface Subcategory {
 }
 
 const subcategoryPostOverrides: Record<string, string[]> = {
-  'Meta': ['a-call-for-more-specific-and-numerate'],
   'Data Centers': ['data-centers-heat-exhaust-is-not'],
+};
+
+// The guide's internal h3 headings, renamed for the theme dropdown so it
+// reads as curation rather than plumbing. Headings not listed here pass
+// through unchanged.
+const subcategoryDisplayNames: Record<string, string> = {
+  'Individual prompts': 'Individual prompts',
+  'Data Centers': 'Data centers',
+  'Environmental ethics': 'Environmental ethics',
 };
 
 // Parse subcategories from meta post HTML
@@ -401,8 +409,10 @@ export function parseSubcategoriesFromHTML(html: string): Subcategory[] {
 
     const name = nameMatch[1].trim();
 
-    // Skip certain sections that aren't real categories
-    if (['Misc', 'Podcast appearances'].includes(name)) continue;
+    // Skip sections that aren't real themes: Misc and podcasts were never
+    // themes; 'Start here' and 'Meta' are the guide's own navigation, and
+    // surfacing them as filterable themes read as plumbing.
+    if (['Misc', 'Podcast appearances', 'Start here', 'Meta'].includes(name)) continue;
 
     // Find all post slugs in this section (until next h3 or end)
     const postSlugs: string[] = [];
@@ -428,7 +438,7 @@ export function parseSubcategoriesFromHTML(html: string): Subcategory[] {
 
     if (postSlugs.length > 0) {
       subcategories.push({
-        name,
+        name: subcategoryDisplayNames[name] || name,
         slug: name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/-+$/, ''),
         postSlugs
       });

@@ -14,12 +14,11 @@ interface Props {
   noindex?: boolean;
   structuredData?: unknown | unknown[];
   activeNav?: string;
-  keywords?: string[];
 }
 
 const {
   title,
-  description = "Andy Masley's personal site — writing, data visualizations, physics lectures, and lists",
+  description = "Essays on AI and the environment, animal welfare, effective altruism, and more — with a $300 bounty on significant errors.",
   ogImage,
   ogTitle,
   ogImageAlt,
@@ -29,16 +28,14 @@ const {
   noindex = false,
   structuredData,
   activeNav,
-  keywords,
 } = Astro.props;
-const keywordsContent = keywords && keywords.length > 0 ? keywords.join(', ') : null;
 const resolvedOgTitle = ogTitle || title;
 const siteOrigin = Astro.site || Astro.url.origin;
 const currentPath = Astro.url.pathname;
-// ?v=2 busts social-platform scrape caches after the 2026 card redesign —
+// ?v busts social-platform scrape caches when the default card changes —
 // platforms cache og:image by URL, so a same-URL re-render would show the old
-// card indefinitely. Bump the version if the default card is redesigned again.
-const resolvedOgImagePath = ogImage || "/og/default.png?v=2";
+// card indefinitely. v=3: 2026 tagline change (essays positioning).
+const resolvedOgImagePath = ogImage || "/og/default.png?v=3";
 const resolvedOgImage = new URL(resolvedOgImagePath, siteOrigin).href;
 const resolvedOgImageAlt = ogImageAlt || resolvedOgTitle;
 const canonicalHref = canonicalUrl
@@ -99,7 +96,6 @@ function isActive(href: string): boolean {
   </script>
   <meta name="description" content={description}>
   <meta name="author" content="Andy Masley">
-  {keywordsContent && <meta name="keywords" content={keywordsContent}>}
   <meta name="robots" content={resolvedRobots}>
   <link rel="canonical" href={canonicalHref}>
   <meta property="og:title" content={resolvedOgTitle}>
@@ -225,7 +221,7 @@ function isActive(href: string): boolean {
     <slot />
 
     <footer class="footer">
-      © Andy Masley · <a href="/rss.xml">RSS</a> · <a href="mailto:AndyMasley@gmail.com">contact</a>
+      © {new Date().getFullYear()} Andy Masley · <a href="/rss.xml">rss</a> · <a href="/writing/errors-and-updates">errors &amp; updates</a> · <a href="/contact">contact</a>
     </footer>
   </main>
 

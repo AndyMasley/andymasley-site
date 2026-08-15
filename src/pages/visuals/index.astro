@@ -1,13 +1,6 @@
 ---
 import SectionPage from '@/layouts/SectionPage.astro';
-
-const visuals = [
-  { title: 'Factory-farmed chickens', href: '/visuals/factory-farmed-chickens' },
-  { title: 'Carbon footprint calculator', href: '/visuals/carbon-footprint' },
-  { title: 'How thirsty is AI?', href: '/visuals/water' },
-  { title: 'What does your AI use cost?', href: '/visuals/ai-prompt-footprint' },
-  { title: 'PM2.5 exposure by county', href: '/visuals/pm25-county-exposure' },
-];
+import { hubVisuals as visuals } from '@/data/visuals';
 ---
 
 <SectionPage

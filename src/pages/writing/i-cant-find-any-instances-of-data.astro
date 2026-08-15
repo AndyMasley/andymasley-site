@@ -1,0 +1,75 @@
+---
+import Base from '@/layouts/Base.astro';
+
+// Tombstone for a withdrawn essay. The URL had press attention; a generic
+// 404 here would read as scrubbing. Withdrawal with a paper trail instead:
+// what the post was, when and why it came down, and where the full note
+// lives. noindex — the page exists for people, not crawlers.
+---
+
+<Base
+  title="Data centers haven’t raised water prices anywhere"
+  activeNav="/writing"
+  description="This post was withdrawn. The reasoning is documented on the errors and updates ledger."
+  noindex={true}
+>
+  <div class="tombstone">
+    <p class="tombstone__meta">Withdrawn April 4, 2026</p>
+    <h1 class="tombstone__title">Data centers haven’t raised water prices anywhere</h1>
+    <p class="tombstone__note">
+      I unpublished this post after finding one real counterexample — Newton
+      County, Georgia, where a Meta data center contributed to accelerated
+      water infrastructure spending — which made the title no longer
+      technically true. The full note, including what the counterexample does
+      and doesn’t change about my overall argument, is
+      <a href="/writing/errors-and-updates#u-2026-04-04-water-prices">on the errors ledger</a>.
+    </p>
+    <p class="tombstone__back"><a href="/writing">&larr; back to writing</a></p>
+  </div>
+</Base>
+
+<style>
+  .tombstone {
+    padding: var(--space-2xl) 0 var(--space-3xl);
+  }
+
+  .tombstone__meta {
+    margin: 0 0 1rem;
+    font-family: var(--font-body);
+    font-size: var(--text-xs);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--dim);
+  }
+
+  .tombstone__title {
+    margin: 0 0 1.5rem;
+    font-family: var(--font-editorial);
+    font-size: var(--text-2xl);
+    font-weight: 700;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+    color: var(--text-secondary);
+  }
+
+  .tombstone__note {
+    margin: 0 0 var(--space-xl);
+    font-size: var(--text-md);
+    line-height: var(--leading-prose);
+  }
+
+  .tombstone__back {
+    margin: 0;
+    font-size: var(--text-sm);
+  }
+
+  .tombstone__back a {
+    color: var(--dim);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  .tombstone__back a:hover {
+    color: var(--text);
+  }
+</style>

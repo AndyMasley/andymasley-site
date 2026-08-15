@@ -8,10 +8,11 @@ import { ArticleTOC } from '@/components/ArticleTOC';
 import { extractHeadingsFromHtml, type TOCHeading } from '@/lib/extract-headings';
 import { mapWithConcurrency } from '@/lib/map-with-concurrency';
 import { getOptionalCollection } from '@/lib/optional-collection';
-import { formatPostDate as formatDate } from '@/lib/format-date';
-import substackKeywords from '@/data/substack-keywords.json';
-
-const keywordsBySlug = substackKeywords as Record<string, string[]>;
+import { formatPostDate as formatDate, formatDateOnly } from '@/lib/format-date';
+import { latestCorrection } from '@/data/corrections';
+import { getSeriesEntry, getSeriesSiblings } from '@/data/series';
+import { getCitedBy } from '@/lib/cited-in';
+import { getCategorySlug, getCategoryDisplayName } from '@/lib/category-slug';
 
 // Union type for all post sources
 type PostSource = 'local' | 'substack' | 'eaforum';
@@ -36,6 +37,7 @@ interface ExternalPost {
   url: string;
   htmlContent: string;
   sourceName: string;
+  category?: string;
 }
 
 type Post = LocalPost | ExternalPost;
@@ -98,6 +100,7 @@ export async function getStaticPaths() {
           url: post.url,
           htmlContent,
           sourceName: 'Substack',
+          category: post.category,
         }
       }
     };
@@ -147,6 +150,7 @@ export async function getStaticPaths() {
           url: post.url,
           htmlContent,
           sourceName: 'EA Forum',
+          category: 'EA Forum',
         }
       }
     };
@@ -158,35 +162,40 @@ export async function getStaticPaths() {
   );
 
   const navigablePaths = sortedPaths.filter(path => !metaSlugSet.has(path.props.post.slug));
+  const postBySlug = new Map(sortedPaths.map(path => [path.props.post.slug, path.props.post]));
+  const toAdjacent = (slug: string): AdjacentPost | undefined => {
+    const p = postBySlug.get(slug);
+    return p ? { slug: p.slug, title: p.title, date: p.date } : undefined;
+  };
 
-  return sortedPaths.map((path, index) => ({
-    ...path,
-    props: {
-      ...path.props,
-      newerPost: (() => {
-        if (metaSlugSet.has(path.props.post.slug)) return undefined;
-        const navIndex = navigablePaths.findIndex(item => item.props.post.slug === path.props.post.slug);
-        return navIndex > 0
-          ? {
-              slug: navigablePaths[navIndex - 1].props.post.slug,
-              title: navigablePaths[navIndex - 1].props.post.title,
-              date: navigablePaths[navIndex - 1].props.post.date,
-            }
-          : undefined;
-      })(),
-      olderPost: (() => {
-        if (metaSlugSet.has(path.props.post.slug)) return undefined;
-        const navIndex = navigablePaths.findIndex(item => item.props.post.slug === path.props.post.slug);
-        return navIndex >= 0 && navIndex < navigablePaths.length - 1
-          ? {
-              slug: navigablePaths[navIndex + 1].props.post.slug,
-              title: navigablePaths[navIndex + 1].props.post.title,
-              date: navigablePaths[navIndex + 1].props.post.date,
-            }
-          : undefined;
-      })(),
+  return sortedPaths.map((path) => {
+    const slug = path.props.post.slug;
+    if (metaSlugSet.has(slug)) {
+      return { ...path, props: { ...path.props, newerPost: undefined, olderPost: undefined } };
     }
-  }));
+    const navIndex = navigablePaths.findIndex(item => item.props.post.slug === slug);
+    let newerPost = navIndex > 0
+      ? toAdjacent(navigablePaths[navIndex - 1].props.post.slug)
+      : undefined;
+    let olderPost = navIndex >= 0 && navIndex < navigablePaths.length - 1
+      ? toAdjacent(navigablePaths[navIndex + 1].props.post.slug)
+      : undefined;
+
+    // Series-aware neighbors: within a real sequence, older/newer walk the
+    // parts before falling back to site-wide chronology — the chronological
+    // neighbor of part 2 of the fitness series should be part 1, not
+    // whatever else was published that week.
+    const seriesEntry = getSeriesEntry(slug);
+    if (seriesEntry) {
+      const siblings = getSeriesSiblings(slug);
+      const prevPart = siblings.filter(s => s.part < seriesEntry.part).sort((a, b) => b.part - a.part)[0];
+      const nextPart = siblings.filter(s => s.part > seriesEntry.part).sort((a, b) => a.part - b.part)[0];
+      if (prevPart) olderPost = toAdjacent(prevPart.slug) ?? olderPost;
+      if (nextPart) newerPost = toAdjacent(nextPart.slug) ?? newerPost;
+    }
+
+    return { ...path, props: { ...path.props, newerPost, olderPost } };
+  });
 }
 
 interface Props {
@@ -204,9 +213,6 @@ const permalink = new URL(`/writing/${post.slug}/`, Astro.site ?? 'https://andym
 // Describes the generated /og/<slug>.png card (og-card.ts), not the page.
 const ogImageAlt = `Title card reading "${post.title}" on a plain white background, andymasley.com`;
 
-const seoKeywords: string[] = post.source === 'local'
-  ? (post.tags || [])
-  : (keywordsBySlug[post.slug] || []);
 
 // Estimate reading time
 function getReadingTime(content: string): number {
@@ -255,7 +261,27 @@ const wordCount = post.source === 'local'
   : (post.htmlContent.replace(/<[^>]*>/g, '').split(/\s+/).length);
 const standfirst = post.description?.trim() || '';
 
-const articleStructuredData = {
+// The ledger's stamp: a corrected essay names its correction in the meta
+// row and carries dateModified, so rigor is visible where readers form
+// judgments. Data is hand-curated in src/data/corrections.ts.
+const correction = latestCorrection(post.slug);
+const correctionLabel = correction
+  ? `${correction.kind === 'correction' ? 'corrected' : 'updated'} ${formatDateOnly(correction.date)}`
+  : '';
+
+// Series line + shelf kicker. The kicker names the post's topic and links
+// the archive's shareable filter URL; series posts carry a part-title line
+// under the standfirst, set like a book's.
+const seriesEntry = getSeriesEntry(post.slug);
+const category = post.source !== 'local' ? post.category : undefined;
+const categorySlug = category ? getCategorySlug(category) : '';
+const categoryName = category ? getCategoryDisplayName(category) : '';
+
+// Cited in: the internal link graph, inverted at build time. Capped at
+// five, most recent first, omitted when empty.
+const citedBy = isMetaPost ? [] : (await getCitedBy(post.slug)).slice(0, 5);
+
+const articleStructuredData: Record<string, unknown> = {
   "@context": "https://schema.org",
   "@type": "Article",
   "headline": post.title,
@@ -277,6 +303,9 @@ const articleStructuredData = {
     "@id": `https://andymasley.com/writing/${post.slug}`
   }
 };
+if (correction) {
+  articleStructuredData.dateModified = new Date(`${correction.date}T12:00:00Z`).toISOString();
+}
 ---
 
 {isCheatSheet && post.source !== 'local' ? (
@@ -287,7 +316,6 @@ const articleStructuredData = {
   ogImage={`/og/${post.slug}.png`}
   ogImageAlt={ogImageAlt}
   structuredData={articleStructuredData}
-  keywords={seoKeywords}
 >
   <meta slot="head" property="article:published_time" content={post.date.toISOString()} />
   <meta slot="head" property="article:author" content="Andy Masley" />
@@ -303,9 +331,16 @@ const articleStructuredData = {
 
     <CheatSheetExplorer client:load html={post.htmlContent} />
 
+    <div class="divider article-endmark" aria-hidden="true"><div class="divider-diamond"></div></div>
     <footer class="article-footer">
-      <p class="article-bounty">Spot an error? <a href="/writing/errors-and-updates">There’s a bounty.</a></p>
-      <a href="/writing" class="article-nav__link">&larr; Back to all writing</a>
+      <p class="article-colophon">
+        <span class="p-author h-card"><a class="p-name u-url" href="https://andymasley.com">Andy Masley</a></span>
+        {' '}· first published on {post.sourceName}, {formatDate(post.date)} — <a href={post.url} target="_blank" rel="noopener">discussion there</a>
+        {' '}· spot an error? <a href="/writing/errors-and-updates">there’s a $300 bounty</a>.
+      </p>
+      <p class="article-backlink">
+        <a href="/writing">&larr; back to writing</a>
+      </p>
     </footer>
   </div>
 </Base>
@@ -318,10 +353,12 @@ const articleStructuredData = {
   ogImage={`/og/${post.slug}.png`}
   ogImageAlt={ogImageAlt}
   structuredData={articleStructuredData}
-  keywords={seoKeywords}
 >
   <meta slot="head" property="article:published_time" content={post.date.toISOString()} />
   <meta slot="head" property="article:author" content="Andy Masley" />
+  {correction && (
+    <meta slot="head" property="article:modified_time" content={new Date(`${correction.date}T12:00:00Z`).toISOString()} />
+  )}
   <div class="article-page article-page--wide">
     <div class="article-grid article-grid--wide">
       <aside class="article-grid__toc">
@@ -352,9 +389,27 @@ const articleStructuredData = {
                 Originally published on <a href={post.url} target="_blank" rel="noopener">{post.sourceName}</a>
               </span>
             )}
+            {categoryName && !isMetaPost && (
+              <span class="article-header__meta-item">
+                <a class="article-header__kicker" href={`/writing?topic=${categorySlug}`}>{categoryName}</a>
+              </span>
+            )}
+            {correction && (
+              <span class="article-header__meta-item">
+                <a class="article-header__corrected" href={`/writing/errors-and-updates#${correction.anchor}`}>{correctionLabel}</a>
+              </span>
+            )}
           </div>
           <h1 class="article-header__title p-name">{post.title}</h1>
           {standfirst && <p class="article-header__standfirst">{standfirst}</p>}
+          {seriesEntry && (
+            <p class="article-header__series">
+              Part {seriesEntry.part} of{' '}
+              {seriesEntry.hubSlug
+                ? <a href={`/writing/${seriesEntry.hubSlug}`}>{seriesEntry.series}</a>
+                : seriesEntry.series}
+            </p>
+          )}
         </header>
 
         <article class="article-body">
@@ -365,34 +420,52 @@ const articleStructuredData = {
               <Fragment set:html={displayHtml || post.htmlContent} />
             )}
           </div>
+          {/* End matter, under the permanent ceiling stated in CLAUDE.md:
+              diamond, notes (inside the prose above), one colophon line,
+              cited-in (≤5, only when non-empty), plain older/newer, one
+              back-link. Nothing else, ever. */}
+          <div class="divider article-endmark" aria-hidden="true"><div class="divider-diamond"></div></div>
           <footer class="article-footer">
-            <p class="article-footer__author p-author h-card">
-              By <a class="p-name u-url" href="https://andymasley.com">Andy Masley</a>
+            <p class="article-colophon">
+              <span class="p-author h-card"><a class="p-name u-url" href="https://andymasley.com">Andy Masley</a></span>
+              {!isMetaPost && (
+                <> · {post.source !== 'local'
+                  ? <>first published on {post.sourceName}, {formatDate(post.date)} — <a href={post.url} target="_blank" rel="noopener">discussion there</a></>
+                  : <>published {formatDate(post.date)}</>}
+                </>
+              )}
+              {' '}· spot an error? <a href="/writing/errors-and-updates">there’s a $300 bounty</a>.
             </p>
-            <p class="article-bounty">Spot an error? <a href="/writing/errors-and-updates">There’s a bounty.</a></p>
-            <div class="article-footer__back">
-              <a href="/writing" class="article-nav__link">&larr; Back to all writing</a>
-            </div>
+            {citedBy.length > 0 && (
+              <div class="article-citedin">
+                <p class="article-citedin__label">Cited in</p>
+                <ul class="article-citedin__list">
+                  {citedBy.map(citer => (
+                    <li>
+                      <a href={`/writing/${citer.slug}`}>{citer.title}</a>
+                      <span class="article-citedin__year">{citer.date.getFullYear()}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
             {(newerPost || olderPost) && (
-              <nav class="article-pagination" aria-label="More writing">
-                {olderPost ? (
-                  <a href={`/writing/${olderPost.slug}`} class="article-pagination__link">
-                    <span class="article-pagination__label">Older</span>
-                    <span class="article-pagination__title">{olderPost.title}</span>
-                    <span class="article-pagination__date">{formatDate(olderPost.date)}</span>
-                  </a>
-                ) : (
-                  <span class="article-pagination__link article-pagination__link--empty" aria-hidden="true"></span>
+              <nav class="article-adjacent" aria-label="More writing">
+                {olderPost && (
+                  <p class="article-adjacent__line">
+                    &larr; older: <a href={`/writing/${olderPost.slug}`}>{olderPost.title}</a>
+                  </p>
                 )}
                 {newerPost && (
-                  <a href={`/writing/${newerPost.slug}`} class="article-pagination__link article-pagination__link--align-end">
-                    <span class="article-pagination__label">Newer</span>
-                    <span class="article-pagination__title">{newerPost.title}</span>
-                    <span class="article-pagination__date">{formatDate(newerPost.date)}</span>
-                  </a>
+                  <p class="article-adjacent__line">
+                    newer: <a href={`/writing/${newerPost.slug}`}>{newerPost.title}</a> &rarr;
+                  </p>
                 )}
               </nav>
             )}
+            <p class="article-backlink">
+              <a href="/writing">&larr; back to writing</a>
+            </p>
           </footer>
         </article>
       </div>
@@ -502,99 +575,89 @@ const articleStructuredData = {
     text-wrap: balance;
   }
 
-  .article-footer {
-    margin-top: clamp(3rem, 6vw, 4.5rem);
-    padding-top: 1.75rem;
-    border-top: 1px solid var(--border);
-    display: flex;
-    flex-direction: column;
-    gap: 1.5rem;
-  }
-
-  .article-bounty {
-    margin: 0;
-    font-size: var(--text-sm);
-    color: var(--dim);
-  }
-
-  /* Visually hidden: kept in the DOM so the h-card microformat still parses */
-  .article-footer__author {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    margin: -1px;
-    padding: 0;
-    border: 0;
-    overflow: hidden;
-    clip: rect(0 0 0 0);
-    clip-path: inset(50%);
-    white-space: nowrap;
-  }
-
-  .article-footer__back {
-    display: flex;
-  }
-
-  .article-nav__link {
-    font-size: var(--text-sm);
-    color: var(--dim);
-    text-decoration: underline;
-    text-underline-offset: var(--underline-offset);
-  }
-
-  .article-nav__link:hover {
-    color: var(--text);
-  }
-
-  .article-pagination {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 1rem;
-  }
-
-  .article-pagination__link {
-    display: flex;
-    flex-direction: column;
-    gap: 0.35rem;
-    min-height: 100%;
-    padding: 1rem 1.125rem;
-    border: 1px solid var(--border);
-    border-radius: 0;
-    background: transparent;
-    text-decoration: none;
-    color: var(--text);
-    transition: border-color var(--transition-fast), background-color var(--transition-fast), color var(--transition-fast);
-  }
-
-  .article-pagination__link:hover {
-    color: var(--text);
-    border-color: var(--border-strong);
-    background: var(--bg-subtle);
-  }
-
-  .article-pagination__link--align-end {
-    text-align: right;
-    align-items: flex-end;
-  }
-
-  .article-pagination__link--empty {
-    visibility: hidden;
-    pointer-events: none;
-  }
-
-  .article-pagination__label,
-  .article-pagination__date {
-    font-size: var(--text-xs);
+  /* Series part-title, set like a book's running line. */
+  .article-header__series {
+    margin: 0.9rem 0 0;
     font-family: var(--font-body);
+    font-size: var(--text-xs);
     letter-spacing: 0.12em;
     text-transform: uppercase;
     color: var(--dim);
   }
 
-  .article-pagination__title {
-    font-family: var(--font-editorial);
-    font-size: var(--text-md);
-    line-height: 1.3;
+  .article-header__series a {
+    color: var(--accent);
+  }
+
+  /* The end matter is typography, not chrome: a diamond, one colophon
+     line, a bare cited-in list, plain older/newer lines, one back-link.
+     The ceiling lives in CLAUDE.md; nothing here grows a border or box. */
+  .article-endmark {
+    margin-top: clamp(3rem, 6vw, 4.5rem);
+  }
+
+  .article-footer {
+    margin-top: var(--space-xl);
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+
+  .article-colophon {
+    margin: 0;
+    font-size: var(--text-sm);
+    line-height: var(--leading-ui);
+    color: var(--text-secondary);
+  }
+
+  .article-citedin__label {
+    margin: 0 0 0.4rem;
+    font-family: var(--font-body);
+    font-size: var(--text-xs);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--dim);
+  }
+
+  .article-citedin__list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .article-citedin__list li {
+    margin: 0 0 0.3rem;
+    font-size: var(--text-sm);
+    line-height: var(--leading-ui);
+  }
+
+  .article-citedin__year {
+    margin-left: 0.5rem;
+    color: var(--dim);
+    font-size: var(--text-xs);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .article-adjacent__line {
+    margin: 0 0 0.3rem;
+    font-size: var(--text-sm);
+    line-height: var(--leading-ui);
+    color: var(--text-secondary);
+  }
+
+  .article-backlink {
+    margin: 0;
+    font-size: var(--text-sm);
+  }
+
+  .article-backlink a {
+    color: var(--dim);
+    text-decoration: underline;
+    text-underline-offset: var(--underline-offset);
+  }
+
+  .article-backlink a:hover {
+    color: var(--text);
   }
 
   .article-prose {
@@ -844,9 +907,9 @@ const articleStructuredData = {
   /* Footnote and sidenote styling is global (see global.css: Components:
      Footnotes / Sidenotes) so the homepage bio note renders identically. */
 
-  :global([data-theme="dark"]) .article-pagination__link,
-  :global([data-theme="dark"]) :global(.article-toc-mobilebar__button),
-  :global([data-theme="dark"]) :global(.article-toc-drawer) {
+  /* The running-head button is transparent by design (its bar carries the
+     page background); the drawer must stay opaque over the scrim. */
+  :global([data-theme="dark"]) :global(.article-toc-mobilebar__button) {
     background: transparent;
   }
 
@@ -1215,18 +1278,6 @@ const articleStructuredData = {
       margin-top: 1.85rem;
     }
 
-    .article-pagination {
-      grid-template-columns: 1fr;
-    }
-
-    .article-pagination__link--empty {
-      display: none;
-    }
-
-    .article-pagination__link--align-end {
-      text-align: left;
-      align-items: flex-start;
-    }
   }
 
   /* ═══ TOC / Wide Layout ═══ */

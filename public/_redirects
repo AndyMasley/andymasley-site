@@ -4,6 +4,14 @@
 /visuals/carbon-footprint-v1/ /visuals/carbon-footprint 301
 /visuals/how-an-ai-prompt-uses-energy /visuals 301
 /visuals/how-an-ai-prompt-uses-energy/ /visuals 301
+# 2026-08: one page per work — the duplicate restaurant guide folds into
+# the canonical one, and the /tags taxonomy retires in favor of the
+# archive's topic filters.
+/lists/dc-vegan-restaurants /lists/dc-vegan-dining 301
+/lists/dc-vegan-restaurants/ /lists/dc-vegan-dining 301
+/tags /writing 301
+/tags/ /writing 301
+/tags/* /writing 301
 # 2026-07 OG card redesign: old static share images moved to build-time routes.
 # Platforms cache og:image URLs from past scrapes, so these must keep resolving.
 /images/og/og-writing.png /og/page/writing.png 301
@@ -13,10 +21,10 @@
 /images/og/og-appearances.png /og/page/appearances.png 301
 /images/og/og-contact.png /og/page/contact.png 301
 /images/og/og-notes.png /og/page/notes.png 301
-/images/og/og-tags.png /og/page/tags.png 301
+/images/og/og-tags.png /og/default.png 301
 /images/og/og-favorite-things.png /og/page/favorite-things.png 301
 /images/og/og-dc-vegan-dining.png /og/page/dc-vegan-dining.png 301
-/images/og/og-dc-vegan-restaurants.png /og/page/dc-vegan-restaurants.png 301
+/images/og/og-dc-vegan-restaurants.png /og/page/dc-vegan-dining.png 301
 /images/og/og-product-recommendations.png /og/page/product-recommendations.png 301
 /images/og/og-carbon-footprint.png /og/page/carbon-footprint.png 301
 /images/og/og-factory-farmed-chickens.png /og/page/factory-farmed-chickens.png 301

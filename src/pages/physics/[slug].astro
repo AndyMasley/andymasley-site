@@ -18,7 +18,7 @@ const { item } = Astro.props;
 const { Content } = await item.render();
 ---
 
-<Base title={item.data.title} description={item.data.description} keywords={item.data.tags}>
+<Base title={item.data.title} description={item.data.description}>
   <article class="container container--narrow">
     
     <header class="physics-header animate-in">

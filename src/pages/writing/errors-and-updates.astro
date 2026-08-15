@@ -2,9 +2,13 @@
 import Base from '@/layouts/Base.astro';
 ---
 
-<Base title="Errors and updates" activeNav="/writing">
+<Base
+  title="Errors and updates"
+  activeNav="/writing"
+  description="I pay a $300 bounty for significant errors in my writing. This page logs every claim and what I changed."
+>
   <div class="errors-page">
-    <h1 class="page-title">Errors and updates</h1>
+    <h1 class="page-header__title">Errors and updates</h1>
 
     <div class="bounty-intro">
       <p>
@@ -26,9 +30,8 @@ import Base from '@/layouts/Base.astro';
 
     <h2 class="section-title">Errors</h2>
 
-    <h3 class="subsection-title">Caught by other people</h3>
-
-    <h4 class="entry-date">April 3rd, 2026</h4>
+    <h3 class="entry-date" id="e-2026-04-03-alcohol">April 3, 2026</h3>
+    <p class="entry-record">Paid $150 · sourcing error in the alcohol post · comparison flipped; core claim stands.</p>
     <div class="entry-body">
       <p>The original version of my <a href="/writing/alcohol-is-so-bad-for-society-that">post on why alcohol is bad</a> linked a BVS literature index page as the source for the claim that "COVID caused 3.7% of the global disease burden in the first year of the pandemic." That source didn’t actually contain or support the 3.7% figure. A reader found the problem by having an AI model scan my writing. I agreed the sourcing error was real but we disagreed about how much it invalidated the core claims of the article. We decided this was an edge case where it was unclear whether "Alcohol caused slightly more or slightly less of the disease burden" was a core claim, and it was obvious the reasonableness of the claim was due to me getting lucky with a misreading. I paid $150 (half the normal bounty of $300). I’ve updated the paragraph to use the GBD 2021 figure from The Lancet: COVID-19 accounted for 7.4% of total global DALYs in 2021, its worst year. The alcohol figure (5.1% of global DALYs) was already well-sourced. The comparison flipped, and alcohol’s annual burden is now shown as lower than COVID’s peak rather than slightly higher, but the core point stands: alcohol does every year what COVID did at its worst, and we don’t treat it as an emergency.</p>
     </div>
@@ -37,7 +40,8 @@ import Base from '@/layouts/Base.astro';
 
     <h2 class="section-title">Updates</h2>
 
-    <h3 class="entry-date">April 4th, 2026</h3>
+    <h3 class="entry-date" id="u-2026-04-04-water-prices">April 4, 2026</h3>
+    <p class="entry-record">Found while error-hunting · one real case of data centers raising water costs · earlier posts edited, one unpublished.</p>
     <div class="entry-body">
       <p>While hunting for errors on my blog, I finally found one place where data centers have contributed to water price increases: Newton County, Georgia.</p>
       <p>The county’s budget documents cite Meta’s second data center as giving "impetus" to accelerated capital spending that’s partly driving rate hikes. I’ve edited my earlier posts that said data centers hadn’t raised water costs anywhere, and I’ve temporarily unpublished the one titled <em>Data centers haven’t raised water prices anywhere</em>, because that’s not technically true anymore.</p>
@@ -56,18 +60,10 @@ import Base from '@/layouts/Base.astro';
     padding: 2rem 1rem;
   }
 
-  .page-title {
-    font-family: var(--font-editorial);
-    font-size: var(--text-lg);
-    font-weight: normal;
-    margin-bottom: 1.5rem;
-  }
-
   .bounty-intro {
-    margin-bottom: 2rem;
-    font-size: var(--text-sm);
+    margin-bottom: var(--space-xl);
+    font-size: var(--text-base);
     line-height: var(--leading-ui);
-    color: var(--text-secondary);
   }
 
   .bounty-intro p {
@@ -75,8 +71,8 @@ import Base from '@/layouts/Base.astro';
   }
 
   .bounty-rules {
-    margin-top: 0.35rem;
-    font-size: var(--text-sm);
+    margin-top: 0.5rem;
+    font-size: var(--text-base);
     line-height: var(--leading-ui);
     color: var(--text-secondary);
   }
@@ -84,8 +80,7 @@ import Base from '@/layouts/Base.astro';
   .bounty-rules summary {
     cursor: pointer;
     color: var(--dim);
-    font-size: var(--text-xs);
-    letter-spacing: 0.04em;
+    font-size: var(--text-sm);
   }
 
   .bounty-rules summary:hover {
@@ -103,49 +98,37 @@ import Base from '@/layouts/Base.astro';
 
   .section-title {
     font-family: var(--font-editorial);
-    font-size: var(--text-md);
+    font-size: var(--text-lg);
     font-weight: 700;
-    margin-bottom: 0.75rem;
-  }
-
-  .subsection-title {
-    font-family: var(--font-editorial);
-    font-size: var(--text-base);
-    font-weight: 700;
-    margin-bottom: 0.75rem;
+    margin-bottom: var(--space-md);
   }
 
   .entry-date {
     font-family: var(--font-editorial);
-    font-size: var(--text-sm);
+    font-size: var(--text-base);
     font-weight: 700;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.35rem;
+    /* Deep links from corrected essays land here; keep the date visible
+       below the viewport top. */
+    scroll-margin-top: var(--space-xl);
   }
 
-  .entry-list {
-    margin-bottom: 2rem;
-    padding-left: 1.25rem;
-  }
-
-  .entry-list li {
-    margin-bottom: 0.75rem;
-    line-height: var(--leading-prose);
+  .entry-record {
+    margin: 0 0 var(--space-md);
   }
 
   .entry-body {
-    margin-bottom: 2rem;
+    margin-bottom: var(--space-xl);
+    color: var(--text-secondary);
+    line-height: var(--leading-ui);
   }
 
   .entry-body p {
     margin-bottom: 0.75rem;
   }
 
-  .empty-state {
-    color: var(--dim);
-  }
-
   .back-link {
-    margin-top: 2rem;
+    margin-top: var(--space-xl);
   }
 
   .back-link a {
