@@ -313,7 +313,7 @@ if (correction) {
   title={post.title}
   description="Every environmental objection to using ChatGPT, answered with data and sources."
   ogType="article"
-  ogImage={`/og/${post.slug}.png`}
+  ogImage={`/og/${post.slug}.png?v=2`}
   ogImageAlt={ogImageAlt}
   structuredData={articleStructuredData}
 >
@@ -321,6 +321,7 @@ if (correction) {
   <meta slot="head" property="article:author" content="Andy Masley" />
   <div class="cheat-sheet-page">
     <header class="article-header">
+      <p class="article-print-attribution" aria-hidden="true">Andy Masley · andymasley.com/writing/{post.slug}</p>
       <h1 class="article-header__title">{post.title}</h1>
       <div class="article-header__meta">
         <span><time datetime={post.date.toISOString()}>{formatDate(post.date)}</time></span>
@@ -350,7 +351,7 @@ if (correction) {
   description={post.description}
   activeNav="/writing"
   ogType="article"
-  ogImage={`/og/${post.slug}.png`}
+  ogImage={`/og/${post.slug}.png?v=2`}
   ogImageAlt={ogImageAlt}
   structuredData={articleStructuredData}
 >
@@ -377,6 +378,7 @@ if (correction) {
       <div class="article-main article-grid__main h-entry">
         <a class="u-url" href={permalink} hidden aria-hidden="true"></a>
         <header class="article-header">
+          <p class="article-print-attribution" aria-hidden="true">Andy Masley · andymasley.com/writing/{post.slug}</p>
           <div class="article-header__meta">
             {!isMetaPost && (
               <span class="article-header__meta-item">
@@ -849,6 +851,16 @@ if (correction) {
   .article-prose :global(ol) {
     margin-bottom: 1.5rem;
     padding-left: 1.35rem;
+  }
+
+  /* Hanging markers: top-level list markers move into the gutter at
+     ≥1024px so the column's left edge runs flush (the same rule as the
+     hanging footnote numbers); nested lists keep their indent. */
+  @media (min-width: 1024px) {
+    .article-prose > :global(ul),
+    .article-prose > :global(ol) {
+      padding-left: 0;
+    }
   }
 
   .article-prose :global(li) {

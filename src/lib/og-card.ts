@@ -17,12 +17,12 @@ const gelasio700 = readFileSync(join(fontDir, 'gelasio-700.woff'));
 
 // Ink hexagon mark, matching the site favicon/header (not the old oxblood).
 // Stroke width is in 24-unit viewBox units, so it does NOT scale with size —
-// the small header mark needs 2.5, the oversized default-card hexagon needs a
+// the small header mark needs 2.5, the oversized card hexagons need a
 // hairline 0.2 (≈5px rendered) to read as a drafting line rather than a slab.
-function hexDataUri(size: number, strokeWidth: number): string {
+function hexDataUri(size: number, strokeWidth: number, stroke = '#1a1a1a'): string {
   const svg =
     `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 24 24">` +
-    `<polygon points="12,2 20.66,7 20.66,17 12,22 3.34,17 3.34,7" fill="none" stroke="#1a1a1a" stroke-width="${strokeWidth}"/>` +
+    `<polygon points="12,2 20.66,7 20.66,17 12,22 3.34,17 3.34,7" fill="none" stroke="${stroke}" stroke-width="${strokeWidth}"/>` +
     '</svg>';
   return 'data:image/svg+xml;base64,' + Buffer.from(svg).toString('base64');
 }
@@ -61,8 +61,28 @@ export async function renderOgCard({ title, date }: CardInput): Promise<Buffer> 
         flexDirection: 'column',
         justifyContent: 'space-between',
         fontFamily: 'Gelasio',
+        position: 'relative',
+        overflow: 'hidden',
       },
       children: [
+        // The one drawing of the mark, shared with the default card but at
+        // a lighter gray stroke so the title stays dominant: an oversized
+        // hairline hexagon cropped by the right edge.
+        {
+          type: 'div',
+          props: {
+            style: {
+              display: 'flex',
+              position: 'absolute',
+              top: '50%',
+              right: '-165px',
+              transform: 'translateY(-50%)',
+            },
+            children: [
+              { type: 'img', props: { src: hexDataUri(620, 0.2, '#e0e0e0'), width: 620, height: 620 } },
+            ],
+          },
+        },
         // Header: hexagon mark + wordmark
         {
           type: 'div',

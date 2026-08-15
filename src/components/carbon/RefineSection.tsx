@@ -21,10 +21,10 @@ const INPUT_STYLE: React.CSSProperties = {
   padding: '7px 10px',
   fontSize: '0.85rem',
   fontFamily: 'inherit',
-  border: '1px solid var(--divider, #DDD9D0)',
+  border: '1px solid var(--chart-hairline)',
   borderRadius: '6px',
   background: 'var(--panel, #EFECE5)',
-  color: 'var(--text, #1A1A18)',
+  color: 'var(--chart-ink)',
   outline: 'none',
   width: 'min(120px, 40%)',
   textAlign: 'right',
@@ -45,7 +45,7 @@ export function RefineSection({ buckets, overrides, onOverridesChange }: RefineS
   return (
     <section style={{ marginBottom: '3rem' }}>
       <div className="cf-section-label">REFINE YOUR ESTIMATE</div>
-      <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary, #6B6B60)', lineHeight: 1.7, marginBottom: '1.5rem', maxWidth: 600 }}>
+      <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: 1.7, marginBottom: '1.5rem', maxWidth: 600 }}>
         Replace defaults with your actual data. Each upgrade improves accuracy.
         You don't need to fill in everything — the biggest improvements come from
         home energy bills and mileage.
@@ -76,28 +76,28 @@ export function RefineSection({ buckets, overrides, onOverridesChange }: RefineS
                   cursor: 'pointer',
                   fontFamily: 'inherit',
                   fontSize: '0.85rem',
-                  color: 'var(--text, #1A1A18)',
+                  color: 'var(--chart-ink)',
                   textAlign: 'left',
                   minHeight: '44px',
                 }}
                 aria-expanded={isOpen}
               >
-                <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary, #6B6B60)', transition: 'transform 0.15s', transform: isOpen ? 'rotate(90deg)' : 'none' }}>
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', transition: 'transform 0.15s', transform: isOpen ? 'rotate(90deg)' : 'none' }}>
                   ▶
                 </span>
                 <span style={{ flex: 1, fontWeight: 600 }}>
                   {BUCKET_META[bucket.bucketId].label}
                 </span>
                 <ConfidenceBadge confidence={bucket.confidence} />
-                <span style={{ fontSize: '0.78rem', fontVariantNumeric: 'tabular-nums', color: 'var(--text-secondary, #6B6B60)' }}>
+                <span style={{ fontSize: '0.78rem', fontVariantNumeric: 'tabular-nums', color: 'var(--text-secondary)' }}>
                   {bucket.kgCO2ePerYear.toLocaleString()} kg
                 </span>
               </button>
 
               {isOpen && (
-                <div style={{ padding: '0 16px 16px', borderTop: '1px solid var(--divider, #DDD9D0)' }}>
+                <div style={{ padding: '0 16px 16px', borderTop: '1px solid var(--chart-hairline)' }}>
                   {bucket.nextUpgrade && (
-                    <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary, #6B6B60)', fontStyle: 'italic', margin: '12px 0' }}>
+                    <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', fontStyle: 'italic', margin: '12px 0' }}>
                       To improve: {bucket.nextUpgrade}
                     </p>
                   )}
@@ -202,9 +202,9 @@ export function RefineSection({ buckets, overrides, onOverridesChange }: RefineS
                           display: 'flex',
                           justifyContent: 'space-between',
                           fontSize: '0.78rem',
-                          color: 'var(--text-secondary, #6B6B60)',
+                          color: 'var(--text-secondary)',
                           padding: '4px 0',
-                          borderBottom: i < bucket.lineItems.length - 1 ? '1px solid var(--divider, #DDD9D0)' : 'none',
+                          borderBottom: i < bucket.lineItems.length - 1 ? '1px solid var(--chart-hairline)' : 'none',
                         }}
                       >
                         <span>

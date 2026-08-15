@@ -70,8 +70,8 @@ function ActionParam({ name, label, defaultVal, match, unit, max, actionParamOve
     </div>
   );
 }
-const MUTED = 'var(--text-secondary, #6B6B60)';
-const DIVIDER = 'var(--divider, #DDD9D0)';
+const MUTED = 'var(--text-secondary)';
+const DIVIDER = 'var(--chart-hairline)';
 
 const FIELD_STYLE: React.CSSProperties = {
   display: 'flex',
@@ -93,7 +93,7 @@ const INPUT_STYLE: React.CSSProperties = {
   border: `1px solid ${DIVIDER}`,
   borderRadius: '5px',
   background: 'var(--panel, #EFECE5)',
-  color: 'var(--text, #1A1A18)',
+  color: 'var(--chart-ink)',
   outline: 'none',
   width: '100%',
   textAlign: 'right',
@@ -118,7 +118,7 @@ const INLINE_INPUT_STYLE: React.CSSProperties = {
 const colHead: React.CSSProperties = {
   display: 'flex', alignItems: 'center', gap: '10px',
   fontSize: '0.85rem', fontWeight: 700, letterSpacing: '0.01em',
-  color: 'var(--text, #1A1A18)', paddingBottom: '0.5rem',
+  color: 'var(--chart-ink)', paddingBottom: '0.5rem',
   borderBottom: `1px solid ${DIVIDER}`, marginBottom: '0.5rem',
 };
 
@@ -388,7 +388,7 @@ export function AdvancedEditor({
                 </div>
 
                 <div style={{ marginTop: '0.75rem', paddingTop: '0.75rem', borderTop: `1px solid ${DIVIDER}`, fontSize: '0.75rem', color: MUTED }}>
-                  Current total: <strong style={{ color: 'var(--text, #1A1A18)' }}>{footprintKg.toLocaleString()}</strong> kg CO2e/yr
+                  Current total: <strong style={{ color: 'var(--chart-ink)' }}>{footprintKg.toLocaleString()}</strong> kg CO2e/yr
                 </div>
               </div>
             </div>
@@ -425,7 +425,7 @@ export function AdvancedEditor({
                             <ActionParam name={action.name} label="% insulation savings" defaultVal={15} match="Weatherize" unit="%" max={100} actionParamOverrides={actionParamOverrides} getParamValue={getParamValue} updateActionParam={updateActionParam} />
                             {action.name.includes('beef') && <>
                               <ActionParam name={action.name} label="% beef cut" defaultVal={50} match="beef" unit="%" max={100} actionParamOverrides={actionParamOverrides} getParamValue={getParamValue} updateActionParam={updateActionParam} />
-                              <span style={{ opacity: 0.8 }}>Please don't substitute chicken. Replacing half your beef with chicken means ~<a href="https://animalclock.org/" target="_blank" rel="noopener noreferrer" style={{ color: '#8B2E2E' }}>8 more chickens</a> per year in <a href="https://thehumaneleague.org/article/how-many-chickens-are-in-the-world" target="_blank" rel="noopener noreferrer" style={{ color: '#8B2E2E' }}>factory farms</a>, vs ~<a href="https://sentientmedia.org/meat-consumption-in-the-us/" target="_blank" rel="noopener noreferrer" style={{ color: '#8B2E2E' }}>1/15th of a cow</a>. Substitute plants.</span>
+                              <span style={{ opacity: 0.8 }}>Please don't substitute chicken. Replacing half your beef with chicken means ~<a href="https://animalclock.org/" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent)' }}>8 more chickens</a> per year in <a href="https://thehumaneleague.org/article/how-many-chickens-are-in-the-world" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent)' }}>factory farms</a>, vs ~<a href="https://sentientmedia.org/meat-consumption-in-the-us/" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent)' }}>1/15th of a cow</a>. Substitute plants.</span>
                             </>}
                             {(action.name.includes('driving') || action.name.includes('Bike') || action.name.includes('transit') || action.name.includes('ride-hailing')) && (
                               <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>

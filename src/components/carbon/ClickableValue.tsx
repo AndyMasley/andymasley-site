@@ -40,7 +40,7 @@ export function ClickableValue({ value, unit = 'kg', label, formula, lineItems, 
         style={{
           background: 'none',
           border: 'none',
-          borderBottom: '1px dashed var(--text-secondary, #6B6B60)',
+          borderBottom: '1px dashed var(--text-secondary)',
           padding: 0,
           font: 'inherit',
           fontWeight: 'inherit',
@@ -66,14 +66,14 @@ export function ClickableValue({ value, unit = 'kg', label, formula, lineItems, 
             left: 0,
             zIndex: 40,
             background: 'var(--panel, #EFECE5)',
-            border: '1px solid var(--divider, #DDD9D0)',
+            border: '1px solid var(--chart-hairline)',
             borderRadius: '8px',
             padding: '14px 18px',
             width: 'min(calc(100vw - 40px), 420px)',
             boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
             fontSize: '0.78rem',
             lineHeight: 1.6,
-            color: 'var(--text, #1A1A18)',
+            color: 'var(--chart-ink)',
           }}
           role="dialog"
           aria-modal="true"
@@ -82,21 +82,21 @@ export function ClickableValue({ value, unit = 'kg', label, formula, lineItems, 
           <div style={{ fontWeight: 700, marginBottom: '8px', fontSize: '0.85rem' }}>{label}</div>
 
           <div style={{ marginBottom: '8px' }}>
-            <div style={{ fontSize: '0.6rem', letterSpacing: '0.1em', textTransform: 'uppercase', fontWeight: 700, color: 'var(--text-secondary, #6B6B60)', marginBottom: '2px' }}>
+            <div style={{ fontSize: '0.6rem', letterSpacing: '0.1em', textTransform: 'uppercase', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '2px' }}>
               How this was calculated
             </div>
-            <code style={{ fontSize: '0.75rem', background: 'var(--divider, #DDD9D0)', padding: '2px 6px', borderRadius: '3px' }}>
+            <code style={{ fontSize: '0.75rem', background: 'var(--chart-hairline)', padding: '2px 6px', borderRadius: '3px' }}>
               {formula}
             </code>
           </div>
 
           {lineItems.length > 0 && (
             <div style={{ marginBottom: '8px' }}>
-              <div style={{ fontSize: '0.6rem', letterSpacing: '0.1em', textTransform: 'uppercase', fontWeight: 700, color: 'var(--text-secondary, #6B6B60)', marginBottom: '4px' }}>
+              <div style={{ fontSize: '0.6rem', letterSpacing: '0.1em', textTransform: 'uppercase', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '4px' }}>
                 Components
               </div>
               {lineItems.map((li, i) => (
-                <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '3px 0', borderBottom: i < lineItems.length - 1 ? '1px solid var(--divider, #DDD9D0)' : 'none' }}>
+                <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '3px 0', borderBottom: i < lineItems.length - 1 ? '1px solid var(--chart-hairline)' : 'none' }}>
                   <span>{li.label}{li.isDefault ? ' (default)' : ''}</span>
                   <span style={{ fontVariantNumeric: 'tabular-nums', fontWeight: 600 }}>{li.kgCO2ePerYear.toLocaleString()} kg</span>
                 </div>
@@ -105,11 +105,11 @@ export function ClickableValue({ value, unit = 'kg', label, formula, lineItems, 
           )}
 
           <div>
-            <div style={{ fontSize: '0.6rem', letterSpacing: '0.1em', textTransform: 'uppercase', fontWeight: 700, color: 'var(--text-secondary, #6B6B60)', marginBottom: '4px' }}>
+            <div style={{ fontSize: '0.6rem', letterSpacing: '0.1em', textTransform: 'uppercase', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '4px' }}>
               Sources
             </div>
             {lineItems.map((li, i) => (
-              <div key={i} style={{ fontSize: '0.72rem', color: 'var(--text-secondary, #6B6B60)', marginBottom: '2px' }}>
+              <div key={i} style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', marginBottom: '2px' }}>
                 {li.source} <span style={{ opacity: 0.7 }}>(updated {li.sourceUpdated})</span>
               </div>
             ))}
@@ -124,7 +124,7 @@ export function ClickableValue({ value, unit = 'kg', label, formula, lineItems, 
               background: 'none',
               border: 'none',
               fontSize: '1rem',
-              color: 'var(--text-secondary, #6B6B60)',
+              color: 'var(--text-secondary)',
               cursor: 'pointer',
               padding: '4px',
             }}

@@ -5,6 +5,9 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
 import { join } from 'path';
 import { getMetaPostSlugs } from '@/lib/meta-posts';
 import { lintPostContent } from './content-lint';
+import { smartenHtmlText, normalizePlainText } from './smarten';
+import { altFor, vanishedUuids } from '@/data/alt-text';
+import { fullwidthFigures, isFullwidth } from '@/data/figures';
 
 // Cache configuration
 const CACHE_DIR = join(process.cwd(), '.cache', 'substack');
@@ -153,6 +156,19 @@ interface CachedPosts {
 // In-memory cache for current build
 let memoryCache: SubstackPost[] | null = null;
 
+// The ONE title/standfirst normalizer, applied on every return path —
+// live fetch AND committed-cache fallback — because CI always takes the
+// fallback (Substack blocks CI IPs) and titles render at display size.
+// The cache on disk stays raw.
+function hydratePosts(posts: Array<Omit<SubstackPost, 'date'> & { date: Date | string }>): SubstackPost[] {
+  return posts.map(p => ({
+    ...p,
+    date: p.date instanceof Date ? p.date : new Date(p.date),
+    title: normalizePlainText(p.title),
+    description: normalizePlainText(p.description || ''),
+  }));
+}
+
 function hasRequiredMetaPosts(posts: Array<{ slug: string }>): boolean {
   const requiredMetaSlugs = getMetaPostSlugs();
   return requiredMetaSlugs.every(slug => posts.some(post => post.slug === slug));
@@ -179,7 +195,7 @@ export async function fetchSubstackPosts(): Promise<SubstackPost[]> {
   // If cache is fresh, use it
   if (existingCache && (Date.now() - existingCache.timestamp) < CACHE_TTL && hasRequiredMetaPosts(existingCache.posts)) {
     console.log(`Using cached posts list (${Math.round((Date.now() - existingCache.timestamp) / 1000)}s old)`);
-    const posts = existingCache.posts.map(p => ({ ...p, date: new Date(p.date) }));
+    const posts = hydratePosts(existingCache.posts);
     memoryCache = posts;
     return posts;
   } else if (existingCache && !hasRequiredMetaPosts(existingCache.posts)) {
@@ -252,7 +268,7 @@ export async function fetchSubstackPosts(): Promise<SubstackPost[]> {
     if (allPosts.length === 0) {
       if (existingCache && existingCache.posts.length > 0) {
         console.warn('Substack API returned 0 posts, using stale cache');
-        const posts = existingCache.posts.map(p => ({ ...p, date: new Date(p.date) }));
+        const posts = hydratePosts(existingCache.posts);
         memoryCache = posts;
         return posts;
       }
@@ -269,9 +285,10 @@ export async function fetchSubstackPosts(): Promise<SubstackPost[]> {
     writeFileSync(POSTS_CACHE_FILE, JSON.stringify(cacheData, null, 2));
     console.log(`Cached ${allPosts.length} posts to disk`);
 
-    // Save to memory cache
-    memoryCache = allPosts;
-    return allPosts;
+    // Save to memory cache (normalized; the disk cache above stays raw)
+    const hydrated = hydratePosts(allPosts);
+    memoryCache = hydrated;
+    return hydrated;
   } catch (error) {
     // Guard errors are intentional build failures, not fetch failures
     if (error instanceof Error && error.message.includes('REQUIRE_CONTENT')) throw error;
@@ -280,7 +297,7 @@ export async function fetchSubstackPosts(): Promise<SubstackPost[]> {
     // Always fall back to stale cache rather than returning nothing
     if (existingCache && existingCache.posts.length > 0) {
       console.log(`Using stale cache (${existingCache.posts.length} posts) after API failure`);
-      const posts = existingCache.posts.map(p => ({ ...p, date: new Date(p.date) }));
+      const posts = hydratePosts(existingCache.posts);
       memoryCache = posts;
       return posts;
     }
@@ -717,6 +734,80 @@ function injectSidenotes(html: string, slug: string): string {
   return out;
 }
 
+// Numeric-column detection: any column where ≥80% of non-empty body cells
+// are numeric gets td.num/th.num, activating right alignment — the tables
+// whose order-of-magnitude gaps ARE the argument finally align on the
+// figures. Conservative: a cell counts as numeric only when it contains a
+// digit and nothing outside number furniture.
+const NUMERIC_CELL = /^[\s\d.,%$€£+\-–—~≈<>×x^*†‡()\/]*\d[\s\d.,%$€£+\-–—~≈<>×x^*†‡()\/]*$/;
+
+function alignNumericColumns(tableHtml: string): string {
+  const rows = [...tableHtml.matchAll(/<tr[\s\S]*?<\/tr>/gi)].map(m => m[0]);
+  if (rows.length < 2) return tableHtml;
+
+  const cellRegex = /<(td|th)([^>]*)>([\s\S]*?)<\/\1>/gi;
+  const numericCount: number[] = [];
+  const totalCount: number[] = [];
+  for (const row of rows) {
+    let col = 0;
+    for (const m of row.matchAll(cellRegex)) {
+      const isHeader = m[1].toLowerCase() === 'th';
+      const text = m[3].replace(/<[^>]*>/g, '').replace(/&[a-z]+;/gi, ' ').trim();
+      if (!isHeader && text) {
+        totalCount[col] = (totalCount[col] || 0) + 1;
+        if (NUMERIC_CELL.test(text)) numericCount[col] = (numericCount[col] || 0) + 1;
+      }
+      col++;
+    }
+  }
+
+  const numericCols = new Set<number>();
+  for (let c = 0; c < totalCount.length; c++) {
+    if ((totalCount[c] || 0) > 0 && (numericCount[c] || 0) / totalCount[c] >= 0.8) {
+      numericCols.add(c);
+    }
+  }
+  if (numericCols.size === 0) return tableHtml;
+
+  return tableHtml.replace(/<tr[\s\S]*?<\/tr>/gi, (row) => {
+    let col = 0;
+    return row.replace(cellRegex, (cell, tag, attrs, inner) => {
+      const thisCol = col++;
+      if (!numericCols.has(thisCol)) return cell;
+      if (/class="/i.test(attrs)) {
+        return `<${tag}${attrs.replace(/class="/i, 'class="num ')}>${inner}</${tag}>`;
+      }
+      return `<${tag}${attrs} class="num">${inner}</${tag}>`;
+    });
+  });
+}
+
+// Committed mirror manifest: UUID → local file under /img/substack/. The
+// download itself runs machine-side (scripts/mirror-images.mjs) where the
+// network is; this build step only rewrites URLs from the committed
+// manifest — zero network — and falls back to the CDN URL for anything
+// unmirrored. The original URL is preserved as data-origin.
+interface MirrorEntry { file: string; width: number; height: number; }
+let mirrorManifest: Record<string, MirrorEntry> | null | undefined;
+
+function getMirrorManifest(): Record<string, MirrorEntry> | null {
+  if (mirrorManifest !== undefined) return mirrorManifest;
+  const manifestPath = join(process.cwd(), 'public', 'img', 'substack', 'manifest.json');
+  try {
+    mirrorManifest = existsSync(manifestPath)
+      ? JSON.parse(readFileSync(manifestPath, 'utf-8'))
+      : null;
+  } catch {
+    mirrorManifest = null;
+  }
+  return mirrorManifest;
+}
+
+function extractS3Uuid(url: string): string | null {
+  const m = url.match(/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/i);
+  return m ? m[1].toLowerCase() : null;
+}
+
 // Process HTML content for display
 export function processPostContent(html: string, slug: string, opts: { sidenotes?: boolean } = {}): string {
   const { sidenotes = true } = opts;
@@ -766,10 +857,87 @@ export function processPostContent(html: string, slug: string, opts: { sidenotes
     return `<div class="embed-frame">${frame}</div>`;
   });
 
-  // Tables get a horizontal-scroll wrapper so a wide ledger never forces the
-  // whole page sideways on phones.
+  // Tables get numeric columns right-aligned (set like a ledger), then a
+  // horizontal-scroll wrapper so a wide one never forces the page sideways.
+  processed = processed.replace(/<table\b[\s\S]*?<\/table>/gi, t => alignNumericColumns(t));
   processed = processed.replace(/<table\b/gi, '<div class="table-scroll"><table')
     .replace(/<\/table>/gi, '</table></div>');
+
+  // Image pass: alt carry-through + overrides, honest sizes, blob strip,
+  // fullwidth opt-in, and mirror rewrite — one traversal so the rules
+  // compose in a stated order.
+  let missingAlt = 0;
+  const manifest = getMirrorManifest();
+  processed = processed.replace(/<img\b[^>]*>/gi, (img) => {
+    let out = img;
+    const src = out.match(/src="([^"]*)"/i)?.[1] || '';
+
+    // Alt discipline: Substack alts carry through untouched; the committed
+    // overrides in alt-text.ts fill the gaps, keyed slug + S3 UUID.
+    const altMatch = out.match(/alt="([^"]*)"/i);
+    const override = altFor(slug, src);
+    if (override) {
+      if (altMatch) out = out.replace(/alt="[^"]*"/i, `alt="${override.replace(/"/g, '&quot;')}"`);
+      else out = out.replace(/^<img/i, `<img alt="${override.replace(/"/g, '&quot;')}"`);
+    } else if (!altMatch || altMatch[1].trim() === '') {
+      missingAlt++;
+    }
+
+    // Honest sizes: the reading column is 640px; declaring 100vw fetches
+    // w_1456 candidates for a 640px slot on every figure.
+    out = out.replace(/sizes="100vw"/gi, 'sizes="(max-width: 704px) 100vw, 640px"');
+
+    // Mirror rewrite from the committed manifest (no-op until the machine-
+    // side mirror script has run and committed images + manifest).
+    if (manifest) {
+      const uuid = extractS3Uuid(src);
+      const entry = uuid ? manifest[uuid] : undefined;
+      if (entry) {
+        out = out
+          .replace(/src="[^"]*"/i, `src="/img/substack/${entry.file}" data-origin="${src.replace(/"/g, '&quot;')}"`)
+          .replace(/\s+srcset="[^"]*"/gi, '')
+          .replace(/\s+sizes="[^"]*"/gi, '');
+      }
+    }
+    return out;
+  });
+  if (missingAlt > 0) {
+    console.log(`[images] ${slug}: ${missingAlt} missing alt`);
+  }
+  for (const uuid of vanishedUuids(slug, processed)) {
+    console.warn(`[images] ${slug}: keyed alt-text UUID ${uuid} no longer appears in the post`);
+  }
+
+  // <picture><source> candidates carry the same dishonest sizes; align them
+  // with the img rewrite above.
+  processed = processed.replace(/(<source\b[^>]*?)sizes="100vw"/gi, '$1sizes="(max-width: 704px) 100vw, 640px"');
+
+  // Substack's editor state (data-attrs JSON blobs) is inert at render time
+  // on every element — ~800 bytes each, 46 blobs on the heaviest post, and
+  // the RSS feed shrinks proportionally.
+  processed = processed.replace(/\s+data-attrs="[^"]*"/gi, '');
+
+  // figure.fullwidth: opt-in rightward breakout over the sidenote margin,
+  // keyed slug + UUID in src/data/figures.ts.
+  if (fullwidthFigures[slug]?.length) {
+    processed = processed.replace(
+      /<figure\b([^>]*)>([\s\S]*?)<\/figure>/gi,
+      (figure, attrs, inner) => {
+        const src = inner.match(/src="([^"]*)"/i)?.[1] || '';
+        if (!isFullwidth(slug, src)) return figure;
+        if (/class="/i.test(attrs)) {
+          return `<figure${attrs.replace(/class="/i, 'class="fullwidth ')}>${inner}</figure>`;
+        }
+        return `<figure${attrs} class="fullwidth">${inner}</figure>`;
+      }
+    );
+  }
+
+  // The compositor's pass: smart quotes and apostrophes in text nodes only,
+  // never inside code. Build-time only — the committed cache stays raw, so
+  // an upstream HTML change can only yield unsmartened output, never a
+  // corrupted cache.
+  processed = smartenHtmlText(processed);
 
   // Tufte sidenotes (inline-content footnotes only; block-content stays bottom-only).
   // Skipped for the RSS feed, where footnotes render at the bottom and inline

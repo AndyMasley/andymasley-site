@@ -226,10 +226,10 @@ export function ComparisonModes({
               textTransform: 'uppercase',
               border: 'none',
               borderBottom: '1px solid',
-              borderColor: activeMode === c.id ? 'var(--accent, #8B2E2E)' : 'transparent',
+              borderColor: activeMode === c.id ? 'var(--accent)' : 'transparent',
               borderRadius: '0',
               background: 'transparent',
-              color: activeMode === c.id ? 'var(--accent, #8B2E2E)' : 'var(--text-secondary, #6B6B60)',
+              color: activeMode === c.id ? 'var(--accent)' : 'var(--text-secondary)',
               cursor: 'pointer',
               transition: 'color 0.15s, border-color 0.15s',
               minHeight: '44px',
@@ -279,8 +279,8 @@ function ComparisonBar({ userKg, datum }: { userKg: number; datum: ComparisonDat
   return (
     <div style={{
       background: 'transparent',
-      border: '1px solid var(--divider, #DDD9D0)',
-      borderLeft: `2px solid ${isLeverageMode ? 'var(--green, #4A7C59)' : 'var(--accent, #8B2E2E)'}`,
+      border: '1px solid var(--chart-hairline)',
+      borderLeft: `2px solid ${isLeverageMode ? 'var(--green, #4A7C59)' : 'var(--accent)'}`,
       borderRadius: '0',
       padding: '14px 16px',
       minHeight: '120px',
@@ -299,11 +299,11 @@ function ComparisonBar({ userKg, datum }: { userKg: number; datum: ComparisonDat
             {userKg.toLocaleString()} kg
           </span>
         </div>
-        <div style={{ height: '14px', background: 'var(--divider, #DDD9D0)', borderRadius: '0', overflow: 'hidden' }}>
+        <div style={{ height: '14px', background: 'var(--chart-hairline)', borderRadius: '0', overflow: 'hidden' }}>
           <div style={{
             height: '100%',
             width: `${(userKg / maxKg) * 100}%`,
-            background: 'var(--accent, #8B2E2E)',
+            background: 'var(--accent)',
             borderRadius: '0',
             transition: 'width 0.4s ease',
             minWidth: '4px',
@@ -319,11 +319,11 @@ function ComparisonBar({ userKg, datum }: { userKg: number; datum: ComparisonDat
             {datum.referenceKg.toLocaleString()} kg
           </span>
         </div>
-        <div style={{ height: '14px', background: 'var(--divider, #DDD9D0)', borderRadius: '0', overflow: 'hidden' }}>
+        <div style={{ height: '14px', background: 'var(--chart-hairline)', borderRadius: '0', overflow: 'hidden' }}>
           <div style={{
             height: '100%',
             width: `${(datum.referenceKg / maxKg) * 100}%`,
-            background: isLeverageMode ? 'var(--green, #4A7C59)' : 'var(--text-secondary, #6B6B60)',
+            background: isLeverageMode ? 'var(--green, #4A7C59)' : 'var(--text-secondary)',
             borderRadius: '0',
             transition: 'width 0.4s ease',
             minWidth: '4px',
@@ -345,10 +345,10 @@ function ComparisonBar({ userKg, datum }: { userKg: number; datum: ComparisonDat
         color: isLeverageMode
           ? 'var(--green, #4A7C59)'
           : diff > 0
-            ? 'var(--accent, #8B2E2E)'
+            ? 'var(--accent)'
             : diff < 0
               ? 'var(--green, #4A7C59)'
-              : 'var(--text-secondary, #6B6B60)',
+              : 'var(--text-secondary)',
         marginBottom: '4px',
       }}>
         {isLeverageMode ? (
@@ -364,7 +364,7 @@ function ComparisonBar({ userKg, datum }: { userKg: number; datum: ComparisonDat
         )}
       </div>
 
-      <div style={{ fontSize: '0.65rem', color: 'var(--text-secondary, #6B6B60)' }}>
+      <div style={{ fontSize: '0.65rem', color: 'var(--text-secondary)' }}>
         {datum.note}
       </div>
     </div>

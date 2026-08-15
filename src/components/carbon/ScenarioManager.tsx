@@ -91,10 +91,10 @@ export function ScenarioManager({ baseline, overrides, totalKg, onLoad }: Scenar
             padding: '6px 12px',
             fontSize: '0.82rem',
             fontFamily: 'inherit',
-            border: '1px solid var(--divider, #DDD9D0)',
+            border: '1px solid var(--chart-hairline)',
             borderRadius: '6px',
             background: 'var(--panel, #EFECE5)',
-            color: 'var(--text, #1A1A18)',
+            color: 'var(--chart-ink)',
             outline: 'none',
             flex: '1',
             minWidth: '120px',
@@ -109,10 +109,10 @@ export function ScenarioManager({ baseline, overrides, totalKg, onLoad }: Scenar
             fontSize: '0.78rem',
             fontFamily: 'inherit',
             fontWeight: 600,
-            border: '1px solid var(--accent, #8B2E2E)',
+            border: '1px solid var(--accent)',
             borderRadius: '6px',
             background: 'transparent',
-            color: 'var(--accent, #8B2E2E)',
+            color: 'var(--accent)',
             cursor: 'pointer',
             minHeight: '44px',
           }}
@@ -127,10 +127,10 @@ export function ScenarioManager({ baseline, overrides, totalKg, onLoad }: Scenar
               fontSize: '0.78rem',
               fontFamily: 'inherit',
               fontWeight: 500,
-              border: '1px solid var(--divider, #DDD9D0)',
+              border: '1px solid var(--chart-hairline)',
               borderRadius: '6px',
               background: 'transparent',
-              color: 'var(--text-secondary, #6B6B60)',
+              color: 'var(--text-secondary)',
               cursor: 'pointer',
               minHeight: '44px',
             }}
@@ -158,7 +158,7 @@ export function ScenarioManager({ baseline, overrides, totalKg, onLoad }: Scenar
               }}
             >
               <span style={{ flex: 1, fontWeight: 500 }}>{s.name}</span>
-              <span style={{ fontSize: '0.72rem', color: 'var(--text-secondary, #6B6B60)' }}>{s.savedAt}</span>
+              <span style={{ fontSize: '0.72rem', color: 'var(--text-secondary)' }}>{s.savedAt}</span>
               <span style={{ fontWeight: 600, fontVariantNumeric: 'tabular-nums', minWidth: '80px', textAlign: 'right' }}>
                 {s.totalKg.toLocaleString()} kg
               </span>
@@ -166,7 +166,7 @@ export function ScenarioManager({ baseline, overrides, totalKg, onLoad }: Scenar
               <button onClick={() => setCompareIdx(compareIdx === i ? null : i)} style={smallBtn}>
                 {compareIdx === i ? 'Uncompare' : 'Compare'}
               </button>
-              <button onClick={() => handleDelete(i)} style={{ ...smallBtn, color: 'var(--accent, #8B2E2E)' }}>×</button>
+              <button onClick={() => handleDelete(i)} style={{ ...smallBtn, color: 'var(--accent)' }}>×</button>
             </div>
           ))}
         </div>
@@ -180,7 +180,7 @@ export function ScenarioManager({ baseline, overrides, totalKg, onLoad }: Scenar
           padding: '14px 18px',
           marginBottom: '1rem',
         }}>
-          <div style={{ fontSize: '0.6rem', letterSpacing: '0.1em', textTransform: 'uppercase', fontWeight: 700, color: 'var(--text-secondary, #6B6B60)', marginBottom: '10px' }}>
+          <div style={{ fontSize: '0.6rem', letterSpacing: '0.1em', textTransform: 'uppercase', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '10px' }}>
             COMPARING: Current vs. {compareScenario.name}
           </div>
           <ComparisonTable
@@ -200,10 +200,10 @@ const smallBtn: React.CSSProperties = {
   fontSize: '0.68rem',
   fontFamily: 'inherit',
   fontWeight: 600,
-  border: '1px solid var(--divider, #DDD9D0)',
+  border: '1px solid var(--chart-hairline)',
   borderRadius: '4px',
   background: 'transparent',
-  color: 'var(--text-secondary, #6B6B60)',
+  color: 'var(--text-secondary)',
   cursor: 'pointer',
 };
 
@@ -223,7 +223,7 @@ function ComparisonTable({
 
   return (
     <div style={{ overflowX: 'auto', fontSize: '0.82rem' }}>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 90px 90px 70px', gap: '4px', fontWeight: 600, borderBottom: '1px solid var(--divider, #DDD9D0)', paddingBottom: '6px', marginBottom: '4px', minWidth: '380px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 90px 90px 70px', gap: '4px', fontWeight: 600, borderBottom: '1px solid var(--chart-hairline)', paddingBottom: '6px', marginBottom: '4px', minWidth: '380px' }}>
         <span>Bucket</span>
         <span style={{ textAlign: 'right' }}>Current</span>
         <span style={{ textAlign: 'right' }}>{savedScenario.name}</span>
@@ -233,11 +233,11 @@ function ComparisonTable({
         const savedBucket = savedFP.buckets.find(sb => sb.bucketId === b.bucketId);
         const diff = b.kgCO2ePerYear - (savedBucket?.kgCO2ePerYear ?? 0);
         return (
-          <div key={b.bucketId} style={{ display: 'grid', gridTemplateColumns: '1fr 90px 90px 70px', gap: '4px', padding: '3px 0', borderBottom: '1px solid var(--divider, #DDD9D0)', minWidth: '380px' }}>
+          <div key={b.bucketId} style={{ display: 'grid', gridTemplateColumns: '1fr 90px 90px 70px', gap: '4px', padding: '3px 0', borderBottom: '1px solid var(--chart-hairline)', minWidth: '380px' }}>
             <span>{BUCKET_META[b.bucketId].label}</span>
             <span style={{ textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{b.kgCO2ePerYear.toLocaleString()}</span>
             <span style={{ textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{(savedBucket?.kgCO2ePerYear ?? 0).toLocaleString()}</span>
-            <span style={{ textAlign: 'right', fontVariantNumeric: 'tabular-nums', color: diff > 0 ? 'var(--accent, #8B2E2E)' : diff < 0 ? 'var(--green, #4A7C59)' : 'inherit', fontWeight: diff !== 0 ? 600 : 400 }}>
+            <span style={{ textAlign: 'right', fontVariantNumeric: 'tabular-nums', color: diff > 0 ? 'var(--accent)' : diff < 0 ? 'var(--green, #4A7C59)' : 'inherit', fontWeight: diff !== 0 ? 600 : 400 }}>
               {diff > 0 ? '+' : ''}{diff.toLocaleString()}
             </span>
           </div>
@@ -250,7 +250,7 @@ function ComparisonTable({
         <span style={{
           textAlign: 'right',
           fontVariantNumeric: 'tabular-nums',
-          color: currentTotal > savedScenario.totalKg ? 'var(--accent, #8B2E2E)' : currentTotal < savedScenario.totalKg ? 'var(--green, #4A7C59)' : 'inherit',
+          color: currentTotal > savedScenario.totalKg ? 'var(--accent)' : currentTotal < savedScenario.totalKg ? 'var(--green, #4A7C59)' : 'inherit',
         }}>
           {currentTotal > savedScenario.totalKg ? '+' : ''}{(currentTotal - savedScenario.totalKg).toLocaleString()}
         </span>

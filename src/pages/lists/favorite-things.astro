@@ -2,7 +2,7 @@
 import Base from '@/layouts/Base.astro';
 ---
 
-<Base title="Favorite things" description="A list of my favorite things" ogImage="/og/page/favorite-things.png">
+<Base title="Favorite things" description="A list of my favorite things" ogImage="/og/page/favorite-things.png?v=2">
   <h1 class="page-title">Favorite things</h1>
   <div class="favorite-things">
     <div class="category" data-category="writing">
@@ -627,6 +627,13 @@ import Base from '@/layouts/Base.astro';
         const newTitle = title.cloneNode(true);
         title.parentNode.replaceChild(newTitle, title);
 
+        // Collapsed panels are hidden from assistive tech and the tab
+        // order, not just visually collapsed; toggles announce state.
+        newTitle.setAttribute('aria-expanded', item.classList.contains('open') ? 'true' : 'false');
+        if (!item.classList.contains('open')) {
+          content.style.visibility = 'hidden';
+        }
+
         newTitle.addEventListener('click', (e) => {
           e.stopPropagation();
           const isOpen = item.classList.contains('open');
@@ -638,10 +645,19 @@ import Base from '@/layouts/Base.astro';
               content.style.opacity = '0';
             });
             item.classList.remove('open');
+            newTitle.setAttribute('aria-expanded', 'false');
+            content.addEventListener('transitionend', function handler() {
+              if (!item.classList.contains('open')) {
+                content.style.visibility = 'hidden';
+              }
+              content.removeEventListener('transitionend', handler);
+            });
           } else {
             item.classList.add('open');
+            content.style.visibility = 'visible';
             content.style.maxHeight = content.scrollHeight + 'px';
             content.style.opacity = '1';
+            newTitle.setAttribute('aria-expanded', 'true');
 
             content.addEventListener('transitionend', function handler() {
               if (item.classList.contains('open')) {

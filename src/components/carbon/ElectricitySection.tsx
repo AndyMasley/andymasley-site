@@ -113,10 +113,10 @@ export function ElectricitySection({ baseline }: ElectricitySectionProps) {
 
   return (
     <section style={{ marginBottom: '2.5rem' }}>
-      <div style={{ fontSize: '0.58rem', letterSpacing: '0.14em', textTransform: 'uppercase', fontWeight: 700, color: 'var(--text-secondary, #6B6B60)', marginBottom: '0.5rem' }}>
+      <div style={{ fontSize: '0.58rem', letterSpacing: '0.14em', textTransform: 'uppercase', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>
         ELECTRICITY & YOUR GRID
       </div>
-      <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary, #6B6B60)', lineHeight: 1.6, marginBottom: '1rem', maxWidth: 600 }}>
+      <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: '1rem', maxWidth: 600 }}>
         Your grid: <strong>{regionName}</strong> — {(todayRate * 1000).toFixed(0)} g CO₂e/kWh.
         {todayRate < 0.25 && ' This is one of the cleaner grids in the US.'}
         {todayRate > 0.50 && ' This is one of the more carbon-intensive grids in the US.'}
@@ -133,10 +133,10 @@ export function ElectricitySection({ baseline }: ElectricitySectionProps) {
               fontSize: '0.75rem',
               fontFamily: 'inherit',
               fontWeight: activeView === view ? 600 : 400,
-              border: '1px solid var(--divider, #DDD9D0)',
+              border: '1px solid var(--chart-hairline)',
               borderRadius: '5px',
-              background: activeView === view ? 'var(--accent, #8B2E2E)' : 'transparent',
-              color: activeView === view ? 'white' : 'var(--text-secondary, #6B6B60)',
+              background: activeView === view ? 'var(--accent)' : 'transparent',
+              color: activeView === view ? 'white' : 'var(--text-secondary)',
               cursor: 'pointer',
               transition: 'all 0.15s',
               minHeight: '44px',
@@ -161,7 +161,7 @@ export function ElectricitySection({ baseline }: ElectricitySectionProps) {
               {hasEV && <StatBox label="EV charging" value={`${todayElec.evDrivingKg.toLocaleString()} kg`} />}
               <StatBox label="Total elec-dependent" value={`${todayElec.totalElecDependentKg.toLocaleString()} kg`} accent />
             </div>
-            <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary, #6B6B60)', marginTop: '1rem', lineHeight: 1.6 }}>
+            <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginTop: '1rem', lineHeight: 1.6 }}>
               Full footprint on today's grid: <strong>{todayFootprint.totalKgCO2ePerYear.toLocaleString()} kg/yr</strong>
             </p>
           </div>
@@ -175,14 +175,14 @@ export function ElectricitySection({ baseline }: ElectricitySectionProps) {
               {hasEV && <StatBox label="EV charging" value={`${cleanerElec.evDrivingKg.toLocaleString()} kg`} />}
               <StatBox label="Total elec-dependent" value={`${cleanerElec.totalElecDependentKg.toLocaleString()} kg`} accent />
             </div>
-            <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary, #6B6B60)', marginTop: '1rem', lineHeight: 1.6 }}>
+            <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginTop: '1rem', lineHeight: 1.6 }}>
               Full footprint on 2035 grid: <strong>{cleanerFootprint.totalKgCO2ePerYear.toLocaleString()} kg/yr</strong>
               {' '}— <strong style={{ color: 'var(--green, #4A7C59)' }}>{diff.toLocaleString()} kg less</strong> than today, with no lifestyle changes.
             </p>
 
             {/* Time slider */}
             <div style={{ marginTop: '1.5rem' }}>
-              <label style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--text-secondary, #6B6B60)' }}>
+              <label style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
                 Grid decarbonization timeline
               </label>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '6px' }}>
@@ -213,17 +213,17 @@ export function ElectricitySection({ baseline }: ElectricitySectionProps) {
             <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', fontSize: '0.85rem', borderCollapse: 'collapse' }}>
               <thead>
-                <tr style={{ borderBottom: '1px solid var(--divider, #DDD9D0)' }}>
+                <tr style={{ borderBottom: '1px solid var(--chart-hairline)' }}>
                   <th style={{ textAlign: 'left', padding: '6px 0', fontWeight: 600 }}>Action</th>
                   <th style={{ textAlign: 'right', padding: '6px 0', fontWeight: 600 }}>Annual savings</th>
                 </tr>
               </thead>
               <tbody>
-                <tr style={{ borderBottom: '1px solid var(--divider, #DDD9D0)' }}>
+                <tr style={{ borderBottom: '1px solid var(--chart-hairline)' }}>
                   <td style={{ padding: '8px 0' }}>Install rooftop solar (7 kW)</td>
                   <td style={{ textAlign: 'right', padding: '8px 0', color: 'var(--green, #4A7C59)', fontWeight: 600 }}>−{solarAccounting.toLocaleString()} kg</td>
                 </tr>
-                <tr style={{ borderBottom: '1px solid var(--divider, #DDD9D0)' }}>
+                <tr style={{ borderBottom: '1px solid var(--chart-hairline)' }}>
                   <td style={{ padding: '8px 0' }}>Replace gas furnace with heat pump</td>
                   <td style={{ textAlign: 'right', padding: '8px 0', color: heatPumpNetKg < 0 ? 'var(--green, #4A7C59)' : 'inherit', fontWeight: 600 }}>
                     {heatPumpNetKg < 0 ? `−${Math.abs(heatPumpNetKg).toLocaleString()}` : `+${heatPumpNetKg.toLocaleString()}`} kg
@@ -240,7 +240,7 @@ export function ElectricitySection({ baseline }: ElectricitySectionProps) {
               </tbody>
             </table>
             </div>
-            <p style={{ fontSize: '0.72rem', color: 'var(--text-secondary, #6B6B60)', marginTop: '0.75rem', fontStyle: 'italic' }}>
+            <p style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', marginTop: '0.75rem', fontStyle: 'italic' }}>
               Savings depend on your grid — the same solar panels save more in a coal-heavy region than in hydro-rich Washington state.
             </p>
           </div>
@@ -255,14 +255,14 @@ export function ElectricitySection({ baseline }: ElectricitySectionProps) {
               <strong>{(scenarios.cleaner.kgCO2ePerKwh * 1000).toFixed(0)} g/kWh</strong>,{' '}
               every EV, every heat pump, and every home on that grid gets cleaner — whether or not the owners did anything.
             </p>
-            <div style={{ background: 'var(--bg, #F5F2EC)', borderRadius: '6px', padding: '1rem', borderLeft: '3px solid var(--accent, #8B2E2E)' }}>
+            <div style={{ background: 'var(--bg, #F5F2EC)', borderRadius: '6px', padding: '1rem', borderLeft: '3px solid var(--accent)' }}>
               <div style={{ fontSize: '0.85rem', fontWeight: 600, marginBottom: '4px' }}>
                 Your footprint difference from grid cleaning alone
               </div>
               <div style={{ fontSize: 'clamp(1.5rem, 3vw, 2.5rem)', fontWeight: 700, color: 'var(--green, #4A7C59)' }}>
                 −{diff.toLocaleString()} kg/yr
               </div>
-              <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary, #6B6B60)', marginTop: '4px' }}>
+              <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', marginTop: '4px' }}>
                 No lifestyle changes needed — this is what happens when the system improves.
               </div>
             </div>
@@ -277,10 +277,10 @@ export function ElectricitySection({ baseline }: ElectricitySectionProps) {
             </p>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', maxWidth: '400px' }}>
               <div>
-                <div style={{ fontSize: '0.6rem', letterSpacing: '0.1em', textTransform: 'uppercase', fontWeight: 700, color: 'var(--text-secondary, #6B6B60)', marginBottom: '4px' }}>
+                <div style={{ fontSize: '0.6rem', letterSpacing: '0.1em', textTransform: 'uppercase', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '4px' }}>
                   Accounting view
                 </div>
-                <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary, #6B6B60)', marginBottom: '4px' }}>
+                <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', marginBottom: '4px' }}>
                   Solar saves (avg rate):
                 </div>
                 <div style={{ fontSize: '1.2rem', fontWeight: 700 }}>
@@ -288,10 +288,10 @@ export function ElectricitySection({ baseline }: ElectricitySectionProps) {
                 </div>
               </div>
               <div>
-                <div style={{ fontSize: '0.6rem', letterSpacing: '0.1em', textTransform: 'uppercase', fontWeight: 700, color: 'var(--text-secondary, #6B6B60)', marginBottom: '4px' }}>
+                <div style={{ fontSize: '0.6rem', letterSpacing: '0.1em', textTransform: 'uppercase', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '4px' }}>
                   Avoided emissions view
                 </div>
-                <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary, #6B6B60)', marginBottom: '4px' }}>
+                <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', marginBottom: '4px' }}>
                   Solar displaces (marginal rate):
                 </div>
                 <div style={{ fontSize: '1.2rem', fontWeight: 700 }}>
@@ -299,7 +299,7 @@ export function ElectricitySection({ baseline }: ElectricitySectionProps) {
                 </div>
               </div>
             </div>
-            <p style={{ fontSize: '0.72rem', color: 'var(--text-secondary, #6B6B60)', marginTop: '1rem', fontStyle: 'italic' }}>
+            <p style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', marginTop: '1rem', fontStyle: 'italic' }}>
               The avoided emissions number is {Math.round((solarAvoided / solarAccounting - 1) * 100)}% higher because the marginal plant your solar displaces is dirtier than the grid average.
               Both numbers are correct — they answer different questions.
             </p>
@@ -313,10 +313,10 @@ export function ElectricitySection({ baseline }: ElectricitySectionProps) {
 function StatBox({ label, value, accent }: { label: string; value: string; accent?: boolean }) {
   return (
     <div>
-      <div style={{ fontSize: '0.6rem', letterSpacing: '0.1em', textTransform: 'uppercase', fontWeight: 700, color: 'var(--text-secondary, #6B6B60)', marginBottom: '2px' }}>
+      <div style={{ fontSize: '0.6rem', letterSpacing: '0.1em', textTransform: 'uppercase', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '2px' }}>
         {label}
       </div>
-      <div style={{ fontSize: '1.2rem', fontWeight: 700, color: accent ? 'var(--accent, #8B2E2E)' : undefined }}>
+      <div style={{ fontSize: '1.2rem', fontWeight: 700, color: accent ? 'var(--accent)' : undefined }}>
         {value}
       </div>
     </div>

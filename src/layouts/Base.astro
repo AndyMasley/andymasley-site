@@ -123,10 +123,11 @@ function isActive(href: string): boolean {
   <ViewTransitions />
 
   <link rel="alternate" type="application/rss+xml" title="Andy Masley" href="/rss.xml">
-  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
-  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
-  <link rel="alternate icon" href="/favicon.ico" sizes="32x32">
-  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  {/* ?v=2: 2026 redraw — the outline drafting line replaced the solid slab */}
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=2">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png?v=2">
+  <link rel="alternate icon" href="/favicon.ico?v=2" sizes="32x32">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=2">
 
   <script is:inline>
     // Persist theme across View Transitions and tab switches. Readers with
@@ -154,7 +155,9 @@ function isActive(href: string): boolean {
 </head>
 <body>
 
-  <main class="main-content" transition:animate="fade">
+  <a class="skip-link" href="#main">[ skip to content ]</a>
+
+  <div class="main-content" transition:animate="fade">
     <header class="header">
       <div class="header__inner">
         <div class="header__logo">
@@ -192,8 +195,9 @@ function isActive(href: string): boolean {
 
       <nav class="header__nav">
         {navLinks.map((link, i) => (
-          <>
-            {i > 0 && <span class="header__nav-sep"> · </span>}
+          /* Each 'label ·' pair wraps as one nowrap group, so a wrapped
+             nav row can never open with a stranded middle dot. */
+          <span class="header__nav-group">
             <a
               href={link.href}
               class:list={[
@@ -203,7 +207,8 @@ function isActive(href: string): boolean {
             >
               {link.label}
             </a>
-          </>
+            {i < navLinks.length - 1 && <span class="header__nav-sep"> · </span>}
+          </span>
         ))}
         {isHexagonPage && (
           <span class="nav-hexagon-wrap">
@@ -218,12 +223,14 @@ function isActive(href: string): boolean {
       </nav>
     </header>
 
-    <slot />
+    <main id="main">
+      <slot />
+    </main>
 
     <footer class="footer">
       © {new Date().getFullYear()} Andy Masley · <a href="/rss.xml">rss</a> · <a href="/writing/errors-and-updates">errors &amp; updates</a> · <a href="/contact">contact</a>
     </footer>
-  </main>
+  </div>
 
 
 
@@ -293,20 +300,37 @@ function isActive(href: string): boolean {
       });
     }
 
-    // Search functionality
+    // Search functionality. Two indexes: a ~40KB titles-only shard for
+    // instant first results, and the full-text index streaming behind it.
+    // Both load on intent (hover warms the shard; activation starts both);
+    // neither competes with the reading surface's first paint.
     let searchIndex = null;
+    let titlesIndex = null;
+    let searchIndexPromise = null;
+    let titlesIndexPromise = null;
     let selectedIndex = 0;
 
-    async function loadSearchIndex() {
-      if (searchIndex) return searchIndex;
-      try {
-        const res = await fetch('/search.json');
-        searchIndex = await res.json();
-        return searchIndex;
-      } catch (e) {
-        console.error('Failed to load search index:', e);
-        return [];
+    function loadTitlesIndex() {
+      if (!titlesIndexPromise) {
+        titlesIndexPromise = fetch('/search-titles.json')
+          .then(res => res.json())
+          .then(data => (titlesIndex = data))
+          .catch(() => []);
       }
+      return titlesIndexPromise;
+    }
+
+    function loadSearchIndex() {
+      if (!searchIndexPromise) {
+        searchIndexPromise = fetch('/search.json')
+          .then(res => res.json())
+          .then(data => (searchIndex = data))
+          .catch(e => {
+            console.error('Failed to load search index:', e);
+            return [];
+          });
+      }
+      return searchIndexPromise;
     }
 
     function initSearch(signal: AbortSignal) {
@@ -319,7 +343,9 @@ function isActive(href: string): boolean {
       if (!widget || !input || !dropdown || !results) return;
 
       function openSearch() {
-        // The index loads on first activation, never eagerly.
+        // Indexes load on first activation, never eagerly: the shard gives
+        // first keystrokes instant results while the full text streams.
+        loadTitlesIndex();
         loadSearchIndex();
         widget.classList.add('active');
         widget.classList.remove('has-input');
@@ -355,6 +381,9 @@ function isActive(href: string): boolean {
       function hideDropdown() {
         dropdown.classList.remove('active');
       }
+
+      // Hover warms the shard before the click lands.
+      widget.addEventListener('pointerenter', () => loadTitlesIndex(), { once: true, signal });
 
       // Click on widget (label or brackets) to open
       widget.addEventListener('click', (e) => {
@@ -442,8 +471,23 @@ function isActive(href: string): boolean {
         }
       }
 
+      let currentQuery = '';
+
       async function search(query) {
-        const index = await loadSearchIndex();
+        currentQuery = query;
+        // The full index when it's here; the titles shard for the first
+        // keystrokes otherwise. When the full index lands, the live query
+        // re-runs against it once — full-text matches stream in.
+        let index = searchIndex;
+        if (!index) {
+          index = titlesIndex || await loadTitlesIndex();
+          loadSearchIndex().then(() => {
+            if (currentQuery === query && widget.classList.contains('active')) {
+              search(query);
+            }
+          });
+        }
+        if (query !== currentQuery) return;
         if (!query.trim()) {
           results.innerHTML = '';
           hideDropdown();

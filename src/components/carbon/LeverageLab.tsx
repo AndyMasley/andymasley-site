@@ -100,7 +100,7 @@ export function LeverageLab({ userMaxPersonalReduction, userFootprint }: Leverag
         borderRadius: '0',
         padding: '12px 16px',
         marginBottom: '2rem',
-        borderLeft: '1px solid var(--accent, #8B2E2E)',
+        borderLeft: '1px solid var(--accent)',
         fontSize: '0.85rem',
         lineHeight: 1.6,
       }}>
@@ -118,10 +118,10 @@ export function LeverageLab({ userMaxPersonalReduction, userFootprint }: Leverag
             fontFamily: 'inherit',
             fontWeight: 600,
             border: '1px solid',
-            borderColor: skepticMode ? 'var(--accent, #8B2E2E)' : 'var(--divider, #DDD9D0)',
+            borderColor: skepticMode ? 'var(--accent)' : 'var(--chart-hairline)',
             borderRadius: '0',
             background: 'transparent',
-            color: skepticMode ? 'var(--accent, #8B2E2E)' : 'var(--text-secondary, #6B6B60)',
+            color: skepticMode ? 'var(--accent)' : 'var(--text-secondary)',
             cursor: 'pointer',
             transition: 'all 0.15s',
             minHeight: '44px',
@@ -132,7 +132,7 @@ export function LeverageLab({ userMaxPersonalReduction, userFootprint }: Leverag
         </button>
 
         {/* Annual / Lifetime toggle */}
-        <div style={{ display: 'inline-flex', border: '1px solid var(--divider, #DDD9D0)', borderRadius: '0', overflow: 'hidden' }}>
+        <div style={{ display: 'inline-flex', border: '1px solid var(--chart-hairline)', borderRadius: '0', overflow: 'hidden' }}>
           {(['annual', 'lifetime'] as const).map(mode => (
             <button
               key={mode}
@@ -143,9 +143,9 @@ export function LeverageLab({ userMaxPersonalReduction, userFootprint }: Leverag
                 fontFamily: 'inherit',
                 fontWeight: 600,
                 border: 'none',
-                borderLeft: mode === 'lifetime' ? '1px solid var(--divider, #DDD9D0)' : 'none',
+                borderLeft: mode === 'lifetime' ? '1px solid var(--chart-hairline)' : 'none',
                 background: 'transparent',
-                color: viewMode === mode ? 'var(--accent, #8B2E2E)' : 'var(--text-secondary, #6B6B60)',
+                color: viewMode === mode ? 'var(--accent)' : 'var(--text-secondary)',
                 cursor: 'pointer',
                 transition: 'all 0.15s',
                 minHeight: '44px',
@@ -158,7 +158,7 @@ export function LeverageLab({ userMaxPersonalReduction, userFootprint }: Leverag
         </div>
 
         {skepticMode && (
-          <span style={{ fontSize: '0.72rem', color: 'var(--accent, #8B2E2E)', fontStyle: 'italic' }}>
+          <span style={{ fontSize: '0.72rem', color: 'var(--accent)', fontStyle: 'italic' }}>
             All probabilities set to conservative (low) values
           </span>
         )}
@@ -184,7 +184,7 @@ export function LeverageLab({ userMaxPersonalReduction, userFootprint }: Leverag
         <div className="cf-section-label" style={{ marginBottom: '1rem' }}>ADVERSARIAL FAQ</div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
           {FAQ_ITEMS.map((item, i) => (
-            <div key={i} style={{ background: 'transparent', border: '1px solid var(--divider, #DDD9D0)', borderRadius: '0', overflow: 'hidden' }}>
+            <div key={i} style={{ background: 'transparent', border: '1px solid var(--chart-hairline)', borderRadius: '0', overflow: 'hidden' }}>
               <button
                 onClick={() => setExpandedFaq(expandedFaq === i ? null : i)}
                 style={{
@@ -199,7 +199,7 @@ export function LeverageLab({ userMaxPersonalReduction, userFootprint }: Leverag
                   fontFamily: 'inherit',
                   fontSize: '0.88rem',
                   fontWeight: 600,
-                  color: 'var(--text, #1A1A18)',
+                  color: 'var(--chart-ink)',
                   textAlign: 'left',
                   minHeight: '44px',
                 }}
@@ -207,7 +207,7 @@ export function LeverageLab({ userMaxPersonalReduction, userFootprint }: Leverag
               >
                 <span style={{
                   fontSize: '0.75rem',
-                  color: 'var(--text-secondary, #6B6B60)',
+                  color: 'var(--text-secondary)',
                   transition: 'transform 0.15s',
                   transform: expandedFaq === i ? 'rotate(90deg)' : 'none',
                   flexShrink: 0,
@@ -219,7 +219,7 @@ export function LeverageLab({ userMaxPersonalReduction, userFootprint }: Leverag
                   padding: '0 16px 14px 40px',
                   fontSize: '0.85rem',
                   lineHeight: 1.7,
-                  color: 'var(--text-secondary, #6B6B60)',
+                  color: 'var(--text-secondary)',
                 }}>
                   {item.answer}
                 </div>
@@ -253,7 +253,7 @@ function CaseCard({ result, viewMode }: { result: LeverageResult; viewMode: 'ann
     <div
       style={{
         background: 'transparent',
-        border: '1px solid var(--divider, #DDD9D0)',
+        border: '1px solid var(--chart-hairline)',
         borderRadius: '0',
         padding: '14px 16px',
       }}
@@ -266,9 +266,9 @@ function CaseCard({ result, viewMode }: { result: LeverageResult; viewMode: 'ann
             <span
               onClick={() => setExpanded(!expanded)}
               style={{
-                borderBottom: '1.5px dashed var(--accent, #8B2E2E)',
+                borderBottom: '1.5px dashed var(--accent)',
                 cursor: 'pointer',
-                color: 'var(--accent, #8B2E2E)',
+                color: 'var(--accent)',
                 transition: 'opacity 0.15s',
               }}
               role="button"
@@ -283,18 +283,18 @@ function CaseCard({ result, viewMode }: { result: LeverageResult; viewMode: 'ann
             <div style={{
               fontSize: '0.78rem',
               lineHeight: 1.65,
-              color: 'var(--text-secondary, #6B6B60)',
+              color: 'var(--text-secondary)',
               marginTop: '6px',
               marginBottom: '4px',
               padding: '8px 12px',
               background: 'var(--bg, #FAF9F7)',
               borderRadius: '4px',
-              borderLeft: '2.5px solid var(--accent, #8B2E2E)',
+              borderLeft: '2.5px solid var(--accent)',
             }}>
               {result.case.explainer}
             </div>
           )}
-          <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary, #6B6B60)', lineHeight: 1.4 }}>
+          <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', lineHeight: 1.4 }}>
             {result.case.description}
           </div>
         </div>
@@ -302,7 +302,7 @@ function CaseCard({ result, viewMode }: { result: LeverageResult; viewMode: 'ann
           <span style={{
             fontSize: '0.85rem',
             fontWeight: 700,
-            color: mult.central >= 1 ? 'var(--green, #4A7C59)' : 'var(--text-secondary, #6B6B60)',
+            color: mult.central >= 1 ? 'var(--green, #4A7C59)' : 'var(--text-secondary)',
             whiteSpace: 'nowrap',
             flexShrink: 0,
           }}>
@@ -320,7 +320,7 @@ function CaseCard({ result, viewMode }: { result: LeverageResult; viewMode: 'ann
           left: 0,
           right: 0,
           height: '4px',
-          background: 'var(--divider, #DDD9D0)',
+          background: 'var(--chart-hairline)',
           borderRadius: '2px',
         }} />
         {/* Range bar (low → high) */}
@@ -352,7 +352,7 @@ function CaseCard({ result, viewMode }: { result: LeverageResult; viewMode: 'ann
       </div>
 
       {/* Three-value readout */}
-      <div style={{ display: 'flex', gap: '16px', fontSize: '0.72rem', color: 'var(--text-secondary, #6B6B60)' }}>
+      <div style={{ display: 'flex', gap: '16px', fontSize: '0.72rem', color: 'var(--text-secondary)' }}>
         <span>Low: <strong>{values.low.toLocaleString()}</strong> {unit}</span>
         <span>Central: <strong style={{ color: 'var(--green, #4A7C59)' }}>{values.central.toLocaleString()}</strong> {unit}</span>
         <span>High: <strong>{values.high.toLocaleString()}</strong> {unit}</span>
@@ -368,7 +368,7 @@ function CaseCard({ result, viewMode }: { result: LeverageResult; viewMode: 'ann
       </div>
 
       {/* Key parameters */}
-      <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginTop: '8px', fontSize: '0.65rem', color: 'var(--text-secondary, #6B6B60)' }}>
+      <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginTop: '8px', fontSize: '0.65rem', color: 'var(--text-secondary)' }}>
         <span>P(success): {(result.case.probabilityOfSuccess.low * 100).toFixed(1)}–{(result.case.probabilityOfSuccess.high * 100).toFixed(0)}%</span>
         <span>Coalition: {result.case.coalitionSize.toLocaleString()}</span>
         <span>Duration: {result.case.durationYears} yr</span>
@@ -411,7 +411,7 @@ function CeilingComparison({
       padding: '1.25rem 1.5rem',
       marginBottom: '1.5rem',
     }}>
-      <div style={{ fontSize: '0.6rem', letterSpacing: '0.1em', textTransform: 'uppercase', fontWeight: 700, color: 'var(--text-secondary, #6B6B60)', marginBottom: '1rem' }}>
+      <div style={{ fontSize: '0.6rem', letterSpacing: '0.1em', textTransform: 'uppercase', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '1rem' }}>
         YOUR PERSONAL CEILING VS. TOP LEVERAGE CASE
       </div>
 
@@ -421,16 +421,16 @@ function CeilingComparison({
           <span style={{ fontWeight: 600 }}>Max personal reduction</span>
           <span style={{ fontVariantNumeric: 'tabular-nums' }}>{personalMax.toLocaleString()} kg{viewMode === 'annual' ? '/yr' : ''}</span>
         </div>
-        <div style={{ height: '16px', background: 'var(--divider, #DDD9D0)', borderRadius: '3px', overflow: 'hidden' }}>
+        <div style={{ height: '16px', background: 'var(--chart-hairline)', borderRadius: '3px', overflow: 'hidden' }}>
           <div style={{
             height: '100%',
             width: `${(personalMax / maxBar) * 100}%`,
-            background: 'var(--accent, #8B2E2E)',
+            background: 'var(--accent)',
             borderRadius: '3px',
             transition: 'width 0.4s ease',
           }} />
         </div>
-        <div style={{ fontSize: '0.65rem', color: 'var(--text-secondary, #6B6B60)', marginTop: '2px' }}>
+        <div style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', marginTop: '2px' }}>
           = eliminating your entire footprint ({userFootprint.toLocaleString()} kg/yr)
         </div>
       </div>
@@ -443,7 +443,7 @@ function CeilingComparison({
             {leverageValues.low.toLocaleString()}–{leverageValues.high.toLocaleString()} kg{viewMode === 'annual' ? '/yr' : ''}
           </span>
         </div>
-        <div style={{ position: 'relative', height: '16px', background: 'var(--divider, #DDD9D0)', borderRadius: '3px', overflow: 'hidden' }}>
+        <div style={{ position: 'relative', height: '16px', background: 'var(--chart-hairline)', borderRadius: '3px', overflow: 'hidden' }}>
           {/* Range */}
           <div style={{
             position: 'absolute',
@@ -461,7 +461,7 @@ function CeilingComparison({
             transition: 'width 0.4s ease',
           }} />
         </div>
-        <div style={{ fontSize: '0.65rem', color: 'var(--text-secondary, #6B6B60)', marginTop: '2px' }}>
+        <div style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', marginTop: '2px' }}>
           Central estimate: {leverageValues.central.toLocaleString()} kg{viewMode === 'annual' ? '/yr' : ''} expected value
           {topLeverageCase.leverageMultiple.central >= 1 && (
             <> — <strong style={{ color: 'var(--green, #4A7C59)' }}>{topLeverageCase.leverageMultiple.central}× your personal ceiling</strong></>

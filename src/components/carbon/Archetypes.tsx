@@ -153,7 +153,7 @@ export function Archetypes({ activeArchetypeId, onSelect }: ArchetypesProps) {
       <div className="cf-section-label">START FROM AN ARCHETYPE</div>
       <p style={{
         fontSize: '0.82rem',
-        color: 'var(--text-secondary, #6B6B60)',
+        color: 'var(--text-secondary)',
         lineHeight: 1.6,
         marginBottom: '1rem',
         maxWidth: 600,
@@ -205,13 +205,13 @@ function ArchetypeCard({
         gap: '6px',
         padding: '14px 16px',
         background: 'transparent',
-        border: '1px solid var(--divider, #DDD9D0)',
-        borderLeft: isActive ? '2px solid var(--accent, #8B2E2E)' : '1px solid var(--divider, #DDD9D0)',
+        border: '1px solid var(--chart-hairline)',
+        borderLeft: isActive ? '2px solid var(--accent)' : '1px solid var(--chart-hairline)',
         borderRadius: '0',
         cursor: 'pointer',
         textAlign: 'left',
         fontFamily: 'inherit',
-        color: 'var(--text, #1A1A18)',
+        color: 'var(--chart-ink)',
         transition: 'border-color 0.15s, color 0.15s',
       }}
       aria-pressed={isActive}
@@ -221,7 +221,7 @@ function ArchetypeCard({
       </div>
       <div style={{
         fontSize: '0.72rem',
-        color: 'var(--text-secondary, #6B6B60)',
+        color: 'var(--text-secondary)',
         lineHeight: 1.5,
         flex: 1,
       }}>
@@ -231,7 +231,7 @@ function ArchetypeCard({
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'baseline',
-        borderTop: '1px solid var(--divider, #DDD9D0)',
+        borderTop: '1px solid var(--chart-hairline)',
         paddingTop: '8px',
         marginTop: '4px',
       }}>
@@ -244,7 +244,7 @@ function ArchetypeCard({
         </span>
         <span style={{
           fontSize: '0.65rem',
-          color: 'var(--text-secondary, #6B6B60)',
+          color: 'var(--text-secondary)',
         }}>
           {pctOfUS}% of US avg
         </span>

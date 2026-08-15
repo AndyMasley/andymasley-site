@@ -18,10 +18,10 @@ interface ComparingCutsProps {
   footprintKg: number;
 }
 
-const ACCENT = 'var(--accent, #8B2E2E)';
+const ACCENT = 'var(--accent)';
 const GREEN = 'var(--green, #4A7C59)';
-const MUTED = 'var(--text-secondary, #6B6B60)';
-const DIVIDER = 'var(--divider, #DDD9D0)';
+const MUTED = 'var(--text-secondary)';
+const DIVIDER = 'var(--chart-hairline)';
 const AI_TRAINING_URL = 'https://www.andymasley.com/writing/whats-the-full-hidden-climate-cost/';
 const AI_PROMPT_ACTION_NAME = 'Stop using AI chatbots';
 
@@ -97,7 +97,7 @@ export function ComparingCuts({ personalActions, enabledPersonal, actionParamOve
   return (
     <div style={{ marginTop: '2.5rem', paddingTop: '1.5rem', borderTop: `1px solid ${DIVIDER}` }}>
       <div style={{ marginBottom: '1rem' }}>
-        <h2 style={{ fontSize: '1.3rem', fontWeight: 700, margin: '0 0 0.5rem', color: 'var(--text, #1A1A18)' }}>
+        <h2 style={{ fontSize: '1.3rem', fontWeight: 700, margin: '0 0 0.5rem', color: 'var(--chart-ink)' }}>
           Comparing your cuts
         </h2>
         <p style={{ margin: '0 0 0.65rem', fontSize: '0.72rem', lineHeight: 1.5, color: MUTED, maxWidth: '34rem' }}>
@@ -158,7 +158,7 @@ export function ComparingCuts({ personalActions, enabledPersonal, actionParamOve
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '3px' }}>
                 <span style={{
-                  fontSize: '0.72rem', color: 'var(--text, #1A1A18)',
+                  fontSize: '0.72rem', color: 'var(--chart-ink)',
                   overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1,
                 }}>
                   {item.name}

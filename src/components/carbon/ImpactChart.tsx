@@ -92,9 +92,9 @@ function InlineNum({ value, onChange, min, max, step }: {
 
 const GREEN = 'var(--green, #4A7C59)';
 const GREEN_BG = 'rgba(74, 124, 89, 0.08)';
-const ACCENT = 'var(--accent, #8B2E2E)';
-const MUTED = 'var(--text-secondary, #6B6B60)';
-const DIVIDER = 'var(--divider, #DDD9D0)';
+const ACCENT = 'var(--accent)';
+const MUTED = 'var(--text-secondary)';
+const DIVIDER = 'var(--chart-hairline)';
 const AI_TRAINING_URL = 'https://www.andymasley.com/writing/whats-the-full-hidden-climate-cost/';
 const AI_PROMPT_ACTION_NAME = 'Stop using AI chatbots';
 
@@ -238,9 +238,9 @@ export function ImpactChart({
                     fontSize: '0.68rem',
                     padding: '5px 12px',
                     borderRadius: '0',
-                    border: `1px solid ${activePresetId === p.id ? ACCENT : 'var(--text-secondary, #6B6B60)'}`,
+                    border: `1px solid ${activePresetId === p.id ? ACCENT : 'var(--text-secondary)'}`,
                     background: 'transparent',
-                    color: activePresetId === p.id ? ACCENT : 'var(--text, #1A1A18)',
+                    color: activePresetId === p.id ? ACCENT : 'var(--chart-ink)',
                     fontFamily: 'inherit',
                     fontWeight: activePresetId === p.id ? 600 : 500,
                     cursor: 'pointer',
@@ -299,7 +299,7 @@ export function ImpactChart({
                       padding: '6px 8px', border: 'none', borderRadius: '0',
                       cursor: 'pointer', fontFamily: 'inherit', fontSize: '0.72rem',
                       fontWeight: 700, textTransform: 'capitalize',
-                      color: 'var(--text, #1A1A18)', textAlign: 'left', minHeight: '32px',
+                      color: 'var(--chart-ink)', textAlign: 'left', minHeight: '32px',
                     }}
                     aria-expanded={isOpen}
                   >
@@ -310,7 +310,7 @@ export function ImpactChart({
                         −{groupSaved.toLocaleString()} <span style={{ fontWeight: 400, color: MUTED }}>of {maxSavings.toLocaleString()} kg</span>
                       </span>
                     )}
-                    {enabledCount === 0 && <span className="cf-category-stats" style={{ fontSize: '0.62rem', color: MUTED, fontWeight: 400, textTransform: 'none' }}>{group.actions.length} action{group.actions.length !== 1 ? 's' : ''} · up to <strong style={{ fontWeight: 600, color: 'var(--text, #1A1A18)' }}>{maxSavings.toLocaleString()}</strong> kg</span>}
+                    {enabledCount === 0 && <span className="cf-category-stats" style={{ fontSize: '0.62rem', color: MUTED, fontWeight: 400, textTransform: 'none' }}>{group.actions.length} action{group.actions.length !== 1 ? 's' : ''} · up to <strong style={{ fontWeight: 600, color: 'var(--chart-ink)' }}>{maxSavings.toLocaleString()}</strong> kg</span>}
                     {enabledCount > 0 && maxSavings > 0 && (
                       <div className="cf-category-progress" style={{ width: '32px', height: '3px', background: DIVIDER, borderRadius: '0', overflow: 'hidden', flexShrink: 0 }}>
                         <div style={{ width: `${Math.min((groupSaved / maxSavings) * 100, 100)}%`, height: '100%', background: GREEN, borderRadius: '0', transition: 'width 0.3s ease' }} />
@@ -602,9 +602,9 @@ export function ImpactChart({
                       <span
                         onClick={e => { e.stopPropagation(); setExpandedExplainer(isExplainerOpen ? null : result.case.name); }}
                         style={{
-                          borderBottom: '1.5px dashed var(--accent, #8B2E2E)',
+                          borderBottom: '1.5px dashed var(--accent)',
                           cursor: 'pointer',
-                          color: 'var(--accent, #8B2E2E)',
+                          color: 'var(--accent)',
                         }}
                         role="button"
                         aria-expanded={isExplainerOpen}
@@ -641,7 +641,7 @@ export function ImpactChart({
                       lineHeight: 1.6,
                       color: MUTED,
                       padding: '8px 10px 8px 28px',
-                      borderLeft: `2.5px solid var(--accent, #8B2E2E)`,
+                      borderLeft: `2.5px solid var(--accent)`,
                       marginLeft: '12px',
                       marginBottom: '4px',
                     }}>
@@ -674,7 +674,7 @@ export function ImpactChart({
           suffix={hasPersonal ? `(−${totalSaved.toLocaleString()})` : ''}
           labelColor={hasPersonal ? GREEN : MUTED}
           dimmed={!showPersonalBar}
-          dotColor="var(--accent, #8B2E2E)"
+          dotColor="var(--accent)"
         />
         <BarRow
           label="Carbon you can help prevent"
@@ -704,7 +704,7 @@ export function ImpactChart({
 // --- Reference lines ---
 
 const REFERENCE_MARKS = [
-  { kg: 17600, label: 'US avg', shortLabel: 'US', color: '#8B2E2E', weight: 700, opacity: 0.5 },
+  { kg: 17600, label: 'US avg', shortLabel: 'US', color: 'var(--accent)', weight: 700, opacity: 0.5 },
   { kg: 8500,  label: 'EU avg', shortLabel: 'EU', color: '#6B6B60', weight: 500, opacity: 0.3 },
   { kg: 6500,  label: 'Global avg', shortLabel: 'World', color: '#6B6B60', weight: 500, opacity: 0.3 },
 ];
@@ -822,7 +822,7 @@ function SystemicIntro() {
   return (
     <div style={{ marginBottom: '0.5rem' }}>
       <div style={{ fontSize: '0.62rem', color: MUTED, lineHeight: 1.45, marginBottom: '4px' }}>
-        Each number is how much carbon would be saved <em>per person working on the problem</em>, calculated as the amount of carbon saved if the action succeeds × the probability of success ÷ the number of people working together on it. All numbers explained in <a href="#methodology-grid-changes" style={{ color: 'var(--accent, #8B2E2E)' }} onClick={e => e.stopPropagation()}>methodology</a> below.
+        Each number is how much carbon would be saved <em>per person working on the problem</em>, calculated as the amount of carbon saved if the action succeeds × the probability of success ÷ the number of people working together on it. All numbers explained in <a href="#methodology-grid-changes" style={{ color: 'var(--accent)' }} onClick={e => e.stopPropagation()}>methodology</a> below.
       </div>
       <ExampleDropdown />
     </div>
@@ -870,19 +870,19 @@ function Dot({ on }: { on: boolean }) {
 const colHead: React.CSSProperties = {
   fontFamily: 'var(--font-editorial, Georgia, serif)',
   fontSize: '1.05rem', fontWeight: 600,
-  color: 'var(--text, #1A1A18)', paddingBottom: '0.75rem',
-  borderBottom: `1px solid var(--divider, #DDD9D0)`, marginBottom: '0.85rem',
+  color: 'var(--chart-ink)', paddingBottom: '0.75rem',
+  borderBottom: `1px solid var(--chart-hairline)`, marginBottom: '0.85rem',
 };
 const colSub: React.CSSProperties = {
   fontSize: '0.65rem', fontWeight: 400,
-  color: 'var(--text-secondary, #6B6B60)', marginTop: '2px', lineHeight: 1.3,
+  color: 'var(--text-secondary)', marginTop: '2px', lineHeight: 1.3,
 };
 
 const categoryHeader: React.CSSProperties = {
   fontSize: '0.6rem',
   fontWeight: 700,
   textTransform: 'capitalize',
-  color: 'var(--text-secondary, #6B6B60)',
+  color: 'var(--text-secondary)',
   marginTop: '0.6rem',
   marginBottom: '0.25rem',
   paddingLeft: '2px',

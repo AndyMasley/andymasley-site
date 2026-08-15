@@ -41,7 +41,7 @@ export function TheTurn({ userFootprintKg, topLeverageAnnualKg, leverageMultiple
       style={{
         margin: '3.5rem 0',
         padding: '3rem 0 2.5rem',
-        borderTop: '2px solid var(--divider, #DDD9D0)',
+        borderTop: '2px solid var(--chart-hairline)',
       }}
     >
       <div className="cf-section-label">THE BIGGER PICTURE</div>
@@ -49,7 +49,7 @@ export function TheTurn({ userFootprintKg, topLeverageAnnualKg, leverageMultiple
       <p style={{
         fontSize: '1.05rem',
         lineHeight: 1.75,
-        color: 'var(--text, #1A1A18)',
+        color: 'var(--chart-ink)',
         maxWidth: 640,
         marginBottom: '2.5rem',
       }}>
@@ -81,7 +81,7 @@ export function TheTurn({ userFootprintKg, topLeverageAnnualKg, leverageMultiple
             <div style={{
               height: '100%',
               width: `${Math.max(personalPct, 1)}%`,
-              background: 'var(--accent, #8B2E2E)',
+              background: 'var(--accent)',
               borderRadius: '4px',
               transition: 'width 0.4s ease',
             }} />
@@ -131,7 +131,7 @@ export function TheTurn({ userFootprintKg, topLeverageAnnualKg, leverageMultiple
             display: 'flex',
             justifyContent: 'space-between',
             fontSize: '0.68rem',
-            color: 'var(--text-secondary, #6B6B60)',
+            color: 'var(--text-secondary)',
             marginTop: '4px',
           }}>
             <span>Top case: {leverageCaseName}</span>
@@ -155,7 +155,7 @@ export function TheTurn({ userFootprintKg, topLeverageAnnualKg, leverageMultiple
       {/* Methodology note */}
       <p style={{
         fontSize: '0.75rem',
-        color: 'var(--text-secondary, #6B6B60)',
+        color: 'var(--text-secondary)',
         lineHeight: 1.6,
         maxWidth: 600,
         marginBottom: '2rem',
@@ -177,7 +177,7 @@ export function TheTurn({ userFootprintKg, topLeverageAnnualKg, leverageMultiple
             <div style={{ fontWeight: 600, fontSize: '0.88rem', marginBottom: '4px' }}>
               {action.title}
             </div>
-            <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary, #6B6B60)', lineHeight: 1.5 }}>
+            <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
               {action.description}
             </div>
           </div>

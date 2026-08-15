@@ -35,6 +35,15 @@
   --underline-quiet: #b8b8b8; /* nav + footer underlines */
   --selection: #d6e4f7;
 
+  /* House chart tokens: a figure drawn by the site uses the same ink and
+     hairlines as its prose, in both themes (they resolve through the ink
+     tokens, so dark mode flows through). --chart-label is the caption
+     size; islands with a documented internal type scale (see carbon's
+     DESIGN-NOTES.md) keep their sizes and take only ink + hairline. */
+  --chart-ink: var(--text);
+  --chart-hairline: var(--border);
+  --chart-label: var(--text-sm);
+
   /* Restrained shadows to avoid glossy "card" UI */
   --shadow-xs: 0 1px 0 rgba(26, 25, 24, 0.05);
   --shadow-sm: 0 2px 8px -6px rgba(26, 25, 24, 0.14);
@@ -164,6 +173,64 @@ body {
   font-feature-settings: 'kern' 1, 'liga' 1;
 }
 
+/* Screen-reader-only text: pages whose visual design carries no heading
+   (the nav names the page) still declare their structure. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* Keyboard-revealed skip link in the house bracket idiom: first tab stop,
+   invisible until focused. ~11 stops otherwise precede content on a
+   90-essay archive. */
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 2000;
+  padding: 0.5rem 0.9rem;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  text-decoration: none;
+  border: 1px solid var(--border-strong);
+}
+
+.skip-link:focus-visible {
+  left: 12px;
+  top: 12px;
+}
+
+/* Motion only on request: one block retires every entrance, spring, and
+   multi-thousand-pixel animated scroll for readers who asked for none.
+   View-transition fades are covered by Astro's own reduced-motion handling. */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  body {
+    animation: none;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
 ::selection {
   background: var(--selection);
 }
@@ -242,10 +309,12 @@ p {
   font-variant-numeric: oldstyle-nums;
 }
 
-/* Data surfaces want uniform-height, column-aligned digits. Faces without
-   lnum/tnum (older Georgia builds) silently keep their defaults. */
+/* Tables set like a ledger. Georgia has no lnum/tnum features to honor, so
+   alignment does the work the (deleted) font-variant declarations only
+   pretended to: the build detects numeric columns (≥80% numeric body
+   cells) and marks them td.num/th.num for right alignment. Oldstyle
+   figures in prose remain a documented bookish trait. */
 .prose table {
-  font-variant-numeric: lining-nums tabular-nums;
   width: 100%;
   margin: var(--space-xl) 0;
   border-collapse: collapse;
@@ -253,6 +322,11 @@ p {
   border-bottom: 1px solid var(--border-strong);
   font-size: var(--text-sm);
   line-height: var(--leading-note);
+}
+
+.prose td.num,
+.prose th.num {
+  text-align: right;
 }
 
 .prose th {
@@ -416,6 +490,40 @@ p {
   margin-bottom: var(--space-xs);
 }
 
+/* One figure rhythm: identical vertical space on every figure, captions
+   set as apparatus — small, dim, left-aligned — not centered decoration. */
+.prose figure {
+  margin: 2.5rem 0;
+}
+
+.prose figcaption {
+  margin-top: 0.6rem;
+  font-family: var(--font-editorial);
+  font-size: var(--text-sm);
+  line-height: var(--leading-note);
+  color: var(--dim);
+  text-align: left;
+}
+
+/* Tufte fullwidth: an opted-in figure (src/data/figures.ts) breaks out
+   rightward over the sidenote margin at ≥1280px — never leftward, where
+   the TOC rail lives — between hairline rules. Below the sidenote gate it
+   is an ordinary figure. */
+.prose figure.fullwidth {
+  --fullwidth-extend: 0px;
+  width: calc(100% + var(--fullwidth-extend));
+  padding: var(--space-md) 0;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+@media (min-width: 1280px) {
+  /* Sidenote geometry: 32px gap + 180px width. Recompute if that changes. */
+  .article-prose figure.fullwidth {
+    --fullwidth-extend: 212px;
+  }
+}
+
 /* ============================================
    Links
    ============================================ */
@@ -572,6 +680,12 @@ a:active {
   font-family: var(--font-body);
   font-size: var(--font-size-small);
   letter-spacing: 0;
+}
+
+/* Each '· label' pair wraps as one unit (see Base.astro). */
+.header__nav-group {
+  white-space: nowrap;
+  display: inline-block;
 }
 
 .header__nav-link {
@@ -1136,12 +1250,20 @@ hr {
    Components: Back link
    ============================================ */
 
+/* The one back-link grammar: '← back to {place}' — text arrow, small,
+   dim, underlined, sentence case, hover to ink. No icons. */
 .back-link {
-  font-size: var(--font-size-small);
+  font-size: var(--text-sm);
 }
 
 .back-link a {
-  color: var(--accent);
+  color: var(--dim);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.back-link a:hover {
+  color: var(--text);
 }
 
 /* ============================================
@@ -1164,8 +1286,9 @@ summary::-webkit-details-marker {
   display: none;
 }
 
+/* The one disclosure marker: the lighter ▸, rotating 90° open. */
 summary::before {
-  content: '\25B6';
+  content: '\25B8';
   font-size: 0.8em;
   color: var(--dim);
   transition: transform 0.2s;
@@ -1339,6 +1462,12 @@ details[open] > summary::before {
   display: none;
 }
 
+/* Print-only attribution line in the article header (shown by the
+   @media print block). */
+.article-print-attribution {
+  display: none;
+}
+
 /* ============================================
    Article styles
    ============================================ */
@@ -1481,7 +1610,24 @@ details[open] > summary::before {
   }
 
   .search-widget.active .search-inner {
-    width: 120px;
+    width: min(52vw, 220px);
+  }
+
+  /* Anything under 16px triggers iOS auto-zoom on focus; the collapsed
+     label may stay small, the field the reader types into may not. */
+  .search-widget.active .search-inline-input {
+    font-size: var(--text-base);
+  }
+
+  /* The dropdown hangs from a ~48px-wide widget on phones; anchor it to
+     the viewport's content margins instead of the widget box. */
+  .search-dropdown {
+    position: fixed;
+    left: var(--page-pad);
+    right: var(--page-pad);
+    top: 3.6rem;
+    width: auto;
+    min-width: 0;
   }
 
   /*
@@ -2053,6 +2199,23 @@ details[open] > summary::before {
 @media print {
   @page { margin: 2cm; }
 
+  /* Paper is light no matter which theme the screen was in: without this,
+     a dark-mode reader's save-to-PDF emits near-white headings on white
+     paper. Both selectors re-declare the light ink. */
+  :root,
+  [data-theme="dark"] {
+    --bg: #fff;
+    --bg-elevated: #fff;
+    --bg-subtle: #fff;
+    --text: #1a1a1a;
+    --text-secondary: #444;
+    --dim: #666;
+    --border: #e5e5e5;
+    --border-strong: #d4d4d4;
+    --border-subtle: #efefef;
+    --accent: #0645ad;
+  }
+
   .header,
   footer,
   .search-widget,
@@ -2067,6 +2230,15 @@ details[open] > summary::before {
 
   html, body { background: #fff; color: #000; }
   a { color: #000 !important; }
+
+  /* The printed page names its source. Hidden on screen; see the
+     .article-print-attribution rule outside this block. */
+  .article-print-attribution {
+    display: block !important;
+    font-size: var(--text-sm);
+    color: var(--dim);
+    margin-bottom: 1.5rem;
+  }
 
   /* Expand external links to their URL instead of the ↗ marker */
   .article-prose a[href^="http"]::after {

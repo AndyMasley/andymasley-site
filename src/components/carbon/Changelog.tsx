@@ -38,12 +38,12 @@ export function Changelog() {
         {ENTRIES.map((entry, i) => (
           <div key={i} style={{ background: 'var(--panel, #EFECE5)', borderRadius: '6px', padding: '10px 14px' }}>
             <div style={{ display: 'flex', gap: '10px', alignItems: 'baseline' }}>
-              <span style={{ fontSize: '0.68rem', color: 'var(--text-secondary, #6B6B60)', fontVariantNumeric: 'tabular-nums', flexShrink: 0 }}>
+              <span style={{ fontSize: '0.68rem', color: 'var(--text-secondary)', fontVariantNumeric: 'tabular-nums', flexShrink: 0 }}>
                 {entry.date}
               </span>
               <span style={{ fontWeight: 600, fontSize: '0.85rem' }}>{entry.title}</span>
             </div>
-            <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary, #6B6B60)', lineHeight: 1.6, margin: '4px 0 0' }}>
+            <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', lineHeight: 1.6, margin: '4px 0 0' }}>
               {entry.details}
             </p>
           </div>

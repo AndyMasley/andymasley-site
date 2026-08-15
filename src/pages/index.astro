@@ -3,6 +3,8 @@ import Base from '@/layouts/Base.astro';
 import { fetchSubstackPosts } from '@/lib/substack';
 import { getMetaPostSlugs } from '@/lib/meta-posts';
 import { formatCompactDate } from '@/lib/format-date';
+import { sizedCover } from '@/lib/cover-image';
+import Elsewhere from '@/components/Elsewhere.astro';
 
 // Fetch recent blog posts from Substack
 const allPosts = await fetchSubstackPosts();
@@ -10,15 +12,6 @@ const metaSlugs = getMetaPostSlugs();
 const recentPosts = allPosts
   .filter(p => !metaSlugs.includes(p.slug))
   .slice(0, 4);
-
-const RAW_COVER_PREFIX = 'https://substack-post-media.s3.amazonaws.com/public/images/';
-
-function sizedCover(cover: string, width: number): string {
-  if (cover.startsWith(RAW_COVER_PREFIX)) {
-    return `https://substackcdn.com/image/fetch/w_${width},c_limit,f_auto,q_auto:good/${encodeURIComponent(cover)}`;
-  }
-  return cover;
-}
 const homeStructuredData = [
   {
     '@context': 'https://schema.org',
@@ -55,6 +48,7 @@ const homeStructuredData = [
   ogImageAlt="Andy Masley — essays on AI and the environment, animal welfare, effective altruism, and more"
   structuredData={homeStructuredData}
 >
+  <h1 class="sr-only">Andy Masley</h1>
   <div class="home-intro">
     <img
       src="/images/headshot.jpg"
@@ -119,24 +113,7 @@ const homeStructuredData = [
 
   <div class="divider"><div class="divider-diamond"></div></div>
 
-  <div class="home-elsewhere">
-    <span class="label">Elsewhere: </span>
-    <a href="https://substack.com/@andymasley" target="_blank" rel="noopener">Substack</a>
-    <span class="header__nav-sep"> · </span>
-    <a href="https://x.com/AndyMasley" target="_blank" rel="noopener">Twitter</a>
-    <span class="header__nav-sep"> · </span>
-    <a href="https://bsky.app/profile/andymasley.bsky.social" target="_blank" rel="noopener">Bluesky</a>
-    <span class="header__nav-sep"> · </span>
-    <a href="https://www.linkedin.com/in/andrew-masley/" target="_blank" rel="noopener">LinkedIn</a>
-    <span class="header__nav-sep"> · </span>
-    <a href="https://www.youtube.com/@andymasley" target="_blank" rel="noopener">YouTube</a>
-    <span class="header__nav-sep"> · </span>
-    <a href="https://www.goodreads.com/andymasley" target="_blank" rel="noopener">Goodreads</a>
-    <span class="header__nav-sep"> · </span>
-    <a href="https://letterboxd.com/andymasley/" target="_blank" rel="noopener">Letterboxd</a>
-    <span class="header__nav-sep"> · </span>
-    <a href="/rss.xml">RSS</a>
-  </div>
+  <Elsewhere />
 </Base>
 
 <style>
@@ -199,6 +176,14 @@ const homeStructuredData = [
     align-items: center;
     padding: 0.6rem 0;
     border-top: 1px solid var(--border-subtle);
+    /* Thumb rows: the whole row is the hit area (see __link::after). */
+    position: relative;
+  }
+
+  .recent-item__link::after {
+    content: '';
+    position: absolute;
+    inset: 0;
   }
 
   .recent-item:last-child {
@@ -256,22 +241,6 @@ const homeStructuredData = [
       height: 96px;
       margin: 0.2rem 0 10px 16px;
     }
-  }
-
-  .home-elsewhere {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 4px 0;
-  }
-
-  .home-elsewhere .label {
-    margin-bottom: 0;
-    margin-right: 8px;
-  }
-
-  .home-elsewhere .label::after {
-    display: none;
   }
 
   .pronunciation {

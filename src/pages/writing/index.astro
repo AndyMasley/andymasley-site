@@ -6,6 +6,7 @@ import { bylines } from '@/lib/bylines';
 import { fetchEAForumPosts } from '@/lib/eaforum';
 import { formatDateOnly, formatMonthAbbrev, formatDayOfMonth } from '@/lib/format-date';
 import { getCategorySlug, getCategoryDisplayName } from '@/lib/category-slug';
+import { sizedCover, coverSrcset } from '@/lib/cover-image';
 
 interface TimelinePost {
   title: string;
@@ -54,22 +55,6 @@ const posts: TimelinePost[] = [...substackPosts, ...eaForumTimelinePosts].sort(
   (a, b) => b.date.getTime() - a.date.getTime()
 );
 
-const RAW_COVER_PREFIX = 'https://substack-post-media.s3.amazonaws.com/public/images/';
-
-// Substack serves resized covers through its CDN fetch proxy. Only raw S3
-// URLs are safe to wrap: already-proxied URLs carry a $s_! signature that
-// covers their transform set, so those are used exactly as given.
-function sizedCover(cover: string, width: number): string {
-  if (cover.startsWith(RAW_COVER_PREFIX)) {
-    return `https://substackcdn.com/image/fetch/w_${width},c_limit,f_auto,q_auto:good/${encodeURIComponent(cover)}`;
-  }
-  return cover;
-}
-
-function coverSrcset(cover: string): string | undefined {
-  if (!cover.startsWith(RAW_COVER_PREFIX)) return undefined;
-  return [400, 600, 900].map(w => `${sizedCover(cover, w)} ${w}w`).join(', ');
-}
 
 const metaPostsWithContent = await Promise.all(
   metaPosts.map(async (meta) => {
@@ -94,6 +79,11 @@ function showArchiveCategory(post: TimelinePost): boolean {
   return !archivePostsWithoutVisibleCategory.has(post.slug);
 }
 
+// The first screenful of covers loads eagerly (three across on desktop,
+// up to six in the narrow layouts); everything below the fold stays lazy.
+// The complete single-page cover wall is deliberate — do not paginate it.
+const eagerCoverSlugs = new Set(posts.slice(0, 6).map(p => p.slug));
+
 const yearMap = new Map<number, TimelinePost[]>();
 for (const post of posts) {
   const year = post.date.getFullYear();
@@ -112,7 +102,8 @@ const postsByYear: YearGroup[] = Array.from(yearMap.entries())
 
 ---
 
-<Base title="Writing" description="Essays on AI and the environment, animal welfare, effective altruism, political liberalism, and more. Published on Substack and elsewhere." ogImage="/og/page/writing.png">
+<Base title="Writing" description="Essays on AI and the environment, animal welfare, effective altruism, political liberalism, and more. Published on Substack and elsewhere." ogImage="/og/page/writing.png?v=2">
+  <h1 class="sr-only">Writing</h1>
   <section class="writing-section writing-section--archive" id="writing-archive" aria-label="Writing archive">
     <div class="archive-controls">
       <div class="archive-control archive-control--search">
@@ -163,7 +154,7 @@ const postsByYear: YearGroup[] = Array.from(yearMap.entries())
       </div>
 
       <div class="archive-toolbar">
-        <button class="archive-inline-action" id="archive-clear" type="button" disabled>Clear filters</button>
+        <button class="archive-inline-action" id="archive-clear" type="button" hidden>Clear filters</button>
       </div>
     </div>
 
@@ -173,8 +164,9 @@ const postsByYear: YearGroup[] = Array.from(yearMap.entries())
       </p>
     )}
 
-    <p class="archive-empty" id="archive-empty" hidden>No posts match the current filters.</p>
+    <p class="archive-empty" id="archive-empty" hidden>No posts match these filters — <button type="button" class="archive-empty__clear" id="archive-empty-clear">clear filters</button>.</p>
 
+    <h2 class="sr-only">All posts</h2>
     <div class="grid-breakout">
       <div class="post-grid" id="post-grid">
         {postsByYear.map(yearGroup => (
@@ -204,7 +196,7 @@ const postsByYear: YearGroup[] = Array.from(yearMap.entries())
                         srcset={coverSrcset(post.cover)}
                         sizes="(max-width: 600px) 92px, (max-width: 940px) 46vw, 356px"
                         alt=""
-                        loading="lazy"
+                        loading={eagerCoverSlugs.has(post.slug) ? 'eager' : 'lazy'}
                         decoding="async"
                         onerror={`this.onerror=null;this.src='/og/${post.slug}.png';this.removeAttribute('srcset');`}
                       />
@@ -400,12 +392,19 @@ const postsByYear: YearGroup[] = Array.from(yearMap.entries())
 
   .archive-empty {
     margin: 0;
-    font-size: var(--text-sm);
-    color: var(--dim);
+    font-size: var(--text-base);
+    color: var(--text-secondary);
   }
 
-  .archive-empty {
-    color: var(--text-secondary);
+  .archive-empty__clear {
+    padding: 0;
+    border: none;
+    background: none;
+    font: inherit;
+    color: var(--accent);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    cursor: pointer;
   }
 
   .archive-bounty-link {
@@ -481,7 +480,6 @@ const postsByYear: YearGroup[] = Array.from(yearMap.entries())
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 2.1rem 1.6rem;
-    min-height: 60vh;
   }
 
   .grid-year {
@@ -628,10 +626,22 @@ const postsByYear: YearGroup[] = Array.from(yearMap.entries())
     text-decoration: underline;
     text-decoration-thickness: 1px;
     text-underline-offset: 2px;
+    text-decoration-color: var(--border-strong);
   }
 
   .byline-link:hover {
     color: var(--accent);
+    text-decoration-color: var(--accent);
+  }
+
+  /* Read pieces turn purple here just like the grid posts above them.
+     Literal hex: browsers ignore var() inside :visited for privacy. */
+  .byline-link:visited {
+    color: #551a8b;
+  }
+
+  :global([data-theme="dark"]) .byline-link:visited {
+    color: #c58af9;
   }
 
   .bylines-details {
@@ -668,13 +678,14 @@ const postsByYear: YearGroup[] = Array.from(yearMap.entries())
       align-items: start;
     }
 
+    /* Two selects side by side and the bounty link inline: the first
+       screen belongs to the covers, not the furniture. */
     .archive-control-grid {
-      grid-template-columns: 1fr;
+      grid-template-columns: 1fr 1fr;
     }
 
     .archive-search {
-      flex-direction: column;
-      align-items: start;
+      flex-wrap: wrap;
     }
   }
 
@@ -705,6 +716,14 @@ const postsByYear: YearGroup[] = Array.from(yearMap.entries())
       align-items: start;
       padding: 0.6rem 0;
       border-top: 1px solid var(--border-subtle);
+      /* Thumb rows: the whole row is the hit area (see __link::after). */
+      position: relative;
+    }
+
+    .post-card__link::after {
+      content: '';
+      position: absolute;
+      inset: 0;
     }
 
     .post-card__imglink {
@@ -936,7 +955,7 @@ const postsByYear: YearGroup[] = Array.from(yearMap.entries())
       }
 
       if (clearAll) {
-        clearAll.disabled = !hasActiveFilters();
+        clearAll.hidden = !hasActiveFilters();
       }
 
       syncUrlState();
@@ -1001,6 +1020,10 @@ const postsByYear: YearGroup[] = Array.from(yearMap.entries())
       state.query = '';
       renderArchive();
       searchInput.focus();
+    });
+
+    on(document.getElementById('archive-empty-clear'), 'click', () => {
+      clearFilters();
     });
 
     on(clearAll, 'click', () => {

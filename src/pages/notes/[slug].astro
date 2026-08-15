@@ -28,7 +28,7 @@ const { Content } = await item.render();
   <meta slot="head" property="article:author" content="Andy Masley" />
   <article class="container container--narrow">
 
-    <header class="note-header animate-in">
+    <header class="note-header">
       <div class="note-header__top">
         {item.data.category && (
           <span class="note-header__category">{item.data.category}</span>
@@ -38,7 +38,7 @@ const { Content } = await item.render();
       <h1 class="note-header__title">{item.data.title}</h1>
     </header>
 
-    <div class="prose animate-in">
+    <div class="prose">
       <Content />
     </div>
     
@@ -47,14 +47,8 @@ const { Content } = await item.render();
         <p class="meta-note">Last updated {formatDate(item.data.updated)}</p>
       )}
       
-      <nav class="article-nav">
-        <a href="/notes" class="article-nav__link">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="m12 19-7-7 7-7"></path>
-            <path d="M19 12H5"></path>
-          </svg>
-          Back to notes
-        </a>
+      <nav class="back-link" aria-label="Back">
+        <a href="/notes">&larr; back to notes</a>
       </nav>
     </footer>
   </article>

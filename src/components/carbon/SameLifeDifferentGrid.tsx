@@ -46,7 +46,7 @@ export function SameLifeDifferentGrid({ baseline, overrides, todayFootprint }: S
   return (
     <section style={{ marginBottom: '3rem' }}>
       <div className="cf-section-label">SAME LIFE, DIFFERENT GRID</div>
-      <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary, #6B6B60)', lineHeight: 1.7, marginBottom: '1.5rem', maxWidth: 600 }}>
+      <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: 1.7, marginBottom: '1.5rem', maxWidth: 600 }}>
         Your lifestyle stays exactly the same — same home, same car, same diet. Only the electricity grid gets cleaner. Watch what happens to your footprint.
       </p>
 
@@ -78,7 +78,7 @@ export function SameLifeDifferentGrid({ baseline, overrides, todayFootprint }: S
                   <div style={{
                     fontSize: '0.65rem',
                     fontWeight: 600,
-                    color: 'var(--text-secondary, #6B6B60)',
+                    color: 'var(--text-secondary)',
                     marginBottom: '4px',
                     whiteSpace: 'nowrap',
                     textAlign: 'center',
@@ -94,7 +94,7 @@ export function SameLifeDifferentGrid({ baseline, overrides, todayFootprint }: S
                     maxWidth: '60px',
                     height: `${heightPct}%`,
                     background: year === 2024
-                      ? 'var(--accent, #8B2E2E)'
+                      ? 'var(--accent)'
                       : (() => {
                           const greenPct = Math.min(Math.round((1 - total / todayTotal) * 200), 100);
                           // Blend from accent (#8B2E2E) toward green (#4A7C59) based on reduction
@@ -113,7 +113,7 @@ export function SameLifeDifferentGrid({ baseline, overrides, todayFootprint }: S
                 <div style={{
                   fontSize: '0.65rem',
                   fontWeight: year === 2024 || year === 2035 ? 700 : 400,
-                  color: 'var(--text-secondary, #6B6B60)',
+                  color: 'var(--text-secondary)',
                   marginTop: '6px',
                 }}>
                   {year}
@@ -137,7 +137,7 @@ export function SameLifeDifferentGrid({ baseline, overrides, todayFootprint }: S
         marginBottom: '1rem',
       }}>
         <div style={{ background: 'var(--panel, #EFECE5)', borderRadius: '6px', padding: '14px' }}>
-          <div style={{ fontSize: '0.6rem', letterSpacing: '0.1em', textTransform: 'uppercase', fontWeight: 700, color: 'var(--text-secondary, #6B6B60)', marginBottom: '4px' }}>
+          <div style={{ fontSize: '0.6rem', letterSpacing: '0.1em', textTransform: 'uppercase', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '4px' }}>
             TODAY (2024)
           </div>
           <div style={{ fontSize: '1.5rem', fontWeight: 700 }}>
@@ -145,7 +145,7 @@ export function SameLifeDifferentGrid({ baseline, overrides, todayFootprint }: S
           </div>
         </div>
         <div style={{ background: 'var(--panel, #EFECE5)', borderRadius: '6px', padding: '14px' }}>
-          <div style={{ fontSize: '0.6rem', letterSpacing: '0.1em', textTransform: 'uppercase', fontWeight: 700, color: 'var(--text-secondary, #6B6B60)', marginBottom: '4px' }}>
+          <div style={{ fontSize: '0.6rem', letterSpacing: '0.1em', textTransform: 'uppercase', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '4px' }}>
             2035 CLEAN GRID
           </div>
           <div style={{ fontSize: '1.5rem', fontWeight: 700 }}>
@@ -153,7 +153,7 @@ export function SameLifeDifferentGrid({ baseline, overrides, todayFootprint }: S
           </div>
         </div>
         <div style={{ background: 'var(--panel, #EFECE5)', borderRadius: '6px', padding: '14px', borderLeft: '3px solid var(--green, #4A7C59)' }}>
-          <div style={{ fontSize: '0.6rem', letterSpacing: '0.1em', textTransform: 'uppercase', fontWeight: 700, color: 'var(--text-secondary, #6B6B60)', marginBottom: '4px' }}>
+          <div style={{ fontSize: '0.6rem', letterSpacing: '0.1em', textTransform: 'uppercase', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '4px' }}>
             REDUCTION (NO LIFESTYLE CHANGE)
           </div>
           <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--green, #4A7C59)' }}>
@@ -162,7 +162,7 @@ export function SameLifeDifferentGrid({ baseline, overrides, todayFootprint }: S
         </div>
       </div>
 
-      <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary, #6B6B60)', lineHeight: 1.6, fontStyle: 'italic' }}>
+      <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', lineHeight: 1.6, fontStyle: 'italic' }}>
         {baseline.carOwnership === 'ev' ? (
           <>Your EV means you're more grid-coupled than a gas car household — grid cleaning helps you more. About {elecDependent.toLocaleString()} kg of your footprint ({Math.round(elecDependent / todayTotal * 100)}%) scales directly with grid intensity.</>
         ) : (

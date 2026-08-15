@@ -75,7 +75,7 @@ export function BucketBar({ buckets, totalKg }: BucketBarProps) {
                 alignItems: 'center',
                 gap: '8px',
                 padding: '6px 0',
-                borderBottom: '1px solid var(--divider, #DDD9D0)',
+                borderBottom: '1px solid var(--chart-hairline)',
                 fontSize: '0.85rem',
               }}
             >
@@ -95,7 +95,7 @@ export function BucketBar({ buckets, totalKg }: BucketBarProps) {
               <span style={{ fontVariantNumeric: 'tabular-nums', fontWeight: 600, minWidth: '70px', textAlign: 'right' }}>
                 {bucket.kgCO2ePerYear.toLocaleString()} kg
               </span>
-              <span style={{ fontSize: '0.72rem', color: 'var(--text-secondary, #6B6B60)', minWidth: '36px', textAlign: 'right' }}>
+              <span style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', minWidth: '36px', textAlign: 'right' }}>
                 {pct}%
               </span>
             </div>

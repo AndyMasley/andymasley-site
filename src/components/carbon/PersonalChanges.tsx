@@ -35,7 +35,7 @@ export function PersonalChanges({ baseline, footprint }: PersonalChangesProps) {
   return (
     <section style={{ marginBottom: '3rem' }}>
       <div className="cf-section-label">PERSONAL CHANGES</div>
-      <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary, #6B6B60)', lineHeight: 1.7, marginBottom: '1.5rem', maxWidth: 600 }}>
+      <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: 1.7, marginBottom: '1.5rem', maxWidth: 600 }}>
         Actions you can take in your own life, ranked by estimated annual savings within each category.
       </p>
 
@@ -47,7 +47,7 @@ export function PersonalChanges({ baseline, footprint }: PersonalChangesProps) {
               fontWeight: 700,
               letterSpacing: '0.08em',
               textTransform: 'uppercase',
-              color: 'var(--text-secondary, #6B6B60)',
+              color: 'var(--text-secondary)',
               marginTop: '0.75rem',
               marginBottom: '0.25rem',
               paddingLeft: '2px',
@@ -78,7 +78,7 @@ export function PersonalChanges({ baseline, footprint }: PersonalChangesProps) {
                     −{action.savingsKg.toLocaleString()} kg
                   </span>
                 </div>
-                <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary, #6B6B60)' }}>
+                <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)' }}>
                   {action.note}
                 </div>
               </div>
@@ -93,9 +93,9 @@ export function PersonalChanges({ baseline, footprint }: PersonalChangesProps) {
         padding: '10px 14px',
         background: 'var(--panel, #EFECE5)',
         borderRadius: '6px',
-        borderLeft: '3px solid var(--divider, #DDD9D0)',
+        borderLeft: '3px solid var(--chart-hairline)',
         fontSize: '0.78rem',
-        color: 'var(--text-secondary, #6B6B60)',
+        color: 'var(--text-secondary)',
         lineHeight: 1.6,
       }}>
         <strong>The personal ceiling:</strong> Even if you did every action above, the maximum

@@ -1,19 +1,12 @@
 ---
 import SectionPage from '@/layouts/SectionPage.astro';
-
-const elsewhere = [
-  { label: 'Substack', href: 'https://substack.com/@andymasley' },
-  { label: 'Twitter', href: 'https://x.com/AndyMasley' },
-  { label: 'Bluesky', href: 'https://bsky.app/profile/andymasley.bsky.social' },
-  { label: 'LinkedIn', href: 'https://www.linkedin.com/in/andrew-masley/' },
-  { label: 'EA Forum', href: 'https://forum.effectivealtruism.org/users/andy-masley' },
-];
+import Elsewhere from '@/components/Elsewhere.astro';
 ---
 
 <SectionPage
   title="Contact"
   description="Get in touch with Andy Masley"
-  ogImage="/og/page/contact.png"
+  ogImage="/og/page/contact.png?v=2"
 >
   <p class="page-header__description" slot="lede">
     Email me at <a href="mailto:AndyMasley@gmail.com">AndyMasley@gmail.com</a> if you’d like
@@ -23,27 +16,13 @@ const elsewhere = [
     If you’ve found an error in something I wrote, <a href="/writing/errors-and-updates">there’s a $300 bounty</a>.
   </p>
 
-  <p class="contact-elsewhere" aria-label="Elsewhere">
-    <span class="contact-elsewhere__label">Elsewhere: </span>
-    {elsewhere.map((e, i) => (
-      <>
-        {i > 0 && <span class="contact-elsewhere__sep"> · </span>}
-        <a href={e.href} target="_blank" rel="noopener">{e.label}</a>
-      </>
-    ))}
-  </p>
+  <div class="contact-elsewhere">
+    <Elsewhere />
+  </div>
 </SectionPage>
 
 <style>
   .contact-elsewhere {
     margin: 2.2rem 0 0;
-  }
-
-  .contact-elsewhere__label {
-    color: var(--dim);
-  }
-
-  .contact-elsewhere__sep {
-    color: var(--border-strong);
   }
 </style>

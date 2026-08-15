@@ -76,17 +76,17 @@ const LABEL_STYLE: React.CSSProperties = {
   fontSize: '0.65rem',
   fontWeight: 600,
   letterSpacing: '0.04em',
-  color: 'var(--text-secondary, #6B6B60)',
+  color: 'var(--text-secondary)',
 };
 
 const SELECT_STYLE: React.CSSProperties = {
   padding: '5px 8px',
   fontSize: '0.75rem',
   fontFamily: 'inherit',
-  border: '1px solid var(--divider, #DDD9D0)',
+  border: '1px solid var(--chart-hairline)',
   borderRadius: '0',
   background: 'var(--bg-elevated, #ffffff)',
-  color: 'var(--text, #1A1A18)',
+  color: 'var(--chart-ink)',
   cursor: 'pointer',
   outline: 'none',
   minHeight: '34px',
@@ -268,7 +268,7 @@ export function BaselineForm({ value, onChange }: BaselineFormProps) {
       <div className="cf-baseline-field" style={FIELD_STYLE}>
         <label style={LABEL_STYLE} htmlFor="cf-spending">Spend/mo <span style={{ fontWeight: 400, opacity: 0.7 }}>(excl. rent)</span></label>
         <div className="cf-baseline-currency" style={{ position: 'relative' }}>
-          <span style={{ position: 'absolute', left: '8px', top: '50%', transform: 'translateY(-50%)', fontSize: '0.75rem', color: 'var(--text-secondary, #6B6B60)', pointerEvents: 'none' }}>$</span>
+          <span style={{ position: 'absolute', left: '8px', top: '50%', transform: 'translateY(-50%)', fontSize: '0.75rem', color: 'var(--text-secondary)', pointerEvents: 'none' }}>$</span>
           <NumInput
             id="cf-spending"
             className="cf-baseline-control"

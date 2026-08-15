@@ -6,9 +6,9 @@
 
 import { useState } from 'react';
 
-const ACCENT = 'var(--accent, #8B2E2E)';
+const ACCENT = 'var(--accent)';
 const MUTED = 'var(--text-secondary, #6B6860)';
-const DIVIDER = 'var(--divider, #DDD9D0)';
+const DIVIDER = 'var(--chart-hairline)';
 
 function Section({ title, id, children }: { title: string; id?: string; children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
@@ -24,7 +24,7 @@ function Section({ title, id, children }: { title: string; id?: string; children
         aria-expanded={open}
       >
         <span style={{ fontSize: '0.62rem', color: MUTED, width: '12px', flexShrink: 0 }}>{open ? '▾' : '▸'}</span>
-        <span style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text, #1A1A18)', flex: 1 }}>{title}</span>
+        <span style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--chart-ink)', flex: 1 }}>{title}</span>
       </button>
       {open && (
         <div style={{ fontSize: '0.72rem', lineHeight: 1.65, color: MUTED, paddingBottom: '1.25rem', paddingLeft: '20px' }}>
@@ -48,7 +48,7 @@ function Val({ children }: { children: React.ReactNode }) {
     <code style={{
       background: 'rgba(0,0,0,0.04)', padding: '1px 4px', borderRadius: '3px',
       fontSize: '0.68rem', fontFamily: 'inherit', fontWeight: 600,
-      color: 'var(--text, #1A1A18)',
+      color: 'var(--chart-ink)',
     }}>
       {children}
     </code>
@@ -91,7 +91,7 @@ function Li({ children }: { children: React.ReactNode }) {
 export function Methodology() {
   return (
     <div style={{ marginTop: '3rem', paddingTop: '2rem', borderTop: `1px solid ${DIVIDER}` }}>
-      <h2 style={{ fontSize: '1.3rem', fontWeight: 700, margin: '0 0 0.25rem', color: 'var(--text, #1A1A18)' }}>Methodology</h2>
+      <h2 style={{ fontSize: '1.3rem', fontWeight: 700, margin: '0 0 0.25rem', color: 'var(--chart-ink)' }}>Methodology</h2>
       <p style={{ fontSize: '0.72rem', lineHeight: 1.5, color: MUTED, marginBottom: '0.5rem' }}>
         Every number in this calculator is derived from publicly available data. Click a section to see exact values, formulas, and sources.
       </p>
@@ -139,7 +139,7 @@ export function Methodology() {
               <Val>((10,500 × 1.0 × 0.375) + (500 × 1.0 × 5.3)) ÷ 2.5 = 2,635 kg/yr</Val>
             </WorkedExample>
 
-            <p style={{ marginTop: '16px', fontWeight: 700, color: 'var(--text, #1A1A18)' }}>Home personal action estimates</p>
+            <p style={{ marginTop: '16px', fontWeight: 700, color: 'var(--chart-ink)' }}>Home personal action estimates</p>
             <p style={{ marginTop: '6px' }}><strong>Rooftop solar (7 kW):</strong> <Val>10,000 kWh/yr × gridRate ÷ householdSize</Val>. <Src href="https://pvwatts.nrel.gov/">NREL PVWatts</Src></p>
             <p style={{ marginTop: '4px' }}><strong>Heat pump (furnace):</strong> <Val>(500 therms × 5.3 − 3,500 kWh × gridRate) ÷ householdSize</Val>. <Src href="https://www.energy.gov/energysaver/heat-pump-systems">DOE</Src></p>
             <p style={{ marginTop: '4px' }}><strong>Triple-pane windows:</strong> ~20% heating/cooling reduction. <Src href="https://www.energy.gov/energysaver/energy-efficient-window-attachments">DOE</Src></p>
@@ -287,7 +287,7 @@ export function Methodology() {
               marginTop: '12px', padding: '10px 12px', borderRadius: '4px',
               background: 'rgba(139, 46, 46, 0.05)', borderLeft: `3px solid ${ACCENT}`,
             }}>
-              <strong style={{ fontSize: '0.72rem', color: 'var(--text, #1A1A18)' }}>Important caveats</strong>
+              <strong style={{ fontSize: '0.72rem', color: 'var(--chart-ink)' }}>Important caveats</strong>
               <ul style={{ paddingLeft: '1.25rem', margin: '4px 0 0', fontSize: '0.62rem' }}>
                 <Li>Attribution is linear (1/N) — a simplification. Marginal contributors may matter more or less.</Li>
                 <Li>Counterfactual assumptions significantly affect numbers — what would have happened without the intervention is uncertain.</Li>

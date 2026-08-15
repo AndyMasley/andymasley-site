@@ -21,7 +21,7 @@ const { Content } = await item.render();
 <Base title={item.data.title} description={item.data.description}>
   <article class="container container--narrow">
     
-    <header class="physics-header animate-in">
+    <header class="physics-header">
       {item.data.unit && (
         <span class="physics-header__unit">{item.data.unit}</span>
       )}
@@ -32,7 +32,7 @@ const { Content } = await item.render();
     </header>
 
     {item.data.youtube_url && (
-      <div class="video-embed animate-in">
+      <div class="video-embed">
         <a href={item.data.youtube_url} target="_blank" rel="noopener" class="video-link">
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <polygon points="5 3 19 12 5 21 5 3"></polygon>
@@ -42,19 +42,13 @@ const { Content } = await item.render();
       </div>
     )}
 
-    <div class="prose animate-in">
+    <div class="prose">
       <Content />
     </div>
     
     <footer class="article-footer">
-      <nav class="article-nav">
-        <a href="/physics" class="article-nav__link">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="m12 19-7-7 7-7"></path>
-            <path d="M19 12H5"></path>
-          </svg>
-          Back to physics archive
-        </a>
+      <nav class="back-link" aria-label="Back">
+        <a href="/physics">&larr; back to physics</a>
       </nav>
     </footer>
   </article>

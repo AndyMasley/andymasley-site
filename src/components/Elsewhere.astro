@@ -1,0 +1,52 @@
+---
+// The one Elsewhere line: a single link set in a single order, used
+// wherever the site points at Andy's other homes (home, contact). Adding
+// a venue here adds it everywhere.
+const elsewhere = [
+  { label: 'Substack', href: 'https://substack.com/@andymasley' },
+  { label: 'Twitter', href: 'https://x.com/AndyMasley' },
+  { label: 'Bluesky', href: 'https://bsky.app/profile/andymasley.bsky.social' },
+  { label: 'LinkedIn', href: 'https://www.linkedin.com/in/andrew-masley/' },
+  { label: 'EA Forum', href: 'https://forum.effectivealtruism.org/users/andy-masley' },
+  { label: 'YouTube', href: 'https://www.youtube.com/@andymasley' },
+  { label: 'Goodreads', href: 'https://www.goodreads.com/andymasley' },
+  { label: 'Letterboxd', href: 'https://letterboxd.com/andymasley/' },
+  { label: 'RSS', href: '/rss.xml' },
+];
+---
+
+<p class="elsewhere" aria-label="Elsewhere">
+  <span class="elsewhere__label">Elsewhere: </span>
+  {elsewhere.map((e, i) => (
+    <>
+      {i > 0 && <span class="inline-sep"> · </span>}
+      {e.href.startsWith('/')
+        ? <a href={e.href}>{e.label}</a>
+        : <a href={e.href} target="_blank" rel="noopener">{e.label}</a>}
+    </>
+  ))}
+</p>
+
+<style>
+  .elsewhere {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 4px 0;
+    margin: 0;
+  }
+
+  .elsewhere__label {
+    font-family: var(--font-body);
+    font-size: var(--text-xs);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--dim);
+    margin-right: 8px;
+  }
+
+  .inline-sep {
+    color: var(--border-strong);
+    white-space: pre;
+  }
+</style>

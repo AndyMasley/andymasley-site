@@ -5,6 +5,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
 import { join } from 'path';
 import { normalizeHeadings, requireContent } from './substack';
 import { lintPostContent } from './content-lint';
+import { normalizePlainText, smartenHtmlText } from './smarten';
 
 // Cache configuration
 const CACHE_DIR = join(process.cwd(), '.cache', 'eaforum');
@@ -51,8 +52,15 @@ const GRAPHQL_ENDPOINT = 'https://forum-bots.effectivealtruism.org/graphql';
 // In-memory cache for current build
 let memoryCache: EAForumPost[] | null = null;
 
+// Titles pass through the shared normalizer on both the live path and the
+// committed-cache fallback (same rule as substack.ts — CI always takes the
+// fallback). The disk cache stays raw.
 function restoreCachedPosts(cached: CachedPosts): EAForumPost[] {
-  return cached.posts.map(post => ({ ...post, date: new Date(post.date) }));
+  return cached.posts.map(post => ({
+    ...post,
+    date: new Date(post.date),
+    title: normalizePlainText(post.title),
+  }));
 }
 
 export async function fetchEAForumPosts(): Promise<EAForumPost[]> {
@@ -140,7 +148,7 @@ export async function fetchEAForumPosts(): Promise<EAForumPost[]> {
           .filter(post => !post.isEvent)
           .filter(post => post.slug !== 'alcohol-is-so-bad-for-society-that-you-should-probably-stop')
           .map(post => ({
-            title: post.title,
+            title: normalizePlainText(post.title),
             slug: post.slug,
             date: new Date(post.postedAt),
             url: `https://forum.effectivealtruism.org/posts/${post._id}/${post.slug}`,
@@ -307,6 +315,10 @@ export function processEAForumContent(html: string, currentSlug?: string): strin
       return `<${tag}${attrs} id="${uniqueId}">${innerHtml}</${tag}>`;
     }
   );
+
+  // Same compositor's pass as Substack imports (build-time only; the
+  // committed cache stays raw).
+  processed = smartenHtmlText(processed);
 
   return processed;
 }
