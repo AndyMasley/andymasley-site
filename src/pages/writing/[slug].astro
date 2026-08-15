@@ -252,6 +252,15 @@ function refineGuideHtml(html: string): string {
   );
   // House sentence case on the one Substack-era heading that breaks it.
   out = out.replace(/Data Centers(?=\s*(?:<a\b|<\/h[1-6]>))/, 'Data centers');
+  // Curated additions the Substack original doesn't carry yet (Andy's
+  // call, Aug 2026). Idempotent: skipped once the post itself links it.
+  out = out.replace(
+    /(<h[1-6][^>]*id="environmental-ethics"[\s\S]*?<ul>)([\s\S]*?)(<\/ul>)/,
+    (m: string, open: string, items: string, close: string) =>
+      items.includes('data-centers-and-low-social-trust')
+        ? m
+        : `${open}${items}<li><p><a href="/writing/data-centers-and-low-social-trust">Data centers and low social trust</a></p></li>${close}`
+  );
   return out;
 }
 

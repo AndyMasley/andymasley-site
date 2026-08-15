@@ -156,6 +156,14 @@ interface CachedPosts {
 // In-memory cache for current build
 let memoryCache: SubstackPost[] | null = null;
 
+// Hand-curated category overrides: a post whose Substack section doesn't
+// match where it belongs on this site. Applied in hydratePosts so every
+// path — live fetch and committed-cache fallback — agrees.
+const categoryOverrides: Record<string, string> = {
+  // Andy's call: this one lives with the AI & environment corpus.
+  'data-centers-and-low-social-trust': 'AI & the Environment',
+};
+
 // The ONE title/standfirst normalizer, applied on every return path —
 // live fetch AND committed-cache fallback — because CI always takes the
 // fallback (Substack blocks CI IPs) and titles render at display size.
@@ -166,6 +174,7 @@ function hydratePosts(posts: Array<Omit<SubstackPost, 'date'> & { date: Date | s
     date: p.date instanceof Date ? p.date : new Date(p.date),
     title: normalizePlainText(p.title),
     description: normalizePlainText(p.description || ''),
+    category: categoryOverrides[p.slug] || p.category,
   }));
 }
 
@@ -392,6 +401,7 @@ export interface Subcategory {
 
 const subcategoryPostOverrides: Record<string, string[]> = {
   'Data Centers': ['data-centers-heat-exhaust-is-not'],
+  'Environmental ethics': ['data-centers-and-low-social-trust'],
 };
 
 // The guide's internal h3 headings, renamed for the theme dropdown so it

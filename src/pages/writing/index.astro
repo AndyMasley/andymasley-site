@@ -940,7 +940,11 @@ const postsByYear: YearGroup[] = Array.from(yearMap.entries())
         const sourceMatch = state.source === 'all' || cardSource === state.source;
         const searchMatch = state.query === '' || cardText.includes(state.query) || cardContent.includes(state.query);
         const themeMatch = state.theme === '' || state.themePosts.includes(cardSlug);
-        const visible = topicMatch && sourceMatch && searchMatch && themeMatch;
+        // A theme is a hand-curated list from the guide; when one is
+        // selected it wins over the topic filter, so a curated post whose
+        // category lives elsewhere (e.g. a Politics essay foundational to
+        // the AI series) still appears.
+        const visible = sourceMatch && searchMatch && (state.theme !== '' ? themeMatch : topicMatch);
 
         card.classList.toggle('hidden', !visible);
         if (visible) {
