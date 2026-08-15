@@ -151,25 +151,19 @@ const homeStructuredData = [
     box-shadow: none;
     border: 1px solid var(--border-strong);
     outline: 1px solid var(--border-subtle);
-    transition: opacity var(--transition-fast), border-color var(--transition-fast);
-  }
-
-  .headshot:hover {
-    opacity: 0.92;
-    border-color: var(--accent);
   }
 
   .grant-note {
     margin: 0.6rem 0 1.2rem;
-    font-size: 0.78rem;
-    line-height: 1.6;
+    font-size: var(--text-sm);
+    line-height: var(--leading-ui);
     color: var(--text-secondary);
   }
 
   .grant-note summary {
     cursor: pointer;
     color: var(--dim);
-    font-size: 0.72rem;
+    font-size: var(--text-xs);
     letter-spacing: 0.04em;
   }
 
@@ -247,8 +241,8 @@ const homeStructuredData = [
     display: block;
     margin-top: 0.14rem;
     font-family: var(--font-label);
-    font-size: 0.66rem;
-    letter-spacing: 0.08em;
+    font-size: var(--text-xs);
+    letter-spacing: 0.12em;
     text-transform: uppercase;
     color: var(--dim);
   }

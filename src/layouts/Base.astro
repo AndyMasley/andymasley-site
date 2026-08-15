@@ -74,17 +74,29 @@ function isActive(href: string): boolean {
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <script is:inline>
-    // Initialize theme immediately to prevent flash on navigation
-    (function() {
-      const stored = localStorage.getItem('theme');
-      const theme = stored || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-      document.documentElement.setAttribute('data-theme', theme);
-      if (!stored) localStorage.setItem('theme', theme);
-    })();
-  </script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#ffffff">
+  <script is:inline>
+    // Initialize theme immediately to prevent flash on navigation. Only an
+    // explicit toggle choice persists; readers who never touched the toggle
+    // follow their system, including live changes.
+    (function() {
+      const stored = localStorage.getItem('theme');
+      const mq = window.matchMedia('(prefers-color-scheme: dark)');
+      const apply = (theme) => {
+        document.documentElement.setAttribute('data-theme', theme);
+        const meta = document.querySelector('meta[name="theme-color"]');
+        if (meta) meta.setAttribute('content', theme === 'dark' ? '#121212' : '#ffffff');
+      };
+      apply(stored || (mq.matches ? 'dark' : 'light'));
+      if (!stored) {
+        mq.addEventListener('change', (e) => {
+          if (!localStorage.getItem('theme')) apply(e.matches ? 'dark' : 'light');
+        });
+      }
+    })();
+  </script>
   <meta name="description" content={description}>
   <meta name="author" content="Andy Masley">
   {keywordsContent && <meta name="keywords" content={keywordsContent}>}
@@ -121,21 +133,24 @@ function isActive(href: string): boolean {
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 
   <script is:inline>
-    // Persist theme across View Transitions and tab switches
+    // Persist theme across View Transitions and tab switches. Readers with
+    // no stored choice follow their system, so the swap must re-derive the
+    // theme from the media query — head scripts don't re-run on swaps, and
+    // leaving data-theme unset would flash system-dark readers to light.
     (function() {
+      const effectiveTheme = () => localStorage.getItem('theme') ||
+        (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+
       document.addEventListener('astro:before-swap', (e) => {
-        const savedTheme = localStorage.getItem('theme');
-        if (savedTheme) {
-          e.newDocument.documentElement.setAttribute('data-theme', savedTheme);
-        }
+        const theme = effectiveTheme();
+        e.newDocument.documentElement.setAttribute('data-theme', theme);
+        const meta = e.newDocument.querySelector('meta[name="theme-color"]');
+        if (meta) meta.setAttribute('content', theme === 'dark' ? '#121212' : '#ffffff');
       });
 
       document.addEventListener('visibilitychange', () => {
         if (document.visibilityState === 'visible') {
-          const savedTheme = localStorage.getItem('theme');
-          if (savedTheme) {
-            document.documentElement.setAttribute('data-theme', savedTheme);
-          }
+          document.documentElement.setAttribute('data-theme', effectiveTheme());
         }
       });
     })();
@@ -264,6 +279,8 @@ function isActive(href: string): boolean {
         const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
         document.documentElement.setAttribute('data-theme', newTheme);
         localStorage.setItem('theme', newTheme);
+        const meta = document.querySelector('meta[name="theme-color"]');
+        if (meta) meta.setAttribute('content', newTheme === 'dark' ? '#121212' : '#ffffff');
         updateThemeLabel();
       });
     }

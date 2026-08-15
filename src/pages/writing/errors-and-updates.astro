@@ -58,15 +58,15 @@ import Base from '@/layouts/Base.astro';
 
   .page-title {
     font-family: var(--font-editorial);
-    font-size: 1.25rem;
+    font-size: var(--text-lg);
     font-weight: normal;
     margin-bottom: 1.5rem;
   }
 
   .bounty-intro {
     margin-bottom: 2rem;
-    font-size: 0.82rem;
-    line-height: 1.65;
+    font-size: var(--text-sm);
+    line-height: var(--leading-ui);
     color: var(--text-secondary);
   }
 
@@ -76,15 +76,15 @@ import Base from '@/layouts/Base.astro';
 
   .bounty-rules {
     margin-top: 0.35rem;
-    font-size: 0.78rem;
-    line-height: 1.6;
+    font-size: var(--text-sm);
+    line-height: var(--leading-ui);
     color: var(--text-secondary);
   }
 
   .bounty-rules summary {
     cursor: pointer;
     color: var(--dim);
-    font-size: 0.72rem;
+    font-size: var(--text-xs);
     letter-spacing: 0.04em;
   }
 
@@ -103,22 +103,22 @@ import Base from '@/layouts/Base.astro';
 
   .section-title {
     font-family: var(--font-editorial);
-    font-size: 1.1rem;
-    font-weight: 600;
+    font-size: var(--text-md);
+    font-weight: 700;
     margin-bottom: 0.75rem;
   }
 
   .subsection-title {
     font-family: var(--font-editorial);
-    font-size: 1rem;
-    font-weight: 600;
+    font-size: var(--text-base);
+    font-weight: 700;
     margin-bottom: 0.75rem;
   }
 
   .entry-date {
     font-family: var(--font-editorial);
-    font-size: 0.85rem;
-    font-weight: 600;
+    font-size: var(--text-sm);
+    font-weight: 700;
     margin-bottom: 0.5rem;
   }
 
@@ -129,7 +129,7 @@ import Base from '@/layouts/Base.astro';
 
   .entry-list li {
     margin-bottom: 0.75rem;
-    line-height: 1.75;
+    line-height: var(--leading-prose);
   }
 
   .entry-body {

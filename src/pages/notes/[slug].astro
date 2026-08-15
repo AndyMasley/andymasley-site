@@ -71,21 +71,21 @@ const { Content } = await item.render();
 
 <style>
   .note-header {
-    margin-bottom: var(--space-2xl);
+    margin-bottom: var(--space-3xl);
   }
   
   .note-header__top {
     display: flex;
     align-items: center;
-    gap: var(--space-md);
-    margin-bottom: var(--space-md);
+    gap: var(--space-lg);
+    margin-bottom: var(--space-lg);
   }
   
   .note-header__category {
     font-size: var(--font-size-mono);
     font-family: var(--font-label);
     text-transform: uppercase;
-    letter-spacing: 0.1em;
+    letter-spacing: 0.12em;
     font-weight: 700;
     color: var(--accent);
     background: none;
@@ -101,15 +101,15 @@ const { Content } = await item.render();
   }
 
   .note-header__title {
-    font-size: 2rem;
+    font-size: var(--text-display);
     font-weight: 700;
     line-height: 1.15;
-    margin: 0 0 var(--space-md) 0;
+    margin: 0 0 var(--space-lg) 0;
   }
 
   .article-footer {
-    margin-top: var(--space-2xl);
-    padding-top: var(--space-xl);
+    margin-top: var(--space-3xl);
+    padding-top: var(--space-2xl);
     border-top: 1px solid var(--border);
   }
 
@@ -117,7 +117,7 @@ const { Content } = await item.render();
     font-size: var(--font-size-mono);
     font-family: var(--font-label);
     color: var(--dim);
-    margin-bottom: var(--space-lg);
+    margin-bottom: var(--space-xl);
   }
 
   .article-nav__link {

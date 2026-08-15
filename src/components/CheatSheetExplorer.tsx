@@ -200,7 +200,6 @@ export function CheatSheetExplorer({ html }: { html: string }) {
   const parsed = useMemo(() => parseHtmlIntoSections(html), [html]);
   const [activeId, setActiveId] = useState('');
   const [showBackToTop, setShowBackToTop] = useState(false);
-  const [progress, setProgress] = useState(0);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   // Collect all trackable elements for scroll-spy
@@ -215,13 +214,10 @@ export function CheatSheetExplorer({ html }: { html: string }) {
     return ids;
   }, [parsed]);
 
-  // Scroll progress + back-to-top
+  // Back-to-top visibility
   useEffect(() => {
     const handleScroll = () => {
-      const scrollTop = window.scrollY;
-      const docHeight = document.documentElement.scrollHeight - window.innerHeight;
-      setProgress(docHeight > 0 ? Math.min(scrollTop / docHeight, 1) : 0);
-      setShowBackToTop(scrollTop > 600);
+      setShowBackToTop(window.scrollY > 600);
     };
     window.addEventListener('scroll', handleScroll, { passive: true });
     handleScroll();
@@ -281,15 +277,8 @@ export function CheatSheetExplorer({ html }: { html: string }) {
     }
   }, []);
 
-  const pct = Math.round(progress * 100);
-
   return (
     <>
-      {/* Progress bar */}
-      <div className="cse-progress-bar">
-        <div className="cse-progress-fill" style={{ width: `${progress * 100}%` }} />
-      </div>
-
       {/* Back to top */}
       {showBackToTop && (
         <button
@@ -307,8 +296,7 @@ export function CheatSheetExplorer({ html }: { html: string }) {
         onClick={() => setMobileNavOpen(true)}
         aria-label="Table of contents"
       >
-        <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="2"><path d="M2 4h14M2 9h14M2 14h14"/></svg>
-        <span className="cse-mobile-pct">{pct}%</span>
+        <span aria-hidden="true">▸</span> Contents
       </button>
 
       {/* Mobile TOC overlay */}

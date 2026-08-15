@@ -800,10 +800,10 @@ import Base from '@/layouts/Base.astro';
 <style>
   .page-title {
     font-family: var(--font-editorial);
-    font-size: clamp(1.9rem, 1.65rem + 0.5vw, 2.3rem);
-    font-weight: 600;
+    font-size: var(--text-2xl);
+    font-weight: 700;
     line-height: 1.08;
-    letter-spacing: -0.03em;
+    letter-spacing: -0.01em;
     margin: 0 0 0.9rem 0;
     color: var(--text);
   }
@@ -826,10 +826,10 @@ import Base from '@/layouts/Base.astro';
     width: 100%;
     background: none;
     border: none;
-    padding: var(--space-md) 0;
+    padding: var(--space-lg) 0;
     text-align: left;
     cursor: pointer;
-    font-size: 1.5rem;
+    font-size: var(--text-xl);
     font-weight: 700;
     font-family: inherit;
     color: var(--text);
@@ -852,13 +852,13 @@ import Base from '@/layouts/Base.astro';
   }
 
   .category.open .category-content {
-    padding-bottom: var(--space-lg);
+    padding-bottom: var(--space-xl);
   }
 
   .category-content h3 {
-    font-size: 1rem;
+    font-size: var(--text-base);
     font-weight: 700;
-    margin-top: var(--space-md);
+    margin-top: var(--space-lg);
     margin-bottom: var(--space-sm);
     color: var(--dim);
   }
@@ -868,14 +868,14 @@ import Base from '@/layouts/Base.astro';
   }
 
   .category-content h4 {
-    font-size: 1rem;
+    font-size: var(--text-base);
     font-weight: 700;
-    margin-top: var(--space-md);
+    margin-top: var(--space-lg);
     margin-bottom: var(--space-sm);
   }
 
   .category-content ul {
-    padding-left: var(--space-lg);
+    padding-left: var(--space-xl);
     margin-bottom: var(--space-sm);
   }
 
@@ -898,7 +898,7 @@ import Base from '@/layouts/Base.astro';
   }
 
   .category-content p {
-    margin-bottom: var(--space-md);
+    margin-bottom: var(--space-lg);
   }
 
   .category-content p:last-child {
@@ -917,7 +917,7 @@ import Base from '@/layouts/Base.astro';
     padding: var(--space-xs) 0;
     text-align: left;
     cursor: pointer;
-    font-size: 1.25rem;
+    font-size: var(--text-lg);
     font-weight: 700;
     font-family: inherit;
     color: var(--text);
@@ -937,11 +937,11 @@ import Base from '@/layouts/Base.astro';
     opacity: 0;
     overflow: hidden;
     transition: max-height 0.4s ease, opacity 0.3s ease;
-    padding-left: var(--space-md);
+    padding-left: var(--space-lg);
   }
 
   .subcategory.open .subcategory-content {
-    padding-bottom: var(--space-md);
+    padding-bottom: var(--space-lg);
   }
 
   /* Sub-subcategories (e.g., "When I was a teenager" under Albums) */
@@ -956,7 +956,7 @@ import Base from '@/layouts/Base.astro';
     padding: var(--space-xs) 0;
     text-align: left;
     cursor: pointer;
-    font-size: 1rem;
+    font-size: var(--text-base);
     font-weight: 700;
     font-family: inherit;
     color: var(--dim);
@@ -976,7 +976,7 @@ import Base from '@/layouts/Base.astro';
     opacity: 0;
     overflow: hidden;
     transition: max-height 0.4s ease, opacity 0.3s ease;
-    padding-left: var(--space-md);
+    padding-left: var(--space-lg);
   }
 
   .sub-subcategory.open .sub-subcategory-content {
@@ -984,7 +984,7 @@ import Base from '@/layouts/Base.astro';
   }
 
   .quotes-section .quote {
-    margin-bottom: var(--space-lg);
+    margin-bottom: var(--space-xl);
   }
 
   .quotes-section .quote:last-child {
@@ -1028,7 +1028,7 @@ import Base from '@/layouts/Base.astro';
     border: 1px solid var(--border-strong);
     border-radius: 0;
     box-shadow: var(--shadow-lg);
-    padding: var(--space-md);
+    padding: var(--space-lg);
     opacity: 0;
     visibility: hidden;
     transform: translateY(-8px);
@@ -1070,7 +1070,7 @@ import Base from '@/layouts/Base.astro';
     right: var(--space-xs);
     background: none;
     border: none;
-    font-size: 1.25rem;
+    font-size: var(--text-lg);
     color: var(--dim);
     cursor: pointer;
     padding: 0;
@@ -1088,8 +1088,8 @@ import Base from '@/layouts/Base.astro';
   }
 
   .popout-body {
-    font-size: 1rem;
-    line-height: 1.65;
+    font-size: var(--text-base);
+    line-height: var(--leading-ui);
     color: var(--text);
   }
 
@@ -1110,8 +1110,8 @@ import Base from '@/layouts/Base.astro';
       border-radius: 0;
       border-bottom: none;
       border-top: 1px solid var(--border-strong);
-      padding: var(--space-lg);
-      padding-top: var(--space-md);
+      padding: var(--space-xl);
+      padding-top: var(--space-lg);
       box-shadow: none;
     }
 
@@ -1285,7 +1285,7 @@ import Base from '@/layouts/Base.astro';
     background: var(--bg);
     border: 1px solid var(--border);
     border-radius: 0;
-    font-size: 16px;
+    font-size: var(--text-base);
     line-height: 1;
     color: var(--dim);
     cursor: pointer;
@@ -1332,13 +1332,13 @@ import Base from '@/layouts/Base.astro';
      ========================================== */
   @media (max-width: 600px) {
     .page-title {
-      font-size: 1.375rem;
+      font-size: var(--text-xl);
       margin-bottom: 1.5rem;
     }
 
     /* Categories - full-width tap targets */
     .category-title {
-      font-size: 1.125rem;
+      font-size: var(--text-md);
       padding: 1rem 0;
       /* Extend tap target to edges */
       margin: 0 -1.5rem;
@@ -1358,13 +1358,13 @@ import Base from '@/layouts/Base.astro';
     }
 
     .category-content h3 {
-      font-size: 1rem;
+      font-size: var(--text-base);
       margin-top: 1.25rem;
       margin-bottom: 0.75rem;
     }
 
     .category-content h4 {
-      font-size: 0.9375rem;
+      font-size: var(--text-base);
       margin-top: 1rem;
     }
 
@@ -1375,12 +1375,12 @@ import Base from '@/layouts/Base.astro';
 
     .category-content li {
       margin-bottom: 0.625rem;
-      line-height: 1.6;
+      line-height: var(--leading-ui);
     }
 
     /* Subcategories - generous tap area */
     .subcategory-title {
-      font-size: 1rem;
+      font-size: var(--text-base);
       padding: 0.875rem 0;
       margin: 0 -1.5rem;
       padding-left: 1.5rem;
@@ -1398,7 +1398,7 @@ import Base from '@/layouts/Base.astro';
 
     /* Sub-subcategories */
     .sub-subcategory-title {
-      font-size: 0.9375rem;
+      font-size: var(--text-base);
       padding: 0.75rem 0;
       margin: 0 -1.5rem;
       padding-left: 1.5rem;
@@ -1424,17 +1424,17 @@ import Base from '@/layouts/Base.astro';
 
     .book-title {
       display: block;
-      font-size: 1rem;
+      font-size: var(--text-base);
     }
 
     .book-author {
-      font-size: 0.875rem;
+      font-size: var(--text-sm);
     }
 
     /* Movie items */
     .movie-item {
       margin-bottom: 0.625rem;
-      line-height: 1.6;
+      line-height: var(--leading-ui);
     }
 
     .movies-list {
@@ -1445,7 +1445,7 @@ import Base from '@/layouts/Base.astro';
     /* Album items */
     .album-item {
       margin-bottom: 0.625rem;
-      line-height: 1.6;
+      line-height: var(--leading-ui);
     }
 
     /* Quotes - more breathing room */
@@ -1455,12 +1455,12 @@ import Base from '@/layouts/Base.astro';
     }
 
     .quotes-section .quote p {
-      font-size: 1rem;
-      line-height: 1.7;
+      font-size: var(--text-base);
+      line-height: var(--leading-prose);
     }
 
     .quotes-section .attribution {
-      font-size: 0.875rem;
+      font-size: var(--text-sm);
       margin-top: 0.5rem;
     }
 
@@ -1480,8 +1480,8 @@ import Base from '@/layouts/Base.astro';
     }
 
     .popout-body {
-      font-size: 1rem;
-      line-height: 1.7;
+      font-size: var(--text-base);
+      line-height: var(--leading-prose);
     }
   }
 </style>

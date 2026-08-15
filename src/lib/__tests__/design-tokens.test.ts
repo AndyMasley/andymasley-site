@@ -49,4 +49,47 @@ describe('design tokens', () => {
 
     expect(undefined_, `undefined design tokens referenced without fallback:\n${undefined_.join('\n')}`).toEqual([]);
   });
+
+  // The case of type: on reading surfaces, every font-size is one of the
+  // eight scale tokens (or a relative em/% for micro-typography). Literal
+  // rem/px sizes are how the system re-fragments. The visualization
+  // internals and the OG raster join through their own documented systems
+  // and are exempt by path.
+  it('reading-surface font sizes stay on the scale', () => {
+    const EXEMPT = [
+      'pages/visuals/water.astro', 'pages/visuals/ai-prompt-footprint',
+      'pages/visuals/pm25-county-exposure.astro', 'pages/visuals/factory-farmed-chickens.astro',
+      'pages/visuals/carbon-footprint.astro', 'pages/visuals/carbon-footprint-v1.astro',
+      'pages/visuals/carbon-boundary-crosswalk.astro',
+      'pages/hexagon.astro', 'pages/room.astro', 'pages/massachusetts-3d.astro',
+      'components/carbon/', 'components/prompt-energy/',
+      'lib/og-card.ts', 'lib/physics-videos.ts', 'data/',
+      'lib/__tests__/',
+      // /tags is retired by redirect; its pages are deleted with the
+      // taxonomy consolidation.
+      'pages/tags/',
+    ];
+    const files = walk(SRC).filter(p => {
+      const rel = p.slice(SRC.length + 1);
+      return !EXEMPT.some(e => rel.startsWith(e));
+    });
+
+    const offenders: string[] = [];
+    for (const file of files) {
+      const s = readFileSync(file, 'utf8');
+      for (const m of s.matchAll(/font-size:\s*([^;}]+)[;}]/g)) {
+        const v = m[1].trim();
+        const ok =
+          v.startsWith('var(--text-') ||
+          v.startsWith('var(--font-size-') ||
+          /^[0-9.]+(em|%)$/.test(v) ||
+          v === 'inherit' ||
+          // the rem base itself (html { font-size: 16px })
+          v.startsWith('16px');
+        if (!ok) offenders.push(`${file.slice(SRC.length + 1)}: font-size: ${v}`);
+      }
+    }
+
+    expect(offenders, `off-scale font sizes on reading surfaces:\n${offenders.join('\n')}`).toEqual([]);
+  });
 });

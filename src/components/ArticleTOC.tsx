@@ -1,9 +1,11 @@
 /**
- * ArticleTOC — sticky sidebar TOC with scroll-spy for blog posts.
- * Reuses the same CSS classes as CheatSheetExplorer for identical styling.
+ * ArticleTOC — sticky sidebar TOC with scroll-spy for blog posts, and the
+ * sticky "contents" running head + drawer below the sidenote/TOC breakpoint.
+ * Entries are true anchors (open-in-tab, copyable links, no-JS) with
+ * scroll-spy and smooth scrolling as enhancements only.
  */
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 
 interface TOCHeading {
   id: string;
@@ -37,18 +39,26 @@ function groupHeadings(headings: TOCHeading[]): SectionGroup[] {
   return groups;
 }
 
-export function ArticleTOC({ headings, meta }: { headings: TOCHeading[]; meta: ArticleMeta }) {
+function prefersReducedMotion(): boolean {
+  return typeof window !== 'undefined'
+    && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
+
+export function ArticleTOC({ headings, meta: _meta }: { headings: TOCHeading[]; meta?: ArticleMeta }) {
   const groups = useMemo(() => groupHeadings(headings), [headings]);
   const hasSections = groups.length > 0;
   const [activeId, setActiveId] = useState('');
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const closeButtonRef = useRef<HTMLButtonElement | null>(null);
   // null until mounted (SSR renders both variants; CSS hides the wrong one).
   // After mount only the active variant stays in the DOM, so exactly one TOC
   // exists in the accessibility tree per viewport.
   const [isMobile, setIsMobile] = useState<boolean | null>(null);
 
+  // The rail exists only where the left margin can hold it (>=1280px); the
+  // running head serves everything below that.
   useEffect(() => {
-    const mq = window.matchMedia('(max-width: 900px)');
+    const mq = window.matchMedia('(max-width: 1279px)');
     const update = () => setIsMobile(mq.matches);
     update();
     mq.addEventListener('change', update);
@@ -82,8 +92,6 @@ export function ArticleTOC({ headings, meta }: { headings: TOCHeading[]; meta: A
         container.scrollTo({ top: Math.max(0, entryBottom - container.clientHeight + padding) });
       }
     };
-
-    syncActiveEntry('.article-toc');
 
     if (mobileNavOpen) {
       syncActiveEntry('.article-toc-drawer');
@@ -119,16 +127,24 @@ export function ArticleTOC({ headings, meta }: { headings: TOCHeading[]; meta: A
     return () => observer.disconnect();
   }, [headings]);
 
-  const navigateTo = useCallback((id: string) => {
+  // Anchor navigation, enhanced: smooth scroll unless the reader asked for
+  // no motion, and focus moves to the target so keyboard/screen-reader
+  // position follows the jump.
+  const handleAnchor = useCallback((e: React.MouseEvent<HTMLAnchorElement>, id: string) => {
     const el = document.getElementById(id);
-    if (el) {
-      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      history.replaceState(null, '', `#${id}`);
-    }
+    if (!el) return; // fall through to native anchor behavior
+    e.preventDefault();
+    el.scrollIntoView({ behavior: prefersReducedMotion() ? 'auto' : 'smooth', block: 'start' });
+    el.tabIndex = -1;
+    el.focus({ preventScroll: true });
+    history.replaceState(null, '', `#${id}`);
   }, []);
 
+  // Focus lands on the close button when the drawer opens; Escape closes.
   useEffect(() => {
     if (!mobileNavOpen) return;
+
+    closeButtonRef.current?.focus();
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
@@ -145,48 +161,15 @@ export function ArticleTOC({ headings, meta }: { headings: TOCHeading[]; meta: A
     };
   }, [mobileNavOpen]);
 
-  if (!hasSections) {
-    return (
-      <div className="article-toc-shell">
-        <aside className="article-toc article-toc--meta" aria-label="Article information">
-          <div className="article-toc__header">
-            <span className="article-toc__eyebrow">About this post</span>
-          </div>
+  // A post with no section headings gets an empty margin — correct
+  // ink-on-paper behavior, not a gap to fill.
+  if (!hasSections) return null;
 
-          <div className="article-toc__entries article-toc__entries--meta">
-            {meta.date && (
-              <div className="article-toc__meta-row">
-                <span className="article-toc__meta-label">Date</span>
-                <span className="article-toc__meta-value">{meta.date}</span>
-              </div>
-            )}
-            <div className="article-toc__meta-row">
-              <span className="article-toc__meta-label">Reading time</span>
-              <span className="article-toc__meta-value">{meta.readingTime}</span>
-            </div>
-            <div className="article-toc__meta-row">
-              <span className="article-toc__meta-label">Length</span>
-              <span className="article-toc__meta-value">{meta.length}</span>
-            </div>
-            {meta.sourceName && meta.sourceUrl && (
-              <div className="article-toc__meta-row">
-                <span className="article-toc__meta-label">Original publication</span>
-                <span className="article-toc__meta-value">
-                  <a href={meta.sourceUrl} target="_blank" rel="noopener">
-                    {meta.sourceName}
-                  </a>
-                </span>
-              </div>
-            )}
-          </div>
-
-          <div className="article-toc__footer">
-            <a href="/writing">Browse all writing</a>
-          </div>
-        </aside>
-      </div>
-    );
-  }
+  const activeTitle = headings.find(h => h.id === activeId)?.text || '';
+  // Collapse discipline: on long contents lists, subsections show only
+  // under the section currently being read.
+  const totalEntries = groups.length + groups.reduce((n, g) => n + g.subs.length, 0);
+  const collapseSubs = totalEntries > 8;
 
   return (
     <>
@@ -196,13 +179,15 @@ export function ArticleTOC({ headings, meta }: { headings: TOCHeading[]; meta: A
           <button
             className="article-toc-mobilebar__button"
             onClick={() => setMobileNavOpen(true)}
+            aria-expanded={mobileNavOpen}
             aria-label="Open table of contents"
           >
             <span className="article-toc-mobilebar__label">
-              <svg width="16" height="16" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
-                <path d="M2 4h14M2 9h14M2 14h14" />
-              </svg>
-              Contents
+              <span className={`article-toc-mobilebar__caret${mobileNavOpen ? ' article-toc-mobilebar__caret--open' : ''}`} aria-hidden="true">▸</span>
+              contents
+              {activeTitle && (
+                <span className="article-toc-mobilebar__current" aria-hidden="true"> · {activeTitle}</span>
+              )}
             </span>
           </button>
         </div>
@@ -219,27 +204,29 @@ export function ArticleTOC({ headings, meta }: { headings: TOCHeading[]; meta: A
               const groupActive = activeId === group.id || group.subs.some(sub => activeId === sub.id);
               return (
                 <div key={group.id} className="article-toc__group">
-                  <button
+                  <a
+                    href={`#${group.id}`}
                     data-toc-id={group.id}
                     className={`article-toc__section ${groupActive ? 'article-toc__section--active' : ''}`}
-                    onClick={() => navigateTo(group.id)}
+                    onClick={(e) => handleAnchor(e, group.id)}
                     title={group.text}
                   >
                     {group.text}
-                  </button>
+                  </a>
 
-                  {group.subs.length > 0 && (
+                  {group.subs.length > 0 && (!collapseSubs || groupActive) && (
                     <div className="article-toc__subs">
                       {group.subs.map(sub => (
-                        <button
+                        <a
                           key={sub.id}
+                          href={`#${sub.id}`}
                           data-toc-id={sub.id}
                           className={`article-toc__sub ${activeId === sub.id ? 'article-toc__sub--active' : ''}`}
-                          onClick={() => navigateTo(sub.id)}
+                          onClick={(e) => handleAnchor(e, sub.id)}
                           title={sub.text}
                         >
                           {sub.text}
-                        </button>
+                        </a>
                       ))}
                     </div>
                   )}
@@ -257,48 +244,55 @@ export function ArticleTOC({ headings, meta }: { headings: TOCHeading[]; meta: A
 
       {mobileNavOpen && (
         <div className="article-toc-overlay" onClick={() => setMobileNavOpen(false)}>
-          <div className="article-toc-drawer" onClick={e => e.stopPropagation()}>
+          <div
+            className="article-toc-drawer"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Table of contents"
+            onClick={e => e.stopPropagation()}
+          >
             <div className="article-toc-drawer__header">
               <div>
                 <div className="article-toc-drawer__eyebrow">Contents</div>
               </div>
               <button
+                ref={closeButtonRef}
                 onClick={() => setMobileNavOpen(false)}
                 className="article-toc-drawer__close"
                 aria-label="Close table of contents"
               >
-                <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
-                  <path d="M4 4l10 10M14 4L4 14" />
-                </svg>
+                ×
               </button>
             </div>
 
             <div className="article-toc-drawer__entries">
               {groups.map(group => (
                 <div key={group.id} className="article-toc-drawer__group">
-                  <button
+                  <a
+                    href={`#${group.id}`}
                     data-toc-id={group.id}
                     className={`article-toc-drawer__section ${activeId === group.id ? 'article-toc-drawer__section--active' : ''}`}
-                    onClick={() => {
-                      navigateTo(group.id);
+                    onClick={(e) => {
+                      handleAnchor(e, group.id);
                       setMobileNavOpen(false);
                     }}
                   >
                     {group.text}
-                  </button>
+                  </a>
 
                   {group.subs.map(sub => (
-                    <button
+                    <a
                       key={sub.id}
+                      href={`#${sub.id}`}
                       data-toc-id={sub.id}
                       className={`article-toc-drawer__sub ${activeId === sub.id ? 'article-toc-drawer__sub--active' : ''}`}
-                      onClick={() => {
-                        navigateTo(sub.id);
+                      onClick={(e) => {
+                        handleAnchor(e, sub.id);
                         setMobileNavOpen(false);
                       }}
                     >
                       {sub.text}
-                    </button>
+                    </a>
                   ))}
                 </div>
               ))}

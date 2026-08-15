@@ -177,10 +177,10 @@ import Base from '@/layouts/Base.astro';
 <style>
   .page-title {
     font-family: var(--font-editorial);
-    font-size: clamp(1.9rem, 1.65rem + 0.5vw, 2.3rem);
-    font-weight: 600;
+    font-size: var(--text-2xl);
+    font-weight: 700;
     line-height: 1.08;
-    letter-spacing: -0.03em;
+    letter-spacing: -0.01em;
     margin: 0 0 0.9rem 0;
     color: var(--text);
   }
@@ -188,14 +188,14 @@ import Base from '@/layouts/Base.astro';
   .intro {
     max-width: 40rem;
     font-family: var(--font-editorial);
-    font-size: 1rem;
-    line-height: 1.78;
+    font-size: var(--text-base);
+    line-height: var(--leading-prose);
     color: var(--text-secondary);
-    margin-bottom: var(--space-md);
+    margin-bottom: var(--space-lg);
   }
 
   .intro:last-of-type {
-    margin-bottom: var(--space-lg);
+    margin-bottom: var(--space-xl);
   }
 
   .intro a {
@@ -222,10 +222,10 @@ import Base from '@/layouts/Base.astro';
     width: 100%;
     background: none;
     border: none;
-    padding: var(--space-md) 0;
+    padding: var(--space-lg) 0;
     text-align: left;
     cursor: pointer;
-    font-size: 1.5rem;
+    font-size: var(--text-xl);
     font-weight: 700;
     font-family: inherit;
     color: var(--text);
@@ -248,13 +248,13 @@ import Base from '@/layouts/Base.astro';
   }
 
   .category.open .category-content {
-    padding-bottom: var(--space-lg);
+    padding-bottom: var(--space-xl);
   }
 
   .category-content h3 {
-    font-size: 1.25rem;
+    font-size: var(--text-lg);
     font-weight: 700;
-    margin-top: var(--space-lg);
+    margin-top: var(--space-xl);
     margin-bottom: var(--space-sm);
     color: var(--text);
   }
@@ -265,7 +265,7 @@ import Base from '@/layouts/Base.astro';
 
   .category-content ul,
   .category-content ol {
-    padding-left: var(--space-lg);
+    padding-left: var(--space-xl);
     margin-bottom: var(--space-sm);
   }
 
@@ -275,7 +275,7 @@ import Base from '@/layouts/Base.astro';
 
   .category-content li {
     margin-bottom: var(--space-sm);
-    line-height: 1.6;
+    line-height: var(--leading-ui);
   }
 
   .category-content li ul {
@@ -289,7 +289,7 @@ import Base from '@/layouts/Base.astro';
   }
 
   .category-content p {
-    margin-bottom: var(--space-md);
+    margin-bottom: var(--space-lg);
   }
 
   .category-content p:last-child {
@@ -302,17 +302,17 @@ import Base from '@/layouts/Base.astro';
 
   @media (max-width: 600px) {
     .page-title {
-      font-size: 1.375rem;
+      font-size: var(--text-xl);
       margin-bottom: 1.5rem;
     }
 
     .intro {
-      font-size: 1rem;
-      line-height: 1.7;
+      font-size: var(--text-base);
+      line-height: var(--leading-prose);
     }
 
     .category-title {
-      font-size: 1.125rem;
+      font-size: var(--text-md);
       padding: 1rem 0;
       margin: 0 -1.5rem;
       padding-left: 1.5rem;
@@ -331,7 +331,7 @@ import Base from '@/layouts/Base.astro';
     }
 
     .category-content h3 {
-      font-size: 1rem;
+      font-size: var(--text-base);
       margin-top: 1.5rem;
       margin-bottom: 0.75rem;
     }
@@ -348,7 +348,7 @@ import Base from '@/layouts/Base.astro';
 
     .category-content li {
       margin-bottom: 0.75rem;
-      line-height: 1.7;
+      line-height: var(--leading-prose);
       padding: 0.25rem 0;
     }
   }

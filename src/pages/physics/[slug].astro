@@ -62,7 +62,7 @@ const { Content } = await item.render();
 
 <style>
   .physics-header {
-    margin-bottom: var(--space-2xl);
+    margin-bottom: var(--space-3xl);
   }
   
   .physics-header__unit {
@@ -71,32 +71,32 @@ const { Content } = await item.render();
     font-family: var(--font-label);
     font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.1em;
+    letter-spacing: 0.12em;
     color: var(--accent);
     background: none;
     padding: 0 0 2px;
     border-bottom: 1px solid var(--accent);
     border-radius: 0;
-    margin-bottom: var(--space-md);
+    margin-bottom: var(--space-lg);
   }
 
   .physics-header__title {
     font-family: var(--font-editorial);
-    font-size: clamp(2rem, 1.7rem + 0.65vw, 2.55rem);
-    font-weight: 600;
+    font-size: var(--text-2xl);
+    font-weight: 700;
     line-height: 1.08;
-    letter-spacing: -0.03em;
+    letter-spacing: -0.01em;
     margin: 0 0 var(--space-sm) 0;
   }
 
   .physics-header__topic {
-    font-size: 1rem;
+    font-size: var(--text-base);
     color: var(--text-secondary);
     margin: 0;
   }
 
   .video-embed {
-    margin-bottom: var(--space-2xl);
+    margin-bottom: var(--space-3xl);
   }
 
   .video-link {
@@ -120,8 +120,8 @@ const { Content } = await item.render();
   }
 
   .article-footer {
-    margin-top: var(--space-2xl);
-    padding-top: var(--space-xl);
+    margin-top: var(--space-3xl);
+    padding-top: var(--space-2xl);
     border-top: 1px solid var(--border);
   }
 

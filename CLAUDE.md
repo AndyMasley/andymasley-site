@@ -58,15 +58,20 @@ Do not "clean up," "polish," "modernize," or "strip" the visual styling of any p
 
 ### Site-wide design system
 
-- **Font:** Source Serif 4 via Google Fonts
-- **Color palette:** Warm stone tones (`#faf9f7`/`#8b3a3a` light, `#1c1917`/`#c2847a` dark)
-- **Max width:** 640px for content
-- **Line height:** 1.75
-- **Links:** Hover changes underline color (does not remove underline)
-- **Title case:** Sentence case only (capitalize first word, not every word)
-- **Dropdowns:** Rotating arrow indicator
+The system lives in `src/styles/global.css` (tokens at the top of `:root`). These are the facts; do not change any of them without being asked.
 
-Do not change any of these without being asked.
+- **Typeface:** Georgia for everything — body, headings, UI chrome (`--font-editorial` / `--font-body` / `--font-label` all resolve to the same Georgia stack). Real code samples are the only monospace. Weights 400 and 700 only; no webfonts.
+- **Ink:** near-black on white paper (`--text: #1a1a1a` on `#ffffff`; dark mode `#e6e6e6` on `#121212`). Secondary ink `--text-secondary`, dimmed ink `--dim`, hairlines `--border` / `--border-subtle`. All pairs meet WCAG AA at the sizes they're used.
+- **Links:** Wikipedia blue `--accent: #0645ad` (dark `#8ab4f8`), visited `#551a8b` (dark `#c58af9`). Blue means "this is a link" and is used for nothing else. Hover changes underline color; it never removes the underline.
+- **Measure:** `--measure: 640px` for reading columns; `.main-content` is measure + `--page-pad` each side. Essay pages at ≥1280px add a 220px TOC rail left of the text column (`.article-grid--wide`); sidenotes engage at the same breakpoint.
+- **Type scale:** eight sizes, `--text-xs` through `--text-2xl` plus `--text-display`. Every font-size on a reading surface is a scale token — `src/lib/__tests__/design-tokens.test.ts` enforces this and fails the build on literal px/rem sizes (visualization internals are exempt by path).
+- **Leading:** five values — `--leading-tight` 1.1 (display), `--leading-heading` 1.3, `--leading-note` 1.5, `--leading-ui` 1.65, `--leading-prose` 1.7.
+- **Spacing:** nine steps, `--space-2xs` (4px) through `--space-4xl` (80px). No off-scale margins/padding on new work.
+- **Labels:** exactly two recipes. A: spaced caps, `--text-xs` / letter-spacing 0.12em / `--dim` (section labels, running heads). B: sentence-case `--text-sm` (everything else). No third variant.
+- **Case:** sentence case for all titles and labels (capitalize first word only).
+- **Corners and effects:** sharp corners (radius 0), hairline borders, no shadows, no animations beyond the rotating ▸ disclosure caret and theme-neutral hovers.
+- **Dark mode:** same structure, inverted ink; nothing warm-toned. Only an explicit toggle choice persists; otherwise the site follows the system preference live.
+- **End matter:** essay pages end with at most: diamond end mark, notes run, one colophon line, a cited-in list (≤5), older/newer links, one back-link. Do not add more furniture after the prose.
 
 ## Water visualization (`src/pages/visuals/water.astro`)
 
