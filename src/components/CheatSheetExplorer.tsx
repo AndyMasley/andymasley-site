@@ -40,6 +40,41 @@ function extractIdAndTitle(tag: string): { id: string; title: string } {
   return { id: idMatch?.[1] || '', title };
 }
 
+const VOID_TAGS = new Set(['img', 'br', 'hr', 'input', 'source', 'meta', 'link', 'embed', 'wbr', 'area', 'col', 'track']);
+
+// Slicing the post at heading boundaries can cut through an element that
+// opened before the heading and closes after it, leaving fragments with
+// stray closers or unclosed openers. The browser "repairs" such SSR HTML
+// by re-nesting it — which no longer matches React's tree and forces a
+// full hydration re-render. Repair fragments deterministically instead:
+// drop closers that match nothing, close anything left open.
+function balanceFragment(html: string): string {
+  const out: string[] = [];
+  const stack: string[] = [];
+  const re = /<(\/?)([a-zA-Z][a-zA-Z0-9-]*)((?:[^>"']|"[^"]*"|'[^']*')*)>|[^<]+|</g;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(html)) !== null) {
+    const token = m[0];
+    if (!m[2]) { out.push(token); continue; }
+    const tag = m[2].toLowerCase();
+    if (VOID_TAGS.has(tag) || (m[3] && m[3].endsWith('/'))) { out.push(token); continue; }
+    if (m[1] !== '/') {
+      stack.push(tag);
+      out.push(token);
+      continue;
+    }
+    // Closer: matched → pop (emitting implicit closers for anything mis-
+    // nested above it); unmatched → drop.
+    const idx = stack.lastIndexOf(tag);
+    if (idx === -1) continue;
+    while (stack.length > idx + 1) out.push(`</${stack.pop()}>`);
+    stack.pop();
+    out.push(token);
+  }
+  while (stack.length) out.push(`</${stack.pop()}>`);
+  return out.join('');
+}
+
 function stripHtml(html: string): string {
   return html.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
 }
@@ -58,7 +93,7 @@ export function parseHtmlIntoSections(html: string): ParsedContent {
   while ((m = sectionRegex.exec(html)) !== null) sectionTags.push({ match: m[0], index: m.index });
 
   const introEnd = sectionTags.length > 0 ? sectionTags[0].index : html.length;
-  const introHtml = html.slice(0, introEnd).trim();
+  const introHtml = balanceFragment(html.slice(0, introEnd).trim());
   const sections: Section[] = [];
 
   for (let i = 0; i < sectionTags.length; i++) {
@@ -77,13 +112,13 @@ export function parseHtmlIntoSections(html: string): ParsedContent {
     while ((m2 = subRegex.exec(body)) !== null) subTags.push({ match: m2[0], index: m2.index });
 
     const introEnd2 = subTags.length > 0 ? subTags[0].index : body.length;
-    const sectionIntro = body.slice(0, introEnd2).trim();
+    const sectionIntro = balanceFragment(body.slice(0, introEnd2).trim());
 
     const subsections: Subsection[] = [];
     for (let j = 0; j < subTags.length; j++) {
       const subStart = subTags[j].index + subTags[j].match.length;
       const subEnd = j + 1 < subTags.length ? subTags[j + 1].index : body.length;
-      const subHtml = body.slice(subStart, subEnd).trim();
+      const subHtml = balanceFragment(body.slice(subStart, subEnd).trim());
       const { id: subId, title: subTitle } = extractIdAndTitle(subTags[j].match);
       subsections.push({ id: subId, title: subTitle, html: subHtml, wordCount: countWords(subHtml) });
     }
