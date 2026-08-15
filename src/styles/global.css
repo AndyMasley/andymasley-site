@@ -2240,7 +2240,7 @@ details[open] > summary::before {
     margin-bottom: 1.5rem;
   }
 
-  /* Expand external links to their URL instead of the ↗ marker */
+  /* Print expands external links to their full URL (citation-grade PDFs) */
   .article-prose a[href^="http"]::after {
     content: " (" attr(href) ")" !important;
     font-size: 0.85em;

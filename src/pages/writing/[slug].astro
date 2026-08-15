@@ -908,18 +908,8 @@ if (correction) {
   .article-prose :global(a:visited) { color: #551a8b; }
   :global([data-theme="dark"]) .article-prose :global(a:visited) { color: #c58af9; }
 
-  /* External-link marker: superscript ↗, link-colored, scoped to the article
-     body. Internal links are relative (/…), footnote and section anchors are
-     #…, so only off-site links match; image links are excluded via :has.
-     The leading word joiner (U+2060) glues the marker to the last word so it
-     can't orphan onto its own line. */
-  .article-prose :global(a[href^="http"]:not([href*="andymasley.com"]):not(:has(img))::after) {
-    content: "\2060\2197";
-    font-size: 0.65em;
-    vertical-align: super;
-    line-height: 0;
-    color: var(--accent);
-  }
+  /* External links read as ordinary hyperlinks — no ↗ marker (Andy's
+     call, Aug 2026). Print still expands their URLs (global.css). */
 
   .article-prose :global(h1) {
     font-family: var(--font-editorial);
