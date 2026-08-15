@@ -23,7 +23,10 @@ const { Content } = await item.render();
   title={item.data.title}
   description={item.data.description}
   keywords={item.data.tags}
+  ogType="article"
 >
+  <meta slot="head" property="article:published_time" content={item.data.date.toISOString()} />
+  <meta slot="head" property="article:author" content="Andy Masley" />
   <article class="container container--narrow">
     
     <header class="note-header animate-in">
@@ -83,7 +86,7 @@ const { Content } = await item.render();
     font-family: var(--font-label);
     text-transform: uppercase;
     letter-spacing: 0.1em;
-    font-weight: var(--font-weight-heading);
+    font-weight: 700;
     color: var(--accent);
     background: none;
     padding: 0 0 2px;
@@ -94,18 +97,18 @@ const { Content } = await item.render();
   .note-header__date {
     font-size: var(--font-size-mono);
     font-family: var(--font-label);
-    color: var(--text-tertiary);
+    color: var(--dim);
   }
 
   .note-header__title {
-    font-size: var(--font-size-h1);
-    font-weight: var(--font-weight-heading);
-    line-height: var(--line-height-h1);
+    font-size: 2rem;
+    font-weight: 700;
+    line-height: 1.15;
     margin: 0 0 var(--space-md) 0;
   }
 
   .article-footer {
-    margin-top: var(--space-3xl);
+    margin-top: var(--space-2xl);
     padding-top: var(--space-xl);
     border-top: 1px solid var(--border);
   }
@@ -113,7 +116,7 @@ const { Content } = await item.render();
   .meta-note {
     font-size: var(--font-size-mono);
     font-family: var(--font-label);
-    color: var(--text-tertiary);
+    color: var(--dim);
     margin-bottom: var(--space-lg);
   }
 
@@ -121,7 +124,7 @@ const { Content } = await item.render();
     display: inline-flex;
     align-items: center;
     gap: var(--space-sm);
-    font-size: var(--font-size-ui);
+    font-size: var(--font-size-small);
     color: var(--text-secondary);
     text-decoration: none;
     padding: 0;
@@ -132,7 +135,7 @@ const { Content } = await item.render();
   }
   
   .article-nav__link:hover {
-    color: var(--text-primary);
+    color: var(--text);
     border-bottom-color: var(--accent);
   }
 </style>

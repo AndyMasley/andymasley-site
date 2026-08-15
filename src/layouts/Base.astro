@@ -5,7 +5,6 @@ import { ViewTransitions } from 'astro:transitions';
 interface Props {
   title: string;
   description?: string;
-  showReadingProgress?: boolean;
   ogImage?: string;
   ogTitle?: string;
   ogImageAlt?: string;
@@ -21,7 +20,6 @@ interface Props {
 const {
   title,
   description = "Andy Masley's personal site — writing, data visualizations, physics lectures, and lists",
-  showReadingProgress = false,
   ogImage,
   ogTitle,
   ogImageAlt,
@@ -144,7 +142,6 @@ function isActive(href: string): boolean {
   </script>
 </head>
 <body>
-  {showReadingProgress && <div class="reading-progress" id="reading-progress"></div>}
 
   <main class="main-content" transition:animate="fade">
     <header class="header">
@@ -221,11 +218,26 @@ function isActive(href: string): boolean {
 
 
   <script>
+    // One init path: astro:page-load fires on initial load AND after every
+    // View Transitions navigation, so nothing else may call the init
+    // functions — the old double-registration stacked duplicate document
+    // listeners (a second keydown handler is why Cmd+K opened-then-closed).
+    // Document/window-level listeners register through an AbortController
+    // aborted before each swap, so navigations add zero net listeners.
+    let pageListeners: AbortController | null = null;
+
+    document.addEventListener('astro:before-swap', () => {
+      pageListeners?.abort();
+    });
+
     document.addEventListener('astro:page-load', () => {
+      pageListeners?.abort();
+      pageListeners = new AbortController();
+      const signal = pageListeners.signal;
       initThemeToggle();
-      initReadingProgress();
       initExternalLinks();
-      initSearch();
+      initSearch(signal);
+      initHexagonPortalTrigger();
     });
 
     function initThemeToggle() {
@@ -256,18 +268,6 @@ function isActive(href: string): boolean {
       });
     }
 
-    function initReadingProgress() {
-      const progressBar = document.getElementById('reading-progress');
-      if (progressBar) {
-        window.addEventListener('scroll', () => {
-          const docHeight = document.documentElement.scrollHeight - window.innerHeight;
-          const scrollPos = window.scrollY;
-          const progress = (scrollPos / docHeight) * 100;
-          progressBar.style.width = `${progress}%`;
-        }, { passive: true });
-      }
-    }
-
     function initExternalLinks() {
       const links = document.querySelectorAll('a[href^="http"]');
       const currentHost = window.location.host;
@@ -296,7 +296,7 @@ function isActive(href: string): boolean {
       }
     }
 
-    function initSearch() {
+    function initSearch(signal: AbortSignal) {
       const widget = document.getElementById('search-widget');
       const input = document.getElementById('search-input') as HTMLInputElement;
       const label = document.getElementById('search-label');
@@ -305,10 +305,9 @@ function isActive(href: string): boolean {
 
       if (!widget || !input || !dropdown || !results) return;
 
-      // Preload search index
-      loadSearchIndex();
-
       function openSearch() {
+        // The index loads on first activation, never eagerly.
+        loadSearchIndex();
         widget.classList.add('active');
         widget.classList.remove('has-input');
         input.value = '';
@@ -352,6 +351,14 @@ function isActive(href: string): boolean {
         }
       });
 
+      // Tabbing into the input activates the widget too — it was a
+      // permanent invisible tab stop before this.
+      input.addEventListener('focus', () => {
+        if (!widget.classList.contains('active')) {
+          openSearch();
+        }
+      });
+
       // Click outside to close
       document.addEventListener('click', (e) => {
         if (!widget.contains(e.target as Node) && !dropdown.contains(e.target as Node)) {
@@ -359,7 +366,7 @@ function isActive(href: string): boolean {
             closeSearch();
           }
         }
-      });
+      }, { signal });
 
       function highlightMatch(text, query) {
         if (!query || !text) return text || '';
@@ -560,14 +567,8 @@ function isActive(href: string): boolean {
         if (e.key === 'Escape' && widget.classList.contains('active')) {
           closeSearch();
         }
-      });
+      }, { signal });
     }
-
-    // Initialize on first load
-    initThemeToggle();
-    initReadingProgress();
-    initExternalLinks();
-    initSearch();
 
     // Hexagon portal activation - requires clicking BOTH hexes
     function initHexagonPortalTrigger() {
@@ -650,12 +651,6 @@ function isActive(href: string): boolean {
       }
     }
 
-    document.addEventListener('astro:page-load', initHexagonPortalTrigger);
-    if (document.readyState !== 'loading') {
-      initHexagonPortalTrigger();
-    } else {
-      document.addEventListener('DOMContentLoaded', initHexagonPortalTrigger);
-    }
   </script>
 
 </body>

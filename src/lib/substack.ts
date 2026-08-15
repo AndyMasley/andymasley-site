@@ -741,6 +741,26 @@ export function processPostContent(html: string, slug: string, opts: { sidenotes
   // Scene breaks: bare <hr> inside post bodies become an asterism.
   processed = processed.replace(/<hr\b[^>]*>/gi, '<div class="asterism" role="separator">⁂</div>');
 
+  // Contain embeds that would otherwise escape the column. Video embeds get
+  // a 16/9 frame with the house hairline (fixed width/height attributes
+  // stripped so CSS owns the box); everything else — e.g. the Spotify player,
+  // which is natively ~152-352px tall — keeps its height and is only clamped
+  // to the column width. A blanket 16/9 would letterbox those.
+  processed = processed.replace(/<iframe\b[^>]*><\/iframe>|<iframe\b[^>]*\/>/gi, (frame) => {
+    const src = frame.match(/src="([^"]*)"/i)?.[1] || '';
+    const isVideo = /youtube(-nocookie)?\.com|youtu\.be|player\.vimeo\.com/i.test(src);
+    if (isVideo) {
+      const cleaned = frame.replace(/\s(?:width|height)="[^"]*"/gi, '');
+      return `<div class="embed-frame embed-frame--video">${cleaned}</div>`;
+    }
+    return `<div class="embed-frame">${frame}</div>`;
+  });
+
+  // Tables get a horizontal-scroll wrapper so a wide ledger never forces the
+  // whole page sideways on phones.
+  processed = processed.replace(/<table\b/gi, '<div class="table-scroll"><table')
+    .replace(/<\/table>/gi, '</table></div>');
+
   // Tufte sidenotes (inline-content footnotes only; block-content stays bottom-only).
   // Skipped for the RSS feed, where footnotes render at the bottom and inline
   // sidenotes would duplicate them.

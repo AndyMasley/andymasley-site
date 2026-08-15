@@ -31,8 +31,13 @@ interface ParsedContent {
 
 function extractIdAndTitle(tag: string): { id: string; title: string } {
   const idMatch = tag.match(/id="([^"]+)"/);
-  const textMatch = tag.match(/>([^<]+)<\//);
-  return { id: idMatch?.[1] || '', title: textMatch?.[1]?.trim() || '' };
+  const inner = tag.replace(/^<h[1-6][^>]*>/i, '').replace(/<\/h[1-6]>$/i, '');
+  const title = inner
+    .replace(/<a\b[^>]*class="h-anchor"[^>]*>[\s\S]*?<\/a>/gi, '')
+    .replace(/<[^>]*>/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+  return { id: idMatch?.[1] || '', title };
 }
 
 function stripHtml(html: string): string {
@@ -43,40 +48,43 @@ function countWords(html: string): number {
   return stripHtml(html).split(/\s+/).filter(Boolean).length;
 }
 
-function parseHtmlIntoSections(html: string): ParsedContent {
-  const h1Regex = /<h1[^>]*>.*?<\/h1>/gi;
-  const h1s: { match: string; index: number }[] = [];
+// Section level is h2, subsection level h3: processPostContent's
+// normalizeHeadings demotes every body h1 before this component ever sees
+// the HTML, so the raw cache's h1 sections arrive here as h2s.
+export function parseHtmlIntoSections(html: string): ParsedContent {
+  const sectionRegex = /<h2[^>]*>[\s\S]*?<\/h2>/gi;
+  const sectionTags: { match: string; index: number }[] = [];
   let m: RegExpExecArray | null;
-  while ((m = h1Regex.exec(html)) !== null) h1s.push({ match: m[0], index: m.index });
+  while ((m = sectionRegex.exec(html)) !== null) sectionTags.push({ match: m[0], index: m.index });
 
-  const introEnd = h1s.length > 0 ? h1s[0].index : html.length;
+  const introEnd = sectionTags.length > 0 ? sectionTags[0].index : html.length;
   const introHtml = html.slice(0, introEnd).trim();
   const sections: Section[] = [];
 
-  for (let i = 0; i < h1s.length; i++) {
-    const start = h1s[i].index;
-    const end = i + 1 < h1s.length ? h1s[i + 1].index : html.length;
-    const body = html.slice(start + h1s[i].match.length, end);
-    const { id, title } = extractIdAndTitle(h1s[i].match);
+  for (let i = 0; i < sectionTags.length; i++) {
+    const start = sectionTags[i].index;
+    const end = i + 1 < sectionTags.length ? sectionTags[i + 1].index : html.length;
+    const body = html.slice(start + sectionTags[i].match.length, end);
+    const { id, title } = extractIdAndTitle(sectionTags[i].match);
 
     // Skip "Contents" and "This post in a nutshell" sections
     const titleLower = title.toLowerCase();
     if (titleLower === 'contents') continue;
 
-    const h2Regex = /<h2[^>]*>.*?<\/h2>/gi;
-    const h2s: { match: string; index: number }[] = [];
+    const subRegex = /<h3[^>]*>[\s\S]*?<\/h3>/gi;
+    const subTags: { match: string; index: number }[] = [];
     let m2: RegExpExecArray | null;
-    while ((m2 = h2Regex.exec(body)) !== null) h2s.push({ match: m2[0], index: m2.index });
+    while ((m2 = subRegex.exec(body)) !== null) subTags.push({ match: m2[0], index: m2.index });
 
-    const introEnd2 = h2s.length > 0 ? h2s[0].index : body.length;
+    const introEnd2 = subTags.length > 0 ? subTags[0].index : body.length;
     const sectionIntro = body.slice(0, introEnd2).trim();
 
     const subsections: Subsection[] = [];
-    for (let j = 0; j < h2s.length; j++) {
-      const subStart = h2s[j].index + h2s[j].match.length;
-      const subEnd = j + 1 < h2s.length ? h2s[j + 1].index : body.length;
+    for (let j = 0; j < subTags.length; j++) {
+      const subStart = subTags[j].index + subTags[j].match.length;
+      const subEnd = j + 1 < subTags.length ? subTags[j + 1].index : body.length;
       const subHtml = body.slice(subStart, subEnd).trim();
-      const { id: subId, title: subTitle } = extractIdAndTitle(h2s[j].match);
+      const { id: subId, title: subTitle } = extractIdAndTitle(subTags[j].match);
       subsections.push({ id: subId, title: subTitle, html: subHtml, wordCount: countWords(subHtml) });
     }
 

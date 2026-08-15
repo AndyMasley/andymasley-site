@@ -3,7 +3,7 @@ import Base from '@/layouts/Base.astro';
 import { fetchSubstackPosts, fetchPostContent, processPostContent, type SubstackPost } from '@/lib/substack';
 import { fetchEAForumPosts, fetchEAForumPostContent, processEAForumContent, type EAForumPost } from '@/lib/eaforum';
 import { metaPosts, getMetaPostSlugs } from '@/lib/meta-posts';
-import { CheatSheetExplorer } from '@/components/CheatSheetExplorer';
+import { CheatSheetExplorer, parseHtmlIntoSections } from '@/components/CheatSheetExplorer';
 import { ArticleTOC } from '@/components/ArticleTOC';
 import { extractHeadingsFromHtml, type TOCHeading } from '@/lib/extract-headings';
 import { mapWithConcurrency } from '@/lib/map-with-concurrency';
@@ -236,8 +236,20 @@ if (post.source === 'local') {
   displayHtml = extracted.cleanedHtml;
 }
 
-const isCheatSheet = post.slug === 'a-cheat-sheet-for-conversations-about';
-const hasTOC = !isCheatSheet;
+// Build-time guard: the explorer needs parseable sections. If the pipeline
+// ever changes shape again, warn loudly and fall back to the standard essay
+// layout for this post rather than shipping an empty Navigate rail — one
+// drifted post must never block deploys of the other ninety.
+let isCheatSheet = post.slug === 'a-cheat-sheet-for-conversations-about';
+if (isCheatSheet && post.source !== 'local') {
+  const parsedCheat = parseHtmlIntoSections(post.htmlContent);
+  if (parsedCheat.sections.length < 2) {
+    console.warn(
+      `[cheatsheet] ${post.slug}: only ${parsedCheat.sections.length} section(s) parsed from processed HTML — falling back to the standard essay layout`
+    );
+    isCheatSheet = false;
+  }
+}
 const wordCount = post.source === 'local'
   ? post.body.split(/\s+/).length
   : (post.htmlContent.replace(/<[^>]*>/g, '').split(/\s+/).length);
@@ -297,7 +309,7 @@ const articleStructuredData = {
     </footer>
   </div>
 </Base>
-) : hasTOC ? (
+) : (
 <Base
   title={post.title}
   description={post.description}
@@ -386,73 +398,6 @@ const articleStructuredData = {
       </div>
     </div>
   </div>
-</Base>
-) : (
-<Base
-  title={post.title}
-  description={post.description}
-  activeNav="/writing"
-  ogType="article"
-  ogImage={`/og/${post.slug}.png`}
-  ogImageAlt={ogImageAlt}
-  structuredData={articleStructuredData}
-  keywords={seoKeywords}
->
-  <meta slot="head" property="article:published_time" content={post.date.toISOString()} />
-  <meta slot="head" property="article:author" content="Andy Masley" />
-  <article class="article-page article-page--standard">
-    <header class="article-header">
-      <div class="article-header__meta">
-        {!isMetaPost && <span class="article-header__meta-item"><time datetime={post.date.toISOString()}>{formatDate(post.date)}</time></span>}
-        <span class="article-header__meta-item">{readingTime} min read</span>
-        {post.source !== 'local' && (
-          <span class="article-header__meta-item">
-            Originally published on <a href={post.url} target="_blank" rel="noopener">{post.sourceName}</a>
-          </span>
-        )}
-      </div>
-      <h1 class="article-header__title">{post.title}</h1>
-      {standfirst && <p class="article-header__standfirst">{standfirst}</p>}
-    </header>
-
-    <div class="article-body">
-      <div class="article-prose prose">
-        {post.source === 'local' ? (
-          <Content />
-        ) : (
-          <Fragment set:html={post.htmlContent} />
-        )}
-      </div>
-    </div>
-
-    <footer class="article-footer">
-      <div class="article-footer__back">
-        <a href="/writing" class="article-nav__link">
-          ← Back to all writing
-        </a>
-      </div>
-      {(newerPost || olderPost) && (
-        <nav class="article-pagination" aria-label="More writing">
-          {olderPost ? (
-            <a href={`/writing/${olderPost.slug}`} class="article-pagination__link">
-              <span class="article-pagination__label">Older</span>
-              <span class="article-pagination__title">{olderPost.title}</span>
-              <span class="article-pagination__date">{formatDate(olderPost.date)}</span>
-            </a>
-          ) : (
-            <span class="article-pagination__link article-pagination__link--empty" aria-hidden="true"></span>
-          )}
-          {newerPost && (
-            <a href={`/writing/${newerPost.slug}`} class="article-pagination__link article-pagination__link--align-end">
-              <span class="article-pagination__label">Newer</span>
-              <span class="article-pagination__title">{newerPost.title}</span>
-              <span class="article-pagination__date">{formatDate(newerPost.date)}</span>
-            </a>
-          )}
-        </nav>
-      )}
-    </footer>
-  </article>
 </Base>
 )}
 
@@ -1225,20 +1170,22 @@ const articleStructuredData = {
       margin-left: 0;
     }
 
+    /* Block flow, not a grid — and the aside + island shell become
+       display:contents — so the sticky Contents bar's containing block is
+       the whole article instead of a wrapper exactly as tall as the bar
+       itself, which is why it could never actually stick. */
     .article-grid--wide {
-      grid-template-columns: 1fr;
-      row-gap: 1.75rem;
-    }
-
-    .article-grid__main,
-    .article-grid__toc {
-      grid-column: 1;
-      grid-row: auto;
+      display: block;
     }
 
     .article-grid__toc {
       position: static;
       top: auto;
+      display: contents;
+    }
+
+    :global(.article-toc-shell) {
+      display: contents;
     }
 
     :global(.article-toc) {
@@ -1248,8 +1195,10 @@ const articleStructuredData = {
     :global(.article-toc-mobilebar) {
       display: block;
       position: sticky;
-      top: 0.75rem;
+      top: 0;
       z-index: 20;
+      background: var(--bg);
+      margin-bottom: 1.75rem;
     }
 
     :global(.article-toc-mobilebar__button) {

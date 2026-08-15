@@ -254,6 +254,41 @@ p {
   padding-right: 0;
 }
 
+/* Embed containment: video embeds ride in a 16/9 hairline frame; other
+   iframes (podcast players etc.) keep their native height and are only
+   clamped to the column. Wide tables scroll inside their wrapper instead
+   of forcing the page sideways. Lives here, not in page-scoped styles, so
+   the cheat-sheet explorer's injected .prose inherits it too. */
+.prose .embed-frame {
+  margin: var(--space-lg) 0;
+}
+
+.prose .embed-frame iframe {
+  display: block;
+  width: 100%;
+}
+
+.prose .embed-frame--video {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  border: 1px solid var(--border);
+}
+
+.prose .embed-frame--video iframe {
+  position: absolute;
+  inset: 0;
+  height: 100%;
+}
+
+.prose .table-scroll {
+  overflow-x: auto;
+  margin: var(--space-lg) 0;
+}
+
+.prose .table-scroll table {
+  margin: 0;
+}
+
 .prose h2 {
   margin-top: var(--space-2xl);
   margin-bottom: var(--space-md);
@@ -1208,16 +1243,6 @@ details[open] > summary::before {
   font-style: italic;
 }
 
-.footnote-return {
-  font-style: normal;
-  text-decoration: none;
-  opacity: 0.5;
-  transition: opacity var(--transition-fast);
-}
-
-.footnote-return:hover {
-  opacity: 1;
-}
 
 /* Tufte sidenotes: margin notes on wide screens, bottom footnotes elsewhere.
    Hidden by default on every .prose surface; the float geometry applies only
@@ -1249,155 +1274,6 @@ details[open] > summary::before {
   }
   .article-prose .sidenote a { color: var(--accent); }
   .article-prose .footnote.footnotes-list { display: none; }
-}
-
-/* ============================================
-   Components: Search Modal
-   ============================================ */
-
-.search-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.3);
-  z-index: 100;
-  opacity: 0;
-  visibility: hidden;
-  transition: opacity 0.2s ease, visibility 0.2s ease;
-}
-
-.search-overlay--open {
-  opacity: 1;
-  visibility: visible;
-}
-
-.search-modal {
-  position: fixed;
-  inset: 0;
-  z-index: 1000;
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
-  padding-top: 15vh;
-}
-
-.search-modal__backdrop {
-  position: absolute;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.5);
-}
-
-.search-modal__content {
-  position: relative;
-  width: 90%;
-  max-width: 500px;
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: 0;
-  box-shadow: var(--shadow-lg);
-}
-
-.search-modal__input,
-.search-input {
-  width: 100%;
-  padding: var(--space-md);
-  font-family: var(--font-body);
-  font-size: var(--font-size-base);
-  border: none;
-  border-bottom: 1px solid var(--border);
-  background: transparent;
-  color: var(--text);
-  outline: none;
-}
-
-.search-modal__input::placeholder,
-.search-input::placeholder {
-  color: var(--dim);
-}
-
-.search-modal__results,
-.search-results {
-  max-height: 300px;
-  overflow-y: auto;
-}
-
-.search-modal__result,
-.search-result {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: var(--space-sm) var(--space-md);
-  text-decoration: none;
-  color: var(--text);
-  border-bottom: 1px solid var(--border);
-}
-
-.search-modal__result:last-child,
-.search-result:last-child {
-  border-bottom: none;
-}
-
-.search-modal__result:hover,
-.search-result:hover {
-  background: var(--border);
-}
-
-.search-modal__result-title,
-.search-result__title {
-  flex: 1;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  color: var(--text);
-}
-
-.search-modal__result-type,
-.search-result__type {
-  font-size: var(--font-size-mono);
-  font-family: var(--font-label);
-  color: var(--dim);
-  margin-left: var(--space-md);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.search-modal__empty,
-.search-empty {
-  padding: var(--space-md);
-  color: var(--dim);
-  text-align: center;
-}
-
-.search-modal__hint,
-.search-hint {
-  padding: var(--space-sm) var(--space-md);
-  font-size: var(--font-size-mono);
-  font-family: var(--font-label);
-  color: var(--dim);
-  text-align: right;
-  border-top: 1px solid var(--border);
-}
-
-.search-result--selected {
-  background: rgba(0, 0, 0, 0.05);
-}
-
-[data-theme="dark"] .search-result--selected {
-  background: rgba(255, 255, 255, 0.05);
-}
-
-/* ============================================
-   Reading Progress
-   ============================================ */
-
-.reading-progress {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 0%;
-  height: 2px;
-  background: var(--accent);
-  z-index: 99;
-  transition: width 50ms linear;
 }
 
 /* ============================================
@@ -1719,16 +1595,6 @@ details[open] > summary::before {
   /*
    * Mobile Search
    */
-  .search-modal {
-    padding-top: 5vh;
-  }
-
-  .search-modal__content {
-    width: 95%;
-    border-radius: 0;
-  }
-
-  .search-modal__result,
   .search-result {
     padding: 1rem 1.25rem;
   }
@@ -2181,4 +2047,10 @@ details[open] > summary::before {
 [data-theme="dark"] .recent-item__thumblink img,
 [data-theme="dark"] .headshot {
   filter: brightness(0.88);
+}
+
+/* Keyboard affordance in the bracket idiom: tabbing into the hidden input
+   lights the brackets, so the widget has a visible focused state. */
+.search-widget:focus-within .search-bracket {
+  color: var(--accent);
 }
