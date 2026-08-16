@@ -123,6 +123,7 @@ const postsByYear: YearGroup[] = Array.from(yearMap.entries())
                 <option value={topic.slug}>{getFilterName(topic.name)}</option>
               ))}
             </select>
+            <span class="archive-select-caret" aria-hidden="true">▾</span>
           </span>
         </label>
         <label class="archive-selectgroup">
@@ -135,6 +136,7 @@ const postsByYear: YearGroup[] = Array.from(yearMap.entries())
                 <option value="eaforum">EA Forum</option>
               )}
             </select>
+            <span class="archive-select-caret" aria-hidden="true">▾</span>
           </span>
         </label>
       </div>
@@ -360,23 +362,23 @@ const postsByYear: YearGroup[] = Array.from(yearMap.entries())
     color: var(--dim);
   }
 
+  /* The caret is a flow sibling of the select (which is sized to its
+     current value), so it always sits beside the text; the wrap reserves
+     the widest value's width (set by script) so a long choice never
+     budges the next control group rightward. */
   .archive-select-wrap {
-    position: relative;
     display: inline-flex;
     align-items: center;
+    gap: 0.45rem;
   }
 
-  /* One soft caret, drawn as type, theme-aware — not widget triangles. */
-  .archive-select-wrap::after {
-    content: '\25BE';
-    position: absolute;
-    right: 2px;
+  .archive-select-caret {
     color: var(--dim);
     font-size: 0.65em;
     pointer-events: none;
   }
 
-  .archive-select-wrap:hover::after {
+  .archive-select-wrap:hover .archive-select-caret {
     color: var(--text);
   }
 
@@ -388,7 +390,7 @@ const postsByYear: YearGroup[] = Array.from(yearMap.entries())
     color: var(--text);
     font-family: var(--font-body);
     font-size: var(--text-sm);
-    padding: 0.2rem 1.25rem 0.2rem 0;
+    padding: 0.2rem 0;
     cursor: pointer;
   }
 
@@ -812,20 +814,25 @@ const postsByYear: YearGroup[] = Array.from(yearMap.entries())
       sourceSelect ? Array.from(sourceSelect.options).map(option => option.value) : []
     );
 
-    // A chosen filter reads bold; 'all' reads quiet. The select is also
-    // sized to its current value (not its longest option), so the caret
-    // sits beside the text instead of floating at the widest option's
-    // right edge.
+    // A chosen filter reads bold; 'all' reads quiet. The select is sized
+    // to its current value so the caret sits beside the text, while the
+    // wrap reserves the widest option's width (measured bold, the wider
+    // rendering) so choosing a long topic never budges the next group.
     const measureCtx = document.createElement('canvas').getContext('2d');
     function markSelect(select: HTMLSelectElement | null) {
-      if (!select) return;
+      if (!select || !measureCtx) return;
       select.classList.toggle('archive-select--set', select.value !== 'all');
-      if (measureCtx) {
-        const cs = getComputedStyle(select);
-        measureCtx.font = `${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
-        const label = select.selectedOptions[0]?.textContent || '';
-        const padding = parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight);
-        select.style.width = `${Math.ceil(measureCtx.measureText(label).width + padding + 2)}px`;
+      const cs = getComputedStyle(select);
+      measureCtx.font = `${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
+      const label = select.selectedOptions[0]?.textContent || '';
+      select.style.width = `${Math.ceil(measureCtx.measureText(label).width + 2)}px`;
+
+      const wrap = select.parentElement as HTMLElement | null;
+      if (wrap && !wrap.style.minWidth) {
+        measureCtx.font = `700 ${cs.fontSize} ${cs.fontFamily}`;
+        const widest = Math.max(...Array.from(select.options).map(o => measureCtx.measureText(o.textContent || '').width));
+        // widest value + flex gap + caret glyph allowance
+        wrap.style.minWidth = `${Math.ceil(widest + 2 + 18)}px`;
       }
     }
     markSelect(topicSelect);
