@@ -97,8 +97,8 @@ const postsByYear: YearGroup[] = Array.from(yearMap.entries())
 <Base title="Writing" description="Essays on AI and the environment, animal welfare, effective altruism, political liberalism, and more. Published on Substack and elsewhere." ogImage="/og/page/writing.png?v=2">
   <h1 class="sr-only">Writing</h1>
   <section class="writing-section writing-section--archive" id="writing-archive" aria-label="Writing archive">
-    {/* Filters you can see beat filters in dropdowns: every topic is one
-        click, the active one marked in ink, nothing hidden behind a caret. */}
+    {/* One hairline search row, then one quiet control row: two labeled
+        selects set small in the house type, a single soft caret each. */}
     <div class="archive-controls">
       <div class="archive-search">
         <input
@@ -113,25 +113,30 @@ const postsByYear: YearGroup[] = Array.from(yearMap.entries())
         <a class="archive-bounty-link" href="/writing/errors-and-updates">$300 error bounty</a>
       </div>
 
-      <div class="archive-facet">
-        <span class="archive-facet__label" id="archive-topic-label">Topic</span>
-        <div class="archive-facet__options" id="archive-topic" role="group" aria-labelledby="archive-topic-label">
-          <button type="button" class="archive-facet__opt archive-facet__opt--active" data-value="all" aria-pressed="true">All</button>
-          {activeCategories.map(topic => (
-            <button type="button" class="archive-facet__opt" data-value={topic.slug} aria-pressed="false">{getFilterName(topic.name)}</button>
-          ))}
-        </div>
-      </div>
-
-      <div class="archive-facet">
-        <span class="archive-facet__label" id="archive-source-label">Source</span>
-        <div class="archive-facet__options" id="archive-source" role="group" aria-labelledby="archive-source-label">
-          <button type="button" class="archive-facet__opt archive-facet__opt--active" data-value="all" aria-pressed="true">All</button>
-          <button type="button" class="archive-facet__opt" data-value="substack" aria-pressed="false">Substack</button>
-          {eaForumTimelinePosts.length > 0 && (
-            <button type="button" class="archive-facet__opt" data-value="eaforum" aria-pressed="false">EA Forum</button>
-          )}
-        </div>
+      <div class="archive-selects">
+        <label class="archive-selectgroup">
+          <span class="archive-selectgroup__label">Topic</span>
+          <span class="archive-select-wrap">
+            <select id="archive-topic" class="archive-select">
+              <option value="all">All topics</option>
+              {activeCategories.map(topic => (
+                <option value={topic.slug}>{getFilterName(topic.name)}</option>
+              ))}
+            </select>
+          </span>
+        </label>
+        <label class="archive-selectgroup">
+          <span class="archive-selectgroup__label">Source</span>
+          <span class="archive-select-wrap">
+            <select id="archive-source" class="archive-select">
+              <option value="all">All sources</option>
+              <option value="substack">Substack</option>
+              {eaForumTimelinePosts.length > 0 && (
+                <option value="eaforum">EA Forum</option>
+              )}
+            </select>
+          </span>
+        </label>
       </div>
 
       <div class="archive-toolbar">
@@ -301,9 +306,8 @@ const postsByYear: YearGroup[] = Array.from(yearMap.entries())
     padding: 0.2rem 0 0.1rem;
   }
 
-  /* One search row on one hairline, then two labeled facet rows of plain
-     text options — the active one marked in ink and underline, exactly
-     the nav's grammar. No dropdown furniture. */
+  /* One search row on one hairline, then one control row of two quiet
+     labeled selects — small type, one soft caret each, no boxes. */
   .archive-search {
     display: flex;
     align-items: baseline;
@@ -333,16 +337,22 @@ const postsByYear: YearGroup[] = Array.from(yearMap.entries())
     color: var(--dim);
   }
 
-  .archive-facet {
+  .archive-selects {
     display: flex;
-    align-items: baseline;
-    gap: 1.1rem;
-    margin-top: 0.9rem;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.6rem 2.75rem;
+    margin-top: 1rem;
   }
 
-  .archive-facet__label {
-    flex-shrink: 0;
-    width: 3.6rem;
+  .archive-selectgroup {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.7rem;
+    cursor: pointer;
+  }
+
+  .archive-selectgroup__label {
     font-family: var(--font-body);
     font-size: var(--text-xs);
     letter-spacing: 0.12em;
@@ -350,34 +360,46 @@ const postsByYear: YearGroup[] = Array.from(yearMap.entries())
     color: var(--dim);
   }
 
-  .archive-facet__options {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.3rem 1.15rem;
+  .archive-select-wrap {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
   }
 
-  .archive-facet__opt {
-    padding: 0;
+  /* One soft caret, drawn as type, theme-aware — not widget triangles. */
+  .archive-select-wrap::after {
+    content: '\25BE';
+    position: absolute;
+    right: 2px;
+    color: var(--dim);
+    font-size: 0.65em;
+    pointer-events: none;
+  }
+
+  .archive-select-wrap:hover::after {
+    color: var(--text);
+  }
+
+  .archive-select {
+    appearance: none;
     border: none;
-    background: none;
+    border-radius: 0;
+    background: transparent;
+    color: var(--text);
     font-family: var(--font-body);
     font-size: var(--text-sm);
-    color: var(--dim);
+    padding: 0.2rem 1.25rem 0.2rem 0;
     cursor: pointer;
   }
 
-  .archive-facet__opt:hover {
-    color: var(--text);
-    text-decoration: underline;
-    text-underline-offset: 3px;
-    text-decoration-thickness: 1px;
+  /* A chosen filter shows its weight. */
+  .archive-select--set {
+    font-weight: 700;
   }
 
-  .archive-facet__opt--active {
-    color: var(--text);
-    text-decoration: underline;
-    text-underline-offset: 3px;
-    text-decoration-thickness: 1px;
+  .archive-select:focus-visible {
+    outline: 1px solid var(--accent);
+    outline-offset: 3px;
   }
 
   .archive-toolbar {
@@ -677,10 +699,13 @@ const postsByYear: YearGroup[] = Array.from(yearMap.entries())
       flex-wrap: wrap;
     }
 
-    /* Facet options keep generous tap targets without visual bulk. */
-    .archive-facet__opt {
-      padding: 0.3rem 0;
-      margin: -0.3rem 0;
+    /* 16px select text keeps iOS from zooming the picker open. */
+    .archive-select {
+      font-size: var(--text-base);
+    }
+
+    .archive-selects {
+      gap: 0.6rem 1.6rem;
     }
   }
 
@@ -760,8 +785,8 @@ const postsByYear: YearGroup[] = Array.from(yearMap.entries())
       cleanupFns.push(() => target.removeEventListener(type, handler, options));
     }
 
-    const topicButtons = Array.from(document.querySelectorAll('#archive-topic .archive-facet__opt')) as HTMLButtonElement[];
-    const sourceButtons = Array.from(document.querySelectorAll('#archive-source .archive-facet__opt')) as HTMLButtonElement[];
+    const topicSelect = document.getElementById('archive-topic') as HTMLSelectElement | null;
+    const sourceSelect = document.getElementById('archive-source') as HTMLSelectElement | null;
     const searchInput = document.getElementById('archive-search') as HTMLInputElement | null;
     const searchClear = document.getElementById('archive-search-clear') as HTMLButtonElement | null;
     const clearAll = document.getElementById('archive-clear') as HTMLButtonElement | null;
@@ -780,16 +805,31 @@ const postsByYear: YearGroup[] = Array.from(yearMap.entries())
     let archiveSearchIndexPromise: Promise<Map<string, string>> | null = null;
     let searchRequestId = 0;
 
-    const validTopics = new Set(topicButtons.map(b => b.dataset.value || ''));
-    const validSources = new Set(sourceButtons.map(b => b.dataset.value || ''));
+    const validTopics = new Set(
+      topicSelect ? Array.from(topicSelect.options).map(option => option.value) : []
+    );
+    const validSources = new Set(
+      sourceSelect ? Array.from(sourceSelect.options).map(option => option.value) : []
+    );
 
-    function setFacet(buttons: HTMLButtonElement[], value: string) {
-      buttons.forEach(b => {
-        const active = (b.dataset.value || '') === value;
-        b.classList.toggle('archive-facet__opt--active', active);
-        b.setAttribute('aria-pressed', active ? 'true' : 'false');
-      });
+    // A chosen filter reads bold; 'all' reads quiet. The select is also
+    // sized to its current value (not its longest option), so the caret
+    // sits beside the text instead of floating at the widest option's
+    // right edge.
+    const measureCtx = document.createElement('canvas').getContext('2d');
+    function markSelect(select: HTMLSelectElement | null) {
+      if (!select) return;
+      select.classList.toggle('archive-select--set', select.value !== 'all');
+      if (measureCtx) {
+        const cs = getComputedStyle(select);
+        measureCtx.font = `${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
+        const label = select.selectedOptions[0]?.textContent || '';
+        const padding = parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight);
+        select.style.width = `${Math.ceil(measureCtx.measureText(label).width + padding + 2)}px`;
+      }
     }
+    markSelect(topicSelect);
+    markSelect(sourceSelect);
 
     function getWritingSlug(url: string) {
       const match = url.match(/^\/writing\/([^/?#]+)/);
@@ -942,26 +982,28 @@ const postsByYear: YearGroup[] = Array.from(yearMap.entries())
       state.source = 'all';
       state.query = '';
 
-      setFacet(topicButtons, 'all');
-      setFacet(sourceButtons, 'all');
+      if (topicSelect) topicSelect.value = 'all';
+      if (sourceSelect) sourceSelect.value = 'all';
+      markSelect(topicSelect);
+      markSelect(sourceSelect);
       if (searchInput) searchInput.value = '';
 
       updateOverview();
       renderArchive();
     }
 
-    topicButtons.forEach(button => on(button, 'click', () => {
-      state.topic = button.dataset.value || 'all';
-      setFacet(topicButtons, state.topic);
+    on(topicSelect, 'change', () => {
+      state.topic = topicSelect?.value || 'all';
+      markSelect(topicSelect);
       updateOverview();
       renderArchive();
-    }));
+    });
 
-    sourceButtons.forEach(button => on(button, 'click', () => {
-      state.source = button.dataset.value || 'all';
-      setFacet(sourceButtons, state.source);
+    on(sourceSelect, 'change', () => {
+      state.source = sourceSelect?.value || 'all';
+      markSelect(sourceSelect);
       renderArchive();
-    }));
+    });
 
     on(searchInput, 'input', () => {
       state.query = searchInput?.value.trim().toLowerCase() || '';
@@ -1004,12 +1046,14 @@ const postsByYear: YearGroup[] = Array.from(yearMap.entries())
 
     if (validTopics.has(topicParam)) {
       state.topic = topicParam;
-      setFacet(topicButtons, topicParam);
+      if (topicSelect) topicSelect.value = topicParam;
+      markSelect(topicSelect);
     }
 
     if (validSources.has(sourceParam)) {
       state.source = sourceParam;
-      setFacet(sourceButtons, sourceParam);
+      if (sourceSelect) sourceSelect.value = sourceParam;
+      markSelect(sourceSelect);
     }
 
     if (queryParam && searchInput) {
