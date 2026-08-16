@@ -1,6 +1,21 @@
 ---
 import SectionPage from '@/layouts/SectionPage.astro';
-import { appearanceGroups as groups } from '@/data/appearances';
+import { appearanceGroups, type Appearance } from '@/data/appearances';
+
+// Ledger style: a month names itself once and holds every appearance from
+// that month under it — no repeated dates down the column.
+interface DateRun { date: string; items: Appearance[] }
+function groupByDate(items: Appearance[]): DateRun[] {
+  const runs: DateRun[] = [];
+  for (const item of items) {
+    const last = runs[runs.length - 1];
+    if (last && last.date === item.date) last.items.push(item);
+    else runs.push({ date: item.date, items: [item] });
+  }
+  return runs;
+}
+
+const groups = appearanceGroups.map(g => ({ heading: g.heading, runs: groupByDate(g.items) }));
 ---
 
 <SectionPage
@@ -13,10 +28,14 @@ import { appearanceGroups as groups } from '@/data/appearances';
     <section class="appearance-group">
       <h2 class="appearance-group__heading">{group.heading}</h2>
       <ul class="appearance-group__list">
-        {group.items.map(item => (
+        {group.runs.map(run => (
           <li class="appearance-row">
-            <span class="appearance-row__date">{item.date}</span>
-            <a href={item.href} target="_blank" rel="noopener" class="appearance-row__link">{item.title}</a>
+            <span class="appearance-row__date">{run.date}</span>
+            <div class="appearance-row__titles">
+              {run.items.map(item => (
+                <a href={item.href} target="_blank" rel="noopener" class="appearance-row__link">{item.title}</a>
+              ))}
+            </div>
           </li>
         ))}
       </ul>
@@ -65,7 +84,14 @@ import { appearanceGroups as groups } from '@/data/appearances';
     font-variant-numeric: tabular-nums;
   }
 
+  .appearance-row__titles {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+  }
+
   .appearance-row__link {
+    align-self: flex-start;
     font-size: var(--text-base);
     line-height: 1.4;
     color: var(--text);
