@@ -676,16 +676,22 @@ a:active {
   color: var(--text);
 }
 
+/* Flex, not inline flow: markup whitespace between groups collapses to
+   nothing, so every gap around a separator is explicit CSS — the dots sit
+   dead-center between labels instead of inheriting stray word spaces. */
 .header__nav {
   font-family: var(--font-body);
   font-size: var(--font-size-small);
   letter-spacing: 0;
+  display: flex;
+  flex-wrap: wrap;
 }
 
-/* Each '· label' pair wraps as one unit (see Base.astro). */
+/* Each 'label ·' pair wraps as one unit (see Base.astro). */
 .header__nav-group {
   white-space: nowrap;
-  display: inline-block;
+  display: inline-flex;
+  align-items: baseline;
 }
 
 .header__nav-link {
@@ -697,13 +703,17 @@ a:active {
   margin: 0;
   position: relative;
   transition: color var(--transition-fast);
-  text-align: left;
+  /* The label centers in its bold-width box, splitting the reserved
+     bold/regular width difference evenly — the dot's gap reads the same
+     on both sides of every label. */
+  text-align: center;
 }
 
 /* Every link reserves the width of its own bold rendering (an invisible
    zero-height bold ghost of the label), so the active page going bold
-   never reflows its neighbors. */
-.header__nav-link::before {
+   never reflows its neighbors. The ghost is ::after — placed before the
+   text it would become the link's first line and hijack its baseline. */
+.header__nav-link::after {
   content: attr(data-label);
   display: block;
   height: 0;
@@ -722,7 +732,9 @@ a:active {
   font-weight: 700;
 }
 
-.header__nav-link--active::after {
+/* The active hairline lives on ::before (::after is the width ghost);
+   absolutely positioned, so it never affects flow or baselines. */
+.header__nav-link--active::before {
   content: '';
   position: absolute;
   bottom: -0.15em;
@@ -735,7 +747,7 @@ a:active {
 
 .header__nav-sep {
   color: var(--dim);
-  margin: 0 6px;
+  margin: 0 9px;
   opacity: 0.4;
 }
 
@@ -1602,7 +1614,7 @@ details[open] > summary::before {
 
   /* The desktop hairline hangs off the padded tap-target box here, far
      below the label; a text-decoration underline hugs the text itself. */
-  .header__nav-link--active::after {
+  .header__nav-link--active::before {
     display: none;
   }
 
@@ -1612,8 +1624,10 @@ details[open] > summary::before {
     text-underline-offset: 3px;
   }
 
+  /* Links carry 0.5rem tap padding on each side here; the sep margin
+     tops it up to the same visual gap as desktop, symmetric. */
   .header__nav-sep {
-    margin: 0 0.125rem;
+    margin: 0 0.0625rem;
   }
 
   /* Header controls - aligned on mobile */
