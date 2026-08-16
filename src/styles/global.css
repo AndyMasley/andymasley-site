@@ -1659,8 +1659,11 @@ details[open] > summary::before {
   }
 
   /* The dropdown hangs from a ~48px-wide widget on phones; anchor it to
-     the viewport's content margins instead of the widget box. */
-  .search-dropdown {
+     the viewport's content margins instead of the widget box. Scoped under
+     .search-widget so it outranks the base rule later in the file (which
+     otherwise leaves an invisible 358px box hanging past the right edge —
+     the phone's phantom horizontal scroll). */
+  .search-widget .search-dropdown {
     position: fixed;
     left: var(--page-pad);
     right: var(--page-pad);

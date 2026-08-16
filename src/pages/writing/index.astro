@@ -1,6 +1,6 @@
 ---
 import Base from '@/layouts/Base.astro';
-import { fetchSubstackPosts, fetchPostContent, categoryConfigs, parseSubcategoriesFromHTML } from '@/lib/substack';
+import { fetchSubstackPosts, categoryConfigs } from '@/lib/substack';
 import { metaPosts, getMetaPostSlugs } from '@/lib/meta-posts';
 import { bylines } from '@/lib/bylines';
 import { fetchEAForumPosts } from '@/lib/eaforum';
@@ -56,15 +56,7 @@ const posts: TimelinePost[] = [...substackPosts, ...eaForumTimelinePosts].sort(
 );
 
 
-const metaPostsWithContent = await Promise.all(
-  metaPosts.map(async (meta) => {
-    const content = await fetchPostContent(meta.slug);
-    return { ...meta, content };
-  })
-);
-
-const aiEnvMeta = metaPostsWithContent.find(meta => meta.slug === 'ai-and-the-environment');
-const aiEnvSubcategories = aiEnvMeta ? parseSubcategoriesFromHTML(aiEnvMeta.content) : [];
+const aiEnvMeta = metaPosts.find(meta => meta.slug === 'ai-and-the-environment');
 const activeCategories = categoryConfigs.filter(config => posts.some(post => post.category === config.name));
 const hasBylines = bylines.length > 0;
 const bylinesPreviewCount = 5;
@@ -105,51 +97,40 @@ const postsByYear: YearGroup[] = Array.from(yearMap.entries())
 <Base title="Writing" description="Essays on AI and the environment, animal welfare, effective altruism, political liberalism, and more. Published on Substack and elsewhere." ogImage="/og/page/writing.png?v=2">
   <h1 class="sr-only">Writing</h1>
   <section class="writing-section writing-section--archive" id="writing-archive" aria-label="Writing archive">
+    {/* Filters you can see beat filters in dropdowns: every topic is one
+        click, the active one marked in ink, nothing hidden behind a caret. */}
     <div class="archive-controls">
-      <div class="archive-control archive-control--search">
-        <div class="archive-search">
-          <input
-            id="archive-search"
-            class="archive-search__input"
-            type="search"
-            placeholder="Search writing"
-            aria-label="Search writing"
-            autocomplete="off"
-          />
-          <button id="archive-search-clear" class="archive-inline-action" type="button" hidden>Clear</button>
-          <a class="archive-bounty-link" href="/writing/errors-and-updates">$300 error bounty</a>
+      <div class="archive-search">
+        <input
+          id="archive-search"
+          class="archive-search__input"
+          type="search"
+          placeholder="Search writing"
+          aria-label="Search writing"
+          autocomplete="off"
+        />
+        <button id="archive-search-clear" class="archive-inline-action" type="button" hidden>Clear</button>
+        <a class="archive-bounty-link" href="/writing/errors-and-updates">$300 error bounty</a>
+      </div>
+
+      <div class="archive-facet">
+        <span class="archive-facet__label" id="archive-topic-label">Topic</span>
+        <div class="archive-facet__options" id="archive-topic" role="group" aria-labelledby="archive-topic-label">
+          <button type="button" class="archive-facet__opt archive-facet__opt--active" data-value="all" aria-pressed="true">All</button>
+          {activeCategories.map(topic => (
+            <button type="button" class="archive-facet__opt" data-value={topic.slug} aria-pressed="false">{getFilterName(topic.name)}</button>
+          ))}
         </div>
       </div>
 
-      <div class="archive-control-grid">
-        <div class="archive-control">
-          <select id="archive-topic" class="archive-select" aria-label="Topic">
-            <option value="all">All topics</option>
-            {activeCategories.map(topic => (
-              <option value={topic.slug}>{getFilterName(topic.name)}</option>
-            ))}
-          </select>
-        </div>
-
-        <div class="archive-control">
-          <select id="archive-source" class="archive-select" aria-label="Source">
-            <option value="all">All sources</option>
-            <option value="substack">Substack</option>
-            {eaForumTimelinePosts.length > 0 && (
-              <option value="eaforum">EA Forum</option>
-            )}
-          </select>
-        </div>
-
-        <div class="archive-control" id="archive-theme-wrap" hidden>
-          <select id="archive-theme" class="archive-select" aria-label="AI and environment theme">
-            <option value="">All themes</option>
-            {aiEnvSubcategories.map(theme => (
-              <option value={theme.slug} data-posts={JSON.stringify(theme.postSlugs)}>
-                {theme.name}
-              </option>
-            ))}
-          </select>
+      <div class="archive-facet">
+        <span class="archive-facet__label" id="archive-source-label">Source</span>
+        <div class="archive-facet__options" id="archive-source" role="group" aria-labelledby="archive-source-label">
+          <button type="button" class="archive-facet__opt archive-facet__opt--active" data-value="all" aria-pressed="true">All</button>
+          <button type="button" class="archive-facet__opt" data-value="substack" aria-pressed="false">Substack</button>
+          {eaForumTimelinePosts.length > 0 && (
+            <button type="button" class="archive-facet__opt" data-value="eaforum" aria-pressed="false">EA Forum</button>
+          )}
         </div>
       </div>
 
@@ -320,69 +301,83 @@ const postsByYear: YearGroup[] = Array.from(yearMap.entries())
     padding: 0.2rem 0 0.1rem;
   }
 
-  .archive-control {
-    display: grid;
-    gap: 0.35rem;
-  }
-
-  .archive-control-grid {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0.85rem;
-  }
-
-  .archive-control-grid.archive-control-grid--with-theme {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-
+  /* One search row on one hairline, then two labeled facet rows of plain
+     text options — the active one marked in ink and underline, exactly
+     the nav's grammar. No dropdown furniture. */
   .archive-search {
     display: flex;
-    align-items: center;
-    gap: 0.85rem;
+    align-items: baseline;
+    gap: 1rem;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 0.4rem;
   }
 
-  .archive-search__input,
-  .archive-select {
-    width: 100%;
-    min-width: 0;
-    border: none;
-    border-bottom: 1px solid var(--border);
-    border-radius: 0;
-    background-color: transparent;
-    color: var(--text);
-    font: inherit;
+  .archive-search:focus-within {
+    border-bottom-color: var(--accent);
   }
 
   .archive-search__input {
-    padding: 0.7rem 0.05rem 0.5rem;
+    flex: 1;
+    min-width: 0;
+    border: none;
+    border-radius: 0;
+    background: transparent;
+    color: var(--text);
     font-family: var(--font-editorial);
-    font-size: var(--text-md);
+    font-size: var(--text-base);
+    padding: 0.35rem 0 0;
+    outline: none;
   }
 
   .archive-search__input::placeholder {
     color: var(--dim);
   }
 
-  .archive-control[hidden] {
-    display: none !important;
+  .archive-facet {
+    display: flex;
+    align-items: baseline;
+    gap: 1.1rem;
+    margin-top: 0.9rem;
   }
 
-  .archive-select {
-    appearance: none;
-    padding: 0.65rem 1.35rem 0.45rem 0.05rem;
-    background-image:
-      linear-gradient(45deg, transparent 50%, var(--dim) 50%),
-      linear-gradient(135deg, var(--dim) 50%, transparent 50%);
-    background-position:
-      calc(100% - 0.65rem) calc(50% + 1px),
-      calc(100% - 0.35rem) calc(50% + 1px);
-    background-size: 0.32rem 0.32rem, 0.32rem 0.32rem;
-    background-repeat: no-repeat;
+  .archive-facet__label {
+    flex-shrink: 0;
+    width: 3.6rem;
+    font-family: var(--font-body);
+    font-size: var(--text-xs);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--dim);
   }
 
-  .archive-search__input:focus,
-  .archive-select:focus {
-    border-bottom-color: var(--accent);
+  .archive-facet__options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem 1.15rem;
+  }
+
+  .archive-facet__opt {
+    padding: 0;
+    border: none;
+    background: none;
+    font-family: var(--font-body);
+    font-size: var(--text-sm);
+    color: var(--dim);
+    cursor: pointer;
+  }
+
+  .archive-facet__opt:hover {
+    color: var(--text);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    text-decoration-thickness: 1px;
+  }
+
+  .archive-facet__opt--active {
+    color: var(--text);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    text-decoration-thickness: 1px;
   }
 
   .archive-toolbar {
@@ -678,14 +673,14 @@ const postsByYear: YearGroup[] = Array.from(yearMap.entries())
       align-items: start;
     }
 
-    /* Two selects side by side and the bounty link inline: the first
-       screen belongs to the covers, not the furniture. */
-    .archive-control-grid {
-      grid-template-columns: 1fr 1fr;
-    }
-
     .archive-search {
       flex-wrap: wrap;
+    }
+
+    /* Facet options keep generous tap targets without visual bulk. */
+    .archive-facet__opt {
+      padding: 0.3rem 0;
+      margin: -0.3rem 0;
     }
   }
 
@@ -765,11 +760,8 @@ const postsByYear: YearGroup[] = Array.from(yearMap.entries())
       cleanupFns.push(() => target.removeEventListener(type, handler, options));
     }
 
-    const topicSelect = document.getElementById('archive-topic') as HTMLSelectElement | null;
-    const controlGrid = document.querySelector('.archive-control-grid') as HTMLElement | null;
-    const themeWrap = document.getElementById('archive-theme-wrap') as HTMLElement | null;
-    const themeSelect = document.getElementById('archive-theme') as HTMLSelectElement | null;
-    const sourceSelect = document.getElementById('archive-source') as HTMLSelectElement | null;
+    const topicButtons = Array.from(document.querySelectorAll('#archive-topic .archive-facet__opt')) as HTMLButtonElement[];
+    const sourceButtons = Array.from(document.querySelectorAll('#archive-source .archive-facet__opt')) as HTMLButtonElement[];
     const searchInput = document.getElementById('archive-search') as HTMLInputElement | null;
     const searchClear = document.getElementById('archive-search-clear') as HTMLButtonElement | null;
     const clearAll = document.getElementById('archive-clear') as HTMLButtonElement | null;
@@ -782,23 +774,22 @@ const postsByYear: YearGroup[] = Array.from(yearMap.entries())
       topic: 'all',
       source: 'all',
       query: '',
-      theme: '',
-      themePosts: [] as string[],
     };
 
     let archiveSearchIndex: Map<string, string> | null = null;
     let archiveSearchIndexPromise: Promise<Map<string, string>> | null = null;
     let searchRequestId = 0;
 
-    const validTopics = new Set(
-      topicSelect ? Array.from(topicSelect.options).map(option => option.value) : []
-    );
-    const validSources = new Set(
-      sourceSelect ? Array.from(sourceSelect.options).map(option => option.value) : []
-    );
-    const validThemes = new Set(
-      themeSelect ? Array.from(themeSelect.options).map(option => option.value).filter(Boolean) : []
-    );
+    const validTopics = new Set(topicButtons.map(b => b.dataset.value || ''));
+    const validSources = new Set(sourceButtons.map(b => b.dataset.value || ''));
+
+    function setFacet(buttons: HTMLButtonElement[], value: string) {
+      buttons.forEach(b => {
+        const active = (b.dataset.value || '') === value;
+        b.classList.toggle('archive-facet__opt--active', active);
+        b.setAttribute('aria-pressed', active ? 'true' : 'false');
+      });
+    }
 
     function getWritingSlug(url: string) {
       const match = url.match(/^\/writing\/([^/?#]+)/);
@@ -857,33 +848,15 @@ const postsByYear: YearGroup[] = Array.from(yearMap.entries())
     }
 
     function hasActiveFilters() {
-      return state.topic !== 'all' || state.source !== 'all' || state.query !== '' || state.theme !== '';
+      return state.topic !== 'all' || state.source !== 'all' || state.query !== '';
     }
 
-    function updateThemeVisibility() {
-      const show = state.topic === 'ai-environment' && Boolean(themeSelect) && themeSelect.options.length > 1;
-
-      if (controlGrid) {
-        controlGrid.classList.toggle('archive-control-grid--with-theme', show);
-      }
-
-      if (themeWrap) {
-        themeWrap.hidden = !show;
-      }
-
-      // The overview line surfaces only for readers browsing the topic it
-      // introduces (Andy's call — the homepage carries the general pointer).
+    // The overview line surfaces only for readers browsing the topic it
+    // introduces (Andy's call — the homepage carries the general pointer).
+    function updateOverview() {
       const overview = document.getElementById('archive-overview');
       if (overview) {
         overview.hidden = state.topic !== 'ai-environment';
-      }
-
-      if (!show) {
-        state.theme = '';
-        state.themePosts = [];
-        if (themeSelect) {
-          themeSelect.value = '';
-        }
       }
     }
 
@@ -908,11 +881,8 @@ const postsByYear: YearGroup[] = Array.from(yearMap.entries())
         params.delete('q');
       }
 
-      if (state.theme !== '') {
-        params.set('theme', state.theme);
-      } else {
-        params.delete('theme');
-      }
+      // The theme facet is retired; scrub it from old shared URLs.
+      params.delete('theme');
 
       const nextUrl = params.toString()
         ? `${window.location.pathname}?${params.toString()}${window.location.hash}`
@@ -939,12 +909,7 @@ const postsByYear: YearGroup[] = Array.from(yearMap.entries())
         const topicMatch = state.topic === 'all' || cardTopic === state.topic;
         const sourceMatch = state.source === 'all' || cardSource === state.source;
         const searchMatch = state.query === '' || cardText.includes(state.query) || cardContent.includes(state.query);
-        const themeMatch = state.theme === '' || state.themePosts.includes(cardSlug);
-        // A theme is a hand-curated list from the guide; when one is
-        // selected it wins over the topic filter, so a curated post whose
-        // category lives elsewhere (e.g. a Politics essay foundational to
-        // the AI series) still appears.
-        const visible = sourceMatch && searchMatch && (state.theme !== '' ? themeMatch : topicMatch);
+        const visible = topicMatch && sourceMatch && searchMatch;
 
         card.classList.toggle('hidden', !visible);
         if (visible) {
@@ -976,37 +941,27 @@ const postsByYear: YearGroup[] = Array.from(yearMap.entries())
       state.topic = 'all';
       state.source = 'all';
       state.query = '';
-      state.theme = '';
-      state.themePosts = [];
 
-      if (topicSelect) topicSelect.value = 'all';
-      if (sourceSelect) sourceSelect.value = 'all';
-      if (themeSelect) themeSelect.value = '';
+      setFacet(topicButtons, 'all');
+      setFacet(sourceButtons, 'all');
       if (searchInput) searchInput.value = '';
 
-      updateThemeVisibility();
+      updateOverview();
       renderArchive();
     }
 
-    on(topicSelect, 'change', () => {
-      state.topic = topicSelect?.value || 'all';
-      updateThemeVisibility();
+    topicButtons.forEach(button => on(button, 'click', () => {
+      state.topic = button.dataset.value || 'all';
+      setFacet(topicButtons, state.topic);
+      updateOverview();
       renderArchive();
-    });
+    }));
 
-    on(sourceSelect, 'change', () => {
-      state.source = sourceSelect?.value || 'all';
+    sourceButtons.forEach(button => on(button, 'click', () => {
+      state.source = button.dataset.value || 'all';
+      setFacet(sourceButtons, state.source);
       renderArchive();
-    });
-
-    on(themeSelect, 'change', () => {
-      const option = themeSelect?.selectedOptions[0];
-      const theme = option?.value || '';
-      const postsJson = option?.dataset.posts;
-      state.theme = theme;
-      state.themePosts = postsJson ? JSON.parse(postsJson) : [];
-      renderArchive();
-    });
+    }));
 
     on(searchInput, 'input', () => {
       state.query = searchInput?.value.trim().toLowerCase() || '';
@@ -1046,16 +1001,15 @@ const postsByYear: YearGroup[] = Array.from(yearMap.entries())
     const topicParam = params.get('topic') || 'all';
     const sourceParam = params.get('source') || 'all';
     const queryParam = params.get('q') || '';
-    const themeParam = params.get('theme') || '';
 
     if (validTopics.has(topicParam)) {
       state.topic = topicParam;
-      if (topicSelect) topicSelect.value = topicParam;
+      setFacet(topicButtons, topicParam);
     }
 
     if (validSources.has(sourceParam)) {
       state.source = sourceParam;
-      if (sourceSelect) sourceSelect.value = sourceParam;
+      setFacet(sourceButtons, sourceParam);
     }
 
     if (queryParam && searchInput) {
@@ -1063,15 +1017,7 @@ const postsByYear: YearGroup[] = Array.from(yearMap.entries())
       state.query = queryParam.trim().toLowerCase();
     }
 
-    updateThemeVisibility();
-
-    if (state.topic === 'ai-environment' && validThemes.has(themeParam) && themeSelect) {
-      themeSelect.value = themeParam;
-      const option = themeSelect.selectedOptions[0];
-      state.theme = themeParam;
-      state.themePosts = option?.dataset.posts ? JSON.parse(option.dataset.posts) : [];
-    }
-
+    updateOverview();
     renderArchive();
 
     void loadArchiveSearchIndex()
