@@ -5,6 +5,7 @@ import { appearanceGroups as groups } from '@/data/appearances';
 
 <SectionPage
   title="Appearances"
+  lede="Podcasts and other appearances, most recent first."
   description="Podcasts and other appearances"
   ogImage="/og/page/appearances.png?v=2"
 >
@@ -13,9 +14,9 @@ import { appearanceGroups as groups } from '@/data/appearances';
       <h2 class="appearance-group__heading">{group.heading}</h2>
       <ul class="appearance-group__list">
         {group.items.map(item => (
-          <li class="appearance-group__item">
-            <a href={item.href} target="_blank" rel="noopener">{item.title}</a>
-            <span class="appearance-group__date">{item.date}</span>
+          <li class="appearance-row">
+            <span class="appearance-row__date">{item.date}</span>
+            <a href={item.href} target="_blank" rel="noopener" class="appearance-row__link">{item.title}</a>
           </li>
         ))}
       </ul>
@@ -24,14 +25,15 @@ import { appearanceGroups as groups } from '@/data/appearances';
 </SectionPage>
 
 <style>
-  /* The bare-list mandate: every venue visible, nothing behind a click.
-     Group headings in the house caps recipe; blue spent only on links. */
+  /* The dated ledger grammar the site already speaks (bylines, recent
+     writing): dates aligned in a fixed caps column, venue titles in ink
+     with hairline underlines — links, not a wall of blue. */
   .appearance-group {
     margin-bottom: var(--space-xl);
   }
 
   .appearance-group__heading {
-    margin: 0 0 0.6rem;
+    margin: 0 0 0.7rem;
     font-family: var(--font-body);
     font-size: var(--text-xs);
     font-weight: 400;
@@ -46,24 +48,45 @@ import { appearanceGroups as groups } from '@/data/appearances';
     padding: 0;
   }
 
-  .appearance-group__item {
-    display: flex;
-    flex-wrap: wrap;
+  .appearance-row {
+    display: grid;
+    grid-template-columns: 5.5rem minmax(0, 1fr);
+    gap: 1rem;
     align-items: baseline;
-    gap: 0.25rem 0.6rem;
-    padding: 0.3rem 0;
+    padding: 0.32rem 0;
   }
 
-  .appearance-group__item a {
-    font-size: var(--text-base);
-    line-height: 1.4;
-  }
-
-  .appearance-group__date {
+  .appearance-row__date {
     font-family: var(--font-body);
     font-size: var(--text-xs);
     letter-spacing: 0.12em;
     text-transform: uppercase;
     color: var(--dim);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .appearance-row__link {
+    font-size: var(--text-base);
+    line-height: 1.4;
+    color: var(--text);
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 2px;
+    text-decoration-color: var(--border-strong);
+  }
+
+  .appearance-row__link:hover {
+    color: var(--accent);
+    text-decoration-color: var(--accent);
+  }
+
+  /* Heard episodes turn purple, same as read posts. Literal hex:
+     browsers ignore var() inside :visited. */
+  .appearance-row__link:visited {
+    color: #551a8b;
+  }
+
+  :global([data-theme="dark"]) .appearance-row__link:visited {
+    color: #c58af9;
   }
 </style>
