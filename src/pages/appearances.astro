@@ -53,24 +53,26 @@ const groups = appearanceGroups.map(g => ({ heading: g.heading, runs: groupByDat
   }
 
   /* The global summary rules supply the house ▸ caret and its rotation;
-     the label itself stays in the caps recipe. */
+     the label takes the same type as the entries on Lists and Visuals
+     (.annotated-list__title), so the neighboring section pages read as
+     one family when you click between them. */
   .appearance-group__summary {
-    padding: 0.35rem 0;
+    padding: 0.4rem 0;
   }
 
   .appearance-group__summary:hover .appearance-group__heading {
-    color: var(--text);
+    color: var(--accent);
   }
 
   .appearance-group__heading {
     display: inline;
     margin: 0;
-    font-family: var(--font-body);
-    font-size: var(--text-xs);
+    font-family: var(--font-editorial);
+    font-size: var(--text-base);
     font-weight: 400;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--dim);
+    line-height: 1.4;
+    letter-spacing: normal;
+    color: var(--text);
   }
 
   .appearance-group__list {
