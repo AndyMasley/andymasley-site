@@ -200,6 +200,7 @@ function isActive(href: string): boolean {
           <span class="header__nav-group">
             <a
               href={link.href}
+              data-label={link.label}
               class:list={[
                 'header__nav-link',
                 { 'header__nav-link--active': isActive(link.href) }

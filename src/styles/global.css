@@ -697,6 +697,19 @@ a:active {
   margin: 0;
   position: relative;
   transition: color var(--transition-fast);
+  text-align: left;
+}
+
+/* Every link reserves the width of its own bold rendering (an invisible
+   zero-height bold ghost of the label), so the active page going bold
+   never reflows its neighbors. */
+.header__nav-link::before {
+  content: attr(data-label);
+  display: block;
+  height: 0;
+  overflow: hidden;
+  visibility: hidden;
+  font-weight: 700;
 }
 
 .header__nav-link:hover {
@@ -1585,6 +1598,18 @@ details[open] > summary::before {
   .header__nav-link {
     padding: 0.5rem; /* Invisible expanded tap area */
     margin: -0.5rem 0;
+  }
+
+  /* The desktop hairline hangs off the padded tap-target box here, far
+     below the label; a text-decoration underline hugs the text itself. */
+  .header__nav-link--active::after {
+    display: none;
+  }
+
+  .header__nav-link--active {
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 3px;
   }
 
   .header__nav-sep {
