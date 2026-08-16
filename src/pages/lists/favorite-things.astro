@@ -1195,10 +1195,6 @@ import Base from '@/layouts/Base.astro';
   }
 
   /* YouTube link items - full row is clickable */
-  .track-item.has-link {
-    padding: 0;
-  }
-
   .album-item.has-link,
   .track-item.has-link {
     cursor: pointer;
@@ -1213,11 +1209,6 @@ import Base from '@/layouts/Base.astro';
 
   .item-link:hover {
     text-decoration: none !important;
-  }
-
-  .track-item.has-link:hover {
-    background: transparent;
-    border-bottom-color: var(--accent);
   }
 
   .album-item.has-link:hover .album-title,
@@ -1240,29 +1231,16 @@ import Base from '@/layouts/Base.astro';
     min-width: 0;
   }
 
+  /* Songs and solos share the albums' exact formatting: plain rows, no
+     rules underneath, state carried by title color alone. */
   .track-item {
     cursor: default;
-    padding: 0.35rem 0;
-    margin-left: 0;
-    margin-right: 0;
-    margin-bottom: 0;
-    border-bottom: 1px solid var(--border-subtle);
-    border-radius: 0;
-    transition: color 0.15s ease, border-color 0.15s ease;
+    margin-bottom: var(--space-xs);
+    transition: color 0.15s ease;
   }
 
   .track-item.has-spotify {
     cursor: pointer;
-  }
-
-  .track-item.has-spotify:hover {
-    background: transparent;
-    border-bottom-color: var(--accent);
-  }
-
-  .track-item.active {
-    background: transparent;
-    border-bottom-color: var(--accent);
   }
 
   .track-item.active .track-title {
@@ -1458,8 +1436,9 @@ import Base from '@/layouts/Base.astro';
       margin-bottom: 0.75rem;
     }
 
-    /* Album items */
-    .album-item {
+    /* Album and track items */
+    .album-item,
+    .track-item {
       margin-bottom: 0.625rem;
       line-height: var(--leading-ui);
     }
