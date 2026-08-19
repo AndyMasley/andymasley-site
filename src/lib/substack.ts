@@ -8,6 +8,7 @@ import { lintPostContent } from './content-lint';
 import { smartenHtmlText, normalizePlainText } from './smarten';
 import { altFor, vanishedUuids } from '@/data/alt-text';
 import { fullwidthFigures, isFullwidth } from '@/data/figures';
+import { replacementFor } from '@/data/embeds';
 
 // Cache configuration
 const CACHE_DIR = join(process.cwd(), '.cache', 'substack');
@@ -851,6 +852,24 @@ export function processPostContent(html: string, slug: string, opts: { sidenotes
 
   // Scene breaks: bare <hr> inside post bodies become an asterism.
   processed = processed.replace(/<hr\b[^>]*>/gi, '<div class="asterism" role="separator">⁂</div>');
+
+  // Third-party embeds that don't render off-platform become committed
+  // static figures, keyed slug + embed UUID in src/data/embeds.ts. Runs
+  // before the iframe containment pass so a replaced embed's iframe never
+  // gets an embed-frame box. Unkeyed embeds pass through untouched.
+  processed = processed.replace(
+    /<div class="code-embed"[^>]*data-attrs="([^"]*)"[^>]*>[\s\S]*?<\/div>/gi,
+    (whole, attrs) => {
+      const uuid = attrs.match(/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/i)?.[1];
+      const rep = uuid ? replacementFor(slug, uuid) : undefined;
+      if (!rep) return whole;
+      const alt = rep.alt.replace(/"/g, '&quot;');
+      return `<div class="captioned-image-container"><figure>` +
+        `<img src="${rep.src}" alt="${alt}" loading="lazy" decoding="async">` +
+        `<figcaption class="image-caption"><a href="${rep.href}">Source</a></figcaption>` +
+        `</figure></div>`;
+    }
+  );
 
   // Contain embeds that would otherwise escape the column. Video embeds get
   // a 16/9 frame with the house hairline (fixed width/height attributes
