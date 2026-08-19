@@ -60,6 +60,7 @@ export const visuals: VisualEntry[] = [
     description:
       'A navigable, to-scale 3D flythrough of Massachusetts — every building and hill, at real elevation.',
     searchTerms: 'map terrain satellite flythrough Webster',
+    onHub: false,
   },
 ];
 
