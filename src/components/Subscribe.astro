@@ -1,0 +1,217 @@
+---
+// The subscribe field, set in the site's own type, posting straight to
+// Substack from the reader's browser.
+//
+// Why a plain form POST into a hidden iframe rather than fetch(): Substack
+// sends no CORS headers, so script can't read the response — but a form
+// submission needs no permission to cross origins. It is also the reader's
+// own browser making the request, with their own address. A server-side
+// proxy from a Cloudflare Function was tried first and Substack answered
+// datacenter traffic with stalls and gateway errors; this path avoids that
+// entirely. The cost is that the outcome is unreadable, so the confirmation
+// asks people to check their inbox instead of claiming success.
+//
+// Post to the custom domain, not andymasley.substack.com: that host 302s,
+// and browsers turn a redirected POST into a GET, dropping the body.
+const substackAction = 'https://blog.andymasley.com/api/v1/free';
+const substackUrl = 'https://andymasley.substack.com/subscribe';
+---
+
+<section class="subscribe" aria-labelledby="subscribe-label">
+  <div class="label" id="subscribe-label">Subscribe</div>
+  <p class="subscribe__blurb">Subscribe to my Substack below or on <a href={substackUrl} target="_blank" rel="noopener">the site itself</a></p>
+  <form
+    class="subscribe__form"
+    id="subscribe-form"
+    action={substackAction}
+    method="post"
+    target="subscribe-sink"
+    novalidate
+  >
+    <input type="hidden" name="first_url" value="https://andymasley.com/" />
+    <input type="hidden" name="current_url" value="https://andymasley.com/" />
+    <input type="hidden" name="source" value="cover_page" />
+    <input type="hidden" name="referral_code" value="" />
+    <div class="subscribe__field">
+      <input
+        class="subscribe__input"
+        id="subscribe-email"
+        type="email"
+        name="email"
+        placeholder="you@example.com"
+        aria-label="Email address"
+        autocomplete="email"
+        required
+      />
+      <button class="subscribe__action" type="submit">Subscribe</button>
+    </div>
+  </form>
+  <p class="subscribe__status" id="subscribe-status" role="status" aria-live="polite" hidden></p>
+  <iframe
+    class="subscribe__sink"
+    id="subscribe-sink"
+    name="subscribe-sink"
+    title="Subscription result"
+    aria-hidden="true"
+    tabindex="-1"
+  ></iframe>
+</section>
+
+<style>
+  .subscribe {
+    margin: 0;
+  }
+
+  .subscribe__blurb {
+    margin: 0 0 var(--space-md);
+    font-size: var(--text-sm);
+    line-height: var(--leading-note);
+    color: var(--text-secondary);
+  }
+
+  .subscribe__form {
+    margin: 0;
+  }
+
+  /* Same one-hairline row as the archive search field. */
+  .subscribe__field {
+    display: flex;
+    align-items: baseline;
+    gap: 1rem;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 0.4rem;
+  }
+
+  .subscribe__field:focus-within {
+    border-bottom-color: var(--accent);
+  }
+
+  .subscribe__input {
+    flex: 1;
+    min-width: 0;
+    border: none;
+    border-radius: 0;
+    background: transparent;
+    color: var(--text);
+    font-family: var(--font-editorial);
+    font-size: var(--text-base);
+    padding: 0.35rem 0 0;
+    outline: none;
+  }
+
+  .subscribe__input::placeholder {
+    color: var(--dim);
+  }
+
+  /* The archive's inline-action shape, but this one is the point of the
+     section rather than a secondary control, so it keeps full ink and a
+     standing underline instead of appearing only on hover. */
+  .subscribe__action {
+    flex: none;
+    background: none;
+    border: none;
+    border-bottom: 1px solid var(--border-strong);
+    padding: 0 0 2px;
+    font-family: var(--font-body);
+    font-size: var(--text-sm);
+    color: var(--text);
+    cursor: pointer;
+    transition: color 0.15s ease, border-color 0.15s ease;
+  }
+
+  .subscribe__action:hover {
+    color: var(--accent);
+    border-color: var(--accent);
+  }
+
+  .subscribe__action[disabled] {
+    color: var(--border-strong);
+    border-color: transparent;
+    cursor: default;
+  }
+
+  .subscribe__status {
+    margin: var(--space-sm) 0 0;
+    font-size: var(--text-sm);
+    line-height: var(--leading-note);
+    color: var(--text-secondary);
+  }
+
+  /* Receives the POST response. Zero-sized rather than display:none so the
+     load event stays reliable across browsers. */
+  .subscribe__sink {
+    position: absolute;
+    width: 0;
+    height: 0;
+    border: 0;
+    visibility: hidden;
+  }
+</style>
+
+<script>
+  function initSubscribe() {
+    const form = document.getElementById('subscribe-form') as HTMLFormElement | null;
+    if (!form || form.dataset.bound === 'true') return;
+
+    const input = form.querySelector('.subscribe__input') as HTMLInputElement | null;
+    const button = form.querySelector('.subscribe__action') as HTMLButtonElement | null;
+    const status = document.getElementById('subscribe-status') as HTMLElement | null;
+    const sink = document.getElementById('subscribe-sink') as HTMLIFrameElement | null;
+    if (!input || !button || !status || !sink) return;
+
+    form.dataset.bound = 'true';
+
+    const say = (message: string) => {
+      status.textContent = message;
+      status.hidden = false;
+    };
+
+    const FAILED = 'That didn’t go through — try subscribing on Substack directly.';
+    const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    let pending = false;
+    let timer = 0;
+
+    const settle = (message: string, keepForm: boolean) => {
+      if (!pending) return;
+      pending = false;
+      window.clearTimeout(timer);
+      button.disabled = false;
+      button.textContent = 'Subscribe';
+      if (!keepForm) form.hidden = true;
+      say(message);
+    };
+
+    // Cross-origin, so the response body is unreadable: a load event only
+    // tells us the request completed, never whether Substack accepted it.
+    // Hence "check your inbox" rather than a claim that it worked.
+    sink.addEventListener('load', () => {
+      settle('Thanks — check your inbox to confirm.', false);
+    });
+
+    form.addEventListener('submit', (event) => {
+      const email = input.value.trim();
+
+      if (!EMAIL.test(email)) {
+        event.preventDefault();
+        say('That doesn’t look like an email address.');
+        input.focus();
+        return;
+      }
+
+      // Let the submission proceed into the hidden frame.
+      pending = true;
+      status.hidden = true;
+      button.disabled = true;
+      button.textContent = 'Subscribing…';
+      timer = window.setTimeout(() => settle(FAILED, true), 12000);
+    });
+  }
+
+  initSubscribe();
+
+  if (!(window as any).__subscribeBound) {
+    document.addEventListener('astro:page-load', initSubscribe);
+    (window as any).__subscribeBound = true;
+  }
+</script>

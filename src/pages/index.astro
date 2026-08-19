@@ -5,6 +5,7 @@ import { getMetaPostSlugs } from '@/lib/meta-posts';
 import { formatCompactDate } from '@/lib/format-date';
 import { sizedCover } from '@/lib/cover-image';
 import Elsewhere from '@/components/Elsewhere.astro';
+import Subscribe from '@/components/Subscribe.astro';
 
 // Fetch recent blog posts from Substack
 const allPosts = await fetchSubstackPosts();
@@ -78,6 +79,10 @@ const homeStructuredData = [
     </p>
     <p class="pronunciation">(It’s pronounced May-zlee)</p>
   </div>
+
+  <div class="divider"><div class="divider-diamond"></div></div>
+
+  <Subscribe />
 
   <div class="divider"><div class="divider-diamond"></div></div>
 
