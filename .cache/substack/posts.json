@@ -1,6 +1,16 @@
 {
-  "timestamp": 1786407182247,
+  "timestamp": 1787104529446,
   "posts": [
+    {
+      "title": "Other large industries show how impoverished the data center debate is",
+      "slug": "other-large-industries-show-how-impoverished",
+      "date": "2026-08-18T19:33:50.094Z",
+      "description": "Clumsy, arbitrary environmental ideas ignore the incredible complexity of the systems modern society depends on",
+      "url": "https://blog.andymasley.com/p/other-large-industries-show-how-impoverished",
+      "category": "AI & the Environment",
+      "source": "substack",
+      "cover_image": "https://substackcdn.com/image/fetch/$s_!wIAI!,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2F59a94f75-3344-4a67-8612-f3aa94a57142_1024x1280.webp"
+    },
     {
       "title": "I'm very skeptical that China has played a meaningful role in the US data center backlash",
       "slug": "im-very-skeptical-that-china-has",
@@ -237,7 +247,7 @@
       "date": "2025-11-07T05:50:15.600Z",
       "description": "Why I was so compelled to post a lot about data centers",
       "url": "https://blog.andymasley.com/p/data-centers-and-low-social-trust",
-      "category": "Artificial Intelligence",
+      "category": "AI & the Environment",
       "source": "substack",
       "cover_image": "https://substack-post-media.s3.amazonaws.com/public/images/db8f9b0f-e1e3-41b6-ada5-51f010e2304a_2944x1648.png"
     },
