@@ -1,0 +1,138 @@
+---
+// The grant explainer, presented the way essay footnotes are: a margin note
+// at >=1280px, an in-column expansion below that width, opened by clicking
+// link-styled text in the sentence itself.
+//
+// It mirrors the sidenote geometry in global.css (.article-prose .sidenote:
+// W=180, G=32, so margin-right = -212) rather than reusing it, because that
+// rule is scoped to the article grid and the homepage is not that surface.
+//
+// The body is spans-as-blocks, not <p>/<blockquote>: this sits inside the
+// bio paragraph so it can anchor at the phrase, and block elements are not
+// valid there. Same reason substack.ts keeps block-content footnotes in the
+// bottom list instead of the margin.
+---
+
+<button
+  type="button"
+  class="grantnote__marker"
+  id="grantnote-marker"
+  aria-expanded="false"
+  aria-controls="grantnote-body"
+>a grant</button><span class="grantnote" id="grantnote-body" role="note" hidden>
+  <span class="grantnote__line">I am not employed by Coefficient Giving and my views don’t represent theirs. The grant does not obligate me to write from any specific perspective. The full text description of the grant’s purpose reads:</span>
+  <span class="grantnote__quote">To support one year of writing and communications work made publicly available on topics related to AI, public policy, and other topics.</span>
+  <span class="grantnote__line">I do not receive any other funding for my writing besides individual paid Substack subscribers, and one-off payments for writing in other publications.</span>
+</span>
+
+<style>
+  /* Link-shaped, but a button: it toggles a note, it does not navigate. */
+  .grantnote__marker {
+    padding: 0;
+    border: none;
+    background: none;
+    font-family: inherit;
+    font-size: inherit;
+    line-height: inherit;
+    color: var(--accent);
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: var(--underline-offset);
+    cursor: pointer;
+  }
+
+  .grantnote__marker[aria-expanded='true'] {
+    text-decoration-style: dotted;
+  }
+
+  /* Below the sidenote gate: an in-column expansion, matching
+     .footnote-inline on essay pages. */
+  .grantnote {
+    display: block;
+    margin: 0.75em 0;
+    padding-left: 1em;
+    border-left: 1px solid var(--border);
+    font-family: var(--font-body);
+    font-size: var(--text-sm);
+    line-height: var(--leading-note);
+    color: var(--dim);
+  }
+
+  .grantnote[hidden] {
+    display: none;
+  }
+
+  .grantnote__line {
+    display: block;
+  }
+
+  .grantnote__line + .grantnote__line,
+  .grantnote__quote + .grantnote__line {
+    margin-top: 0.5em;
+  }
+
+  .grantnote__quote {
+    display: block;
+    margin: 0.5em 0;
+    padding-left: 0.9rem;
+    border-left: 2px solid var(--border);
+    font-style: italic;
+  }
+
+  /* At the sidenote gate it leaves the column, like a margin note. */
+  @media (min-width: 1280px) {
+    .grantnote {
+      float: right;
+      clear: right;
+      width: 180px;
+      margin: 0.15rem -212px 0.8rem 0;
+      padding-left: 0;
+      border-left: none;
+      color: var(--text);
+    }
+
+    .grantnote__quote {
+      padding-left: 0.7rem;
+    }
+  }
+</style>
+
+<script>
+  function initGrantNote() {
+    const marker = document.getElementById('grantnote-marker');
+    const note = document.getElementById('grantnote-body');
+    if (!marker || !note || marker.dataset.bound === 'true') return;
+    const para = marker.closest('p');
+    if (!para) return;
+    marker.dataset.bound = 'true';
+
+    // Same 1280px gate the essay sidenotes use. Above it the note lives
+    // beside the marker and floats into the margin. Below it, it has to sit
+    // after the paragraph — a block dropped mid-sentence would cut "funded
+    // by a grant" off from "from Coefficient Giving". This is what
+    // .footnote-inline does on essay pages, by relocation rather than a
+    // clone, so there is only ever one copy and one set of ids.
+    const wide = window.matchMedia('(min-width: 1280px)');
+
+    const place = () => {
+      if (wide.matches) marker.after(note);
+      else para.after(note);
+    };
+
+    place();
+    wide.addEventListener('change', place);
+
+    marker.addEventListener('click', () => {
+      const open = marker.getAttribute('aria-expanded') === 'true';
+      marker.setAttribute('aria-expanded', open ? 'false' : 'true');
+      note.hidden = open;
+    });
+  }
+
+  initGrantNote();
+
+  if (!(window as any).__grantNoteBound) {
+    document.addEventListener('astro:page-load', initGrantNote);
+    (window as any).__grantNoteBound = true;
+  }
+</script>
