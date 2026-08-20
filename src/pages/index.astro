@@ -6,6 +6,7 @@ import { formatCompactDate } from '@/lib/format-date';
 import { sizedCover } from '@/lib/cover-image';
 import Elsewhere from '@/components/Elsewhere.astro';
 import Subscribe from '@/components/Subscribe.astro';
+import StartHere from '@/components/StartHere.astro';
 
 // Fetch recent blog posts from Substack
 const allPosts = await fetchSubstackPosts();
@@ -84,8 +85,6 @@ const homeStructuredData = [
 
   <Subscribe />
 
-  <div class="divider"><div class="divider-diamond"></div></div>
-
   <div class="home-recent">
     <div class="label">Recent</div>
     <ul class="recent-list">
@@ -112,6 +111,10 @@ const homeStructuredData = [
       ))}
     </ul>
   </div>
+
+  <div class="divider"><div class="divider-diamond"></div></div>
+
+  <StartHere />
 
   <div class="divider"><div class="divider-diamond"></div></div>
 
@@ -163,6 +166,10 @@ const homeStructuredData = [
     border-left: 2px solid var(--border);
     font-style: italic;
     color: var(--dim);
+  }
+
+  .home-recent {
+    margin-top: var(--space-3xl);
   }
 
   .recent-list {

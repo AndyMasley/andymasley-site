@@ -1,0 +1,84 @@
+---
+// A hand-picked reading path for new readers. Titles and slugs are written
+// out rather than pulled from the Substack feed on purpose: this is an
+// editorial selection and an editorial order, not the most recent N.
+const groups = [
+  {
+    heading: 'AI and the environment',
+    posts: [
+      { title: 'A short summary of my argument that using ChatGPT isn’t bad for the environment', slug: 'a-short-summary-of-my-argument-that' },
+      { title: 'Toward liberal environmentalism', slug: 'toward-environmental-liberalism' },
+      { title: 'What a data center is', slug: 'what-a-data-center-is' },
+      { title: 'A simple trick to fix the data center debate', slug: 'a-simple-trick-to-fix-the-data-center' },
+      { title: 'Data centers and low social trust', slug: 'data-centers-and-low-social-trust' },
+      { title: 'Why I think panic about local impacts of data centers is just a panic', slug: 'why-i-think-panic-about-local-impacts' },
+      { title: 'The AI water issue is fake', slug: 'the-ai-water-issue-is-fake' },
+      { title: 'Data center land use issues are fake', slug: 'data-center-land-use-issues-are-fake' },
+    ],
+  },
+  {
+    heading: 'AI in general',
+    posts: [
+      { title: 'All the ways I want the AI debate to be better', slug: 'all-the-ways-i-want-the-ai-debate' },
+      { title: 'The lump of cognition fallacy', slug: 'the-lump-of-cognition-fallacy' },
+    ],
+  },
+  {
+    heading: 'Other',
+    posts: [
+      { title: 'The main way I’ve seen people turn ideologically crazy', slug: 'the-main-way-ive-seen-people-turn' },
+      { title: 'Animal suffering isn’t pretend', slug: 'animal-suffering-isnt-pretend' },
+      { title: 'Strategies for learning', slug: 'strategies-for-learning' },
+    ],
+  },
+];
+---
+
+<section class="start-here" aria-labelledby="start-here-label">
+  <div class="label" id="start-here-label">Start here</div>
+  {groups.map(group => (
+    <div class="start-here__group">
+      <h2 class="start-here__heading">{group.heading}</h2>
+      <ul class="start-here__list">
+        {group.posts.map(post => (
+          <li><a href={`/writing/${post.slug}`}>{post.title}</a></li>
+        ))}
+      </ul>
+    </div>
+  ))}
+</section>
+
+<style>
+  .start-here {
+    margin: 0;
+  }
+
+  .start-here__group + .start-here__group {
+    margin-top: var(--space-lg);
+  }
+
+  /* Label recipe B: sentence case, --text-sm. */
+  .start-here__heading {
+    margin: 0 0 var(--space-xs);
+    font-family: var(--font-body);
+    font-size: var(--text-sm);
+    font-weight: 700;
+    line-height: var(--leading-heading);
+    color: var(--text-secondary);
+  }
+
+  /* Same list rhythm as prose lists. */
+  .start-here__list {
+    margin: 0;
+    padding-left: var(--space-lg);
+  }
+
+  .start-here__list li {
+    margin-bottom: var(--space-xs);
+    line-height: var(--leading-note);
+  }
+
+  .start-here__list li:last-child {
+    margin-bottom: 0;
+  }
+</style>
