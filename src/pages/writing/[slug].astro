@@ -216,6 +216,7 @@ const permalink = new URL(`/writing/${post.slug}/`, Astro.site ?? 'https://andym
 // The social card is the post's own Substack cover art. The generated
 // /og/<slug>.png title card (og-card.ts) stays as the fallback for a post
 // with no cover, and remains the alt text in that case.
+const subscribeUrl = 'https://andymasley.substack.com/subscribe';
 const coverImage = post.source !== 'local' ? post.cover_image : undefined;
 const socialCard = coverImage ? coverSocialCard(coverImage, 1200) : null;
 const ogImage = socialCard ? socialCard.url : `/og/${post.slug}.png?v=2`;
@@ -390,6 +391,7 @@ if (correction) {
     <footer class="article-footer">
       <p class="article-colophon">
         <a href={post.url} target="_blank" rel="noopener">Discussion on {post.sourceName}</a>
+        {' '}· <a href={subscribeUrl} target="_blank" rel="noopener">Subscribe for new essays</a>
         {' '}· spot an error? <a href="/writing/errors-and-updates">there’s a $300 bounty</a>.
       </p>
       <p class="article-backlink">
@@ -493,7 +495,8 @@ if (correction) {
               {post.source !== 'local' && (
                 <><a href={post.url} target="_blank" rel="noopener">Discussion on {post.sourceName}</a> · </>
               )}
-              spot an error? <a href="/writing/errors-and-updates">there’s a $300 bounty</a>.
+              <a href={subscribeUrl} target="_blank" rel="noopener">Subscribe for new essays</a>
+              {' '}· spot an error? <a href="/writing/errors-and-updates">there’s a $300 bounty</a>.
             </p>
             {citedBy.length > 0 && (
               <div class="article-citedin">
