@@ -208,9 +208,29 @@ Research was done by web search in August 2026, drawing on local news, permit re
 
 **Noise:** Mild and construction-related: neighbors describe [nine years of construction truck traffic, noise, and light pollution](https://urbanmilwaukee.com/2025/05/15/an-iowa-city-with-five-microsoft-data-center-complexes-reveals-what-wisconsin-can-expect/) across the multi-campus buildout (each campus takes 8–10 years to build). No operational-noise lawsuits or measured readings for the Iowa campuses.
 
-<!-- PENDING: Microsoft SAT14 -->
+### SAT14 — Microsoft (Westover Hills, San Antonio, Texas)
 
-<!-- PENDING: Microsoft SAT40 -->
+**Status:** A completed two-building, ~411,000 sq ft campus (built 2021–2024) in Microsoft's two-decade-old far West Side cluster; Epoch estimated 66 MW in May 2026. Bexar County now hosts at least 30 data centers with ~23 more coming.
+
+**Taxes:** No SAT14-specific deal surfaced; the cluster's history includes a [2007 10-year city property-tax abatement (~$25 million package, with CPS Energy paying $5.2 million for transformers) for 75 promised jobs](https://www.sacurrent.com/news/san-antonios-endless-incentives-for-microsoft-help-explain-our-lagging-economic-development-28174692/), and a 2013 15-year agreement rebating 40% of city property taxes on a $250 million expansion promising 20 jobs. Texas's sales-tax exemption (>$1 billion a year statewide) covers qualifying equipment.
+
+**Water:** Aggregate only: San Antonio data centers run by Microsoft and the Army Corps used a [combined 463 million gallons across 2023–24](https://www.sacurrent.com/news/san-antonio-data-centers-guzzled-463-million-gallons-of-water-as-area-faced-drought-38116670/) — roughly 7,000 Texas homes' worth — while residents were under Stage 3 drought rules limiting lawn watering to once a week, with no restrictions on the data centers. Mitigating factor: Microsoft's Westover Hills campus draws SAWS recycled ("purple pipe") water — [79% of its San Antonio data-center water is recycled, reused, or non-potable](https://blogs.microsoft.com/blog/2026/06/24/inside-microsofts-two-decade-push-to-cut-water-intensity-while-scaling-for-growth/), avoiding ~58 million gallons of potable water a year.
+
+**Air:** Standard diesel backup under a TCEQ permit-by-rule (Tier 2, emergency-only). The area's air fight targets Vantage/VoltaGrid, not Microsoft.
+
+**Noise:** None found specific to this campus, which has sat in a commercial/industrial corridor since 2005.
+
+### SAT40 — Microsoft (Texas Research Park, San Antonio, Texas)
+
+**Status:** The newest building in the same cluster — a $176 million, 153,000 sq ft build filed in 2023; Epoch estimated 106 MW in May 2026, believed AI-focused (reportedly for OpenAI).
+
+**Taxes:** No SAT40-specific abatement surfaced (see SAT14 for the cluster's deal history); no actual payment figures published.
+
+**Water:** No site figure; covered by the same SAWS recycled-water arrangement and drought context as SAT14. Microsoft has announced zero-water designs for new builds, but nothing confirms SAT40 uses one.
+
+**Air:** Standard diesel backup (TCEQ permit-by-rule, Tier 2, emergency-only). No turbines or enforcement.
+
+**Noise:** General far-West-Side complaints about the growing cluster — one resident: ["There are already three data centers in my backyard... Now the light is in my bedroom every night. I don't sleep. I listen to the hum of the air conditioners"](https://www.sacurrent.com/news/san-antonio-news/a-special-place-in-hell-san-antonio-residents-push-back-against-far-west-side-data-center/) — though the immediate target of that pushback is the incoming Vantage project, and no complaint names SAT40.
 
 ---
 
@@ -524,9 +544,29 @@ Research was done by web search in August 2026, drawing on local news, permit re
 
 **Noise:** None naming NVA02 — but the county's own [early-morning sound testing near the Hornbaker Road cluster the campus belongs to failed the new county noise limits](https://www.princewilliamtimes.com/news/coming-crackdown-on-data-center-noise-likely-wont-bring-relief-to-a-community-most-affected/article_5307ae6c-fac1-11ef-89ef-13f721478913.html), while seven subdivisions without data centers passed. The area's loudest fight — the Great Oak subdivision's battle against a constant low roar — targets four Amazon data centers nearby, which later added mitigation.
 
-<!-- PENDING: Vantage TX1 -->
+### Vantage TX1 — Vantage Data Centers (San Antonio, Texas)
 
-<!-- PENDING: Stream Phoenix -->
+**Status:** One of two Vantage campuses on San Antonio's far West Side (TX11 operational, TX12 under construction, on the Omicron Drive corridor adjacent to residential neighborhoods); Epoch estimated 45 MW in May 2026. Both Vantage campuses are designed to run off-grid on VoltaGrid natural-gas microgrids.
+
+**Taxes:** No Vantage-specific abatement or payment figures surfaced; Texas's sales-tax exemption is the dominant subsidy (the comptroller projects [at least $1.3 billion forgone in 2026](https://www.texastribune.org/2026/04/08/texas-data-centers-sales-tax-break-billion-dollars/) statewide). Vantage has registered over $1 billion of San Antonio construction since 2020.
+
+**Water:** No site figure — and possibly never: [KSAT found that a Texas law shields SAWS smart-meter records for data centers from public-records requests](https://www.ksat.com/news/ksat-investigates/2026/07/28/texas-law-shields-san-antonio-area-data-center-water-usage-from-public-records-requests/), blocking its request for three years of usage data on 36 Bexar County data centers. A Vantage VP says the sister TX2 campus uses closed-loop glycol cooling with total water use "roughly that of a 30-room hotel."
+
+**Air:** TX1's defining issue — this is one of the two campuses named in the July 2026 [Clean Air Act notice of intent to sue](https://environmentalintegrity.org/news/environmental-groups-take-legal-action-against-illegal-data-center-and-power-plant-projects-in-san-antonio/) from the Environmental Integrity Project, Sierra Club, and Public Citizen: the two San Antonio campuses combine two behind-the-meter gas plants and 151 diesel generators (86 at this campus) totaling 423 MW, with an estimated ~5,600 tons of NOx a year — allegedly split into minor-source permits "commonly used for dry cleaners" to dodge major-source review. TCEQ held a public hearing on the campus's operating permit August 17, 2026.
+
+**Noise:** Construction-phase complaints — noise, dust, tree-canopy loss, and lights disrupting sleep ([one resident: there's "a special place in hell"](https://www.sacurrent.com/news/san-antonio-news/a-special-place-in-hell-san-antonio-residents-push-back-against-far-west-side-data-center/) for those responsible). No operational noise action separate from the air fight.
+
+### Stream Phoenix — Stream Data Centers (Goodyear, Arizona)
+
+**Status:** Operating and expanding in Goodyear's data-center corridor (alongside Microsoft, Compass, and Vantage): a planned seven-building, ~2 million sq ft campus targeting 280 MW; Epoch estimated 77 MW in May 2026.
+
+**Taxes:** The documented break is Arizona's Computer Data Center Program: as a qualified "Sustainable Redevelopment Project," the campus's tenants get the [state/county/city sales-tax exemption (currently 8.8% combined in Goodyear) for 20 years](https://streamdatacenters.com/like-a-sale-but-better-phoenix-data-center-tax-incentives) instead of the standard 10. No property-tax abatement or payment figures surfaced.
+
+**Water:** Stream says air-cooled chillers with a fill-once closed loop — daily use at or below an equivalent office building — but no gallons figure exists, and a 2026 Goodyear Independent report says the city [won't release data centers' actual water use](https://www.yourvalley.net/goodyear-independent/stories/report-goodyear-air-cooled-ai-data-centers-guzzling-unknown-millions-of-gallons-of-water,489591), so the claim is unverifiable publicly.
+
+**Air:** Nothing beyond standard backup permitting found — a county dust permit for the seventh building is the only site-specific filing located; emergency diesel engines are capped at 500 hours/12 months under county rules.
+
+**Noise:** None found for this campus. (Area context: Goodyear/Buckeye organizers blocked rezoning for a separate $14 billion Tract project partly over noise; Chandler, across the metro, adopted a data-center noise ordinance in 2022.)
 
 ### Lake Mariner — TeraWulf/Fluidstack for Anthropic and Core42 (Barker, New York)
 
@@ -544,13 +584,53 @@ Research was done by web search in August 2026, drawing on local news, permit re
 
 ## International
 
-<!-- PENDING: DayOne Nusajaya -->
+### DayOne Nusajaya — DayOne/GDS (Iskandar Puteri, Johor, Malaysia)
 
-<!-- PENDING: Oracle Batam -->
+**Status:** Operating and expanding in Nusajaya Tech Park — Phase 1 (~70 MW) launched 2023 and Phase 2 (50 MW), billed as the region's first large-scale AI computing site, opened later; Epoch's 336 MW reflects the fuller multi-phase buildout. The park hosts at least 10 data centers and directly borders residential estates. Johor is Asia's fastest data-center buildout market.
 
-<!-- PENDING: Alibaba Zhangbei -->
+**Taxes:** Malaysia has no US-style property-tax abatements; the local assessment tax goes to the Iskandar Puteri city council (no DayOne figure published). The big fiscal lever is the [Johor–Singapore Special Economic Zone package](https://www.mof.gov.my/portal/en/news/press-release/js-sez-incentive-package-to-drive-high-value-investments-into-johor): a 5% corporate income tax rate for up to 15 years (versus the standard 24%) for eligible digital-economy investments, plus investment allowances — though which incentives DayOne holds isn't public.
 
-<!-- PENDING: Start Campus Sines Data Campus -->
+**Water:** No site figure, but the state context is stark: data centers have requested [up to 440 million liters a day of treated water through 2035 — about 23% of Johor's entire 2023 demand](https://theedgemalaysia.com/node/787590) — prompting Johor to impose a special data-center water tariff in 2025 and push operators toward river and reclaimed water. DayOne is [treating raw water from the heavily polluted Sungai Tebrau](https://www.thestar.com.my/news/nation/2026/07/23/johor-data-centre-turn-to-recycled-water) under a deal with the state water company (first for its Kempas campus, with Nusajaya a stated next focus); the Phase 2 AI building uses air cooling.
+
+**Air:** Nothing found beyond standard grid power — Malaysian air permitting isn't published in searchable form, and local air complaints concern construction dust, not emissions.
+
+**Noise:** Yes — the neighborhood has seen some of Malaysia's most prominent data-center disputes: the bordering Taman Nusa Bayu estate reports persistent construction noise, late-night work, and dust; Johor issued a [stop-work order on a Nusa Bayu data-center project](https://www.nst.com.my/news/nation/2025/08/1263551/iskandar-puteri-data-centre-project-hit-stop-work-order-after-residents) in August 2025 (developer unnamed in coverage), and in February 2026 residents staged what was described as [Malaysia's first public protest against an AI data-center project](https://asianews.network/outcry-over-data-centre-plan-near-malaysian-residential-area/), citing 24-hour operations and noise. The local assemblyman said future data centers should be sited away from homes.
+
+### Oracle Batam — DayOne for Oracle (Nongsa Digital Park, Batam, Indonesia)
+
+**Status:** Operating — Oracle's "Indonesia North (Batam)" cloud region, leased from DayOne in a digital-economy Special Economic Zone on a free-trade-zone island 20 km south of Singapore; Epoch estimated 94 MW in May 2026. Batam has attracted at least 16 new data centers despite limited water and power infrastructure.
+
+**Taxes:** Zone-based rather than negotiated: SEZ tenants qualify for a [100% corporate income-tax holiday for 10–20 years](https://www.aseanbriefing.com/news/investing-in-indonesias-nongsa-special-economic-zone/) (then 50%), VAT non-collection, and import-duty exemptions. No Oracle/DayOne-specific figures are public.
+
+**Water:** The dominant controversy. Batam has no rivers and almost no usable groundwater — supply depends entirely on six rain-fed reservoirs — and [Katadata/Earth Journalism Network estimates](https://earthjournalism.net/stories/a-digital-boom-in-a-thirsty-indonesian-city) large-scale data-center cooling on the island needs ~19 million liters a day (10,000–50,000 residents' worth), with the nine planned Nongsa park data centers requiring ~29 million liters a day by 2032 — roughly 8.4% of Batam's current supply. In December 2024, [villagers from the adjacent Teluk Mata Ikan fishing village protested outside the data centers](https://globalvoices.org/2026/04/21/ai-ready-data-centers-are-booming-in-indonesia-but-water-woes-loom/) because water flowed uninterrupted to the tech complex while their homes went dry. The utility admits it can't serve both residents and data centers as the market scales; the zone authority is planning a new treatment plant and pushing desalination.
+
+**Air:** Nothing documented on-site; the park's developer says it plans dedicated gas-fired generation for the zone's data centers, but no permits or details surfaced.
+
+**Noise:** None found — the documented grievance is water, not sound.
+
+### Alibaba Zhangbei — Alibaba (Zhangbei County, Hebei, China)
+
+**Status:** Operating across three adjacent sites built 2016–2025 on the cold, windy Bashang plateau ("China's wind capital," annual mean temperature 2.6°C), part of China's Eastern Data Western Compute program; Epoch counts 203 MW added since 2024. Alibaba has invested ~45–50 billion yuan across seven local data-center parks since 2015.
+
+**Taxes:** China's structure differs (no property tax or school districts): the negotiated mechanism is that [one-third of the base's projected 30+ billion yuan in ten-year revenue is booked locally, yielding a projected 600–700 million yuan (~$85–100M) a year in local tax](http://www.jjckb.cn/2021-04/02/c_139854619.htm). County media report actual data-industry receipts of [340 million yuan cumulative](https://www.thepaper.cn/newsDetail_forward_23954274) with 520,000 servers installed (all firms, ~3,600 jobs supported).
+
+**Water:** No absolute figure disclosed. The design minimizes water: fresh-air free cooling ~350 days a year (chillers run ~15 days), design PUE of 1.25, immersion liquid cooling at scale, and a wastewater-recovery system. The plateau is water-scarce — the neighboring Ulanqab hub has drawn Chinese press criticism over data-center water — but no Zhangbei-specific controversy surfaced.
+
+**Air:** Nothing found beyond standard backup — coverage emphasizes the site's clean-power profile (a 20 MW on-site wind-solar-storage system, 450 million kWh of renewable power traded by 2021, national green data center designation).
+
+**Noise:** None found — the campuses sit in dedicated big-data industrial parks on sparsely populated plateau land, though Chinese complaint channels are less publicly visible than US ones, so absence of coverage is weaker evidence here.
+
+### Start Campus Sines — Nscale/Start Campus for Microsoft (Sines, Portugal)
+
+**Status:** First building (SIN01, ~40 MW) operating in the Sines heavy-industrial zone on the site of a deactivated aerodrome next to the former EDP coal plant, whose seawater intake it repurposes; the €8.5 billion, six-building campus targets 1.2 GW by 2030 (running about three years behind schedule). The project's fast-track permitting was at the center of Operação Influencer, the November 2023 corruption investigation that [brought down Prime Minister António Costa](https://observador.pt/2023/11/26/operacao-influencer-sines-4-0-o-centro-de-dados-no-centro-da-polemica/); Start Campus was later cleared.
+
+**Taxes:** Start Campus says SIN01 was built ["without subsidies, public funds or tax benefits"](https://www.businesswire.com/news/home/20250408371738/en/Start-Campus-Inaugurates-SIN01-Data-Center), though the project holds fast-track "Project of National Interest" status. The municipality collects standard IMI property tax and derrama surtax; an ECO feature notes Sines received just €1.5 million in total derrama in 2025 (all companies) — revenue modest relative to project scale. In May 2026 the local mayor complained Start Campus ["cut all the support it gave to the local community."](https://eco.sapo.pt/entrevista/a-start-campus-cortou-todo-o-apoio-que-dava-a-comunidade-local/)
+
+**Water:** The most distinctive design in the directory: [zero freshwater for cooling — the world's first AI data center cooled primarily with Atlantic seawater](https://sustainabilitymag.com/articles/behind-the-worlds-biggest-sustainable-ai-data-centre), cycling ~1,000 cubic meters a minute through the old coal plant's intake and returning it about 1°C warmer (non-consumptive; up to ~370 million gallons a day of flow at full buildout). Two research institutes monitor the discharge plume, with biologists diving every other month; studies so far predict the thermal plume is very small.
+
+**Air:** No turbines — 100% renewable grid contracts, with standard emergency diesel backup in the environmental filings. The later phases sit within the Natura 2000 network, making habitat (not air) the main environmental sensitivity.
+
+**Noise:** None found — the campus sits in an established industrial/port zone, and a Portuguese press review notes organized data-center protests haven't materialized in Portugal.
 
 ---
 
