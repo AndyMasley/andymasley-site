@@ -292,7 +292,17 @@ Research was done by web search in August 2026, drawing on local news, permit re
 
 **Noise:** No complaints specific to this just-opened facility were found. Meta's data halls are surrounded by thick concrete walls to curb server noise. But noise is an active local issue — it's among the topics residents have pressed the city on, and broader data-center opposition in Temple (Meta plus the Rowan campus) escalated in August 2026 to a [mayoral recall effort](https://spectrumlocalnews.com/tx/south-texas-el-paso/news/2026/08/04/recall-petition-in-response-to-data-centers).
 
-<!-- PENDING: Meta Kuna -->
+### Kuna — Meta (Kuna, Idaho)
+
+**Status:** Under construction (two buildings starting use in summer 2026) in a fast-growing Boise suburb: an $800 million, 960,000 sq ft campus announced in 2022, built through subsidiary Brisbie LLC on former irrigated farmland in a planned city industrial park.
+
+**Taxes:** Qualified for Idaho's data-center sales-tax exemption and paid Kuna a one-time [$8.2 million mitigation payment](https://boisedev.com/news/2022/08/22/meta-kuna-payments/) (mainly funding the police contract), with the completed campus projected to add ~$725 million in taxable value. The twist: the 2023 legislature passed HB 328 [barring sales-tax-exempt data centers from urban renewal districts](https://boisedev.com/news/2023/04/04/kuna-opposes-data-center-bill/) — over Kuna's objections — redirecting Meta's property taxes from Kuna's planned industrial-park district to the broader Ada County base, an estimated ~1% property-tax cut for all county taxpayers but a blow to Kuna's own plans.
+
+**Water:** Projected average of [~70,000 gallons a day (peaking at ~2 million in July–August)](https://boisedev.com/news/2026/03/20/data-center-water/), described as ~80% below industry standard — closed-loop cooling with winter air-side cooling. Meta holds water rights of 3.7 million gallons a day and signed 2.5 million over to the city, and funded a [$50–70+ million water/wastewater treatment plant gifted to Kuna](https://about.fb.com/news/2025/12/advancing-water-stewardship-in-metas-data-center-communities/), deliberately oversized for future city growth. The city says the campus will use far less water than the farms it replaced; aquifer debate continues at the state level.
+
+**Air:** Standard diesel backup under an Idaho DEQ permit (modified in 2023 to allow renewable diesel/HVO); no turbines, enforcement, or challenges found.
+
+**Noise:** None found — the site was deliberately placed among existing industrial employers, and trade coverage at announcement noted neighbor complaints were considered unlikely. Worth revisiting once operating.
 
 ---
 
@@ -398,11 +408,41 @@ Research was done by web search in August 2026, drawing on local news, permit re
 
 <!-- PENDING: Google Red Oak -->
 
-<!-- PENDING: Google Cedar Rapids -->
+### Cedar Rapids — Google (Cedar Rapids, Iowa)
 
-<!-- PENDING: Google Fort Wayne -->
+**Status:** Under construction: a $576 million project on 414 acres in Alliant Energy's Big Cedar Industrial Center, adjacent to the QTS campus below. Local debate intensified in mid-2026 — residents pressing the council on cumulative impacts, a council member floating a moratorium, and the mayor [defending the projects amid kickback claims and questions about NDAs officials signed](https://www.kcrg.com/2026/07/24/cedar-rapids-mayor-defends-data-center-projects-amid-kickback-claims-nda-questions/).
 
-<!-- PENDING: Google Kansas City East -->
+**Taxes:** The state approved a [20-year, 70% local property-tax exemption worth about $56 million](https://www.businessrecord.com/ieda-approves-56m-local-tax-break-for-googles-576m-cedar-rapids-data-center/), contingent on 31 jobs at $26.20+/hour, plus annual community-betterment payments (reported at $350,000–$400,000 per building per year). More than half of local property-tax allocations flow to the school district. No actual payments yet (pre-operational).
+
+**Water:** The dominant controversy, and the largest projected municipal-share claim in this roundup after The Dalles: the Gazette reported the data center would need [roughly 12–14 million gallons a day](https://www.thegazette.com/environment-nature/google-data-center-would-be-among-cedar-rapids-largest-water-and-energy-users/) — exceeding ADM's 11.7 MGD to become the city's largest water user, and about 30–35% of the city's ~40 MGD average treated output (capacity is 60 MGD; officials say supply is sufficient, and big customers' share of treated water could rise past 70%). Google funded a Linn County water-resource study as it considers more sites; its cooling design here hasn't been confirmed.
+
+**Air:** Standard diesel backup generators being installed; no permit details, turbines, or challenges surfaced. (Alliant is separately adding 94 MW of gas engines at a nearby plant as regional load grows.)
+
+**Noise:** None found — July 2026 council pushback centered on water, transparency, and pace of approvals, not noise.
+
+### Fort Wayne — Google (Fort Wayne, Indiana)
+
+**Status:** First phase operational December 2025 (Epoch's May snapshot predates this), on an 880-plus-acre far-east-side site announced in 2024 as a $2 billion investment ("Project Zodiac," developer entity Hatchworks LLC), with filings suggesting 12+ buildings.
+
+**Taxes:** City council approved a [50% real-property tax abatement for 10 years per building, projected to save more than $55.5 million](https://www.fwbusiness.com/news/government/article_dddc1c20-ed4b-55f6-8be5-89ff78a0876c.html) in the first decade — with a floor of $1 million a year in minimum taxes (rising to $1.2 million after four buildings). Indiana's 50-year data-center sales-tax exemption applies at this investment scale. Local outlet The Local FW has [criticized the secrecy](https://www.thelocalfw.com/data-centers-secrecy-and-tax-abatements/) around the abatement process. No actual payment record yet.
+
+**Water:** Evaporative cooling — the air permit lists 14 cooling towers on municipal water, recycled and discharged to the sewer; Google hasn't published site consumption. The utility runs at about half its 72 MGD capacity (average demand ~37 MGD) and says supply is more than sufficient. Google committed [$1.1 million to make the city filtration plant's rinse cycle more efficient](https://www.journalgazette.net/local/google-announces-1-1-million-investment-in-local-water-infrastructure/article_1e35c719-d838-4c9a-b4bc-e5909e892650.html), projected to save ~182 million gallons a year.
+
+**Air:** Contested diesel: IDEM approved 34 emergency generators in 2024, then in April 2026 approved an expansion to [174–179 total generators](https://www.journalgazette.net/business/state-regulators-approve-140-more-diesel-generators-for-googles-fort-wayne-data-center/article_9057074a-b703-4c06-b331-1a48770c0da8.html) (reports differ) after a packed public hearing where residents urged batteries instead. The state also permitted Google to fill regulated wetlands on the site. No turbines; no enforcement actions.
+
+**Noise:** Yes. WANE's investigative coverage profiles adjacent residents — one [bordered by Google land on three sides](https://www.wane.com/investigations/neighbor-resentment-grows-as-google-builds-new-data-center-site/) — complaining of constant 24/7 noise and light, heavy traffic, security drones, and a promised 10-foot screening berm they say was never delivered ("they don't come through with their promises"). Community pressure led Google to hold a public forum and launch a Q&A site; the council debated a data-center task force. No lawsuits or measured readings.
+
+### Kansas City East — Google (Kansas City Northland, Missouri)
+
+**Status:** Under construction at the Hunt Midwest Business Center in Clay County (announced as a $1 billion data center; four phases filed on 315 acres). Google later confirmed a separate second Northland campus ("Project Mica," ~$10 billion), and much local coverage discusses both together.
+
+**Taxes:** All projected: reporting documents a [75% real-property tax abatement for 25 years plus 100% sales-tax exemptions](https://www.datacenterdynamics.com/en/news/officials-grant-data-center-project-in-kansas-city-tax-breaks/) on construction materials and equipment (terms firmly documented for the second campus, financed through up to $10 billion in Port KC revenue bonds; reported in connection with this one too). Google committed $1.5 million up front to the Smithville School District and $250,000 to the Northland Career Center. [City officials publicly criticized the tax breaks](https://www.datacenterdynamics.com/en/news/officials-in-kansas-city-speak-out-against-tax-breaks-for-google-linked-data-center-campus/), and Kansas City tightened data-center zoning in January 2026.
+
+**Water:** Municipal KC Water — but [Google's contracted volume is being kept confidential](https://www.kshb.com/news/local-news/kansas-city-data-centers-could-use-millions-of-gallons-of-water-per-day-records-show), per KSHB's review of the service contracts. For scale, the neighboring Meta Northland contract allows up to 9.5 million gallons a day against KC Water's 240 MGD capacity, and the city has proposed a [~$2 billion new treatment plant](https://www.kshb.com/news/local-news/kansas-city-proposes-new-2-billion-water-treatment-plant-is-it-connected-to-data-center-development) as four hyperscale campuses rise in the Northland.
+
+**Air:** Nothing beyond the standard backup-generator framework surfaced — no permits, counts, or turbines found for this site.
+
+**Noise:** Construction-phase only: Woodland Creek residents reported [noise and airborne dirt from construction](https://www.kctv5.com/2026/02/12/google-confirms-new-data-center-development-kansas-citys-northland/). The January 2026 zoning change added noise limits and property-line distances for future data centers.
 
 ### Goodnight — Crusoe, sold to Google (Claude, Armstrong County, Texas)
 
@@ -420,9 +460,29 @@ Research was done by web search in August 2026, drawing on local news, permit re
 
 ## CoreWeave
 
-<!-- PENDING: CoreWeave Denton TX -->
+### Denton — Core Scientific/CoreWeave (Denton, Texas)
 
-<!-- PENDING: Coreweave Helios -->
+**Status:** A 300 MW former bitcoin mine on city-owned leased land, being converted to AI hosting for CoreWeave (which acquired Core Scientific); Epoch estimated 183 MW in May 2026, with 260 MW dedicated to CoreWeave by mid-2026. In August 2026 Denton's council [moved toward a moratorium on new data centers](https://www.keranews.org/news/2026-08-05/denton-moves-toward-data-center-moratorium-city-council-weighs-stricter-development-rules) while it drafts stricter rules on zoning, water, noise, and proximity to homes.
+
+**Taxes:** No city tax break — Core Scientific sought none — and the city collects lease revenue on top of taxes since the site sits on city land. The conversion is [projected to generate about $194 million in property tax over a decade](https://dentonrc.com/news/denton/denton-data-center-is-shifting-focus-to-ai-planning-to-grow-and-use-more-power/article_567f9da6-a766-11ef-b426-f30ec039dfa7.html); actuals so far: Denton's data centers had paid [more than $3.1 million combined](https://communityimpact.com/dallas-fort-worth/denton/development/2026/05/07/data-centers-rise-in-denton/) in property taxes through mid-2026, and data centers account for [~23% of the city's sales-tax intake and over $22 million in the proposed FY2026–27 budget](https://www.keranews.org/news/2026-08-12/denton-starts-planning-out-2-22b-budget-with-a-boost-from-data-center-taxes) (including $8.8+ million in electric franchise fees). The company qualified for Texas's data-center sales-tax exemption in 2025.
+
+**Water:** Closed-loop direct-to-chip liquid cooling: per local reporting on Denton's draft rules, a system of this type [holds 3–5 million gallons once but consumes only ~60,000–100,000 gallons a year](https://dentonrc.com/news/denton/denton-moves-toward-data-center-moratorium-city-council-weighs-stricter-development-rules/article_870ea8c3-491e-4002-b7e9-11daddec7f6c.html) — a handful of households — versus millions-to-billions for evaporative designs. No metered site figures; the city's capacity worry is electric, not water.
+
+**Air:** Standard backup generators only (2 extra leased acres for generators and heat exchangers); no TCEQ specifics surfaced, no turbines, no enforcement.
+
+**Noise:** None found — a neighboring rural resident told the local paper noise hasn't been a problem so far, only truck traffic. The city's coming rules would add noise standards and residential setbacks prospectively.
+
+### Helios — Galaxy/CoreWeave (Afton, Dickens County, Texas)
+
+**Status:** A former Argo Blockchain bitcoin mine in remote West Texas (an hour-plus from Lubbock), bought by Galaxy Digital in 2022 for ~$65 million and converted to an AI campus leased to CoreWeave. By early 2026, ~200 MW of gross power had been delivered and [ERCOT approved doubling grid capacity past 1.6 GW](https://www.datacenterdynamics.com/en/news/galaxy-secures-approval-for-more-than-800mw-at-helios-campus-in-texas/), with a $3.5 billion Phase 2 permitted.
+
+**Taxes:** Two county PILOT-style deals: Galaxy's expansion came with a [$20.5 million package ($18.5M in payments in lieu of taxes plus $2M for housing) over ten years](https://www.thetexasspur.com/news/205m-tax-abatement-paves-way-galaxy-growth-dickens-county), and the county approved a [~$19 million deal for tenant CoreWeave](https://www.thetexasspur.com/news/dickens-county-approves-19-million-tax-abatement-galaxy-tenant-coreweave) ($19M to the county treasury over 10 years plus $2M for homebuilding). For rural Dickens County these are large sums; no actual payments confirmed yet.
+
+**Water:** Nothing site-specific disclosed after multiple searches — no usage figures, source, or cooling design surfaced, and no local controversy. (Statewide context: Texas data centers collectively consumed over 50 billion gallons in 2024.)
+
+**Air:** Global Energy Monitor lists a ["Galaxy Helios 1 power plant" in pre-construction](https://www.gem.wiki/Galaxy_Helios_1_power_plant) — an on-site gas project whose capacity and permits haven't been published. Primary power is the ERCOT grid. No emissions figures, generator counts, or enforcement actions found.
+
+**Noise:** None found — the site sits four miles from an unincorporated community in one of Texas's least-populated counties.
 
 ---
 
@@ -440,9 +500,29 @@ Research was done by web search in August 2026, drawing on local news, permit re
 
 **Noise:** No documented complaints, measurements, or lawsuits about the existing campus surfaced — but noise is a recurring, explicit fear in resident opposition to the 17-building expansion: at a May 2026 meeting where residents held "No More Data Centers" signs, one longtime Varina resident said she is ["terrified that I won't be able to... have a constant hum in my ears"](https://www.wtvr.com/news/local-news/henrico-county/residents-push-back-qts-data-center-expansion-may-19-2026). Henrico responded with regulation: a ~3,000-acre overlay district adopted in 2025 sets rules on noise and generator operation and raised residential setbacks from a draft 200 feet to [500 feet](https://richmondbizsense.com/2025/05/15/henrico-looks-to-limit-data-center-development-with-new-white-oak-overlay-district/).
 
-<!-- PENDING: QTS Cedar Rapids -->
+### QTS Cedar Rapids — QTS (Fairfax/Cedar Rapids, Iowa)
 
-<!-- PENDING: STACK Infrastructure NVA02 -->
+**Status:** Under construction next to the Google site — announced at $750 million on 612 acres (the largest development project in Cedar Rapids' history), now described by QTS as a planned $10 billion long-term investment; phases complete late 2026 and late 2027.
+
+**Taxes:** A [20-year, 70% property-tax rebate per phase plus a 20-year, 75% electrical franchise-fee rebate](https://corridorbusiness.com/cedar-rapids-council-approves-development-agreement-for-qts-data-center-project/); as the scope grew, coverage projected ~$2 billion in property taxes generated with up to $1 billion rebated. The mayor says the city will collect [about $25 million a year during the incentive period, ~$55 million after, and "conservatively $100 million per year" once rebates expire](https://www.kcrg.com/2026/07/25/cedar-rapids-mayor-explains-financial-benefits-data-center-projects/) (figures covering both data-center projects). QTS also pays $300,000 per phase per year into a Community Betterment Fund (capped at $18 million).
+
+**Water:** QTS claims closed-loop cooling with "no net new water for cooling" — operational use comparable to about four households a year. The construction phase produced the real story: Linn County found [about 40 unpermitted dewatering wells](https://www.thegazette.com/news/40-unpermitted-wells-at-cedar-rapids-construction-site-raise-questions-regulatory-review/) drilled at the site in 2025 and sought a $20,000 penalty, and an Iowa DNR visit found pumps exceeding the 25,000 gal/day registration threshold without registration — echoes of QTS's unbilled-water episode in Georgia, which local TV [reported on pointedly](https://www.kcrg.com/2026/05/11/company-behind-an-iowa-data-center-is-facing-violations-georgia-this-isnt-first-time-its-broken-regulation/).
+
+**Air:** No permanent turbines, but QTS is planning a [temporary commissioning power plant](https://corridorbusiness.com/qts-planning-temporary-power-plant-for-cedar-rapids-data-center/) (modular generators near the Eastern Iowa Airport, under six months' operation, not yet permitted as of mid-2026). Backup diesel is emergency-only with monthly testing, per QTS; counts and emissions not disclosed.
+
+**Noise:** No operational noise (not running); the dominant grievance is construction traffic through the small town of Fairfax — [thousands of vehicles from 4:30 a.m., 45-minute waits to leave driveways, a traffic study clocking 95 mph](https://www.kcrg.com/2026/06/04/so-many-safety-concerns-fairfax-data-center-traffic-frustrates-residents/) — prompting a special council session, a traffic-safety committee, and moratorium talk without formal action.
+
+### STACK NVA02 — STACK Infrastructure (Manassas area, Prince William County, Virginia)
+
+**Status:** A multi-building campus (STACK markets seven buildings/420 MW; Epoch describes 10 buildings with 350 MW for AI) in Northern Virginia's data-center corridor; first high-density AI building operational late 2024, six AI buildings expected by 2028. Prince William County had 44 operating data centers plus 15 under construction as of mid-2025.
+
+**Taxes:** No STACK-specific incentive found; the county competes on its own terms and recently moved the other way — raising the computer-equipment tax from $2.15 to [$3.70 per $100 of assessed value in 2024](https://www.insidenova.com/headlines/prince-william-county-hikes-data-center-taxes-while-cutting-homeowners-rate/article_8f5a8f76-0259-11ef-b71c-cf647816343e.html). County-wide actuals are striking: data centers paid [$293.7 million in local taxes in tax year 2024, up 77%](https://www.princewilliamtimes.com/news/report-prince-william-county-has-44-data-centers-15-more-on-the-way/article_f0518174-bd23-49ee-ab92-3b04a0936f16.html) — and made up 42% of commercial assessments. Virginia's sales-tax exemption (~$1–2 billion a year statewide) applies to qualifying facilities.
+
+**Water:** No facility figure published. Utility-wide, Prince William Water says an average data-center building uses [~13,600 gallons a day (max ~102,000)](https://princewilliamwater.org/our-customers/residential-customers/frequently-asked-questions/water-quality-frequently-asked-questions/water-wastewater-capacity), and data centers were ~3.8% of average daily demand (10.1% on peak days) in 2025. During Virginia's 2025 drought, the Prince William Times' ["Perfect storm" investigation](https://www.princewilliamtimes.com/localnews/perfect-storm-drought-data-centers-and-ndas/article_f456c388-fc47-59e6-b3cf-fe40176069a3.html) highlighted that county data-center water use is shielded by NDAs.
+
+**Air:** Diesel backup only, grid-served via two 300 MW NOVEC substations. The broader Manassas cluster hosts a reported 842 diesel generators; Virginia now requires Tier 4-equivalent controls for permits filed after July 1, 2026, and a DEQ memo expanding "emergency" operation (letting generators run during grid stress) [drew criticism in late 2025](https://virginiamercury.com/2025/12/16/virginia-regulators-weigh-expanded-use-of-data-centers-polluting-generators/).
+
+**Noise:** None naming NVA02 — but the county's own [early-morning sound testing near the Hornbaker Road cluster the campus belongs to failed the new county noise limits](https://www.princewilliamtimes.com/news/coming-crackdown-on-data-center-noise-likely-wont-bring-relief-to-a-community-most-affected/article_5307ae6c-fac1-11ef-89ef-13f721478913.html), while seven subdivisions without data centers passed. The area's loudest fight — the Great Oak subdivision's battle against a constant low roar — targets four Amazon data centers nearby, which later added mitigation.
 
 <!-- PENDING: Vantage TX1 -->
 
