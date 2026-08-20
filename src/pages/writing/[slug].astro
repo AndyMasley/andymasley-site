@@ -514,14 +514,16 @@ if (correction) {
             {(newerPost || olderPost) && (
               <nav class="article-adjacent" aria-label="More writing">
                 {olderPost && (
-                  <p class="article-adjacent__line">
-                    &larr; older: <a href={`/writing/${olderPost.slug}`}>{olderPost.title}</a>
-                  </p>
+                  <a class="article-adjacent__item article-adjacent__item--older" href={`/writing/${olderPost.slug}`}>
+                    <span class="article-adjacent__label">&larr; Older</span>
+                    <span class="article-adjacent__title">{olderPost.title}</span>
+                  </a>
                 )}
                 {newerPost && (
-                  <p class="article-adjacent__line">
-                    newer: <a href={`/writing/${newerPost.slug}`}>{newerPost.title}</a> &rarr;
-                  </p>
+                  <a class="article-adjacent__item article-adjacent__item--newer" href={`/writing/${newerPost.slug}`}>
+                    <span class="article-adjacent__label">Newer &rarr;</span>
+                    <span class="article-adjacent__title">{newerPost.title}</span>
+                  </a>
                 )}
               </nav>
             )}
@@ -747,11 +749,77 @@ if (correction) {
     font-variant-numeric: tabular-nums;
   }
 
-  .article-adjacent__line {
-    margin: 0 0 0.3rem;
+  /* Older left, newer right. Still typography, not chrome: no border, no
+     box. The label carries the direction so the title can be a plain
+     title, and the title takes the ink-with-hairline treatment the Recent
+     list uses rather than full-width blue. */
+  .article-adjacent {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-lg);
+    align-items: start;
+  }
+
+  /* One neighbour only: it keeps its own side of the grid. */
+  .article-adjacent__item--newer:only-child {
+    grid-column: 2;
+  }
+
+  .article-adjacent__item {
+    display: block;
+    min-width: 0;
+    text-decoration: none;
+  }
+
+  .article-adjacent__item--newer {
+    text-align: right;
+  }
+
+  .article-adjacent__label {
+    display: block;
+    margin-bottom: 0.2rem;
+    font-family: var(--font-label);
+    font-size: var(--text-xs);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--dim);
+  }
+
+  .article-adjacent__title {
     font-size: var(--text-sm);
-    line-height: var(--leading-ui);
-    color: var(--text-secondary);
+    line-height: var(--leading-note);
+    color: var(--text);
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 2px;
+    text-decoration-color: var(--border-strong);
+    /* A long neighbour title stops at two lines instead of running away. */
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .article-adjacent__item:hover .article-adjacent__title {
+    color: var(--accent);
+    text-decoration-color: var(--accent);
+  }
+
+  .article-adjacent__item:hover .article-adjacent__label {
+    color: var(--accent);
+  }
+
+  @media (max-width: 560px) {
+    .article-adjacent {
+      grid-template-columns: 1fr;
+      gap: var(--space-md);
+    }
+
+    .article-adjacent__item--newer,
+    .article-adjacent__item--newer:only-child {
+      grid-column: 1;
+      text-align: left;
+    }
   }
 
   .article-backlink {
