@@ -24,7 +24,7 @@ const groups = appearanceGroups.map(g => ({ heading: g.heading, runs: groupByDat
   ogImage="/og/page/appearances.png?v=2"
 >
   {groups.map(group => (
-    <details class="appearance-group">
+    <details class="appearance-group" open>
       <summary class="appearance-group__summary">
         <h2 class="appearance-group__heading">{group.heading}</h2>
       </summary>
