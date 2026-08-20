@@ -126,7 +126,17 @@ Research was done by web search in August 2026, drawing on local news, permit re
 
 **Noise:** None found for this site. (Nearby context: a separate developer's $14 billion Goodyear/Buckeye proposal was withdrawn after residents opposed it partly over noise; Chandler, across the metro, passed a data-center noise ordinance in 2022 after years of complaints; and Microsoft faces a 2026 class action over fan noise in Wisconsin — none involving this campus.)
 
-<!-- PENDING: Microsoft Project Osmium -->
+### Project Osmium — Microsoft (West Des Moines, Iowa)
+
+**Status:** Fully built and operating; a five-building, ~200-acre campus in the Des Moines metro (one of five completed Microsoft campuses in West Des Moines, with a sixth approved); Epoch estimated 228 MW in May 2026. Per SemiAnalysis, one building held ~25,000 A100s used by OpenAI to train GPT-3.5, and the Iowa cluster was where GPT-4 training's water spike made 2023 headlines.
+
+**Taxes:** No property-tax abatement — [West Des Moines doesn't offer them](https://www.wdm.iowa.gov/Home/Components/News/News/4420/117?backlist=%2F) — and at announcement the city projected up to $12 million a year from the campus. Actuals: Microsoft's property taxes across its West Des Moines campuses totaled [$21 million in FY 2024–25](https://wdmchamber.org/economic-development/microsoft-data-centers/), with $4.84 million flowing to the Norwalk school district; over $200 million in public improvements citywide have been funded mostly by data-center tax increment, and officials credit Microsoft with giving the city Iowa's third-highest property valuation. Microsoft did get a state sales-tax refund on construction materials, and the city fronted ~$65 million in infrastructure repaid from Microsoft's own taxes.
+
+**Water:** Municipal water, direct evaporative cooling. Combined figures for all Microsoft West Des Moines campuses: [~11.5 million gallons a month at summer peak (~6% of city use in peak months)](https://who13.com/news/a-look-into-how-much-water-data-centers-use-in-west-des-moines/), ~70 million gallons in 2024, about 2.4% of the city's 2025 water use. Microsoft funded ~$25 million in waterworks upgrades, and in 2023 the city conditioned any new campuses on designs that sharply cut peak use (the approved sixth campus will use zero-water designs). When central Iowa imposed its first-ever lawn-watering ban in June 2025, data centers were publicly blamed — but the utility's GM said ["Data centers are not our problem"](https://www.axios.com/local/des-moines/2025/06/17/central-iowa-water-ban-data-centers-microsoft): the ban was driven by nitrate pollution from farm runoff.
+
+**Air:** Standard diesel backup only. The site's Iowa DNR Title V permit caps facility-wide diesel consumption at 437,880 gallons in any one day and limits high-level engine operation to seven "high activity days" a year, with annual reporting. No turbines, enforcement actions, or challenges found.
+
+**Noise:** Mild and construction-related: neighbors describe [nine years of construction truck traffic, noise, and light pollution](https://urbanmilwaukee.com/2025/05/15/an-iowa-city-with-five-microsoft-data-center-complexes-reveals-what-wisconsin-can-expect/) across the multi-campus buildout (each campus takes 8–10 years to build). No operational-noise lawsuits or measured readings for the Iowa campuses.
 
 <!-- PENDING: Microsoft SAT14 -->
 
@@ -230,17 +240,77 @@ Research was done by web search in August 2026, drawing on local news, permit re
 
 **Noise:** None found for this facility after genuine searching — retrospective coverage 15+ years in notes nearby apartments filled quickly with no noise complaints reported. Regional sentiment has shifted, though: hundreds of Mayes County residents [organized in mid-2026 against proposed new data centers](https://www.kjrh.com/news/local-news/protect-homeowners-mayes-county-neighbors-advocate-against-future-data-centers) elsewhere in the county (citing noise, water, and energy), and Sand Springs residents filed to recall their entire city council after it welcomed a proposed Google data center there.
 
-<!-- PENDING: Google Columbus -->
+### Columbus (Lockbourne) — Google (Columbus, Ohio)
 
-<!-- PENDING: Google New Albany -->
+**Status:** Operating and expanding; Epoch estimated 364 MW across a five-building campus in May 2026, on a ~500-acre former farm on the city's Far South Side. Google negotiated through a shell company, Magellan Enterprises LLC, before revealing itself.
 
-<!-- PENDING: Google Omaha -->
+**Taxes:** In March 2021 Columbus granted a [15-year, 100% property-tax abatement](https://www.nbc4i.com/news/investigates/20-jobs-but-54-million-in-tax-breaks-for-google-center-in-columbus/) — valued by NBC4's investigation at roughly $54 million in forgone taxes in exchange for an expected 20 full-time jobs at the $300 million first phase (council approved it 6-1, to the shell company). No actual payment amounts have been published. Google's school support has flowed largely as donations ($100,000 to Columbus City Schools in 2023; $1.1 million to central Ohio nonprofits and schools in 2025). [Policy Matters Ohio](https://policymattersohio.org/research/indefensible-tax-breaks-for-data-centers-will-cost-ohio/) has criticized Ohio's data-center tax breaks statewide (at least $2.3 billion committed in sales-tax breaks).
 
-<!-- PENDING: Google Papillion -->
+**Water:** Google's disclosures show the campus used [177 million gallons in 2024](https://freepress.org/article/google-s-columbus-data-center-secrets-exposed) (~485,000 gallons/day) while still ramping up, with [E&E News reporting](https://www.eenews.net/articles/thirsty-data-centers-fuel-local-angst-over-water-infrastructure/) a buildout ceiling of 2 million gallons a day, expandable to 8 million — evaporative cooling on municipal water. Columbus's utility (1.4 million customers) says data centers remain a small share of supply today (~3% of water pumped), but regional data-center demand is projected at ~70 million gallons a day by 2040, and the city is raising water rates 18% in 2026 for capital projects.
 
-<!-- PENDING: Google Council Bluffs (East) -->
+**Air:** Nothing beyond standard diesel backup generators found — no turbines, no enforcement, no challenges. (Ohio's high-profile generator fight is over Google's separate proposed Lima site, with a contested draft permit for 115 diesel generators.) An advocacy outlet's claim, citing an anonymous worker, that the generators "run almost all day" has no regulatory corroboration.
 
-<!-- PENDING: Google Storey County -->
+**Noise:** Neighborhood-level complaints, publicly voiced: a Scioto Southland Civic Association board member says the former farm's soundscape is now ["the constant hum of giant computer systems"](https://www.aol.com/news/concern-grows-data-centers-emerge-144810830.html) audible to neighbors, 24/7. No lawsuits, citations, or measured decibel readings surfaced.
+
+### New Albany — Google (New Albany, Ohio)
+
+**Status:** Operating and expanding on ~447 acres in the New Albany International Business Park (negotiated from 2018 under subsidiary Montauk Innovations LLC; ~$600 million initial build plus a $1 billion expansion); Epoch counts 407 MW in buildings added or modified since 2024.
+
+**Taxes:** The standard New Albany hyperscaler package: a [100% real-property tax abatement for 15 years](https://www.governing.com/infrastructure/ohio-throws-hundreds-of-millions-to-tech-giants-data-centers) under a Community Reinvestment Area agreement, up to $250,000 in fee waivers, and Ohio's 100%, 15-year data-center sales-tax exemption — in exchange for a guaranteed minimum of $750,000 a year in city revenue starting 2021. Because property taxes are abated, the city shares income-tax revenue with the school district and township in lieu; officials say data-center revenue has helped the district avoid going to the ballot. Google-specific actual payments aren't published; [city aggregates](https://datacenters.newalbanyohio.org/city-finances/) include one unnamed data center generating $3.9 million in local tax revenue.
+
+**Water:** One of the biggest disclosed users in this roundup: [more than 405 million gallons a year](https://freepress.org/article/google-s-columbus-data-center-secrets-exposed) (~33.75 million gallons a month — for scale, Columbus's tallest office tower averages ~1 million a month), on Columbus municipal water. All Columbus-area data centers together used ~1.26 billion gallons May 2025–May 2026, about 3% of what the city pumped; Columbus is planning a [20–40 MGD water-reuse program](https://www.waterworld.com/water-reuse/article/55385910/columbus-explores-water-reuse-to-support-data-center-growth-and-long-term-water-supply-needs) and has discussed a dedicated reuse plant near New Albany, which is too far from existing reuse infrastructure.
+
+**Air:** Nothing site-specific found beyond standard backup generators — no turbines, no enforcement, no challenges. (The contested 115-generator permit belongs to Google's separate Lima project.)
+
+**Noise:** Yes — the best-documented Ohio case: in September 2025 the city received [consistent resident complaints about noisy exhaust fans](https://datacenters.newalbanyohio.org/) at this campus. Google retained a sound engineer within two weeks and implemented monitoring, operational adjustments, and dampening materials, plus a dedicated complaint email. The city says it has logged only four data-center noise complaints in 15+ years, all resolved within days.
+
+### Omaha — Google (northwest Omaha, Nebraska)
+
+**Status:** Under construction/ramping; Epoch estimated 284 MW in May 2026. Announced in 2022 under shell entity Westwood Solutions LLC on what's grown to a 450+-acre campus at the Bennington-area edge of Omaha, with ~$750 million initially announced.
+
+**Taxes:** No actual payment figures published. Google's Nebraska sites benefit from the ImagiNE Nebraska Act (sales-tax exemptions on equipment, personal-property exemptions, investment and wage credits); a Google subsidiary reportedly applied for [roughly $600 million in state incentives](https://nebraskaexaminer.com/2022/04/21/google-announces-nebraska-growth-plan-that-includes-new-northwest-omaha-data-center/) (attribution between the Omaha and Lincoln projects is ambiguous). Statewide, Nebraska data centers received [an estimated $519 million in property-tax exemptions from 2021 through mid-2026](https://www.1011now.com/2026/07/20/nebraska-data-centers-have-received-519m-property-tax-exemptions-since-2021/); in July 2026 Gov. Pillen [signed an executive order barring new data-center applications](https://nebraskaexaminer.com/2026/07/20/pillen-rescinds-imagine-act-tax-incentives-for-new-nebraska-data-centers/) from ImagiNE incentives (existing agreements stand).
+
+**Water:** No site-specific figure; Google reports its three Nebraska sites combined used [732 million gallons in 2025](https://flatwaterfreepress.org/data-centers-can-guzzle-serious-water-as-some-nebraskans-worry-tech-giants-seek-solutions/), up from 46.6 million in 2022 — more than all Omaha MUD customers combined use in an average week, or irrigation for ~2,500–3,500 acres of corn. The site's draft air permit documents evaporative cooling towers. In June 2026 Google gave MUD [$3 million for acoustic leak-detection](https://nebraskapublicmedia.org/en/news/news-articles/google-gives-3-million-to-mud-to-reduce-water-use-in-omaha/) on 500 miles of mains (potentially saving ~1 billion gallons a year) and pledged to replenish more water than it uses.
+
+**Air:** Diesel backup generators only. Nebraska's environmental agency proposed a Class II operating permit (comment period August–September 2025) with estimated potential emissions of [71.93 tons of NOx, 24.28 tons of CO, and 4.56 tons of PM2.5 a year](https://dwee.nebraska.gov/news-events/public-notices/westwood-solutions-llc), with limits on engine counts and hours. No turbines, enforcement actions, or challenges found.
+
+**Noise:** None found — no local complaints, lawsuits, or measurements surfaced for this still-ramping edge-of-city campus.
+
+### Papillion — Google (Papillion, Sarpy County, Nebraska)
+
+**Status:** Operating since ~2019 with a five-building buildout; Epoch estimated 284 MW in May 2026. Announced as a $600 million project — Sarpy County's eighth data center — and operated under the LLC name Fireball Group; Google says it has invested more than $15 billion in Nebraska since.
+
+**Taxes:** Nebraska Tier 2 large-data-center incentives: a 10% investment tax credit, personal-property tax exemptions on servers and equipment, and sales/use-tax exemptions after meeting thresholds, plus a pledge of 30+ jobs and a [$100,000 STEM grant to Springfield Platteview schools](https://omaha.com/news/nation-world/business/google-papillion-is-a-go-for-600-million-data-center-sarpy-countys-8th/article_71d55664-45c4-57f9-84b8-7b0c99938bfc.html). Land and buildings stay on the tax rolls; the exemptions cover equipment. Aggregate cost is documented at the county level: Sarpy County [loses about $5.8 million a year](https://www.1011now.com/2026/07/20/nebraska-data-centers-have-received-519m-property-tax-exemptions-since-2021/) in personal-property tax revenue to data-center incentives across all companies. Google-specific actuals aren't published.
+
+**Water:** Google self-reported the Papillion site [withdrew 532 million gallons and consumed 416.9 million in 2024](https://flatwaterfreepress.org/data-centers-can-guzzle-serious-water-as-some-nebraskans-worry-tech-giants-seek-solutions/) (~1.46 million gallons a day average) — evaporative cooling, consistent with the cooling towers in its draft air permit. That's small against MUD's ~320 MGD capacity and ~98 MGD average demand, but Google's combined Nebraska consumption in 2025 exceeded a typical week of all MUD customers combined; amid drought concerns Google pledged in June 2026 to replenish more than it uses.
+
+**Air:** Diesel emergency generators only, under a proposed Class I operating permit (Fireball Group LLC) limiting NOx and PM2.5, engine counts, and hours. No turbines, enforcement, or challenges found.
+
+**Noise:** None found — no complaints, disputes, or measurements surfaced for this campus in roughly seven years of operation.
+
+### Council Bluffs (East) — Google (Council Bluffs, Iowa)
+
+**Status:** One of Google's oldest and largest campuses (2007–2009 origin), directly across the Missouri River from Omaha; Epoch counts 190 MW in the east-side buildings added since 2024. Total Iowa investment has passed $5.5 billion.
+
+**Taxes:** The original deal gave Google a 20-year local property-tax abatement reported at [roughly $33 million in exemptions](https://www.iowapublicradio.org/ipr-news/2014-06-25/data-centers-in-iowa-are-the-incentives-worth-it) against a company projection of ~$65 million paid over 15 years; expansions added a [$16.6 million local property-tax break (2022)](https://www.datacenterknowledge.com/hyperscalers/iowa-officials-approve-tax-breaks-for-google-data-center-expansion) and a $19.8 million state sales-tax refund (2024), with [Axios counting more than $36 million in total incentives](https://www.axios.com/local/des-moines/2025/06/10/iowa-tax-incentives-data-centers-2015-2020). Iowa deals include community-betterment payments of $400,000 a year per data center for 15 years. One tracker reports the Council Bluffs school district relies on data-center-related revenue for about 15% of its budget. No actual annual payment amounts published.
+
+**Water:** Council Bluffs is [Google's thirstiest data center location worldwide](https://trellis.net/article/sip-or-guzzle-heres-how-googles-data-centers-use-water/): about 1 billion gallons consumed in 2024 (~13,300 people's annual use) and ~1.3 billion in 2025 (~3.6 million gallons a day average, with a reported summer peak of 2.7 million), from the municipal utility whose Missouri River intake capacity is ~39.5 MGD. In June 2026 the mayor sought a [moratorium on new data centers](https://www.3newsnow.com/council-bluffs/council-bluffs-mayors-push-to-pause-new-data-center-construction-rejected-by-city-council), saying the city was running "very high at capacity" on water and sewer; the council rejected it. Google has committed $17 million to water projects across seven states plus $1.3 million for Missouri River restoration.
+
+**Air:** Standard diesel backup: the original facility was permitted for [38 diesel generators](https://www.datacenterknowledge.com/hyperscalers/google-38-generators-at-iowa-data-center); no permit details surfaced for the newer east buildings. No turbines, enforcement actions, or challenges found. (A 2022 electrical explosion at the campus injured three workers.)
+
+**Noise:** None found — the June 2026 moratorium debate centered on water and sewer capacity, not noise.
+
+### Storey County — Google (Tahoe Reno Industrial Center, Nevada)
+
+**Status:** Operating since early 2021 inside the 107,000-acre Tahoe Reno Industrial Center east of Reno (alongside Tesla, Switch, and Vantage); Epoch estimated 214 MW in May 2026, expanding toward four buildings. Operated through the entity Silver Slate, LLC.
+
+**Taxes:** Nevada's GOED approved abatements in 2020: [sales tax cut to 2% for 20 years (est. $16.8 million) plus a 75% personal-property tax abatement for 20 years (est. $8.25 million)](https://thenevadaindependent.com/article/state-approves-tax-incentives-for-google-lithium-company-amid-promise-to-raise-threshold-for-future-tax-breaks) — about $25 million in relief on the $600 million build, against a state projection of $94 million in tax revenue over 20 years. The Nevada Independent has reported that [GOED doesn't track whether abated data centers meet their revenue promises](https://thenevadaindependent.com/article/have-data-center-tax-breaks-helped-nevadas-economy-heres-what-we-found), that Nevada has approved ~$457 million in data-center abatements over a decade for about 300 promised permanent jobs, and that recipient details are often withheld.
+
+**Water:** One of the directory's clearest low-water designs: the campus is [air-cooled and uses no water for cooling](https://datacenters.google/locations/storey-county-nevada/) — per [MIT Technology Review's review of Google's figures](https://www.technologyreview.com/2025/05/20/1116287/ai-data-centers-nevada-water-reno-computing-environmental-impact/), it withdrew about 1.9 million gallons in all of 2023 (roughly 5,200 gallons a day) and consumed only ~200,000 — less than many evaporatively cooled sites use in a day. Regional concern about the northern Nevada data-center boom straining the Truckee basin targets wetter-cooled projects, not this one.
+
+**Air:** Diesel emergency generators plus fire pumps, permitted as a Class I major source (potential emissions over 100 tons a year of at least one pollutant), fueled by ultra-low-sulfur diesel or renewable HVO — an unusual fuel commitment. No turbines, enforcement actions, or challenges found.
+
+**Noise:** None found — the site sits in a vast industrial park miles from residential neighbors.
 
 ### The Dalles — Google (The Dalles, Oregon)
 
@@ -298,7 +368,17 @@ Research was done by web search in August 2026, drawing on local news, permit re
 
 <!-- PENDING: Stream Phoenix -->
 
-<!-- PENDING: Fluidstack Lake Mariner -->
+### Lake Mariner — TeraWulf/Fluidstack for Anthropic and Core42 (Barker, New York)
+
+**Status:** A former coal plant site on Lake Ontario in the small Town of Somerset, Niagara County, converted by owner TeraWulf from bitcoin mining toward ~500 MW of AI capacity; Epoch counted 68 MW of AI IT power in May 2026. Buildings 1–2 are leased to G42's Core42; Buildings 3–5 to Fluidstack, reportedly hosting Google TPUs for Anthropic.
+
+**Taxes:** No current PILOT or abatement was found for the data-center era (the coal plant's PILOT ended when it closed in 2020; the plant entity later settled ~$2.2 million in back taxes). The live fight is sales tax: Lake Mariner has paid none under New York's decades-old Internet Data Center Sales Tax Exemption, and in May 2026 the Niagara County Legislature [hired a law firm to investigate what the company might owe](https://www.niagara-gazette.com/news/local_news/citing-lake-mariner-niagara-county-wants-audit-of-states-internet-sales-tax-exemption/article_47e82906-4b1f-49dd-907b-fa906625e360.html) and unanimously called on the governor to audit the exemption, which legislators say costs governments millions.
+
+**Water:** A minor issue by design and geography: the AI buildings use [closed-loop liquid cooling requiring only a few gallons of utility water a day](https://www.datacenterfrontier.com/site-selection/article/55379784/terawulfs-lake-mariner-campus-how-a-retired-coal-plant-became-an-ai-factory-prototype) for makeup, and the site doesn't use the coal plant's massive legacy lake intake. No controversy found.
+
+**Air:** No turbines — the site's pitch is reusing the coal plant's grid interconnection — and no permit fights or generator details surfaced. A [June 2026 fire](https://www.niagara-gazette.com/news/local_news/chief-lake-mariner-fire-exposed-safety-concerns/article_75fe0e5d-98fb-5e34-9108-91f3b477c152.html) in a former water-treatment building (no functional alarm or suppression system) drew the fire chief's criticism.
+
+**Noise:** Yes — the campus's best-documented grievance, mostly from the older air-cooled bitcoin buildings: residents have complained since 2022 of a [constant ~95 dB fan hum at the source](https://www.lockportjournal.com/news/local_news/somerset-residents-sound-off-on-data-center-noise-issues/article_51cd67c8-5f47-11ef-a3d0-13d2c78a810e.html), aired repeatedly at town meetings. TeraWulf installed muting devices; a town-commissioned Acentech study (July 2024) measured sound at nearby homes below Somerset's 50 dB nighttime limit. No lawsuits found.
 
 ---
 
