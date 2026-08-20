@@ -375,8 +375,7 @@ if (correction) {
     <div class="divider article-endmark" aria-hidden="true"><div class="divider-diamond"></div></div>
     <footer class="article-footer">
       <p class="article-colophon">
-        <span class="p-author h-card"><a class="p-name u-url" href="https://andymasley.com">Andy Masley</a></span>
-        {' '}· first published on {post.sourceName}, {formatDate(post.date)} — <a href={post.url} target="_blank" rel="noopener">discussion there</a>
+        <a href={post.url} target="_blank" rel="noopener">Discussion on {post.sourceName}</a>
         {' '}· spot an error? <a href="/writing/errors-and-updates">there’s a $300 bounty</a>.
       </p>
       <p class="article-backlink">
@@ -475,17 +474,10 @@ if (correction) {
           <div class="divider article-endmark" aria-hidden="true"><div class="divider-diamond"></div></div>
           <footer class="article-footer">
             <p class="article-colophon">
-              <span class="p-author h-card"><a class="p-name u-url" href="https://andymasley.com">Andy Masley</a></span>
-              {!isMetaPost && (
-                <> · {post.source !== 'local'
-                  ? <>first published on {post.sourceName}, {formatDate(post.date)} — <a href={post.url} target="_blank" rel="noopener">discussion there</a></>
-                  : <>published {formatDate(post.date)}</>}
-                </>
+              {post.source !== 'local' && (
+                <><a href={post.url} target="_blank" rel="noopener">Discussion on {post.sourceName}</a> · </>
               )}
-              {isMetaPost && post.source !== 'local' && (
-                <> · <a href={post.url} target="_blank" rel="noopener">also on {post.sourceName}</a></>
-              )}
-              {' '}· spot an error? <a href="/writing/errors-and-updates">there’s a $300 bounty</a>.
+              spot an error? <a href="/writing/errors-and-updates">there’s a $300 bounty</a>.
             </p>
             {citedBy.length > 0 && (
               <div class="article-citedin">
