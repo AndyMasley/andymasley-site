@@ -8,6 +8,10 @@ interface Props {
   ogImage?: string;
   ogTitle?: string;
   ogImageAlt?: string;
+  // Real pixel size of ogImage. Pass null to omit the dimension tags
+  // entirely — better than declaring a size the image does not have.
+  ogImageWidth?: number | null;
+  ogImageHeight?: number | null;
   ogType?: string;
   canonicalUrl?: string;
   robots?: string;
@@ -22,6 +26,8 @@ const {
   ogImage,
   ogTitle,
   ogImageAlt,
+  ogImageWidth = 1200,
+  ogImageHeight = 630,
   ogType = 'website',
   canonicalUrl,
   robots,
@@ -105,8 +111,12 @@ function isActive(href: string): boolean {
   <meta property="og:url" content={canonicalHref}>
   <meta property="og:image" content={resolvedOgImage}>
   <meta property="og:image:alt" content={resolvedOgImageAlt}>
-  <meta property="og:image:width" content="1200">
-  <meta property="og:image:height" content="630">
+  {ogImageWidth && ogImageHeight && (
+    <>
+      <meta property="og:image:width" content={String(ogImageWidth)}>
+      <meta property="og:image:height" content={String(ogImageHeight)}>
+    </>
+  )}
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:site" content="@AndyMasley">
   <meta name="twitter:creator" content="@AndyMasley">

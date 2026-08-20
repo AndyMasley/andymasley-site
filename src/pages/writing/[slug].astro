@@ -13,6 +13,7 @@ import { latestCorrection } from '@/data/corrections';
 import { getSeriesEntry, getSeriesSiblings } from '@/data/series';
 import { getCitedBy } from '@/lib/cited-in';
 import { getCategorySlug, getCategoryDisplayName } from '@/lib/category-slug';
+import { coverSocialCard } from '@/lib/cover-image';
 
 // Union type for all post sources
 type PostSource = 'local' | 'substack' | 'eaforum';
@@ -38,6 +39,7 @@ interface ExternalPost {
   htmlContent: string;
   sourceName: string;
   category?: string;
+  cover_image?: string;
 }
 
 type Post = LocalPost | ExternalPost;
@@ -101,6 +103,7 @@ export async function getStaticPaths() {
           htmlContent,
           sourceName: 'Substack',
           category: post.category,
+          cover_image: post.cover_image,
         }
       }
     };
@@ -210,8 +213,17 @@ const isMetaPost = new Set(getMetaPostSlugs()).has(post.slug);
 // path). Substack declares its own canonical on the originals, so both copies
 // deliberately claim themselves — don't "fix" this by pointing ours at Substack.
 const permalink = new URL(`/writing/${post.slug}/`, Astro.site ?? 'https://andymasley.com').href;
-// Describes the generated /og/<slug>.png card (og-card.ts), not the page.
-const ogImageAlt = `Title card reading "${post.title}" on a plain white background, andymasley.com`;
+// The social card is the post's own Substack cover art. The generated
+// /og/<slug>.png title card (og-card.ts) stays as the fallback for a post
+// with no cover, and remains the alt text in that case.
+const coverImage = post.source !== 'local' ? post.cover_image : undefined;
+const socialCard = coverImage ? coverSocialCard(coverImage, 1200) : null;
+const ogImage = socialCard ? socialCard.url : `/og/${post.slug}.png?v=2`;
+const ogImageWidth = socialCard ? socialCard.width : 1200;
+const ogImageHeight = socialCard ? socialCard.height : 630;
+const ogImageAlt = socialCard
+  ? `Cover art for "${post.title}"`
+  : `Title card reading "${post.title}" on a plain white background, andymasley.com`;
 
 
 // Estimate reading time
@@ -353,8 +365,10 @@ if (correction) {
   title={post.title}
   description="Every environmental objection to using ChatGPT, answered with data and sources."
   ogType="article"
-  ogImage={`/og/${post.slug}.png?v=2`}
+  ogImage={ogImage}
   ogImageAlt={ogImageAlt}
+  ogImageWidth={ogImageWidth}
+  ogImageHeight={ogImageHeight}
   structuredData={articleStructuredData}
 >
   <meta slot="head" property="article:published_time" content={post.date.toISOString()} />
@@ -390,8 +404,10 @@ if (correction) {
   description={post.description}
   activeNav="/writing"
   ogType="article"
-  ogImage={`/og/${post.slug}.png?v=2`}
+  ogImage={ogImage}
   ogImageAlt={ogImageAlt}
+  ogImageWidth={ogImageWidth}
+  ogImageHeight={ogImageHeight}
   structuredData={articleStructuredData}
 >
   <meta slot="head" property="article:published_time" content={post.date.toISOString()} />
