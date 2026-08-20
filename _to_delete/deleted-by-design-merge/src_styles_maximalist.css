@@ -1,0 +1,824 @@
+/*
+  MAXIMALIST MODE - 90s Encyclopedia / Textbook Aesthetic
+  Encarta, World Book, DK Eyewitness vibes
+*/
+
+/* ============================================
+   CSS Custom Properties - Encyclopedia Theme
+   ============================================ */
+
+[data-maximalist="true"] {
+  /* Warm paper tones */
+  --enc-bg: #f5f0e6;
+  --enc-bg-alt: #ebe4d4;
+  --enc-paper: #faf8f3;
+  --enc-cream: #f9f5eb;
+
+  /* Rich accent colors */
+  --enc-navy: #1a365d;
+  --enc-burgundy: #722f37;
+  --enc-forest: #2d5a3d;
+  --enc-gold: #b8860b;
+  --enc-rust: #a0522d;
+
+  /* Text colors */
+  --enc-text: #2c2416;
+  --enc-text-secondary: #5c4d3d;
+  --enc-heading: #1a365d;
+
+  /* Decorative */
+  --enc-border: #c4b89a;
+  --enc-border-dark: #8b7355;
+  --enc-highlight: #fff3cd;
+}
+
+/* ============================================
+   Base Encyclopedia Styles
+   ============================================ */
+
+[data-maximalist="true"] body {
+  background: var(--enc-bg);
+  background-image:
+    url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 0h100v100H0z' fill='%23f5f0e6'/%3E%3Cpath d='M0 50h100M50 0v100' stroke='%23e8e0d0' stroke-width='0.5'/%3E%3C/svg%3E");
+  color: var(--enc-text);
+  font-family: 'Georgia', 'Palatino Linotype', 'Book Antiqua', serif;
+  line-height: 1.7;
+}
+
+[data-maximalist="true"] ::selection {
+  background: var(--enc-highlight);
+  color: var(--enc-text);
+}
+
+/* ============================================
+   Main Content - Encyclopedia Page
+   ============================================ */
+
+[data-maximalist="true"] .main-content {
+  background: var(--enc-paper);
+  border: 3px double var(--enc-border-dark);
+  box-shadow:
+    4px 4px 0 var(--enc-border),
+    8px 8px 0 rgba(0,0,0,0.1);
+  margin: 1.5rem auto;
+  position: relative;
+  padding: 2rem;
+}
+
+/* Decorative corner flourishes */
+[data-maximalist="true"] .main-content::before {
+  content: '◆';
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--enc-paper);
+  padding: 0 1rem;
+  color: var(--enc-burgundy);
+  font-size: 1.2rem;
+}
+
+/* ============================================
+   Header - Encyclopedia Title Bar
+   ============================================ */
+
+[data-maximalist="true"] .header {
+  border-bottom: 3px solid var(--enc-navy);
+  padding-bottom: 1rem;
+  margin-bottom: 1.5rem;
+  background: linear-gradient(180deg, var(--enc-cream) 0%, var(--enc-paper) 100%);
+  margin: -2rem -2rem 1.5rem -2rem;
+  padding: 1.5rem 2rem;
+  position: relative;
+}
+
+[data-maximalist="true"] .header::after {
+  content: '';
+  position: absolute;
+  bottom: -6px;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: repeating-linear-gradient(
+    90deg,
+    var(--enc-gold) 0px,
+    var(--enc-gold) 10px,
+    transparent 10px,
+    transparent 15px
+  );
+}
+
+[data-maximalist="true"] .header__logo {
+  color: var(--enc-navy);
+  font-family: 'Palatino Linotype', 'Book Antiqua', 'Georgia', serif;
+  font-weight: bold;
+  font-size: 1.4rem;
+  letter-spacing: 0.02em;
+  text-decoration: none;
+}
+
+[data-maximalist="true"] .header__logo .hexagon {
+  display: none;
+}
+
+[data-maximalist="true"] .header__logo::before {
+  content: '📚 ';
+}
+
+[data-maximalist="true"] .header__control {
+  color: var(--enc-text-secondary);
+  font-family: 'Georgia', serif;
+  font-size: 0.85rem;
+  font-style: italic;
+}
+
+/* Navigation - Tab Style */
+[data-maximalist="true"] .header__nav {
+  margin-top: 1rem;
+  display: flex;
+  gap: 0;
+  flex-wrap: wrap;
+}
+
+[data-maximalist="true"] .header__nav-link {
+  color: var(--enc-navy);
+  text-decoration: none;
+  font-family: 'Georgia', serif;
+  font-size: 0.9rem;
+  font-weight: bold;
+  padding: 0.5rem 1rem;
+  background: var(--enc-bg-alt);
+  border: 2px solid var(--enc-border);
+  border-bottom: none;
+  margin-right: -2px;
+  position: relative;
+  top: 3px;
+}
+
+[data-maximalist="true"] .header__nav-link:hover {
+  background: var(--enc-highlight);
+}
+
+[data-maximalist="true"] .header__nav-link--active {
+  background: var(--enc-paper);
+  border-bottom: 2px solid var(--enc-paper);
+  color: var(--enc-burgundy);
+}
+
+[data-maximalist="true"] .header__nav-sep {
+  display: none;
+}
+
+/* ============================================
+   Typography - Encyclopedia Style
+   ============================================ */
+
+[data-maximalist="true"] h1 {
+  color: var(--enc-navy);
+  font-family: 'Palatino Linotype', 'Book Antiqua', 'Georgia', serif;
+  font-size: 1.8rem;
+  font-weight: bold;
+  border-bottom: 2px solid var(--enc-navy);
+  padding-bottom: 0.5rem;
+  margin-bottom: 1rem;
+  position: relative;
+}
+
+[data-maximalist="true"] h1::first-letter {
+  font-size: 2.4rem;
+  color: var(--enc-burgundy);
+}
+
+[data-maximalist="true"] h2 {
+  color: var(--enc-burgundy);
+  font-family: 'Georgia', serif;
+  font-size: 1.3rem;
+  font-weight: bold;
+  margin-top: 1.5rem;
+  padding-left: 0.75rem;
+  border-left: 4px solid var(--enc-gold);
+}
+
+[data-maximalist="true"] h3 {
+  color: var(--enc-forest);
+  font-family: 'Georgia', serif;
+  font-size: 1.1rem;
+  font-weight: bold;
+  font-style: italic;
+}
+
+[data-maximalist="true"] p {
+  text-align: justify;
+  text-indent: 1.5em;
+  margin-bottom: 1em;
+}
+
+[data-maximalist="true"] p:first-of-type {
+  text-indent: 0;
+}
+
+/* Drop cap for first paragraph */
+[data-maximalist="true"] .prose p:first-of-type::first-letter {
+  float: left;
+  font-size: 3.5rem;
+  line-height: 0.8;
+  padding-right: 0.1em;
+  color: var(--enc-burgundy);
+  font-family: 'Palatino Linotype', serif;
+  font-weight: bold;
+}
+
+/* ============================================
+   Links - Encyclopedia Cross-References
+   ============================================ */
+
+[data-maximalist="true"] a {
+  color: var(--enc-navy);
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-underline-offset: 3px;
+}
+
+[data-maximalist="true"] a:hover {
+  color: var(--enc-burgundy);
+  text-decoration-style: solid;
+  background: var(--enc-highlight);
+}
+
+/* ============================================
+   Footer - Encyclopedia Footer
+   ============================================ */
+
+[data-maximalist="true"] .footer {
+  border-top: 2px solid var(--enc-border-dark);
+  margin-top: 2rem;
+  padding-top: 1rem;
+  font-style: italic;
+  color: var(--enc-text-secondary);
+  text-align: center;
+  font-size: 0.9rem;
+}
+
+[data-maximalist="true"] .footer::before {
+  content: '—— ';
+}
+
+[data-maximalist="true"] .footer::after {
+  content: ' ——';
+}
+
+/* ============================================
+   Dividers - Decorative
+   ============================================ */
+
+[data-maximalist="true"] .divider {
+  border: none;
+  height: 20px;
+  background: url("data:image/svg+xml,%3Csvg width='200' height='20' viewBox='0 0 200 20' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 10h80l10-5 10 10 10-10 10 5h80' stroke='%238b7355' fill='none' stroke-width='1'/%3E%3C/svg%3E") center no-repeat;
+  margin: 1.5rem 0;
+}
+
+/* ============================================
+   Info Boxes - Encyclopedia Sidebars
+   ============================================ */
+
+[data-maximalist="true"] .page-intro {
+  background: var(--enc-highlight);
+  border: 2px solid var(--enc-gold);
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.5rem;
+  font-style: italic;
+  position: relative;
+}
+
+[data-maximalist="true"] .page-intro::before {
+  content: '📖 ';
+  font-style: normal;
+}
+
+/* ============================================
+   Home Page - Encyclopedia Welcome
+   ============================================ */
+
+[data-maximalist="true"] .home-intro {
+  font-size: 1.05rem;
+  line-height: 1.8;
+  column-count: 1;
+}
+
+[data-maximalist="true"] .home-intro p:first-of-type::first-letter {
+  float: left;
+  font-size: 4rem;
+  line-height: 0.75;
+  padding-right: 0.15em;
+  padding-top: 0.05em;
+  color: var(--enc-burgundy);
+  font-family: 'Palatino Linotype', serif;
+  font-weight: bold;
+}
+
+/* ============================================
+   Writing Page - Keep Timeline Readable!
+   ============================================ */
+
+/* Section headers with decorative styling */
+[data-maximalist="true"] .section-header {
+  font-family: 'Georgia', serif;
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: var(--enc-navy);
+  background: linear-gradient(90deg, var(--enc-bg-alt) 0%, transparent 100%);
+  padding: 0.5rem 1rem;
+  border-left: 4px solid var(--enc-burgundy);
+  margin: 1.5rem 0 1rem 0;
+}
+
+/* Timeline filters as encyclopedia index tabs */
+[data-maximalist="true"] .timeline-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 1rem;
+  background: var(--enc-cream);
+  border: 2px solid var(--enc-border);
+  margin-bottom: 1rem;
+}
+
+[data-maximalist="true"] .timeline-filters::before {
+  content: 'Browse by topic: ';
+  font-style: italic;
+  color: var(--enc-text-secondary);
+  width: 100%;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+}
+
+[data-maximalist="true"] .filter-btn,
+[data-maximalist="true"] .subcategory-btn {
+  font-family: 'Georgia', serif;
+  font-size: 0.85rem;
+  padding: 0.4rem 0.8rem;
+  background: var(--enc-paper);
+  color: var(--enc-navy);
+  border: 1px solid var(--enc-border);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+[data-maximalist="true"] .filter-btn:hover,
+[data-maximalist="true"] .subcategory-btn:hover {
+  background: var(--enc-highlight);
+  border-color: var(--enc-gold);
+}
+
+[data-maximalist="true"] .filter-btn.active,
+[data-maximalist="true"] .subcategory-btn.active {
+  background: var(--enc-navy);
+  color: white;
+  border-color: var(--enc-navy);
+}
+
+[data-maximalist="true"] .subcategory-filters {
+  background: var(--enc-bg-alt);
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--enc-border);
+  border-top: none;
+  margin-bottom: 1rem;
+}
+
+/* Timeline - Keep it readable, just style it nicely */
+[data-maximalist="true"] .timeline {
+  display: block; /* Override any flex changes */
+}
+
+[data-maximalist="true"] .year-group {
+  display: block;
+  margin-bottom: 1.5rem;
+  border: 2px solid var(--enc-border);
+  background: var(--enc-paper);
+}
+
+[data-maximalist="true"] .year-header {
+  display: block;
+  font-family: 'Palatino Linotype', serif;
+  font-size: 1.4rem;
+  font-weight: bold;
+  color: white;
+  background: var(--enc-navy);
+  padding: 0.5rem 1rem;
+  margin: 0;
+}
+
+[data-maximalist="true"] .year-posts {
+  display: block;
+  padding: 0.5rem;
+}
+
+[data-maximalist="true"] .timeline-row {
+  display: grid;
+  grid-template-columns: 50px 30px 1fr auto;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  align-items: baseline;
+  border-bottom: 1px dotted var(--enc-border);
+  writing-mode: horizontal-tb; /* Ensure horizontal text */
+  transform: none; /* Remove any rotation */
+}
+
+[data-maximalist="true"] .timeline-row:last-child {
+  border-bottom: none;
+}
+
+[data-maximalist="true"] .timeline-row:hover {
+  background: var(--enc-highlight);
+}
+
+[data-maximalist="true"] .timeline-month {
+  display: block;
+  font-family: 'Georgia', serif;
+  font-size: 0.8rem;
+  color: var(--enc-text-secondary);
+  font-style: italic;
+}
+
+[data-maximalist="true"] .timeline-day {
+  display: block;
+  font-family: 'Georgia', serif;
+  font-size: 0.8rem;
+  color: var(--enc-text-secondary);
+}
+
+[data-maximalist="true"] .timeline-link {
+  display: block;
+  color: var(--enc-navy);
+  font-family: 'Georgia', serif;
+  font-size: 0.95rem;
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  background: none; /* Remove gold foil effect */
+  -webkit-background-clip: unset;
+  background-clip: unset;
+}
+
+[data-maximalist="true"] .timeline-link:hover {
+  color: var(--enc-burgundy);
+  text-decoration-style: solid;
+}
+
+[data-maximalist="true"] .timeline-cat {
+  display: block;
+  font-family: 'Georgia', serif;
+  font-size: 0.75rem;
+  color: var(--enc-text-secondary);
+  font-style: italic;
+  text-align: right;
+}
+
+/* Post count */
+[data-maximalist="true"] .post-count {
+  font-family: 'Georgia', serif;
+  font-style: italic;
+  color: var(--enc-text-secondary);
+  text-align: center;
+  margin-top: 1rem;
+}
+
+/* ============================================
+   Writing Page - Decorative Images
+   ============================================ */
+
+/* Add themed decorations to the writing page */
+[data-maximalist="true"] .top-content[data-content="blog"] {
+  position: relative;
+}
+
+[data-maximalist="true"] .top-content[data-content="blog"]::before {
+  content: '';
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  width: 120px;
+  height: 120px;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect x='10' y='20' width='60' height='50' fill='%23ddd' stroke='%23666' stroke-width='2'/%3E%3Crect x='15' y='25' width='50' height='35' fill='%2398d1f0'/%3E%3Cpolygon points='30,30 45,45 30,60' fill='%23fff' opacity='0.6'/%3E%3Crect x='40' y='65' width='50' height='30' fill='%23f5f0e6' stroke='%238b7355' stroke-width='1'/%3E%3Cline x1='45' y1='72' x2='85' y2='72' stroke='%23666' stroke-width='1'/%3E%3Cline x1='45' y1='78' x2='80' y2='78' stroke='%23666' stroke-width='1'/%3E%3Cline x1='45' y1='84' x2='75' y2='84' stroke='%23666' stroke-width='1'/%3E%3Ccircle cx='75' cy='35' r='15' fill='%23ffd700' stroke='%23b8860b' stroke-width='2'/%3E%3Cpath d='M70,35 L75,30 L80,35 L75,40 Z' fill='%23fff'/%3E%3C/svg%3E") no-repeat;
+  background-size: contain;
+  opacity: 0.6;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ============================================
+   Top Dropdown - Encyclopedia Chapter Style
+   ============================================ */
+
+[data-maximalist="true"] .top-toggle {
+  font-family: 'Palatino Linotype', serif;
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: var(--enc-navy);
+  background: linear-gradient(180deg, var(--enc-cream) 0%, var(--enc-bg-alt) 100%);
+  border: 2px solid var(--enc-border-dark);
+  padding: 0.75rem 1rem;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+}
+
+[data-maximalist="true"] .top-toggle:hover {
+  background: var(--enc-highlight);
+}
+
+[data-maximalist="true"] .top-arrow {
+  color: var(--enc-burgundy);
+}
+
+[data-maximalist="true"] .top-content {
+  background: var(--enc-paper);
+  border: 2px solid var(--enc-border);
+  border-top: none;
+  padding: 1rem;
+}
+
+/* Meta links */
+[data-maximalist="true"] .meta-section {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+[data-maximalist="true"] .meta-link {
+  font-family: 'Georgia', serif;
+  font-size: 0.9rem;
+  color: var(--enc-navy);
+  background: var(--enc-cream);
+  border: 1px solid var(--enc-border);
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+}
+
+[data-maximalist="true"] .meta-link:hover {
+  background: var(--enc-highlight);
+  border-color: var(--enc-gold);
+}
+
+/* ============================================
+   Panels
+   ============================================ */
+
+[data-maximalist="true"] .stacked-panel {
+  background: var(--enc-paper);
+  border: 3px double var(--enc-border-dark);
+  box-shadow: 8px 8px 0 rgba(0,0,0,0.15);
+}
+
+[data-maximalist="true"] .panel-close {
+  color: var(--enc-burgundy);
+  background: var(--enc-cream);
+  border: 2px solid var(--enc-border);
+  font-size: 1.5rem;
+}
+
+[data-maximalist="true"] .panel-header {
+  border-bottom: 2px solid var(--enc-border-dark);
+  padding-bottom: 1rem;
+  margin-bottom: 1rem;
+}
+
+[data-maximalist="true"] .panel-title {
+  color: var(--enc-navy);
+  font-family: 'Palatino Linotype', serif;
+}
+
+/* ============================================
+   Lists Page - Favorite Things
+   ============================================ */
+
+[data-maximalist="true"] .page-title {
+  font-family: 'Palatino Linotype', serif;
+  font-size: 1.8rem;
+  color: var(--enc-navy);
+  border-bottom: 2px solid var(--enc-navy);
+  padding-bottom: 0.5rem;
+}
+
+[data-maximalist="true"] .category-title {
+  font-family: 'Georgia', serif;
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: var(--enc-navy);
+  background: linear-gradient(180deg, var(--enc-cream) 0%, var(--enc-bg-alt) 100%);
+  border: 2px solid var(--enc-border);
+  padding: 0.75rem 1rem;
+  text-align: left;
+  width: 100%;
+}
+
+[data-maximalist="true"] .category-title:hover {
+  background: var(--enc-highlight);
+}
+
+[data-maximalist="true"] .category-content {
+  background: var(--enc-paper);
+  border: 1px solid var(--enc-border);
+  border-top: none;
+  padding: 1rem;
+}
+
+[data-maximalist="true"] .category-content h3 {
+  font-size: 1rem;
+  color: var(--enc-burgundy);
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+[data-maximalist="true"] .category-content li {
+  font-family: 'Georgia', serif;
+  line-height: 1.6;
+  margin-bottom: 0.5rem;
+}
+
+/* ============================================
+   Physics Page
+   ============================================ */
+
+[data-maximalist="true"] .section-title {
+  font-family: 'Georgia', serif;
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: var(--enc-navy);
+  background: var(--enc-bg-alt);
+  padding: 0.5rem 1rem;
+  border-left: 4px solid var(--enc-burgundy);
+}
+
+[data-maximalist="true"] .unit-dropdown > summary,
+[data-maximalist="true"] .topic-dropdown > summary {
+  font-family: 'Georgia', serif;
+  color: var(--enc-navy);
+}
+
+[data-maximalist="true"] .unit-dropdown > summary:hover,
+[data-maximalist="true"] .topic-dropdown > summary:hover {
+  color: var(--enc-burgundy);
+}
+
+[data-maximalist="true"] .topic-content a {
+  color: var(--enc-navy);
+}
+
+[data-maximalist="true"] .advice-content {
+  font-family: 'Georgia', serif;
+  line-height: 1.7;
+}
+
+/* ============================================
+   Bylines
+   ============================================ */
+
+[data-maximalist="true"] .byline-row {
+  font-family: 'Georgia', serif;
+  padding: 0.5rem 0;
+  border-bottom: 1px dotted var(--enc-border);
+}
+
+[data-maximalist="true"] .byline-date {
+  color: var(--enc-text-secondary);
+  font-style: italic;
+}
+
+[data-maximalist="true"] .byline-link {
+  color: var(--enc-navy);
+}
+
+[data-maximalist="true"] .byline-pub {
+  color: var(--enc-burgundy);
+  font-style: italic;
+}
+
+/* ============================================
+   The Toggle Button
+   ============================================ */
+
+.maximalist-toggle {
+  position: fixed;
+  bottom: 1rem;
+  right: 1rem;
+  z-index: 9999;
+
+  padding: 0.5rem 1rem;
+  font-family: 'Georgia', serif;
+  font-size: 0.75rem;
+  font-style: italic;
+
+  background: rgba(250,248,248,0.95);
+  color: #666;
+  border: 1px solid #ccc;
+  cursor: pointer;
+  transition: all 0.3s ease;
+
+  opacity: 0.6;
+}
+
+.maximalist-toggle:hover {
+  opacity: 1;
+  transform: scale(1.02);
+}
+
+/* Toggle in maximalist mode */
+[data-maximalist="true"] .maximalist-toggle {
+  background: var(--enc-cream);
+  color: var(--enc-navy);
+  border: 2px solid var(--enc-border-dark);
+  box-shadow: 2px 2px 0 var(--enc-border);
+  font-family: 'Georgia', serif;
+  opacity: 1;
+}
+
+[data-maximalist="true"] .maximalist-toggle:hover {
+  background: var(--enc-highlight);
+}
+
+/* ============================================
+   Decorative Elements - Encyclopedia Imagery
+   ============================================ */
+
+/* AI/Robot illustration for AI topics */
+[data-maximalist="true"] [data-cat="ai-environment"]::after,
+[data-maximalist="true"] [data-cat="artificial-intelligence"]::after {
+  content: '🤖';
+  font-size: 0.8rem;
+  margin-left: 0.5rem;
+  opacity: 0.6;
+}
+
+/* Earth for environment topics */
+[data-maximalist="true"] [data-filter="ai-environment"].active::after {
+  content: ' 🌍';
+}
+
+/* Animal for animal welfare */
+[data-maximalist="true"] [data-filter="animal-welfare"].active::after {
+  content: ' 🐄';
+}
+
+/* ============================================
+   Responsive
+   ============================================ */
+
+@media (max-width: 768px) {
+  [data-maximalist="true"] .main-content {
+    margin: 0.5rem;
+    padding: 1rem;
+  }
+
+  [data-maximalist="true"] .header {
+    margin: -1rem -1rem 1rem -1rem;
+    padding: 1rem;
+  }
+
+  [data-maximalist="true"] .header__nav {
+    flex-wrap: wrap;
+  }
+
+  [data-maximalist="true"] .header__nav-link {
+    font-size: 0.8rem;
+    padding: 0.4rem 0.6rem;
+  }
+
+  [data-maximalist="true"] .timeline-row {
+    grid-template-columns: 40px 25px 1fr;
+  }
+
+  [data-maximalist="true"] .timeline-cat {
+    display: none;
+  }
+
+  .maximalist-toggle {
+    bottom: 0.5rem;
+    right: 0.5rem;
+    font-size: 0.65rem;
+    padding: 0.4rem 0.75rem;
+  }
+}
+
+/* ============================================
+   Smooth Transitions
+   ============================================ */
+
+html {
+  transition: background-color 0.4s ease;
+}
+
+body,
+.main-content,
+.header,
+.footer,
+a,
+h1, h2, h3,
+.timeline,
+.timeline-row {
+  transition:
+    background 0.4s ease,
+    color 0.4s ease,
+    border-color 0.4s ease,
+    box-shadow 0.4s ease;
+}

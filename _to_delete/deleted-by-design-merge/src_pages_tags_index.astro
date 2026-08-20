@@ -1,0 +1,84 @@
+---
+import Base from '@/layouts/Base.astro';
+import { getOptionalCollection } from '@/lib/optional-collection';
+
+// Get all content with tags
+const writing = await getOptionalCollection('writing', ({ data }) => !data.draft);
+const notes = await getOptionalCollection('notes', ({ data }) => !data.draft);
+
+// Combine all tags with counts
+const tagCounts = new Map<string, number>();
+
+[...writing, ...notes].forEach(item => {
+  item.data.tags.forEach(tag => {
+    tagCounts.set(tag, (tagCounts.get(tag) || 0) + 1);
+  });
+});
+
+// Sort by count (descending), then alphabetically
+const sortedTags = [...tagCounts.entries()]
+  .sort((a, b) => {
+    if (b[1] !== a[1]) return b[1] - a[1];
+    return a[0].localeCompare(b[0]);
+  });
+
+const maxCount = Math.max(...tagCounts.values());
+---
+
+<Base title="Tags" description="Browse all content by tag" ogImage="/og/page/tags.png">
+  <div class="container container--wide">
+    <p class="page-intro">
+      Browse content by topic. {tagCounts.size} tags across {writing.length + notes.length} items.
+    </p>
+
+    <div class="tags-cloud stagger-in">
+      {sortedTags.map(([tag, count]) => {
+        // Scale font size based on count
+        const scale = 0.75 + (count / maxCount) * 0.75;
+        return (
+          <a 
+            href={`/tags/${tag}`} 
+            class="tag-item"
+            style={`font-size: ${scale}rem;`}
+          >
+            {tag}
+            <span class="tag-count">{count}</span>
+          </a>
+        );
+      })}
+    </div>
+  </div>
+</Base>
+
+<style>
+  .tags-cloud {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1rem;
+    align-items: center;
+  }
+  
+  .tag-item {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-xs);
+    padding: 0 0 1px;
+    background: none;
+    border: none;
+    border-bottom: 1px solid transparent;
+    border-radius: 0;
+    color: var(--text);
+    text-decoration: none;
+    transition: border-color var(--transition-fast), color var(--transition-fast);
+  }
+  
+  .tag-item:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  
+  .tag-count {
+    font-size: 0.75em;
+    color: var(--dim);
+  }
+</style>

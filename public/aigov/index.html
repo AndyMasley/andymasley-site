@@ -1,0 +1,310 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<title>Frontier AI policy curriculum</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<style>
+:root{--font-serif:"Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua",Georgia,Cambria,serif;
+--font-sans:ui-sans-serif,-apple-system,"Segoe UI","Helvetica Neue",Arial,sans-serif;
+--font-mono:ui-monospace,"SF Mono","JetBrains Mono",Menlo,Consolas,monospace;
+--paper:#F8F8FB;--paper-2:#FFFFFF;--panel:#F0EFF7;--ink:#1A1A24;--ink-2:#54545F;--ink-3:#8A8A96;
+--rule:#E1E0EA;--rule-2:#CFCEDC;--accent:#5B50C0;--accent-2:#4A3FA8;--focal:#A0455A;--focal-soft:#F3E4E8;
+--good:#1E7A52;--warn:#B07C24;--sel:#DED9F6;
+--shadow:0 1px 2px rgba(26,26,36,.05),0 12px 34px -14px rgba(26,26,36,.16)}
+@media (prefers-color-scheme:dark){:root{--paper:#16161A;--paper-2:#1C1C22;--panel:#1F1F29;
+--ink:#E9E9F0;--ink-2:#AEAEBA;--ink-3:#777784;--rule:#2A2A34;--rule-2:#3A3A46;
+--accent:#9A90F0;--accent-2:#B3ABF6;--focal:#E38CA0;--focal-soft:#33232A;--good:#5FC29A;--warn:#D9A441;--sel:#33305A;
+--shadow:0 1px 2px rgba(0,0,0,.3),0 14px 40px -16px rgba(0,0,0,.6)}}
+:root[data-theme="light"]{--paper:#F8F8FB;--paper-2:#FFFFFF;--panel:#F0EFF7;--ink:#1A1A24;--ink-2:#54545F;
+--ink-3:#8A8A96;--rule:#E1E0EA;--rule-2:#CFCEDC;--accent:#5B50C0;--accent-2:#4A3FA8;--focal:#A0455A;
+--focal-soft:#F3E4E8;--good:#1E7A52;--warn:#B07C24;--sel:#DED9F6}
+:root[data-theme="dark"]{--paper:#16161A;--paper-2:#1C1C22;--panel:#1F1F29;--ink:#E9E9F0;--ink-2:#AEAEBA;
+--ink-3:#777784;--rule:#2A2A34;--rule-2:#3A3A46;--accent:#9A90F0;--accent-2:#B3ABF6;--focal:#E38CA0;
+--focal-soft:#33232A;--good:#5FC29A;--warn:#D9A441;--sel:#33305A}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--font-serif);
+font-size:18px;line-height:1.66;-webkit-font-smoothing:antialiased}
+::selection{background:var(--sel)}
+a{color:var(--accent);text-underline-offset:2px;text-decoration-thickness:.06em}
+a:hover{color:var(--accent-2)}
+#rail{position:fixed;top:0;left:0;width:274px;height:100vh;overflow-y:auto;background:var(--paper-2);
+border-right:1px solid var(--rule);padding:24px 18px 40px;z-index:40;font-family:var(--font-sans);
+transition:transform .25s ease}
+#rail .brand{font-size:.68rem;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-3)}
+#rail .brand-title{font-family:var(--font-serif);font-size:1.12rem;font-weight:600;margin:2px 0 10px;color:var(--ink)}
+#rail .resume{display:inline-block;font-size:.78rem;font-weight:600;color:var(--accent);
+border:1px solid var(--rule-2);border-radius:18px;padding:4px 12px;text-decoration:none;margin-bottom:6px}
+#rail .resume:hover{border-color:var(--accent)}
+#rail .grp{font-size:.64rem;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);
+margin:16px 0 5px;padding-top:10px;border-top:1px solid var(--rule)}
+#rail a.wk{display:flex;gap:8px;align-items:baseline;padding:3px 8px;border-radius:6px;color:var(--ink-2);
+text-decoration:none;font-size:.8rem;line-height:1.35}
+#rail a.wk:hover{background:var(--panel);color:var(--ink)}
+#rail a.wk.active{background:var(--panel);color:var(--accent);font-weight:600}
+#rail a.wk .n{color:var(--ink-3);font-family:var(--font-mono);font-size:.72rem;min-width:26px}
+#rail a.wk .done{color:var(--good);margin-left:auto}
+#rail .soon{opacity:.45;pointer-events:none}
+#rail .themebtn{margin-top:18px;font-size:.72rem;background:none;border:1px solid var(--rule-2);
+color:var(--ink-2);border-radius:18px;padding:5px 12px;cursor:pointer}
+#menubtn{position:fixed;top:12px;left:12px;z-index:50;display:none;background:var(--paper-2);
+border:1px solid var(--rule-2);border-radius:9px;width:40px;height:40px;cursor:pointer;
+box-shadow:var(--shadow);color:var(--ink);font-size:1.1rem}
+#scrim{position:fixed;inset:0;background:rgba(10,10,16,.4);z-index:35;display:none}
+main{margin-left:274px}
+.wrap{max-width:760px;margin:0 auto;padding:40px 28px 90px}
+.kicker{font-family:var(--font-sans);font-size:.72rem;letter-spacing:.2em;text-transform:uppercase;color:var(--accent)}
+h1{font-size:clamp(1.9rem,4.5vw,2.7rem);font-weight:600;line-height:1.08;letter-spacing:-.015em;margin:.2em 0 .3em}
+h2{font-size:1.4rem;font-weight:600;margin:44px 0 6px;letter-spacing:-.01em}
+h3{font-size:1.08rem;font-weight:600;margin:28px 0 2px}
+h4{font-size:.95rem;font-weight:600;margin:22px 0 2px;color:var(--ink-2)}
+p{margin:14px 0;max-width:66ch}
+ul,ol{max-width:64ch;padding-left:1.3em}
+li{margin:7px 0}
+code{font-family:var(--font-mono);background:var(--panel);border:1px solid var(--rule);
+border-radius:5px;padding:.06em .35em;font-size:.85em}
+pre{background:var(--panel);border:1px solid var(--rule);border-radius:10px;padding:14px 16px;
+overflow-x:auto;font-size:.82em;line-height:1.5}
+pre code{background:none;border:none;padding:0}
+blockquote{margin:22px 0;padding-left:18px;border-left:3px solid var(--rule-2);color:var(--ink-2)}
+hr{border:none;border-top:1px solid var(--rule);margin:36px 0}
+.tablewrap{overflow-x:auto;margin:24px 0}
+table{border-collapse:collapse;font-size:.88rem;min-width:50%}
+th{font-family:var(--font-sans);font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;
+color:var(--ink-2);text-align:left}
+th,td{padding:8px 14px 8px 0;border-bottom:1px solid var(--rule);vertical-align:top}
+.meta{font-family:var(--font-sans);font-size:.8rem;color:var(--ink-3);margin:4px 0 22px}
+.callout{margin:26px 0;border-radius:12px;padding:18px 20px 14px;border:1px solid var(--rule);
+background:var(--paper-2);box-shadow:var(--shadow)}
+.callout .tag{font-family:var(--font-sans);font-size:.66rem;letter-spacing:.16em;text-transform:uppercase;
+font-weight:700;display:block;margin-bottom:7px}
+.miscon{background:color-mix(in srgb,var(--focal) 6%,var(--paper-2));
+border-color:color-mix(in srgb,var(--focal) 30%,var(--rule))}
+.miscon .tag{color:var(--focal)}
+.keyidea{background:linear-gradient(180deg,color-mix(in srgb,var(--accent) 5%,var(--paper-2)),var(--paper-2));
+border-color:color-mix(in srgb,var(--accent) 28%,var(--rule))}
+.keyidea .tag{color:var(--accent)}
+details{margin:18px 0;border:1px solid var(--rule);border-radius:10px;padding:10px 16px;background:var(--paper-2)}
+summary{cursor:pointer;font-family:var(--font-sans);font-size:.85rem;font-weight:600;color:var(--ink-2)}
+details[open] summary{margin-bottom:8px}
+.num{font-family:var(--font-mono);font-variant-numeric:tabular-nums}
+@media (max-width:1000px){#rail{transform:translateX(-100%)}#rail.open{transform:none}
+#menubtn{display:block}main{margin-left:0}body.menuopen #scrim{display:block}}
+</style><script>
+(function(){
+  var t=localStorage.getItem('theme');
+  if(t)document.documentElement.setAttribute('data-theme',t);
+  document.addEventListener('DOMContentLoaded',function(){
+    var b=document.querySelector('.themebtn');
+    if(b)b.addEventListener('click',function(){
+      var cur=document.documentElement.getAttribute('data-theme');
+      var next=cur==='dark'?'light':(cur==='light'?'dark':
+        (matchMedia('(prefers-color-scheme: dark)').matches?'light':'dark'));
+      document.documentElement.setAttribute('data-theme',next);
+      localStorage.setItem('theme',next);
+    });
+    var m=document.getElementById('menubtn'),r=document.getElementById('rail'),s=document.getElementById('scrim');
+    if(m){m.addEventListener('click',function(){r.classList.toggle('open');document.body.classList.toggle('menuopen')});
+    s.addEventListener('click',function(){r.classList.remove('open');document.body.classList.remove('menuopen')});}
+  });
+})();
+</script></head>
+<body><button id="menubtn" aria-label="menu">&#9776;</button><div id="scrim"></div>
+<nav id="rail"><div class="brand">Frontier AI</div>
+<div class="brand-title">Policy curriculum</div>
+<a class="resume" href="w00.html">Resume &rarr; W0</a>
+<div class="grp">Start</div>
+<a class="wk" href="how-to-work.html"><span class="n">§</span><span>How to work</span></a>
+<a class="wk" href="w00.html"><span class="n">W0</span><span>Foundation gateway</span></a>
+<div class="grp">Phase I · Orientation and repair</div>
+<a class="wk" href="w01.html"><span class="n">W1</span><span>Calibration</span></a>
+<a class="wk" href="w02.html"><span class="n">W2</span><span>Linear algebra as transformations</span></a>
+<a class="wk" href="w03.html"><span class="n">W3</span><span>Singular values and low rank structure</span></a>
+<a class="wk" href="w04.html"><span class="n">W4</span><span>Probability, likelihood, and information</span></a>
+<a class="wk" href="w05.html"><span class="n">W5</span><span>Automatic differentiation</span></a>
+<a class="wk" href="w06.html"><span class="n">W6</span><span>Numerical computing and PyTorch fluency</span></a>
+<div class="grp">Phase II · Learning systems</div>
+<a class="wk" href="w07.html"><span class="n">W7</span><span>Statistical learning and generalization</span></a>
+<a class="wk" href="w08.html"><span class="n">W8</span><span>Multilayer networks and learned representations</span></a>
+<a class="wk" href="w09.html"><span class="n">W9</span><span>Optimization and trainability</span></a>
+<a class="wk" href="w10.html"><span class="n">W10</span><span>Experimental craft</span></a>
+<a class="wk" href="w11.html"><span class="n">W11</span><span>Calibration, shift, and causal claims</span></a>
+<div class="grp">Phase III · Transformers</div>
+<a class="wk" href="w12.html"><span class="n">W12</span><span>Tokenization and the language modeling objective</span></a>
+<a class="wk" href="w13.html"><span class="n">W13</span><span>Attention</span></a>
+<a class="wk" href="w14.html"><span class="n">W14</span><span>The transformer block</span></a>
+<a class="wk" href="w15.html"><span class="n">W15</span><span>Build and train a compact GPT</span></a>
+<a class="wk" href="w16.html"><span class="n">W16</span><span>In-context learning and emergence</span></a>
+<a class="wk" href="w17.html"><span class="n">W17</span><span>The modern architecture family</span></a>
+<a class="wk" href="w18.html"><span class="n">W18</span><span>Decoding and inference behavior</span></a>
+<div class="grp">Phase IV · Training at scale</div>
+<a class="wk" href="w19.html"><span class="n">W19</span><span>Training data</span></a>
+<a class="wk" href="w20.html"><span class="n">W20</span><span>Scaling laws and algorithmic efficiency</span></a>
+<a class="wk" href="w21.html"><span class="n">W21</span><span>Compute and hardware</span></a>
+<a class="wk" href="w22.html"><span class="n">W22</span><span>Distributed training</span></a>
+<a class="wk" href="w23.html"><span class="n">W23</span><span>Inference systems and economics</span></a>
+<div class="grp">Phase V · Posttraining</div>
+<a class="wk" href="w24.html"><span class="n">W24</span><span>LoRA fine-tuning</span></a>
+<a class="wk" href="w25.html"><span class="n">W25</span><span>Supervised tuning and human feedback</span></a>
+<a class="wk" href="w26.html"><span class="n">W26</span><span>Reinforcement learning foundations</span></a>
+<a class="wk" href="w27.html"><span class="n">W27</span><span>Preference optimization and AI feedback</span></a>
+<a class="wk" href="w28.html"><span class="n">W28</span><span>Verifiable rewards and test-time compute</span></a>
+<div class="grp">Phase VI · Agents</div>
+<a class="wk" href="w29.html"><span class="n">W29</span><span>Retrieval and grounded generation</span></a>
+<a class="wk" href="w30.html"><span class="n">W30</span><span>Tool use and compound systems</span></a>
+<a class="wk" href="w31.html"><span class="n">W31</span><span>Agent architecture and reliability</span></a>
+<a class="wk" href="w32.html"><span class="n">W32</span><span>Long horizon evaluation and monitoring</span></a>
+<div class="grp">Phase VII · Multimodality</div>
+<a class="wk" href="w33.html"><span class="n">W33</span><span>Multimodal representations</span></a>
+<a class="wk" href="w34.html"><span class="n">W34</span><span>Diffusion and flow based generation</span></a>
+<a class="wk" href="w35.html"><span class="n">W35</span><span>Video, world models, robotics, and action</span></a>
+<div class="grp">Phase VIII · Evaluation</div>
+<a class="wk" href="w36.html"><span class="n">W36</span><span>Evaluation as measurement science</span></a>
+<a class="wk" href="w37.html"><span class="n">W37</span><span>Benchmark design, contamination, and gaming</span></a>
+<a class="wk" href="w38.html"><span class="n">W38</span><span>Capability trends and forecasting</span></a>
+<a class="wk" href="w39.html"><span class="n">W39</span><span>Interpretability and causal evidence</span></a>
+<a class="wk" href="w40.html"><span class="n">W40</span><span>Build an evaluation suite</span></a>
+<div class="grp">Phase IX · Safety and security</div>
+<a class="wk" href="w41.html"><span class="n">W41</span><span>Misuse and dangerous capabilities</span></a>
+<a class="wk" href="w42.html"><span class="n">W42</span><span>Deception, reward tampering, and model organisms</span></a>
+<a class="wk" href="w43.html"><span class="n">W43</span><span>Control and monitoring</span></a>
+<a class="wk" href="w44.html"><span class="n">W44</span><span>Model weights and infrastructure security</span></a>
+<a class="wk" href="w45.html"><span class="n">W45</span><span>Societal and systemic risks</span></a>
+<div class="grp">Strategy block</div>
+<a class="wk" href="s1.html"><span class="n">S1</span><span>World models and methods</span></a>
+<a class="wk" href="s2.html"><span class="n">S2</span><span>Threat models: the AI's objectives</span></a>
+<a class="wk" href="s3.html"><span class="n">S3</span><span>Threat models: power, structure, and war</span></a>
+<a class="wk" href="s4.html"><span class="n">S4</span><span>Compute governance</span></a>
+<a class="wk" href="s5.html"><span class="n">S5</span><span>Evals-gated governance</span></a>
+<a class="wk" href="s6.html"><span class="n">S6</span><span>International instruments and verification</span></a>
+<div class="grp">Residency</div>
+<a class="wk" href="r01.html"><span class="n">R1</span><span>US AI policy architecture</span></a>
+<a class="wk" href="r02.html"><span class="n">R2</span><span>Administrative law and regulatory design</span></a>
+<a class="wk" href="r03.html"><span class="n">R3</span><span>Federalism and state AI law</span></a>
+<a class="wk" href="r04.html"><span class="n">R4</span><span>Rights, privacy, due process, and sectoral authority</span></a>
+<a class="wk" href="r05.html"><span class="n">R5</span><span>Copyright, training data, identity, and open weights</span></a>
+<a class="wk" href="r06.html"><span class="n">R6</span><span>National security institutions and military use</span></a>
+<a class="wk" href="r07.html"><span class="n">R7</span><span>Export controls, investment, industrial strategy, and compute</span></a>
+<a class="wk" href="r08.html"><span class="n">R8</span><span>Standards, conformity assessment, audit, and assurance</span></a>
+<a class="wk" href="r09.html"><span class="n">R9</span><span>Comparative and international governance</span></a>
+<a class="wk" href="r10.html"><span class="n">R10</span><span>Productivity, labor, competition, and distribution</span></a>
+<a class="wk" href="r11.html"><span class="n">R11</span><span>Energy, infrastructure, environment, and communities</span></a>
+<a class="wk" href="r12.html"><span class="n">R12</span><span>Implementation, budgeting, procurement, enforcement, and crisis</span></a>
+<div class="grp">Capstone</div>
+<a class="wk" href="c1.html"><span class="n">C1</span><span>Position paper draft</span></a>
+<a class="wk" href="c2.html"><span class="n">C2</span><span>Red team and revise</span></a>
+<a class="wk" href="c3.html"><span class="n">C3</span><span>Brief, defend, publish</span></a>
+<div class="grp">Reference</div>
+<a class="wk" href="matrix.html"><span class="n">⊞</span><span>The matrix</span></a>
+<a class="wk" href="gates.html"><span class="n">▮</span><span>Phase gates</span></a>
+<a class="wk" href="rubric.html"><span class="n">1–4</span><span>Rubric</span></a>
+<a class="wk" href="exemplars.html"><span class="n">◑</span><span>Worked exemplars</span></a>
+<a class="wk" href="roster.html"><span class="n">◈</span><span>Model roster</span></a>
+<a class="wk" href="glossary.html"><span class="n">Aa</span><span>Glossary</span></a>
+<a class="wk" href="sources.html"><span class="n">✓</span><span>Source register</span></a>
+<button class="themebtn">Toggle theme</button></nav>
+<main><div class="wrap"><h1>Frontier AI policy curriculum</h1>
+<p class="meta">Built 2026-08-01 &middot; 70 units &middot; 0 done</p>
+<p>Start at W0 and work down. Each page is three sections: what to read, what to do, what to take away. The Resume link in the sidebar points at the first unfinished unit, and <a href="how-to-work.html">How to work</a> holds the rules that would otherwise repeat on every page.</p>
+<p class="meta">Every entry below lists its sources, so &#8984;F on this page finds the unit that assigns a given paper.</p>
+<h2>Start</h2><ul>
+<li><a href="how-to-work.html">§ &middot; How to work</a></li>
+<li><a href="w00.html">W0 &middot; Foundation gateway</a> <span style="color:var(--ink-3)">The Python tutorial · Virtual environments and packages · The claim ladder</span></li>
+</ul>
+<h2>Phase I · Orientation and repair</h2><ul>
+<li><a href="w01.html">W1 &middot; Calibration</a> <span style="color:var(--ink-3)">AI 2027 · Situational Awareness · Carlsmith, &quot;Is power-seeking AI an existential…</span></li>
+<li><a href="w02.html">W2 &middot; Linear algebra as transformations</a> <span style="color:var(--ink-3)">3Blue1Brown, Essence of Linear Algebra · Mathematics for Machine Learning · Dive into Deep Learning</span></li>
+<li><a href="w03.html">W3 &middot; Singular values and low rank structure</a> <span style="color:var(--ink-3)">Mathematics for Machine Learning, Ch. 4: Matrix… · &quot;We Recommend a Singular Value Decomposition&quot; · Low-Rank Adaptation of Large Language Models</span></li>
+<li><a href="w04.html">W4 &middot; Probability, likelihood, and information</a> <span style="color:var(--ink-3)">Probability for Computer Scientists · Dive into Deep Learning · Deep Learning</span></li>
+<li><a href="w05.html">W5 &middot; Automatic differentiation</a> <span style="color:var(--ink-3)">Karpathy, &quot;The spelled-out intro to neural networks… · Parr &amp; Howard, &quot;The Matrix Calculus You Need for… · PyTorch, &quot;Automatic Differentiation with…</span></li>
+<li><a href="w06.html">W6 &middot; Numerical computing and PyTorch fluency</a> <span style="color:var(--ink-3)">PyTorch, &quot;Learn the Basics&quot; · NumPy quickstart · The Python tutorial · Python tutorial ch. 12, &quot;Virtual Environments and…</span></li>
+</ul>
+<h2>Phase II · Learning systems</h2><ul>
+<li><a href="w07.html">W7 &middot; Statistical learning and generalization</a> <span style="color:var(--ink-3)">Understanding Deep Learning, Chs. 5, 8, 9 · Dive into Deep Learning · Deep Learning, §§5.2–5.5</span></li>
+<li><a href="w08.html">W8 &middot; Multilayer networks and learned representations</a> <span style="color:var(--ink-3)">Karpathy, makemore Parts 2–3 · Dive into Deep Learning, Ch. 5, Multilayer… · Understanding Deep Learning, Chs. 3–4</span></li>
+<li><a href="w09.html">W9 &middot; Optimization and trainability</a> <span style="color:var(--ink-3)">Dive into Deep Learning, the trainability sections · Deep Residual Learning for Image Recognition · Understanding Deep Learning</span></li>
+<li><a href="w10.html">W10 &middot; Experimental craft</a> <span style="color:var(--ink-3)">Evan Miller, &quot;Adding Error Bars to Evals&quot; · D2L §22.10, Statistics · Full Stack Deep Learning 2022, Lectures 2–3</span></li>
+<li><a href="w11.html">W11 &middot; Calibration, shift, and causal claims</a> <span style="color:var(--ink-3)">On Calibration of Modern Neural Networks · A Benchmark of in-the-Wild Distribution Shifts · What If, Ch. 1, A Definition of Causal Effect …</span></li>
+</ul>
+<h2>Phase III · Transformers</h2><ul>
+<li><a href="w12.html">W12 &middot; Tokenization and the language modeling objective</a> <span style="color:var(--ink-3)">Karpathy, &quot;Let&#x27;s build the GPT Tokenizer&quot; · Stanford CS336, Lecture 1 &quot;Overview, tokenization&quot;… …</span></li>
+<li><a href="w13.html">W13 &middot; Attention</a> <span style="color:var(--ink-3)">Attention Is All You Need · 3Blue1Brown, &quot;Attention in transformers&quot; · Karpathy, &quot;Let&#x27;s build GPT&quot;</span></li>
+<li><a href="w14.html">W14 &middot; The transformer block</a> <span style="color:var(--ink-3)">CS336 Lecture 3, &quot;Architectures, hyperparameters&quot; · Karpathy, &quot;Let&#x27;s build GPT&quot; · The Llama 3 Herd of Models</span></li>
+<li><a href="w15.html">W15 &middot; Build and train a compact GPT</a> <span style="color:var(--ink-3)">from scratch, in code, spelled out&quot; · nanoGPT · Stanford CS336</span></li>
+<li><a href="w16.html">W16 &middot; In-context learning and emergence</a> <span style="color:var(--ink-3)">Language Models are Few-Shot Learners · Wei et al., &quot;Emergent Abilities of Large Language… · Schaeffer, Miranda &amp; Koyejo, &quot;Are Emergent… …</span></li>
+<li><a href="w17.html">W17 &middot; The modern architecture family</a> <span style="color:var(--ink-3)">&quot;Mixture of Experts Explained&quot; · DeepSeek-V3 Technical Report · The Llama 3 Herd of Models · Mamba</span></li>
+<li><a href="w18.html">W18 &middot; Decoding and inference behavior</a> <span style="color:var(--ink-3)">kipply, &quot;Transformer Inference Arithmetic&quot; · Hugging Face Transformers, generation docs · CS336 Lecture 10, &quot;Inference&quot;</span></li>
+</ul>
+<h2>Phase IV · Training at scale</h2><ul>
+<li><a href="w19.html">W19 &middot; Training data</a> <span style="color:var(--ink-3)">an Open Corpus of Three Trillion Tokens for… · Decanting the Web for the Finest Text Data at Scale · how to create large-scale synthetic data for… …</span></li>
+<li><a href="w20.html">W20 &middot; Scaling laws and algorithmic efficiency</a> <span style="color:var(--ink-3)">Kaplan et al., &quot;Scaling Laws for Neural Language… · Hoffmann et al., &quot;Training Compute-Optimal Large… …</span></li>
+<li><a href="w21.html">W21 &middot; Compute and hardware</a> <span style="color:var(--ink-3)">How To Scale Your Model, Parts 1, 2, and 12 · What They Are and Why They Matter · LBNL, 2024 United States Data Center Energy Usage… …</span></li>
+<li><a href="w22.html">W22 &middot; Distributed training</a> <span style="color:var(--ink-3)">The Ultra-Scale Playbook · CS336 Lectures 7 and 8, &quot;Parallelism&quot; · FlashAttention · ZeRO</span></li>
+<li><a href="w23.html">W23 &middot; Inference systems and economics</a> <span style="color:var(--ink-3)">&quot;How To Scale Your Model,&quot; Part 7 &quot;All About… · Kwon et al., &quot;Efficient Memory Management for Large… …</span></li>
+</ul>
+<h2>Phase V · Posttraining</h2><ul>
+<li><a href="w24.html">W24 &middot; LoRA fine-tuning</a> <span style="color:var(--ink-3)">Low-Rank Adaptation of Large Language Models · Hugging Face PEFT, LoRA guide · Efficient Finetuning of Quantized LLMs</span></li>
+<li><a href="w25.html">W25 &middot; Supervised tuning and human feedback</a> <span style="color:var(--ink-3)">The RLHF Book · Training language models to follow instructions… · The RLHF Book, &quot;The Nature of Preferences&quot; …</span></li>
+<li><a href="w26.html">W26 &middot; Reinforcement learning foundations</a> <span style="color:var(--ink-3)">Spinning Up in Deep RL · RLHF Book, Ch. 6 &quot;Reinforcement Learning&quot; · Sutton &amp; Barto, Reinforcement Learning: An…</span></li>
+<li><a href="w27.html">W27 &middot; Preference optimization and AI feedback</a> <span style="color:var(--ink-3)">Direct Preference Optimization: Your Language Model… · Pushing Frontiers in Open Language Model… · Harmlessness from AI Feedback …</span></li>
+<li><a href="w28.html">W28 &middot; Verifiable rewards and test-time compute</a> <span style="color:var(--ink-3)">Incentivizing Reasoning Capability in LLMs via… · Snell et al., &quot;Scaling LLM Test-Time Compute… · Lightman et al., &quot;Let&#x27;s Verify Step by Step&quot; …</span></li>
+</ul>
+<h2>Phase VI · Agents</h2><ul>
+<li><a href="w29.html">W29 &middot; Retrieval and grounded generation</a> <span style="color:var(--ink-3)">Retrieval-Augmented Generation for Large Language… · Evaluating Verifiability in Generative Search… · Retrieval-Augmented Generation for…</span></li>
+<li><a href="w30.html">W30 &middot; Tool use and compound systems</a> <span style="color:var(--ink-3)">Building Effective Agents · Model Context Protocol documentation · Synergizing Reasoning and Acting in Language Models · Computer use</span></li>
+<li><a href="w31.html">W31 &middot; Agent architecture and reliability</a> <span style="color:var(--ink-3)">AgentDojo · Simon Willison, prompt-injection series · Defeating Prompt Injections by Design (CaMeL) · OWASP Top 10 for LLM Applications 2025</span></li>
+<li><a href="w32.html">W32 &middot; Long horizon evaluation and monitoring</a> <span style="color:var(--ink-3)">METR, time horizons · &quot;Why SWE-bench Verified no longer measures frontier… · &quot;Separating signal from noise in coding evaluations&quot; · SWE-bench</span></li>
+</ul>
+<h2>Phase VII · Multimodality</h2><ul>
+<li><a href="w33.html">W33 &middot; Multimodal representations</a> <span style="color:var(--ink-3)">Learning Transferable Visual Models From Natural… · The multimodal sections of the newest system card… · FCC Declaratory Ruling FCC 24-17 …</span></li>
+<li><a href="w34.html">W34 &middot; Diffusion and flow based generation</a> <span style="color:var(--ink-3)">Denoising Diffusion Probabilistic Models · Song et al.&#x27;s SDE unification · C2PA Technical Specification v2.2 · SynthID</span></li>
+<li><a href="w35.html">W35 &middot; Video, world models, robotics, and action</a> <span style="color:var(--ink-3)">Mastering Diverse Domains through World Models · Vision-Language-Action Models Transfer Web… · Video generation models as world simulators …</span></li>
+</ul>
+<h2>Phase VIII · Evaluation</h2><ul>
+<li><a href="w36.html">W36 &middot; Evaluation as measurement science</a> <span style="color:var(--ink-3)">Apollo Research, &quot;We Need a Science of Evals&quot; · Holistic Evaluation of Language Models · Anthropic, &quot;Challenges in evaluating AI systems&quot; …</span></li>
+<li><a href="w37.html">W37 &middot; Benchmark design, contamination, and gaming</a> <span style="color:var(--ink-3)">A Careful Examination of Large Language Model… · Judging LLM-as-a-Judge with MT-Bench and Chatbot… …</span></li>
+<li><a href="w38.html">W38 &middot; Capability trends and forecasting</a> <span style="color:var(--ink-3)">Tetlock &amp; Gardner, *Superforecasting: The Art and… · Epoch AI trends dashboards · AI Index Report 2026, Ch. 2 Technical Performance …</span></li>
+<li><a href="w39.html">W39 &middot; Interpretability and causal evidence</a> <span style="color:var(--ink-3)">Scaling Monosemanticity · On the Biology of a Large Language Model · A Mathematical Framework for Transformer Circuits …</span></li>
+<li><a href="w40.html">W40 &middot; Build an evaluation suite</a> <span style="color:var(--ink-3)">Inspect documentation · ARENA Chapter 3, two sections only · lm-evaluation-harness</span></li>
+</ul>
+<h2>Phase IX · Safety and security</h2><ul>
+<li><a href="w41.html">W41 &middot; Misuse and dangerous capabilities</a> <span style="color:var(--ink-3)">Measuring and Reducing Malicious Use with Unlearning · The Operational Risks of AI in Large-Scale… · Epoch, &quot;Do the biorisk evaluations of AI labs… …</span></li>
+<li><a href="w42.html">W42 &middot; Deception, reward tampering, and model organisms</a> <span style="color:var(--ink-3)">Sleeper Agents · Alignment Faking · In-context scheming · Agentic Misalignment in Summer 2026</span></li>
+<li><a href="w43.html">W43 &middot; Control and monitoring</a> <span style="color:var(--ink-3)">Improving Safety Despite Intentional Subversion · The case for ensuring that powerful AIs are… · How to Justify the Safety of Advanced AI Systems …</span></li>
+<li><a href="w44.html">W44 &middot; Model weights and infrastructure security</a> <span style="color:var(--ink-3)">Securing AI Model Weights · Insider Threat Mitigation Guide · Secure AI Framework</span></li>
+<li><a href="w45.html">W45 &middot; Societal and systemic risks</a> <span style="color:var(--ink-3)">AI Safety, Ethics, and Society, Chs. 5 and 7 · Multi-Agent Risks from Advanced AI · International AI Safety Report 2026</span></li>
+</ul>
+<h2>Strategy block</h2><ul>
+<li><a href="s1.html">S1 &middot; World models and methods</a> <span style="color:var(--ink-3)">Thorstad, &quot;Against the singularity hypothesis&quot; · Greenblatt, &quot;Plans A, B, C, and D for misalignment… …</span></li>
+<li><a href="s2.html">S2 &middot; Threat models: the AI's objectives</a> <span style="color:var(--ink-3)">Carlsmith, &quot;Is Power-Seeking AI an Existential… · Wentworth, &quot;The Case Against AI Control Research&quot; …</span></li>
+<li><a href="s3.html">S3 &middot; Threat models: power, structure, and war</a> <span style="color:var(--ink-3)">Davidson, Finnveden &amp; Hadshar, &quot;AI-Enabled Coups&quot; · Kulveit et al., &quot;Gradual Disempowerment&quot; · Kasirzadeh, &quot;Two Types of AI Existential Risk:… …</span></li>
+<li><a href="s4.html">S4 &middot; Compute governance</a> <span style="color:var(--ink-3)">Sastry, Heim, Belfield et al., &quot;Computing Power and… · Heim, Fist, Egan, Huang et al., &quot;Governing Through… …</span></li>
+<li><a href="s5.html">S5 &middot; Evals-gated governance</a> <span style="color:var(--ink-3)">Anthropic RSP v3.4 and the version archive · Karnofsky, &quot;If-Then Commitments for AI Risk… · How to Justify the Safety of Advanced AI Systems&quot; …</span></li>
+<li><a href="s6.html">S6 &middot; International instruments and verification</a> <span style="color:var(--ink-3)">Baker, &quot;Nuclear Arms Control Verification and… · Sheehan, &quot;China&#x27;s AI Regulations and How They Get… …</span></li>
+</ul>
+<h2>Residency</h2><ul>
+<li><a href="r01.html">R1 &middot; US AI policy architecture</a> <span style="color:var(--ink-3)">America&#x27;s AI Action Plan · Executive Order 14365 · NSPM-11</span></li>
+<li><a href="r02.html">R2 &middot; Administrative law and regulatory design</a> <span style="color:var(--ink-3)">Administrative Procedure Act, 5 U.S.C. 551 through… · Regulatory Analysis · OMB M-25-15 · Loper Bright Enterprises v. Raimondo</span></li>
+<li><a href="r03.html">R3 &middot; Federalism and state AI law</a> <span style="color:var(--ink-3)">Executive Order 14365 · California Transparency in Frontier Artificial… · Colorado Artificial Intelligence Act, SB 24-205</span></li>
+<li><a href="r04.html">R4 &middot; Rights, privacy, due process, and sectoral authority</a> <span style="color:var(--ink-3)">Mobley v. Workday, Inc., No. 3:23-cv-00770 (N.D.… · EEOC on algorithmic hiring · CFPB Circular 2023-03, adverse action notification …</span></li>
+<li><a href="r05.html">R5 &middot; Copyright, training data, identity, and open weights</a> <span style="color:var(--ink-3)">Copyright and Artificial Intelligence reports · C2PA Technical Specification 2.2 · Model Openness Framework</span></li>
+<li><a href="r06.html">R6 &middot; National security institutions and military use</a> <span style="color:var(--ink-3)">National Security Presidential Memorandum 11 (June… · DoD Directive 3000.09, Autonomy in Weapon Systems · AI Risk Management Framework</span></li>
+<li><a href="r07.html">R7 &middot; Export controls, investment, industrial strategy, and compute</a> <span style="color:var(--ink-3)">Export Administration Regulations · 31 CFR Part 850, outbound investment · CHIPS and Science Act resources</span></li>
+<li><a href="r08.html">R8 &middot; Standards, conformity assessment, audit, and assurance</a> <span style="color:var(--ink-3)">AI Risk Management Framework · ISO/IEC 42001, AI management system · AI Accountability Framework</span></li>
+<li><a href="r09.html">R9 &middot; Comparative and international governance</a> <span style="color:var(--ink-3)">Regulation (EU) 2024/1689, the AI Act · Interim Measures for the Management of Generative… · Hiroshima AI Process reporting framework</span></li>
+<li><a href="r10.html">R10 &middot; Productivity, labor, competition, and distribution</a> <span style="color:var(--ink-3)">Productivity data and measures · National Economic Accounts · Cloud services market investigation · Three causal studies</span></li>
+<li><a href="r11.html">R11 &middot; Energy, infrastructure, environment, and communities</a> <span style="color:var(--ink-3)">Docket RM26-4, Interconnection of Large Loads to… · Data center and electricity demand data · eGRID · Environmental Justice Index</span></li>
+<li><a href="r12.html">R12 &middot; Implementation, budgeting, procurement, enforcement, and crisis</a> <span style="color:var(--ink-3)">OMB Memorandum M-25-22, Driving Efficient… · Federal Acquisition Regulation · Standards for Internal Control in the Federal…</span></li>
+</ul>
+<h2>Capstone</h2><ul>
+<li><a href="c1.html">C1 &middot; Position paper draft</a></li>
+<li><a href="c2.html">C2 &middot; Red team and revise</a> <span style="color:var(--ink-3)">Klein, &quot;Performing a Project Premortem&quot; · The Alignment Faking external reviews · ICD 203, Analytic Standards</span></li>
+<li><a href="c3.html">C3 &middot; Brief, defend, publish</a> <span style="color:var(--ink-3)">ICD 203, Analytic Standards · The assertion-evidence approach · One serious opposing analysis</span></li>
+</ul>
+<h2>Reference</h2><ul>
+<li><a href="matrix.html">⊞ &middot; The matrix</a></li>
+<li><a href="gates.html">▮ &middot; Phase gates</a></li>
+<li><a href="rubric.html">1–4 &middot; Rubric</a></li>
+<li><a href="exemplars.html">◑ &middot; Worked exemplars</a></li>
+<li><a href="roster.html">◈ &middot; Model roster</a></li>
+<li><a href="glossary.html">Aa &middot; Glossary</a></li>
+<li><a href="sources.html">✓ &middot; Source register</a></li>
+</ul></div></main></body></html>

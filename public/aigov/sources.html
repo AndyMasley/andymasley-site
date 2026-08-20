@@ -1,0 +1,573 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<title>Source register</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<style>
+:root{--font-serif:"Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua",Georgia,Cambria,serif;
+--font-sans:ui-sans-serif,-apple-system,"Segoe UI","Helvetica Neue",Arial,sans-serif;
+--font-mono:ui-monospace,"SF Mono","JetBrains Mono",Menlo,Consolas,monospace;
+--paper:#F8F8FB;--paper-2:#FFFFFF;--panel:#F0EFF7;--ink:#1A1A24;--ink-2:#54545F;--ink-3:#8A8A96;
+--rule:#E1E0EA;--rule-2:#CFCEDC;--accent:#5B50C0;--accent-2:#4A3FA8;--focal:#A0455A;--focal-soft:#F3E4E8;
+--good:#1E7A52;--warn:#B07C24;--sel:#DED9F6;
+--shadow:0 1px 2px rgba(26,26,36,.05),0 12px 34px -14px rgba(26,26,36,.16)}
+@media (prefers-color-scheme:dark){:root{--paper:#16161A;--paper-2:#1C1C22;--panel:#1F1F29;
+--ink:#E9E9F0;--ink-2:#AEAEBA;--ink-3:#777784;--rule:#2A2A34;--rule-2:#3A3A46;
+--accent:#9A90F0;--accent-2:#B3ABF6;--focal:#E38CA0;--focal-soft:#33232A;--good:#5FC29A;--warn:#D9A441;--sel:#33305A;
+--shadow:0 1px 2px rgba(0,0,0,.3),0 14px 40px -16px rgba(0,0,0,.6)}}
+:root[data-theme="light"]{--paper:#F8F8FB;--paper-2:#FFFFFF;--panel:#F0EFF7;--ink:#1A1A24;--ink-2:#54545F;
+--ink-3:#8A8A96;--rule:#E1E0EA;--rule-2:#CFCEDC;--accent:#5B50C0;--accent-2:#4A3FA8;--focal:#A0455A;
+--focal-soft:#F3E4E8;--good:#1E7A52;--warn:#B07C24;--sel:#DED9F6}
+:root[data-theme="dark"]{--paper:#16161A;--paper-2:#1C1C22;--panel:#1F1F29;--ink:#E9E9F0;--ink-2:#AEAEBA;
+--ink-3:#777784;--rule:#2A2A34;--rule-2:#3A3A46;--accent:#9A90F0;--accent-2:#B3ABF6;--focal:#E38CA0;
+--focal-soft:#33232A;--good:#5FC29A;--warn:#D9A441;--sel:#33305A}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--font-serif);
+font-size:18px;line-height:1.66;-webkit-font-smoothing:antialiased}
+::selection{background:var(--sel)}
+a{color:var(--accent);text-underline-offset:2px;text-decoration-thickness:.06em}
+a:hover{color:var(--accent-2)}
+#rail{position:fixed;top:0;left:0;width:274px;height:100vh;overflow-y:auto;background:var(--paper-2);
+border-right:1px solid var(--rule);padding:24px 18px 40px;z-index:40;font-family:var(--font-sans);
+transition:transform .25s ease}
+#rail .brand{font-size:.68rem;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-3)}
+#rail .brand-title{font-family:var(--font-serif);font-size:1.12rem;font-weight:600;margin:2px 0 10px;color:var(--ink)}
+#rail .resume{display:inline-block;font-size:.78rem;font-weight:600;color:var(--accent);
+border:1px solid var(--rule-2);border-radius:18px;padding:4px 12px;text-decoration:none;margin-bottom:6px}
+#rail .resume:hover{border-color:var(--accent)}
+#rail .grp{font-size:.64rem;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);
+margin:16px 0 5px;padding-top:10px;border-top:1px solid var(--rule)}
+#rail a.wk{display:flex;gap:8px;align-items:baseline;padding:3px 8px;border-radius:6px;color:var(--ink-2);
+text-decoration:none;font-size:.8rem;line-height:1.35}
+#rail a.wk:hover{background:var(--panel);color:var(--ink)}
+#rail a.wk.active{background:var(--panel);color:var(--accent);font-weight:600}
+#rail a.wk .n{color:var(--ink-3);font-family:var(--font-mono);font-size:.72rem;min-width:26px}
+#rail a.wk .done{color:var(--good);margin-left:auto}
+#rail .soon{opacity:.45;pointer-events:none}
+#rail .themebtn{margin-top:18px;font-size:.72rem;background:none;border:1px solid var(--rule-2);
+color:var(--ink-2);border-radius:18px;padding:5px 12px;cursor:pointer}
+#menubtn{position:fixed;top:12px;left:12px;z-index:50;display:none;background:var(--paper-2);
+border:1px solid var(--rule-2);border-radius:9px;width:40px;height:40px;cursor:pointer;
+box-shadow:var(--shadow);color:var(--ink);font-size:1.1rem}
+#scrim{position:fixed;inset:0;background:rgba(10,10,16,.4);z-index:35;display:none}
+main{margin-left:274px}
+.wrap{max-width:760px;margin:0 auto;padding:40px 28px 90px}
+.kicker{font-family:var(--font-sans);font-size:.72rem;letter-spacing:.2em;text-transform:uppercase;color:var(--accent)}
+h1{font-size:clamp(1.9rem,4.5vw,2.7rem);font-weight:600;line-height:1.08;letter-spacing:-.015em;margin:.2em 0 .3em}
+h2{font-size:1.4rem;font-weight:600;margin:44px 0 6px;letter-spacing:-.01em}
+h3{font-size:1.08rem;font-weight:600;margin:28px 0 2px}
+h4{font-size:.95rem;font-weight:600;margin:22px 0 2px;color:var(--ink-2)}
+p{margin:14px 0;max-width:66ch}
+ul,ol{max-width:64ch;padding-left:1.3em}
+li{margin:7px 0}
+code{font-family:var(--font-mono);background:var(--panel);border:1px solid var(--rule);
+border-radius:5px;padding:.06em .35em;font-size:.85em}
+pre{background:var(--panel);border:1px solid var(--rule);border-radius:10px;padding:14px 16px;
+overflow-x:auto;font-size:.82em;line-height:1.5}
+pre code{background:none;border:none;padding:0}
+blockquote{margin:22px 0;padding-left:18px;border-left:3px solid var(--rule-2);color:var(--ink-2)}
+hr{border:none;border-top:1px solid var(--rule);margin:36px 0}
+.tablewrap{overflow-x:auto;margin:24px 0}
+table{border-collapse:collapse;font-size:.88rem;min-width:50%}
+th{font-family:var(--font-sans);font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;
+color:var(--ink-2);text-align:left}
+th,td{padding:8px 14px 8px 0;border-bottom:1px solid var(--rule);vertical-align:top}
+.meta{font-family:var(--font-sans);font-size:.8rem;color:var(--ink-3);margin:4px 0 22px}
+.callout{margin:26px 0;border-radius:12px;padding:18px 20px 14px;border:1px solid var(--rule);
+background:var(--paper-2);box-shadow:var(--shadow)}
+.callout .tag{font-family:var(--font-sans);font-size:.66rem;letter-spacing:.16em;text-transform:uppercase;
+font-weight:700;display:block;margin-bottom:7px}
+.miscon{background:color-mix(in srgb,var(--focal) 6%,var(--paper-2));
+border-color:color-mix(in srgb,var(--focal) 30%,var(--rule))}
+.miscon .tag{color:var(--focal)}
+.keyidea{background:linear-gradient(180deg,color-mix(in srgb,var(--accent) 5%,var(--paper-2)),var(--paper-2));
+border-color:color-mix(in srgb,var(--accent) 28%,var(--rule))}
+.keyidea .tag{color:var(--accent)}
+details{margin:18px 0;border:1px solid var(--rule);border-radius:10px;padding:10px 16px;background:var(--paper-2)}
+summary{cursor:pointer;font-family:var(--font-sans);font-size:.85rem;font-weight:600;color:var(--ink-2)}
+details[open] summary{margin-bottom:8px}
+.num{font-family:var(--font-mono);font-variant-numeric:tabular-nums}
+@media (max-width:1000px){#rail{transform:translateX(-100%)}#rail.open{transform:none}
+#menubtn{display:block}main{margin-left:0}body.menuopen #scrim{display:block}}
+</style><script>
+(function(){
+  var t=localStorage.getItem('theme');
+  if(t)document.documentElement.setAttribute('data-theme',t);
+  document.addEventListener('DOMContentLoaded',function(){
+    var b=document.querySelector('.themebtn');
+    if(b)b.addEventListener('click',function(){
+      var cur=document.documentElement.getAttribute('data-theme');
+      var next=cur==='dark'?'light':(cur==='light'?'dark':
+        (matchMedia('(prefers-color-scheme: dark)').matches?'light':'dark'));
+      document.documentElement.setAttribute('data-theme',next);
+      localStorage.setItem('theme',next);
+    });
+    var m=document.getElementById('menubtn'),r=document.getElementById('rail'),s=document.getElementById('scrim');
+    if(m){m.addEventListener('click',function(){r.classList.toggle('open');document.body.classList.toggle('menuopen')});
+    s.addEventListener('click',function(){r.classList.remove('open');document.body.classList.remove('menuopen')});}
+  });
+})();
+</script></head>
+<body><button id="menubtn" aria-label="menu">&#9776;</button><div id="scrim"></div>
+<nav id="rail"><div class="brand">Frontier AI</div>
+<div class="brand-title">Policy curriculum</div>
+<a class="resume" href="w00.html">Resume &rarr; W0</a>
+<div class="grp">Start</div>
+<a class="wk" href="how-to-work.html"><span class="n">§</span><span>How to work</span></a>
+<a class="wk" href="w00.html"><span class="n">W0</span><span>Foundation gateway</span></a>
+<div class="grp">Phase I · Orientation and repair</div>
+<a class="wk" href="w01.html"><span class="n">W1</span><span>Calibration</span></a>
+<a class="wk" href="w02.html"><span class="n">W2</span><span>Linear algebra as transformations</span></a>
+<a class="wk" href="w03.html"><span class="n">W3</span><span>Singular values and low rank structure</span></a>
+<a class="wk" href="w04.html"><span class="n">W4</span><span>Probability, likelihood, and information</span></a>
+<a class="wk" href="w05.html"><span class="n">W5</span><span>Automatic differentiation</span></a>
+<a class="wk" href="w06.html"><span class="n">W6</span><span>Numerical computing and PyTorch fluency</span></a>
+<div class="grp">Phase II · Learning systems</div>
+<a class="wk" href="w07.html"><span class="n">W7</span><span>Statistical learning and generalization</span></a>
+<a class="wk" href="w08.html"><span class="n">W8</span><span>Multilayer networks and learned representations</span></a>
+<a class="wk" href="w09.html"><span class="n">W9</span><span>Optimization and trainability</span></a>
+<a class="wk" href="w10.html"><span class="n">W10</span><span>Experimental craft</span></a>
+<a class="wk" href="w11.html"><span class="n">W11</span><span>Calibration, shift, and causal claims</span></a>
+<div class="grp">Phase III · Transformers</div>
+<a class="wk" href="w12.html"><span class="n">W12</span><span>Tokenization and the language modeling objective</span></a>
+<a class="wk" href="w13.html"><span class="n">W13</span><span>Attention</span></a>
+<a class="wk" href="w14.html"><span class="n">W14</span><span>The transformer block</span></a>
+<a class="wk" href="w15.html"><span class="n">W15</span><span>Build and train a compact GPT</span></a>
+<a class="wk" href="w16.html"><span class="n">W16</span><span>In-context learning and emergence</span></a>
+<a class="wk" href="w17.html"><span class="n">W17</span><span>The modern architecture family</span></a>
+<a class="wk" href="w18.html"><span class="n">W18</span><span>Decoding and inference behavior</span></a>
+<div class="grp">Phase IV · Training at scale</div>
+<a class="wk" href="w19.html"><span class="n">W19</span><span>Training data</span></a>
+<a class="wk" href="w20.html"><span class="n">W20</span><span>Scaling laws and algorithmic efficiency</span></a>
+<a class="wk" href="w21.html"><span class="n">W21</span><span>Compute and hardware</span></a>
+<a class="wk" href="w22.html"><span class="n">W22</span><span>Distributed training</span></a>
+<a class="wk" href="w23.html"><span class="n">W23</span><span>Inference systems and economics</span></a>
+<div class="grp">Phase V · Posttraining</div>
+<a class="wk" href="w24.html"><span class="n">W24</span><span>LoRA fine-tuning</span></a>
+<a class="wk" href="w25.html"><span class="n">W25</span><span>Supervised tuning and human feedback</span></a>
+<a class="wk" href="w26.html"><span class="n">W26</span><span>Reinforcement learning foundations</span></a>
+<a class="wk" href="w27.html"><span class="n">W27</span><span>Preference optimization and AI feedback</span></a>
+<a class="wk" href="w28.html"><span class="n">W28</span><span>Verifiable rewards and test-time compute</span></a>
+<div class="grp">Phase VI · Agents</div>
+<a class="wk" href="w29.html"><span class="n">W29</span><span>Retrieval and grounded generation</span></a>
+<a class="wk" href="w30.html"><span class="n">W30</span><span>Tool use and compound systems</span></a>
+<a class="wk" href="w31.html"><span class="n">W31</span><span>Agent architecture and reliability</span></a>
+<a class="wk" href="w32.html"><span class="n">W32</span><span>Long horizon evaluation and monitoring</span></a>
+<div class="grp">Phase VII · Multimodality</div>
+<a class="wk" href="w33.html"><span class="n">W33</span><span>Multimodal representations</span></a>
+<a class="wk" href="w34.html"><span class="n">W34</span><span>Diffusion and flow based generation</span></a>
+<a class="wk" href="w35.html"><span class="n">W35</span><span>Video, world models, robotics, and action</span></a>
+<div class="grp">Phase VIII · Evaluation</div>
+<a class="wk" href="w36.html"><span class="n">W36</span><span>Evaluation as measurement science</span></a>
+<a class="wk" href="w37.html"><span class="n">W37</span><span>Benchmark design, contamination, and gaming</span></a>
+<a class="wk" href="w38.html"><span class="n">W38</span><span>Capability trends and forecasting</span></a>
+<a class="wk" href="w39.html"><span class="n">W39</span><span>Interpretability and causal evidence</span></a>
+<a class="wk" href="w40.html"><span class="n">W40</span><span>Build an evaluation suite</span></a>
+<div class="grp">Phase IX · Safety and security</div>
+<a class="wk" href="w41.html"><span class="n">W41</span><span>Misuse and dangerous capabilities</span></a>
+<a class="wk" href="w42.html"><span class="n">W42</span><span>Deception, reward tampering, and model organisms</span></a>
+<a class="wk" href="w43.html"><span class="n">W43</span><span>Control and monitoring</span></a>
+<a class="wk" href="w44.html"><span class="n">W44</span><span>Model weights and infrastructure security</span></a>
+<a class="wk" href="w45.html"><span class="n">W45</span><span>Societal and systemic risks</span></a>
+<div class="grp">Strategy block</div>
+<a class="wk" href="s1.html"><span class="n">S1</span><span>World models and methods</span></a>
+<a class="wk" href="s2.html"><span class="n">S2</span><span>Threat models: the AI's objectives</span></a>
+<a class="wk" href="s3.html"><span class="n">S3</span><span>Threat models: power, structure, and war</span></a>
+<a class="wk" href="s4.html"><span class="n">S4</span><span>Compute governance</span></a>
+<a class="wk" href="s5.html"><span class="n">S5</span><span>Evals-gated governance</span></a>
+<a class="wk" href="s6.html"><span class="n">S6</span><span>International instruments and verification</span></a>
+<div class="grp">Residency</div>
+<a class="wk" href="r01.html"><span class="n">R1</span><span>US AI policy architecture</span></a>
+<a class="wk" href="r02.html"><span class="n">R2</span><span>Administrative law and regulatory design</span></a>
+<a class="wk" href="r03.html"><span class="n">R3</span><span>Federalism and state AI law</span></a>
+<a class="wk" href="r04.html"><span class="n">R4</span><span>Rights, privacy, due process, and sectoral authority</span></a>
+<a class="wk" href="r05.html"><span class="n">R5</span><span>Copyright, training data, identity, and open weights</span></a>
+<a class="wk" href="r06.html"><span class="n">R6</span><span>National security institutions and military use</span></a>
+<a class="wk" href="r07.html"><span class="n">R7</span><span>Export controls, investment, industrial strategy, and compute</span></a>
+<a class="wk" href="r08.html"><span class="n">R8</span><span>Standards, conformity assessment, audit, and assurance</span></a>
+<a class="wk" href="r09.html"><span class="n">R9</span><span>Comparative and international governance</span></a>
+<a class="wk" href="r10.html"><span class="n">R10</span><span>Productivity, labor, competition, and distribution</span></a>
+<a class="wk" href="r11.html"><span class="n">R11</span><span>Energy, infrastructure, environment, and communities</span></a>
+<a class="wk" href="r12.html"><span class="n">R12</span><span>Implementation, budgeting, procurement, enforcement, and crisis</span></a>
+<div class="grp">Capstone</div>
+<a class="wk" href="c1.html"><span class="n">C1</span><span>Position paper draft</span></a>
+<a class="wk" href="c2.html"><span class="n">C2</span><span>Red team and revise</span></a>
+<a class="wk" href="c3.html"><span class="n">C3</span><span>Brief, defend, publish</span></a>
+<div class="grp">Reference</div>
+<a class="wk" href="matrix.html"><span class="n">⊞</span><span>The matrix</span></a>
+<a class="wk" href="gates.html"><span class="n">▮</span><span>Phase gates</span></a>
+<a class="wk" href="rubric.html"><span class="n">1–4</span><span>Rubric</span></a>
+<a class="wk" href="exemplars.html"><span class="n">◑</span><span>Worked exemplars</span></a>
+<a class="wk" href="roster.html"><span class="n">◈</span><span>Model roster</span></a>
+<a class="wk" href="glossary.html"><span class="n">Aa</span><span>Glossary</span></a>
+<a class="wk active" href="sources.html"><span class="n">✓</span><span>Source register</span></a>
+<button class="themebtn">Toggle theme</button></nav>
+<main><div class="wrap"><h1 id="source-register">Source register</h1>
+<p><em>Generated 2026-07-29 by Session B; cleaned, re-verified, and roster-synced 2026-07-31 by Session D1. "Verified" = a human-or-agent looked at the live web on that date (method noted); "link OK" / "HTTP 200" = mechanical status check only. Replacement protocol: never silently replace a source — log it in "Dropped or replaced" below. Used-in convention: short page ids (w00-w45, r01-r12, s1-s6, c1-c3), salvage file names, or DEPTH; "claim support" / "named in text" marks resources a page relies on without a hyperlink; "via ... deep link" marks pages citing a sub-page of a registered parent resource; "phase-ix-gate (reserved)" marks resources held for the Session-D gate page per the fixlist routing note.</em></p>
+<h2 id="needs-action-1">Needs action (1)</h2>
+<div class="tablewrap"><table>
+<tr><th>resource</th><th>url</th><th>volatility</th><th>status</th><th>note</th><th>used in</th></tr>
+<tr><td>EEOC AI &amp; Algorithmic Fairness Initiative (eeoc.gov/ai)</td><td>https://www.eeoc.gov/ai</td><td>live</td><td><strong>dead</strong> 2026-07-28</td><td>EEOC scrubbed its AI work Jan 27, 2025 under EO 14179; the May 2023 Title VII TA doc and May 2022 ADA TA doc were withdrawn and the initiative is defunct. STILL CITED BY r04 — apply the fixlist r04 replacement (Mobley v. Workday docket + EEOC amicus + archived guidance) at Session D2.</td><td>r04</td></tr>
+</table></div>
+<h2 id="clean-145">Clean (145)</h2>
+<div class="tablewrap"><table>
+<tr><th>resource</th><th>url</th><th>volatility</th><th>status</th><th>note</th><th>used in</th></tr>
+<tr><td>—</td><td>https://www.3blue1brown.com/lessons/attention</td><td>live</td><td>link OK 2026-07-28</td><td>mechanical check only</td><td>w13</td></tr>
+<tr><td>—</td><td>https://www.acquisition.gov/browse/index/far</td><td>live</td><td>link OK 2026-07-28</td><td>mechanical check only</td><td>r12</td></tr>
+<tr><td>—</td><td>https://ai-2027.com</td><td>live</td><td>link OK 2026-07-28</td><td>mechanical check only</td><td>w01, s1</td></tr>
+<tr><td>Meta hosted flagship — Muse Spark 1.1</td><td>https://ai.meta.com/blog/introducing-muse-spark-meta-model-api/</td><td>live</td><td><strong>verified</strong> 2026-07-28</td><td>Released 9 Jul 2026 by Meta Superintelligence Labs. Closed/proprietary weights, multimodal agentic reasoning, 1M ctx, free at meta.ai + paid OpenAI-compatible Meta Model API public preview ($1.25/$4.25). URL live (Meta b</td><td>roster-salvage</td></tr>
+<tr><td>Meta open weights — Llama 4 Scout + Maverick</td><td>https://ai.meta.com/llama/get-started/</td><td>live</td><td><strong>verified</strong> 2026-07-28</td><td>Still Meta's latest open-weight release (5 Apr 2025); no newer open Llama — Meta's 2026 frontier work (Muse Spark) is closed-weight with no committed open-weights timeline. License: Llama 4 Community License (custom; not</td><td>roster-salvage</td></tr>
+<tr><td>CAIS textbook: AI Safety, Ethics and Society (Hendrycks)</td><td>https://www.aisafetybook.com/</td><td>durable</td><td><strong>verified</strong> 2026-07-28</td><td>8 chapters: 1 Overview of Catastrophic AI Risks; 2 AI Fundamentals; 3 Single-Agent Safety; 4 Safety Engineering; 5 Complex Systems; 6 Beneficial AI and Machine Ethics; 7 Collective Action Problems; 8 Governance. Appendic</td><td>w45; w41 via /textbook/malicious-use deep link</td></tr>
+<tr><td>UK AISI Frontier AI Trends Report</td><td>https://www.aisi.gov.uk/frontier-ai-trends-report</td><td>annual</td><td><strong>verified</strong> 2026-07-28</td><td>Real. Exact title 'Frontier AI Trends Report', UK AI Security Institute, inaugural edition published Dec 18, 2025; URL curl 200 and page fetched (2 years of evals, 30+ frontier systems; chem/bio, cyber, autonomy, safegua. <strong>Currency pass 2026-07-31</strong> (closes the C1/C2 flag on w03 + w10's "tests specific pre-deployment builds"): the report's own phrasing is "During our testing, we are granted API access to model checkpoints. In some cases, this access is ahead of public release or with different safeguards to those implemented on the publicly available version of the model"; aisi.gov.uk/about (read live) adds "Testing leading AI systems before they are released publicly", "Pre-deployment access to leading AI models", and "we rigorously test leading AI systems before and after they are launched". Both pages rewritten to that language. Deliberately NOT asserted: any statutory mandate — secondary sources conflict (law-firm trackers describe a signalled Frontier AI Bill; one aggregator claims an enacted "UK AI Safety Act"), so both hooks rest on AISI's own description</td><td>w03, w10, studios-salvage</td></tr>
+<tr><td>—</td><td>https://www.anthropic.com/research/building-effective-agents</td><td>live</td><td>link OK 2026-07-28</td><td>mechanical check only</td><td>w30</td></tr>
+<tr><td>Anthropic Responsible Scaling Policy</td><td>https://www.anthropic.com/responsible-scaling-policy</td><td>live</td><td><strong>verified</strong> 2026-07-28</td><td>Current: v3.4, effective 8 Jul 2026 ('Version 3.4 and redline (effective July 8, 2026)' on page). Both circulating claims were real: v3.0 eff. 24 Feb 2026 is stale (superseded by 3.1 eff. 2 Apr, 3.2 eff. 29 Apr, 3.3 eff.</td><td>s5, s-block-salvage</td></tr>
+<tr><td>—</td><td>https://www.anthropic.com/system-cards</td><td>live</td><td>verified 2026-07-28</td><td>Hub verified; roster note: Opus 5 shipped Jul 2026</td><td>roster-salvage; phase-ix-gate (reserved)</td></tr>
+<tr><td>DeepSeek flagship — DeepSeek V4 (Pro + Flash)</td><td>https://api-docs.deepseek.com/updates/</td><td>live</td><td><strong>verified</strong> 2026-07-28; roster fix applied 2026-07-31</td><td>Released 24 Apr 2026; GA 20 Jul 2026; legacy deepseek-chat/deepseek-reasoner endpoints retired 24 Jul 2026. V4-Pro 1.6T/49B active ($0.435/$0.87), V4-Flash 284B/13B active ($0.14/$0.28); open weights (MIT) at huggingface.co/deepseek-ai/DeepSeek-V4-Pro and -Flash. All now reflected in roster-salvage.</td><td>roster-salvage</td></tr>
+<tr><td>—</td><td>https://arxiv.org/abs/1512.03385</td><td>durable</td><td>link OK 2026-07-28</td><td>mechanical check only</td><td>w09</td></tr>
+<tr><td>—</td><td>https://arxiv.org/abs/1704.04760</td><td>durable</td><td>link OK 2026-07-28</td><td>mechanical check only</td><td>studios-salvage</td></tr>
+<tr><td>—</td><td>https://arxiv.org/abs/1706.03762</td><td>durable</td><td>link OK 2026-07-28</td><td>mechanical check only</td><td>w13</td></tr>
+<tr><td>The Matrix Calculus You Need for Deep Learning (Parr &amp; Howar</td><td>https://arxiv.org/abs/1802.01528</td><td>durable</td><td><strong>verified</strong> 2026-07-28</td><td>Sections confirmed (identical on explained.ai/matrix-calculus/): 1 Introduction, 2 Review: Scalar derivative rules, 3 Introduction to vector calculus and partial derivatives, 4 Matrix calculus (4.1 Generalization of the</td><td>w05</td></tr>
+<tr><td>—</td><td>https://arxiv.org/abs/1910.02054</td><td>durable</td><td>link OK 2026-07-28</td><td>mechanical check only</td><td>w22, studios-salvage</td></tr>
+<tr><td>—</td><td>https://arxiv.org/abs/2001.08361</td><td>durable</td><td>link OK 2026-07-28</td><td>mechanical check only</td><td>w20</td></tr>
+<tr><td>—</td><td>https://arxiv.org/abs/2005.11401</td><td>durable</td><td>link OK 2026-07-28</td><td>mechanical check only</td><td>w29</td></tr>
+<tr><td>—</td><td>https://arxiv.org/abs/2005.14165</td><td>durable</td><td>link OK 2026-07-28</td><td>mechanical check only</td><td>w16</td></tr>
+<tr><td>—</td><td>https://arxiv.org/abs/2006.11239</td><td>durable</td><td>link OK 2026-07-28</td><td>mechanical check only</td><td>w34</td></tr>
+<tr><td>—</td><td>https://arxiv.org/abs/2011.13456</td><td>durable</td><td>link OK 2026-07-28</td><td>mechanical check only</td><td>w34</td></tr>
+<tr><td>—</td><td>https://arxiv.org/abs/2103.00020</td><td>durable</td><td>link OK 2026-07-28</td><td>mechanical check only</td><td>w33</td></tr>
+<tr><td>—</td><td>https://arxiv.org/abs/2104.04473</td><td>durable</td><td>link OK 2026-07-28</td><td>mechanical check only</td><td>studios-salvage</td></tr>
+<tr><td>—</td><td>https://arxiv.org/abs/2203.02155</td><td>durable</td><td>link OK 2026-07-28</td><td>mechanical check only</td><td>w25</td></tr>
+<tr><td>—</td><td>https://arxiv.org/abs/2203.15556</td><td>durable</td><td>link OK 2026-07-28</td><td>mechanical check only</td><td>w20, studios-salvage</td></tr>
+<tr><td>—</td><td>https://arxiv.org/abs/2204.14198</td><td>durable</td><td>link OK 2026-07-28</td><td>mechanical check only</td><td>w33</td></tr>
+<tr><td>—</td><td>https://arxiv.org/abs/2205.14135</td><td>durable</td><td>link OK 2026-07-28</td><td>mechanical check only (w17 dropped FlashAttention per fixlist — C3)</td><td>w22</td></tr>
+<tr><td>—</td><td>https://arxiv.org/abs/2206.13353</td><td>durable</td><td>link OK 2026-07-28</td><td>mechanical check only</td><td>w01, s2</td></tr>
+<tr><td>—</td><td>https://arxiv.org/abs/2210.02747</td><td>durable</td><td>link OK 2026-07-28</td><td>mechanical check only</td><td>w34</td></tr>
+<tr><td>—</td><td>https://arxiv.org/abs/2210.03629</td><td>durable</td><td>link OK 2026-07-28</td><td>mechanical check only</td><td>w30</td></tr>
+<tr><td>HELM paper: Holistic Evaluation of Language Models</td><td>https://arxiv.org/abs/2211.09110</td><td>durable</td><td><strong>verified</strong> 2026-07-28</td><td>TMLR 2023, latest version Oct 1 2023. Contribution: taxonomy of scenarios x metrics (7 metrics: accuracy, calibration, robustness, fairness, bias, toxicity, efficiency), multi-metric measurement over 42 scenarios. This i</td><td>w11, w36</td></tr>
+<tr><td>—</td><td>https://arxiv.org/abs/2212.08073</td><td>durable</td><td>link OK 2026-07-28</td><td>mechanical check only</td><td>w27</td></tr>
+<tr><td>—</td><td>https://arxiv.org/abs/2301.04104</td><td>durable</td><td>link OK 2026-07-28</td><td>mechanical check only</td><td>w35</td></tr>
+<tr><td>—</td><td>https://arxiv.org/abs/2305.13245</td><td>durable</td><td>link OK 2026-07-28</td><td>mechanical check only</td><td>w17</td></tr>
+<tr><td>—</td><td>https://arxiv.org/abs/2305.18290</td><td>durable</td><td>link OK 2026-07-28</td><td>mechanical check only</td><td>w27</td></tr>
+<tr><td>—</td><td>https://arxiv.org/abs/2305.20050</td><td>durable</td><td>link OK 2026-07-28</td><td>mechanical check only</td><td>w28</td></tr>
+<tr><td>—</td><td>https://arxiv.org/abs/2306.05685</td><td>durable</td><td>link OK 2026-07-28</td><td>mechanical check only</td><td>w37, studios-salvage</td></tr>
+<tr><td>—</td><td>https://arxiv.org/abs/2309.06180</td><td>durable</td><td>link OK 2026-07-28</td><td>mechanical check only</td><td>w23</td></tr>
+<tr><td>—</td><td>https://arxiv.org/abs/2310.06770</td><td>durable</td><td>link OK 2026-07-28</td><td>mechanical check only</td><td>w32</td></tr>
+<tr><td>—</td><td>https://arxiv.org/abs/2312.06942</td><td>durable</td><td>link OK 2026-07-28</td><td>mechanical check only</td><td>w43, studios-salvage</td></tr>
+<tr><td>—</td><td>https://arxiv.org/abs/2402.00159</td><td>durable</td><td>link OK 2026-07-28</td><td>mechanical check only</td><td>w19</td></tr>
+<tr><td>—</td><td>https://arxiv.org/abs/2406.10162</td><td>durable</td><td>link OK 2026-07-28</td><td>mechanical check only</td><td>w42</td></tr>
+<tr><td>—</td><td>https://arxiv.org/abs/2406.13352</td><td>durable</td><td>link OK 2026-07-28</td><td>mechanical check only</td><td>w31</td></tr>
+<tr><td>—</td><td>https://arxiv.org/abs/2406.17557</td><td>durable</td><td>link OK 2026-07-28</td><td>mechanical check only</td><td>w19</td></tr>
+<tr><td>—</td><td>https://arxiv.org/abs/2407.21783</td><td>durable</td><td>link OK 2026-07-28</td><td>mechanical check only</td><td>w14, w17, w20, w22</td></tr>
+<tr><td>—</td><td>https://arxiv.org/abs/2412.14093</td><td>durable</td><td>link OK 2026-07-28</td><td>mechanical check only</td><td>w42</td></tr>
+<tr><td>—</td><td>https://arxiv.org/abs/2412.19437</td><td>durable</td><td>link OK 2026-07-28</td><td>mechanical check only</td><td>w17</td></tr>
+<tr><td>—</td><td>https://arxiv.org/abs/2501.12948</td><td>durable</td><td>link OK 2026-07-28</td><td>mechanical check only</td><td>w28</td></tr>
+<tr><td>—</td><td>https://atlas.mitre.org/</td><td>live</td><td>link OK 2026-07-28</td><td>mechanical check only</td><td>studios-salvage</td></tr>
+<tr><td>—</td><td>https://bbycroft.net/llm</td><td>live</td><td>link OK 2026-07-28</td><td>mechanical check only</td><td>w13</td></tr>
+<tr><td>—</td><td>https://www.bea.gov/data/gdp/gross-domestic-product</td><td>live</td><td>link OK 2026-07-28</td><td>mechanical check only</td><td>r10</td></tr>
+<tr><td>—</td><td>https://www.bis.gov/regulations/ear</td><td>live</td><td>link OK 2026-07-28</td><td>mechanical check only</td><td>r07, s-block-salvage, studios-salvage</td></tr>
+<tr><td>—</td><td>https://www.bls.gov/productivity/</td><td>live</td><td>verified 2026-07-31 (search index)</td><td>'Productivity Home Page: U.S. Bureau of Labor Statistics' — live with data through Q1 2026, including an AI-and-productivity subpage. 403s to automated fetchers.</td><td>r10</td></tr>
+<tr><td>—</td><td>https://c2pa.org/specifications/specifications/2.2/specs/C2PA_Specification.html</td><td>live</td><td>link OK 2026-07-28</td><td>mechanical check only</td><td>r05</td></tr>
+<tr><td>—</td><td>https://www.cac.gov.cn/2023-07/13/c_1690898327029107.htm</td><td>live</td><td>link OK 2026-07-28</td><td>mechanical check only</td><td>r09</td></tr>
+<tr><td>Probability for Computer Scientists (Piech, Stanford CS109)</td><td>https://chrispiech.github.io/probabilityForComputerScientists/en/</td><td>annual</td><td><strong>verified</strong> 2026-07-28</td><td>Live site organized in 5 Parts, not numbered chapters. Part 1 Core Probability: Conditional Probability, Independence, Law of Total Probability, Bayes' Theorem. Part 2 Random Variables: Expectation, Variance, Bernoulli/B</td><td>w04</td></tr>
+<tr><td>—</td><td>https://www.cisa.gov/resources-tools/resources/insider-threat-mitigation-guide</td><td>live</td><td>link OK 2026-07-28</td><td>mechanical check only; content verified at C7 review 2026-07-31</td><td>w44, studios-salvage</td></tr>
+<tr><td>—</td><td>https://www.coe.int/en/web/artificial-intelligence/the-framework-convention-on-artificial-intelligence</td><td>live</td><td>verified 2026-07-31 (search index)</td><td>Framework Convention page live (CETS No. 225; opened for signature 5 Sep 2024; EU has ratified). 403s to automated fetchers.</td><td>s-block-salvage, studios-salvage</td></tr>
+<tr><td>—</td><td>https://www.consumerfinance.gov/compliance/circulars/circular-2023-03-adverse-action-notification-requirements-and-the-proper-use-of-the-cfpbs-sample-forms-provided-in-regulation-b/</td><td>live</td><td>verified 2026-07-31 (GET, browser UA)</td><td>200 with a browser user agent; title 'Consumer Financial Protection Circular 2023-03: Adverse action notification requirements...' confirmed.</td><td>r04</td></tr>
+<tr><td>—</td><td>https://www.copyright.gov/ai/</td><td>live</td><td>link OK 2026-07-28</td><td>mechanical check only</td><td>r05</td></tr>
+<tr><td>HELM live site (leaderboards)</td><td>https://crfm.stanford.edu/helm/</td><td>live</td><td><strong>verified</strong> 2026-07-28</td><td>JS-rendered leaderboard hub (HELM Capabilities, Lite, Classic, AIR-Bench, HELM Instruct), in maintenance mode since June 1, 2026. Fixlist w36 fix applied: pages now cite the HELM paper (arXiv 2211.09110) for methodology; only the studio salvage still points at the live hub.</td><td>studios-salvage</td></tr>
+<tr><td>Stanford CS336 Language Modeling from Scratch</td><td>https://cs336.stanford.edu/</td><td>annual</td><td><strong>verified</strong> 2026-07-28; scope fixes applied at C3-C4</td><td>Current iteration: Spring 2026 (Mar 30-Jun 10 2026, Liang + Hashimoto); fully public — YouTube lectures, PDFs/code, all five assignments on GitHub; prior offerings archived at /spring2025/ and /spring2024/. Session B's stanford-cs336.github.io/spring2026/ replacement row merged here: the github.io URL 301s to cs336.stanford.edu/spring2026/ which 404s — cite the root.</td><td>w12, w14, w15, w17, w18, w19, w20, w22, w23, w37, capstone-salvage</td></tr>
+<tr><td>—</td><td>https://cset.georgetown.edu/publication/ai-chips-what-they-are-and-why-they-matter/</td><td>live</td><td>link OK 2026-07-28</td><td>mechanical check only</td><td>w21, s-block-salvage, studios-salvage</td></tr>
+<tr><td>—</td><td>https://cset.georgetown.edu/publication/the-semiconductor-supply-chain/</td><td>live</td><td>link OK 2026-07-28</td><td>mechanical check only</td><td>studios-salvage</td></tr>
+<tr><td>—</td><td>https://csrc.nist.gov/pubs/sp/800/61/r3/final</td><td>live</td><td>link OK 2026-07-28</td><td>mechanical check only</td><td>studios-salvage</td></tr>
+<tr><td>Dive into Deep Learning (d2l.ai)</td><td>https://d2l.ai/</td><td>annual</td><td><strong>verified</strong> 2026-07-28</td><td>Version 1.0.3 live. Confirmed numbering: Ch 2 Preliminaries (2.1 Data Manipulation, 2.2 Data Preprocessing, 2.3 Linear Algebra, 2.4 Calculus, 2.5 Automatic Differentiation, 2.6 Probability and Statistics, 2.7 Documentati</td><td>w02, w04, w06, w07, w08, w09, w12; w10 via the statistics-appendix deep link</td></tr>
+<tr><td>Deep Learning (Goodfellow, Bengio, Courville)</td><td>https://www.deeplearningbook.org/</td><td>durable</td><td><strong>verified</strong> 2026-07-28</td><td>Frozen 2016 book, HTML per-chapter. Ch 3 Probability and Information Theory; Ch 5 Machine Learning Basics with confirmed sections 5.1 Learning Algorithms, 5.2 Capacity, Overfitting and Underfitting, 5.3 Hyperparameters a</td><td>w04, w07</td></tr>
+<tr><td>Google DeepMind Frontier Safety Framework</td><td>https://deepmind.google/blog/strengthening-our-frontier-safety-framework/</td><td>live</td><td><strong>verified</strong> 2026-07-28</td><td>Current: FSF 3.1, updated 17 Apr 2026 (adds Tracked Capability Levels early-warning layer). 3.0 was published 22 Sep 2025 — stale claim. Same blog URL carries the 3.1 update note, so the s-block link is correct as-is. Fo</td><td>s-block-salvage</td></tr>
+<tr><td>—</td><td>https://deepmind.google/discover/blog/introducing-the-frontier-safety-framework/</td><td>live</td><td>link OK 2026-07-28</td><td>mechanical check only</td><td>studios-salvage</td></tr>
+<tr><td>Google DeepMind flagships — Gemini 3.6 Flash + Gemini 3.1 Pr</td><td>https://deepmind.google/models/model-cards/</td><td>live</td><td><strong>verified</strong> 2026-07-28</td><td>Roster pairing is correct as of 2026-07-28: Gemini 3.6 Flash released 21 Jul 2026 ($1.50/$7.50, 1M ctx, alongside 3.5 Flash-Lite and gov-only 3.5 Flash Cyber); Gemini 3.1 Pro released 19 Feb 2026 (model card: deepmind.go</td><td>roster-salvage; phase-ix-gate (reserved)</td></tr>
+<tr><td>Deployment Safety Hub (OpenAI)</td><td>https://deploymentsafety.openai.com/</td><td>live</td><td><strong>verified</strong> 2026-07-28</td><td>Subdomain live: 'Deployment Safety Hub', OpenAI's index of system cards / deployment safety reports. The old w24 audit moved to the Phase IX gate (DEPTH 4.1); the new w24 no longer cites it — reserved for Session D's gate page, per the fixlist routing note.</td><td>phase-ix-gate (reserved — see fixlist routing note)</td></tr>
+<tr><td>—</td><td>https://digital-strategy.ec.europa.eu/en/policies/contents-code-gpai</td><td>live</td><td>verified 2026-07-28</td><td>GPAI CoP page verified</td><td>studios-salvage</td></tr>
+<tr><td>—</td><td>https://docs.pytorch.org/tutorials/beginner/basics/autogradqs_tutorial.html</td><td>live</td><td>link OK 2026-07-28</td><td>mechanical check only</td><td>w05</td></tr>
+<tr><td>—</td><td>https://docs.pytorch.org/tutorials/beginner/basics/intro.html</td><td>live</td><td>link OK 2026-07-28</td><td>mechanical check only</td><td>w06</td></tr>
+<tr><td>—</td><td>https://doi.org/10.71468/P1WC7Q</td><td>durable</td><td>verified 2026-07-28</td><td>LBNL 2024 DC energy report; DOI resolves</td><td>w21, studios-salvage</td></tr>
+<tr><td>—</td><td>https://www.eia.gov/electricity/data/eia860m/</td><td>live</td><td>link OK 2026-07-28</td><td>mechanical check only</td><td>r11</td></tr>
+<tr><td>CDC/ATSDR Environmental Justice Index</td><td>https://eji.cdc.gov/</td><td>live</td><td><strong>verified</strong> 2026-07-28</td><td>NOT degraded as of 2026-07-28: https://eji.cdc.gov/ curl 200 and program page https://www.atsdr.cdc.gov/place-health/php/eji/index.html fetched live (explorer map, tract data downloads, technical docs; page last updated</td><td>studios-salvage</td></tr>
+<tr><td>—</td><td>https://www.epa.gov/egrid</td><td>live</td><td>link OK 2026-07-28</td><td>mechanical check only</td><td>r11</td></tr>
+<tr><td>—</td><td>https://epoch.ai/trends</td><td>live</td><td>verified 2026-07-28</td><td>Live dashboard verified</td><td>w38, s-block-salvage, studios-salvage</td></tr>
+<tr><td>—</td><td>https://www.esd.whs.mil/Portals/54/Documents/DD/issuances/dodd/300009p.pdf</td><td>live</td><td>verified 2026-07-31 (search index)</td><td>DoD Directive 3000.09 'Autonomy in Weapon Systems' (25 Jan 2023). Exact URL cited live by CRS and Wikipedia and present in the search index; 403s to automated fetchers.</td><td>r06</td></tr>
+<tr><td>—</td><td>https://eur-lex.europa.eu/eli/reg/2024/1689/oj</td><td>live</td><td>verified 2026-07-28</td><td>AI Act ELI permalink verified</td><td>r09, s-block-salvage, studios-salvage</td></tr>
+<tr><td>—</td><td>https://www.fda.gov/medical-devices/software-medical-device-samd/artificial-intelligence-and-machine-learning-software-medical-device</td><td>live</td><td>link OK 2026-07-28</td><td>mechanical check only</td><td>r04</td></tr>
+<tr><td>—</td><td>https://www.ferc.gov/rm26-4</td><td>live</td><td>verified 2026-07-28</td><td>Docket RM26-4 verified real</td><td>r11, studios-salvage</td></tr>
+<tr><td>—</td><td>https://fullstackdeeplearning.com/</td><td>live</td><td>link OK 2026-07-28</td><td>mechanical check only</td><td>w10 via /course/2022 deep link</td></tr>
+<tr><td>—</td><td>https://futuresearch.ai/blog/ai-2027-6-months-later/</td><td>live</td><td>link OK 2026-07-28</td><td>mechanical check only</td><td>w01</td></tr>
+<tr><td>—</td><td>https://www.gao.gov/products/gao-14-704g</td><td>live</td><td>verified 2026-07-31 (search index)</td><td>Live. CONTENT FLAG: GAO's own page title now reads 'Superseded by GAO-25-107721' — the 2025 Green Book revision replaces the 2014 edition; r12's scope may want the current edition.</td><td>r12</td></tr>
+<tr><td>—</td><td>https://www.gao.gov/products/gao-21-519sp</td><td>live</td><td>verified 2026-07-31 (search index)</td><td>'Artificial Intelligence: An Accountability Framework for Federal Agencies and Other Entities' (30 Jun 2021) — live.</td><td>r08</td></tr>
+<tr><td>—</td><td>https://github.com/karpathy/nanoGPT</td><td>live</td><td>link OK 2026-07-28</td><td>mechanical check only</td><td>w15</td></tr>
+<tr><td>—</td><td>https://www.gov.uk/cma-cases/cloud-services-market-investigation</td><td>live</td><td>verified 2026-07-28</td><td>CMA investigation page verified</td><td>r10, studios-salvage</td></tr>
+<tr><td>—</td><td>https://www.gov.uk/government/publications/frontier-ai-safety-commitments-ai-seoul-summit-2024</td><td>live</td><td>link OK 2026-07-28</td><td>mechanical check only</td><td>studios-salvage</td></tr>
+<tr><td>—</td><td>https://www.gov.uk/government/publications/guidelines-for-ai-procurement</td><td>live</td><td>link OK 2026-07-28</td><td>mechanical check only</td><td>studios-salvage</td></tr>
+<tr><td>—</td><td>https://www.governance.ai/research</td><td>live</td><td>link OK 2026-07-28; verified 2026-07-31 (research/publications listing, filterable, current through Jul 2026)</td><td>mechanical check only at first pass; s4 cites the distinct paper governance.ai/research-paper/governing-through-the-cloud (registered under C8a), not this listing</td><td>c3, capstone-salvage, s-block-salvage, studios-salvage</td></tr>
+<tr><td>Stanford HAI AI Index Report 2026</td><td>https://hai.stanford.edu/ai-index/2026-ai-index-report</td><td>annual</td><td><strong>verified</strong> 2026-07-28</td><td>9 chapters, individually downloadable: 1 Research and Development (models, open-source, infrastructure, environment); 2 Technical Performance (image/video/language/speech/reasoning/robotics/agents); 3 Responsible AI; 4 E</td><td>w38, capstone-salvage, s-block-salvage, studios-salvage; named in text w35, w45</td></tr>
+<tr><td>—</td><td>https://home.treasury.gov/policy-issues/international/outbound-investment-program</td><td>live</td><td>link OK 2026-07-28</td><td>mechanical check only</td><td>r07</td></tr>
+<tr><td>Moonshot flagship — Kimi K3</td><td>https://huggingface.co/moonshotai/Kimi-K3</td><td>live</td><td><strong>verified</strong> 2026-07-28; roster fix applied 2026-07-31</td><td>Hosted launch 16 Jul 2026 (Kimi app/Code/API); open weights 26 Jul 2026. 2.8T MoE/104B active, native vision, 1M ctx, ~1.4TB download. License: custom 'Kimi K3 License', NOT Modified MIT — commercial use OK, MaaS revenue &gt;$20M/yr needs a separate agreement, &gt;100M-MAU products must display attribution. URL updated from the README deep link to the repo root per fixlist.</td><td>roster-salvage</td></tr>
+<tr><td>—</td><td>https://www.iea.org/reports/energy-and-ai/</td><td>annual</td><td>verified 2026-07-31 (search index)</td><td>'Energy and AI' (Apr 2025) live. Annual volatility note: the Apr 2026 follow-up is 'Key Questions on Energy and AI' (iea.org/reports/key-questions-on-energy-and-ai) — consider citing it for 2026 numbers. 403s to automated fetchers.</td><td>studios-salvage</td></tr>
+<tr><td>—</td><td>https://incidentdatabase.ai/</td><td>live</td><td>link OK 2026-07-28</td><td>mechanical check only</td><td>studios-salvage</td></tr>
+<tr><td>—</td><td>https://inspect.aisi.org.uk/</td><td>live</td><td>verified 2026-07-28</td><td>Inspect docs verified (AISI + Meridian)</td><td>w32, w40, studios-salvage</td></tr>
+<tr><td>—</td><td>https://internationalaisafetyreport.org/publication/international-ai-safety-report-2026</td><td>annual</td><td>verified 2026-07-28</td><td>IASR 2026 real (2nd ed., Feb 2026, Bengio-led)</td><td>w16, w32, w36, w37, w41, w42, w45, capstone-salvage, s-block-salvage, studios-salvage</td></tr>
+<tr><td>—</td><td>https://isitopen.ai/</td><td>live</td><td>link OK 2026-07-28</td><td>mechanical check only</td><td>r05</td></tr>
+<tr><td>—</td><td>https://www.iso.org/standard/81230.html</td><td>live</td><td>verified 2026-07-31 (search index)</td><td>ISO/IEC 42001:2023 (AI management system standard) — standard page live. 403s to automated fetchers.</td><td>r08</td></tr>
+<tr><td>—</td><td>https://karpathy.ai/zero-to-hero.html</td><td>live</td><td>link OK 2026-07-28</td><td>mechanical check only</td><td>w05, w08, w12, w13, w14, w15</td></tr>
+<tr><td>—</td><td>https://learn.arena.education/</td><td>live</td><td>verified 2026-07-28</td><td>ARENA hosting platform verified</td><td>w25; w40 via /chapter3_llm_evals deep link</td></tr>
+<tr><td>—</td><td>https://learn.microsoft.com/en-us/security/ai-red-team/</td><td>live</td><td>link OK 2026-07-28</td><td>mechanical check only</td><td>studios-salvage</td></tr>
+<tr><td>—</td><td>https://leg.colorado.gov/bills/sb24-205</td><td>live</td><td>link OK 2026-07-28</td><td>mechanical check only</td><td>r03</td></tr>
+<tr><td>—</td><td>https://leginfo.legislature.ca.gov/faces/billNavClient.xhtml?bill_id=202520260SB53</td><td>live</td><td>link OK 2026-07-28</td><td>mechanical check only</td><td>r03</td></tr>
+<tr><td>—</td><td>https://www.lesswrong.com/posts/PAYfmG2aRbdb74mEp/a-deep-critique-of-ai-2027-s-bad-timeline-models</td><td>live</td><td>link OK 2026-07-28</td><td>mechanical check only</td><td>w01</td></tr>
+<tr><td>—</td><td>https://metr.org/time-horizons/</td><td>live</td><td>verified 2026-07-28</td><td>Live page verified</td><td>w32, w38, studios-salvage</td></tr>
+<tr><td>Mistral flagship — Mistral Large 3</td><td>https://mistral.ai/news/mistral-3/</td><td>live</td><td><strong>verified</strong> 2026-07-28</td><td>Still current flagship (released 2 Dec 2025; model id mistral-large-2512). 675B total/41B active sparse MoE, 256K ctx, base + instruct both Apache 2.0 (genuinely permissive — roster's 'permissively licensed' correct). Mi</td><td>roster-salvage</td></tr>
+<tr><td>Mathematics for Machine Learning (Deisenroth, Faisal, Ong)</td><td>https://mml-book.com/</td><td>durable</td><td><strong>verified</strong> 2026-07-28</td><td>Authors' canonical short link (site says 'Please link using https://mml-book.com'); resolves to mml-book.github.io. TOC confirmed from the printed-book PDF: Part I chs 1-7 (2 Linear Algebra, 3 Analytic Geometry, 4 Matrix</td><td>w02, w03</td></tr>
+<tr><td>—</td><td>https://www.nist.gov/artificial-intelligence/ai-standards</td><td>live</td><td>link OK 2026-07-28</td><td>mechanical check only</td><td>studios-salvage</td></tr>
+<tr><td>—</td><td>https://www.nist.gov/chips</td><td>live</td><td>link OK 2026-07-28</td><td>mechanical check only</td><td>r07</td></tr>
+<tr><td>—</td><td>https://www.nist.gov/itl/ai-risk-management-framework</td><td>live</td><td>verified 2026-07-28</td><td>RMF hub verified</td><td>r06, r08, capstone-salvage, s-block-salvage, studios-salvage</td></tr>
+<tr><td>—</td><td>https://www.nist.gov/programs-projects/concept-note-ai-rmf-profile-trustworthy-ai-critical-infrastructure</td><td>live</td><td>link OK 2026-07-28</td><td>mechanical check only</td><td>studios-salvage</td></tr>
+<tr><td>—</td><td>https://oecd.ai/en/ai-principles</td><td>live</td><td>link OK 2026-07-28</td><td>mechanical check only</td><td>s-block-salvage, studios-salvage</td></tr>
+<tr><td>—</td><td>https://www.oecd.org/en/publications/2026/02/oecd-due-diligence-guidance-for-responsible-ai_7831bb49/full-report.html</td><td>live</td><td>verified 2026-07-31 (search index + landing page)</td><td>Real, published 19 Feb 2026. The landing page ..._7831bb49.html was verified 2026-07-28 (Session B row merged here) and full-report component pages under this path are indexed live; the exact URL 403s to bots. Alternate canonical full-report path: ..._41671712-en/full-report.html.</td><td>studios-salvage</td></tr>
+<tr><td>OECD: AI and the global productivity divide</td><td>https://www.oecd.org/en/publications/ai-and-the-global-productivity-divide_c315ea90-en.html</td><td>durable</td><td><strong>verified</strong> 2026-07-28</td><td>Real. Full title 'AI and the Global Productivity Divide: Fuel for the Fast or a Lift for the Laggards?', OECD Artificial Intelligence Papers No. 51, Dec 2025. PDF: https://www.oecd.org/content/dam/oecd/en/publications/re</td><td>studios-salvage</td></tr>
+<tr><td>OECD: Generative AI and the SME Workforce</td><td>https://www.oecd.org/en/publications/generative-ai-and-the-sme-workforce_2d08b99d-en.html</td><td>durable</td><td><strong>verified</strong> 2026-07-28</td><td>Real. 2024 survey of 5,000+ SMEs in AT/CA/DE/IE/JP/KR/UK; 31% adoption; published ~June 5, 2026 (one citation styles it 'OECD (2025) …: New Survey Evidence' — date metadata ambiguous, OECD bot-blocked; existence and URL</td><td>studios-salvage</td></tr>
+<tr><td>—</td><td>https://www.oecd.org/en/publications/macroeconomic-productivity-gains-from-artificial-intelligence-in-g7-economies_a5319ab5-en.html</td><td>live</td><td>verified 2026-07-31 (search index)</td><td>OECD AI Papers (Filippucci, Gal, Laengle, Schief): micro-to-macro estimates, 0.4-1.3 pp annual labor-productivity gains in high-exposure G7 economies. Live; 403s to automated fetchers.</td><td>studios-salvage</td></tr>
+<tr><td>OECD Compendium of Productivity Indicators 2026</td><td>https://www.oecd.org/en/publications/oecd-compendium-of-productivity-indicators-2026_734a5e68-en.html</td><td>annual</td><td><strong>verified</strong> 2026-07-28</td><td>Real. Published June 23, 2026, 101 pp.; the salvage file's URL is already correct. 2026 edition adds industry-level/firm-level decompositions; US labor productivity +2.2% in 2024.</td><td>studios-salvage</td></tr>
+<tr><td>—</td><td>https://openai.com/index/ai-and-compute/</td><td>live</td><td>verified 2026-07-31 (search index)</td><td>'AI and compute' (May 2018, Amodei &amp; Hernandez; 3.4-month training-compute doubling). Exact URL live in the search index; 403s to automated fetchers.</td><td>s-block-salvage</td></tr>
+<tr><td>OpenAI flagship — GPT-5.6</td><td>https://openai.com/index/gpt-5-6/</td><td>live</td><td><strong>verified</strong> 2026-07-28</td><td>Released 9 Jul 2026 (limited partner preview 26 Jun). Family tiers least→most capable: Luna ($1/$6), Terra ($2.50/$15), Sol ($5/$30 flagship). URL live (403s to curl; confirmed via search index). Roster entry correct inc</td><td>roster-salvage</td></tr>
+<tr><td>OpenAI's Frontier Governance Framework</td><td>https://openai.com/index/openai-frontier-governance-framework/</td><td>durable</td><td><strong>verified</strong> 2026-07-28</td><td>Real. Published May 28, 2026 (claimed 'May 2026' correct). Maps OpenAI safety/security practices to legal obligations: California Transparency in Frontier AI Act and EU AI Act GPAI Code of Practice (enforcement Aug 2026)</td><td>s-block-salvage</td></tr>
+<tr><td>Separating signal from noise in coding evaluations (OpenAI)</td><td>https://openai.com/index/separating-signal-from-noise-coding-evaluations/</td><td>durable</td><td><strong>hand-verified</strong> 2026-07-31 (primary source opened)</td><td>Page 403s to curl/WebFetch and to the r.jina.ai proxy (Cloudflare); opened directly in the browser pane 2026-07-31 and read in full. Confirmed verbatim: dated July 8, 2026; "~30% of the tasks are broken" on the 731-task public split; agent pipeline flagged 200 (27.4%), human annotation 249 (34.1%), initial filter 286, five engineers per task; four failure categories (overly strict tests, underspecified prompts, low-coverage tests, misleading prompt) with footnotes stating "overly strict" was previously "narrow" and "underspecified" previously "wide"; frontier pass rate 23.3%→80.3% in eight months; closes "we retract our earlier recommendation to adopt SWE-Bench Pro." All w32 uses check out</td><td>w32</td></tr>
+<tr><td>Our updated Preparedness Framework (OpenAI)</td><td>https://openai.com/index/updating-our-preparedness-framework/</td><td>annual</td><td><strong>verified</strong> 2026-07-28</td><td>Current version: Preparedness Framework Version 2, dated April 15, 2025 — still the operative version as of July 2026 (PDF: https://cdn.openai.com/pdf/18a02b5d-6b67-4cec-ab64-68cdfbddebcd/preparedness-framework-v2.pdf).</td><td>s-block-salvage, studios-salvage</td></tr>
+<tr><td>—</td><td>https://openai.com/index/video-generation-models-as-world-simulators/</td><td>live</td><td>verified 2026-07-31 (search index)</td><td>Sora technical report (Feb 2024). Exact URL live in the search index; 403s to automated fetchers.</td><td>w35</td></tr>
+<tr><td>Why SWE-bench Verified no longer measures frontier coding ca</td><td>https://openai.com/index/why-we-no-longer-evaluate-swe-bench-verified/</td><td>durable</td><td><strong>hand-verified</strong> 2026-07-31 (primary source opened)</td><td>Page 403s to curl/WebFetch and to the r.jina.ai proxy (Cloudflare); opened directly in the browser pane 2026-07-31 and read in full. Confirmed verbatim: dated February 23, 2026; audit of 138 problems = "a 27.6% subset" that "OpenAI o3 did not consistently solve over 64 independent runs" (NOT "consistently failed" — the earlier register note and w32's text both had this wrong; w32 fixed 2026-07-31), each reviewed by ≥6 engineers; 59.4% had "material issues in test design and/or problem description" = 35.5% narrow + 18.8% wide + 5.1% miscellaneous (so "59.4% flawed tests, narrow or wide" slightly overstates the taxonomy); SOTA 74.9%→80.9% over 6 months; contamination probed on GPT-5.2-Chat, Claude Opus 4.5, Gemini 3 Flash Preview; closes "OpenAI recommends reporting results for SWE-bench Pro"</td><td>w32</td></tr>
+<tr><td>—</td><td>https://oxfordinsights.com/ai-readiness/ai-readiness-index/</td><td>live</td><td>link OK 2026-07-28</td><td>mechanical check only</td><td>studios-salvage</td></tr>
+<tr><td>—</td><td>https://www.rand.org/pubs/research_reports/RRA2849-1.html</td><td>live</td><td>verified 2026-07-31 (GET, browser UA)</td><td>200 with a browser user agent; title 'Securing AI Model Weights: Preventing Theft and Misuse of Frontier Models' confirmed. Companion PDF registered under C7 (w44).</td><td>w44, studios-salvage</td></tr>
+<tr><td>—</td><td>https://saif.google/</td><td>live</td><td>verified 2026-07-28</td><td>SAIF 2.0 verified</td><td>w44, studios-salvage</td></tr>
+<tr><td>—</td><td>https://situational-awareness.ai</td><td>live</td><td>link OK 2026-07-28</td><td>mechanical check only</td><td>w01, s1</td></tr>
+<tr><td>—</td><td>https://spinningup.openai.com/en/latest/</td><td>live</td><td>link OK 2026-07-28</td><td>content-verified 2026-07-29 at C5 review (was mechanical check only)</td><td>w26</td></tr>
+<tr><td>—</td><td>https://www.supremecourt.gov/opinions/23pdf/22-451_7m58.pdf</td><td>live</td><td>link OK 2026-07-28</td><td>mechanical check only</td><td>r02</td></tr>
+<tr><td>—</td><td>https://www.swebench.com/</td><td>live</td><td>link OK 2026-07-28</td><td>mechanical check only</td><td>studios-salvage</td></tr>
+<tr><td>—</td><td>https://transformer-circuits.pub/2021/framework/index.html</td><td>live</td><td>link OK 2026-07-28</td><td>mechanical check only</td><td>w39</td></tr>
+<tr><td>—</td><td>https://transformer-circuits.pub/2024/scaling-monosemanticity/</td><td>live</td><td>link OK 2026-07-28</td><td>mechanical check only; URL updated at D1 from the /index.html form to the directory form w39 (C7) actually cites — same document.</td><td>w39</td></tr>
+<tr><td>—</td><td>https://transformerlensorg.github.io/TransformerLens/</td><td>live</td><td>link OK 2026-07-28</td><td>mechanical check only</td><td>w39</td></tr>
+<tr><td>Understanding Deep Learning (Prince)</td><td>https://udlbook.github.io/udlbook/</td><td>annual</td><td><strong>verified</strong> 2026-07-28</td><td>Site is a JS SPA — WebFetch returns an empty shell; chapter data recovered from the site JS bundle and the current draft PDF (release v5.0.3, build dated 2026-02-09). 21 chapters: 1 Introduction, 2 Supervised learning, 3</td><td>w07, w08, w09</td></tr>
+<tr><td>—</td><td>https://uscode.house.gov/view.xhtml?path=/prelim@title5/part1/chapter5&amp;edition=prelim</td><td>live</td><td>link OK 2026-07-28</td><td>mechanical check only</td><td>r02</td></tr>
+<tr><td>—</td><td>https://www.weforum.org/publications/the-future-of-jobs-report-2025/</td><td>annual</td><td>verified 2026-07-31 (search index)</td><td>Future of Jobs Report 2025 (Jan 2025) — live. 403s to automated fetchers.</td><td>studios-salvage</td></tr>
+<tr><td>—</td><td>https://www.whitehouse.gov/presidential-actions/2025/12/eliminating-state-law-obstruction-of-national-artificial-intelligence-policy/</td><td>live</td><td>verified 2026-07-28</td><td>EO 14365 verified (signed 11 Dec 2025)</td><td>r01, r03</td></tr>
+<tr><td>—</td><td>https://www.whitehouse.gov/presidential-actions/2026/06/national-security-presidential-memorandum-nspm-11/</td><td>live</td><td>verified 2026-07-28</td><td>NSPM-11 verified (5 Jun 2026)</td><td>r01, r06</td></tr>
+<tr><td>—</td><td>https://www.whitehouse.gov/wp-content/uploads/2025/07/Americas-AI-Action-Plan.pdf</td><td>live</td><td>verified 2026-07-28</td><td>PDF verified (Jul 2025, three pillars)</td><td>r01</td></tr>
+<tr><td>SpaceXAI flagship — Grok 4.5</td><td>https://x.ai/news/grok-4-5</td><td>live</td><td><strong>verified</strong> 2026-07-28; roster date fixed 2026-07-31</td><td>Released 8 Jul 2026 (broad public 9 Jul; Axios/TechCrunch) — roster's 16 Jul was wrong, now corrected. 1.5T-param V9 base, $2/$6, 'Opus-class' positioning, trained with Cursor. Company is SpaceXAI (xAI merged into SpaceX early 2026). Grok 4.6 (2T) expected Aug 2026.</td><td>roster-salvage</td></tr>
+<tr><td>Z.ai flagship — GLM-5.2</td><td>https://z.ai/blog/glm-5.2</td><td>live</td><td><strong>verified</strong> 2026-07-28</td><td>Roster correct: coding-plan release 13 Jun 2026, full open weights 16 Jun 2026 under plain MIT. 753B MoE/~40B active, 1M ctx (up from GLM-5.1's 200K). Weights: huggingface.co/zai-org/GLM-5.2 (200, + FP8 variants). Blog U</td><td>roster-salvage</td></tr>
+</table></div>
+<h2 id="new-replacement-sources-introduced-by-session-b-9">New/replacement sources introduced by Session B (9)</h2>
+<div class="tablewrap"><table>
+<tr><th>resource</th><th>url</th><th>volatility</th><th>status</th><th>note</th><th>used in</th></tr>
+<tr><td>International AI Safety Report 2026 (full report PDF)</td><td>https://internationalaisafetyreport.org/sites/default/files/2026-02/international-ai-safety-report-2026.pdf</td><td>annual</td><td>verified 2026-07-28</td><td>TOC read from official PDF (DSIT 2026/001, Feb 2026; Bengio chair; 2nd edition, narrowed to 'emerging risks'). Front matter: Key developments since the 2025 Report (p10); Executive summary (p11); Introduction (p14). Ch1 arXiv mirror: arxiv.org/abs/2602.21012 (verified 2026-07-28; standalone mirror row merged here at D1).</td><td>w35</td></tr>
+<tr><td>Anthropic flagships — Claude Fable 5 + Claude Opus 5</td><td>https://www.anthropic.com/news/claude-opus-5</td><td>live</td><td>verified 2026-07-28; roster fix applied 2026-07-31</td><td>Roster's 'Sonnet 5 and Opus 4.8' replaced 2026-07-31 with Claude Fable 5 (first Mythos-class, 9 Jun 2026; export-directive suspension 12-30 Jun, globally re-available 1 Jul — anthropic.com/news/redeploying-fable-5) + Claude Opus 5 (24 Jul 2026). Do NOT link anthropic.com/news/claude-fable-5 (404); product page anthropic.com/claude/fable registered under D1.</td><td>roster-salvage</td></tr>
+<tr><td>On Calibration of Modern Neural Networks (Guo, Pleiss, Sun,</td><td>https://arxiv.org/abs/1706.04599</td><td>durable</td><td>verified 2026-07-28</td><td>Verified live. Canonical calibration paper: confidence calibration, reliability diagrams, ECE, temperature scaling. Recommended external resource replacing the nonexistent UDL calibration chapter in w11.</td><td>w11</td></tr>
+<tr><td>OMB Circular A-4 (Regulatory Analysis) — operative version</td><td>https://www.reginfo.gov/public/jsp/EO/fedRegReview/CircularA4.pdf</td><td>annual</td><td>replace 2026-07-28</td><td>The Nov 9, 2023 revision was revoked by OMB memo M-25-15 (Feb 12, 2025, Vought, per EO 14192 'Unleashing Prosperity Through Deregulation'), which reinstated the Sept 17, 2003 Circular A-4 — verified by reading M-25-15 fi</td><td>r02</td></tr>
+<tr><td>OMB M-25-22, Driving Efficient Acquisition of Artificial Int</td><td>https://www.whitehouse.gov/wp-content/uploads/2025/02/M-25-22-Driving-Efficient-Acquisition-of-Artificial-Intelligence-in-Government.pdf</td><td>durable</td><td>replace 2026-07-28</td><td>Working URL found (whitehouse.gov moved the upload to the /2025/02/ path; /2025/04/ is dead). PDF fetched and first page read: M-25-22, dated April 3, 2025, signed Vought; rescinds and replaces M-24-18; companion to M-25</td><td>r12</td></tr>
+<tr><td>NIST Cyber AI Profile</td><td>https://www.nccoe.nist.gov/projects/cyber-ai-profile</td><td>live</td><td>replace 2026-07-28</td><td>csrc.nist.gov/projects/cyber-ai-profile is gone; the project now lives at NCCoE: https://www.nccoe.nist.gov/projects/cyber-ai-profile (live/indexed; 403s to bot fetchers). The document itself is NIST IR 8596, 'Cybersecur</td><td>studios-salvage</td></tr>
+<tr><td>Hiroshima AI Process Reporting Framework (transparency.oecd.</td><td>https://oecd.ai/en/transparency/overview</td><td>live</td><td>replace 2026-07-28</td><td>transparency.oecd.ai is returning persistent 502 Bad Gateway (root AND report subpages, multiple checks 2026-07-28) — degraded portal, not a one-off. The framework itself is fully active: HAIP Reporting Framework 2.0 lau</td><td>r09</td></tr>
+<tr><td>WAICO — World Artificial Intelligence Cooperation Organizati</td><td>https://en.wikipedia.org/wiki/World_Artificial_Intelligence_Cooperation_Organization</td><td>live</td><td>verified 2026-07-28</td><td>'29 countries' checks out: founding agreement signed July 16-17, 2026 in Shanghai ahead of WAIC 2026; China-led, HQ Shanghai; members incl. China, Russia, Pakistan, Indonesia, Kazakhstan, Laos, Belarus, Serbia, Ethiopia,</td><td>DEPTH, s6 (claim support — named in text)</td></tr>
+<tr><td>CAISI evaluation program claim (40+ evals; pre-deployment ag</td><td>https://content.govdelivery.com/accounts/USNIST/bulletins/415cadf</td><td>live</td><td>verified 2026-07-28</td><td>Both halves check against NIST channels. Five developers: OpenAI + Anthropic (Aug 2024 US-AISI agreements, since renegotiated — https://www.nist.gov/news-events/news/2024/08/us-ai-safety-institute-signs-agreements-regard</td><td>DEPTH, w31, w32, w37, w40 (claim support — named in text)</td></tr>
+</table></div>
+<h2 id="added-by-c1-authoring-phase-i-8">Added by C1 authoring (Phase I) (8)</h2>
+<div class="tablewrap"><table>
+<tr><th>resource</th><th>url</th><th>volatility</th><th>status</th><th>note</th><th>used in</th></tr>
+<tr><td>—</td><td>https://arxiv.org/abs/2106.09685</td><td>durable</td><td>added C1, HTTP 200 2026-07-29</td><td>introduced by Phase-I authoring; full read in w24 (section scopes re-verified against ar5iv at C5 review)</td><td>w03, w24</td></tr>
+<tr><td>—</td><td>https://docs.python.org/3/tutorial/</td><td>durable</td><td>added C1, HTTP 200 2026-07-29</td><td>introduced by Phase-I authoring</td><td>w00, w06</td></tr>
+<tr><td>—</td><td>https://docs.python.org/3/tutorial/venv.html</td><td>durable</td><td>added C1, HTTP 200 2026-07-29</td><td>introduced by Phase-I authoring</td><td>w00, w06</td></tr>
+<tr><td>—</td><td>https://numpy.org/doc/stable/user/absolute_beginners.html</td><td>durable</td><td>added C1, HTTP 200 2026-07-29</td><td>introduced by Phase-I authoring</td><td>w06</td></tr>
+<tr><td>—</td><td>https://numpy.org/doc/stable/user/quickstart.html</td><td>durable</td><td>added C1, HTTP 200 2026-07-29</td><td>introduced by Phase-I authoring</td><td>w00, w06</td></tr>
+<tr><td>—</td><td>https://swcarpentry.github.io/git-novice/</td><td>durable</td><td>added C1, HTTP 200 2026-07-29</td><td>introduced by Phase-I authoring</td><td>w00, w06</td></tr>
+<tr><td>—</td><td>https://www.3blue1brown.com/topics/linear-algebra</td><td>durable</td><td>added C1, HTTP 200 2026-07-29</td><td>introduced by Phase-I authoring</td><td>w02</td></tr>
+<tr><td>—</td><td>https://www.ams.org/publicoutreach/feature-column/fcarc-svd</td><td>durable</td><td>added C1, HTTP 200 2026-07-29</td><td>introduced by Phase-I authoring</td><td>w03</td></tr>
+</table></div>
+<h2 id="added-by-c2-authoring-phase-ii-3">Added by C2 authoring (Phase II) (3)</h2>
+<div class="tablewrap"><table>
+<tr><th>resource</th><th>url</th><th>volatility</th><th>status</th><th>note</th><th>used in</th></tr>
+<tr><td>—</td><td>https://arxiv.org/abs/2012.07421</td><td>durable</td><td>added C2, HTTP 200 2026-07-29</td><td>introduced by Phase-II authoring</td><td>w11</td></tr>
+<tr><td>—</td><td>https://arxiv.org/abs/2411.00640</td><td>durable</td><td>added C2, HTTP 200 2026-07-29</td><td>introduced by Phase-II authoring</td><td>w10</td></tr>
+<tr><td>—</td><td>https://miguelhernan.org/whatifbook</td><td>durable</td><td>added C2, HTTP 200 2026-07-29</td><td>introduced by Phase-II authoring</td><td>w11</td></tr>
+</table></div>
+<h2 id="added-by-c3-authoring-phase-iii-9">Added by C3 authoring (Phase III) (9)</h2>
+<div class="tablewrap"><table>
+<tr><th>resource</th><th>url</th><th>volatility</th><th>status</th><th>note</th><th>used in</th></tr>
+<tr><td>—</td><td>https://arxiv.org/abs/2312.00752</td><td>durable</td><td>added C3, verified 2026-07-29</td><td>Mamba (Gu &amp; Dao); introduced by Phase-III authoring</td><td>w17</td></tr>
+<tr><td>Mixture of Experts Explained (Sanseviero et al., Hugging Fac</td><td>https://huggingface.co/blog/moe</td><td>durable</td><td>added C3, verified 2026-07-29</td><td>Dec 11, 2023 post; section list re-verified at review incl. 'When to use sparse MoEs vs dense models?' and the all-experts-resident VRAM note</td><td>w17</td></tr>
+<tr><td>—</td><td>https://arxiv.org/abs/2206.07682</td><td>durable</td><td>added C3, HTTP 200 2026-07-29</td><td>Phase-III authoring</td><td>w16</td></tr>
+<tr><td>—</td><td>https://arxiv.org/abs/2304.15004</td><td>durable</td><td>added C3, HTTP 200 2026-07-29</td><td>Phase-III authoring</td><td>w16</td></tr>
+<tr><td>—</td><td>https://arxiv.org/abs/2305.15425</td><td>durable</td><td>added C3, HTTP 200 2026-07-29</td><td>Phase-III authoring</td><td>w12</td></tr>
+<tr><td>—</td><td>https://huggingface.co/docs/transformers/generation_strategies</td><td>durable</td><td>added C3, HTTP 200 2026-07-29</td><td>Phase-III authoring</td><td>w18</td></tr>
+<tr><td>—</td><td>https://huggingface.co/docs/transformers/main_classes/text_generation</td><td>durable</td><td>added C3, HTTP 200 2026-07-29</td><td>Phase-III authoring</td><td>w18</td></tr>
+<tr><td>—</td><td>https://kipp.ly/p/transformer-inference-arithmetic</td><td>durable</td><td>added C3, HTTP 200 2026-07-29 (old path 301s; HEAD on it 404s — GET works)</td><td>Phase-III authoring</td><td>w18</td></tr>
+<tr><td>—</td><td>https://transformer-circuits.pub/2022/in-context-learning-and-induction-heads/index.html</td><td>durable</td><td>added C3, HTTP 200 2026-07-29</td><td>Phase-III authoring</td><td>w16</td></tr>
+</table></div>
+<h2 id="added-by-c4-authoring-phase-iv-13">Added by C4 authoring (Phase IV) (13)</h2>
+<div class="tablewrap"><table>
+<tr><th>resource</th><th>url</th><th>volatility</th><th>status</th><th>note</th><th>used in</th></tr>
+<tr><td>Cosmopedia (Hugging Face blog, Ben Allal et al.)</td><td>https://huggingface.co/blog/cosmopedia</td><td>durable</td><td>added C4, verified 2026-07-29</td><td>Full title 'Cosmopedia: how to create large-scale synthetic data for pre-training Large Language Models', Mar 20 2024; 25B Mixtral-generated tokens, 4 audiences x 3 styles, 10-gram + SequenceMatcher 0.5 decontamination — all re-verified live at review</td><td>w19</td></tr>
+<tr><td>—</td><td>https://ai.meta.com/blog/meta-llama-3/</td><td>durable</td><td>added C4, HTTP 200 2026-07-29</td><td>Phase-IV authoring</td><td>w20</td></tr>
+<tr><td>—</td><td>https://arxiv.org/abs/2403.05812</td><td>durable</td><td>added C4, HTTP 200 2026-07-29</td><td>Phase-IV authoring</td><td>w20</td></tr>
+<tr><td>—</td><td>https://arxiv.org/abs/2406.11794</td><td>durable</td><td>added C4, HTTP 200 2026-07-29</td><td>Phase-IV authoring</td><td>w19</td></tr>
+<tr><td>—</td><td>https://epoch.ai/data/notable-ai-models</td><td>durable</td><td>added C4, HTTP 200 2026-07-29</td><td>Phase-IV authoring</td><td>w21</td></tr>
+<tr><td>—</td><td>https://github.com/srush/LLM-Training-Puzzles</td><td>durable</td><td>added C4, HTTP 200 2026-07-29</td><td>Phase-IV authoring</td><td>w22</td></tr>
+<tr><td>—</td><td>https://huggingface.co/spaces/nanotron/ultrascale-playbook</td><td>durable</td><td>added C4, HTTP 200 2026-07-29</td><td>Phase-IV authoring</td><td>w22</td></tr>
+<tr><td>—</td><td>https://jax-ml.github.io/scaling-book/applied-inference/</td><td>durable</td><td>added C4, HTTP 200 2026-07-29</td><td>Phase-IV authoring</td><td>w23</td></tr>
+<tr><td>—</td><td>https://jax-ml.github.io/scaling-book/gpus</td><td>durable</td><td>added C4, HTTP 200 2026-07-29</td><td>Phase-IV authoring</td><td>w21</td></tr>
+<tr><td>—</td><td>https://jax-ml.github.io/scaling-book/inference/</td><td>durable</td><td>added C4, HTTP 200 2026-07-29</td><td>Phase-IV authoring</td><td>w23</td></tr>
+<tr><td>—</td><td>https://jax-ml.github.io/scaling-book/roofline</td><td>durable</td><td>added C4, HTTP 200 2026-07-29</td><td>Phase-IV authoring</td><td>w21</td></tr>
+<tr><td>—</td><td>https://jax-ml.github.io/scaling-book/tpus</td><td>durable</td><td>added C4, HTTP 200 2026-07-29</td><td>Phase-IV authoring</td><td>w21</td></tr>
+<tr><td>—</td><td>https://www.rand.org/pubs/research_reports/RRA3572-1.html</td><td>durable</td><td>added C4; verified 2026-07-31 (GET, browser UA)</td><td>200 with a browser user agent; title "AI's Power Requirements Under Exponential Growth" confirmed (403s to plain fetchers).</td><td>w21</td></tr>
+</table></div>
+<h2 id="added-by-c5-authoring-phase-v-22">Added by C5 authoring (Phase V) (22)</h2>
+<div class="tablewrap"><table>
+<tr><th>resource</th><th>url</th><th>volatility</th><th>status</th><th>note</th><th>used in</th></tr>
+<tr><td>—</td><td>https://arxiv.org/abs/2305.14314</td><td>durable</td><td>added C5, verified 2026-07-29</td><td>QLoRA (Dettmers et al.); NF4 / double quantization / paged optimizers, 65B-on-48GB and 99.3%-of-ChatGPT headline all as cited</td><td>w24</td></tr>
+<tr><td>—</td><td>https://huggingface.co/docs/peft</td><td>durable</td><td>added C5, verified 2026-07-29</td><td>PEFT docs landing</td><td>w24</td></tr>
+<tr><td>—</td><td>https://huggingface.co/docs/peft/main/en/conceptual_guides/lora</td><td>durable</td><td>added C5, verified 2026-07-29</td><td>LoRA conceptual guide; LoraConfig params (r, lora_alpha, target_modules, bias, modules_to_save), merge_and_unload(), initialization options all confirmed live at review</td><td>w24</td></tr>
+<tr><td>Qwen3-1.7B model card</td><td>https://huggingface.co/Qwen/Qwen3-1.7B</td><td>live</td><td>added C5, verified 2026-07-29</td><td>Apache 2.0; this repo is the post-trained variant (Base is a separate repo) — license and variant re-verified at review</td><td>w24 (named in text)</td></tr>
+<tr><td>SmolLM3-3B model card</td><td>https://huggingface.co/HuggingFaceTB/SmolLM3-3B</td><td>live</td><td>added C5, verified 2026-07-29</td><td>Apache 2.0; instruct/post-trained variant (Base is a separate repo) — license and variant re-verified at review</td><td>w24 (named in text)</td></tr>
+<tr><td>EC GPAI guidelines — downstream-modifier criterion (PRIMARY-verified)</td><td>https://ai-act-service-desk.ec.europa.eu/sites/default/files/2025-07/guidelines_on_the_scope_of_the_obligations_for_generalpurpose_ai_models_established_by_regulation_1cx2atxgq79us4n3x8jfgyy1qlm_118340-3.pdf</td><td>live</td><td>added C5; primary PDF hand-verified 2026-07-31</td><td>w24 policy hook verified against the primary Commission document (C(2025) 5045 final annex, Brussels 18.7.2025, §3.2): modifier becomes provider at modification compute &gt; 1/3 of original training compute; fallback 1/3 of 10^23 FLOP when original unknown, 1/3 of 10^25 FLOP if original is a systemic-risk model. Secondary corroboration (artificialintelligenceact.eu/gpai-guidelines-overview/) matches.</td><td>w24 (claim support — named in text)</td></tr>
+<tr><td>—</td><td>http://incompleteideas.net/book/the-book-2nd.html</td><td>durable</td><td>added C5, HTTP 200 2026-07-29</td><td>Authors' official free landing page ('Full Pdf' anchor live); deliberately http:// — the domain serves a self-signed HTTPS cert. Replaces the MIT Press sales page per fixlist w26. Direct PDF RLbook2020.pdf verified 200 2026-07-28 (Session B row merged here at D1).</td><td>w26</td></tr>
+<tr><td>—</td><td>https://arxiv.org/abs/2210.10760</td><td>durable</td><td>added C5, HTTP 200 2026-07-29</td><td>Phase-V authoring</td><td>w27</td></tr>
+<tr><td>—</td><td>https://arxiv.org/abs/2305.04388</td><td>durable</td><td>added C5, HTTP 200 2026-07-29</td><td>Phase-V authoring</td><td>w28</td></tr>
+<tr><td>—</td><td>https://arxiv.org/abs/2310.03693</td><td>durable</td><td>added C5, HTTP 200 2026-07-29</td><td>Phase-V authoring</td><td>w27</td></tr>
+<tr><td>—</td><td>https://arxiv.org/abs/2404.10271</td><td>durable</td><td>added C5, HTTP 200 2026-07-29</td><td>Phase-V authoring</td><td>w25</td></tr>
+<tr><td>—</td><td>https://arxiv.org/abs/2408.03314</td><td>durable</td><td>added C5, HTTP 200 2026-07-29</td><td>Phase-V authoring</td><td>w28</td></tr>
+<tr><td>—</td><td>https://arxiv.org/abs/2411.15124</td><td>durable</td><td>added C5, HTTP 200 2026-07-29</td><td>Phase-V authoring</td><td>w27</td></tr>
+<tr><td>—</td><td>https://huggingface.co/datasets/Anthropic/hh-rlhf</td><td>durable</td><td>added C5, HTTP 200 2026-07-29</td><td>Phase-V authoring</td><td>w25</td></tr>
+<tr><td>—</td><td>https://rlhfbook.com/</td><td>durable</td><td>added C5, HTTP 200 2026-07-29</td><td>Phase-V authoring</td><td>w25; w26 via /c/06-policy-gradients (registered separately)</td></tr>
+<tr><td>—</td><td>https://rlhfbook.com/c/04-instruction-tuning.html</td><td>durable</td><td>added C5, HTTP 200 2026-07-29</td><td>Phase-V authoring</td><td>w25</td></tr>
+<tr><td>—</td><td>https://rlhfbook.com/c/05-reward-models.html</td><td>durable</td><td>added C5, HTTP 200 2026-07-29</td><td>Phase-V authoring</td><td>w25</td></tr>
+<tr><td>—</td><td>https://rlhfbook.com/c/06-policy-gradients</td><td>durable</td><td>added C5, HTTP 200 2026-07-29</td><td>Phase-V authoring</td><td>w26</td></tr>
+<tr><td>—</td><td>https://rlhfbook.com/c/10-preferences.html</td><td>durable</td><td>added C5, HTTP 200 2026-07-29</td><td>Phase-V authoring</td><td>w25</td></tr>
+<tr><td>—</td><td>https://rlhfbook.com/c/11-preference-data.html</td><td>durable</td><td>added C5, HTTP 200 2026-07-29</td><td>Phase-V authoring</td><td>w25</td></tr>
+<tr><td>—</td><td>https://web.stanford.edu/class/cs329h/</td><td>durable</td><td>added C5, HTTP 200 2026-07-29</td><td>Phase-V authoring</td><td>w25</td></tr>
+<tr><td>—</td><td>https://www.ntia.gov/programs-and-initiatives/artificial-intelligence/open-model-weights-report</td><td>durable</td><td>added C5, HTTP 200 2026-07-29</td><td>Phase-V authoring</td><td>w27</td></tr>
+</table></div>
+<h2 id="added-by-c6-authoring-phases-vi-vii-18">Added by C6 authoring (Phases VI-VII) (18)</h2>
+<div class="tablewrap"><table>
+<tr><th>resource</th><th>url</th><th>volatility</th><th>status</th><th>note</th><th>used in</th></tr>
+<tr><td>METR time-horizons paper (Kwa et al.)</td><td>https://arxiv.org/abs/2503.14499</td><td>durable</td><td>added at C6 review, verified 2026-07-30</td><td>"Measuring AI Ability to Complete Long Software Tasks"; v4 dated 10 Jul 2026. Re-verified against the HTML at review: 170 tasks (HCAST 97, RE-Bench 7, SWAA 66); 800+ human baselines totaling 2,529 hours; doubling every 207 days, 95% hierarchical-bootstrap CI 166–240; 80% horizons 4–6x shorter than 50%; 2024–early-2025 points above the long-run fit. Companion to the already-registered metr.org/time-horizons live page (last update stamp May 8, 2026)</td><td>w32</td></tr>
+<tr><td>—</td><td>https://arxiv.org/abs/2303.11156</td><td>durable</td><td>added C6, HTTP 200 2026-07-30</td><td>Phases VI-VII authoring</td><td>w34</td></tr>
+<tr><td>—</td><td>https://arxiv.org/abs/2304.09848</td><td>durable</td><td>added C6, HTTP 200 2026-07-30</td><td>Phases VI-VII authoring</td><td>w29</td></tr>
+<tr><td>—</td><td>https://arxiv.org/abs/2307.15818</td><td>durable</td><td>added C6, HTTP 200 2026-07-30</td><td>Phases VI-VII authoring</td><td>w35</td></tr>
+<tr><td>—</td><td>https://arxiv.org/abs/2312.10997</td><td>durable</td><td>added C6, HTTP 200 2026-07-30</td><td>Phases VI-VII authoring</td><td>w29</td></tr>
+<tr><td>—</td><td>https://arxiv.org/abs/2503.18813</td><td>durable</td><td>added C6, HTTP 200 2026-07-30</td><td>Phases VI-VII authoring</td><td>w31</td></tr>
+<tr><td>—</td><td>https://deepmind.google/technologies/synthid/</td><td>durable</td><td>added C6, HTTP 200 2026-07-30</td><td>Phases VI-VII authoring</td><td>w34</td></tr>
+<tr><td>—</td><td>https://docs.fcc.gov/public/attachments/FCC-24-17A1.pdf</td><td>durable</td><td>added C6; verified 2026-07-31 (GET, browser UA)</td><td>200, application/pdf (HEAD 405s — GET works).</td><td>w33</td></tr>
+<tr><td>—</td><td>https://genai.owasp.org/llm-top-10/</td><td>durable</td><td>added C6, HTTP 200 2026-07-30</td><td>Phases VI-VII authoring</td><td>w31</td></tr>
+<tr><td>—</td><td>https://huggingface.co/docs/diffusers/using-diffusers/write_own_pipeline</td><td>durable</td><td>added C6, HTTP 200 2026-07-30</td><td>Phases VI-VII authoring</td><td>w34</td></tr>
+<tr><td>—</td><td>https://huggingface.co/openai/clip-vit-base-patch32</td><td>durable</td><td>added C6, HTTP 200 2026-07-30</td><td>Phases VI-VII authoring</td><td>w33</td></tr>
+<tr><td>—</td><td>https://modelcontextprotocol.io/</td><td>durable</td><td>added C6, HTTP 200 2026-07-30</td><td>308 redirect to the versioned /docs getting-started intro; destination 200 (rechecked 2026-07-31).</td><td>w30</td></tr>
+<tr><td>—</td><td>https://modelcontextprotocol.io/docs/learn/server-concepts</td><td>durable</td><td>added C6, HTTP 200 2026-07-30</td><td>Phases VI-VII authoring</td><td>w30</td></tr>
+<tr><td>—</td><td>https://openreview.net/forum?id=BZ5a1r-kVsf</td><td>durable</td><td>added C6, HTTP 200 2026-07-30</td><td>Phases VI-VII authoring</td><td>w35</td></tr>
+<tr><td>—</td><td>https://platform.claude.com/docs/en/docs/agents-and-tools/tool-use/computer-use-tool</td><td>durable</td><td>added C6, HTTP 200 2026-07-30</td><td>Phases VI-VII authoring</td><td>w30</td></tr>
+<tr><td>—</td><td>https://simonwillison.net/series/prompt-injection/</td><td>durable</td><td>added C6, HTTP 200 2026-07-30</td><td>Phases VI-VII authoring</td><td>w31</td></tr>
+<tr><td>—</td><td>https://spec.c2pa.org/specifications/specifications/2.2/specs/C2PA_Specification.html</td><td>durable</td><td>added C6, HTTP 200 2026-07-30</td><td>Phases VI-VII authoring</td><td>w34</td></tr>
+<tr><td>—</td><td>https://www.nature.com/articles/s41586-024-08025-4</td><td>durable</td><td>added C6, HTTP 200 2026-07-30</td><td>Phases VI-VII authoring</td><td>w34</td></tr>
+</table></div>
+<h2 id="added-by-c7-authoring-phases-viii-ix-24">Added by C7 authoring (Phases VIII-IX) (24)</h2>
+<div class="tablewrap"><table>
+<tr><th>resource</th><th>url</th><th>volatility</th><th>status</th><th>note</th><th>used in</th></tr>
+<tr><td>—</td><td>https://alignment.anthropic.com/2026/agentic-misalignment-summer-2026/</td><td>durable</td><td>added C7, HTTP 200 2026-07-31</td><td>Phases VIII-IX authoring</td><td>w42</td></tr>
+<tr><td>—</td><td>https://arxiv.org/abs/2312.03656</td><td>durable</td><td>added C7, HTTP 200 2026-07-31</td><td>Phases VIII-IX authoring</td><td>w39</td></tr>
+<tr><td>—</td><td>https://arxiv.org/abs/2401.05566</td><td>durable</td><td>added C7, HTTP 200 2026-07-31</td><td>Phases VIII-IX authoring</td><td>w42</td></tr>
+<tr><td>—</td><td>https://arxiv.org/abs/2403.03218</td><td>durable</td><td>added C7, HTTP 200 2026-07-31</td><td>Phases VIII-IX authoring</td><td>w41</td></tr>
+<tr><td>—</td><td>https://arxiv.org/abs/2403.10462</td><td>durable</td><td>added C7, HTTP 200 2026-07-31</td><td>Phases VIII-IX authoring</td><td>w43, s5</td></tr>
+<tr><td>—</td><td>https://arxiv.org/abs/2405.00332</td><td>durable</td><td>added C7, HTTP 200 2026-07-31</td><td>Phases VIII-IX authoring</td><td>w37</td></tr>
+<tr><td>—</td><td>https://arxiv.org/abs/2406.19314</td><td>durable</td><td>added C7, HTTP 200 2026-07-31</td><td>Phases VIII-IX authoring</td><td>w37</td></tr>
+<tr><td>—</td><td>https://arxiv.org/abs/2412.04984</td><td>durable</td><td>added C7, HTTP 200 2026-07-31</td><td>Phases VIII-IX authoring</td><td>w42</td></tr>
+<tr><td>—</td><td>https://arxiv.org/abs/2502.14143</td><td>durable</td><td>added C7, HTTP 200 2026-07-31</td><td>Phases VIII-IX authoring</td><td>w45</td></tr>
+<tr><td>—</td><td>https://arxiv.org/abs/2509.15541</td><td>durable</td><td>added C7, HTTP 200 2026-07-31</td><td>Phases VIII-IX authoring</td><td>w42</td></tr>
+<tr><td>—</td><td>https://assets.anthropic.com/m/24c8d0a3a7d0a1f1/original/Alignment-Faking-in-Large-Language-Models-reviews.pdf</td><td>durable</td><td>added C7, HTTP 200 2026-07-31</td><td>Phases VIII-IX authoring; 301-redirects to a www-cdn.anthropic.com hash URL (expected in linkcheck)</td><td>w42, c2</td></tr>
+<tr><td>—</td><td>https://blog.redwoodresearch.org/p/ten-people-on-the-inside</td><td>durable</td><td>added C7, HTTP 200 2026-07-31</td><td>Phases VIII-IX authoring</td><td>w43</td></tr>
+<tr><td>—</td><td>https://blog.redwoodresearch.org/p/the-case-for-ensuring-that-powerful</td><td>durable</td><td>added C7, HTTP 200 2026-07-31</td><td>Phases VIII-IX authoring</td><td>w43</td></tr>
+<tr><td>—</td><td>https://epoch.ai/data/eci-documentation</td><td>durable</td><td>added C7, HTTP 200 2026-07-31</td><td>Phases VIII-IX authoring</td><td>w38</td></tr>
+<tr><td>—</td><td>https://epoch.ai/gradient-updates/do-the-biorisk-evaluations-of-ai-labs-actually-measure-the-risk-of-developing-bioweapons</td><td>durable</td><td>added C7, HTTP 200 2026-07-31</td><td>Phases VIII-IX authoring</td><td>w41</td></tr>
+<tr><td>—</td><td>https://github.com/EleutherAI/lm-evaluation-harness</td><td>durable</td><td>added C7, HTTP 200 2026-07-31</td><td>Phases VIII-IX authoring</td><td>w40</td></tr>
+<tr><td>—</td><td>https://transformer-circuits.pub/2025/attribution-graphs/biology.html</td><td>durable</td><td>added C7, HTTP 200 2026-07-31</td><td>Phases VIII-IX authoring</td><td>w39</td></tr>
+<tr><td>—</td><td>https://www.anthropic.com/news/evaluating-ai-systems</td><td>durable</td><td>added C7, HTTP 200 2026-07-31</td><td>Phases VIII-IX authoring</td><td>w36</td></tr>
+<tr><td>—</td><td>https://www.apolloresearch.ai/blog/an-opinionated-evals-reading-list</td><td>durable</td><td>added C7, HTTP 200 2026-07-31</td><td>Phases VIII-IX authoring</td><td>w36</td></tr>
+<tr><td>—</td><td>https://www.apolloresearch.ai/blog/we-need-a-science-of-evals</td><td>durable</td><td>added C7, HTTP 200 2026-07-31</td><td>Phases VIII-IX authoring</td><td>w36</td></tr>
+<tr><td>—</td><td>https://www.apolloresearch.ai/governance/internal-deployment-eu-ai-act/</td><td>durable</td><td>added C7, HTTP 200 2026-07-31</td><td>Phases VIII-IX authoring</td><td>w43</td></tr>
+<tr><td>—</td><td>https://www.arena.education/chapter1</td><td>durable</td><td>added C7, HTTP 200 2026-07-31</td><td>Phases VIII-IX authoring</td><td>w39</td></tr>
+<tr><td>—</td><td>https://www.rand.org/content/dam/rand/pubs/research_reports/RRA2800/RRA2849-1/RAND_RRA2849-1.pdf</td><td>durable</td><td>added C7; <strong>hand-verified</strong> 2026-07-31 (full PDF read, browser UA)</td><td>200, application/pdf (~1.2 MB) with a browser user agent; 403s to plain fetchers. Content check of every w44 claim at the polish pass — see the 'Polish-pass · orgs' entry in salvage/authoring-flags.md; no factual discrepancies found.</td><td>w44</td></tr>
+<tr><td>—</td><td>https://www.rand.org/pubs/research_reports/RRA2977-2.html</td><td>durable</td><td>added C7; <strong>hand-verified</strong> 2026-07-31 (full PDF read, browser UA)</td><td>200 with a browser user agent; title 'The Operational Risks of AI in Large-Scale Biological Attacks' confirmed (403s to plain fetchers). Direct PDF at /content/dam/rand/pubs/research_reports/RRA2900/RRA2977-2/RAND_RRA2977-2.pdf also 200 with a browser UA — now linked from w41. Content check at the polish pass found ONE error, since fixed: the black cell's viability score is 5.24 (Table 6), not 5.50 — 5.50 is its biological-feasibility score. All other w41 methodology claims verified verbatim; see salvage/authoring-flags.md.</td><td>w41</td></tr>
+</table></div>
+<h2 id="added-by-capstone-authoring-c-block-3">Added by capstone authoring (C-block) (3)</h2>
+<div class="tablewrap"><table>
+<tr><th>resource</th><th>url</th><th>volatility</th><th>status</th><th>note</th><th>used in</th></tr>
+<tr><td>ICD 203, Analytic Standards (ODNI, 2 Jan 2015)</td><td>https://www.dni.gov/files/documents/ICD/ICD-203.pdf</td><td>durable</td><td>added at c3 review, verified 2026-07-31</td><td>Canonical PDF 403s to automated fetchers (the odni.gov alias 403s identically; c2 harmonized to this canonical URL at flags sweep 2026-07-31); confirmed live via search index. FAS mirror https://irp.fas.org/dni/icd/icd-203.pdf indexed and live. Section D holds the five analytic standards; the nine tradecraft standards sit under the fifth — page claims match</td><td>c2, c3</td></tr>
+<tr><td>The assertion-evidence approach (Michael Alley, Penn State Leonhard Center)</td><td>https://www.assertion-evidence.com/</td><td>durable</td><td>added at c3 review, verified 2026-07-31</td><td>Live; Alley/Leonhard Center attribution, NSF-funded; tutorial + templates + model talks all present as scoped</td><td>c3</td></tr>
+<tr><td>GovAI open positions (Research Scholar)</td><td>https://www.governance.ai/opportunities</td><td>live</td><td>added at c3 review, verified 2026-07-31</td><td><strong>Date-bound</strong>: Research Scholar deadline 23:59 AoE Sun 16 Aug 2026 confirmed live — matches DEPTH §7. Page will rot after the cycle closes; c3 frames it conditionally so no page edit is forced, but re-verify at next maintenance</td><td>c3</td></tr>
+</table></div>
+<h2 id="added-by-c8a-authoring-s-block-capstone-29">Added by C8a authoring (S-block + capstone) (29)</h2>
+<div class="tablewrap"><table>
+<tr><th>resource</th><th>url</th><th>volatility</th><th>status</th><th>note</th><th>used in</th></tr>
+<tr><td>—</td><td>https://ai-2040.com/</td><td>durable</td><td>added C8a, HTTP 200 2026-07-31</td><td>S-block/capstone authoring</td><td>s6</td></tr>
+<tr><td>—</td><td>https://ai-frontiers.org/articles/ai-deterrence-is-our-best-option</td><td>durable</td><td>added C8a, HTTP 200 2026-07-31</td><td>S-block/capstone authoring</td><td>s3</td></tr>
+<tr><td>—</td><td>https://aisafetychina.com/</td><td>durable</td><td>added C8a, HTTP 200 2026-07-31</td><td>S-block/capstone authoring</td><td>s6</td></tr>
+<tr><td>—</td><td>https://arxiv.org/abs/2304.04123</td><td>durable</td><td>added C8a, HTTP 200 2026-07-31</td><td>S-block/capstone authoring</td><td>s6</td></tr>
+<tr><td>—</td><td>https://arxiv.org/abs/2401.07836</td><td>durable</td><td>added C8a, HTTP 200 2026-07-31</td><td>S-block/capstone authoring</td><td>s3</td></tr>
+<tr><td>—</td><td>https://arxiv.org/abs/2402.08797</td><td>durable</td><td>added C8a, HTTP 200 2026-07-31</td><td>S-block/capstone authoring</td><td>s4</td></tr>
+<tr><td>—</td><td>https://arxiv.org/abs/2408.16074</td><td>durable</td><td>added C8a, HTTP 200 2026-07-31</td><td>S-block/capstone authoring</td><td>s4</td></tr>
+<tr><td>—</td><td>https://arxiv.org/abs/2501.16946</td><td>durable</td><td>added C8a, HTTP 200 2026-07-31</td><td>S-block/capstone authoring</td><td>s3</td></tr>
+<tr><td>—</td><td>https://arxiv.org/abs/2503.05628</td><td>durable</td><td>added C8a, HTTP 200 2026-07-31</td><td>S-block/capstone authoring</td><td>s3</td></tr>
+<tr><td>—</td><td>https://arxiv.org/abs/2504.15088</td><td>durable</td><td>added C8a, HTTP 200 2026-07-31</td><td>S-block/capstone authoring</td><td>s5</td></tr>
+<tr><td>—</td><td>https://arxiv.org/abs/2506.15093</td><td>durable</td><td>added C8a, HTTP 200 2026-07-31</td><td>S-block/capstone authoring</td><td>s4</td></tr>
+<tr><td>—</td><td>https://asteriskmag.com/issues/11/iabied</td><td>durable</td><td>added C8a, HTTP 200 2026-07-31</td><td>S-block/capstone authoring</td><td>s2</td></tr>
+<tr><td>—</td><td>https://blog.aifutures.org/p/q1-2026-timelines-update</td><td>durable</td><td>added C8a, HTTP 200 2026-07-31</td><td>S-block/capstone authoring</td><td>s1</td></tr>
+<tr><td>—</td><td>https://blog.redwoodresearch.org/p/plans-a-b-c-and-d-for-misalignment</td><td>durable</td><td>added C8a, HTTP 200 2026-07-31</td><td>S-block/capstone authoring</td><td>s1, s2</td></tr>
+<tr><td>—</td><td>https://carnegieendowment.org/research/2023/07/chinas-ai-regulations-and-how-they-get-made</td><td>durable</td><td>added C8a, HTTP 200 2026-07-31</td><td>S-block/capstone authoring</td><td>s6</td></tr>
+<tr><td>—</td><td>https://carnegieendowment.org/research/2024/09/if-then-commitments-for-ai-risk-reduction</td><td>durable</td><td>added C8a, HTTP 200 2026-07-31</td><td>S-block/capstone authoring</td><td>s5</td></tr>
+<tr><td>—</td><td>https://concordia-ai.com/research-topics/state-of-ai-safety-in-china/</td><td>durable</td><td>added C8a, HTTP 200 2026-07-31</td><td>S-block/capstone authoring</td><td>s6</td></tr>
+<tr><td>—</td><td>https://gradual-disempowerment.ai/</td><td>durable</td><td>added C8a, HTTP 200 2026-07-31</td><td>S-block/capstone authoring</td><td>s3</td></tr>
+<tr><td>—</td><td>https://hbr.org/2007/09/performing-a-project-premortem</td><td>durable</td><td>added C8a, HTTP 200 2026-07-31</td><td>S-block/capstone authoring</td><td>c2</td></tr>
+<tr><td>—</td><td>https://intelligence.org/2025/04/11/refining-maim-identifying-changes-required-to-meet-conditions-for-deterrence/</td><td>durable</td><td>added C8a; verified 2026-07-31 (GET, browser UA)</td><td>200 with a browser user agent; MIRI post title 'Refining MAIM: Identifying Changes Required to Meet Conditions for Deterrence' confirmed (403s to plain fetchers).</td><td>s3</td></tr>
+<tr><td>—</td><td>https://philpapers.org/rec/THOATS-5</td><td>durable</td><td>added C8a; verified 2026-07-31 (search index)</td><td>Thorstad, 'Against the singularity hypothesis' (Philosophical Studies) — record page live in the search index; open PDF mirror at philarchive.org/rec/THOATS-5. 403s to automated fetchers.</td><td>s1</td></tr>
+<tr><td>—</td><td>https://tracker.safer-ai.org/</td><td>durable</td><td>added C8a, HTTP 200 2026-07-31</td><td>S-block/capstone authoring</td><td>s5</td></tr>
+<tr><td>—</td><td>https://www.anthropic.com/rsp-updates</td><td>durable</td><td>added C8a, HTTP 200 2026-07-31</td><td>S-block/capstone authoring</td><td>s5</td></tr>
+<tr><td>—</td><td>https://www.forethought.org/research/ai-enabled-coups-how-a-small-group-could-use-ai-to-seize-power</td><td>durable</td><td>added C8a, HTTP 200 2026-07-31</td><td>S-block/capstone authoring</td><td>s3</td></tr>
+<tr><td>Governing Through the Cloud (Heim, Fist, Egan, Huang et al., GovAI 2024)</td><td>https://www.governance.ai/research-paper/governing-through-the-cloud</td><td>durable</td><td>added C8a; registered at D1, verified 2026-07-31 (GET)</td><td>Cited by s4 since C8a authoring but missed at registration — caught by the D1 reverse-coverage check. 200; title 'Governing Through the Cloud' confirmed. Distinct from the governance.ai/research listing row.</td><td>s4</td></tr>
+<tr><td>—</td><td>https://www.iaps.ai/research/crucial-considerations-in-asi-deterrence</td><td>durable</td><td>added C8a, HTTP 200 2026-07-31</td><td>S-block/capstone authoring</td><td>s3</td></tr>
+<tr><td>—</td><td>https://www.lesswrong.com/posts/8wBN8cdNAv3c7vt6p/the-case-against-ai-control-research</td><td>durable</td><td>added C8a, HTTP 200 2026-07-31</td><td>S-block/capstone authoring</td><td>s2</td></tr>
+<tr><td>—</td><td>https://www.lesswrong.com/posts/JWH63Aed3TA2cTFMt/contra-collier-on-iabied</td><td>durable</td><td>added C8a, HTTP 200 2026-07-31</td><td>S-block/capstone authoring</td><td>s2</td></tr>
+<tr><td>—</td><td>https://www.lesswrong.com/posts/ct6SMDuexe9uBwDoL/thoughts-on-gradual-disempowerment</td><td>durable</td><td>added C8a, HTTP 200 2026-07-31</td><td>S-block/capstone authoring</td><td>s3</td></tr>
+</table></div>
+<h2 id="added-by-session-d1-2026-07-31-hygiene-pass-1">Added by Session D1 (2026-07-31 hygiene pass) (1)</h2>
+<div class="tablewrap"><table>
+<tr><th>resource</th><th>url</th><th>volatility</th><th>status</th><th>note</th><th>used in</th></tr>
+<tr><td>Anthropic — Claude Fable 5 product page</td><td>https://www.anthropic.com/claude/fable</td><td>live</td><td>added D1, verified 2026-07-31</td><td>Added as a roster current source per fixlist (Anthropic slot). Do NOT link anthropic.com/news/claude-fable-5 — 404; the product page and news/claude-opus-5 are the live anchors.</td><td>roster-salvage</td></tr>
+</table></div>
+<h2 id="dropped-or-replaced-log-20">Dropped or replaced (log) (20)</h2>
+<div class="tablewrap"><table>
+<tr><th>resource</th><th>url</th><th>disposition (logged at D1 2026-07-31 unless dated otherwise)</th></tr>
+<tr><td>—</td><td>https://csrc.nist.gov/projects/cyber-ai-profile</td><td>Dead (404) and no longer cited; replaced by nccoe.nist.gov/projects/cyber-ai-profile (registered under Session B; studios-salvage updated). NIST IR 8596 draft at csrc.nist.gov/pubs/ir/8596/iprd.</td></tr>
+<tr><td>—</td><td>https://transparency.oecd.ai/</td><td>Persistent 502 (degraded portal) and no longer cited; r09 now cites oecd.ai/en/transparency/overview (registered under Session B).</td></tr>
+<tr><td>—</td><td>https://www.whitehouse.gov/wp-content/uploads/2023/11/CircularA-4.pdf</td><td>404 (2023 revision revoked by OMB M-25-15) and no longer cited; r02 now cites the operative 2003 circular at reginfo.gov (registered under Session B).</td></tr>
+<tr><td>—</td><td>https://www.whitehouse.gov/wp-content/uploads/2025/04/M-25-22-Driving-Efficient-Acquisition-of-Artificial-Intelligence-in-Government.pdf</td><td>404 (upload moved) and no longer cited; r12 now cites the working /2025/02/ path (registered under Session B).</td></tr>
+<tr><td>—</td><td>https://mitpress.mit.edu/9780262039246/reinforcement-learning/</td><td>MIT Press sales page no longer cited: w26 replaced it at C5 with the authors' free landing page incompleteideas.net/book/the-book-2nd.html per fixlist w26.</td></tr>
+<tr><td>—</td><td>https://openai.com/index/learning-to-reason-with-llms/</td><td>w28 no longer cites it (dropped during C5 authoring; confirmed in authoring-flags) — orphaned row removed at D1 hygiene pass.</td></tr>
+<tr><td>—</td><td>https://arxiv.org/abs/1803.10122</td><td>w35 no longer cites it (C6 authoring uses Dreamer, RT-2, Genie instead) — orphaned row removed at D1 hygiene pass.</td></tr>
+<tr><td>—</td><td>https://arxiv.org/abs/2302.04761</td><td>Toolformer — dropped by w30 at C6 (baseline misassignment); log entry carried over from the register's own drop annotation.</td></tr>
+<tr><td>—</td><td>https://arxiv.org/abs/2309.00267</td><td>RLAIF — w27 dropped it during C5 authoring (confirmed in authoring-flags); orphaned row removed at D1 hygiene pass.</td></tr>
+<tr><td>—</td><td>https://arxiv.org/abs/2312.11805</td><td>Gemini report — w33 no longer cites it after C6 authoring; orphaned row removed at D1 hygiene pass.</td></tr>
+<tr><td>—</td><td>https://arxiv.org/abs/2404.14108</td><td>Wrong DCLM id from the Session-A brief — resolves to an unrelated materials-science paper; the real DCLM is arXiv 2406.11794 (registered under C4, w19). Dropped at C4 review 2026-07-29.</td></tr>
+<tr><td>—</td><td>https://huggingface.co/docs/transformers/index</td><td>w18 no longer cites the docs index — C3 authoring cites the specific generation_strategies and text_generation pages (both registered) — orphaned row removed at D1 hygiene pass.</td></tr>
+<tr><td>International AI Safety Report 2026 (arXiv mirror)</td><td>https://arxiv.org/abs/2602.21012</td><td>IASR 2026 arXiv mirror — never cited by a page; merged as a note into the IASR full-report PDF row at D1.</td></tr>
+<tr><td>Stanford CS336: Language Modeling from Scratch, Spring 2026</td><td>https://stanford-cs336.github.io/spring2026/</td><td>Dead redirect chain (301 to a 404); replacement cs336.stanford.edu applied across pages at C3-C4; details merged into the cs336.stanford.edu row at D1.</td></tr>
+<tr><td>OpenAI Preparedness Framework</td><td>https://cdn.openai.com/pdf/18a02b5d-6b67-4cec-ab64-68cdfbddebcd/preparedness-framework-v2.pdf</td><td>PF v2 PDF — never cited directly by a page; the openai.com/index/updating-our-preparedness-framework row's note already carries this URL. Merged at D1.</td></tr>
+<tr><td>EU AI Act / Digital Omnibus on AI</td><td>https://www.freshfields.com/en/our-thinking/blogs/technology-quotient/eu-ai-act-unpacked-34-the-final-digital-omnibus-on-ai-key-amendments-to-the-a-102nber</td><td>Session-B verification source for the EU Digital Omnibus timeline; never cited by any page — removed at D1 hygiene pass.</td></tr>
+<tr><td>Sutton &amp; Barto, Reinforcement Learning: An Introduction (2nd</td><td>http://incompleteideas.net/book/RLbook2020.pdf</td><td>Direct PDF (verified 200, 2026-07-28) — w26 deliberately cites the authors' landing page the-book-2nd.html instead (self-signed HTTPS cert on the domain; see authoring-flags). Merged as a note into the landing-page row at D1.</td></tr>
+<tr><td>OECD Due Diligence Guidance for Responsible AI</td><td>https://www.oecd.org/en/publications/2026/02/oecd-due-diligence-guidance-for-responsible-ai_7831bb49.html</td><td>Publication landing page (verified 2026-07-28) — pages cite the /full-report.html path; verification merged into that row at D1.</td></tr>
+<tr><td>EC GPAI guidelines — downstream-modifier criterion (secondary)</td><td>https://artificialintelligenceact.eu/gpai-guidelines-overview/</td><td>Secondary corroboration row (added C5, verified 2026-07-29) superseded in place 2026-07-31 when the primary Commission PDF was hand-verified (see the C5 row for ai-act-service-desk.ec.europa.eu); the secondary's corroboration is noted there.</td></tr>
+<tr><td>—</td><td>https://www.odni.gov/files/documents/ICD/ICD-203.pdf</td><td>odni.gov alias of ICD 203 (added C8a; verified live 2026-07-31 via search index, 403s to fetchers) — c2 harmonized to the canonical dni.gov URL at the 2026-07-31 flags sweep, orphaning this row; the dni.gov row (C-block section, used by c2 and c3) is the surviving registration.</td></tr>
+</table></div>
+<h2 id="added-by-the-polish-pass-orgs-2026-07-31-3">Added by the polish pass · orgs (2026-07-31) (3)</h2>
+<div class="tablewrap"><table>
+<tr><th>resource</th><th>url</th><th>volatility</th><th>status</th><th>note</th><th>used in</th></tr>
+<tr><td>Discussion Paper: Large Language Models and Personal Data (HmbBfDI, English)</td><td>https://datenschutz-hamburg.de/fileadmin/user_upload/HmbBfDI/Datenschutz/Informationen/240715_Discussion_Paper_Hamburg_DPA_KI_Models.pdf</td><td>durable</td><td><strong>hand-verified</strong> 2026-07-31 (full PDF read)</td><td>Resolves the standing w02 flag (cited since C1, never link-verified). Official English translation, 10 pp., 15 July 2024; plain <code>curl</code> returns 200, no browser UA needed. German original: .../240715_Diskussionspapier_HmbBfDI_KI_Modelle.pdf. Thesis 1 verbatim: "The mere storage of an LLM does not constitute processing within the meaning of article 4 (2) GDPR. This is because no personal data is stored in LLMs." §II argues it through tokenisation and embeddings ("abstract mathematical representations"; "vectors in a multidimensional vector space"; tokens as "linguistic fragments"), which is why w02 owns the hook. Now linked from w02</td><td>w02</td></tr>
+<tr><td>EDPB Opinion 28/2024 (AI models and personal data)</td><td>https://www.edpb.europa.eu/system/files/2024-12/edpb_opinion_202428_ai-models_en.pdf</td><td>durable</td><td>verified 2026-07-31</td><td>HTTP 200 to plain curl. Adopted 17 Dec 2024 at the Irish supervisory authority's request; holds that an AI model trained on personal data cannot in all cases be considered anonymous, and that anonymity must be assessed case by case against extraction and inference attacks. Added to w02 as the counterweight to the Hamburg paper</td><td>w02</td></tr>
+<tr><td>—</td><td>https://www.rand.org/content/dam/rand/pubs/research_reports/RRA2900/RRA2977-2/RAND_RRA2977-2.pdf</td><td>durable</td><td><strong>hand-verified</strong> 2026-07-31 (full PDF read, browser UA)</td><td>200 with a browser user agent, 24 pp.; now the fallback link on w41's RAND entry, matching the convention w44 already uses for RRA2849-1</td><td>w41</td></tr>
+</table></div></div></main></body></html>

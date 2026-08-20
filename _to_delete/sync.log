@@ -1,0 +1,630 @@
++ git pull origin main
+From https://github.com/AndyMasley/andymasley-site
+ * branch            main       -> FETCH_HEAD
+Already up to date.
++ mv .cache/substack/content/ai-and-the-environment.html _to_delete/ai-and-the-environment.cache.bak.html
++ npm run build
+
+> andymasley-site@1.0.0 build
+> astro build
+
+✘ [ERROR] The build was canceled
+
+00:51:10 [types] Generated 64ms
+00:51:10 [build] output: "static"
+00:51:10 [build] directory: /Users/andy/andymasley-site/dist/
+00:51:10 [build] Collecting build info...
+00:51:10 [build] ✓ Completed in 72ms.
+00:51:11 [build] Building static entrypoints...
+00:51:11 [vite] ✓ built in 846ms
+00:51:11 [build] ✓ Completed in 864ms.
+
+ building client (vite) 
+00:51:11 [vite] transforming...
+00:51:12 [vite] ✓ 85 modules transformed.
+00:51:12 [vite] rendering chunks...
+00:51:12 [vite] computing gzip size...
+00:51:12 [vite] dist/_astro/hoisted.DE5vJSWI.js               0.24 kB │ gzip:  0.12 kB
+00:51:12 [vite] dist/_astro/jsx-runtime.BjG_zV1W.js           0.64 kB │ gzip:  0.42 kB
+00:51:12 [vite] dist/_astro/hoisted.DJcAFKm3.js               1.04 kB │ gzip:  0.56 kB
+00:51:12 [vite] dist/_astro/hoisted.BK118CJ_.js               1.06 kB │ gzip:  0.59 kB
+00:51:12 [vite] dist/_astro/hoisted.DQt40vkM.js               2.10 kB │ gzip:  1.05 kB
+00:51:12 [vite] dist/_astro/hoisted.DjMwHHtN.js               3.22 kB │ gzip:  1.15 kB
+00:51:12 [vite] dist/_astro/hoisted.DF5I0Rh6.js               3.59 kB │ gzip:  1.63 kB
+00:51:12 [vite] dist/_astro/hoisted.Ra5tMK4t.js               4.25 kB │ gzip:  1.71 kB
+00:51:12 [vite] dist/_astro/ArticleTOC.BqrG2X7J.js            5.01 kB │ gzip:  1.87 kB
+00:51:12 [vite] dist/_astro/CheatSheetExplorer.P4wlVZpo.js    6.89 kB │ gzip:  2.57 kB
+00:51:12 [vite] dist/_astro/index.CzjdDlXV.js                 7.75 kB │ gzip:  3.01 kB
+00:51:12 [vite] dist/_astro/hoisted.yhnBRssy.js              21.90 kB │ gzip:  7.51 kB
+00:51:12 [vite] dist/_astro/Calculator.ChOsCbsx.js           91.09 kB │ gzip: 25.55 kB
+00:51:12 [vite] dist/_astro/hoisted.Cu4jKkBR.js             150.09 kB │ gzip: 54.76 kB
+00:51:12 [vite] dist/_astro/client.CPmkLvHQ.js              185.74 kB │ gzip: 58.20 kB
+00:51:12 [vite] ✓ built in 285ms
+
+ generating static routes 
+00:51:12 ▶ src/pages/404.astro
+00:51:12   └─ /404.htmlCached posts list is missing required guide slugs, fetching fresh data
+Fetching posts list from Substack API...
+Fetching posts list from EA Forum API...
+Cached 5 EA Forum posts to disk
+Cached 87 posts to disk
+ (+1.12s)
+00:51:13 ▶ src/pages/appearances.astro
+00:51:13   └─ /appearances/index.html (+2ms)
+00:51:13 ▶ src/pages/contact.astro
+00:51:13   └─ /contact/index.html (+2ms)
+00:51:13 ▶ src/pages/hexagon.astro
+00:51:13   └─ /hexagon/index.html (+1ms)
+00:51:13 ▶ src/pages/lists/dc-vegan-dining.astro
+00:51:13   └─ /lists/dc-vegan-dining/index.html (+1ms)
+00:51:13 ▶ src/pages/lists/favorite-things.astro
+00:51:13   └─ /lists/favorite-things/index.html (+3ms)
+00:51:13 ▶ src/pages/lists/product-recommendations.astro
+00:51:13   └─ /lists/product-recommendations/index.html (+1ms)
+00:51:13 ▶ src/pages/lists/index.astro
+00:51:13   └─ /lists/index.html (+1ms)
+00:51:13 ▶ src/pages/massachusetts-3d.astro
+00:51:13   └─ /massachusetts-3d/index.html (+1ms)
+00:51:13 ▶ src/pages/notes/[slug].astro
+00:51:13   └─ /notes/complicated-vs-complex/index.html (+3ms)
+00:51:13 ▶ src/pages/notes/index.astro
+00:51:13   └─ /notes/index.html (+1ms)
+00:51:13 λ src/pages/og/default.png.ts
+00:51:13   └─ /og/default.png (+1.12s)
+00:51:14 λ src/pages/og/page/[id].png.ts
+00:51:14   ├─ /og/page/writing.png (+108ms)
+00:51:14   ├─ /og/page/physics.png (+79ms)
+00:51:14   ├─ /og/page/lists.png (+74ms)
+00:51:14   ├─ /og/page/visuals.png (+74ms)
+00:51:14   ├─ /og/page/appearances.png (+73ms)
+00:51:14   ├─ /og/page/contact.png (+73ms)
+00:51:14   ├─ /og/page/notes.png (+78ms)
+00:51:15   ├─ /og/page/favorite-things.png (+95ms)
+00:51:15   ├─ /og/page/dc-vegan-dining.png (+81ms)
+00:51:15   ├─ /og/page/product-recommendations.png (+76ms)
+00:51:15   ├─ /og/page/carbon-footprint.png (+78ms)
+00:51:15   └─ /og/page/factory-farmed-chickens.png (+83ms)
+00:51:15 λ src/pages/og/[slug].png.ts
+00:51:15   ├─ /og/other-large-industries-show-how-impoverished.png (+100ms)
+00:51:15   ├─ /og/im-very-skeptical-that-china-has.png (+85ms)
+00:51:15   ├─ /og/toward-environmental-liberalism.png (+79ms)
+00:51:15   ├─ /og/ai-art-as-curation.png (+80ms)
+00:51:15   ├─ /og/what-does-it-mean-for-ai-to-be-democratic.png (+81ms)
+00:51:15   ├─ /og/a-plug-for-a-tool-i-made-to-show.png (+91ms)
+00:51:15   ├─ /og/a-simple-trick-to-fix-the-data-center.png (+79ms)
+00:51:16   ├─ /og/why-i-think-panic-about-local-impacts.png (+81ms)
+00:51:16   ├─ /og/a-history-of-the-data-center-panic.png (+84ms)
+00:51:16   ├─ /og/a-crash-course-on-us-air-pollution.png (+78ms)
+00:51:16   ├─ /og/lets-not-compare-data-center-heat.png (+80ms)
+00:51:16   ├─ /og/data-center-land-use-issues-are-fake.png (+76ms)
+00:51:16   ├─ /og/to-be-clear-i-do-understand-how-sound.png (+77ms)
+00:51:16   ├─ /og/contra-benn-jordan-data-center-and.png (+81ms)
+00:51:16   ├─ /og/training-ai-models-doesnt-emit-that.png (+79ms)
+00:51:16   ├─ /og/whats-blocking-waymo-in-dc-and-how.png (+77ms)
+00:51:16   ├─ /og/data-centers-heat-exhaust-is-not.png (+80ms)
+00:51:16   ├─ /og/a-call-for-more-specific-and-numerate.png (+76ms)
+00:51:16   ├─ /og/ai-can-obviously-create-new-knowledge.png (+76ms)
+00:51:16   ├─ /og/empire-of-ai-is-wildly-misleading.png (+77ms)
+00:51:17   ├─ /og/a-short-summary-of-my-argument-that.png (+80ms)
+00:51:17   ├─ /og/the-lump-of-cognition-fallacy.png (+74ms)
+00:51:17   ├─ /og/a-list-of-other-catastrophes-that.png (+78ms)
+00:51:17   ├─ /og/its-much-easier-to-hold-computers.png (+80ms)
+00:51:17   ├─ /og/data-centers-and-low-social-trust.png (+75ms)
+00:51:17   ├─ /og/an-armchair-diagnosis-of-the-chatbot.png (+77ms)
+00:51:17   ├─ /og/always-mask-in-airports.png (+76ms)
+00:51:17   ├─ /og/please-please-please-do-not-ban-autonomous.png (+79ms)
+00:51:17   ├─ /og/ai-and-folk-cartesianism-part-2-problems.png (+79ms)
+00:51:17   ├─ /og/ai-and-folk-cartesianism-part-1-defining.png (+78ms)
+00:51:17   ├─ /og/requests-for-journalists-covering.png (+78ms)
+00:51:17   ├─ /og/the-main-way-ive-seen-people-turn.png (+78ms)
+00:51:18   ├─ /og/a-few-meta-points-on-my-posts-on.png (+77ms)
+00:51:18   ├─ /og/slop-implies-capability.png (+74ms)
+00:51:18   ├─ /og/the-ai-water-issue-is-fake.png (+76ms)
+00:51:18   ├─ /og/data-centers-and-electricity-part.png (+82ms)
+00:51:18   ├─ /og/what-a-data-center-is.png (+75ms)
+00:51:18   ├─ /og/more-perfect-union-is-deceptive.png (+79ms)
+00:51:18   ├─ /og/for-the-climate-little-things-dont.png (+78ms)
+00:51:18   ├─ /og/whats-the-full-hidden-climate-cost.png (+79ms)
+00:51:18   ├─ /og/do-data-centers-only-seem-bad-for.png (+79ms)
+00:51:18   ├─ /og/jevons-paradox-isnt-always-bad.png (+74ms)
+00:51:18   ├─ /og/mapping-the-ai-and-environment-debate.png (+78ms)
+00:51:18   ├─ /og/the-core-simple-reason-i-think-ai.png (+77ms)
+00:51:18   ├─ /og/an-example-of-what-i-consider-a-misleading.png (+83ms)
+00:51:19   ├─ /og/when-making-cuts-for-the-climate.png (+84ms)
+00:51:19   ├─ /og/a-ton-of-ai-images-ive-made-that.png (+80ms)
+00:51:19   ├─ /og/contra-the-uk-government-please-dont.png (+94ms)
+00:51:19   ├─ /og/egalitarianism-requires-quantification.png (+79ms)
+00:51:19   ├─ /og/my-can-of-soup-example-for-bad-climate.png (+79ms)
+00:51:19   ├─ /og/ordering-amazon-deliveries-is-often.png (+88ms)
+00:51:19   ├─ /og/all-my-vegan-fitness-advice-part-b55.png (+83ms)
+00:51:19   ├─ /og/all-my-vegan-fitness-advice-part-acf.png (+81ms)
+00:51:19   ├─ /og/all-my-vegan-fitness-advice-part.png (+80ms)
+00:51:19   ├─ /og/ai-can-be-bad-overall-without-being.png (+76ms)
+00:51:19   ├─ /og/my-are-you-presuming-most-people.png (+78ms)
+00:51:19   ├─ /og/computing-is-efficient.png (+75ms)
+00:51:19   ├─ /og/even-with-a-perfect-government-wed.png (+78ms)
+00:51:20   ├─ /og/resource-recs-on-ai-catastrophic.png (+76ms)
+00:51:20   ├─ /og/all-the-ways-i-want-the-ai-debate.png (+77ms)
+00:51:20   ├─ /og/reactions-to-mit-technology-reviews.png (+79ms)
+00:51:20   ├─ /og/things-i-got-wrong-in-my-chatgptenvironment.png (+77ms)
+00:51:20   ├─ /og/why-goofy-ai-art-almost-never-seems.png (+77ms)
+00:51:20   ├─ /og/replies-to-criticisms-of-my-chatgpt.png (+78ms)
+00:51:20   ├─ /og/animal-suffering-isnt-pretend.png (+76ms)
+00:51:20   ├─ /og/a-cheat-sheet-for-conversations-about.png (+79ms)
+00:51:20   ├─ /og/chatgpt-on-the-lives-of-pigs-in-us.png (+78ms)
+00:51:20   ├─ /og/ideological-moves-that-should-be.png (+78ms)
+00:51:20   ├─ /og/recommended-resources-for-energy.png (+75ms)
+00:51:20   ├─ /og/how-i-use-ai.png (+74ms)
+00:51:20   ├─ /og/a-defense-of-ai-art.png (+74ms)
+00:51:21   ├─ /og/peoples-deeply-held-beliefs-are-surprisingly.png (+79ms)
+00:51:21   ├─ /og/guiding-ideas-i-use-to-think-about.png (+79ms)
+00:51:21   ├─ /og/individual-ai-use-is-not-bad-for.png (+77ms)
+00:51:21   ├─ /og/strategies-for-learning.png (+76ms)
+00:51:21   ├─ /og/liberalism.png (+77ms)
+00:51:21   ├─ /og/product-recommendations.png (+77ms)
+00:51:21   ├─ /og/andys-dc-area-vegan-dining-recs.png (+76ms)
+00:51:21   ├─ /og/especially-good-audiobooks.png (+77ms)
+00:51:21   ├─ /og/productivity-stuff-thats-worked-for.png (+81ms)
+00:51:21   ├─ /og/my-favorite-80000-hours-episodes.png (+77ms)
+00:51:21   ├─ /og/thinking-seriously-about-violence.png (+77ms)
+00:51:21   ├─ /og/my-foundational-philosophy-beliefs.png (+76ms)
+00:51:21   ├─ /og/whats-the-deal-with-electric-cars.png (+82ms)
+00:51:22   ├─ /og/alcohol-is-so-bad-for-society-that.png (+80ms)
+00:51:22   ├─ /og/all-my-vegan-fitness-advice.png (+79ms)
+00:51:22   ├─ /og/animal-ethics.png (+107ms)
+00:51:22   ├─ /og/ai-and-the-environment.png (+80ms)
+00:51:22   ├─ /og/a-playbook-for-new-ea-groups.png (+81ms)
+00:51:22   ├─ /og/additional-resources-on-us-policy-careers.png (+79ms)
+00:51:22   ├─ /og/how-ea-dc-can-help-you-get-the-most-out-of-visiting.png (+80ms)
+00:51:22   ├─ /og/resources-on-us-policy-careers.png (+77ms)
+00:51:22   └─ /og/an-ea-s-guide-to-washington-dc.png (+76ms)
+00:51:22 ▶ src/pages/physics/[slug].astro
+00:51:22   └─ /physics/thermal-concepts/index.html (+1ms)
+00:51:22 ▶ src/pages/physics/index.astro
+00:51:22   └─ /physics/index.html (+1ms)
+00:51:22 ▶ src/pages/room.astro
+00:51:22   └─ /room/index.html (+2ms)
+00:51:22 λ src/pages/rss.xml.js
+00:51:22   └─ /rss.xml[images] other-large-industries-show-how-impoverished: 2 missing alt
+[images] im-very-skeptical-that-china-has: 18 missing alt
+[images] toward-environmental-liberalism: 2 missing alt
+[images] ai-art-as-curation: 24 missing alt
+[content-lint] warn what-does-it-mean-for-ai-to-be-democratic: "circle back" (…o share this particular worry. If AI rises to run all society, I will circle back with the Taliban. I’m sure the AI models get plenty of im…)
+[images] what-does-it-mean-for-ai-to-be-democratic: 7 missing alt
+[images] a-plug-for-a-tool-i-made-to-show: 3 missing alt
+[content-lint] warn a-simple-trick-to-fix-the-data-center: "circle back" (…0. 4 Still typing up the footnotes for the carbon section, will circle back later today. 5 Loudoun Water data PEC obtained by FO…)
+[content-lint] warn a-simple-trick-to-fix-the-data-center: "later today" (…till typing up the footnotes for the carbon section, will circle back later today. 5 Loudoun Water data PEC obtained by FOIA: data cen…)
+[headings] a-simple-trick-to-fix-the-data-center: level skip(s) left as-is: h2→h4
+[images] a-simple-trick-to-fix-the-data-center: 1 missing alt
+[images] a-history-of-the-data-center-panic: 5 missing alt
+[images] a-crash-course-on-us-air-pollution: 46 missing alt
+[images] lets-not-compare-data-center-heat: 9 missing alt
+[content-lint] warn data-center-land-use-issues-are-fake: "circle back" (…makes complete sense that infrasound could be harmful to them. I will circle back on this once I know more about infrasound and animals. 1…)
+[images] data-center-land-use-issues-are-fake: 24 missing alt
+[images] contra-benn-jordan-data-center-and: 40 missing alt
+[images] training-ai-models-doesnt-emit-that: 10 missing alt
+[headings] whats-blocking-waymo-in-dc-and-how: level skip(s) left as-is: h3→h5
+[images] whats-blocking-waymo-in-dc-and-how: 1 missing alt
+[content-lint] warn data-centers-heat-exhaust-is-not: "circle back" (…direction as no one’s seriously studied it. I’m unsure here so will circle back if I get better evidence. Other candidates for warming la…)
+[images] data-centers-heat-exhaust-is-not: 6 missing alt
+[images] ai-can-obviously-create-new-knowledge: 1 missing alt
+[images] empire-of-ai-is-wildly-misleading: 12 missing alt
+[images] a-short-summary-of-my-argument-that: 1 missing alt
+[content-lint] warn a-list-of-other-catastrophes-that: "circle back" (…from them. I expected this effect to be smaller than it was. I’ll circle back and add to this as more come to me. 1 I own a 2015 Cor…)
+[images] a-list-of-other-catastrophes-that: 15 missing alt
+[images] its-much-easier-to-hold-computers: 1 missing alt
+[images] an-armchair-diagnosis-of-the-chatbot: 1 missing alt
+[images] please-please-please-do-not-ban-autonomous: 4 missing alt
+[images] ai-and-folk-cartesianism-part-2-problems: 21 missing alt
+[images] ai-and-folk-cartesianism-part-1-defining: 2 missing alt
+[images] requests-for-journalists-covering: 1 missing alt
+[images] the-main-way-ive-seen-people-turn: 1 missing alt
+[images] a-few-meta-points-on-my-posts-on: 2 missing alt
+[content-lint] warn the-ai-water-issue-is-fake: "circle back" (…e mining number is also withdrawals. Everything else is correct. I’ll circle back on this later to update the graph. Sources…)
+[headings] the-ai-water-issue-is-fake: level skip(s) left as-is: h2→h4
+[images] the-ai-water-issue-is-fake: 24 missing alt
+[images] data-centers-and-electricity-part: 16 missing alt
+[images] what-a-data-center-is: 14 missing alt
+[content-lint] warn more-perfect-union-is-deceptive: "circle back" (…e Meta data center harmed Georgia’s water access. With this context, circle back and watch this full clip of the hearing (I’ve had this vid…)
+[images] more-perfect-union-is-deceptive: 14 missing alt
+[headings] for-the-climate-little-things-dont: level skip(s) left as-is: h2→h4
+[images] for-the-climate-little-things-dont: 12 missing alt
+[images] whats-the-full-hidden-climate-cost: 1 missing alt
+[images] do-data-centers-only-seem-bad-for: 6 missing alt
+[images] jevons-paradox-isnt-always-bad: 6 missing alt
+[images] mapping-the-ai-and-environment-debate: 1 missing alt
+[images] an-example-of-what-i-consider-a-misleading: 3 missing alt
+[images] when-making-cuts-for-the-climate: 4 missing alt
+[images] a-ton-of-ai-images-ive-made-that: 150 missing alt
+[headings] contra-the-uk-government-please-dont: level skip(s) left as-is: h1(title)→h5, h2→h4
+[images] contra-the-uk-government-please-dont: 4 missing alt
+[images] egalitarianism-requires-quantification: 1 missing alt
+ (+122ms)
+00:51:22 λ src/pages/search-titles.json.js
+00:51:22   └─ /search-titles.json (+47ms)
+00:51:22 λ src/pages/search.json.js
+00:51:22   └─ /search.json (+6ms)
+00:51:23 λ src/pages/sitemap.xml.js
+00:51:23   └─ /sitemap.xml (+2ms)
+00:51:23 ▶ src/pages/visuals/ai-prompt-footprint/embed.astro
+00:51:23   └─ /visuals/ai-prompt-footprint/embed/index.html (+1ms)
+00:51:23 ▶ src/pages/visuals/ai-prompt-footprint.astro
+00:51:23   └─ /visuals/ai-prompt-footprint/index.html (+1ms)
+00:51:23 λ src/pages/visuals/ai-prompt-footprint-source.txt.js
+00:51:23   └─ /visuals/ai-prompt-footprint-source.txt (+0ms)
+00:51:23 ▶ src/pages/visuals/carbon-boundary-crosswalk.astro
+00:51:23   └─ /visuals/carbon-boundary-crosswalk/index.html (+0ms)
+00:51:23 ▶ src/pages/visuals/carbon-footprint.astro
+00:51:23   └─ /visuals/carbon-footprint/index.html (+9ms)
+00:51:23 ▶ src/pages/visuals/carbon-footprint-v1.astro
+00:51:23   └─ /visuals/carbon-footprint-v1/index.html (+0ms)
+00:51:23 ▶ src/pages/visuals/factory-farmed-chickens.astro
+00:51:23   └─ /visuals/factory-farmed-chickens/index.html (+0ms)
+00:51:23 ▶ src/pages/visuals/pm25-county-exposure.astro
+00:51:23   └─ /visuals/pm25-county-exposure/index.html (+1ms)
+00:51:23 ▶ src/pages/visuals/water.astro
+00:51:23   └─ /visuals/water/index.html (+2ms)
+00:51:23 ▶ src/pages/visuals/index.astro
+00:51:23   └─ /visuals/index.html (+0ms)
+00:51:23 ▶ src/pages/writing/errors-and-updates.astro
+00:51:23   └─ /writing/errors-and-updates/index.html (+0ms)
+00:51:23 ▶ src/pages/writing/i-cant-find-any-instances-of-data.astro
+00:51:23   └─ /writing/i-cant-find-any-instances-of-data/index.html (+0ms)
+00:51:23 ▶ src/pages/writing/stories-of-ai-turning-users-delusional.astro
+00:51:23   └─ /writing/stories-of-ai-turning-users-delusional/index.html (+0ms)
+00:51:23 ▶ src/pages/writing/[slug].astro
+[images] other-large-industries-show-how-impoverished: 2 missing alt
+[images] im-very-skeptical-that-china-has: 18 missing alt
+[images] toward-environmental-liberalism: 2 missing alt
+[images] ai-art-as-curation: 24 missing alt
+[images] what-does-it-mean-for-ai-to-be-democratic: 7 missing alt
+[images] a-plug-for-a-tool-i-made-to-show: 3 missing alt
+[headings] a-simple-trick-to-fix-the-data-center: level skip(s) left as-is: h2→h4
+[images] a-simple-trick-to-fix-the-data-center: 1 missing alt
+[images] a-history-of-the-data-center-panic: 5 missing alt
+[images] a-crash-course-on-us-air-pollution: 46 missing alt
+[sidenotes] a-crash-course-on-us-air-pollution: left 1 block-content footnote(s) bottom-only: 15
+[images] lets-not-compare-data-center-heat: 9 missing alt
+[images] data-center-land-use-issues-are-fake: 24 missing alt
+[images] contra-benn-jordan-data-center-and: 40 missing alt
+[images] training-ai-models-doesnt-emit-that: 10 missing alt
+[sidenotes] training-ai-models-doesnt-emit-that: left 1 block-content footnote(s) bottom-only: 1
+[headings] whats-blocking-waymo-in-dc-and-how: level skip(s) left as-is: h3→h5
+[images] whats-blocking-waymo-in-dc-and-how: 1 missing alt
+[images] data-centers-heat-exhaust-is-not: 6 missing alt
+[images] ai-can-obviously-create-new-knowledge: 1 missing alt
+[images] empire-of-ai-is-wildly-misleading: 12 missing alt
+[images] a-short-summary-of-my-argument-that: 1 missing alt
+[images] a-list-of-other-catastrophes-that: 15 missing alt
+[images] its-much-easier-to-hold-computers: 1 missing alt
+[images] an-armchair-diagnosis-of-the-chatbot: 1 missing alt
+[images] please-please-please-do-not-ban-autonomous: 4 missing alt
+[images] ai-and-folk-cartesianism-part-2-problems: 21 missing alt
+[images] ai-and-folk-cartesianism-part-1-defining: 2 missing alt
+[images] requests-for-journalists-covering: 1 missing alt
+[images] the-main-way-ive-seen-people-turn: 1 missing alt
+[images] a-few-meta-points-on-my-posts-on: 2 missing alt
+[headings] the-ai-water-issue-is-fake: level skip(s) left as-is: h2→h4
+[images] the-ai-water-issue-is-fake: 24 missing alt
+[sidenotes] the-ai-water-issue-is-fake: left 1 block-content footnote(s) bottom-only: 3
+[images] data-centers-and-electricity-part: 16 missing alt
+[images] what-a-data-center-is: 14 missing alt
+[images] more-perfect-union-is-deceptive: 14 missing alt
+[sidenotes] more-perfect-union-is-deceptive: left 1 block-content footnote(s) bottom-only: 2
+[headings] for-the-climate-little-things-dont: level skip(s) left as-is: h2→h4
+[images] for-the-climate-little-things-dont: 12 missing alt
+[images] whats-the-full-hidden-climate-cost: 1 missing alt
+[images] do-data-centers-only-seem-bad-for: 6 missing alt
+[images] jevons-paradox-isnt-always-bad: 6 missing alt
+[images] mapping-the-ai-and-environment-debate: 1 missing alt
+[images] an-example-of-what-i-consider-a-misleading: 3 missing alt
+[images] when-making-cuts-for-the-climate: 4 missing alt
+[images] a-ton-of-ai-images-ive-made-that: 150 missing alt
+[headings] contra-the-uk-government-please-dont: level skip(s) left as-is: h1(title)→h5, h2→h4
+[images] contra-the-uk-government-please-dont: 4 missing alt
+[images] egalitarianism-requires-quantification: 1 missing alt
+[images] my-can-of-soup-example-for-bad-climate: 3 missing alt
+[sidenotes] my-can-of-soup-example-for-bad-climate: left 1 block-content footnote(s) bottom-only: 1
+[images] ordering-amazon-deliveries-is-often: 3 missing alt
+[images] all-my-vegan-fitness-advice-part-b55: 4 missing alt
+[images] all-my-vegan-fitness-advice-part-acf: 5 missing alt
+[headings] all-my-vegan-fitness-advice-part: level skip(s) left as-is: h3→h6, h4→h6
+[images] all-my-vegan-fitness-advice-part: 16 missing alt
+[images] computing-is-efficient: 16 missing alt
+[headings] even-with-a-perfect-government-wed: level skip(s) left as-is: h1(title)→h3
+[images] even-with-a-perfect-government-wed: 9 missing alt
+[images] all-the-ways-i-want-the-ai-debate: 19 missing alt
+[headings] reactions-to-mit-technology-reviews: level skip(s) left as-is: h2→h4
+[images] reactions-to-mit-technology-reviews: 6 missing alt
+[content-lint] warn things-i-got-wrong-in-my-chatgptenvironment: "circle back" (…the environment I occasionally have people correct me and then I circle back and update the posts. I’ll log any updates here. If you th…)
+[images] why-goofy-ai-art-almost-never-seems: 3 missing alt
+[images] replies-to-criticisms-of-my-chatgpt: 11 missing alt
+[images] animal-suffering-isnt-pretend: 3 missing alt
+[content-lint] warn a-cheat-sheet-for-conversations-about: "circle back" (…de if it’s reasonable. Once more clear data comes out I’d be happy to circle back. Back in January, EpochAI took a guess at the maximum amo…)
+[images] a-cheat-sheet-for-conversations-about: 36 missing alt
+[images] chatgpt-on-the-lives-of-pigs-in-us: 1 missing alt
+[images] ideological-moves-that-should-be: 1 missing alt
+[images] recommended-resources-for-energy: 1 missing alt
+[images] how-i-use-ai: 21 missing alt
+[images] a-defense-of-ai-art: 28 missing alt
+[images] peoples-deeply-held-beliefs-are-surprisingly: 1 missing alt
+[images] guiding-ideas-i-use-to-think-about: 2 missing alt
+[images] individual-ai-use-is-not-bad-for: 13 missing alt
+[images] strategies-for-learning: 2 missing alt
+[headings] liberalism: level skip(s) left as-is: h2→h4
+[content-lint] warn product-recommendations: "circle back" (…e made my life better and that I often tell other people to buy. I’ll circle back and add to this as I find more stuff I like. I'm vegan ,…)
+[images] product-recommendations: 1 missing alt
+[images] andys-dc-area-vegan-dining-recs: 1 missing alt
+[headings] productivity-stuff-thats-worked-for: level skip(s) left as-is: h2→h5, h2→h5
+[content-lint] warn thinking-seriously-about-violence: "circle back" (…to what I've already written. Almost every section of this post will circle back to World War 2 and make the same points about it. I see Wo…)
+[images] thinking-seriously-about-violence: 1 missing alt
+[images] my-foundational-philosophy-beliefs: 1 missing alt
+[headings] whats-the-deal-with-electric-cars: level skip(s) left as-is: h3→h5, h2→h4
+[images] whats-the-deal-with-electric-cars: 7 missing alt
+[images] alcohol-is-so-bad-for-society-that: 2 missing alt
+[headings] all-my-vegan-fitness-advice: level skip(s) left as-is: h2→h4
+[images] all-my-vegan-fitness-advice: 2 missing alt
+[headings] animal-ethics: level skip(s) left as-is: h2→h4
+[images] animal-ethics: 12 missing alt
+[headings] ai-and-the-environment: level skip(s) left as-is: h1(title)→h4
+[headings] an-ea-s-guide-to-washington-dc: level skip(s) left as-is: h2→h4
+00:51:23   ├─ /writing/other-large-industries-show-how-impoverished/index.html (+35ms)
+00:51:23   ├─ /writing/im-very-skeptical-that-china-has/index.html (+6ms)
+00:51:23   ├─ /writing/toward-environmental-liberalism/index.html (+2ms)
+00:51:23   ├─ /writing/ai-art-as-curation/index.html (+2ms)
+00:51:23   ├─ /writing/what-does-it-mean-for-ai-to-be-democratic/index.html (+2ms)
+00:51:23   ├─ /writing/a-plug-for-a-tool-i-made-to-show/index.html (+2ms)
+00:51:23   ├─ /writing/a-simple-trick-to-fix-the-data-center/index.html (+2ms)
+00:51:23   ├─ /writing/why-i-think-panic-about-local-impacts/index.html (+1ms)
+00:51:23   ├─ /writing/a-history-of-the-data-center-panic/index.html (+2ms)
+00:51:23   ├─ /writing/a-crash-course-on-us-air-pollution/index.html (+5ms)
+00:51:23   ├─ /writing/lets-not-compare-data-center-heat/index.html (+4ms)
+00:51:23   ├─ /writing/data-center-land-use-issues-are-fake/index.html (+11ms)
+00:51:23   ├─ /writing/to-be-clear-i-do-understand-how-sound/index.html (+2ms)
+00:51:23   ├─ /writing/contra-benn-jordan-data-center-and/index.html (+4ms)
+00:51:23   ├─ /writing/training-ai-models-doesnt-emit-that/index.html (+2ms)
+00:51:23   ├─ /writing/whats-blocking-waymo-in-dc-and-how/index.html (+2ms)
+00:51:23   ├─ /writing/data-centers-heat-exhaust-is-not/index.html (+1ms)
+00:51:23   ├─ /writing/a-call-for-more-specific-and-numerate/index.html (+1ms)
+00:51:23   ├─ /writing/ai-can-obviously-create-new-knowledge/index.html (+1ms)
+00:51:23   ├─ /writing/a-playbook-for-new-ea-groups/index.html (+1ms)
+00:51:23   ├─ /writing/empire-of-ai-is-wildly-misleading/index.html (+2ms)
+00:51:23   ├─ /writing/a-short-summary-of-my-argument-that/index.html (+1ms)
+00:51:23   ├─ /writing/the-lump-of-cognition-fallacy/index.html (+1ms)
+00:51:23   ├─ /writing/a-list-of-other-catastrophes-that/index.html (+1ms)
+00:51:23   ├─ /writing/its-much-easier-to-hold-computers/index.html (+1ms)
+00:51:23   ├─ /writing/data-centers-and-low-social-trust/index.html (+1ms)
+00:51:23   ├─ /writing/an-armchair-diagnosis-of-the-chatbot/index.html (+1ms)
+00:51:23   ├─ /writing/always-mask-in-airports/index.html (+1ms)
+00:51:23   ├─ /writing/please-please-please-do-not-ban-autonomous/index.html (+1ms)
+00:51:23   ├─ /writing/ai-and-folk-cartesianism-part-2-problems/index.html (+2ms)
+00:51:23   ├─ /writing/ai-and-folk-cartesianism-part-1-defining/index.html (+1ms)
+00:51:23   ├─ /writing/requests-for-journalists-covering/index.html (+1ms)
+00:51:23   ├─ /writing/the-main-way-ive-seen-people-turn/index.html (+1ms)
+00:51:23   ├─ /writing/a-few-meta-points-on-my-posts-on/index.html (+1ms)
+00:51:23   ├─ /writing/slop-implies-capability/index.html (+1ms)
+00:51:23   ├─ /writing/the-ai-water-issue-is-fake/index.html (+3ms)
+00:51:23   ├─ /writing/data-centers-and-electricity-part/index.html (+1ms)
+00:51:23   ├─ /writing/what-a-data-center-is/index.html (+1ms)
+00:51:23   ├─ /writing/more-perfect-union-is-deceptive/index.html (+1ms)
+00:51:23   ├─ /writing/for-the-climate-little-things-dont/index.html (+1ms)
+00:51:23   ├─ /writing/whats-the-full-hidden-climate-cost/index.html (+1ms)
+00:51:23   ├─ /writing/do-data-centers-only-seem-bad-for/index.html (+1ms)
+00:51:23   ├─ /writing/jevons-paradox-isnt-always-bad/index.html (+1ms)
+00:51:23   ├─ /writing/mapping-the-ai-and-environment-debate/index.html (+1ms)
+00:51:23   ├─ /writing/the-core-simple-reason-i-think-ai/index.html (+1ms)
+00:51:23   ├─ /writing/an-example-of-what-i-consider-a-misleading/index.html (+1ms)
+00:51:23   ├─ /writing/when-making-cuts-for-the-climate/index.html (+1ms)
+00:51:23   ├─ /writing/a-ton-of-ai-images-ive-made-that/index.html (+3ms)
+00:51:23   ├─ /writing/contra-the-uk-government-please-dont/index.html (+1ms)
+00:51:23   ├─ /writing/egalitarianism-requires-quantification/index.html (+1ms)
+00:51:23   ├─ /writing/my-can-of-soup-example-for-bad-climate/index.html (+1ms)
+00:51:23   ├─ /writing/ordering-amazon-deliveries-is-often/index.html (+3ms)
+00:51:23   ├─ /writing/additional-resources-on-us-policy-careers/index.html (+1ms)
+00:51:23   ├─ /writing/all-my-vegan-fitness-advice-part-b55/index.html (+2ms)
+00:51:23   ├─ /writing/all-my-vegan-fitness-advice-part-acf/index.html (+4ms)
+00:51:23   ├─ /writing/all-my-vegan-fitness-advice-part/index.html (+2ms)
+00:51:23   ├─ /writing/ai-can-be-bad-overall-without-being/index.html (+1ms)
+00:51:23   ├─ /writing/my-are-you-presuming-most-people/index.html (+1ms)
+00:51:23   ├─ /writing/computing-is-efficient/index.html (+7ms)
+00:51:23   ├─ /writing/even-with-a-perfect-government-wed/index.html (+2ms)
+00:51:23   ├─ /writing/resource-recs-on-ai-catastrophic/index.html (+1ms)
+00:51:23   ├─ /writing/all-the-ways-i-want-the-ai-debate/index.html (+4ms)
+00:51:23   ├─ /writing/reactions-to-mit-technology-reviews/index.html (+3ms)
+00:51:23   ├─ /writing/things-i-got-wrong-in-my-chatgptenvironment/index.html (+1ms)
+00:51:23   ├─ /writing/why-goofy-ai-art-almost-never-seems/index.html (+1ms)
+00:51:23   ├─ /writing/replies-to-criticisms-of-my-chatgpt/index.html (+1ms)
+00:51:23   ├─ /writing/animal-suffering-isnt-pretend/index.html (+1ms)
+00:51:23   ├─ /writing/a-cheat-sheet-for-conversations-about/index.html (+30ms)
+00:51:23   ├─ /writing/chatgpt-on-the-lives-of-pigs-in-us/index.html (+4ms)
+00:51:23   ├─ /writing/ideological-moves-that-should-be/index.html (+1ms)
+00:51:23   ├─ /writing/recommended-resources-for-energy/index.html (+1ms)
+00:51:23   ├─ /writing/how-i-use-ai/index.html (+2ms)
+00:51:23   ├─ /writing/a-defense-of-ai-art/index.html (+2ms)
+00:51:23   ├─ /writing/peoples-deeply-held-beliefs-are-surprisingly/index.html (+1ms)
+00:51:23   ├─ /writing/guiding-ideas-i-use-to-think-about/index.html (+2ms)
+00:51:23   ├─ /writing/how-ea-dc-can-help-you-get-the-most-out-of-visiting/index.html (+1ms)
+00:51:23   ├─ /writing/individual-ai-use-is-not-bad-for/index.html (+2ms)
+00:51:23   ├─ /writing/strategies-for-learning/index.html (+2ms)
+00:51:23   ├─ /writing/liberalism/index.html (+3ms)
+00:51:23   ├─ /writing/product-recommendations/index.html (+1ms)
+00:51:23   ├─ /writing/andys-dc-area-vegan-dining-recs/index.html (+1ms)
+00:51:23   ├─ /writing/especially-good-audiobooks/index.html (+1ms)
+00:51:23   ├─ /writing/productivity-stuff-thats-worked-for/index.html (+1ms)
+00:51:23   ├─ /writing/my-favorite-80000-hours-episodes/index.html (+1ms)
+00:51:23   ├─ /writing/resources-on-us-policy-careers/index.html (+4ms)
+00:51:23   ├─ /writing/thinking-seriously-about-violence/index.html (+2ms)
+00:51:23   ├─ /writing/my-foundational-philosophy-beliefs/index.html (+2ms)
+00:51:23   ├─ /writing/whats-the-deal-with-electric-cars/index.html (+1ms)
+00:51:23   ├─ /writing/alcohol-is-so-bad-for-society-that/index.html (+1ms)
+00:51:23   ├─ /writing/all-my-vegan-fitness-advice/index.html (+1ms)
+00:51:23   ├─ /writing/animal-ethics/index.html (+1ms)
+00:51:23   ├─ /writing/an-ea-s-guide-to-washington-dc/index.html (+1ms)
+00:51:23   └─ /writing/ai-and-the-environment/index.html (+1ms)
+00:51:23 ▶ src/pages/writing/index.astro
+00:51:23   └─ /writing/index.html (+7ms)
+00:51:23 ▶ src/pages/index.astro
+00:51:23   └─ /index.html (+1ms)
+00:51:23 ✓ Completed in 11.46s.
+
+00:51:23 [build] 121 page(s) built in 12.73s
+00:51:23 [build] Complete!
++ HUB=.cache/substack/content/ai-and-the-environment.html
++ '[' '!' -s .cache/substack/content/ai-and-the-environment.html ']'
+++ wc -c
++ '[' '   14809' -lt 10000 ']'
++ grep -q '"other-large-industries-show-how-impoverished"' .cache/substack/posts.json
++ '[' -s .cache/substack/content/other-large-industries-show-how-impoverished.html ']'
+++ wc -c
++ '[' '   26701' -ge 5000 ']'
++ '[' -s dist/writing/other-large-industries-show-how-impoverished/index.html ']'
++ npm test
+
+> andymasley-site@1.0.0 test
+> vitest run
+
+
+[1m[46m RUN [49m[22m [36mv4.1.0 [39m[90m/Users/andy/andymasley-site[39m
+
+ [32m✓[39m .claude/worktrees/lucid-pike-a4b767/src/components/carbon/__tests__/grid.test.ts [2m([22m[2m13 tests[22m[2m)[22m[32m 3[2mms[22m[39m
+ [32m✓[39m .claude/worktrees/lucid-pike-a4b767/src/components/carbon/__tests__/baseline.test.ts [2m([22m[2m13 tests[22m[2m)[22m[32m 6[2mms[22m[39m
+ [32m✓[39m .claude/worktrees/lucid-pike-a4b767/src/components/carbon/__tests__/resilience.test.ts [2m([22m[2m23 tests[22m[2m)[22m[32m 14[2mms[22m[39m
+ [32m✓[39m .claude/worktrees/determined-blackburn-cee43c/src/components/carbon/__tests__/grid.test.ts [2m([22m[2m13 tests[22m[2m)[22m[32m 5[2mms[22m[39m
+ [32m✓[39m src/components/carbon/__tests__/resilience.test.ts [2m([22m[2m23 tests[22m[2m)[22m[32m 13[2mms[22m[39m
+ [32m✓[39m src/lib/__tests__/design-tokens.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 39[2mms[22m[39m
+ [32m✓[39m .claude/worktrees/quizzical-moore-800103/src/components/carbon/__tests__/resilience.test.ts [2m([22m[2m23 tests[22m[2m)[22m[32m 16[2mms[22m[39m
+ [32m✓[39m .claude/worktrees/determined-blackburn-cee43c/src/components/carbon/__tests__/resilience.test.ts [2m([22m[2m23 tests[22m[2m)[22m[32m 40[2mms[22m[39m
+[90mstdout[2m | src/lib/__tests__/content-guards.test.ts[2m > [22m[2mREQUIRE_CONTENT guard, Substack[2m > [22m[2mfails the build when the posts API is down and there is no cache
+[22m[39mFetching posts list from Substack API...
+
+[90mstderr[2m | src/lib/__tests__/content-guards.test.ts[2m > [22m[2mREQUIRE_CONTENT guard, Substack[2m > [22m[2mfails the build when the posts API is down and there is no cache
+[22m[39mFailed to fetch Substack posts: Error: Substack posts list fetch failed at offset 0: 403
+    at fetchSubstackPosts (/Users/andy/andymasley-site/src/lib/substack.ts:234:15)
+[90m    at processTicksAndRejections (node:internal/process/task_queues:103:5)[39m
+    at /Users/andy/andymasley-site/src/lib/__tests__/content-guards.test.ts:40:5
+    at file:///Users/andy/andymasley-site/node_modules/[4m@vitest/runner[24m/dist/index.js:1258:20
+
+[90mstderr[2m | src/lib/__tests__/content-guards.test.ts[2m > [22m[2mREQUIRE_CONTENT guard, Substack[2m > [22m[2mfails the build when a post content fetch fails
+[22m[39mFailed to fetch post some-post: 403
+
+[90mstdout[2m | src/lib/__tests__/content-guards.test.ts[2m > [22m[2mREQUIRE_CONTENT guard, Substack[2m > [22m[2mreturns empty results without the flag (local builds keep working)
+[22m[39mFetching posts list from Substack API...
+
+[90mstderr[2m | src/lib/__tests__/content-guards.test.ts[2m > [22m[2mREQUIRE_CONTENT guard, Substack[2m > [22m[2mreturns empty results without the flag (local builds keep working)
+[22m[39mFailed to fetch Substack posts: Error: Substack posts list fetch failed at offset 0: 403
+    at fetchSubstackPosts (/Users/andy/andymasley-site/src/lib/substack.ts:234:15)
+[90m    at processTicksAndRejections (node:internal/process/task_queues:103:5)[39m
+    at /Users/andy/andymasley-site/src/lib/__tests__/content-guards.test.ts:51:5
+    at file:///Users/andy/andymasley-site/node_modules/[4m@vitest/runner[24m/dist/index.js:1258:20
+
+[90mstderr[2m | src/lib/__tests__/content-guards.test.ts[2m > [22m[2mREQUIRE_CONTENT guard, Substack[2m > [22m[2mreturns empty results without the flag (local builds keep working)
+[22m[39mFailed to fetch post some-post: 403
+
+[90mstdout[2m | src/lib/__tests__/content-guards.test.ts[2m > [22m[2mREQUIRE_CONTENT guard, Substack[2m > [22m[2mfails the build on a partial posts list (page 2 fetch fails)
+[22m[39mFetching posts list from Substack API...
+
+ [32m✓[39m .claude/worktrees/determined-blackburn-cee43c/src/components/carbon/__tests__/baseline.test.ts [2m([22m[2m13 tests[22m[2m)[22m[32m 4[2mms[22m[39m
+ [32m✓[39m .claude/worktrees/determined-blackburn-cee43c/src/components/carbon/__tests__/personal-actions.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 3[2mms[22m[39m
+ [32m✓[39m src/components/carbon/__tests__/grid.test.ts [2m([22m[2m13 tests[22m[2m)[22m[32m 3[2mms[22m[39m
+ [32m✓[39m .claude/worktrees/quizzical-moore-800103/src/components/carbon/__tests__/baseline.test.ts [2m([22m[2m13 tests[22m[2m)[22m[32m 5[2mms[22m[39m
+ [32m✓[39m .claude/worktrees/lucid-pike-a4b767/src/components/carbon/__tests__/leverage-lab.test.ts [2m([22m[2m8 tests[22m[2m)[22m[32m 7[2mms[22m[39m
+ [32m✓[39m .claude/worktrees/determined-blackburn-cee43c/src/components/carbon/__tests__/leverage.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 4[2mms[22m[39m
+ [32m✓[39m src/lib/__tests__/substack-links.test.ts [2m([22m[2m14 tests[22m[2m)[22m[32m 5[2mms[22m[39m
+ [32m✓[39m .claude/worktrees/determined-blackburn-cee43c/src/components/carbon/__tests__/leverage-lab.test.ts [2m([22m[2m8 tests[22m[2m)[22m[32m 7[2mms[22m[39m
+[90mstderr[2m | src/lib/__tests__/content-guards.test.ts[2m > [22m[2mREQUIRE_CONTENT guard, Substack[2m > [22m[2mfails the build on a partial posts list (page 2 fetch fails)
+[22m[39mFailed to fetch Substack posts: Error: Substack posts list fetch failed at offset 50: 500
+    at fetchSubstackPosts (/Users/andy/andymasley-site/src/lib/substack.ts:234:15)
+    at /Users/andy/andymasley-site/src/lib/__tests__/content-guards.test.ts:80:5
+    at file:///Users/andy/andymasley-site/node_modules/[4m@vitest/runner[24m/dist/index.js:1258:20
+
+[90mstdout[2m | src/lib/__tests__/content-guards.test.ts[2m > [22m[2mREQUIRE_CONTENT guard, Substack[2m > [22m[2mprefers a stale cache over failing when the fetch breaks mid-pagination
+[22m[39mCached posts list is missing required guide slugs, fetching fresh data
+Fetching posts list from Substack API...
+
+[90mstderr[2m | src/lib/__tests__/content-guards.test.ts[2m > [22m[2mREQUIRE_CONTENT guard, Substack[2m > [22m[2mprefers a stale cache over failing when the fetch breaks mid-pagination
+[22m[39mFailed to fetch Substack posts: Error: Substack posts list fetch failed at offset 0: 403
+    at fetchSubstackPosts (/Users/andy/andymasley-site/src/lib/substack.ts:234:15)
+    at /Users/andy/andymasley-site/src/lib/__tests__/content-guards.test.ts:101:19
+    at file:///Users/andy/andymasley-site/node_modules/[4m@vitest/runner[24m/dist/index.js:1258:20
+
+[90mstdout[2m | src/lib/__tests__/content-guards.test.ts[2m > [22m[2mREQUIRE_CONTENT guard, Substack[2m > [22m[2mprefers a stale cache over failing when the fetch breaks mid-pagination
+[22m[39mUsing stale cache (1 posts) after API failure
+
+[90mstdout[2m | src/lib/__tests__/content-guards.test.ts[2m > [22m[2mREQUIRE_CONTENT guard, EA Forum[2m > [22m[2mfails the build when the posts API is down and there is no cache
+[22m[39mFetching posts list from EA Forum API...
+
+[90mstderr[2m | src/lib/__tests__/content-guards.test.ts[2m > [22m[2mREQUIRE_CONTENT guard, EA Forum[2m > [22m[2mfails the build when the posts API is down and there is no cache
+[22m[39mFailed to fetch EA Forum posts: Error: EA Forum posts list fetch failed at offset 0: 403
+    at fetchEAForumPosts (/Users/andy/andymasley-site/src/lib/eaforum.ts:132:15)
+[90m    at processTicksAndRejections (node:internal/process/task_queues:103:5)[39m
+
+[90mstderr[2m | src/lib/__tests__/content-guards.test.ts[2m > [22m[2mREQUIRE_CONTENT guard, EA Forum[2m > [22m[2mfails the build when a post content fetch fails
+[22m[39mEA Forum API error: 403
+
+[90mstdout[2m | src/lib/__tests__/content-guards.test.ts[2m > [22m[2mREQUIRE_CONTENT guard, EA Forum[2m > [22m[2mreturns empty results without the flag (local builds keep working)
+[22m[39mFetching posts list from EA Forum API...
+
+[90mstderr[2m | src/lib/__tests__/content-guards.test.ts[2m > [22m[2mREQUIRE_CONTENT guard, EA Forum[2m > [22m[2mreturns empty results without the flag (local builds keep working)
+[22m[39mFailed to fetch EA Forum posts: Error: EA Forum posts list fetch failed at offset 0: 403
+    at fetchEAForumPosts (/Users/andy/andymasley-site/src/lib/eaforum.ts:132:15)
+[90m    at processTicksAndRejections (node:internal/process/task_queues:103:5)[39m
+
+[90mstderr[2m | src/lib/__tests__/content-guards.test.ts[2m > [22m[2mREQUIRE_CONTENT guard, EA Forum[2m > [22m[2mreturns empty results without the flag (local builds keep working)
+[22m[39mEA Forum API error: 403
+
+[90mstdout[2m | src/lib/__tests__/content-guards.test.ts[2m > [22m[2mREQUIRE_CONTENT guard, EA Forum[2m > [22m[2mfails the build when GraphQL responds with errors
+[22m[39mFetching posts list from EA Forum API...
+
+[90mstderr[2m | src/lib/__tests__/content-guards.test.ts[2m > [22m[2mREQUIRE_CONTENT guard, EA Forum[2m > [22m[2mfails the build when GraphQL responds with errors
+[22m[39mFailed to fetch EA Forum posts: Error: EA Forum GraphQL returned errors
+    at fetchEAForumPosts (/Users/andy/andymasley-site/src/lib/eaforum.ts:137:15)
+[90m    at processTicksAndRejections (node:internal/process/task_queues:103:5)[39m
+    at /Users/andy/andymasley-site/src/lib/__tests__/content-guards.test.ts:135:5
+    at file:///Users/andy/andymasley-site/node_modules/[4m@vitest/runner[24m/dist/index.js:1258:20
+
+ [32m✓[39m src/lib/__tests__/content-guards.test.ts [2m([22m[2m9 tests[22m[2m)[22m[33m 1134[2mms[22m[39m
+     [33m[2m✓[22m[39m returns empty results without the flag (local builds keep working) [33m 504[2mms[22m[39m
+     [33m[2m✓[22m[39m fails the build on a partial posts list (page 2 fetch fails) [33m 504[2mms[22m[39m
+ [32m✓[39m .claude/worktrees/quizzical-moore-800103/src/components/carbon/__tests__/grid.test.ts [2m([22m[2m13 tests[22m[2m)[22m[32m 3[2mms[22m[39m
+ [32m✓[39m src/components/carbon/__tests__/leverage.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 3[2mms[22m[39m
+ [32m✓[39m src/components/carbon/__tests__/leverage-lab.test.ts [2m([22m[2m8 tests[22m[2m)[22m[32m 3[2mms[22m[39m
+ [32m✓[39m .claude/worktrees/quizzical-moore-800103/src/components/carbon/__tests__/leverage-lab.test.ts [2m([22m[2m8 tests[22m[2m)[22m[32m 5[2mms[22m[39m
+ [32m✓[39m src/components/carbon/__tests__/personal-actions.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 2[2mms[22m[39m
+ [32m✓[39m .claude/worktrees/lucid-pike-a4b767/src/components/carbon/__tests__/personal-actions.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 3[2mms[22m[39m
+ [32m✓[39m src/components/carbon/__tests__/baseline.test.ts [2m([22m[2m13 tests[22m[2m)[22m[32m 4[2mms[22m[39m
+ [32m✓[39m .claude/worktrees/quizzical-moore-800103/src/components/carbon/__tests__/personal-actions.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 2[2mms[22m[39m
+ [32m✓[39m .claude/worktrees/quizzical-moore-800103/src/components/carbon/__tests__/leverage.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 2[2mms[22m[39m
+ [32m✓[39m .claude/worktrees/lucid-pike-a4b767/src/components/carbon/__tests__/leverage.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 2[2mms[22m[39m
+
+[2m Test Files [22m [1m[32m27 passed[39m[22m[90m (27)[39m
+[2m      Tests [22m [1m[32m281 passed[39m[22m[90m (281)[39m
+[2m   Start at [22m 00:51:24
+[2m   Duration [22m 2.51s[2m (transform 519ms, setup 0ms, import 904ms, tests 1.34s, environment 12.87s)[22m
+
++ git status --short .cache
+ M .cache/eaforum/posts.json
+ M .cache/substack/posts.json
++ git add .cache
+fatal: Unable to create '/Users/andy/andymasley-site/.git/index.lock': File exists.
+
+Another git process seems to be running in this repository, e.g.
+an editor opened by 'git commit'. Please make sure all processes
+are terminated then try again. If it still fails, a git process
+may have crashed in this repository earlier:
+remove the file manually to continue.
++ git commit -m 'Refresh Substack and EA Forum caches: add other-large-industries-show-how-impoverished' -m 'Substack blocks CI runner IPs, so the committed cache is what deploy
+builds read. This adds the new post'\''s content cache and the refreshed
+posts lists so it appears on the site.
+
+Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_018FjbLiKPrghm2iKvVTEKg3'
+fatal: Unable to create '/Users/andy/andymasley-site/.git/index.lock': File exists.
+
+Another git process seems to be running in this repository, e.g.
+an editor opened by 'git commit'. Please make sure all processes
+are terminated then try again. If it still fails, a git process
+may have crashed in this repository earlier:
+remove the file manually to continue.
++ echo 'FAIL: commit'
+FAIL: commit
++ exit 1

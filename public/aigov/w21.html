@@ -1,0 +1,217 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<title>Compute and hardware</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<style>
+:root{--font-serif:"Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua",Georgia,Cambria,serif;
+--font-sans:ui-sans-serif,-apple-system,"Segoe UI","Helvetica Neue",Arial,sans-serif;
+--font-mono:ui-monospace,"SF Mono","JetBrains Mono",Menlo,Consolas,monospace;
+--paper:#F8F8FB;--paper-2:#FFFFFF;--panel:#F0EFF7;--ink:#1A1A24;--ink-2:#54545F;--ink-3:#8A8A96;
+--rule:#E1E0EA;--rule-2:#CFCEDC;--accent:#5B50C0;--accent-2:#4A3FA8;--focal:#A0455A;--focal-soft:#F3E4E8;
+--good:#1E7A52;--warn:#B07C24;--sel:#DED9F6;
+--shadow:0 1px 2px rgba(26,26,36,.05),0 12px 34px -14px rgba(26,26,36,.16)}
+@media (prefers-color-scheme:dark){:root{--paper:#16161A;--paper-2:#1C1C22;--panel:#1F1F29;
+--ink:#E9E9F0;--ink-2:#AEAEBA;--ink-3:#777784;--rule:#2A2A34;--rule-2:#3A3A46;
+--accent:#9A90F0;--accent-2:#B3ABF6;--focal:#E38CA0;--focal-soft:#33232A;--good:#5FC29A;--warn:#D9A441;--sel:#33305A;
+--shadow:0 1px 2px rgba(0,0,0,.3),0 14px 40px -16px rgba(0,0,0,.6)}}
+:root[data-theme="light"]{--paper:#F8F8FB;--paper-2:#FFFFFF;--panel:#F0EFF7;--ink:#1A1A24;--ink-2:#54545F;
+--ink-3:#8A8A96;--rule:#E1E0EA;--rule-2:#CFCEDC;--accent:#5B50C0;--accent-2:#4A3FA8;--focal:#A0455A;
+--focal-soft:#F3E4E8;--good:#1E7A52;--warn:#B07C24;--sel:#DED9F6}
+:root[data-theme="dark"]{--paper:#16161A;--paper-2:#1C1C22;--panel:#1F1F29;--ink:#E9E9F0;--ink-2:#AEAEBA;
+--ink-3:#777784;--rule:#2A2A34;--rule-2:#3A3A46;--accent:#9A90F0;--accent-2:#B3ABF6;--focal:#E38CA0;
+--focal-soft:#33232A;--good:#5FC29A;--warn:#D9A441;--sel:#33305A}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--font-serif);
+font-size:18px;line-height:1.66;-webkit-font-smoothing:antialiased}
+::selection{background:var(--sel)}
+a{color:var(--accent);text-underline-offset:2px;text-decoration-thickness:.06em}
+a:hover{color:var(--accent-2)}
+#rail{position:fixed;top:0;left:0;width:274px;height:100vh;overflow-y:auto;background:var(--paper-2);
+border-right:1px solid var(--rule);padding:24px 18px 40px;z-index:40;font-family:var(--font-sans);
+transition:transform .25s ease}
+#rail .brand{font-size:.68rem;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-3)}
+#rail .brand-title{font-family:var(--font-serif);font-size:1.12rem;font-weight:600;margin:2px 0 10px;color:var(--ink)}
+#rail .resume{display:inline-block;font-size:.78rem;font-weight:600;color:var(--accent);
+border:1px solid var(--rule-2);border-radius:18px;padding:4px 12px;text-decoration:none;margin-bottom:6px}
+#rail .resume:hover{border-color:var(--accent)}
+#rail .grp{font-size:.64rem;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);
+margin:16px 0 5px;padding-top:10px;border-top:1px solid var(--rule)}
+#rail a.wk{display:flex;gap:8px;align-items:baseline;padding:3px 8px;border-radius:6px;color:var(--ink-2);
+text-decoration:none;font-size:.8rem;line-height:1.35}
+#rail a.wk:hover{background:var(--panel);color:var(--ink)}
+#rail a.wk.active{background:var(--panel);color:var(--accent);font-weight:600}
+#rail a.wk .n{color:var(--ink-3);font-family:var(--font-mono);font-size:.72rem;min-width:26px}
+#rail a.wk .done{color:var(--good);margin-left:auto}
+#rail .soon{opacity:.45;pointer-events:none}
+#rail .themebtn{margin-top:18px;font-size:.72rem;background:none;border:1px solid var(--rule-2);
+color:var(--ink-2);border-radius:18px;padding:5px 12px;cursor:pointer}
+#menubtn{position:fixed;top:12px;left:12px;z-index:50;display:none;background:var(--paper-2);
+border:1px solid var(--rule-2);border-radius:9px;width:40px;height:40px;cursor:pointer;
+box-shadow:var(--shadow);color:var(--ink);font-size:1.1rem}
+#scrim{position:fixed;inset:0;background:rgba(10,10,16,.4);z-index:35;display:none}
+main{margin-left:274px}
+.wrap{max-width:760px;margin:0 auto;padding:40px 28px 90px}
+.kicker{font-family:var(--font-sans);font-size:.72rem;letter-spacing:.2em;text-transform:uppercase;color:var(--accent)}
+h1{font-size:clamp(1.9rem,4.5vw,2.7rem);font-weight:600;line-height:1.08;letter-spacing:-.015em;margin:.2em 0 .3em}
+h2{font-size:1.4rem;font-weight:600;margin:44px 0 6px;letter-spacing:-.01em}
+h3{font-size:1.08rem;font-weight:600;margin:28px 0 2px}
+h4{font-size:.95rem;font-weight:600;margin:22px 0 2px;color:var(--ink-2)}
+p{margin:14px 0;max-width:66ch}
+ul,ol{max-width:64ch;padding-left:1.3em}
+li{margin:7px 0}
+code{font-family:var(--font-mono);background:var(--panel);border:1px solid var(--rule);
+border-radius:5px;padding:.06em .35em;font-size:.85em}
+pre{background:var(--panel);border:1px solid var(--rule);border-radius:10px;padding:14px 16px;
+overflow-x:auto;font-size:.82em;line-height:1.5}
+pre code{background:none;border:none;padding:0}
+blockquote{margin:22px 0;padding-left:18px;border-left:3px solid var(--rule-2);color:var(--ink-2)}
+hr{border:none;border-top:1px solid var(--rule);margin:36px 0}
+.tablewrap{overflow-x:auto;margin:24px 0}
+table{border-collapse:collapse;font-size:.88rem;min-width:50%}
+th{font-family:var(--font-sans);font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;
+color:var(--ink-2);text-align:left}
+th,td{padding:8px 14px 8px 0;border-bottom:1px solid var(--rule);vertical-align:top}
+.meta{font-family:var(--font-sans);font-size:.8rem;color:var(--ink-3);margin:4px 0 22px}
+.callout{margin:26px 0;border-radius:12px;padding:18px 20px 14px;border:1px solid var(--rule);
+background:var(--paper-2);box-shadow:var(--shadow)}
+.callout .tag{font-family:var(--font-sans);font-size:.66rem;letter-spacing:.16em;text-transform:uppercase;
+font-weight:700;display:block;margin-bottom:7px}
+.miscon{background:color-mix(in srgb,var(--focal) 6%,var(--paper-2));
+border-color:color-mix(in srgb,var(--focal) 30%,var(--rule))}
+.miscon .tag{color:var(--focal)}
+.keyidea{background:linear-gradient(180deg,color-mix(in srgb,var(--accent) 5%,var(--paper-2)),var(--paper-2));
+border-color:color-mix(in srgb,var(--accent) 28%,var(--rule))}
+.keyidea .tag{color:var(--accent)}
+details{margin:18px 0;border:1px solid var(--rule);border-radius:10px;padding:10px 16px;background:var(--paper-2)}
+summary{cursor:pointer;font-family:var(--font-sans);font-size:.85rem;font-weight:600;color:var(--ink-2)}
+details[open] summary{margin-bottom:8px}
+.num{font-family:var(--font-mono);font-variant-numeric:tabular-nums}
+@media (max-width:1000px){#rail{transform:translateX(-100%)}#rail.open{transform:none}
+#menubtn{display:block}main{margin-left:0}body.menuopen #scrim{display:block}}
+</style><script>
+(function(){
+  var t=localStorage.getItem('theme');
+  if(t)document.documentElement.setAttribute('data-theme',t);
+  document.addEventListener('DOMContentLoaded',function(){
+    var b=document.querySelector('.themebtn');
+    if(b)b.addEventListener('click',function(){
+      var cur=document.documentElement.getAttribute('data-theme');
+      var next=cur==='dark'?'light':(cur==='light'?'dark':
+        (matchMedia('(prefers-color-scheme: dark)').matches?'light':'dark'));
+      document.documentElement.setAttribute('data-theme',next);
+      localStorage.setItem('theme',next);
+    });
+    var m=document.getElementById('menubtn'),r=document.getElementById('rail'),s=document.getElementById('scrim');
+    if(m){m.addEventListener('click',function(){r.classList.toggle('open');document.body.classList.toggle('menuopen')});
+    s.addEventListener('click',function(){r.classList.remove('open');document.body.classList.remove('menuopen')});}
+  });
+})();
+</script></head>
+<body><button id="menubtn" aria-label="menu">&#9776;</button><div id="scrim"></div>
+<nav id="rail"><div class="brand">Frontier AI</div>
+<div class="brand-title">Policy curriculum</div>
+<a class="resume" href="w00.html">Resume &rarr; W0</a>
+<div class="grp">Start</div>
+<a class="wk" href="how-to-work.html"><span class="n">§</span><span>How to work</span></a>
+<a class="wk" href="w00.html"><span class="n">W0</span><span>Foundation gateway</span></a>
+<div class="grp">Phase I · Orientation and repair</div>
+<a class="wk" href="w01.html"><span class="n">W1</span><span>Calibration</span></a>
+<a class="wk" href="w02.html"><span class="n">W2</span><span>Linear algebra as transformations</span></a>
+<a class="wk" href="w03.html"><span class="n">W3</span><span>Singular values and low rank structure</span></a>
+<a class="wk" href="w04.html"><span class="n">W4</span><span>Probability, likelihood, and information</span></a>
+<a class="wk" href="w05.html"><span class="n">W5</span><span>Automatic differentiation</span></a>
+<a class="wk" href="w06.html"><span class="n">W6</span><span>Numerical computing and PyTorch fluency</span></a>
+<div class="grp">Phase II · Learning systems</div>
+<a class="wk" href="w07.html"><span class="n">W7</span><span>Statistical learning and generalization</span></a>
+<a class="wk" href="w08.html"><span class="n">W8</span><span>Multilayer networks and learned representations</span></a>
+<a class="wk" href="w09.html"><span class="n">W9</span><span>Optimization and trainability</span></a>
+<a class="wk" href="w10.html"><span class="n">W10</span><span>Experimental craft</span></a>
+<a class="wk" href="w11.html"><span class="n">W11</span><span>Calibration, shift, and causal claims</span></a>
+<div class="grp">Phase III · Transformers</div>
+<a class="wk" href="w12.html"><span class="n">W12</span><span>Tokenization and the language modeling objective</span></a>
+<a class="wk" href="w13.html"><span class="n">W13</span><span>Attention</span></a>
+<a class="wk" href="w14.html"><span class="n">W14</span><span>The transformer block</span></a>
+<a class="wk" href="w15.html"><span class="n">W15</span><span>Build and train a compact GPT</span></a>
+<a class="wk" href="w16.html"><span class="n">W16</span><span>In-context learning and emergence</span></a>
+<a class="wk" href="w17.html"><span class="n">W17</span><span>The modern architecture family</span></a>
+<a class="wk" href="w18.html"><span class="n">W18</span><span>Decoding and inference behavior</span></a>
+<div class="grp">Phase IV · Training at scale</div>
+<a class="wk" href="w19.html"><span class="n">W19</span><span>Training data</span></a>
+<a class="wk" href="w20.html"><span class="n">W20</span><span>Scaling laws and algorithmic efficiency</span></a>
+<a class="wk active" href="w21.html"><span class="n">W21</span><span>Compute and hardware</span></a>
+<a class="wk" href="w22.html"><span class="n">W22</span><span>Distributed training</span></a>
+<a class="wk" href="w23.html"><span class="n">W23</span><span>Inference systems and economics</span></a>
+<div class="grp">Phase V · Posttraining</div>
+<a class="wk" href="w24.html"><span class="n">W24</span><span>LoRA fine-tuning</span></a>
+<a class="wk" href="w25.html"><span class="n">W25</span><span>Supervised tuning and human feedback</span></a>
+<a class="wk" href="w26.html"><span class="n">W26</span><span>Reinforcement learning foundations</span></a>
+<a class="wk" href="w27.html"><span class="n">W27</span><span>Preference optimization and AI feedback</span></a>
+<a class="wk" href="w28.html"><span class="n">W28</span><span>Verifiable rewards and test-time compute</span></a>
+<div class="grp">Phase VI · Agents</div>
+<a class="wk" href="w29.html"><span class="n">W29</span><span>Retrieval and grounded generation</span></a>
+<a class="wk" href="w30.html"><span class="n">W30</span><span>Tool use and compound systems</span></a>
+<a class="wk" href="w31.html"><span class="n">W31</span><span>Agent architecture and reliability</span></a>
+<a class="wk" href="w32.html"><span class="n">W32</span><span>Long horizon evaluation and monitoring</span></a>
+<div class="grp">Phase VII · Multimodality</div>
+<a class="wk" href="w33.html"><span class="n">W33</span><span>Multimodal representations</span></a>
+<a class="wk" href="w34.html"><span class="n">W34</span><span>Diffusion and flow based generation</span></a>
+<a class="wk" href="w35.html"><span class="n">W35</span><span>Video, world models, robotics, and action</span></a>
+<div class="grp">Phase VIII · Evaluation</div>
+<a class="wk" href="w36.html"><span class="n">W36</span><span>Evaluation as measurement science</span></a>
+<a class="wk" href="w37.html"><span class="n">W37</span><span>Benchmark design, contamination, and gaming</span></a>
+<a class="wk" href="w38.html"><span class="n">W38</span><span>Capability trends and forecasting</span></a>
+<a class="wk" href="w39.html"><span class="n">W39</span><span>Interpretability and causal evidence</span></a>
+<a class="wk" href="w40.html"><span class="n">W40</span><span>Build an evaluation suite</span></a>
+<div class="grp">Phase IX · Safety and security</div>
+<a class="wk" href="w41.html"><span class="n">W41</span><span>Misuse and dangerous capabilities</span></a>
+<a class="wk" href="w42.html"><span class="n">W42</span><span>Deception, reward tampering, and model organisms</span></a>
+<a class="wk" href="w43.html"><span class="n">W43</span><span>Control and monitoring</span></a>
+<a class="wk" href="w44.html"><span class="n">W44</span><span>Model weights and infrastructure security</span></a>
+<a class="wk" href="w45.html"><span class="n">W45</span><span>Societal and systemic risks</span></a>
+<div class="grp">Strategy block</div>
+<a class="wk" href="s1.html"><span class="n">S1</span><span>World models and methods</span></a>
+<a class="wk" href="s2.html"><span class="n">S2</span><span>Threat models: the AI's objectives</span></a>
+<a class="wk" href="s3.html"><span class="n">S3</span><span>Threat models: power, structure, and war</span></a>
+<a class="wk" href="s4.html"><span class="n">S4</span><span>Compute governance</span></a>
+<a class="wk" href="s5.html"><span class="n">S5</span><span>Evals-gated governance</span></a>
+<a class="wk" href="s6.html"><span class="n">S6</span><span>International instruments and verification</span></a>
+<div class="grp">Residency</div>
+<a class="wk" href="r01.html"><span class="n">R1</span><span>US AI policy architecture</span></a>
+<a class="wk" href="r02.html"><span class="n">R2</span><span>Administrative law and regulatory design</span></a>
+<a class="wk" href="r03.html"><span class="n">R3</span><span>Federalism and state AI law</span></a>
+<a class="wk" href="r04.html"><span class="n">R4</span><span>Rights, privacy, due process, and sectoral authority</span></a>
+<a class="wk" href="r05.html"><span class="n">R5</span><span>Copyright, training data, identity, and open weights</span></a>
+<a class="wk" href="r06.html"><span class="n">R6</span><span>National security institutions and military use</span></a>
+<a class="wk" href="r07.html"><span class="n">R7</span><span>Export controls, investment, industrial strategy, and compute</span></a>
+<a class="wk" href="r08.html"><span class="n">R8</span><span>Standards, conformity assessment, audit, and assurance</span></a>
+<a class="wk" href="r09.html"><span class="n">R9</span><span>Comparative and international governance</span></a>
+<a class="wk" href="r10.html"><span class="n">R10</span><span>Productivity, labor, competition, and distribution</span></a>
+<a class="wk" href="r11.html"><span class="n">R11</span><span>Energy, infrastructure, environment, and communities</span></a>
+<a class="wk" href="r12.html"><span class="n">R12</span><span>Implementation, budgeting, procurement, enforcement, and crisis</span></a>
+<div class="grp">Capstone</div>
+<a class="wk" href="c1.html"><span class="n">C1</span><span>Position paper draft</span></a>
+<a class="wk" href="c2.html"><span class="n">C2</span><span>Red team and revise</span></a>
+<a class="wk" href="c3.html"><span class="n">C3</span><span>Brief, defend, publish</span></a>
+<div class="grp">Reference</div>
+<a class="wk" href="matrix.html"><span class="n">⊞</span><span>The matrix</span></a>
+<a class="wk" href="gates.html"><span class="n">▮</span><span>Phase gates</span></a>
+<a class="wk" href="rubric.html"><span class="n">1–4</span><span>Rubric</span></a>
+<a class="wk" href="exemplars.html"><span class="n">◑</span><span>Worked exemplars</span></a>
+<a class="wk" href="roster.html"><span class="n">◈</span><span>Model roster</span></a>
+<a class="wk" href="glossary.html"><span class="n">Aa</span><span>Glossary</span></a>
+<a class="wk" href="sources.html"><span class="n">✓</span><span>Source register</span></a>
+<button class="themebtn">Toggle theme</button></nav>
+<main><div class="wrap"><div class="kicker">Phase IV &middot; authored</div><h1 id="compute-and-hardware">Compute and hardware</h1>
+<h2 id="read">Read</h2>
+<ul><li><strong>How To Scale Your Model, Parts 1, 2, and 12</strong> (<a href="https://jax-ml.github.io/scaling-book/roofline">rooflines</a>, <a href="https://jax-ml.github.io/scaling-book/tpus">TPUs</a>, <a href="https://jax-ml.github.io/scaling-book/gpus">GPUs</a>) — rooflines and ridge points, TPU anatomy, GPU anatomy and the H100/B200 spec tables. Rebuild the roofline diagram closed-book and derive the ridge point.</li><li><strong>AI Chips: What They Are and Why They Matter</strong> (Khan &amp; Mann, CSET, April 2020, <a href="https://cset.georgetown.edu/publication/ai-chips-what-they-are-and-why-they-matter/">cset.georgetown.edu</a>) — transistor economics, the cost model, fab concentration, the GPU/FPGA/ASIC taxonomy. It is a 2020 document; grade which claims survived six years.</li><li><strong>LBNL, 2024 United States Data Center Energy Usage Report</strong> (<a href="https://doi.org/10.71468/P1WC7Q">doi.org/10.71468/P1WC7Q</a>) and <strong>RAND, AI's Power Requirements Under Exponential Growth</strong> (<a href="https://www.rand.org/pubs/research_reports/RRA3572-1.html">rand.org</a>) — skim for the numbers you will cite from a ledger, then write the evidence brief on one projection.</li><li><strong>Epoch AI, Data on Notable AI Models</strong> (<a href="https://epoch.ai/data/notable-ai-models">epoch.ai/data/notable-ai-models</a>) — optional as reading, mandatory for the artifact. Read the estimation methodology and the Confident/Likely/Speculative tiers before you defend your own numbers against theirs.</li></ul>
+<h2 id="do">Do</h2>
+<p>Build the spec-sheet roofline ledger. Tabulate peak dense BF16 FLOP/s, HBM capacity and bandwidth, interconnect bandwidth, and TDP for H100 and B200 (add a TPU generation if you like). Compute each chip's ridge point, place three workloads you already own on the plot (a dense training matmul, W18's batch-1 decode, prefill), and check that the chips agree about which side each lands on. Halve the assumed utilization in a 6ND-to-wall-clock conversion and watch the estimated training time move.</p>
+<p>Then estimate one named frontier model's training run, with explicit sensitivity ranges: training FLOPs by both routes (6ND from architecture; accelerator-hours × peak FLOP/s × utilization), accelerator count, wall-clock time, energy (chip TDP through node overhead and PUE to facility MWh), and cost. Close with a sensitivity table, one row per assumption (utilization, precision, token count, retries, PUE, $/GPU-hour).</p>
+<p><strong>Done when</strong> your point estimates bracket at least one published independent estimate from Epoch's database, and the sensitivity table identifies which single assumption dominates the spread.</p>
+<p><strong>Skip if</strong> you can already read the ridge point off an accelerator spec sheet, place a dense training matmul and batch-1 decode on the correct sides of it, and produce a 6ND estimate with a stated utilization for one named model.</p>
+<h2 id="take-away">Take away</h2>
+<ul><li>Every workload has an arithmetic intensity (FLOPs performed per byte moved) and every chip has a ridge point (peak FLOP/s divided by memory bandwidth). Which is bigger decides whether you are buying compute or buying bandwidth.</li><li>An H100 delivers ~990 dense BF16 TFLOP/s against 3.35 TB/s of HBM, a ridge near 300 FLOPs per byte. B200 roughly doubles both numbers and the ratio barely moves. That keeps W18's batch-1 decode memory-bound on every chip you will ever audit.</li><li><strong>A public training-compute estimate is not a measurement.</strong> It is a reconstruction from unknowns (token count, active parameters, precision, utilization, failed runs), each worth a factor. Epoch labels its own estimates Confident (within 3×), Likely (within 10×), or Speculative (within 30×). A bare point estimate has silently claimed the top tier.</li><li>The reference anchors: LBNL puts US data centers at 176 TWh and 4.4% of US electricity in 2023, projected to 325–580 TWh and 6.7–12% by 2028. RAND projects 68 GW of global AI data-center demand by 2027 and single training runs approaching 1 GW by 2028.</li><li>TWh and GW are different quantities. Energy summed over a year answers consumption-share and emissions questions; instantaneous power is what an interconnection queue allocates. Conflating them is the most common quantitative error in data-center policy writing.</li><li>The decision this bears on is how to define training-compute reporting: who measures, in what units, verified how. Three enacted regimes denominate obligations in FLOPs (the EU AI Act, California's TFAIA, and New York's RAISE Act, amended March 2026 to track California and effective January 2027), and none fully specifies the measurement.</li><li>Article 51 presumes systemic risk above 10^25 training FLOPs, documented to the AI Office under Annex XI. California's SB 53, signed September 29, 2025, defines a frontier model as one trained on more than 10^26 operations <em>including subsequent fine-tuning and other material modifications</em>, cumulative and self-measured.</li><li>The rule the statutes haven't written: the unit (cumulative FLOPs at a stated precision, pretraining-only or lifetime, where the laws disagree), the route (logged accelerator-hours cross-checked against 6ND), and the audit. Accelerator-hours are invoiced; utilization is self-reported, and a 6ND figure that cannot reach the disclosed compute is a catchable inconsistency.</li></ul>
+<details><summary>Check yourself</summary>
+<ol><li>Define arithmetic intensity and ridge point. Compute the H100's ridge from ~990 BF16 TFLOP/s and 3.35 TB/s, and say what it means for a workload sitting below it.</li><li>Name the two independent routes to a training-FLOP estimate and the inputs each requires. Which could an auditor verify, and from what records?</li><li>Public estimates of a closed model's training compute can spread across an order of magnitude. Name three distinct unknowns that contribute, and say where your artifact's dominant one showed up.</li><li>LBNL reports 176 TWh; RAND projects 68 GW. Why are these not the same kind of number, and which one does a grid interconnection queue care about?</li></ol>
+<p><strong>Answers.</strong> (1) Arithmetic intensity is FLOPs performed per byte moved to or from memory; the ridge point is peak FLOP/s ÷ memory bandwidth, the intensity at which a chip stops being bandwidth-bound. 990e12 / 3.35e12 ≈ 295 FLOPs per byte. Below the ridge a workload is memory-bound: more FLOP/s won't help, more bandwidth or higher intensity via batching will. (2) Architecture route: 6ND, needing active parameters per token and training tokens, both from disclosure. Hardware route: accelerator count × wall-clock × peak FLOP/s × utilization, needing cluster records plus a utilization figure. The hardware route is auditable from accelerator-hour logs and invoices; utilization is its soft spot, which is why cross-checking the two routes is the audit. (3) Token count (rarely disclosed), active-versus-total parameters under MoE (W17's two-questions-one-name problem), precision and its matching peak-FLOP/s definition, utilization, and failed-run overhead. Which dominates is empirical, and your sensitivity table answers it; for most hardware-route estimates it is utilization, the one factor in the product with no invoice or spec sheet behind it. (4) TWh is energy consumed over a year; GW is the instantaneous draw the infrastructure must serve. An interconnection queue allocates capacity, so it cares about GW at peak, while LBNL's TWh answers consumption-share and emissions questions. They are linked only through load factor.</p>
+</details></div></main></body></html>

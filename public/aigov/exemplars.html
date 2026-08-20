@@ -1,0 +1,271 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<title>Worked exemplars</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<style>
+:root{--font-serif:"Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua",Georgia,Cambria,serif;
+--font-sans:ui-sans-serif,-apple-system,"Segoe UI","Helvetica Neue",Arial,sans-serif;
+--font-mono:ui-monospace,"SF Mono","JetBrains Mono",Menlo,Consolas,monospace;
+--paper:#F8F8FB;--paper-2:#FFFFFF;--panel:#F0EFF7;--ink:#1A1A24;--ink-2:#54545F;--ink-3:#8A8A96;
+--rule:#E1E0EA;--rule-2:#CFCEDC;--accent:#5B50C0;--accent-2:#4A3FA8;--focal:#A0455A;--focal-soft:#F3E4E8;
+--good:#1E7A52;--warn:#B07C24;--sel:#DED9F6;
+--shadow:0 1px 2px rgba(26,26,36,.05),0 12px 34px -14px rgba(26,26,36,.16)}
+@media (prefers-color-scheme:dark){:root{--paper:#16161A;--paper-2:#1C1C22;--panel:#1F1F29;
+--ink:#E9E9F0;--ink-2:#AEAEBA;--ink-3:#777784;--rule:#2A2A34;--rule-2:#3A3A46;
+--accent:#9A90F0;--accent-2:#B3ABF6;--focal:#E38CA0;--focal-soft:#33232A;--good:#5FC29A;--warn:#D9A441;--sel:#33305A;
+--shadow:0 1px 2px rgba(0,0,0,.3),0 14px 40px -16px rgba(0,0,0,.6)}}
+:root[data-theme="light"]{--paper:#F8F8FB;--paper-2:#FFFFFF;--panel:#F0EFF7;--ink:#1A1A24;--ink-2:#54545F;
+--ink-3:#8A8A96;--rule:#E1E0EA;--rule-2:#CFCEDC;--accent:#5B50C0;--accent-2:#4A3FA8;--focal:#A0455A;
+--focal-soft:#F3E4E8;--good:#1E7A52;--warn:#B07C24;--sel:#DED9F6}
+:root[data-theme="dark"]{--paper:#16161A;--paper-2:#1C1C22;--panel:#1F1F29;--ink:#E9E9F0;--ink-2:#AEAEBA;
+--ink-3:#777784;--rule:#2A2A34;--rule-2:#3A3A46;--accent:#9A90F0;--accent-2:#B3ABF6;--focal:#E38CA0;
+--focal-soft:#33232A;--good:#5FC29A;--warn:#D9A441;--sel:#33305A}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--font-serif);
+font-size:18px;line-height:1.66;-webkit-font-smoothing:antialiased}
+::selection{background:var(--sel)}
+a{color:var(--accent);text-underline-offset:2px;text-decoration-thickness:.06em}
+a:hover{color:var(--accent-2)}
+#rail{position:fixed;top:0;left:0;width:274px;height:100vh;overflow-y:auto;background:var(--paper-2);
+border-right:1px solid var(--rule);padding:24px 18px 40px;z-index:40;font-family:var(--font-sans);
+transition:transform .25s ease}
+#rail .brand{font-size:.68rem;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-3)}
+#rail .brand-title{font-family:var(--font-serif);font-size:1.12rem;font-weight:600;margin:2px 0 10px;color:var(--ink)}
+#rail .resume{display:inline-block;font-size:.78rem;font-weight:600;color:var(--accent);
+border:1px solid var(--rule-2);border-radius:18px;padding:4px 12px;text-decoration:none;margin-bottom:6px}
+#rail .resume:hover{border-color:var(--accent)}
+#rail .grp{font-size:.64rem;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);
+margin:16px 0 5px;padding-top:10px;border-top:1px solid var(--rule)}
+#rail a.wk{display:flex;gap:8px;align-items:baseline;padding:3px 8px;border-radius:6px;color:var(--ink-2);
+text-decoration:none;font-size:.8rem;line-height:1.35}
+#rail a.wk:hover{background:var(--panel);color:var(--ink)}
+#rail a.wk.active{background:var(--panel);color:var(--accent);font-weight:600}
+#rail a.wk .n{color:var(--ink-3);font-family:var(--font-mono);font-size:.72rem;min-width:26px}
+#rail a.wk .done{color:var(--good);margin-left:auto}
+#rail .soon{opacity:.45;pointer-events:none}
+#rail .themebtn{margin-top:18px;font-size:.72rem;background:none;border:1px solid var(--rule-2);
+color:var(--ink-2);border-radius:18px;padding:5px 12px;cursor:pointer}
+#menubtn{position:fixed;top:12px;left:12px;z-index:50;display:none;background:var(--paper-2);
+border:1px solid var(--rule-2);border-radius:9px;width:40px;height:40px;cursor:pointer;
+box-shadow:var(--shadow);color:var(--ink);font-size:1.1rem}
+#scrim{position:fixed;inset:0;background:rgba(10,10,16,.4);z-index:35;display:none}
+main{margin-left:274px}
+.wrap{max-width:760px;margin:0 auto;padding:40px 28px 90px}
+.kicker{font-family:var(--font-sans);font-size:.72rem;letter-spacing:.2em;text-transform:uppercase;color:var(--accent)}
+h1{font-size:clamp(1.9rem,4.5vw,2.7rem);font-weight:600;line-height:1.08;letter-spacing:-.015em;margin:.2em 0 .3em}
+h2{font-size:1.4rem;font-weight:600;margin:44px 0 6px;letter-spacing:-.01em}
+h3{font-size:1.08rem;font-weight:600;margin:28px 0 2px}
+h4{font-size:.95rem;font-weight:600;margin:22px 0 2px;color:var(--ink-2)}
+p{margin:14px 0;max-width:66ch}
+ul,ol{max-width:64ch;padding-left:1.3em}
+li{margin:7px 0}
+code{font-family:var(--font-mono);background:var(--panel);border:1px solid var(--rule);
+border-radius:5px;padding:.06em .35em;font-size:.85em}
+pre{background:var(--panel);border:1px solid var(--rule);border-radius:10px;padding:14px 16px;
+overflow-x:auto;font-size:.82em;line-height:1.5}
+pre code{background:none;border:none;padding:0}
+blockquote{margin:22px 0;padding-left:18px;border-left:3px solid var(--rule-2);color:var(--ink-2)}
+hr{border:none;border-top:1px solid var(--rule);margin:36px 0}
+.tablewrap{overflow-x:auto;margin:24px 0}
+table{border-collapse:collapse;font-size:.88rem;min-width:50%}
+th{font-family:var(--font-sans);font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;
+color:var(--ink-2);text-align:left}
+th,td{padding:8px 14px 8px 0;border-bottom:1px solid var(--rule);vertical-align:top}
+.meta{font-family:var(--font-sans);font-size:.8rem;color:var(--ink-3);margin:4px 0 22px}
+.callout{margin:26px 0;border-radius:12px;padding:18px 20px 14px;border:1px solid var(--rule);
+background:var(--paper-2);box-shadow:var(--shadow)}
+.callout .tag{font-family:var(--font-sans);font-size:.66rem;letter-spacing:.16em;text-transform:uppercase;
+font-weight:700;display:block;margin-bottom:7px}
+.miscon{background:color-mix(in srgb,var(--focal) 6%,var(--paper-2));
+border-color:color-mix(in srgb,var(--focal) 30%,var(--rule))}
+.miscon .tag{color:var(--focal)}
+.keyidea{background:linear-gradient(180deg,color-mix(in srgb,var(--accent) 5%,var(--paper-2)),var(--paper-2));
+border-color:color-mix(in srgb,var(--accent) 28%,var(--rule))}
+.keyidea .tag{color:var(--accent)}
+details{margin:18px 0;border:1px solid var(--rule);border-radius:10px;padding:10px 16px;background:var(--paper-2)}
+summary{cursor:pointer;font-family:var(--font-sans);font-size:.85rem;font-weight:600;color:var(--ink-2)}
+details[open] summary{margin-bottom:8px}
+.num{font-family:var(--font-mono);font-variant-numeric:tabular-nums}
+@media (max-width:1000px){#rail{transform:translateX(-100%)}#rail.open{transform:none}
+#menubtn{display:block}main{margin-left:0}body.menuopen #scrim{display:block}}
+</style><script>
+(function(){
+  var t=localStorage.getItem('theme');
+  if(t)document.documentElement.setAttribute('data-theme',t);
+  document.addEventListener('DOMContentLoaded',function(){
+    var b=document.querySelector('.themebtn');
+    if(b)b.addEventListener('click',function(){
+      var cur=document.documentElement.getAttribute('data-theme');
+      var next=cur==='dark'?'light':(cur==='light'?'dark':
+        (matchMedia('(prefers-color-scheme: dark)').matches?'light':'dark'));
+      document.documentElement.setAttribute('data-theme',next);
+      localStorage.setItem('theme',next);
+    });
+    var m=document.getElementById('menubtn'),r=document.getElementById('rail'),s=document.getElementById('scrim');
+    if(m){m.addEventListener('click',function(){r.classList.toggle('open');document.body.classList.toggle('menuopen')});
+    s.addEventListener('click',function(){r.classList.remove('open');document.body.classList.remove('menuopen')});}
+  });
+})();
+</script></head>
+<body><button id="menubtn" aria-label="menu">&#9776;</button><div id="scrim"></div>
+<nav id="rail"><div class="brand">Frontier AI</div>
+<div class="brand-title">Policy curriculum</div>
+<a class="resume" href="w00.html">Resume &rarr; W0</a>
+<div class="grp">Start</div>
+<a class="wk" href="how-to-work.html"><span class="n">§</span><span>How to work</span></a>
+<a class="wk" href="w00.html"><span class="n">W0</span><span>Foundation gateway</span></a>
+<div class="grp">Phase I · Orientation and repair</div>
+<a class="wk" href="w01.html"><span class="n">W1</span><span>Calibration</span></a>
+<a class="wk" href="w02.html"><span class="n">W2</span><span>Linear algebra as transformations</span></a>
+<a class="wk" href="w03.html"><span class="n">W3</span><span>Singular values and low rank structure</span></a>
+<a class="wk" href="w04.html"><span class="n">W4</span><span>Probability, likelihood, and information</span></a>
+<a class="wk" href="w05.html"><span class="n">W5</span><span>Automatic differentiation</span></a>
+<a class="wk" href="w06.html"><span class="n">W6</span><span>Numerical computing and PyTorch fluency</span></a>
+<div class="grp">Phase II · Learning systems</div>
+<a class="wk" href="w07.html"><span class="n">W7</span><span>Statistical learning and generalization</span></a>
+<a class="wk" href="w08.html"><span class="n">W8</span><span>Multilayer networks and learned representations</span></a>
+<a class="wk" href="w09.html"><span class="n">W9</span><span>Optimization and trainability</span></a>
+<a class="wk" href="w10.html"><span class="n">W10</span><span>Experimental craft</span></a>
+<a class="wk" href="w11.html"><span class="n">W11</span><span>Calibration, shift, and causal claims</span></a>
+<div class="grp">Phase III · Transformers</div>
+<a class="wk" href="w12.html"><span class="n">W12</span><span>Tokenization and the language modeling objective</span></a>
+<a class="wk" href="w13.html"><span class="n">W13</span><span>Attention</span></a>
+<a class="wk" href="w14.html"><span class="n">W14</span><span>The transformer block</span></a>
+<a class="wk" href="w15.html"><span class="n">W15</span><span>Build and train a compact GPT</span></a>
+<a class="wk" href="w16.html"><span class="n">W16</span><span>In-context learning and emergence</span></a>
+<a class="wk" href="w17.html"><span class="n">W17</span><span>The modern architecture family</span></a>
+<a class="wk" href="w18.html"><span class="n">W18</span><span>Decoding and inference behavior</span></a>
+<div class="grp">Phase IV · Training at scale</div>
+<a class="wk" href="w19.html"><span class="n">W19</span><span>Training data</span></a>
+<a class="wk" href="w20.html"><span class="n">W20</span><span>Scaling laws and algorithmic efficiency</span></a>
+<a class="wk" href="w21.html"><span class="n">W21</span><span>Compute and hardware</span></a>
+<a class="wk" href="w22.html"><span class="n">W22</span><span>Distributed training</span></a>
+<a class="wk" href="w23.html"><span class="n">W23</span><span>Inference systems and economics</span></a>
+<div class="grp">Phase V · Posttraining</div>
+<a class="wk" href="w24.html"><span class="n">W24</span><span>LoRA fine-tuning</span></a>
+<a class="wk" href="w25.html"><span class="n">W25</span><span>Supervised tuning and human feedback</span></a>
+<a class="wk" href="w26.html"><span class="n">W26</span><span>Reinforcement learning foundations</span></a>
+<a class="wk" href="w27.html"><span class="n">W27</span><span>Preference optimization and AI feedback</span></a>
+<a class="wk" href="w28.html"><span class="n">W28</span><span>Verifiable rewards and test-time compute</span></a>
+<div class="grp">Phase VI · Agents</div>
+<a class="wk" href="w29.html"><span class="n">W29</span><span>Retrieval and grounded generation</span></a>
+<a class="wk" href="w30.html"><span class="n">W30</span><span>Tool use and compound systems</span></a>
+<a class="wk" href="w31.html"><span class="n">W31</span><span>Agent architecture and reliability</span></a>
+<a class="wk" href="w32.html"><span class="n">W32</span><span>Long horizon evaluation and monitoring</span></a>
+<div class="grp">Phase VII · Multimodality</div>
+<a class="wk" href="w33.html"><span class="n">W33</span><span>Multimodal representations</span></a>
+<a class="wk" href="w34.html"><span class="n">W34</span><span>Diffusion and flow based generation</span></a>
+<a class="wk" href="w35.html"><span class="n">W35</span><span>Video, world models, robotics, and action</span></a>
+<div class="grp">Phase VIII · Evaluation</div>
+<a class="wk" href="w36.html"><span class="n">W36</span><span>Evaluation as measurement science</span></a>
+<a class="wk" href="w37.html"><span class="n">W37</span><span>Benchmark design, contamination, and gaming</span></a>
+<a class="wk" href="w38.html"><span class="n">W38</span><span>Capability trends and forecasting</span></a>
+<a class="wk" href="w39.html"><span class="n">W39</span><span>Interpretability and causal evidence</span></a>
+<a class="wk" href="w40.html"><span class="n">W40</span><span>Build an evaluation suite</span></a>
+<div class="grp">Phase IX · Safety and security</div>
+<a class="wk" href="w41.html"><span class="n">W41</span><span>Misuse and dangerous capabilities</span></a>
+<a class="wk" href="w42.html"><span class="n">W42</span><span>Deception, reward tampering, and model organisms</span></a>
+<a class="wk" href="w43.html"><span class="n">W43</span><span>Control and monitoring</span></a>
+<a class="wk" href="w44.html"><span class="n">W44</span><span>Model weights and infrastructure security</span></a>
+<a class="wk" href="w45.html"><span class="n">W45</span><span>Societal and systemic risks</span></a>
+<div class="grp">Strategy block</div>
+<a class="wk" href="s1.html"><span class="n">S1</span><span>World models and methods</span></a>
+<a class="wk" href="s2.html"><span class="n">S2</span><span>Threat models: the AI's objectives</span></a>
+<a class="wk" href="s3.html"><span class="n">S3</span><span>Threat models: power, structure, and war</span></a>
+<a class="wk" href="s4.html"><span class="n">S4</span><span>Compute governance</span></a>
+<a class="wk" href="s5.html"><span class="n">S5</span><span>Evals-gated governance</span></a>
+<a class="wk" href="s6.html"><span class="n">S6</span><span>International instruments and verification</span></a>
+<div class="grp">Residency</div>
+<a class="wk" href="r01.html"><span class="n">R1</span><span>US AI policy architecture</span></a>
+<a class="wk" href="r02.html"><span class="n">R2</span><span>Administrative law and regulatory design</span></a>
+<a class="wk" href="r03.html"><span class="n">R3</span><span>Federalism and state AI law</span></a>
+<a class="wk" href="r04.html"><span class="n">R4</span><span>Rights, privacy, due process, and sectoral authority</span></a>
+<a class="wk" href="r05.html"><span class="n">R5</span><span>Copyright, training data, identity, and open weights</span></a>
+<a class="wk" href="r06.html"><span class="n">R6</span><span>National security institutions and military use</span></a>
+<a class="wk" href="r07.html"><span class="n">R7</span><span>Export controls, investment, industrial strategy, and compute</span></a>
+<a class="wk" href="r08.html"><span class="n">R8</span><span>Standards, conformity assessment, audit, and assurance</span></a>
+<a class="wk" href="r09.html"><span class="n">R9</span><span>Comparative and international governance</span></a>
+<a class="wk" href="r10.html"><span class="n">R10</span><span>Productivity, labor, competition, and distribution</span></a>
+<a class="wk" href="r11.html"><span class="n">R11</span><span>Energy, infrastructure, environment, and communities</span></a>
+<a class="wk" href="r12.html"><span class="n">R12</span><span>Implementation, budgeting, procurement, enforcement, and crisis</span></a>
+<div class="grp">Capstone</div>
+<a class="wk" href="c1.html"><span class="n">C1</span><span>Position paper draft</span></a>
+<a class="wk" href="c2.html"><span class="n">C2</span><span>Red team and revise</span></a>
+<a class="wk" href="c3.html"><span class="n">C3</span><span>Brief, defend, publish</span></a>
+<div class="grp">Reference</div>
+<a class="wk" href="matrix.html"><span class="n">⊞</span><span>The matrix</span></a>
+<a class="wk" href="gates.html"><span class="n">▮</span><span>Phase gates</span></a>
+<a class="wk" href="rubric.html"><span class="n">1–4</span><span>Rubric</span></a>
+<a class="wk active" href="exemplars.html"><span class="n">◑</span><span>Worked exemplars</span></a>
+<a class="wk" href="roster.html"><span class="n">◈</span><span>Model roster</span></a>
+<a class="wk" href="glossary.html"><span class="n">Aa</span><span>Glossary</span></a>
+<a class="wk" href="sources.html"><span class="n">✓</span><span>Source register</span></a>
+<button class="themebtn">Toggle theme</button></nav>
+<main><div class="wrap"><h1 id="worked-exemplars">Worked exemplars</h1>
+<p>Six short examples of the artifact formats the weeks ask for, each at imitable length.</p>
+<p>Formats are defined elsewhere: the claim ladder and the memo bar in <a href="how-to-work.html">How to work</a>, the ledger row in <a href="c1.html">C1</a>, the dossier in <code>dossiers/README.md</code> in the repo, the eval card in <a href="w40.html">W40</a>.</p>
+<p>Bracketed items are placeholders you fill at run time. Credences here are the writer's own numbers, dated, and carry no evidentiary weight. Every other figure traces to the week that assigns the source, or to the <a href="sources.html">source register</a>.</p>
+<hr>
+<h2 id="1-a-graded-claim">1. A graded claim</h2>
+<p><strong>The sentence, as it travels.</strong> <em>Agent task horizons are doubling roughly every seven months.</em> It comes from METR, it is carried in the International AI Safety Report 2026, and from there it reaches briefings.</p>
+<p><strong>Measurement.</strong> On METR's 170-task suite (HCAST 97, RE-Bench 7, SWAA 66), with human completion times from 800-plus baselines, the fitted 50%-success horizon doubles every 207 days, 95% bootstrap CI 166–240 (Kwa et al., <a href="https://arxiv.org/abs/2503.14499">arXiv:2503.14499</a>, v4 10 Jul 2026).</p>
+<p><strong>Scope.</strong> That suite. Clean software tasks. METR's scaffolds. Models 2019–2025. 50% success, which is a coin flip; measured horizons shrink 4–6× at 80%.</p>
+<p><strong>Inference, one rung up.</strong> "Frontier agents are getting better at long tasks in general." Needs the suite to stand in for work outside software. METR's own FAQ flags external validity on the same page as the chart.</p>
+<p><strong>Forecast, two rungs up.</strong> "A 40-hour horizon by [year]." Adds trend continuation. The bootstrap CI covers how the fit wobbles on METR's data. It does not cover trend breaks, benchmark decay, or suite contamination.</p>
+<p><strong>Assurance.</strong> None available. The index is human completion time, not agent runtime, so the number cannot certify that an agent runs unattended for any period.</p>
+<p><strong>Recommendation.</strong> Any rule built on it adds values, alternatives, authority, and cost. The measurement contains none of the four.</p>
+<p><strong>What it cannot support:</strong> a deployment gate, an unattended-runtime claim, a rule written at 80% reliability, or a demand forecast of any kind.</p>
+<p><strong>Why this passes.</strong> The measurement is stated with its instrument and its interval, and every crossing above it is labeled as a crossing rather than absorbed into the sentence.</p>
+<hr>
+<h2 id="2-a-claim-ledger-entry">2. A claim-ledger entry</h2>
+<p>Four rows. Columns per <a href="c1.html">C1</a>, plus the mover.</p>
+<div class="tablewrap"><table>
+<tr><th>claim</th><th>rung</th><th>source</th><th>scope</th><th>what would change it</th></tr>
+<tr><td>Agent 50% time horizons doubled every 207 days, 2019–2025 (95% CI 166–240)</td><td>measurement</td><td>METR, <a href="https://arxiv.org/abs/2503.14499">arXiv:2503.14499</a> v4; <a href="https://metr.org/time-horizons/">metr.org/time-horizons</a></td><td>170-task suite; human-time index; METR scaffolds; 50% success</td><td>several quarters of new points below the fit; a contamination audit of the suite</td></tr>
+<tr><td>LLM access was associated with a 0.22-point decrease in plan viability (p = 0.64) across twelve red cells</td><td>measurement, null and underpowered</td><td>RAND RRA2977-2, 25 Jan 2024</td><td>12 cells, 4 vignettes; scored planning documents, not execution; summer-2023 models; design detects ~1.0 point</td><td>a replication powered below 0.5 points, or a design that scores execution</td></tr>
+<tr><td>A fixed FLOP threshold covers a shrinking share of frontier-capable training runs each year</td><td>forecast</td><td>mine, p = 0.7 (2026-08-01), built on Epoch's training-compute trend (~5×/yr, 90% CI 4–6×)</td><td>US reporting thresholds, unindexed, through 2030</td><td>statutory indexation; a break in the compute trend; evidence that capability tracks something other than training FLOP</td></tr>
+<tr><td>"Our internal evaluations found no dangerous capability"</td><td>assurance</td><td>vendor system card, [date]</td><td>none stated</td><td>nothing. No construct, population, elicitation settings, or logs, so the row cannot be graded</td></tr>
+</table></div>
+<p><strong>Why these pass.</strong> Each row names the instrument rather than the headline, and each scope cell is written where the claim breaks rather than where the source is comfortable. Row four is in the ledger to record that a claim was made and could not be graded. Cite the absence, not the claim.</p>
+<hr>
+<h2 id="3-a-dossier-extract">3. A dossier extract</h2>
+<p>Threat model: misuse, biological weapons (the dossier is <code>dossiers/misuse-biological-weapons.md</code> in the repo, seeded from <code>depth_threatmodels.json</code>). Pathway plus two cruxes; the file also wants the strongest critique at full strength and one falsifiable 12-month prediction.</p>
+<p><strong>Pathway, my words and my probabilities.</strong> The historical constraint on a small group reaching a pandemic-capable agent has been tacit knowledge: protocol design, failure diagnosis, agent selection, and wet-lab troubleshooting that no text transfers. Frontier models compress the first three and are starting to touch the fourth through biological design tools. The path to catastrophe runs through a deliberate actor with a small budget and no institutional lab program, and the model is working as instructed the whole way. That makes it a proliferation failure, so the policy stack it implicates is synthesis screening, KYC, and access tiering rather than control or interpretability. I weight this family below structural drift, because I put most of the kill chain's difficulty downstream of information. Crux 1 is where that weighting lives.</p>
+<p><strong>Crux 1. Where the binding constraint sits.</strong> Information and troubleshooting, which AI addresses, or physical acquisition, somatic tacit skill, and scale-up, which it does not.</p>
+<ul><li>p = 0.3 that the binding constraint is AI-addressable (2026-08-01).</li><li>Moves me up: a red-team study scoring execution rather than planning documents that finds a viability gap above its own detection floor. RAND's 2024 design could not have seen one, at 12 cells and roughly 1.0 point detectable.</li><li>Moves me down: a documented interdiction at procurement or synthesis screening that caught an attempt the information stage did not.</li></ul>
+<p><strong>Crux 2. Do public biorisk benchmark scores predict end-to-end capability?</strong></p>
+<ul><li>p = 0.15 that a validated link is published by 2027-08-01 (2026-08-01).</li><li>Moves me: a study relating wet-lab troubleshooting scores to an end-to-end outcome measure, with the expert baseline stated. The Virology Capabilities Test anchors the input side at 22.1% for expert virologists inside their own sub-areas. The outcome side is the missing half.</li><li>Ho and Berg conclude only that evaluations are insufficient to rule risk out. That is a case for precaution, not positive evidence of uplift, and it is usually quoted as the second thing.</li></ul>
+<p><strong>Why this passes.</strong> Each crux is a belief whose flip changes a recommendation, each credence carries a date, and each observable names a direction and a rough size. A crux with no named observable is a topic.</p>
+<hr>
+<h2 id="4-an-eval-card">4. An eval card</h2>
+<p>Fields per <a href="w40.html">W40</a>. The suite is fictional. The arithmetic is not.</p>
+<p><strong>Construct.</strong> Whether the model, asked to summarize a capability claim, states the scope limits the source itself attaches to it. Decision served: whether a two-person policy team can triage incoming capability claims without a human rereading each source. Stack level: model plus prompt, no tools. Deviations from the <a href="w36.html">W36</a> spec: none.</p>
+<p><strong>Population.</strong> 24 hand-written items, each pairing a real capability sentence with the caveats its own source states. Claims to stand in for capability claims arriving in a policy inbox. Does not cover multi-document claims, non-English sources, or claims whose source states no caveat.</p>
+<p><strong>Task set.</strong> <code>scope-triage-v0.3</code>, committed [date], [hash].</p>
+<p><strong>Elicitation.</strong> Temperature 1.0, single turn, no tools, 800-token cap, 3 samples per item, seeds logged. Any response hitting the cap is scored as-is and flagged.</p>
+<p><strong>Harness.</strong> Inspect [version], model [id and version string], no sandbox.</p>
+<p><strong>Scoring.</strong> Model-graded on three binary criteria: names a caveat the source states; names no caveat the source does not state; does not raise the claim's rung. Grader [model id], prompt verbatim in the log. Hand-check: 30 transcripts regraded by me, agreement [n/30].</p>
+<p><strong>Uncertainty.</strong> Two runs at identical configuration scored 58% and 62%, a 4-point spread. Item-sampling standard error at n = 24 and p ≈ 0.6 is √(0.6 × 0.4 / 24) ≈ 10 points. The second swamps the first. This suite supports "the model does this most of the time" and cannot support a 10-point model-versus-model comparison.</p>
+<p><strong>Validity threats.</strong></p>
+<div class="tablewrap"><table>
+<tr><th>threat</th><th>detector</th><th>result</th></tr>
+<tr><td>construct gap: caveat-stating is a proxy for scope discipline</td><td>items whose stated caveat is real but irrelevant to the claim</td><td>not yet built</td></tr>
+<tr><td>grader dependence</td><td>swap the grader model, direction predicted first</td><td>predicted a drop, measured −7 points; the decision rule uses the stricter grader</td></tr>
+<tr><td>item-writing bias (same person wrote items and rubric)</td><td>a second writer produces 6 items blind to the rubric</td><td>pending</td></tr>
+<tr><td>contamination</td><td>items are new prose, not public benchmark text</td><td>low, unmeasured</td></tr>
+</table></div>
+<p><strong>Decision rule.</strong> Below 50% on the stricter grader, triage for that source type returns to a human. The team lead acts. The threshold reads the run mean, not a single run, and is rechecked whenever the grader or the model version changes.</p>
+<p><strong>Why this passes.</strong> A second run at the same configuration lands inside the stated spread, and the two uncertainties are reported separately instead of averaged into one error bar.</p>
+<hr>
+<h2 id="5-a-memo-opening">5. A memo opening</h2>
+<p>First 150 words of a two-page BLUF memo. Bar per <a href="how-to-work.html">How to work</a>: recommendation up front, a named principal who can act, every strong sentence surviving a source-scope-uncertainty audit. Material from <a href="r11.html">R11</a>.</p>
+<blockquote><p><strong>To</strong> [name], [org] · <strong>From</strong> [you] · <strong>Date</strong> [date] · <strong>Re</strong> Large-load cost allocation before the [state] commission  <strong>Recommendation.</strong> File in the commission's large-load tariff proceeding and skip FERC's RM26-4 docket this quarter. The decision that sets who pays for the [project] campus is retail rate design, and retail rates sit with the state under Federal Power Act section 201(b). RM26-4 is testing whether large-load interconnection is federal business at all. Even a favorable outcome there leaves rate design with your commission.  <strong>Options.</strong> (1) State tariff intervention: a large-load class with minimum-take terms, collateral, and exit fees, priced on cost causation. Cheapest, nearest deadline, most leverage. (2) RM26-4 comments only: national visibility, no effect on this project's rates. (3) Both, which splits two staff across two clocks and files neither well.  <strong>Below:</strong> the authority map with appeal paths, the cost-causation argument, and the two load numbers the commission will ask you for.</p></blockquote>
+<p><strong>Why this passes.</strong></p>
+<ul><li>The first sentence is the ask, with an instrument and a docket.</li><li>The load-bearing jurisdictional claim cites the statute section it rests on.</li><li>The dismissed option is dismissed on a stated reason rather than omitted.</li><li>Option 3 is named and priced, so the principal can see what hedging costs.</li></ul>
+<hr>
+<h2 id="6-the-same-memo-failing">6. The same memo, failing</h2>
+<p>Same brief, second attempt. Competent prose about real things, and it fails.</p>
+<blockquote><p><strong>Re</strong> AI data centers and the grid  Data center demand is growing rapidly. Utilities in the region report a combined [N] GW of pending large-load requests, up sharply from last year, and interconnection queues continue to lengthen. FERC is considering large-load interconnection in Docket RM26-4. Meanwhile agent task horizons are doubling every seven months, so compute demand will keep climbing. State policymakers should take these pressures seriously and consider whether current tariff structures remain appropriate. This memo reviews the background, surveys the relevant authorities, and offers considerations for further study.</p></blockquote>
+<p><strong>Margin notes.</strong></p>
+<ol><li><strong>No ask, no actor.</strong> "Should take seriously" and "consider whether" name no instrument, no docket, and nobody with authority. A principal cannot act on page one.</li><li><strong>Queue totals summed.</strong> One project shops several utilities and holds positions in more than one queue, so a regional sum double-counts by construction. The honest sentence gives a range whose floor is zero (<a href="r11.html">R11</a>).</li><li><strong>"Up sharply from last year"</strong> has no source, no baseline year, and no ledger row. Retrofitting citations onto finished prose is how numbers get invented.</li><li><strong>A fitted parameter crossed into a demand forecast.</strong> The 207-day doubling is measured on a software-task suite at 50% success. Nothing in it is about electricity. Two ladder rungs are crossed inside one clause (<a href="w32.html">W32</a>, <a href="w38.html">W38</a>).</li><li><strong>Jurisdiction named but not resolved.</strong> Citing RM26-4 without saying whether this decision is federal or retail leaves the reader unable to tell who the memo is for.</li><li><strong>The roadmap paragraph.</strong> It tells the principal what they are about to read instead of what to do. Cutting it costs nothing.</li></ol>
+<p><strong>Repair order.</strong> Fix 1 first. Writing the ask forces 2, 4, and 5 into the open.</p></div></main></body></html>

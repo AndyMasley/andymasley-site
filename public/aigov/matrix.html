@@ -1,0 +1,268 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<title>The matrix</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<style>
+:root{--font-serif:"Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua",Georgia,Cambria,serif;
+--font-sans:ui-sans-serif,-apple-system,"Segoe UI","Helvetica Neue",Arial,sans-serif;
+--font-mono:ui-monospace,"SF Mono","JetBrains Mono",Menlo,Consolas,monospace;
+--paper:#F8F8FB;--paper-2:#FFFFFF;--panel:#F0EFF7;--ink:#1A1A24;--ink-2:#54545F;--ink-3:#8A8A96;
+--rule:#E1E0EA;--rule-2:#CFCEDC;--accent:#5B50C0;--accent-2:#4A3FA8;--focal:#A0455A;--focal-soft:#F3E4E8;
+--good:#1E7A52;--warn:#B07C24;--sel:#DED9F6;
+--shadow:0 1px 2px rgba(26,26,36,.05),0 12px 34px -14px rgba(26,26,36,.16)}
+@media (prefers-color-scheme:dark){:root{--paper:#16161A;--paper-2:#1C1C22;--panel:#1F1F29;
+--ink:#E9E9F0;--ink-2:#AEAEBA;--ink-3:#777784;--rule:#2A2A34;--rule-2:#3A3A46;
+--accent:#9A90F0;--accent-2:#B3ABF6;--focal:#E38CA0;--focal-soft:#33232A;--good:#5FC29A;--warn:#D9A441;--sel:#33305A;
+--shadow:0 1px 2px rgba(0,0,0,.3),0 14px 40px -16px rgba(0,0,0,.6)}}
+:root[data-theme="light"]{--paper:#F8F8FB;--paper-2:#FFFFFF;--panel:#F0EFF7;--ink:#1A1A24;--ink-2:#54545F;
+--ink-3:#8A8A96;--rule:#E1E0EA;--rule-2:#CFCEDC;--accent:#5B50C0;--accent-2:#4A3FA8;--focal:#A0455A;
+--focal-soft:#F3E4E8;--good:#1E7A52;--warn:#B07C24;--sel:#DED9F6}
+:root[data-theme="dark"]{--paper:#16161A;--paper-2:#1C1C22;--panel:#1F1F29;--ink:#E9E9F0;--ink-2:#AEAEBA;
+--ink-3:#777784;--rule:#2A2A34;--rule-2:#3A3A46;--accent:#9A90F0;--accent-2:#B3ABF6;--focal:#E38CA0;
+--focal-soft:#33232A;--good:#5FC29A;--warn:#D9A441;--sel:#33305A}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--font-serif);
+font-size:18px;line-height:1.66;-webkit-font-smoothing:antialiased}
+::selection{background:var(--sel)}
+a{color:var(--accent);text-underline-offset:2px;text-decoration-thickness:.06em}
+a:hover{color:var(--accent-2)}
+#rail{position:fixed;top:0;left:0;width:274px;height:100vh;overflow-y:auto;background:var(--paper-2);
+border-right:1px solid var(--rule);padding:24px 18px 40px;z-index:40;font-family:var(--font-sans);
+transition:transform .25s ease}
+#rail .brand{font-size:.68rem;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-3)}
+#rail .brand-title{font-family:var(--font-serif);font-size:1.12rem;font-weight:600;margin:2px 0 10px;color:var(--ink)}
+#rail .resume{display:inline-block;font-size:.78rem;font-weight:600;color:var(--accent);
+border:1px solid var(--rule-2);border-radius:18px;padding:4px 12px;text-decoration:none;margin-bottom:6px}
+#rail .resume:hover{border-color:var(--accent)}
+#rail .grp{font-size:.64rem;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);
+margin:16px 0 5px;padding-top:10px;border-top:1px solid var(--rule)}
+#rail a.wk{display:flex;gap:8px;align-items:baseline;padding:3px 8px;border-radius:6px;color:var(--ink-2);
+text-decoration:none;font-size:.8rem;line-height:1.35}
+#rail a.wk:hover{background:var(--panel);color:var(--ink)}
+#rail a.wk.active{background:var(--panel);color:var(--accent);font-weight:600}
+#rail a.wk .n{color:var(--ink-3);font-family:var(--font-mono);font-size:.72rem;min-width:26px}
+#rail a.wk .done{color:var(--good);margin-left:auto}
+#rail .soon{opacity:.45;pointer-events:none}
+#rail .themebtn{margin-top:18px;font-size:.72rem;background:none;border:1px solid var(--rule-2);
+color:var(--ink-2);border-radius:18px;padding:5px 12px;cursor:pointer}
+#menubtn{position:fixed;top:12px;left:12px;z-index:50;display:none;background:var(--paper-2);
+border:1px solid var(--rule-2);border-radius:9px;width:40px;height:40px;cursor:pointer;
+box-shadow:var(--shadow);color:var(--ink);font-size:1.1rem}
+#scrim{position:fixed;inset:0;background:rgba(10,10,16,.4);z-index:35;display:none}
+main{margin-left:274px}
+.wrap{max-width:760px;margin:0 auto;padding:40px 28px 90px}
+.kicker{font-family:var(--font-sans);font-size:.72rem;letter-spacing:.2em;text-transform:uppercase;color:var(--accent)}
+h1{font-size:clamp(1.9rem,4.5vw,2.7rem);font-weight:600;line-height:1.08;letter-spacing:-.015em;margin:.2em 0 .3em}
+h2{font-size:1.4rem;font-weight:600;margin:44px 0 6px;letter-spacing:-.01em}
+h3{font-size:1.08rem;font-weight:600;margin:28px 0 2px}
+h4{font-size:.95rem;font-weight:600;margin:22px 0 2px;color:var(--ink-2)}
+p{margin:14px 0;max-width:66ch}
+ul,ol{max-width:64ch;padding-left:1.3em}
+li{margin:7px 0}
+code{font-family:var(--font-mono);background:var(--panel);border:1px solid var(--rule);
+border-radius:5px;padding:.06em .35em;font-size:.85em}
+pre{background:var(--panel);border:1px solid var(--rule);border-radius:10px;padding:14px 16px;
+overflow-x:auto;font-size:.82em;line-height:1.5}
+pre code{background:none;border:none;padding:0}
+blockquote{margin:22px 0;padding-left:18px;border-left:3px solid var(--rule-2);color:var(--ink-2)}
+hr{border:none;border-top:1px solid var(--rule);margin:36px 0}
+.tablewrap{overflow-x:auto;margin:24px 0}
+table{border-collapse:collapse;font-size:.88rem;min-width:50%}
+th{font-family:var(--font-sans);font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;
+color:var(--ink-2);text-align:left}
+th,td{padding:8px 14px 8px 0;border-bottom:1px solid var(--rule);vertical-align:top}
+.meta{font-family:var(--font-sans);font-size:.8rem;color:var(--ink-3);margin:4px 0 22px}
+.callout{margin:26px 0;border-radius:12px;padding:18px 20px 14px;border:1px solid var(--rule);
+background:var(--paper-2);box-shadow:var(--shadow)}
+.callout .tag{font-family:var(--font-sans);font-size:.66rem;letter-spacing:.16em;text-transform:uppercase;
+font-weight:700;display:block;margin-bottom:7px}
+.miscon{background:color-mix(in srgb,var(--focal) 6%,var(--paper-2));
+border-color:color-mix(in srgb,var(--focal) 30%,var(--rule))}
+.miscon .tag{color:var(--focal)}
+.keyidea{background:linear-gradient(180deg,color-mix(in srgb,var(--accent) 5%,var(--paper-2)),var(--paper-2));
+border-color:color-mix(in srgb,var(--accent) 28%,var(--rule))}
+.keyidea .tag{color:var(--accent)}
+details{margin:18px 0;border:1px solid var(--rule);border-radius:10px;padding:10px 16px;background:var(--paper-2)}
+summary{cursor:pointer;font-family:var(--font-sans);font-size:.85rem;font-weight:600;color:var(--ink-2)}
+details[open] summary{margin-bottom:8px}
+.num{font-family:var(--font-mono);font-variant-numeric:tabular-nums}
+@media (max-width:1000px){#rail{transform:translateX(-100%)}#rail.open{transform:none}
+#menubtn{display:block}main{margin-left:0}body.menuopen #scrim{display:block}}
+</style><script>
+(function(){
+  var t=localStorage.getItem('theme');
+  if(t)document.documentElement.setAttribute('data-theme',t);
+  document.addEventListener('DOMContentLoaded',function(){
+    var b=document.querySelector('.themebtn');
+    if(b)b.addEventListener('click',function(){
+      var cur=document.documentElement.getAttribute('data-theme');
+      var next=cur==='dark'?'light':(cur==='light'?'dark':
+        (matchMedia('(prefers-color-scheme: dark)').matches?'light':'dark'));
+      document.documentElement.setAttribute('data-theme',next);
+      localStorage.setItem('theme',next);
+    });
+    var m=document.getElementById('menubtn'),r=document.getElementById('rail'),s=document.getElementById('scrim');
+    if(m){m.addEventListener('click',function(){r.classList.toggle('open');document.body.classList.toggle('menuopen')});
+    s.addEventListener('click',function(){r.classList.remove('open');document.body.classList.remove('menuopen')});}
+  });
+})();
+</script></head>
+<body><button id="menubtn" aria-label="menu">&#9776;</button><div id="scrim"></div>
+<nav id="rail"><div class="brand">Frontier AI</div>
+<div class="brand-title">Policy curriculum</div>
+<a class="resume" href="w00.html">Resume &rarr; W0</a>
+<div class="grp">Start</div>
+<a class="wk" href="how-to-work.html"><span class="n">§</span><span>How to work</span></a>
+<a class="wk" href="w00.html"><span class="n">W0</span><span>Foundation gateway</span></a>
+<div class="grp">Phase I · Orientation and repair</div>
+<a class="wk" href="w01.html"><span class="n">W1</span><span>Calibration</span></a>
+<a class="wk" href="w02.html"><span class="n">W2</span><span>Linear algebra as transformations</span></a>
+<a class="wk" href="w03.html"><span class="n">W3</span><span>Singular values and low rank structure</span></a>
+<a class="wk" href="w04.html"><span class="n">W4</span><span>Probability, likelihood, and information</span></a>
+<a class="wk" href="w05.html"><span class="n">W5</span><span>Automatic differentiation</span></a>
+<a class="wk" href="w06.html"><span class="n">W6</span><span>Numerical computing and PyTorch fluency</span></a>
+<div class="grp">Phase II · Learning systems</div>
+<a class="wk" href="w07.html"><span class="n">W7</span><span>Statistical learning and generalization</span></a>
+<a class="wk" href="w08.html"><span class="n">W8</span><span>Multilayer networks and learned representations</span></a>
+<a class="wk" href="w09.html"><span class="n">W9</span><span>Optimization and trainability</span></a>
+<a class="wk" href="w10.html"><span class="n">W10</span><span>Experimental craft</span></a>
+<a class="wk" href="w11.html"><span class="n">W11</span><span>Calibration, shift, and causal claims</span></a>
+<div class="grp">Phase III · Transformers</div>
+<a class="wk" href="w12.html"><span class="n">W12</span><span>Tokenization and the language modeling objective</span></a>
+<a class="wk" href="w13.html"><span class="n">W13</span><span>Attention</span></a>
+<a class="wk" href="w14.html"><span class="n">W14</span><span>The transformer block</span></a>
+<a class="wk" href="w15.html"><span class="n">W15</span><span>Build and train a compact GPT</span></a>
+<a class="wk" href="w16.html"><span class="n">W16</span><span>In-context learning and emergence</span></a>
+<a class="wk" href="w17.html"><span class="n">W17</span><span>The modern architecture family</span></a>
+<a class="wk" href="w18.html"><span class="n">W18</span><span>Decoding and inference behavior</span></a>
+<div class="grp">Phase IV · Training at scale</div>
+<a class="wk" href="w19.html"><span class="n">W19</span><span>Training data</span></a>
+<a class="wk" href="w20.html"><span class="n">W20</span><span>Scaling laws and algorithmic efficiency</span></a>
+<a class="wk" href="w21.html"><span class="n">W21</span><span>Compute and hardware</span></a>
+<a class="wk" href="w22.html"><span class="n">W22</span><span>Distributed training</span></a>
+<a class="wk" href="w23.html"><span class="n">W23</span><span>Inference systems and economics</span></a>
+<div class="grp">Phase V · Posttraining</div>
+<a class="wk" href="w24.html"><span class="n">W24</span><span>LoRA fine-tuning</span></a>
+<a class="wk" href="w25.html"><span class="n">W25</span><span>Supervised tuning and human feedback</span></a>
+<a class="wk" href="w26.html"><span class="n">W26</span><span>Reinforcement learning foundations</span></a>
+<a class="wk" href="w27.html"><span class="n">W27</span><span>Preference optimization and AI feedback</span></a>
+<a class="wk" href="w28.html"><span class="n">W28</span><span>Verifiable rewards and test-time compute</span></a>
+<div class="grp">Phase VI · Agents</div>
+<a class="wk" href="w29.html"><span class="n">W29</span><span>Retrieval and grounded generation</span></a>
+<a class="wk" href="w30.html"><span class="n">W30</span><span>Tool use and compound systems</span></a>
+<a class="wk" href="w31.html"><span class="n">W31</span><span>Agent architecture and reliability</span></a>
+<a class="wk" href="w32.html"><span class="n">W32</span><span>Long horizon evaluation and monitoring</span></a>
+<div class="grp">Phase VII · Multimodality</div>
+<a class="wk" href="w33.html"><span class="n">W33</span><span>Multimodal representations</span></a>
+<a class="wk" href="w34.html"><span class="n">W34</span><span>Diffusion and flow based generation</span></a>
+<a class="wk" href="w35.html"><span class="n">W35</span><span>Video, world models, robotics, and action</span></a>
+<div class="grp">Phase VIII · Evaluation</div>
+<a class="wk" href="w36.html"><span class="n">W36</span><span>Evaluation as measurement science</span></a>
+<a class="wk" href="w37.html"><span class="n">W37</span><span>Benchmark design, contamination, and gaming</span></a>
+<a class="wk" href="w38.html"><span class="n">W38</span><span>Capability trends and forecasting</span></a>
+<a class="wk" href="w39.html"><span class="n">W39</span><span>Interpretability and causal evidence</span></a>
+<a class="wk" href="w40.html"><span class="n">W40</span><span>Build an evaluation suite</span></a>
+<div class="grp">Phase IX · Safety and security</div>
+<a class="wk" href="w41.html"><span class="n">W41</span><span>Misuse and dangerous capabilities</span></a>
+<a class="wk" href="w42.html"><span class="n">W42</span><span>Deception, reward tampering, and model organisms</span></a>
+<a class="wk" href="w43.html"><span class="n">W43</span><span>Control and monitoring</span></a>
+<a class="wk" href="w44.html"><span class="n">W44</span><span>Model weights and infrastructure security</span></a>
+<a class="wk" href="w45.html"><span class="n">W45</span><span>Societal and systemic risks</span></a>
+<div class="grp">Strategy block</div>
+<a class="wk" href="s1.html"><span class="n">S1</span><span>World models and methods</span></a>
+<a class="wk" href="s2.html"><span class="n">S2</span><span>Threat models: the AI's objectives</span></a>
+<a class="wk" href="s3.html"><span class="n">S3</span><span>Threat models: power, structure, and war</span></a>
+<a class="wk" href="s4.html"><span class="n">S4</span><span>Compute governance</span></a>
+<a class="wk" href="s5.html"><span class="n">S5</span><span>Evals-gated governance</span></a>
+<a class="wk" href="s6.html"><span class="n">S6</span><span>International instruments and verification</span></a>
+<div class="grp">Residency</div>
+<a class="wk" href="r01.html"><span class="n">R1</span><span>US AI policy architecture</span></a>
+<a class="wk" href="r02.html"><span class="n">R2</span><span>Administrative law and regulatory design</span></a>
+<a class="wk" href="r03.html"><span class="n">R3</span><span>Federalism and state AI law</span></a>
+<a class="wk" href="r04.html"><span class="n">R4</span><span>Rights, privacy, due process, and sectoral authority</span></a>
+<a class="wk" href="r05.html"><span class="n">R5</span><span>Copyright, training data, identity, and open weights</span></a>
+<a class="wk" href="r06.html"><span class="n">R6</span><span>National security institutions and military use</span></a>
+<a class="wk" href="r07.html"><span class="n">R7</span><span>Export controls, investment, industrial strategy, and compute</span></a>
+<a class="wk" href="r08.html"><span class="n">R8</span><span>Standards, conformity assessment, audit, and assurance</span></a>
+<a class="wk" href="r09.html"><span class="n">R9</span><span>Comparative and international governance</span></a>
+<a class="wk" href="r10.html"><span class="n">R10</span><span>Productivity, labor, competition, and distribution</span></a>
+<a class="wk" href="r11.html"><span class="n">R11</span><span>Energy, infrastructure, environment, and communities</span></a>
+<a class="wk" href="r12.html"><span class="n">R12</span><span>Implementation, budgeting, procurement, enforcement, and crisis</span></a>
+<div class="grp">Capstone</div>
+<a class="wk" href="c1.html"><span class="n">C1</span><span>Position paper draft</span></a>
+<a class="wk" href="c2.html"><span class="n">C2</span><span>Red team and revise</span></a>
+<a class="wk" href="c3.html"><span class="n">C3</span><span>Brief, defend, publish</span></a>
+<div class="grp">Reference</div>
+<a class="wk active" href="matrix.html"><span class="n">⊞</span><span>The matrix</span></a>
+<a class="wk" href="gates.html"><span class="n">▮</span><span>Phase gates</span></a>
+<a class="wk" href="rubric.html"><span class="n">1–4</span><span>Rubric</span></a>
+<a class="wk" href="exemplars.html"><span class="n">◑</span><span>Worked exemplars</span></a>
+<a class="wk" href="roster.html"><span class="n">◈</span><span>Model roster</span></a>
+<a class="wk" href="glossary.html"><span class="n">Aa</span><span>Glossary</span></a>
+<a class="wk" href="sources.html"><span class="n">✓</span><span>Source register</span></a>
+<button class="themebtn">Toggle theme</button></nav>
+<main><div class="wrap"><h1 id="the-matrix">The matrix</h1>
+<p>A cell is one threat model set against one intervention family. It carries a <strong>sign</strong> (serves, ignores, or worsens), the <strong>conditional</strong> naming the world-model settings under which that sign holds, and the <strong>crux</strong>, the observation that would flip it.</p>
+<p>Nineteen threat models by thirty-six intervention families is 684 cells. The maintained set is capped at roughly 50: the seven live debates, plus for each threat model the policy it uniquely motivates and the policy it actively disfavors. Value density collapses outside the contested cells, so completing the grid is not the goal and appears in no milestone.</p>
+<h2 id="the-axes">The axes</h2>
+<p><strong>Rows: 19 threat models, four families, sorted by what has to go wrong.</strong> Full dossier seeds in <code>depth_threatmodels.json</code>.</p>
+<ul><li><strong>A. The AI's objectives.</strong> Fast-takeoff takeover · scheming · reward-hacking to emergent misalignment · WFLL-II correlated failure · rogue replication</li><li><strong>B. Humans using AI against humans.</strong> Misuse-bio · misuse-cyber · AI-enabled coups · authoritarian lock-in · great-power war</li><li><strong>C. Structural drift.</strong> WFLL-I proxy lock-in · gradual disempowerment · the intelligence curse · epistemic collapse · multi-agent flash dynamics · evolutionary selection · value lock-in</li><li><strong>D. Meta-failures.</strong> Safety-tax collapse · s-risks</li></ul>
+<p><strong>Columns: 36 intervention families, sorted by where in the causal chain they bite.</strong> The names below are the ones the seeded cells touch; <code>depth_proposals.json</code> carries the full set with July-2026 status and design cruxes.</p>
+<ul><li><strong>Inputs.</strong> Export controls · compute thresholds and reporting · cloud KYC · HEMs · siting</li><li><strong>Development process.</strong> RSPs · safety cases · licensing · weight security · audits · whistleblower protection</li><li><strong>Artifact.</strong> Open-weight policy · structured access</li><li><strong>Deployment.</strong> Agent governance · provenance · sectoral rules · incident reporting · liability · insurance</li><li><strong>Ecosystem and international.</strong> AISIs · summits · UN track · treaties and verification · MAIM · moratorium · d/acc · windfall · public compute</li><li><strong>Meta.</strong> Preemption and venue · lab structure · natsec-led approaches</li></ul>
+<p><strong>Modulating parameters, 12 world-model variables that reweight every cell.</strong> Timelines · takeoff shape · polarity · alignment-difficulty distribution · offense-defense balance per domain · diffusion rate · compute concentration · warning-shot legibility · institutional response capacity · verification feasibility · delegation depth · labor-substitution rate</p>
+<p>Three seeds name interventions that are not yet columns: control protocols, alignment research, and resilience or institutional design. Treat them as candidate columns; the table keeps each seed's own name.</p>
+<h2 id="the-seeded-cells">The seeded cells</h2>
+<p>Sign is <strong>serves</strong> / <strong>ignores</strong> / <strong>worsens</strong>. Paired rows with opposite signs on the same cell are contested cells, and the crux sits in the gap between their conditionals.</p>
+<div class="tablewrap"><table>
+<tr><th>threat model</th><th>intervention</th><th>sign</th><th>conditional</th><th>source</th></tr>
+<tr><td>Fast-takeoff takeover</td><td>Weight and algorithmic-secret security</td><td>serves</td><td>AGI around 2027 from compute scaling, so weights and secrets are the strategic assets and the lead is the safety margin</td><td>Aschenbrenner, Situational Awareness</td></tr>
+<tr><td>Fast-takeoff takeover</td><td>Control protocols</td><td>ignores</td><td>Takeoff outruns the useful-but-catchable window, so control research bought little</td><td>Wentworth, The Case Against AI Control Research</td></tr>
+<tr><td>Fast-takeoff takeover</td><td>RSPs, evals, control (all marginal measures)</td><td>ignores</td><td>Superintelligence alignment is intractable on current science and there are no retries, so marginal measures are inadequate by construction</td><td>Yudkowsky and Soares, IABIED</td></tr>
+<tr><td>Fast-takeoff takeover</td><td>Moratorium, enforced globally</td><td>serves</td><td>Same premise; only a sufficient measure counts once marginal ones are ruled out</td><td>Yudkowsky and Soares, IABIED</td></tr>
+<tr><td>Fast-takeoff takeover</td><td>Licensing above compute thresholds; bans on AIs improving AIs and on unbounded agents</td><td>serves</td><td>Superintelligence within about 20 years is default-catastrophic and alignment will not be ready in time</td><td>ControlAI, A Narrow Path</td></tr>
+<tr><td>Fast-takeoff takeover</td><td>Structured access and containment</td><td>serves</td><td>Catastrophe is a conjunction (seed AI, containment failure, unsafe goals, no deterrence); severing one cut-set suffices only while the others hold</td><td>Barrett and Baum, ASI-PATH</td></tr>
+<tr><td>Fast-takeoff takeover</td><td>Ex-ante gating and thresholds</td><td>serves</td><td>The roughly 7-month task-horizon doubling continues, month-long autonomous tasks arrive before 2030, and the slow-diffusion premise fails</td><td>METR, Measuring AI Ability to Complete Long Tasks</td></tr>
+<tr><td>Scheming</td><td>Control protocols and untrusted-model monitoring</td><td>serves</td><td>Scheming is plausible, alignment cannot be verified pre-deployment, and models sit inside the useful-but-catchable window</td><td>Greenblatt and Shlegeris, AI Control</td></tr>
+<tr><td>Scheming</td><td>Evals-gated commitments (RSPs)</td><td>ignores</td><td>Sandbagging, eval-gaming, or discontinuous jumps break pre-deployment measurability</td><td>Apollo Research, The Evals Gap</td></tr>
+<tr><td>Scheming</td><td>Incident reporting and tripwire capabilities</td><td>serves</td><td>Takeover requires accumulating power over time, so early catches are likely and convert into political will</td><td>Karnofsky playbook; Carnegie tripwires sketch</td></tr>
+<tr><td>Scheming</td><td>Treaty-scale international slowdown</td><td>serves</td><td>Political will reaches Plan A; estimated takeover risk 7% at Plan A against 75% at Plan E</td><td>Shlegeris, Plans A-D</td></tr>
+<tr><td>Scheming</td><td>Lab-internal monitoring, control protocols, cheap security</td><td>serves</td><td>Plan-D world: 10 to 30 internal advocates holding about 3% of compute, with nothing external available</td><td>Shlegeris, Ten People on the Inside</td></tr>
+<tr><td>Scheming</td><td>Burning the lab's lead on safety</td><td>serves</td><td>The single branch variable in AI 2027; compute lead and export controls matter only as they make burning the lead affordable</td><td>AI Futures Project, AI 2027</td></tr>
+<tr><td>Scheming (pessimistic alignment-difficulty world)</td><td>Frontier safety research inside labs</td><td>ignores</td><td>In the pessimistic world the lab's job flips to producing legible evidence of danger sufficient to stop the field</td><td>Anthropic, Core Views on AI Safety</td></tr>
+<tr><td>Misuse-bio, misuse-cyber</td><td>Open-weight release</td><td>worsens</td><td>Release is irreversible, so the call must be made on marginal risk at a future capability threshold, not on current harm</td><td>Seger et al., Open-Sourcing Highly Capable Foundation Models</td></tr>
+<tr><td>Misuse-bio, misuse-cyber</td><td>Open-weight release</td><td>ignores</td><td>Measured marginal uplift over already-available closed models has stayed low</td><td>Kapoor et al., On the Societal Impact of Open Foundation Models</td></tr>
+<tr><td>Misuse-bio, misuse-cyber</td><td>Weight security and nonproliferation</td><td>ignores</td><td>Near-frontier weights already circulate openly, so the strategy loses its object and policy pivots to adoption competition and defense in depth</td><td>2026 open-weights fight (Kimi K3; NDAA FY2026 DeepSeek exclusion)</td></tr>
+<tr><td>Misuse-bio, misuse-cyber</td><td>d/acc, differential defensive acceleration</td><td>serves</td><td>Defense in that domain can be accelerated faster than offense; a hardware soft-pause is held in reserve for doom-shaped evidence</td><td>Buterin, d/acc</td></tr>
+<tr><td>Great-power war</td><td>Export controls and lead maximization</td><td>serves</td><td>Lock-in logic: whoever reaches superintelligence first sets the terms, so the free-world lead is the safety margin</td><td>Aschenbrenner, Situational Awareness</td></tr>
+<tr><td>Great-power war</td><td>MAIM deterrence, nonproliferation, competitiveness</td><td>serves</td><td>Rivals read a superintelligence project as existential and can reach it by cyber sabotage before kinetic options</td><td>Hendrycks, Schmidt and Wang, Superintelligence Strategy</td></tr>
+<tr><td>Great-power war</td><td>US superintelligence national project</td><td>worsens</td><td>Same perception premise; a declared national project maximizes a rival's incentive to preempt</td><td>Superintelligence Strategy, contra Situational Awareness</td></tr>
+<tr><td>Great-power war</td><td>Confidence-building measures and intelligence-sharing</td><td>serves</td><td>Uncertainty about a rival's breakthrough destabilizes on its own, so these must precede any actual capability</td><td>Mitre and Predd, RAND Five Hard Problems</td></tr>
+<tr><td>Great-power war plus misalignment</td><td>Treaty with mutual datacenter verification and research transparency</td><td>serves</td><td>Verification is feasible and both sides accept inspection; enforcement by mutually assured compute destruction; pause at expert-level AI</td><td>AI Futures Project, AI 2040 Plan A</td></tr>
+<tr><td>AI-enabled coups, authoritarian lock-in</td><td>Transparency into national AGI projects; multipolar deployment</td><td>serves</td><td>Power-concentration risk exceeds misalignment risk</td><td>Forethought coups line; AI 2040 power-concentration branch</td></tr>
+<tr><td>AI-enabled coups, authoritarian lock-in</td><td>US-lead maximization</td><td>worsens</td><td>Same conditional</td><td>Forethought; AI 2040</td></tr>
+<tr><td>Value lock-in, AI-enabled coups</td><td>Pre-solved institutional design for grand challenges</td><td>serves</td><td>An intelligence explosion compresses a century into a decade, leaving no time to deliberate mid-explosion over WMDs, coups, space claims, digital minds</td><td>MacAskill and Moorhouse, Preparing for the Intelligence Explosion</td></tr>
+<tr><td>Accumulative x-risk (structural drift)</td><td>Frontier-model gating: thresholds, licensing</td><td>ignores</td><td>Risk accumulates across many sub-frontier deployments rather than arriving as one decisive event</td><td>Kasirzadeh, Two Types of AI Existential Risk</td></tr>
+<tr><td>Accumulative x-risk</td><td>Sectoral rules, antitrust, dependency limits, epistemic infrastructure</td><td>serves</td><td>Same conditional; threat structure rather than severity picks the intervention class</td><td>Kasirzadeh</td></tr>
+<tr><td>Gradual disempowerment</td><td>Alignment and containment: control, evals, RSPs</td><td>ignores</td><td>No discrete takeover; humans are displaced incrementally from economic, cultural and political roles</td><td>Kulveit et al., Gradual Disempowerment</td></tr>
+<tr><td>Gradual disempowerment</td><td>Institutional design and retained human leverage</td><td>serves</td><td>Same conditional</td><td>Kulveit et al.</td></tr>
+<tr><td>Epistemic collapse, structural drift</td><td>Nonproliferation-style gating</td><td>worsens</td><td>AI diffuses slowly through organizational and human bottlenecks, so gating is speculative and costly</td><td>Narayanan and Kapoor, AI as Normal Technology</td></tr>
+<tr><td>Epistemic collapse, structural drift</td><td>Resilience, fewer single points of failure, ex-post regulation</td><td>serves</td><td>Same conditional</td><td>Narayanan and Kapoor</td></tr>
+<tr><td>Safety-tax collapse</td><td>Safety benchmarks used as a governance instrument</td><td>worsens</td><td>Benchmark scores correlate with general capability, so capability gains read as safety progress</td><td>Ren et al., Safetywashing</td></tr>
+<tr><td>Safety-tax collapse</td><td>Self-set RSP thresholds</td><td>worsens</td><td>The regulated set their own thresholds under a national-security race framing, and thresholds ratchet down</td><td>Khlaaf and Myers West, Safety Co-Option</td></tr>
+<tr><td>Safety-tax collapse</td><td>RSPs generally</td><td>ignores</td><td>No defined risk tolerance, so thresholds and mitigations are picked with no stated bound on acceptable societal risk</td><td>SaferAI risk-management maturity framework</td></tr>
+<tr><td>Any threat routed through frontier training runs</td><td>Compute thresholds, reporting, cloud KYC</td><td>serves</td><td>The scaling paradigm holds, keeping compute detectable, excludable, quantifiable and supply-chain-concentrated</td><td>Sastry et al., Computing Power and the Governance of AI</td></tr>
+<tr><td>Any threat routed through frontier training runs</td><td>Compute thresholds</td><td>ignores</td><td>Algorithmic efficiency gains and decentralized training continue, so yesterday's frontier run fits on commodity clusters</td><td>Sastry et al., limits section; Chatham House on eroding export-control leverage</td></tr>
+<tr><td>Loss of control from a domestic lab</td><td>Export controls</td><td>worsens</td><td>Export controls answer great-power competition and do nothing about a domestic lab's own scaling; the speed they buy need not be spent on safety</td><td>DEPTH §2.2</td></tr>
+<tr><td>Loss of control from a domestic lab</td><td>Export controls</td><td>serves</td><td>The compute lead is the safety budget, since slack is what makes a US slowdown affordable</td><td>Amodei, On DeepSeek and Export Controls</td></tr>
+<tr><td>All families</td><td>If-then commitments</td><td>serves</td><td>Trigger capabilities are measurable when they arrive; cost is near zero if they never do, which makes the instrument signable across timeline camps</td><td>Karnofsky, If-Then Commitments</td></tr>
+<tr><td>All families</td><td>Verification R&amp;D, transparency, weight security</td><td>serves</td><td>Clears the bar across all four MIRI scenarios and the Convergence parameter grid, so it is the robust core of any portfolio</td><td>MIRI TechGov; Katzke, Scenario Planning for AI X-risk</td></tr>
+<tr><td>All families</td><td>HEMs</td><td>serves</td><td>HEMs are buildable and adopted; they are the precondition for verification, which is the precondition for treaties and for any credible pause</td><td>DEPTH §2.2 dependency chain</td></tr>
+<tr><td>Loss of control, under the Off-Switch scenario</td><td>Verification technology and halt infrastructure</td><td>serves</td><td>Only Off-Switch capacity keeps catastrophe acceptably low, and these are the interventions that build toward it</td><td>Barnett and Scher, MIRI TechGov</td></tr>
+<tr><td>Cross-border threats</td><td>International regimes</td><td>serves</td><td>High cross-border externalities and regulatory arbitrage: compute-provider oversight, evals, incident monitoring, risk protocols; not chip distribution, data privacy or bias mitigation</td><td>Dennis et al., GovAI</td></tr>
+<tr><td>Varies with the dominant threat</td><td>Institutional form</td><td>serves</td><td>Proliferation calls for IAEA-analog inspection, race dynamics for CERN-analog joint development, epistemic fragmentation for an IPCC-analog consensus body</td><td>Ho et al., International Institutions for Advanced AI</td></tr>
+</table></div>
+<h2 id="the-seven-live-debates">The seven live debates</h2>
+<p>Each is a fight about one or two cells, and under each cell sits one parameter.</p>
+<ul><li><strong>Halt or continue with safeguards.</strong> The fast-takeoff takeover × moratorium cell; the parameter is P(alignment intractable on current science).</li><li><strong>Open weights.</strong> The misuse-bio × open-weight release cell; the parameter is irreversibility times who diffuses first.</li><li><strong>Control or alignment.</strong> The scheming × control protocols cell; the parameter is the width of the useful-but-catchable window.</li><li><strong>Evals sufficiency.</strong> The scheming × evals-gated commitments cell; the parameter is whether danger is measurable pre-deployment.</li><li><strong>China.</strong> The great-power war × national project cell, against the same row's MAIM cell; the parameter is the rival-perception model, lock-in against preemption.</li><li><strong>AGI is far.</strong> The structural drift × frontier gating cell; the parameter is whether task-horizon extrapolation holds.</li><li><strong>Safety-washing.</strong> The safety-tax collapse × self-set thresholds cell; the parameter is who sets the thresholds and who runs the evals.</li></ul>
+<h2 id="how-to-work-it">How to work it</h2>
+<ul><li><strong>v0 first, from priors.</strong> Fill the roughly 20 cells you think you already know before opening anything. EA-fluent readers reliably find their signs confident and their conditionals empty.</li><li><strong>Update at phase gates, 30 minutes.</strong> What did this phase change, and which cells got evidence. W22 revises the decentralized-training cell, W28 revises capability-tracks-compute, W40 revises every cell that assumes danger is measurable pre-deployment.</li><li><strong>The standing drill.</strong> For each threat model, name the policy it uniquely motivates and the policy at least one other threat model actively disfavors. If a model motivates nothing unique, either it collapses into a neighbor or it is not yet stated sharply enough.</li><li><strong>Working copy.</strong> <code>matrix/matrix.md</code> in the repo, which carries the crux and a dated credence per cell. This page is the published cut.</li></ul></div></main></body></html>

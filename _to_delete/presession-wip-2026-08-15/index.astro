@@ -1,0 +1,93 @@
+---
+import Base from '@/layouts/Base.astro';
+import { getCollection } from 'astro:content';
+
+const allNotes = await getCollection('notes', ({ data }) => !data.draft);
+const items = allNotes.sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+
+// Group by category
+const categories = [...new Set(items.map(item => item.data.category || 'misc'))].sort();
+const itemsByCategory = items.reduce((acc, item) => {
+  const cat = item.data.category || 'misc';
+  if (!acc[cat]) acc[cat] = [];
+  acc[cat].push(item);
+  return acc;
+}, {} as Record<string, typeof items>);
+
+---
+
+<Base title="Notes" description="Shorter notes, ideas, and references" ogImage="/og/page/notes.png">
+  <p class="page-intro">
+    Fragments, references, things I'm thinking about.
+  </p>
+
+  <div class="jump-links">
+    <span class="jump-links__label">Filter: </span>
+    {categories.map((cat, i) => (
+      <>
+        {i > 0 && <span class="jump-links__sep"> · </span>}
+        <a href={`#cat-${cat}`}>{cat}</a>
+      </>
+    ))}
+    <span class="jump-links__sep"> · </span>
+    <a href="#" id="expand-all">all</a>
+  </div>
+
+  <div class="divider"><div class="divider-diamond"></div></div>
+
+  {categories.map(category => (
+    <div class="section" id={`cat-${category}`}>
+      <div class="section__header" data-section={category}>
+        <span class="section__toggle">▼</span>
+        <span class="section__title">{category}</span>
+        <span class="section__count">({itemsByCategory[category].length})</span>
+      </div>
+      <div class="section__content" data-content={category}>
+        {itemsByCategory[category].map(item => (
+          <div class="content-item">
+            <a href={`/notes/${item.slug}`} class="content-item__link">{item.data.title}</a>
+          </div>
+        ))}
+      </div>
+    </div>
+  ))}
+
+</Base>
+
+<script>
+  function initNotesSections() {
+    document.querySelectorAll<HTMLElement>('.section__header').forEach(header => {
+      if (header.dataset.bound) return;
+      header.dataset.bound = 'true';
+      header.addEventListener('click', () => {
+        const section = header.getAttribute('data-section');
+        const content = document.querySelector(`[data-content="${section}"]`) as HTMLElement;
+        const toggle = header.querySelector('.section__toggle');
+
+        if (content && toggle) {
+          const isCollapsed = content.style.display === 'none';
+          content.style.display = isCollapsed ? 'block' : 'none';
+          toggle.textContent = isCollapsed ? '▼' : '▶';
+        }
+      });
+    });
+
+    const expandAll = document.getElementById('expand-all');
+    if (expandAll && !expandAll.dataset.bound) {
+      expandAll.dataset.bound = 'true';
+      expandAll.addEventListener('click', (e) => {
+        e.preventDefault();
+        document.querySelectorAll('.section__content').forEach(content => {
+          (content as HTMLElement).style.display = 'block';
+        });
+        document.querySelectorAll('.section__toggle').forEach(toggle => {
+          toggle.textContent = '▼';
+        });
+      });
+    }
+  }
+
+  // Run on initial load and after View Transitions swaps
+  document.addEventListener('astro:page-load', initNotesSections);
+  initNotesSections();
+</script>

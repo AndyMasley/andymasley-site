@@ -1,0 +1,218 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<title>Long horizon evaluation and monitoring</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<style>
+:root{--font-serif:"Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua",Georgia,Cambria,serif;
+--font-sans:ui-sans-serif,-apple-system,"Segoe UI","Helvetica Neue",Arial,sans-serif;
+--font-mono:ui-monospace,"SF Mono","JetBrains Mono",Menlo,Consolas,monospace;
+--paper:#F8F8FB;--paper-2:#FFFFFF;--panel:#F0EFF7;--ink:#1A1A24;--ink-2:#54545F;--ink-3:#8A8A96;
+--rule:#E1E0EA;--rule-2:#CFCEDC;--accent:#5B50C0;--accent-2:#4A3FA8;--focal:#A0455A;--focal-soft:#F3E4E8;
+--good:#1E7A52;--warn:#B07C24;--sel:#DED9F6;
+--shadow:0 1px 2px rgba(26,26,36,.05),0 12px 34px -14px rgba(26,26,36,.16)}
+@media (prefers-color-scheme:dark){:root{--paper:#16161A;--paper-2:#1C1C22;--panel:#1F1F29;
+--ink:#E9E9F0;--ink-2:#AEAEBA;--ink-3:#777784;--rule:#2A2A34;--rule-2:#3A3A46;
+--accent:#9A90F0;--accent-2:#B3ABF6;--focal:#E38CA0;--focal-soft:#33232A;--good:#5FC29A;--warn:#D9A441;--sel:#33305A;
+--shadow:0 1px 2px rgba(0,0,0,.3),0 14px 40px -16px rgba(0,0,0,.6)}}
+:root[data-theme="light"]{--paper:#F8F8FB;--paper-2:#FFFFFF;--panel:#F0EFF7;--ink:#1A1A24;--ink-2:#54545F;
+--ink-3:#8A8A96;--rule:#E1E0EA;--rule-2:#CFCEDC;--accent:#5B50C0;--accent-2:#4A3FA8;--focal:#A0455A;
+--focal-soft:#F3E4E8;--good:#1E7A52;--warn:#B07C24;--sel:#DED9F6}
+:root[data-theme="dark"]{--paper:#16161A;--paper-2:#1C1C22;--panel:#1F1F29;--ink:#E9E9F0;--ink-2:#AEAEBA;
+--ink-3:#777784;--rule:#2A2A34;--rule-2:#3A3A46;--accent:#9A90F0;--accent-2:#B3ABF6;--focal:#E38CA0;
+--focal-soft:#33232A;--good:#5FC29A;--warn:#D9A441;--sel:#33305A}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--font-serif);
+font-size:18px;line-height:1.66;-webkit-font-smoothing:antialiased}
+::selection{background:var(--sel)}
+a{color:var(--accent);text-underline-offset:2px;text-decoration-thickness:.06em}
+a:hover{color:var(--accent-2)}
+#rail{position:fixed;top:0;left:0;width:274px;height:100vh;overflow-y:auto;background:var(--paper-2);
+border-right:1px solid var(--rule);padding:24px 18px 40px;z-index:40;font-family:var(--font-sans);
+transition:transform .25s ease}
+#rail .brand{font-size:.68rem;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-3)}
+#rail .brand-title{font-family:var(--font-serif);font-size:1.12rem;font-weight:600;margin:2px 0 10px;color:var(--ink)}
+#rail .resume{display:inline-block;font-size:.78rem;font-weight:600;color:var(--accent);
+border:1px solid var(--rule-2);border-radius:18px;padding:4px 12px;text-decoration:none;margin-bottom:6px}
+#rail .resume:hover{border-color:var(--accent)}
+#rail .grp{font-size:.64rem;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);
+margin:16px 0 5px;padding-top:10px;border-top:1px solid var(--rule)}
+#rail a.wk{display:flex;gap:8px;align-items:baseline;padding:3px 8px;border-radius:6px;color:var(--ink-2);
+text-decoration:none;font-size:.8rem;line-height:1.35}
+#rail a.wk:hover{background:var(--panel);color:var(--ink)}
+#rail a.wk.active{background:var(--panel);color:var(--accent);font-weight:600}
+#rail a.wk .n{color:var(--ink-3);font-family:var(--font-mono);font-size:.72rem;min-width:26px}
+#rail a.wk .done{color:var(--good);margin-left:auto}
+#rail .soon{opacity:.45;pointer-events:none}
+#rail .themebtn{margin-top:18px;font-size:.72rem;background:none;border:1px solid var(--rule-2);
+color:var(--ink-2);border-radius:18px;padding:5px 12px;cursor:pointer}
+#menubtn{position:fixed;top:12px;left:12px;z-index:50;display:none;background:var(--paper-2);
+border:1px solid var(--rule-2);border-radius:9px;width:40px;height:40px;cursor:pointer;
+box-shadow:var(--shadow);color:var(--ink);font-size:1.1rem}
+#scrim{position:fixed;inset:0;background:rgba(10,10,16,.4);z-index:35;display:none}
+main{margin-left:274px}
+.wrap{max-width:760px;margin:0 auto;padding:40px 28px 90px}
+.kicker{font-family:var(--font-sans);font-size:.72rem;letter-spacing:.2em;text-transform:uppercase;color:var(--accent)}
+h1{font-size:clamp(1.9rem,4.5vw,2.7rem);font-weight:600;line-height:1.08;letter-spacing:-.015em;margin:.2em 0 .3em}
+h2{font-size:1.4rem;font-weight:600;margin:44px 0 6px;letter-spacing:-.01em}
+h3{font-size:1.08rem;font-weight:600;margin:28px 0 2px}
+h4{font-size:.95rem;font-weight:600;margin:22px 0 2px;color:var(--ink-2)}
+p{margin:14px 0;max-width:66ch}
+ul,ol{max-width:64ch;padding-left:1.3em}
+li{margin:7px 0}
+code{font-family:var(--font-mono);background:var(--panel);border:1px solid var(--rule);
+border-radius:5px;padding:.06em .35em;font-size:.85em}
+pre{background:var(--panel);border:1px solid var(--rule);border-radius:10px;padding:14px 16px;
+overflow-x:auto;font-size:.82em;line-height:1.5}
+pre code{background:none;border:none;padding:0}
+blockquote{margin:22px 0;padding-left:18px;border-left:3px solid var(--rule-2);color:var(--ink-2)}
+hr{border:none;border-top:1px solid var(--rule);margin:36px 0}
+.tablewrap{overflow-x:auto;margin:24px 0}
+table{border-collapse:collapse;font-size:.88rem;min-width:50%}
+th{font-family:var(--font-sans);font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;
+color:var(--ink-2);text-align:left}
+th,td{padding:8px 14px 8px 0;border-bottom:1px solid var(--rule);vertical-align:top}
+.meta{font-family:var(--font-sans);font-size:.8rem;color:var(--ink-3);margin:4px 0 22px}
+.callout{margin:26px 0;border-radius:12px;padding:18px 20px 14px;border:1px solid var(--rule);
+background:var(--paper-2);box-shadow:var(--shadow)}
+.callout .tag{font-family:var(--font-sans);font-size:.66rem;letter-spacing:.16em;text-transform:uppercase;
+font-weight:700;display:block;margin-bottom:7px}
+.miscon{background:color-mix(in srgb,var(--focal) 6%,var(--paper-2));
+border-color:color-mix(in srgb,var(--focal) 30%,var(--rule))}
+.miscon .tag{color:var(--focal)}
+.keyidea{background:linear-gradient(180deg,color-mix(in srgb,var(--accent) 5%,var(--paper-2)),var(--paper-2));
+border-color:color-mix(in srgb,var(--accent) 28%,var(--rule))}
+.keyidea .tag{color:var(--accent)}
+details{margin:18px 0;border:1px solid var(--rule);border-radius:10px;padding:10px 16px;background:var(--paper-2)}
+summary{cursor:pointer;font-family:var(--font-sans);font-size:.85rem;font-weight:600;color:var(--ink-2)}
+details[open] summary{margin-bottom:8px}
+.num{font-family:var(--font-mono);font-variant-numeric:tabular-nums}
+@media (max-width:1000px){#rail{transform:translateX(-100%)}#rail.open{transform:none}
+#menubtn{display:block}main{margin-left:0}body.menuopen #scrim{display:block}}
+</style><script>
+(function(){
+  var t=localStorage.getItem('theme');
+  if(t)document.documentElement.setAttribute('data-theme',t);
+  document.addEventListener('DOMContentLoaded',function(){
+    var b=document.querySelector('.themebtn');
+    if(b)b.addEventListener('click',function(){
+      var cur=document.documentElement.getAttribute('data-theme');
+      var next=cur==='dark'?'light':(cur==='light'?'dark':
+        (matchMedia('(prefers-color-scheme: dark)').matches?'light':'dark'));
+      document.documentElement.setAttribute('data-theme',next);
+      localStorage.setItem('theme',next);
+    });
+    var m=document.getElementById('menubtn'),r=document.getElementById('rail'),s=document.getElementById('scrim');
+    if(m){m.addEventListener('click',function(){r.classList.toggle('open');document.body.classList.toggle('menuopen')});
+    s.addEventListener('click',function(){r.classList.remove('open');document.body.classList.remove('menuopen')});}
+  });
+})();
+</script></head>
+<body><button id="menubtn" aria-label="menu">&#9776;</button><div id="scrim"></div>
+<nav id="rail"><div class="brand">Frontier AI</div>
+<div class="brand-title">Policy curriculum</div>
+<a class="resume" href="w00.html">Resume &rarr; W0</a>
+<div class="grp">Start</div>
+<a class="wk" href="how-to-work.html"><span class="n">§</span><span>How to work</span></a>
+<a class="wk" href="w00.html"><span class="n">W0</span><span>Foundation gateway</span></a>
+<div class="grp">Phase I · Orientation and repair</div>
+<a class="wk" href="w01.html"><span class="n">W1</span><span>Calibration</span></a>
+<a class="wk" href="w02.html"><span class="n">W2</span><span>Linear algebra as transformations</span></a>
+<a class="wk" href="w03.html"><span class="n">W3</span><span>Singular values and low rank structure</span></a>
+<a class="wk" href="w04.html"><span class="n">W4</span><span>Probability, likelihood, and information</span></a>
+<a class="wk" href="w05.html"><span class="n">W5</span><span>Automatic differentiation</span></a>
+<a class="wk" href="w06.html"><span class="n">W6</span><span>Numerical computing and PyTorch fluency</span></a>
+<div class="grp">Phase II · Learning systems</div>
+<a class="wk" href="w07.html"><span class="n">W7</span><span>Statistical learning and generalization</span></a>
+<a class="wk" href="w08.html"><span class="n">W8</span><span>Multilayer networks and learned representations</span></a>
+<a class="wk" href="w09.html"><span class="n">W9</span><span>Optimization and trainability</span></a>
+<a class="wk" href="w10.html"><span class="n">W10</span><span>Experimental craft</span></a>
+<a class="wk" href="w11.html"><span class="n">W11</span><span>Calibration, shift, and causal claims</span></a>
+<div class="grp">Phase III · Transformers</div>
+<a class="wk" href="w12.html"><span class="n">W12</span><span>Tokenization and the language modeling objective</span></a>
+<a class="wk" href="w13.html"><span class="n">W13</span><span>Attention</span></a>
+<a class="wk" href="w14.html"><span class="n">W14</span><span>The transformer block</span></a>
+<a class="wk" href="w15.html"><span class="n">W15</span><span>Build and train a compact GPT</span></a>
+<a class="wk" href="w16.html"><span class="n">W16</span><span>In-context learning and emergence</span></a>
+<a class="wk" href="w17.html"><span class="n">W17</span><span>The modern architecture family</span></a>
+<a class="wk" href="w18.html"><span class="n">W18</span><span>Decoding and inference behavior</span></a>
+<div class="grp">Phase IV · Training at scale</div>
+<a class="wk" href="w19.html"><span class="n">W19</span><span>Training data</span></a>
+<a class="wk" href="w20.html"><span class="n">W20</span><span>Scaling laws and algorithmic efficiency</span></a>
+<a class="wk" href="w21.html"><span class="n">W21</span><span>Compute and hardware</span></a>
+<a class="wk" href="w22.html"><span class="n">W22</span><span>Distributed training</span></a>
+<a class="wk" href="w23.html"><span class="n">W23</span><span>Inference systems and economics</span></a>
+<div class="grp">Phase V · Posttraining</div>
+<a class="wk" href="w24.html"><span class="n">W24</span><span>LoRA fine-tuning</span></a>
+<a class="wk" href="w25.html"><span class="n">W25</span><span>Supervised tuning and human feedback</span></a>
+<a class="wk" href="w26.html"><span class="n">W26</span><span>Reinforcement learning foundations</span></a>
+<a class="wk" href="w27.html"><span class="n">W27</span><span>Preference optimization and AI feedback</span></a>
+<a class="wk" href="w28.html"><span class="n">W28</span><span>Verifiable rewards and test-time compute</span></a>
+<div class="grp">Phase VI · Agents</div>
+<a class="wk" href="w29.html"><span class="n">W29</span><span>Retrieval and grounded generation</span></a>
+<a class="wk" href="w30.html"><span class="n">W30</span><span>Tool use and compound systems</span></a>
+<a class="wk" href="w31.html"><span class="n">W31</span><span>Agent architecture and reliability</span></a>
+<a class="wk active" href="w32.html"><span class="n">W32</span><span>Long horizon evaluation and monitoring</span></a>
+<div class="grp">Phase VII · Multimodality</div>
+<a class="wk" href="w33.html"><span class="n">W33</span><span>Multimodal representations</span></a>
+<a class="wk" href="w34.html"><span class="n">W34</span><span>Diffusion and flow based generation</span></a>
+<a class="wk" href="w35.html"><span class="n">W35</span><span>Video, world models, robotics, and action</span></a>
+<div class="grp">Phase VIII · Evaluation</div>
+<a class="wk" href="w36.html"><span class="n">W36</span><span>Evaluation as measurement science</span></a>
+<a class="wk" href="w37.html"><span class="n">W37</span><span>Benchmark design, contamination, and gaming</span></a>
+<a class="wk" href="w38.html"><span class="n">W38</span><span>Capability trends and forecasting</span></a>
+<a class="wk" href="w39.html"><span class="n">W39</span><span>Interpretability and causal evidence</span></a>
+<a class="wk" href="w40.html"><span class="n">W40</span><span>Build an evaluation suite</span></a>
+<div class="grp">Phase IX · Safety and security</div>
+<a class="wk" href="w41.html"><span class="n">W41</span><span>Misuse and dangerous capabilities</span></a>
+<a class="wk" href="w42.html"><span class="n">W42</span><span>Deception, reward tampering, and model organisms</span></a>
+<a class="wk" href="w43.html"><span class="n">W43</span><span>Control and monitoring</span></a>
+<a class="wk" href="w44.html"><span class="n">W44</span><span>Model weights and infrastructure security</span></a>
+<a class="wk" href="w45.html"><span class="n">W45</span><span>Societal and systemic risks</span></a>
+<div class="grp">Strategy block</div>
+<a class="wk" href="s1.html"><span class="n">S1</span><span>World models and methods</span></a>
+<a class="wk" href="s2.html"><span class="n">S2</span><span>Threat models: the AI's objectives</span></a>
+<a class="wk" href="s3.html"><span class="n">S3</span><span>Threat models: power, structure, and war</span></a>
+<a class="wk" href="s4.html"><span class="n">S4</span><span>Compute governance</span></a>
+<a class="wk" href="s5.html"><span class="n">S5</span><span>Evals-gated governance</span></a>
+<a class="wk" href="s6.html"><span class="n">S6</span><span>International instruments and verification</span></a>
+<div class="grp">Residency</div>
+<a class="wk" href="r01.html"><span class="n">R1</span><span>US AI policy architecture</span></a>
+<a class="wk" href="r02.html"><span class="n">R2</span><span>Administrative law and regulatory design</span></a>
+<a class="wk" href="r03.html"><span class="n">R3</span><span>Federalism and state AI law</span></a>
+<a class="wk" href="r04.html"><span class="n">R4</span><span>Rights, privacy, due process, and sectoral authority</span></a>
+<a class="wk" href="r05.html"><span class="n">R5</span><span>Copyright, training data, identity, and open weights</span></a>
+<a class="wk" href="r06.html"><span class="n">R6</span><span>National security institutions and military use</span></a>
+<a class="wk" href="r07.html"><span class="n">R7</span><span>Export controls, investment, industrial strategy, and compute</span></a>
+<a class="wk" href="r08.html"><span class="n">R8</span><span>Standards, conformity assessment, audit, and assurance</span></a>
+<a class="wk" href="r09.html"><span class="n">R9</span><span>Comparative and international governance</span></a>
+<a class="wk" href="r10.html"><span class="n">R10</span><span>Productivity, labor, competition, and distribution</span></a>
+<a class="wk" href="r11.html"><span class="n">R11</span><span>Energy, infrastructure, environment, and communities</span></a>
+<a class="wk" href="r12.html"><span class="n">R12</span><span>Implementation, budgeting, procurement, enforcement, and crisis</span></a>
+<div class="grp">Capstone</div>
+<a class="wk" href="c1.html"><span class="n">C1</span><span>Position paper draft</span></a>
+<a class="wk" href="c2.html"><span class="n">C2</span><span>Red team and revise</span></a>
+<a class="wk" href="c3.html"><span class="n">C3</span><span>Brief, defend, publish</span></a>
+<div class="grp">Reference</div>
+<a class="wk" href="matrix.html"><span class="n">⊞</span><span>The matrix</span></a>
+<a class="wk" href="gates.html"><span class="n">▮</span><span>Phase gates</span></a>
+<a class="wk" href="rubric.html"><span class="n">1–4</span><span>Rubric</span></a>
+<a class="wk" href="exemplars.html"><span class="n">◑</span><span>Worked exemplars</span></a>
+<a class="wk" href="roster.html"><span class="n">◈</span><span>Model roster</span></a>
+<a class="wk" href="glossary.html"><span class="n">Aa</span><span>Glossary</span></a>
+<a class="wk" href="sources.html"><span class="n">✓</span><span>Source register</span></a>
+<button class="themebtn">Toggle theme</button></nav>
+<main><div class="wrap"><div class="kicker">Phase VI &middot; authored</div><h1 id="long-horizon-evaluation-and-monitoring">Long horizon evaluation and monitoring</h1>
+<h2 id="read">Read</h2>
+<ul><li><strong>METR, time horizons</strong> (<a href="https://metr.org/time-horizons/">page</a> and Kwa et al., 2025, <a href="https://arxiv.org/abs/2503.14499">arXiv:2503.14499</a>) — the construct definition, the current chart, and the FAQ's limitations on the page; the method and the headline with its uncertainty in the paper. Write an evidence brief whose "what it can't establish" line is external validity.</li><li><strong>"Why SWE-bench Verified no longer measures frontier coding capabilities"</strong> (OpenAI, 23 Feb 2026, <a href="https://openai.com/index/why-we-no-longer-evaluate-swe-bench-verified/">post</a>) — the contamination analysis and the audit of 138 problems. Read this one first.</li><li><strong>"Separating signal from noise in coding evaluations"</strong> (OpenAI, 8 July 2026, <a href="https://openai.com/index/separating-signal-from-noise-coding-evaluations/">post</a>) — the SWE-bench Pro audit and the retraction of February's recommendation. Name the institutional position: the auditor is a lab whose models the audited benchmarks rank.</li><li><strong>SWE-bench</strong> (Jimenez et al., 2023, <a href="https://arxiv.org/abs/2310.06770">arXiv:2310.06770</a>) — optional. Task construction and the 2023 headline of 1.96%. Keep a ledger of each design choice (tests as unreviewed ground truth, public GitHub as the source) that the 2026 audits presented the bill for.</li><li><strong>International AI Safety Report 2026</strong> (<a href="https://internationalaisafetyreport.org/publication/international-ai-safety-report-2026">report</a>) — optional. §1.2's "Systems struggle with long-term planning and unexpected obstacles" (p. 29) and §2.2.1 "Reliability challenges" (pp. 71–75). Ask which of METR's caveats survived the trip into the ministerial document.</li></ul>
+<h2 id="do">Do</h2>
+<p>Pick one live agentic benchmark with a public harness and a runnable grader; the July post's subject is defensible, because its flaws are documented and you can check your audit against OpenAI's. Fix a slice of 12–20 tasks and a complete configuration (scaffold, token budget, retry allowance, sampling parameters), commit both before the first run, then run the identical slice at least three times, logging every run. Compute the run mean, the run-to-run spread, and W10's standard errors, clustered where tasks share a repository. Perturb one variable at a time, predicting direction first: double the retries, halve the token budget, swap the scaffold's system prompt. Add a contamination probe per the February post's method, prompting the bare model with no tools or repo for the fix to a sampled task and counting how much gold patch or verbatim problem text comes back. Inspect (<a href="https://inspect.aisi.org.uk/">inspect.aisi.org.uk</a>) does repeats, logging, and scoring natively; W40 is its deep home.</p>
+<p>Write the audit across six dimensions, each with the evidence you gathered: task integrity and contamination; scaffold sensitivity; token budget; retries and attempts; grader dependence (reread three "failures" against the grader and say whose failure each was); and run-to-run variance. W10's standards apply throughout. Close with a verdict page: which decisions this benchmark could currently support, at which rung of the claim ladder, and the conditions that should trigger re-audit or retirement.</p>
+<p><strong>Done when</strong> the audit reports run-to-run variance from repeated runs, however small the n, and states which audit dimension moved the headline number most, with the before-and-after scores that justify the ranking. Every score resolves to a committed run log (slice, configuration, per-run outputs).</p>
+<p><strong>Skip if</strong> you can already show a benchmark audit that reports measured run-to-run variance and names the dimension that moved the headline number most.</p>
+<p>Phase VI closes here. Add the current-model dossier: pick one frontier model from the <a href="roster.html">roster page</a> and record its agent-scaffold-and-permissions snapshot (tools, memory, orchestration, permissions, retries and parallel attempts, human checkpoints), with every capability number naming the scaffold and budget it was measured under, and a last line listing the fields the vendor documentation leaves blank. The phase gate, on the <a href="gates.html">gates page</a>, asks you to explain what a horizon does and doesn't measure without the word "autonomy," trace one benchmark score to the scaffold and budget it was measured under, and defend your audit's verdict against W10's statistics.</p>
+<h2 id="take-away">Take away</h2>
+<ul><li>A task horizon is a statistical construct with three moving parts: a task suite, each task indexed by how long <em>humans</em> take, and a fitted curve relating the agent's success probability to that human time. The 50% horizon is where the fit crosses a coin flip. Change any part and the horizon changes.</li><li>METR's estimate is that horizons double roughly every 7 months since 2019: 207 days, 95% bootstrap CI 166–240. The CI captures how much the fit wobbles under the data METR has. It cannot capture external validity, trend-break risk, or decay of the underlying benchmarks.</li><li><strong>A two-hour horizon does not mean the agent works unattended for two hours.</strong> The index is human completion time, and 50% success means failing half the time. Raise the bar to 80% and measured horizons shrink 4–6×. METR's FAQ corrects both errors on the same page as the chart being quoted.</li><li>Every benchmark number attaches to model-plus-scaffold, never the model alone, and sampling budgets buy score, so a benchmark that doesn't fix the budget isn't measuring one thing.</li><li>February 2026 audited 138 SWE-bench Verified problems that o3 solved inconsistently over 64 runs: 59.4% carried material issues in test design or problem description (35.5% too narrow, 18.8% too wide, 5.1% miscellaneous). July 2026 found roughly 30% of SWE-bench Pro's 731 public tasks broken and retracted February's recommendation of it.</li><li>The SWE-bench arc is a complete benchmark lifecycle observable in public, from 2023 construction to a successor recommended and un-recommended five months apart. Flawed tests and contamination bias scores in opposite directions with unknown magnitudes, so a compromised headline can't be rescued as a conservative bound.</li><li>Policy: horizon evidence is already in the ministerial record, since the International AI Safety Report 2026, the Bengio-chaired synthesis commissioned by around 30 governments, carries METR's ~2-hour and ~7-month-doubling numbers.</li><li>A briefing that turns the trend into "agents will run unattended for a full workday by 20XX" makes three translation failures: construct (human-time index, not runtime), reliability level (50% is a coin flip; rules live on the 80% curve), instrument (suite-bound, decaying). METR states each against its own headline, so its caveats are a writable contract term.</li></ul>
+<details><summary>Check yourself</summary>
+<ol><li>Define the 50% time horizon, naming all three moving parts. A colleague reports: "the model worked 90 minutes on my task before failing, so its horizon is about 90 minutes." Name both errors.</li><li>February 2026 found flawed tests of two kinds. Name both, give the direction each biases a measured score, and contrast with contamination's direction. What does the mix imply about the hope that the score is at least wrong conservatively?</li><li>Your audit ran a 15-task slice three times: 40%, 47%, 43%. Separate the two uncertainties in play, estimate each, and state what model-versus-model gap this design could responsibly resolve.</li><li>February recommends SWE-bench Pro; July retracts the recommendation. Name three pieces of standing machinery that five-month sequence argues an evaluation regime needs.</li></ol>
+<p><strong>Answers.</strong> (1) On a defined task suite whose tasks are indexed by measured human completion time, fit a curve of agent success probability against that human time; the 50% horizon is the human-time value where the fit predicts 50% success. The errors: the ruler is human time rather than agent wall-clock, and a horizon is a suite-level fitted parameter rather than a single-task observation, with 50% itself a threshold choice. (2) Too narrow: tests enforce the gold patch's implementation details, so valid alternative fixes fail, biasing scores down. Too wide: tests demand functionality the issue never described, also biasing down. Contamination biases up, since memorized gold patches score without the capability. The distortions point in opposite directions with unknown magnitudes, so the headline is unsigned and the instrument has to be fixed rather than reinterpreted. (3) Run-to-run: SD of {40, 47, 43} ≈ 3.5 points (mean 43.3, SE over runs ≈ 2), the pipeline's own noise. Task-sampling: with 15 tasks, binomial SE ≈ √(0.43 × 0.57 / 15) ≈ 12.8 points, an order larger. Unpaired, gaps of even ten points are unresolvable at this n; only a paired design on identical tasks (W10's covariance term) supports a comparison, and both numbers get reported because they answer different questions, pipeline stability and suite representativeness. (4) Review before adoption, since February endorsed a successor without the task-level human review July applied. Expiry conditions, since contamination and flawed tasks accumulate and any gate citing a benchmark needs a re-audit trigger and a retirement path. Structural fixes: private holdouts, expert-built tasks with reviewed graders, and no deployment decision resting on a single benchmark. Independence is a fourth worth crediting, because both audits came from a lab the benchmarks rank.</p>
+</details></div></main></body></html>

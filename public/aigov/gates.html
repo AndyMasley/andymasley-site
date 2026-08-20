@@ -1,0 +1,262 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<title>Phase gates</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<style>
+:root{--font-serif:"Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua",Georgia,Cambria,serif;
+--font-sans:ui-sans-serif,-apple-system,"Segoe UI","Helvetica Neue",Arial,sans-serif;
+--font-mono:ui-monospace,"SF Mono","JetBrains Mono",Menlo,Consolas,monospace;
+--paper:#F8F8FB;--paper-2:#FFFFFF;--panel:#F0EFF7;--ink:#1A1A24;--ink-2:#54545F;--ink-3:#8A8A96;
+--rule:#E1E0EA;--rule-2:#CFCEDC;--accent:#5B50C0;--accent-2:#4A3FA8;--focal:#A0455A;--focal-soft:#F3E4E8;
+--good:#1E7A52;--warn:#B07C24;--sel:#DED9F6;
+--shadow:0 1px 2px rgba(26,26,36,.05),0 12px 34px -14px rgba(26,26,36,.16)}
+@media (prefers-color-scheme:dark){:root{--paper:#16161A;--paper-2:#1C1C22;--panel:#1F1F29;
+--ink:#E9E9F0;--ink-2:#AEAEBA;--ink-3:#777784;--rule:#2A2A34;--rule-2:#3A3A46;
+--accent:#9A90F0;--accent-2:#B3ABF6;--focal:#E38CA0;--focal-soft:#33232A;--good:#5FC29A;--warn:#D9A441;--sel:#33305A;
+--shadow:0 1px 2px rgba(0,0,0,.3),0 14px 40px -16px rgba(0,0,0,.6)}}
+:root[data-theme="light"]{--paper:#F8F8FB;--paper-2:#FFFFFF;--panel:#F0EFF7;--ink:#1A1A24;--ink-2:#54545F;
+--ink-3:#8A8A96;--rule:#E1E0EA;--rule-2:#CFCEDC;--accent:#5B50C0;--accent-2:#4A3FA8;--focal:#A0455A;
+--focal-soft:#F3E4E8;--good:#1E7A52;--warn:#B07C24;--sel:#DED9F6}
+:root[data-theme="dark"]{--paper:#16161A;--paper-2:#1C1C22;--panel:#1F1F29;--ink:#E9E9F0;--ink-2:#AEAEBA;
+--ink-3:#777784;--rule:#2A2A34;--rule-2:#3A3A46;--accent:#9A90F0;--accent-2:#B3ABF6;--focal:#E38CA0;
+--focal-soft:#33232A;--good:#5FC29A;--warn:#D9A441;--sel:#33305A}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--font-serif);
+font-size:18px;line-height:1.66;-webkit-font-smoothing:antialiased}
+::selection{background:var(--sel)}
+a{color:var(--accent);text-underline-offset:2px;text-decoration-thickness:.06em}
+a:hover{color:var(--accent-2)}
+#rail{position:fixed;top:0;left:0;width:274px;height:100vh;overflow-y:auto;background:var(--paper-2);
+border-right:1px solid var(--rule);padding:24px 18px 40px;z-index:40;font-family:var(--font-sans);
+transition:transform .25s ease}
+#rail .brand{font-size:.68rem;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-3)}
+#rail .brand-title{font-family:var(--font-serif);font-size:1.12rem;font-weight:600;margin:2px 0 10px;color:var(--ink)}
+#rail .resume{display:inline-block;font-size:.78rem;font-weight:600;color:var(--accent);
+border:1px solid var(--rule-2);border-radius:18px;padding:4px 12px;text-decoration:none;margin-bottom:6px}
+#rail .resume:hover{border-color:var(--accent)}
+#rail .grp{font-size:.64rem;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);
+margin:16px 0 5px;padding-top:10px;border-top:1px solid var(--rule)}
+#rail a.wk{display:flex;gap:8px;align-items:baseline;padding:3px 8px;border-radius:6px;color:var(--ink-2);
+text-decoration:none;font-size:.8rem;line-height:1.35}
+#rail a.wk:hover{background:var(--panel);color:var(--ink)}
+#rail a.wk.active{background:var(--panel);color:var(--accent);font-weight:600}
+#rail a.wk .n{color:var(--ink-3);font-family:var(--font-mono);font-size:.72rem;min-width:26px}
+#rail a.wk .done{color:var(--good);margin-left:auto}
+#rail .soon{opacity:.45;pointer-events:none}
+#rail .themebtn{margin-top:18px;font-size:.72rem;background:none;border:1px solid var(--rule-2);
+color:var(--ink-2);border-radius:18px;padding:5px 12px;cursor:pointer}
+#menubtn{position:fixed;top:12px;left:12px;z-index:50;display:none;background:var(--paper-2);
+border:1px solid var(--rule-2);border-radius:9px;width:40px;height:40px;cursor:pointer;
+box-shadow:var(--shadow);color:var(--ink);font-size:1.1rem}
+#scrim{position:fixed;inset:0;background:rgba(10,10,16,.4);z-index:35;display:none}
+main{margin-left:274px}
+.wrap{max-width:760px;margin:0 auto;padding:40px 28px 90px}
+.kicker{font-family:var(--font-sans);font-size:.72rem;letter-spacing:.2em;text-transform:uppercase;color:var(--accent)}
+h1{font-size:clamp(1.9rem,4.5vw,2.7rem);font-weight:600;line-height:1.08;letter-spacing:-.015em;margin:.2em 0 .3em}
+h2{font-size:1.4rem;font-weight:600;margin:44px 0 6px;letter-spacing:-.01em}
+h3{font-size:1.08rem;font-weight:600;margin:28px 0 2px}
+h4{font-size:.95rem;font-weight:600;margin:22px 0 2px;color:var(--ink-2)}
+p{margin:14px 0;max-width:66ch}
+ul,ol{max-width:64ch;padding-left:1.3em}
+li{margin:7px 0}
+code{font-family:var(--font-mono);background:var(--panel);border:1px solid var(--rule);
+border-radius:5px;padding:.06em .35em;font-size:.85em}
+pre{background:var(--panel);border:1px solid var(--rule);border-radius:10px;padding:14px 16px;
+overflow-x:auto;font-size:.82em;line-height:1.5}
+pre code{background:none;border:none;padding:0}
+blockquote{margin:22px 0;padding-left:18px;border-left:3px solid var(--rule-2);color:var(--ink-2)}
+hr{border:none;border-top:1px solid var(--rule);margin:36px 0}
+.tablewrap{overflow-x:auto;margin:24px 0}
+table{border-collapse:collapse;font-size:.88rem;min-width:50%}
+th{font-family:var(--font-sans);font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;
+color:var(--ink-2);text-align:left}
+th,td{padding:8px 14px 8px 0;border-bottom:1px solid var(--rule);vertical-align:top}
+.meta{font-family:var(--font-sans);font-size:.8rem;color:var(--ink-3);margin:4px 0 22px}
+.callout{margin:26px 0;border-radius:12px;padding:18px 20px 14px;border:1px solid var(--rule);
+background:var(--paper-2);box-shadow:var(--shadow)}
+.callout .tag{font-family:var(--font-sans);font-size:.66rem;letter-spacing:.16em;text-transform:uppercase;
+font-weight:700;display:block;margin-bottom:7px}
+.miscon{background:color-mix(in srgb,var(--focal) 6%,var(--paper-2));
+border-color:color-mix(in srgb,var(--focal) 30%,var(--rule))}
+.miscon .tag{color:var(--focal)}
+.keyidea{background:linear-gradient(180deg,color-mix(in srgb,var(--accent) 5%,var(--paper-2)),var(--paper-2));
+border-color:color-mix(in srgb,var(--accent) 28%,var(--rule))}
+.keyidea .tag{color:var(--accent)}
+details{margin:18px 0;border:1px solid var(--rule);border-radius:10px;padding:10px 16px;background:var(--paper-2)}
+summary{cursor:pointer;font-family:var(--font-sans);font-size:.85rem;font-weight:600;color:var(--ink-2)}
+details[open] summary{margin-bottom:8px}
+.num{font-family:var(--font-mono);font-variant-numeric:tabular-nums}
+@media (max-width:1000px){#rail{transform:translateX(-100%)}#rail.open{transform:none}
+#menubtn{display:block}main{margin-left:0}body.menuopen #scrim{display:block}}
+</style><script>
+(function(){
+  var t=localStorage.getItem('theme');
+  if(t)document.documentElement.setAttribute('data-theme',t);
+  document.addEventListener('DOMContentLoaded',function(){
+    var b=document.querySelector('.themebtn');
+    if(b)b.addEventListener('click',function(){
+      var cur=document.documentElement.getAttribute('data-theme');
+      var next=cur==='dark'?'light':(cur==='light'?'dark':
+        (matchMedia('(prefers-color-scheme: dark)').matches?'light':'dark'));
+      document.documentElement.setAttribute('data-theme',next);
+      localStorage.setItem('theme',next);
+    });
+    var m=document.getElementById('menubtn'),r=document.getElementById('rail'),s=document.getElementById('scrim');
+    if(m){m.addEventListener('click',function(){r.classList.toggle('open');document.body.classList.toggle('menuopen')});
+    s.addEventListener('click',function(){r.classList.remove('open');document.body.classList.remove('menuopen')});}
+  });
+})();
+</script></head>
+<body><button id="menubtn" aria-label="menu">&#9776;</button><div id="scrim"></div>
+<nav id="rail"><div class="brand">Frontier AI</div>
+<div class="brand-title">Policy curriculum</div>
+<a class="resume" href="w00.html">Resume &rarr; W0</a>
+<div class="grp">Start</div>
+<a class="wk" href="how-to-work.html"><span class="n">§</span><span>How to work</span></a>
+<a class="wk" href="w00.html"><span class="n">W0</span><span>Foundation gateway</span></a>
+<div class="grp">Phase I · Orientation and repair</div>
+<a class="wk" href="w01.html"><span class="n">W1</span><span>Calibration</span></a>
+<a class="wk" href="w02.html"><span class="n">W2</span><span>Linear algebra as transformations</span></a>
+<a class="wk" href="w03.html"><span class="n">W3</span><span>Singular values and low rank structure</span></a>
+<a class="wk" href="w04.html"><span class="n">W4</span><span>Probability, likelihood, and information</span></a>
+<a class="wk" href="w05.html"><span class="n">W5</span><span>Automatic differentiation</span></a>
+<a class="wk" href="w06.html"><span class="n">W6</span><span>Numerical computing and PyTorch fluency</span></a>
+<div class="grp">Phase II · Learning systems</div>
+<a class="wk" href="w07.html"><span class="n">W7</span><span>Statistical learning and generalization</span></a>
+<a class="wk" href="w08.html"><span class="n">W8</span><span>Multilayer networks and learned representations</span></a>
+<a class="wk" href="w09.html"><span class="n">W9</span><span>Optimization and trainability</span></a>
+<a class="wk" href="w10.html"><span class="n">W10</span><span>Experimental craft</span></a>
+<a class="wk" href="w11.html"><span class="n">W11</span><span>Calibration, shift, and causal claims</span></a>
+<div class="grp">Phase III · Transformers</div>
+<a class="wk" href="w12.html"><span class="n">W12</span><span>Tokenization and the language modeling objective</span></a>
+<a class="wk" href="w13.html"><span class="n">W13</span><span>Attention</span></a>
+<a class="wk" href="w14.html"><span class="n">W14</span><span>The transformer block</span></a>
+<a class="wk" href="w15.html"><span class="n">W15</span><span>Build and train a compact GPT</span></a>
+<a class="wk" href="w16.html"><span class="n">W16</span><span>In-context learning and emergence</span></a>
+<a class="wk" href="w17.html"><span class="n">W17</span><span>The modern architecture family</span></a>
+<a class="wk" href="w18.html"><span class="n">W18</span><span>Decoding and inference behavior</span></a>
+<div class="grp">Phase IV · Training at scale</div>
+<a class="wk" href="w19.html"><span class="n">W19</span><span>Training data</span></a>
+<a class="wk" href="w20.html"><span class="n">W20</span><span>Scaling laws and algorithmic efficiency</span></a>
+<a class="wk" href="w21.html"><span class="n">W21</span><span>Compute and hardware</span></a>
+<a class="wk" href="w22.html"><span class="n">W22</span><span>Distributed training</span></a>
+<a class="wk" href="w23.html"><span class="n">W23</span><span>Inference systems and economics</span></a>
+<div class="grp">Phase V · Posttraining</div>
+<a class="wk" href="w24.html"><span class="n">W24</span><span>LoRA fine-tuning</span></a>
+<a class="wk" href="w25.html"><span class="n">W25</span><span>Supervised tuning and human feedback</span></a>
+<a class="wk" href="w26.html"><span class="n">W26</span><span>Reinforcement learning foundations</span></a>
+<a class="wk" href="w27.html"><span class="n">W27</span><span>Preference optimization and AI feedback</span></a>
+<a class="wk" href="w28.html"><span class="n">W28</span><span>Verifiable rewards and test-time compute</span></a>
+<div class="grp">Phase VI · Agents</div>
+<a class="wk" href="w29.html"><span class="n">W29</span><span>Retrieval and grounded generation</span></a>
+<a class="wk" href="w30.html"><span class="n">W30</span><span>Tool use and compound systems</span></a>
+<a class="wk" href="w31.html"><span class="n">W31</span><span>Agent architecture and reliability</span></a>
+<a class="wk" href="w32.html"><span class="n">W32</span><span>Long horizon evaluation and monitoring</span></a>
+<div class="grp">Phase VII · Multimodality</div>
+<a class="wk" href="w33.html"><span class="n">W33</span><span>Multimodal representations</span></a>
+<a class="wk" href="w34.html"><span class="n">W34</span><span>Diffusion and flow based generation</span></a>
+<a class="wk" href="w35.html"><span class="n">W35</span><span>Video, world models, robotics, and action</span></a>
+<div class="grp">Phase VIII · Evaluation</div>
+<a class="wk" href="w36.html"><span class="n">W36</span><span>Evaluation as measurement science</span></a>
+<a class="wk" href="w37.html"><span class="n">W37</span><span>Benchmark design, contamination, and gaming</span></a>
+<a class="wk" href="w38.html"><span class="n">W38</span><span>Capability trends and forecasting</span></a>
+<a class="wk" href="w39.html"><span class="n">W39</span><span>Interpretability and causal evidence</span></a>
+<a class="wk" href="w40.html"><span class="n">W40</span><span>Build an evaluation suite</span></a>
+<div class="grp">Phase IX · Safety and security</div>
+<a class="wk" href="w41.html"><span class="n">W41</span><span>Misuse and dangerous capabilities</span></a>
+<a class="wk" href="w42.html"><span class="n">W42</span><span>Deception, reward tampering, and model organisms</span></a>
+<a class="wk" href="w43.html"><span class="n">W43</span><span>Control and monitoring</span></a>
+<a class="wk" href="w44.html"><span class="n">W44</span><span>Model weights and infrastructure security</span></a>
+<a class="wk" href="w45.html"><span class="n">W45</span><span>Societal and systemic risks</span></a>
+<div class="grp">Strategy block</div>
+<a class="wk" href="s1.html"><span class="n">S1</span><span>World models and methods</span></a>
+<a class="wk" href="s2.html"><span class="n">S2</span><span>Threat models: the AI's objectives</span></a>
+<a class="wk" href="s3.html"><span class="n">S3</span><span>Threat models: power, structure, and war</span></a>
+<a class="wk" href="s4.html"><span class="n">S4</span><span>Compute governance</span></a>
+<a class="wk" href="s5.html"><span class="n">S5</span><span>Evals-gated governance</span></a>
+<a class="wk" href="s6.html"><span class="n">S6</span><span>International instruments and verification</span></a>
+<div class="grp">Residency</div>
+<a class="wk" href="r01.html"><span class="n">R1</span><span>US AI policy architecture</span></a>
+<a class="wk" href="r02.html"><span class="n">R2</span><span>Administrative law and regulatory design</span></a>
+<a class="wk" href="r03.html"><span class="n">R3</span><span>Federalism and state AI law</span></a>
+<a class="wk" href="r04.html"><span class="n">R4</span><span>Rights, privacy, due process, and sectoral authority</span></a>
+<a class="wk" href="r05.html"><span class="n">R5</span><span>Copyright, training data, identity, and open weights</span></a>
+<a class="wk" href="r06.html"><span class="n">R6</span><span>National security institutions and military use</span></a>
+<a class="wk" href="r07.html"><span class="n">R7</span><span>Export controls, investment, industrial strategy, and compute</span></a>
+<a class="wk" href="r08.html"><span class="n">R8</span><span>Standards, conformity assessment, audit, and assurance</span></a>
+<a class="wk" href="r09.html"><span class="n">R9</span><span>Comparative and international governance</span></a>
+<a class="wk" href="r10.html"><span class="n">R10</span><span>Productivity, labor, competition, and distribution</span></a>
+<a class="wk" href="r11.html"><span class="n">R11</span><span>Energy, infrastructure, environment, and communities</span></a>
+<a class="wk" href="r12.html"><span class="n">R12</span><span>Implementation, budgeting, procurement, enforcement, and crisis</span></a>
+<div class="grp">Capstone</div>
+<a class="wk" href="c1.html"><span class="n">C1</span><span>Position paper draft</span></a>
+<a class="wk" href="c2.html"><span class="n">C2</span><span>Red team and revise</span></a>
+<a class="wk" href="c3.html"><span class="n">C3</span><span>Brief, defend, publish</span></a>
+<div class="grp">Reference</div>
+<a class="wk" href="matrix.html"><span class="n">⊞</span><span>The matrix</span></a>
+<a class="wk active" href="gates.html"><span class="n">▮</span><span>Phase gates</span></a>
+<a class="wk" href="rubric.html"><span class="n">1–4</span><span>Rubric</span></a>
+<a class="wk" href="exemplars.html"><span class="n">◑</span><span>Worked exemplars</span></a>
+<a class="wk" href="roster.html"><span class="n">◈</span><span>Model roster</span></a>
+<a class="wk" href="glossary.html"><span class="n">Aa</span><span>Glossary</span></a>
+<a class="wk" href="sources.html"><span class="n">✓</span><span>Source register</span></a>
+<button class="themebtn">Toggle theme</button></nav>
+<main><div class="wrap"><h1 id="phase-gates">Phase gates</h1>
+<p>Gates are their own sequence position, not homework stacked on a week. PLAN.md's buffer weeks (one unscheduled consolidation week per ~2 phases) are the gate weeks.</p>
+<p>How to run one. Retrieval bank first, closed book, one sitting, written out rather than recited. Then the transfer prompt, open book, written so the answer could ship as a blog post. A failed item routes to the named week, not to the whole phase. Score with the <a href="rubric.html">rubric</a>.</p>
+<h2 id="phase-i-gate-orientation-and-technical-repair-w0-t">Phase I gate · orientation and technical repair (W0 to W6)</h2>
+<p><strong>Retrieval, closed book.</strong></p>
+<ol><li>Write the system stack's eight levels and the claim ladder's five rungs.</li><li>What do a matrix's columns tell you, what does rank count, and what does a projection discard?</li><li>State Eckart-Young. What does the truncated SVD promise, and what does it not promise about task-relevant directions?</li><li>Define cross-entropy loss in one sentence. Give perplexity's relation to it.</li><li>Why is lower cross-entropy not closer to truth? Name both limits.</li><li>What single question does the backward sweep answer, what does it cost against the forward pass, and what does it pay in?</li><li>Derive the ~6 FLOPs per parameter per token estimate from that cost.</li><li>Name the nine things that must hold for a reproduction, and say which one a seed pins.</li></ol>
+<p><strong>Transfer.</strong> Write 800 words on what a compute threshold counts. Take Article 51's 10^25 presumption and SB 53's 10^26 test, and show which drafting choices (backward-pass FLOPs, discarded runs, fine-tuning, precision) move real models across the line.</p>
+<p><strong>Pass:</strong> 6 of 8, plus a transfer draft a stranger could read. Remediation: items 2 and 3 route to W2 and W3 at full speed, then redo the W0 gateway checks 4 and 5; items 4 and 5 to W4; items 6 and 7 to W5; item 8 to W6.</p>
+<h2 id="phase-ii-gate-learning-systems-w7-to-w11">Phase II gate · learning systems (W7 to W11)</h2>
+<p><strong>Retrieval, closed book.</strong></p>
+<ol><li>Decompose test error into three parts. Which does weight decay attack, and what does it pay?</li><li>Name the three assumptions behind "it generalizes, we tested on held-out data," none checkable from the score.</li><li>Why do two stacked linear layers collapse, and what does a tanh gradient of 1 − a² imply about saturated units?</li><li>State the ResNet evidence that capacity was never the bottleneck.</li><li>Why does a per-layer scale factor compound, and what do initialization and normalization each do about it?</li><li>Write Var(A−B) for a paired comparison and say what pairing cancels.</li><li>What does item clustering do to effective sample size and to the naive standard error?</li><li>Define calibration as a frequency promise. What does temperature scaling leave untouched?</li><li>Distinguish E[Y | A=1] from E[Y^{a=1}], and give the condition under which they coincide.</li></ol>
+<p><strong>Transfer.</strong> Write the four lines that make an eval score mean something in a contract: a standard error on every headline number, paired designs for model-vs-model claims, disclosed seeds and sampling settings, a power analysis. Show on one worked example what each line rules out.</p>
+<p><strong>Pass:</strong> 7 of 9. Remediation: items 1 and 2 to W7; 3 to W8; 4 and 5 to W9; 6 and 7 to W10; 8 and 9 to W11.</p>
+<h2 id="phase-iii-gate-transformers-w12-to-w18">Phase III gate · transformers (W12 to W18)</h2>
+<p><strong>Retrieval, closed book.</strong></p>
+<ol><li>Factor a language model's distribution by the chain rule and connect the training objective to W4's cross-entropy.</li><li>Rebuild scaled dot-product attention from memory. Give the shapes in Q·Kᵀ/√d and say why the mask goes before the softmax.</li><li>Which of Q, K, V cache across generated tokens, and what does that make long context?</li><li>In a GPT-2 block, which carries more parameters, attention or the MLP? Which operation moves information between positions?</li><li>Why did pre-norm win over post-norm?</li><li>List what "the model works" needs to be a measurement claim. Give the arithmetic baseline for a 65-character vocabulary.</li><li>Show how exact match on a k-token answer turns a continuous per-token gain into a sharp benchmark jump.</li><li>For a sparse-expert model, which number governs memory and which governs FLOPs per token?</li><li>Temperature against top-p: what does each do to the distribution, and what four items belong in a decoding disclosure line?</li></ol>
+<p><strong>Transfer.</strong> Write the general-audience piece on why an attention heatmap is not an explanation. Use the routing mechanism, the ablation test, and the fact that a human picked the head. Close on what evidence counts instead.</p>
+<p><strong>Pass:</strong> 7 of 9, and item 2 is mandatory. Remediation: failing the shape trace sends you back to W13's build before anything else; item 5 to W14; item 6 to W15 with W4; item 7 to W16; items 8 and 9 to W17 and W18.</p>
+<h2 id="phase-iv-gate-training-and-serving-at-scale-w19-to">Phase IV gate · training and serving at scale (W19 to W23)</h2>
+<p><strong>Retrieval, closed book.</strong></p>
+<ol><li>Give the operational definition of data quality, and say why a serious corpus is a stack of ablation results.</li><li>Why can provenance not be retrofitted? Name three things you cannot do without it.</li><li>Write L(N, D) = E + A/N^α + B/D^β and say which term is not the model's to reduce.</li><li>Why is Chinchilla-optimal not how frontier models are trained?</li><li>Define arithmetic intensity and a chip's ridge point. Which regime is batch-1 decoding in?</li><li>Distinguish TWh from GW, and say which question each answers.</li><li>Name Epoch's three confidence tiers, and what a bare point estimate has silently claimed.</li><li>For data, tensor, pipeline, and ZeRO sharding: what is sharded, and what collective is owed on which link?</li><li>Why is parameter count not a price? Give both failure modes.</li></ol>
+<p><strong>Transfer.</strong> Write 1,000 words on why a public training-compute number is a reconstruction rather than a measurement. Walk one estimate through the unknowns, attach Epoch's tier, and state what a reporting rule would have to fix: unit, route, audit.</p>
+<p><strong>Pass:</strong> 7 of 9. Remediation: items 1 and 2 to W19; 3 and 4 to W20; 5 to 7 to W21; 8 to W22; 9 to W23 with W18's KV-cache arithmetic.</p>
+<h2 id="phase-v-gate-posttraining-and-reasoning-w24-to-w28">Phase V gate · posttraining and reasoning (W24 to W28)</h2>
+<p><strong>Retrieval, closed book.</strong></p>
+<ol><li>What is the unit of evidence for a fine-tune?</li><li>What does LoRA cut, and what does it leave untouched?</li><li>Why is a preference label not a readout of human values? Give InstructGPT's labeler agreement figure.</li><li>Under Bradley-Terry, why is comparing raw reward scores across prompts a category error?</li><li>Map RLHF onto an MDP: state, action, policy, and when reward arrives.</li><li>Under one gradient step per batch, what happens to PPO's clipping?</li><li>State DPO's implicit reward. What does deleting the RL loop fail to delete?</li><li>Describe the proxy-against-gold divergence Gao et al. measured, and why best-of-n makes the point sharper.</li><li>What does a verifiable reward buy, and what stays as unconstrained as before?</li><li>Why does test-time compute stress a training-compute threshold?</li></ol>
+<p><strong>Transfer.</strong> Write the posttraining disclosure line: whose preferences, under what instructions, aggregated by what rule, optimized against what reward with what leash. Then argue whether Annex XI's "training methodologies and techniques" already reaches it.</p>
+<p><strong>Pass:</strong> 7 of 10. Remediation: a fine-tune with no measured before/after delta means redoing W24's build; items 3 and 4 to W25; 5 and 6 to W26; 7 and 8 to W27; 9 and 10 to W28 with W20.</p>
+<h2 id="phase-vi-gate-retrieval-tools-agents-w29-to-w32">Phase VI gate · retrieval, tools, agents (W29 to W32)</h2>
+<p><strong>Retrieval, closed book.</strong></p>
+<ol><li>Name the four separable joints where a retrieval pipeline fails, and the two joints where grounding gets measured.</li><li>Give Liu et al.'s support and citation figures, and the sign of the correlation between citation precision and perceived utility.</li><li>Why does obligation attach to the system rather than to the weights?</li><li>What changes when the capability-defining event is a connection rather than a model release?</li><li>Define the confused-deputy failure, and say why a system prompt is not a permission system.</li><li>Give AgentDojo's utility-against-attack numbers for one defense, and state the isolation floor.</li><li>Name the three moving parts of a task horizon, and what METR's 50% figure means.</li><li>What happens to measured horizons at an 80% success bar?</li><li>Name the two directions in which broken benchmark tests and contamination bias a score.</li></ol>
+<p><strong>Transfer.</strong> A solicitation says "responses shall cite source documents." Write the acceptance criteria that line fails to buy: claim-level citation precision and recall on the agency's own corpus, plus a measured refusal rate on out-of-corpus queries. Score one shipping product against them.</p>
+<p><strong>Pass:</strong> 7 of 9. Remediation: items 1 and 2 to W29; 3 and 4 to W30; 5 and 6 to W31; 7 to 9 to W32 with W10's statistics.</p>
+<h2 id="phase-vii-gate-multimodality-and-world-models-w33-">Phase VII gate · multimodality and world models (W33 to W35)</h2>
+<p><strong>Retrieval, closed book.</strong></p>
+<ol><li>Describe contrastive training in one pass, and say why zero-shot classification falls out of it.</li><li>Why is "multimodal" a ledger of modality-by-direction cells rather than one property?</li><li>What does an adapter architecture preserve, and what does it cap?</li><li>What is a diffusion network trained to predict, and what does sampling do with that prediction?</li><li>C2PA against SynthID: what does each establish, and where does each fail?</li><li>Why can a watermark not be enforced on open-weight models?</li><li>Give the difference between the exam a video model sits and the exam a control model sits.</li><li>Once a model moves mass near bodies, which instrument family takes over? Name the working example.</li></ol>
+<p><strong>Transfer.</strong> Write the piece on why labeling mandates land on the strippable layer. Use the CAC measures and EU Article 50, give both failure modes of manifests and pixel marks, and end with the rule you would write instead.</p>
+<p><strong>Pass:</strong> 6 of 8. Remediation: items 1 to 3 to W33; 4 to 6 to W34; 7 and 8 to W35.</p>
+<h2 id="phase-viii-gate-evaluation-and-forecasting-w36-to-">Phase VIII gate · evaluation and forecasting (W36 to W40)</h2>
+<p><strong>Retrieval, closed book.</strong></p>
+<ol><li>Separate validity from reliability. What do more samples buy, and what can they never buy?</li><li>Why is writing the construct after picking the benchmark not the same work in a different order?</li><li>Name the six channels by which a benchmark score can rise.</li><li>What did GSM1k's correlation show, and why does matched difficulty make the gap readable?</li><li>Give the two cheap fixes for model-judge artifacts, and what the second one moved.</li><li>State the outside-view forecasting procedure, and why resolution criteria are non-negotiable.</li><li>Give METR's doubling estimate with its interval, and the three caveats that travel with it.</li><li>Name the three rungs of interpretability evidence, and what moves an observation to rung two.</li><li>Why does an unvalidated attribution graph sit on rung one?</li><li>List what an eval card pins that a repo does not.</li></ol>
+<p><strong>Transfer.</strong> Write what an evaluation must disclose before a score can gate anything: construct, population, elicitation, scorer, uncertainty, threshold, and the action taken at that threshold, plus a re-audit trigger and a retirement path. Score one published system card against the list.</p>
+<p><strong>Pass:</strong> 8 of 10. Remediation: items 1 and 2 to W36; 3 to 5 to W37; 6 and 7 to W38; 8 and 9 to W39; a suite that will not rerun inside its stated variance means redoing W40's build.</p>
+<h2 id="phase-ix-gate-safety-security-systemic-risk-w41-to">Phase IX gate · safety, security, systemic risk (W41 to W45)</h2>
+<p>This gate carries the frontier-system audit. Budget it like a week, not like a quiz.</p>
+<p><strong>Retrieval, closed book.</strong></p>
+<ol><li>Write the chain between a capability score and a body. Define uplift as a counterfactual.</li><li>Why is a high hazardous-knowledge score not evidence of uplift? Which way does the inference run?</li><li>Give RAND's red-cell result and the effect size that design could have detected.</li><li>Where do Anthropic's RSP and OpenAI's Preparedness Framework part on the bio threshold?</li><li>What is a model organism? What does construction buy, and what does it cost?</li><li>Which number in the alignment-faking work carries the evidential weight, and why not the raw rate?</li><li>Distinguish alignment from control. What unmeasurable question does the red team convert, and into what?</li><li>When does the control window close?</li><li>Why is "secure" not a property? What does an OC index add to a security claim?</li><li>What earns a risk the word "systemic," and what makes a harm merely large?</li></ol>
+<p><strong>The audit.</strong> Pick the newest system card on the roster page. Sources: the OpenAI <a href="https://deploymentsafety.openai.com/">Deployment Safety Hub</a>, <a href="https://www.anthropic.com/system-cards">Anthropic system cards</a>, <a href="https://deepmind.google/models/model-cards/">DeepMind model cards</a>.</p>
+<p>Build the claim ledger first. One row per consequential claim in the card: the claim, its rung on the claim ladder, the evidence offered, the population and elicitation settings behind it, what it cannot establish, and what would check it.</p>
+<p>Then write a five-page assessment covering both halves.</p>
+<ul><li><strong>Capabilities</strong>, on W36 to W40 judgment. Which scores state a construct, an elicitation protocol, and an uncertainty. Which benchmarks are contaminated or retired. Whether each number attaches to the model or to model-plus-scaffold. Whether a trend claim states resolution criteria.</li><li><strong>Safety posture</strong>, on W41 to W44. Which capability thresholds fire and what they trigger. Whether uplift claims name a baseline. Whether deception or test-awareness evidence appears. Whether the security standard names an attacker class. What control evidence exists, as against assertion.</li></ul>
+<p><strong>Done when</strong> every ledger row cites a page or line in the card, the assessment names three claims you would not sign and the evidence that would change that, and a named principal could act on page one.</p>
+<p><strong>Pass:</strong> 8 of 10 on the bank, plus an assessment that survives its own source-scope-uncertainty audit. Remediation: items 1 to 4 to W41; 5 and 6 to W42; 7 and 8 to W43; 9 to W44; 10 to W45.</p>
+<p>If the weak part was grading the card's evidence rather than reading its safety case, the failure is Phase VIII. Rerun W36 and W37 before rewriting.</p>
+<h2 id="strategy-block-gate-s1-to-s6">Strategy block gate (S1 to S6)</h2>
+<p><strong>Retrieval, closed book.</strong></p>
+<ol><li>What does backward-chaining from a short timeline produce, and what does a long timeline produce instead?</li><li>Why is the forecasting deliverable a distribution plus its sensitivity rather than a year?</li><li>Name the four commitments that price a threat model.</li><li>Which threat model uniquely motivates KYC-for-compute, and what is its binding constraint?</li><li>Decisive against accumulative risk: what intervention class does each imply?</li><li>Which risk families run on solved alignment, and what follows for the alignment stack?</li><li>Name the four properties that make compute governable, and what they are conditional on.</li><li>Order the compute levers, and say what each rung enables above it.</li><li>What three parts make a hard commitment, and what is it without one?</li><li>Why is "voluntary" not a synonym for toothless? Give the two instances that make the point in both directions.</li></ol>
+<p><strong>Transfer.</strong> Write the piece that locates a policy fight in a parameter rather than in values. Take the open-weights question, show that both camps share the facts, and put the disagreement on offense-defense balance and diffusion. Give your number and the observable that would move it.</p>
+<p><strong>Pass:</strong> 8 of 10. Remediation: items 1 and 2 to S1; 3 and 4 to S2; 5 and 6 to S3; 7 and 8 to S4; 9 to S5; 10 to S6.</p></div></main></body></html>

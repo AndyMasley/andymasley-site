@@ -1,0 +1,71 @@
+// Proxy for Substack's free-signup endpoint, so the homepage can offer a
+// subscribe field set in the site's own type instead of embedding
+// Substack's iframe. The endpoint is undocumented: when it changes shape
+// this returns ok:false and the form points people at Substack directly.
+//
+// Posting to the custom domain rather than andymasley.substack.com avoids a
+// cross-host redirect, which would drop the POST body.
+const SUBSTACK_ENDPOINT = "https://blog.andymasley.com/api/v1/free";
+const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+function json(payload, status) {
+  return new Response(JSON.stringify(payload), {
+    status,
+    headers: {
+      "content-type": "application/json",
+      "cache-control": "no-store",
+    },
+  });
+}
+
+export async function onRequestPost(context) {
+  let email = "";
+  try {
+    const body = await context.request.json();
+    if (body && typeof body.email === "string") email = body.email.trim();
+  } catch {
+    email = "";
+  }
+
+  if (!email || email.length > 254 || !EMAIL.test(email)) {
+    return json({ ok: false, message: "That doesn’t look like an email address." }, 400);
+  }
+
+  let upstream;
+  try {
+    upstream = await fetch(SUBSTACK_ENDPOINT, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        accept: "application/json",
+      },
+      body: JSON.stringify({
+        email,
+        first_url: "https://andymasley.com/",
+        first_referrer: "",
+        current_url: "https://andymasley.com/",
+        current_referrer: "",
+        referral_code: "",
+        source: "cover_page",
+        referring_pub_id: null,
+        additional_urls: [],
+      }),
+    });
+  } catch {
+    return json({ ok: false, message: "Couldn’t reach Substack just now." }, 502);
+  }
+
+  if (upstream.ok) return json({ ok: true }, 200);
+
+  // Substack answers a rejected address with {errors:[{param,msg}]}.
+  let message = "Couldn’t complete the signup.";
+  try {
+    const data = await upstream.json();
+    const first = Array.isArray(data.errors) ? data.errors[0] : null;
+    if (first && typeof first.msg === "string" && first.msg) message = first.msg;
+  } catch {
+    // keep the default
+  }
+
+  return json({ ok: false, message }, upstream.status === 400 ? 400 : 502);
+}
