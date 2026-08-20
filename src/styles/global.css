@@ -444,6 +444,13 @@ p {
   font-style: italic;
 }
 
+/* A trailing paragraph margin falls inside the border box, so the rule keeps
+   drawing well past the quote's last line. Nothing hangs below the text. */
+.prose blockquote > :last-child,
+.footnote-content blockquote > :last-child {
+  margin-bottom: 0;
+}
+
 .prose code {
   font-family: var(--font-mono);
   font-size: var(--font-size-mono);

@@ -1,0 +1,158 @@
+---
+// An aside presented the way essay footnotes are: a margin note at >=1280px,
+// an in-column expansion below that, opened by clicking link-styled text in
+// the sentence itself.
+//
+// It mirrors the sidenote geometry in global.css (.article-prose .sidenote:
+// W=180, G=32, so margin-right = -212) rather than reusing it, because that
+// rule is scoped to the article grid and the homepage is not that surface.
+//
+// Content should be spans-as-blocks (.marginnote__line / .marginnote__quote),
+// not <p>/<blockquote>: the note sits inside the host paragraph so it can
+// anchor at the phrase, and block elements are not valid there. Same reason
+// substack.ts keeps block-content footnotes in the bottom list.
+interface Props {
+  /** Unique per page; ids are derived from it. */
+  id: string;
+  /** The words in the sentence that open the note. */
+  label: string;
+}
+const { id, label } = Astro.props;
+---
+
+<button
+  type="button"
+  class="marginnote__marker"
+  id={`${id}-marker`}
+  data-marginnote
+  aria-expanded="false"
+  aria-controls={`${id}-body`}
+>{label}</button><span class="marginnote" id={`${id}-body`} role="note" hidden><slot /></span>
+
+<style is:global>
+  /* Link-shaped, but a button: it toggles a note, it does not navigate. */
+  .marginnote__marker {
+    padding: 0;
+    border: none;
+    background: none;
+    font-family: inherit;
+    font-size: inherit;
+    line-height: inherit;
+    color: var(--accent);
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: var(--underline-offset);
+    cursor: pointer;
+  }
+
+  .marginnote__marker[aria-expanded='true'] {
+    text-decoration-style: dotted;
+  }
+
+  /* Below the sidenote gate: an in-column expansion, matching
+     .footnote-inline on essay pages. */
+  .marginnote {
+    display: block;
+    margin: 0.75em 0;
+    padding-left: 1em;
+    border-left: 1px solid var(--border);
+    font-family: var(--font-body);
+    font-size: var(--text-sm);
+    line-height: var(--leading-note);
+    color: var(--dim);
+  }
+
+  .marginnote[hidden] {
+    display: none;
+  }
+
+  .marginnote__line {
+    display: block;
+  }
+
+  .marginnote__line + .marginnote__line,
+  .marginnote__quote + .marginnote__line {
+    margin-top: 0.5em;
+  }
+
+  .marginnote__quote {
+    display: block;
+    margin: 0.5em 0;
+    padding-left: 0.9rem;
+    border-left: 2px solid var(--border);
+    font-style: italic;
+  }
+
+  /* At the sidenote gate it leaves the column, like a margin note. */
+  @media (min-width: 1280px) {
+    .marginnote {
+      float: right;
+      clear: right;
+      width: 180px;
+      margin: 0.15rem -212px 0.8rem 0;
+      padding-left: 0;
+      border-left: none;
+      color: var(--text);
+    }
+
+    .marginnote__quote {
+      padding-left: 0.7rem;
+    }
+  }
+</style>
+
+<script>
+  function initMarginNotes() {
+    // Same 1280px gate the essay sidenotes use. Above it the note lives
+    // beside the marker and floats into the margin. Below it, it has to sit
+    // after the paragraph — a block dropped mid-sentence would cut the
+    // sentence in half. This is what .footnote-inline does on essay pages,
+    // by relocation rather than a clone, so there is only ever one copy and
+    // one set of ids.
+    const wide = window.matchMedia('(min-width: 1280px)');
+    const placers: Array<() => void> = [];
+
+    document.querySelectorAll<HTMLButtonElement>('[data-marginnote]').forEach(marker => {
+      if (marker.dataset.bound === 'true') return;
+      const noteId = marker.getAttribute('aria-controls');
+      const note = noteId ? document.getElementById(noteId) : null;
+      const para = marker.closest('p');
+      if (!note || !para) return;
+      marker.dataset.bound = 'true';
+
+      const place = () => {
+        if (wide.matches) marker.after(note);
+        else para.after(note);
+      };
+      place();
+      placers.push(place);
+
+      marker.addEventListener('click', () => {
+        const open = marker.getAttribute('aria-expanded') === 'true';
+        marker.setAttribute('aria-expanded', open ? 'false' : 'true');
+        note.hidden = open;
+      });
+    });
+
+    if (placers.length && !(window as any).__marginNoteGateBound) {
+      (window as any).__marginNoteGateBound = true;
+      wide.addEventListener('change', () => {
+        document.querySelectorAll<HTMLButtonElement>('[data-marginnote]').forEach(marker => {
+          const noteId = marker.getAttribute('aria-controls');
+          const note = noteId ? document.getElementById(noteId) : null;
+          const para = marker.closest('p');
+          if (!note || !para) return;
+          if (wide.matches) marker.after(note);
+          else para.after(note);
+        });
+      });
+    }
+  }
+
+  initMarginNotes();
+
+  if (!(window as any).__marginNoteBound) {
+    document.addEventListener('astro:page-load', initMarginNotes);
+    (window as any).__marginNoteBound = true;
+  }
+</script>
