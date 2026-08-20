@@ -49,8 +49,10 @@ const groups = [
 </section>
 
 <style>
+  /* The divider that used to sit above this was removed; the label
+     rule separates it from Recent, so it only needs the gap back. */
   .start-here {
-    margin: 0;
+    margin: var(--space-3xl) 0 0;
   }
 
   .start-here__group + .start-here__group {
