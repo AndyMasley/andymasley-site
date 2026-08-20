@@ -180,9 +180,9 @@ Research was done by web search in August 2026, drawing on local news, permit re
 
 **Water:** This is the site where Microsoft debuted its closed-loop, ["zero-water evaporation" design](https://www.datacenterdynamics.com/en/news/microsofts-upcoming-data-centers-to-use-closed-loop-zero-water-evaporation-design/) (December 2024): filled once, recirculated with no evaporative loss. Microsoft says the design saves ~24 million gallons a year at Mount Pleasant versus conventional cooling, with [peak use around 350,000 gallons a day](https://www.wpr.org/news/microsoft-new-technology-save-water-mount-pleasant-data-center) only on the hottest days (large conventional data centers use 1–5 million a day). Water is Lake Michigan water via the Racine utility — the Foxconn project triggered a contested 2018 Great Lakes Compact approval to divert up to 7 million gallons a day to this area, so the peak figure is ~5% of just that allotment. No local water controversy over this facility surfaced.
 
-**Air:** No gas turbines; on-site combustion is diesel backup. Wisconsin DNR permits (November 2024) cover [40 emergency generators plus two fire pumps](https://urbanmilwaukee.com/2024/11/15/microsofts-wisconsin-data-center-will-rely-on-diesel-backup-power/) at the newer building and 39 generators retrofitted with NOx controls at the first — 79 permitted generators, running ultra-low-sulfur or renewable diesel, with permit-level emissions around 90,000 tons of CO2-equivalent. Residents and environmental advocates [opposed the air permit](https://www.tmj4.com/news/local-news/in-your-community/racine-county/racine-county-residents-oppose-microsoft-data-center-air-pollution-control-permit-application-during-dnr-hearing) at a DNR hearing, noting the Lake Michigan shoreline part of Racine County already fails the 2015 federal ozone standard. No enforcement actions surfaced.
+**Air:** No gas turbines; on-site combustion is diesel backup. Wisconsin DNR permits (November 2024) cover [40 emergency generators plus two fire pumps](https://urbanmilwaukee.com/2024/11/15/microsofts-wisconsin-data-center-will-rely-on-diesel-backup-power/) at the newer building and 39 generators retrofitted with NOx controls at the first — 79 permitted generators, running ultra-low-sulfur or renewable diesel, with permit-level emissions around 90,000 tons of CO2-equivalent. Residents and environmental advocates [opposed the air permit](https://www.tmj4.com/news/local-news/in-your-community/racine-county/racine-county-residents-oppose-microsoft-data-center-air-pollution-control-permit-application-during-dnr-hearing) at a DNR hearing, noting the Lake Michigan shoreline part of Racine County already fails the 2015 federal ozone standard. The fleet is growing: Microsoft has [proposed roughly 150 more generators at a third 2-million-sq-ft building](https://urbanmilwaukee.com/2024/11/15/microsofts-wisconsin-data-center-will-rely-on-diesel-backup-power/) and applied in 2026 to permit six additional data centers, with residents again urging denial at an April 2026 hearing; DNR preliminarily determined the permits should be approved. No enforcement actions surfaced.
 
-**Noise:** Yes — Wisconsin residents filed a [2026 class-action lawsuit over cooling-fan noise](https://www.tomshardware.com/tech-industry/data-centers/wisconsin-residents-file-class-action-lawsuit-against-microsofts-worlds-most-powerful-ai-data-center-due-to-data-center-noise-plaintiffs-also-mention-construction-noise-and-extreme-light-pollution-from-usd7-3-billion-facility) at the Mount Pleasant campus, also citing construction noise and "extreme light pollution." <!-- GAPFILL: Fairwater Wisconsin noise -->
+**Noise:** Yes — the most consequential operational-noise case in this roundup. Three Sturtevant residents [filed a proposed federal class action against Microsoft on July 1, 2026](https://www.wpr.org/news/microsoft-sued-noise-complaints-at-new-mount-pleasant-data-center), alleging nuisance and negligence from "unreasonable and excessive noise" — diesel generators, chillers, cooling towers, and condenser fans — plus construction noise and "extreme" light pollution, on behalf of a class of more than 1,000 households within 1.5 miles (one plaintiff switched work shifts because he couldn't sleep). The complaint describes a persistent tonal/low-frequency hum that standard A-weighted decibel measurements may not fully capture. Microsoft [acknowledged in April 2026 that neighbors "have noticed a tonal humming sound,"](https://local.microsoft.com/blog/mount-pleasant-datacenter-project-update/) said levels meet local ordinances, met with residents, and made adjustments — the village said it had received [no formal complaints since mid-April fixes](https://www.wpr.org/news/microsoft-sued-noise-complaints-at-new-mount-pleasant-data-center) — but the suit proceeded anyway.
 
 ### Goodyear — Microsoft (Goodyear, Arizona)
 
@@ -286,7 +286,7 @@ Research was done by web search in August 2026, drawing on local news, permit re
 
 **Air:** Prometheus is the marquee US case of building dedicated behind-the-meter gas generation for AI. A fleet of plants serving Meta's Sidecat LLC with no grid connection is going up around the site: [Socrates South (200 MW) approved June 2025](https://www.datacenterdynamics.com/en/news/ohio-regulators-approve-construction-of-200mw-gas-power-plant-to-serve-meta-data-center-in-new-albany-ohio/) and Socrates North (together 400 MW, ~$1.6 billion, built by a Williams Companies subsidiary), then [Socrates the Younger (250 MW)](https://www.sciotopost.com/ohio-regulators-approve-250-megawatt-power-plant-to-fuel-new-albany-meta-data-center/), with a 500 MW gas + 260 MW battery plant [proposed next door](https://www.knoxpages.com/2026/08/18/opsb-schedules-hearing-for-proposed-energy-center-in-licking-county/) (hearing October 2026). Socrates South's permitted potential-to-emit is [~238.6 tons of NOx and ~1.51 million tons of CO2e a year](https://www.gem.wiki/Socrates_South_Power_Generation_Project). Critics object that Ohio's fast-track process allowed approval in as little as 45 days without a public hearing; Licking County residents have started [independent air-quality monitoring](https://www.wosu.org/2025-04-15/licking-county-residents-monitor-air-quality-ahead-of-opening-of-intel-plants-other-developments). Context: Ohio regulators approved an AEP data-center tariff requiring large customers to pay for at least 85% of subscribed capacity — a big reported reason Meta went fully off-grid here. Meta's tent structures reportedly have no backup generation; no permit-documented diesel count for Meta's buildings surfaced.
 
-**Noise:** <!-- GAPFILL: Prometheus noise -->
+**Noise:** None found specific to Meta's campus, its tents, or the Socrates gas plants (which come online Q3/Q4 2026, so no operational record exists yet). The city [reports only four data-center noise complaints in 15+ years](https://datacenters.newalbanyohio.org/), none attributed to Meta; the one documented recent complaint wave (September 2025) targeted the neighboring Google campus. Region-wide, [Sierra Club Ohio reports](https://www.sierraclub.org/ohio/blog/2026/02/data-centers-noise-pollution-ohio-communities-are-organizing-accountability) central Ohio residents describing constant low-frequency hum and vibration from the cluster, and the power siting board attached [36 conditions covering noise](https://www.knoxpages.com/2026/06/26/opsb-authorizes-construction-of-licking-county-power-plant/) to the Socrates plant approvals.
 
 ### Hyperion — Meta (Holly Ridge, Richland Parish, Louisiana)
 
@@ -424,9 +424,29 @@ Research was done by web search in August 2026, drawing on local news, permit re
 
 **Noise:** None found — resident friction in The Dalles has centered on [water use and Google's secrecy](https://fortune.com/longform/google-data-center-the-dalles-oregon-water-dispute), not noise.
 
-<!-- PENDING: Google Midlothian -->
+### Midlothian — Google (Midlothian, Ellis County, Texas)
 
-<!-- PENDING: Google Red Oak -->
+**Status:** Operating and growing on 375 acres bought through shell entity Sharka LLC in 2017; announced in 2019 at $600 million, with a [fifth building (~$880 million) filed in December 2025](https://therealdeal.com/texas/2025/12/10/google-to-build-880-million-data-center-outside-dallas/) as part of Google's $40 billion Texas program. Epoch estimated 82 MW in May 2026.
+
+**Taxes:** Ellis County approved a 10-year abatement in 2018, and the City of Midlothian granted a [100% personal-property abatement plus 85% on real-property improvements](https://baxtel.com/data-center/google-midlothian-tx), both ten years, against ~$500 million projected investment and up to 40 jobs. No actual payment figures published; no school-district value-limitation deal appeared in comptroller records.
+
+**Water:** The site uses evaporative cooling on municipal potable water and [consumed 182.3 million gallons in 2024](https://www.houstonchronicle.com/politics/texas/article/texas-google-water-data-centers-ai-22286576.php) (~500,000 gallons a day) per Google's own disclosures — 11th among Google's top US sites in an earlier year. Coverage contrasts it with Google's newer Texas sites, which will be air-cooled; amid backlash Google pledged $10 million to Texas water projects. No municipal-demand comparison was published.
+
+**Air:** Standard diesel backup under a TCEQ permit-by-rule (registered 2018, updated repeatedly through 2025) and a federal operating permit; generators are permitted in groups. No turbines, tonnages, enforcement, or challenges surfaced.
+
+**Noise:** None found specific to this campus.
+
+### Red Oak — Google (Red Oak, Ellis County, Texas)
+
+**Status:** Operating (Epoch: 93 MW, May 2026); announced in 2019 at $600 million via shell company Alamo Mission LLC, then delayed about three years by COVID and water litigation.
+
+**Taxes:** Ellis County and the city approved 10-year abatements in 2019, [restarted in December 2022](https://www.waxahachietx.com/2023/01/02/county-hits-restart-on-google-tax-break/) after the delays; amended terms are 80% abated on buildings/improvements and 100% on business personal property, with a 2019 projection that the county would still collect ~$252,000 a year. No actual payments published.
+
+**Water:** The defining fight, and one of the sharpest in this roundup: a court filing showed Google wanted [roughly 1.46 billion gallons a year by 2021 — about 10% of the anticipated demand for all of Red Oak and surrounding Ellis County](https://time.com/5814276/google-data-centers-water/). The rural provider, Rockett Special Utility District, refused, saying it lacked capacity and Google's application was vague; Google petitioned the state to strip Rockett of its federally protected service rights, Rockett sued the city in federal court, and a consent decree resolved the case in 2022 (terms not public). One building uses dry coolers, another evaporative towers; Google hasn't disclosed actual Red Oak consumption. Google's $10 million Texas Water Impact Fund names Red Oak among recipients.
+
+**Air:** Nothing beyond presumed standard backup generators found. (A TCEQ "Red Oak Datacenter" operating permit belongs to Compass Datacenters, a different facility.)
+
+**Noise:** None specific to Google — but Red Oak is mid-backlash: residents [packed council meetings in 2026 to oppose a proposed ~800-acre Compass campus](https://www.wfaa.com/article/news/local/red-oak-residents-pack-council-meeting-oppose-proposed-data-center-campus/287-dc2d997c-1af1-4167-aff8-22a4e7d8d3ef) citing noise, light, traffic, and property values (nearly 1,600 signed a petition; the council approved it anyway), and a local nonprofit is financing a legal challenge to data centers via car-show fundraisers.
 
 ### Cedar Rapids — Google (Cedar Rapids, Iowa)
 
@@ -636,7 +656,91 @@ Research was done by web search in August 2026, drawing on local news, permit re
 
 ## Directory additions (added to Epoch's directory June–August 2026)
 
-<!-- PENDING: ADDITIONS -->
+Epoch's live directory grew from 50 to 83 sites between the May snapshot and August 18–19, 2026. Seven additions could be firmly identified from outside the directory and are profiled below; the remaining ~26 (concentrated in Texas, Virginia, Ohio, Nebraska, and Iowa per Epoch's state counts) could not be reliably enumerated and are not covered.
+
+### Bristow ("Mango Farm") — Google (Bristow, Prince William County, Virginia)
+
+**Status:** Operating since 2023 on ~250 acres directly next to Gainesville High School, in a corridor where residents face up to 14 new data centers under construction; Epoch lists 279 MW (August 2026). Part of Google's [$9 billion Virginia investment](https://www.insidenova.com/headlines/google-investing-additional-9b-in-virginia-including-data-centers-in-loudoun-prince-william/article_a9465598-3885-4177-acb6-0e727f018466.html).
+
+**Taxes:** No abatement — Prince William County taxes at full (and rising) rates, valuing the property at $1.2 billion; county-wide data-center tax revenue [jumped nearly 70% to $280 million](https://wtop.com/prince-william-county/2025/03/prince-william-countys-data-center-tax-revenue-jumps-nearly-70-to-280-million/), and the FY2026 computer-equipment rate rose to $4.15 per $100 while homeowners got a rate cut. Virginia's sales-tax exemption applies statewide.
+
+**Water:** [Roughly 360 million gallons a year (~1 million gallons a day)](https://www.princewilliamtimes.com/localnews/perfect-storm-drought-data-centers-and-ndas/article_f456c388-fc47-59e6-b3cf-fe40176069a3.html) — one of the county's largest single water users. Disclosure itself became the story: the utility signed an NDA with Google, and the Prince William Times had to take it to court under FOIA, receiving documents with usage numbers redacted. County data centers draw ~4% of supply on average but up to 10% on peak summer days — exactly when drought lowers river flows.
+
+**Air:** Standard diesel backup (no site-specific counts published; Northern Virginia data centers host over 9,000 backup generators collectively).
+
+**Noise:** Yes, named-resident complaints in national press: a Bristow neighbor told AP that despite spending heavily on new windows, [sound from the Google complex still penetrates her home and generator load-testing triggers anxiety attacks](https://www.usnews.com/news/national-news/articles/2026-04-28/living-in-hell-data-center-neighbors-grapple-with-noise-air-pollution). A scientist warned data-center noise could affect the adjacent schools; the county's noise-ordinance rewrite ended up weaker than its citizen group proposed (HVAC equipment is exempt from the 60/55 dB caps).
+
+### Jeffersonville — Meta (Jeffersonville, Indiana)
+
+**Status:** Under construction/commissioning at the River Ridge Commerce Center in Clark County, announced January 2024 as an [$800 million campus with ~100 jobs](https://www.iedc.in.gov/events/news/details/2024/01/25/gov.-holcomb-announces-meta-to-build-an-800m-data-center-campus-in-indiana); Epoch lists 178 MW. (Epoch's directory places "Meta Jeffersonville" in Georgia; Meta's only Jeffersonville data center is this Indiana campus — the Georgia town of the same name hosts only a separate developer's proposal.)
+
+**Taxes:** A 35-year state data-center sales-tax exemption (extendable to 50 years with added investment). Locally, the site sits in the River Ridge TIF district, so Meta's property taxes are [captured to fund the commerce center's infrastructure rather than flowing to schools or the city's general fund](https://www.newsandtribune.com/news/jeffersonville-city-council-approves-one-year-moratorium-for-data-centers/article_c39dd353-1c15-4b9d-8d00-462c2da7506b.html) — a point residents raised at 2026 council hearings.
+
+**Water:** Community groups feared up to 5 million gallons a day; Meta says the facility uses [closed-loop dry cooling requiring minimal water](https://www.wdrb.com/news/business/meta-addresses-community-concerns-over-southern-indiana-data-center/article_15435d3e-4f78-4258-a157-e201d2ab95f8.html). The developer authority is doubling its own treatment capacity from 6 to 12 MGD.
+
+**Air:** Nothing site-specific found beyond standard generators (whose testing residents can hear — see below).
+
+**Noise:** Yes — neighbors testified at city council in August 2026 that [generator testing caused severe noise pollution](https://www.wave3.com/2026/08/04/jeffersonville-passes-year-long-data-center-moratorium-amid-resident-outcry-major-utility-disclosures/), helping push the council to pass a one-year moratorium on new data centers 8-0 (the Meta campus itself is unaffected and continues construction).
+
+### Cheyenne — Meta (Cheyenne, Wyoming)
+
+**Status:** Under construction: an $800M+, 715,000 sq ft AI campus on 960 acres, opening by 2027 (Epoch projects 220 MW); built through the LLC "Goat Systems." Cheyenne is already Wyoming's data-center hub.
+
+**Taxes:** No local abatement — Cheyenne offers no dedicated data-center incentive, and facilities pay full local property taxes. The subsidy is Wyoming's sales-tax exemption on data-center equipment (extended through 2042); a state report found [two data centers averaged over $22.5 million each in exemptions in 2023](https://cowboystatedaily.com/2026/06/12/heres-why-wyoming-doesnt-tax-big-data-center-purchases/).
+
+**Water:** Closed-loop cooling with dry coolers on municipal water; all Cheyenne data centers combined used just 1.2% of city water in 2024, though scrutiny is high because Cheyenne imports about half its water from the oversubscribed Colorado River Basin. The distinctive incident: the city [identified Meta's development entity as the source of a rare metal-resistant bacterium in Cheyenne's reclaimed-water system](https://wyofile.com/white-colonies-of-petri-dish-bacteria-led-to-data-center-pollution-fine/) in July 2026, traced to cooling-loop discharges during commissioning — ~800,000 gallons of wastewater were affected, the reuse system went offline for months, the city suspended all data-center cooling discharges and fined Meta $10,000 plus a surcharge, and Meta appealed.
+
+**Air:** Nothing Meta-specific found (context: Microsoft's Cheyenne portfolio is permitted for 128 diesel generators).
+
+**Noise:** Pre-construction concerns only — neighbors raised noise and traffic at the 2024 unveiling; plans include berms and commitments to stay below existing highway noise.
+
+### Muskogee — Core Scientific/CoreWeave (Muskogee, Oklahoma)
+
+**Status:** Under construction at the Port of Muskogee (ground broken November 2024; operational 2026); Epoch projects 153 MW by late 2027. Possibly serving OpenAI via CoreWeave's hosting contracts.
+
+**Taxes:** Projected [more than $12 million in property and sales taxes](https://www.okcommerce.gov/core-scientific-and-port-muskogee-break-ground-on-100-mw-hpc-data-center/) to the county, Hilldale schools, and the city, on $4+ billion of investment — announcement projections, with the port-authority lease terms undisclosed.
+
+**Water:** Nothing disclosed for the facility; the adjacent Polaris crypto mine (which Core Scientific is acquiring) used [~150 million gallons in a year](https://www.readfrontier.org/stories/as-data-centers-boom-in-oklahoma-so-does-water-demand/) per utility records, and Oklahoma reporting has raised discharge concerns about the Arkansas River upstream of farmland.
+
+**Air:** A minor-source ODEQ construction permit (June 2025) consistent with standard backup generators; grid-served from a 500+ MW-capable substation near the gas-converted Muskogee Generating Station.
+
+**Noise:** None found (pre-operational).
+
+### Ellendale ("Polaris Forge 1") — Applied Digital/CoreWeave (Ellendale, North Dakota)
+
+**Status:** Operational and scaling toward 400 MW under [~$7 billion, 15-year CoreWeave leases](https://southdakotasearchlight.com/2026/01/30/north-dakota-town-serves-as-an-example-of-the-promise-and-perils-of-data-centers-for-south-dakota/), two miles from a town of ~1,100 that reporters treat as the test case for rural data-center impacts.
+
+**Taxes:** No abatement found — instead Applied Digital *volunteered to be annexed into the city*, nearly doubling the town's tax base. Actuals are dramatic for a town this size: Ellendale collected [about $3.5 million in sales tax in the first seven months of 2026, versus roughly $400,000 a year before](https://townhall.com/news/dmitri-bolt/2026/08/10/data-centers-are-revitalizing-forgotten-towns-n2680986), with taxable property value projected to rise from $3.5 million to $35 million; the school district credits company grants for new computers and a playground.
+
+**Water:** Among the lowest in the roundup: closed-loop, waterless direct-to-chip cooling with trucked-in coolant and 200+ free-cooling days a year; the site's permitted draw is [10 gallons a minute — likened to a single-family home](https://southdakotasearchlight.com/2026/01/30/north-dakota-town-serves-as-an-example-of-the-promise-and-perils-of-data-centers-for-south-dakota/).
+
+**Air:** 60 Caterpillar emergency diesel generators permitted (four buildings × 15), NOx analyzed at 69–99.5 tons a year, kept a synthetic minor source via run-hour limits. No turbines, no challenges.
+
+**Noise:** None found for Ellendale — the company built a sound wall and a half-mile setback, explicitly to avoid repeating the noise lawsuit it faces at its separate Williston, ND facility.
+
+### Huawei Horinger — Huawei Cloud (Horinger New Area, Inner Mongolia, China)
+
+**Status:** Phase operating (first Hohhot data center started up October 2023), with a planned 50-building "Cloud Valley" campus billed as Huawei's largest cloud data center in northern China; Epoch tracks ~242 MW — the largest non-US site in the directory. One of the ten national cluster sites of China's Eastern Data Western Compute program.
+
+**Taxes:** No tax receipts published (China's local benefits flow through land deals, power discounts, and subsidies rather than property taxes): cluster policy delivers electricity as low as RMB 0.35/kWh with 80%+ green power, plus computing-purchase rebates. The New Area reports RMB 51.2 billion in business revenue in 2025.
+
+**Water:** No site figure; the cluster averages [WUE 1.65 L/kWh (Tsinghua report)](https://www.igi.tsinghua.edu.cn/__local/7/04/E0/C396CD8BE0BC411C12959A0A8F7_9964D5FC_DB7F1.pdf) on mostly indirect-evaporative cooling — which at Epoch's 242 MW would imply roughly 2.5 million gallons a day at full load (arithmetic, not a reported figure) in a chronically water-short region. Neighboring Ulanqab's data-center buildout has drawn Chinese press criticism for aggravating drought-era scarcity.
+
+**Air:** Nothing site-specific found; coverage emphasizes ~86% green electricity and a 360 MW wind/solar demonstration project.
+
+**Noise:** None found — a purpose-built greenfield zone, though Chinese complaint channels are less visible, so absence of coverage is weak evidence.
+
+### VNET Ulanqab — VNET/21Vianet, reportedly serving ByteDance (Ulanqab, Inner Mongolia, China)
+
+**Status:** Operating and expanding (~221 MW per Epoch); in March 2026 [ByteDance signed VNET's biggest-ever order (~500 MW across VNET's China sites)](https://www.datacenterdynamics.com/en/news/tiktok-owner-bytedance-signs-500mw-vnet-china-data-center-deal/) to support its Doubao AI buildout. Ulanqab's pitch is cold climate, ~0.32 yuan/kWh heavily renewable power, and cheap land; the area has attracted 89 data centers.
+
+**Taxes:** Nothing published; incentives run through electricity pricing and land, with fast-track government service schemes.
+
+**Water:** No facility figure, but the sharpest scarcity context in the directory: [Ulanqab's per-capita water resources are 484 cubic meters — under a quarter of the national average — with groundwater over-exploitation zones](https://www.huxiu.com/article/4883038.html), and a Chinese investigative report criticizes operators for not disclosing arid-region withdrawals and warns data centers could be prioritized over herders and residents in drought. VNET claims "water-free" cooling and recirculating systems at its self-built campuses.
+
+**Air:** Standard diesel backup (confirmed as the cluster norm); grid reported >80% renewable.
+
+**Noise:** None found.
 
 ---
 
