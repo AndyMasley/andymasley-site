@@ -22,9 +22,79 @@ Research was done by web search in August 2026, drawing on local news, permit re
 - **"None found" on noise** means genuine searching turned up no complaints — not proof that none exist. Where complaints exist, they're described.
 - Some 2026 figures rest on single local news reports and are attributed to their outlets; treat precise dollar and gallon figures as reported rather than audited.
 
-<!-- SUMMARY-TABLE -->
+## Summary table
 
-<!-- PATTERNS -->
+IT power is Epoch's May 2026 estimate (August 2026 for the directory additions); 0 = not yet operating. "Beyond-backup generation" means on-site or dedicated fossil generation beyond standard emergency diesel. "Noise" reflects documented complaints as of August 2026 (constr. = construction-phase only).
+
+| Site | Location | MW | Property-tax deal | Beyond-backup generation | Noise complaints |
+|---|---|---|---|---|---|
+| Colossus 2 (xAI) | Memphis, TN | 1,494 | None — full taxes | Gas turbines (Southaven plant; 41 permitted, up to 59 ran unpermitted) | Yes — class action |
+| Colossus 1 (xAI) | Memphis, TN | 425 | None — full taxes | Gas turbines (15 permitted; up to 35 ran unpermitted) | Yes |
+| Stargate Abilene | Abilene, TX | 590 | ~85%, two 10-yr terms | ~360 MW gas plant; 10 turbines + 62 diesel; major permit pending | Yes |
+| Crusoe Abilene expansion (Microsoft) | Abilene, TX | 0 | Unclear (existing 85% deal) | On-site gas plant planned | Pre-op |
+| Stargate Shackelford | Shackelford Co., TX | 0 | $10M/yr PILOT, 10 yr | 210 gas generators, 700 MW (off-grid) | None found |
+| Stargate Lordstown | Lordstown, OH | 0 | None found | None found | None (town fights a different project) |
+| Stargate Michigan | Saline Twp., MI | 0 | 50%, 12 yr, capped at $4.81B value | No — 14 diesel gens only | Constr. |
+| Stargate Milam | Milam Co., TX | 0 | Pending | None found (solar + storage) | None found |
+| Stargate New Mexico | Doña Ana Co., NM | 0 | $165B IRB; $12M/yr PILT × 30 yr | 2.45 GW gas fuel-cell microgrid | Prospective only |
+| Stargate Wisconsin | Port Washington, WI | 0 | TIF; ~$450M reimbursed to developer | No — 45 diesel gens (contested) | Constr. (110 dB report) |
+| Stargate UAE | Abu Dhabi, UAE | 0 | No property tax (state partner) | Nuclear/solar/gas mix | None found |
+| Fairwater Atlanta (Microsoft/QTS) | Fayetteville, GA | 859 | 10%→100% over 10 yr (QTS) | None (MSFT building has zero generators) | Yes |
+| Fairwater Wisconsin (Microsoft) | Mount Pleasant, WI | 442 | None locally (state exemption + TIF) | No — diesel only | Yes — class action |
+| Goodyear (Microsoft) | Goodyear, AZ | 263 | None found | No | None found |
+| Project Osmium (Microsoft) | West Des Moines, IA | 228 | None — full taxes | No | Constr. only |
+| SAT40 (Microsoft) | San Antonio, TX | 106 | Cluster-legacy abatements | No | Area-level only |
+| SAT14 (Microsoft) | San Antonio, TX | 66 | Cluster-legacy abatements | No | None found |
+| New Carlisle / Rainier (Amazon) | New Carlisle, IN | 1,092 | ~85%, 35 yr | No — 911 diesel gens permitted | None found |
+| Madison Mega Site (Amazon) | Canton, MS | 341 | FILOT ~2/3 off, 10 yr/bldg | No — 300+ diesel gens | Constr. |
+| Ridgeland (Amazon) | Ridgeland, MS | 273 | FILOT ~2/3 off, 10 yr/bldg | No (shared diesel fleet) | None found |
+| Prometheus (Meta) | New Albany, OH | 731 | 100%, 15 yr | 850+ MW behind-the-meter gas (Socrates) | None found |
+| Hyperion (Meta) | Richland Parish, LA | 0 | 30-yr PILOT; $3.3B sales-tax break | 2,260+ MW Entergy gas plants; on-site boilers/gens near major-source line | Constr. (600% crash spike) |
+| Temple (Meta) | Temple, TX | 198 | 75%, 10 yr (county + city) | No | None yet; recall effort |
+| Kuna (Meta) | Kuna, ID | 0 | Sales-tax exempt; $8.2M payment | No | None found |
+| Pryor (Google) | Mayes Co., OK | 454 | 5-yr rolling exemptions, state-reimbursed ($239M+/decade) | No | None found |
+| Columbus (Google) | Columbus, OH | 364 | 100%, 15 yr (~$54M) | No | Yes (hum) |
+| New Albany (Google) | New Albany, OH | 407 | 100%, 15 yr | No | Yes (fans; resolved) |
+| Omaha (Google) | Omaha, NE | 284 | State ImagiNE incentives | No | None found |
+| Papillion (Google) | Papillion, NE | 284 | Tier 2 state incentives | No | None found |
+| Council Bluffs (Google) | Council Bluffs, IA | 190 | ~$36M+ in breaks over time | No | None found |
+| Storey County (Google) | TRIC, NV | 214 | ~$25M state abatements | No | None found |
+| The Dalles (Google) | The Dalles, OR | 185 | EZ + SIP deals (~$140M+ historic) | No | None found |
+| Midlothian (Google) | Midlothian, TX | 82 | 85–100%, 10 yr | No | None found |
+| Red Oak (Google) | Red Oak, TX | 93 | 80–100%, 10 yr (restarted 2022) | No | None (Google); town backlash |
+| Cedar Rapids (Google) | Cedar Rapids, IA | 0 | 70%, 20 yr (~$56M) | No | None found |
+| Fort Wayne (Google) | Fort Wayne, IN | 0 | 50%, 10 yr/bldg (~$55.5M) | No — 174–179 diesel gens | Yes |
+| Kansas City East (Google) | Kansas City, MO | 0 | 75%, 25 yr reported | No | Constr. |
+| Goodnight (Crusoe→Google) | Claude, TX | 0 | $1.35M/bldg/yr PILOT, 10 yr | 933 MW gas plant applied for | None found |
+| Denton (Core Scientific/CoreWeave) | Denton, TX | 183 | None locally | No | None found |
+| Helios (Galaxy/CoreWeave) | Afton, TX | 0 | ~$40M in two county PILOTs | Gas plant in pre-construction | None found |
+| QTS Richmond | Sandston, VA | 854 | None — rate-based (county) | No — 900+ diesel gens if expansion approved | Fears re: expansion |
+| QTS Cedar Rapids | Fairfax, IA | 0 | 70% rebate, 20 yr/phase (~$1B) | Temporary commissioning plant planned | Constr. traffic |
+| STACK NVA02 | Manassas, VA | 118 | None found | No | Cluster-level |
+| Vantage TX1 | San Antonio, TX | 45 | None found | Gas microgrid + 86 diesel gens (suit threatened) | Constr. |
+| Stream Phoenix | Goodyear, AZ | 77 | 20-yr sales-tax exemption | No | None found |
+| Lake Mariner (TeraWulf/Fluidstack) | Barker, NY | 68 | None; sales-tax fight | No | Yes (~95 dB claims) |
+| DayOne Nusajaya | Johor, Malaysia | 336 | JS-SEZ 5% corporate rate available | No | Yes (area) |
+| Alibaba Zhangbei | Hebei, China | 203 | Revenue-sharing (1/3 booked locally) | No | None found |
+| Oracle Batam (DayOne) | Batam, Indonesia | 94 | SEZ 10–20 yr tax holiday | Zone gas generation planned | None found |
+| Start Campus Sines | Sines, Portugal | 40 | None claimed (PIN status) | No | None found |
+| Bristow (Google) | Prince William Co., VA | 279 | None — full taxes | No | Yes |
+| Jeffersonville (Meta) | Jeffersonville, IN | 178 | 35-yr sales-tax exemption; TIF capture | No | Yes (generator testing) |
+| Cheyenne (Meta) | Cheyenne, WY | 220 | None locally; state sales-tax exemption | No | Pre-op concerns |
+| Muskogee (Core Scientific/CoreWeave) | Muskogee, OK | 153 | Port lease; >$12M projected | No | None found |
+| Ellendale (Applied Digital/CoreWeave) | Ellendale, ND | 68 | None — annexed into city voluntarily | No — 60 diesel gens | None found |
+| Huawei Horinger | Inner Mongolia, China | 242 | Power-price incentives | No | None found |
+| VNET Ulanqab | Inner Mongolia, China | 221 | Power-price incentives | No | None found |
+
+## What jumps out across the whole list
+
+**Taxes.** Some form of major tax break covers nearly every US site, but the structures differ more than the headlines suggest. The clean "no abatement" cases are rare and notable: xAI in Memphis, Microsoft in Wisconsin, West Des Moines, Goodyear, and Cheyenne, Google in Prince William County, Core Scientific in Denton, Applied Digital in Ellendale (which volunteered to be annexed *into* the taxing city), and Henrico County, which competes on a low across-the-board rate instead of deals. Everywhere else the local abatement runs 50–100% for 10–35 years — yet even heavily abated data centers routinely become the largest taxpayer in their jurisdiction, and in small rural counties the money is transformative (Meta's first $22 million deposit exceeded Richland Parish's entire normal annual sales-tax take; Ellendale's sales-tax receipts rose ~9x; Shackelford County's PILOT could double its budget). The biggest subsidy is usually not the local abatement but the state sales-tax exemption on equipment — roughly $1 billion+ a year in Texas, ~$700 million+ in Virginia (the state's largest economic-development incentive), $2.3 billion committed in Ohio, and $561 million claimed by Amazon in Indiana in 2025 alone — refreshed each hardware cycle and rarely covered in local stories about any single site. Two emerging frictions: valuation disputes (xAI, Amazon in Madison County, the Stargate Abilene tenant, Wasco County appeals) and school-funding plumbing — Texas recapture, TIF/TID capture (Mount Pleasant, Jeffersonville, Cedar Rapids, Temple), and abatement structures often mean far less reaches schools than raw figures imply.
+
+**Water.** The list splits cleanly by cooling design. New AI-optimized builds are mostly closed-loop or dry (filled once, tiny ongoing use — Stargate's sites, Meta's new design, Microsoft Fairwater, Amazon's air-cooled campuses, CoreWeave conversions, Ellendale's 10-gallon-a-minute cap), while the big water numbers belong to older evaporative fleets: Google Council Bluffs (~1.3 billion gallons in 2025, Google's thirstiest site), Pryor (~1.1 billion), New Albany (405M+), Bristow (~360M), and Microsoft's evaporative campuses. Relative to local systems, most operating sites draw low single-digit percentages; the outliers are The Dalles (29% of city water) and the projected Cedar Rapids demand (~30–35% of treated output, which would make Google the city's largest user). The recurring scandal is not volume but secrecy: a 13-month lawsuit to hide records in The Dalles, NDAs and redacted FOIA responses in Prince William County, a Texas law shielding San Antonio smart-meter records, confidential contract volumes in Kansas City, and a city refusing to release figures in Goodyear. Two quieter stories: unbilled or unpermitted construction water (QTS in Georgia and Iowa) and the indirect water embedded in electricity — the plants powering New Carlisle are expected to consume ~7 billion gallons a year, dwarfing anything the campus itself uses.
+
+**Air.** The dividing line is whether a site builds its own fossil generation. A distinct cluster now runs (or plans) gas turbines at scale: xAI (the unpermitted-turbine saga at both Memphis sites and Southaven, now in federal court), Stargate Abilene and its expansion, Shackelford's 210-generator off-grid microgrid, Goodnight's 933 MW plant, Meta's behind-the-meter Socrates plants in Ohio and Entergy's 2,260+ MW for Hyperion, and Vantage/VoltaGrid in San Antonio (facing a Clean Air Act suit threat) — with Project Jupiter pivoting to a 2.45 GW fuel-cell microgrid after backlash. Everywhere else the story is diesel backup at fleet scale: 911 permitted generators at New Carlisle, 900+ at QTS Richmond if its expansion is approved, 174–179 at Fort Wayne, 205 at QTS Fayetteville, 9,000+ across Northern Virginia. The regulatory pattern repeats across states: minor-source or permit-by-rule pathways with no public notice ("permits common for dry cleaners"), synthetic-minor caps engineered just under major-source thresholds (Hyperion's 96.83 tons of NOx against a 100-ton line), and loosening definitions of "emergency" operation. Actual enforcement has been light — the exceptions are xAI, an IDEM violation letter to Amazon (no action taken), and dewatering fines at QTS Cedar Rapids.
+
+**Noise.** Complaints cluster in three situations: turbine/generator sites (the Southaven class action with its "Temu sound wall," Abilene's 60 dB complaints), operational cooling hum at sites near homes (the Microsoft Fairwater federal class action — the most consequential so far — plus Google New Albany's exhaust-fan episode, Lake Mariner's ~95 dB fan complaints, named residents at Bristow, the Columbus "constant hum," and Prince William County's own sound tests failing near the Hornbaker Road cluster), and construction (a 110 dB report at Port Washington, Fairfax's 4:30 a.m. traffic, Holly Ridge's 600% crash spike, Saline's gravel trucks). Just as real: many sites genuinely show no complaints, almost always because of siting — remote land or industrial parks with no neighbors within earshot (Storey County, Ellendale, Helios, Pryor, the Inner Mongolia sites). The policy wave is visible everywhere: Fayetteville banned new data centers outright; Lordstown and Jeffersonville passed moratoria; Kansas City, Denton, Henrico, Ridgeland, and Chandler tightened zoning or noise rules; and recall campaigns launched in Temple and Sand Springs. A last cross-cutting note: nearly every US deal was negotiated behind a shell company (Sidecat, Magellan, Sharka, Alamo Mission, Polmer, Brisbie, Goat Systems, Westwood, Fireball, Myall, Montauk, Hatchworks...) — which, along with the NDAs, is itself a recurring source of local distrust.
 
 ---
 
@@ -154,7 +224,17 @@ Research was done by web search in August 2026, drawing on local news, permit re
 
 **Noise:** Extensive construction-phase complaints: initially 24-hour weekday construction, with one resident reporting [sound as high as 110 decibels](https://www.wpr.org/news/port-washington-limits-construction-hours-data-center-project-after-complaints) to the Plan Commission, police noise calls, and alleged weekend-curfew violations. The city limited construction to 6 a.m.–8 p.m. Monday–Saturday in spring 2026; neighbors say the rules don't go far enough. No operational noise yet.
 
-<!-- PENDING: OpenAI Stargate UAE -->
+### Stargate UAE — G42/Khazna for OpenAI (Al Dhafrah, Abu Dhabi, UAE)
+
+**Status:** Under construction: a [1 GW cluster being built by G42's Khazna Data Centers](https://www.prnewswire.com/news-releases/g42-provides-update-on-construction-of-stargate-uae-ai-infrastructure-cluster-302586430.html) within the planned 5 GW UAE–US AI Campus (unveiled May 2025 with the UAE and US presidents present), with the first 200 MW targeted for 2026 delivery and reported investment around $20 billion. The first non-US Stargate site.
+
+**Taxes:** The UAE has no US-style local property taxes or school-district levies; [free-zone structures offer 0% corporate tax, no import/export duties, and full profit repatriation](https://taxsummaries.pwc.com/united-arab-emirates/corporate/tax-credits-and-incentives), so "tax revenue to the locality" isn't a meaningful frame here — the state itself is a partner in the buildout.
+
+**Water:** No site figure disclosed. The design implies advanced liquid cooling for extreme rack densities, and operator Khazna has piloted [treated sewage effluent for cooling and liquid-cooling systems it says cut cooling water use up to 90%](https://restofworld.org/2025/khazna-data-center-uae/). The regional context is acute: Gulf freshwater is up to ~90% desalinated (energy-intensive, brine-producing), and [Rest of World has reported on whether the desert's water can sustain the Gulf AI buildout](https://restofworld.org/2025/gulf-ai-water-crisis/).
+
+**Air:** No site-specific permits are public (UAE permitting isn't). The reported power strategy is a tri-source mix of nuclear (Barakah), solar, and natural gas.
+
+**Noise:** None found — the site sits in desert far from residential neighborhoods, and no complaints surfaced in accessible coverage (UAE media and complaint channels also make absence weak evidence).
 
 ---
 
