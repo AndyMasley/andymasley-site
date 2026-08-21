@@ -944,6 +944,14 @@ if (correction) {
     font-style: normal;
   }
 
+  /* The page-scoped paragraph margin above outranks global.css's
+     `blockquote > :last-child` reset, so the left rule kept drawing 24px
+     past the quote's last line. Re-assert the reset at page scope:
+     nothing hangs below the text. */
+  .article-prose :global(blockquote > :last-child) {
+    margin-bottom: 0;
+  }
+
   /* Blockquote citations */
   .article-prose :global(blockquote > footer),
   .article-prose :global(blockquote cite) {
@@ -1669,6 +1677,7 @@ if (correction) {
     border-left: 3px solid var(--accent); padding-left: var(--space-lg);
     margin: var(--space-xl) 0; color: var(--dim); font-style: italic;
   }
+  .cheat-sheet-page :global(.prose blockquote > :last-child) { margin-bottom: 0; }
   .cheat-sheet-page :global(.prose a) {
     color: var(--accent); text-decoration: underline; text-underline-offset: var(--underline-offset);
   }
