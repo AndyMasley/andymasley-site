@@ -1,0 +1,97 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 758" role="img" font-family="Georgia, Cambria, 'Times New Roman', Times, serif">
+  <title>Daily US irrigation water use by crop, millions of gallons per day</title>
+  <rect width="720" height="758" fill="#ffffff"/>
+  <line x1="312.0" y1="12" x2="312.0" y2="720" stroke="#1a1a1a" stroke-width="1"/>
+  <text x="312.0" y="734" font-size="10" fill="#666666" text-anchor="middle">0</text>
+  <line x1="399.0" y1="12" x2="399.0" y2="720" stroke="#e5e5e5" stroke-width="1"/>
+  <text x="399.0" y="734" font-size="10" fill="#666666" text-anchor="middle">2,500</text>
+  <line x1="485.9" y1="12" x2="485.9" y2="720" stroke="#e5e5e5" stroke-width="1"/>
+  <text x="485.9" y="734" font-size="10" fill="#666666" text-anchor="middle">5,000</text>
+  <line x1="572.9" y1="12" x2="572.9" y2="720" stroke="#e5e5e5" stroke-width="1"/>
+  <text x="572.9" y="734" font-size="10" fill="#666666" text-anchor="middle">7,500</text>
+  <line x1="659.8" y1="12" x2="659.8" y2="720" stroke="#e5e5e5" stroke-width="1"/>
+  <text x="659.8" y="734" font-size="10" fill="#666666" text-anchor="middle">10,000</text>
+  <text x="300" y="26.5" font-size="11" fill="#333333" text-anchor="end">Alfalfa</text>
+  <rect x="312" y="16" width="386.3" height="14" fill="#8a8a8a"/>
+  <text x="693.3" y="26.5" font-size="10.5" fill="#ffffff" text-anchor="end">11,105</text>
+  <text x="300" y="52.5" font-size="11" fill="#333333" text-anchor="end">Orchards</text>
+  <rect x="312" y="42" width="380.5" height="14" fill="#8a8a8a"/>
+  <text x="687.5" y="52.5" font-size="10.5" fill="#ffffff" text-anchor="end">10,940</text>
+  <text x="300" y="78.5" font-size="11" fill="#333333" text-anchor="end">Corn</text>
+  <rect x="312" y="68" width="361.5" height="14" fill="#8a8a8a"/>
+  <text x="668.5" y="78.5" font-size="10.5" fill="#ffffff" text-anchor="end">10,393</text>
+  <text x="300" y="104.5" font-size="11" fill="#333333" text-anchor="end">Misc. vegetables</text>
+  <rect x="312" y="94" width="185.5" height="14" fill="#8a8a8a"/>
+  <text x="502.5" y="104.5" font-size="10.5" fill="#666666">5,332</text>
+  <text x="300" y="130.5" font-size="11" fill="#333333" text-anchor="end">Soybeans</text>
+  <rect x="312" y="120" width="178.0" height="14" fill="#8a8a8a"/>
+  <text x="495.0" y="130.5" font-size="10.5" fill="#666666">5,118</text>
+  <text x="300" y="156.5" font-size="11" fill="#333333" text-anchor="end">Rice</text>
+  <rect x="312" y="146" width="176.1" height="14" fill="#8a8a8a"/>
+  <text x="493.1" y="156.5" font-size="10.5" fill="#666666">5,064</text>
+  <text x="300" y="182.5" font-size="11" fill="#333333" text-anchor="end">Hay</text>
+  <rect x="312" y="172" width="158.8" height="14" fill="#8a8a8a"/>
+  <text x="475.8" y="182.5" font-size="10.5" fill="#666666">4,565</text>
+  <text x="300" y="208.5" font-size="11" fill="#333333" text-anchor="end">Irrigated pasture</text>
+  <rect x="312" y="198" width="151.2" height="14" fill="#8a8a8a"/>
+  <text x="468.2" y="208.5" font-size="10.5" fill="#666666">4,347</text>
+  <text x="300" y="234.5" font-size="11" fill="#333333" text-anchor="end">Corn (silage)</text>
+  <rect x="312" y="224" width="130.4" height="14" fill="#8a8a8a"/>
+  <text x="447.4" y="234.5" font-size="10.5" fill="#666666">3,750</text>
+  <text x="300" y="260.5" font-size="11" fill="#333333" text-anchor="end">Cotton</text>
+  <rect x="312" y="250" width="88.3" height="14" fill="#8a8a8a"/>
+  <text x="405.3" y="260.5" font-size="10.5" fill="#666666">2,538</text>
+  <text x="300" y="286.5" font-size="11" fill="#333333" text-anchor="end">Wheat</text>
+  <rect x="312" y="276" width="86.5" height="14" fill="#8a8a8a"/>
+  <text x="403.5" y="286.5" font-size="10.5" fill="#666666">2,488</text>
+  <text x="300" y="312.5" font-size="11" fill="#333333" text-anchor="end">Other crops</text>
+  <rect x="312" y="302" width="63.1" height="14" fill="#8a8a8a"/>
+  <text x="380.1" y="312.5" font-size="10.5" fill="#666666">1,815</text>
+  <text x="300" y="338.5" font-size="11" fill="#333333" text-anchor="end">Potatoes</text>
+  <rect x="312" y="328" width="48.6" height="14" fill="#8a8a8a"/>
+  <text x="365.6" y="338.5" font-size="10.5" fill="#666666">1,397</text>
+  <text x="300" y="364.5" font-size="11" fill="#333333" text-anchor="end">Misc grains (barley, oats, etc.)</text>
+  <rect x="312" y="354" width="46.1" height="14" fill="#8a8a8a"/>
+  <text x="363.1" y="364.5" font-size="10.5" fill="#666666">1,325</text>
+  <text x="300" y="390.5" font-size="11" fill="#333333" text-anchor="end">1% of America's daily freshwater withdrawal</text>
+  <rect x="312" y="380" width="45.9" height="14" fill="#1a1a1a"/>
+  <text x="362.9" y="390.5" font-size="10.5" fill="#666666">1,320</text>
+  <text x="300" y="416.5" font-size="11" fill="#333333" text-anchor="end">Tomatoes</text>
+  <rect x="312" y="406" width="29.4" height="14" fill="#8a8a8a"/>
+  <text x="346.4" y="416.5" font-size="10.5" fill="#666666">845</text>
+  <text x="300" y="442.5" font-size="11" fill="#333333" text-anchor="end">Nurseries</text>
+  <rect x="312" y="432" width="26.1" height="14" fill="#8a8a8a"/>
+  <text x="343.1" y="442.5" font-size="10.5" fill="#666666">749</text>
+  <text x="300" y="468.5" font-size="11" fill="#333333" text-anchor="end">Lettuce</text>
+  <rect x="312" y="458" width="21.1" height="14" fill="#8a8a8a"/>
+  <text x="338.1" y="468.5" font-size="10.5" fill="#666666">608</text>
+  <text x="300" y="494.5" font-size="11" fill="#333333" text-anchor="end">Other irrigated land</text>
+  <rect x="312" y="484" width="18.0" height="14" fill="#8a8a8a"/>
+  <text x="335.0" y="494.5" font-size="10.5" fill="#666666">517</text>
+  <text x="300" y="520.5" font-size="11" fill="#333333" text-anchor="end">Peanuts</text>
+  <rect x="312" y="510" width="16.8" height="14" fill="#8a8a8a"/>
+  <text x="333.8" y="520.5" font-size="10.5" fill="#666666">482</text>
+  <text x="300" y="546.5" font-size="11" fill="#333333" text-anchor="end">Sweet corn</text>
+  <rect x="312" y="536" width="14.7" height="14" fill="#8a8a8a"/>
+  <text x="331.7" y="546.5" font-size="10.5" fill="#666666">424</text>
+  <text x="300" y="572.5" font-size="11" fill="#333333" text-anchor="end">Sorghum</text>
+  <rect x="312" y="562" width="14.7" height="14" fill="#8a8a8a"/>
+  <text x="331.7" y="572.5" font-size="10.5" fill="#666666">423</text>
+  <text x="300" y="598.5" font-size="11" fill="#333333" text-anchor="end">Beans</text>
+  <rect x="312" y="588" width="11.7" height="14" fill="#8a8a8a"/>
+  <text x="328.7" y="598.5" font-size="10.5" fill="#666666">337</text>
+  <text x="300" y="624.5" font-size="11" fill="#333333" text-anchor="end">Berries</text>
+  <rect x="312" y="614" width="11.5" height="14" fill="#8a8a8a"/>
+  <text x="328.5" y="624.5" font-size="10.5" fill="#666666">330</text>
+  <text x="300" y="650.5" font-size="11" fill="#333333" text-anchor="end" font-weight="bold">Data centers (onsite + offsite)</text>
+  <rect x="312" y="640" width="8.7" height="14" fill="#0645ad"/>
+  <text x="325.7" y="650.5" font-size="10.5" fill="#666666">250</text>
+  <text x="300" y="676.5" font-size="11" fill="#333333" text-anchor="end" font-weight="bold">Data centers (onsite)</text>
+  <rect x="312" y="666" width="1.7" height="14" fill="#0645ad"/>
+  <text x="318.7" y="676.5" font-size="10.5" fill="#666666">50</text>
+  <text x="300" y="702.5" font-size="11" fill="#333333" text-anchor="end" font-weight="bold">AI in data centers (onsite)</text>
+  <rect x="312" y="692" width="1.5" height="14" fill="#0645ad"/>
+  <text x="318.5" y="702.5" font-size="10.5" fill="#666666">11</text>
+  <text x="712" y="750" font-size="10.5" fill="#666666" text-anchor="end">Millions of gallons per day</text>
+  <text x="2" y="750" font-size="10" fill="#999999">andymasley.com</text>
+</svg>

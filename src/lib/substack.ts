@@ -10,6 +10,7 @@ import { altFor, vanishedUuids } from '@/data/alt-text';
 import { fullwidthFigures, isFullwidth } from '@/data/figures';
 import { replacementFor } from '@/data/embeds';
 import { applyContentPatches } from '@/data/patches';
+import { figureSwapFor, figureSwapUuids } from '@/data/figure-swaps';
 
 // Cache configuration
 const CACHE_DIR = join(process.cwd(), '.cache', 'substack');
@@ -157,6 +158,11 @@ interface CachedPosts {
 
 // In-memory cache for current build
 let memoryCache: SubstackPost[] | null = null;
+
+// Posts deleted on Substack (Andy's call, Aug 2026): body links to these
+// unwrap to plain text in processPostContent, and public/_redirects 301s
+// their old URLs to the archive.
+const DELETED_POST_SLUGS = ['the-place-to-start-in-your-learning'];
 
 // Hand-curated category overrides: a post whose Substack section doesn't
 // match where it belongs on this site. Applied in hydratePosts so every
@@ -839,6 +845,18 @@ export function processPostContent(html: string, slug: string, opts: { sidenotes
   // Fix anchor links
   processed = fixAnchorLinks(processed, slug);
 
+  // Posts Andy deleted upstream: links to them unwrap to their plain text
+  // (the words render verbatim; there is just nothing to click), because
+  // the target page no longer exists to link to. A _redirects 301 catches
+  // anyone arriving at the old URL from elsewhere. Slugs listed at Andy's
+  // direction only.
+  for (const gone of DELETED_POST_SLUGS) {
+    processed = processed.replace(
+      new RegExp(`<a\\b[^>]*href="/writing/${gone}(?:[#?][^"]*)?"[^>]*>([\\s\\S]*?)<\\/a>`, 'gi'),
+      '$1'
+    );
+  }
+
   // Add IDs to headings so anchor links work
   processed = addHeadingIds(processed);
 
@@ -903,9 +921,32 @@ export function processPostContent(html: string, slug: string, opts: { sidenotes
   // compose in a stated order.
   let missingAlt = 0;
   const manifest = getMirrorManifest();
+  // First-party figure re-renders (src/data/figure-swaps.ts), keyed
+  // slug + S3 UUID like the alt/embed overrides. A swapped figure's whole
+  // <picture> block is replaced (its <source srcset> candidates would
+  // otherwise outrank the rewritten <img> src), or the bare <img> when no
+  // picture wraps it — local src, real dimensions, its own alt, and the
+  // original URL kept as data-origin. Everything around the tag stays.
+  const swapTag = (origSrc: string, swap: NonNullable<ReturnType<typeof figureSwapFor>>): string => {
+    const altText = swap.alt.replace(/"/g, '&quot;');
+    return `<img src="${swap.src}" alt="${altText}" width="${swap.width}" height="${swap.height}" loading="lazy" decoding="async" data-origin="${origSrc.replace(/"/g, '&quot;')}">`;
+  };
+  processed = processed.replace(/<picture\b[\s\S]*?<\/picture>/gi, (pic) => {
+    const src = pic.match(/<img[^>]*\bsrc="([^"]*)"/i)?.[1] || '';
+    const uuid = extractS3Uuid(src);
+    const swap = uuid ? figureSwapFor(slug, uuid) : undefined;
+    return swap ? swapTag(src, swap) : pic;
+  });
+
   processed = processed.replace(/<img\b[^>]*>/gi, (img) => {
     let out = img;
     const src = out.match(/src="([^"]*)"/i)?.[1] || '';
+
+    const swapUuid = extractS3Uuid(src);
+    const swap = swapUuid ? figureSwapFor(slug, swapUuid) : undefined;
+    if (swap) {
+      return swapTag(src, swap);
+    }
 
     // Alt discipline: Substack alts carry through untouched; the committed
     // overrides in alt-text.ts fill the gaps, keyed slug + S3 UUID.
@@ -961,6 +1002,11 @@ export function processPostContent(html: string, slug: string, opts: { sidenotes
   }
   for (const uuid of vanishedUuids(slug, processed)) {
     console.warn(`[images] ${slug}: keyed alt-text UUID ${uuid} no longer appears in the post`);
+  }
+  for (const uuid of figureSwapUuids(slug)) {
+    if (!processed.includes(uuid)) {
+      console.warn(`[figures] ${slug}: swap UUID ${uuid} no longer appears in the post — original image changed upstream? See src/data/figure-swaps.ts`);
+    }
   }
 
   // <picture><source> candidates carry the same dishonest sizes; align them

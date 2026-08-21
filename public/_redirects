@@ -30,3 +30,8 @@
 /images/og/og-factory-farmed-chickens.png /og/page/factory-farmed-chickens.png 301
 /images/og/og-default.png /og/default.png 301
 /images/og/og-ai-music.png /og/default.png 301
+
+# 2026-08: post deleted on Substack; its links unwrap in the transform
+# layer, and the old URL lands on the archive instead of a 404.
+/writing/the-place-to-start-in-your-learning /writing 301
+/writing/the-place-to-start-in-your-learning/ /writing 301

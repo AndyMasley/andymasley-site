@@ -205,9 +205,13 @@ function isActive(href: string): boolean {
 
       <nav class="header__nav">
         {navLinks.map((link, i) => (
-          /* Each 'label ·' pair wraps as one nowrap group, so a wrapped
-             nav row can never open with a stranded middle dot. */
+          /* Each '· label' pair wraps as one nowrap group: the separator
+             rides with the label it precedes, so a wrapped nav row never
+             ENDS on a dangling dot — a continuation row opens '· label',
+             reading as a list resuming (same scheme as the article meta
+             row). */
           <span class="header__nav-group">
+            {i > 0 && <span class="header__nav-sep">·</span>}
             <a
               href={link.href}
               data-label={link.label}
@@ -218,7 +222,6 @@ function isActive(href: string): boolean {
             >
               {link.label}
             </a>
-            {i < navLinks.length - 1 && <span class="header__nav-sep">·</span>}
           </span>
         ))}
         {isHexagonPage && (

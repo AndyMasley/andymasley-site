@@ -186,7 +186,7 @@ const postsByYear: YearGroup[] = Array.from(yearMap.entries())
                         alt=""
                         loading={eagerCoverSlugs.has(post.slug) ? 'eager' : 'lazy'}
                         decoding="async"
-                        onerror={`this.onerror=null;this.src='/og/${post.slug}.png';this.removeAttribute('srcset');`}
+                        onerror={`this.onerror=null;this.src='/og/${post.slug}.png';this.removeAttribute('srcset');this.classList.add('post-card__img--titlecard');`}
                       />
                     ) : (
                       <span class="post-card__placeholder" aria-hidden="true">
@@ -552,6 +552,13 @@ const postsByYear: YearGroup[] = Array.from(yearMap.entries())
     width: 100%;
     height: 100%;
     object-fit: cover;
+  }
+
+  /* A card that fell back to the OG title card (onerror above) contains
+     text, and cover-cropping text chops its first letters — show the whole
+     card, letterboxed on the frame's subtle ground. */
+  .post-card__frame img.post-card__img--titlecard {
+    object-fit: contain;
   }
 
   .post-card__placeholder {

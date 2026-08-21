@@ -19,10 +19,44 @@ import Elsewhere from '@/components/Elsewhere.astro';
   <div class="contact-elsewhere">
     <Elsewhere />
   </div>
+
+  <section class="contact-press">
+    <h2 class="contact-press__label">Press</h2>
+    <p class="contact-press__note">
+      A <a href="/images/headshot.jpg">headshot</a> and a short bio:
+      Andy Masley is an independent writer and researcher covering AI and the
+      environment, animal welfare, and effective altruism. His work is funded
+      by a grant from Coefficient Giving. Before writing full time he directed
+      the effective altruism city group in Washington DC and taught high
+      school physics for seven years.
+    </p>
+  </section>
 </SectionPage>
 
 <style>
   .contact-elsewhere {
     margin: 2.2rem 0 0;
+  }
+
+  .contact-press {
+    margin: 2.6rem 0 0;
+  }
+
+  .contact-press__label {
+    margin: 0 0 0.5rem;
+    font-family: var(--font-body);
+    font-size: var(--text-xs);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    font-weight: 400;
+    color: var(--dim);
+  }
+
+  .contact-press__note {
+    margin: 0;
+    max-width: 38rem;
+    font-size: var(--text-base);
+    line-height: var(--leading-prose);
+    color: var(--text-secondary);
   }
 </style>
