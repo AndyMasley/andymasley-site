@@ -30,6 +30,15 @@ const groups = [
     ],
   },
 ];
+
+// Hand-picked appearances (Andy's call, Aug 2026), titles and links
+// mirroring src/data/appearances.ts.
+const appearances = [
+  { title: 'Conspicuous Cognition', href: 'https://open.spotify.com/episode/2E3Yfi24OUyHxz67BtzhHB?si=8110a29fe7034cf5' },
+  { title: 'NYT Hard Fork', href: 'https://open.spotify.com/episode/0UaOQ0DcP9c8OG5IfAgfnT?si=5d00e4bce6aa43f0' },
+  { title: 'The World Unpacked', href: 'https://www.youtube.com/watch?v=4Q6t2PxZxDE' },
+  { title: 'The Cognitive Revolution', href: 'https://open.spotify.com/episode/0RBBVeGb5yfHsFWnKkDgD0?si=15d8b610374544b0' },
+];
 ---
 
 <section class="start-here" aria-labelledby="start-here-label">
@@ -44,6 +53,14 @@ const groups = [
       </ul>
     </div>
   ))}
+  <div class="start-here__group">
+    <h2 class="start-here__heading">Appearances</h2>
+    <ul class="start-here__list">
+      {appearances.map(item => (
+        <li><a href={item.href} target="_blank" rel="noopener">{item.title}</a></li>
+      ))}
+    </ul>
+  </div>
 </section>
 
 <style>
