@@ -83,13 +83,18 @@ const { id, label } = Astro.props;
     font-style: italic;
   }
 
-  /* At the sidenote gate it leaves the column, like a margin note. */
+  /* At the sidenote gate it leaves the column, like a margin note.
+     Absolutely positioned rather than floated: a float still contributes to
+     its container's height, so opening one grew the intro and pushed Recent
+     down the page. Out of flow, nothing below moves at all. `top` is set in
+     script from the marker's offset so the note starts on the marker's line;
+     the host paragraph is the containing block. */
   @media (min-width: 1280px) {
     .marginnote {
-      float: right;
-      clear: right;
+      position: absolute;
+      right: -212px;
       width: 180px;
-      margin: 0.15rem -212px 0.8rem 0;
+      margin: 0.15rem 0 0;
       padding-left: 0;
       border-left: none;
       color: var(--text);
@@ -98,6 +103,11 @@ const { id, label } = Astro.props;
     .marginnote__quote {
       padding-left: 0.7rem;
     }
+  }
+
+  /* Containing block for the absolute note above. */
+  p:has(> .marginnote__marker) {
+    position: relative;
   }
 </style>
 
@@ -121,16 +131,36 @@ const { id, label } = Astro.props;
       marker.dataset.bound = 'true';
 
       const place = () => {
-        if (wide.matches) marker.after(note);
-        else para.after(note);
+        if (wide.matches) {
+          marker.after(note);
+          // Absolute inside the paragraph: align the note's top with the
+          // line the marker sits on.
+          para.style.position = 'relative';
+          note.style.top = `${marker.offsetTop}px`;
+        } else {
+          para.after(note);
+          note.style.top = '';
+        }
       };
       place();
       placers.push(place);
 
       marker.addEventListener('click', () => {
         const open = marker.getAttribute('aria-expanded') === 'true';
+        // Only one note at a time: out of flow they would overlap each other
+        // in the margin, and the old float's `clear` no longer stacks them.
+        if (!open) {
+          document.querySelectorAll<HTMLButtonElement>('[data-marginnote]').forEach(other => {
+            if (other === marker) return;
+            const otherId = other.getAttribute('aria-controls');
+            const otherNote = otherId ? document.getElementById(otherId) : null;
+            if (otherNote) otherNote.hidden = true;
+            other.setAttribute('aria-expanded', 'false');
+          });
+        }
         marker.setAttribute('aria-expanded', open ? 'false' : 'true');
         note.hidden = open;
+        if (!open && wide.matches) note.style.top = `${marker.offsetTop}px`;
       });
     });
 
