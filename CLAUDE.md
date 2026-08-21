@@ -40,6 +40,25 @@ The full workflow for any change is:
 
 Never skip steps 5–7. The deploy is not complete until the push succeeds.
 
+## Post content is inviolable (CRITICAL)
+
+Never edit the main text content of Andy's posts. Not a word, not a heading, not a footnote. This is the hardest rule in this file, and it has no "unless it would clearly be better" exception.
+
+The posts' source of truth is Substack (and the EA Forum). The site's transform layer may change how a post RENDERS, never what it SAYS:
+
+- Never add, remove, retitle, or restructure headings or sections.
+- Never rewrite, insert, or delete sentences, list items, captions, or footnotes.
+- Never change punctuation. Dashes, hyphens, ellipses, spacing characters — everything renders exactly as typed. The single grandfathered exception is the long-standing straight→curly quote/apostrophe smartener in `src/lib/smarten.ts`; do not extend it.
+- Never add per-post content patches to `src/data/patches.ts`. It stays empty unless Andy explicitly dictates a specific patch, in his own words, in the current session.
+- Never edit the committed caches (`.cache/substack`, `.cache/eaforum`) — they hold the raw upstream copies.
+- Never edit the posts on Substack or the EA Forum themselves.
+
+The only permitted transforms are the quote smartener above and character-identical markup work (inline-tag whitespace hygiene, empty-paragraph removal, heading IDs and anchors, link rewriting, image attributes, embed containment, widget stripping). Any new transform that touches text characters requires Andy's explicit approval in the session that adds it. A dash-normalization pass was added and then removed at Andy's direction in Aug 2026 — do not reintroduce it.
+
+**Enforced mechanically:** `src/lib/__tests__/content-integrity.test.ts` fails the suite if the pipeline's output ever adds or rewrites a word of any cached post. Do not weaken, exempt, or delete that test to make a change pass — if it fails, the change is wrong. The sole sanctioned exception is a wording fix Andy dictates himself, recorded in that test's `ALLOWED_INSERTIONS` with a note naming him.
+
+**Why:** During an Aug 2026 typography pass, a session added its own section headings to two essays and retitled "Conclusion" headings. The structure and wording of the essays are Andy's voice and his alone. If a post seems to need an edit, tell Andy what and why — do not make it.
+
 ## Aesthetic and design rules
 
 ### Do not restyle existing UI

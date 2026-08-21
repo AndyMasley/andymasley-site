@@ -988,10 +988,10 @@ export function processPostContent(html: string, slug: string, opts: { sidenotes
     );
   }
 
-  // Whitespace and stranded separator dashes leaked inside inline tags
-  // during import move back outside the tag (see tidyInlineTagBoundaries),
-  // so link underlines start on letters and "**Term** - description"
-  // separators become visible to the dash pass.
+  // Whitespace that leaked inside inline tags during import moves back
+  // outside the tag (see tidyInlineTagBoundaries), so link underlines start
+  // on letters instead of leading spaces. Markup-only; rendered characters
+  // are identical.
   processed = tidyInlineTagBoundaries(processed);
 
   // Empty paragraphs (Substack's editor leaves them behind) add stray
@@ -999,11 +999,10 @@ export function processPostContent(html: string, slug: string, opts: { sidenotes
   processed = processed.replace(/<p>(?:\s|&nbsp;|<br\s*\/?>)*<\/p>/gi, '');
 
   // The compositor's pass: smart quotes and apostrophes in text nodes only,
-  // never inside code — and the house dash convention (unspaced em dash;
-  // " - " between letters was a dash; "**Term** - description" separators
-  // become spaced em dashes). Build-time only — the committed cache stays
-  // raw, so an upstream HTML change can only yield unsmartened output,
-  // never a corrupted cache.
+  // never inside code. Nothing else about the punctuation changes — dashes
+  // render exactly as typed (CLAUDE.md: "Post content is inviolable").
+  // Build-time only — the committed cache stays raw, so an upstream HTML
+  // change can only yield unsmartened output, never a corrupted cache.
   processed = smartenHtmlText(processed);
 
   // Tufte sidenotes (inline-content footnotes only; block-content stays bottom-only).

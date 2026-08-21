@@ -318,7 +318,8 @@ export function processEAForumContent(html: string, currentSlug?: string): strin
 
   // Same compositor's pass as Substack imports (build-time only; the
   // committed cache stays raw): inline-tag whitespace tidied, empty
-  // paragraphs dropped, quotes smartened, dashes normalized.
+  // paragraphs dropped, quotes smartened. Dashes and all other punctuation
+  // render exactly as typed.
   processed = tidyInlineTagBoundaries(processed);
   processed = processed.replace(/<p>(?:\s|&nbsp;|<br\s*\/?>)*<\/p>/gi, '');
   processed = smartenHtmlText(processed);
