@@ -5,10 +5,11 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
 import { join } from 'path';
 import { getMetaPostSlugs } from '@/lib/meta-posts';
 import { lintPostContent } from './content-lint';
-import { smartenHtmlText, normalizePlainText } from './smarten';
+import { smartenHtmlText, normalizePlainText, tidyInlineTagBoundaries } from './smarten';
 import { altFor, vanishedUuids } from '@/data/alt-text';
 import { fullwidthFigures, isFullwidth } from '@/data/figures';
 import { replacementFor } from '@/data/embeds';
+import { applyContentPatches } from '@/data/patches';
 
 // Cache configuration
 const CACHE_DIR = join(process.cwd(), '.cache', 'substack');
@@ -826,9 +827,14 @@ export function processPostContent(html: string, slug: string, opts: { sidenotes
   // placeholder phrases.
   lintPostContent(html, slug);
 
+  // Committed editorial patches (src/data/patches.ts) go first, on the raw
+  // shape: an inserted <h1> section rides the demotion ladder below exactly
+  // like a native Substack section heading.
+  let processed = applyContentPatches(html, slug);
+
   // Demote body h1s and strip strong-in-heading before IDs are generated,
   // so ID slugs and § anchors see the final heading shape.
-  let processed = normalizeHeadings(html, slug);
+  processed = normalizeHeadings(processed, slug);
 
   // Fix anchor links
   processed = fixAnchorLinks(processed, slug);
@@ -916,6 +922,26 @@ export function processPostContent(html: string, slug: string, opts: { sidenotes
     // w_1456 candidates for a 640px slot on every figure.
     out = out.replace(/sizes="100vw"/gi, 'sizes="(max-width: 704px) 100vw, 640px"');
 
+    // Honest dimensions: an image never declares more pixels than its
+    // source file carries. Substack's editor state (data-attrs, still
+    // present at this point in the pass) records the upload's true size;
+    // when the width/height attributes claim more, the CDN's c_limit can't
+    // actually upscale, so the browser stretches a small file soft across
+    // the column. Bring the attributes down to the true size and a small
+    // image renders sharp at its natural width (centered by CSS) instead.
+    const trueW = Number(out.match(/&quot;width&quot;:(\d+)/)?.[1]);
+    const trueH = Number(out.match(/&quot;height&quot;:(\d+)/)?.[1]);
+    const declaredW = Number(out.match(/\bwidth="(\d+)"/)?.[1]);
+    if (trueW && trueH && trueW < 704 && (!declaredW || declaredW > trueW)) {
+      if (declaredW) {
+        out = out
+          .replace(/\bwidth="\d+"/, `width="${trueW}"`)
+          .replace(/\bheight="\d+"/, `height="${trueH}"`);
+      } else {
+        out = out.replace(/^<img/i, `<img width="${trueW}" height="${trueH}"`);
+      }
+    }
+
     // Mirror rewrite from the committed manifest (no-op until the machine-
     // side mirror script has run and committed images + manifest).
     if (manifest) {
@@ -962,10 +988,22 @@ export function processPostContent(html: string, slug: string, opts: { sidenotes
     );
   }
 
+  // Whitespace and stranded separator dashes leaked inside inline tags
+  // during import move back outside the tag (see tidyInlineTagBoundaries),
+  // so link underlines start on letters and "**Term** - description"
+  // separators become visible to the dash pass.
+  processed = tidyInlineTagBoundaries(processed);
+
+  // Empty paragraphs (Substack's editor leaves them behind) add stray
+  // half-gaps to the rhythm; drop them.
+  processed = processed.replace(/<p>(?:\s|&nbsp;|<br\s*\/?>)*<\/p>/gi, '');
+
   // The compositor's pass: smart quotes and apostrophes in text nodes only,
-  // never inside code. Build-time only — the committed cache stays raw, so
-  // an upstream HTML change can only yield unsmartened output, never a
-  // corrupted cache.
+  // never inside code — and the house dash convention (unspaced em dash;
+  // " - " between letters was a dash; "**Term** - description" separators
+  // become spaced em dashes). Build-time only — the committed cache stays
+  // raw, so an upstream HTML change can only yield unsmartened output,
+  // never a corrupted cache.
   processed = smartenHtmlText(processed);
 
   // Tufte sidenotes (inline-content footnotes only; block-content stays bottom-only).

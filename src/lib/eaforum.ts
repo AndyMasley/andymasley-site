@@ -5,7 +5,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
 import { join } from 'path';
 import { normalizeHeadings, requireContent } from './substack';
 import { lintPostContent } from './content-lint';
-import { normalizePlainText, smartenHtmlText } from './smarten';
+import { normalizePlainText, smartenHtmlText, tidyInlineTagBoundaries } from './smarten';
 
 // Cache configuration
 const CACHE_DIR = join(process.cwd(), '.cache', 'eaforum');
@@ -317,7 +317,10 @@ export function processEAForumContent(html: string, currentSlug?: string): strin
   );
 
   // Same compositor's pass as Substack imports (build-time only; the
-  // committed cache stays raw).
+  // committed cache stays raw): inline-tag whitespace tidied, empty
+  // paragraphs dropped, quotes smartened, dashes normalized.
+  processed = tidyInlineTagBoundaries(processed);
+  processed = processed.replace(/<p>(?:\s|&nbsp;|<br\s*\/?>)*<\/p>/gi, '');
   processed = smartenHtmlText(processed);
 
   return processed;

@@ -619,7 +619,9 @@ if (correction) {
     line-height: 1.4;
   }
 
-  .article-header__meta-item:not(:last-child)::after {
+  /* Separator rides ::before on the FOLLOWING item, so when the row wraps
+     the break lands between items and no line ends on a dangling '·'. */
+  .article-header__meta-item:not(:first-child)::before {
     content: '·';
     color: var(--border-strong);
   }
@@ -865,6 +867,7 @@ if (correction) {
   .article-prose :global(h1:hover .h-anchor),
   .article-prose :global(h2:hover .h-anchor),
   .article-prose :global(h3:hover .h-anchor),
+  .article-prose :global(h4:hover .h-anchor),
   .article-prose :global(.h-anchor:focus-visible),
   .cheat-sheet-page :global(.prose h2:hover .h-anchor),
   .cheat-sheet-page :global(.prose h3:hover .h-anchor),
@@ -887,10 +890,15 @@ if (correction) {
     margin-bottom: 1.5rem;
   }
 
+  /* Images ride the column's axis: block flow, centered when narrower
+     than the measure (honest-dimensions images from the import render at
+     their natural width). Wrappers inside a figure give up their margins
+     so the caption sits against its image, not 40px below it. */
   .article-prose :global(img) {
+    display: block;
     max-width: 100%;
     height: auto;
-    margin: 2.25rem 0 0;
+    margin: 2.25rem auto 0;
     border-radius: 0;
     border: 1px solid var(--border);
     background: transparent;
@@ -899,6 +907,17 @@ if (correction) {
 
   .article-prose :global(figure) {
     margin: 2.5rem 0;
+  }
+
+  .article-prose :global(figure img) {
+    margin: 0 auto;
+  }
+
+  .article-prose :global(figure picture),
+  .article-prose :global(figure .image-link),
+  .article-prose :global(figure .image2) {
+    display: block;
+    margin: 0;
   }
 
   /* Captions: secondary ink, smaller than body, hanging indent so wrapped
@@ -1451,7 +1470,7 @@ if (correction) {
     }
 
     .article-prose :global(h3) {
-      font-size: var(--text-base);
+      font-size: var(--text-lg);
       margin-top: 1.85rem;
     }
 

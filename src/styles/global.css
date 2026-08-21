@@ -385,9 +385,12 @@ p {
   margin: 0;
 }
 
-/* The subhead ladder: headings sit above the text they head — hierarchy
-   carried by space, case, and weight, never by size jumps below body size.
-   h4/h5 exist because the pipeline demotes Substack h3/h4s. */
+/* The subhead ladder: headings sit above the text they head, and every
+   level is tellable from the next at a glance (the Aug 2026 audit's call:
+   an h3 set at body size read as a bolded sentence, and h4/h5 rendered
+   pixel-identical). One distinct step per level — h2 22, h3 19, h4 17
+   bold roman, h5 16 bold italic. h4/h5 exist because the pipeline demotes
+   Substack h3/h4s. */
 .prose h2 {
   font-family: var(--font-body);
   font-size: var(--text-xl);
@@ -401,7 +404,7 @@ p {
 
 .prose h3 {
   font-family: var(--font-body);
-  font-size: var(--text-md);
+  font-size: var(--text-lg);
   font-weight: 700;
   line-height: var(--leading-heading);
   letter-spacing: 0;
@@ -410,7 +413,19 @@ p {
   margin-bottom: var(--space-xs);
 }
 
-.prose h4,
+.prose h4 {
+  font-family: var(--font-body);
+  font-size: var(--text-md);
+  font-style: normal;
+  font-weight: 700;
+  line-height: var(--leading-heading);
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--text);
+  margin-top: var(--space-lg);
+  margin-bottom: var(--space-xs);
+}
+
 .prose h5 {
   font-family: var(--font-body);
   font-size: var(--text-base);
@@ -476,10 +491,27 @@ p {
   padding: 0;
 }
 
+/* Images set on the column's axis: block flow, centered when narrower
+   than the measure (imported AI-image posts carry many part-width images
+   that used to hug the left edge with a ragged band of white on the
+   right). Inside a figure the wrappers give up their own margins so the
+   caption sits against its image instead of floating 40px below it. */
 .prose img {
+  display: block;
   max-width: 100%;
   height: auto;
-  margin: var(--space-xl) 0;
+  margin: var(--space-xl) auto;
+}
+
+.prose figure img {
+  margin: 0 auto;
+}
+
+.prose figure picture,
+.prose figure .image-link,
+.prose figure .image2 {
+  display: block;
+  margin: 0;
 }
 
 .prose hr {
@@ -495,6 +527,24 @@ p {
 
 .prose li {
   margin-bottom: var(--space-xs);
+}
+
+/* Imported lists wrap each item's text in a <p> that would otherwise keep
+   its full paragraph margin — Substack posts got double-spaced, sprawling
+   lists while clean markup got the tight native rhythm. The list's rhythm
+   belongs to the <li>, not the paragraph inside it. */
+.prose li > p {
+  margin-bottom: var(--space-xs);
+}
+
+.prose li > p:last-child {
+  margin-bottom: 0;
+}
+
+.prose li > ul,
+.prose li > ol {
+  margin-top: var(--space-xs);
+  margin-bottom: 0;
 }
 
 /* One figure rhythm: identical vertical space on every figure, captions
@@ -1413,6 +1463,14 @@ details[open] > summary::before {
 .home-intro .footnote .footnote-content {
   grid-column: 2;
   min-width: 0;
+}
+
+/* A note whose content opens with a list (or any block carrying a UA top
+   margin) used to leave its number orphaned beside a blank first line —
+   the content's first line aligns with its hanging number. */
+.prose .footnote .footnote-content > :first-child,
+.home-intro .footnote .footnote-content > :first-child {
+  margin-top: 0;
 }
 
 .prose .footnote .footnote-number:hover,
