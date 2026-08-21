@@ -1018,14 +1018,14 @@ if (correction) {
     padding-left: 1.35rem;
   }
 
-  /* Hanging markers: top-level list markers move into the gutter at
-     ≥1024px so the column's left edge runs flush (the same rule as the
-     hanging footnote numbers); nested lists keep their indent. */
-  @media (min-width: 1024px) {
-    .article-prose > :global(ul),
-    .article-prose > :global(ol) {
-      padding-left: 0;
-    }
+  /* Top-level lists indent from the text column, at the same step the
+     lists pages use (--space-xl). Markers used to hang in the gutter at
+     ≥1024px so the column's left edge ran flush; Andy's call, Aug 2026, is
+     that a list should read as indented from the prose instead. Nested
+     lists keep the tighter 1.35rem above. */
+  .article-prose > :global(ul),
+  .article-prose > :global(ol) {
+    padding-left: var(--space-xl);
   }
 
   .article-prose :global(li) {
