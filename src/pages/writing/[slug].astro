@@ -248,8 +248,14 @@ let displayHtml = '';
 function refineGuideHtml(html: string): string {
   let out = html;
   // A paragraph that is exactly one bold run of plain text is a subgroup
-  // label, not prose.
-  out = out.replace(/<p><strong>([^<]{2,48}?)\s*<\/strong><\/p>/g, '<p class="guide-sublabel">$1</p>');
+  // label, not prose. Inside a list item it is something else: a series
+  // name heading its parts, which should read like its neighbours (plain,
+  // unlinked) rather than as a spaced-caps label.
+  out = out.replace(
+    /(<li>\s*)?<p><strong>([^<]{2,48}?)\s*<\/strong><\/p>/g,
+    (m: string, li: string | undefined, text: string) =>
+      li ? `${li}<p>${text}</p>` : `<p class="guide-sublabel">${text}</p>`
+  );
   // Unbold linked titles and bare "Part N:" prefixes beside them.
   out = out.replace(/<strong>\s*(<a[^>]*>[\s\S]*?<\/a>)(\s*)<\/strong>/g, '$1$2');
   out = out.replace(/<strong>\s*(Part \d+:?)(\s*)<\/strong>/g, '$1$2');
