@@ -345,13 +345,23 @@ import Base from '@/layouts/Base.astro';
       // Cap spacer height to stay within browser limits. The spacer is the
       // whole scroll track, so a longer one means a slower pass through the
       // dots: 24M px is about 0.5 rows per scrolled pixel on desktop (it was
-      // 15M, about 0.8). Chromium and WebKit lay out to ~33.5M px; Gecko
-      // stops at ~17.9M and clamps anything taller, which is fine: render()
-      // maps whatever scroll range the page actually has onto the field, so
-      // a clamped spacer only means a faster pass. Mobile browsers crash at
-      // very tall elements, so use a much lower cap there.
-      const MAX_SAFE = isMobile ? 5_000_000 : 24_000_000;
-      scrollArea!.style.height = Math.min(virtualHeight, MAX_SAFE) + 'px';
+      // 15M, about 0.8). Chromium and WebKit lay out to ~33.5M px. Gecko's
+      // coordinate space ends at ~17.9M px, and a page taller than that does
+      // not clamp gracefully: its scroll range collapses to a few hundred
+      // pixels (a Firefox reader watched the whole field go by in two wheel
+      // notches). So ask for the tallest track first and step down until the
+      // browser hands back the height it was asked for, with the document
+      // scrollable to match; render() maps whatever range results onto the
+      // field. Mobile browsers crash at very tall elements, so the cap there
+      // is much lower.
+      const candidates = isMobile ? [5_000_000] : [24_000_000, 17_000_000, 12_000_000, 5_000_000];
+      for (const cap of candidates) {
+        const requested = Math.min(virtualHeight, cap);
+        scrollArea!.style.height = requested + 'px';
+        const got = scrollArea!.getBoundingClientRect().height;
+        const doc = document.documentElement.scrollHeight;
+        if (got >= requested - 1 && doc >= requested) break;
+      }
 
       // Canvas: viewport-sized, sticky below counter
       canvas.width = screenWidth * dpr;
