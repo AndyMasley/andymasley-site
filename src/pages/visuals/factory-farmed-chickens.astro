@@ -144,11 +144,16 @@ import Base from '@/layouts/Base.astro';
     const counterHeight = counter.offsetHeight;
     const viewHeight = window.innerHeight - counterHeight;
 
-    // Dynamically size cells so total page height stays under 25M px.
-    // CELL = sqrt(targetHeight * width / totalDots)
-    const TARGET_HEIGHT = 20_000_000;
+    // Cell size, derived from a virtual page height:
+    // CELL = sqrt(targetHeight * width / totalDots). The spacer below is
+    // capped and scroll is scaled to cover the whole virtual height, so
+    // this only sets how big each dot reads, not how far the page scrolls.
+    // 45M px gives 6px cells (3.6px dots) on the full 1280px column; the
+    // floor keeps phones at 4px cells. (Was 20M / floor 3: 4px cells and
+    // 2.4px dots, which read as texture rather than as dots.)
+    const TARGET_HEIGHT = 45_000_000;
     let CELL = Math.sqrt(TARGET_HEIGHT * screenWidth / TOTAL_DOTS);
-    CELL = Math.max(CELL, 3);
+    CELL = Math.max(CELL, 4);
     CELL = Math.round(CELL * 4) / 4; // round to nearest 0.25
 
     const DOT_RADIUS = CELL * 0.3;
