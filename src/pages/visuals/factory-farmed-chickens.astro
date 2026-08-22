@@ -191,7 +191,10 @@ import Base from '@/layouts/Base.astro';
     if (!ctx) return;
 
     const TOTAL_DOTS = 1_600_000_000;
-    const ROW_VARIANTS = 8;
+    // Rows are composed from short pre-rendered segments (SEG cells each),
+    // picked per row and position from SEG_VARIANTS tiles. See prerender().
+    const SEG = 16;
+    const SEG_VARIANTS = 32;
     const ladderOne = document.getElementById('ladder-one') as HTMLCanvasElement | null;
     const ladderHundred = document.getElementById('ladder-hundred') as HTMLCanvasElement | null;
 
@@ -211,7 +214,7 @@ import Base from '@/layouts/Base.astro';
     let totalRows = 0;
     let virtualHeight = 0;
     let scrollScale = 1;
-    let rowCanvases: HTMLCanvasElement[] = [];
+    let segCanvases: HTMLCanvasElement[] = [];
     let lastScrollY = -1;
 
     // mulberry32: a tiny seeded PRNG, so the jitter is the same every time.
@@ -249,31 +252,39 @@ import Base from '@/layouts/Base.astro';
       return theme === 'dark' ? '#e8e6e1' : '#1a1918';
     }
 
-    // Pre-render full rows of dots into offscreen canvases. Then render()
-    // just tiles these row images — orders of magnitude faster than drawing
-    // thousands of arcs each frame.
+    // Pre-render short segments of a row (SEG cells wide, one cell tall)
+    // into offscreen canvases. Then render() composes each visible row from
+    // them — far faster than drawing thousands of arcs each frame.
     //
-    // Several variants, not one: with a single tile every row is identical,
-    // so a wheel step that happens to move a whole number of rows leaves
-    // the field looking frozen while the counter ticks. Each variant nudges
-    // every dot a little (position and size, seeded so it is stable across
-    // re-renders), and rows pick a variant by hash, so the field visibly
-    // streams past at any scroll speed.
-    function prerenderRows() {
+    // Segments rather than whole rows, and many of them: a single tile made
+    // every row identical, so a wheel step that moved a whole number of rows
+    // left the field looking frozen; eight whole-row variants fixed that but
+    // repeated often enough that the eye caught the same row going by. With
+    // 32 segment variants chosen per (row, position), two rows match only if
+    // all their segments do, which at eight segments a row never happens.
+    // Each segment nudges every dot a little (position and size, seeded so
+    // it is stable across re-renders); dots stay inside their cells, so
+    // segments butt together without seams.
+    function prerender() {
       const color = getDotColor();
-      rowCanvases.forEach((c, v) => {
+      segCanvases.forEach((c, v) => {
         const g = c.getContext('2d')!;
         g.setTransform(dpr, 0, 0, dpr, 0, 0);
-        g.clearRect(0, 0, screenWidth, CELL);
+        g.clearRect(0, 0, SEG * CELL, CELL);
         g.fillStyle = color;
-        drawDotGrid(g, cols, 1, 1000 + v);
+        drawDotGrid(g, SEG, 1, 1000 + v);
       });
     }
 
-    // Which variant a row uses: a cheap integer hash, so neighbours differ
-    // and the choice is stable for a given row.
-    function rowVariant(row: number): number {
-      return (Math.imul(row, 2654435761) >>> 0) % ROW_VARIANTS;
+    // Which variant a segment uses: a cheap 2D integer hash of (row,
+    // position), so neighbours differ and the choice is stable for a given
+    // spot — the field never shimmers between frames.
+    function segmentVariant(row: number, seg: number): number {
+      let h = Math.imul(row + 1, 0x9e3779b1) ^ Math.imul(seg + 1, 0x85ebca6b);
+      h ^= h >>> 15;
+      h = Math.imul(h, 0x2c1b3c6d);
+      h ^= h >>> 12;
+      return (h >>> 0) % SEG_VARIANTS;
     }
 
     // The scale ladder above the field: one dot and a 10x10 block, drawn
@@ -356,14 +367,14 @@ import Base from '@/layouts/Base.astro';
       canvas.style.top = counterHeight + 'px';
       ctx!.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-      rowCanvases = [];
-      for (let v = 0; v < ROW_VARIANTS; v++) {
+      segCanvases = [];
+      for (let v = 0; v < SEG_VARIANTS; v++) {
         const c = document.createElement('canvas');
-        c.width = screenWidth * dpr;
+        c.width = Math.ceil(SEG * CELL * dpr);
         c.height = Math.ceil(CELL * dpr);
-        rowCanvases.push(c);
+        segCanvases.push(c);
       }
-      prerenderRows();
+      prerender();
       drawLadder();
       fillLadderNumbers();
       lastScrollY = -1;
@@ -385,15 +396,21 @@ import Base from '@/layouts/Base.astro';
 
       ctx!.clearRect(0, 0, screenWidth, viewHeight);
 
+      const segs = Math.ceil(cols / SEG);
       for (let row = rowStart; row < rowEnd; row++) {
         const y = row * CELL - clampedY;
-        // Draw this row's pre-rendered variant at this y position
-        const tile = rowCanvases[rowVariant(row)];
-        ctx!.drawImage(
-          tile,
-          0, 0, tile.width, tile.height,
-          0, y, screenWidth, CELL
-        );
+        // Compose this row from pre-rendered segments at this y position.
+        // The last segment is cut to the columns that remain, so no dot is
+        // drawn past the count the counter is keeping.
+        for (let seg = 0; seg < segs; seg++) {
+          const tile = segCanvases[segmentVariant(row, seg)];
+          const cells = Math.min(SEG, cols - seg * SEG);
+          ctx!.drawImage(
+            tile,
+            0, 0, cells * CELL * dpr, tile.height,
+            seg * SEG * CELL, y, cells * CELL, CELL
+          );
+        }
       }
 
       // Update counter — count dots scrolled past (top of viewport)
@@ -415,7 +432,7 @@ import Base from '@/layouts/Base.astro';
 
     // Theme change: re-render the row stamps and the ladder, force a redraw
     const themeObserver = new MutationObserver(() => {
-      prerenderRows();
+      prerender();
       drawLadder();
       lastScrollY = -1;
       render();
