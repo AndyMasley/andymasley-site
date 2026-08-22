@@ -43,6 +43,14 @@ const appearances = [
   { title: 'The World Unpacked', href: 'https://www.youtube.com/watch?v=4Q6t2PxZxDE' },
   { title: 'The Cognitive Revolution', href: 'https://open.spotify.com/episode/0RBBVeGb5yfHsFWnKkDgD0?si=15d8b610374544b0' },
 ];
+
+// Hand-picked visuals, titles and links mirroring src/data/visuals.ts.
+const visuals = [
+  { title: 'Factory-farmed chickens', href: '/visuals/factory-farmed-chickens' },
+  { title: 'Carbon footprint calculator', href: '/visuals/carbon-footprint' },
+  { title: 'How thirsty is AI?', href: '/visuals/water' },
+  { title: 'What does your AI use cost?', href: '/visuals/ai-prompt-footprint' },
+];
 ---
 
 <span class="start-here" role="group" aria-label="Start here">
@@ -61,6 +69,14 @@ const appearances = [
     <span class="start-here__list" role="list">
       {appearances.map(item => (
         <span class="start-here__item" role="listitem"><a href={item.href} target="_blank" rel="noopener">{item.title}</a></span>
+      ))}
+    </span>
+  </span>
+  <span class="start-here__group">
+    <span class="start-here__heading">Visuals</span>
+    <span class="start-here__list" role="list">
+      {visuals.map(item => (
+        <span class="start-here__item" role="listitem"><a href={item.href}>{item.title}</a></span>
       ))}
     </span>
   </span>
