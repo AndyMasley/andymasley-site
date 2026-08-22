@@ -213,7 +213,6 @@ import Base from '@/layouts/Base.astro';
     let cols = 0;
     let totalRows = 0;
     let virtualHeight = 0;
-    let scrollScale = 1;
     let segCanvases: HTMLCanvasElement[] = [];
     let lastScrollY = -1;
 
@@ -347,17 +346,12 @@ import Base from '@/layouts/Base.astro';
       // whole scroll track, so a longer one means a slower pass through the
       // dots: 24M px is about 0.5 rows per scrolled pixel on desktop (it was
       // 15M, about 0.8). Chromium and WebKit lay out to ~33.5M px; Gecko
-      // stops at ~17.9M and clamps anything taller, so read the height back
-      // and scale to whatever the browser actually gave us. Mobile browsers
-      // crash at very tall elements, so use a much lower cap there.
+      // stops at ~17.9M and clamps anything taller, which is fine: render()
+      // maps whatever scroll range the page actually has onto the field, so
+      // a clamped spacer only means a faster pass. Mobile browsers crash at
+      // very tall elements, so use a much lower cap there.
       const MAX_SAFE = isMobile ? 5_000_000 : 24_000_000;
-      const requestedHeight = Math.min(virtualHeight, MAX_SAFE);
-      scrollArea!.style.height = requestedHeight + 'px';
-      const actualHeight = Math.floor(scrollArea!.getBoundingClientRect().height);
-      const spacerHeight = actualHeight > 0 && actualHeight < requestedHeight
-        ? actualHeight
-        : requestedHeight;
-      scrollScale = virtualHeight / spacerHeight;
+      scrollArea!.style.height = Math.min(virtualHeight, MAX_SAFE) + 'px';
 
       // Canvas: viewport-sized, sticky below counter
       canvas.width = screenWidth * dpr;
@@ -388,8 +382,20 @@ import Base from '@/layouts/Base.astro';
       if (roundedScroll === lastScrollY) return;
       lastScrollY = roundedScroll;
 
-      const virtualScrollY = rawScrollY * scrollScale;
-      const clampedY = Math.max(0, Math.min(virtualScrollY, virtualHeight - viewHeight));
+      // Progress through the track: 0 when the field's top reaches the top
+      // of the viewport, 1 at the very bottom of the page. The count and the
+      // field are mapped onto the scroll range the page actually has, not
+      // the spacer's nominal height: what sits below the field is shorter
+      // than a screen, so the page stops scrolling before the spacer ends,
+      // and on phones the steep scroll scale turned that shortfall into a
+      // counter stuck at 99.99%. A few pixels of slack absorb
+      // subpixel scroll positions at the end.
+      const areaTop = scrollAreaRect.top + window.scrollY;
+      const maxRaw = document.documentElement.scrollHeight - window.innerHeight - areaTop;
+      let progress = maxRaw > 0 ? rawScrollY / maxRaw : 0;
+      if (maxRaw - rawScrollY < 4) progress = 1;
+      progress = Math.max(0, Math.min(1, progress));
+      const clampedY = progress * Math.max(0, virtualHeight - viewHeight);
 
       const rowStart = Math.floor(clampedY / CELL);
       const rowEnd = Math.min(Math.ceil((clampedY + viewHeight) / CELL), totalRows);
@@ -413,8 +419,9 @@ import Base from '@/layouts/Base.astro';
         }
       }
 
-      // Update counter — count dots scrolled past (top of viewport)
-      const rowsScrolledPast = Math.floor(clampedY / CELL);
+      // Update counter — dots scrolled past, reaching every last one of
+      // the 1.6 billion at the bottom of the page.
+      const rowsScrolledPast = progress >= 1 ? totalRows : Math.floor(progress * totalRows);
       const dotsScrolledPast = Math.min(TOTAL_DOTS, rowsScrolledPast * cols);
       const fraction = dotsScrolledPast / TOTAL_DOTS;
       pctEl!.textContent = (fraction * 100).toFixed(2) + '%';
