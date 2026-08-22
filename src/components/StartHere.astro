@@ -2,6 +2,10 @@
 // A hand-picked reading path for new readers. Titles and slugs are written
 // out rather than pulled from the Substack feed on purpose: this is an
 // editorial selection and an editorial order, not the most recent N.
+//
+// Rendered as the body of a MarginNote on the homepage, so every box here
+// is a span set to block: the note sits inside the host paragraph, where
+// block elements (h2, ul) are not valid. List semantics come from ARIA.
 const groups = [
   {
     heading: 'AI and the environment',
@@ -41,42 +45,43 @@ const appearances = [
 ];
 ---
 
-<section class="start-here" aria-labelledby="start-here-label">
-  <div class="label" id="start-here-label">Start here</div>
+<span class="start-here" role="group" aria-label="Start here">
   {groups.map(group => (
-    <div class="start-here__group">
-      <h2 class="start-here__heading">{group.heading}</h2>
-      <ul class="start-here__list">
+    <span class="start-here__group">
+      <span class="start-here__heading">{group.heading}</span>
+      <span class="start-here__list" role="list">
         {group.posts.map(post => (
-          <li><a href={`/writing/${post.slug}`}>{post.title}</a></li>
+          <span class="start-here__item" role="listitem"><a href={`/writing/${post.slug}`}>{post.title}</a></span>
         ))}
-      </ul>
-    </div>
+      </span>
+    </span>
   ))}
-  <div class="start-here__group">
-    <h2 class="start-here__heading">Appearances</h2>
-    <ul class="start-here__list">
+  <span class="start-here__group">
+    <span class="start-here__heading">Appearances</span>
+    <span class="start-here__list" role="list">
       {appearances.map(item => (
-        <li><a href={item.href} target="_blank" rel="noopener">{item.title}</a></li>
+        <span class="start-here__item" role="listitem"><a href={item.href} target="_blank" rel="noopener">{item.title}</a></span>
       ))}
-    </ul>
-  </div>
-</section>
+    </span>
+  </span>
+</span>
 
 <style>
-  /* The divider that used to sit above this was removed; the label
-     rule separates it from Recent, so it only needs the gap back. */
-  .start-here {
-    margin: var(--space-3xl) 0 0;
+  .start-here,
+  .start-here__group,
+  .start-here__heading,
+  .start-here__list,
+  .start-here__item {
+    display: block;
   }
 
   .start-here__group + .start-here__group {
-    margin-top: var(--space-lg);
+    margin-top: var(--space-md);
   }
 
   /* Label recipe B: sentence case, --text-sm. */
   .start-here__heading {
-    margin: 0 0 var(--space-xs);
+    margin-bottom: var(--space-2xs);
     font-family: var(--font-body);
     font-size: var(--text-sm);
     font-weight: 700;
@@ -84,18 +89,13 @@ const appearances = [
     color: var(--text-secondary);
   }
 
-  /* Same list rhythm as prose lists. */
-  .start-here__list {
-    margin: 0;
-    padding-left: var(--space-lg);
-  }
-
-  .start-here__list li {
-    margin-bottom: var(--space-xs);
+  /* Same item rhythm the list had as a ul; no bullets, since the margin
+     column is 180px and the titles already wrap. */
+  .start-here__item {
     line-height: var(--leading-note);
   }
 
-  .start-here__list li:last-child {
-    margin-bottom: 0;
+  .start-here__item + .start-here__item {
+    margin-top: var(--space-xs);
   }
 </style>
