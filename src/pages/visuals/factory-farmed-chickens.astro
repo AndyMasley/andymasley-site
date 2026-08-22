@@ -28,6 +28,21 @@ import Base from '@/layouts/Base.astro';
       </figure>
     </div>
 
+    <!-- The scale ladder: the field's own dots at the field's own size, so a
+         reader can count before they can't. Canvases are drawn by the same
+         code as the field; the numbers are filled in for this screen. -->
+    <div class="prose scale-ladder" id="scale-ladder">
+      <div class="scale-ladder__figure">
+        <canvas id="ladder-one" aria-hidden="true"></canvas>
+        <span class="scale-ladder__label">One chicken</span>
+      </div>
+      <div class="scale-ladder__figure">
+        <canvas id="ladder-hundred" aria-hidden="true"></canvas>
+        <span class="scale-ladder__label">100 chickens</span>
+      </div>
+      <p class="scale-ladder__note">Each screenful of dots below is about <span id="ladder-screen">11,000</span> chickens. A million chickens is about <span id="ladder-million">90</span> screenfuls. All 1.6 billion is about <span id="ladder-all">150,000</span>.</p>
+    </div>
+
     <div class="viz-wrapper" id="viz-wrapper">
       <div class="viz-counter viz-counter--hidden" id="viz-counter">
         <span class="viz-counter-pct" id="viz-pct">0.00%</span>
@@ -62,6 +77,32 @@ import Base from '@/layouts/Base.astro';
   .outro-text {
     margin-top: var(--space-2xl);
     text-align: center;
+  }
+
+  .scale-ladder {
+    margin-bottom: var(--space-2xl);
+  }
+
+  .scale-ladder__figure + .scale-ladder__figure {
+    margin-top: var(--space-lg);
+  }
+
+  .scale-ladder__figure canvas {
+    display: block;
+  }
+
+  /* Same apparatus as a figcaption: small, dim, left-aligned. */
+  .scale-ladder__label {
+    display: block;
+    margin-top: var(--space-xs);
+    font-family: var(--font-editorial);
+    font-size: var(--text-sm);
+    line-height: var(--leading-note);
+    color: var(--dim);
+  }
+
+  .scale-ladder__note {
+    margin: var(--space-lg) 0 0;
   }
 
   .viz-wrapper {
@@ -155,17 +196,14 @@ import Base from '@/layouts/Base.astro';
     const counterHeight = counter.offsetHeight;
     const viewHeight = window.innerHeight - counterHeight;
 
-    // Cell size, derived from a virtual page height:
-    // CELL = sqrt(targetHeight * width / totalDots). The spacer below is
-    // capped and scroll is scaled to cover the whole virtual height, so
-    // this only sets how big each dot reads, not how far the page scrolls.
-    // 45M px gives 6px cells (3.6px dots) on the full 1280px column; the
-    // floor keeps phones at 4px cells. (Was 20M / floor 3: 4px cells and
-    // 2.4px dots, which read as texture rather than as dots.)
-    const TARGET_HEIGHT = 45_000_000;
-    let CELL = Math.sqrt(TARGET_HEIGHT * screenWidth / TOTAL_DOTS);
-    CELL = Math.max(CELL, 4);
-    CELL = Math.round(CELL * 4) / 4; // round to nearest 0.25
+    // Cell size. The spacer below is capped and scroll is scaled to cover
+    // the whole virtual height, so this sets only how big each dot reads,
+    // never how far the page scrolls: every dot is unmistakably a dot, and
+    // the scale comes from the counter and the ladder above the field.
+    // (Earlier versions derived a 3-6px cell from a virtual page height,
+    // which read as texture rather than as dots.)
+    const isMobile = window.innerWidth < 768;
+    const CELL = isMobile ? 8 : 10;
 
     const DOT_RADIUS = CELL * 0.3;
     const cols = Math.floor(screenWidth / CELL);
@@ -174,7 +212,6 @@ import Base from '@/layouts/Base.astro';
 
     // Cap spacer height to stay within browser limits.
     // Mobile browsers crash at very tall elements, so use a lower cap there.
-    const isMobile = window.innerWidth < 768;
     const MAX_SAFE = isMobile ? 5_000_000 : 15_000_000;
     const spacerHeight = Math.min(virtualHeight, MAX_SAFE);
     const scrollScale = virtualHeight / spacerHeight;
@@ -189,33 +226,115 @@ import Base from '@/layouts/Base.astro';
     canvas.style.top = counterHeight + 'px';
     ctx.scale(dpr, dpr);
 
-    // Pre-render one full row of dots into an offscreen canvas.
-    // Then render() just tiles this row image — orders of magnitude faster
-    // than drawing thousands of arcs each frame.
-    const rowCanvas = document.createElement('canvas');
-    rowCanvas.width = screenWidth * dpr;
-    rowCanvas.height = Math.ceil(CELL * dpr);
-    const rowCtx = rowCanvas.getContext('2d')!;
-    rowCtx.scale(dpr, dpr);
+    // Pre-render full rows of dots into offscreen canvases. Then render()
+    // just tiles these row images — orders of magnitude faster than drawing
+    // thousands of arcs each frame.
+    //
+    // Several variants, not one: with a single tile every row is identical,
+    // so a wheel step that happens to move a whole number of rows leaves
+    // the field looking frozen while the counter ticks. Each variant nudges
+    // every dot a little (position and size, seeded so it is stable across
+    // re-renders), and rows pick a variant by hash, so the field visibly
+    // streams past at any scroll speed.
+    const ROW_VARIANTS = 8;
+    const rowCanvases: HTMLCanvasElement[] = [];
+    for (let v = 0; v < ROW_VARIANTS; v++) {
+      const c = document.createElement('canvas');
+      c.width = screenWidth * dpr;
+      c.height = Math.ceil(CELL * dpr);
+      rowCanvases.push(c);
+    }
+
+    // mulberry32: a tiny seeded PRNG, so the jitter is the same every time.
+    function seededRandom(seed: number): () => number {
+      let a = seed >>> 0;
+      return () => {
+        a = (a + 0x6d2b79f5) >>> 0;
+        let t = a;
+        t = Math.imul(t ^ (t >>> 15), t | 1);
+        t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+      };
+    }
+
+    // One dot per cell, nudged by up to 15% of the cell and sized within
+    // +/-10% of the nominal radius. Extremes stay inside the cell, so rows
+    // never clip.
+    function drawDotGrid(g: CanvasRenderingContext2D, columns: number, rows: number, seed: number) {
+      const rand = seededRandom(seed);
+      g.beginPath();
+      for (let row = 0; row < rows; row++) {
+        for (let col = 0; col < columns; col++) {
+          const cx = col * CELL + CELL / 2 + (rand() - 0.5) * 0.3 * CELL;
+          const cy = row * CELL + CELL / 2 + (rand() - 0.5) * 0.3 * CELL;
+          const r = DOT_RADIUS * (0.9 + rand() * 0.2);
+          g.moveTo(cx + r, cy);
+          g.arc(cx, cy, r, 0, Math.PI * 2);
+        }
+      }
+      g.fill();
+    }
 
     function getDotColor(): string {
       const theme = document.documentElement.getAttribute('data-theme');
       return theme === 'dark' ? '#e8e6e1' : '#1a1918';
     }
 
-    function prerenderRow() {
-      rowCtx.clearRect(0, 0, screenWidth, CELL);
-      rowCtx.fillStyle = getDotColor();
-      rowCtx.beginPath();
-      for (let col = 0; col < cols; col++) {
-        const cx = col * CELL + CELL / 2;
-        const cy = CELL / 2;
-        rowCtx.moveTo(cx + DOT_RADIUS, cy);
-        rowCtx.arc(cx, cy, DOT_RADIUS, 0, Math.PI * 2);
-      }
-      rowCtx.fill();
+    function prerenderRows() {
+      const color = getDotColor();
+      rowCanvases.forEach((c, v) => {
+        const g = c.getContext('2d')!;
+        g.setTransform(dpr, 0, 0, dpr, 0, 0);
+        g.clearRect(0, 0, screenWidth, CELL);
+        g.fillStyle = color;
+        drawDotGrid(g, cols, 1, 1000 + v);
+      });
     }
-    prerenderRow();
+    prerenderRows();
+
+    // Which variant a row uses: a cheap integer hash, so neighbours differ
+    // and the choice is stable for a given row.
+    function rowVariant(row: number): number {
+      return (Math.imul(row, 2654435761) >>> 0) % ROW_VARIANTS;
+    }
+
+    // The scale ladder above the field: one dot and a 10x10 block, drawn
+    // with the same cells, dots, and jitter as the field, so they are a
+    // literal sample of it. The note's numbers are filled in for this
+    // screen: dots per screenful of the field, and how many screenfuls a
+    // million and 1.6 billion come to.
+    const ladderOne = document.getElementById('ladder-one') as HTMLCanvasElement | null;
+    const ladderHundred = document.getElementById('ladder-hundred') as HTMLCanvasElement | null;
+
+    function drawLadder() {
+      const color = getDotColor();
+      const draw = (c: HTMLCanvasElement | null, n: number, seed: number) => {
+        if (!c) return;
+        const size = n * CELL;
+        c.width = size * dpr;
+        c.height = size * dpr;
+        c.style.width = size + 'px';
+        c.style.height = size + 'px';
+        const g = c.getContext('2d')!;
+        g.setTransform(dpr, 0, 0, dpr, 0, 0);
+        g.fillStyle = color;
+        drawDotGrid(g, n, n, seed);
+      };
+      draw(ladderOne, 1, 1);
+      draw(ladderHundred, 10, 100);
+    }
+    drawLadder();
+
+    const rowsPerScreen = Math.floor(viewHeight / CELL);
+    const dotsPerScreen = cols * rowsPerScreen;
+    const roundTo = (n: number, step: number) => Math.round(n / step) * step;
+    const fill = (id: string, text: string) => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = text;
+    };
+    fill('ladder-screen', roundTo(dotsPerScreen, 100).toLocaleString());
+    fill('ladder-million', Math.round(1_000_000 / dotsPerScreen).toLocaleString());
+    fill('ladder-all', roundTo(TOTAL_DOTS / dotsPerScreen, 1000).toLocaleString());
 
     let lastScrollY = -1;
 
@@ -237,10 +356,11 @@ import Base from '@/layouts/Base.astro';
 
       for (let row = rowStart; row < rowEnd; row++) {
         const y = row * CELL - clampedY;
-        // Draw pre-rendered row at this y position
+        // Draw this row's pre-rendered variant at this y position
+        const tile = rowCanvases[rowVariant(row)];
         ctx.drawImage(
-          rowCanvas,
-          0, 0, rowCanvas.width, rowCanvas.height,
+          tile,
+          0, 0, tile.width, tile.height,
           0, y, screenWidth, CELL
         );
       }
@@ -260,9 +380,10 @@ import Base from '@/layouts/Base.astro';
       }
     }
 
-    // Theme change: re-render the row stamp and force a redraw
+    // Theme change: re-render the row stamps and the ladder, force a redraw
     const themeObserver = new MutationObserver(() => {
-      prerenderRow();
+      prerenderRows();
+      drawLadder();
       lastScrollY = -1;
       render();
     });
