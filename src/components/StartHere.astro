@@ -3,102 +3,122 @@
 // out rather than pulled from the Substack feed on purpose: this is an
 // editorial selection and an editorial order, not the most recent N.
 //
-// Rendered as the body of a MarginNote on the homepage, so every box here
-// is a span set to block: the note sits inside the host paragraph, where
-// block elements (h2, ul) are not valid. List semantics come from ARIA.
-const groups = [
+// Set in two columns on the homepage so the whole list fits in about one
+// screen and Recent stays close below it: the long first group takes the
+// left column, the four short groups stack in the right.
+interface Item {
+  title: string;
+  href: string;
+  external?: boolean;
+}
+
+interface Group {
+  heading: string;
+  items: Item[];
+}
+
+const post = (title: string, slug: string): Item => ({ title, href: `/writing/${slug}` });
+const site = (title: string, href: string): Item => ({ title, href });
+const elsewhere = (title: string, href: string): Item => ({ title, href, external: true });
+
+const groups: Group[] = [
   {
     heading: 'AI and the environment',
-    posts: [
-      { title: 'Using ChatGPT is not bad for the environment - a cheat sheet', slug: 'a-cheat-sheet-for-conversations-about' },
-      { title: 'Toward liberal environmentalism', slug: 'toward-environmental-liberalism' },
-      { title: 'What a data center is', slug: 'what-a-data-center-is' },
-      { title: 'A simple trick to fix the data center debate', slug: 'a-simple-trick-to-fix-the-data-center' },
-      { title: 'Data centers and low social trust', slug: 'data-centers-and-low-social-trust' },
-      { title: 'Why I think panic about local impacts of data centers is just a panic', slug: 'why-i-think-panic-about-local-impacts' },
-      { title: 'The AI water issue is fake', slug: 'the-ai-water-issue-is-fake' },
-      { title: 'Data center land use issues are fake', slug: 'data-center-land-use-issues-are-fake' },
-      { title: 'Empire of AI is wildly misleading about AI water use', slug: 'empire-of-ai-is-wildly-misleading' },
+    items: [
+      post('Using ChatGPT is not bad for the environment - a cheat sheet', 'a-cheat-sheet-for-conversations-about'),
+      post('Toward liberal environmentalism', 'toward-environmental-liberalism'),
+      post('What a data center is', 'what-a-data-center-is'),
+      post('A simple trick to fix the data center debate', 'a-simple-trick-to-fix-the-data-center'),
+      post('Data centers and low social trust', 'data-centers-and-low-social-trust'),
+      post('Why I think panic about local impacts of data centers is just a panic', 'why-i-think-panic-about-local-impacts'),
+      post('The AI water issue is fake', 'the-ai-water-issue-is-fake'),
+      post('Data center land use issues are fake', 'data-center-land-use-issues-are-fake'),
+      post('Empire of AI is wildly misleading about AI water use', 'empire-of-ai-is-wildly-misleading'),
     ],
   },
   {
     heading: 'AI in general',
-    posts: [
-      { title: 'All the ways I want the AI debate to be better', slug: 'all-the-ways-i-want-the-ai-debate' },
+    items: [
+      post('All the ways I want the AI debate to be better', 'all-the-ways-i-want-the-ai-debate'),
     ],
   },
   {
     heading: 'Other',
-    posts: [
-      { title: 'Animal suffering isn’t pretend', slug: 'animal-suffering-isnt-pretend' },
-      { title: 'Strategies for learning', slug: 'strategies-for-learning' },
+    items: [
+      post('Animal suffering isn’t pretend', 'animal-suffering-isnt-pretend'),
+      post('Strategies for learning', 'strategies-for-learning'),
+    ],
+  },
+  // Hand-picked appearances (Andy's call, Aug 2026), titles and links
+  // mirroring src/data/appearances.ts.
+  {
+    heading: 'Appearances',
+    items: [
+      elsewhere('Conspicuous Cognition', 'https://open.spotify.com/episode/2E3Yfi24OUyHxz67BtzhHB?si=8110a29fe7034cf5'),
+      elsewhere('NYT Hard Fork', 'https://open.spotify.com/episode/0UaOQ0DcP9c8OG5IfAgfnT?si=5d00e4bce6aa43f0'),
+      elsewhere('The World Unpacked', 'https://www.youtube.com/watch?v=4Q6t2PxZxDE'),
+      elsewhere('The Cognitive Revolution', 'https://open.spotify.com/episode/0RBBVeGb5yfHsFWnKkDgD0?si=15d8b610374544b0'),
+    ],
+  },
+  // Hand-picked visuals, titles and links mirroring src/data/visuals.ts.
+  {
+    heading: 'Visuals',
+    items: [
+      site('Factory-farmed chickens', '/visuals/factory-farmed-chickens'),
+      site('Carbon footprint calculator', '/visuals/carbon-footprint'),
+      site('How thirsty is AI?', '/visuals/water'),
+      site('What does your AI use cost?', '/visuals/ai-prompt-footprint'),
     ],
   },
 ];
 
-// Hand-picked appearances (Andy's call, Aug 2026), titles and links
-// mirroring src/data/appearances.ts.
-const appearances = [
-  { title: 'Conspicuous Cognition', href: 'https://open.spotify.com/episode/2E3Yfi24OUyHxz67BtzhHB?si=8110a29fe7034cf5' },
-  { title: 'NYT Hard Fork', href: 'https://open.spotify.com/episode/0UaOQ0DcP9c8OG5IfAgfnT?si=5d00e4bce6aa43f0' },
-  { title: 'The World Unpacked', href: 'https://www.youtube.com/watch?v=4Q6t2PxZxDE' },
-  { title: 'The Cognitive Revolution', href: 'https://open.spotify.com/episode/0RBBVeGb5yfHsFWnKkDgD0?si=15d8b610374544b0' },
-];
-
-// Hand-picked visuals, titles and links mirroring src/data/visuals.ts.
-const visuals = [
-  { title: 'Factory-farmed chickens', href: '/visuals/factory-farmed-chickens' },
-  { title: 'Carbon footprint calculator', href: '/visuals/carbon-footprint' },
-  { title: 'How thirsty is AI?', href: '/visuals/water' },
-  { title: 'What does your AI use cost?', href: '/visuals/ai-prompt-footprint' },
-];
+const columns: Group[][] = [[groups[0]], groups.slice(1)];
 ---
 
-<span class="start-here" role="group" aria-label="Start here">
-  {groups.map(group => (
-    <span class="start-here__group">
-      <span class="start-here__heading">{group.heading}</span>
-      <span class="start-here__list" role="list">
-        {group.posts.map(post => (
-          <span class="start-here__item" role="listitem"><a href={`/writing/${post.slug}`}>{post.title}</a></span>
+<section class="start-here" id="start-here" aria-labelledby="start-here-label">
+  <div class="label" id="start-here-label">Start here</div>
+  <div class="start-here__columns">
+    {columns.map(column => (
+      <div class="start-here__column">
+        {column.map(group => (
+          <div class="start-here__group">
+            <h2 class="start-here__heading">{group.heading}</h2>
+            <ul class="start-here__list">
+              {group.items.map(item => (
+                <li>
+                  {item.external
+                    ? <a href={item.href} target="_blank" rel="noopener">{item.title}</a>
+                    : <a href={item.href}>{item.title}</a>}
+                </li>
+              ))}
+            </ul>
+          </div>
         ))}
-      </span>
-    </span>
-  ))}
-  <span class="start-here__group">
-    <span class="start-here__heading">Appearances</span>
-    <span class="start-here__list" role="list">
-      {appearances.map(item => (
-        <span class="start-here__item" role="listitem"><a href={item.href} target="_blank" rel="noopener">{item.title}</a></span>
-      ))}
-    </span>
-  </span>
-  <span class="start-here__group">
-    <span class="start-here__heading">Visuals</span>
-    <span class="start-here__list" role="list">
-      {visuals.map(item => (
-        <span class="start-here__item" role="listitem"><a href={item.href}>{item.title}</a></span>
-      ))}
-    </span>
-  </span>
-</span>
+      </div>
+    ))}
+  </div>
+</section>
 
 <style>
-  .start-here,
-  .start-here__group,
-  .start-here__heading,
-  .start-here__list,
-  .start-here__item {
-    display: block;
+  /* Sits between the intro and Recent; the gap below matches the one
+     Subscribe keeps above itself. */
+  .start-here {
+    margin: 0 0 var(--space-3xl);
+  }
+
+  .start-here__columns {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-lg) var(--space-xl);
   }
 
   .start-here__group + .start-here__group {
-    margin-top: var(--space-md);
+    margin-top: var(--space-lg);
   }
 
   /* Label recipe B: sentence case, --text-sm. */
   .start-here__heading {
-    margin-bottom: var(--space-2xs);
+    margin: 0 0 var(--space-xs);
     font-family: var(--font-body);
     font-size: var(--text-sm);
     font-weight: 700;
@@ -106,13 +126,26 @@ const visuals = [
     color: var(--text-secondary);
   }
 
-  /* Same item rhythm the list had as a ul; no bullets, since the margin
-     column is 180px and the titles already wrap. */
-  .start-here__item {
+  /* A directory, not prose: no bullets, the titles carry the rows. */
+  .start-here__list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .start-here__list li {
+    margin-bottom: var(--space-xs);
+    font-size: var(--text-base);
     line-height: var(--leading-note);
   }
 
-  .start-here__item + .start-here__item {
-    margin-top: var(--space-xs);
+  .start-here__list li:last-child {
+    margin-bottom: 0;
+  }
+
+  @media (max-width: 600px) {
+    .start-here__columns {
+      grid-template-columns: minmax(0, 1fr);
+    }
   }
 </style>
