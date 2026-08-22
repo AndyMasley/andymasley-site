@@ -210,13 +210,21 @@ import Base from '@/layouts/Base.astro';
     const totalRows = Math.ceil(TOTAL_DOTS / cols);
     const virtualHeight = totalRows * CELL;
 
-    // Cap spacer height to stay within browser limits.
-    // Mobile browsers crash at very tall elements, so use a lower cap there.
-    const MAX_SAFE = isMobile ? 5_000_000 : 15_000_000;
-    const spacerHeight = Math.min(virtualHeight, MAX_SAFE);
+    // Cap spacer height to stay within browser limits. The spacer is the
+    // whole scroll track, so a longer one means a slower pass through the
+    // dots: 24M px is about 0.5 rows per scrolled pixel on desktop (it was
+    // 15M, about 0.8). Chromium and WebKit lay out to ~33.5M px; Gecko
+    // stops at ~17.9M and clamps anything taller, so read the height back
+    // and scale to whatever the browser actually gave us. Mobile browsers
+    // crash at very tall elements, so use a much lower cap there.
+    const MAX_SAFE = isMobile ? 5_000_000 : 24_000_000;
+    const requestedHeight = Math.min(virtualHeight, MAX_SAFE);
+    scrollArea.style.height = requestedHeight + 'px';
+    const actualHeight = Math.floor(scrollArea.getBoundingClientRect().height);
+    const spacerHeight = actualHeight > 0 && actualHeight < requestedHeight
+      ? actualHeight
+      : requestedHeight;
     const scrollScale = virtualHeight / spacerHeight;
-
-    scrollArea.style.height = spacerHeight + 'px';
 
     // Canvas: viewport-sized, sticky below counter
     canvas.width = screenWidth * dpr;
