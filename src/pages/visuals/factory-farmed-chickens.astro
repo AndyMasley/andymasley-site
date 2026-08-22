@@ -191,67 +191,28 @@ import Base from '@/layouts/Base.astro';
     if (!ctx) return;
 
     const TOTAL_DOTS = 1_600_000_000;
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
-    const screenWidth = scrollArea.clientWidth;
-    const counterHeight = counter.offsetHeight;
-    const viewHeight = window.innerHeight - counterHeight;
-
-    // Cell size. The spacer below is capped and scroll is scaled to cover
-    // the whole virtual height, so this sets only how big each dot reads,
-    // never how far the page scrolls: every dot is unmistakably a dot, and
-    // the scale comes from the counter and the ladder above the field.
-    // (Earlier versions derived a 3-6px cell from a virtual page height,
-    // which read as texture rather than as dots.)
-    const isMobile = window.innerWidth < 768;
-    const CELL = isMobile ? 8 : 10;
-
-    const DOT_RADIUS = CELL * 0.3;
-    const cols = Math.floor(screenWidth / CELL);
-    const totalRows = Math.ceil(TOTAL_DOTS / cols);
-    const virtualHeight = totalRows * CELL;
-
-    // Cap spacer height to stay within browser limits. The spacer is the
-    // whole scroll track, so a longer one means a slower pass through the
-    // dots: 24M px is about 0.5 rows per scrolled pixel on desktop (it was
-    // 15M, about 0.8). Chromium and WebKit lay out to ~33.5M px; Gecko
-    // stops at ~17.9M and clamps anything taller, so read the height back
-    // and scale to whatever the browser actually gave us. Mobile browsers
-    // crash at very tall elements, so use a much lower cap there.
-    const MAX_SAFE = isMobile ? 5_000_000 : 24_000_000;
-    const requestedHeight = Math.min(virtualHeight, MAX_SAFE);
-    scrollArea.style.height = requestedHeight + 'px';
-    const actualHeight = Math.floor(scrollArea.getBoundingClientRect().height);
-    const spacerHeight = actualHeight > 0 && actualHeight < requestedHeight
-      ? actualHeight
-      : requestedHeight;
-    const scrollScale = virtualHeight / spacerHeight;
-
-    // Canvas: viewport-sized, sticky below counter
-    canvas.width = screenWidth * dpr;
-    canvas.height = viewHeight * dpr;
-    canvas.style.width = screenWidth + 'px';
-    canvas.style.height = viewHeight + 'px';
-    canvas.style.top = counterHeight + 'px';
-    ctx.scale(dpr, dpr);
-
-    // Pre-render full rows of dots into offscreen canvases. Then render()
-    // just tiles these row images — orders of magnitude faster than drawing
-    // thousands of arcs each frame.
-    //
-    // Several variants, not one: with a single tile every row is identical,
-    // so a wheel step that happens to move a whole number of rows leaves
-    // the field looking frozen while the counter ticks. Each variant nudges
-    // every dot a little (position and size, seeded so it is stable across
-    // re-renders), and rows pick a variant by hash, so the field visibly
-    // streams past at any scroll speed.
     const ROW_VARIANTS = 8;
-    const rowCanvases: HTMLCanvasElement[] = [];
-    for (let v = 0; v < ROW_VARIANTS; v++) {
-      const c = document.createElement('canvas');
-      c.width = screenWidth * dpr;
-      c.height = Math.ceil(CELL * dpr);
-      rowCanvases.push(c);
-    }
+    const ladderOne = document.getElementById('ladder-one') as HTMLCanvasElement | null;
+    const ladderHundred = document.getElementById('ladder-hundred') as HTMLCanvasElement | null;
+
+    // Everything that depends on the viewport lives here and is recomputed
+    // by layout(): on load, and again whenever the window is resized or
+    // zoomed (a phone's address bar collapsing counts). Before this the
+    // canvas was sized once, so a taller window left a blank band under
+    // the dots.
+    let dpr = 1;
+    let screenWidth = 0;
+    let counterHeight = 0;
+    let viewHeight = 0;
+    let isMobile = false;
+    let CELL = 10;
+    let DOT_RADIUS = 3;
+    let cols = 0;
+    let totalRows = 0;
+    let virtualHeight = 0;
+    let scrollScale = 1;
+    let rowCanvases: HTMLCanvasElement[] = [];
+    let lastScrollY = -1;
 
     // mulberry32: a tiny seeded PRNG, so the jitter is the same every time.
     function seededRandom(seed: number): () => number {
@@ -288,6 +249,16 @@ import Base from '@/layouts/Base.astro';
       return theme === 'dark' ? '#e8e6e1' : '#1a1918';
     }
 
+    // Pre-render full rows of dots into offscreen canvases. Then render()
+    // just tiles these row images — orders of magnitude faster than drawing
+    // thousands of arcs each frame.
+    //
+    // Several variants, not one: with a single tile every row is identical,
+    // so a wheel step that happens to move a whole number of rows leaves
+    // the field looking frozen while the counter ticks. Each variant nudges
+    // every dot a little (position and size, seeded so it is stable across
+    // re-renders), and rows pick a variant by hash, so the field visibly
+    // streams past at any scroll speed.
     function prerenderRows() {
       const color = getDotColor();
       rowCanvases.forEach((c, v) => {
@@ -298,7 +269,6 @@ import Base from '@/layouts/Base.astro';
         drawDotGrid(g, cols, 1, 1000 + v);
       });
     }
-    prerenderRows();
 
     // Which variant a row uses: a cheap integer hash, so neighbours differ
     // and the choice is stable for a given row.
@@ -308,12 +278,7 @@ import Base from '@/layouts/Base.astro';
 
     // The scale ladder above the field: one dot and a 10x10 block, drawn
     // with the same cells, dots, and jitter as the field, so they are a
-    // literal sample of it. The note's numbers are filled in for this
-    // screen: dots per screenful of the field, and how many screenfuls a
-    // million and 1.6 billion come to.
-    const ladderOne = document.getElementById('ladder-one') as HTMLCanvasElement | null;
-    const ladderHundred = document.getElementById('ladder-hundred') as HTMLCanvasElement | null;
-
+    // literal sample of it.
     function drawLadder() {
       const color = getDotColor();
       const draw = (c: HTMLCanvasElement | null, n: number, seed: number) => {
@@ -331,23 +296,81 @@ import Base from '@/layouts/Base.astro';
       draw(ladderOne, 1, 1);
       draw(ladderHundred, 10, 100);
     }
-    drawLadder();
 
-    const rowsPerScreen = Math.floor(viewHeight / CELL);
-    const dotsPerScreen = cols * rowsPerScreen;
-    const roundTo = (n: number, step: number) => Math.round(n / step) * step;
-    const fill = (id: string, text: string) => {
-      const el = document.getElementById(id);
-      if (el) el.textContent = text;
-    };
-    fill('ladder-screen', roundTo(dotsPerScreen, 100).toLocaleString());
-    fill('ladder-million', Math.round(1_000_000 / dotsPerScreen).toLocaleString());
-    fill('ladder-all', roundTo(TOTAL_DOTS / dotsPerScreen, 1000).toLocaleString());
+    // The ladder note's numbers, filled in for this screen: dots per
+    // screenful of the field, and how many screenfuls a million and 1.6
+    // billion come to.
+    function fillLadderNumbers() {
+      const rowsPerScreen = Math.max(1, Math.floor(viewHeight / CELL));
+      const dotsPerScreen = cols * rowsPerScreen;
+      const roundTo = (n: number, step: number) => Math.round(n / step) * step;
+      const fill = (id: string, text: string) => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = text;
+      };
+      fill('ladder-screen', roundTo(dotsPerScreen, 100).toLocaleString());
+      fill('ladder-million', Math.round(1_000_000 / dotsPerScreen).toLocaleString());
+      fill('ladder-all', roundTo(TOTAL_DOTS / dotsPerScreen, 1000).toLocaleString());
+    }
 
-    let lastScrollY = -1;
+    function layout() {
+      dpr = Math.min(window.devicePixelRatio || 1, 2);
+      screenWidth = scrollArea!.clientWidth;
+      counterHeight = counter!.offsetHeight;
+      viewHeight = Math.max(1, window.innerHeight - counterHeight);
+
+      // Cell size. The spacer below is capped and scroll is scaled to cover
+      // the whole virtual height, so this sets only how big each dot reads,
+      // never how far the page scrolls: every dot is unmistakably a dot, and
+      // the scale comes from the counter and the ladder above the field.
+      // (Earlier versions derived a 3-6px cell from a virtual page height,
+      // which read as texture rather than as dots.)
+      isMobile = window.innerWidth < 768;
+      CELL = isMobile ? 8 : 10;
+      DOT_RADIUS = CELL * 0.3;
+      cols = Math.max(1, Math.floor(screenWidth / CELL));
+      totalRows = Math.ceil(TOTAL_DOTS / cols);
+      virtualHeight = totalRows * CELL;
+
+      // Cap spacer height to stay within browser limits. The spacer is the
+      // whole scroll track, so a longer one means a slower pass through the
+      // dots: 24M px is about 0.5 rows per scrolled pixel on desktop (it was
+      // 15M, about 0.8). Chromium and WebKit lay out to ~33.5M px; Gecko
+      // stops at ~17.9M and clamps anything taller, so read the height back
+      // and scale to whatever the browser actually gave us. Mobile browsers
+      // crash at very tall elements, so use a much lower cap there.
+      const MAX_SAFE = isMobile ? 5_000_000 : 24_000_000;
+      const requestedHeight = Math.min(virtualHeight, MAX_SAFE);
+      scrollArea!.style.height = requestedHeight + 'px';
+      const actualHeight = Math.floor(scrollArea!.getBoundingClientRect().height);
+      const spacerHeight = actualHeight > 0 && actualHeight < requestedHeight
+        ? actualHeight
+        : requestedHeight;
+      scrollScale = virtualHeight / spacerHeight;
+
+      // Canvas: viewport-sized, sticky below counter
+      canvas.width = screenWidth * dpr;
+      canvas.height = viewHeight * dpr;
+      canvas.style.width = screenWidth + 'px';
+      canvas.style.height = viewHeight + 'px';
+      canvas.style.top = counterHeight + 'px';
+      ctx!.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+      rowCanvases = [];
+      for (let v = 0; v < ROW_VARIANTS; v++) {
+        const c = document.createElement('canvas');
+        c.width = screenWidth * dpr;
+        c.height = Math.ceil(CELL * dpr);
+        rowCanvases.push(c);
+      }
+      prerenderRows();
+      drawLadder();
+      fillLadderNumbers();
+      lastScrollY = -1;
+    }
 
     function render() {
-      const scrollAreaRect = scrollArea.getBoundingClientRect();
+      const scrollAreaRect = scrollArea!.getBoundingClientRect();
       const rawScrollY = -(scrollAreaRect.top);
 
       const roundedScroll = Math.round(rawScrollY);
@@ -360,13 +383,13 @@ import Base from '@/layouts/Base.astro';
       const rowStart = Math.floor(clampedY / CELL);
       const rowEnd = Math.min(Math.ceil((clampedY + viewHeight) / CELL), totalRows);
 
-      ctx.clearRect(0, 0, screenWidth, viewHeight);
+      ctx!.clearRect(0, 0, screenWidth, viewHeight);
 
       for (let row = rowStart; row < rowEnd; row++) {
         const y = row * CELL - clampedY;
         // Draw this row's pre-rendered variant at this y position
         const tile = rowCanvases[rowVariant(row)];
-        ctx.drawImage(
+        ctx!.drawImage(
           tile,
           0, 0, tile.width, tile.height,
           0, y, screenWidth, CELL
@@ -377,16 +400,18 @@ import Base from '@/layouts/Base.astro';
       const rowsScrolledPast = Math.floor(clampedY / CELL);
       const dotsScrolledPast = Math.min(TOTAL_DOTS, rowsScrolledPast * cols);
       const fraction = dotsScrolledPast / TOTAL_DOTS;
-      pctEl.textContent = (fraction * 100).toFixed(2) + '%';
-      numEl.textContent = dotsScrolledPast.toLocaleString() + ' / 1,600,000,000';
+      pctEl!.textContent = (fraction * 100).toFixed(2) + '%';
+      numEl!.textContent = dotsScrolledPast.toLocaleString() + ' / 1,600,000,000';
 
       // Fade in counter once user starts scrolling
       if (dotsScrolledPast > 0) {
-        counter.classList.remove('viz-counter--hidden');
+        counter!.classList.remove('viz-counter--hidden');
       } else {
-        counter.classList.add('viz-counter--hidden');
+        counter!.classList.add('viz-counter--hidden');
       }
     }
+
+    layout();
 
     // Theme change: re-render the row stamps and the ladder, force a redraw
     const themeObserver = new MutationObserver(() => {
@@ -413,9 +438,24 @@ import Base from '@/layouts/Base.astro';
     }
     window.addEventListener('scroll', onScroll, { passive: true });
 
+    // Resize or zoom: re-lay out once things settle. The counter only
+    // depends on scroll position and spacer height, so the count a reader
+    // is looking at does not jump when the field re-flows.
+    let resizeTimer = 0;
+    function onResize() {
+      window.clearTimeout(resizeTimer);
+      resizeTimer = window.setTimeout(() => {
+        layout();
+        render();
+      }, 150);
+    }
+    window.addEventListener('resize', onResize);
+
     // Cleanup on Astro navigation
     document.addEventListener('astro:before-swap', () => {
       window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', onResize);
+      window.clearTimeout(resizeTimer);
       themeObserver.disconnect();
     }, { once: true });
 
