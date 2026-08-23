@@ -10,6 +10,19 @@ function stripTags(html: string): string {
   return html.replace(/<[^>]*>/g, '').trim();
 }
 
+// TOC labels are plain strings, so the source's character entities must be
+// decoded once here — otherwise "Mindset &amp; motivation" reaches the rail
+// as literal text. &amp; goes last so double-encoded entities stay encoded.
+function decodeEntities(s: string): string {
+  return s
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&');
+}
+
 function generateId(text: string): string {
   return text
     .toLowerCase()
@@ -45,7 +58,10 @@ export function stripContentsSection(html: string): string {
     const listEnd = html.indexOf('</ul>', afterHeading);
     contentEnd = listEnd !== -1 ? listEnd + 5 : afterHeading;
   }
-  return html.slice(0, start) + html.slice(contentEnd);
+  // A subscribe form placed inside the contents section (Andy puts one
+  // right after the inline TOC on Substack) survives the strip in place.
+  const kept = (html.slice(afterHeading, contentEnd).match(/<form class="post-subscribe"[\s\S]*?<\/form>/gi) || []).join('');
+  return html.slice(0, start) + kept + html.slice(contentEnd);
 }
 
 /**
@@ -96,12 +112,14 @@ export function extractHeadingsFromHtml(html: string): { headings: TOCHeading[];
     const attrs = m[2];
     const innerHtml = m[3];
     // Drop the appended section anchor (§) so it never leaks into TOC labels.
-    const text = stripTags(innerHtml.replace(/<a class="h-anchor"[\s\S]*?<\/a>/gi, ''));
-    if (!text) continue;
+    const raw = stripTags(innerHtml.replace(/<a class="h-anchor"[\s\S]*?<\/a>/gi, ''));
+    if (!raw) continue;
+    const text = decodeEntities(raw);
 
-    // Get ID from attribute or generate one
+    // Get ID from attribute or generate one (from the un-decoded text, so
+    // generated ids match what this function always produced).
     const idMatch = attrs.match(/id="([^"]+)"/);
-    const id = idMatch ? idMatch[1] : generateId(text);
+    const id = idMatch ? idMatch[1] : generateId(raw);
 
     found.push({ tag, id, text });
   }

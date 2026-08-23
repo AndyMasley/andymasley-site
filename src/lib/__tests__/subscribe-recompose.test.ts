@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { processPostContent, recomposeSubscribe } from '../substack';
+import { stripContentsSection, extractHeadingsFromHtml } from '../extract-headings';
 
 // Substack's in-post subscribe widgets and "Subscribe now" buttons become
 // the site's own subscribe form in the same places; other buttons (share,
@@ -44,5 +45,27 @@ describe('in-post subscribe recomposition', () => {
     const out = recomposeSubscribe(WIDGET.replace('Subscribe for more!', ''));
     expect(out).toContain('<form class="post-subscribe"');
     expect(out).not.toContain('post-subscribe__caption');
+  });
+
+  it('keeps a form placed inside the stripped Contents section', () => {
+    // The fitness posts put a subscribe button right after the inline TOC;
+    // the TOC is stripped (the site draws its own rail) but the form stays.
+    const html =
+      '<p>Intro.</p><h2>Contents</h2><ul><li><p><a href="#a">A</a></p></li></ul>' +
+      '<form class="post-subscribe" action="x" method="post"><div class="post-subscribe__row"></div></form>' +
+      '<h2>A</h2><p>Body.</p>';
+    const out = stripContentsSection(html);
+    expect(out).not.toContain('<h2>Contents</h2>');
+    expect(out).not.toContain('href="#a"');
+    expect(out).toContain('<form class="post-subscribe"');
+    expect(out.indexOf('post-subscribe')).toBeLessThan(out.indexOf('<h2>A</h2>'));
+  });
+
+  it('decodes entities in TOC labels without changing generated ids', () => {
+    const html = '<h1 id="mindset-motivation">Mindset &amp; motivation</h1><p>x</p><h1>Q &amp; A</h1><p>y</p>';
+    const { headings } = extractHeadingsFromHtml(html);
+    expect(headings.map(h => h.text)).toEqual(['Mindset & motivation', 'Q & A']);
+    expect(headings[0].id).toBe('mindset-motivation');
+    expect(headings[1].id).toBe('q-amp-a');
   });
 });
