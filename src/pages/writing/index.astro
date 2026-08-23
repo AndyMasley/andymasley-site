@@ -110,6 +110,8 @@ const postsByYear: YearGroup[] = Array.from(yearMap.entries())
           autocomplete="off"
         />
         <button id="archive-search-clear" class="archive-inline-action" type="button" hidden>Clear</button>
+        <a class="archive-subscribe-link" href="https://andymasley.substack.com/subscribe" target="_blank" rel="noopener">Subscribe on Substack</a>
+        <span class="archive-meta-sep" aria-hidden="true">·</span>
         <a class="archive-bounty-link" href="/writing/errors-and-updates">$300 error bounty</a>
       </div>
 
@@ -426,6 +428,32 @@ const postsByYear: YearGroup[] = Array.from(yearMap.entries())
     cursor: pointer;
   }
 
+  /* The one actionable link in the search row: full link blue, where the
+     bounty link beside it stays a quiet dim note. */
+  .archive-subscribe-link {
+    flex-shrink: 0;
+    white-space: nowrap;
+    font-size: var(--text-sm);
+    color: var(--accent);
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 2px;
+    text-decoration-color: var(--border-strong);
+  }
+
+  .archive-subscribe-link:hover {
+    text-decoration-color: var(--accent);
+  }
+
+  /* Tighten the row gap on either side of the middot so the two meta links
+     read as one quiet phrase. */
+  .archive-meta-sep {
+    flex-shrink: 0;
+    margin: 0 -0.45rem;
+    font-size: var(--text-sm);
+    color: var(--dim);
+  }
+
   .archive-bounty-link {
     flex-shrink: 0;
     white-space: nowrap;
@@ -726,6 +754,16 @@ const postsByYear: YearGroup[] = Array.from(yearMap.entries())
   }
 
   @media (max-width: 600px) {
+    /* Not enough line for the field and both meta links: the field takes
+       the first line whole and the links tuck under it, right-aligned. */
+    .archive-search__input {
+      flex: 1 1 100%;
+    }
+
+    .archive-subscribe-link {
+      margin-left: auto;
+    }
+
     .post-grid {
       display: block;
     }
