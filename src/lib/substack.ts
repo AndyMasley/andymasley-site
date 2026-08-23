@@ -827,65 +827,6 @@ function extractS3Uuid(url: string): string | null {
 }
 
 // Process HTML content for display
-// The site's in-post subscribe form, standing where Substack's subscribe
-// widget or "Subscribe now" button stood. It posts to the same no-JS
-// endpoint Substack's own embed form uses, so a reader subscribes in one
-// step without leaving the essay's flow. The button says where the email
-// goes. The visible words are the widget's own caption when it had one;
-// the field and button labels are attributes, as in the original, so the
-// content-integrity check sees no inserted text.
-const SUBSCRIBE_ACTION = 'https://andymasley.substack.com/api/v1/free?nojs=true';
-const SUBSCRIBE_LABEL = 'Subscribe to my Substack';
-
-function subscribeFormHtml(caption: string): string {
-  const cap = caption.trim();
-  const captionHtml = cap ? `<p class="post-subscribe__caption">${cap}</p>` : '';
-  return (
-    `<form class="post-subscribe" action="${SUBSCRIBE_ACTION}" method="post">` +
-    captionHtml +
-    '<div class="post-subscribe__row">' +
-    '<input type="email" name="email" class="post-subscribe__email" placeholder="Type your email…" aria-label="Email address" autocomplete="email" required>' +
-    `<input type="submit" class="post-subscribe__button" value="${SUBSCRIBE_LABEL}">` +
-    '</div>' +
-    '</form>'
-  );
-}
-
-function decodeAttrs(raw: string): Record<string, unknown> {
-  try {
-    const json = raw
-      .replace(/&quot;/g, '"')
-      .replace(/&#39;/g, "'")
-      .replace(/&amp;/g, '&');
-    return JSON.parse(json);
-  } catch {
-    return {};
-  }
-}
-
-export function recomposeSubscribe(html: string): string {
-  let out = html;
-  // The email widget: wrap > widget > (preamble > caption) + form.
-  out = out.replace(
-    /<div class="subscription-widget-wrap(?:-editor)?"[^>]*>[\s\S]*?<\/form>\s*<\/div>\s*<\/div>/gi,
-    (block: string) => {
-      const cap = block.match(/<p class="cta-caption">([\s\S]*?)<\/p>/i);
-      return subscribeFormHtml(cap ? cap[1] : '');
-    }
-  );
-  // The button: only when it points at the subscribe page.
-  out = out.replace(
-    /<p class="button-wrapper" data-attrs="([^"]*)"[^>]*>[\s\S]*?<\/p>/gi,
-    (block: string, attrs: string) => {
-      const data = decodeAttrs(attrs);
-      const url = typeof data.url === 'string' ? data.url : '';
-      if (!/\/subscribe/i.test(url)) return block;
-      return subscribeFormHtml('');
-    }
-  );
-  return out;
-}
-
 export function processPostContent(html: string, slug: string, opts: { sidenotes?: boolean } = {}): string {
   const { sidenotes = true } = opts;
   // Fail the build on TK/TKTK/TODO left in post content; warn on softer
@@ -919,10 +860,11 @@ export function processPostContent(html: string, slug: string, opts: { sidenotes
   // Add IDs to headings so anchor links work
   processed = addHeadingIds(processed);
 
-  // Substack's in-post subscribe widgets and "Subscribe now" buttons become
-  // the site's own subscribe form in the same places (recomposeSubscribe
-  // below). Anything of theirs that survives is stripped.
-  processed = recomposeSubscribe(processed);
+  // Substack's in-post subscribe widgets and "Subscribe now" buttons are
+  // stripped: on the site, the subscribe box at the end of each essay is
+  // the one subscription ask (Andy's call, Aug 2026 — a recomposed in-post
+  // form shipped briefly and came back out).
+  processed = processed.replace(/<div class="subscription-widget-wrap(?:-editor)?"[^>]*>[\s\S]*?<\/form>\s*<\/div>\s*<\/div>/gi, '');
   processed = processed.replace(/<div class="subscription-widget[^>]*>[\s\S]*?<\/div>/gi, '');
   processed = processed.replace(/<div class="subscribe-widget[^>]*>[\s\S]*?<\/div>/gi, '');
   processed = processed.replace(/<a[^>]*class="[^"]*button[^"]*"[^>]*>Subscribe<\/a>/gi, '');

@@ -58,10 +58,7 @@ export function stripContentsSection(html: string): string {
     const listEnd = html.indexOf('</ul>', afterHeading);
     contentEnd = listEnd !== -1 ? listEnd + 5 : afterHeading;
   }
-  // A subscribe form placed inside the contents section (Andy puts one
-  // right after the inline TOC on Substack) survives the strip in place.
-  const kept = (html.slice(afterHeading, contentEnd).match(/<form class="post-subscribe"[\s\S]*?<\/form>/gi) || []).join('');
-  return html.slice(0, start) + kept + html.slice(contentEnd);
+  return html.slice(0, start) + html.slice(contentEnd);
 }
 
 /**
