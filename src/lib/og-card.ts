@@ -15,6 +15,17 @@ const fontDir = join(process.cwd(), 'src/assets/fonts');
 const gelasio400 = readFileSync(join(fontDir, 'gelasio-400.woff'));
 const gelasio700 = readFileSync(join(fontDir, 'gelasio-700.woff'));
 
+// Page screenshots for the section/visual cards, captured from the built site
+// at 2× the panel size (1168×860) and committed under src/assets/og/.
+const panelDir = join(process.cwd(), 'src/assets/og');
+export function loadPanelImage(id: string): string {
+  return 'data:image/png;base64,' + readFileSync(join(panelDir, `${id}.png`)).toString('base64');
+}
+
+// The homepage headshot, shared with the page itself.
+const headshotUri =
+  'data:image/jpeg;base64,' + readFileSync(join(process.cwd(), 'public/images/headshot.jpg')).toString('base64');
+
 // Ink hexagon mark, matching the site favicon/header (not the old oxblood).
 // Stroke width is in 24-unit viewBox units, so it does NOT scale with size —
 // the small header mark needs 2.5, the oversized card hexagons need a
@@ -40,12 +51,78 @@ async function rasterize(tree: unknown): Promise<Buffer> {
   return new Resvg(svg, { fitTo: { mode: 'width', value: 1200 } }).render().asPng();
 }
 
+// Section, list, and visual pages carry a panel on the right instead of the
+// decorative hexagon: a framed window onto the page itself (a screenshot), or
+// for a bare index page, its entries set large enough to read.
+export type CardPanel = { image: string } | { lines: string[] };
+
 interface CardInput {
   title: string;
   date?: Date | null;
+  panel?: CardPanel;
 }
 
-export async function renderOgCard({ title, date }: CardInput): Promise<Buffer> {
+const PANEL_W = 584;
+const PANEL_H = 430;
+// The site's hairline (--border-strong) at card scale.
+const PANEL_FRAME = '2px solid #d4d4d4';
+
+function panelNode(panel: CardPanel) {
+  const frame = {
+    display: 'flex',
+    width: `${PANEL_W}px`,
+    height: `${PANEL_H}px`,
+    border: PANEL_FRAME,
+    overflow: 'hidden',
+    backgroundColor: '#ffffff',
+    flexShrink: 0,
+  };
+  if ('image' in panel) {
+    return {
+      type: 'div',
+      props: {
+        style: frame,
+        children: [
+          {
+            type: 'img',
+            props: {
+              src: panel.image,
+              width: PANEL_W - 4,
+              height: PANEL_H - 4,
+              style: { objectFit: 'cover', objectPosition: 'top left' },
+            },
+          },
+        ],
+      },
+    };
+  }
+  // Entries as rows under hairlines, the list pages' own category-row recipe.
+  return {
+    type: 'div',
+    props: {
+      style: { ...frame, flexDirection: 'column', justifyContent: 'center', padding: '0 40px' },
+      children: panel.lines.map((line, i) => ({
+        type: 'div',
+        props: {
+          style: {
+            display: 'flex',
+            padding: '22px 0',
+            ...(i === 0 ? { borderTop: PANEL_FRAME } : {}),
+            borderBottom: PANEL_FRAME,
+            fontSize: '32px',
+            fontWeight: 700,
+            lineHeight: 1.3,
+            color: '#1a1a1a',
+          },
+          children: line,
+        },
+      })),
+    },
+  };
+}
+
+export async function renderOgCard({ title, date, panel }: CardInput): Promise<Buffer> {
+  if (panel) return renderPanelCard(title, panel);
   const titleSize = title.length > 90 ? 54 : 66;
   const dateStr = date && date.getTime() !== 0 ? formatPostDate(date) : '';
 
@@ -156,7 +233,158 @@ export async function renderOgCard({ title, date }: CardInput): Promise<Buffer> 
   return rasterize(tree);
 }
 
+// Header and domain as on the article card; the title sits in a 440px column
+// left of the panel, so it is set smaller and wraps more.
+async function renderPanelCard(title: string, panel: CardPanel): Promise<Buffer> {
+  const titleSize = title.length > 32 ? 46 : title.length > 18 ? 54 : 64;
+
+  const tree = {
+    type: 'div',
+    props: {
+      style: {
+        width: '1200px',
+        height: '630px',
+        backgroundColor: '#ffffff',
+        padding: '64px',
+        display: 'flex',
+        flexDirection: 'column',
+        fontFamily: 'Gelasio',
+      },
+      children: [
+        {
+          type: 'div',
+          props: {
+            style: { display: 'flex', alignItems: 'center', flexShrink: 0 },
+            children: [
+              { type: 'img', props: { src: hexSmall, width: 44, height: 44 } },
+              {
+                type: 'div',
+                props: {
+                  style: { fontSize: '30px', color: '#666666', marginLeft: '18px' },
+                  children: 'Andy Masley',
+                },
+              },
+            ],
+          },
+        },
+        {
+          type: 'div',
+          props: {
+            style: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: '28px', flexGrow: 1 },
+            children: [
+              {
+                type: 'div',
+                props: {
+                  style: { display: 'flex', flexDirection: 'column', width: '440px', height: `${PANEL_H}px` },
+                  children: [
+                    {
+                      type: 'div',
+                      props: {
+                        style: { display: 'flex', alignItems: 'center', flexGrow: 1, overflow: 'hidden' },
+                        children: [
+                          {
+                            type: 'div',
+                            props: {
+                              style: {
+                                display: 'block',
+                                fontSize: `${titleSize}px`,
+                                fontWeight: 400,
+                                color: '#1a1a1a',
+                                lineHeight: 1.12,
+                                lineClamp: 5,
+                                overflow: 'hidden',
+                              },
+                              children: title,
+                            },
+                          },
+                        ],
+                      },
+                    },
+                    {
+                      type: 'div',
+                      props: {
+                        style: { display: 'flex', fontSize: '26px', color: '#0645ad', flexShrink: 0 },
+                        children: 'andymasley.com',
+                      },
+                    },
+                  ],
+                },
+              },
+              panelNode(panel),
+            ],
+          },
+        },
+      ],
+    },
+  };
+
+  return rasterize(tree);
+}
+
 const DEFAULT_TAGLINE = 'Essays on AI and the environment, animal welfare, effective altruism, and more';
+
+// The homepage card: the default card's text column, with the headshot from
+// the top of the page where the default card has its hexagon.
+export async function renderHomeOgCard(): Promise<Buffer> {
+  const photoSize = 430;
+  const tree = {
+    type: 'div',
+    props: {
+      style: {
+        width: '1200px',
+        height: '630px',
+        backgroundColor: '#ffffff',
+        padding: '64px',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        fontFamily: 'Gelasio',
+      },
+      children: [
+        {
+          type: 'div',
+          props: {
+            style: { display: 'flex', flexDirection: 'column', width: '580px' },
+            children: [
+              {
+                type: 'div',
+                props: {
+                  style: { fontSize: '84px', fontWeight: 400, color: '#1a1a1a', lineHeight: 1.05 },
+                  children: 'Andy Masley',
+                },
+              },
+              {
+                type: 'div',
+                props: {
+                  style: { marginTop: '30px', fontSize: '34px', color: '#666666', lineHeight: 1.4, width: '540px' },
+                  children: DEFAULT_TAGLINE,
+                },
+              },
+              {
+                type: 'div',
+                props: {
+                  style: { marginTop: '52px', fontSize: '28px', color: '#0645ad' },
+                  children: 'andymasley.com',
+                },
+              },
+            ],
+          },
+        },
+        {
+          type: 'div',
+          props: {
+            style: { display: 'flex', width: `${photoSize}px`, height: `${photoSize}px`, border: PANEL_FRAME, flexShrink: 0 },
+            children: [
+              { type: 'img', props: { src: headshotUri, width: photoSize - 4, height: photoSize - 4, style: { objectFit: 'cover' } } },
+            ],
+          },
+        },
+      ],
+    },
+  };
+
+  return rasterize(tree);
+}
 
 // The site-identity card (homepage, 404, and any page without its own image):
 // one oversized hairline hexagon bleeding off the right edge carries the
