@@ -1386,6 +1386,80 @@ details[open] > summary::before {
 }
 
 /* ============================================
+   Components: In-post subscribe form
+   Recomposed at build from Substack's in-post subscribe widgets and
+   "Subscribe now" buttons (src/lib/substack.ts, recomposeSubscribe): the
+   same ask in the same places, set as the site sets everything else.
+   ============================================ */
+
+.post-subscribe {
+  margin: var(--space-xl) 0;
+  padding: var(--space-md);
+  border: 1px solid var(--border);
+}
+
+.post-subscribe__caption {
+  margin: 0 0 var(--space-sm);
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  line-height: var(--leading-note);
+  color: var(--dim);
+}
+
+.post-subscribe__row {
+  display: flex;
+  gap: var(--space-xs);
+}
+
+.post-subscribe__email {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: var(--space-xs) var(--space-sm);
+  border: 1px solid var(--border-strong);
+  border-radius: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  line-height: var(--leading-ui);
+}
+
+.post-subscribe__email::placeholder {
+  color: var(--dim);
+}
+
+.post-subscribe__email:focus {
+  outline: 1px solid var(--text);
+  outline-offset: -1px;
+}
+
+/* A button in ink, not blue: blue is for links. Hover inverts. */
+.post-subscribe__button {
+  flex: 0 0 auto;
+  padding: var(--space-xs) var(--space-md);
+  border: 1px solid var(--text);
+  border-radius: 0;
+  background: var(--text);
+  color: var(--bg);
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  line-height: var(--leading-ui);
+  cursor: pointer;
+}
+
+.post-subscribe__button:hover,
+.post-subscribe__button:focus-visible {
+  background: var(--bg);
+  color: var(--text);
+}
+
+@media (max-width: 600px) {
+  .post-subscribe__row {
+    flex-direction: column;
+  }
+}
+
+/* ============================================
    Components: Footnotes / Sidenotes
    One markup shape sitewide — the Substack import shape:
      in-text  <a class="footnote-anchor" id="footnote-anchor-N" href="#footnote-N">N</a>
