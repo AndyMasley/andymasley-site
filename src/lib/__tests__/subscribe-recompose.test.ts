@@ -17,17 +17,17 @@ describe('in-post subscribe recomposition', () => {
     expect(out).toContain('<form class="post-subscribe"');
     expect(out).toContain('andymasley.substack.com/api/v1/free?nojs=true');
     expect(out).toContain('<p class="post-subscribe__caption">Subscribe for more!</p>');
-    expect(out).toContain('value="Subscribe"');
+    expect(out).toContain('value="Subscribe to my Substack"');
     expect(out).not.toContain('subscription-widget');
     expect(out).not.toContain('fake-input');
     expect(out).toContain('Before.');
     expect(out).toContain('After.');
   });
 
-  it('turns a "Subscribe now" button into the site form with that label', () => {
+  it('turns a "Subscribe now" button into the site form, same label', () => {
     const out = processPostContent(BUTTON, 'some-post');
     expect(out).toContain('<form class="post-subscribe"');
-    expect(out).toContain('value="Subscribe now"');
+    expect(out).toContain('value="Subscribe to my Substack"');
     expect(out).not.toContain('button-wrapper');
     expect(out).not.toContain('post-subscribe__caption');
   });

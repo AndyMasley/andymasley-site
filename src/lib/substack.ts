@@ -830,13 +830,14 @@ function extractS3Uuid(url: string): string | null {
 // The site's in-post subscribe form, standing where Substack's subscribe
 // widget or "Subscribe now" button stood. It posts to the same no-JS
 // endpoint Substack's own embed form uses, so a reader subscribes in one
-// step without leaving the essay's flow. The visible words are the
-// widget's own caption when it had one; the field and button labels are
-// attributes, as in the original, so the content-integrity check sees no
-// inserted text.
+// step without leaving the essay's flow. The button says where the email
+// goes. The visible words are the widget's own caption when it had one;
+// the field and button labels are attributes, as in the original, so the
+// content-integrity check sees no inserted text.
 const SUBSCRIBE_ACTION = 'https://andymasley.substack.com/api/v1/free?nojs=true';
+const SUBSCRIBE_LABEL = 'Subscribe to my Substack';
 
-function subscribeFormHtml(caption: string, buttonLabel: string): string {
+function subscribeFormHtml(caption: string): string {
   const cap = caption.trim();
   const captionHtml = cap ? `<p class="post-subscribe__caption">${cap}</p>` : '';
   return (
@@ -844,7 +845,7 @@ function subscribeFormHtml(caption: string, buttonLabel: string): string {
     captionHtml +
     '<div class="post-subscribe__row">' +
     '<input type="email" name="email" class="post-subscribe__email" placeholder="Type your email…" aria-label="Email address" autocomplete="email" required>' +
-    `<input type="submit" class="post-subscribe__button" value="${buttonLabel}">` +
+    `<input type="submit" class="post-subscribe__button" value="${SUBSCRIBE_LABEL}">` +
     '</div>' +
     '</form>'
   );
@@ -869,7 +870,7 @@ export function recomposeSubscribe(html: string): string {
     /<div class="subscription-widget-wrap(?:-editor)?"[^>]*>[\s\S]*?<\/form>\s*<\/div>\s*<\/div>/gi,
     (block: string) => {
       const cap = block.match(/<p class="cta-caption">([\s\S]*?)<\/p>/i);
-      return subscribeFormHtml(cap ? cap[1] : '', 'Subscribe');
+      return subscribeFormHtml(cap ? cap[1] : '');
     }
   );
   // The button: only when it points at the subscribe page.
@@ -879,8 +880,7 @@ export function recomposeSubscribe(html: string): string {
       const data = decodeAttrs(attrs);
       const url = typeof data.url === 'string' ? data.url : '';
       if (!/\/subscribe/i.test(url)) return block;
-      const text = typeof data.text === 'string' && data.text.trim() ? data.text.trim() : 'Subscribe';
-      return subscribeFormHtml('', text);
+      return subscribeFormHtml('');
     }
   );
   return out;
