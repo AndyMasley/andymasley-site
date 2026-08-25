@@ -21,7 +21,7 @@ mkdirSync(OUT, { recursive: true });
 // 0.88 brightness filter in dark mode like every other figure).
 const INK = '#1a1a1a';
 const NEUTRAL = '#8a8a8a';   // recessive bars (3.2:1 on white; every bar also carries a text label)
-const ACCENT = '#0645ad';    // the argument: data centers / AI rows
+const ACCENT = '#1f5a7a';    // the argument: data centers / AI rows
 const HAIRLINE = '#e5e5e5';
 const LABEL = '#333333';
 const VALUE = '#666666';

@@ -19,21 +19,22 @@
   --text-secondary: #333333;
   --dim: #666666;           /* muted */
   --text-dim: #666666;
-  --accent: #0645ad;        /* link: the one working color */
-  --accent-hover: #043d82;
-  --accent-subtle: rgba(6, 69, 173, 0.08);
+  --accent: #1f5a7a;        /* link: the one working color */
+  --accent-hover: #164257;
+  --accent-subtle: rgba(31, 90, 122, 0.08);
   /* Link tokens. :visited rules must repeat these as literal hex — browsers
-     ignore var() inside :visited for privacy. Both pass AA on --bg:
-     #0645ad 7.7:1, #551a8b 9.9:1. */
-  --link: #0645ad;
-  --link-visited: #551a8b;
+     ignore var() inside :visited for privacy. A quieter ink-blue than the
+     browser-default blue it replaced (Andy, Aug 2026). Both pass AA on
+     --bg: #1f5a7a 6.8:1, #5b3a7a 8.1:1. */
+  --link: #1f5a7a;
+  --link-visited: #5b3a7a;
   --border: #e5e5e5;        /* rule */
   --border-strong: #d4d4d4;
   --border-subtle: #efefef;
 
   /* Supporting cast */
   --underline-quiet: #b8b8b8; /* nav + footer underlines */
-  --selection: #d6e4f7;
+  --selection: #d4e3ea;
 
   /* House chart tokens: a figure drawn by the site uses the same ink and
      hairlines as its prose, in both themes (they resolve through the ink
@@ -115,20 +116,20 @@
   --text-secondary: #c4c4c4;
   --dim: #9a9a9a;           /* muted */
   --text-dim: #9a9a9a;
-  --accent: #8ab4f8;        /* link */
-  --accent-hover: #a9c8fa;
-  --accent-subtle: rgba(138, 180, 248, 0.14);
+  --accent: #8fb8d8;        /* link */
+  --accent-hover: #a9cbe6;
+  --accent-subtle: rgba(143, 184, 216, 0.14);
   /* Same hue families as light mode, lightened to pass AA on #121212:
-     #8ab4f8 9.0:1, #c58af9 6.4:1. Keep the :visited literals in sync. */
-  --link: #8ab4f8;
-  --link-visited: #c58af9;
+     #8fb8d8 8.9:1, #b9a3d9 8.3:1. Keep the :visited literals in sync. */
+  --link: #8fb8d8;
+  --link-visited: #b9a3d9;
   --border: #2a2a2a;        /* rule */
   --border-strong: #3a3a3a;
   --border-subtle: #222222;
 
   /* Supporting cast */
   --underline-quiet: #4a4a4a;
-  --selection: #2c4368;
+  --selection: #22414f;
 
   /* Dark mode shadows */
   --shadow-xs: 0 1px 0 rgba(0, 0, 0, 0.2);
@@ -188,9 +189,8 @@ body {
   white-space: nowrap;
 }
 
-/* Keyboard-revealed skip link in the house bracket idiom: first tab stop,
-   invisible until focused. ~11 stops otherwise precede content on a
-   90-essay archive. */
+/* Keyboard-revealed skip link: first tab stop, invisible until focused.
+   ~11 stops otherwise precede content on a 90-essay archive. */
 .skip-link {
   position: absolute;
   left: -9999px;
@@ -664,11 +664,6 @@ a:active {
   display: flex;
   align-items: center;
   text-decoration: none;
-  transition: opacity var(--transition-fast);
-}
-
-.header__hexagon-link:hover {
-  opacity: 0.7;
 }
 
 .header__name-link {
@@ -723,10 +718,13 @@ a:active {
   align-items: center;
 }
 
+/* "dark" and "light" differ slightly in width; reserving the wider of the
+   two keeps the control from twitching on toggle. Right-aligned so the
+   slack falls inside the header rather than off its flush right edge. */
 #theme-label {
   display: inline-block;
   min-width: 2.5em;
-  text-align: center;
+  text-align: right;
 }
 
 .dark-toggle:hover {
@@ -809,17 +807,16 @@ a:active {
 }
 
 /* Hexagon logo */
+/* The mark used to swing 30° on hover. Hovers here shift colour and
+   nothing else (Andy, Aug 2026), so the stroke carries the affordance —
+   the 10%-alpha fill it briefly used instead was 1.2:1 on the paper, i.e.
+   invisible. It answers :focus-visible too, which the rotation never did. */
 .hexagon,
 .logo-hexagon {
   display: inline-block;
   vertical-align: middle;
   width: 20px;
   height: 20px;
-  transition: transform 0.3s ease;
-}
-
-.logo-hexagon:hover {
-  transform: rotate(30deg);
 }
 
 .hexagon path,
@@ -827,15 +824,13 @@ a:active {
   stroke: var(--text);
   stroke-width: 1.5;
   fill: none;
-  transition: fill 0.3s ease;
+  transition: fill var(--transition-fast);
 }
 
-.logo-hexagon:hover path {
-  fill: rgba(26, 26, 26, 0.1);
-}
-
-[data-theme="dark"] .logo-hexagon:hover path {
-  fill: rgba(230, 230, 230, 0.1);
+.header__hexagon-link:hover .logo-hexagon path,
+.header__hexagon-link:focus-visible .logo-hexagon path {
+  stroke: var(--accent);
+  fill: var(--accent-subtle);
 }
 
 /* ============================================
@@ -879,8 +874,8 @@ a:active {
 
 /* Visited purple on reading surfaces (Recent list + tag lists).
    Literal colors: browsers restrict :visited styling and ignore var(). */
-.content-item__link:visited { color: #551a8b; }
-[data-theme="dark"] .content-item__link:visited { color: #c58af9; }
+.content-item__link:visited { color: #5b3a7a; }
+[data-theme="dark"] .content-item__link:visited { color: #b9a3d9; }
 
 /* Post item hover highlights */
 .post-item,
@@ -931,31 +926,22 @@ a:active {
    Components: Divider
    ============================================ */
 
+/* One thin rule, nothing else. The centered diamond it replaced was
+   ornament rather than structure (Andy, Aug 2026); the seam it marked is
+   real, so it stays — drawn with the same hairline as every other rule on
+   the site. */
 .divider {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin: 48px 0;
-  gap: 16px;
-}
-
-.divider::before,
-.divider::after {
-  content: '';
-  width: 48px;
   height: 1px;
   background: var(--border);
+  margin: var(--space-2xl) 0;
 }
 
-.divider::after {
-  background: var(--border);
-}
-
-.divider-diamond {
-  width: 8px;
-  height: 8px;
-  background: var(--border-strong);
-  clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+/* Where the block above already closes with a hairline of its own — the
+   list-page accordions, the physics unit list — the seam is the spacing
+   alone. A second identical rule 48px under the first reads as an empty
+   row, which is what the diamond used to disguise. */
+.divider--space {
+  background: none;
 }
 
 hr {
@@ -968,18 +954,22 @@ hr {
    Components: Label / Section Header
    ============================================ */
 
+/* Section labels used to set as spaced caps, which read as a stock
+   editorial component rather than as Andy's own headings (Andy, Aug 2026).
+   They are sentence-case headings now, in secondary ink at the small size.
+   The trailing hairline stays: it is what separates Subscribe from the
+   block above it (see Subscribe.astro). */
 .label,
 .section-header {
   font-family: var(--font-body);
-  color: var(--dim);
-  font-size: var(--text-xs); /* 11px */
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  letter-spacing: 0;
   font-weight: 700;
-  margin-bottom: 24px;
+  margin-bottom: var(--space-lg);
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: var(--space-md);
 }
 
 .label::after,
@@ -1651,11 +1641,12 @@ details[open] > summary::before {
   }
 
   .header {
-    margin-bottom: 2.5rem;
+    padding-bottom: var(--space-md);
+    margin-bottom: var(--space-lg);
   }
 
   .header__inner {
-    margin-bottom: 1rem;
+    margin-bottom: var(--space-xs);
   }
 
   .header__logo {
@@ -1664,11 +1655,18 @@ details[open] > summary::before {
 
   /*
    * Mobile Navigation
-   * Generous tap targets, no button styling
+   * The nav used to set at 16px on 2.4 leading, which made it the loudest
+   * thing on a phone screen — a 38px row per link, twice over. It now sets
+   * at the same size as the desktop nav on tighter leading: ~25px rows.
+   * The 0.5rem padding on each link (below) keeps the tap box 41px tall
+   * against a 25px row, and since the negative margin lets adjacent rows'
+   * boxes overlap by 8px, the smallest effective target is ~33x36px —
+   * still well over the 24px floor, which is why the padding did not
+   * shrink along with the leading.
    */
   .header__nav {
-    font-size: var(--text-base);
-    line-height: 2.4; /* Tall lines = tall tap targets */
+    font-size: var(--text-sm);
+    line-height: 1.9;
     margin: 0 -0.5rem; /* Bleed into padding */
   }
 
@@ -1709,17 +1707,17 @@ details[open] > summary::before {
     margin: -0.5rem 0;
   }
 
-  .search-inner {
-    width: 48px;
-  }
-
-  .search-widget.active .search-inner {
-    width: min(52vw, 220px);
-  }
-
   /* Anything under 16px triggers iOS auto-zoom on focus; the collapsed
-     label may stay small, the field the reader types into may not. */
-  .search-widget.active .search-inline-input {
+     label may stay small, the field the reader types into may not.
+     Scoped under .header__controls for the same reason the dropdown rule
+     below is scoped under .search-widget: the base widths are declared
+     later in the file, so a same-specificity override here would lose. */
+  .header__controls .search-widget.active .search-inline-input {
+    /* Sized off what is actually left in the header row: the name, the
+       gap and the theme toggle need ~232px on a phone, and a field wider
+       than the remainder wraps "Andy Masley" onto two lines and doubles
+       the header's height. */
+    width: clamp(96px, calc(100vw - 232px), 220px);
     font-size: var(--text-base);
   }
 
@@ -1912,8 +1910,7 @@ details[open] > summary::before {
    */
   .label,
   .section-header {
-    font-size: var(--text-xs);
-    margin-bottom: 1rem;
+    margin-bottom: var(--space-md);
   }
 
   .jump-links {
@@ -1992,11 +1989,17 @@ details[open] > summary::before {
 
 .nav-hexagon svg {
   display: block;
-  transition: transform 0.3s ease;
 }
 
-.nav-hexagon:hover svg {
-  transform: rotate(30deg);
+/* Was a 30° rotate; the stroke is inherited from the svg's own attribute,
+   so the colour hover has to reach the path directly. */
+.nav-hexagon svg path {
+  transition: stroke var(--transition-fast);
+}
+
+.nav-hexagon:hover svg path,
+.nav-hexagon:focus-visible svg path {
+  stroke: var(--accent);
 }
 
 @keyframes hexagonAppear {
@@ -2032,151 +2035,60 @@ details[open] > summary::before {
   position: relative;
   font-size: var(--font-size-small);
   color: var(--dim);
-  transition: color 0.3s ease;
+  transition: color var(--transition-fast);
   height: 1.4em;
   line-height: 1.4;
-  /* GPU acceleration for smooth animations */
-  will-change: color;
 }
 
-.search-widget:hover {
+.search-widget:hover,
+.search-widget:focus-within {
   color: var(--text);
 }
 
-/* Inner wrapper - fixed width container for smooth expansion */
+/* The word and the field occupy the same slot. Opening swaps one for the
+   other outright: no expanding box, no sliding brackets, no spring easing
+   — the old widget's animation was the loudest thing in the header. */
 .search-inner {
-  position: relative;
   display: inline-flex;
   align-items: center;
-  justify-content: flex-end;
-  width: 42px;
-  height: 100%;
-  /* CLOSING: contract after content fades */
-  transition: width 0.35s cubic-bezier(0.4, 0, 0.2, 1) 0.12s;
-  will-change: width;
-}
-
-.search-bracket {
-  display: inline-block;
-  flex-shrink: 0;
-  /* CLOSING: slide back smoothly */
-  transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1) 0.08s;
-  will-change: transform;
 }
 
 .search-label {
-  position: absolute;
-  left: 0;
-  right: 0;
-  text-align: right;
   white-space: nowrap;
-  opacity: 1;
-  pointer-events: none;
-  /* CLOSING: slide back to the right */
-  transition: text-align 0s linear 0.3s,
-              opacity 0.25s ease,
-              color 0.25s ease;
-  will-change: opacity;
 }
 
-.search-label-prefix,
-.search-label-suffix {
-  display: inline-block;
-  max-width: 0;
-  overflow: hidden;
-  opacity: 0;
-  vertical-align: bottom;
-  /* CLOSING: collapse the prefix/suffix */
-  transition: max-width 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-              opacity 0.2s ease;
-}
-
-.search-label-prefix {
-  /* Enough width for "type to " */
-  max-width: 0;
-}
-
-.search-label-suffix {
-  /* Enough width for "..." */
-  max-width: 0;
-}
-
+/* Collapsed the field is zero-width but still focusable, so it stays the
+   header's tab stop; focus opens the widget (see initSearch in Base.astro)
+   and the field is visible by the time it can take a keystroke. */
 .search-inline-input {
-  position: absolute;
-  left: 0;
-  right: 0;
-  width: 100%;
-  text-align: left;
-  opacity: 0;
+  width: 0;
+  padding: 0;
   background: none;
   border: none;
   font-family: var(--font-body);
   font-size: inherit;
   color: var(--text);
-  outline: none;
-  padding: 0 2px;
-  pointer-events: none;
-  transition: opacity 0.2s ease;
-  will-change: opacity;
 }
 
-/* ===== ACTIVE STATE ===== */
-.search-widget.active {
-  color: var(--text);
-}
-
-/* OPENING: expand container with gentle overshoot */
-.search-widget.active .search-inner {
-  width: 140px;
-  transition: width 0.45s cubic-bezier(0.34, 1.15, 0.64, 1);
-}
-
-/* OPENING: only left bracket moves */
-.search-widget.active .search-bracket--left {
-  transform: translateX(-4px);
-  transition: transform 0.45s cubic-bezier(0.34, 1.15, 0.64, 1);
-}
-
-/* OPENING: label slides left and becomes placeholder-like */
+/* The word is the field's label, so opening swaps it into the placeholder
+   rather than leaving an unlabelled empty box. */
 .search-widget.active .search-label {
-  text-align: left;
+  display: none;
+}
+
+.search-inline-input::placeholder {
   color: var(--dim);
-  transition: text-align 0s linear,
-              opacity 0.3s ease 0.1s,
-              color 0.3s ease 0.1s;
-}
-
-.search-widget.active .search-label-prefix {
-  max-width: 4.5em;
   opacity: 1;
-  transition: max-width 0.35s cubic-bezier(0.34, 1.15, 0.64, 1) 0.05s,
-              opacity 0.25s ease 0.1s;
 }
 
-.search-widget.active .search-label-suffix {
-  max-width: 1.5em;
-  opacity: 1;
-  transition: max-width 0.3s cubic-bezier(0.34, 1.15, 0.64, 1) 0.15s,
-              opacity 0.25s ease 0.2s;
-}
-
-/* Hide label when user is typing */
-.search-widget.has-input .search-label {
-  opacity: 0;
-  transition: opacity 0.15s ease;
-}
-
-/* OPENING: input becomes active */
 .search-widget.active .search-inline-input {
-  opacity: 1;
-  pointer-events: auto;
-  transition: opacity 0.15s ease 0.2s;
+  width: 150px;
 }
 
 /* Search dropdown for results */
 .search-dropdown {
   position: absolute;
-  top: 100%;
+  top: calc(100% + 6px);
   right: 0;
   width: 440px;
   max-width: calc(100vw - 2rem);
@@ -2185,18 +2097,13 @@ details[open] > summary::before {
   border: 1px solid var(--border-strong);
   border-radius: 0;
   box-shadow: var(--shadow-lg);
-  opacity: 0;
-  transform: translateY(-4px);
-  pointer-events: none;
-  transition: opacity var(--transition-medium), transform var(--transition-medium);
+  display: none;
   overflow: hidden;
   z-index: 1000;
 }
 
 .search-dropdown.active {
-  opacity: 1;
-  transform: translateY(6px);
-  pointer-events: auto;
+  display: block;
 }
 
 .search-results {
@@ -2320,7 +2227,7 @@ details[open] > summary::before {
     --border: #e5e5e5;
     --border-strong: #d4d4d4;
     --border-subtle: #efefef;
-    --accent: #0645ad;
+    --accent: #1f5a7a;
   }
 
   .header,
@@ -2373,8 +2280,4 @@ details[open] > summary::before {
   filter: brightness(0.88);
 }
 
-/* Keyboard affordance in the bracket idiom: tabbing into the hidden input
-   lights the brackets, so the widget has a visible focused state. */
-.search-widget:focus-within .search-bracket {
-  color: var(--accent);
-}
+

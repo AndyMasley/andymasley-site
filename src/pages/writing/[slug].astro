@@ -219,7 +219,7 @@ const permalink = new URL(`/writing/${post.slug}/`, Astro.site ?? 'https://andym
 const subscribeUrl = 'https://andymasley.substack.com/subscribe';
 const coverImage = post.source !== 'local' ? post.cover_image : undefined;
 const socialCard = coverImage ? coverSocialCard(coverImage, 1200) : null;
-const ogImage = socialCard ? socialCard.url : `/og/${post.slug}.png?v=2`;
+const ogImage = socialCard ? socialCard.url : `/og/${post.slug}.png?v=3`;
 const ogImageWidth = socialCard ? socialCard.width : 1200;
 const ogImageHeight = socialCard ? socialCard.height : 630;
 const ogImageAlt = socialCard
@@ -393,7 +393,7 @@ if (correction) {
 
     <CheatSheetExplorer client:load html={post.htmlContent} />
 
-    <div class="divider article-endmark" aria-hidden="true"><div class="divider-diamond"></div></div>
+    <div class="divider article-endmark" aria-hidden="true"></div>
     <footer class="article-footer">
       <p class="article-colophon">
         <a href={post.url} target="_blank" rel="noopener">Discussion on {post.sourceName}</a>
@@ -492,10 +492,10 @@ if (correction) {
             )}
           </div>
           {/* End matter, under the permanent ceiling stated in CLAUDE.md:
-              diamond, notes (inside the prose above), one colophon line,
+              end rule, notes (inside the prose above), one colophon line,
               cited-in (≤5, only when non-empty), plain older/newer, one
               back-link. Nothing else, ever. */}
-          <div class="divider article-endmark" aria-hidden="true"><div class="divider-diamond"></div></div>
+          <div class="divider article-endmark" aria-hidden="true"></div>
           <footer class="article-footer">
             <p class="article-colophon">
               {post.source !== 'local' && (
@@ -708,7 +708,7 @@ if (correction) {
     margin-top: 0.1rem;
   }
 
-  /* The end matter is typography, not chrome: a diamond, one colophon
+  /* The end matter is typography, not chrome: one hairline, one colophon
      line, a bare cited-in list, plain older/newer lines, one back-link.
      The ceiling lives in CLAUDE.md; nothing here grows a border or box. */
   .article-endmark {
@@ -1017,8 +1017,8 @@ if (correction) {
   }
 
   /* Visited purple (post prose). Literal colors: :visited ignores var(). */
-  .article-prose :global(a:visited) { color: #551a8b; }
-  :global([data-theme="dark"]) .article-prose :global(a:visited) { color: #c58af9; }
+  .article-prose :global(a:visited) { color: #5b3a7a; }
+  :global([data-theme="dark"]) .article-prose :global(a:visited) { color: #b9a3d9; }
 
   /* External links read as ordinary hyperlinks — no ↗ marker (Andy's
      call, Aug 2026). Print still expands their URLs (global.css). */

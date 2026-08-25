@@ -222,7 +222,7 @@ export async function renderOgCard({ title, date, panel }: CardInput): Promise<B
             },
             children: [
               { type: 'div', props: { children: dateStr } },
-              { type: 'div', props: { style: { color: '#0645ad' }, children: 'andymasley.com' } },
+              { type: 'div', props: { style: { color: '#1f5a7a' }, children: 'andymasley.com' } },
             ],
           },
         },
@@ -303,7 +303,7 @@ async function renderPanelCard(title: string, panel: CardPanel): Promise<Buffer>
                     {
                       type: 'div',
                       props: {
-                        style: { display: 'flex', fontSize: '26px', color: '#0645ad', flexShrink: 0 },
+                        style: { display: 'flex', fontSize: '26px', color: '#1f5a7a', flexShrink: 0 },
                         children: 'andymasley.com',
                       },
                     },
@@ -363,7 +363,7 @@ export async function renderHomeOgCard(): Promise<Buffer> {
               {
                 type: 'div',
                 props: {
-                  style: { marginTop: '52px', fontSize: '28px', color: '#0645ad' },
+                  style: { marginTop: '52px', fontSize: '28px', color: '#1f5a7a' },
                   children: 'andymasley.com',
                 },
               },
@@ -455,7 +455,7 @@ export async function renderDefaultOgCard(): Promise<Buffer> {
               {
                 type: 'div',
                 props: {
-                  style: { marginTop: '52px', fontSize: '28px', color: '#0645ad' },
+                  style: { marginTop: '52px', fontSize: '28px', color: '#1f5a7a' },
                   children: 'andymasley.com',
                 },
               },

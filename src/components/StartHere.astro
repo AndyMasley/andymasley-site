@@ -113,17 +113,20 @@ const columns: Group[][] = [[groups[0]], groups.slice(1)];
   }
 
   .start-here__group + .start-here__group {
-    margin-top: var(--space-lg);
+    margin-top: var(--space-xl);
   }
 
-  /* Label recipe B: sentence case, --text-sm. */
+  /* The group headings used to set smaller and greyer than the links they
+     head, so twenty blue titles all read at one weight and the section
+     looked generated. Same size as the links now, in full ink, so the five
+     groups carry the structure and the links sit under them. */
   .start-here__heading {
     margin: 0 0 var(--space-xs);
     font-family: var(--font-body);
-    font-size: var(--text-sm);
+    font-size: var(--text-base);
     font-weight: 700;
     line-height: var(--leading-heading);
-    color: var(--text-secondary);
+    color: var(--text);
   }
 
   /* A directory, not prose: no bullets, the titles carry the rows. */

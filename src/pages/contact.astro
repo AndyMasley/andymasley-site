@@ -6,7 +6,7 @@ import Elsewhere from '@/components/Elsewhere.astro';
 <SectionPage
   title="Contact"
   description="Get in touch with Andy Masley"
-  ogImage="/og/page/contact.png?v=3"
+  ogImage="/og/page/contact.png?v=4"
 >
   <p class="page-header__description" slot="lede">
     Email me at <a href="mailto:AndyMasley@gmail.com">AndyMasley@gmail.com</a> if you’d like
@@ -42,12 +42,14 @@ import Elsewhere from '@/components/Elsewhere.astro';
     margin: 2.6rem 0 0;
   }
 
+  /* Sentence case, matching the Elsewhere line directly above it — that
+     line is shared with the homepage, which stopped shouting in Aug 2026,
+     and a spaced-caps "PRESS" under a sentence-case "Elsewhere:" was the
+     only mismatch left on this page. */
   .contact-press__label {
     margin: 0 0 0.5rem;
     font-family: var(--font-body);
-    font-size: var(--text-xs);
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
+    font-size: var(--text-sm);
     font-weight: 400;
     color: var(--dim);
   }

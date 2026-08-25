@@ -21,7 +21,7 @@ const groups = appearanceGroups.map(g => ({ heading: g.heading, runs: groupByDat
 <SectionPage
   title="Appearances"
   description="Podcasts and other appearances"
-  ogImage="/og/page/appearances.png?v=3"
+  ogImage="/og/page/appearances.png?v=4"
 >
   {groups.map(group => (
     <details class="appearance-group" open>
@@ -123,10 +123,10 @@ const groups = appearanceGroups.map(g => ({ heading: g.heading, runs: groupByDat
   /* Heard episodes turn purple, same as read posts. Literal hex:
      browsers ignore var() inside :visited. */
   .appearance-row__link:visited {
-    color: #551a8b;
+    color: #5b3a7a;
   }
 
   :global([data-theme="dark"]) .appearance-row__link:visited {
-    color: #c58af9;
+    color: #b9a3d9;
   }
 </style>

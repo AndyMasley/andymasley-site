@@ -41,7 +41,8 @@ const currentPath = Astro.url.pathname;
 // ?v busts social-platform scrape caches when the default card changes —
 // platforms cache og:image by URL, so a same-URL re-render would show the old
 // card indefinitely. v=3: 2026 tagline change (essays positioning).
-const resolvedOgImagePath = ogImage || "/og/default.png?v=3";
+// v=4: the wordmark on every card repainted to the new link blue.
+const resolvedOgImagePath = ogImage || "/og/default.png?v=4";
 const resolvedOgImage = new URL(resolvedOgImagePath, siteOrigin).href;
 const resolvedOgImageAlt = ogImageAlt || resolvedOgTitle;
 const canonicalHref = canonicalUrl
@@ -165,7 +166,7 @@ function isActive(href: string): boolean {
 </head>
 <body>
 
-  <a class="skip-link" href="#main">[ skip to content ]</a>
+  <a class="skip-link" href="#main">Skip to content</a>
 
   <div class="main-content" transition:animate="fade">
     <header class="header">
@@ -181,24 +182,24 @@ function isActive(href: string): boolean {
 
         <div class="header__controls">
           <div class="search-widget" id="search-widget">
-            <span class="search-bracket search-bracket--left">[</span>
             <span class="search-inner">
-              <span class="search-label" id="search-label"><span class="search-label-prefix">type to&nbsp;</span>search<span class="search-label-suffix">...</span></span>
+              <span class="search-label" id="search-label">search</span>
               <input
                 type="text"
                 class="search-inline-input"
                 id="search-input"
+                aria-label="Search this site"
+                placeholder="search"
                 autocomplete="off"
                 spellcheck="false"
               />
             </span>
-            <span class="search-bracket search-bracket--right">]</span>
             <div class="search-dropdown" id="search-dropdown">
               <div class="search-results" id="search-results"></div>
             </div>
           </div>
           <button class="dark-toggle" id="theme-toggle">
-            [<span id="theme-label">dark</span>]
+            <span id="theme-label">dark</span>
           </button>
         </div>
       </div>
@@ -362,7 +363,6 @@ function isActive(href: string): boolean {
         loadTitlesIndex();
         loadSearchIndex();
         widget.classList.add('active');
-        widget.classList.remove('has-input');
         input.value = '';
         results.innerHTML = '';
         selectedIndex = 0;
@@ -373,19 +373,10 @@ function isActive(href: string): boolean {
 
       function closeSearch() {
         widget.classList.remove('active');
-        widget.classList.remove('has-input');
         dropdown.classList.remove('active');
         results.innerHTML = '';
         input.value = '';
         input.blur();
-      }
-
-      function updateHasInput() {
-        if (input.value.length > 0) {
-          widget.classList.add('has-input');
-        } else {
-          widget.classList.remove('has-input');
-        }
       }
 
       function showDropdown() {
@@ -399,7 +390,7 @@ function isActive(href: string): boolean {
       // Hover warms the shard before the click lands.
       widget.addEventListener('pointerenter', () => loadTitlesIndex(), { once: true, signal });
 
-      // Click on widget (label or brackets) to open
+      // Click anywhere on the widget to open
       widget.addEventListener('click', (e) => {
         if (e.target === input) return; // Don't toggle if clicking input
         if (!widget.classList.contains('active')) {
@@ -597,7 +588,6 @@ function isActive(href: string): boolean {
       }
 
       input.addEventListener('input', (e) => {
-        updateHasInput();
         search((e.target as HTMLInputElement).value);
       });
 
@@ -652,36 +642,16 @@ function isActive(href: string): boolean {
       let headerActivated = false;
       let navActivated = false;
 
+      // The hexes no longer rotate on hover, so there is no rotation to
+      // freeze here any more — activation is purely the class.
       function activateHex(hexElement) {
         if (!hexElement) return;
-
-        // Get current rotation from hover state and freeze it
-        const svg = hexElement.querySelector('svg');
-        if (svg) {
-          const computedStyle = window.getComputedStyle(svg);
-          const matrix = computedStyle.transform;
-          let currentRotation = 0;
-          if (matrix && matrix !== 'none') {
-            const values = matrix.split('(')[1]?.split(')')[0]?.split(',');
-            if (values) {
-              const a = parseFloat(values[0]);
-              const b = parseFloat(values[1]);
-              currentRotation = Math.atan2(b, a) * (180 / Math.PI);
-            }
-          }
-          svg.style.transform = `rotate(${currentRotation}deg)`;
-        }
-
         hexElement.classList.add('hex-activated');
       }
 
       function deactivateHex(hexElement) {
         if (!hexElement) return;
         hexElement.classList.remove('hex-activated');
-        const svg = hexElement.querySelector('svg');
-        if (svg) {
-          svg.style.transform = '';
-        }
       }
 
       function handleHexagonClick(e) {
