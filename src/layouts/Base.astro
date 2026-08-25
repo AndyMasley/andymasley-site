@@ -79,7 +79,7 @@ function isActive(href: string): boolean {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#ffffff">
+  <meta name="theme-color" content="#f4f3ee">
   <script is:inline>
     // Initialize theme immediately to prevent flash on navigation. Only an
     // explicit toggle choice persists; readers who never touched the toggle
@@ -90,7 +90,7 @@ function isActive(href: string): boolean {
       const apply = (theme) => {
         document.documentElement.setAttribute('data-theme', theme);
         const meta = document.querySelector('meta[name="theme-color"]');
-        if (meta) meta.setAttribute('content', theme === 'dark' ? '#121212' : '#ffffff');
+        if (meta) meta.setAttribute('content', theme === 'dark' ? '#121212' : '#f4f3ee');
       };
       apply(stored || (mq.matches ? 'dark' : 'light'));
       if (!stored) {
@@ -152,7 +152,7 @@ function isActive(href: string): boolean {
         const theme = effectiveTheme();
         e.newDocument.documentElement.setAttribute('data-theme', theme);
         const meta = e.newDocument.querySelector('meta[name="theme-color"]');
-        if (meta) meta.setAttribute('content', theme === 'dark' ? '#121212' : '#ffffff');
+        if (meta) meta.setAttribute('content', theme === 'dark' ? '#121212' : '#f4f3ee');
       });
 
       document.addEventListener('visibilitychange', () => {
@@ -297,7 +297,7 @@ function isActive(href: string): boolean {
         document.documentElement.setAttribute('data-theme', newTheme);
         localStorage.setItem('theme', newTheme);
         const meta = document.querySelector('meta[name="theme-color"]');
-        if (meta) meta.setAttribute('content', newTheme === 'dark' ? '#121212' : '#ffffff');
+        if (meta) meta.setAttribute('content', newTheme === 'dark' ? '#121212' : '#f4f3ee');
         updateThemeLabel();
       });
     }

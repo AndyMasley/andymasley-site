@@ -12,9 +12,9 @@
 
 :root {
   /* Light mode — ink-on-paper palette */
-  --bg: #ffffff;            /* paper: pure white, never brown */
-  --bg-elevated: #ffffff;
-  --bg-subtle: #f6f6f6;
+  --bg: #f4f3ee;            /* paper: warm off-white (Andy, Aug 2026) */
+  --bg-elevated: #f4f3ee;
+  --bg-subtle: #ebeae5;
   --text: #1a1a1a;          /* ink */
   --text-secondary: #333333;
   --dim: #666666;           /* muted */
@@ -24,7 +24,7 @@
   --accent-subtle: rgba(6, 69, 173, 0.08);
   /* Link tokens. :visited rules must repeat these as literal hex — browsers
      ignore var() inside :visited for privacy. Both pass AA on --bg:
-     #0645ad 8.5:1, #551a8b 11.0:1. */
+     #0645ad 7.7:1, #551a8b 9.9:1. */
   --link: #0645ad;
   --link-visited: #551a8b;
   --border: #e5e5e5;        /* rule */
