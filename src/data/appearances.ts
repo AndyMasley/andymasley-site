@@ -13,6 +13,7 @@ export interface AppearanceGroup {
 }
 
 const aiEnvironment: Appearance[] = [
+  { title: 'Two Psychologists Four Beers', href: 'https://www.fourbeers.com/133', date: 'Aug 2026' },
   { title: 'Caitlin Has Questions', href: 'https://www.youtube.com/watch?v=5gGnVfMiXpE', date: 'Jul 2026' },
   { title: 'The World Unpacked', href: 'https://www.youtube.com/watch?v=4Q6t2PxZxDE', date: 'Jul 2026' },
   { title: 'Scaling Laws', href: 'https://podcasts.apple.com/us/podcast/all-things-data-centers-with-andy-masley/id1607949880?i=1000775770135', date: 'Jul 2026' },
