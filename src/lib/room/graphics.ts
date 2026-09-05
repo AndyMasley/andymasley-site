@@ -79,10 +79,13 @@ export function enrichLibrary({scene, books, bookMeta, matWood, matStone, matBra
   // Layered capitals, shelf lips and recessed ceiling bays give the room architectural scale.
   const apothem = 5 * Math.cos(Math.PI / 6);
   const geometry = new THREE.BoxGeometry(1, 1, 1);
+  const ornamentMatrices = new Map<THREE.Material, THREE.Matrix4[]>();
+  const ornament = new THREE.Object3D();
   const addBox = (w: number, h: number, depth: number, x: number, y: number, z: number, rotation: number, material: THREE.Material) => {
-    const mesh = new THREE.Mesh(geometry, material); mesh.scale.set(w, h, depth);
-    mesh.position.set(x, y, z); mesh.rotation.y = rotation;
-    mesh.receiveShadow = true; scene.add(mesh); return mesh;
+    ornament.scale.set(w, h, depth); ornament.position.set(x, y, z); ornament.rotation.y = rotation;
+    ornament.updateMatrix();
+    if (!ornamentMatrices.has(material)) ornamentMatrices.set(material, []);
+    ornamentMatrices.get(material)!.push(ornament.matrix.clone());
   };
   for (let wall = 0; wall < 6; wall++) {
     const a = wall * Math.PI / 3, nx = Math.cos(a), nz = Math.sin(a), rotation = Math.atan2(nx, nz);
@@ -98,10 +101,16 @@ export function enrichLibrary({scene, books, bookMeta, matWood, matStone, matBra
         addBox(4.0, 0.018, 0.025, nx * (apothem - 0.47), sy - 0.018, nz * (apothem - 0.47), rotation, matBrass);
       }
       for (const off of [-0.7, 0.7]) {
-        const panel = addBox(1.12, 0.035, 1.28, nx * 3.08 - nz * off, 5.96, nz * 3.08 + nx * off, rotation, matWood);
-        panel.material = matWood;
+        addBox(1.12, 0.035, 1.28, nx * 3.08 - nz * off, 5.96, nz * 3.08 + nx * off, rotation, matWood);
       }
     }
+  }
+  for (const [material, matrices] of ornamentMatrices) {
+    const ornaments = new THREE.InstancedMesh(geometry, material, matrices.length);
+    ornaments.name = 'Gallery mouldings';
+    matrices.forEach((matrix, index) => ornaments.setMatrixAt(index, matrix));
+    ornaments.instanceMatrix.needsUpdate = true; ornaments.receiveShadow = true;
+    ornaments.computeBoundingSphere(); scene.add(ornaments);
   }
   for (const material of [matWood, matStone, matWall]) {
     material.bumpMap = material.map; material.bumpScale = material === matWood ? 0.022 : 0.035; material.needsUpdate = true;
@@ -109,7 +118,8 @@ export function enrichLibrary({scene, books, bookMeta, matWood, matStone, matBra
 
   // Tilt the complete volume about one spine, so its paper and covers stay aligned.
   const shrineVolume = new THREE.Group();
-  shrineVolume.position.set(0, 1.34, 0); shrineVolume.rotation.x = -0.15;
+  shrineVolume.name = 'Plunkitt volume';
+  shrineVolume.position.set(0, 1.384, 0); shrineVolume.rotation.x = -0.15;
   shrineGroup.add(shrineVolume);
   shrineBook.geometry.dispose();
   shrineBook.geometry = new THREE.BoxGeometry(0.34, 0.44, 0.014);
@@ -121,14 +131,25 @@ export function enrichLibrary({scene, books, bookMeta, matWood, matStone, matBra
   spine.position.x = -0.156; spine.rotation.y = Math.PI;
   for (const mesh of [back, paper, spine]) { mesh.castShadow = true; shrineVolume.add(mesh); }
   const cradle = new THREE.Mesh(new THREE.BoxGeometry(0.39, 0.025, 0.19), matWood);
-  cradle.position.set(0, 1.115, 0.01); cradle.rotation.x = -0.15; shrineGroup.add(cradle);
+  cradle.name = 'Plunkitt cradle';
+  cradle.position.set(0, 1.15, 0.01); cradle.rotation.x = -0.15;
+  cradle.castShadow = cradle.receiveShadow = true; shrineGroup.add(cradle);
+  for (const x of [-0.14, 0.14]) {
+    const foot = new THREE.Mesh(new THREE.BoxGeometry(0.035, 0.024, 0.07), matWood);
+    foot.name = 'Plunkitt cradle foot'; foot.position.set(x, 1.132, -0.025);
+    foot.castShadow = foot.receiveShadow = true; shrineGroup.add(foot);
+  }
   const rest = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.035, 0.023), matBrass);
-  rest.position.set(0, 1.139, 0.103); shrineGroup.add(rest);
+  rest.name = 'Plunkitt book stop'; rest.rotation.copy(cradle.rotation);
+  rest.position.set(0, 0.025, 0.083).applyEuler(cradle.rotation).add(cradle.position);
+  rest.castShadow = rest.receiveShadow = true; shrineGroup.add(rest);
 
   return { atlasMap, pageEdges, shrineVolume };
 }
 
 export function loadLibraryMaterials(floor: THREE.MeshStandardMaterial, wood: THREE.MeshStandardMaterial, stone: THREE.MeshStandardMaterial) {
+  // Slab joints belong to the floor; the carved trims retain their continuous stone texture.
+  stone.bumpMap = stone.map; stone.bumpScale = 0.009; stone.needsUpdate = true;
   const loader = new THREE.TextureLoader();
   const load = (url: string, apply: (texture: THREE.Texture) => void) => loader.load(url, texture => {
     texture.colorSpace = THREE.SRGBColorSpace; texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
@@ -136,8 +157,6 @@ export function loadLibraryMaterials(floor: THREE.MeshStandardMaterial, wood: TH
   }, undefined, () => { /* Existing procedural materials remain usable if an asset is unavailable. */ });
   load('/images/library/limestone-albedo.png', texture => {
     texture.repeat.set(2, 2); floor.map = texture; floor.bumpMap = texture; floor.bumpScale = 0.018; floor.needsUpdate = true;
-    const trim = texture.clone(); trim.repeat.set(1, 1); trim.needsUpdate = true;
-    stone.map = trim; stone.bumpMap = trim; stone.bumpScale = 0.009; stone.color.setHex(0xb3a995); stone.needsUpdate = true;
   });
   load('/images/library/walnut-albedo.png', texture => {
     wood.map = texture; wood.bumpMap = texture; wood.bumpScale = 0.012; wood.roughness = 0.58; wood.needsUpdate = true;

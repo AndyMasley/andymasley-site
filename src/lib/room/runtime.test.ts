@@ -6,7 +6,7 @@
  */
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
+import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import * as RealThree from 'three';
 import ts from 'typescript';
 import { enrichLibrary, loadLibraryMaterials } from './graphics';
@@ -21,6 +21,10 @@ let renderCount = 0;
 let nextRAF = 0;
 const rafs = new Map<number, FrameRequestCallback>();
 let loggedErrors: ReturnType<typeof vi.spyOn>;
+let coarsePointer = false;
+let pointerLock: Element | null = null;
+let stageWidth = 900, stageHeight = 680;
+const fragments = Function(`return [${source.split('const borgesQuotes = [')[1].split('\n    ];')[0]}]`)() as { source: string; quote: string }[];
 
 const byId = (id: string) => document.getElementById(id)!;
 const tick = async (ms = 16) => {
@@ -37,9 +41,40 @@ const key = (code: string, type = 'keydown', target: EventTarget = document.body
 };
 const enter = async () => { byId('start-button').click(); await tick(); };
 const pause = () => byId('pause-room').click();
+const pointer = (type: string, x: number, y: number, pointerType = 'mouse', pointerId = 1) => {
+  const event = new MouseEvent(type, { clientX: x, clientY: y, button: 0, bubbles: true, cancelable: true });
+  Object.defineProperties(event, { pointerId: { value: pointerId }, pointerType: { value: pointerType } });
+  byId('library-canvas').dispatchEvent(event); return event;
+};
+const clickAt = (x: number, y: number, type = 'mouse') => {
+  pointer('pointerdown', x, y, type); pointer('pointerup', x, y, type); pointer('click', x, y, type);
+};
+const screenPoint = (position: RealThree.Vector3) => {
+  camera.updateMatrixWorld(true);
+  const projected = position.clone().project(camera);
+  const rect = byId('library-canvas').getBoundingClientRect();
+  return { x: rect.left + (projected.x + 1) * rect.width / 2, y: rect.top + (1 - projected.y) * rect.height / 2, projected };
+};
+const shelfTarget = () => {
+  scene.updateMatrixWorld(true);
+  const shelf = scene.children.find(object => (object as RealThree.InstancedMesh).isInstancedMesh && (object as RealThree.Mesh).geometry.getAttribute('archiveTile')) as RealThree.InstancedMesh;
+  const matrix = new RealThree.Matrix4();
+  for (let i = 0; i < shelf.count; i++) {
+    shelf.getMatrixAt(i, matrix);
+    const world = new RealThree.Vector3().setFromMatrixPosition(matrix).applyMatrix4(shelf.matrixWorld);
+    const point = screenPoint(world);
+    if (world.x < 0 && world.y > 1.8 && world.y < 2.4 && Math.abs(point.projected.x) > 0.25 && Math.abs(point.projected.x) < 0.8 && Math.abs(point.projected.y) < 0.8) {
+      const ray = new RealThree.Raycaster(); ray.setFromCamera(new RealThree.Vector2(point.projected.x, point.projected.y), camera);
+      const index = ray.intersectObject(shelf)[0]?.instanceId;
+      if (index !== undefined) return { ...point, mesh: shelf, index, fragment: fragments[index % fragments.length] };
+    }
+  }
+  throw new Error('No off-center shelf book in the initial view');
+};
 
 class Renderer {
   domElement = document.createElement('canvas');
+  constructor() { this.domElement.getBoundingClientRect = () => new DOMRect(16, 24, 1024, 768); }
   shadowMap = { enabled: false, type: 0, autoUpdate: true, needsUpdate: false };
   capabilities = { getMaxAnisotropy: () => 8 };
   toneMapping = 0; toneMappingExposure = 0;
@@ -81,20 +116,21 @@ beforeAll(async () => {
   const body = source.split('<body>')[1].split('</body>')[0];
   document.body.innerHTML = body.replace(/<script\b[^>]*>[\s\S]*?<\/script>/g, '');
   document.head.innerHTML = [...source.matchAll(/<style\b[^>]*>([\s\S]*?)<\/style>/g)].map(match => `<style>${match[1]}</style>`).join('');
-  vi.stubGlobal('matchMedia', (query: string) => ({ matches: query.includes('pointer: coarse') || query.includes('prefers-reduced-motion'), media: query, addEventListener() {}, removeEventListener() {} }));
+  vi.stubGlobal('matchMedia', (query: string) => ({ matches: (query.includes('pointer: coarse') && coarsePointer) || query.includes('prefers-reduced-motion'), media: query, addEventListener() {}, removeEventListener() {} }));
   vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => { rafs.set(++nextRAF, callback); return nextRAF; });
   vi.stubGlobal('cancelAnimationFrame', (id: number) => rafs.delete(id));
   vi.stubGlobal('ResizeObserver', class { observe() {} disconnect() {} });
   vi.stubGlobal('AudioContext', AudioContext);
   Object.defineProperty(document, 'hidden', { configurable: true, get: () => false });
-  Object.defineProperty(document, 'pointerLockElement', { configurable: true, get: () => null });
-  document.exitPointerLock = vi.fn();
+  Object.defineProperty(document, 'pointerLockElement', { configurable: true, get: () => pointerLock });
+  document.exitPointerLock = vi.fn(() => { if (pointerLock) { pointerLock = null; document.dispatchEvent(new Event('pointerlockchange')); } });
+  HTMLElement.prototype.requestPointerLock = vi.fn(async function (this: HTMLElement) { pointerLock = this; document.dispatchEvent(new Event('pointerlockchange')); });
   HTMLElement.prototype.setPointerCapture = vi.fn();
   HTMLElement.prototype.releasePointerCapture = vi.fn();
   HTMLElement.prototype.scrollIntoView = vi.fn();
   // Coarse layout metrics only allow exercising reader state/navigation logic.
-  Object.defineProperty(HTMLElement.prototype, 'clientWidth', { configurable: true, get() { return this.id === 'book-stage' ? 900 : 1024; } });
-  Object.defineProperty(HTMLElement.prototype, 'clientHeight', { configurable: true, get() { return this.id === 'book-stage' ? 680 : 768; } });
+  Object.defineProperty(HTMLElement.prototype, 'clientWidth', { configurable: true, get() { return this.id === 'book-stage' ? stageWidth : 1024; } });
+  Object.defineProperty(HTMLElement.prototype, 'clientHeight', { configurable: true, get() { return this.id === 'book-stage' ? stageHeight : 768; } });
   Object.defineProperty(HTMLElement.prototype, 'scrollHeight', { configurable: true, get() { return Math.max(20, (this.textContent?.length || 0) / 8); } });
   vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockImplementation(() => new Proxy({}, {
     get(target, property) {
@@ -120,6 +156,11 @@ beforeAll(async () => {
 });
 
 afterAll(() => { vi.clearAllTimers(); vi.useRealTimers(); vi.restoreAllMocks(); vi.unstubAllGlobals(); rafs.clear(); });
+afterEach(async () => {
+  key('Escape'); await frames(60); pause(); stageWidth = 900; stageHeight = 680;
+  (byId('room-motion') as HTMLInputElement).checked = true;
+  byId('room-motion').dispatchEvent(new Event('change'));
+});
 
 describe('Borges current room module runtime smoke', () => {
   it('initializes real geometry and enables entry without a caught runtime exception', () => {
@@ -132,12 +173,14 @@ describe('Borges current room module runtime smoke', () => {
     expect(instances.some(mesh => mesh.count >= 242 && mesh.geometry.getAttribute('archiveTile'))).toBe(true);
   });
 
-  it('supports immediate drag-mode entry without the intro timer reopening the menu', async () => {
+  it('enters with a normal desktop cursor without requesting pointer lock', async () => {
     await enter();
     await frames(6);
     expect(document.body.classList.contains('exploring')).toBe(true);
     expect(byId('start-prompt').classList.contains('visible')).toBe(false);
-    expect((byId('touch-controls') as HTMLElement).hidden).toBe(false);
+    expect((byId('touch-controls') as HTMLElement).hidden).toBe(true);
+    expect(HTMLElement.prototype.requestPointerLock).not.toHaveBeenCalled();
+    expect(document.body.classList.contains('pointer-locked')).toBe(false);
     pause();
   });
 
@@ -155,6 +198,106 @@ describe('Borges current room module runtime smoke', () => {
     expect(camera.position.x).toBeCloseTo(resumed.x, 8);
     expect(camera.position.z).toBeCloseTo(resumed.z, 8);
     pause();
+  });
+
+  it('points at and directly clicks an off-center shelf book using canvas coordinates', async () => {
+    await enter();
+    const target = shelfTarget();
+    pointer('pointermove', target.x, target.y); await frames(3);
+    expect(byId('library-canvas').classList.contains('book-pointed')).toBe(true);
+    expect(byId('object-label').textContent).toBe(target.fragment.source);
+    clickAt(target.x, target.y); await frames(8);
+    expect(byId('reading-overlay').classList.contains('visible')).toBe(true);
+    expect(byId('reading-text').textContent).toContain(target.fragment.quote);
+    byId('reader-close').click(); await frames(4);
+    expect(document.body.classList.contains('exploring')).toBe(true);
+    expect(HTMLElement.prototype.requestPointerLock).not.toHaveBeenCalled();
+    pause();
+  });
+
+  it('opens the actual Plunkitt cover while leaving a click on its pedestal alone', async () => {
+    await enter();
+    const volume = scene.getObjectByName('Plunkitt volume')!;
+    const cover = screenPoint(volume.getWorldPosition(new RealThree.Vector3()));
+    const tabletop = screenPoint(new RealThree.Vector3(0.42, 0.9, 0));
+    clickAt(tabletop.x, tabletop.y); await frames(3);
+    expect(byId('reading-overlay').classList.contains('visible')).toBe(false);
+    clickAt(cover.x, cover.y); await frames(8);
+    expect(byId('reading-content').classList.contains('full-book-view')).toBe(true);
+    expect(byId('reading-overlay').classList.contains('visible')).toBe(true);
+    byId('reader-close').click(); await frames(4); pause();
+  });
+
+  it('allows a touch tap with small finger movement but suppresses a drag click', async () => {
+    await enter();
+    const target = shelfTarget();
+    pointer('pointerdown', target.x, target.y, 'touch');
+    pointer('pointermove', target.x + 2, target.y + 2, 'touch');
+    pointer('pointerup', target.x, target.y, 'touch');
+    pointer('click', target.x, target.y, 'touch'); await frames(8);
+    expect(byId('reading-text').textContent).toContain(target.fragment.quote);
+    expect(byId('reading-overlay').classList.contains('visible')).toBe(true);
+    byId('reader-close').click(); await frames(4);
+    pointer('pointerdown', target.x, target.y, 'touch');
+    pointer('pointermove', target.x + 40, target.y, 'touch');
+    pointer('pointermove', target.x, target.y, 'touch');
+    pointer('pointerup', target.x, target.y, 'touch');
+    pointer('click', target.x, target.y, 'touch'); await frames(4);
+    expect(byId('reading-overlay').classList.contains('visible')).toBe(false);
+    expect(document.body.classList.contains('dragging-view')).toBe(false);
+    clickAt(target.x, target.y, 'touch'); await frames(8);
+    expect(byId('reading-overlay').classList.contains('visible')).toBe(true);
+    byId('reader-close').click(); await frames(4); pause();
+  });
+
+  it('cancels interrupted pointer gestures and gives E and Enter the same pointed target', async () => {
+    await enter();
+    const target = shelfTarget();
+    pointer('pointerdown', target.x, target.y);
+    pointer('pointercancel', target.x, target.y);
+    pointer('click', target.x, target.y); await frames(3);
+    expect(byId('reading-overlay').classList.contains('visible')).toBe(false);
+    for (const code of ['KeyE', 'Enter']) {
+      pointer('pointermove', target.x, target.y); await frames(3);
+      key(code, 'keydown', byId('library-canvas')); await frames(8);
+      expect(byId('reading-overlay').classList.contains('visible')).toBe(true);
+      expect(byId('reading-text').textContent).toContain(target.fragment.quote);
+      byId('reader-close').click(); await frames(4);
+    }
+    pause();
+  });
+
+  it('keeps touch center targeting after drag contact ends and opens the centered book with Read', async () => {
+    await enter();
+    const target = scene.getObjectByName('Plunkitt volume')!.getWorldPosition(new RealThree.Vector3());
+    const direction = target.sub(camera.position).normalize();
+    const orientation = new RealThree.Euler().setFromQuaternion(camera.quaternion, 'YXZ');
+    const dx = (orientation.y - Math.atan2(-direction.x, -direction.z)) / 0.004;
+    const dy = (orientation.x - Math.asin(direction.y)) / 0.004;
+    const rect = byId('library-canvas').getBoundingClientRect();
+    const x = rect.left + rect.width / 2, y = rect.top + rect.height / 2;
+    pointer('pointerdown', x, y, 'touch');
+    pointer('pointermove', x + 30, y, 'touch');
+    pointer('pointermove', x + dx, y + dy, 'touch');
+    pointer('pointerup', x + dx, y + dy, 'touch');
+    pointer('pointerleave', x + dx, y + dy, 'touch');
+    pointer('click', x + dx, y + dy, 'touch');
+    await frames(6);
+    expect((byId('touch-controls') as HTMLElement).hidden).toBe(false);
+    expect((byId('touch-read') as HTMLButtonElement).disabled).toBe(false);
+    expect(byId('object-label').textContent).toContain('Plunkitt of Tammany Hall');
+    expect(byId('reading-overlay').classList.contains('visible')).toBe(false);
+    byId('touch-read').click(); await frames(8);
+    expect(byId('reading-overlay').classList.contains('visible')).toBe(true);
+    expect(byId('reading-content').classList.contains('full-book-view')).toBe(true);
+    byId('reader-close').click(); await frames(4);
+    // Restore the view for subsequent off-center shelf-selection cases.
+    pointer('pointerdown', x, y, 'touch');
+    pointer('pointermove', x + 30, y, 'touch');
+    pointer('pointermove', x - dx, y - dy, 'touch');
+    pointer('pointerup', x - dx, y - dy, 'touch');
+    pointer('pointerleave', x - dx, y - dy, 'touch');
+    await frames(3); pause();
   });
 
   it('handles the direct-reader event, preserves the full text, and closes with Escape', async () => {
@@ -184,5 +327,71 @@ describe('Borges current room module runtime smoke', () => {
     expect(byId('reading-overlay').classList.contains('visible')).toBe(false);
     expect(byId('start-prompt').classList.contains('visible')).toBe(true);
     expect(loggedErrors).not.toHaveBeenCalled();
+  });
+
+  it('offers visible page controls and keeps Contents expanded state synchronized', async () => {
+    localStorage.removeItem('library-plunkitt-position');
+    byId('read-without-3d').click(); await frames(8);
+    expect((byId('reader-pagination') as HTMLElement).hidden).toBe(false);
+    expect((byId('reader-prev') as HTMLButtonElement).disabled).toBe(true);
+    expect((byId('reader-next') as HTMLButtonElement).disabled).toBe(false);
+    const firstPosition = byId('reader-position').textContent;
+    byId('reader-next').click();
+    expect(byId('reader-position').textContent).not.toBe(firstPosition);
+    expect((byId('reader-prev') as HTMLButtonElement).disabled).toBe(false);
+    byId('reader-prev').click();
+    expect(byId('reader-position').textContent).toBe(firstPosition);
+    byId('reader-contents').click();
+    expect(byId('reader-contents').getAttribute('aria-expanded')).toBe('true');
+    expect(byId('reading-content').classList.contains('contents-open')).toBe(true);
+    (document.querySelector('#rail-chapters button') as HTMLButtonElement).click();
+    expect(byId('reader-contents').getAttribute('aria-expanded')).toBe('false');
+    byId('reader-contents').click(); byId('reader-close').click(); await frames(4);
+    expect(byId('reader-contents').getAttribute('aria-expanded')).toBe('false');
+    expect(byId('reading-content').classList.contains('contents-open')).toBe(false);
+    expect((byId('reader-pagination') as HTMLElement).hidden).toBe(true);
+  });
+
+  it.each([[650, 230], [304, 230]])('initializes a readable spread at stage size %i by %i', async (width, height) => {
+    stageWidth = width; stageHeight = height;
+    localStorage.removeItem('library-plunkitt-position');
+    byId('read-without-3d').click(); await frames(8);
+    const page = byId('well-right');
+    expect(parseFloat(page.style.width)).toBeGreaterThan(240);
+    expect(document.querySelector('.page-text')?.textContent).toContain('Plunkitt of Tammany Hall');
+    expect(byId('reader-position').textContent).toMatch(/Pages? \d/);
+    expect((byId('reader-next') as HTMLButtonElement).disabled).toBe(false);
+  });
+
+  it('cancels a borrowed book mid-flight without a stale reader and permits a fresh opening', async () => {
+    (byId('room-motion') as HTMLInputElement).checked = false;
+    byId('room-motion').dispatchEvent(new Event('change'));
+    await enter();
+    const target = shelfTarget();
+    const before = new RealThree.Matrix4(); target.mesh.getMatrixAt(target.index, before);
+    clickAt(target.x, target.y); await frames(2);
+    expect(byId('reading-overlay').classList.contains('visible')).toBe(false);
+    key('Escape');
+    window.dispatchEvent(new CustomEvent('library:read-direct', { cancelable: true }));
+    await frames(100);
+    const restored = new RealThree.Matrix4(); target.mesh.getMatrixAt(target.index, restored);
+    expect(restored.elements).toEqual(before.elements);
+    expect(byId('reading-overlay').classList.contains('visible')).toBe(false);
+    expect(byId('start-prompt').classList.contains('visible')).toBe(true);
+    byId('read-without-3d').click(); await frames(8);
+    expect(byId('reading-overlay').classList.contains('visible')).toBe(true);
+    expect(byId('reading-content').classList.contains('full-book-view')).toBe(true);
+  });
+
+  it('only requests FPS pointer lock when opted in and returns to cursor mode when disabled', async () => {
+    const checkbox = byId('room-fps') as HTMLInputElement;
+    checkbox.checked = true; await enter();
+    expect(HTMLElement.prototype.requestPointerLock).toHaveBeenCalledTimes(1);
+    expect(document.body.classList.contains('pointer-locked')).toBe(true);
+    key('Escape'); await frames(3);
+    checkbox.checked = false; await enter();
+    expect(HTMLElement.prototype.requestPointerLock).toHaveBeenCalledTimes(1);
+    expect(document.body.classList.contains('pointer-locked')).toBe(false);
+    expect(document.body.classList.contains('exploring')).toBe(true);
   });
 });

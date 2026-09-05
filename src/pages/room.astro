@@ -37,7 +37,7 @@ import '@/styles/global.css';
       overflow: hidden;
       background-color: #0a0806;
       font-family: 'Source Serif 4', Georgia, serif;
-      cursor: none;
+      cursor: auto;
       color: var(--ink);
     }
 
@@ -102,7 +102,8 @@ import '@/styles/global.css';
       opacity: 0;
       transition: opacity 0.18s ease, transform 0.18s ease;
       text-align: center;
-      white-space: nowrap;
+      max-width: min(340px, calc(100vw - 32px));
+      white-space: normal;
     }
     #object-label.visible {
       opacity: 1;
@@ -115,9 +116,9 @@ import '@/styles/global.css';
       border: 1px solid rgba(216, 185, 120, 0.32);
       border-radius: 2px;
       color: var(--gold);
-      font-size: 0.72rem;
+      font-size: 0.875rem;
       font-variant: small-caps;
-      letter-spacing: 0.16em;
+      letter-spacing: 0.035em;
       text-transform: lowercase;
       backdrop-filter: blur(3px);
       -webkit-backdrop-filter: blur(3px);
@@ -135,13 +136,17 @@ import '@/styles/global.css';
       bottom: 1.4rem;
       left: 50%;
       transform: translateX(-50%);
-      color: rgba(216, 185, 120, 0.5);
-      font-family: 'SF Mono', SFMono-Regular, Menlo, monospace;
-      font-size: 0.62rem;
+      color: #e8d5b0;
+      font-family: inherit;
+      font-size: 0.875rem;
       pointer-events: none;
       text-align: center;
-      letter-spacing: 0.22em;
-      text-transform: uppercase;
+      letter-spacing: 0.025em;
+      width: max-content;
+      max-width: calc(100vw - 2rem);
+      padding: .55rem 1rem;
+      background: rgba(10, 8, 6, .72);
+      border: 1px solid rgba(216,185,120,.18);
       z-index: 40;
       transition: opacity 0.6s ease;
     }
@@ -201,6 +206,8 @@ import '@/styles/global.css';
       visibility: hidden;
       transition: opacity 0.45s ease, visibility 0.45s ease;
       cursor: auto;
+      padding: max(1rem, env(safe-area-inset-top)) 1rem max(1rem, env(safe-area-inset-bottom));
+      overflow-y: auto;
     }
     #start-prompt.visible { opacity: 1; visibility: visible; }
     #start-prompt .menu-panel {
@@ -208,6 +215,10 @@ import '@/styles/global.css';
       flex-direction: column;
       align-items: center;
       padding: 3rem 4rem;
+      max-width: 680px;
+      max-height: 100%;
+      overflow-y: auto;
+      flex-shrink: 0;
       border: 1px solid rgba(216, 185, 120, 0.2);
       background: linear-gradient(180deg, rgba(24,18,12,0.6), rgba(12,9,6,0.6));
       box-shadow: 0 30px 80px rgba(0,0,0,0.6), inset 0 1px 0 rgba(216,185,120,0.08);
@@ -233,10 +244,10 @@ import '@/styles/global.css';
       text-shadow: 0 0 18px rgba(216, 185, 120, 0.45);
     }
     #start-prompt .prompt-instructions {
-      color: rgba(216, 185, 120, 0.6);
-      font-family: 'SF Mono', SFMono-Regular, Menlo, monospace;
-      font-size: 0.64rem;
-      letter-spacing: 0.14em;
+      color: #d7c5a1;
+      font-family: inherit;
+      font-size: 0.875rem;
+      letter-spacing: 0.02em;
       text-align: center;
       margin-bottom: 2rem;
     }
@@ -259,6 +270,8 @@ import '@/styles/global.css';
     #reading-overlay {
       position: fixed;
       inset: 0;
+      padding-top: env(safe-area-inset-top);
+      padding-bottom: env(safe-area-inset-bottom);
       background: rgba(6, 4, 3, 0.62);
       backdrop-filter: blur(7px);
       -webkit-backdrop-filter: blur(7px);
@@ -352,7 +365,7 @@ import '@/styles/global.css';
       margin-top: 2.2rem;
       color: rgba(70, 52, 30, 0.6);
       font-family: 'SF Mono', SFMono-Regular, Menlo, monospace;
-      font-size: 0.6rem;
+      font-size: 0.875rem;
       letter-spacing: 0.1em;
       text-align: center;
     }
@@ -502,9 +515,9 @@ import '@/styles/global.css';
       letter-spacing: 0.14em; text-transform: uppercase; }
     .book-measure { position: fixed; left: -99999px; top: 0; visibility: hidden; padding: 0; height: auto; }
 
-    .page-text { position: absolute; inset: 48px 42px 52px 42px; overflow: hidden; }
+    .page-text { position: absolute; inset: var(--page-pad-top, 48px) var(--page-pad-x, 42px) var(--page-pad-bottom, 52px); overflow-y: auto; scrollbar-width: thin; }
     .page-text .book-title { font-size: 1.5rem; font-weight: 700; font-variant: small-caps; text-align: center;
-      letter-spacing: 0.1em; color: #3a1512; margin-top: 34%; }
+      letter-spacing: 0.1em; color: #3a1512; margin-top: max(0px, calc((var(--page-height, 600px) - 420px) / 2)); }
     .page-text .book-author { text-align: center; color: #5c4a2e; margin: 0.9rem 0 0.3rem; }
     .page-text .book-subtitle { text-align: center; font-style: italic; color: #6b5838; font-size: 0.85rem;
       padding-top: 1rem; margin-top: 0.6rem; border-top: 1px solid rgba(70,52,30,0.28); }
@@ -568,8 +581,7 @@ import '@/styles/global.css';
     .book-sr-fulltext { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0;
       overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; border: 0; }
 
-    /* narrow windows: shrink the rail so the page stage keeps enough width to paginate
-       (the FPS scene is desktop-only, so this only affects narrow desktop windows) */
+    /* Narrow windows leave the page stage enough width to paginate. */
     @media (max-width: 700px) { .book-rail { width: 150px; min-width: 150px; } }
 
     /* ---------- EYELID INTRO ---------- */
@@ -605,7 +617,13 @@ import '@/styles/global.css';
     #room-toolbar { position: fixed; top: max(1rem, env(safe-area-inset-top)); right: max(1rem, env(safe-area-inset-right)); z-index: 90; display: none; }
     body.exploring #room-toolbar { display: block; }
     #room-toolbar button, #touch-read, #move-pad button { border: 1px solid #aa905c; color: #f0dfbc; background: rgba(16,12,8,.78); font-size: 1rem; padding: .75rem 1rem; touch-action: none; cursor: pointer; }
-    #library-canvas { touch-action: none; }
+    #library-canvas { touch-action: none; cursor: grab; }
+    #library-canvas.book-pointed { cursor: pointer; }
+    body.dragging-view #library-canvas { cursor: grabbing; }
+    body.pointer-locked, body.pointer-locked #library-canvas { cursor: none; }
+    body.cursor-aim #crosshair { visibility: hidden; }
+    body:not(.exploring) #crosshair { visibility: hidden; }
+    #library-canvas:focus { outline: none; }
     #touch-controls { position: fixed; z-index: 80; inset: auto 0 max(1rem, env(safe-area-inset-bottom)); pointer-events: none; padding: 0 1rem; }
     #touch-controls[hidden] { display: none; }
     #move-pad { display: grid; grid-template-columns: repeat(3, 48px); grid-template-rows: repeat(2, 48px); gap: 4px; width: fit-content; pointer-events: auto; }
@@ -619,7 +637,13 @@ import '@/styles/global.css';
     .reader-toolbar button { padding: .65rem 1rem; font-size: .875rem; color: var(--ink); background: #1b140e; border: 1px solid #a08454; cursor: pointer; }
     #reader-contents { display: none; }
     #reader-contents[hidden] { display: none; }
-    #reading-content.full-book-view { margin-top: 3rem; max-height: calc(100dvh - 5rem); }
+    #reading-content.full-book-view { margin-top: 0; height: calc(100dvh - 9rem - env(safe-area-inset-top) - env(safe-area-inset-bottom)); max-height: calc(100dvh - 9rem - env(safe-area-inset-top) - env(safe-area-inset-bottom)); }
+    #reader-pagination { position: absolute; bottom: max(.75rem, env(safe-area-inset-bottom)); left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 1rem; padding: .25rem; background: #1b140e; border: 1px solid rgba(216,185,120,.3); }
+    #reader-pagination[hidden] { display: none; }
+    .book-stage { min-width: 0; min-height: 0; }
+    #reader-pagination button { min-width: 44px; min-height: 44px; padding: .6rem .9rem; color: var(--ink); background: none; border: 0; font-size: 1rem; cursor: pointer; }
+    #reader-pagination button:disabled { opacity: .35; cursor: default; }
+    #reader-position { font-size: .875rem; white-space: nowrap; font-variant-numeric: tabular-nums; }
     .chapter-nav-item { display: block; width: 100%; text-align: left; background: none; border: 0; color: inherit; font-family: inherit; }
     .book-rail .chapter-nav-item { font-size: .875rem; }
     .prompt-instructions { line-height: 1.8; }
@@ -631,12 +655,20 @@ import '@/styles/global.css';
       #reader-contents:not([hidden]) { display: block; }
       .book-rail { display: none; }
       .contents-open .book-rail { display: flex; position: absolute; z-index: 50; left: 0; top: 0; bottom: 0; width: 230px; }
-      #reading-content.full-book-view { width: 100%; max-width: 100%; height: calc(100dvh - 5rem); border: 0; }
+      #reading-content.full-book-view { width: 100%; max-width: 100%; border: 0; }
       .book-stage { padding: .5rem; }
-      .menu-panel { padding: 2rem 1.25rem; width: min(94vw, 600px); }
+      #start-prompt .menu-panel { padding: 2rem 1.25rem; width: min(94vw, 600px); }
       #controls-hint { display: none; }
       #object-label { max-width: 85vw; white-space: normal; }
       #object-label .label-inner { font-size: .875rem; letter-spacing: .03em; }
+      #reading-content:not(.full-book-view):not(.text-only) { width: calc(100vw - 2rem); padding: 2rem 1.5rem; max-height: calc(100dvh - 7rem); margin-top: 3rem; }
+      #reading-content .quote-text { font-size: 1.125rem; }
+      #title-card .tc-main { font-size: clamp(1.25rem, 6vw, 2.5rem); }
+    }
+    @media (max-height: 600px) {
+      #start-prompt .menu-panel { padding: 1rem 1.5rem; }
+      #start-prompt .menu-eyebrow, #start-prompt .prompt-text, #loading-note,
+      #start-prompt .prompt-instructions, .room-settings, .room-text-button { margin-bottom: .75rem; }
     }
     @media (prefers-reduced-motion: reduce) {
       #eyelid-top, #eyelid-bottom { animation: none; transform: scaleY(0); }
@@ -652,7 +684,7 @@ import '@/styles/global.css';
 
   <div id="crosshair"></div>
   <div id="object-label"><span class="label-inner"></span></div>
-  <div id="controls-hint">WASD / arrows move · mouse look · click to read · ESC menu</div>
+  <div id="controls-hint">Click a book to read · drag to look · WASD / arrows move · ESC menu</div>
 
   <div id="title-card">
     <div class="tc-over">La Biblioteca de Babel</div>
@@ -665,10 +697,11 @@ import '@/styles/global.css';
       <div class="menu-eyebrow">The Library of Babel</div>
       <button class="prompt-text" id="start-button" disabled>Enter the gallery</button>
       <p id="loading-note" role="status">Opening the library…</p>
-      <div class="prompt-instructions">WASD / arrows move · mouse look · E or click to read<br>Q / R look left / right · T / G look up / down</div>
+      <div class="prompt-instructions">Click or tap a book to read · drag the room to look<br>WASD / arrows move · E / Enter read · Q / R look left / right · T / G look up / down</div>
       <div class="room-settings">
         <label><input type="checkbox" id="room-sound" checked> Sound</label>
         <label><input type="checkbox" id="room-motion"> Still camera</label>
+        <label><input type="checkbox" id="room-fps"> Mouse-look mode</label>
         <label for="room-brightness">Lamplight <input id="room-brightness" type="range" min="0.8" max="2" step="0.05" value="1.35"></label>
       </div>
       <button id="read-without-3d" class="room-text-button">Read Plunkitt</button>
@@ -685,16 +718,21 @@ import '@/styles/global.css';
       <button data-move="KeyD" aria-label="Walk right">→</button>
     </div>
     <button id="touch-read" disabled>Read</button>
-    <span>Drag the room to look</span>
+    <span>Tap a book to read · drag the room to look</span>
   </div>
   <div id="reading-overlay" role="dialog" aria-modal="true" aria-label="Reading" tabindex="-1">
     <div class="reader-toolbar">
-      <button id="reader-contents" hidden>Contents</button>
+      <button id="reader-contents" hidden aria-expanded="false" aria-controls="reading-content">Contents</button>
       <button id="reader-close">Return to the gallery <span aria-hidden="true">×</span></button>
     </div>
     <div id="reading-content">
       <div id="reading-text"></div>
-      <span class="close-hint">click anywhere or press ESC to close</span>
+      <span class="close-hint">Press Esc or use Return to the gallery to close</span>
+    </div>
+    <div id="reader-pagination" hidden role="group" aria-label="Turn pages">
+      <button id="reader-prev" aria-label="Previous page" disabled>←</button>
+      <span id="reader-position" role="status" aria-live="polite"></span>
+      <button id="reader-next" aria-label="Next page" disabled>→</button>
     </div>
   </div>
     <script>
@@ -2182,7 +2220,8 @@ America</h2>
       for (let face = 0; face < 6; face++) {
         const a = face * Math.PI / 3, nx = Math.cos(a), nz = Math.sin(a);
         const radius = moatOuter * Math.cos(Math.PI / 6) + 0.10;
-        const spans = face === 0 ? [[-moatOuter / 2, -0.57], [0.57, moatOuter / 2]] : [[-moatOuter / 2, moatOuter / 2]];
+        const halfSide = radius * Math.tan(Math.PI / 6);
+        const spans = face === 0 ? [[-halfSide, -0.57], [0.57, halfSide]] : [[-halfSide, halfSide]];
         for (const [start, end] of spans) {
           const off = (start + end) / 2;
           for (const y of [0.5, 0.98]) {
@@ -2226,8 +2265,11 @@ America</h2>
       const n = pos.clone().setY(0).normalize();
       const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.55, 6), matBrass);
       arm.position.copy(pos).addScaledVector(n, 0.27);
+      arm.position.y += 0.22;
       arm.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), n);
       scene.add(arm);
+      const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 0.08, 8), matBrass);
+      stem.position.copy(pos); stem.position.y += 0.18; scene.add(stem);
       const halo = new THREE.Sprite(new THREE.SpriteMaterial({ map: haloSprite, color: 0xffe0aa, blending: THREE.AdditiveBlending, transparent: true, opacity: 0.35, depthWrite: false }));
       halo.scale.set(1.6, 1.6, 1); halo.position.copy(pos); scene.add(halo);
     });
@@ -2361,9 +2403,6 @@ America</h2>
     shrineGroup.add(shrineBook);
     shrineGroup.rotation.y = Math.PI / 2; // cover (+Z face) turns to face the bridge on +X
     scene.add(shrineGroup);
-    const shrineHit = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.6, 0.3), new THREE.MeshBasicMaterial({ visible: false }));
-    shrineHit.position.copy(shrineBook.position);
-    scene.add(shrineHit);
 
     // ==================================================================
     //  VOLUMETRIC BEAM + DUST
@@ -2453,8 +2492,12 @@ America</h2>
     const _wish = new THREE.Vector3(), _forward = new THREE.Vector3(), _right = new THREE.Vector3(), _wishWorld = new THREE.Vector3();
     let bobPhase = 0, curFov = 70;
 
-    let exploring = false, dragLook = matchMedia('(pointer: coarse)').matches;
-    let lookPointer = null, lookX = 0, lookY = 0;
+    let exploring = false, dragLook = true;
+    let touchInput = matchMedia('(pointer: coarse)').matches;
+    let lookPointer = null, lookX = 0, lookY = 0, lookStartX = 0, lookStartY = 0;
+    let lookDragged = false, suppressPointerClick = false;
+    const pointerAim = new THREE.Vector2();
+    let hasPointerAim = false, keyboardAim = true;
     const eyeOpening = document.getElementById('eye-opening');
     const startPrompt = document.getElementById('start-prompt');
     const startButton = document.getElementById('start-button');
@@ -2463,6 +2506,7 @@ America</h2>
     const touchControls = document.getElementById('touch-controls');
     const soundControl = document.getElementById('room-sound');
     const motionControl = document.getElementById('room-motion');
+    const fpsControl = document.getElementById('room-fps');
     const brightnessControl = document.getElementById('room-brightness');
     let exposureTarget = 1.35;
     let reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -2470,7 +2514,8 @@ America</h2>
     let introDone = false, titleShown = false;
     function resetInput() {
       Object.keys(keys).forEach(key => delete keys[key]);
-      vel.set(0, 0, 0); lookPointer = null;
+      vel.set(0, 0, 0); lookPointer = null; lookDragged = false; hasPointerAim = false; keyboardAim = true;
+      document.body.classList.remove('dragging-view', 'cursor-aim');
     }
     function runTitleCard() {
       if (titleShown) return; titleShown = true;
@@ -2478,9 +2523,10 @@ America</h2>
       setTimeout(() => titleCard.classList.remove('visible'), 4600);
     }
     function syncControls() {
-      touchControls.hidden = !dragLook || !exploring || reading || menuOpen;
+      touchControls.hidden = !touchInput || !dragLook || !exploring || reading || menuOpen;
       document.body.classList.toggle('exploring', exploring && !reading && !menuOpen);
-      controlsHint.textContent = dragLook ? 'Drag to look · arrows to walk · Read to open a book' : 'WASD / arrows move · mouse look · E or click to read · ESC pause';
+      document.body.classList.toggle('pointer-locked', locked && exploring && !reading && !menuOpen);
+      controlsHint.textContent = locked ? 'WASD / arrows move · mouse look · E / Enter or click to read · ESC pause' : 'Click a book to read · drag to look · WASD / arrows move · E / Enter read · ESC pause';
     }
     function showMenu() {
       resetInput(); menuOpen = true; exploring = false;
@@ -2495,41 +2541,79 @@ America</h2>
       try { initAudioGraph(); audioCtx.resume().catch(() => {}); startAmbient(); } catch (error) { soundControl.checked = false; }
     }
     function useDragLook() {
-      dragLook = true; startExploring();
+      dragLook = true; fpsControl.checked = false; startExploring();
     }
     async function hideMenu() {
-      if (dragLook || !document.body.requestPointerLock) { useDragLook(); return; }
+      if (!fpsControl.checked || !document.body.requestPointerLock) { useDragLook(); return; }
       try {
         await document.body.requestPointerLock();
         if (document.pointerLockElement === document.body) startExploring();
       } catch { useDragLook(); }
     }
     startButton.addEventListener('click', event => { event.stopPropagation(); hideMenu(); });
-    document.addEventListener('pointerlockerror', useDragLook);
+    document.addEventListener('pointerlockerror', () => { if (!reading) useDragLook(); });
     document.addEventListener('pointerlockchange', () => {
       const was = locked;
       locked = document.pointerLockElement === document.body;
       if (locked) { dragLook = false; startExploring(); }
       else if (was && !reading) showMenu();
-      resetInput();
+      resetInput(); syncControls();
     });
     document.addEventListener('mousemove', event => {
       if (!locked || !exploring || reading) return;
       yaw -= event.movementX * 0.0022;
       pitch = Math.max(-1.3, Math.min(1.3, pitch - event.movementY * 0.0022));
     });
+    function aimFromPointer(event) {
+      const rect = renderer.domElement.getBoundingClientRect();
+      if (rect.width <= 0 || rect.height <= 0) return false;
+      const x = (event.clientX - rect.left) / rect.width, y = (event.clientY - rect.top) / rect.height;
+      if (x < 0 || x > 1 || y < 0 || y > 1) { hasPointerAim = false; return false; }
+      pointerAim.set(x * 2 - 1, 1 - y * 2); hasPointerAim = true; keyboardAim = false;
+      return true;
+    }
     renderer.domElement.addEventListener('pointerdown', event => {
-      if (!dragLook || !exploring || reading) return;
-      lookPointer = event.pointerId; lookX = event.clientX; lookY = event.clientY;
+      if (!dragLook || !exploring || reading || event.button !== 0 || lookPointer !== null) return;
+      if (event.pointerType === 'touch') { touchInput = true; syncControls(); }
+      suppressPointerClick = false; lookDragged = false;
+      lookPointer = event.pointerId;
+      lookX = lookStartX = event.clientX; lookY = lookStartY = event.clientY;
+      aimFromPointer(event);
+      renderer.domElement.focus({ preventScroll: true });
       renderer.domElement.setPointerCapture(event.pointerId);
     });
     renderer.domElement.addEventListener('pointermove', event => {
-      if (lookPointer !== event.pointerId || !exploring || reading) return;
-      yaw -= (event.clientX - lookX) * 0.004;
-      pitch = Math.max(-1.3, Math.min(1.3, pitch - (event.clientY - lookY) * 0.004));
-      lookX = event.clientX; lookY = event.clientY;
+      if (!dragLook || !exploring || reading) return;
+      if (lookPointer !== null && lookPointer !== event.pointerId) return;
+      if (lookPointer === event.pointerId) {
+        const threshold = event.pointerType === 'touch' ? 10 : 6;
+        if (Math.hypot(event.clientX - lookStartX, event.clientY - lookStartY) > threshold) lookDragged = true;
+        if (lookDragged) {
+          yaw -= (event.clientX - lookX) * 0.004;
+          pitch = Math.max(-1.3, Math.min(1.3, pitch - (event.clientY - lookY) * 0.004));
+          hasPointerAim = false; clearHover();
+          document.body.classList.add('dragging-view');
+        } else aimFromPointer(event);
+        lookX = event.clientX; lookY = event.clientY;
+      } else aimFromPointer(event);
     });
-    for (const name of ['pointerup', 'pointercancel', 'lostpointercapture']) renderer.domElement.addEventListener(name, () => { lookPointer = null; });
+    renderer.domElement.addEventListener('pointerup', event => {
+      if (lookPointer !== event.pointerId) return;
+      suppressPointerClick = lookDragged;
+      if (!lookDragged) aimFromPointer(event);
+      else if (event.pointerType === 'touch') keyboardAim = true;
+      lookPointer = null; lookDragged = false;
+      document.body.classList.remove('dragging-view');
+      if (renderer.domElement.hasPointerCapture?.(event.pointerId)) renderer.domElement.releasePointerCapture(event.pointerId);
+    });
+    for (const name of ['pointercancel', 'lostpointercapture']) renderer.domElement.addEventListener(name, event => {
+      if (lookPointer !== event.pointerId) return;
+      lookPointer = null; lookDragged = false; suppressPointerClick = true; hasPointerAim = false;
+      document.body.classList.remove('dragging-view'); clearHover();
+    });
+    renderer.domElement.addEventListener('pointerleave', event => {
+      if (lookPointer === null && !locked) { hasPointerAim = false; keyboardAim = event.pointerType === 'touch'; clearHover(); }
+    });
     document.querySelectorAll('[data-move]').forEach(button => {
       button.addEventListener('pointerdown', event => {
         event.preventDefault(); button.setPointerCapture(event.pointerId); keys[button.dataset.move] = true;
@@ -2541,7 +2625,8 @@ America</h2>
       keys[event.code] = true;
       if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space'].includes(event.code)) event.preventDefault();
       if (event.code === 'Escape') showMenu();
-      if (event.code === 'KeyE' && !event.repeat) { event.preventDefault(); interact(); }
+      if (['KeyQ', 'KeyR', 'KeyT', 'KeyG'].includes(event.code)) { hasPointerAim = false; keyboardAim = true; }
+      if (['KeyE', 'Enter', 'NumpadEnter'].includes(event.code) && !event.repeat) { event.preventDefault(); keyboardAim = true; interact(); }
     });
     addEventListener('keyup', event => { keys[event.code] = false; });
     addEventListener('blur', () => { if (!reading) showMenu(); else resetInput(); });
@@ -2579,14 +2664,26 @@ America</h2>
       proxy.visible = false;
       shell.visible = false;
       hovered = null;
+      renderer.domElement.classList.remove('book-pointed');
       document.getElementById('touch-read').disabled = true;
       proxyPull = 0;
     }
     function checkHover() {
-      ray.setFromCamera(centerV, camera);
-      ray.far = 6;
+      const cursorAim = !locked && hasPointerAim;
+      document.body.classList.toggle('cursor-aim', cursorAim);
+      const rect = renderer.domElement.getBoundingClientRect();
+      const aimX = cursorAim ? rect.left + (pointerAim.x + 1) * rect.width / 2 : innerWidth / 2;
+      const aimY = cursorAim ? rect.top + (1 - pointerAim.y) * rect.height / 2 : innerHeight / 2;
+      crosshair.style.left = `${aimX}px`; crosshair.style.top = `${aimY}px`;
+      const labelInset = Math.min(180, innerWidth / 2);
+      label.style.left = `${Math.max(labelInset, Math.min(innerWidth - labelInset, aimX))}px`;
+      label.style.top = `${Math.max(24, Math.min(innerHeight - 100, aimY))}px`;
+      if ((!locked && !hasPointerAim && !keyboardAim) || (lookPointer !== null && lookDragged) || bookMotion.active) { clearHover(); return; }
+      camera.updateMatrixWorld();
+      ray.setFromCamera(cursorAim ? pointerAim : centerV, camera);
+      ray.far = 12;
       const bh = ray.intersectObjects([books, adjacent.books]);
-      const sh = ray.intersectObject(shrineHit);
+      const sh = details.shrineVolume.visible ? ray.intersectObject(details.shrineVolume, true) : [];
       const nearest = Math.min(bh[0]?.distance ?? Infinity, sh[0]?.distance ?? Infinity);
       if (Number.isFinite(nearest)) {
         ray.far = Math.max(0, nearest - 0.025);
@@ -2602,7 +2699,7 @@ America</h2>
       const sameAsBefore = hovered && newHover &&
         ((hovered.type === 'shrine' && newHover.type === 'shrine') ||
          (hovered.type === 'book' && newHover.type === 'book' && hovered.id === newHover.id && hovered.mesh === newHover.mesh));
-      if (sameAsBefore) return;
+      if (sameAsBefore) { renderer.domElement.classList.toggle('book-pointed', cursorAim); return; }
 
       proxy.visible = false; shell.visible = false;
       if (newHover) {
@@ -2613,7 +2710,7 @@ America</h2>
           const meta = newHover.meta;
           crosshair.classList.add('hovering');
           proxy.position.copy(meta.pos); proxy.rotation.set(meta.lean, meta.rotY, 0); proxy.scale.copy(meta.scale);
-          proxyMat.color.copy(hoverColor.fromBufferAttribute(books.instanceColor, newHover.id));
+          proxyMat.color.copy(hoverColor.fromBufferAttribute(newHover.mesh.instanceColor, newHover.id));
           selectedSpine.color.copy(proxyMat.color);
           const bindingIndex = newHover.id % nQuotes;
           selectedBinding.offset.set((bindingIndex % 16) / 16, (15 - Math.floor(bindingIndex / 16)) / 16);
@@ -2628,6 +2725,7 @@ America</h2>
         label.classList.remove('visible');
       }
       hovered = newHover;
+      renderer.domElement.classList.toggle('book-pointed', !!hovered && cursorAim);
       document.getElementById('touch-read').disabled = !hovered;
       proxyPull = 0;
     }
@@ -2669,6 +2767,10 @@ America</h2>
       duckAmbient(0.5);
       if (c.isFullBook) {
         isFullBook = true;
+        document.getElementById('reader-pagination').hidden = false;
+        document.getElementById('reader-position').textContent = 'Opening…';
+        document.getElementById('reader-prev').disabled = true;
+        document.getElementById('reader-next').disabled = true;
         readingContent.classList.add('full-book-view');
         readingContent.innerHTML = `
           <aside class="book-rail">
@@ -2700,7 +2802,7 @@ America</h2>
             <p class="quote-text">${c.quote}</p>
             <p class="quote-source">— ${c.source}</p>
           </div>
-          <span class="close-hint">click anywhere or press ESC to close</span>`;
+          <span class="close-hint">Press Esc or use Return to the gallery to close</span>`;
         playPageTurn();
       }
     }
@@ -2713,7 +2815,9 @@ America</h2>
       }
       isFullBook = false;
       overlay.classList.remove('visible');
-      readingContent.classList.remove('full-book-view');
+      readingContent.classList.remove('full-book-view', 'contents-open');
+      document.getElementById('reader-pagination').hidden = true;
+      document.getElementById('reader-contents').setAttribute('aria-expanded', 'false');
       teardownBook();
       // drop any arrow/space still physically held from page-turning, so it doesn't drive
       // the camera once pointer lock is re-acquired
@@ -2814,14 +2918,21 @@ America</h2>
       const single = PAGE_STEP === 1;
       const spreadH = Math.min(stageH, MAX_SPREAD_H);
       let pageW, spreadW;
-      if (single) { pageW = Math.floor(Math.min(stageW, spreadH * 0.72)); spreadW = pageW; }
-      else { pageW = Math.floor(Math.min(stageW, spreadH * 1.5) / 2); spreadW = pageW * 2; }
+      if (single) { pageW = Math.floor(Math.min(stageW, Math.max(280, spreadH * 0.72))); spreadW = pageW; }
+      else { pageW = Math.floor(Math.min(stageW / 2, Math.max(280, spreadH * 0.75))); spreadW = pageW * 2; }
       const pageH = Math.floor(spreadH);
-      const innerW = pageW - 2 * PAGE_PAD_X;
-      const contentH = pageH - PAGE_PAD_TOP - PAGE_PAD_BOT;
+      const padInsideX = Math.min(PAGE_PAD_X, Math.max(22, pageW * 0.11));
+      const padInsideTop = Math.min(PAGE_PAD_TOP, Math.max(16, pageH * 0.075));
+      const padInsideBottom = Math.min(PAGE_PAD_BOT, Math.max(28, pageH * 0.08));
+      const innerW = pageW - 2 * padInsideX;
+      const contentH = pageH - padInsideTop - padInsideBottom;
       bookDims = { spreadW, spreadH: pageH, pageW, pageH, innerW, contentH };
       const spread = document.getElementById('book-spread');
       spread.style.width = spreadW + 'px'; spread.style.height = pageH + 'px';
+      spread.style.setProperty('--page-pad-x', padInsideX + 'px');
+      spread.style.setProperty('--page-pad-top', padInsideTop + 'px');
+      spread.style.setProperty('--page-pad-bottom', padInsideBottom + 'px');
+      spread.style.setProperty('--page-height', pageH + 'px');
       document.querySelectorAll('.leaf-well').forEach(w => { w.style.width = pageW + 'px'; w.style.height = pageH + 'px'; });
       const leaf = document.getElementById('the-leaf');
       leaf.style.width = pageW + 'px'; leaf.style.height = pageH + 'px';
@@ -2945,7 +3056,14 @@ America</h2>
         item.className = 'chapter-nav-item' + (t.section ? ' section' : '');
         item.textContent = t.disp.length > 28 ? t.disp.slice(0, 28) + '…' : t.disp;
         item.title = t.text; item.dataset.i = i;
-        item.addEventListener('click', () => { requestPage(chapterStartPage[i]); readingContent.classList.remove('contents-open'); });
+        item.addEventListener('click', () => {
+          requestPage(chapterStartPage[i]);
+          if (readingContent.classList.contains('contents-open')) {
+            readingContent.classList.remove('contents-open');
+            document.getElementById('reader-contents').setAttribute('aria-expanded', 'false');
+            document.getElementById('reader-contents').focus({ preventScroll: true });
+          }
+        });
         list.appendChild(item);
         const tick = document.createElement('div'); tick.className = 'rail-tick'; tick.dataset.i = i;
         tick.style.top = (N > 1 ? chapterStartPage[i] / (N - 1) : 0) * 100 + '%';
@@ -2976,11 +3094,19 @@ America</h2>
       if (ribbon && !ribbon.classList.contains('dragging')) ribbon.style.top = (f * 100) + '%';
       if (folio) folio.innerHTML = `Page <b>${curPage + 1}</b> of <b>${N}</b>`;
       let active = 0; for (let i = 0; i < chapterStartPage.length; i++) { if (chapterStartPage[i] <= curPage + PAGE_STEP - 1) active = i; }
-      document.querySelectorAll('#rail-chapters .chapter-nav-item').forEach((el, i) => el.classList.toggle('active', i === active));
+      document.querySelectorAll('#rail-chapters .chapter-nav-item').forEach((el, i) => {
+        el.classList.toggle('active', i === active);
+        if (i === active) el.setAttribute('aria-current', 'location'); else el.removeAttribute('aria-current');
+      });
       document.querySelectorAll('#rail-scrub .rail-tick').forEach((el, i) => el.classList.toggle('active', i === active));
       const prev = document.getElementById('rail-prev'), next = document.getElementById('rail-next');
       if (prev) prev.disabled = curPage <= 0;
       if (next) next.disabled = curPage >= N - PAGE_STEP;
+      document.getElementById('reader-prev').disabled = curPage <= 0;
+      document.getElementById('reader-next').disabled = curPage >= N - PAGE_STEP;
+      document.getElementById('reader-position').textContent = PAGE_STEP === 2
+        ? `Pages ${curPage + 1}–${Math.min(curPage + 2, N)} of ${N}`
+        : `Page ${curPage + 1} of ${N}`;
     }
     function updateRailTarget(p) { const ribbon = document.getElementById('rail-ribbon'); if (ribbon && N > 1) ribbon.style.top = (p / (N - 1) * 100) + '%'; }
     function previewFolio(p) { const folio = document.getElementById('rail-folio'); if (folio) folio.innerHTML = `Page <b>${p + 1}</b> of <b>${N}</b>`; }
@@ -3110,25 +3236,38 @@ America</h2>
       openBook({ source: 'Plunkitt of Tammany Hall', isFullBook: true });
     });
     function interact() {
-      if (!exploring || reading || menuOpen) return;
-      camera.updateMatrixWorld(); checkHover();
+      if (!exploring || reading || menuOpen || bookMotion.active || lookDragged) return;
+      euler.set(pitch, yaw, 0); camera.quaternion.setFromEuler(euler);
+      camera.updateMatrixWorld(); scene.updateMatrixWorld(); checkHover();
       if (!hovered) return;
       if (hovered.type === 'shrine') openBook({ source: 'Plunkitt of Tammany Hall', isFullBook: true }, hovered);
       else { playBookPull(); openBook(hovered.meta.content, hovered); }
     }
-    renderer.domElement.addEventListener('click', () => { if (!dragLook) interact(); });
-    document.getElementById('touch-read').addEventListener('click', interact);
+    renderer.domElement.addEventListener('click', event => {
+      if (event.button !== 0 || (!locked && suppressPointerClick)) return;
+      if (!locked && !aimFromPointer(event)) return;
+      interact();
+    });
+    document.getElementById('touch-read').addEventListener('click', () => { keyboardAim = true; interact(); });
     document.getElementById('reader-close').addEventListener('click', closeBook);
-    document.getElementById('reader-contents').addEventListener('click', () => readingContent.classList.toggle('contents-open'));
+    document.getElementById('reader-prev').addEventListener('click', prevLeaf);
+    document.getElementById('reader-next').addEventListener('click', nextLeaf);
+    document.getElementById('reader-contents').addEventListener('click', event => {
+      const expanded = readingContent.classList.toggle('contents-open');
+      event.currentTarget.setAttribute('aria-expanded', String(expanded));
+    });
     overlay.addEventListener('click', event => { if (event.target === overlay) closeBook(); });
     document.addEventListener('keydown', event => {
-      if (!reading) return;
-      if (event.code === 'Escape') { event.preventDefault(); closeBook(); return; }
-      if (event.code === 'Tab') {
-        const focusable = [...overlay.querySelectorAll('button:not([disabled]), a[href], [tabindex="0"]')].filter(el => el.getClientRects().length);
+      if (reading && event.code === 'Escape') { event.preventDefault(); closeBook(); return; }
+      const activeDialog = reading && overlay.classList.contains('visible') ? overlay
+        : startPrompt.classList.contains('visible') ? startPrompt : null;
+      if (event.code === 'Tab' && activeDialog) {
+        const focusable = [...activeDialog.querySelectorAll('button:not([disabled]), a[href], input:not([disabled]), [tabindex="0"]')]
+          .filter(el => !el.closest('[hidden]') && el.getClientRects().length);
         const first = focusable[0], last = focusable[focusable.length - 1];
-        if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
-        else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
+        if (!first) return;
+        if (event.shiftKey && (document.activeElement === first || !activeDialog.contains(document.activeElement))) { event.preventDefault(); last.focus(); }
+        else if (!event.shiftKey && (document.activeElement === last || !activeDialog.contains(document.activeElement))) { event.preventDefault(); first.focus(); }
       }
     });
 
@@ -3263,7 +3402,7 @@ America</h2>
         if (lastMs) frameTimes.push(nowMs - lastMs);
         lastMs = nowMs;
         if (frameTimes.length >= 180) {
-          const maximum = Math.min(devicePixelRatio, dragLook ? 1.25 : 1.75);
+          const maximum = Math.min(devicePixelRatio, matchMedia('(pointer: coarse)').matches ? 1.25 : 1.75);
           const nextRatio = qualityStep(curPixelRatio, maximum, frameTimes);
           frameTimes.length = 0;
           if (nextRatio !== curPixelRatio) { curPixelRatio = nextRatio; applyPixelRatio(curPixelRatio); }
