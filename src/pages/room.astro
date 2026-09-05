@@ -2610,7 +2610,7 @@ America</h2>
       if (!exploring || reading || menuOpen || event.target.closest('button, input, select, a')) return;
       keys[event.code] = true;
       if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space'].includes(event.code)) event.preventDefault();
-      if (event.code === 'Escape') showMenu();
+      if (event.code === 'Escape' && !event.repeat) showMenu();
       if (['KeyE', 'Enter', 'NumpadEnter'].includes(event.code) && !event.repeat) { event.preventDefault(); interact(); }
     });
     addEventListener('keyup', event => { keys[event.code] = false; });
@@ -2780,10 +2780,10 @@ America</h2>
         playPageTurn();
       }
     }
-    async function closeBook(event) {
+    async function closeBook() {
       if (!reading) return;
       readRequest++;
-      const resumeExploring = exploring && !menuOpen && event?.type === "click";
+      const resumeExploring = exploring && !menuOpen;
       if (isFullBook && N > 1) {
         try { localStorage.setItem('library-plunkitt-position', String(curPage / (N - 1))); } catch {}
       }
@@ -3230,7 +3230,7 @@ America</h2>
     });
     overlay.addEventListener('click', event => { if (event.target === overlay) closeBook(); });
     document.addEventListener('keydown', event => {
-      if (reading && event.code === 'Escape') { event.preventDefault(); closeBook(); return; }
+      if (reading && event.code === 'Escape') { event.preventDefault(); event.stopPropagation(); closeBook(); return; }
       const activeDialog = reading && overlay.classList.contains('visible') ? overlay
         : startPrompt.classList.contains('visible') ? startPrompt : null;
       if (event.code === 'Tab' && activeDialog) {

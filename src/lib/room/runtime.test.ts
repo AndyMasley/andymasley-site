@@ -256,6 +256,73 @@ describe('Borges current room module runtime smoke', () => {
     pause();
   });
 
+  it.each(['backdrop', 'Return button', 'Escape'])('returns straight to exploration when a borrowed book closes via %s', async method => {
+    await enter();
+    const target = shelfTarget(); await mouseLookAt(target.world);
+    const position = camera.position.clone();
+    key('KeyE'); await frames(8);
+    expect(byId('reading-overlay').classList.contains('visible')).toBe(true);
+    if (method === 'backdrop') byId('reading-overlay').click();
+    else if (method === 'Return button') byId('reader-close').click();
+    else key('Escape');
+    await frames(6);
+    expect(byId('reading-overlay').classList.contains('visible')).toBe(false);
+    expect(byId('start-prompt').classList.contains('visible')).toBe(false);
+    expect(document.body.classList.contains('exploring')).toBe(true);
+    expect(camera.position.x).toBeCloseTo(position.x, 8);
+    expect(camera.position.z).toBeCloseTo(position.z, 8);
+    await frames(60);
+    expect(byId('reading-overlay').classList.contains('visible')).toBe(false);
+    expect(byId('start-prompt').classList.contains('visible')).toBe(false);
+    if (method === 'Escape') {
+      document.body.dispatchEvent(new KeyboardEvent('keydown', { code: 'Escape', key: 'Escape', repeat: true, bubbles: true, cancelable: true }));
+      await frames(3);
+      expect(byId('start-prompt').classList.contains('visible')).toBe(false);
+      expect(document.body.classList.contains('exploring')).toBe(true);
+    }
+    key('Escape', 'keyup');
+    key('Escape'); await frames(3);
+    expect(byId('start-prompt').classList.contains('visible')).toBe(true);
+  });
+
+  it('keeps exploring after a book closes even when mouse-look reacquisition is rejected', async () => {
+    await enter();
+    const target = shelfTarget(); await mouseLookAt(target.world);
+    key('KeyE'); await frames(8);
+    vi.mocked(HTMLElement.prototype.requestPointerLock).mockRejectedValueOnce(new Error('Pointer lock cooldown'));
+    byId('reading-overlay').click(); await frames(6);
+    expect(byId('reading-overlay').classList.contains('visible')).toBe(false);
+    expect(byId('start-prompt').classList.contains('visible')).toBe(false);
+    expect(document.body.classList.contains('exploring')).toBe(true);
+    expect(document.body.classList.contains('pointer-locked')).toBe(false);
+    expect((byId('touch-controls') as HTMLElement).hidden).toBe(false);
+    const before = camera.quaternion.clone();
+    pointer('pointerdown', 300, 300); pointer('pointermove', 330, 300); pointer('pointerup', 330, 300);
+    await frames(3);
+    expect(camera.quaternion.equals(before)).toBe(false);
+  });
+
+  it('keeps the menu closed while mouse-look reacquisition is pending after closing a book', async () => {
+    await enter();
+    const target = shelfTarget(); await mouseLookAt(target.world);
+    key('KeyE'); await frames(8);
+    let completeLock!: () => void;
+    vi.mocked(HTMLElement.prototype.requestPointerLock).mockImplementationOnce(function (this: HTMLElement) {
+      const element = this;
+      return new Promise<void>(resolve => {
+        completeLock = () => { pointerLock = element; document.dispatchEvent(new Event('pointerlockchange')); resolve(); };
+      });
+    });
+    byId('reader-close').click(); await frames(6);
+    expect(byId('reading-overlay').classList.contains('visible')).toBe(false);
+    expect(byId('start-prompt').classList.contains('visible')).toBe(false);
+    completeLock(); await frames(6);
+    expect(document.body.classList.contains('exploring')).toBe(true);
+    expect(document.body.classList.contains('pointer-locked')).toBe(true);
+    expect(byId('reading-overlay').classList.contains('visible')).toBe(false);
+    expect(byId('start-prompt').classList.contains('visible')).toBe(false);
+  });
+
   it('opens the actual centered Plunkitt cover while leaving its pedestal alone', async () => {
     await enter();
     const volume = scene.getObjectByName('Plunkitt volume')!;
@@ -386,13 +453,14 @@ describe('Borges current room module runtime smoke', () => {
     await mouseLookAt(target.world); key('KeyE'); await frames(2);
     expect(byId('reading-overlay').classList.contains('visible')).toBe(false);
     key('Escape');
-    window.dispatchEvent(new CustomEvent('library:read-direct', { cancelable: true }));
+    key('KeyE');
     await frames(100);
     const restored = new RealThree.Matrix4(); target.mesh.getMatrixAt(target.index, restored);
     expect(restored.elements).toEqual(before.elements);
     expect(byId('reading-overlay').classList.contains('visible')).toBe(false);
-    expect(byId('start-prompt').classList.contains('visible')).toBe(true);
-    byId('read-without-3d').click(); await frames(8);
+    expect(byId('start-prompt').classList.contains('visible')).toBe(false);
+    expect(document.body.classList.contains('exploring')).toBe(true);
+    pause(); byId('read-without-3d').click(); await frames(8);
     expect(byId('reading-overlay').classList.contains('visible')).toBe(true);
     expect(byId('reading-content').classList.contains('full-book-view')).toBe(true);
   });
