@@ -49,11 +49,15 @@ const pointer = (type: string, x: number, y: number, pointerType = 'mouse', poin
 const clickAt = (x: number, y: number, type = 'mouse') => {
   pointer('pointerdown', x, y, type); pointer('pointerup', x, y, type); pointer('click', x, y, type);
 };
-const screenPoint = (position: RealThree.Vector3) => {
-  camera.updateMatrixWorld(true);
-  const projected = position.clone().project(camera);
-  const rect = byId('library-canvas').getBoundingClientRect();
-  return { x: rect.left + (projected.x + 1) * rect.width / 2, y: rect.top + (1 - projected.y) * rect.height / 2, projected };
+const mouseLookAt = async (position: RealThree.Vector3) => {
+  const direction = position.clone().sub(camera.position).normalize();
+  const orientation = new RealThree.Euler().setFromQuaternion(camera.quaternion, 'YXZ');
+  const event = new MouseEvent('mousemove', { bubbles: true });
+  Object.defineProperties(event, {
+    movementX: { value: (orientation.y - Math.atan2(-direction.x, -direction.z)) / 0.0022 },
+    movementY: { value: (orientation.x - Math.asin(direction.y)) / 0.0022 },
+  });
+  document.body.dispatchEvent(event); await frames(3);
 };
 const shelfTarget = () => {
   scene.updateMatrixWorld(true);
@@ -62,14 +66,13 @@ const shelfTarget = () => {
   for (let i = 0; i < shelf.count; i++) {
     shelf.getMatrixAt(i, matrix);
     const world = new RealThree.Vector3().setFromMatrixPosition(matrix).applyMatrix4(shelf.matrixWorld);
-    const point = screenPoint(world);
-    if (world.x < 0 && world.y > 1.8 && world.y < 2.4 && Math.abs(point.projected.x) > 0.25 && Math.abs(point.projected.x) < 0.8 && Math.abs(point.projected.y) < 0.8) {
-      const ray = new RealThree.Raycaster(); ray.setFromCamera(new RealThree.Vector2(point.projected.x, point.projected.y), camera);
+    if (world.y > 1.8 && world.y < 2.4 && world.distanceTo(camera.position) < 5.5) {
+      const ray = new RealThree.Raycaster(camera.position, world.clone().sub(camera.position).normalize());
       const index = ray.intersectObject(shelf)[0]?.instanceId;
-      if (index !== undefined) return { ...point, mesh: shelf, index, fragment: fragments[index % fragments.length] };
+      if (index !== undefined) return { world, mesh: shelf, index, fragment: fragments[index % fragments.length] };
     }
   }
-  throw new Error('No off-center shelf book in the initial view');
+  throw new Error('No shelf book within centered interaction range');
 };
 
 class Renderer {
@@ -160,6 +163,9 @@ afterEach(async () => {
   key('Escape'); await frames(60); pause(); stageWidth = 900; stageHeight = 680;
   (byId('room-motion') as HTMLInputElement).checked = true;
   byId('room-motion').dispatchEvent(new Event('change'));
+  coarsePointer = false; await enter();
+  await mouseLookAt(camera.position.clone().add(new RealThree.Vector3(-1, 0, 0)));
+  pause();
 });
 
 describe('Borges current room module runtime smoke', () => {
@@ -173,14 +179,45 @@ describe('Borges current room module runtime smoke', () => {
     expect(instances.some(mesh => mesh.count >= 242 && mesh.geometry.getAttribute('archiveTile'))).toBe(true);
   });
 
-  it('enters with a normal desktop cursor without requesting pointer lock', async () => {
+  it.each([0, 3])('seals doorway wall %i above the opening from both gallery and corridor sides', wall => {
+    scene.updateMatrixWorld(true);
+    const parts: RealThree.Object3D[] = [];
+    scene.traverse(object => { if (object.name === `Doorway wall ${wall}`) parts.push(object); });
+    expect(parts).toHaveLength(3);
+    const a = wall * Math.PI / 3;
+    const normal = new RealThree.Vector3(Math.cos(a), 0, Math.sin(a));
+    const tangent = new RealThree.Vector3(-normal.z, 0, normal.x);
+    const apothem = 5 * Math.cos(Math.PI / 6);
+    for (const side of [-1, 1]) {
+      const direction = normal.clone().multiplyScalar(-side);
+      for (const offset of [-2.4, -1.6, -0.88, 0, 0.88, 1.6, 2.4]) {
+        for (const y of [2.8, 4, 5.8]) {
+          const origin = normal.clone().multiplyScalar(apothem + side).addScaledVector(tangent, offset).setY(y);
+          const ray = new RealThree.Raycaster(origin, direction, 0, 2);
+          expect(ray.intersectObjects(parts, false).length, `wall ${wall}, side ${side}, tangent ${offset}, height ${y}`).toBeGreaterThan(0);
+        }
+      }
+      for (const offset of [-0.65, 0, 0.65]) {
+        const origin = normal.clone().multiplyScalar(apothem + side).addScaledVector(tangent, offset).setY(1.5);
+        const ray = new RealThree.Raycaster(origin, direction, 0, 2);
+        expect(ray.intersectObjects(parts, false), `door ${wall}, side ${side}, tangent ${offset}`).toHaveLength(0);
+      }
+    }
+  });
+
+  it('enters desktop mouse-look by default with a centered crosshair and no hand cursor option', async () => {
+    const requests = vi.mocked(HTMLElement.prototype.requestPointerLock).mock.calls.length;
     await enter();
     await frames(6);
     expect(document.body.classList.contains('exploring')).toBe(true);
     expect(byId('start-prompt').classList.contains('visible')).toBe(false);
     expect((byId('touch-controls') as HTMLElement).hidden).toBe(true);
-    expect(HTMLElement.prototype.requestPointerLock).not.toHaveBeenCalled();
-    expect(document.body.classList.contains('pointer-locked')).toBe(false);
+    expect(HTMLElement.prototype.requestPointerLock).toHaveBeenCalledTimes(requests + 1);
+    expect(document.body.classList.contains('pointer-locked')).toBe(true);
+    expect(getComputedStyle(byId('library-canvas')).cursor).toBe('none');
+    expect(getComputedStyle(byId('crosshair')).left).toBe('50%');
+    expect(getComputedStyle(byId('crosshair')).top).toBe('50%');
+    expect(document.getElementById('room-fps')).toBeNull();
     pause();
   });
 
@@ -200,65 +237,45 @@ describe('Borges current room module runtime smoke', () => {
     pause();
   });
 
-  it('points at and directly clicks an off-center shelf book using canvas coordinates', async () => {
+  it('shows a separate E reminder and opens the centered shelf book with E', async () => {
     await enter();
     const target = shelfTarget();
-    pointer('pointermove', target.x, target.y); await frames(3);
-    expect(byId('library-canvas').classList.contains('book-pointed')).toBe(true);
-    expect(byId('object-label').textContent).toBe(target.fragment.source);
-    clickAt(target.x, target.y); await frames(8);
+    await mouseLookAt(target.world);
+    expect(byId('object-label').classList.contains('visible')).toBe(true);
+    expect(document.querySelector('#object-label .label-inner')?.textContent).toBe(target.fragment.source);
+    expect(document.querySelector('#object-label .label-action')?.textContent).toBe('E to open');
+    expect(byId('controls-hint').textContent).toContain('E to open');
+    pointer('pointermove', 20, 20); await frames(3);
+    expect(document.querySelector('#object-label .label-inner')?.textContent).toBe(target.fragment.source);
+    key('KeyE'); await frames(8);
     expect(byId('reading-overlay').classList.contains('visible')).toBe(true);
     expect(byId('reading-text').textContent).toContain(target.fragment.quote);
     byId('reader-close').click(); await frames(4);
     expect(document.body.classList.contains('exploring')).toBe(true);
-    expect(HTMLElement.prototype.requestPointerLock).not.toHaveBeenCalled();
+    expect(document.body.classList.contains('pointer-locked')).toBe(true);
     pause();
   });
 
-  it('opens the actual Plunkitt cover while leaving a click on its pedestal alone', async () => {
+  it('opens the actual centered Plunkitt cover while leaving its pedestal alone', async () => {
     await enter();
     const volume = scene.getObjectByName('Plunkitt volume')!;
-    const cover = screenPoint(volume.getWorldPosition(new RealThree.Vector3()));
-    const tabletop = screenPoint(new RealThree.Vector3(0.42, 0.9, 0));
-    clickAt(tabletop.x, tabletop.y); await frames(3);
+    await mouseLookAt(new RealThree.Vector3(0.42, 0.9, 0));
+    key('KeyE'); await frames(3);
     expect(byId('reading-overlay').classList.contains('visible')).toBe(false);
-    clickAt(cover.x, cover.y); await frames(8);
+    await mouseLookAt(volume.getWorldPosition(new RealThree.Vector3()));
+    document.body.dispatchEvent(new MouseEvent('click', { button: 0, clientX: 20, clientY: 20, bubbles: true }));
+    await frames(8);
     expect(byId('reading-content').classList.contains('full-book-view')).toBe(true);
     expect(byId('reading-overlay').classList.contains('visible')).toBe(true);
     byId('reader-close').click(); await frames(4); pause();
   });
 
-  it('allows a touch tap with small finger movement but suppresses a drag click', async () => {
+  it('gives E and Enter the same centered target independently of pointer coordinates', async () => {
     await enter();
     const target = shelfTarget();
-    pointer('pointerdown', target.x, target.y, 'touch');
-    pointer('pointermove', target.x + 2, target.y + 2, 'touch');
-    pointer('pointerup', target.x, target.y, 'touch');
-    pointer('click', target.x, target.y, 'touch'); await frames(8);
-    expect(byId('reading-text').textContent).toContain(target.fragment.quote);
-    expect(byId('reading-overlay').classList.contains('visible')).toBe(true);
-    byId('reader-close').click(); await frames(4);
-    pointer('pointerdown', target.x, target.y, 'touch');
-    pointer('pointermove', target.x + 40, target.y, 'touch');
-    pointer('pointermove', target.x, target.y, 'touch');
-    pointer('pointerup', target.x, target.y, 'touch');
-    pointer('click', target.x, target.y, 'touch'); await frames(4);
-    expect(byId('reading-overlay').classList.contains('visible')).toBe(false);
-    expect(document.body.classList.contains('dragging-view')).toBe(false);
-    clickAt(target.x, target.y, 'touch'); await frames(8);
-    expect(byId('reading-overlay').classList.contains('visible')).toBe(true);
-    byId('reader-close').click(); await frames(4); pause();
-  });
-
-  it('cancels interrupted pointer gestures and gives E and Enter the same pointed target', async () => {
-    await enter();
-    const target = shelfTarget();
-    pointer('pointerdown', target.x, target.y);
-    pointer('pointercancel', target.x, target.y);
-    pointer('click', target.x, target.y); await frames(3);
-    expect(byId('reading-overlay').classList.contains('visible')).toBe(false);
     for (const code of ['KeyE', 'Enter']) {
-      pointer('pointermove', target.x, target.y); await frames(3);
+      await mouseLookAt(target.world);
+      pointer('pointermove', 1000, 740); await frames(3);
       key(code, 'keydown', byId('library-canvas')); await frames(8);
       expect(byId('reading-overlay').classList.contains('visible')).toBe(true);
       expect(byId('reading-text').textContent).toContain(target.fragment.quote);
@@ -268,6 +285,7 @@ describe('Borges current room module runtime smoke', () => {
   });
 
   it('keeps touch center targeting after drag contact ends and opens the centered book with Read', async () => {
+    coarsePointer = true;
     await enter();
     const target = scene.getObjectByName('Plunkitt volume')!.getWorldPosition(new RealThree.Vector3());
     const direction = target.sub(camera.position).normalize();
@@ -291,13 +309,9 @@ describe('Borges current room module runtime smoke', () => {
     expect(byId('reading-overlay').classList.contains('visible')).toBe(true);
     expect(byId('reading-content').classList.contains('full-book-view')).toBe(true);
     byId('reader-close').click(); await frames(4);
-    // Restore the view for subsequent off-center shelf-selection cases.
-    pointer('pointerdown', x, y, 'touch');
-    pointer('pointermove', x + 30, y, 'touch');
-    pointer('pointermove', x - dx, y - dy, 'touch');
-    pointer('pointerup', x - dx, y - dy, 'touch');
-    pointer('pointerleave', x - dx, y - dy, 'touch');
-    await frames(3); pause();
+    clickAt(20, 20, 'touch'); await frames(3);
+    expect(byId('reading-overlay').classList.contains('visible')).toBe(false);
+    pause();
   });
 
   it('handles the direct-reader event, preserves the full text, and closes with Escape', async () => {
@@ -369,7 +383,7 @@ describe('Borges current room module runtime smoke', () => {
     await enter();
     const target = shelfTarget();
     const before = new RealThree.Matrix4(); target.mesh.getMatrixAt(target.index, before);
-    clickAt(target.x, target.y); await frames(2);
+    await mouseLookAt(target.world); key('KeyE'); await frames(2);
     expect(byId('reading-overlay').classList.contains('visible')).toBe(false);
     key('Escape');
     window.dispatchEvent(new CustomEvent('library:read-direct', { cancelable: true }));
@@ -383,15 +397,20 @@ describe('Borges current room module runtime smoke', () => {
     expect(byId('reading-content').classList.contains('full-book-view')).toBe(true);
   });
 
-  it('only requests FPS pointer lock when opted in and returns to cursor mode when disabled', async () => {
-    const checkbox = byId('room-fps') as HTMLInputElement;
-    checkbox.checked = true; await enter();
-    expect(HTMLElement.prototype.requestPointerLock).toHaveBeenCalledTimes(1);
-    expect(document.body.classList.contains('pointer-locked')).toBe(true);
-    key('Escape'); await frames(3);
-    checkbox.checked = false; await enter();
-    expect(HTMLElement.prototype.requestPointerLock).toHaveBeenCalledTimes(1);
+  it('falls back to centered drag controls if pointer lock is rejected', async () => {
+    vi.mocked(HTMLElement.prototype.requestPointerLock).mockRejectedValueOnce(new Error('Unavailable'));
+    await enter(); await frames(3);
     expect(document.body.classList.contains('pointer-locked')).toBe(false);
     expect(document.body.classList.contains('exploring')).toBe(true);
+    expect((byId('touch-controls') as HTMLElement).hidden).toBe(false);
+    const before = camera.quaternion.clone();
+    pointer('pointerdown', 300, 300); pointer('pointermove', 330, 300);
+    pointer('pointercancel', 330, 300); await frames(3);
+    const afterCancel = camera.quaternion.clone();
+    expect(afterCancel.equals(before)).toBe(false);
+    pointer('pointermove', 800, 300); await frames(3);
+    expect(camera.quaternion.equals(afterCancel)).toBe(true);
+    clickAt(20, 20); await frames(3);
+    expect(byId('reading-overlay').classList.contains('visible')).toBe(false);
   });
 });

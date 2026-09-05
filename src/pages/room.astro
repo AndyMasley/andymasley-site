@@ -123,6 +123,15 @@ import '@/styles/global.css';
       backdrop-filter: blur(3px);
       -webkit-backdrop-filter: blur(3px);
     }
+    #object-label .label-action {
+      display: block;
+      margin-top: .45rem;
+      color: #f5e6c6;
+      font-size: .875rem;
+      font-weight: 600;
+      letter-spacing: .025em;
+      text-shadow: 0 1px 4px #000;
+    }
     #object-label.filler .label-inner {
       color: rgba(176, 141, 87, 0.55);
       font-variant: normal;
@@ -617,11 +626,8 @@ import '@/styles/global.css';
     #room-toolbar { position: fixed; top: max(1rem, env(safe-area-inset-top)); right: max(1rem, env(safe-area-inset-right)); z-index: 90; display: none; }
     body.exploring #room-toolbar { display: block; }
     #room-toolbar button, #touch-read, #move-pad button { border: 1px solid #aa905c; color: #f0dfbc; background: rgba(16,12,8,.78); font-size: 1rem; padding: .75rem 1rem; touch-action: none; cursor: pointer; }
-    #library-canvas { touch-action: none; cursor: grab; }
-    #library-canvas.book-pointed { cursor: pointer; }
-    body.dragging-view #library-canvas { cursor: grabbing; }
-    body.pointer-locked, body.pointer-locked #library-canvas { cursor: none; }
-    body.cursor-aim #crosshair { visibility: hidden; }
+    #library-canvas { touch-action: none; }
+    body.exploring, body.exploring #library-canvas { cursor: none; }
     body:not(.exploring) #crosshair { visibility: hidden; }
     #library-canvas:focus { outline: none; }
     #touch-controls { position: fixed; z-index: 80; inset: auto 0 max(1rem, env(safe-area-inset-bottom)); pointer-events: none; padding: 0 1rem; }
@@ -683,8 +689,8 @@ import '@/styles/global.css';
   </div>
 
   <div id="crosshair"></div>
-  <div id="object-label"><span class="label-inner"></span></div>
-  <div id="controls-hint">Click a book to read · drag to look · WASD / arrows move · ESC menu</div>
+  <div id="object-label"><span class="label-inner"></span><span class="label-action">E to open</span></div>
+  <div id="controls-hint">Mouse to look · WASD / arrows to move · E to open the highlighted book · ESC menu</div>
 
   <div id="title-card">
     <div class="tc-over">La Biblioteca de Babel</div>
@@ -697,11 +703,10 @@ import '@/styles/global.css';
       <div class="menu-eyebrow">The Library of Babel</div>
       <button class="prompt-text" id="start-button" disabled>Enter the gallery</button>
       <p id="loading-note" role="status">Opening the library…</p>
-      <div class="prompt-instructions">Click or tap a book to read · drag the room to look<br>WASD / arrows move · E / Enter read · Q / R look left / right · T / G look up / down</div>
+      <div class="prompt-instructions">Move the mouse to look · WASD / arrows to move<br>Aim the center dot at a book and press E to open it<br>Q / R look left / right · T / G look up / down</div>
       <div class="room-settings">
         <label><input type="checkbox" id="room-sound" checked> Sound</label>
         <label><input type="checkbox" id="room-motion"> Still camera</label>
-        <label><input type="checkbox" id="room-fps"> Mouse-look mode</label>
         <label for="room-brightness">Lamplight <input id="room-brightness" type="range" min="0.8" max="2" step="0.05" value="1.35"></label>
       </div>
       <button id="read-without-3d" class="room-text-button">Read Plunkitt</button>
@@ -718,7 +723,7 @@ import '@/styles/global.css';
       <button data-move="KeyD" aria-label="Walk right">→</button>
     </div>
     <button id="touch-read" disabled>Read</button>
-    <span>Tap a book to read · drag the room to look</span>
+    <span>Drag to look · center a book, then tap Read</span>
   </div>
   <div id="reading-overlay" role="dialog" aria-modal="true" aria-label="Reading" tabindex="-1">
     <div class="reader-toolbar">
@@ -2080,16 +2085,18 @@ America</h2>
         const openW = 1.7, openH = 2.7;
         const jw = (side - openW) / 2;
         // left jamb
-        const lj = new THREE.Mesh(new THREE.PlaneGeometry(jw, H), matWall);
+        const lj = new THREE.Mesh(new THREE.BoxGeometry(jw, H, 0.15), matWall);
         // right jamb
-        const rj = new THREE.Mesh(new THREE.PlaneGeometry(jw, H), matWall);
+        const rj = new THREE.Mesh(new THREE.BoxGeometry(jw, H, 0.15), matWall);
         // spandrel above opening
-        const sp = new THREE.Mesh(new THREE.PlaneGeometry(openW, H - openH), matWall);
+        const sp = new THREE.Mesh(new THREE.BoxGeometry(openW, H - openH, 0.15), matWall);
         const tan = new THREE.Vector3(-n.z, 0, n.x);
         const base = new THREE.Vector3(n.x * apothem, 0, n.z * apothem);
         function place(m, offX, cy, receive = true) {
           m.position.set(base.x + tan.x * offX, cy, base.z + tan.z * offX);
-          m.lookAt(0, cy, 0); m.receiveShadow = receive; scene.add(m);
+          m.lookAt(m.position.x - n.x, cy, m.position.z - n.z);
+          m.name = `Doorway wall ${w}`;
+          m.receiveShadow = receive; scene.add(m);
         }
         place(lj, -(openW / 2 + jw / 2), H / 2);
         place(rj, (openW / 2 + jw / 2), H / 2);
@@ -2101,7 +2108,9 @@ America</h2>
         const t3 = new THREE.Mesh(new THREE.BoxGeometry(openW + 0.24, 0.14, 0.18), trimMat);
         function placeTrim(m, offX, cy) {
           m.position.set(base.x + tan.x * offX, cy, base.z + tan.z * offX);
-          m.lookAt(0, cy, 0); scene.add(m);
+          m.lookAt(m.position.x - n.x, cy, m.position.z - n.z);
+          m.name = `Doorway trim ${w}`;
+          scene.add(m);
         }
         placeTrim(t1, -openW / 2, openH / 2);
         placeTrim(t2, openW / 2, openH / 2);
@@ -2492,12 +2501,9 @@ America</h2>
     const _wish = new THREE.Vector3(), _forward = new THREE.Vector3(), _right = new THREE.Vector3(), _wishWorld = new THREE.Vector3();
     let bobPhase = 0, curFov = 70;
 
-    let exploring = false, dragLook = true;
-    let touchInput = matchMedia('(pointer: coarse)').matches;
+    let exploring = false, dragLook = matchMedia('(pointer: coarse)').matches;
     let lookPointer = null, lookX = 0, lookY = 0, lookStartX = 0, lookStartY = 0;
-    let lookDragged = false, suppressPointerClick = false;
-    const pointerAim = new THREE.Vector2();
-    let hasPointerAim = false, keyboardAim = true;
+    let lookDragged = false;
     const eyeOpening = document.getElementById('eye-opening');
     const startPrompt = document.getElementById('start-prompt');
     const startButton = document.getElementById('start-button');
@@ -2506,7 +2512,6 @@ America</h2>
     const touchControls = document.getElementById('touch-controls');
     const soundControl = document.getElementById('room-sound');
     const motionControl = document.getElementById('room-motion');
-    const fpsControl = document.getElementById('room-fps');
     const brightnessControl = document.getElementById('room-brightness');
     let exposureTarget = 1.35;
     let reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -2514,8 +2519,7 @@ America</h2>
     let introDone = false, titleShown = false;
     function resetInput() {
       Object.keys(keys).forEach(key => delete keys[key]);
-      vel.set(0, 0, 0); lookPointer = null; lookDragged = false; hasPointerAim = false; keyboardAim = true;
-      document.body.classList.remove('dragging-view', 'cursor-aim');
+      vel.set(0, 0, 0); lookPointer = null; lookDragged = false;
     }
     function runTitleCard() {
       if (titleShown) return; titleShown = true;
@@ -2523,10 +2527,11 @@ America</h2>
       setTimeout(() => titleCard.classList.remove('visible'), 4600);
     }
     function syncControls() {
-      touchControls.hidden = !touchInput || !dragLook || !exploring || reading || menuOpen;
+      touchControls.hidden = !dragLook || !exploring || reading || menuOpen;
       document.body.classList.toggle('exploring', exploring && !reading && !menuOpen);
       document.body.classList.toggle('pointer-locked', locked && exploring && !reading && !menuOpen);
-      controlsHint.textContent = locked ? 'WASD / arrows move · mouse look · E / Enter or click to read · ESC pause' : 'Click a book to read · drag to look · WASD / arrows move · E / Enter read · ESC pause';
+      controlsHint.textContent = dragLook ? 'Drag to look · center a book and tap Read · E to open with a keyboard' : 'Mouse to look · WASD / arrows to move · E to open the highlighted book · ESC pause';
+      document.querySelector('#object-label .label-action').textContent = dragLook ? 'Tap Read to open · E on a keyboard' : 'E to open';
     }
     function showMenu() {
       resetInput(); menuOpen = true; exploring = false;
@@ -2541,10 +2546,10 @@ America</h2>
       try { initAudioGraph(); audioCtx.resume().catch(() => {}); startAmbient(); } catch (error) { soundControl.checked = false; }
     }
     function useDragLook() {
-      dragLook = true; fpsControl.checked = false; startExploring();
+      dragLook = true; startExploring();
     }
     async function hideMenu() {
-      if (!fpsControl.checked || !document.body.requestPointerLock) { useDragLook(); return; }
+      if (matchMedia('(pointer: coarse)').matches || !document.body.requestPointerLock) { useDragLook(); return; }
       try {
         await document.body.requestPointerLock();
         if (document.pointerLockElement === document.body) startExploring();
@@ -2564,55 +2569,36 @@ America</h2>
       yaw -= event.movementX * 0.0022;
       pitch = Math.max(-1.3, Math.min(1.3, pitch - event.movementY * 0.0022));
     });
-    function aimFromPointer(event) {
-      const rect = renderer.domElement.getBoundingClientRect();
-      if (rect.width <= 0 || rect.height <= 0) return false;
-      const x = (event.clientX - rect.left) / rect.width, y = (event.clientY - rect.top) / rect.height;
-      if (x < 0 || x > 1 || y < 0 || y > 1) { hasPointerAim = false; return false; }
-      pointerAim.set(x * 2 - 1, 1 - y * 2); hasPointerAim = true; keyboardAim = false;
-      return true;
-    }
     renderer.domElement.addEventListener('pointerdown', event => {
       if (!dragLook || !exploring || reading || event.button !== 0 || lookPointer !== null) return;
-      if (event.pointerType === 'touch') { touchInput = true; syncControls(); }
-      suppressPointerClick = false; lookDragged = false;
+      lookDragged = false;
       lookPointer = event.pointerId;
       lookX = lookStartX = event.clientX; lookY = lookStartY = event.clientY;
-      aimFromPointer(event);
       renderer.domElement.focus({ preventScroll: true });
       renderer.domElement.setPointerCapture(event.pointerId);
     });
     renderer.domElement.addEventListener('pointermove', event => {
       if (!dragLook || !exploring || reading) return;
-      if (lookPointer !== null && lookPointer !== event.pointerId) return;
+      if (lookPointer !== event.pointerId) return;
       if (lookPointer === event.pointerId) {
         const threshold = event.pointerType === 'touch' ? 10 : 6;
         if (Math.hypot(event.clientX - lookStartX, event.clientY - lookStartY) > threshold) lookDragged = true;
         if (lookDragged) {
           yaw -= (event.clientX - lookX) * 0.004;
           pitch = Math.max(-1.3, Math.min(1.3, pitch - (event.clientY - lookY) * 0.004));
-          hasPointerAim = false; clearHover();
-          document.body.classList.add('dragging-view');
-        } else aimFromPointer(event);
+          clearHover();
+        }
         lookX = event.clientX; lookY = event.clientY;
-      } else aimFromPointer(event);
+      }
     });
     renderer.domElement.addEventListener('pointerup', event => {
       if (lookPointer !== event.pointerId) return;
-      suppressPointerClick = lookDragged;
-      if (!lookDragged) aimFromPointer(event);
-      else if (event.pointerType === 'touch') keyboardAim = true;
       lookPointer = null; lookDragged = false;
-      document.body.classList.remove('dragging-view');
       if (renderer.domElement.hasPointerCapture?.(event.pointerId)) renderer.domElement.releasePointerCapture(event.pointerId);
     });
     for (const name of ['pointercancel', 'lostpointercapture']) renderer.domElement.addEventListener(name, event => {
       if (lookPointer !== event.pointerId) return;
-      lookPointer = null; lookDragged = false; suppressPointerClick = true; hasPointerAim = false;
-      document.body.classList.remove('dragging-view'); clearHover();
-    });
-    renderer.domElement.addEventListener('pointerleave', event => {
-      if (lookPointer === null && !locked) { hasPointerAim = false; keyboardAim = event.pointerType === 'touch'; clearHover(); }
+      lookPointer = null; lookDragged = false; clearHover();
     });
     document.querySelectorAll('[data-move]').forEach(button => {
       button.addEventListener('pointerdown', event => {
@@ -2625,8 +2611,7 @@ America</h2>
       keys[event.code] = true;
       if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space'].includes(event.code)) event.preventDefault();
       if (event.code === 'Escape') showMenu();
-      if (['KeyQ', 'KeyR', 'KeyT', 'KeyG'].includes(event.code)) { hasPointerAim = false; keyboardAim = true; }
-      if (['KeyE', 'Enter', 'NumpadEnter'].includes(event.code) && !event.repeat) { event.preventDefault(); keyboardAim = true; interact(); }
+      if (['KeyE', 'Enter', 'NumpadEnter'].includes(event.code) && !event.repeat) { event.preventDefault(); interact(); }
     });
     addEventListener('keyup', event => { keys[event.code] = false; });
     addEventListener('blur', () => { if (!reading) showMenu(); else resetInput(); });
@@ -2664,24 +2649,14 @@ America</h2>
       proxy.visible = false;
       shell.visible = false;
       hovered = null;
-      renderer.domElement.classList.remove('book-pointed');
       document.getElementById('touch-read').disabled = true;
       proxyPull = 0;
     }
     function checkHover() {
-      const cursorAim = !locked && hasPointerAim;
-      document.body.classList.toggle('cursor-aim', cursorAim);
-      const rect = renderer.domElement.getBoundingClientRect();
-      const aimX = cursorAim ? rect.left + (pointerAim.x + 1) * rect.width / 2 : innerWidth / 2;
-      const aimY = cursorAim ? rect.top + (1 - pointerAim.y) * rect.height / 2 : innerHeight / 2;
-      crosshair.style.left = `${aimX}px`; crosshair.style.top = `${aimY}px`;
-      const labelInset = Math.min(180, innerWidth / 2);
-      label.style.left = `${Math.max(labelInset, Math.min(innerWidth - labelInset, aimX))}px`;
-      label.style.top = `${Math.max(24, Math.min(innerHeight - 100, aimY))}px`;
-      if ((!locked && !hasPointerAim && !keyboardAim) || (lookPointer !== null && lookDragged) || bookMotion.active) { clearHover(); return; }
+      if ((lookPointer !== null && lookDragged) || bookMotion.active) { clearHover(); return; }
       camera.updateMatrixWorld();
-      ray.setFromCamera(cursorAim ? pointerAim : centerV, camera);
-      ray.far = 12;
+      ray.setFromCamera(centerV, camera);
+      ray.far = 6;
       const bh = ray.intersectObjects([books, adjacent.books]);
       const sh = details.shrineVolume.visible ? ray.intersectObject(details.shrineVolume, true) : [];
       const nearest = Math.min(bh[0]?.distance ?? Infinity, sh[0]?.distance ?? Infinity);
@@ -2699,7 +2674,7 @@ America</h2>
       const sameAsBefore = hovered && newHover &&
         ((hovered.type === 'shrine' && newHover.type === 'shrine') ||
          (hovered.type === 'book' && newHover.type === 'book' && hovered.id === newHover.id && hovered.mesh === newHover.mesh));
-      if (sameAsBefore) { renderer.domElement.classList.toggle('book-pointed', cursorAim); return; }
+      if (sameAsBefore) return;
 
       proxy.visible = false; shell.visible = false;
       if (newHover) {
@@ -2725,7 +2700,6 @@ America</h2>
         label.classList.remove('visible');
       }
       hovered = newHover;
-      renderer.domElement.classList.toggle('book-pointed', !!hovered && cursorAim);
       document.getElementById('touch-read').disabled = !hovered;
       proxyPull = 0;
     }
@@ -3243,12 +3217,10 @@ America</h2>
       if (hovered.type === 'shrine') openBook({ source: 'Plunkitt of Tammany Hall', isFullBook: true }, hovered);
       else { playBookPull(); openBook(hovered.meta.content, hovered); }
     }
-    renderer.domElement.addEventListener('click', event => {
-      if (event.button !== 0 || (!locked && suppressPointerClick)) return;
-      if (!locked && !aimFromPointer(event)) return;
-      interact();
+    document.addEventListener('click', event => {
+      if (locked && event.button === 0 && (event.target === document.body || event.target === renderer.domElement)) interact();
     });
-    document.getElementById('touch-read').addEventListener('click', () => { keyboardAim = true; interact(); });
+    document.getElementById('touch-read').addEventListener('click', () => interact());
     document.getElementById('reader-close').addEventListener('click', closeBook);
     document.getElementById('reader-prev').addEventListener('click', prevLeaf);
     document.getElementById('reader-next').addEventListener('click', nextLeaf);
