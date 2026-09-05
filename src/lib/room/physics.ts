@@ -4,20 +4,31 @@ export function damp(current: number, target: number, rate: number, dt: number) 
   return target + (current - target) * Math.exp(-rate * Math.max(0, dt));
 }
 
-export function canStand(x: number, z: number) {
+export const GALLERY_APOTHEM = 5 * Math.cos(Math.PI / 6);
+export const NEIGHBOR_X = -(2 * GALLERY_APOTHEM + 2.6);
+
+function insideGallery(x: number, z: number, hasPedestal: boolean) {
   if (!Number.isFinite(x) || !Number.isFinite(z)) return false;
-  const apothem = 5 * Math.cos(Math.PI / 6);
+  const apothem = GALLERY_APOTHEM;
   for (let wall = 0; wall < 6; wall++) {
     const angle = wall * Math.PI / 3;
     const limit = apothem - (wall === 0 || wall === 3 ? 0.25 : 0.7);
     if (x * Math.cos(angle) + z * Math.sin(angle) > limit) return false;
   }
   const distance = Math.hypot(x, z);
+  if (!hasPedestal) return distance >= 2.37;
   if (distance < 0.55) return false;
   if (distance > 1.05 * Math.cos(Math.PI / 6) && distance < 2.37) {
     return x > 0 && Math.abs(z) < 0.5;
   }
   return true;
+}
+
+export function canStand(x: number, z: number) {
+  if (!Number.isFinite(x) || !Number.isFinite(z)) return false;
+  // Both thresholds overlap their gallery floors; the narrower passage leaves room for shoulders.
+  const inPassage = x <= -3.55 && x >= NEIGHBOR_X + 3.55 && Math.abs(z) < 0.52;
+  return inPassage || insideGallery(x, z, true) || insideGallery(x - NEIGHBOR_X, z, false);
 }
 
 // Substeps stop low frame rates from tunneling through the pedestal or the bridge kerb.

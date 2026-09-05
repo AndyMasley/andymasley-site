@@ -1041,7 +1041,7 @@ America</h2>
   <script type="module">
     try {
     const { THREE, EffectComposer, RenderPass, UnrealBloomPass, ShaderPass, OutputPass, Reflector,
-      enrichLibrary, canStand, slideMove, damp, qualityStep, localMovement } = await window.libraryReady;
+      enrichLibrary, loadLibraryMaterials, buildLibraryDepth, BookMotion, canStand, slideMove, damp, qualityStep, localMovement } = await window.libraryReady;
 
     // ==================================================================
     //  AUDIO  — everything synthesized, no external files
@@ -2008,6 +2008,8 @@ America</h2>
       outer.holes.push(hole);
       const geo = new THREE.ShapeGeometry(outer);
       geo.rotateX(-Math.PI / 2);
+      const floorUV = geo.getAttribute('uv');
+      for (let i = 0; i < floorUV.count; i++) floorUV.setXY(i, floorUV.getX(i) / 5, floorUV.getY(i) / 5);
       const floor = new THREE.Mesh(geo, matFloor);
       floor.receiveShadow = true; scene.add(floor);
       // ceiling with a matching hole → the shaft opens upward too
@@ -2020,14 +2022,8 @@ America</h2>
 
       // the infinite chasm: outer shaft wall + central pillar, plunging up & down
       const shaftH = 64;
-      const outerDown = new THREE.Mesh(new THREE.CylinderGeometry(moatOuter, moatOuter, shaftH, 6, 1, true), matShaftWall);
-      outerDown.position.y = -shaftH / 2; scene.add(outerDown);
-      const outerUp = new THREE.Mesh(new THREE.CylinderGeometry(moatOuter, moatOuter, shaftH, 6, 1, true), matShaftWall);
-      outerUp.position.y = H + shaftH / 2; scene.add(outerUp);
       const pillarDown = new THREE.Mesh(new THREE.CylinderGeometry(islandOuter, islandOuter, shaftH, 6, 1, true), matPillar);
       pillarDown.position.y = -shaftH / 2; scene.add(pillarDown);
-      const pillarUp = new THREE.Mesh(new THREE.CylinderGeometry(islandOuter, islandOuter, shaftH, 6, 1, true), matPillar);
-      pillarUp.position.y = H + shaftH / 2; scene.add(pillarUp);
     })();
 
     // ---- WALLS ---- (walls 0 & 3 are the free/vestibule walls; 1,2,4,5 carry bookcases)
@@ -2110,9 +2106,9 @@ America</h2>
         scene.add(sw);
       });
       // floor + ceiling
-      const vf = new THREE.Mesh(new THREE.PlaneGeometry(halfW * 2, depth), matFloor);
+      const vf = new THREE.Mesh(new THREE.PlaneGeometry(depth, halfW * 2), matFloor);
       vf.rotation.x = -Math.PI / 2; vf.position.set(outCenter.x, 0.01, outCenter.z); vf.receiveShadow = true; scene.add(vf);
-      const vc = new THREE.Mesh(new THREE.PlaneGeometry(halfW * 2, depth), matWall);
+      const vc = new THREE.Mesh(new THREE.PlaneGeometry(depth, halfW * 2), matWall);
       vc.rotation.x = Math.PI / 2; vc.position.set(outCenter.x, vh, outCenter.z); scene.add(vc);
       // small vestibule bulb
       const vbLight = new THREE.PointLight(0xffcf90, 7, 7, 2);
@@ -2126,7 +2122,7 @@ America</h2>
       // brass chain across the archway threshold (diegetic barrier)
       const chainY = 1.0;
       const chainMat = matBrass;
-      const ccount = 25; // close enough together that the links interlock
+      const ccount = openBack ? 0 : 25; // the completed west passage is open
       for (let i = 0; i < ccount; i++) {
         const link = new THREE.Mesh(new THREE.TorusGeometry(0.045, 0.014, 6, 10), chainMat);
         const off = (i / (ccount - 1) - 0.5) * (halfW * 2 - 0.1);
@@ -2160,35 +2156,6 @@ America</h2>
     buildVestibule(0, true, false);  // vestibule A — the mirror
     buildVestibule(3, false, true);  // vestibule B — open corridor to the neighbor gallery
 
-    // ---- NEIGHBOR GALLERY SHELL (seen through vestibule B) ----
-    (function neighborGallery() {
-      const n = wallNormal(3);
-      const pitch = 2 * apothem + 2.6 + 0.3; // one gallery + vestibule beyond
-      const g = new THREE.Group();
-      // a simplified hex wall ring + shelves silhouette + 2 emissive bulbs.
-      // Skip the near wall (local w=3 after the y=PI flip) so the corridor reads through into it.
-      for (let w = 0; w < 6; w++) {
-        if (w === 3) continue;
-        const nn = wallNormal(w);
-        const wall = new THREE.Mesh(new THREE.PlaneGeometry(R, H), matWall);
-        wall.position.set(nn.x * apothem, H / 2, nn.z * apothem);
-        wall.lookAt(0, H / 2, 0);
-        g.add(wall);
-      }
-      // faint bulbs
-      [1, 4].forEach(w => {
-        const nn = wallNormal(w);
-        const b = new THREE.Mesh(new THREE.SphereGeometry(0.1, 10, 10), matBulb);
-        b.position.set(nn.x * (apothem - 0.5), 3.2, nn.z * (apothem - 0.5));
-        g.add(b);
-      });
-      const floorN = new THREE.Mesh(new THREE.CircleGeometry(R, 6, Math.PI / 6), matFloor);
-      floorN.rotation.x = -Math.PI / 2; g.add(floorN);
-      g.position.set(n.x * pitch, 0, n.z * pitch);
-      g.rotation.y = Math.PI; // face back toward player
-      scene.add(g);
-    })();
-
     // ---- CENTRAL SHAFT: rim, railing, bridge, pedestal island ----
     const bridgeHalfZ = 0.55;
     (function buildShaft() {
@@ -2212,22 +2179,25 @@ America</h2>
 
       // brass railing at the chasm edge, with a GAP centered on +X for the bridge.
       // The gap is baked into the geometry (rotateZ before rotateX) so it truly sits at +X.
-      const postCount = 18;
-      const gapHalf = 0.36;
-      for (let i = 0; i < postCount; i++) {
-        const a = (i / postCount) * Math.PI * 2;
-        const da = Math.atan2(Math.sin(a), Math.cos(a));
-        if (Math.abs(da) < gapHalf + 0.06) continue;
-        const post = new THREE.Mesh(new THREE.CylinderGeometry(0.026, 0.03, 0.95, 8), matBrass);
-        post.position.set(Math.cos(a) * railingR, 0.475, Math.sin(a) * railingR);
-        scene.add(post);
+      for (let face = 0; face < 6; face++) {
+        const a = face * Math.PI / 3, nx = Math.cos(a), nz = Math.sin(a);
+        const radius = moatOuter * Math.cos(Math.PI / 6) + 0.10;
+        const spans = face === 0 ? [[-moatOuter / 2, -0.57], [0.57, moatOuter / 2]] : [[-moatOuter / 2, moatOuter / 2]];
+        for (const [start, end] of spans) {
+          const off = (start + end) / 2;
+          for (const y of [0.5, 0.98]) {
+            const rail = new THREE.Mesh(new THREE.BoxGeometry(end - start, 0.032, 0.032), matBrass);
+            rail.position.set(nx * radius - nz * off, y, nz * radius + nx * off);
+            rail.rotation.y = Math.atan2(nx, nz); scene.add(rail);
+          }
+          const count = Math.ceil((end - start) / 0.38);
+          for (let postIndex = 0; postIndex <= count; postIndex++) {
+            const off = start + (end - start) * postIndex / count;
+            const post = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.03, 0.96, 8), matBrass);
+            post.position.set(nx * radius - nz * off, 0.48, nz * radius + nx * off); scene.add(post);
+          }
+        }
       }
-      const railArcGeo = new THREE.TorusGeometry(railingR, 0.035, 8, 48, Math.PI * 2 - gapHalf * 2);
-      railArcGeo.rotateZ(gapHalf);        // arc now spans [gapHalf, 2π − gapHalf]
-      railArcGeo.rotateX(Math.PI / 2);    // lay flat: gap centered on +X
-      const rail = new THREE.Mesh(railArcGeo, matBrass);
-      rail.position.y = 0.95; scene.add(rail);
-      const railMid = rail.clone(); railMid.position.y = 0.5; scene.add(railMid);
 
       // stone bridge spanning the chasm from outer floor (+X) to the island
       const bLen = moatOuter - islandOuter + 0.7;
@@ -2246,49 +2216,6 @@ America</h2>
       ped.position.y = 0.57; ped.receiveShadow = true; ped.castShadow = true; scene.add(ped);
       const pedTop = new THREE.Mesh(new THREE.CylinderGeometry(0.46, 0.46, 0.06, 6), matWood);
       pedTop.position.y = 1.09; pedTop.receiveShadow = true; pedTop.castShadow = true; scene.add(pedTop);
-    })();
-
-    // ---- SHAFT ECHO LEVELS (vertical infinity: balconies + lamps down & up) ----
-    (function echoLevels() {
-      const levels = 7, pitch = 4.0;
-      // balcony = thin hexagonal ring hugging the outer shaft wall
-      const balcGeo = new THREE.TorusGeometry(moatOuter - 0.12, 0.1, 6, 6);
-      balcGeo.rotateZ(Math.PI / 6); // align hex balcony vertices with the shaft-wall vertices
-      balcGeo.rotateX(Math.PI / 2);
-      const balconies = new THREE.InstancedMesh(balcGeo, matStone, levels * 2);
-      const railGeo = new THREE.TorusGeometry(moatOuter - 0.12, 0.02, 6, 24);
-      railGeo.rotateX(Math.PI / 2);
-      const balcRails = new THREE.InstancedMesh(railGeo, matBrass, levels * 2);
-      const lampGeo = new THREE.SphereGeometry(0.1, 8, 8);
-      const lamps = new THREE.InstancedMesh(lampGeo, matBulb, levels * 2 * 2);
-      const m = new THREE.Matrix4(), mr = new THREE.Matrix4();
-      let ri = 0, li = 0;
-      for (let s = 1; s <= levels; s++) {
-        for (const dir of [1, -1]) {
-          const y = dir * pitch * s + (dir < 0 ? 0 : H);
-          m.makeTranslation(0, y, 0); balconies.setMatrixAt(ri, m);
-          mr.makeTranslation(0, y + 0.9, 0); balcRails.setMatrixAt(ri, mr);
-          ri++;
-          [1, 4].forEach(w => {
-            const nn = wallNormal(w);
-            m.makeTranslation(nn.x * (moatOuter - 0.5), y + 2.0, nn.z * (moatOuter - 0.5));
-            lamps.setMatrixAt(li++, m);
-          });
-        }
-      }
-      balconies.instanceMatrix.needsUpdate = true;
-      balcRails.instanceMatrix.needsUpdate = true;
-      lamps.instanceMatrix.needsUpdate = true;
-      scene.add(balconies); scene.add(balcRails); scene.add(lamps);
-
-      // terminus caps close the shaft ends
-      const capGeo = new THREE.CircleGeometry(moatOuter, 6, Math.PI / 6); // vertices aligned with shaft hex
-      const capTex = new THREE.CanvasTexture(terminusTexture(0x2a2016));
-      capTex.colorSpace = THREE.SRGBColorSpace;
-      const capUp = new THREE.Mesh(capGeo,
-        new THREE.MeshBasicMaterial({ map: capTex, transparent: true, depthWrite: false, side: THREE.DoubleSide }));
-      capUp.rotation.x = Math.PI / 2; capUp.position.y = H + pitch * levels + pitch; scene.add(capUp);
-      const capDn = capUp.clone(); capDn.position.y = -(pitch * levels + pitch); scene.add(capDn);
     })();
 
     // ---- LAMP GLOBES + ARMS + HALOS (main gallery bulbs) ----
@@ -2343,8 +2270,8 @@ America</h2>
         while (bx < usableW / 2 - 0.06) {
           const bw = 0.045 + seededRandom() * 0.05;
           if (bx + bw > usableW / 2) break;
-          const bh = 0.5 + seededRandom() * 0.42;
-          const bd = 0.2 + seededRandom() * 0.06;
+          const bh = 0.46 + seededRandom() * 0.25;
+          const bd = 0.25 + seededRandom() * 0.07;
           const lean = seededRandom() < 0.12 ? (seededRandom() - 0.5) * 0.14 : 0;
           const cx = bx + bw / 2;
           // seat spines ~8cm behind the case front, clear of the back panel
@@ -2493,6 +2420,14 @@ America</h2>
     scene.add(dust);
 
     const details = enrichLibrary({ scene, books, bookMeta, matWood, matStone, matBrass, matWall, shrineBook, shrineGroup });
+    loadLibraryMaterials(matFloor, matWood, matStone);
+    const adjacent = buildLibraryDepth(scene, { floor: matFloor, stone: matStone, wood: matWood, brass: matBrass, wall: matWall, back: matBack, bulb: matBulb }, books, details.pageEdges, bookMeta);
+    const bookMotion = new BookMotion(scene, camera);
+    const architecture = [];
+    const solidMaterials = new Set([matWall, matWood, matBack, matStone]);
+    scene.traverse(object => {
+      if (object.isMesh && !Array.isArray(object.material) && solidMaterials.has(object.material)) architecture.push(object);
+    });
     const selectedBinding = details.atlasMap.clone();
     selectedBinding.repeat.set(1 / 16, 1 / 16);
     selectedBinding.needsUpdate = true;
@@ -2612,7 +2547,7 @@ America</h2>
     addEventListener('blur', () => { if (!reading) showMenu(); else resetInput(); });
     document.addEventListener('visibilitychange', () => {
       resetInput(); frameTimes.length = 0; lastMs = 0;
-      if (document.hidden) { audioCtx?.suspend(); if (!reading) showMenu(); }
+      if (document.hidden) { if (bookMotion.active) bookMotion.update(1); audioCtx?.suspend(); if (!reading) showMenu(); }
       else if (audioCtx && soundControl.checked) audioCtx.resume().catch(() => {});
     });
     document.getElementById('pause-room').addEventListener('click', event => { event.stopPropagation(); showMenu(); });
@@ -2650,18 +2585,23 @@ America</h2>
     function checkHover() {
       ray.setFromCamera(centerV, camera);
       ray.far = 6;
-      const bh = ray.intersectObject(books);
+      const bh = ray.intersectObjects([books, adjacent.books]);
       const sh = ray.intersectObject(shrineHit);
+      const nearest = Math.min(bh[0]?.distance ?? Infinity, sh[0]?.distance ?? Infinity);
+      if (Number.isFinite(nearest)) {
+        ray.far = Math.max(0, nearest - 0.025);
+        if (ray.intersectObjects(architecture, false).length) { clearHover(); return; }
+      }
       let newHover = null;
       if (sh.length && (!bh.length || sh[0].distance <= bh[0].distance)) {
         newHover = { type: 'shrine' };
       } else if (bh.length) {
-        newHover = { type: 'book', id: bh[0].instanceId, meta: bookMeta[bh[0].instanceId] };
+        newHover = { type: 'book', mesh: bh[0].object, id: bh[0].instanceId, meta: (bh[0].object === books ? bookMeta : adjacent.meta)[bh[0].instanceId] };
       }
 
       const sameAsBefore = hovered && newHover &&
         ((hovered.type === 'shrine' && newHover.type === 'shrine') ||
-         (hovered.type === 'book' && newHover.type === 'book' && hovered.id === newHover.id));
+         (hovered.type === 'book' && newHover.type === 'book' && hovered.id === newHover.id && hovered.mesh === newHover.mesh));
       if (sameAsBefore) return;
 
       proxy.visible = false; shell.visible = false;
@@ -2706,15 +2646,26 @@ America</h2>
     let onBookKey = null;
     let lastTurnSound = 0;
     let _meas = null;
-    async function openBook(c) {
+    let readRequest = 0;
+    async function openBook(c, selection = null) {
+      if (reading) return;
+      const request = ++readRequest;
       reading = true;
       resetInput(); syncControls();
       document.getElementById('reader-contents').hidden = !c.isFullBook;
       overlay.setAttribute('aria-label', c.source);
       clearHover();
+      document.exitPointerLock?.();
+      if (selection?.type === 'book') {
+        const meta = selection.meta;
+        await bookMotion.borrow({ mesh: selection.mesh, pages: selection.mesh === books ? details.pageEdges : adjacent.pageEdges,
+          index: selection.id, position: meta.pos, scale: meta.scale,
+          rotation: new THREE.Quaternion().setFromEuler(new THREE.Euler(meta.lean, meta.rotY, 0, 'YXZ')),
+          source: c.source, color: new THREE.Color().fromBufferAttribute(selection.mesh.instanceColor, selection.id) }, reduceMotion);
+      } else if (selection?.type === 'shrine') await bookMotion.borrowVolume(details.shrineVolume, reduceMotion);
+      if (request !== readRequest || !reading) return;
       overlay.classList.add('visible');
       document.getElementById('reader-close').focus({ preventScroll: true });
-      document.exitPointerLock?.();
       duckAmbient(0.5);
       if (c.isFullBook) {
         isFullBook = true;
@@ -2753,12 +2704,14 @@ America</h2>
         playPageTurn();
       }
     }
-    function closeBook(event) {
+    async function closeBook(event) {
+      if (!reading) return;
+      readRequest++;
       const resumeExploring = exploring && !menuOpen && event?.type === "click";
       if (isFullBook && N > 1) {
         try { localStorage.setItem('library-plunkitt-position', String(curPage / (N - 1))); } catch {}
       }
-      reading = false; isFullBook = false;
+      isFullBook = false;
       overlay.classList.remove('visible');
       readingContent.classList.remove('full-book-view');
       teardownBook();
@@ -2766,8 +2719,17 @@ America</h2>
       // the camera once pointer lock is re-acquired
       resetInput();
       duckAmbient(1.0);
-      if (resumeExploring) hideMenu(); else showMenu();
       playBookClose();
+      const wasHolding = bookMotion.holding;
+      const returning = bookMotion.returnBook(reduceMotion);
+      if (resumeExploring) {
+        reading = false;
+        hideMenu();
+      } else {
+        if (wasHolding) await returning;
+        reading = false;
+        showMenu();
+      }
     }
 
     // =====================================================================
@@ -3151,8 +3113,8 @@ America</h2>
       if (!exploring || reading || menuOpen) return;
       camera.updateMatrixWorld(); checkHover();
       if (!hovered) return;
-      if (hovered.type === 'shrine') openBook({ source: 'Plunkitt of Tammany Hall', isFullBook: true });
-      else { playBookPull(); openBook(hovered.meta.content); }
+      if (hovered.type === 'shrine') openBook({ source: 'Plunkitt of Tammany Hall', isFullBook: true }, hovered);
+      else { playBookPull(); openBook(hovered.meta.content, hovered); }
     }
     renderer.domElement.addEventListener('click', () => { if (!dragLook) interact(); });
     document.getElementById('touch-read').addEventListener('click', interact);
@@ -3186,8 +3148,12 @@ America</h2>
       requestAnimationFrame(loop);
       const dt = Math.min(clock.getDelta(), 0.05);
       const t = clock.elapsedTime;
-      if (document.hidden || reading) { lastMs = 0; return; }
-      if (menuOpen && introDone && performance.now() - lastRender < 100) return;
+      if (document.hidden) { lastMs = 0; return; }
+      const bookWasMoving = bookMotion.active;
+      bookMotion.update(dt);
+      if (bookWasMoving) renderer.shadowMap.needsUpdate = true;
+      if (reading && !bookMotion.active) { lastMs = 0; return; }
+      if (menuOpen && !bookMotion.active && introDone && performance.now() - lastRender < 100) return;
       lastRender = performance.now();
 
       // intro exposure ramp + bloom settle
@@ -3235,7 +3201,7 @@ America</h2>
         camera.quaternion.setFromEuler(euler);
 
         // reverb swell near railing / in vestibule recesses
-        const distCenter = Math.hypot(camera.position.x, camera.position.z);
+        const distCenter = Math.min(Math.hypot(camera.position.x, camera.position.z), Math.hypot(camera.position.x - adjacent.annex.position.x, camera.position.z));
         const nearRail = distCenter < railingR + 0.8;
         const inVest = distCenter > apothem - 0.6;
         setReverbTarget(nearRail || inVest ? 0.36 : 0.22);

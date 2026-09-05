@@ -5,10 +5,12 @@ import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPa
 import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
 import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
 import { Reflector } from 'three/examples/jsm/objects/Reflector.js';
-import { enrichLibrary } from './graphics';
+import { enrichLibrary, loadLibraryMaterials } from './graphics';
+import { buildLibraryDepth } from './depth';
+import { BookMotion } from './book-motion';
 import { canStand, slideMove, damp, qualityStep, localMovement } from './physics';
 
-const modules = { THREE, EffectComposer, RenderPass, UnrealBloomPass, ShaderPass, OutputPass, Reflector, enrichLibrary, canStand, slideMove, damp, qualityStep, localMovement };
+const modules = { THREE, EffectComposer, RenderPass, UnrealBloomPass, ShaderPass, OutputPass, Reflector, enrichLibrary, loadLibraryMaterials, buildLibraryDepth, BookMotion, canStand, slideMove, damp, qualityStep, localMovement };
 declare global {
   interface Window {
     plunkittText: string;

@@ -107,16 +107,39 @@ export function enrichLibrary({scene, books, bookMeta, matWood, matStone, matBra
     material.bumpMap = material.map; material.bumpScale = material === matWood ? 0.022 : 0.035; material.needsUpdate = true;
   }
 
-  // Separate paper and covers make Plunkitt a physical volume rather than a textured cube.
+  // Tilt the complete volume about one spine, so its paper and covers stay aligned.
+  const shrineVolume = new THREE.Group();
+  shrineVolume.position.set(0, 1.34, 0); shrineVolume.rotation.x = -0.15;
+  shrineGroup.add(shrineVolume);
+  shrineBook.geometry.dispose();
   shrineBook.geometry = new THREE.BoxGeometry(0.34, 0.44, 0.014);
-  shrineBook.position.z = 0.039;
+  shrineVolume.add(shrineBook); shrineBook.position.set(0, 0, 0.039); shrineBook.rotation.set(0, 0, 0);
   const back = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.44, 0.014), (shrineBook.material as THREE.Material[])[0]);
-  back.position.copy(shrineBook.position); back.position.z = -0.039; back.rotation.copy(shrineBook.rotation);
+  back.position.z = -0.039;
   const paper = new THREE.Mesh(new THREE.BoxGeometry(0.309, 0.411, 0.062), pagesMaterial);
-  paper.position.copy(shrineBook.position); paper.position.z = 0; paper.rotation.copy(shrineBook.rotation);
   const spine = new THREE.Mesh(new THREE.CylinderGeometry(0.041, 0.041, 0.44, 16, 1, false, 0, Math.PI), (shrineBook.material as THREE.Material[])[0]);
-  spine.position.copy(paper.position); spine.position.x = -0.156; spine.rotation.copy(paper.rotation); spine.rotation.y = Math.PI;
-  for (const mesh of [back, paper, spine]) { mesh.castShadow = true; shrineGroup.add(mesh); }
+  spine.position.x = -0.156; spine.rotation.y = Math.PI;
+  for (const mesh of [back, paper, spine]) { mesh.castShadow = true; shrineVolume.add(mesh); }
+  const cradle = new THREE.Mesh(new THREE.BoxGeometry(0.39, 0.025, 0.19), matWood);
+  cradle.position.set(0, 1.115, 0.01); cradle.rotation.x = -0.15; shrineGroup.add(cradle);
+  const rest = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.035, 0.023), matBrass);
+  rest.position.set(0, 1.139, 0.103); shrineGroup.add(rest);
 
-  return { atlasMap, pageEdges };
+  return { atlasMap, pageEdges, shrineVolume };
+}
+
+export function loadLibraryMaterials(floor: THREE.MeshStandardMaterial, wood: THREE.MeshStandardMaterial, stone: THREE.MeshStandardMaterial) {
+  const loader = new THREE.TextureLoader();
+  const load = (url: string, apply: (texture: THREE.Texture) => void) => loader.load(url, texture => {
+    texture.colorSpace = THREE.SRGBColorSpace; texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+    texture.anisotropy = 8; apply(texture);
+  }, undefined, () => { /* Existing procedural materials remain usable if an asset is unavailable. */ });
+  load('/images/library/limestone-albedo.png', texture => {
+    texture.repeat.set(2, 2); floor.map = texture; floor.bumpMap = texture; floor.bumpScale = 0.018; floor.needsUpdate = true;
+    const trim = texture.clone(); trim.repeat.set(1, 1); trim.needsUpdate = true;
+    stone.map = trim; stone.bumpMap = trim; stone.bumpScale = 0.009; stone.color.setHex(0xb3a995); stone.needsUpdate = true;
+  });
+  load('/images/library/walnut-albedo.png', texture => {
+    wood.map = texture; wood.bumpMap = texture; wood.bumpScale = 0.012; wood.roughness = 0.58; wood.needsUpdate = true;
+  });
 }

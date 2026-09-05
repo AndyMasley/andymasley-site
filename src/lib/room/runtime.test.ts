@@ -9,7 +9,9 @@ import { join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import * as RealThree from 'three';
 import ts from 'typescript';
-import { enrichLibrary } from './graphics';
+import { enrichLibrary, loadLibraryMaterials } from './graphics';
+import { buildLibraryDepth } from './depth';
+import { BookMotion } from './book-motion';
 import { canStand, slideMove, damp, qualityStep, localMovement } from './physics';
 
 const source = readFileSync(join(__dirname, '../../pages/room.astro'), 'utf8');
@@ -110,7 +112,7 @@ beforeAll(async () => {
   window.libraryReady = Promise.resolve({
     THREE: { ...RealThree, WebGLRenderer: Renderer, PMREMGenerator: PMREM },
     EffectComposer: Composer, RenderPass, UnrealBloomPass: Bloom, ShaderPass,
-    OutputPass: class {}, Reflector, enrichLibrary, canStand, slideMove, damp, qualityStep, localMovement,
+    OutputPass: class {}, Reflector, enrichLibrary, loadLibraryMaterials, buildLibraryDepth, BookMotion, canStand, slideMove, damp, qualityStep, localMovement,
   } as unknown as Awaited<Window['libraryReady']>);
   const main = scripts.find(match => match[1].includes('type="module"'))![2];
   const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;

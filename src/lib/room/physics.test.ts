@@ -53,3 +53,16 @@ describe('adaptive rendering', () => {
     expect(qualityStep(1.5, 1.75, Array(10).fill(40))).toBe(1.5);
   });
 });
+
+describe('the second gallery', () => {
+  it('connects both doorways with a continuous passage', () => {
+    const nextGallery = -(10 * Math.cos(Math.PI / 6) + 2.6);
+    for (let x = -3.7; x > nextGallery + 3.6; x -= 0.01) expect(canStand(x, 0)).toBe(true);
+    const crossed = slideMove({ x: -3.8, z: 0 }, { x: -3.8, z: 0 });
+    expect(crossed.x).toBeCloseTo(-7.6);
+    expect(canStand(nextGallery, 0)).toBe(false);
+    expect(canStand(nextGallery, 3)).toBe(true);
+    expect(canStand(nextGallery - 4.2, 0)).toBe(false);
+    expect(canStand(-5.5, 0.7)).toBe(false);
+  });
+});
