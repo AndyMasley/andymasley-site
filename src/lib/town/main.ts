@@ -3,12 +3,13 @@ import { Sky } from 'three/examples/jsm/objects/Sky.js';
 import { advanceRealTime, DriveEngine, LANDMARKS, MPH, RoadGraph, spawnAtLandmark } from './engine';
 import { validateManifest, type Quality, type V3 } from './contracts';
 import { TownWorld } from './world';
+import { createSummerSky, SUMMER_LIGHT } from './atmosphere';
 import release from '../../../data/derived/town/release.json';
 
 const ASSET_ROOT = `/town-assets/${release.directory}/`;
 const WORLD_URL = `${ASSET_ROOT}manifest.json`;
 const NETWORK_URL = `${ASSET_ROOT}network.json`;
-const SUN_OFFSET = new THREE.Vector3(-210, 330, 190);
+const SUN_OFFSET = new THREE.Vector3(-260, 290, 180);
 const toWorld = (p: readonly number[]): V3 => [p[0], p[2], -p[1]];
 type LandmarkKey = keyof typeof LANDMARKS;
 type CameraMode = 'hood' | 'chase' | 'wide';
@@ -110,6 +111,9 @@ export async function startTown(root: HTMLElement): Promise<Session> {
   let qualityAt = 0;
   let drawCount = 0;
   let controlsReady = false;
+  let shownChoices = '';
+  let presentationTime = 0;
+  const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
   const points = { car: new THREE.Vector3(), direction: new THREE.Vector3(), eye: new THREE.Vector3(), target: new THREE.Vector3(), wantedEye: new THREE.Vector3(), wantedTarget: new THREE.Vector3(), up: new THREE.Vector3(0, 1, 0), right: new THREE.Vector3() };
   const wheelNodes: THREE.Object3D[] = [];
   const wheelRest: THREE.Quaternion[] = [];
@@ -163,16 +167,16 @@ export async function startTown(root: HTMLElement): Promise<Session> {
     renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false, powerPreference: 'high-performance' });
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 0.95;
+    renderer.toneMappingExposure = SUMMER_LIGHT.exposure;
     renderer.setPixelRatio(pixelRatio);
     renderer.shadowMap.enabled = !mobile && quality !== 'low';
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     scene = new THREE.Scene();
-    scene.fog = new THREE.Fog('#bfcbd0', 550, 1800);
-    const camera = new THREE.PerspectiveCamera(61, 1, 0.08, 6500);
-    const ambient = new THREE.HemisphereLight('#d5e7ff', '#73684e', 0.55);
+    scene.fog = new THREE.Fog(SUMMER_LIGHT.haze, 380, 1550);
+    const camera = new THREE.PerspectiveCamera(57, 1, 0.08, 6500);
+    const ambient = new THREE.HemisphereLight(SUMMER_LIGHT.skyFill, SUMMER_LIGHT.groundFill, SUMMER_LIGHT.fillIntensity);
     scene.add(ambient);
-    const sun = new THREE.DirectionalLight('#fff0d5', 2.5);
+    const sun = new THREE.DirectionalLight(SUMMER_LIGHT.sun, SUMMER_LIGHT.sunIntensity);
     sun.castShadow = true;
     sun.shadow.mapSize.set(2048, 2048);
     sun.shadow.camera.left = -100;
@@ -185,13 +189,7 @@ export async function startTown(root: HTMLElement): Promise<Session> {
     sun.shadow.normalBias = 0.16;
     scene.add(sun, sun.target);
     const pmrem = new THREE.PMREMGenerator(renderer);
-    sky = new Sky();
-    sky.scale.setScalar(450000);
-    sky.material.uniforms.turbidity.value = 3.0;
-    sky.material.uniforms.rayleigh.value = 1.6;
-    sky.material.uniforms.mieCoefficient.value = 0.003;
-    sky.material.uniforms.mieDirectionalG.value = 0.8;
-    sky.material.uniforms.sunPosition.value.copy(SUN_OFFSET).normalize();
+    sky = createSummerSky(SUN_OFFSET);
     scene.add(sky);
     const skyScene = new THREE.Scene();
     const environmentSky = sky.clone();
@@ -433,7 +431,26 @@ export async function startTown(root: HTMLElement): Promise<Session> {
       const next = engine.nextJunction();
       distanceText.textContent = `${(engine.distance / 1609.344).toFixed(1)} mi`;
       turnText.textContent = engine.paused ? 'Drive paused' : next?.obstacle ? 'Road ends ahead' : next?.selected ? `${next.selected.label} in ${Math.round(next.distance)} m` : 'Follow the road';
-      choicesText.textContent = next?.choices?.length ? next.choices.map((choice) => `${next.selected?.edgeId === choice.edgeId ? '› ' : ''}${choice.label}`).join('   ·   ') : 'A late-summer drive through Webster';
+      const choices = next?.choices ?? [];
+      const choiceKey = choices.map(choice => `${choice.edgeId}:${choice.label}:${next?.selected?.edgeId === choice.edgeId}`).join('|');
+      if (choiceKey !== shownChoices) {
+        shownChoices = choiceKey;
+        choicesText.replaceChildren(...choices.map(choice => {
+          const badge = document.createElement('span');
+          const selected = next?.selected?.edgeId === choice.edgeId;
+          badge.className = 'town-choice';
+          badge.setAttribute('role', 'listitem');
+          badge.dataset.selected = String(selected);
+          badge.setAttribute('aria-current', String(selected));
+          badge.setAttribute('aria-label', `${choice.label}${selected ? ', selected' : ''}`);
+          const arrow = document.createElement('span');
+          arrow.setAttribute('aria-hidden', 'true');
+          arrow.className = 'town-choice__arrow';
+          arrow.textContent = choice.label === 'Left' ? '↰' : choice.label === 'Right' ? '↱' : choice.label === 'U-turn' ? '↶' : '↑';
+          badge.append(arrow, document.createTextNode(choice.label));
+          return badge;
+        }));
+      }
       if (engine.endOfRoute) setStatus(engine.lastMessage);
       drawMap();
     }
@@ -455,7 +472,8 @@ export async function startTown(root: HTMLElement): Promise<Session> {
         if (!streamPaused) advanceRealTime(engine, elapsed, held.has('up'), held.has('down'));
       }
       const [position, tangent] = engine.pose();
-      points.car.fromArray(toWorld(position));
+      const renderedPosition = toWorld(position);
+      points.car.fromArray(renderedPosition);
       points.direction.fromArray(toWorld(tangent)).normalize();
       points.right.crossVectors(points.direction, points.up).normalize();
       car!.position.copy(points.car);
@@ -501,6 +519,8 @@ export async function startTown(root: HTMLElement): Promise<Session> {
         }
         qualityAt = now;
       }
+      if (!engine.paused && !reducedMotion.matches) presentationTime += elapsed;
+      world!.updatePresentation(presentationTime, renderedPosition);
       renderer!.render(scene!, camera);
       world!.metrics.triangles = renderer!.info.render.triangles;
       drawCount++;
@@ -518,6 +538,7 @@ export async function startTown(root: HTMLElement): Promise<Session> {
       world,
       get renderer() { return renderer; },
       get cameraMode() { return cameraMode; },
+      get presentation() { return { version: 'late-summer-art-v1', grass: world!.presentationResources() }; },
       get ready() { return controlsReady && !disposed; },
       get metrics() {
         const samples = [...snapshots].sort((a, b) => a - b);
