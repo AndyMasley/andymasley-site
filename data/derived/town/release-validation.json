@@ -9,7 +9,7 @@
   "buildings": 7805,
   "treeAnchors": 158099,
   "release": "2026-09-2430b57e611e",
-  "status": "Candidate: exact geometry and data decoding passed; final browser acceptance in progress",
+  "status": "Candidate: corrected browser and touch checks passed; hosted delivery and sustained drive in progress",
   "reconstructionAudit": {
     "passed": true,
     "partial": false,
@@ -32,7 +32,8 @@
   "publishAssetAudit": {
     "passed": true,
     "checks": 65171,
-    "reportSha256": "44336c63cd111c7ee56d1e77ddc2bcebedaec60616f810fbf120db5cae888135"
+    "releaseIdentitySha256": "65fdbccb3025a00f73994ccf8bd4b7ffef0fe8fa9e1daeeac6bb7949e8c538c9",
+    "reportSha256": "d1aa87e65feae336527532daf176ff2ed23220d81e12a48deafd34d6d20a4755"
   },
   "automatedTests": {
     "website": 215,
@@ -269,5 +270,66 @@
       "nonzeroRGBBytesUnderAlphaZero": 34440,
       "pass": true
     }
+  },
+  "browserAcceptance": {
+    "chromium": {
+      "passed": true,
+      "checks": 23,
+      "browserVersion": "152.0.7977.77",
+      "reportSha256": "66568321b3420a5f99cc27b2fa8ec51b258b04cac8e32b53492caf87efe28b48",
+      "preview": "http://127.0.0.1:54327/town/",
+      "runtimeCommit": "f59915bd0365df203482a5a7dc45454b9f3e0245",
+      "screenshots": 11,
+      "captureErrors": 0
+    },
+    "firefox": {
+      "passed": true,
+      "checks": 23,
+      "browserVersion": "153.0",
+      "reportSha256": "67a455b39a976fd4502b4701c216d1ecdc7f0046c4bcb3beda3216245b0b969f",
+      "preview": "http://127.0.0.1:54327/town/",
+      "runtimeCommit": "f59915bd0365df203482a5a7dc45454b9f3e0245",
+      "screenshots": 11,
+      "captureErrors": 0
+    },
+    "webkit": {
+      "passed": true,
+      "checks": 23,
+      "browserVersion": "26.5",
+      "reportSha256": "8e265953cd40f88d787a6979e7d58f474ac2fa6266818636184d6529cc073c1d",
+      "preview": "http://127.0.0.1:54327/town/",
+      "runtimeCommit": "f59915bd0365df203482a5a7dc45454b9f3e0245",
+      "screenshots": 11,
+      "captureErrors": 0
+    },
+    "mobile": {
+      "passed": true,
+      "checks": 21,
+      "browserVersion": "152.0.7977.77",
+      "reportSha256": "1bff3552907fd067dd74769f36ddac7dad32514dcd90b143905fe6f78c6dcf8b",
+      "preview": "http://127.0.0.1:54327/town/",
+      "runtimeCommit": "f59915bd0365df203482a5a7dc45454b9f3e0245",
+      "screenshots": 8,
+      "captureErrors": 0,
+      "physicalDeviceTest": false
+    }
+  },
+  "webKitDataTextureVerification": {
+    "passed": true,
+    "rawAndGpuChannelsExact": true,
+    "reportSha256": "078e0d576394a1bf2ed85e8ba725ad7de245bf841c98d8210ed5dc821d694740",
+    "preview": "http://127.0.0.1:54327/town/"
+  },
+  "originalMasterPreserved": {
+    "passed": true,
+    "sha256": "8376d6586e16c53ccf9b13f1754fe4d844d9ff7703475b444076b0853bcc510a",
+    "reportSha256": "e41949ff011c0a3a620bbbd80bca65e6394200833e6d37cf8c28f792595e4080"
+  },
+  "poster": {
+    "source": "Actual game canvas at Main Street; HUD hidden only for screenshot",
+    "width": 1440,
+    "height": 900,
+    "bytes": 109374,
+    "sha256": "23d852ffaa9dacbd8a674125aec97287e356cde038d2fe0a4faec8ea979111b9"
   }
 }
