@@ -2,8 +2,10 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js';
 import { boundsDistanceSquared, chooseLod, type Quality, type TownTile, type V3, type WorldManifest, type WorldMetrics } from './contracts';
+import { TownSurfaces } from './surfaces';
 
-type LoadedTile = { group: THREE.Group; level: number; lastUsed: number; trees?: THREE.Group; treeRows?: number[][]; treeDetail?: boolean; leafKey?: string };
+type TreePlan = { near: Set<number>; shadows: Set<number>; key: string };
+type LoadedTile = { group: THREE.Group; level: number; lastUsed: number; trees?: THREE.Group; treeRows?: number[][]; treePlan?: TreePlan };
 type MaterialEntry = { material: THREE.Material; refs: number; textures: string[] };
 const TEXTURE_SLOTS = ['map', 'normalMap', 'roughnessMap', 'metalnessMap', 'aoMap', 'emissiveMap', 'alphaMap'] as const;
 
@@ -19,17 +21,34 @@ export class TownWorld {
   private leases = new WeakMap<THREE.Object3D, Set<string>>();
   private prototypes: THREE.Group[] = [];
   private backdropMaterials: THREE.Material[] = [];
-  private leafSelections = new Map<string, Set<number>>();
   private failures = new Map<string, number>();
   private disposed = false;
   private generation = 0;
   private low = false;
+  private treeShadows = true;
   private position: V3 = [0, 0, 0];
   private preparingAt: V3 | null = null;
   private sharedAbort = new AbortController();
+  private surfaces?: TownSurfaces;
 
   constructor(readonly manifest: WorldManifest, readonly manifestUrl: string, readonly onChange: () => void) {
     this.root.name = 'Webster scenery';
+    if (manifest.surfaces) this.surfaces = new TownSurfaces(manifest.surfaces, async (asset, color, signal) => {
+      const response = await fetch(this.url(asset.url), { signal });
+      if (!response.ok) throw new Error(`Ground surface could not load (${response.status}).`);
+      const blob = await response.blob();
+      this.metrics.bytes += Number(response.headers.get('content-length')) || blob.size;
+      const bitmap = await createImageBitmap(blob, { imageOrientation: 'none', premultiplyAlpha: 'none', colorSpaceConversion: 'none' });
+      if (this.disposed || signal.aborted) {
+        bitmap.close();
+        throw new DOMException('Loading cancelled', 'AbortError');
+      }
+      const texture = new THREE.Texture(bitmap);
+      texture.flipY = false;
+      texture.colorSpace = color ? THREE.SRGBColorSpace : THREE.NoColorSpace;
+      texture.needsUpdate = true;
+      return texture;
+    });
   }
 
   url(path: string): string { return new URL(path, this.manifestUrl).href; }
@@ -84,6 +103,7 @@ export class TownWorld {
   }
 
   async initialize(): Promise<void> {
+    await this.surfaces?.initialize(this.sharedAbort.signal);
     const fallback = await this.loadGlb(this.manifest.fallback.url);
     fallback.name = 'Town landscape overview';
     fallback.traverse((object) => {
@@ -107,6 +127,7 @@ export class TownWorld {
 
   setQuality(quality: Quality, mobile: boolean): void {
     this.low = quality === 'low' || (quality === 'auto' && mobile);
+    this.treeShadows = !this.low && !mobile;
     this.generation++;
   }
 
@@ -123,21 +144,7 @@ export class TownWorld {
       .sort((a, b) => Number(this.ownsCell(b.tile, position)) - Number(this.ownsCell(a.tile, position)) || Math.min(a.distance, a.ahead + 80) - Math.min(b.distance, b.ahead + 80));
     if (!preparing) selected = selected.slice(0, this.low ? 26 : 48);
     const desired = new Map<string, number>();
-    this.leafSelections.clear();
-    if (!this.low && this.manifest.trees.prototypes.some((prototype) => prototype.role === 'crown' && prototype.level === -1)) {
-      const close: { id: string; index: number; distance: number }[] = [];
-      for (const { tile, distance } of selected) {
-        if (distance > 90) continue;
-        this.loaded.get(tile.id)?.treeRows?.forEach((row, index) => {
-          const distance = (row[0] + tile.origin[0] - position[0]) ** 2 + (row[2] + tile.origin[2] - position[2]) ** 2;
-          if (distance < 45 * 45) close.push({ id: tile.id, index, distance });
-        });
-      }
-      for (const entry of close.sort((a, b) => a.distance - b.distance).slice(0, 8)) {
-        if (!this.leafSelections.has(entry.id)) this.leafSelections.set(entry.id, new Set());
-        this.leafSelections.get(entry.id)!.add(entry.index);
-      }
-    }
+    const treePlans = this.planTrees(selected.map(({ tile }) => tile));
     for (const { tile, distance } of selected) {
       let level = chooseLod(tile, distance, this.low);
       const cached = this.loaded.get(tile.id);
@@ -146,17 +153,14 @@ export class TownWorld {
         const boundary = Math.min(cached.level, level) === 0 ? (this.low ? 160 : 280) : (this.low ? 430 : 650);
         if (!force && cached.level !== level && Math.abs(distance - boundary) < 35) level = cached.level;
         cached.group.visible = true;
-        if (cached.trees) cached.trees.visible = distance < (this.low ? 500 : 800);
-        const treeDetail = !this.low && distance < 90;
-        const leaves = this.leafSelections.get(tile.id) ?? new Set<number>();
-        const leafKey = [...leaves].sort((a, b) => a - b).join(',');
-        if (cached.treeRows && (cached.treeDetail !== treeDetail || (cached.leafKey ?? '') !== leafKey)) {
+        const treePlan = treePlans.get(tile.id);
+        if (cached.treeRows && treePlan && cached.treePlan?.key !== treePlan.key) {
           if (cached.trees) this.releaseTrees(cached.trees);
-          cached.trees = this.buildTrees(cached.treeRows, tile.origin, treeDetail, leaves);
-          cached.treeDetail = treeDetail;
-          cached.leafKey = leafKey;
+          cached.trees = this.buildTrees(cached.treeRows, tile.origin, treePlan);
+          cached.treePlan = treePlan;
           this.root.add(cached.trees);
         }
+        if (cached.trees) cached.trees.visible = distance < (this.low ? 500 : 800);
       }
       desired.set(tile.id, level);
     }
@@ -212,30 +216,27 @@ export class TownWorld {
     this.inflight.set(tile.id, abort);
     const lod = tile.lods.find((item) => item.level === level)!;
     let group: THREE.Group | undefined;
-    let trees: THREE.Group | undefined;
     let treeRows: number[][] | undefined;
     try {
       group = lod ? await this.loadGlb(lod.url, abort.signal) : new THREE.Group();
       group.position.fromArray(tile.origin);
       group.updateMatrixWorld(true);
+      await this.surfaces?.apply(group, tile.id, abort.signal);
       if (tile.treeFile && this.prototypes.length) {
         const rows = await this.fetchJson<number[][] | { rows: number[][] }>(tile.treeFile.url, abort.signal);
         treeRows = Array.isArray(rows) ? rows : rows.rows;
-        trees = this.buildTrees(treeRows, tile.origin, !this.low && boundsDistanceSquared(tile.bounds, this.position) < 8100);
       }
       if (this.disposed || abort.signal.aborted || !this.wanted.has(tile.id)) {
         this.releaseGroup(group);
-        if (trees) this.releaseTrees(trees);
         return;
       }
       this.evict(tile.id);
       this.root.add(group);
-      if (trees) this.root.add(trees);
-      this.loaded.set(tile.id, { group, trees, treeRows, treeDetail: !this.low && boundsDistanceSquared(tile.bounds, this.position) < 8100, level, lastUsed: performance.now() });
+      // The final update allocates tree instances once, after global shadow selection.
+      this.loaded.set(tile.id, { group, treeRows, level, lastUsed: performance.now() });
       this.failures.delete(tile.id);
     } catch (error) {
       if (group) this.releaseGroup(group);
-      if (trees) this.releaseTrees(trees);
       if (!(error instanceof DOMException && error.name === 'AbortError')) {
         this.failures.set(tile.id, performance.now());
         this.metrics.errors++;
@@ -250,7 +251,36 @@ export class TownWorld {
     }
   }
 
-  private buildTrees(rows: number[][], origin: V3, detailed: boolean, leafIndices = new Set<number>()): THREE.Group {
+  private planTrees(tiles: TownTile[]): Map<string, TreePlan> {
+    const plans = new Map<string, TreePlan>();
+    const candidates: { id: string; index: number; score: number }[] = [];
+    const nearRadius = this.low ? 120 : 200;
+    for (const tile of tiles) {
+      const cached = this.loaded.get(tile.id);
+      if (!cached?.treeRows) continue;
+      const plan: TreePlan = { near: new Set(), shadows: new Set(), key: '' };
+      cached.treeRows.forEach((row, index) => {
+        const distance = Math.hypot(row[0] + tile.origin[0] - this.position[0], row[2] + tile.origin[2] - this.position[2]);
+        // Per-anchor LOD, with a 20m exit band to avoid rebuilding at the boundary.
+        const wasNear = cached.treePlan?.near.has(index);
+        if (distance < nearRadius + (wasNear ? 20 : 0)) plan.near.add(index);
+        const wasShadow = cached.treePlan?.shadows.has(index);
+        // Enter at72m, leave by80m; the global cap is across all visible tiles.
+        if (this.treeShadows && distance < (wasShadow ? 80 : 72)) {
+          candidates.push({ id: tile.id, index, score: distance - (wasShadow ? 8 : 0) });
+        }
+      });
+      plans.set(tile.id, plan);
+    }
+    candidates.sort((a, b) => a.score - b.score || a.id.localeCompare(b.id) || a.index - b.index);
+    for (const candidate of candidates.slice(0, 24)) plans.get(candidate.id)!.shadows.add(candidate.index);
+    for (const plan of plans.values()) {
+      plan.key = `${Number(!this.low)}:${Number(this.treeShadows)}:${[...plan.near].join(',')}|${[...plan.shadows].sort((a, b) => a - b).join(',')}`;
+    }
+    return plans;
+  }
+
+  private buildTrees(rows: number[][], origin: V3, plan: TreePlan): THREE.Group {
     const group = new THREE.Group();
     group.position.fromArray(origin);
     const matrix = new THREE.Matrix4();
@@ -259,35 +289,47 @@ export class TownWorld {
     const quaternion = new THREE.Quaternion();
     const up = new THREE.Vector3(0, 1, 0);
     const definitions = this.manifest.trees.prototypes;
-    const desired = definitions.findIndex((definition) => definition.role === 'crown' && definition.level === (detailed ? 0 : 1));
+    const near = definitions.findIndex((definition) => definition.role === 'crown' && definition.level === 0);
+    const far = definitions.findIndex((definition) => definition.role === 'crown' && definition.level === 1);
     const trunk = definitions.findIndex((definition) => definition.role === 'trunk');
-    const leaves = definitions.findIndex((definition) => definition.role === 'crown' && definition.level === -1);
-    for (const prototypeIndex of [desired < 0 ? 0 : desired, trunk, ...(leafIndices.size ? [leaves] : [])].filter((index) => index >= 0)) {
-      const prototype = this.prototypes[prototypeIndex];
-      const isTrunk = definitions[prototypeIndex].role === 'trunk';
-      const isLeaves = prototypeIndex === leaves;
-      const instances = rows.filter((_, index) => isTrunk || (isLeaves ? leafIndices.has(index) : !leafIndices.has(index)));
-      if (!instances.length) continue;
+    const bands = [{ index: near < 0 ? 0 : near, kind: 'near' }, { index: far < 0 ? Math.max(0, near) : far, kind: 'far' }, { index: trunk, kind: 'trunk' }];
+    for (const band of bands) {
+      const prototype = this.prototypes[band.index];
+      if (!prototype) continue;
+      const isTrunk = band.kind === 'trunk';
       prototype.updateMatrixWorld(true);
-      prototype.traverse((object) => {
-      if (!(object instanceof THREE.Mesh)) return;
-      const mesh = new THREE.InstancedMesh(object.geometry, object.material, instances.length);
-      mesh.castShadow = isLeaves;
-      mesh.receiveShadow = !this.low;
-      instances.forEach((row, index) => {
-        const height = row[4] / 0.30;
-        const radius = Math.max(0.12, Math.min(0.4, height * 0.015));
-        point.set(row[0], row[1] - (isTrunk ? height * 0.36 : 0), row[2]);
-        scale.set(isTrunk ? radius : row[3], isTrunk ? height * 0.35 : row[4], isTrunk ? radius : row[5]);
-        quaternion.setFromAxisAngle(up, isTrunk ? 0 : row[6]);
-        matrix.compose(point, quaternion, scale).multiply(object.matrixWorld);
-        mesh.setMatrixAt(index, matrix);
-      });
-      mesh.instanceMatrix.needsUpdate = true;
-      mesh.computeBoundingBox();
-      mesh.computeBoundingSphere();
-      group.add(mesh);
-      });
+      for (const castShadow of [false, true]) {
+        const indices = rows.map((_, index) => index).filter((index) =>
+          (isTrunk || plan.near.has(index) === (band.kind === 'near')) && plan.shadows.has(index) === castShadow);
+        if (!indices.length) continue;
+        prototype.traverse((object) => {
+          if (!(object instanceof THREE.Mesh)) return;
+          // Geometry/materials are shared with the prototypes; only instance matrices are allocated.
+          for (const material of Array.isArray(object.material) ? object.material : [object.material]) {
+            if (material.alphaTest > 0) material.alphaToCoverage = true;
+          }
+          const mesh = new THREE.InstancedMesh(object.geometry, object.material, indices.length);
+          mesh.name = `Webster trees | ${band.kind} | ${castShadow ? 'shadow' : 'ordinary'}`;
+          mesh.userData.treeKind = band.kind;
+          mesh.userData.sourceRows = indices;
+          mesh.castShadow = castShadow;
+          mesh.receiveShadow = !this.low && this.treeShadows;
+          indices.forEach((rowIndex, index) => {
+            const row = rows[rowIndex];
+            const height = row[4] / 0.30;
+            const radius = Math.max(0.12, Math.min(0.4, height * 0.015));
+            point.set(row[0], row[1] - (isTrunk ? height * 0.36 : 0), row[2]);
+            scale.set(isTrunk ? radius : row[3], isTrunk ? height * 0.35 : row[4], isTrunk ? radius : row[5]);
+            quaternion.setFromAxisAngle(up, isTrunk ? 0 : row[6]);
+            matrix.compose(point, quaternion, scale).multiply(object.matrixWorld);
+            mesh.setMatrixAt(index, matrix);
+          });
+          mesh.instanceMatrix.needsUpdate = true;
+          mesh.computeBoundingBox();
+          mesh.computeBoundingSphere();
+          group.add(mesh);
+        });
+      }
     }
     return group;
   }
@@ -326,7 +368,7 @@ export class TownWorld {
             textures.push(textureKey);
           });
           if (standard.isMeshStandardMaterial) {
-            standard.envMapIntensity = 0.55;
+            standard.envMapIntensity = 0.12;
             // Preserve the scanned aggregate while matching the darker pavement in the source scene.
             if (input.name === 'Drive road | asphalt') standard.color.multiply(new THREE.Color(0.55, 0.62, 0.72));
           }
@@ -351,6 +393,7 @@ export class TownWorld {
 
   releaseGroup(group: THREE.Object3D): void {
     group.removeFromParent();
+    this.surfaces?.release(group);
     const geometries = new Set<THREE.BufferGeometry>();
     group.traverse((object) => { if (object instanceof THREE.Mesh) geometries.add(object.geometry); });
     geometries.forEach((geometry) => geometry.dispose());
@@ -371,6 +414,7 @@ export class TownWorld {
   private releaseTrees(group: THREE.Group): void {
     group.removeFromParent();
     group.traverse((object) => { if (object instanceof THREE.InstancedMesh) object.dispose(); });
+    group.clear();
   }
 
   private disposeRaw(group: THREE.Object3D): void {
@@ -411,7 +455,8 @@ export class TownWorld {
       const image = texture.image;
       if (image?.width && image?.height) estimatedTextureBytes += image.width * image.height * 4 * (texture.generateMipmaps ? 4 / 3 : 1);
     }
-    return { materialCount: this.materialPool.size, textureCount: this.texturePool.size, estimatedTextureBytes: Math.round(estimatedTextureBytes), estimatedGeometryBytes: [...buffers].reduce((sum, buffer) => sum + buffer.byteLength, 0) };
+    const surfaces = this.surfaces?.resources() ?? { materials: 0, textures: 0, bytes: 0 };
+    return { materialCount: this.materialPool.size + surfaces.materials, textureCount: this.texturePool.size + surfaces.textures, estimatedTextureBytes: Math.round(estimatedTextureBytes + surfaces.bytes), estimatedGeometryBytes: [...buffers].reduce((sum, buffer) => sum + buffer.byteLength, 0) };
   }
 
   dispose(): void {
@@ -423,6 +468,7 @@ export class TownWorld {
     for (const object of [...this.root.children]) this.releaseGroup(object);
     for (const prototype of this.prototypes) this.releaseGroup(prototype);
     for (const material of this.backdropMaterials) material.dispose();
+    this.surfaces?.dispose();
     this.root.removeFromParent();
   }
 }

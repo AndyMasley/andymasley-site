@@ -84,7 +84,15 @@ src/
 
 ## Deployment
 
-Push to GitHub → Netlify auto-deploys.
+The GitHub main-branch workflow builds and publishes the existing Cloudflare Pages project.
+
+## Webster driving town
+
+`/town/` streams a fixed Three.js scenery release; arrow keys control a car guided by the mapped road network. `data/derived/town/release.json` pins the archive and manifest hashes. The prebuild step restores that archive and validates every delivery file. Run `npm run check:town`, `npm test`, `npm run test:town-assets`, and the normal build after game changes.
+
+The realism update reconstructs 7,782 generic structures from mapped footprints, assessor styles/story counts, usable elevation evidence, and explicitly inferred architectural forms. Twenty-three observed building bodies and their authored landmark details remain. These are plausible exteriors, not a house-by-house photographic survey. The preserved Blender master is an input; it is not overwritten.
+
+Ground materials use world-space metric textures and streamed RGBA cover masks, independent of terrain LOD. MassGIS 2016 cover is refined with existing road, water and building geometry. Tree canopy within residential yards is interpreted as lawn underneath, fading from full influence at 25m to zero at 40m; this is an inference rather than measured lawn extent. All cover classes blend once so mixed boundaries do not expose blurry aerial imagery. Nearby instanced foliage retains the source tree locations and limits shadow casting to 24 trees within 80m. Image sources are credited on the game page. Release validation and provenance are recorded under `data/derived/town/`.
 
 ## License
 

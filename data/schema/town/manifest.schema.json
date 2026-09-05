@@ -17,12 +17,21 @@
     "car": { "allOf": [{ "$ref": "#/$defs/asset" }, { "type": "object", "required": ["forward", "wheelNodes"], "properties": { "forward": { "const": "-Z" }, "wheelNodes": { "type": "array", "items": { "type": "string" }, "minItems": 4, "maxItems": 4, "uniqueItems": true } } }] },
     "fallback": { "$ref": "#/$defs/asset" }, "network": { "$ref": "#/$defs/asset" },
     "textures": { "type": "array", "items": { "$ref": "#/$defs/asset" } },
+    "surfaces": {
+      "type": "object", "required": ["grass", "masks"],
+      "properties": {
+        "grass": { "allOf": [{ "$ref": "#/$defs/groundMaterial" }, { "type": "object", "required": ["normal", "roughness"], "properties": { "normal": { "$ref": "#/$defs/asset" }, "roughness": { "$ref": "#/$defs/asset" } } }] },
+        "soil": { "$ref": "#/$defs/groundMaterial" }, "forest": { "$ref": "#/$defs/groundMaterial" }, "impervious": { "$ref": "#/$defs/groundMaterial" },
+        "masks": { "type": "object", "additionalProperties": { "allOf": [{ "$ref": "#/$defs/asset" }, { "type": "object", "required": ["bounds"], "properties": { "bounds": { "type": "array", "items": { "type": "number" }, "minItems": 4, "maxItems": 4 } } }] } }
+      }
+    },
     "stats": { "type": "object", "required": ["pilot", "buildings"], "properties": { "pilot": { "type": "boolean" }, "buildings": { "type": "integer", "minimum": 0 } } }
   },
   "$defs": {
     "hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
     "vec3": { "type": "array", "items": { "type": "number" }, "minItems": 3, "maxItems": 3 },
     "asset": { "type": "object", "required": ["url", "bytes", "sha256"], "properties": { "url": { "type": "string", "minLength": 1 }, "bytes": { "type": "integer", "minimum": 1, "maximum": 26214400 }, "sha256": { "$ref": "#/$defs/hash" } } },
+    "groundMaterial": { "type": "object", "required": ["color", "repeatM"], "properties": { "color": { "$ref": "#/$defs/asset" }, "repeatM": { "type": "number", "exclusiveMinimum": 0, "maximum": 20 } } },
     "tile": {
       "type": "object", "required": ["id", "origin", "bounds", "lods", "sourceIds"],
       "properties": {

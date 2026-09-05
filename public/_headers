@@ -4,5 +4,5 @@
 /town/
   Cache-Control: public, max-age=0, must-revalidate
 
-/town-assets/2026-09-0e8d4f694d92/*
+/town-assets/2026-09-2430b57e611e/*
   Cache-Control: public, max-age=31536000, immutable

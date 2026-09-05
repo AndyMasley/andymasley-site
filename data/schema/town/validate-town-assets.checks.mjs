@@ -96,6 +96,34 @@ test('negative prototype level is restricted to the source-detail crown', async 
   await ctx.save(); await failsWith(ctx, /Invalid\/duplicate tree prototype/);
 }));
 
+async function addSurfaces(ctx) {
+  const image = Buffer.from([255, 216, 255, 224, 0, 0, 255, 217]);
+  const grass = { repeatM: 1.4 };
+  for (const slot of ['color','normal','roughness']) grass[slot] = await ctx.put(`surfaces/textures/${slot}.jpg`, image);
+  const png = Buffer.alloc(33); Buffer.from([137,80,78,71,13,10,26,10]).copy(png);
+  png.writeUInt32BE(272,16); png.writeUInt32BE(272,20); png[24]=8; png[25]=6;
+  ctx.manifest.surfaces = { grass, masks: { '0_0': { ...await ctx.put('surfaces/masks/0_0.png',png), bounds:[-8,-258,258,8] } } };
+}
+test('ground masks and shared materials are hash-checked release assets', async () => fixture(async ctx => {
+  await addSurfaces(ctx); await ctx.save();
+  const result=await auditTownAssets({root:ctx.root,policy:ctx.policy});
+  assert.equal(result.passed,true,JSON.stringify(result.failures));
+  assert.equal(result.counts.files,16);
+  assert.equal(result.assets.filter(a=>a.role==='surface-mask').length,1);
+}));
+for (const [name,mutate,pattern] of [
+  ['zero ground repeat',m=>m.surfaces.grass.repeatM=0,/metric texture repeat/],
+  ['ground mask misses its cell',m=>m.surfaces.masks['0_0'].bounds=[0,0,250,250],/mask does not cover/],
+  ['ground mask unknown cell',m=>{m.surfaces.masks.nope=m.surfaces.masks['0_0'];delete m.surfaces.masks['0_0'];},/no scenery tile/],
+  ['ground image missing hash',m=>m.surfaces.grass.normal.sha256='',/SHA256/],
+]) test(name,async()=>fixture(async ctx=>{await addSurfaces(ctx);mutate(ctx.manifest);await ctx.save();await failsWith(ctx,pattern);}));
+test('ground classification requires all four byte channels',async()=>fixture(async ctx=>{
+  await addSurfaces(ctx);
+  const file=path.join(ctx.root,'surfaces/masks/0_0.png'),bytes=await readFile(file);bytes[25]=2;
+  Object.assign(ctx.manifest.surfaces.masks['0_0'],await ctx.put('surfaces/masks/0_0.png',bytes));
+  await ctx.save();await failsWith(ctx,/8-bit RGBA mask/);
+}));
+
 for (const [name, mutate, pattern] of [
   ['duplicate tile IDs', (m) => m.tiles.push(structuredClone(m.tiles[0])), /duplicate tile ID/],
   ['duplicate source IDs', (m) => m.tiles[0].sourceIds.push('1_2'), /building source ID/],

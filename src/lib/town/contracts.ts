@@ -1,6 +1,14 @@
 export type V3 = [number, number, number];
 export interface AssetRef { url: string; bytes: number; sha256?: string }
 export interface Bounds { min: V3; max: V3 }
+export interface GroundSurfaces {
+  grass: { color: AssetRef; normal: AssetRef; roughness: AssetRef; repeatM: number };
+  soil?: { color: AssetRef; repeatM: number };
+  forest?: { color: AssetRef; repeatM: number };
+  impervious?: { color: AssetRef; repeatM: number };
+  /** Bounds include the mask gutter, in Three.js world X/Z metres. Image row zero is minZ. */
+  masks: Record<string, AssetRef & { bounds: [number, number, number, number] }>;
+}
 export interface TownTile {
   id: string;
   origin: V3;
@@ -19,6 +27,7 @@ export interface WorldManifest {
   trees: { prototypes: (AssetRef & { id: string; role?: 'crown' | 'trunk'; level?: number })[] };
   car: AssetRef & { forward: string; wheelNodes: string[] };
   stats: Record<string, number | string>;
+  surfaces?: GroundSurfaces;
 }
 export type Quality = 'auto' | 'high' | 'low';
 export interface WorldMetrics {

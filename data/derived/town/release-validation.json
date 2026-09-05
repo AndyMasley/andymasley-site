@@ -1,125 +1,51 @@
 {
-  "release": "2026-09-0e8d4f694d92",
-  "manifestSha256": "0e8d4f694d92b913a7d8195400f48af3c37b4ae53d39223ad9b2606dfb5238b0",
+  "manifestSha256": "2430b57e611e29573e871b662cb7e070a06664283f07871722d69d325ece4597",
+  "archiveSha256": "dd7ea45420273de450bfaf1dd74212d53c19ceb9f3070f1a3d9de909a71c9c4d",
+  "archiveBytes": 503177669,
   "sourceSha256": "8376d6586e16c53ccf9b13f1754fe4d844d9ff7703475b444076b0853bcc510a",
+  "files": 3713,
+  "expandedBytes": 1239386842,
   "tiles": 672,
   "buildings": 7805,
   "treeAnchors": 158099,
-  "files": 3030,
-  "expandedBytes": 705094017,
-  "archiveBytes": 437950236,
-  "sourceGeometryAudit": {
-    "checks": 9496,
-    "triangles": 13590271,
-    "orientedTrianglesExact": true,
-    "decodedXYZErrorM": 0,
-    "decodedNormalError": 0,
-    "decodedTexturedUVError": 0
+  "release": "2026-09-2430b57e611e",
+  "status": "Candidate: final composition and browser acceptance in progress",
+  "reconstructionAudit": {
+    "passed": true,
+    "partial": false,
+    "stats": {
+      "triangles": 11614898,
+      "bytes": 916499776,
+      "nonresidential_or_complex": 910,
+      "accessory": 2218,
+      "principal_residential": 4654,
+      "structures_with_terrain_fallback": 20,
+      "generated_count": 7782,
+      "preserved_count": 23,
+      "expected_count": 7805,
+      "missing_count": 0,
+      "maximum_normal_length_error": 5.960464477539063e-08,
+      "seconds": 18.46372675895691
+    },
+    "reportSha256": "e074c348c2fdecf5cefc632eb766ed23d33b2b535b81881ebe73a59a7a0a584e"
   },
   "publishAssetAudit": {
-    "checks": 57436,
-    "passed": true
+    "passed": true,
+    "checks": 65171,
+    "reportSha256": "44336c63cd111c7ee56d1e77ddc2bcebedaec60616f810fbf120db5cae888135"
   },
   "automatedTests": {
-    "website": 200,
-    "assetValidator": 50,
+    "website": 212,
+    "assetValidator": 56,
     "townTypecheckPassed": true
   },
-  "browserAcceptance": {
-    "Firefox153": {
-      "passed": 23,
-      "skipped": 0,
-      "preview": "https://25ff74e3.andymasley-site.pages.dev/town/",
-      "runtimeCommit": "34ad22c9e52f75e49678d90bad100fa6298eafeb"
-    },
-    "WebKit26.5": {
-      "passed": 23,
-      "skipped": 0,
-      "preview": "https://25ff74e3.andymasley-site.pages.dev/town/",
-      "runtimeCommit": "34ad22c9e52f75e49678d90bad100fa6298eafeb"
-    },
-    "Chrome152MobileEmulation": {
-      "passed": 20,
-      "physicalDeviceTest": false
-    },
-    "Chrome152Hosted": {
-      "passed": 23,
-      "skipped": 0,
-      "preview": "https://25ff74e3.andymasley-site.pages.dev/town/",
-      "runtimeCommit": "34ad22c9e52f75e49678d90bad100fa6298eafeb"
-    },
-    "consolidatedReportSha256": "f3847a602adb9f3d5bc6227798a314dc74ad997dfd23aa016c27bd7b0609f7b0"
+  "guardedBuild": {
+    "passed": true,
+    "pages": 124,
+    "requireContent": true
   },
   "baselineChecks": {
-    "fullSiteTypecheck": "135 unchanged pre-existing errors; no town errors",
+    "fullSiteTypecheck": "135 pre-existing errors outside the game; scoped town typecheck passed",
     "aquiferDataValidation": "Pre-existing missing display-aquifers.json in origin/main"
-  },
-  "performance": {
-    "sustainedDrive": {
-      "durationSeconds": 1200.2,
-      "samples": 61,
-      "completed": true,
-      "pageErrors": [],
-      "sceneErrors": 0,
-      "contextLosses": 0,
-      "medianOfSampledFrameMediansMs": 16.7,
-      "maxSampledFrameP95Ms": 16.8,
-      "peakLoadedTiles": 56,
-      "peakHeapBytes": 246892812,
-      "peakEstimatedGeometryBytes": 162417796,
-      "peakEstimatedTextureBytes": 130823509,
-      "finalHeapBytes": 201818691,
-      "endOfRouteSamples": 0,
-      "reportSha256": "b5a1e3fad719e293c5080634d872232c34576482ff9c39ce6cc0eb49c92a980a",
-      "environment": "Local immutable preview; desktop Chrome152, 1440x1000 DPR1, Metal WebGL. Five start regions with four teleports, arrow-key choices, 20-second samples. Other browser/build activity overlapped the first ten minutes. Frame timing is sampled rolling timing, not a device-independent FPS guarantee.",
-      "runtimeCommit": "a80937695d3bf6c0d37389bfee638acf8b273971",
-      "subsequentChange": "Initial and teleport preparation now request readiness tiles first; steady-state streaming, geometry, and driving engine are unchanged."
-    },
-    "hostedColdStart": {
-      "runtimeCommit": "34ad22c9e52f75e49678d90bad100fa6298eafeb",
-      "url": "https://25ff74e3.andymasley-site.pages.dev/town/",
-      "downloadMbps": 25,
-      "latencyMs": 50,
-      "viewport": {
-        "width": 1280,
-        "height": 850
-      },
-      "deviceScaleFactor": 1,
-      "cpuThrottleRate": 1,
-      "playToInterfaceReadyMs": 6947.8,
-      "playToObservedDrawnReadyMs": 7881.2,
-      "playToReadyEncodedBytesObserved": 14964656,
-      "navigationToReadyEncodedBytesObserved": 15085609,
-      "requestsAfterPlay": 26,
-      "inFlightAtObservation": 0,
-      "reportSha256": "3f44453dde2b1b92878c5e6a581f59ca753007768eb3e0463ee67e29cc99ae71",
-      "caveat": "One cold-browser desktop Chrome152 sample at 25 Mbps/50 ms with normal within-visit caching. Does not force the CDN cold; not a physical mobile measurement or frame-rate guarantee.",
-      "previousStartupEncodedBytes": 21113966
-    }
-  },
-  "cleanCheckoutRestore": {
-    "passed": true,
-    "commit": "a80937695d3bf6c0d37389bfee638acf8b273971",
-    "beganWithoutAssetDirectory": true,
-    "downloadedPublishedArchive": true,
-    "archiveSha256Verified": true,
-    "manifestSha256Verified": true,
-    "validationChecks": 57436,
-    "localNode": "25.2.1"
-  },
-  "startupRegressionTests": {
-    "worldTests": 9,
-    "passed": true,
-    "covers": "Owning-cell preparation, deferred neighbors, covering-cell fallback, timeouts, overlap rejection and disposal"
-  },
-  "cleanNode22Install": {
-    "passed": true,
-    "node": "22.23.2",
-    "npm": "10.9.8",
-    "packagesInstalled": 560,
-    "startedWithoutNodeModules": true,
-    "normalInstallScripts": true,
-    "lockSha256": "44b44deb17c88b597c57a16be3af9f3d45db708251330c52fdadf304ede994d0",
-    "repair": "Adds the missing Vitest/Vite8 optional esbuild0.27.7 lock entry and normalizes npm10 peer metadata; existing package versions, resolved URLs and integrity values are unchanged."
   }
 }
