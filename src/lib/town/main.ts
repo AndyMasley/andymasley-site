@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
+import { Sky } from 'three/examples/jsm/objects/Sky.js';
 import { advanceRealTime, DriveEngine, LANDMARKS, MPH, RoadGraph, spawnAtLandmark } from './engine';
 import { validateManifest, type Quality, type V3 } from './contracts';
 import { TownWorld } from './world';
@@ -88,6 +88,7 @@ export async function startTown(root: HTMLElement): Promise<Session> {
   let renderer: THREE.WebGLRenderer | undefined;
   let resize: ResizeObserver | undefined;
   let environmentTarget: THREE.WebGLRenderTarget | undefined;
+  let sky: Sky | undefined;
   let scene: THREE.Scene | undefined;
   let car: THREE.Group | undefined;
   const audio = new RoadAudio();
@@ -143,6 +144,8 @@ export async function startTown(root: HTMLElement): Promise<Session> {
       if (car) world?.releaseGroup(car);
       world?.dispose();
       environmentTarget?.dispose();
+      sky?.geometry.dispose();
+      sky?.material.dispose();
       renderer?.dispose();
       delete root.dataset.ready;
       root.removeAttribute('aria-busy');
@@ -160,17 +163,16 @@ export async function startTown(root: HTMLElement): Promise<Session> {
     renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false, powerPreference: 'high-performance' });
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.08;
+    renderer.toneMappingExposure = 0.95;
     renderer.setPixelRatio(pixelRatio);
     renderer.shadowMap.enabled = !mobile && quality !== 'low';
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     scene = new THREE.Scene();
-    scene.background = new THREE.Color('#b7cbd1');
-    scene.fog = new THREE.Fog('#bdcbca', 500, 1550);
+    scene.fog = new THREE.Fog('#bfcbd0', 550, 1800);
     const camera = new THREE.PerspectiveCamera(61, 1, 0.08, 6500);
-    const ambient = new THREE.HemisphereLight('#e9f2ec', '#7f795e', 0.8);
+    const ambient = new THREE.HemisphereLight('#d5e7ff', '#73684e', 0.55);
     scene.add(ambient);
-    const sun = new THREE.DirectionalLight('#fff0cc', 2.4);
+    const sun = new THREE.DirectionalLight('#fff0d5', 2.5);
     sun.castShadow = true;
     sun.shadow.mapSize.set(2048, 2048);
     sun.shadow.camera.left = -100;
@@ -183,10 +185,19 @@ export async function startTown(root: HTMLElement): Promise<Session> {
     sun.shadow.normalBias = 0.16;
     scene.add(sun, sun.target);
     const pmrem = new THREE.PMREMGenerator(renderer);
-    const room = new RoomEnvironment();
-    environmentTarget = pmrem.fromScene(room, 0.04);
+    sky = new Sky();
+    sky.scale.setScalar(450000);
+    sky.material.uniforms.turbidity.value = 3.0;
+    sky.material.uniforms.rayleigh.value = 1.6;
+    sky.material.uniforms.mieCoefficient.value = 0.003;
+    sky.material.uniforms.mieDirectionalG.value = 0.8;
+    sky.material.uniforms.sunPosition.value.copy(SUN_OFFSET).normalize();
+    scene.add(sky);
+    const skyScene = new THREE.Scene();
+    const environmentSky = sky.clone();
+    skyScene.add(environmentSky);
+    environmentTarget = pmrem.fromScene(skyScene, 0.04);
     scene.environment = environmentTarget.texture;
-    room.dispose();
     pmrem.dispose();
 
     const [manifestResponse, networkResponse] = await Promise.all([fetch(WORLD_URL, { signal }), fetch(NETWORK_URL, { signal })]);

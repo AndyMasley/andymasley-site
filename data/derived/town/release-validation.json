@@ -1,125 +1,753 @@
 {
-  "release": "2026-09-0e8d4f694d92",
-  "manifestSha256": "0e8d4f694d92b913a7d8195400f48af3c37b4ae53d39223ad9b2606dfb5238b0",
+  "manifestSha256": "37fbef34bc2a4467997252be75b4c43174a6a7b2d39963614cadd8d787e56105",
+  "archiveSha256": "65fe40d8cbcf9d6d7c21ebd51cd8b71dd3f9ef94820f3d6fad50e30897f2b458",
+  "archiveBytes": 479630228,
   "sourceSha256": "8376d6586e16c53ccf9b13f1754fe4d844d9ff7703475b444076b0853bcc510a",
+  "files": 3713,
+  "expandedBytes": 1215406052,
   "tiles": 672,
   "buildings": 7805,
   "treeAnchors": 158099,
-  "files": 3030,
-  "expandedBytes": 705094017,
-  "archiveBytes": 437950236,
-  "sourceGeometryAudit": {
-    "checks": 9496,
-    "triangles": 13590271,
-    "orientedTrianglesExact": true,
-    "decodedXYZErrorM": 0,
-    "decodedNormalError": 0,
-    "decodedTexturedUVError": 0
+  "release": "2026-09-37fbef34bc2a",
+  "status": "Accepted for publication: final hosted loading, driving, rendering and restoration checks passed",
+  "reconstructionAudit": {
+    "passed": true,
+    "partial": false,
+    "stats": {
+      "triangles": 11614898,
+      "bytes": 916499776,
+      "nonresidential_or_complex": 910,
+      "accessory": 2218,
+      "principal_residential": 4654,
+      "structures_with_terrain_fallback": 20,
+      "generated_count": 7782,
+      "preserved_count": 23,
+      "expected_count": 7805,
+      "missing_count": 0,
+      "maximum_normal_length_error": 5.960464477539063e-08,
+      "seconds": 18.46372675895691
+    },
+    "reportSha256": "e074c348c2fdecf5cefc632eb766ed23d33b2b535b81881ebe73a59a7a0a584e"
   },
   "publishAssetAudit": {
-    "checks": 57436,
-    "passed": true
+    "passed": true,
+    "checks": 65171,
+    "releaseIdentitySha256": "9ebede1208792c1bdee0a82033fbda22d329e43bea7226969c847c44f417d4b8",
+    "reportSha256": "394984233751d5e4f629e0003427161ce9aced10f6b39ed7f08af28e8a007dba"
   },
   "automatedTests": {
-    "website": 200,
-    "assetValidator": 50,
+    "website": 215,
+    "assetValidator": 56,
     "townTypecheckPassed": true
   },
-  "browserAcceptance": {
-    "Firefox153": {
-      "passed": 23,
-      "skipped": 0,
-      "preview": "https://25ff74e3.andymasley-site.pages.dev/town/",
-      "runtimeCommit": "34ad22c9e52f75e49678d90bad100fa6298eafeb"
-    },
-    "WebKit26.5": {
-      "passed": 23,
-      "skipped": 0,
-      "preview": "https://25ff74e3.andymasley-site.pages.dev/town/",
-      "runtimeCommit": "34ad22c9e52f75e49678d90bad100fa6298eafeb"
-    },
-    "Chrome152MobileEmulation": {
-      "passed": 20,
-      "physicalDeviceTest": false
-    },
-    "Chrome152Hosted": {
-      "passed": 23,
-      "skipped": 0,
-      "preview": "https://25ff74e3.andymasley-site.pages.dev/town/",
-      "runtimeCommit": "34ad22c9e52f75e49678d90bad100fa6298eafeb"
-    },
-    "consolidatedReportSha256": "f3847a602adb9f3d5bc6227798a314dc74ad997dfd23aa016c27bd7b0609f7b0"
+  "guardedBuild": {
+    "passed": true,
+    "pages": 124,
+    "requireContent": true
   },
   "baselineChecks": {
-    "fullSiteTypecheck": "135 unchanged pre-existing errors; no town errors",
+    "fullSiteTypecheck": "135 pre-existing errors outside the game; scoped town typecheck passed",
     "aquiferDataValidation": "Pre-existing missing display-aquifers.json in origin/main"
   },
-  "performance": {
-    "sustainedDrive": {
-      "durationSeconds": 1200.2,
-      "samples": 61,
-      "completed": true,
-      "pageErrors": [],
-      "sceneErrors": 0,
-      "contextLosses": 0,
-      "medianOfSampledFrameMediansMs": 16.7,
-      "maxSampledFrameP95Ms": 16.8,
-      "peakLoadedTiles": 56,
-      "peakHeapBytes": 246892812,
-      "peakEstimatedGeometryBytes": 162417796,
-      "peakEstimatedTextureBytes": 130823509,
-      "finalHeapBytes": 201818691,
-      "endOfRouteSamples": 0,
-      "reportSha256": "b5a1e3fad719e293c5080634d872232c34576482ff9c39ce6cc0eb49c92a980a",
-      "environment": "Local immutable preview; desktop Chrome152, 1440x1000 DPR1, Metal WebGL. Five start regions with four teleports, arrow-key choices, 20-second samples. Other browser/build activity overlapped the first ten minutes. Frame timing is sampled rolling timing, not a device-independent FPS guarantee.",
-      "runtimeCommit": "a80937695d3bf6c0d37389bfee638acf8b273971",
-      "subsequentChange": "Initial and teleport preparation now request readiness tiles first; steady-state streaming, geometry, and driving engine are unchanged."
+  "sourceCompositionAudit": {
+    "passed": true,
+    "reportSHA256": "48b5ef6ab5b39d7881ffb751e37649c293b951c0b2481ffe44c4008864458600",
+    "validatorSHA256": "b78a65abae5399348468afe53c5aeaac782dc5e913cc518714a6c46c8c14015c",
+    "reportBytes": 7765611,
+    "checks": 12536,
+    "cells": 672,
+    "counts": {
+      "unchanged_category_comparisons": 2013,
+      "source_body_compositions": 671,
+      "raw_compressed_exact_comparisons": 671,
+      "nonempty_source_bodies": 7805,
+      "preserved_source_hashes": 23,
+      "decoded_output_lods": 2013,
+      "lod0_building_triangles": 11815189,
+      "decoded_triangles_all_lods": 46510646,
+      "inherited_zero_normal_references_all_lods": 1440,
+      "inherited_degenerate_faces_all_lods": 1440
     },
-    "hostedColdStart": {
-      "runtimeCommit": "34ad22c9e52f75e49678d90bad100fa6298eafeb",
-      "url": "https://25ff74e3.andymasley-site.pages.dev/town/",
-      "downloadMbps": 25,
-      "latencyMs": 50,
-      "viewport": {
-        "width": 1280,
-        "height": 850
+    "startedUTC": "2026-09-05T22:04:56.322Z",
+    "finishedUTC": "2026-09-05T22:10:04.801Z",
+    "preservationScope": {
+      "observedBodies": {
+        "count": 23,
+        "exactAt": "LOD0",
+        "distantLODs": "Bounded display simplification is permitted at LOD1/2; these bodies are not asserted exact at distant LODs."
       },
-      "deviceScaleFactor": 1,
-      "cpuThrottleRate": 1,
-      "playToInterfaceReadyMs": 6947.8,
-      "playToObservedDrawnReadyMs": 7881.2,
-      "playToReadyEncodedBytesObserved": 14964656,
-      "navigationToReadyEncodedBytesObserved": 15085609,
-      "requestsAfterPlay": 26,
-      "inFlightAtObservation": 0,
-      "reportSha256": "3f44453dde2b1b92878c5e6a581f59ca753007768eb3e0463ee67e29cc99ae71",
-      "caveat": "One cold-browser desktop Chrome152 sample at 25 Mbps/50 ms with normal within-visit caching. Does not force the CDN cold; not a physical mobile measurement or frame-rate guarantee.",
-      "previousStartupEncodedBytes": 21113966
-    }
+      "unchangedCategories": "All categories except replaced generic buildings/facades/roof-details, including authored landmark overlays, must remain exact against the original corresponding LOD.",
+      "sourceComposition": "All 7805 registered body inputs are represented exactly at LOD0 after translation to the owning tile, with unused texture coordinates permitted to be pruned.",
+      "compression": "Compressed LOD0 must retain every attribute and oriented triangle from its uncompressed composed reference."
+    },
+    "geometrySourceManifestSha256": "2430b57e611e29573e871b662cb7e070a06664283f07871722d69d325ece4597"
+  },
+  "deliveryArchiveAudit": {
+    "passed": true,
+    "archive": "/private/tmp/town-assets-37fbef34bc2a.tar.gz",
+    "source_assets": "/private/tmp/webster-realism-v2-delivery/assets",
+    "archive_prefix": "2026-09-37fbef34bc2a",
+    "started_utc": "2026-09-05T22:49:28.417223+00:00",
+    "files_verified": 3713,
+    "directories_verified": 7,
+    "failures": [],
+    "extracted_files": 0,
+    "archive_or_assets_modified": false,
+    "archive_bytes": 479630228,
+    "archive_sha256": "65fe40d8cbcf9d6d7c21ebd51cd8b71dd3f9ef94820f3d6fad50e30897f2b458",
+    "uncompressed_file_bytes": 1215406052,
+    "manifest_sha256": "37fbef34bc2a4467997252be75b4c43174a6a7b2d39963614cadd8d787e56105",
+    "canonical_file_inventory_sha256": "9269de4f92f2a6f931e09c6a1652cf97b1a377b6ff58bbcf8351511cce72e203",
+    "file_types_and_paths_safe": true,
+    "no_symlinks_or_traversal": true,
+    "exact_file_set": true,
+    "all_content_hashes_exact": true,
+    "gzip_crc_validated": true,
+    "compressed_identity_exact": true,
+    "elapsed_seconds": 12.327764987945557,
+    "completed_utc": "2026-09-05T22:49:40.744993+00:00"
   },
   "cleanCheckoutRestore": {
+    "fresh_directory": "/private/tmp/webster-public-restore-37fbef34bc2a",
+    "created_utc": "2026-09-05T22:52:19.502554+00:00",
+    "initial_assets_present": false,
+    "initial_public_directory_present": false,
+    "copied_source_file_count": 6,
+    "copied_files": [
+      {
+        "path": "scripts/prepare-town-assets.mjs",
+        "bytes": 3017,
+        "sha256": "d6100a3545eb5561d6c31a6bf68bfbe8982033bdacb536ca9bd92812f0cb3a2a"
+      },
+      {
+        "path": "scripts/validate-town-assets.mjs",
+        "bytes": 29409,
+        "sha256": "16fa5b36e5634fb8a2652f7d568ad124cca0c93b0021281e51f85ba3d53f09d7"
+      },
+      {
+        "path": "data/derived/town/release.json",
+        "bytes": 609,
+        "sha256": "16667f3833afd98d571e4aa98c6df716e8989211f3d030762e9c8d9d9a7fd772"
+      },
+      {
+        "path": "data/schema/town/manifest.schema.json",
+        "bytes": 4935,
+        "sha256": "7326dbcbe60d396c97840a7bba2ae94225559a68634657f91383ded17621ff88"
+      },
+      {
+        "path": "data/schema/town/release-policy.json",
+        "bytes": 1016,
+        "sha256": "1040884cf69187bbded2cf8b6ba3c34fc4e8c252e6d659d00d5ff2f45a32b4d7"
+      },
+      {
+        "path": "data/schema/town/validate-town-assets.checks.mjs",
+        "bytes": 15407,
+        "sha256": "10a52e12979371399286beed36ca1f4613aa23f8951c863fee728fe9aca951b5"
+      }
+    ],
+    "archive_public_url": "https://github.com/AndyMasley/andymasley-site/releases/download/town-assets-2026-09-05-37fbef34bc2a/town-assets-37fbef34bc2a.tar.gz",
+    "expected_archive_sha256": "65fe40d8cbcf9d6d7c21ebd51cd8b71dd3f9ef94820f3d6fad50e30897f2b458",
+    "expected_archive_bytes": 479630228,
+    "expected_manifest_sha256": "37fbef34bc2a4467997252be75b4c43174a6a7b2d39963614cadd8d787e56105",
+    "source_release_directory": "/private/tmp/webster-release",
+    "active_site_or_pipeline_modified": false,
     "passed": true,
-    "commit": "a80937695d3bf6c0d37389bfee638acf8b273971",
-    "beganWithoutAssetDirectory": true,
-    "downloadedPublishedArchive": true,
-    "archiveSha256Verified": true,
-    "manifestSha256Verified": true,
-    "validationChecks": 57436,
-    "localNode": "25.2.1"
+    "validated_utc": "2026-09-05T22:53:40.553311+00:00",
+    "command": "/opt/homebrew/bin/node scripts/prepare-town-assets.mjs",
+    "preparer_exit_code": 0,
+    "normal_preparer_unmodified": true,
+    "network_escalation_used": true,
+    "public_download_branch_executed": true,
+    "archive_sha256_verified": true,
+    "archive_integrity_evidence": "The unchanged normal preparer downloaded the public URL and required its SHA256 to equal the release pin before extraction, then checked the exact manifest hash. Its finally block removed the downloaded temporary archive.",
+    "actual_manifest_sha256": "37fbef34bc2a4467997252be75b4c43174a6a7b2d39963614cadd8d787e56105",
+    "asset_checks": 65171,
+    "counts": {
+      "network": {
+        "nodes": 1238,
+        "directedEdges": 2964,
+        "physicalRoads": 1561,
+        "points": 197493,
+        "blockedEdges": 28,
+        "blockedTurns": 2,
+        "landmarks": 5
+      },
+      "tiles": 672,
+      "buildings": 7805,
+      "trees": 158099,
+      "prototypes": 3,
+      "textures": 377,
+      "files": 3713,
+      "totalBytes": 1215406052,
+      "maximumAssetBytes": 7806952,
+      "lod0Triangles": 17176873
+    },
+    "actual_expanded_file_count": 3713,
+    "actual_expanded_bytes": 1215406052,
+    "asset_validation_report": "/private/tmp/webster-public-restore-37fbef34bc2a/data/derived/town/asset-validation.json",
+    "asset_validation_report_sha256": "3880e1ea8d241210c04aaf76c3247abcf4446424d4ce4e953d82fd54f408899b",
+    "log": "/private/tmp/webster-public-restore-37fbef34bc2a/clean-restore.log",
+    "log_sha256": "6e93347c05edd39ce279b616d5bb1e8ef4e283f6ae16270ce90d5733a758a14a",
+    "initial_evidence_sha256": "2f0fd7aa3ae5cc04329f1645b2fd9c8191dcb7c5c7ff0b5e54dc2ac55f8651d1",
+    "copied_inputs_unchanged": true,
+    "cleanup_requested_after_full_validation": true,
+    "cleanup_completed": true,
+    "cleanup_utc": "2026-09-05T22:53:41.292766+00:00",
+    "deleted_only_asset_directory": "/private/tmp/webster-public-restore-37fbef34bc2a/public/town-assets/2026-09-37fbef34bc2a",
+    "restored_asset_files_removed": 3713,
+    "restored_asset_logical_bytes_removed": 1215406052,
+    "retained_copied_inputs": 6,
+    "full_report_log_and_evidence_retained": true,
+    "disk_free_before_cleanup_bytes": 11556782080,
+    "disk_free_after_cleanup_bytes": 12781965312
   },
-  "startupRegressionTests": {
-    "worldTests": 9,
+  "groundDecoderAudit": {
     "passed": true,
-    "covers": "Owning-cell preparation, deferred neighbors, covering-cell fallback, timeouts, overlap rejection and disposal"
+    "manifestSHA256": "2430b57e611e29573e871b662cb7e070a06664283f07871722d69d325ece4597",
+    "decoderSourceSHA256": "a530594e6cfd166be411e0c6bbc06460a6a5a4cf41489e7b1c90bc5262efd842",
+    "decoderBundleSHA256": "81aed43b84970f5fdc3dfb77e9e247a8237066ac55e6b9a68b9ea9740743e1dc",
+    "expectedMasks": 670,
+    "complete": true,
+    "manifestUnchanged": true,
+    "decoderSourceUnchanged": true,
+    "encodedPNGBytes": 7560591,
+    "decodedRGBABytes": 198277120,
+    "preservedPixelsWithRGBUnderAlphaZero": 38463149,
+    "preservedNonzeroRGBBytesUnderAlphaZero": 43241871,
+    "filterRows": {
+      "0": 55442,
+      "1": 9326,
+      "2": 71537,
+      "3": 1685,
+      "4": 44250
+    },
+    "fixtureFilterRows": {
+      "0": 5,
+      "1": 4,
+      "2": 3,
+      "3": 3,
+      "4": 2
+    },
+    "startedUTC": "2026-09-05T22:19:31.728Z",
+    "finishedUTC": "2026-09-05T22:19:38.168Z",
+    "reportSHA256": "71ee248394ecb5a29afe75c7f1c74d366f098707cc18ea8c8cab1f0f5d0df823",
+    "dimensions": {
+      "272x272": 670
+    },
+    "pillowVersions": [
+      "11.3.0"
+    ],
+    "lakeExample": {
+      "id": "6_-14",
+      "source": {
+        "kind": "final-mask",
+        "url": "surfaces/masks/6_-14.png"
+      },
+      "pillowVersion": "11.3.0",
+      "width": 272,
+      "height": 272,
+      "mode": "RGBA",
+      "pngSHA256": "de49cf6debb5ad21d2f3cca38642434e15a26a41e0ed47ece85ea0096bbc74ba",
+      "rgbaSHA256": "3a96d728aaa3402639073c72503c37f6ae8b1072344c74a6feb2bd797930a7bd",
+      "pngBytes": 12150,
+      "rgbaBytes": 295936,
+      "filterRows": {
+        "0": 178,
+        "1": 8,
+        "2": 32,
+        "3": 0,
+        "4": 54
+      },
+      "chunks": [
+        "IHDR",
+        "IDAT",
+        "IEND"
+      ],
+      "crcAllValid": true,
+      "decoderRGBA_SHA256": "3a96d728aaa3402639073c72503c37f6ae8b1072344c74a6feb2bd797930a7bd",
+      "exactDimensions": true,
+      "exactByteLength": true,
+      "exactBytes": true,
+      "actualPNGMatchesPillowInput": true,
+      "channelSums": [
+        4640205,
+        42134,
+        2439157,
+        55947
+      ],
+      "pixelsWithRGBUnderAlphaZero": 27892,
+      "nonzeroRGBBytesUnderAlphaZero": 34440,
+      "pass": true
+    },
+    "coverageNote": "Final delivery preserves every ground mask byte; see deliveryTextureAudit."
   },
-  "cleanNode22Install": {
+  "browserAcceptance": {
+    "chromium": {
+      "passed": true,
+      "checks": 23,
+      "browserVersion": "152.0.7977.77",
+      "reportSha256": "66568321b3420a5f99cc27b2fa8ec51b258b04cac8e32b53492caf87efe28b48",
+      "preview": "http://127.0.0.1:54327/town/",
+      "runtimeCommit": "f59915bd0365df203482a5a7dc45454b9f3e0245",
+      "screenshots": 11,
+      "captureErrors": 0
+    },
+    "firefox": {
+      "passed": true,
+      "checks": 23,
+      "browserVersion": "153.0",
+      "reportSha256": "67a455b39a976fd4502b4701c216d1ecdc7f0046c4bcb3beda3216245b0b969f",
+      "preview": "http://127.0.0.1:54327/town/",
+      "runtimeCommit": "f59915bd0365df203482a5a7dc45454b9f3e0245",
+      "screenshots": 11,
+      "captureErrors": 0
+    },
+    "webkit": {
+      "passed": true,
+      "checks": 23,
+      "browserVersion": "26.5",
+      "reportSha256": "8e265953cd40f88d787a6979e7d58f474ac2fa6266818636184d6529cc073c1d",
+      "preview": "http://127.0.0.1:54327/town/",
+      "runtimeCommit": "f59915bd0365df203482a5a7dc45454b9f3e0245",
+      "screenshots": 11,
+      "captureErrors": 0
+    },
+    "mobile": {
+      "passed": true,
+      "checks": 21,
+      "browserVersion": "152.0.7977.77",
+      "reportSha256": "1bff3552907fd067dd74769f36ddac7dad32514dcd90b143905fe6f78c6dcf8b",
+      "preview": "http://127.0.0.1:54327/town/",
+      "runtimeCommit": "f59915bd0365df203482a5a7dc45454b9f3e0245",
+      "screenshots": 8,
+      "captureErrors": 0,
+      "physicalDeviceTest": false
+    }
+  },
+  "webKitDataTextureVerification": {
     "passed": true,
-    "node": "22.23.2",
-    "npm": "10.9.8",
-    "packagesInstalled": 560,
-    "startedWithoutNodeModules": true,
-    "normalInstallScripts": true,
-    "lockSha256": "44b44deb17c88b597c57a16be3af9f3d45db708251330c52fdadf304ede994d0",
-    "repair": "Adds the missing Vitest/Vite8 optional esbuild0.27.7 lock entry and normalizes npm10 peer metadata; existing package versions, resolved URLs and integrity values are unchanged."
+    "rawAndGpuChannelsExact": true,
+    "reportSha256": "078e0d576394a1bf2ed85e8ba725ad7de245bf841c98d8210ed5dc821d694740",
+    "preview": "http://127.0.0.1:54327/town/"
+  },
+  "originalMasterPreserved": {
+    "passed": true,
+    "sha256": "8376d6586e16c53ccf9b13f1754fe4d844d9ff7703475b444076b0853bcc510a",
+    "reportSha256": "e41949ff011c0a3a620bbbd80bca65e6394200833e6d37cf8c28f792595e4080"
+  },
+  "poster": {
+    "source": "Actual game canvas at Main Street; HUD hidden only for screenshot",
+    "width": 1440,
+    "height": 900,
+    "bytes": 109374,
+    "sha256": "23d852ffaa9dacbd8a674125aec97287e356cde038d2fe0a4faec8ea979111b9"
+  },
+  "deliveryTextureAudit": {
+    "passed": true,
+    "scope": "Only three explicitly authorized image derivatives and their manifest integrity/provenance may change. Every other file and all GLB bytes must be identical to the strictly audited full-resolution composition.",
+    "originalManifestSHA256": "2430b57e611e29573e871b662cb7e070a06664283f07871722d69d325ece4597",
+    "deliveryManifestSHA256": "37fbef34bc2a4467997252be75b4c43174a6a7b2d39963614cadd8d787e56105",
+    "originalCompositionReportSHA256": "48b5ef6ab5b39d7881ffb751e37649c293b951c0b2481ffe44c4008864458600",
+    "textureDerivativeProvenanceSHA256": "06fa09983b927a4fccb0f85948b2c3bb6adc09eefd795f6564503a4f71177c5e",
+    "originalDerivativePreparationScriptSHA256": "776f0587257d9e7cd108a648cc8fe27ebc8b46bb8f6a3f050d578c972e477010",
+    "inventoryFiles": 3713,
+    "inventorySHA256": "f24912a5720ebacd074b80c94e17e0bf6ecf31648f6781f448cc921227c4ce20",
+    "byteIdenticalGLBFiles": 2018,
+    "byteIdenticalOtherFiles": 3709,
+    "changedFiles": [
+      "manifest.json",
+      "textures/v2-6ff9f4696b75de41972a80d2.jpg",
+      "textures/v2-87588772649468cafb05ec00.jpg",
+      "textures/v2-c37ef11bb94a533d1c758c5c.jpg"
+    ],
+    "originalExpandedBytes": 1239386842,
+    "deliveryExpandedBytes": 1215406052,
+    "imageBytesSaved": 23982565,
+    "replacements": [
+      {
+        "url": "textures/v2-6ff9f4696b75de41972a80d2.jpg",
+        "sourceImage": "factory_brick_diff_2k.jpg",
+        "sourceSHA256": "6ff9f4696b75de41972a80d2d73a318bc131e84512e0f4b6b0903dd69312e8e3",
+        "sourceBytes": 4155985,
+        "sourceDimensions": [
+          2048,
+          2048
+        ],
+        "sourceMode": "RGB",
+        "derivativeSHA256": "3816a9104c24ca470426e86f6d6b26975cd6497c032a6521dde33ef0f73b6426",
+        "derivativeBytes": 270657,
+        "derivativeDimensions": [
+          1024,
+          1024
+        ],
+        "derivativeMode": "RGB",
+        "frozenDerivativePath": "/Users/andy/Documents/New project/webster-blender/web-export/staging/assets/textures/6ff9f4696b75de41972a80d2.jpg",
+        "exactFrozenDerivativeBytes": true
+      },
+      {
+        "url": "textures/v2-87588772649468cafb05ec00.jpg",
+        "sourceImage": "downtown_aerial.jpg",
+        "sourceSHA256": "87588772649468cafb05ec00fc9ccbd577dafbf3d26019759a145797ace4db9f",
+        "sourceBytes": 18396029,
+        "sourceDimensions": [
+          6400,
+          6144
+        ],
+        "sourceMode": "RGB",
+        "derivativeSHA256": "1844cfcd000a808f7c441bd764289fb0d80af75b614c134a2cf49c7901fab4fd",
+        "derivativeBytes": 996065,
+        "derivativeDimensions": [
+          2048,
+          1966
+        ],
+        "derivativeMode": "RGB",
+        "frozenDerivativePath": "/Users/andy/Documents/New project/webster-blender/web-export/staging/assets/textures/87588772649468cafb05ec00.jpg",
+        "exactFrozenDerivativeBytes": true
+      },
+      {
+        "url": "textures/v2-c37ef11bb94a533d1c758c5c.jpg",
+        "sourceImage": "red_brick_03_diff_2k.jpg",
+        "sourceSHA256": "c37ef11bb94a533d1c758c5c7d7199264e90f19b23946766c7c59aa189c11ff6",
+        "sourceBytes": 2969950,
+        "sourceDimensions": [
+          2048,
+          2048
+        ],
+        "sourceMode": "RGB",
+        "derivativeSHA256": "789c432413c0a7301e73a6bd79aa7642713f38f3eaec1b9b3daee7e7afdbb4c7",
+        "derivativeBytes": 272677,
+        "derivativeDimensions": [
+          1024,
+          1024
+        ],
+        "derivativeMode": "RGB",
+        "frozenDerivativePath": "/Users/andy/Documents/New project/webster-blender/web-export/staging/assets/textures/c37ef11bb94a533d1c758c5c.jpg",
+        "exactFrozenDerivativeBytes": true
+      }
+    ],
+    "unexpectedManifestChanges": [],
+    "startedUTC": "2026-09-05T22:46:42.941423+00:00",
+    "finishedUTC": "2026-09-05T22:46:51.438706+00:00",
+    "reportSHA256": "3912670d6d2f0237ab5f559cc1f890131f379c8ad843b7538e8b74a9ade2239c",
+    "validatorSHA256": "d2bc3bffe2611c86d4f2d7c7a28772e19da4b43ccea289d0ae309bfd395e2530"
+  },
+  "browserAcceptanceScope": "Three-engine and mobile functional checks used the same runtime and byte-identical geometry/masks before the three documented texture derivatives. Final hosted checks are recorded separately.",
+  "acceptedPreviewCommit": "edf9c2f5c8692849d057026fb78eff8781e88f40",
+  "acceptedPreviewURL": "https://b4ad710d.andymasley-site.pages.dev/town/",
+  "hostedAcceptance": {
+    "candidate": {
+      "url": "https://b4ad710d.andymasley-site.pages.dev/town/",
+      "sourceCommit": "edf9c2f5c8692849d057026fb78eff8781e88f40",
+      "manifestSha256": "37fbef34bc2a4467997252be75b4c43174a6a7b2d39963614cadd8d787e56105",
+      "browserRuntimeCommit": "f59915b",
+      "geometryRelationToPriorCandidate": "Parent packaging verification reports all2018GLBs byte-identical; only three preserved-source image web derivatives changed. This audit independently tests the resulting hosted candidate."
+    },
+    "reports": {
+      "cold": {
+        "path": "/private/tmp/webster-realism-v2-acceptance/cold-optimized-final/report.json",
+        "sha256": "a79dcccf103510f33b1fb34d2f18dd17896512996bddde31cc887575f5ad0036",
+        "bytes": 746445
+      },
+      "chrome": {
+        "path": "/private/tmp/webster-realism-v2-acceptance/chromium-optimized-final/report.json",
+        "sha256": "6e6de83846983843162828ac2ec1bc36a452ba08133eee4ab921248aba3b9909",
+        "bytes": 201749
+      },
+      "webkitMask": {
+        "path": "/private/tmp/webster-realism-v2-acceptance/webkit-mask-optimized-final/report.json",
+        "sha256": "1c262c797dad02dd2e43d1e5b3ec041900c23342c5f7aa4293ee1a03d848da71",
+        "bytes": 3218
+      },
+      "sustained": {
+        "path": "/private/tmp/webster-realism-v2-acceptance/sustained-optimized-final/audit.json",
+        "sha256": "7d33917336bac56f1434371a04a80b1f7fda27a211faf6a9fabc96474500aaa1",
+        "bytes": 1539476
+      }
+    },
+    "cold": {
+      "playToInterfaceReadyMs": 6479.2998046875,
+      "playToDrawnReadyMs": 7030.099853515625,
+      "playEncodedTransferBytes": 14339868,
+      "navigationEncodedTransferBytes": 14476234,
+      "playRequestsStarted": 34,
+      "playRequestsCompleted": 34,
+      "playRequestsInFlight": 0,
+      "headerCombinations": [
+        {
+          "contentEncoding": "br",
+          "cacheControl": "public, max-age=0, must-revalidate",
+          "cfCacheStatus": "absent",
+          "responseCount": 8
+        },
+        {
+          "contentEncoding": "none",
+          "cacheControl": "public, max-age=0, must-revalidate",
+          "cfCacheStatus": "absent",
+          "responseCount": 1
+        },
+        {
+          "contentEncoding": "br",
+          "cacheControl": "public, max-age=31536000, immutable",
+          "cfCacheStatus": "absent",
+          "responseCount": 3
+        },
+        {
+          "contentEncoding": "none",
+          "cacheControl": "public, max-age=31536000, immutable",
+          "cfCacheStatus": "absent",
+          "responseCount": 31
+        }
+      ],
+      "meetsPrior8Second15MBTargetInThisRun": true,
+      "caveats": [
+        "One desktop Chromium run with network emulation; this is not a physical phone measurement, a mobile CPU/GPU test, or a statistically representative benchmark.",
+        "25 Mbps uses decimal bits and CDP aggregate throughput. CDP latency is the configured minimum request-to-response-header delay; it is not a measurement of physical network RTT.",
+        "The browser cache starts empty; responses may be reused during this first visit. The Cloudflare edge cache is not forced cold.",
+        "Encoded byte totals use CDP loadingFinished for completed responses and received-header/data counters for in-flight responses; the latter are observed partial bytes, not final response sizes.",
+        "Time to ready includes lazy JavaScript loading, graph/model preparation and drawing; scenery continues streaming after first readiness."
+      ]
+    },
+    "chrome": {
+      "passedChecks": 23,
+      "failedChecks": 0,
+      "skipped": 0,
+      "screenshots": 11,
+      "screenshotSkips": 0,
+      "captureErrors": 0
+    },
+    "webkit": {
+      "passed": true,
+      "rawRGBA": [
+        4640205,
+        42134,
+        2439157,
+        55947
+      ],
+      "liveGPU": {
+        "label": "actual live mask data",
+        "sum": [
+          4640205,
+          42134,
+          2439157
+        ],
+        "nonzero": [
+          21164,
+          833,
+          12644
+        ],
+        "max": [
+          255,
+          184,
+          255
+        ],
+        "center": [
+          0,
+          0,
+          0,
+          255
+        ],
+        "error": 0
+      },
+      "isDataTexture": true,
+      "pageErrors": [],
+      "consoleErrors": [],
+      "note": "Actual WebKit live DataTexture upload matches independently audited source mask channels. ImageBitmap comparison intentionally demonstrates the old browser behavior; live runtime uses rawDataTexture."
+    },
+    "sustained": {
+      "checks": 122,
+      "steadyDrive": {
+        "wallSeconds": 120.13320000004768,
+        "simulationSeconds": 120.12850000000807,
+        "simulationToWallRatio": 0.9999608767597999,
+        "distanceM": 1022.145119467027,
+        "drawnFrames": 7197,
+        "framesPerWallSecond": 59.908501563240996,
+        "runtimeBytesObserved": 36833927,
+        "memoryEstimateStart": {
+          "geometry": 109014154,
+          "texture": 140959744
+        },
+        "memoryEstimateEnd": {
+          "geometry": 67416342,
+          "texture": 106029931
+        }
+      },
+      "sampleMedianMsRange": [
+        16.69999999999709,
+        16.69999999999891
+      ],
+      "sampleRollingP95MsRange": [
+        16.700000000004366,
+        16.799999999999272
+      ],
+      "maxShadowTrees": 24,
+      "maxShadowDistanceM": 79.4183370818631,
+      "maxResidentTiles": 56,
+      "cleanup": {
+        "residentTiles": 42,
+        "pendingLoads": 2,
+        "observedInstanceDisposals": 728,
+        "estimatedGeometryBytes": 246692588,
+        "estimatedTextureBytes": 153669632,
+        "checks": [
+          {
+            "name": "Prior distant tiles evicted",
+            "passed": true,
+            "detail": {
+              "before": [
+                "7_-14",
+                "7_-15",
+                "7_-12",
+                "6_-16",
+                "8_-12",
+                "8_-11",
+                "7_-11",
+                "9_-11",
+                "8_-14",
+                "8_-15",
+                "9_-12",
+                "10_-15",
+                "10_-14",
+                "10_-13",
+                "5_-13",
+                "5_-14",
+                "10_-16",
+                "11_-12",
+                "9_-14",
+                "9_-15",
+                "6_-15",
+                "6_-13",
+                "6_-14",
+                "6_-11",
+                "12_-14",
+                "6_-12",
+                "12_-15",
+                "4_-13",
+                "5_-12",
+                "12_-16",
+                "7_-13",
+                "9_-16",
+                "8_-16",
+                "9_-13",
+                "8_-13",
+                "7_-16",
+                "4_-15",
+                "10_-12",
+                "4_-14",
+                "4_-16",
+                "11_-13",
+                "3_-14",
+                "5_-16",
+                "5_-15",
+                "4_-12",
+                "11_-14",
+                "11_-16",
+                "11_-15"
+              ],
+              "after": [
+                "-12_-4",
+                "-11_-4",
+                "-12_-5",
+                "-11_-5",
+                "-11_-3",
+                "-12_-3",
+                "-13_-4",
+                "-13_-5",
+                "-10_-4",
+                "-10_-5",
+                "-10_-3",
+                "-11_-6",
+                "-12_-6",
+                "-13_-6",
+                "-11_-2",
+                "-12_-2",
+                "-14_-4",
+                "-10_-6",
+                "-14_-5",
+                "-10_-2",
+                "-9_-4",
+                "-9_-5",
+                "-9_-3",
+                "-14_-6",
+                "-12_-7",
+                "-11_-7",
+                "-9_-6",
+                "-13_-7",
+                "-10_-7",
+                "-11_-1",
+                "-12_-1",
+                "-9_-2",
+                "-10_-1",
+                "-14_-7",
+                "-9_-7",
+                "-8_-4",
+                "-8_-3",
+                "-8_-5",
+                "-11_-8",
+                "-12_-8",
+                "-9_-1",
+                "-8_-6"
+              ]
+            }
+          },
+          {
+            "name": "Retired tree instance buffers disposed",
+            "passed": true,
+            "detail": {
+              "before": 619,
+              "after": 728
+            }
+          },
+          {
+            "name": "Resident tile bound after eviction",
+            "passed": true,
+            "detail": {
+              "loaded": 42
+            }
+          }
+        ]
+      },
+      "notes": [
+        "One headlessdesktop run, not physical-mobile performance.",
+        "Rolling p95 samples are not a full-interval latency distribution.",
+        "Memory figures are runtimeallocation estimates, not OS/GPUmemory. Different locations have different resource costs."
+      ]
+    },
+    "visualReview": {
+      "shots": [
+        {
+          "path": "/private/tmp/webster-realism-v2-acceptance/sustained-optimized-final/downtown-auto.png",
+          "sha256": "0d2231ff8ae7a5972eefc0c15cb79ffa789d29ea1efa41fa002d43ce95952368",
+          "bytes": 460279
+        },
+        {
+          "path": "/private/tmp/webster-realism-v2-acceptance/sustained-optimized-final/poland-high.png",
+          "sha256": "552c226a7442b52a164bb058b02d5729ecae2fc072b919ff77b0c47fd67e7442",
+          "bytes": 663372
+        },
+        {
+          "path": "/private/tmp/webster-realism-v2-acceptance/sustained-optimized-final/lakeside-high.png",
+          "sha256": "891508b126158f603292568bd51184078679a702e444d3596a5a1b9fd251e13f",
+          "bytes": 565543
+        },
+        {
+          "path": "/private/tmp/webster-realism-v2-acceptance/webkit-mask-optimized-final/lakeside-high.png",
+          "sha256": "80482c08846a5312f0aaa7c0fdddfb36a661c4b64e9c119316e7ddb8b17b3830",
+          "bytes": 972559
+        }
+      ],
+      "finding": "Viewed final Main Street/Poland hood screenshots and WebKitLakeside view. Connected roofs, restored grass, leafy crowns, original street/car geometry and shadows remain visible with the smaller source-texture derivatives. No new missing or corrupt material identified in these representative views.",
+      "scope": "Actual game captures; functional tests use no CSSinjection. Procedural building details remain inferred, not a surveyed photoreal replica."
+    },
+    "unexpectedErrors": {
+      "cold": [],
+      "chrome": [],
+      "webkit": [],
+      "sustained": []
+    },
+    "artifactCaptureErrors": [],
+    "allOwnedBrowsersClosed": true,
+    "passed": true,
+    "aggregateReportSha256": "f9c5a4a5fe1cf47d5a70b6243c7395751c2fc78ccfb53a4f20b1a6ed2c7a7eaa"
   }
 }

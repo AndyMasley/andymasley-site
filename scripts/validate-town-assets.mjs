@@ -226,6 +226,26 @@ export async function auditTownAssets({ root, policy, allowPilot = false } = {})
     check(manifest.car.forward === '-Z' && same(manifest.car.wheelNodes, policy.wheelNodes), 'Car forward/wheel-node contract mismatch');
     const texturePaths = new Set();
     for (const texture of manifest.textures) { const ref = addRef(texture, 'texture'); check(/^textures\/.+\.(png|jpg|jpeg)$/i.test(ref.relative), 'Texture must be a portable image in textures/'); texturePaths.add(ref.relative); }
+    if (manifest.surfaces) {
+      const surfaces = manifest.surfaces;
+      check(surfaces.grass && surfaces.masks && typeof surfaces.masks === 'object', 'Missing ground material/mask definitions');
+      for (const [name, surface] of Object.entries(surfaces).filter(([name]) => ['grass','soil','forest','impervious'].includes(name))) {
+        check(Number.isFinite(surface.repeatM) && surface.repeatM > 0 && surface.repeatM <= 20, `Ground ${name}: invalid metric texture repeat`);
+        for (const slot of name === 'grass' ? ['color','normal','roughness'] : ['color']) {
+          const ref = addRef(surface[slot], 'surface-image');
+          check(/^surfaces\/textures\/.+\.(png|jpg|jpeg)$/i.test(ref.relative), 'Ground material image must be in surfaces/textures/');
+        }
+      }
+      for (const [id, mask] of Object.entries(surfaces.masks)) {
+        const tile = manifest.tiles.find(tile => tile.id === id);
+        check(tile && tile.lods.length, `Ground mask has no scenery tile: ${id}`);
+        check(vector(mask.bounds, 4) && mask.bounds[0] < mask.bounds[2] && mask.bounds[1] < mask.bounds[3], `Ground ${id}: invalid mask bounds`);
+        const size = manifest.tileSizeM ?? 250;
+        check(mask.bounds[0] <= tile.origin[0] && mask.bounds[2] >= tile.origin[0] + size && mask.bounds[1] <= tile.origin[2] - size && mask.bounds[3] >= tile.origin[2], `Ground ${id}: mask does not cover its tile`);
+        const ref = addRef(mask, 'surface-mask');
+        check(/^surfaces\/masks\/.+\.png$/i.test(ref.relative), 'Ground mask must be a PNG in surfaces/masks/');
+      }
+    }
     const networkRef = addRef(manifest.network, 'network');
     check(networkRef.relative === policy.network.url && networkRef.bytes === policy.network.bytes && networkRef.sha256 === policy.network.sha256, 'Canonical network identity mismatch');
     const referenced = new Set(['manifest.json', ...refs.keys()]), usedTextures = new Set();
@@ -266,9 +286,10 @@ export async function auditTownAssets({ root, policy, allowPilot = false } = {})
         actualTrees += rows.length; row.count = rows.length;
       } else if (ref.role === 'network') {
         report.counts.network = inspectNetwork(JSON.parse(bytes), policy.network, policy.coordinates); report.checks++;
-      } else if (ref.role === 'texture') {
+      } else if (['texture','surface-image','surface-mask'].includes(ref.role)) {
         const png = bytes.subarray(0, 8).equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10])), jpeg = bytes[0] === 255 && bytes[1] === 216 && bytes[2] === 255;
         check(ref.relative.endsWith('.png') ? png : jpeg, `${ref.relative}: image header does not match extension`);
+        if (ref.role === 'surface-mask') check(bytes.length >= 33 && bytes.readUInt32BE(16) > 0 && bytes.readUInt32BE(16) <= 1024 && bytes.readUInt32BE(20) > 0 && bytes.readUInt32BE(20) <= 1024 && bytes[24] === 8 && bytes[25] === 6, `${ref.relative}: expected bounded 8-bit RGBA mask`);
       }
       report.assets.push(row);
     });
