@@ -381,7 +381,7 @@ describe('Borges current room module runtime smoke', () => {
     pause();
   });
 
-  it('handles the direct-reader event, preserves the full text, and closes with Escape', async () => {
+  it('handles the direct-reader event, preserves the full text, and returns to the gallery with Escape', async () => {
     const request = new CustomEvent('library:read-direct', { cancelable: true });
     expect(window.dispatchEvent(request)).toBe(false);
     await frames(8);
@@ -394,7 +394,8 @@ describe('Borges current room module runtime smoke', () => {
     expect(renderCount).toBe(renderedBefore);
     key('Escape');
     expect(byId('reading-overlay').classList.contains('visible')).toBe(false);
-    expect(byId('start-prompt').classList.contains('visible')).toBe(true);
+    expect(byId('start-prompt').classList.contains('visible')).toBe(false);
+    expect(document.body.classList.contains('exploring')).toBe(true);
   });
 
   it('routes the menu reader button through one reader and preserves native Space on close', async () => {
@@ -406,8 +407,23 @@ describe('Borges current room module runtime smoke', () => {
     expect(key('Space', 'keydown', close).defaultPrevented).toBe(false);
     close.click();
     expect(byId('reading-overlay').classList.contains('visible')).toBe(false);
-    expect(byId('start-prompt').classList.contains('visible')).toBe(true);
+    expect(byId('start-prompt').classList.contains('visible')).toBe(false);
+    expect(document.body.classList.contains('exploring')).toBe(true);
     expect(loggedErrors).not.toHaveBeenCalled();
+  });
+
+  it('returns to the gallery when the menu shortcut book closes through its backdrop', async () => {
+    expect(byId('start-prompt').classList.contains('visible')).toBe(true);
+    byId('read-without-3d').click(); await frames(8);
+    expect(byId('reading-overlay').classList.contains('visible')).toBe(true);
+    expect(byId('reading-content').classList.contains('full-book-view')).toBe(true);
+    byId('reading-overlay').click(); await frames(6);
+    expect(byId('reading-overlay').classList.contains('visible')).toBe(false);
+    expect(byId('start-prompt').classList.contains('visible')).toBe(false);
+    expect(document.body.classList.contains('exploring')).toBe(true);
+    const resumed = camera.position.clone();
+    key('KeyW'); await frames(10); key('KeyW', 'keyup');
+    expect(camera.position.distanceTo(resumed)).toBeGreaterThan(0.01);
   });
 
   it('offers visible page controls and keeps Contents expanded state synchronized', async () => {

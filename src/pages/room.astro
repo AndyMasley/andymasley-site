@@ -2780,10 +2780,9 @@ America</h2>
         playPageTurn();
       }
     }
-    async function closeBook() {
+    function closeBook() {
       if (!reading) return;
       readRequest++;
-      const resumeExploring = exploring && !menuOpen;
       if (isFullBook && N > 1) {
         try { localStorage.setItem('library-plunkitt-position', String(curPage / (N - 1))); } catch {}
       }
@@ -2798,16 +2797,9 @@ America</h2>
       resetInput();
       duckAmbient(1.0);
       playBookClose();
-      const wasHolding = bookMotion.holding;
-      const returning = bookMotion.returnBook(reduceMotion);
-      if (resumeExploring) {
-        reading = false;
-        hideMenu();
-      } else {
-        if (wasHolding) await returning;
-        reading = false;
-        showMenu();
-      }
+      bookMotion.returnBook(reduceMotion);
+      reading = false;
+      hideMenu();
     }
 
     // =====================================================================
