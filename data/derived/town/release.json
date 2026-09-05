@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "directory": "2026-09-0e8d4f694d92",
+  "manifestSha256": "0e8d4f694d92b913a7d8195400f48af3c37b4ae53d39223ad9b2606dfb5238b0",
+  "archiveUrl": "https://github.com/AndyMasley/andymasley-site/releases/download/town-assets-2026-09-05-0e8d4f694d92/town-assets-0e8d4f694d92.tar.gz",
+  "archiveSha256": "5d91d32707b5c3527dea1edc37697ca65d5154f13fa1a381c79315c86636088e",
+  "archiveBytes": 437950236,
+  "sourceSha256": "8376d6586e16c53ccf9b13f1754fe4d844d9ff7703475b444076b0853bcc510a",
+  "files": 3030,
+  "expandedBytes": 705094017,
+  "tiles": 672,
+  "buildings": 7805,
+  "treeAnchors": 158099
+}

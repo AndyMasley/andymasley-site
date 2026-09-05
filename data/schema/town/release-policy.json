@@ -1,0 +1,28 @@
+{
+  "version": 1,
+  "sourceSha256": "8376d6586e16c53ccf9b13f1754fe4d844d9ff7703475b444076b0853bcc510a",
+  "maximumAssetBytes": 26214400,
+  "coordinates": {
+    "sourceCRS": "EPSG:6491",
+    "horizontalOrigin": [171282.3328920724, 867589.2761750807],
+    "sourceVerticalOffsetM": 100,
+    "axes": "Y_UP",
+    "conversion": "(x,z,-y)",
+    "units": "metres"
+  },
+  "fullRelease": { "buildings": 7805, "trees": 158099 },
+  "network": {
+    "url": "network.json",
+    "sha256": "d5ad755241708d48478d1c2dc08358b821d9cace21ed1c93d33de27ee0def2f4",
+    "bytes": 7806952,
+    "nodes": 1238,
+    "edges": 2964,
+    "points": 197493,
+    "physicalRoads": 1561,
+    "blockedEdges": 28,
+    "blockedTurns": 2,
+    "landmarks": ["BARTLETT", "BEACH", "DOWNTOWN", "LAKE", "RANCH"]
+  },
+  "glb": { "allowedExtensions": ["EXT_meshopt_compression"], "requiredExtensions": ["EXT_meshopt_compression"] },
+  "wheelNodes": ["Drive wheel | front left", "Drive wheel | front right", "Drive wheel | rear left", "Drive wheel | rear right"]
+}

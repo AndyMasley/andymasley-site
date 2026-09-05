@@ -48,6 +48,12 @@ export const visuals: VisualEntry[] = [
     searchTerms: 'air pollution particulate matter map counties exposure',
   },
   {
+    title: 'Drive through Webster',
+    href: '/town',
+    description: 'A late-summer drive through a reconstruction of Webster, Massachusetts.',
+    searchTerms: 'town game driving car hometown roads Main Street lake New England',
+  },
+  {
     title: 'US emissions vs. planetary boundaries',
     href: '/visuals/carbon-boundary-crosswalk',
     description: 'Crosswalk between US carbon emissions categories and planetary boundaries.',

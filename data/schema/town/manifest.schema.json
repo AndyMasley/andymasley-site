@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://andymasley.com/schemas/town/manifest-v1.json",
+  "title": "Webster browser release manifest",
+  "description": "URLs are release-relative. GLB image URIs are GLB-relative. The executable audit additionally checks file identity, glTF structure, topology, uniqueness and release-policy counts.",
+  "type": "object",
+  "required": ["version", "coordinates", "source", "tiles", "trees", "car", "fallback", "textures", "network", "stats"],
+  "properties": {
+    "version": { "const": 1 },
+    "source": { "type": "object", "required": ["name", "sha256"], "properties": { "name": { "type": "string" }, "sha256": { "$ref": "#/$defs/hash" } } },
+    "coordinates": {
+      "type": "object", "required": ["sourceCRS", "horizontalOrigin", "sourceVerticalOffsetM", "axes", "conversion", "units"],
+      "properties": { "sourceCRS": { "const": "EPSG:6491" }, "horizontalOrigin": { "type": "array", "items": { "type": "number" }, "minItems": 2, "maxItems": 2 }, "sourceVerticalOffsetM": { "const": 100 }, "axes": { "const": "Y_UP" }, "conversion": { "const": "(x,z,-y)" }, "units": { "const": "metres" } }
+    },
+    "tiles": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/tile" } },
+    "trees": { "type": "object", "required": ["prototypes", "format", "sourceAnchors", "sourceAnchorsAndScalesSha256"], "properties": { "prototypes": { "type": "array", "minItems": 3, "items": { "allOf": [{ "$ref": "#/$defs/asset" }, { "type": "object", "required": ["id", "role", "level", "triangles"], "properties": { "id": { "type": "string", "minLength": 1 }, "role": { "enum": ["crown", "trunk"] }, "level": { "type": "integer", "minimum": -1 }, "triangles": { "type": "integer", "minimum": 1 } } }] } }, "format": { "type": "string" }, "sourceAnchors": { "type": "integer", "minimum": 0 }, "sourceAnchorsAndScalesSha256": { "$ref": "#/$defs/hash" } } },
+    "car": { "allOf": [{ "$ref": "#/$defs/asset" }, { "type": "object", "required": ["forward", "wheelNodes"], "properties": { "forward": { "const": "-Z" }, "wheelNodes": { "type": "array", "items": { "type": "string" }, "minItems": 4, "maxItems": 4, "uniqueItems": true } } }] },
+    "fallback": { "$ref": "#/$defs/asset" }, "network": { "$ref": "#/$defs/asset" },
+    "textures": { "type": "array", "items": { "$ref": "#/$defs/asset" } },
+    "stats": { "type": "object", "required": ["pilot", "buildings"], "properties": { "pilot": { "type": "boolean" }, "buildings": { "type": "integer", "minimum": 0 } } }
+  },
+  "$defs": {
+    "hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "vec3": { "type": "array", "items": { "type": "number" }, "minItems": 3, "maxItems": 3 },
+    "asset": { "type": "object", "required": ["url", "bytes", "sha256"], "properties": { "url": { "type": "string", "minLength": 1 }, "bytes": { "type": "integer", "minimum": 1, "maximum": 26214400 }, "sha256": { "$ref": "#/$defs/hash" } } },
+    "tile": {
+      "type": "object", "required": ["id", "origin", "bounds", "lods", "sourceIds"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 }, "origin": { "$ref": "#/$defs/vec3" },
+        "bounds": { "type": "object", "required": ["min", "max"], "properties": { "min": { "$ref": "#/$defs/vec3" }, "max": { "$ref": "#/$defs/vec3" } } },
+        "sourceIds": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
+        "lods": { "type": "array", "items": { "allOf": [{ "$ref": "#/$defs/asset" }, { "type": "object", "required": ["level", "geometricErrorM", "triangles"], "properties": { "level": { "type": "integer", "minimum": 0, "maximum": 2 }, "geometricErrorM": { "type": "number", "minimum": 0 }, "triangles": { "type": "integer", "minimum": 0 } } }] } },
+        "treeFile": { "allOf": [{ "$ref": "#/$defs/asset" }, { "type": "object", "required": ["count"], "properties": { "count": { "type": "integer", "minimum": 0 } } }] }
+      }
+    }
+  }
+}

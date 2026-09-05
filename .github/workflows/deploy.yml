@@ -28,6 +28,10 @@ jobs:
 
       - run: npm test
 
+      - run: npm run check:town
+
+      - run: npm run test:town-assets
+
       - run: npm run build
         env:
           # Fail the build instead of deploying a site with missing posts

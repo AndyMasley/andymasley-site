@@ -1,0 +1,21 @@
+{
+  "passed": true,
+  "sourcePythonSha256": "8cc4118f17d8c822fade9a17f8441c5a682ad37a967541fbb2acbbc9f5e1f675",
+  "sourceNetworkSha256": "d5ad755241708d48478d1c2dc08358b821d9cace21ed1c93d33de27ee0def2f4",
+  "networkBytes": 7806952,
+  "gzipBytes": 1741296,
+  "goldenBytes": 10642748,
+  "pathCount": 2964,
+  "connectorCount": 5630,
+  "trajectoryCount": 40,
+  "landmarkCount": 5,
+  "snapshots": 1238,
+  "elapsedSeconds": 85.86614016600001,
+  "canonicalPythonModified": false,
+  "blenderLaunched": false,
+  "goldenSha256": "e377421864d032a18e87b27abb336bbdd3425c5903e73b4075a6cf82433e560d",
+  "goldenGzipSha256": "476998519501d22da91b84f64a81d7e8606b16872ac73ee0f8d0f39a66187f4e",
+  "networkGzipSha256": "45ef35f049e2295b307b2e98b433f62579be524cbb0efb988b942c1d060f0bb9",
+  "typeScriptSha256": "02d06fe951d3e795fed671c387bffd5b03720e5367927429c971f1ec27878353",
+  "goldenTestSha256": "e31fbf70875e1fe0fead676db03b34bb7e8c2f88eff4337a6dc35c31d002e52b"
+}

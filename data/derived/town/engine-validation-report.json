@@ -1,0 +1,25 @@
+{
+  "passed": true,
+  "testFramework": "Vitest4.1.0",
+  "command": "npm run test -- src/lib/town/__tests__/engine-golden.test.ts",
+  "testsPassed": 48,
+  "testsFailed": 0,
+  "testSeconds": 2.13,
+  "sourceTypeScriptSha256": "02d06fe951d3e795fed671c387bffd5b03720e5367927429c971f1ec27878353",
+  "fixtures": {
+    "sourcePythonSha256": "8cc4118f17d8c822fade9a17f8441c5a682ad37a967541fbb2acbbc9f5e1f675",
+    "sourceNetworkSha256": "d5ad755241708d48478d1c2dc08358b821d9cace21ed1c93d33de27ee0def2f4",
+    "goldenSha256": "e377421864d032a18e87b27abb336bbdd3425c5903e73b4075a6cf82433e560d",
+    "goldenGzipSha256": "476998519501d22da91b84f64a81d7e8606b16872ac73ee0f8d0f39a66187f4e",
+    "networkGzipSha256": "45ef35f049e2295b307b2e98b433f62579be524cbb0efb988b942c1d060f0bb9"
+  },
+  "comparedPathCount": 2964,
+  "comparedConnectorCount": 5630,
+  "trajectoryCount": 40,
+  "trajectorySnapshots": 1238,
+  "absoluteToleranceMeters": 2e-06,
+  "relativeTolerance": 2e-10,
+  "canonicalSourceChanged": false,
+  "blenderLaunched": false,
+  "recordedUtc": "2026-09-05T18:36:57.228031+00:00"
+}

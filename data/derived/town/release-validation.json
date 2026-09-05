@@ -1,0 +1,45 @@
+{
+  "release": "2026-09-0e8d4f694d92",
+  "manifestSha256": "0e8d4f694d92b913a7d8195400f48af3c37b4ae53d39223ad9b2606dfb5238b0",
+  "sourceSha256": "8376d6586e16c53ccf9b13f1754fe4d844d9ff7703475b444076b0853bcc510a",
+  "tiles": 672,
+  "buildings": 7805,
+  "treeAnchors": 158099,
+  "files": 3030,
+  "expandedBytes": 705094017,
+  "archiveBytes": 437950236,
+  "sourceGeometryAudit": {
+    "checks": 9496,
+    "triangles": 13590271,
+    "orientedTrianglesExact": true,
+    "decodedXYZErrorM": 0,
+    "decodedNormalError": 0,
+    "decodedTexturedUVError": 0
+  },
+  "publishAssetAudit": {
+    "checks": 57436,
+    "passed": true
+  },
+  "automatedTests": {
+    "website": 196,
+    "assetValidator": 50,
+    "townTypecheckPassed": true
+  },
+  "browserAcceptance": {
+    "Firefox153": {
+      "passed": 23
+    },
+    "WebKit26.5": {
+      "passed": 23
+    },
+    "Chrome152MobileEmulation": {
+      "passed": 20,
+      "physicalDeviceTest": false
+    }
+  },
+  "baselineChecks": {
+    "fullSiteTypecheck": "135 unchanged pre-existing errors; no town errors",
+    "aquiferDataValidation": "Pre-existing missing display-aquifers.json in origin/main"
+  },
+  "performance": "Sustained driving and hosted cold-start measurements recorded separately after release preview."
+}

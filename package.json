@@ -10,11 +10,15 @@
     "typecheck": "astro check",
     "test": "vitest run",
     "etl": "python3 -m etl.run_all",
-    "validate:data": "python3 -m etl.validate_outputs"
+    "validate:data": "python3 -m etl.validate_outputs",
+    "prebuild": "node scripts/prepare-town-assets.mjs",
+    "check:town": "tsc --project tsconfig.town.json",
+    "test:town-assets": "node --test data/schema/town/validate-town-assets.checks.mjs",
+    "validate:town-assets": "node scripts/validate-town-assets.mjs"
   },
   "dependencies": {
     "@astrojs/check": "^0.9.8",
-    "@astrojs/react": "^5.0.0",
+    "@astrojs/react": "4.4.2",
     "@astrojs/rss": "^4.0.0",
     "@astrojs/sitemap": "^3.7.1",
     "@types/react": "^19.2.14",
