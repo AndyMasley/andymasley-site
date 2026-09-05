@@ -3,6 +3,7 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js';
 import { boundsDistanceSquared, chooseLod, type Quality, type TownTile, type V3, type WorldManifest, type WorldMetrics } from './contracts';
 import { TownSurfaces } from './surfaces';
+import { decodeCoverPNG } from './cover-data';
 
 type TreePlan = { near: Set<number>; shadows: Set<number>; key: string };
 type LoadedTile = { group: THREE.Group; level: number; lastUsed: number; trees?: THREE.Group; treeRows?: number[][]; treePlan?: TreePlan };
@@ -33,9 +34,21 @@ export class TownWorld {
 
   constructor(readonly manifest: WorldManifest, readonly manifestUrl: string, readonly onChange: () => void) {
     this.root.name = 'Webster scenery';
-    if (manifest.surfaces) this.surfaces = new TownSurfaces(manifest.surfaces, async (asset, color, signal) => {
+    if (manifest.surfaces) this.surfaces = new TownSurfaces(manifest.surfaces, async (asset, color, signal, data = false) => {
       const response = await fetch(this.url(asset.url), { signal });
       if (!response.ok) throw new Error(`Ground surface could not load (${response.status}).`);
+      if (data) {
+        const bytes = new Uint8Array(await response.arrayBuffer());
+        this.metrics.bytes += Number(response.headers.get('content-length')) || bytes.length;
+        if (this.disposed || signal.aborted) throw new DOMException('Loading cancelled', 'AbortError');
+        const mask = decodeCoverPNG(bytes);
+        const texture = new THREE.DataTexture(mask.data, mask.width, mask.height);
+        texture.minFilter = THREE.LinearMipmapLinearFilter;
+        texture.magFilter = THREE.LinearFilter;
+        texture.generateMipmaps = true;
+        texture.needsUpdate = true;
+        return texture;
+      }
       const blob = await response.blob();
       this.metrics.bytes += Number(response.headers.get('content-length')) || blob.size;
       const bitmap = await createImageBitmap(blob, { imageOrientation: 'none', premultiplyAlpha: 'none', colorSpaceConversion: 'none' });

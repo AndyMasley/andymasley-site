@@ -9,7 +9,7 @@
   "buildings": 7805,
   "treeAnchors": 158099,
   "release": "2026-09-2430b57e611e",
-  "status": "Candidate: final composition and browser acceptance in progress",
+  "status": "Candidate: exact geometry and data decoding passed; final browser acceptance in progress",
   "reconstructionAudit": {
     "passed": true,
     "partial": false,
@@ -35,7 +35,7 @@
     "reportSha256": "44336c63cd111c7ee56d1e77ddc2bcebedaec60616f810fbf120db5cae888135"
   },
   "automatedTests": {
-    "website": 212,
+    "website": 215,
     "assetValidator": 56,
     "townTypecheckPassed": true
   },
@@ -47,5 +47,227 @@
   "baselineChecks": {
     "fullSiteTypecheck": "135 pre-existing errors outside the game; scoped town typecheck passed",
     "aquiferDataValidation": "Pre-existing missing display-aquifers.json in origin/main"
+  },
+  "sourceCompositionAudit": {
+    "passed": true,
+    "reportSHA256": "48b5ef6ab5b39d7881ffb751e37649c293b951c0b2481ffe44c4008864458600",
+    "validatorSHA256": "b78a65abae5399348468afe53c5aeaac782dc5e913cc518714a6c46c8c14015c",
+    "reportBytes": 7765611,
+    "checks": 12536,
+    "cells": 672,
+    "counts": {
+      "unchanged_category_comparisons": 2013,
+      "source_body_compositions": 671,
+      "raw_compressed_exact_comparisons": 671,
+      "nonempty_source_bodies": 7805,
+      "preserved_source_hashes": 23,
+      "decoded_output_lods": 2013,
+      "lod0_building_triangles": 11815189,
+      "decoded_triangles_all_lods": 46510646,
+      "inherited_zero_normal_references_all_lods": 1440,
+      "inherited_degenerate_faces_all_lods": 1440
+    },
+    "startedUTC": "2026-09-05T22:04:56.322Z",
+    "finishedUTC": "2026-09-05T22:10:04.801Z",
+    "preservationScope": {
+      "observedBodies": {
+        "count": 23,
+        "exactAt": "LOD0",
+        "distantLODs": "Bounded display simplification is permitted at LOD1/2; these bodies are not asserted exact at distant LODs."
+      },
+      "unchangedCategories": "All categories except replaced generic buildings/facades/roof-details, including authored landmark overlays, must remain exact against the original corresponding LOD.",
+      "sourceComposition": "All 7805 registered body inputs are represented exactly at LOD0 after translation to the owning tile, with unused texture coordinates permitted to be pruned.",
+      "compression": "Compressed LOD0 must retain every attribute and oriented triangle from its uncompressed composed reference."
+    }
+  },
+  "deliveryArchiveAudit": {
+    "passed": true,
+    "archive": "/private/tmp/town-assets-2430b57e611e.tar.gz",
+    "source_assets": "/private/tmp/webster-realism-v2-pipeline/assets",
+    "archive_prefix": "2026-09-2430b57e611e",
+    "started_utc": "2026-09-05T22:08:18.150536+00:00",
+    "files_verified": 3713,
+    "directories_verified": 7,
+    "failures": [],
+    "extracted_files": 0,
+    "archive_or_assets_modified": false,
+    "archive_bytes": 503177669,
+    "archive_sha256": "dd7ea45420273de450bfaf1dd74212d53c19ceb9f3070f1a3d9de909a71c9c4d",
+    "uncompressed_file_bytes": 1239386842,
+    "manifest_sha256": "2430b57e611e29573e871b662cb7e070a06664283f07871722d69d325ece4597",
+    "canonical_file_inventory_sha256": "bc83cc4375023201638404e61a7e8fec9144015efe4c649e04c1823324a6a8e6",
+    "file_types_and_paths_safe": true,
+    "no_symlinks_or_traversal": true,
+    "exact_file_set": true,
+    "all_content_hashes_exact": true,
+    "gzip_crc_validated": true,
+    "compressed_identity_exact": true,
+    "elapsed_seconds": 11.492457866668701,
+    "completed_utc": "2026-09-05T22:08:29.642991+00:00"
+  },
+  "cleanCheckoutRestore": {
+    "fresh_directory": "/private/tmp/webster-public-restore-2430b57e611e",
+    "created_utc": "2026-09-05T22:12:42.315442+00:00",
+    "initial_assets_present": false,
+    "initial_public_directory_present": false,
+    "copied_source_file_count": 6,
+    "copied_files": [
+      {
+        "path": "scripts/prepare-town-assets.mjs",
+        "bytes": 3017,
+        "sha256": "d6100a3545eb5561d6c31a6bf68bfbe8982033bdacb536ca9bd92812f0cb3a2a"
+      },
+      {
+        "path": "scripts/validate-town-assets.mjs",
+        "bytes": 29409,
+        "sha256": "16fa5b36e5634fb8a2652f7d568ad124cca0c93b0021281e51f85ba3d53f09d7"
+      },
+      {
+        "path": "data/derived/town/release.json",
+        "bytes": 609,
+        "sha256": "d0e93bbe5f1daa5ba7ff8583ae5b0c0a9cca4b78fa8a1d86a751e41519628322"
+      },
+      {
+        "path": "data/schema/town/manifest.schema.json",
+        "bytes": 4935,
+        "sha256": "7326dbcbe60d396c97840a7bba2ae94225559a68634657f91383ded17621ff88"
+      },
+      {
+        "path": "data/schema/town/release-policy.json",
+        "bytes": 1016,
+        "sha256": "1040884cf69187bbded2cf8b6ba3c34fc4e8c252e6d659d00d5ff2f45a32b4d7"
+      },
+      {
+        "path": "data/schema/town/validate-town-assets.checks.mjs",
+        "bytes": 15407,
+        "sha256": "10a52e12979371399286beed36ca1f4613aa23f8951c863fee728fe9aca951b5"
+      }
+    ],
+    "archive_public_url": "https://github.com/AndyMasley/andymasley-site/releases/download/town-assets-2026-09-05-2430b57e611e/town-assets-2430b57e611e.tar.gz",
+    "expected_archive_sha256": "dd7ea45420273de450bfaf1dd74212d53c19ceb9f3070f1a3d9de909a71c9c4d",
+    "expected_archive_bytes": 503177669,
+    "expected_manifest_sha256": "2430b57e611e29573e871b662cb7e070a06664283f07871722d69d325ece4597",
+    "source_release_directory": "/private/tmp/webster-release",
+    "active_site_or_pipeline_modified": false,
+    "node_version": "v25.2.1",
+    "passed": true,
+    "completed_utc": "2026-09-05T22:14:25.526012+00:00",
+    "command": "/opt/homebrew/bin/node scripts/prepare-town-assets.mjs",
+    "preparer_exit_code": 0,
+    "normal_preparer_unmodified": true,
+    "network_escalation_used": true,
+    "public_download_branch_executed": true,
+    "archive_sha256_verified": true,
+    "archive_integrity_evidence": "The byte-identical normal preparer fetched the release archive from its public URL, required its SHA256 to equal the pinned release hash, validated archive paths, extracted, and checked the manifest before its validator passed. Its finally block removes the temporary downloaded archive.",
+    "actual_manifest_sha256": "2430b57e611e29573e871b662cb7e070a06664283f07871722d69d325ece4597",
+    "asset_checks": 65171,
+    "counts": {
+      "network": {
+        "nodes": 1238,
+        "directedEdges": 2964,
+        "physicalRoads": 1561,
+        "points": 197493,
+        "blockedEdges": 28,
+        "blockedTurns": 2,
+        "landmarks": 5
+      },
+      "tiles": 672,
+      "buildings": 7805,
+      "trees": 158099,
+      "prototypes": 3,
+      "textures": 377,
+      "files": 3713,
+      "totalBytes": 1239386842,
+      "maximumAssetBytes": 18396029,
+      "lod0Triangles": 17176873
+    },
+    "actual_expanded_file_count": 3713,
+    "actual_expanded_bytes": 1239386842,
+    "asset_validation_report": "/private/tmp/webster-public-restore-2430b57e611e/data/derived/town/asset-validation.json",
+    "asset_validation_report_sha256": "46dd58a3a8e5c1a9e3f79fc46c68ba81f9dd0200b5dd3984c6ba330fff024819",
+    "log": "/private/tmp/webster-public-restore-2430b57e611e/clean-restore.log",
+    "log_sha256": "235bee11f2f2eaff455f41e27039007a26f2cd51ab8d31caa6ff02ae5acd3d89",
+    "initial_evidence_sha256": "19d9503d35e60eff6888fd75600b4a765dde3322aedf81b1d7a5792cc13e8180",
+    "copied_inputs_unchanged": true,
+    "restored_assets_retained_at": "/private/tmp/webster-public-restore-2430b57e611e/public/town-assets/2026-09-2430b57e611e"
+  },
+  "groundDecoderAudit": {
+    "passed": true,
+    "manifestSHA256": "2430b57e611e29573e871b662cb7e070a06664283f07871722d69d325ece4597",
+    "decoderSourceSHA256": "a530594e6cfd166be411e0c6bbc06460a6a5a4cf41489e7b1c90bc5262efd842",
+    "decoderBundleSHA256": "81aed43b84970f5fdc3dfb77e9e247a8237066ac55e6b9a68b9ea9740743e1dc",
+    "expectedMasks": 670,
+    "complete": true,
+    "manifestUnchanged": true,
+    "decoderSourceUnchanged": true,
+    "encodedPNGBytes": 7560591,
+    "decodedRGBABytes": 198277120,
+    "preservedPixelsWithRGBUnderAlphaZero": 38463149,
+    "preservedNonzeroRGBBytesUnderAlphaZero": 43241871,
+    "filterRows": {
+      "0": 55442,
+      "1": 9326,
+      "2": 71537,
+      "3": 1685,
+      "4": 44250
+    },
+    "fixtureFilterRows": {
+      "0": 5,
+      "1": 4,
+      "2": 3,
+      "3": 3,
+      "4": 2
+    },
+    "startedUTC": "2026-09-05T22:19:31.728Z",
+    "finishedUTC": "2026-09-05T22:19:38.168Z",
+    "reportSHA256": "71ee248394ecb5a29afe75c7f1c74d366f098707cc18ea8c8cab1f0f5d0df823",
+    "dimensions": {
+      "272x272": 670
+    },
+    "pillowVersions": [
+      "11.3.0"
+    ],
+    "lakeExample": {
+      "id": "6_-14",
+      "source": {
+        "kind": "final-mask",
+        "url": "surfaces/masks/6_-14.png"
+      },
+      "pillowVersion": "11.3.0",
+      "width": 272,
+      "height": 272,
+      "mode": "RGBA",
+      "pngSHA256": "de49cf6debb5ad21d2f3cca38642434e15a26a41e0ed47ece85ea0096bbc74ba",
+      "rgbaSHA256": "3a96d728aaa3402639073c72503c37f6ae8b1072344c74a6feb2bd797930a7bd",
+      "pngBytes": 12150,
+      "rgbaBytes": 295936,
+      "filterRows": {
+        "0": 178,
+        "1": 8,
+        "2": 32,
+        "3": 0,
+        "4": 54
+      },
+      "chunks": [
+        "IHDR",
+        "IDAT",
+        "IEND"
+      ],
+      "crcAllValid": true,
+      "decoderRGBA_SHA256": "3a96d728aaa3402639073c72503c37f6ae8b1072344c74a6feb2bd797930a7bd",
+      "exactDimensions": true,
+      "exactByteLength": true,
+      "exactBytes": true,
+      "actualPNGMatchesPillowInput": true,
+      "channelSums": [
+        4640205,
+        42134,
+        2439157,
+        55947
+      ],
+      "pixelsWithRGBUnderAlphaZero": 27892,
+      "nonzeroRGBBytesUnderAlphaZero": 34440,
+      "pass": true
+    }
   }
 }

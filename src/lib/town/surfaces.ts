@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import type { AssetRef, GroundSurfaces } from './contracts';
 
 type TileSurface = { mask: THREE.Texture; materials: THREE.Material[] };
-type TextureReader = (asset: AssetRef, color: boolean, signal: AbortSignal) => Promise<THREE.Texture>;
+type TextureReader = (asset: AssetRef, color: boolean, signal: AbortSignal, data?: boolean) => Promise<THREE.Texture>;
 
 /** Land cover is sampled in metres, independently of terrain tessellation and LOD. */
 export function groundMaskUV(bounds: readonly number[], x: number, z: number): [number, number] {
@@ -45,7 +45,7 @@ export class TownSurfaces {
       if (object instanceof THREE.Mesh && /^terrain(?:\b|_)/i.test(object.name)) terrain.push(object);
     });
     if (!terrain.length) return;
-    const mask = await this.read(reference, false, signal);
+    const mask = await this.read(reference, false, signal, true);
     if (this.disposed || signal.aborted) {
       this.destroyTexture(mask);
       throw new DOMException('Loading cancelled', 'AbortError');
