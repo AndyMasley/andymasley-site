@@ -1,15 +1,15 @@
 {
-  "manifestSha256": "2430b57e611e29573e871b662cb7e070a06664283f07871722d69d325ece4597",
-  "archiveSha256": "dd7ea45420273de450bfaf1dd74212d53c19ceb9f3070f1a3d9de909a71c9c4d",
-  "archiveBytes": 503177669,
+  "manifestSha256": "37fbef34bc2a4467997252be75b4c43174a6a7b2d39963614cadd8d787e56105",
+  "archiveSha256": "65fe40d8cbcf9d6d7c21ebd51cd8b71dd3f9ef94820f3d6fad50e30897f2b458",
+  "archiveBytes": 479630228,
   "sourceSha256": "8376d6586e16c53ccf9b13f1754fe4d844d9ff7703475b444076b0853bcc510a",
   "files": 3713,
-  "expandedBytes": 1239386842,
+  "expandedBytes": 1215406052,
   "tiles": 672,
   "buildings": 7805,
   "treeAnchors": 158099,
-  "release": "2026-09-2430b57e611e",
-  "status": "Candidate: corrected browser and touch checks passed; hosted delivery and sustained drive in progress",
+  "release": "2026-09-37fbef34bc2a",
+  "status": "Candidate: optimized delivery integrity passed; hosted loading and driving verification in progress",
   "reconstructionAudit": {
     "passed": true,
     "partial": false,
@@ -32,8 +32,8 @@
   "publishAssetAudit": {
     "passed": true,
     "checks": 65171,
-    "releaseIdentitySha256": "65fdbccb3025a00f73994ccf8bd4b7ffef0fe8fa9e1daeeac6bb7949e8c538c9",
-    "reportSha256": "d1aa87e65feae336527532daf176ff2ed23220d81e12a48deafd34d6d20a4755"
+    "releaseIdentitySha256": "9ebede1208792c1bdee0a82033fbda22d329e43bea7226969c847c44f417d4b8",
+    "reportSha256": "394984233751d5e4f629e0003427161ce9aced10f6b39ed7f08af28e8a007dba"
   },
   "automatedTests": {
     "website": 215,
@@ -79,32 +79,33 @@
       "unchangedCategories": "All categories except replaced generic buildings/facades/roof-details, including authored landmark overlays, must remain exact against the original corresponding LOD.",
       "sourceComposition": "All 7805 registered body inputs are represented exactly at LOD0 after translation to the owning tile, with unused texture coordinates permitted to be pruned.",
       "compression": "Compressed LOD0 must retain every attribute and oriented triangle from its uncompressed composed reference."
-    }
+    },
+    "geometrySourceManifestSha256": "2430b57e611e29573e871b662cb7e070a06664283f07871722d69d325ece4597"
   },
   "deliveryArchiveAudit": {
     "passed": true,
-    "archive": "/private/tmp/town-assets-2430b57e611e.tar.gz",
-    "source_assets": "/private/tmp/webster-realism-v2-pipeline/assets",
-    "archive_prefix": "2026-09-2430b57e611e",
-    "started_utc": "2026-09-05T22:08:18.150536+00:00",
+    "archive": "/private/tmp/town-assets-37fbef34bc2a.tar.gz",
+    "source_assets": "/private/tmp/webster-realism-v2-delivery/assets",
+    "archive_prefix": "2026-09-37fbef34bc2a",
+    "started_utc": "2026-09-05T22:49:28.417223+00:00",
     "files_verified": 3713,
     "directories_verified": 7,
     "failures": [],
     "extracted_files": 0,
     "archive_or_assets_modified": false,
-    "archive_bytes": 503177669,
-    "archive_sha256": "dd7ea45420273de450bfaf1dd74212d53c19ceb9f3070f1a3d9de909a71c9c4d",
-    "uncompressed_file_bytes": 1239386842,
-    "manifest_sha256": "2430b57e611e29573e871b662cb7e070a06664283f07871722d69d325ece4597",
-    "canonical_file_inventory_sha256": "bc83cc4375023201638404e61a7e8fec9144015efe4c649e04c1823324a6a8e6",
+    "archive_bytes": 479630228,
+    "archive_sha256": "65fe40d8cbcf9d6d7c21ebd51cd8b71dd3f9ef94820f3d6fad50e30897f2b458",
+    "uncompressed_file_bytes": 1215406052,
+    "manifest_sha256": "37fbef34bc2a4467997252be75b4c43174a6a7b2d39963614cadd8d787e56105",
+    "canonical_file_inventory_sha256": "9269de4f92f2a6f931e09c6a1652cf97b1a377b6ff58bbcf8351511cce72e203",
     "file_types_and_paths_safe": true,
     "no_symlinks_or_traversal": true,
     "exact_file_set": true,
     "all_content_hashes_exact": true,
     "gzip_crc_validated": true,
     "compressed_identity_exact": true,
-    "elapsed_seconds": 11.492457866668701,
-    "completed_utc": "2026-09-05T22:08:29.642991+00:00"
+    "elapsed_seconds": 12.327764987945557,
+    "completed_utc": "2026-09-05T22:49:40.744993+00:00"
   },
   "cleanCheckoutRestore": {
     "fresh_directory": "/private/tmp/webster-public-restore-2430b57e611e",
@@ -269,7 +270,8 @@
       "pixelsWithRGBUnderAlphaZero": 27892,
       "nonzeroRGBBytesUnderAlphaZero": 34440,
       "pass": true
-    }
+    },
+    "coverageNote": "Final delivery preserves every ground mask byte; see deliveryTextureAudit."
   },
   "browserAcceptance": {
     "chromium": {
@@ -331,5 +333,95 @@
     "height": 900,
     "bytes": 109374,
     "sha256": "23d852ffaa9dacbd8a674125aec97287e356cde038d2fe0a4faec8ea979111b9"
-  }
+  },
+  "deliveryTextureAudit": {
+    "passed": true,
+    "scope": "Only three explicitly authorized image derivatives and their manifest integrity/provenance may change. Every other file and all GLB bytes must be identical to the strictly audited full-resolution composition.",
+    "originalManifestSHA256": "2430b57e611e29573e871b662cb7e070a06664283f07871722d69d325ece4597",
+    "deliveryManifestSHA256": "37fbef34bc2a4467997252be75b4c43174a6a7b2d39963614cadd8d787e56105",
+    "originalCompositionReportSHA256": "48b5ef6ab5b39d7881ffb751e37649c293b951c0b2481ffe44c4008864458600",
+    "textureDerivativeProvenanceSHA256": "06fa09983b927a4fccb0f85948b2c3bb6adc09eefd795f6564503a4f71177c5e",
+    "originalDerivativePreparationScriptSHA256": "776f0587257d9e7cd108a648cc8fe27ebc8b46bb8f6a3f050d578c972e477010",
+    "inventoryFiles": 3713,
+    "inventorySHA256": "f24912a5720ebacd074b80c94e17e0bf6ecf31648f6781f448cc921227c4ce20",
+    "byteIdenticalGLBFiles": 2018,
+    "byteIdenticalOtherFiles": 3709,
+    "changedFiles": [
+      "manifest.json",
+      "textures/v2-6ff9f4696b75de41972a80d2.jpg",
+      "textures/v2-87588772649468cafb05ec00.jpg",
+      "textures/v2-c37ef11bb94a533d1c758c5c.jpg"
+    ],
+    "originalExpandedBytes": 1239386842,
+    "deliveryExpandedBytes": 1215406052,
+    "imageBytesSaved": 23982565,
+    "replacements": [
+      {
+        "url": "textures/v2-6ff9f4696b75de41972a80d2.jpg",
+        "sourceImage": "factory_brick_diff_2k.jpg",
+        "sourceSHA256": "6ff9f4696b75de41972a80d2d73a318bc131e84512e0f4b6b0903dd69312e8e3",
+        "sourceBytes": 4155985,
+        "sourceDimensions": [
+          2048,
+          2048
+        ],
+        "sourceMode": "RGB",
+        "derivativeSHA256": "3816a9104c24ca470426e86f6d6b26975cd6497c032a6521dde33ef0f73b6426",
+        "derivativeBytes": 270657,
+        "derivativeDimensions": [
+          1024,
+          1024
+        ],
+        "derivativeMode": "RGB",
+        "frozenDerivativePath": "/Users/andy/Documents/New project/webster-blender/web-export/staging/assets/textures/6ff9f4696b75de41972a80d2.jpg",
+        "exactFrozenDerivativeBytes": true
+      },
+      {
+        "url": "textures/v2-87588772649468cafb05ec00.jpg",
+        "sourceImage": "downtown_aerial.jpg",
+        "sourceSHA256": "87588772649468cafb05ec00fc9ccbd577dafbf3d26019759a145797ace4db9f",
+        "sourceBytes": 18396029,
+        "sourceDimensions": [
+          6400,
+          6144
+        ],
+        "sourceMode": "RGB",
+        "derivativeSHA256": "1844cfcd000a808f7c441bd764289fb0d80af75b614c134a2cf49c7901fab4fd",
+        "derivativeBytes": 996065,
+        "derivativeDimensions": [
+          2048,
+          1966
+        ],
+        "derivativeMode": "RGB",
+        "frozenDerivativePath": "/Users/andy/Documents/New project/webster-blender/web-export/staging/assets/textures/87588772649468cafb05ec00.jpg",
+        "exactFrozenDerivativeBytes": true
+      },
+      {
+        "url": "textures/v2-c37ef11bb94a533d1c758c5c.jpg",
+        "sourceImage": "red_brick_03_diff_2k.jpg",
+        "sourceSHA256": "c37ef11bb94a533d1c758c5c7d7199264e90f19b23946766c7c59aa189c11ff6",
+        "sourceBytes": 2969950,
+        "sourceDimensions": [
+          2048,
+          2048
+        ],
+        "sourceMode": "RGB",
+        "derivativeSHA256": "789c432413c0a7301e73a6bd79aa7642713f38f3eaec1b9b3daee7e7afdbb4c7",
+        "derivativeBytes": 272677,
+        "derivativeDimensions": [
+          1024,
+          1024
+        ],
+        "derivativeMode": "RGB",
+        "frozenDerivativePath": "/Users/andy/Documents/New project/webster-blender/web-export/staging/assets/textures/c37ef11bb94a533d1c758c5c.jpg",
+        "exactFrozenDerivativeBytes": true
+      }
+    ],
+    "unexpectedManifestChanges": [],
+    "startedUTC": "2026-09-05T22:46:42.941423+00:00",
+    "finishedUTC": "2026-09-05T22:46:51.438706+00:00",
+    "reportSHA256": "3912670d6d2f0237ab5f559cc1f890131f379c8ad843b7538e8b74a9ade2239c",
+    "validatorSHA256": "d2bc3bffe2611c86d4f2d7c7a28772e19da4b43ccea289d0ae309bfd395e2530"
+  },
+  "browserAcceptanceScope": "Three-engine and mobile functional checks used the same runtime and byte-identical geometry/masks before the three documented texture derivatives. Final hosted checks are recorded separately."
 }
