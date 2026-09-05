@@ -25,6 +25,7 @@ export class TownWorld {
   private generation = 0;
   private low = false;
   private position: V3 = [0, 0, 0];
+  private preparingAt: V3 | null = null;
   private sharedAbort = new AbortController();
 
   constructor(readonly manifest: WorldManifest, readonly manifestUrl: string, readonly onChange: () => void) {
@@ -111,14 +112,16 @@ export class TownWorld {
 
   update(position: V3, lookAhead: V3, force = false): void {
     if (this.disposed) return;
+    const preparing = this.preparingAt;
+    if (preparing) position = lookAhead = preparing;
     this.position = position;
     const radius = this.low ? 620 : 950;
     const time = performance.now();
-    const selected = this.manifest.tiles
+    let selected = (preparing ? this.readinessTiles(position) : this.manifest.tiles)
       .map((tile) => ({ tile, distance: Math.sqrt(boundsDistanceSquared(tile.bounds, position)), ahead: Math.sqrt(boundsDistanceSquared(tile.bounds, lookAhead)) }))
-      .filter(({ distance, ahead }) => distance < radius || ahead < (this.low ? 240 : 350))
-      .sort((a, b) => Number(this.ownsCell(b.tile, position)) - Number(this.ownsCell(a.tile, position)) || Math.min(a.distance, a.ahead + 80) - Math.min(b.distance, b.ahead + 80))
-      .slice(0, this.low ? 26 : 48);
+      .filter(({ distance, ahead }) => preparing || distance < radius || ahead < (this.low ? 240 : 350))
+      .sort((a, b) => Number(this.ownsCell(b.tile, position)) - Number(this.ownsCell(a.tile, position)) || Math.min(a.distance, a.ahead + 80) - Math.min(b.distance, b.ahead + 80));
+    if (!preparing) selected = selected.slice(0, this.low ? 26 : 48);
     const desired = new Map<string, number>();
     this.leafSelections.clear();
     if (!this.low && this.manifest.trees.prototypes.some((prototype) => prototype.role === 'crown' && prototype.level === -1)) {
@@ -176,22 +179,32 @@ export class TownWorld {
     this.metrics.loaded = this.loaded.size;
   }
 
-  isReadyAt(position: V3): boolean {
+  private readinessTiles(position: V3): TownTile[] {
     const owner = this.manifest.tiles.find((tile) => this.ownsCell(tile, position));
-    if (owner?.lods.length) return this.loaded.has(owner.id);
-    const covering = this.manifest.tiles.filter((tile) => tile.lods.length && boundsDistanceSquared(tile.bounds, position) < 1);
-    return covering.every((tile) => this.loaded.has(tile.id));
+    if (owner?.lods.length) return [owner];
+    return this.manifest.tiles.filter((tile) => tile.lods.length && boundsDistanceSquared(tile.bounds, position) < 1);
+  }
+
+  isReadyAt(position: V3): boolean {
+    return this.readinessTiles(position).every((tile) => this.loaded.has(tile.id));
   }
 
   async prepareAt(position: V3, timeoutMs = 25000): Promise<void> {
+    if (this.preparingAt) throw new Error('Another street is already loading.');
+    const target: V3 = [...position];
+    this.preparingAt = target;
     const start = performance.now();
-    do {
-      if (this.disposed) throw new DOMException('Loading cancelled', 'AbortError');
-      this.update(position, position, true);
-      if (this.isReadyAt(position)) return;
-      await new Promise((resolve) => setTimeout(resolve, 80));
-    } while (performance.now() - start < timeoutMs);
-    throw new Error('This street is taking longer to load. Check your connection and try again.');
+    try {
+      do {
+        if (this.disposed) throw new DOMException('Loading cancelled', 'AbortError');
+        this.update(target, target, true);
+        if (this.isReadyAt(target)) return;
+        await new Promise((resolve) => setTimeout(resolve, 80));
+      } while (performance.now() - start < timeoutMs);
+      throw new Error('This street is taking longer to load. Check your connection and try again.');
+    } finally {
+      this.preparingAt = null;
+    }
   }
 
   private async loadTile(tile: TownTile, level: number): Promise<void> {

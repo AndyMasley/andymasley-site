@@ -51,6 +51,109 @@ describe('Town streaming and resource ownership', () => {
     world.dispose();
   });
 
+  it('prepares only the owning cell, then resumes normal two-request neighbor streaming', async () => {
+    vi.useFakeTimers();
+    const overlapping = { ...tile('neighbor', 250), bounds: { min: [0, 0, 0] as [number, number, number], max: [500, 50, 250] as [number, number, number] } };
+    const world = new TownWorld(manifest([overlapping, tile('owner'), tile('farther', 500)]), 'https://example.test/town/manifest.json', () => {});
+    const finishes: ((g: THREE.Group) => void)[] = [];
+    const load = vi.spyOn(world, 'loadGlb').mockImplementation(() => new Promise(resolve => finishes.push(resolve)));
+    try {
+      const prepared = world.prepareAt([125, 0, 125]);
+      expect(load.mock.calls.map(([url]) => url)).toEqual(['owner-0.glb']);
+      expect(world.metrics.pending).toBe(1);
+      world.update([375, 0, 125], [625, 0, 125]);
+      expect(load).toHaveBeenCalledTimes(1);
+      finishes[0](group(new THREE.MeshStandardMaterial()));
+      await settle();
+      expect(world.isReadyAt([125, 0, 125])).toBe(true);
+      expect(load).toHaveBeenCalledTimes(1);
+      await vi.advanceTimersByTimeAsync(80);
+      await prepared;
+      expect(load).toHaveBeenCalledTimes(1);
+      expect(world.metrics.pending).toBe(0);
+      world.update([125, 0, 125], [625, 0, 125]);
+      expect(load.mock.calls.slice(1).map(([url]) => url)).toEqual(['neighbor-0.glb', 'farther-1.glb']);
+      expect(world.metrics.pending).toBe(2);
+    } finally {
+      world.dispose();
+      finishes.slice(1).forEach(resolve => resolve(group(new THREE.MeshStandardMaterial())));
+      await settle();
+      vi.useRealTimers();
+    }
+  });
+
+  it('uses all covering LOD cells only when the owning cell has no scenery LOD', async () => {
+    vi.useFakeTimers();
+    const cover = (id: string, x: number) => ({ ...tile(id, x), bounds: { min: [0, 0, 0] as [number, number, number], max: [500, 50, 250] as [number, number, number] } });
+    const world = new TownWorld(manifest([{ ...tile('tree-owner'), lods: [] }, cover('left', -250), cover('right', 250), tile('extra', 500)]), 'https://example.test/town/manifest.json', () => {});
+    const finishes: ((g: THREE.Group) => void)[] = [];
+    const load = vi.spyOn(world, 'loadGlb').mockImplementation(() => new Promise(resolve => finishes.push(resolve)));
+    try {
+      const prepared = world.prepareAt([125, 0, 125]);
+      expect(load.mock.calls.map(([url]) => url)).toEqual(['left-0.glb', 'right-0.glb']);
+      finishes[0](group(new THREE.MeshStandardMaterial()));
+      await settle();
+      expect(world.isReadyAt([125, 0, 125])).toBe(false);
+      expect(load).toHaveBeenCalledTimes(2);
+      finishes[1](group(new THREE.MeshStandardMaterial()));
+      await settle();
+      await vi.advanceTimersByTimeAsync(80);
+      await prepared;
+      expect(world.isReadyAt([125, 0, 125])).toBe(true);
+      expect(load).toHaveBeenCalledTimes(2);
+    } finally {
+      world.dispose();
+      vi.useRealTimers();
+    }
+  });
+
+  it('clears the preparation restriction after a failed request times out', async () => {
+    vi.useFakeTimers();
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const world = new TownWorld(manifest([tile('owner'), tile('neighbor', 250), tile('farther', 500)]), 'https://example.test/town/manifest.json', () => {});
+    const finishes: ((g: THREE.Group) => void)[] = [];
+    const load = vi.spyOn(world, 'loadGlb').mockImplementation(() => new Promise(resolve => finishes.push(resolve))).mockRejectedValueOnce(new Error('offline'));
+    try {
+      const failed = expect(world.prepareAt([125, 0, 125], 160)).rejects.toThrow('taking longer to load');
+      await vi.advanceTimersByTimeAsync(160);
+      await failed;
+      expect(load).toHaveBeenCalledTimes(1);
+      expect(world.metrics.errors).toBe(1);
+      world.update([125, 0, 125], [625, 0, 125]);
+      expect(load).toHaveBeenCalledTimes(3);
+      expect(world.metrics.pending).toBe(2);
+    } finally {
+      world.dispose();
+      finishes.forEach(resolve => resolve(group(new THREE.MeshStandardMaterial())));
+      await settle();
+      warn.mockRestore();
+      vi.useRealTimers();
+    }
+  });
+
+  it('rejects overlapping preparation and preserves cancellation on disposal', async () => {
+    vi.useFakeTimers();
+    const world = new TownWorld(manifest([tile('owner'), tile('neighbor', 250)]), 'https://example.test/town/manifest.json', () => {});
+    let finish!: (g: THREE.Group) => void;
+    const load = vi.spyOn(world, 'loadGlb').mockImplementation(() => new Promise(resolve => { finish = resolve; }));
+    try {
+      const prepared = world.prepareAt([125, 0, 125]);
+      await expect(world.prepareAt([375, 0, 125])).rejects.toThrow('already loading');
+      expect(load).toHaveBeenCalledTimes(1);
+      world.dispose();
+      const cancelled = expect(prepared).rejects.toMatchObject({ name: 'AbortError' });
+      await vi.advanceTimersByTimeAsync(80);
+      await cancelled;
+      finish(group(new THREE.MeshStandardMaterial()));
+      await settle();
+      expect(world.loaded.size).toBe(0);
+      expect(world.metrics.errors).toBe(0);
+    } finally {
+      world.dispose();
+      vi.useRealTimers();
+    }
+  });
+
   it('keeps the previous section visible until its replacement is fully loaded', async () => {
     const world = new TownWorld(manifest(), 'https://example.test/town/manifest.json', () => {});
     const old = group(new THREE.MeshStandardMaterial());

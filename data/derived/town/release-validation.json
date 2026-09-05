@@ -21,7 +21,7 @@
     "passed": true
   },
   "automatedTests": {
-    "website": 196,
+    "website": 200,
     "assetValidator": 50,
     "townTypecheckPassed": true
   },
@@ -35,11 +35,52 @@
     "Chrome152MobileEmulation": {
       "passed": 20,
       "physicalDeviceTest": false
+    },
+    "Chrome152Hosted": {
+      "passed": 23,
+      "skipped": 0,
+      "preview": "https://d0889fd6.andymasley-site.pages.dev/town/"
     }
   },
   "baselineChecks": {
     "fullSiteTypecheck": "135 unchanged pre-existing errors; no town errors",
     "aquiferDataValidation": "Pre-existing missing display-aquifers.json in origin/main"
   },
-  "performance": "Sustained driving and hosted cold-start measurements recorded separately after release preview."
+  "performance": {
+    "sustainedDrive": {
+      "durationSeconds": 1200.2,
+      "samples": 61,
+      "completed": true,
+      "pageErrors": [],
+      "sceneErrors": 0,
+      "contextLosses": 0,
+      "medianOfSampledFrameMediansMs": 16.7,
+      "maxSampledFrameP95Ms": 16.8,
+      "peakLoadedTiles": 56,
+      "peakHeapBytes": 246892812,
+      "peakEstimatedGeometryBytes": 162417796,
+      "peakEstimatedTextureBytes": 130823509,
+      "finalHeapBytes": 201818691,
+      "endOfRouteSamples": 0,
+      "reportSha256": "b5a1e3fad719e293c5080634d872232c34576482ff9c39ce6cc0eb49c92a980a",
+      "environment": "Local immutable preview; desktop Chrome152, 1440x1000 DPR1, Metal WebGL. Five start regions with four teleports, arrow-key choices, 20-second samples. Other browser/build activity overlapped the first ten minutes. Frame timing is sampled rolling timing, not a device-independent FPS guarantee.",
+      "runtimeCommit": "a80937695d3bf6c0d37389bfee638acf8b273971",
+      "subsequentChange": "Initial and teleport preparation now request readiness tiles first; steady-state streaming, geometry, and driving engine are unchanged."
+    }
+  },
+  "cleanCheckoutRestore": {
+    "passed": true,
+    "commit": "a80937695d3bf6c0d37389bfee638acf8b273971",
+    "beganWithoutAssetDirectory": true,
+    "downloadedPublishedArchive": true,
+    "archiveSha256Verified": true,
+    "manifestSha256Verified": true,
+    "validationChecks": 57436,
+    "localNode": "25.2.1"
+  },
+  "startupRegressionTests": {
+    "worldTests": 9,
+    "passed": true,
+    "covers": "Owning-cell preparation, deferred neighbors, covering-cell fallback, timeouts, overlap rejection and disposal"
+  }
 }

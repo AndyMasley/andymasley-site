@@ -67,9 +67,13 @@ node scripts/prepare-town-assets.mjs
 node scripts/validate-town-assets.mjs
 node --test data/schema/town/validate-town-assets.checks.mjs
 npm run test -- src/lib/town/__tests__
-npm run typecheck
-npm run build
+npm run check:town
+npm test
+REQUIRE_CONTENT=1 npm run build
 ```
+
+`npm run typecheck` checks the entire site; the release audit records its existing
+errors outside the town code separately from the passing scoped game check.
 
 The engine tests compare paths, legal choices, every connector and trajectories
 against compressed Python-generated golden fixtures in `data/derived/town`.

@@ -475,7 +475,7 @@ export async function startTown(root: HTMLElement): Promise<Session> {
       sun.position.copy(points.car).add(SUN_OFFSET);
       sun.target.position.copy(points.car);
       audio.update(engine.speed, engine.paused || streamPaused || teleporting);
-      if (now - streamingAt > 300 && !teleporting) {
+      if (drawCount >= 3 && now - streamingAt > 300 && !teleporting) {
         world!.update(toWorld(position), toWorld(engine.pose(Math.max(100, engine.speed * 10))[0]));
         streamingAt = now;
       }
@@ -493,8 +493,11 @@ export async function startTown(root: HTMLElement): Promise<Session> {
       renderer!.render(scene!, camera);
       world!.metrics.triangles = renderer!.info.render.triangles;
       drawCount++;
+      // Let the starting street draw before requesting surrounding blocks.
+      if (drawCount === 3) streamingAt = performance.now();
     };
     last = performance.now();
+    streamingAt = last;
     const readyAt = last;
     frame = requestAnimationFrame(tick);
     (window as unknown as { __webster: unknown }).__webster = {
