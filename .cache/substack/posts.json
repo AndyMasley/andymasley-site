@@ -1,6 +1,26 @@
 {
-  "timestamp": 1787301438320,
+  "timestamp": 1788638726727,
   "posts": [
+    {
+      "title": "AI safety and the data center backlash",
+      "slug": "ai-safety-and-the-data-center-backlash",
+      "date": "2026-09-01T11:50:19.996Z",
+      "description": "Planting a flag for AI safety as a place where we won’t abjectly bullshit you",
+      "url": "https://blog.andymasley.com/p/ai-safety-and-the-data-center-backlash",
+      "category": "AI & the Environment",
+      "source": "substack",
+      "cover_image": "https://substack-post-media.s3.amazonaws.com/public/images/b24e99d3-698b-4c9b-9337-bdb50daaf6d8_3104x1552.png"
+    },
+    {
+      "title": "I think the data center backlash is mostly about data centers",
+      "slug": "i-think-the-data-center-backlash",
+      "date": "2026-08-25T19:08:18.667Z",
+      "description": "It’s probably not your ideological thing, or mine. It’s about object-level claims about how data centers impact the communities where they’re built, many of which are wrong.",
+      "url": "https://blog.andymasley.com/p/i-think-the-data-center-backlash",
+      "category": "AI & the Environment",
+      "source": "substack",
+      "cover_image": "https://substack-post-media.s3.amazonaws.com/public/images/830b999a-1dd3-49fd-ac2c-77ae407f82b4_2944x1648.png"
+    },
     {
       "title": "Thinking about other industries like we think about data centers shows how impoverished the debate is",
       "slug": "other-large-industries-show-how-impoverished",

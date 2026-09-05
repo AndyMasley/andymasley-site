@@ -35,3 +35,8 @@ yarn-error.log*
 
 # Large data caches
 data/source/GLHYMPS*
+
+# Versioned town scenery is verified and restored from a fixed release before builds.
+/public/town-assets/2026-09*/
+/data/derived/town/asset-validation*.json
+/data/derived/town/browser-smoke-*/
