@@ -8,7 +8,8 @@ import '@/styles/global.css';
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="The Library of Babel">
-  <title>The Library</title>
+  <title>The library</title>
+  <meta name="robots" content="noindex, nofollow">
   <!-- Immediate dark background to prevent flash / blend with the portal transition -->
   <style>html, body { background: #0a0806; }</style>
 
@@ -590,6 +591,57 @@ import '@/styles/global.css';
     #eyelid-bottom { bottom: 0; transform-origin: bottom center; animation: eyelidOpenBottom 1.8s ease-out forwards; }
     @keyframes eyelidOpenTop { 0% { transform: scaleY(1); } 100% { transform: scaleY(0); } }
     @keyframes eyelidOpenBottom { 0% { transform: scaleY(1); } 100% { transform: scaleY(0); } }
+
+    button { font-family: inherit; }
+    button:focus-visible, a:focus-visible, input:focus-visible { outline: 2px solid var(--gold); outline-offset: 5px; }
+    #start-button { background: none; border: 0; font: inherit; font-size: 1.5rem; }
+    #start-button:disabled { opacity: .45; }
+    #loading-note { color: var(--ink); font-size: .875rem; margin: 0 0 1.5rem; }
+    .room-settings { display: flex; justify-content: center; flex-wrap: wrap; gap: 1rem; font-size: .875rem; margin: 0 0 1.5rem; }
+    .room-settings label { display: flex; align-items: center; gap: .5rem; }
+    .room-settings input { accent-color: #d8b978; }
+    #room-brightness { width: 90px; }
+    .room-text-button { background: none; border: 0; color: var(--ink); display: block; margin: 0 auto 1.5rem; text-decoration: underline; cursor: pointer; font-size: .875rem; }
+    #room-toolbar { position: fixed; top: max(1rem, env(safe-area-inset-top)); right: max(1rem, env(safe-area-inset-right)); z-index: 90; display: none; }
+    body.exploring #room-toolbar { display: block; }
+    #room-toolbar button, #touch-read, #move-pad button { border: 1px solid #aa905c; color: #f0dfbc; background: rgba(16,12,8,.78); font-size: 1rem; padding: .75rem 1rem; touch-action: none; cursor: pointer; }
+    #library-canvas { touch-action: none; }
+    #touch-controls { position: fixed; z-index: 80; inset: auto 0 max(1rem, env(safe-area-inset-bottom)); pointer-events: none; padding: 0 1rem; }
+    #touch-controls[hidden] { display: none; }
+    #move-pad { display: grid; grid-template-columns: repeat(3, 48px); grid-template-rows: repeat(2, 48px); gap: 4px; width: fit-content; pointer-events: auto; }
+    #move-pad button { padding: 0; font-size: 1.5rem; }
+    #move-pad button:first-child { grid-column: 2; }
+    #move-pad button:nth-child(2) { grid-column: 1; }
+    #touch-read { position: absolute; right: 1rem; bottom: 0; min-width: 88px; min-height: 48px; pointer-events: auto; }
+    #touch-read:disabled { opacity: .5; }
+    #touch-controls span { display: block; font-size: .75rem; margin-top: .75rem; color: #ecdcba; }
+    .reader-toolbar { position: absolute; top: max(.75rem, env(safe-area-inset-top)); right: 1rem; left: 1rem; display: flex; justify-content: flex-end; gap: 1rem; z-index: 220; }
+    .reader-toolbar button { padding: .65rem 1rem; font-size: .875rem; color: var(--ink); background: #1b140e; border: 1px solid #a08454; cursor: pointer; }
+    #reader-contents { display: none; }
+    #reader-contents[hidden] { display: none; }
+    #reading-content.full-book-view { margin-top: 3rem; max-height: calc(100dvh - 5rem); }
+    .chapter-nav-item { display: block; width: 100%; text-align: left; background: none; border: 0; color: inherit; font-family: inherit; }
+    .book-rail .chapter-nav-item { font-size: .875rem; }
+    .prompt-instructions { line-height: 1.8; }
+    #reading-text { overflow-wrap: anywhere; }
+    #reading-content.text-only { width: min(760px, 95vw); max-height: calc(100dvh - 6rem); margin-top: 3rem; overflow-y: auto; padding: 2rem; }
+    .text-only p { font-size: 1rem; line-height: 1.8; margin-bottom: 1rem; }
+    .text-only h2 { font-size: 1.25rem; margin: 2rem 0 1rem; }
+    @media (max-width: 700px) {
+      #reader-contents:not([hidden]) { display: block; }
+      .book-rail { display: none; }
+      .contents-open .book-rail { display: flex; position: absolute; z-index: 50; left: 0; top: 0; bottom: 0; width: 230px; }
+      #reading-content.full-book-view { width: 100%; max-width: 100%; height: calc(100dvh - 5rem); border: 0; }
+      .book-stage { padding: .5rem; }
+      .menu-panel { padding: 2rem 1.25rem; width: min(94vw, 600px); }
+      #controls-hint { display: none; }
+      #object-label { max-width: 85vw; white-space: normal; }
+      #object-label .label-inner { font-size: .875rem; letter-spacing: .03em; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      #eyelid-top, #eyelid-bottom { animation: none; transform: scaleY(0); }
+      #title-card, #start-prompt, #reading-overlay { transition: none; }
+    }
   </style>
 </head>
 <body>
@@ -608,22 +660,66 @@ import '@/styles/global.css';
     <div class="tc-rule"></div>
   </div>
 
-  <div id="start-prompt">
+  <div id="start-prompt" class="visible" role="dialog" aria-modal="true" aria-label="The library">
     <div class="menu-panel">
       <div class="menu-eyebrow">The Library of Babel</div>
-      <div class="prompt-text" id="start-button">Enter the gallery</div>
-      <div class="prompt-instructions">WASD / arrows move · mouse look · click to read</div>
+      <button class="prompt-text" id="start-button" disabled>Enter the gallery</button>
+      <p id="loading-note" role="status">Opening the library…</p>
+      <div class="prompt-instructions">WASD / arrows move · mouse look · E or click to read<br>Q / R look left / right · T / G look up / down</div>
+      <div class="room-settings">
+        <label><input type="checkbox" id="room-sound" checked> Sound</label>
+        <label><input type="checkbox" id="room-motion"> Still camera</label>
+        <label for="room-brightness">Lamplight <input id="room-brightness" type="range" min="0.8" max="2" step="0.05" value="1.35"></label>
+      </div>
+      <button id="read-without-3d" class="room-text-button">Read Plunkitt</button>
       <a href="/" class="prompt-home">← return to the main website</a>
     </div>
   </div>
 
-  <div id="reading-overlay">
+  <div id="room-toolbar"><button id="pause-room" aria-label="Pause and open settings">Pause</button></div>
+  <div id="touch-controls" hidden>
+    <div id="move-pad" role="group" aria-label="Move around the library">
+      <button data-move="KeyW" aria-label="Walk forward">↑</button>
+      <button data-move="KeyA" aria-label="Walk left">←</button>
+      <button data-move="KeyS" aria-label="Walk backward">↓</button>
+      <button data-move="KeyD" aria-label="Walk right">→</button>
+    </div>
+    <button id="touch-read" disabled>Read</button>
+    <span>Drag the room to look</span>
+  </div>
+  <div id="reading-overlay" role="dialog" aria-modal="true" aria-label="Reading" tabindex="-1">
+    <div class="reader-toolbar">
+      <button id="reader-contents" hidden>Contents</button>
+      <button id="reader-close">Return to the gallery <span aria-hidden="true">×</span></button>
+    </div>
     <div id="reading-content">
       <div id="reading-text"></div>
       <span class="close-hint">click anywhere or press ESC to close</span>
     </div>
   </div>
     <script>
+    document.getElementById('read-without-3d')?.addEventListener('click', () => {
+      if (!window.dispatchEvent(new CustomEvent('library:read-direct', { cancelable: true }))) return;
+      const overlay = document.getElementById('reading-overlay');
+      const content = document.getElementById('reading-content');
+      if (!content || !overlay) return;
+      content.className = 'text-only';
+      content.innerHTML = window.plunkittText;
+      overlay?.classList.add('visible');
+      document.getElementById('start-prompt')?.classList.remove('visible');
+      document.getElementById('reader-close')?.focus();
+      const close = () => {
+        overlay?.classList.remove('visible');
+        content.className = '';
+        document.getElementById('start-prompt')?.classList.add('visible');
+        document.getElementById('reader-close')?.removeEventListener('click', close);
+        document.removeEventListener('keydown', escape);
+        document.getElementById('read-without-3d')?.focus();
+      };
+      const escape = (event: KeyboardEvent) => { if (event.key === 'Escape') close(); };
+      document.addEventListener('keydown', escape);
+      document.getElementById('reader-close')?.addEventListener('click', close);
+    });
     // Plunkitt of Tammany Hall - Full Text
     window.plunkittText = `<h2 class="chapter-title">Preface</h2>
 <p>THIS volume discloses the mental operations of perhaps the most thoroughly practical politician of the day--George Washington Plunkitt, Tammany leader of the Fifteenth Assembly District, Sachem of the Tammany Society and Chairman of the Elections Committee of Tammany Hall, who has held the offices of State Senator, Assemblyman', Police Magistrate, County Supervisor and Alderman, and who boasts of his record in filling four public offices in one year and drawing salaries from three of them at the same time.</p>
@@ -936,23 +1032,16 @@ America</h2>
 <p>By these means the Tammany district leader reaches out into the homes of his district, keeps watch not only on the men, but also on the women and children; knows their needs, their likes and dislikes, their troubles and their hopes, and places himself in a position to use his knowledge for the benefit of his organization and himself. Is it any wonder that scandals do not permanently disable Tammany and that it speedily recovers from what seems to be crushing defeat?</p>`;
   </script>
 
-  <script type="importmap">
-    {
-      "imports": {
-        "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
-        "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
-      }
-    }
+  <script is:inline>
+    window.libraryReady = new Promise(resolve => { window.resolveLibraryModules = resolve; });
   </script>
-
+  <script>
+    import '../lib/room/bootstrap';
+  </script>
   <script type="module">
-    import * as THREE from 'three';
-    import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
-    import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
-    import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
-    import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
-    import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
-    import { Reflector } from 'three/addons/objects/Reflector.js';
+    try {
+    const { THREE, EffectComposer, RenderPass, UnrealBloomPass, ShaderPass, OutputPass, Reflector,
+      enrichLibrary, canStand, slideMove, damp, qualityStep, localMovement } = await window.libraryReady;
 
     // ==================================================================
     //  AUDIO  — everything synthesized, no external files
@@ -972,7 +1061,7 @@ America</h2>
       audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
       masterGain = audioCtx.createGain();
-      masterGain.gain.value = 0.9;
+      masterGain.gain.value = document.getElementById('room-sound').checked ? 0.65 : 0;
       masterGain.connect(audioCtx.destination);
 
       dryGain = audioCtx.createGain();
@@ -1045,7 +1134,11 @@ America</h2>
       const airFilt = ctx.createBiquadFilter();
       airFilt.type = 'lowpass'; airFilt.frequency.value = 220;
       const airGain = ctx.createGain(); airGain.gain.value = 0.05;
-      air.connect(airFilt); airFilt.connect(airGain); airGain.connect(ambientBus);
+      const shaftAir = ctx.createPanner();
+      shaftAir.panningModel = 'HRTF'; shaftAir.distanceModel = 'inverse';
+      shaftAir.refDistance = 2; shaftAir.rolloffFactor = 0.45;
+      shaftAir.positionX.value = 0; shaftAir.positionY.value = -3; shaftAir.positionZ.value = 0;
+      air.connect(airFilt); airFilt.connect(airGain); airGain.connect(shaftAir); shaftAir.connect(ambientBus);
       air.start();
 
       // (b) drone — two detuned sines with a slow gain LFO
@@ -1069,7 +1162,7 @@ America</h2>
       if (!audioCtx) return;
       const delay = 20000 + Math.random() * 25000;
       setTimeout(() => {
-        if (ambientStarted) playDistantEvent();
+        if (ambientStarted && !document.hidden && audioCtx.state === "running") playDistantEvent();
         scheduleDistantEvent();
       }, delay);
     }
@@ -1106,9 +1199,9 @@ America</h2>
     }
 
     function setReverbTarget(v) { targetReverbWet = v; }
-    function updateReverb() {
+    function updateReverb(dt) {
       if (!reverbSend) return;
-      currentReverbWet += (targetReverbWet - currentReverbWet) * 0.05;
+      currentReverbWet = damp(currentReverbWet, targetReverbWet, 3, dt);
       reverbSend.gain.value = currentReverbWet;
     }
 
@@ -1742,14 +1835,22 @@ America</h2>
 
     const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(innerWidth, innerHeight);
-    let curPixelRatio = Math.min(devicePixelRatio, 2);
+    let curPixelRatio = Math.min(devicePixelRatio, matchMedia("(pointer: coarse)").matches ? 1.25 : 1.75);
     renderer.setPixelRatio(curPixelRatio);
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 0.0; // ramped up during intro
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     renderer.shadowMap.autoUpdate = false; // static scene → freeze
+    renderer.domElement.id = 'library-canvas';
+    renderer.domElement.tabIndex = 0;
+    renderer.domElement.setAttribute('aria-label', 'Explore the library using the movement controls.');
     document.body.appendChild(renderer.domElement);
+    renderer.domElement.addEventListener('webglcontextlost', event => {
+      event.preventDefault(); showMenu();
+      document.getElementById('loading-note').textContent = 'The gallery paused because its graphics connection was lost. Reload to return.';
+      startButton.disabled = true;
+    });
 
     // ==================================================================
     //  PROCEDURAL ENVIRONMENT (PMREM) — warm equirect with lamp blobs
@@ -1793,8 +1894,8 @@ America</h2>
         tDiffuse: { value: null },
         uTime: { value: 0 },
         uVignette: { value: 0.4 },
-        uGrain: { value: 0.035 },
-        uChroma: { value: 0.0016 },
+        uGrain: { value: 0.009 },
+        uChroma: { value: 0.0 },
       },
       vertexShader: `varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0);}`,
       fragmentShader: `
@@ -1819,7 +1920,7 @@ America</h2>
           col = mix(col + shadowTint * (1.0 - smoothstep(0.0,0.35,lum)) * 0.6, col, 0.5) ;
           col *= mix(vec3(1.0), warm, smoothstep(0.1,0.6,lum));
           // vignette
-          float vig = smoothstep(0.8, 0.2, dist);
+          float vig = 1.0 - smoothstep(0.2, 0.8, dist);
           col *= mix(1.0 - uVignette, 1.0, vig);
           // film grain
           float g = (rand(uv * vec2(1920.0,1080.0) + uTime) - 0.5) * uGrain;
@@ -1830,6 +1931,7 @@ America</h2>
     const gradePass = new ShaderPass(GradeShader);
     composer.addPass(gradePass);
     composer.addPass(new OutputPass());
+    bloom.setSize(innerWidth / 2, innerHeight / 2);
 
     // ==================================================================
     //  LIGHTS
@@ -2349,7 +2451,13 @@ America</h2>
     });
     const beam = new THREE.Mesh(beamGeo, beamMat);
     beam.position.set(0, 1.3 + (H - 1.2) / 2, 0);
-    beam.rotation.x = Math.PI; // wide at bottom
+    beam.rotation.x = 0; // ConeGeometry already has its narrow apex at +Y.
+    beamMat.onBeforeCompile = shader => {
+      shader.vertexShader = 'varying vec3 beamNormal; varying vec3 beamView; varying vec2 beamUV;\n' + shader.vertexShader;
+      shader.vertexShader = shader.vertexShader.replace('#include <project_vertex>', '#include <project_vertex>\nbeamNormal = normalize(normalMatrix * normal); beamView = normalize(-mvPosition.xyz); beamUV = uv;');
+      shader.fragmentShader = 'varying vec3 beamNormal; varying vec3 beamView; varying vec2 beamUV;\n' + shader.fragmentShader;
+      shader.fragmentShader = shader.fragmentShader.replace('#include <dithering_fragment>', 'gl_FragColor.a *= pow(abs(dot(normalize(beamNormal), normalize(beamView))), 1.6) * smoothstep(0.0, 0.28, beamUV.y);\n#include <dithering_fragment>');
+    };
     scene.add(beam);
 
     // dust motes with vertex-shader motion
@@ -2384,6 +2492,14 @@ America</h2>
     const dust = new THREE.Points(dustGeo, dustMat);
     scene.add(dust);
 
+    const details = enrichLibrary({ scene, books, bookMeta, matWood, matStone, matBrass, matWall, shrineBook, shrineGroup });
+    const selectedBinding = details.atlasMap.clone();
+    selectedBinding.repeat.set(1 / 16, 1 / 16);
+    selectedBinding.needsUpdate = true;
+    const selectedSpine = proxyMat.clone();
+    selectedSpine.map = selectedBinding;
+    proxy.material = [selectedSpine, proxyMat, proxyMat, proxyMat, proxyMat, proxyMat];
+
     // ==================================================================
     //  FREEZE SHADOWS (static scene) — one manual update
     // ==================================================================
@@ -2400,68 +2516,112 @@ America</h2>
     const keys = {};
     const vel = new THREE.Vector3();
     const _wish = new THREE.Vector3(), _forward = new THREE.Vector3(), _right = new THREE.Vector3(), _wishWorld = new THREE.Vector3();
-    let bobPhase = 0, lastBobSin = 0, curFov = 70;
+    let bobPhase = 0, curFov = 70;
 
-    addEventListener('keydown', e => {
-      keys[e.code] = true;
-      if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space'].includes(e.code)) e.preventDefault();
-    });
-    addEventListener('keyup', e => keys[e.code] = false);
-
+    let exploring = false, dragLook = matchMedia('(pointer: coarse)').matches;
+    let lookPointer = null, lookX = 0, lookY = 0;
     const eyeOpening = document.getElementById('eye-opening');
     const startPrompt = document.getElementById('start-prompt');
     const startButton = document.getElementById('start-button');
     const controlsHint = document.getElementById('controls-hint');
     const titleCard = document.getElementById('title-card');
-
-    // Devices with no pointer lock (touch / coarse pointers) can't play the FPS controls.
-    const noPointerLock = !('requestPointerLock' in HTMLElement.prototype) ||
-      (navigator.maxTouchPoints || 0) > 0 ||
-      (window.matchMedia && window.matchMedia('(pointer: coarse)').matches);
-
-    // Intro sequence — pointer lock is only ever requested from a real user gesture (the menu button / a click),
-    // never from a timer, so browsers don't reject it.
+    const touchControls = document.getElementById('touch-controls');
+    const soundControl = document.getElementById('room-sound');
+    const motionControl = document.getElementById('room-motion');
+    const brightnessControl = document.getElementById('room-brightness');
+    let exposureTarget = 1.35;
+    let reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    motionControl.checked = reduceMotion;
     let introDone = false, titleShown = false;
+    function resetInput() {
+      Object.keys(keys).forEach(key => delete keys[key]);
+      vel.set(0, 0, 0); lookPointer = null;
+    }
     function runTitleCard() {
       if (titleShown) return; titleShown = true;
-      setTimeout(() => { titleCard.classList.add('visible'); }, 400);
-      setTimeout(() => { titleCard.classList.remove('visible'); }, 4600);
+      setTimeout(() => titleCard.classList.add('visible'), 400);
+      setTimeout(() => titleCard.classList.remove('visible'), 4600);
     }
-    setTimeout(() => {
-      eyeOpening.classList.add('hidden');
-      if (noPointerLock) {
-        // touch / no-pointer-lock: present the menu with a note and a working "return" link so nobody is stuck
-        startButton.style.display = 'none';
-        const instr = startPrompt.querySelector('.prompt-instructions');
-        if (instr) instr.textContent = 'This gallery needs a desktop mouse and keyboard to explore.';
-        showMenu();
-      } else {
-        showMenu(); // "Enter the gallery" acquires pointer lock on click (a valid user gesture)
-      }
-    }, 1900);
-
-    function showMenu() { menuOpen = true; if (!noPointerLock) document.exitPointerLock(); startPrompt.classList.add('visible'); clearHover(); }
-    function hideMenu() { menuOpen = false; startPrompt.classList.remove('visible'); document.body.requestPointerLock(); }
-    startButton.addEventListener('click', () => {
-      initAudioGraph(); if (audioCtx.state === 'suspended') audioCtx.resume(); startAmbient();
-      if (noPointerLock) return; // can't lock — leave the menu up with the return link
-      hideMenu();
-      runTitleCard();
-    });
-
+    function syncControls() {
+      touchControls.hidden = !dragLook || !exploring || reading || menuOpen;
+      document.body.classList.toggle('exploring', exploring && !reading && !menuOpen);
+      controlsHint.textContent = dragLook ? 'Drag to look · arrows to walk · Read to open a book' : 'WASD / arrows move · mouse look · E or click to read · ESC pause';
+    }
+    function showMenu() {
+      resetInput(); menuOpen = true; exploring = false;
+      document.exitPointerLock?.(); startPrompt.classList.add('visible'); clearHover(); syncControls();
+      if (titleShown) startButton.textContent = 'Return to the gallery';
+      startButton.focus({ preventScroll: true });
+    }
+    function startExploring() {
+      resetInput(); menuOpen = false; exploring = true;
+      startPrompt.classList.remove('visible'); syncControls(); runTitleCard();
+      renderer.domElement.focus({ preventScroll: true });
+      try { initAudioGraph(); audioCtx.resume().catch(() => {}); startAmbient(); } catch (error) { soundControl.checked = false; }
+    }
+    function useDragLook() {
+      dragLook = true; startExploring();
+    }
+    async function hideMenu() {
+      if (dragLook || !document.body.requestPointerLock) { useDragLook(); return; }
+      try {
+        await document.body.requestPointerLock();
+        if (document.pointerLockElement === document.body) startExploring();
+      } catch { useDragLook(); }
+    }
+    startButton.addEventListener('click', event => { event.stopPropagation(); hideMenu(); });
+    document.addEventListener('pointerlockerror', useDragLook);
     document.addEventListener('pointerlockchange', () => {
       const was = locked;
       locked = document.pointerLockElement === document.body;
-      if (locked && !ambientStarted) { initAudioGraph(); if (audioCtx.state === 'suspended') audioCtx.resume(); startAmbient(); }
-      if (was && !locked && !reading) { menuOpen = true; startPrompt.classList.add('visible'); clearHover(); }
+      if (locked) { dragLook = false; startExploring(); }
+      else if (was && !reading) showMenu();
+      resetInput();
     });
-
-    document.addEventListener('mousemove', e => {
-      if (!locked || reading) return;
-      yaw -= e.movementX * 0.0022;
-      pitch -= e.movementY * 0.0022;
-      pitch = Math.max(-1.3, Math.min(1.3, pitch));
+    document.addEventListener('mousemove', event => {
+      if (!locked || !exploring || reading) return;
+      yaw -= event.movementX * 0.0022;
+      pitch = Math.max(-1.3, Math.min(1.3, pitch - event.movementY * 0.0022));
     });
+    renderer.domElement.addEventListener('pointerdown', event => {
+      if (!dragLook || !exploring || reading) return;
+      lookPointer = event.pointerId; lookX = event.clientX; lookY = event.clientY;
+      renderer.domElement.setPointerCapture(event.pointerId);
+    });
+    renderer.domElement.addEventListener('pointermove', event => {
+      if (lookPointer !== event.pointerId || !exploring || reading) return;
+      yaw -= (event.clientX - lookX) * 0.004;
+      pitch = Math.max(-1.3, Math.min(1.3, pitch - (event.clientY - lookY) * 0.004));
+      lookX = event.clientX; lookY = event.clientY;
+    });
+    for (const name of ['pointerup', 'pointercancel', 'lostpointercapture']) renderer.domElement.addEventListener(name, () => { lookPointer = null; });
+    document.querySelectorAll('[data-move]').forEach(button => {
+      button.addEventListener('pointerdown', event => {
+        event.preventDefault(); button.setPointerCapture(event.pointerId); keys[button.dataset.move] = true;
+      });
+      for (const name of ['pointerup', 'pointercancel', 'lostpointercapture']) button.addEventListener(name, () => { keys[button.dataset.move] = false; });
+    });
+    addEventListener('keydown', event => {
+      if (!exploring || reading || menuOpen || event.target.closest('button, input, select, a')) return;
+      keys[event.code] = true;
+      if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space'].includes(event.code)) event.preventDefault();
+      if (event.code === 'Escape') showMenu();
+      if (event.code === 'KeyE' && !event.repeat) { event.preventDefault(); interact(); }
+    });
+    addEventListener('keyup', event => { keys[event.code] = false; });
+    addEventListener('blur', () => { if (!reading) showMenu(); else resetInput(); });
+    document.addEventListener('visibilitychange', () => {
+      resetInput(); frameTimes.length = 0; lastMs = 0;
+      if (document.hidden) { audioCtx?.suspend(); if (!reading) showMenu(); }
+      else if (audioCtx && soundControl.checked) audioCtx.resume().catch(() => {});
+    });
+    document.getElementById('pause-room').addEventListener('click', event => { event.stopPropagation(); showMenu(); });
+    soundControl.addEventListener('change', () => {
+      if (masterGain) masterGain.gain.setTargetAtTime(soundControl.checked ? 0.65 : 0, audioCtx.currentTime, 0.1);
+    });
+    motionControl.addEventListener('change', () => { reduceMotion = motionControl.checked; });
+    brightnessControl.addEventListener('input', () => { exposureTarget = Number(brightnessControl.value); renderer.toneMappingExposure = exposureTarget; });
+    setTimeout(() => { eyeOpening.classList.add('hidden'); if (!exploring && !reading) showMenu(); }, reduceMotion ? 0 : 1500);
 
     // ==================================================================
     //  INTERACTION
@@ -2484,6 +2644,7 @@ America</h2>
       proxy.visible = false;
       shell.visible = false;
       hovered = null;
+      document.getElementById('touch-read').disabled = true;
       proxyPull = 0;
     }
     function checkHover() {
@@ -2512,7 +2673,10 @@ America</h2>
           const meta = newHover.meta;
           crosshair.classList.add('hovering');
           proxy.position.copy(meta.pos); proxy.rotation.set(meta.lean, meta.rotY, 0); proxy.scale.copy(meta.scale);
-          proxy.material.color.copy(hoverColor.fromBufferAttribute(books.instanceColor, newHover.id));
+          proxyMat.color.copy(hoverColor.fromBufferAttribute(books.instanceColor, newHover.id));
+          selectedSpine.color.copy(proxyMat.color);
+          const bindingIndex = newHover.id % nQuotes;
+          selectedBinding.offset.set((bindingIndex % 16) / 16, (15 - Math.floor(bindingIndex / 16)) / 16);
           proxy.visible = true;
           shell.position.copy(meta.pos); shell.rotation.set(meta.lean, meta.rotY, 0); shell.scale.copy(meta.scale).multiplyScalar(1.06); shell.visible = true;
           labelInner.textContent = meta.content.source;
@@ -2524,6 +2688,7 @@ America</h2>
         label.classList.remove('visible');
       }
       hovered = newHover;
+      document.getElementById('touch-read').disabled = !hovered;
       proxyPull = 0;
     }
 
@@ -2543,9 +2708,13 @@ America</h2>
     let _meas = null;
     async function openBook(c) {
       reading = true;
+      resetInput(); syncControls();
+      document.getElementById('reader-contents').hidden = !c.isFullBook;
+      overlay.setAttribute('aria-label', c.source);
       clearHover();
       overlay.classList.add('visible');
-      document.exitPointerLock();
+      document.getElementById('reader-close').focus({ preventScroll: true });
+      document.exitPointerLock?.();
       duckAmbient(0.5);
       if (c.isFullBook) {
         isFullBook = true;
@@ -2584,16 +2753,20 @@ America</h2>
         playPageTurn();
       }
     }
-    function closeBook() {
+    function closeBook(event) {
+      const resumeExploring = exploring && !menuOpen && event?.type === "click";
+      if (isFullBook && N > 1) {
+        try { localStorage.setItem('library-plunkitt-position', String(curPage / (N - 1))); } catch {}
+      }
       reading = false; isFullBook = false;
       overlay.classList.remove('visible');
       readingContent.classList.remove('full-book-view');
       teardownBook();
       // drop any arrow/space still physically held from page-turning, so it doesn't drive
       // the camera once pointer lock is re-acquired
-      keys['ArrowLeft'] = keys['ArrowRight'] = keys['ArrowUp'] = keys['ArrowDown'] = keys['Space'] = false;
+      resetInput();
       duckAmbient(1.0);
-      document.body.requestPointerLock();
+      if (resumeExploring) hideMenu(); else showMenu();
       playBookClose();
     }
 
@@ -2805,11 +2978,12 @@ America</h2>
       list.innerHTML = '';
       scrub.querySelectorAll('.rail-tick').forEach(t => t.remove());
       chapterTitles.forEach((t, i) => {
-        const item = document.createElement('div');
+        const item = document.createElement('button');
+        item.type = 'button';
         item.className = 'chapter-nav-item' + (t.section ? ' section' : '');
         item.textContent = t.disp.length > 28 ? t.disp.slice(0, 28) + '…' : t.disp;
         item.title = t.text; item.dataset.i = i;
-        item.addEventListener('click', () => requestPage(chapterStartPage[i]));
+        item.addEventListener('click', () => { requestPage(chapterStartPage[i]); readingContent.classList.remove('contents-open'); });
         list.appendChild(item);
         const tick = document.createElement('div'); tick.className = 'rail-tick'; tick.dataset.i = i;
         tick.style.top = (N > 1 ? chapterStartPage[i] / (N - 1) : 0) * 100 + '%';
@@ -2913,7 +3087,8 @@ America</h2>
     const NAV_KEYS = ['ArrowRight', 'ArrowLeft', 'Space', 'PageDown', 'PageUp', 'Home', 'End'];
     onBookKey = e => {
       if (!reading || !isFullBook || !N) return;
-      if (!NAV_KEYS.includes(e.code)) return;
+      if (!NAV_KEYS.includes(e.code) || e.target.closest('input, select, textarea')) return;
+      if (e.code === 'Space' && e.target.closest('button, a')) return;
       e.preventDefault();
       if (e.repeat) return;                       // discrete turns; tap repeatedly to riffle further
       const base = animating ? targetPage : curPage;
@@ -2948,7 +3123,11 @@ America</h2>
       if (myOpen !== openToken || !bookEls || !isFullBook) return;   // superseded/closed while paginating
       if (!d) { await new Promise(r => requestAnimationFrame(r)); d = await paginateAndPlace(); if (myOpen !== openToken || !bookEls || !isFullBook || !d) return; }
       applyBookData(d);
-      buildRail(); renderSpread(0); updateRail();
+      let bookmark = 0;
+      try { bookmark = Number(localStorage.getItem('library-plunkitt-position')) || 0; } catch {}
+      curPage = snapToLeaf(Math.round(Math.max(0, Math.min(1, bookmark)) * (N - 1)));
+      targetPage = curPage;
+      buildRail(); renderSpread(curPage); updateRail();
     }
 
     function teardownBook() {
@@ -2964,74 +3143,63 @@ America</h2>
       curPage = 0; targetPage = 0; bookDims = null; bookEls = null;
     }
 
-    document.addEventListener('click', e => {
-      if (e.target.closest('#start-prompt a')) return;
-      if (reading) {
-        // swallow the stray click that can follow a ribbon drag-release (auto-expires, so it
-        // never eats a later genuine click)
-        if (performance.now() - lastRibbonUp < 220) return;
-        if (isFullBook && e.target.closest('#reading-content')) return;
-        closeBook();
-      } else if (hovered && locked) {
-        if (hovered.type === 'shrine') openBook({ source: 'Plunkitt of Tammany Hall', isFullBook: true });
-        else { playBookPull(); openBook(hovered.meta.content); }
-      } else if (!locked && !menuOpen) {
-        initAudioGraph(); if (audioCtx.state === 'suspended') audioCtx.resume(); startAmbient();
-        document.body.requestPointerLock();
+    window.addEventListener('library:read-direct', event => {
+      event.preventDefault(); startPrompt.classList.remove('visible');
+      openBook({ source: 'Plunkitt of Tammany Hall', isFullBook: true });
+    });
+    function interact() {
+      if (!exploring || reading || menuOpen) return;
+      camera.updateMatrixWorld(); checkHover();
+      if (!hovered) return;
+      if (hovered.type === 'shrine') openBook({ source: 'Plunkitt of Tammany Hall', isFullBook: true });
+      else { playBookPull(); openBook(hovered.meta.content); }
+    }
+    renderer.domElement.addEventListener('click', () => { if (!dragLook) interact(); });
+    document.getElementById('touch-read').addEventListener('click', interact);
+    document.getElementById('reader-close').addEventListener('click', closeBook);
+    document.getElementById('reader-contents').addEventListener('click', () => readingContent.classList.toggle('contents-open'));
+    overlay.addEventListener('click', event => { if (event.target === overlay) closeBook(); });
+    document.addEventListener('keydown', event => {
+      if (!reading) return;
+      if (event.code === 'Escape') { event.preventDefault(); closeBook(); return; }
+      if (event.code === 'Tab') {
+        const focusable = [...overlay.querySelectorAll('button:not([disabled]), a[href], [tabindex="0"]')].filter(el => el.getClientRects().length);
+        const first = focusable[0], last = focusable[focusable.length - 1];
+        if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
+        else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
       }
     });
-    document.addEventListener('keydown', e => { if (e.code === 'Escape' && reading) closeBook(); });
 
     // ==================================================================
     //  COLLISION
     // ==================================================================
-    const coreR = 0.55;
-    const chasmOuter = moatOuter + 0.22;
-    // the island is a hexagon (circumradius islandOuter); its flat faces only reach the apothem,
-    // so treat solid ground as the inscribed circle to avoid standing over the void at the faces
-    const islandSolid = islandOuter * Math.cos(Math.PI / 6);
-    // hexagon-aware wall clamp: stay clear of the bookcase fronts (case front sits at apothem − 0.45),
-    // but allow closer approach to the two archway walls so the chains read as the barrier
-    const wallNs = [0, 1, 2, 3, 4, 5].map(w => wallNormal(w));
-    function allowed(x, z) {
-      for (let w = 0; w < 6; w++) {
-        const lim = (w === 0 || w === 3) ? apothem - 0.25 : apothem - 0.7;
-        if (x * wallNs[w].x + z * wallNs[w].z > lim) return false;
-      }
-      const d = Math.hypot(x, z);
-      // the chasm ring is only crossable on the bridge
-      if (d > islandSolid && d < chasmOuter) {
-        const onBridge = x > 0 && Math.abs(z) < 0.5;
-        if (!onBridge) return false;
-      }
-      // don't stand inside the pedestal itself
-      if (d < coreR) return false;
-      return true;
-    }
 
     // ==================================================================
     //  MAIN LOOP
     // ==================================================================
     const clock = new THREE.Clock();
-    let frameTimes = [], dprDropped = false, lastMs = 0;
-    const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const bobAmp = reduceMotion ? 0 : 0.035;
-    const rollAmp = reduceMotion ? 0 : 0.004;
-    const fovKick = reduceMotion ? 0 : 4;
+    let frameTimes = [], lastMs = 0;
+    let lastRender = 0;
+    let walked = 0;
 
     function loop() {
       requestAnimationFrame(loop);
       const dt = Math.min(clock.getDelta(), 0.05);
       const t = clock.elapsedTime;
+      if (document.hidden || reading) { lastMs = 0; return; }
+      if (menuOpen && introDone && performance.now() - lastRender < 100) return;
+      lastRender = performance.now();
 
       // intro exposure ramp + bloom settle
       if (!introDone) {
-        renderer.toneMappingExposure = Math.min(1.35, renderer.toneMappingExposure + dt * 0.6);
+        renderer.toneMappingExposure = Math.min(exposureTarget, renderer.toneMappingExposure + dt * 0.8);
         bloom.strength = Math.max(0.55, bloom.strength - dt * 0.32);
-        if (renderer.toneMappingExposure >= 1.35 && bloom.strength <= 0.56) introDone = true;
+        if (renderer.toneMappingExposure >= exposureTarget && bloom.strength <= 0.56) introDone = true;
       }
 
-      if (locked && !reading) {
+      if (exploring && !menuOpen && !reading) {
+        yaw += ((keys['KeyQ'] ? 1 : 0) - (keys['KeyR'] ? 1 : 0)) * dt * 1.4;
+        pitch = Math.max(-1.3, Math.min(1.3, pitch + ((keys['KeyT'] ? 1 : 0) - (keys['KeyG'] ? 1 : 0)) * dt));
         // movement (reuse hoisted scratch vectors — no per-frame allocation)
         const wish = _wish.set(0, 0, 0);
         if (keys['KeyW'] || keys['ArrowUp']) wish.z -= 1;
@@ -3041,42 +3209,26 @@ America</h2>
         const moving = wish.lengthSq() > 0;
         wish.normalize();
         // to world using yaw
-        const forward = _forward.set(-Math.sin(yaw), 0, -Math.cos(yaw));
-        const right = _right.set(Math.cos(yaw), 0, -Math.sin(yaw));
-        const wishWorld = _wishWorld.set(0, 0, 0).addScaledVector(forward, -wish.z).addScaledVector(right, wish.x);
-        const accel = 40;
-        vel.addScaledVector(wishWorld, accel * dt);
-        // damping
-        const damp = Math.exp(-8 * dt);
-        vel.multiplyScalar(damp);
-        const maxSpd = 3.2;
-        if (vel.length() > maxSpd) vel.setLength(maxSpd);
-
-        // integrate with collision (slide)
-        let nx = camera.position.x + vel.x * dt;
-        let nz = camera.position.z + vel.z * dt;
-        // outer clamp
-        if (allowed(nx, nz)) { camera.position.x = nx; camera.position.z = nz; }
-        else if (allowed(nx, camera.position.z)) { camera.position.x = nx; vel.z = 0; }
-        else if (allowed(camera.position.x, nz)) { camera.position.z = nz; vel.x = 0; }
-        else { vel.set(0, vel.y, 0); }
-
-        // head bob
-        const spd = vel.length();
-        const speedFactor = Math.min(spd / maxSpd, 1);
-        if (moving) bobPhase += dt * 10 * (0.5 + speedFactor * 0.5);
-        const bobSin = Math.sin(bobPhase);
-        const bobY = bobSin * bobAmp * speedFactor;
-        const roll = Math.cos(bobPhase) * rollAmp * speedFactor;
-        camera.position.y = CAM_EYE + bobY;
-
-        // footstep at bob minima
-        if (moving && lastBobSin > -0.9 && bobSin <= -0.9) playFootstep();
-        lastBobSin = bobSin;
+        const movement = localMovement(wish.x, wish.z, yaw);
+        const wishWorld = _wishWorld.set(movement.x, 0, movement.z);
+        const maxSpd = keys['ShiftLeft'] || keys['ShiftRight'] ? 3.0 : 2.15;
+        vel.x = damp(vel.x, wishWorld.x * maxSpd, moving ? 12 : 18, dt);
+        vel.z = damp(vel.z, wishWorld.z * maxSpd, moving ? 12 : 18, dt);
+        const previousX = camera.position.x, previousZ = camera.position.z;
+        const next = slideMove(camera.position, { x: vel.x * dt, z: vel.z * dt });
+        camera.position.x = next.x; camera.position.z = next.z;
+        const distance = Math.hypot(next.x - previousX, next.z - previousZ);
+        const speedFactor = Math.min(distance / Math.max(dt * maxSpd, 0.001), 1);
+        walked += distance;
+        bobPhase += distance * 8;
+        if (walked > 0.72) { playFootstep(); walked %= 0.72; }
+        const bobY = reduceMotion ? 0 : Math.sin(bobPhase) * 0.019 * speedFactor;
+        const roll = reduceMotion ? 0 : Math.cos(bobPhase * 0.5) * 0.0015 * speedFactor;
+        camera.position.y = damp(camera.position.y, CAM_EYE + bobY, 16, dt);
 
         // FOV drift while moving forward
-        const targetFov = 70 + (moving && wish.z < 0 ? fovKick : 0) * speedFactor;
-        curFov += (targetFov - curFov) * 0.06;
+        const targetFov = 70 + (!reduceMotion && maxSpd > 2.5 && moving && wish.z < 0 ? 2 : 0) * speedFactor;
+        curFov = damp(curFov, targetFov, 6, dt);
         if (Math.abs(camera.fov - curFov) > 0.01) { camera.fov = curFov; camera.updateProjectionMatrix(); }
 
         euler.set(pitch, yaw, roll);
@@ -3096,21 +3248,21 @@ America</h2>
 
       // proxy pull-out easing (only while actually exploring)
       if (!reading && !menuOpen && hovered && hovered.type === 'book') {
-        proxyPull += (1 - proxyPull) * 0.15;
+        proxyPull = damp(proxyPull, 1, 12, dt);
         const meta = hovered.meta;
         const off = 0.04 * proxyPull;
         proxy.position.set(meta.pos.x + meta.normal.x * off, meta.pos.y, meta.pos.z + meta.normal.z * off);
-        proxy.material.emissiveIntensity = 0.15 * proxyPull;
+        proxyMat.emissiveIntensity = selectedSpine.emissiveIntensity = 0.10 * proxyPull;
       }
 
       // shrine title glint + spotlight breathe + beam breathe
-      const breathe = Math.sin(t * 0.6) * 0.5 + 0.5;
+      const breathe = reduceMotion ? 0.5 : Math.sin(t * 0.6) * 0.5 + 0.5;
       shrineMat.emissiveIntensity = 0.5 + breathe * 0.3;
       spot.intensity = 68 * (1 + Math.sin(t * 0.6) * 0.04);
       beamMat.opacity = 0.16 + Math.sin(t * 0.6) * 0.025;
 
       // dust animation
-      if (dustMat.userData.shader) dustMat.userData.shader.uniforms.uTime.value = t;
+      if (dustMat.userData.shader) dustMat.userData.shader.uniforms.uTime.value = reduceMotion ? 0 : t;
       gradePass.uniforms.uTime.value = t;
 
       // gate the mirror's render pass: only when the player is close AND looking toward it
@@ -3125,25 +3277,32 @@ America</h2>
         mirrorObj.visible = near && facing;
       }
 
-      updateReverb();
+      updateReverb(dt);
+      if (audioCtx && exploring) {
+        const listener = audioCtx.listener;
+        const look = _forward.set(0, 0, -1).applyQuaternion(camera.quaternion);
+        if (listener.positionX) {
+          listener.positionX.value = camera.position.x; listener.positionY.value = camera.position.y; listener.positionZ.value = camera.position.z;
+          listener.forwardX.value = look.x; listener.forwardY.value = look.y; listener.forwardZ.value = look.z;
+          listener.upX.value = 0; listener.upY.value = 1; listener.upZ.value = 0;
+        } else {
+          listener.setPosition(camera.position.x, camera.position.y, camera.position.z);
+          listener.setOrientation(look.x, look.y, look.z, 0, 1, 0);
+        }
+      }
 
       // adaptive DPR guard — measured against real wall-clock frame time (not clamped dt)
       const nowMs = performance.now();
-      if (lastMs) frameTimes.push(nowMs - lastMs);
-      lastMs = nowMs;
-      if (frameTimes.length >= 45) {
-        const avg = frameTimes.reduce((a, b) => a + b, 0) / frameTimes.length;
-        frameTimes.length = 0;
-        const maxDpr = Math.min(devicePixelRatio, 2);
-        if (avg > 20 && curPixelRatio > 1.0) {
-          curPixelRatio = Math.max(1.0, curPixelRatio - 0.25); dprDropped = true;
-          applyPixelRatio(curPixelRatio);
-        } else if (avg < 12 && dprDropped && curPixelRatio < maxDpr) {
-          curPixelRatio = Math.min(maxDpr, curPixelRatio + 0.25);
-          applyPixelRatio(curPixelRatio);
-          if (curPixelRatio >= maxDpr) dprDropped = false;
+      if (!menuOpen && introDone) {
+        if (lastMs) frameTimes.push(nowMs - lastMs);
+        lastMs = nowMs;
+        if (frameTimes.length >= 180) {
+          const maximum = Math.min(devicePixelRatio, dragLook ? 1.25 : 1.75);
+          const nextRatio = qualityStep(curPixelRatio, maximum, frameTimes);
+          frameTimes.length = 0;
+          if (nextRatio !== curPixelRatio) { curPixelRatio = nextRatio; applyPixelRatio(curPixelRatio); }
         }
-      }
+      } else { lastMs = 0; frameTimes.length = 0; }
 
       composer.render();
     }
@@ -3183,6 +3342,15 @@ America</h2>
     }
 
     loop();
+    document.getElementById('loading-note').textContent = 'A hexagonal gallery. An inexhaustible library.';
+    startButton.disabled = false;
+    } catch (error) {
+      console.error('Library initialization failed', error);
+      document.getElementById('eye-opening').classList.add('hidden');
+      document.getElementById('start-prompt').classList.add('visible');
+      document.getElementById('loading-note').textContent = 'The gallery could not open. You can still read the book below.';
+      document.getElementById('start-button').hidden = true;
+    }
   </script>
 </body>
 </html>

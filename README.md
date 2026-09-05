@@ -89,3 +89,11 @@ Push to GitHub → Netlify auto-deploys.
 ## License
 
 Content © Andy Masley. Code MIT.
+
+## Hidden library
+
+The `/room` set piece keeps the hexagonal library, chasm, mirror, 242 original fragments, and the complete Plunkitt book. Its 3D dependencies are bundled from pinned npm packages. `src/lib/room/graphics.ts` supplies the individual bindings and architectural details; `physics.ts` owns collision and frame-independent motion.
+
+Visitors can use mouse and keyboard or touch controls. E opens the selected book; Escape pauses. The pause menu offers sound, camera comfort, lamplight, and a direct reading option. Plunkitt remembers a reading-position fraction locally, so the bookmark also survives a changed window size. Hidden tabs suspend audio and rendering; the reader suspends 3D rendering. The book text and original fragment records are retained unchanged.
+
+Run `npm test` and `npm run build` after room edits. The movement tests cover bridge/pedestal collisions, large movement steps, frame rates, and rendering-quality recovery.
