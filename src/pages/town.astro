@@ -1,5 +1,6 @@
 ---
 import Base from '../layouts/Base.astro';
+import TownRadio from '../components/TownRadio.astro';
 import '../styles/town.css';
 
 const poster = '/town-assets/webster-poster-summer.webp';
@@ -122,6 +123,7 @@ const poster = '/town-assets/webster-poster-summer.webp';
           </label>
         </div>
       </div>
+      <TownRadio />
       <div class="town-below-game">
         <p id="town-status" class="town-status" data-town-status role="status" aria-live="polite">Ready when you are.</p>
         <details class="town-help">
@@ -162,6 +164,7 @@ const poster = '/town-assets/webster-poster-summer.webp';
 </Base>
 
 <script>
+  import { mountTownRadio } from '../lib/town/radio';
   let pageCleanup: (() => void) | undefined;
 
   function prepareTownPage() {
@@ -172,6 +175,7 @@ const poster = '/town-assets/webster-poster-summer.webp';
     const status = root.querySelector<HTMLElement>('[data-town-status]')!;
     const quality = root.querySelector<HTMLSelectElement>('[data-town-quality]')!;
     const controller = new AbortController();
+    const radio = mountTownRadio(root);
     let session: { dispose(): void } | undefined;
     let starting = false;
     try {
@@ -197,7 +201,7 @@ const poster = '/town-assets/webster-poster-summer.webp';
         }
       } finally { starting = false; }
     }, { signal: controller.signal });
-    pageCleanup = () => { controller.abort(); session?.dispose(); };
+    pageCleanup = () => { controller.abort(); radio.dispose(); session?.dispose(); };
   }
 
   document.addEventListener('astro:page-load', prepareTownPage);

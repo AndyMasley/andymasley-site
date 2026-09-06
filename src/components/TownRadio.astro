@@ -1,0 +1,70 @@
+---
+import { RADIO_STATIONS, RADIO_CATALOG_CHECKED_AT } from '../lib/town/radio-stations';
+const recommended = RADIO_STATIONS.filter((station) => station.recommended);
+---
+
+<details class="town-radio" data-town-radio>
+  <summary>Car radio <span class="town-radio__summary" data-radio-summary>Off</span></summary>
+  <div class="town-radio__body">
+    <div class="town-radio__top">
+      <div class="town-radio__display">
+        <output class="town-radio__frequency" data-radio-frequency>91.3 FM</output>
+        <span data-radio-name>Local radio</span>
+        <span class="town-radio__muted" data-radio-detail>Webster and the surrounding towns</span>
+      </div>
+      <div class="town-radio__switches">
+        <label>Band <select data-radio-band><option value="fm">FM</option><option value="am">AM</option></select></label>
+        <button type="button" data-radio-power aria-pressed="false">Turn radio on</button>
+      </div>
+    </div>
+
+    <div class="town-radio__tuner">
+      <button type="button" data-radio-down aria-label="Tune down one channel">−</button>
+      <div class="town-radio__scale">
+        <label class="town-radio__dial-label" for="town-radio-dial">Turn the dial</label>
+        <div class="town-radio__markers" data-radio-markers aria-hidden="true"></div>
+        <input id="town-radio-dial" data-radio-dial type="range" min="879" max="1079" step="2" value="913" aria-describedby="town-radio-dial-hint" />
+        <div class="town-radio__limits"><span data-radio-min>87.9</span><span data-radio-max>107.9 MHz</span></div>
+      </div>
+      <button type="button" data-radio-up aria-label="Tune up one channel">+</button>
+    </div>
+
+    <div class="town-radio__playback">
+      <p data-radio-status role="status" aria-live="polite">Turn on the radio to listen.</p>
+      <button type="button" data-radio-retry hidden>Retry</button>
+      <label class="town-radio__volume">Volume <input data-radio-volume type="range" min="0" max="100" step="1" value="45" aria-label="Radio volume" /></label>
+    </div>
+
+    <p class="town-radio__hint" id="town-radio-dial-hint">Every channel is on the dial, including the empty ones. Use the slider or the − / + buttons; arrow keys work when the dial is focused.</p>
+    <div class="town-radio__presets" aria-label="Recommended local stations">
+      <span class="town-radio__label">Try these stations</span>
+      <div class="town-radio__preset-buttons">
+        {recommended.map((station) => (
+          <button type="button" data-radio-station={station.id} aria-pressed="false">
+            <span>{station.frequency.toFixed(station.band === 'fm' ? 1 : 0)} {station.band.toUpperCase()} · {station.name}</span>
+            <span class="town-radio__muted" data-radio-reception="Stream checked">Stream checked</span>
+          </button>
+        ))}
+      </div>
+    </div>
+
+    <details class="town-radio__guide">
+      <summary>Local station guide</summary>
+      <p>Real station broadcasts over the internet. Presets have checked streams; availability can change. Static is simulated, and reception is not measured at your car’s location.</p>
+      <p>FM uses 0.2 MHz steps; AM uses 10 kHz steps. An empty channel means no station is listed here. A missing stream does not mean a station is off the air.</p>
+      <div class="town-radio__stations">
+        {RADIO_STATIONS.map((station) => (
+          <div class="town-radio__station">
+            <button type="button" data-radio-station={station.id} aria-pressed="false">
+              <span>{station.frequency.toFixed(station.band === 'fm' ? 1 : 0)} {station.band.toUpperCase()} · {station.callSign}</span>
+              <span class="town-radio__muted" data-radio-reception={station.streamUrl ? 'Stream checked' : 'No in-game stream'}>{station.streamUrl ? 'Stream checked' : 'No in-game stream'}</span>
+            </button>
+            <div><a href={station.website} target="_blank" rel="noopener noreferrer">{station.name}</a><span class="town-radio__muted">{station.city} · {station.format}</span>{station.note && <span class="town-radio__muted">{station.note}</span>}</div>
+          </div>
+        ))}
+      </div>
+      <p>Station and stream information checked <time datetime={RADIO_CATALOG_CHECKED_AT}>{RADIO_CATALOG_CHECKED_AT}</time>. This guide covers nearby and selected regional stations, not every distant signal.</p>
+    </details>
+    <a class="town-radio__website" data-radio-website href="https://www.wcuw.org/" target="_blank" rel="noopener noreferrer" hidden>Open this station’s website ↗</a>
+  </div>
+</details>
