@@ -106,3 +106,12 @@ Retest with bounded requests, preserve nonworking stations on the dial, and
 advance `RADIO_CATALOG_CHECKED_AT` only after recording fresh evidence. Avoid
 substituting an unrelated station merely because it shares a frequency or
 because a generic directory offers an apparently working stream.
+
+## In-browser playback verification
+
+The six recommended stations played in Chrome and WebKit. Firefox played five;
+its WQVR connection failed with `SEC_ERROR_UNKNOWN_ISSUER` at the stream server,
+before an HTTP response. The game correctly timed out and offered Retry and the
+station website. TLS verification was not bypassed. WORC startup buffering in
+Firefox recovered and playback continued. Full-band keyboard tuning, a 390px
+mobile viewport, and real Astro navigation completed in all three browsers.

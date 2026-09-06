@@ -107,7 +107,7 @@ export const RADIO_STATIONS: readonly RadioStation[] = [
     id: 'wqvr-fm', band: 'fm', frequency: 99.3, callSign: 'WQVR',
     name: 'Quinebaug Valley Radio', format: 'Classic hits / local news', city: 'Webster / Southbridge, MA',
     streamUrl: WQVR_STREAM, website: 'https://wqvrradio.com/',
-    recommended: true, reception: 'local', note: 'FM relay of 940 AM; formerly known as The Lake.',
+    recommended: true, reception: 'local', note: 'FM relay of 940 AM; formerly known as The Lake. If silent in Firefox, try the station player.',
   },
   {
     id: 'wcrb-fm', band: 'fm', frequency: 99.5, callSign: 'WCRB',
@@ -146,7 +146,7 @@ export const RADIO_STATIONS: readonly RadioStation[] = [
     id: 'wqvr-am', band: 'am', frequency: 940, callSign: 'WQVR',
     name: 'Quinebaug Valley Radio', format: 'Classic hits / local news', city: 'Webster / Southbridge, MA',
     streamUrl: WQVR_STREAM, website: 'https://wqvrradio.com/',
-    recommended: false, reception: 'local', note: 'Also on 99.3 FM. Former call sign WGFP.',
+    recommended: false, reception: 'local', note: 'Also on 99.3 FM. Former call sign WGFP. If silent in Firefox, try the station player.',
   },
   {
     id: 'weso-am', band: 'am', frequency: 970, callSign: 'WESO',
