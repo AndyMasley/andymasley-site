@@ -3,6 +3,7 @@ import { Sky } from 'three/examples/jsm/objects/Sky.js';
 import { advanceRealTime, DriveEngine, LANDMARKS, MPH, RoadGraph, spawnAtLandmark } from './engine';
 import { validateManifest, type Quality, type V3 } from './contracts';
 import { TownWorld } from './world';
+import { startupPosition } from './startup';
 import { createSummerSky, SUMMER_LIGHT } from './atmosphere';
 import { createTouringCar, type TouringCar } from './vehicle';
 import release from '../../../data/derived/town/release.json';
@@ -207,7 +208,7 @@ export async function startTown(root: HTMLElement): Promise<Session> {
     world = new TownWorld(manifest, new URL(WORLD_URL, location.href).href, () => {});
     world.setQuality(quality, mobile);
     scene.add(world.root);
-    const landscapeReady = world.initialize();
+    const landscapeReady = world.initialize(startupPosition(startingLocation, manifest));
     void landscapeReady.catch(() => {});
     const network = await networkResponse.json();
     await new Promise((resolve) => setTimeout(resolve, 0));
@@ -217,7 +218,9 @@ export async function startTown(root: HTMLElement): Promise<Session> {
     setStatus('Preparing the landscape and your car…');
     vehicle = createTouringCar();
     car = vehicle.root;
-    await world.initialize(toWorld(engine.pose()[0]));
+    await landscapeReady;
+    if (disposed) return session;
+    await world.prepareAt(toWorld(engine.pose()[0]));
     if (disposed) return session;
     car.name = 'Your car';
     scene.add(car);
