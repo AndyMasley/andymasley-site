@@ -70,10 +70,11 @@ const poster = '/town-assets/webster-poster-crafted.webp';
           </div>
           <div class="town-directions">
             <p data-town-turn>Continue on Main Street</p>
-            <div class="town-choices" data-town-choices role="list" aria-label="Available turns"></div>
+            <div class="town-choices" data-town-choices role="group" aria-label="Available turns"></div>
           </div>
           <div class="town-instruments" aria-label="Speed and distance">
             <div class="town-speed"><span data-town-speed>0</span><span class="town-unit">mph</span></div>
+            <div class="town-road-limit"><span class="town-hud__label">Road limit</span><span data-town-limit>25 mph</span></div>
             <div class="town-odometer"><span data-town-distance>0.0 mi</span><span class="town-hud__label">this drive</span></div>
           </div>
           <figure class="town-map" aria-label="Local road map">
@@ -98,6 +99,7 @@ const poster = '/town-assets/webster-poster-crafted.webp';
       <div class="town-toolbar">
         <div class="town-actions" aria-label="Game controls">
           <button type="button" data-town-pause aria-keyshortcuts="Space" disabled>Pause</button>
+          <button type="button" data-town-reverse aria-keyshortcuts="R" disabled>Turn around</button>
           <button type="button" data-town-camera aria-keyshortcuts="C" disabled>Camera</button>
           <button type="button" data-town-sound aria-pressed="false" disabled>Engine sound off</button>
           <button type="button" data-town-fullscreen disabled>Full screen</button>
@@ -131,12 +133,13 @@ const poster = '/town-assets/webster-poster-crafted.webp';
           <summary>How to drive</summary>
           <div class="town-help__content" id="town-controls-summary">
             <dl class="town-key-list">
-              <div><dt><kbd>↑</kbd> <kbd>↓</kbd></dt><dd>Accelerate / brake</dd></div>
+              <div><dt><kbd>↑</kbd> <kbd>↓</kbd></dt><dd>Cruise at the road limit / brake</dd></div>
               <div><dt><kbd>←</kbd> <kbd>→</kbd></dt><dd>Choose a turn at a junction</dd></div>
               <div><dt><kbd>Space</kbd></dt><dd>Pause / resume</dd></div>
+              <div><dt><kbd>R</kbd></dt><dd>Instantly turn around</dd></div>
               <div><dt><kbd>C</kbd></dt><dd>Change camera</dd></div>
             </dl>
-            <p>The car stays on the road. Pick a direction as you approach a junction; the turn choices appear in the view. On a touch screen, use the arrows below the road.</p>
+            <p>The car stays on the road. Press Up to accelerate smoothly to the road’s speed limit, including 65 mph on I-395. Pick a direction as you approach a junction, or click a labeled road option to select that exact branch. Turn around instantly with the button or R. On a touch screen, use the arrows below the road.</p>
             <p>Click the town view to use the keyboard. Leaving the game pauses the drive. Use Pause to resume. Sound starts only if you turn it on.</p>
           </div>
         </details>

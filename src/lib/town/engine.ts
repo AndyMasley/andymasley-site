@@ -1,4 +1,8 @@
-/** Exact road-guided simulation port of driving/drive_webster.py.
+import { classifyTurnOptions, chooseTurnOption } from './turn-options';
+import { roadSpeedLimitMps, cruiseCeilingMps } from './speed-policy';
+import { reverseDrivingPosition } from './reverse-direction';
+
+/** Road-guided simulation using the source geometry from driving/drive_webster.py.
  * Positions are local east/north/up metres. Rendering may map [x,y,z] to
  * Three.js [x,z,-y]; never change the network or simulation coordinate system.
  * No browser, renderer, physics library, or React dependency.
@@ -183,33 +187,12 @@ export class RoadGraph {
       const label: TurnLabel = Math.abs(angle) >= 150 ? 'U-turn' : angle > 25 ? 'Left' : angle < -25 ? 'Right' : 'Straight';
       (inverse ? inverses : choices).push({ edgeId: candidate, angleDeg: angle, label, name: other.name });
     }
-    const result = choices.length ? choices : inverses;
-    result.sort((a, b) => {
-      const angle = b.angleDeg - a.angleDeg;
-      if (angle) return angle;
-      const x = String(a.edgeId), y = String(b.edgeId);
-      return x < y ? -1 : x > y ? 1 : 0;
-    });
+    const result = classifyTurnOptions(edge, choices.length ? choices : inverses, this.edges);
     this.choiceCache.set(edgeId, result); return result;
   }
 
   choose(edgeId: number, requested: TurnRequest = null): Choice | null {
-    const choices = this.choices(edgeId); if (!choices.length) return null;
-    // Stable minimum matches Python min(): first candidate wins equal scores.
-    const minimum = (items: Choice[], score: (item: Choice) => number): Choice => {
-      let best = items[0], bestScore = score(best);
-      for (let i = 1; i < items.length; i++) { const value = score(items[i]); if (value < bestScore) { best = items[i]; bestScore = value; } }
-      return best;
-    };
-    if (requested === 'LEFT') {
-      const valid = choices.filter(c => c.angleDeg > 25 && c.angleDeg < 150);
-      if (valid.length) return minimum(valid, c => Math.abs(c.angleDeg - 90));
-    } else if (requested === 'RIGHT') {
-      const valid = choices.filter(c => c.angleDeg > -150 && c.angleDeg < -25);
-      if (valid.length) return minimum(valid, c => Math.abs(c.angleDeg + 90));
-    }
-    const name = required(this.edges, edgeId, 'road').name;
-    return minimum(choices, c => Math.abs(c.angleDeg) + (c.name === name ? 0 : 3));
+    return chooseTurnOption(this.choices(edgeId), required(this.edges, edgeId, 'road').name, requested);
   }
 
   connector(edgeId: number, nextId: number): Connector {
@@ -248,6 +231,7 @@ export class RoadGraph {
   nearest(xy: XY | readonly number[], preferConnected = true): [edgeId: number, s: number, distance: number] {
     let best: [distance: number, edgeId: number, s: number] | null = null;
     for (const [edgeId, path] of this.paths) {
+      if (this.edges.get(edgeId)?.manual_reverse_of !== undefined) continue;
       if (preferConnected && (!this.choices(edgeId).length || this.obstacleStops.has(edgeId))) continue;
       for (let i = 0; i < path.points.length - 1; i++) {
         const a = path.points[i], b = path.points[i + 1], dx = b[0] - a[0], dy = b[1] - a[1];
@@ -279,6 +263,8 @@ export class DriveEngine {
   connection: PlannedConnection | null = null;
   connectionS = 0;
   queued: TurnRequest = null;
+  queuedEdge: number | null = null;
+  cruiseAtLimit = false;
   speed = 0; cruise = 0; acceleration = 0;
   paused = false; distance = 0; elapsed = 0; junctions = 0;
   endOfRoute = false;
@@ -296,18 +282,42 @@ export class DriveEngine {
   get path() { return required(this.graph.paths, this.edgeId, 'path'); }
 
   plan(): PlannedConnection | null {
-    if (this.graph.obstacleStops.has(this.edgeId)) return null;
+    if (this.obstacleAhead() !== undefined) return null;
     const requested = this.graph.choices(this.edgeId).length > 1 ? this.queued : null;
-    const key = `${this.edgeId},${requested}`;
+    const key = `${this.edgeId},${requested},${this.queuedEdge}`;
     if (this.planKey === key) return this.planValue;
-    const choice = this.graph.choose(this.edgeId, requested);
+    const choice = this.graph.choices(this.edgeId).find(choice => choice.edgeId === this.queuedEdge) ?? this.graph.choose(this.edgeId, requested);
     const plan = choice ? { ...this.graph.connector(this.edgeId, choice.edgeId), choice } : null;
     this.planKey = key; this.planValue = plan; return plan;
   }
 
   queue(direction: TurnRequest): void {
     this.queued = direction;
+    this.queuedEdge = null;
     this.lastMessage = direction === 'LEFT' ? 'Left turn requested at the next junction.' : direction === 'RIGHT' ? 'Right turn requested at the next junction.' : 'Continuing straight where possible.';
+  }
+
+  queueChoice(edgeId: number): boolean {
+    const choice = this.nextJunction()?.choices.find(option => option.edgeId === edgeId);
+    if (!choice) return false;
+    this.queued = null;
+    this.queuedEdge = edgeId;
+    this.lastMessage = `${choice.label} onto ${choice.name} selected.`;
+    return true;
+  }
+
+  flipDirection(): boolean {
+    const pose = this.pose();
+    const target = reverseDrivingPosition(this.graph, this.phase === 'TURN' && this.connectionS > this.connection!.path.length / 2 ? this.connection!.nextId : this.edgeId, pose);
+    if (!target) return false;
+    this.edgeId = target.edgeId;
+    this.s = target.s;
+    this.phase = 'ROAD'; this.connection = null; this.connectionS = 0;
+    this.planKey = null; this.planValue = null;
+    this.queued = null; this.queuedEdge = null;
+    this.acceleration = 0; this.endOfRoute = false;
+    this.lastMessage = `Turned around on ${this.edge.name}.`;
+    return true;
   }
 
   pose(ahead = 0): Pose {
@@ -332,14 +342,15 @@ export class DriveEngine {
     const seen = new Set<number>();
     for (let i = 0; i < 80; i++) {
       if (seen.has(edgeId)) return null; seen.add(edgeId);
-      if (this.graph.obstacleStops.has(edgeId)) {
-        distance += Math.max(0, this.graph.obstacleStops.get(edgeId)! - startS);
+      const obstacle = this.obstacleAhead(edgeId, startS);
+      if (obstacle !== undefined) {
+        distance += Math.max(0, obstacle - startS);
         return { edgeId, distance, choices: [], selected: null, obstacle: true };
       }
       distance += required(this.graph.paths, edgeId, 'path').length - startS;
       const choices = this.graph.choices(edgeId);
       if (choices.length > 1 || !choices.length || choices[0].label === 'U-turn') {
-        return { edgeId, distance, choices, selected: this.graph.choose(edgeId, this.queued) };
+        return { edgeId, distance, choices, selected: choices.find(choice => choice.edgeId === this.queuedEdge) ?? this.graph.choose(edgeId, this.queued) };
       }
       const choice = this.graph.choose(edgeId);
       if (!choice || distance > maximum) return null;
@@ -348,23 +359,29 @@ export class DriveEngine {
     return null;
   }
 
+  obstacleAhead(edgeId = this.edgeId, s = this.s): number | undefined {
+    const first = this.graph.obstacleStops.get(edgeId);
+    if (first === undefined || s <= first + 2.6) return first;
+    const edge = required(this.graph.edges, edgeId, 'road');
+    const path = required(this.graph.paths, edgeId, 'path');
+    const scale = edge.blocked_spans?.some(span => span.lane_from_m === undefined || span.lane_to_m === undefined)
+      ? path.length / new Path(edge.points).length : 1;
+    const remaining = (edge.blocked_spans ?? []).map(span => ({
+      from: Number(span.lane_from_m ?? Number(span.from_m) * scale),
+      to: Number(span.lane_to_m ?? Number(span.to_m ?? span.from_m) * scale),
+    })).filter(span => span.to + 0.15 >= s);
+    return remaining.length ? Math.max(0, Math.min(...remaining.map(span => span.from)) - 2.6) : undefined;
+  }
+
+  roadLimit(): number {
+    return roadSpeedLimitMps(this.phase === 'TURN' ? required(this.graph.edges, this.connection!.nextId, 'road') : this.edge);
+  }
+
   speedLimit(): number {
-    let limit = Number(this.edge.speed_kph ?? 40) / 3.6;
-    if (this.phase === 'TURN') return Math.min(limit, this.connection!.speed);
-    for (const ahead of [0, 8, 20, 40]) {
-      const curvature = Math.abs(this.path.curvature(this.s + ahead));
-      const bendSpeed = clamp(Math.sqrt(1.8 / Math.max(0.002, curvature)), 2.2, 30);
-      limit = Math.min(limit, Math.sqrt(bendSpeed * bendSpeed + 2 * 2.2 * Math.max(0, ahead - 3)));
-    }
-    const plan = this.plan();
-    if (plan) {
-      const remaining = Math.max(0, this.path.length - plan.fromTrim - this.s);
-      limit = Math.min(limit, Math.sqrt(plan.speed ** 2 + 2 * 2.2 * remaining));
-    } else {
-      const remaining = Math.max(0, (this.graph.obstacleStops.get(this.edgeId) ?? this.path.length) - this.s - 0.15);
-      limit = Math.min(limit, Math.sqrt(2 * 2.2 * remaining));
-    }
-    return limit;
+    const limit = this.roadLimit();
+    if (this.phase === 'TURN' || this.plan()) return limit;
+    const remaining = Math.max(0, (this.obstacleAhead() ?? this.path.length) - this.s - 0.15);
+    return Math.min(limit, Math.sqrt(2 * 2.2 * remaining));
   }
 
   /** Advance a known path distance; public for exact deterministic test fixtures. */
@@ -382,15 +399,15 @@ export class DriveEngine {
           this.phase = 'ROAD'; this.connection = null; this.planKey = null; transitions++;
         }
       } else {
-        const plan = this.plan(), end = this.graph.obstacleStops.get(this.edgeId) ?? this.path.length - (plan?.fromTrim ?? 0);
+        const plan = this.plan(), end = this.obstacleAhead() ?? this.path.length - (plan?.fromTrim ?? 0);
         const available = Math.max(0, end - this.s), advance = Math.min(remaining, available);
         this.s += advance; remaining -= advance;
         if (available <= advance + 1e-7) {
           if (!plan) {
-            this.speed = this.cruise = 0; this.endOfRoute = true;
-            this.lastMessage = this.graph.obstacleStops.has(this.edgeId)
-              ? 'Mapped building obstructs this road in the reconstruction. Press 1–5 to restart.'
-              : 'End of mapped route. Press 1–5 to start at another landmark.';
+            this.speed = this.cruise = 0; this.cruiseAtLimit = false; this.endOfRoute = true;
+            this.lastMessage = this.obstacleAhead() !== undefined
+              ? 'Mapped building obstructs this road. Turn around or choose another starting location.'
+              : 'End of mapped route. Turn around or choose another starting location.';
             break;
           }
           this.s = end; this.phase = 'TURN'; this.connection = plan; this.connectionS = 0;
@@ -399,8 +416,9 @@ export class DriveEngine {
             this.lastMessage = this.queued && plan.choice.label.toUpperCase() !== this.queued
               ? `No ${this.queued.toLowerCase()} branch here; taking ${plan.choice.label.toLowerCase()}.`
               : `${plan.choice.label} onto ${plan.choice.name}`;
-            this.queued = null;
-          } else if (plan.choice.label === 'U-turn') this.lastMessage = 'Mapped dead end — following a slow U-turn.';
+            this.queued = null; this.queuedEdge = null;
+          } else if (plan.choice.label === 'U-turn') this.lastMessage = 'Mapped dead end — turning around.';
+          if (this.queuedEdge === plan.nextId) this.queuedEdge = null;
           transitions++;
         }
       }
@@ -408,15 +426,13 @@ export class DriveEngine {
     this.distance += amount - remaining;
   }
 
-  step(dt: number, throttle = false, brake = false, maxMph = 35): void {
+  step(dt: number, throttle = false, brake = false, maxMph?: number): void {
     dt = clamp(dt, 0, 0.1);
     if (this.paused) return;
     this.elapsed += dt;
-    if (throttle) {
-      this.endOfRoute = false;
-      if (this.cruise < 5 * MPH) this.cruise = Math.min(25, maxMph) * MPH;
-      this.cruise = Math.min(maxMph * MPH, this.cruise + 0.7 * dt);
-    }
+    if (throttle) { this.endOfRoute = false; this.cruiseAtLimit = true; }
+    if (brake) this.cruiseAtLimit = false;
+    if (this.cruiseAtLimit) this.cruise = cruiseCeilingMps(this.phase === 'TURN' ? required(this.graph.edges, this.connection!.nextId, 'road') : this.edge, maxMph);
     if (brake) this.cruise = Math.max(0, Math.min(this.cruise, this.speed) - 5.5 * dt);
     const target = Math.min(this.cruise, this.speedLimit());
     const desired = clamp((target - this.speed) * 1.7, brake ? -5.5 : -3.2, 1.9);
@@ -428,7 +444,7 @@ export class DriveEngine {
   }
 }
 
-export function advanceRealTime(engine: DriveEngine, elapsed: number, throttle = false, brake = false, maxMph = 35): number {
+export function advanceRealTime(engine: DriveEngine, elapsed: number, throttle = false, brake = false, maxMph?: number): number {
   let remaining = clamp(elapsed, 0, 0.5);
   const integrated = remaining;
   while (remaining > 1e-8) { const step = Math.min(1 / 60, remaining); engine.step(step, throttle, brake, maxMph); remaining -= step; }
