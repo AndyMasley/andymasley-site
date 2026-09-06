@@ -270,6 +270,19 @@
   background: rgba(235, 224, 193, 0.08);
 }
 
+.town-choice__copy {
+  display: grid;
+  text-align: left;
+}
+
+.town-choice__name {
+  max-width: 16ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--text-xs);
+}
+
 .town-choice__arrow {
   font-size: var(--text-lg);
   line-height: 1;
@@ -310,6 +323,14 @@
 .town-unit {
   color: var(--town-screen-dim);
   font-size: var(--text-sm);
+}
+
+.town-road-limit {
+  display: grid;
+  gap: var(--space-2xs);
+  font-size: var(--text-sm);
+  line-height: var(--leading-note);
+  white-space: nowrap;
 }
 
 .town-odometer {
@@ -757,6 +778,24 @@ body:has(.town-game.town-expanded) {
 }
 
 @media (max-height: 520px) and (orientation: landscape) {
+  .town-directions {
+    padding: var(--space-xs) var(--space-sm);
+  }
+
+  .town-choices {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+  }
+
+  .town-choices button {
+    flex: 0 0 auto;
+    padding: var(--space-2xs) var(--space-xs);
+  }
+
+  .town-choice__copy {
+    line-height: var(--leading-tight);
+  }
+
   .town-game:is(:fullscreen, .town-expanded) .town-stage {
     min-height: 0;
   }

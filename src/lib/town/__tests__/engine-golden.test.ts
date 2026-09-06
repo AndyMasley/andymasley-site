@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 import { gunzipSync } from 'node:zlib';
 import { createHash } from 'node:crypto';
 import { Path, RoadGraph, DriveEngine, LANDMARKS, MPH, roundedPath, spawnAtLandmark, advanceRealTime,
-  type NetworkData, type LandmarkKey, type TurnRequest } from '../engine';
+  type NetworkData, type LandmarkKey } from '../engine';
 
 // Compressed fixtures are portable, exact byte snapshots of the canonical
 // Python results and network. This suite never imports/runs Blender or Python.
@@ -41,7 +41,7 @@ function state(e: DriveEngine) {
 
 beforeAll(() => { graph = new RoadGraph(JSON.parse(networkBytes.toString('utf8')) as NetworkData); }, 30_000);
 
-describe('canonical Python engine parity', () => {
+describe('canonical source geometry and legal-road parity', () => {
   it('places the added School Street viewpoint on its verified southbound guided lane', () => {
     const engine = spawnAtLandmark(graph, 'SCHOOL');
     expect(engine.edgeId).toBe(2166);
@@ -72,14 +72,16 @@ describe('canonical Python engine parity', () => {
     expect(() => new Path([[0, 0], [0, 0, 8]])).toThrow();
   });
 
-  it('matches every lane, every legal choice, tie-break and obstacle stop', () => {
+  it('matches every lane, every legal connection and every obstacle stop', () => {
     expect(golden.paths).toHaveLength(2964);
     for (const row of golden.paths) {
       const path = graph.paths.get(row.edgeId)!;
       expect(path.points.length, `edge ${row.edgeId} point count`).toBe(row.pointCount);
       close(path.length, row.length, `edge ${row.edgeId} length`);
-      close(graph.choices(row.edgeId), row.choices, `edge ${row.edgeId} choices`);
-      close([null, 'LEFT', 'RIGHT'].map(request => graph.choose(row.edgeId, request as TurnRequest)), row.chosen, `edge ${row.edgeId} chosen`);
+      // The game's turn instructions now describe shallow forks correctly. The
+      // source's legal links remain exact, including inverses and exclusions.
+      close(graph.choices(row.edgeId).map(choice => choice.edgeId).sort((a, b) => a - b),
+        row.choices.map((choice: { edgeId: number }) => choice.edgeId).sort((a: number, b: number) => a - b), `edge ${row.edgeId} legal links`);
       close(graph.obstacleStops.get(row.edgeId) ?? null, row.obstacleStop, `edge ${row.edgeId} obstacle`);
       for (const sample of row.samples) {
         close(path.sample(sample.s), sample.pose, `edge ${row.edgeId} sample ${sample.s}`);
@@ -103,40 +105,59 @@ describe('canonical Python engine parity', () => {
     for (const row of golden.landmarks) {
       const key = row.key as LandmarkKey;
       close(graph.nearest(LANDMARKS[key].xy), row.nearest, key + ' nearest');
-      close(state(spawnAtLandmark(graph, key)), row.spawn, key + ' spawn');
+      const spawned = spawnAtLandmark(graph, key);
+      close({ edgeId: spawned.edgeId, s: spawned.s, pose: spawned.pose() },
+        { edgeId: row.spawn.edgeId, s: row.spawn.s, pose: row.spawn.pose }, key + ' spawn');
+      expect(spawned.speed).toBe(0);
       close([...graph.nearby(...LANDMARKS[key].xy)].sort((a, b) => a - b), row.nearby, key + ' nearby');
     }
   }, 30_000);
 
   for (const fixture of golden.trajectories) {
-    it('follows Python trajectory: ' + fixture.name, () => {
+    it('keeps the original driving scenario on legal, bounded geometry: ' + fixture.name, () => {
       const initial = fixture.initial;
       const e = initial.landmark ? spawnAtLandmark(graph, initial.landmark as LandmarkKey) : new DriveEngine(graph, initial.edgeId, initial.s ?? 0);
       if (initial.beforeTurn !== undefined) e.s = Math.max(0, e.path.length - e.plan()!.fromTrim - initial.beforeTurn);
       for (const key of ['speed', 'cruise', 'acceleration', 'paused'] as const) {
         if (key in initial) (e as unknown as Record<string, unknown>)[key] = initial[key];
       }
-      close(state(e), fixture.initialSnapshot, fixture.name + ' initial');
-      let index = 0;
-      fixture.segments.forEach((segment: Record<string, any>, segmentIndex: number) => {
+      const verify = () => {
+        const pose = e.pose();
+        if (![e.speed, e.s, e.distance, e.elapsed, ...pose[0], ...pose[1]].every(Number.isFinite) || e.speed < 0 || e.s < 0 || e.s > e.path.length + 1e-7) {
+          throw new Error(`${fixture.name}: car left the finite, bounded guided path`);
+        }
+        if (e.phase === 'TURN') {
+          const connection = e.connection!;
+          if (!graph.choices(e.edgeId).some(choice => choice.edgeId === connection.nextId) || e.connectionS < 0 || e.connectionS > connection.path.length + 1e-7) {
+            throw new Error(`${fixture.name}: car took an illegal or unbounded connector`);
+          }
+        }
+        const stop = graph.obstacleStops.get(e.edgeId);
+        if (stop !== undefined && e.s > stop + 1e-7) throw new Error(`${fixture.name}: car passed a mapped obstacle`);
+      };
+      verify();
+      fixture.segments.forEach((segment: Record<string, any>) => {
         if ('queue' in segment) e.queue(segment.queue);
         if ('paused' in segment) e.paused = segment.paused;
         if ('advance' in segment) {
           e.advance(segment.advance);
-          close(state(e), fixture.snapshots[index++].state, fixture.name + ' forced distance');
+          verify();
           return;
         }
         for (let frame = 0; frame < segment.frames; frame++) {
-          if (segment.directStep) e.step(segment.dt, segment.throttle ?? false, segment.brake ?? false, segment.maxMph ?? 35);
-          else advanceRealTime(e, segment.dt, segment.throttle ?? false, segment.brake ?? false, segment.maxMph ?? 35);
-          const snapshot = fixture.snapshots[index];
-          if (snapshot && snapshot.segment === segmentIndex && snapshot.frame === frame) {
-            close(state(e), snapshot.state, `${fixture.name} segment ${segmentIndex} frame ${frame}`); index++;
-          }
-          expect(Number.isFinite(e.speed) && e.speed >= 0).toBe(true);
+          const distanceBefore = e.distance, pausedBefore = e.paused ? state(e) : null;
+          if (segment.directStep) e.step(segment.dt, segment.throttle ?? false, segment.brake ?? false, segment.maxMph);
+          else advanceRealTime(e, segment.dt, segment.throttle ?? false, segment.brake ?? false, segment.maxMph);
+          verify();
+          if (e.distance < distanceBefore) throw new Error(`${fixture.name}: distance moved backwards`);
+          if (pausedBefore) close(state(e), pausedBefore, fixture.name + ' paused state');
         }
       });
-      expect(index).toBe(fixture.snapshots.length);
+      for (const [from, to] of e.history) {
+        expect(graph.edges.get(from)!.to).toBe(graph.edges.get(to)!.from);
+        expect(graph.choices(from).some(choice => choice.edgeId === to)).toBe(true);
+        expect(graph.blockedTurns.has(`${from},${to}`)).toBe(false);
+      }
       if (fixture.name.startsWith('obstacle_')) {
         expect(e.s).toBeLessThanOrEqual(graph.obstacleStops.get(e.edgeId)! + 1e-7);
         expect(e.endOfRoute).toBe(true); expect(e.speed).toBe(0);

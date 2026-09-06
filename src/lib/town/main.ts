@@ -73,10 +73,12 @@ export async function startTown(root: HTMLElement): Promise<Session> {
   const qualitySelect = element<HTMLSelectElement>('quality');
   const locationSelect = element<HTMLSelectElement>('location');
   const pauseButton = element<HTMLButtonElement>('pause');
+  const reverseButton = element<HTMLButtonElement>('reverse');
   const cameraButton = element<HTMLButtonElement>('camera');
   const soundButton = element<HTMLButtonElement>('sound');
   const fullscreenButton = element<HTMLButtonElement>('fullscreen');
   const speedText = element('speed');
+  const limitText = element('limit');
   const roadText = element('road');
   const distanceText = element('distance');
   const turnText = element('turn');
@@ -240,7 +242,7 @@ export async function startTown(root: HTMLElement): Promise<Session> {
     canvas.tabIndex = 0;
     canvas.focus({ preventScroll: true });
     fit();
-    for (const button of [pauseButton, cameraButton, soundButton, fullscreenButton]) button.disabled = false;
+    for (const button of [pauseButton, reverseButton, cameraButton, soundButton, fullscreenButton]) button.disabled = false;
     cameraButton.textContent = `Camera: ${cameraMode}`;
     controlsReady = true;
     setStatus('Ready on Main Street. Press Up to cruise.');
@@ -249,6 +251,14 @@ export async function startTown(root: HTMLElement): Promise<Session> {
       cameraMode = cameraMode === 'hood' ? 'chase' : cameraMode === 'chase' ? 'wide' : 'hood';
       cameraButton.textContent = `Camera: ${cameraMode}`;
       firstFrame = true;
+    };
+    const reverseCar = (): void => {
+      if (teleporting) return;
+      if (!engine.flipDirection()) { setStatus('The direction could not be changed here.'); return; }
+      held.clear(); firstFrame = true; streamPaused = false;
+      world!.update(toWorld(engine.pose()[0]), toWorld(engine.pose(100)[0]), true);
+      refreshHud();
+      setStatus(engine.lastMessage);
     };
     const requestTurn = (turn: 'LEFT' | 'RIGHT' | null): void => {
       engine.queue(turn);
@@ -306,6 +316,9 @@ export async function startTown(root: HTMLElement): Promise<Session> {
       } else if (key.toLowerCase() === 'c') {
         event.preventDefault();
         if (!event.repeat) changeCamera();
+      } else if (key.toLowerCase() === 'r') {
+        event.preventDefault();
+        if (!event.repeat) reverseCar();
       } else if (key.toLowerCase() === 's') {
         event.preventDefault();
         requestTurn(null);
@@ -344,6 +357,13 @@ export async function startTown(root: HTMLElement): Promise<Session> {
       }, eventOptions);
       button.addEventListener('keyup', () => held.delete(button.dataset.townInput!), eventOptions);
     }
+    reverseButton.addEventListener('click', () => { reverseCar(); canvas.focus({ preventScroll: true }); }, eventOptions);
+    choicesText.addEventListener('click', event => {
+      const button = event.target instanceof Element ? event.target.closest<HTMLButtonElement>('button[data-edge]') : null;
+      if (button && !teleporting && engine.queueChoice(Number(button.dataset.edge))) {
+        refreshHud(); setStatus(engine.lastMessage); canvas.focus({ preventScroll: true });
+      }
+    }, eventOptions);
     pauseButton.addEventListener('click', () => { setPaused(!engine.paused); canvas.focus({ preventScroll: true }); }, eventOptions);
     cameraButton.addEventListener('click', () => { changeCamera(); canvas.focus({ preventScroll: true }); }, eventOptions);
     soundButton.addEventListener('click', async () => {
@@ -431,6 +451,8 @@ export async function startTown(root: HTMLElement): Promise<Session> {
     function refreshHud(): void {
       speedText.textContent = String(Math.round(engine.speed / MPH)).padStart(2, '0');
       roadText.textContent = engine.edge.name || 'Local road';
+      limitText.textContent = `${Math.round(engine.roadLimit() / MPH)} mph`;
+      limitText.title = engine.edge.speed_status === 'posted inventory mph converted to km/h' ? 'Posted limit from the mapped road inventory' : 'Game speed limit estimated from the mapped road class';
       const next = engine.nextJunction();
       distanceText.textContent = `${(engine.distance / 1609.344).toFixed(1)} mi`;
       const turnDistance = next ? next.distance < 160 ? `${Math.max(10, Math.round(next.distance * 3.28084 / 10) * 10)} ft` : `${(next.distance / 1609.344).toFixed(1)} mi` : '';
@@ -440,18 +462,27 @@ export async function startTown(root: HTMLElement): Promise<Session> {
       if (choiceKey !== shownChoices) {
         shownChoices = choiceKey;
         choicesText.replaceChildren(...choices.map(choice => {
-          const badge = document.createElement('span');
+          const badge = document.createElement('button');
+          badge.type = 'button';
+          badge.dataset.edge = String(choice.edgeId);
           const selected = next?.selected?.edgeId === choice.edgeId;
           badge.className = 'town-choice';
-          badge.setAttribute('role', 'listitem');
+          badge.setAttribute('aria-pressed', String(selected));
           badge.dataset.selected = String(selected);
           badge.setAttribute('aria-current', String(selected));
-          badge.setAttribute('aria-label', `${choice.label}${selected ? ', selected' : ''}`);
+          badge.setAttribute('aria-label', `${choice.label} onto ${choice.name}${selected ? ', selected' : ''}`);
+          badge.title = `${choice.label} onto ${choice.name}`;
           const arrow = document.createElement('span');
           arrow.setAttribute('aria-hidden', 'true');
           arrow.className = 'town-choice__arrow';
           arrow.textContent = choice.label === 'Left' ? '↰' : choice.label === 'Right' ? '↱' : choice.label === 'U-turn' ? '↶' : '↑';
-          badge.append(arrow, document.createTextNode(choice.label));
+          const copy = document.createElement('span');
+          copy.className = 'town-choice__copy';
+          const name = document.createElement('span');
+          name.className = 'town-choice__name';
+          name.textContent = choice.name;
+          copy.append(document.createTextNode(choice.label), name);
+          badge.append(arrow, copy);
           return badge;
         }));
       }
