@@ -1,9 +1,10 @@
 .town-page {
-  --town-screen: #182320;
-  --town-screen-ink: #f4f3ee;
-  --town-screen-dim: #d0d5ce;
-  --town-screen-rule: rgba(244, 243, 238, 0.28);
-  --town-panel: rgba(17, 24, 22, 0.92);
+  --town-screen: #1b302b;
+  --town-screen-ink: #fff7e8;
+  --town-screen-dim: #d7dfd3;
+  --town-screen-rule: rgba(235, 224, 193, 0.25);
+  --town-panel: rgba(21, 38, 32, 0.9);
+  --town-brass: #d9c28d;
   font-family: var(--font-body);
 }
 
@@ -196,6 +197,7 @@
 .town-map {
   position: absolute;
   background: var(--town-panel);
+  border: 1px solid var(--town-screen-rule);
 }
 
 .town-route {
@@ -205,6 +207,7 @@
   gap: var(--space-2xs);
   max-width: 40%;
   padding: var(--space-sm) var(--space-md);
+  border-left: 3px solid var(--town-brass);
 }
 
 .town-hud__label {
@@ -219,6 +222,7 @@
   white-space: nowrap;
   font-size: var(--text-lg);
   line-height: var(--leading-heading);
+  font-weight: 400;
 }
 
 .town-directions {
@@ -233,6 +237,7 @@
   color: var(--town-screen-ink);
   font-size: var(--text-base);
   line-height: var(--leading-note);
+  font-variant-numeric: tabular-nums;
 }
 
 .town-choices {
@@ -241,10 +246,33 @@
   gap: var(--space-xs);
   margin-top: var(--space-xs);
   pointer-events: auto;
+  color: var(--town-brass);
+  font-size: var(--text-sm);
+  line-height: var(--leading-ui);
 }
 
 .town-choices:empty {
   display: none;
+}
+
+.town-choice {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2xs);
+  padding: var(--space-2xs) var(--space-xs);
+  border: 1px solid transparent;
+  color: var(--town-screen-dim);
+}
+
+.town-choice[data-selected="true"] {
+  border-color: var(--town-screen-rule);
+  color: var(--town-brass);
+  background: rgba(235, 224, 193, 0.08);
+}
+
+.town-choice__arrow {
+  font-size: var(--text-lg);
+  line-height: 1;
 }
 
 .town-choices button {
@@ -276,6 +304,7 @@
   min-width: 84px;
   font-size: var(--text-display);
   line-height: var(--leading-tight);
+  font-variant-numeric: tabular-nums;
 }
 
 .town-unit {
@@ -322,6 +351,7 @@
   color: var(--town-screen-dim);
   font-size: var(--text-sm);
   line-height: var(--leading-note);
+  color: var(--town-brass);
 }
 
 .town-toolbar {
@@ -659,6 +689,10 @@ body:has(.town-game.town-expanded) {
 
   .town-directions p {
     font-size: var(--text-sm);
+  }
+
+  .town-choice {
+    padding: 0 var(--space-2xs);
   }
 
   .town-choices button {

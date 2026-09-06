@@ -1,0 +1,486 @@
+{
+  "version": 1,
+  "generatedAt": "2026-09-06T00:12:15.711972+00:00",
+  "status": "Premerge acceptance passed; production receipt is recorded separately after deployment",
+  "scope": "Runtime art direction for the existing Webster browser game: lighting, atmosphere, coordinated materials, crisp mapped ground, bounded short grass and the game interface. This record does not claim a new scenery survey or a new scenery asset release.",
+  "pullRequest": "https://github.com/AndyMasley/andymasley-site/pull/4",
+  "baseCommit": "a48da0fb8456b2f1070bccdf583d1a247da6de89",
+  "testedCodeCommit": "545a661f1597eceee82d6942f344133dbf951dc8",
+  "localAcceptancePassed": true,
+  "releaseReady": true,
+  "sceneryIdentity": {
+    "release": "2026-09-37fbef34bc2a",
+    "manifestSha256": "37fbef34bc2a4467997252be75b4c43174a6a7b2d39963614cadd8d787e56105",
+    "archiveUrl": "https://github.com/AndyMasley/andymasley-site/releases/download/town-assets-2026-09-05-37fbef34bc2a/town-assets-37fbef34bc2a.tar.gz",
+    "archiveSha256": "65fe40d8cbcf9d6d7c21ebd51cd8b71dd3f9ef94820f3d6fad50e30897f2b458",
+    "archiveBytes": 479630228,
+    "sourceScene": "Webster_Realism.blend",
+    "sourceSceneSha256": "8376d6586e16c53ccf9b13f1754fe4d844d9ff7703475b444076b0853bcc510a",
+    "releaseIdentitySha256": "9ebede1208792c1bdee0a82033fbda22d329e43bea7226969c847c44f417d4b8",
+    "coordinates": {
+      "sourceCRS": "EPSG:6491",
+      "horizontalOrigin": [
+        171282.3328920724,
+        867589.2761750807
+      ],
+      "sourceVerticalOffsetM": 100,
+      "axes": "Y_UP",
+      "conversion": "(x,z,-y)",
+      "units": "metres"
+    },
+    "files": 3713,
+    "expandedBytes": 1215406052,
+    "tiles": 672,
+    "buildingIds": 7805,
+    "treeAnchors": 158099,
+    "assetsUnchanged": true,
+    "verification": "The release descriptor and policy are byte-identical at the base and tested commits. The local manifest and network were independently rehashed for this record; the normal prebuild audit checked every declared scenery asset against the unchanged manifest.",
+    "sourceMasterScope": "The source-scene identity is retained from the unchanged validated release. This runtime-only evidence pass did not reopen or rehash the Blender master."
+  },
+  "roadIdentity": {
+    "url": "network.json",
+    "bytes": 7806952,
+    "sha256": "d5ad755241708d48478d1c2dc08358b821d9cace21ed1c93d33de27ee0def2f4",
+    "nodes": 1238,
+    "directedEdges": 2964,
+    "physicalRoads": 1561,
+    "points": 197493,
+    "blockedEdges": 28,
+    "blockedTurns": 2,
+    "landmarks": 5,
+    "routingEngineUnchanged": true,
+    "guidedRoutingAndSafeguardsRetained": true
+  },
+  "unchangedTrackedIdentityFiles": [
+    {
+      "path": "data/derived/town/release.json",
+      "bytes": 609,
+      "sha256": "16667f3833afd98d571e4aa98c6df716e8989211f3d030762e9c8d9d9a7fd772",
+      "identicalAtBaseAndTestedCommit": true
+    },
+    {
+      "path": "data/schema/town/release-policy.json",
+      "bytes": 1016,
+      "sha256": "1040884cf69187bbded2cf8b6ba3c34fc4e8c252e6d659d00d5ff2f45a32b4d7",
+      "identicalAtBaseAndTestedCommit": true
+    },
+    {
+      "path": "src/lib/town/engine.ts",
+      "bytes": 23921,
+      "sha256": "02d06fe951d3e795fed671c387bffd5b03720e5367927429c971f1ec27878353",
+      "identicalAtBaseAndTestedCommit": true
+    },
+    {
+      "path": "src/lib/town/contracts.ts",
+      "bytes": 2897,
+      "sha256": "1f59313c923d86c25339ce42c0ca8a195e5a63ce44d7c5375e00367e11ff26f9",
+      "identicalAtBaseAndTestedCommit": true
+    },
+    {
+      "path": "src/lib/town/cover-data.ts",
+      "bytes": 3023,
+      "sha256": "a530594e6cfd166be411e0c6bbc06460a6a5a4cf41489e7b1c90bc5262efd842",
+      "identicalAtBaseAndTestedCommit": true
+    }
+  ],
+  "automatedTests": {
+    "site": {
+      "passed": true,
+      "testFiles": 25,
+      "tests": 233,
+      "command": "npm test",
+      "evidence": {
+        "artifact": "site-tests.log",
+        "bytes": 266,
+        "sha256": "f400209be682233aa027b4ff81ff91324c10330c23a1ae5e75072ef4cbc0cc48"
+      }
+    },
+    "assetValidator": {
+      "passed": true,
+      "tests": 56,
+      "failed": 0,
+      "command": "npm run test:town-assets",
+      "evidence": {
+        "artifact": "asset-validator-tests.log",
+        "bytes": 3026,
+        "sha256": "7eb6494a3cfd156afa1a13441ed95bc20229fc715b833c9f7433058ca86f53b4"
+      }
+    },
+    "townTypecheck": {
+      "passed": true,
+      "command": "npm run check:town",
+      "evidence": {
+        "artifact": "town-typecheck.log",
+        "bytes": 72,
+        "sha256": "674f9b826b7704bd951394769795231aebb8b1953c521d68399c9403c063bb5f"
+      }
+    },
+    "scopeNote": "These are the candidate site tests, validator fixture tests and scoped town TypeScript check. No claim of a full-site TypeScript clean baseline is made."
+  },
+  "localBrowserAcceptance": {
+    "passed": true,
+    "environment": "Immutable local Astro build; representative fixed locations and real user-interface inputs",
+    "testedCodeCommit": "545a661f1597eceee82d6942f344133dbf951dc8",
+    "aggregateEvidence": {
+      "artifact": "built-local-545a661-validation.json",
+      "bytes": 8472,
+      "sha256": "8696b2d3d4114d5db93e3efe6d0643828a45cb5b1bfa8a7a0366cf1d5ee5f7db"
+    },
+    "reports": {
+      "settled": {
+        "artifact": "built-local-545a661/report.json",
+        "bytes": 33629,
+        "sha256": "089d9bd7dc014bcd9f62fcc6f719eaee70329e710e515b4559b68148907ff773"
+      },
+      "chrome": {
+        "artifact": "chromium-local-545a661/report.json",
+        "bytes": 316755,
+        "sha256": "ced8836fda3c5044a0e81eec6433e545124550ef38372cdb35587fee5d70ad48"
+      },
+      "webkit": {
+        "artifact": "webkit-local-545a661/report.json",
+        "bytes": 140055,
+        "sha256": "5090ca05a968bdac5c61259c9cd66ef00d9cf10b460247f68c3b840a29a7623a"
+      },
+      "mobile": {
+        "artifact": "mobile-local-545a661/report.json",
+        "bytes": 51687,
+        "sha256": "c3bcdc3ec5bf4aa5d63bd6e6d679e97e2b124868034be8e9961493ffc3e27368"
+      },
+      "webkitGPU": {
+        "artifact": "webkit-mask-local-545a661/report.json",
+        "bytes": 3182,
+        "sha256": "da8ef6d55b0850f7a3f8cbd8b8c14297f5ad9429924ec1648981b6a6d0b174d4"
+      }
+    },
+    "functional": {
+      "chrome": {
+        "passed": true,
+        "checks": 23,
+        "screenshots": 11,
+        "captureErrors": []
+      },
+      "webkit": {
+        "passed": true,
+        "checks": 23,
+        "screenshots": 11,
+        "captureErrors": []
+      },
+      "mobile": {
+        "passed": true,
+        "checks": 21,
+        "screenshots": 8,
+        "captureErrors": []
+      }
+    },
+    "functionalChecksTotal": 67,
+    "functionalCssInjection": false,
+    "allOwnedBrowsersClosed": true,
+    "performanceMeasured": false,
+    "webkitGroundUpload": {
+      "passed": true,
+      "liveDataTexture": true,
+      "sourceRgbaChannelSums": [
+        4640205,
+        42134,
+        2439157,
+        55947
+      ],
+      "liveRgbChannelSums": [
+        4640205,
+        42134,
+        2439157
+      ],
+      "programKeys": [
+        "webster-cut-grass-ground-v3"
+      ],
+      "screenshot": {
+        "artifact": "webkit-mask-local-545a661/lakeside-high.png",
+        "bytes": 1016561,
+        "sha256": "9033f7526a6bc8c667c2bd9b608ec190a0dd29fca03e1c9f4383f318670dec39"
+      }
+    }
+  },
+  "localVisualAcceptance": {
+    "passed": true,
+    "views": 6,
+    "baselineEvidence": {
+      "artifact": "baseline-production/report.json",
+      "bytes": 35939,
+      "sha256": "ad542a06948822f9a30d8394555918c7035674d8650546c51279a166e8b20131"
+    },
+    "findings": [
+      "Main Street charcoal asphalt preserves legible paint and clearer curb shape; cloudy sky, restrained warm/cool buildings and muted HUD read more cohesively.",
+      "Previously conspicuous pale grass spikes are gone; short dark blades blend with the mown lawn. At1280\u00d7850 they are intentionally subtle. Both close camera eyes are about5.7m from the car, targetsabout10m, within14m fade radius.",
+      "Reviewed actual WebKit Lakeside screenshot after GPU check; no missing or corrupt ground/material shader effect seen.",
+      "Underlying source massing and generic fa\u00e7ades remain simplified; this is art-directed appearance, not a surveyed photoreal replica."
+    ],
+    "screenshots": [
+      {
+        "name": "main-chase",
+        "settled": true,
+        "carPoseMatchesBaseline": true,
+        "artifact": "built-local-545a661/main-chase.png",
+        "bytes": 733339,
+        "sha256": "483090dd9dcad41dbd6255c26d2cccd9832ec35eae609b1f006eaa22b66ec5e8"
+      },
+      {
+        "name": "main-hood",
+        "settled": true,
+        "carPoseMatchesBaseline": true,
+        "artifact": "built-local-545a661/main-hood.png",
+        "bytes": 515366,
+        "sha256": "acd2c676f23653d65fdb0be01d431b0c2aa13ee97fb9a0abad760a9074a88515"
+      },
+      {
+        "name": "poland-hood",
+        "settled": true,
+        "carPoseMatchesBaseline": true,
+        "artifact": "built-local-545a661/poland-hood.png",
+        "bytes": 726661,
+        "sha256": "459030579e7e40c202cf18c5431324982d5d0bf5137cbfd5280a34c64342a9e9"
+      },
+      {
+        "name": "poland-grass",
+        "settled": true,
+        "carPoseMatchesBaseline": true,
+        "artifact": "built-local-545a661/poland-grass.png",
+        "bytes": 1081789,
+        "sha256": "894be7d5801c9c9f30ed1ecf8c2aba23f5a04ec86d817258b840928bb015051c"
+      },
+      {
+        "name": "lakeside-hood",
+        "settled": true,
+        "carPoseMatchesBaseline": true,
+        "artifact": "built-local-545a661/lakeside-hood.png",
+        "bytes": 619529,
+        "sha256": "b8a3ef215e9dd00fc725344f6eb66905c93eeba619391a81b56a2642fc6a30b5"
+      },
+      {
+        "name": "lakeside-grass",
+        "settled": true,
+        "carPoseMatchesBaseline": true,
+        "artifact": "built-local-545a661/lakeside-grass.png",
+        "bytes": 923418,
+        "sha256": "fece799559335ffae2b359485b453c72fec3b97c8bbeec5ddf5d87a2ef68818b"
+      }
+    ],
+    "cameraScope": "Main Street, Poland Street and Lakeside Avenue use settled representative views. The two close-grass views use temporary diagnostic cameras in the isolated test page; they do not change the car pose or the source application."
+  },
+  "grassBudget": {
+    "geometryEnabled": "Automatic and High on desktop; disabled in Low and on mobile",
+    "maximumPatches": 8000,
+    "maximumTriangles": 144000,
+    "maximumIndexedTiles": 4,
+    "fadeStartM": 8,
+    "fadeEndM": 14,
+    "selectionRadiusM": 22,
+    "rebuildDistanceM": 6,
+    "placement": "Deterministic world-space sites, eroded raw land-cover channels and height/normal sampling from actual loaded terrain triangles. No per-frame terrain raycasts.",
+    "assetsAdded": 0,
+    "resourceScope": "Counts are implementation limits. Runtime byte figures in the local reports are allocation estimates, not OS or GPU memory measurements."
+  },
+  "limitations": [
+    "Layout, routes and source assets are retained, while colors, lighting, lawns and generic architectural appearance are authored or inferred. This is not a surveyed photoreal replica or an observation of every property.",
+    "The underlying simplified building massing and generic facades remain. Short grass is intentionally subtle at normal driving height and 1280 by 850 review resolution.",
+    "Local functional tests and visual captures do not establish hosted cold-start speed, sustained performance, physical-phone performance or production acceptance.",
+    "The normal asset audit validates declared content, containers and dependencies; exact decoded source-geometry evidence belongs to the existing immutable scenery release audit."
+  ],
+  "evidenceProvenance": {
+    "collection": "webster-art-direction-acceptance",
+    "artifactPaths": "Relative artifact names identify retained local evidence; all listed byte lengths and SHA256 values were independently checked when this record was written.",
+    "sourceOfSummaries": "built-local-545a661-validation.json plus the candidate test/build logs and unchanged release descriptor/policy",
+    "supersededDiagnosticEvidence": {
+      "artifact": "first-local-visual-review.json",
+      "bytes": 6089,
+      "sha256": "e5da75a32da62eef4867bcba63b5341a46041cf73af325a360b5645747213e51"
+    }
+  },
+  "initialBuild": {
+    "passed": true,
+    "command": "npm run build",
+    "pages": 124,
+    "astroBuildSeconds": 43.26,
+    "prebuild": {
+      "passed": true,
+      "command": "node scripts/prepare-town-assets.mjs",
+      "checks": 65171,
+      "files": 3713,
+      "policySha256": "5f1b47f306147a6b4b9a36ead3ec522e93a6f4bad7a3dad96d8b133c99454cea",
+      "releaseIdentitySha256": "9ebede1208792c1bdee0a82033fbda22d329e43bea7226969c847c44f417d4b8",
+      "evidenceScope": "Initial prebuild totals are retained in build-first.log; the current full asset report is bound to the final poster-inclusive build below."
+    },
+    "evidence": {
+      "artifact": "build-first.log",
+      "bytes": 33327,
+      "sha256": "c59d9fc663e3f73c146bb6938ba82d346b46731654b75ff444509f3d70c04a58"
+    },
+    "timingScope": "43.26 seconds is the Astro-reported build duration; it is not a browser startup or network performance measurement.",
+    "warnings": "The successful build retained the existing large-client-chunk advisory and content-lint warnings from writing pages."
+  },
+  "build": {
+    "passed": true,
+    "command": "npm run build",
+    "pages": 124,
+    "astroBuildSeconds": 53.48,
+    "scope": "Final poster-inclusive local build; underlying town runtime remains byte-identical to tested commit 545a661f1597eceee82d6942f344133dbf951dc8",
+    "evidence": {
+      "artifact": "build-final.log",
+      "bytes": 33265,
+      "sha256": "f000b8ec34ce21c1e6e7e7b0fc3b7fe01d57c163ad05f549c47c4413182cc099"
+    },
+    "prebuild": {
+      "passed": true,
+      "command": "node scripts/prepare-town-assets.mjs",
+      "checks": 65171,
+      "files": 3713,
+      "policySha256": "5f1b47f306147a6b4b9a36ead3ec522e93a6f4bad7a3dad96d8b133c99454cea",
+      "releaseIdentitySha256": "9ebede1208792c1bdee0a82033fbda22d329e43bea7226969c847c44f417d4b8",
+      "evidence": {
+        "artifact": "data/derived/town/asset-validation.json",
+        "bytes": 865445,
+        "sha256": "2502a2a8b24b80a84d15cb725719b63762327ca50366bc8e33d174768b564f95"
+      }
+    },
+    "timingScope": "53.48 seconds is the Astro-reported build duration; prebuild and browser performance are separate measurements.",
+    "warnings": "The successful build retained the existing large-client-chunk advisory and content-lint warnings from writing pages."
+  },
+  "posterInclusiveCandidate": {
+    "runtimeCodeCommit": "545a661f1597eceee82d6942f344133dbf951dc8",
+    "runtimeSourceUnchangedFromTestedCommit": true,
+    "candidateCommit": null,
+    "commitStatus": "Pending final candidate commit at the time of this evidence record",
+    "page": {
+      "artifact": "src/pages/town.astro",
+      "bytes": 11794,
+      "sha256": "48d958131dd891e338e60445ac74c682b63049221f5924a3350df69fed8c7631"
+    },
+    "poster": {
+      "artifact": "public/town-assets/webster-poster-summer.webp",
+      "bytes": 113182,
+      "sha256": "f799b073885786175d972a75628d3603331e743cbfc701bb90f82415b12ebcda",
+      "width": 1440,
+      "height": 900
+    },
+    "captureEvidence": {
+      "artifact": "poster/poster-capture-report.json",
+      "bytes": 2483,
+      "sha256": "b5c69f5cd7fd08f01d3cb5aaea3a8f641d1de223f787cef1bd4502f0933e9e71"
+    },
+    "encodingEvidence": {
+      "artifact": "poster/poster-encoding.json",
+      "bytes": 797,
+      "sha256": "f58a5114dd9c2ab2a44c4408e1a8c8df58f44078a57bebde75fb79dcd342fa4f"
+    },
+    "captureLog": {
+      "artifact": "poster-capture.log",
+      "bytes": 1889,
+      "sha256": "f3abba150c1fcdcf56ac2cc4cafc6efd31b5c37fa859b23bd170f44ffc085442"
+    },
+    "sourceCapture": {
+      "artifact": "poster/poster-source.png",
+      "bytes": 1170188,
+      "sha256": "cb48caecbc839419fb1f49a3aa652458ca4ea5a163f2f2865877f16dc2b6d674"
+    },
+    "scope": "Actual game canvas capture only; no scene/geometry/material/camera changes. Separate1600x1200 capture page, High detail, standard MainStreet spawn and chase camera. Poster-only responsive width1440 and hidden HUD/DOM overlays. Functional tests used actual unmodified CSS.",
+    "encoding": "Pillow WebP quality86 method6, RGBencoding only; no resizing, painting, compositing or synthetic changes.",
+    "capturePassed": true,
+    "browserExitCode": 0,
+    "allOwnedBrowsersClosed": true,
+    "publicationAcceptance": "The poster-inclusive build succeeded locally. Hosted cold-load, sustained-drive and production checks remain pending below."
+  },
+  "hostedCandidate": {
+    "url": "https://abc31e3b.andymasley-site.pages.dev/town/",
+    "commit": "effe072e6083f7716dc68b469bb7d3ccc368c29d",
+    "changesAfterLocalBrowserCandidate": "Only the new actual-game poster, its page URL, and this evidence record; rendering and driving code are unchanged."
+  },
+  "hostedAcceptance": {
+    "passed": true,
+    "coldLoad": {
+      "passed": true,
+      "evidence": {
+        "artifact": "cold-hosted-effe072/report.json",
+        "bytes": 756279,
+        "sha256": "da7477ecadd82a0691b0f2e2c7cb6a6a17a1c1339bf6564884aef6051c4e7e50"
+      },
+      "configuration": {
+        "downloadMbpsDecimal": 25,
+        "uploadMbpsDecimal": 25,
+        "downloadBytesPerSecond": 3125000,
+        "uploadBytesPerSecond": 3125000,
+        "latencyMs": 50,
+        "viewport": {
+          "width": 1280,
+          "height": 850
+        },
+        "deviceScaleFactor": 1,
+        "cpuThrottleRate": 1,
+        "headless": true,
+        "cache": "Fresh isolated browser/context, cache explicitly cleared before navigation; normal within-visit caching remains enabled.",
+        "serviceWorkers": "blocked and bypassed",
+        "method": "Network.emulateNetworkConditions",
+        "chromeExecutable": "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+      },
+      "playToDrawnReadyMs": 6909.699951171875,
+      "playToInterfaceReadyMs": 6249,
+      "encodedTransferBytesSincePlay": 14346546,
+      "encodedTransferBytesIncludingNavigation": 14486885,
+      "errors": []
+    },
+    "sustainedDrive": {
+      "passed": true,
+      "checks": 144,
+      "evidence": {
+        "artifact": "sustained-hosted-effe072/audit.json",
+        "bytes": 1526120,
+        "sha256": "477fc1227cef78bfc6ea87c4f4839b5ba40060e4b2c39e1a1a046e86a58a1fd7"
+      },
+      "measurement": {
+        "wallSeconds": 120.03670000004769,
+        "simulationSeconds": 120.0452000000077,
+        "simulationToWallRatio": 1.000070811676429,
+        "distanceM": 1021.5837792201172,
+        "drawnFrames": 7161,
+        "framesPerWallSecond": 59.65675497574621,
+        "runtimeBytesObserved": 38775844,
+        "memoryEstimateStart": {
+          "geometry": 107228980,
+          "texture": 135180288
+        },
+        "memoryEstimateEnd": {
+          "geometry": 67811058,
+          "texture": 106029931
+        }
+      },
+      "screenshots": 6,
+      "captureErrors": [],
+      "pageErrors": [],
+      "consoleErrors": [],
+      "assetErrors": [],
+      "scope": "Original 122 driving/tree/resource checks plus 22 grass cap, Low-mode and disposal checks."
+    },
+    "httpIdentity": {
+      "passed": true,
+      "checks": 22,
+      "evidence": {
+        "artifact": "preview-http-verification.json",
+        "bytes": 25218,
+        "sha256": "94b946c200d06b96db017b5123d999e82400d42cc8f4a87f6f1fd617bc0b0190"
+      },
+      "scope": "Exact local/live HTML, linked entry/runtime, game CSS, new poster, unchanged scene manifest and sampled scene bytes, plus cache and missing-asset404/no-store checks."
+    },
+    "measurementLimits": "Single desktop Chrome runs. Browser cache was fresh for the 25 decimal Mbps / 50ms load test; CDN edges were not forced cold. The 120-second drive used normal network conditions and no competing owned browser or build. Frame rates and runtime memory estimates are not physical-phone or OS/GPU-memory measurements."
+  },
+  "independentCodeReview": {
+    "passed": true,
+    "evidence": {
+      "artifact": "independent-review.json",
+      "bytes": 465,
+      "sha256": "8fee294c496bae55e53f7f8736daf6904eecc42e2ebb3b516d603ea21e623519"
+    }
+  },
+  "productionAcceptance": {
+    "status": "Not part of this premerge snapshot",
+    "receipt": "After deployment, exact production HTTP and browser evidence is preserved with web-export/art-direction/ and the local PUBLISHED_WEB_GAME.md receipt. This record does not count the earlier production release as acceptance of this update."
+  }
+}

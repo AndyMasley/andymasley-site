@@ -2,7 +2,7 @@
 import Base from '../layouts/Base.astro';
 import '../styles/town.css';
 
-const poster = '/town-assets/webster-poster.webp';
+const poster = '/town-assets/webster-poster-summer.webp';
 ---
 
 <Base
@@ -69,7 +69,7 @@ const poster = '/town-assets/webster-poster.webp';
           </div>
           <div class="town-directions">
             <p data-town-turn>Continue on Main Street</p>
-            <div class="town-choices" data-town-choices aria-label="Available turns"></div>
+            <div class="town-choices" data-town-choices role="list" aria-label="Available turns"></div>
           </div>
           <div class="town-instruments" aria-label="Speed and distance">
             <div class="town-speed"><span data-town-speed>0</span><span class="town-unit">mph</span></div>
@@ -146,7 +146,7 @@ const poster = '/town-assets/webster-poster.webp';
       <details class="town-sources">
         <summary>About the town and its sources</summary>
         <div class="town-sources__content">
-          <p>This town combines mapped roads, building footprints, aerial imagery, and lidar with modeled architecture and vegetation. It is built to explore at road level.</p>
+          <p>This town combines mapped roads, building footprints, aerial imagery, and lidar with modeled architecture and vegetation. Its summer palette, materials and light are designed to capture Webster’s character as a driving game.</p>
           <dl class="town-source-list">
             <div><dt>The ground and buildings</dt><dd>MassGIS mapping and spring 2025 aerial imagery establish the town’s layout. USGS lidar collected in 2021 supplies much of its height and roof information.</dd></div>
             <div><dt>The streets</dt><dd>The driving network follows mapped roads, with MassDOT road information informing their appearance. The car follows a guided path with simplified turns.</dd></div>

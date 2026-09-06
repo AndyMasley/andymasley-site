@@ -43,6 +43,39 @@ and many façades are modeled. Selected exteriors use observed reference details
 This is not a house-by-house survey or a live depiction of Webster. The page's
 source notes describe the different source dates and limitations.
 
+## Art direction
+
+The browser presentation uses an authored late-summer palette while the pinned
+geodata and building geometry remain unchanged. `art-materials.ts` applies an
+exact-name whitelist to inferred paint, slate roofs, concrete, asphalt, modeled
+vegetation and cars. Recorded photographic and landmark materials keep their
+source treatment. Paint hex values are sRGB choices converted once into Three's
+linear working space. Texture images, UV coordinates and material pooling remain
+shared; the concrete/curb treatment corrects smoothed box normals through flat
+shading, without changing the underlying sidewalk geometry.
+
+`atmosphere.ts` supplies a blue-to-haze sky with quiet procedural clouds, a warm
+key light and cooler fill. The game retains a single scene render rather than a
+post-processing stack. A slightly narrower driving camera and compact selected
+turn indicators finish the presentation.
+
+`surfaces.ts` samples the original raw RGBA land-cover data in world metres.
+Class weights are sharpened and renormalized; zero-coverage pixels stay excluded.
+Grass color, fine detail and normal treatment use the existing shared maps.
+`grass.ts` places short, tapered blades on actual terrain triangles, with seeded
+world-grid placement and conservative mask erosion. It indexes at most four
+nearby tiles and caps geometry at 8,000 tufts (144,000 triangles), fading before
+14 metres. Selection updates after movement; wind updates through uniforms and
+stops when the game is paused or reduced motion is requested. Low detail and
+mobile omit the extra geometry but retain the ground material treatment.
+
+Grass instances are detached before tile release; shared geometry and material
+are freed with the session. The debug `presentation` record reports tuft and
+index counts for acceptance checks. Its byte estimate includes CPU terrain
+indices and must not be added to the separate resident geometry estimate, which
+already includes visible grass buffers. The camera, lighting and material choices
+are interpretations of Webster's character, not additional observed geodata.
+
 ## Release and build checks
 
 `data/derived/town/release.json` pins a fixed archive URL, its SHA256, the manifest

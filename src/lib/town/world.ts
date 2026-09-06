@@ -4,6 +4,7 @@ import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.j
 import { boundsDistanceSquared, chooseLod, type Quality, type TownTile, type V3, type WorldManifest, type WorldMetrics } from './contracts';
 import { TownSurfaces } from './surfaces';
 import { decodeCoverPNG } from './cover-data';
+import { applyArtMaterial, treeArtColor } from './art-materials';
 
 type TreePlan = { near: Set<number>; shadows: Set<number>; key: string };
 type LoadedTile = { group: THREE.Group; level: number; lastUsed: number; trees?: THREE.Group; treeRows?: number[][]; treePlan?: TreePlan };
@@ -26,6 +27,7 @@ export class TownWorld {
   private disposed = false;
   private generation = 0;
   private low = false;
+  private mobile = false;
   private treeShadows = true;
   private position: V3 = [0, 0, 0];
   private preparingAt: V3 | null = null;
@@ -139,9 +141,18 @@ export class TownWorld {
   }
 
   setQuality(quality: Quality, mobile: boolean): void {
+    this.mobile = mobile;
     this.low = quality === 'low' || (quality === 'auto' && mobile);
     this.treeShadows = !this.low && !mobile;
     this.generation++;
+  }
+
+  updatePresentation(timeSeconds: number, position: V3 = this.position): void {
+    this.surfaces?.update(position, this.low || this.mobile, timeSeconds);
+  }
+
+  presentationResources() {
+    return this.surfaces?.grassResources() ?? { tufts: 0, triangles: 0, bytes: 0, indexedTiles: 0, bins: 0, rebuilds: 0, materials: 0 };
   }
 
   update(position: V3, lookAhead: V3, force = false): void {
@@ -301,6 +312,7 @@ export class TownWorld {
     const scale = new THREE.Vector3();
     const quaternion = new THREE.Quaternion();
     const up = new THREE.Vector3(0, 1, 0);
+    const treeTint = new THREE.Color();
     const definitions = this.manifest.trees.prototypes;
     const near = definitions.findIndex((definition) => definition.role === 'crown' && definition.level === 0);
     const far = definitions.findIndex((definition) => definition.role === 'crown' && definition.level === 1);
@@ -336,8 +348,10 @@ export class TownWorld {
             quaternion.setFromAxisAngle(up, isTrunk ? 0 : row[6]);
             matrix.compose(point, quaternion, scale).multiply(object.matrixWorld);
             mesh.setMatrixAt(index, matrix);
+            if (!isTrunk) mesh.setColorAt(index, treeArtColor(row[0] + origin[0], row[2] + origin[2], treeTint));
           });
           mesh.instanceMatrix.needsUpdate = true;
+          if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
           mesh.computeBoundingBox();
           mesh.computeBoundingSphere();
           group.add(mesh);
@@ -382,8 +396,7 @@ export class TownWorld {
           });
           if (standard.isMeshStandardMaterial) {
             standard.envMapIntensity = 0.12;
-            // Preserve the scanned aggregate while matching the darker pavement in the source scene.
-            if (input.name === 'Drive road | asphalt') standard.color.multiply(new THREE.Color(0.55, 0.62, 0.72));
+            applyArtMaterial(standard);
           }
           entry = { material: input, refs: 0, textures };
           this.materialPool.set(key, entry);
@@ -459,7 +472,10 @@ export class TownWorld {
         buffers.add(array.buffer);
       }
       if (object.geometry.index) buffers.add(object.geometry.index.array.buffer);
-      if (object instanceof THREE.InstancedMesh) buffers.add(object.instanceMatrix.array.buffer);
+      if (object instanceof THREE.InstancedMesh) {
+        buffers.add(object.instanceMatrix.array.buffer);
+        if (object.instanceColor) buffers.add(object.instanceColor.array.buffer);
+      }
     };
     this.root.traverse(inspect);
     for (const prototype of this.prototypes) prototype.traverse(inspect);
