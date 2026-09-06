@@ -1,0 +1,381 @@
+{
+  "passed": true,
+  "school": [
+    {
+      "triangles": 100,
+      "volumeM3": 2552.384560522526,
+      "closedOrientedBody": true,
+      "masses": [
+        {
+          "bounds": [
+            0,
+            0,
+            6.9,
+            22.2
+          ],
+          "eave": 44.15,
+          "peak": 46.2,
+          "roof": "hip"
+        },
+        {
+          "bounds": [
+            0,
+            15.2,
+            24,
+            33
+          ],
+          "eave": 44.0,
+          "peak": 45.5,
+          "roof": "hip"
+        }
+      ],
+      "planAreaM2": 311.1750152417573,
+      "maximumHeight": 46.2,
+      "number": "57",
+      "structId": "168232_866477",
+      "sourceMaximum": 46.30000305175781
+    },
+    {
+      "triangles": 40,
+      "volumeM3": 1054.0314359830372,
+      "closedOrientedBody": true,
+      "masses": [
+        {
+          "bounds": [
+            0,
+            0,
+            8.25,
+            13.5
+          ],
+          "eave": 45.08,
+          "peak": 47.8,
+          "roof": "mansard"
+        }
+      ],
+      "planAreaM2": 110.41437318782798,
+      "maximumHeight": 47.8,
+      "number": "60",
+      "structId": "168179_866480",
+      "sourceMaximum": 49.36975860595703
+    },
+    {
+      "triangles": 20,
+      "volumeM3": 2640.9679047655336,
+      "closedOrientedBody": true,
+      "masses": [
+        {
+          "bounds": [
+            -0.1,
+            0,
+            11.8,
+            21.1
+          ],
+          "eave": 48.92,
+          "peak": 48.92,
+          "roof": "flat"
+        }
+      ],
+      "planAreaM2": 245.90000966530906,
+      "maximumHeight": 48.92,
+      "number": "79",
+      "structId": "168218_866453",
+      "sourceMaximum": 49.28827667236328
+    },
+    {
+      "triangles": 154,
+      "volumeM3": 1347.178313240408,
+      "closedOrientedBody": true,
+      "masses": [
+        {
+          "bounds": [
+            0,
+            0,
+            7.1,
+            3.1
+          ],
+          "eave": 42.55,
+          "peak": 42.55,
+          "roof": "flat"
+        },
+        {
+          "bounds": [
+            0,
+            3,
+            9.7,
+            12.6
+          ],
+          "eave": 44.45,
+          "peak": 47.25,
+          "roof": "depth"
+        },
+        {
+          "bounds": [
+            1.4,
+            10.4,
+            15.9,
+            17.2
+          ],
+          "eave": 43.4,
+          "peak": 45.7,
+          "roof": "across"
+        },
+        {
+          "bounds": [
+            9.5,
+            8,
+            17.6,
+            15.9
+          ],
+          "eave": 43.0,
+          "peak": 45.0,
+          "roof": "across"
+        }
+      ],
+      "planAreaM2": 212.113280554267,
+      "maximumHeight": 47.25,
+      "number": "107",
+      "structId": "168214_866431",
+      "sourceMaximum": 47.683441162109375
+    },
+    {
+      "triangles": 32,
+      "volumeM3": 3424.5029047970074,
+      "closedOrientedBody": true,
+      "masses": [
+        {
+          "bounds": [
+            -2.5,
+            0,
+            20.9,
+            18.8
+          ],
+          "eave": 47.2,
+          "peak": 47.2,
+          "roof": "flat"
+        }
+      ],
+      "planAreaM2": 429.51438130971343,
+      "maximumHeight": 47.2,
+      "number": "116",
+      "structId": "168151_866421",
+      "sourceMaximum": 49.105995178222656
+    },
+    {
+      "triangles": 90,
+      "volumeM3": 1339.440864065294,
+      "closedOrientedBody": true,
+      "masses": [
+        {
+          "bounds": [
+            -1.2,
+            1.65,
+            16.3,
+            9.4
+          ],
+          "eave": 45.3,
+          "peak": 48.15,
+          "roof": "across"
+        },
+        {
+          "bounds": [
+            -1.2,
+            8.8,
+            8,
+            16.5
+          ],
+          "eave": 44.5,
+          "peak": 47.3,
+          "roof": "depth"
+        }
+      ],
+      "planAreaM2": 211.06121176337646,
+      "maximumHeight": 48.15,
+      "number": "121",
+      "structId": "168216_866406",
+      "sourceMaximum": 48.39303970336914
+    },
+    {
+      "triangles": 56,
+      "volumeM3": 971.5800749197402,
+      "closedOrientedBody": true,
+      "masses": [
+        {
+          "bounds": [
+            0,
+            0,
+            11.7,
+            9.4
+          ],
+          "eave": 48.15,
+          "peak": 51.1,
+          "roof": "across"
+        },
+        {
+          "bounds": [
+            0,
+            9.25,
+            5,
+            14.1
+          ],
+          "eave": 45.5,
+          "peak": 47.1,
+          "roof": "depth"
+        }
+      ],
+      "planAreaM2": 130.8842167900971,
+      "maximumHeight": 51.1,
+      "number": "130",
+      "structId": "168179_866390",
+      "sourceMaximum": 51.30217742919922
+    },
+    {
+      "triangles": 118,
+      "volumeM3": 2348.5664576395216,
+      "closedOrientedBody": true,
+      "masses": [
+        {
+          "bounds": [
+            0,
+            0,
+            10.7,
+            11.7
+          ],
+          "eave": 47.5,
+          "peak": 51.5,
+          "roof": "depth"
+        },
+        {
+          "bounds": [
+            8.8,
+            4.6,
+            15,
+            13.6
+          ],
+          "eave": 47.0,
+          "peak": 49.6,
+          "roof": "depth"
+        },
+        {
+          "bounds": [
+            -1.8,
+            10.3,
+            5.9,
+            24.2
+          ],
+          "eave": 44.6,
+          "peak": 47.2,
+          "roof": "depth"
+        }
+      ],
+      "planAreaM2": 252.91826171223957,
+      "maximumHeight": 51.5,
+      "number": "135",
+      "structId": "168214_866383",
+      "sourceMaximum": 52.03778839111328
+    },
+    {
+      "triangles": 102,
+      "volumeM3": 1231.5767307406493,
+      "closedOrientedBody": true,
+      "masses": [
+        {
+          "bounds": [
+            0,
+            1.7,
+            8.75,
+            17.9
+          ],
+          "eave": 47.9,
+          "peak": 50.65,
+          "roof": "depth"
+        },
+        {
+          "bounds": [
+            -1.8,
+            3.5,
+            1,
+            17.9
+          ],
+          "eave": 45.2,
+          "peak": 45.8,
+          "roof": "depth"
+        },
+        {
+          "bounds": [
+            8.2,
+            4.1,
+            10,
+            9.7
+          ],
+          "eave": 45.2,
+          "peak": 45.8,
+          "roof": "depth"
+        }
+      ],
+      "planAreaM2": 182.4742705739402,
+      "maximumHeight": 50.65,
+      "number": "140",
+      "structId": "168180_866371",
+      "sourceMaximum": 50.7542610168457
+    },
+    {
+      "triangles": 68,
+      "volumeM3": 2231.157790451516,
+      "closedOrientedBody": true,
+      "masses": [
+        {
+          "bounds": [
+            -0.1,
+            1.6,
+            14.6,
+            15.5
+          ],
+          "eave": 47.6,
+          "peak": 50.45,
+          "roof": "across"
+        },
+        {
+          "bounds": [
+            12.4,
+            7.5,
+            17.2,
+            13.9
+          ],
+          "eave": 45.5,
+          "peak": 47.0,
+          "roof": "depth"
+        }
+      ],
+      "planAreaM2": 236.94251423086138,
+      "maximumHeight": 50.45,
+      "number": "151",
+      "structId": "168226_866361",
+      "sourceMaximum": 50.8155517578125
+    },
+    {
+      "triangles": 28,
+      "volumeM3": 902.4927861042415,
+      "closedOrientedBody": true,
+      "masses": [
+        {
+          "bounds": [
+            -0.2,
+            1.7,
+            8.7,
+            14
+          ],
+          "eave": 48.6,
+          "peak": 51.55,
+          "roof": "depth"
+        }
+      ],
+      "planAreaM2": 117.62999544507144,
+      "maximumHeight": 51.55,
+      "number": "156",
+      "structId": "168179_866353",
+      "sourceMaximum": 51.880126953125
+    }
+  ],
+  "commercialCount": 5,
+  "dataSha256": "81e35c56453373ffa471adc0706d066fdbfa9051633ab8ee53a0c78421701ba1"
+}

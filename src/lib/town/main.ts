@@ -4,12 +4,13 @@ import { advanceRealTime, DriveEngine, LANDMARKS, MPH, RoadGraph, spawnAtLandmar
 import { validateManifest, type Quality, type V3 } from './contracts';
 import { TownWorld } from './world';
 import { createSummerSky, SUMMER_LIGHT } from './atmosphere';
+import { createTouringCar, type TouringCar } from './vehicle';
 import release from '../../../data/derived/town/release.json';
 
 const ASSET_ROOT = `/town-assets/${release.directory}/`;
 const WORLD_URL = `${ASSET_ROOT}manifest.json`;
 const NETWORK_URL = `${ASSET_ROOT}network.json`;
-const SUN_OFFSET = new THREE.Vector3(-260, 290, 180);
+const SUN_OFFSET = new THREE.Vector3(-260, 205, 180);
 const toWorld = (p: readonly number[]): V3 => [p[0], p[2], -p[1]];
 type LandmarkKey = keyof typeof LANDMARKS;
 type CameraMode = 'hood' | 'chase' | 'wide';
@@ -92,6 +93,7 @@ export async function startTown(root: HTMLElement): Promise<Session> {
   let sky: Sky | undefined;
   let scene: THREE.Scene | undefined;
   let car: THREE.Group | undefined;
+  let vehicle: TouringCar | undefined;
   const audio = new RoadAudio();
   const held = new Set<string>();
   const snapshots: number[] = [];
@@ -115,11 +117,6 @@ export async function startTown(root: HTMLElement): Promise<Session> {
   let presentationTime = 0;
   const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
   const points = { car: new THREE.Vector3(), direction: new THREE.Vector3(), eye: new THREE.Vector3(), target: new THREE.Vector3(), wantedEye: new THREE.Vector3(), wantedTarget: new THREE.Vector3(), up: new THREE.Vector3(0, 1, 0), right: new THREE.Vector3() };
-  const wheelNodes: THREE.Object3D[] = [];
-  const wheelRest: THREE.Quaternion[] = [];
-  const spinQuaternion = new THREE.Quaternion();
-  const steeringQuaternion = new THREE.Quaternion();
-  const xAxis = new THREE.Vector3(1, 0, 0);
 
   const setStatus = (message: string): void => {
     status.textContent = message;
@@ -145,7 +142,7 @@ export async function startTown(root: HTMLElement): Promise<Session> {
       resize?.disconnect();
       held.clear();
       audio.dispose();
-      if (car) world?.releaseGroup(car);
+      vehicle?.dispose();
       world?.dispose();
       environmentTarget?.dispose();
       sky?.geometry.dispose();
@@ -172,7 +169,7 @@ export async function startTown(root: HTMLElement): Promise<Session> {
     renderer.shadowMap.enabled = !mobile && quality !== 'low';
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     scene = new THREE.Scene();
-    scene.fog = new THREE.Fog(SUMMER_LIGHT.haze, 380, 1550);
+    scene.fog = new THREE.Fog(SUMMER_LIGHT.haze, 440, 1800);
     const camera = new THREE.PerspectiveCamera(57, 1, 0.08, 6500);
     const ambient = new THREE.HemisphereLight(SUMMER_LIGHT.skyFill, SUMMER_LIGHT.groundFill, SUMMER_LIGHT.fillIntensity);
     scene.add(ambient);
@@ -186,7 +183,7 @@ export async function startTown(root: HTMLElement): Promise<Session> {
     sun.shadow.camera.near = 10;
     sun.shadow.camera.far = 900;
     sun.shadow.bias = -0.00012;
-    sun.shadow.normalBias = 0.16;
+    sun.shadow.normalBias = 0.055;
     scene.add(sun, sun.target);
     const pmrem = new THREE.PMREMGenerator(renderer);
     sky = createSummerSky(SUN_OFFSET);
@@ -194,9 +191,9 @@ export async function startTown(root: HTMLElement): Promise<Session> {
     const skyScene = new THREE.Scene();
     const environmentSky = sky.clone();
     skyScene.add(environmentSky);
-    environmentTarget = pmrem.fromScene(skyScene, 0.04);
+    try { environmentTarget = pmrem.fromScene(skyScene, 0.04); }
+    finally { pmrem.dispose(); }
     scene.environment = environmentTarget.texture;
-    pmrem.dispose();
 
     const [manifestResponse, networkResponse] = await Promise.all([fetch(WORLD_URL, { signal }), fetch(NETWORK_URL, { signal })]);
     if (!manifestResponse.ok || !networkResponse.ok) throw new Error('The town files could not be loaded. Please try again.');
@@ -211,14 +208,11 @@ export async function startTown(root: HTMLElement): Promise<Session> {
     world.setQuality(quality, mobile);
     scene.add(world.root);
     setStatus('Preparing the landscape and your car…');
-    const [, loadedCar] = await Promise.all([world.initialize(), world.loadGlb(manifest.car.url)]);
-    car = loadedCar;
+    vehicle = createTouringCar();
+    car = vehicle.root;
+    await world.initialize();
     car.name = 'Your car';
     scene.add(car);
-    for (const name of manifest.car.wheelNodes ?? []) {
-      const wheel = car.getObjectByName(name) ?? car.getObjectByName(THREE.PropertyBinding.sanitizeNodeName(name));
-      if (wheel) { wheelNodes.push(wheel); wheelRest.push(wheel.quaternion.clone()); }
-    }
     await world.prepareAt(toWorld(engine.pose()[0]));
     if (disposed) return session;
 
@@ -282,7 +276,7 @@ export async function startTown(root: HTMLElement): Promise<Session> {
       if (input === 'left') requestTurn('LEFT');
       if (input === 'right') requestTurn('RIGHT');
       if (input === 'up' || input === 'down') {
-        if (engine.paused && !teleporting) setPaused(false);
+        if (input === 'up' && engine.paused && !teleporting) setPaused(false);
         held.add(input);
         engine.step(1 / 60, input === 'up', input === 'down');
       }
@@ -306,7 +300,7 @@ export async function startTown(root: HTMLElement): Promise<Session> {
       } else if (key.toLowerCase() === 's') {
         event.preventDefault();
         requestTurn(null);
-      } else if (/^[1-5]$/.test(key)) {
+      } else if (/^[1-6]$/.test(key)) {
         event.preventDefault();
         void teleport(Object.keys(LANDMARKS)[Number(key) - 1] as LandmarkKey);
       }
@@ -430,7 +424,8 @@ export async function startTown(root: HTMLElement): Promise<Session> {
       roadText.textContent = engine.edge.name || 'Local road';
       const next = engine.nextJunction();
       distanceText.textContent = `${(engine.distance / 1609.344).toFixed(1)} mi`;
-      turnText.textContent = engine.paused ? 'Drive paused' : next?.obstacle ? 'Road ends ahead' : next?.selected ? `${next.selected.label} in ${Math.round(next.distance)} m` : 'Follow the road';
+      const turnDistance = next ? next.distance < 160 ? `${Math.max(10, Math.round(next.distance * 3.28084 / 10) * 10)} ft` : `${(next.distance / 1609.344).toFixed(1)} mi` : '';
+      turnText.textContent = engine.paused ? 'Drive paused' : next?.obstacle ? 'Road ends ahead' : next?.selected ? `${next.selected.label} in ${turnDistance}` : 'Follow the road';
       const choices = next?.choices ?? [];
       const choiceKey = choices.map(choice => `${choice.edgeId}:${choice.label}:${next?.selected?.edgeId === choice.edgeId}`).join('|');
       if (choiceKey !== shownChoices) {
@@ -480,20 +475,14 @@ export async function startTown(root: HTMLElement): Promise<Session> {
       car!.rotation.set(Math.asin(Math.max(-1, Math.min(1, points.direction.y))), Math.atan2(-points.direction.x, -points.direction.z), 0, 'YXZ');
       const futureTangent = toWorld(engine.pose(3)[1]);
       const headingChange = Math.atan2(Math.sin(Math.atan2(-futureTangent[0], -futureTangent[2]) - car!.rotation.y), Math.cos(Math.atan2(-futureTangent[0], -futureTangent[2]) - car!.rotation.y));
-      steeringQuaternion.setFromAxisAngle(points.up, Math.max(-0.55, Math.min(0.55, Math.atan(2.6 * headingChange / 3))));
-      for (let index = 0; index < wheelNodes.length; index++) {
-        spinQuaternion.setFromAxisAngle(xAxis, -engine.distance / 0.337);
-        wheelNodes[index].quaternion.copy(wheelRest[index]);
-        if (/front/i.test(wheelNodes[index].name)) wheelNodes[index].quaternion.premultiply(steeringQuaternion);
-        wheelNodes[index].quaternion.multiply(spinQuaternion);
-      }
+      vehicle!.update({ distanceM: engine.distance, steeringRadians: Math.max(-0.55, Math.min(0.55, Math.atan(2.6 * headingChange / 3))), braking: held.has('down') && !engine.paused });
       if (cameraMode === 'hood') {
-        points.wantedEye.copy(points.car).addScaledVector(points.direction, 0.1).addScaledVector(points.right, -0.28).addScaledVector(points.up, 1.45);
+        points.wantedEye.copy(points.car).addScaledVector(points.direction, 0.95).addScaledVector(points.right, -0.28).addScaledVector(points.up, 1.42);
         points.wantedTarget.fromArray(toWorld(engine.pose(20)[0])).addScaledVector(points.up, 1.5);
       } else {
         const wide = cameraMode === 'wide';
-        points.wantedEye.copy(points.car).addScaledVector(points.direction, wide ? -12 : -7).addScaledVector(points.up, wide ? 6.4 : 3.4);
-        points.wantedTarget.copy(points.car).addScaledVector(points.direction, 9).addScaledVector(points.up, 1.3);
+        points.wantedEye.copy(points.car).addScaledVector(points.direction, wide ? -12 : -8.8).addScaledVector(points.up, wide ? 6.4 : 3.6);
+        points.wantedTarget.copy(points.car).addScaledVector(points.direction, 12).addScaledVector(points.up, 1.15);
       }
       const smoothing = firstFrame ? 1 : 1 - Math.exp(-elapsed * (cameraMode === 'hood' ? 18 : 7));
       points.eye.lerp(points.wantedEye, smoothing);
@@ -538,11 +527,15 @@ export async function startTown(root: HTMLElement): Promise<Session> {
       world,
       get renderer() { return renderer; },
       get cameraMode() { return cameraMode; },
-      get presentation() { return { version: 'late-summer-art-v1', grass: world!.presentationResources() }; },
+      get presentation() { return { version: 'crafted-webster-v2', grass: world!.presentationResources(), vehicle: vehicle!.resources() }; },
       get ready() { return controlsReady && !disposed; },
       get metrics() {
         const samples = [...snapshots].sort((a, b) => a - b);
-        return { frames: drawCount, timeToReadyMs: readyAt - startedAt, frameMsMedian: samples[Math.floor(samples.length / 2)] ?? 0, frameMsP95: samples[Math.floor(samples.length * 0.95)] ?? 0, ...world!.metrics, ...world!.residentResources(), geometries: renderer!.info.memory.geometries, textures: renderer!.info.memory.textures, calls: renderer!.info.render.calls };
+        const scenery = world!.residentResources(), carResources = vehicle!.resources();
+        return { frames: drawCount, timeToReadyMs: readyAt - startedAt, frameMsMedian: samples[Math.floor(samples.length / 2)] ?? 0, frameMsP95: samples[Math.floor(samples.length * 0.95)] ?? 0, ...world!.metrics, ...scenery,
+          estimatedGeometryBytes: scenery.estimatedGeometryBytes + carResources.geometryBytes,
+          materialCount: scenery.materialCount + carResources.materials,
+          geometries: renderer!.info.memory.geometries, textures: renderer!.info.memory.textures, calls: renderer!.info.render.calls };
       },
       teleport,
       dispose: session.dispose,

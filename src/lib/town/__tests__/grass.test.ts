@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { describe, expect, it, vi } from 'vitest';
 import * as THREE from 'three';
-import { GRASS_LIMITS, GrassTerrain, TownGrass, grassAllowed, grassMaskFromTexture, grassSite, type GrassMask } from '../grass';
+import { GRASS_LIMITS, GrassTerrain, TownGrass, grassAllowed, grassMaskFromTexture, grassSite, tuftGeometry, type GrassMask } from '../grass';
 
 function mask(bounds: number[] = [-68, -68, 68, 68], core: number[] = [-64, -64, 64, 64]): GrassMask {
   const width = 136, height = 136, data = new Uint8Array(width * height * 4);
@@ -21,6 +21,28 @@ function instances(group: THREE.Object3D): THREE.InstancedMesh {
 }
 
 describe('Conservative lawn placement', () => {
+  it('uses a finite short-blade patch with spread, buried roots and the existing face budget', () => {
+    const geometry = tuftGeometry(), position = geometry.getAttribute('position');
+    expect(geometry.index?.count).toBe(18 * 3);
+    expect(position.count).toBe(30);
+    expect(Array.from(position.array).every(Number.isFinite)).toBe(true);
+    expect(Array.from(geometry.getAttribute('normal').array).every(Number.isFinite)).toBe(true);
+    const heights: number[] = [], roots: number[][] = [];
+    for (let i = 0; i < position.count; i += 5) {
+      expect(position.getY(i)).toBeLessThan(0);
+      expect(position.getY(i + 1)).toBeLessThan(0);
+      const height = position.getY(i + 4);
+      expect(height).toBeGreaterThan(0.026);
+      expect(height).toBeLessThan(0.075);
+      roots.push([(position.getX(i) + position.getX(i + 1)) / 2, (position.getZ(i) + position.getZ(i + 1)) / 2]);
+      heights.push(height);
+    }
+    expect(Math.max(...heights) - Math.min(...heights)).toBeGreaterThan(0.02);
+    expect(new Set(roots.map(root => root.map(value => value.toFixed(3)).join(','))).size).toBe(6);
+    expect(Math.max(...roots.map(root => Math.hypot(...root)))).toBeLessThan(0.205);
+    geometry.dispose();
+  });
+
   it('uses independent raw channels and erodes every road, forest, soil and empty exclusion', () => {
     const m = mask();
     expect(grassAllowed(m, 0.5, 0.5)).toBe(true);
@@ -89,7 +111,7 @@ describe('Bounded near grass lifetime', () => {
     for (let i = 0; i < grass.count; i++) {
       grass.getMatrixAt(i, matrix); p.setFromMatrixPosition(matrix).applyMatrix4(group.matrixWorld);
       expect(grassAllowed(m, p.x, p.z)).toBe(true);
-      expect(p.y).toBeCloseTo(0.006, 6);
+      expect(p.y).toBeCloseTo(0.002, 6);
     }
     const rebuilds = field.resources().rebuilds, version = grass.instanceMatrix.version;
     field.update([1, 2, 0], false, 10);

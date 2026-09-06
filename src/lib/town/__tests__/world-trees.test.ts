@@ -70,20 +70,48 @@ describe('Town tree detail, global shadow budget and instance ownership', () => 
     f.world.dispose();
   });
 
-  it('preserves source arrays and exact scale/rotation/translation formulas in all instance bands', () => {
+  it('preserves source rows, trunk feet and crown tops while creating lower, broader leaf envelopes', () => {
     const rows = [[row(20, 7), row(350, -12)]]; const before = structuredClone(rows);
     const f = fixture(rows); f.update();
     for (const { mesh } of f.meshes()) {
       const expectedGeometry = f.geometries[mesh.userData.treeKind === 'near' ? 0 : mesh.userData.treeKind === 'far' ? 1 : 2];
       expect(mesh.geometry).toBe(expectedGeometry);
       for (let i = 0; i < mesh.count; i++) {
-        const source = rows[0][mesh.userData.sourceRows[i]], trunk = mesh.userData.treeKind === 'trunk', height = source[4] / 0.30, radius = Math.max(.12, Math.min(.4, height * .015));
-        const expected = new THREE.Matrix4().compose(new THREE.Vector3(source[0], source[1] - (trunk ? height * .36 : 0), source[2]), new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), trunk ? 0 : source[6]), new THREE.Vector3(trunk ? radius : source[3], trunk ? height * .35 : source[4], trunk ? radius : source[5]));
+        const source = rows[0][mesh.userData.sourceRows[i]], trunk = mesh.userData.treeKind === 'trunk', height = source[4] / 0.30;
         const actual = new THREE.Matrix4(); mesh.getMatrixAt(i, actual);
-        actual.elements.forEach((value, index) => expect(value).toBeCloseTo(expected.elements[index], 5));
+        expect(actual.elements.every(Number.isFinite)).toBe(true);
+        expect(actual.determinant()).toBeGreaterThan(0);
+        const p = new THREE.Vector3(), q = new THREE.Quaternion(), s = new THREE.Vector3(); actual.decompose(p, q, s);
+        expect(q.angleTo(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), trunk ? 0 : source[6]))).toBeLessThan(0.001);
+        const originalFoot = source[1] - height * 0.71;
+        if (trunk) {
+          expect(new THREE.Vector3(0, -1, 0).applyMatrix4(actual).y).toBeCloseTo(originalFoot, 5);
+          const top = new THREE.Vector3(0, 1, 0).applyMatrix4(actual).y;
+          expect(top).toBeGreaterThan(originalFoot + height * 0.25);
+          expect(top).toBeLessThan(source[1] - height * 0.01);
+          expect(p.x).toBeCloseTo(source[0], 5); expect(p.z).toBeCloseTo(source[2], 5);
+        } else {
+          // Independently measured Y extents of the fixed near leaf and far crown assets.
+          const near = mesh.userData.treeKind === 'near';
+          const bottom = new THREE.Vector3(0, near ? -0.41970714926719666 : -0.7491682171821594, 0).applyMatrix4(actual).y;
+          const top = new THREE.Vector3(0, near ? 1.0466471910476685 : 1.0236793756484985, 0).applyMatrix4(actual).y;
+          expect(top).toBeCloseTo(source[1] + 1.0466471910476685 * source[4], 5);
+          expect(bottom).toBeLessThan(source[1] - 0.41970714926719666 * source[4]);
+          expect(bottom).toBeGreaterThan(originalFoot);
+          expect(s.x).toBeGreaterThan(source[3]); expect(s.z).toBeGreaterThan(source[5]);
+        }
       }
     }
     expect(rows).toEqual(before); f.world.dispose();
+  });
+
+  it('keeps an invalid presentation timestamp out of shared water uniforms', () => {
+    const f = fixture([[row(20)]]), clock = (f.world as unknown as { artClock: { value: number } }).artClock;
+    f.world.updatePresentation(3.5); expect(clock.value).toBe(3.5);
+    f.world.updatePresentation(NaN); f.world.updatePresentation(Infinity);
+    expect(clock.value).toBe(3.5);
+    f.world.updatePresentation(4); expect(clock.value).toBe(4);
+    f.world.dispose();
   });
 
   it('disposes retired instance buffers while keeping shared geometry alive until world disposal', () => {

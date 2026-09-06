@@ -99,7 +99,14 @@ async function state(page) {
     const engine = game.engine, position = engine.pose()[0], car = game.world.root.parent?.getObjectByName('Your car');
     const expectedWheels = new Set(game.world.manifest.car.wheelNodes.map((name) => name.replace(/[^a-z0-9]/gi, '')));
     const wheels = [];
-    car?.traverse((node) => { if (expectedWheels.has(node.name.replace(/[^a-z0-9]/gi, ''))) wheels.push({ name: node.name, quaternion: node.quaternion.toArray() }); });
+    car?.traverse((node) => {
+      if (!expectedWheels.has(node.name.replace(/[^a-z0-9]/gi, ''))) return;
+      const rolling = node.children.find((child) => child.userData.vehicleRole === 'wheel-roll');
+      if (car.userData.vehicleVersion && !rolling) throw new Error(`Modeled wheel has no rolling assembly: ${node.name}`);
+      let rollingMeshCount = 0;
+      rolling?.traverse((child) => { if (child.isMesh) rollingMeshCount++; });
+      wheels.push({ name: node.name, quaternion: rolling ? node.quaternion.clone().multiply(rolling.quaternion).toArray() : node.quaternion.toArray(), rollingQuaternion: rolling?.quaternion.toArray(), rollingMeshCount });
+    });
     return { present: true, ready: game.ready, edgeId: engine.edgeId, road: engine.edge.name, phase: engine.phase, speed: engine.speed, cruise: engine.cruise, distance: engine.distance, elapsed: engine.elapsed, paused: engine.paused, queued: engine.queued, position, camera: game.cameraMode, frames: game.metrics.frames, contextLost: game.renderer.getContext().isContextLost(), canvasCount: document.querySelectorAll('[data-town-canvas]').length, rafs: window.__townSmoke.pending.size, rafNames: [...window.__townSmoke.pending.values()].map((x) => x.name), wheels, metrics: game.metrics, status: document.querySelector('[data-town-status]')?.textContent };
   });
 }
@@ -161,7 +168,9 @@ async function normalScenario(context) {
       assert.equal(after.wheels.length, 4);
       assert.ok(after.wheels.every((wheel) => {
         const prior = beforeDrive.wheels.find((x) => x.name === wheel.name);
-        return prior && wheel.quaternion.some((v, i) => Math.abs(v - prior.quaternion[i]) > 0.001);
+        const orientation = wheel.rollingQuaternion ?? wheel.quaternion;
+        const previous = prior?.rollingQuaternion ?? prior?.quaternion;
+        return previous && orientation.some((v, i) => Math.abs(v - previous[i]) > 0.001) && (!wheel.rollingQuaternion || wheel.rollingMeshCount > 0);
       }), 'All four wheels should rotate after actual driving');
       await shot(page, '02-cruising');
       return { released, after };
@@ -194,6 +203,10 @@ async function normalScenario(context) {
       assert.equal(after.distance, before.distance);
       assert.equal(after.elapsed, before.elapsed);
       assert.match(await page.locator('[data-town-pause]').innerText(), /Resume/);
+      await pressCanvas(page, 'ArrowDown');
+      const brakedWhilePaused = await state(page);
+      assert.equal(brakedWhilePaused.paused, true, 'Brake must not resume a paused drive');
+      assert.equal(brakedWhilePaused.distance, before.distance);
       await shot(page, '03-paused');
       await pressCanvas(page, 'Space');
       await page.waitForFunction(() => !window.__webster.engine.paused);
@@ -266,7 +279,7 @@ async function normalScenario(context) {
       return entered;
     });
     if (report.release.pilot === false) {
-      for (const key of ['DOWNTOWN', 'LAKE', 'BEACH', 'RANCH', 'BARTLETT']) await check(`Starting location ${key} loads its street`, async () => {
+      for (const key of ['DOWNTOWN', 'LAKE', 'BEACH', 'RANCH', 'BARTLETT', 'SCHOOL']) await check(`Starting location ${key} loads its street`, async () => {
         await page.evaluate(() => { window.__townSmoke.previousEngine = window.__webster.engine; });
         // Selecting an already-selected option may not emit change, so use its matching real keyboard shortcut for Main Street.
         if (await page.locator('[data-town-location]').inputValue() === key) await pressCanvas(page, '1');

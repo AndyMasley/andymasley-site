@@ -5,6 +5,8 @@ import { boundsDistanceSquared, chooseLod, type Quality, type TownTile, type V3,
 import { TownSurfaces } from './surfaces';
 import { decodeCoverPNG } from './cover-data';
 import { applyArtMaterial, treeArtColor } from './art-materials';
+import { treeForm } from './vegetation';
+import { applyCraftedFrontages } from './crafted-frontages';
 
 type TreePlan = { near: Set<number>; shadows: Set<number>; key: string };
 type LoadedTile = { group: THREE.Group; level: number; lastUsed: number; trees?: THREE.Group; treeRows?: number[][]; treePlan?: TreePlan };
@@ -33,6 +35,7 @@ export class TownWorld {
   private preparingAt: V3 | null = null;
   private sharedAbort = new AbortController();
   private surfaces?: TownSurfaces;
+  private readonly artClock = { value: 0 };
 
   constructor(readonly manifest: WorldManifest, readonly manifestUrl: string, readonly onChange: () => void) {
     this.root.name = 'Webster scenery';
@@ -82,7 +85,7 @@ export class TownWorld {
     return JSON.parse(text) as T;
   }
 
-  async loadGlb(path: string, signal: AbortSignal = this.sharedAbort.signal): Promise<THREE.Group> {
+  async loadGlb(path: string, signal: AbortSignal = this.sharedAbort.signal, tile?: TownTile, level = 0): Promise<THREE.Group> {
     const url = this.url(path);
     const response = await fetch(url, { signal });
     if (!response.ok) throw new Error(`Scenery could not load (${response.status}).`);
@@ -92,6 +95,10 @@ export class TownWorld {
     if (this.disposed || signal.aborted) {
       this.disposeRaw(gltf.scene);
       throw new DOMException('Loading cancelled', 'AbortError');
+    }
+    if (tile) {
+      try { applyCraftedFrontages(gltf.scene, tile.id, tile.origin, level); }
+      catch (error) { this.disposeRaw(gltf.scene); throw error; }
     }
     gltf.scene.traverse((object) => {
       if (!(object instanceof THREE.Mesh)) return;
@@ -111,7 +118,7 @@ export class TownWorld {
     gltf.scene.traverse((object) => {
       if (object instanceof THREE.Mesh) {
         object.receiveShadow = true;
-        object.castShadow = /building|landmark|car|roof|facade/i.test(object.name);
+        if (!object.userData.townCrafted) object.castShadow = /building|landmark|car|roof|facade/i.test(object.name);
       }
     });
     return gltf.scene;
@@ -148,6 +155,7 @@ export class TownWorld {
   }
 
   updatePresentation(timeSeconds: number, position: V3 = this.position): void {
+    if (Number.isFinite(timeSeconds)) this.artClock.value = timeSeconds;
     this.surfaces?.update(position, this.low || this.mobile, timeSeconds);
   }
 
@@ -242,7 +250,7 @@ export class TownWorld {
     let group: THREE.Group | undefined;
     let treeRows: number[][] | undefined;
     try {
-      group = lod ? await this.loadGlb(lod.url, abort.signal) : new THREE.Group();
+      group = lod ? await this.loadGlb(lod.url, abort.signal, tile, level) : new THREE.Group();
       group.position.fromArray(tile.origin);
       group.updateMatrixWorld(true);
       await this.surfaces?.apply(group, tile.id, abort.signal);
@@ -341,11 +349,10 @@ export class TownWorld {
           mesh.receiveShadow = !this.low && this.treeShadows;
           indices.forEach((rowIndex, index) => {
             const row = rows[rowIndex];
-            const height = row[4] / 0.30;
-            const radius = Math.max(0.12, Math.min(0.4, height * 0.015));
-            point.set(row[0], row[1] - (isTrunk ? height * 0.36 : 0), row[2]);
-            scale.set(isTrunk ? radius : row[3], isTrunk ? height * 0.35 : row[4], isTrunk ? radius : row[5]);
-            quaternion.setFromAxisAngle(up, isTrunk ? 0 : row[6]);
+            const form = treeForm(row, origin, band.kind === 'far');
+            point.fromArray(isTrunk ? form.trunk.position : form.crown.position);
+            scale.fromArray(isTrunk ? form.trunk.scale : form.crown.scale);
+            quaternion.setFromAxisAngle(up, isTrunk ? 0 : form.yaw);
             matrix.compose(point, quaternion, scale).multiply(object.matrixWorld);
             mesh.setMatrixAt(index, matrix);
             if (!isTrunk) mesh.setColorAt(index, treeArtColor(row[0] + origin[0], row[2] + origin[2], treeTint));
@@ -395,8 +402,8 @@ export class TownWorld {
             textures.push(textureKey);
           });
           if (standard.isMeshStandardMaterial) {
-            standard.envMapIntensity = 0.12;
-            applyArtMaterial(standard);
+            if (!standard.userData.townCrafted) standard.envMapIntensity = 0.12;
+            applyArtMaterial(standard, this.artClock);
           }
           entry = { material: input, refs: 0, textures };
           this.materialPool.set(key, entry);

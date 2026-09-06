@@ -852,6 +852,25 @@ body:has(.town-game.town-expanded) {
 .town-game:is(:fullscreen, .town-expanded) .town-radio { flex: 0 0 auto; padding-inline: var(--space-lg); }
 .town-game:is(:fullscreen, .town-expanded) .town-radio__body { max-height: 42dvh; overflow-y: auto; }
 
+@media (max-height: 520px) and (orientation: landscape) {
+  .town-game:is(:fullscreen, .town-expanded) .town-radio__body {
+    max-height: max(64px, calc(100dvh - 320px));
+    margin-bottom: var(--space-xs);
+  }
+
+  .town-game:is(:fullscreen, .town-expanded) .town-instruments {
+    left: 50%;
+    bottom: var(--space-md);
+    transform: translateX(-50%);
+    padding: var(--space-2xs) var(--space-xs);
+  }
+
+  .town-game:is(:fullscreen, .town-expanded) .town-speed {
+    min-width: 0;
+    font-size: var(--text-2xl);
+  }
+}
+
 @media (max-width: 600px) {
   .town-radio__body { padding: 16px; }
   .town-radio__top { flex-direction: column; gap: 16px; }

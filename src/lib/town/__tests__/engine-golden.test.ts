@@ -42,6 +42,16 @@ function state(e: DriveEngine) {
 beforeAll(() => { graph = new RoadGraph(JSON.parse(networkBytes.toString('utf8')) as NetworkData); }, 30_000);
 
 describe('canonical Python engine parity', () => {
+  it('places the added School Street viewpoint on its verified southbound guided lane', () => {
+    const engine = spawnAtLandmark(graph, 'SCHOOL');
+    expect(engine.edgeId).toBe(2166);
+    expect(engine.edge.name).toBe('SCHOOL STREET');
+    expect(engine.pose()[1][1]).toBeLessThan(-0.9);
+    expect(Math.hypot(engine.pose()[0][0] + 3086.9642, engine.pose()[0][1] + 1099.3556)).toBeLessThan(4);
+    expect(graph.obstacleStops.has(engine.edgeId)).toBe(false);
+    expect(engine.plan()).not.toBeNull();
+    expect(engine.speed).toBe(0);
+  });
   it('binds the portable network to the audited source SHA and keeps all guards', () => {
     expect(createHash('sha256').update(networkBytes).digest('hex')).toBe(golden.sourceNetworkSha256);
     expect(golden.sourceNetworkSha256).toBe('d5ad755241708d48478d1c2dc08358b821d9cace21ed1c93d33de27ee0def2f4');
