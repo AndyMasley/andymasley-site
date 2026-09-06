@@ -1,13 +1,13 @@
 {
   "version": 1,
-  "generatedAt": "2026-09-06T00:01:16.559466+00:00",
-  "status": "Local acceptance passed; hosted performance and production acceptance pending",
+  "generatedAt": "2026-09-06T00:12:15.711972+00:00",
+  "status": "Premerge acceptance passed; production receipt is recorded separately after deployment",
   "scope": "Runtime art direction for the existing Webster browser game: lighting, atmosphere, coordinated materials, crisp mapped ground, bounded short grass and the game interface. This record does not claim a new scenery survey or a new scenery asset release.",
   "pullRequest": "https://github.com/AndyMasley/andymasley-site/pull/4",
   "baseCommit": "a48da0fb8456b2f1070bccdf583d1a247da6de89",
   "testedCodeCommit": "545a661f1597eceee82d6942f344133dbf951dc8",
   "localAcceptancePassed": true,
-  "releaseReady": false,
+  "releaseReady": true,
   "sceneryIdentity": {
     "release": "2026-09-37fbef34bc2a",
     "manifestSha256": "37fbef34bc2a4467997252be75b4c43174a6a7b2d39963614cadd8d787e56105",
@@ -211,9 +211,9 @@
     },
     "findings": [
       "Main Street charcoal asphalt preserves legible paint and clearer curb shape; cloudy sky, restrained warm/cool buildings and muted HUD read more cohesively.",
-      "Previously conspicuous pale grass spikes are gone; short dark blades blend with the mown lawn. At1280×850 they are intentionally subtle. Both close camera eyes are about5.7m from the car, targetsabout10m, within14m fade radius.",
+      "Previously conspicuous pale grass spikes are gone; short dark blades blend with the mown lawn. At1280\u00d7850 they are intentionally subtle. Both close camera eyes are about5.7m from the car, targetsabout10m, within14m fade radius.",
       "Reviewed actual WebKit Lakeside screenshot after GPU check; no missing or corrupt ground/material shader effect seen.",
-      "Underlying source massing and generic façades remain simplified; this is art-directed appearance, not a surveyed photoreal replica."
+      "Underlying source massing and generic fa\u00e7ades remain simplified; this is art-directed appearance, not a surveyed photoreal replica."
     ],
     "screenshots": [
       {
@@ -279,29 +279,6 @@
     "placement": "Deterministic world-space sites, eroded raw land-cover channels and height/normal sampling from actual loaded terrain triangles. No per-frame terrain raycasts.",
     "assetsAdded": 0,
     "resourceScope": "Counts are implementation limits. Runtime byte figures in the local reports are allocation estimates, not OS or GPU memory measurements."
-  },
-  "pendingAcceptance": {
-    "hostedColdLoad": {
-      "status": "pending",
-      "passed": null,
-      "evidence": null
-    },
-    "hostedSustainedDrive": {
-      "status": "pending",
-      "passed": null,
-      "evidence": null
-    },
-    "productionDeployment": {
-      "status": "pending",
-      "passed": null,
-      "evidence": null
-    },
-    "productionHttpAndBrowser": {
-      "status": "pending",
-      "passed": null,
-      "evidence": null
-    },
-    "note": "The prior release has its own production record. Those older results are not counted as acceptance of this art-direction candidate."
   },
   "limitations": [
     "Layout, routes and source assets are retained, while colors, lighting, lawns and generic architectural appearance are authored or inferred. This is not a surveyed photoreal replica or an observation of every property.",
@@ -411,5 +388,99 @@
     "browserExitCode": 0,
     "allOwnedBrowsersClosed": true,
     "publicationAcceptance": "The poster-inclusive build succeeded locally. Hosted cold-load, sustained-drive and production checks remain pending below."
+  },
+  "hostedCandidate": {
+    "url": "https://abc31e3b.andymasley-site.pages.dev/town/",
+    "commit": "effe072e6083f7716dc68b469bb7d3ccc368c29d",
+    "changesAfterLocalBrowserCandidate": "Only the new actual-game poster, its page URL, and this evidence record; rendering and driving code are unchanged."
+  },
+  "hostedAcceptance": {
+    "passed": true,
+    "coldLoad": {
+      "passed": true,
+      "evidence": {
+        "artifact": "cold-hosted-effe072/report.json",
+        "bytes": 756279,
+        "sha256": "da7477ecadd82a0691b0f2e2c7cb6a6a17a1c1339bf6564884aef6051c4e7e50"
+      },
+      "configuration": {
+        "downloadMbpsDecimal": 25,
+        "uploadMbpsDecimal": 25,
+        "downloadBytesPerSecond": 3125000,
+        "uploadBytesPerSecond": 3125000,
+        "latencyMs": 50,
+        "viewport": {
+          "width": 1280,
+          "height": 850
+        },
+        "deviceScaleFactor": 1,
+        "cpuThrottleRate": 1,
+        "headless": true,
+        "cache": "Fresh isolated browser/context, cache explicitly cleared before navigation; normal within-visit caching remains enabled.",
+        "serviceWorkers": "blocked and bypassed",
+        "method": "Network.emulateNetworkConditions",
+        "chromeExecutable": "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+      },
+      "playToDrawnReadyMs": 6909.699951171875,
+      "playToInterfaceReadyMs": 6249,
+      "encodedTransferBytesSincePlay": 14346546,
+      "encodedTransferBytesIncludingNavigation": 14486885,
+      "errors": []
+    },
+    "sustainedDrive": {
+      "passed": true,
+      "checks": 144,
+      "evidence": {
+        "artifact": "sustained-hosted-effe072/audit.json",
+        "bytes": 1526120,
+        "sha256": "477fc1227cef78bfc6ea87c4f4839b5ba40060e4b2c39e1a1a046e86a58a1fd7"
+      },
+      "measurement": {
+        "wallSeconds": 120.03670000004769,
+        "simulationSeconds": 120.0452000000077,
+        "simulationToWallRatio": 1.000070811676429,
+        "distanceM": 1021.5837792201172,
+        "drawnFrames": 7161,
+        "framesPerWallSecond": 59.65675497574621,
+        "runtimeBytesObserved": 38775844,
+        "memoryEstimateStart": {
+          "geometry": 107228980,
+          "texture": 135180288
+        },
+        "memoryEstimateEnd": {
+          "geometry": 67811058,
+          "texture": 106029931
+        }
+      },
+      "screenshots": 6,
+      "captureErrors": [],
+      "pageErrors": [],
+      "consoleErrors": [],
+      "assetErrors": [],
+      "scope": "Original 122 driving/tree/resource checks plus 22 grass cap, Low-mode and disposal checks."
+    },
+    "httpIdentity": {
+      "passed": true,
+      "checks": 22,
+      "evidence": {
+        "artifact": "preview-http-verification.json",
+        "bytes": 25218,
+        "sha256": "94b946c200d06b96db017b5123d999e82400d42cc8f4a87f6f1fd617bc0b0190"
+      },
+      "scope": "Exact local/live HTML, linked entry/runtime, game CSS, new poster, unchanged scene manifest and sampled scene bytes, plus cache and missing-asset404/no-store checks."
+    },
+    "measurementLimits": "Single desktop Chrome runs. Browser cache was fresh for the 25 decimal Mbps / 50ms load test; CDN edges were not forced cold. The 120-second drive used normal network conditions and no competing owned browser or build. Frame rates and runtime memory estimates are not physical-phone or OS/GPU-memory measurements."
+  },
+  "independentCodeReview": {
+    "passed": true,
+    "evidence": {
+      "artifact": "independent-review.json",
+      "bytes": 465,
+      "sha256": "8fee294c496bae55e53f7f8736daf6904eecc42e2ebb3b516d603ea21e623519"
+    }
+  },
+  "productionAcceptance": {
+    "status": "Not part of this premerge snapshot",
+    "receipt": "After deployment, exact production HTTP and browser evidence is preserved with web-export/art-direction/ and the local PUBLISHED_WEB_GAME.md receipt. This record does not count the earlier production release as acceptance of this update."
   }
 }
