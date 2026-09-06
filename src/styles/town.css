@@ -796,3 +796,68 @@ body:has(.town-game.town-expanded) {
     max-width: 55%;
   }
 }
+
+.town-radio {
+  border-bottom: 1px solid var(--border-strong);
+  font-size: var(--text-sm);
+  line-height: var(--leading-note);
+}
+
+.town-radio > summary {
+  min-height: 48px;
+  padding-block: 12px;
+  cursor: pointer;
+}
+
+.town-radio__summary { margin-left: 12px; color: var(--dim); }
+.town-radio__body { padding: 20px; margin-bottom: 12px; background: var(--town-screen); color: var(--town-screen-ink); }
+.town-radio__top { display: flex; justify-content: space-between; gap: 20px; }
+.town-radio__display { display: grid; gap: 5px; min-width: 0; }
+.town-radio__frequency { font-size: var(--text-2xl); font-variant-numeric: tabular-nums; line-height: 1.2; color: #f5d88c; }
+.town-radio__muted { display: block; color: var(--town-screen-dim); font-size: var(--text-base); }
+.town-radio__switches { display: flex; align-items: flex-start; flex-wrap: wrap; gap: 12px; }
+.town-radio__switches label { display: flex; align-items: center; gap: 8px; }
+.town-radio__body button,
+.town-radio__body select { min-height: 44px; padding: 8px 12px; border: 1px solid var(--town-screen-rule); color: var(--town-screen-ink); background: var(--town-screen); }
+.town-radio__body button:hover,
+.town-radio__body button[aria-pressed="true"] { border-color: #f5d88c; background: #2d3931; }
+.town-radio__body button:disabled { opacity: 0.45; }
+.town-radio__body a { color: var(--town-screen-ink); }
+.town-radio__body input:focus-visible { outline: 2px solid #f5d88c; outline-offset: 3px; }
+.town-radio__body input[type="range"] { accent-color: #f5d88c; cursor: pointer; }
+.town-radio__tuner { display: flex; align-items: center; gap: 14px; margin-top: 24px; }
+.town-radio__tuner > button { flex-shrink: 0; min-width: 44px; font-size: var(--text-xl); }
+.town-radio__scale { flex: 1; min-width: 0; }
+.town-radio__dial-label { display: block; margin-bottom: 10px; }
+.town-radio__scale input { display: block; width: 100%; height: 36px; margin: 0; }
+.town-radio__markers { position: relative; height: 15px; margin-inline: 8px; background: repeating-linear-gradient(to right, var(--town-screen-rule) 0 1px, transparent 1px 2%); }
+.town-radio__markers span { position: absolute; top: 0; height: 15px; width: 2px; background: var(--town-screen-dim); }
+.town-radio__markers span.recommended { width: 3px; background: #f5d88c; }
+.town-radio__limits { display: flex; justify-content: space-between; font-variant-numeric: tabular-nums; color: var(--town-screen-dim); }
+.town-radio__playback { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; margin-top: 18px; }
+.town-radio__playback p { flex: 1; margin: 0; min-width: 180px; }
+.town-radio[data-state="playing"] [data-radio-status] { color: #f5d88c; }
+.town-radio__volume { display: flex; align-items: center; gap: 10px; }
+.town-radio__volume input { width: 100px; height: 36px; }
+.town-radio__hint { margin: 10px 0 20px; color: var(--town-screen-dim); font-size: var(--text-base); }
+.town-radio__label { display: block; margin-bottom: 10px; }
+.town-radio__preset-buttons { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 205px), 1fr)); gap: 8px; }
+.town-radio__preset-buttons button { text-align: left; }
+.town-radio__guide { margin-top: 18px; border-top: 1px solid var(--town-screen-rule); }
+.town-radio__guide summary { cursor: pointer; min-height: 44px; padding-top: 14px; }
+.town-radio__guide p { margin: 12px 0; color: var(--town-screen-dim); font-size: var(--text-base); }
+.town-radio__stations { display: grid; gap: 10px; }
+.town-radio__station { display: grid; grid-template-columns: minmax(145px, 180px) 1fr; gap: 14px; padding-top: 10px; border-top: 1px solid var(--town-screen-rule); }
+.town-radio__station button { text-align: left; }
+.town-radio__website { display: inline-block; padding-top: 12px; }
+.town-game:is(:fullscreen, .town-expanded) .town-radio { flex: 0 0 auto; padding-inline: var(--space-lg); }
+.town-game:is(:fullscreen, .town-expanded) .town-radio__body { max-height: 42dvh; overflow-y: auto; }
+
+@media (max-width: 600px) {
+  .town-radio__body { padding: 16px; }
+  .town-radio__top { flex-direction: column; gap: 16px; }
+  .town-radio__switches { justify-content: space-between; }
+  .town-radio__tuner { gap: 10px; }
+  .town-radio__station { grid-template-columns: 1fr; gap: 7px; }
+  .town-radio__playback p { flex-basis: 100%; }
+}

@@ -347,7 +347,7 @@ export async function startTown(root: HTMLElement): Promise<Session> {
       try {
         const enabled = await audio.toggle();
         soundButton.setAttribute('aria-pressed', String(enabled));
-        soundButton.textContent = enabled ? 'Sound on' : 'Sound off';
+        soundButton.textContent = enabled ? 'Engine sound on' : 'Engine sound off';
       } catch { setStatus('Sound is unavailable in this browser. Driving still works.'); }
     }, eventOptions);
     const syncFullscreen = (): void => {

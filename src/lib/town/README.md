@@ -22,6 +22,33 @@ leaving the game, a hidden document, or a background window pauses the drive.
 The car follows lanes and intersection connectors; arrows do not provide free
 steering or reverse. Mapped obstacle stops and excluded turns remain enforced.
 
+## Car radio
+
+Open **Car radio** beneath the toolbar and press **Turn radio on**. Its independent
+volume control leaves engine sound optional. The FM dial includes every channel
+from 87.9–107.9 MHz in 0.2 MHz steps; AM includes 530–1710 kHz in 10 kHz steps.
+Dragging, arrow keys on the focused slider, or the −/+ buttons can tune empty
+channels as well as stations. Presets tune without turning sound on automatically.
+
+`radio-stations.ts` contains the sourced station catalog; source and stream checks
+are recorded in `data/source/town/radio-stations.md`. These are live internet
+broadcasts, with quiet simulated static on unlisted channels or unavailable
+streams. They are not measured over-the-air reception at the car's location.
+Nearby recommendations have checked stream endpoints; the guide also retains
+stations without in-game streams and links to official listening pages. Failed
+stations are marked unavailable for this session; successful playback clears
+that label. No stream is requested until the listener turns the radio on.
+
+`radio.ts` owns native HTML audio and a separate optional Web Audio noise source.
+One media element per tune isolates stale events; changing stations cancels the
+old stream immediately and dragging waits briefly before requesting the next.
+Streams time out after 15 seconds without playback. No audio proxy, recording,
+or cross-origin Web Audio capture is used. The radio continues while the car is
+parked, suspends on window blur or a hidden page, resumes only on a new button
+press, and disposes on Astro navigation. Third-party stations may change URLs,
+insert ads, restrict locations, or block playback; Retry and official-site links
+remain available.
+
 ## Coordinates and assets
 
 The engine uses canonical local **X east, Y north, Z up**, in metres. Horizontal
