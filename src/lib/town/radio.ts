@@ -207,18 +207,17 @@ export function mountTownRadio(root: HTMLElement): { dispose(): void } {
   const abort = new AbortController();
   const options = { signal: abort.signal };
   const failed = new Set<string>();
-  const heard = new Set<string>();
   const savedFrequencies = { fm: RADIO_BANDS.fm.initial as number, am: RADIO_BANDS.am.initial as number };
 
   const messages: Record<RadioState, string> = {
-    off: 'Turn on the radio to listen.',
+    off: 'Off',
     tuning: 'Tuning…',
-    connecting: 'Connecting to the live station…',
-    playing: 'Live station · Playing',
-    static: 'Between stations · Static',
-    unavailable: 'No stream coming in here. Try a recommended station or the station’s website.',
-    blocked: 'Your browser paused playback. Press Retry to listen.',
-    suspended: 'Radio paused while you were away. Press Resume radio to listen.',
+    connecting: 'Connecting…',
+    playing: 'Live',
+    static: 'Static',
+    unavailable: 'Unavailable',
+    blocked: 'Playback blocked',
+    suspended: 'Paused',
   };
 
   const radio = new TownRadio(render);
@@ -234,7 +233,8 @@ export function mountTownRadio(root: HTMLElement): { dispose(): void } {
     band.value = radio.band;
     frequency.textContent = label;
     name.textContent = station ? `${station.name} · ${station.callSign}` : 'No listed local station';
-    detail.textContent = station ? `${station.city} · ${station.format}` : 'Keep turning the dial, or try a preset below.';
+    detail.textContent = station ? `${station.city} · ${station.format}` : '';
+    detail.hidden = !station;
     website.hidden = !station;
     if (station) website.href = station.website;
     status.textContent = messages[radio.state];
@@ -248,12 +248,15 @@ export function mountTownRadio(root: HTMLElement): { dispose(): void } {
     get<HTMLButtonElement>('down').disabled = radio.frequency <= config.min;
     get<HTMLButtonElement>('up').disabled = radio.frequency >= config.max;
     if (station && radio.state === 'unavailable') failed.add(station.id);
-    if (station && radio.state === 'playing') { heard.add(station.id); failed.delete(station.id); }
+    if (station && radio.state === 'playing') failed.delete(station.id);
     for (const button of panel.querySelectorAll<HTMLButtonElement>('[data-radio-station]')) {
       const id = button.dataset.radioStation!;
       button.setAttribute('aria-pressed', String(id === station?.id));
       const reception = button.querySelector<HTMLElement>('[data-radio-reception]');
-      if (reception) reception.textContent = failed.has(id) ? 'Unavailable now' : heard.has(id) ? (id === station?.id && radio.state === 'playing' ? 'Playing here' : 'Played here') : reception.dataset.radioReception!;
+      if (reception) {
+        reception.textContent = failed.has(id) ? 'Unavailable' : id === station?.id && radio.state === 'playing' ? 'Live' : reception.dataset.radioReception!;
+        reception.hidden = !reception.textContent;
+      }
     }
     if (markers.dataset.band !== radio.band) {
       markers.dataset.band = radio.band;
