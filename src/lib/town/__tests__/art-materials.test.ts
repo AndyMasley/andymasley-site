@@ -46,7 +46,7 @@ describe('Scoped late-summer materials', () => {
     const previous = vi.fn((shader: { fragmentShader: string }) => { shader.fragmentShader = '// earlier hook\n'+shader.fragmentShader; });
     m.onBeforeCompile = previous; m.customProgramCacheKey = () => 'prior'; applyArtMaterial(m);
     const shader = compile(m);
-    expect(previous).toHaveBeenCalledOnce(); expect(m.customProgramCacheKey()).toBe('prior|webster-art-material-v1:leaf');
+    expect(previous).toHaveBeenCalledOnce(); expect(m.customProgramCacheKey()).toBe('prior|webster-art-material-v2:leaf');
     expect(shader.vertexShader).toContain('townArtPosition = instanceMatrix * townArtPosition');
     expect(shader.fragmentShader).toContain('// earlier hook');
     expect(shader.fragmentShader).toContain('#include <alphatest_fragment>');
@@ -99,6 +99,28 @@ describe('Scoped late-summer materials', () => {
     expect(m.roughness).toBe(before.roughness); expect(m.flatShading).toBe(before.flat);
     expect(m.onBeforeCompile).toBe(before.compile); expect(m.customProgramCacheKey).toBe(before.key);
     expect(textureDispose).not.toHaveBeenCalled(); expect(materialDispose).not.toHaveBeenCalled();
+  });
+
+  it('shares a live water clock within a world without coupling different sessions or moving shoreline vertices', () => {
+    const clock = { value: 0 }, otherClock = { value: 11 };
+    const water = material('Mapped water | inferred level and appearance');
+    const neighbor = material('Mapped water | inferred level and appearance');
+    const other = material('Mapped water | inferred level and appearance');
+    const original = water.onBeforeCompile, map = new THREE.Texture(); water.map = map;
+    applyArtMaterial(water, clock); applyArtMaterial(neighbor, clock); applyArtMaterial(other, otherClock);
+    const a = compile(water), b = compile(neighbor), c = compile(other);
+    expect(a.uniforms.townArtTime).toBe(clock); expect(b.uniforms.townArtTime).toBe(clock);
+    expect(c.uniforms.townArtTime).toBe(otherClock);
+    clock.value = 4.5;
+    expect(a.uniforms.townArtTime.value).toBe(4.5); expect(b.uniforms.townArtTime.value).toBe(4.5);
+    expect(c.uniforms.townArtTime.value).toBe(11);
+    expect(a.vertexShader).not.toContain('townArtTime');
+    expect(a.fragmentShader).toContain('townWaterP = vTownArtWorld.xz');
+    expect(a.fragmentShader).toContain('dFdx(townArtHeight)');
+    expect(water.map).toBe(map);
+    expect(water.customProgramCacheKey()).toBe(neighbor.customProgramCacheKey());
+    removeArtMaterial(water); expect(water.onBeforeCompile).toBe(original);
+    water.dispose(); neighbor.dispose(); other.dispose(); map.dispose();
   });
 
   it('reuses a supplied crown color and varies deterministically without changing LOD or tile coordinates', () => {

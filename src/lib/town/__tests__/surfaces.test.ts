@@ -113,7 +113,7 @@ describe('Mapped summer ground', () => {
     expect(grass.count).toBeGreaterThan(7000);
     const matrix = new THREE.Matrix4(), world = new THREE.Vector3();
     grass.getMatrixAt(0, matrix); world.setFromMatrixPosition(matrix).applyMatrix4(group.matrixWorld);
-    expect(world.y).toBeCloseTo(7.006, 5);
+    expect(world.y).toBeCloseTo(7.002, 5);
     expect(ground.geometry.getAttribute('position').array).toEqual(source);
     const instanceDispose = vi.spyOn(grass, 'dispose'), sharedDispose = vi.spyOn(grass.geometry, 'dispose');
     const groundDispose = vi.spyOn(ground.geometry, 'dispose'), maskDispose = vi.spyOn(mask, 'dispose');

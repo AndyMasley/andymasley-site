@@ -31,6 +31,9 @@ export const LANDMARKS = {
   BEACH: { name: 'Memorial Beach', xy: [-874.48813, -443.51927] as XY },
   RANCH: { name: 'Indian Ranch', xy: [424.12913, -487.71768] as XY },
   BARTLETT: { name: 'Bartlett High', xy: [-2035.88441, -1776.97041] as XY },
+  // Authored viewpoint beside a verified southbound School Street graph point.
+  // Offset west of the centreline selects its right-hand lane, not a parcel centroid.
+  SCHOOL: { name: 'School Street homes', xy: [-3088.50, -1099.42] as XY },
 } as const;
 export type LandmarkKey = keyof typeof LANDMARKS;
 

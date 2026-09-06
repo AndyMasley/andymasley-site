@@ -109,18 +109,19 @@ export class GrassTerrain {
 type GrassTile = { group: THREE.Object3D; id: string; mask: GrassMask; terrain: THREE.Mesh[]; index?: GrassTerrain; mesh?: THREE.InstancedMesh; capacity?: number };
 type Candidate = { tile: GrassTile; x: number; y: number; z: number; seed: number; distance: number; normal: [number, number, number] };
 
-function tuftGeometry(): THREE.BufferGeometry {
+export function tuftGeometry(): THREE.BufferGeometry {
   const positions: number[] = [], colors: number[] = [], roots: number[] = [], indices: number[] = [];
-  const root = new THREE.Color('#3f542d'), middle = new THREE.Color('#51663b'), tip = new THREE.Color('#657b49');
+  const root = new THREE.Color('#3d502e'), middle = new THREE.Color('#5a703d'), tip = new THREE.Color('#6e8248');
   for (let blade = 0; blade < 6; blade++) {
     const angle = blade * 2.39996 + random(blade, 1) * 1.1;
     const rootAngle = blade * 2.39996 + random(blade, 19) * 0.8;
-    const rootRadius = 0.045 + Math.sqrt(random(blade, 23)) * 0.145;
+    const rootRadius = 0.035 + Math.sqrt(random(blade, 23)) * 0.165;
     const rootX = Math.cos(rootAngle) * rootRadius, rootZ = Math.sin(rootAngle) * rootRadius;
-    const height = 0.045 + random(blade, 3) * 0.035, width = 0.003 + random(blade, 7) * 0.0015;
-    const lean = 0.012 + random(blade, 13) * 0.040;
-    const twist = (random(blade, 31) - 0.5) * 0.014;
-    const vertices = [[-width, 0, 0], [width, 0, 0], [-width * 0.65 + lean * 0.3, height * 0.60, twist], [width * 0.65 + lean * 0.3, height * 0.60, twist], [lean, height, twist * 1.8]];
+    const height = 0.028 + random(blade, 3) * 0.045, width = 0.0024 + random(blade, 7) * 0.0018;
+    const lean = 0.010 + random(blade, 13) * 0.044;
+    const twist = (random(blade, 31) - 0.5) * 0.020;
+    // A curved strip with a shallow transverse fold catches light without extra faces.
+    const vertices = [[-width, -0.001, 0], [width, -0.001, 0], [-width * 0.68 + lean * 0.23, height * 0.62, twist - width * 0.35], [width * 0.68 + lean * 0.23, height * 0.62, twist + width * 0.35], [lean, height * 0.95, twist * 1.7]];
     const start = positions.length / 3;
     vertices.forEach(([x, y, z], i) => {
       positions.push(rootX + x * Math.cos(angle) - z * Math.sin(angle), y, rootZ + x * Math.sin(angle) + z * Math.cos(angle));
@@ -161,12 +162,17 @@ export class TownGrass {
     if (this.geometry) return;
     this.geometry = tuftGeometry();
     this.material = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1, side: THREE.DoubleSide });
-    this.material.name = 'Town | short sage grass blades';
+    this.material.name = 'Town | rooted summer turf blades';
     this.material.forceSinglePass = true;
-    this.material.customProgramCacheKey = () => 'town-grass-short-patches-v2';
+    this.material.customProgramCacheKey = () => 'town-grass-rooted-patches-v4';
     this.material.onBeforeCompile = shader => {
       Object.assign(shader.uniforms, this.uniforms);
+      // Thin blades receive a similar soft canopy fill on either face. Undo
+      // DoubleSide's flipped lighting normal so their backs do not become black
+      // needles against the lawn; the upward-biased vertex normals remain.
+      shader.fragmentShader = shader.fragmentShader.replace('#include <normal_fragment_maps>', '#include <normal_fragment_maps>\nnormal *= faceDirection;');
       shader.vertexShader = `attribute vec2 townGrassRoot;\nuniform vec3 townGrassCamera;\nuniform float townGrassTime;\n${shader.vertexShader}`
+        .replace('#include <beginnormal_vertex>', '#include <beginnormal_vertex>\nobjectNormal = normalize(objectNormal + vec3(0.0,0.55,0.0));')
         .replace('#include <begin_vertex>', `
 #include <begin_vertex>
 vec4 townTuftWorld = modelMatrix * instanceMatrix * vec4(0.0,0.0,0.0,1.0);
@@ -237,13 +243,15 @@ transformed = townBladeRoot + (transformed-townBladeRoot) * townTuftGrowth;
       }
       inverse.copy(tile.group.matrixWorld).invert();
       rows.forEach((row, i) => {
-        const size = 0.78 + row.seed * 0.48;
-        p.set(row.x, row.y + 0.006, row.z); scale.setScalar(size);
+        const ix = Math.floor(row.x / GRASS_LIMITS.spacing), iz = Math.floor(row.z / GRASS_LIMITS.spacing);
+        const spread = 0.82 + random(ix, iz, 191) * 0.32;
+        const height = 0.72 + random(ix, iz, 397) * 0.55;
+        p.set(row.x, row.y + 0.002, row.z); scale.set(spread, height, spread);
         q.setFromUnitVectors(up, normal.fromArray(row.normal)); yaw.setFromAxisAngle(up, row.seed * Math.PI * 2); q.multiply(yaw);
         worldMatrix.compose(p, q, scale); matrix.multiplyMatrices(inverse, worldMatrix);
         tile.mesh!.setMatrixAt(i, matrix);
-        const tint = 0.92 + row.seed * 0.13;
-        tile.mesh!.setColorAt(i, color.setRGB(tint, tint, tint * 0.96));
+        const tint = 0.94 + random(ix, iz, 613) * 0.12;
+        tile.mesh!.setColorAt(i, color.setRGB(tint, tint, tint * 0.985));
       });
       tile.mesh.count = rows.length;
       tile.mesh.instanceMatrix.needsUpdate = true;

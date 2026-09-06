@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 
-type ArtKind = 'siding' | 'roof' | 'brick' | 'trim' | 'glass' | 'foundation' | 'concrete' | 'asphalt' | 'shoulder' | 'leaf' | 'far-leaf' | 'bark' | 'car-paint' | 'car-glass' | 'rubber';
+type ArtKind = 'siding' | 'roof' | 'brick' | 'trim' | 'glass' | 'foundation' | 'concrete' | 'asphalt' | 'shoulder' | 'leaf' | 'far-leaf' | 'bark' | 'car-paint' | 'car-glass' | 'rubber' | 'water';
 type Registration = {
   kind: ArtKind;
   color: THREE.Color;
@@ -30,6 +30,7 @@ const kinds: Record<string, ArtKind> = {
   'Drive car | smoked reflective glass': 'car-glass', 'Drive car | rubber': 'rubber',
   'Parked | spruce': 'car-paint', 'Parked | graphite': 'car-paint', 'Parked | silver': 'car-paint',
   'Parked | warm white': 'car-paint',
+  'Mapped water | inferred level and appearance': 'water',
 };
 
 // The GLB factors are linear RGB. Palette hexes are intentionally sRGB paint
@@ -55,6 +56,7 @@ function sidingColor(source: THREE.Color): string {
 
 const functions = `
 varying vec3 vTownArtWorld;
+uniform float townArtTime;
 float townArtHash(vec2 p) {
   vec3 q = fract(vec3(p.xyx) * 0.1031);
   q += dot(q, q.yzx + 33.33);
@@ -75,9 +77,28 @@ float townArtDistance = length(cameraPosition - vTownArtWorld);
 float townArtFootprint = max(length(dFdx(vTownArtWorld)),length(dFdy(vTownArtWorld)));
 float townArtClose = (1.0-smoothstep(35.0,100.0,townArtDistance)) * (1.0-smoothstep(0.02,0.10,townArtFootprint));
 `;
+  if (kind === 'water') return start + `
+// Small wind ripples perturb shading only: the mapped shoreline and water level
+// remain intact. World coordinates keep the phase continuous across tile edges.
+vec2 townWaterP = vTownArtWorld.xz;
+float townWaterFine = 1.0-smoothstep(0.035,0.12,townArtFootprint);
+float townWaterMid = 1.0-smoothstep(0.12,0.50,townArtFootprint);
+townArtHeight = sin(dot(townWaterP,vec2(3.1,1.7))-townArtTime*1.1)*0.012
+  + sin(dot(townWaterP,vec2(-5.2,8.4))-townArtTime*1.7)*0.0045*townWaterMid
+  + sin(dot(townWaterP,vec2(31.0,13.0))+townArtTime*2.0)*0.0007*townWaterFine;
+diffuseColor.rgb *= mix(0.96,1.04,townArtNoise(townWaterP*0.06));
+`;
   if (kind === 'siding') return start + `
 float townPaintAge = townArtNoise(vTownArtWorld.xz*0.16 + vec2(vTownArtWorld.y*0.08));
 diffuseColor.rgb *= mix(0.95,1.035,townPaintAge);
+// Painted clapboard is a sequence of lapped boards, not a large flat paint chip.
+// Height is in world metres, so adjacent primitives and tile LODs keep the same scale.
+float townBoard = fract(vTownArtWorld.y / 0.145);
+float townBoardAA = max(fwidth(vTownArtWorld.y / 0.145),0.015);
+float townBoardSeam = 1.0-smoothstep(0.03,0.03+townBoardAA,townBoard);
+float townBoardDetail = 1.0-smoothstep(0.03,0.16,townArtFootprint);
+diffuseColor.rgb *= 1.0-townBoardSeam*0.17*townBoardDetail;
+townArtHeight = townBoard*0.0035*townBoardDetail;
 `;
   if (kind === 'roof') return start + `
 float townRoofChoice = townArtNoise(vTownArtWorld.xz*0.035);
@@ -116,6 +137,15 @@ if (abs(townArtDet)>0.0000000001) {
 `;
 
 function finishTreatment(kind: ArtKind): string {
+  if (kind === 'glass') return `
+// Slightly varied interior darkness and a cool sky reflection give windows depth
+// without painting invented rooms or business imagery onto observed façades.
+float townWindowFresnel = pow(1.0-max(0.0,dot(normal,normalize(vViewPosition))),3.0);
+float townWindowInterior = townArtNoise(floor(vTownArtWorld.xz*0.4)+floor(vTownArtWorld.y/2.8));
+outgoingLight *= mix(0.72,1.06,townWindowInterior);
+outgoingLight += vec3(0.10,0.15,0.18) * (0.10+townWindowFresnel*0.45);
+#include <opaque_fragment>
+`;
   if (kind === 'leaf') return `
 // A restrained forward-scattering response restores thin-leaf readability.
 // Alpha testing, the original leaf atlas, vertex color and shadow rules remain.
@@ -130,7 +160,7 @@ outgoingLight += diffuseColor.rgb * townLeafSun * (0.012+0.070*townLeafBacklight
 }
 
 /** Modify one newly pooled material; repeated registration is a no-op. */
-export function applyArtMaterial(material: THREE.MeshStandardMaterial): void {
+export function applyArtMaterial(material: THREE.MeshStandardMaterial, clock: { value: number } = { value: 0 }): void {
   if (!material.isMeshStandardMaterial || registrations.has(material)) return;
   const kind = kinds[material.name];
   if (!kind) return;
@@ -142,8 +172,8 @@ export function applyArtMaterial(material: THREE.MeshStandardMaterial): void {
   const previousKey = state.key.call(material);
   registrations.set(material, state);
   if (kind === 'siding') { material.color.set(sidingColor(state.color)); material.roughness = 0.84; }
-  if (kind === 'roof') { material.color.set('#545a5c'); material.roughness = 0.94; }
-  if (kind === 'trim') { material.color.set('#d3cdbb'); material.roughness = 0.78; }
+  if (kind === 'roof') { material.color.set('#606469'); material.roughness = 0.90; }
+  if (kind === 'trim') { material.color.set('#e2ded0'); material.roughness = 0.78; }
   if (kind === 'foundation') { material.color.set('#97968a'); material.roughness = 0.94; }
   if (kind === 'brick') { material.roughness = 0.9; material.normalScale.multiplyScalar(0.55); }
   if (kind === 'concrete') {
@@ -159,16 +189,18 @@ export function applyArtMaterial(material: THREE.MeshStandardMaterial): void {
     material.normalScale.multiplyScalar(0.38);
   }
   if (kind === 'shoulder') { material.color.set('#77796a'); material.roughness = 0.98; }
-  if (kind === 'glass') { material.color.set('#426574'); material.roughness = 0.16; material.metalness = 0.23; material.envMapIntensity = 0.32; }
+  if (kind === 'glass') { material.color.set('#34464b'); material.roughness = 0.19; material.metalness = 0.32; material.envMapIntensity = 0.65; }
   if (kind === 'leaf') { material.roughness = 0.88; material.envMapIntensity = 0.12; }
   if (kind === 'far-leaf') { material.color.set('#657c48'); material.roughness = 0.95; }
   if (kind === 'bark') { material.roughness = 0.93; }
   if (kind === 'car-paint') { material.roughness = 0.22; material.metalness = 0.38; material.envMapIntensity = 0.35; }
   if (kind === 'car-glass') { material.roughness = 0.11; material.metalness = 0.35; material.envMapIntensity = 0.40; }
   if (kind === 'rubber') { material.roughness = 0.93; material.metalness = 0; }
-  material.userData.townArt = { version: 1, kind, sourceColor: state.color.toArray(), appearance: 'Inferred late-summer material treatment; geometry, original maps and UVs retained.' };
+  if (kind === 'water') { material.color.set('#315a5c'); material.roughness = 0.23; material.metalness = 0.24; material.envMapIntensity = 1.2; }
+  material.userData.townArt = { version: 2, kind, sourceColor: state.color.toArray(), appearance: 'Inferred late-summer material treatment; geometry, original maps and UVs retained.' };
   material.onBeforeCompile = (shader, renderer) => {
     state.compile.call(material, shader, renderer);
+    shader.uniforms.townArtTime = clock;
     if (!shader.vertexShader.includes('#include <project_vertex>') || !shader.fragmentShader.includes('#include <map_fragment>') || !shader.fragmentShader.includes('#include <opaque_fragment>')) throw new Error('Town art material shader anchors changed.');
     shader.vertexShader = `varying vec3 vTownArtWorld;\n${shader.vertexShader}`.replace('#include <project_vertex>', `
 #include <project_vertex>
@@ -179,9 +211,9 @@ townArtPosition = instanceMatrix * townArtPosition;
 vTownArtWorld = (modelMatrix * townArtPosition).xyz;
 `);
     shader.fragmentShader = functions + shader.fragmentShader.replace('#include <map_fragment>', mapTreatment(kind)).replace('#include <opaque_fragment>', finishTreatment(kind));
-    if (['asphalt','concrete','foundation','shoulder'].includes(kind)) shader.fragmentShader = shader.fragmentShader.replace('#include <normal_fragment_maps>', mineralNormal);
+    if (['siding','asphalt','concrete','foundation','shoulder','water'].includes(kind)) shader.fragmentShader = shader.fragmentShader.replace('#include <normal_fragment_maps>', mineralNormal);
   };
-  material.customProgramCacheKey = () => `${previousKey}|webster-art-material-v1:${kind}`;
+  material.customProgramCacheKey = () => `${previousKey}|webster-art-material-v2:${kind}`;
   material.addEventListener('dispose', onMaterialDispose);
   material.needsUpdate = true;
 }
