@@ -828,7 +828,6 @@ body:has(.town-game.town-expanded) {
 .town-radio__tuner { display: flex; align-items: center; gap: 14px; margin-top: 24px; }
 .town-radio__tuner > button { flex-shrink: 0; min-width: 44px; font-size: var(--text-xl); }
 .town-radio__scale { flex: 1; min-width: 0; }
-.town-radio__dial-label { display: block; margin-bottom: 10px; }
 .town-radio__scale input { display: block; width: 100%; height: 36px; margin: 0; }
 .town-radio__markers { position: relative; height: 15px; margin-inline: 8px; background: repeating-linear-gradient(to right, var(--town-screen-rule) 0 1px, transparent 1px 2%); }
 .town-radio__markers span { position: absolute; top: 0; height: 15px; width: 2px; background: var(--town-screen-dim); }
@@ -839,7 +838,7 @@ body:has(.town-game.town-expanded) {
 .town-radio[data-state="playing"] [data-radio-status] { color: #f5d88c; }
 .town-radio__volume { display: flex; align-items: center; gap: 10px; }
 .town-radio__volume input { width: 100px; height: 36px; }
-.town-radio__hint { margin: 10px 0 20px; color: var(--town-screen-dim); font-size: var(--text-base); }
+.town-radio__presets { margin-top: 20px; }
 .town-radio__label { display: block; margin-bottom: 10px; }
 .town-radio__preset-buttons { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 205px), 1fr)); gap: 8px; }
 .town-radio__preset-buttons button { text-align: left; }
