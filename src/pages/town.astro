@@ -187,6 +187,8 @@ const poster = '/town-assets/webster-poster-crafted.webp';
       if (starting || session) return;
       starting = true;
       play.disabled = true;
+      play.textContent = 'Loading…';
+      root.setAttribute('aria-busy', 'true');
       status.textContent = 'Preparing your drive…';
       try {
         const { startTown } = await import('../lib/town/main');
@@ -199,6 +201,7 @@ const poster = '/town-assets/webster-poster-crafted.webp';
           status.textContent = error instanceof Error ? error.message : 'The drive could not start. Please try again.';
           play.disabled = false;
           play.textContent = 'Try again';
+          root.removeAttribute('aria-busy');
         }
       } finally { starting = false; }
     }, { signal: controller.signal });

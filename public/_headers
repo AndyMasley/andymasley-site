@@ -6,3 +6,7 @@
 
 /town-assets/2026-09-37fbef34bc2a/*
   Cache-Control: public, max-age=31536000, immutable
+
+/town-transfer/gzip-v1/*
+  Cache-Control: public, max-age=31536000, immutable
+  Content-Type: application/gzip

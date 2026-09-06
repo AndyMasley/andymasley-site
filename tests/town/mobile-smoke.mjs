@@ -15,8 +15,8 @@ try {
  const page=await context.newPage();page.setDefaultTimeout(90000);
  page.on('pageerror',e=>report.pageErrors.push(e.message));
  page.on('console',m=>{if(m.type()==='error')report.consoleErrors.push(m.text())});
- page.on('response',r=>{if(r.url().includes('/town-assets/')&&r.status()>=400)report.assetFailures.push({url:r.url(),status:r.status()})});
- const gated=[];page.on('request',r=>{if(/\/town-assets\/.*(?:manifest\.json|network\.json|\.glb)$/.test(r.url()))gated.push(r.url())});
+ page.on('response',r=>{if(['/town-assets/','/town-transfer/'].some(prefix=>r.url().includes(prefix))&&r.status()>=400)report.assetFailures.push({url:r.url(),status:r.status()})});
+ const gated=[];page.on('request',r=>{if(/\/town-(?:assets|transfer)\/.*(?:manifest\.json|network\.json|\.glb(?:\.gz)?)$/.test(r.url()))gated.push(r.url())});
  const shot=async(name,fullPage=false)=>{if(!report.configuration.captureScreenshots){report.screenshotSkips.push({name,reason:'TOWN_SCREENSHOTS=0; functional assertions unchanged.'});return;}const path=`${out}/${name}.png`;try{const bytes=await page.screenshot({fullPage,timeout:10000});await writeFile(path,bytes);report.screenshots.push({path,bytes:bytes.length,sha256:createHash('sha256').update(bytes).digest('hex')});}catch(error){report.captureErrors.push({name,error:error.message,scope:'Optional artifact; functional assertions unchanged.'});}};
  const state=()=>page.evaluate(()=>{const g=window.__webster;if(!g)return null;const e=g.engine;return{ready:g.ready,edge:e.edgeId,road:e.edge.name,phase:e.phase,speed:e.speed,cruise:e.cruise,distance:e.distance,paused:e.paused,queued:e.queued,camera:g.cameraMode,frames:g.metrics.frames,contextLost:g.renderer.getContext().isContextLost(),pilot:g.world.manifest.stats.pilot,world:{...g.world.metrics},status:document.querySelector('[data-town-status]').textContent}});
  const layout=()=>page.evaluate(()=>{

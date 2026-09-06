@@ -10,6 +10,95 @@ const group = (material: THREE.Material) => { const result = new THREE.Group(); 
 const settle = async () => { for (let i = 0; i < 8; i++) await Promise.resolve(); };
 
 describe('Town streaming and resource ownership', () => {
+  it('downloads shared scenery and the owning street together, but waits for shared materials before exposing it', async () => {
+    vi.useFakeTimers();
+    const m = manifest([tile('owner'), tile('neighbor', 250)]);
+    m.trees!.prototypes = ['near', 'far', 'trunk'].map(id => ({ id, url: `${id}.glb`, bytes: 1 }));
+    m.tiles[0].treeFile = { url: 'owner.trees.json', bytes: 1, count: 0 };
+    const world = new TownWorld(m, 'https://example.test/town/manifest.json', () => {});
+    let finishSurfaces!: () => void;
+    const surfaces = {
+      initialize: vi.fn(() => new Promise<void>(resolve => { finishSurfaces = resolve; })),
+      apply: vi.fn(async () => {}), release: vi.fn(), dispose: vi.fn(),
+    };
+    const internal = world as unknown as { surfaces: typeof surfaces; prototypes: THREE.Group[] };
+    internal.surfaces = surfaces;
+    const finishes = new Map<string, (g: THREE.Group) => void>();
+    const load = vi.spyOn(world, 'loadGlb').mockImplementation(url => new Promise(resolve => finishes.set(url, resolve)));
+    const rows = vi.spyOn(world, 'fetchJson').mockResolvedValue([]);
+    try {
+      const initialized = world.initialize([125, 0, 125]);
+      expect(surfaces.initialize).toHaveBeenCalledOnce();
+      expect(load.mock.calls.map(([url]) => url)).toEqual(['fallback.glb', 'near.glb', 'far.glb', 'trunk.glb', 'owner-0.glb']);
+      const owner = group(new THREE.MeshStandardMaterial());
+      finishes.get('owner-0.glb')!(owner);
+      await settle();
+      expect(world.isReadyAt([125, 0, 125])).toBe(false);
+      expect(surfaces.apply).not.toHaveBeenCalled();
+      expect(rows).not.toHaveBeenCalled();
+      const near = group(new THREE.MeshStandardMaterial()), far = group(new THREE.MeshStandardMaterial()), trunk = group(new THREE.MeshStandardMaterial());
+      finishes.get('trunk.glb')!(trunk);
+      finishes.get('far.glb')!(far);
+      finishes.get('near.glb')!(near);
+      finishes.get('fallback.glb')!(group(new THREE.MeshStandardMaterial()));
+      await settle();
+      expect(world.root.children).toHaveLength(0);
+      finishSurfaces();
+      await vi.advanceTimersByTimeAsync(80);
+      await initialized;
+      expect(world.isReadyAt([125, 0, 125])).toBe(true);
+      expect(internal.prototypes).toEqual([near, far, trunk]);
+      expect(surfaces.apply).toHaveBeenCalledOnce();
+      expect(rows).toHaveBeenCalledWith('owner.trees.json', expect.any(AbortSignal));
+      expect(load).toHaveBeenCalledTimes(5);
+      expect(world.metrics.pending).toBe(0);
+    } finally { world.dispose(); vi.useRealTimers(); }
+  });
+
+  it.each(['surfaces', 'prototype'])('releases successful shared downloads if %s initialization fails', async failure => {
+    const m = manifest();
+    m.trees!.prototypes = [{ id: 'near', url: 'near.glb', bytes: 1 }];
+    const world = new TownWorld(m, 'https://example.test/town/manifest.json', () => {});
+    const surfaces = { initialize: vi.fn(async () => { if (failure === 'surfaces') throw new Error('shared failed'); }), dispose: vi.fn(), release: vi.fn() };
+    (world as unknown as { surfaces: typeof surfaces }).surfaces = surfaces;
+    const successful: THREE.Group[] = [];
+    vi.spyOn(world, 'loadGlb').mockImplementation(async url => {
+      if (failure === 'prototype' && url === 'near.glb') throw new Error('shared failed');
+      const result = group(new THREE.MeshStandardMaterial());
+      successful.push(result);
+      return result;
+    });
+    const release = vi.spyOn(world, 'releaseGroup');
+    await expect(world.initialize()).rejects.toThrow('shared failed');
+    expect(release.mock.calls.map(([result]) => result)).toEqual(successful);
+    expect(world.root.children).toHaveLength(0);
+    expect(surfaces.dispose).toHaveBeenCalledOnce();
+    world.dispose();
+    expect(release).toHaveBeenCalledTimes(successful.length);
+  });
+
+  it('releases late shared downloads after disposal without adopting them into the scene', async () => {
+    const m = manifest();
+    m.trees!.prototypes = [{ id: 'near', url: 'near.glb', bytes: 1 }];
+    const world = new TownWorld(m, 'https://example.test/town/manifest.json', () => {});
+    const finishes: ((g: THREE.Group) => void)[] = [];
+    vi.spyOn(world, 'loadGlb').mockImplementation(() => new Promise(resolve => finishes.push(resolve)));
+    const release = vi.spyOn(world, 'releaseGroup');
+    const initialized = world.initialize();
+    expect(finishes).toHaveLength(2);
+    const failed = expect(initialized).rejects.toMatchObject({ name: 'AbortError' });
+    const fallback = group(new THREE.MeshStandardMaterial());
+    finishes[0](fallback);
+    await settle();
+    world.dispose();
+    const prototype = group(new THREE.MeshStandardMaterial());
+    finishes[1](prototype);
+    await failed;
+    expect(release.mock.calls.map(([result]) => result)).toEqual([fallback, prototype]);
+    expect(world.root.children).toHaveLength(0);
+    expect(world.loaded.size).toBe(0);
+  });
+
   it('uses horizontal bounds even on elevated roads and accepts tree-only cells', () => {
     expect(boundsDistanceSquared(tile('a').bounds, [125, 500, 125])).toBe(0);
     expect(chooseLod(tile('a'), 700, false)).toBe(2);

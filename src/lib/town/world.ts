@@ -7,6 +7,7 @@ import { decodeCoverPNG } from './cover-data';
 import { applyArtMaterial, treeArtColor } from './art-materials';
 import { treeForm } from './vegetation';
 import { applyCraftedFrontages } from './crafted-frontages';
+import { readSceneBuffer } from './asset-transfer';
 
 type TreePlan = { near: Set<number>; shadows: Set<number>; key: string };
 type LoadedTile = { group: THREE.Group; level: number; lastUsed: number; trees?: THREE.Group; treeRows?: number[][]; treePlan?: TreePlan };
@@ -34,6 +35,7 @@ export class TownWorld {
   private position: V3 = [0, 0, 0];
   private preparingAt: V3 | null = null;
   private sharedAbort = new AbortController();
+  private initialization?: Promise<void>;
   private surfaces?: TownSurfaces;
   private readonly artClock = { value: 0 };
 
@@ -87,10 +89,7 @@ export class TownWorld {
 
   async loadGlb(path: string, signal: AbortSignal = this.sharedAbort.signal, tile?: TownTile, level = 0): Promise<THREE.Group> {
     const url = this.url(path);
-    const response = await fetch(url, { signal });
-    if (!response.ok) throw new Error(`Scenery could not load (${response.status}).`);
-    const data = await response.arrayBuffer();
-    this.metrics.bytes += Number(response.headers.get('content-length')) || data.byteLength;
+    const data = await readSceneBuffer(url, signal, bytes => { this.metrics.bytes += bytes; });
     const gltf = await this.loader.parseAsync(data, new URL('.', url).href);
     if (this.disposed || signal.aborted) {
       this.disposeRaw(gltf.scene);
@@ -124,9 +123,31 @@ export class TownWorld {
     return gltf.scene;
   }
 
-  async initialize(): Promise<void> {
-    await this.surfaces?.initialize(this.sharedAbort.signal);
-    const fallback = await this.loadGlb(this.manifest.fallback.url);
+  async initialize(initialPosition?: V3): Promise<void> {
+    const shared = this.initialization ??= this.initializeShared();
+    // Fetch the starting street while shared scenery downloads. Its materials
+    // and trees still wait for the shared resources before the tile is exposed.
+    if (initialPosition) await Promise.all([shared, this.prepareAt(initialPosition)]);
+    else await shared;
+  }
+
+  private async initializeShared(): Promise<void> {
+    const results = await Promise.allSettled([
+      this.surfaces?.initialize(this.sharedAbort.signal),
+      this.loadGlb(this.manifest.fallback.url),
+      ...(this.manifest.trees?.prototypes ?? []).map(prototype => this.loadGlb(prototype.url)),
+    ]);
+    const groups = results.slice(1).flatMap(result => result.status === 'fulfilled' && result.value ? [result.value] : []);
+    const failure = results.find(result => result.status === 'rejected');
+    if (this.disposed || this.sharedAbort.signal.aborted || failure) {
+      groups.forEach(group => this.releaseGroup(group));
+      this.surfaces?.dispose();
+      if (failure?.status === 'rejected') throw failure.reason;
+      throw new DOMException('Loading cancelled', 'AbortError');
+    }
+    // allSettled keeps prototype order stable even when downloads finish in a
+    // different order, and lets us release every successful sibling on failure.
+    const [fallback, ...prototypes] = groups;
     fallback.name = 'Town landscape overview';
     fallback.traverse((object) => {
       if (!(object instanceof THREE.Mesh)) return;
@@ -142,9 +163,7 @@ export class TownWorld {
       object.material = Array.isArray(object.material) ? object.material.map(backdrop) : backdrop(object.material);
     });
     this.root.add(fallback);
-    for (const prototype of this.manifest.trees?.prototypes ?? []) {
-      this.prototypes.push(await this.loadGlb(prototype.url));
-    }
+    this.prototypes.push(...prototypes);
   }
 
   setQuality(quality: Quality, mobile: boolean): void {
@@ -253,6 +272,8 @@ export class TownWorld {
       group = lod ? await this.loadGlb(lod.url, abort.signal, tile, level) : new THREE.Group();
       group.position.fromArray(tile.origin);
       group.updateMatrixWorld(true);
+      await this.initialization;
+      if (this.disposed || abort.signal.aborted) throw new DOMException('Loading cancelled', 'AbortError');
       await this.surfaces?.apply(group, tile.id, abort.signal);
       if (tile.treeFile && this.prototypes.length) {
         const rows = await this.fetchJson<number[][] | { rows: number[][] }>(tile.treeFile.url, abort.signal);

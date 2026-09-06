@@ -57,8 +57,8 @@ async function check(name, fn) {
   }
 }
 
-const townAsset = (url) => new URL(url).pathname.includes('/town-assets/');
-const gatedAsset = (url) => townAsset(url) && /(?:\/manifest\.json|\/network\.json|\.glb)$/.test(new URL(url).pathname);
+const townAsset = (url) => ['/town-assets/','/town-transfer/'].some(prefix=>new URL(url).pathname.includes(prefix));
+const gatedAsset = (url) => townAsset(url) && /(?:\/manifest\.json|\/network\.json|\.glb(?:\.gz)?)$/.test(new URL(url).pathname);
 
 async function observedPage(context, scenario) {
   const page = await context.newPage();
