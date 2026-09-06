@@ -3,6 +3,8 @@ import { defineConfig } from 'vitest/config';
 import { resolve } from 'path';
 
 export default defineConfig({
+  // Astro preserves JSX; component interaction tests need React's JSX transform.
+  oxc: { jsx: { runtime: 'automatic' } },
   resolve: {
     alias: {
       '@': resolve(__dirname, 'src'),

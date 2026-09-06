@@ -1,0 +1,39 @@
+---
+import Base from '@/layouts/Base.astro';
+import TrafficComparison from '@/components/traffic/TrafficComparison';
+import national from '../../../data/source/traffic/national.json';
+import ledger from '../../../data/derived/traffic/av-2026-ledger.json';
+---
+
+<Base title="Traffic deaths & injuries: human driving and AVs" description="A two-column view of the US road toll and reported autonomous-vehicle crashes in 2026, including animal casualties, sources, and missing data." activeNav="/visuals">
+  <article class="traffic-page">
+    <header>
+      <p class="traffic-dateline">United States · 2026 · Sources reviewed September 6</p>
+      <h1>Traffic deaths & injuries</h1>
+      <p>Human driving and autonomous vehicles, side by side. There is no complete public count of every death and injury this year, including animals, attributed to who caused it. Here is the scale we can document, with the gaps left visible.</p>
+    </header>
+    <TrafficComparison client:load />
+    <noscript><p>The interactive comparison requires JavaScript. The source snapshot contains 7,770 estimated US traffic deaths in January–March 2026; 64 verified-engaged ADS injury-crash reports received by July 15 (not 64 injured people); one known AV-involved fatality in Dallas on August 7; and animal narratives documenting one duck killed and two animals injured. These are different periods and measures, not totals assigned by fault. No complete animal casualty count is available.</p></noscript>
+    <section class="traffic-methodology" id="sources">
+      <h2>Sources and counting rules</h2>
+      <ol>
+        <li><strong>National deaths.</strong> <a href={national.deaths2026Q1.source}>NHTSA’s July 2 release</a> estimates 7,770 people killed in January–March 2026. It is an early estimate of all US traffic deaths, including AV-involved crashes, without assignment of fault. The two columns are not mutually exclusive.</li>
+        <li><strong>Optional illustration.</strong> For January 1–September 5 (248 completed days), the visual multiplies the daily rate from <a href={national.deathsBaseline.source}>36,640 estimated deaths in 2025</a> by 248, or the daily rate from <a href={national.injuriesBaseline.source}>2,422,195 people estimated injured in police-reported crashes in 2024</a> by 248. The denominators are 365 and 366 days respectively. It assumes an unchanged daily rate, ignoring seasonality and trends. These are illustrations, not official 2026 estimates or additional casualties to add to the reported figures.</li>
+        <li><strong>AV reports.</strong> <a href={ledger.metadata.sourceOverviewUrl}>NHTSA’s Standing General Order data</a>, corrected August 27, includes reports received through July 15. Keep the latest revision per Report ID, 2026 incident dates, ADS, and “Verified Engaged.” The 734 retained reports have distinct Same Incident IDs in this snapshot; NHTSA cautions that reports and identifiers can be incomplete or inaccurate. Sixty-four reports allege an injury; 13 have unknown severity. The <a href={ledger.metadata.sourceDictionaryUrl}>public fields</a> record highest injury severity, not the number of casualties. A report cutoff does not guarantee every earlier crash was captured.</li>
+        <li><strong>What counts as an AV.</strong> Automated driving systems (ADS), including vehicles testing with safety drivers. Verified engagement can occur any time in the 30 seconds before a crash through its conclusion. Level 2 driver assistance, which requires a human driver, is excluded from this AV ledger. The reports establish involvement, not causation.</li>
+        <li><strong>Animals.</strong> Outcomes are read from the five animal-collision narratives, all of which have no-human-injury severity codes. One duck was killed; a dog and an unspecified domestic animal were injured; outcomes for a deer and a raccoon are unstated. This is a documented minimum. The <a href={national.animals.source}>FHWA wildlife study</a> supplies historical context, not a current-year animal toll.</li>
+        <li><strong>After the cutoff.</strong> <a href="https://www.nbcdfw.com/news/local/pedestrian-killed-suv-crash-waymo-dallas/4060058/">NBC DFW’s reporting on the August 7 Dallas death</a> is listed separately from the federal file. The SUV struck the pedestrian first; the incident does not establish that Waymo caused the death. This page is a dated snapshot, not a live incident feed or exhaustive media census.</li>
+      </ol>
+    </section>
+  </article>
+</Base>
+
+<style>
+  .traffic-page { width: min(960px, calc(100vw - 2rem)); position: relative; left: 50%; transform: translateX(-50%); font-size: var(--text-base); }
+  .traffic-page > header { max-width: 720px; }
+  .traffic-page h1 { font-size: var(--text-2xl); }
+  .traffic-dateline { color: var(--dim); font-size: var(--text-base); margin-bottom: 0.75rem; }
+  .traffic-methodology { margin-top: var(--space-xl); max-width: 720px; }
+  .traffic-methodology h2 { font-size: var(--text-xl); }
+  .traffic-methodology li { margin-bottom: 1rem; }
+</style>

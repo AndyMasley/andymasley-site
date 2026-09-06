@@ -1,0 +1,38 @@
+{
+  "reviewed": "2026-09-06",
+  "projectionThrough": "2026-09-05",
+  "deaths2026Q1": {
+    "value": 7770,
+    "year": 2026,
+    "period": "January–March 2026",
+    "unit": "people killed",
+    "method": "NHTSA early statistical estimate; all US road traffic, no fault allocation",
+    "confidence": "Provisional national estimate",
+    "source": "https://www.nhtsa.gov/press-releases/trumps-transportation-department-reminds-drivers-that-speeding-catches-you"
+  },
+  "deathsBaseline": {
+    "value": 36640,
+    "year": 2025,
+    "unit": "people killed per year",
+    "method": "NHTSA early annual estimate",
+    "confidence": "Provisional national estimate",
+    "source": "https://www.nhtsa.gov/press-releases/traffic-deaths-2025-early-estimates-2024-annual"
+  },
+  "injuriesBaseline": {
+    "value": 2422195,
+    "year": 2024,
+    "unit": "people injured per year",
+    "method": "NHTSA CRSS estimate of people injured in police-reported crashes; table 3, DOT HS 813 791",
+    "confidence": "National sample estimate",
+    "source": "https://crashstats.nhtsa.dot.gov/Api/Public/ViewPublication/813791"
+  },
+  "animals": {
+    "value": null,
+    "year": 2026,
+    "unit": "animals killed or injured",
+    "method": "No complete US animal casualty census or human-driver/ADS split located",
+    "confidence": "Unknown",
+    "context": "FHWA's 2008 study estimated 1–2 million annual large-animal collisions. That is a historical collision estimate, not a 2026 animal casualty count.",
+    "source": "https://www.fhwa.dot.gov/publications/research/safety/08034/02.cfm"
+  }
+}
