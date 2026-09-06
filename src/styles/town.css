@@ -778,6 +778,24 @@ body:has(.town-game.town-expanded) {
 }
 
 @media (max-height: 520px) and (orientation: landscape) {
+  .town-directions {
+    padding: var(--space-xs) var(--space-sm);
+  }
+
+  .town-choices {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+  }
+
+  .town-choices button {
+    flex: 0 0 auto;
+    padding: var(--space-2xs) var(--space-xs);
+  }
+
+  .town-choice__copy {
+    line-height: var(--leading-tight);
+  }
+
   .town-game:is(:fullscreen, .town-expanded) .town-stage {
     min-height: 0;
   }
