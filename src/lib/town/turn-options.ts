@@ -25,7 +25,7 @@ function angleBetween(a: readonly number[], b: readonly number[]): number {
 }
 
 function angleLabel(angle: number): TurnLabel {
-  return Math.abs(angle) >= 150 ? 'U-turn' : angle > 25 ? 'Left' : angle < -25 ? 'Right' : 'Straight';
+  return angle > 25 ? 'Left' : angle < -25 ? 'Right' : 'Straight';
 }
 
 function roadName(name: string | undefined): string {
@@ -45,6 +45,8 @@ export function classifyTurnOptions(incoming: RoadEdge, legalChoices: readonly C
     const outgoing = roads.get(choice.edgeId);
     if (!outgoing) return { ...choice };
     const angleDeg = angleBetween(heading, junctionHeading(outgoing.points, false));
+    // A loop ramp can initially point almost backwards. Only the mapped reverse
+    // of this physical road is a U-turn; a distinct branch stays arrow-selectable.
     const inverse = outgoing.to === incoming.from && (outgoing.physical_id ?? outgoing.id) === (incoming.physical_id ?? incoming.id);
     return { ...choice, angleDeg, label: inverse ? 'U-turn' as const : angleLabel(angleDeg) };
   }).sort(ordered);
