@@ -1,0 +1,168 @@
+{
+  "auditDate": "2026-09-06",
+  "scope": {
+    "country": "United States",
+    "incidentFrom": "2026-07-01",
+    "incidentThrough": "2026-09-05",
+    "purpose": "Supplement federal snapshot with reliably documented later casualty events, without claiming exhaustive coverage.",
+    "federalSnapshotReportedThrough": "2026-07-15"
+  },
+  "additionalCases": [
+    {
+      "id": "media-waymo-los-angeles-2026-07-26",
+      "incidentDate": "2026-07-26",
+      "company": "Waymo",
+      "city": "Los Angeles",
+      "state": "CA",
+      "place": "1000 block of West Venice Boulevard, Pico-Union, near Toberman Street",
+      "timeLocal": "05:44\u201305:45",
+      "humanInjuriesMinimum": 3,
+      "humanInjuriesExact": null,
+      "humanInjuriesReportedAlternative": 5,
+      "injuryCountType": "minimum; conflicting contemporary agency accounts",
+      "deathsReportedInSources": 0,
+      "humanDeathsExact": null,
+      "hospitalizedMinimum": 2,
+      "shortSummary": "A sedan and a Waymo collided on Venice Boulevard. Fire officials reported two people hospitalized and another treated at the scene.",
+      "causeSummary": "Waymo says the other car struck a pedestrian before entering the opposite lane and hitting its vehicle. Police said their investigation was ongoing.",
+      "causalClassification": "AV involved; independent fault determination unavailable",
+      "causationLimits": "Counts cover the entire crash sequence. The pedestrian may have been injured by the sedan before it hit the Waymo. Public evidence does not assign particular injuries to AV action.",
+      "engagementEvidence": "Original TV reporting describes an autonomous Waymo; company supplied a 27 mph travel speed and collision sequence. No operator filing confirming exact ADS-at-impact status was reviewed.",
+      "adsEngagementStatus": "reported autonomous; exact status not independently established in reviewed sources",
+      "countExplanation": "NBC4 quotes LAFD for three injuries, including two transported and a young person treated/released. ABC7 quotes LAPD for a critically injured woman and four others with pain; details and totals differ across outlets. Use at least 3 rather than silently choosing a supposedly exact total.",
+      "sources": [
+        {
+          "title": "NBC4: Two-vehicle crash involving Waymo leaves 3 injured near downtown LA",
+          "url": "https://www.nbclosangeles.com/news/local/two-vehicle-crash-involving-waymo-leaves-several-injured-near-downtown-la/3921938/",
+          "published": "2026-07-26",
+          "evidence": "Original reporting quoting LAFD and LAPD; three injured, two hospitalized."
+        },
+        {
+          "title": "ABC7: Woman critically injured in 2-car crash involving Waymo vehicle in Southern California",
+          "url": "https://abc7news.com/post/woman-critically-injured-2-car-crash-involving-waymo-vehicle-los-angeles-california/19582433/",
+          "published": "2026-07-27",
+          "evidence": "Original reporting quotes LAPD for one woman hospitalized and four others treated for pain; provides company statement on collision sequence."
+        }
+      ],
+      "duplicateHandling": "Event after federal July15 reporting cutoff; do not merge its distinct July26 Atlanta event. Future federal reports must be matched by date/place and deduplicated.",
+      "readerNote": "NBC4 reported three injuries, while ABC7 reported five. This entry counts at least three. News reports describe an autonomous Waymo; driving mode at impact is not independently confirmed in the reviewed federal records."
+    },
+    {
+      "id": "media-waymo-atlanta-2026-07-26",
+      "incidentDate": "2026-07-26",
+      "company": "Waymo",
+      "city": "Atlanta",
+      "state": "GA",
+      "place": "Cheshire Bridge Road near Manchester Street",
+      "timeLocal": "Sunday night",
+      "humanInjuriesMinimum": 2,
+      "humanInjuriesExact": 2,
+      "injuryCountType": "two specifically described injured occupants",
+      "deathsReportedInSources": 0,
+      "humanDeathsExact": null,
+      "shortSummary": "A Jeep rear-ended an empty Waymo and a fire followed. One Jeep occupant suffered burns; another reported a shoulder injury.",
+      "causeSummary": "Firefighters described the Jeep striking the Waymo from behind. Waymo says its vehicle was making a left turn; no final fault finding was located.",
+      "causalClassification": "AV involved; rear-ended by another vehicle, no final fault finding located",
+      "causationLimits": "Both injured people were in the Jeep. Do not label them casualties caused by the AV solely because it was involved.",
+      "engagementEvidence": "FOX5 and WSB describe the unoccupied vehicle as driverless; Waymo supplied its vehicle movement and collision data.",
+      "adsEngagementStatus": "driverless operation reported by original news sources and company statement",
+      "countExplanation": "FOX5 original reporting quotes Atlanta Fire Rescue Capt. Andrew Anderson and explicitly describes burns and a shoulder injury. WSB reports two evaluated and declined hospital transport.",
+      "sources": [
+        {
+          "title": "FOX5 Atlanta: 2 hurt after Waymo driverless car catches fire in Atlanta",
+          "url": "https://www.fox5atlanta.com/news/2-hurt-after-waymo-driverless-car-catches-fire-atlanta.amp",
+          "published": "2026-07-27",
+          "evidence": "Original reporting quoting Atlanta Fire Rescue; describes two specific injuries."
+        },
+        {
+          "title": "WSB-TV: Waymo catches fire after car crashes into back of it",
+          "url": "https://www.wsbtv.com/news/local/waymo-catches-fire-after-car-crashes-into-back-it/IBBB7QXRQBAWXMIKIGT3VRVBM4/",
+          "published": "2026-07-27",
+          "evidence": "Two evaluated in other vehicle, declined hospital transport; empty Waymo rear-ended according to company."
+        }
+      ],
+      "duplicateHandling": "Event after federal July15 reporting cutoff; distinct from July26 Los Angeles collision. Match future reports by date/place before adding.",
+      "readerNote": "The two specifically described injuries were in the Jeep. The Waymo was reported to be unoccupied."
+    }
+  ],
+  "existingCaseVerified": {
+    "id": "media-waymo-dallas-2026-08-07",
+    "incidentDate": "2026-08-07",
+    "company": "Waymo",
+    "city": "Dallas",
+    "state": "TX",
+    "place": "4500 Maple Avenue near Lucas Drive",
+    "humanDeathsExact": 1,
+    "humanInjuriesExact": null,
+    "shortSummary": "An SUV hit a pedestrian, throwing him into a Waymo coming the other way. He died after being taken to hospital.",
+    "causeSummary": "Dallas police described the SUV as the first vehicle to strike him. The empty Waymo was also involved; this source does not establish that the AV caused the death.",
+    "causalClassification": "AV involved; pedestrian initially struck by human-driven SUV",
+    "engagementEvidence": "FOX4 reports the moving Waymo was unoccupied.",
+    "source": {
+      "title": "FOX4 Dallas-Fort Worth: Dallas pedestrian dies after being struck by SUV, thrown into Waymo",
+      "url": "https://www.fox4news.com/news/pedestrian-struck-2-vehicles-including-waymo.amp",
+      "published": "2026-08-08"
+    },
+    "duplicateHandling": "Already known to parent; verify/update existing case only, do not add twice."
+  },
+  "notAdded": [
+    {
+      "incidentDate": "2026-08-27",
+      "place": "Denver, West 8th Avenue and Delaware Street",
+      "reason": "9News and Westword say people were evaluated and no serious injuries, without establishing a positive injury count. Evaluation alone cannot become an injured person.",
+      "source": "https://www.denvergazette.com/2026/08/27/waymo-hit-in-denver-crash/",
+      "additionalSource": "https://www.westword.com/news/self-driving-waymo-involved-in-crash-in-denver-police-say-not-at-fault-40927815/",
+      "causationNote": "Westword quotes DPD: initial driver cited for following too closely; no indication Waymo caused crash."
+    },
+    {
+      "incidentDate": "2026-07-18",
+      "place": "Las Vegas, Polaris Avenue",
+      "reason": "Social media and Citizen injury references surfaced, but no verified casualty total or authoritative/original news report located. Excluded from casualty marks."
+    },
+    {
+      "incidentDate": null,
+      "place": "Zoox testing, 2026",
+      "reason": "Workers allege continued 2026 injuries; incident dates and counts unavailable.",
+      "source": "https://techcrunch.com/2026/08/27/sprains-pain-and-whiplash-waymo-and-zoox-test-drivers-are-getting-hurt-as-robotaxis-scale/"
+    },
+    {
+      "incidentDate": "2026-01-23",
+      "place": "Santa Monica",
+      "reason": "August reporting concerns previously known January child collision, already federal report 30270-13850; not a new August event."
+    }
+  ],
+  "sourcesSearched": {
+    "originalReporting": [
+      "NBC4 Los Angeles",
+      "ABC7/KABC (ABC7News syndicated station version)",
+      "FOX5 Atlanta",
+      "WSB-TV Atlanta",
+      "FOX4 Dallas-Fort Worth",
+      "NBCDFW (open returned error; search result found)",
+      "9News via Denver Gazette",
+      "Denver Westword",
+      "TechCrunch"
+    ],
+    "queryFamilies": [
+      "Waymo / Zoox / Tesla robotaxi / Avride casualties July\u2013September 2026",
+      "Waymo August7 Dallas pedestrian",
+      "Waymo July26 Los Angeles Venice Boulevard",
+      "Waymo July26 Atlanta fire",
+      "Waymo August27 Denver crash",
+      "Waymo July18 Las Vegas Polaris",
+      "July/August 2026 robotaxi injury/fatality searches"
+    ],
+    "leadOnlySources": [
+      "Reddit incident discussions used to locate original reporting; not used as added-case evidence",
+      "Legal marketing/aggregation pages rejected as primary evidence"
+    ],
+    "limits": [
+      "This is a bounded search of public reporting, not an exhaustive police or regulator census.",
+      "News publication date was not treated as incident date.",
+      "Only positive casualty evidence produced added marks; unknown counts were not converted to zero.",
+      "Involvement is not causation. Counts cover crash sequences and can overlap with human-driven crashes.",
+      "No documented federal record ID was available for the two added July26 events; later updates need deduplication.",
+      "Non-collision worker injuries may be missing from federal crash reporting and cannot be counted from undated testimony."
+    ]
+  }
+}

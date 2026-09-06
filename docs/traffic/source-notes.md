@@ -36,7 +36,7 @@ A complete US census of every 2026 traffic death and injury, especially animals,
 - **This is a collision range, not a count of animals killed or injured. Do not combine this number with person casualties as a single total or draw one animal victim per collision.** It is an old baseline, not 2026 surveillance. No complete current animal death/injury census or AV/human-driver split was located.
 - FHWA chapter 4 discusses high post-collision death rates in specific deer/moose studies, but these do not justify assuming every collision kills one animal. It also repeats an older **365 million vertebrates/year** estimate. This is secondary historical material and much weaker for a precise present-day visualization. Recommend excluding it as a numeric baseline unless user specifically wants very uncertain historical context.
 - Chapter 4: https://www.fhwa.dot.gov/publications/research/safety/08034/04.cfm
-- Better UI: include separate animal row/card reading "Unknown — no complete US count" in each column. Add historical context in source notes: FHWA estimated 1–2 million annual large-animal collisions in its 2008 study; small animals are not comprehensively counted. This includes animal harm without inventing a tally.
+- The redesigned animal section uses a historical bird mortality estimate instead of the FHWA collision range. See `animal-research.md` for the primary 2014 study and separately verified AV outcomes.
 
 ## Fault and exposure
 
@@ -50,9 +50,8 @@ A complete US census of every 2026 traffic death and injury, especially animals,
 At start of September 6, 248 full calendar days have elapsed in a 365-day year. If using a fixed as-of date, explicitly say Jan1–Sep5 inclusive. Do not include all of September6 before it ends.
 
 - 36,640 × 248/365 = **24,895** deaths at the 2025 annual pace.
-- 2,422,195 × 248/365 = **1,645,765** injuries at the 2024 annual pace.
-- 1–2M × 248/365 = about **679,000–1,359,000 large-animal collisions** at the historical 2008 estimate's pace (not recommended as 2026 victims).
-- Rounded display (24,900; 1.65M) better communicates uncertainty than precise projected counts. Uniform time interpolation assumes no seasonal or trend changes. Q1 2026 data are a useful separate reality check; do not add them to annual-rate values.
+- 2,422,195 × 248/366 = **1,641,269** injuries at the 2024 daily rate (a leap year).
+- Rounded display (24,900; 1.64M) better communicates uncertainty than precise projected counts. Uniform time interpolation assumes no seasonal or trend changes. Q1 2026 data are a useful separate reality check; do not add them to annual-rate values.
 - For true unit marks: each dot can represent one unit of the explicitly labeled modeled count. A canvas can render millions of dots without DOM explosion. Mark total should match the number rather than a cosmetically chosen fill percentage.
 
 ## July 15 cutoff addendum
@@ -62,3 +61,7 @@ At start of September 6, 248 full calendar days have elapsed in a 365-day year. 
 - If instead phrased as **the 2024 daily injury rate**, 2024 was a leap year, so use **366** days: `2,422,195 / 366 * 196 = 1,297,131.75`. The rounded display is still about 1.30 million. This is the preferable formula if the UI says "at the 2024 daily rate".
 - Likewise Sep6 start at 2024 daily rate is `2,422,195 / 366 * 248 = 1,641,268.74`.
 - Do not present projected victims on the left and injury-coded crashes on the right with a shared "each dot = one injured person" key. Those are different units. Display exact time windows and dot unit under each count.
+
+## Casualty audit used in the redesign
+
+The final AV column counts people from manually reviewed narrative evidence, replacing the initial injury-coded-report unit. All 64 federal injury records were audited: 78 people can be counted and five reports have no usable headcount. Later July 26 reporting adds at least five people, for a displayed minimum of 83. The original records, casualty audit, supplementary reporting audit and deterministic join remain in the repository. See README.md for coverage, deduplication, unknowns and validation.

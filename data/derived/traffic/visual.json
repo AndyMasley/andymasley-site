@@ -1,0 +1,1260 @@
+{
+  "through": "2026-09-05",
+  "reviewed": "2026-09-06",
+  "federalReceivedThrough": "2026-07-15",
+  "injuryMinimum": 83,
+  "unresolvedInjuryReports": 5,
+  "unknownSeverityReports": 13,
+  "federalInjuryMinimum": 78,
+  "deaths": [
+    {
+      "id": "media-waymo-dallas-2026-08-07",
+      "date": "2026-08-07",
+      "place": "Dallas, TX",
+      "company": "Waymo",
+      "count": 1,
+      "summary": "An SUV hit a pedestrian, throwing him into a Waymo coming the other way. He died after being taken to hospital.",
+      "note": "Dallas police described the SUV as the first vehicle to strike him. The empty Waymo was also involved; this source does not establish that the AV caused the death.",
+      "evidence": null,
+      "precision": "exact",
+      "sources": [
+        {
+          "label": "FOX4 Dallas-Fort Worth: Dallas pedestrian dies after being struck by SUV, thrown into Waymo",
+          "url": "https://www.fox4news.com/news/pedestrian-struck-2-vehicles-including-waymo.amp"
+        }
+      ]
+    }
+  ],
+  "injuries": [
+    {
+      "id": "30270-13543",
+      "date": "2026-01",
+      "place": "San Francisco, CA",
+      "company": "Waymo LLC",
+      "count": 1,
+      "summary": "A car struck the rear corner of a Waymo stopped at a red light. One Waymo passenger alleged a minor injury.",
+      "note": "Waymo says the other car approached from behind and struck its stationary vehicle.",
+      "evidence": "A passenger in the Waymo AV alleged a minor injury.",
+      "precision": "exact",
+      "sources": [
+        {
+          "label": "Federal report 30270-13543",
+          "url": "https://static.nhtsa.gov/odi/ffdd/sgo-2021-01/SGO-2021-01_Incident_Reports_ADS.csv"
+        }
+      ]
+    },
+    {
+      "id": "30270-13545",
+      "date": "2026-01",
+      "place": "Austin, TX",
+      "company": "Waymo LLC",
+      "count": 1,
+      "summary": "An SUV rear-ended a Waymo stopped at a red light. One Waymo passenger alleged a minor injury.",
+      "note": "Waymo says the SUV entered the turn lane and struck its stationary vehicle from behind.",
+      "evidence": "The passenger in the Waymo AV alleged a minor injury.",
+      "precision": "exact",
+      "sources": [
+        {
+          "label": "Federal report 30270-13545",
+          "url": "https://static.nhtsa.gov/odi/ffdd/sgo-2021-01/SGO-2021-01_Incident_Reports_ADS.csv"
+        }
+      ]
+    },
+    {
+      "id": "30270-13550",
+      "date": "2026-01",
+      "place": "Los Angeles, CA",
+      "company": "Waymo LLC",
+      "count": 1,
+      "summary": "A truck pushed an SUV into a stopped Waymo. One Waymo passenger alleged a minor injury.",
+      "note": "Waymo describes a chain collision beginning when a heavy truck struck the SUV behind it.",
+      "evidence": "A passenger in the Waymo AV alleged minor injury.",
+      "precision": "exact",
+      "sources": [
+        {
+          "label": "Federal report 30270-13550",
+          "url": "https://static.nhtsa.gov/odi/ffdd/sgo-2021-01/SGO-2021-01_Incident_Reports_ADS.csv"
+        }
+      ]
+    },
+    {
+      "id": "30270-13585",
+      "date": "2026-01",
+      "place": "Los Angeles, CA",
+      "company": "Waymo LLC",
+      "count": null,
+      "summary": "Two SUVs collided beside a stopped Waymo, pushing one into it. The report lists a minor injury but does not identify an injured person.",
+      "note": "Waymo says it was stationary when one SUV was pushed into it by another SUV.",
+      "evidence": "Minor W/O Hospitalization",
+      "precision": "unresolved",
+      "sources": [
+        {
+          "label": "Federal report 30270-13585",
+          "url": "https://static.nhtsa.gov/odi/ffdd/sgo-2021-01/SGO-2021-01_Incident_Reports_ADS.csv"
+        }
+      ]
+    },
+    {
+      "id": "30270-13604",
+      "date": "2026-01",
+      "place": "Los Angeles, CA",
+      "company": "Waymo LLC",
+      "count": 2,
+      "summary": "An SUV struck a slowing Waymo while passing on its right. At least two Waymo passengers alleged minor injuries.",
+      "note": "Waymo says the SUV struck its rear corner while maneuvering around it.",
+      "evidence": "The passengers in the Waymo AV alleged minor injuries.",
+      "precision": "minimum",
+      "sources": [
+        {
+          "label": "Federal report 30270-13604",
+          "url": "https://static.nhtsa.gov/odi/ffdd/sgo-2021-01/SGO-2021-01_Incident_Reports_ADS.csv"
+        }
+      ]
+    },
+    {
+      "id": "30270-13605",
+      "date": "2026-01",
+      "place": "Los Angeles, CA",
+      "company": "Waymo LLC",
+      "count": 1,
+      "summary": "Two cars collided behind a stopped Waymo and one struck it. One Waymo passenger alleged a minor injury; the report also records hospital transport.",
+      "note": "Waymo describes an impact between two other cars that pushed one into its stationary vehicle.",
+      "evidence": "The passenger of the Waymo AV alleged minor injury.",
+      "precision": "exact",
+      "sources": [
+        {
+          "label": "Federal report 30270-13605",
+          "url": "https://static.nhtsa.gov/odi/ffdd/sgo-2021-01/SGO-2021-01_Incident_Reports_ADS.csv"
+        }
+      ]
+    },
+    {
+      "id": "30270-13656",
+      "date": "2026-01",
+      "place": "Los Angeles, CA",
+      "company": "Waymo LLC",
+      "count": 1,
+      "summary": "An oncoming car hit a Waymo completing a left turn. One Waymo passenger alleged a minor injury.",
+      "note": "Waymo says the other car crossed the center lines; the AV braked and moved right before contact.",
+      "evidence": "The passenger of the Waymo AV alleged a minor injury.",
+      "precision": "exact",
+      "sources": [
+        {
+          "label": "Federal report 30270-13656",
+          "url": "https://static.nhtsa.gov/odi/ffdd/sgo-2021-01/SGO-2021-01_Incident_Reports_ADS.csv"
+        }
+      ]
+    },
+    {
+      "id": "30270-13766",
+      "date": "2026-01",
+      "place": "Venice, CA",
+      "company": "Waymo LLC",
+      "count": 1,
+      "summary": "A reversing SUV hit a stopped Waymo. The SUV driver alleged minor injuries.",
+      "note": "Waymo says it stopped to yield before the SUV reversed into its front corner.",
+      "evidence": "The driver of the SUV alleged minor injuries.",
+      "precision": "exact",
+      "sources": [
+        {
+          "label": "Federal report 30270-13766",
+          "url": "https://static.nhtsa.gov/odi/ffdd/sgo-2021-01/SGO-2021-01_Incident_Reports_ADS.csv"
+        }
+      ]
+    },
+    {
+      "id": "30270-13809",
+      "date": "2026-01",
+      "place": "Los Angeles, CA",
+      "company": "Waymo LLC",
+      "count": 2,
+      "summary": "An SUV turning left collided with a Waymo traveling straight. The Waymo passenger and SUV driver alleged minor injuries.",
+      "note": "Waymo says the SUV made an unprotected left turn across its path; the AV braked and moved right.",
+      "evidence": "The passenger in the Waymo AV and the driver of the SUV alleged minor injuries.",
+      "precision": "exact",
+      "sources": [
+        {
+          "label": "Federal report 30270-13809",
+          "url": "https://static.nhtsa.gov/odi/ffdd/sgo-2021-01/SGO-2021-01_Incident_Reports_ADS.csv"
+        }
+      ]
+    },
+    {
+      "id": "30270-13850",
+      "date": "2026-01",
+      "place": "Santa Monica, CA",
+      "company": "Waymo LLC",
+      "count": 1,
+      "summary": "A Waymo struck a pedestrian who emerged from behind an opposing SUV. The pedestrian reported minor injuries.",
+      "note": "Waymo reports braking before striking the pedestrian. The related NTSB preliminary investigation has not established probable cause.",
+      "evidence": "The pedestrian reported minor injuries.",
+      "precision": "exact",
+      "sources": [
+        {
+          "label": "Federal report 30270-13850",
+          "url": "https://static.nhtsa.gov/odi/ffdd/sgo-2021-01/SGO-2021-01_Incident_Reports_ADS.csv"
+        },
+        {
+          "label": "NTSB investigation",
+          "url": "https://www.ntsb.gov/investigations/Pages/HWY26FH008.aspx"
+        }
+      ]
+    },
+    {
+      "id": "30270-13852",
+      "date": "2026-01",
+      "place": "San Francisco, CA",
+      "company": "Waymo LLC",
+      "count": 1,
+      "summary": "A car rear-ended a Waymo slowing for pedestrians during a right turn. One Waymo passenger alleged a minor injury.",
+      "note": "Waymo says it was yielding to a marked crosswalk when the following car struck it.",
+      "evidence": "The passenger in the Waymo AV alleged minor injury.",
+      "precision": "exact",
+      "sources": [
+        {
+          "label": "Federal report 30270-13852",
+          "url": "https://static.nhtsa.gov/odi/ffdd/sgo-2021-01/SGO-2021-01_Incident_Reports_ADS.csv"
+        }
+      ]
+    },
+    {
+      "id": "30413-13853",
+      "date": "2026-01",
+      "place": "Atlanta, GA",
+      "company": "May Mobility",
+      "count": 1,
+      "summary": "A May Mobility vehicle left its lane and hit a fire hydrant. Its operator was taken to hospital with minor injuries.",
+      "note": "May Mobility says its sleeping operator restricted steering with his hand, preventing the engaged system from maintaining the lane.",
+      "evidence": "The AVO was transported by ambulance to the hospital with minor injuries.",
+      "precision": "exact",
+      "sources": [
+        {
+          "label": "Federal report 30413-13853",
+          "url": "https://static.nhtsa.gov/odi/ffdd/sgo-2021-01/SGO-2021-01_Incident_Reports_ADS.csv"
+        }
+      ]
+    },
+    {
+      "id": "30610-14090",
+      "date": "2026-01",
+      "place": "San Francisco, CA",
+      "company": "Zoox, Inc.",
+      "count": 1,
+      "summary": "An SUV and a Zoox collided after the SUV returned from the parking lane. One Zoox passenger reported soreness.",
+      "note": "Zoox says the SUV swerved into its lane; its operator disengaged autonomy and continued braking before contact.",
+      "evidence": "the right rear passenger reported \"experiencing soreness\" after the collision.",
+      "precision": "exact",
+      "sources": [
+        {
+          "label": "Federal report 30610-14090",
+          "url": "https://static.nhtsa.gov/odi/ffdd/sgo-2021-01/SGO-2021-01_Incident_Reports_ADS.csv"
+        }
+      ]
+    },
+    {
+      "id": "31101-13952",
+      "date": "2026-01",
+      "place": "Dallas, TX",
+      "company": "Avride Inc.",
+      "count": 2,
+      "summary": "A car struck the side of an Avride. Its rider and safety driver alleged minor injuries; the rider traveled to hospital.",
+      "note": "Avride says the other car entered without stopping at a stop sign and left after the collision.",
+      "evidence": "Rider and the AV Safety Driver alleged minor injuries.",
+      "precision": "exact",
+      "sources": [
+        {
+          "label": "Federal report 31101-13952",
+          "url": "https://static.nhtsa.gov/odi/ffdd/sgo-2021-01/SGO-2021-01_Incident_Reports_ADS.csv"
+        }
+      ]
+    },
+    {
+      "id": "30270-13957",
+      "date": "2026-02",
+      "place": "San Francisco, CA",
+      "company": "Waymo LLC",
+      "count": 1,
+      "summary": "A car rear-ended a Waymo waiting to turn left. One Waymo passenger alleged a minor injury.",
+      "note": "Waymo says it was stopped to yield to opposing traffic when the following car struck it.",
+      "evidence": "The passenger of the Waymo AV alleged a minor injury.",
+      "precision": "exact",
+      "sources": [
+        {
+          "label": "Federal report 30270-13957",
+          "url": "https://static.nhtsa.gov/odi/ffdd/sgo-2021-01/SGO-2021-01_Incident_Reports_ADS.csv"
+        }
+      ]
+    },
+    {
+      "id": "30270-14001",
+      "date": "2026-02",
+      "place": "Scottsdale, AZ",
+      "company": "Waymo LLC",
+      "count": 2,
+      "summary": "A car rear-ended a Waymo stopped at a red light. At least two Waymo passengers alleged minor injuries.",
+      "note": "Waymo says the other car approached from behind and struck its stationary vehicle.",
+      "evidence": "The passengers in the Waymo AV alleged minor injuries.",
+      "precision": "minimum",
+      "sources": [
+        {
+          "label": "Federal report 30270-14001",
+          "url": "https://static.nhtsa.gov/odi/ffdd/sgo-2021-01/SGO-2021-01_Incident_Reports_ADS.csv"
+        }
+      ]
+    },
+    {
+      "id": "30270-14003",
+      "date": "2026-02",
+      "place": "San Francisco, CA",
+      "company": "Waymo LLC",
+      "count": 2,
+      "summary": "A van rear-ended a Waymo during drop-off. Two passengers went to hospital: one with minor injuries and one with moderate injuries.",
+      "note": "Waymo says it was parked at the curb with hazard lights on when the van struck it from behind.",
+      "evidence": "one of the passengers had minor injuries and one of the passengers had moderate injuries.",
+      "precision": "exact",
+      "sources": [
+        {
+          "label": "Federal report 30270-14003",
+          "url": "https://static.nhtsa.gov/odi/ffdd/sgo-2021-01/SGO-2021-01_Incident_Reports_ADS.csv"
+        }
+      ]
+    },
+    {
+      "id": "30270-14048",
+      "date": "2026-02",
+      "place": "Austin, TX",
+      "company": "Waymo LLC",
+      "count": 1,
+      "summary": "An SUV rear-ended a Waymo stopped at a red light. One Waymo passenger alleged a minor injury.",
+      "note": "Waymo says the SUV approached from behind and struck its stationary vehicle.",
+      "evidence": "The passenger in the Waymo AV alleged a minor injury.",
+      "precision": "exact",
+      "sources": [
+        {
+          "label": "Federal report 30270-14048",
+          "url": "https://static.nhtsa.gov/odi/ffdd/sgo-2021-01/SGO-2021-01_Incident_Reports_ADS.csv"
+        }
+      ]
+    },
+    {
+      "id": "30270-14075",
+      "date": "2026-02",
+      "place": "San Francisco, CA",
+      "company": "Waymo LLC",
+      "count": 1,
+      "summary": "A car struck a person boarding a parked Waymo and the vehicle. That person reported minor injuries and went to hospital.",
+      "note": "Waymo says the other car crossed the intersection without stopping at the stop sign. Only the person outside is reported injured.",
+      "evidence": "The passenger that was standing outside of the Waymo AV reported minor injuries and was transported to a hospital by an ambulance.",
+      "precision": "exact",
+      "sources": [
+        {
+          "label": "Federal report 30270-14075",
+          "url": "https://static.nhtsa.gov/odi/ffdd/sgo-2021-01/SGO-2021-01_Incident_Reports_ADS.csv"
+        }
+      ]
+    },
+    {
+      "id": "30270-14076",
+      "date": "2026-02",
+      "place": "Phoenix, AZ",
+      "company": "Waymo LLC",
+      "count": 2,
+      "summary": "An SUV rear-ended a Waymo slowing near an intersection. At least two Waymo passengers alleged minor injuries.",
+      "note": "Waymo says the SUV approached from behind and hit its rear while it was slowing.",
+      "evidence": "The passengers of the Waymo AV alleged minor injuries.",
+      "precision": "minimum",
+      "sources": [
+        {
+          "label": "Federal report 30270-14076",
+          "url": "https://static.nhtsa.gov/odi/ffdd/sgo-2021-01/SGO-2021-01_Incident_Reports_ADS.csv"
+        }
+      ]
+    },
+    {
+      "id": "30270-14093",
+      "date": "2026-02",
+      "place": "Los Angeles, CA",
+      "company": "Waymo LLC",
+      "count": 2,
+      "summary": "A van rear-ended a Waymo slowing for a stop sign. At least two Waymo passengers alleged minor injuries.",
+      "note": "Waymo says the van approached from behind and hit its rear while it was slowing.",
+      "evidence": "The passengers of the Waymo AV alleged minor injuries.",
+      "precision": "minimum",
+      "sources": [
+        {
+          "label": "Federal report 30270-14093",
+          "url": "https://static.nhtsa.gov/odi/ffdd/sgo-2021-01/SGO-2021-01_Incident_Reports_ADS.csv"
+        }
+      ]
+    },
+    {
+      "id": "30610-14167",
+      "date": "2026-02",
+      "place": "Santa Monica, CA",
+      "company": "Zoox, Inc.",
+      "count": 3,
+      "summary": "An SUV struck a Zoox preparing to change lanes. The Zoox operator and two passengers reported soreness and a headache.",
+      "note": "Zoox describes a strike to its rear corner while preparing to change lanes; this narrative alone does not resolve responsibility.",
+      "evidence": "The Zoox vehicle operator and two passengers reported soreness and a headache after the collision.",
+      "precision": "exact",
+      "sources": [
+        {
+          "label": "Federal report 30610-14167",
+          "url": "https://static.nhtsa.gov/odi/ffdd/sgo-2021-01/SGO-2021-01_Incident_Reports_ADS.csv"
+        }
+      ]
+    },
+    {
+      "id": "30270-14232",
+      "date": "2026-03",
+      "place": "San Francisco, CA",
+      "company": "Waymo LLC",
+      "count": 1,
+      "summary": "A cyclist struck a door opened by a passenger in a stopped Waymo and fell. The cyclist reported minor injuries.",
+      "note": "Waymo describes its passenger opening a door into the path of an approaching cyclist in the bike lane.",
+      "evidence": "The cyclist reported minor injuries.",
+      "precision": "exact",
+      "sources": [
+        {
+          "label": "Federal report 30270-14232",
+          "url": "https://static.nhtsa.gov/odi/ffdd/sgo-2021-01/SGO-2021-01_Incident_Reports_ADS.csv"
+        }
+      ]
+    },
+    {
+      "id": "30270-14246",
+      "date": "2026-03",
+      "place": "Inglewood, CA",
+      "company": "Waymo LLC",
+      "count": 1,
+      "summary": "A turning van hit a stopped Waymo at an intersection. One Waymo passenger alleged a minor injury.",
+      "note": "Waymo says the van turned without stopping at the stop sign and struck its stationary vehicle.",
+      "evidence": "A passenger in the Waymo AV alleged a minor injury.",
+      "precision": "exact",
+      "sources": [
+        {
+          "label": "Federal report 30270-14246",
+          "url": "https://static.nhtsa.gov/odi/ffdd/sgo-2021-01/SGO-2021-01_Incident_Reports_ADS.csv"
+        }
+      ]
+    },
+    {
+      "id": "30270-14265",
+      "date": "2026-03",
+      "place": "Los Angeles, CA",
+      "company": "Waymo LLC",
+      "count": 2,
+      "summary": "A car hit another car while changing lanes, then struck a stopped Waymo. At least two Waymo passengers alleged minor injuries.",
+      "note": "Waymo describes another car hitting it after a lane-change collision with a third vehicle.",
+      "evidence": "The passengers in the Waymo AV alleged minor injuries.",
+      "precision": "minimum",
+      "sources": [
+        {
+          "label": "Federal report 30270-14265",
+          "url": "https://static.nhtsa.gov/odi/ffdd/sgo-2021-01/SGO-2021-01_Incident_Reports_ADS.csv"
+        }
+      ]
+    },
+    {
+      "id": "30270-14296",
+      "date": "2026-03",
+      "place": "Phoenix, AZ",
+      "company": "Waymo LLC",
+      "count": 1,
+      "summary": "A Waymo reported a collision involving an SUV approaching from behind. One Waymo passenger alleged minor injuries.",
+      "note": "The narrative describes the SUV changing lanes but mistakenly names the SUV as both contacting vehicles; the impact description is internally inconsistent.",
+      "evidence": "The passenger in the Waymo AV alleged minor injuries.",
+      "precision": "exact",
+      "sources": [
+        {
+          "label": "Federal report 30270-14296",
+          "url": "https://static.nhtsa.gov/odi/ffdd/sgo-2021-01/SGO-2021-01_Incident_Reports_ADS.csv"
+        }
+      ]
+    },
+    {
+      "id": "30270-14330",
+      "date": "2026-03",
+      "place": "Phoenix, AZ",
+      "company": "Waymo LLC",
+      "count": 1,
+      "summary": "A car rear-ended a Waymo stopping for an approaching skateboarder. One Waymo passenger alleged minor injuries.",
+      "note": "Waymo says it had stopped to yield when the following car struck it from behind.",
+      "evidence": "The passenger in the Waymo AV alleged minor injuries.",
+      "precision": "exact",
+      "sources": [
+        {
+          "label": "Federal report 30270-14330",
+          "url": "https://static.nhtsa.gov/odi/ffdd/sgo-2021-01/SGO-2021-01_Incident_Reports_ADS.csv"
+        }
+      ]
+    },
+    {
+      "id": "30270-14389",
+      "date": "2026-03",
+      "place": "Inglewood, CA",
+      "company": "Waymo LLC",
+      "count": 1,
+      "summary": "An SUV struck a Waymo moving slowly in a traffic queue. One Waymo passenger went to hospital with minor injuries.",
+      "note": "Waymo says the SUV approached from behind and struck its rear corner.",
+      "evidence": "The passenger of the Waymo AV was transported to a hospital by an ambulance with minor injuries.",
+      "precision": "exact",
+      "sources": [
+        {
+          "label": "Federal report 30270-14389",
+          "url": "https://static.nhtsa.gov/odi/ffdd/sgo-2021-01/SGO-2021-01_Incident_Reports_ADS.csv"
+        }
+      ]
+    },
+    {
+      "id": "30270-14481",
+      "date": "2026-03",
+      "place": "Los Angeles, CA",
+      "company": "Waymo LLC",
+      "count": 1,
+      "summary": "A pickup rear-ended a Waymo waiting to turn right. One Waymo passenger alleged minor injuries.",
+      "note": "Waymo says it was yielding before entering the intersection when the pickup struck it from behind.",
+      "evidence": "A passenger in the Waymo AV alleged minor injuries.",
+      "precision": "exact",
+      "sources": [
+        {
+          "label": "Federal report 30270-14481",
+          "url": "https://static.nhtsa.gov/odi/ffdd/sgo-2021-01/SGO-2021-01_Incident_Reports_ADS.csv"
+        }
+      ]
+    },
+    {
+      "id": "30270-14483",
+      "date": "2026-03",
+      "place": "Austin, TX",
+      "company": "Waymo LLC",
+      "count": 1,
+      "summary": "A pickup rear-ended a Waymo stopped at a red light. One Waymo passenger went to hospital alleging minor injuries.",
+      "note": "Waymo says the pickup approached from behind and struck its stationary vehicle.",
+      "evidence": "The passenger of the Waymo AV was transported to a hospital by an ambulance, alleging minor injuries.",
+      "precision": "exact",
+      "sources": [
+        {
+          "label": "Federal report 30270-14483",
+          "url": "https://static.nhtsa.gov/odi/ffdd/sgo-2021-01/SGO-2021-01_Incident_Reports_ADS.csv"
+        }
+      ]
+    },
+    {
+      "id": "30270-14495",
+      "date": "2026-03",
+      "place": "Austin, TX",
+      "company": "Waymo LLC",
+      "count": 1,
+      "summary": "A car turning right into a parking lot hit a Waymo traveling in the right lane. One Waymo passenger alleged minor injuries.",
+      "note": "Waymo says the other car turned from the center lane across its lane of travel.",
+      "evidence": "A passenger in the Waymo AV alleged minor injuries.",
+      "precision": "exact",
+      "sources": [
+        {
+          "label": "Federal report 30270-14495",
+          "url": "https://static.nhtsa.gov/odi/ffdd/sgo-2021-01/SGO-2021-01_Incident_Reports_ADS.csv"
+        }
+      ]
+    },
+    {
+      "id": "30270-14497",
+      "date": "2026-03",
+      "place": "Los Angeles, CA",
+      "company": "Waymo LLC",
+      "count": null,
+      "summary": "An SUV leaving a parking lot collided with a Waymo. The report lists a minor injury but does not identify an injured person.",
+      "note": "Waymo says the SUV exited the lot without stopping and entered its lane.",
+      "evidence": "Minor W/O Hospitalization",
+      "precision": "unresolved",
+      "sources": [
+        {
+          "label": "Federal report 30270-14497",
+          "url": "https://static.nhtsa.gov/odi/ffdd/sgo-2021-01/SGO-2021-01_Incident_Reports_ADS.csv"
+        }
+      ]
+    },
+    {
+      "id": "30270-14625",
+      "date": "2026-03",
+      "place": "Washington, DC",
+      "company": "Waymo LLC",
+      "count": null,
+      "summary": "An SUV rear-ended a Waymo slowing for an ambulance. The report lists a minor injury but does not identify an injured person.",
+      "note": "Waymo says the SUV struck it from behind while it slowed for an emergency siren.",
+      "evidence": "Minor W/O Hospitalization",
+      "precision": "unresolved",
+      "sources": [
+        {
+          "label": "Federal report 30270-14625",
+          "url": "https://static.nhtsa.gov/odi/ffdd/sgo-2021-01/SGO-2021-01_Incident_Reports_ADS.csv"
+        }
+      ]
+    },
+    {
+      "id": "30270-14618",
+      "date": "2026-04",
+      "place": "San Francisco, CA",
+      "company": "Waymo LLC",
+      "count": 2,
+      "summary": "An oncoming SUV sideswiped a Waymo, pushing it into a parked car. At least two Waymo passengers went to hospital alleging minor injuries.",
+      "note": "Waymo says the SUV entered its lane without headlights. The severity field says moderate, while the narrative describes minor alleged injuries.",
+      "evidence": "The passengers of the Waymo AV were transported to a hospital by an ambulance, alleging minor injuries.",
+      "precision": "minimum",
+      "sources": [
+        {
+          "label": "Federal report 30270-14618",
+          "url": "https://static.nhtsa.gov/odi/ffdd/sgo-2021-01/SGO-2021-01_Incident_Reports_ADS.csv"
+        }
+      ]
+    },
+    {
+      "id": "30270-14619",
+      "date": "2026-04",
+      "place": "Phoenix, AZ",
+      "company": "Waymo LLC",
+      "count": 1,
+      "summary": "A pickup pushed a car into a Waymo moving in a traffic queue. One Waymo passenger alleged minor injuries.",
+      "note": "Waymo describes the rear car being pushed into it by a pickup.",
+      "evidence": "The passenger of the Waymo AV alleged minor injuries.",
+      "precision": "exact",
+      "sources": [
+        {
+          "label": "Federal report 30270-14619",
+          "url": "https://static.nhtsa.gov/odi/ffdd/sgo-2021-01/SGO-2021-01_Incident_Reports_ADS.csv"
+        }
+      ]
+    },
+    {
+      "id": "30270-14626",
+      "date": "2026-04",
+      "place": "Los Angeles, CA",
+      "company": "Waymo LLC",
+      "count": 2,
+      "summary": "A passing car struck a Waymo slowing for a stop sign. At least two Waymo passengers alleged minor injuries.",
+      "note": "Waymo says the car passed in the opposing lane, then moved right into its side.",
+      "evidence": "The passengers of the Waymo AV alleged minor injuries.",
+      "precision": "minimum",
+      "sources": [
+        {
+          "label": "Federal report 30270-14626",
+          "url": "https://static.nhtsa.gov/odi/ffdd/sgo-2021-01/SGO-2021-01_Incident_Reports_ADS.csv"
+        }
+      ]
+    },
+    {
+      "id": "30270-14627",
+      "date": "2026-04",
+      "place": "San Francisco, CA",
+      "company": "Waymo LLC",
+      "count": 1,
+      "summary": "An oncoming SUV collided head-on with a Waymo. The SUV driver went to hospital; the narrative does not specify the injuries.",
+      "note": "Waymo says the SUV crossed the center lines; the AV braked and moved right before the collision.",
+      "evidence": "The driver of the SUV was transported to a hospital by an ambulance with unknown injuries.",
+      "precision": "exact",
+      "sources": [
+        {
+          "label": "Federal report 30270-14627",
+          "url": "https://static.nhtsa.gov/odi/ffdd/sgo-2021-01/SGO-2021-01_Incident_Reports_ADS.csv"
+        }
+      ]
+    },
+    {
+      "id": "30270-14628",
+      "date": "2026-04",
+      "place": "San Francisco, CA",
+      "company": "Waymo LLC",
+      "count": 2,
+      "summary": "An SUV struck the rear corner of a Waymo slowing for a red light. At least two Waymo passengers alleged minor injuries.",
+      "note": "Waymo says the SUV approached from behind, partly in the parking lane, and struck its rear corner.",
+      "evidence": "The passengers of the Waymo AV alleged minor injuries.",
+      "precision": "minimum",
+      "sources": [
+        {
+          "label": "Federal report 30270-14628",
+          "url": "https://static.nhtsa.gov/odi/ffdd/sgo-2021-01/SGO-2021-01_Incident_Reports_ADS.csv"
+        }
+      ]
+    },
+    {
+      "id": "30270-14660",
+      "date": "2026-04",
+      "place": "Los Angeles, CA",
+      "company": "Waymo LLC",
+      "count": 2,
+      "summary": "An SUV rear-ended a Waymo parked partly in a bike lane for drop-off. At least two Waymo passengers went to hospital alleging minor injuries.",
+      "note": "Waymo says its hazards were on and the approaching SUV had no active headlights; parking position is also described in the report.",
+      "evidence": "The passengers of the Waymo AV were transported to a hospital by an ambulance with minor alleged injuries.",
+      "precision": "minimum",
+      "sources": [
+        {
+          "label": "Federal report 30270-14660",
+          "url": "https://static.nhtsa.gov/odi/ffdd/sgo-2021-01/SGO-2021-01_Incident_Reports_ADS.csv"
+        }
+      ]
+    },
+    {
+      "id": "30270-14701",
+      "date": "2026-04",
+      "place": "Atlanta, GA",
+      "company": "Waymo LLC",
+      "count": 2,
+      "summary": "A pickup turning left hit a Waymo crossing an intersection. At least two Waymo passengers alleged minor injuries and were transported.",
+      "note": "Waymo says the pickup made an unprotected left turn across its path.",
+      "evidence": "The passengers in the Waymo AV alleged minor injuries and were transported from the scene.",
+      "precision": "minimum",
+      "sources": [
+        {
+          "label": "Federal report 30270-14701",
+          "url": "https://static.nhtsa.gov/odi/ffdd/sgo-2021-01/SGO-2021-01_Incident_Reports_ADS.csv"
+        }
+      ]
+    },
+    {
+      "id": "30270-14702",
+      "date": "2026-04",
+      "place": "Philadelphia, PA",
+      "company": "Waymo LLC",
+      "count": 1,
+      "summary": "An SUV sideswiped a Waymo; after takeover, its test driver hit a parked pickup while avoiding the SUV. The test driver alleged minor injuries.",
+      "note": "ADS was engaged during the first impact and manual driving during the second. The report does not assign the injury to one impact.",
+      "evidence": "The test driver of the Waymo AV alleged minor injuries.",
+      "precision": "exact",
+      "sources": [
+        {
+          "label": "Federal report 30270-14702",
+          "url": "https://static.nhtsa.gov/odi/ffdd/sgo-2021-01/SGO-2021-01_Incident_Reports_ADS.csv"
+        }
+      ]
+    },
+    {
+      "id": "30270-14704",
+      "date": "2026-04",
+      "place": "Los Angeles, CA",
+      "company": "Waymo LLC",
+      "count": 2,
+      "summary": "A car rear-ended a Waymo stopped at a red light. At least two Waymo passengers alleged minor injuries.",
+      "note": "Waymo says the car approached from behind and struck its stationary vehicle.",
+      "evidence": "The passengers of the Waymo AV alleged minor injuries.",
+      "precision": "minimum",
+      "sources": [
+        {
+          "label": "Federal report 30270-14704",
+          "url": "https://static.nhtsa.gov/odi/ffdd/sgo-2021-01/SGO-2021-01_Incident_Reports_ADS.csv"
+        }
+      ]
+    },
+    {
+      "id": "30270-14805",
+      "date": "2026-04",
+      "place": "Atlanta, GA",
+      "company": "Waymo LLC",
+      "count": 1,
+      "summary": "A motorcyclist hit the rear of a Waymo stopped at a red light and fell. The rider received treatment for a moderate injury.",
+      "note": "Waymo says the motorcycle and rider struck its stationary vehicle from behind.",
+      "evidence": "The motorcyclist was treated at the scene for a moderate injury.",
+      "precision": "exact",
+      "sources": [
+        {
+          "label": "Federal report 30270-14805",
+          "url": "https://static.nhtsa.gov/odi/ffdd/sgo-2021-01/SGO-2021-01_Incident_Reports_ADS.csv"
+        }
+      ]
+    },
+    {
+      "id": "30270-14829",
+      "date": "2026-04",
+      "place": "Los Angeles, CA",
+      "company": "Waymo LLC",
+      "count": 1,
+      "summary": "An SUV struck the rear corner of a Waymo parked for drop-off. One Waymo passenger went to hospital with minor injuries.",
+      "note": "Waymo says it was parked at the curb with hazard lights on when the SUV struck it.",
+      "evidence": "A passenger in the Waymo AV was transported to a hospital by an ambulance with minor injuries.",
+      "precision": "exact",
+      "sources": [
+        {
+          "label": "Federal report 30270-14829",
+          "url": "https://static.nhtsa.gov/odi/ffdd/sgo-2021-01/SGO-2021-01_Incident_Reports_ADS.csv"
+        }
+      ]
+    },
+    {
+      "id": "30270-14888",
+      "date": "2026-04",
+      "place": "Los Angeles, CA",
+      "company": "Waymo LLC",
+      "count": 1,
+      "summary": "An SUV struck a Waymo twice as both turned left. One Waymo passenger went to hospital; the narrative does not specify the injuries.",
+      "note": "Waymo says the SUV approached from behind and made both contacts during the turn.",
+      "evidence": "A passenger in the Waymo AV was transported to a hospital by an ambulance with unknown injuries.",
+      "precision": "exact",
+      "sources": [
+        {
+          "label": "Federal report 30270-14888",
+          "url": "https://static.nhtsa.gov/odi/ffdd/sgo-2021-01/SGO-2021-01_Incident_Reports_ADS.csv"
+        }
+      ]
+    },
+    {
+      "id": "30413-14938",
+      "date": "2026-04",
+      "place": "Atlanta, GA",
+      "company": "May Mobility",
+      "count": null,
+      "summary": "A utility vehicle collided with a May Mobility AV at an intersection. The report lists a minor injury with hospitalization but gives no casualty count.",
+      "note": "May Mobility says the utility vehicle ran a red light; its operator began steering and braking during the AV response.",
+      "evidence": "Minor W/ Hospitalization",
+      "precision": "unresolved",
+      "sources": [
+        {
+          "label": "Federal report 30413-14938",
+          "url": "https://static.nhtsa.gov/odi/ffdd/sgo-2021-01/SGO-2021-01_Incident_Reports_ADS.csv"
+        }
+      ]
+    },
+    {
+      "id": "30610-15062",
+      "date": "2026-04",
+      "place": "San Francisco, CA",
+      "company": "Zoox, Inc.",
+      "count": 1,
+      "summary": "A car rear-ended a Zoox that stopped for traffic after a green light. One passenger reported whiplash and declined treatment.",
+      "note": "Zoox says the following driver struck its rear and left without exchanging information.",
+      "evidence": "One passenger reported feeling \"whiplash\" but declined medical treatment.",
+      "precision": "exact",
+      "sources": [
+        {
+          "label": "Federal report 30610-15062",
+          "url": "https://static.nhtsa.gov/odi/ffdd/sgo-2021-01/SGO-2021-01_Incident_Reports_ADS.csv"
+        }
+      ]
+    },
+    {
+      "id": "30610-15064",
+      "date": "2026-04",
+      "place": "Las Vegas, NV",
+      "company": "Zoox, Inc.",
+      "count": 1,
+      "summary": "A car rear-ended a Zoox stopped behind traffic. One passenger later reported neck pain.",
+      "note": "Zoox says the following driver failed to stop and left; the passenger reported symptoms afterward, rather than at the scene.",
+      "evidence": "I began experiencing significant neck pain consistent with a possible soft tissue injury.",
+      "precision": "exact",
+      "sources": [
+        {
+          "label": "Federal report 30610-15064",
+          "url": "https://static.nhtsa.gov/odi/ffdd/sgo-2021-01/SGO-2021-01_Incident_Reports_ADS.csv"
+        }
+      ]
+    },
+    {
+      "id": "30270-14980",
+      "date": "2026-05",
+      "place": "Los Angeles, CA",
+      "company": "Waymo LLC",
+      "count": 1,
+      "summary": "A car struck a slowing Waymo from behind and overturned. One Waymo passenger alleged minor injuries.",
+      "note": "Waymo says the car approached along the center lines and struck its rear corner.",
+      "evidence": "The passenger of the Waymo AV alleged minor injuries.",
+      "precision": "exact",
+      "sources": [
+        {
+          "label": "Federal report 30270-14980",
+          "url": "https://static.nhtsa.gov/odi/ffdd/sgo-2021-01/SGO-2021-01_Incident_Reports_ADS.csv"
+        }
+      ]
+    },
+    {
+      "id": "30270-14986",
+      "date": "2026-05",
+      "place": "Santa Monica, CA",
+      "company": "Waymo LLC",
+      "count": 1,
+      "summary": "A chain collision involving five vehicles pushed a stopped Waymo forward. One Waymo passenger went to hospital; the narrative does not specify the injuries.",
+      "note": "Waymo describes the rearmost of three SUVs initiating the chain that pushed it into the car ahead.",
+      "evidence": "The passenger in the Waymo AV was transported to a hospital by an ambulance with unknown injuries.",
+      "precision": "exact",
+      "sources": [
+        {
+          "label": "Federal report 30270-14986",
+          "url": "https://static.nhtsa.gov/odi/ffdd/sgo-2021-01/SGO-2021-01_Incident_Reports_ADS.csv"
+        }
+      ]
+    },
+    {
+      "id": "30270-15105",
+      "date": "2026-05",
+      "place": "Los Angeles, CA",
+      "company": "Waymo LLC",
+      "count": 1,
+      "summary": "A pickup rear-ended a stopped Waymo, pushing it into an SUV. One Waymo passenger alleged minor injuries.",
+      "note": "Waymo says the pickup hit it from behind while it was stationary in a traffic queue.",
+      "evidence": "The passenger in the Waymo AV alleged minor injuries.",
+      "precision": "exact",
+      "sources": [
+        {
+          "label": "Federal report 30270-15105",
+          "url": "https://static.nhtsa.gov/odi/ffdd/sgo-2021-01/SGO-2021-01_Incident_Reports_ADS.csv"
+        }
+      ]
+    },
+    {
+      "id": "30270-15173",
+      "date": "2026-05",
+      "place": "Scottsdale, AZ",
+      "company": "Waymo LLC",
+      "count": 1,
+      "summary": "A car rear-ended a Waymo stopped behind traffic after a green light. One Waymo passenger alleged minor injuries.",
+      "note": "Waymo says the following car moved forward and struck its stationary vehicle.",
+      "evidence": "The passenger in the Waymo AV alleged minor injuries.",
+      "precision": "exact",
+      "sources": [
+        {
+          "label": "Federal report 30270-15173",
+          "url": "https://static.nhtsa.gov/odi/ffdd/sgo-2021-01/SGO-2021-01_Incident_Reports_ADS.csv"
+        }
+      ]
+    },
+    {
+      "id": "30270-15174",
+      "date": "2026-05",
+      "place": "Phoenix, AZ",
+      "company": "Waymo LLC",
+      "count": 2,
+      "summary": "A pickup hit the side of a Waymo crossing an intersection. Two Waymo passengers went to hospital with moderate injuries.",
+      "note": "Waymo says it had a green light and the pickup entered against a red light.",
+      "evidence": "Two passengers in the Waymo AV were transported to a hospital by an ambulance with moderate injuries.",
+      "precision": "exact",
+      "sources": [
+        {
+          "label": "Federal report 30270-15174",
+          "url": "https://static.nhtsa.gov/odi/ffdd/sgo-2021-01/SGO-2021-01_Incident_Reports_ADS.csv"
+        }
+      ]
+    },
+    {
+      "id": "30270-15177",
+      "date": "2026-05",
+      "place": "Los Angeles, CA",
+      "company": "Waymo LLC",
+      "count": 1,
+      "summary": "An SUV rear-ended a Waymo slowing behind traffic after a green light. One Waymo passenger alleged minor injuries.",
+      "note": "Waymo says the following SUV proceeded forward and struck it as it slowed.",
+      "evidence": "The passenger in the Waymo AV alleged minor injuries.",
+      "precision": "exact",
+      "sources": [
+        {
+          "label": "Federal report 30270-15177",
+          "url": "https://static.nhtsa.gov/odi/ffdd/sgo-2021-01/SGO-2021-01_Incident_Reports_ADS.csv"
+        }
+      ]
+    },
+    {
+      "id": "30270-15192",
+      "date": "2026-05",
+      "place": "Los Angeles, CA",
+      "company": "Waymo LLC",
+      "count": 2,
+      "summary": "A collision between two cars continued into an SUV and a Waymo. The two car drivers alleged minor and moderate injuries respectively.",
+      "note": "Waymo describes the initial collision as occurring between two other cars; one then struck the SUV and Waymo.",
+      "evidence": "The driver of the first passenger car alleged minor injuries and the driver of the second passenger car sedan alleged moderate injuries.",
+      "precision": "exact",
+      "sources": [
+        {
+          "label": "Federal report 30270-15192",
+          "url": "https://static.nhtsa.gov/odi/ffdd/sgo-2021-01/SGO-2021-01_Incident_Reports_ADS.csv"
+        }
+      ]
+    },
+    {
+      "id": "30270-15193",
+      "date": "2026-05",
+      "place": "San Francisco, CA",
+      "company": "Waymo LLC",
+      "count": 1,
+      "summary": "An SUV rear-ended a moving Waymo. One Waymo passenger alleged minor injuries.",
+      "note": "Waymo says the SUV was following partly in its lane and partly in the adjacent lane when it struck the rear.",
+      "evidence": "The passenger in the Waymo AV alleged minor injuries.",
+      "precision": "exact",
+      "sources": [
+        {
+          "label": "Federal report 30270-15193",
+          "url": "https://static.nhtsa.gov/odi/ffdd/sgo-2021-01/SGO-2021-01_Incident_Reports_ADS.csv"
+        }
+      ]
+    },
+    {
+      "id": "30270-15246",
+      "date": "2026-05",
+      "place": "Inglewood, CA",
+      "company": "Waymo LLC",
+      "count": 1,
+      "summary": "An SUV hit a turning car and pushed it into a stopped Waymo. The car driver went to hospital with minor injuries.",
+      "note": "Waymo says the SUV entered without stopping at a stop sign and pushed the other car into its stationary vehicle.",
+      "evidence": "The driver of the passenger car was transported to a hospital by an ambulance with minor injuries.",
+      "precision": "exact",
+      "sources": [
+        {
+          "label": "Federal report 30270-15246",
+          "url": "https://static.nhtsa.gov/odi/ffdd/sgo-2021-01/SGO-2021-01_Incident_Reports_ADS.csv"
+        }
+      ]
+    },
+    {
+      "id": "30270-15471",
+      "date": "2026-06",
+      "place": "Phoenix, AZ",
+      "company": "Waymo LLC",
+      "count": 1,
+      "summary": "A car rear-ended a Waymo stopped in a traffic queue. One Waymo passenger alleged minor injuries.",
+      "note": "Waymo says the following car moved forward after the queue stopped and struck its stationary vehicle.",
+      "evidence": "The passenger in the Waymo AV alleged minor injuries.",
+      "precision": "exact",
+      "sources": [
+        {
+          "label": "Federal report 30270-15471",
+          "url": "https://static.nhtsa.gov/odi/ffdd/sgo-2021-01/SGO-2021-01_Incident_Reports_ADS.csv"
+        }
+      ]
+    },
+    {
+      "id": "30270-15504",
+      "date": "2026-06",
+      "place": "Emeryville, CA",
+      "company": "Waymo LLC",
+      "count": 1,
+      "summary": "A car rear-ended a Waymo moving from a metered freeway entrance. Its test driver alleged minor injuries.",
+      "note": "Waymo says ADS was engaged at contact; its test driver took over afterward.",
+      "evidence": "The test driver of the Waymo AV alleged minor injuries.",
+      "precision": "exact",
+      "sources": [
+        {
+          "label": "Federal report 30270-15504",
+          "url": "https://static.nhtsa.gov/odi/ffdd/sgo-2021-01/SGO-2021-01_Incident_Reports_ADS.csv"
+        }
+      ]
+    },
+    {
+      "id": "30270-15547",
+      "date": "2026-06",
+      "place": "Scottsdale, AZ",
+      "company": "Waymo LLC",
+      "count": 1,
+      "summary": "An SUV hit a Waymo stopped in a left-turn lane at a red light. The SUV driver went to hospital with serious injuries.",
+      "note": "Waymo says the SUV crossed two lanes at high speed before striking its stationary vehicle from behind.",
+      "evidence": "The driver of the SUV was transported from the scene to the hospital by ambulance with serious injuries.",
+      "precision": "exact",
+      "sources": [
+        {
+          "label": "Federal report 30270-15547",
+          "url": "https://static.nhtsa.gov/odi/ffdd/sgo-2021-01/SGO-2021-01_Incident_Reports_ADS.csv"
+        }
+      ]
+    },
+    {
+      "id": "30270-15593",
+      "date": "2026-06",
+      "place": "Los Angeles, CA",
+      "company": "Waymo LLC",
+      "count": 2,
+      "summary": "An SUV rear-ended a Waymo stopped behind a car at a stop sign. At least two Waymo passengers went to hospital with minor injuries.",
+      "note": "Waymo says the SUV approached from behind and struck its stationary vehicle.",
+      "evidence": "The passengers in the Waymo AV were transported to a hospital by an ambulance with minor injuries.",
+      "precision": "minimum",
+      "sources": [
+        {
+          "label": "Federal report 30270-15593",
+          "url": "https://static.nhtsa.gov/odi/ffdd/sgo-2021-01/SGO-2021-01_Incident_Reports_ADS.csv"
+        }
+      ]
+    },
+    {
+      "id": "30270-15594",
+      "date": "2026-06",
+      "place": "Los Angeles, CA",
+      "company": "Waymo LLC",
+      "count": 1,
+      "summary": "A scooter rider hit the rear of a Waymo stopped in traffic and fell. The rider alleged moderate injuries.",
+      "note": "Waymo says the scooter approached from behind and struck its stationary vehicle.",
+      "evidence": "The scooterist alleged moderate injuries.",
+      "precision": "exact",
+      "sources": [
+        {
+          "label": "Federal report 30270-15594",
+          "url": "https://static.nhtsa.gov/odi/ffdd/sgo-2021-01/SGO-2021-01_Incident_Reports_ADS.csv"
+        }
+      ]
+    },
+    {
+      "id": "30270-15674",
+      "date": "2026-06",
+      "place": "San Francisco, CA",
+      "company": "Waymo LLC",
+      "count": 1,
+      "summary": "A car rear-ended a Waymo stopped at a red light. One Waymo passenger alleged minor injuries.",
+      "note": "Waymo says the car approached from behind and struck its stationary vehicle.",
+      "evidence": "A passenger in the Waymo AV alleged minor injuries.",
+      "precision": "exact",
+      "sources": [
+        {
+          "label": "Federal report 30270-15674",
+          "url": "https://static.nhtsa.gov/odi/ffdd/sgo-2021-01/SGO-2021-01_Incident_Reports_ADS.csv"
+        }
+      ]
+    },
+    {
+      "id": "30610-15541",
+      "date": "2026-06",
+      "place": "Las Vegas, NV",
+      "company": "Zoox, Inc.",
+      "count": null,
+      "summary": "A pickup rear-ended a Zoox stopped for an emergency vehicle. One passenger requested hospital transport; the narrative does not state an injury.",
+      "note": "Zoox says the pickup driver was cited for failing to decrease speed. The report lists a minor injury with hospitalization but provides no injury description.",
+      "evidence": "one passenger requested transport to a hospital.",
+      "precision": "unresolved",
+      "sources": [
+        {
+          "label": "Federal report 30610-15541",
+          "url": "https://static.nhtsa.gov/odi/ffdd/sgo-2021-01/SGO-2021-01_Incident_Reports_ADS.csv"
+        }
+      ]
+    },
+    {
+      "id": "media-waymo-los-angeles-2026-07-26",
+      "date": "2026-07-26",
+      "place": "Los Angeles, CA",
+      "company": "Waymo",
+      "count": 3,
+      "summary": "A sedan and a Waymo collided on Venice Boulevard. Fire officials reported two people hospitalized and another treated at the scene.",
+      "note": "Waymo says the other car struck a pedestrian before entering the opposite lane and hitting its vehicle. Police said their investigation was ongoing. NBC4 reported three injuries, while ABC7 reported five. This entry counts at least three. News reports describe an autonomous Waymo; driving mode at impact is not independently confirmed in the reviewed federal records.",
+      "evidence": null,
+      "precision": "minimum",
+      "sources": [
+        {
+          "label": "NBC4: Two-vehicle crash involving Waymo leaves 3 injured near downtown LA",
+          "url": "https://www.nbclosangeles.com/news/local/two-vehicle-crash-involving-waymo-leaves-several-injured-near-downtown-la/3921938/"
+        },
+        {
+          "label": "ABC7: Woman critically injured in 2-car crash involving Waymo vehicle in Southern California",
+          "url": "https://abc7news.com/post/woman-critically-injured-2-car-crash-involving-waymo-vehicle-los-angeles-california/19582433/"
+        }
+      ]
+    },
+    {
+      "id": "media-waymo-atlanta-2026-07-26",
+      "date": "2026-07-26",
+      "place": "Atlanta, GA",
+      "company": "Waymo",
+      "count": 2,
+      "summary": "A Jeep rear-ended an empty Waymo and a fire followed. One Jeep occupant suffered burns; another reported a shoulder injury.",
+      "note": "Firefighters described the Jeep striking the Waymo from behind. Waymo says its vehicle was making a left turn; no final fault finding was located. The two specifically described injuries were in the Jeep. The Waymo was reported to be unoccupied.",
+      "evidence": null,
+      "precision": "exact",
+      "sources": [
+        {
+          "label": "FOX5 Atlanta: 2 hurt after Waymo driverless car catches fire in Atlanta",
+          "url": "https://www.fox5atlanta.com/news/2-hurt-after-waymo-driverless-car-catches-fire-atlanta.amp"
+        },
+        {
+          "label": "WSB-TV: Waymo catches fire after car crashes into back of it",
+          "url": "https://www.wsbtv.com/news/local/waymo-catches-fire-after-car-crashes-into-back-it/IBBB7QXRQBAWXMIKIGT3VRVBM4/"
+        }
+      ]
+    }
+  ],
+  "animals": [
+    {
+      "id": "30270-13663",
+      "date": "2026-01",
+      "place": "Del Valle, TX",
+      "company": "Waymo LLC",
+      "species": "raccoon",
+      "outcome": "unknown",
+      "count": 1,
+      "summary": "Waymo reported striking a raccoon that ran into its lane in Del Valle. Vehicle damage and towing were reported; the raccoon\u2019s outcome was not stated.",
+      "source": "https://static.nhtsa.gov/odi/ffdd/sgo-2021-01/SGO-2021-01_Incident_Reports_ADS.csv"
+    },
+    {
+      "id": "31101-14654",
+      "date": "2026-03",
+      "place": "Austin, TX",
+      "company": "Avride Inc.",
+      "species": "duck",
+      "outcome": "death",
+      "count": 1,
+      "summary": "Avride reported that its vehicle approached a duck lying in the road and made contact with it while proceeding straight. The collision killed the duck.",
+      "source": "https://static.nhtsa.gov/odi/ffdd/sgo-2021-01/SGO-2021-01_Incident_Reports_ADS.csv"
+    },
+    {
+      "id": "30270-15002",
+      "date": "2026-05",
+      "place": "Los Angeles, CA",
+      "company": "Waymo LLC",
+      "species": "domestic animal (unspecified)",
+      "outcome": "injury",
+      "count": 1,
+      "summary": "Waymo reported striking a domestic animal that ran into its lane in Los Angeles. The animal sustained injuries.",
+      "source": "https://static.nhtsa.gov/odi/ffdd/sgo-2021-01/SGO-2021-01_Incident_Reports_ADS.csv"
+    },
+    {
+      "id": "30270-15249",
+      "date": "2026-05",
+      "place": "Burlingame, CA",
+      "company": "Waymo LLC",
+      "species": "deer",
+      "outcome": "unknown",
+      "count": 1,
+      "summary": "Waymo reported striking a deer that ran into its lane in Burlingame. Vehicle damage and towing were reported; the deer\u2019s outcome was not stated.",
+      "source": "https://static.nhtsa.gov/odi/ffdd/sgo-2021-01/SGO-2021-01_Incident_Reports_ADS.csv"
+    },
+    {
+      "id": "30270-15403",
+      "date": "2026-06",
+      "place": "San Francisco, CA",
+      "company": "Waymo LLC",
+      "species": "dog",
+      "outcome": "injury",
+      "count": 1,
+      "summary": "Waymo reported that a dog entered the road between parked cars and was struck while the vehicle slowed and moved left. The dog sustained injuries.",
+      "source": "https://static.nhtsa.gov/odi/ffdd/sgo-2021-01/SGO-2021-01_Incident_Reports_ADS.csv"
+    }
+  ],
+  "excluded": [
+    {
+      "incidentDate": "2026-08-27",
+      "place": "Denver, West 8th Avenue and Delaware Street",
+      "reason": "9News and Westword say people were evaluated and no serious injuries, without establishing a positive injury count. Evaluation alone cannot become an injured person.",
+      "source": "https://www.denvergazette.com/2026/08/27/waymo-hit-in-denver-crash/",
+      "additionalSource": "https://www.westword.com/news/self-driving-waymo-involved-in-crash-in-denver-police-say-not-at-fault-40927815/",
+      "causationNote": "Westword quotes DPD: initial driver cited for following too closely; no indication Waymo caused crash."
+    },
+    {
+      "incidentDate": "2026-07-18",
+      "place": "Las Vegas, Polaris Avenue",
+      "reason": "Social media and Citizen injury references surfaced, but no verified casualty total or authoritative/original news report located. Excluded from casualty marks."
+    },
+    {
+      "incidentDate": null,
+      "place": "Zoox testing, 2026",
+      "reason": "Workers allege continued 2026 injuries; incident dates and counts unavailable.",
+      "source": "https://techcrunch.com/2026/08/27/sprains-pain-and-whiplash-waymo-and-zoox-test-drivers-are-getting-hurt-as-robotaxis-scale/"
+    },
+    {
+      "incidentDate": "2026-01-23",
+      "place": "Santa Monica",
+      "reason": "August reporting concerns previously known January child collision, already federal report 30270-13850; not a new August event."
+    }
+  ],
+  "birdContext": {
+    "low": 89000000,
+    "high": 340000000,
+    "year": 2014,
+    "source": "https://doi.org/10.1002/jwmg.721",
+    "readableSource": "https://www.fws.gov/story/threats-birds-collisions-road-vehicles"
+  },
+  "unconfirmedAnimal": {
+    "date": "2026-01-01",
+    "place": "San Antonio, TX",
+    "summary": "A cat was reportedly killed by a Waymo on January 1. The police account cited by the newspaper does not establish who or what was driving.",
+    "source": "https://www.expressnews.com/business/article/waymo-robotaxis-san-antonio-neighborhoods-parked-21360403.php"
+  }
+}

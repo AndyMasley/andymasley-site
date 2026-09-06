@@ -16,3 +16,12 @@ export function visibleMarks(total: number, columns: number, rowStart: number, r
   const start = Math.min(total, Math.max(0, rowStart) * columns);
   return { start, end: Math.min(total, start + rowCount * columns) };
 }
+
+export function caseIdForMark(index: number, cases: Array<{ id: string; count: number }>): string | undefined {
+  if (!Number.isInteger(index) || index < 0) return undefined;
+  let end = 0;
+  for (const record of cases) {
+    end += record.count;
+    if (index < end) return record.id;
+  }
+}

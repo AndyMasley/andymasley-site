@@ -1,32 +1,42 @@
 # Traffic comparison — September 6, 2026 snapshot
 
-Route: `/visuals/traffic-deaths`. Listed through the shared visuals registry, which also supplies search and sitemap entries.
+Route: `/visuals/traffic-deaths`. The shared visuals registry supplies its search and sitemap entries. The page follows the site's paper, serif typography and rules, with two equal columns and normal page scrolling. Deaths, injuries and animals appear sequentially; jump links and sticky totals keep the very long mark fields usable.
 
-This is deliberately not labelled a census of casualties caused by human drivers versus AVs. No such complete current-year series was located. The default view shows the Q1 national death estimate and a separately sourced AV-involved fatality after the federal cutoff. National 2026 injuries and national animal casualties remain unknown; the optional daily-rate view illustrates scale without posing as an observed 2026 count.
+This is not a census of casualties caused by human drivers versus AVs. No complete current-year series was located. The national column illustrates January 1–September 5 (248 days) at the latest annual daily rates. The AV column shows a documented casualty minimum for that calendar window, with different reporting coverage. National totals include AV involvement. Neither column classifies fault, and no per-mile safety ratio is computed.
 
-National source values are in `data/source/traffic/national.json`. Raw federal data are frozen in `data/source/traffic/sgo-ads-20260827.csv`, SHA-256 recorded in the derived ledger. Reproduce the federal ledger with:
+## Data and counting
+
+National baselines are in `data/source/traffic/national.json`. The 2025 death baseline uses 365 days, while the 2024 injury baseline uses 366. Rounded model counts drive every mark: 24,895 deaths and 1,641,269 injuries. Headline values are rounded further to avoid false precision. These are modeled people, not identified individuals or official year-to-date totals. The actual Q1 2026 early death estimate is supplied in the methods.
+
+The federal raw data are frozen in `data/source/traffic/sgo-ads-20260827.csv`, with their SHA-256 in `data/derived/traffic/av-2026-ledger.json`. Keep the highest revision per report before filtering to 2026, ADS and verified engagement. Verified engagement may include operation in the 30 seconds before the crash and a human takeover before impact. The federal file was corrected August 27 and covers reports received through July 15.
+
+`data/source/traffic/casualty-audit.json` manually reviews all 64 injury-coded reports. It records headcounts, exact narrative evidence, short accounts and responsibility notes. The count is people, not crashes: 78 people explicitly described as injured or reporting symptoms, plus five reports whose headcount remains unresolved. Plural passengers establish at least two; hospital evaluation alone is not counted as injury. Another 13 federal records have unknown severity.
+
+`data/source/traffic/postcutoff-audit.json` adds at least three injuries in Los Angeles and two in Atlanta on July 26, bringing the minimum to 83 across 66 case entries (61 countable). The Los Angeles sources disagree between three and five injuries, and driving mode is not independently verified in the reviewed federal record. These limits are visible in its account. The Dallas August 7 fatality is a separate AV-involved death, without an AV fault finding. The NTSB Santa Monica child investigation supplements one federal entry; it is not added again.
+
+Five federal animal narratives, all reporting ADS engaged at impact, establish one duck killed, two animals injured and two animals with unstated outcomes. The separately reported San Antonio cat death has unconfirmed driving mode and is not added to the verified tally. The national animal toll is uncounted. The 89–340 million annual bird deaths shown for context come from a 2014 mortality study, not a 2026 count or a collision estimate; see `animal-research.md`.
+
+## Rendering and evidence
+
+`CasualtyField` draws only visible canvas rows while preserving the full mark field's document height. Both columns use the same mark size and spacing. Solid marks denote deaths, hollow marks injuries. Clicking an AV mark opens its case account and focuses the disclosure below the sticky header. All case summaries, sources and headcount evidence also exist as ordinary accessible HTML. Without JavaScript or a usable canvas context, accounts remain in normal flow. Print styles omit the canvas and preserve the accounts.
+
+Unknown counts remain unknown. There is no category switch, animation, live update job, or adjustable estimate. Updating this snapshot requires reviewing source coverage, manual audits, source notes and assertions together.
+
+## Reproduction and validation
 
 ```sh
 python3 scripts/build-traffic-ledger.py data/source/traffic/sgo-ads-20260827.csv /tmp/traffic-ledger-check.json
 cmp data/derived/traffic/av-2026-ledger.json /tmp/traffic-ledger-check.json
-npx vitest run src/lib/traffic/__tests__/model.test.ts
+python3 scripts/build-traffic-view.py
+npm test
 python3 -m unittest discover -s data/schema/traffic
+REQUIRE_CONTENT=1 npm run build
 ```
 
-The script is a snapshot-specific transform, not an automatic updater: source release dates, reviewed narrative outcomes, and independent reporting must be reviewed before accepting a newer CSV. It retains highest report versions before filtering for 2026 / ADS / verified engagement and fails on duplicate or missing Same Incident IDs. Narrative review supplies animal outcomes because the structured injury severity field describes humans. Independent NTSB evidence is linked to an existing injury record and is not added again. The Dallas fatality is a separate post-cutoff media report, not a fault finding.
+The view join validates audit membership, unique IDs, positive or unknown counts, source evidence excerpts and the audited aggregate. `build-traffic-view.py` reproduces `data/derived/traffic/visual.json` exactly.
 
-Counts are incident reports where the CSV lacks casualty counts. No ratio or per-mile safety claim is computed. National all-traffic counts include AV involvement and are not disjoint from the AV column. No 94% human-error multiplier is used. Unknowns never become zero. The animal unknowns are not turned into deaths or injuries.
-
-The optional illustration multiplies an annual baseline by elapsed completed days / days in the baseline year. January 1–September 5 is 248 days. The 2024 injury baseline uses 366 days. Exact rounded model counts drive mark rendering, while rounded headline numbers avoid spurious precision. Each national circle represents one estimated/modelled person; AV injury squares represent reports, not people. Visible row virtualization bounds rendering work while retaining every mark and keyboard scrolling.
-
-Update the source notes, snapshot metadata, on-page counting rules, and assertions together when publishing a new data snapshot. There is no live update job.
-
-## Validation for this addition
-
-- Production build: 125 routes, including the comparison; registry entry verified in built search and sitemap.
-- Vitest: 382 tests pass, including category/illustration interactions and numerical safeguards.
-- Traffic TypeScript check: passes. Repository-wide `astro check` reports 135 existing diagnostics outside the traffic files; those unrelated files were not changed.
-- Python transform tests: 3 pass; raw CSV reproduction is byte-identical to the checked-in ledger.
-- Existing town TypeScript and 64 asset/transfer tests pass.
-- The legacy `validate:data` command targets aquifer datasets and cannot run in this checkout because `data/derived/aquifer-stress/display-aquifers.json` is absent. Traffic-specific data checks above pass.
-- Local route returns HTTP 200. No browser interaction or screenshot QA was requested.
+- Vitest: 385 tests pass, covering model counts, dates, mark ranges, case lookup, data consistency and the canvas-unavailable fallback.
+- Dedicated traffic TypeScript and the three Python transform tests pass.
+- Production build passes. Existing town TypeScript and 64 asset/transfer tests pass.
+- Browser QA at 390×844 and 1200×850: equal columns, no horizontal overflow, no nested scroll regions, working section jumps, AV mark-to-case interaction, animal disclosures, readable sources and light/dark themes. External link attributes match the site's initializer to avoid hydration mismatch.
+- Repository-wide `astro check` previously reported 135 diagnostics outside the traffic files. The legacy `validate:data` command targets missing aquifer datasets. Those unrelated baseline problems remain; traffic-specific checks pass.
