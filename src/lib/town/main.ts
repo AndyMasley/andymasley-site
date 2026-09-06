@@ -3,6 +3,7 @@ import { Sky } from 'three/examples/jsm/objects/Sky.js';
 import { advanceRealTime, DriveEngine, LANDMARKS, MPH, RoadGraph, spawnAtLandmark } from './engine';
 import { validateManifest, type Quality, type V3 } from './contracts';
 import { TownWorld } from './world';
+import { startupPosition } from './startup';
 import { createSummerSky, SUMMER_LIGHT } from './atmosphere';
 import { createTouringCar, type TouringCar } from './vehicle';
 import release from '../../../data/derived/town/release.json';
@@ -161,6 +162,9 @@ export async function startTown(root: HTMLElement): Promise<Session> {
 
   try {
     setStatus('Loading the roads and the first streets…');
+    const initialRequests = Promise.all([fetch(WORLD_URL, { signal }), fetch(NETWORK_URL, { signal })]);
+    // A renderer failure can cancel requests before the later await attaches.
+    void initialRequests.catch(() => {});
     renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false, powerPreference: 'high-performance' });
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -195,26 +199,31 @@ export async function startTown(root: HTMLElement): Promise<Session> {
     finally { pmrem.dispose(); }
     scene.environment = environmentTarget.texture;
 
-    const [manifestResponse, networkResponse] = await Promise.all([fetch(WORLD_URL, { signal }), fetch(NETWORK_URL, { signal })]);
+    const [manifestResponse, networkResponse] = await initialRequests;
     if (!manifestResponse.ok || !networkResponse.ok) throw new Error('The town files could not be loaded. Please try again.');
     const manifest: unknown = await manifestResponse.json();
     validateManifest(manifest);
+    if (disposed) return session;
+    const startingLocation = (locationSelect.value || 'DOWNTOWN') as LandmarkKey;
+    world = new TownWorld(manifest, new URL(WORLD_URL, location.href).href, () => {});
+    world.setQuality(quality, mobile);
+    scene.add(world.root);
+    const landscapeReady = world.initialize(startupPosition(startingLocation, manifest));
+    void landscapeReady.catch(() => {});
     const network = await networkResponse.json();
     await new Promise((resolve) => setTimeout(resolve, 0));
     if (disposed) return session;
     graph = new RoadGraph(network);
-    engine = spawnAtLandmark(graph, (locationSelect.value || 'DOWNTOWN') as LandmarkKey);
-    world = new TownWorld(manifest, new URL(WORLD_URL, location.href).href, () => {});
-    world.setQuality(quality, mobile);
-    scene.add(world.root);
+    engine = spawnAtLandmark(graph, startingLocation);
     setStatus('Preparing the landscape and your car…');
     vehicle = createTouringCar();
     car = vehicle.root;
-    await world.initialize();
-    car.name = 'Your car';
-    scene.add(car);
+    await landscapeReady;
+    if (disposed) return session;
     await world.prepareAt(toWorld(engine.pose()[0]));
     if (disposed) return session;
+    car.name = 'Your car';
+    scene.add(car);
 
     const fit = (): void => {
       const box = canvas.getBoundingClientRect();

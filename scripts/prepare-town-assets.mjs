@@ -36,3 +36,4 @@ if (!installed) {
   } finally { await rm(scratch, { recursive: true, force: true }); }
 }
 execFileSync(process.execPath, [join(project, 'scripts/validate-town-assets.mjs'), '--root', destination], { stdio: 'inherit', cwd: project });
+execFileSync(process.execPath, [join(project, 'scripts/prepare-town-transfer.mjs')], { stdio: 'inherit', cwd: project });

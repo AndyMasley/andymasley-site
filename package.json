@@ -13,7 +13,7 @@
     "validate:data": "python3 -m etl.validate_outputs",
     "prebuild": "node scripts/prepare-town-assets.mjs",
     "check:town": "tsc --project tsconfig.town.json",
-    "test:town-assets": "node --test data/schema/town/validate-town-assets.checks.mjs",
+    "test:town-assets": "node --test data/schema/town/validate-town-assets.checks.mjs tests/town/prepare-transfer.checks.mjs",
     "validate:town-assets": "node scripts/validate-town-assets.mjs"
   },
   "dependencies": {
