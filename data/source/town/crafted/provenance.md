@@ -43,6 +43,8 @@ The fuller atlas and its source manifests remain in the user's Webster research 
 
 Coordinates are local source X east / Y north / Z up metres. The builder rotates each façade frame into renderer X / Y up / negative north Z and subtracts its tile origin once. Tile placement then restores that origin. School removal requires its exclusive `Reference | School …` namespace; a missing namespace fails rather than duplicating bodies. Main Street removal applies only to generic trim/glass/door triangle centres in bounded reviewed façade strips. Protected landmark/photo materials remain intact. Assemblies are batched by material, retain stable source IDs, and use the existing world material/texture/geometry ownership and eviction system.
 
+Entrance paths and forecourts are clipped onto the decoded terrain triangles for the active tile LOD, then raised four centimetres. This preserves terrain creases and prevents the coarse two-metre support grid from burying pieces of paving. The saved support grid still positions planting and foundation details; it is also the fallback for fixtures without rendered terrain. Approach width and alignment remain inferred.
+
 ## Broader presentation
 
 The new original, unbranded touring car is built from procedural geometry in metres. It keeps the previous road-contact origin, axle spacing and vehicle envelope. Wheels have separate steering pivots and rolling assemblies. All vehicle resources are owned and disposed by the car; the old source car remains in the immutable archive but is no longer downloaded on Play.

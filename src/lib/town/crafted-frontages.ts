@@ -63,7 +63,7 @@ ${role === 'wall' ? 'diffuseColor.rgb *= 1.0-craftedJoint*0.13;' : role === 'bri
 
 class Batch {
   readonly chunks = new Map<string, Chunk>();
-  constructor(readonly origin: THREE.Vector3, readonly level: number) {}
+  constructor(readonly origin: THREE.Vector3, readonly level: number, readonly terrain = new Map<string, number[][][]>()) {}
 
   geometry(frame: Frame, role: Role, position: ArrayLike<number>, normal: ArrayLike<number>, color = PALETTE[role]): void {
     const key = `${role}:${color}`;
@@ -154,7 +154,57 @@ export function frontageGround(record: School, u: number, outward: number): numb
   return THREE.MathUtils.lerp(THREE.MathUtils.lerp(grid.heights[offset],grid.heights[offset+1],fx),THREE.MathUtils.lerp(grid.heights[offset+grid.x.length],grid.heights[offset+grid.x.length+1],fx),fy);
 }
 
+/** Clip on the rendered triangle plane, retaining every source terrain crease. */
+export function clipTerrainTriangle(triangle: number[][], bounds: readonly number[]): number[][] {
+  let points=triangle.map(p=>p.slice());
+  for(const [axis,edge,sign] of [[0,bounds[0],1],[0,bounds[1],-1],[2,bounds[2],1],[2,bounds[3],-1]]) {
+    const clipped:number[][]=[];
+    for(let i=0;i<points.length;i++) {
+      const a=points[i],b=points[(i+1)%points.length],da=(a[axis]-edge)*sign,db=(b[axis]-edge)*sign;
+      if(da>=0)clipped.push(a);
+      if((da<0)!==(db<0)) {const t=da/(da-db);clipped.push(a.map((v,j)=>v+(b[j]-v)*t));}
+    }
+    points=clipped;if(points.length<3)return [];
+  }
+  points=points.filter((p,i)=>{const q=points[(i+1)%points.length];return Math.hypot(p[0]-q[0],p[2]-q[2])>1e-8;});
+  points=points.filter((p,i)=>{const a=points[(i+points.length-1)%points.length],b=points[(i+1)%points.length];return Math.abs((p[0]-a[0])*(b[2]-p[2])-(p[2]-a[2])*(b[0]-p[0]))>1e-8;});
+  if(points.length<3)return [];
+  const area=points.reduce((sum,p,i)=>{const q=points[(i+1)%points.length];return sum+p[2]*q[0]-p[0]*q[2];},0);
+  if(Math.abs(area)<1e-8)return [];
+  if(area<0)points.reverse();
+  return points.map(([u,y,v])=>[u,y+.04,v]);
+}
+
+function renderedFrontageTerrain(group: THREE.Object3D, origin: THREE.Vector3, rows: School[]): Map<string,number[][][]> {
+  const result=new Map(rows.map(f=>[f.structId,[] as number[][][]]));
+  if(!rows.length)return result;
+  group.updateMatrixWorld(true);
+  const world=new THREE.Vector3();
+  group.traverse(object=>{
+    if(!(object instanceof THREE.Mesh))return;
+    const geometry=object.geometry,position=geometry.getAttribute('position');if(!position)return;
+    const materials=Array.isArray(object.material)?object.material:[object.material],index=geometry.index,count=index?.count??position.count;
+    for(const part of geometry.groups.length?geometry.groups:[{start:0,count,materialIndex:0}]) {
+      if(!/^Realism aerial.*\| ground_/.test(materials[part.materialIndex??0]?.name??''))continue;
+      for(let i=part.start;i<Math.min(count,part.start+part.count);i+=3) {
+        const triangle=[0,1,2].map(j=>world.fromBufferAttribute(position,index?index.getX(i+j):i+j).applyMatrix4(object.matrixWorld).add(origin).clone());
+        for(const f of rows) {
+          const local=triangle.map(p=>{const [u,v]=frontageCoordinates(f,p);return[u,p.y,v];});
+          if(Math.max(...local.map(p=>p[0]))< -5||Math.min(...local.map(p=>p[0]))>f.width+5||Math.max(...local.map(p=>p[2]))< -30||Math.min(...local.map(p=>p[2]))>f.approachM+1)continue;
+          result.get(f.structId)!.push(local);
+        }
+      }
+    }
+  });
+  return result;
+}
+
 function groundStrip(batch: Batch, f: School, u0: number, u1: number, v0: number, v1: number, role: Role): void {
+  const terrain=batch.terrain.get(f.structId);
+  if(terrain?.length) {
+    for(const triangle of terrain)batch.polygon(f,role,clipTerrainTriangle(triangle,[u0,u1,v0,v1]));
+    return;
+  }
   for(let v=v0;v<v1-.001;v+=.8) {
     const end=Math.min(v1,v+.8), p=[[u0,frontageGround(f,u0,v)+.04,v],[u0,frontageGround(f,u0,end)+.04,end],[u1,frontageGround(f,u1,end)+.04,end],[u1,frontageGround(f,u1,v)+.04,v]];
     batch.polygon(f,role,p);
@@ -346,7 +396,7 @@ export function applyCraftedFrontages(group: THREE.Object3D, tileId: string, til
   if(existing)return existing;
   const schoolRows=data.school.filter(r=>r.tileId===tileId),commercialRows=data.commercial.filter(r=>r.tileId===tileId);
   if(!schoolRows.length&&!commercialRows.length)return undefined;
-  const origin=new THREE.Vector3().fromArray(tileOrigin),batch=new Batch(origin,level);
+  const origin=new THREE.Vector3().fromArray(tileOrigin),batch=new Batch(origin,level,renderedFrontageTerrain(group,origin,schoolRows));
   for(const row of schoolRows)school(batch,row);
   for(const row of commercialRows)commercial(batch,row);
   const built=batch.finish();

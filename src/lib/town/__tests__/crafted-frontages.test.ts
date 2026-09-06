@@ -2,7 +2,7 @@
 import { describe, expect, it } from 'vitest';
 import * as THREE from 'three';
 import data from '../../../../data/derived/town/crafted-frontages.json';
-import { applyCraftedFrontages, frontageGround } from '../crafted-frontages';
+import { applyCraftedFrontages, frontageGround, clipTerrainTriangle } from '../crafted-frontages';
 
 function mesh(name: string, position: number[] = [0,0,0,1,0,0,0,1,0]) {
   const geometry=new THREE.BufferGeometry(); geometry.setAttribute('position',new THREE.Float32BufferAttribute(position,3)); geometry.computeVertexNormals();
@@ -58,5 +58,36 @@ describe('evidence-derived frontage assembly',()=>{
     expect(data.excludedPhoto.id).toBe('PHOTO-SCHOOL-73');
     expect(data.school.find(h=>h.number==='116')!.structId).toBe('168151_866421');
     expect(data.school.find(h=>h.number==='60')!.roofMasses.some(m=>m.roof==='mansard')).toBe(true);
+  });
+});
+
+
+describe('entrance paving follows rendered terrain',()=>{
+  const a=[[0,0,0],[0,0,4],[4,2,4]],b=[[0,0,0],[4,2,4],[4,0,0]];
+  it('retains a terrain ridge while covering the full clipped rectangular approach',()=>{
+    const polygons=[a,b].map(t=>clipTerrainTriangle(t,[1,3,.5,3.5]));let area=0;
+    for(const polygon of polygons){
+      for(const [i,p]of polygon.entries()){
+        const q=polygon[(i+1)%polygon.length];area+=(p[2]*q[0]-p[0]*q[2])/2;
+        expect(p[0]).toBeGreaterThanOrEqual(1);expect(p[0]).toBeLessThanOrEqual(3);
+        expect(p[2]).toBeGreaterThanOrEqual(.5);expect(p[2]).toBeLessThanOrEqual(3.5);
+        expect(p[1]).toBeCloseTo(Math.min(p[0],p[2])*.5+.04,10);
+      }
+    }
+    expect(area).toBeCloseTo(6,10);
+    expect(polygons.flat().some(p=>p[0]===p[2])).toBe(true);
+  });
+  it('rejects disjoint or zero-area intersections and repairs downward winding',()=>{
+    expect(clipTerrainTriangle(a,[5,6,5,6])).toEqual([]);
+    expect(clipTerrainTriangle(a,[4,5,0,4])).toEqual([]);
+    expect(clipTerrainTriangle([...a].reverse(),[1,3,.5,3.5])).toEqual(clipTerrainTriangle(a,[1,3,.5,3.5]));
+  });
+  it('does not emit duplicate boundary vertices or zero-area leading triangles',()=>{
+    for(const bounds of [[0,4,0,4],[0,2,0,2],[2,4,0,4]]) {
+      const polygon=clipTerrainTriangle(a,bounds);
+      const points=polygon.map(p=>new THREE.Vector3().fromArray(p));
+      expect(new Set(polygon.map(p=>p.join(','))).size).toBe(polygon.length);
+      expect(points[1].clone().sub(points[0]).cross(points[2].clone().sub(points[0])).y).toBeGreaterThan(0);
+    }
   });
 });
