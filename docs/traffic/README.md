@@ -1,5 +1,7 @@
 # Traffic comparison — September 6, 2026 snapshot
 
+Removed from the public website at the owner's request on September 6, 2026. The route and shared visuals registry entry have been removed; research and implementation files remain in the repository. The notes below document the former visualization.
+
 Route: `/visuals/traffic-deaths`. The shared visuals registry supplies its search and sitemap entries. The page follows the site's paper, serif typography and rules, with two equal columns and normal page scrolling. Deaths, injuries and animals appear sequentially; jump links and sticky totals keep the very long mark fields usable.
 
 This is not a census of casualties caused by human drivers versus AVs. No complete current-year series was located. The national column illustrates January 1–September 5 (248 days) at the latest annual daily rates. The AV column shows a documented casualty minimum for that calendar window, with different reporting coverage. National totals include AV involvement. Neither column classifies fault, and no per-mile safety ratio is computed.

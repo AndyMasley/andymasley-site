@@ -16,12 +16,6 @@ export interface VisualEntry {
 
 export const visuals: VisualEntry[] = [
   {
-    title: 'Traffic deaths & injuries',
-    href: '/visuals/traffic-deaths',
-    description: 'Human driving and autonomous vehicles: the 2026 US road toll, including animals and gaps in the data.',
-    searchTerms: 'AV ADS Waymo robotaxi autonomous self driving cars traffic deaths injuries animals roadkill safety',
-  },
-  {
     title: 'Factory-farmed chickens',
     href: '/visuals/factory-farmed-chickens',
     description: 'Visualizing the scale of factory farming in the United States.',
