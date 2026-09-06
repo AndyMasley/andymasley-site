@@ -59,6 +59,13 @@ describe('junction instructions follow the road branches', () => {
     expect(choices[0].label).toBe('U-turn');
   });
 
+  it.each([160, -160, 179, -179])('makes a distinct %i° hairpin branch selectable without calling it a reversal', angle => {
+    const { choices } = fork([0, angle], ['Main', 'Loop ramp']);
+    const direction = angle > 0 ? 'LEFT' : 'RIGHT';
+    expect(choices.find(choice => choice.edgeId === 2)?.label).toBe(angle > 0 ? 'Left' : 'Right');
+    expect(chooseTurnOption(choices, 'Main', direction)?.edgeId).toBe(2);
+  });
+
   it('does not add unknown, illegal, or inverse roads or mutate cached input choices', () => {
     const fixture = fork([0, -5], ['Main', 'Ramp']);
     const before = JSON.stringify(fixture.legal);
@@ -107,6 +114,19 @@ describe('real Webster junction regressions', () => {
     const options = choices(from);
     expect(options.find(choice => choice.edgeId === target)?.label).toBe(label);
     expect(chooseTurnOption(options, graph.edges.get(from)!.name, label === 'Left' ? 'LEFT' : 'RIGHT')?.edgeId).toBe(target);
+  });
+
+  it.each([
+    [2628, 2438, 'RAMP-RT 16 TO RT 395 SB'],
+    [2245, 2422, 'RAMP-CUDWORTH RD TO RT 395 NB'],
+    [2683, 2128, 'LAKE STREET'],
+  ])('allows Left from approach %i onto sharp branch %i (%s)', (from, target, name) => {
+    const options = choices(from);
+    const branch = options.find(choice => choice.edgeId === target);
+    expect(branch?.name).toBe(name);
+    expect(branch?.angleDeg).toBeGreaterThan(150);
+    expect(branch?.label).toBe('Left');
+    expect(chooseTurnOption(options, graph.edges.get(from)!.name, 'LEFT')?.edgeId).toBe(target);
   });
 
   it('retains every original legal-edge set, including all blocked-turn and obstacle exclusions', () => {
