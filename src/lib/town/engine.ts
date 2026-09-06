@@ -1,6 +1,7 @@
 import { classifyTurnOptions, chooseTurnOption } from './turn-options';
 import { roadSpeedLimitMps, cruiseCeilingMps } from './speed-policy';
 import { reverseDrivingPosition } from './reverse-direction';
+import { rampSpeedLimitMps } from './ramp-speed';
 
 /** Road-guided simulation using the source geometry from driving/drive_webster.py.
  * Positions are local east/north/up metres. Rendering may map [x,y,z] to
@@ -377,8 +378,20 @@ export class DriveEngine {
     return roadSpeedLimitMps(this.phase === 'TURN' ? required(this.graph.edges, this.connection!.nextId, 'road') : this.edge);
   }
 
+  rampTarget(): number | undefined {
+    if (this.phase !== 'TURN') return rampSpeedLimitMps(this.graph, this.edgeId, this.s);
+    const connection = this.connection!;
+    const from = rampSpeedLimitMps(this.graph, this.edgeId, this.path.length - connection.fromTrim);
+    const to = rampSpeedLimitMps(this.graph, connection.nextId, connection.trim);
+    if (from === undefined) return to;
+    const destination = required(this.graph.edges, connection.nextId, 'road');
+    if (to === undefined && Number(destination.road_type) !== 1) return undefined;
+    const fraction = clamp(this.connectionS / connection.path.length, 0, 1);
+    return from + ((to ?? roadSpeedLimitMps(destination)) - from) * fraction;
+  }
+
   speedLimit(): number {
-    const limit = this.roadLimit();
+    const limit = this.rampTarget() ?? this.roadLimit();
     if (this.phase === 'TURN' || this.plan()) return limit;
     const remaining = Math.max(0, (this.obstacleAhead() ?? this.path.length) - this.s - 0.15);
     return Math.min(limit, Math.sqrt(2 * 2.2 * remaining));
@@ -432,7 +445,7 @@ export class DriveEngine {
     this.elapsed += dt;
     if (throttle) { this.endOfRoute = false; this.cruiseAtLimit = true; }
     if (brake) this.cruiseAtLimit = false;
-    if (this.cruiseAtLimit) this.cruise = cruiseCeilingMps(this.phase === 'TURN' ? required(this.graph.edges, this.connection!.nextId, 'road') : this.edge, maxMph);
+    if (this.cruiseAtLimit) this.cruise = Math.max(this.rampTarget() ?? 0, cruiseCeilingMps(this.phase === 'TURN' ? required(this.graph.edges, this.connection!.nextId, 'road') : this.edge, maxMph));
     if (brake) this.cruise = Math.max(0, Math.min(this.cruise, this.speed) - 5.5 * dt);
     const target = Math.min(this.cruise, this.speedLimit());
     const desired = clamp((target - this.speed) * 1.7, brake ? -5.5 : -3.2, 1.9);

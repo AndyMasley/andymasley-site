@@ -79,6 +79,7 @@ export async function startTown(root: HTMLElement): Promise<Session> {
   const fullscreenButton = element<HTMLButtonElement>('fullscreen');
   const speedText = element('speed');
   const limitText = element('limit');
+  const limitLabel = element('limit-label');
   const roadText = element('road');
   const distanceText = element('distance');
   const turnText = element('turn');
@@ -451,8 +452,10 @@ export async function startTown(root: HTMLElement): Promise<Session> {
     function refreshHud(): void {
       speedText.textContent = String(Math.round(engine.speed / MPH)).padStart(2, '0');
       roadText.textContent = engine.edge.name || 'Local road';
-      limitText.textContent = `${Math.round(engine.roadLimit() / MPH)} mph`;
-      limitText.title = engine.edge.speed_status === 'posted inventory mph converted to km/h' ? 'Posted limit from the mapped road inventory' : 'Game speed limit estimated from the mapped road class';
+      const rampTarget = engine.rampTarget();
+      limitLabel.textContent = rampTarget === undefined ? 'Road limit' : 'Ramp target';
+      limitText.textContent = `${Math.round((rampTarget ?? engine.roadLimit()) / MPH)} mph`;
+      limitText.title = rampTarget !== undefined ? 'Modeled acceleration target: build speed along the entrance ramp toward the highway limit' : engine.edge.speed_status === 'posted inventory mph converted to km/h' ? 'Posted limit from the mapped road inventory' : 'Game speed limit estimated from the mapped road class';
       const next = engine.nextJunction();
       distanceText.textContent = `${(engine.distance / 1609.344).toFixed(1)} mi`;
       const turnDistance = next ? next.distance < 160 ? `${Math.max(10, Math.round(next.distance * 3.28084 / 10) * 10)} ft` : `${(next.distance / 1609.344).toFixed(1)} mi` : '';
