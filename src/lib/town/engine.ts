@@ -454,6 +454,11 @@ export class DriveEngine {
     this.speed = Math.max(0, this.speed + this.acceleration * dt);
     if (Math.abs(target - this.speed) < 0.015 && Math.abs(this.acceleration) < 0.08) this.speed = target;
     this.advance(Math.max(0, (previousSpeed + this.speed) * 0.5 * dt));
+    if (this.phase === 'ROAD' && this.speed < 0.05 && this.path.length - this.s < 5 && this.rampTarget() === 0 && !this.plan() && this.obstacleAhead() === undefined) {
+      this.speed = this.cruise = this.acceleration = 0;
+      this.cruiseAtLimit = false; this.endOfRoute = true;
+      this.lastMessage = 'End of mapped route. Turn around or choose another starting location.';
+    }
   }
 }
 

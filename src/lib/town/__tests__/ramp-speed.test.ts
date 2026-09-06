@@ -2,7 +2,7 @@
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { gunzipSync } from 'node:zlib';
-import { RoadGraph, type NetworkData, type RoadEdge } from '../engine';
+import { DriveEngine, RoadGraph, type NetworkData, type RoadEdge } from '../engine';
 import { rampSpeedLimitMps } from '../ramp-speed';
 import { METRES_PER_SECOND_PER_MPH as MPH, roadSpeedLimitMps } from '../speed-policy';
 
@@ -101,5 +101,22 @@ describe('retained Webster entrance ramp network', () => {
     const exits = [...graph.edges.values()].filter(road => /RAMP-RT 395 (NB|SB) TO/.test(road.name));
     expect(exits.length).toBeGreaterThan(10);
     for (const road of exits) expect(rampSpeedLimitMps(graph, road.id, 100), road.name).toBeUndefined();
+  });
+
+  it('brings the actual Cudworth drive to rest before the boundary without an abrupt final speed drop', () => {
+    const engine = new DriveEngine(graph, 2422);
+    engine.speed = engine.cruise = 20 * MPH;
+    let largestDrop = 0;
+    for (let frame = 0; frame < 60 * 90; frame++) {
+      const previous = engine.speed;
+      engine.step(1 / 60, true);
+      largestDrop = Math.max(largestDrop, previous - engine.speed);
+      if (engine.edgeId === 2430 && engine.rampTarget() === 0 && engine.speed < 0.05) break;
+    }
+    expect(engine.edgeId).toBe(2430);
+    expect(engine.speed / MPH).toBeLessThan(1);
+    expect(engine.path.length - engine.s).toBeGreaterThan(2);
+    expect(engine.path.length - engine.s).toBeLessThan(4);
+    expect(largestDrop / MPH).toBeLessThan(1);
   });
 });

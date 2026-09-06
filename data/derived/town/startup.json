@@ -3,7 +3,7 @@
   "directory": "2026-09-37fbef34bc2a",
   "manifestSha256": "37fbef34bc2a4467997252be75b4c43174a6a7b2d39963614cadd8d787e56105",
   "networkSha256": "d5ad755241708d48478d1c2dc08358b821d9cace21ed1c93d33de27ee0def2f4",
-  "engineSourceSha256": "33b59ba2ba8465aa5b69b839b70b4429ebbc49453412361b5f6137df48cdd33c",
+  "engineSourceSha256": "0863d7e8abf4c7ecd2dbb61fc13e8d7cc06847dcac39e79453796ad3f99f9c33",
   "tileSizeM": 250,
   "method": "Exact spawnAtLandmark(new RoadGraph(pinned network), key).pose(); world axes [x,z,-y]. Original unrounded IEEE-754 coordinates; runtime exact road readiness remains authoritative. worldPosition uses decimal strings so JSON-to-JavaScript bundling cannot round its numeric literals; Number() restores the exact original double.",
   "locations": {

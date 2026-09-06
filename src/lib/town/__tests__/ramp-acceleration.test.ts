@@ -68,14 +68,18 @@ describe('entrance-ramp acceleration in the driving engine', () => {
     const engine = new DriveEngine(graph, 2422);
     engine.speed = 20 * MPH;
     engine.step(1 / 60, true);
-    let fastest = 0;
+    let fastest = 0, largestSpeedDrop = 0;
     for (let frame = 0; frame < 90 * 60; frame++) {
+      const before = engine.speed;
       engine.step(1 / 60);
       fastest = Math.max(fastest, engine.speed / MPH);
+      largestSpeedDrop = Math.max(largestSpeedDrop, before - engine.speed);
     }
     expect(fastest).toBeGreaterThan(28);
     expect(engine.edgeId).toBe(2430);
     expect(engine.s).toBeLessThanOrEqual(engine.path.length);
     expect(engine.speed).toBeLessThan(0.2);
+    expect(largestSpeedDrop).toBeLessThan(0.2);
+    expect(engine.endOfRoute).toBe(true);
   });
 });

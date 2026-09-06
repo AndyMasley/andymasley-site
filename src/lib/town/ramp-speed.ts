@@ -6,6 +6,8 @@ interface RampProfile extends Tail { length: number; total: number; entrySpeed: 
 const profiles = new WeakMap<RoadGraph, Map<number, RampProfile>>();
 const INFERRED_SPEED = 'simulation target estimated from road class';
 const ACCELERATION = 1.8;
+const CLIPPED_DECELERATION = 1.4;
+const CLIPPED_STOPPING_MARGIN = 4;
 
 function rampRoute(road: RoadEdge): string { return String(road.route_id ?? '').trim().replace(/A$/i, '').toUpperCase(); }
 function mainlineRoute(road: RoadEdge): string { return String(road.route_id ?? '').replace(/\s/g, '').toUpperCase(); }
@@ -80,5 +82,5 @@ export function rampSpeedLimitMps(graph: RoadGraph, edgeId: number, s: number): 
   const remaining = Math.max(0, profile.distance - position);
   const progress = Math.max(0, profile.total - remaining - profile.hold);
   const target = Math.min(profile.mergeSpeed, Math.sqrt(profile.entrySpeed ** 2 + 2 * ACCELERATION * progress));
-  return profile.clipped ? Math.min(target, Math.sqrt(2 * 2.2 * Math.max(0, remaining - 0.15))) : target;
+  return profile.clipped ? Math.min(target, Math.sqrt(2 * CLIPPED_DECELERATION * Math.max(0, remaining - CLIPPED_STOPPING_MARGIN))) : target;
 }
