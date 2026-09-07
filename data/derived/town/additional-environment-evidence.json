@@ -12,7 +12,9 @@
     "final-lake-sites.json": "04636ef45f34860bbc5e888d5de8d9fdcfb701483b63b98dfb3484eb70d2af18",
     "mount-zion-cemetery.json": "c20c6310585548f8ef4d8f460786fd9499570b833bd07f20e1f927dd2855aff5",
     "sacred-heart-cemetery.json": "5c3cf38c7e1bd78b2de42094129097f4ec19504fe3d34f4fce42a37b968d665c",
+    "final-mapped-facilities.json": "566a959bf1220112de426ab677ba688bb5af7ccb65942f3ba8073e88407b1352",
     "lakeside-cemetery.json": "acc6bd77d90e26492e835c0460446fb0df23a8b706d53890f319ffc6f904a01a",
+    "nipmuck-pond-dam.json": "474aa3133ce79ed7d6de01a42209cc2505fabc13487315877d4a2811b9bd8bad",
     "launches-beaches.json": "b2f3e020a922139ada616e123f27973ae4e8729ca9fa4d733660916bf91c8c90"
   },
   "features": [
@@ -741,6 +743,42 @@
         [
           -154.4199,
           178.589
+        ]
+      ],
+      "basis": "Confirmed mapped dam line. Only low stone/concrete crest fragments against supported water are authored. No gates, hydraulic flow, spillway capacity or exact masonry construction is asserted."
+    },
+    {
+      "id": "nipmuck-pond-dam",
+      "kind": "dam",
+      "evidenceIds": [
+        "OSM-WAY-250488518",
+        "ECO-HAB-07"
+      ],
+      "osmWay": 250488518,
+      "mappedLine": [
+        [
+          630.8924,
+          2887.5415
+        ],
+        [
+          634.5005,
+          2885.6278
+        ],
+        [
+          643.7001,
+          2881.2149
+        ],
+        [
+          666.3173,
+          2871.9504
+        ],
+        [
+          676.6549,
+          2870.7209
+        ],
+        [
+          681.9032,
+          2867.2124
         ]
       ],
       "basis": "Confirmed mapped dam line. Only low stone/concrete crest fragments against supported water are authored. No gates, hydraulic flow, spillway capacity or exact masonry construction is asserted."

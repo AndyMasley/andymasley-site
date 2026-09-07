@@ -1,0 +1,4212 @@
+{
+  "retrievedAt": "2026-09-07T15:00:19.243817+00:00",
+  "attribution": "\u00a9 OpenStreetMap contributors, ODbL",
+  "sources": [
+    {
+      "url": "https://api.openstreetmap.org/api/0.6/node/65606783/ways.json",
+      "sha256": "6686f1db6d76acfe2727a6df132d128a11f5752ee1abe7f72a7e052b5d957aca"
+    },
+    {
+      "url": "https://api.openstreetmap.org/api/0.6/node/70335503/ways.json",
+      "sha256": "48295fb3730e9674e0bd6b01193a4f5de67fd1763693605438cc8e64b3884bf6"
+    },
+    {
+      "url": "https://api.openstreetmap.org/api/0.6/node/70381522/ways.json",
+      "sha256": "9f99e822e01dfb8a16be41643b73c25fe919279168418d33b6988bcb86eafa86"
+    },
+    {
+      "url": "https://api.openstreetmap.org/api/0.6/node/70396573/ways.json",
+      "sha256": "7b6bd0d9a89f9dbac7202833affdfca6eefa0aed4f77498c8db8e13aa7ebba69"
+    },
+    {
+      "url": "https://api.openstreetmap.org/api/0.6/node/70409215/ways.json",
+      "sha256": "4402fb00dde6a07d9e9fffcca1680c1d292bb0c107b6623695b248b3a0a0fd42"
+    },
+    {
+      "url": "https://api.openstreetmap.org/api/0.6/node/2544288349/ways.json",
+      "sha256": "c5ecd5a172a818cbd478585aa18eff9db81faa7fb54a74c8cab70bb12ebc2280"
+    },
+    {
+      "url": "https://api.openstreetmap.org/api/0.6/node/2544288352/ways.json",
+      "sha256": "018dd436bb84d995bb7382f906fa921044d31d3f1dfc99cb311421a494fe6570"
+    },
+    {
+      "url": "https://api.openstreetmap.org/api/0.6/node/9857043718/ways.json",
+      "sha256": "c09a269d62b945e09bcef570861e3d78af21604ad0ee93435e796d43d6ca0a41"
+    },
+    {
+      "url": "https://api.openstreetmap.org/api/0.6/node/9857043719/ways.json",
+      "sha256": "806c447a0c4cd7b18bdbf9da5b00ad5dfcb5e91f85020069cb5ebb48cc5e9659"
+    },
+    {
+      "url": "https://api.openstreetmap.org/api/0.6/node/9857043720/ways.json",
+      "sha256": "db13ae1079d2f636bb128afc0824068380bd8769559acb1a2114191891b1f529"
+    },
+    {
+      "url": "https://api.openstreetmap.org/api/0.6/node/9857043721/ways.json",
+      "sha256": "aca026e3ecb0ef5b41ed1be6e95a68afb028deec14ed9c68beb6bc947e72beeb"
+    },
+    {
+      "url": "https://api.openstreetmap.org/api/0.6/node/9857043722/ways.json",
+      "sha256": "3d1f0d63f85cfb37e26fbb2ee37fd6d7f64f63915c6bd460b4d522541078fca9"
+    },
+    {
+      "url": "https://api.openstreetmap.org/api/0.6/node/9857043723/ways.json",
+      "sha256": "0a527ff63eb7506acc8ce3d8e23f2d5981526bdf4830d49de62da9e85c49f603"
+    },
+    {
+      "url": "https://api.openstreetmap.org/api/0.6/node/9857043724/ways.json",
+      "sha256": "392a6b95ada73e500da44f38c98b72988a7d66e29eb1e9d398bc91ce51db0d9d"
+    },
+    {
+      "url": "https://api.openstreetmap.org/api/0.6/node/9857043725/ways.json",
+      "sha256": "5716fb3eeb4ae371097f12f61892a2e7970c4178ca3d9cbebd11f46f723b3b64"
+    },
+    {
+      "url": "https://api.openstreetmap.org/api/0.6/node/9857043726/ways.json",
+      "sha256": "e5990cab71098975d5b49f9a9cc8fbb09a13077ddb97c8250bba7766810c2415"
+    },
+    {
+      "url": "https://api.openstreetmap.org/api/0.6/node/9857043727/ways.json",
+      "sha256": "1cde8da9e851ff4c63c58a16ba275846a2667ad3f2d34d675857fe58d2734c6f"
+    },
+    {
+      "url": "https://api.openstreetmap.org/api/0.6/node/9857043728/ways.json",
+      "sha256": "28883b248ba9ff7e9592ad59804b068297577f568aa673f829ae4a222ff9fd7d"
+    },
+    {
+      "url": "https://api.openstreetmap.org/api/0.6/node/9857043729/ways.json",
+      "sha256": "39f7db40db12c801492d01f5c690ed9090c3b3a9fa807e4d919a215d7613eb5c"
+    },
+    {
+      "url": "https://api.openstreetmap.org/api/0.6/node/10915053211/ways.json",
+      "sha256": "fca4f8b012682543c66bc3026e8a21ddf28b0dab7c4c612f81e8e5d0caf527d8"
+    },
+    {
+      "url": "https://api.openstreetmap.org/api/0.6/node/10925322326/ways.json",
+      "sha256": "8dd89b06dc091be742d72a31912eca8b003d8e8fd02c9e2a5b60c16c950cf0f3"
+    },
+    {
+      "url": "https://api.openstreetmap.org/api/0.6/node/10925344619/ways.json",
+      "sha256": "960777000e5f8dd10a54b4a2b8782e75132d8574ffc9b80f505d90affae9cb08"
+    },
+    {
+      "url": "https://api.openstreetmap.org/api/0.6/node/10925344620/ways.json",
+      "sha256": "63d262834d8c7064c80aaad74c814817ed0598840b8864463c161331d37b95e8"
+    },
+    {
+      "url": "https://api.openstreetmap.org/api/0.6/node/10925344621/ways.json",
+      "sha256": "8609a18c81a59a7fc88565ec78fd27d91246de903bd1cb26480e008e6a0a0f4a"
+    },
+    {
+      "url": "https://api.openstreetmap.org/api/0.6/node/12075305654/ways.json",
+      "sha256": "e8a303dae17a9d11196ac9c6bc5de074ec3809c2d33bf92f8d478c9eac8125ba"
+    },
+    {
+      "url": "https://api.openstreetmap.org/api/0.6/node/12075305656/ways.json",
+      "sha256": "efd25d5b7bba842daf7f753bc9fd9011580b7368856d7dd891b64b85c9e99321"
+    },
+    {
+      "url": "https://api.openstreetmap.org/api/0.6/way/8959427/full.json",
+      "sha256": "f7d7963df7f7a452896e38e2dba351c4cbb2555be1df4367cb09fa959ade7a70"
+    },
+    {
+      "url": "https://api.openstreetmap.org/api/0.6/way/8959453/full.json",
+      "sha256": "1965d26059062084c253ab7f90603f3de7713fd70fc88e2c3d15202ca0a2db5c"
+    },
+    {
+      "url": "https://api.openstreetmap.org/api/0.6/way/8959781/full.json",
+      "sha256": "31877f566759860fbfe7e877d41a5869a93f0314f54f37fb59a9721595cd3556"
+    },
+    {
+      "url": "https://api.openstreetmap.org/api/0.6/way/9329752/full.json",
+      "sha256": "9988bf6e555bf809fd765380e5037a043c6b9220fd9114b3d4fdab68ef92e451"
+    },
+    {
+      "url": "https://api.openstreetmap.org/api/0.6/way/9329764/full.json",
+      "sha256": "c82e9cb604dc77928fdc53b5e34a0bfcc621aee63beea5b739819e9b7735ef25"
+    },
+    {
+      "url": "https://api.openstreetmap.org/api/0.6/way/9329258/full.json",
+      "sha256": "3e1c46028ed0331530c4de04962fad78e0482af104ec24ae04978ea17c99380e"
+    },
+    {
+      "url": "https://api.openstreetmap.org/api/0.6/way/9329612/full.json",
+      "sha256": "b1de1c1bc42dd1631f6e07bc82948705c9e083306f0316a985c56e806daae803"
+    },
+    {
+      "url": "https://api.openstreetmap.org/api/0.6/way/9329670/full.json",
+      "sha256": "bc80ef42680d9301a584827b3eabcb6abd068045e0648f1d8779846863464fbb"
+    },
+    {
+      "url": "https://api.openstreetmap.org/api/0.6/way/9329027/full.json",
+      "sha256": "52ce319f4e6cbab330edd91961d214938450f630ccca4f31236b2f47de936e27"
+    },
+    {
+      "url": "https://api.openstreetmap.org/api/0.6/way/9329582/full.json",
+      "sha256": "5878f77921e129f6a20ba92f681b35bf3ea876932c13c9687edcb8591425bc2d"
+    },
+    {
+      "url": "https://api.openstreetmap.org/api/0.6/way/9329863/full.json",
+      "sha256": "33663d899e86e5d791aeca89ccfae52a919da1a7994a5cbe485b119bf56ac89e"
+    },
+    {
+      "url": "https://api.openstreetmap.org/api/0.6/way/8959231/full.json",
+      "sha256": "0c6627c200842d8ae99c79c1524f922c5adcda051cf7b9e8736d3ec83c7794df"
+    },
+    {
+      "url": "https://api.openstreetmap.org/api/0.6/way/668112559/full.json",
+      "sha256": "a78494b29995b54a914d79931e9b85d9696d295134fcf7dc9772769a1d72af05"
+    },
+    {
+      "url": "https://api.openstreetmap.org/api/0.6/way/9329813/full.json",
+      "sha256": "b32888d80487c9ac9420cb2914bf367fa05013bd528cda092de82eee2e7bfc80"
+    },
+    {
+      "url": "https://api.openstreetmap.org/api/0.6/way/9329925/full.json",
+      "sha256": "7dbbad1cf9ab487d343fb9acaf9a7492ffbfe8f3f03baad1fcaaf8f4d864e119"
+    },
+    {
+      "url": "https://api.openstreetmap.org/api/0.6/way/9329577/full.json",
+      "sha256": "6b12561e9125bd217ead5c470919146e88a18672e3c7605b8931afa7a3c30c48"
+    },
+    {
+      "url": "https://api.openstreetmap.org/api/0.6/way/9329523/full.json",
+      "sha256": "29c081447c0c8df76096063d6d6f70690ce790f0227c8122a79aa6f43b37aa17"
+    },
+    {
+      "url": "https://api.openstreetmap.org/api/0.6/way/9329515/full.json",
+      "sha256": "b32addadb8387a02bae94db2b2e67a4056c5384abe5135127334383ed67b1d42"
+    },
+    {
+      "url": "https://api.openstreetmap.org/api/0.6/way/9329870/full.json",
+      "sha256": "837b1dab4169eb44a3020cccc5c9743f909e4d0c0179cff640be89c8725c1bd1"
+    },
+    {
+      "url": "https://api.openstreetmap.org/api/0.6/way/9329756/full.json",
+      "sha256": "46c30b4105563311e8cf03e054a6d5034ca2e6d2103e89dddfa21a5d209be338"
+    },
+    {
+      "url": "https://api.openstreetmap.org/api/0.6/way/9319800/full.json",
+      "sha256": "f3668ef986d14e8f96395de58233e5fc779d025df955d456390f01a1a3842bda"
+    },
+    {
+      "url": "https://api.openstreetmap.org/api/0.6/way/9319994/full.json",
+      "sha256": "65db278c00ee0edd8de295d25ce998717de368a4b0df6a4f9dddf939c658e17b"
+    }
+  ],
+  "elements": [
+    {
+      "type": "node",
+      "id": 65553025,
+      "lat": 42.0559797,
+      "lon": -71.8904124,
+      "timestamp": "2021-10-13T03:12:28Z",
+      "version": 3
+    },
+    {
+      "type": "node",
+      "id": 65554763,
+      "lat": 42.0544281,
+      "lon": -71.8842489,
+      "timestamp": "2021-10-13T03:12:28Z",
+      "version": 3
+    },
+    {
+      "type": "node",
+      "id": 65563399,
+      "lat": 42.055938,
+      "lon": -71.890014,
+      "timestamp": "2021-10-13T03:12:29Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 65595870,
+      "lat": 42.054642,
+      "lon": -71.885066,
+      "timestamp": "2021-10-13T03:12:34Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 65606783,
+      "lat": 42.0553213,
+      "lon": -71.8876595,
+      "timestamp": "2022-06-30T02:05:03Z",
+      "version": 4,
+      "tags": {
+        "direction": "both",
+        "highway": "stop",
+        "stop": "all"
+      }
+    },
+    {
+      "type": "node",
+      "id": 65617643,
+      "lat": 42.054207,
+      "lon": -71.883404,
+      "timestamp": "2021-10-13T03:12:37Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 5686259867,
+      "lat": 42.0559694,
+      "lon": -71.8902132,
+      "timestamp": "2018-06-12T22:55:52Z",
+      "version": 1
+    },
+    {
+      "type": "node",
+      "id": 5686259868,
+      "lat": 42.0559563,
+      "lon": -71.8901101,
+      "timestamp": "2018-06-12T22:55:52Z",
+      "version": 1
+    },
+    {
+      "type": "node",
+      "id": 9857027016,
+      "lat": 42.0559732,
+      "lon": -71.8902867,
+      "timestamp": "2022-06-30T02:05:03Z",
+      "version": 1,
+      "tags": {
+        "direction": "backward",
+        "highway": "stop"
+      }
+    },
+    {
+      "type": "node",
+      "id": 9857043717,
+      "lat": 42.0549352,
+      "lon": -71.8861854,
+      "timestamp": "2024-09-20T04:40:32Z",
+      "version": 2,
+      "tags": {
+        "crossing": "marked",
+        "crossing:markings": "yes",
+        "highway": "crossing"
+      }
+    },
+    {
+      "type": "node",
+      "id": 9857043718,
+      "lat": 42.0542288,
+      "lon": -71.8834875,
+      "timestamp": "2022-06-30T02:05:03Z",
+      "version": 1,
+      "tags": {
+        "direction": "forward",
+        "highway": "stop"
+      }
+    },
+    {
+      "type": "way",
+      "id": 8959427,
+      "timestamp": "2022-06-30T02:05:03Z",
+      "version": 3,
+      "nodes": [
+        65553025,
+        9857027016,
+        5686259867,
+        5686259868,
+        65563399,
+        65606783,
+        9857043717,
+        65595870,
+        65554763,
+        9857043718,
+        65617643
+      ],
+      "tags": {
+        "attribution": "Office of Geographic and Environmental Information (MassGIS)",
+        "condition": "good",
+        "highway": "tertiary",
+        "lanes": "2",
+        "massgis:way_id": "206395",
+        "name": "Pine Street",
+        "source": "massgis_import_v0.1_20071009102743",
+        "surface": "asphalt",
+        "width": "12.2"
+      }
+    },
+    {
+      "type": "node",
+      "id": 65551839,
+      "lat": 42.057546,
+      "lon": -71.886614,
+      "timestamp": "2021-10-13T03:12:28Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 65566238,
+      "lat": 42.055752,
+      "lon": -71.887479,
+      "timestamp": "2021-10-13T03:12:29Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 65583045,
+      "lat": 42.058283,
+      "lon": -71.886261,
+      "timestamp": "2021-10-13T03:12:33Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 65600593,
+      "lat": 42.056128,
+      "lon": -71.887303,
+      "timestamp": "2021-10-13T03:12:34Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 65603868,
+      "lat": 42.057027,
+      "lon": -71.886872,
+      "timestamp": "2021-10-13T03:12:35Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 65617385,
+      "lat": 42.056527,
+      "lon": -71.887109,
+      "timestamp": "2021-10-13T03:12:37Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 6772226412,
+      "lat": 42.0568431,
+      "lon": -71.8869592,
+      "timestamp": "2019-09-04T14:45:28Z",
+      "version": 1
+    },
+    {
+      "type": "node",
+      "id": 6772226416,
+      "lat": 42.0581208,
+      "lon": -71.8863387,
+      "timestamp": "2019-09-04T14:45:28Z",
+      "version": 1
+    },
+    {
+      "type": "node",
+      "id": 6772226417,
+      "lat": 42.0575165,
+      "lon": -71.8866286,
+      "timestamp": "2019-09-04T14:45:28Z",
+      "version": 1
+    },
+    {
+      "type": "node",
+      "id": 7822858897,
+      "lat": 42.0582634,
+      "lon": -71.8862704,
+      "timestamp": "2020-08-18T11:05:09Z",
+      "version": 1
+    },
+    {
+      "type": "way",
+      "id": 8959453,
+      "timestamp": "2020-08-18T11:05:09Z",
+      "version": 3,
+      "nodes": [
+        65606783,
+        65566238,
+        65600593,
+        65617385,
+        6772226412,
+        65603868,
+        6772226417,
+        65551839,
+        6772226416,
+        7822858897,
+        65583045
+      ],
+      "tags": {
+        "attribution": "Office of Geographic and Environmental Information (MassGIS)",
+        "condition": "good",
+        "highway": "residential",
+        "lanes": "2",
+        "massgis:way_id": "161798",
+        "name": "School Street",
+        "source": "massgis_import_v0.1_20071009102743",
+        "width": "12.2"
+      }
+    },
+    {
+      "type": "node",
+      "id": 65551443,
+      "lat": 42.054622,
+      "lon": -71.887973,
+      "timestamp": "2021-10-13T03:12:28Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 65554700,
+      "lat": 42.050142,
+      "lon": -71.889998,
+      "timestamp": "2021-10-13T03:12:28Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 65555607,
+      "lat": 42.054441,
+      "lon": -71.888055,
+      "timestamp": "2021-10-13T03:12:28Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 65561421,
+      "lat": 42.054443,
+      "lon": -71.888054,
+      "timestamp": "2021-10-13T03:12:29Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 65561990,
+      "lat": 42.053833,
+      "lon": -71.888337,
+      "timestamp": "2021-10-13T03:12:29Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 65570449,
+      "lat": 42.054544,
+      "lon": -71.888006,
+      "timestamp": "2021-10-13T03:12:32Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 65574820,
+      "lat": 42.051395,
+      "lon": -71.889437,
+      "timestamp": "2021-10-13T03:12:32Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 65584434,
+      "lat": 42.053216,
+      "lon": -71.88861,
+      "timestamp": "2021-10-13T03:12:33Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 65585122,
+      "lat": 42.050326,
+      "lon": -71.889929,
+      "timestamp": "2021-10-13T03:12:33Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 65604303,
+      "lat": 42.050454,
+      "lon": -71.889876,
+      "timestamp": "2021-10-13T03:12:35Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 65604532,
+      "lat": 42.049921,
+      "lon": -71.890076,
+      "timestamp": "2021-10-13T03:12:35Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 65613904,
+      "lat": 42.052502,
+      "lon": -71.888931,
+      "timestamp": "2021-10-13T03:12:37Z",
+      "version": 2
+    },
+    {
+      "type": "way",
+      "id": 8959781,
+      "timestamp": "2011-07-24T07:51:43Z",
+      "version": 2,
+      "nodes": [
+        65604532,
+        65554700,
+        65585122,
+        65604303,
+        65574820,
+        65613904,
+        65584434,
+        65561990,
+        65555607,
+        65561421,
+        65570449,
+        65551443,
+        65606783
+      ],
+      "tags": {
+        "attribution": "Office of Geographic and Environmental Information (MassGIS)",
+        "condition": "good",
+        "highway": "tertiary",
+        "lanes": "2",
+        "massgis:way_id": "169774",
+        "maxspeed": "30 mph",
+        "name": "Mill Street",
+        "source": "massgis_import_v0.1_20071009102743",
+        "source:maxspeed": "massgis",
+        "width": "10.1"
+      }
+    },
+    {
+      "type": "node",
+      "id": 70335503,
+      "lat": 42.0496158,
+      "lon": -71.8770515,
+      "timestamp": "2023-05-24T22:57:51Z",
+      "version": 4,
+      "tags": {
+        "direction": "forward",
+        "highway": "stop"
+      }
+    },
+    {
+      "type": "node",
+      "id": 70348416,
+      "lat": 42.0496761,
+      "lon": -71.8770712,
+      "timestamp": "2023-05-24T22:57:51Z",
+      "version": 4
+    },
+    {
+      "type": "node",
+      "id": 70380609,
+      "lat": 42.048881,
+      "lon": -71.877098,
+      "timestamp": "2021-10-13T03:12:46Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70387191,
+      "lat": 42.048553,
+      "lon": -71.877105,
+      "timestamp": "2021-10-13T03:12:46Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70406168,
+      "lat": 42.049309,
+      "lon": -71.877071,
+      "timestamp": "2021-10-13T03:12:47Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 9084326805,
+      "lat": 42.0483275,
+      "lon": -71.8771112,
+      "timestamp": "2021-09-12T16:40:33Z",
+      "version": 1,
+      "tags": {
+        "barrier": "gate"
+      }
+    },
+    {
+      "type": "node",
+      "id": 13348597666,
+      "lat": 42.0496394,
+      "lon": -71.8770592,
+      "timestamp": "2025-12-02T20:23:50Z",
+      "version": 1,
+      "tags": {
+        "crossing": "uncontrolled",
+        "crossing:markings": "yes",
+        "highway": "crossing"
+      }
+    },
+    {
+      "type": "way",
+      "id": 9329752,
+      "timestamp": "2025-12-02T20:23:50Z",
+      "version": 4,
+      "nodes": [
+        9084326805,
+        70387191,
+        70380609,
+        70406168,
+        70335503,
+        13348597666,
+        70348416
+      ],
+      "tags": {
+        "attribution": "Office of Geographic and Environmental Information (MassGIS)",
+        "condition": "fair",
+        "highway": "residential",
+        "lanes": "2",
+        "massgis:way_id": "197584",
+        "name": "Maynard Avenue",
+        "source": "massgis_import_v0.1_20071009094315",
+        "width": "10.1"
+      }
+    },
+    {
+      "type": "node",
+      "id": 70336447,
+      "lat": 42.061926,
+      "lon": -71.875903,
+      "timestamp": "2021-10-13T03:12:40Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70337737,
+      "lat": 42.0628469,
+      "lon": -71.8779879,
+      "timestamp": "2022-06-30T02:05:03Z",
+      "version": 3
+    },
+    {
+      "type": "node",
+      "id": 70340381,
+      "lat": 42.060825,
+      "lon": -71.874014,
+      "timestamp": "2021-10-13T03:12:41Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70341141,
+      "lat": 42.061375,
+      "lon": -71.874962,
+      "timestamp": "2021-10-13T03:12:41Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70343398,
+      "lat": 42.062199,
+      "lon": -71.876367,
+      "timestamp": "2021-10-13T03:12:41Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70354410,
+      "lat": 42.059888,
+      "lon": -71.872836,
+      "timestamp": "2021-10-13T03:12:41Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70354991,
+      "lat": 42.058378,
+      "lon": -71.871203,
+      "timestamp": "2021-10-13T03:12:41Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70355449,
+      "lat": 42.057994,
+      "lon": -71.870799,
+      "timestamp": "2021-10-13T03:12:41Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70363585,
+      "lat": 42.060355,
+      "lon": -71.873357,
+      "timestamp": "2021-10-13T03:12:45Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70365396,
+      "lat": 42.061577,
+      "lon": -71.875293,
+      "timestamp": "2021-10-13T03:12:45Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70369068,
+      "lat": 42.062535,
+      "lon": -71.877004,
+      "timestamp": "2021-10-13T03:12:45Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70371491,
+      "lat": 42.060961,
+      "lon": -71.874246,
+      "timestamp": "2021-10-13T03:12:45Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70373328,
+      "lat": 42.062812,
+      "lon": -71.877808,
+      "timestamp": "2021-10-13T03:12:45Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70373977,
+      "lat": 42.058857,
+      "lon": -71.871707,
+      "timestamp": "2021-10-13T03:12:45Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70375207,
+      "lat": 42.062589,
+      "lon": -71.877143,
+      "timestamp": "2021-10-13T03:12:45Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70377182,
+      "lat": 42.0611445,
+      "lon": -71.8745576,
+      "timestamp": "2022-06-30T02:05:03Z",
+      "version": 3
+    },
+    {
+      "type": "node",
+      "id": 70381522,
+      "lat": 42.0628363,
+      "lon": -71.8779107,
+      "timestamp": "2022-06-30T02:05:03Z",
+      "version": 3,
+      "tags": {
+        "direction": "forward",
+        "highway": "stop"
+      }
+    },
+    {
+      "type": "node",
+      "id": 70381831,
+      "lat": 42.062679,
+      "lon": -71.877377,
+      "timestamp": "2021-10-13T03:12:46Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70384259,
+      "lat": 42.062349,
+      "lon": -71.876648,
+      "timestamp": "2021-10-13T03:12:46Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70385461,
+      "lat": 42.062483,
+      "lon": -71.876899,
+      "timestamp": "2021-10-13T03:12:46Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70386081,
+      "lat": 42.057573,
+      "lon": -71.870389,
+      "timestamp": "2021-10-13T03:12:46Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70401386,
+      "lat": 42.062184,
+      "lon": -71.876341,
+      "timestamp": "2021-10-13T03:12:47Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70401707,
+      "lat": 42.05731,
+      "lon": -71.870149,
+      "timestamp": "2019-12-28T21:35:24Z",
+      "version": 3,
+      "tags": {
+        "highway": "traffic_signals",
+        "source": "survey",
+        "traffic_signals": "traffic_lights",
+        "traffic_signals:direction": "both"
+      }
+    },
+    {
+      "type": "node",
+      "id": 70402531,
+      "lat": 42.059175,
+      "lon": -71.872034,
+      "timestamp": "2021-10-13T03:12:47Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70403737,
+      "lat": 42.062638,
+      "lon": -71.877272,
+      "timestamp": "2021-10-13T03:12:47Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70411837,
+      "lat": 42.060635,
+      "lon": -71.873728,
+      "timestamp": "2021-10-13T03:12:47Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70412194,
+      "lat": 42.062749,
+      "lon": -71.877594,
+      "timestamp": "2021-10-13T03:12:47Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 6766463218,
+      "lat": 42.0627014,
+      "lon": -71.8774464,
+      "timestamp": "2019-09-02T13:52:56Z",
+      "version": 1
+    },
+    {
+      "type": "node",
+      "id": 13348304346,
+      "lat": 42.0573947,
+      "lon": -71.8702263,
+      "timestamp": "2025-12-02T17:33:57Z",
+      "version": 1,
+      "tags": {
+        "crossing": "uncontrolled",
+        "crossing:markings": "yes",
+        "highway": "crossing"
+      }
+    },
+    {
+      "type": "node",
+      "id": 13348583119,
+      "lat": 42.0620419,
+      "lon": -71.8760997,
+      "timestamp": "2025-12-02T20:23:50Z",
+      "version": 1
+    },
+    {
+      "type": "way",
+      "id": 9329764,
+      "timestamp": "2025-12-02T20:23:50Z",
+      "version": 5,
+      "nodes": [
+        70401707,
+        13348304346,
+        70386081,
+        70355449,
+        70354991,
+        70373977,
+        70402531,
+        70354410,
+        70363585,
+        70411837,
+        70340381,
+        70371491,
+        70377182,
+        70341141,
+        70365396,
+        70336447,
+        13348583119,
+        70401386,
+        70343398,
+        70384259,
+        70385461,
+        70369068,
+        70375207,
+        70403737,
+        70381831,
+        6766463218,
+        70412194,
+        70373328,
+        70381522,
+        70337737
+      ],
+      "tags": {
+        "attribution": "Office of Geographic and Environmental Information (MassGIS)",
+        "condition": "fair",
+        "highway": "tertiary",
+        "lanes": "2",
+        "massgis:way_id": "150711",
+        "maxspeed": "30 mph",
+        "name": "Slater Street",
+        "source": "massgis_import_v0.1_20071009094315",
+        "surface": "asphalt",
+        "width": "12.2"
+      }
+    },
+    {
+      "type": "node",
+      "id": 70335032,
+      "lat": 42.061607,
+      "lon": -71.86728,
+      "timestamp": "2021-10-13T03:12:40Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70396573,
+      "lat": 42.0615769,
+      "lon": -71.8670842,
+      "timestamp": "2022-06-30T02:05:03Z",
+      "version": 3,
+      "tags": {
+        "direction": "both",
+        "highway": "stop",
+        "stop": "all"
+      }
+    },
+    {
+      "type": "way",
+      "id": 9329258,
+      "timestamp": "2018-07-20T11:22:35Z",
+      "version": 2,
+      "nodes": [
+        70335032,
+        70396573
+      ],
+      "tags": {
+        "attribution": "Office of Geographic and Environmental Information (MassGIS)",
+        "highway": "residential",
+        "massgis:way_id": "316",
+        "name": "Hartley Street",
+        "source": "massgis_import_v0.1_20071009094315"
+      }
+    },
+    {
+      "type": "node",
+      "id": 70360452,
+      "lat": 42.060939,
+      "lon": -71.863809,
+      "timestamp": "2019-01-10T03:23:46Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70367807,
+      "lat": 42.061076,
+      "lon": -71.864465,
+      "timestamp": "2021-10-13T03:12:45Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70370197,
+      "lat": 42.061459,
+      "lon": -71.86648,
+      "timestamp": "2021-10-13T03:12:45Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 6759765298,
+      "lat": 42.0610932,
+      "lon": -71.8645556,
+      "timestamp": "2019-08-30T15:21:47Z",
+      "version": 1
+    },
+    {
+      "type": "node",
+      "id": 6759765301,
+      "lat": 42.0610454,
+      "lon": -71.8643183,
+      "timestamp": "2019-08-30T15:21:47Z",
+      "version": 1
+    },
+    {
+      "type": "node",
+      "id": 6759765302,
+      "lat": 42.0611641,
+      "lon": -71.8649288,
+      "timestamp": "2019-08-30T15:21:47Z",
+      "version": 1
+    },
+    {
+      "type": "node",
+      "id": 9857043729,
+      "lat": 42.0609796,
+      "lon": -71.8640032,
+      "timestamp": "2022-06-30T02:05:03Z",
+      "version": 1,
+      "tags": {
+        "direction": "forward",
+        "highway": "stop"
+      }
+    },
+    {
+      "type": "node",
+      "id": 13348304592,
+      "lat": 42.0610414,
+      "lon": -71.8642992,
+      "timestamp": "2025-12-02T17:33:57Z",
+      "version": 1
+    },
+    {
+      "type": "node",
+      "id": 13348304600,
+      "lat": 42.0609699,
+      "lon": -71.8639569,
+      "timestamp": "2025-12-02T17:33:57Z",
+      "version": 1,
+      "tags": {
+        "crossing": "uncontrolled",
+        "crossing:markings": "yes",
+        "highway": "crossing"
+      }
+    },
+    {
+      "type": "way",
+      "id": 9329612,
+      "timestamp": "2025-12-02T17:33:57Z",
+      "version": 4,
+      "nodes": [
+        70396573,
+        70370197,
+        6759765302,
+        6759765298,
+        70367807,
+        6759765301,
+        13348304592,
+        9857043729,
+        13348304600,
+        70360452
+      ],
+      "tags": {
+        "attribution": "Office of Geographic and Environmental Information (MassGIS)",
+        "condition": "fair",
+        "highway": "residential",
+        "lanes": "2",
+        "massgis:way_id": "112607",
+        "name": "Hartley Street",
+        "source": "massgis_import_v0.1_20071009094315",
+        "surface": "asphalt",
+        "width": "12.2"
+      }
+    },
+    {
+      "type": "node",
+      "id": 70341730,
+      "lat": 42.061255,
+      "lon": -71.867127,
+      "timestamp": "2021-10-13T03:12:41Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70348086,
+      "lat": 42.0606044,
+      "lon": -71.8672094,
+      "timestamp": "2022-06-30T02:05:03Z",
+      "version": 3
+    },
+    {
+      "type": "node",
+      "id": 70398924,
+      "lat": 42.059761,
+      "lon": -71.866954,
+      "timestamp": "2021-10-13T03:12:46Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70406915,
+      "lat": 42.060243,
+      "lon": -71.867115,
+      "timestamp": "2021-10-13T03:12:47Z",
+      "version": 2
+    },
+    {
+      "type": "way",
+      "id": 9329670,
+      "timestamp": "2022-06-30T02:05:03Z",
+      "version": 2,
+      "nodes": [
+        70398924,
+        70406915,
+        70348086,
+        70341730,
+        70396573
+      ],
+      "tags": {
+        "attribution": "Office of Geographic and Environmental Information (MassGIS)",
+        "condition": "fair",
+        "highway": "residential",
+        "lanes": "2",
+        "massgis:way_id": "167380",
+        "name": "Didonato Avenue",
+        "source": "massgis_import_v0.1_20071009094315",
+        "surface": "asphalt",
+        "width": "12.2"
+      }
+    },
+    {
+      "type": "node",
+      "id": 70337193,
+      "lat": 42.0510394,
+      "lon": -71.8744405,
+      "timestamp": "2026-04-24T01:46:28Z",
+      "version": 4,
+      "tags": {
+        "crossing": "marked;uncontrolled",
+        "crossing:markings": "lines;yes",
+        "highway": "crossing"
+      }
+    },
+    {
+      "type": "node",
+      "id": 70338732,
+      "lat": 42.054642,
+      "lon": -71.875136,
+      "timestamp": "2021-10-13T03:12:41Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70351210,
+      "lat": 42.05499,
+      "lon": -71.875228,
+      "timestamp": "2021-10-13T03:12:41Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70351900,
+      "lat": 42.051689,
+      "lon": -71.874321,
+      "timestamp": "2021-10-13T03:12:41Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70357207,
+      "lat": 42.052293,
+      "lon": -71.874487,
+      "timestamp": "2021-10-13T03:12:41Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70358005,
+      "lat": 42.052013,
+      "lon": -71.874406,
+      "timestamp": "2021-10-13T03:12:41Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70360994,
+      "lat": 42.054322,
+      "lon": -71.875039,
+      "timestamp": "2021-10-13T03:12:45Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70361281,
+      "lat": 42.0504184,
+      "lon": -71.8746685,
+      "timestamp": "2023-05-24T22:57:51Z",
+      "version": 3,
+      "tags": {
+        "crossing": "marked",
+        "crossing:markings": "lines",
+        "highway": "crossing"
+      }
+    },
+    {
+      "type": "node",
+      "id": 70378149,
+      "lat": 42.0508447,
+      "lon": -71.874512,
+      "timestamp": "2023-05-24T22:57:51Z",
+      "version": 3
+    },
+    {
+      "type": "node",
+      "id": 70381211,
+      "lat": 42.0492972,
+      "lon": -71.8751086,
+      "timestamp": "2023-05-24T22:57:51Z",
+      "version": 3
+    },
+    {
+      "type": "node",
+      "id": 70386768,
+      "lat": 42.051478,
+      "lon": -71.874273,
+      "timestamp": "2021-10-13T03:12:46Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70389167,
+      "lat": 42.05317,
+      "lon": -71.8747458,
+      "timestamp": "2023-05-24T22:57:51Z",
+      "version": 3
+    },
+    {
+      "type": "node",
+      "id": 70393999,
+      "lat": 42.053987,
+      "lon": -71.874954,
+      "timestamp": "2021-10-13T03:12:46Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70395735,
+      "lat": 42.055347,
+      "lon": -71.875328,
+      "timestamp": "2019-01-10T03:23:47Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70398109,
+      "lat": 42.050184,
+      "lon": -71.874748,
+      "timestamp": "2021-10-13T03:12:46Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70398856,
+      "lat": 42.051448,
+      "lon": -71.87428,
+      "timestamp": "2021-10-13T03:12:46Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70401829,
+      "lat": 42.05345,
+      "lon": -71.8748,
+      "timestamp": "2021-10-13T03:12:47Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70408812,
+      "lat": 42.051245,
+      "lon": -71.8743679,
+      "timestamp": "2023-05-24T22:57:51Z",
+      "version": 3,
+      "tags": {
+        "crossing": "marked",
+        "crossing:markings": "lines",
+        "highway": "crossing"
+      }
+    },
+    {
+      "type": "node",
+      "id": 70409215,
+      "lat": 42.0523719,
+      "lon": -71.8745118,
+      "timestamp": "2023-05-24T22:57:51Z",
+      "version": 3,
+      "tags": {
+        "direction": "both",
+        "highway": "stop",
+        "stop": "all"
+      }
+    },
+    {
+      "type": "node",
+      "id": 8817882569,
+      "lat": 42.0547865,
+      "lon": -71.8751742,
+      "timestamp": "2021-06-09T13:08:35Z",
+      "version": 1
+    },
+    {
+      "type": "node",
+      "id": 10925344619,
+      "lat": 42.0493556,
+      "lon": -71.8750848,
+      "timestamp": "2023-05-24T22:57:51Z",
+      "version": 1,
+      "tags": {
+        "highway": "stop"
+      }
+    },
+    {
+      "type": "node",
+      "id": 13348597520,
+      "lat": 42.0552714,
+      "lon": -71.8753068,
+      "timestamp": "2025-12-02T20:23:50Z",
+      "version": 1,
+      "tags": {
+        "crossing": "uncontrolled",
+        "crossing:markings": "yes",
+        "highway": "crossing"
+      }
+    },
+    {
+      "type": "node",
+      "id": 13757593968,
+      "lat": 42.0504703,
+      "lon": -71.8746494,
+      "timestamp": "2026-04-24T01:46:28Z",
+      "version": 1,
+      "tags": {
+        "crossing": "uncontrolled",
+        "crossing:markings": "yes",
+        "highway": "crossing"
+      }
+    },
+    {
+      "type": "way",
+      "id": 9329027,
+      "timestamp": "2026-04-24T01:46:28Z",
+      "version": 8,
+      "nodes": [
+        70395735,
+        13348597520,
+        70351210,
+        8817882569,
+        70338732,
+        70360994,
+        70393999,
+        70401829,
+        70389167,
+        70409215,
+        70357207,
+        70358005,
+        70351900,
+        70386768,
+        70398856,
+        70408812,
+        70337193,
+        70378149,
+        13757593968,
+        70361281,
+        70398109,
+        10925344619,
+        70381211
+      ],
+      "tags": {
+        "attribution": "Office of Geographic and Environmental Information (MassGIS)",
+        "condition": "good",
+        "highway": "residential",
+        "lanes": "1",
+        "massgis:way_id": "191795",
+        "name": "Whitcomb Street",
+        "oneway": "yes",
+        "source": "massgis_import_v0.1_20071009094315",
+        "surface": "asphalt",
+        "width": "12.2"
+      }
+    },
+    {
+      "type": "node",
+      "id": 70386784,
+      "lat": 42.052595,
+      "lon": -71.873012,
+      "timestamp": "2021-10-13T03:12:46Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70405697,
+      "lat": 42.052525,
+      "lon": -71.873526,
+      "timestamp": "2021-10-13T03:12:47Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 13348597564,
+      "lat": 42.0525344,
+      "lon": -71.8734572,
+      "timestamp": "2025-12-02T20:23:50Z",
+      "version": 1,
+      "tags": {
+        "crossing": "uncontrolled",
+        "crossing:markings": "yes",
+        "highway": "crossing"
+      }
+    },
+    {
+      "type": "node",
+      "id": 13348597567,
+      "lat": 42.0525162,
+      "lon": -71.873583,
+      "timestamp": "2025-12-02T20:23:50Z",
+      "version": 1,
+      "tags": {
+        "crossing": "uncontrolled",
+        "crossing:markings": "yes",
+        "highway": "crossing"
+      }
+    },
+    {
+      "type": "node",
+      "id": 13757593920,
+      "lat": 42.0523794,
+      "lon": -71.8744633,
+      "timestamp": "2026-04-24T01:46:28Z",
+      "version": 1,
+      "tags": {
+        "crossing": "uncontrolled",
+        "crossing:markings": "yes",
+        "highway": "crossing"
+      }
+    },
+    {
+      "type": "way",
+      "id": 9329582,
+      "timestamp": "2026-04-24T01:46:28Z",
+      "version": 3,
+      "nodes": [
+        70409215,
+        13757593920,
+        13348597567,
+        70405697,
+        13348597564,
+        70386784
+      ],
+      "tags": {
+        "attribution": "Office of Geographic and Environmental Information (MassGIS)",
+        "condition": "good",
+        "highway": "residential",
+        "lanes": "2",
+        "massgis:way_id": "144344",
+        "name": "Washington Street",
+        "source": "massgis_import_v0.1_20071009094315",
+        "width": "12.2"
+      }
+    },
+    {
+      "type": "node",
+      "id": 70335288,
+      "lat": 42.052186,
+      "lon": -71.875834,
+      "timestamp": "2021-10-13T03:12:40Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70349484,
+      "lat": 42.05226,
+      "lon": -71.875221,
+      "timestamp": "2021-10-13T03:12:41Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70354559,
+      "lat": 42.052158,
+      "lon": -71.876086,
+      "timestamp": "2021-10-13T03:12:41Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70372524,
+      "lat": 42.052098,
+      "lon": -71.876685,
+      "timestamp": "2021-10-13T03:12:45Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 13757593923,
+      "lat": 42.0523598,
+      "lon": -71.8745886,
+      "timestamp": "2026-04-24T01:46:28Z",
+      "version": 1,
+      "tags": {
+        "crossing": "uncontrolled",
+        "crossing:markings": "yes",
+        "highway": "crossing"
+      }
+    },
+    {
+      "type": "node",
+      "id": 13757593946,
+      "lat": 42.0521161,
+      "lon": -71.8765039,
+      "timestamp": "2026-04-24T01:46:28Z",
+      "version": 1,
+      "tags": {
+        "crossing": "uncontrolled",
+        "crossing:markings": "yes",
+        "highway": "crossing"
+      }
+    },
+    {
+      "type": "way",
+      "id": 9329863,
+      "timestamp": "2026-04-24T01:46:28Z",
+      "version": 2,
+      "nodes": [
+        70372524,
+        13757593946,
+        70354559,
+        70335288,
+        70349484,
+        13757593923,
+        70409215
+      ],
+      "tags": {
+        "attribution": "Office of Geographic and Environmental Information (MassGIS)",
+        "condition": "good",
+        "highway": "residential",
+        "lanes": "2",
+        "massgis:way_id": "184451",
+        "name": "Cutler Street",
+        "source": "massgis_import_v0.1_20071009094315",
+        "width": "12.2"
+      }
+    },
+    {
+      "type": "node",
+      "id": 65553781,
+      "lat": 42.0649127,
+      "lon": -71.8795292,
+      "timestamp": "2021-10-13T03:12:28Z",
+      "version": 3
+    },
+    {
+      "type": "node",
+      "id": 65554945,
+      "lat": 42.064124,
+      "lon": -71.879987,
+      "timestamp": "2021-10-13T03:12:28Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 65555782,
+      "lat": 42.064419,
+      "lon": -71.879712,
+      "timestamp": "2021-10-13T03:12:28Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 65556424,
+      "lat": 42.063781,
+      "lon": -71.880476,
+      "timestamp": "2021-10-13T03:12:28Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 65558820,
+      "lat": 42.06388,
+      "lon": -71.880307,
+      "timestamp": "2021-10-13T03:12:29Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 65561549,
+      "lat": 42.0631926,
+      "lon": -71.8815903,
+      "timestamp": "2021-10-13T03:12:29Z",
+      "version": 3
+    },
+    {
+      "type": "node",
+      "id": 65564934,
+      "lat": 42.062925,
+      "lon": -71.882082,
+      "timestamp": "2021-10-13T03:12:29Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 65574754,
+      "lat": 42.062669,
+      "lon": -71.882531,
+      "timestamp": "2021-10-13T03:12:32Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 65579263,
+      "lat": 42.063597,
+      "lon": -71.880818,
+      "timestamp": "2021-10-13T03:12:33Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 65583769,
+      "lat": 42.065088,
+      "lon": -71.8793243,
+      "timestamp": "2021-10-13T03:12:33Z",
+      "version": 3
+    },
+    {
+      "type": "node",
+      "id": 65589080,
+      "lat": 42.0650727,
+      "lon": -71.8795247,
+      "timestamp": "2021-10-13T03:12:33Z",
+      "version": 3
+    },
+    {
+      "type": "node",
+      "id": 65594841,
+      "lat": 42.064618,
+      "lon": -71.879609,
+      "timestamp": "2021-10-13T03:12:34Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 65594930,
+      "lat": 42.0633,
+      "lon": -71.881384,
+      "timestamp": "2021-10-13T03:12:34Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 65599508,
+      "lat": 42.064251,
+      "lon": -71.879855,
+      "timestamp": "2021-10-13T03:12:34Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 65605760,
+      "lat": 42.063992,
+      "lon": -71.880145,
+      "timestamp": "2021-10-13T03:12:35Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 65615852,
+      "lat": 42.064742,
+      "lon": -71.879568,
+      "timestamp": "2021-10-13T03:12:37Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 2544288338,
+      "lat": 42.0645145,
+      "lon": -71.8796535,
+      "timestamp": "2013-11-22T00:42:16Z",
+      "version": 1
+    },
+    {
+      "type": "node",
+      "id": 2544288345,
+      "lat": 42.0649546,
+      "lon": -71.8795241,
+      "timestamp": "2013-11-22T00:42:16Z",
+      "version": 1
+    },
+    {
+      "type": "node",
+      "id": 2544288349,
+      "lat": 42.0649934,
+      "lon": -71.8795213,
+      "timestamp": "2022-06-30T02:05:03Z",
+      "version": 2,
+      "tags": {
+        "direction": "forward",
+        "highway": "stop"
+      }
+    },
+    {
+      "type": "node",
+      "id": 2544288352,
+      "lat": 42.0650838,
+      "lon": -71.8793988,
+      "timestamp": "2022-06-30T02:05:03Z",
+      "version": 2,
+      "tags": {
+        "direction": "backward",
+        "highway": "stop"
+      }
+    },
+    {
+      "type": "node",
+      "id": 9857043719,
+      "lat": 42.0627422,
+      "lon": -71.8824025,
+      "timestamp": "2022-06-30T02:05:03Z",
+      "version": 1,
+      "tags": {
+        "direction": "backward",
+        "highway": "stop"
+      }
+    },
+    {
+      "type": "way",
+      "id": 8959231,
+      "timestamp": "2022-06-30T02:05:03Z",
+      "version": 3,
+      "nodes": [
+        65574754,
+        9857043719,
+        65564934,
+        65561549,
+        65594930,
+        65579263,
+        65556424,
+        65558820,
+        65605760,
+        65554945,
+        65599508,
+        65555782,
+        2544288338,
+        65594841,
+        65615852,
+        65553781,
+        2544288345,
+        2544288349,
+        65589080,
+        2544288352,
+        65583769
+      ],
+      "tags": {
+        "attribution": "Office of Geographic and Environmental Information (MassGIS)",
+        "condition": "fair",
+        "highway": "residential",
+        "lanes": "2",
+        "massgis:way_id": "120881",
+        "name": "Cemetery Road",
+        "source": "massgis_import_v0.1_20071009102743",
+        "surface": "asphalt",
+        "width": "12.2"
+      }
+    },
+    {
+      "type": "node",
+      "id": 70345072,
+      "lat": 42.06644,
+      "lon": -71.875996,
+      "timestamp": "2021-10-13T03:12:41Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70345309,
+      "lat": 42.065513,
+      "lon": -71.87751,
+      "timestamp": "2021-10-13T03:12:41Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70351422,
+      "lat": 42.066773,
+      "lon": -71.875759,
+      "timestamp": "2021-10-13T03:12:41Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70370241,
+      "lat": 42.0663,
+      "lon": -71.876179,
+      "timestamp": "2021-10-13T03:12:45Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70372346,
+      "lat": 42.065801,
+      "lon": -71.877042,
+      "timestamp": "2021-10-13T03:12:45Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70373511,
+      "lat": 42.066119,
+      "lon": -71.876474,
+      "timestamp": "2021-10-13T03:12:45Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70376971,
+      "lat": 42.065212,
+      "lon": -71.877881,
+      "timestamp": "2021-10-13T03:12:45Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70380974,
+      "lat": 42.065413,
+      "lon": -71.877651,
+      "timestamp": "2021-10-13T03:12:46Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70382626,
+      "lat": 42.066484,
+      "lon": -71.875955,
+      "timestamp": "2021-10-13T03:12:46Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70394241,
+      "lat": 42.065044,
+      "lon": -71.878063,
+      "timestamp": "2021-10-13T03:12:46Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70404550,
+      "lat": 42.065952,
+      "lon": -71.876775,
+      "timestamp": "2021-10-13T03:12:47Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70407067,
+      "lat": 42.06637,
+      "lon": -71.876083,
+      "timestamp": "2021-10-13T03:12:47Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70409355,
+      "lat": 42.065332,
+      "lon": -71.877745,
+      "timestamp": "2021-10-13T03:12:47Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70409531,
+      "lat": 42.065637,
+      "lon": -71.877319,
+      "timestamp": "2021-10-13T03:12:47Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70411219,
+      "lat": 42.066909,
+      "lon": -71.875674,
+      "timestamp": "2021-10-13T03:12:47Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70413332,
+      "lat": 42.066601,
+      "lon": -71.875868,
+      "timestamp": "2021-10-13T03:12:47Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70413364,
+      "lat": 42.064812,
+      "lon": -71.878306,
+      "timestamp": "2021-10-13T03:12:47Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 6774561885,
+      "lat": 42.0664283,
+      "lon": -71.8760105,
+      "timestamp": "2019-09-05T12:27:22Z",
+      "version": 1
+    },
+    {
+      "type": "node",
+      "id": 6774561899,
+      "lat": 42.0666937,
+      "lon": -71.8758092,
+      "timestamp": "2019-09-05T12:27:22Z",
+      "version": 1
+    },
+    {
+      "type": "node",
+      "id": 7496504298,
+      "lat": 42.0659782,
+      "lon": -71.8767278,
+      "timestamp": "2020-05-08T06:11:59Z",
+      "version": 1
+    },
+    {
+      "type": "node",
+      "id": 9857043720,
+      "lat": 42.064877,
+      "lon": -71.8782379,
+      "timestamp": "2022-06-30T02:05:03Z",
+      "version": 1,
+      "tags": {
+        "direction": "backward",
+        "highway": "stop"
+      }
+    },
+    {
+      "type": "way",
+      "id": 668112559,
+      "timestamp": "2022-06-30T02:05:03Z",
+      "version": 4,
+      "nodes": [
+        70413364,
+        9857043720,
+        70394241,
+        70376971,
+        70409355,
+        70380974,
+        70345309,
+        70409531,
+        70372346,
+        70404550,
+        7496504298,
+        70373511,
+        70370241,
+        70407067,
+        6774561885,
+        70345072,
+        70382626,
+        70413332,
+        6774561899,
+        70351422,
+        70411219
+      ],
+      "tags": {
+        "attribution": "Office of Geographic and Environmental Information (MassGIS)",
+        "condition": "fair",
+        "highway": "tertiary",
+        "lanes": "2",
+        "massgis:way_id": "208992",
+        "name": "Bigelow Road",
+        "source": "massgis_import_v0.1_20071009094315",
+        "width": "12.2"
+      }
+    },
+    {
+      "type": "node",
+      "id": 70335256,
+      "lat": 42.064314,
+      "lon": -71.878179,
+      "timestamp": "2021-10-13T03:12:40Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70338620,
+      "lat": 42.063986,
+      "lon": -71.878131,
+      "timestamp": "2021-10-13T03:12:41Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70347131,
+      "lat": 42.064583,
+      "lon": -71.878241,
+      "timestamp": "2021-10-13T03:12:41Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70361086,
+      "lat": 42.06398,
+      "lon": -71.87813,
+      "timestamp": "2021-10-13T03:12:45Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70387657,
+      "lat": 42.064717,
+      "lon": -71.878272,
+      "timestamp": "2021-10-13T03:12:46Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70392838,
+      "lat": 42.064149,
+      "lon": -71.878156,
+      "timestamp": "2021-10-13T03:12:46Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70410651,
+      "lat": 42.064455,
+      "lon": -71.878212,
+      "timestamp": "2021-10-13T03:12:47Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 9857043721,
+      "lat": 42.0646926,
+      "lon": -71.8782664,
+      "timestamp": "2022-06-30T02:05:03Z",
+      "version": 1,
+      "tags": {
+        "direction": "forward",
+        "highway": "stop"
+      }
+    },
+    {
+      "type": "way",
+      "id": 9329813,
+      "timestamp": "2022-06-30T02:05:03Z",
+      "version": 2,
+      "nodes": [
+        70361086,
+        70338620,
+        70392838,
+        70335256,
+        70410651,
+        70347131,
+        9857043721,
+        70387657,
+        70413364
+      ],
+      "tags": {
+        "attribution": "Office of Geographic and Environmental Information (MassGIS)",
+        "condition": "fair",
+        "highway": "tertiary",
+        "lanes": "2",
+        "massgis:way_id": "118986",
+        "name": "North Main Street",
+        "source": "massgis_import_v0.1_20071009094315",
+        "surface": "asphalt",
+        "width": "12.2"
+      }
+    },
+    {
+      "type": "node",
+      "id": 70335505,
+      "lat": 42.058489,
+      "lon": -71.873685,
+      "timestamp": "2021-10-13T03:12:40Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70335924,
+      "lat": 42.058301,
+      "lon": -71.874584,
+      "timestamp": "2021-10-13T03:12:40Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70338511,
+      "lat": 42.058104,
+      "lon": -71.876651,
+      "timestamp": "2021-10-13T03:12:41Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70345398,
+      "lat": 42.058654,
+      "lon": -71.872941,
+      "timestamp": "2021-10-13T03:12:41Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70347493,
+      "lat": 42.060406,
+      "lon": -71.869638,
+      "timestamp": "2021-10-13T03:12:41Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70354950,
+      "lat": 42.058254,
+      "lon": -71.874944,
+      "timestamp": "2021-10-13T03:12:41Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70363433,
+      "lat": 42.058431,
+      "lon": -71.873967,
+      "timestamp": "2021-10-13T03:12:45Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70364524,
+      "lat": 42.057998,
+      "lon": -71.878177,
+      "timestamp": "2021-10-13T03:12:45Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70382877,
+      "lat": 42.059785,
+      "lon": -71.870894,
+      "timestamp": "2021-10-13T03:12:46Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70385599,
+      "lat": 42.05884,
+      "lon": -71.872613,
+      "timestamp": "2021-10-13T03:12:46Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70386517,
+      "lat": 42.05806,
+      "lon": -71.877207,
+      "timestamp": "2021-10-13T03:12:46Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70396743,
+      "lat": 42.060624,
+      "lon": -71.869227,
+      "timestamp": "2021-10-13T03:12:46Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70397927,
+      "lat": 42.05814,
+      "lon": -71.876208,
+      "timestamp": "2021-10-13T03:12:46Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70402962,
+      "lat": 42.059415,
+      "lon": -71.871598,
+      "timestamp": "2021-10-13T03:12:47Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70403877,
+      "lat": 42.058031,
+      "lon": -71.877734,
+      "timestamp": "2021-10-13T03:12:47Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70408548,
+      "lat": 42.060077,
+      "lon": -71.870298,
+      "timestamp": "2021-10-13T03:12:47Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70408687,
+      "lat": 42.061018,
+      "lon": -71.868417,
+      "timestamp": "2021-10-13T03:12:47Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70410255,
+      "lat": 42.058192,
+      "lon": -71.875647,
+      "timestamp": "2021-10-13T03:12:47Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70410380,
+      "lat": 42.058275,
+      "lon": -71.874751,
+      "timestamp": "2021-10-13T03:12:47Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70414625,
+      "lat": 42.058237,
+      "lon": -71.875132,
+      "timestamp": "2021-10-13T03:12:47Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70415306,
+      "lat": 42.058314,
+      "lon": -71.874522,
+      "timestamp": "2021-10-13T03:12:47Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 9857043722,
+      "lat": 42.0591211,
+      "lon": -71.8721272,
+      "timestamp": "2022-06-30T02:05:03Z",
+      "version": 1,
+      "tags": {
+        "direction": "forward",
+        "highway": "stop"
+      }
+    },
+    {
+      "type": "node",
+      "id": 9857043723,
+      "lat": 42.0592258,
+      "lon": -71.8719418,
+      "timestamp": "2022-06-30T02:05:03Z",
+      "version": 1,
+      "tags": {
+        "direction": "backward",
+        "highway": "stop"
+      }
+    },
+    {
+      "type": "node",
+      "id": 9857043726,
+      "lat": 42.0603483,
+      "lon": -71.8697537,
+      "timestamp": "2022-06-30T02:05:03Z",
+      "version": 1,
+      "tags": {
+        "direction": "forward",
+        "highway": "stop"
+      }
+    },
+    {
+      "type": "node",
+      "id": 9857043727,
+      "lat": 42.0604564,
+      "lon": -71.869543,
+      "timestamp": "2022-06-30T02:05:03Z",
+      "version": 1,
+      "tags": {
+        "direction": "backward",
+        "highway": "stop"
+      }
+    },
+    {
+      "type": "way",
+      "id": 9329925,
+      "timestamp": "2022-06-30T02:05:03Z",
+      "version": 2,
+      "nodes": [
+        70364524,
+        70403877,
+        70386517,
+        70338511,
+        70397927,
+        70410255,
+        70414625,
+        70354950,
+        70410380,
+        70335924,
+        70415306,
+        70363433,
+        70335505,
+        70345398,
+        70385599,
+        9857043722,
+        70402531,
+        9857043723,
+        70402962,
+        70382877,
+        70408548,
+        9857043726,
+        70347493,
+        9857043727,
+        70396743,
+        70408687
+      ],
+      "tags": {
+        "attribution": "Office of Geographic and Environmental Information (MassGIS)",
+        "condition": "fair",
+        "highway": "residential",
+        "lanes": "2",
+        "massgis:way_id": "212501",
+        "name": "Upland Avenue",
+        "source": "massgis_import_v0.1_20071009094315",
+        "surface": "asphalt",
+        "width": "12.2"
+      }
+    },
+    {
+      "type": "node",
+      "id": 70354002,
+      "lat": 42.061136,
+      "lon": -71.872235,
+      "timestamp": "2021-10-13T03:12:41Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70365283,
+      "lat": 42.058021,
+      "lon": -71.869294,
+      "timestamp": "2021-10-13T03:12:45Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70370650,
+      "lat": 42.057725,
+      "lon": -71.869113,
+      "timestamp": "2019-01-10T03:23:46Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70371966,
+      "lat": 42.059582,
+      "lon": -71.870691,
+      "timestamp": "2021-10-13T03:12:45Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70374570,
+      "lat": 42.060524,
+      "lon": -71.871628,
+      "timestamp": "2021-10-13T03:12:45Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70379345,
+      "lat": 42.059195,
+      "lon": -71.870305,
+      "timestamp": "2021-10-13T03:12:45Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70387593,
+      "lat": 42.058312,
+      "lon": -71.869474,
+      "timestamp": "2021-10-13T03:12:46Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70403652,
+      "lat": 42.058528,
+      "lon": -71.869635,
+      "timestamp": "2021-10-13T03:12:47Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70414469,
+      "lat": 42.061466,
+      "lon": -71.872607,
+      "timestamp": "2021-10-13T03:12:47Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 7908076010,
+      "lat": 42.0580115,
+      "lon": -71.8692882,
+      "timestamp": "2020-09-15T08:58:09Z",
+      "version": 1
+    },
+    {
+      "type": "node",
+      "id": 9857043724,
+      "lat": 42.0597227,
+      "lon": -71.8708317,
+      "timestamp": "2022-06-30T02:05:03Z",
+      "version": 1,
+      "tags": {
+        "direction": "forward",
+        "highway": "stop"
+      }
+    },
+    {
+      "type": "node",
+      "id": 9857043725,
+      "lat": 42.0598554,
+      "lon": -71.870964,
+      "timestamp": "2022-06-30T02:05:03Z",
+      "version": 1,
+      "tags": {
+        "direction": "backward",
+        "highway": "stop"
+      }
+    },
+    {
+      "type": "node",
+      "id": 13348304351,
+      "lat": 42.0577993,
+      "lon": -71.8691584,
+      "timestamp": "2025-12-02T17:33:57Z",
+      "version": 1,
+      "tags": {
+        "highway": "crossing"
+      }
+    },
+    {
+      "type": "way",
+      "id": 9329577,
+      "timestamp": "2025-12-02T17:33:57Z",
+      "version": 4,
+      "nodes": [
+        70370650,
+        13348304351,
+        7908076010,
+        70365283,
+        70387593,
+        70403652,
+        70379345,
+        70371966,
+        9857043724,
+        70382877,
+        9857043725,
+        70374570,
+        70354002,
+        70414469
+      ],
+      "tags": {
+        "attribution": "Office of Geographic and Environmental Information (MassGIS)",
+        "condition": "fair",
+        "highway": "residential",
+        "lanes": "2",
+        "massgis:way_id": "167644",
+        "name": "Brodeur Avenue",
+        "source": "massgis_import_v0.1_20071009094315",
+        "width": "12.2"
+      }
+    },
+    {
+      "type": "node",
+      "id": 70336426,
+      "lat": 42.059972,
+      "lon": -71.868506,
+      "timestamp": "2021-10-13T03:12:40Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70373992,
+      "lat": 42.060365,
+      "lon": -71.86769,
+      "timestamp": "2021-10-13T03:12:45Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70403570,
+      "lat": 42.059672,
+      "lon": -71.869122,
+      "timestamp": "2021-10-13T03:12:47Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 8818512953,
+      "lat": 42.0598547,
+      "lon": -71.8687469,
+      "timestamp": "2021-06-09T17:45:06Z",
+      "version": 1
+    },
+    {
+      "type": "node",
+      "id": 8818512958,
+      "lat": 42.0599969,
+      "lon": -71.8684542,
+      "timestamp": "2021-06-09T17:45:06Z",
+      "version": 1
+    },
+    {
+      "type": "node",
+      "id": 9857043728,
+      "lat": 42.0605671,
+      "lon": -71.8672842,
+      "timestamp": "2022-06-30T02:05:03Z",
+      "version": 1,
+      "tags": {
+        "direction": "forward",
+        "highway": "stop"
+      }
+    },
+    {
+      "type": "way",
+      "id": 9329523,
+      "timestamp": "2022-06-30T02:05:03Z",
+      "version": 3,
+      "nodes": [
+        70403570,
+        8818512953,
+        70336426,
+        8818512958,
+        70373992,
+        9857043728,
+        70348086
+      ],
+      "tags": {
+        "attribution": "Office of Geographic and Environmental Information (MassGIS)",
+        "condition": "fair",
+        "highway": "residential",
+        "lanes": "2",
+        "massgis:way_id": "144732",
+        "name": "Vecchia Street",
+        "source": "massgis_import_v0.1_20071009094315",
+        "surface": "asphalt",
+        "width": "15.2"
+      }
+    },
+    {
+      "type": "node",
+      "id": 70340008,
+      "lat": 42.0489777,
+      "lon": -71.8810364,
+      "timestamp": "2025-12-02T20:23:50Z",
+      "version": 4,
+      "tags": {
+        "crossing": "marked",
+        "crossing:markings": "lines",
+        "highway": "crossing"
+      }
+    },
+    {
+      "type": "node",
+      "id": 70345619,
+      "lat": 42.049168,
+      "lon": -71.881135,
+      "timestamp": "2021-10-13T03:12:41Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70382037,
+      "lat": 42.0486572,
+      "lon": -71.8808628,
+      "timestamp": "2023-05-24T22:57:51Z",
+      "version": 3
+    },
+    {
+      "type": "node",
+      "id": 70390946,
+      "lat": 42.049596,
+      "lon": -71.881367,
+      "timestamp": "2019-01-10T03:23:47Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 6878706803,
+      "lat": 42.0493339,
+      "lon": -71.8812249,
+      "timestamp": "2019-10-14T15:17:31Z",
+      "version": 1
+    },
+    {
+      "type": "node",
+      "id": 6878706804,
+      "lat": 42.0488167,
+      "lon": -71.8809495,
+      "timestamp": "2023-05-24T22:57:51Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 10915053211,
+      "lat": 42.0495226,
+      "lon": -71.8813144,
+      "timestamp": "2023-05-20T22:58:46Z",
+      "version": 1,
+      "tags": {
+        "direction": "forward",
+        "highway": "stop"
+      }
+    },
+    {
+      "type": "node",
+      "id": 10915053212,
+      "lat": 42.0494076,
+      "lon": -71.8812598,
+      "timestamp": "2023-05-20T22:58:46Z",
+      "version": 1
+    },
+    {
+      "type": "node",
+      "id": 10925344621,
+      "lat": 42.0487519,
+      "lon": -71.8809143,
+      "timestamp": "2023-05-24T22:57:51Z",
+      "version": 1,
+      "tags": {
+        "direction": "backward",
+        "highway": "stop"
+      }
+    },
+    {
+      "type": "node",
+      "id": 13348597794,
+      "lat": 42.0487373,
+      "lon": -71.8809063,
+      "timestamp": "2025-12-02T20:23:50Z",
+      "version": 1,
+      "tags": {
+        "crossing": "uncontrolled",
+        "crossing:markings": "yes",
+        "highway": "crossing"
+      }
+    },
+    {
+      "type": "node",
+      "id": 13348597825,
+      "lat": 42.0495324,
+      "lon": -71.8813214,
+      "timestamp": "2025-12-02T20:23:50Z",
+      "version": 1,
+      "tags": {
+        "crossing": "uncontrolled",
+        "crossing:markings": "yes",
+        "highway": "crossing"
+      }
+    },
+    {
+      "type": "way",
+      "id": 9329515,
+      "timestamp": "2025-12-02T20:23:50Z",
+      "version": 5,
+      "nodes": [
+        70382037,
+        13348597794,
+        10925344621,
+        6878706804,
+        70340008,
+        70345619,
+        6878706803,
+        10915053212,
+        10915053211,
+        13348597825,
+        70390946
+      ],
+      "tags": {
+        "attribution": "Office of Geographic and Environmental Information (MassGIS)",
+        "condition": "good",
+        "highway": "residential",
+        "lanes": "2",
+        "massgis:way_id": "109029",
+        "name": "Church Street",
+        "source": "massgis_import_v0.1_20071009094315",
+        "surface": "asphalt",
+        "width": "18.3"
+      }
+    },
+    {
+      "type": "node",
+      "id": 70335758,
+      "lat": 42.050395,
+      "lon": -71.878068,
+      "timestamp": "2021-10-13T03:12:40Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70341027,
+      "lat": 42.0502,
+      "lon": -71.878069,
+      "timestamp": "2021-10-13T03:12:41Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70343123,
+      "lat": 42.051802,
+      "lon": -71.877969,
+      "timestamp": "2021-10-13T03:12:41Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70343212,
+      "lat": 42.051221,
+      "lon": -71.878141,
+      "timestamp": "2021-10-13T03:12:41Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70348430,
+      "lat": 42.050739,
+      "lon": -71.878078,
+      "timestamp": "2021-10-13T03:12:41Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70351021,
+      "lat": 42.051302,
+      "lon": -71.878133,
+      "timestamp": "2021-10-13T03:12:41Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70351140,
+      "lat": 42.054477,
+      "lon": -71.877689,
+      "timestamp": "2019-01-10T03:23:45Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70353315,
+      "lat": 42.053514,
+      "lon": -71.877461,
+      "timestamp": "2021-10-13T03:12:41Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70357299,
+      "lat": 42.051997,
+      "lon": -71.877892,
+      "timestamp": "2021-10-13T03:12:41Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70358882,
+      "lat": 42.049965,
+      "lon": -71.87807,
+      "timestamp": "2021-10-13T03:12:41Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70362168,
+      "lat": 42.051634,
+      "lon": -71.878044,
+      "timestamp": "2021-10-13T03:12:45Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70363324,
+      "lat": 42.052288,
+      "lon": -71.877785,
+      "timestamp": "2021-10-13T03:12:45Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70363715,
+      "lat": 42.051655,
+      "lon": -71.878036,
+      "timestamp": "2021-10-13T03:12:45Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70365011,
+      "lat": 42.053606,
+      "lon": -71.877454,
+      "timestamp": "2021-10-13T03:12:45Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70371097,
+      "lat": 42.051553,
+      "lon": -71.878074,
+      "timestamp": "2021-10-13T03:12:45Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70375157,
+      "lat": 42.054021,
+      "lon": -71.877462,
+      "timestamp": "2021-10-13T03:12:45Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70377520,
+      "lat": 42.052489,
+      "lon": -71.877709,
+      "timestamp": "2021-10-13T03:12:45Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70378222,
+      "lat": 42.054114,
+      "lon": -71.87751,
+      "timestamp": "2021-10-13T03:12:45Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70380050,
+      "lat": 42.053402,
+      "lon": -71.877477,
+      "timestamp": "2021-10-13T03:12:45Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70385793,
+      "lat": 42.053896,
+      "lon": -71.877433,
+      "timestamp": "2021-10-13T03:12:46Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70390965,
+      "lat": 42.052722,
+      "lon": -71.877641,
+      "timestamp": "2021-10-13T03:12:46Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70392441,
+      "lat": 42.052145,
+      "lon": -71.87784,
+      "timestamp": "2021-10-13T03:12:46Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70392752,
+      "lat": 42.051436,
+      "lon": -71.878107,
+      "timestamp": "2021-10-13T03:12:46Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70395171,
+      "lat": 42.051464,
+      "lon": -71.878099,
+      "timestamp": "2021-10-13T03:12:46Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70396683,
+      "lat": 42.053722,
+      "lon": -71.877444,
+      "timestamp": "2021-10-13T03:12:46Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70399714,
+      "lat": 42.050855,
+      "lon": -71.878105,
+      "timestamp": "2021-10-13T03:12:46Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70404607,
+      "lat": 42.050929,
+      "lon": -71.878117,
+      "timestamp": "2021-10-13T03:12:47Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70406551,
+      "lat": 42.053823,
+      "lon": -71.877437,
+      "timestamp": "2021-10-13T03:12:47Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70408197,
+      "lat": 42.050601,
+      "lon": -71.878069,
+      "timestamp": "2021-10-13T03:12:47Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70408644,
+      "lat": 42.053962,
+      "lon": -71.877439,
+      "timestamp": "2021-10-13T03:12:47Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70410374,
+      "lat": 42.051091,
+      "lon": -71.87814,
+      "timestamp": "2021-10-13T03:12:47Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70410597,
+      "lat": 42.053251,
+      "lon": -71.877506,
+      "timestamp": "2021-10-13T03:12:47Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 6784449243,
+      "lat": 42.0529498,
+      "lon": -71.8775829,
+      "timestamp": "2019-09-10T07:05:59Z",
+      "version": 1
+    },
+    {
+      "type": "node",
+      "id": 6784449246,
+      "lat": 42.0539809,
+      "lon": -71.8774464,
+      "timestamp": "2019-09-10T07:05:59Z",
+      "version": 1
+    },
+    {
+      "type": "node",
+      "id": 8620291620,
+      "lat": 42.0509503,
+      "lon": -71.87812,
+      "timestamp": "2021-04-12T04:11:51Z",
+      "version": 1
+    },
+    {
+      "type": "node",
+      "id": 10925322326,
+      "lat": 42.0500497,
+      "lon": -71.8780696,
+      "timestamp": "2023-05-24T22:59:00Z",
+      "version": 1,
+      "tags": {
+        "highway": "stop"
+      }
+    },
+    {
+      "type": "node",
+      "id": 13348597509,
+      "lat": 42.0544084,
+      "lon": -71.8776552,
+      "timestamp": "2025-12-02T20:23:50Z",
+      "version": 1,
+      "tags": {
+        "highway": "crossing"
+      }
+    },
+    {
+      "type": "way",
+      "id": 9329870,
+      "timestamp": "2025-12-02T20:23:50Z",
+      "version": 6,
+      "nodes": [
+        70351140,
+        13348597509,
+        70378222,
+        70375157,
+        6784449246,
+        70408644,
+        70385793,
+        70406551,
+        70396683,
+        70365011,
+        70353315,
+        70380050,
+        70410597,
+        6784449243,
+        70390965,
+        70377520,
+        70363324,
+        70392441,
+        70357299,
+        70343123,
+        70363715,
+        70362168,
+        70371097,
+        70395171,
+        70392752,
+        70351021,
+        70343212,
+        70410374,
+        8620291620,
+        70404607,
+        70399714,
+        70348430,
+        70408197,
+        70335758,
+        70341027,
+        10925322326,
+        70358882
+      ],
+      "tags": {
+        "attribution": "Office of Geographic and Environmental Information (MassGIS)",
+        "condition": "good",
+        "highway": "residential",
+        "lanes": "1",
+        "massgis:way_id": "167316",
+        "name": "Prospect Street",
+        "oneway": "yes",
+        "source": "massgis_import_v0.1_20071009094315",
+        "surface": "asphalt",
+        "width": "12.2"
+      }
+    },
+    {
+      "type": "node",
+      "id": 70336948,
+      "lat": 42.0482,
+      "lon": -71.882566,
+      "timestamp": "2021-10-13T03:12:40Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70337676,
+      "lat": 42.0493721,
+      "lon": -71.8782293,
+      "timestamp": "2023-05-24T22:57:51Z",
+      "version": 3,
+      "tags": {
+        "crossing": "marked",
+        "crossing:markings": "lines",
+        "highway": "crossing"
+      }
+    },
+    {
+      "type": "node",
+      "id": 70338824,
+      "lat": 42.049414,
+      "lon": -71.878079,
+      "timestamp": "2021-10-13T03:12:41Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70347391,
+      "lat": 42.04923,
+      "lon": -71.878752,
+      "timestamp": "2021-10-13T03:12:41Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70349396,
+      "lat": 42.048641,
+      "lon": -71.880915,
+      "timestamp": "2021-10-13T03:12:41Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70365148,
+      "lat": 42.049113,
+      "lon": -71.8791773,
+      "timestamp": "2021-10-13T03:12:45Z",
+      "version": 3
+    },
+    {
+      "type": "node",
+      "id": 70373357,
+      "lat": 42.048452,
+      "lon": -71.88159,
+      "timestamp": "2021-10-13T03:12:45Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70377994,
+      "lat": 42.0496506,
+      "lon": -71.877176,
+      "timestamp": "2023-05-24T22:57:51Z",
+      "version": 4
+    },
+    {
+      "type": "node",
+      "id": 70379033,
+      "lat": 42.049763,
+      "lon": -71.877006,
+      "timestamp": "2021-10-13T03:12:45Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70381516,
+      "lat": 42.048779,
+      "lon": -71.88043,
+      "timestamp": "2021-10-13T03:12:46Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70394932,
+      "lat": 42.049552,
+      "lon": -71.877549,
+      "timestamp": "2021-10-13T03:12:46Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70399361,
+      "lat": 42.049249,
+      "lon": -71.878682,
+      "timestamp": "2021-10-13T03:12:46Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70404158,
+      "lat": 42.048928,
+      "lon": -71.879867,
+      "timestamp": "2021-10-13T03:12:47Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70406518,
+      "lat": 42.048754,
+      "lon": -71.880524,
+      "timestamp": "2021-10-13T03:12:47Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70407722,
+      "lat": 42.048085,
+      "lon": -71.883,
+      "timestamp": "2021-10-13T03:12:47Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70413373,
+      "lat": 42.048302,
+      "lon": -71.882176,
+      "timestamp": "2021-10-13T03:12:47Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 6774801369,
+      "lat": 42.0484893,
+      "lon": -71.8814569,
+      "timestamp": "2019-09-05T14:24:06Z",
+      "version": 1
+    },
+    {
+      "type": "node",
+      "id": 7019412517,
+      "lat": 42.0483819,
+      "lon": -71.881864,
+      "timestamp": "2019-11-29T12:16:02Z",
+      "version": 1
+    },
+    {
+      "type": "node",
+      "id": 7050535005,
+      "lat": 42.0490813,
+      "lon": -71.8792974,
+      "timestamp": "2019-12-11T23:42:07Z",
+      "version": 1
+    },
+    {
+      "type": "node",
+      "id": 7271277466,
+      "lat": 42.0493878,
+      "lon": -71.8781752,
+      "timestamp": "2020-03-06T07:37:55Z",
+      "version": 1
+    },
+    {
+      "type": "node",
+      "id": 7823937925,
+      "lat": 42.0490094,
+      "lon": -71.8795647,
+      "timestamp": "2020-08-18T18:02:05Z",
+      "version": 1
+    },
+    {
+      "type": "node",
+      "id": 10925344620,
+      "lat": 42.0496831,
+      "lon": -71.8770659,
+      "timestamp": "2023-05-24T22:57:51Z",
+      "version": 1,
+      "tags": {
+        "direction": "forward",
+        "highway": "stop"
+      }
+    },
+    {
+      "type": "node",
+      "id": 13348597669,
+      "lat": 42.0496999,
+      "lon": -71.8770533,
+      "timestamp": "2025-12-02T20:23:50Z",
+      "version": 1,
+      "tags": {
+        "crossing": "uncontrolled",
+        "crossing:markings": "yes",
+        "highway": "crossing"
+      }
+    },
+    {
+      "type": "node",
+      "id": 13348597687,
+      "lat": 42.0495938,
+      "lon": -71.8773909,
+      "timestamp": "2025-12-02T20:23:50Z",
+      "version": 1
+    },
+    {
+      "type": "node",
+      "id": 13348597702,
+      "lat": 42.0493928,
+      "lon": -71.8781567,
+      "timestamp": "2025-12-02T20:23:50Z",
+      "version": 1
+    },
+    {
+      "type": "way",
+      "id": 9329756,
+      "timestamp": "2025-12-02T20:23:50Z",
+      "version": 10,
+      "nodes": [
+        70407722,
+        70336948,
+        70413373,
+        7019412517,
+        70373357,
+        6774801369,
+        70349396,
+        70382037,
+        70406518,
+        70381516,
+        70404158,
+        7823937925,
+        7050535005,
+        70365148,
+        70347391,
+        70399361,
+        70337676,
+        7271277466,
+        13348597702,
+        70338824,
+        70394932,
+        13348597687,
+        70377994,
+        70348416,
+        10925344620,
+        13348597669,
+        70379033
+      ],
+      "tags": {
+        "attribution": "Office of Geographic and Environmental Information (MassGIS)",
+        "condition": "fair",
+        "highway": "residential",
+        "lanes": "2",
+        "massgis:way_id": "149402",
+        "name": "Negus Street",
+        "source": "massgis_import_v0.1_20071009094315",
+        "surface": "asphalt",
+        "width": "12.2"
+      }
+    },
+    {
+      "type": "node",
+      "id": 70190860,
+      "lat": 42.090584,
+      "lon": -71.880712,
+      "timestamp": "2021-10-13T03:12:37Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70191367,
+      "lat": 42.090684,
+      "lon": -71.880897,
+      "timestamp": "2021-10-13T03:12:37Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70200409,
+      "lat": 42.097351,
+      "lon": -71.885409,
+      "timestamp": "2021-10-13T03:12:37Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70202116,
+      "lat": 42.097572,
+      "lon": -71.885531,
+      "timestamp": "2021-10-13T03:12:37Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70203713,
+      "lat": 42.090783,
+      "lon": -71.881036,
+      "timestamp": "2021-10-13T03:12:37Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70209387,
+      "lat": 42.100798,
+      "lon": -71.887118,
+      "timestamp": "2021-10-13T03:12:37Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70210509,
+      "lat": 42.095235,
+      "lon": -71.883668,
+      "timestamp": "2021-10-13T03:12:37Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70213240,
+      "lat": 42.099743,
+      "lon": -71.886647,
+      "timestamp": "2021-10-13T03:12:37Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70213431,
+      "lat": 42.093779,
+      "lon": -71.882707,
+      "timestamp": "2021-10-13T03:12:37Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70213891,
+      "lat": 42.101541,
+      "lon": -71.887436,
+      "timestamp": "2024-10-22T13:04:14Z",
+      "version": 3,
+      "tags": {
+        "direction": "both",
+        "highway": "stop"
+      }
+    },
+    {
+      "type": "node",
+      "id": 70220134,
+      "lat": 42.097034,
+      "lon": -71.885207,
+      "timestamp": "2021-10-13T03:12:38Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70230804,
+      "lat": 42.099514,
+      "lon": -71.88654,
+      "timestamp": "2021-10-13T03:12:38Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70231495,
+      "lat": 42.094184,
+      "lon": -71.88297,
+      "timestamp": "2021-10-13T03:12:38Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70241061,
+      "lat": 42.09647,
+      "lon": -71.884792,
+      "timestamp": "2021-10-13T03:12:38Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70242767,
+      "lat": 42.091174,
+      "lon": -71.8813691,
+      "timestamp": "2024-07-26T13:35:52Z",
+      "version": 3
+    },
+    {
+      "type": "node",
+      "id": 70245779,
+      "lat": 42.091026,
+      "lon": -71.881269,
+      "timestamp": "2021-10-13T03:12:38Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70246516,
+      "lat": 42.09874,
+      "lon": -71.88616,
+      "timestamp": "2021-10-13T03:12:38Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70247956,
+      "lat": 42.093483,
+      "lon": -71.882499,
+      "timestamp": "2021-10-13T03:12:39Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70250995,
+      "lat": 42.099231,
+      "lon": -71.886403,
+      "timestamp": "2021-10-13T03:12:39Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70251745,
+      "lat": 42.100095,
+      "lon": -71.886805,
+      "timestamp": "2021-10-13T03:12:39Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70254453,
+      "lat": 42.092928,
+      "lon": -71.882165,
+      "timestamp": "2021-10-13T03:12:39Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70254846,
+      "lat": 42.091584,
+      "lon": -71.881565,
+      "timestamp": "2021-10-13T03:12:39Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70255741,
+      "lat": 42.095025,
+      "lon": -71.88353,
+      "timestamp": "2021-10-13T03:12:39Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70256857,
+      "lat": 42.090978,
+      "lon": -71.881233,
+      "timestamp": "2021-10-13T03:12:39Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70265930,
+      "lat": 42.091262,
+      "lon": -71.881415,
+      "timestamp": "2021-10-13T03:12:39Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70266131,
+      "lat": 42.097826,
+      "lon": -71.885674,
+      "timestamp": "2021-10-13T03:12:39Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70267370,
+      "lat": 42.095531,
+      "lon": -71.883918,
+      "timestamp": "2021-10-13T03:12:39Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70267979,
+      "lat": 42.100313,
+      "lon": -71.886906,
+      "timestamp": "2021-10-13T03:12:39Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70268721,
+      "lat": 42.092694,
+      "lon": -71.882052,
+      "timestamp": "2021-10-13T03:12:39Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70271019,
+      "lat": 42.094679,
+      "lon": -71.883308,
+      "timestamp": "2021-10-13T03:12:40Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70271643,
+      "lat": 42.090868,
+      "lon": -71.881135,
+      "timestamp": "2021-10-13T03:12:40Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70272446,
+      "lat": 42.095336,
+      "lon": -71.883753,
+      "timestamp": "2021-10-13T03:12:40Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70274166,
+      "lat": 42.100511,
+      "lon": -71.886994,
+      "timestamp": "2021-10-13T03:12:40Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70274234,
+      "lat": 42.095834,
+      "lon": -71.884206,
+      "timestamp": "2021-10-13T03:12:40Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70275582,
+      "lat": 42.098378,
+      "lon": -71.885975,
+      "timestamp": "2021-10-13T03:12:40Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70280223,
+      "lat": 42.090521,
+      "lon": -71.880535,
+      "timestamp": "2021-10-13T03:12:40Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70282253,
+      "lat": 42.09048,
+      "lon": -71.880329,
+      "timestamp": "2021-10-13T03:12:40Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70282388,
+      "lat": 42.093218,
+      "lon": -71.882338,
+      "timestamp": "2021-10-13T03:12:40Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70282580,
+      "lat": 42.099942,
+      "lon": -71.886734,
+      "timestamp": "2021-10-13T03:12:40Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70284640,
+      "lat": 42.09216,
+      "lon": -71.881817,
+      "timestamp": "2021-10-13T03:12:40Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70284781,
+      "lat": 42.1012,
+      "lon": -71.887292,
+      "timestamp": "2021-10-13T03:12:40Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70285099,
+      "lat": 42.091103,
+      "lon": -71.881324,
+      "timestamp": "2021-10-13T03:12:40Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70285322,
+      "lat": 42.096767,
+      "lon": -71.885019,
+      "timestamp": "2021-10-13T03:12:40Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70285436,
+      "lat": 42.096143,
+      "lon": -71.88451,
+      "timestamp": "2021-10-13T03:12:40Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 6755997143,
+      "lat": 42.1002955,
+      "lon": -71.8868979,
+      "timestamp": "2019-08-29T12:01:22Z",
+      "version": 1
+    },
+    {
+      "type": "node",
+      "id": 6866153160,
+      "lat": 42.0990688,
+      "lon": -71.8863227,
+      "timestamp": "2019-10-10T09:37:36Z",
+      "version": 1
+    },
+    {
+      "type": "node",
+      "id": 6866153163,
+      "lat": 42.098448,
+      "lon": -71.8860108,
+      "timestamp": "2019-10-10T09:37:36Z",
+      "version": 1
+    },
+    {
+      "type": "node",
+      "id": 6869120384,
+      "lat": 42.0976359,
+      "lon": -71.885567,
+      "timestamp": "2019-10-11T07:03:49Z",
+      "version": 1
+    },
+    {
+      "type": "node",
+      "id": 6878389454,
+      "lat": 42.0923048,
+      "lon": -71.8818807,
+      "timestamp": "2019-10-14T13:57:37Z",
+      "version": 1
+    },
+    {
+      "type": "node",
+      "id": 6881870771,
+      "lat": 42.0952904,
+      "lon": -71.8837147,
+      "timestamp": "2019-10-15T13:30:19Z",
+      "version": 1
+    },
+    {
+      "type": "node",
+      "id": 7440761599,
+      "lat": 42.0971578,
+      "lon": -71.8852859,
+      "timestamp": "2020-04-24T07:07:59Z",
+      "version": 1
+    },
+    {
+      "type": "node",
+      "id": 7766389126,
+      "lat": 42.0998755,
+      "lon": -71.8867049,
+      "timestamp": "2020-07-29T17:01:50Z",
+      "version": 1
+    },
+    {
+      "type": "node",
+      "id": 7911702306,
+      "lat": 42.091841,
+      "lon": -71.8816774,
+      "timestamp": "2020-09-16T05:04:36Z",
+      "version": 1
+    },
+    {
+      "type": "node",
+      "id": 12075305654,
+      "lat": 42.0905064,
+      "lon": -71.8804618,
+      "timestamp": "2024-07-26T13:35:52Z",
+      "version": 1,
+      "tags": {
+        "direction": "backward",
+        "highway": "stop"
+      }
+    },
+    {
+      "type": "node",
+      "id": 12075305655,
+      "lat": 42.0910049,
+      "lon": -71.8812531,
+      "timestamp": "2024-07-26T13:35:52Z",
+      "version": 1
+    },
+    {
+      "type": "way",
+      "id": 9319800,
+      "timestamp": "2024-07-26T13:35:52Z",
+      "version": 10,
+      "nodes": [
+        70282253,
+        12075305654,
+        70280223,
+        70190860,
+        70191367,
+        70203713,
+        70271643,
+        70256857,
+        12075305655,
+        70245779,
+        70285099,
+        70242767,
+        70265930,
+        70254846,
+        7911702306,
+        70284640,
+        6878389454,
+        70268721,
+        70254453,
+        70282388,
+        70247956,
+        70213431,
+        70231495,
+        70271019,
+        70255741,
+        70210509,
+        6881870771,
+        70272446,
+        70267370,
+        70274234,
+        70285436,
+        70241061,
+        70285322,
+        70220134,
+        7440761599,
+        70200409,
+        70202116,
+        6869120384,
+        70266131,
+        70275582,
+        6866153163,
+        70246516,
+        6866153160,
+        70250995,
+        70230804,
+        70213240,
+        7766389126,
+        70282580,
+        70251745,
+        6755997143,
+        70267979,
+        70274166,
+        70209387,
+        70284781,
+        70213891
+      ],
+      "tags": {
+        "attribution": "Office of Geographic and Environmental Information (MassGIS)",
+        "condition": "fair",
+        "highway": "tertiary",
+        "lanes": "2",
+        "massgis:way_id": "155984",
+        "name": "Old Webster Road",
+        "source": "massgis_import_v0.1_20071009092025",
+        "width": "9.1"
+      }
+    },
+    {
+      "type": "node",
+      "id": 70191103,
+      "lat": 42.090169,
+      "lon": -71.885169,
+      "timestamp": "2021-10-13T03:12:37Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70197531,
+      "lat": 42.0907132,
+      "lon": -71.8835529,
+      "timestamp": "2024-07-26T13:35:52Z",
+      "version": 3
+    },
+    {
+      "type": "node",
+      "id": 70205854,
+      "lat": 42.090219,
+      "lon": -71.885471,
+      "timestamp": "2021-10-13T03:12:37Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70206516,
+      "lat": 42.090219,
+      "lon": -71.885261,
+      "timestamp": "2021-10-13T03:12:37Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70208869,
+      "lat": 42.089991,
+      "lon": -71.885522,
+      "timestamp": "2021-10-13T03:12:37Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70211130,
+      "lat": 42.09016,
+      "lon": -71.885541,
+      "timestamp": "2021-10-13T03:12:37Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70214652,
+      "lat": 42.090194,
+      "lon": -71.885511,
+      "timestamp": "2021-10-13T03:12:37Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70215280,
+      "lat": 42.090857,
+      "lon": -71.883218,
+      "timestamp": "2021-10-13T03:12:37Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70217504,
+      "lat": 42.090051,
+      "lon": -71.885553,
+      "timestamp": "2021-10-13T03:12:37Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70219950,
+      "lat": 42.089955,
+      "lon": -71.885331,
+      "timestamp": "2021-10-13T03:12:38Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70219971,
+      "lat": 42.089951,
+      "lon": -71.885383,
+      "timestamp": "2021-10-13T03:12:38Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70227941,
+      "lat": 42.090227,
+      "lon": -71.885426,
+      "timestamp": "2021-10-13T03:12:38Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70234719,
+      "lat": 42.0909564,
+      "lon": -71.8820858,
+      "timestamp": "2024-07-26T13:35:52Z",
+      "version": 3
+    },
+    {
+      "type": "node",
+      "id": 70236704,
+      "lat": 42.090368,
+      "lon": -71.884312,
+      "timestamp": "2021-10-13T03:12:38Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70252011,
+      "lat": 42.089956,
+      "lon": -71.885435,
+      "timestamp": "2021-10-13T03:12:39Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70252325,
+      "lat": 42.090093,
+      "lon": -71.885555,
+      "timestamp": "2021-10-13T03:12:39Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70252725,
+      "lat": 42.090233,
+      "lon": -71.88536,
+      "timestamp": "2021-10-13T03:12:39Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70255139,
+      "lat": 42.0909758,
+      "lon": -71.8818978,
+      "timestamp": "2024-07-26T13:35:52Z",
+      "version": 3
+    },
+    {
+      "type": "node",
+      "id": 70259806,
+      "lat": 42.089983,
+      "lon": -71.885211,
+      "timestamp": "2021-10-13T03:12:39Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70263358,
+      "lat": 42.09023,
+      "lon": -71.885302,
+      "timestamp": "2021-10-13T03:12:39Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70263548,
+      "lat": 42.089965,
+      "lon": -71.885278,
+      "timestamp": "2021-10-13T03:12:39Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70263789,
+      "lat": 42.090085,
+      "lon": -71.885089,
+      "timestamp": "2021-10-13T03:12:39Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70267448,
+      "lat": 42.0909438,
+      "lon": -71.8829545,
+      "timestamp": "2024-07-26T13:35:52Z",
+      "version": 3
+    },
+    {
+      "type": "node",
+      "id": 70270525,
+      "lat": 42.0909615,
+      "lon": -71.8827462,
+      "timestamp": "2024-07-26T13:35:52Z",
+      "version": 3
+    },
+    {
+      "type": "node",
+      "id": 70270715,
+      "lat": 42.09091,
+      "lon": -71.88307,
+      "timestamp": "2021-10-13T03:12:39Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70271087,
+      "lat": 42.0900809,
+      "lon": -71.884976,
+      "timestamp": "2024-07-26T13:35:52Z",
+      "version": 3
+    },
+    {
+      "type": "node",
+      "id": 70274159,
+      "lat": 42.090017,
+      "lon": -71.885543,
+      "timestamp": "2021-10-13T03:12:40Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70275112,
+      "lat": 42.0909543,
+      "lon": -71.8828527,
+      "timestamp": "2024-07-26T13:35:52Z",
+      "version": 3
+    },
+    {
+      "type": "node",
+      "id": 70277810,
+      "lat": 42.090204,
+      "lon": -71.885223,
+      "timestamp": "2021-10-13T03:12:40Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70281186,
+      "lat": 42.090121,
+      "lon": -71.885554,
+      "timestamp": "2021-10-13T03:12:40Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 70283699,
+      "lat": 42.0910495,
+      "lon": -71.8815584,
+      "timestamp": "2024-07-26T13:35:52Z",
+      "version": 3
+    },
+    {
+      "type": "node",
+      "id": 70284393,
+      "lat": 42.089967,
+      "lon": -71.885479,
+      "timestamp": "2021-10-13T03:12:40Z",
+      "version": 2
+    },
+    {
+      "type": "node",
+      "id": 12075305656,
+      "lat": 42.0910855,
+      "lon": -71.8814007,
+      "timestamp": "2024-07-26T13:35:52Z",
+      "version": 1,
+      "tags": {
+        "direction": "forward",
+        "highway": "stop"
+      }
+    },
+    {
+      "type": "way",
+      "id": 9319994,
+      "timestamp": "2024-07-26T13:35:52Z",
+      "version": 2,
+      "nodes": [
+        70263789,
+        70191103,
+        70277810,
+        70206516,
+        70263358,
+        70252725,
+        70227941,
+        70205854,
+        70214652,
+        70211130,
+        70281186,
+        70252325,
+        70217504,
+        70274159,
+        70208869,
+        70284393,
+        70252011,
+        70219971,
+        70219950,
+        70263548,
+        70259806,
+        70263789,
+        70271087,
+        70236704,
+        70197531,
+        70215280,
+        70270715,
+        70267448,
+        70275112,
+        70270525,
+        70234719,
+        70255139,
+        70283699,
+        12075305656,
+        70285099
+      ],
+      "tags": {
+        "attribution": "Office of Geographic and Environmental Information (MassGIS)",
+        "condition": "good",
+        "highway": "residential",
+        "lanes": "2",
+        "massgis:way_id": "134348",
+        "name": "Sneade Drive",
+        "source": "massgis_import_v0.1_20071009092025"
+      }
+    }
+  ]
+}

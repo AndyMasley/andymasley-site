@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { BARK_FINISH_GLSL } from './vegetation-finish';
 
 type ArtKind = 'siding' | 'roof' | 'brick' | 'trim' | 'glass' | 'foundation' | 'concrete' | 'asphalt' | 'shoulder' | 'leaf' | 'far-leaf' | 'bark' | 'car-paint' | 'car-glass' | 'rubber' | 'water';
 type Registration = {
@@ -119,7 +120,8 @@ float townStoneAge = townArtNoise(vTownArtWorld.xz*0.24 + vec2(vTownArtWorld.y*0
 diffuseColor.rgb *= mix(0.94,1.04,townStoneAge) * (1.0+(townStoneGrain-0.5)*${kind === 'asphalt' ? '0.14' : '0.10'}*townArtClose);
 townArtHeight = (townStoneGrain-0.5)*${kind === 'asphalt' ? '0.00055' : '0.00035'}*townArtClose;
 `;
-  if (kind === 'brick' || kind === 'bark') return start + `
+  if (kind === 'bark') return start + BARK_FINISH_GLSL;
+  if (kind === 'brick') return start + `
 diffuseColor.rgb *= mix(0.96,1.04,townArtNoise(vTownArtWorld.xz*0.31+vec2(vTownArtWorld.y*0.29)));
 `;
   return start;
@@ -194,7 +196,12 @@ export function applyArtMaterial(material: THREE.MeshStandardMaterial, clock: { 
   if (kind === 'glass') { material.color.set('#34464b'); material.roughness = 0.19; material.metalness = 0.32; material.envMapIntensity = 0.65; }
   if (kind === 'leaf') { material.roughness = 0.88; material.envMapIntensity = 0.12; }
   if (kind === 'far-leaf') { material.color.set('#657c48'); material.roughness = 0.95; }
-  if (kind === 'bark') { material.roughness = 0.93; }
+  if (kind === 'bark') {
+    // The pinned trunk already has a bark atlas. Retain its source factor so
+    // the gray-brown interpretation does not darken its reflectance twice.
+    if (!material.map) material.color.set('#776f61');
+    material.roughness = 0.96;
+  }
   if (kind === 'car-paint') { material.roughness = 0.22; material.metalness = 0.38; material.envMapIntensity = 0.35; }
   if (kind === 'car-glass') { material.roughness = 0.11; material.metalness = 0.35; material.envMapIntensity = 0.40; }
   if (kind === 'rubber') { material.roughness = 0.93; material.metalness = 0; }
@@ -213,9 +220,9 @@ townArtPosition = instanceMatrix * townArtPosition;
 vTownArtWorld = (modelMatrix * townArtPosition).xyz;
 `);
     shader.fragmentShader = functions + shader.fragmentShader.replace('#include <map_fragment>', mapTreatment(kind)).replace('#include <opaque_fragment>', finishTreatment(kind));
-    if (['siding','asphalt','concrete','foundation','shoulder','water'].includes(kind)) shader.fragmentShader = shader.fragmentShader.replace('#include <normal_fragment_maps>', mineralNormal);
+    if (['siding','asphalt','concrete','foundation','shoulder','water','bark'].includes(kind)) shader.fragmentShader = shader.fragmentShader.replace('#include <normal_fragment_maps>', mineralNormal);
   };
-  material.customProgramCacheKey = () => `${previousKey}|webster-art-material-v2:${kind}`;
+  material.customProgramCacheKey = () => `${previousKey}|webster-art-material-v2:${kind}${kind==='bark'?'|regional-bark-v1':''}`;
   material.addEventListener('dispose', onMaterialDispose);
   material.needsUpdate = true;
 }

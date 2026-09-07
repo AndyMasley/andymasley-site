@@ -1,0 +1,316 @@
+{
+  "version": 1,
+  "sourceManifestSha256": "37fbef34bc2a4467997252be75b4c43174a6a7b2d39963614cadd8d787e56105",
+  "registration": {
+    "id": "DCR-LAKESIDE-BANK-2025",
+    "source": "data/derived/town/additional-environment-sources/final-lake-sites.json",
+    "bankPixels": [
+      [
+        435,
+        445
+      ],
+      [
+        445,
+        474
+      ],
+      [
+        445,
+        494
+      ],
+      [
+        434,
+        520
+      ],
+      [
+        416,
+        544
+      ],
+      [
+        397,
+        566
+      ]
+    ],
+    "bankEastNorth": [
+      [
+        1658.1404805243947,
+        -3357.364358304767
+      ],
+      [
+        1660.3370684013935,
+        -3363.790400545462
+      ],
+      [
+        1660.3201146066422,
+        -3368.2162890770705
+      ],
+      [
+        1657.8547809701704,
+        -3373.9605885889614
+      ],
+      [
+        1653.8363146051415,
+        -3379.2563450451707
+      ],
+      [
+        1649.5974203333317,
+        -3384.108662015293
+      ]
+    ],
+    "waterHeight": 45.08000183105469,
+    "basis": "Reviewed MassGIS spring 2025 bank edge; authored shallow depth and bank interpolation. Not a bathymetric survey.",
+    "imagerySource": "https://tiles.arcgis.com/tiles/hGdibHYSPO59RG1h/arcgis/rest/services/Massachusetts_Aerial_Imagery_2025/MapServer",
+    "tileId": "6_-14",
+    "protectedSourcePolygons": 0,
+    "waterProtectedOverlapM2": 0.0
+  },
+  "registrations": [
+    {
+      "id": "DCR-LAKESIDE-BANK-2025",
+      "source": "data/derived/town/additional-environment-sources/final-lake-sites.json",
+      "bankPixels": [
+        [
+          435,
+          445
+        ],
+        [
+          445,
+          474
+        ],
+        [
+          445,
+          494
+        ],
+        [
+          434,
+          520
+        ],
+        [
+          416,
+          544
+        ],
+        [
+          397,
+          566
+        ]
+      ],
+      "bankEastNorth": [
+        [
+          1658.1404805243947,
+          -3357.364358304767
+        ],
+        [
+          1660.3370684013935,
+          -3363.790400545462
+        ],
+        [
+          1660.3201146066422,
+          -3368.2162890770705
+        ],
+        [
+          1657.8547809701704,
+          -3373.9605885889614
+        ],
+        [
+          1653.8363146051415,
+          -3379.2563450451707
+        ],
+        [
+          1649.5974203333317,
+          -3384.108662015293
+        ]
+      ],
+      "waterHeight": 45.08000183105469,
+      "basis": "Reviewed MassGIS spring 2025 bank edge; authored shallow depth and bank interpolation. Not a bathymetric survey.",
+      "imagerySource": "https://tiles.arcgis.com/tiles/hGdibHYSPO59RG1h/arcgis/rest/services/Massachusetts_Aerial_Imagery_2025/MapServer",
+      "tileId": "6_-14",
+      "protectedSourcePolygons": 0,
+      "waterProtectedOverlapM2": 0.0
+    },
+    {
+      "id": "LAKEVIEW-DOCK-BANK-2025",
+      "tileIds": [
+        "1_-3",
+        "1_-4",
+        "2_-3",
+        "2_-4"
+      ],
+      "bankPixels": [
+        [
+          260,
+          424
+        ],
+        [
+          311,
+          407
+        ],
+        [
+          355,
+          391
+        ],
+        [
+          409,
+          386
+        ],
+        [
+          456,
+          393
+        ],
+        [
+          481,
+          406
+        ],
+        [
+          494,
+          424
+        ],
+        [
+          500,
+          560
+        ],
+        [
+          350,
+          560
+        ]
+      ],
+      "mosaicCropPixels": [
+        4595,
+        5167,
+        4979,
+        5551
+      ],
+      "resizeScale": 2,
+      "basis": "Reviewed MassGIS spring 2025 actual bay edge. Removes dry terrain tongues corresponding to old mapped dock notches; shallow depth and 3m bank interpolation are authored, not surveyed bathymetry.",
+      "imagerySource": "https://tiles.arcgis.com/tiles/hGdibHYSPO59RG1h/arcgis/rest/services/Massachusetts_Aerial_Imagery_2025/MapServer",
+      "waterHeight": 45.08000183105469,
+      "protectedSourcePolygons": 0,
+      "waterProtectedOverlapM2": 0.0
+    }
+  ],
+  "tiles": {
+    "6_-14": {
+      "levels": {
+        "0": {
+          "url": "/town-evidence/v1/environment-ground/6_-14.0.b2d7f95291d2.json",
+          "sha256": "b2d7f95291d2fd271572fa0709b424e279a255d79ab003e1965003ebccbff85e",
+          "bytes": 158187,
+          "sourceSha256": "c93647858b71d2682eeaf37369a7aac1835706984388079919673ab48d9870a4",
+          "sourceTerrainSha256": "12b1101985600c5885a0d718c1f41dd1c20e489366a608c2572f5bf199acd3a3"
+        },
+        "1": {
+          "url": "/town-evidence/v1/environment-ground/6_-14.1.552cf90b76ac.json",
+          "sha256": "552cf90b76ac466ea8730fa29bebeabd4f96a81ff451efa8c0a02a561a3c6d8e",
+          "bytes": 174725,
+          "sourceSha256": "902e6b5d08a6b2e99b6aabc1c3ed975e192830d5e884ec422b7bf3a465a4c257",
+          "sourceTerrainSha256": "6fafcf9728ee0954ecf90475a2c1baf9affb02429b06bf526955dd78e8e180b1"
+        },
+        "2": {
+          "url": "/town-evidence/v1/environment-ground/6_-14.2.738d56e7630a.json",
+          "sha256": "738d56e7630a0a00cc41434609bfa607e4abd8e983313c6cb994c711417c9ba8",
+          "bytes": 213765,
+          "sourceSha256": "131b453689483c343abad6d95cf33cee22a28ea6da4abac30e1d74d3eaabe6de",
+          "sourceTerrainSha256": "801b9436a4b00a22fc0b32e1eb222fbcba43eacdceaaf5c22e5cad6119045737"
+        }
+      }
+    },
+    "1_-3": {
+      "levels": {
+        "0": {
+          "url": "/town-evidence/v1/environment-ground/1_-3.0.35fa13edb053.json",
+          "sha256": "35fa13edb05336d5456a1174ed3f7672fd29a96e36fe5537b30e0b5224e5b785",
+          "bytes": 1005,
+          "sourceSha256": "7bc270364d57f1fc856fcb115e31e6d74c7e801f6e66017d9479857a3d128e18",
+          "sourceTerrainSha256": "f03f58f6db536d19850655054201c8ab0e4899d46f140e7765dc94e4e35b308b"
+        },
+        "1": {
+          "url": "/town-evidence/v1/environment-ground/1_-3.1.396c43c63001.json",
+          "sha256": "396c43c63001b36c87a20a5669d3d9f3dbd17ba81de0d800c123aa749771a54e",
+          "bytes": 1005,
+          "sourceSha256": "b0165787b59ee2a9a952b444eef339809018076ad8bdd8857e8eb0c762c31a31",
+          "sourceTerrainSha256": "dc25be68f136a762f48829fbacb35c913c76fc93a5166ac91774dd7ddbf3c827"
+        },
+        "2": {
+          "url": "/town-evidence/v1/environment-ground/1_-3.2.dd0a5cd50909.json",
+          "sha256": "dd0a5cd50909f90be7aee62a5ea142a73b5b17d3fbb5ff06fe274d8e729aa766",
+          "bytes": 1005,
+          "sourceSha256": "cc82da56dee82026e3885508b3a069d70e872330c7ff3c33f9b402abd1efe2a1",
+          "sourceTerrainSha256": "9ec4ebaa6eaf010b59c5042e4c1bab90903ab870017493737da1ab47d8097d24"
+        }
+      }
+    },
+    "1_-4": {
+      "levels": {
+        "0": {
+          "url": "/town-evidence/v1/environment-ground/1_-4.0.7883412dabe3.json",
+          "sha256": "7883412dabe3cb13157d93efceb842fa1178648964417092d539bfabf79552ec",
+          "bytes": 97419,
+          "sourceSha256": "b11bd1eb4090afc217e92c7378e818c85fadc8b0387a9d2e94d4fbcba351d500",
+          "sourceTerrainSha256": "6444fbd7bb7b7c91a16a876296388573ed86b6c873f006a508d4b933bbf4f41a"
+        },
+        "1": {
+          "url": "/town-evidence/v1/environment-ground/1_-4.1.8d061eff0c64.json",
+          "sha256": "8d061eff0c64d8312d2b070a614ebedc827aa3a2b2eb4b787d5f69534cc8931c",
+          "bytes": 99561,
+          "sourceSha256": "66e35dc2cf5066d3680f8ff091a401aa990e50392fc43ef5fd93451e578663fe",
+          "sourceTerrainSha256": "61f643f372285bb6ecc3002f84ab42984d97a7f6eb7b736e2f623eade05872f1"
+        },
+        "2": {
+          "url": "/town-evidence/v1/environment-ground/1_-4.2.9933bdc8b90a.json",
+          "sha256": "9933bdc8b90a5bd7a291ed9626fb4c50ff6ddca5d5e201478ce1f4db80612e2f",
+          "bytes": 110202,
+          "sourceSha256": "9b4c9dba771a8188ffc3bf0d5ce12a59fd5aab1dc337bf09511137912ec1c15a",
+          "sourceTerrainSha256": "2740bb0d20167d41e58d5bb7a28676349748faa95056b1527f584b4d9b77d787"
+        }
+      }
+    },
+    "2_-3": {
+      "levels": {
+        "0": {
+          "url": "/town-evidence/v1/environment-ground/2_-3.0.7056a4175e60.json",
+          "sha256": "7056a4175e602ff47dba7eeaedad3d9acc7436fa02199e7fb0f4f528d228f302",
+          "bytes": 49813,
+          "sourceSha256": "19c028d3a415170e2980c88ae1afcdf12a3d766c16337d22eae4fc3a7f451ec6",
+          "sourceTerrainSha256": "027f69b9ff563977c41e64e1b5829ff76d460261f29a2b0da7a21108828c0a4c"
+        },
+        "1": {
+          "url": "/town-evidence/v1/environment-ground/2_-3.1.56e7aa2176d0.json",
+          "sha256": "56e7aa2176d09d2999a6667cb790a914b2ba7d9a352810e568fd691c4ec2d216",
+          "bytes": 50537,
+          "sourceSha256": "48e74b2bae63891cc4b8a05156315ea40b9d93b37b66dd9c22908238f9dc0137",
+          "sourceTerrainSha256": "80636e61e0b6fcbbbb43affcc75b16814fe22f0a40b947b48d107e978d938b56"
+        },
+        "2": {
+          "url": "/town-evidence/v1/environment-ground/2_-3.2.23a9be1d0c83.json",
+          "sha256": "23a9be1d0c83d3150f65abff7129da8661fc5c2f9ee4bf05f9afce5461e2a20b",
+          "bytes": 58047,
+          "sourceSha256": "72de5920523c7be975e348387437877a6f18f5221fa09af0ae9902e7faaa9648",
+          "sourceTerrainSha256": "8db657c316e5bc4fc14a14d9618668267d413b7f5d2efe1aa550bfabd4000af8"
+        }
+      }
+    },
+    "2_-4": {
+      "levels": {
+        "0": {
+          "url": "/town-evidence/v1/environment-ground/2_-4.0.faf52bd8d7d5.json",
+          "sha256": "faf52bd8d7d5f0c5bab7929179b874b81f0fea154d3a6e7bd7861cae0790f4e2",
+          "bytes": 1256722,
+          "sourceSha256": "2533cd9b74c78a3e3e34a7d49d07981b974585786f540c2e1e23ef4fdb9ea366",
+          "sourceTerrainSha256": "fafc05b6fdbcfc3ebf40aa9819189349e42a5cc0dd3a45fe87d07c383c1a875d"
+        },
+        "1": {
+          "url": "/town-evidence/v1/environment-ground/2_-4.1.928e7280a7b4.json",
+          "sha256": "928e7280a7b4a1c9c05d2febf08c6bf8e48e6d2435b3614354c2d22c447330d6",
+          "bytes": 1568943,
+          "sourceSha256": "0f57833b9367b52d9e492d5862cf0226ab45e1c28feb864ccd059b7396557d7d",
+          "sourceTerrainSha256": "b5618a20b3631da2cc6a8ebd2d692543c544d78215ec1b4558f742d3848fb35a"
+        },
+        "2": {
+          "url": "/town-evidence/v1/environment-ground/2_-4.2.a058a68ee46f.json",
+          "sha256": "a058a68ee46f7b060b11053f9bcfd1ad52df901d961d92412b3c801cb729811f",
+          "bytes": 1508909,
+          "sourceSha256": "b2a93609ee76c555f5c9a575c2f1a0ec01cb9ecf58846da59b97b0bc6270e325",
+          "sourceTerrainSha256": "1ba85db6216d56cfbdd06a3b5622f3363206f333690fdf9971d20fbb903e451f"
+        }
+      }
+    }
+  }
+}

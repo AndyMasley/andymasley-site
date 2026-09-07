@@ -10,6 +10,22 @@ export interface GrassMask {
   core: readonly number[];
 }
 export interface GrassGround { y: number; normal: [number, number, number] }
+/** Tile-owned painted/paved/water footprints suppress blades without editing the source cover texture. */
+export function excludeGrassPolygons(mask:GrassMask,polygons:readonly (readonly (readonly number[])[])[]):GrassMask {
+  if(!polygons.length)return mask;
+  const data=new Uint8Array(mask.data),[x0,z0,x1,z1]=mask.bounds,dx=(x1-x0)/mask.width,dz=(z1-z0)/mask.height;
+  for(const ring of polygons){
+    if(ring.length<3||ring.some(p=>p.length!==2||!p.every(Number.isFinite)))continue;
+    const minX=Math.max(0,Math.floor((Math.min(...ring.map(p=>p[0]))-x0)/dx)),maxX=Math.min(mask.width-1,Math.ceil((Math.max(...ring.map(p=>p[0]))-x0)/dx));
+    const minZ=Math.max(0,Math.floor((-Math.max(...ring.map(p=>p[1]))-z0)/dz)),maxZ=Math.min(mask.height-1,Math.ceil((-Math.min(...ring.map(p=>p[1]))-z0)/dz));
+    for(let row=minZ;row<=maxZ;row++)for(let col=minX;col<=maxX;col++){
+      const x=x0+(col+.5)*dx,n=-(z0+(row+.5)*dz);let inside=false;
+      for(let i=0,j=ring.length-1;i<ring.length;j=i++){const a=ring[i],b=ring[j];if((a[1]>n)!==(b[1]>n)&&x<(b[0]-a[0])*(n-a[1])/(b[1]-a[1])+a[0])inside=!inside;}
+      if(inside){const i=(row*mask.width+col)*4;data[i]=0;data[i+1]=0;data[i+2]=0;data[i+3]=255;}
+    }
+  }
+  return {...mask,data};
+}
 type Triangle = { x: number; y: number; z: number; ux: number; uy: number; uz: number; vx: number; vy: number; vz: number; inverse: number; normal: [number, number, number] };
 
 const cellKey = (x: number, z: number) => (x + 65536) * 131072 + z + 65536;

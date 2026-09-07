@@ -2,12 +2,13 @@ import * as THREE from 'three';
 import index from '../../../data/derived/town/additional-environment-index.json';
 import {Batch,type Frame,type Role} from './crafted-frontages';
 import {GrassTerrain} from './grass';
+import {wetMarginFlowers} from './vegetation-finish';
 import type {AssetRef} from './contracts';
 
 type V2=[number,number];
 export type AdditionalEnvironmentObject={id:string;tileId:string;featureId:string;kind:'cemetery-stone'|'dam-crest'|'shore-lily'|'wetland-fern'|'wetland-shrub'|'boat-ramp';point:V2;supportPoint?:V2;evidenceIds:string[];seed:number;variant?:string;angle?:number;width?:number;lanes?:1|2;rampRange?:V2;sourceHeight:number;sourceSha256:string};
 export type AdditionalEnvironmentPacket={version:1;tileId:string;sourceManifestSha256:string;objects:AdditionalEnvironmentObject[]};
-export type AdditionalEnvironmentReport={tileId:string;level:number;ids:string[];featureIds:string[];skipped:{id:string;reason:string}[];addedTriangles:number;addedMeshes:number;geometryBytes:number;launches:{id:string;lanes:number;slabs:number;requestedSlabs:number}[];rejected:boolean};
+export type AdditionalEnvironmentReport={tileId:string;level:number;ids:string[];featureIds:string[];skipped:{id:string;reason:string}[];addedTriangles:number;addedMeshes:number;geometryBytes:number;flowers:string[];launches:{id:string;lanes:number;slabs:number;requestedSlabs:number}[];rejected:boolean};
 export function additionalEnvironmentAsset(tileId:string):AssetRef|undefined{return(index.tiles as Record<string,AssetRef>)[tileId];}
 export function validAdditionalEnvironmentPacket(value:unknown,tileId:string):value is AdditionalEnvironmentPacket{
  const p=value as AdditionalEnvironmentPacket|undefined;
@@ -73,7 +74,7 @@ function sourceMeshes(group:THREE.Object3D,kind:string):THREE.Mesh[]{
 export function applyAdditionalEnvironment(group:THREE.Group,tileId:string,origin:readonly number[],level=0,packet?:AdditionalEnvironmentPacket):AdditionalEnvironmentReport|undefined{
  if(!packet)return undefined;
  if(group.userData.townAdditionalEnvironment)return group.userData.townAdditionalEnvironment;
- const report:AdditionalEnvironmentReport={tileId,level,ids:[],featureIds:[],skipped:[],addedTriangles:0,addedMeshes:0,geometryBytes:0,launches:[],rejected:false};
+ const report:AdditionalEnvironmentReport={tileId,level,ids:[],featureIds:[],skipped:[],addedTriangles:0,addedMeshes:0,geometryBytes:0,flowers:[],launches:[],rejected:false};
  if(!validAdditionalEnvironmentPacket(packet,tileId)){report.rejected=true;return report;}
  group.updateMatrixWorld(true);const inverse=group.matrixWorld.clone().invert();
  const sampler=(kind:string):GrassTerrain=>{
@@ -137,7 +138,7 @@ export function applyAdditionalEnvironment(group:THREE.Group,tileId:string,origi
    if([[2,0],[-2,0],[0,2],[0,-2]].some(([dx,dn])=>at([r.point[0]+dx,r.point[1]+dn],'water')===null)){report.skipped.push({id:r.id,reason:'Water patch does not cover the whole leaf cluster.'});continue;}
    lilies(batch,f,r,y);
   }else if(r.kind==='wetland-fern')fern(batch,f,r,y+.018);
-  else if(r.kind==='wetland-shrub')shrub(batch,f,r,y);
+  else if(r.kind==='wetland-shrub'){if(r.seed<.265){wetMarginFlowers(batch,f,y,r.seed);report.flowers.push(r.id);}else shrub(batch,f,r,y);}
   else{
    // A restrained visible crest, not a guessed full-height dam or hydraulic model.
    batch.box(f,'stone',0,y-.16,0,r.width??1.48,.48,.72,'#8c8d7c');

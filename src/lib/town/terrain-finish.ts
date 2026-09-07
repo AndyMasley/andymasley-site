@@ -50,9 +50,9 @@ export function validTerrainFinishPacket(value: unknown, tileId: string): value 
  * source triangle's barycentric coordinates; only their vertical position moves.
  * The group is interpreted relative to the tile origin, even when already placed.
  */
-export function applyTerrainFinish(group: THREE.Object3D, tileId: string, origin: V3, level: number, packet?: TerrainFinishPacket): TerrainFinishReport {
+export function applyTerrainFinish(group: THREE.Object3D, tileId: string, origin: V3, level: number, packet?: TerrainFinishPacket, stateKey = 'terrainFinish'): TerrainFinishReport {
   const report: TerrainFinishReport = { meshes: 0, replacedTriangles: 0, addedTriangles: 0, maximumDropM: 0, collapsedTriangles: 0, windingRepairs: 0, normalRepairs: 0, rejected: false };
-  if (!packet || group.userData.terrainFinish) return report;
+  if (!packet || group.userData[stateKey]) return report;
   if (!validTerrainFinishPacket(packet, tileId)) return { ...report, rejected: true };
   const source = packet.levels.find(row => row.level === level);
   if (!source) return report;
@@ -162,6 +162,6 @@ export function applyTerrainFinish(group: THREE.Object3D, tileId: string, origin
     report.meshes++; report.replacedTriangles += row.patch.patches.length;
     report.addedTriangles += (row.geometry.index!.count / 3 - row.patch.triangles);
   }
-  group.userData.terrainFinish = report;
+  group.userData[stateKey] = report;
   return report;
 }

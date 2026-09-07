@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import release from '../../../data/derived/town/release.json';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js';
 import { boundsDistanceSquared, chooseLod, type Quality, type TownTile, type V3, type WorldManifest, type WorldMetrics } from './contracts';
@@ -9,9 +10,19 @@ import { applyTownHallMaterials } from './town-hall-materials';
 import { applyCivicDetails } from './civic-details';
 import { applyCivicRoofFinish } from './civic-roof-finish';
 import { applyLandmarkCompletion } from './landmark-completion';
+import { applyInstitutionalCompletion } from './institutional-completion';
+import { applyCommercialCompletion } from './commercial-completion';
 import { applyMemorialDetails } from './memorial-details';
 import { additionalEnvironmentAsset, validAdditionalEnvironmentPacket, applyAdditionalEnvironment } from './additional-environment';
+import { roadsideAsset, validRoadsidePacket, applyRoadsideDetails } from './roadside-details';
+import { environmentGroundAsset, validEnvironmentGroundPacket, applyEnvironmentGround, type EnvironmentGroundPacket } from './environment-ground';
+import { roadMaterialAsset, validRoadMaterialPacket, applyRoadMaterialFinish, type RoadMaterialPacket } from './road-material-finish';
+import { applyCemeteryRoadFinish } from './cemetery-roads';
+import { applyLakeLife } from './lake-life';
+import { applyUtilitySiteDetails } from './utility-site-details';
+import { environmentFacilitiesAsset, validEnvironmentFacilitiesPacket, applyEnvironmentFacilities } from './environment-facilities';
 import { treeForm, createConiferPrototype, disposeConiferPrototype } from './vegetation';
+import { excludedTreeAnchors } from './tree-exclusions';
 import { applyCraftedFrontages } from './crafted-frontages';
 import { readSceneBuffer } from './asset-transfer';
 import { EvidenceStream } from './evidence-stream';
@@ -25,8 +36,8 @@ import { parkingFinishAsset } from './paved-surfaces';
 import { applyParkingFinish, validParkingPacket } from './parking-finish';
 import { beginOptionalDetail, TileDetailStream } from './optional-detail';
 
-type TreePlan = { near: Set<number>; shadows: Set<number>; key: string };
-type LoadedTile = { group: THREE.Group; level: number; lastUsed: number; trees?: THREE.Group; treeRows?: number[][]; treePlan?: TreePlan };
+type TreePlan = { near: Set<number>; shadows: Set<number>; excluded: Set<number>; key: string };
+type LoadedTile = { group: THREE.Group; level: number; lastUsed: number; trees?: THREE.Group; treeRows?: number[][]; treeExcluded?: Set<number>; treePlan?: TreePlan };
 type MaterialEntry = { material: THREE.Material; refs: number; textures: string[] };
 const TEXTURE_SLOTS = ['map', 'normalMap', 'roughnessMap', 'metalnessMap', 'aoMap', 'emissiveMap', 'alphaMap'] as const;
 
@@ -64,6 +75,17 @@ export class TownWorld {
   private readonly parkingFinish = new TileDetailStream(parkingFinishAsset,validParkingPacket,(url,signal)=>this.fetchJson(url,signal));
 
   private readonly additionalEnvironment = new TileDetailStream(additionalEnvironmentAsset,validAdditionalEnvironmentPacket,(url,signal)=>this.fetchJson(url,signal));
+  private readonly roadside = new TileDetailStream(roadsideAsset,validRoadsidePacket,(url,signal)=>this.fetchJson(url,signal));
+  private readonly facilities = new TileDetailStream(environmentFacilitiesAsset,validEnvironmentFacilitiesPacket,(url,signal)=>this.fetchJson(url,signal));
+  private readonly environmentGround = new TileDetailStream(
+    key=>{const[id,level]=key.split('@');return environmentGroundAsset(id,Number(level));},
+    (value,key):value is EnvironmentGroundPacket=>{const[id,level]=key.split('@');return validEnvironmentGroundPacket(value,id)&&value.levels.length===1&&value.levels[0].level===Number(level);},
+    (url,signal)=>this.fetchJson(url,signal));
+
+  private readonly roadMaterials = new TileDetailStream(
+    key=>{const[id,level]=key.split('@');return roadMaterialAsset(id,Number(level));},
+    (value,key):value is RoadMaterialPacket=>{const[id,level]=key.split('@');return validRoadMaterialPacket(value,id,Number(level));},
+    (url,signal)=>this.fetchJson(url,signal));
 
   constructor(readonly manifest: WorldManifest, readonly manifestUrl: string, readonly onChange: () => void) {
     this.root.name = 'Webster scenery';
@@ -119,6 +141,10 @@ export class TownWorld {
     const terrainRequest=tile?beginOptionalDetail(signal,s=>this.terrainFinish.tile(`${tile.id}@${level}`,s)):undefined;
     const parkingRequest=tile?beginOptionalDetail(signal,s=>this.parkingFinish.tile(tile.id,s)):undefined;
     const additionalRequest=tile?beginOptionalDetail(signal,s=>this.additionalEnvironment.tile(tile.id,s)):undefined;
+    const roadsideRequest=tile?beginOptionalDetail(signal,s=>this.roadside.tile(tile.id,s)):undefined;
+    const environmentGroundRequest=tile?beginOptionalDetail(signal,s=>this.environmentGround.tile(tile.id+'@'+level,s)):undefined;
+    const facilitiesRequest=tile?beginOptionalDetail(signal,s=>this.facilities.tile(tile.id,s)):undefined;
+    const roadMaterialsRequest=tile?beginOptionalDetail(signal,s=>this.roadMaterials.tile(tile.id+'@'+level,s)):undefined;
     let source: [ArrayBuffer, Awaited<ReturnType<EvidenceStream['tile']>>|undefined];
     try {
       source=await Promise.all([
@@ -126,10 +152,10 @@ export class TownWorld {
         tile?this.evidence.tile(tile.id,signal):Promise.resolve(undefined),
       ]);
     } catch(error) {
-      roadRequest?.cancel();terrainRequest?.cancel();parkingRequest?.cancel();additionalRequest?.cancel();throw error;
+      roadRequest?.cancel();terrainRequest?.cancel();parkingRequest?.cancel();additionalRequest?.cancel();roadsideRequest?.cancel();environmentGroundRequest?.cancel();facilitiesRequest?.cancel();roadMaterialsRequest?.cancel();throw error;
     }
     const [data,evidence]=source;
-    const [road,terrain,parking,additional]=await Promise.all([roadRequest?.finish(),terrainRequest?.finish(),parkingRequest?.finish(),additionalRequest?.finish()]);
+    const [road,terrain,parking,additional,roadside,environmentGround,facilities,roadMaterials]=await Promise.all([roadRequest?.finish(),terrainRequest?.finish(),parkingRequest?.finish(),additionalRequest?.finish(),roadsideRequest?.finish(),environmentGroundRequest?.finish(),facilitiesRequest?.finish(),roadMaterialsRequest?.finish()]);
     const gltf = await this.loader.parseAsync(data, new URL('.', url).href);
     if (this.disposed || signal.aborted) {
       this.disposeRaw(gltf.scene);
@@ -140,11 +166,16 @@ export class TownWorld {
         applyMeasuredBridgeSurface(gltf.scene,tile.id,tile.origin);
         const terrainMatches=terrain?.levels.find(row=>row.level===level)?.sourceSha256===tile.lods.find(row=>row.level===level)?.sha256;
         applyTerrainFinish(gltf.scene,tile.id,tile.origin,level,terrainMatches?terrain:undefined);
+        applyEnvironmentGround(gltf.scene,tile.id,tile.origin,level,environmentGround);
         applyRoadFinish(gltf.scene,tile.id,tile.origin,level,road);
+        applyCemeteryRoadFinish(gltf.scene,tile.id,tile.origin,release.manifestSha256);
         applyParkingFinish(gltf.scene,tile.id,tile.origin,parking);
-        applyCraftedFrontages(gltf.scene, tile.id, tile.origin, level);
         const sourceSha256=tile.lods.find(row=>row.level===level)?.sha256??'';
+        applyRoadMaterialFinish(gltf.scene,tile.id,tile.origin,level,sourceSha256,roadMaterials);
+        const institutions=applyInstitutionalCompletion(gltf.scene,tile.id,tile.origin,level,sourceSha256);
+        applyCraftedFrontages(gltf.scene, tile.id, tile.origin, level,institutions?.ids??[]);
         applyLandmarkCompletion(gltf.scene,tile.id,tile.origin,level,sourceSha256);
+        applyCommercialCompletion(gltf.scene,tile.id,tile.origin,level,sourceSha256);
         const landmarks=landmarkRows(tile.id);
         applyEvidenceBuildings(gltf.scene,tile.id,tile.origin,level,evidence?.buildings??[],
           landmarks.map(row=>({...row,material:row.material??undefined,paint:row.paint??undefined})),
@@ -155,6 +186,10 @@ export class TownWorld {
         applyCivicDetails(gltf.scene,tile.id,tile.origin,level,sourceSha256);
         applyMemorialDetails(gltf.scene,tile.id,tile.origin,level);
         applyAdditionalEnvironment(gltf.scene,tile.id,tile.origin,level,additional);
+        applyEnvironmentFacilities(gltf.scene,tile.id,tile.origin,level,facilities);
+        applyUtilitySiteDetails(gltf.scene,tile.id,tile.origin,level,sourceSha256);
+        applyLakeLife(gltf.scene,tile.id,tile.origin,level,sourceSha256);
+        applyRoadsideDetails(gltf.scene,tile.id,tile.origin,level,sourceSha256,roadside);
       }
       catch (error) { this.disposeRaw(gltf.scene); throw error; }
     }
@@ -264,29 +299,36 @@ export class TownWorld {
   }
 
   researchResources() {
-    let bridges=0,memorials=0,civicWindows=0,landmarkForms=0,environmentObjects=0,triangles=0;
+    let bridges=0,memorials=0,civicWindows=0,landmarkForms=0,institutions=0,commercialFacades=0,environmentObjects=0,roadsideObjects=0,facilities=0,utilityBasins=0,lakeVessels=0,triangles=0;
     for(const {group} of this.loaded.values()) {
       const bridge=group.userData.bridgeDetails,memorial=group.userData.townMemorialDetails;
       const civic=group.userData.civicDetails,environment=group.userData.townAdditionalEnvironment;
       bridges+=bridge?.featureIds.length??0;memorials+=memorial?.ids.length??0;
       landmarkForms+=group.userData.landmarkCompletion?.ids.length??0;
       civicWindows+=civic?.windows??0;environmentObjects+=environment?.ids.length??0;
-      triangles+=(bridge?.addedTriangles??0)+(memorial?.addedTriangles??0)+(civic?.triangles??0)+(environment?.addedTriangles??0)+(group.userData.landmarkCompletion?.triangles??0);
+      roadsideObjects+=group.userData.roadsideDetails?.ids.length??0;
+      utilityBasins+=group.userData.utilitySiteDetails?.ids.length??0;lakeVessels+=group.userData.lakeLife?.ids.length??0;
+      triangles+=(group.userData.utilitySiteDetails?.triangles??0)+(group.userData.lakeLife?.triangles??0);
+      institutions+=group.userData.institutionalCompletion?.ids.length??0;commercialFacades+=group.userData.commercialCompletion?.facades??0;
+      facilities+=group.userData.environmentFacilities?.ids.length??0;
+      triangles+=(bridge?.addedTriangles??0)+(memorial?.addedTriangles??0)+(civic?.triangles??0)+(environment?.addedTriangles??0)+(group.userData.landmarkCompletion?.triangles??0)+(group.userData.roadsideDetails?.addedTriangles??0);
+      triangles+=(group.userData.institutionalCompletion?.triangles??0)+(group.userData.commercialCompletion?.triangles??0)+(group.userData.environmentGround?.waterTriangles??0)+(group.userData.environmentGround?.addedTriangles??0);
+      triangles+=group.userData.environmentFacilities?.triangles??0;
     }
-    return{bridges,memorials,civicWindows,landmarkForms,environmentObjects,triangles,optionalFailures:this.additionalEnvironment.failures};
+    return{utilityBasins,lakeVessels,bridges,memorials,civicWindows,landmarkForms,institutions,commercialFacades,environmentObjects,roadsideObjects,facilities,triangles,optionalFailures:this.additionalEnvironment.failures+this.roadside.failures+this.environmentGround.failures+this.facilities.failures+this.roadMaterials.failures};
   }
 
   finishResources() {
-    let roadTriangles=0,terrainTriangles=0,parkingTriangles=0,parkingBays=0,pavedMasks=0,rejectedTerrain=0;
+    let roadTriangles=0,roadSurfaceTriangles=0,terrainTriangles=0,parkingTriangles=0,parkingBays=0,pavedMasks=0,rejectedTerrain=0;
     for(const {group} of this.loaded.values()) {
-      roadTriangles+=group.userData.roadFinish?.addedTriangles??0;
+      roadTriangles+=group.userData.roadFinish?.addedTriangles??0;roadSurfaceTriangles+=group.userData.roadMaterialFinish?.triangles??0;
       terrainTriangles+=group.userData.terrainFinish?.addedTriangles??0;
       parkingTriangles+=group.userData.parkingFinish?.triangles??0;
       parkingBays+=group.userData.parkingFinish?.bays??0;
       pavedMasks+=Number(!!group.userData.pavedSurfaceMask);
       rejectedTerrain+=Number(!!group.userData.terrainFinish?.rejected);
     }
-    return{roadTriangles,terrainTriangles,parkingTriangles,parkingBays,pavedMasks,rejectedTerrain,optionalFailures:this.roadFinish.failures+this.terrainFinish.failures+this.parkingFinish.failures+this.additionalEnvironment.failures};
+    return{roadTriangles,roadSurfaceTriangles,terrainTriangles,parkingTriangles,parkingBays,pavedMasks,rejectedTerrain,optionalFailures:this.roadFinish.failures+this.terrainFinish.failures+this.parkingFinish.failures+this.additionalEnvironment.failures+this.roadside.failures+this.environmentGround.failures+this.facilities.failures+this.roadMaterials.failures};
   }
 
   update(position: V3, lookAhead: V3, force = false): void {
@@ -393,7 +435,9 @@ export class TownWorld {
       this.evict(tile.id);
       this.root.add(group);
       // The final update allocates tree instances once, after global shadow selection.
-      this.loaded.set(tile.id, { group, treeRows, level, lastUsed: performance.now() });
+      const treeExcluded = treeRows ? excludedTreeAnchors(treeRows, tile.origin, group.userData.environmentTreeExclusions ?? []) : new Set<number>();
+      group.userData.environmentTreeExclusionsReport = { sourceAnchors: treeRows?.length ?? 0, excluded: treeExcluded.size };
+      this.loaded.set(tile.id, { group, treeRows, treeExcluded, level, lastUsed: performance.now() });
       this.failures.delete(tile.id);
     } catch (error) {
       if (group) this.releaseGroup(group);
@@ -418,8 +462,9 @@ export class TownWorld {
     for (const tile of tiles) {
       const cached = this.loaded.get(tile.id);
       if (!cached?.treeRows) continue;
-      const plan: TreePlan = { near: new Set(), shadows: new Set(), key: '' };
+      const plan: TreePlan = { near: new Set(), shadows: new Set(), excluded: cached.treeExcluded ?? new Set(), key: '' };
       cached.treeRows.forEach((row, index) => {
+        if (plan.excluded.has(index)) return;
         const distance = Math.hypot(row[0] + tile.origin[0] - this.position[0], row[2] + tile.origin[2] - this.position[2]);
         // Per-anchor LOD, with a 20m exit band to avoid rebuilding at the boundary.
         const wasNear = cached.treePlan?.near.has(index);
@@ -435,7 +480,7 @@ export class TownWorld {
     candidates.sort((a, b) => a.score - b.score || a.id.localeCompare(b.id) || a.index - b.index);
     for (const candidate of candidates.slice(0, 24)) plans.get(candidate.id)!.shadows.add(candidate.index);
     for (const plan of plans.values()) {
-      plan.key = `${Number(!this.low)}:${Number(this.treeShadows)}:${[...plan.near].join(',')}|${[...plan.shadows].sort((a, b) => a - b).join(',')}`;
+      plan.key = `${Number(!this.low)}:${Number(this.treeShadows)}:${[...plan.near].join(',')}|${[...plan.shadows].sort((a, b) => a - b).join(',')}|${[...plan.excluded].join(',')}`;
     }
     return plans;
   }
@@ -465,7 +510,7 @@ export class TownWorld {
           const prototype = family === 'conifer' ? this.coniferPrototypes.get(band.index) ?? base : base;
           prototype.updateMatrixWorld(true);
           const indices = rows.map((_, index) => index).filter((index) =>
-            (isTrunk || (plan.near.has(index) === (band.kind === 'near') && forms[index].renderFamily === family)) && plan.shadows.has(index) === castShadow);
+            !plan.excluded.has(index) && (isTrunk || (plan.near.has(index) === (band.kind === 'near') && forms[index].renderFamily === family)) && plan.shadows.has(index) === castShadow);
           if (!indices.length) continue;
           prototype.traverse((object) => {
             if (!(object instanceof THREE.Mesh)) return;
@@ -632,7 +677,7 @@ export class TownWorld {
 
   dispose(): void {
     this.evidence.dispose();
-    this.roadFinish.dispose();this.terrainFinish.dispose();this.parkingFinish.dispose();this.additionalEnvironment.dispose();
+    this.roadFinish.dispose();this.terrainFinish.dispose();this.parkingFinish.dispose();this.additionalEnvironment.dispose();this.roadside.dispose();this.environmentGround.dispose();this.facilities.dispose();this.roadMaterials.dispose();
     if (this.disposed) return;
     this.disposed = true;
     this.sharedAbort.abort();

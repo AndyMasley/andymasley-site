@@ -1,0 +1,50 @@
+{
+  "source": "https://overpass-api.de/api/interpreter",
+  "retrievedUtc": "2026-09-07T14:39:11.524402+00:00",
+  "license": "OpenStreetMap contributors, ODbL",
+  "sourceSnapshotSha256": "566a959bf1220112de426ab677ba688bb5af7ccb65942f3ba8073e88407b1352",
+  "response": {
+    "elements": [
+      {
+        "type": "way",
+        "id": 250488518,
+        "bounds": {
+          "minlat": 42.0840143,
+          "minlon": -71.8394645,
+          "maxlat": 42.0841955,
+          "maxlon": -71.838847
+        },
+        "geometry": [
+          {
+            "lat": 42.0841955,
+            "lon": -71.8394645
+          },
+          {
+            "lat": 42.0841784,
+            "lon": -71.8394208
+          },
+          {
+            "lat": 42.084139,
+            "lon": -71.8393094
+          },
+          {
+            "lat": 42.0840564,
+            "lon": -71.8390356
+          },
+          {
+            "lat": 42.0840457,
+            "lon": -71.8389106
+          },
+          {
+            "lat": 42.0840143,
+            "lon": -71.838847
+          }
+        ],
+        "tags": {
+          "name": "Nipmuck Pond Dam",
+          "waterway": "dam"
+        }
+      }
+    ]
+  }
+}

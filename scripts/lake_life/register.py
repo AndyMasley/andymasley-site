@@ -1,0 +1,14 @@
+import json,math,hashlib,os
+from pathlib import Path
+from pyproj import Transformer
+from shapely.geometry import shape,Polygon,Point
+from shapely.ops import unary_union
+repo=Path(__file__).resolve().parents[2];src=Path(os.environ.get('WEBSTER_SOURCE','/Users/andy/Documents/New project/webster-blender'));source=json.loads((repo/'data/source/town/lake-life-source-input.json').read_text());j=source['aerial'];m=j['source'];b=m['bounds_web_mercator_m'];W,H=m['size_pixels'];t=Transformer.from_crs(3857,6491,always_xy=True);origin=[171282.3328920724,867589.2761750807]
+def xy(px,py):
+ a,c=t.transform(b[0]+(j['crop'][0]+px/2)/W*(b[2]-b[0]),b[3]-(j['crop'][1]+py/2)/H*(b[3]-b[1]));return[a-origin[0],c-origin[1]]
+p=xy(692,608);a=xy(686,635);c=xy(696,581);angle=math.atan2(c[1]-a[1],c[0]-a[0]);length=math.dist(a,c);width=6.2;T=[math.cos(angle),math.sin(angle)];N=[T[1],-T[0]]
+ring=[[p[i]+T[i]*u+N[i]*v for i in [0,1]]for u,v in [(-length/2,-width/2),(length/2,-width/2),(length/2,width/2),(-length/2,width/2)]]
+water=unary_union([shape(f['geometry']) for f in json.loads((src/'townwide/landscape_water.geojson').read_text())['features']]);print({'point':p,'angle':angle,'length':length,'waterFraction':Polygon(ring).intersection(water).area/Polygon(ring).area,'centerOnWater':water.covers(Point(p))})
+rel=json.loads((repo/'data/derived/town/release.json').read_text());manifest=json.loads((repo/'public/town-assets'/rel['directory']/'manifest.json').read_text());tileId=f'{math.floor(p[0]/250)}_{math.floor(p[1]/250)}';tile=next(r for r in manifest['tiles']if r['id']==tileId)
+data={'version':1,'sourceManifestSha256':rel['manifestSha256'],'id':'indian-princess','tileId':tileId,'point':p,'angle':angle,'length':length,'width':width,'height':45.08000183105469,'origin':tile['origin'],'sourceLods':{str(l['level']):l['sha256']for l in tile['lods']},'source':{'aerial':m['sha256'],'aerialYear':2025,'crop':j['crop'],'boatCenterPixel':[692,608],'bowPixel':[696,581],'sternPixel':[686,635],'photoURL':'https://indianranch.com/wp-content/uploads/elementor/thumbs/Indian-Princess-v2-e1703784776632-qhhixxthupm3cwgc0h48kt0lhzfoc76fpk4r0rvxbk.jpg','photoSHA256':source['observation']['photoSHA256'],'officialDescription':'https://indianranch.com/cruises/'},'basis':'Viewed official exterior: white walls, red deck bands, blue upper canopy, arched windows, paired black stacks with red bands/gold crowns, white stern spokes and red paddles. Two decks and twin stern wheels are officially described. Length/position/axis derived approximately from spring2025 aerial; beam, height, window count, small trim and exact current berth are authored. This is a stationary late-summer game interpretation, not live vessel tracking.','mappedWaterFraction':Polygon(ring).intersection(water).area/Polygon(ring).area}
+(repo/'data/derived/town/lake-life.json').write_text(json.dumps(data,indent=2)+'\n')

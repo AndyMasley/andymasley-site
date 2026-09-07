@@ -23,6 +23,17 @@ function fixture(rows: number[][][]) {
 }
 
 describe('Town tree detail, global shadow budget and instance ownership', () => {
+  it.each(['low','auto','high'] as const)('omits confirmed playing-surface anchors from every crown, trunk and shadow cohort at %s quality', quality => {
+    const rows = [[row(10),row(50),row(450)]], before = structuredClone(rows), f = fixture(rows);
+    f.world.loaded.get('tile-0')!.treeExcluded = new Set([0,2]);
+    f.world.setQuality(quality,false); f.update();
+    expect([...f.selections('near'),...f.selections('far')]).toEqual(['tile-0:1']);
+    expect(f.selections('trunk')).toEqual(['tile-0:1']);
+    f.update(440);
+    expect([...f.selections('near'),...f.selections('far')]).toEqual(['tile-0:1']);
+    expect(f.selections('trunk')).toEqual(['tile-0:1']);
+    expect(rows).toEqual(before); f.world.dispose();
+  });
   it('keeps exactly one crown and trunk per source row, choosing detail by each anchor', () => {
     const rows = [[row(10), row(199), row(201), row(450)]];
     const f = fixture(rows); f.update();

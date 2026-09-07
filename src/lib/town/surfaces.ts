@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import type { AssetRef, GroundSurfaces, V3 } from './contracts';
-import { TownGrass, grassMaskFromTexture } from './grass';
+import { TownGrass, grassMaskFromTexture, excludeGrassPolygons } from './grass';
 import { pavedMaskReference } from './paved-surfaces';
 import { beginOptionalDetail } from './optional-detail';
 
@@ -82,7 +82,7 @@ export class TownSurfaces {
     this.tiles.set(group, { mask, materials: [...copies.values()] });
     group.userData.pavedSurfaceMask = corrected ? replacement!.url : undefined;
     const grassMask = grassMaskFromTexture(mask, reference.bounds);
-    if (grassMask) this.grass.register(group, id, grassMask, terrain);
+    if (grassMask) this.grass.register(group, id, excludeGrassPolygons(grassMask,group.userData.environmentGrassExclusions??[]), terrain);
   }
 
   update(position: V3, low: boolean, time: number): void { this.grass.update(position, low, time); }

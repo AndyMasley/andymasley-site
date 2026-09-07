@@ -22,7 +22,7 @@ def seed(x,y,k=0):return ((round(x*31)*374761393)^(round(y*37)*668265263)^(k*127
 
 def mapped(name):
  j=json.loads((SNAPSHOTS/(name+'.json')).read_text());nodes={r['id']:r for r in j['response']['elements']if r['type']=='node'};way=next(r for r in j['response']['elements']if r['type']=='way')
- return [xy(nodes[k]['lon'],nodes[k]['lat'])for k in way['nodes']],way
+ return ([xy(q['lon'],q['lat'])for q in way['geometry']]if 'geometry'in way else[xy(nodes[k]['lon'],nodes[k]['lat'])for k in way['nodes']]),way
 
 class Surface:
  def __init__(self,manifest,candidates):
@@ -106,7 +106,7 @@ def main():
   # Retain roadside silhouettes; avoid filling every distant part of large grounds.
   rows.sort(key=lambda r:(road.distance(Point(r['point'])),r['point'][0],r['point'][1]));candidates+=rows[:limit]
   feature_rows.append({'id':name,'kind':'cemetery','evidenceIds':['TER-019',evidence,'SITE-063'],'osmWay':way['id'],'mappedFootprint':[[round(x,4),round(y,4)]for x,y in points],'basis':'Mapped cemetery extent. Anonymous stone shapes, count, spacing, type and orientation are authored; no individual grave, inscription, gate or current layout is asserted.'})
- for name,evidence in [('north-village-dam','INF-DAM-MA00108'),('south-village-dam','INF-DAM-MA00107'),('perryville-dam','INF-DAM-MA00216'),('club-pond-dam','INF-DAM-MA00953')]:
+ for name,evidence in [('north-village-dam','INF-DAM-MA00108'),('south-village-dam','INF-DAM-MA00107'),('perryville-dam','INF-DAM-MA00216'),('club-pond-dam','INF-DAM-MA00953'),('nipmuck-pond-dam','OSM-WAY-250488518')]:
   points,way=mapped(name);line=LineString(points)
   for i,d in enumerate(np.arange(.8,line.length-.8,1.5)):
    p=line.interpolate(d);a=line.interpolate(max(0,d-.2));b=line.interpolate(min(line.length,d+.2));t=math.atan2(b.y-a.y,b.x-a.x)

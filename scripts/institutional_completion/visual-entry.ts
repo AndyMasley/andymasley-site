@@ -1,0 +1,16 @@
+import * as THREE from 'three';
+import {GLTFLoader} from 'three/examples/jsm/loaders/GLTFLoader.js';
+import {MeshoptDecoder} from 'three/examples/jsm/libs/meshopt_decoder.module.js';
+import {applyInstitutionalCompletion,INSTITUTIONAL_COMPLETION_ROWS} from '../../src/lib/town/institutional-completion';
+const canvas=document.querySelector('canvas')!,renderer=new THREE.WebGLRenderer({canvas,antialias:true});renderer.setSize(1440,960);renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.02;renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+const scene=new THREE.Scene();scene.background=new THREE.Color('#a7c6db');scene.add(new THREE.HemisphereLight('#dae9f2','#a39a79',1.55));const sun=new THREE.DirectionalLight('#fff1d9',1.85);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);sun.shadow.camera.left=sun.shadow.camera.bottom=-120;sun.shadow.camera.right=sun.shadow.camera.top=120;sun.shadow.camera.near=1;sun.shadow.camera.far=500;sun.shadow.normalBias=.08;scene.add(sun,sun.target);
+const camera=new THREE.PerspectiveCamera(44,1440/960,.1,1500);const loader=new GLTFLoader().setMeshoptDecoder(MeshoptDecoder);let group:THREE.Group|undefined;
+const manifest=await(await fetch('/assets/manifest.json')).json();
+function dispose(g:THREE.Object3D){g.removeFromParent();const gs=new Set<THREE.BufferGeometry>(),ms=new Set<THREE.Material>(),ts=new Set<THREE.Texture>();g.traverse(o=>{if(o instanceof THREE.Mesh){gs.add(o.geometry);for(const m of Array.isArray(o.material)?o.material:[o.material]){ms.add(m);for(const v of Object.values(m))if(v instanceof THREE.Texture)ts.add(v);}}});gs.forEach(g=>g.dispose());ms.forEach(m=>m.dispose());ts.forEach(t=>t.dispose());}
+async function show(recipe:string,wide=false){
+ const r=INSTITUTIONAL_COMPLETION_ROWS.find(r=>r.recipe===recipe)!,t=manifest.tiles.find((t:any)=>t.id===r.tileId),lod=t.lods[0];if(group)dispose(group);group=(await loader.loadAsync('/assets/'+lod.url)).scene;const report=applyInstitutionalCompletion(group,t.id,t.origin,0,lod.sha256);group.position.set(...t.origin as [number,number,number]);group.traverse(o=>{if(o instanceof THREE.Mesh){o.receiveShadow=true;o.castShadow=o.userData.townCrafted||/buildings/.test(o.name);}});scene.add(group);
+ const f=r.frame,c=[f.start[0]+f.tangent[0]*f.width/2,f.start[1]+f.tangent[1]*f.width/2],dist=wide?120:recipe==='post'?21:48,along=wide?25:recipe==='post'?0:8,height=wide?44:Math.min(10,(r.peak-r.floor)*.5);
+ camera.fov=recipe==='post'&&!wide?62:44;camera.updateProjectionMatrix();
+ camera.position.set(c[0]+f.outward[0]*dist+f.tangent[0]*along,r.floor+height,-c[1]-f.outward[1]*dist-f.tangent[1]*along);camera.lookAt(c[0]-f.outward[0]*(wide?22:2),r.floor+(wide?3:4),-c[1]+f.outward[1]*(wide?22:2));sun.position.set(c[0]+70,r.floor+120,-c[1]-60);sun.target.position.set(c[0],r.floor,-c[1]);sun.target.updateMatrixWorld();for(let i=0;i<3;i++){renderer.render(scene,camera);await new Promise(requestAnimationFrame);}return{id:r.id,name:r.name,recipe,wide,frame:r.frame,floor:r.floor,report,camera:camera.position.toArray(),render:renderer.info.render};
+}
+Object.assign(window,{institutionPreview:{show,rows:INSTITUTIONAL_COMPLETION_ROWS.map(r=>r.recipe)}});renderer.setAnimationLoop(()=>renderer.render(scene,camera));

@@ -73,3 +73,14 @@ describe('Sparse source terrain conformance',()=>{
     const {group,mesh,geometry,packet}=fixture();expect(applyTerrainFinish(group,'1_3',[0,0,0],0).meshes).toBe(0);expect(applyTerrainFinish(group,'1_3',[0,0,0],2,packet).meshes).toBe(0);expect(mesh.geometry).toBe(geometry);
   });
 });
+
+describe('Independent local terrain transactions',()=>{
+ it('applies a second source-stamped repair once without suppressing or replaying the first',()=>{
+  const {group,mesh,packet}=fixture();expect(applyTerrainFinish(group,'1_3',[0,0,0],0,packet).rejected).toBe(false);
+  const old=mesh.geometry,second=structuredClone(packet),row=second.levels[0].meshes[0];row.geometryStamp=terrainGeometryStamp(old);row.positions=old.getAttribute('position').count;row.triangles=old.index!.count/3;row.patches=[[row.triangles-1,[[0,0,.8],[1,0,.8],[0,1,.8]]]];
+  expect(applyTerrainFinish(group,'1_3',[0,0,0],0,packet,'wrongSource').rejected).toBe(true);expect(mesh.geometry).toBe(old);
+  const result=applyTerrainFinish(group,'1_3',[0,0,0],0,second,'environmentGround');expect(result.rejected).toBe(false);expect(result.meshes).toBe(1);const final=mesh.geometry;
+  expect(group.userData.terrainFinish.meshes).toBe(1);expect(group.userData.environmentGround).toBe(result);
+  expect(applyTerrainFinish(group,'1_3',[0,0,0],0,second,'environmentGround').meshes).toBe(0);expect(applyTerrainFinish(group,'1_3',[0,0,0],0,packet).meshes).toBe(0);expect(mesh.geometry).toBe(final);
+ });
+});

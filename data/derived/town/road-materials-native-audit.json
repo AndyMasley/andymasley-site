@@ -1,0 +1,44 @@
+{
+  "sourceManifestSha256": "37fbef34bc2a4467997252be75b4c43174a6a7b2d39963614cadd8d787e56105",
+  "pipeline": [
+    "measured bridge",
+    "terrain finish",
+    "environment ground",
+    "road finish",
+    "cemetery road finish",
+    "parking finish",
+    "environment facilities",
+    "road inventory materials",
+    "art materials"
+  ],
+  "summary": {
+    "tiles": 251,
+    "levels": 753,
+    "failed": 0,
+    "triangles": 203946,
+    "maximumApplyMs": 16.382,
+    "maximumIndexBytes": 11298,
+    "maximumAddedDraws": 3,
+    "maximumMaterialGroups": 4,
+    "sourceAttributesAndRetainedWindingPreserved": true,
+    "unpavedPaintTrianglesRemoved": 32997
+  },
+  "timing": {
+    "medianApplyMs": 0.477,
+    "p95ApplyMs": 3.392
+  },
+  "wholeAreaPaintProof": {
+    "levels": 105,
+    "removedTriangles": 32997,
+    "failures": 0,
+    "maximumUncoveredAreaM2": 7.914193933533653e-08,
+    "maximumPavedOverlapM2": 0
+  },
+  "fullReportSha256": "45afb4ef7ce1aadfad884711c1f8e413225c767231e94a44fa7e5ab292f95f8c",
+  "paintProofSha256": "5c697471c9590fd3c5cf458a7feeac3c134eb20a724b167a328f3eff95cd8e88",
+  "runners": [
+    "scripts/additional-environment/native-road-materials.mjs",
+    "scripts/additional-environment/verify-unpaved-paint.py"
+  ],
+  "note": "Local native GLTFLoader acceptance with texture image bytes stubbed; geometry, source map properties and shader registration retained. CPU values are observations on this host, not browser performance guarantees. Paint geometry deletion is limited to independently proven whole unpaved areas; source archive and all road surface vertices/faces remain."
+}
