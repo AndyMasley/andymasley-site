@@ -1,0 +1,203 @@
+{
+  "version": 1,
+  "retrievedUtc": "2026-09-07",
+  "imageryAcquisition": "MassGIS spring 2025; statewide March 18-April 23; exact local exposure date unresolved",
+  "pixelBasis": {
+    "zoom": 19,
+    "minTileXY": [
+      157537,
+      194568
+    ],
+    "size": [
+      768,
+      768
+    ],
+    "centerWGS84": [
+      -71.8266,
+      42.0279
+    ]
+  },
+  "imagerySourceTiles": [
+    {
+      "url": "https://tiles.arcgis.com/tiles/hGdibHYSPO59RG1h/arcgis/rest/services/Massachusetts_Aerial_Imagery_2025/MapServer/tile/19/194517/157493",
+      "sha256": "77ce7396a0e22a05ddc99ec10877308d11e0637ed9a368eec493b4a4881c1089"
+    },
+    {
+      "url": "https://tiles.arcgis.com/tiles/hGdibHYSPO59RG1h/arcgis/rest/services/Massachusetts_Aerial_Imagery_2025/MapServer/tile/19/194518/157493",
+      "sha256": "5d14a5efb64353cce1396ab61f583a0b4530198515d3c10b57b957fbe8481292"
+    },
+    {
+      "url": "https://tiles.arcgis.com/tiles/hGdibHYSPO59RG1h/arcgis/rest/services/Massachusetts_Aerial_Imagery_2025/MapServer/tile/19/194519/157493",
+      "sha256": "3c055dc1e19ac685e26f854455641959908c656dce2407c50312d4026170a676"
+    },
+    {
+      "url": "https://tiles.arcgis.com/tiles/hGdibHYSPO59RG1h/arcgis/rest/services/Massachusetts_Aerial_Imagery_2025/MapServer/tile/19/194517/157494",
+      "sha256": "64cfbfd332958dc13135cdcde553fe70dab5c3ac70875e7222668e94eedb904d"
+    },
+    {
+      "url": "https://tiles.arcgis.com/tiles/hGdibHYSPO59RG1h/arcgis/rest/services/Massachusetts_Aerial_Imagery_2025/MapServer/tile/19/194518/157494",
+      "sha256": "9cdba5e5f2454175d43de4a80d810cb4fdee82c48e428cbbda575dceb28e4572"
+    },
+    {
+      "url": "https://tiles.arcgis.com/tiles/hGdibHYSPO59RG1h/arcgis/rest/services/Massachusetts_Aerial_Imagery_2025/MapServer/tile/19/194519/157494",
+      "sha256": "68e8388e4dfca40ff5c45c2f31df11515dad29875d7dbfa0fed781b9f90c3ebb"
+    },
+    {
+      "url": "https://tiles.arcgis.com/tiles/hGdibHYSPO59RG1h/arcgis/rest/services/Massachusetts_Aerial_Imagery_2025/MapServer/tile/19/194520/157494",
+      "sha256": "5f2f96ead201181050e868d5856fdb3f29867341898539ff880031d83d7b2e4e"
+    },
+    {
+      "url": "https://tiles.arcgis.com/tiles/hGdibHYSPO59RG1h/arcgis/rest/services/Massachusetts_Aerial_Imagery_2025/MapServer/tile/19/194517/157495",
+      "sha256": "33f01d65e1e99c664676cffd538677cf2f281eb79d71d73b401b4ce19a42bfea"
+    },
+    {
+      "url": "https://tiles.arcgis.com/tiles/hGdibHYSPO59RG1h/arcgis/rest/services/Massachusetts_Aerial_Imagery_2025/MapServer/tile/19/194518/157495",
+      "sha256": "94cd8f487e5032b2957b77e35e187a8dbcc723085358a246500eb808f95b5fdf"
+    },
+    {
+      "url": "https://tiles.arcgis.com/tiles/hGdibHYSPO59RG1h/arcgis/rest/services/Massachusetts_Aerial_Imagery_2025/MapServer/tile/19/194519/157495",
+      "sha256": "c2215eb56b906692630df461e7b4983c15e5f2098fc25b26e059e67a80771127"
+    },
+    {
+      "url": "https://tiles.arcgis.com/tiles/hGdibHYSPO59RG1h/arcgis/rest/services/Massachusetts_Aerial_Imagery_2025/MapServer/tile/19/194520/157495",
+      "sha256": "7f98a1f737cbe38ece0720379875bbc39338deae08a2c29c4f5d1057bf9c9af2"
+    },
+    {
+      "url": "https://tiles.arcgis.com/tiles/hGdibHYSPO59RG1h/arcgis/rest/services/Massachusetts_Aerial_Imagery_2025/MapServer/tile/19/194518/157496",
+      "sha256": "620c02e49fff530710b10e79648f85ca592e70f80606fc0ebf8eaf6c11f73d53"
+    },
+    {
+      "url": "https://tiles.arcgis.com/tiles/hGdibHYSPO59RG1h/arcgis/rest/services/Massachusetts_Aerial_Imagery_2025/MapServer/tile/19/194519/157496",
+      "sha256": "c316c116e18b495a362a57b288cccd8433676cf38d5d4fd232ddc35ea6bd92de"
+    },
+    {
+      "url": "https://tiles.arcgis.com/tiles/hGdibHYSPO59RG1h/arcgis/rest/services/Massachusetts_Aerial_Imagery_2025/MapServer/tile/19/194520/157496",
+      "sha256": "47b5d24dd37f44216ba6f8d7afc832c8263367266a17ba023f7c0ee6ff7446de"
+    },
+    {
+      "url": "https://tiles.arcgis.com/tiles/hGdibHYSPO59RG1h/arcgis/rest/services/Massachusetts_Aerial_Imagery_2025/MapServer/tile/19/194568/157537",
+      "sha256": "105acfb07be3f8137394b74bdb28b990de2bc869696062e096f1c5740b7c1263"
+    },
+    {
+      "url": "https://tiles.arcgis.com/tiles/hGdibHYSPO59RG1h/arcgis/rest/services/Massachusetts_Aerial_Imagery_2025/MapServer/tile/19/194569/157537",
+      "sha256": "01dff73e497cea2c42b488a87c7844f60dd3307ce82c09cc01f9255d663ec9d1"
+    },
+    {
+      "url": "https://tiles.arcgis.com/tiles/hGdibHYSPO59RG1h/arcgis/rest/services/Massachusetts_Aerial_Imagery_2025/MapServer/tile/19/194570/157537",
+      "sha256": "41370c921156f3d500abff1afe5833b447a08cca6b27adc252fa826bc2d5f415"
+    },
+    {
+      "url": "https://tiles.arcgis.com/tiles/hGdibHYSPO59RG1h/arcgis/rest/services/Massachusetts_Aerial_Imagery_2025/MapServer/tile/19/194568/157538",
+      "sha256": "47cb1de767ba7c3817ef68f68cc5bf260110344d8d9aadaa972098c6dc73eaf2"
+    },
+    {
+      "url": "https://tiles.arcgis.com/tiles/hGdibHYSPO59RG1h/arcgis/rest/services/Massachusetts_Aerial_Imagery_2025/MapServer/tile/19/194569/157538",
+      "sha256": "57bed6f80d381b84f28f6c96259410c3d0e1ed0bb4632b0dc70b6ae8c0e9c85e"
+    },
+    {
+      "url": "https://tiles.arcgis.com/tiles/hGdibHYSPO59RG1h/arcgis/rest/services/Massachusetts_Aerial_Imagery_2025/MapServer/tile/19/194570/157538",
+      "sha256": "ead148bf70a546282533938d1403c7089ba50129bfed899fb043920b7af9f5c6"
+    },
+    {
+      "url": "https://tiles.arcgis.com/tiles/hGdibHYSPO59RG1h/arcgis/rest/services/Massachusetts_Aerial_Imagery_2025/MapServer/tile/19/194568/157539",
+      "sha256": "308728cb08e1915da9856b180255ddb1363ca0c032ef8912b07aa6b5773c1746"
+    },
+    {
+      "url": "https://tiles.arcgis.com/tiles/hGdibHYSPO59RG1h/arcgis/rest/services/Massachusetts_Aerial_Imagery_2025/MapServer/tile/19/194569/157539",
+      "sha256": "819bb6a9a4f33033deb83bf938574b5002740304cc6c5366018a28542522f097"
+    },
+    {
+      "url": "https://tiles.arcgis.com/tiles/hGdibHYSPO59RG1h/arcgis/rest/services/Massachusetts_Aerial_Imagery_2025/MapServer/tile/19/194570/157539",
+      "sha256": "cb8039d38de68005d8c0003e767deef512dffd518e537b9264e6c3b988a9f825"
+    }
+  ],
+  "officialOfbaRecord": {
+    "attributes": {
+      "FACNAME": "Webster Lake",
+      "FACILITY_TYPE": "B",
+      "RAMPTYPE": "Concrete",
+      "TOWN": "Webster",
+      "OFBA_ID": 50,
+      "MAINTRESP": "DCR(S)",
+      "GOOGLE_MAP": "https://www.google.com/maps/dir/?api=1&destination=42.02790%2C-71.82663&travelmode=driving",
+      "PONDMAP_LINK": "https://www.mass.gov/info-details/massachusetts-pond-maps",
+      "NOLANES": "1",
+      "NORAMPS": 1,
+      "CONDITION": "Good",
+      "FEE": "No",
+      "STREET_PERMITED": "No",
+      "RESTRICTED": "No",
+      "PARKING": "18 Trailer",
+      "COMMENTS": " ",
+      "DATE_ENTER": 978238800000,
+      "QUADS_ID": 82,
+      "QUAD_NAME": "OXFORD",
+      "DOUBLEQUAD": "WEBSTER",
+      "FISH_CODES": "1,2,3,4,6,7,8",
+      "PAGE": 0,
+      "SITEMAP_NAME": "pab-50.pdf",
+      "COASTAL_ACCESS": "No",
+      "BARRIER_FREE": null,
+      "PENDING": "No",
+      "TOWN_ID": 316,
+      "POINT_Y": 42.02790591,
+      "POINT_X": -71.82663021,
+      "OBJECTID": 193
+    },
+    "geometry": {
+      "x": -71.82663103719413,
+      "y": 42.02791449933796
+    }
+  },
+  "dcrRamp": {
+    "center": [
+      1669.7651918464544,
+      -3366.924669974309
+    ],
+    "angle": 2.982307346323389,
+    "lengthObservedM": 20.009891208233487,
+    "selectedPixelsRoadToWater": [
+      [
+        532,
+        495
+      ],
+      [
+        443,
+        481
+      ]
+    ],
+    "sampledEndpointsEastNorth": [
+      [
+        1679.6434837916458,
+        -3368.511580427643
+      ],
+      [
+        1659.886899901263,
+        -3365.337759520975
+      ]
+    ],
+    "lanes": 1,
+    "range": [
+      -10,
+      10
+    ],
+    "widthM": 3.1,
+    "basis": "Visible narrow ramp/run in georeferenced 2025 aerial, coincident with the current OFBA site 50 point. Endpoints read to roughly one metre; 3.1m width and 20m extent are authored approximations. Original terrain has a roughly9m shore alignment discrepancy and raised submerged relief; this pass retains those sources and does not fabricate a longer ramp across that discrepancy."
+  },
+  "rainGarden": {
+    "status": "supported-remaining",
+    "evidence": "WLA lists 2024 construction; April25 2025 Yankee Xpress p15 documents dedication April5 2025 and shows green dedication sign with mature trees, open gable shelter and bathhouse roof behind.",
+    "photoSource": "https://locable-assets-production.s3.amazonaws.com/uploads/resource/file/1204444/YXN_0425_2025.pdf?timestamp=1749897257",
+    "photoSha256": "0df8fb45f4a9a17f459c3ea25c2debcef9947be05dac856330b75de918aac52e",
+    "placementLimit": "The photograph establishes an approximate shelter/bathhouse context but does not reveal the garden bed boundary. Leaf-off aerial does not unambiguously identify a named bed under tree cover. No named garden is placed at an arbitrary nearby planting patch."
+  },
+  "additionalObservedFacilities": {
+    "basis": "Visual inspection of georeferenced spring2025 aerial; this is new source evidence, not a current operational claim.",
+    "features": [
+      "Memorial Beach basketball court",
+      "two adjacent small marked racquet courts",
+      "open shelter north of bathhouse visible in dedication photograph and aerial"
+    ],
+    "status": "known-supported remaining; outside this final bounded ramp/garden pass"
+  }
+}
