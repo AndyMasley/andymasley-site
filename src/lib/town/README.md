@@ -17,6 +17,10 @@ road graph resident, independent of scenery loading or display quality.
 | 1–6 | Select the corresponding starting location |
 | On-screen arrows | Touch or keyboard-operated driving controls |
 
+Page initialization is idempotent for the same DOM root: a late Astro page-load
+event cannot cancel an early Play click while the game module is importing.
+Navigation away still disposes the session, and returning initializes a new one.
+
 The toolbar also provides camera, pause, starting location, quality and
 fullscreen controls. Sound starts disabled and requires a button press. Focus
 leaving the game, a hidden document, or a background window pauses the drive.

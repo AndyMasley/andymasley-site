@@ -172,10 +172,16 @@ const poster = '/town-assets/webster-poster-crafted.webp';
 <script>
   import { mountTownRadio } from '../lib/town/radio';
   let pageCleanup: (() => void) | undefined;
+  let preparedRoot: HTMLElement | null = null;
 
   function prepareTownPage() {
-    pageCleanup?.();
     const root = document.querySelector<HTMLElement>('[data-town-root]');
+    // Initial setup runs before window load. A slow poster can delay Astro's
+    // page-load until after Play starts importing; do not abort that same root.
+    if (root === preparedRoot) return;
+    pageCleanup?.();
+    pageCleanup = undefined;
+    preparedRoot = null;
     if (!root) return;
     const play = root.querySelector<HTMLButtonElement>('[data-town-play]')!;
     const status = root.querySelector<HTMLElement>('[data-town-status]')!;
@@ -211,9 +217,10 @@ const poster = '/town-assets/webster-poster-crafted.webp';
       } finally { starting = false; }
     }, { signal: controller.signal });
     pageCleanup = () => { controller.abort(); radio.dispose(); session?.dispose(); };
+    preparedRoot = root;
   }
 
   document.addEventListener('astro:page-load', prepareTownPage);
-  document.addEventListener('astro:before-swap', () => { pageCleanup?.(); pageCleanup = undefined; });
+  document.addEventListener('astro:before-swap', () => { pageCleanup?.(); pageCleanup = undefined; preparedRoot = null; });
   prepareTownPage();
 </script>
