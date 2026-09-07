@@ -1,0 +1,24 @@
+{
+  "version": 1,
+  "structId": "168510_866616",
+  "name": "Webster Town Hall and connected former Bartlett / Sitkowski School",
+  "tileId": "-12_-4",
+  "meshName": "buildings_20",
+  "parentName": "buildings",
+  "sourceMaterial": "Estimated buildings | neutral walls",
+  "sourceManifestSha256": "37fbef34bc2a4467997252be75b4c43174a6a7b2d39963614cadd8d787e56105",
+  "brickLinearRGB": [0.24, 0.078, 0.048],
+  "appearanceBasis": "Brick wall material is supported by public exterior photographs and the Town Hall preservation RFP. Approximate color matches the original photo-inferred front facade; procedural joints are a modeled finish, not a surveyed brick pattern.",
+  "references": [
+    "https://webster-ma.gov/DocumentCenter/View/8374/RFP---Webster-Town-Hall-Preservation",
+    "https://npgallery.nps.gov/GetAsset/ec54c744-9f1e-4c03-80a9-ecd91d3e6d6a/",
+    "https://commons.wikimedia.org/wiki/File:Webster_massachusetts_town_hall.jpg"
+  ],
+  "photoReview": "NPS nomination photos 18 and 23, Albert Rex, August 2009: brick Town Hall rear-side and auditorium connector; pale quoins, frieze, cornice, window accents and arched doorway. These are dated exterior references, not a 2026 survey.",
+  "selectionBasis": "Only vertical triangles along the original shared building footprint in the neutral source body. Inclusive triangle ranges are pinned to each source GLB; neighboring buildings, roof caps, front overlays, pale trim, cupola and stone remain unchanged.",
+  "lods": [
+    {"level": 0, "sha256": "4b1dd83f4372e1f94e3f8870e6c6f363f6590876a22f74d1254664bb5aeebaf4", "totalTriangles": 28029, "wallTriangles": [6567, 7594]},
+    {"level": 1, "sha256": "c1f0a819e299223165bb8e8d22d2ad10e2fcb2678ee91186f4518163604bf095", "totalTriangles": 15415, "wallTriangles": [1893, 2863]},
+    {"level": 2, "sha256": "7629e0692f744fa9f293b4f9f16cf375614c24c18954294c7c374384e548f9f4", "totalTriangles": 7007, "wallTriangles": [289, 1245]}
+  ]
+}

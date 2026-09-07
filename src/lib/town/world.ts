@@ -5,6 +5,7 @@ import { boundsDistanceSquared, chooseLod, type Quality, type TownTile, type V3,
 import { TownSurfaces } from './surfaces';
 import { decodeCoverPNG } from './cover-data';
 import { applyArtMaterial, treeArtColor } from './art-materials';
+import { applyTownHallMaterials } from './town-hall-materials';
 import { treeForm, createConiferPrototype, disposeConiferPrototype } from './vegetation';
 import { applyCraftedFrontages } from './crafted-frontages';
 import { readSceneBuffer } from './asset-transfer';
@@ -139,6 +140,7 @@ export class TownWorld {
           landmarks.map(row=>({...row,material:row.material??undefined,paint:row.paint??undefined})),
           (batch,matched)=>buildEvidenceLandmarks(batch,landmarks.filter(row=>matched.has(row.id))),evidence?.roofs??[]);
         applyEvidenceEnvironment(gltf.scene,tile.id,tile.origin,level);
+        applyTownHallMaterials(gltf.scene,tile.id,level,tile.lods.find(row=>row.level===level)?.sha256??'');
       }
       catch (error) { this.disposeRaw(gltf.scene); throw error; }
     }
