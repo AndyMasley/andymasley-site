@@ -1,0 +1,208 @@
+{
+  "version": 1,
+  "basis": "Native actual source geometry with only texture pixels stubbed, existing measured bridge and terrain repair applied first. Runtime added objects only; no source mutations.",
+  "sourceManifestSha256": "37fbef34bc2a4467997252be75b4c43174a6a7b2d39963614cadd8d787e56105",
+  "indexSha256": "eecd37ff3077f2b47f805928a968685b721ec1569c8cf0c875389e554a7002f3",
+  "packetCount": 26,
+  "recipeCount": 1811,
+  "totalRawBytes": 608854,
+  "totalGzipBytes": 49963,
+  "native": {
+    "tiles": 26,
+    "levels": 78,
+    "failedLevels": 0,
+    "zeroFaces": 0,
+    "backwardFaces": 0,
+    "nonfinite": 0,
+    "maxTileTriangles": 8112,
+    "maxTileBytes": 584064,
+    "maxApplyMs": 11.99,
+    "lods": [
+      {
+        "level": 0,
+        "objects": 1792,
+        "triangles": 64948,
+        "bytes": 4676256,
+        "skipped": 19
+      },
+      {
+        "level": 1,
+        "objects": 1177,
+        "triangles": 41040,
+        "bytes": 2954880,
+        "skipped": 634
+      },
+      {
+        "level": 2,
+        "objects": 487,
+        "triangles": 19192,
+        "bytes": 1381824,
+        "skipped": 1324
+      }
+    ]
+  },
+  "launches": [
+    {
+      "tileId": "-4_-2",
+      "level": 0,
+      "launches": [
+        {
+          "id": "ENV2-memorial-double-launch-1813",
+          "lanes": 2,
+          "slabs": 26,
+          "requestedSlabs": 26
+        }
+      ],
+      "clearance": [
+        {
+          "id": "ENV2-memorial-double-launch-1813",
+          "samples": 15738,
+          "missing": 0,
+          "protrusions": 0,
+          "minimumM": 0.042558684357565824,
+          "maximumM": 0.07225282297812896
+        }
+      ]
+    },
+    {
+      "tileId": "-4_-2",
+      "level": 1,
+      "launches": [
+        {
+          "id": "ENV2-memorial-double-launch-1813",
+          "lanes": 2,
+          "slabs": 26,
+          "requestedSlabs": 26
+        }
+      ],
+      "clearance": [
+        {
+          "id": "ENV2-memorial-double-launch-1813",
+          "samples": 15738,
+          "missing": 0,
+          "protrusions": 0,
+          "minimumM": 0.042558684357565824,
+          "maximumM": 0.07225282297812186
+        }
+      ]
+    },
+    {
+      "tileId": "-4_-2",
+      "level": 2,
+      "launches": [
+        {
+          "id": "ENV2-memorial-double-launch-1813",
+          "lanes": 2,
+          "slabs": 26,
+          "requestedSlabs": 26
+        }
+      ],
+      "clearance": [
+        {
+          "id": "ENV2-memorial-double-launch-1813",
+          "samples": 15738,
+          "missing": 0,
+          "protrusions": 0,
+          "minimumM": 0.041143806494105206,
+          "maximumM": 0.06863347617856874
+        }
+      ]
+    },
+    {
+      "tileId": "6_-14",
+      "level": 0,
+      "launches": [
+        {
+          "id": "ENV2-dcr-lakeside-single-launch-1814",
+          "lanes": 1,
+          "slabs": 20,
+          "requestedSlabs": 20
+        }
+      ],
+      "clearance": [
+        {
+          "id": "ENV2-dcr-lakeside-single-launch-1814",
+          "samples": 12126,
+          "missing": 0,
+          "protrusions": 0,
+          "minimumM": 0.04453406697815865,
+          "maximumM": 0.0632574145085627
+        }
+      ]
+    },
+    {
+      "tileId": "6_-14",
+      "level": 1,
+      "launches": [
+        {
+          "id": "ENV2-dcr-lakeside-single-launch-1814",
+          "lanes": 1,
+          "slabs": 20,
+          "requestedSlabs": 20
+        }
+      ],
+      "clearance": [
+        {
+          "id": "ENV2-dcr-lakeside-single-launch-1814",
+          "samples": 12126,
+          "missing": 0,
+          "protrusions": 0,
+          "minimumM": 0.044733078868056,
+          "maximumM": 0.0632574145085627
+        }
+      ]
+    },
+    {
+      "tileId": "6_-14",
+      "level": 2,
+      "launches": [
+        {
+          "id": "ENV2-dcr-lakeside-single-launch-1814",
+          "lanes": 1,
+          "slabs": 20,
+          "requestedSlabs": 20
+        }
+      ],
+      "clearance": [
+        {
+          "id": "ENV2-dcr-lakeside-single-launch-1814",
+          "samples": 12126,
+          "missing": 0,
+          "protrusions": 0,
+          "minimumM": 0.04156169505356644,
+          "maximumM": 0.08745414397799323
+        }
+      ]
+    }
+  ],
+  "ledger": {
+    "sourceLines": 2017,
+    "sourceSections": 266,
+    "counts": {
+      "implemented": 74,
+      "already-present": 292,
+      "inapplicable": 755,
+      "supported-remaining": 2,
+      "remaining-review": 782,
+      "uncertain": 112
+    },
+    "knownSupportedRemainingCategories": 11
+  },
+  "limits": [
+    "Cemetery rows are anonymous authored scenery within current mapped extents, not exact grave or burial inventories.",
+    "Sparse regional wetland forms are placement inference, not a botanical survey.",
+    "Four dam lines gain restrained crest fragments only, not complete hydraulic reconstruction.",
+    "DCR launch footprint is registered to 2025 imagery; retained shoreline/underwater terrain mismatch remains.",
+    "Ernie Benoit Rain Garden presence is documented but bed boundary remains unresolved; no arbitrary named patch added.",
+    "Native timings measure only this optional geometry application, not browser frame rate or physical-device performance."
+  ],
+  "launchClearance": {
+    "samples": 83592,
+    "missing": 0,
+    "protrusions": 0,
+    "minimumM": 0.041143806494105206,
+    "maximumM": 0.08745414397799323,
+    "basis": "Actual source and emitted top triangles independently re-indexed after applying allLODs. Dense samples every0.071/0.073m across both launch footprints. Shared0.5m longitudinal by0.3875m transverse vertex grid, interior ridge correction and0.045m nominal clearance; originals unchanged."
+  },
+  "focusedTests": 8
+}

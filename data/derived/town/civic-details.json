@@ -1,0 +1,805 @@
+{
+  "version": 1,
+  "structId": "168510_866616",
+  "tileId": "-12_-4",
+  "sourceManifestSha256": "37fbef34bc2a4467997252be75b4c43174a6a7b2d39963614cadd8d787e56105",
+  "sourceArchitectureSha256": "9b128f13b274a4c8a1c975f73943fd6f562fc0d782536a3b7fae628d42f92012",
+  "sourceMaterialSelectionSha256": "e71e6bf0e0fc0367f9453e1647fca816bf1968130dc4c4dafe7c854f60bdf736",
+  "sourcePhotoEvidenceSha256": "0babbff24a19074b90495a66a06d5daac298279220273327b2d71a3dbedcd757",
+  "sourceMeshName": "buildings_20",
+  "sourceParentName": "buildings",
+  "sourceMaterial": "Estimated buildings | neutral walls",
+  "lods": [
+    {
+      "level": 0,
+      "sha256": "4b1dd83f4372e1f94e3f8870e6c6f363f6590876a22f74d1254664bb5aeebaf4",
+      "totalTriangles": 28029,
+      "wallTriangles": [
+        6567,
+        7594
+      ]
+    },
+    {
+      "level": 1,
+      "sha256": "c1f0a819e299223165bb8e8d22d2ad10e2fcb2678ee91186f4518163604bf095",
+      "totalTriangles": 15415,
+      "wallTriangles": [
+        1893,
+        2863
+      ]
+    },
+    {
+      "level": 2,
+      "sha256": "7629e0692f744fa9f293b4f9f16cf375614c24c18954294c7c374384e548f9f4",
+      "totalTriangles": 7007,
+      "wallTriangles": [
+        289,
+        1245
+      ]
+    }
+  ],
+  "origin": [
+    -3000,
+    0,
+    1000
+  ],
+  "outline": [
+    [
+      -2765.830085312453,
+      -929.7196848540334
+    ],
+    [
+      -2759.046750759444,
+      -949.4096349494066
+    ],
+    [
+      -2766.509108452039,
+      -952.0420885089552
+    ],
+    [
+      -2759.8075468017487,
+      -971.509530539508
+    ],
+    [
+      -2753.920528083021,
+      -969.4254076528596
+    ],
+    [
+      -2754.2467106286786,
+      -968.3132359036244
+    ],
+    [
+      -2733.353176526958,
+      -961.1866629937431
+    ],
+    [
+      -2732.9442078625143,
+      -962.2992025084095
+    ],
+    [
+      -2724.7358145932085,
+      -959.4478920083493
+    ],
+    [
+      -2717.70794199832,
+      -980.0274642925942
+    ],
+    [
+      -2752.531413381803,
+      -992.0902443003142
+    ],
+    [
+      -2751.7952718200977,
+      -994.092817336903
+    ],
+    [
+      -2773.9331530480995,
+      -1001.7691453659208
+    ],
+    [
+      -2774.341622245178,
+      -1000.5455339441542
+    ],
+    [
+      -2813.144864718284,
+      -1013.92312655563
+    ],
+    [
+      -2819.76552160547,
+      -994.900282919989
+    ],
+    [
+      -2782.04004125949,
+      -981.8511343429564
+    ],
+    [
+      -2782.9387667152914,
+      -979.1814020057209
+    ],
+    [
+      -2781.777817612019,
+      -978.7422939074459
+    ],
+    [
+      -2788.398029446922,
+      -959.6084093205864
+    ],
+    [
+      -2796.937581633858,
+      -962.4581679261755
+    ],
+    [
+      -2803.8031106680573,
+      -942.6567425924586
+    ],
+    [
+      -2793.6877302626963,
+      -939.1475941445678
+    ],
+    [
+      -2794.505645605939,
+      -936.9225079901516
+    ],
+    [
+      -2776.6795848424663,
+      -930.7820191911887
+    ],
+    [
+      -2775.862160010176,
+      -933.1181728864321
+    ]
+  ],
+  "frames": [
+    {
+      "id": "CIVIC-168510_866616-F00",
+      "structId": "168510_866616",
+      "tileId": "-12_-4",
+      "faceIndex": 0,
+      "start": [
+        -2765.830085312453,
+        -929.7196848540334
+      ],
+      "tangent": [
+        0.32572015993048586,
+        -0.9454662222495622
+      ],
+      "outward": [
+        0.9454662222495622,
+        0.32572015993048586
+      ],
+      "width": 20.825651548422965,
+      "recipe": "town-hall-side",
+      "bays": 5,
+      "sourceBounds": [
+        {
+          "level": 0,
+          "minZ": 38.336788177490234,
+          "maxZ": 50.9724006652832
+        },
+        {
+          "level": 1,
+          "minZ": 38.336788177490234,
+          "maxZ": 50.9724006652832
+        },
+        {
+          "level": 2,
+          "minZ": 38.336788177490234,
+          "maxZ": 50.9724006652832
+        }
+      ],
+      "evidenceIds": [
+        "CIV-1"
+      ],
+      "dimensionBasis": "Photograph-informed proportions fitted to the exact mapped wall plane; approximate bay spacing and detail dimensions, not a facade survey."
+    },
+    {
+      "id": "CIVIC-168510_866616-F01",
+      "structId": "168510_866616",
+      "tileId": "-12_-4",
+      "faceIndex": 1,
+      "start": [
+        -2759.046750759444,
+        -949.4096349494066
+      ],
+      "tangent": [
+        -0.9430426652923694,
+        -0.3326718073992206
+      ],
+      "outward": [
+        0.3326718073992206,
+        -0.9430426652923694
+      ],
+      "width": 7.913064771339447,
+      "recipe": "town-hall-return",
+      "bays": 2,
+      "sourceBounds": [
+        {
+          "level": 0,
+          "minZ": 38.336788177490234,
+          "maxZ": 50.968017578125
+        },
+        {
+          "level": 1,
+          "minZ": 38.336788177490234,
+          "maxZ": 50.968017578125
+        },
+        {
+          "level": 2,
+          "minZ": 38.336788177490234,
+          "maxZ": 50.968017578125
+        }
+      ],
+      "evidenceIds": [
+        "CIV-1"
+      ],
+      "dimensionBasis": "Photograph-informed proportions fitted to the exact mapped wall plane; approximate bay spacing and detail dimensions, not a facade survey."
+    },
+    {
+      "id": "CIVIC-168510_866616-F02",
+      "structId": "168510_866616",
+      "tileId": "-12_-4",
+      "faceIndex": 2,
+      "start": [
+        -2766.509108452039,
+        -952.0420885089552
+      ],
+      "tangent": [
+        0.3254979744658909,
+        -0.9455427375949762
+      ],
+      "outward": [
+        0.9455427375949762,
+        0.3254979744658909
+      ],
+      "width": 20.588643174468192,
+      "recipe": "auditorium",
+      "bays": 4,
+      "sourceBounds": [
+        {
+          "level": 0,
+          "minZ": 38.336788177490234,
+          "maxZ": 51.16141128540039
+        },
+        {
+          "level": 1,
+          "minZ": 38.336788177490234,
+          "maxZ": 51.16141128540039
+        },
+        {
+          "level": 2,
+          "minZ": 38.336788177490234,
+          "maxZ": 51.16141128540039
+        }
+      ],
+      "evidenceIds": [
+        "CIV-2"
+      ],
+      "dimensionBasis": "Photograph-informed proportions fitted to the exact mapped wall plane; approximate bay spacing and detail dimensions, not a facade survey."
+    },
+    {
+      "id": "CIVIC-168510_866616-F03",
+      "structId": "168510_866616",
+      "tileId": "-12_-4",
+      "faceIndex": 3,
+      "start": [
+        -2759.8075468017487,
+        -971.509530539508
+      ],
+      "tangent": [
+        0.942670699967254,
+        0.33372436444354353
+      ],
+      "outward": [
+        -0.33372436444354353,
+        0.942670699967254
+      ],
+      "width": 6.245042642072286,
+      "recipe": "school-north",
+      "bays": 1,
+      "sourceBounds": [
+        {
+          "level": 0,
+          "minZ": 38.336788177490234,
+          "maxZ": 58.43000030517578
+        },
+        {
+          "level": 1,
+          "minZ": 38.336788177490234,
+          "maxZ": 58.43000030517578
+        },
+        {
+          "level": 2,
+          "minZ": 38.336788177490234,
+          "maxZ": 58.43000030517578
+        }
+      ],
+      "evidenceIds": [
+        "CIV-2"
+      ],
+      "dimensionBasis": "Photograph-informed proportions fitted to the exact mapped wall plane; approximate bay spacing and detail dimensions, not a facade survey."
+    },
+    {
+      "id": "CIVIC-168510_866616-F05",
+      "structId": "168510_866616",
+      "tileId": "-12_-4",
+      "faceIndex": 5,
+      "start": [
+        -2754.2467106286786,
+        -968.3132359036244
+      ],
+      "tangent": [
+        0.94645791836668,
+        0.3228272119276979
+      ],
+      "outward": [
+        -0.3228272119276979,
+        0.94645791836668
+      ],
+      "width": 22.075502456334025,
+      "recipe": "school-north-arched",
+      "bays": 5,
+      "sourceBounds": [
+        {
+          "level": 0,
+          "minZ": 38.336788177490234,
+          "maxZ": 58.6934928894043
+        },
+        {
+          "level": 1,
+          "minZ": 38.336788177490234,
+          "maxZ": 58.6934928894043
+        },
+        {
+          "level": 2,
+          "minZ": 38.336788177490234,
+          "maxZ": 58.6934928894043
+        }
+      ],
+      "evidenceIds": [
+        "CIV-2"
+      ],
+      "dimensionBasis": "Photograph-informed proportions fitted to the exact mapped wall plane; approximate bay spacing and detail dimensions, not a facade survey."
+    },
+    {
+      "id": "CIVIC-168510_866616-F07",
+      "structId": "168510_866616",
+      "tileId": "-12_-4",
+      "faceIndex": 7,
+      "start": [
+        -2732.9442078625143,
+        -962.2992025084095
+      ],
+      "tangent": [
+        0.9446317941076166,
+        0.3281322501081316
+      ],
+      "outward": [
+        -0.3281322501081316,
+        0.9446317941076166
+      ],
+      "width": 8.689516190866936,
+      "recipe": "school-north",
+      "bays": 2,
+      "sourceBounds": [
+        {
+          "level": 0,
+          "minZ": 38.336788177490234,
+          "maxZ": 58.75323486328125
+        },
+        {
+          "level": 1,
+          "minZ": 38.336788177490234,
+          "maxZ": 58.75323486328125
+        },
+        {
+          "level": 2,
+          "minZ": 38.336788177490234,
+          "maxZ": 58.75323486328125
+        }
+      ],
+      "evidenceIds": [
+        "CIV-2"
+      ],
+      "dimensionBasis": "Photograph-informed proportions fitted to the exact mapped wall plane; approximate bay spacing and detail dimensions, not a facade survey."
+    },
+    {
+      "id": "CIVIC-168510_866616-F08",
+      "structId": "168510_866616",
+      "tileId": "-12_-4",
+      "faceIndex": 8,
+      "start": [
+        -2724.7358145932085,
+        -959.4478920083493
+      ],
+      "tangent": [
+        0.32317274569385324,
+        -0.9463399898771562
+      ],
+      "outward": [
+        0.9463399898771562,
+        0.32317274569385324
+      ],
+      "width": 21.7464891100252,
+      "recipe": "school-east",
+      "bays": 4,
+      "sourceBounds": [
+        {
+          "level": 0,
+          "minZ": 38.336788177490234,
+          "maxZ": 60.03511428833008
+        },
+        {
+          "level": 1,
+          "minZ": 38.336788177490234,
+          "maxZ": 60.03511428833008
+        },
+        {
+          "level": 2,
+          "minZ": 38.336788177490234,
+          "maxZ": 60.03511428833008
+        }
+      ],
+      "evidenceIds": [
+        "CIV-2"
+      ],
+      "dimensionBasis": "Photograph-informed proportions fitted to the exact mapped wall plane; approximate bay spacing and detail dimensions, not a facade survey."
+    },
+    {
+      "id": "CIVIC-168510_866616-F09",
+      "structId": "168510_866616",
+      "tileId": "-12_-4",
+      "faceIndex": 9,
+      "start": [
+        -2717.70794199832,
+        -980.0274642925942
+      ],
+      "tangent": [
+        -0.944914743744581,
+        -0.32731655481217714
+      ],
+      "outward": [
+        0.32731655481217714,
+        -0.944914743744581
+      ],
+      "width": 36.8535591322044,
+      "recipe": "school-south",
+      "bays": 8,
+      "sourceBounds": [
+        {
+          "level": 0,
+          "minZ": 38.336788177490234,
+          "maxZ": 59.71009063720703
+        },
+        {
+          "level": 1,
+          "minZ": 38.336788177490234,
+          "maxZ": 59.71009063720703
+        },
+        {
+          "level": 2,
+          "minZ": 38.336788177490234,
+          "maxZ": 59.71009063720703
+        }
+      ],
+      "evidenceIds": [
+        "CIV-2"
+      ],
+      "dimensionBasis": "Photograph-informed proportions fitted to the exact mapped wall plane; approximate bay spacing and detail dimensions, not a facade survey."
+    },
+    {
+      "id": "CIVIC-168510_866616-F11",
+      "structId": "168510_866616",
+      "tileId": "-12_-4",
+      "faceIndex": 11,
+      "start": [
+        -2751.7952718200977,
+        -994.092817336903
+      ],
+      "tangent": [
+        -0.9448115956065428,
+        -0.3276141767497534
+      ],
+      "outward": [
+        0.3276141767497534,
+        -0.9448115956065428
+      ],
+      "width": 23.431000774064255,
+      "recipe": "school-entry",
+      "bays": 5,
+      "sourceBounds": [
+        {
+          "level": 0,
+          "minZ": 38.336788177490234,
+          "maxZ": 61.44097137451172
+        },
+        {
+          "level": 1,
+          "minZ": 38.336788177490234,
+          "maxZ": 61.44097137451172
+        },
+        {
+          "level": 2,
+          "minZ": 38.336788177490234,
+          "maxZ": 61.44097137451172
+        }
+      ],
+      "evidenceIds": [
+        "CIV-2"
+      ],
+      "dimensionBasis": "Photograph-informed proportions fitted to the exact mapped wall plane; approximate bay spacing and detail dimensions, not a facade survey."
+    },
+    {
+      "id": "CIVIC-168510_866616-F13",
+      "structId": "168510_866616",
+      "tileId": "-12_-4",
+      "faceIndex": 13,
+      "start": [
+        -2774.341622245178,
+        -1000.5455339441542
+      ],
+      "tangent": [
+        -0.9453942724274073,
+        -0.3259289334524526
+      ],
+      "outward": [
+        0.3259289334524526,
+        -0.9453942724274073
+      ],
+      "width": 41.04450767770639,
+      "recipe": "school-south",
+      "bays": 9,
+      "sourceBounds": [
+        {
+          "level": 0,
+          "minZ": 38.336788177490234,
+          "maxZ": 59.362220764160156
+        },
+        {
+          "level": 1,
+          "minZ": 38.336788177490234,
+          "maxZ": 59.362220764160156
+        },
+        {
+          "level": 2,
+          "minZ": 38.336788177490234,
+          "maxZ": 59.362220764160156
+        }
+      ],
+      "evidenceIds": [
+        "CIV-2"
+      ],
+      "dimensionBasis": "Photograph-informed proportions fitted to the exact mapped wall plane; approximate bay spacing and detail dimensions, not a facade survey."
+    },
+    {
+      "id": "CIVIC-168510_866616-F14",
+      "structId": "168510_866616",
+      "tileId": "-12_-4",
+      "faceIndex": 14,
+      "start": [
+        -2813.144864718284,
+        -1013.92312655563
+      ],
+      "tangent": [
+        -0.32869846772427747,
+        0.9444349195766282
+      ],
+      "outward": [
+        -0.9444349195766282,
+        -0.32869846772427747
+      ],
+      "width": 20.14203757329156,
+      "recipe": "school-blind-end",
+      "bays": 0,
+      "sourceBounds": [
+        {
+          "level": 0,
+          "minZ": 38.336788177490234,
+          "maxZ": 58.94575500488281
+        },
+        {
+          "level": 1,
+          "minZ": 38.336788177490234,
+          "maxZ": 58.94575500488281
+        },
+        {
+          "level": 2,
+          "minZ": 38.336788177490234,
+          "maxZ": 58.94575500488281
+        }
+      ],
+      "evidenceIds": [
+        "CIV-2"
+      ],
+      "dimensionBasis": "Photograph-informed proportions fitted to the exact mapped wall plane; approximate bay spacing and detail dimensions, not a facade survey."
+    },
+    {
+      "id": "CIVIC-168510_866616-F15",
+      "structId": "168510_866616",
+      "tileId": "-12_-4",
+      "faceIndex": 15,
+      "start": [
+        -2819.76552160547,
+        -994.900282919989
+      ],
+      "tangent": [
+        0.9450609415933969,
+        0.32689419798246994
+      ],
+      "outward": [
+        -0.32689419798246994,
+        0.9450609415933969
+      ],
+      "width": 39.918568936278234,
+      "recipe": "school-north",
+      "bays": 9,
+      "sourceBounds": [
+        {
+          "level": 0,
+          "minZ": 38.336788177490234,
+          "maxZ": 58.65434265136719
+        },
+        {
+          "level": 1,
+          "minZ": 38.336788177490234,
+          "maxZ": 58.65434265136719
+        },
+        {
+          "level": 2,
+          "minZ": 38.336788177490234,
+          "maxZ": 58.65434265136719
+        }
+      ],
+      "evidenceIds": [
+        "CIV-2"
+      ],
+      "dimensionBasis": "Photograph-informed proportions fitted to the exact mapped wall plane; approximate bay spacing and detail dimensions, not a facade survey."
+    },
+    {
+      "id": "CIVIC-168510_866616-F18",
+      "structId": "168510_866616",
+      "tileId": "-12_-4",
+      "faceIndex": 18,
+      "start": [
+        -2781.777817612019,
+        -978.7422939074459
+      ],
+      "tangent": [
+        -0.3269757777161164,
+        0.945032719426656
+      ],
+      "outward": [
+        -0.945032719426656,
+        -0.3269757777161164
+      ],
+      "width": 20.246795897678414,
+      "recipe": "auditorium",
+      "bays": 4,
+      "sourceBounds": [
+        {
+          "level": 0,
+          "minZ": 38.336788177490234,
+          "maxZ": 51.843360900878906
+        },
+        {
+          "level": 1,
+          "minZ": 38.336788177490234,
+          "maxZ": 51.843360900878906
+        },
+        {
+          "level": 2,
+          "minZ": 38.336788177490234,
+          "maxZ": 51.843360900878906
+        }
+      ],
+      "evidenceIds": [
+        "CIV-2"
+      ],
+      "dimensionBasis": "Photograph-informed proportions fitted to the exact mapped wall plane; approximate bay spacing and detail dimensions, not a facade survey."
+    },
+    {
+      "id": "CIVIC-168510_866616-F19",
+      "structId": "168510_866616",
+      "tileId": "-12_-4",
+      "faceIndex": 19,
+      "start": [
+        -2788.398029446922,
+        -959.6084093205864
+      ],
+      "tangent": [
+        -0.9485752324304282,
+        -0.3165517784179376
+      ],
+      "outward": [
+        0.3165517784179376,
+        -0.9485752324304282
+      ],
+      "width": 9.00250385523557,
+      "recipe": "town-hall-return",
+      "bays": 2,
+      "sourceBounds": [
+        {
+          "level": 0,
+          "minZ": 38.336788177490234,
+          "maxZ": 51.843360900878906
+        },
+        {
+          "level": 1,
+          "minZ": 38.336788177490234,
+          "maxZ": 51.843360900878906
+        },
+        {
+          "level": 2,
+          "minZ": 38.336788177490234,
+          "maxZ": 51.843360900878906
+        }
+      ],
+      "evidenceIds": [
+        "CIV-1"
+      ],
+      "dimensionBasis": "Photograph-informed proportions fitted to the exact mapped wall plane; approximate bay spacing and detail dimensions, not a facade survey."
+    },
+    {
+      "id": "CIVIC-168510_866616-F20",
+      "structId": "168510_866616",
+      "tileId": "-12_-4",
+      "faceIndex": 20,
+      "start": [
+        -2796.937581633858,
+        -962.4581679261755
+      ],
+      "tangent": [
+        -0.32758729823529414,
+        0.9448209153246452
+      ],
+      "outward": [
+        -0.9448209153246452,
+        -0.32758729823529414
+      ],
+      "width": 20.957860915804385,
+      "recipe": "town-hall-side",
+      "bays": 5,
+      "sourceBounds": [
+        {
+          "level": 0,
+          "minZ": 38.336788177490234,
+          "maxZ": 50.98558807373047
+        },
+        {
+          "level": 1,
+          "minZ": 38.336788177490234,
+          "maxZ": 50.98558807373047
+        },
+        {
+          "level": 2,
+          "minZ": 38.336788177490234,
+          "maxZ": 50.98558807373047
+        }
+      ],
+      "evidenceIds": [
+        "CIV-1"
+      ],
+      "dimensionBasis": "Photograph-informed proportions fitted to the exact mapped wall plane; approximate bay spacing and detail dimensions, not a facade survey."
+    }
+  ],
+  "sourceUrls": [
+    "https://npgallery.nps.gov/GetAsset/ec54c744-9f1e-4c03-80a9-ecd91d3e6d6a/",
+    "https://www.dimellashaffer.com/projects/sitkowski-apartments/",
+    "https://www.dimellashaffer.com/wp-content/uploads/2017/08/Sitkowski_01.jpg",
+    "https://commons.wikimedia.org/wiki/File:Town_Hall,_Webster_MA.jpg"
+  ],
+  "observations": [
+    "August2009 NPS photos17/18/19/22/23 show side openings, auditorium fanlights and school masonry trim.",
+    "Architect completed-renovation exterior shows five central school bays, six tall pale pilasters, pale lower entrance surround and a pediment clock.",
+    "Rectangular school glazing follows completed-renovation photo, not the opaque1970s infill visible in2009."
+  ],
+  "inference": [
+    "Wing bay counts, spacing and heights are approximate interpretations within the retained source envelope.",
+    "Simplified pale capitals/clock ornament retain recognizable forms without claiming sculptural accuracy.",
+    "Shallow exterior panes imply openings; the protected solid source wall is not cut or moved.",
+    "No new text signage, current business branding, surveyed entrances or terrain access paths are claimed."
+  ],
+  "excludedFaces": {
+    "21-25": "Existing detailed Main Street portico and front windows, preserved exactly.",
+    "4,6,10,12,16,17": "Short footprint returns; omit detail to avoid crowded or unsupported miniature windows."
+  }
+}

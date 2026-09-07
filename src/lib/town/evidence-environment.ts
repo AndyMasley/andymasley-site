@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import recipes from '../../../data/derived/town/evidence-environment.json';
 import { Batch, type Frame, type Role } from './crafted-frontages';
+import { applyBridgeDetails, BRIDGE_DETAILS } from './bridge-details';
 
 type Recipe = typeof recipes.objects[number];
 type V3 = [number, number, number];
@@ -59,35 +60,57 @@ function bronzeFigure(batch: Batch, frame: Frame, x: number, y: number, z: numbe
 }
 
 function ponyBridge(batch: Batch, frame: Frame, record: Recipe, ground: (u: number, v: number) => number | null): void {
-  const p = record.parameters;
-  const length = p.mappedCrossingLength!, span = p.span!, width = p.width!, rise = p.rise!, n = p.panels!;
+  const p = record.parameters, measured = BRIDGE_DETAILS.pony;
+  const length = p.mappedCrossingLength!, span = measured.spanSouth, width = measured.width, rise = measured.rise, n = measured.panels;
   const start = (length - span) / 2, end = start + span;
   const bankA = ground(0, 0)!, bankB = ground(length, 0)!;
   const deck = Math.max(bankA, bankB) + .16;
-  const walkway = p.sidewalkWidth!;
-  for (const v of [-width / 2, width / 2]) {
-    batch.box(frame, 'metal', length / 2, deck - .23, v, span, .22, .14, DARK);
+  const walkway = measured.sidewalkWidth;
+  const longEndPanel = 1.69, innerPanel = (measured.spanSouth - 2 * longEndPanel) / 7;
+  const member = (a: V3, b: V3, height: number, breadth: number) => {
+    const from = new THREE.Vector3(...a), to = new THREE.Vector3(...b), delta = to.clone().sub(from);
+    const g = new THREE.BoxGeometry(delta.length(), height, breadth);
+    g.applyQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(1, 0, 0), delta.normalize()));
+    g.translate(...from.add(to).multiplyScalar(.5).toArray() as V3); emit(batch, frame, 'metal', g, DARK);
+  };
+  // HAER describes unequal end panels, common internal panels, straight built-up
+  // chord sections and a 4ft camber above the hip. Intermediate rises are inferred.
+  for (const [v, trussSpan] of [[-width / 2, measured.spanNorth], [width / 2, measured.spanSouth]]) {
+    const trussStart = (length - trussSpan) / 2, trussEnd = trussStart + trussSpan;
+    for (const dv of [-.047, .047]) batch.box(frame, 'metal', length / 2, deck - .16, v + dv, trussSpan, .1524, .019, DARK);
+    const levels = [0, rise - measured.camberAboveHip, rise * .79, rise * .94, rise, rise, rise * .94, rise * .79, rise - measured.camberAboveHip, 0];
     const top: V3[] = [];
     for (let i = 0; i <= n; i++) {
-      const u = start + span * i / n;
-      const h = rise * Math.sqrt(Math.sin(Math.PI * i / n) / Math.sin(Math.PI * Math.floor(n / 2) / n));
-      top.push([u, deck + h, v]);
-      if (i && i < n) beam(batch, frame, [u, deck, v], [u, deck + h, v], .052);
-      if (i) {
-        beam(batch, frame, top[i - 1], top[i], .079);
-        const a = start + span * (i - 1) / n, b = u;
-        const first = i <= n / 2 ? top[i] : top[i - 1];
-        const last: V3 = [i <= n / 2 ? a : b, deck, v];
-        beam(batch, frame, first, last, .031);
-        if (!batch.level) beam(batch, frame, i <= n / 2 ? top[i - 1] : top[i], [i <= n / 2 ? b : a, deck, v], .016);
+      const u = i === 0 ? trussStart : i === n ? trussEnd : start + longEndPanel + (i - 1) * innerPanel;
+      const h = levels[i]; top.push([u, deck + h, v]);
+      if (i && i < n) {
+        member([u, deck, v], [u, deck + h, v], .068, .105);
+        if (!batch.level) for (const dv of [-.07, .07]) batch.box(frame, 'metal', u, deck + h - .055, v + dv, .18, .20, .022, DARK);
       }
-      if (!batch.level) orb(batch, frame, u, deck + h, v, .09, .09, .095, DARK);
+      if (i) {
+        member(top[i - 1], top[i], i === 1 || i === n ? .20 : .14, .16);
+        if (i > 1 && i < n) {
+          // Pratt tension rods slope toward the span center; counter rods are
+          // absent in the end panels, as the measured description specifies.
+          const first = i <= n / 2 ? top[i - 1] : top[i];
+          const last: V3 = [i <= n / 2 ? u : top[i - 1][0], deck, v];
+          beam(batch, frame, first, last, .018);
+          if (!batch.level) beam(batch, frame, i <= n / 2 ? top[i] : top[i - 1], [i <= n / 2 ? top[i - 1][0] : u, deck, v], .011);
+        }
+      }
+      if (!batch.level) orb(batch, frame, u, deck + h, v, .065, .065, .092, DARK);
     }
   }
   const totalWidth = width + walkway, middle = -walkway / 2;
   const planks = batch.level ? Math.ceil(span / .9) : Math.ceil(span / .19);
   for (let i = 0; i < planks; i++) batch.box(frame, 'paving', start + (i + .5) * span / planks, deck - .055, middle, span / planks - .009, .11, totalWidth, i % 5 ? '#8c8877' : '#99917e');
-  for (let i = 0; i <= n; i++) batch.box(frame, 'metal', start + i * span / n, deck - .26, middle, .13, .17, totalWidth + .3, DARK);
+  for (let i = 0; i <= n; i++) {
+    const u = i === 0 ? start : i === n ? end : start + longEndPanel + (i - 1) * innerPanel;
+    // HAER places rolled I-section floor beams at the actual panel points,
+    // extending beyond the shorter sidewalk-side truss for its cantilever.
+    batch.box(frame, 'metal', u, deck - .26, middle, .014, .1651, totalWidth + .3, DARK);
+    for (const h of [-.26 - .076, -.26 + .076]) batch.box(frame, 'metal', u, deck + h, middle, .1016, .013, totalWidth + .3, DARK);
+  }
   for (const [u, bank, bankU] of [[start, bankA, 0], [end, bankB, length]]) {
     const support = ground(u, 0) ?? Math.min(bankA, bankB) - .8;
     batch.box(frame, 'stone', u, (support + deck - .15) / 2, middle, .8, Math.max(.2, deck - .15 - support), totalWidth + .5, '#8f9188');
@@ -103,11 +126,23 @@ function ponyBridge(batch: Batch, frame: Frame, record: Recipe, ground: (u: numb
     }
   }
   const v = -width / 2 - walkway;
-  for (let i = 0; i <= n * 3; i++) {
-    const u = start + span * i / (n * 3);
-    beam(batch, frame, [u, deck, v], [u, deck + 1.05, v], i % 3 ? .018 : .029);
+  for (let i = 0; i <= n; i++) {
+    const u = start + span * i / n;
+    batch.box(frame, 'metal', u, deck + .085, v, .16, .17, .15, DARK);
+    batch.box(frame, 'metal', u, deck + .58, v, .09, .94, .08, DARK);
+    batch.box(frame, 'metal', u, deck + 1.08, v, .15, .08, .14, DARK);
+    // The documented raised panels belong to the cast-iron sidewalk posts;
+    // no fabricated maker-name bollards or overhead portal are introduced.
+    if (!batch.level) for (const side of [-1, 1]) {
+      batch.box(frame, 'metal', u, deck + .60, v + side * .045, .052, .59, .019, '#535d50');
+      for (const h of [.285, .915]) batch.box(frame, 'metal', u, deck + h, v + side * .04, .102, .045, .045, DARK);
+    }
   }
-  for (const h of [.15, 1.05]) beam(batch, frame, [start, deck + h, v], [end, deck + h, v], .034);
+  for (let i = 1; i < n * 4; i++) if (i % 4) {
+    const u = start + span * i / (n * 4); batch.box(frame, 'metal', u, deck + .58, v, .018, .84, .018, DARK);
+  }
+  for (const h of [.15, 1.05]) batch.box(frame, 'metal', length / 2, deck + h, v, span, .043, .043, DARK);
+
 }
 
 type HeightSample = (u: number, v: number) => number | null;
@@ -301,7 +336,7 @@ function smallObject(batch: Batch, f: Frame, recipe: Recipe, base: number, minim
     for (const x of [-.48, -.16, .18, .49]) orb(batch, f, x, base + .61, .01, .22, .13, .20, '#5c7048', 'leaf');
   } else if (recipe.kind === 'beach_flagpole') {
     cylinder(batch, f, 0, minimum, 0, .55, .50, base + .28 - minimum, STONE, 'stone', 8);
-    beam(batch, f, [0, base, 0], [0, base + p.height!, 0], .044, '#aeb4ac', 'metal', 10);
+    cylinder(batch, f, 0, base, 0, .095, .038, p.height!, '#aeb4ac', 'metal', 12);
     orb(batch, f, 0, base + p.height!, 0, .085, .085, .085, '#a79869');
     const top = base + p.height! - .20, w = 1.72, h = .91;
     for (let i = 0; i < 13; i++) {
@@ -339,8 +374,9 @@ function categoryMeshes(group: THREE.Object3D, category: string): THREE.Mesh[] {
 
 /** Runs before tile positioning/material pooling; source buffers are read-only. */
 export function applyEvidenceEnvironment(group: THREE.Group, tileId: string, origin: readonly number[], level = 0): EnvironmentReport | undefined {
+  const bridgeDetails = applyBridgeDetails(group, tileId, origin, level);
   const rows = recipes.objects.filter(r => r.tileId === tileId);
-  if (!rows.length) return undefined;
+  if (!rows.length) return bridgeDetails;
   const previous = group.userData.townEvidenceEnvironment as EnvironmentReport | undefined;
   if (previous) return previous;
   group.updateMatrixWorld(true);
@@ -397,6 +433,11 @@ export function applyEvidenceEnvironment(group: THREE.Group, tileId: string, ori
     object.userData.appearanceBasis = 'Mapped historical object forms, dated source records and explicitly authored unmeasured dimensions.';
   });
   report.addedMeshes = result.group.children.length; report.addedTriangles = result.triangles; report.geometryBytes = result.bytes;
+  if (bridgeDetails) {
+    report.featureIds.push(...bridgeDetails.featureIds); report.skipped.push(...bridgeDetails.skipped);
+    report.supports.push(...bridgeDetails.supports); report.bridgeFits.push(...bridgeDetails.bridgeFits);
+    report.addedMeshes += bridgeDetails.addedMeshes; report.addedTriangles += bridgeDetails.addedTriangles; report.geometryBytes += bridgeDetails.geometryBytes;
+  }
   group.add(result.group); group.userData.townEvidenceEnvironment = report;
   return report;
 }

@@ -6,6 +6,11 @@ import { TownSurfaces } from './surfaces';
 import { decodeCoverPNG } from './cover-data';
 import { applyArtMaterial, treeArtColor } from './art-materials';
 import { applyTownHallMaterials } from './town-hall-materials';
+import { applyCivicDetails } from './civic-details';
+import { applyCivicRoofFinish } from './civic-roof-finish';
+import { applyLandmarkCompletion } from './landmark-completion';
+import { applyMemorialDetails } from './memorial-details';
+import { additionalEnvironmentAsset, validAdditionalEnvironmentPacket, applyAdditionalEnvironment } from './additional-environment';
 import { treeForm, createConiferPrototype, disposeConiferPrototype } from './vegetation';
 import { applyCraftedFrontages } from './crafted-frontages';
 import { readSceneBuffer } from './asset-transfer';
@@ -57,6 +62,8 @@ export class TownWorld {
     (value,key):value is TerrainFinishPacket=>{const[id,level]=key.split('@');return validTerrainFinishPacket(value,id)&&value.levels.length===1&&value.levels[0].level===Number(level);},
     (url,signal)=>this.fetchJson(url,signal));
   private readonly parkingFinish = new TileDetailStream(parkingFinishAsset,validParkingPacket,(url,signal)=>this.fetchJson(url,signal));
+
+  private readonly additionalEnvironment = new TileDetailStream(additionalEnvironmentAsset,validAdditionalEnvironmentPacket,(url,signal)=>this.fetchJson(url,signal));
 
   constructor(readonly manifest: WorldManifest, readonly manifestUrl: string, readonly onChange: () => void) {
     this.root.name = 'Webster scenery';
@@ -111,6 +118,7 @@ export class TownWorld {
     const roadRequest=tile?beginOptionalDetail(signal,s=>this.roadFinish.tile(tile.id,s)):undefined;
     const terrainRequest=tile?beginOptionalDetail(signal,s=>this.terrainFinish.tile(`${tile.id}@${level}`,s)):undefined;
     const parkingRequest=tile?beginOptionalDetail(signal,s=>this.parkingFinish.tile(tile.id,s)):undefined;
+    const additionalRequest=tile?beginOptionalDetail(signal,s=>this.additionalEnvironment.tile(tile.id,s)):undefined;
     let source: [ArrayBuffer, Awaited<ReturnType<EvidenceStream['tile']>>|undefined];
     try {
       source=await Promise.all([
@@ -118,10 +126,10 @@ export class TownWorld {
         tile?this.evidence.tile(tile.id,signal):Promise.resolve(undefined),
       ]);
     } catch(error) {
-      roadRequest?.cancel();terrainRequest?.cancel();parkingRequest?.cancel();throw error;
+      roadRequest?.cancel();terrainRequest?.cancel();parkingRequest?.cancel();additionalRequest?.cancel();throw error;
     }
     const [data,evidence]=source;
-    const [road,terrain,parking]=await Promise.all([roadRequest?.finish(),terrainRequest?.finish(),parkingRequest?.finish()]);
+    const [road,terrain,parking,additional]=await Promise.all([roadRequest?.finish(),terrainRequest?.finish(),parkingRequest?.finish(),additionalRequest?.finish()]);
     const gltf = await this.loader.parseAsync(data, new URL('.', url).href);
     if (this.disposed || signal.aborted) {
       this.disposeRaw(gltf.scene);
@@ -135,12 +143,18 @@ export class TownWorld {
         applyRoadFinish(gltf.scene,tile.id,tile.origin,level,road);
         applyParkingFinish(gltf.scene,tile.id,tile.origin,parking);
         applyCraftedFrontages(gltf.scene, tile.id, tile.origin, level);
+        const sourceSha256=tile.lods.find(row=>row.level===level)?.sha256??'';
+        applyLandmarkCompletion(gltf.scene,tile.id,tile.origin,level,sourceSha256);
         const landmarks=landmarkRows(tile.id);
         applyEvidenceBuildings(gltf.scene,tile.id,tile.origin,level,evidence?.buildings??[],
           landmarks.map(row=>({...row,material:row.material??undefined,paint:row.paint??undefined})),
           (batch,matched)=>buildEvidenceLandmarks(batch,landmarks.filter(row=>matched.has(row.id))),evidence?.roofs??[]);
         applyEvidenceEnvironment(gltf.scene,tile.id,tile.origin,level);
-        applyTownHallMaterials(gltf.scene,tile.id,level,tile.lods.find(row=>row.level===level)?.sha256??'');
+        applyTownHallMaterials(gltf.scene,tile.id,level,sourceSha256);
+        applyCivicRoofFinish(gltf.scene,tile.id,level,sourceSha256);
+        applyCivicDetails(gltf.scene,tile.id,tile.origin,level,sourceSha256);
+        applyMemorialDetails(gltf.scene,tile.id,tile.origin,level);
+        applyAdditionalEnvironment(gltf.scene,tile.id,tile.origin,level,additional);
       }
       catch (error) { this.disposeRaw(gltf.scene); throw error; }
     }
@@ -151,6 +165,7 @@ export class TownWorld {
           const texture = (material as THREE.MeshStandardMaterial)[slot];
           if (!texture) continue;
           const reference = gltf.parser.associations.get(texture);
+          if (!reference && texture.userData.sourceUrl) continue;
           const definition = gltf.parser.json.textures?.[reference?.textures ?? -1];
           const imageIndex = definition?.extensions?.KHR_texture_basisu?.source ?? definition?.source;
           const uri = gltf.parser.json.images?.[imageIndex]?.uri;
@@ -248,6 +263,19 @@ export class TownWorld {
     return{buildings,documented,triangles,optionalFailures:this.evidence.failures};
   }
 
+  researchResources() {
+    let bridges=0,memorials=0,civicWindows=0,landmarkForms=0,environmentObjects=0,triangles=0;
+    for(const {group} of this.loaded.values()) {
+      const bridge=group.userData.bridgeDetails,memorial=group.userData.townMemorialDetails;
+      const civic=group.userData.civicDetails,environment=group.userData.townAdditionalEnvironment;
+      bridges+=bridge?.featureIds.length??0;memorials+=memorial?.ids.length??0;
+      landmarkForms+=group.userData.landmarkCompletion?.ids.length??0;
+      civicWindows+=civic?.windows??0;environmentObjects+=environment?.ids.length??0;
+      triangles+=(bridge?.addedTriangles??0)+(memorial?.addedTriangles??0)+(civic?.triangles??0)+(environment?.addedTriangles??0)+(group.userData.landmarkCompletion?.triangles??0);
+    }
+    return{bridges,memorials,civicWindows,landmarkForms,environmentObjects,triangles,optionalFailures:this.additionalEnvironment.failures};
+  }
+
   finishResources() {
     let roadTriangles=0,terrainTriangles=0,parkingTriangles=0,parkingBays=0,pavedMasks=0,rejectedTerrain=0;
     for(const {group} of this.loaded.values()) {
@@ -258,7 +286,7 @@ export class TownWorld {
       pavedMasks+=Number(!!group.userData.pavedSurfaceMask);
       rejectedTerrain+=Number(!!group.userData.terrainFinish?.rejected);
     }
-    return{roadTriangles,terrainTriangles,parkingTriangles,parkingBays,pavedMasks,rejectedTerrain,optionalFailures:this.roadFinish.failures+this.terrainFinish.failures+this.parkingFinish.failures};
+    return{roadTriangles,terrainTriangles,parkingTriangles,parkingBays,pavedMasks,rejectedTerrain,optionalFailures:this.roadFinish.failures+this.terrainFinish.failures+this.parkingFinish.failures+this.additionalEnvironment.failures};
   }
 
   update(position: V3, lookAhead: V3, force = false): void {
@@ -604,7 +632,7 @@ export class TownWorld {
 
   dispose(): void {
     this.evidence.dispose();
-    this.roadFinish.dispose();this.terrainFinish.dispose();this.parkingFinish.dispose();
+    this.roadFinish.dispose();this.terrainFinish.dispose();this.parkingFinish.dispose();this.additionalEnvironment.dispose();
     if (this.disposed) return;
     this.disposed = true;
     this.sharedAbort.abort();

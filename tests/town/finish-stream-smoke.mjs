@@ -14,6 +14,7 @@ const normalTimeout = Number(process.env.TOWN_READY_TIMEOUT_MS || 90000);
 const fallbackTimeout = Number(process.env.TOWN_FAILURE_READY_TIMEOUT_MS || 45000);
 const optionalKind = url => {
   const p = new URL(url).pathname;
+  if (p.startsWith('/town-evidence/v1/additional-environment/')) return 'environment';
   if (p.startsWith('/town-finish/')) return 'road';
   if (p.startsWith('/town-evidence/v1/terrain/')) return 'terrain';
   if (p.startsWith('/town-surfaces/v2/lots/')) return 'parking';
@@ -88,7 +89,7 @@ async function runScenario(mode) {
     window.fetch = async (input, init) => {
       const url = new URL(typeof input === 'string' ? input : input instanceof URL ? input.href : input.url, location.href).href;
       const p = new URL(url).pathname;
-      const kind = p.startsWith('/town-finish/') ? 'road' : p.startsWith('/town-evidence/v1/terrain/') ? 'terrain' : p.startsWith('/town-surfaces/v2/lots/') ? 'parking' : p.startsWith('/town-surfaces/v2/masks/') ? 'mask' : null;
+      const kind = p.startsWith('/town-evidence/v1/additional-environment/') ? 'environment' : p.startsWith('/town-finish/') ? 'road' : p.startsWith('/town-evidence/v1/terrain/') ? 'terrain' : p.startsWith('/town-surfaces/v2/lots/') ? 'parking' : p.startsWith('/town-surfaces/v2/masks/') ? 'mask' : null;
       if (!kind) return original(input, init);
       const signal = init?.signal || (input instanceof Request ? input.signal : undefined);
       const row = { url, kind, start: performance.now(), hasSignal: !!signal, abort: signal?.aborted ? performance.now() : null, settled: null };
@@ -162,9 +163,26 @@ async function runScenario(mode) {
     scenario.driven = await state(page);
     assert.ok(scenario.driven.distance > before + .25);
     scenario.checks.push('Actual arrow-key input drives the fallback game');
+    if (mode !== 'cold-10mbps') {
+      // The startup neighborhood has no new environment packet. Visit the real
+      // beach tile so its additional stream is exercised, not merely intercepted.
+      scenario.environmentFallback = await page.evaluate(async () => {
+        const g = window.__webster, e = g.engine;
+        const [id, s] = g.graph.nearest([-796.64, -341.67]);
+        e.paused = true; e.speed = e.cruise = 0; e.edgeId = id; e.s = s;
+        e.phase = 'ROAD'; e.connection = null; e.connectionS = 0; e.queue(null);
+        await g.world.prepareAt([-796.64, 45.7, 341.67]);
+        return { ready: g.ready, lost: g.renderer.getContext().isContextLost(), research: g.presentation.research };
+      });
+      assert.ok(scenario.intercepted.some(r => r.kind === 'environment'), 'Beach tile did not exercise the added environment stream');
+      assert.equal(scenario.environmentFallback.ready, true);
+      assert.equal(scenario.environmentFallback.lost, false);
+      assert.equal(scenario.environmentFallback.research.environmentObjects, 0);
+      scenario.checks.push('Unavailable beach environment packet leaves its original scenery playable');
+    }
     scenario.fetchSignalsBeforeDispose = await page.evaluate(() => window.__finishStreamProbe.rows);
     if (mode === 'optional-stalled') {
-      for (const kind of ['road', 'terrain', 'mask']) assert.ok(scenario.fetchSignalsBeforeDispose.some(r => r.kind === kind && r.hasSignal && r.abort !== null && r.error === 'AbortError'), 'Stalled ' + kind + ' was not actually aborted by its bounded fallback');
+      for (const kind of ['road', 'terrain', 'mask', 'environment']) assert.ok(scenario.fetchSignalsBeforeDispose.some(r => r.kind === kind && r.hasSignal && r.abort !== null && r.error === 'AbortError'), 'Stalled ' + kind + ' was not actually aborted by its bounded fallback');
       assert.ok(scenario.intercepted.every(r => r.releasedAt === undefined), 'A stalled response was released before proving readiness');
       const retired = await page.evaluate(() => {
         const g = window.__finishRetired = window.__webster;

@@ -1,0 +1,899 @@
+{
+  "version": 1,
+  "sourceManifestSha256": "37fbef34bc2a4467997252be75b4c43174a6a7b2d39963614cadd8d787e56105",
+  "sources": {
+    "south-village-dam.json": "dcdc46fe8f388fb1947f6451bb4fcb0573e802ffbf2af4c627a945bd348303e2",
+    "club-pond-dam.json": "07a8d0a407ec995323981262eb5b99ec3753a0f93421f4046bb7af6a62756f66",
+    "perryville-dam.json": "15fd9acd8ef650c29b5a9179f56c70f175ac55903eeb7df63f26aeaaf8ce14a0",
+    "saint-anthony-cemetery.json": "be6475c21d3023aed5c668353d6fbf0c4ab1ce6b4dadccc2272e3002eaf4ada8",
+    "saint-joseph-cemetery.json": "97afe21f9dfb3c791ca1db6c128b3a41cc303f886ea26a4c366803478ff855fe",
+    "memorial-beach.json": "672686ee8979f56e7143caccbca128c6c9a6313495aeaf073b11eb9978d745f5",
+    "north-village-dam.json": "79935a21c896b06cbc0d39fc683edf5ea3faf00430e915a14e12825057d81fb0",
+    "final-lake-sites.json": "04636ef45f34860bbc5e888d5de8d9fdcfb701483b63b98dfb3484eb70d2af18",
+    "mount-zion-cemetery.json": "c20c6310585548f8ef4d8f460786fd9499570b833bd07f20e1f927dd2855aff5",
+    "sacred-heart-cemetery.json": "5c3cf38c7e1bd78b2de42094129097f4ec19504fe3d34f4fce42a37b968d665c",
+    "lakeside-cemetery.json": "acc6bd77d90e26492e835c0460446fb0df23a8b706d53890f319ffc6f904a01a",
+    "launches-beaches.json": "b2f3e020a922139ada616e123f27973ae4e8729ca9fa4d733660916bf91c8c90"
+  },
+  "features": [
+    {
+      "id": "lakeside-cemetery",
+      "kind": "cemetery",
+      "evidenceIds": [
+        "TER-019",
+        "SITE-063b",
+        "SITE-063"
+      ],
+      "osmWay": 862430789,
+      "mappedFootprint": [
+        [
+          1061.3625,
+          -960.7972
+        ],
+        [
+          1096.5901,
+          -1036.2638
+        ],
+        [
+          1053.5424,
+          -1057.2211
+        ],
+        [
+          1017.1008,
+          -978.9838
+        ],
+        [
+          1061.3625,
+          -960.7972
+        ]
+      ],
+      "basis": "Mapped cemetery extent. Anonymous stone shapes, count, spacing, type and orientation are authored; no individual grave, inscription, gate or current layout is asserted."
+    },
+    {
+      "id": "mount-zion-cemetery",
+      "kind": "cemetery",
+      "evidenceIds": [
+        "TER-019",
+        "SITE-063a",
+        "SITE-063"
+      ],
+      "osmWay": 29759153,
+      "mappedFootprint": [
+        [
+          -1409.883,
+          541.9195
+        ],
+        [
+          -1453.4601,
+          541.8613
+        ],
+        [
+          -1484.1213,
+          538.9268
+        ],
+        [
+          -1516.9336,
+          540.078
+        ],
+        [
+          -1541.0234,
+          542.8692
+        ],
+        [
+          -1567.0624,
+          554.3324
+        ],
+        [
+          -1588.5267,
+          574.8617
+        ],
+        [
+          -1618.3363,
+          600.5918
+        ],
+        [
+          -1637.8055,
+          621.1905
+        ],
+        [
+          -1657.4593,
+          644.9889
+        ],
+        [
+          -1664.6773,
+          673.6432
+        ],
+        [
+          -1662.2856,
+          775.5303
+        ],
+        [
+          -1695.2097,
+          771.5735
+        ],
+        [
+          -1704.991,
+          858.3517
+        ],
+        [
+          -1692.7317,
+          876.1038
+        ],
+        [
+          -1679.2506,
+          883.5542
+        ],
+        [
+          -1545.7145,
+          881.1477
+        ],
+        [
+          -1455.6414,
+          798.3579
+        ],
+        [
+          -1445.1764,
+          785.6398
+        ],
+        [
+          -1428.8279,
+          739.7417
+        ],
+        [
+          -1421.4644,
+          713.9416
+        ],
+        [
+          -1411.8662,
+          678.4354
+        ],
+        [
+          -1409.883,
+          541.9195
+        ]
+      ],
+      "basis": "Mapped cemetery extent. Anonymous stone shapes, count, spacing, type and orientation are authored; no individual grave, inscription, gate or current layout is asserted."
+    },
+    {
+      "id": "saint-anthony-cemetery",
+      "kind": "cemetery",
+      "evidenceIds": [
+        "TER-019",
+        "SITE-063e",
+        "SITE-063"
+      ],
+      "osmWay": 247558034,
+      "mappedFootprint": [
+        [
+          -1409.3699,
+          737.7927
+        ],
+        [
+          -1397.7234,
+          757.5582
+        ],
+        [
+          -1394.4765,
+          763.9643
+        ],
+        [
+          -1394.605,
+          768.7743
+        ],
+        [
+          -1393.691,
+          777.3673
+        ],
+        [
+          -1384.8757,
+          785.3491
+        ],
+        [
+          -1369.938,
+          788.9286
+        ],
+        [
+          -1357.061,
+          790.6176
+        ],
+        [
+          -1348.4444,
+          786.9377
+        ],
+        [
+          -1343.3586,
+          778.1747
+        ],
+        [
+          -1332.125,
+          770.9849
+        ],
+        [
+          -1319.8546,
+          766.2677
+        ],
+        [
+          -1308.1767,
+          760.3867
+        ],
+        [
+          -1301.0466,
+          751.6151
+        ],
+        [
+          -1298.591,
+          745.1847
+        ],
+        [
+          -1297.448,
+          737.6047
+        ],
+        [
+          -1295.7299,
+          729.0004
+        ],
+        [
+          -1299.5743,
+          720.2643
+        ],
+        [
+          -1309.5862,
+          705.3011
+        ],
+        [
+          -1314.1508,
+          698.4673
+        ],
+        [
+          -1314.1825,
+          691.0368
+        ],
+        [
+          -1314.2569,
+          673.5433
+        ],
+        [
+          -1314.9343,
+          617.4215
+        ],
+        [
+          -1317.5842,
+          613.212
+        ],
+        [
+          -1320.0708,
+          612.3452
+        ],
+        [
+          -1320.4252,
+          599.0847
+        ],
+        [
+          -1390.7807,
+          602.0057
+        ],
+        [
+          -1397.7607,
+          680.8965
+        ],
+        [
+          -1401.1779,
+          702.4813
+        ],
+        [
+          -1404.8986,
+          722.7567
+        ],
+        [
+          -1409.3699,
+          737.7927
+        ]
+      ],
+      "basis": "Mapped cemetery extent. Anonymous stone shapes, count, spacing, type and orientation are authored; no individual grave, inscription, gate or current layout is asserted."
+    },
+    {
+      "id": "sacred-heart-cemetery",
+      "kind": "cemetery",
+      "evidenceIds": [
+        "TER-019",
+        "SITE-063d",
+        "SITE-063"
+      ],
+      "osmWay": 247558610,
+      "mappedFootprint": [
+        [
+          -1765.1862,
+          1139.7457
+        ],
+        [
+          -1761.8768,
+          1145.2739
+        ],
+        [
+          -1756.5529,
+          1149.6605
+        ],
+        [
+          -1713.3646,
+          1171.7552
+        ],
+        [
+          -1706.0273,
+          1172.8565
+        ],
+        [
+          -1693.8939,
+          1173.0597
+        ],
+        [
+          -1684.7977,
+          1173.2649
+        ],
+        [
+          -1670.2659,
+          1173.0801
+        ],
+        [
+          -1659.1427,
+          1173.1544
+        ],
+        [
+          -1654.0742,
+          1175.9094
+        ],
+        [
+          -1649.3821,
+          1179.6657
+        ],
+        [
+          -1644.0616,
+          1183.2971
+        ],
+        [
+          -1636.596,
+          1185.3975
+        ],
+        [
+          -1627.7432,
+          1186.7479
+        ],
+        [
+          -1613.5888,
+          1187.3202
+        ],
+        [
+          -1605.9163,
+          1187.4871
+        ],
+        [
+          -1594.2964,
+          1185.6712
+        ],
+        [
+          -1588.3789,
+          1181.8693
+        ],
+        [
+          -1581.0659,
+          1177.3062
+        ],
+        [
+          -1577.4246,
+          1171.4926
+        ],
+        [
+          -1574.5722,
+          1159.2735
+        ],
+        [
+          -1565.4165,
+          1142.4846
+        ],
+        [
+          -1556.8807,
+          1129.7303
+        ],
+        [
+          -1548.3595,
+          1113.5772
+        ],
+        [
+          -1537.3457,
+          1088.0945
+        ],
+        [
+          -1534.6578,
+          1066.435
+        ],
+        [
+          -1518.6007,
+          1008.8198
+        ],
+        [
+          -1509.8334,
+          990.1444
+        ],
+        [
+          -1599.3988,
+          939.913
+        ],
+        [
+          -1695.363,
+          1018.3983
+        ],
+        [
+          -1763.8967,
+          1125.9672
+        ],
+        [
+          -1766.5212,
+          1133.4093
+        ],
+        [
+          -1765.1862,
+          1139.7457
+        ]
+      ],
+      "basis": "Mapped cemetery extent. Anonymous stone shapes, count, spacing, type and orientation are authored; no individual grave, inscription, gate or current layout is asserted."
+    },
+    {
+      "id": "saint-joseph-cemetery",
+      "kind": "cemetery",
+      "evidenceIds": [
+        "TER-019",
+        "SITE-063c",
+        "SITE-063"
+      ],
+      "osmWay": 247558611,
+      "mappedFootprint": [
+        [
+          -1778.0666,
+          1110.3451
+        ],
+        [
+          -2055.2577,
+          1049.2255
+        ],
+        [
+          -2068.273,
+          1049.9153
+        ],
+        [
+          -2078.7532,
+          1051.2162
+        ],
+        [
+          -2085.3221,
+          1051.7558
+        ],
+        [
+          -2185.7546,
+          1032.4239
+        ],
+        [
+          -2254.3304,
+          1041.9101
+        ],
+        [
+          -2217.8538,
+          1118.301
+        ],
+        [
+          -2203.5239,
+          1158.9128
+        ],
+        [
+          -2191.0568,
+          1206.9524
+        ],
+        [
+          -2185.6809,
+          1221.2794
+        ],
+        [
+          -2178.6791,
+          1232.7113
+        ],
+        [
+          -2168.2892,
+          1239.208
+        ],
+        [
+          -2154.8985,
+          1239.2827
+        ],
+        [
+          -2137.3418,
+          1236.307
+        ],
+        [
+          -2109.9127,
+          1238.8307
+        ],
+        [
+          -2090.0675,
+          1238.744
+        ],
+        [
+          -2075.9083,
+          1240.4483
+        ],
+        [
+          -2062.8895,
+          1240.6359
+        ],
+        [
+          -2052.1229,
+          1246.2647
+        ],
+        [
+          -2047.0275,
+          1255.1727
+        ],
+        [
+          -2044.7039,
+          1266.1254
+        ],
+        [
+          -2039.2514,
+          1271.5108
+        ],
+        [
+          -2029.7341,
+          1281.0327
+        ],
+        [
+          -2027.9242,
+          1289.9661
+        ],
+        [
+          -2027.877,
+          1300.7954
+        ],
+        [
+          -2047.6123,
+          1324.1732
+        ],
+        [
+          -2040.3674,
+          1334.4713
+        ],
+        [
+          -2027.7438,
+          1342.7689
+        ],
+        [
+          -2011.1844,
+          1350.2942
+        ],
+        [
+          -1985.757,
+          1351.272
+        ],
+        [
+          -1961.0924,
+          1344.2894
+        ],
+        [
+          -1942.8307,
+          1326.4719
+        ],
+        [
+          -1919.5335,
+          1296.1591
+        ],
+        [
+          -1811.9218,
+          1319.3956
+        ],
+        [
+          -1794.2038,
+          1196.74
+        ],
+        [
+          -1791.2952,
+          1176.5456
+        ],
+        [
+          -1786.3537,
+          1142.2474
+        ],
+        [
+          -1781.5248,
+          1125.9323
+        ],
+        [
+          -1778.0666,
+          1110.3451
+        ]
+      ],
+      "basis": "Mapped cemetery extent. Anonymous stone shapes, count, spacing, type and orientation are authored; no individual grave, inscription, gate or current layout is asserted."
+    },
+    {
+      "id": "north-village-dam",
+      "kind": "dam",
+      "evidenceIds": [
+        "INF-DAM-MA00108",
+        "ECO-HAB-07"
+      ],
+      "osmWay": 217194657,
+      "mappedLine": [
+        [
+          -2731.5315,
+          583.1599
+        ],
+        [
+          -2745.1638,
+          603.4469
+        ],
+        [
+          -2745.1186,
+          613.5876
+        ],
+        [
+          -2748.2105,
+          619.9547
+        ],
+        [
+          -2753.6398,
+          631.1416
+        ]
+      ],
+      "basis": "Confirmed mapped dam line. Only low stone/concrete crest fragments against supported water are authored. No gates, hydraulic flow, spillway capacity or exact masonry construction is asserted."
+    },
+    {
+      "id": "south-village-dam",
+      "kind": "dam",
+      "evidenceIds": [
+        "INF-DAM-MA00107",
+        "ECO-HAB-07"
+      ],
+      "osmWay": 921415594,
+      "mappedLine": [
+        [
+          -2753.3026,
+          -299.6206
+        ],
+        [
+          -2760.6224,
+          -305.708
+        ],
+        [
+          -2784.7928,
+          -305.6002
+        ]
+      ],
+      "basis": "Confirmed mapped dam line. Only low stone/concrete crest fragments against supported water are authored. No gates, hydraulic flow, spillway capacity or exact masonry construction is asserted."
+    },
+    {
+      "id": "perryville-dam",
+      "kind": "dam",
+      "evidenceIds": [
+        "INF-DAM-MA00216",
+        "ECO-HAB-07"
+      ],
+      "osmWay": 217784659,
+      "mappedLine": [
+        [
+          -3100.1209,
+          -3656.8851
+        ],
+        [
+          -3106.6603,
+          -3658.033
+        ],
+        [
+          -3112.1942,
+          -3660.2517
+        ],
+        [
+          -3115.4752,
+          -3662.4251
+        ],
+        [
+          -3119.4868,
+          -3666.8276
+        ],
+        [
+          -3120.2275,
+          -3667.6351
+        ],
+        [
+          -3122.215,
+          -3671.2915
+        ],
+        [
+          -3123.6593,
+          -3675.6834
+        ],
+        [
+          -3124.6963,
+          -3681.5878
+        ]
+      ],
+      "basis": "Confirmed mapped dam line. Only low stone/concrete crest fragments against supported water are authored. No gates, hydraulic flow, spillway capacity or exact masonry construction is asserted."
+    },
+    {
+      "id": "club-pond-dam",
+      "kind": "dam",
+      "evidenceIds": [
+        "INF-DAM-MA00953",
+        "ECO-HAB-07"
+      ],
+      "osmWay": 254596610,
+      "mappedLine": [
+        [
+          -144.4005,
+          222.0881
+        ],
+        [
+          -138.007,
+          214.8868
+        ],
+        [
+          -141.2761,
+          200.794
+        ],
+        [
+          -146.8554,
+          182.4456
+        ],
+        [
+          -154.4199,
+          178.589
+        ]
+      ],
+      "basis": "Confirmed mapped dam line. Only low stone/concrete crest fragments against supported water are authored. No gates, hydraulic flow, spillway capacity or exact masonry construction is asserted."
+    },
+    {
+      "id": "memorial-lily-pond",
+      "kind": "wet-margin",
+      "evidenceIds": [
+        "TER-014",
+        "ECO-HAB-04",
+        "ECO-PLANT-018",
+        "ECO-PLANT-019",
+        "ECO-PLANT-022",
+        "LGT-23"
+      ],
+      "basis": "Dated mapped habitat class and actual mapped water gate regional plant-form interpretations. Individual plant locations, species allocation and abundance are inferred; sheltered patches only, no universal lake fringe."
+    },
+    {
+      "id": "mill-brook-wet-margin",
+      "kind": "wet-margin",
+      "evidenceIds": [
+        "TER-014",
+        "ECO-HAB-04",
+        "ECO-PLANT-018",
+        "ECO-PLANT-019",
+        "ECO-PLANT-022",
+        "LGT-23"
+      ],
+      "basis": "Dated mapped habitat class and actual mapped water gate regional plant-form interpretations. Individual plant locations, species allocation and abundance are inferred; sheltered patches only, no universal lake fringe."
+    },
+    {
+      "id": "sucker-brook-wet-margin",
+      "kind": "wet-margin",
+      "evidenceIds": [
+        "TER-014",
+        "ECO-HAB-04",
+        "ECO-PLANT-018",
+        "ECO-PLANT-019",
+        "ECO-PLANT-022",
+        "LGT-23"
+      ],
+      "basis": "Dated mapped habitat class and actual mapped water gate regional plant-form interpretations. Individual plant locations, species allocation and abundance are inferred; sheltered patches only, no universal lake fringe."
+    },
+    {
+      "id": "cedar-swamp-margin",
+      "kind": "wet-margin",
+      "evidenceIds": [
+        "TER-014",
+        "ECO-HAB-04",
+        "ECO-PLANT-018",
+        "ECO-PLANT-019",
+        "ECO-PLANT-022",
+        "LGT-23"
+      ],
+      "basis": "Dated mapped habitat class and actual mapped water gate regional plant-form interpretations. Individual plant locations, species allocation and abundance are inferred; sheltered patches only, no universal lake fringe."
+    },
+    {
+      "id": "memorial-double-launch",
+      "kind": "boat-ramp",
+      "evidenceIds": [
+        "LK-007",
+        "TER-013",
+        "INF-REC-MEMORIAL"
+      ],
+      "osmNode": 10294356624,
+      "mappedPoint": [
+        -796.6396123300074,
+        -341.67022984451614
+      ],
+      "mappedShoreDistanceM": 4.900746066192109,
+      "basis": "Documented double concrete ramp anchored to the mapped slipway point. Two 3.1 m lanes, a 0.2 m center gap, extent and nearest-shore orientation are authored. Each slab follows the actual rendered terrain; no public driving route, dock or exact surveyed ramp footprint is claimed."
+    },
+    {
+      "id": "dcr-lakeside-single-launch",
+      "kind": "boat-ramp",
+      "evidenceIds": [
+        "LK-017",
+        "INF-REC-LAKESIDE-RAMP"
+      ],
+      "ofbaId": 50,
+      "aerialRegistration": {
+        "center": [
+          1669.7651918464544,
+          -3366.924669974309
+        ],
+        "angle": 2.982307346323389,
+        "lengthObservedM": 20.009891208233487,
+        "selectedPixelsRoadToWater": [
+          [
+            532,
+            495
+          ],
+          [
+            443,
+            481
+          ]
+        ],
+        "sampledEndpointsEastNorth": [
+          [
+            1679.6434837916458,
+            -3368.511580427643
+          ],
+          [
+            1659.886899901263,
+            -3365.337759520975
+          ]
+        ],
+        "lanes": 1,
+        "range": [
+          -10,
+          10
+        ],
+        "widthM": 3.1,
+        "basis": "Visible narrow ramp/run in georeferenced 2025 aerial, coincident with the current OFBA site 50 point. Endpoints read to roughly one metre; 3.1m width and 20m extent are authored approximations. Original terrain has a roughly9m shore alignment discrepancy and raised submerged relief; this pass retains those sources and does not fabricate a longer ramp across that discrepancy."
+      },
+      "basis": "Visible narrow ramp/run in georeferenced 2025 aerial, coincident with the current OFBA site 50 point. Endpoints read to roughly one metre; 3.1m width and 20m extent are authored approximations. Original terrain has a roughly9m shore alignment discrepancy and raised submerged relief; this pass retains those sources and does not fabricate a longer ramp across that discrepancy."
+    }
+  ],
+  "count": 1811,
+  "skipped": [
+    {
+      "featureId": "south-village-dam",
+      "point": [
+        -2768.402,
+        -305.6733
+      ],
+      "reason": "No matching immutable source water"
+    },
+    {
+      "featureId": "perryville-dam",
+      "point": [
+        -3119.02,
+        -3666.3153
+      ],
+      "reason": "No matching immutable source water"
+    },
+    {
+      "featureId": "club-pond-dam",
+      "point": [
+        -143.8694,
+        221.4899
+      ],
+      "reason": "No matching immutable source water"
+    },
+    {
+      "featureId": "club-pond-dam",
+      "point": [
+        -144.0989,
+        191.5107
+      ],
+      "reason": "No matching immutable source water"
+    }
+  ],
+  "candidateCount": 1815,
+  "inference": "Generic environmental forms within supported mapped domains, not a surveyed present-day object inventory."
+}
