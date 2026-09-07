@@ -57,7 +57,7 @@ async function check(name, fn) {
   }
 }
 
-const townAsset = (url) => ['/town-assets/','/town-transfer/'].some(prefix=>new URL(url).pathname.includes(prefix));
+const townAsset = (url) => ['/town-assets/','/town-transfer/','/town-evidence/','/town-finish/','/town-surfaces/','/town-roadside/'].some(prefix=>new URL(url).pathname.includes(prefix));
 const gatedAsset = (url) => townAsset(url) && /(?:\/manifest\.json|\/network\.json|\.glb(?:\.gz)?)$/.test(new URL(url).pathname);
 
 async function observedPage(context, scenario) {

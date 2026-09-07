@@ -1,0 +1,6978 @@
+{
+  "evidence": {
+    "source": "https://www.mass.gov/doc/road-inventory-data-dictionary/download",
+    "verified": "2026-09-07",
+    "codes": {
+      "1": "Unimproved/graded earth or soil",
+      "2": "Gravel or stone",
+      "5": "Surface-treated",
+      "6": "Bituminous concrete"
+    },
+    "sourceNetworkSha256": "d5ad755241708d48478d1c2dc08358b821d9cace21ed1c93d33de27ee0def2f4",
+    "originalRibbonGenerator": "webster-blender/driving/prepare_surfaces.py:27-34",
+    "policy": "Match all three decoded triangle vertices within 2mm XY /4cm elevation and preserve source geometry. Unknown/conflicting codes, bridges with an unmatched corrected elevation, and unmatched surfaces retain original material. Regional subtle palette/roughness is inferred, not measured current pavement color."
+  },
+  "expectedTriangles": 67982,
+  "tiles": 251,
+  "rows": [
+    {
+      "tileId": "-14_-11",
+      "level": 0,
+      "matched": {
+        "2": 25
+      },
+      "ambiguous": 0,
+      "examined": 279
+    },
+    {
+      "tileId": "-14_-11",
+      "level": 1,
+      "matched": {
+        "2": 25
+      },
+      "ambiguous": 0,
+      "examined": 279
+    },
+    {
+      "tileId": "-14_-11",
+      "level": 2,
+      "matched": {
+        "2": 25
+      },
+      "ambiguous": 0,
+      "examined": 279
+    },
+    {
+      "tileId": "-14_-10",
+      "level": 0,
+      "matched": {
+        "2": 111
+      },
+      "ambiguous": 0,
+      "examined": 577
+    },
+    {
+      "tileId": "-14_-10",
+      "level": 1,
+      "matched": {
+        "2": 111
+      },
+      "ambiguous": 0,
+      "examined": 577
+    },
+    {
+      "tileId": "-14_-10",
+      "level": 2,
+      "matched": {
+        "2": 111
+      },
+      "ambiguous": 0,
+      "examined": 577
+    },
+    {
+      "tileId": "-14_-9",
+      "level": 0,
+      "matched": {
+        "5": 50
+      },
+      "ambiguous": 0,
+      "examined": 364
+    },
+    {
+      "tileId": "-14_-9",
+      "level": 1,
+      "matched": {
+        "5": 50
+      },
+      "ambiguous": 0,
+      "examined": 364
+    },
+    {
+      "tileId": "-14_-9",
+      "level": 2,
+      "matched": {
+        "5": 50
+      },
+      "ambiguous": 0,
+      "examined": 364
+    },
+    {
+      "tileId": "-14_-8",
+      "level": 0,
+      "matched": {
+        "2": 164
+      },
+      "ambiguous": 0,
+      "examined": 444
+    },
+    {
+      "tileId": "-14_-8",
+      "level": 1,
+      "matched": {
+        "2": 164
+      },
+      "ambiguous": 0,
+      "examined": 444
+    },
+    {
+      "tileId": "-14_-8",
+      "level": 2,
+      "matched": {
+        "2": 164
+      },
+      "ambiguous": 0,
+      "examined": 444
+    },
+    {
+      "tileId": "-14_-7",
+      "level": 0,
+      "matched": {
+        "2": 24,
+        "5": 64
+      },
+      "ambiguous": 0,
+      "examined": 296
+    },
+    {
+      "tileId": "-14_-7",
+      "level": 1,
+      "matched": {
+        "2": 24,
+        "5": 64
+      },
+      "ambiguous": 0,
+      "examined": 296
+    },
+    {
+      "tileId": "-14_-7",
+      "level": 2,
+      "matched": {
+        "2": 24,
+        "5": 64
+      },
+      "ambiguous": 0,
+      "examined": 296
+    },
+    {
+      "tileId": "-13_-13",
+      "level": 0,
+      "matched": {
+        "2": 33
+      },
+      "ambiguous": 0,
+      "examined": 432
+    },
+    {
+      "tileId": "-13_-13",
+      "level": 1,
+      "matched": {
+        "2": 33
+      },
+      "ambiguous": 0,
+      "examined": 432
+    },
+    {
+      "tileId": "-13_-13",
+      "level": 2,
+      "matched": {
+        "2": 33
+      },
+      "ambiguous": 0,
+      "examined": 432
+    },
+    {
+      "tileId": "-13_-12",
+      "level": 0,
+      "matched": {
+        "5": 58
+      },
+      "ambiguous": 0,
+      "examined": 333
+    },
+    {
+      "tileId": "-13_-12",
+      "level": 1,
+      "matched": {
+        "5": 58
+      },
+      "ambiguous": 0,
+      "examined": 333
+    },
+    {
+      "tileId": "-13_-12",
+      "level": 2,
+      "matched": {
+        "5": 58
+      },
+      "ambiguous": 0,
+      "examined": 333
+    },
+    {
+      "tileId": "-13_-11",
+      "level": 0,
+      "matched": {
+        "5": 273
+      },
+      "ambiguous": 0,
+      "examined": 637
+    },
+    {
+      "tileId": "-13_-11",
+      "level": 1,
+      "matched": {
+        "5": 273
+      },
+      "ambiguous": 0,
+      "examined": 637
+    },
+    {
+      "tileId": "-13_-11",
+      "level": 2,
+      "matched": {
+        "5": 273
+      },
+      "ambiguous": 0,
+      "examined": 637
+    },
+    {
+      "tileId": "-13_-10",
+      "level": 0,
+      "matched": {
+        "5": 256
+      },
+      "ambiguous": 0,
+      "examined": 934
+    },
+    {
+      "tileId": "-13_-10",
+      "level": 1,
+      "matched": {
+        "5": 256
+      },
+      "ambiguous": 0,
+      "examined": 934
+    },
+    {
+      "tileId": "-13_-10",
+      "level": 2,
+      "matched": {
+        "5": 256
+      },
+      "ambiguous": 0,
+      "examined": 934
+    },
+    {
+      "tileId": "-13_-9",
+      "level": 0,
+      "matched": {
+        "5": 372
+      },
+      "ambiguous": 0,
+      "examined": 809
+    },
+    {
+      "tileId": "-13_-9",
+      "level": 1,
+      "matched": {
+        "5": 372
+      },
+      "ambiguous": 0,
+      "examined": 809
+    },
+    {
+      "tileId": "-13_-9",
+      "level": 2,
+      "matched": {
+        "5": 372
+      },
+      "ambiguous": 0,
+      "examined": 809
+    },
+    {
+      "tileId": "-13_-8",
+      "level": 0,
+      "matched": {
+        "5": 250
+      },
+      "ambiguous": 0,
+      "examined": 682
+    },
+    {
+      "tileId": "-13_-8",
+      "level": 1,
+      "matched": {
+        "5": 250
+      },
+      "ambiguous": 0,
+      "examined": 682
+    },
+    {
+      "tileId": "-13_-8",
+      "level": 2,
+      "matched": {
+        "5": 250
+      },
+      "ambiguous": 0,
+      "examined": 682
+    },
+    {
+      "tileId": "-13_-7",
+      "level": 0,
+      "matched": {
+        "5": 678,
+        "2": 56
+      },
+      "ambiguous": 0,
+      "examined": 1159
+    },
+    {
+      "tileId": "-13_-7",
+      "level": 1,
+      "matched": {
+        "5": 678,
+        "2": 56
+      },
+      "ambiguous": 0,
+      "examined": 1159
+    },
+    {
+      "tileId": "-13_-7",
+      "level": 2,
+      "matched": {
+        "5": 678,
+        "2": 56
+      },
+      "ambiguous": 0,
+      "examined": 1159
+    },
+    {
+      "tileId": "-13_-6",
+      "level": 0,
+      "matched": {
+        "5": 265
+      },
+      "ambiguous": 0,
+      "examined": 759
+    },
+    {
+      "tileId": "-13_-6",
+      "level": 1,
+      "matched": {
+        "5": 265
+      },
+      "ambiguous": 0,
+      "examined": 759
+    },
+    {
+      "tileId": "-13_-6",
+      "level": 2,
+      "matched": {
+        "5": 265
+      },
+      "ambiguous": 0,
+      "examined": 759
+    },
+    {
+      "tileId": "-13_-5",
+      "level": 0,
+      "matched": {
+        "5": 258
+      },
+      "ambiguous": 0,
+      "examined": 936
+    },
+    {
+      "tileId": "-13_-5",
+      "level": 1,
+      "matched": {
+        "5": 258
+      },
+      "ambiguous": 0,
+      "examined": 936
+    },
+    {
+      "tileId": "-13_-5",
+      "level": 2,
+      "matched": {
+        "5": 258
+      },
+      "ambiguous": 0,
+      "examined": 936
+    },
+    {
+      "tileId": "-12_-14",
+      "level": 0,
+      "matched": {
+        "2": 197
+      },
+      "ambiguous": 0,
+      "examined": 680
+    },
+    {
+      "tileId": "-12_-14",
+      "level": 1,
+      "matched": {
+        "2": 197
+      },
+      "ambiguous": 0,
+      "examined": 680
+    },
+    {
+      "tileId": "-12_-14",
+      "level": 2,
+      "matched": {
+        "2": 197
+      },
+      "ambiguous": 0,
+      "examined": 680
+    },
+    {
+      "tileId": "-12_-13",
+      "level": 0,
+      "matched": {
+        "2": 140
+      },
+      "ambiguous": 0,
+      "examined": 684
+    },
+    {
+      "tileId": "-12_-13",
+      "level": 1,
+      "matched": {
+        "2": 140
+      },
+      "ambiguous": 0,
+      "examined": 684
+    },
+    {
+      "tileId": "-12_-13",
+      "level": 2,
+      "matched": {
+        "2": 140
+      },
+      "ambiguous": 0,
+      "examined": 684
+    },
+    {
+      "tileId": "-12_-11",
+      "level": 0,
+      "matched": {
+        "5": 27
+      },
+      "ambiguous": 0,
+      "examined": 608
+    },
+    {
+      "tileId": "-12_-11",
+      "level": 1,
+      "matched": {
+        "5": 27
+      },
+      "ambiguous": 0,
+      "examined": 608
+    },
+    {
+      "tileId": "-12_-11",
+      "level": 2,
+      "matched": {
+        "5": 27
+      },
+      "ambiguous": 0,
+      "examined": 608
+    },
+    {
+      "tileId": "-12_-9",
+      "level": 0,
+      "matched": {
+        "5": 467
+      },
+      "ambiguous": 0,
+      "examined": 826
+    },
+    {
+      "tileId": "-12_-9",
+      "level": 1,
+      "matched": {
+        "5": 467
+      },
+      "ambiguous": 0,
+      "examined": 826
+    },
+    {
+      "tileId": "-12_-9",
+      "level": 2,
+      "matched": {
+        "5": 467
+      },
+      "ambiguous": 0,
+      "examined": 826
+    },
+    {
+      "tileId": "-12_-8",
+      "level": 0,
+      "matched": {
+        "5": 652
+      },
+      "ambiguous": 0,
+      "examined": 1073
+    },
+    {
+      "tileId": "-12_-8",
+      "level": 1,
+      "matched": {
+        "5": 652
+      },
+      "ambiguous": 0,
+      "examined": 1073
+    },
+    {
+      "tileId": "-12_-8",
+      "level": 2,
+      "matched": {
+        "5": 652
+      },
+      "ambiguous": 0,
+      "examined": 1073
+    },
+    {
+      "tileId": "-12_-7",
+      "level": 0,
+      "matched": {
+        "5": 323
+      },
+      "ambiguous": 0,
+      "examined": 717
+    },
+    {
+      "tileId": "-12_-7",
+      "level": 1,
+      "matched": {
+        "5": 323
+      },
+      "ambiguous": 0,
+      "examined": 717
+    },
+    {
+      "tileId": "-12_-7",
+      "level": 2,
+      "matched": {
+        "5": 323
+      },
+      "ambiguous": 0,
+      "examined": 717
+    },
+    {
+      "tileId": "-12_-6",
+      "level": 0,
+      "matched": {
+        "5": 209,
+        "2": 17
+      },
+      "ambiguous": 0,
+      "examined": 592
+    },
+    {
+      "tileId": "-12_-6",
+      "level": 1,
+      "matched": {
+        "5": 209,
+        "2": 17
+      },
+      "ambiguous": 0,
+      "examined": 592
+    },
+    {
+      "tileId": "-12_-6",
+      "level": 2,
+      "matched": {
+        "5": 209,
+        "2": 17
+      },
+      "ambiguous": 0,
+      "examined": 592
+    },
+    {
+      "tileId": "-12_-4",
+      "level": 0,
+      "matched": {
+        "5": 220
+      },
+      "ambiguous": 0,
+      "examined": 994
+    },
+    {
+      "tileId": "-12_-4",
+      "level": 1,
+      "matched": {
+        "5": 220
+      },
+      "ambiguous": 0,
+      "examined": 994
+    },
+    {
+      "tileId": "-12_-4",
+      "level": 2,
+      "matched": {
+        "5": 220
+      },
+      "ambiguous": 0,
+      "examined": 994
+    },
+    {
+      "tileId": "-11_-12",
+      "level": 0,
+      "matched": {
+        "2": 70
+      },
+      "ambiguous": 0,
+      "examined": 738
+    },
+    {
+      "tileId": "-11_-12",
+      "level": 1,
+      "matched": {
+        "2": 70
+      },
+      "ambiguous": 0,
+      "examined": 738
+    },
+    {
+      "tileId": "-11_-12",
+      "level": 2,
+      "matched": {
+        "2": 70
+      },
+      "ambiguous": 0,
+      "examined": 738
+    },
+    {
+      "tileId": "-11_-11",
+      "level": 0,
+      "matched": {
+        "5": 262
+      },
+      "ambiguous": 0,
+      "examined": 600
+    },
+    {
+      "tileId": "-11_-11",
+      "level": 1,
+      "matched": {
+        "5": 262
+      },
+      "ambiguous": 0,
+      "examined": 600
+    },
+    {
+      "tileId": "-11_-11",
+      "level": 2,
+      "matched": {
+        "5": 262
+      },
+      "ambiguous": 0,
+      "examined": 600
+    },
+    {
+      "tileId": "-11_-9",
+      "level": 0,
+      "matched": {
+        "5": 189
+      },
+      "ambiguous": 0,
+      "examined": 459
+    },
+    {
+      "tileId": "-11_-9",
+      "level": 1,
+      "matched": {
+        "5": 189
+      },
+      "ambiguous": 0,
+      "examined": 459
+    },
+    {
+      "tileId": "-11_-9",
+      "level": 2,
+      "matched": {
+        "5": 189
+      },
+      "ambiguous": 0,
+      "examined": 459
+    },
+    {
+      "tileId": "-11_-8",
+      "level": 0,
+      "matched": {
+        "5": 504,
+        "2": 76
+      },
+      "ambiguous": 0,
+      "examined": 1099
+    },
+    {
+      "tileId": "-11_-8",
+      "level": 1,
+      "matched": {
+        "5": 504,
+        "2": 76
+      },
+      "ambiguous": 0,
+      "examined": 1099
+    },
+    {
+      "tileId": "-11_-8",
+      "level": 2,
+      "matched": {
+        "5": 504,
+        "2": 76
+      },
+      "ambiguous": 0,
+      "examined": 1099
+    },
+    {
+      "tileId": "-11_-7",
+      "level": 0,
+      "matched": {
+        "5": 452
+      },
+      "ambiguous": 0,
+      "examined": 1044
+    },
+    {
+      "tileId": "-11_-7",
+      "level": 1,
+      "matched": {
+        "5": 452
+      },
+      "ambiguous": 0,
+      "examined": 1044
+    },
+    {
+      "tileId": "-11_-7",
+      "level": 2,
+      "matched": {
+        "5": 452
+      },
+      "ambiguous": 0,
+      "examined": 1044
+    },
+    {
+      "tileId": "-11_-6",
+      "level": 0,
+      "matched": {
+        "5": 644,
+        "2": 75
+      },
+      "ambiguous": 0,
+      "examined": 1022
+    },
+    {
+      "tileId": "-11_-6",
+      "level": 1,
+      "matched": {
+        "5": 644,
+        "2": 75
+      },
+      "ambiguous": 0,
+      "examined": 1022
+    },
+    {
+      "tileId": "-11_-6",
+      "level": 2,
+      "matched": {
+        "5": 644,
+        "2": 75
+      },
+      "ambiguous": 0,
+      "examined": 1022
+    },
+    {
+      "tileId": "-11_-5",
+      "level": 0,
+      "matched": {
+        "5": 162
+      },
+      "ambiguous": 0,
+      "examined": 802
+    },
+    {
+      "tileId": "-11_-5",
+      "level": 1,
+      "matched": {
+        "5": 162
+      },
+      "ambiguous": 0,
+      "examined": 802
+    },
+    {
+      "tileId": "-11_-5",
+      "level": 2,
+      "matched": {
+        "5": 162
+      },
+      "ambiguous": 0,
+      "examined": 802
+    },
+    {
+      "tileId": "-11_-4",
+      "level": 0,
+      "matched": {
+        "5": 170
+      },
+      "ambiguous": 0,
+      "examined": 1008
+    },
+    {
+      "tileId": "-11_-4",
+      "level": 1,
+      "matched": {
+        "5": 170
+      },
+      "ambiguous": 0,
+      "examined": 1008
+    },
+    {
+      "tileId": "-11_-4",
+      "level": 2,
+      "matched": {
+        "5": 170
+      },
+      "ambiguous": 0,
+      "examined": 1008
+    },
+    {
+      "tileId": "-11_-3",
+      "level": 0,
+      "matched": {
+        "5": 314
+      },
+      "ambiguous": 0,
+      "examined": 772
+    },
+    {
+      "tileId": "-11_-3",
+      "level": 1,
+      "matched": {
+        "5": 314
+      },
+      "ambiguous": 0,
+      "examined": 772
+    },
+    {
+      "tileId": "-11_-3",
+      "level": 2,
+      "matched": {
+        "5": 314
+      },
+      "ambiguous": 0,
+      "examined": 772
+    },
+    {
+      "tileId": "-11_-2",
+      "level": 0,
+      "matched": {
+        "5": 124
+      },
+      "ambiguous": 0,
+      "examined": 648
+    },
+    {
+      "tileId": "-11_-2",
+      "level": 1,
+      "matched": {
+        "5": 124
+      },
+      "ambiguous": 0,
+      "examined": 648
+    },
+    {
+      "tileId": "-11_-2",
+      "level": 2,
+      "matched": {
+        "5": 124
+      },
+      "ambiguous": 0,
+      "examined": 648
+    },
+    {
+      "tileId": "-11_-1",
+      "level": 0,
+      "matched": {
+        "5": 530
+      },
+      "ambiguous": 0,
+      "examined": 940
+    },
+    {
+      "tileId": "-11_-1",
+      "level": 1,
+      "matched": {
+        "5": 530
+      },
+      "ambiguous": 0,
+      "examined": 940
+    },
+    {
+      "tileId": "-11_-1",
+      "level": 2,
+      "matched": {
+        "5": 530
+      },
+      "ambiguous": 0,
+      "examined": 940
+    },
+    {
+      "tileId": "-11_0",
+      "level": 0,
+      "matched": {
+        "5": 310
+      },
+      "ambiguous": 0,
+      "examined": 855
+    },
+    {
+      "tileId": "-11_0",
+      "level": 1,
+      "matched": {
+        "5": 310
+      },
+      "ambiguous": 0,
+      "examined": 855
+    },
+    {
+      "tileId": "-11_0",
+      "level": 2,
+      "matched": {
+        "5": 310
+      },
+      "ambiguous": 0,
+      "examined": 855
+    },
+    {
+      "tileId": "-11_1",
+      "level": 0,
+      "matched": {
+        "5": 286
+      },
+      "ambiguous": 0,
+      "examined": 826
+    },
+    {
+      "tileId": "-11_1",
+      "level": 1,
+      "matched": {
+        "5": 286
+      },
+      "ambiguous": 0,
+      "examined": 826
+    },
+    {
+      "tileId": "-11_1",
+      "level": 2,
+      "matched": {
+        "5": 286
+      },
+      "ambiguous": 0,
+      "examined": 826
+    },
+    {
+      "tileId": "-10_-11",
+      "level": 0,
+      "matched": {
+        "5": 67
+      },
+      "ambiguous": 0,
+      "examined": 67
+    },
+    {
+      "tileId": "-10_-11",
+      "level": 1,
+      "matched": {
+        "5": 67
+      },
+      "ambiguous": 0,
+      "examined": 67
+    },
+    {
+      "tileId": "-10_-11",
+      "level": 2,
+      "matched": {
+        "5": 67
+      },
+      "ambiguous": 0,
+      "examined": 67
+    },
+    {
+      "tileId": "-10_-7",
+      "level": 0,
+      "matched": {
+        "5": 236
+      },
+      "ambiguous": 0,
+      "examined": 634
+    },
+    {
+      "tileId": "-10_-7",
+      "level": 1,
+      "matched": {
+        "5": 236
+      },
+      "ambiguous": 0,
+      "examined": 634
+    },
+    {
+      "tileId": "-10_-7",
+      "level": 2,
+      "matched": {
+        "5": 236
+      },
+      "ambiguous": 0,
+      "examined": 634
+    },
+    {
+      "tileId": "-10_-6",
+      "level": 0,
+      "matched": {
+        "5": 211
+      },
+      "ambiguous": 0,
+      "examined": 669
+    },
+    {
+      "tileId": "-10_-6",
+      "level": 1,
+      "matched": {
+        "5": 211
+      },
+      "ambiguous": 0,
+      "examined": 669
+    },
+    {
+      "tileId": "-10_-6",
+      "level": 2,
+      "matched": {
+        "5": 211
+      },
+      "ambiguous": 0,
+      "examined": 669
+    },
+    {
+      "tileId": "-10_-5",
+      "level": 0,
+      "matched": {
+        "5": 293
+      },
+      "ambiguous": 0,
+      "examined": 909
+    },
+    {
+      "tileId": "-10_-5",
+      "level": 1,
+      "matched": {
+        "5": 293
+      },
+      "ambiguous": 0,
+      "examined": 909
+    },
+    {
+      "tileId": "-10_-5",
+      "level": 2,
+      "matched": {
+        "5": 293
+      },
+      "ambiguous": 0,
+      "examined": 909
+    },
+    {
+      "tileId": "-10_-4",
+      "level": 0,
+      "matched": {
+        "5": 496
+      },
+      "ambiguous": 0,
+      "examined": 1072
+    },
+    {
+      "tileId": "-10_-4",
+      "level": 1,
+      "matched": {
+        "5": 496
+      },
+      "ambiguous": 0,
+      "examined": 1072
+    },
+    {
+      "tileId": "-10_-4",
+      "level": 2,
+      "matched": {
+        "5": 496
+      },
+      "ambiguous": 0,
+      "examined": 1072
+    },
+    {
+      "tileId": "-10_-3",
+      "level": 0,
+      "matched": {
+        "5": 832
+      },
+      "ambiguous": 0,
+      "examined": 1118
+    },
+    {
+      "tileId": "-10_-3",
+      "level": 1,
+      "matched": {
+        "5": 832
+      },
+      "ambiguous": 0,
+      "examined": 1118
+    },
+    {
+      "tileId": "-10_-3",
+      "level": 2,
+      "matched": {
+        "5": 832
+      },
+      "ambiguous": 0,
+      "examined": 1118
+    },
+    {
+      "tileId": "-10_-2",
+      "level": 0,
+      "matched": {
+        "5": 321
+      },
+      "ambiguous": 0,
+      "examined": 1142
+    },
+    {
+      "tileId": "-10_-2",
+      "level": 1,
+      "matched": {
+        "5": 321
+      },
+      "ambiguous": 0,
+      "examined": 1142
+    },
+    {
+      "tileId": "-10_-2",
+      "level": 2,
+      "matched": {
+        "5": 321
+      },
+      "ambiguous": 0,
+      "examined": 1142
+    },
+    {
+      "tileId": "-10_-1",
+      "level": 0,
+      "matched": {
+        "5": 292
+      },
+      "ambiguous": 0,
+      "examined": 530
+    },
+    {
+      "tileId": "-10_-1",
+      "level": 1,
+      "matched": {
+        "5": 292
+      },
+      "ambiguous": 0,
+      "examined": 530
+    },
+    {
+      "tileId": "-10_-1",
+      "level": 2,
+      "matched": {
+        "5": 292
+      },
+      "ambiguous": 0,
+      "examined": 530
+    },
+    {
+      "tileId": "-10_0",
+      "level": 0,
+      "matched": {
+        "5": 343
+      },
+      "ambiguous": 0,
+      "examined": 961
+    },
+    {
+      "tileId": "-10_0",
+      "level": 1,
+      "matched": {
+        "5": 343
+      },
+      "ambiguous": 0,
+      "examined": 961
+    },
+    {
+      "tileId": "-10_0",
+      "level": 2,
+      "matched": {
+        "5": 343
+      },
+      "ambiguous": 0,
+      "examined": 961
+    },
+    {
+      "tileId": "-10_1",
+      "level": 0,
+      "matched": {
+        "5": 146
+      },
+      "ambiguous": 0,
+      "examined": 584
+    },
+    {
+      "tileId": "-10_1",
+      "level": 1,
+      "matched": {
+        "5": 146
+      },
+      "ambiguous": 0,
+      "examined": 584
+    },
+    {
+      "tileId": "-10_1",
+      "level": 2,
+      "matched": {
+        "5": 146
+      },
+      "ambiguous": 0,
+      "examined": 584
+    },
+    {
+      "tileId": "-10_8",
+      "level": 0,
+      "matched": {
+        "5": 8
+      },
+      "ambiguous": 0,
+      "examined": 208
+    },
+    {
+      "tileId": "-10_8",
+      "level": 1,
+      "matched": {
+        "5": 8
+      },
+      "ambiguous": 0,
+      "examined": 208
+    },
+    {
+      "tileId": "-10_8",
+      "level": 2,
+      "matched": {
+        "5": 8
+      },
+      "ambiguous": 0,
+      "examined": 208
+    },
+    {
+      "tileId": "-9_-14",
+      "level": 0,
+      "matched": {
+        "5": 422
+      },
+      "ambiguous": 0,
+      "examined": 832
+    },
+    {
+      "tileId": "-9_-14",
+      "level": 1,
+      "matched": {
+        "5": 422
+      },
+      "ambiguous": 0,
+      "examined": 832
+    },
+    {
+      "tileId": "-9_-14",
+      "level": 2,
+      "matched": {
+        "5": 422
+      },
+      "ambiguous": 0,
+      "examined": 832
+    },
+    {
+      "tileId": "-9_-8",
+      "level": 0,
+      "matched": {
+        "5": 27
+      },
+      "ambiguous": 0,
+      "examined": 877
+    },
+    {
+      "tileId": "-9_-8",
+      "level": 1,
+      "matched": {
+        "5": 27
+      },
+      "ambiguous": 0,
+      "examined": 877
+    },
+    {
+      "tileId": "-9_-8",
+      "level": 2,
+      "matched": {
+        "5": 27
+      },
+      "ambiguous": 0,
+      "examined": 877
+    },
+    {
+      "tileId": "-9_-7",
+      "level": 0,
+      "matched": {
+        "5": 289
+      },
+      "ambiguous": 0,
+      "examined": 471
+    },
+    {
+      "tileId": "-9_-7",
+      "level": 1,
+      "matched": {
+        "5": 289
+      },
+      "ambiguous": 0,
+      "examined": 471
+    },
+    {
+      "tileId": "-9_-7",
+      "level": 2,
+      "matched": {
+        "5": 289
+      },
+      "ambiguous": 0,
+      "examined": 471
+    },
+    {
+      "tileId": "-9_-6",
+      "level": 0,
+      "matched": {
+        "5": 646,
+        "2": 96
+      },
+      "ambiguous": 0,
+      "examined": 874
+    },
+    {
+      "tileId": "-9_-6",
+      "level": 1,
+      "matched": {
+        "5": 646,
+        "2": 96
+      },
+      "ambiguous": 0,
+      "examined": 874
+    },
+    {
+      "tileId": "-9_-6",
+      "level": 2,
+      "matched": {
+        "5": 646,
+        "2": 96
+      },
+      "ambiguous": 0,
+      "examined": 874
+    },
+    {
+      "tileId": "-9_-5",
+      "level": 0,
+      "matched": {
+        "5": 458
+      },
+      "ambiguous": 0,
+      "examined": 788
+    },
+    {
+      "tileId": "-9_-5",
+      "level": 1,
+      "matched": {
+        "5": 458
+      },
+      "ambiguous": 0,
+      "examined": 788
+    },
+    {
+      "tileId": "-9_-5",
+      "level": 2,
+      "matched": {
+        "5": 458
+      },
+      "ambiguous": 0,
+      "examined": 788
+    },
+    {
+      "tileId": "-9_-4",
+      "level": 0,
+      "matched": {
+        "5": 190
+      },
+      "ambiguous": 0,
+      "examined": 888
+    },
+    {
+      "tileId": "-9_-4",
+      "level": 1,
+      "matched": {
+        "5": 190
+      },
+      "ambiguous": 0,
+      "examined": 888
+    },
+    {
+      "tileId": "-9_-4",
+      "level": 2,
+      "matched": {
+        "5": 190
+      },
+      "ambiguous": 0,
+      "examined": 888
+    },
+    {
+      "tileId": "-9_-3",
+      "level": 0,
+      "matched": {
+        "5": 218
+      },
+      "ambiguous": 0,
+      "examined": 515
+    },
+    {
+      "tileId": "-9_-3",
+      "level": 1,
+      "matched": {
+        "5": 218
+      },
+      "ambiguous": 0,
+      "examined": 515
+    },
+    {
+      "tileId": "-9_-3",
+      "level": 2,
+      "matched": {
+        "5": 218
+      },
+      "ambiguous": 0,
+      "examined": 515
+    },
+    {
+      "tileId": "-9_-2",
+      "level": 0,
+      "matched": {
+        "5": 104
+      },
+      "ambiguous": 0,
+      "examined": 666
+    },
+    {
+      "tileId": "-9_-2",
+      "level": 1,
+      "matched": {
+        "5": 104
+      },
+      "ambiguous": 0,
+      "examined": 666
+    },
+    {
+      "tileId": "-9_-2",
+      "level": 2,
+      "matched": {
+        "5": 104
+      },
+      "ambiguous": 0,
+      "examined": 666
+    },
+    {
+      "tileId": "-9_-1",
+      "level": 0,
+      "matched": {
+        "5": 583
+      },
+      "ambiguous": 0,
+      "examined": 1092
+    },
+    {
+      "tileId": "-9_-1",
+      "level": 1,
+      "matched": {
+        "5": 583
+      },
+      "ambiguous": 0,
+      "examined": 1092
+    },
+    {
+      "tileId": "-9_-1",
+      "level": 2,
+      "matched": {
+        "5": 583
+      },
+      "ambiguous": 0,
+      "examined": 1092
+    },
+    {
+      "tileId": "-9_0",
+      "level": 0,
+      "matched": {
+        "5": 637
+      },
+      "ambiguous": 0,
+      "examined": 937
+    },
+    {
+      "tileId": "-9_0",
+      "level": 1,
+      "matched": {
+        "5": 637
+      },
+      "ambiguous": 0,
+      "examined": 937
+    },
+    {
+      "tileId": "-9_0",
+      "level": 2,
+      "matched": {
+        "5": 637
+      },
+      "ambiguous": 0,
+      "examined": 937
+    },
+    {
+      "tileId": "-9_1",
+      "level": 0,
+      "matched": {
+        "5": 602
+      },
+      "ambiguous": 0,
+      "examined": 892
+    },
+    {
+      "tileId": "-9_1",
+      "level": 1,
+      "matched": {
+        "5": 602
+      },
+      "ambiguous": 0,
+      "examined": 892
+    },
+    {
+      "tileId": "-9_1",
+      "level": 2,
+      "matched": {
+        "5": 602
+      },
+      "ambiguous": 0,
+      "examined": 892
+    },
+    {
+      "tileId": "-9_2",
+      "level": 0,
+      "matched": {
+        "2": 259,
+        "5": 193
+      },
+      "ambiguous": 0,
+      "examined": 842
+    },
+    {
+      "tileId": "-9_2",
+      "level": 1,
+      "matched": {
+        "2": 259,
+        "5": 193
+      },
+      "ambiguous": 0,
+      "examined": 842
+    },
+    {
+      "tileId": "-9_2",
+      "level": 2,
+      "matched": {
+        "2": 259,
+        "5": 193
+      },
+      "ambiguous": 0,
+      "examined": 842
+    },
+    {
+      "tileId": "-9_8",
+      "level": 0,
+      "matched": {
+        "5": 281
+      },
+      "ambiguous": 0,
+      "examined": 749
+    },
+    {
+      "tileId": "-9_8",
+      "level": 1,
+      "matched": {
+        "5": 281
+      },
+      "ambiguous": 0,
+      "examined": 749
+    },
+    {
+      "tileId": "-9_8",
+      "level": 2,
+      "matched": {
+        "5": 281
+      },
+      "ambiguous": 0,
+      "examined": 749
+    },
+    {
+      "tileId": "-8_-14",
+      "level": 0,
+      "matched": {
+        "5": 100
+      },
+      "ambiguous": 0,
+      "examined": 396
+    },
+    {
+      "tileId": "-8_-14",
+      "level": 1,
+      "matched": {
+        "5": 100
+      },
+      "ambiguous": 0,
+      "examined": 396
+    },
+    {
+      "tileId": "-8_-14",
+      "level": 2,
+      "matched": {
+        "5": 100
+      },
+      "ambiguous": 0,
+      "examined": 396
+    },
+    {
+      "tileId": "-8_-6",
+      "level": 0,
+      "matched": {
+        "5": 139,
+        "2": 160
+      },
+      "ambiguous": 0,
+      "examined": 780
+    },
+    {
+      "tileId": "-8_-6",
+      "level": 1,
+      "matched": {
+        "5": 139,
+        "2": 160
+      },
+      "ambiguous": 0,
+      "examined": 780
+    },
+    {
+      "tileId": "-8_-6",
+      "level": 2,
+      "matched": {
+        "5": 139,
+        "2": 160
+      },
+      "ambiguous": 0,
+      "examined": 780
+    },
+    {
+      "tileId": "-8_-5",
+      "level": 0,
+      "matched": {
+        "5": 117
+      },
+      "ambiguous": 0,
+      "examined": 802
+    },
+    {
+      "tileId": "-8_-5",
+      "level": 1,
+      "matched": {
+        "5": 117
+      },
+      "ambiguous": 0,
+      "examined": 802
+    },
+    {
+      "tileId": "-8_-5",
+      "level": 2,
+      "matched": {
+        "5": 117
+      },
+      "ambiguous": 0,
+      "examined": 802
+    },
+    {
+      "tileId": "-8_-4",
+      "level": 0,
+      "matched": {
+        "2": 75,
+        "5": 197
+      },
+      "ambiguous": 0,
+      "examined": 826
+    },
+    {
+      "tileId": "-8_-4",
+      "level": 1,
+      "matched": {
+        "2": 75,
+        "5": 197
+      },
+      "ambiguous": 0,
+      "examined": 826
+    },
+    {
+      "tileId": "-8_-4",
+      "level": 2,
+      "matched": {
+        "2": 75,
+        "5": 197
+      },
+      "ambiguous": 0,
+      "examined": 826
+    },
+    {
+      "tileId": "-8_-3",
+      "level": 0,
+      "matched": {
+        "5": 461
+      },
+      "ambiguous": 0,
+      "examined": 550
+    },
+    {
+      "tileId": "-8_-3",
+      "level": 1,
+      "matched": {
+        "5": 461
+      },
+      "ambiguous": 0,
+      "examined": 550
+    },
+    {
+      "tileId": "-8_-3",
+      "level": 2,
+      "matched": {
+        "5": 461
+      },
+      "ambiguous": 0,
+      "examined": 550
+    },
+    {
+      "tileId": "-8_-2",
+      "level": 0,
+      "matched": {
+        "5": 503
+      },
+      "ambiguous": 0,
+      "examined": 1038
+    },
+    {
+      "tileId": "-8_-2",
+      "level": 1,
+      "matched": {
+        "5": 503
+      },
+      "ambiguous": 0,
+      "examined": 1038
+    },
+    {
+      "tileId": "-8_-2",
+      "level": 2,
+      "matched": {
+        "5": 503
+      },
+      "ambiguous": 0,
+      "examined": 1038
+    },
+    {
+      "tileId": "-8_-1",
+      "level": 0,
+      "matched": {
+        "5": 336
+      },
+      "ambiguous": 0,
+      "examined": 1063
+    },
+    {
+      "tileId": "-8_-1",
+      "level": 1,
+      "matched": {
+        "5": 336
+      },
+      "ambiguous": 0,
+      "examined": 1063
+    },
+    {
+      "tileId": "-8_-1",
+      "level": 2,
+      "matched": {
+        "5": 336
+      },
+      "ambiguous": 0,
+      "examined": 1063
+    },
+    {
+      "tileId": "-8_0",
+      "level": 0,
+      "matched": {
+        "5": 941
+      },
+      "ambiguous": 0,
+      "examined": 977
+    },
+    {
+      "tileId": "-8_0",
+      "level": 1,
+      "matched": {
+        "5": 941
+      },
+      "ambiguous": 0,
+      "examined": 977
+    },
+    {
+      "tileId": "-8_0",
+      "level": 2,
+      "matched": {
+        "5": 941
+      },
+      "ambiguous": 0,
+      "examined": 977
+    },
+    {
+      "tileId": "-8_1",
+      "level": 0,
+      "matched": {
+        "5": 664
+      },
+      "ambiguous": 0,
+      "examined": 776
+    },
+    {
+      "tileId": "-8_1",
+      "level": 1,
+      "matched": {
+        "5": 664
+      },
+      "ambiguous": 0,
+      "examined": 776
+    },
+    {
+      "tileId": "-8_1",
+      "level": 2,
+      "matched": {
+        "5": 664
+      },
+      "ambiguous": 0,
+      "examined": 776
+    },
+    {
+      "tileId": "-8_2",
+      "level": 0,
+      "matched": {
+        "2": 25,
+        "5": 63
+      },
+      "ambiguous": 0,
+      "examined": 412
+    },
+    {
+      "tileId": "-8_2",
+      "level": 1,
+      "matched": {
+        "2": 25,
+        "5": 63
+      },
+      "ambiguous": 0,
+      "examined": 412
+    },
+    {
+      "tileId": "-8_2",
+      "level": 2,
+      "matched": {
+        "2": 25,
+        "5": 63
+      },
+      "ambiguous": 0,
+      "examined": 412
+    },
+    {
+      "tileId": "-8_4",
+      "level": 0,
+      "matched": {
+        "2": 58,
+        "5": 219
+      },
+      "ambiguous": 0,
+      "examined": 1605
+    },
+    {
+      "tileId": "-8_4",
+      "level": 1,
+      "matched": {
+        "2": 58,
+        "5": 219
+      },
+      "ambiguous": 0,
+      "examined": 1605
+    },
+    {
+      "tileId": "-8_4",
+      "level": 2,
+      "matched": {
+        "2": 58,
+        "5": 219
+      },
+      "ambiguous": 0,
+      "examined": 1605
+    },
+    {
+      "tileId": "-8_5",
+      "level": 0,
+      "matched": {
+        "2": 174,
+        "5": 264
+      },
+      "ambiguous": 0,
+      "examined": 1317
+    },
+    {
+      "tileId": "-8_5",
+      "level": 1,
+      "matched": {
+        "2": 174,
+        "5": 264
+      },
+      "ambiguous": 0,
+      "examined": 1317
+    },
+    {
+      "tileId": "-8_5",
+      "level": 2,
+      "matched": {
+        "2": 174,
+        "5": 264
+      },
+      "ambiguous": 0,
+      "examined": 1317
+    },
+    {
+      "tileId": "-8_6",
+      "level": 0,
+      "matched": {
+        "2": 25,
+        "5": 267
+      },
+      "ambiguous": 0,
+      "examined": 569
+    },
+    {
+      "tileId": "-8_6",
+      "level": 1,
+      "matched": {
+        "2": 25,
+        "5": 267
+      },
+      "ambiguous": 0,
+      "examined": 569
+    },
+    {
+      "tileId": "-8_6",
+      "level": 2,
+      "matched": {
+        "2": 25,
+        "5": 267
+      },
+      "ambiguous": 0,
+      "examined": 569
+    },
+    {
+      "tileId": "-8_7",
+      "level": 0,
+      "matched": {
+        "5": 177
+      },
+      "ambiguous": 0,
+      "examined": 453
+    },
+    {
+      "tileId": "-8_7",
+      "level": 1,
+      "matched": {
+        "5": 177
+      },
+      "ambiguous": 0,
+      "examined": 453
+    },
+    {
+      "tileId": "-8_7",
+      "level": 2,
+      "matched": {
+        "5": 177
+      },
+      "ambiguous": 0,
+      "examined": 453
+    },
+    {
+      "tileId": "-8_8",
+      "level": 0,
+      "matched": {
+        "5": 517
+      },
+      "ambiguous": 0,
+      "examined": 775
+    },
+    {
+      "tileId": "-8_8",
+      "level": 1,
+      "matched": {
+        "5": 517
+      },
+      "ambiguous": 0,
+      "examined": 775
+    },
+    {
+      "tileId": "-8_8",
+      "level": 2,
+      "matched": {
+        "5": 517
+      },
+      "ambiguous": 0,
+      "examined": 775
+    },
+    {
+      "tileId": "-8_9",
+      "level": 0,
+      "matched": {
+        "5": 216
+      },
+      "ambiguous": 0,
+      "examined": 576
+    },
+    {
+      "tileId": "-8_9",
+      "level": 1,
+      "matched": {
+        "5": 216
+      },
+      "ambiguous": 0,
+      "examined": 576
+    },
+    {
+      "tileId": "-8_9",
+      "level": 2,
+      "matched": {
+        "5": 216
+      },
+      "ambiguous": 0,
+      "examined": 576
+    },
+    {
+      "tileId": "-7_-9",
+      "level": 0,
+      "matched": {
+        "2": 30
+      },
+      "ambiguous": 0,
+      "examined": 288
+    },
+    {
+      "tileId": "-7_-9",
+      "level": 1,
+      "matched": {
+        "2": 30
+      },
+      "ambiguous": 0,
+      "examined": 288
+    },
+    {
+      "tileId": "-7_-9",
+      "level": 2,
+      "matched": {
+        "2": 30
+      },
+      "ambiguous": 0,
+      "examined": 288
+    },
+    {
+      "tileId": "-7_-8",
+      "level": 0,
+      "matched": {
+        "2": 78
+      },
+      "ambiguous": 0,
+      "examined": 78
+    },
+    {
+      "tileId": "-7_-8",
+      "level": 1,
+      "matched": {
+        "2": 78
+      },
+      "ambiguous": 0,
+      "examined": 78
+    },
+    {
+      "tileId": "-7_-8",
+      "level": 2,
+      "matched": {
+        "2": 78
+      },
+      "ambiguous": 0,
+      "examined": 78
+    },
+    {
+      "tileId": "-7_-6",
+      "level": 0,
+      "matched": {
+        "2": 134,
+        "5": 126
+      },
+      "ambiguous": 0,
+      "examined": 941
+    },
+    {
+      "tileId": "-7_-6",
+      "level": 1,
+      "matched": {
+        "2": 134,
+        "5": 126
+      },
+      "ambiguous": 0,
+      "examined": 941
+    },
+    {
+      "tileId": "-7_-6",
+      "level": 2,
+      "matched": {
+        "2": 134,
+        "5": 126
+      },
+      "ambiguous": 0,
+      "examined": 941
+    },
+    {
+      "tileId": "-7_-5",
+      "level": 0,
+      "matched": {
+        "5": 899
+      },
+      "ambiguous": 0,
+      "examined": 1269
+    },
+    {
+      "tileId": "-7_-5",
+      "level": 1,
+      "matched": {
+        "5": 899
+      },
+      "ambiguous": 0,
+      "examined": 1269
+    },
+    {
+      "tileId": "-7_-5",
+      "level": 2,
+      "matched": {
+        "5": 899
+      },
+      "ambiguous": 0,
+      "examined": 1269
+    },
+    {
+      "tileId": "-7_-4",
+      "level": 0,
+      "matched": {
+        "5": 618,
+        "2": 225
+      },
+      "ambiguous": 0,
+      "examined": 945
+    },
+    {
+      "tileId": "-7_-4",
+      "level": 1,
+      "matched": {
+        "5": 618,
+        "2": 225
+      },
+      "ambiguous": 0,
+      "examined": 945
+    },
+    {
+      "tileId": "-7_-4",
+      "level": 2,
+      "matched": {
+        "5": 618,
+        "2": 225
+      },
+      "ambiguous": 0,
+      "examined": 945
+    },
+    {
+      "tileId": "-7_-3",
+      "level": 0,
+      "matched": {
+        "5": 411
+      },
+      "ambiguous": 0,
+      "examined": 893
+    },
+    {
+      "tileId": "-7_-3",
+      "level": 1,
+      "matched": {
+        "5": 411
+      },
+      "ambiguous": 0,
+      "examined": 893
+    },
+    {
+      "tileId": "-7_-3",
+      "level": 2,
+      "matched": {
+        "5": 411
+      },
+      "ambiguous": 0,
+      "examined": 893
+    },
+    {
+      "tileId": "-7_-2",
+      "level": 0,
+      "matched": {
+        "5": 345
+      },
+      "ambiguous": 0,
+      "examined": 705
+    },
+    {
+      "tileId": "-7_-2",
+      "level": 1,
+      "matched": {
+        "5": 345
+      },
+      "ambiguous": 0,
+      "examined": 705
+    },
+    {
+      "tileId": "-7_-2",
+      "level": 2,
+      "matched": {
+        "5": 345
+      },
+      "ambiguous": 0,
+      "examined": 705
+    },
+    {
+      "tileId": "-7_-1",
+      "level": 0,
+      "matched": {
+        "5": 550
+      },
+      "ambiguous": 0,
+      "examined": 776
+    },
+    {
+      "tileId": "-7_-1",
+      "level": 1,
+      "matched": {
+        "5": 550
+      },
+      "ambiguous": 0,
+      "examined": 776
+    },
+    {
+      "tileId": "-7_-1",
+      "level": 2,
+      "matched": {
+        "5": 550
+      },
+      "ambiguous": 0,
+      "examined": 776
+    },
+    {
+      "tileId": "-7_0",
+      "level": 0,
+      "matched": {
+        "5": 308
+      },
+      "ambiguous": 0,
+      "examined": 668
+    },
+    {
+      "tileId": "-7_0",
+      "level": 1,
+      "matched": {
+        "5": 308
+      },
+      "ambiguous": 0,
+      "examined": 668
+    },
+    {
+      "tileId": "-7_0",
+      "level": 2,
+      "matched": {
+        "5": 308
+      },
+      "ambiguous": 0,
+      "examined": 668
+    },
+    {
+      "tileId": "-7_1",
+      "level": 0,
+      "matched": {
+        "5": 361
+      },
+      "ambiguous": 0,
+      "examined": 611
+    },
+    {
+      "tileId": "-7_1",
+      "level": 1,
+      "matched": {
+        "5": 361
+      },
+      "ambiguous": 0,
+      "examined": 611
+    },
+    {
+      "tileId": "-7_1",
+      "level": 2,
+      "matched": {
+        "5": 361
+      },
+      "ambiguous": 0,
+      "examined": 611
+    },
+    {
+      "tileId": "-7_3",
+      "level": 0,
+      "matched": {
+        "5": 255
+      },
+      "ambiguous": 0,
+      "examined": 1858
+    },
+    {
+      "tileId": "-7_3",
+      "level": 1,
+      "matched": {
+        "5": 255
+      },
+      "ambiguous": 0,
+      "examined": 1858
+    },
+    {
+      "tileId": "-7_3",
+      "level": 2,
+      "matched": {
+        "5": 255
+      },
+      "ambiguous": 0,
+      "examined": 1858
+    },
+    {
+      "tileId": "-7_4",
+      "level": 0,
+      "matched": {
+        "2": 58,
+        "5": 129
+      },
+      "ambiguous": 0,
+      "examined": 1883
+    },
+    {
+      "tileId": "-7_4",
+      "level": 1,
+      "matched": {
+        "2": 58,
+        "5": 129
+      },
+      "ambiguous": 0,
+      "examined": 1883
+    },
+    {
+      "tileId": "-7_4",
+      "level": 2,
+      "matched": {
+        "2": 58,
+        "5": 129
+      },
+      "ambiguous": 0,
+      "examined": 1883
+    },
+    {
+      "tileId": "-7_5",
+      "level": 0,
+      "matched": {
+        "2": 147
+      },
+      "ambiguous": 0,
+      "examined": 641
+    },
+    {
+      "tileId": "-7_5",
+      "level": 1,
+      "matched": {
+        "2": 147
+      },
+      "ambiguous": 0,
+      "examined": 641
+    },
+    {
+      "tileId": "-7_5",
+      "level": 2,
+      "matched": {
+        "2": 147
+      },
+      "ambiguous": 0,
+      "examined": 641
+    },
+    {
+      "tileId": "-7_6",
+      "level": 0,
+      "matched": {
+        "5": 121
+      },
+      "ambiguous": 0,
+      "examined": 317
+    },
+    {
+      "tileId": "-7_6",
+      "level": 1,
+      "matched": {
+        "5": 121
+      },
+      "ambiguous": 0,
+      "examined": 317
+    },
+    {
+      "tileId": "-7_6",
+      "level": 2,
+      "matched": {
+        "5": 121
+      },
+      "ambiguous": 0,
+      "examined": 317
+    },
+    {
+      "tileId": "-7_7",
+      "level": 0,
+      "matched": {
+        "5": 355
+      },
+      "ambiguous": 0,
+      "examined": 574
+    },
+    {
+      "tileId": "-7_7",
+      "level": 1,
+      "matched": {
+        "5": 355
+      },
+      "ambiguous": 0,
+      "examined": 574
+    },
+    {
+      "tileId": "-7_7",
+      "level": 2,
+      "matched": {
+        "5": 355
+      },
+      "ambiguous": 0,
+      "examined": 574
+    },
+    {
+      "tileId": "-6_-8",
+      "level": 0,
+      "matched": {
+        "2": 56,
+        "5": 165
+      },
+      "ambiguous": 0,
+      "examined": 285
+    },
+    {
+      "tileId": "-6_-8",
+      "level": 1,
+      "matched": {
+        "2": 56,
+        "5": 165
+      },
+      "ambiguous": 0,
+      "examined": 285
+    },
+    {
+      "tileId": "-6_-8",
+      "level": 2,
+      "matched": {
+        "2": 56,
+        "5": 165
+      },
+      "ambiguous": 0,
+      "examined": 285
+    },
+    {
+      "tileId": "-6_-7",
+      "level": 0,
+      "matched": {
+        "2": 58
+      },
+      "ambiguous": 0,
+      "examined": 594
+    },
+    {
+      "tileId": "-6_-7",
+      "level": 1,
+      "matched": {
+        "2": 58
+      },
+      "ambiguous": 0,
+      "examined": 594
+    },
+    {
+      "tileId": "-6_-7",
+      "level": 2,
+      "matched": {
+        "2": 58
+      },
+      "ambiguous": 0,
+      "examined": 594
+    },
+    {
+      "tileId": "-6_-6",
+      "level": 0,
+      "matched": {
+        "5": 184
+      },
+      "ambiguous": 0,
+      "examined": 1216
+    },
+    {
+      "tileId": "-6_-6",
+      "level": 1,
+      "matched": {
+        "5": 184
+      },
+      "ambiguous": 0,
+      "examined": 1216
+    },
+    {
+      "tileId": "-6_-6",
+      "level": 2,
+      "matched": {
+        "5": 184
+      },
+      "ambiguous": 0,
+      "examined": 1216
+    },
+    {
+      "tileId": "-6_-5",
+      "level": 0,
+      "matched": {
+        "5": 30
+      },
+      "ambiguous": 0,
+      "examined": 991
+    },
+    {
+      "tileId": "-6_-5",
+      "level": 1,
+      "matched": {
+        "5": 30
+      },
+      "ambiguous": 0,
+      "examined": 991
+    },
+    {
+      "tileId": "-6_-5",
+      "level": 2,
+      "matched": {
+        "5": 30
+      },
+      "ambiguous": 0,
+      "examined": 991
+    },
+    {
+      "tileId": "-6_-4",
+      "level": 0,
+      "matched": {
+        "5": 285
+      },
+      "ambiguous": 0,
+      "examined": 1216
+    },
+    {
+      "tileId": "-6_-4",
+      "level": 1,
+      "matched": {
+        "5": 285
+      },
+      "ambiguous": 0,
+      "examined": 1216
+    },
+    {
+      "tileId": "-6_-4",
+      "level": 2,
+      "matched": {
+        "5": 285
+      },
+      "ambiguous": 0,
+      "examined": 1216
+    },
+    {
+      "tileId": "-6_-3",
+      "level": 0,
+      "matched": {
+        "5": 48
+      },
+      "ambiguous": 0,
+      "examined": 1216
+    },
+    {
+      "tileId": "-6_-3",
+      "level": 1,
+      "matched": {
+        "5": 48
+      },
+      "ambiguous": 0,
+      "examined": 1216
+    },
+    {
+      "tileId": "-6_-3",
+      "level": 2,
+      "matched": {
+        "5": 48
+      },
+      "ambiguous": 0,
+      "examined": 1216
+    },
+    {
+      "tileId": "-6_-2",
+      "level": 0,
+      "matched": {
+        "5": 549
+      },
+      "ambiguous": 0,
+      "examined": 928
+    },
+    {
+      "tileId": "-6_-2",
+      "level": 1,
+      "matched": {
+        "5": 549
+      },
+      "ambiguous": 0,
+      "examined": 928
+    },
+    {
+      "tileId": "-6_-2",
+      "level": 2,
+      "matched": {
+        "5": 549
+      },
+      "ambiguous": 0,
+      "examined": 928
+    },
+    {
+      "tileId": "-6_-1",
+      "level": 0,
+      "matched": {
+        "5": 96
+      },
+      "ambiguous": 0,
+      "examined": 369
+    },
+    {
+      "tileId": "-6_-1",
+      "level": 1,
+      "matched": {
+        "5": 96
+      },
+      "ambiguous": 0,
+      "examined": 369
+    },
+    {
+      "tileId": "-6_-1",
+      "level": 2,
+      "matched": {
+        "5": 96
+      },
+      "ambiguous": 0,
+      "examined": 369
+    },
+    {
+      "tileId": "-6_0",
+      "level": 0,
+      "matched": {
+        "2": 96
+      },
+      "ambiguous": 0,
+      "examined": 694
+    },
+    {
+      "tileId": "-6_0",
+      "level": 1,
+      "matched": {
+        "2": 96
+      },
+      "ambiguous": 0,
+      "examined": 694
+    },
+    {
+      "tileId": "-6_0",
+      "level": 2,
+      "matched": {
+        "2": 96
+      },
+      "ambiguous": 0,
+      "examined": 694
+    },
+    {
+      "tileId": "-6_1",
+      "level": 0,
+      "matched": {
+        "5": 112
+      },
+      "ambiguous": 0,
+      "examined": 646
+    },
+    {
+      "tileId": "-6_1",
+      "level": 1,
+      "matched": {
+        "5": 112
+      },
+      "ambiguous": 0,
+      "examined": 646
+    },
+    {
+      "tileId": "-6_1",
+      "level": 2,
+      "matched": {
+        "5": 112
+      },
+      "ambiguous": 0,
+      "examined": 646
+    },
+    {
+      "tileId": "-6_3",
+      "level": 0,
+      "matched": {
+        "5": 101
+      },
+      "ambiguous": 0,
+      "examined": 912
+    },
+    {
+      "tileId": "-6_3",
+      "level": 1,
+      "matched": {
+        "5": 101
+      },
+      "ambiguous": 0,
+      "examined": 912
+    },
+    {
+      "tileId": "-6_3",
+      "level": 2,
+      "matched": {
+        "5": 101
+      },
+      "ambiguous": 0,
+      "examined": 912
+    },
+    {
+      "tileId": "-5_-8",
+      "level": 0,
+      "matched": {
+        "5": 41
+      },
+      "ambiguous": 0,
+      "examined": 1693
+    },
+    {
+      "tileId": "-5_-8",
+      "level": 1,
+      "matched": {
+        "5": 41
+      },
+      "ambiguous": 0,
+      "examined": 1693
+    },
+    {
+      "tileId": "-5_-8",
+      "level": 2,
+      "matched": {
+        "5": 41
+      },
+      "ambiguous": 0,
+      "examined": 1693
+    },
+    {
+      "tileId": "-5_-2",
+      "level": 0,
+      "matched": {
+        "5": 278
+      },
+      "ambiguous": 0,
+      "examined": 833
+    },
+    {
+      "tileId": "-5_-2",
+      "level": 1,
+      "matched": {
+        "5": 278
+      },
+      "ambiguous": 0,
+      "examined": 833
+    },
+    {
+      "tileId": "-5_-2",
+      "level": 2,
+      "matched": {
+        "5": 278
+      },
+      "ambiguous": 0,
+      "examined": 833
+    },
+    {
+      "tileId": "-4_-2",
+      "level": 0,
+      "matched": {
+        "5": 294
+      },
+      "ambiguous": 0,
+      "examined": 294
+    },
+    {
+      "tileId": "-4_-2",
+      "level": 1,
+      "matched": {
+        "5": 294
+      },
+      "ambiguous": 0,
+      "examined": 294
+    },
+    {
+      "tileId": "-4_-2",
+      "level": 2,
+      "matched": {
+        "5": 294
+      },
+      "ambiguous": 0,
+      "examined": 294
+    },
+    {
+      "tileId": "-4_3",
+      "level": 0,
+      "matched": {
+        "5": 267
+      },
+      "ambiguous": 0,
+      "examined": 918
+    },
+    {
+      "tileId": "-4_3",
+      "level": 1,
+      "matched": {
+        "5": 267
+      },
+      "ambiguous": 0,
+      "examined": 918
+    },
+    {
+      "tileId": "-4_3",
+      "level": 2,
+      "matched": {
+        "5": 267
+      },
+      "ambiguous": 0,
+      "examined": 918
+    },
+    {
+      "tileId": "-4_4",
+      "level": 0,
+      "matched": {
+        "2": 84
+      },
+      "ambiguous": 0,
+      "examined": 535
+    },
+    {
+      "tileId": "-4_4",
+      "level": 1,
+      "matched": {
+        "2": 84
+      },
+      "ambiguous": 0,
+      "examined": 535
+    },
+    {
+      "tileId": "-4_4",
+      "level": 2,
+      "matched": {
+        "2": 84
+      },
+      "ambiguous": 0,
+      "examined": 535
+    },
+    {
+      "tileId": "-3_-16",
+      "level": 0,
+      "matched": {
+        "2": 17
+      },
+      "ambiguous": 0,
+      "examined": 17
+    },
+    {
+      "tileId": "-3_-16",
+      "level": 1,
+      "matched": {
+        "2": 17
+      },
+      "ambiguous": 0,
+      "examined": 17
+    },
+    {
+      "tileId": "-3_-16",
+      "level": 2,
+      "matched": {
+        "2": 17
+      },
+      "ambiguous": 0,
+      "examined": 17
+    },
+    {
+      "tileId": "-3_-15",
+      "level": 0,
+      "matched": {
+        "2": 323
+      },
+      "ambiguous": 0,
+      "examined": 646
+    },
+    {
+      "tileId": "-3_-15",
+      "level": 1,
+      "matched": {
+        "2": 323
+      },
+      "ambiguous": 0,
+      "examined": 646
+    },
+    {
+      "tileId": "-3_-15",
+      "level": 2,
+      "matched": {
+        "2": 323
+      },
+      "ambiguous": 0,
+      "examined": 646
+    },
+    {
+      "tileId": "-3_-12",
+      "level": 0,
+      "matched": {
+        "5": 262
+      },
+      "ambiguous": 0,
+      "examined": 690
+    },
+    {
+      "tileId": "-3_-12",
+      "level": 1,
+      "matched": {
+        "5": 262
+      },
+      "ambiguous": 0,
+      "examined": 690
+    },
+    {
+      "tileId": "-3_-12",
+      "level": 2,
+      "matched": {
+        "5": 262
+      },
+      "ambiguous": 0,
+      "examined": 690
+    },
+    {
+      "tileId": "-3_-11",
+      "level": 0,
+      "matched": {
+        "5": 265
+      },
+      "ambiguous": 0,
+      "examined": 534
+    },
+    {
+      "tileId": "-3_-11",
+      "level": 1,
+      "matched": {
+        "5": 265
+      },
+      "ambiguous": 0,
+      "examined": 534
+    },
+    {
+      "tileId": "-3_-11",
+      "level": 2,
+      "matched": {
+        "5": 265
+      },
+      "ambiguous": 0,
+      "examined": 534
+    },
+    {
+      "tileId": "-3_-6",
+      "level": 0,
+      "matched": {
+        "5": 160
+      },
+      "ambiguous": 0,
+      "examined": 264
+    },
+    {
+      "tileId": "-3_-6",
+      "level": 1,
+      "matched": {
+        "5": 160
+      },
+      "ambiguous": 0,
+      "examined": 264
+    },
+    {
+      "tileId": "-3_-6",
+      "level": 2,
+      "matched": {
+        "5": 160
+      },
+      "ambiguous": 0,
+      "examined": 264
+    },
+    {
+      "tileId": "-3_3",
+      "level": 0,
+      "matched": {
+        "5": 99,
+        "2": 46
+      },
+      "ambiguous": 0,
+      "examined": 166
+    },
+    {
+      "tileId": "-3_3",
+      "level": 1,
+      "matched": {
+        "5": 99,
+        "2": 46
+      },
+      "ambiguous": 0,
+      "examined": 166
+    },
+    {
+      "tileId": "-3_3",
+      "level": 2,
+      "matched": {
+        "5": 99,
+        "2": 46
+      },
+      "ambiguous": 0,
+      "examined": 166
+    },
+    {
+      "tileId": "-3_4",
+      "level": 0,
+      "matched": {
+        "2": 256,
+        "5": 309
+      },
+      "ambiguous": 0,
+      "examined": 714
+    },
+    {
+      "tileId": "-3_4",
+      "level": 1,
+      "matched": {
+        "2": 256,
+        "5": 309
+      },
+      "ambiguous": 0,
+      "examined": 714
+    },
+    {
+      "tileId": "-3_4",
+      "level": 2,
+      "matched": {
+        "2": 256,
+        "5": 309
+      },
+      "ambiguous": 0,
+      "examined": 714
+    },
+    {
+      "tileId": "-3_5",
+      "level": 0,
+      "matched": {
+        "5": 103
+      },
+      "ambiguous": 0,
+      "examined": 377
+    },
+    {
+      "tileId": "-3_5",
+      "level": 1,
+      "matched": {
+        "5": 103
+      },
+      "ambiguous": 0,
+      "examined": 377
+    },
+    {
+      "tileId": "-3_5",
+      "level": 2,
+      "matched": {
+        "5": 103
+      },
+      "ambiguous": 0,
+      "examined": 377
+    },
+    {
+      "tileId": "-2_-15",
+      "level": 0,
+      "matched": {
+        "5": 257
+      },
+      "ambiguous": 0,
+      "examined": 654
+    },
+    {
+      "tileId": "-2_-15",
+      "level": 1,
+      "matched": {
+        "5": 257
+      },
+      "ambiguous": 0,
+      "examined": 654
+    },
+    {
+      "tileId": "-2_-15",
+      "level": 2,
+      "matched": {
+        "5": 257
+      },
+      "ambiguous": 0,
+      "examined": 654
+    },
+    {
+      "tileId": "-2_-12",
+      "level": 0,
+      "matched": {
+        "5": 188
+      },
+      "ambiguous": 0,
+      "examined": 188
+    },
+    {
+      "tileId": "-2_-12",
+      "level": 1,
+      "matched": {
+        "5": 188
+      },
+      "ambiguous": 0,
+      "examined": 188
+    },
+    {
+      "tileId": "-2_-12",
+      "level": 2,
+      "matched": {
+        "5": 188
+      },
+      "ambiguous": 0,
+      "examined": 188
+    },
+    {
+      "tileId": "-2_-11",
+      "level": 0,
+      "matched": {
+        "5": 175
+      },
+      "ambiguous": 0,
+      "examined": 175
+    },
+    {
+      "tileId": "-2_-11",
+      "level": 1,
+      "matched": {
+        "5": 175
+      },
+      "ambiguous": 0,
+      "examined": 175
+    },
+    {
+      "tileId": "-2_-11",
+      "level": 2,
+      "matched": {
+        "5": 175
+      },
+      "ambiguous": 0,
+      "examined": 175
+    },
+    {
+      "tileId": "-2_-7",
+      "level": 0,
+      "matched": {
+        "2": 21
+      },
+      "ambiguous": 0,
+      "examined": 21
+    },
+    {
+      "tileId": "-2_-7",
+      "level": 1,
+      "matched": {
+        "2": 21
+      },
+      "ambiguous": 0,
+      "examined": 21
+    },
+    {
+      "tileId": "-2_-7",
+      "level": 2,
+      "matched": {
+        "2": 21
+      },
+      "ambiguous": 0,
+      "examined": 21
+    },
+    {
+      "tileId": "-2_-6",
+      "level": 0,
+      "matched": {
+        "5": 296,
+        "2": 99
+      },
+      "ambiguous": 0,
+      "examined": 748
+    },
+    {
+      "tileId": "-2_-6",
+      "level": 1,
+      "matched": {
+        "5": 296,
+        "2": 99
+      },
+      "ambiguous": 0,
+      "examined": 748
+    },
+    {
+      "tileId": "-2_-6",
+      "level": 2,
+      "matched": {
+        "5": 296,
+        "2": 99
+      },
+      "ambiguous": 0,
+      "examined": 748
+    },
+    {
+      "tileId": "-2_3",
+      "level": 0,
+      "matched": {
+        "2": 337
+      },
+      "ambiguous": 0,
+      "examined": 340
+    },
+    {
+      "tileId": "-2_3",
+      "level": 1,
+      "matched": {
+        "2": 337
+      },
+      "ambiguous": 0,
+      "examined": 340
+    },
+    {
+      "tileId": "-2_3",
+      "level": 2,
+      "matched": {
+        "2": 337
+      },
+      "ambiguous": 0,
+      "examined": 340
+    },
+    {
+      "tileId": "-2_5",
+      "level": 0,
+      "matched": {
+        "5": 200
+      },
+      "ambiguous": 0,
+      "examined": 200
+    },
+    {
+      "tileId": "-2_5",
+      "level": 1,
+      "matched": {
+        "5": 200
+      },
+      "ambiguous": 0,
+      "examined": 200
+    },
+    {
+      "tileId": "-2_5",
+      "level": 2,
+      "matched": {
+        "5": 200
+      },
+      "ambiguous": 0,
+      "examined": 200
+    },
+    {
+      "tileId": "-2_6",
+      "level": 0,
+      "matched": {
+        "5": 264
+      },
+      "ambiguous": 0,
+      "examined": 448
+    },
+    {
+      "tileId": "-2_6",
+      "level": 1,
+      "matched": {
+        "5": 264
+      },
+      "ambiguous": 0,
+      "examined": 448
+    },
+    {
+      "tileId": "-2_6",
+      "level": 2,
+      "matched": {
+        "5": 264
+      },
+      "ambiguous": 0,
+      "examined": 448
+    },
+    {
+      "tileId": "-1_-15",
+      "level": 0,
+      "matched": {
+        "5": 61
+      },
+      "ambiguous": 0,
+      "examined": 337
+    },
+    {
+      "tileId": "-1_-15",
+      "level": 1,
+      "matched": {
+        "5": 61
+      },
+      "ambiguous": 0,
+      "examined": 337
+    },
+    {
+      "tileId": "-1_-15",
+      "level": 2,
+      "matched": {
+        "5": 61
+      },
+      "ambiguous": 0,
+      "examined": 337
+    },
+    {
+      "tileId": "-1_-14",
+      "level": 0,
+      "matched": {
+        "5": 387,
+        "2": 30
+      },
+      "ambiguous": 0,
+      "examined": 1009
+    },
+    {
+      "tileId": "-1_-14",
+      "level": 1,
+      "matched": {
+        "5": 387,
+        "2": 30
+      },
+      "ambiguous": 0,
+      "examined": 1009
+    },
+    {
+      "tileId": "-1_-14",
+      "level": 2,
+      "matched": {
+        "5": 387,
+        "2": 30
+      },
+      "ambiguous": 0,
+      "examined": 1009
+    },
+    {
+      "tileId": "-1_-13",
+      "level": 0,
+      "matched": {
+        "2": 127
+      },
+      "ambiguous": 0,
+      "examined": 447
+    },
+    {
+      "tileId": "-1_-13",
+      "level": 1,
+      "matched": {
+        "2": 127
+      },
+      "ambiguous": 0,
+      "examined": 447
+    },
+    {
+      "tileId": "-1_-13",
+      "level": 2,
+      "matched": {
+        "2": 127
+      },
+      "ambiguous": 0,
+      "examined": 447
+    },
+    {
+      "tileId": "-1_-7",
+      "level": 0,
+      "matched": {
+        "2": 98
+      },
+      "ambiguous": 0,
+      "examined": 98
+    },
+    {
+      "tileId": "-1_-7",
+      "level": 1,
+      "matched": {
+        "2": 98
+      },
+      "ambiguous": 0,
+      "examined": 98
+    },
+    {
+      "tileId": "-1_-7",
+      "level": 2,
+      "matched": {
+        "2": 98
+      },
+      "ambiguous": 0,
+      "examined": 98
+    },
+    {
+      "tileId": "-1_-6",
+      "level": 0,
+      "matched": {
+        "5": 612
+      },
+      "ambiguous": 0,
+      "examined": 612
+    },
+    {
+      "tileId": "-1_-6",
+      "level": 1,
+      "matched": {
+        "5": 612
+      },
+      "ambiguous": 0,
+      "examined": 612
+    },
+    {
+      "tileId": "-1_-6",
+      "level": 2,
+      "matched": {
+        "5": 612
+      },
+      "ambiguous": 0,
+      "examined": 612
+    },
+    {
+      "tileId": "-1_-4",
+      "level": 0,
+      "matched": {
+        "5": 54
+      },
+      "ambiguous": 0,
+      "examined": 54
+    },
+    {
+      "tileId": "-1_-4",
+      "level": 1,
+      "matched": {
+        "5": 54
+      },
+      "ambiguous": 0,
+      "examined": 54
+    },
+    {
+      "tileId": "-1_-4",
+      "level": 2,
+      "matched": {
+        "5": 54
+      },
+      "ambiguous": 0,
+      "examined": 54
+    },
+    {
+      "tileId": "-1_0",
+      "level": 0,
+      "matched": {
+        "2": 57
+      },
+      "ambiguous": 0,
+      "examined": 341
+    },
+    {
+      "tileId": "-1_0",
+      "level": 1,
+      "matched": {
+        "2": 57
+      },
+      "ambiguous": 0,
+      "examined": 341
+    },
+    {
+      "tileId": "-1_0",
+      "level": 2,
+      "matched": {
+        "2": 57
+      },
+      "ambiguous": 0,
+      "examined": 341
+    },
+    {
+      "tileId": "-1_1",
+      "level": 0,
+      "matched": {
+        "2": 199
+      },
+      "ambiguous": 0,
+      "examined": 199
+    },
+    {
+      "tileId": "-1_1",
+      "level": 1,
+      "matched": {
+        "2": 199
+      },
+      "ambiguous": 0,
+      "examined": 199
+    },
+    {
+      "tileId": "-1_1",
+      "level": 2,
+      "matched": {
+        "2": 199
+      },
+      "ambiguous": 0,
+      "examined": 199
+    },
+    {
+      "tileId": "-1_2",
+      "level": 0,
+      "matched": {
+        "2": 353
+      },
+      "ambiguous": 0,
+      "examined": 353
+    },
+    {
+      "tileId": "-1_2",
+      "level": 1,
+      "matched": {
+        "2": 353
+      },
+      "ambiguous": 0,
+      "examined": 353
+    },
+    {
+      "tileId": "-1_2",
+      "level": 2,
+      "matched": {
+        "2": 353
+      },
+      "ambiguous": 0,
+      "examined": 353
+    },
+    {
+      "tileId": "-1_3",
+      "level": 0,
+      "matched": {
+        "2": 2
+      },
+      "ambiguous": 0,
+      "examined": 2
+    },
+    {
+      "tileId": "-1_3",
+      "level": 1,
+      "matched": {
+        "2": 2
+      },
+      "ambiguous": 0,
+      "examined": 2
+    },
+    {
+      "tileId": "-1_3",
+      "level": 2,
+      "matched": {
+        "2": 2
+      },
+      "ambiguous": 0,
+      "examined": 2
+    },
+    {
+      "tileId": "-1_6",
+      "level": 0,
+      "matched": {
+        "5": 42
+      },
+      "ambiguous": 0,
+      "examined": 42
+    },
+    {
+      "tileId": "-1_6",
+      "level": 1,
+      "matched": {
+        "5": 42
+      },
+      "ambiguous": 0,
+      "examined": 42
+    },
+    {
+      "tileId": "-1_6",
+      "level": 2,
+      "matched": {
+        "5": 42
+      },
+      "ambiguous": 0,
+      "examined": 42
+    },
+    {
+      "tileId": "-1_7",
+      "level": 0,
+      "matched": {
+        "5": 307
+      },
+      "ambiguous": 0,
+      "examined": 307
+    },
+    {
+      "tileId": "-1_7",
+      "level": 1,
+      "matched": {
+        "5": 307
+      },
+      "ambiguous": 0,
+      "examined": 307
+    },
+    {
+      "tileId": "-1_7",
+      "level": 2,
+      "matched": {
+        "5": 307
+      },
+      "ambiguous": 0,
+      "examined": 307
+    },
+    {
+      "tileId": "-1_8",
+      "level": 0,
+      "matched": {
+        "5": 109
+      },
+      "ambiguous": 0,
+      "examined": 109
+    },
+    {
+      "tileId": "-1_8",
+      "level": 1,
+      "matched": {
+        "5": 109
+      },
+      "ambiguous": 0,
+      "examined": 109
+    },
+    {
+      "tileId": "-1_8",
+      "level": 2,
+      "matched": {
+        "5": 109
+      },
+      "ambiguous": 0,
+      "examined": 109
+    },
+    {
+      "tileId": "0_-14",
+      "level": 0,
+      "matched": {
+        "5": 2
+      },
+      "ambiguous": 0,
+      "examined": 2
+    },
+    {
+      "tileId": "0_-14",
+      "level": 1,
+      "matched": {
+        "5": 2
+      },
+      "ambiguous": 0,
+      "examined": 2
+    },
+    {
+      "tileId": "0_-14",
+      "level": 2,
+      "matched": {
+        "5": 2
+      },
+      "ambiguous": 0,
+      "examined": 2
+    },
+    {
+      "tileId": "0_-13",
+      "level": 0,
+      "matched": {
+        "2": 75,
+        "5": 361
+      },
+      "ambiguous": 0,
+      "examined": 537
+    },
+    {
+      "tileId": "0_-13",
+      "level": 1,
+      "matched": {
+        "2": 75,
+        "5": 361
+      },
+      "ambiguous": 0,
+      "examined": 537
+    },
+    {
+      "tileId": "0_-13",
+      "level": 2,
+      "matched": {
+        "2": 75,
+        "5": 361
+      },
+      "ambiguous": 0,
+      "examined": 537
+    },
+    {
+      "tileId": "0_-6",
+      "level": 0,
+      "matched": {
+        "5": 590,
+        "2": 58
+      },
+      "ambiguous": 0,
+      "examined": 648
+    },
+    {
+      "tileId": "0_-6",
+      "level": 1,
+      "matched": {
+        "5": 590,
+        "2": 58
+      },
+      "ambiguous": 0,
+      "examined": 648
+    },
+    {
+      "tileId": "0_-6",
+      "level": 2,
+      "matched": {
+        "5": 590,
+        "2": 58
+      },
+      "ambiguous": 0,
+      "examined": 648
+    },
+    {
+      "tileId": "0_-5",
+      "level": 0,
+      "matched": {
+        "5": 453,
+        "2": 144,
+        "1": 42
+      },
+      "ambiguous": 0,
+      "examined": 639
+    },
+    {
+      "tileId": "0_-5",
+      "level": 1,
+      "matched": {
+        "5": 453,
+        "2": 144,
+        "1": 42
+      },
+      "ambiguous": 0,
+      "examined": 639
+    },
+    {
+      "tileId": "0_-5",
+      "level": 2,
+      "matched": {
+        "5": 453,
+        "2": 144,
+        "1": 42
+      },
+      "ambiguous": 0,
+      "examined": 639
+    },
+    {
+      "tileId": "0_-4",
+      "level": 0,
+      "matched": {
+        "5": 480,
+        "2": 150,
+        "1": 63
+      },
+      "ambiguous": 0,
+      "examined": 693
+    },
+    {
+      "tileId": "0_-4",
+      "level": 1,
+      "matched": {
+        "5": 480,
+        "2": 150,
+        "1": 63
+      },
+      "ambiguous": 0,
+      "examined": 693
+    },
+    {
+      "tileId": "0_-4",
+      "level": 2,
+      "matched": {
+        "5": 480,
+        "2": 150,
+        "1": 63
+      },
+      "ambiguous": 0,
+      "examined": 693
+    },
+    {
+      "tileId": "0_-3",
+      "level": 0,
+      "matched": {
+        "5": 201,
+        "2": 112
+      },
+      "ambiguous": 0,
+      "examined": 313
+    },
+    {
+      "tileId": "0_-3",
+      "level": 1,
+      "matched": {
+        "5": 201,
+        "2": 112
+      },
+      "ambiguous": 0,
+      "examined": 313
+    },
+    {
+      "tileId": "0_-3",
+      "level": 2,
+      "matched": {
+        "5": 201,
+        "2": 112
+      },
+      "ambiguous": 0,
+      "examined": 313
+    },
+    {
+      "tileId": "0_-2",
+      "level": 0,
+      "matched": {
+        "5": 139
+      },
+      "ambiguous": 0,
+      "examined": 139
+    },
+    {
+      "tileId": "0_-2",
+      "level": 1,
+      "matched": {
+        "5": 139
+      },
+      "ambiguous": 0,
+      "examined": 139
+    },
+    {
+      "tileId": "0_-2",
+      "level": 2,
+      "matched": {
+        "5": 139
+      },
+      "ambiguous": 0,
+      "examined": 139
+    },
+    {
+      "tileId": "0_0",
+      "level": 0,
+      "matched": {
+        "5": 226
+      },
+      "ambiguous": 0,
+      "examined": 750
+    },
+    {
+      "tileId": "0_0",
+      "level": 1,
+      "matched": {
+        "5": 226
+      },
+      "ambiguous": 0,
+      "examined": 750
+    },
+    {
+      "tileId": "0_0",
+      "level": 2,
+      "matched": {
+        "5": 226
+      },
+      "ambiguous": 0,
+      "examined": 750
+    },
+    {
+      "tileId": "0_1",
+      "level": 0,
+      "matched": {
+        "2": 194,
+        "5": 109
+      },
+      "ambiguous": 0,
+      "examined": 303
+    },
+    {
+      "tileId": "0_1",
+      "level": 1,
+      "matched": {
+        "2": 194,
+        "5": 109
+      },
+      "ambiguous": 0,
+      "examined": 303
+    },
+    {
+      "tileId": "0_1",
+      "level": 2,
+      "matched": {
+        "2": 194,
+        "5": 109
+      },
+      "ambiguous": 0,
+      "examined": 303
+    },
+    {
+      "tileId": "0_8",
+      "level": 0,
+      "matched": {
+        "5": 197
+      },
+      "ambiguous": 0,
+      "examined": 197
+    },
+    {
+      "tileId": "0_8",
+      "level": 1,
+      "matched": {
+        "5": 197
+      },
+      "ambiguous": 0,
+      "examined": 197
+    },
+    {
+      "tileId": "0_8",
+      "level": 2,
+      "matched": {
+        "5": 197
+      },
+      "ambiguous": 0,
+      "examined": 197
+    },
+    {
+      "tileId": "0_9",
+      "level": 0,
+      "matched": {
+        "5": 263
+      },
+      "ambiguous": 0,
+      "examined": 263
+    },
+    {
+      "tileId": "0_9",
+      "level": 1,
+      "matched": {
+        "5": 263
+      },
+      "ambiguous": 0,
+      "examined": 263
+    },
+    {
+      "tileId": "0_9",
+      "level": 2,
+      "matched": {
+        "5": 263
+      },
+      "ambiguous": 0,
+      "examined": 263
+    },
+    {
+      "tileId": "1_-16",
+      "level": 0,
+      "matched": {
+        "2": 99
+      },
+      "ambiguous": 0,
+      "examined": 178
+    },
+    {
+      "tileId": "1_-16",
+      "level": 1,
+      "matched": {
+        "2": 99
+      },
+      "ambiguous": 0,
+      "examined": 178
+    },
+    {
+      "tileId": "1_-16",
+      "level": 2,
+      "matched": {
+        "2": 99
+      },
+      "ambiguous": 0,
+      "examined": 178
+    },
+    {
+      "tileId": "1_-14",
+      "level": 0,
+      "matched": {
+        "2": 87
+      },
+      "ambiguous": 0,
+      "examined": 171
+    },
+    {
+      "tileId": "1_-14",
+      "level": 1,
+      "matched": {
+        "2": 87
+      },
+      "ambiguous": 0,
+      "examined": 171
+    },
+    {
+      "tileId": "1_-14",
+      "level": 2,
+      "matched": {
+        "2": 87
+      },
+      "ambiguous": 0,
+      "examined": 171
+    },
+    {
+      "tileId": "1_-13",
+      "level": 0,
+      "matched": {
+        "5": 137
+      },
+      "ambiguous": 0,
+      "examined": 137
+    },
+    {
+      "tileId": "1_-13",
+      "level": 1,
+      "matched": {
+        "5": 137
+      },
+      "ambiguous": 0,
+      "examined": 137
+    },
+    {
+      "tileId": "1_-13",
+      "level": 2,
+      "matched": {
+        "5": 137
+      },
+      "ambiguous": 0,
+      "examined": 137
+    },
+    {
+      "tileId": "1_-12",
+      "level": 0,
+      "matched": {
+        "5": 345
+      },
+      "ambiguous": 0,
+      "examined": 443
+    },
+    {
+      "tileId": "1_-12",
+      "level": 1,
+      "matched": {
+        "5": 345
+      },
+      "ambiguous": 0,
+      "examined": 443
+    },
+    {
+      "tileId": "1_-12",
+      "level": 2,
+      "matched": {
+        "5": 345
+      },
+      "ambiguous": 0,
+      "examined": 443
+    },
+    {
+      "tileId": "1_-5",
+      "level": 0,
+      "matched": {
+        "2": 311
+      },
+      "ambiguous": 0,
+      "examined": 311
+    },
+    {
+      "tileId": "1_-5",
+      "level": 1,
+      "matched": {
+        "2": 311
+      },
+      "ambiguous": 0,
+      "examined": 311
+    },
+    {
+      "tileId": "1_-5",
+      "level": 2,
+      "matched": {
+        "2": 311
+      },
+      "ambiguous": 0,
+      "examined": 311
+    },
+    {
+      "tileId": "1_-4",
+      "level": 0,
+      "matched": {
+        "5": 180,
+        "2": 522,
+        "1": 35
+      },
+      "ambiguous": 0,
+      "examined": 739
+    },
+    {
+      "tileId": "1_-4",
+      "level": 1,
+      "matched": {
+        "5": 180,
+        "2": 522,
+        "1": 35
+      },
+      "ambiguous": 0,
+      "examined": 739
+    },
+    {
+      "tileId": "1_-4",
+      "level": 2,
+      "matched": {
+        "5": 180,
+        "2": 522,
+        "1": 35
+      },
+      "ambiguous": 0,
+      "examined": 739
+    },
+    {
+      "tileId": "1_-3",
+      "level": 0,
+      "matched": {
+        "5": 152,
+        "2": 19
+      },
+      "ambiguous": 0,
+      "examined": 812
+    },
+    {
+      "tileId": "1_-3",
+      "level": 1,
+      "matched": {
+        "5": 152,
+        "2": 19
+      },
+      "ambiguous": 0,
+      "examined": 812
+    },
+    {
+      "tileId": "1_-3",
+      "level": 2,
+      "matched": {
+        "5": 152,
+        "2": 19
+      },
+      "ambiguous": 0,
+      "examined": 812
+    },
+    {
+      "tileId": "1_-2",
+      "level": 0,
+      "matched": {
+        "5": 286,
+        "2": 1
+      },
+      "ambiguous": 0,
+      "examined": 410
+    },
+    {
+      "tileId": "1_-2",
+      "level": 1,
+      "matched": {
+        "5": 286,
+        "2": 1
+      },
+      "ambiguous": 0,
+      "examined": 410
+    },
+    {
+      "tileId": "1_-2",
+      "level": 2,
+      "matched": {
+        "5": 286,
+        "2": 1
+      },
+      "ambiguous": 0,
+      "examined": 410
+    },
+    {
+      "tileId": "1_-1",
+      "level": 0,
+      "matched": {
+        "5": 389,
+        "2": 85
+      },
+      "ambiguous": 0,
+      "examined": 774
+    },
+    {
+      "tileId": "1_-1",
+      "level": 1,
+      "matched": {
+        "5": 389,
+        "2": 85
+      },
+      "ambiguous": 0,
+      "examined": 774
+    },
+    {
+      "tileId": "1_-1",
+      "level": 2,
+      "matched": {
+        "5": 389,
+        "2": 85
+      },
+      "ambiguous": 0,
+      "examined": 774
+    },
+    {
+      "tileId": "1_0",
+      "level": 0,
+      "matched": {
+        "5": 371
+      },
+      "ambiguous": 0,
+      "examined": 454
+    },
+    {
+      "tileId": "1_0",
+      "level": 1,
+      "matched": {
+        "5": 371
+      },
+      "ambiguous": 0,
+      "examined": 454
+    },
+    {
+      "tileId": "1_0",
+      "level": 2,
+      "matched": {
+        "5": 371
+      },
+      "ambiguous": 0,
+      "examined": 454
+    },
+    {
+      "tileId": "1_1",
+      "level": 0,
+      "matched": {
+        "5": 87
+      },
+      "ambiguous": 0,
+      "examined": 557
+    },
+    {
+      "tileId": "1_1",
+      "level": 1,
+      "matched": {
+        "5": 87
+      },
+      "ambiguous": 0,
+      "examined": 557
+    },
+    {
+      "tileId": "1_1",
+      "level": 2,
+      "matched": {
+        "5": 87
+      },
+      "ambiguous": 0,
+      "examined": 557
+    },
+    {
+      "tileId": "1_9",
+      "level": 0,
+      "matched": {
+        "5": 46
+      },
+      "ambiguous": 0,
+      "examined": 46
+    },
+    {
+      "tileId": "1_9",
+      "level": 1,
+      "matched": {
+        "5": 46
+      },
+      "ambiguous": 0,
+      "examined": 46
+    },
+    {
+      "tileId": "1_9",
+      "level": 2,
+      "matched": {
+        "5": 46
+      },
+      "ambiguous": 0,
+      "examined": 46
+    },
+    {
+      "tileId": "1_10",
+      "level": 0,
+      "matched": {
+        "5": 312
+      },
+      "ambiguous": 0,
+      "examined": 444
+    },
+    {
+      "tileId": "1_10",
+      "level": 1,
+      "matched": {
+        "5": 312
+      },
+      "ambiguous": 0,
+      "examined": 444
+    },
+    {
+      "tileId": "1_10",
+      "level": 2,
+      "matched": {
+        "5": 312
+      },
+      "ambiguous": 0,
+      "examined": 444
+    },
+    {
+      "tileId": "1_11",
+      "level": 0,
+      "matched": {
+        "5": 78
+      },
+      "ambiguous": 0,
+      "examined": 239
+    },
+    {
+      "tileId": "1_11",
+      "level": 1,
+      "matched": {
+        "5": 78
+      },
+      "ambiguous": 0,
+      "examined": 239
+    },
+    {
+      "tileId": "1_11",
+      "level": 2,
+      "matched": {
+        "5": 78
+      },
+      "ambiguous": 0,
+      "examined": 239
+    },
+    {
+      "tileId": "1_12",
+      "level": 0,
+      "matched": {
+        "2": 210
+      },
+      "ambiguous": 0,
+      "examined": 210
+    },
+    {
+      "tileId": "1_12",
+      "level": 1,
+      "matched": {
+        "2": 210
+      },
+      "ambiguous": 0,
+      "examined": 210
+    },
+    {
+      "tileId": "1_12",
+      "level": 2,
+      "matched": {
+        "2": 210
+      },
+      "ambiguous": 0,
+      "examined": 210
+    },
+    {
+      "tileId": "1_13",
+      "level": 0,
+      "matched": {
+        "2": 52
+      },
+      "ambiguous": 0,
+      "examined": 52
+    },
+    {
+      "tileId": "1_13",
+      "level": 1,
+      "matched": {
+        "2": 52
+      },
+      "ambiguous": 0,
+      "examined": 52
+    },
+    {
+      "tileId": "1_13",
+      "level": 2,
+      "matched": {
+        "2": 52
+      },
+      "ambiguous": 0,
+      "examined": 52
+    },
+    {
+      "tileId": "2_-16",
+      "level": 0,
+      "matched": {
+        "2": 34,
+        "5": 156
+      },
+      "ambiguous": 0,
+      "examined": 190
+    },
+    {
+      "tileId": "2_-16",
+      "level": 1,
+      "matched": {
+        "2": 34,
+        "5": 156
+      },
+      "ambiguous": 0,
+      "examined": 190
+    },
+    {
+      "tileId": "2_-16",
+      "level": 2,
+      "matched": {
+        "2": 34,
+        "5": 156
+      },
+      "ambiguous": 0,
+      "examined": 190
+    },
+    {
+      "tileId": "2_-15",
+      "level": 0,
+      "matched": {
+        "2": 197,
+        "5": 57
+      },
+      "ambiguous": 0,
+      "examined": 254
+    },
+    {
+      "tileId": "2_-15",
+      "level": 1,
+      "matched": {
+        "2": 197,
+        "5": 57
+      },
+      "ambiguous": 0,
+      "examined": 254
+    },
+    {
+      "tileId": "2_-15",
+      "level": 2,
+      "matched": {
+        "2": 197,
+        "5": 57
+      },
+      "ambiguous": 0,
+      "examined": 254
+    },
+    {
+      "tileId": "2_-14",
+      "level": 0,
+      "matched": {
+        "2": 121,
+        "5": 15
+      },
+      "ambiguous": 0,
+      "examined": 136
+    },
+    {
+      "tileId": "2_-14",
+      "level": 1,
+      "matched": {
+        "2": 121,
+        "5": 15
+      },
+      "ambiguous": 0,
+      "examined": 136
+    },
+    {
+      "tileId": "2_-14",
+      "level": 2,
+      "matched": {
+        "2": 121,
+        "5": 15
+      },
+      "ambiguous": 0,
+      "examined": 136
+    },
+    {
+      "tileId": "2_-13",
+      "level": 0,
+      "matched": {
+        "5": 298
+      },
+      "ambiguous": 0,
+      "examined": 298
+    },
+    {
+      "tileId": "2_-13",
+      "level": 1,
+      "matched": {
+        "5": 298
+      },
+      "ambiguous": 0,
+      "examined": 298
+    },
+    {
+      "tileId": "2_-13",
+      "level": 2,
+      "matched": {
+        "5": 298
+      },
+      "ambiguous": 0,
+      "examined": 298
+    },
+    {
+      "tileId": "2_-12",
+      "level": 0,
+      "matched": {
+        "5": 189
+      },
+      "ambiguous": 0,
+      "examined": 641
+    },
+    {
+      "tileId": "2_-12",
+      "level": 1,
+      "matched": {
+        "5": 189
+      },
+      "ambiguous": 0,
+      "examined": 641
+    },
+    {
+      "tileId": "2_-12",
+      "level": 2,
+      "matched": {
+        "5": 189
+      },
+      "ambiguous": 0,
+      "examined": 641
+    },
+    {
+      "tileId": "2_-7",
+      "level": 0,
+      "matched": {
+        "5": 106
+      },
+      "ambiguous": 0,
+      "examined": 106
+    },
+    {
+      "tileId": "2_-7",
+      "level": 1,
+      "matched": {
+        "5": 106
+      },
+      "ambiguous": 0,
+      "examined": 106
+    },
+    {
+      "tileId": "2_-7",
+      "level": 2,
+      "matched": {
+        "5": 106
+      },
+      "ambiguous": 0,
+      "examined": 106
+    },
+    {
+      "tileId": "2_-6",
+      "level": 0,
+      "matched": {
+        "5": 34
+      },
+      "ambiguous": 0,
+      "examined": 62
+    },
+    {
+      "tileId": "2_-6",
+      "level": 1,
+      "matched": {
+        "5": 34
+      },
+      "ambiguous": 0,
+      "examined": 62
+    },
+    {
+      "tileId": "2_-6",
+      "level": 2,
+      "matched": {
+        "5": 34
+      },
+      "ambiguous": 0,
+      "examined": 62
+    },
+    {
+      "tileId": "2_-4",
+      "level": 0,
+      "matched": {
+        "2": 303
+      },
+      "ambiguous": 0,
+      "examined": 339
+    },
+    {
+      "tileId": "2_-4",
+      "level": 1,
+      "matched": {
+        "2": 303
+      },
+      "ambiguous": 0,
+      "examined": 339
+    },
+    {
+      "tileId": "2_-4",
+      "level": 2,
+      "matched": {
+        "2": 303
+      },
+      "ambiguous": 0,
+      "examined": 339
+    },
+    {
+      "tileId": "2_-3",
+      "level": 0,
+      "matched": {
+        "2": 42
+      },
+      "ambiguous": 0,
+      "examined": 1102
+    },
+    {
+      "tileId": "2_-3",
+      "level": 1,
+      "matched": {
+        "2": 42
+      },
+      "ambiguous": 0,
+      "examined": 1102
+    },
+    {
+      "tileId": "2_-3",
+      "level": 2,
+      "matched": {
+        "2": 42
+      },
+      "ambiguous": 0,
+      "examined": 1102
+    },
+    {
+      "tileId": "2_-2",
+      "level": 0,
+      "matched": {
+        "2": 344
+      },
+      "ambiguous": 0,
+      "examined": 828
+    },
+    {
+      "tileId": "2_-2",
+      "level": 1,
+      "matched": {
+        "2": 344
+      },
+      "ambiguous": 0,
+      "examined": 828
+    },
+    {
+      "tileId": "2_-2",
+      "level": 2,
+      "matched": {
+        "2": 344
+      },
+      "ambiguous": 0,
+      "examined": 828
+    },
+    {
+      "tileId": "2_-1",
+      "level": 0,
+      "matched": {
+        "2": 25,
+        "5": 262
+      },
+      "ambiguous": 0,
+      "examined": 520
+    },
+    {
+      "tileId": "2_-1",
+      "level": 1,
+      "matched": {
+        "2": 25,
+        "5": 262
+      },
+      "ambiguous": 0,
+      "examined": 520
+    },
+    {
+      "tileId": "2_-1",
+      "level": 2,
+      "matched": {
+        "2": 25,
+        "5": 262
+      },
+      "ambiguous": 0,
+      "examined": 520
+    },
+    {
+      "tileId": "2_0",
+      "level": 0,
+      "matched": {
+        "5": 83
+      },
+      "ambiguous": 0,
+      "examined": 83
+    },
+    {
+      "tileId": "2_0",
+      "level": 1,
+      "matched": {
+        "5": 83
+      },
+      "ambiguous": 0,
+      "examined": 83
+    },
+    {
+      "tileId": "2_0",
+      "level": 2,
+      "matched": {
+        "5": 83
+      },
+      "ambiguous": 0,
+      "examined": 83
+    },
+    {
+      "tileId": "2_11",
+      "level": 0,
+      "matched": {
+        "5": 231,
+        "2": 65
+      },
+      "ambiguous": 0,
+      "examined": 512
+    },
+    {
+      "tileId": "2_11",
+      "level": 1,
+      "matched": {
+        "5": 231,
+        "2": 65
+      },
+      "ambiguous": 0,
+      "examined": 512
+    },
+    {
+      "tileId": "2_11",
+      "level": 2,
+      "matched": {
+        "5": 231,
+        "2": 65
+      },
+      "ambiguous": 0,
+      "examined": 512
+    },
+    {
+      "tileId": "2_12",
+      "level": 0,
+      "matched": {
+        "2": 87,
+        "5": 194
+      },
+      "ambiguous": 0,
+      "examined": 281
+    },
+    {
+      "tileId": "2_12",
+      "level": 1,
+      "matched": {
+        "2": 87,
+        "5": 194
+      },
+      "ambiguous": 0,
+      "examined": 281
+    },
+    {
+      "tileId": "2_12",
+      "level": 2,
+      "matched": {
+        "2": 87,
+        "5": 194
+      },
+      "ambiguous": 0,
+      "examined": 281
+    },
+    {
+      "tileId": "3_-16",
+      "level": 0,
+      "matched": {
+        "5": 367
+      },
+      "ambiguous": 0,
+      "examined": 367
+    },
+    {
+      "tileId": "3_-16",
+      "level": 1,
+      "matched": {
+        "5": 367
+      },
+      "ambiguous": 0,
+      "examined": 367
+    },
+    {
+      "tileId": "3_-16",
+      "level": 2,
+      "matched": {
+        "5": 367
+      },
+      "ambiguous": 0,
+      "examined": 367
+    },
+    {
+      "tileId": "3_-15",
+      "level": 0,
+      "matched": {
+        "5": 278
+      },
+      "ambiguous": 0,
+      "examined": 356
+    },
+    {
+      "tileId": "3_-15",
+      "level": 1,
+      "matched": {
+        "5": 278
+      },
+      "ambiguous": 0,
+      "examined": 356
+    },
+    {
+      "tileId": "3_-15",
+      "level": 2,
+      "matched": {
+        "5": 278
+      },
+      "ambiguous": 0,
+      "examined": 356
+    },
+    {
+      "tileId": "3_-11",
+      "level": 0,
+      "matched": {
+        "5": 49
+      },
+      "ambiguous": 0,
+      "examined": 49
+    },
+    {
+      "tileId": "3_-11",
+      "level": 1,
+      "matched": {
+        "5": 49
+      },
+      "ambiguous": 0,
+      "examined": 49
+    },
+    {
+      "tileId": "3_-11",
+      "level": 2,
+      "matched": {
+        "5": 49
+      },
+      "ambiguous": 0,
+      "examined": 49
+    },
+    {
+      "tileId": "3_-7",
+      "level": 0,
+      "matched": {
+        "5": 280
+      },
+      "ambiguous": 0,
+      "examined": 280
+    },
+    {
+      "tileId": "3_-7",
+      "level": 1,
+      "matched": {
+        "5": 280
+      },
+      "ambiguous": 0,
+      "examined": 280
+    },
+    {
+      "tileId": "3_-7",
+      "level": 2,
+      "matched": {
+        "5": 280
+      },
+      "ambiguous": 0,
+      "examined": 280
+    },
+    {
+      "tileId": "3_-4",
+      "level": 0,
+      "matched": {
+        "2": 250,
+        "5": 49
+      },
+      "ambiguous": 0,
+      "examined": 710
+    },
+    {
+      "tileId": "3_-4",
+      "level": 1,
+      "matched": {
+        "2": 250,
+        "5": 49
+      },
+      "ambiguous": 0,
+      "examined": 710
+    },
+    {
+      "tileId": "3_-4",
+      "level": 2,
+      "matched": {
+        "2": 250,
+        "5": 49
+      },
+      "ambiguous": 0,
+      "examined": 710
+    },
+    {
+      "tileId": "3_-3",
+      "level": 0,
+      "matched": {
+        "2": 98,
+        "5": 82
+      },
+      "ambiguous": 0,
+      "examined": 759
+    },
+    {
+      "tileId": "3_-3",
+      "level": 1,
+      "matched": {
+        "2": 98,
+        "5": 82
+      },
+      "ambiguous": 0,
+      "examined": 759
+    },
+    {
+      "tileId": "3_-3",
+      "level": 2,
+      "matched": {
+        "2": 98,
+        "5": 82
+      },
+      "ambiguous": 0,
+      "examined": 759
+    },
+    {
+      "tileId": "3_12",
+      "level": 0,
+      "matched": {
+        "5": 282
+      },
+      "ambiguous": 0,
+      "examined": 282
+    },
+    {
+      "tileId": "3_12",
+      "level": 1,
+      "matched": {
+        "5": 282
+      },
+      "ambiguous": 0,
+      "examined": 282
+    },
+    {
+      "tileId": "3_12",
+      "level": 2,
+      "matched": {
+        "5": 282
+      },
+      "ambiguous": 0,
+      "examined": 282
+    },
+    {
+      "tileId": "4_-16",
+      "level": 0,
+      "matched": {
+        "5": 295
+      },
+      "ambiguous": 0,
+      "examined": 482
+    },
+    {
+      "tileId": "4_-16",
+      "level": 1,
+      "matched": {
+        "5": 295
+      },
+      "ambiguous": 0,
+      "examined": 482
+    },
+    {
+      "tileId": "4_-16",
+      "level": 2,
+      "matched": {
+        "5": 295
+      },
+      "ambiguous": 0,
+      "examined": 482
+    },
+    {
+      "tileId": "4_-15",
+      "level": 0,
+      "matched": {
+        "5": 388
+      },
+      "ambiguous": 0,
+      "examined": 682
+    },
+    {
+      "tileId": "4_-15",
+      "level": 1,
+      "matched": {
+        "5": 388
+      },
+      "ambiguous": 0,
+      "examined": 682
+    },
+    {
+      "tileId": "4_-15",
+      "level": 2,
+      "matched": {
+        "5": 388
+      },
+      "ambiguous": 0,
+      "examined": 682
+    },
+    {
+      "tileId": "4_-11",
+      "level": 0,
+      "matched": {
+        "5": 88
+      },
+      "ambiguous": 0,
+      "examined": 88
+    },
+    {
+      "tileId": "4_-11",
+      "level": 1,
+      "matched": {
+        "5": 88
+      },
+      "ambiguous": 0,
+      "examined": 88
+    },
+    {
+      "tileId": "4_-11",
+      "level": 2,
+      "matched": {
+        "5": 88
+      },
+      "ambiguous": 0,
+      "examined": 88
+    },
+    {
+      "tileId": "4_-10",
+      "level": 0,
+      "matched": {
+        "5": 441
+      },
+      "ambiguous": 0,
+      "examined": 531
+    },
+    {
+      "tileId": "4_-10",
+      "level": 1,
+      "matched": {
+        "5": 441
+      },
+      "ambiguous": 0,
+      "examined": 531
+    },
+    {
+      "tileId": "4_-10",
+      "level": 2,
+      "matched": {
+        "5": 441
+      },
+      "ambiguous": 0,
+      "examined": 531
+    },
+    {
+      "tileId": "4_-9",
+      "level": 0,
+      "matched": {
+        "5": 1
+      },
+      "ambiguous": 0,
+      "examined": 81
+    },
+    {
+      "tileId": "4_-9",
+      "level": 1,
+      "matched": {
+        "5": 1
+      },
+      "ambiguous": 0,
+      "examined": 81
+    },
+    {
+      "tileId": "4_-9",
+      "level": 2,
+      "matched": {
+        "5": 1
+      },
+      "ambiguous": 0,
+      "examined": 81
+    },
+    {
+      "tileId": "4_-8",
+      "level": 0,
+      "matched": {
+        "2": 114
+      },
+      "ambiguous": 0,
+      "examined": 114
+    },
+    {
+      "tileId": "4_-8",
+      "level": 1,
+      "matched": {
+        "2": 114
+      },
+      "ambiguous": 0,
+      "examined": 114
+    },
+    {
+      "tileId": "4_-8",
+      "level": 2,
+      "matched": {
+        "2": 114
+      },
+      "ambiguous": 0,
+      "examined": 114
+    },
+    {
+      "tileId": "4_-7",
+      "level": 0,
+      "matched": {
+        "5": 302,
+        "2": 258
+      },
+      "ambiguous": 0,
+      "examined": 592
+    },
+    {
+      "tileId": "4_-7",
+      "level": 1,
+      "matched": {
+        "5": 302,
+        "2": 258
+      },
+      "ambiguous": 0,
+      "examined": 592
+    },
+    {
+      "tileId": "4_-7",
+      "level": 2,
+      "matched": {
+        "5": 302,
+        "2": 258
+      },
+      "ambiguous": 0,
+      "examined": 592
+    },
+    {
+      "tileId": "4_-6",
+      "level": 0,
+      "matched": {
+        "5": 92
+      },
+      "ambiguous": 0,
+      "examined": 92
+    },
+    {
+      "tileId": "4_-6",
+      "level": 1,
+      "matched": {
+        "5": 92
+      },
+      "ambiguous": 0,
+      "examined": 92
+    },
+    {
+      "tileId": "4_-6",
+      "level": 2,
+      "matched": {
+        "5": 92
+      },
+      "ambiguous": 0,
+      "examined": 92
+    },
+    {
+      "tileId": "4_-5",
+      "level": 0,
+      "matched": {
+        "5": 289
+      },
+      "ambiguous": 0,
+      "examined": 431
+    },
+    {
+      "tileId": "4_-5",
+      "level": 1,
+      "matched": {
+        "5": 289
+      },
+      "ambiguous": 0,
+      "examined": 431
+    },
+    {
+      "tileId": "4_-5",
+      "level": 2,
+      "matched": {
+        "5": 289
+      },
+      "ambiguous": 0,
+      "examined": 431
+    },
+    {
+      "tileId": "4_-4",
+      "level": 0,
+      "matched": {
+        "5": 570,
+        "2": 28
+      },
+      "ambiguous": 0,
+      "examined": 686
+    },
+    {
+      "tileId": "4_-4",
+      "level": 1,
+      "matched": {
+        "5": 570,
+        "2": 28
+      },
+      "ambiguous": 0,
+      "examined": 686
+    },
+    {
+      "tileId": "4_-4",
+      "level": 2,
+      "matched": {
+        "5": 570,
+        "2": 28
+      },
+      "ambiguous": 0,
+      "examined": 686
+    },
+    {
+      "tileId": "4_-3",
+      "level": 0,
+      "matched": {
+        "2": 410
+      },
+      "ambiguous": 0,
+      "examined": 483
+    },
+    {
+      "tileId": "4_-3",
+      "level": 1,
+      "matched": {
+        "2": 410
+      },
+      "ambiguous": 0,
+      "examined": 483
+    },
+    {
+      "tileId": "4_-3",
+      "level": 2,
+      "matched": {
+        "2": 410
+      },
+      "ambiguous": 0,
+      "examined": 483
+    },
+    {
+      "tileId": "4_-2",
+      "level": 0,
+      "matched": {
+        "5": 69
+      },
+      "ambiguous": 0,
+      "examined": 353
+    },
+    {
+      "tileId": "4_-2",
+      "level": 1,
+      "matched": {
+        "5": 69
+      },
+      "ambiguous": 0,
+      "examined": 353
+    },
+    {
+      "tileId": "4_-2",
+      "level": 2,
+      "matched": {
+        "5": 69
+      },
+      "ambiguous": 0,
+      "examined": 353
+    },
+    {
+      "tileId": "4_12",
+      "level": 0,
+      "matched": {
+        "5": 36
+      },
+      "ambiguous": 0,
+      "examined": 36
+    },
+    {
+      "tileId": "4_12",
+      "level": 1,
+      "matched": {
+        "5": 36
+      },
+      "ambiguous": 0,
+      "examined": 36
+    },
+    {
+      "tileId": "4_12",
+      "level": 2,
+      "matched": {
+        "5": 36
+      },
+      "ambiguous": 0,
+      "examined": 36
+    },
+    {
+      "tileId": "4_13",
+      "level": 0,
+      "matched": {
+        "5": 252
+      },
+      "ambiguous": 0,
+      "examined": 252
+    },
+    {
+      "tileId": "4_13",
+      "level": 1,
+      "matched": {
+        "5": 252
+      },
+      "ambiguous": 0,
+      "examined": 252
+    },
+    {
+      "tileId": "4_13",
+      "level": 2,
+      "matched": {
+        "5": 252
+      },
+      "ambiguous": 0,
+      "examined": 252
+    },
+    {
+      "tileId": "5_-16",
+      "level": 0,
+      "matched": {
+        "5": 69,
+        "2": 170
+      },
+      "ambiguous": 0,
+      "examined": 332
+    },
+    {
+      "tileId": "5_-16",
+      "level": 1,
+      "matched": {
+        "5": 69,
+        "2": 170
+      },
+      "ambiguous": 0,
+      "examined": 332
+    },
+    {
+      "tileId": "5_-16",
+      "level": 2,
+      "matched": {
+        "5": 69,
+        "2": 170
+      },
+      "ambiguous": 0,
+      "examined": 332
+    },
+    {
+      "tileId": "5_-15",
+      "level": 0,
+      "matched": {
+        "5": 365,
+        "2": 88
+      },
+      "ambiguous": 0,
+      "examined": 687
+    },
+    {
+      "tileId": "5_-15",
+      "level": 1,
+      "matched": {
+        "5": 365,
+        "2": 88
+      },
+      "ambiguous": 0,
+      "examined": 687
+    },
+    {
+      "tileId": "5_-15",
+      "level": 2,
+      "matched": {
+        "5": 365,
+        "2": 88
+      },
+      "ambiguous": 0,
+      "examined": 687
+    },
+    {
+      "tileId": "5_-14",
+      "level": 0,
+      "matched": {
+        "2": 50,
+        "5": 181
+      },
+      "ambiguous": 0,
+      "examined": 780
+    },
+    {
+      "tileId": "5_-14",
+      "level": 1,
+      "matched": {
+        "2": 50,
+        "5": 181
+      },
+      "ambiguous": 0,
+      "examined": 780
+    },
+    {
+      "tileId": "5_-14",
+      "level": 2,
+      "matched": {
+        "2": 50,
+        "5": 181
+      },
+      "ambiguous": 0,
+      "examined": 780
+    },
+    {
+      "tileId": "5_-10",
+      "level": 0,
+      "matched": {
+        "5": 388
+      },
+      "ambiguous": 0,
+      "examined": 388
+    },
+    {
+      "tileId": "5_-10",
+      "level": 1,
+      "matched": {
+        "5": 388
+      },
+      "ambiguous": 0,
+      "examined": 388
+    },
+    {
+      "tileId": "5_-10",
+      "level": 2,
+      "matched": {
+        "5": 388
+      },
+      "ambiguous": 0,
+      "examined": 388
+    },
+    {
+      "tileId": "5_-9",
+      "level": 0,
+      "matched": {
+        "5": 224
+      },
+      "ambiguous": 0,
+      "examined": 406
+    },
+    {
+      "tileId": "5_-9",
+      "level": 1,
+      "matched": {
+        "5": 224
+      },
+      "ambiguous": 0,
+      "examined": 406
+    },
+    {
+      "tileId": "5_-9",
+      "level": 2,
+      "matched": {
+        "5": 224
+      },
+      "ambiguous": 0,
+      "examined": 406
+    },
+    {
+      "tileId": "5_-8",
+      "level": 0,
+      "matched": {
+        "5": 177
+      },
+      "ambiguous": 0,
+      "examined": 709
+    },
+    {
+      "tileId": "5_-8",
+      "level": 1,
+      "matched": {
+        "5": 177
+      },
+      "ambiguous": 0,
+      "examined": 709
+    },
+    {
+      "tileId": "5_-8",
+      "level": 2,
+      "matched": {
+        "5": 177
+      },
+      "ambiguous": 0,
+      "examined": 709
+    },
+    {
+      "tileId": "5_-7",
+      "level": 0,
+      "matched": {
+        "5": 341,
+        "2": 62
+      },
+      "ambiguous": 0,
+      "examined": 403
+    },
+    {
+      "tileId": "5_-7",
+      "level": 1,
+      "matched": {
+        "5": 341,
+        "2": 62
+      },
+      "ambiguous": 0,
+      "examined": 403
+    },
+    {
+      "tileId": "5_-7",
+      "level": 2,
+      "matched": {
+        "5": 341,
+        "2": 62
+      },
+      "ambiguous": 0,
+      "examined": 403
+    },
+    {
+      "tileId": "5_-6",
+      "level": 0,
+      "matched": {
+        "5": 241
+      },
+      "ambiguous": 0,
+      "examined": 241
+    },
+    {
+      "tileId": "5_-6",
+      "level": 1,
+      "matched": {
+        "5": 241
+      },
+      "ambiguous": 0,
+      "examined": 241
+    },
+    {
+      "tileId": "5_-6",
+      "level": 2,
+      "matched": {
+        "5": 241
+      },
+      "ambiguous": 0,
+      "examined": 241
+    },
+    {
+      "tileId": "5_-5",
+      "level": 0,
+      "matched": {
+        "5": 180
+      },
+      "ambiguous": 0,
+      "examined": 180
+    },
+    {
+      "tileId": "5_-5",
+      "level": 1,
+      "matched": {
+        "5": 180
+      },
+      "ambiguous": 0,
+      "examined": 180
+    },
+    {
+      "tileId": "5_-5",
+      "level": 2,
+      "matched": {
+        "5": 180
+      },
+      "ambiguous": 0,
+      "examined": 180
+    },
+    {
+      "tileId": "5_-4",
+      "level": 0,
+      "matched": {
+        "5": 515
+      },
+      "ambiguous": 0,
+      "examined": 693
+    },
+    {
+      "tileId": "5_-4",
+      "level": 1,
+      "matched": {
+        "5": 515
+      },
+      "ambiguous": 0,
+      "examined": 693
+    },
+    {
+      "tileId": "5_-4",
+      "level": 2,
+      "matched": {
+        "5": 515
+      },
+      "ambiguous": 0,
+      "examined": 693
+    },
+    {
+      "tileId": "5_-3",
+      "level": 0,
+      "matched": {
+        "2": 8
+      },
+      "ambiguous": 0,
+      "examined": 83
+    },
+    {
+      "tileId": "5_-3",
+      "level": 1,
+      "matched": {
+        "2": 8
+      },
+      "ambiguous": 0,
+      "examined": 83
+    },
+    {
+      "tileId": "5_-3",
+      "level": 2,
+      "matched": {
+        "2": 8
+      },
+      "ambiguous": 0,
+      "examined": 83
+    },
+    {
+      "tileId": "5_-2",
+      "level": 0,
+      "matched": {
+        "5": 199
+      },
+      "ambiguous": 0,
+      "examined": 310
+    },
+    {
+      "tileId": "5_-2",
+      "level": 1,
+      "matched": {
+        "5": 199
+      },
+      "ambiguous": 0,
+      "examined": 310
+    },
+    {
+      "tileId": "5_-2",
+      "level": 2,
+      "matched": {
+        "5": 199
+      },
+      "ambiguous": 0,
+      "examined": 310
+    },
+    {
+      "tileId": "5_-1",
+      "level": 0,
+      "matched": {
+        "5": 254
+      },
+      "ambiguous": 0,
+      "examined": 741
+    },
+    {
+      "tileId": "5_-1",
+      "level": 1,
+      "matched": {
+        "5": 254
+      },
+      "ambiguous": 0,
+      "examined": 741
+    },
+    {
+      "tileId": "5_-1",
+      "level": 2,
+      "matched": {
+        "5": 254
+      },
+      "ambiguous": 0,
+      "examined": 741
+    },
+    {
+      "tileId": "5_13",
+      "level": 0,
+      "matched": {
+        "5": 191
+      },
+      "ambiguous": 0,
+      "examined": 191
+    },
+    {
+      "tileId": "5_13",
+      "level": 1,
+      "matched": {
+        "5": 191
+      },
+      "ambiguous": 0,
+      "examined": 191
+    },
+    {
+      "tileId": "5_13",
+      "level": 2,
+      "matched": {
+        "5": 191
+      },
+      "ambiguous": 0,
+      "examined": 191
+    },
+    {
+      "tileId": "5_14",
+      "level": 0,
+      "matched": {
+        "5": 210
+      },
+      "ambiguous": 0,
+      "examined": 210
+    },
+    {
+      "tileId": "5_14",
+      "level": 1,
+      "matched": {
+        "5": 210
+      },
+      "ambiguous": 0,
+      "examined": 210
+    },
+    {
+      "tileId": "5_14",
+      "level": 2,
+      "matched": {
+        "5": 210
+      },
+      "ambiguous": 0,
+      "examined": 210
+    },
+    {
+      "tileId": "6_-16",
+      "level": 0,
+      "matched": {
+        "2": 116
+      },
+      "ambiguous": 0,
+      "examined": 116
+    },
+    {
+      "tileId": "6_-16",
+      "level": 1,
+      "matched": {
+        "2": 116
+      },
+      "ambiguous": 0,
+      "examined": 116
+    },
+    {
+      "tileId": "6_-16",
+      "level": 2,
+      "matched": {
+        "2": 116
+      },
+      "ambiguous": 0,
+      "examined": 116
+    },
+    {
+      "tileId": "6_-14",
+      "level": 0,
+      "matched": {
+        "2": 67,
+        "5": 403
+      },
+      "ambiguous": 0,
+      "examined": 470
+    },
+    {
+      "tileId": "6_-14",
+      "level": 1,
+      "matched": {
+        "2": 67,
+        "5": 403
+      },
+      "ambiguous": 0,
+      "examined": 470
+    },
+    {
+      "tileId": "6_-14",
+      "level": 2,
+      "matched": {
+        "2": 67,
+        "5": 403
+      },
+      "ambiguous": 0,
+      "examined": 470
+    },
+    {
+      "tileId": "6_-13",
+      "level": 0,
+      "matched": {
+        "5": 331
+      },
+      "ambiguous": 0,
+      "examined": 331
+    },
+    {
+      "tileId": "6_-13",
+      "level": 1,
+      "matched": {
+        "5": 331
+      },
+      "ambiguous": 0,
+      "examined": 331
+    },
+    {
+      "tileId": "6_-13",
+      "level": 2,
+      "matched": {
+        "5": 331
+      },
+      "ambiguous": 0,
+      "examined": 331
+    },
+    {
+      "tileId": "6_-12",
+      "level": 0,
+      "matched": {
+        "2": 54
+      },
+      "ambiguous": 0,
+      "examined": 86
+    },
+    {
+      "tileId": "6_-12",
+      "level": 1,
+      "matched": {
+        "2": 54
+      },
+      "ambiguous": 0,
+      "examined": 86
+    },
+    {
+      "tileId": "6_-12",
+      "level": 2,
+      "matched": {
+        "2": 54
+      },
+      "ambiguous": 0,
+      "examined": 86
+    },
+    {
+      "tileId": "6_-11",
+      "level": 0,
+      "matched": {
+        "5": 582
+      },
+      "ambiguous": 0,
+      "examined": 593
+    },
+    {
+      "tileId": "6_-11",
+      "level": 1,
+      "matched": {
+        "5": 582
+      },
+      "ambiguous": 0,
+      "examined": 593
+    },
+    {
+      "tileId": "6_-11",
+      "level": 2,
+      "matched": {
+        "5": 582
+      },
+      "ambiguous": 0,
+      "examined": 593
+    },
+    {
+      "tileId": "6_-10",
+      "level": 0,
+      "matched": {
+        "5": 304
+      },
+      "ambiguous": 0,
+      "examined": 589
+    },
+    {
+      "tileId": "6_-10",
+      "level": 1,
+      "matched": {
+        "5": 304
+      },
+      "ambiguous": 0,
+      "examined": 589
+    },
+    {
+      "tileId": "6_-10",
+      "level": 2,
+      "matched": {
+        "5": 304
+      },
+      "ambiguous": 0,
+      "examined": 589
+    },
+    {
+      "tileId": "6_-9",
+      "level": 0,
+      "matched": {
+        "5": 205
+      },
+      "ambiguous": 0,
+      "examined": 496
+    },
+    {
+      "tileId": "6_-9",
+      "level": 1,
+      "matched": {
+        "5": 205
+      },
+      "ambiguous": 0,
+      "examined": 496
+    },
+    {
+      "tileId": "6_-9",
+      "level": 2,
+      "matched": {
+        "5": 205
+      },
+      "ambiguous": 0,
+      "examined": 496
+    },
+    {
+      "tileId": "6_-8",
+      "level": 0,
+      "matched": {
+        "5": 171
+      },
+      "ambiguous": 0,
+      "examined": 216
+    },
+    {
+      "tileId": "6_-8",
+      "level": 1,
+      "matched": {
+        "5": 171
+      },
+      "ambiguous": 0,
+      "examined": 216
+    },
+    {
+      "tileId": "6_-8",
+      "level": 2,
+      "matched": {
+        "5": 171
+      },
+      "ambiguous": 0,
+      "examined": 216
+    },
+    {
+      "tileId": "6_-7",
+      "level": 0,
+      "matched": {
+        "5": 69
+      },
+      "ambiguous": 0,
+      "examined": 69
+    },
+    {
+      "tileId": "6_-7",
+      "level": 1,
+      "matched": {
+        "5": 69
+      },
+      "ambiguous": 0,
+      "examined": 69
+    },
+    {
+      "tileId": "6_-7",
+      "level": 2,
+      "matched": {
+        "5": 69
+      },
+      "ambiguous": 0,
+      "examined": 69
+    },
+    {
+      "tileId": "6_-6",
+      "level": 0,
+      "matched": {
+        "5": 294
+      },
+      "ambiguous": 0,
+      "examined": 294
+    },
+    {
+      "tileId": "6_-6",
+      "level": 1,
+      "matched": {
+        "5": 294
+      },
+      "ambiguous": 0,
+      "examined": 294
+    },
+    {
+      "tileId": "6_-6",
+      "level": 2,
+      "matched": {
+        "5": 294
+      },
+      "ambiguous": 0,
+      "examined": 294
+    },
+    {
+      "tileId": "6_-5",
+      "level": 0,
+      "matched": {
+        "5": 290
+      },
+      "ambiguous": 0,
+      "examined": 536
+    },
+    {
+      "tileId": "6_-5",
+      "level": 1,
+      "matched": {
+        "5": 290
+      },
+      "ambiguous": 0,
+      "examined": 536
+    },
+    {
+      "tileId": "6_-5",
+      "level": 2,
+      "matched": {
+        "5": 290
+      },
+      "ambiguous": 0,
+      "examined": 536
+    },
+    {
+      "tileId": "6_-4",
+      "level": 0,
+      "matched": {
+        "5": 50
+      },
+      "ambiguous": 0,
+      "examined": 58
+    },
+    {
+      "tileId": "6_-4",
+      "level": 1,
+      "matched": {
+        "5": 50
+      },
+      "ambiguous": 0,
+      "examined": 58
+    },
+    {
+      "tileId": "6_-4",
+      "level": 2,
+      "matched": {
+        "5": 50
+      },
+      "ambiguous": 0,
+      "examined": 58
+    },
+    {
+      "tileId": "6_-1",
+      "level": 0,
+      "matched": {
+        "5": 309
+      },
+      "ambiguous": 0,
+      "examined": 391
+    },
+    {
+      "tileId": "6_-1",
+      "level": 1,
+      "matched": {
+        "5": 309
+      },
+      "ambiguous": 0,
+      "examined": 391
+    },
+    {
+      "tileId": "6_-1",
+      "level": 2,
+      "matched": {
+        "5": 309
+      },
+      "ambiguous": 0,
+      "examined": 391
+    },
+    {
+      "tileId": "7_-15",
+      "level": 0,
+      "matched": {
+        "5": 30,
+        "2": 104
+      },
+      "ambiguous": 0,
+      "examined": 141
+    },
+    {
+      "tileId": "7_-15",
+      "level": 1,
+      "matched": {
+        "5": 30,
+        "2": 104
+      },
+      "ambiguous": 0,
+      "examined": 141
+    },
+    {
+      "tileId": "7_-15",
+      "level": 2,
+      "matched": {
+        "5": 30,
+        "2": 104
+      },
+      "ambiguous": 0,
+      "examined": 141
+    },
+    {
+      "tileId": "7_-14",
+      "level": 0,
+      "matched": {
+        "2": 76,
+        "5": 538
+      },
+      "ambiguous": 0,
+      "examined": 897
+    },
+    {
+      "tileId": "7_-14",
+      "level": 1,
+      "matched": {
+        "2": 76,
+        "5": 538
+      },
+      "ambiguous": 0,
+      "examined": 897
+    },
+    {
+      "tileId": "7_-14",
+      "level": 2,
+      "matched": {
+        "2": 76,
+        "5": 538
+      },
+      "ambiguous": 0,
+      "examined": 897
+    },
+    {
+      "tileId": "7_-13",
+      "level": 0,
+      "matched": {
+        "5": 24,
+        "2": 305
+      },
+      "ambiguous": 0,
+      "examined": 1113
+    },
+    {
+      "tileId": "7_-13",
+      "level": 1,
+      "matched": {
+        "5": 24,
+        "2": 305
+      },
+      "ambiguous": 0,
+      "examined": 1113
+    },
+    {
+      "tileId": "7_-13",
+      "level": 2,
+      "matched": {
+        "5": 24,
+        "2": 305
+      },
+      "ambiguous": 0,
+      "examined": 1113
+    },
+    {
+      "tileId": "7_-12",
+      "level": 0,
+      "matched": {
+        "2": 377,
+        "5": 557
+      },
+      "ambiguous": 0,
+      "examined": 1141
+    },
+    {
+      "tileId": "7_-12",
+      "level": 1,
+      "matched": {
+        "2": 377,
+        "5": 557
+      },
+      "ambiguous": 0,
+      "examined": 1141
+    },
+    {
+      "tileId": "7_-12",
+      "level": 2,
+      "matched": {
+        "2": 377,
+        "5": 557
+      },
+      "ambiguous": 0,
+      "examined": 1141
+    },
+    {
+      "tileId": "7_-11",
+      "level": 0,
+      "matched": {
+        "1": 219,
+        "2": 43,
+        "5": 202
+      },
+      "ambiguous": 0,
+      "examined": 464
+    },
+    {
+      "tileId": "7_-11",
+      "level": 1,
+      "matched": {
+        "1": 219,
+        "2": 43,
+        "5": 202
+      },
+      "ambiguous": 0,
+      "examined": 464
+    },
+    {
+      "tileId": "7_-11",
+      "level": 2,
+      "matched": {
+        "1": 219,
+        "2": 43,
+        "5": 202
+      },
+      "ambiguous": 0,
+      "examined": 464
+    },
+    {
+      "tileId": "7_-10",
+      "level": 0,
+      "matched": {
+        "5": 252
+      },
+      "ambiguous": 0,
+      "examined": 588
+    },
+    {
+      "tileId": "7_-10",
+      "level": 1,
+      "matched": {
+        "5": 252
+      },
+      "ambiguous": 0,
+      "examined": 588
+    },
+    {
+      "tileId": "7_-10",
+      "level": 2,
+      "matched": {
+        "5": 252
+      },
+      "ambiguous": 0,
+      "examined": 588
+    },
+    {
+      "tileId": "7_-9",
+      "level": 0,
+      "matched": {
+        "5": 196
+      },
+      "ambiguous": 0,
+      "examined": 199
+    },
+    {
+      "tileId": "7_-9",
+      "level": 1,
+      "matched": {
+        "5": 196
+      },
+      "ambiguous": 0,
+      "examined": 199
+    },
+    {
+      "tileId": "7_-9",
+      "level": 2,
+      "matched": {
+        "5": 196
+      },
+      "ambiguous": 0,
+      "examined": 199
+    },
+    {
+      "tileId": "7_-8",
+      "level": 0,
+      "matched": {
+        "5": 177
+      },
+      "ambiguous": 0,
+      "examined": 177
+    },
+    {
+      "tileId": "7_-8",
+      "level": 1,
+      "matched": {
+        "5": 177
+      },
+      "ambiguous": 0,
+      "examined": 177
+    },
+    {
+      "tileId": "7_-8",
+      "level": 2,
+      "matched": {
+        "5": 177
+      },
+      "ambiguous": 0,
+      "examined": 177
+    },
+    {
+      "tileId": "7_-7",
+      "level": 0,
+      "matched": {
+        "5": 253
+      },
+      "ambiguous": 0,
+      "examined": 441
+    },
+    {
+      "tileId": "7_-7",
+      "level": 1,
+      "matched": {
+        "5": 253
+      },
+      "ambiguous": 0,
+      "examined": 441
+    },
+    {
+      "tileId": "7_-7",
+      "level": 2,
+      "matched": {
+        "5": 253
+      },
+      "ambiguous": 0,
+      "examined": 441
+    },
+    {
+      "tileId": "7_-2",
+      "level": 0,
+      "matched": {
+        "5": 220
+      },
+      "ambiguous": 0,
+      "examined": 220
+    },
+    {
+      "tileId": "7_-2",
+      "level": 1,
+      "matched": {
+        "5": 220
+      },
+      "ambiguous": 0,
+      "examined": 220
+    },
+    {
+      "tileId": "7_-2",
+      "level": 2,
+      "matched": {
+        "5": 220
+      },
+      "ambiguous": 0,
+      "examined": 220
+    },
+    {
+      "tileId": "7_-1",
+      "level": 0,
+      "matched": {
+        "5": 95
+      },
+      "ambiguous": 0,
+      "examined": 835
+    },
+    {
+      "tileId": "7_-1",
+      "level": 1,
+      "matched": {
+        "5": 95
+      },
+      "ambiguous": 0,
+      "examined": 835
+    },
+    {
+      "tileId": "7_-1",
+      "level": 2,
+      "matched": {
+        "5": 95
+      },
+      "ambiguous": 0,
+      "examined": 835
+    },
+    {
+      "tileId": "8_-12",
+      "level": 0,
+      "matched": {
+        "5": 193,
+        "2": 459
+      },
+      "ambiguous": 0,
+      "examined": 690
+    },
+    {
+      "tileId": "8_-12",
+      "level": 1,
+      "matched": {
+        "5": 193,
+        "2": 459
+      },
+      "ambiguous": 0,
+      "examined": 690
+    },
+    {
+      "tileId": "8_-12",
+      "level": 2,
+      "matched": {
+        "5": 193,
+        "2": 459
+      },
+      "ambiguous": 0,
+      "examined": 690
+    },
+    {
+      "tileId": "8_-11",
+      "level": 0,
+      "matched": {
+        "1": 242,
+        "5": 555,
+        "2": 215
+      },
+      "ambiguous": 0,
+      "examined": 1083
+    },
+    {
+      "tileId": "8_-11",
+      "level": 1,
+      "matched": {
+        "1": 242,
+        "5": 555,
+        "2": 215
+      },
+      "ambiguous": 0,
+      "examined": 1083
+    },
+    {
+      "tileId": "8_-11",
+      "level": 2,
+      "matched": {
+        "1": 242,
+        "5": 555,
+        "2": 215
+      },
+      "ambiguous": 0,
+      "examined": 1083
+    },
+    {
+      "tileId": "8_-10",
+      "level": 0,
+      "matched": {
+        "1": 11,
+        "5": 97
+      },
+      "ambiguous": 0,
+      "examined": 129
+    },
+    {
+      "tileId": "8_-10",
+      "level": 1,
+      "matched": {
+        "1": 11,
+        "5": 97
+      },
+      "ambiguous": 0,
+      "examined": 129
+    },
+    {
+      "tileId": "8_-10",
+      "level": 2,
+      "matched": {
+        "1": 11,
+        "5": 97
+      },
+      "ambiguous": 0,
+      "examined": 129
+    },
+    {
+      "tileId": "8_-9",
+      "level": 0,
+      "matched": {
+        "5": 326
+      },
+      "ambiguous": 0,
+      "examined": 377
+    },
+    {
+      "tileId": "8_-9",
+      "level": 1,
+      "matched": {
+        "5": 326
+      },
+      "ambiguous": 0,
+      "examined": 377
+    },
+    {
+      "tileId": "8_-9",
+      "level": 2,
+      "matched": {
+        "5": 326
+      },
+      "ambiguous": 0,
+      "examined": 377
+    },
+    {
+      "tileId": "8_-8",
+      "level": 0,
+      "matched": {
+        "5": 161
+      },
+      "ambiguous": 0,
+      "examined": 273
+    },
+    {
+      "tileId": "8_-8",
+      "level": 1,
+      "matched": {
+        "5": 161
+      },
+      "ambiguous": 0,
+      "examined": 273
+    },
+    {
+      "tileId": "8_-8",
+      "level": 2,
+      "matched": {
+        "5": 161
+      },
+      "ambiguous": 0,
+      "examined": 273
+    },
+    {
+      "tileId": "8_-2",
+      "level": 0,
+      "matched": {
+        "5": 176
+      },
+      "ambiguous": 0,
+      "examined": 320
+    },
+    {
+      "tileId": "8_-2",
+      "level": 1,
+      "matched": {
+        "5": 176
+      },
+      "ambiguous": 0,
+      "examined": 320
+    },
+    {
+      "tileId": "8_-2",
+      "level": 2,
+      "matched": {
+        "5": 176
+      },
+      "ambiguous": 0,
+      "examined": 320
+    },
+    {
+      "tileId": "9_-12",
+      "level": 0,
+      "matched": {
+        "5": 34,
+        "2": 4
+      },
+      "ambiguous": 0,
+      "examined": 38
+    },
+    {
+      "tileId": "9_-12",
+      "level": 1,
+      "matched": {
+        "5": 34,
+        "2": 4
+      },
+      "ambiguous": 0,
+      "examined": 38
+    },
+    {
+      "tileId": "9_-12",
+      "level": 2,
+      "matched": {
+        "5": 34,
+        "2": 4
+      },
+      "ambiguous": 0,
+      "examined": 38
+    },
+    {
+      "tileId": "9_-11",
+      "level": 0,
+      "matched": {
+        "5": 360
+      },
+      "ambiguous": 0,
+      "examined": 360
+    },
+    {
+      "tileId": "9_-11",
+      "level": 1,
+      "matched": {
+        "5": 360
+      },
+      "ambiguous": 0,
+      "examined": 360
+    },
+    {
+      "tileId": "9_-11",
+      "level": 2,
+      "matched": {
+        "5": 360
+      },
+      "ambiguous": 0,
+      "examined": 360
+    },
+    {
+      "tileId": "9_-10",
+      "level": 0,
+      "matched": {
+        "5": 476
+      },
+      "ambiguous": 0,
+      "examined": 476
+    },
+    {
+      "tileId": "9_-10",
+      "level": 1,
+      "matched": {
+        "5": 476
+      },
+      "ambiguous": 0,
+      "examined": 476
+    },
+    {
+      "tileId": "9_-10",
+      "level": 2,
+      "matched": {
+        "5": 476
+      },
+      "ambiguous": 0,
+      "examined": 476
+    },
+    {
+      "tileId": "9_-9",
+      "level": 0,
+      "matched": {
+        "5": 35
+      },
+      "ambiguous": 0,
+      "examined": 35
+    },
+    {
+      "tileId": "9_-9",
+      "level": 1,
+      "matched": {
+        "5": 35
+      },
+      "ambiguous": 0,
+      "examined": 35
+    },
+    {
+      "tileId": "9_-9",
+      "level": 2,
+      "matched": {
+        "5": 35
+      },
+      "ambiguous": 0,
+      "examined": 35
+    },
+    {
+      "tileId": "10_-12",
+      "level": 0,
+      "matched": {
+        "5": 171
+      },
+      "ambiguous": 0,
+      "examined": 377
+    },
+    {
+      "tileId": "10_-12",
+      "level": 1,
+      "matched": {
+        "5": 171
+      },
+      "ambiguous": 0,
+      "examined": 377
+    },
+    {
+      "tileId": "10_-12",
+      "level": 2,
+      "matched": {
+        "5": 171
+      },
+      "ambiguous": 0,
+      "examined": 377
+    },
+    {
+      "tileId": "10_-11",
+      "level": 0,
+      "matched": {
+        "5": 197
+      },
+      "ambiguous": 0,
+      "examined": 197
+    },
+    {
+      "tileId": "10_-11",
+      "level": 1,
+      "matched": {
+        "5": 197
+      },
+      "ambiguous": 0,
+      "examined": 197
+    },
+    {
+      "tileId": "10_-11",
+      "level": 2,
+      "matched": {
+        "5": 197
+      },
+      "ambiguous": 0,
+      "examined": 197
+    },
+    {
+      "tileId": "12_-13",
+      "level": 0,
+      "matched": {
+        "5": 135
+      },
+      "ambiguous": 0,
+      "examined": 135
+    },
+    {
+      "tileId": "12_-13",
+      "level": 1,
+      "matched": {
+        "5": 135
+      },
+      "ambiguous": 0,
+      "examined": 135
+    },
+    {
+      "tileId": "12_-13",
+      "level": 2,
+      "matched": {
+        "5": 135
+      },
+      "ambiguous": 0,
+      "examined": 135
+    },
+    {
+      "tileId": "12_-12",
+      "level": 0,
+      "matched": {
+        "5": 56
+      },
+      "ambiguous": 0,
+      "examined": 524
+    },
+    {
+      "tileId": "12_-12",
+      "level": 1,
+      "matched": {
+        "5": 56
+      },
+      "ambiguous": 0,
+      "examined": 524
+    },
+    {
+      "tileId": "12_-12",
+      "level": 2,
+      "matched": {
+        "5": 56
+      },
+      "ambiguous": 0,
+      "examined": 524
+    },
+    {
+      "tileId": "13_-13",
+      "level": 0,
+      "matched": {
+        "5": 65
+      },
+      "ambiguous": 0,
+      "examined": 87
+    },
+    {
+      "tileId": "13_-13",
+      "level": 1,
+      "matched": {
+        "5": 65
+      },
+      "ambiguous": 0,
+      "examined": 87
+    },
+    {
+      "tileId": "13_-13",
+      "level": 2,
+      "matched": {
+        "5": 65
+      },
+      "ambiguous": 0,
+      "examined": 87
+    }
+  ],
+  "payloadBytes": 1823745,
+  "gzipBytes": 588647
+}

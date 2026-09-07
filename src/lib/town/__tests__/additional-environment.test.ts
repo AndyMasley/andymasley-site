@@ -65,4 +65,10 @@ describe('additional researched environment',()=>{
   }
   expect(count).toBe(index.count);expect(readdirSync(resolve('public/town-evidence/v1/additional-environment')).filter(p=>p.endsWith('.json')).sort()).toEqual(names.sort());
  });
+ it('uses one actual qualified wet-margin shrub anchor for flowers and never creates a new planting domain',()=>{
+  const rows=Object.entries(index.tiles).flatMap(([tile,ref])=>(JSON.parse(readFileSync('public'+ref.url,'utf8')) as AdditionalEnvironmentPacket).objects.filter(r=>r.kind==='wetland-shrub'&&r.seed<.265));expect(rows).toHaveLength(1);expect(rows[0].featureId).toBe('cedar-swamp-margin');
+  for(const level of[0,1]){const x=fixture('wetland-shrub');x.packet.objects[0].seed=rows[0].seed;const report=applyAdditionalEnvironment(x.group,'test',[0,0,0],level,x.packet)!;expect(report.flowers).toEqual(['test-1']);expect(report.addedTriangles).toBeLessThan(level?100:276);}
+  const other=fixture('wetland-shrub');other.packet.objects[0].seed=.8;expect(applyAdditionalEnvironment(other.group,'test',[0,0,0],0,other.packet)!.flowers).toEqual([]);
+ });
+
 });

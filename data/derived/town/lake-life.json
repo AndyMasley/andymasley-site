@@ -1,0 +1,51 @@
+{
+  "version": 1,
+  "sourceManifestSha256": "37fbef34bc2a4467997252be75b4c43174a6a7b2d39963614cadd8d787e56105",
+  "id": "indian-princess",
+  "tileId": "2_-4",
+  "point": [
+    534.9717448386946,
+    -773.7743379264139
+  ],
+  "angle": 1.3830288380070341,
+  "length": 24.300486590915526,
+  "width": 6.2,
+  "height": 45.08000183105469,
+  "origin": [
+    500,
+    0,
+    1000
+  ],
+  "sourceLods": {
+    "0": "2533cd9b74c78a3e3e34a7d49d07981b974585786f540c2e1e23ef4fdb9ea366",
+    "1": "0f57833b9367b52d9e492d5862cf0226ab45e1c28feb864ccd059b7396557d7d",
+    "2": "b2a93609ee76c555f5c9a575c2f1a0ec01cb9ecf58846da59b97b0bc6270e325"
+  },
+  "source": {
+    "aerial": "b14f7338f5c04544ebb35fd124450eb2b88a96843646cca423ee3601fead69ff",
+    "aerialYear": 2025,
+    "crop": [
+      4439,
+      5085,
+      4879,
+      5525
+    ],
+    "boatCenterPixel": [
+      692,
+      608
+    ],
+    "bowPixel": [
+      696,
+      581
+    ],
+    "sternPixel": [
+      686,
+      635
+    ],
+    "photoURL": "https://indianranch.com/wp-content/uploads/elementor/thumbs/Indian-Princess-v2-e1703784776632-qhhixxthupm3cwgc0h48kt0lhzfoc76fpk4r0rvxbk.jpg",
+    "photoSHA256": "fb3ed72229f658e117adc0aca81df806caaa2162e83cfd691cc387887f55a8f3",
+    "officialDescription": "https://indianranch.com/cruises/"
+  },
+  "basis": "Viewed official exterior: white walls, red deck bands, blue upper canopy, arched windows, paired black stacks with red bands/gold crowns, white stern spokes and red paddles. Two decks and twin stern wheels are officially described. Length/position/axis derived approximately from spring2025 aerial; beam, height, window count, small trim and exact current berth are authored. This is a stationary late-summer game interpretation, not live vessel tracking.",
+  "mappedWaterFraction": 0.9999999999999998
+}

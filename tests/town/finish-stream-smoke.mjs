@@ -15,13 +15,17 @@ const fallbackTimeout = Number(process.env.TOWN_FAILURE_READY_TIMEOUT_MS || 4500
 const optionalKind = url => {
   const p = new URL(url).pathname;
   if (p.startsWith('/town-evidence/v1/additional-environment/')) return 'environment';
+  if (p.startsWith('/town-roadside/')) return 'roadside';
+  if (p.startsWith('/town-evidence/v1/environment-ground/')) return 'environment-ground';
+  if (p.startsWith('/town-evidence/v1/environment-facilities/')) return 'facilities';
+  if (p.startsWith('/town-evidence/v1/road-materials/')) return 'road-materials';
   if (p.startsWith('/town-finish/')) return 'road';
   if (p.startsWith('/town-evidence/v1/terrain/')) return 'terrain';
   if (p.startsWith('/town-surfaces/v2/lots/')) return 'parking';
   if (p.startsWith('/town-surfaces/v2/masks/')) return 'mask';
   return null;
 };
-const townAsset = url => /^\/town-(?:assets|transfer|finish|surfaces|evidence)\//.test(new URL(url).pathname);
+const townAsset = url => /^\/town-(?:assets|transfer|finish|surfaces|evidence|roadside|environment-ground)\//.test(new URL(url).pathname);
 const gatedAsset = url => optionalKind(url) || /^\/town-(?:transfer|evidence)\//.test(new URL(url).pathname) ||
   /^\/town-assets\/.+(?:\/(?:manifest|network)\.json|\.glb(?:\.gz)?)$/.test(new URL(url).pathname);
 const report = {
@@ -50,7 +54,7 @@ async function state(page) {
       edge: e.edgeId, status: document.querySelector('[data-town-status]')?.textContent,
       contextLost: g.renderer.getContext().isContextLost(), canvases: document.querySelectorAll('[data-town-canvas]').length,
       metrics: g.metrics, finish: g.presentation.finish,
-      tiles: [...g.world.loaded].map(([id, t]) => ({ id, level: t.level, road: t.group.userData.roadFinish, terrain: t.group.userData.terrainFinish, parking: t.group.userData.parkingFinish, correctedMask: t.group.userData.pavedSurfaceMask })),
+      tiles: [...g.world.loaded].map(([id, t]) => ({ id, level: t.level, road: t.group.userData.roadFinish, roadMaterials:t.group.userData.roadMaterialFinish, terrain: t.group.userData.terrainFinish, parking: t.group.userData.parkingFinish, correctedMask: t.group.userData.pavedSurfaceMask })),
     };
   });
 }
@@ -89,7 +93,7 @@ async function runScenario(mode) {
     window.fetch = async (input, init) => {
       const url = new URL(typeof input === 'string' ? input : input instanceof URL ? input.href : input.url, location.href).href;
       const p = new URL(url).pathname;
-      const kind = p.startsWith('/town-evidence/v1/additional-environment/') ? 'environment' : p.startsWith('/town-finish/') ? 'road' : p.startsWith('/town-evidence/v1/terrain/') ? 'terrain' : p.startsWith('/town-surfaces/v2/lots/') ? 'parking' : p.startsWith('/town-surfaces/v2/masks/') ? 'mask' : null;
+      const kind = p.startsWith('/town-evidence/v1/road-materials/') ? 'road-materials' : p.startsWith('/town-evidence/v1/environment-facilities/') ? 'facilities' : p.startsWith('/town-roadside/') ? 'roadside' : p.startsWith('/town-evidence/v1/environment-ground/') ? 'environment-ground' : p.startsWith('/town-evidence/v1/additional-environment/') ? 'environment' : p.startsWith('/town-finish/') ? 'road' : p.startsWith('/town-evidence/v1/terrain/') ? 'terrain' : p.startsWith('/town-surfaces/v2/lots/') ? 'parking' : p.startsWith('/town-surfaces/v2/masks/') ? 'mask' : null;
       if (!kind) return original(input, init);
       const signal = init?.signal || (input instanceof Request ? input.signal : undefined);
       const row = { url, kind, start: performance.now(), hasSignal: !!signal, abort: signal?.aborted ? performance.now() : null, settled: null };
@@ -179,10 +183,22 @@ async function runScenario(mode) {
       assert.equal(scenario.environmentFallback.lost, false);
       assert.equal(scenario.environmentFallback.research.environmentObjects, 0);
       scenario.checks.push('Unavailable beach environment packet leaves its original scenery playable');
+      scenario.bankFallback = await page.evaluate(async () => {
+        const g=window.__webster, e=g.engine, point=[1669.7652,-3366.9247], [id,s]=g.graph.nearest(point);
+        e.paused=true;e.speed=e.cruise=0;e.edgeId=id;e.s=s;e.phase='ROAD';e.connection=null;e.connectionS=0;e.queue(null);
+        await g.world.prepareAt([point[0],46.34767,-point[1]]);
+        return {ready:g.ready,lost:g.renderer.getContext().isContextLost(),applied:[...g.world.loaded.values()].some(t=>t.group.userData.environmentGround?.waterTriangles>0),roadside:g.presentation.research.roadsideObjects,facilities:g.presentation.research.facilities,roadSurfaces:g.world.finishResources().roadSurfaceTriangles};
+      });
+      assert.ok(scenario.intercepted.some(r=>r.kind==='environment-ground'),'DCR tile did not exercise ground stream');
+      assert.ok(scenario.intercepted.some(r=>r.kind==='roadside'),'Roadside stream was not exercised');
+      assert.equal(scenario.bankFallback.ready,true);assert.equal(scenario.bankFallback.lost,false);assert.equal(scenario.bankFallback.applied,false);assert.equal(scenario.bankFallback.roadside,0);assert.equal(scenario.bankFallback.facilities,0);assert.equal(scenario.bankFallback.roadSurfaces,0);
+      assert.ok(scenario.intercepted.some(r=>r.kind==='facilities'),'Facilities stream was not exercised');
+      assert.ok(scenario.intercepted.some(r=>r.kind==='road-materials'),'Road material stream was not exercised');
+      scenario.checks.push('Unavailable DCR ground and roadside packets preserve playable original scenery');
     }
     scenario.fetchSignalsBeforeDispose = await page.evaluate(() => window.__finishStreamProbe.rows);
     if (mode === 'optional-stalled') {
-      for (const kind of ['road', 'terrain', 'mask', 'environment']) assert.ok(scenario.fetchSignalsBeforeDispose.some(r => r.kind === kind && r.hasSignal && r.abort !== null && r.error === 'AbortError'), 'Stalled ' + kind + ' was not actually aborted by its bounded fallback');
+      for (const kind of ['road', 'terrain', 'mask', 'environment', 'roadside', 'environment-ground', 'facilities', 'road-materials']) assert.ok(scenario.fetchSignalsBeforeDispose.some(r => r.kind === kind && r.hasSignal && r.abort !== null && r.error === 'AbortError'), 'Stalled ' + kind + ' was not actually aborted by its bounded fallback');
       assert.ok(scenario.intercepted.every(r => r.releasedAt === undefined), 'A stalled response was released before proving readiness');
       const retired = await page.evaluate(() => {
         const g = window.__finishRetired = window.__webster;

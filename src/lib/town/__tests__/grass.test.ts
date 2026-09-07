@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { describe, expect, it, vi } from 'vitest';
 import * as THREE from 'three';
-import { GRASS_LIMITS, GrassTerrain, TownGrass, grassAllowed, grassMaskFromTexture, grassSite, tuftGeometry, type GrassMask } from '../grass';
+import { GRASS_LIMITS, GrassTerrain, TownGrass, grassAllowed, grassMaskFromTexture, grassSite, tuftGeometry, excludeGrassPolygons, type GrassMask } from '../grass';
 
 function mask(bounds: number[] = [-68, -68, 68, 68], core: number[] = [-64, -64, 64, 64]): GrassMask {
   const width = 136, height = 136, data = new Uint8Array(width * height * 4);
@@ -21,6 +21,12 @@ function instances(group: THREE.Object3D): THREE.InstancedMesh {
 }
 
 describe('Conservative lawn placement', () => {
+  it('excludes registered east/north water or pavement without mutating the cover texture',()=>{
+    const source=mask(),before=source.data.slice(),ring=[[10,20],[20,20],[20,30],[10,30]],result=excludeGrassPolygons(source,[ring]);
+    expect(grassAllowed(result,15,-25)).toBe(false);expect(grassAllowed(result,15,25)).toBe(true);expect(grassAllowed(result,0,0)).toBe(true);
+    expect(source.data).toEqual(before);expect(excludeGrassPolygons(source,[])).toBe(source);
+    const reversed=excludeGrassPolygons(source,[[...ring].reverse()]);expect(reversed.data).toEqual(result.data);
+  });
   it('uses a finite short-blade patch with spread, buried roots and the existing face budget', () => {
     const geometry = tuftGeometry(), position = geometry.getAttribute('position');
     expect(geometry.index?.count).toBe(18 * 3);

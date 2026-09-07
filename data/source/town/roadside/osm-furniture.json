@@ -1,0 +1,325 @@
+{
+  "source": "https://www.openstreetmap.org/copyright",
+  "snapshot": {
+    "timestamp_osm_base": "2026-09-06T00:45:20Z",
+    "copyright": "The data included in this document is from www.openstreetmap.org. The data is made available under ODbL."
+  },
+  "parentSha256": "1fd211d8eb311faee4c8f94073924b346fec23b086aeea7056bb638b0b4dc754",
+  "elements": [
+    {
+      "type": "node",
+      "id": 65606783,
+      "lat": 42.0553213,
+      "lon": -71.8876595,
+      "tags": {
+        "direction": "both",
+        "highway": "stop",
+        "stop": "all"
+      }
+    },
+    {
+      "type": "node",
+      "id": 70335503,
+      "lat": 42.0496158,
+      "lon": -71.8770515,
+      "tags": {
+        "direction": "forward",
+        "highway": "stop"
+      }
+    },
+    {
+      "type": "node",
+      "id": 70381522,
+      "lat": 42.0628363,
+      "lon": -71.8779107,
+      "tags": {
+        "direction": "forward",
+        "highway": "stop"
+      }
+    },
+    {
+      "type": "node",
+      "id": 70396573,
+      "lat": 42.0615769,
+      "lon": -71.8670842,
+      "tags": {
+        "direction": "both",
+        "highway": "stop",
+        "stop": "all"
+      }
+    },
+    {
+      "type": "node",
+      "id": 70409215,
+      "lat": 42.0523719,
+      "lon": -71.8745118,
+      "tags": {
+        "direction": "both",
+        "highway": "stop",
+        "stop": "all"
+      }
+    },
+    {
+      "type": "node",
+      "id": 2544288349,
+      "lat": 42.0649934,
+      "lon": -71.8795213,
+      "tags": {
+        "direction": "forward",
+        "highway": "stop"
+      }
+    },
+    {
+      "type": "node",
+      "id": 2544288352,
+      "lat": 42.0650838,
+      "lon": -71.8793988,
+      "tags": {
+        "direction": "backward",
+        "highway": "stop"
+      }
+    },
+    {
+      "type": "node",
+      "id": 9857043718,
+      "lat": 42.0542288,
+      "lon": -71.8834875,
+      "tags": {
+        "direction": "forward",
+        "highway": "stop"
+      }
+    },
+    {
+      "type": "node",
+      "id": 9857043719,
+      "lat": 42.0627422,
+      "lon": -71.8824025,
+      "tags": {
+        "direction": "backward",
+        "highway": "stop"
+      }
+    },
+    {
+      "type": "node",
+      "id": 9857043720,
+      "lat": 42.064877,
+      "lon": -71.8782379,
+      "tags": {
+        "direction": "backward",
+        "highway": "stop"
+      }
+    },
+    {
+      "type": "node",
+      "id": 9857043721,
+      "lat": 42.0646926,
+      "lon": -71.8782664,
+      "tags": {
+        "direction": "forward",
+        "highway": "stop"
+      }
+    },
+    {
+      "type": "node",
+      "id": 9857043722,
+      "lat": 42.0591211,
+      "lon": -71.8721272,
+      "tags": {
+        "direction": "forward",
+        "highway": "stop"
+      }
+    },
+    {
+      "type": "node",
+      "id": 9857043723,
+      "lat": 42.0592258,
+      "lon": -71.8719418,
+      "tags": {
+        "direction": "backward",
+        "highway": "stop"
+      }
+    },
+    {
+      "type": "node",
+      "id": 9857043724,
+      "lat": 42.0597227,
+      "lon": -71.8708317,
+      "tags": {
+        "direction": "forward",
+        "highway": "stop"
+      }
+    },
+    {
+      "type": "node",
+      "id": 9857043725,
+      "lat": 42.0598554,
+      "lon": -71.870964,
+      "tags": {
+        "direction": "backward",
+        "highway": "stop"
+      }
+    },
+    {
+      "type": "node",
+      "id": 9857043726,
+      "lat": 42.0603483,
+      "lon": -71.8697537,
+      "tags": {
+        "direction": "forward",
+        "highway": "stop"
+      }
+    },
+    {
+      "type": "node",
+      "id": 9857043727,
+      "lat": 42.0604564,
+      "lon": -71.869543,
+      "tags": {
+        "direction": "backward",
+        "highway": "stop"
+      }
+    },
+    {
+      "type": "node",
+      "id": 9857043728,
+      "lat": 42.0605671,
+      "lon": -71.8672842,
+      "tags": {
+        "direction": "forward",
+        "highway": "stop"
+      }
+    },
+    {
+      "type": "node",
+      "id": 9857043729,
+      "lat": 42.0609796,
+      "lon": -71.8640032,
+      "tags": {
+        "direction": "forward",
+        "highway": "stop"
+      }
+    },
+    {
+      "type": "node",
+      "id": 10915053211,
+      "lat": 42.0495226,
+      "lon": -71.8813144,
+      "tags": {
+        "direction": "forward",
+        "highway": "stop"
+      }
+    },
+    {
+      "type": "node",
+      "id": 10925322326,
+      "lat": 42.0500497,
+      "lon": -71.8780696,
+      "tags": {
+        "highway": "stop"
+      }
+    },
+    {
+      "type": "node",
+      "id": 10925344619,
+      "lat": 42.0493556,
+      "lon": -71.8750848,
+      "tags": {
+        "highway": "stop"
+      }
+    },
+    {
+      "type": "node",
+      "id": 10925344620,
+      "lat": 42.0496831,
+      "lon": -71.8770659,
+      "tags": {
+        "direction": "forward",
+        "highway": "stop"
+      }
+    },
+    {
+      "type": "node",
+      "id": 10925344621,
+      "lat": 42.0487519,
+      "lon": -71.8809143,
+      "tags": {
+        "direction": "backward",
+        "highway": "stop"
+      }
+    },
+    {
+      "type": "node",
+      "id": 12075305654,
+      "lat": 42.0905064,
+      "lon": -71.8804618,
+      "tags": {
+        "direction": "backward",
+        "highway": "stop"
+      }
+    },
+    {
+      "type": "node",
+      "id": 12075305656,
+      "lat": 42.0910855,
+      "lon": -71.8814007,
+      "tags": {
+        "direction": "forward",
+        "highway": "stop"
+      }
+    },
+    {
+      "type": "node",
+      "id": 13186898121,
+      "lat": 42.0511978,
+      "lon": -71.8793663,
+      "tags": {
+        "amenity": "post_box"
+      }
+    },
+    {
+      "type": "node",
+      "id": 13186898122,
+      "lat": 42.0549125,
+      "lon": -71.8762787,
+      "tags": {
+        "amenity": "post_box"
+      }
+    },
+    {
+      "type": "node",
+      "id": 13186898123,
+      "lat": 42.0580989,
+      "lon": -71.8679603,
+      "tags": {
+        "amenity": "post_box"
+      }
+    },
+    {
+      "type": "node",
+      "id": 13199192151,
+      "lat": 42.0490933,
+      "lon": -71.8842745,
+      "tags": {
+        "amenity": "post_box"
+      }
+    },
+    {
+      "type": "node",
+      "id": 13199192152,
+      "lat": 42.0496929,
+      "lon": -71.880898,
+      "tags": {
+        "amenity": "post_box"
+      }
+    },
+    {
+      "type": "node",
+      "id": 13751462576,
+      "lat": 42.027339,
+      "lon": -71.8503706,
+      "tags": {
+        "amenity": "post_box"
+      }
+    }
+  ]
+}

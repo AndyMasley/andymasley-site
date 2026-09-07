@@ -1,0 +1,307 @@
+{
+  "registrations": [
+    {
+      "id": "DCR-LAKESIDE-BANK-2025",
+      "source": "data/derived/town/additional-environment-sources/final-lake-sites.json",
+      "bankPixels": [
+        [
+          435,
+          445
+        ],
+        [
+          445,
+          474
+        ],
+        [
+          445,
+          494
+        ],
+        [
+          434,
+          520
+        ],
+        [
+          416,
+          544
+        ],
+        [
+          397,
+          566
+        ]
+      ],
+      "bankEastNorth": [
+        [
+          1658.1404805243947,
+          -3357.364358304767
+        ],
+        [
+          1660.3370684013935,
+          -3363.790400545462
+        ],
+        [
+          1660.3201146066422,
+          -3368.2162890770705
+        ],
+        [
+          1657.8547809701704,
+          -3373.9605885889614
+        ],
+        [
+          1653.8363146051415,
+          -3379.2563450451707
+        ],
+        [
+          1649.5974203333317,
+          -3384.108662015293
+        ]
+      ],
+      "waterHeight": 45.08000183105469,
+      "basis": "Reviewed MassGIS spring 2025 bank edge; authored shallow depth and bank interpolation. Not a bathymetric survey.",
+      "imagerySource": "https://tiles.arcgis.com/tiles/hGdibHYSPO59RG1h/arcgis/rest/services/Massachusetts_Aerial_Imagery_2025/MapServer",
+      "tileId": "6_-14",
+      "protectedSourcePolygons": 0,
+      "waterProtectedOverlapM2": 0.0
+    },
+    {
+      "id": "LAKEVIEW-DOCK-BANK-2025",
+      "tileIds": [
+        "1_-3",
+        "1_-4",
+        "2_-3",
+        "2_-4"
+      ],
+      "bankPixels": [
+        [
+          260,
+          424
+        ],
+        [
+          311,
+          407
+        ],
+        [
+          355,
+          391
+        ],
+        [
+          409,
+          386
+        ],
+        [
+          456,
+          393
+        ],
+        [
+          481,
+          406
+        ],
+        [
+          494,
+          424
+        ],
+        [
+          500,
+          560
+        ],
+        [
+          350,
+          560
+        ]
+      ],
+      "mosaicCropPixels": [
+        4595,
+        5167,
+        4979,
+        5551
+      ],
+      "resizeScale": 2,
+      "basis": "Reviewed MassGIS spring 2025 actual bay edge. Removes dry terrain tongues corresponding to old mapped dock notches; shallow depth and 3m bank interpolation are authored, not surveyed bathymetry.",
+      "imagerySource": "https://tiles.arcgis.com/tiles/hGdibHYSPO59RG1h/arcgis/rest/services/Massachusetts_Aerial_Imagery_2025/MapServer",
+      "waterHeight": 45.08000183105469,
+      "protectedSourcePolygons": 0,
+      "waterProtectedOverlapM2": 0.0
+    }
+  ],
+  "rows": [
+    {
+      "tileId": "6_-14",
+      "feature": "dcr",
+      "level": 0,
+      "meshes": 1,
+      "sourceTrianglesReplaced": 61,
+      "newTriangles": 1756,
+      "maximumLoweringM": 1.642644511232163,
+      "waterExtensionAreaM2": 167.1046143654969,
+      "bytes": 158187,
+      "gzipBytes": 16128
+    },
+    {
+      "tileId": "6_-14",
+      "feature": "dcr",
+      "level": 1,
+      "meshes": 1,
+      "sourceTrianglesReplaced": 52,
+      "newTriangles": 1932,
+      "maximumLoweringM": 1.6749217985824458,
+      "waterExtensionAreaM2": 167.1046143654969,
+      "bytes": 174725,
+      "gzipBytes": 19719
+    },
+    {
+      "tileId": "6_-14",
+      "feature": "dcr",
+      "level": 2,
+      "meshes": 1,
+      "sourceTrianglesReplaced": 32,
+      "newTriangles": 2309,
+      "maximumLoweringM": 1.6750618671735253,
+      "waterExtensionAreaM2": 167.1046143654969,
+      "bytes": 213765,
+      "gzipBytes": 25019
+    },
+    {
+      "tileId": "1_-3",
+      "feature": "lakeview",
+      "level": 0,
+      "meshes": 0,
+      "sourceTrianglesReplaced": 0,
+      "newTriangles": 0,
+      "maximumLoweringM": 0,
+      "waterExtensionAreaM2": 0,
+      "bytes": 1005,
+      "gzipBytes": 655
+    },
+    {
+      "tileId": "1_-3",
+      "feature": "lakeview",
+      "level": 1,
+      "meshes": 0,
+      "sourceTrianglesReplaced": 0,
+      "newTriangles": 0,
+      "maximumLoweringM": 0,
+      "waterExtensionAreaM2": 0,
+      "bytes": 1005,
+      "gzipBytes": 653
+    },
+    {
+      "tileId": "1_-3",
+      "feature": "lakeview",
+      "level": 2,
+      "meshes": 0,
+      "sourceTrianglesReplaced": 0,
+      "newTriangles": 0,
+      "maximumLoweringM": 0,
+      "waterExtensionAreaM2": 0,
+      "bytes": 1005,
+      "gzipBytes": 655
+    },
+    {
+      "tileId": "1_-4",
+      "feature": "lakeview",
+      "level": 0,
+      "meshes": 1,
+      "sourceTrianglesReplaced": 32,
+      "newTriangles": 1076,
+      "maximumLoweringM": 1.3860995018716125,
+      "waterExtensionAreaM2": 0,
+      "bytes": 97419,
+      "gzipBytes": 8953
+    },
+    {
+      "tileId": "1_-4",
+      "feature": "lakeview",
+      "level": 1,
+      "meshes": 1,
+      "sourceTrianglesReplaced": 27,
+      "newTriangles": 1100,
+      "maximumLoweringM": 1.3956075724623886,
+      "waterExtensionAreaM2": 0,
+      "bytes": 99561,
+      "gzipBytes": 9678
+    },
+    {
+      "tileId": "1_-4",
+      "feature": "lakeview",
+      "level": 2,
+      "meshes": 1,
+      "sourceTrianglesReplaced": 12,
+      "newTriangles": 1203,
+      "maximumLoweringM": 1.5195654986119536,
+      "waterExtensionAreaM2": 0,
+      "bytes": 110202,
+      "gzipBytes": 11662
+    },
+    {
+      "tileId": "2_-3",
+      "feature": "lakeview",
+      "level": 0,
+      "meshes": 1,
+      "sourceTrianglesReplaced": 19,
+      "newTriangles": 545,
+      "maximumLoweringM": 1.0529969236241854,
+      "waterExtensionAreaM2": 0,
+      "bytes": 49813,
+      "gzipBytes": 6402
+    },
+    {
+      "tileId": "2_-3",
+      "feature": "lakeview",
+      "level": 1,
+      "meshes": 1,
+      "sourceTrianglesReplaced": 19,
+      "newTriangles": 552,
+      "maximumLoweringM": 1.0529969236241854,
+      "waterExtensionAreaM2": 0,
+      "bytes": 50537,
+      "gzipBytes": 6545
+    },
+    {
+      "tileId": "2_-3",
+      "feature": "lakeview",
+      "level": 2,
+      "meshes": 1,
+      "sourceTrianglesReplaced": 16,
+      "newTriangles": 623,
+      "maximumLoweringM": 1.0602855438653336,
+      "waterExtensionAreaM2": 0,
+      "bytes": 58047,
+      "gzipBytes": 7728
+    },
+    {
+      "tileId": "2_-4",
+      "feature": "lakeview",
+      "level": 0,
+      "meshes": 1,
+      "sourceTrianglesReplaced": 396,
+      "newTriangles": 14189,
+      "maximumLoweringM": 1.365452990579783,
+      "waterExtensionAreaM2": 589.4693441364919,
+      "bytes": 1256722,
+      "gzipBytes": 38207
+    },
+    {
+      "tileId": "2_-4",
+      "feature": "lakeview",
+      "level": 1,
+      "meshes": 1,
+      "sourceTrianglesReplaced": 113,
+      "newTriangles": 16568,
+      "maximumLoweringM": 1.365452990579783,
+      "waterExtensionAreaM2": 589.4693441364919,
+      "bytes": 1568943,
+      "gzipBytes": 123339
+    },
+    {
+      "tileId": "2_-4",
+      "feature": "lakeview",
+      "level": 2,
+      "meshes": 1,
+      "sourceTrianglesReplaced": 58,
+      "newTriangles": 15867,
+      "maximumLoweringM": 1.3704371097485009,
+      "waterExtensionAreaM2": 589.4693441364919,
+      "bytes": 1508909,
+      "gzipBytes": 124084
+    }
+  ]
+}

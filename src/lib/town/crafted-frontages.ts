@@ -425,10 +425,10 @@ function inCommercialBand(frame: Commercial, world: THREE.Vector3): boolean {
  * GLBs stay untouched. Only the exclusive School material namespace or generic
  * detail triangles in the reviewed Main Street facade bands are removed.
  */
-export function applyCraftedFrontages(group: THREE.Object3D, tileId: string, tileOrigin: readonly number[], level=0): FrontageReport | undefined {
+export function applyCraftedFrontages(group: THREE.Object3D, tileId: string, tileOrigin: readonly number[], level=0, excludedCommercialIds: readonly string[]=[]): FrontageReport | undefined {
   const existing=group.userData.craftedFrontages as FrontageReport|undefined;
   if(existing)return existing;
-  const schoolRows=data.school.filter(r=>r.tileId===tileId),commercialRows=data.commercial.filter(r=>r.tileId===tileId);
+  const schoolRows=data.school.filter(r=>r.tileId===tileId),commercialRows=data.commercial.filter(r=>r.tileId===tileId&&!excludedCommercialIds.includes(r.structId));
   if(!schoolRows.length&&!commercialRows.length)return undefined;
   const origin=new THREE.Vector3().fromArray(tileOrigin),batch=new Batch(origin,level,renderedFrontageTerrain(group,origin,schoolRows));
   for(const row of schoolRows)school(batch,row);

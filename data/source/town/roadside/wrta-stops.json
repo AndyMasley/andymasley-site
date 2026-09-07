@@ -1,0 +1,326 @@
+{
+  "source": "https://gtfs.wrta.cadavl.com/WRTA/GTFS/GTFS_WRTA.zip",
+  "retrievedAt": "2026-09-07T14:45:10.272158+00:00",
+  "archiveSha256": "d2dbbcbbd319a8a693fb56bd31547f3c98f41c5f15c16d9a843bd49bd1e13cb4",
+  "agency": [
+    {
+      "agency_id": "WRTA",
+      "agency_name": "WRTA",
+      "agency_url": "https://therta.com/",
+      "agency_timezone": "America/New_York",
+      "agency_lang": "en"
+    }
+  ],
+  "routes": [
+    {
+      "route_id": "42",
+      "agency_id": "WRTA",
+      "route_short_name": "42",
+      "route_long_name": "Webster Center via Oxford & Auburn",
+      "route_desc": "",
+      "route_type": "3",
+      "route_color": "009900",
+      "route_text_color": "FFFFFF"
+    },
+    {
+      "route_id": "51",
+      "agency_id": "WRTA",
+      "route_short_name": "51",
+      "route_long_name": "SDW \u2013 Southbridge to Webster via Rts. 131/197",
+      "route_desc": "",
+      "route_type": "3",
+      "route_color": "000000",
+      "route_text_color": "FFFFFF"
+    }
+  ],
+  "stops": [
+    {
+      "stop_id": "0_6501",
+      "stop_code": "6501",
+      "stop_name": "Entering Oxford",
+      "stop_desc": "",
+      "stop_lat": "42.079923",
+      "stop_lon": "-71.8695112",
+      "zone_id": "",
+      "location_type": "0",
+      "parent_station": "1_6501",
+      "wheelchair_boarding": "",
+      "vehicle_type": "3",
+      "routes": [
+        "42"
+      ]
+    },
+    {
+      "stop_id": "0_7000",
+      "stop_code": "7000",
+      "stop_name": "Entering Webster",
+      "stop_desc": "",
+      "stop_lat": "42.0796851",
+      "stop_lon": "-71.869566",
+      "zone_id": "",
+      "location_type": "0",
+      "parent_station": "1_7000",
+      "wheelchair_boarding": "",
+      "vehicle_type": "3",
+      "routes": [
+        "42"
+      ]
+    },
+    {
+      "stop_id": "0_7005",
+      "stop_code": "7005",
+      "stop_name": "Worcester Rd at 75",
+      "stop_desc": "",
+      "stop_lat": "42.0704961",
+      "stop_lon": "-71.8664511",
+      "zone_id": "",
+      "location_type": "0",
+      "parent_station": "1_7005",
+      "wheelchair_boarding": "",
+      "vehicle_type": "3",
+      "routes": [
+        "42"
+      ]
+    },
+    {
+      "stop_id": "0_7010",
+      "stop_code": "7010",
+      "stop_name": "Worcester Rd at East Main",
+      "stop_desc": "",
+      "stop_lat": "42.0598479",
+      "stop_lon": "-71.8645109",
+      "zone_id": "",
+      "location_type": "0",
+      "parent_station": "1_7010",
+      "wheelchair_boarding": "",
+      "vehicle_type": "3",
+      "routes": [
+        "42"
+      ]
+    },
+    {
+      "stop_id": "0_7025",
+      "stop_code": "7025",
+      "stop_name": "East Main St at Day",
+      "stop_desc": "",
+      "stop_lat": "42.0548799",
+      "stop_lon": "-71.8766231",
+      "zone_id": "",
+      "location_type": "0",
+      "parent_station": "1_7025",
+      "wheelchair_boarding": "",
+      "vehicle_type": "3",
+      "routes": [
+        "42"
+      ]
+    },
+    {
+      "stop_id": "0_7020",
+      "stop_code": "7020",
+      "stop_name": "East Main St at Slater",
+      "stop_desc": "",
+      "stop_lat": "42.0572161",
+      "stop_lon": "-71.8706948",
+      "zone_id": "",
+      "location_type": "0",
+      "parent_station": "1_7020",
+      "wheelchair_boarding": "",
+      "vehicle_type": "3",
+      "routes": [
+        "42"
+      ]
+    },
+    {
+      "stop_id": "0_7045",
+      "stop_code": "7045",
+      "stop_name": "E Main St at Day",
+      "stop_desc": "",
+      "stop_lat": "42.0549281",
+      "stop_lon": "-71.8763531",
+      "zone_id": "",
+      "location_type": "0",
+      "parent_station": "1_7045",
+      "wheelchair_boarding": "",
+      "vehicle_type": "3",
+      "routes": [
+        "42"
+      ]
+    },
+    {
+      "stop_id": "0_7040",
+      "stop_code": "7040",
+      "stop_name": "E Main St at Lake",
+      "stop_desc": "",
+      "stop_lat": "42.050248",
+      "stop_lon": "-71.8799782",
+      "zone_id": "",
+      "location_type": "0",
+      "parent_station": "1_7040",
+      "wheelchair_boarding": "",
+      "vehicle_type": "3",
+      "routes": [
+        "42"
+      ]
+    },
+    {
+      "stop_id": "0_7055",
+      "stop_code": "7055",
+      "stop_name": "E Main St at Park Ave",
+      "stop_desc": "",
+      "stop_lat": "42.0575261",
+      "stop_lon": "-71.869581",
+      "zone_id": "",
+      "location_type": "0",
+      "parent_station": "1_7055",
+      "wheelchair_boarding": "",
+      "vehicle_type": "3",
+      "routes": [
+        "42"
+      ]
+    },
+    {
+      "stop_id": "0_7065",
+      "stop_code": "7065",
+      "stop_name": "Worcester Rd at 75",
+      "stop_desc": "",
+      "stop_lat": "42.070735",
+      "stop_lon": "-71.86638",
+      "zone_id": "",
+      "location_type": "0",
+      "parent_station": "1_7065",
+      "wheelchair_boarding": "",
+      "vehicle_type": "3",
+      "routes": [
+        "42"
+      ]
+    },
+    {
+      "stop_id": "0_7060",
+      "stop_code": "7060",
+      "stop_name": "E Main St at Paradis Ln",
+      "stop_desc": "",
+      "stop_lat": "42.058465",
+      "stop_lon": "-71.8672609",
+      "zone_id": "",
+      "location_type": "0",
+      "parent_station": "1_7060",
+      "wheelchair_boarding": "",
+      "vehicle_type": "3",
+      "routes": [
+        "42"
+      ]
+    },
+    {
+      "stop_id": "0_9099",
+      "stop_code": "9099",
+      "stop_name": "Webster Harrington Hosp.",
+      "stop_desc": "Comment",
+      "stop_lat": "42.027494",
+      "stop_lon": "-71.8502566",
+      "zone_id": "",
+      "location_type": "0",
+      "parent_station": "1_WHarHo",
+      "wheelchair_boarding": "",
+      "vehicle_type": "3",
+      "routes": [
+        "51"
+      ]
+    },
+    {
+      "stop_id": "0_9101",
+      "stop_code": "9101",
+      "stop_name": "Lake St & Thompson Rd",
+      "stop_desc": "Comment",
+      "stop_lat": "42.0452585",
+      "stop_lon": "-71.862875",
+      "zone_id": "",
+      "location_type": "0",
+      "parent_station": "1_LkTho",
+      "wheelchair_boarding": "",
+      "vehicle_type": "3",
+      "routes": [
+        "51"
+      ]
+    },
+    {
+      "stop_id": "0_9114",
+      "stop_code": "9114",
+      "stop_name": "Lake St & Thompson Rd",
+      "stop_desc": "Comment",
+      "stop_lat": "42.0453232",
+      "stop_lon": "-71.8629965",
+      "zone_id": "",
+      "location_type": "0",
+      "parent_station": "1_LkTho",
+      "wheelchair_boarding": "",
+      "vehicle_type": "3",
+      "routes": [
+        "51"
+      ]
+    },
+    {
+      "stop_id": "0_9116",
+      "stop_code": "9116",
+      "stop_name": "Webster Harrington Hosp.",
+      "stop_desc": "Comment",
+      "stop_lat": "42.0275222",
+      "stop_lon": "-71.8503058",
+      "zone_id": "",
+      "location_type": "0",
+      "parent_station": "1_WHarHo",
+      "wheelchair_boarding": "",
+      "vehicle_type": "3",
+      "routes": [
+        "51"
+      ]
+    },
+    {
+      "stop_id": "0_7030",
+      "stop_code": "7030",
+      "stop_name": "Davis and Main Webster",
+      "stop_desc": "Comment",
+      "stop_lat": "42.049194",
+      "stop_lon": "-71.8847162",
+      "zone_id": "",
+      "location_type": "0",
+      "parent_station": "1_Webstr",
+      "wheelchair_boarding": "",
+      "vehicle_type": "3",
+      "routes": [
+        "42"
+      ]
+    },
+    {
+      "stop_id": "0_9082",
+      "stop_code": "9082",
+      "stop_name": "Davis and Main Webster",
+      "stop_desc": "",
+      "stop_lat": "42.0489696",
+      "stop_lon": "-71.8843746",
+      "zone_id": "",
+      "location_type": "0",
+      "parent_station": "1_Webstr",
+      "wheelchair_boarding": "",
+      "vehicle_type": "3",
+      "routes": [
+        "51"
+      ]
+    },
+    {
+      "stop_id": "0_9080",
+      "stop_code": "9080",
+      "stop_name": "Davis and Main Webster",
+      "stop_desc": "",
+      "stop_lat": "42.0490794",
+      "stop_lon": "-71.8849935",
+      "zone_id": "",
+      "location_type": "0",
+      "parent_station": "1_Webstr",
+      "wheelchair_boarding": "",
+      "vehicle_type": "3",
+      "routes": [
+        "51"
+      ]
+    }
+  ]
+}

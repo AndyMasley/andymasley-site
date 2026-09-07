@@ -1,0 +1,30 @@
+import*as THREE from'three';
+import{PavementIndex,clipRoadPaintPolygon,roadPaintHeightAt}from'./road-finish';
+type Point=number[];
+export type UnpavedPaintReport={removedTriangles:number;meshes:number;retainedTransitionTriangles:number;pavedVetoes:number};
+const paints=new Set(['Drive road | warm yellow paint','Drive road | chalk white paint','Finished road | solid yellow centerline']);
+const asphalt=new Set(['Drive road | asphalt','Finished parking | asphalt','Streetscape | parking apron asphalt']);
+const cross=(a:Point,b:Point,c:Point)=>(b[0]-a[0])*(c[1]-a[1])-(b[1]-a[1])*(c[0]-a[0]);
+function area(p:Point[]){let a=0;for(let i=1;i<p.length-1;i++)a+=cross(p[0],p[i],p[i+1]);return Math.abs(a)/2;}
+function split(p:Point[],a:Point,b:Point,sign:number):[Point[],Point[]]{const inside:Point[]=[],outside:Point[]=[];for(let i=0;i<p.length;i++){const q=p[i],r=p[(i+1)%p.length],x=sign*cross(a,b,q),y=sign*cross(a,b,r);if(x>=-1e-10)inside.push(q);if(x<=1e-10)outside.push(q);if((x>1e-10&&y< -1e-10)||(x< -1e-10&&y>1e-10)){const t=x/(x-y),v=[q[0]+(r[0]-q[0])*t,q[1]+(r[1]-q[1])*t];inside.push(v);outside.push(v);}}return[inside,outside];}
+function subtract(p:Point[],triangle:Point[]):Point[][]{let remaining=p;const out:Point[][]=[],sign=cross(triangle[0],triangle[1],triangle[2])>=0?1:-1;for(let i=0;i<3;i++){const[inside,outside]=split(remaining,triangle[i],triangle[(i+1)%3],sign);if(outside.length>=3&&area(outside)>1e-12)out.push(outside);remaining=inside;if(remaining.length<3)break;}return out;}
+/** Full polygon-area coverage, not a center-point/nearest-road guess. Bridges and
+ * different-height ribbons cannot remove a marking on another road level. */
+function sameLayer(paint:Point[],surface:Point[],overlap:Point[]){return overlap.every(p=>{const gap=roadPaintHeightAt(paint,p)-roadPaintHeightAt(surface,p);return Number.isFinite(gap)&&gap>=-.04&&gap<=.08;});}
+/** Only called after exact source-stamp inventory matching. All positions,
+ * normals, UVs, transforms and non-paint material assignments remain untouched. */
+export function removeUnpavedRoadPaint(group:THREE.Group):UnpavedPaintReport{
+ const previous=group.userData.unpavedRoadPaint as UnpavedPaintReport|undefined;if(previous)return previous;
+ const report:UnpavedPaintReport={removedTriangles:0,meshes:0,retainedTransitionTriangles:0,pavedVetoes:0},loose:Point[][]=[],paved:Point[][]=[],paintMeshes:THREE.Mesh[]=[];
+ group.updateMatrixWorld(true);const inverse=group.matrixWorld.clone().invert(),v=new THREE.Vector3();
+ const triangle=(o:THREE.Mesh,i:number,matrix:THREE.Matrix4)=>{const g=o.geometry,p=g.getAttribute('position');return[0,1,2].map(k=>{v.fromBufferAttribute(p,g.index?.getX(i+k)??i+k).applyMatrix4(matrix);return[v.x,-v.z,v.y];});};
+ group.traverse(o=>{if(!(o instanceof THREE.Mesh))return;const materials=Array.isArray(o.material)?o.material:[o.material];if(materials.some(m=>paints.has(m.name)))paintMeshes.push(o);const g=o.geometry,p=g.getAttribute('position'),total=g.index?.count??p.count,matrix=inverse.clone().multiply(o.matrixWorld);for(const range of g.groups.length?g.groups:[{start:0,count:total,materialIndex:0}]){const m=materials[range.materialIndex??0],code=m?.userData.townRoadSurfaceType,unpaved=code===1||code===2;if(!unpaved&&!asphalt.has(m?.name)&&code!==5)continue;for(let i=range.start;i+2<Math.min(total,range.start+range.count);i+=3){const tri=triangle(o,i,matrix);if(area(tri)>1e-10)(unpaved?loose:paved).push(tri);}}});
+ if(!loose.length)return report;const looseIndex=new PavementIndex(loose),pavedIndex=new PavementIndex(paved),retired=new Set<THREE.BufferGeometry>();
+ for(const mesh of paintMeshes){const old=mesh.geometry,p=old.getAttribute('position'),total=old.index?.count??p.count,matrix=inverse.clone().multiply(mesh.matrixWorld),materials=Array.isArray(mesh.material)?mesh.material:[mesh.material],indices:number[]=[],groups:{start:number;count:number;materialIndex:number}[]=[];let removed=0;
+  for(const range of old.groups.length?old.groups:[{start:0,count:total,materialIndex:0}]){const start=indices.length;for(let i=range.start;i+2<Math.min(total,range.start+range.count);i+=3){let erase=false;if(paints.has(materials[range.materialIndex??0]?.name)){const face=triangle(mesh,i,matrix),polygon=face.map(v=>v.slice(0,2)),size=area(polygon),tolerance=Math.max(1e-8,size*1e-6),supports=looseIndex.candidates(polygon).filter(s=>{const overlap=clipRoadPaintPolygon(polygon,s.triangle);return overlap.length>=3&&area(overlap)>1e-12&&sameLayer(face,s.triangle,overlap);});
+    if(size>1e-10&&supports.length){const veto=pavedIndex.candidates(polygon).some(s=>{const overlap=clipRoadPaintPolygon(polygon,s.triangle);return overlap.length>=3&&area(overlap)>1e-10&&sameLayer(face,s.triangle,overlap);});if(veto)report.pavedVetoes++;else{let remainder=[polygon];for(const support of supports){remainder=remainder.flatMap(p=>subtract(p,support.triangle));if(!remainder.length||remainder.reduce((a,p)=>a+area(p),0)<=tolerance){erase=true;break;}if(remainder.length>128)break;}if(!erase)report.retainedTransitionTriangles++;}}
+   }if(erase){removed++;continue;}for(let k=0;k<3;k++)indices.push(old.index?.getX(i+k)??i+k);}groups.push({start,count:indices.length-start,materialIndex:range.materialIndex??0});}
+  if(!removed)continue;const geometry=new THREE.BufferGeometry();for(const[name,a]of Object.entries(old.attributes))geometry.setAttribute(name,a);geometry.morphAttributes=old.morphAttributes;geometry.morphTargetsRelative=old.morphTargetsRelative;geometry.boundingBox=old.boundingBox?.clone()??null;geometry.boundingSphere=old.boundingSphere?.clone()??null;geometry.userData={...old.userData};geometry.setIndex(p.count>65535?new THREE.Uint32BufferAttribute(indices,1):new THREE.Uint16BufferAttribute(indices,1));for(const g of groups)if(g.count)geometry.addGroup(g.start,g.count,g.materialIndex);mesh.geometry=geometry;retired.add(old);report.removedTriangles+=removed;report.meshes++;
+ }
+ group.traverse(o=>{if(o instanceof THREE.Mesh)retired.delete(o.geometry);});retired.forEach(g=>g.dispose());group.userData.unpavedRoadPaint=report;return report;
+}

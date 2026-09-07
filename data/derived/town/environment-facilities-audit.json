@@ -1,0 +1,1010 @@
+{
+  "version": 1,
+  "source": "https://overpass-api.de/api/interpreter",
+  "sourceSnapshotSha256": "566a959bf1220112de426ab677ba688bb5af7ccb65942f3ba8073e88407b1352",
+  "registrations": [
+    {
+      "site": "cudworth-fence",
+      "plantWay": 675684788,
+      "sourceAccessPixel": [
+        455,
+        315
+      ],
+      "accessLocal": [
+        -1089.4333714467066,
+        1478.3422267874703
+      ],
+      "gateProjectedLocal": [
+        -1102.9730454387177,
+        1468.79499705462
+      ],
+      "openingM": 7,
+      "basis": "Current plant boundary and aerial track register a bounded inferred fence, against explicit dated permit evidence; all guided roads and source buildings have protective clearance."
+    },
+    {
+      "site": "cudworth",
+      "way": 675684788,
+      "aerialCrop": {
+        "mosaicCropPixels": [
+          2642,
+          2641,
+          3154,
+          3153
+        ],
+        "resizeScale": 1.5,
+        "center": [
+          -71.860691,
+          42.071072
+        ]
+      },
+      "rowPixels": [
+        [
+          156,
+          58,
+          282,
+          58
+        ],
+        [
+          157,
+          78,
+          249,
+          78
+        ],
+        [
+          157,
+          98,
+          251,
+          98
+        ],
+        [
+          278,
+          91,
+          336,
+          91
+        ],
+        [
+          254,
+          103,
+          345,
+          103
+        ],
+        [
+          260,
+          115,
+          354,
+          115
+        ],
+        [
+          198,
+          155,
+          286,
+          155
+        ],
+        [
+          205,
+          166,
+          294,
+          166
+        ],
+        [
+          212,
+          177,
+          302,
+          177
+        ],
+        [
+          219,
+          188,
+          310,
+          188
+        ],
+        [
+          226,
+          199,
+          318,
+          199
+        ],
+        [
+          233,
+          210,
+          326,
+          210
+        ],
+        [
+          240,
+          221,
+          334,
+          221
+        ],
+        [
+          247,
+          232,
+          342,
+          232
+        ],
+        [
+          254,
+          243,
+          350,
+          243
+        ],
+        [
+          261,
+          254,
+          358,
+          254
+        ],
+        [
+          268,
+          265,
+          366,
+          265
+        ],
+        [
+          275,
+          276,
+          374,
+          276
+        ],
+        [
+          282,
+          287,
+          382,
+          287
+        ],
+        [
+          289,
+          298,
+          390,
+          298
+        ],
+        [
+          296,
+          309,
+          398,
+          309
+        ],
+        [
+          299,
+          127,
+          362,
+          127
+        ],
+        [
+          307,
+          138,
+          369,
+          138
+        ],
+        [
+          315,
+          149,
+          376,
+          149
+        ],
+        [
+          323,
+          160,
+          383,
+          160
+        ],
+        [
+          331,
+          171,
+          390,
+          171
+        ],
+        [
+          339,
+          182,
+          397,
+          182
+        ],
+        [
+          347,
+          193,
+          404,
+          193
+        ],
+        [
+          355,
+          204,
+          411,
+          204
+        ],
+        [
+          363,
+          215,
+          418,
+          215
+        ],
+        [
+          371,
+          226,
+          425,
+          226
+        ],
+        [
+          379,
+          237,
+          432,
+          237
+        ],
+        [
+          387,
+          248,
+          439,
+          248
+        ],
+        [
+          395,
+          259,
+          446,
+          259
+        ],
+        [
+          334,
+          328,
+          397,
+          328
+        ],
+        [
+          341,
+          339,
+          403,
+          339
+        ],
+        [
+          348,
+          350,
+          409,
+          350
+        ],
+        [
+          355,
+          361,
+          415,
+          361
+        ],
+        [
+          362,
+          372,
+          421,
+          372
+        ],
+        [
+          369,
+          383,
+          427,
+          383
+        ],
+        [
+          376,
+          394,
+          433,
+          394
+        ],
+        [
+          383,
+          405,
+          439,
+          405
+        ],
+        [
+          381.0,
+          421,
+          448.0,
+          421
+        ],
+        [
+          385.1,
+          432,
+          451.5,
+          432
+        ],
+        [
+          389.2,
+          443,
+          455.0,
+          443
+        ],
+        [
+          393.3,
+          454,
+          458.5,
+          454
+        ],
+        [
+          397.4,
+          465,
+          462.0,
+          465
+        ],
+        [
+          401.5,
+          476,
+          465.5,
+          476
+        ],
+        [
+          405.6,
+          487,
+          469.0,
+          487
+        ],
+        [
+          409.7,
+          498,
+          472.5,
+          498
+        ],
+        [
+          413.8,
+          509,
+          476.0,
+          509
+        ],
+        [
+          417.9,
+          520,
+          479.5,
+          520
+        ],
+        [
+          422.0,
+          531,
+          483.0,
+          531
+        ],
+        [
+          426.1,
+          542,
+          486.5,
+          542
+        ],
+        [
+          430.2,
+          553,
+          490.0,
+          553
+        ],
+        [
+          434.3,
+          564,
+          493.5,
+          564
+        ],
+        [
+          438.4,
+          575,
+          497.0,
+          575
+        ],
+        [
+          442.5,
+          586,
+          500.5,
+          586
+        ],
+        [
+          548.0,
+          522.0,
+          579.0,
+          522.0
+        ],
+        [
+          550.1,
+          532.5,
+          581.3,
+          532.5
+        ],
+        [
+          552.2,
+          543.0,
+          583.6,
+          543.0
+        ],
+        [
+          554.3,
+          553.5,
+          585.9,
+          553.5
+        ],
+        [
+          556.4,
+          564.0,
+          588.2,
+          564.0
+        ],
+        [
+          558.5,
+          574.5,
+          590.5,
+          574.5
+        ],
+        [
+          560.6,
+          585.0,
+          592.8,
+          585.0
+        ],
+        [
+          562.7,
+          595.5,
+          595.1,
+          595.5
+        ],
+        [
+          564.8,
+          606.0,
+          597.4,
+          606.0
+        ],
+        [
+          566.9,
+          616.5,
+          599.7,
+          616.5
+        ],
+        [
+          508,
+          659,
+          598,
+          659
+        ],
+        [
+          446,
+          670,
+          598,
+          670
+        ],
+        [
+          446,
+          681,
+          598,
+          681
+        ],
+        [
+          446,
+          691,
+          598,
+          691
+        ]
+      ],
+      "basis": "Approximate axes of visible racks in spring 2025 aerial; nominal rack depth, panel segmentation, tilt and support construction inferred."
+    },
+    {
+      "site": "webster-solar",
+      "way": 777873377,
+      "aerialCrop": {
+        "mosaicCropPixels": [
+          2874,
+          8459,
+          3386,
+          8971
+        ],
+        "resizeScale": 1.5,
+        "center": [
+          -71.858197,
+          42.024724
+        ]
+      },
+      "rowPixels": [
+        [
+          218,
+          306,
+          309,
+          306
+        ],
+        [
+          218,
+          326,
+          528,
+          326
+        ],
+        [
+          219,
+          345,
+          552,
+          345
+        ],
+        [
+          219,
+          365,
+          559,
+          365
+        ],
+        [
+          220,
+          385,
+          560,
+          385
+        ],
+        [
+          220,
+          404,
+          561,
+          404
+        ],
+        [
+          220,
+          423,
+          563,
+          423
+        ],
+        [
+          220,
+          442,
+          594,
+          442
+        ],
+        [
+          220,
+          460,
+          594,
+          460
+        ]
+      ],
+      "basis": "Approximate axes of visible racks in spring 2025 aerial; nominal rack depth, panel segmentation, tilt and support construction inferred."
+    }
+  ],
+  "count": 530,
+  "byKind": {
+    "court": 25,
+    "solar": 81,
+    "pier": 126,
+    "apron": 2,
+    "fence": 296
+  },
+  "skipped": [
+    {
+      "id": 247622906,
+      "reason": "May Street 2025 aerial does not show the old mapped basketball surface; reconstruction-era geometry remains unverified."
+    },
+    {
+      "id": "court-1125752864",
+      "reason": "No exact source terrain support."
+    },
+    {
+      "id": "pier-1028755374-0",
+      "reason": "No exact source water support."
+    },
+    {
+      "id": "pier-1028755374-1",
+      "reason": "No exact source water support."
+    },
+    {
+      "id": "pier-1028755375-0",
+      "reason": "No exact source water support."
+    },
+    {
+      "id": "pier-1028755375-1",
+      "reason": "No exact source water support."
+    },
+    {
+      "id": "pier-1028755375-2",
+      "reason": "No exact source water support."
+    },
+    {
+      "id": "pier-1028755375-3",
+      "reason": "No exact source water support."
+    },
+    {
+      "id": "pier-1028755376-0",
+      "reason": "No exact source water support."
+    },
+    {
+      "id": "pier-1028755376-1",
+      "reason": "No exact source water support."
+    },
+    {
+      "id": "pier-1028755376-2",
+      "reason": "No exact source water support."
+    },
+    {
+      "id": "pier-1028755376-3",
+      "reason": "No exact source water support."
+    },
+    {
+      "id": "pier-1028755376-4",
+      "reason": "No exact source water support."
+    },
+    {
+      "id": "pier-1028755376-5",
+      "reason": "No exact source water support."
+    },
+    {
+      "id": "pier-1028755377-0",
+      "reason": "No exact source water support."
+    },
+    {
+      "id": "pier-1028755377-1",
+      "reason": "No exact source water support."
+    },
+    {
+      "id": "pier-1028755377-2",
+      "reason": "No exact source water support."
+    },
+    {
+      "id": "pier-1028755377-3",
+      "reason": "No exact source water support."
+    },
+    {
+      "id": "pier-1028755377-4",
+      "reason": "No exact source water support."
+    },
+    {
+      "id": "pier-1028755377-5",
+      "reason": "No exact source water support."
+    },
+    {
+      "id": "pier-1028755377-6",
+      "reason": "No exact source water support."
+    },
+    {
+      "id": "pier-1028755377-7",
+      "reason": "No exact source water support."
+    },
+    {
+      "id": "pier-1028755377-8",
+      "reason": "No exact source water support."
+    },
+    {
+      "id": "pier-1028755377-9",
+      "reason": "No exact source water support."
+    },
+    {
+      "id": "pier-1028755377-10",
+      "reason": "No exact source water support."
+    },
+    {
+      "id": "pier-1028755377-11",
+      "reason": "No exact source water support."
+    },
+    {
+      "id": "pier-1028755377-12",
+      "reason": "No exact source water support."
+    },
+    {
+      "id": "pier-1028755377-13",
+      "reason": "No exact source water support."
+    },
+    {
+      "id": "pier-1028755377-14",
+      "reason": "No exact source water support."
+    },
+    {
+      "id": "pier-1028755377-15",
+      "reason": "No exact source water support."
+    },
+    {
+      "id": "pier-1028755377-16",
+      "reason": "No exact source water support."
+    },
+    {
+      "id": "pier-1028755377-17",
+      "reason": "No exact source water support."
+    },
+    {
+      "id": "pier-1028755377-18",
+      "reason": "No exact source water support."
+    },
+    {
+      "id": "pier-1028755377-19",
+      "reason": "No exact source water support."
+    },
+    {
+      "id": "pier-1028755377-20",
+      "reason": "No exact source water support."
+    },
+    {
+      "id": "pier-1028755377-21",
+      "reason": "No exact source water support."
+    },
+    {
+      "id": "pier-1028755377-22",
+      "reason": "No exact source water support."
+    },
+    {
+      "id": "pier-1028755377-23",
+      "reason": "No exact source water support."
+    },
+    {
+      "id": "pier-1028755377-24",
+      "reason": "No exact source water support."
+    },
+    {
+      "id": "pier-1028755377-25",
+      "reason": "No exact source water support."
+    },
+    {
+      "id": "pier-1028755378-0",
+      "reason": "No exact source water support."
+    },
+    {
+      "id": "pier-1028755378-1",
+      "reason": "No exact source water support."
+    },
+    {
+      "id": "pier-1028755378-2",
+      "reason": "No exact source water support."
+    },
+    {
+      "id": "pier-1028755378-3",
+      "reason": "No exact source water support."
+    },
+    {
+      "id": "pier-1028755378-4",
+      "reason": "No exact source water support."
+    },
+    {
+      "id": "pier-1028755378-5",
+      "reason": "No exact source water support."
+    },
+    {
+      "id": "pier-1028755378-6",
+      "reason": "No exact source water support."
+    },
+    {
+      "id": "pier-1028755378-7",
+      "reason": "No exact source water support."
+    },
+    {
+      "id": "pier-1028755378-8",
+      "reason": "No exact source water support."
+    },
+    {
+      "id": "pier-1028755378-9",
+      "reason": "No exact source water support."
+    },
+    {
+      "id": "pier-1028755378-10",
+      "reason": "No exact source water support."
+    },
+    {
+      "id": "pier-1028755378-11",
+      "reason": "No exact source water support."
+    },
+    {
+      "id": "pier-1028755378-12",
+      "reason": "No exact source water support."
+    },
+    {
+      "id": "pier-1028755378-13",
+      "reason": "No exact source water support."
+    },
+    {
+      "id": "pier-1028755378-14",
+      "reason": "No exact source water support."
+    },
+    {
+      "id": "pier-1028755378-15",
+      "reason": "No exact source water support."
+    },
+    {
+      "id": "pier-1028755378-16",
+      "reason": "No exact source water support."
+    },
+    {
+      "id": "pier-1028755378-17",
+      "reason": "No exact source water support."
+    },
+    {
+      "id": "pier-1028755378-18",
+      "reason": "No exact source water support."
+    },
+    {
+      "id": "pier-1028755378-19",
+      "reason": "No exact source water support."
+    },
+    {
+      "id": "pier-1028755378-20",
+      "reason": "No exact source water support."
+    },
+    {
+      "id": "pier-1028755378-21",
+      "reason": "No exact source water support."
+    },
+    {
+      "id": "pier-1028755378-22",
+      "reason": "No exact source water support."
+    },
+    {
+      "id": "pier-1028755383-0",
+      "reason": "No exact source water support."
+    },
+    {
+      "id": "pier-1028755383-1",
+      "reason": "No exact source water support."
+    },
+    {
+      "id": "pier-1028755384-8",
+      "reason": "No exact source water support."
+    },
+    {
+      "id": "pier-1028755384-9",
+      "reason": "No exact source water support."
+    },
+    {
+      "id": "pier-1028755385-4",
+      "reason": "No exact source water support."
+    },
+    {
+      "id": "pier-1028755385-5",
+      "reason": "No exact source water support."
+    },
+    {
+      "id": "pier-1028755385-6",
+      "reason": "No exact source water support."
+    },
+    {
+      "id": "pier-1028755385-7",
+      "reason": "No exact source water support."
+    },
+    {
+      "id": "pier-1028755385-8",
+      "reason": "No exact source water support."
+    },
+    {
+      "id": "pier-1028755385-9",
+      "reason": "No exact source water support."
+    },
+    {
+      "id": "pier-1028755385-10",
+      "reason": "No exact source water support."
+    },
+    {
+      "id": "pier-1028755385-11",
+      "reason": "No exact source water support."
+    },
+    {
+      "id": "pier-1028755385-12",
+      "reason": "No exact source water support."
+    },
+    {
+      "id": "pier-1028755385-13",
+      "reason": "No exact source water support."
+    },
+    {
+      "id": "pier-1028755385-14",
+      "reason": "No exact source water support."
+    },
+    {
+      "id": "pier-1028755385-15",
+      "reason": "No exact source water support."
+    },
+    {
+      "id": "pier-1028755385-16",
+      "reason": "No exact source water support."
+    },
+    {
+      "id": "pier-1028755385-17",
+      "reason": "No exact source water support."
+    },
+    {
+      "id": "pier-1028755385-18",
+      "reason": "No exact source water support."
+    },
+    {
+      "id": "pier-1028755385-19",
+      "reason": "No exact source water support."
+    },
+    {
+      "id": "pier-1028755385-20",
+      "reason": "No exact source water support."
+    },
+    {
+      "id": "pier-1028755385-21",
+      "reason": "No exact source water support."
+    },
+    {
+      "id": "pier-1028755385-22",
+      "reason": "No exact source water support."
+    },
+    {
+      "id": "pier-1028755385-23",
+      "reason": "No exact source water support."
+    },
+    {
+      "id": "pier-1028755385-24",
+      "reason": "No exact source water support."
+    },
+    {
+      "id": "pier-1028755385-25",
+      "reason": "No exact source water support."
+    },
+    {
+      "id": "pier-1028755385-26",
+      "reason": "No exact source water support."
+    },
+    {
+      "id": "pier-1028755385-27",
+      "reason": "No exact source water support."
+    },
+    {
+      "id": "pier-1028755385-28",
+      "reason": "No exact source water support."
+    },
+    {
+      "id": "pier-1028755385-29",
+      "reason": "No exact source water support."
+    },
+    {
+      "id": "pier-1028755385-30",
+      "reason": "No exact source water support."
+    },
+    {
+      "id": "pier-1028755386-0",
+      "reason": "No exact source water support."
+    },
+    {
+      "id": "pier-1028755386-1",
+      "reason": "No exact source water support."
+    },
+    {
+      "id": "pier-1028755386-2",
+      "reason": "No exact source water support."
+    },
+    {
+      "id": "pier-1028755386-3",
+      "reason": "No exact source water support."
+    },
+    {
+      "id": "pier-1028755386-4",
+      "reason": "No exact source water support."
+    },
+    {
+      "id": "pier-1094899385-1",
+      "reason": "No exact source water support."
+    },
+    {
+      "id": "pier-1094899385-2",
+      "reason": "No exact source water support."
+    },
+    {
+      "id": "pier-1094899385-3",
+      "reason": "No exact source water support."
+    },
+    {
+      "id": "pier-1094899385-4",
+      "reason": "No exact source water support."
+    },
+    {
+      "id": "pier-1094899388-0",
+      "reason": "No exact source water support."
+    },
+    {
+      "id": "pier-1094899388-1",
+      "reason": "No exact source water support."
+    },
+    {
+      "id": "pier-1411710309-3",
+      "reason": "No exact source water support."
+    },
+    {
+      "id": "pier-1411710309-4",
+      "reason": "No exact source water support."
+    },
+    {
+      "id": "pier-1411710309-5",
+      "reason": "No exact source water support."
+    },
+    {
+      "id": "pier-1411710310-0",
+      "reason": "No exact source water support."
+    },
+    {
+      "id": "pier-1411710310-1",
+      "reason": "No exact source water support."
+    },
+    {
+      "id": "pier-1411710310-2",
+      "reason": "No exact source water support."
+    },
+    {
+      "id": "pier-1411710311-2",
+      "reason": "No exact source water support."
+    }
+  ],
+  "inference": "Sport equipment, lines and surface colors are regional authored forms. Solar row axes derive from reviewed 2025 imagery; panel construction is inferred. Pier alignment is mapped; 1.6 m width, boards, posts and deck height are inferred; no named access claim."
+}
