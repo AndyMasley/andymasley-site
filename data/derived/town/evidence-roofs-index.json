@@ -1,0 +1,421 @@
+{
+  "version": 2,
+  "count": 95,
+  "candidates": 154,
+  "skipped": {
+    "nonresidential use or no eligible evidence profile": 6,
+    "complex or large plan": 74,
+    "unsupported proportions": 1,
+    "insufficient measured roof allowance": 2
+  },
+  "tiles": {
+    "-10_-3": {
+      "url": "/town-evidence/v1/roofs/-10_-3.61ccf0117f7e.json",
+      "count": 1,
+      "bytes": 12606,
+      "sha256": "61ccf0117f7eb2b0015b771e9ca1aa02a2f0c44989a0507c20847ed75a16c22a"
+    },
+    "-10_-4": {
+      "url": "/town-evidence/v1/roofs/-10_-4.5d5485619371.json",
+      "count": 3,
+      "bytes": 9904,
+      "sha256": "5d5485619371546349ec383a5437e3bd1d56ce90e2c0143bb96392c7c743ffd4"
+    },
+    "-10_-6": {
+      "url": "/town-evidence/v1/roofs/-10_-6.754dcce673e1.json",
+      "count": 1,
+      "bytes": 6417,
+      "sha256": "754dcce673e1eee616c68187b01a08a050013a8a0ea75fc99c29b8aee0d19cf6"
+    },
+    "-10_-7": {
+      "url": "/town-evidence/v1/roofs/-10_-7.3d9bfe76a2ee.json",
+      "count": 1,
+      "bytes": 9276,
+      "sha256": "3d9bfe76a2ee7cb4d9e185a80ea1531a11a800fbdc53c2cade1aae57c5118287"
+    },
+    "-10_-8": {
+      "url": "/town-evidence/v1/roofs/-10_-8.b223869fde7b.json",
+      "count": 1,
+      "bytes": 3322,
+      "sha256": "b223869fde7be59f43540e1957631c0641ed69d03831bc80e82b28ee1e5976d0"
+    },
+    "-11_-1": {
+      "url": "/town-evidence/v1/roofs/-11_-1.ac13f8dc9b6c.json",
+      "count": 3,
+      "bytes": 19835,
+      "sha256": "ac13f8dc9b6c392f38171eadddea98d295313e969fed788bf9ff6809aff5fe21"
+    },
+    "-11_-14": {
+      "url": "/town-evidence/v1/roofs/-11_-14.06c0b3a34147.json",
+      "count": 1,
+      "bytes": 4142,
+      "sha256": "06c0b3a3414700a1e71febf8a445544231193b7a1ec6b505134b9b32ec02208c"
+    },
+    "-11_-3": {
+      "url": "/town-evidence/v1/roofs/-11_-3.348fdc2fe12d.json",
+      "count": 1,
+      "bytes": 3259,
+      "sha256": "348fdc2fe12d2e319d50a1d8189f2353751790e837c1dafda07f62c0fa6d41e8"
+    },
+    "-11_-4": {
+      "url": "/town-evidence/v1/roofs/-11_-4.5c8b8a18f912.json",
+      "count": 1,
+      "bytes": 5818,
+      "sha256": "5c8b8a18f91225b57b9c1c041d1cfc8ed6677735b382d99771f98eedb7fdf796"
+    },
+    "-11_-6": {
+      "url": "/town-evidence/v1/roofs/-11_-6.cdcf6f070884.json",
+      "count": 3,
+      "bytes": 12845,
+      "sha256": "cdcf6f070884c13c3c2b968ee2b0288629e910e257247beefed0247cacfeb825"
+    },
+    "-11_0": {
+      "url": "/town-evidence/v1/roofs/-11_0.2a9e0f5c653f.json",
+      "count": 1,
+      "bytes": 21166,
+      "sha256": "2a9e0f5c653fae4b0d160be56776dd68da519036ab3ae65ec6ce9c146e9e7015"
+    },
+    "-11_1": {
+      "url": "/town-evidence/v1/roofs/-11_1.7decdeefc921.json",
+      "count": 2,
+      "bytes": 19403,
+      "sha256": "7decdeefc92104a7a63b65cfca4264296a4b6067fff9687328dc47bf5687f3e5"
+    },
+    "-11_2": {
+      "url": "/town-evidence/v1/roofs/-11_2.f5dad87502c1.json",
+      "count": 1,
+      "bytes": 5004,
+      "sha256": "f5dad87502c1f970a5f8c5b5fd15cd425ec75ee1d98b2c22aae6d51dea22b101"
+    },
+    "-11_3": {
+      "url": "/town-evidence/v1/roofs/-11_3.ca621db60dff.json",
+      "count": 1,
+      "bytes": 4941,
+      "sha256": "ca621db60dffcb7a389f00315157d8b314710982fd0a0e92106789cc95e633ad"
+    },
+    "-12_-10": {
+      "url": "/town-evidence/v1/roofs/-12_-10.e5a93f9bc53e.json",
+      "count": 1,
+      "bytes": 22078,
+      "sha256": "e5a93f9bc53e3051db23828dd618274024c975d54a6a1461c8cddf03291f7283"
+    },
+    "-12_-11": {
+      "url": "/town-evidence/v1/roofs/-12_-11.21bae835b6d2.json",
+      "count": 4,
+      "bytes": 35396,
+      "sha256": "21bae835b6d2b7db376c8cff3903b796c03c887873fc2780c5876743525c3f80"
+    },
+    "-12_-13": {
+      "url": "/town-evidence/v1/roofs/-12_-13.fde7f60b709d.json",
+      "count": 1,
+      "bytes": 2907,
+      "sha256": "fde7f60b709d418110eae3f9b2c0f166fda545644783e4c2c622eeaa05e964e3"
+    },
+    "-12_-5": {
+      "url": "/town-evidence/v1/roofs/-12_-5.1ed99b0e7134.json",
+      "count": 2,
+      "bytes": 11478,
+      "sha256": "1ed99b0e7134596a9551a0a5bd973adcf37b86db6802e283dddbe31d7f33394f"
+    },
+    "-12_-6": {
+      "url": "/town-evidence/v1/roofs/-12_-6.58e228a27b3f.json",
+      "count": 4,
+      "bytes": 43681,
+      "sha256": "58e228a27b3f02e644d00f3ee8e39e44326e159d4c120efbabbd5586bcf99d7b"
+    },
+    "-12_-9": {
+      "url": "/town-evidence/v1/roofs/-12_-9.3a9519f9ceef.json",
+      "count": 2,
+      "bytes": 9770,
+      "sha256": "3a9519f9ceef8c511ae8b1419fce6eab29605d7583ec44c4b8fce2dd9e636072"
+    },
+    "-13_-6": {
+      "url": "/town-evidence/v1/roofs/-13_-6.91a5b2c2c3c0.json",
+      "count": 1,
+      "bytes": 9333,
+      "sha256": "91a5b2c2c3c015a51d5d0babbb274a248d5158e139355ff938272f3288ce7518"
+    },
+    "-14_-11": {
+      "url": "/town-evidence/v1/roofs/-14_-11.bf75b00489b1.json",
+      "count": 1,
+      "bytes": 2499,
+      "sha256": "bf75b00489b17b2bd7476c6f6aada841c8f56e6604c82869848f1dcc161cf2dc"
+    },
+    "-1_-11": {
+      "url": "/town-evidence/v1/roofs/-1_-11.16adf70479c4.json",
+      "count": 1,
+      "bytes": 3303,
+      "sha256": "16adf70479c40e8d3d6c4270b8028ed6d1fbb259a4b382c8b681fc3e0206bdbc"
+    },
+    "-1_-6": {
+      "url": "/town-evidence/v1/roofs/-1_-6.77ff46f4be9a.json",
+      "count": 1,
+      "bytes": 9029,
+      "sha256": "77ff46f4be9a02a37daf33c3707b6d65ac809beebd835b2c6e9e6ca588b616c1"
+    },
+    "-2_-11": {
+      "url": "/town-evidence/v1/roofs/-2_-11.dc7873b491ba.json",
+      "count": 4,
+      "bytes": 17342,
+      "sha256": "dc7873b491baab46aebe2b67f7719e5cf1490f92b9c988b8a264ba38bd26edbd"
+    },
+    "-2_-15": {
+      "url": "/town-evidence/v1/roofs/-2_-15.4d16c0559fa3.json",
+      "count": 1,
+      "bytes": 6600,
+      "sha256": "4d16c0559fa3a313bcaf5ba3f962f97a2a2fa55a5edfb7b5f578d688535de805"
+    },
+    "-2_-7": {
+      "url": "/town-evidence/v1/roofs/-2_-7.69698081908d.json",
+      "count": 1,
+      "bytes": 4543,
+      "sha256": "69698081908dcc69f2494357a5f99195facebb1b3e6aec22990d7f4322f69820"
+    },
+    "-3_-12": {
+      "url": "/town-evidence/v1/roofs/-3_-12.75c4e734597c.json",
+      "count": 2,
+      "bytes": 9077,
+      "sha256": "75c4e734597cffba44f26ded261b21ec60b29cb48a938070282bbdc89534fa51"
+    },
+    "-3_-15": {
+      "url": "/town-evidence/v1/roofs/-3_-15.d2879c688f03.json",
+      "count": 1,
+      "bytes": 2486,
+      "sha256": "d2879c688f03845d7498cf997d387d727cd1149890cd38caacfe3ea3d68a32b4"
+    },
+    "-3_-6": {
+      "url": "/town-evidence/v1/roofs/-3_-6.cee3ee40a7ab.json",
+      "count": 1,
+      "bytes": 4953,
+      "sha256": "cee3ee40a7abbbfd2919db092337f7b73b51997420268c8bd2e5b6c8de1d7ef9"
+    },
+    "-4_-6": {
+      "url": "/town-evidence/v1/roofs/-4_-6.7d8ca8e3ee85.json",
+      "count": 1,
+      "bytes": 5777,
+      "sha256": "7d8ca8e3ee858f36f55f94722a2f1316c163422d228b9cab30ed850b2a824ae6"
+    },
+    "-7_-5": {
+      "url": "/town-evidence/v1/roofs/-7_-5.a3744a6f8dba.json",
+      "count": 1,
+      "bytes": 9768,
+      "sha256": "a3744a6f8dbab58d0e23f0b820afeb8522844eec89aac87d0f25be345efb1f0c"
+    },
+    "-7_-7": {
+      "url": "/town-evidence/v1/roofs/-7_-7.7c58e90c3779.json",
+      "count": 1,
+      "bytes": 4550,
+      "sha256": "7c58e90c377952aaca848d080ff059f38ad5272717f770815d43ad12f28bfe79"
+    },
+    "-8_-5": {
+      "url": "/town-evidence/v1/roofs/-8_-5.f17671018588.json",
+      "count": 1,
+      "bytes": 2492,
+      "sha256": "f176710185888444844a05aa00c4e644a129d79dc9dddf39b2aef14708aacc4d"
+    },
+    "-8_8": {
+      "url": "/town-evidence/v1/roofs/-8_8.762f6e861a30.json",
+      "count": 1,
+      "bytes": 5939,
+      "sha256": "762f6e861a30bc7e53fd89f1d09245113bf108b398644214cddc05670f80a2d3"
+    },
+    "-9_-1": {
+      "url": "/town-evidence/v1/roofs/-9_-1.5323edb376f6.json",
+      "count": 2,
+      "bytes": 11137,
+      "sha256": "5323edb376f6fa6ce433f6dff7bcb33600f3cf88d0e675f69b45046fda636982"
+    },
+    "-9_-12": {
+      "url": "/town-evidence/v1/roofs/-9_-12.eb135926d84c.json",
+      "count": 1,
+      "bytes": 4522,
+      "sha256": "eb135926d84cd5d29148f37a3cb137c0597e19326a86bbb4b1bf2a53c3f1fbca"
+    },
+    "-9_-5": {
+      "url": "/town-evidence/v1/roofs/-9_-5.766e970da1b6.json",
+      "count": 1,
+      "bytes": 3317,
+      "sha256": "766e970da1b6d27793d2a9c4547d30873fa927f5b9d62fb1616a7531f3891baf"
+    },
+    "-9_0": {
+      "url": "/town-evidence/v1/roofs/-9_0.28d5a9ae6bee.json",
+      "count": 2,
+      "bytes": 10721,
+      "sha256": "28d5a9ae6beee9bcbfd93a8d3fd2c0e57482a57946ff50e6301f0c46ce013da5"
+    },
+    "-9_1": {
+      "url": "/town-evidence/v1/roofs/-9_1.c6d01d901615.json",
+      "count": 1,
+      "bytes": 6578,
+      "sha256": "c6d01d901615a55bc767a42e4400568cc3d5d675679cdf80cdf97438e0523853"
+    },
+    "0_-10": {
+      "url": "/town-evidence/v1/roofs/0_-10.62bb413243ea.json",
+      "count": 1,
+      "bytes": 4052,
+      "sha256": "62bb413243ea496e76aad706a5f166c80f8ee99c05784a32e7e1acdab783a209"
+    },
+    "0_0": {
+      "url": "/town-evidence/v1/roofs/0_0.75c78488644f.json",
+      "count": 1,
+      "bytes": 4090,
+      "sha256": "75c78488644fab3e5464073cd10ff72a41b012be123ea456959e2f64da734082"
+    },
+    "11_-12": {
+      "url": "/town-evidence/v1/roofs/11_-12.c8940297e960.json",
+      "count": 1,
+      "bytes": 3312,
+      "sha256": "c8940297e9604d7cd83792f08a4bc6b7900d3a447a6c915d739655926725e754"
+    },
+    "12_-12": {
+      "url": "/town-evidence/v1/roofs/12_-12.9bcb6bf8a761.json",
+      "count": 1,
+      "bytes": 5367,
+      "sha256": "9bcb6bf8a76100bcaffbd0007ffa1f89103632bf764b8d20030d832871e9a987"
+    },
+    "1_-12": {
+      "url": "/town-evidence/v1/roofs/1_-12.d6e8fedf8a03.json",
+      "count": 2,
+      "bytes": 9064,
+      "sha256": "d6e8fedf8a037eafa4940c7bbd4fa402428dd444eefaf0372cd9c89bfcf2820f"
+    },
+    "1_-6": {
+      "url": "/town-evidence/v1/roofs/1_-6.3b35ce6e6d17.json",
+      "count": 1,
+      "bytes": 3448,
+      "sha256": "3b35ce6e6d17e4e488806a5be1dc2ecc32d7deb3bdc0aa189836889e667f06f7"
+    },
+    "2_-15": {
+      "url": "/town-evidence/v1/roofs/2_-15.6e2759e410a7.json",
+      "count": 1,
+      "bytes": 2865,
+      "sha256": "6e2759e410a7854a6b2393d270f9516a5289402643944af1aea5241763bd416c"
+    },
+    "2_-4": {
+      "url": "/town-evidence/v1/roofs/2_-4.8d6baf9034a6.json",
+      "count": 1,
+      "bytes": 3277,
+      "sha256": "8d6baf9034a6d06bddab950be6b5c1ef74a8af3613b0bf95f525d6cedcfa8271"
+    },
+    "2_-6": {
+      "url": "/town-evidence/v1/roofs/2_-6.0bbf7665cb1b.json",
+      "count": 1,
+      "bytes": 4529,
+      "sha256": "0bbf7665cb1b516c7984103efd5a6196b7d13255b3b38b687aedc502cb01a955"
+    },
+    "3_-1": {
+      "url": "/town-evidence/v1/roofs/3_-1.6e37e21e0921.json",
+      "count": 1,
+      "bytes": 3298,
+      "sha256": "6e37e21e0921519c117bd62fef9bb5840f6e1d96051574336d443810d45fdbb8"
+    },
+    "3_-12": {
+      "url": "/town-evidence/v1/roofs/3_-12.399418cf90d6.json",
+      "count": 1,
+      "bytes": 5758,
+      "sha256": "399418cf90d63e1815b85693f82e303781b4c1d67e4a14a7eb512329b0386e3f"
+    },
+    "3_-16": {
+      "url": "/town-evidence/v1/roofs/3_-16.3fb4d94e0fac.json",
+      "count": 1,
+      "bytes": 4118,
+      "sha256": "3fb4d94e0fac0a9a230c5afd6285b6c7009fe28e6f567ef6f5251d3907bd951d"
+    },
+    "4_-10": {
+      "url": "/town-evidence/v1/roofs/4_-10.dc804cef3d9d.json",
+      "count": 4,
+      "bytes": 18962,
+      "sha256": "dc804cef3d9d22dd31bdb5bd37ce3935cb5a33b1bf765eb05712286490a9ef38"
+    },
+    "4_-14": {
+      "url": "/town-evidence/v1/roofs/4_-14.095ce5f18812.json",
+      "count": 1,
+      "bytes": 8245,
+      "sha256": "095ce5f18812a67add56a9b1c25ba1f2cac5471bab588a8afaeb441b9ca339e0"
+    },
+    "4_-2": {
+      "url": "/town-evidence/v1/roofs/4_-2.2fd2e89ccfc0.json",
+      "count": 1,
+      "bytes": 9032,
+      "sha256": "2fd2e89ccfc05eb579a652f7137eee22873f6465217369366ff6080ad107522f"
+    },
+    "4_-4": {
+      "url": "/town-evidence/v1/roofs/4_-4.f99e844ed415.json",
+      "count": 1,
+      "bytes": 4938,
+      "sha256": "f99e844ed4157c19248f4dcab737f8df3201354180d5e2713eb6f195d3ca4993"
+    },
+    "4_-5": {
+      "url": "/town-evidence/v1/roofs/4_-5.c1e10a25757c.json",
+      "count": 1,
+      "bytes": 3707,
+      "sha256": "c1e10a25757c5d386e0272e0b899dab0158b0e41127fcdf43104ecb9da3b3ba4"
+    },
+    "5_-10": {
+      "url": "/town-evidence/v1/roofs/5_-10.8aff15ab18a7.json",
+      "count": 2,
+      "bytes": 8643,
+      "sha256": "8aff15ab18a79d7862dd4f850d4b296aeff4acb28dd1da485504b061e131cc7a"
+    },
+    "5_-11": {
+      "url": "/town-evidence/v1/roofs/5_-11.580dfb7255bb.json",
+      "count": 1,
+      "bytes": 5347,
+      "sha256": "580dfb7255bb2816d89f0e32a4f9cc9316458fb29ce98ac4a7c16a15ba9cec72"
+    },
+    "5_-15": {
+      "url": "/town-evidence/v1/roofs/5_-15.d971a9d43918.json",
+      "count": 3,
+      "bytes": 10041,
+      "sha256": "d971a9d439181ba9bad4d49b513d2400cf7e1f5bd0a39fa084a76d35ba902227"
+    },
+    "6_-10": {
+      "url": "/town-evidence/v1/roofs/6_-10.468e8c43770e.json",
+      "count": 1,
+      "bytes": 2870,
+      "sha256": "468e8c43770ef0d54f305a91a9e8ffd8c64c69101a43c18a9bf246af951abef0"
+    },
+    "6_-11": {
+      "url": "/town-evidence/v1/roofs/6_-11.1e201612cc4f.json",
+      "count": 1,
+      "bytes": 3314,
+      "sha256": "1e201612cc4fd36d5531299d31748402844c74d79ec210e7e0c5f46dd787f6bc"
+    },
+    "6_-6": {
+      "url": "/town-evidence/v1/roofs/6_-6.8a269a5adb79.json",
+      "count": 1,
+      "bytes": 7909,
+      "sha256": "8a269a5adb79add6f3c800801aed0e1c22c2d071f338c8dd2edd197603901375"
+    },
+    "7_-12": {
+      "url": "/town-evidence/v1/roofs/7_-12.7be80464dabc.json",
+      "count": 2,
+      "bytes": 7185,
+      "sha256": "7be80464dabcedcfa71ad89b0b23e8e0ae0ca3b94827d83d801d19c7702ab714"
+    },
+    "8_-14": {
+      "url": "/town-evidence/v1/roofs/8_-14.cd1f9bad9bcf.json",
+      "count": 1,
+      "bytes": 9600,
+      "sha256": "cd1f9bad9bcf668a557b8f933edcbe73d4300d86ad39d687617980a1a0873555"
+    },
+    "8_-15": {
+      "url": "/town-evidence/v1/roofs/8_-15.ca5eab353d7b.json",
+      "count": 1,
+      "bytes": 2901,
+      "sha256": "ca5eab353d7b88bb472c6f5bdb898cf1cf5ce70dcb8a15ae641ed855dd917c8b"
+    }
+  },
+  "historicalCandidates": 83,
+  "historicalSkipped": {
+    "historical complex plan without coherent wings": 2,
+    "protected landmark/photo or no eligible residential profile": 11,
+    "existing coherent gable already matches dated form": 42,
+    "historical flat roof retains current body pending local survey": 2,
+    "saltbox rear-eave position is not established": 1
+  },
+  "historicalCount": 25,
+  "historicalEvidenceSha256": "00cbcb12b682f3703305c6dd272685b73f46c5f24c80ece08b4039a4c68c21df",
+  "sourceRegisterSha256": "f0d5fb886bef32c16790b65169d44e69ea96c8d9a3d99ab6b1e5c7aabe4dc31b",
+  "policy": "Bounded principal residential fallbacks plus explicitly dated roof descriptions joined by containment, address and year gates. Named/photo assets remain protected. Coherent source wings and full unchanged source polygons remain closed solids; no historical form is claimed to be a current photograph."
+}

@@ -8,19 +8,36 @@ road graph resident, independent of scenery loading or display quality.
 
 | Control | Action |
 | --- | --- |
-| ↑ / ↓ | Accelerate / brake; releasing ↑ retains cruise |
+| ↑ / ↓ | Engage road-limit cruise / brake; releasing ↑ retains cruise |
 | ← / → | Buffer a choice for the next junction |
 | S | Clear the turn choice; continue straight where possible |
 | Space / Escape | Toggle pause / pause |
 | C | Cycle hood, chase and wide cameras |
-| 1–5 | Main Street, Webster Lake, Memorial Beach, Indian Ranch, Bartlett |
+| R / Flip direction button | Immediately face the opposite driving direction |
+| 1–6 | Select the corresponding starting location |
 | On-screen arrows | Touch or keyboard-operated driving controls |
+
+Page initialization is idempotent for the same DOM root: a late Astro page-load
+event cannot cancel an early Play click while the game module is importing.
+Navigation away still disposes the session, and returning initializes a new one.
 
 The toolbar also provides camera, pause, starting location, quality and
 fullscreen controls. Sound starts disabled and requires a button press. Focus
 leaving the game, a hidden document, or a background window pauses the drive.
-The car follows lanes and intersection connectors; arrows do not provide free
-steering or reverse. Mapped obstacle stops and excluded turns remain enforced.
+The car follows lanes and intersection connectors. Flip direction preserves its
+progress along the road and selects a nearby opposing mapped lane where one
+exists. On a one-way segment without a suitable opposite lane, a session-only
+reverse path lets the player return; it never becomes an ordinary junction choice.
+Mapped obstacle stops and excluded turns remain enforced.
+
+Cruise can attain each road's mapped limit, including 65 mph on I-395; there is no
+town-wide 35 mph ceiling or automatic curve-speed cap. The HUD distinguishes a
+posted inventory limit from an inferred road-class limit. On recognized entrance
+ramps with inferred speeds, it shows a **Ramp target** that rises continuously
+along the whole ramp chain toward the highway limit. Exit ramps and explicit
+posted limits are not promoted. The clipped Cudworth entrance builds speed then
+brakes before the retained map boundary; obstacles and route ends still stop the
+car. These are guided-game driving rules rather than a vehicle-physics model.
 
 ## Car radio
 
@@ -72,8 +89,8 @@ source notes describe the different source dates and limitations.
 
 ## Art direction
 
-The browser presentation uses an authored late-summer palette while the pinned
-geodata and building geometry remain unchanged. `art-materials.ts` applies an
+The browser presentation uses an authored late-summer palette over the pinned
+geodata. `art-materials.ts` applies an
 exact-name whitelist to inferred paint, slate roofs, concrete, asphalt, modeled
 vegetation and cars. Recorded photographic and landmark materials keep their
 source treatment. Paint hex values are sRGB choices converted once into Three's
@@ -102,6 +119,32 @@ index counts for acceptance checks. Its byte estimate includes CPU terrain
 indices and must not be added to the separate resident geometry estimate, which
 already includes visible grass buffers. The camera, lighting and material choices
 are interpretations of Webster's character, not additional observed geodata.
+
+## Building evidence overlays
+
+`evidence-stream.ts` loads residential and roof packets beside the requested
+source tile, with a 64-tile cache and a 1.5-second optional-detail budget. Completed
+siblings survive a partial timeout; missing optional detail leaves base scenery
+usable and is retried on a later load. The complete research corpus is a build
+input, never a browser startup download.
+
+`evidence-buildings.ts` changes only eligible V2 inferred surfaces. Profiles use
+the immutable export's source-building tile owner, including buildings whose
+later footprint centroid lies across a tile boundary. Source east/north outlines,
+per-wall eaves and terrain samples constrain the new openings; retained entry
+anchors keep doors aligned with their existing steps. A low eave preserves the
+original doorway instead of forcing a taller replacement. Window exclusion uses
+the actual entry height, including raised entries. Landmark identity takes
+priority over residential profiles, and photo/reference geometry stays protected.
+
+`historic-appearance.ts` supplies dated material families, frontage rhythms and
+explicit cornice details. More recent listing cladding and palette hints retain
+priority; historical descriptions never establish present-day paint. Roof packets
+replace approved inferred bodies with closed solids bounded by each building's
+source footprint and measured maximum height. House materials and unspecified
+architectural details remain plausible game interpretations. Generators and
+source limitations are documented in the repository README; emitted-file tests
+verify hashes, byte counts, source ownership, entry bounds and stale-file absence.
 
 ## Release and build checks
 

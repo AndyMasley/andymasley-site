@@ -6,6 +6,7 @@ import { TownWorld } from './world';
 import { startupPosition } from './startup';
 import { createSummerSky, SUMMER_LIGHT } from './atmosphere';
 import { createTouringCar, type TouringCar } from './vehicle';
+import { applyMeasuredBridgeGrades } from './bridge-grade';
 import release from '../../../data/derived/town/release.json';
 
 const ASSET_ROOT = `/town-assets/${release.directory}/`;
@@ -217,6 +218,7 @@ export async function startTown(root: HTMLElement): Promise<Session> {
     await new Promise((resolve) => setTimeout(resolve, 0));
     if (disposed) return session;
     graph = new RoadGraph(network);
+    applyMeasuredBridgeGrades(graph);
     engine = spawnAtLandmark(graph, startingLocation);
     setStatus('Preparing the landscape and your car…');
     vehicle = createTouringCar();
@@ -570,7 +572,7 @@ export async function startTown(root: HTMLElement): Promise<Session> {
       world,
       get renderer() { return renderer; },
       get cameraMode() { return cameraMode; },
-      get presentation() { return { version: 'crafted-webster-v2', grass: world!.presentationResources(), vehicle: vehicle!.resources() }; },
+      get presentation() { return { version: 'evidence-webster-v3', grass: world!.presentationResources(), vehicle: vehicle!.resources(), evidence: world!.evidenceResources() }; },
       get ready() { return controlsReady && !disposed; },
       get metrics() {
         const samples = [...snapshots].sort((a, b) => a - b);

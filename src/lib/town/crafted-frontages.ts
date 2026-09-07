@@ -2,10 +2,10 @@ import * as THREE from 'three';
 import data from '../../../data/derived/town/crafted-frontages.json';
 
 type V2 = readonly number[];
-type Frame = { start: V2; tangent: V2; outward: V2; structId: string; tileId: string };
+export type Frame = { start: V2; tangent: V2; outward: V2; structId: string; tileId: string };
 type School = typeof data.school[number];
 type Commercial = typeof data.commercial[number];
-type Role = 'wall' | 'roof' | 'foundation' | 'trim' | 'glass' | 'recess' | 'door' | 'metal' | 'paving' | 'stone' | 'leaf' | 'brick';
+export type Role = 'wall' | 'roof' | 'foundation' | 'trim' | 'glass' | 'recess' | 'door' | 'metal' | 'paving' | 'stone' | 'leaf' | 'brick' | 'shingle' | 'stucco';
 type Chunk = { positions: number[]; normals: number[]; ids: Set<string>; role: Role; color: string };
 export type FrontageReport = { version: number; tileId: string; schoolIds: string[]; commercialIds: string[]; removedTriangles: number; addedTriangles: number; addedMeshes: number; geometryBytes: number };
 
@@ -13,7 +13,7 @@ export const CRAFTED_FRONTAGE_VERSION = 1;
 export const CRAFTED_SCHOOL_IDS = data.school.map((record) => record.structId);
 export const CRAFTED_FRONTAGE_PROVENANCE = { sourceAtlasSha256: data.sourceAtlasSha256, sourceBuildingRegisterSha256: data.sourceBuildingRegisterSha256, sourcePhotosSha256: data.sourcePhotosSha256, school: data.school.map(({ structId, source, inference }) => ({ structId, source, inference })), commercial: data.commercial.map(({ structId, source, inference }) => ({ structId, source, inference })), excludedPhoto: data.excludedPhoto };
 
-const PALETTE: Record<Role, string> = { wall: '#c7cabf', roof: '#50544e', foundation: '#79776b', trim: '#dedbd0', glass: '#3b545b', recess: '#354340', door: '#3d554d', metal: '#454e48', paving: '#656966', stone: '#919183', leaf: '#567044', brick: '#956b54' };
+const PALETTE: Record<Role, string> = { wall: '#c7cabf', roof: '#50544e', foundation: '#79776b', trim: '#dedbd0', glass: '#3b545b', recess: '#354340', door: '#3d554d', metal: '#454e48', paving: '#656966', stone: '#919183', leaf: '#567044', brick: '#956b54', shingle: '#a6a599', stucco: '#c7beaa' };
 const box = new THREE.BoxGeometry(1, 1, 1).toNonIndexed();
 const boxPosition = Array.from(box.getAttribute('position').array);
 const boxNormal = Array.from(box.getAttribute('normal').array);
@@ -35,14 +35,14 @@ function decode(value: string): Float32Array {
   return new Float32Array(bytes.buffer);
 }
 
-function material(role: Role, color: string): THREE.MeshStandardMaterial {
+export function frontageMaterial(role: Role, color: string): THREE.MeshStandardMaterial {
   const result = new THREE.MeshStandardMaterial({ color, roughness: role === 'glass' ? 0.24 : role === 'metal' ? 0.6 : 0.87, metalness: role === 'glass' ? 0.22 : role === 'metal' ? 0.35 : 0 });
   result.name = `Crafted frontage | ${role} | ${color}`;
   result.userData.surfaceRole = role;
   result.userData.townCrafted = true;
   result.envMapIntensity = role === 'glass' ? .32 : .12;
   result.userData.appearanceBasis = 'Dated facade observations plus explicitly inferred dimensions and late-summer materials.';
-  if (['wall', 'roof', 'brick', 'stone', 'paving', 'foundation', 'leaf'].includes(role)) {
+  if (['wall', 'roof', 'brick', 'stone', 'paving', 'foundation', 'leaf', 'shingle', 'stucco'].includes(role)) {
     result.onBeforeCompile = (shader) => {
       shader.vertexShader = `varying vec3 vCraftedWorld;\n${shader.vertexShader}`.replace('#include <project_vertex>', '#include <project_vertex>\nvCraftedWorld = (modelMatrix * vec4(transformed,1.0)).xyz;');
       shader.fragmentShader = `varying vec3 vCraftedWorld;\n${shader.fragmentShader}`.replace('#include <map_fragment>', `
@@ -53,15 +53,45 @@ float craftedFine = max(fwidth(vCraftedWorld.y/${role === 'brick' ? '0.085' : '0
 float craftedJoint = (1.0-smoothstep(0.025,0.045+craftedFine,craftedRow))*craftedNear;
 float craftedNoise = sin(vCraftedWorld.x*4.41+vCraftedWorld.z*2.35)*sin(vCraftedWorld.z*7.63-vCraftedWorld.x*1.14);
 diffuseColor.rgb *= 1.0+craftedNoise*0.025;
-${role === 'wall' ? 'diffuseColor.rgb *= 1.0-craftedJoint*0.13;' : role === 'brick' ? 'diffuseColor.rgb = mix(diffuseColor.rgb,vec3(0.29,0.27,0.23),craftedJoint*0.5);' : role === 'leaf' ? 'diffuseColor.rgb *= 0.90+0.12*sin(vCraftedWorld.x*17.1+vCraftedWorld.y*12.7)*sin(vCraftedWorld.z*16.8-vCraftedWorld.y*6.2);' : ''}
+float craftedRelief = 0.0;
+${role === 'wall' ? 'diffuseColor.rgb *= 1.0-craftedJoint*0.16; craftedRelief=craftedRow*0.003*craftedNear;' : role === 'leaf' ? 'diffuseColor.rgb *= 0.90+0.12*sin(vCraftedWorld.x*17.1+vCraftedWorld.y*12.7)*sin(vCraftedWorld.z*16.8-vCraftedWorld.y*6.2);' : ''}
+${['brick','stone','shingle','roof'].includes(role) ? `
+vec3 craftedSurfaceNormal=normalize(cross(dFdx(vCraftedWorld),dFdy(vCraftedWorld)));
+vec2 craftedTangent=vec2(-craftedSurfaceNormal.z,craftedSurfaceNormal.x);
+craftedTangent=length(craftedTangent)>.01?normalize(craftedTangent):vec2(1.,0.);
+float craftedAlong=dot(vCraftedWorld.xz,craftedTangent);
+vec2 craftedUnit=vec2(${role==='brick'?'.225,.075':role==='stone'?'.62,.285':role==='shingle'?'.19,.20':'.33,.15'});
+vec2 craftedSurface=${role==='roof'?'vCraftedWorld.xz':'vec2(craftedAlong,vCraftedWorld.y)'};
+float craftedCourse=floor(craftedSurface.y/craftedUnit.y);
+vec2 craftedCell=vec2(craftedSurface.x/craftedUnit.x+mod(craftedCourse,2.)*.5,craftedSurface.y/craftedUnit.y);
+vec2 craftedTile=floor(craftedCell),craftedUV=fract(craftedCell);
+vec2 craftedAA=max(fwidth(craftedCell),vec2(.004));
+float craftedGrout=max(1.-smoothstep(.018,.027+craftedAA.x,craftedUV.x),1.-smoothstep(.022,.035+craftedAA.y,craftedUV.y));
+float craftedDetail=craftedNear*(1.-smoothstep(.25,.65,max(craftedAA.x,craftedAA.y)));
+float craftedVariation=fract(sin(dot(craftedTile,vec2(127.1,311.7)))*43758.5453);
+diffuseColor.rgb*=mix(.93,1.06,craftedVariation*craftedDetail+.5*(1.-craftedDetail));
+${role==='brick'||role==='stone'?'diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.27,.255,.23),craftedGrout*.60*craftedDetail);':'diffuseColor.rgb*=1.-craftedGrout*.20*craftedDetail;'}
+craftedRelief=(1.-craftedGrout)*${role==='stone'?'.006':'.002'}*craftedDetail;
+` : ''}
+${role==='stucco'||role==='foundation'||role==='paving'?'craftedRelief=craftedNoise*.0006*craftedNear;':''}
+`);
+      shader.fragmentShader=shader.fragmentShader.replace('#include <normal_fragment_maps>', `
+#include <normal_fragment_maps>
+vec3 craftedDx=dFdx(-vViewPosition),craftedDy=dFdy(-vViewPosition);
+vec3 craftedR1=cross(craftedDy,normal),craftedR2=cross(normal,craftedDx);
+float craftedDet=dot(craftedDx,craftedR1);
+if(abs(craftedDet)>0.0000000001){
+  vec3 craftedGradient=sign(craftedDet)*(dFdx(craftedRelief)*craftedR1+dFdy(craftedRelief)*craftedR2);
+  normal=normalize(abs(craftedDet)*normal-craftedGradient);
+}
 `);
     };
-    result.customProgramCacheKey = () => `crafted-frontages-v1:${role}`;
+    result.customProgramCacheKey = () => `crafted-frontages-v2:${role}`;
   }
   return result;
 }
 
-class Batch {
+export class Batch {
   readonly chunks = new Map<string, Chunk>();
   constructor(readonly origin: THREE.Vector3, readonly level: number, readonly terrain = new Map<string, number[][][]>()) {}
 
@@ -71,10 +101,14 @@ class Batch {
     if (!chunk) { chunk = { positions: [], normals: [], ids: new Set(), role, color }; this.chunks.set(key, chunk); }
     chunk.ids.add(frame.structId);
     const [tx, ty] = frame.tangent, [nx, ny] = frame.outward;
+    // East/north facade frames can have either orientation. Converting north
+    // to Three's -Z reflects one orientation; retain outward-facing triangles.
+    const reflected = nx * ty - tx * ny < 0;
     for (let i = 0; i < position.length; i += 3) {
-      const u = position[i], height = position[i+1], v = position[i+2];
+      const at = reflected ? i - i % 9 + [0, 6, 3][(i % 9) / 3] : i;
+      const u = position[at], height = position[at+1], v = position[at+2];
       chunk.positions.push(frame.start[0]+tx*u+nx*v-this.origin.x, height-this.origin.y, -(frame.start[1]+ty*u+ny*v)-this.origin.z);
-      const a = normal[i], b = normal[i+1], c = normal[i+2];
+      const a = normal[at], b = normal[at+1], c = normal[at+2];
       chunk.normals.push(tx*a+nx*c, b, -ty*a-ny*c);
     }
   }
@@ -137,7 +171,7 @@ class Batch {
       geometry.setAttribute('position',new THREE.Float32BufferAttribute(chunk.positions,3));
       geometry.setAttribute('normal',new THREE.Float32BufferAttribute(chunk.normals,3));
       geometry.computeBoundingBox(); geometry.computeBoundingSphere();
-      const mesh=new THREE.Mesh(geometry,material(chunk.role,chunk.color));
+      const mesh=new THREE.Mesh(geometry,frontageMaterial(chunk.role,chunk.color));
       mesh.name=`Crafted building frontage | ${chunk.role}`; mesh.userData.sourceIds=[...chunk.ids].sort(); mesh.userData.category='crafted-frontages';
       mesh.userData.townCrafted=true;
       mesh.castShadow=!['glass','paving'].includes(chunk.role);mesh.receiveShadow=true;

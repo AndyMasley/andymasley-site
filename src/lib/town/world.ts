@@ -5,9 +5,14 @@ import { boundsDistanceSquared, chooseLod, type Quality, type TownTile, type V3,
 import { TownSurfaces } from './surfaces';
 import { decodeCoverPNG } from './cover-data';
 import { applyArtMaterial, treeArtColor } from './art-materials';
-import { treeForm } from './vegetation';
+import { treeForm, createConiferPrototype, disposeConiferPrototype } from './vegetation';
 import { applyCraftedFrontages } from './crafted-frontages';
 import { readSceneBuffer } from './asset-transfer';
+import { EvidenceStream } from './evidence-stream';
+import { applyEvidenceBuildings } from './evidence-buildings';
+import { landmarkRows, buildEvidenceLandmarks } from './evidence-landmarks';
+import { applyEvidenceEnvironment } from './evidence-environment';
+import { applyMeasuredBridgeSurface } from './bridge-surface';
 
 type TreePlan = { near: Set<number>; shadows: Set<number>; key: string };
 type LoadedTile = { group: THREE.Group; level: number; lastUsed: number; trees?: THREE.Group; treeRows?: number[][]; treePlan?: TreePlan };
@@ -25,6 +30,7 @@ export class TownWorld {
   private texturePool = new Map<string, { texture: THREE.Texture; refs: number }>();
   private leases = new WeakMap<THREE.Object3D, Set<string>>();
   private prototypes: THREE.Group[] = [];
+  private coniferPrototypes = new Map<number, THREE.Group>();
   private backdropMaterials: THREE.Material[] = [];
   private failures = new Map<string, number>();
   private disposed = false;
@@ -38,6 +44,7 @@ export class TownWorld {
   private initialization?: Promise<void>;
   private surfaces?: TownSurfaces;
   private readonly artClock = { value: 0 };
+  private readonly evidence = new EvidenceStream(<T>(url:string,signal:AbortSignal)=>this.fetchJson<T>(url,signal));
 
   constructor(readonly manifest: WorldManifest, readonly manifestUrl: string, readonly onChange: () => void) {
     this.root.name = 'Webster scenery';
@@ -89,14 +96,25 @@ export class TownWorld {
 
   async loadGlb(path: string, signal: AbortSignal = this.sharedAbort.signal, tile?: TownTile, level = 0): Promise<THREE.Group> {
     const url = this.url(path);
-    const data = await readSceneBuffer(url, signal, bytes => { this.metrics.bytes += bytes; });
+    const [data,evidence] = await Promise.all([
+      readSceneBuffer(url, signal, bytes => { this.metrics.bytes += bytes; }),
+      tile?this.evidence.tile(tile.id,signal):Promise.resolve(undefined),
+    ]);
     const gltf = await this.loader.parseAsync(data, new URL('.', url).href);
     if (this.disposed || signal.aborted) {
       this.disposeRaw(gltf.scene);
       throw new DOMException('Loading cancelled', 'AbortError');
     }
     if (tile) {
-      try { applyCraftedFrontages(gltf.scene, tile.id, tile.origin, level); }
+      try {
+        applyMeasuredBridgeSurface(gltf.scene,tile.id,tile.origin);
+        applyCraftedFrontages(gltf.scene, tile.id, tile.origin, level);
+        const landmarks=landmarkRows(tile.id);
+        applyEvidenceBuildings(gltf.scene,tile.id,tile.origin,level,evidence?.buildings??[],
+          landmarks.map(row=>({...row,material:row.material??undefined,paint:row.paint??undefined})),
+          (batch,matched)=>buildEvidenceLandmarks(batch,landmarks.filter(row=>matched.has(row.id))),evidence?.roofs??[]);
+        applyEvidenceEnvironment(gltf.scene,tile.id,tile.origin,level);
+      }
       catch (error) { this.disposeRaw(gltf.scene); throw error; }
     }
     gltf.scene.traverse((object) => {
@@ -164,6 +182,18 @@ export class TownWorld {
     });
     this.root.add(fallback);
     this.prototypes.push(...prototypes);
+    // Borrow the already pooled leaf materials; only two small geometry variants
+    // are allocated for the entire town, independent of the number of anchors.
+    try {
+      this.manifest.trees.prototypes.forEach((definition, index) => {
+        if (definition.role === 'crown') this.coniferPrototypes.set(index, createConiferPrototype(prototypes[index]));
+      });
+    } catch (error) {
+      for (const variant of this.coniferPrototypes.values()) disposeConiferPrototype(variant);
+      this.coniferPrototypes.clear();
+      this.dispose();
+      throw error;
+    }
   }
 
   setQuality(quality: Quality, mobile: boolean): void {
@@ -180,6 +210,15 @@ export class TownWorld {
 
   presentationResources() {
     return this.surfaces?.grassResources() ?? { tufts: 0, triangles: 0, bytes: 0, indexedTiles: 0, bins: 0, rebuilds: 0, materials: 0 };
+  }
+
+  evidenceResources() {
+    let buildings=0,documented=0,triangles=0;
+    for(const tile of this.loaded.values()){
+      const report=tile.group.userData.evidenceBuildings;
+      if(report){buildings+=report.buildingIds.length;documented+=report.documentedIds.length;triangles+=report.addedTriangles;}
+    }
+    return{buildings,documented,triangles,optionalFailures:this.evidence.failures};
   }
 
   update(position: V3, lookAhead: V3, force = false): void {
@@ -348,42 +387,48 @@ export class TownWorld {
     const trunk = definitions.findIndex((definition) => definition.role === 'trunk');
     const bands = [{ index: near < 0 ? 0 : near, kind: 'near' }, { index: far < 0 ? Math.max(0, near) : far, kind: 'far' }, { index: trunk, kind: 'trunk' }];
     for (const band of bands) {
-      const prototype = this.prototypes[band.index];
-      if (!prototype) continue;
+      const base = this.prototypes[band.index];
+      if (!base) continue;
       const isTrunk = band.kind === 'trunk';
-      prototype.updateMatrixWorld(true);
+      const forms = rows.map(row => treeForm(row, origin, band.kind === 'far'));
+      const cohorts = isTrunk ? ['trunk'] as const : ['broadleaf', 'conifer'] as const;
       for (const castShadow of [false, true]) {
-        const indices = rows.map((_, index) => index).filter((index) =>
-          (isTrunk || plan.near.has(index) === (band.kind === 'near')) && plan.shadows.has(index) === castShadow);
-        if (!indices.length) continue;
-        prototype.traverse((object) => {
-          if (!(object instanceof THREE.Mesh)) return;
-          // Geometry/materials are shared with the prototypes; only instance matrices are allocated.
-          for (const material of Array.isArray(object.material) ? object.material : [object.material]) {
-            if (material.alphaTest > 0) material.alphaToCoverage = true;
-          }
-          const mesh = new THREE.InstancedMesh(object.geometry, object.material, indices.length);
-          mesh.name = `Webster trees | ${band.kind} | ${castShadow ? 'shadow' : 'ordinary'}`;
-          mesh.userData.treeKind = band.kind;
-          mesh.userData.sourceRows = indices;
-          mesh.castShadow = castShadow;
-          mesh.receiveShadow = !this.low && this.treeShadows;
-          indices.forEach((rowIndex, index) => {
-            const row = rows[rowIndex];
-            const form = treeForm(row, origin, band.kind === 'far');
-            point.fromArray(isTrunk ? form.trunk.position : form.crown.position);
-            scale.fromArray(isTrunk ? form.trunk.scale : form.crown.scale);
-            quaternion.setFromAxisAngle(up, isTrunk ? 0 : form.yaw);
-            matrix.compose(point, quaternion, scale).multiply(object.matrixWorld);
-            mesh.setMatrixAt(index, matrix);
-            if (!isTrunk) mesh.setColorAt(index, treeArtColor(row[0] + origin[0], row[2] + origin[2], treeTint));
+        for (const family of cohorts) {
+          const prototype = family === 'conifer' ? this.coniferPrototypes.get(band.index) ?? base : base;
+          prototype.updateMatrixWorld(true);
+          const indices = rows.map((_, index) => index).filter((index) =>
+            (isTrunk || (plan.near.has(index) === (band.kind === 'near') && forms[index].renderFamily === family)) && plan.shadows.has(index) === castShadow);
+          if (!indices.length) continue;
+          prototype.traverse((object) => {
+            if (!(object instanceof THREE.Mesh)) return;
+            // Geometry/materials are shared with the prototypes; only instance matrices are allocated.
+            for (const material of Array.isArray(object.material) ? object.material : [object.material]) {
+              if (material.alphaTest > 0) material.alphaToCoverage = true;
+            }
+            const mesh = new THREE.InstancedMesh(object.geometry, object.material, indices.length);
+            mesh.name = `Webster trees | ${band.kind} | ${family} | ${castShadow ? 'shadow' : 'ordinary'}`;
+            mesh.userData.treeKind = band.kind;
+            mesh.userData.treeFamily = family;
+            mesh.userData.sourceRows = indices;
+            mesh.castShadow = castShadow;
+            mesh.receiveShadow = !this.low && this.treeShadows;
+            indices.forEach((rowIndex, index) => {
+              const row = rows[rowIndex];
+              const form = forms[rowIndex];
+              point.fromArray(isTrunk ? form.trunk.position : form.crown.position);
+              scale.fromArray(isTrunk ? form.trunk.scale : form.crown.scale);
+              quaternion.setFromAxisAngle(up, isTrunk ? 0 : form.yaw);
+              matrix.compose(point, quaternion, scale).multiply(object.matrixWorld);
+              mesh.setMatrixAt(index, matrix);
+              if (!isTrunk) mesh.setColorAt(index, treeArtColor(row[0] + origin[0], row[2] + origin[2], treeTint));
+            });
+            mesh.instanceMatrix.needsUpdate = true;
+            if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
+            mesh.computeBoundingBox();
+            mesh.computeBoundingSphere();
+            group.add(mesh);
           });
-          mesh.instanceMatrix.needsUpdate = true;
-          if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
-          mesh.computeBoundingBox();
-          mesh.computeBoundingSphere();
-          group.add(mesh);
-        });
+        }
       }
     }
     return group;
@@ -507,6 +552,7 @@ export class TownWorld {
     };
     this.root.traverse(inspect);
     for (const prototype of this.prototypes) prototype.traverse(inspect);
+    for (const prototype of this.coniferPrototypes.values()) prototype.traverse(inspect);
     let estimatedTextureBytes = 0;
     for (const { texture } of this.texturePool.values()) {
       const image = texture.image;
@@ -517,12 +563,15 @@ export class TownWorld {
   }
 
   dispose(): void {
+    this.evidence.dispose();
     if (this.disposed) return;
     this.disposed = true;
     this.sharedAbort.abort();
     for (const controller of this.inflight.values()) controller.abort();
     for (const id of [...this.loaded.keys()]) this.evict(id);
     for (const object of [...this.root.children]) this.releaseGroup(object);
+    for (const prototype of this.coniferPrototypes.values()) disposeConiferPrototype(prototype);
+    this.coniferPrototypes.clear();
     for (const prototype of this.prototypes) this.releaseGroup(prototype);
     for (const material of this.backdropMaterials) material.dispose();
     this.surfaces?.dispose();
