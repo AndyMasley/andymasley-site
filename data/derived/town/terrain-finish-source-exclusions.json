@@ -1,0 +1,126 @@
+{
+  "version": 1,
+  "sourceManifestSha256": "37fbef34bc2a4467997252be75b4c43174a6a7b2d39963614cadd8d787e56105",
+  "basis": "Measured by native GLTFLoader audit against exact immutable source and final Float32 runtime reconstruction. Retain these source triangles, not their whole tile.",
+  "triangles": [
+    {
+      "tileId": "-11_-6",
+      "level": 1,
+      "mesh": "terrain_1",
+      "triangle": 3976,
+      "sourceSha256": "1eed2dad1ed93e2e2d7d5a6aa9df46dc8f44d529ab2b0a3e4b6c92b5c3d9477e",
+      "geometryStamp": "8af04a05",
+      "center": [
+        -2570.5,
+        50.1253,
+        1458.5
+      ],
+      "areaM2": 2.25,
+      "quantizedDoubleArea": 4.500203307776246,
+      "sourceDoubleArea": 4.5,
+      "reason": "Retain original source triangle: Float32 area conservation guard exceeded; no tolerance widening."
+    },
+    {
+      "tileId": "-11_-4",
+      "level": 2,
+      "mesh": "terrain",
+      "triangle": 3130,
+      "sourceSha256": "d52bc62169857a3315b0f3a60a0b121273e22b71b60a10001ea9249720a93741",
+      "geometryStamp": "8d913bb7",
+      "center": [
+        -2502.5,
+        45.04546,
+        915.0
+      ],
+      "areaM2": 4.5,
+      "quantizedDoubleArea": 8.999751458526589,
+      "sourceDoubleArea": 9,
+      "reason": "Retain original source triangle: Float32 area conservation guard exceeded; no tolerance widening."
+    },
+    {
+      "tileId": "-10_-7",
+      "level": 2,
+      "mesh": "terrain_4",
+      "triangle": 40,
+      "sourceSha256": "0d138925dd7a11afc05d57d50b175fb4d4cb90fd38664570c8e2b03fe8b76bec",
+      "geometryStamp": "8ad4bbbc",
+      "center": [
+        -2427.5,
+        51.06127,
+        1561.5
+      ],
+      "areaM2": 4.5,
+      "quantizedDoubleArea": 8.999789351830259,
+      "sourceDoubleArea": 9,
+      "reason": "Retain original source triangle: Float32 area conservation guard exceeded; no tolerance widening."
+    },
+    {
+      "tileId": "-5_-15",
+      "level": 2,
+      "mesh": "terrain_1",
+      "triangle": 426,
+      "sourceSha256": "068a62f1bc9c9aa7f1cee6cf3624cba4dad5b2a4bd97a4941cbc96a3a1af3079",
+      "geometryStamp": "8ab21d21",
+      "center": [
+        -1166.0,
+        67.34088,
+        3668.0
+      ],
+      "areaM2": 18.0,
+      "quantizedDoubleArea": 36.000810526820715,
+      "sourceDoubleArea": 36,
+      "reason": "Retain original source triangle: Float32 area conservation guard exceeded; no tolerance widening."
+    },
+    {
+      "tileId": "-5_1",
+      "level": 2,
+      "mesh": "terrain_4",
+      "triangle": 38,
+      "sourceSha256": "734ea945473e4791a5366ec4b2d6098fef8329115210d195425e3ec77047c5df",
+      "geometryStamp": "6d5353c1",
+      "center": [
+        -1004.0,
+        58.02841,
+        -448.0
+      ],
+      "areaM2": 18.0,
+      "quantizedDoubleArea": 36.00090759876184,
+      "sourceDoubleArea": 36,
+      "reason": "Retain original source triangle: Float32 area conservation guard exceeded; no tolerance widening."
+    },
+    {
+      "tileId": "-11_-4",
+      "level": 2,
+      "mesh": "terrain",
+      "triangle": 3134,
+      "sourceSha256": "d52bc62169857a3315b0f3a60a0b121273e22b71b60a10001ea9249720a93741",
+      "geometryStamp": "8d913bb7",
+      "center": [
+        -2502.5,
+        45.0279,
+        911.0
+      ],
+      "areaM2": 4.5,
+      "quantizedDoubleArea": 9.000275040511042,
+      "sourceDoubleArea": 9,
+      "reason": "Retain original source triangle: Float32 area conservation guard exceeded; no tolerance widening."
+    },
+    {
+      "tileId": "-11_-4",
+      "level": 2,
+      "mesh": "terrain",
+      "triangle": 3135,
+      "sourceSha256": "d52bc62169857a3315b0f3a60a0b121273e22b71b60a10001ea9249720a93741",
+      "geometryStamp": "8d913bb7",
+      "center": [
+        -2502.5,
+        45.04126,
+        910.0
+      ],
+      "areaM2": 4.5,
+      "quantizedDoubleArea": 8.99974768573884,
+      "sourceDoubleArea": 9,
+      "reason": "Retain original source triangle: Float32 area conservation guard exceeded; no tolerance widening."
+    }
+  ]
+}

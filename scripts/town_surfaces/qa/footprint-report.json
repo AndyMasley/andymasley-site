@@ -1,0 +1,7 @@
+{
+  "status": "PASS",
+  "uniqueBaysChecked": 1143,
+  "surfaceTrianglesChecked": 175117,
+  "failures": [],
+  "method": "Independent Shapely containment of every actual authored bay and every emitted native GLTF paving, paint or mulch triangle; all three LODs. 3mm tolerance for Float32/1mm source serialization."
+}

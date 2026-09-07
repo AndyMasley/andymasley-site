@@ -572,7 +572,7 @@ export async function startTown(root: HTMLElement): Promise<Session> {
       world,
       get renderer() { return renderer; },
       get cameraMode() { return cameraMode; },
-      get presentation() { return { version: 'evidence-webster-v3', grass: world!.presentationResources(), vehicle: vehicle!.resources(), evidence: world!.evidenceResources() }; },
+      get presentation() { return { version: 'finished-webster-v4', grass: world!.presentationResources(), vehicle: vehicle!.resources(), evidence: world!.evidenceResources(), finish: world!.finishResources() }; },
       get ready() { return controlsReady && !disposed; },
       get metrics() {
         const samples = [...snapshots].sort((a, b) => a - b);

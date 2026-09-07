@@ -1,0 +1,47 @@
+{
+  "beach": {
+    "boundsMercator": [
+      -7999362.871484149,
+      5168774.174502915,
+      -7998634.273729284,
+      5169357.623819931
+    ],
+    "size": [
+      1400,
+      1121
+    ],
+    "sourceMetadata": "/Users/andy/Documents/New project/webster-blender/townwide/imagery_aerial_metadata.json",
+    "sourceSHA256": "b14f7338f5c04544ebb35fd124450eb2b88a96843646cca423ee3601fead69ff",
+    "date": "Spring2025"
+  },
+  "downtown": {
+    "boundsMercator": [
+      -8002412.56625482,
+      5168153.407833935,
+      -8001415.20559587,
+      5168670.766372469
+    ],
+    "size": [
+      1400,
+      726
+    ],
+    "sourceMetadata": "/Users/andy/Documents/New project/webster-blender/downtown/downtown_aerial_metadata.json",
+    "sourceSHA256": "87588772649468cafb05ec00fc9ccbd577dafbf3d26019759a145797ace4db9f",
+    "date": "Spring2025"
+  },
+  "bartlett": {
+    "boundsMercator": [
+      -8001049.491351208,
+      5166890.905087906,
+      -8000307.1363270385,
+      5167555.400841984
+    ],
+    "size": [
+      1400,
+      1253
+    ],
+    "sourceMetadata": "/Users/andy/Documents/New project/webster-blender/townwide/imagery_aerial_metadata.json",
+    "sourceSHA256": "b14f7338f5c04544ebb35fd124450eb2b88a96843646cca423ee3601fead69ff",
+    "date": "Spring2025"
+  }
+}

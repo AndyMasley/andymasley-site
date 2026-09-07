@@ -1,0 +1,52 @@
+{
+  "status": "PASS",
+  "indexSha256": "087c2c021801983b8c518c0ecacbc96e175a534d05d3c7acd34d6eea8011d9e1",
+  "sourceManifestSha256": "37fbef34bc2a4467997252be75b4c43174a6a7b2d39963614cadd8d787e56105",
+  "counts": {
+    "lots": 39,
+    "lotPackets": 24,
+    "changedMasks": 124,
+    "maskBytes": 2182744,
+    "lotPacketBytes": 118279,
+    "treeIslandAnchors": 44,
+    "mulchDisks": 20
+  },
+  "checks": {
+    "unique lot id": 39,
+    "valid lot polygons": 39,
+    "safe geometry stays inside source": 39,
+    "marking stays inside safe geometry": 39,
+    "material-gated paint": 39,
+    "within town boundary": 39,
+    "building clearance": 39,
+    "water clearance": 39,
+    "road paint clearance": 34,
+    "service evidence gate": 321,
+    "packet tile coverage": 1,
+    "asset size": 148,
+    "asset sha": 148,
+    "packet tile identity": 24,
+    "identical whole lot in every intersected tile": 24,
+    "mask dimensions RGBA": 670,
+    "zero exclusions exact": 670,
+    "original mask binding": 124,
+    "exact source world bounds": 124,
+    "impervious weight nondecreasing": 124,
+    "other weights nonincreasing": 124,
+    "all changed pixels touch supported geometry": 124,
+    "neighbor gutter exact": 1278
+  },
+  "checkCount": 4250,
+  "failures": [],
+  "neighborPairs": 1278,
+  "neighborPixels": 5561856,
+  "changedCorePixels": 34050,
+  "imperviousEquivalentAreaAddedM2": 17440.287,
+  "limitations": [
+    "2025 aerial observations and 2026 OSM snapshot do not establish current access rights or an authoritative parking inventory.",
+    "Stall presence is observed where recorded; exact future stall orientation and spacing are authored by the runtime.",
+    "Pavement material is visually inferred, not chemically measured.",
+    "Original all-zero source pixels remain excluded, even where newer aerial evidence conflicts.",
+    "No source archive, guided network, terrain triangles or building geometry is changed."
+  ]
+}

@@ -1,0 +1,73 @@
+{
+  "version": 1,
+  "status": "PASS",
+  "terrainIndexSha256": "ea4ff5339727f6dc2728396d13040fa81ab1c3d22998b872f159715542f681e1",
+  "pavedIndexSha256": "087c2c021801983b8c518c0ecacbc96e175a534d05d3c7acd34d6eea8011d9e1",
+  "sourceManifestSha256": "37fbef34bc2a4467997252be75b4c43174a6a7b2d39963614cadd8d787e56105",
+  "summary": {
+    "tileLods": 72,
+    "terrainAppliedCases": 72,
+    "replacedTerrainTriangles": 118433,
+    "uniqueLots": 39,
+    "bays": 1143,
+    "surfaceTriangles": 175117
+  },
+  "sourceGlbHashesMatchManifest": 72,
+  "files": [
+    {
+      "path": "scripts/town_surfaces/native-audit/audit.mjs",
+      "bytes": 10265,
+      "sha256": "4c1c4189bbf6993a4687520240c16140e048a66ce41cdaaf7db24ce981ad7f4f"
+    },
+    {
+      "path": "scripts/town_surfaces/native-audit/entry.ts",
+      "bytes": 357,
+      "sha256": "d589203258c71b29332885229b188525f0d90d79d9ff86b1ab0ac5b1cdae57ed"
+    },
+    {
+      "path": "scripts/town_surfaces/validate_native_footprints.py",
+      "bytes": 3924,
+      "sha256": "27037742f74e2a2bde058d7027a1be29c943308825ca268d66e26000fe5eeafb"
+    },
+    {
+      "path": "scripts/town_surfaces/validate_parking_seams.py",
+      "bytes": 1480,
+      "sha256": "816b1fc1338b9384c4d9545d9dc60837ba61365c8ab8dbc5ad44e67421e766bf"
+    },
+    {
+      "path": "scripts/town_surfaces/README.md",
+      "bytes": 9855,
+      "sha256": "8ee0710e344a1f7461adaf400a9e3177d45e5b3303fad293568348690d88740d"
+    },
+    {
+      "path": "scripts/town_surfaces/qa/native-report.json",
+      "bytes": 81259,
+      "sha256": "1b060ff33460c537129d4de15580c6e31533e504b75547140275049201fae751"
+    },
+    {
+      "path": "scripts/town_surfaces/qa/footprint-report.json",
+      "bytes": 314,
+      "sha256": "4e060692db14813d6836a01e7276cf9721af5a6eb48746ce913aa3b42261ab8c"
+    },
+    {
+      "path": "scripts/town_surfaces/qa/seam-report.json",
+      "bytes": 471,
+      "sha256": "f17ca5c13b34fa31053d03c822812a20e95486031158470b67ca9b17ebbf13b6"
+    },
+    {
+      "path": "scripts/town_surfaces/qa/native-final.log",
+      "bytes": 57773,
+      "sha256": "16cb4f800553f29d353e9ea0894b2b233d26df65fac8c9f8f86ea36895753413"
+    },
+    {
+      "path": "scripts/town_surfaces/qa/footprint.log",
+      "bytes": 2939,
+      "sha256": "435aa6823f3166304bb9ffc94e0d4ad3a51e34e9169d2692639589ca0e08f07e"
+    },
+    {
+      "path": "scripts/town_surfaces/qa/seams.log",
+      "bytes": 451,
+      "sha256": "c24a0d0d22195512d06cdfba0ba6c6464c5e39933535e4fb4b09a39199afabed"
+    }
+  ]
+}

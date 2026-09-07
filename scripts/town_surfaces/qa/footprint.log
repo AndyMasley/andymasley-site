@@ -1,0 +1,99 @@
+{'status': 'PASS', 'uniqueBaysChecked': 1143, 'surfaceTrianglesChecked': 175117, 'failures': [], 'method': 'Independent Shapely containment of every actual authored bay and every emitted native GLTF paving, paint or mulch triangle; all three LODs. 3mm tolerance for Float32/1mm source serialization.'}
+[
+  {
+    "lotId": "PAVE-AERIAL-DOWNTOWN-01",
+    "tileId": "-12_-4",
+    "lotCenterEastNorth": [
+      -2921.065,
+      -886.12
+    ],
+    "edgeId": 75,
+    "physicalId": 44,
+    "roadName": "DAVIS STREET",
+    "sourceEastNorthHeight": [
+      -2928.249,
+      -865.215,
+      30.0095
+    ],
+    "sourceTangentEastNorth": [
+      0.945715,
+      0.324997
+    ],
+    "stationM": 42.09,
+    "roadLengthM": 179.531,
+    "lotDistanceFromRoadM": 22.1,
+    "note": "Exact nearest source-graph point, not an asserted parking entrance. For review, use a side-looking diagnostic camera aimed at lotCenterEastNorth; ordinary chase may not see the whole lot."
+  },
+  {
+    "lotId": "PAVE-AERIAL-BEACH-SOUTH",
+    "tileId": "-4_-2",
+    "lotCenterEastNorth": [
+      -832.324,
+      -428.815
+    ],
+    "edgeId": 1074,
+    "physicalId": 553,
+    "roadName": "MEMORIAL BEACH DRIVE",
+    "sourceEastNorthHeight": [
+      -815.6757,
+      -412.9434,
+      48.1429
+    ],
+    "sourceTangentEastNorth": [
+      -0.690009,
+      0.723801
+    ],
+    "stationM": 69.875,
+    "roadLengthM": 437.115,
+    "lotDistanceFromRoadM": 23.0,
+    "note": "Exact nearest source-graph point, not an asserted parking entrance. For review, use a side-looking diagnostic camera aimed at lotCenterEastNorth; ordinary chase may not see the whole lot."
+  },
+  {
+    "lotId": "PAVE-OSM-1504195631",
+    "tileId": "-8_-7",
+    "lotCenterEastNorth": [
+      -1882.978,
+      -1659.727
+    ],
+    "edgeId": 219,
+    "physicalId": 116,
+    "roadName": "Unnamed road",
+    "sourceEastNorthHeight": [
+      -1866.4136,
+      -1693.3224,
+      55.091
+    ],
+    "sourceTangentEastNorth": [
+      -0.29194,
+      0.956437
+    ],
+    "stationM": 111.006,
+    "roadLengthM": 111.006,
+    "lotDistanceFromRoadM": 37.46,
+    "note": "Exact nearest source-graph point, not an asserted parking entrance. For review, use a side-looking diagnostic camera aimed at lotCenterEastNorth; ordinary chase may not see the whole lot."
+  },
+  {
+    "lotId": "PAVE-OSM-1455549257",
+    "tileId": "-9_-4",
+    "lotCenterEastNorth": [
+      -2193.557,
+      -921.875
+    ],
+    "edgeId": 500,
+    "physicalId": 257,
+    "roadName": "ROBINSON STREET",
+    "sourceEastNorthHeight": [
+      -2173.1516,
+      -917.6444,
+      64.3433
+    ],
+    "sourceTangentEastNorth": [
+      -0.203007,
+      0.979177
+    ],
+    "stationM": 73.354,
+    "roadLengthM": 89.577,
+    "lotDistanceFromRoadM": 20.84,
+    "note": "Exact nearest source-graph point, not an asserted parking entrance. For review, use a side-looking diagnostic camera aimed at lotCenterEastNorth; ordinary chase may not see the whole lot."
+  }
+]

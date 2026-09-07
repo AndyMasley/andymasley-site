@@ -1,0 +1,990 @@
+{
+  "version": 1,
+  "reviewedUtc": "2026-09-07T03:16:58.695773+00:00",
+  "method": "Original visual observations of already viewed georeferenced MassGIS2025 aerial crops, paired with OSM polygon identities. No Google imagery. Roof/water/current-mask exclusions remain authoritative for the retained game geometry.",
+  "mappedReviews": [
+    {
+      "id": "PAVE-OSM-247622897",
+      "osmId": 247622897,
+      "accepted": true,
+      "material": "asphalt",
+      "materialBasis": "2025 aerial hard-surface and pavement-marking observation; asphalt finish is a visually plausible material interpretation, not a composition measurement.",
+      "striping": "observed-present",
+      "confidence": "high",
+      "appearanceDate": "Spring2025",
+      "observation": "Continuous gray pavement, painted perimeter stalls and a paired central row are clearly visible.",
+      "inspectionContactSheet": "parking-contact-01.jpg",
+      "highResolutionInspection": null,
+      "sourceUrl": "https://www.openstreetmap.org/way/247622897"
+    },
+    {
+      "id": "PAVE-OSM-1097398491",
+      "osmId": 1097398491,
+      "accepted": true,
+      "material": "asphalt",
+      "materialBasis": "2025 aerial hard-surface and pavement-marking observation; asphalt finish is a visually plausible material interpretation, not a composition measurement.",
+      "striping": "observed-present",
+      "confidence": "high",
+      "appearanceDate": "Spring2025",
+      "observation": "Small dark asphalt-like lot with vehicles on opposing edges beside Main Street.",
+      "inspectionContactSheet": "parking-contact-01.jpg",
+      "highResolutionInspection": null,
+      "sourceUrl": "https://www.openstreetmap.org/way/1097398491"
+    },
+    {
+      "id": "PAVE-OSM-1097409917",
+      "osmId": 1097409917,
+      "accepted": true,
+      "material": "asphalt",
+      "materialBasis": "2025 aerial hard-surface and pavement-marking observation; asphalt finish is a visually plausible material interpretation, not a composition measurement.",
+      "striping": "observed-present",
+      "confidence": "high",
+      "appearanceDate": "Spring2025",
+      "observation": "Worn paved rectangle with parked vehicles and faint stall paint; resurfacing color is authored.",
+      "inspectionContactSheet": "parking-contact-01.jpg",
+      "highResolutionInspection": "lot-1097409917-z19.jpg",
+      "sourceUrl": "https://www.openstreetmap.org/way/1097409917"
+    },
+    {
+      "id": "PAVE-OSM-1097409918",
+      "osmId": 1097409918,
+      "accepted": true,
+      "material": "paved-unspecified",
+      "materialBasis": "2025 aerial hard-surface and pavement-marking observation; asphalt finish is a visually plausible material interpretation, not a composition measurement.",
+      "striping": "none",
+      "confidence": "medium",
+      "appearanceDate": "Spring2025",
+      "observation": "Pale hard-surface rectangle has no clearly readable current stall paint. Binder and possible former court use are unresolved; no formal new bay layout.",
+      "inspectionContactSheet": "parking-contact-01.jpg",
+      "highResolutionInspection": "lot-1097409918-z19.jpg",
+      "sourceUrl": "https://www.openstreetmap.org/way/1097409918"
+    },
+    {
+      "id": "PAVE-OSM-1097409920",
+      "osmId": 1097409920,
+      "accepted": true,
+      "material": "asphalt",
+      "materialBasis": "2025 aerial hard-surface and pavement-marking observation; asphalt finish is a visually plausible material interpretation, not a composition measurement.",
+      "striping": "none",
+      "confidence": "high",
+      "appearanceDate": "Spring2025",
+      "observation": "Paved loading and trailer apron wraps the industrial building; keep truck circulation open rather than draw passenger bays.",
+      "inspectionContactSheet": "parking-contact-02.jpg",
+      "highResolutionInspection": null,
+      "sourceUrl": "https://www.openstreetmap.org/way/1097409920"
+    },
+    {
+      "id": "PAVE-OSM-1097409921",
+      "osmId": 1097409921,
+      "accepted": true,
+      "material": "asphalt",
+      "materialBasis": "2025 aerial hard-surface and pavement-marking observation; asphalt finish is a visually plausible material interpretation, not a composition measurement.",
+      "striping": "none",
+      "confidence": "high",
+      "appearanceDate": "Spring2025",
+      "observation": "Paved industrial loading yard; no passenger-bay pattern is established.",
+      "inspectionContactSheet": "parking-contact-02.jpg",
+      "highResolutionInspection": null,
+      "sourceUrl": "https://www.openstreetmap.org/way/1097409921"
+    },
+    {
+      "id": "PAVE-OSM-1193651354",
+      "osmId": 1193651354,
+      "accepted": true,
+      "material": "asphalt",
+      "materialBasis": "2025 aerial hard-surface and pavement-marking observation; asphalt finish is a visually plausible material interpretation, not a composition measurement.",
+      "striping": "observed-present",
+      "confidence": "high",
+      "appearanceDate": "Spring2025",
+      "observation": "Paved parking and circulation around the small central building are visible. The lot outline includes the building; retained geometry and zero-mask exclusions remove that footprint.",
+      "inspectionContactSheet": "parking-contact-02.jpg",
+      "highResolutionInspection": "lot-1193651354-z19.jpg",
+      "sourceUrl": "https://www.openstreetmap.org/way/1193651354"
+    },
+    {
+      "id": "PAVE-OSM-1227016151",
+      "osmId": 1227016151,
+      "accepted": true,
+      "material": "asphalt",
+      "materialBasis": "2025 aerial hard-surface and pavement-marking observation; asphalt finish is a visually plausible material interpretation, not a composition measurement.",
+      "striping": "observed-present",
+      "confidence": "high",
+      "appearanceDate": "Spring2025",
+      "observation": "A long paved school-side parking strip is visible beside the field and building; current masks incorrectly classify much of it as lawn.",
+      "inspectionContactSheet": "parking-contact-02.jpg",
+      "highResolutionInspection": "lot-1227016151-z19.jpg",
+      "sourceUrl": "https://www.openstreetmap.org/way/1227016151"
+    },
+    {
+      "id": "PAVE-OSM-1227016152",
+      "osmId": 1227016152,
+      "accepted": true,
+      "material": "asphalt",
+      "materialBasis": "2025 aerial hard-surface and pavement-marking observation; asphalt finish is a visually plausible material interpretation, not a composition measurement.",
+      "striping": "observed-present",
+      "confidence": "high",
+      "appearanceDate": "Spring2025",
+      "observation": "Narrow paved curb-side school parking strip; current mask is mostly lawn.",
+      "inspectionContactSheet": "parking-contact-03.jpg",
+      "highResolutionInspection": null,
+      "sourceUrl": "https://www.openstreetmap.org/way/1227016152"
+    },
+    {
+      "id": "PAVE-OSM-1227016153",
+      "osmId": 1227016153,
+      "accepted": true,
+      "material": "asphalt",
+      "materialBasis": "2025 aerial hard-surface and pavement-marking observation; asphalt finish is a visually plausible material interpretation, not a composition measurement.",
+      "striping": "observed-present",
+      "confidence": "high",
+      "appearanceDate": "Spring2025",
+      "observation": "School parking rectangle with numerous parallel white stall lines; the old soil patch inside is not supported by the 2025 surface.",
+      "inspectionContactSheet": "parking-contact-03.jpg",
+      "highResolutionInspection": null,
+      "sourceUrl": "https://www.openstreetmap.org/way/1227016153"
+    },
+    {
+      "id": "PAVE-OSM-1305753671",
+      "osmId": 1305753671,
+      "accepted": true,
+      "material": "asphalt",
+      "materialBasis": "2025 aerial hard-surface and pavement-marking observation; asphalt finish is a visually plausible material interpretation, not a composition measurement.",
+      "striping": "observed-present",
+      "confidence": "high",
+      "appearanceDate": "Spring2025",
+      "observation": "Painted stalls on a paved rectangular lot; exterior landscaped islands lie outside this mapped boundary.",
+      "inspectionContactSheet": "parking-contact-03.jpg",
+      "highResolutionInspection": null,
+      "sourceUrl": "https://www.openstreetmap.org/way/1305753671"
+    },
+    {
+      "id": "PAVE-OSM-1305753684",
+      "osmId": 1305753684,
+      "accepted": true,
+      "material": "asphalt",
+      "materialBasis": "2025 aerial hard-surface and pavement-marking observation; asphalt finish is a visually plausible material interpretation, not a composition measurement.",
+      "striping": "none",
+      "confidence": "high",
+      "appearanceDate": "Spring2025",
+      "observation": "Narrow paved service-side strip with long vehicle spaces; inferred new passenger rows are withheld.",
+      "inspectionContactSheet": "parking-contact-03.jpg",
+      "highResolutionInspection": null,
+      "sourceUrl": "https://www.openstreetmap.org/way/1305753684"
+    },
+    {
+      "id": "PAVE-OSM-1455518884",
+      "osmId": 1455518884,
+      "accepted": true,
+      "material": "asphalt",
+      "materialBasis": "2025 aerial hard-surface and pavement-marking observation; asphalt finish is a visually plausible material interpretation, not a composition measurement.",
+      "striping": "observed-present",
+      "confidence": "high",
+      "appearanceDate": "Spring2025",
+      "observation": "Small paved lot with opposing vehicle rows; the west grass intrusion conflicts with the aerial pavement.",
+      "inspectionContactSheet": "parking-contact-04.jpg",
+      "highResolutionInspection": null,
+      "sourceUrl": "https://www.openstreetmap.org/way/1455518884"
+    },
+    {
+      "id": "PAVE-OSM-1455518885",
+      "osmId": 1455518885,
+      "accepted": true,
+      "material": "asphalt",
+      "materialBasis": "2025 aerial hard-surface and pavement-marking observation; asphalt finish is a visually plausible material interpretation, not a composition measurement.",
+      "striping": "observed-present",
+      "confidence": "high",
+      "appearanceDate": "Spring2025",
+      "observation": "Large active-looking retail parking surface with multiple vehicle and stall rows. Occupancy is only an aerial observation, not current business verification.",
+      "inspectionContactSheet": "parking-contact-04.jpg",
+      "highResolutionInspection": null,
+      "sourceUrl": "https://www.openstreetmap.org/way/1455518885"
+    },
+    {
+      "id": "PAVE-OSM-1455518886",
+      "osmId": 1455518886,
+      "accepted": true,
+      "material": "asphalt",
+      "materialBasis": "2025 aerial hard-surface and pavement-marking observation; asphalt finish is a visually plausible material interpretation, not a composition measurement.",
+      "striping": "observed-present",
+      "confidence": "high",
+      "appearanceDate": "Spring2025",
+      "observation": "Paved commercial side lot with opposing vehicle rows and a connecting drive.",
+      "inspectionContactSheet": "parking-contact-04.jpg",
+      "highResolutionInspection": null,
+      "sourceUrl": "https://www.openstreetmap.org/way/1455518886"
+    },
+    {
+      "id": "PAVE-OSM-1455549217",
+      "osmId": 1455549217,
+      "accepted": true,
+      "material": "asphalt",
+      "materialBasis": "2025 aerial hard-surface and pavement-marking observation; asphalt finish is a visually plausible material interpretation, not a composition measurement.",
+      "striping": "observed-present",
+      "confidence": "high",
+      "appearanceDate": "Spring2025",
+      "observation": "Higher-resolution review confirms white stall lines and a hatched access area on pavement; prior coarse crop looked ambiguous.",
+      "inspectionContactSheet": "parking-contact-04.jpg",
+      "highResolutionInspection": "lot-1455549217-z19.jpg",
+      "sourceUrl": "https://www.openstreetmap.org/way/1455549217"
+    },
+    {
+      "id": "PAVE-OSM-1455549257",
+      "osmId": 1455549257,
+      "accepted": true,
+      "material": "asphalt",
+      "materialBasis": "2025 aerial hard-surface and pavement-marking observation; asphalt finish is a visually plausible material interpretation, not a composition measurement.",
+      "striping": "observed-present",
+      "confidence": "high",
+      "appearanceDate": "Spring2025",
+      "observation": "Large paved rectangle beside Maynard Street has vehicles and longitudinal pavement cracks; the old grass classification is unsupported.",
+      "inspectionContactSheet": "parking-contact-05.jpg",
+      "highResolutionInspection": null,
+      "sourceUrl": "https://www.openstreetmap.org/way/1455549257"
+    },
+    {
+      "id": "PAVE-OSM-1455549270",
+      "osmId": 1455549270,
+      "accepted": true,
+      "material": "asphalt",
+      "materialBasis": "2025 aerial hard-surface and pavement-marking observation; asphalt finish is a visually plausible material interpretation, not a composition measurement.",
+      "striping": "observed-present",
+      "confidence": "high",
+      "appearanceDate": "Spring2025",
+      "observation": "Small triangular paved forecourt between mapped streets; avoid fitting a large generic paired-row layout.",
+      "inspectionContactSheet": "parking-contact-05.jpg",
+      "highResolutionInspection": null,
+      "sourceUrl": "https://www.openstreetmap.org/way/1455549270"
+    },
+    {
+      "id": "PAVE-OSM-1455549271",
+      "osmId": 1455549271,
+      "accepted": true,
+      "material": "asphalt",
+      "materialBasis": "2025 aerial hard-surface and pavement-marking observation; asphalt finish is a visually plausible material interpretation, not a composition measurement.",
+      "striping": "observed-present",
+      "confidence": "high",
+      "appearanceDate": "Spring2025",
+      "observation": "Paved parking field with repeated white stall rows and a corner hatched area; retaining its perimeter and building clearance is sufficient.",
+      "inspectionContactSheet": "parking-contact-05.jpg",
+      "highResolutionInspection": null,
+      "sourceUrl": "https://www.openstreetmap.org/way/1455549271"
+    },
+    {
+      "id": "PAVE-OSM-1455549277",
+      "osmId": 1455549277,
+      "accepted": true,
+      "material": "asphalt",
+      "materialBasis": "2025 aerial hard-surface and pavement-marking observation; asphalt finish is a visually plausible material interpretation, not a composition measurement.",
+      "striping": "observed-present",
+      "confidence": "high",
+      "appearanceDate": "Spring2025",
+      "observation": "Narrow street-side parking strip; source road clearance may remove some or all marking space.",
+      "inspectionContactSheet": "parking-contact-05.jpg",
+      "highResolutionInspection": null,
+      "sourceUrl": "https://www.openstreetmap.org/way/1455549277"
+    },
+    {
+      "id": "PAVE-OSM-1503221310",
+      "osmId": 1503221310,
+      "accepted": true,
+      "material": "asphalt",
+      "materialBasis": "2025 aerial hard-surface and pavement-marking observation; asphalt finish is a visually plausible material interpretation, not a composition measurement.",
+      "striping": "observed-present",
+      "confidence": "high",
+      "appearanceDate": "Spring2025",
+      "observation": "White marked spaces along the museum-side street are visible, including signed/hatched locations whose accessibility assignment is not reconstructed here.",
+      "inspectionContactSheet": "parking-contact-06.jpg",
+      "highResolutionInspection": null,
+      "sourceUrl": "https://www.openstreetmap.org/way/1503221310"
+    },
+    {
+      "id": "PAVE-OSM-1503221311",
+      "osmId": 1503221311,
+      "accepted": true,
+      "material": "asphalt",
+      "materialBasis": "2025 aerial hard-surface and pavement-marking observation; asphalt finish is a visually plausible material interpretation, not a composition measurement.",
+      "striping": "observed-present",
+      "confidence": "high",
+      "appearanceDate": "Spring2025",
+      "observation": "Short paved marked museum-side row with vehicles; canopy in the old cover mask obscures the paved ground.",
+      "inspectionContactSheet": "parking-contact-06.jpg",
+      "highResolutionInspection": null,
+      "sourceUrl": "https://www.openstreetmap.org/way/1503221311"
+    },
+    {
+      "id": "PAVE-OSM-1504195589",
+      "osmId": 1504195589,
+      "accepted": true,
+      "material": "asphalt",
+      "materialBasis": "2025 aerial hard-surface and pavement-marking observation; asphalt finish is a visually plausible material interpretation, not a composition measurement.",
+      "striping": "observed-present",
+      "confidence": "high",
+      "appearanceDate": "Spring2025",
+      "observation": "Curved school-side paved parking bays and white lines are visible; old mask incorrectly paints lawn over the strip.",
+      "inspectionContactSheet": "parking-contact-06.jpg",
+      "highResolutionInspection": null,
+      "sourceUrl": "https://www.openstreetmap.org/way/1504195589"
+    },
+    {
+      "id": "PAVE-OSM-1504195616",
+      "osmId": 1504195616,
+      "accepted": true,
+      "material": "asphalt",
+      "materialBasis": "2025 aerial hard-surface and pavement-marking observation; asphalt finish is a visually plausible material interpretation, not a composition measurement.",
+      "striping": "observed-present",
+      "confidence": "high",
+      "appearanceDate": "Spring2025",
+      "observation": "Higher-resolution aerial resolves two paved marked curb-side spaces. Current mask is entirely grass.",
+      "inspectionContactSheet": "parking-contact-06.jpg",
+      "highResolutionInspection": "lot-1504195616-z19.jpg",
+      "sourceUrl": "https://www.openstreetmap.org/way/1504195616"
+    },
+    {
+      "id": "PAVE-OSM-1504195624",
+      "osmId": 1504195624,
+      "accepted": false,
+      "material": "asphalt",
+      "materialBasis": "2025 aerial hard-surface and pavement-marking observation; asphalt finish is a visually plausible material interpretation, not a composition measurement.",
+      "striping": "none",
+      "confidence": "high",
+      "appearanceDate": "Spring2025",
+      "observation": "Reject: the mapped parking polygon covers a clearly visible curved building roof and adjacent grass. Approximately79.6% is excluded by the retained building mask; no parking surface or paint is generated.",
+      "inspectionContactSheet": "parking-contact-07.jpg",
+      "highResolutionInspection": "lot-1504195624-z19.jpg",
+      "sourceUrl": "https://www.openstreetmap.org/way/1504195624"
+    },
+    {
+      "id": "PAVE-OSM-1504195628",
+      "osmId": 1504195628,
+      "accepted": true,
+      "material": "asphalt",
+      "materialBasis": "2025 aerial hard-surface and pavement-marking observation; asphalt finish is a visually plausible material interpretation, not a composition measurement.",
+      "striping": "observed-present",
+      "confidence": "high",
+      "appearanceDate": "Spring2025",
+      "observation": "A paved U-shaped school lot surrounds a wooded interior. Preserve its open center and do not fill it with pavement.",
+      "inspectionContactSheet": "parking-contact-07.jpg",
+      "highResolutionInspection": null,
+      "sourceUrl": "https://www.openstreetmap.org/way/1504195628"
+    },
+    {
+      "id": "PAVE-OSM-1504195629",
+      "osmId": 1504195629,
+      "accepted": true,
+      "material": "asphalt",
+      "materialBasis": "2025 aerial hard-surface and pavement-marking observation; asphalt finish is a visually plausible material interpretation, not a composition measurement.",
+      "striping": "observed-present",
+      "confidence": "high",
+      "appearanceDate": "Spring2025",
+      "observation": "A paved curved school court has parked vehicles around its outer and inner edges. Preserve the interior island.",
+      "inspectionContactSheet": "parking-contact-07.jpg",
+      "highResolutionInspection": null,
+      "sourceUrl": "https://www.openstreetmap.org/way/1504195629"
+    },
+    {
+      "id": "PAVE-OSM-1504195630",
+      "osmId": 1504195630,
+      "accepted": true,
+      "material": "asphalt",
+      "materialBasis": "2025 aerial hard-surface and pavement-marking observation; asphalt finish is a visually plausible material interpretation, not a composition measurement.",
+      "striping": "observed-present",
+      "confidence": "high",
+      "appearanceDate": "Spring2025",
+      "observation": "School-side rectangular paved lot with parked vehicles; tree canopy in the aerial does not establish soil under the lot.",
+      "inspectionContactSheet": "parking-contact-07.jpg",
+      "highResolutionInspection": null,
+      "sourceUrl": "https://www.openstreetmap.org/way/1504195630"
+    },
+    {
+      "id": "PAVE-OSM-1504195631",
+      "osmId": 1504195631,
+      "accepted": true,
+      "material": "asphalt",
+      "materialBasis": "2025 aerial hard-surface and pavement-marking observation; asphalt finish is a visually plausible material interpretation, not a composition measurement.",
+      "striping": "observed-present",
+      "confidence": "high",
+      "appearanceDate": "Spring2025",
+      "observation": "Paved school lot with repeated stall lines, bounded by grass.",
+      "inspectionContactSheet": "parking-contact-08.jpg",
+      "highResolutionInspection": null,
+      "sourceUrl": "https://www.openstreetmap.org/way/1504195631"
+    },
+    {
+      "id": "PAVE-OSM-1504195632",
+      "osmId": 1504195632,
+      "accepted": true,
+      "material": "asphalt",
+      "materialBasis": "2025 aerial hard-surface and pavement-marking observation; asphalt finish is a visually plausible material interpretation, not a composition measurement.",
+      "striping": "observed-present",
+      "confidence": "high",
+      "appearanceDate": "Spring2025",
+      "observation": "Paved school lot with parked vehicles and curved approach; old mask grass intrusion is unsupported.",
+      "inspectionContactSheet": "parking-contact-08.jpg",
+      "highResolutionInspection": null,
+      "sourceUrl": "https://www.openstreetmap.org/way/1504195632"
+    }
+  ],
+  "manualPolygons": [
+    {
+      "id": "PAVE-AERIAL-BEACH-EAST",
+      "site": "beach",
+      "material": "asphalt",
+      "striping": "observed-present",
+      "pixelRings": [
+        [
+          [
+            511,
+            294
+          ],
+          [
+            592,
+            250
+          ],
+          [
+            687,
+            295
+          ],
+          [
+            715,
+            315
+          ],
+          [
+            741,
+            374
+          ],
+          [
+            750,
+            424
+          ],
+          [
+            703,
+            465
+          ],
+          [
+            654,
+            497
+          ],
+          [
+            597,
+            439
+          ],
+          [
+            557,
+            401
+          ],
+          [
+            518,
+            382
+          ],
+          [
+            490,
+            349
+          ],
+          [
+            485,
+            321
+          ],
+          [
+            511,
+            294
+          ]
+        ],
+        [
+          [
+            548,
+            313
+          ],
+          [
+            568,
+            309
+          ],
+          [
+            591,
+            323
+          ],
+          [
+            606,
+            348
+          ],
+          [
+            593,
+            373
+          ],
+          [
+            568,
+            373
+          ],
+          [
+            548,
+            355
+          ],
+          [
+            536,
+            337
+          ],
+          [
+            548,
+            313
+          ]
+        ]
+      ],
+      "observation": "Marked lakeside parking and circulation surface; the central wooded island is explicitly removed. Boundary follows visible asphalt shoreward edge, not the waterline."
+    },
+    {
+      "id": "PAVE-AERIAL-BEACH-WEST",
+      "site": "beach",
+      "material": "paved-unspecified",
+      "striping": "none",
+      "pixelRings": [
+        [
+          [
+            205,
+            350
+          ],
+          [
+            323,
+            322
+          ],
+          [
+            393,
+            320
+          ],
+          [
+            430,
+            329
+          ],
+          [
+            477,
+            356
+          ],
+          [
+            494,
+            384
+          ],
+          [
+            485,
+            425
+          ],
+          [
+            479,
+            470
+          ],
+          [
+            403,
+            480
+          ],
+          [
+            329,
+            503
+          ],
+          [
+            215,
+            522
+          ],
+          [
+            205,
+            350
+          ]
+        ]
+      ],
+      "observation": "Large light-toned unmarked parking/overflow apron. Hard-surface footprint is visible but aggregate versus worn pavement is not resolved; no formal parking rows are added."
+    },
+    {
+      "id": "PAVE-AERIAL-DOWNTOWN-01",
+      "site": "downtown",
+      "material": "asphalt",
+      "striping": "observed-present",
+      "pixelRings": [
+        [
+          [
+            660,
+            238
+          ],
+          [
+            775,
+            214
+          ],
+          [
+            804,
+            218
+          ],
+          [
+            817,
+            283
+          ],
+          [
+            676,
+            309
+          ],
+          [
+            657,
+            286
+          ],
+          [
+            660,
+            238
+          ]
+        ]
+      ],
+      "observation": "Clearly paved rear downtown parking court, with vehicles and repeated stall rows."
+    },
+    {
+      "id": "PAVE-AERIAL-DOWNTOWN-02",
+      "site": "downtown",
+      "material": "asphalt",
+      "striping": "observed-present",
+      "pixelRings": [
+        [
+          [
+            520,
+            135
+          ],
+          [
+            544,
+            116
+          ],
+          [
+            584,
+            108
+          ],
+          [
+            598,
+            138
+          ],
+          [
+            610,
+            211
+          ],
+          [
+            628,
+            240
+          ],
+          [
+            598,
+            256
+          ],
+          [
+            565,
+            264
+          ],
+          [
+            541,
+            254
+          ],
+          [
+            526,
+            229
+          ],
+          [
+            516,
+            192
+          ],
+          [
+            520,
+            135
+          ]
+        ]
+      ],
+      "observation": "Curved paved parking court near the river corridor; boundary excludes the adjacent white-roofed building and riverbank."
+    },
+    {
+      "id": "PAVE-AERIAL-DOWNTOWN-03",
+      "site": "downtown",
+      "material": "asphalt",
+      "striping": "observed-present",
+      "pixelRings": [
+        [
+          [
+            405,
+            245
+          ],
+          [
+            458,
+            221
+          ],
+          [
+            478,
+            254
+          ],
+          [
+            463,
+            269
+          ],
+          [
+            402,
+            290
+          ],
+          [
+            397,
+            278
+          ],
+          [
+            405,
+            245
+          ]
+        ]
+      ],
+      "observation": "A small marked paved apron at the front of a commercial building."
+    },
+    {
+      "id": "PAVE-AERIAL-DOWNTOWN-04",
+      "site": "downtown",
+      "material": "asphalt",
+      "striping": "observed-present",
+      "pixelRings": [
+        [
+          [
+            515,
+            609
+          ],
+          [
+            563,
+            601
+          ],
+          [
+            583,
+            647
+          ],
+          [
+            594,
+            670
+          ],
+          [
+            540,
+            693
+          ],
+          [
+            522,
+            679
+          ],
+          [
+            515,
+            609
+          ]
+        ]
+      ],
+      "observation": "A rear paved downtown parking court with visible vehicles and perimeter stalls."
+    },
+    {
+      "id": "PAVE-AERIAL-DOWNTOWN-05",
+      "site": "downtown",
+      "material": "asphalt",
+      "striping": "observed-present",
+      "pixelRings": [
+        [
+          [
+            894,
+            55
+          ],
+          [
+            970,
+            35
+          ],
+          [
+            1005,
+            87
+          ],
+          [
+            930,
+            121
+          ],
+          [
+            913,
+            109
+          ],
+          [
+            894,
+            55
+          ]
+        ],
+        [
+          [
+            906,
+            61
+          ],
+          [
+            960,
+            44
+          ],
+          [
+            971,
+            63
+          ],
+          [
+            952,
+            73
+          ],
+          [
+            926,
+            79
+          ],
+          [
+            913,
+            75
+          ],
+          [
+            906,
+            61
+          ]
+        ]
+      ],
+      "observation": "A compact marked paved lot along the north side of the downtown block. The landscaped island at its north edge is explicitly removed."
+    },
+    {
+      "id": "PAVE-AERIAL-DOWNTOWN-06",
+      "site": "downtown",
+      "material": "asphalt",
+      "striping": "authored-permitted",
+      "pixelRings": [
+        [
+          [
+            411,
+            325
+          ],
+          [
+            509,
+            296
+          ],
+          [
+            525,
+            335
+          ],
+          [
+            489,
+            354
+          ],
+          [
+            481,
+            363
+          ],
+          [
+            463,
+            367
+          ],
+          [
+            455,
+            338
+          ],
+          [
+            426,
+            353
+          ],
+          [
+            411,
+            325
+          ]
+        ]
+      ],
+      "observation": "Paved rear forecourt and short access apron are visible; any refreshed stall pattern is an authored finishing choice."
+    },
+    {
+      "id": "PAVE-AERIAL-DOWNTOWN-07",
+      "site": "downtown",
+      "material": "asphalt",
+      "striping": "observed-present",
+      "pixelRings": [
+        [
+          [
+            1147,
+            374
+          ],
+          [
+            1183,
+            371
+          ],
+          [
+            1206,
+            425
+          ],
+          [
+            1254,
+            412
+          ],
+          [
+            1271,
+            448
+          ],
+          [
+            1169,
+            486
+          ],
+          [
+            1157,
+            449
+          ],
+          [
+            1147,
+            374
+          ]
+        ]
+      ],
+      "observation": "Paved civic/downtown parking court south of the broad flat-roofed building, with existing marked spaces. Building and street clearance is applied after digitization."
+    },
+    {
+      "id": "PAVE-AERIAL-BEACH-SOUTH",
+      "site": "beach",
+      "material": "asphalt",
+      "striping": "observed-present",
+      "pixelRings": [
+        [
+          [
+            497,
+            386
+          ],
+          [
+            526,
+            397
+          ],
+          [
+            558,
+            414
+          ],
+          [
+            592,
+            448
+          ],
+          [
+            612,
+            470
+          ],
+          [
+            602,
+            490
+          ],
+          [
+            580,
+            525
+          ],
+          [
+            559,
+            539
+          ],
+          [
+            531,
+            524
+          ],
+          [
+            491,
+            515
+          ],
+          [
+            478,
+            495
+          ],
+          [
+            486,
+            452
+          ],
+          [
+            497,
+            386
+          ]
+        ]
+      ],
+      "observation": "The southern marked paved parking court is distinct from the pale western overflow area; visible parked vehicles and repeated white stall rows establish pavement."
+    }
+  ],
+  "manualUncertaintyM": 0.6,
+  "materialPolicy": "Only visible hard-surface boundaries are accepted. Asphalt is a plausible visual finish for confirmed pavement; no chemical/composition claim. Pale ambiguous surfaces are paved-unspecified and receive no formal bay paint. Explicit unpaved service ways remain unpaved.",
+  "widthPolicy": "Mapped service-road width is used when available. Otherwise3.2m driveway or4.8m service circulation width is an authored assumption, gated by explicit paved tags or strong pre-existing impervious support. No new guided route or public-access claim."
+}

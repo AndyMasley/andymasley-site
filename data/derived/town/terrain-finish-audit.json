@@ -1,0 +1,634 @@
+{
+  "version": 1,
+  "created": "2026-09-07T04:04:08.494372+00:00",
+  "sourceManifestSha256": "37fbef34bc2a4467997252be75b4c43174a6a7b2d39963614cadd8d787e56105",
+  "indexSha256": "ea4ff5339727f6dc2728396d13040fa81ab1c3d22998b872f159715542f681e1",
+  "sourceExclusionsSha256": "0f752e7548606c532a529ad56bd8dc19258c543f57a16e4c30c3d5da88f2e17e",
+  "scope": "Optional lowering-only cosmetic grade repair against actual decoded neighboring shoulder triangles; original source archives, road geometry, water, buildings, source attributes and UV coordinates remain intact. These are inferred road-edge finishes, not measured new elevation data.",
+  "generation": {
+    "seconds": 354.44,
+    "totalAddedTriangles": 4092209,
+    "totalReplacedTriangles": 559944,
+    "maximumDropM": 1.511513,
+    "totalBytes": 412818582,
+    "totalGzipBytes": 64816530,
+    "retainedUncertainTriangles": 24,
+    "sourceTiles": 672,
+    "repairedTiles": 427,
+    "packets": 1281,
+    "perLod": [
+      {
+        "level": 0,
+        "packets": 427,
+        "bytes": 158918959,
+        "gzipBytes": 25870055,
+        "medianGzipBytes": 43553,
+        "p95GzipBytes": 185080,
+        "maximumGzipBytes": 457370
+      },
+      {
+        "level": 1,
+        "packets": 427,
+        "bytes": 133169793,
+        "gzipBytes": 20999287,
+        "medianGzipBytes": 40236,
+        "p95GzipBytes": 123786,
+        "maximumGzipBytes": 242404
+      },
+      {
+        "level": 2,
+        "packets": 427,
+        "bytes": 120729830,
+        "gzipBytes": 17947188,
+        "medianGzipBytes": 33508,
+        "p95GzipBytes": 105051,
+        "maximumGzipBytes": 187912
+      }
+    ],
+    "largestPackets": [
+      {
+        "tileId": "-12_-5",
+        "level": 0,
+        "bytes": 2622345,
+        "gzipBytes": 457370,
+        "addedTriangles": 20238,
+        "replacedTriangles": 12505
+      },
+      {
+        "tileId": "-10_-3",
+        "level": 0,
+        "bytes": 2021419,
+        "gzipBytes": 350833,
+        "addedTriangles": 15170,
+        "replacedTriangles": 10119
+      },
+      {
+        "tileId": "-10_-4",
+        "level": 0,
+        "bytes": 1940119,
+        "gzipBytes": 335369,
+        "addedTriangles": 14282,
+        "replacedTriangles": 10210
+      },
+      {
+        "tileId": "-10_-2",
+        "level": 0,
+        "bytes": 1831049,
+        "gzipBytes": 316602,
+        "addedTriangles": 13524,
+        "replacedTriangles": 9515
+      },
+      {
+        "tileId": "-10_-5",
+        "level": 0,
+        "bytes": 1727755,
+        "gzipBytes": 304541,
+        "addedTriangles": 12621,
+        "replacedTriangles": 9249
+      }
+    ]
+  },
+  "runtime": {
+    "strategy": "One packet per tile and LOD; optional deferred streaming with source fallback. No per-frame terrain work. Source positions and attribute prefixes retained byte-for-byte; appended attributes interpolated from original source triangles.",
+    "timingBasis": "Native GLTFLoader/Meshopt source geometry, with one-pixel texture stubs only. Actual source attributes, triangle indices and node transforms; each source file hash verified. Independent of browser rendering/performance.",
+    "nativeSummary": {
+      "levels": 1281,
+      "tiles": 427,
+      "failedLevels": 0,
+      "addedTriangles": 4087321,
+      "maximumDropM": 1.5115126374669643,
+      "maximumAddedGeometryBytes": 3566130,
+      "medianAddedGeometryBytes": 282162,
+      "medianApplyMs": 2.16,
+      "p95ApplyMs": 8.59,
+      "maximumApplyMs": 58.7,
+      "zeroAreaFaces": 0,
+      "backwards": 0
+    },
+    "collapsedMicroscopicFaces": 4888,
+    "windingRepairs": 11630,
+    "normalRepairs": 11042,
+    "performanceCaveat": "Native Node timings are not browser FPS, mobile memory limits, or network benchmarks. Gzip is calculated encoded transfer size; actual server negotiation may differ. Total town bytes are not initial load bytes."
+  },
+  "roadClearance": {
+    "summary": {
+      "routes": 16,
+      "modes": 64,
+      "sampledAsphalt": 5440,
+      "buriedBefore": 465,
+      "buriedAfter": 4,
+      "maximumBeforeM": 0.5636589169404829,
+      "maximumAfterM": 0.04874847803841931,
+      "raised": 0,
+      "roadChanges": 0
+    },
+    "northMain": {
+      "name": "north-main-camera",
+      "edgeId": 2322,
+      "s": 74.19785051822039,
+      "owners": [
+        "-11_2"
+      ],
+      "samples": 1250,
+      "results": [
+        {
+          "mode": 0,
+          "applied": [
+            {
+              "tileId": "-11_2",
+              "level": 0,
+              "addedTriangles": 5708
+            }
+          ],
+          "sampledAsphalt": 750,
+          "buriedBefore": 117,
+          "buriedAfter": 0,
+          "maximumBeforeM": 0.5636589169404829,
+          "maximumAfterM": 0,
+          "raised": 0,
+          "roadChanges": 0,
+          "worst": []
+        },
+        {
+          "mode": 1,
+          "applied": [
+            {
+              "tileId": "-11_2",
+              "level": 1,
+              "addedTriangles": 5403
+            }
+          ],
+          "sampledAsphalt": 750,
+          "buriedBefore": 125,
+          "buriedAfter": 0,
+          "maximumBeforeM": 0.5561533625570405,
+          "maximumAfterM": 0,
+          "raised": 0,
+          "roadChanges": 0,
+          "worst": []
+        },
+        {
+          "mode": 2,
+          "applied": [
+            {
+              "tileId": "-11_2",
+              "level": 2,
+              "addedTriangles": 5357
+            }
+          ],
+          "sampledAsphalt": 750,
+          "buriedBefore": 78,
+          "buriedAfter": 0,
+          "maximumBeforeM": 0.39326256451312247,
+          "maximumAfterM": 0,
+          "raised": 0,
+          "roadChanges": 0,
+          "worst": []
+        },
+        {
+          "mode": "mixed",
+          "applied": [
+            {
+              "tileId": "-11_2",
+              "level": 2,
+              "addedTriangles": 5357
+            }
+          ],
+          "sampledAsphalt": 750,
+          "buriedBefore": 78,
+          "buriedAfter": 0,
+          "maximumBeforeM": 0.39326256451312247,
+          "maximumAfterM": 0,
+          "raised": 0,
+          "roadChanges": 0,
+          "worst": []
+        }
+      ]
+    },
+    "remainingSamples": [
+      {
+        "name": "lake-parkway-boundary",
+        "edgeId": 784,
+        "mode": 2,
+        "sampledAsphalt": 60,
+        "buriedBefore": 4,
+        "buriedAfter": 2,
+        "maximumBeforeM": 0.09296526082721357,
+        "maximumAfterM": 0.04874847803841931,
+        "raised": 0,
+        "roadChanges": 0,
+        "worst": [
+          {
+            "s": 38.41702,
+            "lateral": 4,
+            "x": -1239.958115442963,
+            "z": 2036.5532207654564,
+            "before": {
+              "terrain": 54.1803559282518,
+              "asphalt": 54.087390667424586
+            },
+            "after": {
+              "terrain": 54.136139145463005,
+              "asphalt": 54.087390667424586
+            }
+          },
+          {
+            "s": 36.41702,
+            "lateral": 4,
+            "x": -1242.0226523075382,
+            "z": 2036.5446506596907,
+            "before": {
+              "terrain": 54.279656389386616,
+              "asphalt": 54.227313394787416
+            },
+            "after": {
+              "terrain": 54.236005923527614,
+              "asphalt": 54.227313394787416
+            }
+          }
+        ]
+      },
+      {
+        "name": "lake-parkway-boundary",
+        "edgeId": 784,
+        "mode": "mixed",
+        "sampledAsphalt": 60,
+        "buriedBefore": 6,
+        "buriedAfter": 2,
+        "maximumBeforeM": 0.09296526082721357,
+        "maximumAfterM": 0.04874847803841931,
+        "raised": 0,
+        "roadChanges": 0,
+        "worst": [
+          {
+            "s": 38.41702,
+            "lateral": 4,
+            "x": -1239.958115442963,
+            "z": 2036.5532207654564,
+            "before": {
+              "terrain": 54.1803559282518,
+              "asphalt": 54.087390667424586
+            },
+            "after": {
+              "terrain": 54.136139145463005,
+              "asphalt": 54.087390667424586
+            }
+          },
+          {
+            "s": 36.41702,
+            "lateral": 4,
+            "x": -1242.0226523075382,
+            "z": 2036.5446506596907,
+            "before": {
+              "terrain": 54.279656389386616,
+              "asphalt": 54.227313394787416
+            },
+            "after": {
+              "terrain": 54.236005923527614,
+              "asphalt": 54.227313394787416
+            }
+          }
+        ]
+      }
+    ],
+    "limitation": "Two Lake Parkway outer-edge sample points remain 0.9\u20134.9 cm above asphalt in coarse LOD2 and the same mixed-LOD configuration. Near LOD0 and medium LOD1 are clear at these points. Sampled clearance is not an every-pixel guarantee."
+  },
+  "retainedOriginalTriangles": {
+    "count": 24,
+    "originalDomainAreaM2": 2625.75,
+    "meaning": "The full original triangle remains intact. Areas are original domain areas, not missing surfaces or necessarily attempted repair areas. Seventeen polygon partition uncertainty cases plus seven precisely source-pinned Float32 guard cases. No holes are introduced.",
+    "records": [
+      {
+        "tileId": "-13_-4",
+        "level": 1,
+        "mesh": "terrain_1",
+        "triangle": 3649,
+        "center": [
+          -3202.0,
+          30.06354,
+          927.0
+        ],
+        "areaM2": 70.875,
+        "reason": "Terrain polygon partition lost horizontal area"
+      },
+      {
+        "tileId": "-13_-4",
+        "level": 2,
+        "mesh": "terrain_1",
+        "triangle": 422,
+        "center": [
+          -3166.0,
+          29.22268,
+          836.0
+        ],
+        "areaM2": 292.5,
+        "reason": "Terrain polygon partition lost horizontal area"
+      },
+      {
+        "tileId": "-12_-6",
+        "level": 2,
+        "mesh": "terrain_2",
+        "triangle": 370,
+        "center": [
+          -2966.5,
+          38.75542,
+          1302.0
+        ],
+        "areaM2": 101.25,
+        "reason": "Terrain polygon partition lost horizontal area"
+      },
+      {
+        "tileId": "-11_-6",
+        "level": 1,
+        "mesh": "terrain_1",
+        "triangle": 3976,
+        "center": [
+          -2570.5,
+          50.1253,
+          1458.5
+        ],
+        "areaM2": 2.25,
+        "reason": "Retain original source triangle: Float32 area conservation guard exceeded; no tolerance widening."
+      },
+      {
+        "tileId": "-11_-4",
+        "level": 2,
+        "mesh": "terrain",
+        "triangle": 3130,
+        "center": [
+          -2502.5,
+          45.04546,
+          915.0
+        ],
+        "areaM2": 4.5,
+        "reason": "Retain original source triangle: Float32 area conservation guard exceeded; no tolerance widening."
+      },
+      {
+        "tileId": "-11_-4",
+        "level": 2,
+        "mesh": "terrain",
+        "triangle": 3134,
+        "center": [
+          -2502.5,
+          45.0279,
+          911.0
+        ],
+        "areaM2": 4.5,
+        "reason": "Retain original source triangle: Float32 area conservation guard exceeded; no tolerance widening."
+      },
+      {
+        "tileId": "-11_-4",
+        "level": 2,
+        "mesh": "terrain",
+        "triangle": 3135,
+        "center": [
+          -2502.5,
+          45.04126,
+          910.0
+        ],
+        "areaM2": 4.5,
+        "reason": "Retain original source triangle: Float32 area conservation guard exceeded; no tolerance widening."
+      },
+      {
+        "tileId": "-11_-1",
+        "level": 0,
+        "mesh": "terrain",
+        "triangle": 466,
+        "center": [
+          -2570.0,
+          39.77048,
+          196.0
+        ],
+        "areaM2": 18.0,
+        "reason": "Terrain polygon partition lost horizontal area"
+      },
+      {
+        "tileId": "-11_-1",
+        "level": 2,
+        "mesh": "terrain",
+        "triangle": 244,
+        "center": [
+          -2584.0,
+          39.67754,
+          208.0
+        ],
+        "areaM2": 540.0,
+        "reason": "Terrain polygon partition lost horizontal area"
+      },
+      {
+        "tileId": "-11_0",
+        "level": 2,
+        "mesh": "terrain",
+        "triangle": 102,
+        "center": [
+          -2594.0,
+          35.27821,
+          -94.0
+        ],
+        "areaM2": 252.0,
+        "reason": "Terrain polygon partition lost horizontal area"
+      },
+      {
+        "tileId": "-11_1",
+        "level": 2,
+        "mesh": "terrain_1",
+        "triangle": 427,
+        "center": [
+          -2642.0,
+          34.3843,
+          -302.0
+        ],
+        "areaM2": 36.0,
+        "reason": "Terrain polygon partition lost horizontal area"
+      },
+      {
+        "tileId": "-10_-7",
+        "level": 2,
+        "mesh": "terrain_4",
+        "triangle": 40,
+        "center": [
+          -2427.5,
+          51.06127,
+          1561.5
+        ],
+        "areaM2": 4.5,
+        "reason": "Retain original source triangle: Float32 area conservation guard exceeded; no tolerance widening."
+      },
+      {
+        "tileId": "-10_-4",
+        "level": 1,
+        "mesh": "terrain_1",
+        "triangle": 946,
+        "center": [
+          -2496.0,
+          44.71676,
+          939.0
+        ],
+        "areaM2": 10.125,
+        "reason": "Terrain polygon partition lost horizontal area"
+      },
+      {
+        "tileId": "-10_-4",
+        "level": 2,
+        "mesh": "terrain_2",
+        "triangle": 4110,
+        "center": [
+          -2418.0,
+          46.25451,
+          882.5
+        ],
+        "areaM2": 6.75,
+        "reason": "Terrain polygon partition lost horizontal area"
+      },
+      {
+        "tileId": "-10_-1",
+        "level": 1,
+        "mesh": "terrain_2",
+        "triangle": 13,
+        "center": [
+          -2406.0,
+          41.64273,
+          244.0
+        ],
+        "areaM2": 72.0,
+        "reason": "Terrain polygon partition lost horizontal area"
+      },
+      {
+        "tileId": "-7_-6",
+        "level": 2,
+        "mesh": "terrain_1",
+        "triangle": 6,
+        "center": [
+          -1704.0,
+          62.09908,
+          1486.0
+        ],
+        "areaM2": 252.0,
+        "reason": "Terrain polygon partition lost horizontal area"
+      },
+      {
+        "tileId": "-7_-6",
+        "level": 2,
+        "mesh": "terrain_2",
+        "triangle": 169,
+        "center": [
+          -1570.0,
+          64.17468,
+          1332.0
+        ],
+        "areaM2": 414.0,
+        "reason": "Terrain polygon partition lost horizontal area"
+      },
+      {
+        "tileId": "-6_1",
+        "level": 0,
+        "mesh": "terrain_1",
+        "triangle": 418,
+        "center": [
+          -1426.0,
+          43.59451,
+          -316.0
+        ],
+        "areaM2": 18.0,
+        "reason": "Terrain polygon partition lost horizontal area"
+      },
+      {
+        "tileId": "-5_-15",
+        "level": 2,
+        "mesh": "terrain_1",
+        "triangle": 426,
+        "center": [
+          -1166.0,
+          67.34088,
+          3668.0
+        ],
+        "areaM2": 18.0,
+        "reason": "Retain original source triangle: Float32 area conservation guard exceeded; no tolerance widening."
+      },
+      {
+        "tileId": "-5_1",
+        "level": 2,
+        "mesh": "terrain_4",
+        "triangle": 38,
+        "center": [
+          -1004.0,
+          58.02841,
+          -448.0
+        ],
+        "areaM2": 18.0,
+        "reason": "Retain original source triangle: Float32 area conservation guard exceeded; no tolerance widening."
+      },
+      {
+        "tileId": "1_-1",
+        "level": 2,
+        "mesh": "terrain_1",
+        "triangle": 12,
+        "center": [
+          294.0,
+          50.36538,
+          240.0
+        ],
+        "areaM2": 324.0,
+        "reason": "Terrain polygon partition lost horizontal area"
+      },
+      {
+        "tileId": "3_11",
+        "level": 2,
+        "mesh": "terrain_1",
+        "triangle": 23,
+        "center": [
+          852.0,
+          106.38993,
+          -2754.0
+        ],
+        "areaM2": 108.0,
+        "reason": "Terrain polygon partition lost horizontal area"
+      },
+      {
+        "tileId": "7_-12",
+        "level": 0,
+        "mesh": "terrain_2",
+        "triangle": 481,
+        "center": [
+          1900.0,
+          51.29731,
+          2770.0
+        ],
+        "areaM2": 18.0,
+        "reason": "Terrain polygon partition lost horizontal area"
+      },
+      {
+        "tileId": "7_-12",
+        "level": 1,
+        "mesh": "terrain_2",
+        "triangle": 537,
+        "center": [
+          1904.0,
+          51.47944,
+          2768.0
+        ],
+        "areaM2": 36.0,
+        "reason": "Terrain polygon partition lost horizontal area"
+      }
+    ]
+  },
+  "verification": {
+    "nativeActualSourceLevels": 1281,
+    "sourceHashAndGeometryFailures": 0,
+    "zeroAreaFaces": 0,
+    "backwardFaces": 0,
+    "finiteAndSourceAttributes": "All changed geometry and every protected source geometry in indexed tiles checked against native source snapshots. Original source vertex/normal/UV prefixes and unpatched triangle indices remain byte-exact.",
+    "automatedTests": [
+      "terrain-finish.test.ts: 7 runtime geometry/transform/Float32/fallback tests",
+      "terrain-assets.test.ts: every emitted payload, hash, bytes, finite/barycentric validator, count, LOD/source ownership, source fallback and no stale payloads",
+      "scripts/test_terrain_finish.py: 4 pure partition/protected polygon/bridge/shared-edge tests"
+    ]
+  },
+  "reproduction": [
+    "node scripts/extract-terrain-finish.mjs",
+    "python3 scripts/prepare-terrain-finish.py",
+    "node scripts/audit-terrain-finish.mjs",
+    "node scripts/audit-terrain-clearance.mjs",
+    "python3 scripts/summarize-terrain-finish.py"
+  ]
+}

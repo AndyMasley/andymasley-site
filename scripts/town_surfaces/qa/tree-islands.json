@@ -1,0 +1,500 @@
+{
+  "policy": {
+    "source": "Unchanged frozen scene treeFile anchors. These are retained geometric tree positions, not a verified current species or tree survey.",
+    "selection": "All anchors within 1.4 m of the safe lot polygon.",
+    "disk": "1.15 m radius only when the full circle plus 5 mm clearance fits within the building/water/zero-protected lot; otherwise radius0 is avoidance-only.",
+    "paintClearance": "Runtime minimum1.4 m, or radius plus0.35 m.",
+    "maskChanges": "None; root adds terrain-following authored mulch at positive-radius anchors.",
+    "originalTreesChanged": 0,
+    "originalMasksChanged": 0
+  },
+  "verifiedSourceTreeFiles": 640,
+  "sourceTreeAnchors": 158099,
+  "selectedAnchors": 44,
+  "rows": [
+    {
+      "lotId": "PAVE-OSM-247622897",
+      "id": "TREE--11_-5-64",
+      "center": [
+        -2707.0,
+        -1141.0
+      ],
+      "sourceTileId": "-11_-5",
+      "sourceSha256": "64109db98e28e023dd4d2e09f7cd7bbd29ce55cd1d68f094aca18f706a2ba8a0",
+      "radiusM": 0
+    },
+    {
+      "lotId": "PAVE-OSM-1097409917",
+      "id": "TREE--13_-9-187",
+      "center": [
+        -3075.0,
+        -2039.0
+      ],
+      "sourceTileId": "-13_-9",
+      "sourceSha256": "9921cc22399856d0d244af31752d04c23f07a25f2ae233a7f940ed61db214593",
+      "radiusM": 0
+    },
+    {
+      "lotId": "PAVE-OSM-1097409920",
+      "id": "TREE--12_-6-99",
+      "center": [
+        -2801.0,
+        -1355.0
+      ],
+      "sourceTileId": "-12_-6",
+      "sourceSha256": "73b22955b965d9a18b02d8e9e7c3efae68f62574ceab15fa3d3ffa1a866cc6c4",
+      "radiusM": 0
+    },
+    {
+      "lotId": "PAVE-OSM-1097409920",
+      "id": "TREE--12_-6-88",
+      "center": [
+        -2837.0,
+        -1377.0
+      ],
+      "sourceTileId": "-12_-6",
+      "sourceSha256": "73b22955b965d9a18b02d8e9e7c3efae68f62574ceab15fa3d3ffa1a866cc6c4",
+      "radiusM": 0
+    },
+    {
+      "lotId": "PAVE-OSM-1097409920",
+      "id": "TREE--12_-6-107",
+      "center": [
+        -2823.0,
+        -1325.0
+      ],
+      "sourceTileId": "-12_-6",
+      "sourceSha256": "73b22955b965d9a18b02d8e9e7c3efae68f62574ceab15fa3d3ffa1a866cc6c4",
+      "radiusM": 0
+    },
+    {
+      "lotId": "PAVE-OSM-1097409920",
+      "id": "TREE--12_-6-109",
+      "center": [
+        -2801.0,
+        -1321.0
+      ],
+      "sourceTileId": "-12_-6",
+      "sourceSha256": "73b22955b965d9a18b02d8e9e7c3efae68f62574ceab15fa3d3ffa1a866cc6c4",
+      "radiusM": 1.15
+    },
+    {
+      "lotId": "PAVE-OSM-1097409920",
+      "id": "TREE--12_-6-115",
+      "center": [
+        -2801.0,
+        -1319.0
+      ],
+      "sourceTileId": "-12_-6",
+      "sourceSha256": "73b22955b965d9a18b02d8e9e7c3efae68f62574ceab15fa3d3ffa1a866cc6c4",
+      "radiusM": 0
+    },
+    {
+      "lotId": "PAVE-OSM-1097409920",
+      "id": "TREE--12_-6-104",
+      "center": [
+        -2787.0,
+        -1343.0
+      ],
+      "sourceTileId": "-12_-6",
+      "sourceSha256": "73b22955b965d9a18b02d8e9e7c3efae68f62574ceab15fa3d3ffa1a866cc6c4",
+      "radiusM": 1.15
+    },
+    {
+      "lotId": "PAVE-OSM-1097409920",
+      "id": "TREE--12_-6-111",
+      "center": [
+        -2783.0,
+        -1329.0
+      ],
+      "sourceTileId": "-12_-6",
+      "sourceSha256": "73b22955b965d9a18b02d8e9e7c3efae68f62574ceab15fa3d3ffa1a866cc6c4",
+      "radiusM": 0
+    },
+    {
+      "lotId": "PAVE-OSM-1097409920",
+      "id": "TREE--12_-6-110",
+      "center": [
+        -2795.0,
+        -1321.0
+      ],
+      "sourceTileId": "-12_-6",
+      "sourceSha256": "73b22955b965d9a18b02d8e9e7c3efae68f62574ceab15fa3d3ffa1a866cc6c4",
+      "radiusM": 1.15
+    },
+    {
+      "lotId": "PAVE-OSM-1097409920",
+      "id": "TREE--12_-6-117",
+      "center": [
+        -2833.0,
+        -1299.0
+      ],
+      "sourceTileId": "-12_-6",
+      "sourceSha256": "73b22955b965d9a18b02d8e9e7c3efae68f62574ceab15fa3d3ffa1a866cc6c4",
+      "radiusM": 0
+    },
+    {
+      "lotId": "PAVE-OSM-1097409920",
+      "id": "TREE--12_-6-122",
+      "center": [
+        -2827.0,
+        -1291.0
+      ],
+      "sourceTileId": "-12_-6",
+      "sourceSha256": "73b22955b965d9a18b02d8e9e7c3efae68f62574ceab15fa3d3ffa1a866cc6c4",
+      "radiusM": 1.15
+    },
+    {
+      "lotId": "PAVE-OSM-1097409920",
+      "id": "TREE--12_-6-128",
+      "center": [
+        -2877.0,
+        -1259.0
+      ],
+      "sourceTileId": "-12_-6",
+      "sourceSha256": "73b22955b965d9a18b02d8e9e7c3efae68f62574ceab15fa3d3ffa1a866cc6c4",
+      "radiusM": 1.15
+    },
+    {
+      "lotId": "PAVE-OSM-1097409921",
+      "id": "TREE--12_-6-112",
+      "center": [
+        -2931.0,
+        -1313.0
+      ],
+      "sourceTileId": "-12_-6",
+      "sourceSha256": "73b22955b965d9a18b02d8e9e7c3efae68f62574ceab15fa3d3ffa1a866cc6c4",
+      "radiusM": 1.15
+    },
+    {
+      "lotId": "PAVE-OSM-1455549217",
+      "id": "TREE--10_1-186",
+      "center": [
+        -2447.0,
+        427.0
+      ],
+      "sourceTileId": "-10_1",
+      "sourceSha256": "fed11295c33216e4dac1354abe46ea2a1be32a1664576e96de22c76a11a994ef",
+      "radiusM": 1.15
+    },
+    {
+      "lotId": "PAVE-OSM-1503221311",
+      "id": "TREE--8_-3-13",
+      "center": [
+        -1943.0,
+        -713.0
+      ],
+      "sourceTileId": "-8_-3",
+      "sourceSha256": "1ddbb692caebc255f7318b10d238c720057bb7e51a30c2c09dc7203367e08fa7",
+      "radiusM": 0
+    },
+    {
+      "lotId": "PAVE-OSM-1503221311",
+      "id": "TREE--8_-3-12",
+      "center": [
+        -1945.0,
+        -713.0
+      ],
+      "sourceTileId": "-8_-3",
+      "sourceSha256": "1ddbb692caebc255f7318b10d238c720057bb7e51a30c2c09dc7203367e08fa7",
+      "radiusM": 0
+    },
+    {
+      "lotId": "PAVE-OSM-1504195628",
+      "id": "TREE--9_-8-136",
+      "center": [
+        -2123.0,
+        -1871.0
+      ],
+      "sourceTileId": "-9_-8",
+      "sourceSha256": "b44de990f4dd3418f448d667c1f4b0cc05f3d7c74c50872800491b05dd149672",
+      "radiusM": 0
+    },
+    {
+      "lotId": "PAVE-OSM-1504195628",
+      "id": "TREE--9_-8-135",
+      "center": [
+        -2125.0,
+        -1871.0
+      ],
+      "sourceTileId": "-9_-8",
+      "sourceSha256": "b44de990f4dd3418f448d667c1f4b0cc05f3d7c74c50872800491b05dd149672",
+      "radiusM": 0
+    },
+    {
+      "lotId": "PAVE-OSM-1504195628",
+      "id": "TREE--9_-8-133",
+      "center": [
+        -2159.0,
+        -1861.0
+      ],
+      "sourceTileId": "-9_-8",
+      "sourceSha256": "b44de990f4dd3418f448d667c1f4b0cc05f3d7c74c50872800491b05dd149672",
+      "radiusM": 0
+    },
+    {
+      "lotId": "PAVE-OSM-1504195629",
+      "id": "TREE--9_-8-193",
+      "center": [
+        -2063.0,
+        -1789.0
+      ],
+      "sourceTileId": "-9_-8",
+      "sourceSha256": "b44de990f4dd3418f448d667c1f4b0cc05f3d7c74c50872800491b05dd149672",
+      "radiusM": 0
+    },
+    {
+      "lotId": "PAVE-OSM-1504195629",
+      "id": "TREE--9_-8-200",
+      "center": [
+        -2065.0,
+        -1785.0
+      ],
+      "sourceTileId": "-9_-8",
+      "sourceSha256": "b44de990f4dd3418f448d667c1f4b0cc05f3d7c74c50872800491b05dd149672",
+      "radiusM": 0
+    },
+    {
+      "lotId": "PAVE-OSM-1504195629",
+      "id": "TREE--9_-8-201",
+      "center": [
+        -2063.0,
+        -1785.0
+      ],
+      "sourceTileId": "-9_-8",
+      "sourceSha256": "b44de990f4dd3418f448d667c1f4b0cc05f3d7c74c50872800491b05dd149672",
+      "radiusM": 1.15
+    },
+    {
+      "lotId": "PAVE-AERIAL-BEACH-EAST",
+      "id": "TREE--4_-2-51",
+      "center": [
+        -811.0,
+        -397.0
+      ],
+      "sourceTileId": "-4_-2",
+      "sourceSha256": "93b473227d2197b36f8cdc99201a504d3c9d37d0d036722de8b717a8c066c8d4",
+      "radiusM": 1.15
+    },
+    {
+      "lotId": "PAVE-AERIAL-BEACH-EAST",
+      "id": "TREE--4_-2-50",
+      "center": [
+        -821.0,
+        -397.0
+      ],
+      "sourceTileId": "-4_-2",
+      "sourceSha256": "93b473227d2197b36f8cdc99201a504d3c9d37d0d036722de8b717a8c066c8d4",
+      "radiusM": 1.15
+    },
+    {
+      "lotId": "PAVE-AERIAL-BEACH-EAST",
+      "id": "TREE--4_-2-55",
+      "center": [
+        -811.0,
+        -395.0
+      ],
+      "sourceTileId": "-4_-2",
+      "sourceSha256": "93b473227d2197b36f8cdc99201a504d3c9d37d0d036722de8b717a8c066c8d4",
+      "radiusM": 1.15
+    },
+    {
+      "lotId": "PAVE-AERIAL-BEACH-EAST",
+      "id": "TREE--4_-2-56",
+      "center": [
+        -803.0,
+        -387.0
+      ],
+      "sourceTileId": "-4_-2",
+      "sourceSha256": "93b473227d2197b36f8cdc99201a504d3c9d37d0d036722de8b717a8c066c8d4",
+      "radiusM": 1.15
+    },
+    {
+      "lotId": "PAVE-AERIAL-BEACH-EAST",
+      "id": "TREE--4_-2-62",
+      "center": [
+        -807.0,
+        -383.0
+      ],
+      "sourceTileId": "-4_-2",
+      "sourceSha256": "93b473227d2197b36f8cdc99201a504d3c9d37d0d036722de8b717a8c066c8d4",
+      "radiusM": 0
+    },
+    {
+      "lotId": "PAVE-AERIAL-BEACH-EAST",
+      "id": "TREE--4_-2-60",
+      "center": [
+        -829.0,
+        -373.0
+      ],
+      "sourceTileId": "-4_-2",
+      "sourceSha256": "93b473227d2197b36f8cdc99201a504d3c9d37d0d036722de8b717a8c066c8d4",
+      "radiusM": 0
+    },
+    {
+      "lotId": "PAVE-AERIAL-BEACH-EAST",
+      "id": "TREE--4_-2-70",
+      "center": [
+        -817.0,
+        -369.0
+      ],
+      "sourceTileId": "-4_-2",
+      "sourceSha256": "93b473227d2197b36f8cdc99201a504d3c9d37d0d036722de8b717a8c066c8d4",
+      "radiusM": 0
+    },
+    {
+      "lotId": "PAVE-AERIAL-BEACH-WEST",
+      "id": "TREE--4_-2-48",
+      "center": [
+        -853.0,
+        -401.0
+      ],
+      "sourceTileId": "-4_-2",
+      "sourceSha256": "93b473227d2197b36f8cdc99201a504d3c9d37d0d036722de8b717a8c066c8d4",
+      "radiusM": 1.15
+    },
+    {
+      "lotId": "PAVE-AERIAL-BEACH-WEST",
+      "id": "TREE--4_-2-49",
+      "center": [
+        -851.0,
+        -399.0
+      ],
+      "sourceTileId": "-4_-2",
+      "sourceSha256": "93b473227d2197b36f8cdc99201a504d3c9d37d0d036722de8b717a8c066c8d4",
+      "radiusM": 0
+    },
+    {
+      "lotId": "PAVE-AERIAL-BEACH-WEST",
+      "id": "TREE--4_-2-53",
+      "center": [
+        -853.0,
+        -395.0
+      ],
+      "sourceTileId": "-4_-2",
+      "sourceSha256": "93b473227d2197b36f8cdc99201a504d3c9d37d0d036722de8b717a8c066c8d4",
+      "radiusM": 1.15
+    },
+    {
+      "lotId": "PAVE-AERIAL-BEACH-WEST",
+      "id": "TREE--4_-2-52",
+      "center": [
+        -865.0,
+        -385.0
+      ],
+      "sourceTileId": "-4_-2",
+      "sourceSha256": "93b473227d2197b36f8cdc99201a504d3c9d37d0d036722de8b717a8c066c8d4",
+      "radiusM": 1.15
+    },
+    {
+      "lotId": "PAVE-AERIAL-BEACH-WEST",
+      "id": "TREE--4_-2-59",
+      "center": [
+        -873.0,
+        -383.0
+      ],
+      "sourceTileId": "-4_-2",
+      "sourceSha256": "93b473227d2197b36f8cdc99201a504d3c9d37d0d036722de8b717a8c066c8d4",
+      "radiusM": 1.15
+    },
+    {
+      "lotId": "PAVE-AERIAL-BEACH-WEST",
+      "id": "TREE--4_-2-58",
+      "center": [
+        -881.0,
+        -381.0
+      ],
+      "sourceTileId": "-4_-2",
+      "sourceSha256": "93b473227d2197b36f8cdc99201a504d3c9d37d0d036722de8b717a8c066c8d4",
+      "radiusM": 1.15
+    },
+    {
+      "lotId": "PAVE-AERIAL-DOWNTOWN-01",
+      "id": "TREE--12_-4-6",
+      "center": [
+        -2949.0,
+        -879.0
+      ],
+      "sourceTileId": "-12_-4",
+      "sourceSha256": "ea08b4aef1d3e274c0b40b22e6d94340c729a61ca6e0acdeee6702758c260e65",
+      "radiusM": 1.15
+    },
+    {
+      "lotId": "PAVE-AERIAL-DOWNTOWN-01",
+      "id": "TREE--12_-4-8",
+      "center": [
+        -2883.0,
+        -871.0
+      ],
+      "sourceTileId": "-12_-4",
+      "sourceSha256": "ea08b4aef1d3e274c0b40b22e6d94340c729a61ca6e0acdeee6702758c260e65",
+      "radiusM": 0
+    },
+    {
+      "lotId": "PAVE-AERIAL-DOWNTOWN-02",
+      "id": "TREE--13_-4-30",
+      "center": [
+        -3037.0,
+        -839.0
+      ],
+      "sourceTileId": "-13_-4",
+      "sourceSha256": "dd17fa52b9f09ef4a8d9f4315cb4560e4eec3d8c4e4e02b53a1b3a5a6902e59b",
+      "radiusM": 0
+    },
+    {
+      "lotId": "PAVE-AERIAL-DOWNTOWN-05",
+      "id": "TREE--12_-4-18",
+      "center": [
+        -2827.0,
+        -785.0
+      ],
+      "sourceTileId": "-12_-4",
+      "sourceSha256": "ea08b4aef1d3e274c0b40b22e6d94340c729a61ca6e0acdeee6702758c260e65",
+      "radiusM": 0
+    },
+    {
+      "lotId": "PAVE-AERIAL-DOWNTOWN-07",
+      "id": "TREE--11_-5-155",
+      "center": [
+        -2675.0,
+        -1001.0
+      ],
+      "sourceTileId": "-11_-5",
+      "sourceSha256": "64109db98e28e023dd4d2e09f7cd7bbd29ce55cd1d68f094aca18f706a2ba8a0",
+      "radiusM": 0
+    },
+    {
+      "lotId": "PAVE-AERIAL-DOWNTOWN-07",
+      "id": "TREE--11_-4-2",
+      "center": [
+        -2647.0,
+        -991.0
+      ],
+      "sourceTileId": "-11_-4",
+      "sourceSha256": "0d83be49d7bffbd4b578eb7286ddc45c340d76725b1f89d029dbca7a91fa7b5a",
+      "radiusM": 0
+    },
+    {
+      "lotId": "PAVE-AERIAL-BEACH-SOUTH",
+      "id": "TREE--4_-2-35",
+      "center": [
+        -817.0,
+        -445.0
+      ],
+      "sourceTileId": "-4_-2",
+      "sourceSha256": "93b473227d2197b36f8cdc99201a504d3c9d37d0d036722de8b717a8c066c8d4",
+      "radiusM": 1.15
+    },
+    {
+      "lotId": "PAVE-AERIAL-BEACH-SOUTH",
+      "id": "TREE--4_-2-40",
+      "center": [
+        -817.0,
+        -437.0
+      ],
+      "sourceTileId": "-4_-2",
+      "sourceSha256": "93b473227d2197b36f8cdc99201a504d3c9d37d0d036722de8b717a8c066c8d4",
+      "radiusM": 1.15
+    }
+  ]
+}

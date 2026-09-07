@@ -1,0 +1,19 @@
+{
+  "url": "https://overpass-api.de/api/interpreter",
+  "queryFile": "osm-paved-query.overpass",
+  "querySHA256": "14ce7cd638897d19e84a271ea5d9ac72cfe6081d13f2b3c1f249059f00006f8f",
+  "retrievedUtc": "2026-09-07T02:56:05.248776+00:00",
+  "databaseTimestamp": "2026-09-07T02:55:21Z",
+  "httpStatus": 200,
+  "rawResponseSHA256": "6e3fe74a6354ba784cdef65006ed9da05cb4f3e94a9a5b428805dd161a976782",
+  "rawResponseBytes": 950013,
+  "savedFile": "osm-paved-geometry.json",
+  "savedSHA256": "399ac9a9464c5d03f852a8efa121e88e0c0dd0076e869addf834d599982eaa2b",
+  "savedBytes": 676485,
+  "elements": 1371,
+  "redactedFields": 638,
+  "scope": "Parking areas and service-road centerlines only. Whitelisted geometry-related tags; no private owner/account metadata retained.",
+  "license": "ODbL-1.0",
+  "attribution": "OpenStreetMap contributors",
+  "licenseURL": "https://www.openstreetmap.org/copyright"
+}
