@@ -25,6 +25,7 @@ const kinds: Record<string, ArtKind> = {
   'Streetscape | repaired sidewalk concrete': 'concrete', 'Streetscape | granite curb': 'concrete',
   'Drive road | asphalt': 'asphalt', 'Drive road | weathered shoulder': 'shoulder',
   'Streetscape | parking apron asphalt': 'asphalt', 'Streetscape | asphalt utility repair': 'asphalt',
+  'Finished parking | asphalt': 'asphalt',
   'Inferred deciduous leaf clusters': 'leaf', 'Canopy | subdued summer green': 'far-leaf',
   'Canopy trunks | schematic bark': 'bark', 'Drive car | deep teal pearl': 'car-paint',
   'Drive car | smoked reflective glass': 'car-glass', 'Drive car | rubber': 'rubber',
@@ -183,7 +184,8 @@ export function applyArtMaterial(material: THREE.MeshStandardMaterial, clock: { 
     material.normalScale.multiplyScalar(0.22);
   }
   if (kind === 'asphalt') {
-    if (material.map) material.color.setRGB(0.50,0.50,0.50);
+    if (material.name === 'Finished parking | asphalt') material.color.set('#30332f');
+    else if (material.map) material.color.setRGB(0.50,0.50,0.50);
     else material.color.set(material.name.includes('repair') ? '#484b48' : '#50534e');
     material.roughness = 0.96;
     material.normalScale.multiplyScalar(0.38);

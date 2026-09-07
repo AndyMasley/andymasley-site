@@ -1,0 +1,2673 @@
+{
+  "sourceIndexSha256": "087c2c021801983b8c518c0ecacbc96e175a534d05d3c7acd34d6eea8011d9e1",
+  "parkingRuntimeSha256": "ef06b67f64a50fc3e996e32effe78c2daaaced84b4831279297b74cc641debeb",
+  "terrainIndexSha256": "ea4ff5339727f6dc2728396d13040fa81ab1c3d22998b872f159715542f681e1",
+  "terrainRuntimeSha256": "5ae5b23ab50808b9381917471832e635e946c777853e3b15cac0f611dc8f497b",
+  "roadRuntimeSha256": "938b541cb114dd166567884b96910227ebc253650e4c897ceb1a189653195a13",
+  "sourceManifestSha256": "37fbef34bc2a4467997252be75b4c43174a6a7b2d39963614cadd8d787e56105",
+  "scope": "Native GLTFLoader: all 24 parking tiles at LOD0/1/2. Exact source geometry, UVs and normals; texture pixels stubbed. Final per-LOD terrain packets from the complete town index, measured bridge corrections and road finishing are applied before parking.",
+  "tiles": [
+    {
+      "tileId": "-10_1",
+      "level": 0,
+      "sourceSha256": "194507b175f4165c674867ca1e233882a664d44d31cf5295869c52ddb6be4088",
+      "lots": [
+        "PAVE-OSM-1455549217"
+      ],
+      "bays": 13,
+      "triangles": 282,
+      "pavingTriangles": 112,
+      "treeIslands": 1,
+      "inferredLayout": true,
+      "terrainPacket": {
+        "url": "/town-evidence/v1/terrain/-10_1-0.8757f47c469f7742.json",
+        "bytes": 388267,
+        "sha256": "8757f47c469f7742e196e297c35c5fd0b48f6d155247119230000fd643365100",
+        "replacedTriangles": 562,
+        "addedTriangles": 3885
+      },
+      "terrainPatch": {
+        "meshes": 3,
+        "replacedTriangles": 562,
+        "addedTriangles": 3883,
+        "maximumDropM": 0.4563133447624992,
+        "collapsedTriangles": 2,
+        "windingRepairs": 13,
+        "normalRepairs": 15,
+        "rejected": false
+      },
+      "sourceMeshCount": 29,
+      "normalError": 2.983520175359189e-8,
+      "unsupported": 0,
+      "maxHeightError": 0.0000015399899566548997,
+      "belowSupport": 0,
+      "failures": []
+    },
+    {
+      "tileId": "-10_1",
+      "level": 1,
+      "sourceSha256": "13fa061210a8181ca280326106cfd1a6e5b788871f3e0a57477c73eab6645dba",
+      "lots": [
+        "PAVE-OSM-1455549217"
+      ],
+      "bays": 13,
+      "triangles": 237,
+      "pavingTriangles": 75,
+      "treeIslands": 1,
+      "inferredLayout": true,
+      "terrainPacket": {
+        "url": "/town-evidence/v1/terrain/-10_1-1.e2d7455df4988bef.json",
+        "bytes": 369068,
+        "sha256": "e2d7455df4988bef3a7c311c72e330f09050a998a49b423ce759122a679beae2",
+        "replacedTriangles": 377,
+        "addedTriangles": 3789
+      },
+      "terrainPatch": {
+        "meshes": 3,
+        "replacedTriangles": 377,
+        "addedTriangles": 3787,
+        "maximumDropM": 0.4563133447624992,
+        "collapsedTriangles": 2,
+        "windingRepairs": 12,
+        "normalRepairs": 11,
+        "rejected": false
+      },
+      "sourceMeshCount": 29,
+      "normalError": 2.983520175359189e-8,
+      "unsupported": 0,
+      "maxHeightError": 0.0000014448805061417075,
+      "belowSupport": 0,
+      "failures": []
+    },
+    {
+      "tileId": "-10_1",
+      "level": 2,
+      "sourceSha256": "0c664c3a1d2d22e561a17f52632c01340513883fe6842944d82087f61e07ba0e",
+      "lots": [
+        "PAVE-OSM-1455549217"
+      ],
+      "bays": 13,
+      "triangles": 275,
+      "pavingTriangles": 111,
+      "treeIslands": 1,
+      "inferredLayout": true,
+      "terrainPacket": {
+        "url": "/town-evidence/v1/terrain/-10_1-2.d711aa6d2535904f.json",
+        "bytes": 342167,
+        "sha256": "d711aa6d2535904f9c0dbb7ae56c52c2ecf4364036a73385e8efc2eaf74b01c2",
+        "replacedTriangles": 148,
+        "addedTriangles": 3546
+      },
+      "terrainPatch": {
+        "meshes": 3,
+        "replacedTriangles": 148,
+        "addedTriangles": 3544,
+        "maximumDropM": 0.4563133447624992,
+        "collapsedTriangles": 2,
+        "windingRepairs": 6,
+        "normalRepairs": 5,
+        "rejected": false
+      },
+      "sourceMeshCount": 29,
+      "normalError": 2.9806877410720745e-8,
+      "unsupported": 0,
+      "maxHeightError": 0.0000018167756794581352,
+      "belowSupport": 0,
+      "failures": []
+    },
+    {
+      "tileId": "-11_-3",
+      "level": 0,
+      "sourceSha256": "9b4e02d1f9e372bf5c29bfe681197c96640a3f99050f1e8357bbbe6c2567723d",
+      "lots": [
+        "PAVE-OSM-1455549277"
+      ],
+      "bays": 0,
+      "triangles": 944,
+      "pavingTriangles": 944,
+      "treeIslands": 0,
+      "inferredLayout": true,
+      "terrainPacket": {
+        "url": "/town-evidence/v1/terrain/-11_-3-0.292b7d98bce21bc2.json",
+        "bytes": 1254984,
+        "sha256": "292b7d98bce21bc29dd5147a4a61abf15ad61a49b8c05a17ca9c4bf35bbfc331",
+        "replacedTriangles": 7086,
+        "addedTriangles": 8846
+      },
+      "terrainPatch": {
+        "meshes": 2,
+        "replacedTriangles": 7086,
+        "addedTriangles": 8845,
+        "maximumDropM": 0.3154226969762348,
+        "collapsedTriangles": 1,
+        "windingRepairs": 54,
+        "normalRepairs": 39,
+        "rejected": false
+      },
+      "sourceMeshCount": 38,
+      "normalError": 2.9736174855798936e-8,
+      "unsupported": 0,
+      "maxHeightError": 0.0000016850402244587143,
+      "belowSupport": 0,
+      "failures": []
+    },
+    {
+      "tileId": "-11_-3",
+      "level": 1,
+      "sourceSha256": "4d576afe5934a456046d57f3d2990da05f19c3468265c8116bc8e604f4057311",
+      "lots": [
+        "PAVE-OSM-1455549277"
+      ],
+      "bays": 0,
+      "triangles": 590,
+      "pavingTriangles": 590,
+      "treeIslands": 0,
+      "inferredLayout": true,
+      "terrainPacket": {
+        "url": "/town-evidence/v1/terrain/-11_-3-1.b34cf33a74a5512e.json",
+        "bytes": 664746,
+        "sha256": "b34cf33a74a5512e73241b1f5c837f4551ededaf379928a4c3907e6fe15ee267",
+        "replacedTriangles": 1586,
+        "addedTriangles": 6259
+      },
+      "terrainPatch": {
+        "meshes": 2,
+        "replacedTriangles": 1586,
+        "addedTriangles": 6258,
+        "maximumDropM": 0.3154226969762419,
+        "collapsedTriangles": 1,
+        "windingRepairs": 27,
+        "normalRepairs": 27,
+        "rejected": false
+      },
+      "sourceMeshCount": 38,
+      "normalError": 2.973103718773018e-8,
+      "unsupported": 0,
+      "maxHeightError": 0.0000016606755510791688,
+      "belowSupport": 0,
+      "failures": []
+    },
+    {
+      "tileId": "-11_-3",
+      "level": 2,
+      "sourceSha256": "d9403cf20858eb9034c281a3d1a5942034507e75ac5c15bcfe4adda278e0fb49",
+      "lots": [
+        "PAVE-OSM-1455549277"
+      ],
+      "bays": 0,
+      "triangles": 592,
+      "pavingTriangles": 592,
+      "treeIslands": 0,
+      "inferredLayout": true,
+      "terrainPacket": {
+        "url": "/town-evidence/v1/terrain/-11_-3-2.defa000b7cf0c48d.json",
+        "bytes": 480367,
+        "sha256": "defa000b7cf0c48d0de531346f576c7716da3e245970957d998fa5f331b69801",
+        "replacedTriangles": 416,
+        "addedTriangles": 4940
+      },
+      "terrainPatch": {
+        "meshes": 2,
+        "replacedTriangles": 416,
+        "addedTriangles": 4939,
+        "maximumDropM": 0.3908872742828393,
+        "collapsedTriangles": 1,
+        "windingRepairs": 14,
+        "normalRepairs": 11,
+        "rejected": false
+      },
+      "sourceMeshCount": 38,
+      "normalError": 3.0298600517397745e-8,
+      "unsupported": 0,
+      "maxHeightError": 0.0000016478333930650818,
+      "belowSupport": 0,
+      "failures": []
+    },
+    {
+      "tileId": "-11_-4",
+      "level": 0,
+      "sourceSha256": "80ff36f5c0997ea3e88ad343ff56058367edd12d0085292b17bec240319b1b6b",
+      "lots": [
+        "PAVE-OSM-1455549270",
+        "PAVE-OSM-1455549271",
+        "PAVE-OSM-1455549277",
+        "PAVE-AERIAL-DOWNTOWN-07"
+      ],
+      "bays": 69,
+      "triangles": 12658,
+      "pavingTriangles": 10702,
+      "treeIslands": 0,
+      "inferredLayout": true,
+      "terrainPacket": {
+        "url": "/town-evidence/v1/terrain/-11_-4-0.1af6cf2e13f8eecc.json",
+        "bytes": 1746476,
+        "sha256": "1af6cf2e13f8eecc4b0bdfaeb202309f58b3904e58534386c6e7658fffccdb85",
+        "replacedTriangles": 9803,
+        "addedTriangles": 12373
+      },
+      "terrainPatch": {
+        "meshes": 1,
+        "replacedTriangles": 9803,
+        "addedTriangles": 12361,
+        "maximumDropM": 0.5565622116699203,
+        "collapsedTriangles": 12,
+        "windingRepairs": 81,
+        "normalRepairs": 35,
+        "rejected": false
+      },
+      "sourceMeshCount": 37,
+      "normalError": 3.137652693219195e-8,
+      "unsupported": 0,
+      "maxHeightError": 0.0000018695601482366514,
+      "belowSupport": 0,
+      "failures": []
+    },
+    {
+      "tileId": "-11_-4",
+      "level": 1,
+      "sourceSha256": "c3b9677ae2653d5186ca553d7f2ada62a2459ede9244eb6741cc82b8472ef0e7",
+      "lots": [
+        "PAVE-OSM-1455549270",
+        "PAVE-OSM-1455549271",
+        "PAVE-OSM-1455549277",
+        "PAVE-AERIAL-DOWNTOWN-07"
+      ],
+      "bays": 69,
+      "triangles": 5844,
+      "pavingTriangles": 4986,
+      "treeIslands": 0,
+      "inferredLayout": true,
+      "terrainPacket": {
+        "url": "/town-evidence/v1/terrain/-11_-4-1.583f9bc03519b55a.json",
+        "bytes": 867432,
+        "sha256": "583f9bc03519b55aedb7b257975788e4abb64ca362b1c8105ec33d8d9603f624",
+        "replacedTriangles": 1660,
+        "addedTriangles": 8511
+      },
+      "terrainPatch": {
+        "meshes": 1,
+        "replacedTriangles": 1660,
+        "addedTriangles": 8502,
+        "maximumDropM": 0.5208505055912056,
+        "collapsedTriangles": 9,
+        "windingRepairs": 44,
+        "normalRepairs": 28,
+        "rejected": false
+      },
+      "sourceMeshCount": 37,
+      "normalError": 3.041025542493969e-8,
+      "unsupported": 0,
+      "maxHeightError": 0.0000018724287544954338,
+      "belowSupport": 0,
+      "failures": []
+    },
+    {
+      "tileId": "-11_-4",
+      "level": 2,
+      "sourceSha256": "d52bc62169857a3315b0f3a60a0b121273e22b71b60a10001ea9249720a93741",
+      "lots": [
+        "PAVE-OSM-1455549270",
+        "PAVE-OSM-1455549271",
+        "PAVE-OSM-1455549277",
+        "PAVE-AERIAL-DOWNTOWN-07"
+      ],
+      "bays": 69,
+      "triangles": 4870,
+      "pavingTriangles": 4305,
+      "treeIslands": 0,
+      "inferredLayout": true,
+      "terrainPacket": {
+        "url": "/town-evidence/v1/terrain/-11_-4-2.c60fee40b6db603f.json",
+        "bytes": 683596,
+        "sha256": "c60fee40b6db603f79bb5893ccf9ec4c6a7f537dc6c1e28090bb21a29dd88d2a",
+        "replacedTriangles": 542,
+        "addedTriangles": 7098
+      },
+      "terrainPatch": {
+        "meshes": 1,
+        "replacedTriangles": 542,
+        "addedTriangles": 7089,
+        "maximumDropM": 0.5674469183700594,
+        "collapsedTriangles": 9,
+        "windingRepairs": 18,
+        "normalRepairs": 14,
+        "rejected": false
+      },
+      "sourceMeshCount": 37,
+      "normalError": 2.985494274021505e-8,
+      "unsupported": 0,
+      "maxHeightError": 0.0000018748826959725379,
+      "belowSupport": 0,
+      "failures": []
+    },
+    {
+      "tileId": "-11_-5",
+      "level": 0,
+      "sourceSha256": "a6bcc109d6075296f76ab2bdd50875673a3a0ac4bfa709b59a92bfc51b6b9ae8",
+      "lots": [
+        "PAVE-OSM-247622897",
+        "PAVE-AERIAL-DOWNTOWN-07"
+      ],
+      "bays": 22,
+      "triangles": 3605,
+      "pavingTriangles": 2935,
+      "treeIslands": 0,
+      "inferredLayout": true,
+      "terrainPacket": {
+        "url": "/town-evidence/v1/terrain/-11_-5-0.370ab833b706da13.json",
+        "bytes": 1490054,
+        "sha256": "370ab833b706da13f57473dc956d41bd9645e15fa65f98492c45570046da7b28",
+        "replacedTriangles": 7193,
+        "addedTriangles": 11523
+      },
+      "terrainPatch": {
+        "meshes": 2,
+        "replacedTriangles": 7193,
+        "addedTriangles": 11508,
+        "maximumDropM": 0.3093939603607154,
+        "collapsedTriangles": 15,
+        "windingRepairs": 85,
+        "normalRepairs": 58,
+        "rejected": false
+      },
+      "sourceMeshCount": 24,
+      "normalError": 2.97874167554113e-8,
+      "unsupported": 0,
+      "maxHeightError": 0.0000017669109097940422,
+      "belowSupport": 0,
+      "failures": []
+    },
+    {
+      "tileId": "-11_-5",
+      "level": 1,
+      "sourceSha256": "d719bcb8b462a6676713e715b495ce4985ac833c68517f203a12d105cbdac0d5",
+      "lots": [
+        "PAVE-OSM-247622897",
+        "PAVE-AERIAL-DOWNTOWN-07"
+      ],
+      "bays": 22,
+      "triangles": 1383,
+      "pavingTriangles": 1115,
+      "treeIslands": 0,
+      "inferredLayout": true,
+      "terrainPacket": {
+        "url": "/town-evidence/v1/terrain/-11_-5-1.d11b7123a555a149.json",
+        "bytes": 907778,
+        "sha256": "d11b7123a555a149a006be3301647e96109d44bacc9a8742b6b51b1c57e5fe0d",
+        "replacedTriangles": 2262,
+        "addedTriangles": 8543
+      },
+      "terrainPatch": {
+        "meshes": 2,
+        "replacedTriangles": 2262,
+        "addedTriangles": 8535,
+        "maximumDropM": 0.3093939603607154,
+        "collapsedTriangles": 8,
+        "windingRepairs": 55,
+        "normalRepairs": 46,
+        "rejected": false
+      },
+      "sourceMeshCount": 24,
+      "normalError": 2.998760195715988e-8,
+      "unsupported": 0,
+      "maxHeightError": 0.0000017667783296249767,
+      "belowSupport": 0,
+      "failures": []
+    },
+    {
+      "tileId": "-11_-5",
+      "level": 2,
+      "sourceSha256": "df7cd35b10f804cd712b967e132befe1613dde3fcb48e40e37f54f03ee284318",
+      "lots": [
+        "PAVE-OSM-247622897",
+        "PAVE-AERIAL-DOWNTOWN-07"
+      ],
+      "bays": 22,
+      "triangles": 1099,
+      "pavingTriangles": 985,
+      "treeIslands": 0,
+      "inferredLayout": true,
+      "terrainPacket": {
+        "url": "/town-evidence/v1/terrain/-11_-5-2.f12b54c8c67791e5.json",
+        "bytes": 666196,
+        "sha256": "f12b54c8c67791e5cac77ee29531fb9b19bb4f4cd2c6f7129a85fbebad6f882d",
+        "replacedTriangles": 668,
+        "addedTriangles": 6820
+      },
+      "terrainPatch": {
+        "meshes": 2,
+        "replacedTriangles": 668,
+        "addedTriangles": 6810,
+        "maximumDropM": 0.4073735421155149,
+        "collapsedTriangles": 10,
+        "windingRepairs": 22,
+        "normalRepairs": 23,
+        "rejected": false
+      },
+      "sourceMeshCount": 24,
+      "normalError": 3.0497530945083895e-8,
+      "unsupported": 0,
+      "maxHeightError": 0.000001829953980575158,
+      "belowSupport": 0,
+      "failures": []
+    },
+    {
+      "tileId": "-12_-4",
+      "level": 0,
+      "sourceSha256": "4b1dd83f4372e1f94e3f8870e6c6f363f6590876a22f74d1254664bb5aeebaf4",
+      "lots": [
+        "PAVE-AERIAL-DOWNTOWN-01",
+        "PAVE-AERIAL-DOWNTOWN-02",
+        "PAVE-AERIAL-DOWNTOWN-05"
+      ],
+      "bays": 97,
+      "triangles": 10632,
+      "pavingTriangles": 7944,
+      "treeIslands": 1,
+      "inferredLayout": true,
+      "terrainPacket": {
+        "url": "/town-evidence/v1/terrain/-12_-4-0.3fca3e4fdbfa82f3.json",
+        "bytes": 1579350,
+        "sha256": "3fca3e4fdbfa82f3e4e8738855fd0a3b9fc9cf682b71009cd47d2c9659adf87a",
+        "replacedTriangles": 8370,
+        "addedTriangles": 11558
+      },
+      "terrainPatch": {
+        "meshes": 2,
+        "replacedTriangles": 8370,
+        "addedTriangles": 11539,
+        "maximumDropM": 1.0578582004394548,
+        "collapsedTriangles": 19,
+        "windingRepairs": 58,
+        "normalRepairs": 51,
+        "rejected": false
+      },
+      "sourceMeshCount": 68,
+      "normalError": 3.263974479583709e-8,
+      "unsupported": 0,
+      "maxHeightError": 0.0000018296660855409569,
+      "belowSupport": 0,
+      "failures": []
+    },
+    {
+      "tileId": "-12_-4",
+      "level": 1,
+      "sourceSha256": "c1f0a819e299223165bb8e8d22d2ad10e2fcb2678ee91186f4518163604bf095",
+      "lots": [
+        "PAVE-AERIAL-DOWNTOWN-01",
+        "PAVE-AERIAL-DOWNTOWN-02",
+        "PAVE-AERIAL-DOWNTOWN-05"
+      ],
+      "bays": 97,
+      "triangles": 4190,
+      "pavingTriangles": 2795,
+      "treeIslands": 1,
+      "inferredLayout": true,
+      "terrainPacket": {
+        "url": "/town-evidence/v1/terrain/-12_-4-1.611bd6e72439cf0d.json",
+        "bytes": 920488,
+        "sha256": "611bd6e72439cf0d490b84effe8b0586ac2c443fa6f82f6ec529d15082bc125f",
+        "replacedTriangles": 2100,
+        "addedTriangles": 8765
+      },
+      "terrainPatch": {
+        "meshes": 2,
+        "replacedTriangles": 2100,
+        "addedTriangles": 8745,
+        "maximumDropM": 1.075141379814454,
+        "collapsedTriangles": 20,
+        "windingRepairs": 24,
+        "normalRepairs": 30,
+        "rejected": false
+      },
+      "sourceMeshCount": 68,
+      "normalError": 3.2212132961007e-8,
+      "unsupported": 0,
+      "maxHeightError": 0.0000016993549294287008,
+      "belowSupport": 0,
+      "failures": []
+    },
+    {
+      "tileId": "-12_-4",
+      "level": 2,
+      "sourceSha256": "7629e0692f744fa9f293b4f9f16cf375614c24c18954294c7c374384e548f9f4",
+      "lots": [
+        "PAVE-AERIAL-DOWNTOWN-01",
+        "PAVE-AERIAL-DOWNTOWN-02",
+        "PAVE-AERIAL-DOWNTOWN-05"
+      ],
+      "bays": 97,
+      "triangles": 2611,
+      "pavingTriangles": 1617,
+      "treeIslands": 1,
+      "inferredLayout": true,
+      "terrainPacket": {
+        "url": "/town-evidence/v1/terrain/-12_-4-2.7a97621d201d23d2.json",
+        "bytes": 619103,
+        "sha256": "7a97621d201d23d2529075687c992c0480f7862733c5d4241fe44d3ea89cfa71",
+        "replacedTriangles": 426,
+        "addedTriangles": 6440
+      },
+      "terrainPatch": {
+        "meshes": 2,
+        "replacedTriangles": 426,
+        "addedTriangles": 6423,
+        "maximumDropM": 0.30118708114761006,
+        "collapsedTriangles": 17,
+        "windingRepairs": 11,
+        "normalRepairs": 13,
+        "rejected": false
+      },
+      "sourceMeshCount": 68,
+      "normalError": 3.16270118982942e-8,
+      "unsupported": 0,
+      "maxHeightError": 0.0000015556967654217074,
+      "belowSupport": 0,
+      "failures": []
+    },
+    {
+      "tileId": "-12_-5",
+      "level": 0,
+      "sourceSha256": "52020281ddc760c4110eb95c0c45f1f6ba4054989fc50c350c3746c746f14e6c",
+      "lots": [
+        "PAVE-OSM-1097409920",
+        "PAVE-AERIAL-DOWNTOWN-04"
+      ],
+      "bays": 0,
+      "triangles": 337,
+      "pavingTriangles": 337,
+      "treeIslands": 0,
+      "inferredLayout": true,
+      "terrainPacket": {
+        "url": "/town-evidence/v1/terrain/-12_-5-0.406a0ad8625de40e.json",
+        "bytes": 2622345,
+        "sha256": "406a0ad8625de40ee5f8cb543fe9db5d4d7504a2d4d6984ae84f359cca7d63ba",
+        "replacedTriangles": 12505,
+        "addedTriangles": 20238
+      },
+      "terrainPatch": {
+        "meshes": 4,
+        "replacedTriangles": 12505,
+        "addedTriangles": 20214,
+        "maximumDropM": 0.4038477618062615,
+        "collapsedTriangles": 24,
+        "windingRepairs": 121,
+        "normalRepairs": 84,
+        "rejected": false
+      },
+      "sourceMeshCount": 28,
+      "normalError": 2.9406063140058336e-8,
+      "unsupported": 0,
+      "maxHeightError": 0.000001595710891649435,
+      "belowSupport": 0,
+      "failures": []
+    },
+    {
+      "tileId": "-12_-5",
+      "level": 1,
+      "sourceSha256": "d45d6e3310d6b43cd1d1f502c5474076ddc87c600266511a3e5b589816985b3b",
+      "lots": [
+        "PAVE-OSM-1097409920",
+        "PAVE-AERIAL-DOWNTOWN-04"
+      ],
+      "bays": 0,
+      "triangles": 330,
+      "pavingTriangles": 330,
+      "treeIslands": 0,
+      "inferredLayout": true,
+      "terrainPacket": {
+        "url": "/town-evidence/v1/terrain/-12_-5-1.0b3eb264f34e4551.json",
+        "bytes": 1469730,
+        "sha256": "0b3eb264f34e45517304187567d7748126ea6eb1ce7d60c0cecdeebf4e6952bf",
+        "replacedTriangles": 2755,
+        "addedTriangles": 14384
+      },
+      "terrainPatch": {
+        "meshes": 4,
+        "replacedTriangles": 2755,
+        "addedTriangles": 14370,
+        "maximumDropM": 0.3943372869820436,
+        "collapsedTriangles": 14,
+        "windingRepairs": 75,
+        "normalRepairs": 62,
+        "rejected": false
+      },
+      "sourceMeshCount": 28,
+      "normalError": 2.9406063140058336e-8,
+      "unsupported": 0,
+      "maxHeightError": 0.0000016014573065489118,
+      "belowSupport": 0,
+      "failures": []
+    },
+    {
+      "tileId": "-12_-5",
+      "level": 2,
+      "sourceSha256": "3cd6d63f15984962f5d576ffcbe826168e684d4ee11923bb9cace3d66fe96630",
+      "lots": [
+        "PAVE-OSM-1097409920",
+        "PAVE-AERIAL-DOWNTOWN-04"
+      ],
+      "bays": 0,
+      "triangles": 235,
+      "pavingTriangles": 235,
+      "treeIslands": 0,
+      "inferredLayout": true,
+      "terrainPacket": {
+        "url": "/town-evidence/v1/terrain/-12_-5-2.13494c79679d4c91.json",
+        "bytes": 1216820,
+        "sha256": "13494c79679d4c916be35fcfb2185a8542d00b829b42f45bd2188df92c0a598e",
+        "replacedTriangles": 908,
+        "addedTriangles": 12487
+      },
+      "terrainPatch": {
+        "meshes": 4,
+        "replacedTriangles": 908,
+        "addedTriangles": 12466,
+        "maximumDropM": 0.438201120271529,
+        "collapsedTriangles": 21,
+        "windingRepairs": 36,
+        "normalRepairs": 34,
+        "rejected": false
+      },
+      "sourceMeshCount": 28,
+      "normalError": 2.9647924226772204e-8,
+      "unsupported": 0,
+      "maxHeightError": 0.0000014943035966438062,
+      "belowSupport": 0,
+      "failures": []
+    },
+    {
+      "tileId": "-12_-6",
+      "level": 0,
+      "sourceSha256": "16e41312e50e729705eae25f7076fde6e767789dca895f8c43bb77a36ed30de0",
+      "lots": [
+        "PAVE-OSM-1097409920",
+        "PAVE-OSM-1097409921"
+      ],
+      "bays": 0,
+      "triangles": 16304,
+      "pavingTriangles": 16130,
+      "treeIslands": 6,
+      "inferredLayout": true,
+      "terrainPacket": {
+        "url": "/town-evidence/v1/terrain/-12_-6-0.9c0e4341dafb1a9f.json",
+        "bytes": 1148089,
+        "sha256": "9c0e4341dafb1a9f23e4c175c8fd301700b7de6c2108592ea19f362623ff9715",
+        "replacedTriangles": 5531,
+        "addedTriangles": 8867
+      },
+      "terrainPatch": {
+        "meshes": 4,
+        "replacedTriangles": 5531,
+        "addedTriangles": 8830,
+        "maximumDropM": 0.3311215019531275,
+        "collapsedTriangles": 37,
+        "windingRepairs": 42,
+        "normalRepairs": 28,
+        "rejected": false
+      },
+      "sourceMeshCount": 26,
+      "normalError": 3.106240642480884e-8,
+      "unsupported": 0,
+      "maxHeightError": 0.0000017761748412111616,
+      "belowSupport": 0,
+      "failures": []
+    },
+    {
+      "tileId": "-12_-6",
+      "level": 1,
+      "sourceSha256": "95eaab2035b0620839c31dd704228945a148ad9e2c2c57d8309af48e89f653d9",
+      "lots": [
+        "PAVE-OSM-1097409920",
+        "PAVE-OSM-1097409921"
+      ],
+      "bays": 0,
+      "triangles": 5661,
+      "pavingTriangles": 5513,
+      "treeIslands": 6,
+      "inferredLayout": true,
+      "terrainPacket": {
+        "url": "/town-evidence/v1/terrain/-12_-6-1.62236fe27796e93e.json",
+        "bytes": 639432,
+        "sha256": "62236fe27796e93e61c975084e0016dd34612bcaddfd12a1c72b82d2f414867c",
+        "replacedTriangles": 1477,
+        "addedTriangles": 6107
+      },
+      "terrainPatch": {
+        "meshes": 4,
+        "replacedTriangles": 1477,
+        "addedTriangles": 6079,
+        "maximumDropM": 0.3311215019531275,
+        "collapsedTriangles": 28,
+        "windingRepairs": 30,
+        "normalRepairs": 30,
+        "rejected": false
+      },
+      "sourceMeshCount": 26,
+      "normalError": 3.083784294588554e-8,
+      "unsupported": 0,
+      "maxHeightError": 0.000001804333592531418,
+      "belowSupport": 0,
+      "failures": []
+    },
+    {
+      "tileId": "-12_-6",
+      "level": 2,
+      "sourceSha256": "68287769419041422641b37eb577162cea0a834d0c4b9fdb29f7305e54763b48",
+      "lots": [
+        "PAVE-OSM-1097409920",
+        "PAVE-OSM-1097409921"
+      ],
+      "bays": 0,
+      "triangles": 2322,
+      "pavingTriangles": 2198,
+      "treeIslands": 6,
+      "inferredLayout": true,
+      "terrainPacket": {
+        "url": "/town-evidence/v1/terrain/-12_-6-2.e6de0789ac530dbc.json",
+        "bytes": 478134,
+        "sha256": "e6de0789ac530dbc33cc150a966769cf4d4d6f769e09fb68bbd4194dd83f7425",
+        "replacedTriangles": 475,
+        "addedTriangles": 4852
+      },
+      "terrainPatch": {
+        "meshes": 4,
+        "replacedTriangles": 475,
+        "addedTriangles": 4828,
+        "maximumDropM": 0.30047667625235874,
+        "collapsedTriangles": 24,
+        "windingRepairs": 9,
+        "normalRepairs": 15,
+        "rejected": false
+      },
+      "sourceMeshCount": 26,
+      "normalError": 3.048611485478858e-8,
+      "unsupported": 0,
+      "maxHeightError": 0.0000017716224573974954,
+      "belowSupport": 0,
+      "failures": []
+    },
+    {
+      "tileId": "-12_-9",
+      "level": 0,
+      "sourceSha256": "9485621ec8252b525f8a0989389b1efbb2a18b63c7a020d60968c655e29cb2c3",
+      "lots": [],
+      "bays": 0,
+      "triangles": 0,
+      "pavingTriangles": 0,
+      "treeIslands": 0,
+      "inferredLayout": true,
+      "terrainPacket": {
+        "url": "/town-evidence/v1/terrain/-12_-9-0.34f8701bfa8c2b3f.json",
+        "bytes": 557254,
+        "sha256": "34f8701bfa8c2b3f0c76f63a2a38d85db3eda50d2b35fcc264e2aea5aabd589a",
+        "replacedTriangles": 687,
+        "addedTriangles": 5653
+      },
+      "terrainPatch": {
+        "meshes": 4,
+        "replacedTriangles": 687,
+        "addedTriangles": 5635,
+        "maximumDropM": 0.6228335215209881,
+        "collapsedTriangles": 18,
+        "windingRepairs": 10,
+        "normalRepairs": 15,
+        "rejected": false
+      },
+      "sourceMeshCount": 29,
+      "normalError": 0,
+      "unsupported": 0,
+      "maxHeightError": 0,
+      "belowSupport": 0,
+      "failures": []
+    },
+    {
+      "tileId": "-12_-9",
+      "level": 1,
+      "sourceSha256": "7ae6e17950efe3ac6788b0b508b779fb2736c32eeced683f7de57f52cc54f75a",
+      "lots": [],
+      "bays": 0,
+      "triangles": 0,
+      "pavingTriangles": 0,
+      "treeIslands": 0,
+      "inferredLayout": true,
+      "terrainPacket": {
+        "url": "/town-evidence/v1/terrain/-12_-9-1.233b5e2e7cb66c97.json",
+        "bytes": 535148,
+        "sha256": "233b5e2e7cb66c972f40880b217e4dce27df0ce9db47deeb0d3af9838f10ff1b",
+        "replacedTriangles": 460,
+        "addedTriangles": 5531
+      },
+      "terrainPatch": {
+        "meshes": 4,
+        "replacedTriangles": 460,
+        "addedTriangles": 5513,
+        "maximumDropM": 0.6228335215209881,
+        "collapsedTriangles": 18,
+        "windingRepairs": 6,
+        "normalRepairs": 6,
+        "rejected": false
+      },
+      "sourceMeshCount": 29,
+      "normalError": 0,
+      "unsupported": 0,
+      "maxHeightError": 0,
+      "belowSupport": 0,
+      "failures": []
+    },
+    {
+      "tileId": "-12_-9",
+      "level": 2,
+      "sourceSha256": "20ed0ec5c34aad2430a541ee42a79b903ccb00c441171539bc74b112d77582ec",
+      "lots": [],
+      "bays": 0,
+      "triangles": 0,
+      "pavingTriangles": 0,
+      "treeIslands": 0,
+      "inferredLayout": true,
+      "terrainPacket": {
+        "url": "/town-evidence/v1/terrain/-12_-9-2.8569ba7bffda0fe7.json",
+        "bytes": 601047,
+        "sha256": "8569ba7bffda0fe7437fc7ed54c7ffb905d4915c61648c93294adc1f478434f8",
+        "replacedTriangles": 226,
+        "addedTriangles": 6230
+      },
+      "terrainPatch": {
+        "meshes": 4,
+        "replacedTriangles": 226,
+        "addedTriangles": 6212,
+        "maximumDropM": 0.4942303742058556,
+        "collapsedTriangles": 18,
+        "windingRepairs": 5,
+        "normalRepairs": 6,
+        "rejected": false
+      },
+      "sourceMeshCount": 29,
+      "normalError": 0,
+      "unsupported": 0,
+      "maxHeightError": 0,
+      "belowSupport": 0,
+      "failures": []
+    },
+    {
+      "tileId": "-13_-4",
+      "level": 0,
+      "sourceSha256": "f88b7617ffc07b522bc80eb504992de1dae327e735e2af00a81e1f66d3cf6943",
+      "lots": [
+        "PAVE-AERIAL-DOWNTOWN-02",
+        "PAVE-AERIAL-DOWNTOWN-03",
+        "PAVE-AERIAL-DOWNTOWN-06"
+      ],
+      "bays": 109,
+      "triangles": 10879,
+      "pavingTriangles": 7889,
+      "treeIslands": 0,
+      "inferredLayout": true,
+      "terrainPacket": {
+        "url": "/town-evidence/v1/terrain/-13_-4-0.bb53e8143729f0d5.json",
+        "bytes": 1257828,
+        "sha256": "bb53e8143729f0d54bdf1fb9a7aa3a386a8278a0b38a55a608304bfa682bbc5c",
+        "replacedTriangles": 7063,
+        "addedTriangles": 8886
+      },
+      "terrainPatch": {
+        "meshes": 2,
+        "replacedTriangles": 7063,
+        "addedTriangles": 8883,
+        "maximumDropM": 0.3578968586425759,
+        "collapsedTriangles": 3,
+        "windingRepairs": 46,
+        "normalRepairs": 33,
+        "rejected": false
+      },
+      "sourceMeshCount": 58,
+      "normalError": 3.035144757745911e-8,
+      "unsupported": 0,
+      "maxHeightError": 0.0000017616601397773407,
+      "belowSupport": 0,
+      "failures": []
+    },
+    {
+      "tileId": "-13_-4",
+      "level": 1,
+      "sourceSha256": "89a712000547aab7f8e702a23d0d36e2d3b6ee8fe88e65c1cefd1e2f1faaace8",
+      "lots": [
+        "PAVE-AERIAL-DOWNTOWN-02",
+        "PAVE-AERIAL-DOWNTOWN-03",
+        "PAVE-AERIAL-DOWNTOWN-06"
+      ],
+      "bays": 109,
+      "triangles": 4265,
+      "pavingTriangles": 2792,
+      "treeIslands": 0,
+      "inferredLayout": true,
+      "terrainPacket": {
+        "url": "/town-evidence/v1/terrain/-13_-4-1.f99d6fbb1a962edd.json",
+        "bytes": 611762,
+        "sha256": "f99d6fbb1a962edd2ad6fc7085f81d7bc94ca92c4b3a8185b7e42d4d3222a585",
+        "replacedTriangles": 1045,
+        "addedTriangles": 6045
+      },
+      "terrainPatch": {
+        "meshes": 2,
+        "replacedTriangles": 1045,
+        "addedTriangles": 6044,
+        "maximumDropM": 0.3578968586425759,
+        "collapsedTriangles": 1,
+        "windingRepairs": 26,
+        "normalRepairs": 22,
+        "rejected": false
+      },
+      "sourceMeshCount": 58,
+      "normalError": 3.1153053914323436e-8,
+      "unsupported": 0,
+      "maxHeightError": 0.0000018036647275610634,
+      "belowSupport": 0,
+      "failures": []
+    },
+    {
+      "tileId": "-13_-4",
+      "level": 2,
+      "sourceSha256": "bf38dacce36c0effeb12d7b1ddca9ad6afbf3f32f789f7d236b74bc72ab56aac",
+      "lots": [
+        "PAVE-AERIAL-DOWNTOWN-02",
+        "PAVE-AERIAL-DOWNTOWN-03",
+        "PAVE-AERIAL-DOWNTOWN-06"
+      ],
+      "bays": 109,
+      "triangles": 2196,
+      "pavingTriangles": 1237,
+      "treeIslands": 0,
+      "inferredLayout": true,
+      "terrainPacket": {
+        "url": "/town-evidence/v1/terrain/-13_-4-2.1af9f407839eccd7.json",
+        "bytes": 482888,
+        "sha256": "1af9f407839eccd7f807e66b8e1eca0af75dc9dc275e45bffdb9fa291363a0f4",
+        "replacedTriangles": 349,
+        "addedTriangles": 4970
+      },
+      "terrainPatch": {
+        "meshes": 2,
+        "replacedTriangles": 349,
+        "addedTriangles": 4969,
+        "maximumDropM": 0.29281795931663623,
+        "collapsedTriangles": 1,
+        "windingRepairs": 9,
+        "normalRepairs": 10,
+        "rejected": false
+      },
+      "sourceMeshCount": 58,
+      "normalError": 2.993009751151021e-8,
+      "unsupported": 0,
+      "maxHeightError": 0.0000015153915955464642,
+      "belowSupport": 0,
+      "failures": []
+    },
+    {
+      "tileId": "-13_-5",
+      "level": 0,
+      "sourceSha256": "e8d9ee78b19579263dd3e06940f1ef5b32025c12b5bec0d4253f44aa9233ee6b",
+      "lots": [
+        "PAVE-OSM-1097398491",
+        "PAVE-AERIAL-DOWNTOWN-04"
+      ],
+      "bays": 37,
+      "triangles": 6766,
+      "pavingTriangles": 5682,
+      "treeIslands": 0,
+      "inferredLayout": true,
+      "terrainPacket": {
+        "url": "/town-evidence/v1/terrain/-13_-5-0.6265db292e68adea.json",
+        "bytes": 1676376,
+        "sha256": "6265db292e68adeab73d2ca9fdc4e01f934d71f7614e5208f5440d2bbcfba7c1",
+        "replacedTriangles": 8777,
+        "addedTriangles": 12413
+      },
+      "terrainPatch": {
+        "meshes": 4,
+        "replacedTriangles": 8777,
+        "addedTriangles": 12409,
+        "maximumDropM": 0.47833384936523515,
+        "collapsedTriangles": 4,
+        "windingRepairs": 87,
+        "normalRepairs": 39,
+        "rejected": false
+      },
+      "sourceMeshCount": 86,
+      "normalError": 2.992037395621594e-8,
+      "unsupported": 0,
+      "maxHeightError": 0.000001838250864182392,
+      "belowSupport": 0,
+      "failures": []
+    },
+    {
+      "tileId": "-13_-5",
+      "level": 1,
+      "sourceSha256": "e9c29889202c9d8405c8ab5de30e1370f2cdab9cfc0a2914ff502db79b32d4f0",
+      "lots": [
+        "PAVE-OSM-1097398491",
+        "PAVE-AERIAL-DOWNTOWN-04"
+      ],
+      "bays": 37,
+      "triangles": 3248,
+      "pavingTriangles": 2648,
+      "treeIslands": 0,
+      "inferredLayout": true,
+      "terrainPacket": {
+        "url": "/town-evidence/v1/terrain/-13_-5-1.5ec6540dfbcd4433.json",
+        "bytes": 884830,
+        "sha256": "5ec6540dfbcd4433e45daca7f2b45fdc07b2581be354e11bc7b22e916c10dd64",
+        "replacedTriangles": 1750,
+        "addedTriangles": 8632
+      },
+      "terrainPatch": {
+        "meshes": 4,
+        "replacedTriangles": 1750,
+        "addedTriangles": 8630,
+        "maximumDropM": 0.47833384936523515,
+        "collapsedTriangles": 2,
+        "windingRepairs": 31,
+        "normalRepairs": 21,
+        "rejected": false
+      },
+      "sourceMeshCount": 86,
+      "normalError": 3.0433011777297736e-8,
+      "unsupported": 0,
+      "maxHeightError": 0.0000018022906831446223,
+      "belowSupport": 0,
+      "failures": []
+    },
+    {
+      "tileId": "-13_-5",
+      "level": 2,
+      "sourceSha256": "51ddc58176523b315cc2ba60269e69fae44b4fc945d2ac4cf93285f399dd8499",
+      "lots": [
+        "PAVE-OSM-1097398491",
+        "PAVE-AERIAL-DOWNTOWN-04"
+      ],
+      "bays": 37,
+      "triangles": 1555,
+      "pavingTriangles": 1211,
+      "treeIslands": 0,
+      "inferredLayout": true,
+      "terrainPacket": {
+        "url": "/town-evidence/v1/terrain/-13_-5-2.0042ed772223dd79.json",
+        "bytes": 715680,
+        "sha256": "0042ed772223dd79306ebf5ac11357b75eb75416602196bef68b8bf4d9ea00e5",
+        "replacedTriangles": 614,
+        "addedTriangles": 7394
+      },
+      "terrainPatch": {
+        "meshes": 4,
+        "replacedTriangles": 614,
+        "addedTriangles": 7392,
+        "maximumDropM": 0.6150325915679957,
+        "collapsedTriangles": 2,
+        "windingRepairs": 17,
+        "normalRepairs": 10,
+        "rejected": false
+      },
+      "sourceMeshCount": 86,
+      "normalError": 3.025258743516446e-8,
+      "unsupported": 0,
+      "maxHeightError": 0.0000017558295371030569,
+      "belowSupport": 0,
+      "failures": []
+    },
+    {
+      "tileId": "-13_-9",
+      "level": 0,
+      "sourceSha256": "04d69b9eb1efbc52cb21308c03c0d122f3e0e3c89fafaf2dffe1dcb8ad7db1e0",
+      "lots": [
+        "PAVE-OSM-1097409917"
+      ],
+      "bays": 37,
+      "triangles": 1613,
+      "pavingTriangles": 1213,
+      "treeIslands": 0,
+      "inferredLayout": true,
+      "terrainPacket": {
+        "url": "/town-evidence/v1/terrain/-13_-9-0.fce933f649082339.json",
+        "bytes": 531602,
+        "sha256": "fce933f6490823397f1cdc5f86a3f5608a4bbeb7485b772613b1c02ed1c526b9",
+        "replacedTriangles": 759,
+        "addedTriangles": 5326
+      },
+      "terrainPatch": {
+        "meshes": 4,
+        "replacedTriangles": 759,
+        "addedTriangles": 5326,
+        "maximumDropM": 0.8773062040420498,
+        "collapsedTriangles": 0,
+        "windingRepairs": 21,
+        "normalRepairs": 8,
+        "rejected": false
+      },
+      "sourceMeshCount": 29,
+      "normalError": 2.9799573142419433e-8,
+      "unsupported": 0,
+      "maxHeightError": 0.0000018016762697355831,
+      "belowSupport": 0,
+      "failures": []
+    },
+    {
+      "tileId": "-13_-9",
+      "level": 1,
+      "sourceSha256": "388c3002e525124e782953a851d1f043d42e8623485d2bcbf97035ae22b02197",
+      "lots": [
+        "PAVE-OSM-1097409917"
+      ],
+      "bays": 37,
+      "triangles": 1129,
+      "pavingTriangles": 792,
+      "treeIslands": 0,
+      "inferredLayout": true,
+      "terrainPacket": {
+        "url": "/town-evidence/v1/terrain/-13_-9-1.095bb54ecb279605.json",
+        "bytes": 506286,
+        "sha256": "095bb54ecb279605b96f6fdf4c1c91a653ac78757ed0a209615b20c004f5118f",
+        "replacedTriangles": 588,
+        "addedTriangles": 5150
+      },
+      "terrainPatch": {
+        "meshes": 4,
+        "replacedTriangles": 588,
+        "addedTriangles": 5150,
+        "maximumDropM": 0.877306204042057,
+        "collapsedTriangles": 0,
+        "windingRepairs": 19,
+        "normalRepairs": 14,
+        "rejected": false
+      },
+      "sourceMeshCount": 29,
+      "normalError": 2.9767280640413674e-8,
+      "unsupported": 0,
+      "maxHeightError": 0.0000016737527814714853,
+      "belowSupport": 0,
+      "failures": []
+    },
+    {
+      "tileId": "-13_-9",
+      "level": 2,
+      "sourceSha256": "aa6ad1caff66aa2fd138e53b8558b021ce04e53ba141b02fc6e713c1fac57b42",
+      "lots": [
+        "PAVE-OSM-1097409917"
+      ],
+      "bays": 37,
+      "triangles": 1492,
+      "pavingTriangles": 1182,
+      "treeIslands": 0,
+      "inferredLayout": true,
+      "terrainPacket": {
+        "url": "/town-evidence/v1/terrain/-13_-9-2.aa9ee17c051a49ca.json",
+        "bytes": 503944,
+        "sha256": "aa9ee17c051a49ca2c70f0bb70d309eae77b6ce42910e2a98e17c5e96e39a116",
+        "replacedTriangles": 287,
+        "addedTriangles": 5235
+      },
+      "terrainPatch": {
+        "meshes": 4,
+        "replacedTriangles": 287,
+        "addedTriangles": 5235,
+        "maximumDropM": 0.877306204042057,
+        "collapsedTriangles": 0,
+        "windingRepairs": 8,
+        "normalRepairs": 15,
+        "rejected": false
+      },
+      "sourceMeshCount": 29,
+      "normalError": 2.9848870930493376e-8,
+      "unsupported": 0,
+      "maxHeightError": 0.0000017821203639415556,
+      "belowSupport": 0,
+      "failures": []
+    },
+    {
+      "tileId": "-4_-2",
+      "level": 0,
+      "sourceSha256": "4b00a1579212db5a1be406f717a623d4df6bcc9da6502ec313be5161dddbf022",
+      "lots": [
+        "PAVE-AERIAL-BEACH-EAST",
+        "PAVE-AERIAL-BEACH-SOUTH"
+      ],
+      "bays": 145,
+      "triangles": 4242,
+      "pavingTriangles": 2565,
+      "treeIslands": 11,
+      "inferredLayout": true,
+      "terrainPacket": {
+        "url": "/town-evidence/v1/terrain/-4_-2-0.9e0aacd80458ccac.json",
+        "bytes": 200668,
+        "sha256": "9e0aacd80458ccac72438af0a65a9c6545a27535a17cb0f2990ff23fb352981f",
+        "replacedTriangles": 234,
+        "addedTriangles": 2046
+      },
+      "terrainPatch": {
+        "meshes": 1,
+        "replacedTriangles": 234,
+        "addedTriangles": 2046,
+        "maximumDropM": 0.2083553991511593,
+        "collapsedTriangles": 0,
+        "windingRepairs": 8,
+        "normalRepairs": 10,
+        "rejected": false
+      },
+      "sourceMeshCount": 13,
+      "normalError": 2.981888380659825e-8,
+      "unsupported": 0,
+      "maxHeightError": 0.0000017373818226359278,
+      "belowSupport": 0,
+      "failures": []
+    },
+    {
+      "tileId": "-4_-2",
+      "level": 1,
+      "sourceSha256": "2208779e638dc4db27db4885b293ade80727a932388a135953b61185f7adac52",
+      "lots": [
+        "PAVE-AERIAL-BEACH-EAST",
+        "PAVE-AERIAL-BEACH-SOUTH"
+      ],
+      "bays": 145,
+      "triangles": 2998,
+      "pavingTriangles": 1676,
+      "treeIslands": 11,
+      "inferredLayout": true,
+      "terrainPacket": {
+        "url": "/town-evidence/v1/terrain/-4_-2-1.18f8508a4580f4cc.json",
+        "bytes": 159773,
+        "sha256": "18f8508a4580f4cc09d85f34190e069ab4fa1dc59ee5111298852ed2218b9c4f",
+        "replacedTriangles": 110,
+        "addedTriangles": 1658
+      },
+      "terrainPatch": {
+        "meshes": 1,
+        "replacedTriangles": 110,
+        "addedTriangles": 1658,
+        "maximumDropM": 0.14609673852539373,
+        "collapsedTriangles": 0,
+        "windingRepairs": 4,
+        "normalRepairs": 6,
+        "rejected": false
+      },
+      "sourceMeshCount": 13,
+      "normalError": 2.9793247424692026e-8,
+      "unsupported": 0,
+      "maxHeightError": 0.0000016514140031061858,
+      "belowSupport": 0,
+      "failures": []
+    },
+    {
+      "tileId": "-4_-2",
+      "level": 2,
+      "sourceSha256": "1beabdb2be128e53c2f0da4eab39e56232646fe21464dcaa3157a4200a6b3e23",
+      "lots": [
+        "PAVE-AERIAL-BEACH-EAST",
+        "PAVE-AERIAL-BEACH-SOUTH"
+      ],
+      "bays": 145,
+      "triangles": 2740,
+      "pavingTriangles": 1490,
+      "treeIslands": 11,
+      "inferredLayout": true,
+      "terrainPacket": {
+        "url": "/town-evidence/v1/terrain/-4_-2-2.62c12e4b87af171b.json",
+        "bytes": 119286,
+        "sha256": "62c12e4b87af171bbcdf12abe788b71bfef7d58301e44b45735a32ee74948f46",
+        "replacedTriangles": 43,
+        "addedTriangles": 1241
+      },
+      "terrainPatch": {
+        "meshes": 1,
+        "replacedTriangles": 43,
+        "addedTriangles": 1241,
+        "maximumDropM": 0.1890741090904271,
+        "collapsedTriangles": 0,
+        "windingRepairs": 0,
+        "normalRepairs": 1,
+        "rejected": false
+      },
+      "sourceMeshCount": 13,
+      "normalError": 2.985075486794386e-8,
+      "unsupported": 0,
+      "maxHeightError": 0.0000018120944245084841,
+      "belowSupport": 0,
+      "failures": []
+    },
+    {
+      "tileId": "-4_8",
+      "level": 0,
+      "sourceSha256": "379211ac37037a76e78e1c1d21a89b904d7dbd9ed1c2eb7e131ee1203434d80b",
+      "lots": [
+        "PAVE-OSM-1305753671",
+        "PAVE-OSM-1305753684"
+      ],
+      "bays": 10,
+      "triangles": 420,
+      "pavingTriangles": 322,
+      "treeIslands": 0,
+      "inferredLayout": true,
+      "terrainPacket": {
+        "url": "/town-evidence/v1/terrain/-4_8-0.54c335d190776b78.json",
+        "bytes": 173466,
+        "sha256": "54c335d190776b78adf10cf30c2833dd94a74456169b5ae5c479f1b2538869e5",
+        "replacedTriangles": 215,
+        "addedTriangles": 1760
+      },
+      "terrainPatch": {
+        "meshes": 2,
+        "replacedTriangles": 215,
+        "addedTriangles": 1760,
+        "maximumDropM": 0.9261778400256162,
+        "collapsedTriangles": 0,
+        "windingRepairs": 3,
+        "normalRepairs": 11,
+        "rejected": false
+      },
+      "sourceMeshCount": 14,
+      "normalError": 2.969246382100721e-8,
+      "unsupported": 0,
+      "maxHeightError": 0.0000032958984517109796,
+      "belowSupport": 0,
+      "failures": []
+    },
+    {
+      "tileId": "-4_8",
+      "level": 1,
+      "sourceSha256": "9cf2ce55a49cac93a6d96f43167f36faa10236517da96308481a8806c73a7130",
+      "lots": [
+        "PAVE-OSM-1305753671",
+        "PAVE-OSM-1305753684"
+      ],
+      "bays": 10,
+      "triangles": 207,
+      "pavingTriangles": 113,
+      "treeIslands": 0,
+      "inferredLayout": true,
+      "terrainPacket": {
+        "url": "/town-evidence/v1/terrain/-4_8-1.c82e6985414a368e.json",
+        "bytes": 158223,
+        "sha256": "c82e6985414a368ec72142014b844a12921eab63cfeee34570106324335719f7",
+        "replacedTriangles": 124,
+        "addedTriangles": 1628
+      },
+      "terrainPatch": {
+        "meshes": 2,
+        "replacedTriangles": 124,
+        "addedTriangles": 1628,
+        "maximumDropM": 0.9261778400256162,
+        "collapsedTriangles": 0,
+        "windingRepairs": 3,
+        "normalRepairs": 4,
+        "rejected": false
+      },
+      "sourceMeshCount": 14,
+      "normalError": 2.9551074698375146e-8,
+      "unsupported": 0,
+      "maxHeightError": 0.0000032958984517109796,
+      "belowSupport": 0,
+      "failures": []
+    },
+    {
+      "tileId": "-4_8",
+      "level": 2,
+      "sourceSha256": "bfa82216bafebea96b7aee5859dea7f5a7fcd939b3eb74f3d89b955173ed20b8",
+      "lots": [
+        "PAVE-OSM-1305753671",
+        "PAVE-OSM-1305753684"
+      ],
+      "bays": 10,
+      "triangles": 144,
+      "pavingTriangles": 82,
+      "treeIslands": 0,
+      "inferredLayout": true,
+      "terrainPacket": {
+        "url": "/town-evidence/v1/terrain/-4_8-2.f2ddf5dbd2f6d6b3.json",
+        "bytes": 125211,
+        "sha256": "f2ddf5dbd2f6d6b3ccb8cd2ab2e9d1f5f2bfa3cb3ac5f81e9514ea87e2df1468",
+        "replacedTriangles": 56,
+        "addedTriangles": 1289
+      },
+      "terrainPatch": {
+        "meshes": 2,
+        "replacedTriangles": 56,
+        "addedTriangles": 1289,
+        "maximumDropM": 0.9261778400256162,
+        "collapsedTriangles": 0,
+        "windingRepairs": 1,
+        "normalRepairs": 3,
+        "rejected": false
+      },
+      "sourceMeshCount": 14,
+      "normalError": 2.978022073385489e-8,
+      "unsupported": 0,
+      "maxHeightError": 0.0000033239619623374322,
+      "belowSupport": 0,
+      "failures": []
+    },
+    {
+      "tileId": "-5_1",
+      "level": 0,
+      "sourceSha256": "499ccfc4d763ce2ec133fcde988ecc19f1f07fbb1b37437c0395ec4b8e77e0ee",
+      "lots": [
+        "PAVE-OSM-1455518885",
+        "PAVE-OSM-1455518886"
+      ],
+      "bays": 72,
+      "triangles": 1668,
+      "pavingTriangles": 1002,
+      "treeIslands": 0,
+      "inferredLayout": true,
+      "terrainPacket": {
+        "url": "/town-evidence/v1/terrain/-5_1-0.2317f4fb982ed1cb.json",
+        "bytes": 784741,
+        "sha256": "2317f4fb982ed1cbd9d426078abc17317177ee1821ef74c4f7cf58ab57f8b200",
+        "replacedTriangles": 1015,
+        "addedTriangles": 7933
+      },
+      "terrainPatch": {
+        "meshes": 4,
+        "replacedTriangles": 1015,
+        "addedTriangles": 7929,
+        "maximumDropM": 0.8753334038279732,
+        "collapsedTriangles": 4,
+        "windingRepairs": 18,
+        "normalRepairs": 30,
+        "rejected": false
+      },
+      "sourceMeshCount": 21,
+      "normalError": 2.983494029606959e-8,
+      "unsupported": 0,
+      "maxHeightError": 0.0000018369210181955892,
+      "belowSupport": 0,
+      "failures": []
+    },
+    {
+      "tileId": "-5_1",
+      "level": 1,
+      "sourceSha256": "fcdfa96dafdafea1dfdc5f000311bac129dfae92f7c319620a633fcc0a84b01a",
+      "lots": [
+        "PAVE-OSM-1455518885",
+        "PAVE-OSM-1455518886"
+      ],
+      "bays": 72,
+      "triangles": 1339,
+      "pavingTriangles": 778,
+      "treeIslands": 0,
+      "inferredLayout": true,
+      "terrainPacket": {
+        "url": "/town-evidence/v1/terrain/-5_1-1.f91868bb1db361fc.json",
+        "bytes": 708229,
+        "sha256": "f91868bb1db361fcaf2e54adaadb941fbfe0bf11ec5e45906d8bf90b099bf1e9",
+        "replacedTriangles": 710,
+        "addedTriangles": 7265
+      },
+      "terrainPatch": {
+        "meshes": 4,
+        "replacedTriangles": 710,
+        "addedTriangles": 7261,
+        "maximumDropM": 0.8753334038279732,
+        "collapsedTriangles": 4,
+        "windingRepairs": 20,
+        "normalRepairs": 33,
+        "rejected": false
+      },
+      "sourceMeshCount": 21,
+      "normalError": 2.980850377642952e-8,
+      "unsupported": 0,
+      "maxHeightError": 0.0000016668309641542506,
+      "belowSupport": 0,
+      "failures": []
+    },
+    {
+      "tileId": "-5_1",
+      "level": 2,
+      "sourceSha256": "734ea945473e4791a5366ec4b2d6098fef8329115210d195425e3ec77047c5df",
+      "lots": [
+        "PAVE-OSM-1455518885",
+        "PAVE-OSM-1455518886"
+      ],
+      "bays": 72,
+      "triangles": 810,
+      "pavingTriangles": 398,
+      "treeIslands": 0,
+      "inferredLayout": true,
+      "terrainPacket": {
+        "url": "/town-evidence/v1/terrain/-5_1-2.ff5b2a625e03e3b3.json",
+        "bytes": 632673,
+        "sha256": "ff5b2a625e03e3b3f979de52c524d0f29a8064afceede8bf0201018c01af0f98",
+        "replacedTriangles": 401,
+        "addedTriangles": 6532
+      },
+      "terrainPatch": {
+        "meshes": 4,
+        "replacedTriangles": 401,
+        "addedTriangles": 6525,
+        "maximumDropM": 0.8753334038279732,
+        "collapsedTriangles": 7,
+        "windingRepairs": 13,
+        "normalRepairs": 25,
+        "rejected": false
+      },
+      "sourceMeshCount": 21,
+      "normalError": 3.008259352732523e-8,
+      "unsupported": 0,
+      "maxHeightError": 0.0000017016035685057246,
+      "belowSupport": 0,
+      "failures": []
+    },
+    {
+      "tileId": "-5_8",
+      "level": 0,
+      "sourceSha256": "b6b0a2f0fe63a99cd3121a3aeb9a0b6eb5d5c9ac84fede7b47785825e6128726",
+      "lots": [
+        "PAVE-OSM-1305753671"
+      ],
+      "bays": 24,
+      "triangles": 340,
+      "pavingTriangles": 114,
+      "treeIslands": 0,
+      "inferredLayout": true,
+      "terrainPacket": {
+        "url": "/town-evidence/v1/terrain/-5_8-0.ceb1603e91dd9fab.json",
+        "bytes": 383792,
+        "sha256": "ceb1603e91dd9fab2d8bcf835ec8847fe5c144fbd0742a2585cf760c725337b4",
+        "replacedTriangles": 516,
+        "addedTriangles": 3849
+      },
+      "terrainPatch": {
+        "meshes": 3,
+        "replacedTriangles": 516,
+        "addedTriangles": 3841,
+        "maximumDropM": 0.420863952948082,
+        "collapsedTriangles": 8,
+        "windingRepairs": 19,
+        "normalRepairs": 12,
+        "rejected": false
+      },
+      "sourceMeshCount": 22,
+      "normalError": 2.975001212046635e-8,
+      "unsupported": 0,
+      "maxHeightError": 0.0000033955887628282083,
+      "belowSupport": 0,
+      "failures": []
+    },
+    {
+      "tileId": "-5_8",
+      "level": 1,
+      "sourceSha256": "b75819258dfa570e20ea2fae357737c879c85cac09335aa98be3ac1c8c31403f",
+      "lots": [
+        "PAVE-OSM-1305753671"
+      ],
+      "bays": 24,
+      "triangles": 309,
+      "pavingTriangles": 101,
+      "treeIslands": 0,
+      "inferredLayout": true,
+      "terrainPacket": {
+        "url": "/town-evidence/v1/terrain/-5_8-1.49ebeed8e32a872d.json",
+        "bytes": 348593,
+        "sha256": "49ebeed8e32a872d896ea17439a59c4daa26b801f8ead5513e9e925a7290ab1d",
+        "replacedTriangles": 353,
+        "addedTriangles": 3562
+      },
+      "terrainPatch": {
+        "meshes": 3,
+        "replacedTriangles": 353,
+        "addedTriangles": 3554,
+        "maximumDropM": 0.420863952948082,
+        "collapsedTriangles": 8,
+        "windingRepairs": 10,
+        "normalRepairs": 17,
+        "rejected": false
+      },
+      "sourceMeshCount": 22,
+      "normalError": 2.982132185636033e-8,
+      "unsupported": 0,
+      "maxHeightError": 0.0000033955887628282083,
+      "belowSupport": 0,
+      "failures": []
+    },
+    {
+      "tileId": "-5_8",
+      "level": 2,
+      "sourceSha256": "9910c89daa8c7540747ea1cc4ca03c3030a0115fb47e291e1aafe50898a88315",
+      "lots": [
+        "PAVE-OSM-1305753671"
+      ],
+      "bays": 24,
+      "triangles": 192,
+      "pavingTriangles": 46,
+      "treeIslands": 0,
+      "inferredLayout": true,
+      "terrainPacket": {
+        "url": "/town-evidence/v1/terrain/-5_8-2.98f98f72efd48e01.json",
+        "bytes": 298515,
+        "sha256": "98f98f72efd48e0174dab304d2fb0dcca417470bfdc84d6bc0c327c3afb35634",
+        "replacedTriangles": 166,
+        "addedTriangles": 3099
+      },
+      "terrainPatch": {
+        "meshes": 3,
+        "replacedTriangles": 166,
+        "addedTriangles": 3091,
+        "maximumDropM": 0.4658829990389961,
+        "collapsedTriangles": 8,
+        "windingRepairs": 7,
+        "normalRepairs": 2,
+        "rejected": false
+      },
+      "sourceMeshCount": 22,
+      "normalError": 2.9608079543663735e-8,
+      "unsupported": 0,
+      "maxHeightError": 0.0000031935211624155996,
+      "belowSupport": 0,
+      "failures": []
+    },
+    {
+      "tileId": "-6_1",
+      "level": 0,
+      "sourceSha256": "743f9e6bea8e3ba8d9bf8a0f7207602792abfc9c0b857babf00e09c72d8f8407",
+      "lots": [
+        "PAVE-OSM-1455518885"
+      ],
+      "bays": 218,
+      "triangles": 3789,
+      "pavingTriangles": 1681,
+      "treeIslands": 0,
+      "inferredLayout": true,
+      "terrainPacket": {
+        "url": "/town-evidence/v1/terrain/-6_1-0.6c584a948fc0b7b2.json",
+        "bytes": 430149,
+        "sha256": "6c584a948fc0b7b2af80ac44469d44bf49a521d02474b79e3cefad28cab8c5f6",
+        "replacedTriangles": 498,
+        "addedTriangles": 4368
+      },
+      "terrainPatch": {
+        "meshes": 4,
+        "replacedTriangles": 498,
+        "addedTriangles": 4368,
+        "maximumDropM": 0.4396668464637017,
+        "collapsedTriangles": 0,
+        "windingRepairs": 15,
+        "normalRepairs": 7,
+        "rejected": false
+      },
+      "sourceMeshCount": 28,
+      "normalError": 2.9796002554149936e-8,
+      "unsupported": 0,
+      "maxHeightError": 0.0000018632284650831749,
+      "belowSupport": 0,
+      "failures": []
+    },
+    {
+      "tileId": "-6_1",
+      "level": 1,
+      "sourceSha256": "d4ab2ba7080aab594dc45e252a12d0c819bc6ca531ba289447cccc3b85401847",
+      "lots": [
+        "PAVE-OSM-1455518885"
+      ],
+      "bays": 218,
+      "triangles": 2556,
+      "pavingTriangles": 874,
+      "treeIslands": 0,
+      "inferredLayout": true,
+      "terrainPacket": {
+        "url": "/town-evidence/v1/terrain/-6_1-1.b84ed4257650c959.json",
+        "bytes": 405092,
+        "sha256": "b84ed4257650c959e79b28e0092ee275332d8c87211733864e7d79fad9e612bf",
+        "replacedTriangles": 364,
+        "addedTriangles": 4170
+      },
+      "terrainPatch": {
+        "meshes": 4,
+        "replacedTriangles": 364,
+        "addedTriangles": 4170,
+        "maximumDropM": 0.4396668464637017,
+        "collapsedTriangles": 0,
+        "windingRepairs": 10,
+        "normalRepairs": 4,
+        "rejected": false
+      },
+      "sourceMeshCount": 28,
+      "normalError": 2.985310221248483e-8,
+      "unsupported": 0,
+      "maxHeightError": 0.000001775820749344223,
+      "belowSupport": 0,
+      "failures": []
+    },
+    {
+      "tileId": "-6_1",
+      "level": 2,
+      "sourceSha256": "9f8f9710e7fe226e44b9fd807c3c7223022b8f1c58daf685aa1a78e8b02e447b",
+      "lots": [
+        "PAVE-OSM-1455518885"
+      ],
+      "bays": 218,
+      "triangles": 1712,
+      "pavingTriangles": 412,
+      "treeIslands": 0,
+      "inferredLayout": true,
+      "terrainPacket": {
+        "url": "/town-evidence/v1/terrain/-6_1-2.0ae2d3141244aaba.json",
+        "bytes": 382922,
+        "sha256": "0ae2d3141244aaba17df187c98dd2d52d88fd5a1e0a16ffe2b1bff9396d4700e",
+        "replacedTriangles": 242,
+        "addedTriangles": 3955
+      },
+      "terrainPatch": {
+        "meshes": 4,
+        "replacedTriangles": 242,
+        "addedTriangles": 3955,
+        "maximumDropM": 0.46696630672229844,
+        "collapsedTriangles": 0,
+        "windingRepairs": 6,
+        "normalRepairs": 5,
+        "rejected": false
+      },
+      "sourceMeshCount": 28,
+      "normalError": 2.976981239299903e-8,
+      "unsupported": 0,
+      "maxHeightError": 0.000001645793342731558,
+      "belowSupport": 0,
+      "failures": []
+    },
+    {
+      "tileId": "-6_2",
+      "level": 0,
+      "sourceSha256": "44df5079a5937cc11a8d4206c24c8e6d227ccfe65b368a1464f0dffe126aab13",
+      "lots": [
+        "PAVE-OSM-1455518884"
+      ],
+      "bays": 16,
+      "triangles": 318,
+      "pavingTriangles": 154,
+      "treeIslands": 0,
+      "inferredLayout": true,
+      "terrainPacket": {
+        "url": "/town-evidence/v1/terrain/-6_2-0.fb087cb2722c8551.json",
+        "bytes": 1063551,
+        "sha256": "fb087cb2722c8551be6c4ae800eae4f94d4e40706900fdeb25593d1797e7d129",
+        "replacedTriangles": 1262,
+        "addedTriangles": 10826
+      },
+      "terrainPatch": {
+        "meshes": 4,
+        "replacedTriangles": 1262,
+        "addedTriangles": 10795,
+        "maximumDropM": 0.47495619180659787,
+        "collapsedTriangles": 31,
+        "windingRepairs": 30,
+        "normalRepairs": 31,
+        "rejected": false
+      },
+      "sourceMeshCount": 20,
+      "normalError": 2.9747646346223178e-8,
+      "unsupported": 0,
+      "maxHeightError": 0.0000016424358861965443,
+      "belowSupport": 0,
+      "failures": []
+    },
+    {
+      "tileId": "-6_2",
+      "level": 1,
+      "sourceSha256": "3aba218cdb5407503297263bd95dac8c540452e4d6e4f5faeab40497a524a1de",
+      "lots": [
+        "PAVE-OSM-1455518884"
+      ],
+      "bays": 16,
+      "triangles": 216,
+      "pavingTriangles": 90,
+      "treeIslands": 0,
+      "inferredLayout": true,
+      "terrainPacket": {
+        "url": "/town-evidence/v1/terrain/-6_2-1.aec62a3f3e9e8612.json",
+        "bytes": 962677,
+        "sha256": "aec62a3f3e9e8612a9eff03bc2efaacd52e2a83f5c0ede4fe1fbb6c972261222",
+        "replacedTriangles": 850,
+        "addedTriangles": 9926
+      },
+      "terrainPatch": {
+        "meshes": 4,
+        "replacedTriangles": 850,
+        "addedTriangles": 9894,
+        "maximumDropM": 0.47495619180659787,
+        "collapsedTriangles": 32,
+        "windingRepairs": 19,
+        "normalRepairs": 42,
+        "rejected": false
+      },
+      "sourceMeshCount": 20,
+      "normalError": 2.9791386690902755e-8,
+      "unsupported": 0,
+      "maxHeightError": 0.0000013329477710610077,
+      "belowSupport": 0,
+      "failures": []
+    },
+    {
+      "tileId": "-6_2",
+      "level": 2,
+      "sourceSha256": "7d3530dc30675ff3d94e0701e6e4dfe8416d3208c92d055026288075eba5f67e",
+      "lots": [
+        "PAVE-OSM-1455518884"
+      ],
+      "bays": 16,
+      "triangles": 212,
+      "pavingTriangles": 90,
+      "treeIslands": 0,
+      "inferredLayout": true,
+      "terrainPacket": {
+        "url": "/town-evidence/v1/terrain/-6_2-2.6f6dd64622a717e2.json",
+        "bytes": 877753,
+        "sha256": "6f6dd64622a717e2aaeed6b5ac51e0d8a9d14591802a2ec45c9a93c0854c147a",
+        "replacedTriangles": 400,
+        "addedTriangles": 9087
+      },
+      "terrainPatch": {
+        "meshes": 4,
+        "replacedTriangles": 400,
+        "addedTriangles": 9055,
+        "maximumDropM": 0.4749904642478171,
+        "collapsedTriangles": 32,
+        "windingRepairs": 18,
+        "normalRepairs": 9,
+        "rejected": false
+      },
+      "sourceMeshCount": 20,
+      "normalError": 2.983990787797097e-8,
+      "unsupported": 0,
+      "maxHeightError": 0.0000016991065378991338,
+      "belowSupport": 0,
+      "failures": []
+    },
+    {
+      "tileId": "-7_-3",
+      "level": 0,
+      "sourceSha256": "ce8c8a725d9fae61bf231e1b97d5635f519ff3b9a666d37f2d1a634f463caf00",
+      "lots": [
+        "PAVE-OSM-1227016151",
+        "PAVE-OSM-1227016152",
+        "PAVE-OSM-1227016153"
+      ],
+      "bays": 90,
+      "triangles": 4130,
+      "pavingTriangles": 2712,
+      "treeIslands": 0,
+      "inferredLayout": true,
+      "terrainPacket": {
+        "url": "/town-evidence/v1/terrain/-7_-3-0.c4a102ce0f28e238.json",
+        "bytes": 583653,
+        "sha256": "c4a102ce0f28e2386ea5d1bcce2955a1017ed5b3c4aa512c475d8ec9790adb3d",
+        "replacedTriangles": 792,
+        "addedTriangles": 5853
+      },
+      "terrainPatch": {
+        "meshes": 2,
+        "replacedTriangles": 792,
+        "addedTriangles": 5851,
+        "maximumDropM": 0.906800363969424,
+        "collapsedTriangles": 2,
+        "windingRepairs": 21,
+        "normalRepairs": 22,
+        "rejected": false
+      },
+      "sourceMeshCount": 27,
+      "normalError": 2.990498060295721e-8,
+      "unsupported": 0,
+      "maxHeightError": 0.0000035912094202786987,
+      "belowSupport": 0,
+      "failures": []
+    },
+    {
+      "tileId": "-7_-3",
+      "level": 1,
+      "sourceSha256": "13f20766ab3c6ee2a4e28f26f02f7c2636aea227c0c23e53b84856a8be44e453",
+      "lots": [
+        "PAVE-OSM-1227016151",
+        "PAVE-OSM-1227016152",
+        "PAVE-OSM-1227016153"
+      ],
+      "bays": 90,
+      "triangles": 3798,
+      "pavingTriangles": 2437,
+      "treeIslands": 0,
+      "inferredLayout": true,
+      "terrainPacket": {
+        "url": "/town-evidence/v1/terrain/-7_-3-1.567b0d403ae57ae9.json",
+        "bytes": 545333,
+        "sha256": "567b0d403ae57ae9cc8035246668d909f4705a617946636c7dd6d7e43cb35e91",
+        "replacedTriangles": 574,
+        "addedTriangles": 5577
+      },
+      "terrainPatch": {
+        "meshes": 2,
+        "replacedTriangles": 574,
+        "addedTriangles": 5575,
+        "maximumDropM": 0.906800363969424,
+        "collapsedTriangles": 2,
+        "windingRepairs": 19,
+        "normalRepairs": 19,
+        "rejected": false
+      },
+      "sourceMeshCount": 27,
+      "normalError": 2.987595715264746e-8,
+      "unsupported": 0,
+      "maxHeightError": 0.0000036670682887918887,
+      "belowSupport": 0,
+      "failures": []
+    },
+    {
+      "tileId": "-7_-3",
+      "level": 2,
+      "sourceSha256": "202a81c91feecad4baeabc7abfc2d33aaebcdc51875e600e995cd53e7b5a1b3b",
+      "lots": [
+        "PAVE-OSM-1227016151",
+        "PAVE-OSM-1227016152",
+        "PAVE-OSM-1227016153"
+      ],
+      "bays": 90,
+      "triangles": 3508,
+      "pavingTriangles": 2130,
+      "treeIslands": 0,
+      "inferredLayout": true,
+      "terrainPacket": {
+        "url": "/town-evidence/v1/terrain/-7_-3-2.f67bff2509ce8f30.json",
+        "bytes": 461776,
+        "sha256": "f67bff2509ce8f3011246475a6a1dec2ded526263771d580fda24e0236436efa",
+        "replacedTriangles": 223,
+        "addedTriangles": 4794
+      },
+      "terrainPatch": {
+        "meshes": 2,
+        "replacedTriangles": 223,
+        "addedTriangles": 4792,
+        "maximumDropM": 0.8150140919925661,
+        "collapsedTriangles": 2,
+        "windingRepairs": 3,
+        "normalRepairs": 14,
+        "rejected": false
+      },
+      "sourceMeshCount": 27,
+      "normalError": 2.985272851141474e-8,
+      "unsupported": 0,
+      "maxHeightError": 0.00000359969575902154,
+      "belowSupport": 0,
+      "failures": []
+    },
+    {
+      "tileId": "-8_-3",
+      "level": 0,
+      "sourceSha256": "01bca3eaacd89b7b353b2bd42c089b7bcac66906cffe67997bf6aa41bdd525db",
+      "lots": [
+        "PAVE-OSM-1503221310",
+        "PAVE-OSM-1503221311"
+      ],
+      "bays": 0,
+      "triangles": 1972,
+      "pavingTriangles": 1972,
+      "treeIslands": 0,
+      "inferredLayout": true,
+      "terrainPacket": {
+        "url": "/town-evidence/v1/terrain/-8_-3-0.06663ae2fe341913.json",
+        "bytes": 739015,
+        "sha256": "06663ae2fe34191309040564e982e9ccd3e85846cd7255cdcd3f2a0f8834b1ee",
+        "replacedTriangles": 3833,
+        "addedTriangles": 5449
+      },
+      "terrainPatch": {
+        "meshes": 3,
+        "replacedTriangles": 3833,
+        "addedTriangles": 5449,
+        "maximumDropM": 0.22748377341216042,
+        "collapsedTriangles": 0,
+        "windingRepairs": 27,
+        "normalRepairs": 22,
+        "rejected": false
+      },
+      "sourceMeshCount": 28,
+      "normalError": 2.9800033551907745e-8,
+      "unsupported": 0,
+      "maxHeightError": 0.0000035220697041041943,
+      "belowSupport": 0,
+      "failures": []
+    },
+    {
+      "tileId": "-8_-3",
+      "level": 1,
+      "sourceSha256": "4fa53da7534edf470a2ca2140f711675b3e160f97b922eb8169ecc98f7cdbcea",
+      "lots": [
+        "PAVE-OSM-1503221310",
+        "PAVE-OSM-1503221311"
+      ],
+      "bays": 0,
+      "triangles": 960,
+      "pavingTriangles": 960,
+      "treeIslands": 0,
+      "inferredLayout": true,
+      "terrainPacket": {
+        "url": "/town-evidence/v1/terrain/-8_-3-1.33a5cbd45bd3a525.json",
+        "bytes": 453377,
+        "sha256": "33a5cbd45bd3a5258b363801dbfc4db0c407fb5da20daa359a53f81b0e7417e8",
+        "replacedTriangles": 1130,
+        "addedTriangles": 4264
+      },
+      "terrainPatch": {
+        "meshes": 3,
+        "replacedTriangles": 1130,
+        "addedTriangles": 4264,
+        "maximumDropM": 0.22878393909607553,
+        "collapsedTriangles": 0,
+        "windingRepairs": 13,
+        "normalRepairs": 18,
+        "rejected": false
+      },
+      "sourceMeshCount": 28,
+      "normalError": 2.970335100105359e-8,
+      "unsupported": 0,
+      "maxHeightError": 0.00000344058521739056,
+      "belowSupport": 0,
+      "failures": []
+    },
+    {
+      "tileId": "-8_-3",
+      "level": 2,
+      "sourceSha256": "bf1be2471e2f6d7c8de6345ac12f5b4dbd7ffdd6af326bc937ab87dc6cb735f2",
+      "lots": [
+        "PAVE-OSM-1503221310",
+        "PAVE-OSM-1503221311"
+      ],
+      "bays": 0,
+      "triangles": 788,
+      "pavingTriangles": 788,
+      "treeIslands": 0,
+      "inferredLayout": true,
+      "terrainPacket": {
+        "url": "/town-evidence/v1/terrain/-8_-3-2.ffab68cd056a47af.json",
+        "bytes": 314184,
+        "sha256": "ffab68cd056a47afbf9684595c84dd109281a62a7941ec156574df73cab06f90",
+        "replacedTriangles": 290,
+        "addedTriangles": 3220
+      },
+      "terrainPatch": {
+        "meshes": 3,
+        "replacedTriangles": 290,
+        "addedTriangles": 3220,
+        "maximumDropM": 0.2818433486004608,
+        "collapsedTriangles": 0,
+        "windingRepairs": 8,
+        "normalRepairs": 6,
+        "rejected": false
+      },
+      "sourceMeshCount": 28,
+      "normalError": 2.9607899243444535e-8,
+      "unsupported": 0,
+      "maxHeightError": 0.000003624996651069648,
+      "belowSupport": 0,
+      "failures": []
+    },
+    {
+      "tileId": "-8_-7",
+      "level": 0,
+      "sourceSha256": "7f848f6dc58b4bbaab8efcbee5d9969c5745c2eaf5be350b45a2abf57e756d1d",
+      "lots": [
+        "PAVE-OSM-1504195589",
+        "PAVE-OSM-1504195630",
+        "PAVE-OSM-1504195631",
+        "PAVE-OSM-1504195632"
+      ],
+      "bays": 117,
+      "triangles": 2074,
+      "pavingTriangles": 806,
+      "treeIslands": 0,
+      "inferredLayout": true,
+      "terrainPacket": {
+        "url": "/town-evidence/v1/terrain/-8_-7-0.0a7aed9ea72b0209.json",
+        "bytes": 104161,
+        "sha256": "0a7aed9ea72b02097b882d959c605338c4f541970243f9284d16e13c026f23c5",
+        "replacedTriangles": 125,
+        "addedTriangles": 1061
+      },
+      "terrainPatch": {
+        "meshes": 1,
+        "replacedTriangles": 125,
+        "addedTriangles": 1049,
+        "maximumDropM": 0.10720229178489404,
+        "collapsedTriangles": 12,
+        "windingRepairs": 5,
+        "normalRepairs": 2,
+        "rejected": false
+      },
+      "sourceMeshCount": 17,
+      "normalError": 2.978406876685824e-8,
+      "unsupported": 0,
+      "maxHeightError": 0.0000016736727801568846,
+      "belowSupport": 0,
+      "failures": []
+    },
+    {
+      "tileId": "-8_-7",
+      "level": 1,
+      "sourceSha256": "dd969acd51f50c6b42c2b302478a824a20efcc435cbac6b9e4fac0e30e4d217d",
+      "lots": [
+        "PAVE-OSM-1504195589",
+        "PAVE-OSM-1504195630",
+        "PAVE-OSM-1504195631",
+        "PAVE-OSM-1504195632"
+      ],
+      "bays": 117,
+      "triangles": 1181,
+      "pavingTriangles": 361,
+      "treeIslands": 0,
+      "inferredLayout": true,
+      "terrainPacket": {
+        "url": "/town-evidence/v1/terrain/-8_-7-1.a0b3921d9ae341f1.json",
+        "bytes": 90358,
+        "sha256": "a0b3921d9ae341f1a65f3cba0794b0ce447e8d9cdfca8d9509b6a3ee25d6017a",
+        "replacedTriangles": 73,
+        "addedTriangles": 932
+      },
+      "terrainPatch": {
+        "meshes": 1,
+        "replacedTriangles": 73,
+        "addedTriangles": 918,
+        "maximumDropM": 0.11392333328072368,
+        "collapsedTriangles": 14,
+        "windingRepairs": 5,
+        "normalRepairs": 0,
+        "rejected": false
+      },
+      "sourceMeshCount": 17,
+      "normalError": 2.979554958315589e-8,
+      "unsupported": 0,
+      "maxHeightError": 0.0000017371635620978126,
+      "belowSupport": 0,
+      "failures": []
+    },
+    {
+      "tileId": "-8_-7",
+      "level": 2,
+      "sourceSha256": "2aaed0e0bfd0d1da914bc8a594efebc29603c2be5d0119aaff532ad9003f0983",
+      "lots": [
+        "PAVE-OSM-1504195589",
+        "PAVE-OSM-1504195630",
+        "PAVE-OSM-1504195631",
+        "PAVE-OSM-1504195632"
+      ],
+      "bays": 117,
+      "triangles": 749,
+      "pavingTriangles": 191,
+      "treeIslands": 0,
+      "inferredLayout": true,
+      "terrainPacket": {
+        "url": "/town-evidence/v1/terrain/-8_-7-2.192298e4e0364fe2.json",
+        "bytes": 80095,
+        "sha256": "192298e4e0364fe2bfc62f66d4fb8f961f150e3ed9d39585597fea400142da33",
+        "replacedTriangles": 43,
+        "addedTriangles": 822
+      },
+      "terrainPatch": {
+        "meshes": 1,
+        "replacedTriangles": 43,
+        "addedTriangles": 812,
+        "maximumDropM": 0.26452187087009094,
+        "collapsedTriangles": 10,
+        "windingRepairs": 1,
+        "normalRepairs": 1,
+        "rejected": false
+      },
+      "sourceMeshCount": 17,
+      "normalError": 2.979974067507385e-8,
+      "unsupported": 0,
+      "maxHeightError": 0.0000015740445859935975,
+      "belowSupport": 0,
+      "failures": []
+    },
+    {
+      "tileId": "-8_-8",
+      "level": 0,
+      "sourceSha256": "fbe6d6f688c3139634b419e99815c0789dc427b7ba2d548ec12e2e30da3764de",
+      "lots": [
+        "PAVE-OSM-1504195589",
+        "PAVE-OSM-1504195616"
+      ],
+      "bays": 0,
+      "triangles": 488,
+      "pavingTriangles": 488,
+      "treeIslands": 0,
+      "inferredLayout": true,
+      "terrainPacket": {
+        "url": "/town-evidence/v1/terrain/-8_-8-0.1b25bff831078dc7.json",
+        "bytes": 406218,
+        "sha256": "1b25bff831078dc7d3f225a6d2b507f6a3d8a73ea0a58bd748e3d998cc94b57d",
+        "replacedTriangles": 396,
+        "addedTriangles": 4170
+      },
+      "terrainPatch": {
+        "meshes": 1,
+        "replacedTriangles": 396,
+        "addedTriangles": 4170,
+        "maximumDropM": 0.25927128950882405,
+        "collapsedTriangles": 0,
+        "windingRepairs": 10,
+        "normalRepairs": 3,
+        "rejected": false
+      },
+      "sourceMeshCount": 17,
+      "normalError": 2.9717893701430853e-8,
+      "unsupported": 0,
+      "maxHeightError": 0.000001676489518103938,
+      "belowSupport": 0,
+      "failures": []
+    },
+    {
+      "tileId": "-8_-8",
+      "level": 1,
+      "sourceSha256": "47b3a37e151a91bc44a20c35ab2080882f071497b868c6e865ae2abcc943aced",
+      "lots": [
+        "PAVE-OSM-1504195589",
+        "PAVE-OSM-1504195616"
+      ],
+      "bays": 0,
+      "triangles": 470,
+      "pavingTriangles": 470,
+      "treeIslands": 0,
+      "inferredLayout": true,
+      "terrainPacket": {
+        "url": "/town-evidence/v1/terrain/-8_-8-1.2a4bf6722f23e70f.json",
+        "bytes": 362809,
+        "sha256": "2a4bf6722f23e70f0a0ac93ea0534a28da827763df146d6189f6852a39814b63",
+        "replacedTriangles": 216,
+        "addedTriangles": 3769
+      },
+      "terrainPatch": {
+        "meshes": 1,
+        "replacedTriangles": 216,
+        "addedTriangles": 3769,
+        "maximumDropM": 0.25927128950882405,
+        "collapsedTriangles": 0,
+        "windingRepairs": 6,
+        "normalRepairs": 6,
+        "rejected": false
+      },
+      "sourceMeshCount": 17,
+      "normalError": 2.9710193638621263e-8,
+      "unsupported": 0,
+      "maxHeightError": 0.000001510978300473323,
+      "belowSupport": 0,
+      "failures": []
+    },
+    {
+      "tileId": "-8_-8",
+      "level": 2,
+      "sourceSha256": "3123a0b5560ab74bc58c9cc7c955474b74973e9d23b504b53c636eaa36ac761f",
+      "lots": [
+        "PAVE-OSM-1504195589",
+        "PAVE-OSM-1504195616"
+      ],
+      "bays": 0,
+      "triangles": 508,
+      "pavingTriangles": 508,
+      "treeIslands": 0,
+      "inferredLayout": true,
+      "terrainPacket": {
+        "url": "/town-evidence/v1/terrain/-8_-8-2.1802f8fe552434d0.json",
+        "bytes": 318896,
+        "sha256": "1802f8fe552434d0c6d5984ecb9331badec8aeef8642efb986b1742804e112ef",
+        "replacedTriangles": 53,
+        "addedTriangles": 3293
+      },
+      "terrainPatch": {
+        "meshes": 1,
+        "replacedTriangles": 53,
+        "addedTriangles": 3293,
+        "maximumDropM": 0.4875667249832176,
+        "collapsedTriangles": 0,
+        "windingRepairs": 2,
+        "normalRepairs": 1,
+        "rejected": false
+      },
+      "sourceMeshCount": 17,
+      "normalError": 2.9780217403185816e-8,
+      "unsupported": 0,
+      "maxHeightError": 0.000001576326383428625,
+      "belowSupport": 0,
+      "failures": []
+    },
+    {
+      "tileId": "-9_-4",
+      "level": 0,
+      "sourceSha256": "c12d8e4597dd1ed5f5408bef8828a925cd217b25a4ce5d5054fe615deac01506",
+      "lots": [
+        "PAVE-OSM-1455549257"
+      ],
+      "bays": 20,
+      "triangles": 2004,
+      "pavingTriangles": 1436,
+      "treeIslands": 0,
+      "inferredLayout": true,
+      "terrainPacket": {
+        "url": "/town-evidence/v1/terrain/-9_-4-0.2557798e291ef90c.json",
+        "bytes": 1579742,
+        "sha256": "2557798e291ef90c3693885ff3cfda02ed5c1cbaa916030b8da9c37255d0b69d",
+        "replacedTriangles": 8957,
+        "addedTriangles": 11159
+      },
+      "terrainPatch": {
+        "meshes": 2,
+        "replacedTriangles": 8957,
+        "addedTriangles": 11150,
+        "maximumDropM": 0.6031877150878913,
+        "collapsedTriangles": 9,
+        "windingRepairs": 71,
+        "normalRepairs": 31,
+        "rejected": false
+      },
+      "sourceMeshCount": 28,
+      "normalError": 2.987250491415239e-8,
+      "unsupported": 0,
+      "maxHeightError": 0.0000034543267586287923,
+      "belowSupport": 0,
+      "failures": []
+    },
+    {
+      "tileId": "-9_-4",
+      "level": 1,
+      "sourceSha256": "afabb97590793a88e542f3678a18b36ef641ca6a248aa34923d02bd627cfa703",
+      "lots": [
+        "PAVE-OSM-1455549257"
+      ],
+      "bays": 20,
+      "triangles": 436,
+      "pavingTriangles": 238,
+      "treeIslands": 0,
+      "inferredLayout": true,
+      "terrainPacket": {
+        "url": "/town-evidence/v1/terrain/-9_-4-1.7e9c9f1b9205b317.json",
+        "bytes": 740773,
+        "sha256": "7e9c9f1b9205b317941dec003673d653ed5d64ce0acbdc0491bd3f7b5ed9d6fe",
+        "replacedTriangles": 1700,
+        "addedTriangles": 7099
+      },
+      "terrainPatch": {
+        "meshes": 2,
+        "replacedTriangles": 1700,
+        "addedTriangles": 7090,
+        "maximumDropM": 0.5803075167623959,
+        "collapsedTriangles": 9,
+        "windingRepairs": 29,
+        "normalRepairs": 44,
+        "rejected": false
+      },
+      "sourceMeshCount": 28,
+      "normalError": 2.990852465689642e-8,
+      "unsupported": 0,
+      "maxHeightError": 0.0000028530351554537786,
+      "belowSupport": 0,
+      "failures": []
+    },
+    {
+      "tileId": "-9_-4",
+      "level": 2,
+      "sourceSha256": "a0497d39e78df9911d275960401945f98b34a419b80b7a3dcb56455af02ce3bc",
+      "lots": [
+        "PAVE-OSM-1455549257"
+      ],
+      "bays": 20,
+      "triangles": 265,
+      "pavingTriangles": 111,
+      "treeIslands": 0,
+      "inferredLayout": true,
+      "terrainPacket": {
+        "url": "/town-evidence/v1/terrain/-9_-4-2.2487f21496009267.json",
+        "bytes": 580612,
+        "sha256": "2487f214960092674708fb51a0717422389f8f79023b94a702439ccd8fd18706",
+        "replacedTriangles": 524,
+        "addedTriangles": 5977
+      },
+      "terrainPatch": {
+        "meshes": 2,
+        "replacedTriangles": 524,
+        "addedTriangles": 5968,
+        "maximumDropM": 0.8205439793937614,
+        "collapsedTriangles": 9,
+        "windingRepairs": 29,
+        "normalRepairs": 25,
+        "rejected": false
+      },
+      "sourceMeshCount": 28,
+      "normalError": 2.995134629202312e-8,
+      "unsupported": 0,
+      "maxHeightError": 0.0000022881162207114697,
+      "belowSupport": 0,
+      "failures": []
+    },
+    {
+      "tileId": "-9_-8",
+      "level": 0,
+      "sourceSha256": "8b60521d6911987668e42bd102e2981a516ba47011e50a638ae66bd34495e543",
+      "lots": [
+        "PAVE-OSM-1504195628",
+        "PAVE-OSM-1504195629"
+      ],
+      "bays": 57,
+      "triangles": 4158,
+      "pavingTriangles": 3099,
+      "treeIslands": 1,
+      "inferredLayout": true,
+      "terrainPacket": {
+        "url": "/town-evidence/v1/terrain/-9_-8-0.d485b79a61e75030.json",
+        "bytes": 528347,
+        "sha256": "d485b79a61e7503092c3d4c02cfde21fa0967bfd37de6bc92295c7c6558bea2f",
+        "replacedTriangles": 584,
+        "addedTriangles": 5413
+      },
+      "terrainPatch": {
+        "meshes": 2,
+        "replacedTriangles": 584,
+        "addedTriangles": 5407,
+        "maximumDropM": 0.3642422848199445,
+        "collapsedTriangles": 6,
+        "windingRepairs": 20,
+        "normalRepairs": 11,
+        "rejected": false
+      },
+      "sourceMeshCount": 25,
+      "normalError": 2.979850499684744e-8,
+      "unsupported": 0,
+      "maxHeightError": 0.000001788678964715143,
+      "belowSupport": 0,
+      "failures": []
+    },
+    {
+      "tileId": "-9_-8",
+      "level": 1,
+      "sourceSha256": "8c54f5a9d4fab3c1895d36829499fd55d4265de503252603c43014e44fc6343b",
+      "lots": [
+        "PAVE-OSM-1504195628",
+        "PAVE-OSM-1504195629"
+      ],
+      "bays": 57,
+      "triangles": 4119,
+      "pavingTriangles": 2900,
+      "treeIslands": 1,
+      "inferredLayout": true,
+      "terrainPacket": {
+        "url": "/town-evidence/v1/terrain/-9_-8-1.65d92e88e658da1f.json",
+        "bytes": 477727,
+        "sha256": "65d92e88e658da1fe2ab4cdb11a9f7281d43245f1e8dde8011bc11849222baa4",
+        "replacedTriangles": 328,
+        "addedTriangles": 4959
+      },
+      "terrainPatch": {
+        "meshes": 2,
+        "replacedTriangles": 328,
+        "addedTriangles": 4953,
+        "maximumDropM": 0.3642422848199445,
+        "collapsedTriangles": 6,
+        "windingRepairs": 8,
+        "normalRepairs": 9,
+        "rejected": false
+      },
+      "sourceMeshCount": 25,
+      "normalError": 2.979850499684744e-8,
+      "unsupported": 0,
+      "maxHeightError": 0.000001762566711022498,
+      "belowSupport": 0,
+      "failures": []
+    },
+    {
+      "tileId": "-9_-8",
+      "level": 2,
+      "sourceSha256": "f5042f18c22781373019c32b4157dd998a862ff9c49da4872d1b26eaef31f7d7",
+      "lots": [
+        "PAVE-OSM-1504195628",
+        "PAVE-OSM-1504195629"
+      ],
+      "bays": 57,
+      "triangles": 3279,
+      "pavingTriangles": 2376,
+      "treeIslands": 1,
+      "inferredLayout": true,
+      "terrainPacket": {
+        "url": "/town-evidence/v1/terrain/-9_-8-2.ca735630ab6a11f0.json",
+        "bytes": 460428,
+        "sha256": "ca735630ab6a11f000b067c297e4632733c26a974f3d87507914a9a1897868c4",
+        "replacedTriangles": 132,
+        "addedTriangles": 4776
+      },
+      "terrainPatch": {
+        "meshes": 2,
+        "replacedTriangles": 132,
+        "addedTriangles": 4770,
+        "maximumDropM": 0.4700795726992766,
+        "collapsedTriangles": 6,
+        "windingRepairs": 4,
+        "normalRepairs": 1,
+        "rejected": false
+      },
+      "sourceMeshCount": 25,
+      "normalError": 2.985403146915644e-8,
+      "unsupported": 0,
+      "maxHeightError": 0.000001768073192976935,
+      "belowSupport": 0,
+      "failures": []
+    },
+    {
+      "tileId": "1_-1",
+      "level": 0,
+      "sourceSha256": "5ed95e4bac395ecaf3e90a31bcaafae320a8c920cfa065ab0d915b3d9765d33c",
+      "lots": [
+        "PAVE-OSM-1193651354"
+      ],
+      "bays": 18,
+      "triangles": 2688,
+      "pavingTriangles": 2500,
+      "treeIslands": 0,
+      "inferredLayout": true,
+      "terrainPacket": {
+        "url": "/town-evidence/v1/terrain/1_-1-0.3d3952c0204d4b37.json",
+        "bytes": 505425,
+        "sha256": "3d3952c0204d4b37ebd3a58ab822da160e3344ac606c29fecb2146b5b8787a60",
+        "replacedTriangles": 689,
+        "addedTriangles": 5088
+      },
+      "terrainPatch": {
+        "meshes": 2,
+        "replacedTriangles": 689,
+        "addedTriangles": 5086,
+        "maximumDropM": 0.7577478185133373,
+        "collapsedTriangles": 2,
+        "windingRepairs": 11,
+        "normalRepairs": 28,
+        "rejected": false
+      },
+      "sourceMeshCount": 24,
+      "normalError": 2.978179414192539e-8,
+      "unsupported": 0,
+      "maxHeightError": 0.0000017994902494818804,
+      "belowSupport": 0,
+      "failures": []
+    },
+    {
+      "tileId": "1_-1",
+      "level": 1,
+      "sourceSha256": "a1623424089c6787dbc229bcf285c746a9df5896b70f70c6568b83cca20df06a",
+      "lots": [
+        "PAVE-OSM-1193651354"
+      ],
+      "bays": 18,
+      "triangles": 2516,
+      "pavingTriangles": 2350,
+      "treeIslands": 0,
+      "inferredLayout": true,
+      "terrainPacket": {
+        "url": "/town-evidence/v1/terrain/1_-1-1.c533335167b04de4.json",
+        "bytes": 486897,
+        "sha256": "c533335167b04de4fdbc99f9d23676df981b0547c485903b4846ed0a13116b73",
+        "replacedTriangles": 565,
+        "addedTriangles": 4945
+      },
+      "terrainPatch": {
+        "meshes": 2,
+        "replacedTriangles": 565,
+        "addedTriangles": 4943,
+        "maximumDropM": 0.7577478185133373,
+        "collapsedTriangles": 2,
+        "windingRepairs": 13,
+        "normalRepairs": 24,
+        "rejected": false
+      },
+      "sourceMeshCount": 24,
+      "normalError": 2.976636159779389e-8,
+      "unsupported": 0,
+      "maxHeightError": 0.0000017994902494818804,
+      "belowSupport": 0,
+      "failures": []
+    },
+    {
+      "tileId": "1_-1",
+      "level": 2,
+      "sourceSha256": "d2d2249881a76c21480258ed9828bd946a0e4a578b0f0577bdf978f7c379f651",
+      "lots": [
+        "PAVE-OSM-1193651354"
+      ],
+      "bays": 18,
+      "triangles": 2670,
+      "pavingTriangles": 2434,
+      "treeIslands": 0,
+      "inferredLayout": true,
+      "terrainPacket": {
+        "url": "/town-evidence/v1/terrain/1_-1-2.6ae3634140b7ac8d.json",
+        "bytes": 395213,
+        "sha256": "6ae3634140b7ac8d3889b01485cc554bbbd1c07394dbabad768f9134aab26baa",
+        "replacedTriangles": 192,
+        "addedTriangles": 4103
+      },
+      "terrainPatch": {
+        "meshes": 2,
+        "replacedTriangles": 192,
+        "addedTriangles": 4101,
+        "maximumDropM": 0.7577478185133373,
+        "collapsedTriangles": 2,
+        "windingRepairs": 1,
+        "normalRepairs": 7,
+        "rejected": false
+      },
+      "sourceMeshCount": 24,
+      "normalError": 2.980623325932186e-8,
+      "unsupported": 0,
+      "maxHeightError": 0.000001861805173803202,
+      "belowSupport": 0,
+      "failures": []
+    }
+  ],
+  "failures": [],
+  "status": "PASS",
+  "summary": {
+    "tileLods": 72,
+    "terrainAppliedCases": 72,
+    "replacedTerrainTriangles": 118433,
+    "uniqueLots": 39,
+    "bays": 1143,
+    "surfaceTriangles": 175117
+  }
+}

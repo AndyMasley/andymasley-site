@@ -1,6 +1,8 @@
 import * as THREE from 'three';
 import type { AssetRef, GroundSurfaces, V3 } from './contracts';
 import { TownGrass, grassMaskFromTexture } from './grass';
+import { pavedMaskReference } from './paved-surfaces';
+import { beginOptionalDetail } from './optional-detail';
 
 type TileSurface = { mask: THREE.Texture; materials: THREE.Material[] };
 type TextureReader = (asset: AssetRef, color: boolean, signal: AbortSignal, data?: boolean) => Promise<THREE.Texture>;
@@ -48,7 +50,17 @@ export class TownSurfaces {
       if (object instanceof THREE.Mesh && /^terrain(?:\b|_)/i.test(object.name)) terrain.push(object);
     });
     if (!terrain.length) return;
-    const mask = await this.read(reference, false, signal, true);
+    const replacement = pavedMaskReference(id, reference);
+    let corrected: THREE.Texture | undefined;
+    if (replacement) {
+      const request = beginOptionalDetail(signal, async child => {
+        const texture = await this.read(replacement, false, child, true);
+        if (child.aborted || this.disposed) { this.destroyTexture(texture); return undefined; }
+        return texture;
+      });
+      corrected = await request.finish();
+    }
+    const mask = corrected ?? await this.read(reference, false, signal, true);
     if (this.disposed || signal.aborted) {
       this.destroyTexture(mask);
       throw new DOMException('Loading cancelled', 'AbortError');
@@ -68,6 +80,7 @@ export class TownSurfaces {
     };
     for (const mesh of terrain) mesh.material = Array.isArray(mesh.material) ? mesh.material.map(clone) : clone(mesh.material);
     this.tiles.set(group, { mask, materials: [...copies.values()] });
+    group.userData.pavedSurfaceMask = corrected ? replacement!.url : undefined;
     const grassMask = grassMaskFromTexture(mask, reference.bounds);
     if (grassMask) this.grass.register(group, id, grassMask, terrain);
   }
@@ -78,7 +91,7 @@ export class TownSurfaces {
 
   private patch(material: THREE.MeshStandardMaterial, mask: THREE.Texture, bounds: number[]): void {
     const [color, normal, roughness, soil, forest, impervious] = this.shared;
-    material.customProgramCacheKey = () => 'webster-rooted-turf-ground-v4';
+    material.customProgramCacheKey = () => 'webster-finished-ground-v5';
     material.onBeforeCompile = shader => {
       Object.assign(shader.uniforms, {
         townCover: { value: mask }, townGrass: { value: color }, townGrassNormal: { value: normal },
@@ -101,6 +114,17 @@ float townHash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.54
 float townNoise(vec2 p) {
   vec2 i = floor(p), f = fract(p); f = f*f*(3.0-2.0*f);
   return mix(mix(townHash(i),townHash(i+vec2(1,0)),f.x),mix(townHash(i+vec2(0,1)),townHash(i+vec2(1,1)),f.x),f.y);
+}
+vec3 townScatteredGround(sampler2D groundTexture, vec2 world, float repeatSize) {
+  vec2 cell = floor(world / 3.6), blend = fract(world / 3.6);
+  blend = blend*blend*(3.0-2.0*blend);
+  vec2 uv = world / repeatSize;
+  vec2 a = vec2(townHash(cell),townHash(cell+vec2(71.3,9.7)))*47.0;
+  vec2 b = vec2(townHash(cell+vec2(1,0)),townHash(cell+vec2(72.3,9.7)))*47.0;
+  vec2 c = vec2(townHash(cell+vec2(0,1)),townHash(cell+vec2(71.3,10.7)))*47.0;
+  vec2 d = vec2(townHash(cell+vec2(1,1)),townHash(cell+vec2(72.3,10.7)))*47.0;
+  return mix(mix(texture2D(groundTexture,uv+a).rgb,texture2D(groundTexture,uv+b).rgb,blend.x),
+    mix(texture2D(groundTexture,uv+c).rgb,texture2D(groundTexture,uv+d).rgb,blend.x),blend.y);
 }
 vec2 townCutBlade(vec2 world) {
   vec2 p = world * 24.0, cell = floor(p), f = fract(p) - 0.5;
@@ -146,13 +170,26 @@ if (townWeights.r > 0.001) {
   vec2 townBlade = townCutBlade(vTownGroundXZ);
   townGrassColor *= 1.0 + townBlade.x * townClose * 0.15 - townBlade.y * townClose * 0.14;
 }
-vec2 townForestUV = vTownGroundXZ / townOtherRepeats.y;
-vec3 townForestSource = mix(texture2D(townForest,townForestUV).rgb,
-  texture2D(townForest,townTurfRotation*townForestUV/1.17+vec2(7.13,2.87)).rgb,0.48);
-float townForestValue = dot(townForestSource,vec3(0.2126,0.7152,0.0722));
-// Last season's litter is muted and irregular, not a tiled orange autumn carpet.
-vec3 townForestColor = mix(townForestValue*vec3(1.10,1.02,0.88),townForestSource,0.42) * mix(0.72,0.91,townMacro);
-vec3 townSoilColor = texture2D(townSoil,vTownGroundXZ/townOtherRepeats.x).rgb * mix(0.90,1.08,townMacro);
+vec3 townForestColor = vec3(0.0);
+if (townWeights.g > 0.001) {
+  // Blend hashed texture offsets continuously in world space. The source leaf
+  // photograph has strong pale patches that otherwise form a visible grid.
+  vec3 townForestSource = townScatteredGround(townForest,vTownGroundXZ,townOtherRepeats.y);
+  float townForestValue = smoothstep(0.035,0.30,dot(townForestSource,vec3(0.2126,0.7152,0.0722)));
+  float townLitterDetail = 1.0 - smoothstep(8.0,42.0,townDistance);
+  float townFloorVariation = mix(townNoise(vTownGroundXZ/1.9),townForestValue,0.24+0.40*townLitterDetail);
+  townForestColor = mix(vec3(0.062,0.073,0.043),vec3(0.145,0.128,0.078),townFloorVariation);
+  townForestColor *= mix(0.86,1.07,townMacro);
+}
+vec3 townSoilColor = vec3(0.0);
+if (townWeights.a > 0.001) {
+  vec3 townSoilSource = townScatteredGround(townSoil,vTownGroundXZ,townOtherRepeats.x);
+  float townSoilValue = smoothstep(0.035,0.36,dot(townSoilSource,vec3(0.2126,0.7152,0.0722)));
+  float townSoilDetail = 1.0 - smoothstep(9.0,45.0,townDistance);
+  float townSoilVariation = mix(townNoise(vTownGroundXZ/2.4),townSoilValue,0.28+0.42*townSoilDetail);
+  townSoilColor = mix(vec3(0.115,0.101,0.074),vec3(0.245,0.219,0.166),townSoilVariation);
+  townSoilColor *= mix(0.91,1.07,townMacro);
+}
 vec3 townPavedSource = texture2D(townPavement,vTownGroundXZ/townOtherRepeats.z).rgb;
 float townPavedValue = dot(townPavedSource,vec3(0.2126,0.7152,0.0722));
 vec3 townPavedColor = mix(townPavedSource, townPavedValue*vec3(0.94,1.0,1.07),0.96) * 0.56;

@@ -10,3 +10,15 @@
 /town-transfer/gzip-v1/*
   Cache-Control: public, max-age=31536000, immutable
   Content-Type: application/gzip
+
+/town-finish/v1/markings/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/town-evidence/v1/terrain/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/town-surfaces/v2/masks/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/town-surfaces/v2/lots/*
+  Cache-Control: public, max-age=31536000, immutable

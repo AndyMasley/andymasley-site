@@ -1,0 +1,6 @@
+[out:json][timeout:60];(
+way(42.0227,-71.8918,42.0942,-71.8038)["amenity"="parking"];
+relation(42.0227,-71.8918,42.0942,-71.8038)["amenity"="parking"];
+way(42.0227,-71.8918,42.0942,-71.8038)["highway"="service"];
+way(42.0227,-71.8918,42.0942,-71.8038)["area:highway"];
+);out geom;

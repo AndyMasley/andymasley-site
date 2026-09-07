@@ -1,0 +1,3011 @@
+{
+  "sourceManifestSha256": "37fbef34bc2a4467997252be75b4c43174a6a7b2d39963614cadd8d787e56105",
+  "lots": [
+    {
+      "id": "PAVE-OSM-247622897",
+      "osmId": 247622897,
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -2732.6250483425392,
+              -1117.4012608884368
+            ],
+            [
+              -2703.3098451611004,
+              -1106.1358044801746
+            ],
+            [
+              -2700.8053907508147,
+              -1112.6113254257943
+            ],
+            [
+              -2695.48135802435,
+              -1110.557970254682
+            ],
+            [
+              -2688.6062191712554,
+              -1128.3044993797084
+            ],
+            [
+              -2696.0615472814534,
+              -1131.1814167154953
+            ],
+            [
+              -2694.44915894937,
+              -1135.3426737576956
+            ],
+            [
+              -2721.624947604665,
+              -1145.7957617359934
+            ],
+            [
+              -2722.909939816018,
+              -1142.4801016751444
+            ],
+            [
+              -2729.555830148951,
+              -1125.3232404724695
+            ],
+            [
+              -2732.6250483425392,
+              -1117.4012608884368
+            ]
+          ]
+        ]
+      },
+      "tags": {
+        "amenity": "parking"
+      },
+      "areaM2": 1054.46,
+      "insideTownAreaM2": 1054.46,
+      "center": [
+        -2710.8178795647636,
+        -1125.3305860743226
+      ],
+      "currentMask": {
+        "pixels": 1108,
+        "equivalentAreaM2": 1056.671142578125,
+        "weights": {
+          "grass": 0.1234,
+          "forest": 0.0,
+          "impervious": 0.8766,
+          "soil": 0.0
+        },
+        "excludedFraction": 0.0,
+        "tiles": [
+          "-11_-5"
+        ]
+      },
+      "nearbyBuildings": [
+        {
+          "id": "BLD-168598_866482",
+          "address": "4 MERINGO AVE",
+          "use": "Single Family Residential",
+          "distanceM": 31.5
+        },
+        {
+          "id": "BLD-168541_866492",
+          "address": "5 MAY ST",
+          "use": "Three-Family Residential",
+          "distanceM": 42.4
+        },
+        {
+          "id": "BLD-168583_866508",
+          "address": "3 MERINGO AVE",
+          "use": "Single Family Residential",
+          "distanceM": 45.8
+        }
+      ],
+      "inspectionAerialMetadata": "/Users/andy/Documents/New project/webster-blender/downtown/downtown_aerial_metadata.json",
+      "inspectionImageDate": "Spring2025",
+      "aerialPixelM": 0.22171621168085145
+    },
+    {
+      "id": "PAVE-OSM-1097398491",
+      "osmId": 1097398491,
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -3166.3617341199424,
+              -1038.7499119098065
+            ],
+            [
+              -3163.029100715765,
+              -1037.7208843071712
+            ],
+            [
+              -3151.4783185892447,
+              -1037.2398812930332
+            ],
+            [
+              -3150.166097571666,
+              -1041.810855084681
+            ],
+            [
+              -3151.7795863228675,
+              -1054.4657594372984
+            ],
+            [
+              -3154.9422017768084,
+              -1067.3469218118116
+            ],
+            [
+              -3166.7520820156496,
+              -1062.861839542864
+            ],
+            [
+              -3171.011264777393,
+              -1060.0769180360949
+            ],
+            [
+              -3171.2248005933943,
+              -1057.8656246622559
+            ],
+            [
+              -3170.8771609457326,
+              -1054.212932048482
+            ],
+            [
+              -3169.5233687261643,
+              -1049.5762439925456
+            ],
+            [
+              -3166.3617341199424,
+              -1038.7499119098065
+            ]
+          ]
+        ]
+      },
+      "tags": {
+        "amenity": "parking"
+      },
+      "areaM2": 471.99,
+      "insideTownAreaM2": 471.99,
+      "center": [
+        -3160.220633403012,
+        -1051.2331029289346
+      ],
+      "currentMask": {
+        "pixels": 497,
+        "equivalentAreaM2": 473.97613525390625,
+        "weights": {
+          "grass": 0.0,
+          "forest": 0.0,
+          "impervious": 1.0,
+          "soil": 0.0
+        },
+        "excludedFraction": 0.0,
+        "tiles": [
+          "-13_-5"
+        ]
+      },
+      "nearbyBuildings": [
+        {
+          "id": "BLD-168175_866540",
+          "address": "128 MAIN ST",
+          "use": "Small Retail and Services stores (under 10,000 sq. ft.)",
+          "distanceM": 53.3
+        },
+        {
+          "id": "BLD-168068_866552",
+          "address": "80 MAIN ST",
+          "use": "Fuel Service Areas - providing only fuel products",
+          "distanceM": 54.5
+        },
+        {
+          "id": "BLD-168175_866497",
+          "address": "48 SCHOOL ST",
+          "use": "Funeral Homes",
+          "distanceM": 66.7
+        }
+      ],
+      "inspectionAerialMetadata": "/Users/andy/Documents/New project/webster-blender/downtown/downtown_aerial_metadata.json",
+      "inspectionImageDate": "Spring2025",
+      "aerialPixelM": 0.22171621168085145
+    },
+    {
+      "id": "PAVE-OSM-1097409917",
+      "osmId": 1097409917,
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -3123.902885945543,
+              -2045.3736946622375
+            ],
+            [
+              -3060.7861585239007,
+              -2036.1391479935264
+            ],
+            [
+              -3060.7149458951317,
+              -2069.9941152238753
+            ],
+            [
+              -3119.7910055068205,
+              -2069.9501812540693
+            ],
+            [
+              -3123.902885945543,
+              -2045.3736946622375
+            ]
+          ]
+        ]
+      },
+      "tags": {
+        "amenity": "parking"
+      },
+      "areaM2": 1794.59,
+      "insideTownAreaM2": 1794.59,
+      "center": [
+        -3089.7564959027127,
+        -2055.06079861439
+      ],
+      "currentMask": {
+        "pixels": 1912,
+        "equivalentAreaM2": 1823.42529296875,
+        "weights": {
+          "grass": 0.0644,
+          "forest": 0.0,
+          "impervious": 0.933,
+          "soil": 0.0
+        },
+        "excludedFraction": 0.0026,
+        "tiles": [
+          "-13_-9"
+        ]
+      },
+      "nearbyBuildings": [
+        {
+          "id": "BLD-168200_865573",
+          "address": "14 HOUGHTON ST",
+          "use": "Single Family Residential",
+          "distanceM": 39.7
+        },
+        {
+          "id": "BLD-168232_865530",
+          "address": "9 HOUGHTON ST",
+          "use": "Function Halls, Community Centers, Fraternal Organizations (Charitable Org.)",
+          "distanceM": 40.1
+        },
+        {
+          "id": "BLD-168176_865572",
+          "address": "16 HOUGHTON ST",
+          "use": "Single Family Residential",
+          "distanceM": 41.3
+        }
+      ],
+      "inspectionAerialMetadata": "/Users/andy/Documents/New project/webster-blender/townwide/imagery_aerial_metadata.json",
+      "inspectionImageDate": "Spring2025",
+      "aerialPixelM": 0.8867472028467306
+    },
+    {
+      "id": "PAVE-OSM-1097409918",
+      "osmId": 1097409918,
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -3027.2959791750764,
+              -2049.3406904105796
+            ],
+            [
+              -2997.471941571188,
+              -2047.4198628580198
+            ],
+            [
+              -2996.0658581534517,
+              -2058.8110235395143
+            ],
+            [
+              -2995.869990542822,
+              -2070.5077499387553
+            ],
+            [
+              -3024.9784910303133,
+              -2073.4758745293366
+            ],
+            [
+              -3027.0899960706884,
+              -2051.407549448195
+            ],
+            [
+              -3027.2959791750764,
+              -2049.3406904105796
+            ]
+          ]
+        ]
+      },
+      "tags": {
+        "amenity": "parking"
+      },
+      "areaM2": 707.55,
+      "insideTownAreaM2": 707.55,
+      "center": [
+        -3011.3687360001913,
+        -2060.1416383891924
+      ],
+      "currentMask": {
+        "pixels": 742,
+        "equivalentAreaM2": 707.6263427734375,
+        "weights": {
+          "grass": 0.1754,
+          "forest": 0.0,
+          "impervious": 0.8246,
+          "soil": 0.0
+        },
+        "excludedFraction": 0.0,
+        "tiles": [
+          "-13_-9",
+          "-12_-9"
+        ]
+      },
+      "nearbyBuildings": [
+        {
+          "id": "BLD-168280_865501",
+          "address": "630 SCHOOL ST",
+          "use": "Single Family Residential",
+          "distanceM": 29.8
+        },
+        {
+          "id": "BLD-168232_865530",
+          "address": "9 HOUGHTON ST",
+          "use": "Function Halls, Community Centers, Fraternal Organizations (Charitable Org.)",
+          "distanceM": 38.5
+        },
+        {
+          "id": "BLD-168272_865479",
+          "address": "642 SCHOOL ST",
+          "use": "Single Family Residential",
+          "distanceM": 50.0
+        }
+      ],
+      "inspectionAerialMetadata": "/Users/andy/Documents/New project/webster-blender/townwide/imagery_aerial_metadata.json",
+      "inspectionImageDate": "Spring2025",
+      "aerialPixelM": 0.8867472028467306
+    },
+    {
+      "id": "PAVE-OSM-1097409920",
+      "osmId": 1097409920,
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -2850.248207933153,
+              -1247.0080830377992
+            ],
+            [
+              -2820.4712647301203,
+              -1288.2265822163317
+            ],
+            [
+              -2834.8422992998967,
+              -1299.1029506789055
+            ],
+            [
+              -2829.6016326273384,
+              -1312.0440106929746
+            ],
+            [
+              -2821.2254534528183,
+              -1331.041374830529
+            ],
+            [
+              -2801.852630235633,
+              -1319.876305794809
+            ],
+            [
+              -2791.7929305818398,
+              -1314.123255870887
+            ],
+            [
+              -2784.1579358314048,
+              -1324.842422917718
+            ],
+            [
+              -2777.8615763295093,
+              -1342.4198449698742
+            ],
+            [
+              -2808.3465304528363,
+              -1359.5443596214755
+            ],
+            [
+              -2844.10267194116,
+              -1379.777408302878
+            ],
+            [
+              -2879.6703979011218,
+              -1265.3477238599444
+            ],
+            [
+              -2881.7189203934104,
+              -1258.7631086659385
+            ],
+            [
+              -2850.248207933153,
+              -1247.0080830377992
+            ]
+          ]
+        ]
+      },
+      "tags": {
+        "amenity": "parking"
+      },
+      "areaM2": 5891.32,
+      "insideTownAreaM2": 5891.32,
+      "center": [
+        -2836.676796215311,
+        -1315.2190875605402
+      ],
+      "currentMask": {
+        "pixels": 6173,
+        "equivalentAreaM2": 5887.031555175781,
+        "weights": {
+          "grass": 0.1131,
+          "forest": 0.0232,
+          "impervious": 0.8595,
+          "soil": 0.0042
+        },
+        "excludedFraction": 0.0,
+        "tiles": [
+          "-12_-6",
+          "-12_-5"
+        ]
+      },
+      "nearbyBuildings": [
+        {
+          "id": "BLD-168494_866295",
+          "address": "30 MYRTLE AVE",
+          "use": "Apartments with Four to Eight Units",
+          "distanceM": 53.2
+        },
+        {
+          "id": "BLD-168515_866277",
+          "address": "32 MYRTLE AVE",
+          "use": "Two-Family Residential",
+          "distanceM": 69.2
+        },
+        {
+          "id": "BLD-168417_866343",
+          "address": "18-20 PARK ST",
+          "use": "Three-Family Residential",
+          "distanceM": 75.0
+        }
+      ],
+      "inspectionAerialMetadata": "/Users/andy/Documents/New project/webster-blender/downtown/downtown_aerial_metadata.json",
+      "inspectionImageDate": "Spring2025",
+      "aerialPixelM": 0.22171621168085145
+    },
+    {
+      "id": "PAVE-OSM-1097409921",
+      "osmId": 1097409921,
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -2947.4842444965034,
+              -1256.5358561329776
+            ],
+            [
+              -2941.104097372532,
+              -1255.320459799259
+            ],
+            [
+              -2926.37793724754,
+              -1263.1281695630169
+            ],
+            [
+              -2906.868572744541,
+              -1265.8368633247446
+            ],
+            [
+              -2881.9467625035904,
+              -1263.4271031748503
+            ],
+            [
+              -2881.237738019612,
+              -1273.337877297774
+            ],
+            [
+              -2928.7419825521647,
+              -1288.164258350851
+            ],
+            [
+              -2919.731880347681,
+              -1317.1277190205874
+            ],
+            [
+              -2936.758703930449,
+              -1322.0274279019795
+            ],
+            [
+              -2950.0958369477303,
+              -1279.5271077073412
+            ],
+            [
+              -2954.5157730968785,
+              -1266.389708754723
+            ],
+            [
+              -2945.601307501376,
+              -1263.1086410317803
+            ],
+            [
+              -2946.817447156558,
+              -1259.2267830186756
+            ],
+            [
+              -2951.783899153321,
+              -1259.0379031359917
+            ],
+            [
+              -2947.4842444965034,
+              -1256.5358561329776
+            ]
+          ]
+        ]
+      },
+      "tags": {
+        "amenity": "parking"
+      },
+      "areaM2": 2009.92,
+      "insideTownAreaM2": 2009.92,
+      "center": [
+        -2926.0900710852707,
+        -1281.977997508117
+      ],
+      "currentMask": {
+        "pixels": 2106,
+        "equivalentAreaM2": 2008.4381103515625,
+        "weights": {
+          "grass": 0.0435,
+          "forest": 0.0,
+          "impervious": 0.9417,
+          "soil": 0.0
+        },
+        "excludedFraction": 0.0147,
+        "tiles": [
+          "-12_-6"
+        ]
+      },
+      "nearbyBuildings": [
+        {
+          "id": "BLD-168382_866352",
+          "address": "14-16 PARK ST",
+          "use": "Multiple Houses on one parcel",
+          "distanceM": 51.5
+        },
+        {
+          "id": "BLD-168372_866252",
+          "address": "12 PARK ST",
+          "use": "Buildings for manufacturing operations",
+          "distanceM": 57.6
+        },
+        {
+          "id": "BLD-168343_866365",
+          "address": "13 PARK ST",
+          "use": "Three-Family Residential",
+          "distanceM": 62.6
+        }
+      ],
+      "inspectionAerialMetadata": "/Users/andy/Documents/New project/webster-blender/downtown/downtown_aerial_metadata.json",
+      "inspectionImageDate": "Spring2025",
+      "aerialPixelM": 0.22171621168085145
+    },
+    {
+      "id": "PAVE-OSM-1193651354",
+      "osmId": 1193651354,
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              305.8872760357626,
+              -49.67597287276294
+            ],
+            [
+              293.6276632157678,
+              -58.10139814938884
+            ],
+            [
+              278.13075919874245,
+              -62.61514554952737
+            ],
+            [
+              287.06861104106065,
+              -108.26829308399465
+            ],
+            [
+              289.24335371656343,
+              -108.82130150659941
+            ],
+            [
+              290.11878917497233,
+              -113.42319497128483
+            ],
+            [
+              305.94130225805566,
+              -110.29912772087846
+            ],
+            [
+              306.9043850831804,
+              -111.63586371787824
+            ],
+            [
+              307.0440802917292,
+              -113.94671726226807
+            ],
+            [
+              307.1111121555732,
+              -115.80188442405779
+            ],
+            [
+              309.3516656533466,
+              -114.40028950676788
+            ],
+            [
+              311.4465333877015,
+              -112.17617713147774
+            ],
+            [
+              312.88457666762406,
+              -108.61656119453255
+            ],
+            [
+              314.2419455210038,
+              -104.5345833976753
+            ],
+            [
+              315.6055682457518,
+              -98.89762663608417
+            ],
+            [
+              316.5240466023388,
+              -92.80348492413759
+            ],
+            [
+              317.5870021156152,
+              -87.83174844481982
+            ],
+            [
+              318.5772476650018,
+              -82.41543249133974
+            ],
+            [
+              318.89555777734495,
+              -77.3629502496915
+            ],
+            [
+              316.9059825002041,
+              -71.93464786012191
+            ],
+            [
+              310.8402020831709,
+              -59.20364123629406
+            ],
+            [
+              305.8872760357626,
+              -49.67597287276294
+            ]
+          ]
+        ]
+      },
+      "tags": {
+        "amenity": "parking"
+      },
+      "areaM2": 1816.45,
+      "insideTownAreaM2": 1816.45,
+      "center": [
+        299.55394860442834,
+        -83.01442533680017
+      ],
+      "currentMask": {
+        "pixels": 1904,
+        "equivalentAreaM2": 1815.7958984375,
+        "weights": {
+          "grass": 0.8477,
+          "forest": 0.0,
+          "impervious": 0.0342,
+          "soil": 0.0
+        },
+        "excludedFraction": 0.1182,
+        "tiles": [
+          "1_-1"
+        ]
+      },
+      "nearbyBuildings": [
+        {
+          "id": "BLD-171563_867503",
+          "address": "140-144 GORE RD",
+          "use": "Small Retail and Services stores (under 10,000 sq. ft.)",
+          "distanceM": 19.1
+        },
+        {
+          "id": "BLD-171550_867546",
+          "address": "136 GORE RD",
+          "use": "Single Family Residential",
+          "distanceM": 51.4
+        },
+        {
+          "id": "BLD-171634_867509",
+          "address": "141 GORE RD",
+          "use": "Single Family Residential",
+          "distanceM": 51.8
+        }
+      ],
+      "inspectionAerialMetadata": "/Users/andy/Documents/New project/webster-blender/townwide/imagery_aerial_metadata.json",
+      "inspectionImageDate": "Spring2025",
+      "aerialPixelM": 0.8867472028467306
+    },
+    {
+      "id": "PAVE-OSM-1227016151",
+      "osmId": 1227016151,
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -1721.6062414995395,
+              -678.5779400889296
+            ],
+            [
+              -1702.5320890455332,
+              -674.4283095264109
+            ],
+            [
+              -1710.796711779025,
+              -636.717156200204
+            ],
+            [
+              -1715.867643555277,
+              -637.8171259092633
+            ],
+            [
+              -1734.0199466153863,
+              -554.923748901696
+            ],
+            [
+              -1748.0145887146646,
+              -557.9622806656407
+            ],
+            [
+              -1732.6875048390648,
+              -627.9369712198386
+            ],
+            [
+              -1726.3488578514953,
+              -626.5648003435927
+            ],
+            [
+              -1725.3339911901276,
+              -631.1786544249626
+            ],
+            [
+              -1731.6809679386788,
+              -632.561897475156
+            ],
+            [
+              -1721.6062414995395,
+              -678.5779400889296
+            ]
+          ]
+        ]
+      },
+      "tags": {
+        "amenity": "parking",
+        "capacity": "60"
+      },
+      "areaM2": 1937.96,
+      "insideTownAreaM2": 1937.96,
+      "center": [
+        -1725.8664313002464,
+        -620.6233773511314
+      ],
+      "currentMask": {
+        "pixels": 2033,
+        "equivalentAreaM2": 1938.8198852539062,
+        "weights": {
+          "grass": 0.6282,
+          "forest": 0.0214,
+          "impervious": 0.3503,
+          "soil": 0.0
+        },
+        "excludedFraction": 0.0,
+        "tiles": [
+          "-7_-3"
+        ]
+      },
+      "nearbyBuildings": [
+        {
+          "id": "BLD-169602_867006",
+          "address": "58 PARK AVE",
+          "use": "Improved, Education (Municipal or County)",
+          "distanceM": 74.0
+        },
+        {
+          "id": "BLD-169575_866863",
+          "address": "54 RAY ST",
+          "use": "Single Family Residential",
+          "distanceM": 107.3
+        },
+        {
+          "id": "BLD-169616_866869",
+          "address": "60 RAY ST",
+          "use": "Single Family Residential",
+          "distanceM": 116.2
+        }
+      ],
+      "inspectionAerialMetadata": "/Users/andy/Documents/New project/webster-blender/townwide/imagery_aerial_metadata.json",
+      "inspectionImageDate": "Spring2025",
+      "aerialPixelM": 0.8867472028467306
+    },
+    {
+      "id": "PAVE-OSM-1227016152",
+      "osmId": 1227016152,
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -1701.8171610845602,
+              -635.3008079665015
+            ],
+            [
+              -1661.0285811241192,
+              -677.061684162938
+            ],
+            [
+              -1652.9234804342268,
+              -676.8744077935116
+            ],
+            [
+              -1695.0438975333818,
+              -634.8856985906605
+            ],
+            [
+              -1701.8171610845602,
+              -635.3008079665015
+            ]
+          ]
+        ]
+      },
+      "tags": {
+        "amenity": "parking",
+        "capacity": "13"
+      },
+      "areaM2": 324.0,
+      "insideTownAreaM2": 324.0,
+      "center": [
+        -1677.2053372940939,
+        -656.5294273463379
+      ],
+      "currentMask": {
+        "pixels": 351,
+        "equivalentAreaM2": 334.73968505859375,
+        "weights": {
+          "grass": 0.9383,
+          "forest": 0.0,
+          "impervious": 0.0617,
+          "soil": 0.0
+        },
+        "excludedFraction": 0.0,
+        "tiles": [
+          "-7_-3"
+        ]
+      },
+      "nearbyBuildings": [
+        {
+          "id": "BLD-169616_866869",
+          "address": "60 RAY ST",
+          "use": "Single Family Residential",
+          "distanceM": 64.7
+        },
+        {
+          "id": "BLD-169602_867006",
+          "address": "58 PARK AVE",
+          "use": "Improved, Education (Municipal or County)",
+          "distanceM": 66.8
+        },
+        {
+          "id": "BLD-169653_866879",
+          "address": "64 RAY ST",
+          "use": "Single Family Residential",
+          "distanceM": 72.0
+        }
+      ],
+      "inspectionAerialMetadata": "/Users/andy/Documents/New project/webster-blender/townwide/imagery_aerial_metadata.json",
+      "inspectionImageDate": "Spring2025",
+      "aerialPixelM": 0.8867472028467306
+    },
+    {
+      "id": "PAVE-OSM-1227016153",
+      "osmId": 1227016153,
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -1617.3676832976926,
+              -508.9645681543043
+            ],
+            [
+              -1621.8804661984323,
+              -513.1214768775972
+            ],
+            [
+              -1623.4295314587653,
+              -511.44874373823404
+            ],
+            [
+              -1646.425738406193,
+              -532.6423457294004
+            ],
+            [
+              -1603.9987431360933,
+              -578.3418848615838
+            ],
+            [
+              -1580.8030380114506,
+              -556.9601798173971
+            ],
+            [
+              -1582.343940160179,
+              -555.3097052449593
+            ],
+            [
+              -1578.0306321158423,
+              -551.3407375480747
+            ],
+            [
+              -1617.3676832976926,
+              -508.9645681543043
+            ]
+          ]
+        ]
+      },
+      "tags": {
+        "amenity": "parking",
+        "capacity": "70"
+      },
+      "areaM2": 2305.14,
+      "insideTownAreaM2": 2305.14,
+      "center": [
+        -1611.5904522225774,
+        -542.9498406679294
+      ],
+      "currentMask": {
+        "pixels": 2419,
+        "equivalentAreaM2": 2306.9381713867188,
+        "weights": {
+          "grass": 0.0063,
+          "forest": 0.0,
+          "impervious": 0.8213,
+          "soil": 0.1724
+        },
+        "excludedFraction": 0.0,
+        "tiles": [
+          "-7_-3"
+        ]
+      },
+      "nearbyBuildings": [
+        {
+          "id": "BLD-169602_867006",
+          "address": "58 PARK AVE",
+          "use": "Improved, Education (Municipal or County)",
+          "distanceM": 67.7
+        },
+        {
+          "id": "BLD-169712_867100",
+          "address": "69 PARK AVE",
+          "use": "Single Family Residential",
+          "distanceM": 68.5
+        },
+        {
+          "id": "BLD-169742_867068",
+          "address": "75 PARK AVE",
+          "use": "Single Family Residential",
+          "distanceM": 74.4
+        }
+      ],
+      "inspectionAerialMetadata": "/Users/andy/Documents/New project/webster-blender/townwide/imagery_aerial_metadata.json",
+      "inspectionImageDate": "Spring2025",
+      "aerialPixelM": 0.8867472028467306
+    },
+    {
+      "id": "PAVE-OSM-1305753671",
+      "osmId": 1305753671,
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -1043.2790911222983,
+              2066.060327756335
+            ],
+            [
+              -987.8396035261394,
+              2071.380383394193
+            ],
+            [
+              -989.3170942675497,
+              2091.9238296815893
+            ],
+            [
+              -1045.5775416687247,
+              2086.1518525198335
+            ],
+            [
+              -1043.2790911222983,
+              2066.060327756335
+            ]
+          ]
+        ]
+      },
+      "tags": {
+        "access": "private",
+        "amenity": "parking",
+        "parking": "surface"
+      },
+      "areaM2": 1145.2,
+      "insideTownAreaM2": 1145.2,
+      "center": [
+        -1016.4216692828082,
+        2078.913368620175
+      ],
+      "currentMask": {
+        "pixels": 1198,
+        "equivalentAreaM2": 1142.5018310546875,
+        "weights": {
+          "grass": 0.0987,
+          "forest": 0.0,
+          "impervious": 0.9013,
+          "soil": 0.0
+        },
+        "excludedFraction": 0.0,
+        "tiles": [
+          "-5_8",
+          "-4_8"
+        ]
+      },
+      "nearbyBuildings": [
+        {
+          "id": "BLD-170267_869556",
+          "address": "4 GOYA DR",
+          "use": "Buildings for manufacturing operations",
+          "distanceM": 112.3
+        },
+        {
+          "id": "BLD-170167_869570",
+          "address": "50 CUDWORTH RD",
+          "use": "Other Mining/Quarry",
+          "distanceM": 139.7
+        },
+        {
+          "id": "BLD-170329_869808",
+          "address": "9 GOYA DR",
+          "use": "Other Storage, Warehouse, and Distribution facilities (see also usecode 401)",
+          "distanceM": 153.8
+        }
+      ],
+      "inspectionAerialMetadata": "/Users/andy/Documents/New project/webster-blender/townwide/imagery_aerial_metadata.json",
+      "inspectionImageDate": "Spring2025",
+      "aerialPixelM": 0.8867472028467306
+    },
+    {
+      "id": "PAVE-OSM-1305753684",
+      "osmId": 1305753684,
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -968.3686220695381,
+              2116.660299771349
+            ],
+            [
+              -962.9286361574486,
+              2117.4704618353862
+            ],
+            [
+              -954.2571688890166,
+              2137.016010075691
+            ],
+            [
+              -961.6580391833268,
+              2216.9412833113456
+            ],
+            [
+              -973.2974391932366,
+              2215.7240161083173
+            ],
+            [
+              -965.8153608271095,
+              2123.6582097188802
+            ],
+            [
+              -968.3686220695381,
+              2116.660299771349
+            ]
+          ]
+        ]
+      },
+      "tags": {
+        "access": "private",
+        "amenity": "parking",
+        "parking": "surface"
+      },
+      "areaM2": 1124.71,
+      "insideTownAreaM2": 1124.71,
+      "center": [
+        -963.7288282851536,
+        2169.5479665887665
+      ],
+      "currentMask": {
+        "pixels": 1179,
+        "equivalentAreaM2": 1124.3820190429688,
+        "weights": {
+          "grass": 0.0324,
+          "forest": 0.0,
+          "impervious": 0.9676,
+          "soil": 0.0
+        },
+        "excludedFraction": 0.0,
+        "tiles": [
+          "-4_8"
+        ]
+      },
+      "nearbyBuildings": [
+        {
+          "id": "BLD-170329_869808",
+          "address": "9 GOYA DR",
+          "use": "Other Storage, Warehouse, and Distribution facilities (see also usecode 401)",
+          "distanceM": 50.7
+        },
+        {
+          "id": "BLD-170256_869821",
+          "address": "5-7 GOYA DR",
+          "use": "Other Storage, Warehouse, and Distribution facilities (see also usecode 401)",
+          "distanceM": 96.2
+        },
+        {
+          "id": "BLD-170267_869556",
+          "address": "4 GOYA DR",
+          "use": "Buildings for manufacturing operations",
+          "distanceM": 209.5
+        }
+      ],
+      "inspectionAerialMetadata": "/Users/andy/Documents/New project/webster-blender/townwide/imagery_aerial_metadata.json",
+      "inspectionImageDate": "Spring2025",
+      "aerialPixelM": 0.8867472028467306
+    },
+    {
+      "id": "PAVE-OSM-1455518884",
+      "osmId": 1455518884,
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -1378.204692547879,
+              534.9534909039503
+            ],
+            [
+              -1378.397218338534,
+              499.50016291765496
+            ],
+            [
+              -1358.641060462658,
+              499.3937530684052
+            ],
+            [
+              -1358.5327591679525,
+              518.9863734507235
+            ],
+            [
+              -1363.7800639250781,
+              519.0198378413916
+            ],
+            [
+              -1363.6959268566861,
+              534.8805459184805
+            ],
+            [
+              -1378.204692547879,
+              534.9534909039503
+            ]
+          ]
+        ]
+      },
+      "tags": {
+        "amenity": "parking"
+      },
+      "areaM2": 617.3,
+      "insideTownAreaM2": 617.3,
+      "center": [
+        -1369.4076026554078,
+        515.8592184050315
+      ],
+      "currentMask": {
+        "pixels": 652,
+        "equivalentAreaM2": 621.795654296875,
+        "weights": {
+          "grass": 0.1888,
+          "forest": 0.0,
+          "impervious": 0.8112,
+          "soil": 0.0
+        },
+        "excludedFraction": 0.0,
+        "tiles": [
+          "-6_1",
+          "-6_2"
+        ]
+      },
+      "nearbyBuildings": [
+        {
+          "id": "BLD-170025_868105",
+          "address": "30 WORCESTER RD",
+          "use": "Warehouses for storage of manufactured products",
+          "distanceM": 111.7
+        },
+        {
+          "id": "BLD-169863_867983",
+          "address": "27 WORCESTER RD",
+          "use": "Auto Repair Facilities",
+          "distanceM": 131.8
+        },
+        {
+          "id": "BLD-169801_868025",
+          "address": "41 WORCESTER RD",
+          "use": "Shopping Centers/Malls",
+          "distanceM": 137.4
+        }
+      ],
+      "inspectionAerialMetadata": "/Users/andy/Documents/New project/webster-blender/townwide/imagery_aerial_metadata.json",
+      "inspectionImageDate": "Spring2025",
+      "aerialPixelM": 0.8867472028467306
+    },
+    {
+      "id": "PAVE-OSM-1455518885",
+      "osmId": 1455518885,
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -1361.1182878765103,
+              339.51633547234815
+            ],
+            [
+              -1377.9121426999918,
+              337.5886134726461
+            ],
+            [
+              -1377.9395102477574,
+              331.168776041246
+            ],
+            [
+              -1382.9821182515298,
+              330.7126652651932
+            ],
+            [
+              -1380.483943078143,
+              293.4818315168377
+            ],
+            [
+              -1374.4561274684384,
+              293.9892806322314
+            ],
+            [
+              -1365.5824983552739,
+              294.1513921645237
+            ],
+            [
+              -1365.487257903762,
+              289.30825307033956
+            ],
+            [
+              -1335.1257891946298,
+              291.5892021682812
+            ],
+            [
+              -1335.3639815440401,
+              297.8546691503143
+            ],
+            [
+              -1334.0473966545833,
+              297.9823509179987
+            ],
+            [
+              -1325.6338786296546,
+              283.38502090226393
+            ],
+            [
+              -1325.3070893512922,
+              276.541603701422
+            ],
+            [
+              -1323.9082991942996,
+              276.53565132117365
+            ],
+            [
+              -1323.1167741772952,
+              269.9790435577743
+            ],
+            [
+              -1256.7263764158415,
+              273.9731201053364
+            ],
+            [
+              -1257.2174720806943,
+              279.1733679912286
+            ],
+            [
+              -1253.3020701611822,
+              281.21157423744444
+            ],
+            [
+              -1227.5425843738776,
+              283.50141700485256
+            ],
+            [
+              -1212.3165948453825,
+              284.5808904338628
+            ],
+            [
+              -1213.1427338332578,
+              300.56763262860477
+            ],
+            [
+              -1219.7472255786124,
+              300.69560082198586
+            ],
+            [
+              -1222.0916374305962,
+              335.3488552015042
+            ],
+            [
+              -1214.7968134412076,
+              336.0176751164254
+            ],
+            [
+              -1215.3956400259922,
+              347.0496498189168
+            ],
+            [
+              -1226.2916541381273,
+              346.2072819034802
+            ],
+            [
+              -1226.3120528633008,
+              341.39795682486147
+            ],
+            [
+              -1242.5468892783683,
+              340.5116174464347
+            ],
+            [
+              -1249.558875110728,
+              349.92695078335237
+            ],
+            [
+              -1348.4514853105065,
+              342.18363959819544
+            ],
+            [
+              -1361.1182878765103,
+              339.51633547234815
+            ]
+          ]
+        ]
+      },
+      "tags": {
+        "amenity": "parking"
+      },
+      "areaM2": 10287.54,
+      "insideTownAreaM2": 10287.54,
+      "center": [
+        -1294.7644348563438,
+        312.03608304044315
+      ],
+      "currentMask": {
+        "pixels": 10794,
+        "equivalentAreaM2": 10293.960571289062,
+        "weights": {
+          "grass": 0.0309,
+          "forest": 0.0,
+          "impervious": 0.9687,
+          "soil": 0.0
+        },
+        "excludedFraction": 0.0004,
+        "tiles": [
+          "-6_1",
+          "-5_1"
+        ]
+      },
+      "nearbyBuildings": [
+        {
+          "id": "BLD-169976_867982",
+          "address": "2 WORCESTER RD",
+          "use": "Shopping Centers/Malls",
+          "distanceM": 81.1
+        },
+        {
+          "id": "BLD-169863_867898",
+          "address": "15 WORCESTER RD",
+          "use": "Two-Family Residential",
+          "distanceM": 124.9
+        },
+        {
+          "id": "BLD-169927_867785",
+          "address": "4 GORE RD",
+          "use": "Bank Buildings",
+          "distanceM": 131.0
+        }
+      ],
+      "inspectionAerialMetadata": "/Users/andy/Documents/New project/webster-blender/townwide/imagery_aerial_metadata.json",
+      "inspectionImageDate": "Spring2025",
+      "aerialPixelM": 0.8867472028467306
+    },
+    {
+      "id": "PAVE-OSM-1455518886",
+      "osmId": 1455518886,
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -1232.7874257228104,
+              412.92238537047524
+            ],
+            [
+              -1214.1088219276571,
+              414.3426371967653
+            ],
+            [
+              -1213.7324014333717,
+              409.4205574298976
+            ],
+            [
+              -1207.464814029052,
+              409.89381059922744
+            ],
+            [
+              -1204.2965693321312,
+              368.4616827230202
+            ],
+            [
+              -1210.3323498854006,
+              368.00965829286724
+            ],
+            [
+              -1209.885623664828,
+              362.09874140669126
+            ],
+            [
+              -1226.2046854600194,
+              360.85729171533603
+            ],
+            [
+              -1226.5886231251643,
+              365.9571187546244
+            ],
+            [
+              -1229.8612573702121,
+              374.94560725428164
+            ],
+            [
+              -1232.7874257228104,
+              412.92238537047524
+            ]
+          ]
+        ]
+      },
+      "tags": {
+        "amenity": "parking"
+      },
+      "areaM2": 1218.6,
+      "insideTownAreaM2": 1218.6,
+      "center": [
+        -1218.630619891848,
+        388.23313807481503
+      ],
+      "currentMask": {
+        "pixels": 1278,
+        "equivalentAreaM2": 1218.7957763671875,
+        "weights": {
+          "grass": 0.2126,
+          "forest": 0.0,
+          "impervious": 0.7874,
+          "soil": 0.0
+        },
+        "excludedFraction": 0.0,
+        "tiles": [
+          "-5_1"
+        ]
+      },
+      "nearbyBuildings": [
+        {
+          "id": "BLD-169976_867982",
+          "address": "2 WORCESTER RD",
+          "use": "Shopping Centers/Malls",
+          "distanceM": 88.1
+        },
+        {
+          "id": "BLD-170025_868105",
+          "address": "30 WORCESTER RD",
+          "use": "Warehouses for storage of manufactured products",
+          "distanceM": 133.4
+        },
+        {
+          "id": "BLD-169863_867983",
+          "address": "27 WORCESTER RD",
+          "use": "Auto Repair Facilities",
+          "distanceM": 200.6
+        }
+      ],
+      "inspectionAerialMetadata": "/Users/andy/Documents/New project/webster-blender/townwide/imagery_aerial_metadata.json",
+      "inspectionImageDate": "Spring2025",
+      "aerialPixelM": 0.8867472028467306
+    },
+    {
+      "id": "PAVE-OSM-1455549217",
+      "osmId": 1455549217,
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -2434.0573971047997,
+              437.3919079178013
+            ],
+            [
+              -2452.3821605345584,
+              428.0538902078988
+            ],
+            [
+              -2444.7897737236635,
+              411.7483310108073
+            ],
+            [
+              -2418.20169927011,
+              423.6378957629204
+            ],
+            [
+              -2420.3359026427497,
+              429.5452294233255
+            ],
+            [
+              -2430.8715297971503,
+              431.6021089388523
+            ],
+            [
+              -2434.0573971047997,
+              437.3919079178013
+            ]
+          ]
+        ]
+      },
+      "tags": {
+        "amenity": "parking"
+      },
+      "areaM2": 466.88,
+      "insideTownAreaM2": 466.88,
+      "center": [
+        -2436.528116413449,
+        424.7500445061302
+      ],
+      "currentMask": {
+        "pixels": 488,
+        "equivalentAreaM2": 465.39306640625,
+        "weights": {
+          "grass": 0.3115,
+          "forest": 0.0033,
+          "impervious": 0.6852,
+          "soil": 0.0
+        },
+        "excludedFraction": 0.0,
+        "tiles": [
+          "-10_1"
+        ]
+      },
+      "nearbyBuildings": [
+        {
+          "id": "BLD-168871_868002",
+          "address": "81 SLATER ST",
+          "use": "Improved, Selectmen or City Council (Municipal)",
+          "distanceM": 27.3
+        },
+        {
+          "id": "BLD-168825_868048",
+          "address": "85-87 SLATER ST",
+          "use": "Two-Family Residential",
+          "distanceM": 40.0
+        },
+        {
+          "id": "BLD-168886_868047",
+          "address": "82 SLATER ST",
+          "use": "Single Family Residential",
+          "distanceM": 52.1
+        }
+      ],
+      "inspectionAerialMetadata": "/Users/andy/Documents/New project/webster-blender/townwide/imagery_aerial_metadata.json",
+      "inspectionImageDate": "Spring2025",
+      "aerialPixelM": 0.8867472028467306
+    },
+    {
+      "id": "PAVE-OSM-1455549257",
+      "osmId": 1455549257,
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -2181.5217865902814,
+              -907.1541527587688
+            ],
+            [
+              -2210.7197900766623,
+              -901.4949473947054
+            ],
+            [
+              -2212.56682980858,
+              -922.5016343820607
+            ],
+            [
+              -2205.207127731148,
+              -928.1318858043524
+            ],
+            [
+              -2202.864277305285,
+              -937.5721380074974
+            ],
+            [
+              -2173.4814204002614,
+              -942.6434383791639
+            ],
+            [
+              -2181.5217865902814,
+              -907.1541527587688
+            ]
+          ]
+        ]
+      },
+      "tags": {
+        "amenity": "parking"
+      },
+      "areaM2": 1093.15,
+      "insideTownAreaM2": 1093.15,
+      "center": [
+        -2193.5570817645594,
+        -921.8750988296486
+      ],
+      "currentMask": {
+        "pixels": 1146,
+        "equivalentAreaM2": 1092.9107666015625,
+        "weights": {
+          "grass": 0.922,
+          "forest": 0.0,
+          "impervious": 0.078,
+          "soil": 0.0
+        },
+        "excludedFraction": 0.0,
+        "tiles": [
+          "-9_-4"
+        ]
+      },
+      "nearbyBuildings": [
+        {
+          "id": "BLD-169061_866677",
+          "address": "10 MAYNARD ST",
+          "use": "Three-Family Residential",
+          "distanceM": 29.6
+        },
+        {
+          "id": "BLD-169100_866639",
+          "address": "13-15 ROBINSON ST",
+          "use": "Three-Family Residential",
+          "distanceM": 30.6
+        },
+        {
+          "id": "BLD-169124_866682",
+          "address": "18 ROBINSON ST",
+          "use": "Two-Family Residential",
+          "distanceM": 38.2
+        }
+      ],
+      "inspectionAerialMetadata": "/Users/andy/Documents/New project/webster-blender/downtown/downtown_aerial_metadata.json",
+      "inspectionImageDate": "Spring2025",
+      "aerialPixelM": 0.22171621168085145
+    },
+    {
+      "id": "PAVE-OSM-1455549270",
+      "osmId": 1455549270,
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -2507.263108613086,
+              -926.4027532191249
+            ],
+            [
+              -2531.90076144223,
+              -919.1518433050951
+            ],
+            [
+              -2530.605242940306,
+              -938.8061750329798
+            ],
+            [
+              -2507.098864890344,
+              -930.446492357878
+            ],
+            [
+              -2507.263108613086,
+              -926.4027532191249
+            ]
+          ]
+        ]
+      },
+      "tags": {
+        "amenity": "parking"
+      },
+      "areaM2": 285.63,
+      "insideTownAreaM2": 285.63,
+      "center": [
+        -2521.8609033717257,
+        -928.755745567697
+      ],
+      "currentMask": {
+        "pixels": 302,
+        "equivalentAreaM2": 288.0096435546875,
+        "weights": {
+          "grass": 0.0258,
+          "forest": 0.0,
+          "impervious": 0.9742,
+          "soil": 0.0
+        },
+        "excludedFraction": 0.0,
+        "tiles": [
+          "-11_-4"
+        ]
+      },
+      "nearbyBuildings": [
+        {
+          "id": "BLD-168745_866659",
+          "address": "32 LAKE ST",
+          "use": "Small Retail and Services stores (under 10,000 sq. ft.)",
+          "distanceM": 15.7
+        },
+        {
+          "id": "BLD-168733_866650",
+          "address": "30 LAKE ST",
+          "use": "Single Family Residential",
+          "distanceM": 29.1
+        },
+        {
+          "id": "BLD-168756_866631",
+          "address": "60 NEGUS ST",
+          "use": "Three-Family Residential",
+          "distanceM": 29.5
+        }
+      ],
+      "inspectionAerialMetadata": "/Users/andy/Documents/New project/webster-blender/downtown/downtown_aerial_metadata.json",
+      "inspectionImageDate": "Spring2025",
+      "aerialPixelM": 0.22171621168085145
+    },
+    {
+      "id": "PAVE-OSM-1455549271",
+      "osmId": 1455549271,
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -2614.450387088378,
+              -901.7142917624442
+            ],
+            [
+              -2636.796465414227,
+              -898.5828392968979
+            ],
+            [
+              -2635.366867419507,
+              -917.8046074088197
+            ],
+            [
+              -2632.9943085993,
+              -946.5271994015202
+            ],
+            [
+              -2626.1853721648513,
+              -971.7262939354405
+            ],
+            [
+              -2588.518030315987,
+              -958.609212071402
+            ],
+            [
+              -2614.450387088378,
+              -901.7142917624442
+            ]
+          ]
+        ]
+      },
+      "tags": {
+        "amenity": "parking"
+      },
+      "areaM2": 2159.83,
+      "insideTownAreaM2": 2159.83,
+      "center": [
+        -2616.899247122906,
+        -936.3046041524599
+      ],
+      "currentMask": {
+        "pixels": 2264,
+        "equivalentAreaM2": 2159.11865234375,
+        "weights": {
+          "grass": 0.0343,
+          "forest": 0.0016,
+          "impervious": 0.9642,
+          "soil": 0.0
+        },
+        "excludedFraction": 0.0,
+        "tiles": [
+          "-11_-4"
+        ]
+      },
+      "nearbyBuildings": [
+        {
+          "id": "BLD-168700_866663",
+          "address": "16 LAKE ST",
+          "use": "Church, Mosque, Synagogue, Temple, etc...",
+          "distanceM": 35.7
+        },
+        {
+          "id": "BLD-168621_866649",
+          "address": "4 VETERANS WAY",
+          "use": "Improved, Selectmen or City Council (Municipal)",
+          "distanceM": 44.6
+        },
+        {
+          "id": "BLD-168635_866620",
+          "address": "6 VETERANS WAY",
+          "use": "Apartments with Four to Eight Units",
+          "distanceM": 45.1
+        }
+      ],
+      "inspectionAerialMetadata": "/Users/andy/Documents/New project/webster-blender/downtown/downtown_aerial_metadata.json",
+      "inspectionImageDate": "Spring2025",
+      "aerialPixelM": 0.22171621168085145
+    },
+    {
+      "id": "PAVE-OSM-1455549277",
+      "osmId": 1455549277,
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -2669.602691574779,
+              -708.3821152288001
+            ],
+            [
+              -2672.0159230965655,
+              -707.4828127771616
+            ],
+            [
+              -2685.00123147096,
+              -747.7219292641385
+            ],
+            [
+              -2692.579445794894,
+              -767.1480038143927
+            ],
+            [
+              -2695.7262485296524,
+              -778.552187107387
+            ],
+            [
+              -2693.312205057533,
+              -779.2737862038193
+            ],
+            [
+              -2682.1773738248157,
+              -747.501236786251
+            ],
+            [
+              -2669.602691574779,
+              -708.3821152288001
+            ]
+          ]
+        ]
+      },
+      "tags": {
+        "amenity": "parking",
+        "parking": "street_side"
+      },
+      "areaM2": 205.6,
+      "insideTownAreaM2": 205.6,
+      "center": [
+        -2682.938762428991,
+        -744.6525059758762
+      ],
+      "currentMask": {
+        "pixels": 214,
+        "equivalentAreaM2": 204.0863037109375,
+        "weights": {
+          "grass": 0.0967,
+          "forest": 0.0,
+          "impervious": 0.9033,
+          "soil": 0.0
+        },
+        "excludedFraction": 0.0,
+        "tiles": [
+          "-11_-4",
+          "-11_-3"
+        ]
+      },
+      "nearbyBuildings": [
+        {
+          "id": "BLD-168570_866842",
+          "address": "457-471 SOUTH MAIN ST",
+          "use": "Auto Repair Facilities",
+          "distanceM": 29.2
+        },
+        {
+          "id": "BLD-168582_866879",
+          "address": "505-509 SOUTH MAIN ST",
+          "use": "Mixed Use (Primarily Commercial, some Residential)",
+          "distanceM": 38.4
+        },
+        {
+          "id": "BLD-168594_866791",
+          "address": "456-458 SOUTH MAIN ST",
+          "use": "Mixed Use (Primarily Commercial, some Residential)",
+          "distanceM": 53.9
+        }
+      ],
+      "inspectionAerialMetadata": "/Users/andy/Documents/New project/webster-blender/downtown/downtown_aerial_metadata.json",
+      "inspectionImageDate": "Spring2025",
+      "aerialPixelM": 0.22171621168085145
+    },
+    {
+      "id": "PAVE-OSM-1503221310",
+      "osmId": 1503221310,
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -1952.4868209237757,
+              -664.0836115601705
+            ],
+            [
+              -1947.5154577487556,
+              -663.050022219657
+            ],
+            [
+              -1961.9254613935773,
+              -593.9563114044722
+            ],
+            [
+              -1966.9050560498144,
+              -594.989854710293
+            ],
+            [
+              -1952.4868209237757,
+              -664.0836115601705
+            ]
+          ]
+        ]
+      },
+      "tags": {
+        "amenity": "parking"
+      },
+      "areaM2": 358.67,
+      "insideTownAreaM2": 358.67,
+      "center": [
+        -1957.210111602234,
+        -629.0108326106722
+      ],
+      "currentMask": {
+        "pixels": 376,
+        "equivalentAreaM2": 358.58154296875,
+        "weights": {
+          "grass": 0.9127,
+          "forest": 0.0295,
+          "impervious": 0.0577,
+          "soil": 0.0
+        },
+        "excludedFraction": 0.0,
+        "tiles": [
+          "-8_-3"
+        ]
+      },
+      "nearbyBuildings": [
+        {
+          "id": "BLD-169306_866882",
+          "address": "31 RAY ST",
+          "use": "Improved, Selectmen or City Council (Municipal)",
+          "distanceM": 80.5
+        },
+        {
+          "id": "BLD-169293_867083",
+          "address": "20 NELSON ST",
+          "use": "Single Family Residential",
+          "distanceM": 126.7
+        },
+        {
+          "id": "BLD-169324_866828",
+          "address": "30 RAY ST",
+          "use": "Function Halls, Community Centers, Fraternal Organizations (Charitable Org.)",
+          "distanceM": 133.4
+        }
+      ],
+      "inspectionAerialMetadata": "/Users/andy/Documents/New project/webster-blender/downtown/downtown_aerial_metadata.json",
+      "inspectionImageDate": "Spring2025",
+      "aerialPixelM": 0.22171621168085145
+    },
+    {
+      "id": "PAVE-OSM-1503221311",
+      "osmId": 1503221311,
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -1945.0691846279951,
+              -679.2326966369292
+            ],
+            [
+              -1949.608897479222,
+              -679.990483098547
+            ],
+            [
+              -1943.742345276405,
+              -714.9147119045956
+            ],
+            [
+              -1941.643970460631,
+              -715.901255292003
+            ],
+            [
+              -1938.9847461641475,
+              -715.4574073378462
+            ],
+            [
+              -1945.0691846279951,
+              -679.2326966369292
+            ]
+          ]
+        ]
+      },
+      "tags": {
+        "amenity": "parking"
+      },
+      "areaM2": 167.79,
+      "insideTownAreaM2": 167.79,
+      "center": [
+        -1944.3066824151524,
+        -697.5890917201598
+      ],
+      "currentMask": {
+        "pixels": 175,
+        "equivalentAreaM2": 166.89300537109375,
+        "weights": {
+          "grass": 0.3693,
+          "forest": 0.3371,
+          "impervious": 0.2935,
+          "soil": 0.0
+        },
+        "excludedFraction": 0.0,
+        "tiles": [
+          "-8_-3"
+        ]
+      },
+      "nearbyBuildings": [
+        {
+          "id": "BLD-169306_866882",
+          "address": "31 RAY ST",
+          "use": "Improved, Selectmen or City Council (Municipal)",
+          "distanceM": 33.5
+        },
+        {
+          "id": "BLD-169324_866828",
+          "address": "30 RAY ST",
+          "use": "Function Halls, Community Centers, Fraternal Organizations (Charitable Org.)",
+          "distanceM": 66.1
+        },
+        {
+          "id": "BLD-169372_866831",
+          "address": "32 RAY ST",
+          "use": "Single Family Residential",
+          "distanceM": 69.2
+        }
+      ],
+      "inspectionAerialMetadata": "/Users/andy/Documents/New project/webster-blender/downtown/downtown_aerial_metadata.json",
+      "inspectionImageDate": "Spring2025",
+      "aerialPixelM": 0.22171621168085145
+    },
+    {
+      "id": "PAVE-OSM-1504195589",
+      "osmId": 1504195589,
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -1841.7315239455784,
+              -1746.291121788905
+            ],
+            [
+              -1840.1356574141537,
+              -1760.1597669352777
+            ],
+            [
+              -1841.823698644701,
+              -1769.5046934331767
+            ],
+            [
+              -1845.3791108522855,
+              -1777.975179238827
+            ],
+            [
+              -1854.844903814199,
+              -1791.9181238426827
+            ],
+            [
+              -1859.940048323042,
+              -1788.8527014566353
+            ],
+            [
+              -1853.2560565171589,
+              -1780.6290177165065
+            ],
+            [
+              -1847.5230528765533,
+              -1770.2242077343399
+            ],
+            [
+              -1845.7096726127493,
+              -1758.7028210998978
+            ],
+            [
+              -1846.8935262637679,
+              -1747.2017836190062
+            ],
+            [
+              -1841.7315239455784,
+              -1746.291121788905
+            ]
+          ]
+        ]
+      },
+      "tags": {
+        "amenity": "parking"
+      },
+      "areaM2": 256.95,
+      "insideTownAreaM2": 256.95,
+      "center": [
+        -1847.1833243100084,
+        -1769.6543482184352
+      ],
+      "currentMask": {
+        "pixels": 269,
+        "equivalentAreaM2": 256.53839111328125,
+        "weights": {
+          "grass": 0.9194,
+          "forest": 0.0,
+          "impervious": 0.0806,
+          "soil": 0.0
+        },
+        "excludedFraction": 0.0,
+        "tiles": [
+          "-8_-8",
+          "-8_-7"
+        ]
+      },
+      "nearbyBuildings": [
+        {
+          "id": "BLD-169324_865813",
+          "address": "52 LAKE PARKWAY",
+          "use": "Improved, Education (Municipal or County)",
+          "distanceM": 111.4
+        },
+        {
+          "id": "BLD-169556_865928",
+          "address": "34-R EASTERN AVE",
+          "use": "Residential Condominium",
+          "distanceM": 163.1
+        },
+        {
+          "id": "BLD-169417_865654",
+          "address": "46-R LAKE PARKWAY",
+          "use": "Single Family Residential",
+          "distanceM": 166.6
+        }
+      ],
+      "inspectionAerialMetadata": "/Users/andy/Documents/New project/webster-blender/townwide/imagery_aerial_metadata.json",
+      "inspectionImageDate": "Spring2025",
+      "aerialPixelM": 0.8867472028467306
+    },
+    {
+      "id": "PAVE-OSM-1504195616",
+      "osmId": 1504195616,
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -1948.904753611132,
+              -1840.8149881496793
+            ],
+            [
+              -1952.9704307672218,
+              -1844.729267316754
+            ],
+            [
+              -1957.3905514838407,
+              -1850.1859001494013
+            ],
+            [
+              -1955.163132909307,
+              -1852.0393640145194
+            ],
+            [
+              -1950.9612183215213,
+              -1847.2593190950574
+            ],
+            [
+              -1946.8859593117668,
+              -1843.0451870010002
+            ],
+            [
+              -1948.904753611132,
+              -1840.8149881496793
+            ]
+          ]
+        ]
+      },
+      "tags": {
+        "amenity": "parking",
+        "parking": "street_side"
+      },
+      "areaM2": 38.16,
+      "insideTownAreaM2": 38.16,
+      "center": [
+        -1952.158331099949,
+        -1846.3877155755504
+      ],
+      "currentMask": {
+        "pixels": 38,
+        "equivalentAreaM2": 36.2396240234375,
+        "weights": {
+          "grass": 1.0,
+          "forest": 0.0,
+          "impervious": 0.0,
+          "soil": 0.0
+        },
+        "excludedFraction": 0.0,
+        "tiles": [
+          "-8_-8"
+        ]
+      },
+      "nearbyBuildings": [
+        {
+          "id": "BLD-169324_865813",
+          "address": "52 LAKE PARKWAY",
+          "use": "Improved, Education (Municipal or County)",
+          "distanceM": 70.6
+        },
+        {
+          "id": "BLD-169375_865651",
+          "address": "48-R LAKE PARKWAY",
+          "use": "Single Family Residential",
+          "distanceM": 102.4
+        },
+        {
+          "id": "BLD-169335_865630",
+          "address": "50-A LAKE PARKWAY",
+          "use": "Single Family Residential",
+          "distanceM": 112.7
+        }
+      ],
+      "inspectionAerialMetadata": "/Users/andy/Documents/New project/webster-blender/townwide/imagery_aerial_metadata.json",
+      "inspectionImageDate": "Spring2025",
+      "aerialPixelM": 0.8867472028467306
+    },
+    {
+      "id": "PAVE-OSM-1504195624",
+      "osmId": 1504195624,
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -1944.7583991142164,
+              -1907.9424661869416
+            ],
+            [
+              -1947.0124932278122,
+              -1904.6005302984267
+            ],
+            [
+              -1949.2806207568792,
+              -1904.4907168186037
+            ],
+            [
+              -1950.601389911346,
+              -1905.4846257893369
+            ],
+            [
+              -1957.7143979535322,
+              -1907.5863075756934
+            ],
+            [
+              -1960.1688129769464,
+              -1902.710708981729
+            ],
+            [
+              -1962.4114340253582,
+              -1898.6357452723896
+            ],
+            [
+              -1946.9726892063918,
+              -1887.8066743676318
+            ],
+            [
+              -1936.9625581243017,
+              -1874.421574427979
+            ],
+            [
+              -1930.2620555318426,
+              -1862.432707334403
+            ],
+            [
+              -1926.348490181932,
+              -1849.6875611162977
+            ],
+            [
+              -1914.7705903487513,
+              -1852.7811541281408
+            ],
+            [
+              -1916.3735082594503,
+              -1863.470398188685
+            ],
+            [
+              -1911.125933092204,
+              -1865.7590206735767
+            ],
+            [
+              -1915.7421122204396,
+              -1876.335230684257
+            ],
+            [
+              -1922.9160229687986,
+              -1888.6663793273037
+            ],
+            [
+              -1934.8353666286857,
+              -1901.2768181392457
+            ],
+            [
+              -1941.4838307544705,
+              -1906.9903601323022
+            ],
+            [
+              -1944.7583991142164,
+              -1907.9424661869416
+            ]
+          ]
+        ]
+      },
+      "tags": {
+        "amenity": "parking"
+      },
+      "areaM2": 1184.87,
+      "insideTownAreaM2": 1184.87,
+      "center": [
+        -1933.4482630769542,
+        -1881.9756051255347
+      ],
+      "currentMask": {
+        "pixels": 1246,
+        "equivalentAreaM2": 1188.2781982421875,
+        "weights": {
+          "grass": 0.0937,
+          "forest": 0.0007,
+          "impervious": 0.1095,
+          "soil": 0.0
+        },
+        "excludedFraction": 0.7961,
+        "tiles": [
+          "-8_-8"
+        ]
+      },
+      "nearbyBuildings": [
+        {
+          "id": "BLD-169375_865651",
+          "address": "48-R LAKE PARKWAY",
+          "use": "Single Family Residential",
+          "distanceM": 62.2
+        },
+        {
+          "id": "BLD-169335_865630",
+          "address": "50-A LAKE PARKWAY",
+          "use": "Single Family Residential",
+          "distanceM": 78.2
+        },
+        {
+          "id": "BLD-169417_865654",
+          "address": "46-R LAKE PARKWAY",
+          "use": "Single Family Residential",
+          "distanceM": 86.7
+        }
+      ],
+      "inspectionAerialMetadata": "/Users/andy/Documents/New project/webster-blender/townwide/imagery_aerial_metadata.json",
+      "inspectionImageDate": "Spring2025",
+      "aerialPixelM": 0.8867472028467306
+    },
+    {
+      "id": "PAVE-OSM-1504195628",
+      "osmId": 1504195628,
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -2099.1947255925916,
+              -1856.0884263616754
+            ],
+            [
+              -2103.07125263309,
+              -1873.5541840944206
+            ],
+            [
+              -2141.0719219987222,
+              -1867.3126164707355
+            ],
+            [
+              -2141.5269564500486,
+              -1863.445335161523
+            ],
+            [
+              -2148.992374179914,
+              -1866.6115722069517
+            ],
+            [
+              -2153.0134281465726,
+              -1873.5470801696647
+            ],
+            [
+              -2153.0403749467223,
+              -1879.711438137223
+            ],
+            [
+              -2151.1799098405463,
+              -1885.9506893976359
+            ],
+            [
+              -2146.9074910519703,
+              -1889.7013702477561
+            ],
+            [
+              -2136.468296702631,
+              -1891.901776838
+            ],
+            [
+              -2135.6524136012595,
+              -1887.084832561668
+            ],
+            [
+              -2108.5063146040193,
+              -1891.4685301709687
+            ],
+            [
+              -2111.5540193828347,
+              -1908.7268644458381
+            ],
+            [
+              -2146.9696747345442,
+              -1903.929374578176
+            ],
+            [
+              -2158.1318391344976,
+              -1896.6498180800118
+            ],
+            [
+              -2164.4551171509665,
+              -1888.5472614568425
+            ],
+            [
+              -2166.0283620979462,
+              -1879.110399645404
+            ],
+            [
+              -2164.319493133051,
+              -1866.9999571639346
+            ],
+            [
+              -2157.0064475019462,
+              -1857.024378741975
+            ],
+            [
+              -2145.7720119412697,
+              -1851.542118793237
+            ],
+            [
+              -2130.394038633385,
+              -1850.8762367713498
+            ],
+            [
+              -2099.1947255925916,
+              -1856.0884263616754
+            ]
+          ]
+        ]
+      },
+      "tags": {
+        "amenity": "parking"
+      },
+      "areaM2": 2016.43,
+      "insideTownAreaM2": 2016.43,
+      "center": [
+        -2134.2997439902615,
+        -1877.4493877085108
+      ],
+      "currentMask": {
+        "pixels": 2111,
+        "equivalentAreaM2": 2013.2064819335938,
+        "weights": {
+          "grass": 0.0703,
+          "forest": 0.1163,
+          "impervious": 0.8134,
+          "soil": 0.0
+        },
+        "excludedFraction": 0.0,
+        "tiles": [
+          "-9_-8"
+        ]
+      },
+      "nearbyBuildings": [
+        {
+          "id": "BLD-169104_865756",
+          "address": "38 THIRD ST",
+          "use": "Two-Family Residential",
+          "distanceM": 62.6
+        },
+        {
+          "id": "BLD-169119_865774",
+          "address": "40 THIRD ST",
+          "use": "Two-Family Residential",
+          "distanceM": 68.8
+        },
+        {
+          "id": "BLD-169166_865787",
+          "address": "42 THIRD ST",
+          "use": "Two-Family Residential",
+          "distanceM": 77.2
+        }
+      ],
+      "inspectionAerialMetadata": "/Users/andy/Documents/New project/webster-blender/townwide/imagery_aerial_metadata.json",
+      "inspectionImageDate": "Spring2025",
+      "aerialPixelM": 0.8867472028467306
+    },
+    {
+      "id": "PAVE-OSM-1504195629",
+      "osmId": 1504195629,
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -2079.986613227491,
+              -1763.1497226333013
+            ],
+            [
+              -2075.9359040308045,
+              -1781.660815692041
+            ],
+            [
+              -2068.578434412746,
+              -1782.3371098520001
+            ],
+            [
+              -2062.6322150803753,
+              -1787.6722542505013
+            ],
+            [
+              -2059.364204270416,
+              -1805.3135667120805
+            ],
+            [
+              -2061.2394877228944,
+              -1810.0592597612413
+            ],
+            [
+              -2065.395943429292,
+              -1813.8953287318582
+            ],
+            [
+              -2069.429810962931,
+              -1816.1991411033086
+            ],
+            [
+              -2072.0059380328166,
+              -1816.4766960396664
+            ],
+            [
+              -2071.224877279863,
+              -1821.5338608690072
+            ],
+            [
+              -2066.171535470494,
+              -1828.4756537374342
+            ],
+            [
+              -2046.613014897186,
+              -1820.3304764309432
+            ],
+            [
+              -2045.2693481647875,
+              -1802.6759396271082
+            ],
+            [
+              -2047.1541413786472,
+              -1796.3033240346704
+            ],
+            [
+              -2042.595739531127,
+              -1795.2235717767617
+            ],
+            [
+              -2044.9981720985961,
+              -1784.1392644402804
+            ],
+            [
+              -2049.3172164926073,
+              -1775.8900401596911
+            ],
+            [
+              -2056.027986554196,
+              -1769.3075728527037
+            ],
+            [
+              -2064.1474757975666,
+              -1764.907070156769
+            ],
+            [
+              -2072.3103383975103,
+              -1762.861087814439
+            ],
+            [
+              -2079.986613227491,
+              -1763.1497226333013
+            ]
+          ]
+        ]
+      },
+      "tags": {
+        "amenity": "parking"
+      },
+      "areaM2": 1244.62,
+      "insideTownAreaM2": 1244.62,
+      "center": [
+        -2059.0631442237614,
+        -1793.252031704186
+      ],
+      "currentMask": {
+        "pixels": 1307,
+        "equivalentAreaM2": 1246.4523315429688,
+        "weights": {
+          "grass": 0.2261,
+          "forest": 0.2116,
+          "impervious": 0.5623,
+          "soil": 0.0
+        },
+        "excludedFraction": 0.0,
+        "tiles": [
+          "-9_-8"
+        ]
+      },
+      "nearbyBuildings": [
+        {
+          "id": "BLD-169166_865787",
+          "address": "42 THIRD ST",
+          "use": "Two-Family Residential",
+          "distanceM": 58.2
+        },
+        {
+          "id": "BLD-169156_865830",
+          "address": "43 THIRD ST",
+          "use": "Single Family Residential",
+          "distanceM": 75.1
+        },
+        {
+          "id": "BLD-169207_865882",
+          "address": "69 POLAND ST",
+          "use": "Single Family Residential",
+          "distanceM": 87.5
+        }
+      ],
+      "inspectionAerialMetadata": "/Users/andy/Documents/New project/webster-blender/townwide/imagery_aerial_metadata.json",
+      "inspectionImageDate": "Spring2025",
+      "aerialPixelM": 0.8867472028467306
+    },
+    {
+      "id": "PAVE-OSM-1504195630",
+      "osmId": 1504195630,
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -1772.8158313524036,
+              -1671.9599816644331
+            ],
+            [
+              -1764.4428272830264,
+              -1707.7945158296498
+            ],
+            [
+              -1843.0099251126521,
+              -1726.026123833144
+            ],
+            [
+              -1851.3907844274654,
+              -1690.1803544802824
+            ],
+            [
+              -1772.8158313524036,
+              -1671.9599816644331
+            ]
+          ]
+        ]
+      },
+      "tags": {
+        "amenity": "parking"
+      },
+      "areaM2": 2968.68,
+      "insideTownAreaM2": 2968.68,
+      "center": [
+        -1807.9171488622385,
+        -1698.9905802843007
+      ],
+      "currentMask": {
+        "pixels": 3112,
+        "equivalentAreaM2": 2967.83447265625,
+        "weights": {
+          "grass": 0.1131,
+          "forest": 0.004,
+          "impervious": 0.8829,
+          "soil": 0.0
+        },
+        "excludedFraction": 0.0,
+        "tiles": [
+          "-8_-7"
+        ]
+      },
+      "nearbyBuildings": [
+        {
+          "id": "BLD-169556_865928",
+          "address": "34-R EASTERN AVE",
+          "use": "Residential Condominium",
+          "distanceM": 90.4
+        },
+        {
+          "id": "BLD-169593_865959",
+          "address": "32 EASTERN AVE",
+          "use": "Single Family Residential",
+          "distanceM": 136.6
+        },
+        {
+          "id": "BLD-169584_866011",
+          "address": "28 EASTERN AVE",
+          "use": "Single Family Residential",
+          "distanceM": 163.3
+        }
+      ],
+      "inspectionAerialMetadata": "/Users/andy/Documents/New project/webster-blender/townwide/imagery_aerial_metadata.json",
+      "inspectionImageDate": "Spring2025",
+      "aerialPixelM": 0.8867472028467306
+    },
+    {
+      "id": "PAVE-OSM-1504195631",
+      "osmId": 1504195631,
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -1862.4903239252162,
+              -1643.5932800758164
+            ],
+            [
+              -1882.1927706837887,
+              -1679.3840744179906
+            ],
+            [
+              -1887.571045960416,
+              -1676.7172623616643
+            ],
+            [
+              -1900.6853389984753,
+              -1684.324357245816
+            ],
+            [
+              -1905.4624112820602,
+              -1682.393211065908
+            ],
+            [
+              -1879.4151556642028,
+              -1634.5009509383235
+            ],
+            [
+              -1862.4903239252162,
+              -1643.5932800758164
+            ]
+          ]
+        ]
+      },
+      "tags": {
+        "amenity": "parking"
+      },
+      "areaM2": 902.19,
+      "insideTownAreaM2": 902.19,
+      "center": [
+        -1882.9782569846884,
+        -1659.7271709519928
+      ],
+      "currentMask": {
+        "pixels": 946,
+        "equivalentAreaM2": 902.1759033203125,
+        "weights": {
+          "grass": 0.2554,
+          "forest": 0.0,
+          "impervious": 0.7446,
+          "soil": 0.0
+        },
+        "excludedFraction": 0.0,
+        "tiles": [
+          "-8_-7"
+        ]
+      },
+      "nearbyBuildings": [
+        {
+          "id": "BLD-169324_865813",
+          "address": "52 LAKE PARKWAY",
+          "use": "Improved, Education (Municipal or County)",
+          "distanceM": 138.7
+        },
+        {
+          "id": "BLD-169352_866071",
+          "address": "26 STEFANIAK AVE",
+          "use": "Single Family Residential",
+          "distanceM": 149.7
+        },
+        {
+          "id": "BLD-169556_865928",
+          "address": "34-R EASTERN AVE",
+          "use": "Residential Condominium",
+          "distanceM": 156.6
+        }
+      ],
+      "inspectionAerialMetadata": "/Users/andy/Documents/New project/webster-blender/townwide/imagery_aerial_metadata.json",
+      "inspectionImageDate": "Spring2025",
+      "aerialPixelM": 0.8867472028467306
+    },
+    {
+      "id": "PAVE-OSM-1504195632",
+      "osmId": 1504195632,
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -1885.6092261895246,
+              -1630.9531393538928
+            ],
+            [
+              -1890.5651810029813,
+              -1628.2770477263257
+            ],
+            [
+              -1899.0348391442385,
+              -1626.3632210918004
+            ],
+            [
+              -1904.9485113799165,
+              -1623.072072917712
+            ],
+            [
+              -1910.338666894182,
+              -1632.7008233348606
+            ],
+            [
+              -1908.7115853508003,
+              -1633.6075604449725
+            ],
+            [
+              -1939.583868044836,
+              -1688.665103680105
+            ],
+            [
+              -1934.3887090875069,
+              -1691.5533038274152
+            ],
+            [
+              -1921.8956021259364,
+              -1685.9206514816033
+            ],
+            [
+              -1916.8900397973484,
+              -1688.6191943275044
+            ],
+            [
+              -1885.6092261895246,
+              -1630.9531393538928
+            ]
+          ]
+        ]
+      },
+      "tags": {
+        "amenity": "parking"
+      },
+      "areaM2": 1375.61,
+      "insideTownAreaM2": 1375.61,
+      "center": [
+        -1911.7499306357204,
+        -1657.891465551119
+      ],
+      "currentMask": {
+        "pixels": 1444,
+        "equivalentAreaM2": 1377.105712890625,
+        "weights": {
+          "grass": 0.3617,
+          "forest": 0.0,
+          "impervious": 0.6383,
+          "soil": 0.0
+        },
+        "excludedFraction": 0.0,
+        "tiles": [
+          "-8_-7"
+        ]
+      },
+      "nearbyBuildings": [
+        {
+          "id": "BLD-169324_865813",
+          "address": "52 LAKE PARKWAY",
+          "use": "Improved, Education (Municipal or County)",
+          "distanceM": 127.1
+        },
+        {
+          "id": "BLD-169352_866071",
+          "address": "26 STEFANIAK AVE",
+          "use": "Single Family Residential",
+          "distanceM": 141.3
+        },
+        {
+          "id": "BLD-169278_866043",
+          "address": "32 STEFANIAK AVE",
+          "use": "Single Family Residential",
+          "distanceM": 145.2
+        }
+      ],
+      "inspectionAerialMetadata": "/Users/andy/Documents/New project/webster-blender/townwide/imagery_aerial_metadata.json",
+      "inspectionImageDate": "Spring2025",
+      "aerialPixelM": 0.8867472028467306
+    }
+  ]
+}

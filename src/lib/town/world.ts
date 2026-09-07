@@ -13,6 +13,11 @@ import { applyEvidenceBuildings } from './evidence-buildings';
 import { landmarkRows, buildEvidenceLandmarks } from './evidence-landmarks';
 import { applyEvidenceEnvironment } from './evidence-environment';
 import { applyMeasuredBridgeSurface } from './bridge-surface';
+import { RoadFinishStream, applyRoadFinish } from './road-finish';
+import { terrainFinishAsset, validTerrainFinishPacket, applyTerrainFinish, type TerrainFinishPacket } from './terrain-finish';
+import { parkingFinishAsset } from './paved-surfaces';
+import { applyParkingFinish, validParkingPacket } from './parking-finish';
+import { beginOptionalDetail, TileDetailStream } from './optional-detail';
 
 type TreePlan = { near: Set<number>; shadows: Set<number>; key: string };
 type LoadedTile = { group: THREE.Group; level: number; lastUsed: number; trees?: THREE.Group; treeRows?: number[][]; treePlan?: TreePlan };
@@ -45,6 +50,12 @@ export class TownWorld {
   private surfaces?: TownSurfaces;
   private readonly artClock = { value: 0 };
   private readonly evidence = new EvidenceStream(<T>(url:string,signal:AbortSignal)=>this.fetchJson<T>(url,signal));
+  private readonly roadFinish = new RoadFinishStream(<T>(url:string,signal:AbortSignal)=>this.fetchJson<T>(url,signal));
+  private readonly terrainFinish = new TileDetailStream(
+    key=>{const[id,level]=key.split('@');return terrainFinishAsset(id,Number(level));},
+    (value,key):value is TerrainFinishPacket=>{const[id,level]=key.split('@');return validTerrainFinishPacket(value,id)&&value.levels.length===1&&value.levels[0].level===Number(level);},
+    (url,signal)=>this.fetchJson(url,signal));
+  private readonly parkingFinish = new TileDetailStream(parkingFinishAsset,validParkingPacket,(url,signal)=>this.fetchJson(url,signal));
 
   constructor(readonly manifest: WorldManifest, readonly manifestUrl: string, readonly onChange: () => void) {
     this.root.name = 'Webster scenery';
@@ -96,10 +107,20 @@ export class TownWorld {
 
   async loadGlb(path: string, signal: AbortSignal = this.sharedAbort.signal, tile?: TownTile, level = 0): Promise<THREE.Group> {
     const url = this.url(path);
-    const [data,evidence] = await Promise.all([
-      readSceneBuffer(url, signal, bytes => { this.metrics.bytes += bytes; }),
-      tile?this.evidence.tile(tile.id,signal):Promise.resolve(undefined),
-    ]);
+    const roadRequest=tile?beginOptionalDetail(signal,s=>this.roadFinish.tile(tile.id,s)):undefined;
+    const terrainRequest=tile?beginOptionalDetail(signal,s=>this.terrainFinish.tile(`${tile.id}@${level}`,s)):undefined;
+    const parkingRequest=tile?beginOptionalDetail(signal,s=>this.parkingFinish.tile(tile.id,s)):undefined;
+    let source: [ArrayBuffer, Awaited<ReturnType<EvidenceStream['tile']>>|undefined];
+    try {
+      source=await Promise.all([
+        readSceneBuffer(url, signal, bytes => { this.metrics.bytes += bytes; }),
+        tile?this.evidence.tile(tile.id,signal):Promise.resolve(undefined),
+      ]);
+    } catch(error) {
+      roadRequest?.cancel();terrainRequest?.cancel();parkingRequest?.cancel();throw error;
+    }
+    const [data,evidence]=source;
+    const [road,terrain,parking]=await Promise.all([roadRequest?.finish(),terrainRequest?.finish(),parkingRequest?.finish()]);
     const gltf = await this.loader.parseAsync(data, new URL('.', url).href);
     if (this.disposed || signal.aborted) {
       this.disposeRaw(gltf.scene);
@@ -108,6 +129,10 @@ export class TownWorld {
     if (tile) {
       try {
         applyMeasuredBridgeSurface(gltf.scene,tile.id,tile.origin);
+        const terrainMatches=terrain?.levels.find(row=>row.level===level)?.sourceSha256===tile.lods.find(row=>row.level===level)?.sha256;
+        applyTerrainFinish(gltf.scene,tile.id,tile.origin,level,terrainMatches?terrain:undefined);
+        applyRoadFinish(gltf.scene,tile.id,tile.origin,level,road);
+        applyParkingFinish(gltf.scene,tile.id,tile.origin,parking);
         applyCraftedFrontages(gltf.scene, tile.id, tile.origin, level);
         const landmarks=landmarkRows(tile.id);
         applyEvidenceBuildings(gltf.scene,tile.id,tile.origin,level,evidence?.buildings??[],
@@ -219,6 +244,19 @@ export class TownWorld {
       if(report){buildings+=report.buildingIds.length;documented+=report.documentedIds.length;triangles+=report.addedTriangles;}
     }
     return{buildings,documented,triangles,optionalFailures:this.evidence.failures};
+  }
+
+  finishResources() {
+    let roadTriangles=0,terrainTriangles=0,parkingTriangles=0,parkingBays=0,pavedMasks=0,rejectedTerrain=0;
+    for(const {group} of this.loaded.values()) {
+      roadTriangles+=group.userData.roadFinish?.addedTriangles??0;
+      terrainTriangles+=group.userData.terrainFinish?.addedTriangles??0;
+      parkingTriangles+=group.userData.parkingFinish?.triangles??0;
+      parkingBays+=group.userData.parkingFinish?.bays??0;
+      pavedMasks+=Number(!!group.userData.pavedSurfaceMask);
+      rejectedTerrain+=Number(!!group.userData.terrainFinish?.rejected);
+    }
+    return{roadTriangles,terrainTriangles,parkingTriangles,parkingBays,pavedMasks,rejectedTerrain,optionalFailures:this.roadFinish.failures+this.terrainFinish.failures+this.parkingFinish.failures};
   }
 
   update(position: V3, lookAhead: V3, force = false): void {
@@ -564,6 +602,7 @@ export class TownWorld {
 
   dispose(): void {
     this.evidence.dispose();
+    this.roadFinish.dispose();this.terrainFinish.dispose();this.parkingFinish.dispose();
     if (this.disposed) return;
     this.disposed = true;
     this.sharedAbort.abort();
