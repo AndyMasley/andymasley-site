@@ -36,13 +36,17 @@ export function collectTextureFailureProbe() {
 
 export function retiredTextureDiagnostic(entry, probe) {
   if (entry.type !== 'error') return null;
-  return probe.errors.find(error => {
+  const related = probe.errors.filter(error => error.uri && entry.text === `THREE.GLTFLoader: Couldn't load texture ${error.uri}` && Math.abs(entry.time - error.time) <= 2000);
+  // Ambiguous concurrent errors stay failures, even if a retired generation
+  // was also decoding the same source URI.
+  if (related.some(error => error.name !== 'AbortError' || !error.retired || !error.aborted || !error.imageCacheDisposed)) return null;
+  return related.find(error => {
     const generation = probe.generations.find(value => value.generation === error.generation);
     return error.uri && entry.text === `THREE.GLTFLoader: Couldn't load texture ${error.uri}` &&
       Math.abs(entry.time - error.time) <= 2000 && error.name === 'AbortError' &&
       error.retired && error.aborted && error.imageCacheDisposed &&
       generation?.retired && generation.aborted && generation.children === 0 && generation.loaded === 0 &&
-      generation.inflight === 0 && Object.values(generation.resources).every(value => value === 0) &&
+      generation.inflight === 0 && ['materialCount', 'textureCount', 'estimatedTextureBytes', 'estimatedGeometryBytes'].every(key => generation.resources[key] === 0) &&
       generation.cacheBytes === 0 && generation.activeDetailRequests === 0 && generation.queuedDetailRequests === 0 &&
       generation.imageResources.pending === 0 && generation.imageResources.objectURLs === 0;
   }) ?? null;

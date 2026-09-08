@@ -9,10 +9,11 @@ afterEach(() => vi.unstubAllGlobals());
 describe('strict test-only retired texture diagnostics', () => {
   it('accepts only the exact correlated AbortError after all retired resources are released', () => {
     expect(retiredTextureDiagnostic(entry, probe())).toBe(error);
+    expect(retiredTextureDiagnostic(entry, { errors: [error, { ...error, generation: 2, retired: false }], generations: [generation] })).toBeNull();
     for (const changed of [{ uri: 'other.jpg' }, { time: 9999 }, { name: 'Error' }, { retired: false }, { aborted: false }, { imageCacheDisposed: false }]) expect(retiredTextureDiagnostic(entry, probe({ ...error, ...changed }))).toBeNull();
   });
   it('does not excuse live objects, requests, retained textures or pending image decoding', () => {
-    for (const changed of [{ retired: false }, { children: 1 }, { loaded: 1 }, { inflight: 1 }, { cacheBytes: 1 }, { activeDetailRequests: 1 }, { queuedDetailRequests: 1 }, { resources: { textureCount: 1 } }, { imageResources: { pending: 1, objectURLs: 0 } }, { imageResources: { pending: 0, objectURLs: 1 } }]) expect(retiredTextureDiagnostic(entry, probe(error, { ...generation, ...changed }))).toBeNull();
+    for (const changed of [{ retired: false }, { children: 1 }, { loaded: 1 }, { inflight: 1 }, { cacheBytes: 1 }, { activeDetailRequests: 1 }, { queuedDetailRequests: 1 }, { resources: { textureCount: 1 } }, { resources: {} }, { imageResources: { pending: 1, objectURLs: 0 } }, { imageResources: { pending: 0, objectURLs: 1 } }]) expect(retiredTextureDiagnostic(entry, probe(error, { ...generation, ...changed }))).toBeNull();
   });
   it('observer rethrows identical errors and leaves live decode or HTTP failures unexpected', async () => {
     for (const retired of [false, true]) {
