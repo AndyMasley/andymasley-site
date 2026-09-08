@@ -85,9 +85,8 @@ const poster = '/town-assets/webster-poster-crafted.webp';
             <div class="town-odometer"><span data-town-distance>0.0 mi</span><span class="town-hud__label">this drive</span></div>
             <span class="town-cruise-state" data-town-cruise>Stopped</span>
           </div>
-          <figure class="town-map" aria-label="Local road map">
-            <span class="town-map__north" aria-hidden="true">N</span>
-            <canvas data-town-minimap width="320" height="240" aria-label="Your position on the nearby road network"></canvas>
+          <figure class="town-map" aria-label="Local map">
+            <canvas data-town-minimap width="360" height="360" aria-label="Your position, nearby roads, water and lettered places. Place names are listed in Explore Webster below."></canvas>
             <figcaption>Webster</figcaption>
           </figure>
         </div>
@@ -157,7 +156,7 @@ const poster = '/town-assets/webster-poster-crafted.webp';
         <summary>Explore Webster</summary>
         <div class="town-explore__body">
           <p>Choose a starting place, then take your own turns. Moving to another start resets this drive’s mileage; reloading offers your last saved road position, safely paused.</p>
-          <canvas data-town-overview width="800" height="520" aria-label="Town road overview with six starting places and sixteen scenery markers. All places are listed below."></canvas>
+          <canvas data-town-overview width="800" height="520" aria-label="Town overview showing roads, water and islands, six starting places and sixteen lettered places. All places are listed below."></canvas>
           <div class="town-explore__places">
             {EXPLORE_PLACES.map(place => <div><button type="button" data-town-place={place.key} disabled>{place.title}</button><p>{place.detail}</p></div>)}
           </div>

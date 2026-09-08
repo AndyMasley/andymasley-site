@@ -10,6 +10,7 @@ type Registration = {
   metalness: number;
   envMapIntensity: number;
   flatShading: boolean;
+  vertexColors: boolean;
   normalScale: THREE.Vector2;
   compile: THREE.Material['onBeforeCompile'];
   key: THREE.Material['customProgramCacheKey'];
@@ -36,6 +37,7 @@ const kinds: Record<string, ArtKind> = {
   'Parked | spruce': 'car-paint', 'Parked | graphite': 'car-paint', 'Parked | silver': 'car-paint',
   'Parked | warm white': 'car-paint',
   'Mapped water | inferred level and appearance': 'water',
+  'Boundary context | water': 'water',
 };
 
 // The GLB factors are linear RGB. Palette hexes are intentionally sRGB paint
@@ -157,12 +159,10 @@ if (abs(townArtDet)>0.0000000001) {
 
 function finishTreatment(kind: ArtKind): string {
   if (kind === 'glass') return `
-// Slightly varied interior darkness and a cool sky reflection give windows depth
-// without painting invented rooms or business imagery onto observed façades.
-float townWindowFresnel = pow(1.0-max(0.0,dot(normal,normalize(vViewPosition))),3.0);
+// Darken the room-facing diffuse contribution, retaining the actual sky's
+// dielectric reflection instead of adding a uniform cyan light to every pane.
 float townWindowInterior = townArtNoise(floor(vTownArtWorld.xz*0.4)+floor(vTownArtWorld.y/2.8));
-outgoingLight *= mix(0.72,1.06,townWindowInterior);
-outgoingLight += vec3(0.10,0.15,0.18) * (0.10+townWindowFresnel*0.45);
+outgoingLight -= totalDiffuse * (1.0-mix(0.48,0.68,townWindowInterior));
 #include <opaque_fragment>
 `;
   if (kind === 'leaf') return `
@@ -186,7 +186,7 @@ export function applyArtMaterial(material: THREE.MeshStandardMaterial, clock: { 
   if (!kind) return;
   const state: Registration = {
     kind, color: material.color.clone(), roughness: material.roughness, metalness: material.metalness,
-    envMapIntensity: material.envMapIntensity, flatShading: material.flatShading, normalScale: material.normalScale.clone(),
+    envMapIntensity: material.envMapIntensity, flatShading: material.flatShading, vertexColors: material.vertexColors, normalScale: material.normalScale.clone(),
     compile: material.onBeforeCompile, key: material.customProgramCacheKey, previousTag: material.userData.townArt,
   };
   const previousKey = state.key.call(material);
@@ -211,9 +211,9 @@ export function applyArtMaterial(material: THREE.MeshStandardMaterial, clock: { 
   }
   if (kind === 'shoulder') { material.color.set('#77796a'); material.roughness = 0.98; }
   if (kind === 'road-paint') { material.roughness=Math.max(.94,material.roughness); }
-  if (kind === 'glass') { material.color.set('#34464b'); material.roughness = 0.19; material.metalness = 0.32; material.envMapIntensity = 0.65; }
+  if (kind === 'glass') { material.color.set('#34464b'); material.roughness = 0.14; material.metalness = 0; material.envMapIntensity = 0.85; }
   if (kind === 'leaf') { material.roughness = 0.88; material.envMapIntensity = 0.12; }
-  if (kind === 'far-leaf') { material.color.set('#556b3e'); material.roughness = 0.95; }
+  if (kind === 'far-leaf') { material.color.set('#576d43'); material.roughness = 0.95; material.vertexColors = true; }
   if (kind === 'bark') {
     // The pinned trunk already has a bark atlas. Retain its source factor so
     // the gray-brown interpretation does not darken its reflectance twice.
@@ -240,7 +240,7 @@ vTownArtWorld = (modelMatrix * townArtPosition).xyz;
     shader.fragmentShader = functions + shader.fragmentShader.replace('#include <map_fragment>', mapTreatment(kind)).replace('#include <opaque_fragment>', finishTreatment(kind));
     if (['siding','asphalt','concrete','foundation','shoulder','water','bark'].includes(kind)) shader.fragmentShader = shader.fragmentShader.replace('#include <normal_fragment_maps>', mineralNormal);
   };
-  material.customProgramCacheKey = () => `${previousKey}|webster-art-material-v2:${kind}${kind==='bark'?'|regional-bark-v1':''}`;
+  material.customProgramCacheKey = () => `${previousKey}|webster-art-material-v2:${kind}${kind==='bark'?'|regional-bark-v1':kind==='glass'?'|dielectric-glass-v1':''}`;
   material.addEventListener('dispose', onMaterialDispose);
   material.needsUpdate = true;
 }
@@ -257,6 +257,7 @@ export function removeArtMaterial(material: THREE.MeshStandardMaterial): void {
   if (!state) return;
   material.color.copy(state.color); material.roughness = state.roughness; material.metalness = state.metalness;
   material.envMapIntensity = state.envMapIntensity; material.flatShading = state.flatShading; material.normalScale.copy(state.normalScale);
+  material.vertexColors = state.vertexColors;
   material.onBeforeCompile = state.compile; material.customProgramCacheKey = state.key;
   if (state.previousTag === undefined) delete material.userData.townArt; else material.userData.townArt = state.previousTag;
   material.removeEventListener('dispose', onMaterialDispose); registrations.delete(material); material.needsUpdate = true;

@@ -4,6 +4,7 @@ import * as THREE from 'three';
 import { TownWorld } from '../world';
 import type { TownTile, WorldManifest } from '../contracts';
 import { createConiferPrototype, createOpenBroadleafPrototype, treeForm } from '../vegetation';
+import { createDistantCanopyPrototype } from '../distant-canopy';
 
 const tile = (id: string): TownTile => ({ id, origin: [0, 0, 0], bounds: { min: [-1000, 0, -1000], max: [1000, 40, 1000] }, lods: [{ level: 0, url: `${id}.glb`, bytes: 1 }] });
 const row = (x: number, z = 0): number[] => [x, 10, z, 3, 4, 5, 0.37];
@@ -23,6 +24,26 @@ function fixture(rows: number[][][]) {
 }
 
 describe('Town tree detail, global shadow budget and instance ownership', () => {
+  it('uses shared far canopy refinement without adding draws, changing anchors or extending near detail', () => {
+    const rows = [Array.from({ length: 80 }, (_, i) => row(i * 11, i % 3 * 17))];
+    const baseline = fixture(rows), candidate = fixture(rows);
+    const state = candidate.world as unknown as { prototypes: THREE.Group[]; distantCanopyPrototypes: Map<number, { broadleaf: THREE.Group; conifer: THREE.Group }> };
+    const broadleaf = createDistantCanopyPrototype(state.prototypes[1]), conifer = createDistantCanopyPrototype(state.prototypes[1]);
+    state.distantCanopyPrototypes.set(1, { broadleaf, conifer });
+    const disposals = [broadleaf, conifer].map(group => vi.spyOn((group.children[0] as THREE.Mesh).geometry, 'dispose'));
+    baseline.update(); candidate.update();
+    expect(candidate.meshes()).toHaveLength(baseline.meshes().length);
+    for (const kind of ['near', 'far', 'trunk']) expect(candidate.selections(kind)).toEqual(baseline.selections(kind));
+    expect(candidate.selections('near', true)).toEqual(baseline.selections('near', true));
+    for (const { mesh } of candidate.meshes().filter(row => row.mesh.userData.treeKind === 'far')) {
+      const prototype = mesh.userData.treeFamily === 'conifer' ? conifer : broadleaf;
+      expect(mesh.geometry).toBe((prototype.children[0] as THREE.Mesh).geometry);
+      expect(mesh.geometry.getAttribute('color')).toBeDefined();
+    }
+    candidate.world.dispose(); candidate.world.dispose(); baseline.world.dispose();
+    disposals.forEach(spy => expect(spy).toHaveBeenCalledTimes(1));
+    expect(state.distantCanopyPrototypes.size).toBe(0);
+  });
   it.each(['low','auto','high'] as const)('omits confirmed playing-surface anchors from every crown, trunk and shadow cohort at %s quality', quality => {
     const rows = [[row(10),row(50),row(450)]], before = structuredClone(rows), f = fixture(rows);
     f.world.loaded.get('tile-0')!.treeExcluded = new Set([0,2]);

@@ -34,6 +34,29 @@ describe('dated architectural appearance priority',()=>{
   it('returns an unknown identity unchanged without borrowing neighboring evidence',()=>{
     const input={...fixture,id:'unmatched-test-property'};expect(historicAppearance(input)).toBe(input);
   });
+  it('carries the documented yellow pressed-brick fabric only into an inferred finish at 768 School',()=>{
+    const input={...fixture,id:'168288_865127'},result=historicAppearance(input);
+    expect(result.material).toBe('brick');expect(result.paint).toBe('#b49b69');
+    expect(result.historicalEvidenceIds).toEqual(['WEB.371']);expect(result.documented).toBe(false);
+    for(const protectedInput of[
+      {...input,paint:'#eff0e9',paintBasis:'dated-listing-palette-hint',colorsDated:true},
+      {...input,material:'siding' as const,materialBasis:'dated-listing'},
+      {...input,material:'brick' as const,materialBasis:'observed'},
+    ]){
+      const protectedResult=historicAppearance(protectedInput);
+      expect(protectedResult.paint).not.toBe('#b49b69');
+      if(protectedInput.paintBasis!=='inferred')expect(protectedResult.paint).toBe(protectedInput.paint);
+    }
+    expect(historicAppearance({...input,id:'unmatched-neighbor'})).toEqual({...input,id:'unmatched-neighbor'});
+  });
+  it('limits dated triple 12-over-1 guidance to 790 School without overriding newer listed exteriors',()=>{
+    const input={...fixture,id:'168330_865062'},result=historicAppearance(input);
+    expect(result.historicalWindowGroup).toEqual({count:3,sash:'12-over-1'});
+    expect(result.historicalEvidenceIds).toEqual(['WEB.373']);expect(result.frontageBays).toBe(3);
+    expect(historicAppearance({...input,documented:true,evidenceIds:['LATER-LISTING']}).historicalWindowGroup).toBeUndefined();
+    expect(historicAppearance({...input,id:'168251_865177'}).historicalWindowGroup).toBeUndefined();
+    expect(input).not.toHaveProperty('historicalWindowGroup');
+  });
   it('keeps every historical source explicitly dated and unobserved in the current town',()=>{
     expect(source.rows).toHaveLength(source.count);
     expect(new Set(source.rows.map(row=>row.id)).size).toBe(source.count);

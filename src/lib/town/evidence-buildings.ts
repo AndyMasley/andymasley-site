@@ -3,12 +3,14 @@ import { Batch, frontageMaterial, type Frame, type Role } from './crafted-fronta
 import type { EvidenceBuilding, EvidenceReport, EvidenceRoof } from './evidence-types';
 import { historicAppearance } from './historic-appearance';
 import { repairFoundationWalls } from './foundation-wall-finish';
+import {prepareAddressFrontages,insideFormerEntrySteps,renderAddressStoop,type EntryStepEnvelope} from './address-frontage';
 
 export type EvidenceTarget = {
   id: string; tileId: string; outline: readonly (readonly number[])[];
   base: number; floor?: number; peak: number; material?: Role; paint?: string;
   replaceBody?: boolean; replaceOpenings?: boolean;
   preserveEntry?: Pick<Frame,'start'|'tangent'|'outward'> & {u:number;floor:number};
+  retireEntrySteps?:EntryStepEnvelope;
 };
 type PreparedTarget = EvidenceTarget & { bounds: number[] };
 
@@ -68,6 +70,7 @@ function targetIndex(rows: readonly EvidenceTarget[]) {
  * street furniture, and the earlier crafted buildings remain protected. */
 export function filterEvidenceSources(group:THREE.Object3D,origin:THREE.Vector3,rows:readonly EvidenceTarget[]) {
   const locate=targetIndex(rows),matched=new Set<string>(),retired=new Set<THREE.BufferGeometry>();
+  const formerSteps=rows.flatMap(r=>r.retireEntrySteps?[r.retireEntrySteps]:[]);
   const replacements=new Map<string,THREE.Material>(),oldMaterials=new Set<THREE.Material>();
   const world=new THREE.Vector3(),point=new THREE.Vector3();let removedTriangles=0,recoloredTriangles=0;
   group.updateMatrixWorld(true);
@@ -104,6 +107,7 @@ export function filterEvidenceSources(group:THREE.Object3D,origin:THREE.Vector3,
               changed=true;recoloredTriangles++;
             }
           }
+          if(!remove&&role==='foundation'&&formerSteps.some(entry=>ids.every(id=>insideFormerEntrySteps(point.fromBufferAttribute(position,id).applyMatrix4(mesh.matrixWorld).add(origin),entry))))remove=true;
         }
         if(remove){changed=true;removedTriangles++;continue;}
         const bucket=buckets.get(output)??[];bucket.push(...ids);buckets.set(output,bucket);
@@ -158,6 +162,12 @@ function homeWindows(batch:Batch,home:EvidenceBuilding):void {
       for(let i=0;i<bays;i++){
         const u=(i+.5)*w/bays;
         if(entry&&Math.abs(u-doorU)<1.15&&bottom<entry.floor+2.2&&bottom+windowHeight>entry.floor)continue;
+        const groupedWidth=home.historicalWindowGroup?Math.min(2.65,w/bays-.5):0;
+        if(groupedWidth>=1.7){
+          if(entry&&Math.abs(u-doorU)<groupedWidth/2+.70&&bottom<entry.floor+2.3&&bottom+windowHeight>entry.floor)continue;
+          groupedHistoricWindow(batch,f,u,bottom,groupedWidth,windowHeight);
+          continue;
+        }
         const width=Math.min(ranch&&front&&bays<4?1.72:1.05,w/bays-.65);
         if(width<.55)continue;
         batch.window(f,u,bottom,width,windowHeight,.01,ranch&&width>1.4,front&&colonial&&home.material!=='brick'&&w/bays>2.7);
@@ -194,6 +204,18 @@ function homeWindows(batch:Batch,home:EvidenceBuilding):void {
       const h=eave-Math.max(ground+.16,home.base+.15);
       if(h>1)batch.box(f,'metal',w-.15,eave-h/2,.15,.065,h,.065,'#b6b5aa');
     }
+  }
+}
+
+function groupedHistoricWindow(batch:Batch,f:Frame,u:number,bottom:number,width:number,height:number):void {
+  batch.window(f,u,bottom,width,height,.01);
+  const unit=width/3;
+  for(const sign of[-1,1])batch.box(f,'trim',u+sign*unit/2,bottom+height/2,.16,.065,height,.07);
+  if(batch.level>0)return;
+  for(let pane=0;pane<3;pane++){
+    const left=u-width/2+unit*pane;
+    for(let column=1;column<4;column++)batch.box(f,'trim',left+unit*column/4,bottom+height*.75,.165,.022,height*.5,.027);
+    for(let row=1;row<3;row++)batch.box(f,'trim',left+unit/2,bottom+height*(.5+row/6),.165,unit,.022,.027);
   }
 }
 
@@ -280,19 +302,22 @@ export function applyEvidenceBuildings(group:THREE.Object3D,tileId:string,tileOr
   if(group.userData.evidenceBuildings)return group.userData.evidenceBuildings as EvidenceReport;
   if(!rows.length&&!extras.length)return undefined;
   const repairs=new Map(roofs.map(r=>[r.id,r]));
-  const extraIds=new Set(extras.map(r=>r.id)),homes=rows.filter(r=>!extraIds.has(r.id)).map(historicAppearance).map(home=>{
+  const extraIds=new Set(extras.map(r=>r.id)),originalHomes=rows.filter(r=>!extraIds.has(r.id)).map(historicAppearance).map(home=>{
     const roof=repairs.get(home.id);return roof?{...home,base:roof.base,floor:roof.floor,eave:roof.eave,peak:roof.peak,stories:roof.stories,frames:home.frames.map((f,i)=>({...f,eave:roof.frameEaves?.[i]??roof.eave,start:[f.start[0]+f.outward[0]*(roof.frameOutsets?.[i]??0),f.start[1]+f.outward[1]*(roof.frameOutsets?.[i]??0)] as const}))}:home;
   });
-  const targets:EvidenceTarget[]=[...homes.map(r=>({...r,material:buildingMaterial(r),replaceOpenings:true,replaceBody:repairs.has(r.id),preserveEntry:shortEntryEnvelope(r)})),...extras];
+  const {homes,stoops}=prepareAddressFrontages(group,tileOrigin,originalHomes),stoopById=new Map(stoops.map(s=>[s.home.id,s]));
+  const targets:EvidenceTarget[]=[...homes.map(r=>({...r,material:buildingMaterial(r),replaceOpenings:true,replaceBody:repairs.has(r.id),preserveEntry:shortEntryEnvelope(r),retireEntrySteps:stoopById.get(r.id)?.former})),...extras];
   const origin=new THREE.Vector3().fromArray(tileOrigin);
   repairFoundationWalls(group,origin,targets);
   const filtered=filterEvidenceSources(group,origin,targets),batch=new Batch(origin,level);
   for(const row of homes)if(filtered.matched.has(row.id)){
     const roof=repairs.get(row.id);if(roof)roofGeometry(batch,row,roof);
     homeWindows(batch,row);
+    const stoop=stoopById.get(row.id);if(stoop)renderAddressStoop(batch,stoop);
   }
   buildExtra?.(batch,filtered.matched);
   const built=batch.finish();built.group.name='Evidence-informed Webster buildings';group.add(built.group);
+  if(stoops.length)group.userData.addressFrontages=stoops.filter(s=>filtered.matched.has(s.home.id)).map(s=>({id:s.home.id,frameIndex:s.home.entry!.frameIndex,entry:s.home.entry,blocks:s.blocks,basis:s.basis}));
   const report:EvidenceReport={version:1,tileId,buildingIds:[...filtered.matched].sort(),documentedIds:homes.filter(r=>r.documented&&filtered.matched.has(r.id)).map(r=>r.id),removedTriangles:filtered.removedTriangles,recoloredTriangles:filtered.recoloredTriangles,addedTriangles:built.triangles,addedMeshes:built.group.children.length,geometryBytes:built.bytes};
   group.userData.evidenceBuildings=report;return report;
 }

@@ -2,6 +2,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import * as THREE from 'three';
 import { applyArtMaterial, removeArtMaterial, treeArtColor } from '../art-materials';
+import { createBoundaryContext } from '../boundary-context';
 
 const material = (name: string, color: [number,number,number] = [0.66,0.68,0.64]) => {
   const m = new THREE.MeshStandardMaterial(); m.name = name; m.color.setRGB(...color); return m;
@@ -137,6 +138,40 @@ describe('Scoped late-summer materials', () => {
 
   it('uses warped, low-slope dielectric ripples without adding water assets or moving its geometry',()=>{
     const m=material('Mapped water | inferred level and appearance');applyArtMaterial(m);const shader=compile(m);expect(m.metalness).toBe(0);expect(m.roughness).toBe(.28);expect(shader.fragmentShader).toContain('townWaterWind');expect(shader.fragmentShader).toContain('townWaterStrength');expect(shader.fragmentShader).toContain('townWaterFine');expect(shader.vertexShader).not.toContain('townWaterWind');expect(shader.fragmentShader).not.toContain('vec2(3.1,1.7)');
+  });
+
+  it('gives the neighboring lake the same finish and wave phase as the playable water without changing either shoreline', () => {
+    const positions = [0, 45, 0, 0, 45, 10, 10, 45, 0];
+    const group = createBoundaryContext({version: 1, cellId: 'test', sourceManifestSha256: 'test', origin: [512, 0, 1024], batches: [{role: 'water', positions}], trees: [], records: []});
+    const mesh = group.children[0] as THREE.Mesh<THREE.BufferGeometry, THREE.MeshStandardMaterial>;
+    const before = Array.from(mesh.geometry.getAttribute('position').array);
+    const boundary = mesh.material, originalColor = boundary.color.toArray();
+    const mapped = material('Mapped water | inferred level and appearance'), clock = {value: 2};
+    applyArtMaterial(boundary, clock); applyArtMaterial(mapped, clock);
+    expect(boundary.color.toArray()).toEqual(mapped.color.toArray());
+    expect(boundary.roughness).toBe(mapped.roughness);
+    expect(boundary.metalness).toBe(mapped.metalness);
+    expect(boundary.envMapIntensity).toBe(mapped.envMapIntensity);
+    expect(compile(boundary).fragmentShader).toBe(compile(mapped).fragmentShader);
+    expect(compile(boundary).uniforms.townArtTime).toBe(clock);
+    expect(Array.from(mesh.geometry.getAttribute('position').array)).toEqual(before);
+    expect(group.position.toArray()).toEqual([512, 0, 1024]);
+    removeArtMaterial(boundary);
+    expect(boundary.color.toArray()).toEqual(originalColor);
+    mesh.geometry.dispose(); boundary.dispose(); mapped.dispose();
+  });
+
+  it('uses baked far-crown shade without modifying shared leaf maps and restores the vertex-color contract', () => {
+    const far = material('Canopy | subdued summer green'), near = material('Inferred deciduous leaf clusters');
+    near.vertexColors = true;
+    const map = new THREE.Texture(); near.map = map;
+    applyArtMaterial(far); applyArtMaterial(near);
+    expect(far.vertexColors).toBe(true); expect(near.vertexColors).toBe(true);
+    expect(far.color.getHexString()).toBe('576d43');
+    expect(near.map).toBe(map); expect(far.map).toBeNull();
+    removeArtMaterial(far); removeArtMaterial(near);
+    expect(far.vertexColors).toBe(false); expect(near.vertexColors).toBe(true);
+    far.dispose(); near.dispose(); map.dispose();
   });
 
   it('reuses a supplied crown color and varies deterministically without changing LOD or tile coordinates', () => {

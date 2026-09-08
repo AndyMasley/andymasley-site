@@ -36,6 +36,7 @@ import { applyParkingFinish, validParkingPacket } from './parking-finish';
 import { beginOptionalDetail, TileDetailStream } from './optional-detail';
 import { BoundaryContext } from './boundary-context';
 import { propertyTerrainAsset, validPropertyTerrainPacket, type PropertyTerrainPacket } from './property-terrain-finish';
+import { createDistantCanopyPrototype, disposeDistantCanopyPrototype } from './distant-canopy';
 
 type TreePlan = { near: Set<number>; shadows: Set<number>; excluded: Set<number>; key: string };
 type LoadedTile = { group: THREE.Group; level: number; lastUsed: number; trees?: THREE.Group; treeRows?: number[][]; treeExcluded?: Set<number>; treePlan?: TreePlan; occluders?: THREE.Mesh[]; geometryBytes?: number; detailRetryAt?: number; detailAttempts?: number };
@@ -59,6 +60,7 @@ export class TownWorld {
   private prototypes: THREE.Group[] = [];
   private coniferPrototypes = new Map<number, THREE.Group>();
   private openBroadleafPrototypes = new Map<number, THREE.Group>();
+  private distantCanopyPrototypes = new Map<number, { broadleaf: THREE.Group; conifer: THREE.Group }>();
   private backdropMaterials: THREE.Material[] = [];
   private failures = new Map<string, number>();
   private disposed = false;
@@ -327,12 +329,19 @@ export class TownWorld {
     });
     this.root.add(fallback);
     this.prototypes.push(...prototypes);
-    // Borrow the already pooled leaf materials; only two small geometry variants
-    // are allocated for the entire town, independent of the number of anchors.
+    // Borrow pooled leaf materials; shared variants are allocated once for the
+    // entire town, independent of the number of anchors or visible tiles.
     try {
       this.manifest.trees.prototypes.forEach((definition, index) => {
         if (definition.role === 'crown') this.coniferPrototypes.set(index, createConiferPrototype(prototypes[index]));
         if (definition.role === 'crown' && definition.level === 0) this.openBroadleafPrototypes.set(index, createOpenBroadleafPrototype(prototypes[index]));
+        if (definition.role === 'crown' && definition.level === 1) {
+          const broadleaf = createDistantCanopyPrototype(prototypes[index]);
+          try {
+            const conifer = createDistantCanopyPrototype(this.coniferPrototypes.get(index)!);
+            this.distantCanopyPrototypes.set(index, { broadleaf, conifer });
+          } catch (error) { disposeDistantCanopyPrototype(broadleaf); throw error; }
+        }
       });
     } catch (error) {
       for (const variant of this.coniferPrototypes.values()) disposeConiferPrototype(variant);
@@ -706,7 +715,8 @@ export class TownWorld {
       const cohorts = isTrunk ? ['trunk'] as const : splitBroadleaf ? ['broadleaf', 'open', 'conifer'] as const : ['broadleaf', 'conifer'] as const;
       for (const castShadow of [false, true]) {
         for (const family of cohorts) {
-          const prototype = family === 'conifer' ? this.coniferPrototypes.get(band.index) ?? base : family === 'open' ? this.openBroadleafPrototypes.get(band.index) ?? base : base;
+          const distant = band.kind === 'far' ? this.distantCanopyPrototypes.get(band.index) : undefined;
+          const prototype = family === 'conifer' ? distant?.conifer ?? this.coniferPrototypes.get(band.index) ?? base : family === 'open' ? this.openBroadleafPrototypes.get(band.index) ?? base : distant?.broadleaf ?? base;
           prototype.updateMatrixWorld(true);
           const indices = rows.map((_, index) => index).filter((index) =>
             !plan.excluded.has(index) && (isTrunk || (plan.near.has(index) === (band.kind === 'near') && forms[index].renderFamily === (family === 'open' ? 'broadleaf' : family) && (!splitBroadleaf || forms[index].renderFamily !== 'broadleaf' || (forms[index].crownVariant === 'open') === (family === 'open')))) && plan.shadows.has(index) === castShadow);
@@ -888,6 +898,7 @@ export class TownWorld {
     for (const prototype of this.prototypes) prototype.traverse(inspect);
     for (const prototype of this.coniferPrototypes.values()) prototype.traverse(inspect);
     for (const prototype of this.openBroadleafPrototypes.values()) prototype.traverse(inspect);
+    for (const pair of this.distantCanopyPrototypes.values()) { pair.broadleaf.traverse(inspect); pair.conifer.traverse(inspect); }
     let estimatedTextureBytes = 0;
     for (const { texture } of this.texturePool.values()) {
       const image = texture.image;
@@ -913,6 +924,8 @@ export class TownWorld {
     this.coniferPrototypes.clear();
     for (const prototype of this.openBroadleafPrototypes.values()) disposeOpenBroadleafPrototype(prototype);
     this.openBroadleafPrototypes.clear();
+    for (const pair of this.distantCanopyPrototypes.values()) { disposeDistantCanopyPrototype(pair.broadleaf); disposeDistantCanopyPrototype(pair.conifer); }
+    this.distantCanopyPrototypes.clear();
     for (const prototype of this.prototypes) this.releaseGroup(prototype);
     this.prototypes = [];
     for (const material of this.backdropMaterials) material.dispose();

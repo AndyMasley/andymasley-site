@@ -106,6 +106,36 @@ describe('mapped evidence building application',()=>{
     try{applyEvidenceBuildings(group,'0_0',[0,0,0],0,[{...home,entry:null}]);expect(doors).not.toHaveBeenCalled();}
     finally{doors.mockRestore();dispose(group);}
   });
+  it('fits 790 School triple windows around the retained entry with clear lower sash and bounded detail cost',()=>{
+    for(const level of[0,1,2]){
+      const group=new THREE.Group(),body=mesh('V2 inferred | siding',wall),reference=mesh('Photo home | siding',wall);
+      const protectedGeometry=reference.geometry,protectedPositions=[...reference.geometry.getAttribute('position').array];
+      group.add(body,reference);
+      const windows=vi.spyOn(Batch.prototype,'window'),boxes=vi.spyOn(Batch.prototype,'box');
+      try{
+        const result=applyEvidenceBuildings(group,'0_0',[0,0,0],level,[{...home,id:'168330_865062',documented:false,porch:'none'}])!;
+        expect(result.buildingIds).toEqual(['168330_865062']);expect(result.addedMeshes).toBeLessThan(12);
+        expect(result.geometryBytes).toBeLessThan(350_000);
+        expect(windows.mock.calls).toHaveLength(5);
+        for(const[,u,bottom,width,height]of windows.mock.calls){
+          expect(width).toBe(2.65);expect(u-width/2).toBeGreaterThan(0);expect(u+width/2).toBeLessThan(10);
+          expect(bottom+height).toBeLessThan(home.eave);
+          const doorOverlap=Math.min(u+width/2+.11,5+.60)-Math.max(u-width/2-.11,5-.60);
+          expect(doorOverlap<=0||bottom>=home.entry!.floor+2.3).toBe(true);
+        }
+        const upperMuntins=boxes.mock.calls.filter(c=>c[1]==='trim'&&c[5]===.022&&c[7]===.027);
+        expect(upperMuntins).toHaveLength(level===0?45:0);
+        for(const call of upperMuntins){
+          const containing=windows.mock.calls.find(([,u,bottom,width,height])=>Math.abs(call[2]-u)<width/2&&call[3]>bottom&&call[3]<bottom+height)!;
+          expect(call[3]-call[6]/2).toBeCloseTo(containing[2]+containing[4]/2);
+        }
+        expect(reference.geometry).toBe(protectedGeometry);expect([...reference.geometry.getAttribute('position').array]).toEqual(protectedPositions);
+        const addition=group.getObjectByName('Evidence-informed Webster buildings')!;
+        addition.traverse(o=>{if(o instanceof THREE.Mesh)expect(o.geometry.getAttribute('position').array.every(Number.isFinite)).toBe(true);});
+        expect(applyEvidenceBuildings(group,'0_0',[0,0,0],level,[home])).toBe(result);
+      }finally{windows.mockRestore();boxes.mockRestore();dispose(group);}
+    }
+  });
   it('keeps an elevated retained entry clear when it reaches the next floor window band',()=>{
     const raised:EvidenceBuilding={...home,porch:'none',entry:{frameIndex:0,u:5,floor:home.floor+1.4077}};
     const group=new THREE.Group();group.add(mesh('V2 inferred | siding',wall));
@@ -144,6 +174,16 @@ describe('mapped evidence building application',()=>{
         preserveEntry:{...home.frames[0],u:5,floor:3}}]);
       expect(body.parent).toBeNull();
       for(const kept of [doors,trim]){expect(kept.parent).toBe(group);expect(kept.geometry.index!.count).toBe(3);expect([...kept.geometry.getAttribute('position').array]).toEqual(entry.map(Math.fround));}
+    }finally{dispose(group);}
+  });
+  it('retires only complete inferred step triangles in the old entrance envelope beyond the wall filter',()=>{
+    const oldStep=[14.5,2.1,-8.8,15.5,2.1,-8.8,14.5,2.2,-8.7],neighbor=oldStep.map((v,i)=>i%3===0?v+3:v);
+    const group=new THREE.Group(),steps=mesh('V2 inferred | foundation',[...oldStep,...neighbor]),reference=mesh('Observed | foundation',oldStep),body=mesh('V2 inferred | siding',wall);
+    group.add(steps,reference,body);const refGeometry=reference.geometry;
+    try{
+      const result=filterEvidenceSources(group,new THREE.Vector3(),[{...home,material:'wall',retireEntrySteps:{frame:{...home.frames[0],structId:home.id,tileId:home.tileId},u:5,floor:2.3}}]);
+      expect(result.removedTriangles).toBe(1);expect([...steps.geometry.getAttribute('position').array]).toEqual(neighbor.map(Math.fround));
+      expect(reference.parent).toBe(group);expect(reference.geometry).toBe(refGeometry);expect(body.parent).toBe(group);
     }finally{dispose(group);}
   });
 });

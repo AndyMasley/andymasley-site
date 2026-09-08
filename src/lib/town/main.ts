@@ -12,6 +12,7 @@ import { displayRoadName, turnDistanceLabel, displayChoices } from './road-displ
 import { updateChoiceControls } from './choice-controls';
 import { qualityPixelRatio, readPreferences, writePreferences, readSnapshot, restoreSnapshot, saveSnapshot, snapshotDrive, type CameraMode, type ComfortMode } from './ux-state';
 import { drawTownOverview } from './explore-map';
+import { drawNavigationBase, drawNavigationFurniture, drawNavigationPlaces, navigationPoint } from './navigation-map';
 import placeDirectory from '../../../data/derived/town/place-directory.json';
 import { readCriticalJson } from './critical-load';
 import { CameraObstruction } from './camera-comfort';
@@ -487,20 +488,10 @@ export async function startTown(root: HTMLElement): Promise<Session> {
       map.clearRect(0, 0, size, size);
       const [position, direction] = engine.pose();
       const scale = 0.19;
-      const project = (p: readonly number[]): [number, number] => [size / 2 + (p[0] - position[0]) * scale, size / 2 - (p[1] - position[1]) * scale];
-      const drawn = new Set<number | string>();
+      const view = { width: size, height: size, center: position, scale };
+      const project = (p: readonly number[]): [number, number] => navigationPoint(p, view);
+      drawNavigationBase(map, graph, view);
       map.lineCap = 'round';
-      for (const id of graph.nearby(position[0], position[1], 520)) {
-        const edge = graph.edges.get(id)!;
-        const physical = edge.physical_id ?? edge.id;
-        if (drawn.has(physical)) continue;
-        drawn.add(physical);
-        map.beginPath();
-        edge.points.forEach((p: readonly number[], index: number) => { const q = project(p); if (!index) map.moveTo(...q); else map.lineTo(...q); });
-        map.strokeStyle = '#d3d6c58c';
-        map.lineWidth = 1.4;
-        map.stroke();
-      }
       const next = engine.nextJunction();
       const current = graph.paths.get(engine.edgeId)!;
       map.beginPath();
@@ -518,12 +509,15 @@ export async function startTown(root: HTMLElement): Promise<Session> {
           map.stroke();
         }
       }
+      drawNavigationPlaces(map, view);
       map.save();
       map.translate(size / 2, size / 2);
       map.rotate(Math.atan2(direction[0], direction[1]));
       map.beginPath(); map.moveTo(0, -7); map.lineTo(5, 5); map.lineTo(0, 3); map.lineTo(-5, 5); map.closePath();
+      map.strokeStyle = '#172a23'; map.lineWidth = 2.5; map.stroke();
       map.fillStyle = '#fff5d3'; map.fill();
       map.restore();
+      drawNavigationFurniture(map, view);
     }
 
     function refreshHud(): void {

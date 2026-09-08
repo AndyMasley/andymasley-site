@@ -52,6 +52,7 @@ export type EvidenceBuilding = {
   frontageBays?: number | null;
   eaveDetail?: 'dentils' | 'brick-dentils' | 'brackets' | null;
   historicalEvidenceIds?: string[];
+  historicalWindowGroup?: {count:3;sash:'12-over-1'};
   materialBasis?: string;
   paintBasis?: string;
 };

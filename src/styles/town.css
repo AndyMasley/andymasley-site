@@ -354,16 +354,7 @@
   display: block;
   width: 100%;
   height: auto;
-  aspect-ratio: 4 / 3;
-}
-
-.town-map__north {
-  position: absolute;
-  top: var(--space-xs);
-  right: var(--space-xs);
-  color: var(--town-screen-dim);
-  font-size: var(--text-xs);
-  line-height: var(--leading-note);
+  aspect-ratio: 1;
 }
 
 .town-map figcaption {

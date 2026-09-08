@@ -38,11 +38,11 @@ function decode(value: string): Float32Array {
 }
 
 export function frontageMaterial(role: Role, color: string): THREE.MeshStandardMaterial {
-  const result = new THREE.MeshStandardMaterial({ color, roughness: role === 'glass' ? 0.18 : role === 'metal' ? 0.6 : 0.87, metalness: role === 'glass' ? 0.26 : role === 'metal' ? 0.35 : 0 });
+  const result = new THREE.MeshStandardMaterial({ color, roughness: role === 'glass' ? 0.14 : role === 'metal' ? 0.6 : 0.87, metalness: role === 'metal' ? 0.35 : 0 });
   result.name = `Crafted frontage | ${role} | ${color}`;
   result.userData.surfaceRole = role;
   result.userData.townCrafted = true;
-  result.envMapIntensity = role === 'glass' ? .62 : .12;
+  result.envMapIntensity = role === 'glass' ? .85 : .12;
   result.userData.appearanceBasis = 'Dated facade observations plus explicitly inferred dimensions and late-summer materials.';
   if (['wall', 'roof', 'brick', 'stone', 'paving', 'foundation', 'leaf', 'shingle', 'stucco'].includes(role)) {
     result.onBeforeCompile = (shader) => {
@@ -93,13 +93,11 @@ if(abs(craftedDet)>0.0000000001){
     result.customProgramCacheKey = () => `crafted-frontages-v3:${role}`;
   }
   if(role==='glass'){
-    // The original authored glass tint remains. Sky-facing reflectance and a
-    // subdued interior value give depth without fabricated interior images.
+    // Keep the authored hue and sky reflection; the diffuse interior is dark.
     result.onBeforeCompile=shader=>{shader.fragmentShader=shader.fragmentShader.replace('#include <opaque_fragment>',`
-float craftedGlassFresnel=pow(1.0-clamp(dot(normal,normalize(vViewPosition)),0.0,1.0),4.0);
-outgoingLight += vec3(.095,.135,.16) * (.07+.25*craftedGlassFresnel);
+outgoingLight -= totalDiffuse * .42;
 #include <opaque_fragment>
-`);};result.customProgramCacheKey=()=> 'crafted-frontages-v3:glass';
+`);};result.customProgramCacheKey=()=> 'crafted-frontages-v4:glass';
   }
   return result;
 }
