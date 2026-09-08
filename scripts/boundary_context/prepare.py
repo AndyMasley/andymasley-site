@@ -231,6 +231,22 @@ def prepare(work,destination):
      for y in range(math.floor(g.bounds[1]/8)*8,math.ceil(g.bounds[3]/8)*8,8):
       part=g.intersection(box(x,y,x+8,y+8))
       for t in triangles(part):emit(key,'water',[(px,py,waterHeight(px,py,props['OBJECTID']))for px,py in t])
+ for road in roadRows:
+  p=road['polygon'];props=road['properties']
+  for cx in range(math.floor(p.bounds[0]/CELL),math.floor(p.bounds[2]/CELL)+1):
+   for cy in range(math.floor(p.bounds[1]/CELL),math.floor(p.bounds[3]/CELL)+1):
+    key=f'{cx}_{cy}';g=shapely.set_precision(shapely.make_valid(p.intersection(box(cx*CELL,cy*CELL,(cx+1)*CELL,(cy+1)*CELL))),.000001)
+    # A mitered station ribbon supplies actual planar triangle supports. A
+    # nonlinear nearest-station height on a skinny fan triangle can fold even
+    # when its 2D coverage is correct; this construction cannot do that.
+    for i in range(len(road['xy'])-1):
+     left0=road['xy'][i]+road['offsets'][i];right0=road['xy'][i]-road['offsets'][i];left1=road['xy'][i+1]+road['offsets'][i+1];right1=road['xy'][i+1]-road['offsets'][i+1]
+     for support in [np.array([[*right0,road['height'][i]],[*right1,road['height'][i+1]],[*left1,road['height'][i+1]]]),np.array([[*right0,road['height'][i]],[*left1,road['height'][i+1]],[*left0,road['height'][i]]])]:
+      poly=shapely.set_precision(Polygon(support[:,:2]),.000001)
+      if poly.area<1e-8 or not poly.intersects(g):continue
+      plane=np.linalg.solve(np.column_stack([support[:,:2],np.ones(3)]),support[:,2]);part=poly.intersection(g)
+      for t in triangles(part):emit(key,'road',[(x,y,float(np.array([x,y,1])@plane))for x,y in t])
+    if not g.is_empty:records[key].append({'kind':'road','id':props['OBJECTID'],'name':props.get('STREETNAME'),'widthBasis':'MassDOT SURFACE_WD feet, or explicit inferred lane-width fallback','anchors':len(road['anchors'])})
  # Exposed source-registered bank closure, strictly additive. The upper edge
  # is an ACTUAL final Float32 context-ground boundary and the lower edge lies
  # on ACTUAL emitted water triangles. Neither sampled water levels nor any
@@ -238,7 +254,7 @@ def prepare(work,destination):
  # water curtain or a claimed retaining wall/riprap inventory.
  qualification=json.loads((Path(__file__).with_name('bank-qualification.json')).read_text())
  bankArea=unary_union([Point(*r['pointEastNorth']).buffer(r['radiusM'])for r in qualification['rows']])
- bankRecords=[]
+ bankRecords=[];bankRoadKeepout=roadUnion.union(retainedUnion).buffer(.03)
  def finalSource(key,role):
   cx,cy=map(int,key.split('_'));origin=np.array([cx*CELL,0,-cy*CELL]);raw=np.asarray(batches[key].get(role,[])).reshape(-1,3)
   runtime=np.column_stack([raw[:,0]-origin[0],raw[:,2],-raw[:,1]-origin[2]]).astype(np.float32).astype(float).round(5).astype(np.float32).astype(float)
@@ -257,8 +273,14 @@ def prepare(work,destination):
    a,b=entries[0];line=LineString([a[:2],b[:2]]);mid=line.interpolate(.5,normalized=True)
    if line.length<.001 or not bankArea.covers(mid)or waters.boundary.distance(mid)>.00008:continue
    # A road-side edge or a municipal cut is never substituted for a water bank.
-   if roadUnion.distance(line)<.05 or retainedUnion.distance(line)<.05:continue
-   intervals=[];cuts=[0.,1.]
+   # Clip a touching edge; rejecting the entire 8m support segment leaves a
+   # visibly broad opening even though the intended road tolerance is 3cm.
+   clear=line.difference(bankRoadKeepout);clearIntervals=[]
+   for segment in [clear]if clear.geom_type=='LineString'else getattr(clear,'geoms',[]):
+    if segment.geom_type=='LineString'and segment.length>.0001:
+     clearIntervals.append(sorted([line.project(Point(segment.coords[0]))/line.length,line.project(Point(segment.coords[-1]))/line.length]))
+   if not clearIntervals:continue
+   intervals=[];cuts=[0.,1.,*[v for q in clearIntervals for v in q]]
    for wi in wetIndex.query(line.buffer(.00004)):
     wi=int(wi);part=line.intersection(wetPolys[wi].buffer(.00003))
     if part.is_empty:continue
@@ -268,31 +290,70 @@ def prepare(work,destination):
    cuts=sorted(set(round(v,9)for v in cuts))
    for u0,u1 in zip(cuts,cuts[1:]):
     if (u1-u0)*line.length<.0001:continue
-    midu=(u0+u1)/2;eligible=[q for q in intervals if q[0]-1e-8<=midu<=q[1]+1e-8]
+    midu=(u0+u1)/2
+    if not any(a-1e-9<=midu<=b+1e-9 for a,b in clearIntervals):continue
+    eligible=[q for q in intervals if q[0]-1e-8<=midu<=q[1]+1e-8]
     if not eligible:continue
     wi=min(eligible,key=lambda q:wetPolys[q[2]].distance(line.interpolate(midu,normalized=True)))[2]
     t=wetTris[wi];plane=np.linalg.solve(np.column_stack([t[:,:2],np.ones(3)]),t[:,2]);topa=a+(b-a)*u0;topb=a+(b-a)*u1;bottoma=topa.copy();bottomb=topb.copy();bottoma[2]=np.array([*topa[:2],1])@plane;bottomb[2]=np.array([*topb[:2],1])@plane
     gap=np.array([topa[2]-bottoma[2],topb[2]-bottomb[2]])
     if gap.min()<.03 or gap.max()>12:continue
     emit(key,'bank',[topa,bottoma,topb]);emit(key,'bank',[topb,bottoma,bottomb]);bankRecords.append({'cellId':key,'top':[topa.tolist(),topb.tolist()],'bottom':[bottoma.tolist(),bottomb.tolist()],'waterTriangle':wi,'gapM':gap.tolist()})
- waterStats['bankClosure']={'qualificationSha256':hsh((Path(__file__).with_name('bank-qualification.json')).read_bytes()),'segments':len(bankRecords),'maximumHeightM':max((max(r['gapM'])for r in bankRecords),default=0),'policy':'Additive matte earth face only at actual shared land-water perimeter within220m of eight reviewed crossings. Exact original batches and water levels retained; no shoreline plan, road or armor changes.'}
+  # At bridge approaches, the land edge can meet a ROAD cut several metres
+  # before the mapped water edge. Close that exposed land wedge below the
+  # actual deck, not with a wall across the water opening. Nearest-water feet
+  # stay on the retained water perimeter; the source land/road arrays are exact.
+  roadTris=finalSource(key,'road');roadCross=np.cross(roadTris[:,1]-roadTris[:,0],roadTris[:,2]-roadTris[:,0]);roadTris=roadTris[(np.linalg.norm(roadCross,axis=1)>1e-7)&(roadCross[:,2]>1e-7)]
+  cutRoadPolys=[Polygon(t[:,:2])for t in roadTris];cutRoadIndex=STRtree(cutRoadPolys)
+  cutWetUnion=unary_union(wetPolys);cutDomain=domain.intersection(box(cx*CELL,cy*CELL,(cx+1)*CELL,(cy+1)*CELL)).difference(cutWetUnion)
+  for entries in edges.values():
+   if len(entries)!=1 or not len(roadTris):continue
+   sourceA,sourceB=entries[0];line=LineString([sourceA[:2],sourceB[:2]]);mid=line.interpolate(.5,normalized=True)
+   if line.length<.001 or not bankArea.covers(mid)or not .05<mid.distance(cutWetUnion)<12:continue
+   ri=int(cutRoadIndex.nearest(mid))
+   if mid.distance(cutRoadPolys[ri])>.0001:continue
+   pairs=[]
+   for v in [sourceA,sourceB]:
+    p=Point(v[:2]);wi=int(wetIndex.nearest(p));nearest=shapely.get_point(shapely.shortest_line(wetPolys[wi],p),0)
+    if p.distance(nearest)>12:pairs=[];break
+    wt=wetTris[wi];wp=np.linalg.solve(np.column_stack([wt[:,:2],np.ones(3)]),wt[:,2]);bottom=np.array([nearest.x,nearest.y,np.array([nearest.x,nearest.y,1])@wp]);top=v.copy()
+    candidates=cutRoadIndex.query(p.buffer(.0001))
+    if not len(candidates):pairs=[];break
+    caps=[]
+    for ri in candidates:
+     rt=roadTris[int(ri)];rp=np.linalg.solve(np.column_stack([rt[:,:2],np.ones(3)]),rt[:,2]);caps.append(np.array([*v[:2],1])@rp-.03)
+    top[2]=min(top[2],min(caps));pairs.append((top,bottom))
+   if len(pairs)!=2:continue
+   (topa,bottoma),(topb,bottomb)=pairs;gap=np.array([topa[2]-bottoma[2],topb[2]-bottomb[2]])
+   if gap.min()<.03 or gap.max()>12:continue
+   if np.dot((bottoma+bottomb-topa-topb)[:2],[topb[1]-topa[1],topa[0]-topb[0]])<=0:continue
+   # An approach can cross several planar road triangles. Cap the entire
+   # addition against every intersected deck plane, not just its two endpoints.
+   # Uniform lowering preserves this small quad's continuity and merely embeds
+   # its water-side foot; it never moves source ground, pavement or water.
+   deckDrop=0.
+   for raw in [np.array([topa,bottoma,topb]),np.array([topb,bottoma,bottomb])]:
+    poly=Polygon(raw[:,:2])
+    if poly.area<1e-8:continue
+    plane=np.linalg.solve(np.column_stack([raw[:,:2],np.ones(3)]),raw[:,2])
+    for ri in cutRoadIndex.query(poly):
+     part=poly.intersection(cutRoadPolys[int(ri)])
+     if part.area<1e-8:continue
+     rt=roadTris[int(ri)];rp=np.linalg.solve(np.column_stack([rt[:,:2],np.ones(3)]),rt[:,2])
+     for piece in polys(part):
+      xy=np.asarray(piece.exterior.coords);deckDrop=max(deckDrop,float((np.column_stack([xy,np.ones(len(xy))])@(plane-rp)).max())+.0301)
+   if deckDrop>.5:continue
+   for vertex in [topa,topb,bottoma,bottomb]:vertex[2]-=deckDrop
+   emitted=0
+   for raw in [np.array([topa,bottoma,topb]),np.array([topb,bottoma,bottomb])]:
+    poly=Polygon(raw[:,:2])
+    if poly.area<1e-8:continue
+    plane=np.linalg.solve(np.column_stack([raw[:,:2],np.ones(3)]),raw[:,2]);clipped=poly.intersection(cutDomain)
+    for xy in triangles(clipped):
+     emit(key,'bank',[(x,y,np.array([x,y,1])@plane)for x,y in xy]);emitted+=1
+   if emitted:bankRecords.append({'cellId':key,'kind':'road_land_cut','additionalDeckClearanceLoweringM':deckDrop,'top':[topa.tolist(),topb.tolist()],'bottom':[bottoma.tolist(),bottomb.tolist()],'gapM':gap.tolist(),'triangles':emitted,'scope':'Below-road earth slope outside the actual mapped water interior; not a channel wall or inferred armor.'})
+ waterStats['bankClosure']={'qualificationSha256':hsh((Path(__file__).with_name('bank-qualification.json')).read_bytes()),'segments':len(bankRecords),'maximumHeightM':max((max(r['gapM'])for r in bankRecords),default=0),'policy':'Matte earth closes shared land-water edges and road/land cuts within12m of actual water, capped below the deck, within220m of eight reviewed crossings. Water interior and original batches remain exact; no channel wall or armor claim.'}
  (work/'bank-support-records.json').write_text(json.dumps(bankRecords,separators=(',',':')))
- for road in roadRows:
-  p=road['polygon'];props=road['properties']
-  for cx in range(math.floor(p.bounds[0]/CELL),math.floor(p.bounds[2]/CELL)+1):
-   for cy in range(math.floor(p.bounds[1]/CELL),math.floor(p.bounds[3]/CELL)+1):
-    key=f'{cx}_{cy}';g=shapely.set_precision(shapely.make_valid(p.intersection(box(cx*CELL,cy*CELL,(cx+1)*CELL,(cy+1)*CELL))),.000001)
-    # A mitered station ribbon supplies actual planar triangle supports. A
-    # nonlinear nearest-station height on a skinny fan triangle can fold even
-    # when its 2D coverage is correct; this construction cannot do that.
-    for i in range(len(road['xy'])-1):
-     left0=road['xy'][i]+road['offsets'][i];right0=road['xy'][i]-road['offsets'][i];left1=road['xy'][i+1]+road['offsets'][i+1];right1=road['xy'][i+1]-road['offsets'][i+1]
-     for support in [np.array([[*right0,road['height'][i]],[*right1,road['height'][i+1]],[*left1,road['height'][i+1]]]),np.array([[*right0,road['height'][i]],[*left1,road['height'][i+1]],[*left0,road['height'][i]]])]:
-      poly=shapely.set_precision(Polygon(support[:,:2]),.000001)
-      if poly.area<1e-8 or not poly.intersects(g):continue
-      plane=np.linalg.solve(np.column_stack([support[:,:2],np.ones(3)]),support[:,2]);part=poly.intersection(g)
-      for t in triangles(part):emit(key,'road',[(x,y,float(np.array([x,y,1])@plane))for x,y in t])
-    if not g.is_empty:records[key].append({'kind':'road','id':props['OBJECTID'],'name':props.get('STREETNAME'),'widthBasis':'MassDOT SURFACE_WD feet, or explicit inferred lane-width fallback','anchors':len(road['anchors'])})
  # Mapped building footprints receive restrained inferred volumes. Roof planes
  # are clipped to the real polygon and split at the ridge: no concave bites or
  # disconnected roof caps. No current exterior observation is implied.

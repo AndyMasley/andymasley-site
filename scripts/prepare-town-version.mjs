@@ -4,7 +4,7 @@ import { dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const site = resolve(fileURLToPath(new URL('..', import.meta.url)));
-const paths = new Set([join(site, 'src/pages/town.astro')]);
+const paths = new Set([join(site, 'src/pages/town.astro'), join(site, 'src/styles/town.css')]);
 async function collect(directory) {
   for (const row of await readdir(directory, { withFileTypes: true })) {
     if (row.isDirectory()) { if (row.name !== '__tests__') await collect(join(directory, row.name)); }

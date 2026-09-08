@@ -59,6 +59,7 @@ jobs:
           TOWN_URL: http://127.0.0.1:4322/town/
           TOWN_OUT_DIR: artifacts/town-chromium
           CHECK_MISSING_ASSET: '1'
+          TOWN_FUNCTIONAL_SOFTWARE: '1'
       - uses: actions/upload-artifact@v4
         if: always()
         with:

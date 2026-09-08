@@ -978,7 +978,8 @@ body:has(.town-game.town-expanded) {
   .town-directions:has(.town-clear-turn:not([hidden])) { padding-block: 7px; }
   .town-directions:has(.town-clear-turn:not([hidden])) > p { min-height: 28px; padding-right: 82px; display: flex; align-items: center; }
   .town-clear-turn { position: absolute; top: -1px; right: 9px; margin: 0; font-size: var(--text-sm); }
-  .town-choices { flex-wrap: nowrap; }
+  .town-choices { flex-wrap: nowrap; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: thin; padding-bottom: 4px; }
+  .town-choices button { flex: 0 0 142px; }
   .town-choice__name { max-width: 20ch; }
   .town-cruise-state { display: none; }
   .town-game:is(:fullscreen, .town-expanded) .town-explore__body { max-height: 35dvh; }

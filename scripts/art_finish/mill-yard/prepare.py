@@ -15,7 +15,7 @@ def parts(p):
  if p.geom_type=='Polygon':return[p]
  return[q for c in getattr(p,'geoms',[])for q in parts(c)]
 trace=read(Path(__file__).with_name('trace.json'));meta=read(PROJECT/'townwide/imagery_aerial_metadata.json');assert meta['sha256']==trace['sourceSha256']
-domain=Polygon(trace['outline']);assert domain.is_valid;extent=domain.buffer(2);protected=[];sources=[]
+traces=[{'sourceBuildingId':trace['sourceBuildingId'],'outline':trace['outline']},trace['secondaryApron']];domain=unary_union([Polygon(t['outline'])for t in traces]);assert domain.is_valid;extent=domain.buffer(2);protected=[];sources=[]
 for p in sorted(OUT.glob('*.source.json.gz')):
  r=read(p);sources.append(r)
  for tri in r['protectedFaces']:
@@ -40,8 +40,13 @@ car=unary_union(cars);protected.append(car.buffer(.03));keepout=unary_union(prot
 final=unary_union([p for p in parts(domain.difference(keepout))if p.area>.2])
 assert 100<final.area<domain.area, ('Implausible or unclipped traced apron',final.area)
 release=read(ROOT/'data/derived/town/release.json');manifest=read(ROOT/'public/town-assets'/release['directory']/'manifest.json');tilemap={t['id']:t for t in manifest['tiles']}
-features=[]
-for i,p in enumerate(sorted(parts(final),key=lambda p:-p.area)):
+features=[];allocated=Polygon();featureParts=[]
+for sourceTrace in traces:
+ selected=Polygon(sourceTrace['outline']).intersection(final).difference(allocated)
+ for i,p in enumerate(sorted(parts(selected),key=lambda p:-p.area)):
+  if p.area>.2:featureParts.append((sourceTrace['sourceBuildingId'],i,p))
+ allocated=allocated.union(selected)
+for sid,i,p in featureParts:
  rings=[list(r.coords)[:-1]for r in [p.exterior,*p.interiors]]
  result=subprocess.run([os.environ.get('WEBSTER_NODE','node'),str(ROOT/'scripts/triangulate-ground.mjs')],input=json.dumps(rings),text=True,capture_output=True,check=True);tri=json.loads(result.stdout)
  assert abs(sum(Polygon(t).area for t in tri)-p.area)<1e-6
@@ -51,12 +56,24 @@ for i,p in enumerate(sorted(parts(final),key=lambda p:-p.area)):
    key=tuple(round(float(x),7)for x in v)
    if key not in lookup:lookup[key]=len(points);points.append(list(key))
    indices.append(lookup[key])
- features.append({'id':f'MILL-YARD-168466_867928-{i+1:02d}','sid':trace['sourceBuildingId'],'site':'Mill Street north-village mill frontage','kind':'walk','color':'#85857a','areaM2':p.area,'points':points,'indices':indices})
+ features.append({'id':f'MILL-YARD-{sid}-{i+1:02d}','sid':sid,'site':'Mill Street north-village mill frontage','kind':'walk','color':'#85857a','areaM2':p.area,'points':points,'indices':indices})
 tiles={}
 for tid in ['-12_1','-11_1']:
  tile=tilemap[tid];cell=box(tile['origin'][0],-tile['origin'][2],tile['origin'][0]+250,-tile['origin'][2]+250)
  if final.intersects(cell):tiles[tid]={'origin':tile['origin'],'lods':[{'level':l['level'],'sha256':l['sha256']}for l in tile['lods']],'features':[f['id']for f in features]}
-catalog={'version':1,'sourceManifestSha256':release['manifestSha256'],'sourceAerialSha256':trace['sourceSha256'],'sourceTraceSha256':digest(Path(__file__).with_name('trace.json')),'sourceChapter':trace['sourceChapter'],'sourceDate':trace['sourceDate'],'sourceCarEnvelopeSha256':digest(carpath),'policy':trace['observation']+' '+trace['inference']+' The trace is approximate dated aerial interpretation; actual source roads, water, roofprints and guided vehicle envelopes are excluded. No parking, access permission or current industrial operation is asserted.','features':features,'tiles':tiles}
+catalog={'version':1,'sourceManifestSha256':release['manifestSha256'],'sourceAerialSha256':trace['sourceSha256'],'sourceTraceSha256':digest(Path(__file__).with_name('trace.json')),'sourceChapter':trace['sourceChapter'],'sourceDate':trace['sourceDate'],'sourceCarEnvelopeSha256':digest(carpath),'policy':trace['observation']+' '+trace['inference']+' '+trace['secondaryApron']['observation']+' '+trace['secondaryApron']['inference']+' The trace is approximate dated aerial interpretation; actual source roads, water, roofprints and guided vehicle envelopes are excluded. No parking, access permission or current industrial operation is asserted.','features':features,'tiles':tiles}
 (ROOT/'data/derived/town/mill-yard-grounds.json').write_text(json.dumps(catalog,separators=(',',':'))+'\n')
 report={'sourceTraceSha256':catalog['sourceTraceSha256'],'sourceTerrainExports':{r['tileId']+'-'+str(r['level']):digest(OUT/f"{r['tileId']}-{r['level']}.source.json.gz")for r in sources},'aerialAreaM2':domain.area,'finishedAreaM2':final.area,'carIntersectionM2':final.intersection(car).area,'protectedIntersectionM2':final.intersection(keepout).area,'features':len(features),'tiles':list(tiles),'carPosesScreened':len(poses),'nearbyCarPoses':len(cars)}
 (OUT/'generation-report.json').write_text(json.dumps(report,indent=2));(OUT/'geometry-domain.json').write_text(json.dumps({'final':final.__geo_interface__,'protected':keepout.__geo_interface__}));print(json.dumps(report,indent=2))
+# Documentary registration overlay, not a texture or a fabricated photo.
+from PIL import Image,ImageDraw
+import math
+inverse=Transformer.from_crs(6491,4326,always_xy=True);registration=trace['aerialRegistration']
+def pixel(p):
+ lon,lat=inverse.transform(p[0]+ox,p[1]+oy);xt=(lon+180)/360*2**17;yt=(1-math.asinh(math.tan(math.radians(lat)))/math.pi)/2*2**17
+ return[((xt-meta['tile_bounds_xy_inclusive'][0])*256-registration['crop'][0])*registration['scale'],((yt-meta['tile_bounds_xy_inclusive'][1])*256-registration['crop'][1])*registration['scale']]
+im=Image.open(PROJECT/trace['sourceImage']).crop(registration['crop']);im=im.resize((im.width*registration['scale'],im.height*registration['scale']));draw=ImageDraw.Draw(im)
+for p in parts(final):
+ draw.line([tuple(pixel(q))for q in p.exterior.coords],fill='#00ffff',width=2)
+ for hole in p.interiors:draw.line([tuple(pixel(q))for q in hole.coords],fill='#ff8833',width=2)
+im.save(OUT/'final-trace-review.png')

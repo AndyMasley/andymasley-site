@@ -12,25 +12,21 @@ if (!target) throw new Error('Set TOWN_URL to a running, frozen candidate.');
 const out = process.env.TOWN_OUT_DIR || '/private/tmp/webster-finish-stream-acceptance';
 const normalTimeout = Number(process.env.TOWN_READY_TIMEOUT_MS || 90000);
 const fallbackTimeout = Number(process.env.TOWN_FAILURE_READY_TIMEOUT_MS || 45000);
+const optionalFamilies = [
+  ['/town-evidence/v1/additional-environment/', 'environment'], ['/town-roadside/', 'roadside'],
+  ['/town-evidence/v1/environment-ground/', 'environment-ground'], ['/town-evidence/v1/environment-facilities/', 'facilities'],
+  ['/town-evidence/v1/road-materials/', 'road-materials'], ['/town-finish/v1/corner-ground/', 'corner-ground'],
+  ['/town-finish/v1/corners/', 'corners'], ['/town-finish/v1/curves/', 'road-curve'],
+  ['/town-finish/v1/dashes/', 'road-dash'], ['/town-finish/v1/property-terrain/', 'property-terrain'],
+  ['/town-finish/v1/context/', 'context'], ['/town-finish/v1/markings/', 'road'],
+  ['/town-evidence/v1/terrain/', 'terrain'], ['/town-surfaces/v2/lots/', 'parking'], ['/town-surfaces/v2/masks/', 'mask'],
+];
 const optionalKind = url => {
   const p = new URL(url).pathname.replace('/town-transfer/json-gzip-v1', '').replace(/\.json\.gz$/, '.json');
-  if (p.startsWith('/town-evidence/v1/additional-environment/')) return 'environment';
-  if (p.startsWith('/town-roadside/')) return 'roadside';
-  if (p.startsWith('/town-evidence/v1/environment-ground/')) return 'environment-ground';
-  if (p.startsWith('/town-evidence/v1/environment-facilities/')) return 'facilities';
-  if (p.startsWith('/town-evidence/v1/road-materials/')) return 'road-materials';
-  if (p.startsWith('/town-finish/v1/corner-ground/')) return 'corner-ground';
-  if (p.startsWith('/town-finish/v1/corners/')) return 'corners';
-  if (p.startsWith('/town-finish/v1/curves/')) return 'road-curve';
-  if (p.startsWith('/town-finish/v1/dashes/')) return 'road-dash';
-  if (p.startsWith('/town-finish/')) return 'road';
-  if (p.startsWith('/town-evidence/v1/terrain/')) return 'terrain';
-  if (p.startsWith('/town-surfaces/v2/lots/')) return 'parking';
-  if (p.startsWith('/town-surfaces/v2/masks/')) return 'mask';
-  return null;
+  return optionalFamilies.find(([prefix]) => p.startsWith(prefix))?.[1] ?? null;
 };
 const townAsset = url => /^\/town-(?:assets|transfer|finish|surfaces|evidence|roadside|environment-ground)\//.test(new URL(url).pathname);
-const gatedAsset = url => optionalKind(url) || /^\/town-(?:transfer|evidence)\//.test(new URL(url).pathname) ||
+const gatedAsset = url => optionalKind(url) || /^\/town-finish\/v1\/network\//.test(new URL(url).pathname) || /^\/town-(?:transfer|evidence)\//.test(new URL(url).pathname) ||
   /^\/town-assets\/.+(?:\/(?:manifest|network)\.json|\.glb(?:\.gz)?)$/.test(new URL(url).pathname);
 const report = {
   version: 1, url: target, started: new Date().toISOString(), passed: false,
@@ -91,13 +87,13 @@ async function runScenario(mode) {
   });
   page.on('requestfailed', request => scenario.failedRequests.push({ url: request.url(), error: request.failure()?.errorText }));
   // Observe real fetch signals without changing response timing or cancellation.
-  await page.addInitScript(() => {
+  await page.addInitScript(families => {
     const original = window.fetch.bind(window);
     const probe = window.__finishStreamProbe = { rows: [], playAt: null };
     window.fetch = async (input, init) => {
       const url = new URL(typeof input === 'string' ? input : input instanceof URL ? input.href : input.url, location.href).href;
       const p = new URL(url).pathname.replace('/town-transfer/json-gzip-v1', '').replace(/\.json\.gz$/, '.json');
-      const kind = p.startsWith('/town-evidence/v1/road-materials/') ? 'road-materials' : p.startsWith('/town-evidence/v1/environment-facilities/') ? 'facilities' : p.startsWith('/town-roadside/') ? 'roadside' : p.startsWith('/town-evidence/v1/environment-ground/') ? 'environment-ground' : p.startsWith('/town-evidence/v1/additional-environment/') ? 'environment' : p.startsWith('/town-finish/v1/corner-ground/') ? 'corner-ground' : p.startsWith('/town-finish/v1/corners/') ? 'corners' : p.startsWith('/town-finish/v1/curves/') ? 'road-curve' : p.startsWith('/town-finish/') ? 'road' : p.startsWith('/town-evidence/v1/terrain/') ? 'terrain' : p.startsWith('/town-surfaces/v2/lots/') ? 'parking' : p.startsWith('/town-surfaces/v2/masks/') ? 'mask' : null;
+      const kind = families.find(([prefix]) => p.startsWith(prefix))?.[1] ?? null;
       if (!kind) return original(input, init);
       const signal = init?.signal || (input instanceof Request ? input.signal : undefined);
       const row = { url, kind, start: performance.now(), hasSignal: !!signal, abort: signal?.aborted ? performance.now() : null, settled: null };
@@ -108,7 +104,7 @@ async function runScenario(mode) {
       catch (error) { row.error = error.name; throw error; }
       finally { row.settled = performance.now(); signal?.removeEventListener('abort', aborted); }
     };
-  });
+  }, optionalFamilies);
   if (mode !== 'cold-10mbps') await context.route(url => !!optionalKind(url.href), route => {
     const run = (async () => {
       const row = { url: route.request().url(), kind: optionalKind(route.request().url()), time: Date.now() };
@@ -204,10 +200,23 @@ async function runScenario(mode) {
       assert.ok(scenario.bankFallback.roadCurves.every(row=>!row.applied),'Unavailable curve must preserve the complete original corridor');
       assert.deepEqual(scenario.ready.finish.streetCorners, [], 'Missing registered corner grading must not expose new unsupported slabs');
       scenario.checks.push('Unavailable DCR ground and roadside packets preserve playable original scenery');
+      // The three earlier owners contain no registered dash packet. Exercise
+      // the actual Thompson Road owner explicitly instead of depending on
+      // whether speculative neighboring-tile loads happen to reach a dash.
+      scenario.dashFallback = await page.evaluate(async () => {
+        const g=window.__webster,e=g.engine,point=[-1356.354,-626.0703], [id,s]=g.graph.nearest(point);
+        e.paused=true;e.speed=e.cruise=0;e.edgeId=id;e.s=s;e.phase='ROAD';e.connection=null;e.connectionS=0;e.queue(null);
+        const p=e.pose()[0];await g.world.prepareAt([p[0],p[2],-p[1]]);
+        return {ready:g.ready,lost:g.renderer.getContext().isContextLost(),dashes:g.world.finishResources().roadDash,streaming:g.world.streamingResources()};
+      });
+      assert.equal(scenario.dashFallback.ready,true);assert.equal(scenario.dashFallback.lost,false);
+      assert.ok(scenario.dashFallback.dashes.every(row=>!row.applied),'Unavailable dashes must retain source markings');
+      assert.ok(scenario.intercepted.some(row=>row.kind==='road-dash') || scenario.dashFallback.streaming.incompleteTiles.some(tile=>tile.id==='-6_-3' && tile.missing.includes('roadDash')), 'Registered Thompson Road dash owner was not exercised');
+      scenario.checks.push('Unavailable registered Thompson Road dashes retain source markings and remain retryable');
     }
     scenario.fetchSignalsBeforeDispose = await page.evaluate(() => window.__finishStreamProbe.rows);
     if (mode === 'optional-stalled') {
-      const observations = [scenario.ready.streaming, scenario.environmentFallback.streaming, scenario.bankFallback.streaming];
+      const observations = [scenario.ready.streaming, scenario.environmentFallback.streaming, scenario.bankFallback.streaming, scenario.dashFallback.streaming];
       const missing = new Set(observations.flatMap(s => s.incompleteTiles.flatMap(t => t.missing)));
       const labels = { road:'roadPaint', terrain:'terrain', mask:'coverMask', environment:'environment', roadside:'roadside', 'environment-ground':'shoreline', facilities:'facilities', 'road-materials':'roadMaterials', 'corners':'streetCorners', 'corner-ground':'streetCornerGround', 'road-curve':'roadCurve', 'road-dash':'roadDash' };
       for (const [kind,label] of Object.entries(labels)) {

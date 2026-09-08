@@ -16,7 +16,7 @@ describe('Dated mill-yard apron',()=>{
   expect(Object.keys(catalog.tiles).sort()).toEqual(['-11_1','-12_1']);expect(catalog.features.length).toBeGreaterThan(0);
   expect(catalog.features.reduce((s,f)=>s+f.areaM2,0)).toBeGreaterThan(100);
   expect(catalog.policy).toContain('Asphalt versus compacted gravel cannot be resolved');
-  for(const f of catalog.features){expect(f.sid).toBe('168466_867928');expect(f.indices.every(i=>Number.isInteger(i)&&i>=0&&i<f.points.length)).toBe(true);expect(f.points.flat().every(Number.isFinite)).toBe(true);}
+  for(const f of catalog.features){expect(['168466_867928','168518_868019']).toContain(f.sid);expect(f.indices.every(i=>Number.isInteger(i)&&i>=0&&i<f.points.length)).toBe(true);expect(f.points.flat().every(Number.isFinite)).toBe(true);}
  });
  it('gates source/LOD/origin without changing retained geometry',()=>{
   const{group,mesh,geometry}=source(),origin:V3=[-3000,0,-250];
