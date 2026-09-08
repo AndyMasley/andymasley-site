@@ -134,7 +134,7 @@ export class TownSurfaces {
   grassResources(): ReturnType<TownGrass['resources']> { return this.grass.resources(); }
 
   private patch(material: THREE.MeshStandardMaterial, mask: THREE.Texture, bounds: number[]): void {
-    material.customProgramCacheKey = () => 'webster-finished-ground-v6';
+    material.customProgramCacheKey = () => 'webster-finished-ground-v7';
     material.onBeforeCompile = shader => {
       const [color, normal, roughness, soil, forest, impervious] = this.shared;
       Object.assign(shader.uniforms, {
@@ -171,17 +171,20 @@ vec3 townScatteredGround(sampler2D groundTexture, vec2 world, float repeatSize) 
   return mix(mix(texture2D(groundTexture,uv+a).rgb,texture2D(groundTexture,uv+b).rgb,blend.x),
     mix(texture2D(groundTexture,uv+c).rgb,texture2D(groundTexture,uv+d).rgb,blend.x),blend.y);
 }
-vec2 townCutBlade(vec2 world) {
+vec2 townCutBlade(vec2 world, float pixelWidth) {
   vec2 p = world * 24.0, cell = floor(p), f = fract(p) - 0.5;
   float seed = townHash(cell);
   float angle = seed * 6.2831853;
   f = mat2(cos(angle), -sin(angle), sin(angle), cos(angle)) * f;
   float side = f.x + f.y*f.y*0.38 + (seed-0.5)*0.23;
-  float aa = max(fwidth(side), 0.015);
+  // Derivatives of the continuous world position remain stable across cells;
+  // differentiating the hashed/rotated blade would create boundary flashes.
+  float footprint = pixelWidth * 24.0;
+  float aa = max(footprint * 0.65, 0.015);
   float tip = 1.0 - smoothstep(0.12, 0.41, abs(f.y));
   float blade = (1.0 - smoothstep(0.034-aa, 0.034+aa, abs(side))) * tip;
   float contact = (1.0 - smoothstep(0.04-aa, 0.10+aa, abs(side+0.07))) * tip;
-  float resolved = 1.0 - smoothstep(0.35, 0.95, max(fwidth(p.x),fwidth(p.y)));
+  float resolved = 1.0 - smoothstep(0.35, 0.95, footprint);
   return vec2(blade,contact) * resolved;
 }
 ${shader.fragmentShader}`.replace('#include <map_fragment>', `
@@ -192,12 +195,18 @@ vec4 townWeights = texture2D(townCover, townMaskUV);
 float townCoverage = min(1.0, dot(townWeights,vec4(1.0)));
 townWeights *= townWeights;
 townWeights *= townCoverage / max(dot(townWeights,vec4(1.0)),0.00001);
-vec2 townDetailUV = vTownGroundXZ / townGrassRepeat;
+// A finer physical repeat keeps the source blades from reading as large clumps.
+// All three grass maps use the same coordinates and existing mip filtering.
+vec2 townDetailUV = vTownGroundXZ * 1.5 / townGrassRepeat;
 // A second, differently oriented scale breaks the source tile's repeated clumps.
 mat2 townTurfRotation = mat2(0.8,0.6,-0.6,0.8);
 vec2 townDetailUV2 = townTurfRotation * townDetailUV * 0.43 + vec2(3.71,9.23);
 float townDistance = length(vTownGroundXZ - cameraPosition.xz);
 float townClose = 1.0 - smoothstep(14.0, 55.0, townDistance);
+// Evaluate before class-dependent branches, including at grazing view angles.
+vec2 townGroundFootprint = fwidth(vTownGroundXZ);
+float townPixelWidth = max(townGroundFootprint.x,townGroundFootprint.y);
+float townGrassResolved = 1.0 - smoothstep(0.012,0.07,townPixelWidth);
 float townMacro = townNoise(vTownGroundXZ / 19.0);
 float townPatch = townNoise(vTownGroundXZ / 3.7 + vec2(17.9,2.1));
 vec3 townGrassColor = vec3(0.0);
@@ -217,10 +226,11 @@ if (townWeights.r > 0.001) {
   // Authored differences in moisture/cutting density, not surveyed lawn health.
   // Continuous metre-space variation avoids tile edges and repeated mowing grids.
   float townLawnDrift = townNoise(vTownGroundXZ/8.3+vec2(6.1,27.3));
-  townGrassColor *= mix(vec3(1.04,0.985,0.89),vec3(0.945,1.025,1.055),townLawnDrift);
+  float townLawnVariation = clamp(townLawnDrift + (townPatch-0.5)*0.45,0.0,1.0);
+  townGrassColor *= mix(vec3(1.075,1.015,0.87),vec3(0.92,1.035,1.04),townLawnVariation);
   townGrassColor *= mix(0.88,1.105,townMacro) * mix(0.955,1.055,townPatch);
-  vec2 townBlade = townCutBlade(vTownGroundXZ);
-  townGrassColor *= 1.0 + townBlade.x * townClose * 0.15 - townBlade.y * townClose * 0.14;
+  vec2 townBlade = townCutBlade(vTownGroundXZ,townPixelWidth);
+  townGrassColor *= 1.0 + townBlade.x * townClose * 0.18 - townBlade.y * townClose * 0.12;
 }
 vec3 townForestColor = vec3(0.0);
 if (townWeights.g > 0.001) {
@@ -266,7 +276,7 @@ if (townWeights.r > 0.001) {
   if (abs(dot(normal,townEast)) > 0.95) townEast = mat3(viewMatrix) * vec3(0.0,0.0,1.0);
   vec3 townTangent = normalize(townEast - normal * dot(normal,townEast));
   vec3 townBitangent = normalize(cross(townTangent,normal));
-  normal = normalize(normal + (townTangent*townNormal.x + townBitangent*townNormal.y) * townWeights.r * townClose * 0.38);
+  normal = normalize(normal + (townTangent*townNormal.x + townBitangent*townNormal.y) * townWeights.r * townClose * townGrassResolved * 0.46);
 }
 `);
     };

@@ -31,6 +31,37 @@ describe('Mapped summer ground', () => {
     expect(groundMaskUV(definition.masks.a.bounds, -7.8125, -257.8125)).toEqual([0, 0]);
   });
 
+  it('keeps grass color, relief and roughness registered without extra texture samples', async () => {
+    const read = vi.fn(async () => texture());
+    const surfaces = new TownSurfaces(definition, read), signal = new AbortController().signal;
+    await surfaces.initialize(signal);
+    const group = scene(new THREE.MeshStandardMaterial());
+    await surfaces.apply(group, 'a', signal);
+    const material = (group.children[0] as THREE.Mesh).material as THREE.MeshStandardMaterial;
+    const standard = THREE.ShaderLib.standard;
+    const shader = { vertexShader: standard.vertexShader, fragmentShader: standard.fragmentShader, uniforms: THREE.UniformsUtils.clone(standard.uniforms) };
+    material.onBeforeCompile(shader as Parameters<THREE.Material['onBeforeCompile']>[0], {} as THREE.WebGLRenderer);
+    const samples = (sampler: string) => [...shader.fragmentShader.matchAll(new RegExp(`texture2D\\(${sampler},\\s*([^)]*)\\)`, 'g'))].map(match => match[1].trim());
+    const colorUVs = samples('townGrass');
+    expect(colorUVs).toHaveLength(2);
+    expect(samples('townGrassNormal')).toEqual(colorUVs);
+    expect(samples('townGrassRoughness')).toEqual([colorUVs[0]]);
+    expect(read).toHaveBeenCalledTimes(4); // Three existing grass maps and this tile's mask.
+    expect(shader.vertexShader).toContain('(modelMatrix * vec4(transformed, 1.0)).xz');
+
+    // Screen derivatives must come from continuous coordinates, outside the
+    // divergent cover branch; hashed blade cells must not differentiate seams.
+    const fragment = shader.fragmentShader;
+    const derivatives = [...fragment.matchAll(/fwidth\(([^)]*)\)/g)].map(match => match[1]);
+    expect(derivatives).toEqual(['vTownGroundXZ']);
+    expect(fragment.indexOf('fwidth(vTownGroundXZ)')).toBeLessThan(fragment.indexOf('if (townWeights.r'));
+    expect(fragment).toContain('townCutBlade(vTownGroundXZ,townPixelWidth)');
+    const finalNormal = fragment.split('\n').find(line => line.includes('normal = normalize(normal +'))!;
+    expect(finalNormal).toContain('townClose * townGrassResolved');
+    expect(finalNormal).toContain('townWeights.r');
+    surfaces.dispose();
+  });
+
   it('keeps each tile mask independent while leaving roads and pooled source materials alone', async () => {
     const created: THREE.Texture[] = [];
     const surfaces = new TownSurfaces(definition, async () => { const t = texture(); created.push(t); return t; });
