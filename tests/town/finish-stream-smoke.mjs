@@ -12,21 +12,21 @@ if (!target) throw new Error('Set TOWN_URL to a running, frozen candidate.');
 const out = process.env.TOWN_OUT_DIR || '/private/tmp/webster-finish-stream-acceptance';
 const normalTimeout = Number(process.env.TOWN_READY_TIMEOUT_MS || 90000);
 const fallbackTimeout = Number(process.env.TOWN_FAILURE_READY_TIMEOUT_MS || 45000);
+const optionalFamilies = [
+  ['/town-evidence/v1/additional-environment/', 'environment'], ['/town-roadside/', 'roadside'],
+  ['/town-evidence/v1/environment-ground/', 'environment-ground'], ['/town-evidence/v1/environment-facilities/', 'facilities'],
+  ['/town-evidence/v1/road-materials/', 'road-materials'], ['/town-finish/v1/corner-ground/', 'corner-ground'],
+  ['/town-finish/v1/corners/', 'corners'], ['/town-finish/v1/curves/', 'road-curve'],
+  ['/town-finish/v1/dashes/', 'road-dash'], ['/town-finish/v1/property-terrain/', 'property-terrain'],
+  ['/town-finish/v1/context/', 'context'], ['/town-finish/v1/markings/', 'road'],
+  ['/town-evidence/v1/terrain/', 'terrain'], ['/town-surfaces/v2/lots/', 'parking'], ['/town-surfaces/v2/masks/', 'mask'],
+];
 const optionalKind = url => {
-  const p = new URL(url).pathname;
-  if (p.startsWith('/town-evidence/v1/additional-environment/')) return 'environment';
-  if (p.startsWith('/town-roadside/')) return 'roadside';
-  if (p.startsWith('/town-evidence/v1/environment-ground/')) return 'environment-ground';
-  if (p.startsWith('/town-evidence/v1/environment-facilities/')) return 'facilities';
-  if (p.startsWith('/town-evidence/v1/road-materials/')) return 'road-materials';
-  if (p.startsWith('/town-finish/')) return 'road';
-  if (p.startsWith('/town-evidence/v1/terrain/')) return 'terrain';
-  if (p.startsWith('/town-surfaces/v2/lots/')) return 'parking';
-  if (p.startsWith('/town-surfaces/v2/masks/')) return 'mask';
-  return null;
+  const p = new URL(url).pathname.replace('/town-transfer/json-gzip-v1', '').replace(/\.json\.gz$/, '.json');
+  return optionalFamilies.find(([prefix]) => p.startsWith(prefix))?.[1] ?? null;
 };
 const townAsset = url => /^\/town-(?:assets|transfer|finish|surfaces|evidence|roadside|environment-ground)\//.test(new URL(url).pathname);
-const gatedAsset = url => optionalKind(url) || /^\/town-(?:transfer|evidence)\//.test(new URL(url).pathname) ||
+const gatedAsset = url => optionalKind(url) || /^\/town-finish\/v1\/network\//.test(new URL(url).pathname) || /^\/town-(?:transfer|evidence)\//.test(new URL(url).pathname) ||
   /^\/town-assets\/.+(?:\/(?:manifest|network)\.json|\.glb(?:\.gz)?)$/.test(new URL(url).pathname);
 const report = {
   version: 1, url: target, started: new Date().toISOString(), passed: false,
@@ -53,8 +53,8 @@ async function state(page) {
       ready: g.ready, frames: g.metrics.frames, distance: e.distance, speed: e.speed, paused: e.paused,
       edge: e.edgeId, status: document.querySelector('[data-town-status]')?.textContent,
       contextLost: g.renderer.getContext().isContextLost(), canvases: document.querySelectorAll('[data-town-canvas]').length,
-      metrics: g.metrics, finish: g.presentation.finish,
-      tiles: [...g.world.loaded].map(([id, t]) => ({ id, level: t.level, road: t.group.userData.roadFinish, roadMaterials:t.group.userData.roadMaterialFinish, terrain: t.group.userData.terrainFinish, parking: t.group.userData.parkingFinish, correctedMask: t.group.userData.pavedSurfaceMask })),
+      metrics: g.metrics, finish: g.presentation.finish, streaming: g.world.streamingResources(),
+      tiles: [...g.world.loaded].map(([id, t]) => ({ id, level: t.level, road: t.group.userData.roadFinish, roadMaterials:t.group.userData.roadMaterialFinish, terrain: t.group.userData.terrainFinish, parking: t.group.userData.parkingFinish, correctedMask: t.group.userData.pavedSurfaceMask, missing: t.group.userData.optionalDetailMissing ?? [] })),
     };
   });
 }
@@ -87,13 +87,13 @@ async function runScenario(mode) {
   });
   page.on('requestfailed', request => scenario.failedRequests.push({ url: request.url(), error: request.failure()?.errorText }));
   // Observe real fetch signals without changing response timing or cancellation.
-  await page.addInitScript(() => {
+  await page.addInitScript(families => {
     const original = window.fetch.bind(window);
     const probe = window.__finishStreamProbe = { rows: [], playAt: null };
     window.fetch = async (input, init) => {
       const url = new URL(typeof input === 'string' ? input : input instanceof URL ? input.href : input.url, location.href).href;
-      const p = new URL(url).pathname;
-      const kind = p.startsWith('/town-evidence/v1/road-materials/') ? 'road-materials' : p.startsWith('/town-evidence/v1/environment-facilities/') ? 'facilities' : p.startsWith('/town-roadside/') ? 'roadside' : p.startsWith('/town-evidence/v1/environment-ground/') ? 'environment-ground' : p.startsWith('/town-evidence/v1/additional-environment/') ? 'environment' : p.startsWith('/town-finish/') ? 'road' : p.startsWith('/town-evidence/v1/terrain/') ? 'terrain' : p.startsWith('/town-surfaces/v2/lots/') ? 'parking' : p.startsWith('/town-surfaces/v2/masks/') ? 'mask' : null;
+      const p = new URL(url).pathname.replace('/town-transfer/json-gzip-v1', '').replace(/\.json\.gz$/, '.json');
+      const kind = families.find(([prefix]) => p.startsWith(prefix))?.[1] ?? null;
       if (!kind) return original(input, init);
       const signal = init?.signal || (input instanceof Request ? input.signal : undefined);
       const row = { url, kind, start: performance.now(), hasSignal: !!signal, abort: signal?.aborted ? performance.now() : null, settled: null };
@@ -104,7 +104,7 @@ async function runScenario(mode) {
       catch (error) { row.error = error.name; throw error; }
       finally { row.settled = performance.now(); signal?.removeEventListener('abort', aborted); }
     };
-  });
+  }, optionalFamilies);
   if (mode !== 'cold-10mbps') await context.route(url => !!optionalKind(url.href), route => {
     const run = (async () => {
       const row = { url: route.request().url(), kind: optionalKind(route.request().url()), time: Date.now() };
@@ -151,7 +151,7 @@ async function runScenario(mode) {
     scenario.checks.push('Base town renders and reaches ready within the configured bound');
     if (mode !== 'cold-10mbps') {
       for (const kind of ['road', 'terrain', 'mask']) assert.ok(scenario.intercepted.some(r => r.kind === kind), 'Candidate did not exercise ' + kind + ' fallback; rebuild the final finish assets');
-      assert.ok(scenario.intercepted.filter(r => r.kind === 'terrain').every(r => /-[012]\.[a-f0-9]+\.json$/.test(new URL(r.url).pathname)), 'Terrain must be requested per LOD, not as a combined packet');
+      assert.ok(scenario.intercepted.filter(r => r.kind === 'terrain').every(r => /-[012]\.[a-f0-9]+\.json(?:\.gz)?$/.test(new URL(r.url).pathname)), 'Terrain must be requested per LOD, not as a combined packet');
       assert.equal(scenario.ready.finish.roadTriangles, 0);
       assert.equal(scenario.ready.finish.terrainTriangles, 0);
       assert.equal(scenario.ready.finish.parkingTriangles, 0);
@@ -176,9 +176,9 @@ async function runScenario(mode) {
         e.paused = true; e.speed = e.cruise = 0; e.edgeId = id; e.s = s;
         e.phase = 'ROAD'; e.connection = null; e.connectionS = 0; e.queue(null);
         await g.world.prepareAt([-796.64, 45.7, 341.67]);
-        return { ready: g.ready, lost: g.renderer.getContext().isContextLost(), research: g.presentation.research };
+        return { ready: g.ready, lost: g.renderer.getContext().isContextLost(), research: g.presentation.research, streaming: g.world.streamingResources() };
       });
-      assert.ok(scenario.intercepted.some(r => r.kind === 'environment'), 'Beach tile did not exercise the added environment stream');
+      assert.ok(scenario.intercepted.some(r => r.kind === 'environment') || scenario.environmentFallback.streaming.incompleteTiles.some(t => t.missing.includes('environment')), 'Beach tile did not exercise bounded environment fallback');
       assert.equal(scenario.environmentFallback.ready, true);
       assert.equal(scenario.environmentFallback.lost, false);
       assert.equal(scenario.environmentFallback.research.environmentObjects, 0);
@@ -187,18 +187,44 @@ async function runScenario(mode) {
         const g=window.__webster, e=g.engine, point=[1669.7652,-3366.9247], [id,s]=g.graph.nearest(point);
         e.paused=true;e.speed=e.cruise=0;e.edgeId=id;e.s=s;e.phase='ROAD';e.connection=null;e.connectionS=0;e.queue(null);
         await g.world.prepareAt([point[0],46.34767,-point[1]]);
-        return {ready:g.ready,lost:g.renderer.getContext().isContextLost(),applied:[...g.world.loaded.values()].some(t=>t.group.userData.environmentGround?.waterTriangles>0),roadside:g.presentation.research.roadsideObjects,facilities:g.presentation.research.facilities,roadSurfaces:g.world.finishResources().roadSurfaceTriangles};
+        return {ready:g.ready,lost:g.renderer.getContext().isContextLost(),applied:[...g.world.loaded.values()].some(t=>t.group.userData.environmentGround?.waterTriangles>0),roadside:g.presentation.research.roadsideObjects,facilities:g.presentation.research.facilities,roadSurfaces:g.world.finishResources().roadSurfaceTriangles,roadCurves:g.world.finishResources().roadCurve,streaming:g.world.streamingResources()};
       });
-      assert.ok(scenario.intercepted.some(r=>r.kind==='environment-ground'),'DCR tile did not exercise ground stream');
-      assert.ok(scenario.intercepted.some(r=>r.kind==='roadside'),'Roadside stream was not exercised');
+      const missing = new Set(scenario.bankFallback.streaming.incompleteTiles.flatMap(t => t.missing));
+      const exercised = (kind, label) => scenario.intercepted.some(r => r.kind === kind) || missing.has(label) && scenario.bankFallback.streaming.detailRequests.cancelled > 0;
+      assert.ok(exercised('environment-ground','shoreline'),'DCR tile did not exercise bounded ground fallback');
+      assert.ok(exercised('roadside','roadside'),'Roadside fallback was not exercised');
       assert.equal(scenario.bankFallback.ready,true);assert.equal(scenario.bankFallback.lost,false);assert.equal(scenario.bankFallback.applied,false);assert.equal(scenario.bankFallback.roadside,0);assert.equal(scenario.bankFallback.facilities,0);assert.equal(scenario.bankFallback.roadSurfaces,0);
-      assert.ok(scenario.intercepted.some(r=>r.kind==='facilities'),'Facilities stream was not exercised');
-      assert.ok(scenario.intercepted.some(r=>r.kind==='road-materials'),'Road material stream was not exercised');
+      assert.ok(exercised('facilities','facilities'),'Facilities fallback was not exercised');
+      assert.ok(exercised('road-materials','roadMaterials'),'Road material fallback was not exercised');
+      assert.ok(exercised('road-curve','roadCurve'),'Lake curve fallback was not exercised');
+      assert.ok(scenario.bankFallback.roadCurves.every(row=>!row.applied),'Unavailable curve must preserve the complete original corridor');
+      assert.deepEqual(scenario.ready.finish.streetCorners, [], 'Missing registered corner grading must not expose new unsupported slabs');
       scenario.checks.push('Unavailable DCR ground and roadside packets preserve playable original scenery');
+      // The three earlier owners contain no registered dash packet. Exercise
+      // the actual Thompson Road owner explicitly instead of depending on
+      // whether speculative neighboring-tile loads happen to reach a dash.
+      scenario.dashFallback = await page.evaluate(async () => {
+        const g=window.__webster,e=g.engine,point=[-1356.354,-626.0703], [id,s]=g.graph.nearest(point);
+        e.paused=true;e.speed=e.cruise=0;e.edgeId=id;e.s=s;e.phase='ROAD';e.connection=null;e.connectionS=0;e.queue(null);
+        const p=e.pose()[0];await g.world.prepareAt([p[0],p[2],-p[1]]);
+        return {ready:g.ready,lost:g.renderer.getContext().isContextLost(),dashes:g.world.finishResources().roadDash,streaming:g.world.streamingResources()};
+      });
+      assert.equal(scenario.dashFallback.ready,true);assert.equal(scenario.dashFallback.lost,false);
+      assert.ok(scenario.dashFallback.dashes.every(row=>!row.applied),'Unavailable dashes must retain source markings');
+      assert.ok(scenario.intercepted.some(row=>row.kind==='road-dash') || scenario.dashFallback.streaming.incompleteTiles.some(tile=>tile.id==='-6_-3' && tile.missing.includes('roadDash')), 'Registered Thompson Road dash owner was not exercised');
+      scenario.checks.push('Unavailable registered Thompson Road dashes retain source markings and remain retryable');
     }
     scenario.fetchSignalsBeforeDispose = await page.evaluate(() => window.__finishStreamProbe.rows);
     if (mode === 'optional-stalled') {
-      for (const kind of ['road', 'terrain', 'mask', 'environment', 'roadside', 'environment-ground', 'facilities', 'road-materials']) assert.ok(scenario.fetchSignalsBeforeDispose.some(r => r.kind === kind && r.hasSignal && r.abort !== null && r.error === 'AbortError'), 'Stalled ' + kind + ' was not actually aborted by its bounded fallback');
+      const observations = [scenario.ready.streaming, scenario.environmentFallback.streaming, scenario.bankFallback.streaming, scenario.dashFallback.streaming];
+      const missing = new Set(observations.flatMap(s => s.incompleteTiles.flatMap(t => t.missing)));
+      const labels = { road:'roadPaint', terrain:'terrain', mask:'coverMask', environment:'environment', roadside:'roadside', 'environment-ground':'shoreline', facilities:'facilities', 'road-materials':'roadMaterials', 'corners':'streetCorners', 'corner-ground':'streetCornerGround', 'road-curve':'roadCurve', 'road-dash':'roadDash' };
+      for (const [kind,label] of Object.entries(labels)) {
+        const attempted = scenario.fetchSignalsBeforeDispose.filter(r => r.kind === kind);
+        if (attempted.length) assert.ok(attempted.some(r => r.hasSignal && r.abort !== null && r.error === 'AbortError'), 'Stalled '+kind+' did not abort');
+        else assert.ok(missing.has(label) && observations.some(s => s.detailRequests.cancelled > 0), 'Queued '+kind+' was neither attempted nor explicitly cancelled with a recoverable fallback');
+      }
+      scenario.checks.push('Attempted optional requests abort; cancelled queued families remain explicitly incomplete and retryable without starting network work');
       assert.ok(scenario.intercepted.every(r => r.releasedAt === undefined), 'A stalled response was released before proving readiness');
       const retired = await page.evaluate(() => {
         const g = window.__finishRetired = window.__webster;

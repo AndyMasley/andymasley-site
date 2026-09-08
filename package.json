@@ -13,8 +13,9 @@
     "validate:data": "python3 -m etl.validate_outputs",
     "prebuild": "node scripts/prepare-town-assets.mjs",
     "check:town": "tsc --project tsconfig.town.json",
-    "test:town-assets": "node --test data/schema/town/validate-town-assets.checks.mjs tests/town/prepare-transfer.checks.mjs",
-    "validate:town-assets": "node scripts/validate-town-assets.mjs"
+    "test:town-assets": "node --test data/schema/town/validate-town-assets.checks.mjs tests/town/prepare-transfer.checks.mjs tests/town/prepare-json-transfer.checks.mjs tests/town/source-texture-aliases.checks.mjs tests/town/prepare-startup-transfer.checks.mjs",
+    "validate:town-assets": "node scripts/validate-town-assets.mjs",
+    "check:town-budgets": "node scripts/check-town-budgets.mjs"
   },
   "dependencies": {
     "@astrojs/check": "^0.9.8",
@@ -38,6 +39,7 @@
     "@types/three": "0.160.0",
     "jsdom": "^28.1.0",
     "satori": "^0.25.0",
-    "vitest": "^4.1.0"
+    "vitest": "^4.1.0",
+    "playwright": "1.62.1"
   }
 }

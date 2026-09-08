@@ -1,4 +1,5 @@
 import type { AssetRef } from './contracts';
+import { ByteCache } from './byte-cache';
 
 /** Start beside the base scenery, allowing a bounded extra wait once it arrives. */
 export function beginOptionalDetail<T>(parent: AbortSignal, read: (signal: AbortSignal) => Promise<T>) {
@@ -21,17 +22,21 @@ export function beginOptionalDetail<T>(parent: AbortSignal, read: (signal: Abort
 /** Only nearby supplemental packets are retained, never an all-town payload. */
 export class TileDetailStream<T> {
   failures = 0;
-  private cache = new Map<string, T>();
+  private cache: ByteCache<T>;
   private disposed = false;
   constructor(
     private asset: (id: string) => AssetRef | undefined,
     private valid: (value: unknown, id: string) => value is T,
     private read: (url: string, signal: AbortSignal) => Promise<unknown>,
-  ) {}
+    budgetBytes = 8 * 1024 * 1024,
+  ) { this.cache = new ByteCache(budgetBytes); }
+  hasAsset(id: string): boolean { return !!this.asset(id); }
+  resources() { return this.cache.resources(); }
+  setBudget(bytes: number): void { this.cache.maxBytes = bytes; this.cache.trim(); }
   async tile(id: string, signal: AbortSignal): Promise<T | undefined> {
     if (this.disposed || signal.aborted) return undefined;
     const cached = this.cache.get(id);
-    if (cached) { this.cache.delete(id); this.cache.set(id, cached); return cached; }
+    if (cached !== undefined) return cached;
     const asset = this.asset(id);
     if (!asset) return undefined;
     try {
@@ -39,7 +44,6 @@ export class TileDetailStream<T> {
       if (signal.aborted || this.disposed) return undefined;
       if (!this.valid(value, id)) throw new Error('Invalid town detail packet.');
       this.cache.set(id, value);
-      while (this.cache.size > 64) this.cache.delete(this.cache.keys().next().value!);
       return value;
     } catch (error) {
       if (!signal.aborted && !this.disposed) this.failures++;

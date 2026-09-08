@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /** Real browser input/streaming checks. Run against a started dev/preview/deployed server; never starts or edits it. */
 import assert from 'node:assert/strict';
+import { installTextureFailureProbe, collectTextureFailureProbe, retiredTextureDiagnostic } from './teardown-diagnostics.mjs';
 import { createHash, randomUUID } from 'node:crypto';
 import { mkdir, readFile, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
@@ -11,10 +12,15 @@ const target = new URL(process.env.TOWN_URL || 'http://127.0.0.1:4322/town');
 const browserName = process.env.BROWSER || 'chromium';
 const out = path.resolve(process.env.TOWN_OUT_DIR || path.join(repo, 'data/derived/town', `browser-smoke-${browserName}-${new Date().toISOString().replace(/[:.]/g, '-')}`));
 const timeout = Number(process.env.TOWN_TIMEOUT_MS || 90000);
+// CI uses a software rasterizer, so this is functional coverage at a real
+// selectable low-detail setting. Hardware/default-profile performance remains
+// a separate measured run; no engine step or control threshold is altered.
+const softwareFunctional = process.env.TOWN_FUNCTIONAL_SOFTWARE === '1';
+const interactionTimeout = softwareFunctional ? 60000 : 12000;
 const headless = process.env.HEADED !== '1';
 const checkMissing = process.env.CHECK_MISSING_ASSET !== '0';
 const bundle = '/Users/andy/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules';
-const report = { version: 1, passed: false, startedAt: new Date().toISOString(), url: target.href, configuration: { browser: browserName, playwrightBrowsersPath: process.env.PLAYWRIGHT_BROWSERS_PATH || '(Playwright default)', headless, viewport: { width: 1280, height: 850 }, timeoutMs: timeout, checkMissingAsset: checkMissing }, checks: [], scenarios: [], console: [], pageErrors: [], requests: [], failedRequests: [], responses: [], screenshots: [], skipped: [] };
+const report = { version: 1, passed: false, startedAt: new Date().toISOString(), url: target.href, configuration: { browser: browserName, playwrightBrowsersPath: process.env.PLAYWRIGHT_BROWSERS_PATH || '(Playwright default)', headless, viewport: softwareFunctional ? { width: 960, height: 640 } : { width: 1280, height: 850 }, softwareFunctional, initialSavedDetail: softwareFunctional ? 'low' : 'default', interactionTimeoutMs: interactionTimeout, timeoutMs: timeout, checkMissingAsset: checkMissing }, checks: [], interactions: [], textureFailureProbes: [], expectedTextureCancellations: [], scenarios: [], console: [], pageErrors: [], requests: [], failedRequests: [], responses: [], screenshots: [], skipped: [] };
 let browser;
 
 async function playwrightModule() {
@@ -38,7 +44,7 @@ async function playwrightModule() {
 async function shot(page, name) {
   if (page.isClosed()) return;
   const file = path.join(out, `${name}.png`);
-  await page.screenshot({ path: file, fullPage: false, timeout: 20000 });
+  await page.screenshot({ path: file, fullPage: false, timeout: softwareFunctional ? 60000 : 20000 });
   const bytes = await readFile(file);
   report.screenshots.push({ name, file, bytes: bytes.length, sha256: createHash('sha256').update(bytes).digest('hex') });
 }
@@ -58,14 +64,14 @@ async function check(name, fn) {
 }
 
 const townAsset = (url) => ['/town-assets/','/town-transfer/','/town-evidence/','/town-finish/','/town-surfaces/','/town-roadside/'].some(prefix=>new URL(url).pathname.includes(prefix));
-const gatedAsset = (url) => townAsset(url) && /(?:\/manifest\.json|\/network\.json|\.glb(?:\.gz)?)$/.test(new URL(url).pathname);
+const gatedAsset = (url) => townAsset(url) && /(?:\/(?:manifest|network)\.json(?:\.gz)?|\/network\.[a-f0-9]+\.json\.gz|\.glb(?:\.gz)?)$/.test(new URL(url).pathname);
 
 async function observedPage(context, scenario) {
   const page = await context.newPage();
   page.setDefaultTimeout(timeout);
   page.setDefaultNavigationTimeout(timeout);
   page.on('console', (message) => {
-    if (message.type() === 'error' || message.type() === 'warning') report.console.push({ scenario, type: message.type(), text: message.text(), location: message.location() });
+    if (message.type() === 'error' || message.type() === 'warning') report.console.push({ scenario, time: Date.now(), type: message.type(), text: message.text(), location: message.location() });
   });
   page.on('pageerror', (error) => report.pageErrors.push({ scenario, message: error.message, stack: error.stack }));
   page.on('request', (request) => {
@@ -89,6 +95,7 @@ async function observedPage(context, scenario) {
     };
     window.cancelAnimationFrame = (id) => { pending.delete(id); nativeCancel(id); };
   });
+  if (softwareFunctional) await page.addInitScript(() => localStorage.setItem('webster-quality', 'low'));
   return page;
 }
 
@@ -107,12 +114,14 @@ async function state(page) {
       rolling?.traverse((child) => { if (child.isMesh) rollingMeshCount++; });
       wheels.push({ name: node.name, quaternion: rolling ? node.quaternion.clone().multiply(rolling.quaternion).toArray() : node.quaternion.toArray(), rollingQuaternion: rolling?.quaternion.toArray(), rollingMeshCount });
     });
-    return { present: true, ready: game.ready, edgeId: engine.edgeId, road: engine.edge.name, phase: engine.phase, speed: engine.speed, cruise: engine.cruise, distance: engine.distance, elapsed: engine.elapsed, paused: engine.paused, queued: engine.queued, position, camera: game.cameraMode, frames: game.metrics.frames, contextLost: game.renderer.getContext().isContextLost(), canvasCount: document.querySelectorAll('[data-town-canvas]').length, rafs: window.__townSmoke.pending.size, rafNames: [...window.__townSmoke.pending.values()].map((x) => x.name), wheels, metrics: game.metrics, status: document.querySelector('[data-town-status]')?.textContent };
+    const gl=game.renderer.getContext(),debug=gl.getExtension('WEBGL_debug_renderer_info');
+    return { present: true, ready: game.ready, edgeId: engine.edgeId, road: engine.edge.name, phase: engine.phase, speed: engine.speed, cruise: engine.cruise, distance: engine.distance, elapsed: engine.elapsed, paused: engine.paused, queued: engine.queued, position, camera: game.cameraMode, frames: game.metrics.frames, detail:document.querySelector('[data-town-quality]')?.value, renderer:debug?gl.getParameter(debug.UNMASKED_RENDERER_WEBGL):gl.getParameter(gl.RENDERER), contextLost: gl.isContextLost(), canvasCount: document.querySelectorAll('[data-town-canvas]').length, rafs: window.__townSmoke.pending.size, rafNames: [...window.__townSmoke.pending.values()].map((x) => x.name), wheels, metrics: game.metrics, status: document.querySelector('[data-town-status]')?.textContent };
   });
 }
 
 async function waitReady(page) {
   await page.waitForFunction(() => window.__webster?.ready && window.__webster.metrics.frames >= 3, null, { timeout });
+  await page.evaluate(installTextureFailureProbe);
   const value = await state(page);
   assert.equal(value.contextLost, false, 'WebGL context is lost');
   assert.equal(value.canvasCount, 1, 'Expected exactly one game canvas');
@@ -125,11 +134,12 @@ async function pressCanvas(page, key) {
   await page.keyboard.press(key);
 }
 
-async function holdUntil(page, key, predicate, argument = null, maximum = 12000) {
+async function holdUntil(page, key, predicate, argument = null, maximum = interactionTimeout) {
+  const started=Date.now(), before=await state(page), evidence={key,before,passed:false};report.interactions.push(evidence);
   await page.locator('[data-town-canvas]').focus();
   await page.keyboard.down(key);
-  try { await page.waitForFunction(predicate, argument, { timeout: maximum }); }
-  finally { await page.keyboard.up(key); }
+  try { await page.waitForFunction(predicate, argument, { timeout: maximum }); evidence.passed=true; }
+  finally { await page.keyboard.up(key); evidence.after=await state(page).catch(()=>null);evidence.wallMs=Date.now()-started;evidence.simulationSeconds=evidence.after?evidence.after.elapsed-before.elapsed:null;evidence.renderedFrames=evidence.after?evidence.after.frames-before.frames:null; }
 }
 
 async function normalScenario(context) {
@@ -150,6 +160,7 @@ async function normalScenario(context) {
       const value = await waitReady(page);
       assert.equal(value.speed, 0, 'Drive should start stationary');
       assert.equal(value.wheels.length, 4, 'Car must expose four animated wheel nodes');
+      if (softwareFunctional) assert.equal(value.detail,'low','Software CI must apply the real saved Low graphics setting');
       report.release = await page.evaluate(() => {
         const world = window.__webster.world, m = world.manifest;
         return { manifestUrl: world.manifestUrl, sourceSha256: m.source?.sha256 ?? m.sourceSha256, pilot: m.stats.pilot, tiles: m.tiles.length, buildings: m.stats.buildings, treeAnchors: m.trees.sourceAnchors, network: m.network };
@@ -161,7 +172,7 @@ async function normalScenario(context) {
     await check('Arrow Up accelerates and release keeps cruising', async () => {
       await holdUntil(page, 'ArrowUp', () => window.__webster.engine.speed > 1.5);
       const released = await state(page);
-      await page.waitForFunction((distance) => window.__webster.engine.distance > distance + 0.4, released.distance, { timeout: 12000 });
+      await page.waitForFunction((distance) => window.__webster.engine.distance > distance + 0.4, released.distance, { timeout: interactionTimeout });
       const after = await state(page);
       assert.ok(after.cruise > 0 && after.speed > 0);
       assert.equal(after.paused, false);
@@ -182,16 +193,27 @@ async function normalScenario(context) {
       assert.ok(after.speed < before.speed && after.cruise === 0);
       return { beforeSpeed: before.speed, after };
     });
-    await check('Arrow Left and Right buffer turn choices; S clears the choice', async () => {
-      await pressCanvas(page, 'ArrowLeft');
-      await page.waitForFunction(() => window.__webster.engine.queued === 'LEFT');
-      const left = await state(page);
+    await check('Available arrow turns select real branches; unavailable requests stay truthful; S clears', async () => {
+      const saved = await page.evaluate(() => { const e = window.__webster.engine; return { edgeId:e.edgeId,s:e.s,paused:e.paused,distance:e.distance,elapsed:e.elapsed }; });
+      const stageJunction = async right => page.evaluate(async right => {
+        const g=window.__webster,e=g.engine,here=e.pose()[0];
+        const edge=[...g.graph.edges.values()].filter(x=>x.id>=0&&g.graph.choices(x.id).length>1&&g.graph.choices(x.id).some(c=>c.label==='Left')&&g.graph.choices(x.id).some(c=>c.label==='Right')===right).sort((a,b)=>Math.hypot(a.points.at(-1)[0]-here[0],a.points.at(-1)[1]-here[1])-Math.hypot(b.points.at(-1)[0]-here[0],b.points.at(-1)[1]-here[1]))[0];
+        if(!edge)throw Error('Missing actual junction fixture');
+        e.paused=true;e.edgeId=edge.id;e.s=Math.max(0,g.graph.paths.get(edge.id).length-50);e.phase='ROAD';e.connection=null;e.connectionS=0;e.speed=e.cruise=e.acceleration=0;e.cruiseAtLimit=false;e.endOfRoute=false;e.queue(null);
+        const p=e.pose()[0];await g.world.prepareAt([p[0],p[2],-p[1]]);return {edge:edge.id,choices:g.graph.choices(edge.id)};
+      },right);
+      const realRightJunction = await stageJunction(true);
+      await pressCanvas(page, 'ArrowLeft'); await page.waitForFunction(() => window.__webster.engine.queued === 'LEFT'); const left = await state(page);
+      await pressCanvas(page, 'ArrowRight'); await page.waitForFunction(() => window.__webster.engine.queued === 'RIGHT'); const right = await state(page);
+      await pressCanvas(page, 's'); await page.waitForFunction(() => window.__webster.engine.queued === null);
+      const unavailableJunction = await stageJunction(false);
+      await pressCanvas(page, 'ArrowLeft'); await page.waitForFunction(() => window.__webster.engine.queued === 'LEFT');
+      const selected = await page.evaluate(() => window.__webster.engine.nextJunction().selected.edgeId);
       await pressCanvas(page, 'ArrowRight');
-      await page.waitForFunction(() => window.__webster.engine.queued === 'RIGHT');
-      const right = await state(page);
-      await pressCanvas(page, 's');
-      await page.waitForFunction(() => window.__webster.engine.queued === null);
-      return { left: left.queued, right: right.queued, cleared: (await state(page)).queued };
+      await page.waitForFunction(() => document.querySelector('[data-town-status]').textContent.includes('No right branch'));
+      assert.equal(await page.evaluate(() => window.__webster.engine.nextJunction().selected.edgeId), selected);
+      await page.evaluate(async saved => { const g=window.__webster,e=g.engine;Object.assign(e,saved);e.phase='ROAD';e.connection=null;e.connectionS=0;e.speed=e.cruise=e.acceleration=0;e.cruiseAtLimit=false;e.endOfRoute=false;e.queue(null);const p=e.pose()[0];await g.world.prepareAt([p[0],p[2],-p[1]]); },saved);
+      return { left:left.queued,right:right.queued,realRightJunction,unavailableJunction,unavailablePreservedSelection:selected,cleared:(await state(page)).queued };
     });
     await check('Space pauses simulation while drawing remains live', async () => {
       await holdUntil(page, 'ArrowUp', () => window.__webster.engine.speed > 0.8);
@@ -259,6 +281,7 @@ async function normalScenario(context) {
         if (quality === 'high') assert.equal(applied.shadows, true);
         evidence.push(applied);
       }
+      if (softwareFunctional) await page.locator('[data-town-quality]').selectOption('low');
       return evidence;
     });
     await check('Sound button toggles only after user activation', async () => {
@@ -343,19 +366,28 @@ async function normalScenario(context) {
     try { await shot(page, 'failure-normal'); report.failureState = await state(page); } catch {}
   } finally {
     if (complete) report.scenarios.push({ name: scenario, complete: true });
+    if (!page.isClosed()) report.textureFailureProbes.push({ scenario, ...await page.evaluate(collectTextureFailureProbe) });
     await context.close();
   }
 }
 
 async function retryScenario(context) {
   const scenario = 'retry', page = await observedPage(context, scenario);
-  let injectedUrl, complete = false;
+  let injectedUrl, failing = true, complete = false;
+  const injectedUrls = new Set();
   try {
-    await page.route('**/town-assets/**', async (route) => {
-      if (!injectedUrl && gatedAsset(route.request().url())) {
-        injectedUrl = route.request().url();
-        report.injectedFailure = { url: injectedUrl, status: 503, scenario };
-        await route.fulfill({ status: 503, contentType: 'text/plain', body: 'Intentional one-shot browser smoke test failure.' });
+    await page.route(/\/town-(?:assets|transfer|finish)\//, async (route) => {
+      const url = route.request().url();
+      const original = value => {
+        const path = new URL(value).pathname;
+        if (/\/(?:network\.json(?:\.gz)?|network\.[a-f0-9]+\.json\.gz)$/.test(path)) return 'critical-network';
+        return value.replace('/town-transfer/json-gzip-v1', '').replace(/\.json\.gz$/, '.json');
+      };
+      if (failing && gatedAsset(url) && (!injectedUrl || original(url) === original(injectedUrl))) {
+        injectedUrl ??= url;
+        injectedUrls.add(url);
+        report.injectedFailure = { url: injectedUrl, urls: [...injectedUrls], status: 503, scenario, includesAlternateEncoding: true };
+        await route.fulfill({ status: 503, contentType: 'text/plain', body: 'Intentional initial asset outage for both encodings.' });
       } else await route.continue();
     });
     await check('A one-shot initial asset HTTP 503 exposes an enabled Try again button', async () => {
@@ -372,6 +404,7 @@ async function retryScenario(context) {
     });
     await check('Try again creates a rendering, keyboard-drivable session on the same page', async () => {
       const documentId = await page.evaluate(() => window.__townSmoke.documentId);
+      failing = false;
       await page.locator('[data-town-play]').click();
       const ready = await waitReady(page);
       await holdUntil(page, 'ArrowUp', () => window.__webster.engine.speed > 0.5 && window.__webster.engine.distance > 0.15);
@@ -391,6 +424,7 @@ async function retryScenario(context) {
     try { await shot(page, 'failure-retry'); } catch {}
   } finally {
     if (complete) report.scenarios.push({ name: scenario, complete: true });
+    if (!page.isClosed()) report.textureFailureProbes.push({ scenario, ...await page.evaluate(collectTextureFailureProbe) });
     await context.close();
   }
 }
@@ -418,14 +452,20 @@ try {
   await normalScenario(await browser.newContext(settings));
   await retryScenario(await browser.newContext(settings));
   await check('No unexpected JavaScript, console, or town asset errors', async () => {
-    const unexpectedConsole = report.console.filter((entry) => entry.type === 'error' && !(entry.scenario === 'retry' && /503/.test(entry.text) && (!entry.location.url || entry.location.url === report.injectedFailure?.url)));
-    const unexpectedResponses = report.responses.filter((entry) => !(entry.scenario === 'retry' && entry.status === 503 && entry.url === report.injectedFailure?.url));
+    const intentionallyFailed = new Set(report.injectedFailure?.urls ?? []);
+    for (const entry of report.console) {
+      const probe = report.textureFailureProbes.find(value => value.scenario === entry.scenario);
+      const cancellation = probe && retiredTextureDiagnostic(entry, probe);
+      if (cancellation) report.expectedTextureCancellations.push({ console: entry, cancellation, cleanup: probe.generations.find(value => value.generation === cancellation.generation) });
+    }
+    const unexpectedConsole = report.console.filter((entry) => entry.type === 'error' && !report.expectedTextureCancellations.some(value => value.console === entry) && !(entry.scenario === 'retry' && /503/.test(entry.text) && intentionallyFailed.has(entry.location.url)));
+    const unexpectedResponses = report.responses.filter((entry) => !(entry.scenario === 'retry' && entry.status === 503 && intentionallyFailed.has(entry.url)));
     const unexpectedRequests = report.failedRequests.filter((entry) => townAsset(entry.url) && !entry.expectedCancellation);
     assert.deepEqual(report.pageErrors, []);
     assert.deepEqual(unexpectedConsole, []);
     assert.deepEqual(unexpectedResponses, []);
     assert.deepEqual(unexpectedRequests, []);
-    return { expected503: report.injectedFailure, cancelledRequests: report.failedRequests.filter((r) => r.expectedCancellation).length, warnings: report.console.filter((r) => r.type === 'warning').length };
+    return { expected503: report.injectedFailure, expectedRetiredTextureDiagnostics: report.expectedTextureCancellations, cancelledRequests: report.failedRequests.filter((r) => r.expectedCancellation).length, warnings: report.console.filter((r) => r.type === 'warning').length };
   });
 } catch (error) {
   report.fatalError = error.stack || error.message;

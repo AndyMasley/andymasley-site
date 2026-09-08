@@ -35,10 +35,11 @@ function arched(b:Batch,f:Frame,u:number,bottom:number,w:number,h:number):void{
  if(b.level<2){b.box(f,'metal',u,bottom+h/2,.19,.04,h,.04,'#b6bbaf');b.box(f,'metal',u,bottom+h*.45,.19,w,.04,.04,'#b6bbaf');}
 }
 function portal(b:Batch,r:Row,w:number,canopy:'flat'|'gable'|'curve'='flat'):void{
- const f=frame(r,r.frame),u=r.frame.width/2,y=r.floor,trim=r.recipe==='middle'?TEAL:PALE,h=2.75;
+ const f=frame(r,r.frame),u=r.frame.width/2,y=r.floor,trim=r.recipe==='middle'?TEAL:PALE,h=r.recipe==='post'?3.45:2.75;
  b.box(f,'recess',u,y+h/2,.075,w+.22,h+.22,.14,'#303f3f');pane(b,f,u,y+.04,w,h,trim,4);
  for(const v of[-1,1])b.box(f,'stone',u+v*(w/2+.18),y+h/2,.18,.24,h+.25,.34,trim);
  b.box(f,'metal',u,y+1.05,.23,w*.8,.06,.06,trim);
+ if(r.recipe==='post')b.box(f,'metal',u,y+2.30,.23,w,.075,.06,trim);
  if(canopy==='flat'){b.box(f,'roof',u,y+h+.25,.33,w+.85,.18,.92,SLATE);b.box(f,'trim',u,y+h+.20,.72,w+.9,.15,.15,trim);}
  else if(canopy==='gable'){
   const half=w*.65,peak=y+h+1.03,edge=y+h+.12;
@@ -64,17 +65,28 @@ function windows(b:Batch,r:Row):void{
  if(['holy','emanuel','lodge','siegel','zion'].includes(r.recipe))return;
  for(const part of r.parts)for(const s of part.frames){if(!s.exterior||s.width<3.0)continue;const f=frame(r,s),w=s.width,h=part.eave-r.floor,front=s.outward[0]*r.frame.outward[0]+s.outward[1]*r.frame.outward[1]>.92;
   let stories=r.recipe==='post'?1:r.recipe==='anne'?3:(r.recipe==='legion'||r.recipe==='parish')?2:r.recipe==='park'&&h>8.5?3:h>6.7?2:1;
-  const height=stories===1?Math.min(2.1,h-1.5):Math.min(2.35,h/stories-1.35),step=h/stories;
+  const height=r.recipe==='post'?Math.min(3.90,h-1.10):stories===1?Math.min(2.1,h-1.5):Math.min(2.35,h/stories-1.35),step=h/stories;
   let count=Math.max(1,Math.floor((w-.7)/(r.recipe==='rock'?3.2:r.recipe==='anne'?2.3:r.recipe==='bartlett'?5.5:r.recipe==='park'?4.8:r.recipe==='police'?4.5:4.2)));
   if(r.recipe==='anne'&&front)count=s.width>12?7:4;
   if(r.recipe==='legion')count=front?5:s.width>23?9:Math.max(1,Math.floor(w/3));
   const spacing=w/count,ww=Math.min(r.recipe==='rock'?1.32:r.recipe==='anne'?1.32:r.recipe==='post'?3.6:r.recipe==='bartlett'?3.9:2.7,spacing-.8);
   for(let j=0;j<stories;j++)for(let i=0;i<count;i++){
-   const u=(i+.5)*spacing,bottom=r.floor+.95+j*step,px=s.start[0]+s.tangent[0]*u,py=s.start[1]+s.tangent[1]*u,du=(px-r.frame.start[0])*r.frame.tangent[0]+(py-r.frame.start[1])*r.frame.tangent[1],dv=(px-r.frame.start[0])*r.frame.outward[0]+(py-r.frame.start[1])*r.frame.outward[1];
+   const u=(i+.5)*spacing,bottom=r.floor+(r.recipe==='post'?.55:.95)+j*step,px=s.start[0]+s.tangent[0]*u,py=s.start[1]+s.tangent[1]*u,du=(px-r.frame.start[0])*r.frame.tangent[0]+(py-r.frame.start[1])*r.frame.tangent[1],dv=(px-r.frame.start[0])*r.frame.outward[0]+(py-r.frame.start[1])*r.frame.outward[1];
    if(!j&&Math.abs(dv)<.5&&Math.abs(du-r.frame.width/2)<((r.recipe==='legion'||r.recipe==='rectory')?1.6:r.recipe==='anne'?1.2:3.6))continue;
    if(r.recipe==='rock'&&j===stories-1)arched(b,f,u,bottom,ww,height+.22);else pane(b,f,u,bottom,ww,height,r.recipe==='middle'?TEAL:PALE,r.recipe==='rock'?2:3);
   }
   if(r.recipe==='bartlett'||r.recipe==='police')for(let j=1;j<=stories;j++)b.box(f,'brick',w/2,r.floor+j*step-.20,.055,w,.42,.15,DARK_BRICK);
+  if(r.recipe==='post'){
+   // A restrained authored interpretation of the retained modern one-story
+   // civic hall. Taller lights and their lintel resolve the otherwise blank
+   // upper wall; they do not introduce an invented second story or signage.
+   b.box(f,'stone',w/2,r.floor+.55+height+.18,.08,w,.18,.16,PALE);
+   for(let i=1;i<count;i++){
+    const u=i*spacing,px=s.start[0]+s.tangent[0]*u,py=s.start[1]+s.tangent[1]*u,du=(px-r.frame.start[0])*r.frame.tangent[0]+(py-r.frame.start[1])*r.frame.tangent[1],dv=(px-r.frame.start[0])*r.frame.outward[0]+(py-r.frame.start[1])*r.frame.outward[1];
+    if(Math.abs(dv)<.5&&Math.abs(du-r.frame.width/2)<3.6)continue;
+    b.box(f,'brick',u,(r.floor+part.eave)/2,.055,.18,h,.16,BRICK);
+   }
+  }
   if(r.recipe==='anne'||r.recipe==='saints'){for(let i=1;i<count;i++)b.box(f,'brick',i*spacing,(r.floor+part.eave)/2,.035,.24,h,.13,DARK_BRICK);b.box(f,'stone',w/2,part.eave-.45,.09,w,.20,.16,PALE);}
   if(r.recipe==='rock'){
    for(const u of[.18,w-.18])for(let y=r.floor+.32;y<part.eave-.2;y+=.52)b.box(f,'brick',u,y,.10,.42,.30,.23,BRICK);

@@ -3,12 +3,12 @@ import { Sky } from 'three/examples/jsm/objects/Sky.js';
 
 export const SUMMER_LIGHT = {
   sun: '#fff1de',
-  skyFill: '#c4def3',
-  groundFill: '#827b63',
+  skyFill: '#d1e2ee',
+  groundFill: '#969078',
   haze: '#d7d8cb',
-  sunIntensity: 2.7,
-  fillIntensity: 1.1,
-  exposure: 1.02,
+  sunIntensity: 2.25,
+  fillIntensity: 1.6,
+  exposure: 1.0,
 } as const;
 
 export function createSummerSky(sunDirection: THREE.Vector3): Sky {

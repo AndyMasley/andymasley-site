@@ -1,10 +1,13 @@
 import * as THREE from 'three';
-import domains from '../../../data/derived/town/cemetery-road-domains.json';
+import domains from '../../../data/derived/town/cemetery-road-index.json';
+import campground from '../../../data/derived/town/campground-road-domains.json';
 type Domain={id:string;outline:number[][];holes:number[][][]};
 function inside(p:readonly number[],ring:number[][]):boolean{let hit=false;for(let i=0,j=ring.length-1;i<ring.length;j=i++){const a=ring[i],b=ring[j];if((a[1]>p[1])!==(b[1]>p[1])&&p[0]<(b[0]-a[0])*(p[1]-a[1])/(b[1]-a[1])+a[0])hit=!hit;}return hit;}
 export function applyCemeteryRoadFinish(group:THREE.Object3D,tileId:string,origin:readonly number[],manifestSha256:string){
  if(group.userData.cemeteryRoadFinish)return group.userData.cemeteryRoadFinish as {removedTriangles:number;meshes:number};
- const rows=(domains.tiles as Record<string,Domain[]>)[tileId],report={removedTriangles:0,meshes:0};if(!rows)return report;
+ const refs=(domains.tiles as Record<string,string[]>)[tileId]??[],report={removedTriangles:0,meshes:0};
+ const rows=[...refs.map(id=>(domains.domains as Record<string,Domain>)[id]),...(campground.sourceManifestSha256===manifestSha256?(campground.tiles as Record<string,Domain[]>)[tileId]??[]:[])];
+ if(!rows.length)return report;
  // The caller provides the immutable release pin; source identity is checked before edits.
  if(manifestSha256!==domains.sourceManifestSha256)return report;
  group.updateMatrixWorld(true);const inverse=group.matrixWorld.clone().invert(),owners=new Map<THREE.BufferGeometry,number>();group.traverse(o=>{if(o instanceof THREE.Mesh)owners.set(o.geometry,(owners.get(o.geometry)??0)+1);});

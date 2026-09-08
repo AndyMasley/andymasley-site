@@ -16,7 +16,7 @@ try {
  page.on('pageerror',e=>report.pageErrors.push(e.message));
  page.on('console',m=>{if(m.type()==='error')report.consoleErrors.push(m.text())});
  page.on('response',r=>{if(['/town-assets/','/town-transfer/','/town-evidence/','/town-finish/','/town-surfaces/','/town-roadside/'].some(prefix=>r.url().includes(prefix))&&r.status()>=400)report.assetFailures.push({url:r.url(),status:r.status()})});
- const gated=[];page.on('request',r=>{if(/\/town-(?:assets|transfer)\/.*(?:manifest\.json|network\.json|\.glb(?:\.gz)?)$/.test(r.url()))gated.push(r.url())});
+ const gated=[];page.on('request',r=>{if(/\/town-(?:assets|transfer|finish)\/.*(?:manifest\.json(?:\.gz)?|network(?:\.[a-f0-9]+)?\.json(?:\.gz)?|\.glb(?:\.gz)?)$/.test(r.url()))gated.push(r.url())});
  const shot=async(name,fullPage=false)=>{if(!report.configuration.captureScreenshots){report.screenshotSkips.push({name,reason:'TOWN_SCREENSHOTS=0; functional assertions unchanged.'});return;}const path=`${out}/${name}.png`;try{const bytes=await page.screenshot({fullPage,timeout:10000});await writeFile(path,bytes);report.screenshots.push({path,bytes:bytes.length,sha256:createHash('sha256').update(bytes).digest('hex')});}catch(error){report.captureErrors.push({name,error:error.message,scope:'Optional artifact; functional assertions unchanged.'});}};
  const state=()=>page.evaluate(()=>{const g=window.__webster;if(!g)return null;const e=g.engine;return{ready:g.ready,edge:e.edgeId,road:e.edge.name,phase:e.phase,speed:e.speed,cruise:e.cruise,distance:e.distance,paused:e.paused,queued:e.queued,camera:g.cameraMode,frames:g.metrics.frames,contextLost:g.renderer.getContext().isContextLost(),pilot:g.world.manifest.stats.pilot,world:{...g.world.metrics},status:document.querySelector('[data-town-status]').textContent}});
  const layout=()=>page.evaluate(()=>{
@@ -47,8 +47,9 @@ try {
  record('Touch Go starts cruise and advances after finger release',moving.cruise>0&&moving.speed>0&&moving.distance>before.distance,{before,after:moving});
  await page.locator('[data-town-input="left"]').tap();const left=await state();
  record('Touch left queues a left turn',left.queued==='LEFT',left);
+ const rightAvailable=await page.evaluate(()=>window.__webster.engine.nextJunction()?.choices.some(c=>c.label==='Right')??false);
  await page.locator('[data-town-input="right"]').tap();const right=await state();
- record('Touch right replaces queued turn',right.queued==='RIGHT',right);
+ record('Touch right selects an available branch or explains its absence',rightAvailable?right.queued==='RIGHT':right.queued===left.queued&&right.status.includes('No right branch'),{rightAvailable,right});
  await page.locator('[data-town-pause]').tap();await page.waitForTimeout(100);const paused=await state();
  await page.waitForTimeout(650);const still=await state();
  record('Touch Pause stops travel',paused.paused&&still.paused&&Math.abs(still.distance-paused.distance)<1e-6,{paused,after:still});

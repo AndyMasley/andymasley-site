@@ -50,6 +50,26 @@ function entrance(b:Batch,f:Frame,u:number,y:number,w:number,h:number,canopy:boo
  b.box(f,'trim',u,y+h+.09,.40,w+.28,.15,.20,PALE);
  if(canopy){b.box(f,'roof',u,y+h+.24,.43,w+.70,.12,.85,'#535d56');b.box(f,'metal',u,y+h+.18,.87,w+.70,.16,.065,DARK);}
 }
+/** Ground-floor retail glazing: broad display panes, a high transom and a
+ * substantial stall riser. Upper-floor residential windows keep their own
+ * proportions. All dimensions here are restrained authored inference. */
+function displayWindow(b:Batch,f:Frame,left:number,right:number,bottom:number,top:number):void {
+ const w=right-left,h=top-bottom;if(w<.55||h<.8)return;
+ const u=(left+right)/2,metal='#68766f',v=.34;
+ panel(b,f,'recess',u,(bottom+top)/2,v,w+.10,h+.10,DARK);
+ panel(b,f,'glass',u,(bottom+top)/2,v+.018,w,h,GLASS);
+ for(const x of[left,right])b.box(f,'metal',x,(bottom+top)/2,v+.045,.055,h+.08,.07,metal);
+ for(const z of[bottom,top])b.box(f,'metal',u,z,v+.045,w+.09,.055,.07,metal);
+ const divisions=Math.max(1,Math.ceil(w/1.7));
+ for(let i=1;i<divisions;i++)b.box(f,'metal',left+w*i/divisions,(bottom+top)/2,v+.06,.045,h,.065,metal);
+ // A transom reads as shop joinery; never a residential cross in the middle.
+ if(h>1.65)b.box(f,'metal',u,top-Math.min(.43,h*.20),v+.07,w,.055,.075,metal);
+ b.box(f,'stone',u,bottom-.11,.36,w+.12,.16,.19,PALE);
+}
+export function storefrontDisplaySpans(left:number,right:number,entry:number,doorWidth:number):Array<[number,number]> {
+ const gap=.24,lo=entry-doorWidth/2-gap,hi=entry+doorWidth/2+gap;
+ return [[left,Math.min(right,lo)],[Math.max(left,hi),right]].filter(([a,c])=>c-a>=.55) as Array<[number,number]>;
+}
 function garageDoor(b:Batch,f:Frame,u:number,y:number,w:number,h:number):void {
  panel(b,f,'recess',u,y+h/2,.32,w+.15,h+.14,DARK);panel(b,f,'door',u,y+h/2,.36,w,h,'#b4b7aa');
  for(let i=1;i<6;i++)panel(b,f,'metal',u,y+h*i/6,.39,w,.027,'#68716a');
@@ -69,8 +89,10 @@ function buildFacade(b:Batch,r:Row,s:Facade):void {
   const bays=Math.max(4,Math.round(w/6.3)),lower=s.top-1.05;
   for(let i=0;i<bays;i++){
    const u=(i+.5)*w/bays,ww=w/bays-.65;
-   pane(b,f,u,y+.32,ww,Math.min(2.6,lower-y-.38),.34);
-   if(i%2===0)entrance(b,f,u+ww*.28,y,.95,Math.min(2.35,lower-y-.22),false);
+   const door=i%2===0,entry=u+ww*.28,head=Math.min(y+2.92,lower-.12);
+   const spans=door?storefrontDisplaySpans(u-ww/2,u+ww/2,entry,.95):[[u-ww/2,u+ww/2]];
+   for(const [left,right]of spans)displayWindow(b,f,left,right,y+.32,head);
+   if(door)entrance(b,f,entry,y,.95,Math.min(2.35,lower-y-.22),false);
   }
   b.polygon(f,'metal',[[0,lower,.58],[w,lower,.58],[w,s.top,.13],[0,s.top,.13]],'#305955');
   b.box(f,'metal',w/2,s.top+.015,.12,w+.05,.09,.10,'#687b67');
@@ -118,12 +140,16 @@ function buildFacade(b:Batch,r:Row,s:Facade):void {
  const shop=['classical','moderne','plain','apartments','market','parts','restaurant','retail','drive-through','bank','colonial'].includes(recipe);
  if(shop){
   const spans=recipe==='market'?2:Math.max(1,Math.min(5,Math.floor(w/7))),pitch=w/spans,dh=Math.min(2.35,floorHeight-.40),uEntry=recipe==='colonial'?w/2:pitch*.31;
+  const doorWidth=Math.min(1.6,pitch*.25),head=y+Math.min(3.05,floorHeight-.50);
   for(let i=0;i<spans;i++){
-   const center=(i+.5)*pitch,width=Math.min(pitch*.71,5.7),yy=y+.54,wh=Math.min(1.85,floorHeight-.98);
-   if(recipe==='colonial'&&Math.abs(center-uEntry)<2.0)continue;
-   pane(b,f,center,yy,width,wh,.34,false);
+   const center=(i+.5)*pitch,width=Math.min(pitch*.79,6.3),left=center-width/2,right=center+width/2;
+   for(const [a,c]of storefrontDisplaySpans(left,right,uEntry,doorWidth))displayWindow(b,f,a,c,y+.40,head);
   }
-  entrance(b,f,uEntry,y,Math.min(1.6,pitch*.25),dh,['bank','market','restaurant','parts','drive-through'].includes(recipe));
+  entrance(b,f,uEntry,y,doorWidth,dh,['bank','market','restaurant','parts','drive-through'].includes(recipe));
+  // A narrow fascia gives the shop a coherent base to the upper elevation.
+  // No invented business name, sign copy, awning or interior is introduced.
+  const fasciaBottom=Math.max(head+.12,y+dh+.16),fasciaTop=y+floorHeight-.34;
+  if(fasciaTop-fasciaBottom>.12)panel(b,f,'metal',w/2,(fasciaBottom+fasciaTop)/2,.32,w-.28,fasciaTop-fasciaBottom,recipe==='moderne'?'#485953':'#6b7468');
   b.box(f,'trim',w/2,y+floorHeight-.20,.31,w,.17,.15,PALE);
   if(recipe==='colonial'){
    const ew=Math.min(3.4,w*.35),top=y+dh+.26;
@@ -177,8 +203,15 @@ function buildSplitBody(b:Batch,r:Row):void {
    b.box(f,'brick',width/2,(r.base+part.eave)/2,-.05,width,part.eave-r.base,.10,part.paint);
    b.box(f,'metal',width/2,part.eave+.04,.005,width,.11,.18,'#777a6c');
    // Secondary elevations follow each wing's own eave, never the tall neighbor.
-   if(f.outward[1]>.5&&width>4){const bays=Math.max(1,Math.floor(width/3.6)),levels=part.id==='gilles-rear'?1:part.id==='tiffany'?3:2,fh=(part.eave-r.floor)/levels;
-    for(let level=0;level<levels;level++)for(let j=0;j<bays;j++)pane(b,f,(j+.5)*width/bays,r.floor+level*fh+.45,Math.min(1.3,width/bays*.45),Math.min(1.85,fh-.85),.10);}
+   if(width>4){const bays=Math.max(1,Math.floor(width/3.6)),levels=part.id==='gilles-rear'?1:part.id==='tiffany'?3:2,fh=(part.eave-r.floor)/levels;
+    for(let level=0;level<levels;level++)for(let j=0;j<bays;j++){
+     const u=(j+.5)*width/bays,wy=r.floor+level*fh+.45;
+     const px=a[0]+f.tangent[0]*u+f.outward[0]*.30,pn=a[1]+f.tangent[1]*u+f.outward[1]*.30;
+     // A lower attached wing may hide only the bottom floors. Do not draw
+     // windows into a party wall or carry its floor rhythm up the taller wing.
+     if(r.bodyParts.some(other=>other!==part&&other.eave>wy&&planDistanceSquared(other.outline,px,pn)<.25*.25))continue;
+     pane(b,f,u,wy,Math.min(1.3,width/bays*.45),Math.min(1.85,fh-.85),.10);
+    }}
   }
   const f:Frame={start:[0,0],tangent:[1,0],outward:[0,1],structId:r.id,tileId:r.tileId};
   const tris=THREE.ShapeUtils.triangulateShape(points.map(p=>new THREE.Vector2(p[0],p[1])),[]);

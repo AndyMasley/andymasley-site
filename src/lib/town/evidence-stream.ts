@@ -1,6 +1,7 @@
 import homes from '../../../data/derived/town/residential-evidence-index.json';
 import roofs from '../../../data/derived/town/evidence-roofs-index.json';
 import type { EvidenceBuilding, EvidenceRoof } from './evidence-types';
+import { ByteCache } from './byte-cache';
 
 type Asset={url:string;count:number;bytes:number};
 export type TileEvidence={buildings:EvidenceBuilding[];roofs:EvidenceRoof[];failures:number};
@@ -40,19 +41,27 @@ function validRoof(value:unknown,id:string):value is EvidenceRoof{
 /** Optional detail payloads download beside the street tile. A missing supplement
  * leaves its original scenery usable. Aborted requests never enter the cache. */
 export class EvidenceStream {
-  private cache=new Map<string,TileEvidence>();
+  private cache=new ByteCache<TileEvidence>(12 * 1024 * 1024);
+  private disposed=false;
+  private active=new Set<AbortController>();
   failures=0;
   constructor(private readonly read:<T>(url:string,signal:AbortSignal)=>Promise<T>,private readonly budgetMs=1500){}
-  async tile(id:string,signal:AbortSignal):Promise<TileEvidence>{
-    if(signal.aborted)throw new DOMException('Loading cancelled','AbortError');
+  hasAsset(id:string):boolean{return !!(homeAssets[id]||roofAssets[id]);}
+  resources(){return this.cache.resources();}
+  setBudget(bytes:number):void{this.cache.maxBytes=bytes;this.cache.trim();}
+  async tile(id:string,signal:AbortSignal,budgetStart?:Promise<unknown>):Promise<TileEvidence>{
+    if(this.disposed||signal.aborted)throw new DOMException('Loading cancelled','AbortError');
     const cached=this.cache.get(id);
-    if(cached){this.cache.delete(id);this.cache.set(id,cached);return cached;}
+    if(cached)return cached;
     const houseAsset=homeAssets[id],roofAsset=roofAssets[id];
     if(!houseAsset&&!roofAsset)return{buildings:[],roofs:[],failures:0};
-    const controller=new AbortController();let release!:()=>void;
+    const controller=new AbortController();this.active.add(controller);let release!:()=>void;
     const deadline=new Promise<undefined>(resolve=>{release=()=>resolve(undefined);});
     const cancel=()=>{controller.abort();release();};
-    signal.addEventListener('abort',cancel,{once:true});const timer=setTimeout(cancel,this.budgetMs);
+    signal.addEventListener('abort',cancel,{once:true});controller.signal.addEventListener('abort',release,{once:true});
+    let timer:ReturnType<typeof setTimeout>|undefined,finished=false;
+    const startBudget=()=>{if(!finished&&!controller.signal.aborted)timer=setTimeout(cancel,this.budgetMs);};
+    if(budgetStart)void budgetStart.then(startBudget,startBudget);else startBudget();
     type Homes={version:number;tileId:string;buildings:EvidenceBuilding[]}|undefined;
     let completedHomes:PromiseSettledResult<Homes>|undefined,completedRoofs:PromiseSettledResult<EvidenceRoof[]|undefined>|undefined;
     const observe=<T>(request:Promise<T>,settled:(value:PromiseSettledResult<T>)=>void)=>request.then(value=>{settled({status:'fulfilled',value});return value;},reason=>{settled({status:'rejected',reason});throw reason;});
@@ -62,8 +71,8 @@ export class EvidenceStream {
       observe(request(()=>roofAsset?this.read<EvidenceRoof[]>(roofAsset.url,controller.signal):undefined),v=>{completedRoofs=v;}),
     ]);
     const raced=await Promise.race([pending,deadline]);
-    clearTimeout(timer);signal.removeEventListener('abort',cancel);
-    if(signal.aborted)throw new DOMException('Loading cancelled','AbortError');
+    finished=true;if(timer)clearTimeout(timer);signal.removeEventListener('abort',cancel);controller.signal.removeEventListener('abort',release);this.active.delete(controller);
+    if(this.disposed||signal.aborted)throw new DOMException('Loading cancelled','AbortError');
     const results=raced??[completedHomes??{status:'rejected',reason:'Optional detail deadline'},completedRoofs??{status:'rejected',reason:'Optional detail deadline'}] as const;
     const a=results[0],b=results[1];
     const buildings=a.status==='fulfilled'&&a.value?.version===1&&a.value.tileId===id&&Array.isArray(a.value.buildings)&&a.value.buildings.length===houseAsset?.count&&a.value.buildings.every(r=>validBuilding(r,id))&&new Set(a.value.buildings.map(r=>r.id)).size===a.value.buildings.length?a.value.buildings:[];
@@ -72,8 +81,8 @@ export class EvidenceStream {
     this.failures+=failures;
     const value={buildings,roofs:roofRows,failures};
     // Failed optional requests are retried on a later tile load.
-    if(!failures){this.cache.set(id,value);if(this.cache.size>64)this.cache.delete(this.cache.keys().next().value!);}
+    if(!failures)this.cache.set(id,value);
     return value;
   }
-  dispose():void{this.cache.clear();}
+  dispose():void{this.disposed=true;for(const controller of this.active)controller.abort();this.active.clear();this.cache.clear();}
 }

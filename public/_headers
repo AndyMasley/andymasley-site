@@ -22,3 +22,44 @@
 
 /town-surfaces/v2/lots/*
   Cache-Control: public, max-age=31536000, immutable
+
+/town-transfer/json-gzip-v1/*
+  Cache-Control: public, max-age=31536000, immutable
+  Content-Type: application/gzip
+
+/town-evidence/v1/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/town-roadside/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/town-finish/v1/corners/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/town-version.json
+  Cache-Control: no-store
+
+/town-finish/v1/corner-ground/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/town-finish/v1/curves/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/town-finish/v1/art/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/town-finish/v1/dashes/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/town-finish/v1/context/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/town-finish/v1/property-terrain/*
+  Cache-Control: public, max-age=0, must-revalidate
+
+/town-finish/v1/network/*
+  Cache-Control: public, max-age=31536000, immutable
+  Content-Type: application/gzip
+
+/town-finish/v1/ground-preview/*
+  Cache-Control: public, max-age=31536000, immutable

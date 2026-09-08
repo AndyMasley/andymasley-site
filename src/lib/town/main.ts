@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { Sky } from 'three/examples/jsm/objects/Sky.js';
-import { advanceRealTime, DriveEngine, LANDMARKS, MPH, RoadGraph, spawnAtLandmark } from './engine';
+import { advanceRealTime, DriveEngine, LANDMARKS, MPH, RoadGraph, spawnAtLandmark, type NetworkData } from './engine';
 import { validateManifest, type Quality, type V3 } from './contracts';
 import { TownWorld } from './world';
 import { startupPosition } from './startup';
@@ -8,6 +8,15 @@ import { createSummerSky, SUMMER_LIGHT } from './atmosphere';
 import { createTouringCar, type TouringCar } from './vehicle';
 import { applyMeasuredBridgeGrades } from './bridge-grade';
 import release from '../../../data/derived/town/release.json';
+import { displayRoadName, turnDistanceLabel, displayChoices } from './road-display';
+import { updateChoiceControls } from './choice-controls';
+import { qualityPixelRatio, readPreferences, writePreferences, readSnapshot, restoreSnapshot, saveSnapshot, snapshotDrive, type CameraMode, type ComfortMode } from './ux-state';
+import { drawTownOverview } from './explore-map';
+import placeDirectory from '../../../data/derived/town/place-directory.json';
+import { readCriticalJson } from './critical-load';
+import { CameraObstruction } from './camera-comfort';
+import { RoadAudio } from './driving-audio';
+import { checkTownUpdate } from './release-recovery';
 
 const ASSET_ROOT = `/town-assets/${release.directory}/`;
 const WORLD_URL = `${ASSET_ROOT}manifest.json`;
@@ -15,50 +24,8 @@ const NETWORK_URL = `${ASSET_ROOT}network.json`;
 const SUN_OFFSET = new THREE.Vector3(-260, 205, 180);
 const toWorld = (p: readonly number[]): V3 => [p[0], p[2], -p[1]];
 type LandmarkKey = keyof typeof LANDMARKS;
-type CameraMode = 'hood' | 'chase' | 'wide';
 type Session = { dispose(): void };
 
-class RoadAudio {
-  context?: AudioContext;
-  gain?: GainNode;
-  engine?: OscillatorNode;
-  harmonic?: OscillatorNode;
-  enabled = false;
-
-  async toggle(): Promise<boolean> {
-    if (!this.context) {
-      this.context = new AudioContext();
-      this.gain = this.context.createGain();
-      this.gain.gain.value = 0;
-      this.gain.connect(this.context.destination);
-      this.engine = this.context.createOscillator();
-      this.engine.type = 'sine';
-      this.engine.frequency.value = 44;
-      this.engine.connect(this.gain);
-      this.engine.start();
-      const overtone = this.context.createGain();
-      overtone.gain.value = 0.16;
-      overtone.connect(this.gain);
-      this.harmonic = this.context.createOscillator();
-      this.harmonic.type = 'triangle';
-      this.harmonic.connect(overtone);
-      this.harmonic.start();
-    }
-    await this.context.resume();
-    this.enabled = !this.enabled;
-    return this.enabled;
-  }
-
-  update(speed: number, paused: boolean): void {
-    if (!this.context || !this.gain || !this.engine || !this.harmonic) return;
-    const now = this.context.currentTime;
-    this.gain.gain.setTargetAtTime(this.enabled && !paused ? 0.022 + Math.min(0.012, speed * 0.0006) : 0, now, 0.15);
-    this.engine.frequency.setTargetAtTime(38 + speed * 2.7, now, 0.12);
-    this.harmonic.frequency.setTargetAtTime(76 + speed * 5.4, now, 0.12);
-  }
-
-  dispose(): void { this.engine?.stop(); this.harmonic?.stop(); void this.context?.close(); }
-}
 
 export async function startTown(root: HTMLElement): Promise<Session> {
   const element = <T extends HTMLElement>(name: string): T => {
@@ -85,6 +52,17 @@ export async function startTown(root: HTMLElement): Promise<Session> {
   const distanceText = element('distance');
   const turnText = element('turn');
   const choicesText = element('choices');
+  const clearButton = element<HTMLButtonElement>('clear');
+  const cruiseText = element('cruise');
+  const comfortSelect = element<HTMLSelectElement>('comfort');
+  const engineVolume = element<HTMLInputElement>('engine-volume');
+  const explore = element<HTMLDetailsElement>('explore');
+  const overview = element<HTMLCanvasElement>('overview');
+  let selectedDirectoryPlace: string | undefined;
+  const recovery = element('recovery');
+  const recoveryMessage = element('recovery-message');
+  const retryStreet = element<HTMLButtonElement>('retry-street');
+  const restart = element<HTMLButtonElement>('restart');
   const minimap = element<HTMLCanvasElement>('minimap');
   const map = minimap.getContext('2d');
   const abort = new AbortController();
@@ -100,37 +78,56 @@ export async function startTown(root: HTMLElement): Promise<Session> {
   let car: THREE.Group | undefined;
   let vehicle: TouringCar | undefined;
   const audio = new RoadAudio();
+  const cameraObstruction = new CameraObstruction();
+  const cameraAnchor = new THREE.Vector3();
   const held = new Set<string>();
   const snapshots: number[] = [];
   const startedAt = performance.now();
   const mobile = matchMedia('(pointer: coarse)').matches || window.innerWidth < 720;
+  let storage: Storage | undefined;
+  try { storage = localStorage; } catch { /* Private/blocked storage is optional. */ }
+  const preferences = readPreferences(storage);
+  comfortSelect.value = preferences.comfort;
+  engineVolume.value = String(Math.round(preferences.engineVolume * 100));
+  audio.volume = preferences.engineVolume;
   let graph: RoadGraph;
   let engine: DriveEngine;
-  let cameraMode: CameraMode = 'chase';
+  let cameraMode: CameraMode = preferences.camera;
   let quality: Quality = (qualitySelect.value as Quality) || 'auto';
   let streamPaused = false;
   let teleporting = false;
   let firstFrame = true;
-  let pixelRatio = Math.min(devicePixelRatio || 1, mobile ? 1.2 : 1.6);
+  let pixelRatio = qualityPixelRatio(quality, mobile, devicePixelRatio);
   let last = performance.now();
   let hudAt = 0;
   let streamingAt = 0;
   let qualityAt = 0;
   let drawCount = 0;
   let controlsReady = false;
-  let shownChoices = '';
+  let lastEngineMessage = '';
+  let lastAnnouncement = '';
+  let savedAt = 0;
+  let streamStartedAt = 0;
+  let contextLost = false;
   let presentationTime = 0;
+  let lastDraw = 0;
+  let renderRequested = true;
+  let updateAvailable = false;
   const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
+  const steady = (): boolean => preferences.comfort === 'steady' || (preferences.comfort === 'system' && reducedMotion.matches);
+  const persist = (): void => { if (engine) saveSnapshot(snapshotDrive(engine, release.manifestSha256), storage); };
   const points = { car: new THREE.Vector3(), direction: new THREE.Vector3(), eye: new THREE.Vector3(), target: new THREE.Vector3(), wantedEye: new THREE.Vector3(), wantedTarget: new THREE.Vector3(), up: new THREE.Vector3(0, 1, 0), right: new THREE.Vector3() };
 
   const setStatus = (message: string): void => {
-    status.textContent = message;
-    if (loading && !loading.hidden) loading.textContent = message;
+    if (status.textContent !== message) status.textContent = message;
+    if (loading && !loading.hidden && loading.textContent !== message) loading.textContent = message;
   };
   const setPaused = (paused: boolean): void => {
     if (!engine) return;
     engine.paused = paused;
+    renderRequested = true;
     held.clear();
+    if (paused) { audio.silence(); persist(); }
     pauseButton.textContent = paused ? 'Resume' : 'Pause';
     pauseButton.setAttribute('aria-pressed', String(paused));
     root.dataset.paused = String(paused);
@@ -142,6 +139,7 @@ export async function startTown(root: HTMLElement): Promise<Session> {
     dispose() {
       if (disposed) return;
       disposed = true;
+      persist();
       abort.abort();
       cancelAnimationFrame(frame);
       resize?.disconnect();
@@ -166,7 +164,10 @@ export async function startTown(root: HTMLElement): Promise<Session> {
 
   try {
     setStatus('Loading the roads and the first streets…');
-    const initialRequests = Promise.all([fetch(WORLD_URL, { signal }), fetch(NETWORK_URL, { signal })]);
+    const transfer = { roads: 0, manifest: 0 };
+    const manifestRequest = readCriticalJson<unknown>(WORLD_URL, signal, { label: 'Town manifest', onProgress: p => { transfer.manifest = p.receivedBytes; } });
+    const networkRequest = readCriticalJson<NetworkData>(NETWORK_URL, signal, { label: 'Road network', onProgress: p => { transfer.roads = p.receivedBytes; if (!disposed) setStatus(`Loading roads… ${(transfer.roads / 1048576).toFixed(1)} MB received`); } });
+    const initialRequests = Promise.all([manifestRequest, networkRequest]);
     // A renderer failure can cancel requests before the later await attaches.
     void initialRequests.catch(() => {});
     renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false, powerPreference: 'high-performance' });
@@ -203,23 +204,23 @@ export async function startTown(root: HTMLElement): Promise<Session> {
     finally { pmrem.dispose(); }
     scene.environment = environmentTarget.texture;
 
-    const [manifestResponse, networkResponse] = await initialRequests;
-    if (!manifestResponse.ok || !networkResponse.ok) throw new Error('The town files could not be loaded. Please try again.');
-    const manifest: unknown = await manifestResponse.json();
+    const manifest = await manifestRequest;
     validateManifest(manifest);
     if (disposed) return session;
     const startingLocation = (locationSelect.value || 'DOWNTOWN') as LandmarkKey;
+    const requestedResume = root.dataset.resumeDrive === 'true' ? readSnapshot(release.manifestSha256, storage) : null;
+    delete root.dataset.resumeDrive;
     world = new TownWorld(manifest, new URL(WORLD_URL, location.href).href, () => {});
     world.setQuality(quality, mobile);
     scene.add(world.root);
-    const landscapeReady = world.initialize(startupPosition(startingLocation, manifest));
+    const landscapeReady = world.initialize(requestedResume?.position ? toWorld(requestedResume.position) : startupPosition(startingLocation, manifest));
     void landscapeReady.catch(() => {});
-    const network = await networkResponse.json();
+    const network = await networkRequest;
     await new Promise((resolve) => setTimeout(resolve, 0));
     if (disposed) return session;
     graph = new RoadGraph(network);
     applyMeasuredBridgeGrades(graph);
-    engine = spawnAtLandmark(graph, startingLocation);
+    engine = (requestedResume && restoreSnapshot(graph, requestedResume)) || spawnAtLandmark(graph, startingLocation);
     setStatus('Preparing the landscape and your car…');
     vehicle = createTouringCar();
     car = vehicle.root;
@@ -231,6 +232,7 @@ export async function startTown(root: HTMLElement): Promise<Session> {
     scene.add(car);
 
     const fit = (): void => {
+      renderRequested = true;
       const box = canvas.getBoundingClientRect();
       renderer!.setSize(Math.max(1, box.width), Math.max(1, box.height), false);
       camera.aspect = Math.max(1, box.width) / Math.max(1, box.height);
@@ -246,35 +248,43 @@ export async function startTown(root: HTMLElement): Promise<Session> {
     canvas.focus({ preventScroll: true });
     fit();
     for (const button of [pauseButton, reverseButton, cameraButton, soundButton, fullscreenButton]) button.disabled = false;
+    element<HTMLButtonElement>('recovery-reverse').disabled = false;
     cameraButton.textContent = `Camera: ${cameraMode}`;
     controlsReady = true;
-    setStatus('Ready on Main Street. Press Up to cruise.');
+    for (const button of root.querySelectorAll<HTMLButtonElement>('[data-town-place], [data-town-report], [data-town-directory-place], [data-town-directory-reset]')) button.disabled = false;
+    if (engine.paused) setPaused(true);
+    setStatus(engine.paused ? `Resumed on ${displayRoadName(engine.edge.name)}, safely paused. Press Up or Resume when ready.` : `Ready near ${LANDMARKS[startingLocation].name}. Press Up to cruise.`);
+    lastEngineMessage = engine.lastMessage;
 
     const changeCamera = (): void => {
       cameraMode = cameraMode === 'hood' ? 'chase' : cameraMode === 'chase' ? 'wide' : 'hood';
       cameraButton.textContent = `Camera: ${cameraMode}`;
+      preferences.camera = cameraMode; writePreferences(preferences, storage);
       firstFrame = true;
+      renderRequested = true;
     };
     const reverseCar = (): void => {
-      if (teleporting) return;
+      if (teleporting || contextLost) return;
       if (!engine.flipDirection()) { setStatus('The direction could not be changed here.'); return; }
       held.clear(); firstFrame = true; streamPaused = false;
       world!.update(toWorld(engine.pose()[0]), toWorld(engine.pose(100)[0]), true);
       refreshHud();
       setStatus(engine.lastMessage);
+      persist();
     };
     const requestTurn = (turn: 'LEFT' | 'RIGHT' | null): void => {
       engine.queue(turn);
-      setStatus(turn ? `${turn === 'LEFT' ? 'Left' : 'Right'} turn selected for the next junction.` : 'Continuing straight where possible.');
+      refreshHud(); setStatus(engine.lastMessage);
     };
     const teleport = async (key: LandmarkKey): Promise<void> => {
-      if (teleporting) return;
+      if (teleporting || contextLost) return;
       teleporting = true;
       locationSelect.disabled = true;
       if (loading) loading.hidden = false;
       const previous = engine;
       previous.paused = true;
       held.clear();
+      audio.silence();
       const destination = spawnAtLandmark(graph, key);
       setStatus(`Loading ${LANDMARKS[key].name}…`);
       try {
@@ -284,6 +294,9 @@ export async function startTown(root: HTMLElement): Promise<Session> {
         firstFrame = true;
         setPaused(false);
         locationSelect.value = key;
+        setStatus(`Ready near ${LANDMARKS[key].name}. This drive starts at zero miles.`);
+        persist();
+        if (explore.open) drawTownOverview(overview, engine, selectedDirectoryPlace);
       } catch (error) {
         engine = previous;
         setPaused(true);
@@ -295,17 +308,18 @@ export async function startTown(root: HTMLElement): Promise<Session> {
       }
     };
     const activate = (input: string): void => {
+      if (!controlsReady || teleporting || contextLost) return;
       if (input === 'left') requestTurn('LEFT');
       if (input === 'right') requestTurn('RIGHT');
       if (input === 'up' || input === 'down') {
         if (input === 'up' && engine.paused && !teleporting) setPaused(false);
         held.add(input);
-        engine.step(1 / 60, input === 'up', input === 'down');
+        if (!streamPaused) engine.step(1 / 60, held.has('up') && !held.has('down'), held.has('down'));
       }
     };
     const eventOptions = { signal };
     canvas.addEventListener('keydown', (event) => {
-      if (!controlsReady || teleporting) return;
+      if (!controlsReady || teleporting || contextLost) return;
       const key = event.key;
       const mapped: Record<string, string> = { ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right' };
       if (mapped[key]) {
@@ -325,6 +339,8 @@ export async function startTown(root: HTMLElement): Promise<Session> {
       } else if (key.toLowerCase() === 's') {
         event.preventDefault();
         requestTurn(null);
+      } else if (key.toLowerCase() === 'm') {
+        event.preventDefault(); root.dispatchEvent(new Event('town:mute'));
       } else if (/^[1-6]$/.test(key)) {
         event.preventDefault();
         void teleport(Object.keys(LANDMARKS)[Number(key) - 1] as LandmarkKey);
@@ -344,9 +360,43 @@ export async function startTown(root: HTMLElement): Promise<Session> {
     document.addEventListener('visibilitychange', () => { if (document.hidden) setPaused(true); }, eventOptions);
     canvas.addEventListener('webglcontextlost', (event) => {
       event.preventDefault();
+      contextLost = true;
+      updateAvailable = false;
+      element<HTMLButtonElement>('dismiss-update').hidden = true;
+      const updateButton = recovery.querySelector<HTMLButtonElement>('[data-town-reload]'); if (updateButton) updateButton.hidden = true;
       setPaused(true);
-      setStatus('Graphics were interrupted. Reload this page to restart the drive.');
+      recovery.hidden = false; retryStreet.hidden = true; restart.hidden = false;
+      element<HTMLButtonElement>('recovery-reverse').disabled = true;
+      recoveryMessage.textContent = 'Graphics were interrupted. Your last safe road position is saved.';
+      setStatus('Graphics were interrupted. Use Restart graphics to continue from a safe paused position.');
     }, eventOptions);
+    restart.addEventListener('click', () => { persist(); root.dispatchEvent(new Event('town:restart')); }, eventOptions);
+    retryStreet.addEventListener('click', () => {
+      world!.retryAt(toWorld(engine.pose(Math.max(12, engine.speed * 2))[0])); streamStartedAt = performance.now();
+      setStatus('Retrying the next street. Your car stays safely paused while it loads.');
+      void checkTownUpdate(signal).then(update => {
+        if (disposed || update !== 'new') return;
+        updateAvailable = true;
+        recovery.hidden = false;
+        const button = recovery.querySelector<HTMLButtonElement>('[data-town-reload]'); if (button) button.hidden = false;
+        recoveryMessage.textContent = 'A newer version of the town is available. Reload to update; your safe road position is saved.';
+        setStatus(recoveryMessage.textContent);
+      });
+    }, eventOptions);
+    element<HTMLButtonElement>('dismiss-update').addEventListener('click', () => {
+      updateAvailable = false;
+      const button = recovery.querySelector<HTMLButtonElement>('[data-town-reload]'); if (button) button.hidden = true;
+      refreshHud(); canvas.focus({ preventScroll: true });
+      setStatus('Continuing this version. Reloading the page will update the game.');
+    }, eventOptions);
+    element<HTMLButtonElement>('recovery-reverse').addEventListener('click', () => { reverseCar(); canvas.focus({ preventScroll: true }); }, eventOptions);
+    clearButton.addEventListener('click', (event) => {
+      requestTurn(null);
+      if (event.detail) canvas.focus({ preventScroll: true });
+      else (choicesText.querySelector<HTMLButtonElement>('button[aria-pressed="true"]') ?? canvas).focus({ preventScroll: true });
+    }, eventOptions);
+    root.addEventListener('town:mute', () => { audio.turnOff(); soundButton.textContent = 'Engine sound off'; soundButton.setAttribute('aria-pressed', 'false'); setStatus('All sound is off. Driving sound and radio can be turned on separately.'); }, eventOptions);
+    root.addEventListener('town:pause', () => setPaused(true), eventOptions);
 
     for (const button of root.querySelectorAll<HTMLElement>('[data-town-input]')) {
       button.addEventListener('pointerdown', (event) => {
@@ -364,7 +414,7 @@ export async function startTown(root: HTMLElement): Promise<Session> {
     choicesText.addEventListener('click', event => {
       const button = event.target instanceof Element ? event.target.closest<HTMLButtonElement>('button[data-edge]') : null;
       if (button && !teleporting && engine.queueChoice(Number(button.dataset.edge))) {
-        refreshHud(); setStatus(engine.lastMessage); canvas.focus({ preventScroll: true });
+        refreshHud(); setStatus(engine.lastMessage); if (event.detail) canvas.focus({ preventScroll: true });
       }
     }, eventOptions);
     pauseButton.addEventListener('click', () => { setPaused(!engine.paused); canvas.focus({ preventScroll: true }); }, eventOptions);
@@ -372,6 +422,7 @@ export async function startTown(root: HTMLElement): Promise<Session> {
     soundButton.addEventListener('click', async () => {
       try {
         const enabled = await audio.toggle();
+        if (disposed) return;
         soundButton.setAttribute('aria-pressed', String(enabled));
         soundButton.textContent = enabled ? 'Engine sound on' : 'Engine sound off';
       } catch { setStatus('Sound is unavailable in this browser. Driving still works.'); }
@@ -393,11 +444,35 @@ export async function startTown(root: HTMLElement): Promise<Session> {
       syncFullscreen();
     }, eventOptions);
     locationSelect.addEventListener('change', () => void teleport(locationSelect.value as LandmarkKey), eventOptions);
+    comfortSelect.addEventListener('change', () => { preferences.comfort = comfortSelect.value as ComfortMode; writePreferences(preferences, storage); firstFrame = true; setStatus(steady() ? 'Steady camera enabled. Decorative motion is reduced.' : 'Standard camera enabled.'); }, eventOptions);
+    engineVolume.addEventListener('input', () => { audio.volume = Number(engineVolume.value) / 100; preferences.engineVolume = audio.volume; writePreferences(preferences, storage); }, eventOptions);
+    explore.addEventListener('toggle', () => { if (explore.open) { setPaused(true); drawTownOverview(overview, engine, selectedDirectoryPlace); } }, eventOptions);
+    for (const button of root.querySelectorAll<HTMLButtonElement>('[data-town-place]')) button.addEventListener('click', () => { explore.open = false; void teleport(button.dataset.townPlace as LandmarkKey); }, eventOptions);
+    const showDirectoryPlace = (id?: string): void => {
+      const place = placeDirectory.places.find(row => row.id === id); selectedDirectoryPlace = place?.id;
+      for (const button of root.querySelectorAll<HTMLButtonElement>('[data-town-directory-place]')) button.setAttribute('aria-pressed', String(button.dataset.townDirectoryPlace === place?.id));
+      element('directory-info').textContent = place ? `${place.title}. Near ${place.nearRoad}. ${place.detail} The car stays where you left it.` : 'Whole-town view. Squares mark researched scenery; numbered circles are the six driving starts.';
+      setPaused(true); drawTownOverview(overview, engine, selectedDirectoryPlace);
+    };
+    for (const button of root.querySelectorAll<HTMLButtonElement>('[data-town-directory-place]')) button.addEventListener('click', () => showDirectoryPlace(button.dataset.townDirectoryPlace), eventOptions);
+    element<HTMLButtonElement>('directory-reset').addEventListener('click', () => showDirectoryPlace(), eventOptions);
+    const reportOutput = element<HTMLTextAreaElement>('report-output');
+    let reportPose: Record<string, unknown> = {};
+    element<HTMLButtonElement>('report').addEventListener('click', () => {
+      setPaused(true); element('report-panel').hidden = false;
+      reportPose = { game: 'Webster', release: 'finished-webster-v8', source: release.directory, edge: engine.edgeId, road: engine.edge.name, s: engine.s, phase: engine.phase, pose: engine.pose(), camera: cameraMode, quality, url: location.href };
+      reportOutput.value = JSON.stringify(reportPose, null, 2); element<HTMLTextAreaElement>('report-note').focus();
+    }, eventOptions);
+    element<HTMLButtonElement>('report-copy').addEventListener('click', async () => {
+      reportOutput.value = JSON.stringify({ ...reportPose, note: element<HTMLTextAreaElement>('report-note').value.slice(0, 4000) }, null, 2);
+      try { await navigator.clipboard.writeText(reportOutput.value); setStatus('Location and note copied. Nothing was sent.'); }
+      catch { reportOutput.focus(); reportOutput.select(); setStatus('Select and copy the location report below. Nothing was sent.'); }
+    }, eventOptions);
     qualitySelect.addEventListener('change', () => {
       quality = qualitySelect.value as Quality;
       world!.setQuality(quality, mobile);
       renderer!.shadowMap.enabled = quality !== 'low' && !mobile;
-      pixelRatio = Math.min(devicePixelRatio || 1, quality === 'high' ? 1.8 : quality === 'low' ? 1 : mobile ? 1.2 : 1.6);
+      pixelRatio = qualityPixelRatio(quality, mobile, devicePixelRatio);
       renderer!.setPixelRatio(pixelRatio);
       world!.update(toWorld(engine.pose()[0]), toWorld(engine.pose(100)[0]), true);
       fit();
@@ -452,46 +527,40 @@ export async function startTown(root: HTMLElement): Promise<Session> {
     }
 
     function refreshHud(): void {
-      speedText.textContent = String(Math.round(engine.speed / MPH)).padStart(2, '0');
-      roadText.textContent = engine.edge.name || 'Local road';
+      speedText.textContent = String(Math.round(engine.speed / MPH));
+      roadText.textContent = displayRoadName(engine.edge.name);
       const rampTarget = engine.rampTarget();
       limitLabel.textContent = rampTarget === undefined ? 'Road limit' : 'Ramp target';
       limitText.textContent = `${Math.round((rampTarget ?? engine.roadLimit()) / MPH)} mph`;
-      limitText.title = rampTarget !== undefined ? 'Modeled acceleration target: build speed along the entrance ramp toward the highway limit' : engine.edge.speed_status === 'posted inventory mph converted to km/h' ? 'Posted limit from the mapped road inventory' : 'Game speed limit estimated from the mapped road class';
+      limitText.title = rampTarget !== undefined ? 'Modeled acceleration toward the highway limit' : engine.edge.speed_status === 'posted inventory mph converted to km/h' ? 'Posted limit from the road inventory' : 'Game estimate from the mapped road class';
+      limitText.setAttribute('aria-label', `${limitText.textContent}. ${limitText.title}. Details in How to drive.`);
       const next = engine.nextJunction();
+      const committing = engine.phase === 'TURN' ? engine.connection!.choice : null;
       distanceText.textContent = `${(engine.distance / 1609.344).toFixed(1)} mi`;
-      const turnDistance = next ? next.distance < 160 ? `${Math.max(10, Math.round(next.distance * 3.28084 / 10) * 10)} ft` : `${(next.distance / 1609.344).toFixed(1)} mi` : '';
-      turnText.textContent = engine.paused ? 'Drive paused' : next?.obstacle ? 'Road ends ahead' : next?.selected ? `${next.selected.label} in ${turnDistance}` : 'Follow the road';
-      const choices = next?.choices ?? [];
-      const choiceKey = choices.map(choice => `${choice.edgeId}:${choice.label}:${next?.selected?.edgeId === choice.edgeId}`).join('|');
-      if (choiceKey !== shownChoices) {
-        shownChoices = choiceKey;
-        choicesText.replaceChildren(...choices.map(choice => {
-          const badge = document.createElement('button');
-          badge.type = 'button';
-          badge.dataset.edge = String(choice.edgeId);
-          const selected = next?.selected?.edgeId === choice.edgeId;
-          badge.className = 'town-choice';
-          badge.setAttribute('aria-pressed', String(selected));
-          badge.dataset.selected = String(selected);
-          badge.setAttribute('aria-current', String(selected));
-          badge.setAttribute('aria-label', `${choice.label} onto ${choice.name}${selected ? ', selected' : ''}`);
-          badge.title = `${choice.label} onto ${choice.name}`;
-          const arrow = document.createElement('span');
-          arrow.setAttribute('aria-hidden', 'true');
-          arrow.className = 'town-choice__arrow';
-          arrow.textContent = choice.label === 'Left' ? '↰' : choice.label === 'Right' ? '↱' : choice.label === 'U-turn' ? '↶' : '↑';
-          const copy = document.createElement('span');
-          copy.className = 'town-choice__copy';
-          const name = document.createElement('span');
-          name.className = 'town-choice__name';
-          name.textContent = choice.name;
-          copy.append(document.createTextNode(choice.label), name);
-          badge.append(arrow, copy);
-          return badge;
-        }));
+      const boundary = !!next && !next.choices.length;
+      turnText.textContent = engine.paused ? 'Drive paused' : streamPaused ? 'Loading the next street' : committing
+        ? `${committing.label === 'U-turn' ? 'Turning around' : `Turning ${committing.label.toLowerCase()}`} · next choices below`
+        : boundary ? `${next.obstacle ? 'Mapped obstruction' : next.boundary ? 'Town boundary · stopping' : 'Mapped road ends'} ${turnDistanceLabel(next.distance)}`
+        : next?.selected ? `${next.selected.label === 'U-turn' ? 'Automatic turn around' : next.selected.label} ${turnDistanceLabel(next.distance)}` : 'Follow the road';
+      choicesText.setAttribute('aria-label', committing ? 'Choices for the junction after this turn' : 'Available turns');
+      updateChoiceControls(choicesText, graph, next);
+      clearButton.hidden = engine.queued === null && engine.queuedEdge === null;
+      cruiseText.textContent = engine.paused ? 'Paused' : streamPaused ? 'Waiting for street' : held.has('down') ? 'Braking' : engine.endOfRoute ? next?.boundary ? 'Town boundary' : 'Road ends' : engine.speed < 0.05 && !engine.cruiseAtLimit ? 'Up to cruise' : engine.cruiseAtLimit ? 'Cruise at limit' : `Cruise ${Math.round(engine.cruise / MPH)} mph`;
+      if (engine.lastMessage !== lastEngineMessage) { lastEngineMessage = engine.lastMessage; setStatus(engine.lastMessage); }
+      if (!engine.paused && !streamPaused && next && next.distance < Math.max(40, engine.speed * 6)) {
+        const announcement = `${next.edgeId}:${next.selected?.edgeId ?? 'end'}:${committing ? 'later' : 'now'}`;
+        if (announcement !== lastAnnouncement) {
+          lastAnnouncement = announcement;
+          const selected = displayChoices(graph, next.choices).find(row => row.choice.edgeId === next.selected?.edgeId);
+          setStatus(boundary ? `${next.obstacle ? 'A mapped obstruction' : next.boundary ? 'The mapped town boundary' : 'The mapped road ends'} ${turnDistanceLabel(next.distance)}. ${next.boundary ? 'The car will stop before the edge. ' : ''}Turn around or choose another starting place.` : `${committing ? 'After this turn: ' : ''}${next.selected?.label} ${turnDistanceLabel(next.distance)} onto ${selected?.name}. Choose another branch with the arrow keys or road buttons.`);
+        }
       }
-      if (engine.endOfRoute) setStatus(engine.lastMessage);
+      if (!contextLost) {
+        recovery.hidden = !updateAvailable && !engine.endOfRoute && !(streamPaused && performance.now() - streamStartedAt > 8000);
+        restart.hidden = true; retryStreet.hidden = !streamPaused;
+        element<HTMLButtonElement>('dismiss-update').hidden = !updateAvailable;
+        if (!recovery.hidden) recoveryMessage.textContent = updateAvailable ? 'A newer version of the town is available. Reload to update; your safe road position is saved.' : streamPaused ? 'This street is taking longer to load. Retry, turn around or choose a starting place.' : engine.lastMessage;
+      }
       drawMap();
     }
 
@@ -500,16 +569,17 @@ export async function startTown(root: HTMLElement): Promise<Session> {
       frame = requestAnimationFrame(tick);
       const elapsed = Math.min(0.5, Math.max(0, (now - last) / 1000));
       last = now;
-      if (!document.hidden) {
+      if (contextLost) return;
+      if (!document.hidden && !engine.paused) {
         snapshots.push(elapsed * 1000);
         if (snapshots.length > 1800) snapshots.shift();
       }
       const forwardPoint = toWorld(engine.pose(Math.max(12, engine.speed * 2))[0]);
       if (!teleporting) {
         const ready = world!.isReadyAt(forwardPoint);
-        if (!ready && engine.speed > 0.2 && !streamPaused) { streamPaused = true; setStatus('Loading the next street…'); }
-        if (ready && streamPaused) { streamPaused = false; setStatus('Street ready. Continuing your drive.'); }
-        if (!streamPaused) advanceRealTime(engine, elapsed, held.has('up'), held.has('down'));
+        if (!ready && engine.speed > 0.2 && !streamPaused) { streamPaused = true; streamStartedAt = now; audio.silence(); setStatus('Loading the next street…'); }
+        if (ready && streamPaused) { streamPaused = false; setStatus(engine.paused ? 'Street ready. Your drive remains paused.' : 'Street ready. Continuing your drive.'); }
+        if (!streamPaused) advanceRealTime(engine, elapsed, held.has('up') && !held.has('down'), held.has('down'));
       }
       const [position, tangent] = engine.pose();
       const renderedPosition = toWorld(position);
@@ -529,21 +599,36 @@ export async function startTown(root: HTMLElement): Promise<Session> {
         points.wantedEye.copy(points.car).addScaledVector(points.direction, wide ? -12 : -8.8).addScaledVector(points.up, wide ? 6.4 : 3.6);
         points.wantedTarget.copy(points.car).addScaledVector(points.direction, 12).addScaledVector(points.up, 1.15);
       }
-      const smoothing = firstFrame ? 1 : 1 - Math.exp(-elapsed * (cameraMode === 'hood' ? 18 : 7));
+      const smoothing = firstFrame ? 1 : 1 - Math.exp(-elapsed * (cameraMode === 'hood' ? 18 : steady() ? 12 : 7));
       points.eye.lerp(points.wantedEye, smoothing);
       points.target.lerp(points.wantedTarget, smoothing);
+      car!.visible = cameraMode !== 'hood';
+      if (cameraMode !== 'hood') {
+        cameraAnchor.copy(points.car).addScaledVector(points.up, 1.3);
+        const clearance = cameraObstruction.resolve(cameraAnchor, points.eye, world!.cameraOccluders(renderedPosition, 24), now, firstFrame);
+        if (clearance.close) {
+          // If even the short boom would enter the car, use its clear road-eye
+          // view until the obstruction passes, rather than showing body interiors.
+          points.eye.copy(points.car).addScaledVector(points.direction, 0.95).addScaledVector(points.up, 1.42);
+          points.target.fromArray(toWorld(engine.pose(20)[0])).addScaledVector(points.up, 1.5);
+          car!.visible = false;
+        }
+      }
       camera.position.copy(points.eye);
       camera.lookAt(points.target);
+      if (firstFrame) renderRequested = true;
       firstFrame = false;
       sun.position.copy(points.car).add(SUN_OFFSET);
       sun.target.position.copy(points.car);
-      audio.update(engine.speed, engine.paused || streamPaused || teleporting);
+      const shore = Math.max(0, ...[LANDMARKS.LAKE, LANDMARKS.BEACH, LANDMARKS.RANCH].map(place => 1 - Math.hypot(position[0] - place.xy[0], position[1] - place.xy[1]) / 220));
+      audio.update(engine.speed, engine.paused || streamPaused || teleporting, engine.acceleration, Number(engine.edge.surface_type ?? 6), shore);
       if (drawCount >= 3 && now - streamingAt > 300 && !teleporting) {
         world!.update(toWorld(position), toWorld(engine.pose(Math.max(100, engine.speed * 10))[0]));
         streamingAt = now;
       }
       if (now - hudAt > 120) { refreshHud(); hudAt = now; }
-      if (quality === 'auto' && now - startedAt > 15000 && world!.metrics.pending === 0 && now - qualityAt > 5000 && snapshots.length > 100) {
+      if (now - savedAt > 5000) { persist(); savedAt = now; }
+      if (!engine.paused && quality === 'auto' && now - startedAt > 15000 && world!.metrics.pending === 0 && now - qualityAt > 5000 && snapshots.length > 100) {
         const average = snapshots.slice(-100).reduce((a, b) => a + b, 0) / 100;
         if (average > 35 && pixelRatio > 0.8) {
           pixelRatio = Math.max(0.8, pixelRatio - 0.15);
@@ -553,9 +638,14 @@ export async function startTown(root: HTMLElement): Promise<Session> {
         }
         qualityAt = now;
       }
-      if (!engine.paused && !reducedMotion.matches) presentationTime += elapsed;
+      if (!engine.paused && !steady()) presentationTime += elapsed;
+      // Keep controls, recovery and streaming responsive on the single RAF,
+      // while a paused scene redraws at most ten times per second. Camera and
+      // resize changes request an immediate frame; background tabs draw none.
+      if (document.hidden || (engine.paused && !renderRequested && drawCount >= 3 && now - lastDraw < 100)) return;
       world!.updatePresentation(presentationTime, renderedPosition);
       renderer!.render(scene!, camera);
+      renderRequested = false; lastDraw = now;
       world!.metrics.triangles = renderer!.info.render.triangles;
       drawCount++;
       // Let the starting street draw before requesting surrounding blocks.
@@ -572,7 +662,7 @@ export async function startTown(root: HTMLElement): Promise<Session> {
       world,
       get renderer() { return renderer; },
       get cameraMode() { return cameraMode; },
-      get presentation() { return { version: 'research-webster-v7', grass: world!.presentationResources(), vehicle: vehicle!.resources(), evidence: world!.evidenceResources(), finish: world!.finishResources(), research: world!.researchResources() }; },
+      get presentation() { return { version: 'finished-webster-v8', grass: world!.presentationResources(), vehicle: vehicle!.resources(), evidence: world!.evidenceResources(), finish: world!.finishResources(), research: world!.researchResources(), streaming: world!.streamingResources(), comfort: preferences.comfort, camera: { checks: cameraObstruction.checks, testedMeshes: cameraObstruction.testedMeshes, milliseconds: cameraObstruction.milliseconds, skippedCandidates: cameraObstruction.skippedCandidates } }; },
       get ready() { return controlsReady && !disposed; },
       get metrics() {
         const samples = [...snapshots].sort((a, b) => a - b);

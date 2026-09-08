@@ -1,0 +1,45 @@
+{
+  "version": 1,
+  "sourceManifestSha256": "37fbef34bc2a4467997252be75b4c43174a6a7b2d39963614cadd8d787e56105",
+  "directory": "2026-09-37fbef34bc2a",
+  "finalMapsUnchanged": true,
+  "previewSize": 128,
+  "rows": {
+    "surfaces/textures/grass-color.jpg": {
+      "sourceSha256": "3268c0998df8e5380ca3a272ff41512e45055b51087935887f4fbf53a4b89be2",
+      "url": "/town-finish/v1/ground-preview/grass-color.87157064231b70da.png",
+      "bytes": 34803,
+      "sha256": "87157064231b70dad6da3f94a21b731920e929d5e1093ba620b43232ec9b62fe"
+    },
+    "surfaces/textures/grass-normal.jpg": {
+      "sourceSha256": "9683354c1a4e9d81a62b933dac6d4308cea8d81ee4b117b310bf1d04b213a34e",
+      "url": "/town-finish/v1/ground-preview/grass-normal.00b0dca45f2b667d.png",
+      "bytes": 37287,
+      "sha256": "00b0dca45f2b667d916c169a80bcaca35f06cfa22f9e57d8b6b6bc5bb020fbf8"
+    },
+    "surfaces/textures/grass-roughness.jpg": {
+      "sourceSha256": "77315c028a95cbfd1a5e6e4d7f3bc6d2d55b9b178e8c244114e9da9d687f4149",
+      "url": "/town-finish/v1/ground-preview/grass-roughness.a9b39745b52f6279.png",
+      "bytes": 14831,
+      "sha256": "a9b39745b52f62791ea9349e29129e0a40d6afeeeb51c28786f1d427924d75c1"
+    },
+    "surfaces/textures/soil-color.jpg": {
+      "sourceSha256": "e8909b9a9788a399d8983db464197f88dc9b825ae7e9bb3bec24d731ea3c2234",
+      "url": "/town-finish/v1/ground-preview/soil-color.311cbe95a0760958.png",
+      "bytes": 35651,
+      "sha256": "311cbe95a0760958d738f7490defe02cd985a3731b74c8a014e81ae838653f6d"
+    },
+    "surfaces/textures/forest-color.jpg": {
+      "sourceSha256": "c663af292b8148ae15f52ecf5ecd3e4627e5da23eea98317b5592474263578bf",
+      "url": "/town-finish/v1/ground-preview/forest-color.081e7aa9955ff63e.png",
+      "bytes": 43882,
+      "sha256": "081e7aa9955ff63e167723b3185b912032a82f889c92648254df16dd03fa3362"
+    },
+    "surfaces/textures/asphalt-color.jpg": {
+      "sourceSha256": "e19b87059f69394fb8c3f52a5360828fba40314be610fd0862b6d91155c22f71",
+      "url": "/town-finish/v1/ground-preview/asphalt-color.3596dd453c311793.png",
+      "bytes": 19875,
+      "sha256": "3596dd453c31179305363cbb5d76ca028ea49cc5ef35e6a5899a5ebfde5bf860"
+    }
+  }
+}

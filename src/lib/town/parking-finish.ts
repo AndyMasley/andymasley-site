@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { PavementIndex, clipRoadPaintPolygon, roadPaintHeightAt } from './road-finish';
 import type { V3 } from './contracts';
+import { parkedPlacements, addParkedLife } from './parked-life';
 
 type XY = [number, number];
 type Polygon = XY[][];
@@ -95,14 +96,14 @@ export function validParkingPacket(value: unknown, tileId: string): value is Par
 
 /** Clip every stripe to decoded ground triangles, then lift it onto any apron.
  * No floating rectangular lot plates, no markings over the exclusion polygons. */
-export function applyParkingFinish(group: THREE.Group, tileId: string, origin: V3, packet?: ParkingPacket): ParkingFinishReport {
+export function applyParkingFinish(group: THREE.Group, tileId: string, origin: V3, packet?: ParkingPacket, level = 0): ParkingFinishReport {
   const previous=group.userData.parkingFinish as ParkingFinishReport|undefined;
   if(previous)return previous;
   const report:ParkingFinishReport={lots:[],bays:0,triangles:0,pavingTriangles:0,treeIslands:0,inferredLayout:true};
   if(!packet||!validParkingPacket(packet,tileId))return report;
   const bays=packet.lots.flatMap(layoutParking);
   if(!packet.lots.length){group.userData.parkingFinish=report;return report;}
-  const terrain:number[][][]=[],aprons:number[][][]=[],point=new THREE.Vector3(),normalPoint=new THREE.Vector3();
+  const terrain:number[][][]=[],aprons:number[][][]=[],point=new THREE.Vector3(),normalPoint=new THREE.Vector3(),occupied:THREE.Box3[]=[];
   const sourceNormals=new Map<number[][],number[][]>();
   group.updateMatrixWorld(true);
   const rootInverse=group.matrixWorld.clone().invert();
@@ -111,6 +112,10 @@ export function applyParkingFinish(group: THREE.Group, tileId: string, origin: V
     const g=object.geometry,p=g.getAttribute('position');if(!p)return;
     const isTerrain=/^terrain(?:\b|_)/i.test(object.name),materials=Array.isArray(object.material)?object.material:[object.material];
     const matrix=rootInverse.clone().multiply(object.matrixWorld),normalMatrix=new THREE.Matrix3().getNormalMatrix(matrix),normal=g.getAttribute('normal'),count=g.index?.count??p.count;
+    if(/car|parked/i.test(object.name)||materials.some(m=>/^Parked \|/.test(m.name))) {
+      const box=new THREE.Box3().setFromObject(object).applyMatrix4(rootInverse);
+      occupied.push(new THREE.Box3(new THREE.Vector3(box.min.x+origin[0],0,-box.max.z-origin[2]),new THREE.Vector3(box.max.x+origin[0],1,-box.min.z-origin[2])));
+    }
     for(const part of g.groups.length?g.groups:[{start:0,count,materialIndex:0}]) {
       if(!isTerrain&&!/parking apron asphalt/.test(materials[part.materialIndex??0]?.name??''))continue;
       for(let i=part.start;i<Math.min(count,part.start+part.count);i+=3) {
@@ -199,5 +204,15 @@ export function applyParkingFinish(group: THREE.Group, tileId: string, origin: V
     if(emit(circle,mulch,.012))report.treeIslands++;
   }
   attach(mulch,'Finished parking | tree planting beds',0x4b4735);
+  const heightAt=(p:readonly number[]):number|undefined=>{
+    let height:number|undefined;
+    for(const index of [ground,upper])for(const support of index.candidates([[p[0]-.001,p[1]-.001],[p[0]+.001,p[1]-.001],[p[0],p[1]+.001]])) {
+      const t=support.triangle,area=cross(t[0],t[1],t[2]),a=cross(t[0],t[1],p),b=cross(t[1],t[2],p),c=cross(t[2],t[0],p);
+      if(area>0?(Math.min(a,b,c)<-1e-7):(Math.max(a,b,c)>1e-7))continue;
+      const z=roadPaintHeightAt(t,p);height=height===undefined?z:Math.max(height,z);
+    }
+    return height;
+  };
+  addParkedLife(group,origin,level,parkedPlacements(bays.filter(b=>activeLots.has(b.lotId)),heightAt,occupied));
   report.lots=[...activeLots];report.triangles=(positions.length+mulch.length+paving.length)/9;group.userData.parkingFinish=report;return report;
 }

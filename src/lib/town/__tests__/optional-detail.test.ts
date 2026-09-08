@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { beginOptionalDetail, TileDetailStream } from '../optional-detail';
+import { RequestQueue } from '../request-queue';
 
 afterEach(() => vi.useRealTimers());
 describe('optional scenery', () => {
@@ -47,5 +48,15 @@ describe('optional scenery', () => {
     await stream.tile('0', signal); expect(read).toHaveBeenCalledTimes(66);
     expect(await stream.tile('bad', signal)).toBeUndefined(); expect(stream.failures).toBe(1);
     stream.dispose(); expect(await stream.tile('64', signal)).toBeUndefined();
+  });
+  it('releases a stalled slot on cancellation and never starts cancelled queued work', async () => {
+    const queue = new RequestQueue(1), first = new AbortController(), second = new AbortController();
+    const read = vi.fn(() => new Promise<number>(() => {}));
+    const a = queue.run(first.signal, read); const failedA = expect(a).rejects.toMatchObject({name:'AbortError'});
+    const b = queue.run(second.signal, read); const failedB = expect(b).rejects.toMatchObject({name:'AbortError'});
+    await Promise.resolve(); expect(read).toHaveBeenCalledOnce(); expect(queue.queued).toBe(1);
+    second.abort(); await failedB; expect(queue.queued).toBe(0);
+    first.abort(); await failedA; expect(queue.active).toBe(0);
+    expect(await queue.run(new AbortController().signal, async () => 4)).toBe(4); expect(queue.peakActive).toBe(1);
   });
 });

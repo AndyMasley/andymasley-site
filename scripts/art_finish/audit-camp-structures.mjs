@@ -1,0 +1,56 @@
+/** Geometry/lifecycle evidence using the SAME ordered steps as the live world.
+ * Native texture placeholders prove topology, never actual texture appearance,
+ * browser frame rates, shader output or physical-device memory. */
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+import { createHash } from 'node:crypto';
+import { gzipSync } from 'node:zlib';
+import { build } from 'esbuild';
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js';
+
+const site = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
+const out = path.resolve(process.env.TOWN_ASSEMBLY_OUT || '/private/tmp/webster-finished-game/art/ranch');
+fs.mkdirSync(out, { recursive: true });
+const read = p => JSON.parse(fs.readFileSync(p)), hash = b => createHash('sha256').update(b).digest('hex');
+const data = name => read(path.join(site, 'data/derived/town', name + '.json'));
+const release = data('release'), source = path.join(site, 'public/town-assets', release.directory);
+const manifestBytes = fs.readFileSync(path.join(source, 'manifest.json'));
+if (hash(manifestBytes) !== release.manifestSha256) throw new Error('Pinned source manifest changed');
+const manifest = JSON.parse(manifestBytes);
+const indices = Object.fromEntries(['residential-evidence', 'evidence-roofs', 'road-finish', 'terrain-finish', 'paved-surfaces', 'additional-environment', 'roadside', 'environment-ground', 'environment-facilities', 'road-materials', 'street-corners', 'street-corner-ground', 'road-curve'].map(name => [name, data(name + '-index')]));
+const packet = asset => {
+  if (!asset) return;
+  const bytes = fs.readFileSync(path.join(site, 'public', asset.url.slice(1)));
+  if (bytes.length !== asset.bytes || asset.sha256 && hash(bytes) !== asset.sha256) throw new Error('Packet source mismatch: ' + asset.url);
+  return JSON.parse(bytes);
+};
+function details(id, level) {
+  const home = packet(indices['residential-evidence'].tiles[id]), roofs = packet(indices['evidence-roofs'].tiles[id]);
+  return { evidence: { buildings: home?.buildings ?? [], roofs: roofs ?? [], failures: 0 },
+    road: packet(indices['road-finish'].tiles[id])?.rows,
+    terrain: packet(indices['terrain-finish'].tiles[id]?.levels[level]),
+    parking: packet(indices['paved-surfaces'].lotAssets[id]),
+    additional: packet(indices['additional-environment'].tiles[id]), roadside: packet(indices.roadside.tiles[id]),
+    environmentGround: packet(indices['environment-ground'].tiles[id]?.levels[level]),
+    facilities: packet(indices['environment-facilities'].tiles[id]), roadMaterials: packet(indices['road-materials'].tiles[id]?.levels[level]), streetCorners: packet(indices['street-corners'].tiles[id]), streetCornerGround: packet(indices['street-corner-ground'].tiles[id]?.levels[level]), roadCurve: packet(indices['road-curve'].tiles[id]?.levels[level]),
+  };
+}
+const entry = path.join(out, 'entry.ts'), bundle = path.join(out, 'assembly.mjs');
+fs.writeFileSync(entry, `export {applyCampStructures} from ${JSON.stringify(path.join(site,'src/lib/town/camp-structures.ts'))}; export { tileAssemblySteps } from ${JSON.stringify(path.join(site, 'src/lib/town/tile-assembly.ts'))}; export { layoutParking } from ${JSON.stringify(path.join(site, 'src/lib/town/parking-finish.ts'))};`);
+await build({ entryPoints: [entry], outfile: bundle, bundle: true, platform: 'node', format: 'esm', logLevel: 'silent', plugins: [{ name: 'same-three', setup(b) { b.onResolve({ filter: /^three$/ }, () => ({ path: fileURLToPath(import.meta.resolve('three')), external: true })); } }] });
+const { tileAssemblySteps, layoutParking, applyCampStructures } = await import(pathToFileURL(bundle).href);
+const loader = new GLTFLoader().setMeshoptDecoder(MeshoptDecoder);
+loader.register(() => ({ name: 'NATIVE_TEXTURE_PLACEHOLDER', loadTexture() { return Promise.resolve(new THREE.DataTexture(new Uint8Array([255, 255, 255, 255]), 1, 1)); } }));
+
+
+const catalog=data('camp-structures'),report={runtimeSha256:hash(fs.readFileSync(path.join(site,'src/lib/town/camp-structures.ts'))),catalogSha256:hash(fs.readFileSync(path.join(site,'data/derived/town/camp-structures.json'))),scope:'All aerial-matched camp structure tiles/LODs after authoritative current assembly; exact protected non-V2 meshes, native source-height delta, finite/outward geometry and idempotence.',rows:[],failures:[]},exports=[];
+function protectedInferredSignature(group,tile){const hashes=[];const rows=catalog.rows.filter(r=>r.tileId===tile.id);const distance=(ring,x,y)=>{let inside=false,best=Infinity;for(let i=0,j=ring.length-1;i<ring.length;j=i++){const a=ring[j],b=ring[i];if((a[1]>y)!==(b[1]>y)&&x<(b[0]-a[0])*(y-a[1])/(b[1]-a[1])+a[0])inside=!inside;const dx=b[0]-a[0],dy=b[1]-a[1],t=Math.max(0,Math.min(1,((x-a[0])*dx+(y-a[1])*dy)/(dx*dx+dy*dy)));best=Math.min(best,(x-a[0]-t*dx)**2+(y-a[1]-t*dy)**2);}return inside?0:best;};group.updateMatrixWorld(true);group.traverse(o=>{if(!(o instanceof THREE.Mesh))return;const g=o.geometry,p=g.getAttribute('position'),ix=g.index,count=ix?.count??p.count,mats=Array.isArray(o.material)?o.material:[o.material];for(const part of g.groups.length?g.groups:[{start:0,count,materialIndex:0}]){const m=mats[part.materialIndex??0];if(!m.name.startsWith('V2 inferred | '))continue;for(let i=part.start;i<part.start+part.count;i+=3){const ids=[0,1,2].map(k=>ix?ix.getX(i+k):i+k),c=new THREE.Vector3();for(const id of ids)c.add(new THREE.Vector3().fromBufferAttribute(p,id).applyMatrix4(o.matrixWorld));c.multiplyScalar(1/3).add(new THREE.Vector3().fromArray(tile.origin));if(rows.some(r=>c.y>=r.sourceBase-1&&c.y<=r.sourcePeak+12&&distance(r.outline,c.x,-c.z)<.85**2))continue;const values=[m.name,...m.color.toArray()];for(const [name,a]of Object.entries(g.attributes)){values.push(name);for(const id of ids)for(let j=0;j<a.itemSize;j++)values.push(a.getComponent(id,j));}hashes.push(hash(JSON.stringify(values)));}}});hashes.sort();return{triangles:hashes.length,sha256:hash(JSON.stringify(hashes))};}
+for(const tile of manifest.tiles.filter(t=>catalog.rows.some(r=>r.tileId===t.id)))for(const lod of tile.lods){const raw=fs.readFileSync(path.join(source,lod.url));if(hash(raw)!==lod.sha256)throw Error('sourceSHA');const group=(await loader.parseAsync(raw.buffer.slice(raw.byteOffset,raw.byteOffset+raw.byteLength),'')).scene;for(const step of tileAssemblySteps(group,tile,lod.level,details(tile.id,lod.level)))if(step.name!=='campStructures')step.apply();
+ const digest=g=>{const h=createHash('sha256');for(const attr of Object.values(g.attributes)){const a=attr.isInterleavedBufferAttribute?attr.data.array:attr.array;h.update(Buffer.from(a.buffer,a.byteOffset,a.byteLength));}if(g.index){const a=g.index.array;h.update(Buffer.from(a.buffer,a.byteOffset,a.byteLength));}return h.digest('hex');};const protectedMeshes=[];group.traverse(o=>{if(o instanceof THREE.Mesh&&!(Array.isArray(o.material)?o.material:[o.material]).some(m=>m.name.startsWith('V2 inferred | ')))protectedMeshes.push({o,hash:digest(o.geometry),material:o.material,geometry:o.geometry,matrix:o.matrix.toArray()});});
+ const inferredBefore=protectedInferredSignature(group,tile);const start=performance.now(),result=applyCampStructures(group,tile.id,tile.origin,lod.level,lod.sha256),ms=performance.now()-start,failures=[];if(result.status!=='applied'||result.ids.length!==catalog.rows.filter(r=>r.tileId===tile.id).length)failures.push('Source match/support incomplete');for(const s of protectedMeshes)if(s.o.geometry!==s.geometry||digest(s.o.geometry)!==s.hash||s.o.material!==s.material||JSON.stringify(s.o.matrix.toArray())!==JSON.stringify(s.matrix))failures.push('Protected source changed');
+ const inferredAfter=protectedInferredSignature(group,tile);if(JSON.stringify(inferredBefore)!==JSON.stringify(inferredAfter))failures.push('Unselected inferred geometry changed');const badFaces=[];let triangles=0,minNormalDot=1,minNormal=1,maxNormal=1,degenerate=0;const geometry=[];group.traverse(o=>{if(!(o instanceof THREE.Mesh)||o.userData.category!=='camp-structures')return;const p=o.geometry.getAttribute('position'),n=o.geometry.getAttribute('normal');for(let i=0;i<p.count;i++){if(!Number.isFinite(p.getX(i)+p.getY(i)+p.getZ(i)))failures.push('Nonfinite');const len=Math.hypot(n.getX(i),n.getY(i),n.getZ(i));minNormal=Math.min(minNormal,len);maxNormal=Math.max(maxNormal,len);}for(let i=0;i<p.count;i+=3){triangles++;const a=new THREE.Vector3().fromBufferAttribute(p,i),b=new THREE.Vector3().fromBufferAttribute(p,i+1),c=new THREE.Vector3().fromBufferAttribute(p,i+2),cross=b.sub(a).cross(c.sub(a));if(cross.length()<1e-9){degenerate++;continue;}const area=cross.length()*.5;cross.normalize();const dot=cross.dot(new THREE.Vector3().fromBufferAttribute(n,i));minNormalDot=Math.min(minNormalDot,dot);if(dot<0&&badFaces.length<5)badFaces.push({material:o.material.name,area,dot,position:Array.from(p.array.slice(i*3,i*3+9))});}geometry.push({name:o.name,sourceIds:o.userData.sourceIds,position:Array.from(p.array),role:o.material.userData.surfaceRole,material:o.material.name});});if(triangles!==result.triangles||minNormal<.99999||maxNormal>1.00001||minNormalDot<.99||degenerate)failures.push('Geometry invalid');if(applyCampStructures(group,tile.id,tile.origin,lod.level,lod.sha256)!==result)failures.push('Repeat mutation');const row={tileId:tile.id,level:lod.level,sourceSha256:lod.sha256,ms,...result,protectedMeshes:protectedMeshes.length,protectedInferred:inferredBefore,minNormal,maxNormal,minNormalDot,degenerate,badFaces,failures};report.rows.push(row);report.failures.push(...failures);exports.push({tileId:tile.id,level:lod.level,origin:tile.origin,geometry});console.log(JSON.stringify(row));
+ const gs=new Set(),ms2=new Set(),ts=new Set();group.traverse(o=>{if(o instanceof THREE.Mesh){gs.add(o.geometry);for(const m of Array.isArray(o.material)?o.material:[o.material]){ms2.add(m);for(const v of Object.values(m))if(v instanceof THREE.Texture)ts.add(v);}}});gs.forEach(g=>g.dispose());ms2.forEach(m=>m.dispose());ts.forEach(t=>t.dispose());}
+report.status=report.failures.length?'FAIL':'PASS';fs.writeFileSync(path.join(out,'all-lod-geometry.json.gz'),gzipSync(JSON.stringify(exports)));fs.writeFileSync(path.join(out,'native-audit.json'),JSON.stringify(report,null,2));console.log(report.status);if(report.failures.length)process.exitCode=1;

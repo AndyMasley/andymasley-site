@@ -186,8 +186,8 @@ describe('independent user-facing invariants', () => {
     expect(g.choices(0).map(c => c.label)).toEqual(['Left', 'Straight', 'Right']);
     for (const request of ['LEFT', 'RIGHT', null, 'LEFT'] as const) { e.queue(request); close(e.pose()[0], before, 'choice does not teleport car', 1e-9); }
     e.advance(1.1); expect(e.phase).toBe('TURN'); expect(e.connection!.choice.name).toBe('West'); expect(e.queued).toBeNull();
-    e.queue('RIGHT'); e.advance(e.connection!.path.length + 1);
-    expect(e.history[0]).toEqual([0, 4]); expect(e.queued).toBe('RIGHT');
+    e.queue('RIGHT'); expect(e.lastMessage).toContain('No right branch'); e.advance(e.connection!.path.length + 1);
+    expect(e.history[0]).toEqual([0, 4]); expect(e.queued).toBeNull();
     for (const [from, to] of e.history) expect(g.edges.get(from)!.to).toBe(g.edges.get(to)!.from);
   });
 

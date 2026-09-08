@@ -26,11 +26,18 @@ describe('Scoped late-summer materials', () => {
     expect(m.color.g).toBeLessThan(0.5);
   });
 
-  it('does not change terrain, observed landmarks, photo references, road markings or unrelated materials', () => {
-    for (const name of ['Reference | church red brick','Town Hall | pale painted trim','Photo home | blue clapboard','Realism aerial viewport 512 | ground_342.jpg','Drive road | chalk white paint','Unrelated']) {
+  it('does not change terrain, observed landmarks, photo references or unrelated materials', () => {
+    for (const name of ['Reference | church red brick','Town Hall | pale painted trim','Photo home | blue clapboard','Realism aerial viewport 512 | ground_342.jpg','Unrelated']) {
       const m = material(name), before = m.toJSON(), callback = m.onBeforeCompile;
       applyArtMaterial(m);
       expect(m.toJSON()).toEqual(before); expect(m.onBeforeCompile).toBe(callback);
+    }
+  });
+
+  it('keeps exact white/yellow paint, alpha and placement flags while applying restrained reflectance wear',()=>{
+    for(const name of['Drive road | chalk white paint','Drive road | warm yellow paint','Streetscape | inferred crossing paint','Finished road | solid yellow centerline']){
+      const m=material(name);m.alphaTest=.2;m.opacity=.91;m.polygonOffset=true;m.polygonOffsetFactor=-1;const color=m.color.toArray();applyArtMaterial(m);const shader=compile(m);
+      expect(m.color.toArray()).toEqual(color);expect(m.opacity).toBe(.91);expect(m.alphaTest).toBe(.2);expect(m.polygonOffsetFactor).toBe(-1);expect(m.roughness).toBeGreaterThanOrEqual(.94);expect(shader.fragmentShader).toContain('mix(.92,1.0,townPaintWear)');expect(shader.fragmentShader).not.toContain('discard');expect(shader.fragmentShader).not.toContain('diffuseColor.a =');
     }
   });
 
@@ -88,6 +95,11 @@ describe('Scoped late-summer materials', () => {
     }
   });
 
+  it('joins new street-corner aprons to the existing restrained parking asphalt finish',()=>{
+    const lot=material('Finished parking | asphalt'),corner=material('Finished street corner | asphalt apron');applyArtMaterial(lot);applyArtMaterial(corner);
+    expect(corner.color.toArray()).toEqual(lot.color.toArray());expect(corner.roughness).toBe(lot.roughness);expect(corner.userData.townArt.kind).toBe('asphalt');expect(compile(corner).fragmentShader).toContain('townAsphaltValue');
+  });
+
   it('is idempotent and restores original ownership without disposing shared resources', () => {
     const m = material('Streetscape | granite curb'); m.map = new THREE.Texture();
     const textureDispose = vi.spyOn(m.map,'dispose'), materialDispose = vi.spyOn(m,'dispose');
@@ -121,6 +133,10 @@ describe('Scoped late-summer materials', () => {
     expect(water.customProgramCacheKey()).toBe(neighbor.customProgramCacheKey());
     removeArtMaterial(water); expect(water.onBeforeCompile).toBe(original);
     water.dispose(); neighbor.dispose(); other.dispose(); map.dispose();
+  });
+
+  it('uses warped, low-slope dielectric ripples without adding water assets or moving its geometry',()=>{
+    const m=material('Mapped water | inferred level and appearance');applyArtMaterial(m);const shader=compile(m);expect(m.metalness).toBe(0);expect(m.roughness).toBe(.28);expect(shader.fragmentShader).toContain('townWaterWind');expect(shader.fragmentShader).toContain('townWaterStrength');expect(shader.fragmentShader).toContain('townWaterFine');expect(shader.vertexShader).not.toContain('townWaterWind');expect(shader.fragmentShader).not.toContain('vec2(3.1,1.7)');
   });
 
   it('reuses a supplied crown color and varies deterministically without changing LOD or tile coordinates', () => {

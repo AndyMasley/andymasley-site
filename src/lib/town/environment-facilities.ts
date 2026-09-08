@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import index from '../../../data/derived/town/environment-facilities-index.json';
 import {Batch,type Frame,type Role} from './crafted-frontages';
+import {finishRecreationSurfaces} from './site-surface-finish';
 import type{AssetRef}from'./contracts';
 type V2=[number,number];
 type Facility={id:string;tileId:string;kind:'court'|'solar'|'pier'|'apron'|'fence';gate?:boolean;sport?:'basketball'|'tennis'|'futsal'|'football'|'baseball';home?:V2;infieldAxis?:number;parking?:boolean;point:V2;angle:number;length:number;width:number;height:number;outline:V2[];grid?:{rows:number;columns:number;heights:number[]};evidenceIds:string[]};
@@ -80,7 +81,11 @@ function solar(batch:Batch,f:Frame,r:Facility){
  const count=Math.ceil(r.length/2.2),half=r.width/2;for(let i=0;i<count;i++){
   const u0=(i/count-.5)*r.length+.012,u1=((i+1)/count-.5)*r.length-.012;const vertex=(u:number,v:number,offset=0)=>[u,height(r,u,v)+1.05+(v/r.width+.5)*.72+offset,v];const p=[vertex(u0,-half),vertex(u0,half),vertex(u1,half),vertex(u1,-half)];batch.polygon(f,'glass',p,'#263a48');batch.polygon(f,'metal',[...p].reverse(),'#626b6b');
   if(batch.level===0)for(const v of[-half,0,half]){const a=vertex(u0,v,.012),b=vertex(u1,v,.012);batch.polygon(f,'metal',[[a[0],a[1],v-.018],[a[0],a[1],v+.018],[b[0],b[1],v+.018],[b[0],b[1],v-.018]],'#adb4ad');}
-  if(i%3===0){const u=(u0+u1)/2,y=height(r,u,0);for(const v of[-half*.65,half*.65])batch.box(f,'metal',u,y+.14,v,.055,2.3,.055,'#838982');}
+  if(i%3===0){const u=(u0+u1)/2,bottom=height(r,u,0)-1.01;for(const v of[-half*.65,half*.65]){
+   // Keep the existing buried support base/XY; terminate at this tilted panel's
+   // underside instead of one shared height that protrudes or leaves a gap.
+   const top=vertex(u,v)[1]-.025;batch.box(f,'metal',u,(bottom+top)/2,v,.055,top-bottom,.055,'#838982');
+  }}
  }
 }
 function pier(batch:Batch,f:Frame,r:Facility){
@@ -92,5 +97,6 @@ export function applyEnvironmentFacilities(group:THREE.Object3D,tileId:string,or
  if(!packet)return;if(group.userData.environmentFacilities)return group.userData.environmentFacilities;const report={ids:[]as string[],triangles:0,bytes:0,meshes:0,rejected:false,equipment:{backstops:0,benches:0,footballGoals:0,fenceMeters:0,gates:0}};if(!validEnvironmentFacilitiesPacket(packet,tileId))return{...report,rejected:true};
  const batch=new Batch(new THREE.Vector3(...origin),level);for(const r of packet.objects){const f=frame(r);if(r.kind==='court'){court(batch,f,r);fieldEquipment(batch,f,r,report.equipment);}else if(r.kind==='fence'){meshPanel(batch,f,r,[-r.length/2,r.gate?.12:0],[r.length/2,r.gate?.12:0],r.gate?1.85:2);report.equipment.fenceMeters+=r.length;if(r.gate)report.equipment.gates++;}else if(r.kind==='solar')solar(batch,f,r);else if(r.kind==='pier')pier(batch,f,r);else{top(batch,f,r,r.parking?'#74776f':'#827f73');if(r.parking)for(let u=-r.length/2+3;u<r.length/2-3;u+=2.8)line(batch,f,r,[u,.4],[u,r.width/2-.65],.085);}report.ids.push(r.id);}
  const result=batch.finish();result.group.name='Registered environment facilities';result.group.userData.townCrafted=true;result.group.traverse(o=>{if(o instanceof THREE.Mesh){o.userData.townCrafted=true;o.userData.category='environment-facilities';if(level)o.castShadow=false;}});if(result.triangles)group.add(result.group);report.triangles=result.triangles;report.bytes=result.bytes;report.meshes=result.group.children.length;
+ finishRecreationSurfaces(result.group);
  group.userData.environmentFacilities=report;group.userData.environmentTreeExclusions=[...(group.userData.environmentTreeExclusions??[]),...(packet.grassExclusions??packet.objects.filter(r=>r.kind==='court'||r.kind==='apron').map(r=>r.outline))];group.userData.environmentGrassExclusions=[...(group.userData.environmentGrassExclusions??[]),...(packet.grassExclusions??packet.objects.filter(r=>r.kind==='court'||r.kind==='apron').map(r=>r.outline))];return report;
 }

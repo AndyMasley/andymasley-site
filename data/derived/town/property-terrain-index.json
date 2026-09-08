@@ -1,0 +1,118 @@
+{
+  "version": 1,
+  "sourceManifestSha256": "37fbef34bc2a4467997252be75b4c43174a6a7b2d39963614cadd8d787e56105",
+  "sourcePropertySha256": "7eb41b3dfd6b0d6cd12f05bd76e8a78bbcc494ded6b8917f3a8d1a92ff62a58f",
+  "policy": "Display-mesh T-junction repair: retained LOD0 terrain is locally stitched at existing source vertices, then reused under authorized property features with a 0.75 m blend. Maximum incident source height resolves a shared LOD0 edge only; this is not a surveyed elevation update. All source roads, water, buildings and existing paving remain protected.",
+  "tiles": {
+    "-9_-6": {
+      "origin": [
+        -2250,
+        0,
+        1500
+      ],
+      "levels": {
+        "1": {
+          "url": "/town-finish/v1/property-terrain/-9_-6-1.json",
+          "bytes": 108145,
+          "sha256": "30d92034570a457556357574ca47de3df2a3b09b1930ca2840baa57701092ea3"
+        },
+        "2": {
+          "url": "/town-finish/v1/property-terrain/-9_-6-2.json",
+          "bytes": 145183,
+          "sha256": "4d9ec8103a5854d537ad33152ee028631b52a1a9e845582dc838fa31505bb194"
+        }
+      }
+    },
+    "-9_-7": {
+      "origin": [
+        -2250,
+        0,
+        1750
+      ],
+      "levels": {
+        "0": {
+          "url": "/town-finish/v1/property-terrain/-9_-7-0.json",
+          "bytes": 11058,
+          "sha256": "42d1acd60874f09ca8000d174ef2205796b1ae3053543e4f1ad845e6545c03f1"
+        },
+        "1": {
+          "url": "/town-finish/v1/property-terrain/-9_-7-1.json",
+          "bytes": 574877,
+          "sha256": "5c70dda7800dce12e4a5696e98aef8549aa64bd1101226d3a849c8ab07be725f"
+        },
+        "2": {
+          "url": "/town-finish/v1/property-terrain/-9_-7-2.json",
+          "bytes": 1290928,
+          "sha256": "5cf280f4385e77332ad47767bc9c6359ba267ff11d16fa27a8df541da1c02946"
+        }
+      }
+    },
+    "-9_-8": {
+      "origin": [
+        -2250,
+        0,
+        2000
+      ],
+      "levels": {
+        "1": {
+          "url": "/town-finish/v1/property-terrain/-9_-8-1.json",
+          "bytes": 133413,
+          "sha256": "bb2531677e79a5710ca16b14c84840065a62b6af8f05471625757b9f8899a639"
+        },
+        "2": {
+          "url": "/town-finish/v1/property-terrain/-9_-8-2.json",
+          "bytes": 225740,
+          "sha256": "3c6b1e7b4c973bda5a7f0b25634527557d0ac18cc040733e514735a62b562e90"
+        }
+      }
+    },
+    "6_-14": {
+      "origin": [
+        1500,
+        0,
+        3500
+      ],
+      "levels": {
+        "0": {
+          "url": "/town-finish/v1/property-terrain/6_-14-0.json",
+          "bytes": 18819,
+          "sha256": "ba03c97a61cf59fd9ce4dbc8eecdf299d839a4fcdba3ec3288aeeb71d37d6dd1"
+        },
+        "1": {
+          "url": "/town-finish/v1/property-terrain/6_-14-1.json",
+          "bytes": 536376,
+          "sha256": "8d7e6edde5730bf9fb20af398823da0995ba87090672b5e86a8b1faf1c7f8240"
+        },
+        "2": {
+          "url": "/town-finish/v1/property-terrain/6_-14-2.json",
+          "bytes": 953576,
+          "sha256": "620db2cb29bb3c28fc3fd9ed5f432164c8f8065dc3ff8f2fbdd8a19ab82750b2"
+        }
+      }
+    },
+    "7_-14": {
+      "origin": [
+        1750,
+        0,
+        3500
+      ],
+      "levels": {
+        "0": {
+          "url": "/town-finish/v1/property-terrain/7_-14-0.json",
+          "bytes": 2025,
+          "sha256": "cb324ace670196d176567e5eb7b94812ac87e6d3b495af44d8085fac64ecf19f"
+        },
+        "1": {
+          "url": "/town-finish/v1/property-terrain/7_-14-1.json",
+          "bytes": 63880,
+          "sha256": "2ca68c13fafcb26f441b0550b6d769162427dd78960b392e40a5dcc1fca711ad"
+        },
+        "2": {
+          "url": "/town-finish/v1/property-terrain/7_-14-2.json",
+          "bytes": 117719,
+          "sha256": "cf4c3771b82fa3cbf52812aa5e93e0384129e95429b4bdbb2268cdc48927fc71"
+        }
+      }
+    }
+  }
+}

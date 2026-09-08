@@ -221,7 +221,16 @@ export function mountTownRadio(root: HTMLElement): { dispose(): void } {
   };
 
   const radio = new TownRadio(render);
+  try {
+    const saved = JSON.parse(localStorage.getItem('webster-radio-preferences-v1') ?? 'null');
+    if (saved && ['am', 'fm'].includes(saved.band)) {
+      radio.band = saved.band; radio.frequency = tuneFrequency(radio.band, Number(saved.frequency));
+      if (typeof saved.volume === 'number' && Number.isFinite(saved.volume)) radio.volume = Math.max(0, Math.min(1, saved.volume));
+      savedFrequencies[radio.band] = radio.frequency;
+    }
+  } catch { /* Restoring preferences never starts playback. */ }
   function render(): void {
+    try { localStorage.setItem('webster-radio-preferences-v1', JSON.stringify({ band: radio.band, frequency: radio.frequency, volume: radio.volume })); } catch {}
     const config = RADIO_BANDS[radio.band];
     const station = stationAt(radio.band, radio.frequency);
     const label = `${formatFrequency(radio.band, radio.frequency)} ${radio.band.toUpperCase()}`;
@@ -297,6 +306,7 @@ export function mountTownRadio(root: HTMLElement): { dispose(): void } {
   document.addEventListener('visibilitychange', () => { if (document.hidden) radio.suspend(); }, options);
   window.addEventListener('blur', () => radio.suspend(), options);
   window.addEventListener('pagehide', () => radio.suspend(), options);
+  root.addEventListener('town:mute', () => radio.turnOff(), options);
   render();
   return { dispose() { abort.abort(); radio.dispose(); } };
 }

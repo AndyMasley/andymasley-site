@@ -1,0 +1,500 @@
+{
+  "version": 1,
+  "basis": "Actual complete parking bays checked with largest authored parked body against 690,528 conservative guided car rectangles along every road and connector. Placement exclusion, not a parking regulation or surveyed stall plan.",
+  "inputs": {
+    "report.json": "1b432e523442a9c317a6f83414a9e91ea1690978655d4ab1c4657ed290f73758",
+    "clearance-car-poses.json.gz": "cb23c306aa5d6d2235c6a340a1408d291ff30ded94169008e7e6035ce5ab8199",
+    "engine-network.json.gz": "45ef35f049e2295b307b2e98b433f62579be524cbb0efb988b942c1d060f0bb9"
+  },
+  "checkedBays": 1563,
+  "bays": [
+    {
+      "lotId": "PAVE-AERIAL-DOWNTOWN-02",
+      "center": [
+        -2996.549,
+        -880.564
+      ],
+      "maximumOverlapM2": 1.949344
+    },
+    {
+      "lotId": "PAVE-AERIAL-DOWNTOWN-02",
+      "center": [
+        -3007.759,
+        -883.55
+      ],
+      "maximumOverlapM2": 3.16676
+    },
+    {
+      "lotId": "PAVE-AERIAL-DOWNTOWN-02",
+      "center": [
+        -2996.549,
+        -880.564
+      ],
+      "maximumOverlapM2": 1.949344
+    },
+    {
+      "lotId": "PAVE-AERIAL-DOWNTOWN-02",
+      "center": [
+        -3007.759,
+        -883.55
+      ],
+      "maximumOverlapM2": 3.16676
+    },
+    {
+      "lotId": "PAVE-OSM-1504195628",
+      "center": [
+        -2157.06,
+        -1891.974
+      ],
+      "maximumOverlapM2": 1.732834
+    },
+    {
+      "lotId": "PAVE-OSM-1504195628",
+      "center": [
+        -2154.446,
+        -1892.41
+      ],
+      "maximumOverlapM2": 5.603259
+    },
+    {
+      "lotId": "PAVE-OSM-1504195628",
+      "center": [
+        -2151.832,
+        -1892.847
+      ],
+      "maximumOverlapM2": 6.049333
+    },
+    {
+      "lotId": "PAVE-OSM-1504195628",
+      "center": [
+        -2149.218,
+        -1893.283
+      ],
+      "maximumOverlapM2": 5.547488
+    },
+    {
+      "lotId": "PAVE-OSM-1504195628",
+      "center": [
+        -2146.605,
+        -1893.72
+      ],
+      "maximumOverlapM2": 5.123463
+    },
+    {
+      "lotId": "PAVE-OSM-1504195628",
+      "center": [
+        -2143.991,
+        -1894.157
+      ],
+      "maximumOverlapM2": 4.600988
+    },
+    {
+      "lotId": "PAVE-OSM-1504195628",
+      "center": [
+        -2141.377,
+        -1894.593
+      ],
+      "maximumOverlapM2": 4.928655
+    },
+    {
+      "lotId": "PAVE-OSM-1504195628",
+      "center": [
+        -2138.763,
+        -1895.03
+      ],
+      "maximumOverlapM2": 4.794043
+    },
+    {
+      "lotId": "PAVE-OSM-1504195628",
+      "center": [
+        -2136.15,
+        -1895.467
+      ],
+      "maximumOverlapM2": 4.774661
+    },
+    {
+      "lotId": "PAVE-OSM-1504195628",
+      "center": [
+        -2133.536,
+        -1895.903
+      ],
+      "maximumOverlapM2": 4.827292
+    },
+    {
+      "lotId": "PAVE-OSM-1504195628",
+      "center": [
+        -2130.922,
+        -1896.34
+      ],
+      "maximumOverlapM2": 4.971111
+    },
+    {
+      "lotId": "PAVE-OSM-1504195628",
+      "center": [
+        -2128.308,
+        -1896.777
+      ],
+      "maximumOverlapM2": 5.114938
+    },
+    {
+      "lotId": "PAVE-OSM-1504195628",
+      "center": [
+        -2125.694,
+        -1897.213
+      ],
+      "maximumOverlapM2": 5.258786
+    },
+    {
+      "lotId": "PAVE-OSM-1504195628",
+      "center": [
+        -2160.376,
+        -1879.659
+      ],
+      "maximumOverlapM2": 3.579947
+    },
+    {
+      "lotId": "PAVE-OSM-1504195628",
+      "center": [
+        -2157.762,
+        -1880.095
+      ],
+      "maximumOverlapM2": 5.69017
+    },
+    {
+      "lotId": "PAVE-OSM-1504195628",
+      "center": [
+        -2158.465,
+        -1868.217
+      ],
+      "maximumOverlapM2": 1.685248
+    },
+    {
+      "lotId": "PAVE-OSM-1504195628",
+      "center": [
+        -2155.851,
+        -1868.654
+      ],
+      "maximumOverlapM2": 8.282547
+    },
+    {
+      "lotId": "PAVE-OSM-1504195628",
+      "center": [
+        -2148.712,
+        -1858.086
+      ],
+      "maximumOverlapM2": 4.528598
+    },
+    {
+      "lotId": "PAVE-OSM-1504195628",
+      "center": [
+        -2146.098,
+        -1858.522
+      ],
+      "maximumOverlapM2": 5.948783
+    },
+    {
+      "lotId": "PAVE-OSM-1504195628",
+      "center": [
+        -2143.484,
+        -1858.959
+      ],
+      "maximumOverlapM2": 5.88881
+    },
+    {
+      "lotId": "PAVE-OSM-1504195628",
+      "center": [
+        -2140.871,
+        -1859.396
+      ],
+      "maximumOverlapM2": 4.617741
+    },
+    {
+      "lotId": "PAVE-OSM-1504195628",
+      "center": [
+        -2138.257,
+        -1859.832
+      ],
+      "maximumOverlapM2": 5.665706
+    },
+    {
+      "lotId": "PAVE-OSM-1504195628",
+      "center": [
+        -2135.643,
+        -1860.269
+      ],
+      "maximumOverlapM2": 5.601995
+    },
+    {
+      "lotId": "PAVE-OSM-1504195628",
+      "center": [
+        -2133.029,
+        -1860.706
+      ],
+      "maximumOverlapM2": 5.5736
+    },
+    {
+      "lotId": "PAVE-OSM-1504195628",
+      "center": [
+        -2130.415,
+        -1861.142
+      ],
+      "maximumOverlapM2": 5.57459
+    },
+    {
+      "lotId": "PAVE-OSM-1504195628",
+      "center": [
+        -2127.802,
+        -1861.579
+      ],
+      "maximumOverlapM2": 5.430517
+    },
+    {
+      "lotId": "PAVE-OSM-1504195628",
+      "center": [
+        -2125.188,
+        -1862.016
+      ],
+      "maximumOverlapM2": 4.970466
+    },
+    {
+      "lotId": "PAVE-OSM-1504195628",
+      "center": [
+        -2122.574,
+        -1862.452
+      ],
+      "maximumOverlapM2": 4.461214
+    },
+    {
+      "lotId": "PAVE-OSM-1504195628",
+      "center": [
+        -2119.96,
+        -1862.889
+      ],
+      "maximumOverlapM2": 4.06635
+    },
+    {
+      "lotId": "PAVE-OSM-1504195628",
+      "center": [
+        -2110.935,
+        -1864.397
+      ],
+      "maximumOverlapM2": 5.406235
+    },
+    {
+      "lotId": "PAVE-OSM-1504195628",
+      "center": [
+        -2108.322,
+        -1864.833
+      ],
+      "maximumOverlapM2": 5.524453
+    },
+    {
+      "lotId": "PAVE-OSM-1504195628",
+      "center": [
+        -2105.708,
+        -1865.27
+      ],
+      "maximumOverlapM2": 5.524153
+    },
+    {
+      "lotId": "PAVE-OSM-1227016151",
+      "center": [
+        -1707.112,
+        -672.027
+      ],
+      "maximumOverlapM2": 3.344219
+    },
+    {
+      "lotId": "PAVE-OSM-1227016151",
+      "center": [
+        -1707.679,
+        -669.438
+      ],
+      "maximumOverlapM2": 3.7924
+    },
+    {
+      "lotId": "PAVE-OSM-1227016151",
+      "center": [
+        -1708.245,
+        -666.85
+      ],
+      "maximumOverlapM2": 4.240594
+    },
+    {
+      "lotId": "PAVE-OSM-1227016151",
+      "center": [
+        -1708.812,
+        -664.261
+      ],
+      "maximumOverlapM2": 4.688786
+    },
+    {
+      "lotId": "PAVE-OSM-1227016151",
+      "center": [
+        -1709.379,
+        -661.672
+      ],
+      "maximumOverlapM2": 5.137212
+    },
+    {
+      "lotId": "PAVE-OSM-1227016151",
+      "center": [
+        -1709.946,
+        -659.084
+      ],
+      "maximumOverlapM2": 5.475451
+    },
+    {
+      "lotId": "PAVE-OSM-1227016151",
+      "center": [
+        -1710.513,
+        -656.495
+      ],
+      "maximumOverlapM2": 5.487051
+    },
+    {
+      "lotId": "PAVE-OSM-1227016151",
+      "center": [
+        -1711.08,
+        -653.906
+      ],
+      "maximumOverlapM2": 5.487041
+    },
+    {
+      "lotId": "PAVE-OSM-1227016151",
+      "center": [
+        -1711.647,
+        -651.318
+      ],
+      "maximumOverlapM2": 5.487034
+    },
+    {
+      "lotId": "PAVE-OSM-1227016151",
+      "center": [
+        -1712.214,
+        -648.729
+      ],
+      "maximumOverlapM2": 5.487034
+    },
+    {
+      "lotId": "PAVE-OSM-1227016151",
+      "center": [
+        -1712.78,
+        -646.14
+      ],
+      "maximumOverlapM2": 5.487052
+    },
+    {
+      "lotId": "PAVE-OSM-1227016151",
+      "center": [
+        -1713.347,
+        -643.552
+      ],
+      "maximumOverlapM2": 5.487036
+    },
+    {
+      "lotId": "PAVE-OSM-1227016151",
+      "center": [
+        -1713.914,
+        -640.963
+      ],
+      "maximumOverlapM2": 5.487034
+    },
+    {
+      "lotId": "PAVE-OSM-1227016151",
+      "center": [
+        -1735.139,
+        -598.265
+      ],
+      "maximumOverlapM2": 0.019124
+    },
+    {
+      "lotId": "PAVE-OSM-1227016151",
+      "center": [
+        -1735.706,
+        -595.676
+      ],
+      "maximumOverlapM2": 1.755028
+    },
+    {
+      "lotId": "PAVE-OSM-1227016151",
+      "center": [
+        -1736.273,
+        -593.088
+      ],
+      "maximumOverlapM2": 4.32455
+    },
+    {
+      "lotId": "PAVE-OSM-1227016151",
+      "center": [
+        -1736.84,
+        -590.499
+      ],
+      "maximumOverlapM2": 5.498075
+    },
+    {
+      "lotId": "PAVE-OSM-1227016151",
+      "center": [
+        -1737.407,
+        -587.91
+      ],
+      "maximumOverlapM2": 5.484761
+    },
+    {
+      "lotId": "PAVE-OSM-1227016151",
+      "center": [
+        -1739.364,
+        -578.972
+      ],
+      "maximumOverlapM2": 5.535881
+    },
+    {
+      "lotId": "PAVE-OSM-1227016151",
+      "center": [
+        -1739.931,
+        -576.384
+      ],
+      "maximumOverlapM2": 5.417706
+    },
+    {
+      "lotId": "PAVE-OSM-1227016151",
+      "center": [
+        -1740.498,
+        -573.795
+      ],
+      "maximumOverlapM2": 4.563818
+    },
+    {
+      "lotId": "PAVE-OSM-1227016151",
+      "center": [
+        -1741.064,
+        -571.206
+      ],
+      "maximumOverlapM2": 3.516929
+    },
+    {
+      "lotId": "PAVE-OSM-1227016151",
+      "center": [
+        -1741.631,
+        -568.618
+      ],
+      "maximumOverlapM2": 2.469812
+    },
+    {
+      "lotId": "PAVE-OSM-1227016151",
+      "center": [
+        -1742.198,
+        -566.029
+      ],
+      "maximumOverlapM2": 1.422895
+    },
+    {
+      "lotId": "PAVE-OSM-1227016151",
+      "center": [
+        -1742.765,
+        -563.44
+      ],
+      "maximumOverlapM2": 0.379078
+    }
+  ]
+}

@@ -7,7 +7,9 @@ type School = typeof data.school[number];
 type Commercial = typeof data.commercial[number];
 export type Role = 'wall' | 'roof' | 'foundation' | 'trim' | 'glass' | 'recess' | 'door' | 'metal' | 'paving' | 'stone' | 'leaf' | 'brick' | 'shingle' | 'stucco';
 type Chunk = { positions: number[]; normals: number[]; ids: Set<string>; role: Role; color: string };
-export type FrontageReport = { version: number; tileId: string; schoolIds: string[]; commercialIds: string[]; removedTriangles: number; addedTriangles: number; addedMeshes: number; geometryBytes: number };
+export type RetainingWallPlacement = { structId: string; number: string; status: 'placed' | 'omitted-no-sidewalk' | 'omitted-no-ground'; wallV?: number; sidewalkV?: number; segments: number[][]; geometryRanges?: { key: string; start: number; count: number }[] };
+export type ConstructionDetail = {structId:string;gutterMeters:number;downspouts:number;porchFixtures:number;basis:string;geometryRanges:{key:string;start:number;count:number}[]};
+export type FrontageReport = { retainingWalls: RetainingWallPlacement[]; constructionDetails: ConstructionDetail[]; version: number; tileId: string; schoolIds: string[]; commercialIds: string[]; removedTriangles: number; addedTriangles: number; addedMeshes: number; geometryBytes: number };
 
 export const CRAFTED_FRONTAGE_VERSION = 1;
 export const CRAFTED_SCHOOL_IDS = data.school.map((record) => record.structId);
@@ -36,16 +38,16 @@ function decode(value: string): Float32Array {
 }
 
 export function frontageMaterial(role: Role, color: string): THREE.MeshStandardMaterial {
-  const result = new THREE.MeshStandardMaterial({ color, roughness: role === 'glass' ? 0.24 : role === 'metal' ? 0.6 : 0.87, metalness: role === 'glass' ? 0.22 : role === 'metal' ? 0.35 : 0 });
+  const result = new THREE.MeshStandardMaterial({ color, roughness: role === 'glass' ? 0.18 : role === 'metal' ? 0.6 : 0.87, metalness: role === 'glass' ? 0.26 : role === 'metal' ? 0.35 : 0 });
   result.name = `Crafted frontage | ${role} | ${color}`;
   result.userData.surfaceRole = role;
   result.userData.townCrafted = true;
-  result.envMapIntensity = role === 'glass' ? .32 : .12;
+  result.envMapIntensity = role === 'glass' ? .62 : .12;
   result.userData.appearanceBasis = 'Dated facade observations plus explicitly inferred dimensions and late-summer materials.';
   if (['wall', 'roof', 'brick', 'stone', 'paving', 'foundation', 'leaf', 'shingle', 'stucco'].includes(role)) {
     result.onBeforeCompile = (shader) => {
-      shader.vertexShader = `varying vec3 vCraftedWorld;\n${shader.vertexShader}`.replace('#include <project_vertex>', '#include <project_vertex>\nvCraftedWorld = (modelMatrix * vec4(transformed,1.0)).xyz;');
-      shader.fragmentShader = `varying vec3 vCraftedWorld;\n${shader.fragmentShader}`.replace('#include <map_fragment>', `
+      shader.vertexShader = `varying vec3 vCraftedWorld;\nvarying vec3 vCraftedWorldNormal;\n${shader.vertexShader}`.replace('#include <project_vertex>', '#include <project_vertex>\nvCraftedWorld = (modelMatrix * vec4(transformed,1.0)).xyz;\nvCraftedWorldNormal = inverseTransformDirection(transformedNormal,viewMatrix);');
+      shader.fragmentShader = `varying vec3 vCraftedWorld;\nvarying vec3 vCraftedWorldNormal;\n${shader.fragmentShader}`.replace('#include <map_fragment>', `
 #include <map_fragment>
 float craftedNear = 1.0-smoothstep(25.0,110.0,length(cameraPosition-vCraftedWorld));
 float craftedRow = fract(vCraftedWorld.y/${role === 'brick' ? '0.085' : '0.145'});
@@ -56,7 +58,9 @@ diffuseColor.rgb *= 1.0+craftedNoise*0.025;
 float craftedRelief = 0.0;
 ${role === 'wall' ? 'diffuseColor.rgb *= 1.0-craftedJoint*0.16; craftedRelief=craftedRow*0.003*craftedNear;' : role === 'leaf' ? 'diffuseColor.rgb *= 0.90+0.12*sin(vCraftedWorld.x*17.1+vCraftedWorld.y*12.7)*sin(vCraftedWorld.z*16.8-vCraftedWorld.y*6.2);' : ''}
 ${['brick','stone','shingle','roof'].includes(role) ? `
-vec3 craftedSurfaceNormal=normalize(cross(dFdx(vCraftedWorld),dFdy(vCraftedWorld)));
+// A stable vertex normal avoids differentiating large world coordinates: tiny
+// raster errors in that derivative rotated the brick grid and caused stippling.
+vec3 craftedSurfaceNormal=normalize(vCraftedWorldNormal);
 vec2 craftedTangent=vec2(-craftedSurfaceNormal.z,craftedSurfaceNormal.x);
 craftedTangent=length(craftedTangent)>.01?normalize(craftedTangent):vec2(1.,0.);
 float craftedAlong=dot(vCraftedWorld.xz,craftedTangent);
@@ -69,7 +73,7 @@ vec2 craftedAA=max(fwidth(craftedCell),vec2(.004));
 float craftedGrout=max(1.-smoothstep(.018,.027+craftedAA.x,craftedUV.x),1.-smoothstep(.022,.035+craftedAA.y,craftedUV.y));
 float craftedDetail=craftedNear*(1.-smoothstep(.25,.65,max(craftedAA.x,craftedAA.y)));
 float craftedVariation=fract(sin(dot(craftedTile,vec2(127.1,311.7)))*43758.5453);
-diffuseColor.rgb*=mix(.93,1.06,craftedVariation*craftedDetail+.5*(1.-craftedDetail));
+diffuseColor.rgb*=mix(.965,1.035,craftedVariation*craftedDetail+.5*(1.-craftedDetail));
 ${role==='brick'||role==='stone'?'diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.27,.255,.23),craftedGrout*.60*craftedDetail);':'diffuseColor.rgb*=1.-craftedGrout*.20*craftedDetail;'}
 craftedRelief=(1.-craftedGrout)*${role==='stone'?'.006':'.002'}*craftedDetail;
 ` : ''}
@@ -86,13 +90,25 @@ if(abs(craftedDet)>0.0000000001){
 }
 `);
     };
-    result.customProgramCacheKey = () => `crafted-frontages-v2:${role}`;
+    result.customProgramCacheKey = () => `crafted-frontages-v3:${role}`;
+  }
+  if(role==='glass'){
+    // The original authored glass tint remains. Sky-facing reflectance and a
+    // subdued interior value give depth without fabricated interior images.
+    result.onBeforeCompile=shader=>{shader.fragmentShader=shader.fragmentShader.replace('#include <opaque_fragment>',`
+float craftedGlassFresnel=pow(1.0-clamp(dot(normal,normalize(vViewPosition)),0.0,1.0),4.0);
+outgoingLight += vec3(.095,.135,.16) * (.07+.25*craftedGlassFresnel);
+#include <opaque_fragment>
+`);};result.customProgramCacheKey=()=> 'crafted-frontages-v3:glass';
   }
   return result;
 }
 
 export class Batch {
   readonly chunks = new Map<string, Chunk>();
+  readonly retainingWalls: RetainingWallPlacement[] = [];
+  readonly constructionDetails: ConstructionDetail[] = [];
+  readonly sidewalkEdges = new Map<string, number>();
   constructor(readonly origin: THREE.Vector3, readonly level: number, readonly terrain = new Map<string, number[][][]>()) {}
 
   geometry(frame: Frame, role: Role, position: ArrayLike<number>, normal: ArrayLike<number>, color = PALETTE[role]): void {
@@ -212,6 +228,16 @@ export function clipTerrainTriangle(triangle: number[][], bounds: readonly numbe
 function renderedFrontageTerrain(group: THREE.Object3D, origin: THREE.Vector3, rows: School[]): Map<string,number[][][]> {
   const result=new Map(rows.map(f=>[f.structId,[] as number[][][]]));
   if(!rows.length)return result;
+  // A conservative world-XZ broad phase avoids transforming every town-ground
+  // face into every house's local frame. Exact local clipping remains below.
+  const frames=rows.map(frame=>{
+    const [tx,ty]=frame.tangent,[nx,ny]=frame.outward,det=tx*ny-ty*nx;
+    const corners=[[-5,-30],[-5,frame.approachM+1],[frame.width+5,-30],[frame.width+5,frame.approachM+1]].map(([u,v])=>[
+      frame.start[0]+(u*ny-ty*v)/det,
+      -frame.start[1]-(tx*v-u*nx)/det,
+    ]);
+    return{frame,bounds:[Math.min(...corners.map(p=>p[0]))-1e-9,Math.max(...corners.map(p=>p[0]))+1e-9,Math.min(...corners.map(p=>p[1]))-1e-9,Math.max(...corners.map(p=>p[1]))+1e-9]};
+  });
   group.updateMatrixWorld(true);
   const world=new THREE.Vector3();
   group.traverse(object=>{
@@ -222,7 +248,10 @@ function renderedFrontageTerrain(group: THREE.Object3D, origin: THREE.Vector3, r
       if(!/^Realism aerial.*\| ground_/.test(materials[part.materialIndex??0]?.name??''))continue;
       for(let i=part.start;i<Math.min(count,part.start+part.count);i+=3) {
         const triangle=[0,1,2].map(j=>world.fromBufferAttribute(position,index?index.getX(i+j):i+j).applyMatrix4(object.matrixWorld).add(origin).clone());
-        for(const f of rows) {
+        const x0=Math.min(triangle[0].x,triangle[1].x,triangle[2].x),x1=Math.max(triangle[0].x,triangle[1].x,triangle[2].x);
+        const z0=Math.min(triangle[0].z,triangle[1].z,triangle[2].z),z1=Math.max(triangle[0].z,triangle[1].z,triangle[2].z);
+        for(const {frame:f,bounds} of frames) {
+          if(x1<bounds[0]||x0>bounds[1]||z1<bounds[2]||z0>bounds[3])continue;
           const local=triangle.map(p=>{const [u,v]=frontageCoordinates(f,p);return[u,p.y,v];});
           if(Math.max(...local.map(p=>p[0]))< -5||Math.min(...local.map(p=>p[0]))>f.width+5||Math.max(...local.map(p=>p[2]))< -30||Math.min(...local.map(p=>p[2]))>f.approachM+1)continue;
           result.get(f.structId)!.push(local);
@@ -245,6 +274,77 @@ function groundStrip(batch: Batch, f: School, u0: number, u1: number, v0: number
   }
 }
 
+const RETAINING_EDGE_HOMES=new Set(['121','130','135','140','151','156']);
+
+/** Dated exterior photos support low retaining edges, not their exact survey
+ * line. The source sidewalk's property edge constrains our authored placement;
+ * absence of a verified sidewalk or current ground omits the detail. */
+export function renderedSidewalkEdges(group:THREE.Object3D,origin:THREE.Vector3,rows:School[]):Map<string,number>{
+  const relevant=rows.filter(f=>RETAINING_EDGE_HOMES.has(f.number)),edges=new Map<string,number>();
+  if(!relevant.length)return edges;
+  const ranges=new Map<string,number[][]>(),world=new THREE.Vector3();group.updateMatrixWorld(true);
+  group.traverse(object=>{
+    if(!(object instanceof THREE.Mesh)||object.userData.townCrafted)return;
+    const geometry=object.geometry,position=geometry.getAttribute('position'),index=geometry.index;if(!position)return;
+    const count=index?.count??position.count,materials=Array.isArray(object.material)?object.material:[object.material];
+    for(const part of geometry.groups.length?geometry.groups:[{start:0,count,materialIndex:0}]){
+      if(!/^Streetscape \| (?:warm|cool|repaired) sidewalk concrete$/.test(materials[part.materialIndex??0]?.name??''))continue;
+      for(let i=part.start;i<Math.min(count,part.start+part.count);i+=3){
+        const tri=[0,1,2].map(k=>world.fromBufferAttribute(position,index?index.getX(i+k):i+k).applyMatrix4(object.matrixWorld).add(origin).clone());
+        const normal=tri[1].clone().sub(tri[0]).cross(tri[2].clone().sub(tri[0]));
+        if(normal.y<=0||normal.y/normal.length()<.85)continue;
+        for(const f of relevant){
+          const local=tri.map(p=>{const [u,v]=frontageCoordinates(f,p);return[u,p.y,v];});
+          const clipped=clipTerrainTriangle(local,[.1,f.width-.1,.5,f.approachM+1]);if(!clipped.length)continue;
+          const minU=Math.min(...clipped.map(p=>p[0])),maxU=Math.max(...clipped.map(p=>p[0]));
+          if(maxU-minU<.35)continue;
+          const edge=Math.min(...clipped.map(p=>p[2]));edges.set(f.structId,Math.min(edges.get(f.structId)??Infinity,edge));
+          const list=ranges.get(f.structId)??[];list.push([minU,maxU]);ranges.set(f.structId,list);
+        }
+      }
+    }
+  });
+  // A transverse walk or stray sliver cannot establish an entire frontage edge.
+  for(const f of relevant){const intervals=(ranges.get(f.structId)??[]).sort((a,b)=>a[0]-b[0]);let length=0,end=-Infinity;for(const [a,b]of intervals){length+=Math.max(0,b-Math.max(a,end));end=Math.max(end,b);}if(length<f.width*.5)edges.delete(f.structId);}
+  return edges;
+}
+
+function renderedGroundAt(batch:Batch,f:School,u:number,v:number):number|undefined{
+  for(const t of batch.terrain.get(f.structId)??[]){
+    const [a,b,c]=t,d=(b[2]-c[2])*(a[0]-c[0])+(c[0]-b[0])*(a[2]-c[2]);if(Math.abs(d)<1e-10)continue;
+    const p=((b[2]-c[2])*(u-c[0])+(c[0]-b[0])*(v-c[2]))/d,q=((c[2]-a[2])*(u-c[0])+(a[0]-c[0])*(v-c[2]))/d;
+    if(p>=-1e-7&&q>=-1e-7&&p+q<=1+1e-7)return a[1]*p+b[1]*q+c[1]*(1-p-q);
+  }
+  return undefined;
+}
+
+function retainingEdge(batch:Batch,f:School,entry:number):void{
+  const sidewalkV=batch.sidewalkEdges.get(f.structId),report:RetainingWallPlacement={structId:f.structId,number:f.number,status:'omitted-no-sidewalk',segments:[]};batch.retainingWalls.push(report);
+  if(sidewalkV===undefined||sidewalkV<.85)return;
+  const v=sidewalkV-.30;report.wallV=v;report.sidewalkV=sidewalkV;report.status='omitted-no-ground';
+  const runs:number[][]=[];
+  for(const [a,b]of [[.10,entry-.8],[entry+.8,f.width-.1]]){
+    if(b-a<.5)continue;
+    const ya=renderedGroundAt(batch,f,a,v),yb=renderedGroundAt(batch,f,b,v);if(ya===undefined||yb===undefined)continue;
+    const points=(batch.terrain.get(f.structId)??[]).flatMap(t=>clipTerrainTriangle(t,[a,b,v-.18,v+.18])).map(p=>[p[0],p[1]-.04,p[2]]);
+    if(!points.length)continue;
+    // A buried continuous footing and a straight sloping cap make a built wall,
+    // rather than reproducing each sub-metre terrain ripple as a masonry step.
+    const base=Math.min(...points.map(p=>p[1]))-.035;
+    const rise=.28+Math.max(0,...points.map(p=>p[1]-(ya+(yb-ya)*(p[0]-a)/(b-a))));
+    runs.push([a,b,base,base,ya+rise,yb+rise]);
+  }
+  if(!runs.length)return;
+  const before=new Map([...batch.chunks].map(([key,chunk])=>[key,chunk.positions.length/3]));
+  const prism=(a:number,b:number,ya:number,yb:number,ta:number,tb:number,depth:number,role:Role,color?:string)=>{
+    const p=[[a,ya,v-depth/2],[b,yb,v-depth/2],[b,yb,v+depth/2],[a,ya,v+depth/2]],q=[[a,ta,v-depth/2],[b,tb,v-depth/2],[b,tb,v+depth/2],[a,ta,v+depth/2]];
+    for(const face of [[p[3],p[2],p[1],p[0]],[q[0],q[1],q[2],q[3]],[p[0],p[1],q[1],q[0]],[p[1],p[2],q[2],q[1]],[p[2],p[3],q[3],q[2]],[p[3],p[0],q[0],q[3]]])batch.polygon(f,role,face.reverse(),color);
+  };
+  for(const [a,b,ya,yb,ta,tb]of runs){prism(a,b,ya,yb,ta,tb,.28,'stone');prism(a,b,ta,tb,ta+.08,tb+.08,.36,'trim','#bbb9a8');report.segments.push([a,b,ya,yb,ta,tb]);}
+  report.geometryRanges=[...batch.chunks].map(([key,chunk])=>({key,start:before.get(key)??0,count:chunk.positions.length/3-(before.get(key)??0)})).filter(r=>r.count>0);
+  report.status='placed';
+}
+
 function approach(batch: Batch, f: School, entry: number): void {
   const width=1.15, reach=f.approachM, start=f.porchDepth ? -f.porchDepth : 0;
   groundStrip(batch,f,entry-width/2,entry+width/2,start,reach,'paving');
@@ -253,14 +353,7 @@ function approach(batch: Batch, f: School, entry: number): void {
     const v=start+.2+i*.29, bottom=frontageGround(f,entry,v)-.07, top=f.floor-.04-i*.17;
     if(top>bottom+.07 && v<reach) batch.box(f,'stone',entry,(top+bottom)/2,v,1.4,top-bottom,.32);
   }
-  if(['121','130','135','140','151','156'].includes(f.number)) {
-    const wallV=Math.max(.55,reach-.5);
-    for(const [a,b] of [[.10,entry-.8],[entry+.8,f.width-.1]]) {
-      if(b-a<.5)continue;
-      const y=frontageGround(f,(a+b)/2,wallV); batch.box(f,'stone',(a+b)/2,y+.28,wallV,b-a,.56,.28);
-      batch.box(f,'trim',(a+b)/2,y+.59,wallV,b-a+.06,.08,.36,'#bbb9a8');
-    }
-  }
+  if(RETAINING_EDGE_HOMES.has(f.number)) retainingEdge(batch,f,entry);
 }
 
 function porch(batch: Batch, f: School, enclosed: boolean, entry: number): void {
@@ -319,6 +412,41 @@ function planting(batch: Batch, f: School, entry: number): void {
     }
     batch.geometry(f,'leaf',p,n);
   }
+}
+
+/** Quiet, explicitly inferred construction on the registered photo front. Only
+ * horizontal roof/porch eaves receive gutters; flat parapets and front gables
+ * are not given a false drainage arrangement. Generic homes have their own kit. */
+function constructionDetails(batch: Batch, f: School, entry: number): void {
+  if(batch.level)return;
+  const before=new Map([...batch.chunks].map(([key,chunk])=>[key,chunk.positions.length/3]));
+  const report:ConstructionDetail={structId:f.structId,gutterMeters:0,downspouts:0,porchFixtures:0,geometryRanges:[],basis:'Authored construction details fitted to the observed porch/roof form. These fixtures, gutter sizes, drain outlets and colors are not verified individual-property observations.'};
+  const porchRoof=['121','140','151','156'].includes(f.number),mainEave=['57','60','130'].includes(f.number);
+  if(porchRoof||mainEave){
+    const y=porchRoof?f.floor+2.68:f.roofMasses[0].eave+.01,v=porchRoof?.24:.27,a=.08,b=f.width-.08;
+    // Open trough represented by its bottom, outer lip and two end caps.
+    batch.box(f,'metal',(a+b)/2,y-.045,v,b-a,.035,.12);
+    batch.box(f,'trim',(a+b)/2,y-.006,v+.055,b-a,.082,.025);
+    for(const u of[a,b])batch.box(f,'trim',u,y-.006,v,.035,.082,.12);
+    report.gutterMeters=b-a;
+    for(const u of[f.width-.17]){
+      const bottom=Math.max(f.floor-.10,frontageGround(f,u,.10)+.15),top=y-.07;
+      if(top-bottom<1)continue;
+      batch.box(f,'trim',u,(bottom+top)/2,.13,.065,top-bottom,.065);
+      batch.box(f,'trim',u,top+.016,.19,.065,.06,.16);
+      batch.box(f,'trim',u,bottom,.20,.065,.07,.20);
+      for(let h=bottom+.55;h<top-.2;h+=1.65)batch.box(f,'metal',u,h,.168,.085,.03,.02);
+      report.downspouts++;
+    }
+  }
+  if(porchRoof){
+    // Daytime, unlit soffit fitting above the doorway, not a glowing window or
+    // an invented freestanding lamp. It stays inside the existing porch front.
+    batch.box(f,'metal',entry,f.floor+2.435,.035,.24,.075,.20);
+    batch.box(f,'trim',entry,f.floor+2.389,.035,.17,.021,.14);
+    report.porchFixtures++;
+  }
+  if(report.gutterMeters||report.porchFixtures){report.geometryRanges=[...batch.chunks].map(([key,chunk])=>({key,start:before.get(key)??0,count:chunk.positions.length/3-(before.get(key)??0)})).filter(r=>r.count>0);batch.constructionDetails.push(report);}
 }
 
 function school(batch: Batch, f: School): void {
@@ -384,7 +512,7 @@ function school(batch: Batch, f: School): void {
     const side={...f,start:[f.start[0]-f.outward[0]*2.0,f.start[1]-f.outward[1]*2.0],tangent:[-f.outward[0],-f.outward[1]],outward:[-f.tangent[0],-f.tangent[1]]};
     for(let d=2;d<Math.min(maxDepth-3,15);d+=4.0)for(const bottom of [g+.80,g+3.7])if(bottom+1.3<f.roofMasses[0].eave-.2)batch.window(side,d,bottom,.88,1.3);
   }
-  approach(batch,f,entry);planting(batch,f,entry);
+  approach(batch,f,entry);planting(batch,f,entry);constructionDetails(batch,f,entry);
   if(['60','79','121','135','140','156'].includes(f.number)) {
     const left=f.number==='156', x=left?-2.15:w+1.75;
     groundStrip(batch,f,x-1.25,x+1.25,-Math.min(12,Math.max(...f.outline.map(p=>p[1]))),f.approachM,'paving');
@@ -431,6 +559,7 @@ export function applyCraftedFrontages(group: THREE.Object3D, tileId: string, til
   const schoolRows=data.school.filter(r=>r.tileId===tileId),commercialRows=data.commercial.filter(r=>r.tileId===tileId&&!excludedCommercialIds.includes(r.structId));
   if(!schoolRows.length&&!commercialRows.length)return undefined;
   const origin=new THREE.Vector3().fromArray(tileOrigin),batch=new Batch(origin,level,renderedFrontageTerrain(group,origin,schoolRows));
+  for(const [sid,edge]of renderedSidewalkEdges(group,origin,schoolRows))batch.sidewalkEdges.set(sid,edge);
   for(const row of schoolRows)school(batch,row);
   for(const row of commercialRows)commercial(batch,row);
   const built=batch.finish();
@@ -442,6 +571,10 @@ export function applyCraftedFrontages(group: THREE.Object3D, tileId: string, til
   for(const mesh of meshes) {
     const materials=Array.isArray(mesh.material)?mesh.material:[mesh.material],geometry=mesh.geometry;
     for(const item of materials)oldMaterials.add(item);
+    // Unrelated terrain, road and wall meshes cannot enter either removal
+    // namespace. Avoid allocating a throwaway index for all of their triangles.
+    const mayRemove=materials.some(mat=>mat&&((schoolRows.length>0&&/^Reference \| School (?:\d+ |observed |historic )/.test(mat.name))||(commercialRows.length>0&&/^V2 inferred \| (?:trim|glass|door)$/.test(mat.name))));
+    if(!mayRemove&&materials.length&&materials.every(Boolean)&&geometry.groups.every(part=>!!materials[part.materialIndex??0]))continue;
     const position=geometry.getAttribute('position');if(!position)continue;
     const index=geometry.index, count=index?.count??position.count;
     const indices:number[]=[],groups:{start:number;count:number;materialIndex:number}[]=[];
@@ -482,6 +615,6 @@ export function applyCraftedFrontages(group: THREE.Object3D, tileId: string, til
   for(const geometry of removedGeometries)if(!retainedGeometry.has(geometry))geometry.dispose();
   const discardedTextures=new Set<THREE.Texture>();for(const m of oldMaterials)if(!retainedMaterials.has(m)){for(const value of Object.values(m))if(value instanceof THREE.Texture&&!retainedTextures.has(value))discardedTextures.add(value);m.dispose();}
   for(const texture of discardedTextures)texture.dispose();
-  const report:FrontageReport={version:CRAFTED_FRONTAGE_VERSION,tileId,schoolIds:schoolRows.map(r=>r.structId),commercialIds:commercialRows.map(r=>r.structId),removedTriangles,addedTriangles:built.triangles,addedMeshes:built.group.children.length,geometryBytes:built.bytes};
+  const report:FrontageReport={retainingWalls:batch.retainingWalls,constructionDetails:batch.constructionDetails,version:CRAFTED_FRONTAGE_VERSION,tileId,schoolIds:schoolRows.map(r=>r.structId),commercialIds:commercialRows.map(r=>r.structId),removedTriangles,addedTriangles:built.triangles,addedMeshes:built.group.children.length,geometryBytes:built.bytes};
   group.userData.craftedFrontages=report;return report;
 }

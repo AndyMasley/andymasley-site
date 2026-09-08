@@ -1,0 +1,1686 @@
+{
+  "version": 1,
+  "sourceManifestSha256": "37fbef34bc2a4467997252be75b4c43174a6a7b2d39963614cadd8d787e56105",
+  "policy": "Modeled construction grading beneath inventory-supported corner sidewalks; exact prior terrain triangles, protected building/water boundaries, existing paved ceilings, three-meter blended verges. Not new survey data.",
+  "sourceCornerIndexSha256": "7dbdad6f903ec5f0e7d9543ad1c00e3ef6b89bccee60f652737f7d11c1d7d93a",
+  "tiles": {
+    "-10_-1": {
+      "levels": {
+        "0": {
+          "url": "/town-finish/v1/corner-ground/-10_-1-0-8d032191c4b8.json",
+          "sha256": "8d032191c4b8095c074835b58725440a4f9d25d0e162cb59481bf1073c56889f",
+          "bytes": 119695
+        },
+        "1": {
+          "url": "/town-finish/v1/corner-ground/-10_-1-1-91e981827bc2.json",
+          "sha256": "91e981827bc23ff5c4e4440cd9ef4a58110a13bf429dfcaf2bdcd0ce986d73ae",
+          "bytes": 124712
+        },
+        "2": {
+          "url": "/town-finish/v1/corner-ground/-10_-1-2-ea9ee4cb82af.json",
+          "sha256": "ea9ee4cb82af81e11c09702f3445ddf9ab85b78769d2b83e1796a6197e0b2a85",
+          "bytes": 146803
+        }
+      }
+    },
+    "-10_-2": {
+      "levels": {
+        "0": {
+          "url": "/town-finish/v1/corner-ground/-10_-2-0-3a2d59400511.json",
+          "sha256": "3a2d59400511c1748558c024e4dd57ae0c59f718a919c0d5601e80a0fedcfebc",
+          "bytes": 2456487
+        },
+        "1": {
+          "url": "/town-finish/v1/corner-ground/-10_-2-1-32b24046a921.json",
+          "sha256": "32b24046a921502231d28e21435d3871cf23898b5c65e994f621686ba4ca4e64",
+          "bytes": 2753012
+        },
+        "2": {
+          "url": "/town-finish/v1/corner-ground/-10_-2-2-aaa9a6c31f38.json",
+          "sha256": "aaa9a6c31f389988ac56ab258adeb9f09ecd5d7bc0925f4c4d08ab59607edeed",
+          "bytes": 2830839
+        }
+      }
+    },
+    "-10_-3": {
+      "levels": {
+        "0": {
+          "url": "/town-finish/v1/corner-ground/-10_-3-0-2db8e9b76aa6.json",
+          "sha256": "2db8e9b76aa6886577951dddcb81dc72e70a896bf565af0425597f386ddce055",
+          "bytes": 1596964
+        },
+        "1": {
+          "url": "/town-finish/v1/corner-ground/-10_-3-1-010547edf87a.json",
+          "sha256": "010547edf87a28ffbb7c527ff4563face9e071b50abd6adf811482f2b0f641d6",
+          "bytes": 1774445
+        },
+        "2": {
+          "url": "/town-finish/v1/corner-ground/-10_-3-2-af8f5caa2138.json",
+          "sha256": "af8f5caa2138d52835540ce5177074d42f39c2e077152915c59c613f146a28a5",
+          "bytes": 1743699
+        }
+      }
+    },
+    "-10_-4": {
+      "levels": {
+        "0": {
+          "url": "/town-finish/v1/corner-ground/-10_-4-0-e8a073d81e66.json",
+          "sha256": "e8a073d81e666d0da63ee6076c0e7568d4ed9e13a36b7715a94d75179e100463",
+          "bytes": 1000170
+        },
+        "1": {
+          "url": "/town-finish/v1/corner-ground/-10_-4-1-bfba9186d735.json",
+          "sha256": "bfba9186d735e700c5df6c751b290b84ab17cf1bcc70f045e85753649936e8d4",
+          "bytes": 1042408
+        },
+        "2": {
+          "url": "/town-finish/v1/corner-ground/-10_-4-2-080e023e3bb6.json",
+          "sha256": "080e023e3bb66fc87c0368d485cd0b5281c1ad57818995aa1614842e1638911a",
+          "bytes": 1024724
+        }
+      }
+    },
+    "-10_-5": {
+      "levels": {
+        "0": {
+          "url": "/town-finish/v1/corner-ground/-10_-5-0-5601ab347d61.json",
+          "sha256": "5601ab347d61d5047799484d91f1b9af023e994f573550d2f8553d8468772603",
+          "bytes": 657011
+        },
+        "1": {
+          "url": "/town-finish/v1/corner-ground/-10_-5-1-d1de1d6da1b9.json",
+          "sha256": "d1de1d6da1b90292bf22ed589b0bd9cf3d6aab65f5d0491955ccd1db7040ec46",
+          "bytes": 808367
+        },
+        "2": {
+          "url": "/town-finish/v1/corner-ground/-10_-5-2-a0be189a3b2f.json",
+          "sha256": "a0be189a3b2fc594b24c90e6deabd58d0c4b70892b66b8974ee8fcf49090eb2a",
+          "bytes": 763575
+        }
+      }
+    },
+    "-10_-6": {
+      "levels": {
+        "0": {
+          "url": "/town-finish/v1/corner-ground/-10_-6-0-13ac67ed9a56.json",
+          "sha256": "13ac67ed9a56869144cb35da36714f19284763aaca6668369878124a8505bc1a",
+          "bytes": 559568
+        },
+        "1": {
+          "url": "/town-finish/v1/corner-ground/-10_-6-1-fec7ccdb1838.json",
+          "sha256": "fec7ccdb18383b635e043b49b0794f9eebf7f47220e66fe8b9ed1a9d945500f3",
+          "bytes": 572527
+        },
+        "2": {
+          "url": "/town-finish/v1/corner-ground/-10_-6-2-b6913a5dce1e.json",
+          "sha256": "b6913a5dce1e7a20d0284905130f9c3b68477153a18a5515d856907f16eee08f",
+          "bytes": 565703
+        }
+      }
+    },
+    "-10_-7": {
+      "levels": {
+        "0": {
+          "url": "/town-finish/v1/corner-ground/-10_-7-0-828cd3a78227.json",
+          "sha256": "828cd3a78227bc7295c3bdafd7fa5edfabfe5a78a422c4288458f3dd7a9992a9",
+          "bytes": 26448
+        },
+        "1": {
+          "url": "/town-finish/v1/corner-ground/-10_-7-1-8ad20e1f83ae.json",
+          "sha256": "8ad20e1f83aef5a5b817ae1343bb08a010b6c0864c6056f44709f9fe2e15b64f",
+          "bytes": 27435
+        },
+        "2": {
+          "url": "/town-finish/v1/corner-ground/-10_-7-2-3a7eee959e0b.json",
+          "sha256": "3a7eee959e0ba35feb4513f9bbbe72a8de00ea0b8cf88d4f7cff1e3b101f402b",
+          "bytes": 34614
+        }
+      }
+    },
+    "-10_0": {
+      "levels": {
+        "0": {
+          "url": "/town-finish/v1/corner-ground/-10_0-0-20ad14bbd49e.json",
+          "sha256": "20ad14bbd49e2bb568106ea41321138576bbb79a3de54a1cf06927e81d74087b",
+          "bytes": 404730
+        },
+        "1": {
+          "url": "/town-finish/v1/corner-ground/-10_0-1-205fe2d6f886.json",
+          "sha256": "205fe2d6f886fe32ba55c5f0d8cf41796f7f4a6556c4c06d11bb5de43724f14a",
+          "bytes": 466960
+        },
+        "2": {
+          "url": "/town-finish/v1/corner-ground/-10_0-2-792e61583570.json",
+          "sha256": "792e6158357038a1fa335aab03ef80b2d56b89e837cb410317e524b2e27935e2",
+          "bytes": 475671
+        }
+      }
+    },
+    "-10_1": {
+      "levels": {
+        "0": {
+          "url": "/town-finish/v1/corner-ground/-10_1-0-d79af05a85ef.json",
+          "sha256": "d79af05a85efe2c809da6c7cf93ceab8111640dadd54b67ada06c3ece7d733b0",
+          "bytes": 602847
+        },
+        "1": {
+          "url": "/town-finish/v1/corner-ground/-10_1-1-0ed86b991190.json",
+          "sha256": "0ed86b9911904faa250e2957fb7dc109c573ae95bf1b351b44ce30912ae951c6",
+          "bytes": 635106
+        },
+        "2": {
+          "url": "/town-finish/v1/corner-ground/-10_1-2-4dd700af7a62.json",
+          "sha256": "4dd700af7a6249342f7c957537d7ec4867f4bea32fdeea3413be6a766ef17e03",
+          "bytes": 713172
+        }
+      }
+    },
+    "-11_-1": {
+      "levels": {
+        "0": {
+          "url": "/town-finish/v1/corner-ground/-11_-1-0-c823fd6fb33c.json",
+          "sha256": "c823fd6fb33ce216667387803e3538c750d84e586c48903f0a2d57cc172477b2",
+          "bytes": 1169431
+        },
+        "1": {
+          "url": "/town-finish/v1/corner-ground/-11_-1-1-7dc06ce1669c.json",
+          "sha256": "7dc06ce1669c3abf51ba2ba4d504ddb0c6d6e301f7b65dd2b489f6c99fe955e9",
+          "bytes": 1327620
+        },
+        "2": {
+          "url": "/town-finish/v1/corner-ground/-11_-1-2-7cdb2d906237.json",
+          "sha256": "7cdb2d906237a89588164e96c359945517e425aa96af7761c90929b9df9d0cb7",
+          "bytes": 1370929
+        }
+      }
+    },
+    "-11_-12": {
+      "levels": {
+        "0": {
+          "url": "/town-finish/v1/corner-ground/-11_-12-0-47c5fb5ad3b0.json",
+          "sha256": "47c5fb5ad3b05fec11c23995ec4b2f05682b8f481d8aecf92fad92d1eb3cbcdf",
+          "bytes": 166622
+        },
+        "1": {
+          "url": "/town-finish/v1/corner-ground/-11_-12-1-191e28e284fd.json",
+          "sha256": "191e28e284fd1fb6865212184a14fea6d0d788eee1fb499b887cad3fed19c6c0",
+          "bytes": 173003
+        },
+        "2": {
+          "url": "/town-finish/v1/corner-ground/-11_-12-2-5c137b04a228.json",
+          "sha256": "5c137b04a228428192c09357c45992641e7e23e9a282a3033da0093dd2315360",
+          "bytes": 208272
+        }
+      }
+    },
+    "-11_-13": {
+      "levels": {
+        "0": {
+          "url": "/town-finish/v1/corner-ground/-11_-13-0-95102b10d231.json",
+          "sha256": "95102b10d2316b05facb63e162dd6c28f48ec11fde3b6c25e6776e23a98d4b88",
+          "bytes": 113163
+        },
+        "1": {
+          "url": "/town-finish/v1/corner-ground/-11_-13-1-3cd43c042637.json",
+          "sha256": "3cd43c04263706a2822ff8531f4727bc777a4d4f701c2ba7a1b149175e54b10e",
+          "bytes": 126378
+        },
+        "2": {
+          "url": "/town-finish/v1/corner-ground/-11_-13-2-d47d5ff3ef8a.json",
+          "sha256": "d47d5ff3ef8a6b22074558a2ab38bb7af4e040c3c7d5dbb4d4cf64a87627c263",
+          "bytes": 117581
+        }
+      }
+    },
+    "-11_-2": {
+      "levels": {
+        "0": {
+          "url": "/town-finish/v1/corner-ground/-11_-2-0-5a4565912f9f.json",
+          "sha256": "5a4565912f9f565c6ef71f7bf89ef61cf5048756d8817c97489626bd2a050841",
+          "bytes": 837185
+        },
+        "1": {
+          "url": "/town-finish/v1/corner-ground/-11_-2-1-1ba230c48d1a.json",
+          "sha256": "1ba230c48d1a5d01e9166535a282f205c439a07791bc22bff47d9efe4deff874",
+          "bytes": 924823
+        },
+        "2": {
+          "url": "/town-finish/v1/corner-ground/-11_-2-2-51866ee7a460.json",
+          "sha256": "51866ee7a4608d46e4e2c287059ad2a57cae52853a378175be9899a4df73024c",
+          "bytes": 943080
+        }
+      }
+    },
+    "-11_-3": {
+      "levels": {
+        "0": {
+          "url": "/town-finish/v1/corner-ground/-11_-3-0-3d3faf8cfa50.json",
+          "sha256": "3d3faf8cfa50f292c900f94d3c73cba7854b0f3102e8c461c5a279b8ddfed2ce",
+          "bytes": 636708
+        },
+        "1": {
+          "url": "/town-finish/v1/corner-ground/-11_-3-1-dc97eecc0124.json",
+          "sha256": "dc97eecc01242c8fe6680d5dabf31ba93f05c1ea0abbb2551eaa65b54277299f",
+          "bytes": 727086
+        },
+        "2": {
+          "url": "/town-finish/v1/corner-ground/-11_-3-2-06baad01f4ed.json",
+          "sha256": "06baad01f4edb932f607508af747bb1f64470b1f95239a3fde31f71ad4452219",
+          "bytes": 815271
+        }
+      }
+    },
+    "-11_-4": {
+      "levels": {
+        "0": {
+          "url": "/town-finish/v1/corner-ground/-11_-4-0-7ffdbd0ae778.json",
+          "sha256": "7ffdbd0ae778fa2361dabae6c1efbe8a5e66d7d6764d343244ee777da35919f2",
+          "bytes": 1231850
+        },
+        "1": {
+          "url": "/town-finish/v1/corner-ground/-11_-4-1-322c0c90744d.json",
+          "sha256": "322c0c90744d829694ed52e14a169754f0c0351e61f42b4844114d927b9e6590",
+          "bytes": 1389061
+        },
+        "2": {
+          "url": "/town-finish/v1/corner-ground/-11_-4-2-4c7c21968b51.json",
+          "sha256": "4c7c21968b51e5e143511dc671763f03f145e0ca63187dd734fc15529874d47d",
+          "bytes": 1515936
+        }
+      }
+    },
+    "-11_-5": {
+      "levels": {
+        "0": {
+          "url": "/town-finish/v1/corner-ground/-11_-5-0-ce5cce6168f3.json",
+          "sha256": "ce5cce6168f372db237a1314cf201386ee0ee7a8313638acaf56ea240099489f",
+          "bytes": 869283
+        },
+        "1": {
+          "url": "/town-finish/v1/corner-ground/-11_-5-1-a26e32fa004e.json",
+          "sha256": "a26e32fa004e3b4dd4cb1a2389f688a6a0690da946d1ed595830a860665f0a14",
+          "bytes": 942372
+        },
+        "2": {
+          "url": "/town-finish/v1/corner-ground/-11_-5-2-4a99f190f468.json",
+          "sha256": "4a99f190f46820f8e69170f6d742b1e45ea6c9a83c1068e33668799fd46aa03e",
+          "bytes": 960923
+        }
+      }
+    },
+    "-11_-6": {
+      "levels": {
+        "0": {
+          "url": "/town-finish/v1/corner-ground/-11_-6-0-4bc32336795f.json",
+          "sha256": "4bc32336795faf0765d7babc321ca507e2b31308d7660344ddf7dcccdaae4005",
+          "bytes": 1070404
+        },
+        "1": {
+          "url": "/town-finish/v1/corner-ground/-11_-6-1-eef6ac75ace2.json",
+          "sha256": "eef6ac75ace27386ee23b7b23459cb3697997cde937829319c1d51ac93179759",
+          "bytes": 1202548
+        },
+        "2": {
+          "url": "/town-finish/v1/corner-ground/-11_-6-2-ff55e216f71f.json",
+          "sha256": "ff55e216f71f8a590e183fdbed187ff44aab1f64fcb2ce36c7e4111ea796563f",
+          "bytes": 1277732
+        }
+      }
+    },
+    "-11_-7": {
+      "levels": {
+        "0": {
+          "url": "/town-finish/v1/corner-ground/-11_-7-0-217fc57c9826.json",
+          "sha256": "217fc57c98269d355468f97c75f276e3648b59a4dfa7e3d8e4c6e56947158ce4",
+          "bytes": 593103
+        },
+        "1": {
+          "url": "/town-finish/v1/corner-ground/-11_-7-1-ddb91ac6cb12.json",
+          "sha256": "ddb91ac6cb127b73322d7470ea7ea96b4c4ea8114636fcebae6322c0286d55b0",
+          "bytes": 609828
+        },
+        "2": {
+          "url": "/town-finish/v1/corner-ground/-11_-7-2-e260ad23b404.json",
+          "sha256": "e260ad23b40410eaef10d06a23445b8863484a76edfaa9c9ab968e2b447fe1a7",
+          "bytes": 652890
+        }
+      }
+    },
+    "-11_-8": {
+      "levels": {
+        "0": {
+          "url": "/town-finish/v1/corner-ground/-11_-8-0-31190c559486.json",
+          "sha256": "31190c559486955d00effdec58f2873f2e6205a1128537649d35951eafcaa779",
+          "bytes": 494268
+        },
+        "1": {
+          "url": "/town-finish/v1/corner-ground/-11_-8-1-12033774948c.json",
+          "sha256": "12033774948cd37d70057c55ee95a55d199fe434585dacb3727b0144e3f3db6f",
+          "bytes": 520871
+        },
+        "2": {
+          "url": "/town-finish/v1/corner-ground/-11_-8-2-16ed0a989a48.json",
+          "sha256": "16ed0a989a48ccd5a28e1b3dae883fee043797947db140b11ac0b05919bbdf19",
+          "bytes": 546789
+        }
+      }
+    },
+    "-11_0": {
+      "levels": {
+        "0": {
+          "url": "/town-finish/v1/corner-ground/-11_0-0-96d689dfbd5d.json",
+          "sha256": "96d689dfbd5d8dacfb93e0fa062baf8915d88713b99c1277f544c616a0a15305",
+          "bytes": 1045015
+        },
+        "1": {
+          "url": "/town-finish/v1/corner-ground/-11_0-1-e4507588419d.json",
+          "sha256": "e4507588419de0373035bd1e8aa965ec8a56152010a834718697f96ff3592359",
+          "bytes": 1199637
+        },
+        "2": {
+          "url": "/town-finish/v1/corner-ground/-11_0-2-f6f150b290c7.json",
+          "sha256": "f6f150b290c7391cc5d76341d446a4dc64f1b52cacfff6a8705223362274fec9",
+          "bytes": 1198905
+        }
+      }
+    },
+    "-11_1": {
+      "levels": {
+        "0": {
+          "url": "/town-finish/v1/corner-ground/-11_1-0-58089251c54b.json",
+          "sha256": "58089251c54b4d3aa0a9254bc8e54d551dd6680ff64064c317523d92b3be8bfc",
+          "bytes": 213534
+        },
+        "1": {
+          "url": "/town-finish/v1/corner-ground/-11_1-1-24e3c9082636.json",
+          "sha256": "24e3c9082636f2a247a0b5e9206cd2829de58c6251bf9b10169ca4282f004355",
+          "bytes": 245277
+        },
+        "2": {
+          "url": "/town-finish/v1/corner-ground/-11_1-2-64047b05ff0f.json",
+          "sha256": "64047b05ff0f204bb5cfffa0288c3a9c644617aa11257e4aaa5ce9c28563a7b5",
+          "bytes": 241879
+        }
+      }
+    },
+    "-11_2": {
+      "levels": {
+        "0": {
+          "url": "/town-finish/v1/corner-ground/-11_2-0-1ed1ea36ef25.json",
+          "sha256": "1ed1ea36ef25f5686e59f6d0afc0e2853dc14c3755d014a61002f07c0894db1a",
+          "bytes": 318709
+        },
+        "1": {
+          "url": "/town-finish/v1/corner-ground/-11_2-1-e3910b243be7.json",
+          "sha256": "e3910b243be75f1460a535b7901c0b775858ab57c70e83fa6a4276d04e8f2567",
+          "bytes": 343979
+        },
+        "2": {
+          "url": "/town-finish/v1/corner-ground/-11_2-2-9f3d258c01d2.json",
+          "sha256": "9f3d258c01d2bf14d6d265cb80b0ef73c1ca4f6e1a9a2e19af8cf0c0a94e4797",
+          "bytes": 374208
+        }
+      }
+    },
+    "-12_-10": {
+      "levels": {
+        "0": {
+          "url": "/town-finish/v1/corner-ground/-12_-10-0-94daf8d278a6.json",
+          "sha256": "94daf8d278a66e660c0f8fdad62334de5d33efff19f147b73214f3b645d8bd6d",
+          "bytes": 287140
+        },
+        "1": {
+          "url": "/town-finish/v1/corner-ground/-12_-10-1-5f322839ba9c.json",
+          "sha256": "5f322839ba9c595340fdefbcebcfcc285b7592ef30f238173203d2783f303ac6",
+          "bytes": 299047
+        },
+        "2": {
+          "url": "/town-finish/v1/corner-ground/-12_-10-2-00fcb4989bf0.json",
+          "sha256": "00fcb4989bf03704c24232a9912642aa2456bf08ecdef8026838d3df65004d5f",
+          "bytes": 321698
+        }
+      }
+    },
+    "-12_-11": {
+      "levels": {
+        "0": {
+          "url": "/town-finish/v1/corner-ground/-12_-11-0-bcdd34b0f6e8.json",
+          "sha256": "bcdd34b0f6e875431229aa6925fcc029b70609a4e2a0491834a2b89dd8b35428",
+          "bytes": 204702
+        },
+        "1": {
+          "url": "/town-finish/v1/corner-ground/-12_-11-1-a2ddcc7df52d.json",
+          "sha256": "a2ddcc7df52d94209884132a849ea826cc72c4cc2c19b314118c72f928e95521",
+          "bytes": 206805
+        },
+        "2": {
+          "url": "/town-finish/v1/corner-ground/-12_-11-2-d29b27146e7c.json",
+          "sha256": "d29b27146e7cf75b4bc145430e0699472949100d0b84624d9b9073dd362a3d74",
+          "bytes": 242647
+        }
+      }
+    },
+    "-12_-4": {
+      "levels": {
+        "0": {
+          "url": "/town-finish/v1/corner-ground/-12_-4-0-aafbec5c9b9c.json",
+          "sha256": "aafbec5c9b9c2b3e94d2cf4bb222726b7f6881a9c808c713464d0baf6f78da29",
+          "bytes": 835961
+        },
+        "1": {
+          "url": "/town-finish/v1/corner-ground/-12_-4-1-72c5286fc56b.json",
+          "sha256": "72c5286fc56bee144d176b7663514506a52cabc9981a69deea792172e92ecc7e",
+          "bytes": 896606
+        },
+        "2": {
+          "url": "/town-finish/v1/corner-ground/-12_-4-2-83f69147ed83.json",
+          "sha256": "83f69147ed838f9586525b98ad45e7efa3ff20e4298fc2764cb9360e1ecd9421",
+          "bytes": 970804
+        }
+      }
+    },
+    "-12_-5": {
+      "levels": {
+        "0": {
+          "url": "/town-finish/v1/corner-ground/-12_-5-0-3921549351a5.json",
+          "sha256": "3921549351a5704ad587b6d7f342a757fce8428c8018c1f19e0632512c483b86",
+          "bytes": 3178884
+        },
+        "1": {
+          "url": "/town-finish/v1/corner-ground/-12_-5-1-d2aa0f8cdd9a.json",
+          "sha256": "d2aa0f8cdd9ad3cdbff3bbb3e23cc68fb81b55d663dd223f738aa713ac522afd",
+          "bytes": 3503999
+        },
+        "2": {
+          "url": "/town-finish/v1/corner-ground/-12_-5-2-822e9cd7da52.json",
+          "sha256": "822e9cd7da527a555457973e80562c21ffa3b51c68950cc8f2d2f8bd32c20d76",
+          "bytes": 3613073
+        }
+      }
+    },
+    "-12_-6": {
+      "levels": {
+        "0": {
+          "url": "/town-finish/v1/corner-ground/-12_-6-0-0e48696e93bc.json",
+          "sha256": "0e48696e93bc10ba1c219ec96316ba7948d447f1bde3ffe6552bb83cc5da2e36",
+          "bytes": 170088
+        },
+        "1": {
+          "url": "/town-finish/v1/corner-ground/-12_-6-1-c01435a7a4c8.json",
+          "sha256": "c01435a7a4c80007e574cdd34d18ba28118569dd42b48b22150096402af58fdb",
+          "bytes": 194275
+        },
+        "2": {
+          "url": "/town-finish/v1/corner-ground/-12_-6-2-dfa46eae88cd.json",
+          "sha256": "dfa46eae88cded889d24a9fa3cb63547070ab2bbc97b98d2671a32a82af9f9db",
+          "bytes": 138964
+        }
+      }
+    },
+    "-12_-7": {
+      "levels": {
+        "0": {
+          "url": "/town-finish/v1/corner-ground/-12_-7-0-3bf6ebe2f83d.json",
+          "sha256": "3bf6ebe2f83d6465156189a559fece02fa40a46887a4a0a0f1cdf3a88d65ff76",
+          "bytes": 344491
+        },
+        "1": {
+          "url": "/town-finish/v1/corner-ground/-12_-7-1-da6a487890e7.json",
+          "sha256": "da6a487890e7af4931af99685263eb717be8de075e914158ddc03a1c0e96cfaa",
+          "bytes": 356521
+        },
+        "2": {
+          "url": "/town-finish/v1/corner-ground/-12_-7-2-3c873cd2c9f9.json",
+          "sha256": "3c873cd2c9f9374a5c2c3e60228d3ea315406e7e50f6f79a0054bca7123fc577",
+          "bytes": 407827
+        }
+      }
+    },
+    "-12_-8": {
+      "levels": {
+        "0": {
+          "url": "/town-finish/v1/corner-ground/-12_-8-0-fdc7a76ef0ca.json",
+          "sha256": "fdc7a76ef0caacca518ba856f2969b558dc8b00ee89b8e67d978dea24c1f3105",
+          "bytes": 1663390
+        },
+        "1": {
+          "url": "/town-finish/v1/corner-ground/-12_-8-1-e1fb4a96b9cf.json",
+          "sha256": "e1fb4a96b9cf502e8294124a845a745c71a0c4cf471714a49c385a4728578e1c",
+          "bytes": 1863835
+        },
+        "2": {
+          "url": "/town-finish/v1/corner-ground/-12_-8-2-d122fb466d55.json",
+          "sha256": "d122fb466d55bb6ea79e7267257eb7f1c116736182fa89d784eb344c19fc7ea9",
+          "bytes": 2083061
+        }
+      }
+    },
+    "-12_-9": {
+      "levels": {
+        "0": {
+          "url": "/town-finish/v1/corner-ground/-12_-9-0-d73951c4d41f.json",
+          "sha256": "d73951c4d41f2732d4aaf8e35a6b92f0e5f2623c628345994f79acce9e8fccf4",
+          "bytes": 668913
+        },
+        "1": {
+          "url": "/town-finish/v1/corner-ground/-12_-9-1-93c75a1c9ca8.json",
+          "sha256": "93c75a1c9ca80d5b029bc9baf3566e4a7243099a82d2f35bc450b909fa2b9bfb",
+          "bytes": 729856
+        },
+        "2": {
+          "url": "/town-finish/v1/corner-ground/-12_-9-2-727d5dad29f4.json",
+          "sha256": "727d5dad29f4ad32ce02548d1353aa85227f8829e12c175d187a73cbae77efe8",
+          "bytes": 785668
+        }
+      }
+    },
+    "-13_-10": {
+      "levels": {
+        "0": {
+          "url": "/town-finish/v1/corner-ground/-13_-10-0-be14fa2d76b8.json",
+          "sha256": "be14fa2d76b8c1bc8caf2fb34974e30e5ef3b14c5e8afc7bf425c7ca8ad7f119",
+          "bytes": 119849
+        },
+        "1": {
+          "url": "/town-finish/v1/corner-ground/-13_-10-1-2cd95c9c9b02.json",
+          "sha256": "2cd95c9c9b02d0ceefa16f4697491ba770ee7acf90aaf6b7a4245b3390f8e86d",
+          "bytes": 126784
+        },
+        "2": {
+          "url": "/town-finish/v1/corner-ground/-13_-10-2-63012001f68e.json",
+          "sha256": "63012001f68e4a678906d4dee7d675479969ade9168483dccf34e46d5762987a",
+          "bytes": 130009
+        }
+      }
+    },
+    "-13_-4": {
+      "levels": {
+        "0": {
+          "url": "/town-finish/v1/corner-ground/-13_-4-0-e540a1a7aa41.json",
+          "sha256": "e540a1a7aa415ab16e5bc613ac6e2529463cd3ea5b2d9db61e75551ec61baa5f",
+          "bytes": 432223
+        },
+        "1": {
+          "url": "/town-finish/v1/corner-ground/-13_-4-1-0147f52315b5.json",
+          "sha256": "0147f52315b52cc16410b7627dd2b0ecbabc5967bf1af4e64d6d12648d1a58c8",
+          "bytes": 503282
+        },
+        "2": {
+          "url": "/town-finish/v1/corner-ground/-13_-4-2-9b742c8f7389.json",
+          "sha256": "9b742c8f7389e82516d744f837f42d4c4b490b2e089615bb4b363aa289394894",
+          "bytes": 617257
+        }
+      }
+    },
+    "-13_-5": {
+      "levels": {
+        "0": {
+          "url": "/town-finish/v1/corner-ground/-13_-5-0-466c175061e9.json",
+          "sha256": "466c175061e90bb7b0d275783fd0461034462b327a21d26db78afa80c2a727f9",
+          "bytes": 1373796
+        },
+        "1": {
+          "url": "/town-finish/v1/corner-ground/-13_-5-1-e9401ca27c5b.json",
+          "sha256": "e9401ca27c5b6ab0b4c93a2a60aec7844cbc25f6585d04f70bfb8029b17c40e8",
+          "bytes": 1369921
+        },
+        "2": {
+          "url": "/town-finish/v1/corner-ground/-13_-5-2-716243acd0fd.json",
+          "sha256": "716243acd0fd451d5ef59ea2be1f9f5407d3eea93d282971eca668dd95e79b41",
+          "bytes": 1554047
+        }
+      }
+    },
+    "-13_-6": {
+      "levels": {
+        "0": {
+          "url": "/town-finish/v1/corner-ground/-13_-6-0-34ccc98b53ed.json",
+          "sha256": "34ccc98b53ed38a3ab267589fb2584740db3c35730285e56ccac428f75fdc369",
+          "bytes": 647989
+        },
+        "1": {
+          "url": "/town-finish/v1/corner-ground/-13_-6-1-b58868fcd88c.json",
+          "sha256": "b58868fcd88cc7206cdf853f0453a1b8d52e81572c75892eeb1e9bc19c4f8369",
+          "bytes": 704643
+        },
+        "2": {
+          "url": "/town-finish/v1/corner-ground/-13_-6-2-812c67d84bb6.json",
+          "sha256": "812c67d84bb6e0e2114d1a7f9cee0130608df8e50aa190cdee2399b07393958d",
+          "bytes": 692663
+        }
+      }
+    },
+    "-13_-7": {
+      "levels": {
+        "0": {
+          "url": "/town-finish/v1/corner-ground/-13_-7-0-7b0b11af73f2.json",
+          "sha256": "7b0b11af73f2dda6b5cbe66544cf41098ff8ee551d1d3cce7dcc9cf578b9a4df",
+          "bytes": 799211
+        },
+        "1": {
+          "url": "/town-finish/v1/corner-ground/-13_-7-1-5c4ecd677370.json",
+          "sha256": "5c4ecd6773708f10374eb80f6a21fb3078f46749081bf3f00974f387c6fc08ea",
+          "bytes": 823989
+        },
+        "2": {
+          "url": "/town-finish/v1/corner-ground/-13_-7-2-a23cb0588c8c.json",
+          "sha256": "a23cb0588c8cb50cb3750146075938bc40450a6cddefda55614910781a1a9700",
+          "bytes": 901579
+        }
+      }
+    },
+    "-13_-8": {
+      "levels": {
+        "0": {
+          "url": "/town-finish/v1/corner-ground/-13_-8-0-8c1590bfe6ce.json",
+          "sha256": "8c1590bfe6ce77cc86a413e33984da096a5319df81774bc84ffacc3ac9b018da",
+          "bytes": 249244
+        },
+        "1": {
+          "url": "/town-finish/v1/corner-ground/-13_-8-1-cdc730d53cc6.json",
+          "sha256": "cdc730d53cc6ad4518a731f6cf8f88fe955dede927c633322f4e213764732d8c",
+          "bytes": 264652
+        },
+        "2": {
+          "url": "/town-finish/v1/corner-ground/-13_-8-2-9e6d4c82e6b8.json",
+          "sha256": "9e6d4c82e6b864289aefd138019c340f88732b7d7829e2f53b36a83249f652c1",
+          "bytes": 300691
+        }
+      }
+    },
+    "-13_-9": {
+      "levels": {
+        "0": {
+          "url": "/town-finish/v1/corner-ground/-13_-9-0-22c1a00d78c8.json",
+          "sha256": "22c1a00d78c84e98636dd2d606cdfff754787802fc71915b3bceb5f86faa22ff",
+          "bytes": 115530
+        },
+        "1": {
+          "url": "/town-finish/v1/corner-ground/-13_-9-1-094809e1fe67.json",
+          "sha256": "094809e1fe675c21d3b91c138844d8ba56188e5d640dd06e49d3848b01466503",
+          "bytes": 139083
+        },
+        "2": {
+          "url": "/town-finish/v1/corner-ground/-13_-9-2-e3b271d88e8a.json",
+          "sha256": "e3b271d88e8a6ade446d6c058673568db599c00597221e8790e7b81a4c154ad5",
+          "bytes": 136456
+        }
+      }
+    },
+    "-14_-4": {
+      "levels": {
+        "0": {
+          "url": "/town-finish/v1/corner-ground/-14_-4-0-25754d6193de.json",
+          "sha256": "25754d6193de7df1029f44a1f0f0517fd332dc9a010542e57f0fb051a8c77882",
+          "bytes": 769213
+        },
+        "1": {
+          "url": "/town-finish/v1/corner-ground/-14_-4-1-57d83f751e26.json",
+          "sha256": "57d83f751e26b07729145eb59c730f9a3395fbb5749ee445bb8dd72645cefb79",
+          "bytes": 821672
+        },
+        "2": {
+          "url": "/town-finish/v1/corner-ground/-14_-4-2-ebb6eebae708.json",
+          "sha256": "ebb6eebae708e3418e54f956fa67c18f567e8ae1080d9d41dc1b175e59bc11e3",
+          "bytes": 889315
+        }
+      }
+    },
+    "-3_1": {
+      "levels": {
+        "0": {
+          "url": "/town-finish/v1/corner-ground/-3_1-0-6a12d4fe1f5a.json",
+          "sha256": "6a12d4fe1f5a84305ea5d7f995fad9287f47e8fb635a625698b81852ff294b0a",
+          "bytes": 552169
+        },
+        "1": {
+          "url": "/town-finish/v1/corner-ground/-3_1-1-6b900dac3973.json",
+          "sha256": "6b900dac39730f83b02d16e0879ace81098fea87dde82fb9421a61f305ca63e0",
+          "bytes": 600488
+        },
+        "2": {
+          "url": "/town-finish/v1/corner-ground/-3_1-2-a73c790370e7.json",
+          "sha256": "a73c790370e7a837e58cd522a46543f1ad690add6b5abb74bbb0bba7d254e695",
+          "bytes": 571250
+        }
+      }
+    },
+    "-4_-10": {
+      "levels": {
+        "0": {
+          "url": "/town-finish/v1/corner-ground/-4_-10-0-5afe7382e496.json",
+          "sha256": "5afe7382e4963a1f33300ed16409c842c6a72bcab79a00873250e8e6ec6df0c4",
+          "bytes": 56959
+        },
+        "1": {
+          "url": "/town-finish/v1/corner-ground/-4_-10-1-e4c23aeeb43e.json",
+          "sha256": "e4c23aeeb43ea452d0362de8141dba06d715965a2d166b1fceec84c432d2d110",
+          "bytes": 71904
+        },
+        "2": {
+          "url": "/town-finish/v1/corner-ground/-4_-10-2-b69a708064a6.json",
+          "sha256": "b69a708064a656658ad41806f9c6a70f8b287f2e2675ec2029f6d8f7105a5b1c",
+          "bytes": 76622
+        }
+      }
+    },
+    "-4_-9": {
+      "levels": {
+        "0": {
+          "url": "/town-finish/v1/corner-ground/-4_-9-0-db54d6c668b3.json",
+          "sha256": "db54d6c668b37713ac5205b43b031aa1dcd1ea746b39065e7353587e1f4a0904",
+          "bytes": 202256
+        },
+        "1": {
+          "url": "/town-finish/v1/corner-ground/-4_-9-1-b37a205e15e2.json",
+          "sha256": "b37a205e15e27225e3b5426ad28bafd891b1247f3ff3e7ede10de3bed3e74593",
+          "bytes": 212438
+        },
+        "2": {
+          "url": "/town-finish/v1/corner-ground/-4_-9-2-cc7899755f5d.json",
+          "sha256": "cc7899755f5dbcaba83aff3105714c22c955e9acc7bfe7bf4acf33ebb4d6e409",
+          "bytes": 243605
+        }
+      }
+    },
+    "-4_1": {
+      "levels": {
+        "0": {
+          "url": "/town-finish/v1/corner-ground/-4_1-0-43aa365d47e8.json",
+          "sha256": "43aa365d47e86b5590322d584102c707eb1e7459c3310c805c952b28a947f02f",
+          "bytes": 700500
+        },
+        "1": {
+          "url": "/town-finish/v1/corner-ground/-4_1-1-1ecf818fac43.json",
+          "sha256": "1ecf818fac43d91b42196db1df6d1f8b4f2b05b135c35eb8e19b54bf6e14cc37",
+          "bytes": 789269
+        },
+        "2": {
+          "url": "/town-finish/v1/corner-ground/-4_1-2-fde0810265b0.json",
+          "sha256": "fde0810265b08ec9e6c0d51e68a2605f884286cb619e00e199a8efd8960ea619",
+          "bytes": 870966
+        }
+      }
+    },
+    "-5_-8": {
+      "levels": {
+        "0": {
+          "url": "/town-finish/v1/corner-ground/-5_-8-0-2803d9e91ae6.json",
+          "sha256": "2803d9e91ae6471699d6453d54d4718f85cc22d203bf7af348757e0757e89871",
+          "bytes": 173956
+        },
+        "1": {
+          "url": "/town-finish/v1/corner-ground/-5_-8-1-96d4bf21469f.json",
+          "sha256": "96d4bf21469f4f5d14d504765410dd31208b66b1ba9d8b2e0020fe53165cf781",
+          "bytes": 187100
+        },
+        "2": {
+          "url": "/town-finish/v1/corner-ground/-5_-8-2-52c1f03d348e.json",
+          "sha256": "52c1f03d348ef80f6787fddb4bc58f4a565b0e75507902dfc8dc044779f34400",
+          "bytes": 211122
+        }
+      }
+    },
+    "-5_-9": {
+      "levels": {
+        "0": {
+          "url": "/town-finish/v1/corner-ground/-5_-9-0-25734eef36ce.json",
+          "sha256": "25734eef36ce3d59a0951a789ccbdd7c6060023a787f2c4d0973d2d108f45b72",
+          "bytes": 187341
+        },
+        "1": {
+          "url": "/town-finish/v1/corner-ground/-5_-9-1-080a67194563.json",
+          "sha256": "080a671945637bc997e59e76f89bf9c40d2da407a2fecd36e5156891814efcfb",
+          "bytes": 194493
+        },
+        "2": {
+          "url": "/town-finish/v1/corner-ground/-5_-9-2-a23b55bd539e.json",
+          "sha256": "a23b55bd539e4fcf3bb69046b571f5c16a6bdc9d47130be8ff560eac5583262b",
+          "bytes": 215742
+        }
+      }
+    },
+    "-5_1": {
+      "levels": {
+        "0": {
+          "url": "/town-finish/v1/corner-ground/-5_1-0-a6061550ef05.json",
+          "sha256": "a6061550ef056cb36265a9071cae25c3961b7a7ef9650a7d76e9362d44b4609c",
+          "bytes": 214814
+        },
+        "1": {
+          "url": "/town-finish/v1/corner-ground/-5_1-1-0e7d906ea791.json",
+          "sha256": "0e7d906ea7917614ba2603544572c2ec7dc95650d55229caecbccb2aea12ea9d",
+          "bytes": 252102
+        },
+        "2": {
+          "url": "/town-finish/v1/corner-ground/-5_1-2-22bc6a7712d0.json",
+          "sha256": "22bc6a7712d06a65bc714e6710aed459302ba2a76999929fb654bea8fc4bbd9a",
+          "bytes": 249489
+        }
+      }
+    },
+    "-6_-1": {
+      "levels": {
+        "0": {
+          "url": "/town-finish/v1/corner-ground/-6_-1-0-40174ba75491.json",
+          "sha256": "40174ba75491c5f273ba191b14de75879f5d4a7dd1981aca23fd45af3861c05e",
+          "bytes": 216832
+        },
+        "1": {
+          "url": "/town-finish/v1/corner-ground/-6_-1-1-549a05765139.json",
+          "sha256": "549a057651391ace1086aee7718cf7b7014134b940208a8f200a3f38c3d9ba27",
+          "bytes": 241980
+        },
+        "2": {
+          "url": "/town-finish/v1/corner-ground/-6_-1-2-e783f87e6630.json",
+          "sha256": "e783f87e6630a7c3a2a692ffe3e59275798152139ef107d1e523352629eec864",
+          "bytes": 256038
+        }
+      }
+    },
+    "-6_-2": {
+      "levels": {
+        "0": {
+          "url": "/town-finish/v1/corner-ground/-6_-2-0-1dc3d62d1ae0.json",
+          "sha256": "1dc3d62d1ae0eb6e6b9e8e5e08f7b1fc2962b47d9786d88312af98c2ee74cc63",
+          "bytes": 376349
+        },
+        "1": {
+          "url": "/town-finish/v1/corner-ground/-6_-2-1-d6050b06ec27.json",
+          "sha256": "d6050b06ec270ef13f4eaff3e12f121b920b37002fd4252c6f715959a996dec0",
+          "bytes": 427111
+        },
+        "2": {
+          "url": "/town-finish/v1/corner-ground/-6_-2-2-afed3fc55406.json",
+          "sha256": "afed3fc55406176d32716f60f5b08ac8ac3b71c8509d874ee6f898fb2f67cff3",
+          "bytes": 408875
+        }
+      }
+    },
+    "-6_-3": {
+      "levels": {
+        "0": {
+          "url": "/town-finish/v1/corner-ground/-6_-3-0-686346951fd7.json",
+          "sha256": "686346951fd72847696ed9f25202d1caca821da66d4b52969cbd589238ea22b2",
+          "bytes": 282742
+        },
+        "1": {
+          "url": "/town-finish/v1/corner-ground/-6_-3-1-2486e6822e2a.json",
+          "sha256": "2486e6822e2a242713b53899218bcf87d1df631297ee8673d802ad0f48b07b66",
+          "bytes": 285616
+        },
+        "2": {
+          "url": "/town-finish/v1/corner-ground/-6_-3-2-279372ea8319.json",
+          "sha256": "279372ea83199b1f6c21ebc62b395b118698d0902cf7c84878904dfa7dc99c7b",
+          "bytes": 293484
+        }
+      }
+    },
+    "-6_-6": {
+      "levels": {
+        "0": {
+          "url": "/town-finish/v1/corner-ground/-6_-6-0-b814e397192c.json",
+          "sha256": "b814e397192c83994e9f503c6f366bd3feffe36861947d106134ae6ac8b02142",
+          "bytes": 739770
+        },
+        "1": {
+          "url": "/town-finish/v1/corner-ground/-6_-6-1-7086183f3192.json",
+          "sha256": "7086183f3192b3dbceceb21373f10a9267900618fc7b20b32757e7ea09023f73",
+          "bytes": 789841
+        },
+        "2": {
+          "url": "/town-finish/v1/corner-ground/-6_-6-2-a0f574cd9cd4.json",
+          "sha256": "a0f574cd9cd4b6f29226344188ec29324c340862ce37d9b115a416946ce5a7aa",
+          "bytes": 860583
+        }
+      }
+    },
+    "-6_-7": {
+      "levels": {
+        "0": {
+          "url": "/town-finish/v1/corner-ground/-6_-7-0-7add96779b9f.json",
+          "sha256": "7add96779b9f9fbe0fa9978d294507ba0c77bd25d721cb7f5058d2eb21859a93",
+          "bytes": 198707
+        },
+        "1": {
+          "url": "/town-finish/v1/corner-ground/-6_-7-1-e8dfcf9c456d.json",
+          "sha256": "e8dfcf9c456d0163f711e9ed43b75585a1f9d61e29fa31026831b18cf0bc273a",
+          "bytes": 239654
+        },
+        "2": {
+          "url": "/town-finish/v1/corner-ground/-6_-7-2-ad71e24d9671.json",
+          "sha256": "ad71e24d9671460c42bb5f030ec6d301139806cc99a76b777b7ac20f182e6bef",
+          "bytes": 240542
+        }
+      }
+    },
+    "-6_0": {
+      "levels": {
+        "0": {
+          "url": "/town-finish/v1/corner-ground/-6_0-0-3d1b0235551e.json",
+          "sha256": "3d1b0235551e7b12cf29e358b5dfddcc75c148b3800bcbcf79b1ee41f53c88ca",
+          "bytes": 429452
+        },
+        "1": {
+          "url": "/town-finish/v1/corner-ground/-6_0-1-8dd86079e352.json",
+          "sha256": "8dd86079e3521088bdd36c9c2453cefb93d3cc10b89bb55687cca958c92f7416",
+          "bytes": 471179
+        },
+        "2": {
+          "url": "/town-finish/v1/corner-ground/-6_0-2-69493c679c0a.json",
+          "sha256": "69493c679c0a822877ee6249bb474ec0a01dcdf5b977f361b6f98ecc906e8da7",
+          "bytes": 483994
+        }
+      }
+    },
+    "-6_1": {
+      "levels": {
+        "0": {
+          "url": "/town-finish/v1/corner-ground/-6_1-0-32839d2ee47e.json",
+          "sha256": "32839d2ee47e3a5fd2d2465572b7512b1098526bbc99eb3ded385775d8501c75",
+          "bytes": 334818
+        },
+        "1": {
+          "url": "/town-finish/v1/corner-ground/-6_1-1-d66d66366f70.json",
+          "sha256": "d66d66366f70c0380872a18e67a8cef920df57f959cc325877390149af8c99c7",
+          "bytes": 371894
+        },
+        "2": {
+          "url": "/town-finish/v1/corner-ground/-6_1-2-58f266b2b4b6.json",
+          "sha256": "58f266b2b4b634c37accddd947ae94b94fd97b2a60b1a1bc2b198a6a6a84d763",
+          "bytes": 413710
+        }
+      }
+    },
+    "-6_2": {
+      "levels": {
+        "0": {
+          "url": "/town-finish/v1/corner-ground/-6_2-0-2e3343dbc069.json",
+          "sha256": "2e3343dbc069134432de9a5bec2686b6c51811234b819e9c5fbb0d3a09a12f8f",
+          "bytes": 866122
+        },
+        "1": {
+          "url": "/town-finish/v1/corner-ground/-6_2-1-67bdba8dac1b.json",
+          "sha256": "67bdba8dac1b244656511f4dd71fc29d877d9d8f09b487da3693c541a46b66b9",
+          "bytes": 897480
+        },
+        "2": {
+          "url": "/town-finish/v1/corner-ground/-6_2-2-055a28b3f1af.json",
+          "sha256": "055a28b3f1af21a392bb806919343344ff1453b263ea704e547a0e81d26f6058",
+          "bytes": 1047091
+        }
+      }
+    },
+    "-6_3": {
+      "levels": {
+        "0": {
+          "url": "/town-finish/v1/corner-ground/-6_3-0-84dea899be04.json",
+          "sha256": "84dea899be043d2ba4cc6814257c7ab555f7d952c069cc9f52cc4413762300f7",
+          "bytes": 332622
+        },
+        "1": {
+          "url": "/town-finish/v1/corner-ground/-6_3-1-2faded0b3c00.json",
+          "sha256": "2faded0b3c000e56a618a010d87fd53ff992d9f893d947fc27699698ce5020dc",
+          "bytes": 359211
+        },
+        "2": {
+          "url": "/town-finish/v1/corner-ground/-6_3-2-8dc20f62a480.json",
+          "sha256": "8dc20f62a4809595ccd8d0f3959a73dd454adb86976a671c931365e5158b2f18",
+          "bytes": 366129
+        }
+      }
+    },
+    "-6_4": {
+      "levels": {
+        "0": {
+          "url": "/town-finish/v1/corner-ground/-6_4-0-487bdc2f2a5b.json",
+          "sha256": "487bdc2f2a5bfc2e7d21018db6a8ff4457adc745b50f339430f7feea13fba993",
+          "bytes": 106116
+        },
+        "1": {
+          "url": "/town-finish/v1/corner-ground/-6_4-1-84300c8ad534.json",
+          "sha256": "84300c8ad5346aedb0feb040f4064f232aa492c9601e8d5b36f5547ead7e5c90",
+          "bytes": 109102
+        },
+        "2": {
+          "url": "/town-finish/v1/corner-ground/-6_4-2-196fe12e1cb4.json",
+          "sha256": "196fe12e1cb42e6f26ced8b16133ad3396027ae5a30519cc84a9d943795bcbc8",
+          "bytes": 118093
+        }
+      }
+    },
+    "-7_-1": {
+      "levels": {
+        "0": {
+          "url": "/town-finish/v1/corner-ground/-7_-1-0-ecea276dca3a.json",
+          "sha256": "ecea276dca3a0ff70cd2a9c28531c4d764354bbdd088319d15a52e9197298507",
+          "bytes": 32059
+        },
+        "1": {
+          "url": "/town-finish/v1/corner-ground/-7_-1-1-7519a24ac008.json",
+          "sha256": "7519a24ac008bec320d4a15feb399b6920ace36b8a18ab3fcde7cc967ce6a584",
+          "bytes": 33983
+        },
+        "2": {
+          "url": "/town-finish/v1/corner-ground/-7_-1-2-805bb860fd3e.json",
+          "sha256": "805bb860fd3efbd9ed3b2be8c9e26a69182fca04e13cb22005eab58e37dfba3b",
+          "bytes": 34352
+        }
+      }
+    },
+    "-7_-2": {
+      "levels": {
+        "0": {
+          "url": "/town-finish/v1/corner-ground/-7_-2-0-725c82762531.json",
+          "sha256": "725c827625319edf8ef679f6303e8465bfc7dec1affd27295364397eed23ce78",
+          "bytes": 406607
+        },
+        "1": {
+          "url": "/town-finish/v1/corner-ground/-7_-2-1-440f913c16be.json",
+          "sha256": "440f913c16be1ef6c9826b0f4664b58ec8c55bba2f292b4f56b37d2d89b03742",
+          "bytes": 438819
+        },
+        "2": {
+          "url": "/town-finish/v1/corner-ground/-7_-2-2-5f35b9606b29.json",
+          "sha256": "5f35b9606b2986d2920740e068d31038ec0cb3fb3e6ef9a5e79bb91faca0fbda",
+          "bytes": 495461
+        }
+      }
+    },
+    "-7_-4": {
+      "levels": {
+        "0": {
+          "url": "/town-finish/v1/corner-ground/-7_-4-0-535c49400007.json",
+          "sha256": "535c4940000761a1a3f0ae1a4d13e9d80c7993fbe171561bd54dbe0841444e1f",
+          "bytes": 200153
+        },
+        "1": {
+          "url": "/town-finish/v1/corner-ground/-7_-4-1-6ab6c4d79ed9.json",
+          "sha256": "6ab6c4d79ed90450132960686b2af41c1ef3ecd7f9f6fe02b9196076eccf267b",
+          "bytes": 251679
+        },
+        "2": {
+          "url": "/town-finish/v1/corner-ground/-7_-4-2-fc6667910659.json",
+          "sha256": "fc66679106592c1d76341b7c526cefb1bda85bee66b47a30cc290365d4374aff",
+          "bytes": 252246
+        }
+      }
+    },
+    "-7_-5": {
+      "levels": {
+        "0": {
+          "url": "/town-finish/v1/corner-ground/-7_-5-0-8752587f26c1.json",
+          "sha256": "8752587f26c104463e716196583e12544ff6166752cab2e98af6b3f636e077e8",
+          "bytes": 1151919
+        },
+        "1": {
+          "url": "/town-finish/v1/corner-ground/-7_-5-1-24a37b34316a.json",
+          "sha256": "24a37b34316a7f6fd383df1d8db1e89e7c601d834dbc7725bd63d99fa121732e",
+          "bytes": 1248988
+        },
+        "2": {
+          "url": "/town-finish/v1/corner-ground/-7_-5-2-73b752dfa52d.json",
+          "sha256": "73b752dfa52d662caeb2fbd3a8cc2a9dac58f50b9eb0c839aecfc1e45bf1bc0d",
+          "bytes": 1356452
+        }
+      }
+    },
+    "-7_-6": {
+      "levels": {
+        "0": {
+          "url": "/town-finish/v1/corner-ground/-7_-6-0-822bea88cd1d.json",
+          "sha256": "822bea88cd1d83e8c53151a9828f70ca4fd2541fe1d99f3b0c5017273b1e60ab",
+          "bytes": 597091
+        },
+        "1": {
+          "url": "/town-finish/v1/corner-ground/-7_-6-1-11addf61cac7.json",
+          "sha256": "11addf61cac70920b57e097c49dc0d30fbed3946098d665ad1e0631e6578d9e8",
+          "bytes": 651993
+        },
+        "2": {
+          "url": "/town-finish/v1/corner-ground/-7_-6-2-2dfcffe22a2d.json",
+          "sha256": "2dfcffe22a2df8aedb138e90f7954625905d000941704aa663ace85a8694c371",
+          "bytes": 713751
+        }
+      }
+    },
+    "-7_0": {
+      "levels": {
+        "0": {
+          "url": "/town-finish/v1/corner-ground/-7_0-0-42864c3df378.json",
+          "sha256": "42864c3df378185e95b5bed13228545e378c6c7c2b9096796e04c1eb278de619",
+          "bytes": 246348
+        },
+        "1": {
+          "url": "/town-finish/v1/corner-ground/-7_0-1-9b8dd03d9b17.json",
+          "sha256": "9b8dd03d9b17db1cf1c8bd6e9e0e5144ec56f3315769944f97c2554e67aa76a9",
+          "bytes": 308508
+        },
+        "2": {
+          "url": "/town-finish/v1/corner-ground/-7_0-2-25e433247451.json",
+          "sha256": "25e433247451ef91b463d72ab44f02095e4134e80937140ad22525258051349e",
+          "bytes": 290810
+        }
+      }
+    },
+    "-7_5": {
+      "levels": {
+        "0": {
+          "url": "/town-finish/v1/corner-ground/-7_5-0-62f7443f92a3.json",
+          "sha256": "62f7443f92a32b643c682ea6bb650945c74b7828c42ed26b9df1b6d9a392e74a",
+          "bytes": 115367
+        },
+        "1": {
+          "url": "/town-finish/v1/corner-ground/-7_5-1-f37a0932c2d2.json",
+          "sha256": "f37a0932c2d2ca713d378900f427841b4f0e3ad4a8047dfa17617e40778fda76",
+          "bytes": 119167
+        },
+        "2": {
+          "url": "/town-finish/v1/corner-ground/-7_5-2-8d25365334b1.json",
+          "sha256": "8d25365334b1c76521cac6990810ecea60bd3c0da26c118d352199d8bb94e7ea",
+          "bytes": 128789
+        }
+      }
+    },
+    "-8_-1": {
+      "levels": {
+        "0": {
+          "url": "/town-finish/v1/corner-ground/-8_-1-0-c008198312b3.json",
+          "sha256": "c008198312b3409c20857e4af1f60132a5018c9cf48cac335126c267c411731d",
+          "bytes": 1064784
+        },
+        "1": {
+          "url": "/town-finish/v1/corner-ground/-8_-1-1-52335dd47b20.json",
+          "sha256": "52335dd47b20d49dfef857cdbc65b5a94885dbf8de7926b54d246a8c8a603bf5",
+          "bytes": 1224597
+        },
+        "2": {
+          "url": "/town-finish/v1/corner-ground/-8_-1-2-4641d2aa60b1.json",
+          "sha256": "4641d2aa60b1f9d02fbb1ad99f69da1d491f42cb60f0985b08c6e6095427c786",
+          "bytes": 1251330
+        }
+      }
+    },
+    "-8_-2": {
+      "levels": {
+        "0": {
+          "url": "/town-finish/v1/corner-ground/-8_-2-0-1f226822e6bb.json",
+          "sha256": "1f226822e6bb13fd2a9eef4a90b5b89260b69cf3b506e6a834abc551ba4818c0",
+          "bytes": 493597
+        },
+        "1": {
+          "url": "/town-finish/v1/corner-ground/-8_-2-1-61a10a858a57.json",
+          "sha256": "61a10a858a57010a06260689d79f8326b8e3bd6d97cc61866a1ed7361d434d6b",
+          "bytes": 523653
+        },
+        "2": {
+          "url": "/town-finish/v1/corner-ground/-8_-2-2-98d2ed4e453c.json",
+          "sha256": "98d2ed4e453c53450aa8cc649cf0e3b0e2af6cd8993deb4aaaab3ed8ed5f31b1",
+          "bytes": 576543
+        }
+      }
+    },
+    "-8_-3": {
+      "levels": {
+        "0": {
+          "url": "/town-finish/v1/corner-ground/-8_-3-0-82aa6533b69f.json",
+          "sha256": "82aa6533b69f79b0da09025406a0290152a168e401a0a302488c3ad76f5f01b4",
+          "bytes": 57320
+        },
+        "1": {
+          "url": "/town-finish/v1/corner-ground/-8_-3-1-84c37b63a4ea.json",
+          "sha256": "84c37b63a4ea2b2d862225e0d99b97490a732a1b524ed1d0de5a080493a68563",
+          "bytes": 70633
+        },
+        "2": {
+          "url": "/town-finish/v1/corner-ground/-8_-3-2-3002657b3da2.json",
+          "sha256": "3002657b3da2db4cebf4737d103c415784e51a3a15d58917359c14842c674f3f",
+          "bytes": 58315
+        }
+      }
+    },
+    "-8_-4": {
+      "levels": {
+        "0": {
+          "url": "/town-finish/v1/corner-ground/-8_-4-0-7244a5b3cab1.json",
+          "sha256": "7244a5b3cab14a7ffe97ee43f3d8973f2378a33e2bf0bf91db1232700d0667a5",
+          "bytes": 337168
+        },
+        "1": {
+          "url": "/town-finish/v1/corner-ground/-8_-4-1-f711342b7891.json",
+          "sha256": "f711342b789111268c087977f6967bcab649d7ef3f7e7b17a68c780aa178ed4e",
+          "bytes": 408518
+        },
+        "2": {
+          "url": "/town-finish/v1/corner-ground/-8_-4-2-a0b4589b9ea0.json",
+          "sha256": "a0b4589b9ea0a6d7391a733294bb986b6f561966cad7de0c9c18ed566d5a4daa",
+          "bytes": 419931
+        }
+      }
+    },
+    "-8_-5": {
+      "levels": {
+        "0": {
+          "url": "/town-finish/v1/corner-ground/-8_-5-0-0af15ccd9d10.json",
+          "sha256": "0af15ccd9d109959f10d6b4352c26715ecdc545b332a40f327588209e9daf5a8",
+          "bytes": 676551
+        },
+        "1": {
+          "url": "/town-finish/v1/corner-ground/-8_-5-1-31b3467f7951.json",
+          "sha256": "31b3467f7951c592f2b005b5d850a607297800cbd61f9a359e91fc04df4cb459",
+          "bytes": 724724
+        },
+        "2": {
+          "url": "/town-finish/v1/corner-ground/-8_-5-2-b429138ed90d.json",
+          "sha256": "b429138ed90d94d0e380309d7cb0f4e2870e340f6002fea622edf2b1baa1c070",
+          "bytes": 783955
+        }
+      }
+    },
+    "-8_0": {
+      "levels": {
+        "0": {
+          "url": "/town-finish/v1/corner-ground/-8_0-0-f7d77d5f2b4e.json",
+          "sha256": "f7d77d5f2b4eecdf05a303d332ca046aed69829f6e4d82523ed0bdc8774a457b",
+          "bytes": 63588
+        },
+        "1": {
+          "url": "/town-finish/v1/corner-ground/-8_0-1-b8fd2bd441aa.json",
+          "sha256": "b8fd2bd441aa354c3c5df0e4e9f551a9cf2fae059d9c9cd61cb2d052e4f26fce",
+          "bytes": 66493
+        },
+        "2": {
+          "url": "/town-finish/v1/corner-ground/-8_0-2-ac523ef2b47d.json",
+          "sha256": "ac523ef2b47dd700497fd286b0d71a974f969ac45828b7e18011b559bf2a9e2e",
+          "bytes": 65916
+        }
+      }
+    },
+    "-8_2": {
+      "levels": {
+        "0": {
+          "url": "/town-finish/v1/corner-ground/-8_2-0-63e2f5b65985.json",
+          "sha256": "63e2f5b659858afb081f6fcb6bb3353fc4547eed18aa0af55fe9dd1c47691190",
+          "bytes": 119589
+        },
+        "1": {
+          "url": "/town-finish/v1/corner-ground/-8_2-1-06c14a94f065.json",
+          "sha256": "06c14a94f065f698de8d926c63c4052830b5559edb3d532eab4c189a7d4995f3",
+          "bytes": 124767
+        },
+        "2": {
+          "url": "/town-finish/v1/corner-ground/-8_2-2-ac64058977d5.json",
+          "sha256": "ac64058977d5406d1915c648e5f880bd13b4fc0f9622e0300dd88547994b09eb",
+          "bytes": 134805
+        }
+      }
+    },
+    "-8_7": {
+      "levels": {
+        "0": {
+          "url": "/town-finish/v1/corner-ground/-8_7-0-1c8b4a75e3e8.json",
+          "sha256": "1c8b4a75e3e8c198f5c6f34c07c68dd56995988ac1961e49f8e37496a57ab854",
+          "bytes": 150127
+        },
+        "1": {
+          "url": "/town-finish/v1/corner-ground/-8_7-1-b6c57467aecd.json",
+          "sha256": "b6c57467aecd05e6d234fe5cdb7e09de29734de787043e245b70b32ed8cf4eca",
+          "bytes": 173871
+        },
+        "2": {
+          "url": "/town-finish/v1/corner-ground/-8_7-2-27113e6d31e5.json",
+          "sha256": "27113e6d31e57bc67f4666e1c5ad317cb3a66760a763c434166be13212e709f8",
+          "bytes": 198748
+        }
+      }
+    },
+    "-9_-1": {
+      "levels": {
+        "0": {
+          "url": "/town-finish/v1/corner-ground/-9_-1-0-7d71df3860aa.json",
+          "sha256": "7d71df3860aab8aa4e210d5eeacb4a71c865ffd3a90fa98d35a9b5988a293d18",
+          "bytes": 1076405
+        },
+        "1": {
+          "url": "/town-finish/v1/corner-ground/-9_-1-1-01b10c610121.json",
+          "sha256": "01b10c610121778f93ecc32edf6819731de3669fc7a98aeb6004878403e99e1a",
+          "bytes": 1204563
+        },
+        "2": {
+          "url": "/town-finish/v1/corner-ground/-9_-1-2-d5f60c2db62f.json",
+          "sha256": "d5f60c2db62f601255a52cbafb67ffa4dd6d3e0054ff29d38d0c7009d30631e6",
+          "bytes": 1262250
+        }
+      }
+    },
+    "-9_-2": {
+      "levels": {
+        "0": {
+          "url": "/town-finish/v1/corner-ground/-9_-2-0-4caeba6e07f2.json",
+          "sha256": "4caeba6e07f2637eb431da566ca7b7a9712e933c54201f7692c20562131b4a88",
+          "bytes": 116006
+        },
+        "1": {
+          "url": "/town-finish/v1/corner-ground/-9_-2-1-8a931b53ea3a.json",
+          "sha256": "8a931b53ea3a1ff84f93e23713d210cd314eeae0720c4bd25617c98c9a80bde8",
+          "bytes": 113236
+        },
+        "2": {
+          "url": "/town-finish/v1/corner-ground/-9_-2-2-bd0209f12678.json",
+          "sha256": "bd0209f12678a0f59daa102ea0fd6d6e088b504c8d037346d78e67a3a2f1d696",
+          "bytes": 121761
+        }
+      }
+    },
+    "-9_-3": {
+      "levels": {
+        "0": {
+          "url": "/town-finish/v1/corner-ground/-9_-3-0-dafce65b3147.json",
+          "sha256": "dafce65b314787dfe4ae8a7144f8fc1d8aeb8901b5c0fb950e499912d3d9ef8b",
+          "bytes": 873995
+        },
+        "1": {
+          "url": "/town-finish/v1/corner-ground/-9_-3-1-1e9bc966750d.json",
+          "sha256": "1e9bc966750dd1a8f991c5ea22fb36ab56fe932a97b8a4eb4cecb95e931d3dc7",
+          "bytes": 919974
+        },
+        "2": {
+          "url": "/town-finish/v1/corner-ground/-9_-3-2-05dde9952361.json",
+          "sha256": "05dde9952361f0e0ce3357a82d169d38bc3abcadde2a0aa948d55100a123347c",
+          "bytes": 950324
+        }
+      }
+    },
+    "-9_-4": {
+      "levels": {
+        "0": {
+          "url": "/town-finish/v1/corner-ground/-9_-4-0-075272c2e142.json",
+          "sha256": "075272c2e1420d6458c04a56d8dbf7db6cdf23aa91fab6c20876d3ec1f1e01eb",
+          "bytes": 636792
+        },
+        "1": {
+          "url": "/town-finish/v1/corner-ground/-9_-4-1-d95f05455c9f.json",
+          "sha256": "d95f05455c9fc3749f38cd03b1e7d3c18075231e564aeb0eb80603f702f7a9c4",
+          "bytes": 661222
+        },
+        "2": {
+          "url": "/town-finish/v1/corner-ground/-9_-4-2-43ceb54c2a0f.json",
+          "sha256": "43ceb54c2a0f4d53bc85c8eec518ebfda76658a5d4d614b8f668a7e12dd2c7ca",
+          "bytes": 641584
+        }
+      }
+    },
+    "-9_-5": {
+      "levels": {
+        "0": {
+          "url": "/town-finish/v1/corner-ground/-9_-5-0-24038975bb5d.json",
+          "sha256": "24038975bb5dba085f993cf5d4a998248744c6784227cb51ca4002af54c53712",
+          "bytes": 897274
+        },
+        "1": {
+          "url": "/town-finish/v1/corner-ground/-9_-5-1-f6c7c3bfa3fa.json",
+          "sha256": "f6c7c3bfa3fa1a74a2a1db148e5233271c07ccfe95d506913a7d5ac9a2b2c3c2",
+          "bytes": 989269
+        },
+        "2": {
+          "url": "/town-finish/v1/corner-ground/-9_-5-2-67b701a389f8.json",
+          "sha256": "67b701a389f812efe7ec2c44e44f80ca92f5ee33c1e96ab5e7910d8aa99b9026",
+          "bytes": 958935
+        }
+      }
+    },
+    "-9_-6": {
+      "levels": {
+        "0": {
+          "url": "/town-finish/v1/corner-ground/-9_-6-0-6d9b518d1fbc.json",
+          "sha256": "6d9b518d1fbcf968c6630fa4c80786570118f7ebe2dd7c0bd5671433ffb8b3af",
+          "bytes": 259743
+        },
+        "1": {
+          "url": "/town-finish/v1/corner-ground/-9_-6-1-80652ec1ddd9.json",
+          "sha256": "80652ec1ddd9f912d9030ea00e67edbcad7c3c29fe270a9b795ec9d9bbaeb93f",
+          "bytes": 280825
+        },
+        "2": {
+          "url": "/town-finish/v1/corner-ground/-9_-6-2-74ffc05b93d3.json",
+          "sha256": "74ffc05b93d39659f4fccf3968eb674e52d18952abf4832a607f9096dd3b5087",
+          "bytes": 298319
+        }
+      }
+    },
+    "-9_-8": {
+      "levels": {
+        "0": {
+          "url": "/town-finish/v1/corner-ground/-9_-8-0-d83aed87d3b7.json",
+          "sha256": "d83aed87d3b738b039186123aa9382ef5c20936701a70f51a37c82d575f47b06",
+          "bytes": 53680
+        },
+        "1": {
+          "url": "/town-finish/v1/corner-ground/-9_-8-1-8d2979372436.json",
+          "sha256": "8d29793724363cde639d2b324aff18a98c4aa4be37e694c3ed0239ab0f843856",
+          "bytes": 58391
+        },
+        "2": {
+          "url": "/town-finish/v1/corner-ground/-9_-8-2-66a7b7e89054.json",
+          "sha256": "66a7b7e890540c4f50790f411bf9a0c7701c93d17226fc2853583169a2911e3a",
+          "bytes": 65599
+        }
+      }
+    },
+    "-9_0": {
+      "levels": {
+        "0": {
+          "url": "/town-finish/v1/corner-ground/-9_0-0-279dd88142de.json",
+          "sha256": "279dd88142dea5fe010b613f2de8296a66815614453ebb34d04baa27eaf77af4",
+          "bytes": 761974
+        },
+        "1": {
+          "url": "/town-finish/v1/corner-ground/-9_0-1-c331e152b0fe.json",
+          "sha256": "c331e152b0feecf11f7dc0c9914dcf96d95f9761dec69bd648449504235c38d9",
+          "bytes": 804966
+        },
+        "2": {
+          "url": "/town-finish/v1/corner-ground/-9_0-2-5527e40a4b3d.json",
+          "sha256": "5527e40a4b3decd185619adee8639c1822fd462d6c4850435963e2ab778f81c6",
+          "bytes": 870422
+        }
+      }
+    },
+    "-9_1": {
+      "levels": {
+        "0": {
+          "url": "/town-finish/v1/corner-ground/-9_1-0-475ac90a6b12.json",
+          "sha256": "475ac90a6b125404f95524b357578b52e431ec3f3621b9b7c3e35ed6ce537f17",
+          "bytes": 160029
+        },
+        "1": {
+          "url": "/town-finish/v1/corner-ground/-9_1-1-032fd71dd873.json",
+          "sha256": "032fd71dd8730f2ed7ab0fb193240d253e6fff9f8870919ac40ca530edbc96a6",
+          "bytes": 168509
+        },
+        "2": {
+          "url": "/town-finish/v1/corner-ground/-9_1-2-9eefe680f949.json",
+          "sha256": "9eefe680f949e1a09454b26797e5b302401f6f4d01152e6104738e8b778e36ee",
+          "bytes": 258071
+        }
+      }
+    },
+    "-9_2": {
+      "levels": {
+        "0": {
+          "url": "/town-finish/v1/corner-ground/-9_2-0-e9fd72e277eb.json",
+          "sha256": "e9fd72e277eba43165f0f154dcc2f15c33b56de78b891ba054c52ffc11d7b4d4",
+          "bytes": 204879
+        },
+        "1": {
+          "url": "/town-finish/v1/corner-ground/-9_2-1-4ed94ee9cd3a.json",
+          "sha256": "4ed94ee9cd3ab46eed655c3f15bbb0b76e7905aa605249f6bc0e210c0a7f5ff2",
+          "bytes": 220719
+        },
+        "2": {
+          "url": "/town-finish/v1/corner-ground/-9_2-2-0d51e459d971.json",
+          "sha256": "0d51e459d97167178eb43c0c27fb9d939fe3b31668f232b8e6b40e47547f81de",
+          "bytes": 232670
+        }
+      }
+    },
+    "0_0": {
+      "levels": {
+        "0": {
+          "url": "/town-finish/v1/corner-ground/0_0-0-35aae5f4dbda.json",
+          "sha256": "35aae5f4dbdac94f454c7a34fa44e0b37f22a6f840d0c489790868648d4c0615",
+          "bytes": 84380
+        },
+        "1": {
+          "url": "/town-finish/v1/corner-ground/0_0-1-245d4405b9a7.json",
+          "sha256": "245d4405b9a7d65d5737f7a37547d6fb7b3ce91a65ac7fca390ece1e4d670169",
+          "bytes": 80705
+        },
+        "2": {
+          "url": "/town-finish/v1/corner-ground/0_0-2-b1395cce8f49.json",
+          "sha256": "b1395cce8f49dd8d42e69d861c3bcc45389b218cc8998f143180cfacbad08a36",
+          "bytes": 94069
+        }
+      }
+    },
+    "13_-13": {
+      "levels": {
+        "0": {
+          "url": "/town-finish/v1/corner-ground/13_-13-0-412b32c62195.json",
+          "sha256": "412b32c62195f90a0ae667b5679b62655d4501b053889ed6d843f498dfc0b723",
+          "bytes": 57057
+        },
+        "1": {
+          "url": "/town-finish/v1/corner-ground/13_-13-1-b73d6a958bcb.json",
+          "sha256": "b73d6a958bcb1fc6af6309c297d31e8e707b07350425e48fa10b6147ed088278",
+          "bytes": 57993
+        },
+        "2": {
+          "url": "/town-finish/v1/corner-ground/13_-13-2-dfdbd358a76b.json",
+          "sha256": "dfdbd358a76b5c7372970dbbb72a70dec56bc378981541f848a11ddbbc9220dc",
+          "bytes": 69567
+        }
+      }
+    },
+    "7_-12": {
+      "levels": {
+        "0": {
+          "url": "/town-finish/v1/corner-ground/7_-12-0-69fd4699617e.json",
+          "sha256": "69fd4699617e62c913ffa55be5c904530f8e78f220ccf77cf64628e86bbc3055",
+          "bytes": 368671
+        },
+        "1": {
+          "url": "/town-finish/v1/corner-ground/7_-12-1-931b72d43f76.json",
+          "sha256": "931b72d43f76552a2155183bd77ccb2595075b64ae764159c20a1177be158002",
+          "bytes": 448046
+        },
+        "2": {
+          "url": "/town-finish/v1/corner-ground/7_-12-2-78a767f95109.json",
+          "sha256": "78a767f951091ea0129e31ed199cbd6c40c466b4e6316783fd788919f89501b7",
+          "bytes": 458775
+        }
+      }
+    },
+    "7_-13": {
+      "levels": {
+        "0": {
+          "url": "/town-finish/v1/corner-ground/7_-13-0-e8eb8dddc991.json",
+          "sha256": "e8eb8dddc991cd194f5e3c977e28e51f2c0a76bcd4a3990cea7b8f599f1c14ed",
+          "bytes": 557839
+        },
+        "1": {
+          "url": "/town-finish/v1/corner-ground/7_-13-1-ef055851a33e.json",
+          "sha256": "ef055851a33ed730d2bf15a7654be54805f2e38ac2b15718bf88b69640fcb7ea",
+          "bytes": 622652
+        },
+        "2": {
+          "url": "/town-finish/v1/corner-ground/7_-13-2-69197e8f0023.json",
+          "sha256": "69197e8f0023e0547b78297050be275e23a3b1fe7fd68bed51c316375859159e",
+          "bytes": 711939
+        }
+      }
+    },
+    "7_-7": {
+      "levels": {
+        "0": {
+          "url": "/town-finish/v1/corner-ground/7_-7-0-15d0299bfa0e.json",
+          "sha256": "15d0299bfa0e35a7224c538f758e0a9c453f9c225f563186edb9bff91a13675c",
+          "bytes": 77142
+        },
+        "1": {
+          "url": "/town-finish/v1/corner-ground/7_-7-1-2a51dff8effe.json",
+          "sha256": "2a51dff8effe1138f8a6766eb67b58e9e1fddfb5808742a665d6b90457db489f",
+          "bytes": 82301
+        },
+        "2": {
+          "url": "/town-finish/v1/corner-ground/7_-7-2-a80d8626ad66.json",
+          "sha256": "a80d8626ad66d298b22b70102e5e40aa5a4ea8003f450765433199e10baef523",
+          "bytes": 107081
+        }
+      }
+    },
+    "8_-14": {
+      "levels": {
+        "0": {
+          "url": "/town-finish/v1/corner-ground/8_-14-0-cad8e813d5ff.json",
+          "sha256": "cad8e813d5fffa9a5214c7cc375619af4d472ffc5a58ec29ef7d3a32d4b8721b",
+          "bytes": 435181
+        },
+        "1": {
+          "url": "/town-finish/v1/corner-ground/8_-14-1-398bd01b23fd.json",
+          "sha256": "398bd01b23fdbb622c63c1d4b36714bb81df13bd06dab83c0d57daf81363ef28",
+          "bytes": 489181
+        },
+        "2": {
+          "url": "/town-finish/v1/corner-ground/8_-14-2-e84724dd20e5.json",
+          "sha256": "e84724dd20e5716c3f37520e11ab9e286a83225c72778838e9768e65bfe4afed",
+          "bytes": 501907
+        }
+      }
+    },
+    "8_-15": {
+      "levels": {
+        "0": {
+          "url": "/town-finish/v1/corner-ground/8_-15-0-bb32a5f02f75.json",
+          "sha256": "bb32a5f02f750044904ab4610e9e5c2193a0bb3b63b6eaa5a7b404eeb7d96534",
+          "bytes": 157216
+        },
+        "1": {
+          "url": "/town-finish/v1/corner-ground/8_-15-1-0729fff7dfbc.json",
+          "sha256": "0729fff7dfbcb4090b51f703490bf4907cabc05ca1c69c3bb150e153695c640f",
+          "bytes": 198308
+        },
+        "2": {
+          "url": "/town-finish/v1/corner-ground/8_-15-2-e90862278e87.json",
+          "sha256": "e90862278e87abb715783f8fe5202f41fbe69ab762d938a794225967bf4ccb1d",
+          "bytes": 165029
+        }
+      }
+    },
+    "8_-7": {
+      "levels": {
+        "0": {
+          "url": "/town-finish/v1/corner-ground/8_-7-0-f05a41ae55ba.json",
+          "sha256": "f05a41ae55ba46ac1c5c841866467be788c629ac44d8003c5f9aac7221b93d8d",
+          "bytes": 343218
+        },
+        "1": {
+          "url": "/town-finish/v1/corner-ground/8_-7-1-157b50ad30ae.json",
+          "sha256": "157b50ad30ae4552fcac2d13d9f3c27ab8d9d37d679e45a6116dee5e91a3cd2b",
+          "bytes": 387339
+        },
+        "2": {
+          "url": "/town-finish/v1/corner-ground/8_-7-2-108ca2bff653.json",
+          "sha256": "108ca2bff65307e7bfe66c715e6edc0f7c4f39738f6904fe257ce537b723fc55",
+          "bytes": 388291
+        }
+      }
+    }
+  },
+  "counts": {
+    "tiles": 88,
+    "levels": 264,
+    "addedTriangles": 1509627,
+    "bytes": 152405258
+  }
+}

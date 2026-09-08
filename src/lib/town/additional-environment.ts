@@ -3,6 +3,7 @@ import index from '../../../data/derived/town/additional-environment-index.json'
 import {Batch,type Frame,type Role} from './crafted-frontages';
 import {GrassTerrain} from './grass';
 import {wetMarginFlowers} from './vegetation-finish';
+import {finishLaunchSurfaces} from './site-surface-finish';
 import type {AssetRef} from './contracts';
 
 type V2=[number,number];
@@ -83,7 +84,7 @@ export function applyAdditionalEnvironment(group:THREE.Group,tileId:string,origi
  };
  // One bounded spatial index replaces thousands of repeated full-mesh raycasts.
  // Proxies borrow geometry/materials and are never attached or disposed here.
- const needTerrain=packet.objects.some(r=>!['dam-crest','shore-lily'].includes(r.kind)),needWater=packet.objects.some(r=>['dam-crest','shore-lily'].includes(r.kind));
+ const needTerrain=packet.objects.some(r=>!['dam-crest','shore-lily'].includes(r.kind)),needWater=packet.objects.some(r=>['dam-crest','shore-lily','boat-ramp'].includes(r.kind));
  const terrain=needTerrain?sampler('terrain'):undefined,water=needWater?sampler('water'):undefined;
  const at=(p:readonly number[],kind:'terrain'|'water'):number|null=>{
   const sample=(kind==='water'?water:terrain)?.sample(p[0]-origin[0],-p[1]-origin[2]);return sample?sample.y+origin[1]:null;
@@ -148,7 +149,14 @@ export function applyAdditionalEnvironment(group:THREE.Group,tileId:string,origi
  }
  const result=batch.finish();result.group.name='Additional researched environment';result.group.userData.townCrafted=true;result.group.userData.environmentDetails=true;
  result.group.traverse(o=>{if(!(o instanceof THREE.Mesh))return;o.name=o.name.replace('Crafted building frontage','Additional environment');o.userData.category='additional-environment';o.userData.appearanceBasis='Mapped environmental domains with explicit regional/form inference; anonymous cemetery stones are not a surveyed grave inventory.';o.userData.townCrafted=true;if(level)o.castShadow=false;});
- report.featureIds=[...features];report.addedTriangles=result.triangles;report.addedMeshes=result.group.children.length;report.geometryBytes=result.bytes;
+ const launches=packet.objects.filter(r=>r.kind==='boat-ramp'&&report.ids.includes(r.id)).map(r=>{
+  // Source water may begin beyond the dry concrete. Sample only along the
+  // existing registered ramp; absent coverage disables the wet transition.
+  const f=frame(r),samples=(r.rampRange??[-6,7]).map(u=>at([r.point[0]+f.tangent[0]*u,r.point[1]+f.tangent[1]*u],'water')).filter((v):v is number=>v!==null);
+  return{point:r.point,angle:r.angle,waterHeight:samples.length?samples.reduce((a,b)=>a+b,0)/samples.length:null};
+ });
+ const surfaceBytes=finishLaunchSurfaces(result.group,origin,launches);
+ report.featureIds=[...features];report.addedTriangles=result.triangles;report.addedMeshes=result.group.children.length;report.geometryBytes=result.bytes+surfaceBytes;
  if(result.triangles)group.add(result.group);else result.group.traverse(o=>{if(o instanceof THREE.Mesh){o.geometry.dispose();for(const m of Array.isArray(o.material)?o.material:[o.material])m.dispose();}});
  group.userData.townAdditionalEnvironment=report;return report;
 }

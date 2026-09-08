@@ -9,7 +9,11 @@ export function compressedSceneURL(rawURL: string): string | undefined {
   return url.href;
 }
 
-const isGLB = (buffer: ArrayBuffer): boolean => new Uint8Array(buffer).subarray(0, 4).every((v, i) => v === [103, 108, 84, 70][i]) && buffer.byteLength >= 12;
+const isGLB = (buffer: ArrayBuffer): boolean => {
+  if (buffer.byteLength < 20) return false;
+  const view = new DataView(buffer);
+  return view.getUint32(0, true) === 0x46546c67 && view.getUint32(4, true) === 2 && view.getUint32(8, true) === buffer.byteLength;
+};
 
 /** Decode lossless transport compression locally; raw scenery remains the fallback. */
 export async function readSceneBuffer(url: string, signal: AbortSignal, onBytes: (bytes: number) => void): Promise<ArrayBuffer> {
@@ -35,5 +39,7 @@ export async function readSceneBuffer(url: string, signal: AbortSignal, onBytes:
       if (signal.aborted || (error instanceof DOMException && error.name === 'AbortError')) throw error;
     }
   }
-  return read(url);
+  const raw = await read(url);
+  if (!isGLB(raw)) throw new Error('Scenery was incomplete or invalid. Please try again.');
+  return raw;
 }
