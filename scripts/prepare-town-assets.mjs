@@ -37,3 +37,10 @@ if (!installed) {
 }
 execFileSync(process.execPath, [join(project, 'scripts/validate-town-assets.mjs'), '--root', destination], { stdio: 'inherit', cwd: project });
 execFileSync(process.execPath, [join(project, 'scripts/prepare-town-transfer.mjs')], { stdio: 'inherit', cwd: project });
+
+execFileSync(process.execPath, [join(project, 'scripts/prepare-town-json-transfer.mjs')], { stdio: 'inherit', cwd: project });
+execFileSync(process.execPath, [join(project, 'scripts/prepare-source-texture-aliases.mjs')], { stdio: 'inherit', cwd: project });
+execFileSync(process.execPath, [join(project, 'scripts/prepare-town-image-hints.mjs')], { stdio: 'inherit', cwd: project });
+execFileSync(process.execPath, [join(project, 'scripts/prepare-network-transfer.mjs')], { stdio: 'inherit', cwd: project });
+execFileSync(process.execPath, [join(project, 'scripts/prepare-ground-previews.mjs')], { stdio: 'inherit', cwd: project });
+execFileSync(process.execPath, [join(project, 'scripts/prepare-town-version.mjs')], { stdio: 'inherit', cwd: project });

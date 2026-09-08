@@ -1,0 +1,79 @@
+{
+  "version": 1,
+  "basis": "Eight actual player-camera boundary reviews on 2026-09-08 UTC. A bank is allowed only where already-emitted retained context ground and source-registered water share a perimeter. Radius bounds the visual repair, not a newly mapped shoreline.",
+  "sourceReviewSha256": "eceb6afc4e5dd1110d181108ee5e5e882cee29e8b990f6ab710b24405599d608",
+  "rows": [
+    {
+      "id": "cudworth",
+      "edgeId": 2294,
+      "pointEastNorth": [
+        -1573.0675856631758,
+        2523.668407119636
+      ],
+      "radiusM": 220
+    },
+    {
+      "id": "north-main",
+      "edgeId": 589,
+      "pointEastNorth": [
+        -2641.4010511173074,
+        781.8209151757105
+      ],
+      "radiusM": 220
+    },
+    {
+      "id": "chase",
+      "edgeId": 1390,
+      "pointEastNorth": [
+        -3322.020129076332,
+        -1246.812436253485
+      ],
+      "radiusM": 220
+    },
+    {
+      "id": "hill",
+      "edgeId": 2392,
+      "pointEastNorth": [
+        -3327.867182775141,
+        -1653.0279194787158
+      ],
+      "radiusM": 220
+    },
+    {
+      "id": "perryville",
+      "edgeId": 2365,
+      "pointEastNorth": [
+        -3066.3590977769263,
+        -3697.449732372724
+      ],
+      "radiusM": 220
+    },
+    {
+      "id": "pleasant",
+      "edgeId": 2177,
+      "pointEastNorth": [
+        -3159.8322487349606,
+        -822.395775833683
+      ],
+      "radiusM": 220
+    },
+    {
+      "id": "tracy",
+      "edgeId": 1294,
+      "pointEastNorth": [
+        -2980.2424010627965,
+        -789.4578450717091
+      ],
+      "radiusM": 220
+    },
+    {
+      "id": "main-great-bridge",
+      "edgeId": 2575,
+      "pointEastNorth": [
+        -3345.92226916183,
+        -970.2002523729113
+      ],
+      "radiusM": 220
+    }
+  ]
+}

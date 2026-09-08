@@ -1,7 +1,8 @@
 import * as THREE from 'three';
 import { BARK_FINISH_GLSL } from './vegetation-finish';
+import { applySiteArtMaterial, removeSiteArtMaterial } from './site-surface-finish';
 
-type ArtKind = 'siding' | 'roof' | 'brick' | 'trim' | 'glass' | 'foundation' | 'concrete' | 'asphalt' | 'shoulder' | 'leaf' | 'far-leaf' | 'bark' | 'car-paint' | 'car-glass' | 'rubber' | 'water';
+type ArtKind = 'siding' | 'roof' | 'brick' | 'trim' | 'glass' | 'foundation' | 'concrete' | 'asphalt' | 'shoulder' | 'road-paint' | 'leaf' | 'far-leaf' | 'bark' | 'car-paint' | 'car-glass' | 'rubber' | 'water';
 type Registration = {
   kind: ArtKind;
   color: THREE.Color;
@@ -26,7 +27,9 @@ const kinds: Record<string, ArtKind> = {
   'Streetscape | repaired sidewalk concrete': 'concrete', 'Streetscape | granite curb': 'concrete',
   'Drive road | asphalt': 'asphalt', 'Drive road | weathered shoulder': 'shoulder',
   'Streetscape | parking apron asphalt': 'asphalt', 'Streetscape | asphalt utility repair': 'asphalt',
-  'Finished parking | asphalt': 'asphalt',
+  'Finished parking | asphalt': 'asphalt', 'Finished street corner | asphalt apron': 'asphalt',
+  'Drive road | warm yellow paint': 'road-paint', 'Drive road | chalk white paint': 'road-paint',
+  'Streetscape | inferred crossing paint': 'road-paint', 'Finished road | solid yellow centerline': 'road-paint',
   'Inferred deciduous leaf clusters': 'leaf', 'Canopy | subdued summer green': 'far-leaf',
   'Canopy trunks | schematic bark': 'bark', 'Drive car | deep teal pearl': 'car-paint',
   'Drive car | smoked reflective glass': 'car-glass', 'Drive car | rubber': 'rubber',
@@ -85,9 +88,15 @@ float townArtClose = (1.0-smoothstep(35.0,100.0,townArtDistance)) * (1.0-smooths
 vec2 townWaterP = vTownArtWorld.xz;
 float townWaterFine = 1.0-smoothstep(0.035,0.12,townArtFootprint);
 float townWaterMid = 1.0-smoothstep(0.12,0.50,townArtFootprint);
-townArtHeight = sin(dot(townWaterP,vec2(3.1,1.7))-townArtTime*1.1)*0.012
-  + sin(dot(townWaterP,vec2(-5.2,8.4))-townArtTime*1.7)*0.0045*townWaterMid
-  + sin(dot(townWaterP,vec2(31.0,13.0))+townArtTime*2.0)*0.0007*townWaterFine;
+// Slowly varying wind domains break the former three perfectly periodic bands.
+// Lower slopes and pixel-footprint fading avoid a standing moiré pattern.
+vec2 townWaterWind = townWaterP + 2.8*vec2(townArtNoise(townWaterP*.071),townArtNoise(townWaterP*.067+vec2(17.3,41.7)));
+float townWaterStrength = mix(.72,1.08,townArtNoise(townWaterP*.11+vec2(3.1,9.7)));
+townArtHeight = (sin(dot(townWaterWind,vec2(1.71,2.23))-townArtTime*.71)*.006
+ +sin(dot(townWaterWind,vec2(-2.63,1.43))+townArtTime*.83)*.0035
+ +(sin(dot(townWaterWind,vec2(7.31,2.17))-townArtTime*1.17)*.0013
+ +sin(dot(townWaterWind,vec2(-3.97,8.73))+townArtTime*1.41)*.0008)*townWaterMid
+ +sin(dot(townWaterWind,vec2(19.73,11.31))-townArtTime*1.83)*.00025*townWaterFine)*townWaterStrength;
 diffuseColor.rgb *= mix(0.96,1.04,townArtNoise(townWaterP*0.06));
 `;
   if (kind === 'siding') return start + `
@@ -108,6 +117,13 @@ float townRoofChoice = townArtNoise(vTownArtWorld.xz*0.035);
 // Continuous world-space weathering avoids assuming a common local origin.
 diffuseColor.rgb *= mix(vec3(0.83,0.85,0.84),vec3(1.12,1.09,1.035),townRoofChoice);
 diffuseColor.rgb *= mix(0.96,1.04,townArtNoise(vTownArtWorld.xz*0.70));
+`;
+  if (kind === 'road-paint') return start + `
+// At most nine percent reflectance loss: retain every white/yellow source
+// polygon and its opacity. This is material wear, never a missing dash or sign.
+float townPaintWear=townArtNoise(vTownArtWorld.xz*1.7);
+float townPaintGrain=townArtNoise(vTownArtWorld.xz*61.0);
+diffuseColor.rgb*=mix(.92,1.0,townPaintWear)*(1.0-.01*townPaintGrain*townArtClose);
 `;
   if (kind === 'asphalt' || kind === 'concrete' || kind === 'foundation' || kind === 'shoulder') return start + (kind === 'asphalt' ? `
 // map_fragment already supplies linear reflectance. Keep its aggregate luminance,
@@ -165,6 +181,7 @@ outgoingLight += diffuseColor.rgb * townLeafSun * (0.012+0.070*townLeafBacklight
 /** Modify one newly pooled material; repeated registration is a no-op. */
 export function applyArtMaterial(material: THREE.MeshStandardMaterial, clock: { value: number } = { value: 0 }): void {
   if (!material.isMeshStandardMaterial || registrations.has(material)) return;
+  if (applySiteArtMaterial(material)) return;
   const kind = kinds[material.name];
   if (!kind) return;
   const state: Registration = {
@@ -186,16 +203,17 @@ export function applyArtMaterial(material: THREE.MeshStandardMaterial, clock: { 
     material.normalScale.multiplyScalar(0.22);
   }
   if (kind === 'asphalt') {
-    if (material.name === 'Finished parking | asphalt') material.color.set('#30332f');
+    if (material.name === 'Finished parking | asphalt' || material.name === 'Finished street corner | asphalt apron') material.color.set('#30332f');
     else if (material.map) material.color.setRGB(0.50,0.50,0.50);
     else material.color.set(material.name.includes('repair') ? '#484b48' : '#50534e');
     material.roughness = 0.96;
     material.normalScale.multiplyScalar(0.38);
   }
   if (kind === 'shoulder') { material.color.set('#77796a'); material.roughness = 0.98; }
+  if (kind === 'road-paint') { material.roughness=Math.max(.94,material.roughness); }
   if (kind === 'glass') { material.color.set('#34464b'); material.roughness = 0.19; material.metalness = 0.32; material.envMapIntensity = 0.65; }
   if (kind === 'leaf') { material.roughness = 0.88; material.envMapIntensity = 0.12; }
-  if (kind === 'far-leaf') { material.color.set('#657c48'); material.roughness = 0.95; }
+  if (kind === 'far-leaf') { material.color.set('#556b3e'); material.roughness = 0.95; }
   if (kind === 'bark') {
     // The pinned trunk already has a bark atlas. Retain its source factor so
     // the gray-brown interpretation does not darken its reflectance twice.
@@ -205,7 +223,7 @@ export function applyArtMaterial(material: THREE.MeshStandardMaterial, clock: { 
   if (kind === 'car-paint') { material.roughness = 0.22; material.metalness = 0.38; material.envMapIntensity = 0.35; }
   if (kind === 'car-glass') { material.roughness = 0.11; material.metalness = 0.35; material.envMapIntensity = 0.40; }
   if (kind === 'rubber') { material.roughness = 0.93; material.metalness = 0; }
-  if (kind === 'water') { material.color.set('#315a5c'); material.roughness = 0.23; material.metalness = 0.24; material.envMapIntensity = 1.2; }
+  if (kind === 'water') { material.color.set('#315a5c'); material.roughness = 0.28; material.metalness = 0; material.envMapIntensity = 1.0; }
   material.userData.townArt = { version: 2, kind, sourceColor: state.color.toArray(), appearance: 'Inferred late-summer material treatment; geometry, original maps and UVs retained.' };
   material.onBeforeCompile = (shader, renderer) => {
     state.compile.call(material, shader, renderer);
@@ -234,6 +252,7 @@ function onMaterialDispose(event: THREE.Event<'dispose', THREE.MeshStandardMater
 
 /** Restore this module's changes without disposing shared maps or materials. */
 export function removeArtMaterial(material: THREE.MeshStandardMaterial): void {
+  removeSiteArtMaterial(material);
   const state = registrations.get(material);
   if (!state) return;
   material.color.copy(state.color); material.roughness = state.roughness; material.metalness = state.metalness;

@@ -24,6 +24,8 @@ describe('evidence-derived frontage assembly',()=>{
       const sourceGeometry=protectedMesh.geometry,sourceMaterial=protectedMesh.material;
       const report=applyCraftedFrontages(group,'-13_-5',[-3250,0,1250],level)!;
       expect(report.schoolIds).toHaveLength(11);expect(new Set(report.schoolIds).size).toBe(11);expect(report.removedTriangles).toBe(1);
+      if(!level){expect(report.constructionDetails).toHaveLength(7);expect(report.constructionDetails.reduce((n,r)=>n+r.porchFixtures,0)).toBe(4);expect(report.constructionDetails.every(r=>r.downspouts===1&&r.gutterMeters>6&&r.basis.includes('not verified'))).toBe(true);expect(report.constructionDetails.map(r=>r.structId)).not.toContain('168214_866383');}
+      else expect(report.constructionDetails).toEqual([]);
       expect(old.parent).toBeNull();expect(protectedMesh.geometry).toBe(sourceGeometry);expect(protectedMesh.material).toBe(sourceMaterial);
       expect(applyCraftedFrontages(group,'-13_-5',[-3250,0,1250],level)).toBe(report);
       let faces=0;group.traverse(o=>{if(o instanceof THREE.Mesh&&o.userData.townCrafted){faces+=o.geometry.getAttribute('position').count/3;for(const a of Object.values(o.geometry.attributes) as THREE.BufferAttribute[])expect(a.array.every(Number.isFinite)).toBe(true);expect(o.geometry.boundingBox!.min.y).toBeGreaterThan(20);expect(o.geometry.boundingBox!.max.y).toBeLessThan(60);}});

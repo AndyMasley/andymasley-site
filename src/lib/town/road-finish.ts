@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import catalog from '../../../data/derived/town/road-finish-index.json';
 import { bridgeDeckDisplacement } from './bridge-grade';
 import type { V3 } from './contracts';
+import { ByteCache } from './byte-cache';
 
 type XY = readonly number[];
 export type RoadPaintPatch = { id:string;edgeId:number;physicalId:number;surface:number[][];paint:number[][][] };
@@ -26,21 +27,24 @@ export function validateRoadFinish(value:unknown,tileId:string):RoadPaintPatch[]
 /** Optional per-tile details. The caller controls parallel start and deadline;
  * no background insertion is possible after cancellation or disposal. */
 export class RoadFinishStream {
-  private cache=new Map<string,RoadPaintPatch[]>();
+  private cache=new ByteCache<RoadPaintPatch[]>(6 * 1024 * 1024);
   private disposed=false;
   failures=0;
   constructor(private readonly read:<T>(url:string,signal:AbortSignal)=>Promise<T>){}
+  hasAsset(id:string):boolean{return !!assets[id];}
+  resources(){return this.cache.resources();}
+  setBudget(bytes:number):void{this.cache.maxBytes=bytes;this.cache.trim();}
   async tile(id:string,signal:AbortSignal):Promise<RoadPaintPatch[]>{
     if(this.disposed||signal.aborted)throw new DOMException('Loading cancelled','AbortError');
     const cached=this.cache.get(id);
-    if(cached){this.cache.delete(id);this.cache.set(id,cached);return cached;}
+    if(cached)return cached;
     const asset=assets[id];if(!asset)return[];
     let rows:RoadPaintPatch[]|undefined;
     try{rows=validateRoadFinish(await this.read<unknown>(asset.url,signal),id);}
     catch(error){if(this.disposed||signal.aborted)throw new DOMException('Loading cancelled','AbortError');this.failures++;return[];}
     if(this.disposed||signal.aborted)throw new DOMException('Loading cancelled','AbortError');
     if(!rows){this.failures++;return[];}
-    this.cache.set(id,rows);if(this.cache.size>64)this.cache.delete(this.cache.keys().next().value!);
+    this.cache.set(id,rows);
     return rows;
   }
   dispose():void{this.disposed=true;this.cache.clear();}

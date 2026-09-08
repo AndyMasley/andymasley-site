@@ -22,3 +22,13 @@ for feature in [f for f in j['features']if f['kind']=='cemetery']:
     if p.intersects(box(x*250,y*250,x*250+250,y*250+250)):tiles.setdefault(f'{x}_{y}',[]).append({'id':feature['id'],'outline':coords,'holes':holes})
 out={'version':1,'sourceManifestSha256':j['sourceManifestSha256'],'sourceNetworkSha256':hashlib.sha256((S/'data/derived/town/engine-network.json.gz').read_bytes()).hexdigest(),'basis':'Regional unstriped cemetery-drive appearance inferred for internal unnamed mapped roads only. Named public roads, road surfaces and other painted objects are protected.','tiles':tiles}
 (S/'data/derived/town/cemetery-road-domains.json').write_text(json.dumps(out,separators=(',',':'))+'\n');print(json.dumps({'tiles':len(tiles),'domains':counts}))
+# Runtime references share identical coordinates across tile boundaries. Keep
+# the expanded artifact above as an independent audit input.
+unique={};refs={};runtime={k:v for k,v in out.items()if k!='tiles'}
+for tid,rows in tiles.items():
+ refs[tid]=[]
+ for row in rows:
+  key=hashlib.sha256(json.dumps(row,sort_keys=True,separators=(',',':')).encode()).hexdigest()[:16]
+  if key in unique:assert unique[key]==row
+  unique[key]=row;refs[tid].append(key)
+runtime.update({'tiles':refs,'domains':unique});(S/'data/derived/town/cemetery-road-index.json').write_text(json.dumps(runtime,separators=(',',':'))+'\n')

@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { describe, expect, it } from 'vitest';
 import * as THREE from 'three';
-import { applyCommercialCompletion, COMMERCIAL_COMPLETION as data } from '../commercial-completion';
+import { applyCommercialCompletion, COMMERCIAL_COMPLETION as data, storefrontDisplaySpans } from '../commercial-completion';
 import { applyEvidenceBuildings } from '../evidence-buildings';
 import { landmarkRows } from '../evidence-landmarks';
 
@@ -15,6 +15,13 @@ function source(tileId:string){
  const material=new THREE.MeshStandardMaterial();material.name='V2 inferred | siding';const mesh=new THREE.Mesh(geometry,material);group.add(mesh);return{group,origin,rows,mesh};
 }
 describe('commercial research completion',()=>{
+ it('keeps display glazing out of real doorway openings, including doors at a bay edge',()=>{
+  for(const [left,right,entry,width]of [[0,6,1.4,1.6],[0,6,3,1.6],[0,6,0,.95],[0,6,6,.95],[0,6,-3,1.2],[0,6,9,1.2]]){
+   const spans=storefrontDisplaySpans(left,right,entry,width);
+   for(const [a,c]of spans){expect(a).toBeGreaterThanOrEqual(left);expect(c).toBeLessThanOrEqual(right);expect(c-a).toBeGreaterThanOrEqual(.55);expect(c<=entry-width/2-.239999||a>=entry+width/2+.239999).toBe(true);}
+   for(let i=1;i<spans.length;i++)expect(spans[i][0]).toBeGreaterThan(spans[i-1][1]);
+  }
+ });
  it('keeps shared Main Street identities on disjoint street segments',()=>{
   const row=data.rows.find(r=>r.id==='168341_866602')!,f=row.frames[0];
   const intervals=row.frames.map(g=>{const u=g.start.reduce((sum,v,i)=>sum+(v-f.start[i])*f.tangent[i],0);return[u,u+g.width,g.id] as const;}).sort((a,b)=>a[0]-b[0]);

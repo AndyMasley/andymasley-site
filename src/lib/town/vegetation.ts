@@ -8,6 +8,7 @@ export interface TreeForm {
   yaw: number;
   family: 'rounded' | 'spreading' | 'open' | 'tiered';
   renderFamily: 'broadleaf' | 'conifer';
+  crownVariant: 'standard' | 'open';
   habitat: TreeHabitat;
   groundY: number;
   topY: number;
@@ -101,7 +102,7 @@ export function treeForm(row: readonly number[], origin: readonly number[], dist
   return {
     crown: { position: crownPosition, scale },
     trunk: { position: [row[0], groundY + halfTrunk, row[2]], scale: [radius, halfTrunk, radius] },
-    yaw, family, renderFamily, habitat, groundY, topY,
+    yaw, family, renderFamily, crownVariant:renderFamily==='broadleaf'&&(family==='open'||(family==='spreading'&&variation(x,z,991)<.45))?'open':'standard', habitat, groundY, topY,
   };
 }
 
@@ -113,10 +114,15 @@ const coniferGeometry = new WeakMap<THREE.Group, Set<THREE.BufferGeometry>>();
  * colors remain borrowed from the fixed source prototype. The broken tiers and
  * off-centre leader evoke mature pine habit; the leaf atlas is not needle data.
  */
-export function createConiferPrototype(base: THREE.Group): THREE.Group {
+export function createConiferPrototype(base: THREE.Group): THREE.Group { return createCrownPrototype(base,'conifer'); }
+/** One shared near broadleaf silhouette, with coherent branch/leaf deformation.
+ * The returned geometry is owned; materials and textures remain borrowed. */
+export function createOpenBroadleafPrototype(base:THREE.Group):THREE.Group { return createCrownPrototype(base,'open'); }
+export function disposeOpenBroadleafPrototype(group:THREE.Group):void { disposeConiferPrototype(group); }
+function createCrownPrototype(base: THREE.Group, habit:'conifer'|'open'): THREE.Group {
   base.updateMatrixWorld(true);
   const result = new THREE.Group();
-  result.name = `${base.name || 'Tree crown'} | inferred conifer habit`;
+  result.name = `${base.name || 'Tree crown'} | inferred ${habit} habit`;
   const owned = new Set<THREE.BufferGeometry>();
   coniferGeometry.set(result, owned);
   const leaves: THREE.Mesh[] = [];
@@ -131,7 +137,7 @@ export function createConiferPrototype(base: THREE.Group): THREE.Group {
       mesh.name = object.name;
       mesh.castShadow = object.castShadow;
       mesh.receiveShadow = object.receiveShadow;
-      mesh.userData.townConiferVariant = true;
+      mesh.userData[habit==='conifer'?'townConiferVariant':'townOpenBroadleafVariant'] = true;
       result.add(mesh);
       all.push(mesh);
       const materials = Array.isArray(object.material) ? object.material : [object.material];
@@ -145,22 +151,47 @@ export function createConiferPrototype(base: THREE.Group): THREE.Group {
     }
     const size = sourceBounds.getSize(new THREE.Vector3()), center = sourceBounds.getCenter(new THREE.Vector3());
     if (![size.x, size.y, size.z].every(value => Number.isFinite(value) && value > 0)) throw new Error('Tree crown bounds must be finite and nonempty.');
-    for (const mesh of all) {
-      const position = mesh.geometry.getAttribute('position');
-      for (let i = 0; i < position.count; i++) {
-        const x = (position.getX(i) - center.x) / size.x;
-        const z = (position.getZ(i) - center.z) / size.z;
-        const t = (position.getY(i) - sourceBounds.min.y) / size.y;
+    const deform=(px:number,py:number,pz:number,far=false):THREE.Vector3=>{
+        const x = (px - center.x) / size.x;
+        const z = (pz - center.z) / size.z;
+        const t = (py - sourceBounds.min.y) / size.y;
         const angle = Math.atan2(z, x);
         const inside = Math.max(0, Math.min(1, t));
+        if(habit==='open'){
+          // A flatter, off-centre upper branching habit and a few broad lobes
+          // distinguish whole crown structure without new branch locations.
+          const crown=Math.sin(inside*Math.PI),lobes=1+.14*crown*Math.cos(angle*3+inside*3.7);
+          const radial=(.82+.24*Math.sin(inside*2.1+.35))*lobes;
+          const sway=Math.sin(inside*3.0)*.055;
+          return new THREE.Vector3(center.x+size.x*(x*radial+sway),sourceBounds.min.y+size.y*(t+.030*crown*Math.min(1,Math.hypot(x,z)*2.5)*Math.sin(angle*2+inside*3)),center.z+size.z*(z*radial-sway*.68));
+
+        }
         // Broad, offset upper boughs and broken lower whorls, not a perfect cone.
-        const radial = (0.42 + 0.62 * Math.exp(-Math.pow((inside - 0.57) / 0.30, 2)) - 0.18 * Math.pow(inside, 12)) *
-          (0.83 + 0.17 * Math.cos(inside * Math.PI * 8 + 0.6)) *
-          (1 + 0.16 * Math.sin(angle * 3 + inside * 7) + 0.08 * Math.cos(angle * 5 - inside * 9));
-        const sway = Math.sin(inside * 3.1) * 0.065;
-        const y = t + 0.022 * Math.sin(inside * Math.PI * 8);
-        position.setXYZ(i, center.x + size.x * (x * radial + sway), sourceBounds.min.y + size.y * y,
+        const radial = (0.78 + 0.30 * Math.exp(-Math.pow((inside - 0.57) / 0.30, 2)) - 0.08 * Math.pow(inside, 12)) *
+          (.965+.035*Math.cos(inside*Math.PI*4+.6)) *
+          (1 + 0.055 * Math.sin(angle * 3 + inside * 7) + 0.022 * Math.cos(angle * 5 - inside * 9));
+        const sway = Math.sin(inside * 3.1) * 0.025;
+        const y = t + .007 * Math.sin(inside * Math.PI * 4);
+        return new THREE.Vector3( center.x + size.x * (x * radial + sway), sourceBounds.min.y + size.y * y,
           center.z + size.z * (z * radial - sway * 0.57));
+    };
+    for(const mesh of all){
+      const geometry=mesh.geometry,position=geometry.getAttribute('position'),source=position.clone(),leaf=leaves.includes(mesh),far=!geometry.getAttribute('uv');
+      for(let i=0;i<position.count;i++){const v=deform(source.getX(i),source.getY(i),source.getZ(i),far);position.setXYZ(i,v.x,v.y,v.z);}
+      if(habit==='conifer'&&leaf&&!far){
+        // Source cards are connected four-vertex components. Deform each with
+        // the local affine derivative, retaining a planar leaf card instead of
+        // folding its opposite triangles across a narrow crown tier.
+        const parent=Array.from({length:position.count},(_,i)=>i),find=(n:number):number=>{while(parent[n]!==n){parent[n]=parent[parent[n]];n=parent[n];}return n;},index=geometry.index;
+        for(let i=0;i<(index?.count??position.count);i+=3){const ids=[0,1,2].map(k=>index?index.getX(i+k):i+k);for(const k of ids)parent[find(k)]=find(ids[0]);}
+        const components=new Map<number,number[]>();for(let i=0;i<position.count;i++){const key=find(i),list=components.get(key);if(list)list.push(i);else components.set(key,[i]);}
+        for(const ids of components.values()){
+          if(ids.length<3||ids.length>12)continue;
+          const c=new THREE.Vector3();for(const i of ids)c.add(new THREE.Vector3().fromBufferAttribute(source,i));c.multiplyScalar(1/ids.length);
+          const origin=deform(c.x,c.y,c.z),h=1e-4,jx=deform(c.x+h,c.y,c.z).sub(deform(c.x-h,c.y,c.z)).multiplyScalar(.5/h),jy=deform(c.x,c.y+h,c.z).sub(deform(c.x,c.y-h,c.z)).multiplyScalar(.5/h),jz=deform(c.x,c.y,c.z+h).sub(deform(c.x,c.y,c.z-h)).multiplyScalar(.5/h);
+          if(jx.clone().cross(jy).dot(jz)<=0)throw new Error('Crown deformation must preserve orientation.');
+          for(const i of ids){const v=origin.clone().addScaledVector(jx,source.getX(i)-c.x).addScaledVector(jy,source.getY(i)-c.y).addScaledVector(jz,source.getZ(i)-c.z);position.setXYZ(i,v.x,v.y,v.z);}
+        }
       }
     }
     // Both source and variant use the same leaf bounds, so near/far crown and
@@ -182,6 +213,19 @@ export function createConiferPrototype(base: THREE.Group): THREE.Group {
       const previousNormal = geometry.getAttribute('normal')?.clone();
       geometry.computeVertexNormals();
       const normal = geometry.getAttribute('normal');
+      if(habit==='conifer'&&!leaves.includes(mesh)){
+        // Narrow branch sides have very different triangle areas after bending.
+        // Equal face weights preserve the cylindrical smoothing instead of
+        // letting one long triangle pull a short neighbour's normal backwards.
+        const sums=new Float64Array(position.count*3),a=new THREE.Vector3(),b=new THREE.Vector3(),c=new THREE.Vector3(),index=geometry.index;
+        for(let i=0;i<(index?.count??position.count);i+=3){
+          const ids=[0,1,2].map(k=>index?index.getX(i+k):i+k);
+          a.fromBufferAttribute(position,ids[0]);b.fromBufferAttribute(position,ids[1]);c.fromBufferAttribute(position,ids[2]);
+          const face=b.sub(a).cross(c.sub(a)).normalize();
+          for(const id of ids){sums[id*3]+=face.x;sums[id*3+1]+=face.y;sums[id*3+2]+=face.z;}
+        }
+        for(let i=0;i<position.count;i++){a.fromArray(sums,i*3).normalize();normal.setXYZ(i,a.x,a.y,a.z);}
+      }
       for (let i = 0; i < normal.count; i++) {
         if (Math.hypot(normal.getX(i), normal.getY(i), normal.getZ(i)) > 1e-8) continue;
         // Unreferenced seam vertices can have zero area after Three recomputes
@@ -193,7 +237,7 @@ export function createConiferPrototype(base: THREE.Group): THREE.Group {
       geometry.computeBoundingBox();
       geometry.computeBoundingSphere();
     }
-    result.userData.townConiferVariant = true;
+    result.userData[habit==='conifer'?'townConiferVariant':'townOpenBroadleafVariant'] = true;
     result.userData.townBorrowedMaterials = true;
     result.userData.townCrownBounds = { min: sourceBounds.min.toArray(), max: sourceBounds.max.toArray() };
     const buffers = new Set<ArrayBufferLike>();
@@ -201,7 +245,7 @@ export function createConiferPrototype(base: THREE.Group): THREE.Group {
       for (const attribute of Object.values(geometry.attributes)) buffers.add(attribute instanceof THREE.InterleavedBufferAttribute ? attribute.data.array.buffer : attribute.array.buffer);
       if (geometry.index) buffers.add(geometry.index.array.buffer);
     }
-    result.userData.townConiferGeometryBytes = [...buffers].reduce((total, buffer) => total + buffer.byteLength, 0);
+    result.userData.townCrownGeometryBytes = result.userData.townConiferGeometryBytes = [...buffers].reduce((total, buffer) => total + buffer.byteLength, 0);
     return result;
   } catch (error) {
     disposeConiferPrototype(result);

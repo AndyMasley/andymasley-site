@@ -3,6 +3,8 @@ import Base from '../layouts/Base.astro';
 import TownRadio from '../components/TownRadio.astro';
 import buildingEvidence from '../../data/derived/town/residential-evidence-index.json';
 import historicEvidence from '../../data/derived/town/historic-appearance.json';
+import { EXPLORE_PLACES } from '../lib/town/explore-places';
+import directory from '../../data/derived/town/place-directory.json';
 import '../styles/town.css';
 
 const poster = '/town-assets/webster-poster-crafted.webp';
@@ -48,7 +50,7 @@ const poster = '/town-assets/webster-poster-crafted.webp';
             decoding="async"
           />
           <div class="town-intro__content">
-            <h2>Start on Main Street</h2>
+            <h2>Find your way through Webster</h2>
             <p>The car follows the road.<br />You choose where it goes.</p>
             <button class="town-play" type="button" data-town-play>
               <span>Play</span>
@@ -56,12 +58,15 @@ const poster = '/town-assets/webster-poster-crafted.webp';
                 <path d="M2 9h18M13 2l7 7-7 7" stroke="currentColor" stroke-width="1.5" />
               </svg>
             </button>
+            <button class="town-resume-drive" type="button" data-town-resume hidden>Resume last drive</button>
+            <button class="town-resume-drive" type="button" data-town-reload hidden>Reload updated game</button>
+            <p data-town-resume-label hidden></p>
             <p class="town-intro__hint">Arrow keys or touch controls</p>
           </div>
           <span class="town-poster-caption">A late-summer drive through Webster</span>
         </div>
 
-        <div class="town-loading" data-town-loading role="status" aria-live="polite" hidden>
+        <div class="town-loading" data-town-loading aria-live="off" hidden>
           Preparing the town…
         </div>
 
@@ -73,17 +78,28 @@ const poster = '/town-assets/webster-poster-crafted.webp';
           <div class="town-directions">
             <p data-town-turn>Continue on Main Street</p>
             <div class="town-choices" data-town-choices role="group" aria-label="Available turns"></div>
+            <button class="town-clear-turn" type="button" data-town-clear aria-keyshortcuts="S">Clear turn</button>
           </div>
           <div class="town-instruments" aria-label="Speed and distance">
             <div class="town-speed"><span data-town-speed>0</span><span class="town-unit">mph</span></div>
             <div class="town-road-limit"><span class="town-hud__label" data-town-limit-label>Road limit</span><span data-town-limit>25 mph</span></div>
             <div class="town-odometer"><span data-town-distance>0.0 mi</span><span class="town-hud__label">this drive</span></div>
+            <span class="town-cruise-state" data-town-cruise>Stopped</span>
           </div>
           <figure class="town-map" aria-label="Local road map">
             <span class="town-map__north" aria-hidden="true">N</span>
             <canvas data-town-minimap width="320" height="240" aria-label="Your position on the nearby road network"></canvas>
             <figcaption>Webster</figcaption>
           </figure>
+        </div>
+
+        <div class="town-recovery" data-town-recovery role="group" aria-label="Drive recovery" hidden>
+          <p data-town-recovery-message></p>
+          <button type="button" data-town-retry-street>Retry street</button>
+          <button type="button" data-town-recovery-reverse>Turn around</button>
+          <button type="button" data-town-restart hidden>Restart graphics</button>
+          <button type="button" data-town-reload hidden>Reload updated game</button>
+          <button type="button" data-town-dismiss-update hidden>Keep driving</button>
         </div>
 
         <div class="town-touch" aria-label="Touch driving controls">
@@ -105,6 +121,7 @@ const poster = '/town-assets/webster-poster-crafted.webp';
           <button type="button" data-town-camera aria-keyshortcuts="C" disabled>Camera</button>
           <button type="button" data-town-sound aria-pressed="false" disabled>Engine sound off</button>
           <button type="button" data-town-fullscreen disabled>Full screen</button>
+          <button type="button" data-town-mute aria-keyshortcuts="M">Mute all sound</button>
         </div>
         <div class="town-settings">
           <label class="town-setting">
@@ -126,8 +143,44 @@ const poster = '/town-assets/webster-poster-crafted.webp';
               <option value="low">Low</option>
             </select>
           </label>
+          <label class="town-setting">
+            <span>Motion</span>
+            <select data-town-comfort aria-label="Camera comfort">
+              <option value="system">Use device preference</option>
+              <option value="steady">Steady camera</option>
+              <option value="standard">Standard camera</option>
+            </select>
+          </label>
+          <label class="town-setting town-engine-volume"><span>Driving sound</span><input data-town-engine-volume aria-label="Driving sound volume" type="range" min="0" max="100" value="65" /></label>
         </div>
       </div>
+      <details class="town-explore" data-town-explore>
+        <summary>Explore Webster</summary>
+        <div class="town-explore__body">
+          <p>Choose a starting place, then take your own turns. Moving to another start resets this drive’s mileage; reloading offers your last saved road position, safely paused.</p>
+          <canvas data-town-overview width="800" height="520" aria-label="Town road overview with six starting places and sixteen scenery markers. All places are listed below."></canvas>
+          <div class="town-explore__places">
+            {EXPLORE_PLACES.map(place => <div><button type="button" data-town-place={place.key} disabled>{place.title}</button><p>{place.detail}</p></div>)}
+          </div>
+          <div class="town-directory">
+            <h3>Places to look for</h3>
+            <p>Select a place to see its part of town. These markers show scenery; use the six starting places above to move the car.</p>
+            <p data-town-directory-info role="status" aria-live="polite">Scenery markers come from the game’s building, bridge and shoreline research. Nearby roads are references, not turn-by-turn directions.</p>
+            <button type="button" data-town-directory-reset disabled>Show whole town</button>
+            <div class="town-directory__list">
+              {directory.places.map(place => <div><button type="button" data-town-directory-place={place.id} aria-pressed="false" disabled>{place.label}. {place.title}</button><p>Near {place.nearRoad}. {place.detail}</p></div>)}
+            </div>
+          </div>
+          <p class="town-explore__policy">An unhurried guided drive: cruise does not simulate traffic or enforce stops. Turn around is an instant game assist. Some routes stop at the edge of the mapped town.</p>
+          <button type="button" data-town-report disabled>Report this spot</button>
+          <div data-town-report-panel hidden>
+            <label>Your note <textarea data-town-report-note rows="2" placeholder="What should be different here?"></textarea></label>
+            <button type="button" data-town-report-copy>Copy location and note</button>
+            <textarea data-town-report-output aria-label="Copyable location report" readonly rows="6"></textarea>
+            <p>This copies a local text report. Nothing is sent automatically.</p>
+          </div>
+        </div>
+      </details>
       <TownRadio />
       <div class="town-below-game">
         <p id="town-status" class="town-status" data-town-status role="status" aria-live="polite">Ready when you are.</p>
@@ -140,11 +193,14 @@ const poster = '/town-assets/webster-poster-crafted.webp';
               <div><dt><kbd>Space</kbd></dt><dd>Pause / resume</dd></div>
               <div><dt><kbd>R</kbd></dt><dd>Instantly turn around</dd></div>
               <div><dt><kbd>C</kbd></dt><dd>Change camera</dd></div>
-              <div><dt>Bridges, memorials and shorelines</dt><dd>Historical surveys guide Memorial Beach’s iron truss and sidewalk posts. The Court of Honor, lawn howitzers, relocated Slater markers and other public memorials use dated records and photographs; small dimensions and placements remain interpretations. Cemetery stones, shoreline plants and dam fragments sit within mapped settings, with anonymous layouts and inferred details. Memorial Beach has its documented double launch and 65-foot flagpole; the DCR Lakeside launch has a single concrete strip with a locally registered water edge. The Indian Princess uses its photographed two-deck riverboat appearance and a berth visible in 2025 imagery; it is a stationary interpretation.</dd></div>
-            <div><dt>Roadside details</dt><dd>WRTA boarding-stop coordinates locate bus flags; OpenStreetMap records locate collection boxes and stop controls. Flag and box designs, sign offsets and pole hardware are modeled interpretations. Selected overhead utility runs follow photographed corridor character, with inferred spacing and placement; they are not a surveyed utility map. Matched road-inventory segments distinguish earth, gravel and surface-treated pavement using inferred material tones. The Gore Road plaza’s lake-name sign uses a dated exterior reference. Playing fields and solar-site boundaries receive restrained inferred equipment. Nine aerial-registered wastewater basins preserve the surrounding real buildings; rails and small dimensions are authored.</dd></div>
+              <div><dt><kbd>S</kbd></dt><dd>Clear a pending turn and follow the road where possible</dd></div>
+              <div><dt><kbd>M</kbd></dt><dd>Silence all driving sound and radio</dd></div>
+              <div><dt><kbd>1</kbd>–<kbd>6</kbd></dt><dd>Move to the corresponding starting place; resets this drive</dd></div>
           </dl>
             <p>The car stays on the road. Press Up to accelerate smoothly to the road’s speed limit, including 65 mph on I-395. On entrance ramps, speed builds gradually toward the highway limit before merging. Pick a direction as you approach a junction, or click a labeled road option to select that exact branch. Turn around instantly with the button or R. On a touch screen, use the arrows below the road.</p>
-            <p>Click the town view to use the keyboard. Leaving the game pauses the drive. Use Pause to resume. Sound starts only if you turn it on.</p>
+            <p>Click the town view to use the keyboard. Tab leaves the driving view for the controls. Leaving the game pauses the drive. Use Resume or Up to continue. Braking reduces your cruise target; press Up again to return to the road limit. Once a turn begins, a new choice applies to the following junction.</p>
+            <p>Sound starts only if you turn it on. Pause stops driving sound and leaves the radio available; M or Mute all sound silences both. Radio turns off when you leave the tab. The road limit may be an estimate where the road inventory has no posted value; a ramp target is modeled acceleration toward the highway limit.</p>
+            <p>Automatic detail can reduce resolution and shadows to keep the drive responsive. Choose a detail setting again to restore its starting quality. The saved camera, comfort, detail and volume settings return on your next visit; sound still starts off.</p>
           </div>
         </details>
       </div>
@@ -176,6 +232,10 @@ const poster = '/town-assets/webster-poster-crafted.webp';
 
 <script>
   import { mountTownRadio } from '../lib/town/radio';
+  import { readSnapshot } from '../lib/town/ux-state';
+  import { displayRoadName } from '../lib/town/road-display';
+  import release from '../../data/derived/town/release.json';
+  import { checkTownUpdate } from '../lib/town/release-recovery';
   let pageCleanup: (() => void) | undefined;
   let preparedRoot: HTMLElement | null = null;
 
@@ -191,6 +251,8 @@ const poster = '/town-assets/webster-poster-crafted.webp';
     const play = root.querySelector<HTMLButtonElement>('[data-town-play]')!;
     const status = root.querySelector<HTMLElement>('[data-town-status]')!;
     const quality = root.querySelector<HTMLSelectElement>('[data-town-quality]')!;
+    const resume = root.querySelector<HTMLButtonElement>('[data-town-resume]')!;
+    const resumeLabel = root.querySelector<HTMLElement>('[data-town-resume-label]')!;
     const controller = new AbortController();
     const radio = mountTownRadio(root);
     let session: { dispose(): void } | undefined;
@@ -198,11 +260,15 @@ const poster = '/town-assets/webster-poster-crafted.webp';
     try {
       const saved = localStorage.getItem('webster-quality');
       if (saved && ['auto', 'high', 'low'].includes(saved)) quality.value = saved;
+      const snapshot = readSnapshot(release.manifestSha256, localStorage);
+      if (snapshot) { resume.hidden = false; resumeLabel.hidden = false; resumeLabel.textContent = `Last drive: ${displayRoadName(snapshot.road)} · resumes paused`; }
     } catch {}
-    play.addEventListener('click', async () => {
+    const begin = async (resumeDrive = false) => {
       if (starting || session) return;
       starting = true;
+      root.dataset.resumeDrive = String(resumeDrive);
       play.disabled = true;
+      resume.disabled = true;
       play.textContent = 'Loading…';
       root.setAttribute('aria-busy', 'true');
       status.textContent = 'Preparing your drive…';
@@ -217,9 +283,32 @@ const poster = '/town-assets/webster-poster-crafted.webp';
           status.textContent = error instanceof Error ? error.message : 'The drive could not start. Please try again.';
           play.disabled = false;
           play.textContent = 'Try again';
+          resume.disabled = false;
           root.removeAttribute('aria-busy');
+          void checkTownUpdate(controller.signal).then(update => {
+            if (controller.signal.aborted || session || starting || update !== 'new') return;
+            root.querySelectorAll<HTMLButtonElement>('[data-town-intro] [data-town-reload]').forEach(button => { button.hidden = false; });
+            status.textContent = 'A newer town is available. Reload updated game, or try this version again.';
+          });
         }
       } finally { starting = false; }
+    };
+    play.addEventListener('click', () => void begin(false), { signal: controller.signal });
+    resume.addEventListener('click', () => void begin(true), { signal: controller.signal });
+    root.querySelector('[data-town-mute]')!.addEventListener('click', () => root.dispatchEvent(new Event('town:mute')), { signal: controller.signal });
+    for (const button of root.querySelectorAll('[data-town-reload]')) button.addEventListener('click', () => {
+      root.dispatchEvent(new Event('town:pause')); root.dispatchEvent(new Event('town:mute')); session?.dispose(); location.reload();
+    }, { signal: controller.signal });
+    root.addEventListener('town:restart', () => {
+      if (starting) return;
+      root.dispatchEvent(new Event('town:mute'));
+      session?.dispose(); session = undefined;
+      // A lost WebGL context cannot always be reacquired on the same canvas.
+      const old = root.querySelector<HTMLCanvasElement>('[data-town-canvas]')!;
+      old.replaceWith(old.cloneNode(false));
+      root.querySelector<HTMLElement>('[data-town-intro]')!.hidden = false;
+      root.querySelector<HTMLElement>('[data-town-recovery]')!.hidden = true;
+      void begin(true);
     }, { signal: controller.signal });
     pageCleanup = () => { controller.abort(); radio.dispose(); session?.dispose(); };
     preparedRoot = root;

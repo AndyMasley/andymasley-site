@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "sourceAerialSha256": "b14f7338f5c04544ebb35fd124450eb2b88a96843646cca423ee3601fead69ff",
+  "sourceDate": "Spring 2025; individual flight date unresolved",
+  "crop": [3253, 4983, 3433, 5163],
+  "displayScale": 5,
+  "approachAndForecourtPixels": [[80,11],[115,0],[334,283],[383,314],[414,349],[439,377],[426,392],[403,413],[384,435],[366,455],[341,478],[312,478],[310,453],[316,425],[329,402],[328,384],[311,360],[297,344],[277,314]],
+  "island": {"centerPixels": [365,363], "radiusPixels": 34},
+  "courtKeepoutPixels": [[111,294],[194,245],[288,365],[215,427]],
+  "observation": "The actually inspected registered aerial shows a pale paved approach from the road at upper left into a curved forecourt northwest of the bathhouse entrance pavilion. The circular island and separate southwest court remain unpaved by this addition.",
+  "inference": "The manually traced perimeter is approximate at the roughly 0.89 m source cache pixel scale. A restrained gray matte surface and a short connection to the already-authored entrance slab are construction interpretations; no material survey, current operation, garden or fixture inventory is asserted.",
+  "sourceUrl": "https://www.mass.gov/info-details/massgis-data-2025-aerial-imagery"
+}

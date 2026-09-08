@@ -1,0 +1,457 @@
+{
+  "version": 1,
+  "sourceManifestSha256": "37fbef34bc2a4467997252be75b4c43174a6a7b2d39963614cadd8d787e56105",
+  "policy": "Modeled corner completion only where existing inventory-supported sidewalk panels approach the same junction. New geometry is outside road/car/building/water envelopes; no surveyed corner-layout claim.",
+  "counts": {
+    "nodes": 250,
+    "patches": 682,
+    "rejected": {
+      "grade": 11,
+      "detached": 1
+    },
+    "area": 4706.166978367851,
+    "tiles": 86,
+    "bytes": 2866004
+  },
+  "inputs": {
+    "engine-network.json.gz": "45ef35f049e2295b307b2e98b433f62579be524cbb0efb988b942c1d060f0bb9",
+    "engine.ts": "1811cf1838ef98738ccfdf4b7ce1b16601780f842ac85bde8e90929153a73551",
+    "streetscape_features.json.gz": "fee36571aaa59ebc85b045e20d199144e33511efef24ea7364680dc8cd22f583",
+    "streetscape_meshes.json.gz": "c384645ac45a712ab2c95d4db0d2d5359ddad7120e4b68780abb28f7e1f74b47",
+    "observed_crosswalks.json": "2194f192b3cf580509f259d604492432593160e37b3505975ab8a9820155cbca",
+    "clearance-paths.json.gz": "3d085175bb7011dd080f05e0e72f643e4a793790a31cf18d3a79d62cb4dd86e4",
+    "clearance-car-poses.json.gz": "db56f69fe003af5bebedb295536a066089484514c8caad2931adf1448a56690b"
+  },
+  "tiles": {
+    "-3_1": {
+      "url": "/town-finish/v1/corners/-3_1-f5fa22af63fb.json",
+      "sha256": "f5fa22af63fbfebef7cdad47c312a645c5ffada72e3e8dbde3d2ca67e2b5e19a",
+      "bytes": 27341
+    },
+    "-4_1": {
+      "url": "/town-finish/v1/corners/-4_1-ce8dc10efdca.json",
+      "sha256": "ce8dc10efdcae3dd1f58357d9a47956834e33058fd016f27381711547ad092be",
+      "bytes": 32667
+    },
+    "-12_-8": {
+      "url": "/town-finish/v1/corners/-12_-8-84b9e53666eb.json",
+      "sha256": "84b9e53666eb0c9a18371bbc3280a80df1c83451a2d832f04d5e37c74e114b5d",
+      "bytes": 96852
+    },
+    "-10_1": {
+      "url": "/town-finish/v1/corners/-10_1-2733cd96cda8.json",
+      "sha256": "2733cd96cda8b1585165e8d8f91cf47dd3926b49aed13872bd5844b4ca7366b4",
+      "bytes": 32585
+    },
+    "-11_0": {
+      "url": "/town-finish/v1/corners/-11_0-a6f9ce1c0863.json",
+      "sha256": "a6f9ce1c0863926c7fb98f61c35ee2655bd0e3b51858c5adc9e97ed6c0208697",
+      "bytes": 52109
+    },
+    "-10_0": {
+      "url": "/town-finish/v1/corners/-10_0-9c7caa6e3237.json",
+      "sha256": "9c7caa6e323783956b3bdafd9f657450c049895863cfaff8176e8a38d5ee83fb",
+      "bytes": 20713
+    },
+    "-12_-4": {
+      "url": "/town-finish/v1/corners/-12_-4-780bb1e8fffb.json",
+      "sha256": "780bb1e8fffb53bebb0ea0baa047767b3bb0e255a6e281e7fda93d3b3549bff5",
+      "bytes": 133860
+    },
+    "-6_2": {
+      "url": "/town-finish/v1/corners/-6_2-96807dc5ccb1.json",
+      "sha256": "96807dc5ccb1ee644b11dfd34d78789f0a95c6303cdd28f582043d4003dfc196",
+      "bytes": 46198
+    },
+    "-9_-6": {
+      "url": "/town-finish/v1/corners/-9_-6-86ea1dbe64c4.json",
+      "sha256": "86ea1dbe64c470e6ec8e1da8bd1ee1753219e7355278cd3eeddd4b7933751729",
+      "bytes": 10644
+    },
+    "-10_-6": {
+      "url": "/town-finish/v1/corners/-10_-6-b38ea623f6c4.json",
+      "sha256": "b38ea623f6c4bf36cab257b6590c6cb043ac08dd088dffd8b3c9e2b883cbe3d0",
+      "bytes": 28325
+    },
+    "-7_-2": {
+      "url": "/town-finish/v1/corners/-7_-2-54286f326058.json",
+      "sha256": "54286f3260589f28f77862b0746bddf05c0bee4f88aeb5248b76d96430cfdf25",
+      "bytes": 27407
+    },
+    "-9_-3": {
+      "url": "/town-finish/v1/corners/-9_-3-693a214a9b58.json",
+      "sha256": "693a214a9b5897da9b6dfa8e8656a8c29c72a3bd756a4f4a7cdaad4fbc2e2793",
+      "bytes": 37568
+    },
+    "-6_-7": {
+      "url": "/town-finish/v1/corners/-6_-7-96d9deecd023.json",
+      "sha256": "96d9deecd023690028431cccff8643a84ba1febd436f04333770a2f4e3133590",
+      "bytes": 10073
+    },
+    "-7_5": {
+      "url": "/town-finish/v1/corners/-7_5-809591c143b5.json",
+      "sha256": "809591c143b596b634cfd55290f5615a274c5a072cecaefcf7532925468c1b0e",
+      "bytes": 6749
+    },
+    "-6_3": {
+      "url": "/town-finish/v1/corners/-6_3-4bfae84508e3.json",
+      "sha256": "4bfae84508e3fdc898a6aedca29d0c8ee321d6d503570fa819b2cf0954e11ecf",
+      "bytes": 16955
+    },
+    "-11_-1": {
+      "url": "/town-finish/v1/corners/-11_-1-488f01d8f751.json",
+      "sha256": "488f01d8f7517a44101df7ce01f7f3a253541f84a2a64a595d5b4290eda99a33",
+      "bytes": 73894
+    },
+    "-10_-2": {
+      "url": "/town-finish/v1/corners/-10_-2-354322fd12e7.json",
+      "sha256": "354322fd12e7fb6d432efa488d0dfe15bc3e13c0eccbc862c0e26b1f572cc399",
+      "bytes": 140762
+    },
+    "-10_-1": {
+      "url": "/town-finish/v1/corners/-10_-1-956add6222eb.json",
+      "sha256": "956add6222ebb7730f4d3e2c96677922cb89c6df4abff1e72b510bcb4f970726",
+      "bytes": 3609
+    },
+    "7_-13": {
+      "url": "/town-finish/v1/corners/7_-13-8433da0767aa.json",
+      "sha256": "8433da0767aa5e259aac910cf688bd2deec0fed249a9bb2226d20fe804fd6fa7",
+      "bytes": 40157
+    },
+    "0_0": {
+      "url": "/town-finish/v1/corners/0_0-6d110df04636.json",
+      "sha256": "6d110df046365efd91a35a1320f4efe3b586ffa346227d2b026489026a5a2555",
+      "bytes": 3308
+    },
+    "-9_-1": {
+      "url": "/town-finish/v1/corners/-9_-1-e51a228c280f.json",
+      "sha256": "e51a228c280fd2d686932edb1c0bd337e49ff5ba727898319c9e6903ccb9b9e2",
+      "bytes": 80407
+    },
+    "-9_-8": {
+      "url": "/town-finish/v1/corners/-9_-8-0e26d7c8efa7.json",
+      "sha256": "0e26d7c8efa749ea2c74cf7e88bb967db0d3ed4d33051c2606db7da4d7d434a1",
+      "bytes": 2831
+    },
+    "-9_2": {
+      "url": "/town-finish/v1/corners/-9_2-c8f846ac0796.json",
+      "sha256": "c8f846ac0796710cf76ead9c4901607064692bfe804532cd95be30daf487cb06",
+      "bytes": 11004
+    },
+    "-12_-10": {
+      "url": "/town-finish/v1/corners/-12_-10-0677644f49f3.json",
+      "sha256": "0677644f49f31cf9f3e4535731a9ae4f32d89cb733ad1a45ec502146b2ade5e2",
+      "bytes": 15059
+    },
+    "-12_-5": {
+      "url": "/town-finish/v1/corners/-12_-5-073597a171f6.json",
+      "sha256": "073597a171f689e0cab8ef5eeaddf784394fd45fa6c55e19eace0af78fe7c905",
+      "bytes": 156863
+    },
+    "-9_-4": {
+      "url": "/town-finish/v1/corners/-9_-4-4a3f2fada130.json",
+      "sha256": "4a3f2fada1306fd804ffb81093e07a6c039ad30b2bab98085b5d526a32af5c60",
+      "bytes": 31763
+    },
+    "-10_-3": {
+      "url": "/town-finish/v1/corners/-10_-3-3216a860ce4f.json",
+      "sha256": "3216a860ce4faba52d7447213841bd81c4561fb66287aa4c9e597c3ece0d85a9",
+      "bytes": 87736
+    },
+    "-11_1": {
+      "url": "/town-finish/v1/corners/-11_1-4f68d1daa15b.json",
+      "sha256": "4f68d1daa15bf48a6d91aad749d98576cea1fe0965945b707db8bbdcecbe7819",
+      "bytes": 16418
+    },
+    "-9_-5": {
+      "url": "/town-finish/v1/corners/-9_-5-422c85fabbbd.json",
+      "sha256": "422c85fabbbd9cdca3ad172bab4829295e1faf1bb0e26b32a8a61c6997157c6e",
+      "bytes": 38967
+    },
+    "-13_-5": {
+      "url": "/town-finish/v1/corners/-13_-5-dbc41d555ea6.json",
+      "sha256": "dbc41d555ea6fd4756efee404cfd17ac2627d6f22d68a5a964b8fcaac227cf57",
+      "bytes": 169544
+    },
+    "-13_-4": {
+      "url": "/town-finish/v1/corners/-13_-4-5f0cd5961835.json",
+      "sha256": "5f0cd5961835536e16a5104f2eee36bc6d09629e51523539e867ea42f5a9923a",
+      "bytes": 84506
+    },
+    "-8_-1": {
+      "url": "/town-finish/v1/corners/-8_-1-75be3d5251cb.json",
+      "sha256": "75be3d5251cb4d2795608a1aea27615f82fc4a471f154bbf5ac47aab7babd773",
+      "bytes": 59666
+    },
+    "-6_1": {
+      "url": "/town-finish/v1/corners/-6_1-87267ae21cdd.json",
+      "sha256": "87267ae21cdd27526a13bbf6fd43668aa63b674d283a16548110b8888d80f3e3",
+      "bytes": 17079
+    },
+    "-7_-6": {
+      "url": "/town-finish/v1/corners/-7_-6-e3ba205f7ab1.json",
+      "sha256": "e3ba205f7ab194c658526c533d586f6b9cf4273fbdb1727c95482f63355bf6ad",
+      "bytes": 32943
+    },
+    "-12_-9": {
+      "url": "/town-finish/v1/corners/-12_-9-3b5380328572.json",
+      "sha256": "3b538032857257c80cbbb16b121958422926e669b4de68db73fd136832867bd5",
+      "bytes": 47304
+    },
+    "-11_-8": {
+      "url": "/town-finish/v1/corners/-11_-8-dc24e5ce57db.json",
+      "sha256": "dc24e5ce57db6b799dc66813351a525e101412dcfedd15a19bf2335afee2a548",
+      "bytes": 26416
+    },
+    "-12_-7": {
+      "url": "/town-finish/v1/corners/-12_-7-73f8f9a508be.json",
+      "sha256": "73f8f9a508be34db2e8d6a750cbcdcd45ac1a7b3bb7609cf9fde8f7f7b7ff257",
+      "bytes": 24679
+    },
+    "-8_-4": {
+      "url": "/town-finish/v1/corners/-8_-4-7e73807ff5fa.json",
+      "sha256": "7e73807ff5fa8a86a1262561b762d95a5af2cd4350044d74334b05b1c6910b77",
+      "bytes": 17546
+    },
+    "-13_-8": {
+      "url": "/town-finish/v1/corners/-13_-8-add20963a390.json",
+      "sha256": "add20963a3904f46d7fd1dccdadcb5b4218d1dcfb40dc722e8ba54874d7c9689",
+      "bytes": 15267
+    },
+    "-13_-7": {
+      "url": "/town-finish/v1/corners/-13_-7-3fe4fb38ada2.json",
+      "sha256": "3fe4fb38ada25381e6eac62175322dbdfd559f416c3ea59d60241acc5a38fa5d",
+      "bytes": 47960
+    },
+    "-7_-5": {
+      "url": "/town-finish/v1/corners/-7_-5-122b4c200c2f.json",
+      "sha256": "122b4c200c2f37c81e25db829ab22fea4e3e208de2026c012dabbbf10a44d32d",
+      "bytes": 69631
+    },
+    "-7_-4": {
+      "url": "/town-finish/v1/corners/-7_-4-7920466d8185.json",
+      "sha256": "7920466d818502b768a740983be198d5d3f795ca144b400f7fad24751c3ec312",
+      "bytes": 11386
+    },
+    "-11_-7": {
+      "url": "/town-finish/v1/corners/-11_-7-6d58313783fe.json",
+      "sha256": "6d58313783fe3324b93ae67244897b2139d6c39c26fdfa3c6606ce03379320eb",
+      "bytes": 30785
+    },
+    "-8_-3": {
+      "url": "/town-finish/v1/corners/-8_-3-bab3eee69df4.json",
+      "sha256": "bab3eee69df473ca0202391d4cfe7f3a5e987d962920434f85575095ade0a32e",
+      "bytes": 2357
+    },
+    "-6_-3": {
+      "url": "/town-finish/v1/corners/-6_-3-007afff6f3dd.json",
+      "sha256": "007afff6f3dd50073dea7a0dec5558df6799bd71f53c8ae48a45024bb5b7c1bf",
+      "bytes": 16282
+    },
+    "-11_-6": {
+      "url": "/town-finish/v1/corners/-11_-6-78616c3eadd9.json",
+      "sha256": "78616c3eadd93216441e8c933ecfd2aa399528710645cb32e5a98ba7b040c018",
+      "bytes": 58935
+    },
+    "-12_-6": {
+      "url": "/town-finish/v1/corners/-12_-6-c86c326999cd.json",
+      "sha256": "c86c326999cd41014ee7cc354e76edacefc1906dcaabf64e21c78e035b430dd2",
+      "bytes": 7062
+    },
+    "-13_-6": {
+      "url": "/town-finish/v1/corners/-13_-6-7c99b81b89a1.json",
+      "sha256": "7c99b81b89a143e2e42b9b5d8605f0c0f2b63f4f53ffaa94a398ca59117be35f",
+      "bytes": 34191
+    },
+    "-11_-5": {
+      "url": "/town-finish/v1/corners/-11_-5-b9aa69e15580.json",
+      "sha256": "b9aa69e155805f533fd2c44fa10ce2101cffa859c1c51a663a68eb7b3651e7e6",
+      "bytes": 40803
+    },
+    "7_-12": {
+      "url": "/town-finish/v1/corners/7_-12-7a1156523889.json",
+      "sha256": "7a11565238898443be13a48361bd3432e5c3398fecd049f9fa5d6dcb41a71d6f",
+      "bytes": 20442
+    },
+    "-14_-4": {
+      "url": "/town-finish/v1/corners/-14_-4-6ba6a29e59f9.json",
+      "sha256": "6ba6a29e59f9524d9ea9ea7c51ee0574e470dd548b1a6307e4a605abe3b7d9f6",
+      "bytes": 122783
+    },
+    "-11_-2": {
+      "url": "/town-finish/v1/corners/-11_-2-655d1ee1b82e.json",
+      "sha256": "655d1ee1b82ed8881e778e883402835e6fc59389c945983b023970d72ebfc791",
+      "bytes": 47130
+    },
+    "8_-7": {
+      "url": "/town-finish/v1/corners/8_-7-eaf51c50f733.json",
+      "sha256": "eaf51c50f73373c93569a8f6fa91a2c1b68ab0a58e9e1e441d751ab64b67e3ae",
+      "bytes": 14439
+    },
+    "7_-7": {
+      "url": "/town-finish/v1/corners/7_-7-8ebbf3728781.json",
+      "sha256": "8ebbf3728781c83385d943885cf53cf5eaf185d2f53810303c29f29b78701d7a",
+      "bytes": 3880
+    },
+    "-12_-11": {
+      "url": "/town-finish/v1/corners/-12_-11-94033fa00df8.json",
+      "sha256": "94033fa00df8189899f367846b43ba582a7ee6c22e4e02993ba8a1e4d984c9d7",
+      "bytes": 11955
+    },
+    "-8_2": {
+      "url": "/town-finish/v1/corners/-8_2-0e37e2801f83.json",
+      "sha256": "0e37e2801f83ca598bd9c1c1bec59ba425dc750787afaebae4cec71d1078ecc2",
+      "bytes": 6028
+    },
+    "-9_0": {
+      "url": "/town-finish/v1/corners/-9_0-10de780a7c25.json",
+      "sha256": "10de780a7c257d12a29023051a8a3c22a5f88a20d96eea5fc39d3f0dff252a4e",
+      "bytes": 40109
+    },
+    "-6_0": {
+      "url": "/town-finish/v1/corners/-6_0-e5c07126e309.json",
+      "sha256": "e5c07126e30978be8df6b513f98d380b46c49e43a7b4fc77173c2ccacf2354c4",
+      "bytes": 24320
+    },
+    "-10_-4": {
+      "url": "/town-finish/v1/corners/-10_-4-11738325ed9a.json",
+      "sha256": "11738325ed9a8764bb03463f31c7508ee981dbcd09b0623c9d27c6eb8c99093c",
+      "bytes": 47826
+    },
+    "-11_-4": {
+      "url": "/town-finish/v1/corners/-11_-4-ba7a3fadedeb.json",
+      "sha256": "ba7a3fadedebf7ec296f6d134b123094f92dcd9aab8d7811d2d2c467dc6b3ef2",
+      "bytes": 55374
+    },
+    "-11_-13": {
+      "url": "/town-finish/v1/corners/-11_-13-a6e4b878b2e2.json",
+      "sha256": "a6e4b878b2e2f22633494639abcd8bc7778a1c9dbdab5693563bbc3c91dfbf62",
+      "bytes": 6677
+    },
+    "-13_-10": {
+      "url": "/town-finish/v1/corners/-13_-10-8e9114fe17ba.json",
+      "sha256": "8e9114fe17bad4c7351c2f594b33fe8033b9aecadd580fe54ed02ac0df5b08d1",
+      "bytes": 6840
+    },
+    "-13_-9": {
+      "url": "/town-finish/v1/corners/-13_-9-271dc6e1a8bc.json",
+      "sha256": "271dc6e1a8bc881e774d5fcf24146e1c94cf99d1a7b7dc68f383a838f8fca9e8",
+      "bytes": 11456
+    },
+    "-7_0": {
+      "url": "/town-finish/v1/corners/-7_0-47a7d9e652c6.json",
+      "sha256": "47a7d9e652c610033ae7d3dafdc6a8378b71b861e35fec28cc88604956b5f17f",
+      "bytes": 13343
+    },
+    "-8_0": {
+      "url": "/town-finish/v1/corners/-8_0-7daa93f82b83.json",
+      "sha256": "7daa93f82b8353926dc680abbc5c8488e7318fc8e9d7ab8a7f5977ca6547b6f7",
+      "bytes": 3227
+    },
+    "-10_-5": {
+      "url": "/town-finish/v1/corners/-10_-5-0cf53b1bc2e3.json",
+      "sha256": "0cf53b1bc2e333ae48e98b2e13072ba6dc845f81bfbd677d8db58ff33987252c",
+      "bytes": 39101
+    },
+    "-11_-12": {
+      "url": "/town-finish/v1/corners/-11_-12-6eb4971bc66b.json",
+      "sha256": "6eb4971bc66b429bd75f04763f6889ef5964cedb9daaa86642e4c3531d3577af",
+      "bytes": 8905
+    },
+    "8_-14": {
+      "url": "/town-finish/v1/corners/8_-14-cff456df4423.json",
+      "sha256": "cff456df4423d4bed787922484c1912330b97fa40c445c87cee5c9ceb720e6a9",
+      "bytes": 20447
+    },
+    "-6_-2": {
+      "url": "/town-finish/v1/corners/-6_-2-771b3020d210.json",
+      "sha256": "771b3020d2107561b6425c19d2f8c544196b6c0093b5d72893335eb4880005ac",
+      "bytes": 23715
+    },
+    "-9_-2": {
+      "url": "/town-finish/v1/corners/-9_-2-e9556a5dcf88.json",
+      "sha256": "e9556a5dcf88e99e35e9743373349f00d3b52931cc8b646b18c5dad9b0d06aa9",
+      "bytes": 3951
+    },
+    "-11_-3": {
+      "url": "/town-finish/v1/corners/-11_-3-57706c73a324.json",
+      "sha256": "57706c73a3246bcb0954768ddd6b1424e470b1572b5df83b9ee24911618ec27f",
+      "bytes": 31248
+    },
+    "-8_-5": {
+      "url": "/town-finish/v1/corners/-8_-5-9c9361121561.json",
+      "sha256": "9c936112156149faa8be5196ded80688b05c4c7679e2b62eed76593eec443d82",
+      "bytes": 36982
+    },
+    "-6_-6": {
+      "url": "/town-finish/v1/corners/-6_-6-9d22eca44353.json",
+      "sha256": "9d22eca44353b53e9c246dc037820dfdcc63e92f81904312fe894b460b29bde4",
+      "bytes": 42011
+    },
+    "-9_1": {
+      "url": "/town-finish/v1/corners/-9_1-3f53d3250ef8.json",
+      "sha256": "3f53d3250ef86ac52933fb0ffa144b5cfa2a17eecbd3f45b45236c93a723183c",
+      "bytes": 6590
+    },
+    "-6_-1": {
+      "url": "/town-finish/v1/corners/-6_-1-753a67ec3870.json",
+      "sha256": "753a67ec38701532153b75695e15345e03253901c772c93a63877972e5ddfe75",
+      "bytes": 12355
+    },
+    "-8_-2": {
+      "url": "/town-finish/v1/corners/-8_-2-8d7d4b150b80.json",
+      "sha256": "8d7d4b150b80a7d05d3aedf8cc5ce89edc841eaac95821f35c10abb5227d615c",
+      "bytes": 25321
+    },
+    "13_-13": {
+      "url": "/town-finish/v1/corners/13_-13-0c8d7d414e10.json",
+      "sha256": "0c8d7d414e102f8aaa5d743ad6ec99ec827bd82b923db92d08f6d9d55171f173",
+      "bytes": 2382
+    },
+    "8_-15": {
+      "url": "/town-finish/v1/corners/8_-15-305ca4a518c0.json",
+      "sha256": "305ca4a518c07b8d794b0f0c4ffe3c949f608cab820a7ed465d664c56bad2b30",
+      "bytes": 8595
+    },
+    "-5_-8": {
+      "url": "/town-finish/v1/corners/-5_-8-3cbec8abf5f4.json",
+      "sha256": "3cbec8abf5f4fc690f6ad18f9182925980557e0a34b03bc4d6d3b9016cdbe4be",
+      "bytes": 6767
+    },
+    "-11_2": {
+      "url": "/town-finish/v1/corners/-11_2-1b61631cb579.json",
+      "sha256": "1b61631cb579dfe5557a9d4749ca7a74d1eb93c09a4c2e1cd545b5224f14fe52",
+      "bytes": 17106
+    },
+    "-6_4": {
+      "url": "/town-finish/v1/corners/-6_4-c8d5b70d0bcf.json",
+      "sha256": "c8d5b70d0bcfd191fce7e4578acf2c84864ca134cfcd58d95d89f345fa47651f",
+      "bytes": 7120
+    },
+    "-8_7": {
+      "url": "/town-finish/v1/corners/-8_7-468209242a68.json",
+      "sha256": "468209242a6884a6254c9e1750fbf3595ba152a017810e04f86c1709254e1484",
+      "bytes": 7144
+    },
+    "-4_-9": {
+      "url": "/town-finish/v1/corners/-4_-9-2e216ed7a60d.json",
+      "sha256": "2e216ed7a60d777e16c6cc272a9fd8c7f1be087fc4ab850e3616dedcdd002d17",
+      "bytes": 9364
+    },
+    "-5_-9": {
+      "url": "/town-finish/v1/corners/-5_-9-1f23414483f0.json",
+      "sha256": "1f23414483f04390c38a9b1a368177af5ff331f65197f6d6d8429c44ccc6814d",
+      "bytes": 9090
+    },
+    "-5_1": {
+      "url": "/town-finish/v1/corners/-5_1-408317816527.json",
+      "sha256": "408317816527462a3c65e12a4419a14e04cc46d7856d23ae989b1186b48d1cfc",
+      "bytes": 11819
+    },
+    "-4_-10": {
+      "url": "/town-finish/v1/corners/-4_-10-ecd2b8c50496.json",
+      "sha256": "ecd2b8c504966ceb3428388065207bb98655f0548a6952c2c467620844d845c6",
+      "bytes": 2996
+    }
+  }
+}

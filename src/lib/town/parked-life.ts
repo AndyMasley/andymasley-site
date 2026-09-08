@@ -1,0 +1,74 @@
+import * as THREE from 'three';
+import template from '../../../data/derived/town/parked-vehicle-template.json';
+import clearance from '../../../data/derived/town/parked-clearance.json';
+import type { ParkingBay } from './parking-finish';
+import type { V3 } from './contracts';
+
+type XY = readonly number[];
+export interface ParkedPlacement { center: number[]; corners: number[][]; forward: number[]; grade: number[]; color: string; scale: number }
+const palette = ['#ecebe3', '#aeb7b8', '#56666b', '#8e2e2b', '#263e57', '#d0c3a4', '#333739', '#647261'];
+function hash(value: string): number { let n = 2166136261; for (let i = 0; i < value.length; i++) n = Math.imul(n ^ value.charCodeAt(i), 16777619) >>> 0; return n; }
+
+/** Occupancy is deliberately sparse and stable. It is an authored summer
+ * scene, never a claim about a real person's car or a measured parking count. */
+export function parkedPlacements(bays: readonly ParkingBay[], height: (p: XY) => number | undefined, excluded: readonly THREE.Box3[] = []): ParkedPlacement[] {
+  const selected: ParkedPlacement[] = [];
+  const ordered = bays.map(bay => ({ bay, value: hash(bay.lotId + ':' + bay.corners.map(p => p.map(v => v.toFixed(2)).join(',')).join('|')) })).sort((a, b) => a.value - b.value);
+  for (const { bay, value } of ordered) {
+    if (selected.length >= 14) break;
+    if (value % 100 >= 24) continue;
+    const center = bay.corners.reduce((n, p) => [n[0] + p[0] / 4, n[1] + p[1] / 4], [0, 0]);
+    if (clearance.bays.some(b => b.lotId === bay.lotId && Math.hypot(b.center[0] - center[0], b.center[1] - center[1]) < .02)) continue;
+    if (excluded.some(b => center[0] > b.min.x - 3 && center[0] < b.max.x + 3 && center[1] > b.min.z - 3 && center[1] < b.max.z + 3)) continue;
+    const dx = bay.corners[3][0] - bay.corners[0][0], dy = bay.corners[3][1] - bay.corners[0][1], length = Math.hypot(dx, dy);
+    const forward = [dx / length, dy / length], right = [forward[1], -forward[0]], scale = .94 + (value % 7) * .009;
+    const corners = [[-2.276, -1.14], [2.276, -1.14], [2.276, 1.14], [-2.276, 1.14]].map(([a, b]) => [center[0] + (forward[0] * a + right[0] * b) * scale, center[1] + (forward[1] * a + right[1] * b) * scale]);
+    const contacts = [[-1.325, -.814], [1.325, -.814], [1.325, .814], [-1.325, .814]].map(([a, b]) => [center[0] + (forward[0] * a + right[0] * b) * scale, center[1] + (forward[1] * a + right[1] * b) * scale]);
+    const levels = contacts.map(height);
+    if (levels.some(v => v === undefined || !Number.isFinite(v))) continue;
+    const h = levels as number[], mean = h.reduce((a, b) => a + b, 0) / 4;
+    const along = ((h[1] + h[2]) - (h[0] + h[3])) / (4 * 1.325 * scale), across = ((h[2] + h[3]) - (h[0] + h[1])) / (4 * .814 * scale);
+    if (Math.hypot(along, across) > .12 || Math.abs((h[0] + h[2]) - (h[1] + h[3])) > .08) continue;
+    if (corners.some(p => { const z = height(p); return z === undefined || z > mean + .25; })) continue;
+    selected.push({ center: [...center, mean + .016], corners, forward, grade: [along, across], color: palette[value % palette.length], scale });
+  }
+  return selected;
+}
+
+function decode(value: string): Uint8Array {
+  const raw = atob(value), array = new Uint8Array(raw.length);
+  for (let i = 0; i < raw.length; i++) array[i] = raw.charCodeAt(i);
+  return array;
+}
+
+/** Seven shared material draws per tile, independent of vehicle count. */
+export function addParkedLife(group: THREE.Group, origin: V3, level: number, placements: readonly ParkedPlacement[]): void {
+  if (!placements.length || group.userData.parkedLife) return;
+  const matrices = placements.map(p => {
+    const f = new THREE.Vector3(p.forward[0], p.grade[0], -p.forward[1]).normalize();
+    const r = new THREE.Vector3(p.forward[1], p.grade[1], p.forward[0]).normalize();
+    const up = new THREE.Vector3().crossVectors(r, f).normalize();
+    const right = new THREE.Vector3().crossVectors(f, up).normalize();
+    const matrix = new THREE.Matrix4().makeBasis(right, up, f.negate());
+    matrix.scale(new THREE.Vector3(p.scale, p.scale, p.scale)); matrix.setPosition(p.center[0] - origin[0], p.center[2] - origin[1], -p.center[1] - origin[2]);
+    return matrix;
+  });
+  let triangles = 0, draws = 0;
+  for (const part of template.parts) {
+    if (level >= 2 && /aluminum|lamps|soft black/.test(part.name)) continue;
+    const packed = decode(part.positions), normals = decode(part.normals), indices = decode(part.indices);
+    const source = new Int16Array(packed.buffer), nn = new Int8Array(normals.buffer);
+    const positions = Float32Array.from(source, v => v / template.positionScale), normal = Float32Array.from(nn, v => v / template.normalScale);
+    const geometry = new THREE.BufferGeometry(); geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3)); geometry.setAttribute('normal', new THREE.BufferAttribute(normal, 3)); geometry.setIndex(new THREE.BufferAttribute(new Uint16Array(indices.buffer), 1));
+    geometry.normalizeNormals(); geometry.computeBoundingBox(); geometry.computeBoundingSphere();
+    const painted = /deep teal/.test(part.name), glass = /glass/.test(part.name);
+    const material = new THREE.MeshStandardMaterial({ color: painted ? 0xffffff : part.color, roughness: glass ? .2 : part.roughness, metalness: part.metalness, envMapIntensity: glass ? .7 : .45 });
+    material.name = painted ? 'Parked | graphite' : part.name;
+    const mesh = new THREE.InstancedMesh(geometry, material, placements.length); mesh.name = 'Finished parking | parked touring cars';
+    mesh.castShadow = true; mesh.receiveShadow = true; mesh.userData.townCrafted = true; mesh.userData.category = 'cars'; mesh.userData.appearanceBasis = template.basis;
+    matrices.forEach((m, i) => { mesh.setMatrixAt(i, m); if (painted) mesh.setColorAt(i, new THREE.Color(placements[i].color)); });
+    mesh.instanceMatrix.needsUpdate = true; if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true; mesh.computeBoundingBox(); mesh.computeBoundingSphere(); group.add(mesh);
+    triangles += indices.byteLength / 2 / 3 * placements.length; draws++;
+  }
+  group.userData.parkedLife = { cars: placements.length, draws, triangles, placements };
+}

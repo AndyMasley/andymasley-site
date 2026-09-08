@@ -53,12 +53,26 @@ export function chooseLod(tile: TownTile, distance: number, low: boolean): numbe
 
 export function validateManifest(value: unknown): asserts value is WorldManifest {
   const m = value as WorldManifest;
-  if (!m || m.version !== 1 || m.coordinates?.axes !== 'Y_UP' || !Array.isArray(m.tiles) || !m.tiles.length || !m.fallback?.url || !m.car?.url) {
+  const vector = (v: unknown): v is number[] => Array.isArray(v) && v.length === 3 && v.every(Number.isFinite);
+  const asset = (a: unknown): a is AssetRef => {
+    if (!a || typeof a !== 'object') return false;
+    const r = a as AssetRef;
+    return typeof r.url === 'string' && !!r.url && !/^(?:javascript|data):/i.test(r.url) && !r.url.split('/').includes('..') &&
+      Number.isSafeInteger(r.bytes) && r.bytes >= 0 && (r.sha256 === undefined || /^[a-f0-9]{64}$/.test(r.sha256));
+  };
+  if (!m || m.version !== 1 || m.coordinates?.axes !== 'Y_UP' || !Array.isArray(m.tiles) || !m.tiles.length ||
+      !asset(m.fallback) || !asset(m.car) || !Array.isArray(m.trees?.prototypes) || !m.trees.prototypes.every(asset) ||
+      (m.tileSizeM !== undefined && (!Number.isFinite(m.tileSizeM) || m.tileSizeM <= 0))) {
     throw new Error('This town release has an unsupported asset manifest. Please reload the page.');
   }
   const ids = new Set<string>();
   for (const tile of m.tiles) {
-    if (ids.has(tile.id) || (!tile.lods?.length && !tile.treeFile) || !tile.origin?.every(Number.isFinite) || !tile.bounds?.min?.every(Number.isFinite) || !tile.bounds?.max?.every(Number.isFinite)) {
+    if (!tile || typeof tile.id !== 'string' || !tile.id || ids.has(tile.id) || !Array.isArray(tile.lods) || (!tile.lods.length && !tile.treeFile) ||
+        !vector(tile.origin) || !vector(tile.bounds?.min) || !vector(tile.bounds?.max) || tile.bounds.min.some((n, i) => n > tile.bounds.max[i]) ||
+        new Set(tile.lods.map(lod => lod?.level)).size !== tile.lods.length ||
+        !tile.lods.every(lod => asset(lod) && Number.isInteger(lod.level) && lod.level >= 0 && lod.level <= 2 &&
+          (lod.geometricErrorM === undefined || Number.isFinite(lod.geometricErrorM) && lod.geometricErrorM >= 0)) ||
+        (tile.treeFile !== undefined && (!asset(tile.treeFile) || !Number.isSafeInteger(tile.treeFile.count) || tile.treeFile.count < 0))) {
       throw new Error('The town scenery manifest contains an invalid or duplicate section.');
     }
     ids.add(tile.id);

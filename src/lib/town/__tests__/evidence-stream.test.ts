@@ -105,6 +105,17 @@ describe('optional per-tile building evidence streaming',()=>{
     const stream=streamWith(read,20),pending=stream.tile(both,signal());await flush();await vi.advanceTimersByTimeAsync(25);
     const result=await pending;expect(result.buildings).toHaveLength(homes[both].count);expect(result.roofs).toEqual([]);expect(result.failures).toBe(1);
   });
+  it('starts its evidence grace only after base scenery arrives and never revives after disposal',async()=>{
+    vi.useFakeTimers();let baseDone!:()=>void,homeDone!:(value:unknown)=>void;
+    const base=new Promise<void>(resolve=>{baseDone=resolve;});
+    const stream=streamWith(url=>new Promise(resolve=>{homeDone=()=>resolve(payload(url));}),100);
+    const result=stream.tile(onlyHome,signal(),base);
+    await vi.advanceTimersByTimeAsync(9000);baseDone();await vi.advanceTimersByTimeAsync(80);homeDone(undefined);
+    expect((await result).failures).toBe(0);
+    const stalled=streamWith(()=>new Promise(()=>{}),10000),pending=stalled.tile(onlyHome,signal());
+    const rejected=expect(pending).rejects.toMatchObject({name:'AbortError'});stalled.dispose();await rejected;
+    expect(stalled.resources().entries).toBe(0);
+  });
   it('evicts least-recently-used successful payloads and clears its cache on dispose',async()=>{
     const read=vi.fn(async(url:string)=>payload(url)),stream=streamWith(read),ids=Object.keys(homes).slice(0,65);
     for(const id of ids.slice(0,64))await stream.tile(id,signal());const before=read.mock.calls.length;
@@ -112,6 +123,6 @@ describe('optional per-tile building evidence streaming',()=>{
     await stream.tile(ids[64],signal());const afterNew=read.mock.calls.length;
     await stream.tile(ids[0],signal());expect(read).toHaveBeenCalledTimes(afterNew);
     await stream.tile(ids[1],signal());expect(read.mock.calls.length).toBeGreaterThan(afterNew);
-    stream.dispose();const afterDispose=read.mock.calls.length;await stream.tile(ids[0],signal());expect(read.mock.calls.length).toBeGreaterThan(afterDispose);
+    stream.dispose();const afterDispose=read.mock.calls.length;await expect(stream.tile(ids[0],signal())).rejects.toMatchObject({name:'AbortError'});expect(read).toHaveBeenCalledTimes(afterDispose);
   });
 });

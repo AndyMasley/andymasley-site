@@ -10,6 +10,105 @@ const group = (material: THREE.Material) => { const result = new THREE.Group(); 
 const settle = async () => { for (let i = 0; i < 8; i++) await Promise.resolve(); };
 
 describe('Town streaming and resource ownership', () => {
+  it.each([false,true])('bounds every registered detail cache under the mobile=%s profile', mobile => {
+    const world = new TownWorld(manifest(), 'https://example.test/manifest.json', () => {});
+    try {
+      world.setQuality('auto',mobile);
+      const { retrySources, sourceImages, ...details } = world.streamingResources().caches;
+      const scale=mobile?.5:1,mib=1024*1024;
+      expect(Object.values(details).every(cache=>Number.isFinite(cache.budgetBytes)&&cache.budgetBytes>0)).toBe(true);
+      expect(Object.values(details).reduce((sum,cache)=>sum+cache.budgetBytes,0)).toBeLessThanOrEqual(64.5*mib*scale);
+      expect(retrySources.budgetBytes).toBe(24*mib*scale);
+      expect(sourceImages.budgetBytes).toBe(8*mib*scale);
+    } finally { world.dispose(); }
+  });
+  it.each([false, true])('starts source texture decode while optional detail is pending and retires abort=%s safely', async abort => {
+    const world = new TownWorld(manifest(), 'https://example.test/manifest.json', () => {}), scene = group(new THREE.MeshStandardMaterial());
+    const geometryDispose = vi.spyOn((scene.children[0] as THREE.Mesh).geometry, 'dispose');
+    const bytes = new ArrayBuffer(20), header = new DataView(bytes); header.setUint32(0, 0x46546c67, true); header.setUint32(4, 2, true); header.setUint32(8, 20, true);
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(bytes)));
+    const result = { scene, scenes: [scene], animations: [], cameras: [], asset: {}, parser: { associations: new Map(), json: {} } };
+    const parse = vi.spyOn(world.loader, 'parseAsync').mockResolvedValue(result as unknown as Awaited<ReturnType<typeof world.loader.parseAsync>>);
+    let finish!: (value: []) => void;
+    const internal = world as unknown as { roadFinish: { tile(...args: unknown[]): Promise<unknown> } };
+    vi.spyOn(internal.roadFinish, 'tile').mockImplementation(() => new Promise(resolve => { finish = resolve; }));
+    const controller = new AbortController(); let settled = false;
+    const loaded = world.loadGlb('a-0.glb', controller.signal, tile('a')).finally(() => { settled = true; });
+    const checked = abort ? expect(loaded).rejects.toMatchObject({ name: 'AbortError' }) : undefined;
+    try {
+      await vi.waitFor(() => expect(parse).toHaveBeenCalledOnce()); expect(settled).toBe(false);
+      if (abort) { controller.abort(); await checked; await settle(); expect(geometryDispose).toHaveBeenCalledOnce(); }
+      else { finish([]); expect(await loaded).toBe(scene); expect(geometryDispose).not.toHaveBeenCalled(); world.releaseGroup(scene); expect(geometryDispose).toHaveBeenCalledOnce(); }
+    } finally { finish?.([]); world.dispose(); vi.unstubAllGlobals(); }
+  });
+  it('atomically retries missing detail on the same street and keeps successful existing detail during a failed retry', async () => {
+    vi.useFakeTimers(); const world = new TownWorld(manifest(), 'https://example.test/manifest.json', () => {});
+    const initial = group(new THREE.MeshStandardMaterial()); initial.userData.optionalDetailMissing = ['terrain'];
+    const worse = group(new THREE.MeshStandardMaterial()); worse.userData.optionalDetailMissing = ['terrain', 'buildings'];
+    const complete = group(new THREE.MeshStandardMaterial()); complete.userData.optionalDetailMissing = [];
+    const load = vi.spyOn(world, 'loadGlb').mockResolvedValueOnce(initial).mockResolvedValueOnce(worse).mockResolvedValueOnce(complete);
+    const release = vi.spyOn(world, 'releaseGroup');
+    try {
+      world.update([125, 0, 125], [125, 0, 125]); await settle(); expect(world.loaded.get('a')?.group).toBe(initial);
+      world.retryAt([125, 0, 125]); await settle(); expect(world.loaded.get('a')?.group).toBe(initial); expect(release).toHaveBeenCalledWith(worse);
+      world.retryAt([125, 0, 125]); await settle(); expect(world.loaded.get('a')?.group).toBe(complete); expect(release).toHaveBeenCalledWith(initial);
+      expect(load).toHaveBeenCalledTimes(3); expect(world.streamingResources().detailRecovered).toBe(1); expect(world.streamingResources().incompleteTiles).toEqual([]);
+    } finally { world.dispose(); vi.useRealTimers(); }
+  });
+  it('indexes nearby solid camera occluders only once and excludes plants, water and transparent planes', async () => {
+    const world = new TownWorld(manifest(), 'https://example.test/manifest.json', () => {}), scene = new THREE.Group();
+    for (const name of ['building walls', 'terrain', 'water', 'tree crown', 'paint']) { const mesh = new THREE.Mesh(new THREE.BoxGeometry(), new THREE.MeshStandardMaterial()); mesh.name = name; scene.add(mesh); }
+    vi.spyOn(world, 'loadGlb').mockResolvedValue(scene);
+    world.update([125, 0, 125], [125, 0, 125]); await settle();
+    expect(world.cameraOccluders([125, 0, 125]).map(mesh => mesh.name)).toEqual(['building walls', 'terrain']);
+    const scan = vi.spyOn(scene, 'traverse'); world.cameraOccluders([125, 0, 125]); expect(scan).not.toHaveBeenCalled();
+    expect(world.cameraOccluders([1000, 0, 1000])).toEqual([]); world.dispose();
+  });
+  it('owns parked instance buffers, exposes only solid car parts, and releases adopted instances once', async () => {
+    const world = new TownWorld(manifest(), 'https://example.test/manifest.json', () => {}), scene = new THREE.Group();
+    const body = new THREE.InstancedMesh(new THREE.BoxGeometry(), new THREE.MeshStandardMaterial(), 2);
+    body.name = 'Finished parking | parked touring cars'; body.material.name = 'Parked | graphite';
+    body.setMatrixAt(0, new THREE.Matrix4().makeTranslation(40, 0, 0)); body.setMatrixAt(1, new THREE.Matrix4().makeTranslation(80, 0, 0));
+    body.setColorAt(0, new THREE.Color('#eeeedd'));
+    const glass = new THREE.InstancedMesh(new THREE.BoxGeometry(), new THREE.MeshStandardMaterial(), 2);
+    glass.name = body.name; glass.material.name = 'Car | glass';
+    scene.add(body, glass); scene.userData.parkedLife = { cars: 2, draws: 2, triangles: 48 };
+    const instanceDispose = vi.spyOn(body, 'dispose'), geometryDispose = vi.spyOn(body.geometry, 'dispose'), materialDispose = vi.spyOn(body.material, 'dispose');
+    const internal = world as unknown as { acquireMaterials(group: THREE.Group): void; geometryBytes(group: THREE.Group): number };
+    internal.acquireMaterials(scene);
+    vi.spyOn(world, 'loadGlb').mockResolvedValue(scene); world.update([125, 0, 125], [125, 0, 125]); await settle();
+    expect(world.cameraOccluders([125, 0, 125])).toEqual([body]); expect(body.boundingBox?.min.x).toBe(39.5); expect(body.boundingBox?.max.x).toBe(80.5);
+    const geometryBytes = (geometry: THREE.BufferGeometry) => Object.values(geometry.attributes).reduce((n, a) => n + a.array.byteLength, 0) + geometry.index!.array.byteLength;
+    const expected = geometryBytes(body.geometry) + geometryBytes(glass.geometry) + body.instanceMatrix.array.byteLength + glass.instanceMatrix.array.byteLength + body.instanceColor!.array.byteLength;
+    expect(internal.geometryBytes(scene)).toBe(expected); expect(world.streamingResources().retainedTileGeometryBytes).toBe(expected);
+    expect(world.finishResources()).toMatchObject({ parkedCars: 2, parkedDraws: 2, parkedTriangles: 48 });
+    world.releaseGroup(scene); world.releaseGroup(scene); world.dispose();
+    expect(instanceDispose).toHaveBeenCalledOnce(); expect(geometryDispose).toHaveBeenCalledOnce(); expect(materialDispose).toHaveBeenCalledOnce();
+  });
+  it('retires late raw instanced scenes exactly once before material adoption', () => {
+    const world = new TownWorld(manifest(), 'https://example.test/manifest.json', () => {}), scene = new THREE.Group();
+    const mesh = new THREE.InstancedMesh(new THREE.BoxGeometry(), new THREE.MeshStandardMaterial(), 1); scene.add(mesh);
+    const instance = vi.spyOn(mesh, 'dispose'), geometry = vi.spyOn(mesh.geometry, 'dispose'), material = vi.spyOn(mesh.material, 'dispose');
+    const internal = world as unknown as { disposeRaw(group: THREE.Group): void }; internal.disposeRaw(scene); internal.disposeRaw(scene); world.releaseGroup(scene);
+    expect(instance).toHaveBeenCalledOnce(); expect(geometry).toHaveBeenCalledOnce(); expect(material).toHaveBeenCalledOnce(); world.dispose();
+  });
+  it('drops disposed prototype references from retained-buffer diagnostics', () => {
+    const world = new TownWorld(manifest(), 'https://example.test/manifest.json', () => {});
+    const prototype = group(new THREE.MeshStandardMaterial());
+    const internal = world as unknown as { prototypes: THREE.Group[]; acquireMaterials(group: THREE.Group): void };
+    internal.prototypes = [prototype]; internal.acquireMaterials(prototype);
+    expect(world.residentResources().estimatedGeometryBytes).toBeGreaterThan(0); world.dispose();
+    expect(internal.prototypes).toEqual([]); expect(world.residentResources()).toEqual({ materialCount: 0, textureCount: 0, estimatedGeometryBytes: 0, estimatedTextureBytes: 0 });
+  });
+  it('closes duplicate and retained GLTF bitmaps at their respective final texture ownership points', () => {
+    const world = new TownWorld(manifest(), 'https://example.test/manifest.json', () => {});
+    const a = { width: 4, height: 4, close: vi.fn() }, b = { width: 4, height: 4, close: vi.fn() };
+    const mapA = new THREE.Texture(a), mapB = new THREE.Texture(b); mapA.userData.sourceUrl = mapB.userData.sourceUrl = 'same.jpg';
+    const first = group(new THREE.MeshStandardMaterial({ map: mapA })), second = group(new THREE.MeshStandardMaterial({ map: mapB }));
+    const internal = world as unknown as { acquireMaterials(group: THREE.Group): void };
+    internal.acquireMaterials(first); internal.acquireMaterials(second); expect(b.close).toHaveBeenCalledOnce(); expect(a.close).not.toHaveBeenCalled();
+    world.releaseGroup(first); expect(a.close).not.toHaveBeenCalled(); world.releaseGroup(second); expect(a.close).toHaveBeenCalledOnce(); world.dispose();
+  });
   it('downloads shared scenery and the owning street together, but waits for shared materials before exposing it', async () => {
     vi.useFakeTimers();
     const m = manifest([tile('owner'), tile('neighbor', 250)]);

@@ -1,0 +1,75 @@
+{
+  "basis": "Actual full source tile assembly supports registered study footprints. Broad manifest bounds include unrelated cross-tile building/road geometry; only these five source terrain owners apply. All three LODs checked.",
+  "tiles": {
+    "-9_-6": [
+      {
+        "level": 0,
+        "sourceSha256": "140a5f6fb2e27b0ce474eb25d2a3f7da7dee806b5c1c3f0bbd98daaecf6073b8"
+      },
+      {
+        "level": 1,
+        "sourceSha256": "28618be735a90768d2e4c86356196daf1b279a034c77ad54fe0c72372ec327d3"
+      },
+      {
+        "level": 2,
+        "sourceSha256": "a9f82069f1f1181fbedb1e8f2064d929b544696d290baab9c3c0518ce972fbb6"
+      }
+    ],
+    "-9_-7": [
+      {
+        "level": 0,
+        "sourceSha256": "5ce8412a5293b4ec826a65415987388fd3c789f84cf431fef325365f2372517f"
+      },
+      {
+        "level": 1,
+        "sourceSha256": "dbf5f31d8e5c8431def161e9d989147fb6bfee5b83b43d610e3d37c811d6692d"
+      },
+      {
+        "level": 2,
+        "sourceSha256": "c143989a9fd51274e000445984d7e0164dc5446405e568350d48da6fa188b2e5"
+      }
+    ],
+    "-9_-8": [
+      {
+        "level": 0,
+        "sourceSha256": "8b60521d6911987668e42bd102e2981a516ba47011e50a638ae66bd34495e543"
+      },
+      {
+        "level": 1,
+        "sourceSha256": "8c54f5a9d4fab3c1895d36829499fd55d4265de503252603c43014e44fc6343b"
+      },
+      {
+        "level": 2,
+        "sourceSha256": "f5042f18c22781373019c32b4157dd998a862ff9c49da4872d1b26eaef31f7d7"
+      }
+    ],
+    "6_-14": [
+      {
+        "level": 0,
+        "sourceSha256": "c93647858b71d2682eeaf37369a7aac1835706984388079919673ab48d9870a4"
+      },
+      {
+        "level": 1,
+        "sourceSha256": "902e6b5d08a6b2e99b6aabc1c3ed975e192830d5e884ec422b7bf3a465a4c257"
+      },
+      {
+        "level": 2,
+        "sourceSha256": "131b453689483c343abad6d95cf33cee22a28ea6da4abac30e1d74d3eaabe6de"
+      }
+    ],
+    "7_-14": [
+      {
+        "level": 0,
+        "sourceSha256": "d1d0e3251f7437e0eb53d73f4092b8cdaa358f3bd24159513e2a4e2898298843"
+      },
+      {
+        "level": 1,
+        "sourceSha256": "34174cc4067aaa76de42d6e1ec9a80d4d13c3b2660a723b26f12fd3b6f36ec68"
+      },
+      {
+        "level": 2,
+        "sourceSha256": "e4975b57ddac9a39bfa1442ead06bf1e4251c7de3f663cc3f66320c9116ab42c"
+      }
+    ]
+  }
+}

@@ -1,0 +1,29 @@
+import {chromium} from '/Users/andy/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright/index.mjs';
+import fs from 'node:fs/promises';import {createHash} from 'node:crypto';
+const out=process.env.TOWN_VISUAL_OUT||'/private/tmp/webster-finished-game/finish-visuals',url=process.env.TOWN_URL||'http://127.0.0.1:4398/town/';await fs.mkdir(out,{recursive:true});
+const defaultViews=[{name:'downtown-post-office',edge:2573,s:5.8385474},{name:'gilles-tiffany-east',edge:2578,s:45.5},{name:'gilles-tiffany-west',edge:2579,s:5.23},{name:'lake-name-plaza-east',edge:2641,s:374.5},{name:'lake-name-plaza-west',edge:2642,s:45.45},{name:'school-entrances',edge:2168,s:18.07260994},{name:'poland-paving',edge:937,s:40.884},{name:'poland-reverse',edge:938,s:20},{name:'lakeside-paving',edge:2783,s:79.215756},{name:'lakeside-curve',edge:2783,s:139},{name:'ranch-drive',edge:2908,s:15.70733206},{name:'beach-approach',edge:1073,s:424},{name:'beach-reverse',edge:1074,s:20},{name:'ranch-shore-road',edge:159,s:63.83}];
+const customViews=process.env.TOWN_VISUAL_VIEWS?JSON.parse(await fs.readFile(process.env.TOWN_VISUAL_VIEWS,'utf8')):null;
+const views=customViews?.views??customViews??defaultViews;
+const report={url,scope:'Normal unchanged player chase camera at exact existing graph poses; additional roof/site diagnostic cameras are explicitly labeled. Paused stills, not a performance or physical-phone benchmark.',views:[],errors:[],startedAt:new Date().toISOString()};let browser;const assetReads=[];
+try{
+ browser=await chromium.launch({headless:true,executablePath:'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'});const page=await browser.newPage({viewport:{width:1440,height:960},serviceWorkers:'block'});
+ report.runtimeAssets=[];page.on('response',response=>{if(/\/_astro\/main\.[^/]+\.js(?:\?|$)/.test(response.url()))assetReads.push(response.body().then(body=>report.runtimeAssets.push({url:response.url(),sha256:createHash('sha256').update(body).digest('hex'),bytes:body.length})));});
+ page.on('pageerror',e=>report.errors.push(e.message));page.on('console',m=>{if(m.type()==='error')report.errors.push(m.text());});page.on('response',r=>{if(r.status()>=400&&/\/town-(assets|evidence|finish|surfaces|transfer)\//.test(r.url()))report.errors.push(`${r.status()} ${r.url()}`);});
+ await page.goto(url,{waitUntil:'domcontentloaded'});await page.locator('[data-town-quality]').selectOption('high');await page.locator('[data-town-play]').click();await page.waitForFunction(()=>window.__webster?.ready,null,{timeout:45000});await page.waitForFunction(()=>window.__webster.world.streamingResources().groundTextures?.previewMaps===0,null,{timeout:30000});
+ await page.evaluate(()=>{const g=window.__webster;const original=g.renderer.render.bind(g.renderer);g.renderer.render=(scene,camera)=>{window.__artScene=scene;const v=window.__artView;if(v){const c=camera.clone();c.position.set(...v.camera);c.lookAt(...v.target);c.updateMatrixWorld(true);original(scene,c);}else original(scene,camera);};});
+ const capture=async view=>{
+  await page.evaluate(async v=>{const g=window.__webster,e=g.engine;e.paused=true;e.speed=0;e.cruise=0;e.phase='ROAD';e.connection=null;e.connectionS=0;e.queue(null);e.edgeId=v.edge;const length=g.graph.paths.get(v.edge)?.length;if(!Number.isFinite(length))throw Error(`Unmapped visual edge ${v.edge}`);const stop=Math.min(length,g.graph.boundaryStops.get(v.edge)??length,g.graph.obstacleStops.get(v.edge)??length);e.s=Math.max(0,Math.min(v.s,stop));window.__visualSourcePose={requestedS:v.s,actualS:e.s,stop,clamped:e.s!==v.s};window.__artView=v.camera?v:null;const p=e.pose()[0];await g.world.prepareAt([p[0],p[2],-p[1]]);const control=document.querySelector('[data-town-comfort]');control.value='steady';control.dispatchEvent(new Event('change',{bubbles:true}));},view);
+  await page.waitForTimeout(1800);await page.waitForFunction(()=>window.__webster.metrics.pending===0,null,{timeout:20000}).catch(()=>{});await page.waitForTimeout(500);
+  const canvas=page.locator('[data-town-canvas]');const image=await canvas.screenshot({path:`${out}/${view.name}.png`});
+  const state=await page.evaluate(()=>{const g=window.__webster;const tiles=[...g.world.loaded].filter(([id,t])=>t.group.userData.assemblyReports).map(([id,t])=>({id,level:t.level,assembly:t.group.userData.assemblyReports,frontages:t.group.userData.craftedFrontages,church:t.group.userData.churchRoofFinish,schoolRoof:t.group.userData.civicRoofFinish,arrivals:t.group.userData.arrivalGrounds,camp:t.group.userData.campStructures}));return{sourcePose:window.__visualSourcePose,groundTextures:g.world.streamingResources().groundTextures,pose:g.engine.pose(),cameraMode:g.cameraMode,metrics:g.metrics,presentation:g.presentation,tiles};});
+  report.views.push({...view,diagnostic:!!view.camera,imageSha256:createHash('sha256').update(image).digest('hex'),...state});console.log(view.name,'captured',state.metrics.pending,'pending');
+ };
+ for(const view of views)await capture(view);
+ if(!customViews){
+ await capture({name:'bathhouse-front-diagnostic',edge:1073,s:424,camera:[-780,52.5,462],target:[-745,50.5,492]});
+ await capture({name:'bathhouse-rear-diagnostic',edge:1073,s:424,camera:[-713,52.5,532],target:[-745,50.5,492]});
+ await capture({name:'princess-and-docks-diagnostic',edge:159,s:63.83,camera:[507,50,722],target:[535,48,774]});
+ await capture({name:'beach-launch-diagnostic',edge:1073,s:424,camera:[-706,53,465],target:[-716,46,477]});
+ }
+ report.status=report.errors.length?'FAIL':'CAPTURED';
+}catch(e){report.error=e.stack;report.status='FAIL';process.exitCode=1;}finally{await Promise.allSettled(assetReads);if(browser)await browser.close();report.finishedAt=new Date().toISOString();await fs.writeFile(`${out}/report.json`,JSON.stringify(report,null,2));console.log(JSON.stringify({status:report.status,views:report.views.length,errors:report.errors,error:report.error}));}

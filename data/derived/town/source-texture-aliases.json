@@ -1,0 +1,56 @@
+{
+  "version": 1,
+  "sourceManifestSha256": "37fbef34bc2a4467997252be75b4c43174a6a7b2d39963614cadd8d787e56105",
+  "directory": "2026-09-37fbef34bc2a",
+  "basis": "Byte-identical source files only; request/cache aliases preserve every original file and decoded image.",
+  "aliases": [
+    {
+      "from": "textures/v2-2f4c280009db46923e1b03db.png",
+      "to": "textures/authored-siding-normal.png",
+      "sha256": "2f4c280009db46923e1b03db2dd83da77c2b66a68019938988a90a9d4e66d9a8",
+      "bytes": 1709
+    },
+    {
+      "from": "textures/v2-3816a9104c24ca470426e86f.jpg",
+      "to": "textures/6ff9f4696b75de41972a80d2.jpg",
+      "sha256": "3816a9104c24ca470426e86f6d6b26975cd6497c032a6521dde33ef0f73b6426",
+      "bytes": 270657
+    },
+    {
+      "from": "textures/v2-6ff9f4696b75de41972a80d2.jpg",
+      "to": "textures/6ff9f4696b75de41972a80d2.jpg",
+      "sha256": "3816a9104c24ca470426e86f6d6b26975cd6497c032a6521dde33ef0f73b6426",
+      "bytes": 270657
+    },
+    {
+      "from": "textures/v2-721fd26749f6859a3e6ff6c3.png",
+      "to": "textures/authored-siding.png",
+      "sha256": "721fd26749f6859a3e6ff6c3c0b6129cb3c0292f018874508b9a23d83064f909",
+      "bytes": 11820
+    },
+    {
+      "from": "textures/v2-bfa2e7594f6699e40533351a.png",
+      "to": "textures/authored-mineral-normal.png",
+      "sha256": "bfa2e7594f6699e40533351a6d8a4171ffe882c8469924b1f42ab55d37b43254",
+      "bytes": 440844
+    },
+    {
+      "from": "textures/v2-c341b5dd46d7523e8348a239.png",
+      "to": "textures/authored-roof-normal.png",
+      "sha256": "c341b5dd46d7523e8348a239e6bf855d08e88160c2af69ff7c1aaf51f2e1b0c2",
+      "bytes": 258020
+    },
+    {
+      "from": "textures/v2-c37ef11bb94a533d1c758c5c.jpg",
+      "to": "textures/c37ef11bb94a533d1c758c5c.jpg",
+      "sha256": "789c432413c0a7301e73a6bd79aa7642713f38f3eaec1b9b3daee7e7afdbb4c7",
+      "bytes": 272677
+    },
+    {
+      "from": "textures/v2-d2dd89e5da7c07c010a9d0a8.png",
+      "to": "textures/authored-roof.png",
+      "sha256": "d2dd89e5da7c07c010a9d0a80723b47128004a74e4ebdbb4774b89b1b5b583ae",
+      "bytes": 129354
+    }
+  ]
+}

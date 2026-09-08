@@ -17,7 +17,8 @@ export function terrainGeometryStamp(geometry: THREE.BufferGeometry): string {
   return hash.toString(16).padStart(8, '0');
 }
 
-export interface TerrainFinishReport { meshes: number; replacedTriangles: number; addedTriangles: number; maximumDropM: number; collapsedTriangles: number; windingRepairs: number; normalRepairs: number; rejected: boolean }
+export interface TerrainFinishReport { meshes: number; replacedTriangles: number; addedTriangles: number; maximumDropM: number; collapsedTriangles: number; windingRepairs: number; normalRepairs: number; rejected: boolean; rejectionReason?: string; maximumFootprintDriftM2?: number }
+type TerrainEnvelope = { raise: number; lower: number; footprintToleranceM2?: number };
 
 /** Optional, individually streamed terrain repairs; no all-town geometry import. */
 export function terrainFinishAsset(tileId: string, level = 0): AssetRef | undefined {
@@ -50,10 +51,10 @@ export function validTerrainFinishPacket(value: unknown, tileId: string): value 
  * source triangle's barycentric coordinates; only their vertical position moves.
  * The group is interpreted relative to the tile origin, even when already placed.
  */
-export function applyTerrainFinish(group: THREE.Object3D, tileId: string, origin: V3, level: number, packet?: TerrainFinishPacket, stateKey = 'terrainFinish'): TerrainFinishReport {
+export function applyTerrainFinish(group: THREE.Object3D, tileId: string, origin: V3, level: number, packet?: TerrainFinishPacket, stateKey = 'terrainFinish', envelope: TerrainEnvelope = { raise: 0, lower: 2 }): TerrainFinishReport {
   const report: TerrainFinishReport = { meshes: 0, replacedTriangles: 0, addedTriangles: 0, maximumDropM: 0, collapsedTriangles: 0, windingRepairs: 0, normalRepairs: 0, rejected: false };
   if (!packet || group.userData[stateKey]) return report;
-  if (!validTerrainFinishPacket(packet, tileId)) return { ...report, rejected: true };
+  if (!validTerrainFinishPacket(packet, tileId)) return { ...report, rejected: true, rejectionReason: 'Invalid terrain packet' };
   const source = packet.levels.find(row => row.level === level);
   if (!source) return report;
   group.updateMatrixWorld(true);
@@ -66,7 +67,7 @@ export function applyTerrainFinish(group: THREE.Object3D, tileId: string, origin
   // Validate every source match before changing any scene geometry.
   for (const patch of source.meshes) {
     const candidates = matches.get(patch.mesh), g = candidates?.[0]?.geometry;
-    if (candidates?.length !== 1 || !g || terrainGeometryStamp(g) !== patch.geometryStamp || g.getAttribute('position').count !== patch.positions || (g.index?.count ?? patch.positions) !== patch.triangles * 3 || Object.values(g.attributes).some(a => a instanceof THREE.InterleavedBufferAttribute || !(a.array instanceof Float32Array) || a.normalized)) return { ...report, rejected: true };
+    if (candidates?.length !== 1 || !g || terrainGeometryStamp(g) !== patch.geometryStamp || g.getAttribute('position').count !== patch.positions || (g.index?.count ?? patch.positions) !== patch.triangles * 3 || Object.values(g.attributes).some(a => a instanceof THREE.InterleavedBufferAttribute || !(a.array instanceof Float32Array) || a.normalized)) return { ...report, rejected: true, rejectionReason: `Terrain predecessor mismatch: ${patch.mesh}` };
   }
   const replacements: { mesh: THREE.Mesh; geometry: THREE.BufferGeometry; patch: TerrainMeshFinish }[] = [];
   const a = new THREE.Vector3(), b = new THREE.Vector3(), c = new THREE.Vector3(), point = new THREE.Vector3();
@@ -96,7 +97,7 @@ export function applyTerrainFinish(group: THREE.Object3D, tileId: string, origin
           }
           point.copy(a).multiplyScalar(weights[0]).addScaledVector(b, u).addScaledVector(c, v).applyMatrix4(matrix);
           const drop = point.y + origin[1] - height;
-          if (drop < -0.0001 || drop > 2.0001) throw new Error('Terrain repair exceeded its lowering-only envelope.');
+          if (drop < -envelope.raise - 0.0001 || drop > envelope.lower + 0.0001) throw new Error('Terrain repair exceeded its declared vertical envelope.');
           report.maximumDropM = Math.max(report.maximumDropM, drop);
           point.y = height - origin[1]; point.applyMatrix4(inverse);
           attributes.position.setXYZ(next, point.x, point.y, point.z);
@@ -110,6 +111,19 @@ export function applyTerrainFinish(group: THREE.Object3D, tileId: string, origin
         // source footprint area and only remove faces with no projected area.
         const sourceFirst = a.clone().applyMatrix4(matrix), sourceSecond = b.clone().applyMatrix4(matrix), sourceThird = c.clone().applyMatrix4(matrix);
         const originalArea = sourceSecond.sub(sourceFirst).cross(sourceThird.sub(sourceFirst)).y;
+        if (envelope.footprintToleranceM2 !== undefined) {
+          // Prove the supplied partition before Float32 rounding. Dense bank
+          // boundaries can accumulate a few square centimetres of quantization
+          // drift; that is separate from a missing or overlapping source patch.
+          let partition = 0;
+          for (let i = 0; i < vertices.length; i += 3) {
+            const [p, q, r] = vertices.slice(i, i + 3);
+            partition += Math.abs((q[0] - p[0]) * (r[1] - p[1]) - (q[1] - p[1]) * (r[0] - p[0]));
+          }
+          // Match the offline overlay's 0.2 cm² absolute area tolerance; the
+          // cross product here is twice the projected polygon area.
+          if (Math.abs(partition - 1) * Math.abs(originalArea) > Math.max(.00004, Math.abs(originalArea) * .000002)) throw new Error('Constructed terrain partition does not cover its source triangle.');
+        }
         const retained: number[] = []; let coveredArea = 0;
         for (let i = 0; i < appended.length; i += 3) {
           const ids = appended.slice(i, i + 3);
@@ -125,14 +139,16 @@ export function applyTerrainFinish(group: THREE.Object3D, tileId: string, origin
             face.copy(secondPoint).sub(firstPoint).cross(thirdPoint.sub(firstPoint)).normalize();
             normal.set(0, 0, 0);
             for (const id of ids) normal.add(point.fromBufferAttribute(attributes.normal, id));
-            if (face.dot(normal) <= 0) {
+            if (envelope.raise > 0 || face.dot(normal) <= 0) {
               for (const id of ids) attributes.normal.setXYZ(id, face.x, face.y, face.z);
               report.normalRepairs++;
             }
           }
           retained.push(...ids);
         }
-        if (Math.abs(coveredArea - Math.abs(originalArea)) > Math.max(0.0002, Math.abs(originalArea) * 0.00002)) throw new Error('Terrain repair lost its source footprint.');
+        const drift = Math.abs(coveredArea - Math.abs(originalArea));
+        if (envelope.footprintToleranceM2 !== undefined) report.maximumFootprintDriftM2 = Math.max(report.maximumFootprintDriftM2 ?? 0, drift / 2);
+        if (drift > Math.max(envelope.footprintToleranceM2 === undefined ? .0002 : envelope.footprintToleranceM2 * 2, Math.abs(originalArea) * .00002)) throw new Error(`Terrain repair lost its source footprint: ${patch.mesh} triangle ${triangle}, source ${Math.abs(originalArea)}, covered ${coveredArea}.`);
         additions.set(triangle, retained);
       }
       const indices: number[] = [], output = new THREE.BufferGeometry();
@@ -150,9 +166,9 @@ export function applyTerrainFinish(group: THREE.Object3D, tileId: string, origin
       output.setIndex(indices); output.computeBoundingBox(); output.computeBoundingSphere();
       replacements.push({ mesh, geometry: output, patch });
     }
-  } catch {
+  } catch (error) {
     replacements.forEach(row => row.geometry.dispose());
-    return { meshes: 0, replacedTriangles: 0, addedTriangles: 0, maximumDropM: 0, collapsedTriangles: 0, windingRepairs: 0, normalRepairs: 0, rejected: true };
+    return { meshes: 0, replacedTriangles: 0, addedTriangles: 0, maximumDropM: 0, collapsedTriangles: 0, windingRepairs: 0, normalRepairs: 0, rejected: true, rejectionReason: error instanceof Error ? error.message : 'Terrain transaction failed' };
   }
   for (const row of replacements) {
     const previous = row.mesh.geometry;

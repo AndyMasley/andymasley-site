@@ -2,7 +2,7 @@
 import { describe, expect, it } from 'vitest';
 import * as THREE from 'three';
 import { createHash } from 'node:crypto';
-import { CROWN_FORM_BOUNDS, treeForm, habitatAt, TREE_HABITAT_PROVENANCE, createConiferPrototype, disposeConiferPrototype } from '../vegetation';
+import { CROWN_FORM_BOUNDS, treeForm, habitatAt, TREE_HABITAT_PROVENANCE, createConiferPrototype, disposeConiferPrototype, createOpenBroadleafPrototype } from '../vegetation';
 
 describe('Authored tree forms', () => {
   it('keeps original rows, implied ground and top unchanged while bringing leaf mass lower', () => {
@@ -126,13 +126,13 @@ function attributeHash(geometry: THREE.BufferGeometry) {
   return hash.digest('hex');
 }
 
-describe('shared conifer-like crown prototypes', () => {
+describe.each([['conifer',createConiferPrototype],['open broadleaf',createOpenBroadleafPrototype]] as const)('shared %s crown prototypes', (_name,createPrototype) => {
   it('changes the silhouette within the same bounds while retaining UVs, colors, topology and borrowed materials', () => {
     const { group, leaf, branch } = prototypeFixture();
     const original = [attributeHash(leaf.geometry), attributeHash(branch.geometry)];
     group.updateMatrixWorld(true);
     const sourceBounds = new THREE.Box3().setFromObject(leaf);
-    const variant = createConiferPrototype(group);
+    const variant = createPrototype(group);
     const variants = variant.children as THREE.Mesh[];
     expect(variants.length).toBe(2);
     expect(variants[0].geometry).not.toBe(leaf.geometry);
@@ -162,7 +162,7 @@ describe('shared conifer-like crown prototypes', () => {
 
   it('disposes only variant geometry once and leaves source geometry, materials and textures alive', () => {
     const { group, leaf, branch, texture } = prototypeFixture();
-    const variant = createConiferPrototype(group); const meshes = variant.children as THREE.Mesh[];
+    const variant = createPrototype(group); const meshes = variant.children as THREE.Mesh[];
     let clonedDisposals = 0, sourceDisposals = 0;
     for (const mesh of meshes) mesh.geometry.addEventListener('dispose', () => clonedDisposals++);
     for (const geometry of [leaf.geometry, branch.geometry] as THREE.BufferGeometry[]) geometry.addEventListener('dispose', () => sourceDisposals++);
@@ -174,6 +174,6 @@ describe('shared conifer-like crown prototypes', () => {
   });
 
   it('rejects a prototype without a crown', () => {
-    expect(() => createConiferPrototype(new THREE.Group())).toThrow('crown primitive');
+    expect(() => createPrototype(new THREE.Group())).toThrow('crown primitive');
   });
 });

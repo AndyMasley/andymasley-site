@@ -1,0 +1,34 @@
+{
+  "middle": {
+    "source": "townwide/imagery_aerial.jpg",
+    "sha256": "b14f7338f5c04544ebb35fd124450eb2b88a96843646cca423ee3601fead69ff",
+    "mosaicCropPixels": [
+      1780,
+      6085,
+      2292,
+      6597
+    ],
+    "resizeScale": 2,
+    "centerLocal": [
+      -1909.35846120934,
+      -1606.229673315146
+    ],
+    "sourceDate": "2025"
+  },
+  "park": {
+    "source": "townwide/imagery_aerial.jpg",
+    "sha256": "b14f7338f5c04544ebb35fd124450eb2b88a96843646cca423ee3601fead69ff",
+    "mosaicCropPixels": [
+      2042,
+      4971,
+      2554,
+      5483
+    ],
+    "resizeScale": 2,
+    "centerLocal": [
+      -1673.132642959931,
+      -621.3266465451782
+    ],
+    "sourceDate": "2025"
+  }
+}

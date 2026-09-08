@@ -1,0 +1,123 @@
+{
+  "id": "MILL-YARD-AERIAL-01",
+  "sourceBuildingId": "168466_867928",
+  "sourceImage": "townwide/imagery_aerial.jpg",
+  "sourceSha256": "b14f7338f5c04544ebb35fd124450eb2b88a96843646cca423ee3601fead69ff",
+  "sourceDate": "2025 aerial mosaic attribution",
+  "evidenceStatus": "Observed dated hardstanding; exact current composition/use unverified",
+  "observation": "Visible pale hardstanding and parked vehicles between the existing mill front and Mill Street; no apparent lawn in this selected strip.",
+  "inference": "Treat as neutral weathered industrial hardstanding. Asphalt versus compacted gravel cannot be resolved confidently from this cache.",
+  "coordinateSystem": "local EPSG6491 metres east/north",
+  "imagePixels": [
+    [
+      245,
+      491
+    ],
+    [
+      277,
+      480
+    ],
+    [
+      386,
+      460
+    ],
+    [
+      409,
+      492
+    ],
+    [
+      439,
+      746
+    ],
+    [
+      351,
+      779
+    ],
+    [
+      326,
+      731
+    ],
+    [
+      311,
+      671
+    ],
+    [
+      292,
+      677
+    ],
+    [
+      278,
+      588
+    ]
+  ],
+  "aerialRegistration": {
+    "crop": [
+      1001,
+      3959,
+      1161,
+      4129
+    ],
+    "scale": 5,
+    "center": [
+      -2749,
+      430
+    ],
+    "sourceSha256": "b14f7338f5c04544ebb35fd124450eb2b88a96843646cca423ee3601fead69ff"
+  },
+  "outline": [
+    [
+      -2776.98367,
+      418.59544
+    ],
+    [
+      -2771.29183,
+      420.51644
+    ],
+    [
+      -2751.9178,
+      423.96895
+    ],
+    [
+      -2747.85827,
+      418.28862
+    ],
+    [
+      -2742.73059,
+      373.32162
+    ],
+    [
+      -2758.38541,
+      367.55218
+    ],
+    [
+      -2762.78754,
+      376.06522
+    ],
+    [
+      -2765.40419,
+      386.69364
+    ],
+    [
+      -2768.78331,
+      385.64703
+    ],
+    [
+      -2771.19946,
+      401.40596
+    ]
+  ],
+  "rawTraceAreaM2": 1246.6600548881374,
+  "runtimeRequirements": [
+    "Clip exact source/final road, guided vehicle, building-wall and water footprints before emission.",
+    "Drape against final actual terrain/road apron supports in eachLOD; no sourceheight or access-policy change.",
+    "No parked vehicle inventory inferred; cars only establish dated hardstanding in the image."
+  ],
+  "sourceChapter": {
+    "path": "research/sections/landmark-dossiers-mills-industry-rail.md",
+    "lines": [
+      188,
+      200
+    ],
+    "id": "IND-08"
+  }
+}

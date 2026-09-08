@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import * as THREE from 'three';
 import { TownWorld } from '../world';
 import type { TownTile, WorldManifest } from '../contracts';
-import { createConiferPrototype, treeForm } from '../vegetation';
+import { createConiferPrototype, createOpenBroadleafPrototype, treeForm } from '../vegetation';
 
 const tile = (id: string): TownTile => ({ id, origin: [0, 0, 0], bounds: { min: [-1000, 0, -1000], max: [1000, 40, 1000] }, lods: [{ level: 0, url: `${id}.glb`, bytes: 1 }] });
 const row = (x: number, z = 0): number[] => [x, 10, z, 3, 4, 5, 0.37];
@@ -58,21 +58,24 @@ describe('Town tree detail, global shadow budget and instance ownership', () => 
   it('shares two habitat crown families without duplicating anchors, shadows or owned resources', () => {
     const rows = [Array.from({ length: 400 }, (_, i) => row(i * 1.2 - 60, (i % 11) * 2))];
     const f = fixture(rows);
-    const state = f.world as unknown as { prototypes: THREE.Group[]; coniferPrototypes: Map<number, THREE.Group> };
+    const state = f.world as unknown as { prototypes: THREE.Group[]; coniferPrototypes: Map<number, THREE.Group>; openBroadleafPrototypes: Map<number, THREE.Group> };
     for (const index of [0, 1]) state.coniferPrototypes.set(index, createConiferPrototype(state.prototypes[index]));
-    const owned = [...state.coniferPrototypes.values()].flatMap(group => group.children.map(child => (child as THREE.Mesh).geometry));
+    state.openBroadleafPrototypes.set(0, createOpenBroadleafPrototype(state.prototypes[0]));
+    const owned = [...state.coniferPrototypes.values(), ...state.openBroadleafPrototypes.values()].flatMap(group => group.children.map(child => (child as THREE.Mesh).geometry));
     const dispose = owned.map(geometry => vi.spyOn(geometry, 'dispose'));
     const sourceDispose = f.geometries.map(geometry => vi.spyOn(geometry, 'dispose'));
     f.update();
     const crowns = f.meshes().filter(({ mesh }) => mesh.userData.treeKind !== 'trunk');
     expect(new Set(crowns.map(({ mesh }) => mesh.userData.treeFamily))).toEqual(new Set(['broadleaf', 'conifer']));
+    expect(crowns.some(({mesh})=>mesh.userData.treeVariant==='open')).toBe(true);
+    expect(crowns.filter(({mesh})=>mesh.userData.treeKind==='far').every(({mesh})=>mesh.userData.treeVariant==='standard')).toBe(true);
     const anchors = [...f.selections('near'), ...f.selections('far')];
     expect(new Set(anchors).size).toBe(400); expect(anchors).toHaveLength(400);
     expect(f.selections('trunk')).toHaveLength(400);
     expect(f.selections('near', true)).toHaveLength(24);
     for (const { mesh } of crowns) {
       const index = mesh.userData.treeKind === 'near' ? 0 : 1;
-      const prototype = mesh.userData.treeFamily === 'conifer' ? state.coniferPrototypes.get(index)! : state.prototypes[index];
+      const prototype = mesh.userData.treeFamily === 'conifer' ? state.coniferPrototypes.get(index)! : mesh.userData.treeVariant === 'open' ? state.openBroadleafPrototypes.get(index)! : state.prototypes[index];
       expect(mesh.geometry).toBe((prototype.children[0] as THREE.Mesh).geometry);
       expect(mesh.material).toBe(f.materials[index]);
       for (const rowIndex of mesh.userData.sourceRows) expect(mesh.userData.treeFamily).toBe(treeForm(rows[0][rowIndex], [0, 0, 0]).renderFamily);
@@ -83,6 +86,7 @@ describe('Town tree detail, global shadow budget and instance ownership', () => 
     f.world.dispose(); f.world.dispose();
     [...dispose, ...sourceDispose].forEach(spy => expect(spy).toHaveBeenCalledTimes(1));
     expect(state.coniferPrototypes.size).toBe(0);
+    expect(state.openBroadleafPrototypes.size).toBe(0);
   });
 
   it.each([['low', false], ['auto', true], ['high', true]] as const)('disables shadow instance groups for%s, mobile=%s', (quality, mobile) => {

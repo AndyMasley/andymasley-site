@@ -21,3 +21,47 @@ jobs:
       - run: npm ci
 
       - run: npm test
+
+      - run: npm run check:town
+
+      - run: npm run test:town-assets
+
+  town-browser:
+    # Functional software-rendered browser coverage; physical-device frame-time
+    # and thermal acceptance remain separate release evidence.
+    needs: test
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run build
+      - run: npm run check:town-budgets
+        env:
+          TOWN_BUDGET_REPORT: artifacts/town-chromium/transfer-budget.json
+      - name: Frozen-site Chromium readiness, driving, navigation and recovery
+        shell: bash
+        run: |
+          npm run preview -- --host 127.0.0.1 --port 4322 > /tmp/town-preview.log 2>&1 &
+          preview_pid=$!
+          trap 'kill "$preview_pid" 2>/dev/null || true' EXIT
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:4322/town/ > /dev/null; then break; fi
+            sleep 1
+          done
+          node tests/town/browser-smoke.mjs
+        env:
+          TOWN_URL: http://127.0.0.1:4322/town/
+          TOWN_OUT_DIR: artifacts/town-chromium
+          CHECK_MISSING_ASSET: '1'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: town-chromium-functional-report
+          path: artifacts/town-chromium
+          if-no-files-found: warn

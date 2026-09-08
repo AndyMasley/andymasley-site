@@ -3,6 +3,7 @@ import type { AssetRef, GroundSurfaces, V3 } from './contracts';
 import { TownGrass, grassMaskFromTexture, excludeGrassPolygons } from './grass';
 import { pavedMaskReference } from './paved-surfaces';
 import { beginOptionalDetail } from './optional-detail';
+import { groundTexturePreview } from './ground-preview';
 
 type TileSurface = { mask: THREE.Texture; materials: THREE.Material[] };
 type TextureReader = (asset: AssetRef, color: boolean, signal: AbortSignal, data?: boolean) => Promise<THREE.Texture>;
@@ -17,15 +18,29 @@ export class TownSurfaces {
   private tiles = new Map<THREE.Object3D, TileSurface>();
   private disposed = false;
   private grass = new TownGrass();
+  private fullMaps: { asset: AssetRef; color: boolean }[] = [];
+  private previewSlots = new Set<number>();
+  private fullResolutionWork?: Promise<void>;
+  private upgradeTimer?: ReturnType<typeof setTimeout>;
+  private upgradeRetryAt = 0;
+  private upgradeFailures = 0;
+  private shaders = new Map<THREE.Material, Set<Record<string, THREE.IUniform>>>();
 
   constructor(private definition: GroundSurfaces, private read: TextureReader) {}
 
   async initialize(signal: AbortSignal): Promise<void> {
     const grass = this.definition.grass;
-    const results = await Promise.allSettled([
-      this.read(grass.color, true, signal), this.read(grass.normal, false, signal), this.read(grass.roughness, false, signal),
-      ...[this.definition.soil, this.definition.forest, this.definition.impervious].map(surface => surface ? this.read(surface.color, true, signal) : Promise.resolve(null)),
-    ]);
+    const definitions = [grass.color, grass.normal, grass.roughness, this.definition.soil?.color, this.definition.forest?.color, this.definition.impervious?.color];
+    this.fullMaps = definitions.map((asset, i) => ({ asset: asset!, color: i === 0 || i > 2 }));
+    const results = await Promise.allSettled(definitions.map(async (asset, i) => {
+      if (!asset) return null;
+      const preview = groundTexturePreview(asset);
+      if (preview) {
+        try { const texture = await this.read(preview, this.fullMaps[i].color, signal); this.previewSlots.add(i); return texture; }
+        catch (error) { if (signal.aborted || this.disposed) throw error; }
+      }
+      return this.read(asset, this.fullMaps[i].color, signal);
+    }));
     const textures = results.flatMap(result => result.status === 'fulfilled' && result.value ? [result.value] : []);
     const failure = results.find(result => result.status === 'rejected');
     if (this.disposed || signal.aborted || failure) {
@@ -39,6 +54,35 @@ export class TownSurfaces {
       texture.needsUpdate = true;
     }
     this.shared = results.map(result => result.status === 'fulfilled' ? result.value : null);
+  }
+
+  /** Only six shared ground maps refine after the first live render. Source
+   * building/car maps always retain full quality. Failed refinement keeps the
+   * usable preview and retries; no source texture or shader formula changes. */
+  refine(signal: AbortSignal): void {
+    if (this.disposed || signal.aborted || !this.previewSlots.size || this.fullResolutionWork || this.upgradeTimer || Date.now() < this.upgradeRetryAt) return;
+    this.upgradeTimer = setTimeout(() => {
+      this.upgradeTimer = undefined;
+      if (this.disposed || signal.aborted) return;
+      this.fullResolutionWork = Promise.all([...this.previewSlots].map(async i => {
+        const source = this.fullMaps[i];
+        try {
+          const texture = await this.read(source.asset, source.color, signal);
+          if (this.disposed || signal.aborted) { this.destroyTexture(texture); return; }
+          texture.wrapS = texture.wrapT = THREE.RepeatWrapping; texture.anisotropy = 4; texture.needsUpdate = true;
+          const old = this.shared[i]; this.shared[i] = texture; this.previewSlots.delete(i);
+          for (const versions of this.shaders.values()) for (const uniforms of versions) this.updateUniformTextures(uniforms);
+          if (old) this.destroyTexture(old);
+        } catch { if (!this.disposed && !signal.aborted) this.upgradeFailures++; }
+      })).then(() => { this.upgradeRetryAt = Date.now() + 10000; }).finally(() => { this.fullResolutionWork = undefined; });
+    }, 500);
+  }
+
+  retryRefinement(signal: AbortSignal): void { this.upgradeRetryAt = 0; this.refine(signal); }
+  detailResources() { return { previewMaps: this.previewSlots.size, fullMaps: this.shared.filter(Boolean).length - this.previewSlots.size, upgrading: !!this.fullResolutionWork, failures: this.upgradeFailures }; }
+  private updateUniformTextures(uniforms: Record<string, THREE.IUniform>): void {
+    const [color, normal, roughness, soil, forest, impervious] = this.shared;
+    for (const [name, texture] of Object.entries({ townGrass: color, townGrassNormal: normal, townGrassRoughness: roughness, townSoil: soil ?? color, townForest: forest ?? color, townPavement: impervious ?? color })) if (uniforms[name]) uniforms[name].value = texture;
   }
 
   async apply(group: THREE.Object3D, id: string, signal: AbortSignal): Promise<void> {
@@ -90,9 +134,9 @@ export class TownSurfaces {
   grassResources(): ReturnType<TownGrass['resources']> { return this.grass.resources(); }
 
   private patch(material: THREE.MeshStandardMaterial, mask: THREE.Texture, bounds: number[]): void {
-    const [color, normal, roughness, soil, forest, impervious] = this.shared;
-    material.customProgramCacheKey = () => 'webster-finished-ground-v5';
+    material.customProgramCacheKey = () => 'webster-finished-ground-v6';
     material.onBeforeCompile = shader => {
+      const [color, normal, roughness, soil, forest, impervious] = this.shared;
       Object.assign(shader.uniforms, {
         townCover: { value: mask }, townGrass: { value: color }, townGrassNormal: { value: normal },
         townGrassRoughness: { value: roughness }, townCoverBounds: { value: new THREE.Vector4(...bounds) },
@@ -101,6 +145,7 @@ export class TownSurfaces {
         townOtherRepeats: { value: new THREE.Vector3(this.definition.soil?.repeatM ?? 1, this.definition.forest?.repeatM ?? 1, this.definition.impervious?.repeatM ?? 2) },
         townHasPavement: { value: impervious ? 1 : 0 },
       });
+      let versions = this.shaders.get(material); if (!versions) { versions = new Set(); this.shaders.set(material, versions); } versions.add(shader.uniforms);
       shader.vertexShader = `varying vec2 vTownGroundXZ;\n${shader.vertexShader}`
         .replace('#include <project_vertex>', '#include <project_vertex>\nvTownGroundXZ = (modelMatrix * vec4(transformed, 1.0)).xz;');
       shader.fragmentShader = `
@@ -162,11 +207,18 @@ if (townWeights.r > 0.001) {
   vec3 townGrassSource2 = texture2D(townGrass, townDetailUV2).rgb;
   float townFine = dot(townGrassSource,vec3(0.2126,0.7152,0.0722));
   float townBroad = dot(townGrassSource2,vec3(0.2126,0.7152,0.0722));
-  float townTurfValue = smoothstep(0.035,0.24,mix(townFine,townBroad,0.30));
-  vec3 townLawnShade = vec3(0.068,0.127,0.038);
-  vec3 townLawnLight = vec3(0.205,0.281,0.095);
+  // The actual decoded source has median luminance .092 and p10/p90 .057/.126.
+  // The old .035–.24 smoothstep compressed that into nearly one flat paint tone.
+  // Retain the source's blades and broader clumps, with a restrained summer range.
+  float townTurfValue = clamp((mix(townFine,townBroad,0.19)-0.025)/0.155,0.0,1.0);
+  vec3 townLawnShade = vec3(0.063,0.105,0.033);
+  vec3 townLawnLight = vec3(0.198,0.259,0.094);
   townGrassColor = mix(townLawnShade,townLawnLight,townTurfValue);
-  townGrassColor *= mix(0.92,1.065,townMacro) * mix(0.97,1.035,townPatch);
+  // Authored differences in moisture/cutting density, not surveyed lawn health.
+  // Continuous metre-space variation avoids tile edges and repeated mowing grids.
+  float townLawnDrift = townNoise(vTownGroundXZ/8.3+vec2(6.1,27.3));
+  townGrassColor *= mix(vec3(1.04,0.985,0.89),vec3(0.945,1.025,1.055),townLawnDrift);
+  townGrassColor *= mix(0.88,1.105,townMacro) * mix(0.955,1.055,townPatch);
   vec2 townBlade = townCutBlade(vTownGroundXZ);
   townGrassColor *= 1.0 + townBlade.x * townClose * 0.15 - townBlade.y * townClose * 0.14;
 }
@@ -226,7 +278,7 @@ if (townWeights.r > 0.001) {
     if (!entry) return;
     // Detach owned instancing before the world's generic mesh-disposal traversal.
     this.grass.release(group);
-    entry.materials.forEach(material => material.dispose());
+    entry.materials.forEach(material => { this.shaders.delete(material); material.dispose(); });
     this.destroyTexture(entry.mask);
     this.tiles.delete(group);
   }
@@ -248,9 +300,11 @@ if (townWeights.r > 0.001) {
 
   dispose(): void {
     this.disposed = true;
+    if (this.upgradeTimer) clearTimeout(this.upgradeTimer); this.upgradeTimer = undefined;
     for (const group of this.tiles.keys()) this.release(group);
     this.grass.dispose();
     this.shared.forEach(texture => { if (texture) this.destroyTexture(texture); });
     this.shared = [];
+    this.previewSlots.clear(); this.shaders.clear();
   }
 }

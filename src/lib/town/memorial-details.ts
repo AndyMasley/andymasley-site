@@ -1,6 +1,8 @@
 import * as THREE from 'three';
 import data from '../../../data/derived/town/memorial-details.json';
 import { Batch, clipTerrainTriangle, type Frame, type Role } from './crafted-frontages';
+import { PlanarTriangleIndex } from './planar-triangle-index';
+import { TerrainRayIndex } from './terrain-ray-index';
 
 type V3 = [number, number, number];
 type Recipe = typeof data.objects[number];
@@ -130,12 +132,13 @@ function courtTerrain(terrain:THREE.Mesh[],f:Frame,origin:THREE.Vector3):number[
 
 function court(b:Batch,f:Frame,l:Letters,ground:(u:number,v:number)=>number|null,terrain:THREE.Mesh[]):void {
   const support=courtTerrain(terrain,f,b.origin);
+  const supportIndex=new PlanarTriangleIndex(support,[-4.6,4.6,-6,11]);
   const step=b.level===0?.40:.80;
   for(let v=-6;v<11;v+=step)for(let u=-4.6;u<4.6;u+=step*2) {
     const width=Math.min(step*2,4.6-u),depth=Math.min(step,11-v);
     // Four corner samples can bridge over a terrain crease inside a paver.
     // Retain each rendered support plane, with the shared 4 cm paving clearance.
-    for(const triangle of support) {
+    for(const triangle of supportIndex.query([u,u+width,v,v+depth])) {
       if(Math.max(...triangle.map(p=>p[0]))<u||Math.min(...triangle.map(p=>p[0]))>u+width||Math.max(...triangle.map(p=>p[2]))<v||Math.min(...triangle.map(p=>p[2]))>v+depth)continue;
       b.polygon(f,'paving',clipTerrainTriangle(triangle,[u,u+width,v,v+depth]),(Math.round(v/step)+Math.round(u/step))%5?'#98684e':'#a77756');
     }
@@ -224,13 +227,14 @@ export function applyMemorialDetails(group:THREE.Group,tileId:string,origin:read
   const rows=data.objects.filter(r=>r.tileId===tileId);if(!rows.length)return;
   if(group.userData.townMemorialDetails)return group.userData.townMemorialDetails;
   group.updateMatrixWorld(true);const terrain=sourceMeshes(group,'terrain'),ray=new THREE.Raycaster();ray.ray.direction.set(0,-1,0);ray.far=2000;
+  const terrainIndex=rows.some(r=>r.kind==='honor_court')?new TerrainRayIndex(terrain):undefined;
   const b=new Batch(new THREE.Vector3(...origin),level),letters=new Letters(origin);
   const report:MemorialReport={tileId,level,ids:[],skipped:[],addedTriangles:0,addedMeshes:0,geometryBytes:0,supports:[]};
   for(const r of rows) {
     const f:Frame={...r.frame,structId:r.id,tileId};
     const sample=(u:number,v:number):number|null=>{
       ray.ray.origin.set(f.start[0]+f.tangent[0]*u+f.outward[0]*v-origin[0],1000-origin[1],-f.start[1]-f.tangent[1]*u-f.outward[1]*v-origin[2]);
-      const hit=ray.intersectObjects(terrain,false)[0];return hit?hit.point.y+origin[1]:null;
+      const hit=terrainIndex?terrainIndex.first(ray.ray,ray.far):ray.intersectObjects(terrain,false)[0]?.point;return hit?hit.y+origin[1]:null;
     };
     const ground=sample(0,0);
     if(ground===null){report.skipped.push({id:r.id,reason:'Mapped source terrain support missing.'});continue;}

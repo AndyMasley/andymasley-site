@@ -58,7 +58,7 @@ async function check(name, fn) {
 }
 
 const townAsset = (url) => ['/town-assets/','/town-transfer/','/town-evidence/','/town-finish/','/town-surfaces/','/town-roadside/'].some(prefix=>new URL(url).pathname.includes(prefix));
-const gatedAsset = (url) => townAsset(url) && /(?:\/manifest\.json|\/network\.json|\.glb(?:\.gz)?)$/.test(new URL(url).pathname);
+const gatedAsset = (url) => townAsset(url) && /(?:\/(?:manifest|network)\.json(?:\.gz)?|\/network\.[a-f0-9]+\.json\.gz|\.glb(?:\.gz)?)$/.test(new URL(url).pathname);
 
 async function observedPage(context, scenario) {
   const page = await context.newPage();
@@ -182,16 +182,27 @@ async function normalScenario(context) {
       assert.ok(after.speed < before.speed && after.cruise === 0);
       return { beforeSpeed: before.speed, after };
     });
-    await check('Arrow Left and Right buffer turn choices; S clears the choice', async () => {
-      await pressCanvas(page, 'ArrowLeft');
-      await page.waitForFunction(() => window.__webster.engine.queued === 'LEFT');
-      const left = await state(page);
+    await check('Available arrow turns select real branches; unavailable requests stay truthful; S clears', async () => {
+      const saved = await page.evaluate(() => { const e = window.__webster.engine; return { edgeId:e.edgeId,s:e.s,paused:e.paused,distance:e.distance,elapsed:e.elapsed }; });
+      const stageJunction = async right => page.evaluate(async right => {
+        const g=window.__webster,e=g.engine,here=e.pose()[0];
+        const edge=[...g.graph.edges.values()].filter(x=>x.id>=0&&g.graph.choices(x.id).length>1&&g.graph.choices(x.id).some(c=>c.label==='Left')&&g.graph.choices(x.id).some(c=>c.label==='Right')===right).sort((a,b)=>Math.hypot(a.points.at(-1)[0]-here[0],a.points.at(-1)[1]-here[1])-Math.hypot(b.points.at(-1)[0]-here[0],b.points.at(-1)[1]-here[1]))[0];
+        if(!edge)throw Error('Missing actual junction fixture');
+        e.paused=true;e.edgeId=edge.id;e.s=Math.max(0,g.graph.paths.get(edge.id).length-50);e.phase='ROAD';e.connection=null;e.connectionS=0;e.speed=e.cruise=e.acceleration=0;e.cruiseAtLimit=false;e.endOfRoute=false;e.queue(null);
+        const p=e.pose()[0];await g.world.prepareAt([p[0],p[2],-p[1]]);return {edge:edge.id,choices:g.graph.choices(edge.id)};
+      },right);
+      const realRightJunction = await stageJunction(true);
+      await pressCanvas(page, 'ArrowLeft'); await page.waitForFunction(() => window.__webster.engine.queued === 'LEFT'); const left = await state(page);
+      await pressCanvas(page, 'ArrowRight'); await page.waitForFunction(() => window.__webster.engine.queued === 'RIGHT'); const right = await state(page);
+      await pressCanvas(page, 's'); await page.waitForFunction(() => window.__webster.engine.queued === null);
+      const unavailableJunction = await stageJunction(false);
+      await pressCanvas(page, 'ArrowLeft'); await page.waitForFunction(() => window.__webster.engine.queued === 'LEFT');
+      const selected = await page.evaluate(() => window.__webster.engine.nextJunction().selected.edgeId);
       await pressCanvas(page, 'ArrowRight');
-      await page.waitForFunction(() => window.__webster.engine.queued === 'RIGHT');
-      const right = await state(page);
-      await pressCanvas(page, 's');
-      await page.waitForFunction(() => window.__webster.engine.queued === null);
-      return { left: left.queued, right: right.queued, cleared: (await state(page)).queued };
+      await page.waitForFunction(() => document.querySelector('[data-town-status]').textContent.includes('No right branch'));
+      assert.equal(await page.evaluate(() => window.__webster.engine.nextJunction().selected.edgeId), selected);
+      await page.evaluate(async saved => { const g=window.__webster,e=g.engine;Object.assign(e,saved);e.phase='ROAD';e.connection=null;e.connectionS=0;e.speed=e.cruise=e.acceleration=0;e.cruiseAtLimit=false;e.endOfRoute=false;e.queue(null);const p=e.pose()[0];await g.world.prepareAt([p[0],p[2],-p[1]]); },saved);
+      return { left:left.queued,right:right.queued,realRightJunction,unavailableJunction,unavailablePreservedSelection:selected,cleared:(await state(page)).queued };
     });
     await check('Space pauses simulation while drawing remains live', async () => {
       await holdUntil(page, 'ArrowUp', () => window.__webster.engine.speed > 0.8);
@@ -349,13 +360,21 @@ async function normalScenario(context) {
 
 async function retryScenario(context) {
   const scenario = 'retry', page = await observedPage(context, scenario);
-  let injectedUrl, complete = false;
+  let injectedUrl, failing = true, complete = false;
+  const injectedUrls = new Set();
   try {
-    await page.route('**/town-assets/**', async (route) => {
-      if (!injectedUrl && gatedAsset(route.request().url())) {
-        injectedUrl = route.request().url();
-        report.injectedFailure = { url: injectedUrl, status: 503, scenario };
-        await route.fulfill({ status: 503, contentType: 'text/plain', body: 'Intentional one-shot browser smoke test failure.' });
+    await page.route(/\/town-(?:assets|transfer|finish)\//, async (route) => {
+      const url = route.request().url();
+      const original = value => {
+        const path = new URL(value).pathname;
+        if (/\/(?:network\.json(?:\.gz)?|network\.[a-f0-9]+\.json\.gz)$/.test(path)) return 'critical-network';
+        return value.replace('/town-transfer/json-gzip-v1', '').replace(/\.json\.gz$/, '.json');
+      };
+      if (failing && gatedAsset(url) && (!injectedUrl || original(url) === original(injectedUrl))) {
+        injectedUrl ??= url;
+        injectedUrls.add(url);
+        report.injectedFailure = { url: injectedUrl, urls: [...injectedUrls], status: 503, scenario, includesAlternateEncoding: true };
+        await route.fulfill({ status: 503, contentType: 'text/plain', body: 'Intentional initial asset outage for both encodings.' });
       } else await route.continue();
     });
     await check('A one-shot initial asset HTTP 503 exposes an enabled Try again button', async () => {
@@ -372,6 +391,7 @@ async function retryScenario(context) {
     });
     await check('Try again creates a rendering, keyboard-drivable session on the same page', async () => {
       const documentId = await page.evaluate(() => window.__townSmoke.documentId);
+      failing = false;
       await page.locator('[data-town-play]').click();
       const ready = await waitReady(page);
       await holdUntil(page, 'ArrowUp', () => window.__webster.engine.speed > 0.5 && window.__webster.engine.distance > 0.15);
@@ -418,8 +438,9 @@ try {
   await normalScenario(await browser.newContext(settings));
   await retryScenario(await browser.newContext(settings));
   await check('No unexpected JavaScript, console, or town asset errors', async () => {
-    const unexpectedConsole = report.console.filter((entry) => entry.type === 'error' && !(entry.scenario === 'retry' && /503/.test(entry.text) && (!entry.location.url || entry.location.url === report.injectedFailure?.url)));
-    const unexpectedResponses = report.responses.filter((entry) => !(entry.scenario === 'retry' && entry.status === 503 && entry.url === report.injectedFailure?.url));
+    const intentionallyFailed = new Set(report.injectedFailure?.urls ?? []);
+    const unexpectedConsole = report.console.filter((entry) => entry.type === 'error' && !(entry.scenario === 'retry' && /503/.test(entry.text) && intentionallyFailed.has(entry.location.url)));
+    const unexpectedResponses = report.responses.filter((entry) => !(entry.scenario === 'retry' && entry.status === 503 && intentionallyFailed.has(entry.url)));
     const unexpectedRequests = report.failedRequests.filter((entry) => townAsset(entry.url) && !entry.expectedCancellation);
     assert.deepEqual(report.pageErrors, []);
     assert.deepEqual(unexpectedConsole, []);

@@ -1,0 +1,32 @@
+{
+  "version": 1,
+  "sourceManifestSha256": "37fbef34bc2a4467997252be75b4c43174a6a7b2d39963614cadd8d787e56105",
+  "sourceUri": "../textures/leaf-cluster.png",
+  "sourceSha256": "af97b35b70960a864a0f7c44b6faf8e131175652876888fe3ee6156ce4820d91",
+  "url": "/town-finish/v1/art/leaf-cluster-e1efc172cdf0.png",
+  "sha256": "e1efc172cdf0d18f00ce4111ae4064c8efe6b88e4a7f1b99e3580a96d2fbd22b",
+  "bytes": 69021,
+  "width": 512,
+  "height": 512,
+  "originalVectorSha256": "0d6629e3cbad4e835612d21460a6b0f2d910affd50c9b23c86b91157c2c0ce9b",
+  "leafShapes": 64,
+  "evidence": "ART-040. Original authored curved broadleaf cluster, regional late-summer interpretation; no photographed tree or verified species. Finer leaf shapes replace the source atlas stars without changing twig anchors, card geometry, UVs or texture dimensions.",
+  "original": {
+    "opaquePixels": 76296,
+    "coverage": 0.291046142578125,
+    "meanSRGB": [
+      0.29371128340190017,
+      0.4393363206664652,
+      0.17194646444086703
+    ]
+  },
+  "replacement": {
+    "opaquePixels": 57860,
+    "coverage": 0.2207183837890625,
+    "meanSRGB": [
+      0.36609313894932327,
+      0.45464264655049713,
+      0.2511383799976956
+    ]
+  }
+}

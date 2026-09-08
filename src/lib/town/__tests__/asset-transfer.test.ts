@@ -127,4 +127,11 @@ describe('Lossless scenery transfer', () => {
     await expect(readSceneBuffer(rawURL, signal(), vi.fn())).rejects.toThrow('Scenery could not load (503).');
     expect(fetch.mock.calls.map(([url]) => url)).toEqual([compressedURL, rawURL]);
   });
+  it('rejects a successful raw HTML response and a GLB with a truncated declared length', async () => {
+    vi.stubGlobal('DecompressionStream', undefined);
+    const damaged = glb.slice(0, glb.byteLength - 1);
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValueOnce(new Response('<html>fallback</html>')).mockResolvedValueOnce(new Response(damaged)));
+    await expect(readSceneBuffer(rawURL, signal(), vi.fn())).rejects.toThrow('Scenery was incomplete or invalid');
+    await expect(readSceneBuffer(rawURL, signal(), vi.fn())).rejects.toThrow('Scenery was incomplete or invalid');
+  });
 });

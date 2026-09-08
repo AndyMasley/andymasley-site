@@ -2,10 +2,11 @@ import * as THREE from 'three';
 import { Batch, frontageMaterial, type Frame, type Role } from './crafted-frontages';
 import type { EvidenceBuilding, EvidenceReport, EvidenceRoof } from './evidence-types';
 import { historicAppearance } from './historic-appearance';
+import { repairFoundationWalls } from './foundation-wall-finish';
 
 export type EvidenceTarget = {
   id: string; tileId: string; outline: readonly (readonly number[])[];
-  base: number; peak: number; material?: Role; paint?: string;
+  base: number; floor?: number; peak: number; material?: Role; paint?: string;
   replaceBody?: boolean; replaceOpenings?: boolean;
   preserveEntry?: Pick<Frame,'start'|'tangent'|'outward'> & {u:number;floor:number};
 };
@@ -283,7 +284,9 @@ export function applyEvidenceBuildings(group:THREE.Object3D,tileId:string,tileOr
     const roof=repairs.get(home.id);return roof?{...home,base:roof.base,floor:roof.floor,eave:roof.eave,peak:roof.peak,stories:roof.stories,frames:home.frames.map((f,i)=>({...f,eave:roof.frameEaves?.[i]??roof.eave,start:[f.start[0]+f.outward[0]*(roof.frameOutsets?.[i]??0),f.start[1]+f.outward[1]*(roof.frameOutsets?.[i]??0)] as const}))}:home;
   });
   const targets:EvidenceTarget[]=[...homes.map(r=>({...r,material:buildingMaterial(r),replaceOpenings:true,replaceBody:repairs.has(r.id),preserveEntry:shortEntryEnvelope(r)})),...extras];
-  const origin=new THREE.Vector3().fromArray(tileOrigin),filtered=filterEvidenceSources(group,origin,targets),batch=new Batch(origin,level);
+  const origin=new THREE.Vector3().fromArray(tileOrigin);
+  repairFoundationWalls(group,origin,targets);
+  const filtered=filterEvidenceSources(group,origin,targets),batch=new Batch(origin,level);
   for(const row of homes)if(filtered.matched.has(row.id)){
     const roof=repairs.get(row.id);if(roof)roofGeometry(batch,row,roof);
     homeWindows(batch,row);

@@ -918,3 +918,94 @@ body:has(.town-game.town-expanded) {
   .town-radio__station { grid-template-columns: 1fr; gap: 7px; }
   .town-radio__playback p { flex-basis: 100%; }
 }
+
+/* The drive stays visually primary; full names remain readable at touch sizes. */
+.town-hud { font-family: system-ui, -apple-system, sans-serif; }
+.town-route,
+.town-directions,
+.town-instruments,
+.town-map { border: 0; border-radius: 8px; background: rgba(16, 33, 28, .82); box-shadow: 0 2px 12px #0002; }
+.town-route { padding: 9px 12px; max-width: 35%; }
+.town-route > .town-hud__label { display: none; }
+.town-road { white-space: normal; overflow: visible; font-size: var(--text-md); line-height: 1.25; }
+.town-directions { padding: 9px 12px; max-width: 44%; }
+.town-directions > p { font-size: var(--text-sm); font-weight: 600; }
+.town-choices { gap: 6px; }
+.town-choices button { border-radius: 5px; max-width: 100%; font-family: system-ui, -apple-system, sans-serif; }
+.town-choice__name { max-width: 26ch; white-space: normal; overflow: visible; text-overflow: clip; overflow-wrap: anywhere; font-size: var(--text-sm); line-height: 1.3; }
+.town-choice__maneuver { font-size: var(--text-sm); line-height: 1.35; }
+.town-choice__arrow { font-size: var(--text-xl); }
+.town-clear-turn { display: block; pointer-events: auto; margin-top: 4px; padding: 7px 2px; min-height: 44px; color: #e2e9de; background: transparent; border: 0; text-decoration: underline; text-underline-offset: 3px; }
+.town-instruments { padding: 10px 14px; gap: 14px; flex-wrap: wrap; max-width: 48%; }
+.town-speed { font-size: var(--text-display); }
+.town-cruise-state { flex-basis: 100%; color: #e2e9de; font-size: var(--text-xs); line-height: 1.3; }
+.town-map { width: 144px; }
+.town-map figcaption { font-size: var(--text-xs); }
+.town-resume-drive { min-height: 44px; margin-block: 12px 0; padding: 9px 12px; color: var(--town-screen-ink); border: 1px solid var(--town-screen-rule); background: var(--town-screen); }
+.town-intro__content [data-town-resume-label] { font-size: var(--text-sm); margin-top: 8px; margin-bottom: 0; }
+.town-engine-volume input { width: 100px; height: 36px; accent-color: #9a803c; }
+.town-recovery { position: absolute; z-index: 2; bottom: 28%; left: 50%; transform: translateX(-50%); width: min(90%, 440px); padding: 16px; border: 1px solid var(--town-screen-rule); border-radius: 8px; background: #142a25f2; color: var(--town-screen-ink); box-shadow: 0 4px 24px #0005; }
+.town-recovery p { margin: 0 0 12px; }
+.town-recovery button { min-height: 44px; padding: 8px 12px; margin: 4px; border: 1px solid var(--town-screen-rule); color: var(--town-screen-ink); background: var(--town-screen); }
+.town-explore { border-bottom: 1px solid var(--border-strong); }
+.town-explore > summary { min-height: 48px; padding: 12px 0; cursor: pointer; }
+.town-explore__body { padding: 0 0 20px; }
+.town-explore__body > p { font-size: var(--text-sm); }
+.town-explore canvas { display: block; width: 100%; height: auto; max-height: 420px; object-fit: contain; background: #142a25; border-radius: 6px; }
+.town-explore__places { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 230px), 1fr)); gap: 16px; margin-top: 16px; counter-reset: place; }
+.town-explore__places > div { counter-increment: place; }
+.town-explore__places button::before { content: counter(place) '. '; }
+.town-explore button { min-height: 44px; padding: 8px 12px; color: var(--text); border: 1px solid var(--border-strong); background: var(--bg); text-align: left; }
+.town-explore__places p { margin: 8px 0; font-size: var(--text-sm); line-height: 1.55; color: var(--text-secondary); }
+.town-explore textarea { display: block; width: 100%; padding: 8px; margin: 8px 0 12px; color: var(--text); border: 1px solid var(--border-strong); background: var(--bg); font: inherit; font-size: var(--text-base); }
+.town-explore [data-town-report-output] { font-family: ui-monospace, monospace; font-size: var(--text-sm); }
+.town-game:is(:fullscreen, .town-expanded) .town-explore { padding-inline: var(--space-lg); flex: 0 0 auto; }
+.town-game:is(:fullscreen, .town-expanded) .town-explore__body { max-height: 38dvh; overflow: auto; }
+@media (max-width: 720px) {
+  .town-route { max-width: calc(100% - 24px); padding: 7px 10px; }
+  .town-road { font-size: var(--text-base); }
+  .town-directions { max-width: none; padding: 7px 9px; top: 52px; }
+  .town-choice__name { max-width: 22ch; font-size: var(--text-sm); }
+  .town-choices button { flex: 1 1 110px; }
+  .town-instruments { max-width: 56%; gap: 8px; padding: 8px 10px; }
+  .town-speed { font-size: var(--text-2xl); }
+  .town-map { width: 104px; }
+  .town-cruise-state { font-size: var(--text-xs); }
+  .town-settings { justify-content: flex-start; flex-wrap: wrap; }
+}
+@media (max-height: 520px) and (orientation: landscape) {
+  .town-directions { max-width: 53%; }
+  .town-directions:has(.town-clear-turn:not([hidden])) { padding-block: 7px; }
+  .town-directions:has(.town-clear-turn:not([hidden])) > p { min-height: 28px; padding-right: 82px; display: flex; align-items: center; }
+  .town-clear-turn { position: absolute; top: -1px; right: 9px; margin: 0; font-size: var(--text-sm); }
+  .town-choices { flex-wrap: nowrap; }
+  .town-choice__name { max-width: 20ch; }
+  .town-cruise-state { display: none; }
+  .town-game:is(:fullscreen, .town-expanded) .town-explore__body { max-height: 35dvh; }
+  /* Keep the drive controls above the radio's scrollable tuning drawer. The
+     closed Explore row returns as soon as the radio drawer is closed. */
+  .town-game:is(:fullscreen, .town-expanded):has(.town-radio[open]) .town-explore:not([open]) { display: none; }
+}
+@media (max-width: 600px) and (orientation: portrait) {
+  .town-game:not(:fullscreen):not(.town-expanded) .town-stage { aspect-ratio: 3 / 5; min-height: 520px; }
+  .town-directions { padding: 6px 8px 8px; }
+  .town-directions > p { min-height: 32px; display: flex; align-items: center; }
+  .town-directions:has(.town-clear-turn:not([hidden])) > p { padding-right: 82px; }
+  .town-clear-turn { position: absolute; top: 0; right: 9px; margin: 0; font-size: var(--text-sm); }
+  .town-choices { flex-wrap: nowrap; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: thin; padding-bottom: 4px; }
+  .town-choices button { flex: 0 0 142px; min-height: 62px; padding: 6px; }
+  .town-choice__name { max-width: none; }
+  .town-instruments { bottom: 92px; left: 12px; max-width: 57%; }
+  .town-map { bottom: 92px; right: 12px; width: 88px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .town-page *, .town-page *::before, .town-page *::after { scroll-behavior: auto !important; transition-duration: 0s !important; animation-duration: 0s !important; }
+}
+
+.town-directory { margin-top: var(--space-lg); border-top: 1px solid var(--border-strong); padding-top: var(--space-md); }
+.town-directory h3 { margin: 0 0 var(--space-sm); font-size: var(--text-lg); }
+.town-directory > p, .town-directory__list p { font-size: var(--text-sm); color: var(--text-secondary); line-height: 1.55; }
+.town-directory__list { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); gap: var(--space-md); margin-top: var(--space-md); }
+.town-directory__list button { width: 100%; }
+.town-directory__list button[aria-pressed="true"] { border-color: var(--text); background: var(--bg-subtle); }
+.town-directory__list p { margin: var(--space-sm) 0; }

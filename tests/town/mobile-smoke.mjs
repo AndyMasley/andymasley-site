@@ -47,8 +47,9 @@ try {
  record('Touch Go starts cruise and advances after finger release',moving.cruise>0&&moving.speed>0&&moving.distance>before.distance,{before,after:moving});
  await page.locator('[data-town-input="left"]').tap();const left=await state();
  record('Touch left queues a left turn',left.queued==='LEFT',left);
+ const rightAvailable=await page.evaluate(()=>window.__webster.engine.nextJunction()?.choices.some(c=>c.label==='Right')??false);
  await page.locator('[data-town-input="right"]').tap();const right=await state();
- record('Touch right replaces queued turn',right.queued==='RIGHT',right);
+ record('Touch right selects an available branch or explains its absence',rightAvailable?right.queued==='RIGHT':right.queued===left.queued&&right.status.includes('No right branch'),{rightAvailable,right});
  await page.locator('[data-town-pause]').tap();await page.waitForTimeout(100);const paused=await state();
  await page.waitForTimeout(650);const still=await state();
  record('Touch Pause stops travel',paused.paused&&still.paused&&Math.abs(still.distance-paused.distance)<1e-6,{paused,after:still});

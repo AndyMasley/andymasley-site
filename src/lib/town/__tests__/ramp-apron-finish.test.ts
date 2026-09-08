@@ -1,0 +1,7 @@
+import {describe,expect,it}from'vitest';import*as THREE from'three';
+import data from '../../../../data/derived/town/ramp-apron.json';
+import {applyRampApronFinish}from'../ramp-apron-finish';
+describe('one bounded source ramp apron',()=>{
+ it('has the same eight-face inferred surface in every source LOD',()=>{expect(data.levels).toHaveLength(3);for(const row of data.levels){expect(row.positions).toHaveLength(24);expect(row.positions.flat().every(Number.isFinite)).toBe(true);expect(row.positions).toEqual(data.levels[0].positions);expect(row.uv?.length).toBe(24);expect(row.guards.length).toBeGreaterThan(0);}expect(JSON.stringify(data).length).toBeLessThan(12000);expect([data.fromEdge,data.toEdge]).toEqual([2431,135]);});
+ it('retains the source intact when any exact identity guard fails',()=>{const scene=new THREE.Group(),mesh=new THREE.Mesh(new THREE.BoxGeometry(),new THREE.MeshBasicMaterial());scene.add(mesh);const before=mesh.geometry;expect(applyRampApronFinish(scene,data.tileId,data.origin as[number,number,number],0,'0'.repeat(64)).rejected).toBe(true);expect(applyRampApronFinish(scene,data.tileId,data.origin as[number,number,number],0,data.levels[0].sourceSha256).rejected).toBe(true);expect(mesh.geometry).toBe(before);expect(scene.children).toEqual([mesh]);expect(applyRampApronFinish(scene,'0_0',[0,0,0],0,'0'.repeat(64)).rejected).toBe(false);mesh.geometry.dispose();(mesh.material as THREE.Material).dispose();});
+});

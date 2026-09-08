@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import data from '../../../data/derived/town/utility-site-details.json';
 import {Batch,type Frame,type Role} from './crafted-frontages';
+import {finishBasinSurfaces} from './site-surface-finish';
 
 export const UTILITY_SITE_ROWS=data.rows;
 type Row=typeof data.rows[number];
@@ -52,5 +53,6 @@ export function applyUtilitySiteDetails(group:THREE.Group,tileId:string,origin:r
   if(m.userData.surfaceRole==='glass'){m.roughness=.39;m.metalness=.06;m.envMapIntensity=.14;o.castShadow=false;}
  });
  group.add(built.group);group.userData.environmentTreeExclusions=[...(group.userData.environmentTreeExclusions??[]),...rows.map(r=>r.outline)];group.userData.environmentGrassExclusions=[...(group.userData.environmentGrassExclusions??[]),...rows.map(r=>r.outline)];
- const report:UtilitySiteReport={status:'applied',ids:rows.map(r=>r.id),triangles:built.triangles,geometryBytes:built.bytes,meshes:built.group.children.length,removedTriangles:0};group.userData.utilitySiteDetails=report;return report;
+ const surfaceBytes=finishBasinSurfaces(built.group,origin,rows);
+ const report:UtilitySiteReport={status:'applied',ids:rows.map(r=>r.id),triangles:built.triangles,geometryBytes:built.bytes+surfaceBytes,meshes:built.group.children.length,removedTriangles:0};group.userData.utilitySiteDetails=report;return report;
 }

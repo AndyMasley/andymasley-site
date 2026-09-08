@@ -1,0 +1,720 @@
+{
+  "source": "MassGIS2025imagery_aerial.jpg",
+  "imageSha256": "b14f7338f5c04544ebb35fd124450eb2b88a96843646cca423ee3601fead69ff",
+  "registrations": {
+    "poland": {
+      "center": [
+        -2126.7215404942954,
+        -1626.9722555133108
+      ],
+      "crop": [
+        1572,
+        6165,
+        2012,
+        6565
+      ],
+      "scale": 2.5,
+      "bounds3857": [
+        -8002956.861457952,
+        5164391.379059648,
+        -7993172.921837451,
+        5175092.563019575
+      ],
+      "imageSize": [
+        8192,
+        8960
+      ]
+    },
+    "lakeside": {
+      "center": [
+        1664.91,
+        -3418.79
+      ],
+      "crop": [
+        5848,
+        8172,
+        6288,
+        8572
+      ],
+      "scale": 2.5,
+      "bounds3857": [
+        -8002956.861457952,
+        5164391.379059648,
+        -7993172.921837451,
+        5175092.563019575
+      ],
+      "imageSize": [
+        8192,
+        8960
+      ]
+    }
+  },
+  "features": [
+    {
+      "id": "LOT-POLAND-01",
+      "site": "poland",
+      "kind": "driveway",
+      "pixels": [
+        [
+          492,
+          141
+        ],
+        [
+          554,
+          126
+        ],
+        [
+          560,
+          145
+        ],
+        [
+          497,
+          164
+        ]
+      ],
+      "basis": "Manually traced visible paved approach/parking patch in the registered 2025 MassGIS aerial. Footprint at roughly0.9m source pixels; boundaries clipped to retained buildings and driving envelope. Authored asphalt color and edge treatment, no surveyed parcel or access claim."
+    },
+    {
+      "id": "LOT-POLAND-03",
+      "site": "poland",
+      "kind": "driveway",
+      "pixels": [
+        [
+          452,
+          312
+        ],
+        [
+          500,
+          297
+        ],
+        [
+          502,
+          312
+        ],
+        [
+          455,
+          330
+        ]
+      ],
+      "basis": "Manually traced visible paved approach/parking patch in the registered 2025 MassGIS aerial. Footprint at roughly0.9m source pixels; boundaries clipped to retained buildings and driving envelope. Authored asphalt color and edge treatment, no surveyed parcel or access claim."
+    },
+    {
+      "id": "LOT-POLAND-04",
+      "site": "poland",
+      "kind": "driveway",
+      "pixels": [
+        [
+          366,
+          406
+        ],
+        [
+          496,
+          367
+        ],
+        [
+          508,
+          379
+        ],
+        [
+          371,
+          423
+        ]
+      ],
+      "basis": "Manually traced visible paved approach/parking patch in the registered 2025 MassGIS aerial. Footprint at roughly0.9m source pixels; boundaries clipped to retained buildings and driving envelope. Authored asphalt color and edge treatment, no surveyed parcel or access claim."
+    },
+    {
+      "id": "LOT-POLAND-05",
+      "site": "poland",
+      "kind": "driveway",
+      "pixels": [
+        [
+          538,
+          429
+        ],
+        [
+          596,
+          422
+        ],
+        [
+          597,
+          438
+        ],
+        [
+          539,
+          448
+        ]
+      ],
+      "basis": "Manually traced visible paved approach/parking patch in the registered 2025 MassGIS aerial. Footprint at roughly0.9m source pixels; boundaries clipped to retained buildings and driving envelope. Authored asphalt color and edge treatment, no surveyed parcel or access claim."
+    },
+    {
+      "id": "LOT-POLAND-06",
+      "site": "poland",
+      "kind": "driveway",
+      "pixels": [
+        [
+          493,
+          502
+        ],
+        [
+          515,
+          495
+        ],
+        [
+          519,
+          512
+        ],
+        [
+          491,
+          523
+        ]
+      ],
+      "basis": "Manually traced visible paved approach/parking patch in the registered 2025 MassGIS aerial. Footprint at roughly0.9m source pixels; boundaries clipped to retained buildings and driving envelope. Authored asphalt color and edge treatment, no surveyed parcel or access claim."
+    },
+    {
+      "id": "LOT-POLAND-07",
+      "site": "poland",
+      "kind": "driveway",
+      "pixels": [
+        [
+          495,
+          519
+        ],
+        [
+          522,
+          511
+        ],
+        [
+          524,
+          526
+        ],
+        [
+          504,
+          535
+        ]
+      ],
+      "basis": "Manually traced visible paved approach/parking patch in the registered 2025 MassGIS aerial. Footprint at roughly0.9m source pixels; boundaries clipped to retained buildings and driving envelope. Authored asphalt color and edge treatment, no surveyed parcel or access claim."
+    },
+    {
+      "id": "LOT-POLAND-08",
+      "site": "poland",
+      "kind": "driveway",
+      "pixels": [
+        [
+          554,
+          556
+        ],
+        [
+          616,
+          541
+        ],
+        [
+          622,
+          559
+        ],
+        [
+          559,
+          579
+        ]
+      ],
+      "basis": "Manually traced visible paved approach/parking patch in the registered 2025 MassGIS aerial. Footprint at roughly0.9m source pixels; boundaries clipped to retained buildings and driving envelope. Authored asphalt color and edge treatment, no surveyed parcel or access claim."
+    },
+    {
+      "id": "LOT-POLAND-09",
+      "site": "poland",
+      "kind": "driveway",
+      "pixels": [
+        [
+          428,
+          638
+        ],
+        [
+          548,
+          598
+        ],
+        [
+          554,
+          617
+        ],
+        [
+          435,
+          660
+        ]
+      ],
+      "basis": "Manually traced visible paved approach/parking patch in the registered 2025 MassGIS aerial. Footprint at roughly0.9m source pixels; boundaries clipped to retained buildings and driving envelope. Authored asphalt color and edge treatment, no surveyed parcel or access claim."
+    },
+    {
+      "id": "LOT-POLAND-10",
+      "site": "poland",
+      "kind": "driveway",
+      "pixels": [
+        [
+          585,
+          646
+        ],
+        [
+          636,
+          635
+        ],
+        [
+          642,
+          658
+        ],
+        [
+          591,
+          674
+        ]
+      ],
+      "basis": "Manually traced visible paved approach/parking patch in the registered 2025 MassGIS aerial. Footprint at roughly0.9m source pixels; boundaries clipped to retained buildings and driving envelope. Authored asphalt color and edge treatment, no surveyed parcel or access claim."
+    },
+    {
+      "id": "LOT-POLAND-11",
+      "site": "poland",
+      "kind": "driveway",
+      "pixels": [
+        [
+          594,
+          683
+        ],
+        [
+          653,
+          668
+        ],
+        [
+          662,
+          686
+        ],
+        [
+          602,
+          704
+        ]
+      ],
+      "basis": "Manually traced visible paved approach/parking patch in the registered 2025 MassGIS aerial. Footprint at roughly0.9m source pixels; boundaries clipped to retained buildings and driving envelope. Authored asphalt color and edge treatment, no surveyed parcel or access claim."
+    },
+    {
+      "id": "LOT-POLAND-13",
+      "site": "poland",
+      "kind": "driveway",
+      "pixels": [
+        [
+          522,
+          822
+        ],
+        [
+          576,
+          804
+        ],
+        [
+          582,
+          819
+        ],
+        [
+          529,
+          837
+        ]
+      ],
+      "basis": "Manually traced visible paved approach/parking patch in the registered 2025 MassGIS aerial. Footprint at roughly0.9m source pixels; boundaries clipped to retained buildings and driving envelope. Authored asphalt color and edge treatment, no surveyed parcel or access claim."
+    },
+    {
+      "id": "LOT-POLAND-14",
+      "site": "poland",
+      "kind": "driveway",
+      "pixels": [
+        [
+          583,
+          856
+        ],
+        [
+          619,
+          845
+        ],
+        [
+          622,
+          861
+        ],
+        [
+          588,
+          875
+        ]
+      ],
+      "basis": "Manually traced visible paved approach/parking patch in the registered 2025 MassGIS aerial. Footprint at roughly0.9m source pixels; boundaries clipped to retained buildings and driving envelope. Authored asphalt color and edge treatment, no surveyed parcel or access claim."
+    },
+    {
+      "id": "LOT-POLAND-15",
+      "site": "poland",
+      "kind": "driveway",
+      "pixels": [
+        [
+          584,
+          887
+        ],
+        [
+          625,
+          869
+        ],
+        [
+          630,
+          886
+        ],
+        [
+          591,
+          905
+        ]
+      ],
+      "basis": "Manually traced visible paved approach/parking patch in the registered 2025 MassGIS aerial. Footprint at roughly0.9m source pixels; boundaries clipped to retained buildings and driving envelope. Authored asphalt color and edge treatment, no surveyed parcel or access claim."
+    },
+    {
+      "id": "LOT-LAKESIDE-02",
+      "site": "lakeside",
+      "kind": "driveway",
+      "pixels": [
+        [
+          601,
+          153
+        ],
+        [
+          643,
+          151
+        ],
+        [
+          644,
+          169
+        ],
+        [
+          602,
+          171
+        ]
+      ],
+      "basis": "Manually traced visible paved approach/parking patch in the registered 2025 MassGIS aerial. Footprint at roughly0.9m source pixels; boundaries clipped to retained buildings and driving envelope. Authored asphalt color and edge treatment, no surveyed parcel or access claim."
+    },
+    {
+      "id": "LOT-LAKESIDE-03",
+      "site": "lakeside",
+      "kind": "driveway",
+      "pixels": [
+        [
+          548,
+          207
+        ],
+        [
+          596,
+          207
+        ],
+        [
+          596,
+          222
+        ],
+        [
+          550,
+          222
+        ]
+      ],
+      "basis": "Manually traced visible paved approach/parking patch in the registered 2025 MassGIS aerial. Footprint at roughly0.9m source pixels; boundaries clipped to retained buildings and driving envelope. Authored asphalt color and edge treatment, no surveyed parcel or access claim."
+    },
+    {
+      "id": "LOT-LAKESIDE-04",
+      "site": "lakeside",
+      "kind": "driveway",
+      "pixels": [
+        [
+          552,
+          249
+        ],
+        [
+          598,
+          238
+        ],
+        [
+          601,
+          253
+        ],
+        [
+          558,
+          266
+        ]
+      ],
+      "basis": "Manually traced visible paved approach/parking patch in the registered 2025 MassGIS aerial. Footprint at roughly0.9m source pixels; boundaries clipped to retained buildings and driving envelope. Authored asphalt color and edge treatment, no surveyed parcel or access claim."
+    },
+    {
+      "id": "LOT-LAKESIDE-05",
+      "site": "lakeside",
+      "kind": "driveway",
+      "pixels": [
+        [
+          562,
+          268
+        ],
+        [
+          601,
+          263
+        ],
+        [
+          603,
+          278
+        ],
+        [
+          565,
+          283
+        ]
+      ],
+      "basis": "Manually traced visible paved approach/parking patch in the registered 2025 MassGIS aerial. Footprint at roughly0.9m source pixels; boundaries clipped to retained buildings and driving envelope. Authored asphalt color and edge treatment, no surveyed parcel or access claim."
+    },
+    {
+      "id": "LOT-LAKESIDE-06",
+      "site": "lakeside",
+      "kind": "driveway",
+      "pixels": [
+        [
+          623,
+          310
+        ],
+        [
+          677,
+          307
+        ],
+        [
+          679,
+          362
+        ],
+        [
+          640,
+          369
+        ]
+      ],
+      "basis": "Manually traced visible paved approach/parking patch in the registered 2025 MassGIS aerial. Footprint at roughly0.9m source pixels; boundaries clipped to retained buildings and driving envelope. Authored asphalt color and edge treatment, no surveyed parcel or access claim."
+    },
+    {
+      "id": "LOT-LAKESIDE-07",
+      "site": "lakeside",
+      "kind": "driveway",
+      "pixels": [
+        [
+          633,
+          391
+        ],
+        [
+          671,
+          398
+        ],
+        [
+          676,
+          422
+        ],
+        [
+          639,
+          421
+        ]
+      ],
+      "basis": "Manually traced visible paved approach/parking patch in the registered 2025 MassGIS aerial. Footprint at roughly0.9m source pixels; boundaries clipped to retained buildings and driving envelope. Authored asphalt color and edge treatment, no surveyed parcel or access claim."
+    },
+    {
+      "id": "LOT-LAKESIDE-08",
+      "site": "lakeside",
+      "kind": "driveway",
+      "pixels": [
+        [
+          630,
+          432
+        ],
+        [
+          671,
+          431
+        ],
+        [
+          668,
+          462
+        ],
+        [
+          626,
+          461
+        ]
+      ],
+      "basis": "Manually traced visible paved approach/parking patch in the registered 2025 MassGIS aerial. Footprint at roughly0.9m source pixels; boundaries clipped to retained buildings and driving envelope. Authored asphalt color and edge treatment, no surveyed parcel or access claim."
+    },
+    {
+      "id": "LOT-LAKESIDE-09",
+      "site": "lakeside",
+      "kind": "driveway",
+      "pixels": [
+        [
+          574,
+          493
+        ],
+        [
+          614,
+          469
+        ],
+        [
+          627,
+          481
+        ],
+        [
+          585,
+          507
+        ]
+      ],
+      "basis": "Manually traced visible paved approach/parking patch in the registered 2025 MassGIS aerial. Footprint at roughly0.9m source pixels; boundaries clipped to retained buildings and driving envelope. Authored asphalt color and edge treatment, no surveyed parcel or access claim."
+    },
+    {
+      "id": "LOT-LAKESIDE-10",
+      "site": "lakeside",
+      "kind": "driveway",
+      "pixels": [
+        [
+          520,
+          549
+        ],
+        [
+          548,
+          536
+        ],
+        [
+          554,
+          548
+        ],
+        [
+          532,
+          562
+        ]
+      ],
+      "basis": "Manually traced visible paved approach/parking patch in the registered 2025 MassGIS aerial. Footprint at roughly0.9m source pixels; boundaries clipped to retained buildings and driving envelope. Authored asphalt color and edge treatment, no surveyed parcel or access claim."
+    },
+    {
+      "id": "LOT-LAKESIDE-11",
+      "site": "lakeside",
+      "kind": "driveway",
+      "pixels": [
+        [
+          565,
+          589
+        ],
+        [
+          611,
+          569
+        ],
+        [
+          622,
+          581
+        ],
+        [
+          577,
+          603
+        ]
+      ],
+      "basis": "Manually traced visible paved approach/parking patch in the registered 2025 MassGIS aerial. Footprint at roughly0.9m source pixels; boundaries clipped to retained buildings and driving envelope. Authored asphalt color and edge treatment, no surveyed parcel or access claim."
+    },
+    {
+      "id": "LOT-LAKESIDE-13",
+      "site": "lakeside",
+      "kind": "driveway",
+      "pixels": [
+        [
+          630,
+          653
+        ],
+        [
+          647,
+          650
+        ],
+        [
+          661,
+          676
+        ],
+        [
+          649,
+          685
+        ]
+      ],
+      "basis": "Manually traced visible paved approach/parking patch in the registered 2025 MassGIS aerial. Footprint at roughly0.9m source pixels; boundaries clipped to retained buildings and driving envelope. Authored asphalt color and edge treatment, no surveyed parcel or access claim."
+    },
+    {
+      "id": "LOT-LAKESIDE-14",
+      "site": "lakeside",
+      "kind": "driveway",
+      "pixels": [
+        [
+          542,
+          664
+        ],
+        [
+          559,
+          659
+        ],
+        [
+          583,
+          681
+        ],
+        [
+          569,
+          691
+        ]
+      ],
+      "basis": "Manually traced visible paved approach/parking patch in the registered 2025 MassGIS aerial. Footprint at roughly0.9m source pixels; boundaries clipped to retained buildings and driving envelope. Authored asphalt color and edge treatment, no surveyed parcel or access claim."
+    },
+    {
+      "id": "LOT-LAKESIDE-15",
+      "site": "lakeside",
+      "kind": "driveway",
+      "pixels": [
+        [
+          821,
+          610
+        ],
+        [
+          840,
+          610
+        ],
+        [
+          846,
+          648
+        ],
+        [
+          827,
+          650
+        ]
+      ],
+      "basis": "Manually traced visible paved approach/parking patch in the registered 2025 MassGIS aerial. Footprint at roughly0.9m source pixels; boundaries clipped to retained buildings and driving envelope. Authored asphalt color and edge treatment, no surveyed parcel or access claim."
+    },
+    {
+      "id": "LOT-LAKESIDE-16",
+      "site": "lakeside",
+      "kind": "driveway",
+      "pixels": [
+        [
+          952,
+          596
+        ],
+        [
+          984,
+          594
+        ],
+        [
+          986,
+          611
+        ],
+        [
+          954,
+          617
+        ]
+      ],
+      "basis": "Manually traced visible paved approach/parking patch in the registered 2025 MassGIS aerial. Footprint at roughly0.9m source pixels; boundaries clipped to retained buildings and driving envelope. Authored asphalt color and edge treatment, no surveyed parcel or access claim."
+    }
+  ],
+  "reviewedExclusions": [
+    {
+      "id": "LOT-LAKESIDE-01",
+      "reason": "Reinspection shows primarily a road-edge strip or ambiguous tree-covered patch; omitted rather than asserted as a private driveway."
+    },
+    {
+      "id": "LOT-LAKESIDE-12",
+      "reason": "Reinspection shows primarily a road-edge strip or ambiguous tree-covered patch; omitted rather than asserted as a private driveway."
+    },
+    {
+      "id": "LOT-POLAND-02",
+      "reason": "Reinspection shows primarily a road-edge strip or ambiguous tree-covered patch; omitted rather than asserted as a private driveway."
+    },
+    {
+      "id": "LOT-POLAND-12",
+      "reason": "Reinspection shows primarily a road-edge strip or ambiguous tree-covered patch; omitted rather than asserted as a private driveway."
+    }
+  ]
+}

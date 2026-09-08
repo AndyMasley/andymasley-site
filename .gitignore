@@ -41,3 +41,6 @@ data/source/GLHYMPS*
 /public/town-transfer/
 /data/derived/town/asset-validation*.json
 /data/derived/town/browser-smoke-*/
+
+/data/derived/town/assembly-audit/
+/artifacts/town-*/

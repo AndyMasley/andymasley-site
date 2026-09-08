@@ -19,7 +19,8 @@ describe('Inventory road appearance', () => {
     const compiled=shader(variant),registered=variant.onBeforeCompile,key=variant.customProgramCacheKey();
     expect(compiled.fragmentShader.includes('diffuseColor.rgb = mix(diffuseColor.rgb,vec3(townAsphaltValue)')).toBe(code===5);
     expect(compiled.fragmentShader.includes('townInventoryVariation')).toBe(code!==5);
-    expect(compiled.fragmentShader).toContain(code===1?'vec3(0.185,0.131,0.080)':code===2?'vec3(0.235,0.234,0.206)':'vTownArtWorld.xz*29.0');
+    expect(compiled.fragmentShader).toContain(code===1?'vec3(0.185,0.131,0.080)':code===2?'vec3(0.115,0.117,0.102)':'vTownArtWorld.xz*29.0');
+    if(code===2){expect(compiled.fragmentShader).toContain('vec3(0.245,0.241,0.208)');expect(compiled.fragmentShader).toContain('townGravelResolved');}
     expect(compiled.fragmentShader).toContain('townArtClose');
     expect(compiled.fragmentShader).toContain('(townStoneGrain-0.5)*'+(code===2?'0.0015':'0.0008'));
     expect(compiled.fragmentShader.match(/#include <map_fragment>/g)).toHaveLength(1);

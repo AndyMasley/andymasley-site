@@ -51,6 +51,19 @@ describe('Sparse source terrain conformance',()=>{
   it('never raises terrain or permits lowering beyond the measured intrusion envelope',()=>{
     for(const height of [1.2,-1.2]){const{group,mesh,geometry,packet}=fixture();packet.levels[0].meshes[0].patches[0][1][0][2]=height;expect(applyTerrainFinish(group,'1_3',[0,0,0],0,packet).rejected).toBe(true);expect(mesh.geometry).toBe(geometry);}
   });
+  it('allows constructed banks only through an explicit bounded envelope and gives new slopes matching normals',()=>{
+    const {group,mesh,geometry,packet}=fixture();
+    const original=geometry.getAttribute('position').array.slice();
+    for(const vertex of packet.levels[0].meshes[0].patches[0][1])vertex[2]=1.1+vertex[0]*.2;
+    const result=applyTerrainFinish(group,'1_3',[0,0,0],0,packet,'streetCornerGround',{raise:.4,lower:.5});
+    expect(result.rejected).toBe(false);expect(result.normalRepairs).toBe(2);
+    expect(mesh.geometry.getAttribute('position').array.slice(0,original.length)).toEqual(original);
+    const p=mesh.geometry.getAttribute('position'),n=mesh.geometry.getAttribute('normal'),ids=mesh.geometry.index!;
+    const a=new THREE.Vector3().fromBufferAttribute(p,ids.getX(0)),b=new THREE.Vector3().fromBufferAttribute(p,ids.getX(1)),c=new THREE.Vector3().fromBufferAttribute(p,ids.getX(2));
+    expect(b.sub(a).cross(c.sub(a)).normalize().dot(new THREE.Vector3().fromBufferAttribute(n,ids.getX(0)))).toBeCloseTo(1,5);
+    const other=fixture();for(const vertex of other.packet.levels[0].meshes[0].patches[0][1])vertex[2]=1.7;
+    expect(applyTerrainFinish(other.group,'1_3',[0,0,0],0,other.packet,'streetCornerGround',{raise:.4,lower:.5}).rejected).toBe(true);expect(other.mesh.geometry).toBe(other.geometry);
+  });
   it('handles Float32-collapsed overlay slivers and repairs reflected winding without changing source bytes',()=>{
     const {group,mesh,geometry,packet}=fixture(),position=geometry.getAttribute('position');
     for(let i=0;i<position.count;i++){position.setX(i,position.getX(i)+256);position.setZ(i,position.getZ(i)+256);}
@@ -68,6 +81,19 @@ describe('Sparse source terrain conformance',()=>{
     packet.levels[0].meshes[0].patches[0][1].splice(3);
     expect(applyTerrainFinish(group,'1_3',[0,0,0],0,packet).rejected).toBe(true);
     expect(mesh.geometry).toBe(geometry);expect(dispose).not.toHaveBeenCalled();expect(group.userData.terrainFinish).toBeUndefined();
+  });
+  it('checks the unrounded source partition independently of the constructed-bank quantization allowance',()=>{
+    for(const invalid of ['missing','duplicated']) {
+      const {group,mesh,geometry,packet}=fixture();
+      const vertices=packet.levels[0].meshes[0].patches[0][1];
+      if(invalid==='missing')vertices.splice(3);else vertices.push(...structuredClone(vertices));
+      const result=applyTerrainFinish(group,'1_3',[0,0,0],0,packet,'streetCornerGround',{raise:.4,lower:.5,footprintToleranceM2:100});
+      expect(result.rejected).toBe(true);expect(result.rejectionReason).toContain('partition');
+      expect(mesh.geometry).toBe(geometry);expect(group.userData.streetCornerGround).toBeUndefined();
+    }
+    const valid=fixture();
+    const result=applyTerrainFinish(valid.group,'1_3',[0,0,0],0,valid.packet,'streetCornerGround',{raise:.4,lower:.5,footprintToleranceM2:.0005});
+    expect(result.rejected).toBe(false);expect(result.maximumFootprintDriftM2).toBe(0);
   });
   it('leaves scenery intact when an optional packet or LOD repair is absent',()=>{
     const {group,mesh,geometry,packet}=fixture();expect(applyTerrainFinish(group,'1_3',[0,0,0],0).meshes).toBe(0);expect(applyTerrainFinish(group,'1_3',[0,0,0],2,packet).meshes).toBe(0);expect(mesh.geometry).toBe(geometry);

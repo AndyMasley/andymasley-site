@@ -2,6 +2,8 @@ import { classifyTurnOptions, chooseTurnOption } from './turn-options';
 import { roadSpeedLimitMps, cruiseCeilingMps } from './speed-policy';
 import { reverseDrivingPosition } from './reverse-direction';
 import { rampSpeedLimitMps } from './ramp-speed';
+import { displayRoadName } from './road-display';
+import { isMappedBoundaryEdge, MAP_BOUNDARY_MESSAGE, MAP_BOUNDARY_SETBACK } from './map-boundaries';
 
 /** Road-guided simulation using the source geometry from driving/drive_webster.py.
  * Positions are local east/north/up metres. Rendering may map [x,y,z] to
@@ -27,7 +29,7 @@ export interface NetworkData {
 export interface Choice { edgeId: number; angleDeg: number; label: TurnLabel; name: string }
 export interface Connector { path: Path; trim: number; fromTrim: number; speed: number; angle: number; nextId: number }
 export interface PlannedConnection extends Connector { choice: Choice }
-export interface Junction { edgeId: number; distance: number; choices: Choice[]; selected: Choice | null; obstacle?: boolean }
+export interface Junction { edgeId: number; distance: number; choices: Choice[]; selected: Choice | null; obstacle?: boolean; boundary?: boolean }
 
 export const MPH = 0.44704;
 export const LANDMARKS = {
@@ -141,6 +143,7 @@ export class RoadGraph {
   outgoing = new Map<number, number[]>();
   paths = new Map<number, Path>();
   obstacleStops = new Map<number, number>();
+  boundaryStops = new Map<number, number>();
   blockedTurns = new Set<string>();
   grid = new Map<string, Set<number>>();
   choiceCache = new Map<number, Choice[]>();
@@ -173,6 +176,21 @@ export class RoadGraph {
       }
     }
     if (!this.edges.size) throw new Error('The embedded driving road network is empty.');
+    for (const edge of this.edges.values()) {
+      if (!isMappedBoundaryEdge(edge) || (this.outgoing.get(edge.to) ?? []).some(id => this.edges.get(id)!.physical_id !== edge.physical_id)) continue;
+      const path = this.paths.get(edge.id)!;
+      this.boundaryStops.set(edge.id, Math.max(0, path.length - MAP_BOUNDARY_SETBACK));
+      // Three source clips are shorter than the car. Their sole incoming road
+      // stops before its original connector; the tiny stub is not entered.
+      if (path.length < MAP_BOUNDARY_SETBACK / .68) for (const incoming of this.edges.values()) {
+        if (incoming.to !== edge.from || incoming.physical_id === edge.physical_id) continue;
+        const choices = this.choices(incoming.id);
+        if (choices.length === 1 && choices[0].edgeId === edge.id) {
+          const fromPath = this.paths.get(incoming.id)!, connector = this.connector(incoming.id, edge.id);
+          this.boundaryStops.set(incoming.id, Math.max(0, fromPath.length - connector.fromTrim - 1));
+        }
+      }
+    }
   }
 
   choices(edgeId: number): Choice[] {
@@ -265,6 +283,7 @@ export class DriveEngine {
   connectionS = 0;
   queued: TurnRequest = null;
   queuedEdge: number | null = null;
+  queuedJunction: number | null = null;
   cruiseAtLimit = false;
   speed = 0; cruise = 0; acceleration = 0;
   paused = false; distance = 0; elapsed = 0; junctions = 0;
@@ -273,37 +292,46 @@ export class DriveEngine {
   history: [number, number][] = [];
   private planKey: string | null = null;
   private planValue: PlannedConnection | null = null;
+  private previewLengths = new Map<string, { length: number; trim: number; fromTrim: number }>();
 
   constructor(graph: RoadGraph, edgeId?: number, s = 0) {
     this.graph = graph;
     this.edgeId = edgeId ?? graph.edges.keys().next().value!;
-    this.s = clamp(s, 0, this.path.length);
+    this.s = clamp(s, 0, this.graph.boundaryStops.get(this.edgeId) ?? this.path.length);
   }
   get edge() { return required(this.graph.edges, this.edgeId, 'road'); }
   get path() { return required(this.graph.paths, this.edgeId, 'path'); }
 
   plan(): PlannedConnection | null {
-    if (this.obstacleAhead() !== undefined) return null;
+    if (this.obstacleAhead() !== undefined || this.graph.boundaryStops.has(this.edgeId)) return null;
     const requested = this.graph.choices(this.edgeId).length > 1 ? this.queued : null;
-    const key = `${this.edgeId},${requested},${this.queuedEdge}`;
+    const key = `${this.edgeId},${requested},${this.queuedEdge},${this.queuedJunction}`;
     if (this.planKey === key) return this.planValue;
-    const choice = this.graph.choices(this.edgeId).find(choice => choice.edgeId === this.queuedEdge) ?? this.graph.choose(this.edgeId, requested);
+    const choice = (this.queuedJunction === this.edgeId ? this.graph.choices(this.edgeId).find(choice => choice.edgeId === this.queuedEdge) : undefined) ?? this.graph.choose(this.edgeId, requested);
     const plan = choice ? { ...this.graph.connector(this.edgeId, choice.edgeId), choice } : null;
     this.planKey = key; this.planValue = plan; return plan;
   }
 
   queue(direction: TurnRequest): void {
+    const next = this.nextJunction();
+    if (direction && next && !next.choices.some(choice => choice.label.toUpperCase() === direction)) {
+      this.lastMessage = `No ${direction.toLowerCase()} branch at the next junction.${next.selected ? ` ${next.selected.label} onto ${displayRoadName(next.selected.name)} remains selected.` : ' Turn around or choose another starting place.'}`;
+      return;
+    }
     this.queued = direction;
-    this.queuedEdge = null;
-    this.lastMessage = direction === 'LEFT' ? 'Left turn requested at the next junction.' : direction === 'RIGHT' ? 'Right turn requested at the next junction.' : 'Continuing straight where possible.';
+    this.queuedEdge = null; this.queuedJunction = null;
+    const selected = this.nextJunction()?.selected;
+    this.lastMessage = direction && selected ? `${selected.label} onto ${displayRoadName(selected.name)} selected.` : direction ? `${direction === 'LEFT' ? 'Left' : 'Right'} requested when a junction comes into view.` : 'Turn request cleared. Following the road where possible.';
   }
 
   queueChoice(edgeId: number): boolean {
-    const choice = this.nextJunction()?.choices.find(option => option.edgeId === edgeId);
+    const next = this.nextJunction();
+    const choice = next?.choices.find(option => option.edgeId === edgeId);
     if (!choice) return false;
     this.queued = null;
     this.queuedEdge = edgeId;
-    this.lastMessage = `${choice.label} onto ${choice.name} selected.`;
+    this.queuedJunction = next!.edgeId;
+    this.lastMessage = `${choice.label} onto ${displayRoadName(choice.name)} selected.`;
     return true;
   }
 
@@ -315,9 +343,9 @@ export class DriveEngine {
     this.s = target.s;
     this.phase = 'ROAD'; this.connection = null; this.connectionS = 0;
     this.planKey = null; this.planValue = null;
-    this.queued = null; this.queuedEdge = null;
+    this.queued = null; this.queuedEdge = null; this.queuedJunction = null;
     this.acceleration = 0; this.endOfRoute = false;
-    this.lastMessage = `Turned around on ${this.edge.name}.`;
+    this.lastMessage = `Turned around on ${displayRoadName(this.edge.name)}.`;
     return true;
   }
 
@@ -348,14 +376,28 @@ export class DriveEngine {
         distance += Math.max(0, obstacle - startS);
         return { edgeId, distance, choices: [], selected: null, obstacle: true };
       }
-      distance += required(this.graph.paths, edgeId, 'path').length - startS;
+      const boundary = this.graph.boundaryStops.get(edgeId);
+      if (boundary !== undefined) return { edgeId, distance: distance + Math.max(0, boundary - startS), choices: [], selected: null, boundary: true };
+      const path = required(this.graph.paths, edgeId, 'path');
       const choices = this.graph.choices(edgeId);
       if (choices.length > 1 || !choices.length || choices[0].label === 'U-turn') {
-        return { edgeId, distance, choices, selected: choices.find(choice => choice.edgeId === this.queuedEdge) ?? this.graph.choose(edgeId, this.queued) };
+        // The actionable countdown ends where the connector is committed, not
+        // at the physical centre of an already-executing intersection.
+        distance += Math.max(0, path.length - startS - (choices.length ? Math.min(path.length * 0.32, 11) : 0));
+        return { edgeId, distance, choices, selected: (this.queuedJunction === edgeId ? choices.find(choice => choice.edgeId === this.queuedEdge) : undefined) ?? this.graph.choose(edgeId, this.queued) };
       }
       const choice = this.graph.choose(edgeId);
-      if (!choice || distance > maximum) return null;
-      edgeId = choice.edgeId; startS = 0;
+      if (!choice || distance + path.length - startS > maximum) return null;
+      const key = `${edgeId}:${choice.edgeId}`;
+      let preview = this.previewLengths.get(key);
+      if (!preview) {
+        const connection = this.graph.connector(edgeId, choice.edgeId);
+        preview = { length: connection.path.length, fromTrim: connection.fromTrim, trim: connection.trim };
+        if (this.previewLengths.size >= 128) this.previewLengths.clear();
+        this.previewLengths.set(key, preview);
+      }
+      distance += Math.max(0, path.length - startS - preview.fromTrim) + preview.length;
+      edgeId = choice.edgeId; startS = preview.trim;
     }
     return null;
   }
@@ -392,6 +434,14 @@ export class DriveEngine {
 
   speedLimit(): number {
     const limit = this.rampTarget() ?? this.roadLimit();
+    const next = this.nextJunction();
+    if (next?.boundary) {
+      const remaining = Math.max(0, next.distance - .15);
+      // The acceleration controller has response time. A square-root stopping
+      // envelope alone retains crawl speed until the hard endpoint; taper the
+      // last metres continuously so the safety stop does not create a jerk.
+      return Math.min(limit, Math.sqrt(2 * 2.2 * remaining), remaining * .5);
+    }
     if (this.phase === 'TURN' || this.plan()) return limit;
     const remaining = Math.max(0, (this.obstacleAhead() ?? this.path.length) - this.s - 0.15);
     return Math.min(limit, Math.sqrt(2 * 2.2 * remaining));
@@ -399,6 +449,7 @@ export class DriveEngine {
 
   /** Advance a known path distance; public for exact deterministic test fixtures. */
   advance(amount: number): void {
+    if (this.endOfRoute && this.phase === 'ROAD' && this.graph.boundaryStops.has(this.edgeId)) return;
     let remaining = amount, transitions = 0;
     while (remaining > 1e-8 && transitions < 50) {
       if (this.phase === 'TURN') {
@@ -412,7 +463,7 @@ export class DriveEngine {
           this.phase = 'ROAD'; this.connection = null; this.planKey = null; transitions++;
         }
       } else {
-        const plan = this.plan(), end = this.obstacleAhead() ?? this.path.length - (plan?.fromTrim ?? 0);
+        const plan = this.plan(), end = this.obstacleAhead() ?? this.graph.boundaryStops.get(this.edgeId) ?? this.path.length - (plan?.fromTrim ?? 0);
         const available = Math.max(0, end - this.s), advance = Math.min(remaining, available);
         this.s += advance; remaining -= advance;
         if (available <= advance + 1e-7) {
@@ -420,7 +471,7 @@ export class DriveEngine {
             this.speed = this.cruise = 0; this.cruiseAtLimit = false; this.endOfRoute = true;
             this.lastMessage = this.obstacleAhead() !== undefined
               ? 'Mapped building obstructs this road. Turn around or choose another starting location.'
-              : 'End of mapped route. Turn around or choose another starting location.';
+              : this.graph.boundaryStops.has(this.edgeId) ? MAP_BOUNDARY_MESSAGE : 'End of mapped route. Turn around or choose another starting location.';
             break;
           }
           this.s = end; this.phase = 'TURN'; this.connection = plan; this.connectionS = 0;
@@ -428,10 +479,10 @@ export class DriveEngine {
             this.junctions++;
             this.lastMessage = this.queued && plan.choice.label.toUpperCase() !== this.queued
               ? `No ${this.queued.toLowerCase()} branch here; taking ${plan.choice.label.toLowerCase()}.`
-              : `${plan.choice.label} onto ${plan.choice.name}`;
-            this.queued = null; this.queuedEdge = null;
+              : `${plan.choice.label} onto ${displayRoadName(plan.choice.name)}`;
+            this.queued = null; this.queuedEdge = null; this.queuedJunction = null;
           } else if (plan.choice.label === 'U-turn') this.lastMessage = 'Mapped dead end — turning around.';
-          if (this.queuedEdge === plan.nextId) this.queuedEdge = null;
+          if (this.queuedJunction === this.edgeId && this.queuedEdge === plan.nextId) { this.queuedEdge = null; this.queuedJunction = null; }
           transitions++;
         }
       }
@@ -443,6 +494,9 @@ export class DriveEngine {
     dt = clamp(dt, 0, 0.1);
     if (this.paused) return;
     this.elapsed += dt;
+    // A completed municipal stop stays latched until explicit reversal or a
+    // new starting point; held Go cannot crawl across its final safety margin.
+    if (this.endOfRoute && this.speed === 0 && this.graph.boundaryStops.has(this.edgeId)) return;
     if (throttle) { this.endOfRoute = false; this.cruiseAtLimit = true; }
     if (brake) this.cruiseAtLimit = false;
     if (this.cruiseAtLimit) this.cruise = Math.max(this.rampTarget() ?? 0, cruiseCeilingMps(this.phase === 'TURN' ? required(this.graph.edges, this.connection!.nextId, 'road') : this.edge, maxMph));
@@ -454,10 +508,12 @@ export class DriveEngine {
     this.speed = Math.max(0, this.speed + this.acceleration * dt);
     if (Math.abs(target - this.speed) < 0.015 && Math.abs(this.acceleration) < 0.08) this.speed = target;
     this.advance(Math.max(0, (previousSpeed + this.speed) * 0.5 * dt));
-    if (this.phase === 'ROAD' && this.speed < 0.05 && this.path.length - this.s < 5 && this.rampTarget() === 0 && !this.plan() && this.obstacleAhead() === undefined) {
+    const obstacle = this.obstacleAhead();
+    const terminalDistance = (obstacle ?? this.graph.boundaryStops.get(this.edgeId) ?? this.path.length) - this.s;
+    if (this.phase === 'ROAD' && this.speed < 0.05 && !this.plan() && (terminalDistance < 0.2 || (terminalDistance < 5 && this.rampTarget() === 0))) {
       this.speed = this.cruise = this.acceleration = 0;
       this.cruiseAtLimit = false; this.endOfRoute = true;
-      this.lastMessage = 'End of mapped route. Turn around or choose another starting location.';
+      this.lastMessage = obstacle !== undefined ? 'Mapped building obstructs this road. Turn around or choose another starting location.' : this.graph.boundaryStops.has(this.edgeId) ? MAP_BOUNDARY_MESSAGE : 'End of mapped route. Turn around or choose another starting location.';
     }
   }
 }
