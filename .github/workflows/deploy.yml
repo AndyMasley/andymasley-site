@@ -26,6 +26,9 @@ jobs:
 
       - run: npm ci
 
+      - name: Prepare pinned town assets for geometry tests
+        run: node scripts/prepare-town-assets.mjs
+
       - run: npm test
 
       - run: npm run check:town
