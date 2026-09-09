@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import * as THREE from 'three';
 import { applyArtMaterial, removeArtMaterial } from '../art-materials';
 import { applyInventoryRoadAppearance } from '../road-inventory-material';
+import { MINERAL_FINISH } from '../mineral-finish';
 
 function shader(material:THREE.MeshStandardMaterial) {
   const result = { vertexShader:THREE.ShaderLib.standard.vertexShader, fragmentShader:THREE.ShaderLib.standard.fragmentShader, uniforms:{} };
@@ -19,10 +20,15 @@ describe('Inventory road appearance', () => {
     const compiled=shader(variant),registered=variant.onBeforeCompile,key=variant.customProgramCacheKey();
     expect(compiled.fragmentShader.includes('diffuseColor.rgb = mix(diffuseColor.rgb,vec3(townAsphaltValue)')).toBe(code===5);
     expect(compiled.fragmentShader.includes('townInventoryVariation')).toBe(code!==5);
-    expect(compiled.fragmentShader).toContain(code===1?'vec3(0.185,0.131,0.080)':code===2?'vec3(0.115,0.117,0.102)':'vTownArtWorld.xz*29.0');
+    expect(compiled.fragmentShader).toContain(code===1?'vec3(0.185,0.131,0.080)':code===2?'vec3(0.115,0.117,0.102)':'vTownArtWorld.xz*75.0');
     if(code===2){expect(compiled.fragmentShader).toContain('vec3(0.245,0.241,0.208)');expect(compiled.fragmentShader).toContain('townGravelResolved');}
     expect(compiled.fragmentShader).toContain('townArtClose');
-    expect(compiled.fragmentShader).toContain('(townStoneGrain-0.5)*'+(code===2?'0.0015':'0.0008'));
+    const family=code===1?'earth':code===2?'gravel':'chip-seal';
+    expect(compiled.fragmentShader).toContain('Webster mineral family: '+family);
+    expect(compiled.fragmentShader).not.toContain('Webster mineral family: asphalt');
+    expect(compiled.fragmentShader).toContain('(townStoneGrain-0.5)*'+MINERAL_FINISH[family].relief);
+    expect(compiled.fragmentShader.match(/townArtNoise\(/g)).toHaveLength(3);
+    if(code===2){expect(compiled.fragmentShader).toContain('townArtFootprint*22.0');expect(compiled.fragmentShader).not.toContain('fwidth(townGravelRadius)');}
     expect(compiled.fragmentShader.match(/#include <map_fragment>/g)).toHaveLength(1);
     expect(variant.map).toBe(original.map);expect(variant.normalMap).toBe(original.normalMap);
     applyArtMaterial(variant);expect(variant.onBeforeCompile).toBe(registered);expect(variant.customProgramCacheKey()).toBe(key);
@@ -36,7 +42,12 @@ describe('Inventory road appearance', () => {
     const before=shader(asphalt),key=asphalt.customProgramCacheKey(),color=asphalt.color.clone();
     const separate=new THREE.MeshStandardMaterial();separate.name='Drive road | asphalt';applyArtMaterial(separate);applyInventoryRoadAppearance(separate,2);
     expect(shader(asphalt)).toEqual(before);expect(asphalt.customProgramCacheKey()).toBe(key);expect(asphalt.color).toEqual(color);
-    expect(before.fragmentShader).toContain('vTownArtWorld.xz*37.0');expect(before.fragmentShader).toContain('0.00055');
+    expect(before.fragmentShader).toContain('vTownArtWorld.xz*110.0');expect(before.fragmentShader).toContain('0.00065');
     separate.dispose();asphalt.dispose();
+  });
+  it('fails visibly if another shader wrapper removes the mineral-family contract', () => {
+    const material=new THREE.MeshStandardMaterial();material.name='Drive road | asphalt';applyArtMaterial(material);
+    const compile=material.onBeforeCompile;material.onBeforeCompile=(shader,renderer)=>{compile.call(material,shader,renderer);shader.fragmentShader=shader.fragmentShader.replace('// Webster mineral family: asphalt','// missing family');};
+    applyInventoryRoadAppearance(material,2);expect(()=>shader(material)).toThrow('mineral shader anchor changed');removeArtMaterial(material);material.dispose();
   });
 });

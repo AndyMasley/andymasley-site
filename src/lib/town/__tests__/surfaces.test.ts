@@ -46,6 +46,13 @@ describe('Mapped summer ground', () => {
     expect(colorUVs).toHaveLength(2);
     expect(samples('townGrassNormal')).toEqual(colorUVs);
     expect(samples('townGrassRoughness')).toEqual([colorUVs[0]]);
+    // Forest/soil relief reuses the four scattered color reads per class;
+    // pavement relief reuses its existing color read as well.
+    expect(samples('groundTexture')).toHaveLength(4);
+    expect(samples('townCover')).toHaveLength(1);
+    expect(samples('townPavement')).toHaveLength(1);
+    expect([...shader.fragmentShader.matchAll(/townScatteredGround\(\s*town(?:Forest|Soil),/g)]).toHaveLength(2);
+    expect([...shader.fragmentShader.matchAll(/texture2D\(/g)]).toHaveLength(11);
     expect(read).toHaveBeenCalledTimes(4); // Three existing grass maps and this tile's mask.
     expect(shader.vertexShader).toContain('(modelMatrix * vec4(transformed, 1.0)).xz');
 
@@ -59,6 +66,21 @@ describe('Mapped summer ground', () => {
     const finalNormal = fragment.split('\n').find(line => line.includes('normal = normalize(normal +'))!;
     expect(finalNormal).toContain('townClose * townGrassResolved');
     expect(finalNormal).toContain('townWeights.r');
+    // A derivative inside even the near-degenerate determinant guard is
+    // undefined when neighboring fragments disagree on that guard. Check the
+    // generated shader's statement and brace scope, including single-line ifs.
+    const normalInjection = fragment.split('#include <normal_fragment_maps>')[1].split('#include <clearcoat_normal_fragment_begin>')[0].replace(/\/\/[^\n]*|\/\*[\s\S]*?\*\//g, '');
+    const reliefDerivatives = [...normalInjection.matchAll(/dFd[xy]\(([^)]*)\)/g)];
+    expect(reliefDerivatives.map(match => match[1])).toEqual(['-vViewPosition', '-vViewPosition', 'townGroundRelief', 'townGroundRelief']);
+    for (const derivative of reliefDerivatives) {
+      const prefix = normalInjection.slice(0, derivative.index!);
+      const braceDepth = [...prefix].reduce((depth, character) => depth + (character === '{' ? 1 : character === '}' ? -1 : 0), 0);
+      expect(braceDepth).toBe(0);
+      const statement = prefix.slice(Math.max(prefix.lastIndexOf(';'), prefix.lastIndexOf('}')) + 1).trim();
+      expect(statement).toMatch(/^(?:float|vec[234])\s+\w+\s*=/);
+    }
+    const determinantGuard = normalInjection.indexOf('if(abs(townGroundDet)');
+    expect(determinantGuard).toBeGreaterThan(reliefDerivatives.at(-1)!.index!);
     surfaces.dispose();
   });
 

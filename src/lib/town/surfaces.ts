@@ -134,7 +134,7 @@ export class TownSurfaces {
   grassResources(): ReturnType<TownGrass['resources']> { return this.grass.resources(); }
 
   private patch(material: THREE.MeshStandardMaterial, mask: THREE.Texture, bounds: number[]): void {
-    material.customProgramCacheKey = () => 'webster-finished-ground-v7';
+    material.customProgramCacheKey = () => 'webster-finished-ground-v8';
     material.onBeforeCompile = shader => {
       const [color, normal, roughness, soil, forest, impervious] = this.shared;
       Object.assign(shader.uniforms, {
@@ -160,7 +160,7 @@ float townNoise(vec2 p) {
   vec2 i = floor(p), f = fract(p); f = f*f*(3.0-2.0*f);
   return mix(mix(townHash(i),townHash(i+vec2(1,0)),f.x),mix(townHash(i+vec2(0,1)),townHash(i+vec2(1,1)),f.x),f.y);
 }
-vec3 townScatteredGround(sampler2D groundTexture, vec2 world, float repeatSize) {
+vec3 townScatteredGround(sampler2D groundTexture, vec2 world, float repeatSize, vec3 sourceMean) {
   vec2 cell = floor(world / 3.6), blend = fract(world / 3.6);
   blend = blend*blend*(3.0-2.0*blend);
   vec2 uv = world / repeatSize;
@@ -168,8 +168,13 @@ vec3 townScatteredGround(sampler2D groundTexture, vec2 world, float repeatSize) 
   vec2 b = vec2(townHash(cell+vec2(1,0)),townHash(cell+vec2(72.3,9.7)))*47.0;
   vec2 c = vec2(townHash(cell+vec2(0,1)),townHash(cell+vec2(71.3,10.7)))*47.0;
   vec2 d = vec2(townHash(cell+vec2(1,1)),townHash(cell+vec2(72.3,10.7)))*47.0;
-  return mix(mix(texture2D(groundTexture,uv+a).rgb,texture2D(groundTexture,uv+b).rgb,blend.x),
+  vec3 scattered = mix(mix(texture2D(groundTexture,uv+a).rgb,texture2D(groundTexture,uv+b).rgb,blend.x),
     mix(texture2D(groundTexture,uv+c).rgb,texture2D(groundTexture,uv+d).rgb,blend.x),blend.y);
+  // Offset blending removes tiling but also averages away leaf/stone contrast.
+  // Restore its variance around the measured linear-RGB source mean, retaining
+  // the same four reads and continuous blend at every patch boundary.
+  vec4 weights = vec4((1.0-blend.x)*(1.0-blend.y),blend.x*(1.0-blend.y),(1.0-blend.x)*blend.y,blend.x*blend.y);
+  return clamp(sourceMean+(scattered-sourceMean)*inversesqrt(dot(weights,weights)),0.0,1.0);
 }
 vec2 townCutBlade(vec2 world, float pixelWidth) {
   vec2 p = world * 24.0, cell = floor(p), f = fract(p) - 0.5;
@@ -195,40 +200,42 @@ vec4 townWeights = texture2D(townCover, townMaskUV);
 float townCoverage = min(1.0, dot(townWeights,vec4(1.0)));
 townWeights *= townWeights;
 townWeights *= townCoverage / max(dot(townWeights,vec4(1.0)),0.00001);
-// A finer physical repeat keeps the source blades from reading as large clumps.
-// All three grass maps use the same coordinates and existing mip filtering.
-vec2 townDetailUV = vTownGroundXZ * 1.5 / townGrassRepeat;
-// A second, differently oriented scale breaks the source tile's repeated clumps.
-mat2 townTurfRotation = mat2(0.8,0.6,-0.6,0.8);
-vec2 townDetailUV2 = townTurfRotation * townDetailUV * 0.43 + vec2(3.71,9.23);
 float townDistance = length(vTownGroundXZ - cameraPosition.xz);
 float townClose = 1.0 - smoothstep(14.0, 55.0, townDistance);
 // Evaluate before class-dependent branches, including at grazing view angles.
 vec2 townGroundFootprint = fwidth(vTownGroundXZ);
 float townPixelWidth = max(townGroundFootprint.x,townGroundFootprint.y);
 float townGrassResolved = 1.0 - smoothstep(0.012,0.07,townPixelWidth);
+float townGroundReliefResolved = 1.0-smoothstep(0.018,0.12,townPixelWidth);
+float townGroundRelief = 0.0;
 float townMacro = townNoise(vTownGroundXZ / 19.0);
 float townPatch = townNoise(vTownGroundXZ / 3.7 + vec2(17.9,2.1));
+// A continuous, gentle domain drift breaks the source tile's regular grid.
+// Reuse the existing patch fields and keep color/normal/roughness coordinates
+// registered; no hashed UV jumps, extra maps or additional texture reads.
+vec2 townDetailUV = vTownGroundXZ * 1.5 / townGrassRepeat + vec2(townPatch,townMacro)*0.85;
+mat2 townTurfRotation = mat2(0.8,0.6,-0.6,0.8);
+vec2 townDetailUV2 = townTurfRotation * townDetailUV * 0.43 + vec2(3.71,9.23);
 vec3 townGrassColor = vec3(0.0);
 if (townWeights.r > 0.001) {
   // Color textures are already decoded from sRGB by their GPU texture format.
   vec3 townGrassSource = texture2D(townGrass, townDetailUV).rgb;
   vec3 townGrassSource2 = texture2D(townGrass, townDetailUV2).rgb;
-  float townFine = dot(townGrassSource,vec3(0.2126,0.7152,0.0722));
-  float townBroad = dot(townGrassSource2,vec3(0.2126,0.7152,0.0722));
-  // The actual decoded source has median luminance .092 and p10/p90 .057/.126.
-  // The old .035–.24 smoothstep compressed that into nearly one flat paint tone.
-  // Retain the source's blades and broader clumps, with a restrained summer range.
-  float townTurfValue = clamp((mix(townFine,townBroad,0.19)-0.025)/0.155,0.0,1.0);
-  vec3 townLawnShade = vec3(0.063,0.105,0.033);
-  vec3 townLawnLight = vec3(0.198,0.259,0.094);
-  townGrassColor = mix(townLawnShade,townLawnLight,townTurfValue);
+  // Preserve actual interwoven turf hues instead of replacing every source
+  // pixel with a point on the same smooth green gradient. These measured means
+  // belong to the pinned grass atlas, not a survey of a particular lawn.
+  vec3 townTurfMean = vec3(0.060254,0.108959,0.022895);
+  vec3 townTurfSource = mix(townGrassSource,townGrassSource2,0.32);
+  townTurfSource = max(vec3(0.008),townTurfMean+(townTurfSource-townTurfMean)*1.32);
+  float townTurfLight = dot(townTurfSource,vec3(0.2126,0.7152,0.0722));
+  townGrassColor = mix(townTurfSource,vec3(townTurfLight),0.19)*vec3(1.45,1.20,1.05);
   // Authored differences in moisture/cutting density, not surveyed lawn health.
   // Continuous metre-space variation avoids tile edges and repeated mowing grids.
   float townLawnDrift = townNoise(vTownGroundXZ/8.3+vec2(6.1,27.3));
   float townLawnVariation = clamp(townLawnDrift + (townPatch-0.5)*0.45,0.0,1.0);
-  townGrassColor *= mix(vec3(1.075,1.015,0.87),vec3(0.92,1.035,1.04),townLawnVariation);
-  townGrassColor *= mix(0.88,1.105,townMacro) * mix(0.955,1.055,townPatch);
+  float townDryThatch = smoothstep(0.57,0.88,townLawnVariation);
+  townGrassColor *= mix(vec3(0.93,1.035,0.97),vec3(1.36,1.12,0.78),townDryThatch);
+  townGrassColor *= mix(0.88,1.12,townMacro) * mix(0.88,1.13,townPatch);
   vec2 townBlade = townCutBlade(vTownGroundXZ,townPixelWidth);
   townGrassColor *= 1.0 + townBlade.x * townClose * 0.18 - townBlade.y * townClose * 0.12;
 }
@@ -236,25 +243,31 @@ vec3 townForestColor = vec3(0.0);
 if (townWeights.g > 0.001) {
   // Blend hashed texture offsets continuously in world space. The source leaf
   // photograph has strong pale patches that otherwise form a visible grid.
-  vec3 townForestSource = townScatteredGround(townForest,vTownGroundXZ,townOtherRepeats.y);
-  float townForestValue = smoothstep(0.035,0.30,dot(townForestSource,vec3(0.2126,0.7152,0.0722)));
-  float townLitterDetail = 1.0 - smoothstep(8.0,42.0,townDistance);
-  float townFloorVariation = mix(townNoise(vTownGroundXZ/1.9),townForestValue,0.24+0.40*townLitterDetail);
-  townForestColor = mix(vec3(0.062,0.073,0.043),vec3(0.145,0.128,0.078),townFloorVariation);
+  vec3 townForestSource = townScatteredGround(townForest,vTownGroundXZ,townOtherRepeats.y,vec3(0.198153,0.118377,0.046169));
+  float townForestValue = dot(townForestSource,vec3(0.2126,0.7152,0.0722));
+  float townLitterDetail = 1.0 - smoothstep(18.0,65.0,townDistance);
+  float townFloorVariation = clamp((townForestValue-0.015)/0.34,0.0,1.0);
+  townForestColor = mix(vec3(0.027,0.026,0.016),vec3(0.19,0.155,0.087),townFloorVariation);
+  townForestColor *= mix(0.91,1.08,townNoise(vTownGroundXZ/1.9));
   townForestColor *= mix(0.86,1.07,townMacro);
+  townGroundRelief += (townFloorVariation-0.38)*0.009*townWeights.g*townLitterDetail;
 }
 vec3 townSoilColor = vec3(0.0);
 if (townWeights.a > 0.001) {
-  vec3 townSoilSource = townScatteredGround(townSoil,vTownGroundXZ,townOtherRepeats.x);
-  float townSoilValue = smoothstep(0.035,0.36,dot(townSoilSource,vec3(0.2126,0.7152,0.0722)));
-  float townSoilDetail = 1.0 - smoothstep(9.0,45.0,townDistance);
-  float townSoilVariation = mix(townNoise(vTownGroundXZ/2.4),townSoilValue,0.28+0.42*townSoilDetail);
-  townSoilColor = mix(vec3(0.115,0.101,0.074),vec3(0.245,0.219,0.166),townSoilVariation);
+  vec3 townSoilSource = townScatteredGround(townSoil,vTownGroundXZ,townOtherRepeats.x,vec3(0.182107,0.145364,0.080108));
+  float townSoilValue = dot(townSoilSource,vec3(0.2126,0.7152,0.0722));
+  float townSoilDetail = 1.0 - smoothstep(15.0,55.0,townDistance);
+  float townSoilVariation = clamp((townSoilValue-0.025)/0.34,0.0,1.0);
+  townSoilColor = mix(vec3(0.064,0.052,0.034),vec3(0.28,0.231,0.153),townSoilVariation);
+  townSoilColor *= mix(0.93,1.06,townNoise(vTownGroundXZ/2.4));
   townSoilColor *= mix(0.91,1.07,townMacro);
+  townGroundRelief += (townSoilVariation-0.38)*0.004*townWeights.a*townSoilDetail;
 }
 vec3 townPavedSource = texture2D(townPavement,vTownGroundXZ/townOtherRepeats.z).rgb;
 float townPavedValue = dot(townPavedSource,vec3(0.2126,0.7152,0.0722));
 vec3 townPavedColor = mix(townPavedSource, townPavedValue*vec3(0.94,1.0,1.07),0.96) * 0.56;
+townGroundRelief += (townPavedValue-0.16)*0.003*townWeights.b*townHasPavement*townClose;
+townGroundRelief *= townGroundReliefResolved;
 float townTotalWeight = townWeights.r + townWeights.g + townWeights.a + townWeights.b*townHasPavement;
 vec3 townSurfaceColor = townGrassColor*townWeights.r + townForestColor*townWeights.g + townSoilColor*townWeights.a + townPavedColor*townWeights.b*townHasPavement;
 townSurfaceColor /= max(townTotalWeight, 0.001);
@@ -262,22 +275,30 @@ townSurfaceColor /= max(townTotalWeight, 0.001);
 diffuseColor.rgb = mix(diffuseColor.rgb, townSurfaceColor, min(1.0,townTotalWeight));
 `).replace('#include <roughnessmap_fragment>', `
 #include <roughnessmap_fragment>
-roughnessFactor = mix(roughnessFactor, clamp(texture2D(townGrassRoughness,townDetailUV).r,0.88,0.99), townWeights.r);
+roughnessFactor = mix(roughnessFactor, 0.91+texture2D(townGrassRoughness,townDetailUV).r*0.08, townWeights.r);
 roughnessFactor = mix(roughnessFactor, max(roughnessFactor,0.9), min(1.0,townWeights.g+townWeights.a));
+roughnessFactor = mix(roughnessFactor,clamp(0.84+townPavedValue*0.3,0.84,0.97),townWeights.b*townHasPavement);
 `).replace('#include <normal_fragment_maps>', `
 #include <normal_fragment_maps>
 if (townWeights.r > 0.001) {
   vec2 townNormal = texture2D(townGrassNormal,townDetailUV).xy * 2.0 - 1.0;
   vec2 townNormal2 = texture2D(townGrassNormal,townDetailUV2).xy * 2.0 - 1.0;
   townNormal2 = mat2(0.8,-0.6,0.6,0.8) * townNormal2;
-  townNormal = mix(townNormal,townNormal2,0.22);
+  townNormal = mix(townNormal,townNormal2,0.32);
   // Project the world-X texture axis onto the actual sloping terrain surface.
   vec3 townEast = mat3(viewMatrix) * vec3(1.0,0.0,0.0);
   if (abs(dot(normal,townEast)) > 0.95) townEast = mat3(viewMatrix) * vec3(0.0,0.0,1.0);
   vec3 townTangent = normalize(townEast - normal * dot(normal,townEast));
   vec3 townBitangent = normalize(cross(townTangent,normal));
-  normal = normalize(normal + (townTangent*townNormal.x + townBitangent*townNormal.y) * townWeights.r * townClose * townGrassResolved * 0.46);
+  normal = normalize(normal + (townTangent*townNormal.x + townBitangent*townNormal.y) * townWeights.r * townClose * townGrassResolved * 0.64);
 }
+// Litter, mineral ground and paved cover reuse the color samples as shallow
+// relief. Differentiate after all class branches; nothing displaces terrain.
+vec3 townGroundDx=dFdx(-vViewPosition),townGroundDy=dFdy(-vViewPosition);
+vec3 townGroundR1=cross(townGroundDy,normal),townGroundR2=cross(normal,townGroundDx);
+float townGroundDet=dot(townGroundDx,townGroundR1);
+vec2 townReliefDerivative=vec2(dFdx(townGroundRelief),dFdy(townGroundRelief));
+if(abs(townGroundDet)>1e-10)normal=normalize(abs(townGroundDet)*normal-sign(townGroundDet)*(townReliefDerivative.x*townGroundR1+townReliefDerivative.y*townGroundR2));
 `);
     };
     material.needsUpdate = true;

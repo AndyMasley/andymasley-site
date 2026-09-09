@@ -37,6 +37,21 @@ function decode(value: string): Float32Array {
   return new Float32Array(bytes.buffer);
 }
 
+// A ground role may be a walk, mineral hardstanding or an earth planting bed.
+// Only fine construction texture is authored here; its source hue stays intact.
+const pavingNoise = `
+float craftedGroundHash(vec2 p) {
+  vec3 q=fract(vec3(p.xyx)*.1031);
+  q+=dot(q,q.yzx+33.33);
+  return fract((q.x+q.y)*q.z);
+}
+float craftedGroundNoise(vec2 p) {
+  vec2 i=floor(p),f=fract(p);f=f*f*(3.0-2.0*f);
+  return mix(mix(craftedGroundHash(i),craftedGroundHash(i+vec2(1.,0.)),f.x),
+    mix(craftedGroundHash(i+vec2(0.,1.)),craftedGroundHash(i+vec2(1.)),f.x),f.y);
+}
+`;
+
 export function frontageMaterial(role: Role, color: string): THREE.MeshStandardMaterial {
   const result = new THREE.MeshStandardMaterial({ color, roughness: role === 'glass' ? 0.14 : role === 'metal' ? 0.6 : 0.87, metalness: role === 'metal' ? 0.35 : 0 });
   result.name = `Crafted frontage | ${role} | ${color}`;
@@ -47,15 +62,25 @@ export function frontageMaterial(role: Role, color: string): THREE.MeshStandardM
   if (['wall', 'roof', 'brick', 'stone', 'paving', 'foundation', 'leaf', 'shingle', 'stucco'].includes(role)) {
     result.onBeforeCompile = (shader) => {
       shader.vertexShader = `varying vec3 vCraftedWorld;\nvarying vec3 vCraftedWorldNormal;\n${shader.vertexShader}`.replace('#include <project_vertex>', '#include <project_vertex>\nvCraftedWorld = (modelMatrix * vec4(transformed,1.0)).xyz;\nvCraftedWorldNormal = inverseTransformDirection(transformedNormal,viewMatrix);');
-      shader.fragmentShader = `varying vec3 vCraftedWorld;\nvarying vec3 vCraftedWorldNormal;\n${shader.fragmentShader}`.replace('#include <map_fragment>', `
+      shader.fragmentShader = `${role==='paving'?pavingNoise:''}varying vec3 vCraftedWorld;\nvarying vec3 vCraftedWorldNormal;\n${shader.fragmentShader}`.replace('#include <map_fragment>', `
 #include <map_fragment>
 float craftedNear = 1.0-smoothstep(25.0,110.0,length(cameraPosition-vCraftedWorld));
 float craftedRow = fract(vCraftedWorld.y/${role === 'brick' ? '0.085' : '0.145'});
 float craftedFine = max(fwidth(vCraftedWorld.y/${role === 'brick' ? '0.085' : '0.145'}),0.002);
 float craftedJoint = (1.0-smoothstep(0.025,0.045+craftedFine,craftedRow))*craftedNear;
-float craftedNoise = sin(vCraftedWorld.x*4.41+vCraftedWorld.z*2.35)*sin(vCraftedWorld.z*7.63-vCraftedWorld.x*1.14);
+${role==='paving'?`
+// Continuous metre coordinates keep the finish aligned across source pieces.
+// Approx. 15 mm grain and 2.9 m variation replace the repeating broad ripples.
+float craftedPavingFootprint=max(length(dFdx(vCraftedWorld)),length(dFdy(vCraftedWorld)));
+float craftedPavingResolved=1.0-smoothstep(.002,.012,craftedPavingFootprint);
+float craftedPavingGrain=craftedGroundNoise(vCraftedWorld.xz*65.0);
+float craftedPavingAge=craftedGroundNoise(vCraftedWorld.xz*.35+vec2(17.1,41.7));
+diffuseColor.rgb*=mix(.97,1.03,craftedPavingAge)*(1.0+(craftedPavingGrain-.5)*.10*craftedPavingResolved);
+// At most 0.35 mm signed shading relief, fading before individual grains alias.
+float craftedRelief=(craftedPavingGrain-.5)*.0007*craftedPavingResolved*craftedNear;
+`:`float craftedNoise = sin(vCraftedWorld.x*4.41+vCraftedWorld.z*2.35)*sin(vCraftedWorld.z*7.63-vCraftedWorld.x*1.14);
 diffuseColor.rgb *= 1.0+craftedNoise*0.025;
-float craftedRelief = 0.0;
+float craftedRelief = 0.0;`}
 ${role === 'wall' ? 'diffuseColor.rgb *= 1.0-craftedJoint*0.16; craftedRelief=craftedRow*0.003*craftedNear;' : role === 'leaf' ? 'diffuseColor.rgb *= 0.90+0.12*sin(vCraftedWorld.x*17.1+vCraftedWorld.y*12.7)*sin(vCraftedWorld.z*16.8-vCraftedWorld.y*6.2);' : ''}
 ${['brick','stone','shingle','roof'].includes(role) ? `
 // A stable vertex normal avoids differentiating large world coordinates: tiny
@@ -77,7 +102,7 @@ diffuseColor.rgb*=mix(.965,1.035,craftedVariation*craftedDetail+.5*(1.-craftedDe
 ${role==='brick'||role==='stone'?'diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.27,.255,.23),craftedGrout*.60*craftedDetail);':'diffuseColor.rgb*=1.-craftedGrout*.20*craftedDetail;'}
 craftedRelief=(1.-craftedGrout)*${role==='stone'?'.006':'.002'}*craftedDetail;
 ` : ''}
-${role==='stucco'||role==='foundation'||role==='paving'?'craftedRelief=craftedNoise*.0006*craftedNear;':''}
+${role==='stucco'||role==='foundation'?'craftedRelief=craftedNoise*.0006*craftedNear;':''}
 `);
       shader.fragmentShader=shader.fragmentShader.replace('#include <normal_fragment_maps>', `
 #include <normal_fragment_maps>
@@ -90,7 +115,7 @@ if(abs(craftedDet)>0.0000000001){
 }
 `);
     };
-    result.customProgramCacheKey = () => `crafted-frontages-v3:${role}`;
+    result.customProgramCacheKey = () => role==='paving'?'crafted-frontages-v4:paving':`crafted-frontages-v3:${role}`;
   }
   if(role==='glass'){
     // Keep the authored hue and sky reflection; the diffuse interior is dark.

@@ -1,8 +1,9 @@
 import * as THREE from 'three';
 import { BARK_FINISH_GLSL } from './vegetation-finish';
 import { applySiteArtMaterial, removeSiteArtMaterial } from './site-surface-finish';
+import { mineralFragment, MINERAL_ROUGHNESS } from './mineral-finish';
 
-type ArtKind = 'siding' | 'roof' | 'brick' | 'trim' | 'glass' | 'foundation' | 'concrete' | 'asphalt' | 'shoulder' | 'road-paint' | 'leaf' | 'far-leaf' | 'bark' | 'car-paint' | 'car-glass' | 'rubber' | 'water';
+type ArtKind = 'siding' | 'roof' | 'brick' | 'trim' | 'glass' | 'foundation' | 'concrete' | 'granite' | 'asphalt' | 'shoulder' | 'road-paint' | 'leaf' | 'far-leaf' | 'bark' | 'car-paint' | 'car-glass' | 'rubber' | 'water';
 type Registration = {
   kind: ArtKind;
   color: THREE.Color;
@@ -25,7 +26,7 @@ const kinds: Record<string, ArtKind> = {
   'V2 inferred | brick': 'brick', 'V2 inferred | trim': 'trim', 'V2 inferred | glass': 'glass',
   'V2 inferred | foundation': 'foundation', 'V2 inferred | concrete_wall': 'foundation',
   'Streetscape | warm sidewalk concrete': 'concrete', 'Streetscape | cool sidewalk concrete': 'concrete',
-  'Streetscape | repaired sidewalk concrete': 'concrete', 'Streetscape | granite curb': 'concrete',
+  'Streetscape | repaired sidewalk concrete': 'concrete', 'Streetscape | granite curb': 'granite',
   'Drive road | asphalt': 'asphalt', 'Drive road | weathered shoulder': 'shoulder',
   'Streetscape | parking apron asphalt': 'asphalt', 'Streetscape | asphalt utility repair': 'asphalt',
   'Finished parking | asphalt': 'asphalt', 'Finished street corner | asphalt apron': 'asphalt',
@@ -127,17 +128,12 @@ float townPaintWear=townArtNoise(vTownArtWorld.xz*1.7);
 float townPaintGrain=townArtNoise(vTownArtWorld.xz*61.0);
 diffuseColor.rgb*=mix(.92,1.0,townPaintWear)*(1.0-.01*townPaintGrain*townArtClose);
 `;
-  if (kind === 'asphalt' || kind === 'concrete' || kind === 'foundation' || kind === 'shoulder') return start + (kind === 'asphalt' ? `
+  if (kind === 'asphalt' || kind === 'concrete' || kind === 'granite' || kind === 'foundation' || kind === 'shoulder') return start + (kind === 'asphalt' ? `
 // map_fragment already supplies linear reflectance. Keep its aggregate luminance,
 // remove the brown source cast, and give asphalt a restrained cool mineral tone.
 float townAsphaltValue = dot(diffuseColor.rgb,vec3(0.2126,0.7152,0.0722));
 diffuseColor.rgb = mix(diffuseColor.rgb,vec3(townAsphaltValue)*vec3(0.94,1.0,1.07),0.96);
-` : '') + `
-float townStoneGrain = townArtNoise(vTownArtWorld.xz*37.0 + vec2(vTownArtWorld.y*9.0));
-float townStoneAge = townArtNoise(vTownArtWorld.xz*0.24 + vec2(vTownArtWorld.y*0.17));
-diffuseColor.rgb *= mix(0.94,1.04,townStoneAge) * (1.0+(townStoneGrain-0.5)*${kind === 'asphalt' ? '0.14' : '0.10'}*townArtClose);
-townArtHeight = (townStoneGrain-0.5)*${kind === 'asphalt' ? '0.00055' : '0.00035'}*townArtClose;
-`;
+` : '') + mineralFragment(kind);
   if (kind === 'bark') return start + BARK_FINISH_GLSL;
   if (kind === 'brick') return start + `
 diffuseColor.rgb *= mix(0.96,1.04,townArtNoise(vTownArtWorld.xz*0.31+vec2(vTownArtWorld.y*0.29)));
@@ -151,8 +147,9 @@ const mineralNormal = `
 vec3 townArtDx = dFdx(-vViewPosition), townArtDy = dFdy(-vViewPosition);
 vec3 townArtR1 = cross(townArtDy,normal), townArtR2 = cross(normal,townArtDx);
 float townArtDet = dot(townArtDx,townArtR1);
+vec2 townArtHeightGradient = vec2(dFdx(townArtHeight),dFdy(townArtHeight));
 if (abs(townArtDet)>0.0000000001) {
-  vec3 townArtGradient = sign(townArtDet)*(dFdx(townArtHeight)*townArtR1+dFdy(townArtHeight)*townArtR2);
+  vec3 townArtGradient = sign(townArtDet)*(townArtHeightGradient.x*townArtR1+townArtHeightGradient.y*townArtR2);
   normal = normalize(abs(townArtDet)*normal-townArtGradient);
 }
 `;
@@ -196,8 +193,8 @@ export function applyArtMaterial(material: THREE.MeshStandardMaterial, clock: { 
   if (kind === 'trim') { material.color.set('#e2ded0'); material.roughness = 0.78; }
   if (kind === 'foundation') { material.color.set('#97968a'); material.roughness = 0.94; }
   if (kind === 'brick') { material.roughness = 0.9; material.normalScale.multiplyScalar(0.55); }
-  if (kind === 'concrete') {
-    material.color.set(material.name.includes('granite') ? '#96998f' : material.name.includes('repaired') ? '#b1afa5' : material.name.includes('cool') ? '#a6a79d' : '#aba89c');
+  if (kind === 'concrete' || kind === 'granite') {
+    material.color.set(kind === 'granite' ? '#98988f' : material.name.includes('repaired') ? '#b1afa5' : material.name.includes('cool') ? '#a6a79d' : '#aba89c');
     material.roughness = 0.97;
     material.flatShading = true;
     material.normalScale.multiplyScalar(0.22);
@@ -206,10 +203,10 @@ export function applyArtMaterial(material: THREE.MeshStandardMaterial, clock: { 
     if (material.name === 'Finished parking | asphalt' || material.name === 'Finished street corner | asphalt apron') material.color.set('#30332f');
     else if (material.map) material.color.setRGB(0.50,0.50,0.50);
     else material.color.set(material.name.includes('repair') ? '#484b48' : '#50534e');
-    material.roughness = 0.96;
+    material.roughness = 0.94;
     material.normalScale.multiplyScalar(0.38);
   }
-  if (kind === 'shoulder') { material.color.set('#77796a'); material.roughness = 0.98; }
+  if (kind === 'shoulder') { material.color.set('#868174'); material.roughness = 0.98; }
   if (kind === 'road-paint') { material.roughness=Math.max(.94,material.roughness); }
   if (kind === 'glass') { material.color.set('#34464b'); material.roughness = 0.14; material.metalness = 0; material.envMapIntensity = 0.85; }
   if (kind === 'leaf') { material.roughness = 0.88; material.envMapIntensity = 0.12; }
@@ -238,9 +235,25 @@ townArtPosition = instanceMatrix * townArtPosition;
 vTownArtWorld = (modelMatrix * townArtPosition).xyz;
 `);
     shader.fragmentShader = functions + shader.fragmentShader.replace('#include <map_fragment>', mapTreatment(kind)).replace('#include <opaque_fragment>', finishTreatment(kind));
-    if (['siding','asphalt','concrete','foundation','shoulder','water','bark'].includes(kind)) shader.fragmentShader = shader.fragmentShader.replace('#include <normal_fragment_maps>', mineralNormal);
+    if (['siding','asphalt','concrete','granite','foundation','shoulder','water','bark'].includes(kind)) shader.fragmentShader = shader.fragmentShader.replace('#include <normal_fragment_maps>', mineralNormal);
+    if (['asphalt','concrete','granite','foundation','shoulder'].includes(kind)) {
+      if (!shader.fragmentShader.includes('#include <roughnessmap_fragment>')) throw new Error('Town mineral roughness shader anchor changed.');
+      shader.fragmentShader = shader.fragmentShader.replace('#include <roughnessmap_fragment>', MINERAL_ROUGHNESS);
+    }
+    if (kind === 'asphalt') {
+      if (!shader.vertexShader.includes('#include <uv_vertex>')) throw new Error('Town pavement UV shader anchor changed.');
+      // Native asphalt repeats at 2.08 m; display its existing atlas at 1.30 m.
+      // Shared texture transforms and source UV attributes stay untouched.
+      shader.vertexShader = shader.vertexShader.replace('#include <uv_vertex>', `#include <uv_vertex>
+#ifdef USE_MAP
+vMapUv *= 1.6;
+#endif
+#ifdef USE_NORMALMAP
+vNormalMapUv *= 1.6;
+#endif`);
+    }
   };
-  material.customProgramCacheKey = () => `${previousKey}|webster-art-material-v2:${kind}${kind==='bark'?'|regional-bark-v1':kind==='glass'?'|dielectric-glass-v1':''}`;
+  material.customProgramCacheKey = () => `${previousKey}|webster-art-material-v2:${kind}${kind==='bark'?'|regional-bark-v1':kind==='glass'?'|dielectric-glass-v1':''}${['asphalt','concrete','granite','foundation','shoulder'].includes(kind)?'|mineral-families-v1':''}`;
   material.addEventListener('dispose', onMaterialDispose);
   material.needsUpdate = true;
 }

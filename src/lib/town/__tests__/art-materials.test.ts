@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import * as THREE from 'three';
 import { applyArtMaterial, removeArtMaterial, treeArtColor } from '../art-materials';
 import { createBoundaryContext } from '../boundary-context';
+import { mineralFragment, MINERAL_FINISH, type MineralFamily } from '../mineral-finish';
 
 const material = (name: string, color: [number,number,number] = [0.66,0.68,0.64]) => {
   const m = new THREE.MeshStandardMaterial(); m.name = name; m.color.setRGB(...color); return m;
@@ -15,6 +16,30 @@ const compile = (m: THREE.MeshStandardMaterial) => {
 };
 
 describe('Scoped late-summer materials', () => {
+  it('gives each mineral family its own filtered scale using two noise samples and existing texture slots', () => {
+    const families: [string, MineralFamily][] = [['Drive road | asphalt','asphalt'],['Streetscape | warm sidewalk concrete','concrete'],['Streetscape | granite curb','granite'],['V2 inferred | foundation','foundation'],['Drive road | weathered shoulder','shoulder']];
+    const scales = new Set<number>();
+    for (const [name, family] of families) {
+      const m = material(name), map = new THREE.Texture(), normal = new THREE.Texture(), roughness = new THREE.Texture();
+      map.repeat.set(2,3); normal.repeat.set(4,5); m.map = map; m.normalMap = normal; m.roughnessMap = roughness;
+      const original = { color:m.color.toArray(), roughness:m.roughness, normal:m.normalScale.toArray(), compile:m.onBeforeCompile, key:m.customProgramCacheKey };
+      const textureDisposals = [map,normal,roughness].map(texture => vi.spyOn(texture,'dispose'));
+      applyArtMaterial(m); const shader = compile(m), spec = MINERAL_FINISH[family]; scales.add(spec.frequency);
+      expect(shader.fragmentShader).toContain(mineralFragment(family));
+      expect((mineralFragment(family).match(/townArtNoise\(/g) ?? []).length).toBe(2);
+      expect(shader.fragmentShader).toContain('roughnessFactor = clamp(roughnessFactor+townMineralRoughness,0.88,1.0)');
+      expect(shader.fragmentShader.indexOf('vec2 townArtHeightGradient')).toBeLessThan(shader.fragmentShader.indexOf('if (abs(townArtDet)'));
+      expect(shader.vertexShader.includes('vMapUv *= 1.6')).toBe(family === 'asphalt');
+      expect(shader.vertexShader.includes('vNormalMapUv *= 1.6')).toBe(family === 'asphalt');
+      expect(m.map).toBe(map); expect(m.normalMap).toBe(normal); expect(m.roughnessMap).toBe(roughness);
+      expect(map.repeat.toArray()).toEqual([2,3]); expect(normal.repeat.toArray()).toEqual([4,5]);
+      expect(spec.resolved[0]).toBeLessThan(spec.resolved[1]); expect(spec.relief).toBeLessThanOrEqual(.0015);
+      removeArtMaterial(m); expect(m.color.toArray()).toEqual(original.color); expect(m.roughness).toBe(original.roughness); expect(m.normalScale.toArray()).toEqual(original.normal);
+      expect(m.onBeforeCompile).toBe(original.compile); expect(m.customProgramCacheKey).toBe(original.key);
+      textureDisposals.forEach(spy => expect(spy).not.toHaveBeenCalled()); m.dispose(); map.dispose(); normal.dispose(); roughness.dispose();
+    }
+    expect(scales.size).toBe(families.length);
+  });
   it('uses a coherent sRGB paint palette while retaining maps, UV transforms and source provenance', () => {
     const m = material('V2 inferred | siding');
     const map = new THREE.Texture(), normal = new THREE.Texture(); map.repeat.set(3,7); map.offset.set(0.2,0.4);
