@@ -1,0 +1,24 @@
+"""Register video-observed venue signatures against retained native building frames."""
+from pathlib import Path
+import hashlib
+import json
+
+ROOT=Path(__file__).resolve().parents[1]
+SOURCE=Path('/Users/andy/Documents/New project/webster-blender')
+commercial_path=ROOT/'data/derived/town/commercial-completion.json'
+commercial=json.loads(commercial_path.read_bytes())
+row=next(r for r in commercial['rows']if r['id']=='168400_866616')
+front=next(f for f in row['frames']if f['id']=='MS-S-020')
+assert row['name']=='Eastern Pearl / former Webster Five bank' and front['recipe']=='colonial'
+source_video={'id':'V01','url':'https://www.youtube.com/watch?v=feZq1WgvtoA','title':'Living in Webster, MA: The Ultimate Local Guide | Homes.com','channel':'Homes.com','observedAtSeconds':75.1548,'recordingDate':None,'reviewedOn':'2026-09-09','reviewMethod':'Root agent enlarged and visually inspected the actual in-browser video frame; appearance observations are not derived from a transcript.'}
+packet={'version':1,'sourceManifestSha256':json.loads((ROOT/'data/derived/town/release.json').read_bytes())['manifestSha256'],'sourceCommercialSha256':hashlib.sha256(commercial_path.read_bytes()).hexdigest(),'venues':[{
+ 'id':row['id'],'facadeId':front['id'],'name':row['name'],'address':'290 Main Street','tileId':row['tileId'],'origin':row['origin'],'lods':row['lods'],'frame':{k:front[k]for k in ['start','tangent','outward','width','floor','top']},'source':source_video,
+ 'observed':['Red brick front of the one-story former bank.','Two dark projecting trapezoid bow windows, with shallow hipped metal-looking caps, flank the centered entrance.','Dark brown central door, narrow sidelights, and five small round-headed transom lights.','Wide white fluted pilasters, entablature, dentils, broken triangular pediment and central urn ornament.','A light stone band near the cornice retains the old savings-bank inscription.','Raised front terrace, central concrete stair and black metal railings; conical evergreens partly obscure the right bay and left frontage.'],
+ 'historicalSupport':{'url':'https://mhc-macris.net/Documents/WEB/PDFs/WEB_341.pdf','formDate':'2000-06-30','researchPath':'research/sections/macris-forms-310-381.md','lines':[126,130],'facts':['Three-bay red brick bank frontage','Deep center entry with trabeated surround and broken pediment','Bow windows','Granite retaining wall and landscaped setback']},
+ 'implemented':['Retires the same building’s preceding authored generic shop-front frames and fascia after the exact source/frame-qualified replacement succeeds; native body stays intact','Observed front material and three-bay composition','Projecting dark bow glazing and low metal-colored caps','Centered brown door, narrow sidelights and five arched transom lights','White fluted pilasters, dentils, broken pediment and central urn','Pale upper cornice band'],
+ 'inferred':'Widths, heights, projection, exact paint, glazing subdivisions and ornament profiles are authored fits inside the retained facade. The existing game entrance center and floor stay fixed. Bow-window caps follow the video appearance, rather than assuming the 2000 domed-roof description is unchanged.',
+ 'deferred':['Inscription lettering is documented but omitted at this small rendering scale.','Terrace, stair, railings and evergreen positions require separate ground registration; none are invented by this facade transform.'],
+ 'dimensions':{'skinOffset':.26,'doorWidth':1.02,'doorHeight':2.23,'portalWidth':1.6,'transomBottom':2.30,'transomHeight':.42,'pilasterOffset':1.31,'pilasterWidth':.38,'pilasterHeight':2.92,'entablatureBottom':2.93,'entablatureHeight':.28,'pedimentPeak':3.80,'urnTop':3.99,'bowCenters':[.235,.765],'bowWidth':2.6,'bowBottom':.47,'bowHeight':1.99,'bowFrontOffset':.89,'bowBackOffset':.32,'bowCapRise':.22,'corniceBandBottom':4.13,'corniceBandHeight':.29}
+ }],
+ 'unplacedVideoSites':[{'id':'171884_864879','name':'Point Breeze restaurant','address':'114 Point Breeze Road','source':{'id':'V02','url':'https://www.youtube.com/watch?v=WpMS8lopK4M','observedAtSeconds':71.4},'observed':['White siding, low gray roof and blue arched entry canopy','Weathered wooden service fence to the right in the viewed frame','Unmarked gray approach contrasting with paler hardstanding'], 'nativeDoorWorldCenter':[620.3671864087933,58.670440673828125,2734.217495613207],'status':'placement-review','reason':'Native inferred door lies on a narrow southeastern appendage and is not yet matched to the photographed entry. Canopy/fence and material boundaries are deferred until the observed face and ground arrangement are registered.'}]}
+out=ROOT/'data/derived/town/video-venue-details.json';out.write_text(json.dumps(packet,separators=(',',':'))+'\n');print(out,len(out.read_bytes()))

@@ -1,0 +1,177 @@
+{
+  "version": 1,
+  "originalInventory": {
+    "pathAtExtraction": "/private/tmp/webster-finished-game/art/ranch/source-rows.json",
+    "sha256": "74ec925a84276cb8ec662a42e31872fb5c9eb8b29f50a0fa1f13cb158f01837a",
+    "recordCount": 75,
+    "selectedId": "171785_866902",
+    "selectedLabel": 68,
+    "extractedOn": "2026-09-09"
+  },
+  "provenance": {
+    "basis": "Selected existing source roofprint and V2 generated-building report. Label68 belongs to this75-record inventory; later registered aerial label88 uses a different numbering and is not the source identifier.",
+    "originalInventoryPurpose": "Indian Ranch200GoreRoad source-building inventory extracted from the retained local building architecture and source reports.",
+    "sourceRoofprint": "Mapped2011roofprint; current placement registration in indian-ranch-ground-input.json against2025MassGISaerial.",
+    "heightBasis": "inferred area/use height prior; old area-bin mass is not treated as measured",
+    "heightCaution": "These source body heights are generated priors, not surveyed canopy measurements; the runtime canopy uses explicit authored height over pinned native terrain.",
+    "video": "https://www.youtube.com/watch?v=feZq1WgvtoA&t=37",
+    "videoSeconds": 37.5774,
+    "sourceAerialUrl": "https://www.mass.gov/info-details/massgis-data-2025-aerial-imagery"
+  },
+  "recordSha256": "f630d6ec2715ce5ea48f87e8e8d5fed1ce9dc737d26b0fc569771c9e68a06ef0",
+  "record": {
+    "label": 68,
+    "id": "171785_866902",
+    "area": 735.5554171624711,
+    "center": [
+      502.2171872249478,
+      -687.0719237492858
+    ],
+    "pixel": [
+      485.46136202663183,
+      754.3278886973858
+    ],
+    "outline": [
+      [
+        496.4047086153296,
+        -671.7194076298038
+      ],
+      [
+        497.36432790895924,
+        -680.1646859260509
+      ],
+      [
+        503.27587299840525,
+        -671.6357960392488
+      ],
+      [
+        521.6019739512121,
+        -684.482237752527
+      ],
+      [
+        506.364050477423,
+        -706.7467656129738
+      ],
+      [
+        487.9542508200684,
+        -694.1220934013836
+      ],
+      [
+        496.6958739720576,
+        -681.7170168675948
+      ],
+      [
+        483.86232739523984,
+        -682.3321410758654
+      ],
+      [
+        483.15550473699113,
+        -672.7771556079388
+      ],
+      [
+        496.4047086153296,
+        -671.7194076298038
+      ]
+    ],
+    "floor": 52.14711979318601,
+    "eave": 54.03276331529585,
+    "sourcePeak": 54.272762298583984,
+    "ground": [
+      48.732763315295855,
+      52.34642510180292
+    ],
+    "base": 48.53276331529585,
+    "report": {
+      "struct_id": "171785_866902",
+      "source_style": "CLUB/LODGE/HALL",
+      "source_stories": 0,
+      "interpreted_stories": 0,
+      "principal_inferred": false,
+      "method": "complete low-slope footprint with parapet",
+      "mode": "nonresidential_or_complex",
+      "fallback_reason": null,
+      "source_height_evidence": {
+        "base_z": 48.69647643581193,
+        "roof_p05": 61.74829699157905,
+        "roof_p50": 61.74829699157905,
+        "roof_p75": 61.74829699157905,
+        "roof_p95": 61.74829699157905,
+        "roof_max": 61.74829699157905,
+        "source": "original_mass",
+        "height_status": "original_mass",
+        "quality": {},
+        "source_vertices": 18,
+        "current_source_bounds": {
+          "min": [
+            483.1555118560791,
+            48.696475982666016,
+            671.6357717514038
+          ],
+          "max": [
+            521.6019802093506,
+            61.7482967376709,
+            706.7467403411865
+          ]
+        },
+        "current_geometry_sha256": "dccfccd6a2e4313981a48c5970c6214228aa433e23b40d9734815f16dbaf3bb3"
+      },
+      "height_estimation_method": "inferred area/use height prior; old area-bin mass is not treated as measured",
+      "upper_cluster_spread_m": 0.0,
+      "utility_or_tank_interpretation": false,
+      "base_z": 48.53276331529585,
+      "floor_z": 52.14711979318601,
+      "eave_z": 54.03276331529585,
+      "occupied_floors": 1,
+      "cleanup": {
+        "symmetric_difference_fraction": 0.0,
+        "boundary_hausdorff_m": 0.0
+      },
+      "ground_min_max_m": [
+        48.732763315295855,
+        52.34642510180292
+      ],
+      "minimum_opening_ground_clearance_m": null,
+      "source_world_origin": [
+        502.2171872249478,
+        -687.0719237492858,
+        0
+      ],
+      "bounds": {
+        "min": [
+          483.15550547751127,
+          48.53276443481445,
+          671.6357960866271
+        ],
+        "max": [
+          521.6019738307828,
+          54.272762298583984,
+          706.7467646764098
+        ]
+      },
+      "envelope_qa": {
+        "vertices": 18,
+        "triangles": 32,
+        "nonmanifold_edges": 0,
+        "misoriented_edges": 0,
+        "zero_area_triangles": 0,
+        "volume_m3": 4045.5547941409204,
+        "finite": true,
+        "solid_components": 1,
+        "status": "Error.NoError"
+      },
+      "details": {},
+      "wall_surface_role": "siding",
+      "preserved_courtyard_count": 0,
+      "high_feature": null,
+      "asset": {
+        "url": "171785_866902.glb",
+        "bytes": 12312,
+        "sha256": "bd3bce7f129cd950efef485d4a373e24e46f969fd65986c8e40c90c9c5e34d5f"
+      },
+      "source_height_m": 13.051820755004883,
+      "new_height_m": 5.739997863769531,
+      "terrain_fallback_samples": 0,
+      "source_footprint_sha256": "03c37614b29be7eea4f0f5de843dfe115928f1992f2dbaa816358f706fcf1ae6"
+    }
+  }
+}

@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import data from '../../../data/derived/town/lake-life.json';
 import { Batch, type Frame, type Role } from './crafted-frontages';
-import {buildPrincessCanopy,buildPrincessForwardDetails,buildPrincessStacks,PRINCESS_FINISH_BASIS} from './princess-details';
+import {buildPrincessCanopy,buildPrincessForwardDetails,buildPrincessStacks,finishPrincessCanopyMaterial,PRINCESS_FINISH_BASIS} from './princess-details';
 
 export const LAKE_LIFE_PROVENANCE = data;
 export type LakeLifeReport = { ids: string[]; triangles: number; meshes: number; geometryBytes: number; rejected: boolean };
@@ -60,6 +60,6 @@ export function applyLakeLife(group:THREE.Group,tileId:string,origin:readonly nu
     for(const edge of[-.58,.58]){emit(b,f,'metal',new THREE.TorusGeometry(radius,.048,4,segments).translate(-10.75,y+.63,v+edge),white);for(let i=0;i<segments;i++){const a=i*Math.PI*2/segments;beam(b,f,[-10.75,y+.63,v+edge],[-10.75+Math.cos(a)*radius,y+.63+Math.sin(a)*radius,v+edge],.035);}}
     for(let i=0;i<segments;i++){const a=i*Math.PI*2/segments,g=new THREE.BoxGeometry(.35,.065,1.3);g.rotateZ(a);g.translate(-10.75+Math.cos(a)*radius,y+.63+Math.sin(a)*radius,v);emit(b,f,'metal',g,red);}
   }
-  const built=b.finish();built.group.name='Indian Princess | dated berth interpretation';const names=lettering(origin);built.group.add(names);report.ids=[data.id];report.triangles=built.triangles+4;report.geometryBytes=built.bytes;
+  const built=b.finish();finishPrincessCanopyMaterial(built.group);built.group.name='Indian Princess | dated berth interpretation';const names=lettering(origin);built.group.add(names);report.ids=[data.id];report.triangles=built.triangles+4;report.geometryBytes=built.bytes;
   names.traverse(o=>{if(o instanceof THREE.Mesh){report.geometryBytes+=o.geometry.index?.array.byteLength??0;for(const key of Object.keys(o.geometry.attributes))report.geometryBytes+=o.geometry.getAttribute(key).array.byteLength;}});report.meshes=built.group.children.length-1+names.children.length;built.group.userData.appearanceBasis=data.basis;built.group.userData.detailBasis=PRINCESS_FINISH_BASIS;group.add(built.group);group.userData.lakeLife=report;return report;
 }

@@ -27,7 +27,10 @@ describe('shared scene dependency order',()=>{
     expect(names.indexOf('streetCorners')).toBeLessThan(names.indexOf('streetGeometry'));
     expect(names.indexOf('streetGeometry')).toBeLessThan(names.indexOf('arrivalGrounds'));
     expect(names.indexOf('evidenceBuildings')).toBeLessThan(names.indexOf('campStructures'));
-    expect(names.indexOf('campStructures')).toBeLessThan(names.indexOf('evidenceEnvironment'));
+    expect(names.indexOf('campStructures')).toBeLessThan(names.indexOf('indianRanchCanopy'));
+    expect(names.indexOf('terrain')).toBeLessThan(names.indexOf('indianRanchGrounds'));
+    expect(names.indexOf('indianRanchCanopy')).toBeLessThan(names.indexOf('indianRanchGrounds'));
+    expect(names.indexOf('indianRanchGrounds')).toBeLessThan(names.indexOf('evidenceEnvironment'));
     steps.find(s=>s.name==='streetCornerGround')!.apply();steps.find(s=>s.name==='streetCorners')!.apply();
     if(state==='applied'){expect(add).toHaveBeenCalledOnce();expect(scene.userData.optionalDetailMissing).toBeUndefined();}
     else{expect(add).not.toHaveBeenCalled();expect(scene.userData.optionalDetailMissing).toEqual(['streetCornerGround']);}

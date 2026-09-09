@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import data from '../../../data/derived/town/commercial-completion.json';
 import { Batch, type Frame, type Role } from './crafted-frontages';
 import { filterEvidenceSources, planDistanceSquared } from './evidence-buildings';
+import { buildVideoVenueFacade, retireSupersededVideoFrontages } from './video-venue-details';
 
 type Row = typeof data.rows[number];
 type Facade = Row['frames'][number];
@@ -84,6 +85,7 @@ function cornice(b:Batch,f:Frame,w:number,top:number,ornate:boolean):void {
 function buildFacade(b:Batch,r:Row,s:Facade):void {
  const f=frame(r,s),w=s.width,h=s.top-s.floor,recipe=s.recipe,y=s.floor;
  if(w<2||h<2.2)return;
+ if(buildVideoVenueFacade(b,{nativeId:r.id,facadeId:s.id,frame:f,width:w,floor:y,top:s.top}))return;
  if(recipe==='lake-plaza'){
   panel(b,f,'brick',w/2,y+h/2,.26,w,h,'#9e8768');
   const bays=Math.max(4,Math.round(w/6.3)),lower=s.top-1.05;
@@ -241,9 +243,10 @@ export function applyCommercialCompletion(group:THREE.Group,tileId:string,origin
  const filtered=replacement.length?filterEvidenceSources(group,vector,replacement.map(r=>({...r,replaceBody:true}))):{removedTriangles:0};
  const b=new Batch(vector,level);for(const r of selected){if(r.bodyParts.length)buildSplitBody(b,r);for(const f of r.frames)buildFacade(b,r,f);}
  const result=b.finish();result.group.name='Commercial research completion';result.group.userData.townCrafted=true;result.group.userData.evidenceVersion=data.version;
+ const retiredGeneric=retireSupersededVideoFrontages(group,vector,selected.flatMap(r=>r.frames.map(s=>({nativeId:r.id,facadeId:s.id,frame:frame(r,s),width:s.width,floor:s.floor,top:s.top}))));
  let extraTriangles=0,extraBytes=0;for(const r of selected)if(r.frames.some(f=>f.recipe==='lake-plaza')){const letters=lakeNameLetters(r,origin);result.group.add(letters);extraTriangles+=2;for(const a of Object.values(letters.geometry.attributes)as THREE.BufferAttribute[])extraBytes+=a.array.byteLength;}
  result.group.traverse(o=>{if(!(o instanceof THREE.Mesh))return;o.name=o.name.replace('Crafted building frontage','Commercial research');o.userData.category='commercial-completion';o.userData.townCrafted=true;});
  group.add(result.group);
- const report:CommercialReport={status:'applied',ids:selected.flatMap(r=>r.frames.map(f=>f.id)).filter((id,i,all)=>all.indexOf(id)===i),buildingIds:selected.map(r=>r.id),facades:selected.reduce((n,r)=>n+r.frames.length,0),triangles:result.triangles+extraTriangles,meshes:result.group.children.length,geometryBytes:result.bytes+extraBytes,removedTriangles:filtered.removedTriangles};
+ const report:CommercialReport={status:'applied',ids:selected.flatMap(r=>r.frames.map(f=>f.id)).filter((id,i,all)=>all.indexOf(id)===i),buildingIds:selected.map(r=>r.id),facades:selected.reduce((n,r)=>n+r.frames.length,0),triangles:result.triangles+extraTriangles,meshes:result.group.children.length,geometryBytes:result.bytes+extraBytes,removedTriangles:filtered.removedTriangles+retiredGeneric};
  group.userData.commercialCompletion=report;return report;
 }

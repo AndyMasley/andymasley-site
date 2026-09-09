@@ -3,11 +3,20 @@ import {Batch,type Frame,type Role} from './crafted-frontages';
 
 type V3=[number,number,number];
 const white='#e3dfcd',red='#a13d34',dark='#303c40',brass='#b9a56b';
+const canopyNavy='#263b54';
 export const PRINCESS_FINISH_BASIS={
  photoSHA256:'fb3ed72229f658e117adc0aca81df806caaa2162e83cfd691cc387887f55a8f3',
  observed:['Three arched pilot-house front windows','Curved white pilot-house crown','Forward exterior stair rising aft to the open upper deck','Black stacks seated on the upper deck with red collars and open gold crowns','Partial blue canopy','Large lower-cabin name below the windows'],
  inference:'Dimensions, glazing divisions, stair count and decorative profile are authored from the viewed official exterior, not a measured vessel plan.',
  stair:{bottom:1,top:3.54,front:9.04,rear:5.50,width:.76,centerV:2.27,steps:14},
+ canopy:{
+  source:'https://www.youtube.com/watch?v=cuRQ1_whRsA',
+  title:'Come Explore Webster Lake in Massachusetts!',
+  timeSeconds:257.813333,
+  reviewed:'2026-09-09',
+  observation:'Root reviewer viewed the berthed vessel in V07: broad dark navy upper-deck canopy above the white cabin and red trim.',
+  inference:'RGB #263b54 is an authored visual interpretation, not sampled from the video. Textile construction and the matte nonmetal finish are inferred; dimensions and registered berth are retained.',
+ },
 };
 function emit(b:Batch,f:Frame,role:Role,g:THREE.BufferGeometry,color:string){const flat=g.index?g.toNonIndexed():g;b.geometry(f,role,flat.getAttribute('position').array,flat.getAttribute('normal').array,color);if(flat!==g)flat.dispose();g.dispose();}
 function beam(b:Batch,f:Frame,a:V3,c:V3,r:number,color=white){const start=new THREE.Vector3(...a),end=new THREE.Vector3(...c),d=end.clone().sub(start);if(d.lengthSq()<1e-10)return;const g=new THREE.CylinderGeometry(r,r,d.length(),b.level===2?4:6);g.applyQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0,1,0),d.normalize()));g.translate(...start.add(end).multiplyScalar(.5).toArray()as V3);emit(b,f,'metal',g,color);}
@@ -66,6 +75,19 @@ export function buildPrincessCanopy(b:Batch,f:Frame,y:number){
  // A shallow canvas crown gives the observed canopy a coherent edge/silhouette.
  const section=[[-2.875,5.66],[0,5.82],[2.875,5.66],[2.875,5.74],[0,5.90],[-2.875,5.74]],ends=[-9.1,3.7];
  const faces=THREE.ShapeUtils.triangulateShape(section.map(p=>new THREE.Vector2(...p)),[]);
- for(const[side,u]of ends.entries())for(const face of faces){const p=face.map(i=>[u,y+section[i][1],section[i][0]]);b.polygon(f,'metal',side?p.reverse():p,'#506d89');}
- for(let i=0;i<section.length;i++){const j=(i+1)%section.length;b.polygon(f,'metal',[[ends[0],y+section[i][1],section[i][0]],[ends[1],y+section[i][1],section[i][0]],[ends[1],y+section[j][1],section[j][0]],[ends[0],y+section[j][1],section[j][0]]],'#506d89');}
+ for(const[side,u]of ends.entries())for(const face of faces){const p=face.map(i=>[u,y+section[i][1],section[i][0]]);b.polygon(f,'metal',side?p.reverse():p,canopyNavy);}
+ for(let i=0;i<section.length;i++){const j=(i+1)%section.length;b.polygon(f,'metal',[[ends[0],y+section[i][1],section[i][0]],[ends[1],y+section[i][1],section[i][0]],[ends[1],y+section[j][1],section[j][0]],[ends[0],y+section[j][1],section[j][0]]],canopyNavy);}
+}
+
+/** This navy chunk belongs only to the canopy. Finish it before material
+ * acquisition, keeping every other boat and shared frontage material intact. */
+export function finishPrincessCanopyMaterial(group:THREE.Group){
+ group.traverse(o=>{
+  if(!(o instanceof THREE.Mesh))return;
+  for(const m of Array.isArray(o.material)?o.material:[o.material]){
+   if(!(m instanceof THREE.MeshStandardMaterial)||m.name!==`Crafted frontage | metal | ${canopyNavy}`)continue;
+   m.metalness=0;m.roughness=.87;m.name='Indian Princess | matte navy canopy';
+   m.userData.surfaceRole='canvas';m.userData.appearanceBasis=PRINCESS_FINISH_BASIS.canopy;
+  }
+ });
 }

@@ -1,0 +1,338 @@
+{
+  "version": 1,
+  "sourceVideo": {
+    "id": "V01",
+    "url": "https://www.youtube.com/watch?v=feZq1WgvtoA&t=37",
+    "seconds": 37.5774,
+    "observedDate": "2026-09-09",
+    "observer": "Coordinating agent via actual CUA playback; ground implementer inspected pinned aerial and retained source geometry.",
+    "captureDate": null,
+    "observation": "Green bench tiers occupy a pale uniform hard pad beside the gray stage and open white seating canopy. A bounded brown, sparsely grassy pine-floor patch lies to their right, with a pale crushed-stone-looking margin farther right and a downhill lawn strip. Exact material, tree species and boundaries are not surveyed."
+  },
+  "sourceAerial": {
+    "source": "/Users/andy/Documents/New project/webster-blender/townwide/imagery_aerial.jpg",
+    "sha256": "b14f7338f5c04544ebb35fd124450eb2b88a96843646cca423ee3601fead69ff",
+    "mosaicCropPixels": [
+      4505,
+      4914,
+      5017,
+      5426
+    ],
+    "resizeScale": 2,
+    "centerLocal": [
+      515,
+      -580
+    ],
+    "sourceDate": "2025",
+    "cropSha256": "abb508b8c1a5fbdeeb85e8c52b52b2c447bc3c8e3bc463dca9d20995c641988f",
+    "url": "https://www.mass.gov/info-details/massgis-data-2025-aerial-imagery"
+  },
+  "sourceRegisterSha256": "74ec925a84276cb8ec662a42e31872fb5c9eb8b29f50a0fa1f13cb158f01837a",
+  "registeredStructures": {
+    "171785_866902": {
+      "id": "171785_866902",
+      "center": [
+        502.2171872249478,
+        -687.0719237492858
+      ],
+      "outline": [
+        [
+          496.4047086153296,
+          -671.7194076298038
+        ],
+        [
+          497.36432790895924,
+          -680.1646859260509
+        ],
+        [
+          503.27587299840525,
+          -671.6357960392488
+        ],
+        [
+          521.6019739512121,
+          -684.482237752527
+        ],
+        [
+          506.364050477423,
+          -706.7467656129738
+        ],
+        [
+          487.9542508200684,
+          -694.1220934013836
+        ],
+        [
+          496.6958739720576,
+          -681.7170168675948
+        ],
+        [
+          483.86232739523984,
+          -682.3321410758654
+        ],
+        [
+          483.15550473699113,
+          -672.7771556079388
+        ],
+        [
+          496.4047086153296,
+          -671.7194076298038
+        ]
+      ]
+    },
+    "171771_866877": {
+      "id": "171771_866877",
+      "center": [
+        489.16473996478686,
+        -712.2871399067104
+      ],
+      "outline": [
+        [
+          497.7367117854301,
+          -711.2662261537043
+        ],
+        [
+          491.07655210161465,
+          -720.6806914133485
+        ],
+        [
+          480.59276497532846,
+          -713.3080469298875
+        ],
+        [
+          487.25293180148583,
+          -703.893591480446
+        ],
+        [
+          497.7367117854301,
+          -711.2662261537043
+        ]
+      ]
+    },
+    "171839_866870": {
+      "id": "171839_866870",
+      "center": [
+        557.0989658669542,
+        -719.6669932154024
+      ],
+      "outline": [
+        [
+          565.6992812792596,
+          -711.5375244566239
+        ],
+        [
+          561.3180856928229,
+          -730.7354429441039
+        ],
+        [
+          548.4986357501475,
+          -727.7964497361099
+        ],
+        [
+          552.8798644638155,
+          -708.598539141356
+        ],
+        [
+          565.6992812792596,
+          -711.5375244566239
+        ]
+      ]
+    },
+    "171749_866853": {
+      "id": "171749_866853",
+      "center": [
+        467.0913368118044,
+        -736.6174801539804
+      ],
+      "outline": [
+        [
+          472.3151839906641,
+          -713.1638674428686
+        ],
+        [
+          484.5102581551764,
+          -727.3187354196562
+        ],
+        [
+          479.44288476769,
+          -731.7413358568447
+        ],
+        [
+          492.21480602465454,
+          -746.5649266234832
+        ],
+        [
+          477.6779962013534,
+          -759.0578931261552
+        ],
+        [
+          464.741854605556,
+          -743.9004043220775
+        ],
+        [
+          454.8567288807244,
+          -752.4133575564483
+        ],
+        [
+          446.6987943095155,
+          -743.0506834759144
+        ],
+        [
+          444.04047521186294,
+          -745.3725431583589
+        ],
+        [
+          438.27296675916295,
+          -738.5740777922329
+        ],
+        [
+          451.48087191558443,
+          -727.1865883452119
+        ],
+        [
+          454.03506066155387,
+          -730.1957464306615
+        ],
+        [
+          458.18875281128567,
+          -726.5470086955465
+        ],
+        [
+          454.15074127251864,
+          -721.9769101416459
+        ],
+        [
+          459.71658347020275,
+          -717.1120362423826
+        ],
+        [
+          463.1773556058761,
+          -721.1244637251366
+        ],
+        [
+          472.3151839906641,
+          -713.1638674428686
+        ]
+      ]
+    }
+  },
+  "coordinates": "Local east,north metres, EPSG6491 minus [171282.3328920724,867589.2761750807].",
+  "policy": "Three modest photo-informed authored extents inside the registered stage/canopy/shore-building arrangement. The documentary building-use assignments were unresolved; V01 supports the relative stage and white canopy arrangement, not a surveyed plan. Do not reclassify the campground parking northwest of the venue or all ground under pine crowns. Preserve the downhill lawn, all source roofs, roads, water and guided-car clearance.",
+  "features": [
+    {
+      "id": "RANCH-SEATING-PAD",
+      "sid": "ranch-stage-171771_866877",
+      "kind": "walk",
+      "surface": "pale-hard-pad",
+      "color": "#b3b0a3",
+      "ring": [
+        [
+          521.0423241,
+          -705.9898949
+        ],
+        [
+          513.7322446,
+          -716.649744
+        ],
+        [
+          504.6604133,
+          -710.4286607
+        ],
+        [
+          513.7092616,
+          -697.2332697
+        ],
+        [
+          519.7816571,
+          -701.3974651
+        ]
+      ],
+      "inference": "Only the approximate unroofed seating wing beside the stage and southeast canopy edge, limited to 11m along rows and 16m of depth in the registered canopy frame. Pale hard surface observed; exact composition and perimeter authored. No connecting apron, individual surveyed seating row or masonry retaining edge reconstructed."
+    },
+    {
+      "id": "RANCH-PINE-FLOOR",
+      "sid": "ranch-pine-floor",
+      "kind": "walk",
+      "surface": "pine-floor",
+      "color": "#786c54",
+      "ring": [
+        [
+          525,
+          -713
+        ],
+        [
+          532,
+          -709
+        ],
+        [
+          538,
+          -714
+        ],
+        [
+          538,
+          -723
+        ],
+        [
+          530,
+          -728
+        ],
+        [
+          524,
+          -724
+        ]
+      ],
+      "inference": "Only a small irregular patch within the observed bare/sparse venue floor; boundary and late-summer needle/soil mixture authored. No species identification, site-wide canopy/soil inference or new tree locations."
+    },
+    {
+      "id": "RANCH-GRAVEL-MARGIN",
+      "sid": "ranch-gravel-margin",
+      "kind": "walk",
+      "surface": "pale-gravel",
+      "color": "#a9a796",
+      "line": [
+        [
+          539,
+          -700
+        ],
+        [
+          542,
+          -711
+        ],
+        [
+          544,
+          -721
+        ],
+        [
+          543,
+          -731
+        ]
+      ],
+      "widthM": 2.0,
+      "inference": "Observed pale loose-material-looking margin beside the bare patch. This short centerline and 2m width are approximate art extents, not a surveyed route, confirmed stone composition or public-access claim."
+    }
+  ],
+  "benches": {
+    "frame": {
+      "start": [
+        487.9542508200684,
+        -694.1220934013836
+      ],
+      "tangent": [
+        0.8247119360250732,
+        -0.565553023666018
+      ],
+      "away": [
+        0.565553023666018,
+        0.8247119360250732
+      ]
+    },
+    "rows": 10,
+    "firstRowV": -2.5,
+    "rowPitchM": 1.4,
+    "edgeInsetM": 0.65,
+    "maximumSectionLengthM": 2.8,
+    "sectionGapM": 0.1,
+    "seatHeightM": 0.46,
+    "seatDepthM": 0.34,
+    "color": "#497b56",
+    "inference": "Ten low green exterior bench rows, parallel to the registered canopy row axis and facing the stage. Count is approximate from the sampled video; pitch, short grade-supported sections, board dimensions, legs and exact arrangement are authored."
+  }
+}

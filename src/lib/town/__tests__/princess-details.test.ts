@@ -8,4 +8,25 @@ describe('physically connected Princess details',()=>{
  it('uses a closed outward canopy volume with the same modest span',()=>{for(let level=0;level<3;level++){const b=new Batch(new THREE.Vector3(),level);buildPrincessCanopy(b,frame,0);const result=b.finish();let volume=0;result.group.traverse(o=>{if(!(o instanceof THREE.Mesh))return;const p=o.geometry.getAttribute('position');for(let i=0;i<p.count;i+=3){const a=new THREE.Vector3().fromBufferAttribute(p,i),c=new THREE.Vector3().fromBufferAttribute(p,i+1),e=new THREE.Vector3().fromBufferAttribute(p,i+2);volume+=a.dot(c.cross(e))/6;}});expect(volume).toBeCloseTo(12.8*5.75*.08,3);}});
  it('has a clear stairwell with connected treads instead of a roof or cabin through the flight',()=>{for(let level=0;level<3;level++){const group=new THREE.Group();applyLakeLife(group,d.tileId,d.origin,level,(d.sourceLods as Record<string,string>)[String(level)]);group.updateMatrixWorld(true);const s=PRINCESS_FINISH_BASIS.stair,ray=new THREE.Raycaster(),meshes:THREE.Mesh[]=[];group.traverse(o=>{if(o instanceof THREE.Mesh)meshes.push(o);});for(let i=0;i<s.steps;i++){const u=s.front-(i+.5)*(s.front-s.rear)/s.steps,v=s.centerV,x=d.point[0]+Math.cos(d.angle)*u+Math.sin(d.angle)*v,z=-d.point[1]-Math.sin(d.angle)*u+Math.cos(d.angle)*v;ray.set(new THREE.Vector3(x-d.origin[0],d.height+8,z-d.origin[2]),new THREE.Vector3(0,-1,0));const hit=ray.intersectObjects(meshes,false)[0];expect(hit,`tread${i} LOD${level}`).toBeDefined();expect(hit.point.y-d.height).toBeCloseTo(s.bottom+(i+1)*(s.top-s.bottom)/s.steps,4);}}});
  it('documents observed forms separately from the authored dimensions',()=>{expect(PRINCESS_FINISH_BASIS.photoSHA256).toBe(d.source.photoSHA256);expect(PRINCESS_FINISH_BASIS.inference).toContain('authored');expect(PRINCESS_FINISH_BASIS.observed).toContain('Three arched pilot-house front windows');});
+ it('gives only the canopy a navy nonmetal finish at every LOD',()=>{
+  for(let level=0;level<3;level++){
+   const group=new THREE.Group();applyLakeLife(group,d.tileId,d.origin,level,(d.sourceLods as Record<string,string>)[String(level)]);
+   const canopy:THREE.Mesh[]=[],otherMetal=new Set<THREE.MeshStandardMaterial>();
+   group.traverse(o=>{
+    if(!(o instanceof THREE.Mesh))return;
+    for(const material of Array.isArray(o.material)?o.material:[o.material]){
+     if(!(material instanceof THREE.MeshStandardMaterial))continue;
+     if(material.name==='Indian Princess | matte navy canopy'){
+      canopy.push(o);expect(material.color.getHexString()).toBe('263b54');expect(material.metalness).toBe(0);expect(material.roughness).toBe(.87);expect(material.map).toBeNull();
+      expect(material.userData.appearanceBasis).toBe(PRINCESS_FINISH_BASIS.canopy);
+      // No cabin, wheelhouse or railing geometry shares this material.
+      const bounds=new THREE.Box3().setFromBufferAttribute(o.geometry.getAttribute('position')as THREE.BufferAttribute);
+      expect(bounds.min.y).toBeCloseTo(d.height+5.66,4);expect(bounds.max.y).toBeCloseTo(d.height+5.90,4);
+     }else if(material.userData.surfaceRole==='metal')otherMetal.add(material);
+    }
+   });
+   expect(canopy).toHaveLength(1);expect(otherMetal.size).toBeGreaterThan(2);
+   for(const material of otherMetal){expect(material.metalness).toBe(.35);expect(material.roughness).toBe(.6);}
+  }
+ });
 });
