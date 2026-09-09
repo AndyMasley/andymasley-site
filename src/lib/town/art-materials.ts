@@ -200,7 +200,8 @@ export function applyArtMaterial(material: THREE.MeshStandardMaterial, clock: { 
     material.normalScale.multiplyScalar(0.22);
   }
   if (kind === 'asphalt') {
-    if (material.name === 'Finished parking | asphalt' || material.name === 'Finished street corner | asphalt apron') material.color.set('#30332f');
+    if (material.name === 'Finished parking | asphalt') material.color.set('#4c4f49');
+    else if (material.name === 'Finished street corner | asphalt apron') material.color.set('#30332f');
     else if (material.map) material.color.setRGB(0.50,0.50,0.50);
     else material.color.set(material.name.includes('repair') ? '#484b48' : '#50534e');
     material.roughness = 0.94;

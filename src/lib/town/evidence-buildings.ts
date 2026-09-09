@@ -2,7 +2,6 @@ import * as THREE from 'three';
 import { Batch, frontageMaterial, type Frame, type Role } from './crafted-frontages';
 import type { EvidenceBuilding, EvidenceReport, EvidenceRoof } from './evidence-types';
 import { historicAppearance } from './historic-appearance';
-import { repairFoundationWalls } from './foundation-wall-finish';
 import {prepareAddressFrontages,insideFormerEntrySteps,renderAddressStoop,type EntryStepEnvelope} from './address-frontage';
 
 export type EvidenceTarget = {
@@ -308,7 +307,6 @@ export function applyEvidenceBuildings(group:THREE.Object3D,tileId:string,tileOr
   const {homes,stoops}=prepareAddressFrontages(group,tileOrigin,originalHomes),stoopById=new Map(stoops.map(s=>[s.home.id,s]));
   const targets:EvidenceTarget[]=[...homes.map(r=>({...r,material:buildingMaterial(r),replaceOpenings:true,replaceBody:repairs.has(r.id),preserveEntry:shortEntryEnvelope(r),retireEntrySteps:stoopById.get(r.id)?.former})),...extras];
   const origin=new THREE.Vector3().fromArray(tileOrigin);
-  repairFoundationWalls(group,origin,targets);
   const filtered=filterEvidenceSources(group,origin,targets),batch=new Batch(origin,level);
   for(const row of homes)if(filtered.matched.has(row.id)){
     const roof=repairs.get(row.id);if(roof)roofGeometry(batch,row,roof);

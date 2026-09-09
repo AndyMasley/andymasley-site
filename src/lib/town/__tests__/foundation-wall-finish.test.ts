@@ -57,3 +57,59 @@ describe('Foundation triangle material correction', () => {
     }
   });
 });
+
+describe('Each building keeps its own material', () => {
+  it('retains different siding colors and a brick neighbor in the same merged tile', () => {
+    const group = new THREE.Group(), targets = [], fixtures = [];
+    for (const [i, color, role] of [[0, '#87a3b1', 'siding'], [1, '#d8cba6', 'siding'], [2, '#865440', 'brick']] as const) {
+      const f = fixture(); f.mesh.position.x = i * 8;
+      f.siding.color.set(color); f.siding.name = 'V2 inferred | ' + role;
+      group.add(f.mesh); fixtures.push(f);
+      targets.push({...target, id:'house-'+i, outline:target.outline.map(([x,y]) => [x+i*8,y])});
+    }
+    expect(repairFoundationWalls(group,new THREE.Vector3(),targets).ids).toHaveLength(3);
+    for (const f of fixtures) {
+      const p = f.mesh.geometry.getAttribute('position'), materials = f.mesh.material as THREE.Material[];
+      for (const part of f.mesh.geometry.groups) {
+        const upper = materials[part.materialIndex!].name !== 'V2 inferred | foundation';
+        if (upper) expect(materials[part.materialIndex!]).toBe(f.siding);
+        for(let i=part.start;i<part.start+part.count;i++) if(upper) expect(p.getY(i)).toBeGreaterThanOrEqual(target.floor);
+      }
+    }
+  });
+
+  it('does not borrow a nearby wall when a registered house has no own matching wall', () => {
+    const f = fixture();
+    const peer = fixture(); peer.mesh.position.x=10;
+    f.mesh.geometry.clearGroups(); f.mesh.geometry.addGroup(0,6,0); f.mesh.material = [f.foundation];
+    f.group.add(peer.mesh);
+    const before=f.mesh.geometry;
+    const report=repairFoundationWalls(f.group,new THREE.Vector3(),[target]);
+    expect(report.ids).toEqual([]); expect(report.unresolved).toEqual(['house']);
+    expect(f.mesh.geometry).toBe(before);
+  });
+});
+
+describe('Original source UV conventions', () => {
+  it('converts only emitted brick and foundation UVs without mutating either clipped polygon or source', () => {
+    const f=fixture(), original=f.geometry.toNonIndexed();f.mesh.geometry=original;
+    f.siding.name='V2 inferred | brick';
+    const uv=original.getAttribute('uv');for(let i=3;i<6;i++)uv.setXY(i,uv.getX(i)*2/3,uv.getY(i)*2/3);
+    const originalUv=Array.from(uv.array);
+    const signature=[f.siding.name,[f.siding.color.r,f.siding.color.g,f.siding.color.b],f.siding.roughness,f.siding.metalness,[2/3,2/3]] as const;
+    const report=repairFoundationWalls(f.group,new THREE.Vector3(),[{...target,materialSignature:signature}]);
+    expect(report.repairedTriangles).toBe(2);expect(Array.from(uv.array)).toEqual(originalUv);
+    const p=f.mesh.geometry.getAttribute('position'),out=f.mesh.geometry.getAttribute('uv');
+    for(const part of f.mesh.geometry.groups){
+      const mat=(f.mesh.material as THREE.Material[])[part.materialIndex!],scale=mat===f.siding?2/3:1;
+      for(let i=part.start;i<part.start+part.count;i++){expect(out.getX(i)).toBeCloseTo(p.getX(i)/4*scale,6);expect(out.getY(i)).toBeCloseTo(p.getY(i)/4*scale,6);}
+    }
+  });
+
+  it('fails closed for a supplied stale material signature even if a nearby wall could be borrowed', () => {
+    const f=fixture(),before=f.mesh.geometry;
+    const signature=[f.siding.name,[.123,.456,.789],f.siding.roughness,f.siding.metalness,[1,1]] as const;
+    const report=repairFoundationWalls(f.group,new THREE.Vector3(),[{...target,materialSignature:signature}]);
+    expect(report.unresolved).toEqual(['house']);expect(report.rejectedMeshes).toBe(1);expect(report.repairedTriangles).toBe(0);expect(f.mesh.geometry).toBe(before);
+  });
+});

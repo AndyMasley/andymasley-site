@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { applyFoundationWallFinish } from './foundation-wall-finish';
 import type { TownTile } from './contracts';
 import type { TileEvidence } from './evidence-stream';
 import release from '../../../data/derived/town/release.json';
@@ -24,6 +25,7 @@ import { applyRailCrossingFinish } from './rail-crossing-finish';
 import { applyArrivalGrounds } from './arrival-grounds';
 import { applyPropertyGrounds } from './property-grounds';
 import { applyCommercialFrontageGrounds } from './commercial-frontage-grounds';
+import { applyModerneFrontageGrounds } from './moderne-frontage-grounds';
 import { applyMillYardGrounds } from './mill-yard-grounds';
 import { applyPropertyTerrainFinish } from './property-terrain-finish';
 import { applyStreetCorners } from './street-corners';
@@ -44,6 +46,7 @@ import { terrainFinishAsset, validTerrainFinishPacket, applyTerrainFinish, type 
 import { applyParkingFinish, validParkingPacket } from './parking-finish';
 
 export interface TileDetails {
+  foundationWalls?: Parameters<typeof applyFoundationWallFinish>[5];
   evidence?: TileEvidence;
   streetCorners?: Parameters<typeof applyStreetCorners>[5];
   streetCornerGround?: Parameters<typeof applyStreetCornerGround>[5];
@@ -64,12 +67,13 @@ export type AssemblyStep = { name: string; apply: () => unknown };
 /** One authoritative transaction order is shared by live loading and native QA.
  * A scene is unpublished until every step and its source guards complete. */
 export function tileAssemblySteps(group: THREE.Group, tile: TownTile, level: number, details: TileDetails): AssemblyStep[] {
-  const { evidence, road, terrain, parking, additional, roadside, environmentGround, facilities, roadMaterials, streetCorners, streetCornerGround, roadCurve, roadDash, propertyTerrain } = details;
+  const { foundationWalls, evidence, road, terrain, parking, additional, roadside, environmentGround, facilities, roadMaterials, streetCorners, streetCornerGround, roadCurve, roadDash, propertyTerrain } = details;
   const sourceSha256 = tile.lods.find(row => row.level === level)?.sha256 ?? '';
   let institutions: ReturnType<typeof applyInstitutionalCompletion>;
   const landmarks = landmarkRows(tile.id);
   let cornerGroundReady = !streetCornerGroundAsset(tile.id, level);
   const steps: AssemblyStep[] = [
+    { name: 'foundationWalls', apply: () => applyFoundationWallFinish(group,tile.id,tile.origin,level,sourceSha256,foundationWalls) },
     { name: 'bridge', apply: () => { return applyMeasuredBridgeSurface(group,tile.id,tile.origin); } },
     { name: 'terrain', apply: () => { const matches=terrain?.levels.find(row=>row.level===level)?.sourceSha256===sourceSha256; return terrain && !matches ? {rejected:true,rejectionReason:'source SHA mismatch'} : applyTerrainFinish(group,tile.id,tile.origin,level,terrain); } },
     { name: 'shoreline', apply: () => { return applyEnvironmentGround(group,tile.id,tile.origin,level,environmentGround); } },
@@ -106,6 +110,7 @@ export function tileAssemblySteps(group: THREE.Group, tile: TownTile, level: num
     { name: 'propertyTerrain', apply: () => { return applyPropertyTerrainFinish(group,tile.id,tile.origin,level,sourceSha256,propertyTerrain); } },
     { name: 'propertyGrounds', apply: () => { return applyPropertyGrounds(group,tile.id,tile.origin,level,sourceSha256); } },
     { name: 'commercialFrontageGrounds', apply: () => { return applyCommercialFrontageGrounds(group,tile.id,tile.origin,level,sourceSha256); } },
+    { name: 'moderneFrontageGrounds', apply: () => { return applyModerneFrontageGrounds(group,tile.id,tile.origin,level,sourceSha256); } },
     { name: 'millYardGrounds', apply: () => { return applyMillYardGrounds(group,tile.id,tile.origin,level,sourceSha256); } },
     { name: 'institutions', apply: () => { return institutions=applyInstitutionalCompletion(group,tile.id,tile.origin,level,sourceSha256); } },
     { name: 'craftedFrontages', apply: () => { return applyCraftedFrontages(group,tile.id,tile.origin,level,institutions?.ids??[]); } },
@@ -128,7 +133,7 @@ export function tileAssemblySteps(group: THREE.Group, tile: TownTile, level: num
     { name: 'lakeLife', apply: () => { return applyLakeLife(group,tile.id,tile.origin,level,sourceSha256); } },
     { name: 'roadside', apply: () => { return applyRoadsideDetails(group,tile.id,tile.origin,level,sourceSha256,roadside); } },
   ];
-  const familyByStage: Record<string,string> = {propertyTerrain:'propertyTerrain',terrain:'terrain',shoreline:'shoreline',roadPaint:'roadPaint',parking:'parking',roadMaterials:'roadMaterials',streetCornerGround:'streetCornerGround',roadCurve:'roadCurve',roadDash:'roadDash',streetCorners:'streetCorners',additionalEnvironment:'environment',facilities:'facilities',roadside:'roadside'};
+  const familyByStage: Record<string,string> = {foundationWalls:'foundationWalls',propertyTerrain:'propertyTerrain',terrain:'terrain',shoreline:'shoreline',roadPaint:'roadPaint',parking:'parking',roadMaterials:'roadMaterials',streetCornerGround:'streetCornerGround',roadCurve:'roadCurve',roadDash:'roadDash',streetCorners:'streetCorners',additionalEnvironment:'environment',facilities:'facilities',roadside:'roadside'};
   return steps.map(({name,apply}) => ({name,apply:()=>{
     const result=apply();
     if(result && typeof result==='object') {

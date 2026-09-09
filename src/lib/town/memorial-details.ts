@@ -3,6 +3,7 @@ import data from '../../../data/derived/town/memorial-details.json';
 import { Batch, clipTerrainTriangle, type Frame, type Role } from './crafted-frontages';
 import { PlanarTriangleIndex } from './planar-triangle-index';
 import { TerrainRayIndex } from './terrain-ray-index';
+import { finishMemorialPedestrianSurfaces } from './pedestrian-ground-finish';
 
 type V3 = [number, number, number];
 type Recipe = typeof data.objects[number];
@@ -140,7 +141,7 @@ function court(b:Batch,f:Frame,l:Letters,ground:(u:number,v:number)=>number|null
     // Retain each rendered support plane, with the shared 4 cm paving clearance.
     for(const triangle of supportIndex.query([u,u+width,v,v+depth])) {
       if(Math.max(...triangle.map(p=>p[0]))<u||Math.min(...triangle.map(p=>p[0]))>u+width||Math.max(...triangle.map(p=>p[2]))<v||Math.min(...triangle.map(p=>p[2]))>v+depth)continue;
-      b.polygon(f,'paving',clipTerrainTriangle(triangle,[u,u+width,v,v+depth]),(Math.round(v/step)+Math.round(u/step))%5?'#98684e':'#a77756');
+      b.polygon(f,'paving',clipTerrainTriangle(triangle,[u,u+width,v,v+depth]),'#98684e');
     }
   }
   const wallY=ground(0,-6)??ground(0,0)!;
@@ -252,7 +253,7 @@ export function applyMemorialDetails(group:THREE.Group,tileId:string,origin:read
     }
     report.ids.push(r.id);report.supports.push({id:r.id,height:ground});
   }
-  const result=b.finish();result.group.name='Research memorial details';const text=letters.finish();if(text)result.group.add(text);
+  const result=b.finish();finishMemorialPedestrianSurfaces(result.group);result.group.name='Research memorial details';const text=letters.finish();if(text)result.group.add(text);
   result.group.traverse(o=>{if(!(o instanceof THREE.Mesh))return;o.name=o.name.replace('Crafted building frontage','Research memorial');o.userData.townCrafted=true;o.userData.category='research-memorial';o.userData.evidenceIds=report.ids;o.castShadow=true;
     report.addedTriangles+=(o.geometry.index?o.geometry.index.count:o.geometry.getAttribute('position').count)/3;for(const a of Object.values(o.geometry.attributes) as THREE.BufferAttribute[])report.geometryBytes+=a.array.byteLength;report.addedMeshes++;
   });

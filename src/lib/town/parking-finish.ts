@@ -184,7 +184,7 @@ export function applyParkingFinish(group: THREE.Group, tileId: string, origin: V
       }
     }
   }
-  attach(paving,'Finished parking | asphalt',0x30332f);
+  attach(paving,'Finished parking | asphalt',0x4c4f49);
   report.pavingTriangles=paving.length/9;
   for(const bay of bays) {
     let painted=false;

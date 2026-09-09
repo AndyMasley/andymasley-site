@@ -17,7 +17,8 @@ describe('Town streaming and resource ownership', () => {
       const { retrySources, sourceImages, ...details } = world.streamingResources().caches;
       const scale=mobile?.5:1,mib=1024*1024;
       expect(Object.values(details).every(cache=>Number.isFinite(cache.budgetBytes)&&cache.budgetBytes>0)).toBe(true);
-      expect(Object.values(details).reduce((sum,cache)=>sum+cache.budgetBytes,0)).toBeLessThanOrEqual(64.5*mib*scale);
+      expect(Object.values(details).reduce((sum,cache)=>sum+cache.budgetBytes,0)).toBeLessThanOrEqual(65*mib*scale);
+      expect(details.foundationWalls.budgetBytes).toBe(.5*mib*scale);
       expect(retrySources.budgetBytes).toBe(24*mib*scale);
       expect(sourceImages.budgetBytes).toBe(8*mib*scale);
     } finally { world.dispose(); }

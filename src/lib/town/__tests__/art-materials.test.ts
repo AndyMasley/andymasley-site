@@ -121,9 +121,10 @@ describe('Scoped late-summer materials', () => {
     }
   });
 
-  it('joins new street-corner aprons to the existing restrained parking asphalt finish',()=>{
+  it('distinguishes weathered parking asphalt from road connections while retaining the same mineral finish',()=>{
     const lot=material('Finished parking | asphalt'),corner=material('Finished street corner | asphalt apron');applyArtMaterial(lot);applyArtMaterial(corner);
-    expect(corner.color.toArray()).toEqual(lot.color.toArray());expect(corner.roughness).toBe(lot.roughness);expect(corner.userData.townArt.kind).toBe('asphalt');expect(compile(corner).fragmentShader).toContain('townAsphaltValue');
+    expect(lot.color.r).toBeGreaterThan(corner.color.r);expect(lot.color.g).toBeGreaterThan(corner.color.g);expect(lot.color.b).toBeGreaterThan(corner.color.b);
+    expect(corner.roughness).toBe(lot.roughness);expect(corner.userData.townArt.kind).toBe('asphalt');expect(compile(corner).fragmentShader).toBe(compile(lot).fragmentShader);
   });
 
   it('is idempotent and restores original ownership without disposing shared resources', () => {

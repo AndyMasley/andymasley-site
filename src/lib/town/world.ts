@@ -1,3 +1,4 @@
+import { foundationWallAsset, validFoundationWallPacket } from './foundation-wall-finish';
 import * as THREE from 'three';
 import release from '../../../data/derived/town/release.json';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
@@ -78,6 +79,7 @@ export class TownWorld {
   private readonly artClock = { value: 0 };
   private readonly boundaryContext: BoundaryContext;
   private readonly sourceImages: SourceImageCache;
+  private readonly foundationWalls = new TileDetailStream(foundationWallAsset, validFoundationWallPacket, (url, signal) => this.fetchJson(url, signal), 512 * 1024);
   private readonly evidence = new EvidenceStream(<T>(url:string,signal:AbortSignal)=>this.fetchJson<T>(url,signal));
   private readonly roadFinish = new RoadFinishStream(<T>(url:string,signal:AbortSignal)=>this.fetchJson<T>(url,signal));
   private readonly terrainFinish = new TileDetailStream(
@@ -191,6 +193,7 @@ export class TownWorld {
     this.sourceImages.prefetch(sourceImageHints(url));
     const cachedSource = this.sourceRetryCache.get(url);
     const base = cachedSource ? Promise.resolve(cachedSource) : readSceneBuffer(url, signal, bytes => { this.metrics.bytes += bytes; });
+    const foundationWallsRequest=tile?beginOptionalDetail(signal,s=>this.foundationWalls.tile(tile.id,s)):undefined;
     const roadRequest=tile?beginOptionalDetail(signal,s=>this.roadFinish.tile(tile.id,s)):undefined;
     const terrainRequest=tile?beginOptionalDetail(signal,s=>this.terrainFinish.tile(`${tile.id}@${level}`,s)):undefined;
     const parkingRequest=tile?beginOptionalDetail(signal,s=>this.parkingFinish.tile(tile.id,s)):undefined;
@@ -214,18 +217,18 @@ export class TownWorld {
       this.timings.parseMs += parseMs; this.timings.maxParseMs = Math.max(this.timings.maxParseMs, parseMs);
       return gltf;
     });
-    const finishes = base.then(() => Promise.all([roadRequest?.finish(),terrainRequest?.finish(),parkingRequest?.finish(),additionalRequest?.finish(),roadsideRequest?.finish(),environmentGroundRequest?.finish(),facilitiesRequest?.finish(),roadMaterialsRequest?.finish(),streetCornersRequest?.finish(),streetCornerGroundRequest?.finish(),roadCurveRequest?.finish(),roadDashRequest?.finish(),propertyTerrainRequest?.finish()]));
+    const finishes = base.then(() => Promise.all([roadRequest?.finish(),terrainRequest?.finish(),parkingRequest?.finish(),additionalRequest?.finish(),roadsideRequest?.finish(),environmentGroundRequest?.finish(),facilitiesRequest?.finish(),roadMaterialsRequest?.finish(),streetCornersRequest?.finish(),streetCornerGroundRequest?.finish(),roadCurveRequest?.finish(),roadDashRequest?.finish(),propertyTerrainRequest?.finish(),foundationWallsRequest?.finish()]));
     const complete = Promise.all([base, tile?this.evidence.tile(tile.id,signal,base):Promise.resolve(undefined), finishes, parsed]);
     let loaded: Awaited<typeof complete>;
     try { loaded = await complete; }
     catch(error) {
-      roadRequest?.cancel();terrainRequest?.cancel();parkingRequest?.cancel();additionalRequest?.cancel();roadsideRequest?.cancel();environmentGroundRequest?.cancel();facilitiesRequest?.cancel();roadMaterialsRequest?.cancel();streetCornersRequest?.cancel();streetCornerGroundRequest?.cancel();roadCurveRequest?.cancel();roadDashRequest?.cancel();propertyTerrainRequest?.cancel();
+      roadRequest?.cancel();terrainRequest?.cancel();parkingRequest?.cancel();additionalRequest?.cancel();roadsideRequest?.cancel();environmentGroundRequest?.cancel();facilitiesRequest?.cancel();roadMaterialsRequest?.cancel();streetCornersRequest?.cancel();streetCornerGroundRequest?.cancel();roadCurveRequest?.cancel();roadDashRequest?.cancel();propertyTerrainRequest?.cancel();foundationWallsRequest?.cancel();
       // A different family can fail after parsing already succeeded. Retire it
       // here, including a late parse result; release is idempotent.
       void parsed.then(gltf => this.disposeRaw(gltf.scene), () => {});
       throw error;
     }
-    const [data,evidence,[road,terrain,parking,additional,roadside,environmentGround,facilities,roadMaterials,streetCorners,streetCornerGround,roadCurve,roadDash,propertyTerrain],gltf] = loaded;
+    const [data,evidence,[road,terrain,parking,additional,roadside,environmentGround,facilities,roadMaterials,streetCorners,streetCornerGround,roadCurve,roadDash,propertyTerrain,foundationWalls],gltf] = loaded;
     if (this.disposed || signal.aborted) {
       this.disposeRaw(gltf.scene);
       throw new DOMException('Loading cancelled', 'AbortError');
@@ -234,6 +237,7 @@ export class TownWorld {
     if (tile) {
       const assemblyStarted = performance.now();
       const missing = [
+        this.foundationWalls.hasAsset(tile.id) && !foundationWalls && 'foundationWalls',
         this.evidence.hasAsset(tile.id) && (!evidence || evidence.failures > 0) && 'buildings',
         this.roadFinish.hasAsset(tile.id) && !road?.length && 'roadPaint',
         this.terrainFinish.hasAsset(tile.id+'@'+level) && !terrain && 'terrain',
@@ -251,7 +255,7 @@ export class TownWorld {
       ].filter(Boolean) as string[];
       gltf.scene.userData.optionalDetailMissing = missing;
       try {
-        const stages = await assembleTile(gltf.scene, tile, level, { evidence, road, terrain, parking, additional, roadside, environmentGround, facilities, roadMaterials, streetCorners, streetCornerGround, roadCurve, roadDash, propertyTerrain }, signal);
+        const stages = await assembleTile(gltf.scene, tile, level, { evidence, road, terrain, parking, additional, roadside, environmentGround, facilities, roadMaterials, streetCorners, streetCornerGround, roadCurve, roadDash, propertyTerrain, foundationWalls }, signal);
         for (const [name, ms] of Object.entries(stages)) this.stageTimings[name] = Math.max(this.stageTimings[name] ?? 0, ms);
       }
       catch (error) { this.disposeRaw(gltf.scene); sourceTextures.forEach(texture => this.textureLifetime.release(texture)); throw error; }
@@ -365,7 +369,7 @@ export class TownWorld {
     this.terrainFinish.setBudget(12 * mib * scale);
     this.evidence.setBudget(8 * mib * scale); this.roadFinish.setBudget(4 * mib * scale);
     for (const stream of [this.parkingFinish, this.additionalEnvironment, this.roadside, this.facilities, this.environmentGround, this.roadMaterials, this.streetCorners, this.streetCornerGround]) stream.setBudget(4 * mib * scale);
-    this.roadCurve.setBudget(2 * mib * scale); this.roadDash.setBudget(.5 * mib * scale); this.propertyTerrain.setBudget(2 * mib * scale);
+    this.roadCurve.setBudget(2 * mib * scale); this.roadDash.setBudget(.5 * mib * scale); this.propertyTerrain.setBudget(2 * mib * scale); this.foundationWalls.setBudget(.5 * mib * scale);
     this.sourceRetryCache.maxBytes = (mobile ? 12 : 24) * mib; this.sourceRetryCache.trim();
   }
 
@@ -407,7 +411,7 @@ export class TownWorld {
       triangles+=(group.userData.institutionalCompletion?.triangles??0)+(group.userData.commercialCompletion?.triangles??0)+(group.userData.environmentGround?.waterTriangles??0)+(group.userData.environmentGround?.addedTriangles??0);
       triangles+=group.userData.environmentFacilities?.triangles??0;
     }
-    return{campStructures,utilityBasins,lakeVessels,bridges,memorials,civicWindows,landmarkForms,institutions,commercialFacades,environmentObjects,roadsideObjects,facilities,triangles,optionalFailures:this.additionalEnvironment.failures+this.roadside.failures+this.environmentGround.failures+this.facilities.failures+this.roadMaterials.failures+this.streetCorners.failures+this.streetCornerGround.failures+this.roadCurve.failures+this.roadDash.failures+this.propertyTerrain.failures};
+    return{campStructures,utilityBasins,lakeVessels,bridges,memorials,civicWindows,landmarkForms,institutions,commercialFacades,environmentObjects,roadsideObjects,facilities,triangles,optionalFailures:this.additionalEnvironment.failures+this.roadside.failures+this.environmentGround.failures+this.facilities.failures+this.roadMaterials.failures+this.streetCorners.failures+this.streetCornerGround.failures+this.roadCurve.failures+this.roadDash.failures+this.propertyTerrain.failures+this.foundationWalls.failures};
   }
 
   finishResources() {
@@ -425,7 +429,7 @@ export class TownWorld {
       pavedMasks+=Number(!!group.userData.pavedSurfaceMask);
       rejectedTerrain+=Number(!!group.userData.terrainFinish?.rejected);
     }
-    return{roadDash:[...this.loaded.values()].flatMap(({group})=>group.userData.roadDashResult?[group.userData.roadDashResult]:[]),roadCurve:[...this.loaded.values()].flatMap(({group})=>group.userData.roadCurveResult?[group.userData.roadCurveResult]:[]),arrivalGrounds:[...this.loaded.values()].flatMap(({group})=>group.userData.arrivalGrounds?[group.userData.arrivalGrounds]:[]),parkedCars,parkedDraws,parkedTriangles,streetCornerGround:[...this.loaded.values()].flatMap(({group})=>group.userData.streetCornerGroundResult?[group.userData.streetCornerGroundResult]:[]),streetCorners:[...this.loaded.values()].flatMap(({group})=>group.userData.streetCorners?[group.userData.streetCorners]:[]),streetGeometry,roadTriangles,roadSurfaceTriangles,terrainTriangles,parkingTriangles,parkingBays,pavedMasks,rejectedTerrain,optionalFailures:this.roadFinish.failures+this.terrainFinish.failures+this.parkingFinish.failures+this.additionalEnvironment.failures+this.roadside.failures+this.environmentGround.failures+this.facilities.failures+this.roadMaterials.failures+this.streetCorners.failures+this.streetCornerGround.failures+this.roadCurve.failures+this.roadDash.failures+this.propertyTerrain.failures};
+    return{roadDash:[...this.loaded.values()].flatMap(({group})=>group.userData.roadDashResult?[group.userData.roadDashResult]:[]),roadCurve:[...this.loaded.values()].flatMap(({group})=>group.userData.roadCurveResult?[group.userData.roadCurveResult]:[]),arrivalGrounds:[...this.loaded.values()].flatMap(({group})=>group.userData.arrivalGrounds?[group.userData.arrivalGrounds]:[]),parkedCars,parkedDraws,parkedTriangles,streetCornerGround:[...this.loaded.values()].flatMap(({group})=>group.userData.streetCornerGroundResult?[group.userData.streetCornerGroundResult]:[]),streetCorners:[...this.loaded.values()].flatMap(({group})=>group.userData.streetCorners?[group.userData.streetCorners]:[]),streetGeometry,roadTriangles,roadSurfaceTriangles,terrainTriangles,parkingTriangles,parkingBays,pavedMasks,rejectedTerrain,optionalFailures:this.roadFinish.failures+this.terrainFinish.failures+this.parkingFinish.failures+this.additionalEnvironment.failures+this.roadside.failures+this.environmentGround.failures+this.facilities.failures+this.roadMaterials.failures+this.streetCorners.failures+this.streetCornerGround.failures+this.roadCurve.failures+this.roadDash.failures+this.propertyTerrain.failures+this.foundationWalls.failures};
   }
 
   update(position: V3, lookAhead: V3, force = false): void {
@@ -558,7 +562,7 @@ export class TownWorld {
   streamingResources() {
     const caches = { evidence: this.evidence.resources(), roadPaint: this.roadFinish.resources(), terrain: this.terrainFinish.resources(),
       parking: this.parkingFinish.resources(), environment: this.additionalEnvironment.resources(), roadside: this.roadside.resources(),
-      shoreline: this.environmentGround.resources(), facilities: this.facilities.resources(), roadMaterials: this.roadMaterials.resources(), streetCorners: this.streetCorners.resources(), streetCornerGround: this.streetCornerGround.resources(), roadCurve: this.roadCurve.resources(), roadDash: this.roadDash.resources(), propertyTerrain: this.propertyTerrain.resources(), boundaryContext: this.boundaryContext.resources(), retrySources: this.sourceRetryCache.resources(), sourceImages: this.sourceImages.resources() };
+      shoreline: this.environmentGround.resources(), facilities: this.facilities.resources(), roadMaterials: this.roadMaterials.resources(), streetCorners: this.streetCorners.resources(), streetCornerGround: this.streetCornerGround.resources(), roadCurve: this.roadCurve.resources(), roadDash: this.roadDash.resources(), propertyTerrain: this.propertyTerrain.resources(), foundationWalls: this.foundationWalls.resources(), boundaryContext: this.boundaryContext.resources(), retrySources: this.sourceRetryCache.resources(), sourceImages: this.sourceImages.resources() };
     const geometryBudgetBytes = (this.mobile ? 192 : 384) * 1024 * 1024;
     const retainedTileGeometryBytes = [...this.loaded.values()].reduce((sum, tile) => sum + (tile.geometryBytes ?? 0), 0);
     return { ...this.timings, groundTextures: this.surfaces?.detailResources(), maxStageMs: { ...this.stageTimings }, detailRequests: { active: this.detailRequests.active, queued: this.detailRequests.queued, peakActive: this.detailRequests.peakActive, cancelled: this.detailRequests.cancelled }, caches, estimatedCacheBytes: Object.values(caches).reduce((sum, cache) => sum + cache.estimatedBytes, 0),
@@ -913,7 +917,7 @@ export class TownWorld {
     this.boundaryContext.dispose();
     this.sourceRetryCache.clear();
     this.evidence.dispose();
-    this.roadFinish.dispose();this.terrainFinish.dispose();this.parkingFinish.dispose();this.additionalEnvironment.dispose();this.roadside.dispose();this.environmentGround.dispose();this.facilities.dispose();this.roadMaterials.dispose();this.streetCorners.dispose();this.streetCornerGround.dispose();this.roadCurve.dispose();this.roadDash.dispose();this.propertyTerrain.dispose();
+    this.roadFinish.dispose();this.terrainFinish.dispose();this.parkingFinish.dispose();this.additionalEnvironment.dispose();this.roadside.dispose();this.environmentGround.dispose();this.facilities.dispose();this.roadMaterials.dispose();this.streetCorners.dispose();this.streetCornerGround.dispose();this.roadCurve.dispose();this.roadDash.dispose();this.propertyTerrain.dispose();this.foundationWalls.dispose();
     if (this.disposed) return;
     this.disposed = true;
     this.sharedAbort.abort();

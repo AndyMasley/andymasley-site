@@ -60,7 +60,7 @@ describe('source-qualified civic objects',()=>{
   const original=Array.from(terrain.geometry.getAttribute('position').array);
   applyMemorialDetails(group,'-11_-4',origin,level);group.updateMatrixWorld(true);
   const paving:THREE.Mesh[]=[];group.traverse(o=>{if(o instanceof THREE.Mesh&&o.userData.townCrafted&&(o.material as THREE.Material).name.includes('paving'))paving.push(o);});
-  expect(paving.length).toBe(2);const ray=new THREE.Raycaster();ray.ray.direction.set(0,-1,0);
+  expect(paving.length).toBe(1);expect((paving[0].material as THREE.MeshStandardMaterial).userData.pedestrianGroundFinish.id).toBe('MON-004-court');const ray=new THREE.Raycaster();ray.ray.direction.set(0,-1,0);
   for(let v=7.825;v<8.6;v+=.05)for(let u=-.575;u<.2;u+=.05) {
    ray.ray.origin.set(court.frame.start[0]+u-origin[0],1000,-court.frame.start[1]-v-origin[2]);
    const ground=ray.intersectObject(terrain)[0],paver=ray.intersectObjects(paving)[0];
