@@ -34,6 +34,9 @@ function wallRays(group:THREE.Group){
 }
 
 describe('native school/auditorium roof-step enclosure',()=>{
+ // This integration check decodes the entire native downtown tile, assembles
+ // every detail stage and audits all protected attributes. The shared CI runner
+ // takes more than the 5 s unit-test default; geometry assertions stay exact.
  it.each([0,1,2])('seals the source height transition at LOD%i without changing protected source geometry or materials',async level=>{
   const group=await native(level),row=data.lods[level];let before:Map<THREE.Mesh,{geometry:THREE.BufferGeometry;material:THREE.Material|THREE.Material[];hash:string}>|undefined,sourceRoof:THREE.Mesh|undefined,oldRoof:THREE.BufferGeometry|undefined,originalBrick:THREE.Material|undefined;
   try{
@@ -70,5 +73,5 @@ describe('native school/auditorium roof-step enclosure',()=>{
    expect(applyCivicRoofFinish(group,data.tileId,level,row.sha256)).toBe(group.userData.civicRoofFinish);
    expect(applyCivicRoofFinish(group,data.tileId,level,'stale')?.status).toBe('source-mismatch');
   }finally{dispose(group);}
- });
+ },20_000);
 });
