@@ -22,6 +22,9 @@ import { environmentFacilitiesAsset, validEnvironmentFacilitiesPacket, applyEnvi
 import { applyCraftedFrontages } from './crafted-frontages';
 import { applyStreetGeometry } from './street-geometry';
 import { applyRailCrossingFinish } from './rail-crossing-finish';
+import { applyMainStreetCrossing } from './main-street-crossing';
+import { applyMainStreetSurfaces } from './main-street-surfaces';
+import { applyMainStreetFurniture } from './main-street-furniture';
 import { applyArrivalGrounds } from './arrival-grounds';
 import { applyPropertyGrounds } from './property-grounds';
 import { applyCommercialFrontageGrounds } from './commercial-frontage-grounds';
@@ -111,6 +114,8 @@ export function tileAssemblySteps(group: THREE.Group, tile: TownTile, level: num
     { name: 'streetCorners', apply: () => { return cornerGroundReady ? applyStreetCorners(group,tile.id,tile.origin,level,sourceSha256,streetCorners) : {skipped:true,reason:'Registered corner grading did not apply'}; } },
     { name: 'streetGeometry', apply: () => { return applyStreetGeometry(group); } },
     { name: 'railCrossings', apply: () => { return applyRailCrossingFinish(group,tile.id,tile.origin,level,sourceSha256); } },
+    { name: 'mainStreetCrossing', apply: () => applyMainStreetCrossing(group,tile.id,tile.origin,level,sourceSha256) },
+    { name: 'mainStreetSurfaces', apply: () => applyMainStreetSurfaces(group,tile.id,tile.origin,level,sourceSha256) },
     { name: 'arrivalGrounds', apply: () => { return applyArrivalGrounds(group,tile.id,tile.origin,level,sourceSha256); } },
     { name: 'propertyTerrain', apply: () => { return applyPropertyTerrainFinish(group,tile.id,tile.origin,level,sourceSha256,propertyTerrain); } },
     { name: 'propertyGrounds', apply: () => { return applyPropertyGrounds(group,tile.id,tile.origin,level,sourceSha256); } },
@@ -130,6 +135,7 @@ export function tileAssemblySteps(group: THREE.Group, tile: TownTile, level: num
     { name: 'bathhouseGrounds', apply: () => { return applyBathhouseGrounds(group,tile.id,tile.origin,level,sourceSha256); } },
     { name: 'frenchRiverPark', apply: () => { return applyFrenchRiverPark(group,tile.id,tile.origin,level,sourceSha256); } },
     { name: 'frenchRiverParkFurniture', apply: () => { return applyFrenchRiverParkFurniture(group,tile.id,tile.origin,level,sourceSha256); } },
+    { name: 'mainStreetFurniture', apply: () => applyMainStreetFurniture(group,tile.id,tile.origin,level,sourceSha256) },
     { name: 'evidenceEnvironment', apply: () => { return applyEvidenceEnvironment(group,tile.id,tile.origin,level); } },
     { name: 'townHallMaterials', apply: () => { return applyTownHallMaterials(group,tile.id,level,sourceSha256); } },
     { name: 'civicRoof', apply: () => { return applyCivicRoofFinish(group,tile.id,level,sourceSha256); } },

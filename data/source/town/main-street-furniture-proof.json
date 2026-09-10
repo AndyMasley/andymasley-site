@@ -1,0 +1,256 @@
+{
+  "sourceInputSha256": "8ae9611abf63a42938dcc295cebbcddfb761b22c227eee79e6e1fefa9575ecd4",
+  "sourceManifestSha256": "37fbef34bc2a4467997252be75b4c43174a6a7b2d39963614cadd8d787e56105",
+  "lamps": [
+    {
+      "id": "MAIN-LANTERN-01",
+      "checks": [
+        {
+          "level": 0,
+          "walkUncoveredM2": 0.0,
+          "protectedOverlapM2": 0.0,
+          "roadOverlapM2": 0.0,
+          "paintOverlapM2": 0.0,
+          "supportRangeM": 0.004836664689740644
+        },
+        {
+          "level": 1,
+          "walkUncoveredM2": 0.0,
+          "protectedOverlapM2": 0.0,
+          "roadOverlapM2": 0.0,
+          "paintOverlapM2": 0.0,
+          "supportRangeM": 0.004836664689740644
+        },
+        {
+          "level": 2,
+          "walkUncoveredM2": 0.0,
+          "protectedOverlapM2": 0.0,
+          "roadOverlapM2": 0.0,
+          "paintOverlapM2": 0.0,
+          "supportRangeM": 0.004836664689740644
+        }
+      ]
+    },
+    {
+      "id": "MAIN-LANTERN-02",
+      "checks": [
+        {
+          "level": 0,
+          "walkUncoveredM2": 0.0,
+          "protectedOverlapM2": 0.0,
+          "roadOverlapM2": 0.0,
+          "paintOverlapM2": 0.0,
+          "supportRangeM": 0.007836144150161317
+        },
+        {
+          "level": 1,
+          "walkUncoveredM2": 0.0,
+          "protectedOverlapM2": 0.0,
+          "roadOverlapM2": 0.0,
+          "paintOverlapM2": 0.0,
+          "supportRangeM": 0.007836144150161317
+        },
+        {
+          "level": 2,
+          "walkUncoveredM2": 0.0,
+          "protectedOverlapM2": 0.0,
+          "roadOverlapM2": 0.0,
+          "paintOverlapM2": 0.0,
+          "supportRangeM": 0.007836144150161317
+        }
+      ]
+    },
+    {
+      "id": "MAIN-LANTERN-03",
+      "checks": [
+        {
+          "level": 0,
+          "walkUncoveredM2": 0.0,
+          "protectedOverlapM2": 0.0,
+          "roadOverlapM2": 0.0,
+          "paintOverlapM2": 0.0,
+          "supportRangeM": 0.009979275583418712
+        },
+        {
+          "level": 1,
+          "walkUncoveredM2": 0.0,
+          "protectedOverlapM2": 0.0,
+          "roadOverlapM2": 0.0,
+          "paintOverlapM2": 0.0,
+          "supportRangeM": 0.009979275583418712
+        },
+        {
+          "level": 2,
+          "walkUncoveredM2": 0.0,
+          "protectedOverlapM2": 0.0,
+          "roadOverlapM2": 0.0,
+          "paintOverlapM2": 0.0,
+          "supportRangeM": 0.009979275583418712
+        }
+      ]
+    },
+    {
+      "id": "MAIN-LANTERN-04",
+      "checks": [
+        {
+          "level": 0,
+          "walkUncoveredM2": 0.0,
+          "protectedOverlapM2": 0.0,
+          "roadOverlapM2": 0.0,
+          "paintOverlapM2": 0.0,
+          "supportRangeM": 0.006823860448470498
+        },
+        {
+          "level": 1,
+          "walkUncoveredM2": 0.0,
+          "protectedOverlapM2": 0.0,
+          "roadOverlapM2": 0.0,
+          "paintOverlapM2": 0.0,
+          "supportRangeM": 0.006823860448470498
+        },
+        {
+          "level": 2,
+          "walkUncoveredM2": 0.0,
+          "protectedOverlapM2": 0.0,
+          "roadOverlapM2": 0.0,
+          "paintOverlapM2": 0.0,
+          "supportRangeM": 0.006823860448470498
+        }
+      ]
+    },
+    {
+      "id": "MAIN-LANTERN-05",
+      "checks": [
+        {
+          "level": 0,
+          "walkUncoveredM2": 0.0,
+          "protectedOverlapM2": 0.0,
+          "roadOverlapM2": 0.0,
+          "paintOverlapM2": 0.0,
+          "supportRangeM": 0.01019434996102575
+        },
+        {
+          "level": 1,
+          "walkUncoveredM2": 0.0,
+          "protectedOverlapM2": 0.0,
+          "roadOverlapM2": 0.0,
+          "paintOverlapM2": 0.0,
+          "supportRangeM": 0.01019434996102575
+        },
+        {
+          "level": 2,
+          "walkUncoveredM2": 0.0,
+          "protectedOverlapM2": 0.0,
+          "roadOverlapM2": 0.0,
+          "paintOverlapM2": 0.0,
+          "supportRangeM": 0.01019434996102575
+        }
+      ]
+    },
+    {
+      "id": "MAIN-LANTERN-06",
+      "checks": [
+        {
+          "level": 0,
+          "walkUncoveredM2": 0.0,
+          "protectedOverlapM2": 0.0,
+          "roadOverlapM2": 0.0,
+          "paintOverlapM2": 0.0,
+          "supportRangeM": 0.007722202317140159
+        },
+        {
+          "level": 1,
+          "walkUncoveredM2": 0.0,
+          "protectedOverlapM2": 0.0,
+          "roadOverlapM2": 0.0,
+          "paintOverlapM2": 0.0,
+          "supportRangeM": 0.007722202317140159
+        },
+        {
+          "level": 2,
+          "walkUncoveredM2": 0.0,
+          "protectedOverlapM2": 0.0,
+          "roadOverlapM2": 0.0,
+          "paintOverlapM2": 0.0,
+          "supportRangeM": 0.007722202317140159
+        }
+      ]
+    },
+    {
+      "id": "MAIN-LANTERN-07",
+      "checks": [
+        {
+          "level": 0,
+          "walkUncoveredM2": 0.0,
+          "protectedOverlapM2": 0.0,
+          "roadOverlapM2": 0.0,
+          "paintOverlapM2": 0.0,
+          "supportRangeM": 0.00527285618652229
+        },
+        {
+          "level": 1,
+          "walkUncoveredM2": 0.0,
+          "protectedOverlapM2": 0.0,
+          "roadOverlapM2": 0.0,
+          "paintOverlapM2": 0.0,
+          "supportRangeM": 0.00527285618652229
+        },
+        {
+          "level": 2,
+          "walkUncoveredM2": 0.0,
+          "protectedOverlapM2": 0.0,
+          "roadOverlapM2": 0.0,
+          "paintOverlapM2": 0.0,
+          "supportRangeM": 0.00527285618652229
+        }
+      ]
+    }
+  ],
+  "hedge": [
+    {
+      "level": 0,
+      "terrainUncoveredM2": 0.0,
+      "protectedOverlapM2": 0.0,
+      "walkOverlapM2": 0.0,
+      "roadOverlapM2": 0.0,
+      "paintOverlapM2": 0.0
+    },
+    {
+      "level": 1,
+      "terrainUncoveredM2": 0.0,
+      "protectedOverlapM2": 0.0,
+      "walkOverlapM2": 0.0,
+      "roadOverlapM2": 0.0,
+      "paintOverlapM2": 0.0
+    },
+    {
+      "level": 2,
+      "terrainUncoveredM2": 0.0,
+      "protectedOverlapM2": 0.0,
+      "walkOverlapM2": 0.0,
+      "roadOverlapM2": 0.0,
+      "paintOverlapM2": 0.0
+    }
+  ],
+  "guidedCar": {
+    "source": "/private/tmp/webster-finished-game/roads/full-clearance/clearance-car-poses.json.gz",
+    "sha256": "cb23c306aa5d6d2235c6a340a1408d291ff30ded94169008e7e6035ce5ab8199",
+    "poses": 690528,
+    "nearbyPoses": 952,
+    "intersectionAreaM2": 0.0
+  },
+  "sourceExports": [
+    {
+      "file": "-12_-4-0.source.json.gz",
+      "sha256": "260a79920e29a8f2af7e419758f371b97254cc40a504a04a7c9dd511a78006d2"
+    },
+    {
+      "file": "-12_-4-1.source.json.gz",
+      "sha256": "4b9c1b70425f1e1d862d5312352a527235336565fc69779d79635a4d385683a3"
+    },
+    {
+      "file": "-12_-4-2.source.json.gz",
+      "sha256": "5dde2b5eb750766c59e269c34c163cd52adef9ab359d8a1461e97c02dbb6fee1"
+    }
+  ]
+}

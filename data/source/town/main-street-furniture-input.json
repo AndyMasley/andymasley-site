@@ -1,0 +1,4906 @@
+{
+  "version": 1,
+  "tileId": "-12_-4",
+  "sourcePhoto": {
+    "file": "Screenshot 2026-09-09 at 11.59.59\u202fPM.png",
+    "sha256": "d177f1dc60ae7a05ccfd93b4dc0e804071f47463c1fc05812401544221ed86dc",
+    "bytes": 4583785,
+    "observed": "User-supplied Main Street eastward view, personally inspected 2026-09-10: repeated black tapered ornamental lanterns with flared bases, segmented pale globes, domed caps and finials; low continuously clipped hedge behind the UCC church-front sidewalk. Existing cars and crossing paint are retained.",
+    "captureDate": "Unknown; screenshot filename is not the scene capture date.",
+    "use": "Appearance evidence only, no copied imagery or texture assets."
+  },
+  "sourceStreetscape": {
+    "file": "/Users/andy/Documents/New project/webster-blender/realism/streetscape_features.json.gz",
+    "sha256": "fee36571aaa59ebc85b045e20d199144e33511efef24ea7364680dc8cd22f583",
+    "basis": "MassDOT sidewalk inventory and retained authored streetscape geometry; individual lamp positions, spacing and hedge dimensions remain inferred."
+  },
+  "registeredSidewalks": [
+    {
+      "kind": "sidewalk",
+      "source_objectid": 346626,
+      "physical_id": 1356,
+      "name": "MAIN STREET",
+      "side": "left_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": false,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.6961982375623048,
+      "footprint": [
+        [
+          -2850.148646621667,
+          -930.0075915761664
+        ],
+        [
+          -2848.598717782985,
+          -929.3284973463867
+        ],
+        [
+          -2849.5772946690354,
+          -927.0950735536217
+        ],
+        [
+          -2851.127216134381,
+          -927.7741645527813
+        ],
+        [
+          -2850.148646621667,
+          -930.0075915761664
+        ]
+      ],
+      "min_z": 37.66240780247176,
+      "max_z": 37.707458658573316
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 346626,
+      "physical_id": 1356,
+      "name": "MAIN STREET",
+      "side": "left_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": false,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.6961982375623048,
+      "footprint": [
+        [
+          -2848.595054030044,
+          -929.3268920693426
+        ],
+        [
+          -2847.045130876675,
+          -928.647783024001
+        ],
+        [
+          -2848.0237149230397,
+          -926.4143623685486
+        ],
+        [
+          -2849.5736309160943,
+          -927.0934682765776
+        ],
+        [
+          -2848.595054030044,
+          -929.3268920693426
+        ]
+      ],
+      "min_z": 37.707458658573316,
+      "max_z": 37.75016150348423
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 346626,
+      "physical_id": 1356,
+      "name": "MAIN STREET",
+      "side": "left_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": false,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.6961982375623048,
+      "footprint": [
+        [
+          -2847.041467128881,
+          -928.646177735211
+        ],
+        [
+          -2845.545405856773,
+          -927.990935550713
+        ],
+        [
+          -2846.540964707951,
+          -925.7650296376427
+        ],
+        [
+          -2848.0200511752455,
+          -926.4127570797586
+        ],
+        [
+          -2847.041467128881,
+          -928.646177735211
+        ]
+      ],
+      "min_z": 37.75016150348423,
+      "max_z": 37.78844045512261
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 346626,
+      "physical_id": 1356,
+      "name": "MAIN STREET",
+      "side": "left_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": false,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.6961982375623048,
+      "footprint": [
+        [
+          -2845.5417544363117,
+          -927.9893024161145
+        ],
+        [
+          -2844.060108206334,
+          -927.3127747263111
+        ],
+        [
+          -2845.07386036294,
+          -925.0950955058249
+        ],
+        [
+          -2846.5373132874897,
+          -925.7633965030442
+        ],
+        [
+          -2845.5417544363117,
+          -927.9893024161145
+        ]
+      ],
+      "min_z": 37.78844045512261,
+      "max_z": 37.82267994984893
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 346626,
+      "physical_id": 1356,
+      "name": "MAIN STREET",
+      "side": "left_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": false,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.6961982375623048,
+      "footprint": [
+        [
+          -2844.0564702811034,
+          -927.3111117470517
+        ],
+        [
+          -2842.5219586432463,
+          -926.6085836825592
+        ],
+        [
+          -2843.537004266175,
+          -924.3914961914182
+        ],
+        [
+          -2845.0702224377096,
+          -925.0934325265655
+        ],
+        [
+          -2844.0564702811034,
+          -927.3111117470517
+        ]
+      ],
+      "min_z": 37.82267994984893,
+      "max_z": 37.85610037587991
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 346626,
+      "physical_id": 1356,
+      "name": "MAIN STREET",
+      "side": "left_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": false,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.6961982375623048,
+      "footprint": [
+        [
+          -2842.5183216887003,
+          -926.6069185814719
+        ],
+        [
+          -2840.979764978652,
+          -925.902505959001
+        ],
+        [
+          -2841.9948259164366,
+          -923.6854254795003
+        ],
+        [
+          -2843.533367311629,
+          -924.3898310903309
+        ],
+        [
+          -2842.5183216887003,
+          -926.6069185814719
+        ]
+      ],
+      "min_z": 37.85610037587991,
+      "max_z": 37.88879582171571
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 346626,
+      "physical_id": 1356,
+      "name": "MAIN STREET",
+      "side": "left_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": false,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.696198237562303,
+      "footprint": [
+        [
+          -2840.9761280356083,
+          -925.9008408327907
+        ],
+        [
+          -2839.4374335502102,
+          -925.1963747045204
+        ],
+        [
+          -2840.452467548386,
+          -922.9792818912744
+        ],
+        [
+          -2841.991188973393,
+          -923.6837603532899
+        ],
+        [
+          -2840.9761280356083,
+          -925.9008408327907
+        ]
+      ],
+      "min_z": 37.88879582171571,
+      "max_z": 37.92072346512393
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 346626,
+      "physical_id": 1356,
+      "name": "MAIN STREET",
+      "side": "left_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": false,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.6961982375623066,
+      "footprint": [
+        [
+          -2839.433796586934,
+          -925.1947096225024
+        ],
+        [
+          -2837.895164012678,
+          -924.4903075610848
+        ],
+        [
+          -2838.9101948301827,
+          -922.2732132916601
+        ],
+        [
+          -2840.4488305851096,
+          -922.9776168092563
+        ],
+        [
+          -2839.433796586934,
+          -925.1947096225024
+        ]
+      ],
+      "min_z": 37.92072346512393,
+      "max_z": 37.95176055496152
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 346626,
+      "physical_id": 1356,
+      "name": "MAIN STREET",
+      "side": "left_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": false,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.6961982375623066,
+      "footprint": [
+        [
+          -2837.8915270470125,
+          -924.4886424842844
+        ],
+        [
+          -2836.4146070934153,
+          -923.8128110337233
+        ],
+        [
+          -2837.449071279521,
+          -921.6047171934019
+        ],
+        [
+          -2838.9065578645173,
+          -922.2715482148596
+        ],
+        [
+          -2837.8915270470125,
+          -924.4886424842844
+        ]
+      ],
+      "min_z": 37.95176055496152,
+      "max_z": 37.98181640598061
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 346626,
+      "physical_id": 1356,
+      "name": "MAIN STREET",
+      "side": "left_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": false,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.696198237562303,
+      "footprint": [
+        [
+          -2836.410984892234,
+          -923.8111140780373
+        ],
+        [
+          -2834.9526729749855,
+          -923.111898668996
+        ],
+        [
+          -2836.008451727122,
+          -920.9139164610295
+        ],
+        [
+          -2837.4454490783396,
+          -921.603020237716
+        ],
+        [
+          -2836.410984892234,
+          -923.8111140780373
+        ]
+      ],
+      "min_z": 37.98181640598061,
+      "max_z": 38.01102520307178
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 346626,
+      "physical_id": 1356,
+      "name": "MAIN STREET",
+      "side": "left_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": false,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.696198237562303,
+      "footprint": [
+        [
+          -2834.9490673611276,
+          -923.1101667484709
+        ],
+        [
+          -2833.430443294266,
+          -922.3790225109581
+        ],
+        [
+          -2834.4881334475563,
+          -920.1819594486786
+        ],
+        [
+          -2836.004846113264,
+          -920.9121845405044
+        ],
+        [
+          -2834.9490673611276,
+          -923.1101667484709
+        ]
+      ],
+      "min_z": 38.01102520307178,
+      "max_z": 38.039248925772384
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 346626,
+      "physical_id": 1356,
+      "name": "MAIN STREET",
+      "side": "left_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": false,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.6961982375623066,
+      "footprint": [
+        [
+          -2833.426839188193,
+          -922.3772874549322
+        ],
+        [
+          -2831.9018653515886,
+          -921.6432051701881
+        ],
+        [
+          -2832.9594811195443,
+          -919.4461062995473
+        ],
+        [
+          -2834.4845293414833,
+          -920.1802243926528
+        ],
+        [
+          -2833.426839188193,
+          -922.3772874549322
+        ]
+      ],
+      "min_z": 38.039248925772384,
+      "max_z": 38.06693484336188
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 346626,
+      "physical_id": 1356,
+      "name": "MAIN STREET",
+      "side": "left_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": false,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.6961982375623066,
+      "footprint": [
+        [
+          -2831.898261186775,
+          -921.6414702361856
+        ],
+        [
+          -2830.373626650602,
+          -920.9075650253278
+        ],
+        [
+          -2831.431276595249,
+          -918.7104826066214
+        ],
+        [
+          -2832.9558769547307,
+          -919.4443713655447
+        ],
+        [
+          -2831.898261186775,
+          -921.6414702361856
+        ]
+      ],
+      "min_z": 38.06693484336188,
+      "max_z": 38.094241626005044
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 346626,
+      "physical_id": 1356,
+      "name": "MAIN STREET",
+      "side": "left_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": false,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.696198237562303,
+      "footprint": [
+        [
+          -2830.370022512776,
+          -920.905830035261
+        ],
+        [
+          -2828.845492264666,
+          -920.1719027786773
+        ],
+        [
+          -2829.9032003395123,
+          -917.9748483441207
+        ],
+        [
+          -2831.427672457423,
+          -918.7087476165547
+        ],
+        [
+          -2830.370022512776,
+          -920.905830035261
+        ]
+      ],
+      "min_z": 38.094241626005044,
+      "max_z": 38.1211883097158
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 346626,
+      "physical_id": 1356,
+      "name": "MAIN STREET",
+      "side": "left_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": false,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.696198237562303,
+      "footprint": [
+        [
+          -2828.8418881727457,
+          -920.1701676932528
+        ],
+        [
+          -2827.445233741599,
+          -919.4992774357872
+        ],
+        [
+          -2828.543279245593,
+          -917.3221025160441
+        ],
+        [
+          -2829.899596247592,
+          -917.9731132586961
+        ],
+        [
+          -2828.8418881727457,
+          -920.1701676932528
+        ]
+      ],
+      "min_z": 38.1211883097158,
+      "max_z": 38.14765921447913
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 346626,
+      "physical_id": 1356,
+      "name": "MAIN STREET",
+      "side": "left_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": false,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.6961982375623066,
+      "footprint": [
+        [
+          -2827.4416622604317,
+          -919.4974761800393
+        ],
+        [
+          -2826.089562405961,
+          -918.78249053658
+        ],
+        [
+          -2827.2330755168678,
+          -916.6288488938771
+        ],
+        [
+          -2828.5397077644257,
+          -917.3203012602961
+        ],
+        [
+          -2827.4416622604317,
+          -919.4974761800393
+        ]
+      ],
+      "min_z": 38.14765921447913,
+      "max_z": 38.17355338926226
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 346626,
+      "physical_id": 1356,
+      "name": "MAIN STREET",
+      "side": "left_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": false,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.6961982375623066,
+      "footprint": [
+        [
+          -2826.08602952925,
+          -918.7806146948627
+        ],
+        [
+          -2824.6110464448666,
+          -917.9925671934209
+        ],
+        [
+          -2825.7600907319315,
+          -915.8418715416926
+        ],
+        [
+          -2827.229542640157,
+          -916.6269730521599
+        ],
+        [
+          -2826.08602952925,
+          -918.7806146948627
+        ]
+      ],
+      "min_z": 38.17355338926226,
+      "max_z": 38.198795097496685
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 346626,
+      "physical_id": 1356,
+      "name": "MAIN STREET",
+      "side": "left_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": false,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.6961982375622995,
+      "footprint": [
+        [
+          -2824.6075184008187,
+          -917.9906822782518
+        ],
+        [
+          -2823.1149896988695,
+          -917.1932533136571
+        ],
+        [
+          -2824.2640339855648,
+          -915.0425576617312
+        ],
+        [
+          -2825.7565626878836,
+          -915.8399866265236
+        ],
+        [
+          -2824.6075184008187,
+          -917.9906822782518
+        ]
+      ],
+      "min_z": 38.198795097496685,
+      "max_z": 38.223405256763876
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 346626,
+      "physical_id": 1356,
+      "name": "MAIN STREET",
+      "side": "left_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": false,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.6961982375623066,
+      "footprint": [
+        [
+          -2823.1114616548207,
+          -917.1913683984887
+        ],
+        [
+          -2821.6188337918143,
+          -916.3939286750277
+        ],
+        [
+          -2822.76785237198,
+          -914.2432192891661
+        ],
+        [
+          -2824.260505941516,
+          -915.0406727465628
+        ],
+        [
+          -2823.1114616548207,
+          -917.1913683984887
+        ]
+      ],
+      "min_z": 38.223405256763876,
+      "max_z": 38.247460904743875
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 346626,
+      "physical_id": 1356,
+      "name": "MAIN STREET",
+      "side": "left_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": false,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.6961982375623066,
+      "footprint": [
+        [
+          -2821.6153057252363,
+          -916.3920438020288
+        ],
+        [
+          -2820.1227537950813,
+          -915.5946483441107
+        ],
+        [
+          -2821.271771069644,
+          -913.4439382607296
+        ],
+        [
+          -2822.764324305402,
+          -914.2413344161671
+        ],
+        [
+          -2821.6153057252363,
+          -916.3920438020288
+        ]
+      ],
+      "min_z": 38.247460904743875,
+      "max_z": 38.27120717526646
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 346626,
+      "physical_id": 1356,
+      "name": "MAIN STREET",
+      "side": "left_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": false,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.6961982375623066,
+      "footprint": [
+        [
+          -2820.119225727359,
+          -915.5927634732536
+        ],
+        [
+          -2818.7848118308207,
+          -914.8822890583015
+        ],
+        [
+          -2819.983644000428,
+          -912.7589435873253
+        ],
+        [
+          -2821.2682430019217,
+          -913.4420533898725
+        ],
+        [
+          -2820.119225727359,
+          -915.5927634732536
+        ]
+      ],
+      "min_z": 38.27120717526646,
+      "max_z": 38.294886048264694
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 346626,
+      "physical_id": 1356,
+      "name": "MAIN STREET",
+      "side": "left_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": false,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.6961982375623066,
+      "footprint": [
+        [
+          -2818.7813286525547,
+          -914.8803224700966
+        ],
+        [
+          -2817.5780954411853,
+          -914.1618935662325
+        ],
+        [
+          -2818.8555310165616,
+          -912.0848878101589
+        ],
+        [
+          -2819.980160822162,
+          -912.7569769991205
+        ],
+        [
+          -2818.7813286525547,
+          -914.8803224700966
+        ]
+      ],
+      "min_z": 38.294886048264694,
+      "max_z": 38.31856954890209
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 346626,
+      "physical_id": 1356,
+      "name": "MAIN STREET",
+      "side": "left_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": false,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.6961982375622995,
+      "footprint": [
+        [
+          -2817.5746882795115,
+          -914.1597980354329
+        ],
+        [
+          -2816.238352601496,
+          -913.3107800609582
+        ],
+        [
+          -2817.544896373582,
+          -911.2519605128621
+        ],
+        [
+          -2818.852123854888,
+          -912.0827922793593
+        ],
+        [
+          -2817.5746882795115,
+          -914.1597980354329
+        ]
+      ],
+      "min_z": 38.31856954890209,
+      "max_z": 38.34231812888656
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 346626,
+      "physical_id": 1356,
+      "name": "MAIN STREET",
+      "side": "left_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": false,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.6961982375623066,
+      "footprint": [
+        [
+          -2816.234975272841,
+          -913.3086367804922
+        ],
+        [
+          -2814.8062235980765,
+          -912.4019660081199
+        ],
+        [
+          -2816.112779285784,
+          -910.3431540218234
+        ],
+        [
+          -2817.541519044927,
+          -911.249817232396
+        ],
+        [
+          -2816.234975272841,
+          -913.3086367804922
+        ]
+      ],
+      "min_z": 38.34231812888656,
+      "max_z": 38.36603920679728
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 346626,
+      "physical_id": 1356,
+      "name": "MAIN STREET",
+      "side": "left_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": false,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.6961982375623066,
+      "footprint": [
+        [
+          -2814.802846281826,
+          -912.3998227081072
+        ],
+        [
+          -2813.3740839314273,
+          -911.4930684269527
+        ],
+        [
+          -2814.680637237806,
+          -909.4342549294278
+        ],
+        [
+          -2816.109401969534,
+          -910.3410107218107
+        ],
+        [
+          -2814.802846281826,
+          -912.3998227081072
+        ]
+      ],
+      "min_z": 38.36603920679728,
+      "max_z": 38.389529477485965
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 346626,
+      "physical_id": 1356,
+      "name": "MAIN STREET",
+      "side": "left_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": false,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.6961982375622995,
+      "footprint": [
+        [
+          -2813.3707066126976,
+          -911.4909251308466
+        ],
+        [
+          -2811.9418446557916,
+          -910.5841890024245
+        ],
+        [
+          -2813.2483758015865,
+          -908.5253614416348
+        ],
+        [
+          -2814.6772599190763,
+          -909.4321116333216
+        ],
+        [
+          -2813.3707066126976,
+          -911.4909251308466
+        ]
+      ],
+      "min_z": 38.389529477485965,
+      "max_z": 38.41253199276464
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 346626,
+      "physical_id": 1356,
+      "name": "MAIN STREET",
+      "side": "left_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": false,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.6961982375623066,
+      "footprint": [
+        [
+          -2811.9384673139925,
+          -910.5820457426709
+        ],
+        [
+          -2810.509806026497,
+          -909.6753988315563
+        ],
+        [
+          -2811.816372783984,
+          -907.6165938703646
+        ],
+        [
+          -2813.2449984597874,
+          -908.5232181818811
+        ],
+        [
+          -2811.9384673139925,
+          -910.5820457426709
+        ]
+      ],
+      "min_z": 38.41253199276464,
+      "max_z": 38.43530505933276
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 346626,
+      "physical_id": 1356,
+      "name": "MAIN STREET",
+      "side": "left_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": false,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.6961982375623066,
+      "footprint": [
+        [
+          -2810.5064287217706,
+          -909.6732555133847
+        ],
+        [
+          -2809.0776993242516,
+          -908.7665340789958
+        ],
+        [
+          -2810.3842757803013,
+          -906.7077352727749
+        ],
+        [
+          -2811.812995479258,
+          -907.6144505521929
+        ],
+        [
+          -2810.5064287217706,
+          -909.6732555133847
+        ]
+      ],
+      "min_z": 38.43530505933276,
+      "max_z": 38.45812850851612
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 346626,
+      "physical_id": 1356,
+      "name": "MAIN STREET",
+      "side": "left_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": false,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.6961982375623066,
+      "footprint": [
+        [
+          -2809.0743220296217,
+          -908.7643907449144
+        ],
+        [
+          -2807.617105588534,
+          -907.8396793482261
+        ],
+        [
+          -2808.914719384849,
+          -905.7752198558621
+        ],
+        [
+          -2810.3808984856714,
+          -906.7055919386935
+        ],
+        [
+          -2809.0743220296217,
+          -908.7643907449144
+        ]
+      ],
+      "min_z": 38.45812850851612,
+      "max_z": 38.481146310181956
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 346626,
+      "physical_id": 1356,
+      "name": "MAIN STREET",
+      "side": "left_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": false,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.6961982375623066,
+      "footprint": [
+        [
+          -2807.613719008002,
+          -907.8375507166704
+        ],
+        [
+          -2806.112539084367,
+          -906.9031080994575
+        ],
+        [
+          -2807.389786797343,
+          -904.8259868127489
+        ],
+        [
+          -2808.911332804317,
+          -905.7730912243064
+        ],
+        [
+          -2807.613719008002,
+          -907.8375507166704
+        ]
+      ],
+      "min_z": 38.481146310181956,
+      "max_z": 38.50440870243471
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 346626,
+      "physical_id": 1356,
+      "name": "MAIN STREET",
+      "side": "left_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": false,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.6961982375622995,
+      "footprint": [
+        [
+          -2806.1091317331748,
+          -906.9010128768314
+        ],
+        [
+          -2804.626537010851,
+          -906.0004030010701
+        ],
+        [
+          -2805.892361896023,
+          -903.9163008154567
+        ],
+        [
+          -2807.3863794461504,
+          -904.8238915901227
+        ],
+        [
+          -2806.1091317331748,
+          -906.9010128768314
+        ]
+      ],
+      "min_z": 38.50440870243471,
+      "max_z": 38.5279975651478
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 346626,
+      "physical_id": 1356,
+      "name": "MAIN STREET",
+      "side": "left_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": false,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.6961982375623066,
+      "footprint": [
+        [
+          -2804.6231182080533,
+          -905.9983265166785
+        ],
+        [
+          -2803.1768499786676,
+          -905.1199040060199
+        ],
+        [
+          -2804.442692123299,
+          -903.0358123034129
+        ],
+        [
+          -2805.8889430932254,
+          -903.914224331065
+        ],
+        [
+          -2804.6231182080533,
+          -905.9983265166785
+        ]
+      ],
+      "min_z": 38.5279975651478,
+      "max_z": 38.551660848654926
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 346626,
+      "physical_id": 1356,
+      "name": "MAIN STREET",
+      "side": "left_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": false,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.6961982375623066,
+      "footprint": [
+        [
+          -2803.173431193066,
+          -905.1178274933154
+        ],
+        [
+          -2801.727133398279,
+          -904.2393541782764
+        ],
+        [
+          -2802.9929788995582,
+          -902.1552645144444
+        ],
+        [
+          -2804.439273337697,
+          -903.0337357907084
+        ],
+        [
+          -2803.173431193066,
+          -905.1178274933154
+        ]
+      ],
+      "min_z": 38.551660848654926,
+      "max_z": 38.57515509105949
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 346626,
+      "physical_id": 1356,
+      "name": "MAIN STREET",
+      "side": "left_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": false,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.6961982375622995,
+      "footprint": [
+        [
+          -2801.7237146160223,
+          -904.2372776600656
+        ],
+        [
+          -2800.2773396267316,
+          -903.3587839205859
+        ],
+        [
+          -2801.543167868569,
+          -901.2746837737197
+        ],
+        [
+          -2802.9895601173016,
+          -902.1531879962337
+        ],
+        [
+          -2801.7237146160223,
+          -904.2372776600656
+        ]
+      ],
+      "min_z": 38.57515509105949,
+      "max_z": 38.598506437272285
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 346626,
+      "physical_id": 1356,
+      "name": "MAIN STREET",
+      "side": "left_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": false,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.6961982375623137,
+      "footprint": [
+        [
+          -2800.2739208272783,
+          -903.356707430688
+        ],
+        [
+          -2798.8275871513315,
+          -902.4782451537016
+        ],
+        [
+          -2800.0934120365037,
+          -900.3941429680881
+        ],
+        [
+          -2801.5397490691157,
+          -901.2726072838218
+        ],
+        [
+          -2800.2739208272783,
+          -903.356707430688
+        ]
+      ],
+      "min_z": 38.598506437272285,
+      "max_z": 38.6213232037711
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 346626,
+      "physical_id": 1356,
+      "name": "MAIN STREET",
+      "side": "left_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": false,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.6961982375622995,
+      "footprint": [
+        [
+          -2798.824168348534,
+          -902.4761686693099
+        ],
+        [
+          -2797.3778635954195,
+          -901.5977239619741
+        ],
+        [
+          -2798.6436942342334,
+          -899.5136252709711
+        ],
+        [
+          -2800.089993233706,
+          -900.3920664836965
+        ],
+        [
+          -2798.824168348534,
+          -902.4761686693099
+        ]
+      ],
+      "min_z": 38.6213232037711,
+      "max_z": 38.64315620433588
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 346626,
+      "physical_id": 1356,
+      "name": "MAIN STREET",
+      "side": "left_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": false,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.6961982375622995,
+      "footprint": [
+        [
+          -2797.3744447983545,
+          -901.595647468144
+        ],
+        [
+          -2795.9282138613075,
+          -900.7172366753678
+        ],
+        [
+          -2797.1940719777244,
+          -898.6331546738378
+        ],
+        [
+          -2798.6402754371684,
+          -899.511548777141
+        ],
+        [
+          -2797.3744447983545,
+          -901.595647468144
+        ]
+      ],
+      "min_z": 38.64315620433588,
+      "max_z": 38.66331658442936
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 346626,
+      "physical_id": 1356,
+      "name": "MAIN STREET",
+      "side": "right_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": false,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.6961982375623048,
+      "footprint": [
+        [
+          -2841.402770761905,
+          -945.7419707456952
+        ],
+        [
+          -2839.8527949821037,
+          -945.0628386419287
+        ],
+        [
+          -2840.8313790284683,
+          -942.8294179864763
+        ],
+        [
+          -2842.381347647955,
+          -943.5085469529301
+        ],
+        [
+          -2841.402770761905,
+          -945.7419707456952
+        ]
+      ],
+      "min_z": 37.707458658573316,
+      "max_z": 37.75016150348423
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 346626,
+      "physical_id": 1356,
+      "name": "MAIN STREET",
+      "side": "right_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": false,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.6961982375623048,
+      "footprint": [
+        [
+          -2839.8491312343094,
+          -945.0612333531387
+        ],
+        [
+          -2838.2283096021497,
+          -944.3507597845054
+        ],
+        [
+          -2839.2238684533277,
+          -942.1248538714351
+        ],
+        [
+          -2840.827715280674,
+          -942.8278126976863
+        ],
+        [
+          -2839.8491312343094,
+          -945.0612333531387
+        ]
+      ],
+      "min_z": 37.75016150348423,
+      "max_z": 37.78844045512261
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 346626,
+      "physical_id": 1356,
+      "name": "MAIN STREET",
+      "side": "right_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": false,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.6961982375623048,
+      "footprint": [
+        [
+          -2838.2246581816885,
+          -944.3491266499069
+        ],
+        [
+          -2836.609295931961,
+          -943.612134928848
+        ],
+        [
+          -2837.623048088567,
+          -941.3944557083619
+        ],
+        [
+          -2839.2202170328665,
+          -942.1232207368366
+        ],
+        [
+          -2838.2246581816885,
+          -944.3491266499069
+        ]
+      ],
+      "min_z": 37.78844045512261,
+      "max_z": 37.82267994984893
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 346626,
+      "physical_id": 1356,
+      "name": "MAIN STREET",
+      "side": "right_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": false,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.6961982375623048,
+      "footprint": [
+        [
+          -2836.60565800673,
+          -943.6104719495886
+        ],
+        [
+          -2835.0616397308954,
+          -942.9035948297179
+        ],
+        [
+          -2836.076685353824,
+          -940.6865073385769
+        ],
+        [
+          -2837.6194101633364,
+          -941.3927927291024
+        ],
+        [
+          -2836.60565800673,
+          -943.6104719495886
+        ]
+      ],
+      "min_z": 37.82267994984893,
+      "max_z": 37.85610037587991
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 346626,
+      "physical_id": 1356,
+      "name": "MAIN STREET",
+      "side": "right_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": false,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.6961982375623048,
+      "footprint": [
+        [
+          -2835.0580027763494,
+          -942.9019297286305
+        ],
+        [
+          -2833.519333506126,
+          -942.1974655724441
+        ],
+        [
+          -2834.5343944439105,
+          -939.9803850929434
+        ],
+        [
+          -2836.073048399278,
+          -940.6848422374895
+        ],
+        [
+          -2835.0580027763494,
+          -942.9019297286305
+        ]
+      ],
+      "min_z": 37.85610037587991,
+      "max_z": 37.88879582171571
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 346626,
+      "physical_id": 1356,
+      "name": "MAIN STREET",
+      "side": "right_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": false,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.696198237562303,
+      "footprint": [
+        [
+          -2833.515696563082,
+          -942.1958004462338
+        ],
+        [
+          -2831.977200076741,
+          -941.4914249677548
+        ],
+        [
+          -2832.9922340749167,
+          -939.2743321545088
+        ],
+        [
+          -2834.530757500867,
+          -939.978719966733
+        ],
+        [
+          -2833.515696563082,
+          -942.1958004462338
+        ]
+      ],
+      "min_z": 37.88879582171571,
+      "max_z": 37.92072346512393
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 346626,
+      "physical_id": 1356,
+      "name": "MAIN STREET",
+      "side": "right_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": false,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.6961982375623066,
+      "footprint": [
+        [
+          -2831.973563113465,
+          -941.4897598857368
+        ],
+        [
+          -2830.4349539163054,
+          -940.7853685268494
+        ],
+        [
+          -2831.44998473381,
+          -938.5682742574247
+        ],
+        [
+          -2832.9885971116405,
+          -939.2726670724908
+        ],
+        [
+          -2831.973563113465,
+          -941.4897598857368
+        ]
+      ],
+      "min_z": 37.92072346512393,
+      "max_z": 37.95176055496152
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 346626,
+      "physical_id": 1356,
+      "name": "MAIN STREET",
+      "side": "right_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": false,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.6961982375623066,
+      "footprint": [
+        [
+          -2830.43131695064,
+          -940.783703450049
+        ],
+        [
+          -2828.8115668384494,
+          -940.041721207896
+        ],
+        [
+          -2829.846031024555,
+          -937.8336273675746
+        ],
+        [
+          -2831.4463477681447,
+          -938.5666091806243
+        ],
+        [
+          -2830.43131695064,
+          -940.783703450049
+        ]
+      ],
+      "min_z": 37.95176055496152,
+      "max_z": 37.98181640598061
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 346626,
+      "physical_id": 1356,
+      "name": "MAIN STREET",
+      "side": "right_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": false,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.696198237562303,
+      "footprint": [
+        [
+          -2828.807944637268,
+          -940.0400242522101
+        ],
+        [
+          -2827.1929762540663,
+          -939.2664909993322
+        ],
+        [
+          -2828.248755006203,
+          -937.0685087913657
+        ],
+        [
+          -2829.8424088233737,
+          -937.8319304118887
+        ],
+        [
+          -2828.807944637268,
+          -940.0400242522101
+        ]
+      ],
+      "min_z": 37.98181640598061,
+      "max_z": 38.01102520307178
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 346626,
+      "physical_id": 1356,
+      "name": "MAIN STREET",
+      "side": "right_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": false,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.696198237562303,
+      "footprint": [
+        [
+          -2827.1893706402084,
+          -939.2647590788071
+        ],
+        [
+          -2825.6566982765457,
+          -938.5268593617399
+        ],
+        [
+          -2826.714388429836,
+          -936.3297962994604
+        ],
+        [
+          -2828.245149392345,
+          -937.0667768708406
+        ],
+        [
+          -2827.1893706402084,
+          -939.2647590788071
+        ]
+      ],
+      "min_z": 38.01102520307178,
+      "max_z": 38.039248925772384
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 346626,
+      "physical_id": 1356,
+      "name": "MAIN STREET",
+      "side": "right_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": false,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.6961982375623066,
+      "footprint": [
+        [
+          -2825.6530941704727,
+          -938.525124305714
+        ],
+        [
+          -2824.1286670465547,
+          -937.7913052030284
+        ],
+        [
+          -2825.1862828145104,
+          -935.5942063323876
+        ],
+        [
+          -2826.710784323763,
+          -936.3280612434346
+        ],
+        [
+          -2825.6530941704727,
+          -938.525124305714
+        ]
+      ],
+      "min_z": 38.039248925772384,
+      "max_z": 38.06693484336188
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 346626,
+      "physical_id": 1356,
+      "name": "MAIN STREET",
+      "side": "right_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": false,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.6961982375623066,
+      "footprint": [
+        [
+          -2824.125062881741,
+          -937.7895702690258
+        ],
+        [
+          -2822.6001771558585,
+          -937.0555441407674
+        ],
+        [
+          -2823.6578271005055,
+          -934.8584617220611
+        ],
+        [
+          -2825.1826786496968,
+          -935.592471398385
+        ],
+        [
+          -2824.125062881741,
+          -937.7895702690258
+        ]
+      ],
+      "min_z": 38.06693484336188,
+      "max_z": 38.094241626005044
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 346626,
+      "physical_id": 1356,
+      "name": "MAIN STREET",
+      "side": "right_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": false,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.696198237562303,
+      "footprint": [
+        [
+          -2822.5965730180324,
+          -937.0538091507007
+        ],
+        [
+          -2821.0716155282144,
+          -936.3196762179615
+        ],
+        [
+          -2822.1293236030606,
+          -934.1226217834048
+        ],
+        [
+          -2823.6542229626793,
+          -934.8567267319943
+        ],
+        [
+          -2822.5965730180324,
+          -937.0538091507007
+        ]
+      ],
+      "min_z": 38.094241626005044,
+      "max_z": 38.1211883097158
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 346626,
+      "physical_id": 1356,
+      "name": "MAIN STREET",
+      "side": "right_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": false,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.696198237562303,
+      "footprint": [
+        [
+          -2821.068011436294,
+          -936.3179411325369
+        ],
+        [
+          -2819.374887488163,
+          -935.5009416589127
+        ],
+        [
+          -2820.472932992157,
+          -933.3237667391695
+        ],
+        [
+          -2822.1257195111402,
+          -934.1208866979803
+        ],
+        [
+          -2821.068011436294,
+          -936.3179411325369
+        ]
+      ],
+      "min_z": 38.1211883097158,
+      "max_z": 38.14765921447913
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 346626,
+      "physical_id": 1356,
+      "name": "MAIN STREET",
+      "side": "right_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": false,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.6961982375623066,
+      "footprint": [
+        [
+          -2819.3713160069956,
+          -935.4991404031647
+        ],
+        [
+          -2817.6850411754695,
+          -934.6111913501725
+        ],
+        [
+          -2818.8285542863764,
+          -932.4575497074696
+        ],
+        [
+          -2820.4693615109895,
+          -933.3219654834215
+        ],
+        [
+          -2819.3713160069956,
+          -935.4991404031647
+        ]
+      ],
+      "min_z": 38.14765921447913,
+      "max_z": 38.17355338926226
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 346626,
+      "physical_id": 1356,
+      "name": "MAIN STREET",
+      "side": "right_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": false,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.6961982375623066,
+      "footprint": [
+        [
+          -2817.6815082987587,
+          -934.6093155084552
+        ],
+        [
+          -2816.165872521365,
+          -933.7996157465764
+        ],
+        [
+          -2817.31491680843,
+          -931.6489200948481
+        ],
+        [
+          -2818.8250214096656,
+          -932.4556738657524
+        ],
+        [
+          -2817.6815082987587,
+          -934.6093155084552
+        ]
+      ],
+      "min_z": 38.17355338926226,
+      "max_z": 38.198795097496685
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 346626,
+      "physical_id": 1356,
+      "name": "MAIN STREET",
+      "side": "right_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": false,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.6961982375622995,
+      "footprint": [
+        [
+          -2816.162344477317,
+          -933.7977308314073
+        ],
+        [
+          -2814.669815778087,
+          -933.0003018682652
+        ],
+        [
+          -2815.8188600647823,
+          -930.8496062163392
+        ],
+        [
+          -2817.311388764382,
+          -931.647035179679
+        ],
+        [
+          -2816.162344477317,
+          -933.7977308314073
+        ]
+      ],
+      "min_z": 38.198795097496685,
+      "max_z": 38.223405256763876
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 346626,
+      "physical_id": 1356,
+      "name": "MAIN STREET",
+      "side": "right_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": false,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.6961982375623066,
+      "footprint": [
+        [
+          -2814.666287734038,
+          -932.9984169530968
+        ],
+        [
+          -2813.1738488072738,
+          -932.201078170458
+        ],
+        [
+          -2814.3228673874396,
+          -930.0503687845963
+        ],
+        [
+          -2815.8153320207334,
+          -930.8477213011708
+        ],
+        [
+          -2814.666287734038,
+          -932.9984169530968
+        ]
+      ],
+      "min_z": 38.223405256763876,
+      "max_z": 38.247460904743875
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 346626,
+      "physical_id": 1356,
+      "name": "MAIN STREET",
+      "side": "right_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": false,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.6961982375623066,
+      "footprint": [
+        [
+          -2813.170320740696,
+          -932.199193297459
+        ],
+        [
+          -2811.6777784063847,
+          -931.4018029661264
+        ],
+        [
+          -2812.8267956809473,
+          -929.2510928827453
+        ],
+        [
+          -2814.3193393208617,
+          -930.0484839115974
+        ],
+        [
+          -2813.170320740696,
+          -932.199193297459
+        ]
+      ],
+      "min_z": 38.247460904743875,
+      "max_z": 38.27120717526646
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 346626,
+      "physical_id": 1356,
+      "name": "MAIN STREET",
+      "side": "right_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": false,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.6961982375623066,
+      "footprint": [
+        [
+          -2811.6742503386627,
+          -931.3999180952693
+        ],
+        [
+          -2809.9737100383195,
+          -930.4883209614532
+        ],
+        [
+          -2811.1725422079267,
+          -928.364975490477
+        ],
+        [
+          -2812.823267613225,
+          -929.2492080118882
+        ],
+        [
+          -2811.6742503386627,
+          -931.3999180952693
+        ]
+      ],
+      "min_z": 38.27120717526646,
+      "max_z": 38.294886048264694
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 346626,
+      "physical_id": 1356,
+      "name": "MAIN STREET",
+      "side": "right_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": false,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.6961982375623066,
+      "footprint": [
+        [
+          -2809.9702268600536,
+          -930.4863543732483
+        ],
+        [
+          -2808.189279247096,
+          -929.4273407275051
+        ],
+        [
+          -2809.466714822472,
+          -927.3503349714315
+        ],
+        [
+          -2811.1690590296607,
+          -928.3630089022722
+        ],
+        [
+          -2809.9702268600536,
+          -930.4863543732483
+        ]
+      ],
+      "min_z": 38.294886048264694,
+      "max_z": 38.31856954890209
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 346626,
+      "physical_id": 1356,
+      "name": "MAIN STREET",
+      "side": "right_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": false,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.6961982375622995,
+      "footprint": [
+        [
+          -2808.185872085422,
+          -929.4252451967055
+        ],
+        [
+          -2806.635598801538,
+          -928.4425633668804
+        ],
+        [
+          -2807.942142573624,
+          -926.3837438187843
+        ],
+        [
+          -2809.4633076607984,
+          -927.3482394406319
+        ],
+        [
+          -2808.185872085422,
+          -929.4252451967055
+        ]
+      ],
+      "min_z": 38.31856954890209,
+      "max_z": 38.34231812888656
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 346626,
+      "physical_id": 1356,
+      "name": "MAIN STREET",
+      "side": "right_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": false,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.6961982375623066,
+      "footprint": [
+        [
+          -2806.632221472883,
+          -928.4404200864144
+        ],
+        [
+          -2805.203382221426,
+          -927.5336937367996
+        ],
+        [
+          -2806.509937909134,
+          -925.4748817505031
+        ],
+        [
+          -2807.938765244969,
+          -926.3816005383183
+        ],
+        [
+          -2806.632221472883,
+          -928.4404200864144
+        ]
+      ],
+      "min_z": 38.34231812888656,
+      "max_z": 38.36603920679728
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 346626,
+      "physical_id": 1356,
+      "name": "MAIN STREET",
+      "side": "right_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": false,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.6961982375623066,
+      "footprint": [
+        [
+          -2805.200004905176,
+          -927.5315504367869
+        ],
+        [
+          -2803.771260056921,
+          -926.6248072627646
+        ],
+        [
+          -2805.0778133633,
+          -924.5659937652397
+        ],
+        [
+          -2806.5065605928835,
+          -925.4727384504904
+        ],
+        [
+          -2805.200004905176,
+          -927.5315504367869
+        ]
+      ],
+      "min_z": 38.36603920679728,
+      "max_z": 38.389529477485965
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 346626,
+      "physical_id": 1356,
+      "name": "MAIN STREET",
+      "side": "right_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": false,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.6961982375622995,
+      "footprint": [
+        [
+          -2803.7678827381915,
+          -926.6226639666585
+        ],
+        [
+          -2802.339183655758,
+          -925.7160311995411
+        ],
+        [
+          -2803.645714801553,
+          -923.6572036387514
+        ],
+        [
+          -2805.07443604457,
+          -924.5638504691335
+        ],
+        [
+          -2803.7678827381915,
+          -926.6226639666585
+        ]
+      ],
+      "min_z": 38.389529477485965,
+      "max_z": 38.41253199276464
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 346626,
+      "physical_id": 1356,
+      "name": "MAIN STREET",
+      "side": "right_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": false,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.6961982375623066,
+      "footprint": [
+        [
+          -2802.335806313959,
+          -925.7138879397875
+        ],
+        [
+          -2800.9068832898697,
+          -924.80707492756
+        ],
+        [
+          -2802.213450047357,
+          -922.7482699663683
+        ],
+        [
+          -2803.642337459754,
+          -923.6550603789977
+        ],
+        [
+          -2802.335806313959,
+          -925.7138879397875
+        ]
+      ],
+      "min_z": 38.41253199276464,
+      "max_z": 38.43530505933276
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 346626,
+      "physical_id": 1356,
+      "name": "MAIN STREET",
+      "side": "right_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": false,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.6961982375623066,
+      "footprint": [
+        [
+          -2800.9035059851435,
+          -924.8049316093884
+        ],
+        [
+          -2799.47470530574,
+          -923.8981649375789
+        ],
+        [
+          -2800.7812817617896,
+          -921.839366131358
+        ],
+        [
+          -2802.210072742631,
+          -922.7461266481967
+        ],
+        [
+          -2800.9035059851435,
+          -924.8049316093884
+        ]
+      ],
+      "min_z": 38.43530505933276,
+      "max_z": 38.45812850851612
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 346626,
+      "physical_id": 1356,
+      "name": "MAIN STREET",
+      "side": "right_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": false,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.6961982375623066,
+      "footprint": [
+        [
+          -2799.47132801111,
+          -923.8960216034975
+        ],
+        [
+          -2798.0799847666644,
+          -923.0129147642165
+        ],
+        [
+          -2799.3775985629795,
+          -920.9484552718525
+        ],
+        [
+          -2800.7779044671597,
+          -921.8372227972766
+        ],
+        [
+          -2799.47132801111,
+          -923.8960216034975
+        ]
+      ],
+      "min_z": 38.45812850851612,
+      "max_z": 38.481146310181956
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 346626,
+      "physical_id": 1356,
+      "name": "MAIN STREET",
+      "side": "right_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": false,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.6961982375623066,
+      "footprint": [
+        [
+          -2798.0765981861327,
+          -923.0107861326608
+        ],
+        [
+          -2796.7251036296166,
+          -922.1694043805758
+        ],
+        [
+          -2798.002351342592,
+          -920.0922830938671
+        ],
+        [
+          -2799.374211982448,
+          -920.9463266402968
+        ],
+        [
+          -2798.0765981861327,
+          -923.0107861326608
+        ]
+      ],
+      "min_z": 38.481146310181956,
+      "max_z": 38.50440870243471
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 346626,
+      "physical_id": 1356,
+      "name": "MAIN STREET",
+      "side": "right_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": false,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.6961982375622995,
+      "footprint": [
+        [
+          -2796.721696278424,
+          -922.1673091579496
+        ],
+        [
+          -2795.323056342337,
+          -921.318007056881
+        ],
+        [
+          -2796.5888812275093,
+          -919.2339048712676
+        ],
+        [
+          -2797.9989439913998,
+          -920.0901878712409
+        ],
+        [
+          -2796.721696278424,
+          -922.1673091579496
+        ]
+      ],
+      "min_z": 38.50440870243471,
+      "max_z": 38.5279975651478
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 346626,
+      "physical_id": 1356,
+      "name": "MAIN STREET",
+      "side": "right_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": false,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.6961982375623066,
+      "footprint": [
+        [
+          -2795.3196375395396,
+          -921.3159305724894
+        ],
+        [
+          -2793.873242457661,
+          -920.4374310144852
+        ],
+        [
+          -2795.1390846022923,
+          -918.3533393118782
+        ],
+        [
+          -2796.5854624247117,
+          -919.2318283868759
+        ],
+        [
+          -2795.3196375395396,
+          -921.3159305724894
+        ]
+      ],
+      "min_z": 38.5279975651478,
+      "max_z": 38.551660848654926
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 382927,
+      "physical_id": 1475,
+      "name": "MAIN STREET",
+      "side": "left_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": false,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.699303901247017,
+      "footprint": [
+        [
+          -2930.4346935335047,
+          -953.7041310774193
+        ],
+        [
+          -2928.7294481706326,
+          -953.2469496680491
+        ],
+        [
+          -2929.347256785143,
+          -950.8881137102435
+        ],
+        [
+          -2931.0738746174593,
+          -951.3509965504713
+        ],
+        [
+          -2930.4346935335047,
+          -953.7041310774193
+        ]
+      ],
+      "min_z": 36.14930689293003,
+      "max_z": 36.16817505475321
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 382927,
+      "physical_id": 1475,
+      "name": "MAIN STREET",
+      "side": "left_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": false,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.6993039012470135,
+      "footprint": [
+        [
+          -2928.725578689074,
+          -953.2459362024741
+        ],
+        [
+          -2927.039450094041,
+          -952.8146876235631
+        ],
+        [
+          -2927.6435065052565,
+          -950.4522925651384
+        ],
+        [
+          -2929.3433873035847,
+          -950.8871002446685
+        ],
+        [
+          -2928.725578689074,
+          -953.2459362024741
+        ]
+      ],
+      "min_z": 36.16817505475321,
+      "max_z": 36.18797550002489
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 382927,
+      "physical_id": 1475,
+      "name": "MAIN STREET",
+      "side": "left_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": false,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.6993039012470135,
+      "footprint": [
+        [
+          -2927.035574774063,
+          -952.8136967173767
+        ],
+        [
+          -2925.3931242376234,
+          -952.393715324925
+        ],
+        [
+          -2925.997183095316,
+          -950.0313208920575
+        ],
+        [
+          -2927.6396311852786,
+          -950.4513016589519
+        ],
+        [
+          -2927.035574774063,
+          -952.8136967173767
+        ]
+      ],
+      "min_z": 36.18797550002489,
+      "max_z": 36.20847746739517
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 382927,
+      "physical_id": 1475,
+      "name": "MAIN STREET",
+      "side": "left_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": true,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.6993039012470135,
+      "footprint": [
+        [
+          -2925.3892489186715,
+          -952.3927244147254
+        ],
+        [
+          -2923.746620435334,
+          -951.9727185635726
+        ],
+        [
+          -2924.3506272814484,
+          -949.6103108320735
+        ],
+        [
+          -2925.993307776364,
+          -950.0303299818579
+        ],
+        [
+          -2925.3892489186715,
+          -952.3927244147254
+        ]
+      ],
+      "min_z": 36.20322617880197,
+      "max_z": 36.20847746739517
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 382927,
+      "physical_id": 1475,
+      "name": "MAIN STREET",
+      "side": "left_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": true,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.6993039012470135,
+      "footprint": [
+        [
+          -2923.742745094567,
+          -951.9717277386939
+        ],
+        [
+          -2922.1002627586154,
+          -951.5518153575161
+        ],
+        [
+          -2922.704267866402,
+          -949.1894071815719
+        ],
+        [
+          -2924.3467519406813,
+          -949.6093200071948
+        ],
+        [
+          -2923.742745094567,
+          -951.9717277386939
+        ]
+      ],
+      "min_z": 36.14736473856515,
+      "max_z": 36.20322617880197
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 382927,
+      "physical_id": 1475,
+      "name": "MAIN STREET",
+      "side": "left_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": true,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.6993039012470135,
+      "footprint": [
+        [
+          -2922.09638741712,
+          -951.5508245354889
+        ],
+        [
+          -2920.4540645990273,
+          -951.1308994099123
+        ],
+        [
+          -2921.0581141660045,
+          -948.7685026014495
+        ],
+        [
+          -2922.7003925249064,
+          -949.1884163595447
+        ],
+        [
+          -2922.09638741712,
+          -951.5508245354889
+        ]
+      ],
+      "min_z": 36.14736473856515,
+      "max_z": 36.170501932908934
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 382927,
+      "physical_id": 1475,
+      "name": "MAIN STREET",
+      "side": "left_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": true,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.6993039012470135,
+      "footprint": [
+        [
+          -2920.450189276179,
+          -951.1299085149534
+        ],
+        [
+          -2918.8075701263406,
+          -950.7098951679022
+        ],
+        [
+          -2919.411569874439,
+          -948.3474856216344
+        ],
+        [
+          -2921.0542388431563,
+          -948.7675117064906
+        ],
+        [
+          -2920.450189276179,
+          -951.1299085149534
+        ]
+      ],
+      "min_z": 36.170501932908934,
+      "max_z": 36.19421560709643
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 382927,
+      "physical_id": 1475,
+      "name": "MAIN STREET",
+      "side": "left_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": true,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.6993039012470135,
+      "footprint": [
+        [
+          -2918.8036947825967,
+          -950.7089043546671
+        ],
+        [
+          -2917.161207151906,
+          -950.2890110156396
+        ],
+        [
+          -2917.765205009309,
+          -947.9266009859765
+        ],
+        [
+          -2919.407694530695,
+          -948.3464948083993
+        ],
+        [
+          -2918.8036947825967,
+          -950.7089043546671
+        ]
+      ],
+      "min_z": 36.19421560709643,
+      "max_z": 36.28695493665883
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 382927,
+      "physical_id": 1475,
+      "name": "MAIN STREET",
+      "side": "left_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": true,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.6993039012470135,
+      "footprint": [
+        [
+          -2917.1573318073692,
+          -950.2880202055061
+        ],
+        [
+          -2915.5150667016615,
+          -949.868100196388
+        ],
+        [
+          -2916.119126467544,
+          -947.5057059957428
+        ],
+        [
+          -2917.761329664772,
+          -947.925610175843
+        ],
+        [
+          -2917.1573318073692,
+          -950.2880202055061
+        ]
+      ],
+      "min_z": 36.28695493665883,
+      "max_z": 36.347642116154
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 382927,
+      "physical_id": 1475,
+      "name": "MAIN STREET",
+      "side": "left_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": false,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.6993039012470135,
+      "footprint": [
+        [
+          -2915.5111913830906,
+          -949.8671092846985
+        ],
+        [
+          -2913.8685328269357,
+          -949.447080366346
+        ],
+        [
+          -2914.4725299465053,
+          -947.084670148041
+        ],
+        [
+          -2916.115251148973,
+          -947.5047150840533
+        ],
+        [
+          -2915.5111913830906,
+          -949.8671092846985
+        ]
+      ],
+      "min_z": 36.347642116154,
+      "max_z": 36.37188445252637
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 382927,
+      "physical_id": 1475,
+      "name": "MAIN STREET",
+      "side": "left_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": false,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.6993039012470135,
+      "footprint": [
+        [
+          -2913.8646574820896,
+          -949.4460895574227
+        ],
+        [
+          -2912.229800899755,
+          -949.0281628829043
+        ],
+        [
+          -2912.8362006037087,
+          -946.666368234963
+        ],
+        [
+          -2914.468654601659,
+          -947.0836793391178
+        ],
+        [
+          -2913.8646574820896,
+          -949.4460895574227
+        ]
+      ],
+      "min_z": 36.37188445252637,
+      "max_z": 36.3961259586927
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 382927,
+      "physical_id": 1475,
+      "name": "MAIN STREET",
+      "side": "left_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": false,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.6993039012470135,
+      "footprint": [
+        [
+          -2912.2259265647026,
+          -949.0271681327338
+        ],
+        [
+          -2910.6056816409764,
+          -948.6093672637361
+        ],
+        [
+          -2911.21880644437,
+          -946.249309523878
+        ],
+        [
+          -2912.8323262686563,
+          -946.6653734847924
+        ],
+        [
+          -2912.2259265647026,
+          -949.0271681327338
+        ]
+      ],
+      "min_z": 36.3961259586927,
+      "max_z": 36.4203655450958
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 382927,
+      "physical_id": 1475,
+      "name": "MAIN STREET",
+      "side": "left_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": false,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.6993039012470206,
+      "footprint": [
+        [
+          -2910.6018101551826,
+          -948.6083614815783
+        ],
+        [
+          -2908.9751491435004,
+          -948.1826193882297
+        ],
+        [
+          -2909.5924956336353,
+          -945.8236624426459
+        ],
+        [
+          -2911.214934958576,
+          -946.2483037417202
+        ],
+        [
+          -2910.6018101551826,
+          -948.6083614815783
+        ]
+      ],
+      "min_z": 36.4203655450958,
+      "max_z": 36.444547535422885
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 382927,
+      "physical_id": 1475,
+      "name": "MAIN STREET",
+      "side": "left_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": false,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.6993039012470135,
+      "footprint": [
+        [
+          -2908.971279463472,
+          -948.1816066807327
+        ],
+        [
+          -2907.331024188869,
+          -947.7523698991282
+        ],
+        [
+          -2907.9483143997904,
+          -945.3933982258136
+        ],
+        [
+          -2909.588625953607,
+          -945.8226497351488
+        ],
+        [
+          -2908.971279463472,
+          -948.1816066807327
+        ]
+      ],
+      "min_z": 36.444547535422885,
+      "max_z": 36.46865440810667
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 382927,
+      "physical_id": 1475,
+      "name": "MAIN STREET",
+      "side": "left_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": false,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.6993039012470135,
+      "footprint": [
+        [
+          -2907.3271544846807,
+          -947.7513572839529
+        ],
+        [
+          -2905.687050767265,
+          -947.3221974100671
+        ],
+        [
+          -2906.304335308882,
+          -944.9632242532293
+        ],
+        [
+          -2907.944444695602,
+          -945.3923856106383
+        ],
+        [
+          -2907.3271544846807,
+          -947.7513572839529
+        ]
+      ],
+      "min_z": 36.46865440810667,
+      "max_z": 36.49268945969362
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 382927,
+      "physical_id": 1475,
+      "name": "MAIN STREET",
+      "side": "left_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": false,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.6993039012470135,
+      "footprint": [
+        [
+          -2905.683181060643,
+          -947.3211848041918
+        ],
+        [
+          -2904.0432550471705,
+          -946.892042612169
+        ],
+        [
+          -2904.6605876683097,
+          -944.5330820370689
+        ],
+        [
+          -2906.30046560226,
+          -944.962211647354
+        ],
+        [
+          -2905.683181060643,
+          -947.3211848041918
+        ]
+      ],
+      "min_z": 36.49268945969362,
+      "max_z": 36.51665291252763
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 382927,
+      "physical_id": 1475,
+      "name": "MAIN STREET",
+      "side": "left_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": true,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.6993039012470135,
+      "footprint": [
+        [
+          -2904.0393853611877,
+          -946.891029927423
+        ],
+        [
+          -2902.399284023353,
+          -946.4617991443833
+        ],
+        [
+          -2903.0166062065923,
+          -944.1028358377418
+        ],
+        [
+          -2904.656717982327,
+          -944.5320693523229
+        ],
+        [
+          -2904.0393853611877,
+          -946.891029927423
+        ]
+      ],
+      "min_z": 36.48822662106688,
+      "max_z": 36.51665291252763
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 382927,
+      "physical_id": 1475,
+      "name": "MAIN STREET",
+      "side": "left_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": true,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.6993039012470135,
+      "footprint": [
+        [
+          -2902.3954143328892,
+          -946.46078647676
+        ],
+        [
+          -2900.7551635662508,
+          -946.031574824236
+        ],
+        [
+          -2901.3724327377377,
+          -943.6725976454716
+        ],
+        [
+          -2903.0127365161284,
+          -944.1018231701185
+        ],
+        [
+          -2902.3954143328892,
+          -946.46078647676
+        ]
+      ],
+      "min_z": 36.45954234445652,
+      "max_z": 36.48822662106688
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 382927,
+      "physical_id": 1475,
+      "name": "MAIN STREET",
+      "side": "left_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": true,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.6993039012470135,
+      "footprint": [
+        [
+          -2900.7512938530313,
+          -946.0305622435742
+        ],
+        [
+          -2899.1111945998605,
+          -945.6014108479346
+        ],
+        [
+          -2899.7284600720277,
+          -943.242432701179
+        ],
+        [
+          -2901.368563024518,
+          -943.6715850648097
+        ],
+        [
+          -2900.7512938530313,
+          -946.0305622435742
+        ]
+      ],
+      "min_z": 36.45954234445652,
+      "max_z": 36.48360508236759
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 382927,
+      "physical_id": 1475,
+      "name": "MAIN STREET",
+      "side": "left_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": true,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.6993039012470135,
+      "footprint": [
+        [
+          -2899.107324885053,
+          -945.6003982733412
+        ],
+        [
+          -2897.4673652027927,
+          -945.1712682816528
+        ],
+        [
+          -2898.08466977063,
+          -942.8123003652692
+        ],
+        [
+          -2899.72459035722,
+          -943.2414201265856
+        ],
+        [
+          -2899.107324885053,
+          -945.6003982733412
+        ]
+      ],
+      "min_z": 36.48360508236759,
+      "max_z": 36.51290650082991
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 382927,
+      "physical_id": 1475,
+      "name": "MAIN STREET",
+      "side": "left_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": true,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.6993039012470135,
+      "footprint": [
+        [
+          -2897.4634955047673,
+          -945.1702556429261
+        ],
+        [
+          -2895.8235112994107,
+          -944.7410762213755
+        ],
+        [
+          -2896.4408439205504,
+          -942.3821156462752
+        ],
+        [
+          -2898.0808000726047,
+          -942.8112877265424
+        ],
+        [
+          -2897.4634955047673,
+          -945.1702556429261
+        ]
+      ],
+      "min_z": 36.51290650082991,
+      "max_z": 36.626991662850656
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 382927,
+      "physical_id": 1475,
+      "name": "MAIN STREET",
+      "side": "left_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": true,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.6993039012470135,
+      "footprint": [
+        [
+          -2895.819641613428,
+          -944.7400635366295
+        ],
+        [
+          -2894.17947522024,
+          -944.3108377324131
+        ],
+        [
+          -2894.7967786101503,
+          -941.9518695077851
+        ],
+        [
+          -2896.4369742345675,
+          -942.3811029615292
+        ],
+        [
+          -2895.819641613428,
+          -944.7400635366295
+        ]
+      ],
+      "min_z": 36.626991662850656,
+      "max_z": 36.66354713169287
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 382927,
+      "physical_id": 1475,
+      "name": "MAIN STREET",
+      "side": "left_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": true,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.6993039012470135,
+      "footprint": [
+        [
+          -2894.175605521709,
+          -944.3098250956186
+        ],
+        [
+          -2892.5354199171625,
+          -943.8806364486983
+        ],
+        [
+          -2893.1526912789027,
+          -941.5216598430544
+        ],
+        [
+          -2894.792908911619,
+          -941.9508568709906
+        ],
+        [
+          -2894.175605521709,
+          -944.3098250956186
+        ]
+      ],
+      "min_z": 36.60918013172,
+      "max_z": 36.66354713169287
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 382927,
+      "physical_id": 1475,
+      "name": "MAIN STREET",
+      "side": "left_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": true,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.6993039012470135,
+      "footprint": [
+        [
+          -2892.5315502048825,
+          -943.8796238644435
+        ],
+        [
+          -2890.891660936158,
+          -943.4505182492546
+        ],
+        [
+          -2891.508994030821,
+          -941.0915577980741
+        ],
+        [
+          -2893.1488215666227,
+          -941.5206472587996
+        ],
+        [
+          -2892.5315502048825,
+          -943.8796238644435
+        ]
+      ],
+      "min_z": 36.60918013172,
+      "max_z": 36.61351718144647
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 382927,
+      "physical_id": 1475,
+      "name": "MAIN STREET",
+      "side": "left_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": true,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.6993039012470135,
+      "footprint": [
+        [
+          -2890.887791250379,
+          -943.4495055637319
+        ],
+        [
+          -2889.247720393833,
+          -943.02025508664
+        ],
+        [
+          -2889.86505051661,
+          -940.6612938577276
+        ],
+        [
+          -2891.505124345042,
+          -941.0905451125514
+        ],
+        [
+          -2890.887791250379,
+          -943.4495055637319
+        ]
+      ],
+      "min_z": 36.61351718144647,
+      "max_z": 36.643089544622754
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 382927,
+      "physical_id": 1475,
+      "name": "MAIN STREET",
+      "side": "left_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": true,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.6993039012470135,
+      "footprint": [
+        [
+          -2889.2438507067777,
+          -943.0192424059924
+        ],
+        [
+          -2887.603570324168,
+          -942.5900388643046
+        ],
+        [
+          -2888.2208393303654,
+          -940.2310616422891
+        ],
+        [
+          -2889.861180829555,
+          -940.66028117708
+        ],
+        [
+          -2889.2438507067777,
+          -943.0192424059924
+        ]
+      ],
+      "min_z": 36.643089544622754,
+      "max_z": 36.7079861782961
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 382927,
+      "physical_id": 1475,
+      "name": "MAIN STREET",
+      "side": "left_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": true,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.6993039012470135,
+      "footprint": [
+        [
+          -2887.5997006108773,
+          -942.5890262839138
+        ],
+        [
+          -2885.9596213625177,
+          -942.1598645189873
+        ],
+        [
+          -2886.5768917667483,
+          -939.8008876627929
+        ],
+        [
+          -2888.216969617075,
+          -940.2300490618983
+        ],
+        [
+          -2887.5997006108773,
+          -942.5890262839138
+        ]
+      ],
+      "min_z": 36.7079861782961,
+      "max_z": 36.81136665386313
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 382927,
+      "physical_id": 1475,
+      "name": "MAIN STREET",
+      "side": "left_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": false,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.6993039012470206,
+      "footprint": [
+        [
+          -2885.9557516498276,
+          -942.1588519363032
+        ],
+        [
+          -2884.315732445655,
+          -941.7297146250186
+        ],
+        [
+          -2884.9330238345583,
+          -939.3707432599558
+        ],
+        [
+          -2886.573022054058,
+          -939.7998750801088
+        ],
+        [
+          -2885.9557516498276,
+          -942.1588519363032
+        ]
+      ],
+      "min_z": 36.81136665386313,
+      "max_z": 36.844578850064046
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 382927,
+      "physical_id": 1475,
+      "name": "MAIN STREET",
+      "side": "left_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": false,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.6993039012470064,
+      "footprint": [
+        [
+          -2884.3118627419726,
+          -941.7287020079108
+        ],
+        [
+          -2882.6719332564344,
+          -941.2995482618027
+        ],
+        [
+          -2883.2892708098257,
+          -938.940588977463
+        ],
+        [
+          -2884.9291541308758,
+          -939.369730642848
+        ],
+        [
+          -2884.3118627419726,
+          -941.7287020079108
+        ]
+      ],
+      "min_z": 36.844578850064046,
+      "max_z": 36.87849972041699
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 382927,
+      "physical_id": 1475,
+      "name": "MAIN STREET",
+      "side": "left_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": false,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.6993039012470206,
+      "footprint": [
+        [
+          -2882.668063572569,
+          -941.2985355689658
+        ],
+        [
+          -2881.027883338277,
+          -940.8692874375437
+        ],
+        [
+          -2881.6451858577216,
+          -938.5103189851291
+        ],
+        [
+          -2883.28540112596,
+          -938.9395762846261
+        ],
+        [
+          -2882.668063572569,
+          -941.2985355689658
+        ]
+      ],
+      "min_z": 36.87849972041699,
+      "max_z": 36.91304547970242
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 382927,
+      "physical_id": 1475,
+      "name": "MAIN STREET",
+      "side": "left_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": false,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.6993039012470064,
+      "footprint": [
+        [
+          -2881.0240136393722,
+          -940.8682748021771
+        ],
+        [
+          -2879.5052597059016,
+          -940.4719712483626
+        ],
+        [
+          -2880.160782188516,
+          -938.1233365737511
+        ],
+        [
+          -2881.6413161588166,
+          -938.5093063497625
+        ],
+        [
+          -2881.0240136393722,
+          -940.8682748021771
+        ]
+      ],
+      "min_z": 36.91304547970242,
+      "max_z": 36.94829912312538
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 382927,
+      "physical_id": 1475,
+      "name": "MAIN STREET",
+      "side": "left_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": false,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.6993039012470206,
+      "footprint": [
+        [
+          -2879.501406958732,
+          -940.4708959162061
+        ],
+        [
+          -2878.137844070836,
+          -940.0666643072956
+        ],
+        [
+          -2878.875480611902,
+          -937.7425113662687
+        ],
+        [
+          -2880.156929441346,
+          -938.1222612415946
+        ],
+        [
+          -2879.501406958732,
+          -940.4708959162061
+        ]
+      ],
+      "min_z": 36.94829912312538,
+      "max_z": 36.98423247659566
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 382927,
+      "physical_id": 1475,
+      "name": "MAIN STREET",
+      "side": "left_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": false,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.6993039012470064,
+      "footprint": [
+        [
+          -2878.13403148399,
+          -940.0654542735996
+        ],
+        [
+          -2876.666865548751,
+          -939.5676684457359
+        ],
+        [
+          -2877.4482004362667,
+          -937.2578393712045
+        ],
+        [
+          -2878.871668025056,
+          -937.7413013325727
+        ],
+        [
+          -2878.13403148399,
+          -940.0654542735996
+        ]
+      ],
+      "min_z": 36.98423247659566,
+      "max_z": 37.02107307704663
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 382927,
+      "physical_id": 1475,
+      "name": "MAIN STREET",
+      "side": "left_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": false,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.6993039012470206,
+      "footprint": [
+        [
+          -2876.663076459062,
+          -939.5663867284007
+        ],
+        [
+          -2875.0570443921297,
+          -939.0231233018478
+        ],
+        [
+          -2875.8383424245226,
+          -936.7132817608369
+        ],
+        [
+          -2877.4444113465775,
+          -937.2565576538693
+        ],
+        [
+          -2876.663076459062,
+          -939.5663867284007
+        ]
+      ],
+      "min_z": 37.02107307704663,
+      "max_z": 37.05884174346546
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 382927,
+      "physical_id": 1475,
+      "name": "MAIN STREET",
+      "side": "left_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": false,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.6993039012470064,
+      "footprint": [
+        [
+          -2875.0532552819905,
+          -939.0218416449704
+        ],
+        [
+          -2873.4472305024683,
+          -938.4786350108822
+        ],
+        [
+          -2874.228499168557,
+          -936.1687835370016
+        ],
+        [
+          -2875.8345533143834,
+          -936.7120001039596
+        ],
+        [
+          -2875.0532552819905,
+          -939.0218416449704
+        ]
+      ],
+      "min_z": 37.05884174346546,
+      "max_z": 37.09760030084801
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 382927,
+      "physical_id": 1475,
+      "name": "MAIN STREET",
+      "side": "left_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": false,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.6993039012470206,
+      "footprint": [
+        [
+          -2873.4434413760346,
+          -938.477353402178
+        ],
+        [
+          -2871.837605464183,
+          -937.9342018774978
+        ],
+        [
+          -2872.6189034135928,
+          -935.6243603084182
+        ],
+        [
+          -2874.224710042123,
+          -936.1675019282974
+        ],
+        [
+          -2873.4434413760346,
+          -938.477353402178
+        ]
+      ],
+      "min_z": 37.09760030084801,
+      "max_z": 37.13736585033061
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 382927,
+      "physical_id": 1475,
+      "name": "MAIN STREET",
+      "side": "left_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": false,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.6993039012470206,
+      "footprint": [
+        [
+          -2871.8338163539975,
+          -937.9329202207566
+        ],
+        [
+          -2870.2279408903355,
+          -937.38971864647
+        ],
+        [
+          -2871.009252159523,
+          -935.0798815828138
+        ],
+        [
+          -2872.615114303407,
+          -935.623078651677
+        ],
+        [
+          -2871.8338163539975,
+          -937.9329202207566
+        ]
+      ],
+      "min_z": 37.13736585033061,
+      "max_z": 37.17811116940688
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 382927,
+      "physical_id": 1475,
+      "name": "MAIN STREET",
+      "side": "left_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": false,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.6993039012470064,
+      "footprint": [
+        [
+          -2870.2241517875404,
+          -937.3884369678789
+        ],
+        [
+          -2868.6182473628905,
+          -936.8452416370981
+        ],
+        [
+          -2869.3995643633334,
+          -934.5354065120687
+        ],
+        [
+          -2871.005463056728,
+          -935.0785999042226
+        ],
+        [
+          -2870.2241517875404,
+          -937.3884369678789
+        ]
+      ],
+      "min_z": 37.17811116940688,
+      "max_z": 37.219753595794046
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 382927,
+      "physical_id": 1475,
+      "name": "MAIN STREET",
+      "side": "left_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": false,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.6993039012470206,
+      "footprint": [
+        [
+          -2868.614458263276,
+          -936.8439599491053
+        ],
+        [
+          -2867.008594146943,
+          -936.3007533487743
+        ],
+        [
+          -2867.789927193772,
+          -933.9909236516035
+        ],
+        [
+          -2869.395775263719,
+          -934.5341248240759
+        ],
+        [
+          -2868.614458263276,
+          -936.8439599491053
+        ]
+      ],
+      "min_z": 37.219753595794046,
+      "max_z": 37.26213459174797
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 382927,
+      "physical_id": 1475,
+      "name": "MAIN STREET",
+      "side": "left_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": false,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.6993039012470064,
+      "footprint": [
+        [
+          -2867.0048050562323,
+          -936.2994716344587
+        ],
+        [
+          -2865.3988899902747,
+          -935.7562478145509
+        ],
+        [
+          -2866.180223037104,
+          -933.44641811738
+        ],
+        [
+          -2867.7861381030616,
+          -933.9896419372878
+        ],
+        [
+          -2867.0048050562323,
+          -936.2994716344587
+        ]
+      ],
+      "min_z": 37.26213459174797,
+      "max_z": 37.305273478755275
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 382927,
+      "physical_id": 1475,
+      "name": "MAIN STREET",
+      "side": "left_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": false,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.6993039012470206,
+      "footprint": [
+        [
+          -2865.395100899564,
+          -935.7549661002353
+        ],
+        [
+          -2863.789071089306,
+          -935.211703434383
+        ],
+        [
+          -2864.5703679915455,
+          -932.9018615111012
+        ],
+        [
+          -2866.1764339463934,
+          -933.4451364030643
+        ],
+        [
+          -2865.395100899564,
+          -935.7549661002353
+        ]
+      ],
+      "min_z": 37.305273478755275,
+      "max_z": 37.34856851554266
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 382927,
+      "physical_id": 1475,
+      "name": "MAIN STREET",
+      "side": "left_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": false,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.6993039012470064,
+      "footprint": [
+        [
+          -2863.7852819785394,
+          -935.2104217793596
+        ],
+        [
+          -2862.179231144179,
+          -934.6672080787611
+        ],
+        [
+          -2862.960490640442,
+          -932.3573535033605
+        ],
+        [
+          -2864.5665788807787,
+          -932.9005798560778
+        ],
+        [
+          -2863.7852819785394,
+          -935.2104217793596
+        ]
+      ],
+      "min_z": 37.34856851554266,
+      "max_z": 37.39077274983425
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 382927,
+      "physical_id": 1475,
+      "name": "MAIN STREET",
+      "side": "right_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": false,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.699303901247017,
+      "footprint": [
+        [
+          -2925.7368803305026,
+          -970.9990522298763
+        ],
+        [
+          -2924.188717008472,
+          -970.5837748408708
+        ],
+        [
+          -2924.8065256229825,
+          -968.2249388830652
+        ],
+        [
+          -2926.376061414457,
+          -968.6459177029283
+        ],
+        [
+          -2925.7368803305026,
+          -970.9990522298763
+        ]
+      ],
+      "min_z": 36.14930689293003,
+      "max_z": 36.16817505475321
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 382927,
+      "physical_id": 1475,
+      "name": "MAIN STREET",
+      "side": "right_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": false,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.6993039012470135,
+      "footprint": [
+        [
+          -2907.7690479006696,
+          -966.3857389014948
+        ],
+        [
+          -2906.099375261182,
+          -965.9551722139662
+        ],
+        [
+          -2906.7125000645756,
+          -963.5951144741081
+        ],
+        [
+          -2908.3754476046233,
+          -964.0239442535535
+        ],
+        [
+          -2907.7690479006696,
+          -966.3857389014948
+        ]
+      ],
+      "min_z": 36.3961259586927,
+      "max_z": 36.4203655450958
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 382927,
+      "physical_id": 1475,
+      "name": "MAIN STREET",
+      "side": "right_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": false,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.6993039012470206,
+      "footprint": [
+        [
+          -2906.0955037753884,
+          -965.9541664318084
+        ],
+        [
+          -2904.43781447421,
+          -965.5203337894666
+        ],
+        [
+          -2905.055160964345,
+          -963.1613768438827
+        ],
+        [
+          -2906.708628578782,
+          -963.5941086919503
+        ],
+        [
+          -2906.0955037753884,
+          -965.9541664318084
+        ]
+      ],
+      "min_z": 36.4203655450958,
+      "max_z": 36.444547535422885
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 382927,
+      "physical_id": 1475,
+      "name": "MAIN STREET",
+      "side": "right_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": false,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.6993039012470135,
+      "footprint": [
+        [
+          -2904.4339447941816,
+          -965.5193210819696
+        ],
+        [
+          -2902.7941031570263,
+          -965.0901925453206
+        ],
+        [
+          -2903.4113933679478,
+          -962.731220872006
+        ],
+        [
+          -2905.0512912843164,
+          -963.1603641363857
+        ],
+        [
+          -2904.4339447941816,
+          -965.5193210819696
+        ]
+      ],
+      "min_z": 36.444547535422885,
+      "max_z": 36.46865440810667
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 382927,
+      "physical_id": 1475,
+      "name": "MAIN STREET",
+      "side": "right_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": false,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.6993039012470135,
+      "footprint": [
+        [
+          -2902.790233452838,
+          -965.0891799301453
+        ],
+        [
+          -2901.1501714033234,
+          -964.6600309597652
+        ],
+        [
+          -2901.76745594494,
+          -962.3010578029274
+        ],
+        [
+          -2903.4075236637595,
+          -962.7302082568307
+        ],
+        [
+          -2902.790233452838,
+          -965.0891799301453
+        ]
+      ],
+      "min_z": 36.46865440810667,
+      "max_z": 36.49268945969362
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 382927,
+      "physical_id": 1475,
+      "name": "MAIN STREET",
+      "side": "right_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": false,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.6993039012470135,
+      "footprint": [
+        [
+          -2901.1463016967014,
+          -964.6590183538899
+        ],
+        [
+          -2899.506022311354,
+          -964.2297836893981
+        ],
+        [
+          -2900.1233549324934,
+          -961.870823114298
+        ],
+        [
+          -2901.763586238318,
+          -962.3000451970521
+        ],
+        [
+          -2901.1463016967014,
+          -964.6590183538899
+        ]
+      ],
+      "min_z": 36.49268945969362,
+      "max_z": 36.51665291252763
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 382927,
+      "physical_id": 1475,
+      "name": "MAIN STREET",
+      "side": "right_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": true,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.6993039012470135,
+      "footprint": [
+        [
+          -2899.5021526253713,
+          -964.2287710046521
+        ],
+        [
+          -2897.862128003367,
+          -963.7995602977244
+        ],
+        [
+          -2898.4794501866063,
+          -961.4405969910829
+        ],
+        [
+          -2900.1194852465105,
+          -961.869810429552
+        ],
+        [
+          -2899.5021526253713,
+          -964.2287710046521
+        ]
+      ],
+      "min_z": 36.48822662106688,
+      "max_z": 36.51665291252763
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 382927,
+      "physical_id": 1475,
+      "name": "MAIN STREET",
+      "side": "right_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": true,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.6993039012470135,
+      "footprint": [
+        [
+          -2897.858258312903,
+          -963.798547630101
+        ],
+        [
+          -2896.218397168728,
+          -963.3694379340402
+        ],
+        [
+          -2896.835666340215,
+          -961.0104607552757
+        ],
+        [
+          -2898.4755804961424,
+          -961.4395843234595
+        ],
+        [
+          -2897.858258312903,
+          -963.798547630101
+        ]
+      ],
+      "min_z": 36.45954234445652,
+      "max_z": 36.48822662106688
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 382927,
+      "physical_id": 1475,
+      "name": "MAIN STREET",
+      "side": "right_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": true,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.6993039012470135,
+      "footprint": [
+        [
+          -2896.2145274555087,
+          -963.3684253533784
+        ],
+        [
+          -2894.5744553913673,
+          -962.9392810722188
+        ],
+        [
+          -2895.1917208635346,
+          -960.5803029254632
+        ],
+        [
+          -2896.8317966269956,
+          -961.0094481746139
+        ],
+        [
+          -2896.2145274555087,
+          -963.3684253533784
+        ]
+      ],
+      "min_z": 36.45954234445652,
+      "max_z": 36.48360508236759
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 382927,
+      "physical_id": 1475,
+      "name": "MAIN STREET",
+      "side": "right_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": true,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.6993039012470135,
+      "footprint": [
+        [
+          -2894.57058567656,
+          -962.9382684976254
+        ],
+        [
+          -2892.9303386513866,
+          -962.5090633153887
+        ],
+        [
+          -2893.547643219224,
+          -960.1500953990051
+        ],
+        [
+          -2895.187851148727,
+          -960.5792903508698
+        ],
+        [
+          -2894.57058567656,
+          -962.9382684976254
+        ]
+      ],
+      "min_z": 36.48360508236759,
+      "max_z": 36.51290650082991
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 382927,
+      "physical_id": 1475,
+      "name": "MAIN STREET",
+      "side": "right_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": true,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.6993039012470135,
+      "footprint": [
+        [
+          -2892.926468953361,
+          -962.508050676662
+        ],
+        [
+          -2891.286278563595,
+          -962.0788172986047
+        ],
+        [
+          -2891.9036111847345,
+          -959.7198567235044
+        ],
+        [
+          -2893.5437735211985,
+          -960.1490827602784
+        ],
+        [
+          -2892.926468953361,
+          -962.508050676662
+        ]
+      ],
+      "min_z": 36.51290650082991,
+      "max_z": 36.626991662850656
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 382927,
+      "physical_id": 1475,
+      "name": "MAIN STREET",
+      "side": "right_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": false,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.6993039012470206,
+      "footprint": [
+        [
+          -2878.130794585994,
+          -958.6362671594441
+        ],
+        [
+          -2876.4908718420197,
+          -958.2070864109667
+        ],
+        [
+          -2877.108174361464,
+          -955.848117958552
+        ],
+        [
+          -2878.7481321393852,
+          -956.2773078751044
+        ],
+        [
+          -2878.130794585994,
+          -958.6362671594441
+        ]
+      ],
+      "min_z": 36.87849972041699,
+      "max_z": 36.91304547970242
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 382927,
+      "physical_id": 1475,
+      "name": "MAIN STREET",
+      "side": "right_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": false,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.6993039012470064,
+      "footprint": [
+        [
+          -2876.4870021431148,
+          -958.2060737756001
+        ],
+        [
+          -2874.687341511831,
+          -957.7338196672096
+        ],
+        [
+          -2875.3428639944455,
+          -955.385184992598
+        ],
+        [
+          -2877.104304662559,
+          -955.8471053231855
+        ],
+        [
+          -2876.4870021431148,
+          -958.2060737756001
+        ]
+      ],
+      "min_z": 36.91304547970242,
+      "max_z": 36.94829912312538
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 382927,
+      "physical_id": 1475,
+      "name": "MAIN STREET",
+      "side": "right_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": false,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.6993039012470206,
+      "footprint": [
+        [
+          -2874.6834887646614,
+          -957.7327443350531
+        ],
+        [
+          -2872.7164090993915,
+          -957.148578409948
+        ],
+        [
+          -2873.4540456404575,
+          -954.824425468921
+        ],
+        [
+          -2875.3390112472757,
+          -955.3841096604416
+        ],
+        [
+          -2874.6834887646614,
+          -957.7327443350531
+        ]
+      ],
+      "min_z": 36.94829912312538,
+      "max_z": 36.98423247659566
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 382927,
+      "physical_id": 1475,
+      "name": "MAIN STREET",
+      "side": "right_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": false,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.6993039012470064,
+      "footprint": [
+        [
+          -2872.7125965125456,
+          -957.147368376252
+        ],
+        [
+          -2870.9242592002843,
+          -956.544305889192
+        ],
+        [
+          -2871.7055940878,
+          -954.2344768146605
+        ],
+        [
+          -2873.4502330536116,
+          -954.823215435225
+        ],
+        [
+          -2872.7125965125456,
+          -957.147368376252
+        ]
+      ],
+      "min_z": 36.98423247659566,
+      "max_z": 37.02107307704663
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 382927,
+      "physical_id": 1475,
+      "name": "MAIN STREET",
+      "side": "right_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": false,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.6993039012470206,
+      "footprint": [
+        [
+          -2870.920470110595,
+          -956.5430241718568
+        ],
+        [
+          -2869.314708919143,
+          -955.9998523706549
+        ],
+        [
+          -2870.096006951536,
+          -953.690010829644
+        ],
+        [
+          -2871.7018049981107,
+          -954.2331950973254
+        ],
+        [
+          -2870.920470110595,
+          -956.5430241718568
+        ]
+      ],
+      "min_z": 37.02107307704663,
+      "max_z": 37.05884174346546
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 382927,
+      "physical_id": 1475,
+      "name": "MAIN STREET",
+      "side": "right_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": false,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.6993039012470064,
+      "footprint": [
+        [
+          -2869.3109198090037,
+          -955.9985707137776
+        ],
+        [
+          -2867.7051108641094,
+          -955.4554370836746
+        ],
+        [
+          -2868.486379530198,
+          -953.145585609794
+        ],
+        [
+          -2870.0922178413966,
+          -953.6887291727667
+        ],
+        [
+          -2869.3109198090037,
+          -955.9985707137776
+        ]
+      ],
+      "min_z": 37.05884174346546,
+      "max_z": 37.09760030084801
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 382927,
+      "physical_id": 1475,
+      "name": "MAIN STREET",
+      "side": "right_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": false,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.6993039012470206,
+      "footprint": [
+        [
+          -2867.7013217376757,
+          -955.4541554749704
+        ],
+        [
+          -2866.0952706011008,
+          -954.9109311526034
+        ],
+        [
+          -2866.8765685505105,
+          -952.6010895835238
+        ],
+        [
+          -2868.4825904037643,
+          -953.1443040010898
+        ],
+        [
+          -2867.7013217376757,
+          -955.4541554749704
+        ]
+      ],
+      "min_z": 37.09760030084801,
+      "max_z": 37.13736585033061
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 382927,
+      "physical_id": 1475,
+      "name": "MAIN STREET",
+      "side": "right_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": false,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.6993039012470206,
+      "footprint": [
+        [
+          -2866.091481490915,
+          -954.9096494958623
+        ],
+        [
+          -2864.485508130381,
+          -954.3664148078966
+        ],
+        [
+          -2865.2668193995682,
+          -952.0565777442404
+        ],
+        [
+          -2866.872779440325,
+          -952.5998079267827
+        ],
+        [
+          -2866.091481490915,
+          -954.9096494958623
+        ]
+      ],
+      "min_z": 37.13736585033061,
+      "max_z": 37.17811116940688
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 382927,
+      "physical_id": 1475,
+      "name": "MAIN STREET",
+      "side": "right_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": false,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.6993039012470064,
+      "footprint": [
+        [
+          -2864.4817190275858,
+          -954.3651331293055
+        ],
+        [
+          -2862.875772479715,
+          -953.8219235501251
+        ],
+        [
+          -2863.657089480158,
+          -951.5120884250957
+        ],
+        [
+          -2865.263030296773,
+          -952.0552960656493
+        ],
+        [
+          -2864.4817190275858,
+          -954.3651331293055
+        ]
+      ],
+      "min_z": 37.17811116940688,
+      "max_z": 37.219753595794046
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 382927,
+      "physical_id": 1475,
+      "name": "MAIN STREET",
+      "side": "right_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": false,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.6993039012470206,
+      "footprint": [
+        [
+          -2862.8719833801006,
+          -953.8206418621323
+        ],
+        [
+          -2861.266001327037,
+          -953.2773953684662
+        ],
+        [
+          -2862.0473343738663,
+          -950.9675656712953
+        ],
+        [
+          -2863.6533003805434,
+          -951.5108067371029
+        ],
+        [
+          -2862.8719833801006,
+          -953.8206418621323
+        ]
+      ],
+      "min_z": 37.219753595794046,
+      "max_z": 37.26213459174797
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 382927,
+      "physical_id": 1475,
+      "name": "MAIN STREET",
+      "side": "right_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": false,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.6993039012470064,
+      "footprint": [
+        [
+          -2861.2622122363264,
+          -953.2761136541505
+        ],
+        [
+          -2859.6562971703697,
+          -952.7328898342429
+        ],
+        [
+          -2860.437630217199,
+          -950.423060137072
+        ],
+        [
+          -2862.0435452831557,
+          -950.9662839569797
+        ],
+        [
+          -2861.2622122363264,
+          -953.2761136541505
+        ]
+      ],
+      "min_z": 37.26213459174797,
+      "max_z": 37.305273478755275
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 382927,
+      "physical_id": 1475,
+      "name": "MAIN STREET",
+      "side": "right_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": false,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.6993039012470206,
+      "footprint": [
+        [
+          -2859.652508079659,
+          -952.7316081199273
+        ],
+        [
+          -2858.046743922649,
+          -952.1884353127826
+        ],
+        [
+          -2858.8280408248884,
+          -949.8785933895008
+        ],
+        [
+          -2860.4338411264885,
+          -950.4217784227563
+        ],
+        [
+          -2859.652508079659,
+          -952.7316081199273
+        ]
+      ],
+      "min_z": 37.305273478755275,
+      "max_z": 37.34856851554266
+    },
+    {
+      "kind": "sidewalk",
+      "source_objectid": 382927,
+      "physical_id": 1475,
+      "name": "MAIN STREET",
+      "side": "right_along_edge",
+      "inventory_width_m": 2.4384,
+      "curb_inventory": true,
+      "lowered_access_inferred": false,
+      "aerial_informed_parking_offset_m": 2.2,
+      "length_m": 1.6993039012470064,
+      "footprint": [
+        [
+          -2858.0429548118823,
+          -952.1871536577593
+        ],
+        [
+          -2856.4371789016323,
+          -951.6440329469118
+        ],
+        [
+          -2857.218438397895,
+          -949.3341783715113
+        ],
+        [
+          -2858.8242517141216,
+          -949.8773117344774
+        ],
+        [
+          -2858.0429548118823,
+          -952.1871536577593
+        ]
+      ],
+      "min_z": 37.34856851554266,
+      "max_z": 37.39077274983425
+    }
+  ],
+  "lampTargets": [
+    {
+      "id": "MAIN-LANTERN-01",
+      "physicalId": 1475,
+      "side": "left_along_edge",
+      "targetE": -2921
+    },
+    {
+      "id": "MAIN-LANTERN-02",
+      "physicalId": 1475,
+      "side": "left_along_edge",
+      "targetE": -2890
+    },
+    {
+      "id": "MAIN-LANTERN-03",
+      "physicalId": 1475,
+      "side": "left_along_edge",
+      "targetE": -2869
+    },
+    {
+      "id": "MAIN-LANTERN-04",
+      "physicalId": 1356,
+      "side": "left_along_edge",
+      "targetE": -2829
+    },
+    {
+      "id": "MAIN-LANTERN-05",
+      "physicalId": 1475,
+      "side": "right_along_edge",
+      "targetE": -2859
+    },
+    {
+      "id": "MAIN-LANTERN-06",
+      "physicalId": 1356,
+      "side": "right_along_edge",
+      "targetE": -2835
+    },
+    {
+      "id": "MAIN-LANTERN-07",
+      "physicalId": 1356,
+      "side": "right_along_edge",
+      "targetE": -2808
+    }
+  ],
+  "lamp": {
+    "heightM": 4.74,
+    "footRadiusM": 0.2,
+    "curbInsetM": 0.38,
+    "inference": "Seven authored post locations tied to retained Main Street sidewalk segments, avoiding lowered access and existing objects; count/spacing, 4.74m profile height and 0.40m base diameter are not surveyed."
+  },
+  "hedge": {
+    "id": "MAIN-CHURCH-HEDGE",
+    "structId": "168424_866597",
+    "physicalId": 1475,
+    "side": "right_along_edge",
+    "minE": -2876,
+    "maxE": -2860,
+    "landwardOffsetM": 0.63,
+    "widthM": 0.78,
+    "heightM": 0.82,
+    "inference": "One restrained hedge line on the observed church-front side of Main Street, offset behind the retained sidewalk edge. Exact clipped extent, width and mature summer species appearance are authored; no species identification or measured hedge inventory is claimed."
+  },
+  "policy": "Only observed furniture families are added. Native sidewalks, curbs, roads, paint, parked cars, buildings and trees are retained; authored placements must stay inside supported ground and outside protected geometry."
+}

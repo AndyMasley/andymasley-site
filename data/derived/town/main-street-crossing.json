@@ -1,0 +1,53 @@
+{
+  "version": 1,
+  "id": "MAIN-CHURCH-CROSSING",
+  "tileId": "-12_-4",
+  "origin": [
+    -3000,
+    0,
+    1000
+  ],
+  "sourceManifestSha256": "37fbef34bc2a4467997252be75b4c43174a6a7b2d39963614cadd8d787e56105",
+  "lods": [
+    {
+      "level": 0,
+      "sha256": "4b1dd83f4372e1f94e3f8870e6c6f363f6590876a22f74d1254664bb5aeebaf4"
+    },
+    {
+      "level": 1,
+      "sha256": "c1f0a819e299223165bb8e8d22d2ad10e2fcb2678ee91186f4518163604bf095"
+    },
+    {
+      "level": 2,
+      "sha256": "7629e0692f744fa9f293b4f9f16cf375614c24c18954294c7c374384e548f9f4"
+    }
+  ],
+  "sourcePhoto": {
+    "name": "Screenshot 2026-09-09 at 11.59.59\u202fPM.png",
+    "sha256": "d177f1dc60ae7a05ccfd93b4dc0e804071f47463c1fc05812401544221ed86dc",
+    "received": "2026-09-10",
+    "captureDate": "unknown"
+  },
+  "observation": "White continental crossing across Church Street at its Main Street mouth is visible in the user-provided photo. Existing Main Street crossing E is retained separately.",
+  "inference": "Crossing center is fitted 10.6m into source Church physical243 from node67. Width, stripe count, spacing and length are authored to fit retained pavement, not image-derived measurements.",
+  "center": [
+    -2849.3359842958803,
+    -949.6697905111552
+  ],
+  "tangent": [
+    0.9290274067127531,
+    0.3700109154830125
+  ],
+  "roadAxis": [
+    0.3700109154830125,
+    -0.9290274067127531
+  ],
+  "baseHeight": 37.36,
+  "count": 15,
+  "pitchM": 0.85,
+  "stripeWidthM": 0.44,
+  "stripeLengthM": 2.45,
+  "offsetM": 0.012,
+  "maxHeightDriftM": 0.65,
+  "coverageToleranceM2": 0.025
+}
