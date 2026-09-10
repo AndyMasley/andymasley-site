@@ -1,0 +1,1384 @@
+{
+  "version": 1,
+  "sourceAerial": {
+    "sourceService": "https://tiles.arcgis.com/tiles/hGdibHYSPO59RG1h/arcgis/rest/services/Massachusetts_Aerial_Imagery_2025/MapServer",
+    "sourceDate": "Spring2025; exact exposure date unresolved",
+    "zoom": 19,
+    "tileBounds": [
+      157456,
+      194523,
+      157458,
+      194526
+    ],
+    "centerLocal": [
+      -2919.397336777096,
+      -800.8564173472114
+    ],
+    "resizeScale": 1,
+    "sourceRows": [
+      {
+        "x": 157456,
+        "y": 194523,
+        "url": "https://tiles.arcgis.com/tiles/hGdibHYSPO59RG1h/arcgis/rest/services/Massachusetts_Aerial_Imagery_2025/MapServer/tile/19/194523/157456",
+        "sha256": "af487f8c6c01f9a3d41cf1e5eb724e96464a5e5e43e4d3e6ef2e8b27a9286fc8",
+        "bytes": 18540,
+        "file": "/private/tmp/webster-video-pass3/registration/19-157456-194523.jpg"
+      },
+      {
+        "x": 157456,
+        "y": 194524,
+        "url": "https://tiles.arcgis.com/tiles/hGdibHYSPO59RG1h/arcgis/rest/services/Massachusetts_Aerial_Imagery_2025/MapServer/tile/19/194524/157456",
+        "sha256": "13fb630161ca901442a3e4dd771922103f83df46d9943916e5044932754a011f",
+        "bytes": 19068,
+        "file": "/private/tmp/webster-video-pass3/registration/19-157456-194524.jpg"
+      },
+      {
+        "x": 157456,
+        "y": 194525,
+        "url": "https://tiles.arcgis.com/tiles/hGdibHYSPO59RG1h/arcgis/rest/services/Massachusetts_Aerial_Imagery_2025/MapServer/tile/19/194525/157456",
+        "sha256": "25b19475a6a33587c80edc9194b3a2a77bacfa5f3f3e5098ced690197c71ff27",
+        "bytes": 19290,
+        "file": "/private/tmp/webster-video-pass3/registration/19-157456-194525.jpg"
+      },
+      {
+        "x": 157457,
+        "y": 194523,
+        "url": "https://tiles.arcgis.com/tiles/hGdibHYSPO59RG1h/arcgis/rest/services/Massachusetts_Aerial_Imagery_2025/MapServer/tile/19/194523/157457",
+        "sha256": "567d16256433be5e4e46d5eef2c25b5f9e8ab150a6956dbf0e023be336b47b57",
+        "bytes": 13987,
+        "file": "/private/tmp/webster-video-pass3/registration/19-157457-194523.jpg"
+      },
+      {
+        "x": 157457,
+        "y": 194524,
+        "url": "https://tiles.arcgis.com/tiles/hGdibHYSPO59RG1h/arcgis/rest/services/Massachusetts_Aerial_Imagery_2025/MapServer/tile/19/194524/157457",
+        "sha256": "7acd24ab22d0714313290d84c0571e75bd1f04eff38f843d3f9db8ba2cf26c6d",
+        "bytes": 17561,
+        "file": "/private/tmp/webster-video-pass3/registration/19-157457-194524.jpg"
+      },
+      {
+        "x": 157457,
+        "y": 194525,
+        "url": "https://tiles.arcgis.com/tiles/hGdibHYSPO59RG1h/arcgis/rest/services/Massachusetts_Aerial_Imagery_2025/MapServer/tile/19/194525/157457",
+        "sha256": "d0f5ce172b019767597e773909fb6a42df950ebcc2860dd94df4c3b734a16508",
+        "bytes": 17127,
+        "file": "/private/tmp/webster-video-pass3/registration/19-157457-194525.jpg"
+      },
+      {
+        "x": 157458,
+        "y": 194523,
+        "url": "https://tiles.arcgis.com/tiles/hGdibHYSPO59RG1h/arcgis/rest/services/Massachusetts_Aerial_Imagery_2025/MapServer/tile/19/194523/157458",
+        "sha256": "80576bd178ac976b9d98aa8ea087c4668871da0dbd239202ca69ddfd876b4ab2",
+        "bytes": 13427,
+        "file": "/private/tmp/webster-video-pass3/registration/19-157458-194523.jpg"
+      },
+      {
+        "x": 157458,
+        "y": 194524,
+        "url": "https://tiles.arcgis.com/tiles/hGdibHYSPO59RG1h/arcgis/rest/services/Massachusetts_Aerial_Imagery_2025/MapServer/tile/19/194524/157458",
+        "sha256": "be488bedcf15e783afc2f965c9ac15cfd097d6900da279ea60d2e4161770a6bb",
+        "bytes": 18989,
+        "file": "/private/tmp/webster-video-pass3/registration/19-157458-194524.jpg"
+      },
+      {
+        "x": 157458,
+        "y": 194525,
+        "url": "https://tiles.arcgis.com/tiles/hGdibHYSPO59RG1h/arcgis/rest/services/Massachusetts_Aerial_Imagery_2025/MapServer/tile/19/194525/157458",
+        "sha256": "8378691bf715993dbc9f67f5b803c14c6f8b37ad539fb006ebce334d1f923702",
+        "bytes": 17241,
+        "file": "/private/tmp/webster-video-pass3/registration/19-157458-194525.jpg"
+      },
+      {
+        "x": 157456,
+        "y": 194526,
+        "url": "https://tiles.arcgis.com/tiles/hGdibHYSPO59RG1h/arcgis/rest/services/Massachusetts_Aerial_Imagery_2025/MapServer/tile/19/194526/157456",
+        "sha256": "80e4577a4a643e83eb1bcc55157e650c0682850c2a3f32d46c7ea2c088f6637e",
+        "bytes": 20068,
+        "file": "/private/tmp/webster-video-pass3/registration/19-157456-194526.jpg"
+      },
+      {
+        "x": 157457,
+        "y": 194526,
+        "url": "https://tiles.arcgis.com/tiles/hGdibHYSPO59RG1h/arcgis/rest/services/Massachusetts_Aerial_Imagery_2025/MapServer/tile/19/194526/157457",
+        "sha256": "d5d8b326fc7a4eeea53d19d6c913f320dee199c8729a01460d7cd9cbf2636156",
+        "bytes": 19161,
+        "file": "/private/tmp/webster-video-pass3/registration/19-157457-194526.jpg"
+      },
+      {
+        "x": 157458,
+        "y": 194526,
+        "url": "https://tiles.arcgis.com/tiles/hGdibHYSPO59RG1h/arcgis/rest/services/Massachusetts_Aerial_Imagery_2025/MapServer/tile/19/194526/157458",
+        "sha256": "f767d09e682fc1353c8bf317d6d333f6ce53cae4561ff183f173c05c37b13b78",
+        "bytes": 19012,
+        "file": "/private/tmp/webster-video-pass3/registration/19-157458-194526.jpg"
+      }
+    ],
+    "policy": "Read-only source registration; no pixels are game assets."
+  },
+  "sourcePhoto": {
+    "url": "https://www.webster-ma.gov/ImageRepository/Document?documentID=175",
+    "gallery": "French River Park project, after",
+    "observedDate": "2026-09-09",
+    "captureDate": null,
+    "observer": "coordinating agent, actual CUA view",
+    "observed": "Individual pale square pads support green picnic tables/attached benches; a backed green bench is near the water path; boulders, bark mulch and lawn remain separate. Individual photo-to-aerial furniture correspondence is unresolved."
+  },
+  "sourcePlan": {
+    "url": "https://8e17239f-92c5-4fce-900b-3122fd1c9074.filesusr.com/ugd/35c726_8c4d2741b0a044619c77dbfcb67caf5c.pdf",
+    "sha256": "8c6d6647991996b1c08c7a00ca15dbcc28f2dc0cca561ec66da942930d2fe058",
+    "bytes": 6962861,
+    "page": 1,
+    "metadataCreationDate": "2017-04-13",
+    "basis": "Park loop and interior paths corroborate the2025aerial. Phase colors/furniture remain proposals, not as-built evidence."
+  },
+  "coordinates": "Native local EPSG6491 east/north; subtract[171282.3328920724,867589.2761750807]; runtime z=-north. Aerial tiles use WebMercator zoom19.",
+  "policy": "2025 aerial establishes visible bounded paved paths/pads. Exact dimensions, colors and material type remain authored. The2017plan corroborates broad layout only. Keep both southern connections and interior lawn; no medallion or blanket park paving. Source road/building geometry is preserved. Projected source water beneath retained land is permitted only with at least0.5m actual terrain clearance over every clipped intersection. The source-visible south parking lot and Davis Street apron complete the two path arrivals; its retained planting island remains unpaved. Neutral asphalt is authored; existing native paving/car envelopes remain unchanged.",
+  "minimumTerrainAboveWaterM": 0.5,
+  "walks": [
+    {
+      "id": "U-WALK",
+      "pixelLine": [
+        [
+          399,
+          686
+        ],
+        [
+          403,
+          657
+        ],
+        [
+          402,
+          619
+        ],
+        [
+          407,
+          581
+        ],
+        [
+          410,
+          546
+        ],
+        [
+          411,
+          522
+        ],
+        [
+          417,
+          474
+        ],
+        [
+          426,
+          447
+        ],
+        [
+          445,
+          429
+        ],
+        [
+          473,
+          415
+        ],
+        [
+          511,
+          409
+        ],
+        [
+          550,
+          414
+        ],
+        [
+          575,
+          427
+        ],
+        [
+          592,
+          451
+        ],
+        [
+          603,
+          481
+        ],
+        [
+          610,
+          522
+        ],
+        [
+          612,
+          563
+        ],
+        [
+          608,
+          605
+        ],
+        [
+          603,
+          637
+        ],
+        [
+          610,
+          659
+        ],
+        [
+          614,
+          669
+        ],
+        [
+          608,
+          678
+        ],
+        [
+          584,
+          687
+        ]
+      ],
+      "widthM": 2.0,
+      "basis": "Observed outer park walk ending independently at the two parking connections. Width and smooth interpolation authored from aerial appearance; no invented southern closing arc.",
+      "line": [
+        [
+          -2944.4792703,
+          -842.6500251
+        ],
+        [
+          -2943.5623523,
+          -836.2387478
+        ],
+        [
+          -2943.7466966,
+          -827.8315585
+        ],
+        [
+          -2942.5988167,
+          -819.4303528
+        ],
+        [
+          -2941.8979891,
+          -811.6908107
+        ],
+        [
+          -2941.6521472,
+          -806.3826485
+        ],
+        [
+          -2940.2723183,
+          -795.770318
+        ],
+        [
+          -2938.2472118,
+          -789.8064884
+        ],
+        [
+          -2934.0106719,
+          -785.8435442
+        ],
+        [
+          -2927.7797776,
+          -782.7744124
+        ],
+        [
+          -2919.3364577,
+          -781.4849374
+        ],
+        [
+          -2910.6820049,
+          -782.6298018
+        ],
+        [
+          -2905.1439813,
+          -785.5304478
+        ],
+        [
+          -2901.3931403,
+          -790.856494
+        ],
+        [
+          -2898.9804561,
+          -797.5038641
+        ],
+        [
+          -2897.4668098,
+          -806.5806257
+        ],
+        [
+          -2897.0633454,
+          -815.6524279
+        ],
+        [
+          -2897.9930951,
+          -824.9394921
+        ],
+        [
+          -2899.1349795,
+          -832.0134175
+        ],
+        [
+          -2897.6025066,
+          -836.8871222
+        ],
+        [
+          -2896.7242599,
+          -839.1032569
+        ],
+        [
+          -2898.0654018,
+          -841.0882348
+        ],
+        [
+          -2903.4032289,
+          -843.0553157
+        ]
+      ],
+      "parkingConnectionInference": "East endpoint extends the former trace by1.62m along the visibly paved apron to meet the registered lot edge. The short transition is authored interpolation at aerial resolution; no park lawn closing arc is introduced."
+    },
+    {
+      "id": "INTERIOR-WEST",
+      "pixelLine": [
+        [
+          441,
+          434
+        ],
+        [
+          458,
+          435
+        ],
+        [
+          484,
+          450
+        ],
+        [
+          507,
+          464
+        ],
+        [
+          510,
+          486
+        ]
+      ],
+      "widthM": 1.25,
+      "basis": "Observed narrow interior branch; exact width authored. Short connection through the observed main-walk junction is authored to preserve a continuous path.",
+      "line": [
+        [
+          -2934.9037751,
+          -786.9456339
+        ],
+        [
+          -2931.1301502,
+          -787.183768
+        ],
+        [
+          -2925.3720778,
+          -790.5278557
+        ],
+        [
+          -2920.279118,
+          -793.6477412
+        ],
+        [
+          -2919.6348146,
+          -798.5174449
+        ]
+      ]
+    },
+    {
+      "id": "INTERIOR-EAST",
+      "pixelLine": [
+        [
+          507,
+          464
+        ],
+        [
+          537,
+          455
+        ],
+        [
+          560,
+          446
+        ],
+        [
+          596,
+          459
+        ]
+      ],
+      "widthM": 1.25,
+      "basis": "Observed second arm of the interior branch; exact width authored. Connection beneath the tree-shadowed junction is inferred from the2025 trace and2017 path layout.",
+      "line": [
+        [
+          -2920.279118,
+          -793.6477412
+        ],
+        [
+          -2913.6091051,
+          -791.6866549
+        ],
+        [
+          -2908.4933503,
+          -789.7186015
+        ],
+        [
+          -2900.5129194,
+          -792.630186
+        ]
+      ]
+    }
+  ],
+  "features": [
+    {
+      "id": "FRP-PAD-01",
+      "sid": "FRP-PALE-PADS",
+      "kind": "walk",
+      "surface": "pale-pad",
+      "color": "#b0b0a3",
+      "pixelRing": [
+        [
+          417,
+          579
+        ],
+        [
+          430,
+          578
+        ],
+        [
+          433,
+          591
+        ],
+        [
+          419,
+          594
+        ]
+      ],
+      "ring": [
+        [
+          -2940.3764602,
+          -818.9978779
+        ],
+        [
+          -2937.488984,
+          -818.7896038
+        ],
+        [
+          -2936.8357646,
+          -821.6683883
+        ],
+        [
+          -2939.9472629,
+          -822.3180979
+        ]
+      ],
+      "inference": "Individually traced pale rectangular hardstanding visible in2025 aerial; officialphoto175 corroborates furniture pads. Exact edge, construction, color and individual furniture type are not surveyed."
+    },
+    {
+      "id": "FRP-PAD-02",
+      "sid": "FRP-PALE-PADS",
+      "kind": "walk",
+      "surface": "pale-pad",
+      "color": "#b0b0a3",
+      "pixelRing": [
+        [
+          418,
+          548
+        ],
+        [
+          429,
+          550
+        ],
+        [
+          430,
+          562
+        ],
+        [
+          418,
+          561
+        ]
+      ],
+      "ring": [
+        [
+          -2940.1236765,
+          -812.141205
+        ],
+        [
+          -2937.6832524,
+          -812.5945851
+        ],
+        [
+          -2937.4731162,
+          -815.2501613
+        ],
+        [
+          -2940.1365701,
+          -815.0170006
+        ]
+      ],
+      "inference": "Individually traced pale rectangular hardstanding visible in2025 aerial; officialphoto175 corroborates furniture pads. Exact edge, construction, color and individual furniture type are not surveyed."
+    },
+    {
+      "id": "FRP-PAD-03",
+      "sid": "FRP-PALE-PADS",
+      "kind": "walk",
+      "surface": "pale-pad",
+      "color": "#b0b0a3",
+      "pixelRing": [
+        [
+          451,
+          502
+        ],
+        [
+          465,
+          514
+        ],
+        [
+          458,
+          522
+        ],
+        [
+          447,
+          513
+        ]
+      ],
+      "ring": [
+        [
+          -2932.7508406,
+          -801.9981699
+        ],
+        [
+          -2929.6542243,
+          -804.6666799
+        ],
+        [
+          -2931.2164143,
+          -806.4294319
+        ],
+        [
+          -2933.6498953,
+          -804.4275508
+        ]
+      ],
+      "inference": "Individually traced pale rectangular hardstanding visible in2025 aerial; officialphoto175 corroborates furniture pads. Exact edge, construction, color and individual furniture type are not surveyed."
+    },
+    {
+      "id": "FRP-PAD-04",
+      "sid": "FRP-PALE-PADS",
+      "kind": "walk",
+      "surface": "pale-pad",
+      "color": "#b0b0a3",
+      "pixelRing": [
+        [
+          443,
+          441
+        ],
+        [
+          454,
+          447
+        ],
+        [
+          450,
+          461
+        ],
+        [
+          437,
+          457
+        ]
+      ],
+      "ring": [
+        [
+          -2934.4666441,
+          -788.4961243
+        ],
+        [
+          -2932.0301941,
+          -789.8343583
+        ],
+        [
+          -2932.9322219,
+          -792.9273782
+        ],
+        [
+          -2935.8147289,
+          -792.0295814
+        ]
+      ],
+      "inference": "Individually traced pale rectangular hardstanding visible in2025 aerial; officialphoto175 corroborates furniture pads. Exact edge, construction, color and individual furniture type are not surveyed."
+    },
+    {
+      "id": "FRP-PAD-05",
+      "sid": "FRP-PALE-PADS",
+      "kind": "walk",
+      "surface": "pale-pad",
+      "color": "#b0b0a3",
+      "pixelRing": [
+        [
+          474,
+          418
+        ],
+        [
+          482,
+          416
+        ],
+        [
+          484,
+          423
+        ],
+        [
+          475,
+          425
+        ]
+      ],
+      "ring": [
+        [
+          -2927.5607157,
+          -783.4390498
+        ],
+        [
+          -2925.7824438,
+          -783.0045823
+        ],
+        [
+          -2925.3453111,
+          -784.5550712
+        ],
+        [
+          -2927.3456195,
+          -784.9885439
+        ]
+      ],
+      "inference": "Individually traced pale rectangular hardstanding visible in2025 aerial; officialphoto175 corroborates furniture pads. Exact edge, construction, color and individual furniture type are not surveyed."
+    },
+    {
+      "id": "FRP-PAD-06",
+      "sid": "FRP-PALE-PADS",
+      "kind": "walk",
+      "surface": "pale-pad",
+      "color": "#b0b0a3",
+      "pixelRing": [
+        [
+          511,
+          415
+        ],
+        [
+          519,
+          415
+        ],
+        [
+          522,
+          421
+        ],
+        [
+          511,
+          421
+        ]
+      ],
+      "ring": [
+        [
+          -2919.3424048,
+          -782.8122219
+        ],
+        [
+          -2917.5661158,
+          -782.8201805
+        ],
+        [
+          -2916.9059539,
+          -784.1504495
+        ],
+        [
+          -2919.3483518,
+          -784.1395065
+        ]
+      ],
+      "inference": "Individually traced pale rectangular hardstanding visible in2025 aerial; officialphoto175 corroborates furniture pads. Exact edge, construction, color and individual furniture type are not surveyed."
+    },
+    {
+      "id": "FRP-PAD-07",
+      "sid": "FRP-PALE-PADS",
+      "kind": "walk",
+      "surface": "pale-pad",
+      "color": "#b0b0a3",
+      "pixelRing": [
+        [
+          523,
+          439
+        ],
+        [
+          534,
+          437
+        ],
+        [
+          538,
+          450
+        ],
+        [
+          525,
+          454
+        ]
+      ],
+      "ring": [
+        [
+          -2916.7017574,
+          -788.1332998
+        ],
+        [
+          -2914.2573761,
+          -787.7018134
+        ],
+        [
+          -2913.3821138,
+          -790.5815778
+        ],
+        [
+          -2916.2725509,
+          -791.453504
+        ]
+      ],
+      "inference": "Individually traced pale rectangular hardstanding visible in2025 aerial; officialphoto175 corroborates furniture pads. Exact edge, construction, color and individual furniture type are not surveyed."
+    },
+    {
+      "id": "FRP-PAD-08",
+      "sid": "FRP-PALE-PADS",
+      "kind": "walk",
+      "surface": "pale-pad",
+      "color": "#b0b0a3",
+      "pixelRing": [
+        [
+          559,
+          521
+        ],
+        [
+          568,
+          528
+        ],
+        [
+          561,
+          538
+        ],
+        [
+          552,
+          532
+        ]
+      ],
+      "ring": [
+        [
+          -2908.7896995,
+          -806.3086994
+        ],
+        [
+          -2906.7983032,
+          -807.8661537
+        ],
+        [
+          -2908.3624698,
+          -810.0713414
+        ],
+        [
+          -2910.3548574,
+          -808.735101
+        ]
+      ],
+      "inference": "Individually traced pale rectangular hardstanding visible in2025 aerial; officialphoto175 corroborates furniture pads. Exact edge, construction, color and individual furniture type are not surveyed."
+    },
+    {
+      "id": "FRP-PAD-09",
+      "sid": "FRP-PALE-PADS",
+      "kind": "walk",
+      "surface": "pale-pad",
+      "color": "#b0b0a3",
+      "pixelRing": [
+        [
+          419,
+          610
+        ],
+        [
+          432,
+          610
+        ],
+        [
+          432,
+          623
+        ],
+        [
+          418,
+          623
+        ]
+      ],
+      "ring": [
+        [
+          -2939.963132,
+          -825.8575439
+        ],
+        [
+          -2937.0766447,
+          -825.8704849
+        ],
+        [
+          -2937.0895372,
+          -828.7462861
+        ],
+        [
+          -2940.1980632,
+          -828.7323496
+        ]
+      ],
+      "inference": "Individually traced pale rectangular hardstanding visible in2025 aerial; officialphoto175 corroborates furniture pads. Exact edge, construction, color and individual furniture type are not surveyed."
+    },
+    {
+      "id": "FRP-PARKING",
+      "sid": "FRP-PARKING",
+      "kind": "walk",
+      "surface": "parking-asphalt",
+      "color": "#767c76",
+      "pixelRings": [
+        [
+          [
+            396,
+            683
+          ],
+          [
+            407,
+            691
+          ],
+          [
+            426,
+            684
+          ],
+          [
+            454,
+            675
+          ],
+          [
+            484,
+            665
+          ],
+          [
+            516,
+            655
+          ],
+          [
+            547,
+            645
+          ],
+          [
+            570,
+            638
+          ],
+          [
+            579,
+            665
+          ],
+          [
+            587,
+            695
+          ],
+          [
+            595,
+            722
+          ],
+          [
+            603,
+            742
+          ],
+          [
+            612,
+            756
+          ],
+          [
+            592,
+            767
+          ],
+          [
+            555,
+            780
+          ],
+          [
+            510,
+            794
+          ],
+          [
+            464,
+            808
+          ],
+          [
+            424,
+            820
+          ],
+          [
+            395,
+            830
+          ],
+          [
+            401,
+            812
+          ],
+          [
+            411,
+            793
+          ],
+          [
+            415,
+            780
+          ],
+          [
+            413,
+            759
+          ],
+          [
+            408,
+            730
+          ],
+          [
+            403,
+            702
+          ]
+        ],
+        [
+          [
+            460,
+            772
+          ],
+          [
+            456,
+            768
+          ],
+          [
+            458,
+            763
+          ],
+          [
+            477,
+            757
+          ],
+          [
+            508,
+            747
+          ],
+          [
+            539,
+            737
+          ],
+          [
+            559,
+            730
+          ],
+          [
+            565,
+            730
+          ],
+          [
+            568,
+            735
+          ],
+          [
+            566,
+            741
+          ],
+          [
+            548,
+            748
+          ],
+          [
+            514,
+            758
+          ],
+          [
+            480,
+            769
+          ],
+          [
+            465,
+            774
+          ]
+        ]
+      ],
+      "ring": [
+        [
+          -2945.1424084,
+          -841.9833903
+        ],
+        [
+          -2942.7079258,
+          -843.7640698
+        ],
+        [
+          -2938.4822605,
+          -842.234473
+        ],
+        [
+          -2932.2562725,
+          -840.2713999
+        ],
+        [
+          -2925.5852208,
+          -838.0890961
+        ],
+        [
+          -2918.4700976,
+          -835.9087763
+        ],
+        [
+          -2911.5770167,
+          -833.7274555
+        ],
+        [
+          -2906.4632135,
+          -832.2018201
+        ],
+        [
+          -2904.4916234,
+          -838.1835943
+        ],
+        [
+          -2902.74504,
+          -844.8280267
+        ],
+        [
+          -2900.9954815,
+          -850.8088162
+        ],
+        [
+          -2899.2389862,
+          -855.2410957
+        ],
+        [
+          -2897.2545072,
+          -858.3470729
+        ],
+        [
+          -2901.706174,
+          -860.7605696
+        ],
+        [
+          -2909.9344828,
+          -863.599591
+        ],
+        [
+          -2919.9400994,
+          -866.651862
+        ],
+        [
+          -2930.1677636,
+          -869.7031249
+        ],
+        [
+          -2939.0612195,
+          -872.3179135
+        ],
+        [
+          -2945.5102686,
+          -874.5012109
+        ],
+        [
+          -2944.1601795,
+          -870.525281
+        ],
+        [
+          -2941.920945,
+          -866.3321187
+        ],
+        [
+          -2941.0198959,
+          -863.4602845
+        ],
+        [
+          -2941.4431441,
+          -858.8127463
+        ],
+        [
+          -2942.5245717,
+          -852.3924942
+        ],
+        [
+          -2943.6069892,
+          -846.1934637
+        ]
+      ],
+      "holes": [
+        [
+          [
+            -2931.0202238,
+            -861.7353439
+          ],
+          [
+            -2931.9044119,
+            -860.8464969
+          ],
+          [
+            -2931.455377,
+            -859.7424048
+          ],
+          [
+            -2927.2306961,
+            -858.4340142
+          ],
+          [
+            -2920.3375904,
+            -856.2526949
+          ],
+          [
+            -2913.444489,
+            -854.0713696
+          ],
+          [
+            -2908.9967858,
+            -852.5427476
+          ],
+          [
+            -2907.6645558,
+            -852.5487146
+          ],
+          [
+            -2907.0033948,
+            -853.6577794
+          ],
+          [
+            -2907.4534163,
+            -854.9830884
+          ],
+          [
+            -2911.4570439,
+            -856.5137011
+          ],
+          [
+            -2919.0162626,
+            -858.6920447
+          ],
+          [
+            -2926.5764774,
+            -861.0915973
+          ],
+          [
+            -2929.9120137,
+            -862.182753
+          ]
+        ]
+      ],
+      "inference": "Actual park south parking and connection toward Davis Street are visible in2025 aerial through parked cars/stall rows and hardstanding edges. Outer edge and planting island are hand traced; small junction transitions and muted asphalt appearance are authored. Native roads/sidewalks, guided-car envelope and already finished lot surfaces are subtracted. No surveyed curb height, current occupancy or exact paving age is claimed."
+    }
+  ],
+  "registeredStructures": {
+    "168323_866733": {
+      "id": "168323_866733",
+      "outline": [
+        [
+          -2955.7042110713955,
+          -848.4545328109525
+        ],
+        [
+          -2955.3840445593523,
+          -850.8995490691159
+        ],
+        [
+          -2953.230221477803,
+          -850.575994581799
+        ],
+        [
+          -2952.9085594642092,
+          -852.6878019616706
+        ],
+        [
+          -2954.068502282491,
+          -852.9047428141348
+        ],
+        [
+          -2952.3764125698945,
+          -863.2420117924921
+        ],
+        [
+          -2960.329465163173,
+          -864.5391979580745
+        ],
+        [
+          -2960.8924952526286,
+          -860.8713018902345
+        ],
+        [
+          -2965.117366622144,
+          -861.5187769677723
+        ],
+        [
+          -2965.842967563425,
+          -857.1837200839072
+        ],
+        [
+          -2967.3340392960235,
+          -857.3991729322588
+        ],
+        [
+          -2968.462084097351,
+          -850.5076579026645
+        ],
+        [
+          -2955.7042110713955,
+          -848.4545328109525
+        ]
+      ],
+      "center": [
+        -2959.8151228360143,
+        -856.0590887215602
+      ]
+    },
+    "168317_866784": {
+      "id": "168317_866784",
+      "outline": [
+        [
+          -2951.722300696827,
+          -828.1462496212916
+        ],
+        [
+          -2973.9207305432938,
+          -830.9345188910374
+        ],
+        [
+          -2978.991879413632,
+          -798.8119977944298
+        ],
+        [
+          -2975.429294185771,
+          -798.1615584705723
+        ],
+        [
+          -2976.5493441921426,
+          -789.4929281721124
+        ],
+        [
+          -2965.199854663224,
+          -787.6556422907161
+        ],
+        [
+          -2967.7007766129973,
+          -773.0940099641448
+        ],
+        [
+          -2958.754454203561,
+          -771.8012884735363
+        ],
+        [
+          -2953.774982718547,
+          -805.922677419614
+        ],
+        [
+          -2956.1776344878017,
+          -806.3561873341678
+        ],
+        [
+          -2951.722300696827,
+          -828.1462496212916
+        ]
+      ],
+      "center": [
+        -2965.0104639900987,
+        -805.3339156499932
+      ]
+    },
+    "168429_866791": {
+      "id": "168429_866791",
+      "outline": [
+        [
+          -2849.8804263929196,
+          -805.4993529953063
+        ],
+        [
+          -2853.3636984548357,
+          -806.9277129956754
+        ],
+        [
+          -2853.855420297914,
+          -805.8147961631184
+        ],
+        [
+          -2861.8218019899505,
+          -810.1109725758433
+        ],
+        [
+          -2868.3901557936915,
+          -797.9747643830488
+        ],
+        [
+          -2845.238084458484,
+          -785.527178265038
+        ],
+        [
+          -2837.92417517383,
+          -797.5556251207599
+        ],
+        [
+          -2850.6199960698723,
+          -804.2742564996006
+        ],
+        [
+          -2849.8804263929196,
+          -805.4993529953063
+        ]
+      ],
+      "center": [
+        -2853.2648163213275,
+        -797.8904584610755
+      ]
+    },
+    "168419_866726": {
+      "id": "168419_866726",
+      "outline": [
+        [
+          -2861.875305302354,
+          -859.0934049667558
+        ],
+        [
+          -2861.294838087051,
+          -858.8738574010786
+        ],
+        [
+          -2858.7529355841107,
+          -864.3277440500678
+        ],
+        [
+          -2865.2238438350323,
+          -867.4088142241817
+        ],
+        [
+          -2867.8485244760814,
+          -861.9545549576869
+        ],
+        [
+          -2861.875305302354,
+          -859.0934049667558
+        ]
+      ],
+      "center": [
+        -2863.287030238274,
+        -863.125390318218
+      ]
+    }
+  },
+  "parkingBayRows": [
+    {
+      "id": "FRP-UPPER-BAYS",
+      "startPixel": [
+        429,
+        680
+      ],
+      "endPixel": [
+        556,
+        641
+      ],
+      "dividerPixelVector": [
+        8,
+        25
+      ],
+      "dividerCount": 11,
+      "widthM": 0.1
+    },
+    {
+      "id": "FRP-LOWER-BAYS",
+      "startPixel": [
+        445,
+        757
+      ],
+      "endPixel": [
+        550,
+        723
+      ],
+      "dividerPixelVector": [
+        -8,
+        -25
+      ],
+      "dividerCount": 9,
+      "widthM": 0.1
+    }
+  ],
+  "parkingBayPolicy": "The2025 image clearly resolves two rows of pale bay dividers and a central driving aisle. These conservative white lines interpolate along the visible rows; their spacing, exact count and 10cm width are authored for game readability, clipped inside the new lot. No accessibility symbol, occupancy or reserved bay designation is inferred."
+}

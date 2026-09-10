@@ -1,0 +1,286 @@
+{
+  "version": 1,
+  "id": "171884_864879",
+  "address": "114 Point Breeze Road",
+  "nativeArchitecture": {
+    "struct_id": "171884_864879",
+    "outline_xy": [
+      [
+        621.3774558884907,
+        -2696.939805040136
+      ],
+      [
+        618.9337337027537,
+        -2707.5929330356885
+      ],
+      [
+        624.1455028758501,
+        -2708.835450471728
+      ],
+      [
+        623.219199333631,
+        -2712.7192631270736
+      ],
+      [
+        629.5893415337196,
+        -2714.1885268914048
+      ],
+      [
+        628.0714871700911,
+        -2721.0689139956376
+      ],
+      [
+        626.0771279081819,
+        -2722.8381235208362
+      ],
+      [
+        626.8015997647017,
+        -2728.061358320061
+      ],
+      [
+        624.8962270966731,
+        -2728.275922565721
+      ],
+      [
+        626.6679939843889,
+        -2740.834031782928
+      ],
+      [
+        621.5314935084316,
+        -2741.4800286510726
+      ],
+      [
+        619.4364737084252,
+        -2726.9213478657184
+      ],
+      [
+        603.216201757692,
+        -2724.5243014855077
+      ],
+      [
+        603.9751417783846,
+        -2721.0841106646694
+      ],
+      [
+        601.7416501381667,
+        -2720.519863122725
+      ],
+      [
+        600.9827090881881,
+        -2723.960053705843
+      ],
+      [
+        598.500805314543,
+        -2723.3948162270244
+      ],
+      [
+        599.3425512950926,
+        -2719.954955566325
+      ],
+      [
+        570.4701485470287,
+        -2713.286740873591
+      ],
+      [
+        569.9649160112021,
+        -2715.3950830692193
+      ],
+      [
+        565.0011197671993,
+        -2714.26458542794
+      ],
+      [
+        563.9357401113666,
+        -2711.4835548853735
+      ],
+      [
+        566.2963003624172,
+        -2700.941185513977
+      ],
+      [
+        569.4503606770886,
+        -2699.0655434204964
+      ],
+      [
+        589.0575466964219,
+        -2703.475441693794
+      ],
+      [
+        591.8790608840645,
+        -2701.9316792495083
+      ],
+      [
+        594.4968319403997,
+        -2689.168897709227
+      ],
+      [
+        596.9880100915325,
+        -2687.4016751545714
+      ],
+      [
+        605.9228194765747,
+        -2689.4365279910853
+      ],
+      [
+        604.748982170684,
+        -2693.0972103790846
+      ],
+      [
+        621.3774558884907,
+        -2696.939805040136
+      ]
+    ],
+    "area_m2": 1462.5296363511577,
+    "centroid_xy": [
+      601.2576149518837,
+      -2710.302357845414
+    ],
+    "parcel_overlap_fraction": 1.0,
+    "parcel_objectid": 1601712,
+    "parcel_loc_id": "F_564022_2837472",
+    "record_year": 2025,
+    "assessor_style": "RESTAURANT",
+    "assessor_stories": "1",
+    "year_built": 1890,
+    "use_desc": "Mixed Use (Primarily Commercial, some Residential)",
+    "road_name": "POINT BREEZE ROAD",
+    "nearest_road_xy": [
+      590.2768031582931,
+      -2730.4908630969603
+    ],
+    "distance_to_road_m": 10.714333649249827,
+    "source_url": "https://www.mass.gov/info-details/massgis-data-property-tax-parcels",
+    "photo_reviewed": false,
+    "primary_structure_inferred": true,
+    "evidence": "Parcel assessor style/stories; spatial attachment to principal footprint inferred",
+    "architecture_note": "Assessor describes property as RESTAURANT, 1 stories, built 1890. Color, openings, trim and exact entrance position unverified."
+  },
+  "architectureSha256": "9b128f13b274a4c8a1c975f73943fd6f562fc0d782536a3b7fae628d42f92012",
+  "originalGeneratedReportSha256": "9ee1997f524ca5cb6413ae6ba61665d0bcee765656cb76b8c15c2858e548f4d6",
+  "originalGeneratedHeight": {
+    "base": 52.795603625447114,
+    "floor": 57.64044102974766,
+    "eave": 61.62369074659014,
+    "basis": "robust own roof median with bounded roof allowance"
+  },
+  "aerial": {
+    "sourceService": "https://tiles.arcgis.com/tiles/hGdibHYSPO59RG1h/arcgis/rest/services/Massachusetts_Aerial_Imagery_2025/MapServer",
+    "sourceDate": "Spring2025; exact exposure date unresolved",
+    "zoom": 19,
+    "tileBounds": [
+      157519,
+      194557,
+      157521,
+      194559
+    ],
+    "centerLocal": [
+      601.2576149518837,
+      -2710.302357845414
+    ],
+    "resizeScale": 1,
+    "sourceRows": [
+      {
+        "x": 157519,
+        "y": 194557,
+        "url": "https://tiles.arcgis.com/tiles/hGdibHYSPO59RG1h/arcgis/rest/services/Massachusetts_Aerial_Imagery_2025/MapServer/tile/19/194557/157519",
+        "sha256": "916ea841337212db2382fb13e678d02563a8fe797b992a7c30fd1dd627c9161c",
+        "bytes": 11678,
+        "file": "/private/tmp/webster-video-pass3/registration/19-157519-194557.jpg"
+      },
+      {
+        "x": 157519,
+        "y": 194558,
+        "url": "https://tiles.arcgis.com/tiles/hGdibHYSPO59RG1h/arcgis/rest/services/Massachusetts_Aerial_Imagery_2025/MapServer/tile/19/194558/157519",
+        "sha256": "48fb2f321658fb44ae2a3a1e1870338ca34f11da25b5ee372ac357d4c70441a0",
+        "bytes": 21589,
+        "file": "/private/tmp/webster-video-pass3/registration/19-157519-194558.jpg"
+      },
+      {
+        "x": 157519,
+        "y": 194559,
+        "url": "https://tiles.arcgis.com/tiles/hGdibHYSPO59RG1h/arcgis/rest/services/Massachusetts_Aerial_Imagery_2025/MapServer/tile/19/194559/157519",
+        "sha256": "dc2223300014de889d024f213e1df84761bceb5498a230787184244d4220241c",
+        "bytes": 16367,
+        "file": "/private/tmp/webster-video-pass3/registration/19-157519-194559.jpg"
+      },
+      {
+        "x": 157520,
+        "y": 194557,
+        "url": "https://tiles.arcgis.com/tiles/hGdibHYSPO59RG1h/arcgis/rest/services/Massachusetts_Aerial_Imagery_2025/MapServer/tile/19/194557/157520",
+        "sha256": "9d800edc9ba955292e0c13141186264bd027fb6c7aa9ff5b5087ccde60f5cff5",
+        "bytes": 12659,
+        "file": "/private/tmp/webster-video-pass3/registration/19-157520-194557.jpg"
+      },
+      {
+        "x": 157520,
+        "y": 194558,
+        "url": "https://tiles.arcgis.com/tiles/hGdibHYSPO59RG1h/arcgis/rest/services/Massachusetts_Aerial_Imagery_2025/MapServer/tile/19/194558/157520",
+        "sha256": "bb161760bd6ba669509c751548e9350c73e65f0bd0eeb855b626f47dc89b7dcc",
+        "bytes": 19371,
+        "file": "/private/tmp/webster-video-pass3/registration/19-157520-194558.jpg"
+      },
+      {
+        "x": 157520,
+        "y": 194559,
+        "url": "https://tiles.arcgis.com/tiles/hGdibHYSPO59RG1h/arcgis/rest/services/Massachusetts_Aerial_Imagery_2025/MapServer/tile/19/194559/157520",
+        "sha256": "0866cecb8ce04521c628e2edce599540dc3ff95d37626993ee06b0f5ce29127f",
+        "bytes": 19377,
+        "file": "/private/tmp/webster-video-pass3/registration/19-157520-194559.jpg"
+      },
+      {
+        "x": 157521,
+        "y": 194557,
+        "url": "https://tiles.arcgis.com/tiles/hGdibHYSPO59RG1h/arcgis/rest/services/Massachusetts_Aerial_Imagery_2025/MapServer/tile/19/194557/157521",
+        "sha256": "ba62002b1e8a146692a12e5d4ac325d5c4162e5b72583482a652b96f7ffefcbb",
+        "bytes": 8216,
+        "file": "/private/tmp/webster-video-pass3/registration/19-157521-194557.jpg"
+      },
+      {
+        "x": 157521,
+        "y": 194558,
+        "url": "https://tiles.arcgis.com/tiles/hGdibHYSPO59RG1h/arcgis/rest/services/Massachusetts_Aerial_Imagery_2025/MapServer/tile/19/194558/157521",
+        "sha256": "d6a60dfc6f11f7d232b45ded7341490279432355f44ce7accefae0f79e8dc87a",
+        "bytes": 19743,
+        "file": "/private/tmp/webster-video-pass3/registration/19-157521-194558.jpg"
+      },
+      {
+        "x": 157521,
+        "y": 194559,
+        "url": "https://tiles.arcgis.com/tiles/hGdibHYSPO59RG1h/arcgis/rest/services/Massachusetts_Aerial_Imagery_2025/MapServer/tile/19/194559/157521",
+        "sha256": "ba4dd86022a402d5a45d352965ed859e080abf9f395cfeeb746c2a6b11261ca8",
+        "bytes": 19565,
+        "file": "/private/tmp/webster-video-pass3/registration/19-157521-194559.jpg"
+      }
+    ],
+    "policy": "Read-only source registration; no pixels are game assets."
+  },
+  "registration": {
+    "observedCanopyPixel": [
+      281,
+      407
+    ],
+    "observedCanopyCenterLocal": [
+      602.9331902553968,
+      -2721.6879945994588
+    ],
+    "priorInferredDoorLocal": [
+      620.3671864087933,
+      -2734.217495613207
+    ],
+    "separationM": 21.469341338992326,
+    "traceStatus": "Photo-ground candidate; blue canopy visible in2025 aerial, final footprint/entryface matching required"
+  },
+  "video": {
+    "id": "V02",
+    "url": "https://www.youtube.com/watch?v=WpMS8lopK4M",
+    "seconds": [
+      71.4,
+      76.4
+    ],
+    "reviewedOn": "2026-09-09",
+    "captureDate": "2023-04-01",
+    "captureDateBasis": "Date burned into video, recorded by coordinating reviewer.",
+    "observed": "Root reviewer inspected actual playback: blue rounded/barrel canopy in the central south-facade notch, dark double opening, two pale slender posts and tiny white Point Breeze lettering; white horizontal siding and low gray shingle roof. Another blue awning appears farther west at76.4s; it is not replaced by this registration."
+  },
+  "inference": "The canopy candidate is read from spring2025 aerial, .29m along and .84m outward from roofprint edge13 midpoint. The authored doorway/canopy is centered within that retained notch; image-point selection and2011roofprint parallax are not survey measurements. Width, arch profile, height, frame/door proportions and RGB values are authored. Threshold and both post feet are sampled from retained runtime terrain. The former generated door on edge10 is superseded inference, not an observed second entrance."
+}

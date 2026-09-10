@@ -36,6 +36,9 @@ import { applyRampApronFinish } from './ramp-apron-finish';
 import { applyCampStructures } from './camp-structures';
 import { applyIndianRanchCanopy } from './indian-ranch-canopy';
 import { applyIndianRanchGrounds } from './indian-ranch-grounds';
+import { applyFrenchRiverPark } from './french-river-park';
+import { applyFrenchRiverParkFurniture } from './french-river-park-furniture';
+import { applyPointBreezeDetails } from './point-breeze-details';
 import { applyBathhouse } from './bathhouse';
 import { applyBathhouseGrounds } from './bathhouse-grounds';
 import { applyDockApproaches } from './dock-approaches';
@@ -120,10 +123,13 @@ export function tileAssemblySteps(group: THREE.Group, tile: TownTile, level: num
     { name: 'commercial', apply: () => { return applyCommercialCompletion(group,tile.id,tile.origin,level,sourceSha256); } },
     { name: 'evidenceBuildings', apply: () => { return applyEvidenceBuildings(group,tile.id,tile.origin,level,evidence?.buildings??[],landmarks.map(row=>({...row,material:row.material??undefined,paint:row.paint??undefined})),(batch,matched)=>buildEvidenceLandmarks(batch,landmarks.filter(row=>matched.has(row.id))),evidence?.roofs??[]); } },
     { name: 'campStructures', apply: () => { return applyCampStructures(group,tile.id,tile.origin,level,sourceSha256); } },
+    { name: 'pointBreezeDetails', apply: () => { return applyPointBreezeDetails(group,tile.id,tile.origin,level,sourceSha256); } },
     { name: 'indianRanchCanopy', apply: () => { return applyIndianRanchCanopy(group,tile.id,tile.origin,level,sourceSha256); } },
     { name: 'indianRanchGrounds', apply: () => { return applyIndianRanchGrounds(group,tile.id,tile.origin,level,sourceSha256); } },
     { name: 'bathhouse', apply: () => { return applyBathhouse(group,tile.id,tile.origin,level,sourceSha256); } },
     { name: 'bathhouseGrounds', apply: () => { return applyBathhouseGrounds(group,tile.id,tile.origin,level,sourceSha256); } },
+    { name: 'frenchRiverPark', apply: () => { return applyFrenchRiverPark(group,tile.id,tile.origin,level,sourceSha256); } },
+    { name: 'frenchRiverParkFurniture', apply: () => { return applyFrenchRiverParkFurniture(group,tile.id,tile.origin,level,sourceSha256); } },
     { name: 'evidenceEnvironment', apply: () => { return applyEvidenceEnvironment(group,tile.id,tile.origin,level); } },
     { name: 'townHallMaterials', apply: () => { return applyTownHallMaterials(group,tile.id,level,sourceSha256); } },
     { name: 'civicRoof', apply: () => { return applyCivicRoofFinish(group,tile.id,level,sourceSha256); } },

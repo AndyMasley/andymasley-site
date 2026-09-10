@@ -47,6 +47,6 @@ describe('Video-observed Eastern Pearl facade',()=>{
   it('records video observations and unresolved ground placement separately from fitted dimensions',()=>{
     expect(row.source.url).toBe('https://www.youtube.com/watch?v=feZq1WgvtoA');expect(row.source.observedAtSeconds).toBe(75.1548);
     expect(row.address).toBe('290 Main Street');expect(row.inferred).toContain('Widths');expect(row.deferred.some(s=>s.includes('Terrace'))).toBe(true);
-    expect(VIDEO_VENUE_DETAILS.unplacedVideoSites[0].status).toBe('placement-review');
+    expect(VIDEO_VENUE_DETAILS.unplacedVideoSites[0].status).toBe('partially-registered');
   });
 });
