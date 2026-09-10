@@ -35,6 +35,14 @@ function random(x: number, z: number, salt = 0): number {
   return ((value ^ (value >>> 16)) >>> 0) / 4294967296;
 }
 
+function lawnHeightPatch(x: number, z: number): number {
+  const px = x / 3, pz = z / 3, ix = Math.floor(px), iz = Math.floor(pz);
+  const a = px - ix, b = pz - iz, u = a * a * (3 - 2 * a), v = b * b * (3 - 2 * b);
+  const left = random(ix, iz, 857) * (1 - v) + random(ix, iz + 1, 857) * v;
+  const right = random(ix + 1, iz, 857) * (1 - v) + random(ix + 1, iz + 1, 857) * v;
+  return left * (1 - u) + right * u;
+}
+
 /** World-grid seeds do not depend on tile ID, loading order or display LOD. */
 export function grassSite(x: number, z: number): { x: number; z: number; seed: number } {
   return {
@@ -127,22 +135,25 @@ type Candidate = { tile: GrassTile; x: number; y: number; z: number; seed: numbe
 
 export function tuftGeometry(): THREE.BufferGeometry {
   const positions: number[] = [], colors: number[] = [], roots: number[] = [], indices: number[] = [];
-  const root = new THREE.Color('#3d502e'), middle = new THREE.Color('#5a703d'), tip = new THREE.Color('#6e8248');
+  const root = new THREE.Color('#405333'), middle = new THREE.Color('#556a42'), tip = new THREE.Color('#687a4b'), dryTip = new THREE.Color('#7d8255');
   for (let blade = 0; blade < 6; blade++) {
-    const angle = blade * 2.39996 + random(blade, 1) * 1.1;
-    const rootAngle = blade * 2.39996 + random(blade, 19) * 0.8;
-    const rootRadius = 0.035 + Math.sqrt(random(blade, 23)) * 0.165;
-    const rootX = Math.cos(rootAngle) * rootRadius, rootZ = Math.sin(rootAngle) * rootRadius;
-    const height = 0.028 + random(blade, 3) * 0.045, width = 0.0024 + random(blade, 7) * 0.0018;
-    const lean = 0.010 + random(blade, 13) * 0.044;
-    const twist = (random(blade, 31) - 0.5) * 0.020;
-    // A curved strip with a shallow transverse fold catches light without extra faces.
-    const vertices = [[-width, -0.001, 0], [width, -0.001, 0], [-width * 0.68 + lean * 0.23, height * 0.62, twist - width * 0.35], [width * 0.68 + lean * 0.23, height * 0.62, twist + width * 0.35], [lean, height * 0.95, twist * 1.7]];
+    // Three paired sprays read as small turf clumps instead of six isolated
+    // needles. Their full footprint stays inside the original 0.2m root radius.
+    const spray = Math.floor(blade / 2), rootAngle = spray * 2.39996 + random(spray, 19) * .65;
+    const rootRadius = .07 + Math.sqrt(random(spray, 23)) * .095;
+    const offset = (blade % 2 ? 1 : -1) * .015;
+    const rootX = Math.cos(rootAngle) * rootRadius - Math.sin(rootAngle) * offset, rootZ = Math.sin(rootAngle) * rootRadius + Math.cos(rootAngle) * offset;
+    const angle = rootAngle + (blade % 2 ? .8 : -.6) + random(blade, 1) * .7;
+    // Slightly broader, 6–11cm curved blades remain legible from the driving
+    // camera. The original 30 vertices / 18 triangles per instance are retained.
+    const height = .060 + random(blade, 3) * .052, width = .0046 + random(blade, 7) * .0028;
+    const lean = .012 + random(blade, 13) * .045, twist = (random(blade, 31) - .5) * .015;
+    const vertices = [[-width, -.003, 0], [width, -.003, 0], [-width * .61 + lean * .30, height * .60, twist - width * .32], [width * .61 + lean * .30, height * .60, twist + width * .32], [lean, height, twist * 1.6]];
     const start = positions.length / 3;
     vertices.forEach(([x, y, z], i) => {
       positions.push(rootX + x * Math.cos(angle) - z * Math.sin(angle), y, rootZ + x * Math.sin(angle) + z * Math.cos(angle));
       roots.push(rootX, rootZ);
-      const color = i < 2 ? root : i < 4 ? middle : tip;
+      const color = i < 2 ? root : i < 4 ? middle : random(blade, 47) > .76 ? dryTip : tip;
       colors.push(color.r, color.g, color.b);
     });
     indices.push(start, start + 1, start + 3, start, start + 3, start + 2, start + 2, start + 3, start + 4);
@@ -180,7 +191,7 @@ export class TownGrass {
     this.material = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1, side: THREE.DoubleSide });
     this.material.name = 'Town | rooted summer turf blades';
     this.material.forceSinglePass = true;
-    this.material.customProgramCacheKey = () => 'town-grass-rooted-patches-v4';
+    this.material.customProgramCacheKey = () => 'town-grass-paired-sprays-v5';
     this.material.onBeforeCompile = shader => {
       Object.assign(shader.uniforms, this.uniforms);
       // Thin blades receive a similar soft canopy fill on either face. Undo
@@ -188,14 +199,17 @@ export class TownGrass {
       // needles against the lawn; the upward-biased vertex normals remain.
       shader.fragmentShader = shader.fragmentShader.replace('#include <normal_fragment_maps>', '#include <normal_fragment_maps>\nnormal *= faceDirection;');
       shader.vertexShader = `attribute vec2 townGrassRoot;\nuniform vec3 townGrassCamera;\nuniform float townGrassTime;\n${shader.vertexShader}`
-        .replace('#include <beginnormal_vertex>', '#include <beginnormal_vertex>\nobjectNormal = normalize(objectNormal + vec3(0.0,0.55,0.0));')
+        .replace('#include <beginnormal_vertex>', '#include <beginnormal_vertex>\nobjectNormal = normalize(objectNormal + vec3(0.0,0.80,0.0));')
         .replace('#include <begin_vertex>', `
 #include <begin_vertex>
 vec4 townTuftWorld = modelMatrix * instanceMatrix * vec4(0.0,0.0,0.0,1.0);
 float townTuftDistance = length(townTuftWorld.xz - townGrassCamera.xz);
 float townTuftGrowth = 1.0 - smoothstep(${GRASS_LIMITS.fadeStart.toFixed(1)},${GRASS_LIMITS.radius.toFixed(1)},townTuftDistance);
-float townTuftWind = sin(townGrassTime*1.15 + townTuftWorld.x*0.38 + townTuftWorld.z*0.21);
-transformed.x += townTuftWind * position.y * position.y * 0.29;
+float townTuftWind = sin(townGrassTime*1.05 + townTuftWorld.x*0.38 + townTuftWorld.z*0.21);
+float townBladeBend = pow(clamp(position.y/.112,0.0,1.0),2.0);
+// A gentle coherent gust flexes the tips; every buried root stays anchored.
+transformed.x += townTuftWind * townBladeBend * .008;
+transformed.z += sin(townGrassTime*.83 + townTuftWorld.z*.31) * townBladeBend * .004;
 vec3 townBladeRoot = vec3(townGrassRoot.x,0.0,townGrassRoot.y);
 transformed = townBladeRoot + (transformed-townBladeRoot) * townTuftGrowth;
 `);
@@ -261,7 +275,10 @@ transformed = townBladeRoot + (transformed-townBladeRoot) * townTuftGrowth;
       rows.forEach((row, i) => {
         const ix = Math.floor(row.x / GRASS_LIMITS.spacing), iz = Math.floor(row.z / GRASS_LIMITS.spacing);
         const spread = 0.82 + random(ix, iz, 191) * 0.32;
-        const height = 0.72 + random(ix, iz, 397) * 0.55;
+        // Small areas share a mowing-height tendency, with restrained variation
+        // inside each patch; world seeds remain independent of tile/LOD order.
+        const patch = lawnHeightPatch(row.x, row.z);
+        const height = .75 + patch * .23 + random(ix, iz, 397) * .22;
         p.set(row.x, row.y + 0.002, row.z); scale.set(spread, height, spread);
         q.setFromUnitVectors(up, normal.fromArray(row.normal)); yaw.setFromAxisAngle(up, row.seed * Math.PI * 2); q.multiply(yaw);
         worldMatrix.compose(p, q, scale); matrix.multiplyMatrices(inverse, worldMatrix);

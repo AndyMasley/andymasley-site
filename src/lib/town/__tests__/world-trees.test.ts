@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import * as THREE from 'three';
 import { TownWorld } from '../world';
 import type { TownTile, WorldManifest } from '../contracts';
-import { createConiferPrototype, createOpenBroadleafPrototype, treeForm } from '../vegetation';
+import { createConiferPrototype, createOpenBroadleafPrototype, createBroadleafPrototype, treeForm } from '../vegetation';
 import { createDistantCanopyPrototype } from '../distant-canopy';
 
 const tile = (id: string): TownTile => ({ id, origin: [0, 0, 0], bounds: { min: [-1000, 0, -1000], max: [1000, 40, 1000] }, lods: [{ level: 0, url: `${id}.glb`, bytes: 1 }] });
@@ -24,6 +24,24 @@ function fixture(rows: number[][][]) {
 }
 
 describe('Town tree detail, global shadow budget and instance ownership', () => {
+  it('shares standard leaf-cluster shading with identical draws, instances and shadow selection, and counts/disposes its geometry once', () => {
+    const rows = [Array.from({ length: 100 }, (_, i) => row(i * 4, i % 7 * 5))];
+    const baseline = fixture(rows), candidate = fixture(rows);
+    const state = candidate.world as unknown as { prototypes: THREE.Group[]; broadleafPrototypes: Map<number, THREE.Group> };
+    const sourceGeometry = (state.prototypes[0].children[0] as THREE.Mesh).geometry;
+    const before = sourceGeometry.getAttribute('position').array.slice();
+    const variant = createBroadleafPrototype(state.prototypes[0]); state.broadleafPrototypes.set(0, variant);
+    const geometry = (variant.children[0] as THREE.Mesh).geometry, disposal = vi.spyOn(geometry, 'dispose');
+    baseline.update(); candidate.update();
+    expect(candidate.meshes()).toHaveLength(baseline.meshes().length);
+    for (const kind of ['near', 'far', 'trunk']) expect(candidate.selections(kind)).toEqual(baseline.selections(kind));
+    expect(candidate.selections('near', true)).toEqual(baseline.selections('near', true));
+    expect(candidate.world.residentResources().estimatedGeometryBytes - baseline.world.residentResources().estimatedGeometryBytes).toBe(variant.userData.townCrownGeometryBytes);
+    for (const { mesh } of candidate.meshes().filter(r => r.mesh.userData.treeKind === 'near' && r.mesh.userData.treeFamily === 'broadleaf')) expect(mesh.geometry).toBe(geometry);
+    expect(sourceGeometry.getAttribute('position').array).toEqual(before);
+    candidate.world.dispose(); candidate.world.dispose(); baseline.world.dispose();
+    expect(disposal).toHaveBeenCalledTimes(1); expect(state.broadleafPrototypes.size).toBe(0);
+  });
   it('uses shared far canopy refinement without adding draws, changing anchors or extending near detail', () => {
     const rows = [Array.from({ length: 80 }, (_, i) => row(i * 11, i % 3 * 17))];
     const baseline = fixture(rows), candidate = fixture(rows);

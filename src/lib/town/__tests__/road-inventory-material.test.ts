@@ -26,8 +26,13 @@ describe('Inventory road appearance', () => {
     const family=code===1?'earth':code===2?'gravel':'chip-seal';
     expect(compiled.fragmentShader).toContain('Webster mineral family: '+family);
     expect(compiled.fragmentShader).not.toContain('Webster mineral family: asphalt');
-    expect(compiled.fragmentShader).toContain('(townStoneGrain-0.5)*'+MINERAL_FINISH[family].relief);
-    expect(compiled.fragmentShader.match(/townArtNoise\(/g)).toHaveLength(3);
+    const spec=MINERAL_FINISH[family];
+    expect(compiled.fragmentShader).toContain('float townFineValue = (townStoneGrain-0.5)*townMineralResolved;');
+    expect(compiled.fragmentShader).toContain('float townAggregateValue = (townStoneAggregate-0.5)*townAggregateResolved;');
+    expect(compiled.fragmentShader).toContain(`townArtHeight = townFineValue*${spec.relief}+townAggregateValue*${spec.aggregateRelief};`);
+    expect(compiled.fragmentShader).toContain(`townArtClose * (1.0-smoothstep(${spec.resolved[0]},${spec.resolved[1]},townArtFootprint))`);
+    expect(compiled.fragmentShader).toContain(`townArtClose * (1.0-smoothstep(0.25,1.05,townArtFootprint*${spec.aggregate.toFixed(1)}))`);
+    expect(compiled.fragmentShader.match(/townArtNoise\(/g)).toHaveLength(4); // Three shared mineral reads and the function declaration.
     if(code===2){expect(compiled.fragmentShader).toContain('townArtFootprint*22.0');expect(compiled.fragmentShader).not.toContain('fwidth(townGravelRadius)');}
     expect(compiled.fragmentShader.match(/#include <map_fragment>/g)).toHaveLength(1);
     expect(variant.map).toBe(original.map);expect(variant.normalMap).toBe(original.normalMap);

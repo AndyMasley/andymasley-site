@@ -3,15 +3,24 @@ import {describe,expect,it} from 'vitest';
 import * as THREE from 'three';
 import {applyArtMaterial} from '../art-materials';
 import {applyInventoryRoadAppearance} from '../road-inventory-material';
+import {MINERAL_FINISH} from '../mineral-finish';
 function compile(code:1|2|5){const m=new THREE.MeshStandardMaterial();m.name='Drive road | asphalt';m.map=new THREE.Texture();applyArtMaterial(m);applyInventoryRoadAppearance(m,code);const s=THREE.ShaderLib.standard,shader={vertexShader:s.vertexShader,fragmentShader:s.fragmentShader,uniforms:THREE.UniformsUtils.clone(s.uniforms)};m.onBeforeCompile(shader as Parameters<THREE.Material['onBeforeCompile']>[0],{}as THREE.WebGLRenderer);return{m,shader};}
 describe('inventory gravel appearance',()=>{
  it('adds filtered stones after the base grain without overwriting either contribution',()=>{
   const{m,shader}=compile(2),fragment=shader.fragmentShader;
   expect(m.map).not.toBeNull();expect(m.opacity).toBe(1);
   expect(fragment).toContain('vTownArtWorld.xz*22.0');expect(fragment).toContain('smoothstep(.006,.045,townArtFootprint)');
-  const base=fragment.indexOf('townArtHeight = (townStoneGrain-0.5)*0.0015*townMineralResolved;');
+  const spec=MINERAL_FINISH.gravel;
+  const fine=fragment.indexOf('float townFineValue = (townStoneGrain-0.5)*townMineralResolved;');
+  const aggregate=fragment.indexOf('float townAggregateValue = (townStoneAggregate-0.5)*townAggregateResolved;');
+  const base=fragment.indexOf(`townArtHeight = townFineValue*${spec.relief}+townAggregateValue*${spec.aggregateRelief};`);
   const stones=fragment.indexOf('townArtHeight+=townGravelStone*.0013*townGravelResolved;');
-  expect(base).toBeGreaterThan(fragment.indexOf('#include <map_fragment>'));
+  expect(fine).toBeGreaterThan(fragment.indexOf('#include <map_fragment>'));
+  expect(aggregate).toBeGreaterThan(fragment.indexOf('#include <map_fragment>'));
+  expect(base).toBeGreaterThan(fine);expect(base).toBeGreaterThan(aggregate);
+  expect(fragment).toContain('townArtClose * (1.0-smoothstep(0.006,0.045,townArtFootprint))');
+  expect(fragment).toContain('townArtClose * (1.0-smoothstep(0.25,1.05,townArtFootprint*12.0))');
+  expect(fragment.match(/townArtNoise\(/g)).toHaveLength(4); // Three shared mineral reads and the function declaration.
   expect(stones).toBeGreaterThan(base);
   expect(fragment.slice(stones)).not.toMatch(/\btownArtHeight\s*=(?!=)/);
   expect(fragment.indexOf('vec2 townArtHeightGradient')).toBeGreaterThan(stones);

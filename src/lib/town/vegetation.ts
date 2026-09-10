@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import type { V3 } from './contracts';
 import habitatData from '../../../data/derived/town/vegetation-habitats.json';
+import { finishLeafClusters } from './foliage-clusters';
 
 export interface TreeForm {
   crown: { position: V3; scale: V3 };
@@ -119,7 +120,10 @@ export function createConiferPrototype(base: THREE.Group): THREE.Group { return 
  * The returned geometry is owned; materials and textures remain borrowed. */
 export function createOpenBroadleafPrototype(base:THREE.Group):THREE.Group { return createCrownPrototype(base,'open'); }
 export function disposeOpenBroadleafPrototype(group:THREE.Group):void { disposeConiferPrototype(group); }
-function createCrownPrototype(base: THREE.Group, habit:'conifer'|'open'): THREE.Group {
+/** Shared standard broadleaf shading variant; source card locations unchanged. */
+export function createBroadleafPrototype(base:THREE.Group):THREE.Group { return createCrownPrototype(base,'standard'); }
+export function disposeBroadleafPrototype(group:THREE.Group):void { disposeConiferPrototype(group); }
+function createCrownPrototype(base: THREE.Group, habit:'conifer'|'open'|'standard'): THREE.Group {
   base.updateMatrixWorld(true);
   const result = new THREE.Group();
   result.name = `${base.name || 'Tree crown'} | inferred ${habit} habit`;
@@ -137,7 +141,7 @@ function createCrownPrototype(base: THREE.Group, habit:'conifer'|'open'): THREE.
       mesh.name = object.name;
       mesh.castShadow = object.castShadow;
       mesh.receiveShadow = object.receiveShadow;
-      mesh.userData[habit==='conifer'?'townConiferVariant':'townOpenBroadleafVariant'] = true;
+      mesh.userData[habit==='conifer'?'townConiferVariant':habit==='open'?'townOpenBroadleafVariant':'townBroadleafVariant'] = true;
       result.add(mesh);
       all.push(mesh);
       const materials = Array.isArray(object.material) ? object.material : [object.material];
@@ -152,6 +156,7 @@ function createCrownPrototype(base: THREE.Group, habit:'conifer'|'open'): THREE.
     const size = sourceBounds.getSize(new THREE.Vector3()), center = sourceBounds.getCenter(new THREE.Vector3());
     if (![size.x, size.y, size.z].every(value => Number.isFinite(value) && value > 0)) throw new Error('Tree crown bounds must be finite and nonempty.');
     const deform=(px:number,py:number,pz:number,far=false):THREE.Vector3=>{
+        if(habit==='standard')return new THREE.Vector3(px,py,pz);
         const x = (px - center.x) / size.x;
         const z = (pz - center.z) / size.z;
         const t = (py - sourceBounds.min.y) / size.y;
@@ -236,8 +241,9 @@ function createCrownPrototype(base: THREE.Group, habit:'conifer'|'open'): THREE.
       }
       geometry.computeBoundingBox();
       geometry.computeBoundingSphere();
+      if(leaves.includes(mesh))finishLeafClusters(geometry,sourceBounds);
     }
-    result.userData[habit==='conifer'?'townConiferVariant':'townOpenBroadleafVariant'] = true;
+    result.userData[habit==='conifer'?'townConiferVariant':habit==='open'?'townOpenBroadleafVariant':'townBroadleafVariant'] = true;
     result.userData.townBorrowedMaterials = true;
     result.userData.townCrownBounds = { min: sourceBounds.min.toArray(), max: sourceBounds.max.toArray() };
     const buffers = new Set<ArrayBufferLike>();

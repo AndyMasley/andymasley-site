@@ -4,7 +4,7 @@ import { advanceRealTime, DriveEngine, LANDMARKS, MPH, RoadGraph, spawnAtLandmar
 import { validateManifest, type Quality, type V3 } from './contracts';
 import { TownWorld } from './world';
 import { startupPosition } from './startup';
-import { createSummerSky, SUMMER_LIGHT } from './atmosphere';
+import { createSummerSky, createShadowAnchor, SUMMER_LIGHT } from './atmosphere';
 import { createTouringCar, type TouringCar } from './vehicle';
 import { applyMeasuredBridgeGrades } from './bridge-grade';
 import release from '../../../data/derived/town/release.json';
@@ -193,7 +193,8 @@ export async function startTown(root: HTMLElement): Promise<Session> {
     sun.shadow.camera.near = 10;
     sun.shadow.camera.far = 900;
     sun.shadow.bias = -0.00012;
-    sun.shadow.normalBias = 0.055;
+    sun.shadow.normalBias = 0.035;
+    const shadowAnchor=createShadowAnchor(SUN_OFFSET,200,sun.shadow.mapSize.x);
     scene.add(sun, sun.target);
     const pmrem = new THREE.PMREMGenerator(renderer);
     sky = createSummerSky(SUN_OFFSET);
@@ -612,8 +613,8 @@ export async function startTown(root: HTMLElement): Promise<Session> {
       camera.lookAt(points.target);
       if (firstFrame) renderRequested = true;
       firstFrame = false;
-      sun.position.copy(points.car).add(SUN_OFFSET);
-      sun.target.position.copy(points.car);
+      shadowAnchor(points.car,sun.target.position);
+      sun.position.copy(sun.target.position).add(SUN_OFFSET);
       const shore = Math.max(0, ...[LANDMARKS.LAKE, LANDMARKS.BEACH, LANDMARKS.RANCH].map(place => 1 - Math.hypot(position[0] - place.xy[0], position[1] - place.xy[1]) / 220));
       audio.update(engine.speed, engine.paused || streamPaused || teleporting, engine.acceleration, Number(engine.edge.surface_type ?? 6), shore);
       if (drawCount >= 3 && now - streamingAt > 300 && !teleporting) {

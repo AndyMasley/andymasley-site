@@ -16,7 +16,21 @@ const compile = (m: THREE.MeshStandardMaterial) => {
 };
 
 describe('Scoped late-summer materials', () => {
-  it('gives each mineral family its own filtered scale using two noise samples and existing texture slots', () => {
+  it('limits filtered canopy relief and stable rim openings to distant foliage while retaining source resources',()=>{
+    const far=material('Canopy | subdued summer green'),original=far.onBeforeCompile,map=new THREE.Texture();far.map=map;
+    applyArtMaterial(far);const shader=compile(far);
+    expect(shader.fragmentShader).toContain('townCrownResolved');
+    expect(shader.fragmentShader).toContain('townCrownRim<.22');
+    expect(shader.fragmentShader).toContain('townCrownFine<.27*townCrownFringe');
+    expect(shader.fragmentShader).not.toContain('gl_FragCoord');
+    expect(shader.fragmentShader).not.toContain('townCrownP* townArtTime');
+    expect(far.map).toBe(map);expect(far.transparent).toBe(false);expect(far.opacity).toBe(1);
+    for(const name of['V2 inferred | siding','Drive road | asphalt','Inferred deciduous leaf clusters']){
+      const other=material(name);applyArtMaterial(other);expect(compile(other).fragmentShader).not.toContain('townCrownRim');other.dispose();
+    }
+    removeArtMaterial(far);expect(far.onBeforeCompile).toBe(original);expect(far.map).toBe(map);far.dispose();map.dispose();
+  });
+  it('gives each mineral family its own filtered scale using three noise scales and existing texture slots', () => {
     const families: [string, MineralFamily][] = [['Drive road | asphalt','asphalt'],['Streetscape | warm sidewalk concrete','concrete'],['Streetscape | granite curb','granite'],['V2 inferred | foundation','foundation'],['Drive road | weathered shoulder','shoulder']];
     const scales = new Set<number>();
     for (const [name, family] of families) {
@@ -26,7 +40,7 @@ describe('Scoped late-summer materials', () => {
       const textureDisposals = [map,normal,roughness].map(texture => vi.spyOn(texture,'dispose'));
       applyArtMaterial(m); const shader = compile(m), spec = MINERAL_FINISH[family]; scales.add(spec.frequency);
       expect(shader.fragmentShader).toContain(mineralFragment(family));
-      expect((mineralFragment(family).match(/townArtNoise\(/g) ?? []).length).toBe(2);
+      expect((mineralFragment(family).match(/townArtNoise\(/g) ?? []).length).toBe(3);
       expect(shader.fragmentShader).toContain('roughnessFactor = clamp(roughnessFactor+townMineralRoughness,0.88,1.0)');
       expect(shader.fragmentShader.indexOf('vec2 townArtHeightGradient')).toBeLessThan(shader.fragmentShader.indexOf('if (abs(townArtDet)'));
       expect(shader.vertexShader.includes('vMapUv *= 1.6')).toBe(family === 'asphalt');
@@ -34,6 +48,9 @@ describe('Scoped late-summer materials', () => {
       expect(m.map).toBe(map); expect(m.normalMap).toBe(normal); expect(m.roughnessMap).toBe(roughness);
       expect(map.repeat.toArray()).toEqual([2,3]); expect(normal.repeat.toArray()).toEqual([4,5]);
       expect(spec.resolved[0]).toBeLessThan(spec.resolved[1]); expect(spec.relief).toBeLessThanOrEqual(.0015);
+      expect(spec.aggregate).toBeLessThan(spec.frequency);expect(spec.aggregateRelief).toBeLessThan(spec.relief);
+      expect(mineralFragment(family)).toContain("smoothstep(0.25,1.05,townArtFootprint*");
+      expect(mineralFragment(family)).not.toMatch(/texture2D|discard|diffuseColor\.a\s*=/);
       removeArtMaterial(m); expect(m.color.toArray()).toEqual(original.color); expect(m.roughness).toBe(original.roughness); expect(m.normalScale.toArray()).toEqual(original.normal);
       expect(m.onBeforeCompile).toBe(original.compile); expect(m.customProgramCacheKey).toBe(original.key);
       textureDisposals.forEach(spy => expect(spy).not.toHaveBeenCalled()); m.dispose(); map.dispose(); normal.dispose(); roughness.dispose();

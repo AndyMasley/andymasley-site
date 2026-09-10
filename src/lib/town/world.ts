@@ -16,7 +16,7 @@ import { roadsideAsset, validRoadsidePacket, applyRoadsideDetails } from './road
 import { environmentGroundAsset, validEnvironmentGroundPacket, applyEnvironmentGround, type EnvironmentGroundPacket } from './environment-ground';
 import { roadMaterialAsset, validRoadMaterialPacket, applyRoadMaterialFinish, type RoadMaterialPacket } from './road-material-finish';
 import { environmentFacilitiesAsset, validEnvironmentFacilitiesPacket, applyEnvironmentFacilities } from './environment-facilities';
-import { treeForm, createConiferPrototype, disposeConiferPrototype, createOpenBroadleafPrototype, disposeOpenBroadleafPrototype } from './vegetation';
+import { treeForm, createConiferPrototype, disposeConiferPrototype, createOpenBroadleafPrototype, disposeOpenBroadleafPrototype, createBroadleafPrototype, disposeBroadleafPrototype } from './vegetation';
 import { excludedTreeAnchors } from './tree-exclusions';
 import { readSceneBuffer } from './asset-transfer';
 import { readCriticalJson, withLoadDeadline } from './critical-load';
@@ -60,6 +60,7 @@ export class TownWorld {
   private releasedGroups = new WeakSet<THREE.Object3D>();
   private prototypes: THREE.Group[] = [];
   private coniferPrototypes = new Map<number, THREE.Group>();
+  private broadleafPrototypes = new Map<number, THREE.Group>();
   private openBroadleafPrototypes = new Map<number, THREE.Group>();
   private distantCanopyPrototypes = new Map<number, { broadleaf: THREE.Group; conifer: THREE.Group }>();
   private backdropMaterials: THREE.Material[] = [];
@@ -338,6 +339,7 @@ export class TownWorld {
     try {
       this.manifest.trees.prototypes.forEach((definition, index) => {
         if (definition.role === 'crown') this.coniferPrototypes.set(index, createConiferPrototype(prototypes[index]));
+        if (definition.role === 'crown' && definition.level === 0) this.broadleafPrototypes.set(index, createBroadleafPrototype(prototypes[index]));
         if (definition.role === 'crown' && definition.level === 0) this.openBroadleafPrototypes.set(index, createOpenBroadleafPrototype(prototypes[index]));
         if (definition.role === 'crown' && definition.level === 1) {
           const broadleaf = createDistantCanopyPrototype(prototypes[index]);
@@ -350,6 +352,8 @@ export class TownWorld {
     } catch (error) {
       for (const variant of this.coniferPrototypes.values()) disposeConiferPrototype(variant);
       this.coniferPrototypes.clear();
+      for (const variant of this.broadleafPrototypes.values()) disposeBroadleafPrototype(variant);
+      this.broadleafPrototypes.clear();
       for (const variant of this.openBroadleafPrototypes.values()) disposeOpenBroadleafPrototype(variant);
       this.openBroadleafPrototypes.clear();
       this.dispose();
@@ -720,7 +724,7 @@ export class TownWorld {
       for (const castShadow of [false, true]) {
         for (const family of cohorts) {
           const distant = band.kind === 'far' ? this.distantCanopyPrototypes.get(band.index) : undefined;
-          const prototype = family === 'conifer' ? distant?.conifer ?? this.coniferPrototypes.get(band.index) ?? base : family === 'open' ? this.openBroadleafPrototypes.get(band.index) ?? base : distant?.broadleaf ?? base;
+          const prototype = family === 'conifer' ? distant?.conifer ?? this.coniferPrototypes.get(band.index) ?? base : family === 'open' ? this.openBroadleafPrototypes.get(band.index) ?? base : distant?.broadleaf ?? this.broadleafPrototypes.get(band.index) ?? base;
           prototype.updateMatrixWorld(true);
           const indices = rows.map((_, index) => index).filter((index) =>
             !plan.excluded.has(index) && (isTrunk || (plan.near.has(index) === (band.kind === 'near') && forms[index].renderFamily === (family === 'open' ? 'broadleaf' : family) && (!splitBroadleaf || forms[index].renderFamily !== 'broadleaf' || (forms[index].crownVariant === 'open') === (family === 'open')))) && plan.shadows.has(index) === castShadow);
@@ -901,6 +905,7 @@ export class TownWorld {
     this.root.traverse(inspect);
     for (const prototype of this.prototypes) prototype.traverse(inspect);
     for (const prototype of this.coniferPrototypes.values()) prototype.traverse(inspect);
+    for (const prototype of this.broadleafPrototypes.values()) prototype.traverse(inspect);
     for (const prototype of this.openBroadleafPrototypes.values()) prototype.traverse(inspect);
     for (const pair of this.distantCanopyPrototypes.values()) { pair.broadleaf.traverse(inspect); pair.conifer.traverse(inspect); }
     let estimatedTextureBytes = 0;
@@ -926,6 +931,8 @@ export class TownWorld {
     for (const object of [...this.root.children]) this.releaseGroup(object);
     for (const prototype of this.coniferPrototypes.values()) disposeConiferPrototype(prototype);
     this.coniferPrototypes.clear();
+    for (const prototype of this.broadleafPrototypes.values()) disposeBroadleafPrototype(prototype);
+    this.broadleafPrototypes.clear();
     for (const prototype of this.openBroadleafPrototypes.values()) disposeOpenBroadleafPrototype(prototype);
     this.openBroadleafPrototypes.clear();
     for (const pair of this.distantCanopyPrototypes.values()) { disposeDistantCanopyPrototype(pair.broadleaf); disposeDistantCanopyPrototype(pair.conifer); }

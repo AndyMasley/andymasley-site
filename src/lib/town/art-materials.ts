@@ -135,6 +135,18 @@ float townAsphaltValue = dot(diffuseColor.rgb,vec3(0.2126,0.7152,0.0722));
 diffuseColor.rgb = mix(diffuseColor.rgb,vec3(townAsphaltValue)*vec3(0.94,1.0,1.07),0.96);
 ` : '') + mineralFragment(kind);
   if (kind === 'bark') return start + BARK_FINISH_GLSL;
+  if (kind === 'far-leaf') return start + `
+// Sparse distant hulls represent groups of leaves, not polished green solids.
+// Both fields live in metres, remain still, and filter out before subpixel size.
+vec2 townCrownP = vTownArtWorld.xz + vec2(vTownArtWorld.y*.71,vTownArtWorld.y*.39);
+float townCrownCoarse = townArtNoise(townCrownP*.77);
+float townCrownFine = townArtNoise(townCrownP*2.6+vec2(23.7,8.1));
+float townCrownResolved = 1.0-smoothstep(.12,.48,townArtFootprint);
+float townCrownMass = mix(townCrownCoarse,townCrownFine,.32*townCrownResolved);
+diffuseColor.rgb *= mix(vec3(.82,.88,.78),vec3(1.14,1.11,1.03),townCrownMass);
+townArtHeight = (townCrownCoarse-.5)*.075*(1.0-smoothstep(.3,.9,townArtFootprint))
+  +(townCrownFine-.5)*.032*townCrownResolved;
+`;
   if (kind === 'brick') return start + `
 diffuseColor.rgb *= mix(0.96,1.04,townArtNoise(vTownArtWorld.xz*0.31+vec2(vTownArtWorld.y*0.29)));
 `;
@@ -155,6 +167,14 @@ if (abs(townArtDet)>0.0000000001) {
 `;
 
 function finishTreatment(kind: ArtKind): string {
+  if (kind === 'far-leaf') return `
+// A few stable openings on the outer rim soften the solid hull silhouette.
+// No screen-space dither: unresolved foliage keeps an opaque, steady outline.
+float townCrownRim = abs(dot(nonPerturbedNormal,normalize(vViewPosition)));
+float townCrownFringe = 1.0-smoothstep(.045,.20,townArtFootprint);
+if(townCrownRim<.22 && townCrownFine<.27*townCrownFringe) discard;
+#include <opaque_fragment>
+`;
   if (kind === 'glass') return `
 // Darken the room-facing diffuse contribution, retaining the actual sky's
 // dielectric reflection instead of adding a uniform cyan light to every pane.
@@ -236,7 +256,7 @@ townArtPosition = instanceMatrix * townArtPosition;
 vTownArtWorld = (modelMatrix * townArtPosition).xyz;
 `);
     shader.fragmentShader = functions + shader.fragmentShader.replace('#include <map_fragment>', mapTreatment(kind)).replace('#include <opaque_fragment>', finishTreatment(kind));
-    if (['siding','asphalt','concrete','granite','foundation','shoulder','water','bark'].includes(kind)) shader.fragmentShader = shader.fragmentShader.replace('#include <normal_fragment_maps>', mineralNormal);
+    if (['siding','asphalt','concrete','granite','foundation','shoulder','water','bark','far-leaf'].includes(kind)) shader.fragmentShader = shader.fragmentShader.replace('#include <normal_fragment_maps>', mineralNormal);
     if (['asphalt','concrete','granite','foundation','shoulder'].includes(kind)) {
       if (!shader.fragmentShader.includes('#include <roughnessmap_fragment>')) throw new Error('Town mineral roughness shader anchor changed.');
       shader.fragmentShader = shader.fragmentShader.replace('#include <roughnessmap_fragment>', MINERAL_ROUGHNESS);
@@ -254,7 +274,7 @@ vNormalMapUv *= 1.6;
 #endif`);
     }
   };
-  material.customProgramCacheKey = () => `${previousKey}|webster-art-material-v2:${kind}${kind==='bark'?'|regional-bark-v1':kind==='glass'?'|dielectric-glass-v1':''}${['asphalt','concrete','granite','foundation','shoulder'].includes(kind)?'|mineral-families-v1':''}`;
+  material.customProgramCacheKey = () => `${previousKey}|webster-art-material-v2:${kind}${kind==='bark'?'|regional-bark-v1':kind==='glass'?'|dielectric-glass-v1':kind==='far-leaf'?'|layered-far-foliage-v1':''}${['asphalt','concrete','granite','foundation','shoulder'].includes(kind)?'|mineral-families-v2':''}`;
   material.addEventListener('dispose', onMaterialDispose);
   material.needsUpdate = true;
 }

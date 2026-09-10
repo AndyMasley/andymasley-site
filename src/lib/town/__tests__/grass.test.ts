@@ -27,7 +27,7 @@ describe('Conservative lawn placement', () => {
     expect(source.data).toEqual(before);expect(excludeGrassPolygons(source,[])).toBe(source);
     const reversed=excludeGrassPolygons(source,[[...ring].reverse()]);expect(reversed.data).toEqual(result.data);
   });
-  it('uses a finite short-blade patch with spread, buried roots and the existing face budget', () => {
+  it('uses short paired turf sprays with buried roots and the existing face budget', () => {
     const geometry = tuftGeometry(), position = geometry.getAttribute('position');
     expect(geometry.index?.count).toBe(18 * 3);
     expect(position.count).toBe(30);
@@ -38,14 +38,37 @@ describe('Conservative lawn placement', () => {
       expect(position.getY(i)).toBeLessThan(0);
       expect(position.getY(i + 1)).toBeLessThan(0);
       const height = position.getY(i + 4);
-      expect(height).toBeGreaterThan(0.026);
-      expect(height).toBeLessThan(0.075);
+      expect(height).toBeGreaterThan(0.059);
+      expect(height).toBeLessThan(0.113);
       roots.push([(position.getX(i) + position.getX(i + 1)) / 2, (position.getZ(i) + position.getZ(i + 1)) / 2]);
       heights.push(height);
     }
     expect(Math.max(...heights) - Math.min(...heights)).toBeGreaterThan(0.02);
     expect(new Set(roots.map(root => root.map(value => value.toFixed(3)).join(','))).size).toBe(6);
     expect(Math.max(...roots.map(root => Math.hypot(...root)))).toBeLessThan(0.205);
+    for (let i = 0; i < roots.length; i += 2) expect(Math.hypot(roots[i][0] - roots[i + 1][0], roots[i][1] - roots[i + 1][1])).toBeCloseTo(.03, 5);
+    // Wider bases remain inside the old patch footprint and taper to points.
+    for (let i = 0; i < position.count; i++) expect(Math.hypot(position.getX(i), position.getZ(i))).toBeLessThan(.23);
+    geometry.dispose();
+  });
+
+  it('keeps the tuft optically legible at driving height without becoming a large grass bush', () => {
+    const geometry = tuftGeometry(), p = geometry.getAttribute('position'), ix = geometry.index!;
+    const camera = new THREE.PerspectiveCamera(60, 16 / 9, .1, 100); camera.position.set(0, 1.7, 0); camera.lookAt(0, .5, -10); camera.updateMatrixWorld(true);
+    const projectedAreas: number[] = [];
+    for (let turn = 0; turn < 8; turn++) {
+      const world = new THREE.Matrix4().makeRotationY(turn * Math.PI / 4); world.setPosition(0, 0, -8);
+      let pixels = 0;
+      for (let i = 0; i < ix.count; i += 3) {
+        const v = [0, 1, 2].map(k => new THREE.Vector3().fromBufferAttribute(p, ix.getX(i + k)).applyMatrix4(world).project(camera));
+        pixels += Math.abs((v[1].x - v[0].x) * (v[2].y - v[0].y) - (v[1].y - v[0].y) * (v[2].x - v[0].x)) / 2 * 640 * 360;
+      }
+      projectedAreas.push(pixels);
+    }
+    // 720p, 8m away: this rejects the old subpixel-needle patch while bounding
+    // its visual weight. It does not substitute for the final driving render.
+    expect(Math.min(...projectedAreas)).toBeGreaterThan(8);
+    expect(Math.max(...projectedAreas)).toBeLessThan(70);
     geometry.dispose();
   });
 
