@@ -122,6 +122,24 @@ describe('Conservative lawn placement', () => {
 });
 
 describe('Bounded near grass lifetime', () => {
+  it('keeps warm/green turf variation spatially coherent without changing its placement or resource budget', () => {
+    const field=new TownGrass(),{group,mesh}=terrain();field.register(group,'lawn',mask(),[mesh]);field.update([0,2,0],false,0);
+    const grass=instances(group),matrix=new THREE.Matrix4(),point=new THREE.Vector3(),ratios=new Map<string,number>();
+    for(let i=0;i<grass.count;i++){
+      grass.getMatrixAt(i,matrix);point.setFromMatrixPosition(matrix);
+      ratios.set(`${Math.floor(point.x/GRASS_LIMITS.spacing)},${Math.floor(point.z/GRASS_LIMITS.spacing)}`,grass.instanceColor!.getX(i)/grass.instanceColor!.getY(i));
+    }
+    const values=[...ratios.values()];expect(Math.max(...values)-Math.min(...values)).toBeGreaterThan(.06);
+    expect(Math.min(...values)).toBeGreaterThan(.93);expect(Math.max(...values)).toBeLessThan(1.06);
+    let near=0,far=0,pairs=0;
+    for(const [key,value] of ratios){
+      const [x,z]=key.split(',').map(Number),a=ratios.get(`${x+1},${z}`),b=ratios.get(`${x+18},${z}`);
+      if(a===undefined||b===undefined)continue;near+=(value-a)**2;far+=(value-b)**2;pairs++;
+    }
+    expect(pairs).toBeGreaterThan(4000);expect(near).toBeLessThan(far*.15);
+    expect(field.resources().triangles).toBe(grass.count*18);expect(field.resources().materials).toBe(1);
+    field.dispose();
+  });
   it('has a global budget, exact ground support and no per-frame rebuild or raycast', () => {
     const field = new TownGrass(), { group, mesh } = terrain();
     const m = mask();

@@ -241,7 +241,14 @@ export function applyArtMaterial(material: THREE.MeshStandardMaterial, clock: { 
   if (kind === 'car-paint') { material.roughness = 0.22; material.metalness = 0.38; material.envMapIntensity = 0.35; }
   if (kind === 'car-glass') { material.roughness = 0.11; material.metalness = 0.35; material.envMapIntensity = 0.40; }
   if (kind === 'rubber') { material.roughness = 0.93; material.metalness = 0; }
-  if (kind === 'water') { material.color.set('#315a5c'); material.roughness = 0.28; material.metalness = 0; material.envMapIntensity = 1.0; }
+  if (kind === 'water') {
+    // VC-0382–0393: blue open water and broken sky reflection. This is an
+    // absorption/roughness interpretation, not a depth or water-quality map.
+    // Lower diffuse reflectance keeps the bright summer fill from making the
+    // lake an opaque pale-gray sheet; dielectric sky reflection stays intact.
+    material.color.set('#153f50'); material.roughness = 0.22;
+    material.metalness = 0; material.envMapIntensity = 0.85;
+  }
   material.userData.townArt = { version: 2, kind, sourceColor: state.color.toArray(), appearance: 'Inferred late-summer material treatment; geometry, original maps and UVs retained.' };
   material.onBeforeCompile = (shader, renderer) => {
     state.compile.call(material, shader, renderer);
@@ -261,6 +268,16 @@ vTownArtWorld = (modelMatrix * townArtPosition).xyz;
       if (!shader.fragmentShader.includes('#include <roughnessmap_fragment>')) throw new Error('Town mineral roughness shader anchor changed.');
       shader.fragmentShader = shader.fragmentShader.replace('#include <roughnessmap_fragment>', MINERAL_ROUGHNESS);
     }
+    if (kind === 'water') {
+      if (!shader.fragmentShader.includes('#include <roughnessmap_fragment>')) throw new Error('Town water roughness shader anchor changed.');
+      // Reuse the already evaluated wind field. Changing roughness gently
+      // breaks the broad sky highlight without another sample, texture, render
+      // pass or an invented reflection of a particular shoreline building.
+      shader.fragmentShader = shader.fragmentShader.replace('#include <roughnessmap_fragment>', `
+#include <roughnessmap_fragment>
+roughnessFactor = clamp(roughnessFactor + (townWaterStrength - .90)*.12, .18, .27);
+`);
+    }
     if (kind === 'asphalt') {
       if (!shader.vertexShader.includes('#include <uv_vertex>')) throw new Error('Town pavement UV shader anchor changed.');
       // Native asphalt repeats at 2.08 m; display its existing atlas at 1.30 m.
@@ -274,7 +291,7 @@ vNormalMapUv *= 1.6;
 #endif`);
     }
   };
-  material.customProgramCacheKey = () => `${previousKey}|webster-art-material-v2:${kind}${kind==='bark'?'|regional-bark-v1':kind==='glass'?'|dielectric-glass-v1':kind==='far-leaf'?'|layered-far-foliage-v1':''}${['asphalt','concrete','granite','foundation','shoulder'].includes(kind)?'|mineral-families-v2':''}`;
+  material.customProgramCacheKey = () => `${previousKey}|webster-art-material-v2:${kind}${kind==='water'?'|summer-water-optics-v2':kind==='bark'?'|regional-bark-v1':kind==='glass'?'|dielectric-glass-v1':kind==='far-leaf'?'|layered-far-foliage-v1':''}${['asphalt','concrete','granite','foundation','shoulder'].includes(kind)?'|mineral-families-v2':''}`;
   material.addEventListener('dispose', onMaterialDispose);
   material.needsUpdate = true;
 }

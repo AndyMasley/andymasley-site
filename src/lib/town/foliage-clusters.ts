@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 
-export const FOLIAGE_CLUSTER_BASIS = 'Authored late-summer leaf-cluster shading. Existing twig/card locations, atlas UVs, topology, crown envelope and habitat inference remain unchanged; no individual species is asserted.';
+export const FOLIAGE_CLUSTER_BASIS = 'VC-0184/0205/0207: authored late-summer branch-cluster shading, with darker interiors and restrained green/yellow-green variation between exposed clusters. Existing twig/card locations, atlas UVs, topology, crown envelope and habitat inference remain unchanged; no individual species is asserted.';
 
 type Card = { ids: number[]; center: THREE.Vector3; normal: THREE.Vector3; radius: number; cluster: THREE.Vector3 };
 
@@ -59,7 +59,11 @@ export function finishLeafClusters(geometry: THREE.BufferGeometry, bounds: THREE
     const orientation = crown.dot(card.normal) < 0 ? -1 : 1;
     const radius = Math.hypot((card.center.x - center.x) / size.x, (card.center.z - center.z) / size.z);
     const exposure = THREE.MathUtils.clamp(radius * 1.8 + t * .40, 0, 1);
-    const shade = .89 + .22 * exposure;
+    // Broad, continuous branch-scale variation is baked once. Neighbouring
+    // cards share a tone while the individual source leaf edges remain intact.
+    const cx = (card.cluster.x - center.x) / size.x, cy = (card.cluster.y - center.y) / size.y, cz = (card.cluster.z - center.z) / size.z;
+    const clusterTone = Math.sin(cx * 7.1 + cy * 2.3) * Math.cos(cz * 6.7 - cy * 3.1);
+    const shade = (.89 + .22 * exposure) * (1 + .035 * clusterTone);
     for (const id of card.ids) {
       point.fromBufferAttribute(position, id);
       lobe.copy(point).sub(card.cluster); lobe.y += card.radius * .23; lobe.normalize();
@@ -69,9 +73,9 @@ export function finishLeafClusters(geometry: THREE.BufferGeometry, bounds: THREE
       direction.addScaledVector(card.normal, Math.max(0, .28 - direction.dot(card.normal))).normalize();
       direction.multiplyScalar(.66).addScaledVector(card.normal, .34).normalize();
       normal.setXYZ(id, direction.x, direction.y, direction.z);
-      colors[id * 3] *= shade * (1.005 + t * .012);
+      colors[id * 3] *= shade * (1.005 + t * .012 + .025 * clusterTone);
       colors[id * 3 + 1] *= shade * 1.025;
-      colors[id * 3 + 2] *= shade * (.98 + (1 - t) * .02);
+      colors[id * 3 + 2] *= shade * (.98 + (1 - t) * .02 - .012 * clusterTone);
     }
   }
   normal.needsUpdate = true;

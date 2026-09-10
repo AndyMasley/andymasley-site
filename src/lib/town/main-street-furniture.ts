@@ -128,12 +128,18 @@ function hedge(b: Batch, ground: PavementIndex, walk: PavementIndex, obstacles: 
   const h = sections.map(s => [-1,0,1].map(k => sample(ground,s.point.map((v,i) => v + s.normal[i]*k*row.widthM/2))));
   if (h.some((r,i) => r.some(v => v === undefined || Math.abs(v-sections[i].sourceHeight[b.level]) > catalog.limits.hedgeBaseHeightChangeM))) { report.omitted.push({id:row.id,reason:'Missing or changed hedge support'});return; }
   const heights = h as number[][], positions: number[] = [], indices: number[] = [];
-  const profile = [[-.41,.07],[-.47,.31],[-.46,.61],[-.36,.86],[-.18,.98],[.19,.98],[.37,.85],[.46,.60],[.47,.30],[.40,.07]];
+  const profile = [[-.41,.025],[-.47,.31],[-.46,.61],[-.36,.86],[-.18,.98],[.19,.98],[.37,.85],[.46,.60],[.47,.30],[.40,.025]];
   sections.forEach((s,i) => {
-    const swell = .96 + .035*Math.sin(i*1.72), base = Math.min(...heights[i])-.012;
+    // A clipped shrub still has overlapping leafy lobes. Shape the existing
+    // sections inward, including the ends, rather than enlarging the registered
+    // envelope or adding an expensive second layer of foliage geometry.
+    const edge = Math.min(i,sections.length-1-i), end = edge===0?.79:edge===1?.93:1;
+    const swell = (.91+.065*Math.sin(i*1.72+.7))*end, base = Math.min(...heights[i])-.012;
+    const inset=i===0?.002:i===sections.length-1?-.002:0;
     profile.forEach(([side,up],j) => {
-      const r = side*row.widthM*swell, ripple = .012*Math.sin(i*2.31+j*1.7)*up;
-      positions.push(s.point[0]+s.normal[0]*r,base+row.heightM*up+ripple,s.point[1]+s.normal[1]*r);
+      const r = side*row.widthM*swell;
+      const crown = up>.6 ? .022*(1+Math.sin(i*2.31+j*1.7))+(1-end)*.15 : 0;
+      positions.push(s.point[0]+s.normal[0]*r+s.normal[1]*inset,base+row.heightM*up-crown,s.point[1]+s.normal[1]*r-s.normal[0]*inset);
     });
     if(i) for(let j=0;j<profile.length;j++){const a=(i-1)*profile.length+j,c=(i-1)*profile.length+(j+1)%profile.length,d=i*profile.length+(j+1)%profile.length,z=i*profile.length+j;indices.push(a,c,z,c,d,z);}
   });
@@ -156,16 +162,26 @@ function materials(group: THREE.Group) {
     if(role==='glass') {m.roughness=.46;m.metalness=.03;m.envMapIntensity=.5;m.onBeforeCompile=()=>{};m.customProgramCacheKey=()=> 'main-street-lantern-globe-v1';}
     if(role==='leaf') {
       const previous=m.onBeforeCompile;
-      m.onBeforeCompile=(shader,renderer)=>{previous.call(m,shader,renderer);shader.fragmentShader=`
+      m.onBeforeCompile=(shader,renderer)=>{previous.call(m,shader,renderer);
+        const leafAnchor='diffuseColor.rgb *= 0.90+0.12*sin(vCraftedWorld.x*17.1+vCraftedWorld.y*12.7)*sin(vCraftedWorld.z*16.8-vCraftedWorld.y*6.2);';
+        if(!shader.fragmentShader.includes(leafAnchor)||!shader.fragmentShader.includes('dFdx(craftedRelief)'))throw Error('Main Street hedge shader anchors changed');
+        shader.fragmentShader=`
 float mainHedgeHash(vec3 p){p=fract(p*.1031);p+=dot(p,p.yzx+33.33);return fract((p.x+p.y)*p.z);}
 float mainHedgeNoise(vec3 p){vec3 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(mix(mainHedgeHash(i),mainHedgeHash(i+vec3(1,0,0)),f.x),mix(mainHedgeHash(i+vec3(0,1,0)),mainHedgeHash(i+vec3(1,1,0)),f.x),f.y),mix(mix(mainHedgeHash(i+vec3(0,0,1)),mainHedgeHash(i+vec3(1,0,1)),f.x),mix(mainHedgeHash(i+vec3(0,1,1)),mainHedgeHash(i+vec3(1,1,1)),f.x),f.y),f.z);}
-${shader.fragmentShader}`.replace('diffuseColor.rgb *= 0.90+0.12*sin(vCraftedWorld.x*17.1+vCraftedWorld.y*12.7)*sin(vCraftedWorld.z*16.8-vCraftedWorld.y*6.2);',`
+${shader.fragmentShader}`.replace(leafAnchor,`
 vec3 mainHedgeLocal=vCraftedWorld-vec3(-2875.,36.,958.);
 float mainHedgeFootprint=max(length(dFdx(mainHedgeLocal)),length(dFdy(mainHedgeLocal)));
-float mainHedgeGrain=(mainHedgeNoise(mainHedgeLocal*32.)-.5)*(1.-smoothstep(.008,.055,mainHedgeFootprint));
+float mainHedgeLeafResolved=1.-smoothstep(.008,.055,mainHedgeFootprint);
+float mainHedgeGrain=mainHedgeNoise(mainHedgeLocal*32.);
 float mainHedgeClusters=mainHedgeNoise(mainHedgeLocal*5.);
-diffuseColor.rgb*=.86+mainHedgeClusters*.28+mainHedgeGrain*.22;
-`);};m.customProgramCacheKey=()=> 'main-street-clipped-hedge-v1';
+float mainHedgeClusterResolved=1.-smoothstep(.055,.22,mainHedgeFootprint);
+// Shaded leaf pockets are distinct from the clipped outer crown. Both fields
+// are filtered in metres and reuse the two existing noise evaluations.
+float mainHedgePocket=smoothstep(.27,.71,mainHedgeGrain);
+diffuseColor.rgb*=.82+mainHedgeClusters*.32+(mainHedgePocket-.5)*.30*mainHedgeLeafResolved;
+craftedRelief=(mainHedgeClusters-.5)*.030*mainHedgeClusterResolved
+  +(mainHedgePocket-.5)*.012*mainHedgeLeafResolved;
+`);};m.customProgramCacheKey=()=> 'main-street-clipped-hedge-v2';
     }
   });
 }

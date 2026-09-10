@@ -18,6 +18,7 @@ import { readCriticalJson } from './critical-load';
 import { CameraObstruction } from './camera-comfort';
 import { RoadAudio } from './driving-audio';
 import { checkTownUpdate } from './release-recovery';
+import { TownWaterReflection } from './water-reflection';
 
 const ASSET_ROOT = `/town-assets/${release.directory}/`;
 const WORLD_URL = `${ASSET_ROOT}manifest.json`;
@@ -80,6 +81,7 @@ export async function startTown(root: HTMLElement): Promise<Session> {
   let vehicle: TouringCar | undefined;
   const audio = new RoadAudio();
   const cameraObstruction = new CameraObstruction();
+  const waterReflection = new TownWaterReflection();
   const cameraAnchor = new THREE.Vector3();
   const held = new Set<string>();
   const snapshots: number[] = [];
@@ -147,6 +149,7 @@ export async function startTown(root: HTMLElement): Promise<Session> {
       held.clear();
       audio.dispose();
       vehicle?.dispose();
+      waterReflection.dispose();
       world?.dispose();
       environmentTarget?.dispose();
       sky?.geometry.dispose();
@@ -363,6 +366,9 @@ export async function startTown(root: HTMLElement): Promise<Session> {
     canvas.addEventListener('webglcontextlost', (event) => {
       event.preventDefault();
       contextLost = true;
+      // This session stays paused until Restart creates a new one. Cancel its
+      // optional shader work immediately rather than polling a lost context.
+      waterReflection.dispose();
       updateAvailable = false;
       element<HTMLButtonElement>('dismiss-update').hidden = true;
       const updateButton = recovery.querySelector<HTMLButtonElement>('[data-town-reload]'); if (updateButton) updateButton.hidden = true;
@@ -639,6 +645,10 @@ export async function startTown(root: HTMLElement): Promise<Session> {
       // resize changes request an immediate frame; background tabs draw none.
       if (document.hidden || (engine.paused && !renderRequested && drawCount >= 3 && now - lastDraw < 100)) return;
       world!.updatePresentation(presentationTime, renderedPosition);
+      // Optional shore reflection starts after the first playable frames. It
+      // owns a bounded offscreen pass; the following main render keeps the
+      // regular world draw/triangle counters and never waits for new assets.
+      if (drawCount >= 3) waterReflection.update(renderer!, scene!, camera, now, { quality, mobile });
       renderer!.render(scene!, camera);
       renderRequested = false; lastDraw = now;
       world!.metrics.triangles = renderer!.info.render.triangles;
@@ -656,6 +666,9 @@ export async function startTown(root: HTMLElement): Promise<Session> {
       graph,
       world,
       get renderer() { return renderer; },
+      get camera() { return camera; },
+      get reflection() { return waterReflection; },
+      reflectionResources() { return { ...waterReflection.metrics }; },
       get cameraMode() { return cameraMode; },
       get presentation() { return { version: 'finished-webster-v8', grass: world!.presentationResources(), vehicle: vehicle!.resources(), evidence: world!.evidenceResources(), finish: world!.finishResources(), research: world!.researchResources(), streaming: world!.streamingResources(), comfort: preferences.comfort, camera: { checks: cameraObstruction.checks, testedMeshes: cameraObstruction.testedMeshes, milliseconds: cameraObstruction.milliseconds, skippedCandidates: cameraObstruction.skippedCandidates } }; },
       get ready() { return controlsReady && !disposed; },

@@ -28,17 +28,23 @@ diffuseColor.rgb = mix(vec3(${dark}),vec3(${light}),0.20+0.65*townInventoryVaria
 // Small irregular aggregate is an authored material response, not extra stone
 // geometry or a new pavement classification. Fade below the pixel footprint.
 vec2 townGravelP=vTownArtWorld.xz*22.0,townGravelCell=floor(townGravelP),townGravelF=fract(townGravelP)-.5;
+// Fade every chip and its tint before the cell boundary. Untapered per-cell
+// tint produces square paving patches even when the stone itself is filtered.
+float townGravelSupport=1.0-smoothstep(.14,.25,dot(townGravelF,townGravelF));
 float townGravelSeed=townArtHash(townGravelCell),townGravelAngle=townGravelSeed*6.2831853;
 townGravelF-=vec2(townArtHash(townGravelCell+vec2(41.2,8.1)),townArtHash(townGravelCell+vec2(7.3,79.1)))*.22-.11;
 townGravelF=mat2(cos(townGravelAngle),-sin(townGravelAngle),sin(townGravelAngle),cos(townGravelAngle))*townGravelF;
-float townGravelRadius=length(townGravelF*vec2(1.0,mix(1.12,1.65,townGravelSeed)));
+vec2 townGravelShape=abs(townGravelF*vec2(1.0,mix(1.12,1.65,townGravelSeed)));
+// A mix of box and radial distance makes irregular clipped chips, supported by
+// the photographed loose angular aggregate, without individual stone meshes.
+float townGravelRadius=mix(length(townGravelShape),max(townGravelShape.x,townGravelShape.y),.38);
 float townGravelAA=max(townArtFootprint*22.0,.025);
-float townGravelStone=1.0-smoothstep(.26-townGravelAA,.37+townGravelAA,townGravelRadius);
+float townGravelStone=(1.0-smoothstep(.26-townGravelAA,.37+townGravelAA,townGravelRadius))*townGravelSupport;
 float townGravelResolved=1.0-smoothstep(.006,.045,townArtFootprint);
-diffuseColor.rgb*=1.0+((townGravelStone-.54)*.20+(townGravelSeed-.5)*.13)*townGravelResolved;
+diffuseColor.rgb*=1.0+(townGravelStone*(.20+(townGravelSeed-.5)*.13)-.065)*townGravelResolved;
 townArtHeight+=townGravelStone*.0013*townGravelResolved;
 float townMineralRoughness =`);
   };
-  material.customProgramCacheKey = () => `${key}|inventory-surface-v3:${code}`;
+  material.customProgramCacheKey = () => `${key}|inventory-surface-v4:${code}`;
   material.needsUpdate = true;
 }

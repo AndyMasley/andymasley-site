@@ -98,9 +98,10 @@ linear working space. Texture images, UV coordinates and material pooling remain
 shared; the concrete/curb treatment corrects smoothed box normals through flat
 shading, without changing the underlying sidewalk geometry.
 
-`atmosphere.ts` supplies a blue-to-haze sky with quiet procedural clouds, a warm
-key light and cooler fill. The game retains a single scene render rather than a
-post-processing stack. A slightly narrower driving camera and compact selected
+`atmosphere.ts` supplies a blue-to-haze sky with separated procedural clouds, a warm
+key light and cooler fill. The game uses one main scene render without a
+post-processing stack, plus the bounded optional lake reflection described below.
+A slightly narrower driving camera and compact selected
 turn indicators finish the presentation.
 
 `surfaces.ts` samples the original raw RGBA land-cover data in world metres.
@@ -119,6 +120,33 @@ index counts for acceptance checks. Its byte estimate includes CPU terrain
 indices and must not be added to the separate resident geometry estimate, which
 already includes visible grass buffers. The camera, lighting and material choices
 are interpretations of Webster's character, not additional observed geodata.
+
+The September 10 visual-reference application is recorded against all 465 notes
+in [the application ledger](../../../docs/town/visual-character-application-2026-09-10.md).
+Ground color, normals and roughness use continuous texture gradients on WebGL2,
+preventing hashed texture offsets from creating false blurred seams. The WebGL1
+fallback retains compatible sampling. Gravel has separate supported stone
+shapes; terrain class masks and every road-paint polygon remain unchanged.
+Registered Main sidewalks have route-aligned concrete joints, the existing hedge
+has a softly irregular clipped crown, and Main asphalt has sparse authored
+connected crack-seal marks. These are general appearance inferences, not measured
+panel dimensions, plant species or present-day maintenance inventories.
+
+Turf tint now varies in coherent small patches. Leaf clusters carry restrained
+within-crown tonal variation. `trunk-contact.ts` replaces only the pinned native
+trunk prototype with a closed flared/tapered base inside the original bounds:
+four extra triangles per displayed trunk, one shared 1,248-byte geometry, unchanged
+anchors, crown joins and material ownership.
+
+`water-reflection.ts` adds actual rendered shore forms to the lake water on High
+desktop graphics, with a 384-square target, a maximum ten refreshes per second,
+and strict draw/triangle and timing limits. It begins after the first playable
+frames, uses existing loaded scenery, and excludes expensive small details.
+Unsupported or over-budget views keep the sky/environment water treatment.
+Its target and pass costs are reported separately by `reflectionResources()`;
+session cleanup releases its target and restores borrowed material hooks.
+This remains a limited reflected subset, not a complete shore-object mirror,
+depth reconstruction, water-quality model, or moving-boat simulation.
 
 ## Building evidence overlays
 

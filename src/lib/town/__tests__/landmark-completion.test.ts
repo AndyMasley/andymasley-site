@@ -19,7 +19,9 @@ describe('registered civic landmark signatures',()=>{
    expect(protectedMesh.geometry).toBe(g);expect(protectedMesh.material).toBe(m);expect(protectedMesh.parent).toBe(group);expect(applyLandmarkCompletion(group,row.tileId,row.origin,level,row.lods[level].sha256)).toBe(result);
    group.traverse(o=>{if(o instanceof THREE.Mesh&&o.userData.townCrafted){expect(o.userData.sourceIds).toEqual([row.id]);const p=o.geometry.getAttribute('position'),n=o.geometry.getAttribute('normal');for(let i=0;i<p.count;i++){expect(Number.isFinite(p.getX(i)+p.getY(i)+p.getZ(i))).toBe(true);expect(Math.hypot(n.getX(i),n.getY(i),n.getZ(i))).toBeCloseTo(1,5);}}});dispose(group);
   }}
- });
+ // Exhaustively visits every vertex across four landmarks and three LODs.
+ // Keep every assertion; shared runners need more than the default five seconds.
+ },30000);
  it('rejects a wrong source hash or tile origin without changing the scene',()=>{
   const row=LANDMARK_COMPLETION_ROWS[0];for(const bad of['hash','origin']){const{group}=fixture(row),children=[...group.children];expect(applyLandmarkCompletion(group,row.tileId,bad==='origin'?[0,0,0]:row.origin,0,bad==='hash'?'wrong':row.lods[0].sha256)?.status).toBe('source-mismatch');expect(group.children).toEqual(children);dispose(group);}
  });

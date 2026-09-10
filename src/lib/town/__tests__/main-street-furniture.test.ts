@@ -72,8 +72,34 @@ describe('Main Street source-grounded furniture',()=>{
   });
   it('keeps the clipped hedge inside its observed-sidewalk-side domain, with filtered stationary detail',()=>{
     const g=scene();apply(g);const mesh=g.getObjectByName('Main Street furniture | leaf') as THREE.Mesh<THREE.BufferGeometry,THREE.MeshStandardMaterial>;
-    const positions=mesh.geometry.getAttribute('position');for(let i=0;i<positions.count;i++)expect(positions.getY(i)).toBeLessThan(37.75);
+    const ring=catalog.hedge.ring;
+    const inside=(x:number,y:number)=>{let hit=false;for(let i=0,j=ring.length-1;i<ring.length;j=i++){const a=ring[i],b=ring[j];if((a[1]>y)!==(b[1]>y)&&x<(b[0]-a[0])*(y-a[1])/(b[1]-a[1])+a[0])hit=!hit;}return hit;};
+    const positions=mesh.geometry.getAttribute('position');for(let i=0;i<positions.count;i++){
+      expect(positions.getY(i)).toBeLessThanOrEqual(36.90+catalog.hedge.heightM);
+      expect(positions.getY(i)).toBeGreaterThanOrEqual(36.90-.012);
+      const x=positions.getX(i)+origin[0],y=-positions.getZ(i)-origin[2];
+      if(!inside(x,y)){
+        // End vertices lie on the retained ring boundary; only Float32 upload
+        // rounding is allowed outside it, never a visible envelope expansion.
+        const distance=Math.min(...ring.map((a,j)=>{const b=ring[(j+1)%ring.length],dx=b[0]-a[0],dy=b[1]-a[1],t=Math.max(0,Math.min(1,((x-a[0])*dx+(y-a[1])*dy)/(dx*dx+dy*dy)));return Math.hypot(x-a[0]-t*dx,y-a[1]-t*dy);}));
+        expect(distance,`hedge vertex ${i} at ${x},${y}`).toBeLessThan(.00005);
+      }
+    }
     const shader={uniforms:{},vertexShader:THREE.ShaderLib.standard.vertexShader,fragmentShader:THREE.ShaderLib.standard.fragmentShader};mesh.material.onBeforeCompile(shader as THREE.WebGLProgramParametersWithUniforms,{}as THREE.WebGLRenderer);
     expect(shader.fragmentShader).toContain('mainHedgeFootprint');expect(shader.fragmentShader).toContain('smoothstep(.008,.055,mainHedgeFootprint)');expect(shader.fragmentShader).not.toContain('gl_FragCoord');
+    expect(shader.fragmentShader).toContain('craftedRelief=(mainHedgeClusters-.5)*.030*mainHedgeClusterResolved');
+    expect(shader.fragmentShader).toContain('dFdx(craftedRelief)');expect(shader.fragmentShader).toContain('smoothstep(.055,.22,mainHedgeFootprint)');
+    expect(shader.fragmentShader.indexOf('craftedRelief=(mainHedgeClusters')).toBeLessThan(shader.fragmentShader.indexOf('dFdx(craftedRelief)'));
+    expect(shader.fragmentShader.match(/mainHedgeNoise\(mainHedgeLocal/g)).toHaveLength(2);
+    expect(mesh.material.customProgramCacheKey()).toBe('main-street-clipped-hedge-v2');
+    expect(shader.fragmentShader).not.toMatch(/discard|\btime\b/);
+    expect(shader.fragmentShader.match(/uniform sampler\w+ \w+/g)).toEqual(THREE.ShaderLib.standard.fragmentShader.match(/uniform sampler\w+ \w+/g));
+  });
+  it('does not increase the existing furniture geometry, draws or texture allocation at any LOD',()=>{
+    for(const level of[0,1,2]){
+      const g=scene(),r=apply(g,level);expect(r.triangles).toBe([5892,4268,3512][level]);expect(r.meshes).toBe(3);
+      const owned=g.getObjectByName('Main Street photo furniture')!;
+      for(const o of owned.children){const m=o as THREE.Mesh<THREE.BufferGeometry,THREE.MeshStandardMaterial>;expect(Object.values(m.material).some(v=>v instanceof THREE.Texture)).toBe(false);}
+    }
   });
 });

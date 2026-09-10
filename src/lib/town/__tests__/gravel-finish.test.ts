@@ -24,8 +24,29 @@ describe('inventory gravel appearance',()=>{
   expect(stones).toBeGreaterThan(base);
   expect(fragment.slice(stones)).not.toMatch(/\btownArtHeight\s*=(?!=)/);
   expect(fragment.indexOf('vec2 townArtHeightGradient')).toBeGreaterThan(stones);
+  expect(fragment).toContain('smoothstep(.14,.25,dot(townGravelF,townGravelF))');
+  expect(fragment).toContain('townGravelRadius))*townGravelSupport');
+  expect(fragment).toContain('townGravelStone*(.20+(townGravelSeed-.5)*.13)');
+  expect(fragment).not.toContain('(townGravelStone-.54)*.20+(townGravelSeed-.5)*.13');
+  expect(fragment).toContain('mix(length(townGravelShape),max(townGravelShape.x,townGravelShape.y),.38)');
   expect(fragment).toContain('0.115,0.117,0.102');expect(fragment).not.toContain('sRGBToLinear');expect(shader.vertexShader).not.toContain('townGravel');
-  expect(m.customProgramCacheKey()).toContain('inventory-surface-v3:2');m.map!.dispose();m.dispose();
+  expect(m.customProgramCacheKey()).toContain('inventory-surface-v4:2');m.map!.dispose();m.dispose();
+ });
+ it('joins neighboring gravel cells without a color or relief step at every pixel scale',()=>{
+  const smooth=(a:number,b:number,x:number)=>{const t=Math.max(0,Math.min(1,(x-a)/(b-a)));return t*t*(3-2*t);};
+  const evaluate=(x:number,y:number,seed:number,pixel:number)=>{
+   const support=1-smooth(.14,.25,x*x+y*y),resolved=1-smooth(.006,.045,pixel);
+   // Regardless of each cell's rotated stone shape, its value lies in [0,1].
+   // Check the extreme opposite neighbor shapes/seeds as a conservative bound.
+   const stone=seed*support;
+   return{color:1+(stone*(.20+(seed-.5)*.13)-.065)*resolved,height:stone*.0013*resolved};
+  };
+  for(const pixel of[.0001,.003,.012,.03,.06])for(const side of[-1,1])for(const offset of[-.5,-.3,0,.3,.5]){
+   const left=evaluate(side*.5,offset,0,pixel),right=evaluate(-side*.5,offset,1,pixel);
+   expect(left).toEqual(right);
+   const inner=evaluate(side*(.5-1e-5),offset,1,pixel);
+   expect(Math.abs(inner.color-left.color)).toBeLessThan(1e-7);expect(Math.abs(inner.height-left.height)).toBeLessThan(1e-9);
+  }
  });
  it('keeps earth, gravel and chip-seal as distinct explicit programs with separate versioned keys',()=>{
   const keys=new Set<string>(),programs=new Set<string>();
@@ -35,7 +56,7 @@ describe('inventory gravel appearance',()=>{
    expect(fragment).toContain(`vTownArtWorld.xz*${frequency}.0`);
    expect(fragment).not.toContain('Webster mineral family: asphalt');
    expect(fragment.includes('townGravelStone')).toBe(code===2);
-   expect(m.customProgramCacheKey()).toContain(`inventory-surface-v3:${code}`);
+   expect(m.customProgramCacheKey()).toContain(`inventory-surface-v4:${code}`);
    expect(fragment.includes('townInventoryVariation')).toBe(code!==5);
    if(code===1)expect(fragment).toContain('0.185,0.131,0.080');
    else if(code===5)expect(fragment).toContain('townAsphaltValue');

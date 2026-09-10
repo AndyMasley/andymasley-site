@@ -180,7 +180,10 @@ describe('Scoped late-summer materials', () => {
   });
 
   it('uses warped, low-slope dielectric ripples without adding water assets or moving its geometry',()=>{
-    const m=material('Mapped water | inferred level and appearance');applyArtMaterial(m);const shader=compile(m);expect(m.metalness).toBe(0);expect(m.roughness).toBe(.28);expect(shader.fragmentShader).toContain('townWaterWind');expect(shader.fragmentShader).toContain('townWaterStrength');expect(shader.fragmentShader).toContain('townWaterFine');expect(shader.vertexShader).not.toContain('townWaterWind');expect(shader.fragmentShader).not.toContain('vec2(3.1,1.7)');
+    const m=material('Mapped water | inferred level and appearance');applyArtMaterial(m);const shader=compile(m);expect(m.metalness).toBe(0);expect(m.roughness).toBe(.22);expect(shader.fragmentShader).toContain('townWaterWind');expect(shader.fragmentShader).toContain('townWaterStrength');expect(shader.fragmentShader).toContain('townWaterFine');expect(shader.vertexShader).not.toContain('townWaterWind');expect(shader.fragmentShader).not.toContain('vec2(3.1,1.7)');
+    expect(m.color.b).toBeGreaterThan(m.color.g);expect(m.color.g).toBeGreaterThan(m.color.r);
+    expect(shader.fragmentShader.indexOf('roughnessFactor = clamp(roughnessFactor + (townWaterStrength')).toBeGreaterThan(shader.fragmentShader.indexOf('float townWaterStrength'));
+    expect(shader.fragmentShader).not.toContain('townWaterDepth');
   });
 
   it('gives the neighboring lake the same finish and wave phase as the playable water without changing either shoreline', () => {

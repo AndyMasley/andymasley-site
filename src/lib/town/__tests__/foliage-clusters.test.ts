@@ -54,6 +54,21 @@ describe('baked leaf cluster volume', () => {
     geometry.dispose(); solid.dispose();
   });
 
+  it('gives neighbouring branch clusters restrained tonal differences even at the same crown height', () => {
+    const geometry=cards();geometry.computeBoundingBox();finishLeafClusters(geometry,geometry.boundingBox!);
+    const color=geometry.getAttribute('color'),ratios:number[]=[];
+    // The first five cards have identical centre height and source color.
+    // This checks horizontal branch-scale variety, separate from the existing
+    // top-to-bottom illumination gradient and per-tree instance tint.
+    for(let card=0;card<5;card++){
+      const i=card*4;ratios.push(color.getX(i)/color.getY(i));
+      for(let vertex=1;vertex<4;vertex++)expect(color.getX(i+vertex)/color.getY(i+vertex)).toBeCloseTo(ratios[card],6);
+    }
+    expect(Math.max(...ratios)-Math.min(...ratios)).toBeGreaterThan(.012);
+    expect(Math.max(...ratios)-Math.min(...ratios)).toBeLessThan(.07);
+    geometry.dispose();
+  });
+
   it('preserves the native crown envelope and all card topology across standard, open and conifer variants with bounded shared storage', async () => {
     const base = `public/town-assets/${release.directory}/`, bytes = readFileSync(base + 'manifest.json');
     expect(createHash('sha256').update(bytes).digest('hex')).toBe(release.manifestSha256);

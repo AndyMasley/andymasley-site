@@ -12,12 +12,21 @@ type Selection = { ownership?: 'street-corner-apron'; name: string; parent: stri
 export type MainStreetSurfaceReport = { applied: boolean; rejected: boolean; asphaltTriangles: number; sidewalkTriangles: number; meshes: number; materialVariants: number; addedDraws: number; geometryBytes: number };
 export const MAIN_STREET_SURFACE_PROVENANCE = catalog;
 
+const civicCrackFunctions = `
+float mainCrackSegment(vec2 p,vec2 a,vec2 b){
+  vec2 v=b-a;
+  vec2 delta=p-a-v*clamp(dot(p-a,v)/dot(v,v),0.0,1.0);
+  return dot(delta,delta);
+}
+`;
+
 function finishMaterial(source: THREE.MeshStandardMaterial, kind: FinishKind): THREE.MeshStandardMaterial {
   const material = source.clone();
   applyArtMaterial(material);
   const previous = material.onBeforeCompile, previousKey = material.customProgramCacheKey();
   material.name = `${source.name} | photo-informed civic Main Street ${kind}`;
-  material.userData.mainStreetSurface = { version: catalog.version, kind, physicalIds: catalog.physicalIds, basis: catalog.inference };
+  material.userData.mainStreetSurface = { version: catalog.version, kind, physicalIds: catalog.physicalIds, basis: catalog.inference,
+    finishBasis: kind==='asphalt'?'Sparse authored crack-seal vocabulary on this registered civic-asphalt interval; not surveyed present-day damage or repair locations.':'Authored 1.524 m concrete joint rhythm within the retained sidewalk tops; not a measured panel inventory.' };
   material.onBeforeCompile = (shader, renderer) => {
     previous.call(material, shader, renderer);
     if (!shader.vertexShader.includes('#include <project_vertex>') || !shader.fragmentShader.includes('#include <roughnessmap_fragment>')) throw Error('Main Street surface shader anchors changed');
@@ -25,6 +34,7 @@ function finishMaterial(source: THREE.MeshStandardMaterial, kind: FinishKind): T
       .replace('#include <project_vertex>', '#include <project_vertex>\nvTownMainCoord=townMainCoord;');
     shader.fragmentShader = `varying vec2 vTownMainCoord;\n${shader.fragmentShader}`;
     if (kind === 'asphalt') {
+      shader.fragmentShader=civicCrackFunctions+shader.fragmentShader;
       const anchor = 'diffuseColor.rgb = mix(diffuseColor.rgb,vec3(townAsphaltValue)*vec3(0.94,1.0,1.07),0.96);';
       if (!shader.fragmentShader.includes(anchor)) throw Error('Main Street asphalt shader anchor changed');
       shader.fragmentShader = shader.fragmentShader.replace(anchor, `${anchor}
@@ -36,6 +46,34 @@ float mainAsphaltFade=smoothstep(0.0,6.0,vTownMainCoord.x)*(1.0-smoothstep(${(ca
 mainAsphaltFade*=1.0-smoothstep(${catalog.junctionFadeM[0].toFixed(1)},${catalog.junctionFadeM[1].toFixed(1)},vTownMainCoord.y);
 vec3 mainWeatheredGray=mix(vec3(.135,.142,.144),vec3(.235,.243,.242),smoothstep(.015,.20,townAsphaltValue));
 diffuseColor.rgb=mix(diffuseColor.rgb,mainWeatheredGray,mainAsphaltFade);
+// VC-0444/0445: a few connected, branched repair marks supply the observed
+// older-civic asphalt vocabulary. Cells are world-anchored, not tile anchored.
+// Every mark stops inside its cell, so the hash never exposes square seams.
+vec2 mainCrackWorld=mat2(.961,-.276,.276,.961)*(vTownArtWorld.xz-vec2(-2885.,949.));
+vec2 mainCrackCell=floor(mainCrackWorld/8.0),mainCrackP=fract(mainCrackWorld/8.0)*8.0-4.0;
+float mainCrackSeed=townArtHash(mainCrackCell+vec2(43.8,11.2));
+float mainCrackChoice=townArtHash(mainCrackCell+vec2(7.1,89.3));
+mainCrackP.x*=mainCrackSeed<.5?-1.0:1.0;
+mainCrackP-=vec2(mainCrackSeed-.5,mainCrackChoice-.5)*.55;
+vec2 mainCrackJoin=vec2(.15+(mainCrackSeed-.5)*.6,-.1);
+vec2 mainCrackBranch=vec2(1.65+mainCrackSeed*.5,.25+mainCrackChoice*.8);
+float mainCrackDistance=min(mainCrackSegment(mainCrackP,vec2(-1.40+mainCrackSeed*.8,-3.15+mainCrackChoice*.7),mainCrackJoin),mainCrackSegment(mainCrackP,mainCrackJoin,vec2(-.65+mainCrackChoice,3.10-mainCrackSeed*.6)));
+mainCrackDistance=min(mainCrackDistance,mainCrackSegment(mainCrackP,mainCrackJoin,mainCrackBranch));
+mainCrackDistance=min(mainCrackDistance,mainCrackSegment(mainCrackP,mainCrackBranch,vec2(2.40+mainCrackSeed*.5,1.45+mainCrackChoice*.6)));
+mainCrackDistance=min(mainCrackDistance,mainCrackSegment(mainCrackP,mainCrackJoin,vec2(-2.55+mainCrackChoice*.5,.8+mainCrackSeed)));
+mainCrackDistance=sqrt(mainCrackDistance);
+float mainCrackAA=max(townArtFootprint*.65,.001);
+float mainCrackWidth=mix(.011,.023,mainCrackSeed);
+float mainCrackResolved=1.0-smoothstep(.018,.090,townArtFootprint);
+float mainCrackCoverage=(1.0-smoothstep(mainCrackWidth-mainCrackAA,mainCrackWidth+mainCrackAA,mainCrackDistance))
+  *step(.73,mainCrackChoice)*mainCrackResolved*mainAsphaltFade;
+diffuseColor.rgb*=1.0-mainCrackCoverage*.35;
+`);
+      shader.fragmentShader=shader.fragmentShader.replace('#include <roughnessmap_fragment>',`
+// Apply after the mineral field has assigned its height, before normal shading.
+// This shallow sealed seam never changes road support or the paint layer.
+townArtHeight-=mainCrackCoverage*.00055;
+#include <roughnessmap_fragment>
 `);
     } else {
       shader.fragmentShader = shader.fragmentShader.replace('#include <roughnessmap_fragment>', `
@@ -53,11 +91,23 @@ float mainPaverVariation=(townArtHash(mainPaverCell)-.5)*(1.0-smoothstep(.04,.12
 vec3 mainPaverColor=vec3(.215,.073,.045)*(1.0+mainPaverVariation*.16);
 mainPaverColor*=1.0-max(mainPaverJoint.x,mainPaverJoint.y)*.24*mainPaverResolved;
 diffuseColor.rgb=mix(diffuseColor.rgb,mainPaverColor,mainBand);
+// Authored five-foot panel rhythm follows this registered walk's curving route,
+// rather than a global X/Z grid. Dimensions and joint ages are not a survey.
+// Restrict joints to concrete: the separate curbside paver band keeps its phase.
+float mainConcrete=1.0-mainBand;
+float mainPanelPhase=vTownMainCoord.x/1.524;
+float mainPanelEdge=min(fract(mainPanelPhase),1.0-fract(mainPanelPhase))*1.524;
+float mainPanelResolved=1.0-smoothstep(.028,.13,mainPaverAA.x);
+float mainPanelJoint=(1.0-smoothstep(.003,.007+mainPaverAA.x*.55,mainPanelEdge))*mainPanelResolved*mainConcrete;
+float mainPanelVariation=(townArtHash(vec2(floor(mainPanelPhase),11.7))-.5)*.045*mainConcrete;
+diffuseColor.rgb*=1.0+mainPanelVariation-mainPanelJoint*.28;
+// The existing mineral normal hook consumes this sub-millimetre recess.
+townArtHeight-=mainPanelJoint*.0012;
 #include <roughnessmap_fragment>
 `);
     }
   };
-  material.customProgramCacheKey = () => `${previousKey}|main-street-surface-v3:${kind}`;
+  material.customProgramCacheKey = () => `${previousKey}|main-street-surface-v5:${kind}`;
   material.needsUpdate = true;
   return material;
 }

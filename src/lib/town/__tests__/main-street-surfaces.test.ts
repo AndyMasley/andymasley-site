@@ -68,9 +68,24 @@ describe('Photo-informed civic Main Street surfaces',()=>{
             const shader=compile(material);expect(shader.vertexShader).toContain('vTownMainCoord=townMainCoord');expect(shader.fragmentShader).not.toMatch(/discard|texture2D\(townMain/);
             if(material.userData.mainStreetSurface.kind==='pavers'){
               expect(shader.fragmentShader).toContain('fwidth(vTownMainCoord)');expect(shader.fragmentShader).not.toMatch(/fwidth\(mainPaver(?:Grid|Cell|Edge)/);
+              expect(shader.fragmentShader).toContain('mainPanelPhase=vTownMainCoord.x/1.524');
+              expect(shader.fragmentShader).toContain('mainConcrete=1.0-mainBand');
+              expect(shader.fragmentShader).toContain('smoothstep(.028,.13,mainPaverAA.x)');
+              expect(shader.fragmentShader).toContain('townArtHeight-=mainPanelJoint*.0012');
+              expect(shader.fragmentShader.indexOf('townArtHeight-=mainPanelJoint')).toBeLessThan(shader.fragmentShader.indexOf('dFdx(townArtHeight)'));
+              expect(material.customProgramCacheKey()).toContain('main-street-surface-v5:pavers');
+              expect(shader.fragmentShader).not.toContain('mainCrack');
               for(let i=part.start;i<part.start+part.count;i+=3){const ids=[0,1,2].map(k=>mesh.geometry.index!.getX(i+k)),p=mesh.geometry.getAttribute('position'),[a,b,c]=ids.map(id=>new THREE.Vector3().fromBufferAttribute(p,id)),normal=b.sub(a).cross(c.sub(a)).normalize();minimumTopNormal=Math.min(minimumTopNormal,normal.y);expect(normal.y).toBeGreaterThan(.95);topFaces++;for(const id of ids)expect(Math.min(Math.abs(coords.getY(id)),Math.abs(coords.getY(id)-2.4384))).toBeLessThan(.0001);}
             }else{
               expect(shader.fragmentShader).toContain('mainWeatheredGray');expect(shader.fragmentShader.indexOf('mainWeatheredGray')).toBeLessThan(shader.fragmentShader.indexOf('float townStoneGrain'));
+              expect(shader.fragmentShader).toContain('mainCrackWorld=mat2(.961,-.276,.276,.961)*(vTownArtWorld.xz');
+              expect(shader.fragmentShader).toContain('step(.73,mainCrackChoice)*mainCrackResolved*mainAsphaltFade');
+              expect(shader.fragmentShader).toContain('smoothstep(.018,.090,townArtFootprint)');
+              expect(shader.fragmentShader).not.toMatch(/fwidth\(mainCrack|dFd[xy]\(mainCrack/);
+              expect(shader.fragmentShader.indexOf('townArtHeight-=mainCrackCoverage')).toBeGreaterThan(shader.fragmentShader.indexOf('townArtHeight = townFineValue'));
+              expect(shader.fragmentShader.indexOf('townArtHeight-=mainCrackCoverage')).toBeLessThan(shader.fragmentShader.indexOf('dFdx(townArtHeight)'));
+              expect(material.userData.mainStreetSurface.finishBasis).toContain('not surveyed present-day damage');
+              expect(compile(source).fragmentShader).not.toContain('mainCrack');
               expect(shader.fragmentShader).toContain('mainAsphaltFade*=1.0-smoothstep(7.7,12.0,vTownMainCoord.y)');
               for(let i=part.start;i<part.start+part.count;i+=3){
                 const ids=[0,1,2].map(k=>mesh.geometry.index!.getX(i+k));
@@ -84,6 +99,9 @@ describe('Photo-informed civic Main Street surfaces',()=>{
           }
         }
         expect(topFaces).toBe(238);expect(junctionFaces).toBe(26);expect(cornerFaces).toBe(411);expect(retainedCornerFaces).toBe(211);expect(farJunctionVertices).toBeGreaterThan(0);expect(unchanged).toBe(before.size-report.meshes);expect(resources(group).textures).toEqual(beforeResources.textures);
+        // Material wear may tint existing asphalt, but it cannot leak into
+        // white/yellow traffic paint or unqualified townwide road surfaces.
+        for(const material of resources(group).materials){if(!(material instanceof THREE.MeshStandardMaterial)||!/(?:paint|Drive road \| asphalt$)/.test(material.name)||material.userData.mainStreetSurface)continue;expect(compile(material).fragmentShader).not.toContain('mainCrack');}
         expect(applyMainStreetSurfaces(group,tile.id,origin,level,catalog.levels[level].sourceSha256)).toBe(report);
         console.log('Main Street native',JSON.stringify({level,...report,minimumTopNormal,unchangedMeshes:unchanged,applyMs:+applyMs.toFixed(2)}));
       }

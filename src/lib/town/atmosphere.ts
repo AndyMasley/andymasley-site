@@ -5,7 +5,7 @@ export const SUMMER_LIGHT = {
   sun: '#fff1db',
   skyFill: '#c5ddf2',
   groundFill: '#aea58c',
-  haze: '#cbd7db',
+  haze: '#c0d4e0',
   sunIntensity: 2.65,
   fillIntensity: 1.30,
   exposure: 1.03,
@@ -31,7 +31,7 @@ export function createSummerSky(sunDirection: THREE.Vector3): Sky {
   sky.scale.setScalar(450000);
   sky.material.uniforms.sunPosition.value.copy(sunDirection).normalize();
   Object.assign(sky.material.uniforms, {
-    summerZenith: { value: new THREE.Color('#4c91c4') },
+    summerZenith: { value: new THREE.Color('#448dc4') },
     summerHorizon: { value: new THREE.Color(SUMMER_LIGHT.haze) },
     summerCloud: { value: new THREE.Color('#fff6e9') },
     summerGround: { value: new THREE.Color('#626a51') },
@@ -62,9 +62,11 @@ export function createSummerSky(sunDirection: THREE.Vector3): Sky {
       // Broad, separated fair-weather cloud masses keep a blue sky between
       // them. A second nearby field shades the sun-facing lobes without a
       // texture download, ray march, or moving noise in the player's view.
-      vec2 cloudUV = direction.xz / max(0.10, elevation) * 0.46 + vec2(3.1,8.7);
+      vec2 cloudUV = direction.xz / max(0.10, elevation) * 0.62 + vec2(3.1,8.7);
       float field = cloudField(cloudUV);
-      float cloud = smoothstep(0.49,0.64,field) * smoothstep(0.025,0.15,elevation);
+      // The civic photograph's open blue sky is the baseline. Keep a few
+      // separated fair-weather clouds, with the same bounded five-octave cost.
+      float cloud = smoothstep(0.55,0.70,field) * smoothstep(0.025,0.15,elevation);
       vec2 lightStep = normalize(vSunDirection.xz) * 0.16;
       float lightField = cloudField(cloudUV + lightStep);
       float cloudLight = clamp(0.63+(field-lightField)*3.6,0.25,1.0);

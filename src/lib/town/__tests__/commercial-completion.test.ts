@@ -75,5 +75,7 @@ describe('commercial research completion',()=>{
     for(let i=0;i<p.count;i+=3){const a=new THREE.Vector3().fromBufferAttribute(p,i),b=new THREE.Vector3().fromBufferAttribute(p,i+1),c=new THREE.Vector3().fromBufferAttribute(p,i+2),normal=new THREE.Vector3().fromBufferAttribute(n,i),cross=b.sub(a).cross(c.sub(a));expect([...a,...b,...c,...normal].every(Number.isFinite)).toBe(true);expect(cross.length()).toBeGreaterThan(1e-9);expect(cross.dot(normal)).toBeGreaterThan(0);}
    });
   }
- });
+ // Full source-tile geometry census, not a five-second performance benchmark.
+ // Preserve all winding, support and idempotence assertions on shared runners.
+ },30000);
 });

@@ -41,7 +41,7 @@ describe('Mapped summer ground', () => {
     const standard = THREE.ShaderLib.standard;
     const shader = { vertexShader: standard.vertexShader, fragmentShader: standard.fragmentShader, uniforms: THREE.UniformsUtils.clone(standard.uniforms) };
     material.onBeforeCompile(shader as Parameters<THREE.Material['onBeforeCompile']>[0], {} as THREE.WebGLRenderer);
-    const samples = (sampler: string) => [...shader.fragmentShader.matchAll(new RegExp(`texture2D\\(${sampler},\\s*([^)]*)\\)`, 'g'))].map(match => match[1].trim());
+    const samples = (sampler: string) => [...shader.fragmentShader.matchAll(new RegExp(`texture(?:2D|Grad)\\(${sampler},\\s*([^)]*)\\)`, 'g'))].map(match => match[1].trim());
     const colorUVs = samples('townGrass');
     expect(colorUVs).toHaveLength(2);
     expect(samples('townGrassNormal')).toEqual(colorUVs);
@@ -52,7 +52,7 @@ describe('Mapped summer ground', () => {
     expect(samples('townCover')).toHaveLength(1);
     expect(samples('townPavement')).toHaveLength(1);
     expect([...shader.fragmentShader.matchAll(/townScatteredGround\(\s*town(?:Forest|Soil),/g)]).toHaveLength(2);
-    expect([...shader.fragmentShader.matchAll(/texture2D\(/g)]).toHaveLength(11);
+    expect([...shader.fragmentShader.matchAll(/texture(?:2D|Grad)\(/g)]).toHaveLength(11);
     expect(read).toHaveBeenCalledTimes(4); // Three existing grass maps and this tile's mask.
     expect(shader.vertexShader).toContain('(modelMatrix * vec4(transformed, 1.0)).xz');
 
@@ -63,6 +63,32 @@ describe('Mapped summer ground', () => {
     expect(derivatives).toEqual(['vTownGroundXZ']);
     expect(fragment.indexOf('fwidth(vTownGroundXZ)')).toBeLessThan(fragment.indexOf('if (townWeights.r'));
     expect(fragment).toContain('townCutBlade(vTownGroundXZ,townPixelWidth)');
+    expect(material.customProgramCacheKey()).toBe('webster-finished-ground-v12');
+    // Mask lookup is continuous already. Every detail lookup uses explicit
+    // gradients; no floor/hash offset or divergent class branch computes them.
+    expect([...fragment.matchAll(/texture2D\(/g)]).toHaveLength(1);
+    expect([...fragment.matchAll(/textureGrad\(/g)]).toHaveLength(10);
+    const beforeClasses=fragment.slice(fragment.indexOf('#include <map_fragment>'),fragment.indexOf('if (townWeights.r'));
+    expect([...beforeClasses.matchAll(/dFd[xy]\(([^)]*)\)/g)].map(m=>m[1])).toEqual(['vTownGroundXZ','vTownGroundXZ','townDetailUV','townDetailUV','townPavedUV','townPavedUV']);
+    expect(fragment).toContain('uvDx = worldDx / repeatSize, uvDy = worldDy / repeatSize');
+    for(const sample of samples('groundTexture'))expect(sample).toMatch(/^uv\+[abcd],uvDx,uvDy$/);
+    expect(colorUVs).toEqual(['townDetailUV,townDetailDx,townDetailDy','townDetailUV2,townDetailDx2,townDetailDy2']);
+    expect(fragment).toContain('townTurfRotation * townDetailDx * 0.73');
+    expect(fragment).toContain('townTurfRotation * townDetailDy * 0.73');
+    const scatter=fragment.slice(fragment.indexOf('vec3 townScatteredGround('),fragment.indexOf('vec2 townCutBlade('));
+    expect(scatter).not.toMatch(/dFdx|dFdy|fwidth/);
+    expect(fragment).toContain('townScatteredGround(townForest,vTownGroundXZ,townWorldDx,townWorldDy,');
+    expect(fragment).toContain('townScatteredGround(townSoil,vTownGroundXZ,townWorldDx,townWorldDy,');
+    // Sparse litter consumes the continuous hoisted pixel width. It cannot
+    // manufacture cover or shade grass/pavement outside the retained masks.
+    const forestBranch=fragment.slice(fragment.indexOf('if (townWeights.g'),fragment.indexOf('vec3 townSoilColor'));
+    const soilBranch=fragment.slice(fragment.indexOf('if (townWeights.a'),fragment.indexOf('float townPavedValue'));
+    expect([...fragment.matchAll(/=townLitterFragment\(/g)]).toHaveLength(2);
+    expect(forestBranch).toContain('townLitterFragment(vTownGroundXZ,townPixelWidth,');
+    expect(soilBranch).toContain('townLitterFragment(vTownGroundXZ,townPixelWidth,');
+    for(const branch of [forestBranch,soilBranch])expect(branch).not.toMatch(/townWeights\s*(?:\.[rgba])?\s*[*+\-/]?=/);
+    expect(forestBranch).toMatch(/townForestFragment\.x\*[^;]*townWeights\.g/);
+    expect(soilBranch).toMatch(/townSoilFragment\.x\*[^;]*townWeights\.a/);
     const finalNormal = fragment.split('\n').find(line => line.includes('normal = normalize(normal +'))!;
     expect(finalNormal).toContain('townClose * townGrassResolved');
     expect(finalNormal).toContain('townWeights.r');
@@ -81,6 +107,14 @@ describe('Mapped summer ground', () => {
     }
     const determinantGuard = normalInjection.indexOf('if(abs(townGroundDet)');
     expect(determinantGuard).toBeGreaterThan(reliefDerivatives.at(-1)!.index!);
+    // Older WebGL1 remains compatible with the prior texture path; no GLSL3
+    // builtin may leak into its generated shader or add another atlas read.
+    const legacyShader = { vertexShader: standard.vertexShader, fragmentShader: standard.fragmentShader, uniforms: THREE.UniformsUtils.clone(standard.uniforms) };
+    material.onBeforeCompile(legacyShader as Parameters<THREE.Material['onBeforeCompile']>[0], {capabilities:{isWebGL2:false}} as THREE.WebGLRenderer);
+    expect(legacyShader.fragmentShader).not.toMatch(/textureGrad\(/);
+    expect([...legacyShader.fragmentShader.matchAll(/texture2D\(/g)]).toHaveLength(11);
+    expect(legacyShader.fragmentShader).toContain('texture2D(groundTexture,uv+a)');
+    expect(legacyShader.fragmentShader).toContain('texture2D(townGrassNormal,townDetailUV2)');
     surfaces.dispose();
   });
 

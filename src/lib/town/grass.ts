@@ -284,7 +284,10 @@ transformed = townBladeRoot + (transformed-townBladeRoot) * townTuftGrowth;
         worldMatrix.compose(p, q, scale); matrix.multiplyMatrices(inverse, worldMatrix);
         tile.mesh!.setMatrixAt(i, matrix);
         const tint = 0.94 + random(ix, iz, 613) * 0.12;
-        tile.mesh!.setColorAt(i, color.setRGB(tint, tint, tint * 0.985));
+        // VC-0137/0262: neighbouring turf shares restrained green/olive
+        // tendencies. Reuse the already sampled height patch, retaining the
+        // mean palette, grass-only mask and independent fine brightness grain.
+        tile.mesh!.setColorAt(i, color.setRGB(tint * (.96 + .08 * patch), tint * (1.015 - .03 * patch), tint * (1.015 - .07 * patch)));
       });
       tile.mesh.count = rows.length;
       tile.mesh.instanceMatrix.needsUpdate = true;
