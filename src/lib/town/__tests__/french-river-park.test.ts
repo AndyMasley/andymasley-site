@@ -132,5 +132,7 @@ describe('source-registered French River Park paths and pads', () => {
       expect(sites).toBeGreaterThan(5);
     }
     expect(mask.data).toEqual(original); expect(grassAllowed(finished, -2918, 817)).toBe(true);
-  });
+  // Exhaustively visits the 130 × 240 site grid for each registered footprint;
+  // shared CI runners need headroom for these unchanged geometric assertions.
+  }, 20_000);
 });
