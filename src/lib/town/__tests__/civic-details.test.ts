@@ -45,6 +45,33 @@ describe('researched civic facade completion',()=>{
    expect(r?.status).toBe(bad==='tile'?undefined:'source-mismatch');expect(f.group.children).toHaveLength(1);f.dispose();
   }
  });
+ it('adds upper stepwall windows only when the enclosing wall was successfully repaired',()=>{
+  const run=(status:string,enclosureTriangles:number)=>{
+   const f=fixture();f.group.userData.civicRoofFinish={status,enclosureTriangles};
+   const r=applyCivicDetails(f.group,data.tileId,data.origin,0,data.lods[0].sha256)!;
+   const basis=f.group.children[1].userData.roofStepBasis;
+   f.dispose();return{...r,basis};
+  };
+  const rejected=run('source-mismatch',12),unclosed=run('applied',0),closed=run('applied',12);
+  expect(rejected.frames).toBe(15);expect(unclosed.frames).toBe(15);
+  expect(rejected.basis).toBeUndefined();expect(unclosed.basis).toBeUndefined();
+  expect(closed.frames).toBe(16);expect(closed.windows).toBe(unclosed.windows+5);
+  expect(closed.basis).toContain('not surveyed');
+ });
+ it('keeps the raised school entrance pediment opaque from both sides of the flat roof',()=>{
+  const frame=CIVIC_DETAIL_FRAMES.find(f=>f.recipe==='school-entry')!;
+  for(const level of[0,1,2]){
+   const f=fixture(level);applyCivicDetails(f.group,data.tileId,data.origin,level,data.lods[level].sha256);
+   f.group.position.fromArray(data.origin);f.group.updateMatrixWorld(true);
+   for(const side of[-1,1]){
+    const u=frame.width*.42,v=side*2;
+    const origin=new THREE.Vector3(frame.start[0]+frame.tangent[0]*u+frame.outward[0]*v,60,-frame.start[1]-frame.tangent[1]*u-frame.outward[1]*v);
+    const ray=new THREE.Raycaster(origin,new THREE.Vector3(-side*frame.outward[0],0,side*frame.outward[1]),0,4);
+    expect(ray.intersectObject(f.group.children[1],true).length).toBeGreaterThan(0);
+   }
+   f.dispose();
+  }
+ });
  it('keeps the protected north front and short returns outside the new frame set',()=>{
   expect(new Set(CIVIC_DETAIL_FRAMES.map(f=>f.faceIndex)).size).toBe(15);
   expect(CIVIC_DETAIL_FRAMES.every(f=>f.faceIndex<21)).toBe(true);

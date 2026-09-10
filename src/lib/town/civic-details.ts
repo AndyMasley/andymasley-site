@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import source from '../../../data/derived/town/civic-details.json';
+import schoolRoof from '../../../data/derived/town/civic-roof-finish.json';
 import { Batch, type Frame, type Role } from './crafted-frontages';
 
 type CivicFrame = Frame & { id: string; faceIndex: number; width: number; recipe: string; bays: number };
@@ -129,6 +130,14 @@ function school(batch:Batch,f:CivicFrame):void {
     batch.box(f,'trim',f.width/2,42.47,.08,f.width-.14,8.10,.14,PALE);
     const base=58.72,apex=60.85;
     batch.polygon(f,'trim',[[.5,base,.24],[f.width-.5,base,.24],[f.width/2,apex,.24]],PALE);
+    // This pediment rises above the flat roof. Its rear and edge thickness must
+    // remain solid when seen from the civic green behind the entrance facade.
+    const pediment=[[.5,base],[f.width-.5,base],[f.width/2,apex]];
+    batch.polygon(f,'trim',pediment.slice().reverse().map(([u,y])=>[u,y,.04]),PALE);
+    for(let i=0;i<3;i++){
+      const a=pediment[i],b=pediment[(i+1)%3];
+      batch.polygon(f,'trim',[[a[0],a[1],.04],[b[0],b[1],.04],[b[0],b[1],.24],[a[0],a[1],.24]],PALE);
+    }
     for(const sign of[-1,1]){
       const x0=sign<0?.5:f.width-.5,dx=f.width/2-x0,dy=apex-base,length=Math.hypot(dx,dy),nx=-dy/length*.10,ny=dx/length*.10;
       batch.polygon(f,'trim',[[x0+nx,base+ny,.39],[f.width/2+nx,apex+ny,.39],[f.width/2-nx,apex-ny,.39],[x0-nx,base-ny,.39]],'#dfdccf');
@@ -159,9 +168,21 @@ function school(batch:Batch,f:CivicFrame):void {
     }
   }
 }
-export function buildCivicDetails(batch:Batch):{windows:number;entrances:number} {
+/** The connector hides the lower stories of this internal height step. NPS
+ * photo 18 supports upper rectangular windows and pale trim; the five-bay
+ * spacing follows the adjacent school rhythm and is an authored inference. */
+function schoolRoofStep(batch:Batch):void {
+  const a=schoolRoof.polygon[schoolRoof.polygon.length-1],b=schoolRoof.polygon[0];
+  const dx=b[0]-a[0],dy=b[1]-a[1],width=Math.hypot(dx,dy);
+  const f:CivicFrame={id:'CIVIC-school-roof-step',faceIndex:-1,structId:schoolRoof.structId,tileId:schoolRoof.tileId,start:[a[0],a[1]],tangent:[dx/width,dy/width],outward:[-dy/width,dx/width],width,recipe:'school-roof-step',bays:5};
+  cornice(batch,f,58.05);
+  for(let i=0;i<f.bays;i++)pane(batch,f,(i+.5)*width/f.bays,53.23,1.8,3.20,4,6);
+}
+
+export function buildCivicDetails(batch:Batch,includeRoofStep=false):{windows:number;entrances:number} {
   count.windows=0;count.entrances=0;
   for(const f of CIVIC_DETAIL_FRAMES){if(f.recipe.startsWith('town-hall'))hall(batch,f);else if(f.recipe==='auditorium')auditorium(batch,f);else school(batch,f);}
+  if(includeRoofStep)schoolRoofStep(batch);
   return {...count};
 }
 
@@ -177,12 +198,15 @@ export function applyCivicDetails(group:THREE.Group,tileId:string,origin:readonl
   if(matches.length!==1)return reject();
   const mesh=matches[0],materials=Array.isArray(mesh.material)?mesh.material:[mesh.material];
   if(materials[0]?.name!==source.sourceMaterial||(mesh.geometry.index?.count??mesh.geometry.getAttribute('position')?.count)!==lod.totalTriangles*3)return reject();
-  const batch=new Batch(new THREE.Vector3(...origin),level),counts=buildCivicDetails(batch),result=batch.finish();
+  // Decorations must never float if the source-qualified wall repair rejects.
+  const roofStep=group.userData.civicRoofFinish?.status==='applied'&&group.userData.civicRoofFinish.enclosureTriangles>0;
+  const batch=new Batch(new THREE.Vector3(...origin),level),counts=buildCivicDetails(batch,roofStep),result=batch.finish();
   result.group.name='Civic details | Town Hall and Sitkowski School';
   result.group.userData.townCrafted=true;result.group.userData.sourceStructId=source.structId;
   result.group.userData.evidence=CIVIC_DETAIL_PROVENANCE;
+  if(roofStep)result.group.userData.roofStepBasis='NPS photo 18: brick school wall and rectangular upper windows above the auditorium. Five-bay spacing and dimensions inferred from adjacent school windows, not surveyed.';
   for(const o of result.group.children){o.name=o.name.replace('Crafted building frontage','Civic details');o.userData.category='civic-details';}
   group.add(result.group);
-  const report:CivicDetailReport={version:source.version,status:'applied',frames:CIVIC_DETAIL_FRAMES.length,...counts,triangles:result.triangles,meshes:result.group.children.length,geometryBytes:result.bytes};
+  const report:CivicDetailReport={version:source.version,status:'applied',frames:CIVIC_DETAIL_FRAMES.length+Number(roofStep),...counts,triangles:result.triangles,meshes:result.group.children.length,geometryBytes:result.bytes};
   group.userData.civicDetails=report;return report;
 }
