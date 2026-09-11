@@ -1,0 +1,224 @@
+{
+  "version": 1,
+  "date": "2026-09-11",
+  "baselineCommit": "5c36807a4e5a66832ca8d2446f5791bfbdc343bc",
+  "sourceReference": "data/source/town/visual-character-reference-2026-09-10.json",
+  "scope": "Continuing general visual-character implementation. The previous 465-note ledger remains a dated record, not a claim that its 163 evidence/simulation limits are now resolved.",
+  "changes": [
+    {
+      "area": "hardscape contacts",
+      "basis": [
+        "VC-0361",
+        "VC-0362"
+      ],
+      "implementation": "Exact emitted crafted ground-strip and parking-asphalt triangles suppress turf. Source geometry, paint and outlines remain unchanged; temporary raster input is released after grass registration.",
+      "coverage": "37 existing asphalt lot IDs across 23 qualifying tile packets (24 packets total); actual supported emitted triangles only. Native School tile retains 11 qualifying frontage sources across three LODs.",
+      "inference": "Existing modeled forecourt extents and authored parking layouts remain inferred; this fixes overlap, not survey accuracy.",
+      "memory": "Temporary emitted-face arrays exist through assembly and mask loading, then release after successful grass registration; unreadable masks retain them until normal group disposal. Previously exclusion-free 272\u00d7272 tiles require a 295,936-byte CPU raster copy; School already had this copy."
+    },
+    {
+      "area": "planting materials and forms",
+      "basis": [
+        "VC-0213",
+        "VC-0214",
+        "VC-0219",
+        "VC-0231",
+        "VC-0259",
+        "VC-0260",
+        "VC-0459",
+        "VC-0461"
+      ],
+      "implementation": "Distinct matte soil/mulch texture for exclusively bed-owned source batches; three same-topology inward shrub profiles at retained existing plants.",
+      "coverage": "22 existing bed features and 36 existing shrubs through shared grounded-site rendering, subject to native LOD visibility. No added plants, mesh draws or textures.",
+      "inference": "Authored garden-bed soil/bark interpretation and shrub forms; no exact mulch product, species or additional photo placement asserted."
+    },
+    {
+      "area": "reflection efficiency",
+      "basis": [
+        "VC-0461"
+      ],
+      "implementation": "Omit redundant offscreen transform walk; gather light context during existing traversal; reuse material/geometry descriptors within the same update.",
+      "coverage": "Existing bounded High-desktop lake reflection path only.",
+      "inference": "Engineering improvement retains existing authored look and hardware limits, not new geographic evidence."
+    }
+  ],
+  "referenceNotes": [
+    {
+      "id": "VC-0213",
+      "reference": "Reddish-brown mulch remains visible between planted clumps.",
+      "originalStatus": "observed",
+      "sources": [
+        {
+          "number": 44,
+          "title": "Sitkowski Apartments landscape: architect-hosted actual exterior",
+          "url": "https://www.dimellashaffer.com/wp-content/uploads/2017/08/Sitkowski_01.jpg"
+        }
+      ]
+    },
+    {
+      "id": "VC-0214",
+      "reference": "That mulch has fine speckled texture and small tonal variations.",
+      "originalStatus": "observed",
+      "sources": [
+        {
+          "number": 44,
+          "title": "Sitkowski Apartments landscape: architect-hosted actual exterior",
+          "url": "https://www.dimellashaffer.com/wp-content/uploads/2017/08/Sitkowski_01.jpg"
+        }
+      ]
+    },
+    {
+      "id": "VC-0219",
+      "reference": "Several medium shrubs have rounded dense forms and are spaced apart, leaving separate silhouettes.",
+      "originalStatus": "observed",
+      "sources": [
+        {
+          "number": 44,
+          "title": "Sitkowski Apartments landscape: architect-hosted actual exterior",
+          "url": "https://www.dimellashaffer.com/wp-content/uploads/2017/08/Sitkowski_01.jpg"
+        }
+      ]
+    },
+    {
+      "id": "VC-0231",
+      "reference": "A line of low rounded shrubs along the school frontage remains segmented into individual plants.",
+      "originalStatus": "observed",
+      "sources": [
+        {
+          "number": 19,
+          "title": "Webster school approach: middle-built.jpg",
+          "url": "https://resources.finalsite.net/images/f_auto,q_auto/v1682008749/websterschoolsorg/xywpfioyb0mcmcqwkugh/wms.png"
+        }
+      ]
+    },
+    {
+      "id": "VC-0259",
+      "reference": "Natural fallen leaves on a grassy slope and deliberately maintained mulch in a formal bed need different surface treatments; they should not share one generic brown ground texture.",
+      "originalStatus": "inference",
+      "sources": [
+        {
+          "number": 17,
+          "title": "Samuel Slater Experience \u2014 grassy slope and stairs",
+          "url": "https://samuelslaterexperience.org/wp-content/uploads/2021/12/2021-12-1024x546.jpg"
+        },
+        {
+          "number": 44,
+          "title": "Sitkowski Apartments landscape: architect-hosted actual exterior",
+          "url": "https://www.dimellashaffer.com/wp-content/uploads/2017/08/Sitkowski_01.jpg"
+        }
+      ]
+    },
+    {
+      "id": "VC-0260",
+      "reference": "Reserve sharper maintained bed boundaries for formal planting and softer foliage silhouettes for crowns; this is a visual design inference from the inspected landscape examples.",
+      "originalStatus": "inference",
+      "sources": [
+        {
+          "number": 1,
+          "title": "User-supplied Main Street civic approach photograph",
+          "url": null
+        },
+        {
+          "number": 44,
+          "title": "Sitkowski Apartments landscape: architect-hosted actual exterior",
+          "url": "https://www.dimellashaffer.com/wp-content/uploads/2017/08/Sitkowski_01.jpg"
+        },
+        {
+          "number": 19,
+          "title": "Webster school approach: middle-built.jpg",
+          "url": "https://resources.finalsite.net/images/f_auto,q_auto/v1682008749/websterschoolsorg/xywpfioyb0mcmcqwkugh/wms.png"
+        }
+      ]
+    },
+    {
+      "id": "VC-0361",
+      "reference": "Model contact and boundaries first: pole bases meet their walks, retaining walls meet grade, and furniture pads meet grass without bright gaps.",
+      "originalStatus": "inference",
+      "sources": [
+        {
+          "number": 1,
+          "title": "User-supplied Main Street civic approach photograph",
+          "url": null
+        },
+        {
+          "number": 44,
+          "title": "Sitkowski Apartments landscape: architect-hosted actual exterior",
+          "url": "https://www.dimellashaffer.com/wp-content/uploads/2017/08/Sitkowski_01.jpg"
+        },
+        {
+          "number": 55,
+          "title": "French River Park source aerial mosaic",
+          "url": "https://tiles.arcgis.com/tiles/hGdibHYSPO59RG1h/arcgis/rest/services/Massachusetts_Aerial_Imagery_2025/MapServer"
+        }
+      ]
+    },
+    {
+      "id": "VC-0362",
+      "reference": "Keep pavement boundaries readable at driving distance before adding fine crack detail; use texture scale to distinguish roads, service yards and walking surfaces.",
+      "originalStatus": "inference",
+      "sources": [
+        {
+          "number": 1,
+          "title": "User-supplied Main Street civic approach photograph",
+          "url": null
+        },
+        {
+          "number": 22,
+          "title": "Point Breeze restaurant and marina ground",
+          "url": "https://tiles.arcgis.com/tiles/hGdibHYSPO59RG1h/arcgis/rest/services/Massachusetts_Aerial_Imagery_2025/MapServer"
+        },
+        {
+          "number": 56,
+          "title": "Mill Street yard source aerial enlargement",
+          "url": "https://tiles.arcgis.com/tiles/hGdibHYSPO59RG1h/arcgis/rest/services/Massachusetts_Aerial_Imagery_2025/MapServer"
+        }
+      ]
+    },
+    {
+      "id": "VC-0459",
+      "reference": "Keep the scale of cracks, bricks, aggregate and leaves consistent with the car, curb and human-scale fixtures.",
+      "originalStatus": "inference",
+      "sources": [
+        {
+          "number": 1,
+          "title": "User-supplied Main Street civic approach photograph",
+          "url": null
+        },
+        {
+          "number": 33,
+          "title": "Downtown Program: red curbside band",
+          "url": "https://www.webster-ma.gov/ImageRepository/Document?documentID=168"
+        },
+        {
+          "number": 36,
+          "title": "Riverwalk Spotted Turtle medallion paving",
+          "url": "https://www.webster-ma.gov/ImageRepository/Document?documentID=181"
+        }
+      ]
+    },
+    {
+      "id": "VC-0461",
+      "reference": "Reduce fine texture contrast with viewing distance so distant pavement and foliage do not shimmer or turn into a noisy pattern.",
+      "originalStatus": "inference",
+      "sources": [
+        {
+          "number": 1,
+          "title": "User-supplied Main Street civic approach photograph",
+          "url": null
+        },
+        {
+          "number": 72,
+          "title": "Homes.com, Living in Webster, MA: The Ultimate Local Guide \u2014 Lakefront housing and reflections",
+          "url": "https://www.youtube.com/watch?v=feZq1WgvtoA&t=50"
+        },
+        {
+          "number": 26,
+          "title": "Homes.com Webster overview: previously recorded ground frames",
+          "url": "https://www.youtube.com/watch?v=feZq1WgvtoA&t=62"
+        }
+      ]
+    }
+  ],
+  "remainingLimits": "Unregistered exact photo locations, dates, surface-product identities and plant species remain limited; no new boat wakes or street-scene window reflections. No unchanged reference note is marked newly completed by this supplement.",
+  "runtimePolicy": "Documentation only; no browser import."
+}

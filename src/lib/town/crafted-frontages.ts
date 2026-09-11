@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import data from '../../../data/derived/town/crafted-frontages.json';
+import { registerHardscapeGrassExclusions } from './hardscape-grass-exclusions';
 
 type V2 = readonly number[];
 export type Frame = { start: V2; tangent: V2; outward: V2; structId: string; tileId: string };
@@ -129,6 +130,9 @@ outgoingLight -= totalDiffuse * .42;
 
 export class Batch {
   readonly chunks = new Map<string, Chunk>();
+  /** Only explicitly emitted ground strips suppress grass. The shared paving
+   * role also serves other geometry and cannot itself identify lawn coverage. */
+  readonly groundExclusions: number[][][] = [];
   readonly retainingWalls: RetainingWallPlacement[] = [];
   readonly constructionDetails: ConstructionDetail[] = [];
   readonly sidewalkEdges = new Map<string, number>();
@@ -169,6 +173,21 @@ export class Batch {
     const normal = b.sub(a).cross(c.sub(a)).normalize(), p: number[] = [], n: number[] = [];
     for (let j = 1; j < points.length-1; j++) for (const point of [points[0],points[j],points[j+1]]) { p.push(...point); n.push(normal.x,normal.y,normal.z); }
     this.geometry(f,role,p,n,color);
+  }
+
+  groundPolygon(f: Frame, role: Role, points: number[][]): void {
+    const key = `${role}:${PALETTE[role]}`, start = this.chunks.get(key)?.positions.length ?? 0;
+    this.polygon(f,role,points);
+    if (role !== 'paving') return;
+    const positions = this.chunks.get(key)?.positions;
+    if (!positions) return;
+    // Use the same reflected winding and Float32 coordinates as the GPU mesh,
+    // in the east/north contract consumed by excludeGrassPolygons.
+    for (let i = start; i + 8 < positions.length; i += 9) {
+      const tri = [0,3,6].map(k => [Math.fround(positions[i+k])+this.origin.x, -Math.fround(positions[i+k+2])-this.origin.z]);
+      const [a,b,c] = tri;
+      if (tri.flat().every(Number.isFinite) && Math.abs((b[0]-a[0])*(c[1]-a[1])-(b[1]-a[1])*(c[0]-a[0])) > 1e-8) this.groundExclusions.push(tri);
+    }
   }
 
   window(f: Frame, u: number, bottom: number, width: number, height: number, v = 0, paired = false, shutters = false): void {
@@ -288,12 +307,12 @@ function renderedFrontageTerrain(group: THREE.Object3D, origin: THREE.Vector3, r
 function groundStrip(batch: Batch, f: School, u0: number, u1: number, v0: number, v1: number, role: Role): void {
   const terrain=batch.terrain.get(f.structId);
   if(terrain?.length) {
-    for(const triangle of terrain)batch.polygon(f,role,clipTerrainTriangle(triangle,[u0,u1,v0,v1]));
+    for(const triangle of terrain)batch.groundPolygon(f,role,clipTerrainTriangle(triangle,[u0,u1,v0,v1]));
     return;
   }
   for(let v=v0;v<v1-.001;v+=.8) {
     const end=Math.min(v1,v+.8), p=[[u0,frontageGround(f,u0,v)+.04,v],[u0,frontageGround(f,u0,end)+.04,end],[u1,frontageGround(f,u1,end)+.04,end],[u1,frontageGround(f,u1,v)+.04,v]];
-    batch.polygon(f,role,p);
+    batch.groundPolygon(f,role,p);
   }
 }
 
@@ -633,6 +652,9 @@ export function applyCraftedFrontages(group: THREE.Object3D, tileId: string, til
     throw new Error('School replacement namespace missing; refusing duplicate geometry.');
   }
   group.add(built.group);
+  // Publish only after the source replacement has been accepted. Exclusions
+  // follow the rendered strips, not their enclosing rectangles or source lawn.
+  registerHardscapeGrassExclusions(group,batch.groundExclusions);
   const retainedGeometry=new Set<THREE.BufferGeometry>(),retainedMaterials=new Set<THREE.Material>(),retainedTextures=new Set<THREE.Texture>();
   group.traverse(o=>{if(o instanceof THREE.Mesh){retainedGeometry.add(o.geometry);for(const m of Array.isArray(o.material)?o.material:[o.material]){retainedMaterials.add(m);for(const value of Object.values(m))if(value instanceof THREE.Texture)retainedTextures.add(value);}}});
   for(const geometry of removedGeometries)if(!retainedGeometry.has(geometry))geometry.dispose();

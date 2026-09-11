@@ -99,14 +99,21 @@ function distanceXZ(box: THREE.Box3, point: THREE.Vector3): number {
 /** Program-relevant material and original geometry context. Source UUID catches
  * streamed replacements; layout/instancing/maps/defines catch reused materials
  * moving between native LODs. Values such as animation time are uniforms. */
-function warmSignature(mesh: THREE.Mesh, material: THREE.Material, side: THREE.Side, context: string, mode: string, key: string): string {
+function materialSignature(material: THREE.Material, key: string): string {
   const m=material as THREE.MeshStandardMaterial & Record<string,unknown>;
   const textureState=Object.keys(m).filter(k=>m[k] instanceof THREE.Texture).sort().map(k=>{const t=m[k] as THREE.Texture;return[k,t.mapping,t.channel,t.colorSpace,t.type];});
   const flags=['fog','vertexColors','flatShading','transparent','forceSinglePass','alphaHash','premultipliedAlpha','dithering','normalMapType','wireframe','precision','toneMapped'].map(k=>m[k]);
-  const layout=Object.entries(mesh.geometry.attributes).sort(([a],[b])=>a.localeCompare(b)).map(([name,a])=>[name,a.itemSize,a.normalized]);
-  return JSON.stringify([mode,material.uuid,key,side,flags,m.alphaTest>0,m.defines,textureState,layout,mesh instanceof THREE.InstancedMesh,!!(mesh as THREE.InstancedMesh).instanceColor,
-    !!(mesh as THREE.SkinnedMesh).isSkinnedMesh,Object.entries(mesh.geometry.morphAttributes).map(([k,v])=>[k,v.length]),
-    (material as THREE.ShaderMaterial).vertexShader,(material as THREE.ShaderMaterial).fragmentShader,context]);
+  return JSON.stringify([material.uuid,key,flags,m.alphaTest>0,m.defines,textureState,
+    (material as THREE.ShaderMaterial).vertexShader,(material as THREE.ShaderMaterial).fragmentShader]);
+}
+function geometrySignature(geometry: THREE.BufferGeometry): string {
+  const layout=Object.entries(geometry.attributes).sort(([a],[b])=>a.localeCompare(b)).map(([name,a])=>[name,a.itemSize,a.normalized]);
+  return JSON.stringify([layout,Object.entries(geometry.morphAttributes).map(([k,v])=>[k,v.length])]);
+}
+function warmSignature(mesh: THREE.Mesh, side: THREE.Side, context: string, mode: string, material: string, geometry: string): string {
+  // The component strings are complete JSON values, so concatenating the tuple
+  // is unambiguous without serializing/escaping the same shader source again.
+  return `[${JSON.stringify(mode)},${side},${material},${geometry},${mesh instanceof THREE.InstancedMesh},${!!(mesh as THREE.InstancedMesh).instanceColor},${!!(mesh as THREE.SkinnedMesh).isSkinnedMesh},${context}]`;
 }
 
 /** r160 compile() traverses hidden children too. This is an enumeration view of
@@ -201,18 +208,30 @@ if(townLakeReflectionEnabled>.0 && abs(vTownArtWorld.y-townLakeReflectionHeight)
     for(const [material,state] of this.bindings)if(state.installed){material.onBeforeCompile=state.compile;material.customProgramCacheKey=state.key;material.needsUpdate=true;state.installed=false;}
   }
 
-  private warmSpecs(selected:Set<THREE.Mesh>,water:THREE.Mesh[],scene:THREE.Scene,renderer:THREE.WebGLRenderer):WarmSpec[] {
-    const lights:string[]=[];scene.traverseVisible(o=>{if(o instanceof THREE.Light)lights.push(`${o.type}:${o.castShadow}:${o.layers.mask}`);});
+  private warmSpecs(selected:Set<THREE.Mesh>,water:THREE.Mesh[],scene:THREE.Scene,renderer:THREE.WebGLRenderer,lights:string[]):WarmSpec[] {
     const context=JSON.stringify([scene.fog?.constructor.name,scene.environment?.uuid,lights.sort(),renderer.shadowMap.enabled,renderer.shadowMap.type,renderer.toneMapping,renderer.outputColorSpace]);
     const rows=new Map<string,WarmSpec>();
-    for(const mode of ['water','shore'] as const)for(const mesh of mode==='water'?water:selected)for(const source of materials(mesh)){
+    // Cache only within this selection. Re-reading each unique descriptor on
+    // the next update catches in-place maps/defines/layout edits even when a
+    // caller has not incremented material.version or replaced the geometry.
+    const geometryKeys=new Map<THREE.BufferGeometry,string>();
+    for(const mode of ['water','shore'] as const){
+      const materialKeys=new Map<THREE.Material,string>();
+      for(const mesh of mode==='water'?water:selected)for(const source of materials(mesh)){
       if(mode==='water'&&!waterMaterial(source))continue;
-      const binding=this.bindings.get(source as THREE.MeshStandardMaterial);
-      const programKey=mode==='water'&&binding?binding.reflectionKey:source.customProgramCacheKey();
+      let materialKey=materialKeys.get(source);
+      if(materialKey===undefined){
+        const binding=this.bindings.get(source as THREE.MeshStandardMaterial);
+        const programKey=mode==='water'&&binding?binding.reflectionKey:source.customProgramCacheKey();
+        materialKey=materialSignature(source,programKey);materialKeys.set(source,materialKey);
+      }
+      let geometryKey=geometryKeys.get(mesh.geometry);
+      if(geometryKey===undefined){geometryKey=geometrySignature(mesh.geometry);geometryKeys.set(mesh.geometry,geometryKey);}
       // r160 compileAsync polls only currentProgram. Separate private clones
       // ensure both passes of double-sided transparency are actually ready.
       const sides=source.transparent&&source.side===THREE.DoubleSide&&!source.forceSinglePass?[THREE.BackSide,THREE.FrontSide]:[source.side];
-      for(const side of sides){const key=warmSignature(mesh,source,side,context,mode,programKey);rows.set(key,{key,source,mesh,side,mode});}
+      for(const side of sides){const key=warmSignature(mesh,side,context,mode,materialKey,geometryKey);rows.set(key,{key,source,mesh,side,mode});}
+      }
     }
     return [...rows.values()];
   }
@@ -224,7 +243,9 @@ if(townLakeReflectionEnabled>.0 && abs(vTownArtWorld.y-townLakeReflectionHeight)
       if(!entry.ready)continue;
       const source=renderer.properties.get(entry.source).programs as Map<string,unknown>|undefined;
       const clone=renderer.properties.get(entry.clone).programs as Map<string,unknown>|undefined;
-      if(!source?.size||!clone?.size||![...clone.values()].every(p=>[...source.values()].includes(p)))continue;
+      if(!source?.size||!clone?.size)continue;
+      const acquired=new Set(source.values());
+      if(![...clone.values()].every(p=>acquired.has(p)))continue;
       const keys=this.warmed.get(entry.source)??new Set<string>();keys.add(entry.key);this.warmed.set(entry.source,keys);this.dropWarm(entry);
     }
   }
@@ -321,8 +342,8 @@ if(townLakeReflectionEnabled>.0 && abs(vTownArtWorld.y-townLakeReflectionHeight)
     }
     this.checked=now;
     scene.updateMatrixWorld();
-    const visible: THREE.Mesh[] = [], otherDraws: THREE.Object3D[] = [];
-    scene.traverseVisible(o => { if (o instanceof THREE.Mesh) visible.push(o); else if(o instanceof THREE.Line||o instanceof THREE.Points||o instanceof THREE.Sprite)otherDraws.push(o); });
+    const visible: THREE.Mesh[] = [], otherDraws: THREE.Object3D[] = [], lights:string[]=[];
+    scene.traverseVisible(o => { if (o instanceof THREE.Mesh) visible.push(o); else if(o instanceof THREE.Light)lights.push(`${o.type}:${o.castShadow}:${o.layers.mask}`); else if(o instanceof THREE.Line||o instanceof THREE.Points||o instanceof THREE.Sprite)otherDraws.push(o); });
     const frustum = new THREE.Frustum().setFromProjectionMatrix(new THREE.Matrix4().multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse));
     let nearWater = false;const nearWaterMeshes:THREE.Mesh[]=[];
     for (const mesh of visible) {
@@ -393,7 +414,7 @@ if(townLakeReflectionEnabled>.0 && abs(vTownArtWorld.y-townLakeReflectionHeight)
       this.metrics.targetBytes = WATER_REFLECTION_LIMITS.size ** 2 * 12;
     }
     this.collectAcquiredPrograms(renderer);
-    const needed=this.warmSpecs(selected,nearWaterMeshes,scene,renderer),neededKeys=new Set(needed.map(e=>e.key));
+    const needed=this.warmSpecs(selected,nearWaterMeshes,scene,renderer,lights),neededKeys=new Set(needed.map(e=>e.key));
     for(const entry of this.warmEntries.values())if(entry.ready&&!neededKeys.has(entry.key))this.dropWarm(entry);
     if(needed.some(spec=>!this.warmed.get(spec.source)?.has(spec.key)&&!this.warmEntries.get(spec.key)?.ready)){
       this.startWarmup(needed,renderer,scene,camera,reflected.camera);
@@ -413,10 +434,16 @@ if(townLakeReflectionEnabled>.0 && abs(vTownArtWorld.y-townLakeReflectionHeight)
     const target = renderer.getRenderTarget(), cube = renderer.getActiveCubeFace(), mip = renderer.getActiveMipmapLevel();
     const viewport = renderer.getViewport(new THREE.Vector4()), scissor = renderer.getScissor(new THREE.Vector4()), scissorTest = renderer.getScissorTest();
     const shadowAuto = renderer.shadowMap.autoUpdate, shadowNeeds = renderer.shadowMap.needsUpdate, xr = renderer.xr.enabled, infoReset = renderer.info.autoReset;
+    const matrixAuto = scene.matrixWorldAutoUpdate;
     this.enabled.value = 0; this.rendering = true; const start = performance.now();
     try {
       hidden.forEach(mesh => { mesh.visible = false; });
       renderer.xr.enabled = false; renderer.shadowMap.autoUpdate = false; renderer.shadowMap.needsUpdate = false;
+      // Preflight already updated this frame's complete scene transforms.
+      // r160 render() would walk them again even for hidden meshes. Suppress
+      // only that redundant offscreen walk; the following main render keeps
+      // its original update policy, including when submission throws.
+      scene.matrixWorldAutoUpdate = false;
       renderer.info.autoReset = true;
       renderer.setRenderTarget(this.target); renderer.setScissorTest(false); renderer.state.buffers.depth.setMask(true); renderer.clear();
       renderer.render(scene, reflected.camera);
@@ -432,6 +459,7 @@ if(townLakeReflectionEnabled>.0 && abs(vTownArtWorld.y-townLakeReflectionHeight)
     } catch {
       this.cooldown = now + WATER_REFLECTION_LIMITS.cooldownMs; return this.off('render-failed');
     } finally {
+      scene.matrixWorldAutoUpdate = matrixAuto;
       hidden.forEach(mesh => { mesh.visible = true; });
       renderer.shadowMap.autoUpdate = shadowAuto; renderer.shadowMap.needsUpdate = shadowNeeds; renderer.xr.enabled = xr; renderer.info.autoReset = infoReset;
       renderer.setRenderTarget(target, cube, mip); renderer.setViewport(viewport); renderer.setScissor(scissor); renderer.setScissorTest(scissorTest);

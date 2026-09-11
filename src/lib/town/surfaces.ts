@@ -5,6 +5,7 @@ import { pavedMaskReference } from './paved-surfaces';
 import { beginOptionalDetail } from './optional-detail';
 import { groundTexturePreview } from './ground-preview';
 import { FOREST_LITTER_GLSL, FOREST_LITTER_LIMITS } from './forest-litter';
+import { releaseHardscapeGrassExclusions } from './hardscape-grass-exclusions';
 
 type TileSurface = { mask: THREE.Texture; materials: THREE.Material[] };
 type TextureReader = (asset: AssetRef, color: boolean, signal: AbortSignal, data?: boolean) => Promise<THREE.Texture>;
@@ -127,7 +128,10 @@ export class TownSurfaces {
     this.tiles.set(group, { mask, materials: [...copies.values()] });
     group.userData.pavedSurfaceMask = corrected ? replacement!.url : undefined;
     const grassMask = grassMaskFromTexture(mask, reference.bounds);
-    if (grassMask) this.grass.register(group, id, excludeGrassPolygons(grassMask,group.userData.environmentGrassExclusions??[]), terrain);
+    if (grassMask) {
+      this.grass.register(group, id, excludeGrassPolygons(grassMask,group.userData.environmentGrassExclusions??[]), terrain);
+      releaseHardscapeGrassExclusions(group);
+    }
   }
 
   update(position: V3, low: boolean, time: number): void { this.grass.update(position, low, time); }

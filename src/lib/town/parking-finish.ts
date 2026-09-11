@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { PavementIndex, clipRoadPaintPolygon, roadPaintHeightAt } from './road-finish';
 import type { V3 } from './contracts';
 import { parkedPlacements, addParkedLife } from './parked-life';
+import { registerHardscapeGrassExclusions } from './hardscape-grass-exclusions';
 
 type XY = [number, number];
 type Polygon = XY[][];
@@ -214,5 +215,13 @@ export function applyParkingFinish(group: THREE.Group, tileId: string, origin: V
     return height;
   };
   addParkedLife(group,origin,level,parkedPlacements(bays.filter(b=>activeLots.has(b.lotId)),heightAt,occupied));
+  // Only actual supported asphalt triangles suppress blades. Source polygon
+  // holes, unsupported portions, paint-only lots and neighboring lawn remain
+  // intact; the source cover texture and authored bay layout are unchanged.
+  if(paving.length) {
+    const exclusions:number[][][]=[];
+    for(let i=0;i+8<paving.length;i+=9) exclusions.push([0,3,6].map(k=>[paving[i+k]+origin[0],-paving[i+k+2]-origin[2]]));
+    registerHardscapeGrassExclusions(group,exclusions);
+  }
   report.lots=[...activeLots];report.triangles=(positions.length+mulch.length+paving.length)/9;group.userData.parkingFinish=report;return report;
 }

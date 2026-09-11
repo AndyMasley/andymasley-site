@@ -121,6 +121,8 @@ indices and must not be added to the separate resident geometry estimate, which
 already includes visible grass buffers. The camera, lighting and material choices
 are interpretations of Webster's character, not additional observed geodata.
 
+The [September 11 continuation](../../../docs/town/surface-depth-release-2026-09-11.md) fixes turf overlap using actual emitted ground-strip/parking faces, releases the temporary exclusion data after rasterization, and gives exclusively owned garden beds and existing shrubs a distinct authored finish. It also removes redundant reflection traversals and repeated descriptor serialization within an update, retaining the original reflection budget and lifecycle.
+
 The September 10 visual-reference application is recorded against all 465 notes
 in [the application ledger](../../../docs/town/visual-character-application-2026-09-10.md).
 Ground color, normals and roughness use continuous texture gradients on WebGL2,

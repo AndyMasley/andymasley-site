@@ -42,6 +42,8 @@ function fakeRenderer(onRender?: (scene: THREE.Scene, camera: THREE.Camera) => v
       }});return used;
     }),
     render: vi.fn((scene: THREE.Scene, camera: THREE.Camera) => {
+      // Match r160's automatic scene update so redundant walks are observable.
+      if(scene.matrixWorldAutoUpdate)scene.updateMatrixWorld();
       expect(r.shadowMap).toEqual({ autoUpdate: false, needsUpdate: false });
       r.info.render.calls = 0; r.info.render.triangles = 0;
       scene.traverseVisible(o => { if (o instanceof THREE.Mesh) { const cost = reflectionMeshCost(o); r.info.render.calls += cost.calls; r.info.render.triangles += cost.triangles; } });
@@ -117,6 +119,117 @@ describe('bounded real lake reflection', () => {
     effect.update(renderer.r, f.scene, f.camera, 200, high); expect(renderer.raw.render).toHaveBeenCalledTimes(2);
     const target = renderer.targets.find(t=>t?.texture.name==='Optional near-lake planar reflection')!; expect(target.width).toBeLessThanOrEqual(512); expect(target.texture.colorSpace).toBe(THREE.LinearSRGBColorSpace); expect(target.samples).toBe(0); expect(target.texture.generateMipmaps).toBe(false);
     effect.dispose(); renderer.originalTarget.dispose();
+  });
+
+  it.each([
+    { prior:true, fail:false }, { prior:false, fail:false },
+    { prior:true, fail:true }, { prior:false, fail:true },
+  ])('updates fresh transforms once and restores matrix policy $prior after failed=$fail submission', ({prior,fail}) => {
+    const f=fixture(),effect=new TownWaterReflection(); f.scene.matrixWorldAutoUpdate=prior;
+    f.house.position.x=603;
+    const matrixUpdate=vi.spyOn(f.scene,'updateMatrixWorld');
+    const renderer=fakeRenderer(()=>{
+      expect(f.scene.matrixWorldAutoUpdate).toBe(false);
+      expect(new THREE.Vector3().setFromMatrixPosition(f.house.matrixWorld).x).toBe(603);
+      if(fail)throw new Error('fixture submission failure');
+    });
+    try{
+      expect(effect.update(renderer.r,f.scene,f.camera,100,high).reason).toBe(fail?'render-failed':'reflected-shore');
+      expect(matrixUpdate).toHaveBeenCalledTimes(1);
+      expect(f.scene.matrixWorldAutoUpdate).toBe(prior);
+      expect(f.water.visible&&f.house.visible&&f.grass.visible).toBe(true);
+      // A following ordinary main render still follows the caller's policy.
+      if(f.scene.matrixWorldAutoUpdate)f.scene.updateMatrixWorld();
+      expect(matrixUpdate).toHaveBeenCalledTimes(prior?2:1);
+    }finally{effect.dispose();matrixUpdate.mockRestore();}
+  });
+
+  it('reads a shared material descriptor once per update while still detecting a dynamic shader key', () => {
+    const f=fixture(),effect=new TownWaterReflection(),renderer=fakeRenderer();
+    let revision=1;
+    const key=vi.fn(()=>`authored shader \"key\" with \\ escapes:${revision}`);
+    (f.house.material as THREE.Material).customProgramCacheKey=key;
+    for(let i=0;i<80;i++){const mesh=f.house.clone();mesh.position.x+=i*.01;f.scene.add(mesh);}
+    try{
+      expect(effect.update(renderer.r,f.scene,f.camera,100,high).active).toBe(true);
+      expect(effect.metrics.warmupMaterials).toBe(2);
+      key.mockClear();
+      expect(effect.update(renderer.r,f.scene,f.camera,200,high).active).toBe(true);
+      expect(key).toHaveBeenCalledTimes(1);
+      expect(effect.metrics.warmupMaterials).toBe(2);
+      revision++;
+      effect.update(renderer.r,f.scene,f.camera,300,high);
+      expect(effect.metrics.warmupMaterials).toBe(3);
+      expect(effect.metrics.calls).toBe(81);
+    }finally{effect.dispose();}
+  });
+
+  it.each(['defines','map','layout','morph-layout','flags'] as const)('revalidates in-place %s changes without a material version bump', kind => {
+    const f=fixture(),effect=new TownWaterReflection(),renderer=fakeRenderer();
+    const material=f.house.material as THREE.MeshStandardMaterial;
+    material.defines={AUTHORED_TEST:1}; material.map=new THREE.Texture();
+    try{
+      effect.update(renderer.r,f.scene,f.camera,100,high);
+      const version=material.version;
+      if(kind==='defines')material.defines.AUTHORED_TEST=2;
+      if(kind==='map')material.map.channel=1;
+      if(kind==='layout')f.house.geometry.setAttribute('color',new THREE.Float32BufferAttribute(new Float32Array(f.house.geometry.attributes.position.count*3),3,true));
+      if(kind==='morph-layout')f.house.geometry.morphAttributes.position=[f.house.geometry.attributes.position.clone()];
+      if(kind==='flags')material.flatShading=true;
+      expect(material.version).toBe(version);
+      renderer.ready(false);
+      expect(effect.update(renderer.r,f.scene,f.camera,200,high).reason).toBe('warming-shaders');
+      expect(effect.metrics.warmupMaterials).toBe(3);
+      expect(renderer.raw.render).toHaveBeenCalledTimes(1);
+    }finally{effect.dispose();}
+  });
+
+  it('collects the identical visible light context in the mesh traversal and rewarms changed scene context', () => {
+    const f=fixture(),effect=new TownWaterReflection(),renderer=fakeRenderer();
+    const sun=new THREE.DirectionalLight(),ambient=new THREE.AmbientLight(),hidden=new THREE.Group(),hiddenLight=new THREE.PointLight();
+    hidden.visible=false;hidden.add(hiddenLight);f.scene.add(sun,ambient,hidden);
+    const traversal=vi.spyOn(f.scene,'traverseVisible');
+    try{
+      effect.update(renderer.r,f.scene,f.camera,100,high);
+      // One eligibility/light pass plus the fake renderer's draw enumeration.
+      expect(traversal).toHaveBeenCalledTimes(2);
+      const initial=effect.metrics.warmupMaterials;
+      hiddenLight.castShadow=true;hiddenLight.layers.set(2);
+      sun.removeFromParent();f.scene.add(sun); // order has no shader meaning
+      effect.update(renderer.r,f.scene,f.camera,200,high);
+      expect(effect.metrics.warmupMaterials).toBe(initial);
+      hidden.visible=true;
+      effect.update(renderer.r,f.scene,f.camera,300,high);
+      expect(effect.metrics.warmupMaterials).toBe(initial+2);
+      sun.castShadow=true;sun.layers.set(1);
+      effect.update(renderer.r,f.scene,f.camera,400,high);
+      expect(effect.metrics.warmupMaterials).toBe(initial+4);
+      f.scene.fog=new THREE.Fog(0x8899aa,10,500);
+      effect.update(renderer.r,f.scene,f.camera,500,high);
+      expect(effect.metrics.warmupMaterials).toBe(initial+6);
+      f.scene.environment=new THREE.Texture();
+      effect.update(renderer.r,f.scene,f.camera,600,high);
+      expect(effect.metrics.warmupMaterials).toBe(initial+8);
+    }finally{effect.dispose();traversal.mockRestore();}
+  });
+
+  it('retains a warming clone until the original acquires every compiled program', () => {
+    const f=fixture(),effect=new TownWaterReflection(),renderer=fakeRenderer();
+    try{
+      effect.update(renderer.r,f.scene,f.camera,100,high);
+      const clone=renderer.raw.compile.mock.results.flatMap(r=>[...r.value as Set<THREE.Material>]).find(m=>m.name!=='Mapped water | inferred level and appearance')!;
+      const programs=renderer.raw.properties.get(clone).programs!,second={isReady:()=>true};
+      programs.set('second-pass',second);
+      const source=renderer.raw.properties.get(f.house.material as THREE.Material);
+      source.programs=new Map([['first-pass',programs.values().next().value!]]);
+      const dispose=vi.spyOn(clone,'dispose');
+      effect.update(renderer.r,f.scene,f.camera,200,high);
+      expect(dispose).not.toHaveBeenCalled();
+      source.programs.set('second-pass',second);
+      effect.update(renderer.r,f.scene,f.camera,300,high);
+      expect(dispose).toHaveBeenCalledTimes(1);
+      expect(effect.metrics.warmupMaterials).toBe(2);
+    }finally{effect.dispose();}
   });
 
   it('chains the real water shader, restricts pooled materials by height and lake area, and never disposes borrowed resources', () => {
