@@ -1,6 +1,16 @@
 {
-  "timestamp": 1788638726727,
+  "timestamp": 1789874441963,
   "posts": [
+    {
+      "title": "Don’t treat surface-level metaphors about AI as if they describe fundamental reality",
+      "slug": "dont-treat-surface-level-metaphors",
+      "date": "2026-09-19T03:17:20.614Z",
+      "description": "Debates about whether AI is a “tool” or whether it’s wrong to “anthropomorphize” it often seem confused about what reality is made of",
+      "url": "https://blog.andymasley.com/p/dont-treat-surface-level-metaphors",
+      "category": "Artificial Intelligence",
+      "source": "substack",
+      "cover_image": "https://substack-post-media.s3.amazonaws.com/public/images/204e75bb-fb8c-41a8-bacc-547797ce6fb1_1952x1000.png"
+    },
     {
       "title": "AI safety and the data center backlash",
       "slug": "ai-safety-and-the-data-center-backlash",
