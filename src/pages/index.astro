@@ -2,6 +2,7 @@
 import Base from '@/layouts/Base.astro';
 import { fetchSubstackPosts } from '@/lib/substack';
 import { getMetaPostSlugs } from '@/lib/meta-posts';
+import { bylines, bylineDate } from '@/lib/bylines';
 import { formatCompactDate } from '@/lib/format-date';
 import { sizedCover } from '@/lib/cover-image';
 import Elsewhere from '@/components/Elsewhere.astro';
@@ -9,11 +10,27 @@ import Subscribe from '@/components/Subscribe.astro';
 import StartHere from '@/components/StartHere.astro';
 import MarginNote from '@/components/MarginNote.astro';
 
-// Fetch recent blog posts from Substack
+interface RecentItem {
+  title: string;
+  href: string;
+  date: Date;
+  cover?: string;
+  /** Site posts only: the OG title card stands in if the cover fails. */
+  slug?: string;
+  /** Bylines only: named after the date, and the link leaves the site. */
+  publication?: string;
+}
+
+// Fetch recent blog posts from Substack, dated in with the bylines
 const allPosts = await fetchSubstackPosts();
 const metaSlugs = getMetaPostSlugs();
-const recentPosts = allPosts
-  .filter(p => !metaSlugs.includes(p.slug))
+const recentItems: RecentItem[] = [
+  ...allPosts
+    .filter(p => !metaSlugs.includes(p.slug))
+    .map(p => ({ title: p.title, href: `/writing/${p.slug}`, date: p.date, cover: p.cover_image, slug: p.slug })),
+  ...bylines.map(b => ({ title: b.title, href: b.url, date: bylineDate(b), cover: b.cover, publication: b.publication })),
+]
+  .sort((a, b) => b.date.getTime() - a.date.getTime())
   .slice(0, 4);
 const homeStructuredData = [
   {
@@ -92,24 +109,44 @@ const homeStructuredData = [
   <div class="home-recent">
     <div class="label">Recent</div>
     <ul class="recent-list">
-      {recentPosts.map(post => (
+      {recentItems.map(item => (
         <li class="recent-item">
-          {post.cover_image ? (
-            <a href={`/writing/${post.slug}`} class="recent-item__thumblink" tabindex="-1" aria-hidden="true">
+          {item.cover ? (
+            <a
+              href={item.href}
+              class="recent-item__thumblink"
+              tabindex="-1"
+              aria-hidden="true"
+              target={item.publication ? '_blank' : undefined}
+              rel={item.publication ? 'noopener' : undefined}
+            >
               <img
-                src={sizedCover(post.cover_image, 200)}
+                src={sizedCover(item.cover, 200)}
                 alt=""
                 loading="lazy"
                 decoding="async"
-                onerror={`this.onerror=null;this.src='/og/${post.slug}.png';`}
+                onerror={item.slug ? `this.onerror=null;this.src='/og/${item.slug}.png';` : 'this.onerror=null;this.remove();'}
               />
             </a>
           ) : (
             <span class="recent-item__thumblink" aria-hidden="true"></span>
           )}
           <div class="recent-item__main">
-            <a href={`/writing/${post.slug}`} class="recent-item__link">{post.title}</a>
-            <span class="recent-item__date">{formatCompactDate(post.date)}</span>
+            <a
+              href={item.href}
+              class="recent-item__link"
+              target={item.publication ? '_blank' : undefined}
+              rel={item.publication ? 'noopener' : undefined}
+            >{item.title}</a>
+            <span class="recent-item__date">
+              {formatCompactDate(item.date)}
+              {item.publication && (
+                <>
+                  <span class="recent-item__sep" aria-hidden="true">·</span>
+                  {item.publication}
+                </>
+              )}
+            </span>
           </div>
         </li>
       ))}
@@ -243,6 +280,14 @@ const homeStructuredData = [
     margin-top: 0.14rem;
     font-family: var(--font-label);
     font-size: var(--text-sm);
+    color: var(--dim);
+  }
+
+  /* "Sep 19 · The Atlantic": a byline names its outlet after the date. The
+     middot stays in the line's own dim ink (as /writing's meta-link row
+     does) — the hairline colour the grid cards use for theirs vanishes at
+     this size in dark mode. */
+  .recent-item__sep {
     color: var(--dim);
   }
 

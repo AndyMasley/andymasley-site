@@ -2,9 +2,9 @@
 import Base from '@/layouts/Base.astro';
 import { fetchSubstackPosts, categoryConfigs } from '@/lib/substack';
 import { metaPosts, getMetaPostSlugs } from '@/lib/meta-posts';
-import { bylines } from '@/lib/bylines';
+import { bylines, bylineDate, getPublicationSlug } from '@/lib/bylines';
 import { fetchEAForumPosts } from '@/lib/eaforum';
-import { formatDateOnly, formatMonthAbbrev, formatDayOfMonth } from '@/lib/format-date';
+import { formatMonthAbbrev, formatDayOfMonth } from '@/lib/format-date';
 import { getCategorySlug, getCategoryDisplayName } from '@/lib/category-slug';
 import { sizedCover, coverSrcset } from '@/lib/cover-image';
 
@@ -14,7 +14,12 @@ interface TimelinePost {
   date: Date;
   url: string;
   category: string;
-  source: 'substack' | 'eaforum';
+  /** Source filter value: 'substack', 'eaforum', or a byline's publication slug. */
+  source: string;
+  /** Named in the meta line after the topic, where the piece isn't a Substack post. */
+  publication?: string;
+  /** Bylines: the card leaves the site for the publisher's copy. */
+  external?: boolean;
   cover?: string;
 }
 
@@ -49,17 +54,36 @@ const eaForumTimelinePosts: TimelinePost[] = eaForumPosts.map(post => ({
   url: post.url,
   category: 'Charity',
   source: 'eaforum' as const,
+  publication: 'EA Forum',
 }));
 
-const posts: TimelinePost[] = [...substackPosts, ...eaForumTimelinePosts].sort(
+// Writing published elsewhere takes its dated place in the same grid, tagged
+// with the outlet and filterable under Source; the card links out, since the
+// site has no copy of the piece. The URL stands in for the slug (a key for
+// the eager-load set and the search lookup; it never becomes a site path).
+const bylineTimelinePosts: TimelinePost[] = bylines.map(byline => ({
+  title: byline.title,
+  slug: byline.url,
+  date: bylineDate(byline),
+  url: byline.url,
+  category: byline.category,
+  source: getPublicationSlug(byline.publication),
+  publication: byline.publication,
+  external: true,
+  cover: byline.cover,
+}));
+
+const posts: TimelinePost[] = [...substackPosts, ...eaForumTimelinePosts, ...bylineTimelinePosts].sort(
   (a, b) => b.date.getTime() - a.date.getTime()
 );
 
+// One Source option per outlet with a byline, in first-appearance order.
+const bylinePublications = bylineTimelinePosts
+  .map(post => ({ slug: post.source, name: post.publication! }))
+  .filter((pub, i, all) => all.findIndex(p => p.slug === pub.slug) === i);
 
 const aiEnvMeta = metaPosts.find(meta => meta.slug === 'ai-and-the-environment');
 const activeCategories = categoryConfigs.filter(config => posts.some(post => post.category === config.name));
-const hasBylines = bylines.length > 0;
-const bylinesPreviewCount = 5;
 const archivePostsWithoutVisibleCategory = new Set<string>([]);
 
 // Category display names and slugs come from the shared lib — the essay
@@ -137,6 +161,9 @@ const postsByYear: YearGroup[] = Array.from(yearMap.entries())
               {eaForumTimelinePosts.length > 0 && (
                 <option value="eaforum">EA Forum</option>
               )}
+              {bylinePublications.map(pub => (
+                <option value={pub.slug}>{pub.name}</option>
+              ))}
             </select>
             <span class="archive-select-caret" aria-hidden="true">▾</span>
           </span>
@@ -175,9 +202,11 @@ const postsByYear: YearGroup[] = Array.from(yearMap.entries())
               >
                 <a
                   class="post-card__imglink"
-                  href={`/writing/${post.slug}`}
+                  href={post.external ? post.url : `/writing/${post.slug}`}
                   tabindex="-1"
                   aria-hidden="true"
+                  target={post.external ? '_blank' : undefined}
+                  rel={post.external ? 'noopener' : undefined}
                 >
                   <span class="post-card__frame">
                     {post.cover ? (
@@ -188,7 +217,9 @@ const postsByYear: YearGroup[] = Array.from(yearMap.entries())
                         alt=""
                         loading={eagerCoverSlugs.has(post.slug) ? 'eager' : 'lazy'}
                         decoding="async"
-                        onerror={`this.onerror=null;this.src='/og/${post.slug}.png';this.removeAttribute('srcset');this.classList.add('post-card__img--titlecard');`}
+                        onerror={post.external
+                          ? 'this.onerror=null;this.remove();'
+                          : `this.onerror=null;this.src='/og/${post.slug}.png';this.removeAttribute('srcset');this.classList.add('post-card__img--titlecard');`}
                       />
                     ) : (
                       <span class="post-card__placeholder" aria-hidden="true">
@@ -209,15 +240,20 @@ const postsByYear: YearGroup[] = Array.from(yearMap.entries())
                       <span class="post-card__cat">{getShortName(post.category)}</span>
                     </>
                   )}
-                  {post.source === 'eaforum' && (
+                  {post.publication && (
                     <>
                       <span class="post-card__separator" aria-hidden="true">·</span>
-                      <span>EA Forum</span>
+                      <span>{post.publication}</span>
                     </>
                   )}
                 </p>
                 <h3 class="post-card__title">
-                  <a href={`/writing/${post.slug}`} class="post-card__link">{post.title}</a>
+                  <a
+                    href={post.external ? post.url : `/writing/${post.slug}`}
+                    class="post-card__link"
+                    target={post.external ? '_blank' : undefined}
+                    rel={post.external ? 'noopener' : undefined}
+                  >{post.title}</a>
                 </h3>
               </article>
             ))}
@@ -226,81 +262,11 @@ const postsByYear: YearGroup[] = Array.from(yearMap.entries())
       </div>
     </div>
   </section>
-
-  {hasBylines && (
-    <section class="writing-section writing-section--elsewhere" aria-labelledby="elsewhere-heading">
-      <header class="writing-section__header">
-        <div>
-          <h2 class="writing-section__title" id="elsewhere-heading">Elsewhere</h2>
-          <p class="writing-section__description">Writing published outside the main blog archive.</p>
-        </div>
-      </header>
-
-      <div class="bylines-list">
-        {bylines.slice(0, bylinesPreviewCount).map(byline => (
-          <article class="byline-row">
-            <span class="byline-date">{formatDateOnly(byline.date)}</span>
-            <a href={byline.url} target="_blank" rel="noopener" class="byline-link">
-              {byline.title}
-            </a>
-            <span class="byline-pub">{byline.publication}</span>
-          </article>
-        ))}
-      </div>
-
-      {bylines.length > bylinesPreviewCount && (
-        <details class="bylines-details">
-          <summary class="bylines-details__summary">Show all bylines</summary>
-          <div class="bylines-list bylines-list--extra">
-            {bylines.slice(bylinesPreviewCount).map(byline => (
-              <article class="byline-row">
-                <span class="byline-date">{formatDateOnly(byline.date)}</span>
-                <a href={byline.url} target="_blank" rel="noopener" class="byline-link">
-                  {byline.title}
-                </a>
-                <span class="byline-pub">{byline.publication}</span>
-              </article>
-            ))}
-          </div>
-        </details>
-      )}
-    </section>
-  )}
 </Base>
 
 <style>
   .writing-section {
     margin-bottom: 2.75rem;
-  }
-
-  .writing-section__header {
-    display: flex;
-    justify-content: space-between;
-    align-items: end;
-    gap: 1rem 2rem;
-    margin-bottom: 0.95rem;
-  }
-
-  .writing-section__title {
-    margin: 0;
-    font-family: var(--font-editorial);
-    font-size: var(--text-xl);
-    font-weight: 700;
-    line-height: 1.08;
-    letter-spacing: -0.01em;
-  }
-
-  .writing-section__description {
-    max-width: 42rem;
-    margin: 0.3rem 0 0;
-    font-size: var(--text-base);
-    line-height: var(--leading-prose);
-    color: var(--text-secondary);
-  }
-
-  .writing-section--elsewhere {
-    border-top: 1px solid var(--border);
-    padding-top: 1rem;
   }
 
   .archive-controls {
@@ -644,81 +610,6 @@ const postsByYear: YearGroup[] = Array.from(yearMap.entries())
     display: none;
   }
 
-  .bylines-list {
-    display: flex;
-    flex-direction: column;
-    gap: 0;
-    border-top: 1px solid var(--border-subtle);
-  }
-
-  .byline-row {
-    display: grid;
-    grid-template-columns: 72px minmax(0, 1fr) auto;
-    gap: 0.85rem 1rem;
-    align-items: baseline;
-    padding: 0.65rem 0;
-    border-bottom: 1px solid var(--border-subtle);
-  }
-
-  .byline-date,
-  .byline-pub {
-    font-size: var(--text-xs);
-    font-family: var(--font-label);
-    color: var(--dim);
-  }
-
-  .byline-pub {
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    white-space: nowrap;
-  }
-
-  .byline-link {
-    color: var(--text);
-    font-family: var(--font-editorial);
-    font-size: var(--text-base);
-    text-decoration: underline;
-    text-decoration-thickness: 1px;
-    text-underline-offset: 2px;
-    text-decoration-color: var(--border-strong);
-  }
-
-  .byline-link:hover {
-    color: var(--accent);
-    text-decoration-color: var(--accent);
-  }
-
-  /* Read pieces turn purple here just like the grid posts above them.
-     Literal hex: browsers ignore var() inside :visited for privacy. */
-  .byline-link:visited {
-    color: #5b3a7a;
-  }
-
-  :global([data-theme="dark"]) .byline-link:visited {
-    color: #b9a3d9;
-  }
-
-  .bylines-details {
-    margin-top: 0.9rem;
-  }
-
-  .bylines-details__summary {
-    cursor: pointer;
-    font-size: var(--text-xs);
-    font-family: var(--font-body);
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--dim);
-  }
-
-  .bylines-details__summary:hover {
-    color: var(--accent);
-  }
-
-  .bylines-list--extra {
-    margin-top: 0.9rem;
-  }
-
   @media (max-width: 940px) {
     .post-grid {
       grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -727,11 +618,6 @@ const postsByYear: YearGroup[] = Array.from(yearMap.entries())
   }
 
   @media (max-width: 760px) {
-    .writing-section__header {
-      flex-direction: column;
-      align-items: start;
-    }
-
     .archive-search {
       flex-wrap: wrap;
     }
@@ -743,13 +629,6 @@ const postsByYear: YearGroup[] = Array.from(yearMap.entries())
 
     .archive-selects {
       gap: 0.6rem 1.6rem;
-    }
-  }
-
-  @media (max-width: 620px) {
-    .byline-row {
-      grid-template-columns: 1fr;
-      gap: 0.2rem;
     }
   }
 

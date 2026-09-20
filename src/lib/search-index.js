@@ -6,6 +6,7 @@ import { mapWithConcurrency } from '@/lib/map-with-concurrency';
 import { getOptionalCollection } from '@/lib/optional-collection';
 import { visuals } from '@/data/visuals';
 import { appearanceGroups } from '@/data/appearances';
+import { bylines } from '@/lib/bylines';
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -250,6 +251,19 @@ export async function buildSearchIndex() {
     };
   });
   searchIndex.push(...eaForumEntries);
+
+  // Bylines: title and outlet only, linking out — the site holds no copy
+  // of the text to index.
+  for (const byline of bylines) {
+    searchIndex.push({
+      title: byline.title,
+      description: byline.publication,
+      content: `${byline.title} ${byline.publication}`,
+      type: 'article',
+      url: byline.url,
+      tags: [],
+    });
+  }
 
   // Other collections with body content
   for (const item of notes) {
