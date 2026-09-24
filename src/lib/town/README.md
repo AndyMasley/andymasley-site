@@ -99,10 +99,36 @@ shared; the concrete/curb treatment corrects smoothed box normals through flat
 shading, without changing the underlying sidewalk geometry.
 
 `atmosphere.ts` supplies a blue-to-haze sky with separated procedural clouds, a warm
-key light and cooler fill. The game uses one main scene render without a
-post-processing stack, plus the bounded optional lake reflection described below.
-A slightly narrower driving camera and compact selected
-turn indicators finish the presentation.
+key light and cooler fill. Sky, haze and town share one scene-referred exposure:
+the sky's linear HDR colors pass through the same ACES curve as the buildings, and
+the distance haze converges on the horizon color. Reflections and image lighting
+use a separate copy of the sky whose low band is greyed and replaced by an
+irregular dark treeline, because street-level glass, paint and water mirror trees
+and roofs rather than open horizon. A slightly narrower driving camera and compact
+selected turn indicators finish the presentation.
+
+On desktop High and Automatic graphics with WebGL2 half-float targets,
+`cinematic.ts` (a separately loaded chunk, fetched beside the first tiles) renders
+the scene into a 4× multisampled HDR buffer, adds N8AO screen-space ambient
+occlusion (full resolution on High, half on Automatic), removes non-finite pixels,
+then applies a thresholded bloom, the existing ACES curve and a small grade
+(contrast, saturation, warm highlights/cool shade, vignette). Low, mobile and
+unsupported browsers keep the single direct render. Automatic sessions averaging
+below about 48 fps first drop multisampling, then full-resolution occlusion, then
+the finish, before the existing resolution fallback. The desktop sun shadow uses
+a 4096² map over a 250 m frame led 55 m ahead of the car, and the nearest 64
+crowns within about 110 m cast shadows. These are presentation choices; geometry,
+source colors, the road graph and driving are unchanged.
+
+The same pass calibrates a few shared treatments against the dated photographs:
+ordinary asphalt families (and chip-seal roads, by the same factor) are lifted
+together toward weathered mid-grey; ordinary asphalt also carries broad paving-age
+fields plus sparse, meandering crack-seal lines that fade by 70 m (inventory earth
+and gravel keep their own finishes);
+inferred roofs gain fine asphalt-shingle courses; inferred window glass mutes its
+mirrored sky; trim is a cleaner white; and leaf clusters transmit a little more
+sunlight. Crack positions and shingle rhythm are authored patterns, not surveyed
+features.
 
 `surfaces.ts` samples the original raw RGBA land-cover data in world metres.
 Class weights are sharpened and renormalized; zero-coverage pixels stay excluded.

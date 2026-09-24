@@ -98,6 +98,11 @@ describe('Scoped late-summer materials', () => {
     const shader = compile(m);
     expect(previous).toHaveBeenCalledOnce(); expect(m.customProgramCacheKey()).toBe('prior|webster-art-material-v2:leaf');
     expect(shader.vertexShader).toContain('townArtPosition = instanceMatrix * townArtPosition');
+    // The breeze displaces the local vertex before projection, keyed to each instance's position.
+    expect(shader.vertexShader.indexOf('#include <begin_vertex>')).toBeLessThan(shader.vertexShader.indexOf('float townSwayPhase'));
+    expect(shader.vertexShader.indexOf('float townSwayPhase')).toBeLessThan(shader.vertexShader.indexOf('#include <project_vertex>'));
+    expect(shader.vertexShader).toContain('(modelMatrix * instanceMatrix[3]).xyz');
+    expect(shader.uniforms.townArtTime).toBeDefined();
     expect(shader.fragmentShader).toContain('// earlier hook');
     expect(shader.fragmentShader).toContain('#include <alphatest_fragment>');
     expect(shader.fragmentShader.indexOf('outgoingLight +=')).toBeGreaterThan(shader.fragmentShader.indexOf('vec3 outgoingLight ='));

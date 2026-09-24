@@ -2,14 +2,38 @@ import * as THREE from 'three';
 import { Sky } from 'three/examples/jsm/objects/Sky.js';
 
 export const SUMMER_LIGHT = {
-  sun: '#fff1db',
-  skyFill: '#c5ddf2',
-  groundFill: '#aea58c',
-  haze: '#c0d4e0',
-  sunIntensity: 2.65,
-  fillIntensity: 1.30,
+  sun: '#fff2dc',
+  skyFill: '#b4cfee',
+  groundFill: '#9d9a7d',
+  // Clear-day key/fill balance. The dated Main Street, St. Joseph and
+  // Sitkowski photographs show roughly four-to-one sunlit/shaded ground, crisp
+  // cool shade under trees and cars, and differently lit wall orientations.
+  sunIntensity: 3.2,
+  fillIntensity: 1.1,
   exposure: 1.03,
 } as const;
+
+/**
+ * Sky colors are scene-referred linear RGB and pass through the same filmic
+ * curve as the town, so the sky, its reflections and the distant haze stay in
+ * one exposure. Values above 1 are intentional: after the curve they display
+ * as a deep summer zenith (about #3d7cc9), a pale horizon (#b7d0e8) and
+ * near-white fair-weather cloud, matching the clear-sky reference photographs.
+ */
+export const SUMMER_SKY = {
+  zenith: [0.048, 0.167, 0.55],
+  horizon: [0.31, 0.6, 1.22],
+  cloud: [2.45, 2.34, 1.9],
+  ground: [0.095, 0.113, 0.077],
+  treeline: [0.05, 0.066, 0.045],
+} as const;
+
+export const linearColor = (rgb: readonly number[]): THREE.Color => new THREE.Color().setRGB(rgb[0], rgb[1], rgb[2], THREE.LinearSRGBColorSpace);
+
+/** Distance haze that converges on the horizon sky rather than a separate grey. */
+export function createSummerHaze(): THREE.Fog {
+  return new THREE.Fog(linearColor(SUMMER_SKY.horizon), 380, 2400);
+}
 
 /** Keep the directional shadow's light-space texels fixed as the car moves.
  * Snapping in world X/Z would still crawl along an oblique sun's image plane. */
@@ -23,23 +47,32 @@ export function createShadowAnchor(direction:THREE.Vector3,span:number,resolutio
   };
 }
 
-export function createSummerSky(sunDirection: THREE.Vector3): Sky {
+/**
+ * The visible sky, or with `surroundings` the source for reflections and image
+ * lighting. Street-level glass, paint and water in the reference photographs
+ * mirror trees and buildings just above the horizon rather than open sky, so the
+ * reflection source replaces that band with a dark, broken treeline tone.
+ */
+export function createSummerSky(sunDirection: THREE.Vector3, { surroundings = false } = {}): Sky {
   const sky = new Sky();
-  sky.name = 'Late summer sky';
-  sky.material.toneMapped = false;
+  sky.name = surroundings ? 'Late summer reflection surroundings' : 'Late summer sky';
+  sky.material.toneMapped = true;
   sky.renderOrder = 1000;
   sky.scale.setScalar(450000);
   sky.material.uniforms.sunPosition.value.copy(sunDirection).normalize();
   Object.assign(sky.material.uniforms, {
-    summerZenith: { value: new THREE.Color('#448dc4') },
-    summerHorizon: { value: new THREE.Color(SUMMER_LIGHT.haze) },
-    summerCloud: { value: new THREE.Color('#fff6e9') },
-    summerGround: { value: new THREE.Color('#626a51') },
+    summerZenith: { value: linearColor(SUMMER_SKY.zenith) },
+    summerHorizon: { value: linearColor(SUMMER_SKY.horizon) },
+    summerCloud: { value: linearColor(SUMMER_SKY.cloud) },
+    summerGround: { value: linearColor(SUMMER_SKY.ground) },
+    summerTreeline: { value: linearColor(SUMMER_SKY.treeline) },
+    summerSurroundings: { value: surroundings ? 1 : 0 },
   });
   sky.material.fragmentShader = `
     varying vec3 vWorldPosition;
     varying vec3 vSunDirection;
-    uniform vec3 summerZenith, summerHorizon, summerCloud, summerGround;
+    uniform vec3 summerZenith, summerHorizon, summerCloud, summerGround, summerTreeline;
+    uniform float summerSurroundings;
     float cloudHash(vec2 p) { return fract(sin(dot(p, vec2(127.1,311.7))) * 43758.5453); }
     float cloudNoise(vec2 p) {
       vec2 i = floor(p), f = fract(p); f = f*f*(3.0-2.0*f);
@@ -81,6 +114,12 @@ export function createSummerSky(sunDirection: THREE.Vector3): Sky {
       // The reflected lower hemisphere is landscape, not a second bright sky.
       // This gives glass and metallic bodywork a grounded reflection gradient.
       color = mix(color,summerGround,smoothstep(0.01,0.36,-direction.y));
+      // Reflection source only: the low sky seen in windows, paint and water is
+      // greyed by haze, screens and street clutter, then an irregular band of
+      // trees and roofs replaces the horizon itself.
+      color = mix(color, vec3(dot(color, vec3(0.2126, 0.7152, 0.0722))) * vec3(0.94, 0.98, 1.06), summerSurroundings * 0.45 * (1.0 - smoothstep(0.06, 0.26, direction.y)));
+      float treelineTop = 0.045 + 0.05 * cloudNoise(vec2(atan(direction.z, direction.x) * 7.0, 2.7));
+      color = mix(color, summerTreeline, summerSurroundings * (1.0 - smoothstep(treelineTop - 0.03, treelineTop, direction.y)) * smoothstep(-0.2, -0.02, direction.y));
       gl_FragColor = vec4(color,1.0);
       #include <tonemapping_fragment>
       #include <colorspace_fragment>

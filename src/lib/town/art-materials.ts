@@ -120,6 +120,15 @@ float townRoofChoice = townArtNoise(vTownArtWorld.xz*0.035);
 // Continuous world-space weathering avoids assuming a common local origin.
 diffuseColor.rgb *= mix(vec3(0.83,0.85,0.84),vec3(1.12,1.09,1.035),townRoofChoice);
 diffuseColor.rgb *= mix(0.96,1.04,townArtNoise(vTownArtWorld.xz*0.70));
+// Asphalt-shingle courses (about 14 cm exposure) read as fine horizontal lines
+// on pitched roofs near the road and fade out before they can alias.
+float townCourse = fract(vTownArtWorld.y / 0.14 + townArtNoise(vTownArtWorld.xz*0.9)*0.25);
+float townCourseAA = max(fwidth(vTownArtWorld.y / 0.14), 0.02);
+float townCourseDetail = (1.0-smoothstep(0.02,0.09,townArtFootprint)) * (1.0-smoothstep(0.0,0.05,townCourseAA-0.05));
+float townCourseLine = 1.0-smoothstep(0.0,0.08+townCourseAA,townCourse);
+float townTab = townArtNoise(vec2(floor(vTownArtWorld.y/0.14)*3.1, (vTownArtWorld.x+vTownArtWorld.z)*3.2));
+diffuseColor.rgb *= 1.0 - townCourseDetail*(townCourseLine*0.22 + (townTab-0.5)*0.08);
+townArtHeight = -townCourseLine*0.004*townCourseDetail;
 `;
   if (kind === 'road-paint') return start + `
 // At most nine percent reflectance loss: retain every white/yellow source
@@ -180,20 +189,44 @@ if(townCrownRim<.22 && townCrownFine<.27*townCrownFringe) discard;
 // dielectric reflection instead of adding a uniform cyan light to every pane.
 float townWindowInterior = townArtNoise(floor(vTownArtWorld.xz*0.4)+floor(vTownArtWorld.y/2.8));
 outgoingLight -= totalDiffuse * (1.0-mix(0.48,0.68,townWindowInterior));
+// Window reflections in the photographs are greyer than the open sky: glass,
+// screens and interior shade mute the mirrored blue (VC-0373, VC-0405).
+outgoingLight = mix(vec3(dot(outgoingLight,vec3(0.2126,0.7152,0.0722))),outgoingLight,0.6);
 #include <opaque_fragment>
 `;
   if (kind === 'leaf') return `
-// A restrained forward-scattering response restores thin-leaf readability.
+// A restrained forward-scattering response restores thin-leaf readability;
+// sunlit summer maples in the photographs glow yellow-green through the crown.
 // Alpha testing, the original leaf atlas, vertex color and shadow rules remain.
 #if NUM_DIR_LIGHTS > 0
 float townLeafBacklight = pow(max(0.0,dot(normalize(vViewPosition),-directionalLights[0].direction)),2.0);
 float townLeafSun = min(2.5,max(directionalLights[0].color.r,max(directionalLights[0].color.g,directionalLights[0].color.b)));
-outgoingLight += diffuseColor.rgb * townLeafSun * (0.012+0.070*townLeafBacklight);
+outgoingLight += diffuseColor.rgb * townLeafSun * (0.03+0.09*townLeafBacklight);
 #endif
 #include <opaque_fragment>
 `;
   return '#include <opaque_fragment>';
 }
+
+// A light summer breeze for near crowns: a slow sway that grows toward the crown
+// top plus a small per-card flutter, in the prototype's local units (instances
+// scale it to roughly 5-12 cm). The phase comes from each tree's position, so
+// neighbours never move in lockstep. The art clock only advances while driving
+// with standard motion, so paused and reduced-motion views stay still. Shadow
+// maps keep the rest pose; the offset is far smaller than their texels' blur.
+const LEAF_SWAY = `
+#include <begin_vertex>
+#ifdef USE_INSTANCING
+vec3 townSwayOrigin = (modelMatrix * instanceMatrix[3]).xyz;
+#else
+vec3 townSwayOrigin = modelMatrix[3].xyz;
+#endif
+float townSwayPhase = townArtTime * 1.1 + dot(townSwayOrigin.xz, vec2(0.37, 0.23));
+float townSwayReach = clamp(transformed.y + 0.45, 0.0, 1.5);
+transformed.x += (sin(townSwayPhase + transformed.y * 1.7) * 0.011 + sin(townSwayPhase * 2.3 + 1.7) * 0.004) * townSwayReach;
+transformed.z += cos(townSwayPhase * 0.87 + transformed.x * 1.9) * 0.009 * townSwayReach;
+transformed += sin(townArtTime * 5.3 + dot(position, vec3(13.1, 7.7, 11.3))) * 0.0035 * normal;
+`;
 
 /** Modify one newly pooled material; repeated registration is a no-op. */
 export function applyArtMaterial(material: THREE.MeshStandardMaterial, clock: { value: number } = { value: 0 }): void {
@@ -209,8 +242,8 @@ export function applyArtMaterial(material: THREE.MeshStandardMaterial, clock: { 
   const previousKey = state.key.call(material);
   registrations.set(material, state);
   if (kind === 'siding') { material.color.set(sidingColor(state.color)); material.roughness = 0.84; }
-  if (kind === 'roof') { material.color.set('#606469'); material.roughness = 0.90; }
-  if (kind === 'trim') { material.color.set('#e2ded0'); material.roughness = 0.78; }
+  if (kind === 'roof') { material.color.set('#595c61'); material.roughness = 0.90; }
+  if (kind === 'trim') { material.color.set('#e9e7de'); material.roughness = 0.74; }
   if (kind === 'foundation') { material.color.set('#97968a'); material.roughness = 0.94; }
   if (kind === 'brick') { material.roughness = 0.9; material.normalScale.multiplyScalar(0.55); }
   if (kind === 'concrete' || kind === 'granite') {
@@ -229,7 +262,7 @@ export function applyArtMaterial(material: THREE.MeshStandardMaterial, clock: { 
   }
   if (kind === 'shoulder') { material.color.set('#868174'); material.roughness = 0.98; }
   if (kind === 'road-paint') { material.roughness=Math.max(.94,material.roughness); }
-  if (kind === 'glass') { material.color.set('#34464b'); material.roughness = 0.14; material.metalness = 0; material.envMapIntensity = 0.85; }
+  if (kind === 'glass') { material.color.set('#2f3f44'); material.roughness = 0.12; material.metalness = 0; material.envMapIntensity = 0.6; }
   if (kind === 'leaf') { material.roughness = 0.88; material.envMapIntensity = 0.12; }
   if (kind === 'far-leaf') { material.color.set('#576d43'); material.roughness = 0.95; material.vertexColors = true; }
   if (kind === 'bark') {
@@ -262,8 +295,12 @@ townArtPosition = instanceMatrix * townArtPosition;
 #endif
 vTownArtWorld = (modelMatrix * townArtPosition).xyz;
 `);
+    if (kind === 'leaf') {
+      if (!shader.vertexShader.includes('#include <begin_vertex>')) throw new Error('Town leaf sway shader anchor changed.');
+      shader.vertexShader = `uniform float townArtTime;\n${shader.vertexShader}`.replace('#include <begin_vertex>', LEAF_SWAY);
+    }
     shader.fragmentShader = functions + shader.fragmentShader.replace('#include <map_fragment>', mapTreatment(kind)).replace('#include <opaque_fragment>', finishTreatment(kind));
-    if (['siding','asphalt','concrete','granite','foundation','shoulder','water','bark','far-leaf'].includes(kind)) shader.fragmentShader = shader.fragmentShader.replace('#include <normal_fragment_maps>', mineralNormal);
+    if (['siding','roof','asphalt','concrete','granite','foundation','shoulder','water','bark','far-leaf'].includes(kind)) shader.fragmentShader = shader.fragmentShader.replace('#include <normal_fragment_maps>', mineralNormal);
     if (['asphalt','concrete','granite','foundation','shoulder'].includes(kind)) {
       if (!shader.fragmentShader.includes('#include <roughnessmap_fragment>')) throw new Error('Town mineral roughness shader anchor changed.');
       shader.fragmentShader = shader.fragmentShader.replace('#include <roughnessmap_fragment>', MINERAL_ROUGHNESS);
@@ -291,7 +328,7 @@ vNormalMapUv *= 1.6;
 #endif`);
     }
   };
-  material.customProgramCacheKey = () => `${previousKey}|webster-art-material-v2:${kind}${kind==='water'?'|summer-water-optics-v2':kind==='bark'?'|regional-bark-v1':kind==='glass'?'|dielectric-glass-v1':kind==='far-leaf'?'|layered-far-foliage-v1':''}${['asphalt','concrete','granite','foundation','shoulder'].includes(kind)?'|mineral-families-v2':''}`;
+  material.customProgramCacheKey = () => `${previousKey}|webster-art-material-v2:${kind}${kind==='water'?'|summer-water-optics-v2':kind==='bark'?'|regional-bark-v1':kind==='glass'?'|dielectric-glass-v2':kind==='far-leaf'?'|layered-far-foliage-v1':kind==='roof'?'|shingle-courses-v1':kind==='asphalt'?'|paving-fields-v2':''}${['asphalt','concrete','granite','foundation','shoulder'].includes(kind)?'|mineral-families-v2':''}`;
   material.addEventListener('dispose', onMaterialDispose);
   material.needsUpdate = true;
 }

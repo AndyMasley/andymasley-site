@@ -4,7 +4,7 @@ import { advanceRealTime, DriveEngine, LANDMARKS, MPH, RoadGraph, spawnAtLandmar
 import { validateManifest, type Quality, type V3 } from './contracts';
 import { TownWorld } from './world';
 import { startupPosition } from './startup';
-import { createSummerSky, createShadowAnchor, SUMMER_LIGHT } from './atmosphere';
+import { createSummerHaze, createSummerSky, createShadowAnchor, SUMMER_LIGHT } from './atmosphere';
 import { createTouringCar, type TouringCar } from './vehicle';
 import { applyMeasuredBridgeGrades } from './bridge-grade';
 import release from '../../../data/derived/town/release.json';
@@ -19,11 +19,18 @@ import { CameraObstruction } from './camera-comfort';
 import { RoadAudio } from './driving-audio';
 import { checkTownUpdate } from './release-recovery';
 import { TownWaterReflection } from './water-reflection';
+import type { CinematicRenderer } from './cinematic';
 
+type CinematicModule = typeof import('./cinematic');
+const cinematicAllowed = (quality: Quality, mobile: boolean): boolean => !mobile && quality !== 'low';
 const ASSET_ROOT = `/town-assets/${release.directory}/`;
 const WORLD_URL = `${ASSET_ROOT}manifest.json`;
 const NETWORK_URL = `${ASSET_ROOT}network.json`;
 const SUN_OFFSET = new THREE.Vector3(-260, 205, 180);
+const SHADOW_MAP = 4096;
+const SHADOW_SPAN = 250;
+const SHADOW_LEAD = 55;
+const CINEMATIC_FRAME_MS = 21;
 const toWorld = (p: readonly number[]): V3 => [p[0], p[2], -p[1]];
 type LandmarkKey = keyof typeof LANDMARKS;
 type Session = { dispose(): void };
@@ -82,6 +89,10 @@ export async function startTown(root: HTMLElement): Promise<Session> {
   const audio = new RoadAudio();
   const cameraObstruction = new CameraObstruction();
   const waterReflection = new TownWaterReflection();
+  let cinematic: CinematicRenderer | undefined;
+  let cinematicModule: Promise<CinematicModule | undefined> | undefined;
+  let cinematicReductions = 0;
+  let cinematicUnsupported = false;
   const cameraAnchor = new THREE.Vector3();
   const held = new Set<string>();
   const snapshots: number[] = [];
@@ -121,6 +132,7 @@ export async function startTown(root: HTMLElement): Promise<Session> {
   const persist = (): void => { if (engine) saveSnapshot(snapshotDrive(engine, release.manifestSha256), storage); };
   const points = { car: new THREE.Vector3(), direction: new THREE.Vector3(), eye: new THREE.Vector3(), target: new THREE.Vector3(), wantedEye: new THREE.Vector3(), wantedTarget: new THREE.Vector3(), up: new THREE.Vector3(0, 1, 0), right: new THREE.Vector3() };
 
+  const loadCinematic = (): Promise<CinematicModule | undefined> => cinematicModule ??= import('./cinematic').catch(() => { cinematicModule = undefined; return undefined; });
   const setStatus = (message: string): void => {
     if (status.textContent !== message) status.textContent = message;
     if (loading && !loading.hidden && loading.textContent !== message) loading.textContent = message;
@@ -149,6 +161,8 @@ export async function startTown(root: HTMLElement): Promise<Session> {
       held.clear();
       audio.dispose();
       vehicle?.dispose();
+      cinematic?.dispose();
+      cinematic = undefined;
       waterReflection.dispose();
       world?.dispose();
       environmentTarget?.dispose();
@@ -179,34 +193,43 @@ export async function startTown(root: HTMLElement): Promise<Session> {
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = SUMMER_LIGHT.exposure;
     renderer.setPixelRatio(pixelRatio);
+    // Counters are reset once per displayed frame so the camera finish's
+    // fullscreen passes are included beside the scene's own draws.
+    renderer.info.autoReset = false;
     renderer.shadowMap.enabled = !mobile && quality !== 'low';
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    // The desktop camera finish is a separate optional chunk. Fetch it beside
+    // the roads and first tiles so it is normally ready before the first frame.
+    if (cinematicAllowed(quality, mobile)) void loadCinematic();
     scene = new THREE.Scene();
-    scene.fog = new THREE.Fog(SUMMER_LIGHT.haze, 440, 1800);
+    scene.fog = createSummerHaze();
     const camera = new THREE.PerspectiveCamera(57, 1, 0.08, 6500);
     const ambient = new THREE.HemisphereLight(SUMMER_LIGHT.skyFill, SUMMER_LIGHT.groundFill, SUMMER_LIGHT.fillIntensity);
     scene.add(ambient);
     const sun = new THREE.DirectionalLight(SUMMER_LIGHT.sun, SUMMER_LIGHT.sunIntensity);
     sun.castShadow = true;
-    sun.shadow.mapSize.set(2048, 2048);
-    sun.shadow.camera.left = -100;
-    sun.shadow.camera.right = 100;
-    sun.shadow.camera.top = 100;
-    sun.shadow.camera.bottom = -100;
+    // Shadows are desktop-only. A finer map over a wider frame keeps crisp
+    // contact shadows while reaching further down the street ahead.
+    sun.shadow.mapSize.set(SHADOW_MAP, SHADOW_MAP);
+    sun.shadow.camera.left = -SHADOW_SPAN / 2;
+    sun.shadow.camera.right = SHADOW_SPAN / 2;
+    sun.shadow.camera.top = SHADOW_SPAN / 2;
+    sun.shadow.camera.bottom = -SHADOW_SPAN / 2;
     sun.shadow.camera.near = 10;
     sun.shadow.camera.far = 900;
     sun.shadow.bias = -0.00012;
     sun.shadow.normalBias = 0.035;
-    const shadowAnchor=createShadowAnchor(SUN_OFFSET,200,sun.shadow.mapSize.x);
+    const shadowAnchor=createShadowAnchor(SUN_OFFSET,SHADOW_SPAN,sun.shadow.mapSize.x);
+    const shadowFocus = new THREE.Vector3();
     scene.add(sun, sun.target);
     const pmrem = new THREE.PMREMGenerator(renderer);
     sky = createSummerSky(SUN_OFFSET);
     scene.add(sky);
     const skyScene = new THREE.Scene();
-    const environmentSky = sky.clone();
+    const environmentSky = createSummerSky(SUN_OFFSET, { surroundings: true });
     skyScene.add(environmentSky);
     try { environmentTarget = pmrem.fromScene(skyScene, 0.04); }
-    finally { pmrem.dispose(); }
+    finally { pmrem.dispose(); environmentSky.geometry.dispose(); environmentSky.material.dispose(); }
     scene.environment = environmentTarget.texture;
 
     const manifest = await manifestRequest;
@@ -240,9 +263,27 @@ export async function startTown(root: HTMLElement): Promise<Session> {
       renderRequested = true;
       const box = canvas.getBoundingClientRect();
       renderer!.setSize(Math.max(1, box.width), Math.max(1, box.height), false);
+      cinematic?.setSize(box.width, box.height);
       camera.aspect = Math.max(1, box.width) / Math.max(1, box.height);
       camera.updateProjectionMatrix();
     };
+    const createCinematic = (module: CinematicModule | undefined): void => {
+      // The finish needs renderable WebGL2 half-float targets; otherwise the
+      // direct render remains, exactly as on Low and mobile.
+      if (cinematic || cinematicUnsupported || !module || disposed || contextLost || !cinematicAllowed(quality, mobile)) return;
+      if (!renderer!.capabilities.isWebGL2 || !renderer!.extensions.has('EXT_color_buffer_float')) { cinematicUnsupported = true; return; }
+      try {
+        cinematic = new module.CinematicRenderer(renderer!, scene!, camera, { halfResAO: quality !== 'high' });
+        if (!cinematic.verify()) { cinematic.dispose(); cinematic = undefined; cinematicUnsupported = true; }
+      } catch { cinematic?.dispose(); cinematic = undefined; cinematicUnsupported = true; }
+      cinematicReductions = 0;
+      renderRequested = true;
+    };
+    const releaseCinematic = (): void => { cinematic?.dispose(); cinematic = undefined; renderRequested = true; };
+    // Materials compile for the first frame's actual target, so the finish is
+    // attached before that frame rather than swapped in once the street shows.
+    if (cinematicAllowed(quality, mobile)) createCinematic(await Promise.race([loadCinematic(), new Promise<undefined>(resolve => setTimeout(resolve, 1500))]));
+    if (disposed) return session;
     resize = new ResizeObserver(fit);
     resize.observe(canvas);
     intro.hidden = true;
@@ -369,6 +410,7 @@ export async function startTown(root: HTMLElement): Promise<Session> {
       // This session stays paused until Restart creates a new one. Cancel its
       // optional shader work immediately rather than polling a lost context.
       waterReflection.dispose();
+      releaseCinematic();
       updateAvailable = false;
       element<HTMLButtonElement>('dismiss-update').hidden = true;
       const updateButton = recovery.querySelector<HTMLButtonElement>('[data-town-reload]'); if (updateButton) updateButton.hidden = true;
@@ -482,6 +524,8 @@ export async function startTown(root: HTMLElement): Promise<Session> {
       renderer!.shadowMap.enabled = quality !== 'low' && !mobile;
       pixelRatio = qualityPixelRatio(quality, mobile, devicePixelRatio);
       renderer!.setPixelRatio(pixelRatio);
+      releaseCinematic();
+      if (cinematicAllowed(quality, mobile)) void loadCinematic().then(module => { createCinematic(module); fit(); });
       world!.update(toWorld(engine.pose()[0]), toWorld(engine.pose(100)[0]), true);
       fit();
       try { localStorage.setItem('webster-quality', quality); } catch {}
@@ -619,7 +663,8 @@ export async function startTown(root: HTMLElement): Promise<Session> {
       camera.lookAt(points.target);
       if (firstFrame) renderRequested = true;
       firstFrame = false;
-      shadowAnchor(points.car,sun.target.position);
+      // Most of the shadow frame lies ahead of the car, where the camera looks.
+      shadowAnchor(shadowFocus.copy(points.car).addScaledVector(points.direction, SHADOW_LEAD), sun.target.position);
       sun.position.copy(sun.target.position).add(SUN_OFFSET);
       const shore = Math.max(0, ...[LANDMARKS.LAKE, LANDMARKS.BEACH, LANDMARKS.RANCH].map(place => 1 - Math.hypot(position[0] - place.xy[0], position[1] - place.xy[1]) / 220));
       audio.update(engine.speed, engine.paused || streamPaused || teleporting, engine.acceleration, Number(engine.edge.surface_type ?? 6), shore);
@@ -631,7 +676,14 @@ export async function startTown(root: HTMLElement): Promise<Session> {
       if (now - savedAt > 5000) { persist(); savedAt = now; }
       if (!engine.paused && quality === 'auto' && now - startedAt > 15000 && world!.metrics.pending === 0 && now - qualityAt > 5000 && snapshots.length > 100) {
         const average = snapshots.slice(-100).reduce((a, b) => a + b, 0) / 100;
-        if (average > 35 && pixelRatio > 0.8) {
+        // Automatic sessions keep the camera finish only while it holds a
+        // smooth frame rate (about 48 fps): they first give up its costlier
+        // options, then the finish itself, before lowering resolution.
+        if (average > CINEMATIC_FRAME_MS && cinematic) {
+          if (cinematicReductions < 2 && cinematic.reduce()) cinematicReductions++;
+          else releaseCinematic();
+          fit();
+        } else if (average > 35 && pixelRatio > 0.8) {
           pixelRatio = Math.max(0.8, pixelRatio - 0.15);
           renderer!.setPixelRatio(pixelRatio);
           renderer!.shadowMap.enabled = false;
@@ -649,7 +701,9 @@ export async function startTown(root: HTMLElement): Promise<Session> {
       // owns a bounded offscreen pass; the following main render keeps the
       // regular world draw/triangle counters and never waits for new assets.
       if (drawCount >= 3) waterReflection.update(renderer!, scene!, camera, now, { quality, mobile });
-      renderer!.render(scene!, camera);
+      renderer!.info.reset();
+      if (cinematic) cinematic.render(elapsed);
+      else renderer!.render(scene!, camera);
       renderRequested = false; lastDraw = now;
       world!.metrics.triangles = renderer!.info.render.triangles;
       drawCount++;
@@ -669,6 +723,7 @@ export async function startTown(root: HTMLElement): Promise<Session> {
       get camera() { return camera; },
       get reflection() { return waterReflection; },
       reflectionResources() { return { ...waterReflection.metrics }; },
+      get cinematic() { return cinematic?.metrics() ?? { enabled: false }; },
       get cameraMode() { return cameraMode; },
       get presentation() { return { version: 'finished-webster-v8', grass: world!.presentationResources(), vehicle: vehicle!.resources(), evidence: world!.evidenceResources(), finish: world!.finishResources(), research: world!.researchResources(), streaming: world!.streamingResources(), comfort: preferences.comfort, camera: { checks: cameraObstruction.checks, testedMeshes: cameraObstruction.testedMeshes, milliseconds: cameraObstruction.milliseconds, skippedCandidates: cameraObstruction.skippedCandidates } }; },
       get ready() { return controlsReady && !disposed; },

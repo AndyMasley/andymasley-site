@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { describe, expect, it, vi } from 'vitest';
 import * as THREE from 'three';
-import { TownWorld } from '../world';
+import { TownWorld, TREE_SHADOW_CAP } from '../world';
 import type { TownTile, WorldManifest } from '../contracts';
 import { createConiferPrototype, createOpenBroadleafPrototype, createBroadleafPrototype, treeForm } from '../vegetation';
 import { createDistantCanopyPrototype } from '../distant-canopy';
@@ -83,14 +83,14 @@ describe('Town tree detail, global shadow budget and instance ownership', () => 
     f.world.dispose();
   });
 
-  it('caps ordinary shadow trees at24 globally and applies the same selection to trunks', () => {
-    const f = fixture([Array.from({ length: 30 }, (_, i) => row(i + 1)), Array.from({ length: 30 }, (_, i) => row(i + 31))]);
+  it('caps ordinary shadow trees globally and applies the same selection to trunks', () => {
+    const f = fixture([Array.from({ length: 50 }, (_, i) => row(i + 1)), Array.from({ length: 50 }, (_, i) => row(i + 51))]);
     f.update();
     const crowns = f.selections('near', true);
-    expect(crowns).toHaveLength(24);
+    expect(crowns).toHaveLength(TREE_SHADOW_CAP);
     expect(f.selections('trunk', true)).toEqual(crowns);
     expect(f.selections('far', true)).toEqual([]);
-    expect(f.selections('near')).toHaveLength(60);
+    expect(f.selections('near')).toHaveLength(100);
     f.world.dispose();
   });
 
@@ -111,7 +111,7 @@ describe('Town tree detail, global shadow budget and instance ownership', () => 
     const anchors = [...f.selections('near'), ...f.selections('far')];
     expect(new Set(anchors).size).toBe(400); expect(anchors).toHaveLength(400);
     expect(f.selections('trunk')).toHaveLength(400);
-    expect(f.selections('near', true)).toHaveLength(24);
+    expect(f.selections('near', true)).toHaveLength(TREE_SHADOW_CAP);
     for (const { mesh } of crowns) {
       const index = mesh.userData.treeKind === 'near' ? 0 : 1;
       const prototype = mesh.userData.treeFamily === 'conifer' ? state.coniferPrototypes.get(index)! : mesh.userData.treeVariant === 'open' ? state.openBroadleafPrototypes.get(index)! : state.prototypes[index];
@@ -136,8 +136,8 @@ describe('Town tree detail, global shadow budget and instance ownership', () => 
     f.world.dispose();
   });
 
-  it('retains existing instance groups through detail and shadow hysteresis, with a strict80m shadow exit', () => {
-    const f = fixture([[row(210), row(75)]]); f.update();
+  it('retains existing instance groups through detail and shadow hysteresis, with a strict 120m shadow exit', () => {
+    const f = fixture([[row(210), row(115)]]); f.update();
     expect(f.selections('near')).toEqual(['tile-0:1']);
     expect(f.selections('near', true)).toEqual([]);
     f.update(15);

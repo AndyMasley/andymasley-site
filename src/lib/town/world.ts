@@ -45,6 +45,11 @@ type LoadedTile = { group: THREE.Group; level: number; lastUsed: number; trees?:
 type MaterialEntry = { material: THREE.Material; refs: number; textures: string[] };
 
 
+/** Leafy streets read through broken tree shade (VC-0369, VC-0377, VC-0427).
+ * Desktop shadows cover the nearest crowns ahead of and around the car. */
+export const TREE_SHADOW_CAP = 64;
+const TREE_SHADOW_ENTER_M = 110;
+
 export class TownWorld {
   readonly metrics: WorldMetrics = { pending: 0, loaded: 0, triangles: 0, bytes: 0, errors: 0 };
   readonly root = new THREE.Group();
@@ -688,15 +693,15 @@ export class TownWorld {
         const wasNear = cached.treePlan?.near.has(index);
         if (distance < nearRadius + (wasNear ? 20 : 0)) plan.near.add(index);
         const wasShadow = cached.treePlan?.shadows.has(index);
-        // Enter at72m, leave by80m; the global cap is across all visible tiles.
-        if (this.treeShadows && distance < (wasShadow ? 80 : 72)) {
+        // Enter/leave with a 10m band; the global cap is across all visible tiles.
+        if (this.treeShadows && distance < TREE_SHADOW_ENTER_M + (wasShadow ? 10 : 0)) {
           candidates.push({ id: tile.id, index, score: distance - (wasShadow ? 8 : 0) });
         }
       });
       plans.set(tile.id, plan);
     }
     candidates.sort((a, b) => a.score - b.score || a.id.localeCompare(b.id) || a.index - b.index);
-    for (const candidate of candidates.slice(0, 24)) plans.get(candidate.id)!.shadows.add(candidate.index);
+    for (const candidate of candidates.slice(0, TREE_SHADOW_CAP)) plans.get(candidate.id)!.shadows.add(candidate.index);
     for (const plan of plans.values()) {
       plan.key = `${Number(!this.low)}:${Number(this.treeShadows)}:${[...plan.near].join(',')}|${[...plan.shadows].sort((a, b) => a - b).join(',')}|${[...plan.excluded].join(',')}`;
     }
