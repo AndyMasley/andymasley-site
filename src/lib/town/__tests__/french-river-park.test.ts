@@ -7,7 +7,7 @@ import catalog from '../../../../data/derived/town/french-river-park.json';
 import proof from '../../../../data/source/town/french-river-park-proof.json';
 import { applyFrenchRiverPark } from '../french-river-park';
 import { excludedTreeAnchors } from '../tree-exclusions';
-import { excludeGrassPolygons, grassAllowed, grassSite, type GrassMask } from '../grass';
+import { GRASS_LIMITS, excludeGrassPolygons, grassAllowed, grassSite, type GrassMask } from '../grass';
 import type { V3 } from '../contracts';
 const tileId = '-12_-4', tile = catalog.tiles[tileId], origin = tile.origin as V3;
 function scene(support = true) {
@@ -125,14 +125,15 @@ describe('source-registered French River Park paths and pads', () => {
     const original = data.slice(), finished = excludeGrassPolygons(mask, group.userData.environmentGrassExclusions);
     for (const f of catalog.features) {
       const ts = Array.from({ length: f.indices.length / 3 }, (_, i) => f.indices.slice(i * 3, i * 3 + 3).map(k => f.points[k])); let sites = 0;
-      for (let x = -6550; x < -6420; x++) for (let z = 1720; z < 1960; z++) {
+      // The site grid over the park's paths and pads: x -2947.5..-2889 m, z 774..882 m.
+      for (let x = Math.floor(-2947.5 / GRASS_LIMITS.spacing); x < Math.ceil(-2889 / GRASS_LIMITS.spacing); x++) for (let z = Math.floor(774 / GRASS_LIMITS.spacing); z < Math.ceil(882 / GRASS_LIMITS.spacing); z++) {
         const p = grassSite(x, z); if (!ts.some(t => inside([p.x, -p.z], t))) continue;
         sites++; expect(grassAllowed(mask, p.x, p.z)).toBe(true); expect(grassAllowed(finished, p.x, p.z), `${f.id} at ${p.x}, ${p.z}`).toBe(false);
       }
       expect(sites).toBeGreaterThan(5);
     }
     expect(mask.data).toEqual(original); expect(grassAllowed(finished, -2918, 817)).toBe(true);
-  // Exhaustively visits the 130 × 240 site grid for each registered footprint;
+  // Exhaustively visits the site grid over the park for each registered footprint;
   // shared CI runners need headroom for these unchanged geometric assertions.
   }, 20_000);
 });

@@ -7,7 +7,7 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js';
 import release from '../../../../data/derived/town/release.json';
 import { createTrunkContactPrototype, disposeTrunkContactPrototype } from '../trunk-contact';
-import { treeForm } from '../vegetation';
+import { treeForm, trunkMatrix, trunkProfile, TRUNK_BURY_M, CROWN_FORM_BOUNDS, createBroadleafPrototype, createOpenBroadleafPrototype, createConiferPrototype, type TrunkJoin } from '../vegetation';
 import { TownWorld } from '../world';
 import type { WorldManifest } from '../contracts';
 
@@ -34,46 +34,88 @@ function releaseSource(group: THREE.Group): void {
   for (const material of Array.isArray(mesh.material) ? mesh.material : [mesh.material]) { (material as THREE.MeshStandardMaterial).map?.dispose(); material.dispose(); }
 }
 
-describe('bounded shared trunk foot', () => {
-  it('encloses a flared foot inside the native straight prism, with ground/crown joins fixed at every tree scale', async () => {
+async function nativePrototype(role: string, level = 0): Promise<THREE.Group> {
+  const root = `public/town-assets/${release.directory}/`, manifest = JSON.parse(readFileSync(root + 'manifest.json').toString());
+  const entry = manifest.trees.prototypes.find((p: { role: string; level?: number }) => p.role === role && (p.level ?? 0) === level);
+  const bytes = readFileSync(root + entry.url);
+  expect(createHash('sha256').update(bytes).digest('hex')).toBe(entry.sha256);
+  const loader = new GLTFLoader().setMeshoptDecoder(MeshoptDecoder);
+  loader.register(() => ({ name: 'GEOMETRY_ONLY_TEXTURE_PLACEHOLDER', loadTexture: async () => new THREE.DataTexture(new Uint8Array([255,255,255,255]),1,1) }) as never);
+  return (await loader.parseAsync(bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength), '')).scene;
+}
+
+describe('grounded shared trunk', () => {
+  it.each([['near', 10, 8, 148, 98], ['far', 6, 3, 28, 27]] as const)('builds a closed, flared and tapering %s trunk over the source height', async (detail, sides, rings, triangles, vertices) => {
     const base = await nativeTrunk(), source = nativeMesh(base), snapshot = signature(source.geometry);
-    const result = createTrunkContactPrototype(base), mesh = nativeMesh(result), geometry = mesh.geometry;
+    const result = createTrunkContactPrototype(base, detail), mesh = nativeMesh(result), geometry = mesh.geometry;
     const p = geometry.getAttribute('position'), normal = geometry.getAttribute('normal'), ix = geometry.index!;
     expect(mesh.material).toBe(source.material); expect(result.children).toHaveLength(1);
-    expect(result.userData.townTrunkContact).toMatchObject({ sourceTriangles:28, triangles:32, vertices:33, geometryBytes:1248 });
-    source.geometry.computeBoundingBox(); expect(geometry.boundingBox).toEqual(source.geometry.boundingBox);
-    const original = source.geometry.getAttribute('position');
-    const unique = new Map<string, THREE.Vector2>();
-    for (let i = 0; i < original.count; i++) if (original.getY(i) < -.999) unique.set(`${original.getX(i)},${original.getZ(i)}`, new THREE.Vector2(original.getX(i), original.getZ(i)));
-    const ring = [...unique.values()].sort((a,b) => Math.atan2(a.y,a.x)-Math.atan2(b.y,b.x));
+    expect(result.userData.townTrunkContact).toMatchObject({ detail, sourceTriangles: 28, triangles, vertices });
+    expect(result.userData.townTrunkContact.geometryBytes).toBe(Object.values(geometry.attributes).reduce((sum, a) => sum + a.array.byteLength, 0) + ix.array.byteLength);
+    source.geometry.computeBoundingBox();
+    expect(geometry.boundingBox!.min.y).toBeCloseTo(source.geometry.boundingBox!.min.y, 6);
+    expect(geometry.boundingBox!.max.y).toBeCloseTo(source.geometry.boundingBox!.max.y, 6);
+    // Mean radius of each ring follows the shared profile: flared foot, steady taper.
+    const ringRadius = (y: number) => { const r: number[] = []; for (let i = 0; i < (rings) * (sides + 1); i++) if (Math.abs(p.getY(i) - y) < 1e-5) r.push(Math.hypot(p.getX(i), p.getZ(i))); return r.reduce((a, b) => a + b, 0) / r.length; };
+    for (const h of [0, 0.12, 1]) expect(ringRadius(-1 + 2 * h)).toBeCloseTo(trunkProfile(h), 1);
+    expect(ringRadius(-1) / ringRadius(1)).toBeGreaterThan(2.1);
     const edgeCounts = new Map<string, number>(), a = new THREE.Vector3(), b = new THREE.Vector3(), c = new THREE.Vector3();
     const key = (id: number) => [p.getX(id),p.getY(id),p.getZ(id)].map(v => v.toFixed(6)).join(',');
-    for (let i = 0; i < p.count; i++) {
-      expect(Math.hypot(normal.getX(i),normal.getY(i),normal.getZ(i))).toBeCloseTo(1,6);
-      for (let j=0;j<ring.length;j++) {
-        const v=ring[j],w=ring[(j+1)%ring.length];
-        expect((w.x-v.x)*(p.getZ(i)-v.y)-(w.y-v.y)*(p.getX(i)-v.x)).toBeGreaterThanOrEqual(-1e-6);
-      }
-    }
+    for (let i = 0; i < p.count; i++) expect(Math.hypot(normal.getX(i),normal.getY(i),normal.getZ(i))).toBeCloseTo(1,6);
     for (let i=0;i<ix.count;i+=3) {
       const ids=[ix.getX(i),ix.getX(i+1),ix.getX(i+2)];
       a.fromBufferAttribute(p,ids[0]);b.fromBufferAttribute(p,ids[1]);c.fromBufferAttribute(p,ids[2]);
-      const face=b.sub(a).cross(c.sub(a));expect(face.length()).toBeGreaterThan(.01);face.normalize();
+      const centre=a.clone().add(b).add(c).divideScalar(3),face=b.clone().sub(a).cross(c.clone().sub(a));
+      expect(face.length()).toBeGreaterThan(1e-4);face.normalize();
+      // Faces point outward (or up, for the top cap).
+      expect(face.dot(new THREE.Vector3(centre.x,0,centre.z).normalize())+Math.max(0,face.y)).toBeGreaterThan(.5);
       for(const id of ids)expect(face.dot(new THREE.Vector3().fromBufferAttribute(normal,id))).toBeGreaterThan(.25);
       for(let e=0;e<3;e++){const edge=[key(ids[e]),key(ids[(e+1)%3])].sort().join('|');edgeCounts.set(edge,(edgeCounts.get(edge)??0)+1);}
     }
-    expect([...edgeCounts.values()].every(count=>count===2)).toBe(true);
-    const radiusAt = (y:number) => Math.max(...Array.from({length:p.count},(_,i)=>Math.abs(p.getY(i)-y)<1e-5?Math.hypot(p.getX(i),p.getZ(i)):0));
-    expect(radiusAt(-1)/radiusAt(-.72)).toBeGreaterThan(1.25);
-    expect(radiusAt(-.72)/radiusAt(1)).toBeGreaterThan(1.1);
-    for(const height of [3,7,14,22]) for(const distant of [false,true]) {
-      const form=treeForm([9,height*.71,-8,2,height*.3,2,.7],[250,0,500],distant);
-      expect(form.trunk.position[1]+geometry.boundingBox!.min.y*form.trunk.scale[1]).toBeCloseTo(form.groundY,6);
-      const near=treeForm([9,height*.71,-8,2,height*.3,2,.7],[250,0,500]);
-      expect(form.trunk).toEqual(near.trunk);
-    }
+    // Watertight except the buried foot ring.
+    const open=[...edgeCounts.entries()].filter(([,count])=>count!==2);
+    expect(open).toHaveLength(sides);
+    for(const [edge,count] of open){expect(count).toBe(1);for(const vertex of edge.split('|'))expect(Number(vertex.split(',')[1])).toBeCloseTo(-1,5);}
     expect(signature(source.geometry)).toBe(snapshot);
     disposeTrunkContactPrototype(result);releaseSource(base);
+  });
+
+  it.each(['standard', 'open', 'conifer'] as const)('continues the %s crown skeleton from below the ground, with no stub left hanging', async habit => {
+    const crown = await nativePrototype('crown', 0), trunk = await nativeTrunk();
+    const variant = habit === 'conifer' ? createConiferPrototype(crown) : habit === 'open' ? createOpenBroadleafPrototype(crown) : createBroadleafPrototype(crown);
+    const join = variant.userData.townTrunkJoin as TrunkJoin;
+    expect(join).toBeDefined();
+    expect(join.bottom[1]).toBeLessThan(CROWN_FORM_BOUNDS.near.min[1] - 0.3);
+    expect(join.top[1]).toBeGreaterThan(join.bottom[1] + 0.3);
+    expect(join.bottomRadius).toBeGreaterThan(join.topRadius);
+    // The skeleton no longer reaches down below its lowest branch fork.
+    let lowest = Infinity;
+    variant.traverse(o => { if (!(o instanceof THREE.Mesh) || !/bark/i.test((o.material as THREE.Material).name)) return;
+      const p = o.geometry.getAttribute('position'), ix = o.geometry.index!;
+      for (let i = 0; i < ix.count; i++) lowest = Math.min(lowest, p.getY(ix.getX(i))); });
+    expect(lowest).toBeGreaterThan(join.bottom[1] + 0.2);
+    const prototype = createTrunkContactPrototype(trunk), geometry = nativeMesh(prototype).geometry, m = new THREE.Matrix4();
+    for (const height of [8, 14, 22, 30]) for (const yaw of [0, 1.3, -2.4]) {
+      const row = [9, 30 + height * .71, -8, height * .3 * .9, height * .3, height * .3 * .9, yaw];
+      const form = treeForm(row, [250, 0, 500]);
+      if ((form.renderFamily === 'conifer') !== (habit === 'conifer')) continue;
+      trunkMatrix(form, join, m);
+      const foot = new THREE.Vector3(0, -1, 0).applyMatrix4(m), top = new THREE.Vector3(0, 1, 0).applyMatrix4(m);
+      expect(foot.y).toBeCloseTo(form.groundY - TRUNK_BURY_M, 6);
+      expect(Math.hypot(foot.x - row[0], foot.z - row[2])).toBeLessThan(1e-6);
+      expect(top.y).toBeCloseTo(Math.max(form.trunkTopY, form.frame.position[1] + (join.top[1] + 0.02) * form.frame.scale[1]), 6);
+      expect(top.y).toBeLessThan(form.topY);
+      // At the old stub's top the trunk axis passes through its centre and is wider than it was.
+      const frame = new THREE.Matrix4().compose(new THREE.Vector3(...form.frame.position), new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), form.yaw), new THREE.Vector3(...form.frame.scale));
+      const stubTop = new THREE.Vector3(...join.top).applyMatrix4(frame), hAtTop = (stubTop.y - foot.y) / (top.y - foot.y);
+      const axis = new THREE.Vector3(0, -1 + 2 * hAtTop, 0).applyMatrix4(m);
+      expect(axis.distanceTo(stubTop)).toBeLessThan(1e-4);
+      const edge = new THREE.Vector3(trunkProfile(hAtTop), -1 + 2 * hAtTop, 0).applyMatrix4(m);
+      expect(Math.hypot(edge.x - axis.x, edge.z - axis.z)).toBeGreaterThan(join.topRadius * Math.min(form.frame.scale[0], form.frame.scale[2]));
+      const p = geometry.getAttribute('position');
+      for (let i = 0; i < p.count; i++) expect(new THREE.Vector3().fromBufferAttribute(p, i).applyMatrix4(m).toArray().every(Number.isFinite)).toBe(true);
+    }
+    disposeTrunkContactPrototype(prototype); releaseSource(trunk);
   });
 
   it('owns only its geometry and rejects unrelated or changed prototypes', async () => {
@@ -101,7 +143,7 @@ describe('bounded shared trunk foot', () => {
     const material=nativeMesh(trunk).material,sourceDispose=vi.spyOn(nativeMesh(trunk).geometry,'dispose'),materialDispose=vi.spyOn(material as THREE.Material,'dispose');
     const baselineBytes=world.residentResources().estimatedGeometryBytes,variant=createTrunkContactPrototype(trunk),variantMesh=nativeMesh(variant);
     const variantDispose=vi.spyOn(variantMesh.geometry,'dispose');internal.trunkContactPrototypes.set(2,variant);
-    expect(world.residentResources().estimatedGeometryBytes-baselineBytes).toBe(1248);
+    expect(world.residentResources().estimatedGeometryBytes-baselineBytes).toBe(variant.userData.townTrunkContact.geometryBytes);
     const rows=[[20,10,0,3,4,5,.37],[420,11,15,3,4,5,.92]],before=structuredClone(rows);
     world.loaded.set('trees',{group:new THREE.Group(),level:0,lastUsed:performance.now(),treeRows:rows});world.update([0,0,0],[0,0,0]);
     const meshes=world.loaded.get('trees')!.trees!.children as THREE.InstancedMesh[];

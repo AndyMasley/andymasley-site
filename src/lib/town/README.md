@@ -171,7 +171,19 @@ The September 24 overhaul adds, all as authored interpretation rather than surve
   authored and stable, not records of any property.
 - Inferred brick walls take the running-bond brick set; lawns in `surfaces.ts`
   also vary lot by lot (a soft patchwork of lusher, drier and paler cells about
-  15 to 30 m across).
+  15 to 30 m across), and about half the yards show mown stripes a mower deck
+  wide that lighten or darken with the viewing direction.
+- `cover-cleanup.ts` tidies each land-cover mask as it loads. The paved class is
+  smoothed and cut at one half, strips two pixels wide or less (roof-edge halos,
+  slivers along walls) are opened away, isolated islands smaller than a parking
+  space become lawn, and a narrow smooth band is written around what remains so
+  the ground shader draws a single crisp edge at its half-way contour. Small
+  canopy patches (yard and street trees) give their weight to lawn, or to paving
+  when they stand over a drive or lot; woods keep their leaf litter. Buildings,
+  water and every tile seam are left exactly as the release had them. Paving
+  then uses the streets' own authored asphalt at the streets' reflectance, in a
+  few lot-by-lot tones, with dusty broken edges, stains and hairline cracks
+  near the camera; the lawn beside it thins into a straw-toned verge.
 - `atmosphere.ts` installs aerial perspective (height-dependent haze that brightens
   toward the sun) on the shared fog chunks; turf in `surfaces.ts` is a mosaic of
   dry, moist and clover patches that lightens toward grazing view angles.
@@ -189,13 +201,16 @@ The September 24 overhaul adds, all as authored interpretation rather than surve
   and traffic's tail lamps light while a car brakes or waits. Numbers, routes
   and colours are authored, not a traffic count.
 
-`surfaces.ts` samples the original raw RGBA land-cover data in world metres.
-Class weights are sharpened and renormalized; zero-coverage pixels stay excluded.
-Grass color, fine detail and normal treatment use the existing shared maps.
+`surfaces.ts` samples the cleaned RGBA land-cover data in world metres. Paving
+is drawn at its half-way contour; lawn, canopy litter and soil are sharpened
+after a metre-scale perturbation, so broad fades become ragged natural edges.
+Zero-coverage pixels stay excluded. Grass colour carries tussock- and
+clump-scale variation that fades out before it can alias, on top of the shared
+maps' fine detail and normal treatment.
 `grass.ts` places short, tapered blades on actual terrain triangles, with seeded
 world-grid placement and conservative mask erosion. It indexes at most four
-nearby tiles and caps geometry at 8,000 tufts (144,000 triangles), fading before
-14 metres. Selection updates after movement; wind updates through uniforms and
+nearby tiles and caps geometry at 12,000 tufts of twelve blades (432,000
+triangles) on a 0.3 m grid, fading before 12 metres. Selection updates after movement; wind updates through uniforms and
 stops when the game is paused or reduced motion is requested. Low detail and
 mobile omit the extra geometry but retain the ground material treatment.
 
@@ -220,10 +235,18 @@ connected crack-seal marks. These are general appearance inferences, not measure
 panel dimensions, plant species or present-day maintenance inventories.
 
 Turf tint now varies in coherent small patches. Leaf clusters carry restrained
-within-crown tonal variation. `trunk-contact.ts` replaces only the pinned native
-trunk prototype with a closed flared/tapered base inside the original bounds:
-four extra triangles per displayed trunk, one shared 1,248-byte geometry, unchanged
-anchors, crown joins and material ownership.
+within-crown tonal variation. Each near crown variant's skeleton used to carry a
+short trunk stub that ended in mid-air, wider than the instanced trunk and mapped
+differently, so the bark seemed to stop part way down. `vegetation.ts` now
+measures that stub and removes it, and `trunk-contact.ts` replaces the pinned
+native trunk with a grounded one: a buttressed root flare and a steady taper,
+round (10 sides, 148 triangles) within the near-crown radius and six-sided
+beyond it. `trunkMatrix` sets each instance in its crown's frame, from 0.25 m
+below the implied ground up past the old stub, leaning so its axis passes
+through the stub's top where the lowest branches spring. Bark is mapped in
+world space (about a metre per repeat), so trunk and branches share one scale
+and a round trunk has no seam. Anchors, ground and crown heights and material
+ownership are unchanged.
 
 `water-reflection.ts` adds actual rendered shore forms to the lake water on High
 desktop graphics, with a 384-square target, a maximum ten refreshes per second,

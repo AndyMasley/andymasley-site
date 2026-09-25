@@ -7,7 +7,7 @@ import catalog from '../../../../data/derived/town/indian-ranch-grounds.json';
 import proof from '../../../../data/source/town/indian-ranch-ground-proof.json';
 import { applyIndianRanchGrounds } from '../indian-ranch-grounds';
 import { clipRoadPaintPolygon } from '../road-finish';
-import { excludeGrassPolygons, grassAllowed, grassSite, type GrassMask } from '../grass';
+import { GRASS_LIMITS, excludeGrassPolygons, grassAllowed, grassSite, type GrassMask } from '../grass';
 import type { V3 } from '../contracts';
 const tileId = '2_-3', tile = catalog.tiles[tileId], origin = tile.origin as V3;
 function area(p: number[][]): number { return Math.abs(p.reduce((s, a, i) => { const b = p[(i + 1) % p.length]; return s + a[0] * b[1] - b[0] * a[1]; }, 0)) / 2; }
@@ -136,7 +136,8 @@ describe('registered Indian Ranch exterior venue ground', () => {
     };
     for (const f of catalog.features) {
       const ts = featureTriangles(f); let count = 0;
-      for (let x = 1100; x < 1220; x++) for (let z = 1530; z < 1640; z++) {
+      // The site grid over the venue's hard surfaces: x 495..549 m, z 688.5..738 m.
+      for (let x = Math.floor(495 / GRASS_LIMITS.spacing); x < Math.ceil(549 / GRASS_LIMITS.spacing); x++) for (let z = Math.floor(688.5 / GRASS_LIMITS.spacing); z < Math.ceil(738 / GRASS_LIMITS.spacing); z++) {
         const p = grassSite(x, z);
         if (ts.some(t => inside([p.x, -p.z], t))) { count++; expect(grassAllowed(mask, p.x, p.z)).toBe(true); expect(grassAllowed(finished, p.x, p.z)).toBe(false); }
       }

@@ -133,7 +133,11 @@ export function createSummerSky(sunDirection: THREE.Vector3, { surroundings = fa
       // Broad, separated fair-weather cloud masses keep a blue sky between
       // them. A second nearby field shades the sun-facing lobes without a
       // texture download, ray march, or moving noise in the player's view.
-      vec2 cloudUV = direction.xz / max(0.10, elevation) * 0.62 + vec2(3.1,8.7);
+      // A flat cloud deck seen toward the horizon: its projection keeps
+      // shrinking with elevation, so low clouds flatten into slivers. (A floor
+      // on the elevation froze the pattern below it into vertical streaks
+      // hanging under the low clouds.)
+      vec2 cloudUV = direction.xz / (elevation + 0.035) * 0.62 + vec2(3.1,8.7);
       float field = cloudField(cloudUV);
       // The civic photograph's open blue sky is the baseline. Keep a few
       // separated fair-weather clouds, with the same bounded five-octave cost.

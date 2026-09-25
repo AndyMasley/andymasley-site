@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { describe, expect, it, vi } from 'vitest';
 import * as THREE from 'three';
-import { GRASS_LIMITS, GrassTerrain, TownGrass, grassAllowed, grassMaskFromTexture, grassSite, tuftGeometry, excludeGrassPolygons, type GrassMask } from '../grass';
+import { GRASS_LIMITS, TUFT_BLADES, TUFT_TRIANGLES, GrassTerrain, TownGrass, grassAllowed, grassMaskFromTexture, grassSite, tuftGeometry, excludeGrassPolygons, type GrassMask } from '../grass';
 
 function mask(bounds: number[] = [-68, -68, 68, 68], core: number[] = [-64, -64, 64, 64]): GrassMask {
   const width = 136, height = 136, data = new Uint8Array(width * height * 4);
@@ -27,10 +27,11 @@ describe('Conservative lawn placement', () => {
     expect(source.data).toEqual(before);expect(excludeGrassPolygons(source,[])).toBe(source);
     const reversed=excludeGrassPolygons(source,[[...ring].reverse()]);expect(reversed.data).toEqual(result.data);
   });
-  it('uses short paired turf sprays with buried roots and the existing face budget', () => {
+  it('uses short turf sprays with buried roots within a bounded face budget', () => {
     const geometry = tuftGeometry(), position = geometry.getAttribute('position');
-    expect(geometry.index?.count).toBe(18 * 3);
-    expect(position.count).toBe(30);
+    expect(TUFT_BLADES).toBe(12);
+    expect(geometry.index?.count).toBe(TUFT_TRIANGLES * 3);
+    expect(position.count).toBe(TUFT_BLADES * 5);
     expect(Array.from(position.array).every(Number.isFinite)).toBe(true);
     expect(Array.from(geometry.getAttribute('normal').array).every(Number.isFinite)).toBe(true);
     const heights: number[] = [], roots: number[][] = [];
@@ -38,17 +39,18 @@ describe('Conservative lawn placement', () => {
       expect(position.getY(i)).toBeLessThan(0);
       expect(position.getY(i + 1)).toBeLessThan(0);
       const height = position.getY(i + 4);
-      expect(height).toBeGreaterThan(0.059);
-      expect(height).toBeLessThan(0.113);
+      expect(height).toBeGreaterThan(0.069);
+      expect(height).toBeLessThan(0.133);
       roots.push([(position.getX(i) + position.getX(i + 1)) / 2, (position.getZ(i) + position.getZ(i + 1)) / 2]);
       heights.push(height);
     }
     expect(Math.max(...heights) - Math.min(...heights)).toBeGreaterThan(0.02);
-    expect(new Set(roots.map(root => root.map(value => value.toFixed(3)).join(','))).size).toBe(6);
+    expect(new Set(roots.map(root => root.map(value => value.toFixed(3)).join(','))).size).toBe(TUFT_BLADES);
     expect(Math.max(...roots.map(root => Math.hypot(...root)))).toBeLessThan(0.205);
-    for (let i = 0; i < roots.length; i += 2) expect(Math.hypot(roots[i][0] - roots[i + 1][0], roots[i][1] - roots[i + 1][1])).toBeCloseTo(.03, 5);
-    // Wider bases remain inside the old patch footprint and taper to points.
-    for (let i = 0; i < position.count; i++) expect(Math.hypot(position.getX(i), position.getZ(i))).toBeLessThan(.23);
+    // Each spray fans three blades from roots 1.5 cm apart.
+    for (let i = 0; i < roots.length; i += 3) for (const k of [1, 2]) expect(Math.hypot(roots[i + k][0] - roots[i + k - 1][0], roots[i + k][1] - roots[i + k - 1][1])).toBeCloseTo(.015, 5);
+    // Bases stay inside a small clump and taper to points.
+    for (let i = 0; i < position.count; i++) expect(Math.hypot(position.getX(i), position.getZ(i))).toBeLessThan(.25);
     geometry.dispose();
   });
 
@@ -137,7 +139,7 @@ describe('Bounded near grass lifetime', () => {
       if(a===undefined||b===undefined)continue;near+=(value-a)**2;far+=(value-b)**2;pairs++;
     }
     expect(pairs).toBeGreaterThan(4000);expect(near).toBeLessThan(far*.15);
-    expect(field.resources().triangles).toBe(grass.count*18);expect(field.resources().materials).toBe(1);
+    expect(field.resources().triangles).toBe(grass.count*TUFT_TRIANGLES);expect(field.resources().materials).toBe(1);
     field.dispose();
   });
   it('has a global budget, exact ground support and no per-frame rebuild or raycast', () => {
@@ -154,7 +156,7 @@ describe('Bounded near grass lifetime', () => {
     expect(grass).toBeDefined();
     expect(field.resources().tufts).toBeGreaterThan(6000);
     expect(field.resources().tufts).toBeLessThanOrEqual(GRASS_LIMITS.tufts);
-    expect(field.resources().triangles).toBe(field.resources().tufts * 18);
+    expect(field.resources().triangles).toBe(field.resources().tufts * TUFT_TRIANGLES);
     for (let i = 0; i < grass.count; i++) {
       grass.getMatrixAt(i, matrix); p.setFromMatrixPosition(matrix).applyMatrix4(group.matrixWorld);
       expect(grassAllowed(m, p.x, p.z)).toBe(true);

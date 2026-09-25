@@ -5,7 +5,11 @@ import { finishLeafClusters } from './foliage-clusters';
 
 export interface TreeForm {
   crown: { position: V3; scale: V3 };
+  /** Straight fallback trunk: centre and half-extents of the [-1, 1] prototype. */
   trunk: { position: V3; scale: V3 };
+  /** The near crown's frame at every LOD; a grounded trunk continues its skeleton. */
+  frame: { position: V3; scale: V3 };
+  trunkTopY: number;
   yaw: number;
   family: 'rounded' | 'spreading' | 'open' | 'tiered';
   renderFamily: 'broadleaf' | 'conifer';
@@ -103,8 +107,48 @@ export function treeForm(row: readonly number[], origin: readonly number[], dist
   return {
     crown: { position: crownPosition, scale },
     trunk: { position: [row[0], groundY + halfTrunk, row[2]], scale: [radius, halfTrunk, radius] },
+    frame: { position: [row[0], topY - near.max[1] * nearScale[1], row[2]], scale: nearScale },
+    trunkTopY: trunkTop,
     yaw, family, renderFamily, crownVariant:renderFamily==='broadleaf'&&(family==='open'||(family==='spreading'&&variation(x,z,991)<.45))?'open':'standard', habitat, groundY, topY,
   };
+}
+
+/** Where the near crown's own skeleton trunk was, in crown-local units. */
+export type TrunkJoin = { bottom: V3; bottomRadius: number; top: V3; topRadius: number };
+
+/** Metres the grounded trunk's foot sits below the implied ground, so sloping
+ * terrain never shows a gap under its downhill side. */
+export const TRUNK_BURY_M = 0.25;
+
+/** Relative radius of the grounded trunk prototype at normalized height h
+ * (0 at its buried foot, 1 at its top): a root flare, then a steady taper. */
+export function trunkProfile(h: number): number {
+  const t = Math.min(1, Math.max(0, h));
+  if (t < 0.12) { const u = t / 0.12; return 1 + 0.42 * (1 - u) * (1 - u); }
+  return 1 - 0.38 * (t - 0.12) / 0.88;
+}
+
+/**
+ * A grounded trunk that continues the crown's skeleton: in the near crown's
+ * frame (yaw and scale), from just below the ground up past the skeleton's
+ * former stub, leaning so its axis passes through the stub's top where the
+ * lowest branches spring, and wide enough there to carry them.
+ */
+export function trunkMatrix(form: TreeForm, join: TrunkJoin, target: THREE.Matrix4): THREE.Matrix4 {
+  const [sx, sy, sz] = form.frame.scale, crownY = form.frame.position[1];
+  const ground = (form.groundY - TRUNK_BURY_M - crownY) / sy, top = Math.max((form.trunkTopY - crownY) / sy, join.top[1] + 0.02);
+  const length = top - ground, joinH = Math.min(0.97, Math.max(0.3, (join.top[1] - ground) / length));
+  const k = Math.max(join.topRadius * 1.08 / trunkProfile(joinH), join.bottomRadius * 0.98 / trunkProfile((join.bottom[1] - ground) / length));
+  const leanX = join.top[0] / joinH, leanZ = join.top[2] / joinH;
+  // Prototype y spans [-1, 1]: h = (y + 1) / 2.
+  const local = new THREE.Matrix4().set(
+    k, leanX / 2, 0, leanX / 2,
+    0, length / 2, 0, ground + length / 2,
+    0, leanZ / 2, k, leanZ / 2,
+    0, 0, 0, 1);
+  const frame = new THREE.Matrix4().compose(new THREE.Vector3(...form.frame.position),
+    new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), form.yaw), new THREE.Vector3(sx, sy, sz));
+  return target.multiplyMatrices(frame, local);
 }
 
 
@@ -243,6 +287,12 @@ function createCrownPrototype(base: THREE.Group, habit:'conifer'|'open'|'standar
       geometry.computeBoundingSphere();
       if(leaves.includes(mesh))finishLeafClusters(geometry,sourceBounds);
     }
+    // The skeleton carries a short trunk stub below the leaves. On its own it
+    // ends in mid-air, wider than the instanced trunk and mapped differently,
+    // so the bark appeared to stop part way down. Record it for the grounded
+    // trunk to continue, then drop its faces.
+    const join = removeTrunkStub(all.filter(mesh => !leaves.includes(mesh)), sourceBounds);
+    if (join) result.userData.townTrunkJoin = join;
     result.userData[habit==='conifer'?'townConiferVariant':habit==='open'?'townOpenBroadleafVariant':'townBroadleafVariant'] = true;
     result.userData.townBorrowedMaterials = true;
     result.userData.townCrownBounds = { min: sourceBounds.min.toArray(), max: sourceBounds.max.toArray() };
@@ -257,6 +307,49 @@ function createCrownPrototype(base: THREE.Group, habit:'conifer'|'open'|'standar
     disposeConiferPrototype(result);
     throw error;
   }
+}
+
+/** Finds the skeleton's lowest connected piece (a straight stub hanging below
+ * the leaves), removes its faces from the owned geometry and returns its
+ * bottom and top rings. Anything else, or a different skeleton, is left alone. */
+function removeTrunkStub(meshes: THREE.Mesh[], leaves: THREE.Box3): TrunkJoin | undefined {
+  let owner: THREE.Mesh | undefined, lowest = -1, lowY = Infinity;
+  for (const mesh of meshes) {
+    const p = mesh.geometry.getAttribute('position');
+    for (let i = 0; i < p.count; i++) if (p.getY(i) < lowY) { lowY = p.getY(i); lowest = i; owner = mesh; }
+  }
+  const size = leaves.getSize(new THREE.Vector3());
+  if (!owner?.geometry.index || !(lowY < leaves.min.y - 0.1 * size.y)) return undefined;
+  const geometry = owner.geometry, p = geometry.getAttribute('position'), index = geometry.index!;
+  // Connectivity by position: UV seams duplicate vertices along the stub.
+  const key = (i: number) => `${p.getX(i).toFixed(5)},${p.getY(i).toFixed(5)},${p.getZ(i).toFixed(5)}`;
+  const parent = new Map<string, string>();
+  const find = (k: string): string => { let r = k; while (parent.get(r) !== r) r = parent.get(r)!; let n = k; while (n !== r) { const next = parent.get(n)!; parent.set(n, r); n = next; } return r; };
+  for (let i = 0; i < p.count; i++) { const k = key(i); if (!parent.has(k)) parent.set(k, k); }
+  for (let t = 0; t + 2 < index.count; t += 3) {
+    const a = find(key(index.getX(t)));
+    for (const b of [find(key(index.getX(t + 1))), find(key(index.getX(t + 2)))]) if (b !== a) parent.set(b, a);
+  }
+  const root = find(key(lowest)), members = new Set<number>();
+  let minY = Infinity, maxY = -Infinity;
+  for (let i = 0; i < p.count; i++) if (find(key(i)) === root) { members.add(i); minY = Math.min(minY, p.getY(i)); maxY = Math.max(maxY, p.getY(i)); }
+  if (members.size < 6 || members.size > 400 || maxY > leaves.min.y + 0.25 * size.y) return undefined;
+  const ring = (lo: number, hi: number) => {
+    const unique = new Map<string, THREE.Vector3>();
+    for (const i of members) if (p.getY(i) >= lo && p.getY(i) <= hi) unique.set(key(i), new THREE.Vector3(p.getX(i), p.getY(i), p.getZ(i)));
+    const points = [...unique.values()], centre = points.reduce((sum, v) => sum.add(v), new THREE.Vector3()).multiplyScalar(1 / Math.max(1, points.length));
+    return { centre, radius: points.reduce((sum, v) => sum + Math.hypot(v.x - centre.x, v.z - centre.z), 0) / Math.max(1, points.length), count: points.length };
+  };
+  const span = maxY - minY, bottom = ring(minY, minY + 0.06 * span), top = ring(maxY - 0.06 * span, maxY);
+  if (bottom.count < 3 || top.count < 3 || !(bottom.radius > 0) || !(top.radius > 0)) return undefined;
+  const kept: number[] = [];
+  for (let t = 0; t + 2 < index.count; t += 3) {
+    const a = index.getX(t), b = index.getX(t + 1), c = index.getX(t + 2);
+    if (!(members.has(a) && members.has(b) && members.has(c))) kept.push(a, b, c);
+  }
+  geometry.setIndex(kept);
+  geometry.computeBoundingBox(); geometry.computeBoundingSphere();
+  return { bottom: [bottom.centre.x, minY, bottom.centre.z], bottomRadius: bottom.radius, top: [top.centre.x, maxY, top.centre.z], topRadius: top.radius };
 }
 
 /** Release only geometry created above; never dispose borrowed materials/textures. */

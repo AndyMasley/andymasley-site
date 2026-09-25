@@ -16,7 +16,10 @@ describe('bounded regional vegetation finish',()=>{
     expect(shader.vertexShader).toContain('townArtPosition = instanceMatrix * townArtPosition');
     expect(shader.fragmentShader).toContain('smoothstep(18.0,48.0,townArtDistance)');
     expect(shader.fragmentShader.indexOf('vec3 townArtDx')).toBeGreaterThan(shader.fragmentShader.indexOf('#include <normal_fragment_maps>'));
-    expect(shader.fragmentShader.match(/#include <map_fragment>/g)).toHaveLength(1);
+    // Bark is read in world space, one sample per projection axis, never from UVs.
+    expect(shader.fragmentShader.match(/#include <map_fragment>/g)).toBeNull();
+    expect(shader.fragmentShader.match(/texture2D\(map, vTownArtWorld\.(?:zy|xz|xy)/g)).toHaveLength(3);
+    expect(shader.fragmentShader).not.toMatch(/texture2D\(map, vMapUv/);
     expect(material.map).toBe(map);expect(position.array).toEqual(before);expect(geometry.index!.array).toEqual(index);
     expect(material.color.getHexString()).toBe(original.color); // Retain the mapped source factor; avoid double darkening.
     removeArtMaterial(material);expect(material.color.getHexString()).toBe(original.color);expect(material.onBeforeCompile).toBe(original.compile);expect(material.customProgramCacheKey).toBe(original.key);

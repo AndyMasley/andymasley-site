@@ -20,8 +20,10 @@ import { applyArtMaterial } from './art-materials';
 export type RoadLookup = { nearestRoad(x: number, n: number, max?: number): { x: number; n: number; z: number; tx: number; tn: number; width: number; type: number; distance: number } | null };
 export type HouseDressingReport = { buildings: number; frontWalls: number; shrubs: number; beds: number; mailboxes: number; gutterM: number; downspouts: number; rakeM: number; chimneys: number; driveways: number; cars: number; walks: number; walkM: number; triangles: number };
 
-/** Surfaces a driveway car must never stand on. */
-const DRIVEWAY_BLOCKERS = /^(?:Streetscape \||Finished parking \||Finished street corner \|)/;
+/** Material names of surfaces a driveway car must never stand on, and where a
+ * generated front walk stops: street furniture, lots and corners, and any
+ * authored paving (crafted and researched frontages lay their own walks). */
+const DRIVEWAY_BLOCKERS = /^(?:Streetscape \||Finished parking \||Finished street corner \|)|\| paving(?: \||$)/;
 const DRIVEWAY_PALETTE = ['#ecebe3', '#aeb7b8', '#56666b', '#8e2e2b', '#263e57', '#d0c3a4', '#333739', '#647261', '#9aa3a6', '#1f2a33'];
 const FOUNDATION = /^(?:V2 inferred \| (?:foundation|concrete_wall)$|Crafted frontage \| foundation \|)/;
 type Segment = { a: THREE.Vector3; b: THREE.Vector3; nx: number; nz: number; building: number };
@@ -392,8 +394,13 @@ export class HouseDressing {
         const s0 = length * k / steps, s1 = length * (k + 1) / steps;
         const q = [corner(s0, -1), corner(s0, 1), corner(s1, 1), corner(s1, -1)];
         const u = [[0, s0], [2 * half, s0], [2 * half, s1], [0, s1]];
+        // The slab's own tilt, not straight up: on a sloping lawn the shadow
+        // normal offset then keeps the walk clear of the ground's shadow depth.
+        const n = new THREE.Vector3(q[1][0] - q[0][0], q[1][1] - q[0][1], q[1][2] - q[0][2])
+          .cross(new THREE.Vector3(q[3][0] - q[0][0], q[3][1] - q[0][1], q[3][2] - q[0][2])).normalize();
+        if (n.y < 0) n.negate();
         // (across x outward) is up, so this order winds counter-clockwise seen from above.
-        for (const i of [0, 1, 2, 0, 2, 3]) { position.push(...q[i]); normal.push(0, 1, 0); lane.push(1.01 + u[i][0], u[i][1], 1.01, 1); }
+        for (const i of [0, 1, 2, 0, 2, 3]) { position.push(...q[i]); normal.push(n.x, n.y, n.z); lane.push(1.01 + u[i][0], u[i][1], 1.01, 1); }
       }
       report.walks++; report.walkM += length;
     }

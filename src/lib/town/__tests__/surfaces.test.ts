@@ -63,7 +63,7 @@ describe('Mapped summer ground', () => {
     expect(derivatives).toEqual(['vTownGroundXZ']);
     expect(fragment.indexOf('fwidth(vTownGroundXZ)')).toBeLessThan(fragment.indexOf('if (townWeights.r'));
     expect(fragment).toContain('townCutBlade(vTownGroundXZ,townPixelWidth)');
-    expect(material.customProgramCacheKey()).toBe('webster-finished-ground-v14');
+    expect(material.customProgramCacheKey()).toBe('webster-finished-ground-v15');
     // Mask lookup is continuous already. Every detail lookup uses explicit
     // gradients; no floor/hash offset or divergent class branch computes them.
     expect([...fragment.matchAll(/texture2D\(/g)]).toHaveLength(1);

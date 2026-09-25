@@ -1,7 +1,9 @@
 import * as THREE from 'three';
 import type { V3 } from './contracts';
 
-export const GRASS_LIMITS = { tufts: 8000, fadeStart: 8, radius: 14, selectionRadius: 22, spacing: 0.45, rebuildDistance: 6, tiles: 4 } as const;
+export const GRASS_LIMITS = { tufts: 12000, fadeStart: 7, radius: 12, selectionRadius: 18, spacing: 0.3, rebuildDistance: 6, tiles: 4 } as const;
+/** Twelve blades in four sprays; three triangles and five vertices each. */
+export const TUFT_BLADES = 12, TUFT_TRIANGLES = TUFT_BLADES * 3;
 export interface GrassMask {
   data: Uint8Array | Uint8ClampedArray;
   width: number;
@@ -136,18 +138,17 @@ type Candidate = { tile: GrassTile; x: number; y: number; z: number; seed: numbe
 export function tuftGeometry(): THREE.BufferGeometry {
   const positions: number[] = [], colors: number[] = [], roots: number[] = [], indices: number[] = [];
   const root = new THREE.Color('#4a5d3b'), middle = new THREE.Color('#5a6f45'), tip = new THREE.Color('#687a4b'), dryTip = new THREE.Color('#7d8255');
-  for (let blade = 0; blade < 6; blade++) {
-    // Three paired sprays read as small turf clumps instead of six isolated
-    // needles. Their full footprint stays inside the original 0.2m root radius.
-    const spray = Math.floor(blade / 2), rootAngle = spray * 2.39996 + random(spray, 19) * .65;
-    const rootRadius = .07 + Math.sqrt(random(spray, 23)) * .095;
-    const offset = (blade % 2 ? 1 : -1) * .015;
+  for (let blade = 0; blade < TUFT_BLADES; blade++) {
+    // Four sprays of three blades read as a small turf clump rather than
+    // isolated needles; the whole footprint stays inside a 0.2 m root radius.
+    const spray = Math.floor(blade / 3), fan = blade % 3 - 1, rootAngle = spray * 2.39996 + random(spray, 19) * .65;
+    const rootRadius = .05 + Math.sqrt(random(spray, 23)) * .115;
+    const offset = fan * .015;
     const rootX = Math.cos(rootAngle) * rootRadius - Math.sin(rootAngle) * offset, rootZ = Math.sin(rootAngle) * rootRadius + Math.cos(rootAngle) * offset;
-    const angle = rootAngle + (blade % 2 ? .8 : -.6) + random(blade, 1) * .7;
-    // Slightly broader, 6–11cm curved blades remain legible from the driving
-    // camera. The original 30 vertices / 18 triangles per instance are retained.
-    const height = .060 + random(blade, 3) * .052, width = .0046 + random(blade, 7) * .0028;
-    const lean = .012 + random(blade, 13) * .045, twist = (random(blade, 31) - .5) * .015;
+    const angle = rootAngle + fan * .75 + random(blade, 1) * .7;
+    // Broad, 7-13 cm curved blades stay legible from the driving camera.
+    const height = .070 + random(blade, 3) * .062, width = .0040 + random(blade, 7) * .0026;
+    const lean = .012 + random(blade, 13) * .05, twist = (random(blade, 31) - .5) * .018;
     const vertices = [[-width, -.003, 0], [width, -.003, 0], [-width * .61 + lean * .30, height * .60, twist - width * .32], [width * .61 + lean * .30, height * .60, twist + width * .32], [lean, height, twist * 1.6]];
     const start = positions.length / 3;
     vertices.forEach(([x, y, z], i) => {
@@ -188,10 +189,12 @@ export class TownGrass {
   private shared(): void {
     if (this.geometry) return;
     this.geometry = tuftGeometry();
-    this.material = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1, side: THREE.DoubleSide });
+    // The same weak sky reflection as the terrain beneath: at full strength the
+    // blades glowed pale against lawn in shade.
+    this.material = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1, side: THREE.DoubleSide, envMapIntensity: 0.12 });
     this.material.name = 'Town | rooted summer turf blades';
     this.material.forceSinglePass = true;
-    this.material.customProgramCacheKey = () => 'town-grass-paired-sprays-v5';
+    this.material.customProgramCacheKey = () => 'town-grass-paired-sprays-v6';
     this.material.onBeforeCompile = shader => {
       Object.assign(shader.uniforms, this.uniforms);
       // Thin blades receive a similar soft canopy fill on either face. Undo
@@ -322,7 +325,7 @@ transformed = townBladeRoot + (transformed-townBladeRoot) * townTuftGrowth;
       if (tile.index) { const index = tile.index.resources(); indexedTiles++; bytes += index.bytes; bins += index.bins; }
       if (tile.mesh) { tufts += tile.mesh.count; bytes += tile.mesh.instanceMatrix.array.byteLength + (tile.mesh.instanceColor?.array.byteLength ?? 0); }
     }
-    return { tufts, triangles: tufts * 18, bytes, indexedTiles, bins, rebuilds: this.rebuilds, materials: this.material ? 1 : 0 };
+    return { tufts, triangles: tufts * TUFT_TRIANGLES, bytes, indexedTiles, bins, rebuilds: this.rebuilds, materials: this.material ? 1 : 0 };
   }
 
   dispose(): void {

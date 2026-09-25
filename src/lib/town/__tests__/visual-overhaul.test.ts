@@ -211,6 +211,24 @@ describe('driveway cars', () => {
     dressing.dispose();
   });
 
+  it('leaves a door alone when an authored frontage already paves its walk', () => {
+    const houses = [-150, -90, -30, 30, 90, 150];
+    const { group, dressing } = street(houses);
+    group.userData.openings = { doors: houses.map(hx => [hx - 3, 11.1, -20]), garageDoors: [] };
+    // Crafted frontage walks in front of the first three doors, from the wall to the street.
+    const quads: number[] = [];
+    for (const hx of houses.slice(0, 3)) { const a = hx - 3.6, b = hx - 2.4; quads.push(a, 10.02, -19.9, a, 10.02, -5, b, 10.02, -19.9, b, 10.02, -19.9, a, 10.02, -5, b, 10.02, -5); } // faces up
+    const crafted = new THREE.Mesh(new THREE.BufferGeometry().setAttribute('position', new THREE.Float32BufferAttribute(quads, 3)), new THREE.MeshStandardMaterial());
+    crafted.name = 'Crafted building frontage | paving'; (crafted.material as THREE.Material).name = 'Crafted frontage | paving | #656966'; crafted.userData.townCrafted = true; group.add(crafted);
+    const report = dressing.apply(group, [0, 0, 0], 0);
+    const walks = group.getObjectByName('House dressing | front walks') as THREE.Mesh;
+    const position = walks.geometry.getAttribute('position'), xs = new Set<number>();
+    for (let i = 0; i < position.count; i++) xs.add(Math.round(position.getX(i)));
+    for (const hx of houses.slice(0, 3)) expect([...xs].some(x => Math.abs(x - (hx - 3)) < 1)).toBe(false);
+    expect(report.walks).toBeGreaterThanOrEqual(1);
+    dressing.dispose();
+  });
+
   it('never parks on a parking lot or at a distant level of detail', () => {
     // The same house and paved frontage, but the pavement is a finished parking lot.
     const lot = street([30], 30);

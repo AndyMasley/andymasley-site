@@ -106,6 +106,26 @@ float townArtNoise(vec2 p) {
 }
 `;
 
+// Bark is mapped in world space from each face's orientation, about a metre
+// per repeat and a little longer up the trunk. Trunks and skeleton branches
+// then share one bark scale whatever their UVs or instance stretch, and a
+// round trunk has no texture seam.
+const BARK_START = `
+#ifdef USE_MAP
+vec3 townBarkAxes = pow(abs(normalize(vTownArtNormal)), vec3(6.0));
+townBarkAxes /= max(dot(townBarkAxes, vec3(1.0)), 1e-4);
+vec2 townBarkScale = vec2(1.0/0.95, 1.0/1.3);
+vec4 sampledDiffuseColor = texture2D(map, vTownArtWorld.zy*townBarkScale)*townBarkAxes.x
+  + texture2D(map, vTownArtWorld.xz*townBarkScale.x)*townBarkAxes.y
+  + texture2D(map, vTownArtWorld.xy*townBarkScale)*townBarkAxes.z;
+diffuseColor *= sampledDiffuseColor;
+#endif
+float townArtHeight = 0.0;
+float townArtDistance = length(cameraPosition - vTownArtWorld);
+float townArtFootprint = max(length(dFdx(vTownArtWorld)),length(dFdy(vTownArtWorld)));
+float townArtClose = (1.0-smoothstep(35.0,100.0,townArtDistance)) * (1.0-smoothstep(0.02,0.10,townArtFootprint));
+`;
+
 const ART_START = `
 #include <map_fragment>
 float townArtHeight = 0.0;
@@ -230,7 +250,7 @@ diffuseColor.rgb*=mix(.92,1.0,townPaintWear)*(1.0-.01*townPaintGrain*townArtClos
 float townAsphaltValue = dot(diffuseColor.rgb,vec3(0.2126,0.7152,0.0722));
 diffuseColor.rgb = mix(diffuseColor.rgb,vec3(townAsphaltValue)*vec3(0.94,1.0,1.07),0.96);
 ` : '') + mineralFragment(kind) + (kind === 'asphalt' ? ROAD_WEAR_GLSL : kind === 'concrete' ? WALK_WEAR_GLSL : '');
-  if (kind === 'bark') return start + BARK_FINISH_GLSL;
+  if (kind === 'bark') return BARK_START + BARK_FINISH_GLSL;
   if (kind === 'far-leaf') return start + `
 // Sparse distant hulls represent groups of leaves, not polished green solids.
 // Both fields live in metres, remain still, and filter out before subpixel size.
@@ -437,7 +457,7 @@ vNormalMapUv *= 1.6;
   material.customProgramCacheKey = () => {
     const use = LIBRARY[kind], set = use ? surfaceSet(use.set) : undefined;
     const library = use ? `|surface-library-v1:${set ? set.normal ? 'detail' : 'albedo' : 'off'}` : '';
-    return `${previousKey}|webster-art-material-v2:${kind}${kind==='water'?'|summer-water-optics-v2':kind==='bark'?'|regional-bark-v1':kind==='glass'?'|interior-rooms-v1':kind==='door'?'|panel-door-v1':kind==='far-leaf'?'|layered-far-foliage-v1':kind==='roof'?'|shingle-courses-v1':kind==='asphalt'?'|paving-fields-v2|lane-wear-v1':''}${['asphalt','concrete','granite','foundation','shoulder'].includes(kind)?'|mineral-families-v2':''}${kind==='concrete'?'|walk-joints-v1':''}${library}`;
+    return `${previousKey}|webster-art-material-v2:${kind}${kind==='water'?'|summer-water-optics-v2':kind==='bark'?'|regional-bark-v2|world-bark-v1':kind==='glass'?'|interior-rooms-v1':kind==='door'?'|panel-door-v1':kind==='far-leaf'?'|layered-far-foliage-v1':kind==='roof'?'|shingle-courses-v1':kind==='asphalt'?'|paving-fields-v2|lane-wear-v1':''}${['asphalt','concrete','granite','foundation','shoulder'].includes(kind)?'|mineral-families-v2':''}${kind==='concrete'?'|walk-joints-v1':''}${library}`;
   };
   material.addEventListener('dispose', onMaterialDispose);
   material.needsUpdate = true;

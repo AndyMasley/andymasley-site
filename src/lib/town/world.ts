@@ -16,7 +16,7 @@ import { roadsideAsset, validRoadsidePacket, applyRoadsideDetails } from './road
 import { environmentGroundAsset, validEnvironmentGroundPacket, applyEnvironmentGround, type EnvironmentGroundPacket } from './environment-ground';
 import { roadMaterialAsset, validRoadMaterialPacket, applyRoadMaterialFinish, type RoadMaterialPacket } from './road-material-finish';
 import { environmentFacilitiesAsset, validEnvironmentFacilitiesPacket, applyEnvironmentFacilities } from './environment-facilities';
-import { treeForm, createConiferPrototype, disposeConiferPrototype, createOpenBroadleafPrototype, disposeOpenBroadleafPrototype, createBroadleafPrototype, disposeBroadleafPrototype } from './vegetation';
+import { treeForm, trunkMatrix, createConiferPrototype, disposeConiferPrototype, createOpenBroadleafPrototype, disposeOpenBroadleafPrototype, createBroadleafPrototype, disposeBroadleafPrototype, type TreeForm, type TrunkJoin } from './vegetation';
 import { excludedTreeAnchors } from './tree-exclusions';
 import { readSceneBuffer } from './asset-transfer';
 import { readCriticalJson, withLoadDeadline } from './critical-load';
@@ -76,6 +76,7 @@ export class TownWorld {
   private openBroadleafPrototypes = new Map<number, THREE.Group>();
   private distantCanopyPrototypes = new Map<number, { broadleaf: THREE.Group; conifer: THREE.Group }>();
   private trunkContactPrototypes = new Map<number, THREE.Group>();
+  private trunkFarPrototypes = new Map<number, THREE.Group>();
   private backdropMaterials: THREE.Material[] = [];
   private failures = new Map<string, number>();
   private disposed = false;
@@ -361,7 +362,10 @@ export class TownWorld {
     // entire town, independent of the number of anchors or visible tiles.
     try {
       this.manifest.trees.prototypes.forEach((definition, index) => {
-        if (definition.role === 'trunk' && definition.sha256 === TRUNK_CONTACT_SOURCE_SHA256) this.trunkContactPrototypes.set(index, createTrunkContactPrototype(prototypes[index]));
+        if (definition.role === 'trunk' && definition.sha256 === TRUNK_CONTACT_SOURCE_SHA256) {
+          this.trunkContactPrototypes.set(index, createTrunkContactPrototype(prototypes[index]));
+          this.trunkFarPrototypes.set(index, createTrunkContactPrototype(prototypes[index], 'far'));
+        }
         if (definition.role === 'crown') this.coniferPrototypes.set(index, createConiferPrototype(prototypes[index]));
         if (definition.role === 'crown' && definition.level === 0) this.broadleafPrototypes.set(index, createBroadleafPrototype(prototypes[index]));
         if (definition.role === 'crown' && definition.level === 0) this.openBroadleafPrototypes.set(index, createOpenBroadleafPrototype(prototypes[index]));
@@ -771,20 +775,27 @@ export class TownWorld {
     const far = definitions.findIndex((definition) => definition.role === 'crown' && definition.level === 1);
     const trunk = definitions.findIndex((definition) => definition.role === 'trunk');
     const bands = [{ index: near < 0 ? 0 : near, kind: 'near' }, { index: far < 0 ? Math.max(0, near) : far, kind: 'far' }, { index: trunk, kind: 'trunk' }];
+    // A grounded trunk continues the skeleton of the near crown variant that
+    // tree shows up close, at every distance, so nothing changes between LODs.
+    const nearIndex = near < 0 ? 0 : near;
+    const trunkJoin = (form: TreeForm): TrunkJoin | undefined => (form.renderFamily === 'conifer' ? this.coniferPrototypes.get(nearIndex)
+      : form.crownVariant === 'open' && this.openBroadleafPrototypes.has(nearIndex) ? this.openBroadleafPrototypes.get(nearIndex)
+      : this.broadleafPrototypes.get(nearIndex))?.userData.townTrunkJoin;
     for (const band of bands) {
       const base = this.prototypes[band.index];
       if (!base) continue;
       const isTrunk = band.kind === 'trunk';
       const forms = rows.map(row => treeForm(row, origin, band.kind === 'far'));
       const splitBroadleaf = band.kind === 'near' && this.openBroadleafPrototypes.has(band.index);
-      const cohorts = isTrunk ? ['trunk'] as const : splitBroadleaf ? ['broadleaf', 'open', 'conifer'] as const : ['broadleaf', 'conifer'] as const;
+      // Trunks follow each anchor's crown detail: round and flared up close, a few faces beyond.
+      const cohorts = isTrunk ? ['near', 'far'] as const : splitBroadleaf ? ['broadleaf', 'open', 'conifer'] as const : ['broadleaf', 'conifer'] as const;
       for (const castShadow of [false, true]) {
         for (const family of cohorts) {
           const distant = band.kind === 'far' ? this.distantCanopyPrototypes.get(band.index) : undefined;
-          const prototype = isTrunk ? this.trunkContactPrototypes.get(band.index) ?? base : family === 'conifer' ? distant?.conifer ?? this.coniferPrototypes.get(band.index) ?? base : family === 'open' ? this.openBroadleafPrototypes.get(band.index) ?? base : distant?.broadleaf ?? this.broadleafPrototypes.get(band.index) ?? base;
+          const prototype = isTrunk ? (family === 'far' ? this.trunkFarPrototypes.get(band.index) : undefined) ?? this.trunkContactPrototypes.get(band.index) ?? base : family === 'conifer' ? distant?.conifer ?? this.coniferPrototypes.get(band.index) ?? base : family === 'open' ? this.openBroadleafPrototypes.get(band.index) ?? base : distant?.broadleaf ?? this.broadleafPrototypes.get(band.index) ?? base;
           prototype.updateMatrixWorld(true);
           const indices = rows.map((_, index) => index).filter((index) =>
-            !plan.excluded.has(index) && (isTrunk || (plan.near.has(index) === (band.kind === 'near') && forms[index].renderFamily === (family === 'open' ? 'broadleaf' : family) && (!splitBroadleaf || forms[index].renderFamily !== 'broadleaf' || (forms[index].crownVariant === 'open') === (family === 'open')))) && plan.shadows.has(index) === castShadow);
+            !plan.excluded.has(index) && (isTrunk ? plan.near.has(index) === (family === 'near') : (plan.near.has(index) === (band.kind === 'near') && forms[index].renderFamily === (family === 'open' ? 'broadleaf' : family) && (!splitBroadleaf || forms[index].renderFamily !== 'broadleaf' || (forms[index].crownVariant === 'open') === (family === 'open')))) && plan.shadows.has(index) === castShadow);
           if (!indices.length) continue;
           prototype.traverse((object) => {
             if (!(object instanceof THREE.Mesh)) return;
@@ -794,8 +805,9 @@ export class TownWorld {
             }
             const mesh = new THREE.InstancedMesh(object.geometry, object.material, indices.length);
             mesh.name = `Webster trees | ${band.kind} | ${family} | ${castShadow ? 'shadow' : 'ordinary'}`;
+            if (isTrunk) mesh.userData.trunkDetail = family;
             mesh.userData.treeKind = band.kind;
-            mesh.userData.treeFamily = family === 'open' ? 'broadleaf' : family;
+            mesh.userData.treeFamily = isTrunk ? 'trunk' : family === 'open' ? 'broadleaf' : family;
             mesh.userData.treeVariant = family === 'open' ? 'open' : 'standard';
             mesh.userData.sourceRows = indices;
             mesh.castShadow = castShadow;
@@ -803,10 +815,14 @@ export class TownWorld {
             indices.forEach((rowIndex, index) => {
               const row = rows[rowIndex];
               const form = forms[rowIndex];
-              point.fromArray(isTrunk ? form.trunk.position : form.crown.position);
-              scale.fromArray(isTrunk ? form.trunk.scale : form.crown.scale);
-              quaternion.setFromAxisAngle(up, isTrunk ? 0 : form.yaw);
-              matrix.compose(point, quaternion, scale).multiply(object.matrixWorld);
+              const join = isTrunk ? trunkJoin(form) : undefined;
+              if (join) trunkMatrix(form, join, matrix).multiply(object.matrixWorld);
+              else {
+                point.fromArray(isTrunk ? form.trunk.position : form.crown.position);
+                scale.fromArray(isTrunk ? form.trunk.scale : form.crown.scale);
+                quaternion.setFromAxisAngle(up, isTrunk ? 0 : form.yaw);
+                matrix.compose(point, quaternion, scale).multiply(object.matrixWorld);
+              }
               mesh.setMatrixAt(index, matrix);
               if (!isTrunk) mesh.setColorAt(index, treeArtColor(row[0] + origin[0], row[2] + origin[2], treeTint));
             });
@@ -967,6 +983,7 @@ export class TownWorld {
     for (const prototype of this.openBroadleafPrototypes.values()) prototype.traverse(inspect);
     for (const pair of this.distantCanopyPrototypes.values()) { pair.broadleaf.traverse(inspect); pair.conifer.traverse(inspect); }
     for (const prototype of this.trunkContactPrototypes.values()) prototype.traverse(inspect);
+    for (const prototype of this.trunkFarPrototypes.values()) prototype.traverse(inspect);
     let estimatedTextureBytes = 0;
     for (const { texture } of this.texturePool.values()) {
       const image = texture.image;
@@ -997,8 +1014,8 @@ export class TownWorld {
     this.openBroadleafPrototypes.clear();
     for (const pair of this.distantCanopyPrototypes.values()) { disposeDistantCanopyPrototype(pair.broadleaf); disposeDistantCanopyPrototype(pair.conifer); }
     this.distantCanopyPrototypes.clear();
-    for (const prototype of this.trunkContactPrototypes.values()) disposeTrunkContactPrototype(prototype);
-    this.trunkContactPrototypes.clear();
+    for (const prototype of [...this.trunkContactPrototypes.values(), ...this.trunkFarPrototypes.values()]) disposeTrunkContactPrototype(prototype);
+    this.trunkContactPrototypes.clear(); this.trunkFarPrototypes.clear();
     for (const prototype of this.prototypes) this.releaseGroup(prototype);
     this.prototypes = [];
     for (const material of this.backdropMaterials) material.dispose();
