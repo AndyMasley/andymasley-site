@@ -68,6 +68,8 @@ export class TemplateFleet {
   readonly group = new THREE.Group();
   readonly meshes: THREE.InstancedMesh[] = [];
   readonly materials: THREE.MeshStandardMaterial[] = [];
+  /** Lit tail lamps, drawn over the lamps of braking or stopped cars only. */
+  readonly brakes: THREE.InstancedMesh;
   constructor(readonly capacity: number, label: string) {
     this.group.name = label;
     for (const part of template.parts) {
@@ -79,7 +81,18 @@ export class TemplateFleet {
       if (painted) { mesh.userData.painted = true; for (let i = 0; i < capacity; i++) mesh.setColorAt(i, new THREE.Color(1, 1, 1)); }
       this.meshes.push(mesh); this.materials.push(material); this.group.add(mesh);
     }
+    const lamps = template.parts.find(part => /tail lamps/.test(part.name)) ?? template.parts[0];
+    // Scene-referred red above 1 so the lit lamp reads (and blooms) in daylight.
+    const glow = new THREE.MeshBasicMaterial({ color: new THREE.Color().setRGB(2.4, 0.1, 0.04, THREE.LinearSRGBColorSpace), polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 });
+    glow.name = `${label} | brake lights`;
+    this.brakes = new THREE.InstancedMesh(partGeometry(lamps).geometry, glow, capacity);
+    this.brakes.name = `${label} | brake lights`; this.brakes.count = 0; this.brakes.frustumCulled = false; this.brakes.userData.townCrafted = true;
+    this.brakes.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+    this.group.add(this.brakes);
   }
+  /** Lights the tail lamps of brake slot `i` at a car's matrix. */
+  setBrake(i: number, matrix: THREE.Matrix4): void { this.brakes.setMatrixAt(i, matrix); }
+  commitBrakes(count: number): void { this.brakes.count = count; this.brakes.instanceMatrix.needsUpdate = true; }
   /** Places car `i`; the painted body takes `color`. */
   set(i: number, matrix: THREE.Matrix4, color: THREE.Color): void {
     for (const mesh of this.meshes) { mesh.setMatrixAt(i, matrix); if (mesh.userData.painted) mesh.setColorAt(i, color); }
@@ -92,8 +105,9 @@ export class TemplateFleet {
     }
   }
   dispose(): void {
-    for (const mesh of this.meshes) { mesh.geometry.dispose(); mesh.dispose(); }
+    for (const mesh of [...this.meshes, this.brakes]) { mesh.geometry.dispose(); mesh.dispose(); }
     for (const material of this.materials) material.dispose();
+    (this.brakes.material as THREE.Material).dispose();
     this.group.removeFromParent();
   }
 }

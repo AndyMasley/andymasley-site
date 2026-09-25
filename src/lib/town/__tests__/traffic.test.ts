@@ -71,10 +71,13 @@ describe('local traffic', () => {
     traffic.dispose();
   });
 
-  it('queues behind a stopped player rather than driving through it', () => {
+  it('queues behind a stopped player rather than driving through it, brake lamps lit', () => {
     const { sameLane, any, traffic } = run(150, false);
     expect(sameLane).toBeGreaterThan(6);
     expect(any).toBeGreaterThan(3);
+    const lamps = traffic.root.getObjectByName('Traffic | moving cars | brake lights') as THREE.InstancedMesh;
+    expect(traffic.metrics.braking).toBeGreaterThan(0);
+    expect(lamps.count).toBe(traffic.metrics.braking);
     traffic.dispose();
   });
 

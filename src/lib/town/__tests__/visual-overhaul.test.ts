@@ -188,6 +188,29 @@ describe('driveway cars', () => {
     dressing.dispose();
   });
 
+  it('runs a front walk from each street-facing door to the street edge', () => {
+    const houses = [-150, -90, -30, 30, 90, 150];
+    const { group, dressing } = street(houses);
+    group.userData.openings = { doors: houses.map(hx => [hx - 3, 11.1, -20]), garageDoors: [] };
+    const report = dressing.apply(group, [0, 0, 0], 0);
+    expect(report.walks).toBeGreaterThanOrEqual(3);
+    const walks = group.getObjectByName('House dressing | front walks') as THREE.Mesh;
+    const position = walks.geometry.getAttribute('position'), lane = walks.geometry.getAttribute(ROAD_LANE_ATTRIBUTE);
+    expect(lane.count).toBe(position.count);
+    for (let i = 0; i < position.count; i++) {
+      const x = position.getX(i), n = -position.getZ(i);
+      expect(houses.some(hx => Math.abs(x - (hx - 3)) < 0.6)).toBe(true);
+      expect(n).toBeLessThanOrEqual(20);
+      expect(n).toBeGreaterThan(4.05); // meets the street edge, never the carriageway
+      expect(position.getY(i)).toBeCloseTo(10.05, 3);
+    }
+    // Faces up.
+    const a = new THREE.Vector3().fromBufferAttribute(position, 0), b = new THREE.Vector3().fromBufferAttribute(position, 1), c = new THREE.Vector3().fromBufferAttribute(position, 2);
+    expect(new THREE.Vector3().subVectors(b, a).cross(new THREE.Vector3().subVectors(c, a)).y).toBeGreaterThan(0);
+    expect(report.walkM / report.walks).toBeGreaterThan(14);
+    dressing.dispose();
+  });
+
   it('never parks on a parking lot or at a distant level of detail', () => {
     // The same house and paved frontage, but the pavement is a finished parking lot.
     const lot = street([30], 30);

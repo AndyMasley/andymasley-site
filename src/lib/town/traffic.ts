@@ -10,10 +10,10 @@ import { applyArtMaterial } from './art-materials';
  * car included) and hold back while another vehicle is inside the junction
  * they are about to enter. They appear and leave well away from the player,
  * outside the camera's view or deep in the haze. The player's car eases off
- * behind a slower car ahead. Numbers, routes and colours are authored; this is
- * not a traffic count.
+ * behind a slower car ahead. Tail lamps light while a car brakes or waits.
+ * Numbers, routes and colours are authored; this is not a traffic count.
  */
-export type TrafficMetrics = { cars: number; spawned: number; retired: number; yields: number };
+export type TrafficMetrics = { cars: number; spawned: number; retired: number; yields: number; braking: number };
 type Car = { engine: DriveEngine; id: number; color: THREE.Color; scale: number; chose: number | null; waited: number; yielding: boolean };
 /** Where an approaching car stands: the junction node it is heading for and its distance to the turn. */
 type Approach = { node: number; toJunction: number; range: number; id: number };
@@ -32,7 +32,7 @@ function mulberry(seed: number): () => number {
 
 export class Traffic {
   readonly root: THREE.Group;
-  readonly metrics: TrafficMetrics = { cars: 0, spawned: 0, retired: 0, yields: 0 };
+  readonly metrics: TrafficMetrics = { cars: 0, spawned: 0, retired: 0, yields: 0, braking: 0 };
   private readonly fleet: TemplateFleet;
   private readonly cars: Car[] = [];
   private readonly random: () => number;
@@ -208,7 +208,7 @@ export class Traffic {
   }
 
   private place(): void {
-    let i = 0;
+    let i = 0, lit = 0;
     for (const car of this.cars) {
       if (i >= this.fleet.capacity) break;
       const [p, t] = car.engine.pose();
@@ -219,9 +219,13 @@ export class Traffic {
       this.matrix.scale(this.size.setScalar(car.scale));
       this.matrix.setPosition(p[0], p[2], -p[1]);
       this.fleet.set(i++, this.matrix, car.color);
+      // Brake lamps while slowing, and while held at a junction or in a queue.
+      if (car.engine.acceleration < -0.6 || (car.engine.speed < 0.4 && car.engine.leadLimit < 0.5)) this.fleet.setBrake(lit++, this.matrix);
     }
     this.fleet.commit(i);
+    this.fleet.commitBrakes(lit);
     this.metrics.cars = i;
+    this.metrics.braking = lit;
   }
 }
 

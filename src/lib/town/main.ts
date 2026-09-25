@@ -740,7 +740,7 @@ export async function startTown(root: HTMLElement): Promise<Session> {
       // while a paused scene redraws at most ten times per second. Camera and
       // resize changes request an immediate frame; background tabs draw none.
       if (document.hidden || (engine.paused && !renderRequested && drawCount >= 3 && now - lastDraw < 100)) return;
-      traffic?.update(elapsed, engine, camera, !engine.paused && !streamPaused && !teleporting);
+      if (!teleporting) traffic?.update(elapsed, engine, camera, !engine.paused && !streamPaused);
       world!.updatePresentation(presentationTime, renderedPosition);
       // Optional shore reflection starts after the first playable frames. It
       // owns a bounded offscreen pass; the following main render keeps the

@@ -161,7 +161,9 @@ The September 24 overhaul adds, all as authored interpretation rather than surve
   walls, curbside mailboxes on local streets, gutters with downspouts along
   pitched eaves, painted rake boards, a brick chimney (capped, with a clay flue)
   on the main ridge of about two in three house roofs (never garages or sheds,
-  told apart by roof area), and a parked car in some driveways. A driveway is the
+  told apart by roof area), a poured concrete front walk (with the sidewalks'
+  control joints) from most street-facing doors to the first pavement it
+  meets, and a parked car in some driveways. A driveway is the
   paved land-cover class between a house front and its street; the car's whole
   footprint must lie on it, clear of streets, sidewalks, curbs, aprons, parking
   lots and building walls. `curb-parking.ts` parallel-parks cars on registered
@@ -182,8 +184,9 @@ The September 24 overhaul adds, all as authored interpretation rather than surve
   turns, keeping a gap to the vehicle ahead (the player's car included) and
   taking each junction one car at a time, in a fixed order. They appear and
   leave 170 to 430 m away, outside the camera's view or deep in the haze. The
-  player's car eases off behind a slower car ahead (`DriveEngine.leadLimit`).
-  Numbers, routes and colours are authored, not a traffic count.
+  player's car eases off behind a slower car ahead (`DriveEngine.leadLimit`),
+  and traffic's tail lamps light while a car brakes or waits. Numbers, routes
+  and colours are authored, not a traffic count.
 
 `surfaces.ts` samples the original raw RGBA land-cover data in world metres.
 Class weights are sharpened and renormalized; zero-coverage pixels stay excluded.
