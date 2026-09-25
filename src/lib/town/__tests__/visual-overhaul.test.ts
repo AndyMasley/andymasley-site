@@ -6,7 +6,7 @@ import { readFileSync } from 'node:fs';
 import library from '../../../../data/derived/town/material-library.json';
 import { RoadWear, ROAD_LANE_ATTRIBUTE, ROAD_WEAR_GLSL, WALK_WEAR_GLSL } from '../road-wear';
 import { findSignPlacements, signLabel } from '../street-signs';
-import { StreetDressing } from '../street-dressing';
+import { StreetDressing, updateDressingViewport } from '../street-dressing';
 import { FILM } from '../cinematic';
 import { applyArtMaterial } from '../art-materials';
 import { CurbParking } from '../curb-parking';
@@ -249,6 +249,15 @@ describe('chimneys', () => {
 });
 
 describe('street dressing placement', () => {
+  it('sizes overhead wire ribbons from the live drawing buffer', () => {
+    const dressing = new StreetDressing(crossing());
+    updateDressingViewport(dressing, { getDrawingBufferSize: (target: THREE.Vector2) => target.set(1600, 900) } as unknown as THREE.WebGLRenderer);
+    const wire = (dressing as unknown as { materials: { wire: THREE.ShaderMaterial } }).materials.wire;
+    expect(wire.uniforms.townViewport.value.toArray()).toEqual([1600, 900]);
+    // A vertex behind the camera slides along its wire rather than fanning the ribbon.
+    expect(wire.vertexShader).toContain('point += townWireDir * ((0.3 - depth) / rate);');
+    dressing.dispose();
+  });
   it('sets poles off the street centreline, not the driving line', () => {
     const dressing = new StreetDressing(crossing());
     const poles = (dressing as unknown as { poles: { x: number; n: number }[] }).poles;

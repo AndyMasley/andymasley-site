@@ -286,6 +286,8 @@ export class DriveEngine {
   queuedJunction: number | null = null;
   cruiseAtLimit = false;
   speed = 0; cruise = 0; acceleration = 0;
+  /** Speed allowed by a vehicle ahead in this lane (m/s); traffic sets it, Infinity when the road is clear. */
+  leadLimit = Infinity;
   paused = false; distance = 0; elapsed = 0; junctions = 0;
   endOfRoute = false;
   lastMessage = 'Press Up to cruise. Choose turns with Left / Right.';
@@ -501,8 +503,10 @@ export class DriveEngine {
     if (brake) this.cruiseAtLimit = false;
     if (this.cruiseAtLimit) this.cruise = Math.max(this.rampTarget() ?? 0, cruiseCeilingMps(this.phase === 'TURN' ? required(this.graph.edges, this.connection!.nextId, 'road') : this.edge, maxMph));
     if (brake) this.cruise = Math.max(0, Math.min(this.cruise, this.speed) - 5.5 * dt);
-    const target = Math.min(this.cruise, this.speedLimit());
-    const desired = clamp((target - this.speed) * 1.7, brake ? -5.5 : -3.2, 1.9);
+    const lead = Number.isNaN(this.leadLimit) ? Infinity : Math.max(0, this.leadLimit);
+    const target = Math.min(this.cruise, this.speedLimit(), lead);
+    // Closing on a slower vehicle ahead may need firmer braking than easing off.
+    const desired = clamp((target - this.speed) * 1.7, brake || lead < this.speed - 1 ? -5.5 : -3.2, 1.9);
     this.acceleration += clamp(desired - this.acceleration, -5.5 * dt, 3.5 * dt);
     const previousSpeed = this.speed;
     this.speed = Math.max(0, this.speed + this.acceleration * dt);

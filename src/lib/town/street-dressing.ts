@@ -447,19 +447,35 @@ attribute vec3 townWireDir;
 attribute float townWireSide;
 attribute float townWireRadius;
 varying float vTownWireAlpha;
+varying float vTownWireNear;
 #include <fog_pars_vertex>
 void main() {
-  vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+  vec3 point = position;
+  vec4 mvPosition = modelViewMatrix * vec4(point, 1.0);
+  float depth = -mvPosition.z;
+  // A span passing over or behind the camera has vertices behind it. Clipped
+  // there, a screen-space width fans the ribbon across the sky, so such a
+  // vertex slides along the wire to just in front of the camera instead.
+  if (depth < 0.3) {
+    float rate = -(modelViewMatrix * vec4(townWireDir, 0.0)).z;
+    if (abs(rate) > 1e-3) {
+      point += townWireDir * ((0.3 - depth) / rate);
+      mvPosition = modelViewMatrix * vec4(point, 1.0);
+      depth = -mvPosition.z;
+    }
+  }
   vec4 clip = projectionMatrix * mvPosition;
-  vec4 ahead = projectionMatrix * (modelViewMatrix * vec4(position + townWireDir * 0.5, 1.0));
+  vec4 ahead = projectionMatrix * (modelViewMatrix * vec4(point + townWireDir * 0.5, 1.0));
   vec2 ndc = clip.xy / clip.w, ndcAhead = ahead.xy / ahead.w;
   vec2 along = (ndcAhead - ndc) * townViewport * 0.5;
   float alongLength = length(along);
   vec2 across = alongLength > 1e-5 ? vec2(-along.y, along.x) / alongLength : vec2(0.0, 1.0);
-  float pixelsPerMetre = townViewport.y * 0.5 * projectionMatrix[1][1] / max(-mvPosition.z, 0.05);
+  float pixelsPerMetre = townViewport.y * 0.5 * projectionMatrix[1][1] / max(depth, 0.05);
   float widthPx = 2.0 * townWireRadius * pixelsPerMetre;
-  float drawPx = max(widthPx, 1.3);
-  vTownWireAlpha = clamp(widthPx / drawPx, 0.0, 1.0);
+  float drawPx = depth > 0.25 ? max(widthPx, 1.3) : 0.0;
+  vTownWireAlpha = clamp(widthPx / max(drawPx, 1e-4), 0.0, 1.0);
+  // Spans passing within a few metres of the camera fade out rather than filling the view.
+  vTownWireNear = smoothstep(0.6, 3.0, depth);
   clip.xy += across * townWireSide * drawPx / townViewport * clip.w;
   gl_Position = clip;
   #include <fog_vertex>
@@ -467,10 +483,11 @@ void main() {
     fragmentShader: /* glsl */`
 uniform vec3 diffuse;
 varying float vTownWireAlpha;
+varying float vTownWireNear;
 #include <common>
 #include <fog_pars_fragment>
 void main() {
-  gl_FragColor = vec4(diffuse, 0.25 + 0.7 * vTownWireAlpha);
+  gl_FragColor = vec4(diffuse, (0.25 + 0.7 * vTownWireAlpha) * vTownWireNear);
   #include <tonemapping_fragment>
   #include <colorspace_fragment>
   #include <fog_fragment>
@@ -479,6 +496,9 @@ void main() {
     depthWrite: false,
     fog: true,
   });
+  // UniformsUtils.merge clones values: bind the live viewport the renderer
+  // writes each frame, or the ribbon width would stay in a 1 x 1 viewport.
+  material.uniforms.townViewport.value = viewport;
   material.userData.townCrafted = true;
   return material;
 }

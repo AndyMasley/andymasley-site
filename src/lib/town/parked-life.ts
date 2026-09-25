@@ -41,6 +41,63 @@ function decode(value: string): Uint8Array {
   return array;
 }
 
+type TemplatePart = (typeof template.parts)[number];
+
+/** One part of the packed parked-car template as renderable geometry. */
+function partGeometry(part: TemplatePart): { geometry: THREE.BufferGeometry; painted: boolean; triangles: number } {
+  const packed = decode(part.positions), normals = decode(part.normals), indices = decode(part.indices);
+  const source = new Int16Array(packed.buffer), nn = new Int8Array(normals.buffer);
+  const positions = Float32Array.from(source, v => v / template.positionScale), normal = Float32Array.from(nn, v => v / template.normalScale);
+  const geometry = new THREE.BufferGeometry(); geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3)); geometry.setAttribute('normal', new THREE.BufferAttribute(normal, 3)); geometry.setIndex(new THREE.BufferAttribute(new Uint16Array(indices.buffer), 1));
+  geometry.normalizeNormals(); geometry.computeBoundingBox(); geometry.computeBoundingSphere();
+  return { geometry, painted: /deep teal/.test(part.name), triangles: indices.byteLength / 2 / 3 };
+}
+
+function partMaterial(part: TemplatePart): THREE.MeshStandardMaterial {
+  const painted = /deep teal/.test(part.name), glass = /glass/.test(part.name);
+  const material = new THREE.MeshStandardMaterial({ color: painted ? 0xffffff : part.color, roughness: glass ? .2 : part.roughness, metalness: part.metalness, envMapIntensity: glass ? .7 : .45 });
+  material.name = painted ? 'Parked | graphite' : part.name;
+  return material;
+}
+
+/**
+ * The parked-car template as one set of instanced meshes (seven draws) with
+ * room for `capacity` cars whose world matrices change every frame (traffic).
+ */
+export class TemplateFleet {
+  readonly group = new THREE.Group();
+  readonly meshes: THREE.InstancedMesh[] = [];
+  readonly materials: THREE.MeshStandardMaterial[] = [];
+  constructor(readonly capacity: number, label: string) {
+    this.group.name = label;
+    for (const part of template.parts) {
+      const { geometry, painted } = partGeometry(part), material = partMaterial(part);
+      const mesh = new THREE.InstancedMesh(geometry, material, capacity);
+      mesh.name = label; mesh.count = 0; mesh.frustumCulled = false;
+      mesh.castShadow = true; mesh.receiveShadow = true; mesh.userData.townCrafted = true; mesh.userData.category = 'cars';
+      mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+      if (painted) { mesh.userData.painted = true; for (let i = 0; i < capacity; i++) mesh.setColorAt(i, new THREE.Color(1, 1, 1)); }
+      this.meshes.push(mesh); this.materials.push(material); this.group.add(mesh);
+    }
+  }
+  /** Places car `i`; the painted body takes `color`. */
+  set(i: number, matrix: THREE.Matrix4, color: THREE.Color): void {
+    for (const mesh of this.meshes) { mesh.setMatrixAt(i, matrix); if (mesh.userData.painted) mesh.setColorAt(i, color); }
+  }
+  /** Shows the first `count` cars. */
+  commit(count: number): void {
+    for (const mesh of this.meshes) {
+      mesh.count = count; mesh.instanceMatrix.needsUpdate = true;
+      if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
+    }
+  }
+  dispose(): void {
+    for (const mesh of this.meshes) { mesh.geometry.dispose(); mesh.dispose(); }
+    for (const material of this.materials) material.dispose();
+    this.group.removeFromParent();
+  }
+}
+
 /** Seven shared material draws per tile, independent of vehicle count. */
 export function addParkedLife(group: THREE.Group, origin: V3, level: number, placements: readonly ParkedPlacement[], key = 'parkedLife', label = 'Finished parking | parked touring cars', shared?: Map<string, THREE.MeshStandardMaterial>): void {
   if (!placements.length || group.userData[key]) return;
@@ -56,23 +113,14 @@ export function addParkedLife(group: THREE.Group, origin: V3, level: number, pla
   let triangles = 0, draws = 0;
   for (const part of template.parts) {
     if (level >= 2 && /aluminum|lamps|soft black/.test(part.name)) continue;
-    const packed = decode(part.positions), normals = decode(part.normals), indices = decode(part.indices);
-    const source = new Int16Array(packed.buffer), nn = new Int8Array(normals.buffer);
-    const positions = Float32Array.from(source, v => v / template.positionScale), normal = Float32Array.from(nn, v => v / template.normalScale);
-    const geometry = new THREE.BufferGeometry(); geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3)); geometry.setAttribute('normal', new THREE.BufferAttribute(normal, 3)); geometry.setIndex(new THREE.BufferAttribute(new Uint16Array(indices.buffer), 1));
-    geometry.normalizeNormals(); geometry.computeBoundingBox(); geometry.computeBoundingSphere();
-    const painted = /deep teal/.test(part.name), glass = /glass/.test(part.name);
+    const { geometry, painted, triangles: count } = partGeometry(part);
     let material = shared?.get(part.name);
-    if (!material) {
-      material = new THREE.MeshStandardMaterial({ color: painted ? 0xffffff : part.color, roughness: glass ? .2 : part.roughness, metalness: part.metalness, envMapIntensity: glass ? .7 : .45 });
-      material.name = painted ? 'Parked | graphite' : part.name;
-      shared?.set(part.name, material);
-    }
+    if (!material) { material = partMaterial(part); shared?.set(part.name, material); }
     const mesh = new THREE.InstancedMesh(geometry, material, placements.length); mesh.name = label;
     mesh.castShadow = true; mesh.receiveShadow = true; mesh.userData.townCrafted = true; mesh.userData.category = 'cars'; mesh.userData.appearanceBasis = template.basis;
     matrices.forEach((m, i) => { mesh.setMatrixAt(i, m); if (painted) mesh.setColorAt(i, new THREE.Color(placements[i].color)); });
     mesh.instanceMatrix.needsUpdate = true; if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true; mesh.computeBoundingBox(); mesh.computeBoundingSphere(); group.add(mesh);
-    triangles += indices.byteLength / 2 / 3 * placements.length; draws++;
+    triangles += count * placements.length; draws++;
   }
   group.userData[key] = { cars: placements.length, draws, triangles, placements };
 }

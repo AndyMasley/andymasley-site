@@ -7,6 +7,7 @@ import { StreetDressing, updateDressingViewport } from './street-dressing';
 import { HouseDressing } from './house-dressing';
 import { RoadWear } from './road-wear';
 import { CurbParking } from './curb-parking';
+import { Traffic } from './traffic';
 import { startupPosition } from './startup';
 import { createSummerHaze, createSummerSky, createShadowAnchor, installAerialPerspective, SUMMER_LIGHT } from './atmosphere';
 import { createTouringCar, type TouringCar } from './vehicle';
@@ -87,6 +88,7 @@ export async function startTown(root: HTMLElement): Promise<Session> {
   let dressing: StreetDressing | undefined;
   let houses: HouseDressing | undefined;
   let curbParking: CurbParking | undefined;
+  let traffic: Traffic | undefined;
   let restoreFog: (() => void) | undefined;
   let renderer: THREE.WebGLRenderer | undefined;
   let resize: ResizeObserver | undefined;
@@ -180,6 +182,7 @@ export async function startTown(root: HTMLElement): Promise<Session> {
       dressing?.dispose();
       houses?.dispose();
       curbParking?.dispose();
+      traffic?.dispose();
       restoreFog?.();
       restoreFog = undefined;
       environmentTarget?.dispose();
@@ -271,6 +274,9 @@ export async function startTown(root: HTMLElement): Promise<Session> {
     houses = new HouseDressing(dressing);
     curbParking = new CurbParking(network);
     world.setStreetDressing(dressing, houses, new RoadWear(network), curbParking);
+    // A few cars share the mapped lanes; fewer on Low and mobile.
+    traffic = new Traffic(graph, mobile || quality === 'low' ? 6 : 12);
+    scene.add(traffic.root);
     engine = (requestedResume && restoreSnapshot(graph, requestedResume)) || spawnAtLandmark(graph, startingLocation);
     setStatus('Preparing the landscape and your car…');
     vehicle = createTouringCar();
@@ -360,6 +366,7 @@ export async function startTown(root: HTMLElement): Promise<Session> {
         await world!.prepareAt(toWorld(destination.pose()[0]));
         if (disposed) return;
         engine = destination;
+        traffic?.clear(engine);
         firstFrame = true;
         setPaused(false);
         locationSelect.value = key;
@@ -733,6 +740,7 @@ export async function startTown(root: HTMLElement): Promise<Session> {
       // while a paused scene redraws at most ten times per second. Camera and
       // resize changes request an immediate frame; background tabs draw none.
       if (document.hidden || (engine.paused && !renderRequested && drawCount >= 3 && now - lastDraw < 100)) return;
+      traffic?.update(elapsed, engine, camera, !engine.paused && !streamPaused && !teleporting);
       world!.updatePresentation(presentationTime, renderedPosition);
       // Optional shore reflection starts after the first playable frames. It
       // owns a bounded offscreen pass; the following main render keeps the
@@ -780,6 +788,9 @@ export async function startTown(root: HTMLElement): Promise<Session> {
           materialCount: scenery.materialCount + carResources.materials,
           geometries: renderer!.info.memory.geometries, textures: renderer!.info.memory.textures, calls: renderer!.info.render.calls };
       },
+      get traffic() { return traffic ? { ...traffic.metrics } : undefined; },
+      /** QA: runs traffic for `seconds` of simulated time around the (unmoving) player. */
+      advanceTraffic(seconds: number) { for (let t = 0; t < Math.min(600, seconds); t += 1 / 30) traffic?.update(1 / 30, engine, camera, true); renderRequested = true; },
       teleport,
       dispose: session.dispose,
     };
