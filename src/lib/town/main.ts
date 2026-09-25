@@ -274,8 +274,8 @@ export async function startTown(root: HTMLElement): Promise<Session> {
     houses = new HouseDressing(dressing);
     curbParking = new CurbParking(network);
     world.setStreetDressing(dressing, houses, new RoadWear(network), curbParking);
-    // A few cars share the mapped lanes; fewer on Low and mobile.
-    traffic = new Traffic(graph, mobile || quality === 'low' ? 6 : 12);
+    // A few cars share the mapped lanes; fewer on mobile and fewer still on Low.
+    traffic = new Traffic(graph, quality === 'low' ? 4 : mobile ? 6 : 12);
     scene.add(traffic.root);
     engine = (requestedResume && restoreSnapshot(graph, requestedResume)) || spawnAtLandmark(graph, startingLocation);
     setStatus('Preparing the landscape and your car…');

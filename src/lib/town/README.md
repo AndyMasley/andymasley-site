@@ -178,10 +178,11 @@ The September 24 overhaul adds, all as authored interpretation rather than surve
 - The player's car body leans on its suspension (outward roll in turns, dive
   under braking, squat under power) while its wheels stay on the road, and the
   camera lens widens slightly with speed; the steady camera keeps a fixed lens.
-- `traffic.ts` runs light local traffic: up to a dozen cars (six on Low and
-  mobile) drive the mapped lanes around the player on the same rail engine, at
+- `traffic.ts` runs light local traffic: up to a dozen cars (six on mobile,
+  four on Low) drive the mapped lanes around the player on the same rail engine, at
   each road's limit, choosing turns at random (mostly straight on), slowing for
-  turns, keeping a gap to the vehicle ahead (the player's car included) and
+  turns, keeping a gap to the vehicle ahead (a longer one behind the player's
+  car, out of the chase camera's frame) and
   taking each junction one car at a time, in a fixed order. They appear and
   leave 170 to 430 m away, outside the camera's view or deep in the haze. The
   player's car eases off behind a slower car ahead (`DriveEngine.leadLimit`),

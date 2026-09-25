@@ -31,7 +31,7 @@ function run(seconds: number, playerDrives: boolean) {
   camera.position.set(300, 30, -250); camera.lookAt(300, 0, -450);
   const spawnDistances: number[] = [];
   const seen = new Set<DriveEngine>();
-  let sameLane = Infinity, any = Infinity, travelled = 0;
+  let sameLane = Infinity, any = Infinity, behindPlayer = Infinity, travelled = 0;
   for (let step = 0; step < seconds * 30; step++) {
     if (playerDrives) advanceRealTime(player, 1 / 30, true);
     traffic.update(1 / 30, player, camera, true);
@@ -45,11 +45,16 @@ function run(seconds: number, playerDrives: boolean) {
     for (let a = 0; a < poses.length; a++) for (let b = a + 1; b < poses.length; b++) {
       const d = Math.hypot(poses[a][0][0] - poses[b][0][0], poses[a][0][1] - poses[b][0][1]);
       any = Math.min(any, d);
-      if (poses[a][1][0] * poses[b][1][0] + poses[a][1][1] * poses[b][1][1] > 0.7) sameLane = Math.min(sameLane, d);
+      if (poses[a][1][0] * poses[b][1][0] + poses[a][1][1] * poses[b][1][1] > 0.7) {
+        sameLane = Math.min(sameLane, d);
+        // A car following the player's car, behind it in its lane.
+        const [p, t] = poses[0];
+        if (a === 0 && (poses[b][0][0] - p[0]) * t[0] + (poses[b][0][1] - p[1]) * t[1] < 0) behindPlayer = Math.min(behindPlayer, d);
+      }
     }
   }
   for (const car of seen) travelled = Math.max(travelled, car.distance);
-  return { traffic, player, spawnDistances, seen, sameLane, any, travelled };
+  return { traffic, player, spawnDistances, seen, sameLane, any, behindPlayer, travelled };
 }
 
 describe('local traffic', () => {
@@ -72,8 +77,11 @@ describe('local traffic', () => {
   });
 
   it('queues behind a stopped player rather than driving through it, brake lamps lit', () => {
-    const { sameLane, any, traffic } = run(150, false);
+    const { sameLane, any, behindPlayer, traffic } = run(150, false);
     expect(sameLane).toBeGreaterThan(6);
+    // Out of the chase camera's frame, about nine metres behind the car.
+    expect(behindPlayer).toBeGreaterThan(14);
+    expect(behindPlayer).toBeLessThan(40); // cars did queue behind it
     expect(any).toBeGreaterThan(3);
     const lamps = traffic.root.getObjectByName('Traffic | moving cars | brake lights') as THREE.InstancedMesh;
     expect(traffic.metrics.braking).toBeGreaterThan(0);

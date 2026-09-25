@@ -22,6 +22,8 @@ type Vehicle = { engine: DriveEngine; position: Vec3; tangent: Vec3 };
 const PALETTE = ['#ecebe3', '#aeb7b8', '#56666b', '#8e2e2b', '#263e57', '#d0c3a4', '#333739', '#647261', '#9aa3a6', '#1f2a33', '#7b1f24', '#2d4a3a'];
 /** Template car length (m) and the radius within which a vehicle ahead is in this lane. */
 const LENGTH = 4.6, LANE = 1.9;
+/** Extra following distance (m) behind the player's car, which the chase camera sits 9 m behind. */
+const PLAYER_MARGIN = 9;
 /** Spawn ring, the distance inside which a spawn must be out of view, and the retirement distance (m). */
 export const TRAFFIC_RANGE = { min: 170, max: 380, view: 330, retire: 430 } as const;
 
@@ -153,7 +155,8 @@ export class Traffic {
     // Slow for turns: into the connector at its comfortable speed, and through it.
     if (engine.phase === 'TURN' && engine.connection!.choice.label !== 'Straight') limit = Math.max(3, engine.connection!.speed);
     if (plan && plan.choice.label !== 'Straight') limit = Math.min(limit, Math.sqrt(Math.max(3, plan.speed) ** 2 + 2 * 2.2 * Math.max(0, toJunction)));
-    const gap = this.gap(engine, vehicles);
+    // Hang further back from the player's car, out of the chase camera's frame.
+    const gap = this.gap(engine, vehicles, PLAYER_MARGIN);
     if (gap !== undefined) limit = Math.min(limit, followSpeed(gap));
     // Hold at the junction while another vehicle is moving inside it.
     const busy = plan !== null && toJunction < approachRange(engine.speed) && this.junctionBusy(engine, vehicles, approaches);
@@ -167,15 +170,18 @@ export class Traffic {
     engine.step(dt, true, false);
   }
 
-  /** Bumper gap (m) to the nearest vehicle ahead along this engine's own route, if one is close. */
-  private gap(engine: DriveEngine, vehicles: Vehicle[]): number | undefined {
-    const reach = Math.max(30, engine.speed * 3.2);
+  /**
+   * Bumper gap (m) to the nearest vehicle ahead along this engine's own route,
+   * if one is close; the player's car (the first vehicle) counts `playerMargin` metres nearer.
+   */
+  private gap(engine: DriveEngine, vehicles: Vehicle[], playerMargin = 0): number | undefined {
+    const reach = Math.max(30, engine.speed * 3.2) + playerMargin;
     for (let d = 2.5; d <= reach; d += 2.5) {
       const [q, t] = engine.pose(d);
       for (const v of vehicles) {
         if (v.engine === engine || Math.abs(v.position[0] - q[0]) > LANE || Math.abs(v.position[1] - q[1]) > LANE) continue;
         // Oncoming traffic, whose lane can pass close on tight bends, is not ahead in this lane.
-        if (Math.hypot(v.position[0] - q[0], v.position[1] - q[1]) < LANE && Math.abs(v.position[2] - q[2]) < 3 && v.tangent[0] * t[0] + v.tangent[1] * t[1] > -0.5) return d - LENGTH;
+        if (Math.hypot(v.position[0] - q[0], v.position[1] - q[1]) < LANE && Math.abs(v.position[2] - q[2]) < 3 && v.tangent[0] * t[0] + v.tangent[1] * t[1] > -0.5) return d - LENGTH - (v === vehicles[0] ? playerMargin : 0);
       }
     }
     return undefined;
