@@ -27,6 +27,7 @@ import { TownWaterReflection } from './water-reflection';
 import type { CinematicRenderer } from './cinematic';
 
 type CinematicModule = typeof import('./cinematic');
+type RoadsideCommerce = import('./roadside-commerce').RoadsideCommerce;
 const cinematicAllowed = (quality: Quality, mobile: boolean): boolean => !mobile && quality !== 'low';
 const ASSET_ROOT = `/town-assets/${release.directory}/`;
 const WORLD_URL = `${ASSET_ROOT}manifest.json`;
@@ -88,6 +89,7 @@ export async function startTown(root: HTMLElement): Promise<Session> {
   let dressing: StreetDressing | undefined;
   let houses: HouseDressing | undefined;
   let curbParking: CurbParking | undefined;
+  let commerce: RoadsideCommerce | undefined;
   let traffic: Traffic | undefined;
   let restoreFog: (() => void) | undefined;
   let renderer: THREE.WebGLRenderer | undefined;
@@ -182,6 +184,7 @@ export async function startTown(root: HTMLElement): Promise<Session> {
       dressing?.dispose();
       houses?.dispose();
       curbParking?.dispose();
+      commerce?.dispose();
       traffic?.dispose();
       restoreFog?.();
       restoreFog = undefined;
@@ -274,6 +277,12 @@ export async function startTown(root: HTMLElement): Promise<Session> {
     houses = new HouseDressing(dressing);
     curbParking = new CurbParking(network);
     world.setStreetDressing(dressing, houses, new RoadWear(network), curbParking);
+    // Fuel stations and business signs arrive in their own chunk.
+    void import('./roadside-commerce').then(module => {
+      if (disposed || !world) return;
+      commerce = new module.RoadsideCommerce(undefined, { low: quality === 'low' || mobile });
+      world.setRoadsideCommerce(commerce);
+    }).catch(error => console.warn('Roadside signs unavailable:', error));
     // A few cars share the mapped lanes; fewer on mobile and fewer still on Low.
     traffic = new Traffic(graph, quality === 'low' ? 4 : mobile ? 6 : 12);
     scene.add(traffic.root);

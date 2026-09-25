@@ -200,6 +200,28 @@ The September 24 overhaul adds, all as authored interpretation rather than surve
   player's car eases off behind a slower car ahead (`DriveEngine.leadLimit`),
   and traffic's tail lamps light while a car brakes or waits. Numbers, routes
   and colours are authored, not a traffic count.
+- `roadside-commerce.ts` (its own chunk, loaded once the road network is up)
+  adds the six fuel stations and the business signs. Each canopy's outline and
+  deck height are measured from the 2021 lidar's class-6 upper returns, which
+  the building footprints never captured, and match the canopy roofs in the
+  2025 aerial; columns, pump islands (one per 7 m of canopy, a second row on
+  deep canopies), dispensers, downlights, bollards and a double-sided price sign
+  are authored. At 88 East Main the building footprint was traced over the
+  canopy too, so that store's body is rebuilt without the canopy's part.
+  Listed businesses get a wall sign over their storefront and a pylon or
+  monument sign at their street frontage. Signs show only a generic word for
+  what each business sells or does: no names, brands, logos or house colours,
+  and a test rejects any legend outside that vocabulary. Legends are drawn once
+  into a 2048 x 1024 single-channel atlas and coloured per face. Their lots get
+  head-in stall rows laid out from each storefront (single row, aisle, then
+  double rows) wherever the finished land cover is paving inside the lot and
+  clear of buildings, canopies, streets and the lots that already have
+  striping, with pole lights where rows meet nose to nose and a stable share
+  of the stalls holding light instanced cars (about 160 triangles each; none
+  beyond the middle display band). Stripe colours, prices, fonts, sign forms,
+  stall layouts, occupancy and positions are authored;
+  `scripts/prepare-roadside-commerce.py` rebuilds the data from the research
+  corpus.
 
 `surfaces.ts` samples the cleaned RGBA land-cover data in world metres. Paving
 is drawn at its half-way contour; lawn, canopy litter and soil are sharpened

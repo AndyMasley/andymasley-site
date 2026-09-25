@@ -45,6 +45,7 @@ import { releaseTileTerrain, type StreetDressing } from './street-dressing';
 import type { HouseDressing } from './house-dressing';
 import type { RoadWear } from './road-wear';
 import type { CurbParking } from './curb-parking';
+import type { RoadsideCommerce } from './roadside-commerce';
 
 type TreePlan = { near: Set<number>; shadows: Set<number>; excluded: Set<number>; key: string };
 type LoadedTile = { group: THREE.Group; level: number; lastUsed: number; trees?: THREE.Group; treeRows?: number[][]; treeExcluded?: Set<number>; treePlan?: TreePlan; occluders?: THREE.Mesh[]; geometryBytes?: number; detailRetryAt?: number; detailAttempts?: number };
@@ -93,6 +94,7 @@ export class TownWorld {
   private houses?: HouseDressing;
   private roadWear?: RoadWear;
   private curbParking?: CurbParking;
+  private commerce?: RoadsideCommerce;
   private readonly stageTimings: Record<string, number> = {};
   private readonly timings = { tiles: 0, parseMs: 0, assemblyMs: 0, maxParseMs: 0, maxAssemblyMs: 0, dressingMs: 0, maxDressingMs: 0, detailRetries: 0, detailRecovered: 0 };
   private readonly artClock = { value: 0 };
@@ -419,6 +421,18 @@ export class TownWorld {
     }
   }
 
+  /** Fuel stations and business signs load as their own chunk; tiles already shown receive them too. */
+  setRoadsideCommerce(commerce: RoadsideCommerce): void {
+    this.commerce = commerce;
+    for (const [id, tile] of this.loaded) {
+      const definition = this.manifest.tiles.find(candidate => candidate.id === id);
+      if (!definition) continue;
+      commerce.apply(tile.group, id, definition.origin, tile.level);
+      releaseTileTerrain();
+      tile.geometryBytes = this.geometryBytes(tile.group);
+    }
+  }
+
   /** Street and house dressing, lane wear and curbside cars for one tile (each at most once). */
   private dress(group: THREE.Group, id: string, origin: V3, level: number): void {
     const dressing = this.dressing;
@@ -432,6 +446,7 @@ export class TownWorld {
     stage('houses', () => this.houses?.apply(group, origin, level));
     stage('wear', () => this.roadWear?.apply(group, origin));
     stage('parking', () => this.curbParking?.apply(group, id, origin, level));
+    stage('commerce', () => this.commerce?.apply(group, id, origin, level));
     releaseTileTerrain();
     const ms = performance.now() - started;
     this.timings.dressingMs += ms; this.timings.maxDressingMs = Math.max(this.timings.maxDressingMs, ms);
