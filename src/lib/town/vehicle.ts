@@ -3,7 +3,8 @@ import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js
 
 /** Authored, unbranded compact touring car. Metres, Y up, forward -Z; origin is the road contact plane. */
 export const TOURING_CAR_DIMENSIONS = Object.freeze({ length: 4.46, bodyWidth: 1.88, mirrorWidth: 2.28, wheelbase: 2.65, wheelRadius: 0.337 });
-export type VehicleUpdate = { distanceM: number; steeringRadians: number; braking: boolean };
+/** `rollRadians`/`pitchRadians` lean the sprung body on its suspension; wheels stay on the road. */
+export type VehicleUpdate = { distanceM: number; steeringRadians: number; braking: boolean; rollRadians?: number; pitchRadians?: number };
 export type VehicleResources = { geometries: number; materials: number; triangles: number; drawCalls: number; geometryBytes: number; textures: number; wheels: number; disposed: boolean };
 export type TouringCar = { root: THREE.Group; wheels: readonly THREE.Group[]; update(input: VehicleUpdate): void; resources(): VehicleResources; dispose(): void };
 type Point = readonly [number, number, number];
@@ -12,6 +13,8 @@ type Batch = Map<Material, THREE.BufferGeometry[]>;
 const X = new THREE.Vector3(1, 0, 0);
 const Y = new THREE.Vector3(0, 1, 0);
 const WHEEL_NAMES = ['Drive wheel | front left', 'Drive wheel | front right', 'Drive wheel | rear left', 'Drive wheel | rear right'];
+const BODY_PIVOT_Y = 0.55;
+const MAX_LEAN = 0.06;
 
 /** Smooth section interpolation; the result remains inside its two bracketing design stations. */
 function profile(z: number, stations: readonly (readonly number[])[], field: number): number {
@@ -247,7 +250,12 @@ export function createTouringCar(): TouringCar {
   tube(body, [[-0.102, 0.677, 2.235], [0.102, 0.677, 2.235]], 0.009, chrome);
   // Small abstract round manufacturer's medallion, intentionally unbranded.
   add(body, new THREE.TorusGeometry(0.023, 0.0035, 5, 20), chrome, [0, 0.764, 2.232]);
-  finish(body, root);
+  // The sprung body hangs from a pivot near its centre of mass so it can roll
+  // and pitch on the suspension while the wheels stay on the road.
+  const bodyPivot = new THREE.Group(), bodyFrame = new THREE.Group();
+  bodyPivot.name = 'Sprung body'; bodyPivot.position.set(0, BODY_PIVOT_Y, 0); bodyFrame.position.set(0, -BODY_PIVOT_Y, 0);
+  bodyPivot.add(bodyFrame); root.add(bodyPivot);
+  finish(body, bodyFrame);
   // Stay inside the source bumper-to-bumper envelope, including plate and lamp relief.
   // Axles and wheel openings stay unchanged: only the final 0.5m of each overhang contracts.
   let extremity = 2.23;
@@ -302,9 +310,11 @@ export function createTouringCar(): TouringCar {
   };
   return {
     root, wheels,
-    update({ distanceM, steeringRadians, braking }) {
+    update({ distanceM, steeringRadians, braking, rollRadians = 0, pitchRadians = 0 }) {
       if (disposed) return;
       // No per-frame geometry/material allocations and no mutation of the authoritative road pose.
+      const lean = (v: number) => Number.isFinite(v) ? THREE.MathUtils.clamp(v, -MAX_LEAN, MAX_LEAN) : 0;
+      bodyPivot.rotation.set(lean(pitchRadians), 0, lean(rollRadians));
       const angle = Number.isFinite(steeringRadians) ? THREE.MathUtils.clamp(steeringRadians, -0.55, 0.55) : 0;
       const distance = Number.isFinite(distanceM) ? distanceM : 0;
       steering.setFromAxisAngle(Y, angle); rolling.setFromAxisAngle(X, -(distance / 0.337) % (Math.PI * 2));

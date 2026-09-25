@@ -10,6 +10,7 @@ import { StreetDressing } from '../street-dressing';
 import { FILM } from '../cinematic';
 import { applyArtMaterial } from '../art-materials';
 import { CurbParking } from '../curb-parking';
+import { createTouringCar } from '../vehicle';
 import type { NetworkData, RoadEdge } from '../engine';
 
 const edge = (id: number, physical: number, from: number, to: number, points: number[][], name: string, width = 8, direction = 1, type = 5): RoadEdge =>
@@ -146,6 +147,22 @@ describe('surface library', () => {
       expect(bytes.length).toBe(entry.bytes);
       expect(createHash('sha256').update(bytes).digest('hex')).toBe(entry.sha256);
     }
+  });
+});
+
+describe('car body lean', () => {
+  it('rolls and pitches only the sprung body, within bounds, leaving the wheels on the road', () => {
+    const car = createTouringCar();
+    const body = car.root.getObjectByName('Sprung body')!;
+    const wheelY = car.wheels.map(w => w.position.y);
+    car.update({ distanceM: 3, steeringRadians: 0.1, braking: true, rollRadians: -0.03, pitchRadians: -0.02 });
+    expect(body.rotation.z).toBeCloseTo(-0.03, 8);
+    expect(body.rotation.x).toBeCloseTo(-0.02, 8);
+    expect(car.wheels.map(w => w.position.y)).toEqual(wheelY);
+    car.update({ distanceM: 3, steeringRadians: 0, braking: false, rollRadians: 5, pitchRadians: Number.NaN });
+    expect(Math.abs(body.rotation.z)).toBeLessThanOrEqual(0.06);
+    expect(body.rotation.x).toBe(0);
+    car.dispose();
   });
 });
 

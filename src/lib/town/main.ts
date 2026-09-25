@@ -31,6 +31,7 @@ const ASSET_ROOT = `/town-assets/${release.directory}/`;
 const WORLD_URL = `${ASSET_ROOT}manifest.json`;
 const NETWORK_URL = `${ASSET_ROOT}network.json`;
 const SUN_OFFSET = new THREE.Vector3(-260, 205, 180);
+const BASE_FOV = 57;
 const SHADOW_MAP = 4096;
 const SHADOW_SPAN = 250;
 const SHADOW_LEAD = 55;
@@ -121,6 +122,7 @@ export async function startTown(root: HTMLElement): Promise<Session> {
   let firstFrame = true;
   // QA-only camera placement (screenshot harnesses); null in normal play.
   let debugCamera: { eye: number[]; target: number[] } | null = null;
+  const bodyLean = { roll: 0, pitch: 0 };
   let pixelRatio = qualityPixelRatio(quality, mobile, devicePixelRatio);
   let last = performance.now();
   let hudAt = 0;
@@ -219,7 +221,7 @@ export async function startTown(root: HTMLElement): Promise<Session> {
     scene = new THREE.Scene();
     scene.fog = createSummerHaze();
     restoreFog = installAerialPerspective(SUN_OFFSET);
-    const camera = new THREE.PerspectiveCamera(57, 1, 0.08, 6500);
+    const camera = new THREE.PerspectiveCamera(BASE_FOV, 1, 0.08, 6500);
     const ambient = new THREE.HemisphereLight(SUMMER_LIGHT.skyFill, SUMMER_LIGHT.groundFill, SUMMER_LIGHT.fillIntensity);
     scene.add(ambient);
     const sun = new THREE.DirectionalLight(SUMMER_LIGHT.sun, SUMMER_LIGHT.sunIntensity);
@@ -656,7 +658,15 @@ export async function startTown(root: HTMLElement): Promise<Session> {
       car!.rotation.set(Math.asin(Math.max(-1, Math.min(1, points.direction.y))), Math.atan2(-points.direction.x, -points.direction.z), 0, 'YXZ');
       const futureTangent = toWorld(engine.pose(3)[1]);
       const headingChange = Math.atan2(Math.sin(Math.atan2(-futureTangent[0], -futureTangent[2]) - car!.rotation.y), Math.cos(Math.atan2(-futureTangent[0], -futureTangent[2]) - car!.rotation.y));
-      vehicle!.update({ distanceM: engine.distance, steeringRadians: Math.max(-0.55, Math.min(0.55, Math.atan(2.6 * headingChange / 3))), braking: held.has('down') && !engine.paused });
+      // Body lean from lateral and longitudinal acceleration, eased like a
+      // damped suspension: outward roll in turns, dive under braking, squat
+      // under power. The road pose, wheels and camera anchor are unchanged.
+      const lateral = engine.speed * engine.speed * headingChange / 3, longitudinal = engine.paused ? 0 : engine.acceleration;
+      const leanEase = 1 - Math.exp(-elapsed * 6);
+      // Positive heading change is a left turn; the body rolls out to the right (negative Z).
+      bodyLean.roll += (Math.max(-0.05, Math.min(0.05, -lateral * 0.009)) - bodyLean.roll) * leanEase;
+      bodyLean.pitch += (Math.max(-0.035, Math.min(0.035, longitudinal * 0.006)) - bodyLean.pitch) * leanEase;
+      vehicle!.update({ distanceM: engine.distance, steeringRadians: Math.max(-0.55, Math.min(0.55, Math.atan(2.6 * headingChange / 3))), braking: held.has('down') && !engine.paused, rollRadians: bodyLean.roll, pitchRadians: bodyLean.pitch });
       if (cameraMode === 'hood') {
         points.wantedEye.copy(points.car).addScaledVector(points.direction, 0.95).addScaledVector(points.right, -0.28).addScaledVector(points.up, 1.42);
         points.wantedTarget.fromArray(toWorld(engine.pose(20)[0])).addScaledVector(points.up, 1.5);
@@ -682,6 +692,11 @@ export async function startTown(root: HTMLElement): Promise<Session> {
       }
       camera.position.copy(points.eye);
       camera.lookAt(points.target);
+      // The view widens a little with speed (57 to about 62 degrees at 25 m/s)
+      // for a sense of pace; the steady camera and QA views keep a fixed lens.
+      const wantedFov = BASE_FOV + (steady() || debugCamera ? 0 : Math.min(1, Math.max(0, engine.speed - 4) / 21) * 5);
+      const fov = camera.fov + (wantedFov - camera.fov) * (firstFrame ? 1 : 1 - Math.exp(-elapsed * 2.5));
+      if (Math.abs(fov - camera.fov) > 0.005) { camera.fov = fov; camera.updateProjectionMatrix(); }
       if (debugCamera) { camera.position.set(debugCamera.eye[0], debugCamera.eye[1], debugCamera.eye[2]); camera.lookAt(debugCamera.target[0], debugCamera.target[1], debugCamera.target[2]); }
       if (firstFrame) renderRequested = true;
       firstFrame = false;

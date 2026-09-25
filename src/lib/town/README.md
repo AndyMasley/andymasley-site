@@ -164,6 +164,9 @@ The September 24 overhaul adds, all as authored interpretation rather than surve
 - `atmosphere.ts` installs aerial perspective (height-dependent haze that brightens
   toward the sun) on the shared fog chunks; turf in `surfaces.ts` is a mosaic of
   dry, moist and clover patches that lightens toward grazing view angles.
+- The player's car body leans on its suspension (outward roll in turns, dive
+  under braking, squat under power) while its wheels stay on the road, and the
+  camera lens widens slightly with speed; the steady camera keeps a fixed lens.
 
 `surfaces.ts` samples the original raw RGBA land-cover data in world metres.
 Class weights are sharpened and renormalized; zero-coverage pixels stay excluded.
