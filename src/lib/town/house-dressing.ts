@@ -1,21 +1,50 @@
 import * as THREE from 'three';
 import { Builder, tileTerrain } from './street-dressing';
+import { GrassTerrain, type GrassMask } from './grass';
+import { addParkedLife, surfaceProxies, type ParkedPlacement } from './parked-life';
+import { applyArtMaterial } from './art-materials';
 
 /**
  * Front-yard dressing for houses: clipped foundation shrubs (yew, boxwood,
  * hydrangea in late-summer bloom) in dark mulch beds along the walls that face
  * the street, curbside mailboxes on local streets, aluminium gutters with
- * downspouts along the eaves of pitched roofs and painted rake boards up their
- * gables. The planting habit and
+ * downspouts along the eaves of pitched roofs, painted rake boards up their
+ * gables, and a car in some driveways. Driveways are the paved land-cover
+ * class between a house and its local street; which ones hold a car, and its
+ * colour, are authored and stable, not a record of anyone's vehicle. The planting habit and
  * mailbox forms follow ordinary New England front yards; which houses have
  * them, species, sizes and positions are authored from each building's
  * foundation outline, its doors and the nearest street. None is surveyed.
  */
 export type RoadLookup = { nearestRoad(x: number, n: number, max?: number): { x: number; n: number; z: number; tx: number; tn: number; width: number; type: number; distance: number } | null };
-export type HouseDressingReport = { buildings: number; frontWalls: number; shrubs: number; beds: number; mailboxes: number; gutterM: number; downspouts: number; rakeM: number; triangles: number };
+export type HouseDressingReport = { buildings: number; frontWalls: number; shrubs: number; beds: number; mailboxes: number; gutterM: number; downspouts: number; rakeM: number; chimneys: number; driveways: number; cars: number; triangles: number };
 
+/** Surfaces a driveway car must never stand on. */
+const DRIVEWAY_BLOCKERS = /^(?:Streetscape \||Finished parking \||Finished street corner \|)/;
+const DRIVEWAY_PALETTE = ['#ecebe3', '#aeb7b8', '#56666b', '#8e2e2b', '#263e57', '#d0c3a4', '#333739', '#647261', '#9aa3a6', '#1f2a33'];
 const FOUNDATION = /^(?:V2 inferred \| (?:foundation|concrete_wall)$|Crafted frontage \| foundation \|)/;
 type Segment = { a: THREE.Vector3; b: THREE.Vector3; nx: number; nz: number; building: number };
+type Outline = { walls: Segment[]; x0: number; x1: number; z0: number; z1: number };
+
+/** Each building's foundation walls with their plan bounds (tile-local x/z). */
+function buildingOutlines(segments: readonly Segment[]): Map<number, Outline> {
+  const outlines = new Map<number, Outline>();
+  for (const w of segments) {
+    let o = outlines.get(w.building);
+    if (!o) { o = { walls: [], x0: Infinity, x1: -Infinity, z0: Infinity, z1: -Infinity }; outlines.set(w.building, o); }
+    o.walls.push(w);
+    o.x0 = Math.min(o.x0, w.a.x, w.b.x); o.x1 = Math.max(o.x1, w.a.x, w.b.x); o.z0 = Math.min(o.z0, w.a.z, w.b.z); o.z1 = Math.max(o.z1, w.a.z, w.b.z);
+  }
+  return outlines;
+}
+
+/** Whether a tile-local point lies inside an outline (even-odd rule over its walls). */
+function inside(o: Outline, x: number, z: number): boolean {
+  if (x < o.x0 || x > o.x1 || z < o.z0 || z > o.z1) return false;
+  let crossings = 0;
+  for (const w of o.walls) if ((w.a.z > z) !== (w.b.z > z) && w.a.x + (z - w.a.z) * (w.b.x - w.a.x) / (w.b.z - w.a.z) > x) crossings++;
+  return crossings % 2 === 1;
+}
 
 function seeded(x: number, z: number, salt: number): () => number {
   let s = (Math.imul(Math.round(x * 7) ^ salt, 0x27d4eb2d) ^ Math.imul(Math.round(z * 7) + 0x165667b1, 0x85ebca6b)) >>> 0;
@@ -106,6 +135,8 @@ export class HouseDressing {
   private readonly shrub = shrubMaterial();
   private readonly mulch = mulchMaterial();
   private readonly solids: Record<string, THREE.MeshStandardMaterial>;
+  /** Driveway cars share one material per part across tiles. */
+  private readonly carMaterials = new Map<string, THREE.MeshStandardMaterial>();
 
   constructor(private readonly roads: RoadLookup) {
     const standard = (name: string, color: string, roughness: number, metalness = 0): THREE.MeshStandardMaterial => {
@@ -119,14 +150,19 @@ export class HouseDressing {
       darkPost: standard('treated post', '#4c4034', 0.85),
       gutter: standard('painted aluminium gutter', '#e4e2da', 0.5, 0.1),
       rake: standard('painted rake board', '#e7e4da', 0.72),
+      chimney: standard('brick chimney', '#8a5243', 0.9),
+      chimneyCap: standard('cast chimney cap', '#8f8c84', 0.86),
+      flue: standard('clay flue liner', '#7c4a37', 0.82),
       mulch: this.mulch,
     };
+    // Chimney brick takes the shared running-bond library texture.
+    applyArtMaterial(this.solids.chimney);
   }
 
   apply(group: THREE.Group, origin: readonly number[], level: number): HouseDressingReport {
     const existing = group.userData.houseDressing as HouseDressingReport | undefined;
     if (existing) return existing;
-    const report: HouseDressingReport = { buildings: 0, frontWalls: 0, shrubs: 0, beds: 0, mailboxes: 0, gutterM: 0, downspouts: 0, rakeM: 0, triangles: 0 };
+    const report: HouseDressingReport = { buildings: 0, frontWalls: 0, shrubs: 0, beds: 0, mailboxes: 0, gutterM: 0, downspouts: 0, rakeM: 0, chimneys: 0, driveways: 0, cars: 0, triangles: 0 };
     group.userData.houseDressing = report;
     if (level > 1) return report;
     group.updateMatrixWorld(true);
@@ -239,7 +275,10 @@ export class HouseDressing {
       if (random() < 0.4) builder.box('flag', [x - face[0] * 0.05 + face[1] * 0.1, y + 1.33, z - face[1] * 0.05 - face[0] * 0.1], face, 0.04, 0.16, 0.012);
       report.mailboxes++;
     }
+    const outlines = buildingOutlines(segments);
+    const driveways = level === 0 ? this.driveways(group, origin, [...buildings.values()], outlines, report) : [];
     this.gutters(group, inverse, builder, groundAt, report);
+    this.chimneys(group, inverse, builder, report);
     const built = builder.finish(this.solids);
     if (shrubs.length) {
       const geometry = level === 0 ? this.shrubHigh : this.shrubLow;
@@ -258,9 +297,188 @@ export class HouseDressing {
       built.add(mesh);
       report.shrubs = shrubs.length;
     }
+    if (driveways.length) {
+      addParkedLife(built, origin as [number, number, number], level, driveways, 'drivewayCars', 'Driveway | parked cars', this.carMaterials);
+      for (const material of this.carMaterials.values()) applyArtMaterial(material);
+      report.cars = driveways.length;
+    }
     if (built.children.length) { built.name = 'House dressing'; group.add(built); }
     built.traverse(o => { if (o instanceof THREE.Mesh) report.triangles += ((o.geometry.index?.count ?? o.geometry.getAttribute('position').count) / 3) * (o instanceof THREE.InstancedMesh ? o.count : 1); });
     return report;
+  }
+
+  /**
+   * A parked car on some house driveways. A driveway is the paved land-cover
+   * class between a house front and its street; the car's whole footprint must
+   * lie on it, clear of carriageways, sidewalks, curbs, aprons, parking lots
+   * and every building wall. It stands nose to the house (a few are backed
+   * in), at the head of the drive and centred across it.
+   */
+  private driveways(group: THREE.Group, origin: readonly number[], fronts: { best: Segment; bestLength: number }[], outlines: Map<number, Outline>, report: HouseDressingReport): ParkedPlacement[] {
+    const cover = group.userData.coverMask as GrassMask | undefined;
+    if (!cover) return [];
+    const [x0, z0, x1, z1] = cover.bounds, sx = cover.width / (x1 - x0), sz = cover.height / (z1 - z0);
+    const paved = (east: number, north: number): boolean => {
+      const px = Math.floor((east - x0) * sx), pz = Math.floor((-north - z0) * sz);
+      if (px < 0 || pz < 0 || px >= cover.width || pz >= cover.height) return false;
+      const i = (pz * cover.width + px) * 4;
+      return cover.data[i + 2] > 150 && cover.data[i] < 100 && cover.data[i + 1] < 100;
+    };
+    const ground = tileTerrain(group);
+    const heightAt = (east: number, north: number): number | undefined => ground.sample(east - origin[0], -north - origin[2])?.y;
+    // Streets by the network; sidewalks, curbs, aprons, lots and corner work by their triangles.
+    let blockers: GrassTerrain | undefined;
+    const blocked = (east: number, north: number): boolean => {
+      const street = this.roads.nearestRoad(east, north, 16);
+      if (street && street.distance < street.width / 2 + 0.9) return true;
+      blockers ??= new GrassTerrain(surfaceProxies(group, name => DRIVEWAY_BLOCKERS.test(name), true));
+      return !!blockers.sample(east - origin[0], -north - origin[2]);
+    };
+    const lot = (group.userData.parkedLife?.placements ?? []) as ParkedPlacement[];
+    const footprint: number[][] = [];
+    for (const u of [-2.4, -1.6, -0.8, 0, 0.8, 1.6, 2.4]) for (const v of [-1.15, 0, 1.15]) footprint.push([u, v]);
+    const placements: ParkedPlacement[] = [];
+    for (const { best, bestLength } of fronts) {
+      if (bestLength < 5 || bestLength > 24) continue;
+      const mid = best.a.clone().add(best.b).multiplyScalar(0.5);
+      const me = mid.x + origin[0], mn = -(mid.z + origin[2]);
+      const road = this.roads.nearestRoad(me, mn, 42);
+      if (!road || road.distance < 9) continue;
+      const ne = (me - road.x) / road.distance, nn = (mn - road.n) / road.distance, te = -nn, tn = ne;
+      const half = road.width / 2;
+      const near = [...outlines.values()].filter(o => o.x0 - 40 < mid.x && o.x1 + 40 > mid.x && o.z0 - 40 < mid.z && o.z1 + 40 > mid.z);
+      const clearOfBuildings = (east: number, north: number): boolean => {
+        const x = east - origin[0], z = -north - origin[2];
+        for (const o of near) {
+          if (x < o.x0 - 0.6 || x > o.x1 + 0.6 || z < o.z0 - 0.6 || z > o.z1 + 0.6) continue;
+          for (const w of o.walls) {
+            const ex = w.b.x - w.a.x, ez = w.b.z - w.a.z, t = Math.max(0, Math.min(1, ((x - w.a.x) * ex + (z - w.a.z) * ez) / (ex * ex + ez * ez || 1)));
+            if (Math.hypot(w.a.x + ex * t - x, w.a.z + ez * t - z) < 0.6) return false;
+          }
+          if (inside(o, x, z)) return false;
+        }
+        return true;
+      };
+      const fits = (depth: number, along: number): boolean => {
+        const ce = road.x + ne * depth + te * along, cn = road.n + nn * depth + tn * along;
+        if (!paved(ce, cn)) return false;
+        for (const [u, v] of footprint) if (!paved(ce + ne * u + te * v, cn + nn * u + tn * v)) return false;
+        for (const [u, v] of footprint) if (!clearOfBuildings(ce + ne * u + te * v, cn + nn * u + tn * v)) return false;
+        for (const [u, v] of footprint) if (blocked(ce + ne * u + te * v, cn + nn * u + tn * v)) return false;
+        return true;
+      };
+      let found: { depth: number; along: number } | null = null;
+      // Head of the drive first (nearest the house), then outward along the street.
+      search: for (let depth = Math.min(road.distance - 3.1, half + 28); depth >= half + 4.8; depth -= 0.5) {
+        for (let k = 0; k <= 48; k++) {
+          const along = (k % 2 ? 1 : -1) * Math.ceil(k / 2) * 0.5;
+          if (fits(depth, along)) { found = { depth, along }; break search; }
+        }
+      }
+      if (!found) continue;
+      // Centre across the paved strip.
+      let lo = found.along, hi = found.along;
+      while (lo - found.along > -3 && fits(found.depth, lo - 0.25)) lo -= 0.25;
+      while (hi - found.along < 3 && fits(found.depth, hi + 0.25)) hi += 0.25;
+      const along = (lo + hi) / 2, depth = found.depth;
+      report.driveways++;
+      const ce = road.x + ne * depth + te * along, cn = road.n + nn * depth + tn * along;
+      const random = seeded(ce, cn, 9187);
+      if (random() > 0.6) continue;
+      if ([...placements, ...lot].some(p => Math.hypot(p.center[0] - ce, p.center[1] - cn) < 5.5)) continue;
+      const nose = random() < 0.82 ? 1 : -1, fe = ne * nose, fn = nn * nose, re = fn, rn = -fe;
+      const scale = 0.95 + random() * 0.05;
+      const at = (u: number, v: number) => [ce + (fe * u + re * v) * scale, cn + (fn * u + rn * v) * scale];
+      const corners = [[-2.276, -1.14], [2.276, -1.14], [2.276, 1.14], [-2.276, 1.14]].map(([u, v]) => at(u, v));
+      const levels = [[-1.325, -0.814], [1.325, -0.814], [1.325, 0.814], [-1.325, 0.814]].map(([u, v]) => { const [e, n] = at(u, v); return heightAt(e, n); });
+      if (levels.some(h => h === undefined)) continue;
+      const h = levels as number[], mean = h.reduce((a, b) => a + b, 0) / 4;
+      const slope = ((h[1] + h[2]) - (h[0] + h[3])) / (4 * 1.325 * scale), cross = ((h[2] + h[3]) - (h[0] + h[1])) / (4 * 0.814 * scale);
+      if (Math.hypot(slope, cross) > 0.12 || Math.abs((h[0] + h[2]) - (h[1] + h[3])) > 0.08) continue;
+      if (corners.some(([e, n]) => { const y = heightAt(e, n); return y === undefined || y > mean + 0.25; })) continue;
+      placements.push({ center: [ce, cn, mean + 0.016], corners, forward: [fe, fn], grade: [slope, cross], color: DRIVEWAY_PALETTE[Math.floor(random() * DRIVEWAY_PALETTE.length)], scale });
+    }
+    return placements;
+  }
+
+  /**
+   * A brick chimney on the main ridge of most house roofs: a centre chimney
+   * or one near a gable end, rising about a metre above the ridge under a cast
+   * cap with a clay flue. Roofs are told apart as connected pieces of roof
+   * surface; garages (a vehicle door beneath), sheds (small roofs) and very
+   * large roofs get none.
+   * Which houses have one, and where, is authored.
+   */
+  private chimneys(group: THREE.Group, inverse: THREE.Matrix4, builder: Builder, report: HouseDressingReport): void {
+    const relative = new THREE.Matrix4(), p = [new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3()];
+    const garages: number[][] = group.userData.openings?.garageDoors ?? [];
+    group.traverse(object => {
+      if (!(object instanceof THREE.Mesh) || object instanceof THREE.InstancedMesh) return;
+      const material = Array.isArray(object.material) ? object.material[0] : object.material;
+      if (material?.name !== 'V2 inferred | roof') return;
+      relative.copy(inverse).multiply(object.matrixWorld);
+      const position = object.geometry.getAttribute('position'), index = object.geometry.index;
+      if (!position) return;
+      const count = index ? index.count : position.count;
+      const key = (v: THREE.Vector3) => `${Math.round(v.x * 100)},${Math.round(v.y * 100)},${Math.round(v.z * 100)}`;
+      // Roofs: triangles joined through shared corners. Plan area tells a house from a garage.
+      const ids = new Map<string, number>(), parent: number[] = [];
+      const id = (v: THREE.Vector3): number => { const k = key(v); let i = ids.get(k); if (i === undefined) { i = parent.length; ids.set(k, i); parent.push(i); } return i; };
+      const find = (i: number): number => { while (parent[i] !== i) { parent[i] = parent[parent[i]]; i = parent[i]; } return i; };
+      const triangles: { corner: number; area: number; x: number[]; z: number[] }[] = [];
+      // A ridge is a level edge shared by two differently pitched faces that both fall away from it.
+      const ridges = new Map<string, { a: THREE.Vector3; b: THREE.Vector3; corner: number; normals: THREE.Vector3[] }>();
+      for (let t = 0; t + 2 < count; t += 3) {
+        for (let k = 0; k < 3; k++) p[k].fromBufferAttribute(position, index ? index.getX(t + k) : t + k).applyMatrix4(relative);
+        const i0 = id(p[0]), i1 = id(p[1]), i2 = id(p[2]);
+        const r0 = find(i0), r1 = find(i1); if (r0 !== r1) parent[r0] = r1;
+        const r2 = find(i2), r3 = find(i1); if (r2 !== r3) parent[r2] = r3;
+        triangles.push({ corner: i0, area: Math.abs((p[1].x - p[0].x) * (p[2].z - p[0].z) - (p[2].x - p[0].x) * (p[1].z - p[0].z)) / 2, x: [p[0].x, p[1].x, p[2].x], z: [p[0].z, p[1].z, p[2].z] });
+        const n = new THREE.Vector3().subVectors(p[1], p[0]).cross(new THREE.Vector3().subVectors(p[2], p[0]));
+        if (n.lengthSq() < 1e-8) continue;
+        n.normalize(); if (n.y < 0) n.negate();
+        if (n.y < 0.3 || n.y > 0.97) continue;
+        for (let k = 0; k < 3; k++) {
+          const a = p[k], b = p[(k + 1) % 3], c = p[(k + 2) % 3];
+          if (Math.abs(a.y - b.y) > 0.03 || c.y > Math.min(a.y, b.y) - 0.3) continue;
+          const ka = key(a), kb = key(b), edge = ka < kb ? `${ka}|${kb}` : `${kb}|${ka}`;
+          const ridge = ridges.get(edge);
+          if (ridge) ridge.normals.push(n); else ridges.set(edge, { a: a.clone(), b: b.clone(), corner: i0, normals: [n] });
+        }
+      }
+      const area = new Map<number, number>(), bounds = new Map<number, number[]>();
+      for (const tri of triangles) {
+        const root = find(tri.corner);
+        area.set(root, (area.get(root) ?? 0) + tri.area);
+        const b = bounds.get(root) ?? [Infinity, Infinity, -Infinity, -Infinity];
+        b[0] = Math.min(b[0], ...tri.x); b[1] = Math.min(b[1], ...tri.z); b[2] = Math.max(b[2], ...tri.x); b[3] = Math.max(b[3], ...tri.z);
+        bounds.set(root, b);
+      }
+      // A roof over a vehicle door is a garage or a house with one attached: no chimney.
+      const garaged = (root: number): boolean => { const b = bounds.get(root)!; return garages.some(([x, , z]) => x > b[0] - 0.8 && x < b[2] + 0.8 && z > b[1] - 0.8 && z < b[3] + 0.8); };
+      // The longest ridge of each roof carries its chimney.
+      const main = new Map<number, { a: THREE.Vector3; b: THREE.Vector3; length: number }>();
+      for (const ridge of ridges.values()) {
+        if (ridge.normals.length !== 2 || ridge.normals[0].dot(ridge.normals[1]) > 0.9) continue;
+        const length = ridge.a.distanceTo(ridge.b), root = find(ridge.corner), plan = area.get(root) ?? 0;
+        if (length < 4 || plan < 62 || plan > 450 || garaged(root)) continue;
+        const known = main.get(root);
+        if (!known || length > known.length) main.set(root, { a: ridge.a, b: ridge.b, length });
+      }
+      for (const { a, b, length } of main.values()) {
+        const mid = a.clone().add(b).multiplyScalar(0.5);
+        const random = seeded(mid.x, mid.z, 6121);
+        if (random() > 0.66) continue;
+        const dir = new THREE.Vector3().subVectors(b, a).divideScalar(length);
+        const t = random() < 0.45 ? 0.5 : random() < 0.5 ? 1.15 / length : 1 - 1.15 / length;
+        const at = a.clone().addScaledVector(dir, length * t);
+        const top = at.y + 0.85 + random() * 0.4, bottom = at.y - 1.5, along = 0.62 + random() * 0.22, across = 0.6 + random() * 0.14;
+        builder.box('chimney', [at.x, (top + bottom) / 2, at.z], [dir.x, dir.z], along, top - bottom, across);
+        builder.box('chimneyCap', [at.x, top + 0.04, at.z], [dir.x, dir.z], along + 0.1, 0.08, across + 0.1);
+        builder.box('flue', [at.x, top + 0.16, at.z], [dir.x, dir.z], 0.22, 0.17, 0.22);
+        report.chimneys++;
+      }
+    });
   }
 
   /**
@@ -346,6 +564,8 @@ export class HouseDressing {
   }
 
   dispose(): void {
+    for (const material of this.carMaterials.values()) material.dispose();
+    this.carMaterials.clear();
     this.shrubHigh.dispose(); this.shrubLow.dispose();
     this.shrub.dispose(); this.mulch.dispose();
     for (const material of Object.values(this.solids)) material.dispose();

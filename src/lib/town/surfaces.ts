@@ -128,6 +128,8 @@ export class TownSurfaces {
     this.tiles.set(group, { mask, materials: [...copies.values()] });
     group.userData.pavedSurfaceMask = corrected ? replacement!.url : undefined;
     const grassMask = grassMaskFromTexture(mask, reference.bounds);
+    // House dressing reads the paved class to find driveways (no copy of the data).
+    group.userData.coverMask = grassMask ?? undefined;
     if (grassMask) {
       this.grass.register(group, id, excludeGrassPolygons(grassMask,group.userData.environmentGrassExclusions??[]), terrain);
       releaseHardscapeGrassExclusions(group);
@@ -139,7 +141,7 @@ export class TownSurfaces {
   grassResources(): ReturnType<TownGrass['resources']> { return this.grass.resources(); }
 
   private patch(material: THREE.MeshStandardMaterial, mask: THREE.Texture, bounds: number[]): void {
-    material.customProgramCacheKey = () => 'webster-finished-ground-v13';
+    material.customProgramCacheKey = () => 'webster-finished-ground-v14';
     material.onBeforeCompile = (shader, renderer) => {
       const [color, normal, roughness, soil, forest, impervious] = this.shared;
       Object.assign(shader.uniforms, {
@@ -164,6 +166,16 @@ float townHash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.54
 float townNoise(vec2 p) {
   vec2 i = floor(p), f = fract(p); f = f*f*(3.0-2.0*f);
   return mix(mix(townHash(i),townHash(i+vec2(1,0)),f.x),mix(townHash(i+vec2(0,1)),townHash(i+vec2(1,1)),f.x),f.y);
+}
+vec3 townLotHash(vec2 p) {
+  vec3 p3 = fract(vec3(p.xyx) * vec3(0.1031, 0.1030, 0.0973));
+  p3 += dot(p3, p3.yzx + 33.33);
+  return fract((p3.xxy + p3.yzz) * p3.zyx);
+}
+// Neighbouring lawns are kept differently. Authored lot-sized tints: most
+// unchanged, some lusher, some drier, some paler from recent mowing.
+vec3 townLotTint(float id) {
+  return id < 0.44 ? vec3(1.0) : id < 0.64 ? vec3(0.87,0.96,0.89) : id < 0.84 ? vec3(1.13,1.07,0.85) : vec3(1.07,1.06,0.97);
 }
 ${FOREST_LITTER_GLSL}
 vec3 townScatteredGround(sampler2D groundTexture, vec2 world, vec2 worldDx, vec2 worldDy, float repeatSize, vec3 sourceMean) {
@@ -273,6 +285,18 @@ if (townWeights.r > 0.001) {
   float townClover = smoothstep(0.62,0.74,townNoise(vTownGroundXZ/1.7+vec2(9.4,61.8)))*smoothstep(0.35,0.6,townNoise(vTownGroundXZ/9.0+vec2(2.7,5.9)));
   townGrassColor *= mix(vec3(1.0),vec3(0.80,0.92,0.95),townClover);
   townGrassColor *= mix(0.88,1.09,townMacro) * mix(0.93,1.07,townPatch);
+  // A soft patchwork of lot-sized cells (about 15-30 m) blended over a couple
+  // of metres at their borders, so adjoining yards read as separately kept.
+  vec2 townLotP = vTownGroundXZ / 21.0, townLotCell = floor(townLotP);
+  float townLotNear = 9.0, townLotNext = 9.0, townLotA = 0.0, townLotB = 0.0;
+  for (int j = -1; j <= 1; j++) for (int i = -1; i <= 1; i++) {
+    vec2 townLotC = townLotCell + vec2(float(i), float(j));
+    vec3 townLotH = townLotHash(townLotC);
+    float townLotD = length(townLotP - townLotC - 0.1 - townLotH.xy * 0.8);
+    if (townLotD < townLotNear) { townLotNext = townLotNear; townLotB = townLotA; townLotNear = townLotD; townLotA = townLotH.z; }
+    else if (townLotD < townLotNext) { townLotNext = townLotD; townLotB = townLotH.z; }
+  }
+  townGrassColor *= mix(mix(townLotTint(townLotA), townLotTint(townLotB), 0.5), townLotTint(townLotA), smoothstep(0.0, 0.09, townLotNext - townLotNear));
   vec2 townBlade = townCutBlade(vTownGroundXZ,townPixelWidth);
   townGrassColor *= 1.0 + townBlade.x * townClose * 0.24 - townBlade.y * townClose * 0.16;
   townGroundRelief += (townBlade.x*0.0014-townBlade.y*0.00055)*townWeights.r*townClose;

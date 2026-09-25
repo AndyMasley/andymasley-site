@@ -11,6 +11,7 @@ import { FILM } from '../cinematic';
 import { applyArtMaterial } from '../art-materials';
 import { CurbParking } from '../curb-parking';
 import { createTouringCar } from '../vehicle';
+import { HouseDressing, type RoadLookup } from '../house-dressing';
 import type { NetworkData, RoadEdge } from '../engine';
 
 const edge = (id: number, physical: number, from: number, to: number, points: number[][], name: string, width = 8, direction = 1, type = 5): RoadEdge =>
@@ -124,6 +125,126 @@ describe('curbside parking', () => {
     }
     expect(parking.apply(group, '0_-1', [0, 0, -250], 0)).toBe(report);
     parking.dispose();
+  });
+});
+
+describe('driveway cars', () => {
+  /** A street along north = 0 (8 m wide), houses 10 m square set back 20 m, each with a paved strip to its east half. */
+  function street(houses: number[], lot?: number) {
+    const roads: RoadLookup = { nearestRoad: (x, n, max = 40) => Math.abs(n) > max ? null : { x, n: 0, z: 10, tx: 1, tn: 0, width: 8, type: 5, distance: Math.abs(n) } };
+    const group = new THREE.Group();
+    const terrain = new THREE.Mesh(new THREE.BufferGeometry().setAttribute('position', new THREE.Float32BufferAttribute([-200, 10, 20, 200, 10, 20, 200, 10, -60, -200, 10, 20, 200, 10, -60, -200, 10, -60], 3)));
+    terrain.name = 'terrain'; group.add(terrain);
+    const walls: number[] = [], normals: number[] = [];
+    for (const hx of houses) {
+      const ring = [[hx - 5, 20], [hx + 5, 20], [hx + 5, 30], [hx - 5, 30]];
+      for (let i = 0; i < 4; i++) {
+        const [ae, an] = ring[i], [be, bn] = ring[(i + 1) % 4];
+        // Outward normal of a counter-clockwise ring in east/north is (dn, -de); x = east, z = -north.
+        const le = be - ae, ln = bn - an, l = Math.hypot(le, ln), ox = ln / l, oz = le / l;
+        const a0 = [ae, 10, -an], b0 = [be, 10, -bn], b1 = [be, 10.6, -bn], a1 = [ae, 10.6, -an];
+        for (const v of [a0, b0, b1, a0, b1, a1]) { walls.push(...v); normals.push(ox, 0, oz); }
+      }
+    }
+    const foundation = new THREE.BufferGeometry();
+    foundation.setAttribute('position', new THREE.Float32BufferAttribute(walls, 3));
+    foundation.setAttribute('normal', new THREE.Float32BufferAttribute(normals, 3));
+    const material = new THREE.MeshStandardMaterial(); material.name = 'V2 inferred | foundation';
+    group.add(new THREE.Mesh(foundation, material));
+    if (lot !== undefined) {
+      const paving = new THREE.Mesh(new THREE.BufferGeometry().setAttribute('position', new THREE.Float32BufferAttribute([lot - 2, 10.01, -4, lot + 8, 10.01, -4, lot + 8, 10.01, -20, lot - 2, 10.01, -4, lot + 8, 10.01, -20, lot - 2, 10.01, -20], 3)), new THREE.MeshStandardMaterial());
+      (paving.material as THREE.Material).name = 'Finished parking | asphalt'; group.add(paving);
+    }
+    // Land cover at 1 m: lawn everywhere, pavement from the curb to each house's front, east half.
+    const width = 400, height = 80, data = new Uint8Array(width * height * 4);
+    for (let i = 0; i < width * height; i++) data[i * 4] = 255;
+    for (const hx of [...houses, ...(lot === undefined ? [] : [lot])]) for (let n = 5; n <= 20; n++) for (let e = hx; e < hx + 4; e++) {
+      const i = (Math.floor(60 - n) * width + (e + 200)) * 4; data[i] = 0; data[i + 2] = 255;
+    }
+    group.userData.coverMask = { data, width, height, bounds: [-200, -60, 200, 20], core: [-200, -60, 200, 20] };
+    return { group, dressing: new HouseDressing(roads) };
+  }
+
+  it('parks on the paved drive, centred across it, clear of the house and the street', () => {
+    const houses = [-150, -90, -30, 30, 90, 150];
+    const { group, dressing } = street(houses);
+    const report = dressing.apply(group, [0, 0, 0], 0);
+    expect(report.driveways).toBe(houses.length);
+    expect(report.cars).toBeGreaterThan(0);
+    const built = group.getObjectByName('House dressing')!;
+    const cars = built.userData.drivewayCars.placements as { center: number[]; forward: number[]; grade: number[] }[];
+    expect(cars).toHaveLength(report.cars);
+    for (const car of cars) {
+      const hx = houses.find(h => Math.abs(car.center[0] - h - 2) < 1)!;
+      expect(hx).toBeDefined();
+      expect(car.center[0]).toBeCloseTo(hx + 2, 1); // centred on the 4 m strip
+      expect(car.center[1] + 2.3).toBeLessThan(20); // nose clear of the house front
+      expect(car.center[1] - 2.3).toBeGreaterThan(4 + 1.5); // tail clear of the carriageway and curb
+      expect(Math.abs(car.forward[1])).toBeCloseTo(1, 5);
+      expect(car.center[2]).toBeCloseTo(10.016, 3);
+      expect(car.grade).toEqual([0, 0]);
+    }
+    expect(dressing.apply(group, [0, 0, 0], 0)).toBe(report);
+    dressing.dispose();
+  });
+
+  it('never parks on a parking lot or at a distant level of detail', () => {
+    // The same house and paved frontage, but the pavement is a finished parking lot.
+    const lot = street([30], 30);
+    expect(lot.dressing.apply(lot.group, [0, 0, 0], 0).driveways).toBe(0);
+    const far = street([-30, 30]);
+    expect(far.dressing.apply(far.group, [0, 0, 0], 1).cars).toBe(0);
+  });
+});
+
+describe('chimneys', () => {
+  /** Gable-roofed buildings (east x width, north 20 to 20 + depth, eaves 3 m up) beside a street along north = 0. */
+  function block(buildings: { x: number; w: number; d: number }[]) {
+    const roads: RoadLookup = { nearestRoad: (x, n, max = 40) => Math.abs(n) > max ? null : { x, n: 0, z: 10, tx: 1, tn: 0, width: 8, type: 5, distance: Math.abs(n) } };
+    const group = new THREE.Group();
+    const walls: number[] = [], normals: number[] = [], roof: number[] = [];
+    for (const { x, w, d } of buildings) {
+      const ring = [[x - w / 2, 20], [x + w / 2, 20], [x + w / 2, 20 + d], [x - w / 2, 20 + d]];
+      for (let i = 0; i < 4; i++) {
+        const [ae, an] = ring[i], [be, bn] = ring[(i + 1) % 4];
+        const le = be - ae, ln = bn - an, l = Math.hypot(le, ln);
+        for (const v of [[ae, 10, -an], [be, 10, -bn], [be, 10.6, -bn], [ae, 10, -an], [be, 10.6, -bn], [ae, 10.6, -an]]) { walls.push(...v); normals.push(ln / l, 0, le / l); }
+      }
+      const west = x - w / 2, east = x + w / 2, ridge = -(20 + d / 2);
+      const A = [west, 13, -20], B = [east, 13, -20], C = [east, 15.5, ridge], D = [west, 15.5, ridge], E = [east, 13, -(20 + d)], F = [west, 13, -(20 + d)];
+      for (const v of [A, B, C, A, C, D, D, C, E, D, E, F]) roof.push(...v);
+    }
+    const geometry = (positions: number[], name: string, normal?: number[]) => {
+      const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+      if (normal) g.setAttribute('normal', new THREE.Float32BufferAttribute(normal, 3));
+      const m = new THREE.MeshStandardMaterial(); m.name = name; return new THREE.Mesh(g, m);
+    };
+    group.add(geometry(walls, 'V2 inferred | foundation', normals), geometry(roof, 'V2 inferred | roof'));
+    return { group, dressing: new HouseDressing(roads) };
+  }
+
+  it('crowns most house ridges with a brick chimney, never a garage', () => {
+    const houses = [-140, -100, -60, -20, 20, 60, 100, 140].map(x => ({ x, w: 10, d: 10 }));
+    const { group, dressing } = block(houses);
+    const report = dressing.apply(group, [0, 0, 0], 0);
+    expect(report.chimneys).toBeGreaterThan(0);
+    expect(report.chimneys).toBeLessThanOrEqual(houses.length);
+    const chimney = group.getObjectByName('Street dressing | chimney') as THREE.Mesh;
+    expect(chimney.castShadow).toBe(true);
+    expect((chimney.material as THREE.Material).userData.townArt?.kind).toBe('brick');
+    const box = new THREE.Box3().setFromObject(chimney);
+    expect(box.max.y).toBeGreaterThan(15.5 + 0.8);
+    expect(box.max.y).toBeLessThan(15.5 + 1.3);
+    // Every chimney stands on a ridge line (north 25), within its roof.
+    const position = chimney.geometry.getAttribute('position');
+    for (let i = 0; i < position.count; i++) expect(Math.abs(-position.getZ(i) - 25)).toBeLessThan(0.5);
+    dressing.dispose();
+    const garages = block([-100, -60, -20, 20, 60, 100].map(x => ({ x, w: 6, d: 6.5 })));
+    expect(garages.dressing.apply(garages.group, [0, 0, 0], 0).chimneys).toBe(0);
+    // The same houses with a vehicle door in each front wall.
+    const attached = block(houses);
+    attached.group.userData.openings = { doors: [], garageDoors: houses.map(h => [h.x + 2, 11.1, -20]) };
+    expect(attached.dressing.apply(attached.group, [0, 0, 0], 0).chimneys).toBe(0);
   });
 });
 

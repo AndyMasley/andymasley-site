@@ -76,3 +76,38 @@ export function addParkedLife(group: THREE.Group, origin: V3, level: number, pla
   }
   group.userData[key] = { cars: placements.length, draws, triangles, placements };
 }
+
+/**
+ * Tile-local proxies holding only the triangles whose material passes `test`,
+ * for point-on-surface queries (a GrassTerrain over them). Crafted additions
+ * are skipped unless asked for.
+ */
+export function surfaceProxies(group: THREE.Group, test: (name: string) => boolean, crafted = false): THREE.Mesh[] {
+  group.updateMatrixWorld(true);
+  const inverse = group.matrixWorld.clone().invert(), proxies: THREE.Mesh[] = [];
+  group.traverse(object => {
+    if (!(object instanceof THREE.Mesh) || object instanceof THREE.InstancedMesh || (!crafted && object.userData.townCrafted)) return;
+    const materials = Array.isArray(object.material) ? object.material : [object.material];
+    const pass = (m: THREE.Material | undefined) => !!m?.name && test(m.name);
+    if (!materials.some(pass)) return;
+    const geometry = object.geometry as THREE.BufferGeometry, position = geometry.getAttribute('position'), index = geometry.index;
+    if (!position) return;
+    const count = index ? index.count : position.count, groups = geometry.groups.length ? geometry.groups : [{ start: 0, count, materialIndex: 0 }];
+    const out: number[] = [];
+    for (const g of groups) {
+      if (!pass(materials[g.materialIndex ?? 0])) continue;
+      for (let i = g.start; i < Math.min(count, g.start + g.count); i++) {
+        const v = index ? index.getX(i) : i;
+        out.push(position.getX(v), position.getY(v), position.getZ(v));
+      }
+    }
+    if (!out.length) return;
+    const proxyGeometry = new THREE.BufferGeometry();
+    proxyGeometry.setAttribute('position', new THREE.Float32BufferAttribute(out, 3));
+    const proxy = new THREE.Mesh(proxyGeometry);
+    proxy.matrixAutoUpdate = false;
+    proxy.matrixWorld.copy(inverse).multiply(object.matrixWorld);
+    proxies.push(proxy);
+  });
+  return proxies;
+}

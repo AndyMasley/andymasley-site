@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import type { NetworkData, RoadEdge } from './engine';
 import { GrassTerrain } from './grass';
-import { addParkedLife, type ParkedPlacement } from './parked-life';
+import { addParkedLife, surfaceProxies, type ParkedPlacement } from './parked-life';
 import { applyArtMaterial } from './art-materials';
 
 /**
@@ -64,7 +64,7 @@ export class CurbParking {
     const report: CurbParkingReport = { cars: 0, spaces: 0 };
     group.userData.curbParking = report;
     if (level > 1) return report;
-    const aprons = apronProxies(group);
+    const aprons = surfaceProxies(group, name => name.startsWith(APRON));
     if (!aprons.length) return report;
     const ground = new GrassTerrain(aprons);
     const placements: ParkedPlacement[] = [];
@@ -130,35 +130,4 @@ export class CurbParking {
     for (const material of this.materials.values()) material.dispose();
     this.materials.clear();
   }
-}
-
-/** Tile-local proxies holding only parking-apron triangles. */
-function apronProxies(group: THREE.Group): THREE.Mesh[] {
-  group.updateMatrixWorld(true);
-  const inverse = group.matrixWorld.clone().invert(), proxies: THREE.Mesh[] = [];
-  group.traverse(object => {
-    if (!(object instanceof THREE.Mesh) || object instanceof THREE.InstancedMesh || object.userData.townCrafted) return;
-    const materials = Array.isArray(object.material) ? object.material : [object.material];
-    const apron = (m: THREE.Material | undefined) => !!m?.name?.startsWith(APRON);
-    if (!materials.some(apron)) return;
-    const geometry = object.geometry as THREE.BufferGeometry, position = geometry.getAttribute('position'), index = geometry.index;
-    if (!position) return;
-    const count = index ? index.count : position.count, groups = geometry.groups.length ? geometry.groups : [{ start: 0, count, materialIndex: 0 }];
-    const out: number[] = [];
-    for (const g of groups) {
-      if (!apron(materials[g.materialIndex ?? 0])) continue;
-      for (let i = g.start; i < g.start + g.count; i++) {
-        const v = index ? index.getX(i) : i;
-        out.push(position.getX(v), position.getY(v), position.getZ(v));
-      }
-    }
-    if (!out.length) return;
-    const proxyGeometry = new THREE.BufferGeometry();
-    proxyGeometry.setAttribute('position', new THREE.Float32BufferAttribute(out, 3));
-    const proxy = new THREE.Mesh(proxyGeometry);
-    proxy.matrixAutoUpdate = false;
-    proxy.matrixWorld.copy(inverse).multiply(object.matrixWorld);
-    proxies.push(proxy);
-  });
-  return proxies;
 }

@@ -414,7 +414,7 @@ export class Builder {
       g.computeBoundingBox(); g.computeBoundingSphere();
       const mesh = new THREE.Mesh(g, materials[role]);
       mesh.name = `Street dressing | ${role}`; mesh.userData.townCrafted = true;
-      mesh.castShadow = role === 'wood' || role === 'hydrant'; mesh.receiveShadow = true;
+      mesh.castShadow = role === 'wood' || role === 'hydrant' || role === 'chimney'; mesh.receiveShadow = true;
       group.add(mesh);
     }
     if (this.wires.p.length) {

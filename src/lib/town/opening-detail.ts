@@ -59,10 +59,10 @@ function hashCenter(x: number, y: number, z: number): number {
 
 /** Adds opening coordinates to every eligible glass/door geometry once.
  * `origin` is the tile translation, so seeds differ between tiles. */
-export function prepareOpenings(root: THREE.Object3D, origin: readonly number[] = [0, 0, 0]): { openings: number; bytes: number; doors: number[][] } {
+export function prepareOpenings(root: THREE.Object3D, origin: readonly number[] = [0, 0, 0]): { openings: number; bytes: number; doors: number[][]; garageDoors: number[][] } {
   root.updateMatrixWorld(true);
   let openings = 0, bytes = 0;
-  const doors: number[][] = [];
+  const doors: number[][] = [], garageDoors: number[][] = [];
   root.traverse(object => {
     if (!(object instanceof THREE.Mesh) || object instanceof THREE.InstancedMesh) return;
     const material = Array.isArray(object.material) ? object.material[0] : object.material;
@@ -116,6 +116,8 @@ export function prepareOpenings(root: THREE.Object3D, origin: readonly number[] 
       openings++;
       // Tile-local door centres let planting and mailboxes keep entries clear.
       if (/door/.test(material.name) && height > 1.6) doors.push([mx + object.matrixWorld.elements[12], (ymin + ymax) / 2 + object.matrixWorld.elements[13], mz + object.matrixWorld.elements[14]]);
+      // Doors wider than a person's entry are vehicle (garage) doors.
+      if (/door/.test(material.name) && height > 1.6 && width > 2.2) garageDoors.push([mx + object.matrixWorld.elements[12], (ymin + ymax) / 2 + object.matrixWorld.elements[13], mz + object.matrixWorld.elements[14]]);
       const worldX = mx + object.matrixWorld.elements[12] + origin[0], worldZ = mz + object.matrixWorld.elements[14] + origin[2];
       const seed = hashCenter(worldX, (ymin + ymax) / 2 + object.matrixWorld.elements[13] + origin[1], worldZ);
       // 64 centred seed levels survive varying interpolation error intact.
@@ -131,7 +133,7 @@ export function prepareOpenings(root: THREE.Object3D, origin: readonly number[] 
     geometry.setAttribute(OPENING_ATTRIBUTE, new THREE.BufferAttribute(values, 4));
     bytes += values.byteLength;
   });
-  return { openings, bytes, doors };
+  return { openings, bytes, doors, garageDoors };
 }
 
 /** Shared frame for glass and doors: the visible face, its horizontal axis and

@@ -158,9 +158,18 @@ The September 24 overhaul adds, all as authored interpretation rather than surve
   streets without mapped poles; `street-signs.ts` puts green street-name blades
   on a galvanized post at a corner of each named intersection.
 - `house-dressing.ts` adds foundation shrubs and mulch beds along street-facing
-  walls, curbside mailboxes on local streets, and gutters with downspouts along
-  pitched eaves; `curb-parking.ts` parallel-parks cars on registered curbside
-  parking aprons only.
+  walls, curbside mailboxes on local streets, gutters with downspouts along
+  pitched eaves, painted rake boards, a brick chimney (capped, with a clay flue)
+  on the main ridge of about two in three house roofs (never garages or sheds,
+  told apart by roof area), and a parked car in some driveways. A driveway is the
+  paved land-cover class between a house front and its street; the car's whole
+  footprint must lie on it, clear of streets, sidewalks, curbs, aprons, parking
+  lots and building walls. `curb-parking.ts` parallel-parks cars on registered
+  curbside parking aprons only. Occupancy, colours and chimney positions are
+  authored and stable, not records of any property.
+- Inferred brick walls take the running-bond brick set; lawns in `surfaces.ts`
+  also vary lot by lot (a soft patchwork of lusher, drier and paler cells about
+  15 to 30 m across).
 - `atmosphere.ts` installs aerial perspective (height-dependent haze that brightens
   toward the sun) on the shared fog chunks; turf in `surfaces.ts` is a mosaic of
   dry, moist and clover patches that lightens toward grazing view angles.

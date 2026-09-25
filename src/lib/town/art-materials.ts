@@ -19,6 +19,7 @@ const LIBRARY: Partial<Record<ArtKind, LibraryUse>> = {
   concrete: { set: 'concrete', mode: 'auto', normal: 1.0, roughness: 0.7, occlusion: 0.6 },
   granite: { set: 'granite', mode: 'auto', normal: 1.0, roughness: 0.8, occlusion: 0.6 },
   foundation: { set: 'foundation', mode: 'auto', normal: 1.0, roughness: 0.8, occlusion: 0.7 },
+  brick: { set: 'brick', mode: 'wall', normal: 1.0, roughness: 0.9, occlusion: 0.8 },
 };
 
 /** Stable relative tone of each asphalt family against the ordinary drive surface. */
@@ -62,6 +63,7 @@ const kinds: Record<string, ArtKind> = {
   'Drive car | smoked reflective glass': 'car-glass', 'Drive car | rubber': 'rubber',
   'Parked | spruce': 'car-paint', 'Parked | graphite': 'car-paint', 'Parked | silver': 'car-paint',
   'Parked | warm white': 'car-paint',
+  'House dressing | brick chimney': 'brick',
   'Mapped water | inferred level and appearance': 'water',
   'Boundary context | water': 'water',
 };
@@ -132,6 +134,10 @@ diffuseColor.rgb = townLibAlb * townRoofTint;
 `;
   if (kind === 'flat-roof') return start + `
 diffuseColor.rgb *= townLibAlb / max(vec3(0.02), townLibMean) * mix(0.9,1.08,townArtNoise(vTownArtWorld.xz*0.21));
+`;
+  if (kind === 'brick') return start + `
+// Running-bond courses relative to the painted brick colour; walls differ a little in firing.
+diffuseColor.rgb *= townLibAlb / max(vec3(0.02), townLibMean) * mix(0.95,1.05,townArtNoise(vTownArtWorld.xz*0.31+vec2(vTownArtWorld.y*0.29)));
 `;
   // Later family colour changes (inventory clones) scale the material colour;
   // keep them relative to the tone this module assigned. The neutralization
