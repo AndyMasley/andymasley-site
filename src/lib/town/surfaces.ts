@@ -32,6 +32,9 @@ export class TownSurfaces {
   private upgradeRetryAt = 0;
   private upgradeFailures = 0;
   private shaders = new Map<THREE.Material, Set<Record<string, THREE.IUniform>>>();
+  /** Shared by every ground material: 0 on Low and mobile, which skip the
+   * close-range turf, stripe, crack and edge-noise detail. */
+  private detail = { value: 1 };
 
   constructor(private definition: GroundSurfaces, private read: TextureReader) {}
 
@@ -151,7 +154,7 @@ export class TownSurfaces {
     }
   }
 
-  update(position: V3, low: boolean, time: number): void { this.grass.update(position, low, time); }
+  update(position: V3, low: boolean, time: number): void { this.detail.value = low ? 0 : 1; this.grass.update(position, low, time); }
 
   grassResources(): ReturnType<TownGrass['resources']> { return this.grass.resources(); }
 
@@ -176,7 +179,7 @@ export class TownSurfaces {
         townSoil: { value: soil ?? color }, townForest: { value: forest ?? color }, townPavement: { value: paving.texture },
         townOtherRepeats: { value: new THREE.Vector3(this.definition.soil?.repeatM ?? 1, this.definition.forest?.repeatM ?? 1, this.definition.impervious?.repeatM ?? 2) },
         townHasPavement: { value: impervious ? 1 : 0 },
-        townPavedTile: { value: paving.tile }, townPavedGain: { value: paving.gain },
+        townPavedTile: { value: paving.tile }, townPavedGain: { value: paving.gain }, townGroundDetail: this.detail,
       });
       let versions = this.shaders.get(material); if (!versions) { versions = new Set(); this.shaders.set(material, versions); } versions.add(shader.uniforms);
       shader.vertexShader = `varying vec2 vTownGroundXZ;\n${shader.vertexShader}`
@@ -187,7 +190,7 @@ uniform sampler2D townCover, townGrass, townGrassNormal, townGrassRoughness;
 uniform sampler2D townSoil, townForest, townPavement;
 uniform vec4 townCoverBounds;
 uniform vec3 townOtherRepeats;
-uniform float townGrassRepeat, townHasPavement, townPavedTile, townPavedGain;
+uniform float townGrassRepeat, townHasPavement, townPavedTile, townPavedGain, townGroundDetail;
 float townHash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
 float townNoise(vec2 p) {
   vec2 i = floor(p), f = fract(p); f = f*f*(3.0-2.0*f);
@@ -281,8 +284,12 @@ float townVerge = smoothstep(0.26, 0.49, townPavedShare) * (1.0 - townPavedCover
 // canopy and soil shares are nudged by a metre-scale field before the three
 // are sharpened, so broad fades in the source become irregular edges a
 // metre or two wide. Excluded water and buildings gain no coverage.
-float townEdgeNoise = townNoise(vTownGroundXZ*0.37+vec2(4.1,9.3)) + (townNoise(vTownGroundXZ*1.21+vec2(13.7,2.9))-0.5)*0.55 - 0.5;
-vec3 townOthers = townWeights.rga * vec3(1.0, 1.0+townEdgeNoise*0.7, 1.0-townEdgeNoise*0.5);
+vec3 townOthers = townWeights.rga;
+// Only where two classes actually meet; a single class normalizes the same.
+if (townGroundDetail > 0.5 && dot(townOthers,vec3(1.0)) - max(townOthers.x,max(townOthers.y,townOthers.z)) > 0.004) {
+  float townEdgeNoise = townNoise(vTownGroundXZ*0.37+vec2(4.1,9.3)) + (townNoise(vTownGroundXZ*1.21+vec2(13.7,2.9))-0.5)*0.55 - 0.5;
+  townOthers *= vec3(1.0, 1.0+townEdgeNoise*0.7, 1.0-townEdgeNoise*0.5);
+}
 townOthers *= townOthers; townOthers *= townOthers;
 townOthers *= townCoverage*(1.0-townPavedCover) / max(dot(townOthers,vec3(1.0)),1e-8);
 townWeights = vec4(townOthers.x, townOthers.y, townPavedCover*townCoverage, townOthers.z);
@@ -337,15 +344,18 @@ if (townWeights.r > 0.001) {
   // Turf is clumped at two scales the atlas cannot carry past a few metres:
   // tussocks a hand across and clumps about a stride across, the lighter ones
   // a little yellower. Each fades out before its pixels could alias.
-  float townTuss = townNoise(vTownGroundXZ*6.3+vec2(3.1,7.7));
-  float townClump = townNoise(vTownGroundXZ*1.7+vec2(8.3,1.2));
   float townTussVis = 1.0 - smoothstep(0.03, 0.10, townPixelWidth);
   float townClumpVis = 1.0 - smoothstep(0.10, 0.34, townPixelWidth);
-  townGrassColor *= (1.0 + (townTuss-0.5)*0.30*townTussVis) * (1.0 + (townClump-0.5)*0.26*townClumpVis);
-  townGrassColor *= mix(vec3(1.0), vec3(1.06,1.02,0.88), clamp(townClump*2.0-1.0,0.0,1.0)*townClumpVis);
-  townGroundRelief += ((townTuss-0.5)*0.0022*townTussVis + (townClump-0.5)*0.006*townClumpVis)*townWeights.r;
+  float townClump = 0.5;
+  if (townGroundDetail > 0.5 && townClumpVis > 0.0) {
+    townClump = townNoise(vTownGroundXZ*1.7+vec2(8.3,1.2));
+    float townTuss = townTussVis > 0.0 ? townNoise(vTownGroundXZ*6.3+vec2(3.1,7.7)) : 0.5;
+    townGrassColor *= (1.0 + (townTuss-0.5)*0.30*townTussVis) * (1.0 + (townClump-0.5)*0.26*townClumpVis);
+    townGrassColor *= mix(vec3(1.0), vec3(1.06,1.02,0.88), clamp(townClump*2.0-1.0,0.0,1.0)*townClumpVis);
+    townGroundRelief += ((townTuss-0.5)*0.0022*townTussVis + (townClump-0.5)*0.006*townClumpVis)*townWeights.r;
+  }
   float townLawnDrift = townNoise(vTownGroundXZ/8.3+vec2(6.1,27.3));
-  float townLawnVariation = clamp(townLawnDrift+(townPatch-0.5)*0.34+(townClump-0.5)*0.22,0.0,1.0);
+  float townLawnVariation = clamp(townLawnDrift+(townPatch-0.5)*0.34+(townClump-0.5)*0.22*townClumpVis,0.0,1.0);
   float townDryThatch = smoothstep(0.62,0.92,townLawnVariation);
   // Late-summer turf is a mosaic: straw-toned dry runs with ragged edges,
   // deeper green where it stays moist, and blue-green clover patches a metre
@@ -362,13 +372,14 @@ if (townWeights.r > 0.001) {
   // bands a mower deck wide lighten or darken with the viewing direction.
   // Whether a yard shows them, and their heading, is chosen lot by lot.
   vec3 townMow = townLotHash(townLotCellA + vec2(17.0,5.0));
-  vec2 townMowDir = vec2(cos(townMow.x*3.14159), sin(townMow.x*3.14159));
-  float townMowCoord = dot(vTownGroundXZ, vec2(-townMowDir.y, townMowDir.x)) / 0.56;
   float townMowAA = townPixelWidth / 0.56;
-  float townMowWave = clamp(sin(townMowCoord*3.14159265)*2.2, -1.0, 1.0) * (1.0 - smoothstep(0.25, 0.7, townMowAA));
-  float townMowShown = step(0.52, townMow.y) * smoothstep(0.02, 0.1, townLotEdge);
-  vec2 townViewXZ = normalize(cameraPosition.xz - vTownGroundXZ + vec2(0.0001));
-  townGrassColor *= 1.0 + 0.085 * townMowWave * dot(townViewXZ, townMowDir) * townMowShown;
+  if (townGroundDetail > 0.5 && townMow.y > 0.52 && townMowAA < 0.7) {
+    vec2 townMowDir = vec2(cos(townMow.x*3.14159), sin(townMow.x*3.14159));
+    float townMowCoord = dot(vTownGroundXZ, vec2(-townMowDir.y, townMowDir.x)) / 0.56;
+    float townMowWave = clamp(sin(townMowCoord*3.14159265)*2.2, -1.0, 1.0) * (1.0 - smoothstep(0.25, 0.7, townMowAA));
+    vec2 townViewXZ = normalize(cameraPosition.xz - vTownGroundXZ + vec2(0.0001));
+    townGrassColor *= 1.0 + 0.085 * townMowWave * dot(townViewXZ, townMowDir) * smoothstep(0.02, 0.1, townLotEdge);
+  }
   // The verge along paving: thinner, straw and soil-toned turf.
   townGrassColor = mix(townGrassColor, townGrassColor*vec3(1.2,1.04,0.74)+vec3(0.010,0.007,0.002), townVerge*0.75);
   vec2 townBlade = townCutBlade(vTownGroundXZ,townPixelWidth);
@@ -426,11 +437,13 @@ if (townWeights.b*townHasPavement > 0.001) {
   townPavedColor *= mix(vec3(1.0), vec3(1.05,1.02,0.95), (1.0-smoothstep(0.5,0.66,townPavedShare))*0.6);
   // Hairline cracks meander through the older half of the paving. A warped
   // noise contour a couple of centimetres wide, drawn only while resolved.
-  float townCrackField = townNoise(vTownGroundXZ*0.55+vec2(townNoise(vTownGroundXZ*1.7+vec2(3.3,8.1))*0.9,0.0));
-  float townCrack = (1.0-smoothstep(0.0, 0.011+townPixelWidth*0.45, abs(townCrackField-0.5)))
-    * (1.0-smoothstep(0.02,0.06,townPixelWidth)) * smoothstep(0.42,0.62,townNoise(vTownGroundXZ*0.083+vec2(9.1,2.3)));
-  townPavedColor *= 1.0 - 0.3*townCrack;
-  townGroundRelief -= townCrack*0.0018*townWeights.b;
+  if (townGroundDetail > 0.5 && townPixelWidth < 0.06) {
+    float townCrackField = townNoise(vTownGroundXZ*0.55+vec2(townNoise(vTownGroundXZ*1.7+vec2(3.3,8.1))*0.9,0.0));
+    float townCrack = (1.0-smoothstep(0.0, 0.011+townPixelWidth*0.45, abs(townCrackField-0.5)))
+      * (1.0-smoothstep(0.02,0.06,townPixelWidth)) * smoothstep(0.42,0.62,townNoise(vTownGroundXZ*0.083+vec2(9.1,2.3)));
+    townPavedColor *= 1.0 - 0.3*townCrack;
+    townGroundRelief -= townCrack*0.0018*townWeights.b;
+  }
   float townPavedAggregate = townNoise(vTownGroundXZ*23.0+vec2(5.3,1.8));
   float townPavedResolved = townClose*(1.0-smoothstep(0.008,0.048,townPixelWidth));
   townPavedColor *= 1.0+(townPavedAggregate-0.5)*0.12*townPavedResolved;
