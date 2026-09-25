@@ -135,7 +135,7 @@ type Candidate = { tile: GrassTile; x: number; y: number; z: number; seed: numbe
 
 export function tuftGeometry(): THREE.BufferGeometry {
   const positions: number[] = [], colors: number[] = [], roots: number[] = [], indices: number[] = [];
-  const root = new THREE.Color('#405333'), middle = new THREE.Color('#556a42'), tip = new THREE.Color('#687a4b'), dryTip = new THREE.Color('#7d8255');
+  const root = new THREE.Color('#4a5d3b'), middle = new THREE.Color('#5a6f45'), tip = new THREE.Color('#687a4b'), dryTip = new THREE.Color('#7d8255');
   for (let blade = 0; blade < 6; blade++) {
     // Three paired sprays read as small turf clumps instead of six isolated
     // needles. Their full footprint stays inside the original 0.2m root radius.

@@ -22,7 +22,9 @@ describe('crafted facade material continuity',()=>{
    const m=frontageMaterial(role,'#956b54'),shader=compile(m);
    expect(shader.fragmentShader).not.toContain('craftedGroundNoise');expect(shader.fragmentShader).not.toContain('craftedPaving');
    expect(shader.fragmentShader).toContain('float craftedNoise = sin(vCraftedWorld.x*4.41+vCraftedWorld.z*2.35)*sin(vCraftedWorld.z*7.63-vCraftedWorld.x*1.14)');
-   expect(m.customProgramCacheKey()).toBe(`crafted-frontages-v3:${role}`);expect(m.color.getHexString()).toBe('956b54');m.dispose();
+   // Library roles name the surface library state (off here: nothing is loaded in unit tests).
+   const library=['wall','roof','foundation','shingle','brick'].includes(role)?'|surface-library-v1:off':'';
+   expect(m.customProgramCacheKey()).toBe(`crafted-frontages-v3:${role}${library}`);expect(m.color.getHexString()).toBe('956b54');m.dispose();
   }
  });
  it('uses stable interpolated world normals for masonry orientation rather than differentiated large coordinates',()=>{for(const role of ['brick','stone','roof','shingle'] as const){const m=frontageMaterial(role,'#956b54'),shader=compile(m);expect(shader.vertexShader).toContain('inverseTransformDirection(transformedNormal,viewMatrix)');expect(shader.fragmentShader).toContain('normalize(vCraftedWorldNormal)');expect(shader.fragmentShader).not.toContain('cross(dFdx(vCraftedWorld),dFdy(vCraftedWorld))');expect(shader.fragmentShader.match(/#include <map_fragment>/g)).toHaveLength(1);expect(shader.fragmentShader.match(/#include <normal_fragment_maps>/g)).toHaveLength(1);expect(shader.vertexShader.indexOf('vCraftedWorldNormal =')).toBeGreaterThan(shader.vertexShader.indexOf('#include <defaultnormal_vertex>'));m.dispose();}});

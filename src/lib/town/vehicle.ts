@@ -71,16 +71,18 @@ export function createTouringCar(): TouringCar {
   const material = (name: string, color: number, roughness: number, metalness = 0): Material => {
     const m = new THREE.MeshStandardMaterial({ name, color, roughness, metalness }); materials.add(m); return m;
   };
-  const paint = new THREE.MeshPhysicalMaterial({ name: 'Touring | deep mineral teal metallic', color: 0x245d61, roughness: 0.28, metalness: 0.58,
-    clearcoat: 0.8, clearcoatRoughness: 0.19, envMapIntensity: 1.2 }); materials.add(paint);
+  // Metallic base under a glossy clear coat: the coat carries crisp sky and
+  // horizon reflections along the flanks; the flake layer keeps a soft sheen.
+  const paint = new THREE.MeshPhysicalMaterial({ name: 'Touring | deep mineral teal metallic', color: 0x245d61, roughness: 0.34, metalness: 0.62,
+    clearcoat: 1.0, clearcoatRoughness: 0.055, envMapIntensity: 1.25 }); materials.add(paint);
   const shadowPaint = material('Touring | lower satin teal', 0x183c40, 0.41, 0.35);
   const rubber = material('Touring | fine matte tyre rubber', 0x141617, 0.84);
   const trim = material('Touring | graphite seals and grille', 0x131d21, 0.52, 0.12);
   const alloy = material('Touring | machined aluminium', 0xc2c8c9, 0.27, 0.86);
   const darkAlloy = material('Touring | graphite wheel barrel', 0x3c474c, 0.33, 0.76);
   const chrome = material('Touring | satin brightwork', 0xaebfc3, 0.23, 0.85);
-  const glass = new THREE.MeshPhysicalMaterial({ name: 'Touring | smoked automotive glass', color: 0x293f49, metalness: 0.22, roughness: 0.09,
-    clearcoat: 1, clearcoatRoughness: 0.08, transparent: true, opacity: 0.82, depthWrite: false, side: THREE.DoubleSide, envMapIntensity: 1.35 }); materials.add(glass);
+  const glass = new THREE.MeshPhysicalMaterial({ name: 'Touring | smoked automotive glass', color: 0x1a2226, metalness: 0.22, roughness: 0.06,
+    clearcoat: 1, clearcoatRoughness: 0.04, transparent: true, opacity: 0.86, depthWrite: false, side: THREE.DoubleSide, envMapIntensity: 1.35 }); materials.add(glass);
   const interior = material('Touring | warm charcoal interior', 0x292c2b, 0.9);
   const red = material('Touring | ruby rear lamp', 0x8d1014, 0.23, 0.16); red.emissive.setHex(0xff251b); red.emissiveIntensity = 0.12;
   const led = material('Touring | warm white running lamps', 0xe2e8df, 0.21, 0.22); led.emissive.setHex(0xfff4d8); led.emissiveIntensity = 0.65;

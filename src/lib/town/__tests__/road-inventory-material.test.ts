@@ -32,7 +32,7 @@ describe('Inventory road appearance', () => {
     expect(compiled.fragmentShader).toContain(`townArtHeight = townFineValue*${spec.relief}+townAggregateValue*${spec.aggregateRelief};`);
     expect(compiled.fragmentShader).toContain(`townArtClose * (1.0-smoothstep(${spec.resolved[0]},${spec.resolved[1]},townArtFootprint))`);
     expect(compiled.fragmentShader).toContain(`townArtClose * (1.0-smoothstep(0.25,1.05,townArtFootprint*${spec.aggregate.toFixed(1)}))`);
-    expect(compiled.fragmentShader.match(/townArtNoise\(/g)).toHaveLength(4); // Three shared mineral reads and the function declaration.
+    expect(compiled.fragmentShader.match(/townArtNoise\(/g)).toHaveLength(12); // Declaration, three shared mineral reads and eight lane-wear reads (road-wear.ts).
     if(code===2){expect(compiled.fragmentShader).toContain('townArtFootprint*22.0');expect(compiled.fragmentShader).not.toContain('fwidth(townGravelRadius)');}
     expect(compiled.fragmentShader.match(/#include <map_fragment>/g)).toHaveLength(1);
     expect(variant.map).toBe(original.map);expect(variant.normalMap).toBe(original.normalMap);

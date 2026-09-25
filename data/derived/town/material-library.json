@@ -1,0 +1,224 @@
+{
+  "version": 1,
+  "library": "v1",
+  "provenance": "Procedurally authored from fixed seeds by scripts/town_material_library/generate.py; no photographs or third-party images.",
+  "convention": "Rows follow texture v (flipY false). Normal maps are tangent-space OpenGL (+y along +v). ORM: R ambient occlusion, G roughness, B metalness (0).",
+  "materials": {
+    "clapboard": {
+      "tileM": 2.0,
+      "description": "Painted lapped clapboard, 0.10 m exposure; neutral white to be tinted by paint colour.",
+      "meanLinearAlbedo": [
+        0.88401,
+        0.88401,
+        0.88401
+      ],
+      "albedo": {
+        "url": "clapboard-albedo.webp",
+        "bytes": 34612,
+        "sha256": "4f75f62e97df5880c4d95f8e9e116475eff3614875cad892071e2e8c1e681bed",
+        "size": 1024
+      },
+      "normal": {
+        "url": "clapboard-normal.webp",
+        "bytes": 76724,
+        "sha256": "6c18ff38a86017fcea69505202f770188b8a0379ff489fb701d698484398ce25",
+        "size": 1024
+      },
+      "orm": {
+        "url": "clapboard-orm.webp",
+        "bytes": 48058,
+        "sha256": "deb9025a8ad9a493ee3318cea55e3e312ceb43ab9138fb52548e4c5fecdda0b0",
+        "size": 512
+      }
+    },
+    "shingles": {
+      "tileM": 3.92,
+      "description": "Laminated architectural asphalt shingles, 0.14 m exposure, blended charcoal and grey granules.",
+      "meanLinearAlbedo": [
+        0.05932,
+        0.05899,
+        0.06001
+      ],
+      "albedo": {
+        "url": "shingles-albedo.webp",
+        "bytes": 170846,
+        "sha256": "d0537fee402fab7be502a49485bae2a856f6a15c147f3f2a4217616f743e86c7",
+        "size": 1024
+      },
+      "normal": {
+        "url": "shingles-normal.webp",
+        "bytes": 157700,
+        "sha256": "af0c47dc64f3473f4c78bcf569bf368b93214079431f72cf5be4b5d374d8f8d5",
+        "size": 1024
+      },
+      "orm": {
+        "url": "shingles-orm.webp",
+        "bytes": 56284,
+        "sha256": "544cbe34d003462a1cb1c38ed5cf814fe45a0844f5453ccea8cebcd4132ee621",
+        "size": 512
+      }
+    },
+    "asphalt": {
+      "tileM": 2.0,
+      "description": "Weathered dense-graded asphalt: oxidised grey binder with exposed 6-16 mm aggregate.",
+      "meanLinearAlbedo": [
+        0.12845,
+        0.12849,
+        0.12872
+      ],
+      "albedo": {
+        "url": "asphalt-albedo.webp",
+        "bytes": 579798,
+        "sha256": "7d9b41fba65e65d9e484c71f63024d0a4d63f65d8d729ba7c200551c58bd9f6b",
+        "size": 1024
+      },
+      "normal": {
+        "url": "asphalt-normal.webp",
+        "bytes": 650132,
+        "sha256": "8224691a4672696498a3fd5337b454352b883b1d868afb43edd1167c87e4738b",
+        "size": 1024
+      },
+      "orm": {
+        "url": "asphalt-orm.webp",
+        "bytes": 131264,
+        "sha256": "804f7e3af6d5870dc038df2c74d5c369464be7487bbc6b4a01a121abf92271aa",
+        "size": 512
+      }
+    },
+    "concrete": {
+      "tileM": 2.0,
+      "description": "Broom-finished sidewalk concrete with sand, pits and mild staining.",
+      "meanLinearAlbedo": [
+        0.38697,
+        0.38314,
+        0.36973
+      ],
+      "albedo": {
+        "url": "concrete-albedo.webp",
+        "bytes": 278644,
+        "sha256": "6b0ff2fdb2d64c3b797922f6d95be2729278e211561c49ef3347a8593b7d6e0d",
+        "size": 1024
+      },
+      "normal": {
+        "url": "concrete-normal.webp",
+        "bytes": 48030,
+        "sha256": "efb843ac24a99af964632124a7bf6917ac6ed35a89a83f3ec416df435fdde787",
+        "size": 512
+      },
+      "orm": {
+        "url": "concrete-orm.webp",
+        "bytes": 74826,
+        "sha256": "a9fd0e452bc41d25e9806cbdcfa90894067723f858c1a332425cd7058eb8aa84",
+        "size": 512
+      }
+    },
+    "granite": {
+      "tileM": 1.0,
+      "description": "Sawn grey curb granite with feldspar, quartz and biotite grains.",
+      "meanLinearAlbedo": [
+        0.26823,
+        0.26265,
+        0.25274
+      ],
+      "albedo": {
+        "url": "granite-albedo.webp",
+        "bytes": 119012,
+        "sha256": "2b553efa99a43f59295234cb4f7b9facc2c9fefe63302d9fb8ddb753211d7c95",
+        "size": 512
+      },
+      "normal": {
+        "url": "granite-normal.webp",
+        "bytes": 18428,
+        "sha256": "70f73f178deeffc02f5534a9d5ca19f2f4ebc933a52dea98aaba8538b6f87e40",
+        "size": 512
+      },
+      "orm": {
+        "url": "granite-orm.webp",
+        "bytes": 12036,
+        "sha256": "031a7ae2b7c0b28417d7f10903f108e0bf3809b6cd970b1dbe35a4a0d1b711d2",
+        "size": 256
+      }
+    },
+    "foundation": {
+      "tileM": 2.0,
+      "description": "Poured concrete foundation with form seams and tie holes.",
+      "meanLinearAlbedo": [
+        0.29451,
+        0.28874,
+        0.2743
+      ],
+      "albedo": {
+        "url": "foundation-albedo.webp",
+        "bytes": 11986,
+        "sha256": "5169ec1db8e9a1b196b5e47377b6bb5eada96784a1c0acf37460f5e0fad56f7b",
+        "size": 512
+      },
+      "normal": {
+        "url": "foundation-normal.webp",
+        "bytes": 5682,
+        "sha256": "4a6f5e86a2fc7ee7ace24d19adc389f643224535f9e7fb1bfba8417e2715f4c2",
+        "size": 512
+      },
+      "orm": {
+        "url": "foundation-orm.webp",
+        "bytes": 1842,
+        "sha256": "ce82fa82aca0d330c5c7d29145b6edec0f0c05cef3d135959fb23b2b15c9efd8",
+        "size": 256
+      }
+    },
+    "cedar": {
+      "tileM": 2.0,
+      "description": "Painted or stained cedar wall shingles, 0.125 m exposure, random widths; neutral white to be tinted.",
+      "meanLinearAlbedo": [
+        0.82732,
+        0.82322,
+        0.81499
+      ],
+      "albedo": {
+        "url": "cedar-albedo.webp",
+        "bytes": 67790,
+        "sha256": "c45bdabc632006342018bb35a82ef2e0fadc7d5ab22e0273eb66e11d7836dd06",
+        "size": 1024
+      },
+      "normal": {
+        "url": "cedar-normal.webp",
+        "bytes": 105002,
+        "sha256": "ca6d77f1f9a850795fc902b0bee0b9b65b5580056c4ff848635591a6a25d9ee9",
+        "size": 1024
+      },
+      "orm": {
+        "url": "cedar-orm.webp",
+        "bytes": 45560,
+        "sha256": "de77c5ad80ac1ea6500983a5017e5d9a51f367b742d391cf53c94dc285a09934",
+        "size": 512
+      }
+    },
+    "brick": {
+      "tileM": 2.0,
+      "description": "Running-bond face brick, 0.2 x 0.067 m module with recessed mortar; neutral, tinted by the brick colour.",
+      "meanLinearAlbedo": [
+        0.51735,
+        0.49972,
+        0.48293
+      ],
+      "albedo": {
+        "url": "brick-albedo.webp",
+        "bytes": 278392,
+        "sha256": "2c0f7fc9cb21032f01898d20656f41000f685135c8fd250469b7f9e2ca878700",
+        "size": 1024
+      },
+      "normal": {
+        "url": "brick-normal.webp",
+        "bytes": 392996,
+        "sha256": "d9bb04e4d76e5d37ba062245d6a5bf0bc8d69e52d7bec4bd5b6db65854e93c5f",
+        "size": 1024
+      },
+      "orm": {
+        "url": "brick-orm.webp",
+        "bytes": 57170,
+        "sha256": "b4213cafa718be3e1162e310e3798829b7ef78bdcf0c7d7097be291f44a47c90",
+        "size": 512
+      }
+    }
+  }
+}

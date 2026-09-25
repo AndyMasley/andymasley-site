@@ -3,8 +3,12 @@ import { Sky } from 'three/examples/jsm/objects/Sky.js';
 import { advanceRealTime, DriveEngine, LANDMARKS, MPH, RoadGraph, spawnAtLandmark, type NetworkData } from './engine';
 import { validateManifest, type Quality, type V3 } from './contracts';
 import { TownWorld } from './world';
+import { StreetDressing, updateDressingViewport } from './street-dressing';
+import { HouseDressing } from './house-dressing';
+import { RoadWear } from './road-wear';
+import { CurbParking } from './curb-parking';
 import { startupPosition } from './startup';
-import { createSummerHaze, createSummerSky, createShadowAnchor, SUMMER_LIGHT } from './atmosphere';
+import { createSummerHaze, createSummerSky, createShadowAnchor, installAerialPerspective, SUMMER_LIGHT } from './atmosphere';
 import { createTouringCar, type TouringCar } from './vehicle';
 import { applyMeasuredBridgeGrades } from './bridge-grade';
 import release from '../../../data/derived/town/release.json';
@@ -79,6 +83,10 @@ export async function startTown(root: HTMLElement): Promise<Session> {
   let disposed = false;
   let frame = 0;
   let world: TownWorld | undefined;
+  let dressing: StreetDressing | undefined;
+  let houses: HouseDressing | undefined;
+  let curbParking: CurbParking | undefined;
+  let restoreFog: (() => void) | undefined;
   let renderer: THREE.WebGLRenderer | undefined;
   let resize: ResizeObserver | undefined;
   let environmentTarget: THREE.WebGLRenderTarget | undefined;
@@ -111,6 +119,8 @@ export async function startTown(root: HTMLElement): Promise<Session> {
   let streamPaused = false;
   let teleporting = false;
   let firstFrame = true;
+  // QA-only camera placement (screenshot harnesses); null in normal play.
+  let debugCamera: { eye: number[]; target: number[] } | null = null;
   let pixelRatio = qualityPixelRatio(quality, mobile, devicePixelRatio);
   let last = performance.now();
   let hudAt = 0;
@@ -165,6 +175,11 @@ export async function startTown(root: HTMLElement): Promise<Session> {
       cinematic = undefined;
       waterReflection.dispose();
       world?.dispose();
+      dressing?.dispose();
+      houses?.dispose();
+      curbParking?.dispose();
+      restoreFog?.();
+      restoreFog = undefined;
       environmentTarget?.dispose();
       sky?.geometry.dispose();
       sky?.material.dispose();
@@ -203,6 +218,7 @@ export async function startTown(root: HTMLElement): Promise<Session> {
     if (cinematicAllowed(quality, mobile)) void loadCinematic();
     scene = new THREE.Scene();
     scene.fog = createSummerHaze();
+    restoreFog = installAerialPerspective(SUN_OFFSET);
     const camera = new THREE.PerspectiveCamera(57, 1, 0.08, 6500);
     const ambient = new THREE.HemisphereLight(SUMMER_LIGHT.skyFill, SUMMER_LIGHT.groundFill, SUMMER_LIGHT.fillIntensity);
     scene.add(ambient);
@@ -248,6 +264,11 @@ export async function startTown(root: HTMLElement): Promise<Session> {
     if (disposed) return session;
     graph = new RoadGraph(network);
     applyMeasuredBridgeGrades(graph);
+    // Overhead utilities and hydrants follow the named street centrelines.
+    dressing = new StreetDressing(network);
+    houses = new HouseDressing(dressing);
+    curbParking = new CurbParking(network);
+    world.setStreetDressing(dressing, houses, new RoadWear(network), curbParking);
     engine = (requestedResume && restoreSnapshot(graph, requestedResume)) || spawnAtLandmark(graph, startingLocation);
     setStatus('Preparing the landscape and your car…');
     vehicle = createTouringCar();
@@ -661,6 +682,7 @@ export async function startTown(root: HTMLElement): Promise<Session> {
       }
       camera.position.copy(points.eye);
       camera.lookAt(points.target);
+      if (debugCamera) { camera.position.set(debugCamera.eye[0], debugCamera.eye[1], debugCamera.eye[2]); camera.lookAt(debugCamera.target[0], debugCamera.target[1], debugCamera.target[2]); }
       if (firstFrame) renderRequested = true;
       firstFrame = false;
       // Most of the shadow frame lies ahead of the car, where the camera looks.
@@ -702,8 +724,11 @@ export async function startTown(root: HTMLElement): Promise<Session> {
       // regular world draw/triangle counters and never waits for new assets.
       if (drawCount >= 3) waterReflection.update(renderer!, scene!, camera, now, { quality, mobile });
       renderer!.info.reset();
-      if (cinematic) cinematic.render(elapsed);
-      else renderer!.render(scene!, camera);
+      updateDressingViewport(dressing, renderer!);
+      if (cinematic) {
+        cinematic.motion(car, !engine.paused && !steady() && !debugCamera && !teleporting);
+        cinematic.render(elapsed);
+      } else renderer!.render(scene!, camera);
       renderRequested = false; lastDraw = now;
       world!.metrics.triangles = renderer!.info.render.triangles;
       drawCount++;
@@ -725,6 +750,11 @@ export async function startTown(root: HTMLElement): Promise<Session> {
       reflectionResources() { return { ...waterReflection.metrics }; },
       get cinematic() { return cinematic?.metrics() ?? { enabled: false }; },
       get cameraMode() { return cameraMode; },
+      get lights() { return { sun, ambient, scene }; },
+      look(values: Parameters<NonNullable<typeof cinematic>['look']>[0]) { cinematic?.look(values); renderRequested = true; },
+      redraw() { renderRequested = true; },
+      get debugCamera() { return debugCamera; },
+      set debugCamera(value: { eye: number[]; target: number[] } | null) { debugCamera = value; renderRequested = true; },
       get presentation() { return { version: 'finished-webster-v8', grass: world!.presentationResources(), vehicle: vehicle!.resources(), evidence: world!.evidenceResources(), finish: world!.finishResources(), research: world!.researchResources(), streaming: world!.streamingResources(), comfort: preferences.comfort, camera: { checks: cameraObstruction.checks, testedMeshes: cameraObstruction.testedMeshes, milliseconds: cameraObstruction.milliseconds, skippedCandidates: cameraObstruction.skippedCandidates } }; },
       get ready() { return controlsReady && !disposed; },
       get metrics() {

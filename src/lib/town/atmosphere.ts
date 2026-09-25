@@ -8,8 +8,8 @@ export const SUMMER_LIGHT = {
   // Clear-day key/fill balance. The dated Main Street, St. Joseph and
   // Sitkowski photographs show roughly four-to-one sunlit/shaded ground, crisp
   // cool shade under trees and cars, and differently lit wall orientations.
-  sunIntensity: 3.2,
-  fillIntensity: 1.1,
+  sunIntensity: 3.3,
+  fillIntensity: 1.3,
   exposure: 1.03,
 } as const;
 
@@ -33,6 +33,44 @@ export const linearColor = (rgb: readonly number[]): THREE.Color => new THREE.Co
 /** Distance haze that converges on the horizon sky rather than a separate grey. */
 export function createSummerHaze(): THREE.Fog {
   return new THREE.Fog(linearColor(SUMMER_SKY.horizon), 380, 2400);
+}
+
+/**
+ * Aerial perspective: summer boundary-layer haze thickens with distance and
+ * thins with height (optical depth integrated along each view ray), and it is
+ * brighter and warmer toward the sun. Roughly a quarter of the way to the
+ * horizon colour at 1 km and half by 2 km, so ridges and tree lines recede in
+ * layers as in the late-afternoon reference photographs. The haze colour is
+ * the sky's own horizon, so terrain meets the sky without a seam. Installed on
+ * the shared shader chunks for the session and restored on disposal.
+ */
+export const AERIAL_PERSPECTIVE = { density: 0.00032, scaleHeightM: 900, baseY: 40, sunTint: [1.55, 1.25, 0.92], sunGlow: 0.6 } as const;
+
+export function installAerialPerspective(sunDirection: THREE.Vector3): () => void {
+  const chunks = THREE.ShaderChunk as unknown as Record<string, string>;
+  const names = ['fog_pars_vertex', 'fog_vertex', 'fog_pars_fragment', 'fog_fragment'];
+  const previous = Object.fromEntries(names.map(name => [name, chunks[name]]));
+  const sun = sunDirection.clone().normalize(), f = (v: number) => v.toFixed(6);
+  const { density, scaleHeightM, baseY, sunTint, sunGlow } = AERIAL_PERSPECTIVE;
+  chunks.fog_pars_vertex = `#ifdef USE_FOG\nvarying float vFogDepth;\nvarying vec3 vTownFogRay;\n#endif`;
+  chunks.fog_vertex = `#ifdef USE_FOG\nvFogDepth = - mvPosition.z;\nvTownFogRay = (vec4(mvPosition.xyz, 0.0) * viewMatrix).xyz;\n#endif`;
+  chunks.fog_pars_fragment = `#ifdef USE_FOG\nuniform vec3 fogColor;\nvarying float vFogDepth;\nvarying vec3 vTownFogRay;\n#ifdef FOG_EXP2\nuniform float fogDensity;\n#else\nuniform float fogNear;\nuniform float fogFar;\n#endif\n#endif`;
+  chunks.fog_fragment = `#ifdef USE_FOG
+float townFogDistance = length(vTownFogRay);
+vec3 townFogDir = vTownFogRay / max(townFogDistance, 1e-3);
+float townFogStart = ${f(density)} * exp(-(cameraPosition.y - ${f(baseY)}) / ${f(scaleHeightM)});
+float townFogRise = townFogDir.y * townFogDistance / ${f(scaleHeightM)};
+float townFogOptical = townFogStart * townFogDistance * (abs(townFogRise) > 1e-3 ? (1.0 - exp(-townFogRise)) / townFogRise : 1.0);
+float fogFactor = 1.0 - exp(-max(townFogOptical, 0.0));
+float townFogSun = pow(max(dot(townFogDir, vec3(${f(sun.x)}, ${f(sun.y)}, ${f(sun.z)})), 0.0), 6.0);
+vec3 townFogColor = fogColor * mix(vec3(1.0), vec3(${sunTint.map(f).join(', ')}), townFogSun * ${f(sunGlow)});
+#ifdef TONE_MAPPING
+townFogColor = toneMapping(townFogColor);
+#endif
+townFogColor = linearToOutputTexel(vec4(townFogColor, 1.0)).rgb;
+gl_FragColor.rgb = mix(gl_FragColor.rgb, townFogColor, fogFactor);
+#endif`;
+  return () => { for (const name of names) chunks[name] = previous[name]; };
 }
 
 /** Keep the directional shadow's light-space texels fixed as the car moves.

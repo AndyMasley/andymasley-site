@@ -139,7 +139,7 @@ export class TownSurfaces {
   grassResources(): ReturnType<TownGrass['resources']> { return this.grass.resources(); }
 
   private patch(material: THREE.MeshStandardMaterial, mask: THREE.Texture, bounds: number[]): void {
-    material.customProgramCacheKey = () => 'webster-finished-ground-v12';
+    material.customProgramCacheKey = () => 'webster-finished-ground-v13';
     material.onBeforeCompile = (shader, renderer) => {
       const [color, normal, roughness, soil, forest, impervious] = this.shared;
       Object.assign(shader.uniforms, {
@@ -263,9 +263,16 @@ if (townWeights.r > 0.001) {
     +(townTurfSource-townTurfMean)*vec3(1.18,1.18,1.05));
   float townLawnDrift = townNoise(vTownGroundXZ/8.3+vec2(6.1,27.3));
   float townLawnVariation = clamp(townLawnDrift+(townPatch-0.5)*0.28,0.0,1.0);
-  float townDryThatch = smoothstep(0.64,0.90,townLawnVariation);
-  townGrassColor *= mix(vec3(0.97,1.02,0.99),vec3(1.20,1.08,0.89),townDryThatch);
-  townGrassColor *= mix(0.94,1.055,townMacro) * mix(0.95,1.055,townPatch);
+  float townDryThatch = smoothstep(0.60,0.90,townLawnVariation);
+  // Late-summer turf is a mosaic: straw-toned dry runs, deeper green where it
+  // stays moist, and darker blue-green clover patches a metre or two across.
+  // Authored variation in amplitude and scale, not a survey of any lawn.
+  townGrassColor *= mix(vec3(0.95,1.02,1.0),vec3(1.30,1.13,0.80),townDryThatch);
+  float townLawnMoist = smoothstep(0.55,0.85,townNoise(vTownGroundXZ/13.0+vec2(41.2,3.3)));
+  townGrassColor *= mix(vec3(1.0),vec3(0.84,0.95,0.90),townLawnMoist*(1.0-townDryThatch));
+  float townClover = smoothstep(0.62,0.74,townNoise(vTownGroundXZ/1.7+vec2(9.4,61.8)))*smoothstep(0.35,0.6,townNoise(vTownGroundXZ/9.0+vec2(2.7,5.9)));
+  townGrassColor *= mix(vec3(1.0),vec3(0.80,0.92,0.95),townClover);
+  townGrassColor *= mix(0.88,1.09,townMacro) * mix(0.93,1.07,townPatch);
   vec2 townBlade = townCutBlade(vTownGroundXZ,townPixelWidth);
   townGrassColor *= 1.0 + townBlade.x * townClose * 0.24 - townBlade.y * townClose * 0.16;
   townGroundRelief += (townBlade.x*0.0014-townBlade.y*0.00055)*townWeights.r*townClose;
@@ -345,6 +352,12 @@ if (townWeights.r > 0.001) {
   vec3 townTangent = normalize(townEast - normal * dot(normal,townEast));
   vec3 townBitangent = normalize(cross(townTangent,normal));
   normal = normalize(normal + (townTangent*townNormal.x + townBitangent*townNormal.y) * townWeights.r * townClose * townGrassResolved * 0.58);
+  // Turf seen at a low angle shows blade sides and their sheen rather than the
+  // shaded gaps between them, so lawns lighten and lose saturation toward the
+  // horizon the way they do in the street-level photographs.
+  float townTurfGrazing = smoothstep(0.45, 0.95, 1.0 - clamp(dot(nonPerturbedNormal, normalize(vViewPosition)), 0.0, 1.0));
+  vec3 townTurfSheen = mix(diffuseColor.rgb, vec3(dot(diffuseColor.rgb, vec3(0.2126,0.7152,0.0722))), 0.25) * vec3(1.30,1.27,1.12);
+  diffuseColor.rgb = mix(diffuseColor.rgb, townTurfSheen, townTurfGrazing * townWeights.r * 0.8);
 }
 // Litter, mineral ground and paved cover reuse the color samples as shallow
 // relief. Differentiate after all class branches; nothing displaces terrain.

@@ -1,6 +1,17 @@
 import * as THREE from 'three';
 import data from '../../../data/derived/town/crafted-frontages.json';
 import { registerHardscapeGrassExclusions } from './hardscape-grass-exclusions';
+import { installSurfaceChunks, surfaceLibraryState, SURFACE_ALBEDO, type SurfaceUse } from './surface-library';
+import { installOpeningMaterial } from './opening-detail';
+
+/** Crafted roles that take an authored library surface when it is loaded. */
+const LIBRARY_ROLES: Partial<Record<string, { use: SurfaceUse; albedo: string }>> = {
+  wall: { use: { set: 'clapboard', mode: 'wall', normal: 1.0, roughness: 1.0, occlusion: 0.85 }, albedo: SURFACE_ALBEDO.tint },
+  roof: { use: { set: 'shingles', mode: 'roof', normal: 1.0, roughness: 1.0, occlusion: 0.8 }, albedo: 'diffuseColor.rgb = townLibAlb * (diffuse / 0.075);' },
+  foundation: { use: { set: 'foundation', mode: 'auto', normal: 1.0, roughness: 0.8, occlusion: 0.7 }, albedo: SURFACE_ALBEDO.relative },
+  shingle: { use: { set: 'cedar', mode: 'wall', normal: 1.0, roughness: 1.0, occlusion: 0.85 }, albedo: SURFACE_ALBEDO.tint },
+  brick: { use: { set: 'brick', mode: 'wall', normal: 1.0, roughness: 0.9, occlusion: 0.8 }, albedo: SURFACE_ALBEDO.relative },
+};
 
 type V2 = readonly number[];
 export type Frame = { start: V2; tangent: V2; outward: V2; structId: string; tileId: string };
@@ -61,7 +72,11 @@ export function frontageMaterial(role: Role, color: string): THREE.MeshStandardM
   result.envMapIntensity = role === 'glass' ? .85 : .12;
   result.userData.appearanceBasis = 'Dated facade observations plus explicitly inferred dimensions and late-summer materials.';
   if (['wall', 'roof', 'brick', 'stone', 'paving', 'foundation', 'leaf', 'shingle', 'stucco'].includes(role)) {
+    const librarySpec = LIBRARY_ROLES[role];
     result.onBeforeCompile = (shader) => {
+      // With the authored surface library loaded, clapboard, shingle and
+      // foundation texture replace the procedural rows for these roles.
+      const library = !!librarySpec && surfaceLibraryState(librarySpec.use.set) !== 'off';
       shader.vertexShader = `varying vec3 vCraftedWorld;\nvarying vec3 vCraftedWorldNormal;\n${shader.vertexShader}`.replace('#include <project_vertex>', '#include <project_vertex>\nvCraftedWorld = (modelMatrix * vec4(transformed,1.0)).xyz;\nvCraftedWorldNormal = inverseTransformDirection(transformedNormal,viewMatrix);');
       shader.fragmentShader = `${role==='paving'?pavingNoise:''}varying vec3 vCraftedWorld;\nvarying vec3 vCraftedWorldNormal;\n${shader.fragmentShader}`.replace('#include <map_fragment>', `
 #include <map_fragment>
@@ -82,8 +97,8 @@ float craftedRelief=(craftedPavingGrain-.5)*.0007*craftedPavingResolved*craftedN
 `:`float craftedNoise = sin(vCraftedWorld.x*4.41+vCraftedWorld.z*2.35)*sin(vCraftedWorld.z*7.63-vCraftedWorld.x*1.14);
 diffuseColor.rgb *= 1.0+craftedNoise*0.025;
 float craftedRelief = 0.0;`}
-${role === 'wall' ? 'diffuseColor.rgb *= 1.0-craftedJoint*0.16; craftedRelief=craftedRow*0.003*craftedNear;' : role === 'leaf' ? 'diffuseColor.rgb *= 0.90+0.12*sin(vCraftedWorld.x*17.1+vCraftedWorld.y*12.7)*sin(vCraftedWorld.z*16.8-vCraftedWorld.y*6.2);' : ''}
-${['brick','stone','shingle','roof'].includes(role) ? `
+${role === 'wall' ? (library ? '' : 'diffuseColor.rgb *= 1.0-craftedJoint*0.16; craftedRelief=craftedRow*0.003*craftedNear;') : role === 'leaf' ? 'diffuseColor.rgb *= 0.90+0.12*sin(vCraftedWorld.x*17.1+vCraftedWorld.y*12.7)*sin(vCraftedWorld.z*16.8-vCraftedWorld.y*6.2);' : ''}
+${['brick','stone','shingle','roof'].includes(role) && !(library && ['roof','shingle','brick'].includes(role)) ? `
 // A stable vertex normal avoids differentiating large world coordinates: tiny
 // raster errors in that derivative rotated the brick grid and caused stippling.
 vec3 craftedSurfaceNormal=normalize(vCraftedWorldNormal);
@@ -103,7 +118,7 @@ diffuseColor.rgb*=mix(.965,1.035,craftedVariation*craftedDetail+.5*(1.-craftedDe
 ${role==='brick'||role==='stone'?'diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.27,.255,.23),craftedGrout*.60*craftedDetail);':'diffuseColor.rgb*=1.-craftedGrout*.20*craftedDetail;'}
 craftedRelief=(1.-craftedGrout)*${role==='stone'?'.006':'.002'}*craftedDetail;
 ` : ''}
-${role==='stucco'||role==='foundation'?'craftedRelief=craftedNoise*.0006*craftedNear;':''}
+${role==='stucco'||(role==='foundation'&&!library)?'craftedRelief=craftedNoise*.0006*craftedNear;':''}
 `);
       shader.fragmentShader=shader.fragmentShader.replace('#include <normal_fragment_maps>', `
 #include <normal_fragment_maps>
@@ -115,8 +130,9 @@ if(abs(craftedDet)>0.0000000001){
   normal=normalize(abs(craftedDet)*normal-craftedGradient);
 }
 `);
+      if (library && librarySpec) installSurfaceChunks(shader, librarySpec.use, 'vCraftedWorld', librarySpec.albedo, 'vCraftedWorldNormal');
     };
-    result.customProgramCacheKey = () => role==='paving'?'crafted-frontages-v4:paving':`crafted-frontages-v3:${role}`;
+    result.customProgramCacheKey = () => role==='paving'?'crafted-frontages-v4:paving':`crafted-frontages-v3:${role}${librarySpec ? `|surface-library-v1:${surfaceLibraryState(librarySpec.use.set)}` : ''}`;
   }
   if(role==='glass'){
     // Keep the authored hue and sky reflection; the diffuse interior is dark.
@@ -124,7 +140,10 @@ if(abs(craftedDet)>0.0000000001){
 outgoingLight -= totalDiffuse * .42;
 #include <opaque_fragment>
 `);};result.customProgramCacheKey=()=> 'crafted-frontages-v4:glass';
+    // Every pane then opens onto a shallow authored room behind the glass.
+    installOpeningMaterial(result, 'glass');
   }
+  if (role === 'door') installOpeningMaterial(result, 'door');
   return result;
 }
 

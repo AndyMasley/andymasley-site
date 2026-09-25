@@ -42,8 +42,8 @@ function decode(value: string): Uint8Array {
 }
 
 /** Seven shared material draws per tile, independent of vehicle count. */
-export function addParkedLife(group: THREE.Group, origin: V3, level: number, placements: readonly ParkedPlacement[]): void {
-  if (!placements.length || group.userData.parkedLife) return;
+export function addParkedLife(group: THREE.Group, origin: V3, level: number, placements: readonly ParkedPlacement[], key = 'parkedLife', label = 'Finished parking | parked touring cars', shared?: Map<string, THREE.MeshStandardMaterial>): void {
+  if (!placements.length || group.userData[key]) return;
   const matrices = placements.map(p => {
     const f = new THREE.Vector3(p.forward[0], p.grade[0], -p.forward[1]).normalize();
     const r = new THREE.Vector3(p.forward[1], p.grade[1], p.forward[0]).normalize();
@@ -62,13 +62,17 @@ export function addParkedLife(group: THREE.Group, origin: V3, level: number, pla
     const geometry = new THREE.BufferGeometry(); geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3)); geometry.setAttribute('normal', new THREE.BufferAttribute(normal, 3)); geometry.setIndex(new THREE.BufferAttribute(new Uint16Array(indices.buffer), 1));
     geometry.normalizeNormals(); geometry.computeBoundingBox(); geometry.computeBoundingSphere();
     const painted = /deep teal/.test(part.name), glass = /glass/.test(part.name);
-    const material = new THREE.MeshStandardMaterial({ color: painted ? 0xffffff : part.color, roughness: glass ? .2 : part.roughness, metalness: part.metalness, envMapIntensity: glass ? .7 : .45 });
-    material.name = painted ? 'Parked | graphite' : part.name;
-    const mesh = new THREE.InstancedMesh(geometry, material, placements.length); mesh.name = 'Finished parking | parked touring cars';
+    let material = shared?.get(part.name);
+    if (!material) {
+      material = new THREE.MeshStandardMaterial({ color: painted ? 0xffffff : part.color, roughness: glass ? .2 : part.roughness, metalness: part.metalness, envMapIntensity: glass ? .7 : .45 });
+      material.name = painted ? 'Parked | graphite' : part.name;
+      shared?.set(part.name, material);
+    }
+    const mesh = new THREE.InstancedMesh(geometry, material, placements.length); mesh.name = label;
     mesh.castShadow = true; mesh.receiveShadow = true; mesh.userData.townCrafted = true; mesh.userData.category = 'cars'; mesh.userData.appearanceBasis = template.basis;
     matrices.forEach((m, i) => { mesh.setMatrixAt(i, m); if (painted) mesh.setColorAt(i, new THREE.Color(placements[i].color)); });
     mesh.instanceMatrix.needsUpdate = true; if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true; mesh.computeBoundingBox(); mesh.computeBoundingSphere(); group.add(mesh);
     triangles += indices.byteLength / 2 / 3 * placements.length; draws++;
   }
-  group.userData.parkedLife = { cars: placements.length, draws, triangles, placements };
+  group.userData[key] = { cars: placements.length, draws, triangles, placements };
 }

@@ -100,7 +100,7 @@ shading, without changing the underlying sidewalk geometry.
 
 `atmosphere.ts` supplies a blue-to-haze sky with separated procedural clouds, a warm
 key light and cooler fill. Sky, haze and town share one scene-referred exposure:
-the sky's linear HDR colors pass through the same ACES curve as the buildings, and
+the sky's linear HDR colors pass through the same filmic curve as the buildings, and
 the distance haze converges on the horizon color. Reflections and image lighting
 use a separate copy of the sky whose low band is greyed and replaced by an
 irregular dark treeline, because street-level glass, paint and water mirror trees
@@ -111,9 +111,13 @@ On desktop High and Automatic graphics with WebGL2 half-float targets,
 `cinematic.ts` (a separately loaded chunk, fetched beside the first tiles) renders
 the scene into a 4× multisampled HDR buffer, adds N8AO screen-space ambient
 occlusion (full resolution on High, half on Automatic), removes non-finite pixels,
-then applies a thresholded bloom, the existing ACES curve and a small grade
-(contrast, saturation, warm highlights/cool shade, vignette). Low, mobile and
-unsupported browsers keep the single direct render. Automatic sessions averaging
+then applies camera motion blur, a thresholded bloom and the AgX filmic curve,
+and finally contrast-adaptive sharpening and a photographic grade (contrast,
+saturation, lift, warm highlights/cool shade, vignette). Motion blur uses a
+180-degree shutter over the frame's own camera motion, capped at 22 px; the
+player's car travels with the camera and is masked out, and nothing blurs while
+paused or with the steady camera. Low, mobile and unsupported browsers keep the
+single direct render with ACES. Automatic sessions averaging
 below about 48 fps first drop multisampling, then full-resolution occlusion, then
 the finish, before the existing resolution fallback. The desktop sun shadow uses
 a 4096² map over a 250 m frame led 55 m ahead of the car, and the nearest 64
@@ -129,6 +133,37 @@ inferred roofs gain fine asphalt-shingle courses; inferred window glass mutes it
 mirrored sky; trim is a cleaner white; and leaf clusters transmit a little more
 sunlight. Crack positions and shingle rhythm are authored patterns, not surveyed
 features.
+
+The September 24 overhaul adds, all as authored interpretation rather than survey:
+
+- `surface-library.ts` loads eight tileable PBR sets (painted clapboard,
+  architectural shingles, asphalt, sidewalk concrete, curb granite, poured
+  foundation, cedar wall shingles and running-bond brick). They are procedurally
+  generated from fixed seeds by `scripts/town_material_library/generate.py` (no
+  photographs), projected in world space from each face's own orientation and
+  tinted by the material's existing paint or family colour. Low and mobile load
+  albedo only.
+- `opening-detail.ts` gives every inferred, crafted and photographed window pane
+  a shallow parallax room (walls, floor, blinds, curtains, occasional lamps) with
+  Fresnel sky reflection, and inferred doors raised panels.
+- `road-wear.ts` gives drive asphalt and sidewalks lane coordinates from the
+  mapped centrelines. Asphalt wears darker in the travel lanes and wheel paths,
+  carries a patchy oil band and gutter grime, sealed centre, transverse and edge
+  cracks, utility patches, manhole covers and curbside drain grates; sidewalks get
+  five-foot control joints, slab-to-slab tone and curb grime. Effects fade at
+  junctions and never apply to earth or gravel roads.
+- `street-dressing.ts` adds wooden distribution poles with crossarms, overhead
+  primaries, neutral and communications cables (screen-width-aware ribbons),
+  occasional transformers and cobra-head lights, and hydrants, along named
+  streets without mapped poles; `street-signs.ts` puts green street-name blades
+  on a galvanized post at a corner of each named intersection.
+- `house-dressing.ts` adds foundation shrubs and mulch beds along street-facing
+  walls, curbside mailboxes on local streets, and gutters with downspouts along
+  pitched eaves; `curb-parking.ts` parallel-parks cars on registered curbside
+  parking aprons only.
+- `atmosphere.ts` installs aerial perspective (height-dependent haze that brightens
+  toward the sun) on the shared fog chunks; turf in `surfaces.ts` is a mosaic of
+  dry, moist and clover patches that lightens toward grazing view angles.
 
 `surfaces.ts` samples the original raw RGBA land-cover data in world metres.
 Class weights are sharpened and renormalized; zero-coverage pixels stay excluded.

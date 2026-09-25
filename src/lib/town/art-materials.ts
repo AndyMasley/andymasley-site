@@ -2,8 +2,32 @@ import * as THREE from 'three';
 import { BARK_FINISH_GLSL } from './vegetation-finish';
 import { applySiteArtMaterial, removeSiteArtMaterial } from './site-surface-finish';
 import { mineralFragment, MINERAL_ROUGHNESS } from './mineral-finish';
+import { surfaceSet, surfaceUniforms, surfaceDeclarations, surfaceSampling, SURFACE_NORMAL, SURFACE_ROUGHNESS, SURFACE_OCCLUSION, type SurfaceKind, type ProjectionMode } from './surface-library';
+import { OPENING_ATTRIBUTE, WINDOW_INTERIOR_GLSL, DOOR_PANEL_GLSL, DOOR_PANEL_NORMAL } from './opening-detail';
+import { ROAD_LANE_ATTRIBUTE, ROAD_WEAR_GLSL, WALK_WEAR_GLSL } from './road-wear';
 
-type ArtKind = 'siding' | 'roof' | 'brick' | 'trim' | 'glass' | 'foundation' | 'concrete' | 'granite' | 'asphalt' | 'shoulder' | 'road-paint' | 'leaf' | 'far-leaf' | 'bark' | 'car-paint' | 'car-glass' | 'rubber' | 'water';
+type ArtKind = 'siding' | 'roof' | 'flat-roof' | 'brick' | 'trim' | 'glass' | 'door' | 'foundation' | 'concrete' | 'granite' | 'asphalt' | 'shoulder' | 'road-paint' | 'leaf' | 'far-leaf' | 'bark' | 'car-paint' | 'car-glass' | 'rubber' | 'water';
+
+/** Library-textured families: which authored set, how it is projected, and
+ * how strongly its relief, roughness and cavity occlusion apply. */
+type LibraryUse = { set: SurfaceKind; mode: ProjectionMode; normal: number; roughness: number; occlusion: number };
+const LIBRARY: Partial<Record<ArtKind, LibraryUse>> = {
+  siding: { set: 'clapboard', mode: 'wall', normal: 1.0, roughness: 1.0, occlusion: 0.85 },
+  roof: { set: 'shingles', mode: 'roof', normal: 1.0, roughness: 1.0, occlusion: 0.8 },
+  'flat-roof': { set: 'asphalt', mode: 'auto', normal: 0.8, roughness: 0.8, occlusion: 0.6 },
+  asphalt: { set: 'asphalt', mode: 'auto', normal: 1.0, roughness: 0.75, occlusion: 0.7 },
+  concrete: { set: 'concrete', mode: 'auto', normal: 1.0, roughness: 0.7, occlusion: 0.6 },
+  granite: { set: 'granite', mode: 'auto', normal: 1.0, roughness: 0.8, occlusion: 0.6 },
+  foundation: { set: 'foundation', mode: 'auto', normal: 1.0, roughness: 0.8, occlusion: 0.7 },
+};
+
+/** Stable relative tone of each asphalt family against the ordinary drive surface. */
+function asphaltFamily(name: string): number {
+  if (name === 'Finished parking | asphalt') return 1.12;
+  if (name === 'Finished street corner | asphalt apron') return 0.86;
+  if (name.includes('repair')) return 0.9;
+  return 1.0;
+}
 type Registration = {
   kind: ArtKind;
   color: THREE.Color;
@@ -16,14 +40,15 @@ type Registration = {
   compile: THREE.Material['onBeforeCompile'];
   key: THREE.Material['customProgramCacheKey'];
   previousTag: unknown;
+  asphaltBase?: number;
 };
 const registrations = new WeakMap<THREE.MeshStandardMaterial, Registration>();
 
 // Only inferred surfaces and modeled transport/vegetation are recolored.
 // Photo, Town Hall and Reference materials retain their authored colors/maps.
 const kinds: Record<string, ArtKind> = {
-  'V2 inferred | siding': 'siding', 'V2 inferred | roof': 'roof', 'V2 inferred | flat_roof': 'roof',
-  'V2 inferred | brick': 'brick', 'V2 inferred | trim': 'trim', 'V2 inferred | glass': 'glass',
+  'V2 inferred | siding': 'siding', 'V2 inferred | roof': 'roof', 'V2 inferred | flat_roof': 'flat-roof',
+  'V2 inferred | brick': 'brick', 'V2 inferred | trim': 'trim', 'V2 inferred | glass': 'glass', 'V2 inferred | door': 'door',
   'V2 inferred | foundation': 'foundation', 'V2 inferred | concrete_wall': 'foundation',
   'Streetscape | warm sidewalk concrete': 'concrete', 'Streetscape | cool sidewalk concrete': 'concrete',
   'Streetscape | repaired sidewalk concrete': 'concrete', 'Streetscape | granite curb': 'granite',
@@ -64,6 +89,7 @@ function sidingColor(source: THREE.Color): string {
 
 const functions = `
 varying vec3 vTownArtWorld;
+varying vec3 vTownArtNormal;
 uniform float townArtTime;
 float townArtHash(vec2 p) {
   vec3 q = fract(vec3(p.xyx) * 0.1031);
@@ -77,14 +103,67 @@ float townArtNoise(vec2 p) {
 }
 `;
 
-function mapTreatment(kind: ArtKind): string {
-  const start = `
+const ART_START = `
 #include <map_fragment>
 float townArtHeight = 0.0;
 float townArtDistance = length(cameraPosition - vTownArtWorld);
 float townArtFootprint = max(length(dFdx(vTownArtWorld)),length(dFdy(vTownArtWorld)));
 float townArtClose = (1.0-smoothstep(35.0,100.0,townArtDistance)) * (1.0-smoothstep(0.02,0.10,townArtFootprint));
 `;
+
+/** Library-textured treatment. Paint and family colours stay the material's;
+ * the authored set supplies boards, shingles, stone, sand and cavities. */
+function libraryMapTreatment(kind: ArtKind, use: LibraryUse, name: string, asphaltBase: number): string {
+  const start = ART_START + surfaceSampling(use.mode);
+  if (kind === 'siding') return start + `
+float townPaintAge = townArtNoise(vTownArtWorld.xz*0.16 + vec2(vTownArtWorld.y*0.08));
+diffuseColor.rgb *= mix(0.955,1.03,townPaintAge) * townLibAlb;
+`;
+  if (kind === 'roof') return start + `
+// Roofs differ in age and blend: a slow field of tens of metres varies the
+// granule tone, and slopes facing the afternoon sun are a little bleached.
+float townRoofChoice = townArtNoise(vTownArtWorld.xz*0.031);
+vec3 townRoofTint = mix(vec3(0.94,0.96,0.99), vec3(1.42,1.33,1.20), smoothstep(0.25,0.9,townRoofChoice));
+townRoofTint *= 1.0 + 0.14*clamp(dot(townLibFace, normalize(vec3(-0.62,0.45,0.64))), 0.0, 1.0);
+// Weathered patches and faint streaks that run down the slope.
+float townRoofStreak = townArtNoise(vec2(dot(vTownArtWorld, townLibT)*1.9, dot(vTownArtWorld, townLibB)*0.18));
+townRoofTint *= mix(0.9, 1.06, townRoofStreak) * mix(0.93,1.05,townArtNoise(vTownArtWorld.xz*0.45));
+diffuseColor.rgb = townLibAlb * townRoofTint;
+`;
+  if (kind === 'flat-roof') return start + `
+diffuseColor.rgb *= townLibAlb / max(vec3(0.02), townLibMean) * mix(0.9,1.08,townArtNoise(vTownArtWorld.xz*0.21));
+`;
+  // Later family colour changes (inventory clones) scale the material colour;
+  // keep them relative to the tone this module assigned. The neutralization
+  // lines are shared anchors for the inventory and Main Street finishes.
+  if (kind === 'asphalt') return start + `
+// Individual stones resolve only within a few metres; beyond that their
+// speckle is averaged toward the mean so the surface does not shimmer.
+townLibAlb = mix(townLibAlb, townLibMean, smoothstep(0.003, 0.02, townArtFootprint) * 0.45);
+// Broad patches of different paving age and repair, tens of metres across.
+townLibAlb *= mix(0.93, 1.07, townArtNoise(vTownArtWorld.xz * 0.045 + vec2(3.7, 1.9)));
+diffuseColor.rgb = townLibAlb * ${asphaltFamily(name).toFixed(3)} * (diffuse / ${Math.max(0.005, asphaltBase).toFixed(5)});
+float townAsphaltValue = dot(diffuseColor.rgb,vec3(0.2126,0.7152,0.0722));
+diffuseColor.rgb = mix(diffuseColor.rgb,vec3(townAsphaltValue)*vec3(0.94,1.0,1.07),0.96);
+` + mineralFragment('asphalt') + ROAD_WEAR_GLSL;
+  return start + `
+diffuseColor.rgb *= townLibAlb / max(vec3(0.02), townLibMean);
+` + mineralFragment(kind as 'concrete' | 'granite' | 'foundation') + (kind === 'concrete' ? WALK_WEAR_GLSL : '');
+}
+
+const LIBRARY_MINERAL_ROUGHNESS = `
+#include <roughnessmap_fragment>
+roughnessFactor = clamp(mix(roughnessFactor, townLibOrmS.g, townLibRoughnessWeight) + townMineralRoughness, 0.62, 1.0);
+`;
+
+/** Asphalt adds the lane wear (polished wheel paths, sealant) to the mineral roughness. */
+const LIBRARY_ASPHALT_ROUGHNESS = `
+#include <roughnessmap_fragment>
+roughnessFactor = clamp(mix(roughnessFactor, townLibOrmS.g, townLibRoughnessWeight) + townMineralRoughness + townRoadWearRough, 0.55, 1.0);
+`;
+
+function mapTreatment(kind: ArtKind): string {
+  const start = ART_START;
   if (kind === 'water') return start + `
 // Small wind ripples perturb shading only: the mapped shoreline and water level
 // remain intact. World coordinates keep the phase continuous across tile edges.
@@ -114,7 +193,8 @@ float townBoardDetail = 1.0-smoothstep(0.03,0.16,townArtFootprint);
 diffuseColor.rgb *= 1.0-townBoardSeam*0.17*townBoardDetail;
 townArtHeight = townBoard*0.0035*townBoardDetail;
 `;
-  if (kind === 'roof') return start + `
+  if (kind === 'door') return start + DOOR_PANEL_GLSL;
+  if (kind === 'roof' || kind === 'flat-roof') return start + `
 float townRoofChoice = townArtNoise(vTownArtWorld.xz*0.035);
 // Roof UV families differ across reconstructed and retained sources.
 // Continuous world-space weathering avoids assuming a common local origin.
@@ -142,7 +222,7 @@ diffuseColor.rgb*=mix(.92,1.0,townPaintWear)*(1.0-.01*townPaintGrain*townArtClos
 // remove the brown source cast, and give asphalt a restrained cool mineral tone.
 float townAsphaltValue = dot(diffuseColor.rgb,vec3(0.2126,0.7152,0.0722));
 diffuseColor.rgb = mix(diffuseColor.rgb,vec3(townAsphaltValue)*vec3(0.94,1.0,1.07),0.96);
-` : '') + mineralFragment(kind);
+` : '') + mineralFragment(kind) + (kind === 'asphalt' ? ROAD_WEAR_GLSL : kind === 'concrete' ? WALK_WEAR_GLSL : '');
   if (kind === 'bark') return start + BARK_FINISH_GLSL;
   if (kind === 'far-leaf') return start + `
 // Sparse distant hulls represent groups of leaves, not polished green solids.
@@ -184,14 +264,7 @@ float townCrownFringe = 1.0-smoothstep(.045,.20,townArtFootprint);
 if(townCrownRim<.22 && townCrownFine<.27*townCrownFringe) discard;
 #include <opaque_fragment>
 `;
-  if (kind === 'glass') return `
-// Darken the room-facing diffuse contribution, retaining the actual sky's
-// dielectric reflection instead of adding a uniform cyan light to every pane.
-float townWindowInterior = townArtNoise(floor(vTownArtWorld.xz*0.4)+floor(vTownArtWorld.y/2.8));
-outgoingLight -= totalDiffuse * (1.0-mix(0.48,0.68,townWindowInterior));
-// Window reflections in the photographs are greyer than the open sky: glass,
-// screens and interior shade mute the mirrored blue (VC-0373, VC-0405).
-outgoingLight = mix(vec3(dot(outgoingLight,vec3(0.2126,0.7152,0.0722))),outgoingLight,0.6);
+  if (kind === 'glass') return WINDOW_INTERIOR_GLSL + `
 #include <opaque_fragment>
 `;
   if (kind === 'leaf') return `
@@ -243,9 +316,17 @@ export function applyArtMaterial(material: THREE.MeshStandardMaterial, clock: { 
   registrations.set(material, state);
   if (kind === 'siding') { material.color.set(sidingColor(state.color)); material.roughness = 0.84; }
   if (kind === 'roof') { material.color.set('#595c61'); material.roughness = 0.90; }
+  if (kind === 'flat-roof') { material.color.set('#4f5254'); material.roughness = 0.92; }
+  if (kind === 'door') { material.roughness = 0.62; }
+  if (kind === 'glass' || kind === 'door') {
+    // Opening coordinates come from opening-detail.ts; glass without them
+    // (other LODs or sources) must read zeros, never another program's value.
+    (material as THREE.MeshStandardMaterial & { defaultAttributeValues?: Record<string, number[]> }).defaultAttributeValues = { [OPENING_ATTRIBUTE]: [0, 0, 0, 0] };
+  }
   if (kind === 'trim') { material.color.set('#e9e7de'); material.roughness = 0.74; }
   if (kind === 'foundation') { material.color.set('#97968a'); material.roughness = 0.94; }
   if (kind === 'brick') { material.roughness = 0.9; material.normalScale.multiplyScalar(0.55); }
+  if (kind === 'concrete') (material as THREE.MeshStandardMaterial & { defaultAttributeValues?: Record<string, number[]> }).defaultAttributeValues = { [ROAD_LANE_ATTRIBUTE]: [0, 0, 0, 0] };
   if (kind === 'concrete' || kind === 'granite') {
     material.color.set(kind === 'granite' ? '#98988f' : material.name.includes('repaired') ? '#b1afa5' : material.name.includes('cool') ? '#a6a79d' : '#aba89c');
     material.roughness = 0.97;
@@ -253,12 +334,15 @@ export function applyArtMaterial(material: THREE.MeshStandardMaterial, clock: { 
     material.normalScale.multiplyScalar(0.22);
   }
   if (kind === 'asphalt') {
+    // Lane coordinates come from road-wear.ts; other asphalt reads zeros (no wear).
+    (material as THREE.MeshStandardMaterial & { defaultAttributeValues?: Record<string, number[]> }).defaultAttributeValues = { [ROAD_LANE_ATTRIBUTE]: [0, 0, 0, 0] };
     if (material.name === 'Finished parking | asphalt') material.color.set('#4c4f49');
     else if (material.name === 'Finished street corner | asphalt apron') material.color.set('#30332f');
     else if (material.map) material.color.setRGB(0.50,0.50,0.50);
     else material.color.set(material.name.includes('repair') ? '#484b48' : '#50534e');
     material.roughness = 0.94;
     material.normalScale.multiplyScalar(0.38);
+    state.asphaltBase = material.color.r * 0.2126 + material.color.g * 0.7152 + material.color.b * 0.0722;
   }
   if (kind === 'shoulder') { material.color.set('#868174'); material.roughness = 0.98; }
   if (kind === 'road-paint') { material.roughness=Math.max(.94,material.roughness); }
@@ -287,23 +371,38 @@ export function applyArtMaterial(material: THREE.MeshStandardMaterial, clock: { 
     state.compile.call(material, shader, renderer);
     shader.uniforms.townArtTime = clock;
     if (!shader.vertexShader.includes('#include <project_vertex>') || !shader.fragmentShader.includes('#include <map_fragment>') || !shader.fragmentShader.includes('#include <opaque_fragment>')) throw new Error('Town art material shader anchors changed.');
-    shader.vertexShader = `varying vec3 vTownArtWorld;\n${shader.vertexShader}`.replace('#include <project_vertex>', `
+    const use = LIBRARY[kind], set = use ? surfaceSet(use.set) : undefined;
+    const opening = kind === 'glass' || kind === 'door';
+    const lanes = kind === 'asphalt' || kind === 'concrete';
+    shader.vertexShader = `varying vec3 vTownArtWorld;\nvarying vec3 vTownArtNormal;\n${opening ? `attribute vec4 ${OPENING_ATTRIBUTE};\nvarying vec4 vTownOpening;\n` : ''}${lanes ? `attribute vec4 ${ROAD_LANE_ATTRIBUTE};\nvarying vec4 vTownRoadLane;\n` : ''}${shader.vertexShader}`.replace('#include <project_vertex>', `
 #include <project_vertex>
 vec4 townArtPosition = vec4(transformed,1.0);
 #ifdef USE_INSTANCING
 townArtPosition = instanceMatrix * townArtPosition;
 #endif
 vTownArtWorld = (modelMatrix * townArtPosition).xyz;
+vTownArtNormal = inverseTransformDirection(transformedNormal, viewMatrix);
+${opening ? `vTownOpening = ${OPENING_ATTRIBUTE};` : ''}
+${lanes ? `vTownRoadLane = ${ROAD_LANE_ATTRIBUTE};` : ''}
 `);
     if (kind === 'leaf') {
       if (!shader.vertexShader.includes('#include <begin_vertex>')) throw new Error('Town leaf sway shader anchor changed.');
       shader.vertexShader = `uniform float townArtTime;\n${shader.vertexShader}`.replace('#include <begin_vertex>', LEAF_SWAY);
     }
-    shader.fragmentShader = functions + shader.fragmentShader.replace('#include <map_fragment>', mapTreatment(kind)).replace('#include <opaque_fragment>', finishTreatment(kind));
-    if (['siding','roof','asphalt','concrete','granite','foundation','shoulder','water','bark','far-leaf'].includes(kind)) shader.fragmentShader = shader.fragmentShader.replace('#include <normal_fragment_maps>', mineralNormal);
-    if (['asphalt','concrete','granite','foundation','shoulder'].includes(kind)) {
+    const map = use && set ? libraryMapTreatment(kind, use, material.name, state.asphaltBase ?? 0.5) : mapTreatment(kind);
+    shader.fragmentShader = functions + (opening ? 'varying vec4 vTownOpening;\n' : '') + (lanes ? 'varying vec4 vTownRoadLane;\n' : '') + (use && set ? surfaceDeclarations(!!set.normal) : '')
+      + shader.fragmentShader.replace('#include <map_fragment>', map).replace('#include <opaque_fragment>', finishTreatment(kind));
+    if (['siding','roof','flat-roof','asphalt','concrete','granite','foundation','shoulder','water','bark','far-leaf'].includes(kind)) shader.fragmentShader = shader.fragmentShader.replace('#include <normal_fragment_maps>', mineralNormal);
+    if (kind === 'door') shader.fragmentShader = shader.fragmentShader.replace('#include <normal_fragment_maps>', DOOR_PANEL_NORMAL);
+    if (use && set) {
+      Object.assign(shader.uniforms, surfaceUniforms(set, use.normal, use.roughness, use.occlusion));
+      if (!shader.fragmentShader.includes('#include <aomap_fragment>') || !shader.fragmentShader.includes('#include <roughnessmap_fragment>')) throw new Error('Town surface library shader anchors changed.');
+      shader.fragmentShader = shader.fragmentShader.replace('#include <normal_fragment_maps>', SURFACE_NORMAL)
+        .replace('#include <aomap_fragment>', SURFACE_OCCLUSION)
+        .replace('#include <roughnessmap_fragment>', kind === 'asphalt' ? LIBRARY_ASPHALT_ROUGHNESS : ['concrete','granite','foundation'].includes(kind) ? LIBRARY_MINERAL_ROUGHNESS : SURFACE_ROUGHNESS);
+    } else if (['asphalt','concrete','granite','foundation','shoulder'].includes(kind)) {
       if (!shader.fragmentShader.includes('#include <roughnessmap_fragment>')) throw new Error('Town mineral roughness shader anchor changed.');
-      shader.fragmentShader = shader.fragmentShader.replace('#include <roughnessmap_fragment>', MINERAL_ROUGHNESS);
+      shader.fragmentShader = shader.fragmentShader.replace('#include <roughnessmap_fragment>', kind === 'asphalt' ? MINERAL_ROUGHNESS + 'roughnessFactor = clamp(roughnessFactor + townRoadWearRough, 0.8, 1.0);\n' : MINERAL_ROUGHNESS);
     }
     if (kind === 'water') {
       if (!shader.fragmentShader.includes('#include <roughnessmap_fragment>')) throw new Error('Town water roughness shader anchor changed.');
@@ -328,7 +427,11 @@ vNormalMapUv *= 1.6;
 #endif`);
     }
   };
-  material.customProgramCacheKey = () => `${previousKey}|webster-art-material-v2:${kind}${kind==='water'?'|summer-water-optics-v2':kind==='bark'?'|regional-bark-v1':kind==='glass'?'|dielectric-glass-v2':kind==='far-leaf'?'|layered-far-foliage-v1':kind==='roof'?'|shingle-courses-v1':kind==='asphalt'?'|paving-fields-v2':''}${['asphalt','concrete','granite','foundation','shoulder'].includes(kind)?'|mineral-families-v2':''}`;
+  material.customProgramCacheKey = () => {
+    const use = LIBRARY[kind], set = use ? surfaceSet(use.set) : undefined;
+    const library = use ? `|surface-library-v1:${set ? set.normal ? 'detail' : 'albedo' : 'off'}` : '';
+    return `${previousKey}|webster-art-material-v2:${kind}${kind==='water'?'|summer-water-optics-v2':kind==='bark'?'|regional-bark-v1':kind==='glass'?'|interior-rooms-v1':kind==='door'?'|panel-door-v1':kind==='far-leaf'?'|layered-far-foliage-v1':kind==='roof'?'|shingle-courses-v1':kind==='asphalt'?'|paving-fields-v2|lane-wear-v1':''}${['asphalt','concrete','granite','foundation','shoulder'].includes(kind)?'|mineral-families-v2':''}${kind==='concrete'?'|walk-joints-v1':''}${library}`;
+  };
   material.addEventListener('dispose', onMaterialDispose);
   material.needsUpdate = true;
 }

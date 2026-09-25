@@ -39,6 +39,12 @@ import { BoundaryContext } from './boundary-context';
 import { propertyTerrainAsset, validPropertyTerrainPacket, type PropertyTerrainPacket } from './property-terrain-finish';
 import { createDistantCanopyPrototype, disposeDistantCanopyPrototype } from './distant-canopy';
 import { createTrunkContactPrototype, disposeTrunkContactPrototype, TRUNK_CONTACT_SOURCE_SHA256 } from './trunk-contact';
+import { loadSurfaceLibrary, releaseSurfaceLibrary, surfaceLibraryResources } from './surface-library';
+import { prepareOpenings, installOpeningMaterial, REFERENCE_GLAZING } from './opening-detail';
+import { releaseTileTerrain, type StreetDressing } from './street-dressing';
+import type { HouseDressing } from './house-dressing';
+import type { RoadWear } from './road-wear';
+import type { CurbParking } from './curb-parking';
 
 type TreePlan = { near: Set<number>; shadows: Set<number>; excluded: Set<number>; key: string };
 type LoadedTile = { group: THREE.Group; level: number; lastUsed: number; trees?: THREE.Group; treeRows?: number[][]; treeExcluded?: Set<number>; treePlan?: TreePlan; occluders?: THREE.Mesh[]; geometryBytes?: number; detailRetryAt?: number; detailAttempts?: number };
@@ -82,8 +88,12 @@ export class TownWorld {
   private sharedAbort = new AbortController();
   private initialization?: Promise<void>;
   private surfaces?: TownSurfaces;
+  private dressing?: StreetDressing;
+  private houses?: HouseDressing;
+  private roadWear?: RoadWear;
+  private curbParking?: CurbParking;
   private readonly stageTimings: Record<string, number> = {};
-  private readonly timings = { tiles: 0, parseMs: 0, assemblyMs: 0, maxParseMs: 0, maxAssemblyMs: 0, detailRetries: 0, detailRecovered: 0 };
+  private readonly timings = { tiles: 0, parseMs: 0, assemblyMs: 0, maxParseMs: 0, maxAssemblyMs: 0, dressingMs: 0, maxDressingMs: 0, detailRetries: 0, detailRecovered: 0 };
   private readonly artClock = { value: 0 };
   private readonly boundaryContext: BoundaryContext;
   private readonly sourceImages: SourceImageCache;
@@ -268,6 +278,8 @@ export class TownWorld {
       }
       catch (error) { this.disposeRaw(gltf.scene); sourceTextures.forEach(texture => this.textureLifetime.release(texture)); throw error; }
       if (gltf.scene.userData.optionalDetailMissing?.length) this.sourceRetryCache.set(url, data, data.byteLength); else this.sourceRetryCache.delete(url);
+      gltf.scene.userData.openings = prepareOpenings(gltf.scene, tile.origin);
+      gltf.scene.userData.mappedPoles = (roadside?.objects ?? []).filter(object => object.kind === 'utility-pole').map(object => object.point);
       const assemblyMs = performance.now() - assemblyStarted; this.timings.tiles++;
       this.timings.assemblyMs += assemblyMs; this.timings.maxAssemblyMs = Math.max(this.timings.maxAssemblyMs, assemblyMs);
     }
@@ -309,6 +321,10 @@ export class TownWorld {
   }
 
   private async initializeShared(): Promise<void> {
+    // The authored surface library installs one-texel placeholders at once and
+    // streams its images behind the first frames; startup never waits for it.
+    void loadSurfaceLibrary(this.manifestUrl, !this.low && !this.mobile, this.sharedAbort.signal, this)
+      .catch(error => { if (!this.sharedAbort.signal.aborted) console.warn('Some Webster surface textures are unavailable; their placeholder tones remain.', error); });
     const results = await Promise.allSettled([
       this.surfaces?.initialize(this.sharedAbort.signal),
       this.loadGlb(this.manifest.fallback.url),
@@ -383,6 +399,38 @@ export class TownWorld {
     for (const stream of [this.parkingFinish, this.additionalEnvironment, this.roadside, this.facilities, this.environmentGround, this.roadMaterials, this.streetCorners, this.streetCornerGround]) stream.setBudget(4 * mib * scale);
     this.roadCurve.setBudget(2 * mib * scale); this.roadDash.setBudget(.5 * mib * scale); this.propertyTerrain.setBudget(2 * mib * scale); this.foundationWalls.setBudget(.5 * mib * scale);
     this.sourceRetryCache.maxBytes = (mobile ? 12 : 24) * mib; this.sourceRetryCache.trim();
+  }
+
+  /** Street dressing arrives with the road network; tiles already shown receive it too. */
+  setStreetDressing(dressing: StreetDressing, houses?: HouseDressing, roadWear?: RoadWear, curbParking?: CurbParking): void {
+    this.dressing = dressing;
+    this.houses = houses;
+    this.roadWear = roadWear;
+    this.curbParking = curbParking;
+    for (const [id, tile] of this.loaded) {
+      const definition = this.manifest.tiles.find(candidate => candidate.id === id);
+      if (!definition) continue;
+      this.dress(tile.group, id, definition.origin, tile.level);
+      tile.geometryBytes = this.geometryBytes(tile.group);
+    }
+  }
+
+  /** Street and house dressing, lane wear and curbside cars for one tile (each at most once). */
+  private dress(group: THREE.Group, id: string, origin: V3, level: number): void {
+    const dressing = this.dressing;
+    if (!dressing) return;
+    const started = performance.now();
+    const stage = (name: string, run: () => void) => {
+      const at = performance.now(); run();
+      this.stageTimings[`dress:${name}`] = Math.max(this.stageTimings[`dress:${name}`] ?? 0, performance.now() - at);
+    };
+    stage('street', () => dressing.apply(group, id, origin, level, group.userData.mappedPoles ?? []));
+    stage('houses', () => this.houses?.apply(group, origin, level));
+    stage('wear', () => this.roadWear?.apply(group, origin));
+    stage('parking', () => this.curbParking?.apply(group, id, origin, level));
+    releaseTileTerrain();
+    const ms = performance.now() - started;
+    this.timings.dressingMs += ms; this.timings.maxDressingMs = Math.max(this.timings.maxDressingMs, ms);
   }
 
   updatePresentation(timeSeconds: number, position: V3 = this.position): void {
@@ -651,6 +699,7 @@ export class TownWorld {
         this.timings.detailRecovered++;
       }
       this.evict(tile.id);
+      this.dress(group, tile.id, tile.origin, level);
       this.root.add(group);
       // The final update allocates tree instances once, after global shadow selection.
       const treeExcluded = treeRows ? excludedTreeAnchors(treeRows, tile.origin, group.userData.environmentTreeExclusions ?? []) : new Set<number>();
@@ -819,6 +868,7 @@ export class TownWorld {
           if (standard.isMeshStandardMaterial) {
             if (!standard.userData.townCrafted) standard.envMapIntensity = 0.12;
             applyArtMaterial(standard, this.artClock);
+            if (REFERENCE_GLAZING.has(standard.name)) { standard.envMapIntensity = 0.6; installOpeningMaterial(standard, 'glass'); }
           }
           entry = { material: input, refs: 0, textures };
           this.materialPool.set(key, entry);
@@ -923,7 +973,8 @@ export class TownWorld {
       if (image?.width && image?.height) estimatedTextureBytes += image.width * image.height * 4 * (texture.generateMipmaps ? 4 / 3 : 1);
     }
     const surfaces = this.surfaces?.resources() ?? { materials: 0, textures: 0, bytes: 0 };
-    return { materialCount: this.materialPool.size + surfaces.materials, textureCount: this.texturePool.size + surfaces.textures, estimatedTextureBytes: Math.round(estimatedTextureBytes + surfaces.bytes), estimatedGeometryBytes: [...buffers].reduce((sum, buffer) => sum + buffer.byteLength, 0) };
+    const library = surfaceLibraryResources();
+    return { materialCount: this.materialPool.size + surfaces.materials, textureCount: this.texturePool.size + surfaces.textures + library.textures, estimatedTextureBytes: Math.round(estimatedTextureBytes + surfaces.bytes + library.bytes), estimatedGeometryBytes: [...buffers].reduce((sum, buffer) => sum + buffer.byteLength, 0) };
   }
 
   dispose(): void {
@@ -954,6 +1005,7 @@ export class TownWorld {
     this.backdropMaterials = [];
     this.wanted.clear(); this.failures.clear();
     this.surfaces?.dispose();
+    releaseSurfaceLibrary(this);
     this.root.removeFromParent();
   }
 }

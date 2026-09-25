@@ -3,6 +3,7 @@ import catalog from '../../../data/derived/town/main-street-surfaces.json';
 import release from '../../../data/derived/town/release.json';
 import cornerIndex from '../../../data/derived/town/street-corners-index.json';
 import { applyArtMaterial } from './art-materials';
+import { surfaceSet, surfaceMeanLuminance } from './surface-library';
 import { terrainGeometryStamp } from './terrain-finish';
 import type { V3 } from './contracts';
 
@@ -11,6 +12,7 @@ type Assignment = [number, FinishKind, number, number, number, number, number, n
 type Selection = { ownership?: 'street-corner-apron'; name: string; parent: string; geometryStamp: string; positions: number; triangles: number; materials: string[]; assignments: Assignment[] };
 export type MainStreetSurfaceReport = { applied: boolean; rejected: boolean; asphaltTriangles: number; sidewalkTriangles: number; meshes: number; materialVariants: number; addedDraws: number; geometryBytes: number };
 export const MAIN_STREET_SURFACE_PROVENANCE = catalog;
+const ASPHALT_LIBRARY_MEAN = surfaceMeanLuminance('asphalt');
 
 const civicCrackFunctions = `
 float mainCrackSegment(vec2 p,vec2 a,vec2 b){
@@ -44,7 +46,9 @@ float mainAsphaltFade=smoothstep(0.0,6.0,vTownMainCoord.x)*(1.0-smoothstep(${(ca
 // Crossing road ribbons share the gray intersection, then return smoothly to
 // their retained dark finish outside the Main Street road/parking envelope.
 mainAsphaltFade*=1.0-smoothstep(${catalog.junctionFadeM[0].toFixed(1)},${catalog.junctionFadeM[1].toFixed(1)},vTownMainCoord.y);
-vec3 mainWeatheredGray=mix(vec3(.135,.142,.144),vec3(.235,.243,.242),smoothstep(.015,.20,townAsphaltValue));
+${surfaceSet('asphalt') ? `// Oxidized binder lifts the whole surface toward the photographed pale gray;
+// the aggregate keeps three quarters of its texture contrast (in log terms).
+vec3 mainWeatheredGray=vec3(.198,.204,.205)*pow(max(townAsphaltValue,.001)/${ASPHALT_LIBRARY_MEAN.toFixed(4)},.75);` : `vec3 mainWeatheredGray=mix(vec3(.135,.142,.144),vec3(.235,.243,.242),smoothstep(.015,.20,townAsphaltValue));`}
 diffuseColor.rgb=mix(diffuseColor.rgb,mainWeatheredGray,mainAsphaltFade);
 // VC-0444/0445: a few connected, branched repair marks supply the observed
 // older-civic asphalt vocabulary. Cells are world-anchored, not tile anchored.
@@ -63,11 +67,13 @@ mainCrackDistance=min(mainCrackDistance,mainCrackSegment(mainCrackP,mainCrackBra
 mainCrackDistance=min(mainCrackDistance,mainCrackSegment(mainCrackP,mainCrackJoin,vec2(-2.55+mainCrackChoice*.5,.8+mainCrackSeed)));
 mainCrackDistance=sqrt(mainCrackDistance);
 float mainCrackAA=max(townArtFootprint*.65,.001);
-float mainCrackWidth=mix(.011,.023,mainCrackSeed);
-float mainCrackResolved=1.0-smoothstep(.018,.090,townArtFootprint);
-float mainCrackCoverage=(1.0-smoothstep(mainCrackWidth-mainCrackAA,mainCrackWidth+mainCrackAA,mainCrackDistance))
-  *step(.73,mainCrackChoice)*mainCrackResolved*mainAsphaltFade;
-diffuseColor.rgb*=1.0-mainCrackCoverage*.35;
+// Sealant bands are a few centimetres wide, soft-edged where the squeegee
+// feathered them, and recede with distance instead of reading as pen lines.
+float mainCrackWidth=mix(.018,.034,mainCrackSeed);
+float mainCrackResolved=1.0-smoothstep(.010,.045,townArtFootprint);
+float mainCrackCoverage=(1.0-smoothstep(mainCrackWidth*.45-mainCrackAA,mainCrackWidth+mainCrackAA,mainCrackDistance))
+  *step(.80,mainCrackChoice)*mainCrackResolved*mainAsphaltFade;
+diffuseColor.rgb*=1.0-mainCrackCoverage*.30;
 `);
       shader.fragmentShader=shader.fragmentShader.replace('#include <roughnessmap_fragment>',`
 // Apply after the mineral field has assigned its height, before normal shading.
@@ -107,7 +113,7 @@ townArtHeight-=mainPanelJoint*.0012;
 `);
     }
   };
-  material.customProgramCacheKey = () => `${previousKey}|main-street-surface-v5:${kind}`;
+  material.customProgramCacheKey = () => `${previousKey}|main-street-surface-v6:${kind}`;
   material.needsUpdate = true;
   return material;
 }

@@ -73,14 +73,14 @@ describe('Photo-informed civic Main Street surfaces',()=>{
               expect(shader.fragmentShader).toContain('smoothstep(.028,.13,mainPaverAA.x)');
               expect(shader.fragmentShader).toContain('townArtHeight-=mainPanelJoint*.0012');
               expect(shader.fragmentShader.indexOf('townArtHeight-=mainPanelJoint')).toBeLessThan(shader.fragmentShader.indexOf('dFdx(townArtHeight)'));
-              expect(material.customProgramCacheKey()).toContain('main-street-surface-v5:pavers');
+              expect(material.customProgramCacheKey()).toContain('main-street-surface-v6:pavers');
               expect(shader.fragmentShader).not.toContain('mainCrack');
               for(let i=part.start;i<part.start+part.count;i+=3){const ids=[0,1,2].map(k=>mesh.geometry.index!.getX(i+k)),p=mesh.geometry.getAttribute('position'),[a,b,c]=ids.map(id=>new THREE.Vector3().fromBufferAttribute(p,id)),normal=b.sub(a).cross(c.sub(a)).normalize();minimumTopNormal=Math.min(minimumTopNormal,normal.y);expect(normal.y).toBeGreaterThan(.95);topFaces++;for(const id of ids)expect(Math.min(Math.abs(coords.getY(id)),Math.abs(coords.getY(id)-2.4384))).toBeLessThan(.0001);}
             }else{
               expect(shader.fragmentShader).toContain('mainWeatheredGray');expect(shader.fragmentShader.indexOf('mainWeatheredGray')).toBeLessThan(shader.fragmentShader.indexOf('float townStoneGrain'));
               expect(shader.fragmentShader).toContain('mainCrackWorld=mat2(.961,-.276,.276,.961)*(vTownArtWorld.xz');
-              expect(shader.fragmentShader).toContain('step(.73,mainCrackChoice)*mainCrackResolved*mainAsphaltFade');
-              expect(shader.fragmentShader).toContain('smoothstep(.018,.090,townArtFootprint)');
+              expect(shader.fragmentShader).toContain('step(.80,mainCrackChoice)*mainCrackResolved*mainAsphaltFade');
+              expect(shader.fragmentShader).toContain('smoothstep(.010,.045,townArtFootprint)');
               expect(shader.fragmentShader).not.toMatch(/fwidth\(mainCrack|dFd[xy]\(mainCrack/);
               expect(shader.fragmentShader.indexOf('townArtHeight-=mainCrackCoverage')).toBeGreaterThan(shader.fragmentShader.indexOf('townArtHeight = townFineValue'));
               expect(shader.fragmentShader.indexOf('townArtHeight-=mainCrackCoverage')).toBeLessThan(shader.fragmentShader.indexOf('dFdx(townArtHeight)'));

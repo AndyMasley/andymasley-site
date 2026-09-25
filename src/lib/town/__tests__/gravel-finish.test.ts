@@ -20,7 +20,7 @@ describe('inventory gravel appearance',()=>{
   expect(base).toBeGreaterThan(fine);expect(base).toBeGreaterThan(aggregate);
   expect(fragment).toContain('townArtClose * (1.0-smoothstep(0.006,0.045,townArtFootprint))');
   expect(fragment).toContain('townArtClose * (1.0-smoothstep(0.25,1.05,townArtFootprint*12.0))');
-  expect(fragment.match(/townArtNoise\(/g)).toHaveLength(4); // Three shared mineral reads and the function declaration.
+  expect(fragment.match(/townArtNoise\(/g)).toHaveLength(12); // Declaration, three shared mineral reads and eight lane-wear reads (road-wear.ts).
   expect(stones).toBeGreaterThan(base);
   expect(fragment.slice(stones)).not.toMatch(/\btownArtHeight\s*=(?!=)/);
   expect(fragment.indexOf('vec2 townArtHeightGradient')).toBeGreaterThan(stones);
