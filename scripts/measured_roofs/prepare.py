@@ -25,7 +25,8 @@ street photograph.
 5. Everything else. Garages, sheds, barns and the other plainly modelled
    buildings join the same packets (outbuildings.py), and each photographed
    house's front fence gets its line along the parcel's street frontage
-   (fences.py).
+   (fences.py). Each tile's packet also says which of its scenery trees are
+   evergreens in the leaf-off aerial (trees.py).
 
 Usage: python3 scripts/measured_roofs/prepare.py [--jobs N] [--limit N] [--reuse]
   --reuse skips the LiDAR fits when $OUT/records.jsonl (houses) and
@@ -34,7 +35,7 @@ Environment: WEBSTER_SOURCE (research folder), WEBSTER_MEASURED_OUT (work dir).
 Writes public/town-evidence/v1/measured/<digest>/<tile>.json and
 data/derived/town/measured-roofs-index.json.
 """
-import argparse, base64, collections, hashlib, json, math, os, re, shutil, sys, time
+import argparse, base64, collections, functools, hashlib, json, math, os, re, shutil, sys, time
 from multiprocessing import Pool
 from pathlib import Path
 
@@ -216,6 +217,7 @@ def aerial(east, north):
     return (a * (1 - fx) * (1 - fy) + b * fx * (1 - fy) + c * (1 - fx) * fy + d * fx * fy).astype(np.uint8)
 
 
+@functools.lru_cache(maxsize=None)
 def tile_shift(e0, n0, size=250.0, pad=10.0, maxs=5.0):
     """Where the LiDAR's roof edges appear in the aerial: the building lean
     of this part of the mosaic, from edge cross-correlation."""
@@ -331,9 +333,10 @@ def facade(fc):
         for k in ('ground', 'upper'):
             if fc.get(k) in ('open', 'enclosed'): f[k] = fc[k]
         if fc.get('levels') in (2, 3): f['levels'] = fc['levels']
-    # the street-context read: mailbox, foundation shrubs, street-facing garage doors, front fence
+    # the street-context read: mailbox, foundation shrubs, driveway surface, street-facing garage doors, front fence
     if fc.get('mb') in ('curb', 'house', 'none'): f['mb'] = fc['mb']
     if fc.get('sh') in ('none', 'some', 'many'): f['sh'] = fc['sh']
+    if fc.get('dw') in ('asphalt', 'gravel', 'concrete', 'pavers', 'none'): f['dw'] = fc['dw']
     if fc.get('g') == 'attached' and fc.get('gd') in (1, 2, 3) and fc.get('gs') in ('left', 'right', 'center'):
         f['gd'] = fc['gd']; f['gs'] = fc['gs']
         if hexok(fc.get('gc')): f['gc'] = fc['gc']
@@ -456,7 +459,12 @@ def packets(records, colours, lots, others=()):
     for tile, row, rec in others:
         if rec and rec['id'] in other_colours: row['rc'] = roof_colour(other_colours[rec['id']])
         tiles[tile].append(row)
-    payloads = {t: json.dumps({'version': 1, 'tileId': t, 'rows': sorted(items, key=lambda x: x['id'])}, separators=(',', ':'), allow_nan=False) + '\n'
+    # which of each tile's scenery trees are evergreens (trees.py)
+    from trees import tree_families
+    families = tree_families(SITE, aerial, tile_shift)
+    for t in families: tiles.setdefault(t, [])
+    payloads = {t: json.dumps({'version': 1, 'tileId': t, 'rows': sorted(items, key=lambda x: x['id']), **({'trees': families[t]} if t in families else {})},
+                              separators=(',', ':'), allow_nan=False) + '\n'
                 for t, items in sorted(tiles.items())}
     digest = hashlib.sha256(''.join(payloads[t] for t in sorted(payloads)).encode()).hexdigest()[:12]
     root = SITE / 'public/town-evidence/v1/measured'
@@ -467,6 +475,8 @@ def packets(records, colours, lots, others=()):
              'photographed': sum(x.get('k') == 'h' for v in tiles.values() for x in v),
              'others': sum(x.get('k') in ('o', 'b') for v in tiles.values() for x in v), 'kept': sum(x.get('k') == 'v' for v in tiles.values() for x in v),
              'photoReads': sum('f' in x and x.get('k') in (None, 'h') for v in tiles.values() for x in v),
+             'evergreens': sum(bin(b).count('1') for f in families.values() for b in base64.b64decode(f['c'])),
+             'trees': sum(f['n'] for f in families.values()),
              'tiles': ','.join(sorted(tiles)), 'grid': tile_grid(tiles), 'bytes': sum(len(t) for t in payloads.values())}
     (SITE / 'data/derived/town/measured-roofs-index.json').write_text(json.dumps(index, separators=(',', ':')) + '\n')
     print(json.dumps({'houses': index['count'], 'others': index['others'], 'kept': index['kept'], 'tiles': len(tiles), 'bytes': index['bytes'], 'skipped': dict(skipped),

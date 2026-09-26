@@ -21,7 +21,7 @@ import { frontageMaterial } from './crafted-frontages';
  * outline, its doors and the nearest street.
  */
 export type RoadLookup = { nearestRoad(x: number, n: number, max?: number): { x: number; n: number; z: number; tx: number; tn: number; width: number; type: number; distance: number } | null };
-export type HouseDressingReport = { buildings: number; frontWalls: number; shrubs: number; beds: number; mailboxes: number; fenceM: number; gutterM: number; downspouts: number; rakeM: number; chimneys: number; driveways: number; cars: number; walks: number; walkM: number; triangles: number };
+export type HouseDressingReport = { buildings: number; frontWalls: number; shrubs: number; beds: number; mailboxes: number; fenceM: number; aprons: number; gutterM: number; downspouts: number; rakeM: number; chimneys: number; driveways: number; cars: number; walks: number; walkM: number; triangles: number };
 
 /** Material names of surfaces a driveway car must never stand on, and where a
  * generated front walk stops: street furniture, lots and corners, and any
@@ -136,6 +136,14 @@ diffuseColor.rgb *= mix(0.55, 1.45, townMulchHash(townChip)) * mix(0.85, 1.1, to
   return m;
 }
 
+/** Driveway surfaces as photographed: asphalt, gravel or poured concrete. */
+function driveMaterial(kind: 'asphalt' | 'gravel'): THREE.MeshStandardMaterial {
+  const m = new THREE.MeshStandardMaterial({ color: kind === 'asphalt' ? '#4b4b48' : '#8d8676', roughness: 0.95, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 });
+  m.name = kind === 'asphalt' ? 'House dressing | asphalt drive' : 'House dressing | gravel drive';
+  applyArtMaterial(m);
+  return m;
+}
+
 function walkMaterial(): THREE.MeshStandardMaterial {
   const m = new THREE.MeshStandardMaterial({ color: '#a8a59b', roughness: 0.92, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 });
   m.name = 'House dressing | concrete walk';
@@ -153,6 +161,7 @@ export class HouseDressing {
   private readonly carMaterials = new Map<string, THREE.MeshStandardMaterial>();
   /** Front walks: poured concrete with the sidewalk joints and texture. */
   private readonly walk = walkMaterial();
+  private readonly drives = { asphalt: driveMaterial('asphalt'), gravel: driveMaterial('gravel') };
 
   constructor(private readonly roads: RoadLookup) {
     const standard = (name: string, color: string, roughness: number, metalness = 0): THREE.MeshStandardMaterial => {
@@ -188,7 +197,7 @@ export class HouseDressing {
   apply(group: THREE.Group, origin: readonly number[], level: number): HouseDressingReport {
     const existing = group.userData.houseDressing as HouseDressingReport | undefined;
     if (existing) return existing;
-    const report: HouseDressingReport = { buildings: 0, frontWalls: 0, shrubs: 0, beds: 0, mailboxes: 0, fenceM: 0, gutterM: 0, downspouts: 0, rakeM: 0, chimneys: 0, driveways: 0, cars: 0, walks: 0, walkM: 0, triangles: 0 };
+    const report: HouseDressingReport = { buildings: 0, frontWalls: 0, shrubs: 0, beds: 0, mailboxes: 0, fenceM: 0, aprons: 0, gutterM: 0, downspouts: 0, rakeM: 0, chimneys: 0, driveways: 0, cars: 0, walks: 0, walkM: 0, triangles: 0 };
     group.userData.houseDressing = report;
     if (level > 1) return report;
     group.updateMatrixWorld(true);
@@ -234,7 +243,7 @@ export class HouseDressing {
     segments.forEach((s, i) => { s.building = find(i); });
     // What each house's street photograph shows (mailbox, foundation shrubs),
     // matched to its foundation by the nearest measured house centre.
-    const observations: { e: number; n: number; b?: number; mb?: string; sh?: string; fe?: string; fc?: string; fl?: number[][] }[] = group.userData.houseObservations ?? [];
+    const observations: { e: number; n: number; b?: number; mb?: string; sh?: string; dw?: string; fe?: string; fc?: string; fl?: number[][] }[] = group.userData.houseObservations ?? [];
     const observed = new Map<number, { mb?: string; sh?: string }>();
     if (observations.length) {
       const centres = new Map<number, number[]>();
@@ -327,6 +336,7 @@ export class HouseDressing {
     const tests = level === 0 ? this.surfaceTests(group, origin) : null;
     const driveways = tests ? this.driveways(group, origin, [...buildings.values()], outlines, tests, report) : [];
     const walks = tests ? this.walkways(origin, frontWalls, outlines, doors, tests, groundAt, report) : null;
+    const aprons = tests ? this.aprons(group, origin, outlines, observations, tests, groundAt, report) : [];
     this.gutters(group, inverse, builder, groundAt, report);
     this.chimneys(group, inverse, builder, report);
     const built = builder.finish({ ...this.solids, ...Object.fromEntries(this.paints) });
@@ -353,6 +363,7 @@ export class HouseDressing {
       report.cars = driveways.length;
     }
     if (walks) built.add(walks);
+    for (const apron of aprons) built.add(apron);
     if (built.children.length) { built.name = 'House dressing'; group.add(built); }
     built.traverse(o => { if (o instanceof THREE.Mesh) report.triangles += ((o.geometry.index?.count ?? o.geometry.getAttribute('position').count) / 3) * (o instanceof THREE.InstancedMesh ? o.count : 1); });
     return report;
@@ -525,6 +536,63 @@ export class HouseDressing {
     const mesh = new THREE.Mesh(geometry, this.walk);
     mesh.name = 'House dressing | front walks'; mesh.userData.townCrafted = true; mesh.receiveShadow = true;
     return mesh;
+  }
+
+  /**
+   * A drive in front of each vehicle door that the land cover leaves on lawn
+   * (the 2016 cover predates many drives, and misses gravel): as wide as the
+   * door and out to the pavement it meets (a drive, a sidewalk or the street),
+   * else 8 m, in the surface the house's photograph shows. It follows the
+   * ground and stops short of any other building.
+   */
+  private aprons(group: THREE.Group, origin: readonly number[], outlines: Map<number, Outline>, observations: readonly { e: number; n: number; dw?: string }[],
+    tests: SurfaceTests, groundAt: (x: number, z: number, fallback: number) => number, report: HouseDressingReport): THREE.Mesh[] {
+    const doors: number[][] = (group.userData.openings?.garageDoors ?? []).filter((d: number[]) => d.length >= 6);
+    const east = (x: number) => x + origin[0], north = (z: number) => -(z + origin[2]);
+    const out = { asphalt: { p: [] as number[], n: [] as number[], l: [] as number[] }, gravel: { p: [] as number[], n: [] as number[], l: [] as number[] }, concrete: { p: [] as number[], n: [] as number[], l: [] as number[] } };
+    for (const [dx, dy, dz, ox, oz, width] of doors) {
+      let seen: string | undefined, bestD = 15;
+      for (const o of observations) { const d = Math.hypot(o.e - east(dx), o.n - north(dz)); if (d < bestD) { bestD = d; seen = o.dw; } }
+      if (seen === 'none') continue;
+      const kind = seen === 'gravel' ? 'gravel' : seen === 'concrete' || seen === 'pavers' ? 'concrete' : 'asphalt';
+      // A drive the cover already holds needs nothing more.
+      const at = (s: number) => [dx + ox * (s - 0.3), dz + oz * (s - 0.3)];
+      if ([1.5, 3, 4.5].filter(s => { const [x, z] = at(s); return tests.paved(east(x), north(z)); }).length >= 2) continue;
+      const others = [...outlines.values()].filter(o => o.x0 - 30 < dx && o.x1 + 30 > dx && o.z0 - 30 < dz && o.z1 + 30 > dz);
+      let length = 8;
+      for (let s = 0.5; s <= 25; s += 0.5) {
+        const [x, z] = at(s);
+        if (others.some(o => x > o.x0 - 0.3 && x < o.x1 + 0.3 && z > o.z0 - 0.3 && z < o.z1 + 0.3 && s > 1 && inside(o, x, z))) { length = Math.min(length, s - 1); break; }
+        if (s > 1 && tests.blocked(east(x), north(z))) { length = s - 0.5; break; }
+        if (s > 1 && tests.paved(east(x), north(z))) { length = s; break; }
+      }
+      if (length < 2) continue;
+      const half = width / 2 + 0.3, ax = -oz, az = ox, steps = Math.ceil(length);
+      const corner = (s: number, side: number) => { const [x, z] = at(s); return [x + ax * side * half, groundAt(x + ax * side * half, z + az * side * half, dy - 1) + 0.04, z + az * side * half]; };
+      const target = out[kind];
+      for (let k = 0; k < steps; k++) {
+        const s0 = length * k / steps, s1 = length * (k + 1) / steps;
+        const q = [corner(s0, -1), corner(s0, 1), corner(s1, 1), corner(s1, -1)], u = [[-half, s0], [half, s0], [half, s1], [-half, s1]];
+        const n = new THREE.Vector3(q[1][0] - q[0][0], q[1][1] - q[0][1], q[1][2] - q[0][2]).cross(new THREE.Vector3(q[3][0] - q[0][0], q[3][1] - q[0][1], q[3][2] - q[0][2])).normalize();
+        const up = n.y >= 0, order = up ? [0, 1, 2, 0, 2, 3] : [0, 2, 1, 0, 3, 2];
+        if (!up) n.negate();
+        for (const i of order) { target.p.push(...q[i]); target.n.push(n.x, n.y, n.z); target.l.push(u[i][0], u[i][1], half, 1); }
+      }
+      report.aprons++;
+    }
+    const meshes: THREE.Mesh[] = [];
+    for (const [kind, { p, n, l }] of Object.entries(out)) {
+      if (!p.length) continue;
+      const geometry = new THREE.BufferGeometry();
+      geometry.setAttribute('position', new THREE.Float32BufferAttribute(p, 3));
+      geometry.setAttribute('normal', new THREE.Float32BufferAttribute(n, 3));
+      geometry.setAttribute(ROAD_LANE_ATTRIBUTE, new THREE.Float32BufferAttribute(l, 4));
+      geometry.computeBoundingBox(); geometry.computeBoundingSphere();
+      const mesh = new THREE.Mesh(geometry, kind === 'concrete' ? this.walk : this.drives[kind as 'asphalt' | 'gravel']);
+      mesh.name = `House dressing | ${kind} drive aprons`; mesh.userData.townCrafted = true; mesh.receiveShadow = true;
+      meshes.push(mesh);
+    }
+    return meshes;
   }
 
   /**
@@ -770,7 +838,7 @@ export class HouseDressing {
   dispose(): void {
     for (const material of this.carMaterials.values()) material.dispose();
     this.carMaterials.clear();
-    this.walk.dispose();
+    this.walk.dispose(); this.drives.asphalt.dispose(); this.drives.gravel.dispose();
     this.shrubHigh.dispose(); this.shrubLow.dispose();
     this.shrub.dispose(); this.mulch.dispose();
     for (const material of Object.values(this.solids)) material.dispose();

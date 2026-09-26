@@ -337,10 +337,16 @@ take their read material, colours, shopfront, awning, window pattern and
 overhead doors (`outbuilding-reads.json`, `building-reads.json`).
 
 `house-dressing.ts` follows each measured house's photograph for its yard:
-curbside mailboxes only where one is seen, foundation beds as full as seen, and
+curbside mailboxes only where one is seen, foundation beds as full as seen,
 picket, board, split-rail, iron and chain-link fences, dry stone and retaining
 walls and hedges along the lot's street frontage from the parcel map, open at
-the drive and the front walk. `street-dressing.ts` clears the painted centre
+the drive and the front walk, and a drive paved (in the photographed surface)
+to any vehicle door the land cover leaves on lawn. It loads as its own chunk
+beside the road network; vehicle doors built during assembly join the tile's
+gathered openings afterwards (`mergeVehicleDoors`). Each tile's measured
+packet also says which of its scenery trees are evergreens in the 2025
+leaf-off aerial; `treeForm` draws those as conifers and the rest as broadleaf
+in place of the habitat draw. `street-dressing.ts` clears the painted centre
 line from streets whose photographs show none, stands poles on the side the
 photographs place them and leaves them off streets photographed without poles
 or wires (`street-context.json`, from `scripts/street_context/prepare.py`).

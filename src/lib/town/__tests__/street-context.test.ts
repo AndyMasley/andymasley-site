@@ -64,7 +64,7 @@ describe('streets as photographed', () => {
 
 describe('yards as photographed', () => {
   /** A street along north = 0 (8 m wide) with 10 m square houses set back 20 m, centred on `houses`. */
-  function street(houses: number[]) {
+  function street(houses: number[], paved: number[][] = []) {
     const roads: RoadLookup = { nearestRoad: (x, n, max = 40) => Math.abs(n) > max ? null : { x, n: 0, z: 10, tx: 1, tn: 0, width: 8, type: 5, distance: Math.abs(n) } };
     const group = new THREE.Group();
     const terrain = new THREE.Mesh(new THREE.BufferGeometry().setAttribute('position', new THREE.Float32BufferAttribute([-200, 10, 20, 200, 10, 20, 200, 10, -60, -200, 10, 20, 200, 10, -60, -200, 10, -60], 3)));
@@ -84,6 +84,11 @@ describe('yards as photographed', () => {
     foundation.setAttribute('normal', new THREE.Float32BufferAttribute(normals, 3));
     const material = new THREE.MeshStandardMaterial(); material.name = 'V2 inferred | foundation';
     group.add(new THREE.Mesh(foundation, material));
+    // Land cover at 1 m: lawn, with pavement from the curb to the house front over `paved` east ranges.
+    const width = 400, height = 80, data = new Uint8Array(width * height * 4);
+    for (let i = 0; i < width * height; i++) data[i * 4] = 255;
+    for (const [e0, e1] of paved) for (let n = 5; n <= 20; n++) for (let e = e0; e < e1; e++) { const i = (Math.floor(60 - n) * width + (e + 200)) * 4; data[i] = 0; data[i + 2] = 255; }
+    group.userData.coverMask = { data, width, height, bounds: [-200, -60, 200, 20], core: [-200, -60, 200, 20] };
     return { group, dressing: new HouseDressing(roads) };
   }
   const houses = [-150, -90, -30, 30, 90, 150];
@@ -110,6 +115,28 @@ describe('yards as photographed', () => {
     expect(shrubs('some')).toBeGreaterThan(0);
     expect(shrubs('many')).toBeGreaterThan(shrubs('some'));
     expect(shrubs('many')).toBeGreaterThanOrEqual(shrubs());
+  });
+
+  it('paves a drive in front of garage doors the land cover leaves on lawn, in the photographed surface', () => {
+    // Garage doors in the front wall (north 20, facing the street to the south) of the first four houses; the fourth already has its drive.
+    const { group, dressing } = street(houses, [[25, 35]]);
+    group.userData.openings = { doors: [], garageDoors: houses.slice(0, 4).map(hx => [hx + 2, 11, -19.7, 0, 1, 2.4]) };
+    group.userData.houseObservations = houses.map((hx, i) => ({ e: hx, n: 25, b: 10, dw: i === 1 ? 'gravel' : i === 2 ? 'none' : 'asphalt' }));
+    const report = dressing.apply(group, [0, 0, 0], 0);
+    expect(report.aprons).toBe(2);
+    const asphalt = group.getObjectByName('House dressing | asphalt drive aprons') as THREE.Mesh, gravel = group.getObjectByName('House dressing | gravel drive aprons') as THREE.Mesh;
+    expect((asphalt.material as THREE.Material).name).toBe('House dressing | asphalt drive');
+    expect((gravel.material as THREE.Material).name).toBe('House dressing | gravel drive');
+    for (const mesh of [asphalt, gravel]) {
+      const p = mesh.geometry.getAttribute('position');
+      for (let i = 0; i < p.count; i++) {
+        const n = -p.getZ(i); expect(n).toBeLessThanOrEqual(20.01); expect(n).toBeGreaterThan(4.9); // from the wall to the street edge
+        expect(p.getY(i)).toBeCloseTo(10.04, 3);
+      }
+      const a = new THREE.Vector3().fromBufferAttribute(p, 0), b = new THREE.Vector3().fromBufferAttribute(p, 1), c = new THREE.Vector3().fromBufferAttribute(p, 2);
+      expect(new THREE.Vector3().subVectors(b, a).cross(new THREE.Vector3().subVectors(c, a)).y).toBeGreaterThan(0);
+    }
+    dressing.dispose();
   });
 
   it('builds photographed fences and walls along the frontage, painted as seen', () => {

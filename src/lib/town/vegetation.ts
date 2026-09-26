@@ -76,13 +76,14 @@ function variation(x: number, z: number, salt: number): number {
  * Rows remain unmodified. The world coordinate seed is independent of tile ownership.
  * Both LODs cover the same leaf envelope; only their displayed mesh changes.
  */
-export function treeForm(row: readonly number[], origin: readonly number[], distant = false): TreeForm {
+/** `evergreen`, when the leaf-off aerial settled it, replaces the habitat draw of conifer or broadleaf. */
+export function treeForm(row: readonly number[], origin: readonly number[], distant = false, evergreen?: boolean): TreeForm {
   if (row.length < 7 || !row.slice(0, 7).every(Number.isFinite) || row.slice(3, 6).some(value => value <= 0) ||
       origin.length < 3 || !origin.slice(0, 3).every(Number.isFinite)) throw new Error('Tree forms require finite positive source transforms.');
   const x = row[0] + origin[0], z = row[2] + origin[2];
   const seed = variation(x, z, 1877), detail = variation(x, z, 731);
   const habitat = habitatAt(x, -z);
-  const renderFamily = variation(x, z, 4021) < CONIFER_SHARE[habitat] ? 'conifer' : 'broadleaf';
+  const renderFamily = (evergreen ?? variation(x, z, 4021) < CONIFER_SHARE[habitat]) ? 'conifer' : 'broadleaf';
   const roundLimit = habitat === 'forested-wetland' ? 0.70 : habitat === 'deciduous-woodland' ? 0.30 : 0.42;
   const spreadLimit = habitat === 'forested-wetland' ? 0.80 : habitat === 'deciduous-woodland' ? 0.88 : 0.82;
   const family = renderFamily === 'conifer' ? 'tiered' : seed < roundLimit ? 'rounded' : seed < spreadLimit ? 'spreading' : 'open';

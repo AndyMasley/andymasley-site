@@ -65,6 +65,7 @@ const kinds: Record<string, ArtKind> = {
   'Parked | warm white': 'car-paint',
   'House dressing | brick chimney': 'brick',
   'House dressing | concrete walk': 'concrete',
+  'House dressing | asphalt drive': 'asphalt', 'House dressing | gravel drive': 'shoulder',
   'Mapped water | inferred level and appearance': 'water',
   'Boundary context | water': 'water',
 };

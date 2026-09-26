@@ -5,8 +5,10 @@ import { readFileSync, existsSync, readdirSync } from 'node:fs';
 import { resolve } from 'node:path';
 import index from '../../../../data/derived/town/measured-roofs-index.json';
 import homeIndex from '../../../../data/derived/town/residential-evidence-index.json';
-import { measuredRoofAsset, validMeasuredRoofPacket, measuredBody, isMeasuredOther, isPhotographedHouse, MEASURED_ROOF_COVERAGE, type MeasuredRoof, type MeasuredOther, type MeasuredRoofPacket } from '../measured-roofs';
-import { applyEvidenceBuildings, MEASURED_WALL_INSET } from '../evidence-buildings';
+import { measuredRoofAsset, validMeasuredRoofPacket, measuredBody, isMeasuredOther, isPhotographedHouse, evergreens, MEASURED_ROOF_COVERAGE, type MeasuredRoof, type MeasuredOther, type MeasuredRoofPacket } from '../measured-roofs';
+import { treeForm } from '../vegetation';
+import { applyEvidenceBuildings, mergeVehicleDoors, MEASURED_WALL_INSET } from '../evidence-buildings';
+import { prepareOpenings } from '../opening-detail';
 import { Batch } from '../crafted-frontages';
 import type { EvidenceBuilding } from '../evidence-types';
 
@@ -191,7 +193,7 @@ describe('measured house roofs', () => {
 
   it('hangs photographed garage doors beside the entry, in their colour, and keeps yard dressing clear of them', () => {
     const tile = tiles.find(t => houses(t).length)!, row = houses(tile)[0], [e, n] = row.o;
-    const build = (f: NonNullable<MeasuredRoof['f']>) => {
+    const build = (f: NonNullable<MeasuredRoof['f']>, gathered = true) => {
       const frames = [{ start: [e - 6.32, n - 4.32], tangent: [1, 0], outward: [0, -1], width: 12.64, front: true, groundMaximum: row.b, clearanceM: 5 }];
       const home: EvidenceBuilding = { id: row.id, tileId: tile, address: 'Fixture', outline: [[e - 6.32, n - 4.32], [e + 6.32, n - 4.32], [e + 6.32, n + 4.32], [e - 6.32, n + 4.32]],
         frames, base: row.b, floor: row.b + .4, eave: row.b + 5.8, peak: row.b + 9, stories: 2, style: 'RAISED RANCH', year: 1975, material: 'siding', paint: '#d9d5c8',
@@ -200,7 +202,7 @@ describe('measured house roofs', () => {
       geometry.setAttribute('position', new THREE.Float32BufferAttribute([e - 4, row.b + 2, -(n - 4), e - 2, row.b + 2, -(n - 4), e - 4, row.b + 4, -(n - 4)], 3));
       const inferred = new THREE.MeshStandardMaterial(); inferred.name = 'V2 inferred | siding';
       group.add(new THREE.Mesh(geometry, inferred));
-      group.userData.openings = { doors: [], garageDoors: [] };
+      if (gathered) group.userData.openings = { doors: [], garageDoors: [] };
       applyEvidenceBuildings(group, tile, [0, 0, 0], 0, [home], [], undefined, [], [{ ...row, e: [row.b + 5.8], ep: [5.8], f }]);
       const doors = new Map<string, THREE.MeshStandardMaterial>();
       group.traverse(o => { if (o instanceof THREE.Mesh) for (const m of [o.material].flat()) if (m.name.startsWith('Crafted frontage | door |')) doors.set(m.name, m as THREE.MeshStandardMaterial); });
@@ -231,6 +233,13 @@ describe('measured house roofs', () => {
       for (let i = 0; i < p.count; i++) if (p.getY(i) < row.b + 2.4 && p.getX(i) - e > 1.4 && -p.getZ(i) < n - 4) low++;
     } });
     expect(low).toBe(0);
+    // In the game the tile's openings are gathered after assembly; the doors join them, facing and width kept.
+    const late = build({ material: 'siding', bays: 3, gd: 2, gs: 'right', gc: '#3f6c9e' }, false).group;
+    expect(late.userData.openings).toBeUndefined();
+    late.userData.openings = prepareOpenings(late); mergeVehicleDoors(late);
+    const merged = (late.userData.openings.garageDoors as number[][]).filter(d => d.length === 6);
+    expect(merged).toHaveLength(2);
+    for (const d of merged) { expect(d[3]).toBeCloseTo(0, 5); expect(d[4]).toBeCloseTo(1, 5); expect(d[5]).toBeGreaterThan(2); }
   });
 
   it('puts a photographed garage in its wing and moves a plan entry the doors displace onto a fitted stoop', () => {
@@ -377,6 +386,25 @@ describe('measured house roofs', () => {
     const names = new Set<string>();
     group.traverse(o => { if (o instanceof THREE.Mesh) for (const m of [o.material].flat()) names.add(m.name); });
     if (home.entry) expect(names.has(`Crafted frontage | door | ${photo.f!.door}`)).toBe(true);
+  });
+
+  it('marks the evergreens the leaf-off aerial shows among the scenery trees', () => {
+    const release = resolve('public/town-assets', readdirSync(resolve('public/town-assets')).find(d => existsSync(resolve('public/town-assets', d, 'manifest.json')))!);
+    const manifest = JSON.parse(readFileSync(resolve(release, 'manifest.json'), 'utf8')) as { tiles: { id: string; treeFile?: { url: string; count: number } }[] };
+    let trees = 0, conifers = 0;
+    for (const tile of manifest.tiles) {
+      if (!tile.treeFile?.count) continue;
+      const p = packet(tile.id), flag = evergreens(p.trees, tile.treeFile.count);
+      expect(flag, tile.id).toBeDefined();
+      for (let i = 0; i < tile.treeFile.count; i++) { trees++; if (flag!(i)) conifers++; }
+    }
+    expect(trees).toBe(index.trees); expect(conifers).toBe(index.evergreens);
+    expect(conifers / trees).toBeGreaterThan(.04); expect(conifers / trees).toBeLessThan(.3);
+    // a mismatched count falls back to the habitat draw
+    expect(evergreens({ n: 3, c: 'Bw==' }, 4)).toBeUndefined();
+    const row = [10, 12, -10, 1.2, 3, 1.2, 0];
+    expect(treeForm(row, [0, 0, 0], false, true).renderFamily).toBe('conifer');
+    expect(treeForm(row, [0, 0, 0], false, false).renderFamily).toBe('broadleaf');
   });
 
   it('sets walls in under the roofprint so the eaves overhang', () => {

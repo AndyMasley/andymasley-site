@@ -1,5 +1,5 @@
 import { foundationWallAsset, validFoundationWallPacket } from './foundation-wall-finish';
-import { measuredRoofAsset, validMeasuredRoofPacket } from './measured-roofs';
+import { measuredRoofAsset, validMeasuredRoofPacket, evergreens } from './measured-roofs';
 import * as THREE from 'three';
 import release from '../../../data/derived/town/release.json';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
@@ -42,6 +42,7 @@ import { createDistantCanopyPrototype, disposeDistantCanopyPrototype } from './d
 import { createTrunkContactPrototype, disposeTrunkContactPrototype, TRUNK_CONTACT_SOURCE_SHA256 } from './trunk-contact';
 import { loadSurfaceLibrary, releaseSurfaceLibrary, surfaceLibraryResources } from './surface-library';
 import { prepareOpenings, installOpeningMaterial, REFERENCE_GLAZING } from './opening-detail';
+import { mergeVehicleDoors } from './evidence-buildings';
 import { releaseTileTerrain, type StreetDressing } from './street-dressing';
 import type { HouseDressing } from './house-dressing';
 import type { RoadWear } from './road-wear';
@@ -286,6 +287,7 @@ export class TownWorld {
       catch (error) { this.disposeRaw(gltf.scene); sourceTextures.forEach(texture => this.textureLifetime.release(texture)); throw error; }
       if (gltf.scene.userData.optionalDetailMissing?.length) this.sourceRetryCache.set(url, data, data.byteLength); else this.sourceRetryCache.delete(url);
       gltf.scene.userData.openings = prepareOpenings(gltf.scene, tile.origin);
+      mergeVehicleDoors(gltf.scene);
       gltf.scene.userData.mappedPoles = (roadside?.objects ?? []).filter(object => object.kind === 'utility-pole').map(object => object.point);
       const assemblyMs = performance.now() - assemblyStarted; this.timings.tiles++;
       this.timings.assemblyMs += assemblyMs; this.timings.maxAssemblyMs = Math.max(this.timings.maxAssemblyMs, assemblyMs);
@@ -540,7 +542,7 @@ export class TownWorld {
         const treePlan = treePlans.get(tile.id);
         if (cached.treeRows && treePlan && cached.treePlan?.key !== treePlan.key) {
           if (cached.trees) this.releaseTrees(cached.trees);
-          cached.trees = this.buildTrees(cached.treeRows, tile.origin, treePlan);
+          cached.trees = this.buildTrees(cached.treeRows, tile.origin, treePlan, evergreens(cached.group.userData.treeFamilies, cached.treeRows.length));
           cached.treePlan = treePlan;
           this.root.add(cached.trees);
         }
@@ -780,7 +782,7 @@ export class TownWorld {
     return plans;
   }
 
-  private buildTrees(rows: number[][], origin: V3, plan: TreePlan): THREE.Group {
+  private buildTrees(rows: number[][], origin: V3, plan: TreePlan, evergreen?: (index: number) => boolean): THREE.Group {
     const group = new THREE.Group();
     group.position.fromArray(origin);
     const matrix = new THREE.Matrix4();
@@ -804,7 +806,7 @@ export class TownWorld {
       const base = this.prototypes[band.index];
       if (!base) continue;
       const isTrunk = band.kind === 'trunk';
-      const forms = rows.map(row => treeForm(row, origin, band.kind === 'far'));
+      const forms = rows.map((row, index) => treeForm(row, origin, band.kind === 'far', evergreen?.(index)));
       const splitBroadleaf = band.kind === 'near' && this.openBroadleafPrototypes.has(band.index);
       // Trunks follow each anchor's crown detail: round and flared up close, a few faces beyond.
       const cohorts = isTrunk ? ['near', 'far'] as const : splitBroadleaf ? ['broadleaf', 'open', 'conifer'] as const : ['broadleaf', 'conifer'] as const;

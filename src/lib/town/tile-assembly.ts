@@ -128,6 +128,7 @@ export function tileAssemblySteps(group: THREE.Group, tile: TownTile, level: num
     { name: 'craftedFrontages', apply: () => { return applyCraftedFrontages(group,tile.id,tile.origin,level,institutions?.ids??[]); } },
     { name: 'landmarkCompletion', apply: () => { return applyLandmarkCompletion(group,tile.id,tile.origin,level,sourceSha256); } },
     { name: 'commercial', apply: () => { return applyCommercialCompletion(group,tile.id,tile.origin,level,sourceSha256); } },
+    { name: 'treeFamilies', apply: () => { group.userData.treeFamilies = measuredRoofs?.trees; return measuredRoofs?.trees?.n ?? 0; } },
     { name: 'evidenceBuildings', apply: () => { return applyEvidenceBuildings(group,tile.id,tile.origin,level,evidence?.buildings??[],landmarks.map(row=>({...row,material:row.material??undefined,paint:row.paint??undefined})),(batch,matched)=>buildEvidenceLandmarks(batch,landmarks.filter(row=>matched.has(row.id))),evidence?.roofs??[],measuredRoofs?.rows??[]); } },
     { name: 'campStructures', apply: () => { return applyCampStructures(group,tile.id,tile.origin,level,sourceSha256); } },
     { name: 'pointBreezeDetails', apply: () => { return applyPointBreezeDetails(group,tile.id,tile.origin,level,sourceSha256); } },

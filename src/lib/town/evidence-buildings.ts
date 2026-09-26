@@ -248,6 +248,21 @@ function garageDoors(home:EvidenceBuilding,edge:EvidenceBuilding['frames'][numbe
   return undefined;
 }
 
+/** Adds the vehicle doors built during assembly to the tile's gathered
+ * openings (once): the same doors, with their facing and width. */
+export function mergeVehicleDoors(group:THREE.Object3D):void{
+  const openings=group.userData.openings as {doors?:number[][];garageDoors?:number[][]}|undefined,vehicle=group.userData.vehicleDoors as number[][]|undefined;
+  if(!openings||!vehicle?.length)return;
+  const garages=openings.garageDoors??(openings.garageDoors=[]),doors=openings.doors??(openings.doors=[]);
+  for(const door of vehicle){
+    // The gathered copy of the same door (its centre, without facing) gives way to this one.
+    const same=garages.findIndex(g=>g.length<6&&Math.hypot(g[0]-door[0],g[2]-door[2])<1.2);
+    if(same>=0)garages.splice(same,1);
+    if(!garages.includes(door))garages.push(door);
+    if(!doors.some(d=>Math.hypot(d[0]-door[0],d[2]-door[2])<1.2))doors.push(door);
+  }
+}
+
 /** A sectional vehicle door in its recess, with jambs and a header; yard
  * dressing keeps clear of it. */
 function vehicleDoor(batch:Batch,f:Frame,u:number,g:number,width:number,h:number,color:string):void{
@@ -258,7 +273,8 @@ function vehicleDoor(batch:Batch,f:Frame,u:number,g:number,width:number,h:number
   for(const sign of [-1,1])batch.box(f,'trim',u+sign*(dw/2+.1),g+h/2+.035,.12,.12,h+.11,.1);
   batch.box(f,'trim',u,g+h+.12,.12,dw+.32,.14,.12);
   const e=f.start[0]+f.tangent[0]*u+f.outward[0]*.3,n=f.start[1]+f.tangent[1]*u+f.outward[1]*.3;
-  batch.garageDoors.push([e-batch.origin.x,g+1,-n-batch.origin.z]);
+  // Tile-local position 0.3 m out, the wall's outward direction and the door's width.
+  batch.garageDoors.push([e-batch.origin.x,g+1,-n-batch.origin.z,f.outward[0],-f.outward[1],width]);
 }
 
 /** Surface roles for photographed wall materials. */
@@ -674,10 +690,11 @@ export function applyEvidenceBuildings(group:THREE.Object3D,tileId:string,tileOr
   const builtOthers=others.filter(r=>filtered.matched.has(r.id));
   if(builtOthers.length){const ground=tileGround(group,tileOrigin);for(const row of builtOthers)otherBuilding(batch,row,tileId,ground);}
   const built=batch.finish();built.group.name='Evidence-informed Webster buildings';group.add(built.group);
-  // Yard dressing keeps clear of added vehicle doors and follows what each house's photograph shows.
-  const openings=group.userData.openings as {doors?:number[][];garageDoors?:number[][]}|undefined;
-  if(openings&&batch.garageDoors.length){openings.doors?.push(...batch.garageDoors);openings.garageDoors?.push(...batch.garageDoors);}
-  const observed=[...measured,...photos.values()].filter(m=>m.f&&filtered.matched.has(m.id)).map(m=>({e:m.o[0],n:m.o[1],b:m.b,mb:m.f!.mb,sh:m.f!.sh,
+  // Yard dressing keeps clear of added vehicle doors (paving a drive to them)
+  // and follows what each house's photograph shows. The tile's openings are
+  // gathered after assembly; the doors join them then (mergeVehicleDoors).
+  if(batch.garageDoors.length){group.userData.vehicleDoors=[...(group.userData.vehicleDoors??[]),...batch.garageDoors];mergeVehicleDoors(group);}
+  const observed=[...measured,...photos.values()].filter(m=>m.f&&filtered.matched.has(m.id)).map(m=>({e:m.o[0],n:m.o[1],b:m.b,mb:m.f!.mb,sh:m.f!.sh,dw:m.f!.dw,
     ...(m.f!.fe&&m.f!.fl?{fe:m.f!.fe,fc:m.f!.fc,fl:m.f!.fl.map(([a,b,c,d])=>[m.o[0]+a/10,m.o[1]+b/10,m.o[0]+c/10,m.o[1]+d/10])}:{})}));
   if(observed.length)group.userData.houseObservations=observed;
   if(stoops.length)group.userData.addressFrontages=stoops.filter(s=>filtered.matched.has(s.home.id)).map(s=>({id:s.home.id,frameIndex:s.home.entry!.frameIndex,entry:s.home.entry,blocks:s.blocks,basis:s.basis}));

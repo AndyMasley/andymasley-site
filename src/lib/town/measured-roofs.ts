@@ -32,6 +32,8 @@ export type MeasuredRoof = {
     side?: 'left' | 'right' | 'center' | 'full'; ground?: 'open' | 'enclosed'; upper?: 'open' | 'enclosed'; levels?: number;
     /** Street context: mailbox, foundation shrubs, street-facing garage doors (count, side as seen, colour), front fence. */
     mb?: 'curb' | 'house' | 'none'; sh?: 'none' | 'some' | 'many'; gd?: number; gs?: 'left' | 'right' | 'center'; gc?: string;
+    /** The driveway's surface. */
+    dw?: 'asphalt' | 'gravel' | 'concrete' | 'pavers' | 'none';
     fe?: 'picket' | 'chain' | 'stone' | 'retaining' | 'rail' | 'privacy' | 'iron' | 'hedge'; fc?: string;
     /** The fence's runs along the lot's street frontage: [e0, n0, e1, n1] in decimetres from `o`. */
     fl?: number[][];
@@ -59,7 +61,15 @@ export type MeasuredOther = {
 /** A house the LiDAR could not fit whose street photograph was read: its
  * facade reads only (as a measured house's), at the plan's centre `o`. */
 export type PhotographedHouse = { id: string; k: 'h'; o: [number, number]; b: number; wc?: string; tc?: string; f?: MeasuredRoof['f'] };
-export type MeasuredRoofPacket = { version: 1; tileId: string; rows: (MeasuredRoof | MeasuredOther | PhotographedHouse)[] };
+/** Which of the tile's scenery trees are evergreens in the leaf-off aerial: `n` tree rows, `c` base64 bits in row order. */
+export type TreeFamilies = { n: number; c: string };
+export type MeasuredRoofPacket = { version: 1; tileId: string; rows: (MeasuredRoof | MeasuredOther | PhotographedHouse)[]; trees?: TreeFamilies };
+/** The evergreen flag of each tree row, when the packet's count matches the rows. */
+export function evergreens(families: TreeFamilies | undefined, rows: number): ((index: number) => boolean) | undefined {
+  if (!families || families.n !== rows) return undefined;
+  const bits = atob(families.c);
+  return bits.length === (rows + 7) >> 3 ? index => !!(bits.charCodeAt(index >> 3) & (1 << (index & 7))) : undefined;
+}
 export const isMeasuredOther = (row: MeasuredRoof | MeasuredOther | PhotographedHouse): row is MeasuredOther => 'k' in row && (row.k === 'o' || row.k === 'b' || row.k === 'v');
 export const isPhotographedHouse = (row: MeasuredRoof | MeasuredOther | PhotographedHouse): row is PhotographedHouse => 'k' in row && row.k === 'h';
 
@@ -95,6 +105,7 @@ export function validMeasuredRoofPacket(value: unknown, tileId: string): value i
   if (!value || typeof value !== 'object') return false;
   const p = value as MeasuredRoofPacket;
   if (p.version !== 1 || p.tileId !== tileId || !Array.isArray(p.rows)) return false;
+  if (p.trees !== undefined && !(p.trees && Number.isInteger(p.trees.n) && p.trees.n > 0 && typeof p.trees.c === 'string' && /^[A-Za-z0-9+/]*={0,2}$/.test(p.trees.c))) return false;
   const ids = new Set<string>();
   for (const row of p.rows) {
     if (!row || typeof row.id !== 'string' || ids.has(row.id)) return false;
@@ -138,6 +149,7 @@ function validFacade(f: MeasuredRoof['f']): boolean {
     [f.ground, f.upper].some(x => x !== undefined && x !== 'open' && x !== 'enclosed') ||
     (f.levels !== undefined && f.levels !== 2 && f.levels !== 3) ||
     (f.mb !== undefined && !['curb', 'house', 'none'].includes(f.mb)) || (f.sh !== undefined && !['none', 'some', 'many'].includes(f.sh)) ||
+    (f.dw !== undefined && !['asphalt', 'gravel', 'concrete', 'pavers', 'none'].includes(f.dw)) ||
     (f.gd !== undefined && !(Number.isInteger(f.gd) && f.gd >= 1 && f.gd <= 3)) || (f.gs !== undefined && !['left', 'right', 'center'].includes(f.gs)) ||
     (f.fe !== undefined && !['picket', 'chain', 'stone', 'retaining', 'rail', 'privacy', 'iron', 'hedge'].includes(f.fe)) || !hex(f.gc) || !hex(f.fc) ||
     (f.fl !== undefined && !(f.fe && Array.isArray(f.fl) && f.fl.every(l => Array.isArray(l) && l.length === 4 && l.every(x => Number.isInteger(x) && Math.abs(x) < 2000))))) return false;
