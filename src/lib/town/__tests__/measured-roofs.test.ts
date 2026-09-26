@@ -481,6 +481,18 @@ describe('measured house roofs', () => {
     expect(panes).toBe(2);
     expect(top).toBeLessThanOrEqual(eave - .26 + .01);
     group.traverse(x => { if (x instanceof THREE.Mesh) { x.geometry.dispose(); for (const m of [x.material].flat()) m.dispose(); } });
+    // A photograph whose windows a wall cannot hold at all (upper ones read on a one-storey
+    // front) leaves the wall its bays rather than bare.
+    const read = { ...cape, id: 'bare', layout: photoLayout(cape, { w2: [30, 70] })! };
+    const bare = new THREE.Group(), g2 = new THREE.BufferGeometry();
+    g2.setAttribute('position', new THREE.Float32BufferAttribute([2, b + 1, 0, 3, b + 1, 0, 2, b + 2, 0], 3));
+    const m2 = new THREE.MeshStandardMaterial(); m2.name = 'V2 inferred | siding';
+    bare.add(new THREE.Mesh(g2, m2));
+    applyEvidenceBuildings(bare, 't', [0, 0, 0], 0, [read], [], undefined, [], []);
+    let fallback = 0;
+    bare.traverse(x => { if (x instanceof THREE.Mesh && [x.material].flat().some(m => m.name.includes('| glass |'))) fallback += x.geometry.getAttribute('position').count / 36; });
+    expect(fallback).toBeGreaterThanOrEqual(2);
+    bare.traverse(x => { if (x instanceof THREE.Mesh) { x.geometry.dispose(); for (const m of [x.material].flat()) m.dispose(); } });
   });
 
   it('places a photographed front: doors, windows storey by storey, garage doors, porch and dormers along its street walls', () => {

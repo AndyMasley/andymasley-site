@@ -620,8 +620,9 @@ function houseOpenings(batch:Batch,home:EvidenceBuilding):void {
     const pitch=layout&&!sunporch?layout.pitch:w/bays,centres=layout&&!sunporch?layout.centres:Array.from({length:bays},(_,i)=>(i+.5)*w/bays);
     const windowHeight=sunporch?1.3:ranch?1.25:cape?1.34:multi?1.52:1.45;
     // Under a low measured eave (a Cape's or a ranch's front) ground-floor
-    // windows drop their sills and shorten, heads tight under the frieze.
-    const shortest=sunporch?windowHeight:Math.min(windowHeight,1.12);
+    // windows drop their sills and shorten, heads tight under the frieze;
+    // under one barely two metres over the floor, to low sash on low sills.
+    const squat=eave-floor<2.2,shortest=sunporch?windowHeight:Math.min(windowHeight,squat?.85:1.12);
     // A street wall of a photographed front takes the windows the photograph
     // shows, storey by storey; other walls their bays.
     // (A street wall the photograph shows as porch, with no windows of its own read,
@@ -632,19 +633,21 @@ function houseOpenings(batch:Batch,home:EvidenceBuilding):void {
     })();
     const photographed=!sunporch&&!porchWall&&!!read?.windows.length&&read.frames.includes(frameIndex);
     const extraDoors=(read?.doors??[]).filter(d=>d.frameIndex===frameIndex&&!(entry&&Math.abs(d.u-doorU)<1.2)).map(d=>d.u);
-    const specs=photographed?read!.windows.filter(x=>x.frameIndex===frameIndex&&x.level>=0).map(x=>({u:x.u,width:x.width,level:x.level,spacing:x.width+1.05,street:true}))
-      :Array.from({length:levels},(_,level)=>centres.map(u=>({u,level,spacing:pitch,street:front,
-        width:sunporch?Math.min(1,pitch-.22):Math.min(ranch&&front&&bays<4?1.72:1.05,pitch-.65)}))).flat();
+    const bayed=Array.from({length:levels},(_,level)=>centres.map(u=>({u,level,spacing:pitch,street:front,
+      width:sunporch?Math.min(1,pitch-.22):Math.min(ranch&&front&&bays<4?1.72:1.05,pitch-.65)}))).flat();
+    const specs=photographed?read!.windows.filter(x=>x.frameIndex===frameIndex&&x.level>=0).map(x=>({u:x.u,width:x.width,level:x.level,spacing:x.width+1.05,street:true})):bayed;
     // A photographed dormer where this wall itself rises into the roof (a wall
     // dormer, or the gable the survey made of one) is a window high in the wall.
     if(read)for(const d of read.dormers)if(d.frameIndex===frameIndex&&highWall(home,edge,d.u))specs.push({u:d.u,width:.8,level:atticLevel(home),spacing:1.85,street:true});
-    const storeys=Math.max(levels,...specs.map(x=>x.level+1));
+    const placeAll=(list:typeof specs,photographed:boolean):number=>{
+    let placed=0;
+    const storeys=Math.max(levels,...list.map(x=>x.level+1));
     for(let level=0;level<storeys;level++){
       // An upper storey under a low measured eave keeps its windows by
       // sitting them closer to that floor (a lower storey, a shorter sill).
-      const standard=floor+(sunporch?.85:.72)+level*floorHeight,lowest=level?floor+level*2.45+.5:sunporch?standard:floor+.55;
+      const standard=floor+(sunporch?.85:.72)+level*floorHeight,lowest=level?floor+level*2.45+.5:sunporch?standard:floor+(squat?.35:.55);
       if(lowest+shortest>eave-.26||standard<ground+.16)continue;
-      for(const spec of specs.filter(x=>x.level===level)){
+      for(const spec of list.filter(x=>x.level===level)){
         const {width,spacing,street}=spec;let u=spec.u;
         // A photographed window a door has displaced steps aside from it, up to half a metre.
         if(photographed&&level===0&&entry&&Math.abs(u-doorU)<.68+width/2){
@@ -666,6 +669,7 @@ function houseOpenings(batch:Batch,home:EvidenceBuilding):void {
         }
         if(width<(sunporch?.45:.55))continue;
         batch.window(f,u,bottom,width,height,.01,(ranch||photographed)&&width>1.4,!sunporch&&(home.shutters!==undefined?street&&home.shutters&&spacing>1.9:street&&colonial&&home.material!=='brick'&&spacing>2.7));
+        placed++;
         if(home.year>0&&home.year<1940&&batch.level===0&&!sunporch){
           // Six-over-six sash is a period interpretation. Contemporary and
           // modern ranch windows retain their broad, quieter glass panes.
@@ -674,6 +678,11 @@ function houseOpenings(batch:Batch,home:EvidenceBuilding):void {
         }
       }
     }
+    return placed;
+    };
+    // Photographed windows this wall cannot hold at all (the storeys read stand
+    // above its measured top, or doors fill it) give way to its bays.
+    if(!placeAll(specs,photographed)&&photographed&&specs.length)placeAll(bayed,false);
     // The raised ranch's lower level: shorter windows under the main ones,
     // where the ground falls far enough below the main floor.
     const lower=photographed?read!.windows.filter(x=>x.frameIndex===frameIndex&&x.level<0):centres.map(u=>({u,width:Math.min(1.05,pitch-.65)}));
