@@ -7,6 +7,9 @@ export type BuildingFrame = Omit<Frame, 'structId' | 'tileId'> & {
   groundMaximum?: number;
   groundAt?: number[];
   clearanceM?: number;
+  /** Measured wall top along the frame, a polyline of [u, height]: level
+   * under an eave, rising and falling under a gable, stepping at a wing. */
+  profile?: readonly (readonly [number, number])[];
 };
 
 export type EvidenceRoof = {
@@ -42,7 +45,7 @@ export type EvidenceBuilding = {
   material: 'siding' | 'brick' | 'stone' | 'stucco' | 'shingle';
   paint: string;
   roof: 'gable' | 'hip' | 'gambrel' | 'mansard' | 'flat' | 'retained';
-  porch: 'none' | 'entry' | 'open' | 'enclosed' | 'wraparound';
+  porch: 'none' | 'entry' | 'open' | 'enclosed' | 'wraparound' | 'stacked';
   documented: boolean;
   evidenceIds: string[];
   colorsDated: boolean;
@@ -55,6 +58,22 @@ export type EvidenceBuilding = {
   historicalWindowGroup?: {count:3;sash:'12-over-1'};
   materialBasis?: string;
   paintBasis?: string;
+  /** Body measured from LiDAR: gutters follow its roofprint eaves. */
+  measured?: boolean;
+  /** Read from the assessor's street photograph: trim and door colours and
+   * whether the front windows carry shutters, and in what colour. */
+  trim?: string;
+  door?: string;
+  shutters?: boolean;
+  shutterColor?: string;
+  /** A photographed stacked porch: where it sits on the front as seen from
+   * the street, and whether its ground and upper levels are open or enclosed. */
+  porchSide?: 'left' | 'right' | 'center' | 'full';
+  porchGround?: 'open' | 'enclosed';
+  porchUpper?: 'open' | 'enclosed';
+  porchLevels?: number;
+  /** The photographed enclosed porch is the entry bay of the mapped plan. */
+  porchInPlan?: boolean;
 };
 
 export type EvidenceReport = {

@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { applyFoundationWallFinish } from './foundation-wall-finish';
 import type { TownTile } from './contracts';
 import type { TileEvidence } from './evidence-stream';
+import type { MeasuredRoofPacket } from './measured-roofs';
 import release from '../../../data/derived/town/release.json';
 import { applyTownHallMaterials } from './town-hall-materials';
 import { applyCivicDetails } from './civic-details';
@@ -56,6 +57,7 @@ import { applyParkingFinish, validParkingPacket } from './parking-finish';
 export interface TileDetails {
   foundationWalls?: Parameters<typeof applyFoundationWallFinish>[5];
   evidence?: TileEvidence;
+  measuredRoofs?: MeasuredRoofPacket;
   streetCorners?: Parameters<typeof applyStreetCorners>[5];
   streetCornerGround?: Parameters<typeof applyStreetCornerGround>[5];
   roadCurve?: Parameters<typeof applyRoadCurveFinish>[5];
@@ -75,7 +77,7 @@ export type AssemblyStep = { name: string; apply: () => unknown };
 /** One authoritative transaction order is shared by live loading and native QA.
  * A scene is unpublished until every step and its source guards complete. */
 export function tileAssemblySteps(group: THREE.Group, tile: TownTile, level: number, details: TileDetails): AssemblyStep[] {
-  const { foundationWalls, evidence, road, terrain, parking, additional, roadside, environmentGround, facilities, roadMaterials, streetCorners, streetCornerGround, roadCurve, roadDash, propertyTerrain } = details;
+  const { foundationWalls, evidence, measuredRoofs, road, terrain, parking, additional, roadside, environmentGround, facilities, roadMaterials, streetCorners, streetCornerGround, roadCurve, roadDash, propertyTerrain } = details;
   const sourceSha256 = tile.lods.find(row => row.level === level)?.sha256 ?? '';
   let institutions: ReturnType<typeof applyInstitutionalCompletion>;
   const landmarks = landmarkRows(tile.id);
@@ -126,7 +128,7 @@ export function tileAssemblySteps(group: THREE.Group, tile: TownTile, level: num
     { name: 'craftedFrontages', apply: () => { return applyCraftedFrontages(group,tile.id,tile.origin,level,institutions?.ids??[]); } },
     { name: 'landmarkCompletion', apply: () => { return applyLandmarkCompletion(group,tile.id,tile.origin,level,sourceSha256); } },
     { name: 'commercial', apply: () => { return applyCommercialCompletion(group,tile.id,tile.origin,level,sourceSha256); } },
-    { name: 'evidenceBuildings', apply: () => { return applyEvidenceBuildings(group,tile.id,tile.origin,level,evidence?.buildings??[],landmarks.map(row=>({...row,material:row.material??undefined,paint:row.paint??undefined})),(batch,matched)=>buildEvidenceLandmarks(batch,landmarks.filter(row=>matched.has(row.id))),evidence?.roofs??[]); } },
+    { name: 'evidenceBuildings', apply: () => { return applyEvidenceBuildings(group,tile.id,tile.origin,level,evidence?.buildings??[],landmarks.map(row=>({...row,material:row.material??undefined,paint:row.paint??undefined})),(batch,matched)=>buildEvidenceLandmarks(batch,landmarks.filter(row=>matched.has(row.id))),evidence?.roofs??[],measuredRoofs?.rows??[]); } },
     { name: 'campStructures', apply: () => { return applyCampStructures(group,tile.id,tile.origin,level,sourceSha256); } },
     { name: 'pointBreezeDetails', apply: () => { return applyPointBreezeDetails(group,tile.id,tile.origin,level,sourceSha256); } },
     { name: 'indianRanchCanopy', apply: () => { return applyIndianRanchCanopy(group,tile.id,tile.origin,level,sourceSha256); } },

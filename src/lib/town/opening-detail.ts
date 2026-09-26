@@ -26,7 +26,7 @@ float townArtHash(vec2 p) {
 
 /** Installs the room or panel treatment on a material outside the art pool
  * (crafted frontage glass and doors), after that material's own hook. */
-export function installOpeningMaterial(material: THREE.MeshStandardMaterial, kind: 'glass' | 'door'): void {
+export function installOpeningMaterial(material: THREE.MeshStandardMaterial, kind: 'glass' | 'door', keepColor = false): void {
   if (material.userData.townOpening) return;
   material.userData.townOpening = kind;
   (material as THREE.MeshStandardMaterial & { defaultAttributeValues?: Record<string, number[]> }).defaultAttributeValues = { [OPENING_ATTRIBUTE]: [0, 0, 0, 0] };
@@ -42,11 +42,11 @@ townOpenPosition = instanceMatrix * townOpenPosition;
 vTownArtWorld = (modelMatrix * townOpenPosition).xyz;
 vTownArtNormal = inverseTransformDirection(transformedNormal, viewMatrix);
 vTownOpening = ${OPENING_ATTRIBUTE};`);
-    shader.fragmentShader = `varying vec3 vTownArtWorld;\nvarying vec3 vTownArtNormal;\nvarying vec4 vTownOpening;\n${OPENING_HASH}\n${shader.fragmentShader}`;
+    shader.fragmentShader = `${keepColor ? '#define TOWN_DOOR_KEEP_COLOR\n' : ''}varying vec3 vTownArtWorld;\nvarying vec3 vTownArtNormal;\nvarying vec4 vTownOpening;\n${OPENING_HASH}\n${shader.fragmentShader}`;
     if (kind === 'glass') shader.fragmentShader = shader.fragmentShader.replace('#include <opaque_fragment>', `${WINDOW_INTERIOR_GLSL}\n#include <opaque_fragment>`);
     else shader.fragmentShader = shader.fragmentShader.replace('#include <map_fragment>', `#include <map_fragment>\nfloat townArtHeight = 0.0;\n${DOOR_PANEL_GLSL}`).replace('#include <normal_fragment_maps>', DOOR_PANEL_NORMAL);
   };
-  material.customProgramCacheKey = () => `${previousKey}|opening-${kind}-v1`;
+  material.customProgramCacheKey = () => `${previousKey}|opening-${kind}-v1${keepColor ? '-kept' : ''}`;
   material.needsUpdate = true;
 }
 
@@ -259,7 +259,9 @@ if (townOpenKnown) {
   vec3 townDoorColor = townOpenSeed < 0.2 ? vec3(0.018,0.02,0.022) : townOpenSeed < 0.38 ? vec3(0.23,0.035,0.03)
     : townOpenSeed < 0.52 ? vec3(0.028,0.045,0.085) : townOpenSeed < 0.64 ? vec3(0.03,0.07,0.045)
     : townOpenSeed < 0.86 ? vec3(0.72,0.71,0.66) : vec3(0.16,0.08,0.035);
+  #ifndef TOWN_DOOR_KEEP_COLOR
   diffuseColor.rgb = mix(diffuseColor.rgb, townDoorColor, 0.9);
+  #endif
   float townField = 0.0;
   if (townDoorW > 1.6) {
     // Sectional doors: four horizontal sections with shallow recessed panels.

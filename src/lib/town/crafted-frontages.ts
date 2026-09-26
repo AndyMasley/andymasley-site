@@ -18,7 +18,7 @@ export type Frame = { start: V2; tangent: V2; outward: V2; structId: string; til
 type School = typeof data.school[number];
 type Commercial = typeof data.commercial[number];
 export type Role = 'wall' | 'roof' | 'foundation' | 'trim' | 'glass' | 'recess' | 'door' | 'metal' | 'paving' | 'stone' | 'leaf' | 'brick' | 'shingle' | 'stucco';
-type Chunk = { positions: number[]; normals: number[]; ids: Set<string>; role: Role; color: string };
+type Chunk = { positions: number[]; normals: number[]; ids: Set<string>; role: Role; color: string; kept?: boolean };
 export type RetainingWallPlacement = { structId: string; number: string; status: 'placed' | 'omitted-no-sidewalk' | 'omitted-no-ground'; wallV?: number; sidewalkV?: number; segments: number[][]; geometryRanges?: { key: string; start: number; count: number }[] };
 export type ConstructionDetail = {structId:string;gutterMeters:number;downspouts:number;porchFixtures:number;basis:string;geometryRanges:{key:string;start:number;count:number}[]};
 export type FrontageReport = { retainingWalls: RetainingWallPlacement[]; constructionDetails: ConstructionDetail[]; version: number; tileId: string; schoolIds: string[]; commercialIds: string[]; removedTriangles: number; addedTriangles: number; addedMeshes: number; geometryBytes: number };
@@ -64,7 +64,10 @@ float craftedGroundNoise(vec2 p) {
 }
 `;
 
-export function frontageMaterial(role: Role, color: string): THREE.MeshStandardMaterial {
+/** Shutters without an observed colour: black, Webster's most common. */
+const SHUTTER = '#1f2123';
+
+export function frontageMaterial(role: Role, color: string, kept = false): THREE.MeshStandardMaterial {
   const result = new THREE.MeshStandardMaterial({ color, roughness: role === 'glass' ? 0.14 : role === 'metal' ? 0.6 : 0.87, metalness: role === 'metal' ? 0.35 : 0 });
   result.name = `Crafted frontage | ${role} | ${color}`;
   result.userData.surfaceRole = role;
@@ -143,7 +146,8 @@ outgoingLight -= totalDiffuse * .42;
     // Every pane then opens onto a shallow authored room behind the glass.
     installOpeningMaterial(result, 'glass');
   }
-  if (role === 'door') installOpeningMaterial(result, 'door');
+  // An observed door keeps its photographed colour under the panel relief.
+  if (role === 'door') installOpeningMaterial(result, 'door', kept);
   return result;
 }
 
@@ -155,12 +159,18 @@ export class Batch {
   readonly retainingWalls: RetainingWallPlacement[] = [];
   readonly constructionDetails: ConstructionDetail[] = [];
   readonly sidewalkEdges = new Map<string, number>();
+  /** While set, default-coloured trim takes this observed house trim colour. */
+  trimColor?: string;
+  /** While set, window shutters take this colour. */
+  shutterColor?: string;
+  /** While set, door leaves keep their given colour instead of a period one. */
+  keepOpeningColor = false;
   constructor(readonly origin: THREE.Vector3, readonly level: number, readonly terrain = new Map<string, number[][][]>()) {}
 
   geometry(frame: Frame, role: Role, position: ArrayLike<number>, normal: ArrayLike<number>, color = PALETTE[role]): void {
-    const key = `${role}:${color}`;
+    const kept = role === 'door' && this.keepOpeningColor, key = `${role}:${color}${kept ? ':kept' : ''}`;
     let chunk = this.chunks.get(key);
-    if (!chunk) { chunk = { positions: [], normals: [], ids: new Set(), role, color }; this.chunks.set(key, chunk); }
+    if (!chunk) { chunk = { positions: [], normals: [], ids: new Set(), role, color, ...(kept ? { kept } : {}) }; this.chunks.set(key, chunk); }
     chunk.ids.add(frame.structId);
     const [tx, ty] = frame.tangent, [nx, ny] = frame.outward;
     // East/north facade frames can have either orientation. Converting north
@@ -177,6 +187,7 @@ export class Batch {
 
   box(f: Frame, role: Role, u: number, y: number, v: number, width: number, height: number, depth: number, color = PALETTE[role], yaw = 0): void {
     if (Math.min(width,height,depth) <= 0) return;
+    if (role === 'trim' && this.trimColor && color === PALETTE.trim) color = this.trimColor;
     const p: number[] = [], n: number[] = [], c = Math.cos(yaw), s = Math.sin(yaw);
     for (let i = 0; i < boxPosition.length; i += 3) {
       const x = boxPosition[i]*width, z = boxPosition[i+2]*depth;
@@ -218,16 +229,18 @@ export class Batch {
     if (this.level < 2) {
       this.box(f,'trim',u,bottom+height*.5,v+.135,width,.035,.045);
       if (paired) this.box(f,'trim',u,bottom+height/2,v+.145,.085,height,.055);
+      // Louvred shutters are painted boards, one colour for the whole house.
       if (shutters) for (const sign of [-1,1]) {
-        const x=u+sign*(width/2+.28);this.box(f,'door',x,bottom+height/2,v+.10,.37,height+.10,.075);
-        if (!this.level) for (let j=0;j<8;j++) this.box(f,'metal',x,bottom+(j+.5)*height/8,v+.15,.31,.025,.035);
+        const x=u+sign*(width/2+.28),color=this.shutterColor??SHUTTER;this.box(f,'trim',x,bottom+height/2,v+.10,.37,height+.10,.075,color);
+        if (!this.level) for (let j=0;j<8;j++) this.box(f,'trim',x,bottom+(j+.5)*height/8,v+.15,.31,.025,.035,color);
       }
     }
   }
 
-  door(f: Frame, u: number, floor: number, v = 0, width = .98, color = PALETTE.door): void {
+  door(f: Frame, u: number, floor: number, v = 0, width = .98, color = PALETTE.door, observed = false): void {
     this.box(f,'recess',u,floor+1.1,v+.06,width+.20,2.24,.13);
-    this.box(f,'door',u,floor+1.04,v+.14,width,2.08,.065,color);
+    this.keepOpeningColor = observed;
+    try { this.box(f,'door',u,floor+1.04,v+.14,width,2.08,.065,color); } finally { this.keepOpeningColor = false; }
     this.box(f,'glass',u,floor+1.42,v+.183,width*.65,.74,.02);
     for(const sign of [-1,1]) this.box(f,'trim',u+sign*(width/2+.07),floor+1.1,v+.20,.11,2.26,.15);
     this.box(f,'trim',u,floor+2.2,v+.2,width+.32,.14,.18);
@@ -248,7 +261,7 @@ export class Batch {
       geometry.setAttribute('position',new THREE.Float32BufferAttribute(chunk.positions,3));
       geometry.setAttribute('normal',new THREE.Float32BufferAttribute(chunk.normals,3));
       geometry.computeBoundingBox(); geometry.computeBoundingSphere();
-      const mesh=new THREE.Mesh(geometry,frontageMaterial(chunk.role,chunk.color));
+      const mesh=new THREE.Mesh(geometry,frontageMaterial(chunk.role,chunk.color,chunk.kept));
       mesh.name=`Crafted building frontage | ${chunk.role}`; mesh.userData.sourceIds=[...chunk.ids].sort(); mesh.userData.category='crafted-frontages';
       mesh.userData.townCrafted=true;
       mesh.castShadow=!['glass','paving'].includes(chunk.role);mesh.receiveShadow=true;

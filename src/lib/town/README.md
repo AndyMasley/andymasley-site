@@ -306,6 +306,19 @@ architectural details remain plausible game interpretations. Generators and
 source limitations are documented in the repository README; emitted-file tests
 verify hashes, byte counts, source ownership, entry bounds and stale-file absence.
 
+`measured-roofs.ts` streams a packet per tile from `scripts/measured_roofs/`:
+each house fitted to the 2021 LiDAR roof returns as a closed body of flat, shed,
+gable, hip, gambrel and mansard sections, walls 0.32 m inside the roofprint so
+eaves and rakes overhang, with measured chimneys and gutters on level eaves. Roof
+colour is sampled from the lean-registered 2025 aerial. Siding, trim, door and
+shutter colours, wall material, front porch and window bays are reads of the
+assessor's street photographs (`facade-reads.json`); no photograph ships.
+Stacked porches keep their photographed side and open or enclosed levels. A
+measured house replaces its V2 body; storeys follow its tallest wall, and
+windows follow each wall's traced top, up into gables under their rakes.
+Shutters are painted boards, one colour per house (a photographed one, else
+one drawn from the town's photographed mix); an observed door keeps its colour.
+
 ## Release and build checks
 
 `data/derived/town/release.json` pins a fixed archive URL, its SHA256, the manifest
