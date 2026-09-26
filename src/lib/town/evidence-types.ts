@@ -74,12 +74,17 @@ export type EvidenceBuilding = {
   porchLevels?: number;
   /** The photographed enclosed porch is the entry bay of the mapped plan. */
   porchInPlan?: boolean;
+  /** Street-facing garage doors in the house, as photographed: count, side as
+   * seen from the street, colour. */
+  garage?: { doors: number; side: 'left' | 'right' | 'center'; color?: string };
 };
 
 export type EvidenceReport = {
   version: number;
   tileId: string;
   buildingIds: string[];
+  /** Garages, sheds and other buildings rebuilt from their measurement or given doors and paint. */
+  otherIds?: string[];
   documentedIds: string[];
   removedTriangles: number;
   recoloredTriangles: number;

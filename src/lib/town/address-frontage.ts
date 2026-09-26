@@ -9,37 +9,72 @@ export type EntryStepEnvelope={frame:Frame;u:number;floor:number};
 export type AddressStoop={home:EvidenceBuilding;former:EntryStepEnvelope;blocks:{u:number;v:number;width:number;depth:number;bottom:number;top:number}[];basis:string};
 const rows=new Map((catalog.rows as unknown as {id:string;addressFrontage?:Correction}[]).filter(r=>r.addressFrontage).map(r=>[r.id,r.addressFrontage!]));
 
-export function prepareAddressFrontages(group:THREE.Object3D,origin:readonly number[],homes:readonly EvidenceBuilding[]):{homes:EvidenceBuilding[];stoops:AddressStoop[]}{
-  const candidates=homes.filter(h=>rows.has(h.id));if(!candidates.length)return{homes:[...homes],stoops:[]};
+/** Entries moved to another wall: by the reviewed address catalog, or, in
+ * `moves`, where photographed garage doors take the wall the plan gave the
+ * door. Each moved door gets a stoop fitted to the sampled ground and retires
+ * the steps of the former entry. */
+export function prepareAddressFrontages(group:THREE.Object3D,origin:readonly number[],homes:readonly EvidenceBuilding[],moves:ReadonlyMap<string,{frameIndex:number;u:number}>=new Map()):{homes:EvidenceBuilding[];stoops:AddressStoop[]}{
+  const candidates=homes.filter(h=>rows.has(h.id)||moves.has(h.id));if(!candidates.length)return{homes:[...homes],stoops:[]};
   group.updateMatrixWorld(true);const inverse=group.matrixWorld.clone().invert(),meshes:THREE.Mesh[]=[];
   group.traverse(o=>{if(!(o instanceof THREE.Mesh)||!/^terrain(?:\b|_)/i.test(o.name))return;const proxy=new THREE.Mesh(o.geometry,o.material);proxy.matrixAutoUpdate=false;proxy.matrixWorld.copy(inverse).multiply(o.matrixWorld);meshes.push(proxy);});
   if(!meshes.length)return{homes:[...homes],stoops:[]};
   const terrain=new GrassTerrain(meshes),stoops:AddressStoop[]=[];
+  /** A landing and steps down to the sampled ground in front of a door at u. */
+  const stoopAt=(home:EvidenceBuilding,edge:EvidenceBuilding['frames'][number],u:number):{floor:number;blocks:AddressStoop['blocks']}|undefined=>{
+    const sample=(x:number,v:number):number|undefined=>{const p=terrain.sample(edge.start[0]+edge.tangent[0]*x+edge.outward[0]*v-origin[0],-edge.start[1]-edge.tangent[1]*x-edge.outward[1]*v-origin[2]);return p?p.y+origin[1]:undefined;};
+    const ground=(v:number,width:number,depth:number)=>[-1,0,1].flatMap(a=>[-1,0,1].map(b=>sample(u+a*width/2,v+b*depth/2)));
+    const pad=ground(.48,1.45,.96);if(pad.some(y=>y===undefined))return undefined;
+    // The wall must stand a door's height over the landing where the door goes
+    // (a measured wall top may step down to a wing elsewhere on the same wall).
+    const profile=edge.profile,top=(x:number)=>{
+      if(!profile)return edge.eave??home.eave;
+      let h=profile[0][1];for(let k=1;k<profile.length;k++)if(x>=profile[k-1][0])h=profile[k][0]-profile[k-1][0]>1e-6?profile[k-1][1]+(profile[k][1]-profile[k-1][1])*Math.min(1,(x-profile[k-1][0])/(profile[k][0]-profile[k-1][0])):Math.min(profile[k-1][1],profile[k][1]);
+      return h;
+    };
+    const heights=pad as number[],floor=Math.max(home.floor,Math.max(...heights)+.15),eave=Math.min(top(u-.6),top(u),top(u+.6));
+    if(floor+2.45>=eave||floor-Math.min(...heights)>1.15)return undefined;
+    const blocks=[{u,v:.48,width:1.45,depth:.96,bottom:Math.min(...heights)-.045,top:floor-.025}];
+    for(let i=1;i<=7;i++){
+      const v=.96+(i-.5)*.29,values=ground(v,1.25,.30);if(values.some(y=>y===undefined))return undefined;
+      const ys=values as number[],top=floor-.025-i*.16;
+      if(top<=Math.max(...ys)+.08)return top>=Math.min(...ys)-.17?{floor,blocks}:undefined;
+      blocks.push({u,v,width:1.25,depth:.30,bottom:Math.min(...ys)-.045,top});
+    }
+    return undefined;
+  };
   const changed=homes.map(home=>{
-    const row=rows.get(home.id);
+    const row=rows.get(home.id),move=moves.get(home.id);
+    if(!row&&move&&home.entry){
+      const edge=home.frames[move.frameIndex],old=home.frames[home.entry.frameIndex];if(!edge||!old)return home;
+      const stoop=stoopAt(home,edge,move.u);if(!stoop)return home;
+      const corrected={...home,frames:home.frames.map((frame,i)=>({...frame,front:i===move.frameIndex})),entry:{frameIndex:move.frameIndex,u:move.u,floor:stoop.floor}};
+      stoops.push({home:corrected,former:{frame:{...old,structId:home.id,tileId:home.tileId},u:home.entry.u,floor:home.entry.floor},blocks:stoop.blocks,
+        basis:'Photographed garage doors fill the planned entry wall.'});
+      return corrected;
+    }
     if(!row||home.documented||home.materialBasis!=='inferred'||home.paintBasis!=='inferred'||home.address!==row.address||JSON.stringify(home.outline)!==JSON.stringify(row.outline)||JSON.stringify(home.entry)!==JSON.stringify(row.formerEntry))return home;
     const edge=home.frames[row.frameIndex],old=home.frames[row.formerEntry.frameIndex];if(!edge||!old)return home;
     if(row.clearance.neighborBuildingIntersections!==0||row.clearance.roadEnvelopeClearanceM<=2||edge.width!==row.selectedFrame.width||['start','tangent','outward'].some(key=>(edge[key as 'start']as readonly number[]).some((v,i)=>Math.abs(v-row.selectedFrame[key as 'start'][i])>1e-4)))return home;
-    const f:Frame={...edge,structId:home.id,tileId:home.tileId},u=edge.width/2;
-    const sample=(x:number,v:number):number|undefined=>{const p=terrain.sample(edge.start[0]+edge.tangent[0]*x+edge.outward[0]*v-origin[0],-edge.start[1]-edge.tangent[1]*x-edge.outward[1]*v-origin[2]);return p?p.y+origin[1]:undefined;};
-    const ground=(v:number,width:number,depth:number)=>[-1,0,1].flatMap(a=>[-1,0,1].map(b=>sample(u+a*width/2,v+b*depth/2)));
-    const pad=ground(.48,1.45,.96);if(pad.some(y=>y===undefined))return home;
-    const heights=pad as number[],floor=Math.max(home.floor,Math.max(...heights)+.15),eave=edge.eave??home.eave;
-    if(floor+2.45>=eave||floor-Math.min(...heights)>1.15)return home;
-    const blocks=[{u,v:.48,width:1.45,depth:.96,bottom:Math.min(...heights)-.045,top:floor-.025}];
-    let joined=false;
-    for(let i=1;i<=7;i++){
-      const v=.96+(i-.5)*.29,values=ground(v,1.25,.30);if(values.some(y=>y===undefined))return home;
-      const ys=values as number[],top=floor-.025-i*.16;
-      if(top<=Math.max(...ys)+.08){joined=top>=Math.min(...ys)-.17;break;}
-      blocks.push({u,v,width:1.25,depth:.30,bottom:Math.min(...ys)-.045,top});
-    }
-    if(!joined)return home;
+    const u=edge.width/2,stoop=stoopAt(home,edge,u);if(!stoop)return home;
+    const {floor,blocks}=stoop;
     if(blocks.some(b=>b.width>row.clearance.maximumWidthM||b.v+b.depth/2>row.clearance.maximumProjectionM))return home;
     const corrected={...home,frames:home.frames.map((frame,i)=>({...frame,front:i===row.frameIndex})),entry:{frameIndex:row.frameIndex,u,floor}};
     stoops.push({home:corrected,former:{frame:{...old,structId:home.id,tileId:home.tileId},u:row.formerEntry.u,floor:row.formerEntry.floor},blocks,basis:row.basis});return corrected;
   });
   return{homes:changed,stoops};
+}
+
+/** The tile's terrain height at east/north points; the index is built on first use. */
+export function tileGround(group:THREE.Object3D,origin:readonly number[]):(e:number,n:number)=>number|undefined{
+  let terrain:GrassTerrain|null|undefined;
+  return (e,n)=>{
+    if(terrain===undefined){
+      group.updateMatrixWorld(true);const inverse=group.matrixWorld.clone().invert(),meshes:THREE.Mesh[]=[];
+      group.traverse(o=>{if(!(o instanceof THREE.Mesh)||!/^terrain(?:\b|_)/i.test(o.name))return;const proxy=new THREE.Mesh(o.geometry,o.material);proxy.matrixAutoUpdate=false;proxy.matrixWorld.copy(inverse).multiply(o.matrixWorld);meshes.push(proxy);});
+      terrain=meshes.length?new GrassTerrain(meshes):null;
+    }
+    const p=terrain?.sample(e-origin[0],-n-origin[2]);return p?p.y+origin[1]:undefined;
+  };
 }
 
 export function insideFormerEntrySteps(point:THREE.Vector3,entry:EntryStepEnvelope):boolean{

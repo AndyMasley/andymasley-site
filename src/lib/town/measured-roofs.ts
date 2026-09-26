@@ -1,4 +1,4 @@
-import index from '../../../data/derived/town/measured-roofs-index.json';
+import { dir, grid, count, photographed, others, kept } from '../../../data/derived/town/measured-roofs-index.json';
 import type { AssetRef } from './contracts';
 import type { Batch, Frame, Role } from './crafted-frontages';
 
@@ -30,14 +30,52 @@ export type MeasuredRoof = {
   f?: {
     material?: 'siding' | 'shingle' | 'brick' | 'stone' | 'stucco'; porch?: 'none' | 'open' | 'enclosed' | 'stacked'; shutters?: string; bays?: number; door?: string;
     side?: 'left' | 'right' | 'center' | 'full'; ground?: 'open' | 'enclosed'; upper?: 'open' | 'enclosed'; levels?: number;
+    /** Street context: mailbox, foundation shrubs, street-facing garage doors (count, side as seen, colour), front fence. */
+    mb?: 'curb' | 'house' | 'none'; sh?: 'none' | 'some' | 'many'; gd?: number; gs?: 'left' | 'right' | 'center'; gc?: string;
+    fe?: 'picket' | 'chain' | 'stone' | 'retaining' | 'rail' | 'privacy' | 'iron' | 'hedge'; fc?: string;
+    /** The fence's runs along the lot's street frontage: [e0, n0, e1, n1] in decimetres from `o`. */
+    fl?: number[][];
   };
 };
-export type MeasuredRoofPacket = { version: 1; tileId: string; rows: MeasuredRoof[] };
+/** A garage, shed or other building that is not one of the evidence houses.
+ * 'o' (garage or shed) and 'b' (a building with storeys of windows) carry a
+ * measured body like a house's; 'v' keeps the scenery's own box and takes
+ * only doors and paint. `ol` is the roofprint ring, decimetres from `o`,
+ * counter-clockwise; walls stand `in` inside it ('v': on it, `h` high). */
+export type MeasuredOther = {
+  id: string; k: 'o' | 'b' | 'v'; o: [number, number]; b: number; ol: [number, number][];
+  p?: number; v?: string; r?: string; w?: string; t?: string; q?: number; in?: number; g?: number[][];
+  /** Per ring edge, the inset wall's top above `b` (as a house's `ep`). */
+  ep?: (number | [number, number][] | null)[];
+  h?: number; rc?: string; wc?: string; tc?: string;
+  /** The ring edge holding `gn` vehicle doors (in colour `gc`), or the one holding a hinged door (on a building, its street face). */
+  gw?: number; gn?: number; gc?: string; dw?: number;
+  /** Wall material from a photograph. */
+  m?: 'siding' | 'shingle' | 'wood' | 'brick' | 'block' | 'concrete' | 'metal' | 'stucco' | 'stone';
+  /** A photographed building's street face: storeys, shopfront, awning colour,
+   * window pattern and columns, overhead doors (count, colour), entrance door. */
+  fb?: { fl?: number; st?: number; aw?: string; wn?: 'none' | 'few' | 'rows' | 'band'; bays?: number; od?: number; oc?: string; dc?: string };
+};
+/** A house the LiDAR could not fit whose street photograph was read: its
+ * facade reads only (as a measured house's), at the plan's centre `o`. */
+export type PhotographedHouse = { id: string; k: 'h'; o: [number, number]; b: number; wc?: string; tc?: string; f?: MeasuredRoof['f'] };
+export type MeasuredRoofPacket = { version: 1; tileId: string; rows: (MeasuredRoof | MeasuredOther | PhotographedHouse)[] };
+export const isMeasuredOther = (row: MeasuredRoof | MeasuredOther | PhotographedHouse): row is MeasuredOther => 'k' in row && (row.k === 'o' || row.k === 'b' || row.k === 'v');
+export const isPhotographedHouse = (row: MeasuredRoof | MeasuredOther | PhotographedHouse): row is PhotographedHouse => 'k' in row && row.k === 'h';
 
-const tiles = new Set(index.tiles.split(','));
-export const MEASURED_ROOF_COVERAGE = { houses: index.count, tiles: tiles.size };
+/** Tiles with a packet: a bitmap over tile columns and rows from [x0, y0], `width` wide. */
+const [x0, y0, width, bitmap] = grid as [number, number, number, string], held = atob(bitmap);
+const hasPacket = (tileId: string): boolean => {
+  const m = /^(-?\d+)_(-?\d+)$/.exec(tileId);
+  if (!m) return false;
+  const x = +m[1] - x0, y = +m[2] - y0, k = y * width + x;
+  return x >= 0 && x < width && y >= 0 && k >> 3 < held.length && !!(held.charCodeAt(k >> 3) & (1 << (k & 7)));
+};
+let packetTiles = 0;
+for (let i = 0; i < held.length; i++) for (let b = held.charCodeAt(i); b; b >>= 1) packetTiles += b & 1;
+export const MEASURED_ROOF_COVERAGE = { houses: count, photographed, others, kept, tiles: packetTiles };
 export const measuredRoofAsset = (tileId: string): AssetRef | undefined =>
-  tiles.has(tileId) ? { url: `${index.dir}/${tileId}.json`, bytes: 0 } : undefined;
+  hasPacket(tileId) ? { url: `${dir}/${tileId}.json`, bytes: 0 } : undefined;
 
 const finite = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v);
 const hex = (v: unknown) => v === undefined || (typeof v === 'string' && /^#[0-9a-f]{6}$/i.test(v));
@@ -58,33 +96,68 @@ export function validMeasuredRoofPacket(value: unknown, tileId: string): value i
   const p = value as MeasuredRoofPacket;
   if (p.version !== 1 || p.tileId !== tileId || !Array.isArray(p.rows)) return false;
   const ids = new Set<string>();
-  for (const r of p.rows) {
-    if (!r || typeof r.id !== 'string' || ids.has(r.id)) return false;
-    ids.add(r.id);
-    if (!Array.isArray(r.o) || r.o.length !== 2 || !r.o.every(finite) || !finite(r.b) || !finite(r.p) || !finite(r.q) || r.p <= r.b) return false;
-    if (typeof r.v !== 'string' || typeof r.r !== 'string' || typeof r.w !== 'string' || (r.t !== undefined && typeof r.t !== 'string')) return false;
-    if (!Array.isArray(r.e) || !r.e.every(e => e === null || finite(e)) || !Array.isArray(r.c) || !r.c.every(c => Array.isArray(c) && c.length === 7 && c.every(finite))) return false;
-    if (r.g !== undefined && !(Array.isArray(r.g) && r.g.every(g => Array.isArray(g) && g.length === 5 && g.every(finite)))) return false;
-    if (r.ep !== undefined && !(Array.isArray(r.ep) && r.ep.length === r.e.length && r.ep.every(p => p === null || finite(p) ||
-      (Array.isArray(p) && p.length >= 2 && p.every((x, i) => Array.isArray(x) && x.length === 2 && x.every(finite) && (i === 0 || x[0] >= p[i - 1][0])))))) return false;
-    if (!hex(r.rc) || !hex(r.wc) || !hex(r.tc)) return false;
-    if (r.f !== undefined) {
-      const f = r.f;
-      if (!f || typeof f !== 'object' || !hex(f.door) || !hex(f.shutters) ||
-        (f.bays !== undefined && !(Number.isInteger(f.bays) && f.bays >= 1 && f.bays <= 12)) ||
-        (f.material !== undefined && !['siding', 'shingle', 'brick', 'stone', 'stucco'].includes(f.material)) ||
-        (f.porch !== undefined && !['none', 'open', 'enclosed', 'stacked'].includes(f.porch)) ||
-        (f.side !== undefined && !['left', 'right', 'center', 'full'].includes(f.side)) ||
-        [f.ground, f.upper].some(x => x !== undefined && x !== 'open' && x !== 'enclosed') ||
-        (f.levels !== undefined && f.levels !== 2 && f.levels !== 3)) return false;
+  for (const row of p.rows) {
+    if (!row || typeof row.id !== 'string' || ids.has(row.id)) return false;
+    ids.add(row.id);
+    if (isMeasuredOther(row)) { if (!validOther(row)) return false; continue; }
+    if (isPhotographedHouse(row)) {
+      if (!Array.isArray(row.o) || row.o.length !== 2 || !row.o.every(finite) || !finite(row.b) || !hex(row.wc) || !hex(row.tc) || !validFacade(row.f)) return false;
+      continue;
     }
-    try {
-      const v = int16(r.v), n = v.length / 3;
-      if (!n || v.length % 3) return false;
-      for (const s of [r.r, r.w, r.t ?? '']) { const t = Array.from(indices(s, n)); if (t.length % 3 || t.some(i => i >= n)) return false; }
-    } catch { return false; }
+    if ('k' in row && (row as { k?: unknown }).k !== undefined) return false;
+    const r = row;
+    if (!Array.isArray(r.e) || !r.e.every(e => e === null || finite(e)) || !Array.isArray(r.c) || !r.c.every(c => Array.isArray(c) && c.length === 7 && c.every(finite))) return false;
+    if (!validBody(r, r.e.length) || !hex(r.wc) || !validFacade(r.f)) return false;
   }
   return true;
+}
+
+/** A measured body: origin and base, peak above base, fit share, vertex and
+ * index strings in range, gutters, per-frame wall tops, colours. */
+function validBody(r: Pick<MeasuredRoof, 'o' | 'b' | 'p' | 'q' | 'v' | 'r' | 'w' | 't' | 'g' | 'ep' | 'rc' | 'tc'>, frames: number): boolean {
+  if (!Array.isArray(r.o) || r.o.length !== 2 || !r.o.every(finite) || !finite(r.b) || !finite(r.p) || !finite(r.q) || r.p <= r.b) return false;
+  if (typeof r.v !== 'string' || typeof r.r !== 'string' || typeof r.w !== 'string' || (r.t !== undefined && typeof r.t !== 'string') || !hex(r.rc) || !hex(r.tc)) return false;
+  if (r.g !== undefined && !(Array.isArray(r.g) && r.g.every(g => Array.isArray(g) && g.length === 5 && g.every(finite)))) return false;
+  if (r.ep !== undefined && !(Array.isArray(r.ep) && r.ep.length === frames && r.ep.every(p => p === null || finite(p) ||
+    (Array.isArray(p) && p.length >= 2 && p.every((x, i) => Array.isArray(x) && x.length === 2 && x.every(finite) && (i === 0 || x[0] >= p[i - 1][0])))))) return false;
+  try {
+    const v = int16(r.v), n = v.length / 3;
+    if (!n || v.length % 3) return false;
+    for (const s of [r.r, r.w, r.t ?? '']) { const t = Array.from(indices(s, n)); if (t.length % 3 || t.some(i => i >= n)) return false; }
+  } catch { return false; }
+  return true;
+}
+
+function validFacade(f: MeasuredRoof['f']): boolean {
+  if (f === undefined) return true;
+  if (!f || typeof f !== 'object' || !hex(f.door) || !hex(f.shutters) ||
+    (f.bays !== undefined && !(Number.isInteger(f.bays) && f.bays >= 1 && f.bays <= 12)) ||
+    (f.material !== undefined && !['siding', 'shingle', 'brick', 'stone', 'stucco'].includes(f.material)) ||
+    (f.porch !== undefined && !['none', 'open', 'enclosed', 'stacked'].includes(f.porch)) ||
+    (f.side !== undefined && !['left', 'right', 'center', 'full'].includes(f.side)) ||
+    [f.ground, f.upper].some(x => x !== undefined && x !== 'open' && x !== 'enclosed') ||
+    (f.levels !== undefined && f.levels !== 2 && f.levels !== 3) ||
+    (f.mb !== undefined && !['curb', 'house', 'none'].includes(f.mb)) || (f.sh !== undefined && !['none', 'some', 'many'].includes(f.sh)) ||
+    (f.gd !== undefined && !(Number.isInteger(f.gd) && f.gd >= 1 && f.gd <= 3)) || (f.gs !== undefined && !['left', 'right', 'center'].includes(f.gs)) ||
+    (f.fe !== undefined && !['picket', 'chain', 'stone', 'retaining', 'rail', 'privacy', 'iron', 'hedge'].includes(f.fe)) || !hex(f.gc) || !hex(f.fc) ||
+    (f.fl !== undefined && !(f.fe && Array.isArray(f.fl) && f.fl.every(l => Array.isArray(l) && l.length === 4 && l.every(x => Number.isInteger(x) && Math.abs(x) < 2000))))) return false;
+  return true;
+}
+
+function validOther(r: MeasuredOther): boolean {
+  if (!['o', 'b', 'v'].includes(r.k) || !Array.isArray(r.o) || r.o.length !== 2 || !r.o.every(finite) || !finite(r.b)) return false;
+  if (!Array.isArray(r.ol) || r.ol.length < 3 || r.ol.length > 200 || !r.ol.every(q => Array.isArray(q) && q.length === 2 && q.every(x => Number.isInteger(x) && Math.abs(x) < 20000))) return false;
+  const edges = r.ol.length, edge = (i: unknown) => i === undefined || (Number.isInteger(i) && (i as number) >= 0 && (i as number) < edges);
+  if (!edge(r.gw) || !edge(r.dw) || (r.gn !== undefined && !(Number.isInteger(r.gn) && r.gn >= 1 && r.gn <= 3)) || (r.gw === undefined) !== (r.gn === undefined)) return false;
+  if (!hex(r.rc) || !hex(r.wc) || !hex(r.tc) || !hex(r.gc)) return false;
+  if (r.m !== undefined && !['siding', 'shingle', 'wood', 'brick', 'block', 'concrete', 'metal', 'stucco', 'stone'].includes(r.m)) return false;
+  if (r.fb !== undefined) {
+    const f = r.fb, count = (v: unknown, max: number) => v === undefined || (Number.isInteger(v) && (v as number) >= 0 && (v as number) <= max);
+    if (!f || typeof f !== 'object' || r.k !== 'b' || !count(f.fl, 6) || !count(f.st, 1) || !count(f.bays, 20) || !count(f.od, 8) || !hex(f.aw) || !hex(f.oc) ||
+      (f.dc !== undefined && f.dc !== 'glass' && !hex(f.dc)) || (f.wn !== undefined && !['none', 'few', 'rows', 'band'].includes(f.wn))) return false;
+  }
+  if (r.k === 'v') return finite(r.h) && r.h > 0 && r.h < 30 && r.v === undefined;
+  return finite(r.in) && r.in >= 0 && r.in <= .5 && validBody(r as Parameters<typeof validBody>[0], edges);
 }
 
 /** Adds the measured body, its chimneys and a foundation band to a batch.

@@ -4,21 +4,24 @@ import { GrassTerrain, type GrassMask } from './grass';
 import { addParkedLife, surfaceProxies, type ParkedPlacement } from './parked-life';
 import { ROAD_LANE_ATTRIBUTE } from './road-wear';
 import { applyArtMaterial } from './art-materials';
+import { frontageMaterial } from './crafted-frontages';
 
 /**
  * Front-yard dressing for houses: clipped foundation shrubs (yew, boxwood,
  * hydrangea in late-summer bloom) in dark mulch beds along the walls that face
- * the street, curbside mailboxes on local streets, aluminium gutters with
+ * the street, curbside mailboxes, aluminium gutters with
  * downspouts along the eaves of pitched roofs, painted rake boards up their
  * gables, and a car in some driveways. Driveways are the paved land-cover
  * class between a house and its local street; which ones hold a car, and its
  * colour, are authored and stable, not a record of anyone's vehicle. The planting habit and
- * mailbox forms follow ordinary New England front yards; which houses have
- * them, species, sizes and positions are authored from each building's
- * foundation outline, its doors and the nearest street. None is surveyed.
+ * mailbox forms follow ordinary New England front yards. Where a house's
+ * street photograph was read, it decides whether that house has a curbside
+ * mailbox and how full its foundation planting is; elsewhere those, and all
+ * species, sizes and positions, are authored from each building's foundation
+ * outline, its doors and the nearest street.
  */
 export type RoadLookup = { nearestRoad(x: number, n: number, max?: number): { x: number; n: number; z: number; tx: number; tn: number; width: number; type: number; distance: number } | null };
-export type HouseDressingReport = { buildings: number; frontWalls: number; shrubs: number; beds: number; mailboxes: number; gutterM: number; downspouts: number; rakeM: number; chimneys: number; driveways: number; cars: number; walks: number; walkM: number; triangles: number };
+export type HouseDressingReport = { buildings: number; frontWalls: number; shrubs: number; beds: number; mailboxes: number; fenceM: number; gutterM: number; downspouts: number; rakeM: number; chimneys: number; driveways: number; cars: number; walks: number; walkM: number; triangles: number };
 
 /** Material names of surfaces a driveway car must never stand on, and where a
  * generated front walk stops: street furniture, lots and corners, and any
@@ -167,7 +170,17 @@ export class HouseDressing {
       chimneyCap: standard('cast chimney cap', '#8f8c84', 0.86),
       flue: standard('clay flue liner', '#7c4a37', 0.82),
       mulch: this.mulch,
+      picket: standard('painted picket', '#ecebe4', 0.7),
+      rail: standard('weathered split rail', '#8b7b66', 0.95),
+      privacy: standard('board fence', '#e3e0d6', 0.8),
+      iron: standard('black iron railing', '#1d1e1f', 0.5, 0.4),
+      chainPost: standard('galvanised fence post', '#a7aaa8', 0.45, 0.6),
+      hedge: standard('clipped hedge', '#2c4524', 1),
+      fieldstone: frontageMaterial('stone', '#8e897e'),
+      block: frontageMaterial('stone', '#9a968d'),
     };
+    const mesh = new THREE.MeshStandardMaterial({ color: '#9a9d9b', roughness: 0.5, metalness: 0.5, transparent: true, opacity: 0.38, depthWrite: false, side: THREE.DoubleSide });
+    mesh.name = 'House dressing | chain-link mesh'; mesh.userData.townCrafted = true; this.solids.chainMesh = mesh;
     // Chimney brick takes the shared running-bond library texture.
     applyArtMaterial(this.solids.chimney);
   }
@@ -175,7 +188,7 @@ export class HouseDressing {
   apply(group: THREE.Group, origin: readonly number[], level: number): HouseDressingReport {
     const existing = group.userData.houseDressing as HouseDressingReport | undefined;
     if (existing) return existing;
-    const report: HouseDressingReport = { buildings: 0, frontWalls: 0, shrubs: 0, beds: 0, mailboxes: 0, gutterM: 0, downspouts: 0, rakeM: 0, chimneys: 0, driveways: 0, cars: 0, walks: 0, walkM: 0, triangles: 0 };
+    const report: HouseDressingReport = { buildings: 0, frontWalls: 0, shrubs: 0, beds: 0, mailboxes: 0, fenceM: 0, gutterM: 0, downspouts: 0, rakeM: 0, chimneys: 0, driveways: 0, cars: 0, walks: 0, walkM: 0, triangles: 0 };
     group.userData.houseDressing = report;
     if (level > 1) return report;
     group.updateMatrixWorld(true);
@@ -219,6 +232,20 @@ export class HouseDressing {
     segments.forEach((s, i) => { for (const p of [s.a, s.b]) { const k = `${Math.round(p.x * 2)}_${Math.round(p.z * 2)}`; const l = grid.get(k); if (l) l.push(i); else grid.set(k, [i]); } });
     for (const list of grid.values()) for (let i = 1; i < list.length; i++) { const x = find(list[0]), y = find(list[i]); if (x !== y) parent[x] = y; }
     segments.forEach((s, i) => { s.building = find(i); });
+    // What each house's street photograph shows (mailbox, foundation shrubs),
+    // matched to its foundation by the nearest measured house centre.
+    const observations: { e: number; n: number; b?: number; mb?: string; sh?: string; fe?: string; fc?: string; fl?: number[][] }[] = group.userData.houseObservations ?? [];
+    const observed = new Map<number, { mb?: string; sh?: string }>();
+    if (observations.length) {
+      const centres = new Map<number, number[]>();
+      for (const s of segments) { const c = centres.get(s.building) ?? [0, 0, 0]; c[0] += s.a.x + s.b.x; c[1] += s.a.z + s.b.z; c[2] += 2; centres.set(s.building, c); }
+      for (const [building, [x, z, k]] of centres) {
+        const e = x / k + origin[0], n = -(z / k + origin[2]);
+        let best: typeof observations[number] | undefined, bestD = 9;
+        for (const o of observations) { const d = Math.hypot(o.e - e, o.n - n); if (d < bestD) { bestD = d; best = o; } }
+        if (best) observed.set(building, best);
+      }
+    }
     const doors: number[][] = group.userData.openings?.doors ?? [];
     const ground = tileTerrain(group);
     const groundAt = (x: number, z: number, fallback: number) => { const p = ground.sample(x, z); return p && Math.abs(p.y - fallback) < 2.5 ? p.y : fallback; };
@@ -240,6 +267,8 @@ export class HouseDressing {
       const known = buildings.get(segment.building);
       if (!known || length > known.bestLength) buildings.set(segment.building, { best: segment, bestLength: length });
       if (length < 1.6) continue;
+      const seen = observed.get(segment.building)?.sh;
+      if (seen === 'none') continue;
       const random = seeded(mid.x + origin[0], mid.z + origin[2], 811);
       const species = random();
       const kindFor = (): number => species < 0.38 ? 0 : species < 0.66 ? 1 : species < 0.86 ? 2 : (random() < 0.5 ? 1 : 2);
@@ -248,7 +277,7 @@ export class HouseDressing {
       for (let t = 0.55 + random() * 0.4; t < length - 0.45; t += 0.9 + random() * 0.55) {
         const p = segment.a.clone().addScaledVector(dir, t);
         if (doors.some(door => Math.hypot(door[0] - p.x, door[2] - p.z) < 1.35)) continue;
-        if (random() < 0.16) continue;
+        if (random() < (seen === 'some' ? 0.55 : seen === 'many' ? 0.06 : 0.16)) continue;
         const kind = kindFor();
         const radius = kind === 2 ? 0.5 + random() * 0.25 : kind === 0 ? 0.42 + random() * 0.22 : 0.34 + random() * 0.2;
         const height = radius * (kind === 0 ? 1.5 + random() * 0.4 : kind === 2 ? 1.35 + random() * 0.3 : 1.15 + random() * 0.3);
@@ -270,11 +299,14 @@ export class HouseDressing {
         report.beds++;
       }
     }
-    for (const { best } of buildings.values()) {
+    for (const [building, { best }] of buildings) {
       report.buildings++;
       const mid = best.a.clone().add(best.b).multiplyScalar(0.5);
       const road = this.roads.nearestRoad(toEast(mid.x), toNorth(mid.z), 38);
-      if (!road || road.type !== 5 || road.distance < 7) continue;
+      // A curbside mailbox where the photograph shows one; elsewhere about one
+      // house in twelve on local streets, the share the photographs show.
+      const box = observed.get(building)?.mb;
+      if (!road || road.distance < 7 || (box ? box !== 'curb' : road.type !== 5 || seeded(toEast(mid.x), toNorth(mid.z), 97)() >= 0.08)) continue;
       const toHouseE = toEast(mid.x) - road.x, toHouseN = toNorth(mid.z) - road.n, d = Math.hypot(toHouseE, toHouseN) || 1;
       const offset = road.width / 2 + 0.5;
       const east = road.x + toHouseE / d * offset + road.tx * 1.6, north = road.n + toHouseN / d * offset + road.tn * 1.6;
@@ -290,13 +322,14 @@ export class HouseDressing {
       if (random() < 0.4) builder.box('flag', [x - face[0] * 0.05 + face[1] * 0.1, y + 1.33, z - face[1] * 0.05 - face[0] * 0.1], face, 0.04, 0.16, 0.012);
       report.mailboxes++;
     }
+    this.fences(observations, builder, origin, level, groundAt, report);
     const outlines = buildingOutlines(segments);
     const tests = level === 0 ? this.surfaceTests(group, origin) : null;
     const driveways = tests ? this.driveways(group, origin, [...buildings.values()], outlines, tests, report) : [];
     const walks = tests ? this.walkways(origin, frontWalls, outlines, doors, tests, groundAt, report) : null;
     this.gutters(group, inverse, builder, groundAt, report);
     this.chimneys(group, inverse, builder, report);
-    const built = builder.finish(this.solids);
+    const built = builder.finish({ ...this.solids, ...Object.fromEntries(this.paints) });
     if (shrubs.length) {
       const geometry = level === 0 ? this.shrubHigh : this.shrubLow;
       const mesh = new THREE.InstancedMesh(geometry, this.shrub, shrubs.length);
@@ -323,6 +356,85 @@ export class HouseDressing {
     if (built.children.length) { built.name = 'House dressing'; group.add(built); }
     built.traverse(o => { if (o instanceof THREE.Mesh) report.triangles += ((o.geometry.index?.count ?? o.geometry.getAttribute('position').count) / 3) * (o instanceof THREE.InstancedMesh ? o.count : 1); });
     return report;
+  }
+
+  /** Painted fence colours seen in the photographs, one material each. */
+  private readonly paints = new Map<string, THREE.MeshStandardMaterial>();
+  private paint(kind: string, color: string | undefined): string {
+    if (!color) return kind;
+    const key = `${kind}:${color}`;
+    if (!this.paints.has(key)) {
+      const base = this.solids[kind], m = base.clone(); m.color.set(color); m.name = `${base.name} ${color}`;
+      this.paints.set(key, m);
+    }
+    return key;
+  }
+
+  /**
+   * What stands along each lot's street frontage in its photograph: picket,
+   * board, split-rail, iron or chain-link fences, dry stone walls, retaining
+   * walls that hold the yard up off the sidewalk, and clipped hedges. Runs
+   * come from the parcel map (openings for the drive and the front walk);
+   * posts, heights and spacing are ordinary New England forms.
+   */
+  private fences(observations: readonly { e: number; n: number; b?: number; fe?: string; fc?: string; fl?: number[][] }[], builder: Builder, origin: readonly number[],
+    level: number, groundAt: (x: number, z: number, fallback: number) => number, report: HouseDressingReport): void {
+    for (const o of observations) {
+      if (!o.fe || !o.fl) continue;
+      const kind = o.fe, base = o.b ?? 0;
+      for (const [e0, n0, e1, n1] of o.fl) {
+        const x0 = e0 - origin[0], z0 = -n0 - origin[2], x1 = e1 - origin[0], z1 = -n1 - origin[2];
+        const length = Math.hypot(x1 - x0, z1 - z0);
+        if (length < 0.8) continue;
+        const dx = (x1 - x0) / length, dz = (z1 - z0) / length, dir: [number, number] = [dx, dz];
+        const at = (t: number): [number, number] => [x0 + dx * t, z0 + dz * t];
+        const ground = (t: number) => { const [x, z] = at(t); return groundAt(x, z, base - origin[1]); };
+        const spacing = kind === 'chain' || kind === 'rail' ? 3 : kind === 'stone' || kind === 'retaining' || kind === 'hedge' ? 1.6 : 2.4;
+        const pieces = Math.max(1, Math.round(length / spacing)), step = length / pieces;
+        // which side is the yard: the lot lies away from the street, toward the house
+        const [mx, mz] = at(length / 2), hx = o.e - origin[0] - mx, hz = -o.n - origin[2] - mz;
+        const yard = hx * -dz + hz * dx > 0 ? 1 : -1, nx = -dz * yard, nz = dx * yard;
+        for (let k = 0; k < pieces; k++) {
+          const t0 = k * step, t1 = (k + 1) * step, tm = (t0 + t1) / 2, [cx, cz] = at(tm), g = ground(tm);
+          if (kind === 'hedge') { builder.box('hedge', [cx + nx * 0.35, g + 0.58, cz + nz * 0.35], dir, step + 0.06, 1.2, 0.8); continue; }
+          if (kind === 'stone') { const h = 0.62 + ((k * 7919) % 5) * 0.03; builder.box('fieldstone', [cx, g + h / 2 - 0.05, cz], dir, step + 0.04, h, 0.55); continue; }
+          if (kind === 'retaining') {
+            // The wall holds the yard up: its face at the frontage, its top at the yard's level.
+            const yardG = groundAt(cx + nx * 1.4, cz + nz * 1.4, g), top = Math.max(yardG + 0.12, g + 0.45);
+            builder.box('block', [cx + nx * 0.15, (top + g - 0.25) / 2, cz + nz * 0.15], dir, step + 0.04, top - g + 0.25, 0.32);
+            continue;
+          }
+          const post = (t: number, h: number, w: number, role: string) => { const [x, z] = at(t), y = ground(t); builder.box(role, [x, y + h / 2 - 0.05, z], dir, w, h + 0.1, w); };
+          if (kind === 'picket') {
+            const role = this.paint('picket', o.fc);
+            post(t0, 1.1, 0.09, role); if (k === pieces - 1) post(t1, 1.1, 0.09, role);
+            for (const h of [0.3, 0.82]) builder.box(role, [cx - nx * 0.03, g + h, cz - nz * 0.03], dir, step, 0.08, 0.035);
+            if (level === 0) for (let t = t0 + 0.12; t < t1 - 0.06; t += 0.13) { const [x, z] = at(t), y = ground(t); builder.box(role, [x - nx * 0.06, y + 0.5, z - nz * 0.06], dir, 0.07, 1.0, 0.02); }
+            else builder.box(role, [cx - nx * 0.06, g + 0.5, cz - nz * 0.06], dir, step, 1.0, 0.02);
+          } else if (kind === 'privacy') {
+            const role = this.paint('privacy', o.fc);
+            post(t0, 1.85, 0.1, role); if (k === pieces - 1) post(t1, 1.85, 0.1, role);
+            builder.box(role, [cx, g + 0.92, cz], dir, step, 1.78, 0.04);
+          } else if (kind === 'rail') {
+            const role = this.paint('rail', o.fc);
+            post(t0, 1.1, 0.14, role); if (k === pieces - 1) post(t1, 1.1, 0.14, role);
+            for (const h of [0.45, 0.9]) { const [ax, az] = at(t0), [bx, bz] = at(t1); builder.beam(role, [ax, ground(t0) + h, az], [bx, ground(t1) + h, bz], 0.055, 5); }
+          } else if (kind === 'iron') {
+            const role = this.paint('iron', o.fc);
+            post(t0, 1.2, 0.05, role); if (k === pieces - 1) post(t1, 1.2, 0.05, role);
+            for (const h of [0.15, 1.05]) builder.box(role, [cx, g + h, cz], dir, step, 0.03, 0.03);
+            if (level === 0) for (let t = t0 + 0.12; t < t1 - 0.05; t += 0.12) { const [x, z] = at(t), y = ground(t); builder.box(role, [x, y + 0.6, z], dir, 0.016, 1.0, 0.016); }
+          } else if (kind === 'chain') {
+            const [ax, az] = at(t0), [bx, bz] = at(t1);
+            builder.cylinder('chainPost', [ax, ground(t0) - 0.05, az], [ax, ground(t0) + 1.25, az], 0.03, 0.03, 6);
+            if (k === pieces - 1) builder.cylinder('chainPost', [bx, ground(t1) - 0.05, bz], [bx, ground(t1) + 1.25, bz], 0.03, 0.03, 6);
+            builder.beam('chainPost', [ax, ground(t0) + 1.2, az], [bx, ground(t1) + 1.2, bz], 0.02, 5);
+            builder.box('chainMesh', [cx, g + 0.6, cz], dir, step, 1.18, 0.005);
+          }
+        }
+        report.fenceM += length;
+      }
+    }
   }
 
   /**
@@ -662,5 +774,7 @@ export class HouseDressing {
     this.shrubHigh.dispose(); this.shrubLow.dispose();
     this.shrub.dispose(); this.mulch.dispose();
     for (const material of Object.values(this.solids)) material.dispose();
+    for (const material of this.paints.values()) material.dispose();
+    this.paints.clear();
   }
 }

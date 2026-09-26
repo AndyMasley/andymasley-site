@@ -3,7 +3,7 @@ import { Sky } from 'three/examples/jsm/objects/Sky.js';
 import { advanceRealTime, DriveEngine, LANDMARKS, MPH, RoadGraph, spawnAtLandmark, type NetworkData } from './engine';
 import { validateManifest, type Quality, type V3 } from './contracts';
 import { TownWorld } from './world';
-import { StreetDressing, updateDressingViewport } from './street-dressing';
+import { StreetDressing, updateDressingViewport, type StreetContext } from './street-dressing';
 import { HouseDressing } from './house-dressing';
 import { RoadWear } from './road-wear';
 import { CurbParking } from './curb-parking';
@@ -207,6 +207,8 @@ export async function startTown(root: HTMLElement): Promise<Session> {
     setStatus('Loading the roads and the first streets…');
     const transfer = { roads: 0, manifest: 0 };
     const manifestRequest = readCriticalJson<unknown>(WORLD_URL, signal, { label: 'Town manifest', onProgress: p => { transfer.manifest = p.receivedBytes; } });
+    // What the street photographs decided (centre lines, pole sides) arrives as its own small chunk.
+    const streetContext = import('../../../data/derived/town/street-context.json').then(m => m.default as StreetContext, () => undefined);
     const networkRequest = readCriticalJson<NetworkData>(NETWORK_URL, signal, { label: 'Road network', onProgress: p => { transfer.roads = p.receivedBytes; if (!disposed) setStatus(`Loading roads… ${(transfer.roads / 1048576).toFixed(1)} MB received`); } });
     const initialRequests = Promise.all([manifestRequest, networkRequest]);
     // A renderer failure can cancel requests before the later await attaches.
@@ -273,7 +275,7 @@ export async function startTown(root: HTMLElement): Promise<Session> {
     graph = new RoadGraph(network);
     applyMeasuredBridgeGrades(graph);
     // Overhead utilities and hydrants follow the named street centrelines.
-    dressing = new StreetDressing(network);
+    dressing = new StreetDressing(network, await streetContext);
     houses = new HouseDressing(dressing);
     curbParking = new CurbParking(network);
     world.setStreetDressing(dressing, houses, new RoadWear(network), curbParking);

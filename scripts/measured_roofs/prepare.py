@@ -22,9 +22,14 @@ street photograph.
    owner or sale detail does.
 4. Wall tops. Each frame's inset wall top is traced from the solid itself, so
    windows can stand in a gable under its rakes.
+5. Everything else. Garages, sheds, barns and the other plainly modelled
+   buildings join the same packets (outbuildings.py), and each photographed
+   house's front fence gets its line along the parcel's street frontage
+   (fences.py).
 
 Usage: python3 scripts/measured_roofs/prepare.py [--jobs N] [--limit N] [--reuse]
-  --reuse skips step 1 when $OUT/records.jsonl exists.
+  --reuse skips the LiDAR fits when $OUT/records.jsonl (houses) and
+  $OUT/others.jsonl (everything else) exist.
 Environment: WEBSTER_SOURCE (research folder), WEBSTER_MEASURED_OUT (work dir).
 Writes public/town-evidence/v1/measured/<digest>/<tile>.json and
 data/derived/town/measured-roofs-index.json.
@@ -326,6 +331,15 @@ def facade(fc):
         for k in ('ground', 'upper'):
             if fc.get(k) in ('open', 'enclosed'): f[k] = fc[k]
         if fc.get('levels') in (2, 3): f['levels'] = fc['levels']
+    # the street-context read: mailbox, foundation shrubs, street-facing garage doors, front fence
+    if fc.get('mb') in ('curb', 'house', 'none'): f['mb'] = fc['mb']
+    if fc.get('sh') in ('none', 'some', 'many'): f['sh'] = fc['sh']
+    if fc.get('g') == 'attached' and fc.get('gd') in (1, 2, 3) and fc.get('gs') in ('left', 'right', 'center'):
+        f['gd'] = fc['gd']; f['gs'] = fc['gs']
+        if hexok(fc.get('gc')): f['gc'] = fc['gc']
+    if fc.get('fe') in ('picket', 'chain', 'stone', 'retaining', 'rail', 'privacy', 'iron', 'hedge'):
+        f['fe'] = fc['fe']
+        if hexok(fc.get('fc')): f['fc'] = fc['fc']
     return f
 
 
@@ -340,7 +354,7 @@ def simplify(points, tol):
     return simplify(points[:i + 1], tol)[:-1] + simplify(points[i:], tol)
 
 
-def wall_profiles(r, house):
+def wall_profiles(r, house, inset=INSET):
     """Per frame, the measured wall's top as a polyline [[u, height above
     base], ...] along the inset wall: level along an eave, rising and falling
     under a gable, stepping where a wing meets the frame."""
@@ -350,8 +364,8 @@ def wall_profiles(r, house):
     out = []
     for fr in house['frames']:
         t = np.asarray(fr['tangent'], float); o = np.asarray(fr['outward'], float)
-        s = np.asarray(fr['start'], float) + t * INSET - o * INSET
-        w = fr['width'] - 2 * INSET
+        s = np.asarray(fr['start'], float) + t * inset - o * inset
+        w = fr['width'] - 2 * inset
         rel = en - s; u = rel @ t; off = rel @ o
         on = (np.abs(off[tri]) < 0.06).all(1) & (u[tri].max(1) > 0.05) & (u[tri].min(1) < w - 0.05)
         if w < 0.5 or not on.any(): out.append(None); continue
@@ -381,7 +395,19 @@ def small_indices(b64s, nv):
     return base64.b64encode(a.astype('u1').tobytes()).decode() if nv <= 255 else b64s
 
 
-def packets(records, colours):
+def tile_grid(tiles):
+    """The tiles with packets as a bitmap the game can carry cheaply: the
+    first tile column and row, the width, and base64 bits (row by row, least
+    significant bit first)."""
+    xy = [tuple(map(int, t.split('_'))) for t in tiles]
+    x0, y0 = min(x for x, _ in xy), min(y for _, y in xy)
+    w = max(x for x, _ in xy) - x0 + 1; h = max(y for _, y in xy) - y0 + 1
+    bits = bytearray((w * h + 7) // 8)
+    for x, y in xy: k = (y - y0) * w + (x - x0); bits[k >> 3] |= 1 << (k & 7)
+    return [x0, y0, w, base64.b64encode(bytes(bits)).decode()]
+
+
+def packets(records, colours, lots, others=()):
     facades = json.load(open(HERE / 'facade-reads.json'))
     homes = {h['id']: h for h in M.houses()}
     tiles = collections.defaultdict(list); skipped = collections.Counter()
@@ -403,7 +429,33 @@ def packets(records, colours):
             if hexok(fc.get('wall')): row['wc'] = paint(fc['wall'])
             if hexok(fc.get('trim')): row['tc'] = paint(fc['trim'])
             row['f'] = facade(fc)
+            if row['f'].get('fe'):
+                # the fence's line along the lot's street frontage, decimetres from the house centre
+                lines = lots.frontage(homes[r['id']], homes[r['id']].get('address'))
+                if lines: row['f']['fl'] = [[round((a[0] - r['origin'][0]) * 10), round((a[1] - r['origin'][1]) * 10), round((b[0] - r['origin'][0]) * 10), round((b[1] - r['origin'][1]) * 10)] for a, b in lines]
+                else: row['f'].pop('fe', None); row['f'].pop('fc', None)
         tiles[r['tileId']].append(row)
+    # houses the LiDAR could not fit keep their bodies but take their photograph's facade
+    done = {row['id'] for rows in tiles.values() for row in rows}
+    for hid, house in sorted(homes.items()):
+        fc = facades.get(hid)
+        if hid in done or not fc: continue
+        xs = [p[0] for p in house['outline']]; ns = [p[1] for p in house['outline']]
+        o = [round(sum(xs) / len(xs), 3), round(sum(ns) / len(ns), 3)]
+        row = {'id': hid, 'k': 'h', 'o': o, 'b': round(house['base'], 3)}
+        if hexok(fc.get('wall')): row['wc'] = paint(fc['wall'])
+        if hexok(fc.get('trim')): row['tc'] = paint(fc['trim'])
+        row['f'] = facade(fc)
+        if row['f'].get('fe'):
+            lines = lots.frontage(house, house.get('address'))
+            if lines: row['f']['fl'] = [[round((a[0] - o[0]) * 10), round((a[1] - o[1]) * 10), round((b[0] - o[0]) * 10), round((b[1] - o[1]) * 10)] for a, b in lines]
+            else: row['f'].pop('fe', None); row['f'].pop('fc', None)
+        tiles[house['tileId']].append(row)
+    # garages, sheds and other buildings (outbuildings.py)
+    other_colours = roof_colours([rec for _, _, rec in others if rec])
+    for tile, row, rec in others:
+        if rec and rec['id'] in other_colours: row['rc'] = roof_colour(other_colours[rec['id']])
+        tiles[tile].append(row)
     payloads = {t: json.dumps({'version': 1, 'tileId': t, 'rows': sorted(items, key=lambda x: x['id'])}, separators=(',', ':'), allow_nan=False) + '\n'
                 for t, items in sorted(tiles.items())}
     digest = hashlib.sha256(''.join(payloads[t] for t in sorted(payloads)).encode()).hexdigest()[:12]
@@ -411,11 +463,13 @@ def packets(records, colours):
     if root.exists(): shutil.rmtree(root)
     out = root / digest; out.mkdir(parents=True)
     for t, text in payloads.items(): (out / f'{t}.json').write_text(text)
-    index = {'version': 1, 'dir': f'/town-evidence/v1/measured/{digest}', 'count': sum(len(v) for v in tiles.values()),
-             'photoReads': sum('f' in x for v in tiles.values() for x in v),
-             'tiles': ','.join(sorted(tiles)), 'bytes': sum(len(t) for t in payloads.values())}
+    index = {'version': 1, 'dir': f'/town-evidence/v1/measured/{digest}', 'count': sum('k' not in x for v in tiles.values() for x in v),
+             'photographed': sum(x.get('k') == 'h' for v in tiles.values() for x in v),
+             'others': sum(x.get('k') in ('o', 'b') for v in tiles.values() for x in v), 'kept': sum(x.get('k') == 'v' for v in tiles.values() for x in v),
+             'photoReads': sum('f' in x and x.get('k') in (None, 'h') for v in tiles.values() for x in v),
+             'tiles': ','.join(sorted(tiles)), 'grid': tile_grid(tiles), 'bytes': sum(len(t) for t in payloads.values())}
     (SITE / 'data/derived/town/measured-roofs-index.json').write_text(json.dumps(index, separators=(',', ':')) + '\n')
-    print(json.dumps({'houses': index['count'], 'tiles': len(tiles), 'bytes': index['bytes'], 'skipped': dict(skipped),
+    print(json.dumps({'houses': index['count'], 'others': index['others'], 'kept': index['kept'], 'tiles': len(tiles), 'bytes': index['bytes'], 'skipped': dict(skipped),
                       'roofColours': sum('rc' in x for v in tiles.values() for x in v), 'photoReads': index['photoReads']}))
 
 
@@ -427,4 +481,9 @@ if __name__ == '__main__':
     a = ap.parse_args()
     if a.reuse and (OUT / 'records.jsonl').exists(): records = [json.loads(l) for l in open(OUT / 'records.jsonl')]
     else: records = measure_all(a.jobs, a.limit)
-    packets(records, roof_colours(records))
+    import gzip
+    from fences import Frontages
+    from outbuildings import prepare_others
+    lots = Frontages(SOURCE / 'research/data/parcels-current.geojson', json.load(gzip.open(SITE / 'data/derived/town/engine-network.json.gz')), aerial)
+    others = prepare_others(OUT, a.jobs, a.reuse, M.houses(), json.load(open(HERE / 'facade-reads.json')), paint, lots)
+    packets(records, roof_colours(records), lots, others)

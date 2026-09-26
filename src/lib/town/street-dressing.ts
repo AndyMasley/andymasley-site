@@ -11,7 +11,11 @@ import { StreetSigns } from './street-signs';
  * general pattern is recorded in the visual reference, but these particular
  * pole positions, spacing (about 40-48 m), transformer and light placement and
  * hydrant positions are authored from the road centrelines. They are not a
- * utility survey. Streets with mapped poles keep those instead.
+ * utility survey. Streets with mapped poles keep those instead. Where the
+ * assessor's street photographs show them, poles take the photographed side
+ * of the street, and a street photographed without poles or wires anywhere
+ * (buried service) gets none. Painted centre lines are cleared from streets
+ * photographed without them (data/derived/town/street-context.json).
  */
 type Pole = { x: number; n: number; z: number; ox: number; on: number; tx: number; tn: number; light: boolean; transformer: boolean };
 type Span = { a: number; b: number };
@@ -22,6 +26,14 @@ const TILE = 250;
 const POLE_TOP = 9.4;
 const ELIGIBLE_TYPES = new Set([3, 4, 5]);
 const tileKey = (x: number, n: number) => `${Math.floor(x / TILE)}_${Math.floor(n / TILE)}`;
+/** Physical road ids from runs like "13-22,25". */
+export const idRuns = (runs: string): Set<number> => new Set(runs.split(',').filter(Boolean).flatMap(run => {
+  const [a, b = a] = run.split('-').map(Number);
+  return Array.from({ length: b - a + 1 }, (_, i) => a + i);
+}));
+/** What the street photographs decided (data/derived/town/street-context.json, loaded as its own chunk). */
+export type StreetContext = { centreCleared: string; polesPositive: string; polesNegative: string; poleFree: string };
+const YELLOW = /^(?:Drive road \| warm yellow paint|Finished road \| solid yellow centerline)$/;
 
 function hash(text: string): number {
   let h = 2166136261;
@@ -77,9 +89,13 @@ export class StreetDressing {
   private readonly signs: StreetSigns;
   private readonly viewport = new THREE.Vector2(1, 1);
   private readonly roadSamples = new Map<string, number[][]>();
+  /** Centreline segments [e0, n0, e1, n1] of streets photographed without a centre line, by tile. */
+  private readonly unmarked = new Map<string, number[][]>();
 
-  constructor(network: NetworkData) {
+  constructor(network: NetworkData, context?: StreetContext) {
     this.signs = new StreetSigns(network);
+    const CLEARED = idRuns(context?.centreCleared ?? ''), POLE_FREE = idRuns(context?.poleFree ?? '');
+    const POLE_SIDE = new Map<number, number>([...[...idRuns(context?.polesPositive ?? '')].map(id => [id, 1] as const), ...[...idRuns(context?.polesNegative ?? '')].map(id => [id, -1] as const)]);
     const degree = new Map<number, number>();
     const physical = new Map<number, RoadEdge[]>();
     for (const edge of network.edges) {
@@ -101,12 +117,23 @@ export class StreetDressing {
       const edge = list.find(e => Number(e.direction) === 1) ?? list[0];
       const name = String(edge.name ?? '');
       if (ELIGIBLE_TYPES.has(Number(edge.road_type))) this.indexRoad(centreline(edge), Number(edge.width_m ?? 7), Number(edge.road_type));
+      if (CLEARED.has(id)) {
+        const line = centreline(edge);
+        for (let i = 1; i < line.length; i++) {
+          const a = line[i - 1], b = line[i], seg = [a[0], a[1], b[0], b[1]];
+          const x0 = Math.floor((Math.min(a[0], b[0]) - 3) / TILE), x1 = Math.floor((Math.max(a[0], b[0]) + 3) / TILE);
+          const n0 = Math.floor((Math.min(a[1], b[1]) - 3) / TILE), n1 = Math.floor((Math.max(a[1], b[1]) + 3) / TILE);
+          for (let tx = x0; tx <= x1; tx++) for (let tn = n0; tn <= n1; tn++) { const k = `${tx}_${tn}`, l = this.unmarked.get(k); if (l) l.push(seg); else this.unmarked.set(k, [seg]); }
+        }
+      }
+      if (POLE_FREE.has(id)) continue;
       if (!ELIGIBLE_TYPES.has(Number(edge.road_type)) || !name || name === 'Unnamed road' || /INTERSTATE|RAMP/i.test(name)) continue;
       const line = centreline(edge);
       const width = Number(edge.width_m ?? 7);
       const random = mulberry(hash(`${id}:${name}`));
-      // One side per street: north or south of east-west runs, east or west of north-south runs.
-      const sideChoice = hash(name) < 0.5 ? 1 : -1;
+      // One side per street: north or south of east-west runs, east or west of
+      // north-south runs; the photographed side where the photographs show poles.
+      const sideChoice = POLE_SIDE.get(id) ?? (hash(name) < 0.5 ? 1 : -1);
       const lengths = [0];
       for (let i = 1; i < line.length; i++) lengths.push(lengths[i - 1] + Math.hypot(line[i][0] - line[i - 1][0], line[i][1] - line[i - 1][1]));
       const total = lengths[lengths.length - 1];
@@ -204,6 +231,7 @@ export class StreetDressing {
   /** Adds the tile's dressing (once). `mapped` are east/north points of mapped poles in or near the tile. */
   apply(group: THREE.Group, tileId: string, origin: readonly number[], level: number, mapped: readonly number[][]): DressingReport | undefined {
     if (group.userData.streetDressing) return group.userData.streetDressing;
+    this.clearCentreLines(group, tileId, origin);
     const report: DressingReport = { poles: 0, spans: 0, hydrants: 0, signs: 0, triangles: 0, bytes: 0, skippedMapped: 0 };
     const poleIds = this.polesByTile.get(tileId) ?? [], spanIds = this.spansByTile.get(tileId) ?? [], hydrantIds = this.hydrantsByTile.get(tileId) ?? [];
     const signs = level > 1 ? [] : this.signs.placements(tileId);
@@ -294,6 +322,40 @@ export class StreetDressing {
     built.traverse(o => { if (o instanceof THREE.Mesh) { report.triangles += (o.geometry.index?.count ?? o.geometry.getAttribute('position').count) / 3; for (const a of Object.values(o.geometry.attributes)) report.bytes += (a as THREE.BufferAttribute).array.byteLength; } });
     group.userData.streetDressing = report;
     return report;
+  }
+
+  /** Removes yellow centre paint lying on the centreline of a street photographed without one. */
+  private clearCentreLines(group: THREE.Group, tileId: string, origin: readonly number[]): void {
+    const segments = this.unmarked.get(tileId);
+    if (!segments?.length) return;
+    const near = (e: number, n: number): boolean => {
+      for (const [x0, n0, x1, n1] of segments) {
+        const dx = x1 - x0, dn = n1 - n0, l2 = dx * dx + dn * dn || 1, t = Math.max(0, Math.min(1, ((e - x0) * dx + (n - n0) * dn) / l2));
+        if (Math.hypot(e - x0 - dx * t, n - n0 - dn * t) < 1.6) return true;
+      }
+      return false;
+    };
+    // The tile group stands at its origin in the world; work in its own frame.
+    group.updateMatrixWorld(true);
+    const inverse = group.matrixWorld.clone().invert(), relative = new THREE.Matrix4();
+    const v = new THREE.Vector3(), meshes: THREE.Mesh[] = [];
+    group.traverse(o => { if (o instanceof THREE.Mesh && !(o instanceof THREE.InstancedMesh) && !Array.isArray(o.material) && YELLOW.test(o.material.name)) meshes.push(o); });
+    for (const mesh of meshes) {
+      relative.multiplyMatrices(inverse, mesh.matrixWorld);
+      const geometry = mesh.geometry, position = geometry.getAttribute('position'), index = geometry.index, total = index?.count ?? position.count;
+      const keep: number[] = [];
+      for (let i = 0; i + 2 < total; i += 3) {
+        let e = 0, n = 0;
+        for (let k = 0; k < 3; k++) { v.fromBufferAttribute(position, index ? index.getX(i + k) : i + k).applyMatrix4(relative); e += (v.x + origin[0]) / 3; n += -(v.z + origin[2]) / 3; }
+        if (!near(e, n)) for (let k = 0; k < 3; k++) keep.push(index ? index.getX(i + k) : i + k);
+      }
+      if (keep.length === total) continue;
+      const next = geometry.clone();
+      next.setIndex(position.count > 65535 ? new THREE.Uint32BufferAttribute(keep, 1) : new THREE.Uint16BufferAttribute(keep, 1));
+      next.clearGroups();
+      mesh.geometry = next; geometry.dispose();
+      mesh.visible = keep.length > 0;
+    }
   }
 
   dispose(): void {

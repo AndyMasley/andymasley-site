@@ -318,6 +318,32 @@ measured house replaces its V2 body; storeys follow its tallest wall, and
 windows follow each wall's traced top, up into gables under their rakes.
 Shutters are painted boards, one colour per house (a photographed one, else
 one drawn from the town's photographed mix); an observed door keeps its colour.
+Photographed garage doors (count, side as seen from the street, colour) go in
+the street wall on that side, a garage wing's own wall where the front steps;
+when they fill the wall the plan gave the entry, the door moves to the widest
+other street wall on a stoop fitted to the sampled ground, and the old steps are
+retired. A house the LiDAR could not fit keeps its scenery body but takes its
+photograph's colours, doors, shutters, bays, porch and yard the same way. A
+raised ranch is built as a split foyer: main-floor windows a storey
+under its measured wall top, a sided lower level with its own windows, and
+garage doors under the main windows. The same packets carry the town's other
+plainly modelled buildings (`outbuildings.py`): garages, sheds and barns, and
+shops, works, apartment blocks and public buildings that no crafted model
+replaces, each measured like a house where the LiDAR has building returns (a
+flat roof keeps a coping lip), else the scenery's box kept. Vehicle doors stand
+in the wall a paved drive runs up to, other doors face the lot's house or the
+street, buildings take storeys of windows; photographed garages and buildings
+take their read material, colours, shopfront, awning, window pattern and
+overhead doors (`outbuilding-reads.json`, `building-reads.json`).
+
+`house-dressing.ts` follows each measured house's photograph for its yard:
+curbside mailboxes only where one is seen, foundation beds as full as seen, and
+picket, board, split-rail, iron and chain-link fences, dry stone and retaining
+walls and hedges along the lot's street frontage from the parcel map, open at
+the drive and the front walk. `street-dressing.ts` clears the painted centre
+line from streets whose photographs show none, stands poles on the side the
+photographs place them and leaves them off streets photographed without poles
+or wires (`street-context.json`, from `scripts/street_context/prepare.py`).
 
 ## Release and build checks
 

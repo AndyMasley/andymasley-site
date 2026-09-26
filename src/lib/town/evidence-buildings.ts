@@ -2,8 +2,8 @@ import * as THREE from 'three';
 import { Batch, frontageMaterial, type Frame, type Role } from './crafted-frontages';
 import type { EvidenceBuilding, EvidenceReport, EvidenceRoof } from './evidence-types';
 import { historicAppearance } from './historic-appearance';
-import {prepareAddressFrontages,insideFormerEntrySteps,renderAddressStoop,type EntryStepEnvelope} from './address-frontage';
-import { measuredBody, type MeasuredRoof } from './measured-roofs';
+import {prepareAddressFrontages,insideFormerEntrySteps,renderAddressStoop,tileGround,type EntryStepEnvelope} from './address-frontage';
+import { measuredBody, isMeasuredOther, isPhotographedHouse, type MeasuredRoof, type MeasuredOther, type PhotographedHouse } from './measured-roofs';
 
 /** Measured walls stand this far inside the roofprint, under the eaves. */
 export const MEASURED_WALL_INSET = .32;
@@ -25,17 +25,24 @@ function measuredHome(home:EvidenceBuilding,roof:MeasuredRoof):EvidenceBuilding{
   // record omits still gets its windows (each is kept under its wall top).
   const tops=[...valid,...frames.flatMap(f=>f.profile?.map(p=>p[1])??[])];
   const stories=Math.max(home.stories,tops.length?Math.min(4,Math.floor((Math.max(...tops)-home.floor+.35)/2.7)):0);
-  const seen=roof.f,front=home.entry&&home.frames[home.entry.frameIndex];
+  return{...photographedHome(home,roof),frames,entry,eave,stories,peak:Math.max(roof.p,eave+.1),measured:true};
+}
+
+/** What a house's street photograph shows: siding and trim colours, door,
+ * shutters, wall material, window bays, front porch and garage doors. */
+function photographedHome(home:EvidenceBuilding,photo:Pick<MeasuredRoof,'wc'|'tc'|'f'>):EvidenceBuilding{
+  const seen=photo.f,front=home.entry&&home.frames[home.entry.frameIndex];
   // An entry bay standing 1-3.5 m proud of a parallel front wall is itself the
   // porch when the photograph shows it enclosed.
   const bay=!!front&&home.frames.some(g=>g!==front&&g.outward[0]*front.outward[0]+g.outward[1]*front.outward[1]>.996&&
     (()=>{const off=(g.start[0]-front.start[0])*front.outward[0]+(g.start[1]-front.start[1])*front.outward[1];return off<-1&&off>-3.5;})());
   const porchInPlan=bay&&(seen?.porch==='enclosed'||(seen?.porch==='stacked'&&seen.upper==='enclosed'));
-  return{...home,frames,entry,eave,stories,...(porchInPlan?{porchInPlan}:{}),peak:Math.max(roof.p,eave+.1),paint:roof.wc??home.paint,measured:true,
-    ...(roof.tc?{trim:roof.tc}:{}),...(seen?.door?{door:seen.door}:{}),...(seen?{shutters:!!seen.shutters,...(seen.shutters?{shutterColor:seen.shutters}:{})}:{}),
+  return{...home,...(porchInPlan?{porchInPlan}:{}),paint:photo.wc??home.paint,
+    ...(photo.tc?{trim:photo.tc}:{}),...(seen?.door?{door:seen.door}:{}),...(seen?{shutters:!!seen.shutters,...(seen.shutters?{shutterColor:seen.shutters}:{})}:{}),
     ...(seen?.material?{material:seen.material}:{}),...(seen?.bays?{frontageBays:seen.bays}:{}),
     ...(seen?.porch&&seen.porch!=='none'&&home.entry?{porch:seen.porch,porchPlacement:'front' as const}:{}),
-    ...(seen?.porch==='stacked'?{porchSide:seen.side,porchGround:seen.ground,porchUpper:seen.upper,porchLevels:seen.levels}:{})};
+    ...(seen?.porch==='stacked'?{porchSide:seen.side,porchGround:seen.ground,porchUpper:seen.upper,porchLevels:seen.levels}:{}),
+    ...(seen?.gd&&seen.gs?{garage:{doors:seen.gd,side:seen.gs,...(seen.gc?{color:seen.gc}:{})}}:{})};
 }
 
 export type EvidenceTarget = {
@@ -188,6 +195,171 @@ function homeWindows(batch:Batch,home:EvidenceBuilding):void {
   try{houseOpenings(batch,home);}finally{batch.trimColor=undefined;batch.shutterColor=undefined;}
 }
 
+/** The street wall that holds the photographed garage doors: of the walls
+ * facing the same way as the front, the one on the photographed side as seen
+ * from the street (a garage wing), or the widest for a centred garage. */
+export function garageFrame(home:EvidenceBuilding):number{
+  const g=home.garage,front=home.frames.findIndex(f=>f.front);if(!g||front<0)return -1;
+  const o=home.frames[front].outward,right=[-o[1],o[0]];
+  const along=(f:EvidenceBuilding['frames'][number])=>(f.start[0]+f.tangent[0]*f.width/2)*right[0]+(f.start[1]+f.tangent[1]*f.width/2)*right[1];
+  let best=-1;
+  for(const [i,f]of home.frames.entries()){
+    if(f.outward[0]*o[0]+f.outward[1]*o[1]<=.8||f.width<2.6)continue;
+    const b=home.frames[best];
+    if(!b||(g.side==='center'?f.width>b.width:g.side==='left'?along(f)<along(b)-.5:along(f)>along(b)+.5))best=i;
+  }
+  return best;
+}
+
+/** Where the plan's entry shares the garage's wall and leaves no room for the
+ * photographed doors, the door moves to the widest other street wall. */
+function garageEntryMove(home:EvidenceBuilding):{frameIndex:number;u:number}|undefined{
+  const at=garageFrame(home),entry=home.entry;
+  if(at<0||!entry||entry.frameIndex!==at)return undefined;
+  const edge=home.frames[at];
+  if(garageDoors(home,edge,entry.u)||!garageDoors(home,edge))return undefined;
+  let best=-1;
+  for(const [i,f]of home.frames.entries())if(i!==at&&f.outward[0]*edge.outward[0]+f.outward[1]*edge.outward[1]>.8&&f.width>=2.4&&(best<0||f.width>home.frames[best].width))best=i;
+  return best<0?undefined:{frameIndex:best,u:home.frames[best].width/2};
+}
+
+/** Where photographed garage doors sit on a street wall: up to the photographed
+ * count, each 2.2-2.6 m wide with 0.4 m piers, on the side seen in the
+ * photograph (left or right as viewed from the street, or centred; centred on
+ * a wall of their own), kept 0.4 m from the corner and clear of the front door. */
+function garageDoors(home:EvidenceBuilding,edge:EvidenceBuilding['frames'][number],doorU?:number,own=false):{u0:number;u1:number;doors:number[];width:number}|undefined{
+  const g=home.garage;if(!g)return undefined;
+  const w=edge.width,toRight=edge.tangent[0]*-edge.outward[1]+edge.tangent[1]*edge.outward[0]>0;
+  const high=own?undefined:g.side==='right'?toRight:g.side==='left'?!toRight:undefined;
+  // The free stretch of wall on the photographed side of the door; a narrow
+  // garage wing takes a 7 ft door between slimmer corners.
+  for(let n=g.doors;n>0;n--)for(const [pier,least]of [[.4,2.2],[.25,2.1]]){
+    let lo=pier,hi=w-pier;
+    if(doorU!==undefined&&doorU>0){
+      const side=high??(doorU<w/2);
+      if(side)lo=Math.max(lo,doorU+1.0);else hi=Math.min(hi,doorU-1.0);
+    }
+    const avail=hi-lo,width=Math.min(2.6,(avail-(n-1)*.4)/n);
+    if(width<least)continue;
+    const span=n*width+(n-1)*.4;
+    const u0=high===undefined?Math.max(lo,Math.min(hi-span,(w-span)/2)):high?hi-span:lo;
+    return{u0,u1:u0+span,width,doors:Array.from({length:n},(_,k)=>u0+width/2+k*(width+.4))};
+  }
+  return undefined;
+}
+
+/** A sectional vehicle door in its recess, with jambs and a header; yard
+ * dressing keeps clear of it. */
+function vehicleDoor(batch:Batch,f:Frame,u:number,g:number,width:number,h:number,color:string):void{
+  const dw=width-.16;
+  batch.box(f,'recess',u,g+h/2+.035,.04,dw+.18,h+.07,.1);
+  batch.keepOpeningColor=true;
+  try{batch.box(f,'door',u,g+h/2,.1,dw,h,.05,color);}finally{batch.keepOpeningColor=false;}
+  for(const sign of [-1,1])batch.box(f,'trim',u+sign*(dw/2+.1),g+h/2+.035,.12,.12,h+.11,.1);
+  batch.box(f,'trim',u,g+h+.12,.12,dw+.32,.14,.12);
+  const e=f.start[0]+f.tangent[0]*u+f.outward[0]*.3,n=f.start[1]+f.tangent[1]*u+f.outward[1]*.3;
+  batch.garageDoors.push([e-batch.origin.x,g+1,-n-batch.origin.z]);
+}
+
+/** Surface roles for photographed wall materials. */
+const OTHER_ROLE:Record<NonNullable<MeasuredOther['m']>,Role>={siding:'wall',wood:'wall',shingle:'shingle',brick:'brick',block:'stucco',concrete:'stucco',metal:'metal',stucco:'stucco',stone:'stone'};
+export const otherRole=(row:MeasuredOther):Role=>row.m?OTHER_ROLE[row.m]:'wall';
+
+/** A garage, shed or other building: its measured body (or the scenery's own
+ * box, kept), vehicle doors in the wall the drive runs up to, a hinged door
+ * toward the lot's house or the street, and on a building storeys of windows;
+ * a photographed building's street face follows its photograph (shopfront,
+ * awning, window pattern and columns, overhead doors, entrance). */
+function otherBuilding(batch:Batch,row:MeasuredOther,tileId:string,groundAt:(e:number,n:number)=>number|undefined):void{
+  const measured=row.k!=='v',inset=measured?row.in??MEASURED_WALL_INSET:0,face=row.fb;
+  const paint=row.wc??(row.k==='b'?'#cbc6b8':'#d9d4c6'),trim=row.tc??'#e4e2da';
+  if(measured)measuredBody(batch,row.id,tileId,{...row,p:row.p!,v:row.v!,r:row.r!,w:row.w!,q:row.q!,e:[],c:[],tc:trim},otherRole(row),paint,'#55585a');
+  const ring=row.ol.map(([x,y])=>[row.o[0]+x/10,row.o[1]+y/10]);
+  for(const [i,a]of ring.entries()){
+    const b=ring[(i+1)%ring.length],dx=b[0]-a[0],dy=b[1]-a[1],length=Math.hypot(dx,dy);
+    const t=[dx/length,dy/length] as const,o=[t[1],-t[0]] as const,w=length-2*inset;
+    if(!(w>=1))continue;
+    const start=[a[0]+t[0]*inset-o[0]*inset,a[1]+t[1]*inset-o[1]*inset] as const;
+    const f:Frame={start,tangent:t,outward:o,structId:row.id,tileId};
+    const ground=(u:number)=>groundAt(start[0]+t[0]*u+o[0]*.7,start[1]+t[1]*u+o[1]*.7)??row.b;
+    const wallTopAt=((): ((u:number)=>number)=>{
+      if(!measured)return()=>row.b+row.h!;
+      const p=row.ep?.[i];if(p==null)return()=>-Infinity;
+      if(typeof p==='number')return()=>row.b+p;
+      const profile=p.map(([u,h])=>[u,row.b+h] as [number,number]);return(u:number)=>wallTop(profile,u);
+    })();
+    const clear=(u:number,half:number)=>Math.min(wallTopAt(u-half),wallTopAt(u),wallTopAt(u+half));
+    // A poured slab edge shows a hand's breadth above grade under measured walls
+    // (smooth concrete, so house yard dressing does not take it for a house).
+    if(measured&&batch.level<2){const g=Math.max(ground(0),ground(w/2),ground(w))+.14;if(g>row.b+.05)batch.box(f,'stucco',w/2,(row.b+g)/2,.02,w,g-row.b,.06,'#8b897f');}
+    let doorU=-100;
+    const street=i===row.dw,floor=Math.max(ground(0),ground(w))+.3,busy:[number,number][]=[];
+    // Overhead doors on a photographed building's street face, as many as fit.
+    if(street&&face?.od)for(let n=face.od;n>0;n--){
+      const each=Math.min(3.6,(w-.8-(n-1)*.6)/n);if(each<2.4)continue;
+      const span=n*each+(n-1)*.6,u0=(w-span)/2;
+      for(let k=0;k<n;k++){
+        const u=u0+each/2+k*(each+.6),g=ground(u),h=Math.min(3.66,clear(u,each/2)-g-.45);
+        if(h>=2.2){vehicleDoor(batch,f,u,g-.03,each,h,face.oc??'#dcdcd6');busy.push([u-each/2-.3,u+each/2+.3]);}
+      }
+      break;
+    }
+    // A shopfront: plate glass in bays across the ground floor, the entrance in the middle.
+    if(street&&face?.st&&w>=4){
+      const top=floor+2.9,bays=Math.max(2,Math.round((w-1.2)/1.9)),span=(w-1.2)/bays;
+      if(clear(w/2,w/2-.6)>top+.5){
+        for(let k=0;k<bays;k++){const u=.6+(k+.5)*span;if(busy.some(([a,b])=>u>a&&u<b))continue;batch.window(f,u,floor+.45,span-.12,2.4,.01,false,false);}
+        busy.push([.3,w-.3]);
+        if(face.aw)batch.box(f,'metal',w/2,top+.2,.55,w-.9,.36,1.1,face.aw);
+      }
+    }
+    if(i===row.gw&&row.gn){
+      for(let n=row.gn;n>0;n--){
+        const each=Math.min(2.6,(w-.8-(n-1)*.4)/n);if(each<2.2)continue;
+        const span=n*each+(n-1)*.4,u0=(w-span)/2;
+        for(let k=0;k<n;k++){
+          const u=u0+each/2+k*(each+.4),g=ground(u),h=Math.min(2.13,clear(u,each/2)-g-.37);
+          if(h>=1.9)vehicleDoor(batch,f,u,g-.03,each,h,row.gc??'#ecebe6');
+        }
+        break;
+      }
+    }
+    else if(street&&!(face?.st&&busy.length)){
+      // The entrance: in a free stretch nearest the middle of the street face.
+      const free=(u:number)=>!busy.some(([a,b])=>u+.7>a&&u-.7<b);
+      const u=[w/2,w/2-1.8,w/2+1.8,w/4,3*w/4].find(x=>x>.8&&x<w-.8&&free(x));
+      if(u!==undefined){
+        const g=ground(u);
+        if(clear(u,.6)>=g+2.35){
+          if(face?.dc==='glass'){batch.window(f,u,g+.06,1.05,2.1,.01,true,false);}
+          else batch.door(f,u,g+.04,.025,row.k==='b'?1.1:.9,face?.dc??(row.k==='b'?'#3f4749':trim),!!face?.dc);
+          doorU=u;busy.push([u-.9,u+.9]);
+        }
+      }
+    }
+    // A building's storeys of windows, in the photographed pattern (plain sash when unphotographed).
+    const pattern=face?.wn??'rows';
+    if(row.k==='b'&&w>=3&&pattern!=='none'&&(pattern!=='few'||street)){
+      const levels=Math.max(1,Math.min(6,face?.fl??6)),bays=street&&face?.bays?Math.min(20,face.bays):Math.max(1,Math.floor(w/3.2));
+      const storey=face?.fl?Math.max(2.7,Math.min(3.8,(clear(w/2,w/2-.5)-floor-.2)/face.fl)):2.9;
+      for(let level=0;level<(pattern==='few'?1:levels);level++){
+        const bottom=floor+.8+level*storey;
+        if(pattern==='band'){
+          const width=w-1.4;if(width>1&&bottom+1.2<=clear(w/2,width/2)-.3&&!(level===0&&busy.length))batch.window(f,w/2,bottom,width,1.2,.01,true,false);
+          continue;
+        }
+        for(let k=0;k<bays;k++){
+          const u=(k+.5)*w/bays,width=Math.min(1.0,w/bays-.4);
+          if(width<.5||bottom+1.45>clear(u,width/2+.12)-.3)continue;
+          if(level===0&&busy.some(([a,b])=>u+width/2>a&&u-width/2<b))continue;
+          if(Math.abs(u-doorU)<1.3&&bottom<floor+2.4)continue;
+          batch.window(f,u,bottom,width,1.45,.01,false,false);
+        }
+      }
+    }
+  }
+}
+
 /** Height of a wall-top polyline at u, held level past its ends. */
 function wallTop(profile:readonly (readonly [number,number])[],u:number):number{
   if(u<=profile[0][0])return profile[0][1];
@@ -199,8 +371,9 @@ function wallTop(profile:readonly (readonly [number,number])[],u:number):number{
 }
 
 function houseOpenings(batch:Batch,home:EvidenceBuilding):void {
-  const style=home.style.toUpperCase(),ranch=/RANCH|SPLIT LEVEL/.test(style),cape=/CAPE/.test(style);
+  const style=home.style.toUpperCase(),ranch=/RANCH|SPLIT LEVEL/.test(style),cape=/CAPE/.test(style),raised=/RAISED RANCH|SPLIT LEVEL/.test(style);
   const colonial=/COLONIAL|FEDERAL|GEORGIAN/.test(style),multi=/FLATS|APARTMENT|CONVERSION|DUPLEX/.test(style);
+  const garageAt=garageFrame(home);
   for(const [frameIndex,edge]of home.frames.entries()){
     const f:Frame={...edge,structId:home.id,tileId:home.tileId},w=edge.width,low=edge.eave??home.eave;
     // A measured wall top follows its roof: level under an eave, rising and
@@ -209,27 +382,40 @@ function houseOpenings(batch:Batch,home:EvidenceBuilding):void {
     const top=(u:number)=>wallTop(profile,u),clear=(u:number,half:number)=>Math.min(top(u-half),top(u),top(u+half));
     if(w<1.4||eave-home.floor<.7)continue;
     const floorHeight=home.floorHeight??(multi?2.85:2.70),levels=Math.max(1,Math.min(4,Math.ceil(home.stories)));
-    const floor=home.floor,ground=edge.groundMaximum??floor-.12;
+    const ground=edge.groundMaximum??home.floor-.12;
+    // A raised ranch's entry is a landing between its storeys: the main floor
+    // stands a storey-height under the measured wall top, the lower level
+    // (garage, family room) half out of the ground below it.
+    const floor=raised?Math.max(home.floor,low-2.45):home.floor;
     const front=edge.front&&w>=3.2;
     const entry=home.entry?.frameIndex===frameIndex?home.entry:undefined;
     const doorU=entry?.u??-100;
+    const garage=frameIndex===garageAt?garageDoors(home,edge,entry?.u,!entry&&!edge.front):undefined;
+    const groundAtU=(u:number)=>{const g=edge.groundAt;if(!g||g.length<2)return ground;const x=Math.max(0,Math.min(1,u/w))*(g.length-1),k=Math.min(g.length-2,Math.floor(x));return g[k]+(g[k+1]-g[k])*(x-k);};
     // A photographed sunporch that the mapped plan already holds (the entry
     // bay projects from the front) takes a band of windows on each storey.
     const sunporch=!!entry&&home.porchInPlan===true;
+    // A 7 ft sectional door, or a 6 ft 6 in one where a raised ranch's upper windows sit low over it.
+    const garageGround=garage?Math.max(...garage.doors.map(groundAtU)):ground,room=floor+.72-garageGround-.24;
+    const doorHeight=room>=1.98&&room<2.13?room:2.13;
     let bays=Math.max(1,Math.floor(w/(ranch?3.6:3.15)));
     if(front&&colonial&&w>8)bays=Math.min(5,Math.max(3,bays%2?bays:bays+1));
     if(front&&home.frontageBays&&home.frontageBays>=2&&w/home.frontageBays>1.65)bays=Math.min(12,home.frontageBays);
     if(sunporch)bays=Math.max(2,Math.round(w/1.15));
     const windowHeight=sunporch?1.3:ranch?1.25:cape?1.34:multi?1.52:1.45;
     for(let level=0;level<levels;level++){
-      const bottom=floor+(sunporch?.85:.72)+level*floorHeight;
-      if(bottom+windowHeight>eave-.26||bottom<ground+.16)continue;
+      // An upper storey under a low measured eave keeps its windows by
+      // sitting them closer to that floor (a lower storey, a shorter sill).
+      const standard=floor+(sunporch?.85:.72)+level*floorHeight,lowest=level?floor+level*2.45+.5:standard;
+      if(lowest+windowHeight>eave-.26||standard<ground+.16)continue;
       for(let i=0;i<bays;i++){
         const u=(i+.5)*w/bays,width=sunporch?Math.min(1,w/bays-.22):Math.min(ranch&&front&&bays<4?1.72:1.05,w/bays-.65);
         const groupedWidth=home.historicalWindowGroup?Math.min(2.65,w/bays-.5):0;
         // Upper windows stand in a gable only where its rakes clear them.
-        if(bottom+windowHeight>clear(u,Math.max(0,groupedWidth>=1.7?groupedWidth:width)/2+.12)-.26)continue;
+        const room=clear(u,Math.max(0,groupedWidth>=1.7?groupedWidth:width)/2+.12)-.26,bottom=Math.max(lowest,Math.min(standard,room-windowHeight));
+        if(bottom+windowHeight>room)continue;
         if(entry&&Math.abs(u-doorU)<(sunporch?.75:1.15)&&bottom<entry.floor+2.2&&bottom+windowHeight>entry.floor)continue;
+        if(garage&&u+width/2>garage.u0-.3&&u-width/2<garage.u1+.3&&bottom<groundAtU(u)+doorHeight+.22)continue;
         if(groupedWidth>=1.7&&!sunporch){
           if(entry&&Math.abs(u-doorU)<groupedWidth/2+.70&&bottom<entry.floor+2.3&&bottom+windowHeight>entry.floor)continue;
           groupedHistoricWindow(batch,f,u,bottom,groupedWidth,windowHeight);
@@ -244,6 +430,21 @@ function houseOpenings(batch:Batch,home:EvidenceBuilding):void {
           for(const fraction of [.25,.75])batch.box(f,'trim',u,bottom+windowHeight*fraction,.16,width,.022,.027);
         }
       }
+    }
+    // The raised ranch's lower level: shorter windows under the main ones,
+    // where the ground falls far enough below the main floor.
+    if(raised&&!sunporch)for(let i=0;i<bays;i++){
+      const u=(i+.5)*w/bays,width=Math.min(1.05,w/bays-.65),bottom=groundAtU(u)+.42,height=Math.min(1.05,floor-.16-bottom);
+      if(width<.55||height<.6)continue;
+      if(entry&&Math.abs(u-doorU)<1.25)continue;
+      if(garage&&u+width/2>garage.u0-.3&&u-width/2<garage.u1+.3)continue;
+      batch.window(f,u,bottom,width,height,.01,false,false);
+    }
+    // Sectional vehicle doors in their photographed colour (white when unrecorded).
+    if(garage)for(const u of garage.doors){
+      const g=groundAtU(u);
+      if(clear(u,garage.width/2)<g+doorHeight+.37)continue;
+      vehicleDoor(batch,f,u,g,garage.width,doorHeight,home.garage?.color??'#ecebe6');
     }
     if(entry&&entry.floor+2.3<clear(doorU,.6)){
       // Keep the existing generated doorway aligned with its retained steps.
@@ -267,7 +468,8 @@ function houseOpenings(batch:Batch,home:EvidenceBuilding):void {
         if(bracket)batch.box(f,'trim',u,top(u)-.22,.22,.13,.13,.19);
       }
     }
-    for(const u of [.04,w-.04])batch.box(f,'trim',u,(floor+top(u))/2,.06,.11,top(u)-floor,.12);
+    const boards=raised?Math.min(floor,ground+.3):floor;
+    for(const u of [.04,w-.04])batch.box(f,'trim',u,(boards+top(u))/2,.06,.11,top(u)-boards,.12);
     if(batch.level===0&&w>4&&!home.measured){
       batch.box(f,'metal',w/2,eave-.02,.20,w,.08,.085,'#aaa99e');
       // Downspout ends above grade; all sides use their sampled local ground.
@@ -430,26 +632,35 @@ function roofGeometry(batch:Batch,home:EvidenceBuilding,roof:EvidenceRoof):void 
 /** A visible foundation band follows the preserved floor datum. Below-grade
  * portions remain occluded by the same terrain used to build the source. */
 function foundationBand(batch:Batch,home:EvidenceBuilding):void {
+  // A raised ranch's lower level is sided down to a low concrete strip.
+  const raised=/RAISED RANCH|SPLIT LEVEL/.test(home.style.toUpperCase());
   for(const edge of home.frames){
-    if(home.floor<=home.base+.15)continue;
+    const top=raised?Math.min(home.floor,(edge.groundMaximum??home.floor)+.3):home.floor;
+    if(top<=home.base+.15)continue;
     const f={...edge,structId:home.id,tileId:home.tileId};
-    batch.box(f,'foundation',edge.width/2,(home.floor+home.base)/2,.022,edge.width,home.floor-home.base,.08,'#858579');
+    batch.box(f,'foundation',edge.width/2,(top+home.base)/2,.022,edge.width,top-home.base,.08,'#858579');
   }
 }
 
-export function applyEvidenceBuildings(group:THREE.Object3D,tileId:string,tileOrigin:readonly number[],level:number,rows:readonly EvidenceBuilding[],extras:readonly EvidenceTarget[]=[],buildExtra?:(batch:Batch,matched:ReadonlySet<string>)=>void,roofs:readonly EvidenceRoof[]=[],measured:readonly MeasuredRoof[]=[]):EvidenceReport|undefined {
+export function applyEvidenceBuildings(group:THREE.Object3D,tileId:string,tileOrigin:readonly number[],level:number,rows:readonly EvidenceBuilding[],extras:readonly EvidenceTarget[]=[],buildExtra?:(batch:Batch,matched:ReadonlySet<string>)=>void,roofs:readonly EvidenceRoof[]=[],packetRows:readonly (MeasuredRoof|MeasuredOther|PhotographedHouse)[]=[]):EvidenceReport|undefined {
   if(group.userData.evidenceBuildings)return group.userData.evidenceBuildings as EvidenceReport;
-  if(!rows.length&&!extras.length)return undefined;
+  const measured=packetRows.filter((r):r is MeasuredRoof=>!isMeasuredOther(r)&&!isPhotographedHouse(r)),others=packetRows.filter(isMeasuredOther);
+  const photos=new Map(packetRows.filter(isPhotographedHouse).map(r=>[r.id,r]));
+  if(!rows.length&&!extras.length&&!others.length)return undefined;
   // A curated roof yields only to a measurement that explains most returns.
   const curated=new Map(roofs.map(r=>[r.id,r]));
   const surveyed=new Map(measured.filter(m=>!curated.has(m.id)||m.q>=.8).map(m=>[m.id,m]));
   const repairs=new Map(roofs.filter(r=>!surveyed.has(r.id)).map(r=>[r.id,r]));
   const extraIds=new Set(extras.map(r=>r.id)),originalHomes=rows.filter(r=>!extraIds.has(r.id)).map(historicAppearance).map(home=>{
     const survey=surveyed.get(home.id);if(survey)return measuredHome(home,survey);
+    const photo=photos.get(home.id);if(photo)home=photographedHome(home,photo);
     const roof=repairs.get(home.id);return roof?{...home,base:roof.base,floor:roof.floor,eave:roof.eave,peak:roof.peak,stories:roof.stories,frames:home.frames.map((f,i)=>({...f,eave:roof.frameEaves?.[i]??roof.eave,start:[f.start[0]+f.outward[0]*(roof.frameOutsets?.[i]??0),f.start[1]+f.outward[1]*(roof.frameOutsets?.[i]??0)] as const}))}:home;
   });
-  const {homes,stoops}=prepareAddressFrontages(group,tileOrigin,originalHomes),stoopById=new Map(stoops.map(s=>[s.home.id,s]));
-  const targets:EvidenceTarget[]=[...homes.map(r=>({...r,material:buildingMaterial(r),replaceOpenings:true,replaceBody:repairs.has(r.id)||surveyed.has(r.id),preserveEntry:shortEntryEnvelope(r),retireEntrySteps:stoopById.get(r.id)?.former})),...extras];
+  const moves=new Map(originalHomes.flatMap(home=>{const move=garageEntryMove(home);return move?[[home.id,move] as const]:[];}));
+  const {homes,stoops}=prepareAddressFrontages(group,tileOrigin,originalHomes,moves),stoopById=new Map(stoops.map(s=>[s.home.id,s]));
+  const targets:EvidenceTarget[]=[...homes.map(r=>({...r,material:buildingMaterial(r),replaceOpenings:true,replaceBody:repairs.has(r.id)||surveyed.has(r.id),preserveEntry:shortEntryEnvelope(r),retireEntrySteps:stoopById.get(r.id)?.former})),...extras,
+    ...others.map(r=>({id:r.id,tileId,outline:r.ol.map(([x,y])=>[r.o[0]+x/10,r.o[1]+y/10]),base:r.b,peak:r.p??r.b+(r.h??3)+4,replaceBody:r.k!=='v',replaceOpenings:true,
+      ...(r.k==='v'&&r.wc?{material:otherRole(r),paint:r.wc}:{})}))];
   const origin=new THREE.Vector3().fromArray(tileOrigin);
   const filtered=filterEvidenceSources(group,origin,targets),batch=new Batch(origin,level);
   for(const row of homes)if(filtered.matched.has(row.id)){
@@ -460,8 +671,17 @@ export function applyEvidenceBuildings(group:THREE.Object3D,tileId:string,tileOr
     const stoop=stoopById.get(row.id);if(stoop)renderAddressStoop(batch,stoop);
   }
   buildExtra?.(batch,filtered.matched);
+  const builtOthers=others.filter(r=>filtered.matched.has(r.id));
+  if(builtOthers.length){const ground=tileGround(group,tileOrigin);for(const row of builtOthers)otherBuilding(batch,row,tileId,ground);}
   const built=batch.finish();built.group.name='Evidence-informed Webster buildings';group.add(built.group);
+  // Yard dressing keeps clear of added vehicle doors and follows what each house's photograph shows.
+  const openings=group.userData.openings as {doors?:number[][];garageDoors?:number[][]}|undefined;
+  if(openings&&batch.garageDoors.length){openings.doors?.push(...batch.garageDoors);openings.garageDoors?.push(...batch.garageDoors);}
+  const observed=[...measured,...photos.values()].filter(m=>m.f&&filtered.matched.has(m.id)).map(m=>({e:m.o[0],n:m.o[1],b:m.b,mb:m.f!.mb,sh:m.f!.sh,
+    ...(m.f!.fe&&m.f!.fl?{fe:m.f!.fe,fc:m.f!.fc,fl:m.f!.fl.map(([a,b,c,d])=>[m.o[0]+a/10,m.o[1]+b/10,m.o[0]+c/10,m.o[1]+d/10])}:{})}));
+  if(observed.length)group.userData.houseObservations=observed;
   if(stoops.length)group.userData.addressFrontages=stoops.filter(s=>filtered.matched.has(s.home.id)).map(s=>({id:s.home.id,frameIndex:s.home.entry!.frameIndex,entry:s.home.entry,blocks:s.blocks,basis:s.basis}));
-  const report:EvidenceReport={version:1,tileId,buildingIds:[...filtered.matched].sort(),documentedIds:homes.filter(r=>r.documented&&filtered.matched.has(r.id)).map(r=>r.id),removedTriangles:filtered.removedTriangles,recoloredTriangles:filtered.recoloredTriangles,addedTriangles:built.triangles,addedMeshes:built.group.children.length,geometryBytes:built.bytes};
+  const otherIds=new Set(builtOthers.map(r=>r.id));
+  const report:EvidenceReport={version:1,tileId,buildingIds:[...filtered.matched].filter(id=>!otherIds.has(id)).sort(),...(otherIds.size?{otherIds:[...otherIds].sort()}:{}),documentedIds:homes.filter(r=>r.documented&&filtered.matched.has(r.id)).map(r=>r.id),removedTriangles:filtered.removedTriangles,recoloredTriangles:filtered.recoloredTriangles,addedTriangles:built.triangles,addedMeshes:built.group.children.length,geometryBytes:built.bytes};
   group.userData.evidenceBuildings=report;return report;
 }

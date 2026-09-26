@@ -165,6 +165,8 @@ export class Batch {
   shutterColor?: string;
   /** While set, door leaves keep their given colour instead of a period one. */
   keepOpeningColor = false;
+  /** Vehicle doors added here, tile-local [x, y, z], so yard dressing keeps clear of them. */
+  readonly garageDoors: number[][] = [];
   constructor(readonly origin: THREE.Vector3, readonly level: number, readonly terrain = new Map<string, number[][][]>()) {}
 
   geometry(frame: Frame, role: Role, position: ArrayLike<number>, normal: ArrayLike<number>, color = PALETTE[role]): void {
