@@ -1,5 +1,6 @@
 import { foundationWallAsset, validFoundationWallPacket } from './foundation-wall-finish';
-import { measuredRoofAsset, validMeasuredRoofPacket, evergreens } from './measured-roofs';
+import { measuredRoofAsset, validMeasuredRoofPacket, evergreens, surveyTreeRows, type SurveyTrees } from './measured-roofs';
+import { tileGround } from './address-frontage';
 import * as THREE from 'three';
 import release from '../../../data/derived/town/release.json';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
@@ -725,6 +726,9 @@ export class TownWorld {
       }
       this.evict(tile.id);
       this.dress(group, tile.id, tile.origin, level);
+      // Near streets and houses, the trees the survey found replace the scenery's block trees.
+      const survey = group.userData.surveyTrees as SurveyTrees | undefined;
+      if (survey && treeRows) treeRows = surveyTreeRows(survey, treeRows, tile.origin, tileGround(group, tile.origin)) ?? treeRows;
       this.root.add(group);
       // The final update allocates tree instances once, after global shadow selection.
       const treeExcluded = treeRows ? excludedTreeAnchors(treeRows, tile.origin, group.userData.environmentTreeExclusions ?? []) : new Set<number>();

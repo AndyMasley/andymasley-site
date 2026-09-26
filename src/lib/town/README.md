@@ -326,7 +326,26 @@ retired. A house the LiDAR could not fit keeps its scenery body but takes its
 photograph's colours, doors, shutters, bays, porch and yard the same way. A
 raised ranch is built as a split foyer: main-floor windows a storey
 under its measured wall top, a sided lower level with its own windows, and
-garage doors under the main windows. The same packets carry the town's other
+garage doors under the main windows. A third read of each photograph
+(`layout-reads.json`) places the street front's openings: entrance doors,
+each storey's windows, attic windows, garage doors and the porch's extent in
+percent of the front's width from its left end as seen, mapped along the
+frontmost of the walls facing the street, so a front split by jogs lays out
+as one. A door moves to its photographed place on a fitted stoop (onto the
+nearest wall tall enough for it when a recess is too low), and a photographed
+window it displaces steps aside. Where the photograph shows a gable end and
+the plan's front is an eave wall (or the reverse), the wall facing the
+address street is taken as the one photographed (`faces.py`). Walls the
+measured body sets back from its plan (over porch and wing roofs, between
+roof sections) take storeys of windows where a window fits inside them;
+dormers the photograph shows on the street slope stand on the measured roof
+where the body has none, a window in each (gabled) or a row (shed). Low Cape
+and ranch eaves keep their ground-floor windows with lower sills and shorter
+sash. Where a photograph shows an open porch the plan holds (a low front on a
+taller house, the house wall standing on the porch roof behind), the body is
+measured again with the porch cut out under its roof (`porches.py`); the door
+and windows move onto the house wall and the porch gets a deck, posts under a
+beam, railings and steps. The same packets carry the town's other
 plainly modelled buildings (`outbuildings.py`): garages, sheds and barns, and
 shops, works, apartment blocks and public buildings that no crafted model
 replaces, each measured like a house where the LiDAR has building returns (a
@@ -344,9 +363,11 @@ the drive and the front walk, and a drive paved (in the photographed surface)
 to any vehicle door the land cover leaves on lawn. It loads as its own chunk
 beside the road network; vehicle doors built during assembly join the tile's
 gathered openings afterwards (`mergeVehicleDoors`). Each tile's measured
-packet also says which of its scenery trees are evergreens in the 2025
-leaf-off aerial; `treeForm` draws those as conifers and the rest as broadleaf
-in place of the habitat draw. `street-dressing.ts` clears the painted centre
+packet also carries the trees the 2021 LiDAR found near its streets and houses
+(place, height and crown radius, stood on the tile's terrain by
+`surveyTreeRows` in place of the scenery's block trees there) and says which
+of its trees are evergreens in the 2025 leaf-off aerial; `treeForm` draws
+those as conifers and the rest as broadleaf in place of the habitat draw. `street-dressing.ts` clears the painted centre
 line from streets whose photographs show none, stands poles on the side the
 photographs place them and leaves them off streets photographed without poles
 or wires (`street-context.json`, from `scripts/street_context/prepare.py`).

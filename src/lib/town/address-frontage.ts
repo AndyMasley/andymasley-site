@@ -13,7 +13,7 @@ const rows=new Map((catalog.rows as unknown as {id:string;addressFrontage?:Corre
  * `moves`, where photographed garage doors take the wall the plan gave the
  * door. Each moved door gets a stoop fitted to the sampled ground and retires
  * the steps of the former entry. */
-export function prepareAddressFrontages(group:THREE.Object3D,origin:readonly number[],homes:readonly EvidenceBuilding[],moves:ReadonlyMap<string,{frameIndex:number;u:number}>=new Map()):{homes:EvidenceBuilding[];stoops:AddressStoop[]}{
+export function prepareAddressFrontages(group:THREE.Object3D,origin:readonly number[],homes:readonly EvidenceBuilding[],moves:ReadonlyMap<string,{frameIndex:number;u:number;basis?:string;alternatives?:readonly {frameIndex:number;u:number}[]}>=new Map()):{homes:EvidenceBuilding[];stoops:AddressStoop[]}{
   const candidates=homes.filter(h=>rows.has(h.id)||moves.has(h.id));if(!candidates.length)return{homes:[...homes],stoops:[]};
   group.updateMatrixWorld(true);const inverse=group.matrixWorld.clone().invert(),meshes:THREE.Mesh[]=[];
   group.traverse(o=>{if(!(o instanceof THREE.Mesh)||!/^terrain(?:\b|_)/i.test(o.name))return;const proxy=new THREE.Mesh(o.geometry,o.material);proxy.matrixAutoUpdate=false;proxy.matrixWorld.copy(inverse).multiply(o.matrixWorld);meshes.push(proxy);});
@@ -32,7 +32,7 @@ export function prepareAddressFrontages(group:THREE.Object3D,origin:readonly num
       return h;
     };
     const heights=pad as number[],floor=Math.max(home.floor,Math.max(...heights)+.15),eave=Math.min(top(u-.6),top(u),top(u+.6));
-    if(floor+2.45>=eave||floor-Math.min(...heights)>1.15)return undefined;
+    if(floor+2.32>=eave||floor-Math.min(...heights)>1.15)return undefined;
     const blocks=[{u,v:.48,width:1.45,depth:.96,bottom:Math.min(...heights)-.045,top:floor-.025}];
     for(let i=1;i<=7;i++){
       const v=.96+(i-.5)*.29,values=ground(v,1.25,.30);if(values.some(y=>y===undefined))return undefined;
@@ -45,11 +45,14 @@ export function prepareAddressFrontages(group:THREE.Object3D,origin:readonly num
   const changed=homes.map(home=>{
     const row=rows.get(home.id),move=moves.get(home.id);
     if(!row&&move&&home.entry){
-      const edge=home.frames[move.frameIndex],old=home.frames[home.entry.frameIndex];if(!edge||!old)return home;
-      const stoop=stoopAt(home,edge,move.u);if(!stoop)return home;
-      const corrected={...home,frames:home.frames.map((frame,i)=>({...frame,front:i===move.frameIndex})),entry:{frameIndex:move.frameIndex,u:move.u,floor:stoop.floor}};
+      const old=home.frames[home.entry.frameIndex];if(!old)return home;
+      // The first of the move's places (in order) where a stoop fits the ground.
+      let place:{frameIndex:number;u:number}|undefined,stoop:ReturnType<typeof stoopAt>;
+      for(const p of [move,...(move.alternatives??[])]){const edge=home.frames[p.frameIndex];if(edge&&(stoop=stoopAt(home,edge,p.u))){place=p;break;}}
+      if(!place||!stoop)return home;
+      const corrected={...home,frames:home.frames.map((frame,i)=>({...frame,front:i===place!.frameIndex})),entry:{frameIndex:place.frameIndex,u:place.u,floor:stoop.floor}};
       stoops.push({home:corrected,former:{frame:{...old,structId:home.id,tileId:home.tileId},u:home.entry.u,floor:home.entry.floor},blocks:stoop.blocks,
-        basis:'Photographed garage doors fill the planned entry wall.'});
+        basis:move.basis??'Photographed garage doors fill the planned entry wall.'});
       return corrected;
     }
     if(!row||home.documented||home.materialBasis!=='inferred'||home.paintBasis!=='inferred'||home.address!==row.address||JSON.stringify(home.outline)!==JSON.stringify(row.outline)||JSON.stringify(home.entry)!==JSON.stringify(row.formerEntry))return home;

@@ -1,6 +1,7 @@
 import { dir, grid, count, photographed, others, kept } from '../../../data/derived/town/measured-roofs-index.json';
 import type { AssetRef } from './contracts';
 import type { Batch, Frame, Role } from './crafted-frontages';
+import type { SetbackWall } from './evidence-types';
 
 /** One house measured from the 2021 LiDAR roof returns: a closed body whose
  * roof sections, ridge heights and eaves follow the fitted planes, with the
@@ -25,6 +26,11 @@ export type MeasuredRoof = {
   rc?: string;
   wc?: string;
   tc?: string;
+  /** An open porch cut from the body under its roof: the frame it fronts, the
+   * porch ceiling above `b`, and its strips (the house wall behind may step),
+   * each [u0, u1] along that frame's inset wall, the depth of the house wall
+   * behind and that wall's top ([u from the strip's start, height above `b`]). */
+  pp?: { f: number; c: number; s: [number, number, number, [number, number][]][] };
   /** Read from the assessor's street photograph, when one shows the house;
    * shutters is their colour, absent when the front windows have none. */
   f?: {
@@ -37,7 +43,21 @@ export type MeasuredRoof = {
     fe?: 'picket' | 'chain' | 'stone' | 'retaining' | 'rail' | 'privacy' | 'iron' | 'hedge'; fc?: string;
     /** The fence's runs along the lot's street frontage: [e0, n0, e1, n1] in decimetres from `o`. */
     fl?: number[][];
+    /** The street front's layout as photographed, in percent of its width from its left end as seen. */
+    lo?: FrontLayout;
   };
+};
+/** Entrance doors, window centres on each storey (w1 the ground floor) and in
+ * the attic or gable, dormers (centre and kind: gabled, shed, hipped,
+ * eyebrow), garage doors and the porch's extent, in percent of the street
+ * front's width from its left end as seen; how the roof meets the street and
+ * the storeys that show. */
+export type FrontLayout = {
+  d?: number[]; w1?: number[]; w2?: number[]; w3?: number[]; wa?: number[]; gx?: number[];
+  dm?: [number, 'g' | 's' | 'h' | 'e'][]; pw?: [number, number];
+  rf?: 'side' | 'front' | 'cross' | 'hip' | 'gambrel' | 'mansard' | 'flat' | 'shed'; st?: number;
+  /** The frame the photograph shows, where it is not the plan's front. */
+  sf?: number;
 };
 /** A garage, shed or other building that is not one of the evidence houses.
  * 'o' (garage or shed) and 'b' (a building with storeys of windows) carry a
@@ -61,15 +81,38 @@ export type MeasuredOther = {
 /** A house the LiDAR could not fit whose street photograph was read: its
  * facade reads only (as a measured house's), at the plan's centre `o`. */
 export type PhotographedHouse = { id: string; k: 'h'; o: [number, number]; b: number; wc?: string; tc?: string; f?: MeasuredRoof['f'] };
-/** Which of the tile's scenery trees are evergreens in the leaf-off aerial: `n` tree rows, `c` base64 bits in row order. */
+/** Which of the tile's trees are evergreens in the leaf-off aerial: `n` tree rows, `c` base64 bits in row order. */
 export type TreeFamilies = { n: number; c: string };
-export type MeasuredRoofPacket = { version: 1; tileId: string; rows: (MeasuredRoof | MeasuredOther | PhotographedHouse)[]; trees?: TreeFamilies };
+/** Trees the survey found near the tile's streets and houses: `n` scenery tree
+ * rows, `k` base64 bits of those kept, and `t` base64 int16 per survey tree:
+ * tile-local x and z, height and crown radius, in decimetres. */
+export type SurveyTrees = { n: number; k: string; t: string };
+export type MeasuredRoofPacket = { version: 1; tileId: string; rows: (MeasuredRoof | MeasuredOther | PhotographedHouse)[]; trees?: TreeFamilies; lt?: SurveyTrees };
 /** The evergreen flag of each tree row, when the packet's count matches the rows. */
 export function evergreens(families: TreeFamilies | undefined, rows: number): ((index: number) => boolean) | undefined {
   if (!families || families.n !== rows) return undefined;
   const bits = atob(families.c);
   return bits.length === (rows + 7) >> 3 ? index => !!(bits.charCodeAt(index >> 3) & (1 << (index & 7))) : undefined;
 }
+/** A tile's tree rows with the survey's trees in place of the scenery's near
+ * its streets and houses: the scenery rows kept, then each survey tree stood on
+ * the ground (its crown centre at 71% of its height, as the scenery's), or
+ * undefined when the packet was made for other rows. Every tree keeps its place
+ * in the list, so the evergreen flags stay aligned. */
+export function surveyTreeRows(lt: SurveyTrees, rows: readonly number[][], origin: readonly number[], ground: (e: number, n: number) => number | undefined): number[][] | undefined {
+  if (lt.n !== rows.length) return undefined;
+  const bits = atob(lt.k), q = int16(lt.t);
+  const kept = rows.filter((_, i) => bits.charCodeAt(i >> 3) >> (i & 7) & 1);
+  const feet = kept.map(r => r[1] - .71 * r[4] / .30).sort((a, b) => a - b), fallback = feet.length ? feet[feet.length >> 1] : origin[1];
+  const out = [...kept];
+  for (let i = 0; i + 3 < q.length; i += 4) {
+    const x = q[i] / 10, z = q[i + 1] / 10, h = Math.max(2, q[i + 2] / 10), r = Math.max(.8, q[i + 3] / 10), e = x + origin[0], n = -(z + origin[2]);
+    const g = ground(e, n) ?? fallback, yaw = ((Math.sin(e * 12.9898 + n * 78.233) * 43758.5453) % 1 + 1) % 1 * Math.PI * 2;
+    out.push([x, g - origin[1] + .71 * h, z, r, .30 * h, r, yaw]);
+  }
+  return out;
+}
+
 export const isMeasuredOther = (row: MeasuredRoof | MeasuredOther | PhotographedHouse): row is MeasuredOther => 'k' in row && (row.k === 'o' || row.k === 'b' || row.k === 'v');
 export const isPhotographedHouse = (row: MeasuredRoof | MeasuredOther | PhotographedHouse): row is PhotographedHouse => 'k' in row && row.k === 'h';
 
@@ -106,6 +149,8 @@ export function validMeasuredRoofPacket(value: unknown, tileId: string): value i
   const p = value as MeasuredRoofPacket;
   if (p.version !== 1 || p.tileId !== tileId || !Array.isArray(p.rows)) return false;
   if (p.trees !== undefined && !(p.trees && Number.isInteger(p.trees.n) && p.trees.n > 0 && typeof p.trees.c === 'string' && /^[A-Za-z0-9+/]*={0,2}$/.test(p.trees.c))) return false;
+  if (p.lt !== undefined && !(p.lt && Number.isInteger(p.lt.n) && p.lt.n >= 0 && [p.lt.k, p.lt.t].every(v => typeof v === 'string' && /^[A-Za-z0-9+/]*={0,2}$/.test(v)) &&
+    atob(p.lt.k).length === (p.lt.n + 7) >> 3 && atob(p.lt.t).length % 8 === 0)) return false;
   const ids = new Set<string>();
   for (const row of p.rows) {
     if (!row || typeof row.id !== 'string' || ids.has(row.id)) return false;
@@ -119,6 +164,9 @@ export function validMeasuredRoofPacket(value: unknown, tileId: string): value i
     const r = row;
     if (!Array.isArray(r.e) || !r.e.every(e => e === null || finite(e)) || !Array.isArray(r.c) || !r.c.every(c => Array.isArray(c) && c.length === 7 && c.every(finite))) return false;
     if (!validBody(r, r.e.length) || !hex(r.wc) || !validFacade(r.f)) return false;
+    if (r.pp !== undefined && !(r.pp && Number.isInteger(r.pp.f) && r.pp.f >= 0 && r.pp.f < r.e.length && finite(r.pp.c) && Array.isArray(r.pp.s) && r.pp.s.length >= 1 && r.pp.s.length <= 6 &&
+      r.pp.s.every(([u0, u1, d, t], i) => finite(u0) && finite(u1) && u1 > u0 && (i === 0 || u0 >= r.pp!.s[i - 1][1] - .25) && finite(d) && d > 0 && d < 5 &&
+        Array.isArray(t) && t.length >= 2 && t.every(q => Array.isArray(q) && q.length === 2 && q.every(finite))))) return false;
   }
   return true;
 }
@@ -152,8 +200,20 @@ function validFacade(f: MeasuredRoof['f']): boolean {
     (f.dw !== undefined && !['asphalt', 'gravel', 'concrete', 'pavers', 'none'].includes(f.dw)) ||
     (f.gd !== undefined && !(Number.isInteger(f.gd) && f.gd >= 1 && f.gd <= 3)) || (f.gs !== undefined && !['left', 'right', 'center'].includes(f.gs)) ||
     (f.fe !== undefined && !['picket', 'chain', 'stone', 'retaining', 'rail', 'privacy', 'iron', 'hedge'].includes(f.fe)) || !hex(f.gc) || !hex(f.fc) ||
-    (f.fl !== undefined && !(f.fe && Array.isArray(f.fl) && f.fl.every(l => Array.isArray(l) && l.length === 4 && l.every(x => Number.isInteger(x) && Math.abs(x) < 2000))))) return false;
+    (f.fl !== undefined && !(f.fe && Array.isArray(f.fl) && f.fl.every(l => Array.isArray(l) && l.length === 4 && l.every(x => Number.isInteger(x) && Math.abs(x) < 2000)))) ||
+    (f.lo !== undefined && !validLayout(f.lo))) return false;
   return true;
+}
+
+const percent = (x: unknown) => Number.isInteger(x) && (x as number) >= 0 && (x as number) <= 100;
+function validLayout(lo: FrontLayout): boolean {
+  if (!lo || typeof lo !== 'object') return false;
+  for (const k of ['d', 'w1', 'w2', 'w3', 'wa', 'gx'] as const) if (lo[k] !== undefined && !(Array.isArray(lo[k]) && lo[k]!.length <= 30 && lo[k]!.every(percent))) return false;
+  if (lo.dm !== undefined && !(Array.isArray(lo.dm) && lo.dm.length <= 8 && lo.dm.every(d => Array.isArray(d) && d.length === 2 && percent(d[0]) && ['g', 's', 'h', 'e'].includes(d[1])))) return false;
+  if (lo.pw !== undefined && !(Array.isArray(lo.pw) && lo.pw.length === 2 && lo.pw.every(percent) && lo.pw[1] > lo.pw[0])) return false;
+  if (lo.rf !== undefined && !['side', 'front', 'cross', 'hip', 'gambrel', 'mansard', 'flat', 'shed'].includes(lo.rf)) return false;
+  if (lo.sf !== undefined && !(Number.isInteger(lo.sf) && lo.sf >= 0 && lo.sf < 200)) return false;
+  return lo.st === undefined || [1, 1.5, 2, 2.5, 3, 3.5].includes(lo.st);
 }
 
 function validOther(r: MeasuredOther): boolean {
@@ -170,6 +230,69 @@ function validOther(r: MeasuredOther): boolean {
   }
   if (r.k === 'v') return finite(r.h) && r.h > 0 && r.h < 30 && r.v === undefined;
   return finite(r.in) && r.in >= 0 && r.in <= .5 && validBody(r as Parameters<typeof validBody>[0], edges);
+}
+
+/** The walls of a measured body that stand back from every wall of its plan
+ * (given as each wall's inset start and outward direction): wall triangles
+ * grouped by plane, each plane split where its spans along the wall part. */
+export function setbackWalls(roof: Pick<MeasuredRoof, 'o' | 'b' | 'v' | 'w'>, plan: readonly { start: readonly number[]; outward: readonly number[] }[]): SetbackWall[] {
+  // Planes are compared about the body's own origin: centimetre vertices tilt
+  // small triangles' normals, which would shift offsets taken from the town's.
+  const v = int16(roof.v), t = indices(roof.w, v.length / 3), planes: { o: [number, number]; d: number; tris: number[][] }[] = [];
+  const directions = plan.map(f => f.outward);
+  for (let i = 0; i < t.length; i += 3) {
+    const p = [t[i], t[i + 1], t[i + 2]].map(k => [v[k * 3] / 100, v[k * 3 + 1] / 100, roof.b + v[k * 3 + 2] / 100]);
+    const ax = p[1][0] - p[0][0], ay = p[1][1] - p[0][1], az = p[1][2] - p[0][2], bx = p[2][0] - p[0][0], by = p[2][1] - p[0][1], bz = p[2][2] - p[0][2];
+    let nx = ay * bz - az * by, ny = az * bx - ax * bz;
+    const nz = ax * by - ay * bx, l = Math.hypot(nx, ny);
+    if (l < .01 || Math.abs(nz) > .1 * l) continue;
+    nx /= l; ny /= l;
+    // Walls square to the plan take its exact direction.
+    const snap = directions.find(o => o[0] * nx + o[1] * ny > .9986);
+    if (snap) { nx = snap[0]; ny = snap[1]; }
+    const d = (nx * (p[0][0] + p[1][0] + p[2][0]) + ny * (p[0][1] + p[1][1] + p[2][1])) / 3;
+    let plane = planes.find(q => q.o[0] * nx + q.o[1] * ny > .9986 && Math.abs(q.d - d) < .08);
+    if (!plane) planes.push(plane = { o: [nx, ny], d, tris: [] });
+    plane.tris.push(p.flat());
+  }
+  const out: SetbackWall[] = [];
+  for (const { o, d, tris } of planes) {
+    if (plan.some(f => f.outward[0] * o[0] + f.outward[1] * o[1] > .9986 && Math.abs(f.outward[0] * (f.start[0] - roof.o[0]) + f.outward[1] * (f.start[1] - roof.o[1]) - d) < .15)) continue;
+    const tangent: [number, number] = [-o[1], o[0]];
+    const flat = tris.map(p => [0, 3, 6].flatMap(k => [tangent[0] * p[k] + tangent[1] * p[k + 1], p[k + 2]]))
+      .map(q => ({ q, lo: Math.min(q[0], q[2], q[4]), hi: Math.max(q[0], q[2], q[4]) })).sort((a, b) => a.lo - b.lo);
+    // Separate walls on one plane (two dormers) are separate faces.
+    for (let k = 0; k < flat.length;) {
+      let hi = flat[k].hi, j = k + 1;
+      while (j < flat.length && flat[j].lo < hi + .05) hi = Math.max(hi, flat[j++].hi);
+      const lo = flat[k].lo, part = flat.slice(k, j);
+      k = j;
+      if (hi - lo < 1.2) continue;
+      out.push({ start: [roof.o[0] + o[0] * d + tangent[0] * lo, roof.o[1] + o[1] * d + tangent[1] * lo], tangent, outward: o, width: hi - lo,
+        outline: part.flatMap(({ q }) => [q[0] - lo, q[1], q[2] - lo, q[3], q[4] - lo, q[5]]) });
+    }
+  }
+  return out;
+}
+
+/** The height of a measured roof over a point (east, north), or undefined
+ * off the roof: the highest of its roof triangles there. */
+export function roofHeight(roof: { o: readonly number[]; b: number; v: string; r: string }): (e: number, n: number) => number | undefined {
+  const v = int16(roof.v), t = indices(roof.r, v.length / 3), tris: number[][] = [];
+  for (let i = 0; i < t.length; i += 3) tris.push([t[i], t[i + 1], t[i + 2]].flatMap(k => [v[k * 3] / 100, v[k * 3 + 1] / 100, v[k * 3 + 2] / 100]));
+  return (e, n) => {
+    const x = e - roof.o[0], y = n - roof.o[1];
+    let best: number | undefined;
+    for (const [ax, ay, az, bx, by, bz, cx, cy, cz] of tris) {
+      const d = (by - cy) * (ax - cx) + (cx - bx) * (ay - cy);
+      if (Math.abs(d) < 1e-9) continue;
+      const l1 = ((by - cy) * (x - cx) + (cx - bx) * (y - cy)) / d, l2 = ((cy - ay) * (x - cx) + (ax - cx) * (y - cy)) / d, l3 = 1 - l1 - l2;
+      if (l1 < -1e-6 || l2 < -1e-6 || l3 < -1e-6) continue;
+      const z = roof.b + l1 * az + l2 * bz + l3 * cz;
+      if (best === undefined || z > best) best = z;
+    }
+    return best;
+  };
 }
 
 /** Adds the measured body, its chimneys and a foundation band to a batch.

@@ -5,9 +5,9 @@ import { readFileSync, existsSync, readdirSync } from 'node:fs';
 import { resolve } from 'node:path';
 import index from '../../../../data/derived/town/measured-roofs-index.json';
 import homeIndex from '../../../../data/derived/town/residential-evidence-index.json';
-import { measuredRoofAsset, validMeasuredRoofPacket, measuredBody, isMeasuredOther, isPhotographedHouse, evergreens, MEASURED_ROOF_COVERAGE, type MeasuredRoof, type MeasuredOther, type MeasuredRoofPacket } from '../measured-roofs';
+import { measuredRoofAsset, validMeasuredRoofPacket, measuredBody, setbackWalls, surveyTreeRows, isMeasuredOther, isPhotographedHouse, evergreens, MEASURED_ROOF_COVERAGE, type MeasuredRoof, type MeasuredOther, type MeasuredRoofPacket } from '../measured-roofs';
 import { treeForm } from '../vegetation';
-import { applyEvidenceBuildings, mergeVehicleDoors, MEASURED_WALL_INSET } from '../evidence-buildings';
+import { applyEvidenceBuildings, mergeVehicleDoors, facadeLayouts, photoLayout, MEASURED_WALL_INSET } from '../evidence-buildings';
 import { prepareOpenings } from '../opening-detail';
 import { Batch } from '../crafted-frontages';
 import type { EvidenceBuilding } from '../evidence-types';
@@ -88,7 +88,8 @@ describe('measured house roofs', () => {
     const home: EvidenceBuilding = { id: row.id, tileId: tile, address: 'Fixture', outline: [[e - 5, n - 4], [e + 5, n - 4], [e + 5, n + 4], [e - 5, n + 4]],
       frames, base: row.b, floor: row.b + .4, eave: row.b + 6, peak: row.p, stories: 2, style: 'COLONIAL', year: 1920, material: 'siding', paint: '#d9d5c8',
       roof: 'gable', porch: 'none', documented: false, evidenceIds: [], colorsDated: false, entry: null };
-    const measured = { ...row, e: [row.b + 3.2], ep: [3.2] };
+    // Without its walls the body has no setback walls of its own to window.
+    const measured = { ...row, e: [row.b + 3.2], ep: [3.2], w: '' };
     const group = new THREE.Group(), geometry = new THREE.BufferGeometry();
     geometry.setAttribute('position', new THREE.Float32BufferAttribute([e - 4, row.b + 2, -(n - 4), e - 2, row.b + 2, -(n - 4), e - 4, row.b + 4, -(n - 4)], 3));
     const material = new THREE.MeshStandardMaterial(); material.name = 'V2 inferred | siding';
@@ -117,7 +118,7 @@ describe('measured house roofs', () => {
     const home: EvidenceBuilding = { id: row.id, tileId: tile, address: 'Fixture', outline: [[e - 6, n - 4], [e + 6, n - 4], [e + 6, n + 4], [e - 6, n + 4]],
       frames, base: row.b, floor: row.b + .4, eave: row.b + 6, peak: row.p, stories: 2, style: 'COLONIAL', year: 1920, material: 'brick', paint: '#d9d5c8',
       roof: 'gable', porch: 'none', documented: false, evidenceIds: [], colorsDated: false, entry: null };
-    const measured = { ...row, e: [row.b + 5.6], ep: [5.6], f: { ...row.f, bays: 3 } };
+    const measured = { ...row, e: [row.b + 5.6], ep: [5.6], f: { ...row.f, bays: 3, lo: undefined } };
     const group = new THREE.Group(), geometry = new THREE.BufferGeometry();
     geometry.setAttribute('position', new THREE.Float32BufferAttribute([e - 4, row.b + 2, -(n - 4), e - 2, row.b + 2, -(n - 4), e - 4, row.b + 4, -(n - 4)], 3));
     const inferred = new THREE.MeshStandardMaterial(); inferred.name = 'V2 inferred | brick';
@@ -392,11 +393,13 @@ describe('measured house roofs', () => {
     const release = resolve('public/town-assets', readdirSync(resolve('public/town-assets')).find(d => existsSync(resolve('public/town-assets', d, 'manifest.json')))!);
     const manifest = JSON.parse(readFileSync(resolve(release, 'manifest.json'), 'utf8')) as { tiles: { id: string; treeFile?: { url: string; count: number } }[] };
     let trees = 0, conifers = 0;
+    const bits = (s: string) => [...atob(s)].reduce((n, c) => n + [...c.charCodeAt(0).toString(2)].filter(b => b === '1').length, 0);
     for (const tile of manifest.tiles) {
       if (!tile.treeFile?.count) continue;
-      const p = packet(tile.id), flag = evergreens(p.trees, tile.treeFile.count);
+      // with survey trees, the flags run over the kept scenery rows and then the survey's
+      const p = packet(tile.id), count = p.lt ? bits(p.lt.k) + atob(p.lt.t).length / 8 : tile.treeFile.count, flag = evergreens(p.trees, count);
       expect(flag, tile.id).toBeDefined();
-      for (let i = 0; i < tile.treeFile.count; i++) { trees++; if (flag!(i)) conifers++; }
+      for (let i = 0; i < count; i++) { trees++; if (flag!(i)) conifers++; }
     }
     expect(trees).toBe(index.trees); expect(conifers).toBe(index.evergreens);
     expect(conifers / trees).toBeGreaterThan(.04); expect(conifers / trees).toBeLessThan(.3);
@@ -405,6 +408,183 @@ describe('measured house roofs', () => {
     const row = [10, 12, -10, 1.2, 3, 1.2, 0];
     expect(treeForm(row, [0, 0, 0], false, true).renderFamily).toBe('conifer');
     expect(treeForm(row, [0, 0, 0], false, false).renderFamily).toBe('broadleaf');
+  });
+
+  it('windows the walls a measured body sets back over porch and wing roofs', () => {
+    // A two-storey block 10 m wide behind a porch 2 m deep under a roof 3 m up:
+    // the block's front above the porch roof stands on no wall of the plan.
+    const o: [number, number] = [100, 200], b = 50, points: number[][] = [], triangles: number[] = [];
+    const at = (p: number[]) => { let i = points.findIndex(q => q.every((x, k) => x === p[k])); if (i < 0) { i = points.length; points.push(p); } return i; };
+    const quad = (...c: number[][]) => { const [p, q, r, t] = c.map(at); triangles.push(p, q, r, p, r, t); };
+    quad([-500, -400, 0], [500, -400, 0], [500, -400, 300], [-500, -400, 300]);
+    quad([-500, -200, 300], [500, -200, 300], [500, -200, 700], [-500, -200, 700]);
+    quad([500, -400, 0], [500, -200, 0], [500, -200, 300], [500, -400, 300]);
+    quad([500, -200, 0], [500, 600, 0], [500, 600, 700], [500, -200, 700]);
+    quad([-500, 600, 0], [-500, -200, 0], [-500, -200, 700], [-500, 600, 700]);
+    quad([-500, -200, 0], [-500, -400, 0], [-500, -400, 300], [-500, -200, 300]);
+    quad([500, 600, 0], [-500, 600, 0], [-500, 600, 700], [500, 600, 700]);
+    const v = Buffer.from(new Int16Array(points.flat()).buffer).toString('base64'), w = Buffer.from(Uint8Array.from(triangles)).toString('base64');
+    const plan = [{ start: [95, 196], tangent: [1, 0], outward: [0, -1], width: 10 }, { start: [105, 196], tangent: [0, 1], outward: [1, 0], width: 10 },
+      { start: [105, 206], tangent: [-1, 0], outward: [0, 1], width: 10 }, { start: [95, 206], tangent: [0, -1], outward: [-1, 0], width: 10 }];
+    const walls = setbackWalls({ o, b, v, w }, plan);
+    expect(walls).toHaveLength(1);
+    const [wall] = walls, heights = wall.outline.filter((_, i) => i % 2);
+    expect(wall.outward).toEqual([0, -1]); expect(wall.width).toBeCloseTo(10, 2);
+    expect(wall.start[0]).toBeCloseTo(95, 2); expect(wall.start[1]).toBeCloseTo(198, 2);
+    expect(Math.min(...heights)).toBeCloseTo(b + 3, 2); expect(Math.max(...heights)).toBeCloseTo(b + 7, 2);
+    // Its storey of windows stands over the porch roof, in the photographed bays.
+    const home: EvidenceBuilding = { id: 'setback', tileId: 't', address: 'Fixture', outline: [[95, 196], [105, 196], [105, 206], [95, 206]],
+      frames: plan.map((f, i) => ({ ...f, front: i === 0, groundMaximum: b, clearanceM: 5, eave: b + (i === 0 ? 3 : 7) })), base: b, floor: b + .5, eave: b + 3, peak: b + 7,
+      stories: 2, style: 'COLONIAL', year: 1990, material: 'siding', paint: '#d9d5c8', roof: 'gable', porch: 'none', documented: false, evidenceIds: [], colorsDated: false,
+      entry: null, frontageBays: 3, setbacks: walls };
+    const glass: number[][] = [];
+    const group = new THREE.Group(), geometry = new THREE.BufferGeometry();
+    geometry.setAttribute('position', new THREE.Float32BufferAttribute([98, b + 2, -196, 99, b + 2, -196, 98, b + 3, -196], 3));
+    const material = new THREE.MeshStandardMaterial(); material.name = 'V2 inferred | siding';
+    group.add(new THREE.Mesh(geometry, material));
+    applyEvidenceBuildings(group, 't', [0, 0, 0], 0, [home], [], undefined, [], []);
+    group.traverse(x => { if (x instanceof THREE.Mesh && [x.material].flat().some(m => m.name.includes('| glass |'))) {
+      const p = x.geometry.getAttribute('position');
+      for (let i = 0; i < p.count; i += 36) { let lo = Infinity, north = 0; for (let k = i; k < i + 36; k++) { lo = Math.min(lo, p.getY(k)); north += -p.getZ(k) / 36; } glass.push([north, lo]); }
+    } });
+    const upper = glass.filter(([north, lo]) => Math.abs(north - 198.1) < .2 && lo > b + 3);
+    expect(upper).toHaveLength(3);
+    group.traverse(x => { if (x instanceof THREE.Mesh) { x.geometry.dispose(); for (const m of [x.material].flat()) m.dispose(); } });
+  });
+
+  it('lays a facade split by jogs out as one, and fits a Cape\'s windows under its low eaves', () => {
+    // A 10 m front in three parts, the middle set back 1.2 m.
+    const frames = [{ start: [0, 0], width: 3.8 }, { start: [3.8, 1.2], width: 2.2 }, { start: [6, 0], width: 4 }].map(f => ({ ...f, tangent: [1, 0], outward: [0, -1], front: f.start[0] === 6 }));
+    const home = { frames } as unknown as EvidenceBuilding;
+    const layout = facadeLayouts(home, () => 4);
+    expect([...layout.keys()].sort()).toEqual([0, 1, 2]);
+    // Four bays across all 10 m; the two by the jogs step clear of the corners onto the wider walls.
+    const centres = [0, 1, 2].flatMap(i => layout.get(i)!.centres.map(u => frames[i].start[0] + u));
+    expect(centres).toHaveLength(4);
+    [1.25, 2.975, 6.825, 8.75].forEach((c, i) => expect(centres[i]).toBeCloseTo(c, 2));
+    expect(layout.get(0)!.front).toBe(true);
+    // A Cape's front wall 2.1 m above its floor still takes its windows, heads under the frieze.
+    const b = 40, floor = b + .6, eave = floor + 2.12;
+    const cape: EvidenceBuilding = { id: 'cape', tileId: 't', address: 'Fixture', outline: [[0, 0], [10, 0], [10, 8], [0, 8]],
+      frames: [{ start: [0, 0], tangent: [1, 0], outward: [0, -1], width: 10, front: true, groundMaximum: b, clearanceM: 5, eave }], base: b, floor, eave, peak: eave + 3,
+      stories: 1, style: 'CAPE', year: 1955, material: 'siding', paint: '#d9d5c8', roof: 'gable', porch: 'none', documented: false, evidenceIds: [], colorsDated: false,
+      entry: { frameIndex: 0, u: 5, floor }, frontageBays: 2 };
+    const group = new THREE.Group(), geometry = new THREE.BufferGeometry();
+    geometry.setAttribute('position', new THREE.Float32BufferAttribute([2, b + 1, 0, 3, b + 1, 0, 2, b + 2, 0], 3));
+    const material = new THREE.MeshStandardMaterial(); material.name = 'V2 inferred | siding';
+    group.add(new THREE.Mesh(geometry, material));
+    applyEvidenceBuildings(group, 't', [0, 0, 0], 0, [cape], [], undefined, [], []);
+    let panes = 0, top = -Infinity;
+    group.traverse(x => { if (x instanceof THREE.Mesh && [x.material].flat().some(m => m.name.includes('| glass |'))) {
+      const p = x.geometry.getAttribute('position'); for (let i = 0; i < p.count; i++) top = Math.max(top, p.getY(i)); panes += p.count / 36;
+    } });
+    expect(panes).toBe(2);
+    expect(top).toBeLessThanOrEqual(eave - .26 + .01);
+    group.traverse(x => { if (x instanceof THREE.Mesh) { x.geometry.dispose(); for (const m of [x.material].flat()) m.dispose(); } });
+  });
+
+  it('places a photographed front: doors, windows storey by storey, garage doors, porch and dormers along its street walls', () => {
+    // A 12 m front: a 4 m garage wing set 1 m back on the left as seen, the house's 8 m wall on the right.
+    const frames = [{ start: [0, 1], width: 4 }, { start: [4, 0], width: 8 }].map((f, i) => ({ ...f, tangent: [1, 0], outward: [0, -1], front: i === 1 }));
+    const home = { id: 'h', frames, style: 'COLONIAL', stories: 2 } as unknown as EvidenceBuilding;
+    const layout = photoLayout(home, { d: [67], w1: [50, 58, 83], w2: [50, 67, 83], gx: [17], pw: [55, 80], dm: [[67, 'g']], rf: 'side' })!;
+    expect(layout.frames).toEqual([0, 1]);
+    // positions are shares of the whole 12 m front from its left end
+    expect(layout.doors).toEqual([{ frameIndex: 1, u: expect.closeTo(4.04, 1) }]);
+    const at = (level: number) => layout.windows.filter(w => w.level === level).map(w => [w.frameIndex, +(frames[w.frameIndex].start[0] + w.u).toFixed(1)]);
+    // the two ground-floor sashes a metre apart stay two, narrower than a lone one
+    expect(at(0)).toEqual([[1, 6], [1, 7], [1, 10]]);
+    expect(layout.windows.find(w => w.level === 0)!.width).toBeLessThan(1);
+    expect(at(1)).toEqual([[1, 6], [1, 8], [1, 10]]);
+    expect(layout.garage).toEqual([{ frameIndex: 0, u: expect.closeTo(2.04, 2) }]);
+    expect(layout.porch!.frameIndex).toBe(1); expect(layout.porch!.u0).toBeCloseTo(2.6, 1); expect(layout.porch!.u1).toBeCloseTo(5.6, 1);
+    expect(layout.dormers).toEqual([{ frameIndex: 1, u: expect.closeTo(4.04, 1), kind: 'g', width: 1.7 }]);
+    // an attic window sits on the storey above the top full one
+    expect(photoLayout(home, { w1: [60], wa: [60] })!.windows.map(w => w.level)).toEqual([0, 1]);
+    // a wall drawn the other way round still takes the photograph's left end on the viewer's left (here its far end)
+    const reversed = { id: 'r', frames: [{ start: [10, 0], tangent: [-1, 0], outward: [0, -1], width: 10, front: true }], style: 'COLONIAL', stories: 2 } as unknown as EvidenceBuilding;
+    expect(photoLayout(reversed, { d: [10] })!.doors[0].u).toBeCloseTo(9, 1);
+  });
+
+  it('raises a photographed dormer on the street slope of a measured roof, with its window', () => {
+    // A 10 m by 8 m gable, eaves 3 m up along the front, ridge 6 m up across the middle.
+    const o: [number, number] = [300, 400], b = 30;
+    const points = [[-500, -400, 300], [500, -400, 300], [500, 0, 600], [-500, 0, 600], [-500, 400, 300], [500, 400, 300]];
+    const roof = [0, 1, 2, 0, 2, 3, 3, 2, 5, 3, 5, 4];
+    const v = Buffer.from(new Int16Array(points.flat()).buffer).toString('base64'), r = Buffer.from(Uint8Array.from(roof)).toString('base64');
+    const frames = [{ start: [295, 396], tangent: [1, 0], outward: [0, -1], width: 10, front: true, groundMaximum: b, clearanceM: 5, eave: b + 3 }];
+    const home: EvidenceBuilding = { id: 'dormer', tileId: 't', address: 'Fixture', outline: [[295, 396], [305, 396], [305, 404], [295, 404]], frames, base: b, floor: b + .5,
+      eave: b + 3, peak: b + 6, stories: 1.5, style: 'CAPE', year: 1950, material: 'siding', paint: '#d9d5c8', roof: 'gable', porch: 'none', documented: false, evidenceIds: [],
+      colorsDated: false, entry: null, roofSurface: { o, b, v, r, color: '#3c3d3f' } };
+    home.layout = photoLayout(home, { dm: [[50, 'g']] })!;
+    const group = new THREE.Group(), geometry = new THREE.BufferGeometry();
+    geometry.setAttribute('position', new THREE.Float32BufferAttribute([298, b + 1, -396, 299, b + 1, -396, 298, b + 2, -396], 3));
+    const material = new THREE.MeshStandardMaterial(); material.name = 'V2 inferred | siding';
+    group.add(new THREE.Mesh(geometry, material));
+    applyEvidenceBuildings(group, 't', [0, 0, 0], 0, [home], [], undefined, [], []);
+    let roofTop = -Infinity, glassLow = Infinity;
+    group.traverse(x => { if (x instanceof THREE.Mesh) for (const m of [x.material].flat()) {
+      const p = x.geometry.getAttribute('position');
+      if (m.name === 'Crafted frontage | roof | #3c3d3f') for (let i = 0; i < p.count; i++) roofTop = Math.max(roofTop, p.getY(i));
+      // glass set back up the slope, behind the front wall's plane
+      if (m.name.includes('| glass |')) for (let i = 0; i < p.count; i++) if (-p.getZ(i) > 396.3) glassLow = Math.min(glassLow, p.getY(i));
+    } });
+    // the dormer's gable roof stays under the house's ridge; its window stands above the eaves
+    expect(roofTop).toBeGreaterThan(b + 4.5); expect(roofTop).toBeLessThan(b + 6);
+    expect(glassLow).toBeGreaterThan(b + 3.3); expect(glassLow).toBeLessThan(b + 5);
+    group.traverse(x => { if (x instanceof THREE.Mesh) { x.geometry.dispose(); for (const m of [x.material].flat()) m.dispose(); } });
+  });
+
+  it('opens a porch the plan holds: the door on the house wall behind it, posts along the front under its ceiling', () => {
+    // A 10 m by 8 m house facing south whose front 2 m is an open porch under a roof 3 m up.
+    const o: [number, number] = [500, 600], b = 20, floor = b + .6;
+    const points = [[-500, -400, 0], [500, -400, 0], [500, 400, 0], [-500, 400, 0]];
+    const v = Buffer.from(new Int16Array(points.flat()).buffer).toString('base64');
+    const plan = [{ start: [495, 596], tangent: [1, 0], outward: [0, -1], width: 10 }, { start: [505, 596], tangent: [0, 1], outward: [1, 0], width: 8 },
+      { start: [505, 604], tangent: [-1, 0], outward: [0, 1], width: 10 }, { start: [495, 604], tangent: [0, -1], outward: [-1, 0], width: 8 }];
+    const home: EvidenceBuilding = { id: 'porch', tileId: 't', address: 'Fixture', outline: plan.map(f => f.start), frames: plan.map((f, i) => ({ ...f, front: i === 0, groundMaximum: b + .1, clearanceM: 6 })),
+      base: b, floor, eave: b + 6, peak: b + 9, stories: 2, style: 'CONVERSION', year: 1915, material: 'siding', paint: '#d9d5c8', roof: 'gable', porch: 'none', documented: false,
+      evidenceIds: [], colorsDated: false, entry: { frameIndex: 0, u: 5, floor } };
+    const row: MeasuredRoof = { id: 'porch', o, b, p: b + 9, v, r: '', w: '', e: [b + 3, b + 6, b + 6, b + 6], ep: [3, 6, 6, 6], c: [], q: .9,
+      pp: { f: 0, c: 3, s: [[0, 9.36, 2, [[0, 6], [9.36, 6]]]] }, f: { porch: 'open' } };
+    const group = new THREE.Group(), geometry = new THREE.BufferGeometry();
+    geometry.setAttribute('position', new THREE.Float32BufferAttribute([498, b + 1, -596, 499, b + 1, -596, 498, b + 2, -596], 3));
+    const material = new THREE.MeshStandardMaterial(); material.name = 'V2 inferred | siding';
+    group.add(new THREE.Mesh(geometry, material));
+    applyEvidenceBuildings(group, 't', [0, 0, 0], 0, [home], [], undefined, [], [row]);
+    const door: number[] = [], posts: number[][] = [];
+    group.traverse(x => { if (x instanceof THREE.Mesh) for (const m of [x.material].flat()) {
+      const p = x.geometry.getAttribute('position');
+      if (m.name.startsWith('Crafted frontage | door |')) for (let i = 0; i < p.count; i++) door.push(-p.getZ(i));
+      if (m.name.startsWith('Crafted frontage | trim |')) for (let i = 0; i < p.count; i += 36) {
+        let lo = Infinity, hi = -Infinity, north = 0; for (let k = i; k < i + 36; k++) { lo = Math.min(lo, p.getY(k)); hi = Math.max(hi, p.getY(k)); north += -p.getZ(k) / 36; }
+        if (hi - lo > 2.2 && Math.abs(north - 596.46) < .1) posts.push([lo, hi]);
+      }
+    } });
+    // the door stands on the house wall 2 m behind the porch front (the inset wall at 596.32)
+    expect(door.length).toBeGreaterThan(0);
+    expect(Math.min(...door)).toBeGreaterThan(598); expect(Math.max(...door)).toBeLessThan(598.7);
+    // posts along the porch front run from the floor to the ceiling
+    expect(posts.length).toBeGreaterThanOrEqual(4);
+    for (const [lo, hi] of posts) { expect(lo).toBeCloseTo(floor, 1); expect(hi).toBeCloseTo(b + 3, 1); }
+    group.traverse(x => { if (x instanceof THREE.Mesh) { x.geometry.dispose(); for (const m of [x.material].flat()) m.dispose(); } });
+  });
+
+  it('stands the survey\'s trees in place of the scenery\'s block trees near streets and houses', () => {
+    const origin = [1000, 0, -2000], rows = [[1, 40, 1, 4, 3, 4, 0], [5, 41, 5, 4, 3, 4, 0], [9, 42, 9, 4, 3, 4, 0]];
+    const bits = Buffer.from([0b101]).toString('base64'), trees = Buffer.from(new Int16Array([120, -80, 150, 45, 300, 300, 80, 20]).buffer).toString('base64');
+    const lt = { n: 3, k: bits, t: trees };
+    const placed = surveyTreeRows(lt, rows, origin, e => e < 1020 ? 30 : undefined)!;
+    // the kept block trees first, then each survey tree on the ground its crown centre 71% up its height
+    expect(placed.slice(0, 2)).toEqual([rows[0], rows[2]]);
+    expect(placed).toHaveLength(4);
+    const [x, y, z, r, sy] = placed[2];
+    expect([x, z, r]).toEqual([12, -8, 4.5]); expect(sy).toBeCloseTo(4.5, 5); expect(y).toBeCloseTo(30 + .71 * 15, 5);
+    // off the terrain a tree stands on the kept trees' ground
+    expect(placed[3][1]).toBeCloseTo(42 - .71 * 10 + .71 * 8, 5);
+    expect(surveyTreeRows({ ...lt, n: 4 }, rows, origin, () => 0)).toBeUndefined();
+    const tile = tiles.find(t => packet(t).lt)!, p = packet(tile);
+    expect(p.trees!.n).toBe(atob(p.lt!.k).split('').reduce((n, c) => n + [...c.charCodeAt(0).toString(2)].filter(b => b === '1').length, 0) + atob(p.lt!.t).length / 8);
   });
 
   it('sets walls in under the roofprint so the eaves overhang', () => {

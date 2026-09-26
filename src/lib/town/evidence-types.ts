@@ -77,7 +77,38 @@ export type EvidenceBuilding = {
   /** Street-facing garage doors in the house, as photographed: count, side as
    * seen from the street, colour. */
   garage?: { doors: number; side: 'left' | 'right' | 'center'; color?: string };
+  /** The measured body's walls that stand back from the plan's (over porch and
+   * wing roofs, between roof sections, dormer faces). */
+  setbacks?: SetbackWall[];
+  /** The street front's openings where its photograph shows them. */
+  layout?: PhotoLayout;
+  /** An open porch cut from the measured body: its front line (the plan
+   * frame's inset wall, from u0 to u1), its strips (each the frame of the house
+   * wall behind it and the porch's depth there) and its ceiling. */
+  openPorch?: { front: Omit<Frame, 'structId' | 'tileId'> & { u0: number; u1: number }; strips: { frameIndex: number; depth: number }[]; ceiling: number };
+  /** The measured roof, for what stands on it: origin, base, centimetre
+   * vertices and roof triangles as in the packet, and its colour. */
+  roofSurface?: { o: readonly [number, number] | readonly number[]; b: number; v: string; r: string; color?: string };
 };
+
+/** A street front's openings placed from its photograph, on the frames that
+ * face the street: entrance doors, windows by storey (0 the ground floor, -1 a
+ * raised ranch's lower level, the top one the attic or gable), garage doors,
+ * the porch's extent, dormers, and how the roof meets the street. */
+export type PhotoLayout = {
+  frames: number[];
+  doors: { frameIndex: number; u: number }[];
+  windows: { frameIndex: number; u: number; width: number; level: number }[];
+  garage: { frameIndex: number; u: number }[];
+  porch?: { frameIndex: number; u0: number; u1: number };
+  dormers: { frameIndex: number; u: number; kind: 'g' | 's' | 'h' | 'e'; width: number }[];
+  roof?: string;
+};
+
+/** A wall of a measured body standing back from every wall of the plan, as a
+ * frame (east/north start at its left end seen from outside, tangent,
+ * outward, width) with its outline as triangles, [u, height] per corner. */
+export type SetbackWall = Omit<Frame, 'structId' | 'tileId'> & { width: number; outline: number[] };
 
 export type EvidenceReport = {
   version: number;

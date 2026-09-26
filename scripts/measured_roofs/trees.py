@@ -33,17 +33,23 @@ def evergreen(rgb):
     return (g > r + 4) & (g > b) & (v < 140) & (v > 22)
 
 
-def tree_families(site, aerial, tile_shift):
-    """{tile: {'n': rows, 'c': base64 bitset of evergreens}} for every tile with trees."""
+def scenery_rows(site):
+    """{tile: (origin, rows)} of the scenery's tree rows, for every tile with trees."""
     manifest = Path(sorted(glob.glob(str(site / 'public/town-assets/*/manifest.json')))[-1])
-    man = json.load(open(manifest))
-    shifts, out = {}, {}
-    for tile in man['tiles']:
+    out = {}
+    for tile in json.load(open(manifest))['tiles']:
         if not tile.get('treeFile'): continue
         data = json.load(open(manifest.parent / tile['treeFile']['url']))
         rows = data if isinstance(data, list) else data['rows']
-        if not rows: continue
-        o = tile['origin']
+        if rows: out[tile['id']] = (tile['origin'], rows)
+    return out
+
+
+def tree_families(site, aerial, tile_shift, tiles=None):
+    """{tile: {'n': rows, 'c': base64 bitset of evergreens}} for every tile with
+    trees: the scenery's rows, or those given ({tile: (origin, rows)})."""
+    shifts, out = {}, {}
+    for tid, (o, rows) in (tiles or scenery_rows(site)).items():
         bits = bytearray((len(rows) + 7) // 8)
         for i, (x, y, z, sx, sy, sz, yaw) in enumerate(rows):
             e, n, height = x + o[0], -(z + o[2]), sy / 0.30
@@ -53,5 +59,5 @@ def tree_families(site, aerial, tile_shift):
             lean = min(4.0, 0.7 * height / 6.0) if strength > 0.02 else 0.0
             xs, ys = crown_disc(e + dx * lean, n + dy * lean, max(1.2, min(4.0, 0.22 * height)))
             if evergreen(aerial(xs, ys)).mean() >= 0.45: bits[i >> 3] |= 1 << (i & 7)
-        out[tile['id']] = {'n': len(rows), 'c': base64.b64encode(bytes(bits)).decode()}
+        out[tid] = {'n': len(rows), 'c': base64.b64encode(bytes(bits)).decode()}
     return out

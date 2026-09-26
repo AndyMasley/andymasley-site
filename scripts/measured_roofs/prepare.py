@@ -18,15 +18,26 @@ street photograph.
    side and whether each level is open or enclosed. Each photo was read by eye
    (a second, careful pass after a quick first one), and the siding colour
    took the photo's own hue where the reader's sample point landed on siding
-   of the named family. Only these reads enter the repository; no photograph,
-   owner or sale detail does.
+   of the named family. layout-reads.json holds a third read of the same
+   photographs: where along the street front its doors, each storey's
+   windows, attic windows, dormers, garage doors and porch are (percent of
+   the front's width from its left end as seen), how the roof meets the
+   street and how many storeys show; where the roof read shows a wall other
+   than the plan's front, the one facing the address street is taken
+   (faces.py). Only these reads enter the repository; no photograph, owner
+   or sale detail does.
 4. Wall tops. Each frame's inset wall top is traced from the solid itself, so
    windows can stand in a gable under its rakes.
-5. Everything else. Garages, sheds, barns and the other plainly modelled
+5. Open porches. Where a photograph shows an open front porch the plan
+   holds, the body is measured again with the porch cut out under its roof
+   (porches.py).
+6. Everything else. Garages, sheds, barns and the other plainly modelled
    buildings join the same packets (outbuildings.py), and each photographed
    house's front fence gets its line along the parcel's street frontage
-   (fences.py). Each tile's packet also says which of its scenery trees are
-   evergreens in the leaf-off aerial (trees.py).
+   (fences.py). Near the streets and houses each tile's packet carries the
+   trees the survey found in place of the scenery's block trees
+   (lidar_trees.py), and says which of its trees are evergreens in the
+   leaf-off aerial (trees.py).
 
 Usage: python3 scripts/measured_roofs/prepare.py [--jobs N] [--limit N] [--reuse]
   --reuse skips the LiDAR fits when $OUT/records.jsonl (houses) and
@@ -134,7 +145,9 @@ def gutters(v, f, lpoly, R, c):
     return out
 
 
-def measure_house(house):
+def measure_house(house, carve=None):
+    """The measured body of a house; `carve` (rings of [east, north], bottom,
+    top) are prisms cut from it (an open porch under its roof, porches.py)."""
     import manifold3d as mf
     rec = {'id': house['id'], 'tileId': house['tileId']}
     try:
@@ -147,6 +160,11 @@ def measure_house(house):
             rec['status'] = 'no-solid'; return rec
         grown = S.grown_union(res, fillers, lpoly, house['base'], 0.02)
         body = S.eaved_solid(full, grown, lpoly, house['base'], inset=INSET, thickness=SLAB)
+        if carve:
+            rings, z0, z1 = carve
+            for ring in rings:
+                loc = (np.asarray(ring, float) - c) @ R.T
+                body = body - S.cross_section(shapely.Polygon(loc)).extrude(z1 - z0).translate([0, 0, z0])
         pieces = [p for p in body.decompose() if p.volume() > 1.0]
         comps = len(pieces)
         if not pieces: raise ValueError('empty body')
@@ -177,6 +195,44 @@ def measure_house(house):
     except Exception as e:
         rec['status'] = 'error'; rec['error'] = repr(e)[:200]
     return rec
+
+
+def measure_carved(job):
+    return measure_house(*job)
+
+
+def open_porches(records, jobs, reuse):
+    """Houses whose photographs show an open porch the plan holds: their
+    bodies measured again with the porch cut out under its roof (porches.py).
+    Returns the records, carved where so, and each carved house's porch."""
+    from porches import open_porch, carve_rings
+    facades = json.load(open(HERE / 'facade-reads.json'))
+    homes = {h['id']: h for h in M.houses()}
+    porches, jobs_ = {}, []
+    for r in records:
+        if r.get('status') != 'ok' or r['id'] not in facades: continue
+        house = homes[r['id']]
+        ep = [None if pr is None else pr[0][1] if all(abs(q[1] - pr[0][1]) < 0.015 for q in pr) else pr for pr in wall_profiles(r, house)]
+        porch = open_porch(house, r, ep, facade(facades[r['id']]))
+        if not porch: continue
+        porches[r['id']] = porch
+        jobs_.append((house, (carve_rings(house, porch), r['base'] - 1.0, r['base'] + porch['c'] - .005)))
+    cache = OUT / 'porch-records.jsonl'
+    carved = {}
+    if reuse and cache.exists():
+        for line in open(cache):
+            rec = json.loads(line)
+            if rec['id'] in porches and rec.get('carve') == porches[rec['id']]: carved[rec['id']] = rec
+    todo = [j for j in jobs_ if j[0]['id'] not in carved]
+    if todo:
+        with Pool(jobs, initializer=M.lidar) as pool:
+            for rec in pool.imap(measure_carved, todo, chunksize=2):
+                rec['carve'] = porches[rec['id']]; carved[rec['id']] = rec
+        with open(cache, 'w') as out:
+            for rec in carved.values(): out.write(json.dumps(rec) + '\n')
+    ok = {k: v for k, v in carved.items() if v.get('status') == 'ok'}
+    print(f'open porches: {len(porches)} found, {len(ok)} carved', flush=True)
+    return [ok.get(r['id'], r) for r in records], {k: porches[k] for k in ok}
 
 
 def measure_all(jobs, limit):
@@ -346,6 +402,22 @@ def facade(fc):
     return f
 
 
+def layout(lr):
+    """What the photograph shows of the street front's layout, positions in
+    percent of the front's width from its left end as seen: entrance doors,
+    window centres on each storey and in the attic, dormers, garage doors, the
+    porch's extent, how the roof meets the street and the storeys seen."""
+    if not lr: return None
+    ok = lambda xs: isinstance(xs, list) and all(isinstance(x, int) and 0 <= x <= 100 for x in xs)
+    lo = {k: lr[k] for k in ('d', 'w1', 'w2', 'w3', 'wa', 'gx') if ok(lr.get(k)) and lr[k]}
+    dm = [d for d in lr.get('dm') or [] if isinstance(d, list) and len(d) == 2 and ok([d[0]]) and d[1] in ('g', 's', 'h', 'e')]
+    if dm: lo['dm'] = dm
+    if ok(lr.get('pw')) and len(lr['pw']) == 2 and lr['pw'][1] > lr['pw'][0]: lo['pw'] = lr['pw']
+    if lr.get('rf') in ('side', 'front', 'cross', 'hip', 'gambrel', 'mansard', 'flat', 'shed'): lo['rf'] = lr['rf']
+    if lr.get('st') in (1, 1.5, 2, 2.5, 3, 3.5): lo['st'] = lr['st']
+    return lo or None
+
+
 def simplify(points, tol):
     """Douglas-Peucker on a (u, h) polyline."""
     if len(points) < 3: return points
@@ -361,35 +433,38 @@ def wall_profiles(r, house, inset=INSET):
     """Per frame, the measured wall's top as a polyline [[u, height above
     base], ...] along the inset wall: level along an eave, rising and falling
     under a gable, stepping where a wing meets the frame."""
-    v = np.frombuffer(base64.b64decode(r['v']), dtype='<i2').reshape(-1, 3).astype(float) / 100
-    tri = np.frombuffer(base64.b64decode(r['wall']), dtype='<u2').reshape(-1, 3)
-    en = v[:, :2] + np.asarray(r['origin'])
     out = []
     for fr in house['frames']:
         t = np.asarray(fr['tangent'], float); o = np.asarray(fr['outward'], float)
-        s = np.asarray(fr['start'], float) + t * inset - o * inset
-        w = fr['width'] - 2 * inset
-        rel = en - s; u = rel @ t; off = rel @ o
-        on = (np.abs(off[tri]) < 0.06).all(1) & (u[tri].max(1) > 0.05) & (u[tri].min(1) < w - 0.05)
-        if w < 0.5 or not on.any(): out.append(None); continue
-        T = tri[on]; tu = u[T]; tz = v[T, 2]
-        us = np.linspace(0, w, max(3, int(round(w / 0.1)) + 1))
-        top = np.full(len(us), np.nan)
-        for k in range(3):   # each triangle edge, where it spans a sample
-            u0, u1 = tu[:, k], tu[:, (k + 1) % 3]; z0, z1 = tz[:, k], tz[:, (k + 1) % 3]
-            lo, hi = np.minimum(u0, u1), np.maximum(u0, u1)
-            span = hi - lo > 1e-6
-            inside = (us[None] >= lo[:, None] - 1e-6) & (us[None] <= hi[:, None] + 1e-6) & span[:, None]
-            f = np.clip((us[None] - u0[:, None]) / np.where(span, u1 - u0, 1)[:, None], 0, 1)
-            z = np.where(inside, z0[:, None] + f * (z1 - z0)[:, None], np.nan)
-            top = np.fmax(top, np.nanmax(np.where(np.isnan(z), -np.inf, z), 0))
-        top[~np.isfinite(top)] = np.nan
-        if np.isnan(top).all(): out.append(None); continue
-        good = ~np.isnan(top)
-        top = np.interp(us, us[good], top[good])
-        pts = simplify([[float(a), float(b)] for a, b in zip(us, top)], 0.08)
-        out.append([[round(a, 2), round(b, 2)] for a, b in pts])
+        out.append(wall_profile(r, np.asarray(fr['start'], float) + t * inset - o * inset, t, o, fr['width'] - 2 * inset))
     return out
+
+
+def wall_profile(r, s, t, o, w):
+    """The top of the body's wall standing on the line from `s` along `t` for `w` metres, facing `o`."""
+    v = np.frombuffer(base64.b64decode(r['v']), dtype='<i2').reshape(-1, 3).astype(float) / 100
+    tri = np.frombuffer(base64.b64decode(r['wall']), dtype='<u2').reshape(-1, 3)
+    en = v[:, :2] + np.asarray(r['origin'])
+    rel = en - s; u = rel @ t; off = rel @ o
+    on = (np.abs(off[tri]) < 0.06).all(1) & (u[tri].max(1) > 0.05) & (u[tri].min(1) < w - 0.05)
+    if w < 0.5 or not on.any(): return None
+    T = tri[on]; tu = u[T]; tz = v[T, 2]
+    us = np.linspace(0, w, max(3, int(round(w / 0.1)) + 1))
+    top = np.full(len(us), np.nan)
+    for k in range(3):   # each triangle edge, where it spans a sample
+        u0, u1 = tu[:, k], tu[:, (k + 1) % 3]; z0, z1 = tz[:, k], tz[:, (k + 1) % 3]
+        lo, hi = np.minimum(u0, u1), np.maximum(u0, u1)
+        span = hi - lo > 1e-6
+        inside = (us[None] >= lo[:, None] - 1e-6) & (us[None] <= hi[:, None] + 1e-6) & span[:, None]
+        f = np.clip((us[None] - u0[:, None]) / np.where(span, u1 - u0, 1)[:, None], 0, 1)
+        z = np.where(inside, z0[:, None] + f * (z1 - z0)[:, None], np.nan)
+        top = np.fmax(top, np.nanmax(np.where(np.isnan(z), -np.inf, z), 0))
+    top[~np.isfinite(top)] = np.nan
+    if np.isnan(top).all(): return None
+    good = ~np.isnan(top)
+    top = np.interp(us, us[good], top[good])
+    pts = simplify([[float(a), float(b)] for a, b in zip(us, top)], 0.08)
+    return [[round(a, 2), round(b, 2)] for a, b in pts]
 
 
 def small_indices(b64s, nv):
@@ -410,9 +485,12 @@ def tile_grid(tiles):
     return [x0, y0, w, base64.b64encode(bytes(bits)).decode()]
 
 
-def packets(records, colours, lots, others=()):
+def packets(records, colours, lots, others=(), porches={}):
+    from faces import Cover, street_face
     facades = json.load(open(HERE / 'facade-reads.json'))
+    layouts = json.load(open(HERE / 'layout-reads.json'))
     homes = {h['id']: h for h in M.houses()}
+    cover = Cover(SITE)
     tiles = collections.defaultdict(list); skipped = collections.Counter()
     for r in records:
         if r.get('status') != 'ok': skipped[r.get('status')] += 1; continue
@@ -427,11 +505,29 @@ def packets(records, colours, lots, others=()):
                'c': [c for c in r['chimneys'] if all(math.isfinite(x) for x in c)],
                'g': [g for g in r.get('gutters', []) if all(math.isfinite(x) for x in g)], 'q': q}
         if r['id'] in colours: row['rc'] = roof_colour(colours[r['id']])
+        pc = porches.get(r['id'])
+        if pc:
+            # the open porch cut from the body: its frame, the porch ceiling above the base,
+            # and per strip its span along the inset wall, the house wall's depth behind and its top
+            fr = homes[r['id']]['frames'][pc['f']]
+            t = np.asarray(fr['tangent'], float); o = np.asarray(fr['outward'], float)
+            s0 = np.asarray(fr['start'], float) + t * INSET - o * INSET
+            strips = []
+            for q in pc['s']:
+                top = wall_profile(r, s0 - o * q['d'] + t * q['u'][0], t, o, q['u'][1] - q['u'][0])
+                if top: strips.append([q['u'][0], q['u'][1], q['d'], top])
+            if strips: row['pp'] = {'f': pc['f'], 'c': pc['c'], 's': strips}
         fc = facades.get(r['id'])
         if fc:
             if hexok(fc.get('wall')): row['wc'] = paint(fc['wall'])
             if hexok(fc.get('trim')): row['tc'] = paint(fc['trim'])
             row['f'] = facade(fc)
+            lo = layout(layouts.get(r['id']))
+            if lo:
+                # the wall the photograph shows, where it is not the plan's front (faces.py)
+                sf = street_face(homes[r['id']], row['ep'], lo, lots, cover)
+                if sf is not None: lo['sf'] = sf
+                row['f']['lo'] = lo
             if row['f'].get('fe'):
                 # the fence's line along the lot's street frontage, decimetres from the house centre
                 lines = lots.frontage(homes[r['id']], homes[r['id']].get('address'))
@@ -449,6 +545,8 @@ def packets(records, colours, lots, others=()):
         if hexok(fc.get('wall')): row['wc'] = paint(fc['wall'])
         if hexok(fc.get('trim')): row['tc'] = paint(fc['trim'])
         row['f'] = facade(fc)
+        lo = layout(layouts.get(hid))
+        if lo: row['f']['lo'] = lo
         if row['f'].get('fe'):
             lines = lots.frontage(house, house.get('address'))
             if lines: row['f']['fl'] = [[round((a[0] - o[0]) * 10), round((a[1] - o[1]) * 10), round((b[0] - o[0]) * 10), round((b[1] - o[1]) * 10)] for a, b in lines]
@@ -459,12 +557,17 @@ def packets(records, colours, lots, others=()):
     for tile, row, rec in others:
         if rec and rec['id'] in other_colours: row['rc'] = roof_colour(other_colours[rec['id']])
         tiles[tile].append(row)
-    # which of each tile's scenery trees are evergreens (trees.py)
-    from trees import tree_families
-    families = tree_families(SITE, aerial, tile_shift)
+    # the survey's trees near the streets and houses in place of the block trees (lidar_trees.py),
+    # and which of each tile's trees are evergreens (trees.py)
+    from trees import tree_families, scenery_rows
+    from lidar_trees import lidar_tiles
+    scenery = scenery_rows(SITE)
+    outlines = [[[row['o'][0] + x / 10, row['o'][1] + y / 10] for x, y in row['ol']] for _, row, _ in others]
+    survey, combined, tree_stats = lidar_tiles(SITE, SOURCE, list(homes.values()), outlines, scenery)
+    families = tree_families(SITE, aerial, tile_shift, {t: (o, combined.get(t, rows)) for t, (o, rows) in scenery.items()})
     for t in families: tiles.setdefault(t, [])
-    payloads = {t: json.dumps({'version': 1, 'tileId': t, 'rows': sorted(items, key=lambda x: x['id']), **({'trees': families[t]} if t in families else {})},
-                              separators=(',', ':'), allow_nan=False) + '\n'
+    payloads = {t: json.dumps({'version': 1, 'tileId': t, 'rows': sorted(items, key=lambda x: x['id']), **({'trees': families[t]} if t in families else {}),
+                               **({'lt': survey[t]} if t in survey else {})}, separators=(',', ':'), allow_nan=False) + '\n'
                 for t, items in sorted(tiles.items())}
     digest = hashlib.sha256(''.join(payloads[t] for t in sorted(payloads)).encode()).hexdigest()[:12]
     root = SITE / 'public/town-evidence/v1/measured'
@@ -476,7 +579,7 @@ def packets(records, colours, lots, others=()):
              'others': sum(x.get('k') in ('o', 'b') for v in tiles.values() for x in v), 'kept': sum(x.get('k') == 'v' for v in tiles.values() for x in v),
              'photoReads': sum('f' in x and x.get('k') in (None, 'h') for v in tiles.values() for x in v),
              'evergreens': sum(bin(b).count('1') for f in families.values() for b in base64.b64decode(f['c'])),
-             'trees': sum(f['n'] for f in families.values()),
+             'trees': sum(f['n'] for f in families.values()), 'surveyTrees': tree_stats['trees'],
              'tiles': ','.join(sorted(tiles)), 'grid': tile_grid(tiles), 'bytes': sum(len(t) for t in payloads.values())}
     (SITE / 'data/derived/town/measured-roofs-index.json').write_text(json.dumps(index, separators=(',', ':')) + '\n')
     print(json.dumps({'houses': index['count'], 'others': index['others'], 'kept': index['kept'], 'tiles': len(tiles), 'bytes': index['bytes'], 'skipped': dict(skipped),
@@ -491,9 +594,10 @@ if __name__ == '__main__':
     a = ap.parse_args()
     if a.reuse and (OUT / 'records.jsonl').exists(): records = [json.loads(l) for l in open(OUT / 'records.jsonl')]
     else: records = measure_all(a.jobs, a.limit)
+    records, porches = open_porches(records, a.jobs, a.reuse)
     import gzip
     from fences import Frontages
     from outbuildings import prepare_others
     lots = Frontages(SOURCE / 'research/data/parcels-current.geojson', json.load(gzip.open(SITE / 'data/derived/town/engine-network.json.gz')), aerial)
     others = prepare_others(OUT, a.jobs, a.reuse, M.houses(), json.load(open(HERE / 'facade-reads.json')), paint, lots)
-    packets(records, roof_colours(records), lots, others)
+    packets(records, roof_colours(records), lots, others, porches)
