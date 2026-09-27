@@ -6,6 +6,14 @@ import {GrassTerrain} from './grass';
 
 /** The wall a door needs over its sill: a Cape's low eave (its frieze meeting the door's head) is enough. */
 export const DOOR_ROOM=2.2;
+/** A split foyer: a raised ranch or split level by its record, or one its
+ * photograph shows (evidence-buildings.ts). Its entrance opens on a landing a
+ * step or two over the ground, half a storey under its main floor. */
+export function splitFoyer(home:EvidenceBuilding):boolean{
+  return home.splitFoyer===true||/RAISED RANCH|SPLIT LEVEL/i.test(home.style);
+}
+/** A split foyer's landing over the ground in front of its door. */
+export const LANDING=.35;
 
 type Correction={frameIndex:number;address:string;outline:number[][];formerEntry:NonNullable<EvidenceBuilding['entry']>;selectedFrame:Pick<EvidenceBuilding['frames'][number],'start'|'tangent'|'outward'|'width'>;clearance:{maximumWidthM:number;maximumProjectionM:number;neighborBuildingIntersections:number;roadEnvelopeClearanceM:number};basis:string};
 export type EntryStepEnvelope={frame:Frame;u:number;floor:number};
@@ -34,7 +42,8 @@ export function prepareAddressFrontages(group:THREE.Object3D,origin:readonly num
       let h=profile[0][1];for(let k=1;k<profile.length;k++)if(x>=profile[k-1][0])h=profile[k][0]-profile[k-1][0]>1e-6?profile[k-1][1]+(profile[k][1]-profile[k-1][1])*Math.min(1,(x-profile[k-1][0])/(profile[k][0]-profile[k-1][0])):Math.min(profile[k-1][1],profile[k][1]);
       return h;
     };
-    const heights=pad as number[],floor=Math.max(home.floor,Math.max(...heights)+.15),eave=Math.min(top(u-.6),top(u),top(u+.6));
+    // A split foyer's door opens on its landing, a step or two up from the ground.
+    const heights=pad as number[],floor=Math.max(splitFoyer(home)?Math.min(home.floor,Math.max(...heights)+LANDING):home.floor,Math.max(...heights)+.15),eave=Math.min(top(u-.6),top(u),top(u+.6));
     if(floor+DOOR_ROOM>=eave||floor-Math.min(...heights)>1.15)return undefined;
     const blocks=[{u,v:.48,width:1.45,depth:.96,bottom:Math.min(...heights)-.045,top:floor-.025}];
     for(let i=1;i<=7;i++){

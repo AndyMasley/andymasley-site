@@ -309,7 +309,15 @@ verify hashes, byte counts, source ownership, entry bounds and stale-file absenc
 `measured-roofs.ts` streams a packet per tile from `scripts/measured_roofs/`:
 each house fitted to the 2021 LiDAR roof returns as a closed body of flat, shed,
 gable, hip, gambrel and mansard sections, walls 0.32 m inside the roofprint so
-eaves and rakes overhang, with measured chimneys and gutters on level eaves. Roof
+eaves and rakes overhang, with measured chimneys and gutters on level eaves. The
+plans were traced from aerial photographs and stand one to three metres from the
+survey's roofs, drifting across the town, so each house's returns are first
+moved onto its plan by the shift that lays the two together best
+(`register.py`); a plan's roof no longer loses a strip, and its eave there its
+height, along one side. Outbuildings and the survey's trees move by the local
+shift. A lower part at one end of a section (a wing, a porch or a garage under
+its own lower roof) is split from the section spanning it and fitted again,
+where that explains enough more of the returns. Roof
 colour is sampled from the lean-registered 2025 aerial. Siding, trim, door and
 shutter colours, wall material, front porch and window bays are reads of the
 assessor's street photographs (`facade-reads.json`); no photograph ships.
@@ -345,7 +353,11 @@ sash. Where a photograph shows an open porch the plan holds (a low front on a
 taller house, the house wall standing on the porch roof behind), the body is
 measured again with the porch cut out under its roof (`porches.py`); the door
 and windows move onto the house wall and the porch gets a deck, posts under a
-beam, railings and steps. A triple-decker's stacked porches that the plan
+beam, railings and steps. Where the photograph shows the porch under the
+house's main roof (a bungalow's, or a Cape's sweeping over it), no step in the
+roof marks its depth, so it is cut 2.3 m deep (at most two fifths of the
+house's depth) under the front eave, across the width the photograph shows. A
+triple-decker's stacked porches that the plan
 holds as a box standing proud of the front are cut out the same way, with a
 deck and railings on every level and open ends. A fourth read
 (`detail-reads.json`) adds what else the photograph shows on the front: a
@@ -380,7 +392,11 @@ beside the road network; vehicle doors built during assembly join the tile's
 gathered openings afterwards (`mergeVehicleDoors`). Each tile's measured
 packet also carries the trees the 2021 LiDAR found near its streets and houses
 (place, height and crown radius, stood on the tile's terrain by
-`surveyTreeRows` in place of the scenery's block trees there) and says which
+`surveyTreeRows` in place of the scenery's block trees there). None stands
+inside any mapped building (a steeple's or a tower's returns read as a tree
+go), a trunk on a drive, a lot, a walk or in the water steps to open ground
+within 3 m (else the tree goes), and no crown reaches more than 2 m over the
+nearest building. The packet also says which
 of its trees are evergreens in the 2025 leaf-off aerial; `treeForm` draws
 those as conifers and the rest as broadleaf in place of the habitat draw. `street-dressing.ts` clears the painted centre
 line from streets whose photographs show none, stands poles on the side the

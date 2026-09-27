@@ -25,6 +25,22 @@ for (const [tile, asset] of Object.entries(homeIndex.tiles as Record<string, { u
   for (const row of JSON.parse(readFileSync(resolve('public', asset.url.slice(1)), 'utf8')).buildings) { homes.set(row.id, tile); records.set(row.id, row); }
 
 describe('measured house roofs', () => {
+  it('measures each roof from returns registered onto its plan, by a shift that drifts smoothly across the town', () => {
+    const reg = JSON.parse(readFileSync(resolve('scripts/measured_roofs/registration.json'), 'utf8')).houses as Record<string, number[]>;
+    const rows = Object.values(reg), size = rows.map(([e, n]) => Math.hypot(e, n)).sort((a, b) => a - b);
+    expect(rows.length).toBeGreaterThan(5000);
+    // the plans stand a metre or two from the survey's roofs, never farther than the search reaches
+    expect(size[Math.floor(size.length / 2)]).toBeGreaterThan(.8); expect(size[Math.floor(size.length / 2)]).toBeLessThan(2.5);
+    expect(size[size.length - 1]).toBeLessThanOrEqual(4 * Math.SQRT2 + .01);
+    // neighbours agree: a house's shift is within a metre of the next house's for most houses
+    const pts = rows.map(r => [r[2], r[3]]), near = rows.map((r, i) => {
+      let best = Infinity, k = -1;
+      for (let j = 0; j < rows.length; j++) if (j !== i) { const d = Math.hypot(pts[j][0] - pts[i][0], pts[j][1] - pts[i][1]); if (d < best) { best = d; k = j; } }
+      return Math.hypot(r[0] - rows[k][0], r[1] - rows[k][1]);
+    }).sort((a, b) => a - b);
+    expect(near[Math.floor(near.length * .9)]).toBeLessThan(1.0);
+  });
+
   it('ships one valid packet per listed tile, for measured residential houses only', () => {
     const dir = resolve('public', index.dir.slice(1));
     expect(readdirSync(dir).sort()).toEqual(tiles.map(t => `${t}.json`).sort());
@@ -288,7 +304,8 @@ describe('measured house roofs', () => {
     geometry.setAttribute('position', new THREE.Float32BufferAttribute([e - 4, b + 2, -(n - 4.32), e - 2, b + 2, -(n - 4.32), e - 4, b + 4, -(n - 4.32)], 3));
     const inferred = new THREE.MeshStandardMaterial(); inferred.name = 'V2 inferred | siding';
     group.add(new THREE.Mesh(geometry, inferred));
-    applyEvidenceBuildings(group, tile, [0, 0, 0], 0, [home], [], undefined, [], [{ ...row, e: [b + 4.6], ep: [4.6], f: { material: 'siding', bays: 3 } }]);
+    // (without its walls the tile's real body sets no walls back from this plan to window)
+    applyEvidenceBuildings(group, tile, [0, 0, 0], 0, [home], [], undefined, [], [{ ...row, e: [b + 4.6], ep: [4.6], w: '', f: { material: 'siding', bays: 3 } }]);
     const glass: number[][] = [], band: number[] = [];
     group.traverse(o => { if (o instanceof THREE.Mesh) for (const m of [o.material].flat()) {
       const p = o.geometry.getAttribute('position');

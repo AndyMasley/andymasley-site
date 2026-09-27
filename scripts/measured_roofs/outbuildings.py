@@ -49,6 +49,7 @@ from shapely.ops import transform as reproject
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 import measure as M
+import register as G
 import solid as S
 
 SITE, SOURCE = M.SITE, M.SOURCE
@@ -150,7 +151,8 @@ def measure_one(item):
     sid, outline, base = item
     rec = {'id': sid}
     try:
-        res = M.measure({'id': sid, 'outline': outline, 'base': base}, debug=True)
+        shift = G.shift_at(*np.asarray(outline, float).mean(0))
+        res = M.measure({'id': sid, 'outline': outline, 'base': base}, debug=True, shift=shift)
         if not res or res.get('status') != 'ok':
             rec['status'] = (res or {}).get('status', 'none'); return rec
         PL, Z, lpoly, R, c = res['debug']
@@ -170,7 +172,7 @@ def measure_one(item):
         edge = shapely.distance(lpoly.exterior, shapely.points(PL[:, 0], PL[:, 1]))
         pick = inl & (np.asarray(edge) > 0.5)
         if pick.sum() < 8: pick = inl
-        en = PL[pick] @ R + c
+        en = PL[pick] @ R + c + shift
         sel = np.linspace(0, len(en) - 1, min(len(en), 300)).astype(int)
         rec.update({'status': 'ok', 'origin': [round(float(c[0]), 3), round(float(c[1]), 3)], 'base': base, 'inset': inset,
                     'peak': round(float(v[:, 2].max()), 3), 'v': P.b64(uq), 'roof': P.b64(roof), 'wall': P.b64(wall), 'trim': P.b64(trim), 'nv': int(len(uq)),

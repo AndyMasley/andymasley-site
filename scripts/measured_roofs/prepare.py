@@ -10,7 +10,12 @@ street photograph.
    and rakes overhang (solid.py, manifold3d 3.5.4). Chimneys are where the
    returns rise sharply above the fitted roof, kept where they stand clear of
    every roof around them and moved in off the wall line; gutters run along
-   level eaves.
+   level eaves. The plans were traced from aerial photographs and stand one
+   to three metres from the survey's roofs (by an amount that drifts across
+   the town), so each house's returns are first moved onto its plan by the
+   shift that best lays the two together (register.py, registration.json);
+   the other buildings' returns and the survey's trees move by the local
+   shift at their places.
 2. Roof colour. The MassGIS 2025 aerial is registered to the LiDAR per 250 m
    tile (building lean differs across the mosaic) and sampled on each roof's
    inlier returns.
@@ -45,7 +50,8 @@ street photograph.
    (lidar_trees.py), and says which of its trees are evergreens in the
    leaf-off aerial (trees.py).
 
-Usage: python3 scripts/measured_roofs/prepare.py [--jobs N] [--limit N] [--reuse]
+Usage: python3 scripts/measured_roofs/register.py (when the plans or the survey change), then
+       python3 scripts/measured_roofs/prepare.py [--jobs N] [--limit N] [--reuse]
   --reuse skips the LiDAR fits when $OUT/records.jsonl (houses) and
   $OUT/others.jsonl (everything else) exist.
 Environment: WEBSTER_SOURCE (research folder), WEBSTER_MEASURED_OUT (work dir).
@@ -64,6 +70,7 @@ from scipy.signal import fftconvolve
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 import measure as M
+import register as G
 import solid as S
 
 SITE = M.SITE
@@ -157,7 +164,9 @@ def measure_house(house, carve=None):
     import manifold3d as mf
     rec = {'id': house['id'], 'tileId': house['tileId']}
     try:
-        res = M.measure(house, debug=True)
+        centre = np.asarray(house['outline'], float).mean(0)
+        shift = G.house_shift(house['id'], *centre)
+        res = M.measure(house, debug=True, shift=shift)
         if not res or res.get('status') != 'ok':
             rec['status'] = (res or {}).get('status', 'none'); return rec
         PL, Z, lpoly, R, c = res['debug']
@@ -184,7 +193,8 @@ def measure_house(house, carve=None):
         edge = shapely.distance(lpoly.exterior, shapely.points(PL[:, 0], PL[:, 1]))
         pick = inl & (np.asarray(edge) > 0.7)
         if pick.sum() < 12: pick = inl
-        en = PL[pick] @ R + c
+        # (where the aerial shows them: at the returns' own places)
+        en = PL[pick] @ R + c + shift
         sel = np.linspace(0, len(en) - 1, min(len(en), 400)).astype(int)
         chim = []
         for ch in res['chimneys']:
@@ -211,9 +221,10 @@ def open_porches(records, jobs, reuse):
     """Houses whose photographs show an open porch the plan holds: their
     bodies measured again with the porch cut out under its roof (porches.py).
     Returns the records, carved where so, and each carved house's porch."""
-    from porches import open_porch, stacked_porch, carve_rings
+    from porches import open_porch, stacked_porch, main_porch, carve_rings
     facades = json.load(open(HERE / 'facade-reads.json'))
     layouts = json.load(open(HERE / 'layout-reads.json'))
+    extra = json.load(open(HERE / 'detail-reads.json'))
     homes = {h['id']: h for h in M.houses()}
     porches, jobs_ = {}, []
     for r in records:
@@ -222,7 +233,7 @@ def open_porches(records, jobs, reuse):
         ep = [None if pr is None else pr[0][1] if all(abs(q[1] - pr[0][1]) < 0.015 for q in pr) else pr for pr in wall_profiles(r, house)]
         fc = facade(facades[r['id']]); lo = layout(layouts.get(r['id']))
         if lo: fc['lo'] = lo
-        porch = open_porch(house, r, ep, fc) or stacked_porch(house, r, ep, fc)
+        porch = open_porch(house, r, ep, fc) or stacked_porch(house, r, ep, fc) or main_porch(house, r, ep, fc, extra.get(r['id']))
         if not porch: continue
         porches[r['id']] = porch
         jobs_.append((house, (carve_rings(house, porch), r['base'] + porch.get('z0', -1.0), r['base'] + porch['c'] - .005)))
@@ -648,7 +659,9 @@ def packets(records, colours, lots, others=(), porches={}):
     from lidar_trees import lidar_tiles
     scenery = scenery_rows(SITE)
     outlines = [[[row['o'][0] + x / 10, row['o'][1] + y / 10] for x, y in row['ol']] for _, row, _ in others]
-    survey, combined, tree_stats = lidar_tiles(SITE, SOURCE, list(homes.values()), outlines, scenery)
+    from outbuildings import structures
+    buildings = [list(p.exterior.coords)[:-1] for p, _ in structures().values()]
+    survey, combined, tree_stats = lidar_tiles(SITE, SOURCE, list(homes.values()), outlines, scenery, buildings)
     families = tree_families(SITE, aerial, tile_shift, {t: (o, combined.get(t, rows)) for t, (o, rows) in scenery.items()})
     for t in families: tiles.setdefault(t, [])
     payloads = {t: json.dumps({'version': 1, 'tileId': t, 'rows': sorted(items, key=lambda x: x['id']), **({'trees': families[t]} if t in families else {}),

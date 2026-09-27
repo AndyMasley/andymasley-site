@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { Batch, frontageMaterial, type Frame, type Role } from './crafted-frontages';
 import type { EvidenceBuilding, EvidenceReport, EvidenceRoof, PhotoLayout, SetbackWall } from './evidence-types';
 import { historicAppearance } from './historic-appearance';
-import {prepareAddressFrontages,insideFormerEntrySteps,renderAddressStoop,tileGround,DOOR_ROOM,type EntryStepEnvelope} from './address-frontage';
+import {prepareAddressFrontages,insideFormerEntrySteps,renderAddressStoop,tileGround,DOOR_ROOM,LANDING,splitFoyer,type EntryStepEnvelope} from './address-frontage';
 import { measuredBody, setbackWalls, roofHeight, isMeasuredOther, isPhotographedHouse, type FrontDetails, type FrontLayout, type MeasuredRoof, type MeasuredOther, type PhotographedHouse } from './measured-roofs';
 
 /** Measured walls stand this far inside the roofprint, under the eaves. */
@@ -98,13 +98,16 @@ function photographedHome(home:EvidenceBuilding,photo:Pick<MeasuredRoof,'wc'|'tc
 }
 
 /** The street front a photograph shows: the frames facing the same way as the
- * front, from 3 m before its wall to 6 m behind, and their span along it (the
- * photograph's left end is the low end). `at` finds the frontmost of them
- * holding a stretch `half` either side of a point along the span. */
+ * front, from 3 m before its wall (or before the frontmost wing, where the
+ * plan's front is set back in the crook of an L) to 6 m behind, and their
+ * span along it (the photograph's left end is the low end). `at` finds the
+ * frontmost of them holding a stretch `half` either side of a point along the span. */
 export function streetFront(home:EvidenceBuilding):{frames:number[];a0:number;a1:number;at:(a:number,half:number)=>{frameIndex:number;u:number}|undefined}|undefined{
   const front=home.frames.find(f=>f.front)??(home.entry?home.frames[home.entry.frameIndex]:undefined);if(!front)return undefined;
   const o=front.outward,t=front.tangent,depth=(f:typeof front)=>(f.start[0]-front.start[0])*o[0]+(f.start[1]-front.start[1])*o[1];
-  const frames=home.frames.flatMap((f,i)=>f.width>=.4&&f.outward[0]*o[0]+f.outward[1]*o[1]>.95&&depth(f)>-6&&depth(f)<3?[i]:[]);
+  const parallel=(f:typeof front)=>f.outward[0]*o[0]+f.outward[1]*o[1]>.95;
+  const reach=Math.max(3,...home.frames.filter(f=>parallel(f)&&f.width>=2&&depth(f)<12).map(f=>depth(f)+.1));
+  const frames=home.frames.flatMap((f,i)=>f.width>=.4&&parallel(f)&&depth(f)>-6&&depth(f)<reach?[i]:[]);
   if(!frames.length)return undefined;
   const span=(i:number)=>{const f=home.frames[i],a=f.start[0]*t[0]+f.start[1]*t[1];return[a,a+f.width] as const;};
   const a0=Math.min(...frames.map(i=>span(i)[0])),a1=Math.max(...frames.map(i=>span(i)[1]));
@@ -342,13 +345,10 @@ export function garageFrame(home:EvidenceBuilding):number{
   return best;
 }
 
-/** A split foyer: a raised ranch or split level by its record, or a house
- * whose photograph shows a lower storey with a garage door and windows only on
- * the storey above it, under a measured wall too low for two full storeys over
+/** A split foyer (splitFoyer, address-frontage.ts) is also a house whose
+ * photograph shows a lower storey with a garage door and windows only on the
+ * storey above it, under a measured wall too low for two full storeys over
  * the recorded floor (its main floor stands half a storey up). */
-function splitFoyer(home:EvidenceBuilding):boolean{
-  return home.splitFoyer===true||/RAISED RANCH|SPLIT LEVEL/i.test(home.style);
-}
 const photographedSplitFoyer=(home:EvidenceBuilding,lo:FrontLayout):boolean=>{
   if(!(lo.st===2&&lo.w2?.length&&!lo.w1?.length&&lo.gx?.length))return false;
   const front=home.frames.find(f=>f.front);if(!front)return false;
@@ -383,7 +383,9 @@ function photoDoorMove(home:EvidenceBuilding):{frameIndex:number;u:number;basis:
   const at=(i:number,u:number)=>{const f=home.frames[i];return[f.start[0]+f.tangent[0]*u,f.start[1]+f.tangent[1]*u];};
   const [e,n]=at(entry.frameIndex,entry.u);
   const [best]=doors.map(d=>{const [x,y]=at(d.frameIndex,d.u);return{d,far:Math.hypot(x-e,y-n)};}).sort((a,b)=>a.far-b.far);
-  const fits=(i:number,u:number)=>{const f=home.frames[i],top=(x:number)=>f.profile?wallTop(f.profile,x):f.eave??home.eave;return Math.min(top(u-.6),top(u),top(u+.6))-home.floor>=DOOR_ROOM;};
+  // (a split foyer's door stands on its landing, a step or two over the ground)
+  const split=splitFoyer(home),ground=(f:EvidenceBuilding['frames'][number],u:number)=>{const g=f.groundAt;if(!g||g.length<2)return f.groundMaximum??home.floor;const x=Math.max(0,Math.min(1,u/f.width))*(g.length-1),k=Math.min(g.length-2,Math.floor(x));return g[k]+(g[k+1]-g[k])*(x-k);};
+  const fits=(i:number,u:number)=>{const f=home.frames[i],top=(x:number)=>f.profile?wallTop(f.profile,x):f.eave??home.eave;return Math.min(top(u-.6),top(u),top(u+.6))-(split?Math.min(home.floor,ground(f,u)+LANDING):home.floor)>=DOOR_ROOM;};
   // Places along the street walls within 2.5 m of the photographed door, nearest
   // first, where the wall stands tall enough; the stoop takes the first the ground allows.
   const [x0,y0]=at(best.d.frameIndex,best.d.u),places:{frameIndex:number;u:number;far:number}[]=[];
@@ -764,7 +766,9 @@ function houseOpenings(batch:Batch,home:EvidenceBuilding):void {
     // The photographed front door stands at the entry's floor; where the wall
     // there is too low over that floor (a low eave over a floor recorded high),
     // its sill comes down as far as the ground in front of it.
-    const sill=entry?Math.min(entry.floor,clear(doorU,.6)-DOOR_ROOM-.01):0,lowered=!!entry&&entry.floor-sill>.02;
+    // A split foyer's door opens on its landing, a step or two over the ground.
+    const landing=raised&&entry?Math.min(entry.floor,Math.max(groundAtU(doorU)+.15,groundAtU(doorU)+LANDING)):undefined;
+    const sill=entry?Math.min(landing??entry.floor,clear(doorU,.6)-DOOR_ROOM-.01):0,lowered=!!entry&&(landing??entry.floor)-sill>.02;
     if(entry&&(!lowered||sill>=groundAtU(doorU)-.02&&!!read?.doors.some(d=>d.frameIndex===frameIndex&&Math.abs(d.u-doorU)<1.2))){
       // Keep the existing generated doorway aligned with its retained steps.
       // The source checked grade at the doorway, not at the uphill wall corner.
@@ -777,12 +781,12 @@ function houseOpenings(batch:Batch,home:EvidenceBuilding):void {
         if(cover)doorCover(batch,f,home,doorU,sill,groundAtU(doorU),cover.kind,clear(doorU,1.15),trim);
         // A door the map did not give the house has no scenery steps: it takes its own.
         const g=groundAtU(doorU),rise=sill-g,n=Math.min(8,Math.ceil(rise/.18));
-        if((home.entryFromPhoto||lowered)&&rise>.2&&rise<1.5)for(let i=0;i<n;i++){const h=rise*(n-i)/n;batch.box(f,'foundation',doorU,g+h/2-.02,.3+i*.28,1.2,h,.3,'#a19f93');}
+        if((home.entryFromPhoto||lowered||landing!==undefined)&&rise>.2&&rise<1.5)for(let i=0;i<n;i++){const h=rise*(n-i)/n;batch.box(f,'foundation',doorU,g+h/2-.02,.3+i*.28,1.2,h,.3,'#a19f93');}
       }
     }
     // Another photographed entrance (a two-family's second door), with its steps.
     for(const u of extraDoors){
-      const g=groundAtU(u),sill=Math.max(g+.05,Math.min(Math.max(floor,g+.15),clear(u,.6)-DOOR_ROOM-.01));
+      const g=groundAtU(u),sill=Math.max(g+.05,Math.min(raised?g+LANDING:Math.max(floor,g+.15),clear(u,.6)-DOOR_ROOM-.01));
       if(sill+DOOR_ROOM>=clear(u,.6)||sill-g>1.4)continue;
       frontDoor(batch,f,home,u,sill,multi?1.08:.96,home.door??'#465356');
       const rise=sill-g,steps=Math.min(8,Math.ceil(rise/.18));
@@ -849,7 +853,7 @@ function openPorch(batch:Batch,home:EvidenceBuilding):void{
   const f:Frame={start:[line.start[0]+line.tangent[0]*u0,line.start[1]+line.tangent[1]*u0],tangent:line.tangent,outward:line.outward,structId:home.id,tileId:home.tileId};
   const front=home.frames.find(g=>g.outward[0]*line.outward[0]+g.outward[1]*line.outward[1]>.99&&Math.abs((g.start[0]-line.start[0])*line.outward[0]+(g.start[1]-line.start[1])*line.outward[1])<.05);
   const floor=home.entry?.floor??home.floor,ground=Math.min(floor-.05,(porch.strips[0].frameIndex!==undefined?home.frames[porch.strips[0].frameIndex].groundMaximum:front?.groundMaximum)??floor-.3),ceiling=porch.ceiling;
-  if(ceiling-floor<2.1||width<1.5)return;
+  if(ceiling-floor<1.95||width<1.5)return;
   // The door's place along the porch front, where it stands on the house wall behind.
   const along=(i:number,u:number)=>{const g=home.frames[i];return(g.start[0]-f.start[0])*f.tangent[0]+(g.start[1]-f.start[1])*f.tangent[1]+u;};
   const entry=home.entry,door=Math.max(.7,Math.min(width-.7,entry&&porch.strips.some(s=>s.frameIndex===entry.frameIndex)?along(entry.frameIndex,entry.u):width/2)),rise=floor-ground;

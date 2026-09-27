@@ -135,6 +135,47 @@ def stacked_porch(house, rec, ep, f):
     return porch
 
 
+MAIN_DEPTH = 2.3
+
+
+def main_porch(house, rec, ep, f, dt):
+    """An open porch the photograph shows under the house's main roof (the roof
+    sweeping down over it, as on a bungalow or Cape): no step in the survey's
+    roof marks its depth, so it is cut 2.3 m deep (at most two fifths of the
+    house's depth) under the front eave, along the photographed extent of the
+    front, as open_porch's."""
+    if not f or f.get('porch') != 'open' or (dt or {}).get('pr') != 'main': return None
+    pw = (f.get('lo') or {}).get('pw')
+    if not pw: return None
+    frames = house['frames']
+    e = house.get('entry')
+    front = next((i for i, fr in enumerate(frames) if fr.get('front')), None)
+    F = e['frameIndex'] if e else front
+    if F is None or ep[F] is None: return None
+    fr = frames[F]; w = fr['width'] - 2 * INSET
+    o = np.asarray(fr['outward'], float); t = np.asarray(fr['tangent'], float)
+    if w < 2.0 or (front is not None and np.dot(o, frames[front]['outward']) < .95): return None
+    base = rec['base']; floor = house['floor'] - base; hF = _low(ep[F])
+    if not (2.0 <= hF - floor <= 3.4): return None
+    # the photographed extent along the street front, onto this wall
+    street = [i for i, g in enumerate(frames) if np.dot(g['outward'], o) > .95 and g['width'] >= .4]
+    a = [float(np.dot(frames[i]['start'], t)) for i in street]; b = [a[k] + frames[i]['width'] for k, i in enumerate(street)]
+    a0, a1 = min(a), max(b); right = t[0] * -o[1] + t[1] * o[0] > 0
+    at = lambda x: a0 + x / 100 * (a1 - a0) if right else a1 - x / 100 * (a1 - a0)
+    lo_, hi_ = sorted((at(pw[0]), at(pw[1])))
+    base_a = float(np.dot(fr['start'], t)) + INSET
+    u0, u1 = max(0.0, lo_ - base_a), min(w, hi_ - base_a)
+    if u1 - u0 < max(1.8, .3 * w): return None
+    # the house's depth behind this wall
+    ring = np.asarray(house['outline'], float)
+    deep = float(np.max((np.asarray(fr['start'], float) - ring) @ o))
+    d = min(MAIN_DEPTH, .4 * deep)
+    if d < 1.5: return None
+    k = len(frames); prev, nxt = frames[(F - 1) % k], frames[(F + 1) % k]
+    ends = [bool(u0 < .3 and np.dot(prev['outward'], t) < -.9), bool(u1 > w - .3 and np.dot(nxt['outward'], t) > .9)]
+    return {'f': F, 'c': round(hF - .02, 3), 's': [{'u': [round(u0, 2), round(u1, 2)], 'd': round(d, 3), 'ends': ends}]}
+
+
 def carve_rings(house, porch):
     """The prisms to cut, one per strip: from 2 cm outside the front wall back
     to the house wall, 2 cm past a corner's side wall, as east/north corners."""

@@ -3,7 +3,11 @@
 A roof is modelled as the union of rectangular sections, each covered by a
 convex roof (flat, shed, gable, hip, gambrel, mansard) written as the lower
 envelope of a few planes. Sections come from the footprint's own grid lines
-plus LiDAR height breaks, chosen greedily by how many returns they explain.
+plus LiDAR height breaks, chosen greedily by how many returns they explain,
+then refined: wings reach into their neighbours, raised parts (cross gables,
+dormers) become overlays, and a lower part at a section's end (a wing, a
+porch or a garage under its own lower roof) is split from the section
+spanning it, each part fitted again.
 """
 import json, math, glob, collections, os
 from pathlib import Path
@@ -305,8 +309,11 @@ def residual_clusters(P, r, thresh, cell=0.5):
     return out
 
 
-def measure(house, debug=False):
+def measure(house, debug=False, shift=None):
+    """The roof over a plan from the returns inside it; `shift` [east, north]
+    is where the plan's returns lie from it (register.py), and moves them onto it."""
     x, y, z, tree = lidar()
+    s = np.zeros(2) if shift is None else np.asarray(shift, dtype='f8')
     outline = np.asarray(house['outline'], dtype='f8')
     poly = Polygon(outline).buffer(0)
     if poly.is_empty or poly.area < 12: return None
@@ -319,9 +326,9 @@ def measure(house, debug=False):
     lpoly = Polygon(loc).buffer(0)
     if lpoly.geom_type != 'Polygon': lpoly = max(lpoly.geoms, key=lambda g: g.area)
     rad = np.max(np.hypot(*(outline - c).T)) + 1
-    ids = np.asarray(tree.query_ball_point(c, rad), dtype=int)
+    ids = np.asarray(tree.query_ball_point(c + s, rad), dtype=int)
     if len(ids) < 12: return {'id': house['id'], 'status': 'no-lidar', 'n': int(len(ids))}
-    P = np.c_[x[ids], y[ids]]; Z = z[ids]
+    P = np.c_[x[ids], y[ids]] - s; Z = z[ids]
     PL = (P - c) @ R.T
     inner = lpoly.buffer(-0.2)
     inside = shapely.contains_xy(inner if not inner.is_empty else lpoly, PL[:, 0], PL[:, 1])
@@ -420,6 +427,44 @@ def measure(house, debug=False):
                 if sc > base_score + max(6, 0.015 * n) and (best is None or sc > best[0]): best = (sc, dict(sec, overlay=True))
         if not best: break
         sections.append(best[1])
+    # ---- refinement 3: lower parts at a section's end (a wing, a porch or a
+    # garage under its own lower roof) split from the section spanning them
+    def snap(x, grid):
+        k = int(np.argmin(np.abs(grid - x)))
+        return float(grid[k]) if abs(grid[k] - x) < 0.8 else float(x)
+    for it in range(3):
+        f = union_height(sections, PL); r = Z - np.where(np.isfinite(f), f, Z)
+        low = [cl for cl in residual_clusters(PL, -r, 0.35) if len(cl) * 0.25 >= 3.0]
+        if not low: break
+        base_score = total_score(sections, PL, Z, lam)
+        best = None
+        for cl in sorted(low, key=len, reverse=True)[:3]:
+            (bx0, by0), (bx1, by1) = PL[cl].min(0), PL[cl].max(0)
+            # candidate cuts at the cluster's inner edge where it reaches a section's end
+            cuts = set()
+            for sec in sections:
+                if sec.get('overlay') or not in_rect(sec['rect'], PL[cl]).any(): continue
+                x0, y0, x1, y1 = sec['rect']
+                for axis, lo, hi, c0, c1, grid in ((0, x0, x1, bx0, bx1, us), (1, y0, y1, by0, by1, vs)):
+                    if c1 > hi - 1.0 and c0 > lo + 1.0: cuts.add((axis, round(snap(c0 - 0.25, grid), 3)))
+                    if c0 < lo + 1.0 and c1 < hi - 1.0: cuts.add((axis, round(snap(c1 + 0.25, grid), 3)))
+            for axis, cut in sorted(cuts):
+                # every section the cut crosses beside the cluster splits there, each part refitted
+                trial, ok = [], False
+                for sec in sections:
+                    x0, y0, x1, y1 = sec['rect']
+                    lo, hi = (x0, x1) if axis == 0 else (y0, y1)
+                    olo, ohi, c0, c1 = (y0, y1, by0, by1) if axis == 0 else (x0, x1, bx0, bx1)
+                    if sec.get('overlay') or not (lo + 1.0 < cut < hi - 1.0) or ohi < c0 or olo > c1: trial.append(sec); continue
+                    a, b = ((x0, y0, cut, y1), (cut, y0, x1, y1)) if axis == 0 else ((x0, y0, x1, cut), (x0, cut, x1, y1))
+                    sa, sb = make_section(a, PL, Z), make_section(b, PL, Z)
+                    if not sa or not sb: trial.append(sec); continue
+                    trial += [sa, sb]; ok = True
+                if not ok: continue
+                sc = total_score(trial, PL, Z, lam)
+                if sc > base_score + max(6, 0.015 * n) and (best is None or sc > best[0]): best = (sc, trial)
+        if not best: break
+        sections = best[1]
     f = union_height(sections, PL); r = Z - np.where(np.isfinite(f), f, Z)
     # ---- chimneys: small, sharp clusters well above the fitted roof
     chimneys = []
