@@ -15,7 +15,10 @@ for feature in [f for f in j['features']if f['kind']=='cemetery']:
  domain=p.intersection(unary_union(lines)).difference(public);polys=[domain]if isinstance(domain,Polygon)else list(domain.geoms);counts[feature['id']]=len(polys)
  for p in polys:
   if not isinstance(p,Polygon)or p.area<.1:continue
-  coords=[[round(x,5),round(y,5)]for x,y in p.exterior.coords];holes=[[[round(x,5),round(y,5)]for x,y in r.coords]for r in p.interiors]
+  # The buffered drives' round joins carry sub-centimetre vertices; a
+  # centimetre is well inside a paint stripe's width.
+  p=p.simplify(.01,preserve_topology=True)
+  coords=[[round(x,2),round(y,2)]for x,y in p.exterior.coords];holes=[[[round(x,2),round(y,2)]for x,y in r.coords]for r in p.interiors]
   x0,y0,x1,y1=p.bounds
   for x in range(math.floor(x0/250),math.floor(x1/250)+1):
    for y in range(math.floor(y0/250),math.floor(y1/250)+1):
