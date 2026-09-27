@@ -302,7 +302,7 @@ def prepare_others(out, jobs, reuse, houses, facades, paint, lots):
         if ok:
             row.update({'p': rec['peak'], 'v': rec['v'], 'r': P.small_indices(rec['roof'], rec['nv']), 'w': P.small_indices(rec['wall'], rec['nv']),
                         't': P.small_indices(rec['trim'], rec['nv']), 'q': rec['fit']['inlierShare'], 'in': rec['inset'],
-                        'g': [g for g in rec['gutters'] if all(math.isfinite(x) for x in g)],
+                        'g': P.merge_gutters(rec['gutters']),
                         'ep': [None if pr is None else pr[0][1] if all(abs(q[1] - pr[0][1]) < 0.015 for q in pr) else pr
                                for pr in P.wall_profiles(rec, {'frames': frames}, rec['inset'])]})
         else:

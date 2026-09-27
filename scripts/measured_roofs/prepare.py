@@ -15,7 +15,10 @@ street photograph.
    the town), so each house's returns are first moved onto its plan by the
    shift that best lays the two together (register.py, registration.json);
    the other buildings' returns and the survey's trees move by the local
-   shift at their places.
+   shift at their places. A house the survey has no roof over (most built
+   since) takes the roof form and storeys its photograph shows, at the eave
+   height and pitch of the town's measured houses with those storeys
+   (photo_roof).
 2. Roof colour. The MassGIS 2025 aerial is registered to the LiDAR per 250 m
    tile (building lean differs across the mosaic) and sampled on each roof's
    inlier returns.
@@ -47,8 +50,9 @@ street photograph.
    house's front fence gets its line along the parcel's street frontage
    (fences.py). Near the streets and houses each tile's packet carries the
    trees the survey found in place of the scenery's block trees
-   (lidar_trees.py), and says which of its trees are evergreens in the
-   leaf-off aerial (trees.py).
+   (lidar_trees.py), less those on the lots cleared since for the houses
+   built since, and says which of its trees are evergreens in the leaf-off
+   aerial (trees.py).
 
 Usage: python3 scripts/measured_roofs/register.py (when the plans or the survey change), then
        python3 scripts/measured_roofs/prepare.py [--jobs N] [--limit N] [--reuse]
@@ -77,6 +81,7 @@ SITE = M.SITE
 SOURCE = M.SOURCE
 OUT = Path(os.environ.get('WEBSTER_MEASURED_OUT', '/private/tmp/webster-measured-roofs'))
 INSET, SLAB = 0.32, 0.22
+CLEARED = 12.0   # metres around a house built since the survey that its lot was cleared
 OX, OY = 171282.3328920724, 867589.2761750807
 
 
@@ -162,6 +167,167 @@ def gutters(v, f, lpoly, R, c):
     return out
 
 
+def merge_gutters(gs):
+    """Gutter runs [e0, n0, e1, n1, height] merged where they lie on one line at
+    one height and overlap or touch (a fascia's edges split at the body's
+    vertices, and doubled where its triangles meet it at a T)."""
+    out = []
+    for g in sorted((g for g in gs if all(math.isfinite(x) for x in g)), key=lambda g: -math.hypot(g[2] - g[0], g[3] - g[1])):
+        a, b = np.asarray(g[:2], float), np.asarray(g[2:4], float); L = float(np.hypot(*(b - a)))
+        if L < 1e-6: continue
+        for m in out:
+            ma, mb = np.asarray(m[:2], float), np.asarray(m[2:4], float); ML = float(np.hypot(*(mb - ma)))
+            d = (mb - ma) / ML
+            if abs(m[4] - g[4]) > 0.03 or abs(d[0] * (b - a)[1] - d[1] * (b - a)[0]) > 0.035 * L: continue
+            off = lambda q: abs(d[0] * (q - ma)[1] - d[1] * (q - ma)[0])
+            if off(a) > 0.06 or off(b) > 0.06: continue
+            ta, tb = sorted((float(d @ (a - ma)), float(d @ (b - ma))))
+            if ta > ML + 0.05 or tb < -0.05: continue
+            lo, hi = min(0.0, ta), max(ML, tb)
+            p0, p1 = ma + d * lo, ma + d * hi
+            m[:4] = [round(float(p0[0]), 2), round(float(p0[1]), 2), round(float(p1[0]), 2), round(float(p1[1]), 2)]
+            break
+        else: out.append(list(g))
+    return out
+
+
+# The eave over the floor and the pitch, by the storeys a photograph shows: the
+# medians of the town's measured houses (their highest frame eave, and the
+# area-weighted slope of their roofs).
+PHOTO_EAVE = {1: 2.75, 1.5: 2.85, 2: 5.5, 2.5: 5.9, 3: 8.4}
+PHOTO_PITCH = {1: 0.40, 1.5: 0.72, 2: 0.57, 2.5: 0.68, 3: 0.60}
+
+
+def plan_rects(lpoly, most=3):
+    """Rectangles (x0, y0, x1, y1) covering a plan in its own frame, largest
+    first: the largest rectangle of the grid the plan's own edges draw (edges
+    within 0.7 m merged; a cell counts when mostly inside), then the largest
+    of what is left, while one holds 12 m² and a tenth of the plan."""
+    xs, ys = np.asarray(lpoly.exterior.coords).T
+    us = M.cluster_values(xs, 0.7); vs = M.cluster_values(ys, 0.7)
+    x0, y0, x1, y1 = lpoly.bounds
+    us[0], us[-1], vs[0], vs[-1] = x0, x1, y0, y1
+    nu, nv = len(us) - 1, len(vs) - 1
+    free = np.zeros((nu, nv), bool)
+    for i in range(nu):
+        for j in range(nv):
+            cell = shapely.box(us[i], vs[j], us[i + 1], vs[j + 1])
+            free[i, j] = cell.area > 0 and lpoly.intersection(cell).area >= 0.5 * cell.area
+    rects = []
+    while len(rects) < most:
+        best = None
+        for i0 in range(nu):
+            for i1 in range(i0 + 1, nu + 1):
+                for j0 in range(nv):
+                    for j1 in range(j0 + 1, nv + 1):
+                        if not free[i0:i1, j0:j1].all(): break
+                        area = (us[i1] - us[i0]) * (vs[j1] - vs[j0])
+                        if best is None or area > best[0]: best = (area, i0, i1, j0, j1)
+        if not best or best[0] < max(12.0, 0.1 * lpoly.area): break
+        _, i0, i1, j0, j1 = best
+        free[i0:i1, j0:j1] = False
+        rects.append([float(us[i0]), float(vs[j0]), float(us[i1]), float(vs[j1])])
+    return rects
+
+
+def photo_roof(house):
+    """A roof for a house the survey missed (built since 2021, or under a gap
+    in its returns): the form and storeys its street photograph shows, at the
+    eave height and pitch the town's measured houses of those storeys have
+    (a raised ranch's or walkout's lower storey stands under its floor). The
+    plan is covered by up to three rectangles: the largest carries the form,
+    a side gable's (or cross gable's) ridge along the street front and a front
+    gable's across it; the others are gabled along their length (hipped under
+    a hip). None without a read of both, or for a plan too small to be the
+    house photographed."""
+    lo = _layouts().get(house['id']) or {}
+    form, st = lo.get('rf'), lo.get('st')
+    if not form or not st: return None
+    outline = np.asarray(house['outline'], float)
+    poly = shapely.Polygon(outline).buffer(0)
+    if poly.is_empty or poly.area < 30: return None
+    if poly.geom_type != 'Polygon': poly = max(poly.geoms, key=lambda g: g.area)
+    theta = M.orientation(outline); c = np.asarray(poly.centroid.coords[0])
+    R = np.array([[math.cos(theta), math.sin(theta)], [-math.sin(theta), math.cos(theta)]])
+    lpoly = shapely.Polygon((outline - c) @ R.T).buffer(0)
+    if lpoly.geom_type != 'Polygon': lpoly = max(lpoly.geoms, key=lambda g: g.area)
+    rects = plan_rects(lpoly)
+    if not rects: return None
+    o = address_outward(house) @ R.T
+    street_u = abs(o[1]) >= abs(o[0])   # the street front faces across v, so runs along u
+    style = house.get('style') or ''
+    mobile = style == 'MOBILE HOME'
+    if style == 'CAPE' and st >= 1.5: st = 1.5   # a Cape's upper storey is in its roof, however many rows of windows show
+    # a raised ranch's (a walkout's) floor is its upper storey's
+    above = st - 1 if st >= 2 and house['floor'] - house['base'] > 1.6 and style in ('RAISED RANCH', 'RANCH', 'SPLIT LEVEL') else st
+    if form in ('gambrel', 'mansard'): above = max(1, st - 1)   # the upper storey is in the roof
+    near = min(PHOTO_EAVE, key=lambda k: abs(k - above))
+    E = house['floor'] + (2.7 if mobile else PHOTO_EAVE[near])
+    k = 0.27 if mobile else PHOTO_PITCH[min(PHOTO_PITCH, key=lambda q: abs(q - st))]
+    sections = []
+    for n, (x0, y0, x1, y1) in enumerate(rects):
+        cu, cv, A, B = (x0 + x1) / 2, (y0 + y1) / 2, (x1 - x0) / 2, (y1 - y0) / 2
+        if n == 0: along_u = street_u if form in ('side', 'cross', 'gambrel', 'shed') else (not street_u) if form == 'front' else A >= B
+        else: along_u = A >= B if abs(A - B) > 0.15 * max(A, B) else not sections[0]['along_u'] if form == 'cross' else sections[0]['along_u']
+        half, length = (B, A) if along_u else (A, B)
+        # planes z <= a*s + b*t + c, s along u and t along v from the rectangle's centre
+        side = lambda kk, H: [(0.0, -kk, H), (0.0, kk, H)] if along_u else [(-kk, 0.0, H), (kk, 0.0, H)]
+        ends = lambda kk, H: [(-kk, 0.0, H), (kk, 0.0, H)] if along_u else [(0.0, -kk, H), (0.0, kk, H)]
+        main = form if n == 0 else 'hip' if form == 'hip' else 'flat' if form == 'flat' else 'gable'
+        if main == 'flat': model, planes = 'flat', [(0.0, 0.0, E + 0.3)]
+        elif main == 'shed': model, planes = 'shed', [(0.0, -0.25, E + 0.25 * half)] if along_u else [(-0.25, 0.0, E + 0.25 * half)]
+        elif main == 'hip': model, planes = 'hip', side(k, E + k * half) + ends(k, E + k * length)
+        elif main == 'mansard': model, planes = 'mansard', side(1.2, E + 1.2 * half) + ends(1.2, E + 1.2 * length) + [(0.0, 0.0, E + 2.4)]
+        elif main == 'gambrel':
+            w = 0.3 * half
+            model, planes = 'gambrel', side(0.45, E + 2.6 * w + 0.45 * (half - w)) + side(2.6, E + 2.6 * half)
+        else: model, planes = 'gable', side(k, E + k * half)
+        # (named as the fits name them, by the ridge's axis: the frame's first, here u, or across)
+        model = {'shed': ('shed_s', 'shed_t'), 'gable': ('gable_s', 'gable_t'), 'hip': ('hip', 'hip_t')}.get(model, (model, model))[0 if along_u else 1]
+        sections.append({'rect': [x0, y0, x1, y1], 'frame': [cu, cv, A, B, False], 'model': model, 'along_u': along_u,
+                         'planes': [list(p) for p in planes], 'rmse': 0.0, 'n': 0, 'inliers': 0, 'params': {'photo': form}})
+    for sec in sections: del sec['along_u']
+    # what the rectangles leave is roofed flat at the eave (house_solid's fillers)
+    bx0, by0, bx1, by1 = lpoly.bounds
+    gx, gy = np.meshgrid(np.arange(bx0, bx1, 0.5), np.arange(by0, by1, 0.5))
+    grid = np.c_[gx.ravel(), gy.ravel()]
+    PL = grid[shapely.contains_xy(lpoly, grid[:, 0], grid[:, 1])]
+    return {'id': house['id'], 'status': 'ok', 'theta': theta, 'centre': c.tolist(), 'sections': sections, 'chimneys': [], 'n': 0, 'cover': 0.0,
+            'inlierShare': 0.0, 'rmse': 0.0, 'photo': True, 'debug': (PL, np.full(len(PL), E), lpoly, R, c)}
+
+
+_streets = None
+def address_outward(house):
+    """The outward normal of the wall the street photograph shows: the plan's
+    marked front, unless another wall faces the address street clearly better
+    (a corner lot's marked front on its side street)."""
+    global _streets
+    from fences import street_name
+    if _streets is None:
+        import gzip
+        _streets = {}
+        for e in json.load(gzip.open(SITE / 'data/derived/town/engine-network.json.gz'))['edges']:
+            if len(e['points']) >= 2: _streets.setdefault(e['name'], []).append(shapely.LineString([q[:2] for q in e['points']]))
+    frames = house['frames']
+    front = next((f for f in frames if f.get('front')), frames[0])
+    name = street_name(house.get('address'), set(_streets))
+    if not name: return np.asarray(front['outward'], float)
+    c = np.asarray(house['outline'], float).mean(0); p = shapely.Point(*c)
+    line = min(_streets[name], key=lambda l: l.distance(p))
+    q = line.interpolate(line.project(p)); d = np.array([q.x, q.y]) - c; n = float(np.hypot(*d))
+    if n < 1 or n > 120: return np.asarray(front['outward'], float)
+    d /= n
+    best = max((f for f in frames if f['width'] > 3), key=lambda f: float(np.dot(f['outward'], d)), default=front)
+    return np.asarray(best['outward'] if np.dot(best['outward'], d) > np.dot(front['outward'], d) + 0.2 else front['outward'], float)
+
+
+_layout_reads = None
+def _layouts():
+    global _layout_reads
+    if _layout_reads is None: _layout_reads = json.load(open(HERE / 'layout-reads.json'))
+    return _layout_reads
+
+
 _forms = None
 def roof_form(hid):
     """The roof the house's street photograph shows (layout-reads.json 'rf'), where read."""
@@ -178,7 +344,11 @@ def measure_house(house, carve=None):
     try:
         centre = np.asarray(house['outline'], float).mean(0)
         shift = G.house_shift(house['id'], *centre)
-        res = M.measure(house, debug=True, shift=shift, form=roof_form(house['id']))
+        res = M.measure(house, debug=True, shift=shift, form=roof_form(house['id']), facing=address_outward(house))
+        # a house the survey missed takes the roof its photograph shows: one it
+        # found no roof over at all, or only a few returns over while it was built
+        missed = not res or res.get('status') == 'no-lidar' or res.get('status') in ('sparse', 'unfit') and (house.get('year') or 0) >= 2019
+        if missed: res = photo_roof(house) or res
         if not res or res.get('status') != 'ok':
             rec['status'] = (res or {}).get('status', 'none'); return rec
         PL, Z, lpoly, R, c = res['debug']
@@ -205,7 +375,13 @@ def measure_house(house, carve=None):
         edge = shapely.distance(lpoly.exterior, shapely.points(PL[:, 0], PL[:, 1]))
         pick = inl & (np.asarray(edge) > 0.7)
         if pick.sum() < 12: pick = inl
-        # (where the aerial shows them: at the returns' own places)
+        # (where the aerial shows them: at the returns' own places; a photographed
+        # roof samples its plan, well inside the edge)
+        if res.get('photo'):
+            inner = lpoly.buffer(-0.7)
+            gx, gy = np.meshgrid(np.arange(*inner.bounds[0::2], 0.8) if not inner.is_empty else [], np.arange(*inner.bounds[1::2], 0.8) if not inner.is_empty else [])
+            grid = np.c_[gx.ravel(), gy.ravel()]
+            PL = grid[shapely.contains_xy(inner, grid[:, 0], grid[:, 1])] if len(grid) else np.zeros((0, 2)); pick = np.ones(len(PL), bool)
         en = PL[pick] @ R + c + shift
         sel = np.linspace(0, len(en) - 1, min(len(en), 400)).astype(int)
         chim = []
@@ -216,6 +392,7 @@ def measure_house(house, carve=None):
                     'peak': round(float(v[:, 2].max()), 3), 'theta': res['theta'],
                     'v': b64(uq), 'roof': b64(roof), 'wall': b64(wall), 'trim': b64(trim), 'nv': int(len(uq)),
                     'frameEaves': eaves, 'chimneys': chim, 'gutters': gutters(v, f, lpoly, R, c), 'components': comps,
+                    **({'photoBody': True} if res.get('photo') else {}),
                     'fit': {'inlierShare': round(res['inlierShare'], 3), 'rmse': round(res['rmse'], 3), 'n': res['n'], 'cover': round(res['cover'], 3),
                             'models': [s['model'] for s in res['sections']], 'overlays': sum(bool(s.get('overlay')) for s in res['sections']),
                             'fillers': len(fillers)},
@@ -366,7 +543,12 @@ def roof_colours(records):
         for r in items:
             pts = np.asarray(r['colourPts'], float)
             if len(pts) < 5: continue
-            out[r['id']] = [round(float(v), 1) for v in robust_colour(aerial(pts[:, 0] + dx, pts[:, 1] + dy))]
+            col = robust_colour(aerial(pts[:, 0] + dx, pts[:, 1] + dy))
+            # a roof the survey missed may be missing from the aerial too: its
+            # plan's colour is kept only where it reads as roofing (grey, not
+            # green, not bare ground's pale tan)
+            if r.get('photoBody') and (col.max() - col.min() > 40 or col @ [0.2126, 0.7152, 0.0722] > 165 or (col[1] > col[0] + 6 and col[1] > col[2] + 4)): continue
+            out[r['id']] = [round(float(v), 1) for v in col]
     return out
 
 
@@ -600,7 +782,7 @@ def packets(records, colours, lots, others=(), porches={}):
         q = r['fit']['inlierShare']
         # a fit explaining under three fifths of the returns still beats the
         # scenery's guessed body where the returns cover most of the plan
-        if q < 0.45 or r['fit']['cover'] < 0.35 or (q < 0.6 and r['fit']['cover'] < 0.6): skipped['weak fit'] += 1; continue
+        if not r.get('photoBody') and (q < 0.45 or r['fit']['cover'] < 0.35 or (q < 0.6 and r['fit']['cover'] < 0.6)): skipped['weak fit'] += 1; continue
         row = {'id': r['id'], 'o': r['origin'], 'b': round(r['base'], 3), 'p': r['peak'], 'v': r['v'], 'r': small_indices(r['roof'], r['nv']),
                'w': small_indices(r['wall'], r['nv']), 't': small_indices(r['trim'], r['nv']),
                'e': [None if e is None or not math.isfinite(e[0]) else round(e[0], 3) for e in r['frameEaves']],
@@ -608,7 +790,7 @@ def packets(records, colours, lots, others=(), porches={}):
                'ep': [None if pr is None else pr[0][1] if all(abs(q[1] - pr[0][1]) < 0.015 for q in pr) else pr
                       for pr in wall_profiles(r, homes[r['id']])],
                'c': [c for c in clear_chimneys(r, homes[r['id']]) if all(math.isfinite(x) for x in c)],
-               'g': [g for g in r.get('gutters', []) if all(math.isfinite(x) for x in g)], 'q': q}
+               'g': merge_gutters(r.get('gutters', [])), 'q': q}
         if r['id'] in colours: row['rc'] = roof_colour(colours[r['id']])
         pc = porches.get(r['id'])
         if pc:
@@ -675,7 +857,11 @@ def packets(records, colours, lots, others=(), porches={}):
     outlines = [[[row['o'][0] + x / 10, row['o'][1] + y / 10] for x, y in row['ol']] for _, row, _ in others]
     from outbuildings import structures
     buildings = [list(p.exterior.coords)[:-1] for p, _ in structures().values()]
-    survey, combined, tree_stats = lidar_tiles(SITE, SOURCE, list(homes.values()), outlines, scenery, buildings)
+    # a house built since the survey (none of its roof there, built 2019 or later) stands on a lot
+    # cleared since: the survey's trees within 12 m of it are gone
+    cleared = [shapely.Polygon(homes[r['id']]['outline']).buffer(CLEARED) for r in records
+               if r.get('photoBody') and (homes[r['id']].get('year') or 0) >= 2019]
+    survey, combined, tree_stats = lidar_tiles(SITE, SOURCE, list(homes.values()), outlines, scenery, buildings, cleared)
     families = tree_families(SITE, aerial, tile_shift, {t: (o, combined.get(t, rows)) for t, (o, rows) in scenery.items()})
     for t in families: tiles.setdefault(t, [])
     payloads = {t: json.dumps({'version': 1, 'tileId': t, 'rows': sorted(items, key=lambda x: x['id']), **({'trees': families[t]} if t in families else {}),

@@ -7,11 +7,14 @@ plus LiDAR height breaks, chosen greedily by how many returns they explain,
 then refined: wings reach into their neighbours, raised parts (cross gables,
 dormers) become overlays, and a lower part at a section's end (a wing, a
 porch or a garage under its own lower roof) is split from the section
-spanning it, each part fitted again. No shed is steeper than 45 degrees and
+spanning it, each part fitted again, and a gable one of whose sides
+pitches far lower than the other is fitted as a symmetric roof under a shed
+dormer on that side (shed_dormers). No shed is steeper than 45 degrees and
 no gable side steeper than two to one (a steeper plane over a section is half
 of a small gable or the top of a wall, and drew as a roof standing upright on
 a front), and a section over a third of the plan leans toward the roof form
-the street photograph shows. A plan with a wing set at an angle to the rest
+the street photograph shows, a side gable's ridge along the photographed wall
+and a front gable's across it. A plan with a wing set at an angle to the rest
 is also fitted in two parts, each in its own frame (split_plan), and keeps
 the parts where together they explain clearly more of the returns.
 """
@@ -190,14 +193,24 @@ FORMS = {'gambrel': {'gambrel'}, 'hip': {'hip', 'hip_t'}, 'mansard': {'mansard'}
          'side': {'gable_s', 'gable_t'}, 'front': {'gable_s', 'gable_t'}, 'cross': {'gable_s', 'gable_t'}}
 
 
-def choose(fits, n, form=None):
+def favoured(form, wall, swap):
+    """The models a photographed form favours over a section with this frame:
+    a side gable's ridge runs along the street wall ('u' or 'v' in the house
+    frame, where known) and a front gable's across it."""
+    models = FORMS.get(form, set())
+    if wall is None or form not in ('side', 'front'): return models
+    along = wall if form == 'side' else ('v' if wall == 'u' else 'u')
+    return {'gable_s' if (along == 'u') != swap else 'gable_t'}
+
+
+def choose(fits, n, favour=()):
     """Prefer simpler roofs unless a richer one explains clearly more returns;
-    a main roof leans toward the form its photograph shows, by as much as
-    four in a hundred of its returns."""
+    a main roof leans toward the form its photograph shows (`favour`), by as
+    much as four in a hundred of its returns."""
     if not fits: return None
     best = None
     for name, (planes, rmse, inl, params) in fits.items():
-        score = inl - COMPLEXITY[name] * max(2.0, 0.015 * n) - rmse * n * 0.25 + (0.04 * n if name in FORMS.get(form, ()) else 0.0)
+        score = inl - COMPLEXITY[name] * max(2.0, 0.015 * n) - rmse * n * 0.25 + (0.04 * n if name in favour else 0.0)
         if best is None or score > best[0]: best = (score, name)
     name = best[1]
     # A pitched roof must actually pitch; nearly level fits are flat.
@@ -296,7 +309,7 @@ def total_score(sections, P, Z, lam):
     return inl - lam * sum(COMPLEXITY[s['model']] for s in sections)
 
 
-def make_section(rect, P, Z, mask=None, quick=False, allowed=None, form=None):
+def make_section(rect, P, Z, mask=None, quick=False, allowed=None, form=None, wall=None):
     frame = section_frame(rect)
     m = in_rect(rect, P)
     if mask is not None: m &= mask
@@ -304,7 +317,7 @@ def make_section(rect, P, Z, mask=None, quick=False, allowed=None, form=None):
     s, t = local_st(frame, P[m])
     fits = fit_models(s, t, Z[m], frame[2], frame[3], quick=quick)
     if allowed: fits = {k: v for k, v in fits.items() if k in allowed}
-    name = choose(fits, int(m.sum()), form)
+    name = choose(fits, int(m.sum()), favoured(form, wall, frame[4]))
     if not name: return None
     planes, rmse, inl, params = fits[name]
     return {'rect': [float(v) for v in rect], 'frame': [float(v) for v in frame[:4]] + [bool(frame[4])], 'model': name,
@@ -333,11 +346,13 @@ def residual_clusters(P, r, thresh, cell=0.5):
     return out
 
 
-def measure(house, debug=False, shift=None, form=None, split=True):
+def measure(house, debug=False, shift=None, form=None, split=True, facing=None):
     """The roof over a plan from the returns inside it; `shift` [east, north]
     is where the plan's returns lie from it (register.py), and moves them onto
     it; `form` is the roof its street photograph shows, which a section over
-    at least a third of the plan leans toward (choose)."""
+    at least a third of the plan leans toward (choose), a side gable's ridge
+    along the wall facing `facing` (the photographed wall's outward normal)
+    and a front gable's across it."""
     x, y, z, tree = lidar()
     s = np.zeros(2) if shift is None else np.asarray(shift, dtype='f8')
     outline = np.asarray(house['outline'], dtype='f8')
@@ -348,6 +363,9 @@ def measure(house, debug=False, shift=None, form=None, split=True):
     c = np.asarray(poly.centroid.coords[0])
     U = np.array([math.cos(theta), math.sin(theta)]); V = np.array([-U[1], U[0]])
     R = np.vstack([U, V])
+    # the street wall's axis in the house frame: 'u' where the wall the
+    # photograph shows faces across v
+    wall = None if facing is None else 'u' if abs(float(np.dot(facing, V))) >= abs(float(np.dot(facing, U))) else 'v'
     loc = (outline - c) @ R.T
     lpoly = Polygon(loc).buffer(0)
     if lpoly.geom_type != 'Polygon': lpoly = max(lpoly.geoms, key=lambda g: g.area)
@@ -413,7 +431,7 @@ def measure(house, debug=False, shift=None, form=None, split=True):
         val, (i0, i1, j0, j1), m = best
         rect = (us[i0], vs[j0], us[i1], vs[j1])
         main = (rect[2] - rect[0]) * (rect[3] - rect[1]) >= total_area / 3
-        sec = make_section(rect, PL, Z, mask=m, form=form if main else None)
+        sec = make_section(rect, PL, Z, mask=m, form=form if main else None, wall=wall)
         if not sec: break
         sections.append(sec)
         covered[i0:i1, j0:j1] = True
@@ -485,7 +503,7 @@ def measure(house, debug=False, shift=None, form=None, split=True):
                     if sec.get('overlay') or not (lo + 1.0 < cut < hi - 1.0) or ohi < c0 or olo > c1: trial.append(sec); continue
                     a, b = ((x0, y0, cut, y1), (cut, y0, x1, y1)) if axis == 0 else ((x0, y0, x1, cut), (x0, cut, x1, y1))
                     big = lambda q: form if (q[2] - q[0]) * (q[3] - q[1]) >= total_area / 3 else None
-                    sa, sb = make_section(a, PL, Z, form=big(a)), make_section(b, PL, Z, form=big(b))
+                    sa, sb = make_section(a, PL, Z, form=big(a), wall=wall), make_section(b, PL, Z, form=big(b), wall=wall)
                     if not sa or not sb: trial.append(sec); continue
                     trial += [sa, sb]; ok = True
                 if not ok: continue
@@ -493,6 +511,7 @@ def measure(house, debug=False, shift=None, form=None, split=True):
                 if sc > base_score + max(6, 0.015 * n) and (best is None or sc > best[0]): best = (sc, trial)
         if not best: break
         sections = best[1]
+    sections = shed_dormers(sections, PL, Z, lam)
     result = {'id': house['id'], 'status': 'ok', 'theta': theta, 'centre': c.tolist(), 'grid': [us.tolist(), vs.tolist()], 'n': int(n), 'cover': cover}
     result.update(finish(sections, PL, Z, lpoly))
     # ---- a wing set at an angle to the rest: each part fitted in its own
@@ -501,7 +520,7 @@ def measure(house, debug=False, shift=None, form=None, split=True):
     if parts:
         combined = []
         for k, part in enumerate(parts):
-            sub = measure({'id': f"{house['id']}#{k}", 'outline': part, 'base': base}, shift=shift, form=form, split=False)
+            sub = measure({'id': f"{house['id']}#{k}", 'outline': part, 'base': base}, shift=shift, form=form, split=False, facing=facing)
             if not sub or sub.get('status') != 'ok': combined = None; break
             phi = sub['theta'] - theta; ck = np.asarray(sub['centre']); Rk = np.array([[math.cos(sub['theta']), math.sin(sub['theta'])], [-math.sin(sub['theta']), math.cos(sub['theta'])]])
             d = (ck - c) @ Rk.T
@@ -514,6 +533,65 @@ def measure(house, debug=False, shift=None, form=None, split=True):
                 result.update(alt); result['parts'] = len(parts)
     result['debug'] = (PL, Z, lpoly, R, c) if debug else None
     return result
+
+
+def shed_dormers(sections, PL, Z, lam):
+    """Refinement 4: a shed dormer on one slope. A gable whose one side
+    pitches at under three fifths of the other is most often a symmetric roof
+    with a shed dormer along that side (a Cape's or a bungalow's), not a
+    lopsided one: each such section is tried as its steeper slope mirrored,
+    under the shallower slope as a dormer (an overlay from the ridge) inset
+    from the gable ends and set back from the eave as the returns show, and
+    kept that way unless it explains clearly fewer returns; so a gable end
+    facing the street keeps its true shape."""
+    n = len(Z)
+    for k in range(len(sections)):
+        sec = sections[k]
+        if sec.get('overlay') or sec.get('rot') or sec['model'] not in ('gable_s', 'gable_t'): continue
+        p = sec['params']
+        if 'k1' not in p: continue
+        k1, k2, off = p['k1'], p['k2'], p['offset']
+        steep, shallow = max(k1, k2), min(k1, k2)
+        if shallow >= 0.6 * steep or steep < 0.3: continue
+        cu, cv, A, B, swap = sec['frame']
+        ridge_s = sec['model'] == 'gable_s'
+        Aa, Bc = (A, B) if ridge_s else (B, A)          # half-lengths along the ridge and across it
+        side = 1.0 if k1 < k2 else -1.0                  # the dormer's side of the ridge, across
+        run = Bc - side * off                            # ridge to eave on that side
+        if run < 1.5 or 2 * Aa < 3.0: continue
+        H = sec['planes'][0][2] - k1 * off               # the ridge's height
+        sym = [(0.0, -steep, H + steep * off), (0.0, steep, H - steep * off)] if ridge_s else [(-steep, 0.0, H + steep * off), (steep, 0.0, H - steep * off)]
+        mirrored = dict(sec, planes=[list(q) for q in sym], params=dict(p, k1=steep, k2=steep, dormer=True))
+        rest = sections[:k] + [mirrored] + sections[k + 1:]
+        # the shallow plane in the house frame: z <= ax*x + ay*y + c
+        pa, pb, pc = sec['planes'][0] if k1 < k2 else sec['planes'][1]
+        ax, ay, c0 = (pb, pa, pc - pa * cv - pb * cu) if swap else (pa, pb, pc - pa * cu - pb * cv)
+        old = int(np.sum(np.abs(Z - union_height(sections, PL)) < INLIER))
+        along_x = ridge_s != swap
+        best = None
+        for f in (1.0, 0.8, 0.6):
+            for i0 in (0.0, 0.5, 1.0, 1.5):
+                for i1 in (0.0, 0.5, 1.0, 1.5):
+                    if 2 * Aa - i0 - i1 < 2.0: continue
+                    q0, q1 = sorted((off + side * 0.1, off + side * f * run))
+                    a0, a1 = -Aa + i0, Aa - i1
+                    rect = [cu + a0, cv + q0, cu + a1, cv + q1] if along_x else [cu + q0, cv + a0, cu + q1, cv + a1]
+                    fr = section_frame(rect)
+                    fcu, fcv, _, _, fswap = fr
+                    cc = c0 + ax * fcu + ay * fcv
+                    plane = (ay, ax, cc) if fswap else (ax, ay, cc)
+                    model = 'shed_s' if abs(plane[0]) > abs(plane[1]) else 'shed_t'
+                    dm = {'rect': [float(v) for v in rect], 'frame': [float(v) for v in fr[:4]] + [bool(fswap)], 'model': model,
+                          'planes': [[float(v) for v in plane]], 'rmse': 0.0, 'n': 0, 'inliers': 0, 'params': {'dormer': True},
+                          'overlay': True, 'dormer': True}
+                    trial = rest + [dm]
+                    inl = int(np.sum(np.abs(Z - union_height(trial, PL)) < INLIER))
+                    # of equal fits, the dormer set in from the ends and the eave
+                    if best is None or inl >= best[0]: best = (inl, trial, i0 + i1 > 0 or f < 1.0)
+        # the symmetric roof and its dormer, unless they explain clearly fewer
+        # returns, or are the lopsided roof again (flush with both ends and the eave)
+        if best and best[2] and best[0] >= old - max(4, 0.01 * n): sections = best[1]
+    return sections
 
 
 def finish(sections, PL, Z, lpoly):

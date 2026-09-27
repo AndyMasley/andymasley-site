@@ -323,7 +323,12 @@ longer stands upright on a front. A plan with a wing set at an angle to the rest
 is fitted in two parts, each section keeping its turn from the house frame
 (`rot`), and a roof fit explaining under three fifths of the returns is still
 used where the returns cover most of the plan: it beats the scenery's guessed
-body. Where the photograph shows a gambrel, the
+body. A gable with one side pitched far lower than the other, most often a
+full shed dormer the survey reads as one long shallow slope, is fitted as a
+symmetric roof under a shed dormer (`shed_dormers`), inset from the gable ends
+and set back from the eave where the returns show it, and a main roof leans
+toward the photographed form with its ridge along the photographed wall (a
+side gable) or across it (a front gable). Where the photograph shows a gambrel, the
 survey finds its shallow upper slopes and the steep lower ones stand nearly
 upright over the upper storey of each eave wall, so that storey is shingled in
 the roof's colour from a flared eave at its head (`gambrelSides`), its windows
@@ -340,7 +345,13 @@ Photographed garage doors (count, side as seen from the street, colour) go in
 the street wall on that side, a garage wing's own wall where the front steps;
 when they fill the wall the plan gave the entry, the door moves to the widest
 other street wall on a stoop fitted to the sampled ground, and the old steps are
-retired. A house the LiDAR could not fit keeps its scenery body but takes its
+retired. A house the survey has no roof over (most of them built since 2021)
+is built from its photograph (`photo_roof` in `prepare.py`): the roof form and
+storeys it shows, at the eave height and pitch of the town's measured houses
+with those storeys, over up to three rectangles covering the plan, the
+largest carrying the form (a side or cross gable's ridge along the address
+street, a front gable's across it) and the rest gabled along their length. A
+house the LiDAR could not fit otherwise keeps its scenery body but takes its
 photograph's colours, doors, shutters, bays, porch and yard the same way. A
 raised ranch is built as a split foyer: main-floor windows a storey
 under its measured wall top, a sided lower level with its own windows, and
@@ -405,8 +416,10 @@ packet also carries the trees the 2021 LiDAR found near its streets and houses
 `surveyTreeRows` in place of the scenery's block trees there). None stands
 inside any mapped building (a steeple's or a tower's returns read as a tree
 go), a trunk on a drive, a lot, a walk or in the water steps to open ground
-within 3 m (else the tree goes), and no crown reaches more than 2 m over the
-nearest building. The packet also says which
+within 3 m (else the tree goes), a trunk stepped off a road stands up to 1.5 m
+farther back, tree by tree, so they do not line the curb, no crown reaches more
+than 2 m over the nearest building, and none stands within 12 m of a house
+built since the survey, whose lot was cleared for it. The packet also says which
 of its trees are evergreens in the 2025 leaf-off aerial; `treeForm` draws
 those as conifers and the rest as broadleaf in place of the habitat draw. `street-dressing.ts` clears the painted centre
 line from streets whose photographs show none, stands poles on the side the

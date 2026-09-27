@@ -11,7 +11,8 @@ treetops, each crown the canopy nearest its top; a trunk over a road steps off
 its edge, one inside any building goes (a steeple's or a tower's returns read
 as a tree go with it), one on a drive, a lot, a walk or in the water steps to
 open ground within 3 m, and no crown reaches more than 2 m over the nearest
-building. Each treetop is first moved onto
+building; one within 12 m of a house built since the survey goes with the lot
+cleared for it. Each treetop is first moved onto
 the plans by the local shift the houses' roofs need (register.py), so a yard
 tree keeps its place beside its house. The block trees in that zone give
 way to these; farther out the blocks stay.
@@ -153,14 +154,17 @@ class Cover:
         return total >= 24 and c[2] * 2 > total, total < 24
 
 
-def clear_of(tops, network, outlines, cover=None, water=()):
-    """Trunks off the pavement and out of the buildings: a treetop over a road
-    (within its half-width and 0.8 m) stands its trunk just off the edge when
-    that is within 3 m, else goes; one inside any building's outline (or within
-    half a metre of it) goes, which also drops the returns of steeples and
-    towers read as trees. A trunk on a drive, a lot or a walk, or in the water,
-    steps to the nearest open ground within 3 m, else goes; and a crown reaches
-    at most 2 m over the nearest building."""
+def clear_of(tops, network, outlines, cover=None, water=(), cleared=()):
+    """Trunks off the pavement and out of the buildings: one on ground cleared
+    since the survey (`cleared`: polygons around the houses built since) goes;
+    a treetop over a road (within its half-width and 0.8 m) stands its trunk
+    just off the edge when that is within 3 m (by up to 1.5 m more, tree by
+    tree, so stepped trunks do not line up along the edge), else goes; one
+    inside any building's outline (or within half a metre of it) goes, which
+    also drops the returns of steeples and towers read as trees. A trunk on a
+    drive, a lot or a walk, or in the water, steps to the nearest open ground
+    within 3 m, else goes; and a crown reaches at most 2 m over the nearest
+    building."""
     import shapely
     from shapely.geometry import LineString, Polygon
     lines, half = [], []
@@ -173,6 +177,7 @@ def clear_of(tops, network, outlines, cover=None, water=()):
     rings = [w.buffer(.5) for w in walls]
     bodies, near = shapely.STRtree(rings), shapely.STRtree(walls)
     wet = shapely.STRtree([Polygon(r[0], r[1:]).buffer(0) for r in water]) if len(water) else None
+    lots = shapely.STRtree(list(cleared)) if len(cleared) else None
     def blocked(e, n):
         p = shapely.Point(e, n)
         if len(bodies.query(p, predicate='intersects')): return True
@@ -185,16 +190,19 @@ def clear_of(tops, network, outlines, cover=None, water=()):
         return False
     rings_out = [(dx, dy) for rad in (.5, 1.0, 1.5, 2.0, 2.5, 3.0) for a in np.linspace(0, 2 * math.pi, int(8 * rad) + 4, endpoint=False)
                  for dx, dy in [(rad * math.cos(a), rad * math.sin(a))]]
-    keep = np.ones(len(tops), bool); out = tops.copy(); stats = {'building': 0, 'road': 0, 'stepped': 0, 'open': 0, 'lost': 0, 'crowns': 0}
+    keep = np.ones(len(tops), bool); out = tops.copy(); stats = {'cleared': 0, 'building': 0, 'road': 0, 'stepped': 0, 'open': 0, 'lost': 0, 'crowns': 0}
     for k, (e, n, h, r) in enumerate(tops):
         p = shapely.Point(e, n)
+        if lots is not None and len(lots.query(p, predicate='intersects')): keep[k] = False; stats['cleared'] += 1; continue
         if len(bodies.query(p, predicate='intersects')): keep[k] = False; stats['building'] += 1; continue
         i = tree.nearest(p)
         if i is not None:
             q = lines[i].interpolate(lines[i].project(p)); d = p.distance(q); need = half[i] + .8
             if d < need:
                 if need - d > 3 or d < 1e-6: keep[k] = False; stats['road'] += 1; continue
-                e, n = q.x + (e - q.x) / d * need, q.y + (n - q.y) / d * need; stats['stepped'] += 1
+                # off the edge by a little more, tree by tree, so stepped trunks don't line up
+                back = need + 1.5 * ((math.sin(e * 12.9898 + n * 78.233) * 43758.5453) % 1.0)
+                e, n = q.x + (e - q.x) / d * back, q.y + (n - q.y) / d * back; stats['stepped'] += 1
         if blocked(e, n):
             # the nearest open ground within 3 m, else the tree goes
             found = next(((e + dx, n + dy) for dx, dy in rings_out if not blocked(e + dx, n + dy)), None)
@@ -210,7 +218,7 @@ def clear_of(tops, network, outlines, cover=None, water=()):
     return out[keep], tops[keep]
 
 
-def lidar_tiles(site, source, houses, others_outlines, tile_rows, buildings=()):
+def lidar_tiles(site, source, houses, others_outlines, tile_rows, buildings=(), cleared=()):
     """Per tile: {'n': scenery rows, 'k': base64 bits of the rows kept, 't': base64 int16
     [x, z, height, radius] decimetres per survey tree (tile-local x, z)} and the combined
     rows (kept scenery rows, then survey trees) for the evergreen read."""
@@ -229,7 +237,7 @@ def lidar_tiles(site, source, houses, others_outlines, tile_rows, buildings=()):
     moved = np.asarray([shift_at(e, n) for e, n in tops[:, :2]], float).reshape(-1, 2)
     tops[:, :2] -= moved
     water = [p['rings'] for p in json.load(open(site / 'data/derived/town/navigation-water.json'))['polygons']]
-    tops, found = clear_of(tops, network, [h['outline'] for h in houses] + list(others_outlines) + list(buildings), Cover(site), water)
+    tops, found = clear_of(tops, network, [h['outline'] for h in houses] + list(others_outlines) + list(buildings), Cover(site), water, cleared)
     ti = np.floor(tops[:, 0] / 250).astype(int); tj = np.floor(tops[:, 1] / 250).astype(int)
     inzone = lambda e, n: zone[min(zone.shape[0] - 1, max(0, int((n - origin[1]) / cell))), min(zone.shape[1] - 1, max(0, int((e - origin[0]) / cell)))]
     out, combined = {}, {}
