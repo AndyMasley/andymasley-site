@@ -9,12 +9,17 @@ import shapely
 
 
 def world_planes(sec):
-    """Section planes as z <= a*u + b*v + c in the building frame."""
+    """Section planes as z <= a*u + b*v + c in the building frame (a wing set
+    at an angle turns its planes with it)."""
     cu, cv, A, B, swap = sec['frame']
     out = []
     for a, b, c in sec['planes']:
         if swap: out.append((b, a, c - a * cv - b * cu))
         else: out.append((a, b, c - a * cu - b * cv))
+    phi = sec.get('rot', 0.0)
+    if phi:
+        co, si = math.cos(phi), math.sin(phi)
+        out = [(a * co - b * si, a * si + b * co, c) for a, b, c in out]
     return out
 
 
@@ -23,11 +28,19 @@ def section_solid(sec, base, top, grow=0.0):
     x0, y0, x1, y1 = x0 - grow, y0 - grow, x1 + grow, y1 + grow
     if x1 - x0 < 0.05 or y1 - y0 < 0.05: return None
     solid = mf.Manifold.cube([x1 - x0, y1 - y0, top - base]).translate([x0, y0, base])
+    if sec.get('rot'): solid = solid.rotate([0.0, 0.0, math.degrees(sec['rot'])])
     for a, b, c in world_planes(sec):
         n = np.array([a, b, -1.0]); L = np.linalg.norm(n)
         solid = solid.trim_by_plane((n / L).tolist(), -c / L)
     if solid.is_empty() or solid.volume() < 0.05: return None
     return solid
+
+
+def section_box(sec):
+    """A section's rectangle in the building frame, turned with its wing."""
+    import shapely.affinity
+    b = box(*sec['rect'])
+    return shapely.affinity.rotate(b, sec['rot'], origin=(0, 0), use_radians=True) if sec.get('rot') else b
 
 
 def cross_section(poly):
@@ -42,7 +55,7 @@ def house_solid(result, lpoly, base, lidar_pts=None):
     peak = max(max(c for a, b, c in world_planes(s)) for s in secs) if secs else base + 3
     top = peak + 30
     parts = [s for s in (section_solid(sec, base, top) for sec in secs) if s is not None]
-    covered = unary_union([box(*s['rect']) for s in secs]) if secs else Polygon()
+    covered = unary_union([section_box(s) for s in secs]) if secs else Polygon()
     leftover = lpoly.difference(covered.buffer(0.02, join_style=2))
     fillers = []
     geoms = [leftover] if leftover.geom_type == 'Polygon' else list(getattr(leftover, 'geoms', []))

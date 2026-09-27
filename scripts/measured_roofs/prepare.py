@@ -146,7 +146,7 @@ def gutters(v, f, lpoly, R, c):
     p = v[f]; n = np.cross(p[:, 1] - p[:, 0], p[:, 2] - p[:, 0]); ln = np.linalg.norm(n, axis=1)
     nz = np.where(ln > 0, n[:, 2] / np.maximum(ln, 1e-12), 0)
     ring = lpoly.exterior
-    out = []
+    out, seen = [], set()
     for tri in f[nz > 0.15]:
         for a, b in ((tri[0], tri[1]), (tri[1], tri[2]), (tri[2], tri[0])):
             A, B = v[a], v[b]
@@ -154,8 +154,20 @@ def gutters(v, f, lpoly, R, c):
             mid = (A[:2] + B[:2]) / 2
             if ring.distance(shapely.points(mid[0], mid[1])) > 0.05: continue
             ea, na = A[:2] @ R + c; eb, nb = B[:2] @ R + c
-            out.append([round(float(ea - c[0]), 2), round(float(na - c[1]), 2), round(float(eb - c[0]), 2), round(float(nb - c[1]), 2), round(float((A[2] + B[2]) / 2 - SLAB), 2)])
+            g = [round(float(ea - c[0]), 2), round(float(na - c[1]), 2), round(float(eb - c[0]), 2), round(float(nb - c[1]), 2), round(float((A[2] + B[2]) / 2 - SLAB), 2)]
+            # each fascia edge once, whichever triangles share it
+            key = tuple(sorted([(g[0], g[1]), (g[2], g[3])]))
+            if key in seen: continue
+            seen.add(key); out.append(g)
     return out
+
+
+_forms = None
+def roof_form(hid):
+    """The roof the house's street photograph shows (layout-reads.json 'rf'), where read."""
+    global _forms
+    if _forms is None: _forms = {k: v.get('rf') for k, v in json.load(open(HERE / 'layout-reads.json')).items()}
+    return _forms.get(hid)
 
 
 def measure_house(house, carve=None):
@@ -166,7 +178,7 @@ def measure_house(house, carve=None):
     try:
         centre = np.asarray(house['outline'], float).mean(0)
         shift = G.house_shift(house['id'], *centre)
-        res = M.measure(house, debug=True, shift=shift)
+        res = M.measure(house, debug=True, shift=shift, form=roof_form(house['id']))
         if not res or res.get('status') != 'ok':
             rec['status'] = (res or {}).get('status', 'none'); return rec
         PL, Z, lpoly, R, c = res['debug']
@@ -586,7 +598,9 @@ def packets(records, colours, lots, others=(), porches={}):
     for r in records:
         if r.get('status') != 'ok': skipped[r.get('status')] += 1; continue
         q = r['fit']['inlierShare']
-        if q < 0.6 or r['fit']['cover'] < 0.35: skipped['weak fit'] += 1; continue
+        # a fit explaining under three fifths of the returns still beats the
+        # scenery's guessed body where the returns cover most of the plan
+        if q < 0.45 or r['fit']['cover'] < 0.35 or (q < 0.6 and r['fit']['cover'] < 0.6): skipped['weak fit'] += 1; continue
         row = {'id': r['id'], 'o': r['origin'], 'b': round(r['base'], 3), 'p': r['peak'], 'v': r['v'], 'r': small_indices(r['roof'], r['nv']),
                'w': small_indices(r['wall'], r['nv']), 't': small_indices(r['trim'], r['nv']),
                'e': [None if e is None or not math.isfinite(e[0]) else round(e[0], 3) for e in r['frameEaves']],

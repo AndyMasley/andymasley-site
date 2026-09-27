@@ -319,7 +319,11 @@ shift. A lower part at one end of a section (a wing, a porch or a garage under
 its own lower roof) is split from the section spanning it and fitted again,
 where that explains enough more of the returns. No shed is steeper than 45
 degrees and no gable side steeper than two to one, so a small porch's roof no
-longer stands upright on a front. Where the photograph shows a gambrel, the
+longer stands upright on a front. A plan with a wing set at an angle to the rest
+is fitted in two parts, each section keeping its turn from the house frame
+(`rot`), and a roof fit explaining under three fifths of the returns is still
+used where the returns cover most of the plan: it beats the scenery's guessed
+body. Where the photograph shows a gambrel, the
 survey finds its shallow upper slopes and the steep lower ones stand nearly
 upright over the upper storey of each eave wall, so that storey is shingled in
 the roof's colour from a flared eave at its head (`gambrelSides`), its windows

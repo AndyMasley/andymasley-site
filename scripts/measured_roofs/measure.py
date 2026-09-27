@@ -11,7 +11,9 @@ spanning it, each part fitted again. No shed is steeper than 45 degrees and
 no gable side steeper than two to one (a steeper plane over a section is half
 of a small gable or the top of a wall, and drew as a roof standing upright on
 a front), and a section over a third of the plan leans toward the roof form
-the street photograph shows.
+the street photograph shows. A plan with a wing set at an angle to the rest
+is also fitted in two parts, each in its own frame (split_plan), and keeps
+the parts where together they explain clearly more of the returns.
 """
 import json, math, glob, collections, os
 from pathlib import Path
@@ -268,12 +270,22 @@ def in_rect(rect, P, pad=1e-6):
     return (P[:, 0] >= x0 - pad) & (P[:, 0] <= x1 + pad) & (P[:, 1] >= y0 - pad) & (P[:, 1] <= y1 + pad)
 
 
+def to_section(sec, P):
+    """Points of the house frame in a section's own axes: a wing set at an angle
+    to the rest of the plan carries its turn from the house frame ('rot')."""
+    phi = sec.get('rot', 0.0)
+    if not phi: return P
+    c, s = math.cos(phi), math.sin(phi)
+    return np.c_[c * P[:, 0] + s * P[:, 1], -s * P[:, 0] + c * P[:, 1]]
+
+
 def union_height(sections, P):
     z = np.full(len(P), -np.inf)
     for sec in sections:
-        m = in_rect(sec['rect'], P)
+        Q = to_section(sec, P)
+        m = in_rect(sec['rect'], Q)
         if not m.any(): continue
-        s, t = local_st(sec['frame'], P[m])
+        s, t = local_st(sec['frame'], Q[m])
         z[m] = np.maximum(z[m], planes_eval(sec['planes'], s, t))
     return z
 
@@ -321,7 +333,7 @@ def residual_clusters(P, r, thresh, cell=0.5):
     return out
 
 
-def measure(house, debug=False, shift=None, form=None):
+def measure(house, debug=False, shift=None, form=None, split=True):
     """The roof over a plan from the returns inside it; `shift` [east, north]
     is where the plan's returns lie from it (register.py), and moves them onto
     it; `form` is the roof its street photograph shows, which a section over
@@ -481,10 +493,35 @@ def measure(house, debug=False, shift=None, form=None):
                 if sc > base_score + max(6, 0.015 * n) and (best is None or sc > best[0]): best = (sc, trial)
         if not best: break
         sections = best[1]
+    result = {'id': house['id'], 'status': 'ok', 'theta': theta, 'centre': c.tolist(), 'grid': [us.tolist(), vs.tolist()], 'n': int(n), 'cover': cover}
+    result.update(finish(sections, PL, Z, lpoly))
+    # ---- a wing set at an angle to the rest: each part fitted in its own
+    # frame, where together they explain clearly more of the returns
+    parts = split_plan(outline) if split else None
+    if parts:
+        combined = []
+        for k, part in enumerate(parts):
+            sub = measure({'id': f"{house['id']}#{k}", 'outline': part, 'base': base}, shift=shift, form=form, split=False)
+            if not sub or sub.get('status') != 'ok': combined = None; break
+            phi = sub['theta'] - theta; ck = np.asarray(sub['centre']); Rk = np.array([[math.cos(sub['theta']), math.sin(sub['theta'])], [-math.sin(sub['theta']), math.cos(sub['theta'])]])
+            d = (ck - c) @ Rk.T
+            for sec in sub['sections']:
+                x0, y0, x1, y1 = sec['rect']; cu, cv, A, B, swap = sec['frame']
+                combined.append(dict(sec, rect=[x0 + d[0], y0 + d[1], x1 + d[0], y1 + d[1]], frame=[cu + d[0], cv + d[1], A, B, swap], rot=float(phi)))
+        if combined:
+            alt = finish(combined, PL, Z, lpoly)
+            if alt['inlierShare'] > result['inlierShare'] + 0.04:
+                result.update(alt); result['parts'] = len(parts)
+    result['debug'] = (PL, Z, lpoly, R, c) if debug else None
+    return result
+
+
+def finish(sections, PL, Z, lpoly):
+    """A fitted roof's chimneys (small, sharp clusters well above it) and how
+    well it explains the returns."""
     f = union_height(sections, PL); r = Z - np.where(np.isfinite(f), f, Z)
-    # ---- chimneys: small, sharp clusters well above the fitted roof
     chimneys = []
-    edges = [box(*s['rect']).exterior for s in sections]
+    edges = [section_outline(s).exterior for s in sections]
     for cl in residual_clusters(PL, r, 0.45):
         area = len(cl) * 0.25
         if area > 2.0: continue
@@ -498,11 +535,59 @@ def measure(house, debug=False, shift=None, form=None):
         roofz = float(union_height(sections, cxy[None])[0])
         chimneys.append({'at': [float(v) for v in cxy], 'top': top, 'roof': roofz, 'size': [float(min(1.4, max(0.55, ext[0]))), float(min(1.4, max(0.55, ext[1])))], 'lift': lift, 'n': int(len(cl))})
     chimneys = sorted(chimneys, key=lambda ch: -ch['lift'] * min(ch['n'], 4))[:2]
-    inl = float(np.mean(np.abs(r) < INLIER))
-    return {'id': house['id'], 'status': 'ok', 'theta': theta, 'centre': c.tolist(), 'sections': sections, 'chimneys': chimneys,
-            'grid': [us.tolist(), vs.tolist()], 'n': int(n), 'cover': cover, 'inlierShare': inl,
-            'rmse': float(np.sqrt(np.mean(np.minimum(r, 2) ** 2))),
-            'debug': (PL, Z, lpoly, R, c) if debug else None}
+    return {'sections': sections, 'chimneys': chimneys, 'inlierShare': float(np.mean(np.abs(r) < INLIER)),
+            'rmse': float(np.sqrt(np.mean(np.minimum(r, 2) ** 2)))}
+
+
+def section_outline(sec):
+    """A section's rectangle in the house frame, turned with its wing."""
+    import shapely.affinity
+    b = box(*sec['rect'])
+    return shapely.affinity.rotate(b, sec['rot'], origin=(0, 0), use_radians=True) if sec.get('rot') else b
+
+
+def split_plan(outline):
+    """A plan whose outline turns through a second orientation for one stretch
+    (a wing set at an angle to the rest): its two parts, cut along the line
+    joining the corners where the outline passes from one orientation to the
+    other; else None."""
+    ol = np.asarray(outline, dtype='f8')
+    n = len(ol)
+    if n < 6: return None
+    d = np.diff(np.vstack([ol, ol[:1]]), axis=0); L = np.hypot(*d.T)
+    ang = np.arctan2(d[:, 1], d[:, 0])
+    # the plan's main orientation: the direction (modulo a right angle) most of its outline runs in
+    grid = np.radians(np.arange(0, 90, 1.0))
+    near = np.abs((ang[None] - grid[:, None] + math.pi / 4) % (math.pi / 2) - math.pi / 4) < math.radians(4)
+    th = float(grid[np.argmax((near * L[None]).sum(1))])
+    dev = np.abs((ang - th + math.pi / 4) % (math.pi / 2) - math.pi / 4)
+    off = dev > math.radians(10)
+    # short stretches (under 1.5 m) between turned edges join the run around them
+    for i in range(n):
+        if off[i] or not off[i - 1]: continue
+        j, run = i, 0.0
+        while not off[j % n] and run < 1.5 and j - i < n: run += L[j % n]; j += 1
+        if run < 1.5 and off[j % n]:
+            for m in range(i, j): off[m % n] = True
+    if L[off].sum() < 0.2 * L.sum() or L[~off].sum() < 0.3 * L.sum(): return None
+    starts = [i for i in range(n) if off[i] and not off[i - 1]]
+    if len(starts) != 1: return None
+    i0 = starts[0]; j = i0
+    while off[j % n] and j - i0 < n: j += 1
+    k = j - i0
+    wing = [ol[(i0 + m) % n] for m in range(k + 1)]
+    main = [ol[(i0 + k + m) % n] for m in range(n - k + 1)]
+    if len(wing) < 3 or len(main) < 3: return None
+    plan = Polygon(ol).buffer(0)
+    parts = []
+    for ring in (main, wing):
+        p = Polygon(ring)
+        if not p.is_valid or p.area < 12 or p.area < 0.15 * plan.area: return None
+        parts.append(ring)
+    if abs(Polygon(main).area + Polygon(wing).area - plan.area) > 0.05 * plan.area: return None
+    th2 = orientation(np.asarray(wing))
+    if abs((th2 - th + math.pi / 4) % (math.pi / 2) - math.pi / 4) < math.radians(8): return None
+    return [np.asarray(r).tolist() for r in parts]
 
 
 def model_height(result, PL):
