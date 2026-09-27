@@ -8,7 +8,9 @@ street photograph.
    gambrel or mansard (measure.py). The sections become one closed solid whose
    walls stand 0.32 m inside the roofprint under a 0.22 m roof slab, so eaves
    and rakes overhang (solid.py, manifold3d 3.5.4). Chimneys are where the
-   returns rise sharply above the fitted roof; gutters run along level eaves.
+   returns rise sharply above the fitted roof, kept where they stand clear of
+   every roof around them and moved in off the wall line; gutters run along
+   level eaves.
 2. Roof colour. The MassGIS 2025 aerial is registered to the LiDAR per 250 m
    tile (building lean differs across the mosaic) and sampled on each roof's
    inlier returns.
@@ -24,8 +26,12 @@ street photograph.
    the front's width from its left end as seen), how the roof meets the
    street and how many storeys show; where the roof read shows a wall other
    than the plan's front, the one facing the address street is taken
-   (faces.py). Only these reads enter the repository; no photograph, owner
-   or sale detail does.
+   (faces.py). detail-reads.json holds a fourth read, placed the same way:
+   hoods, porticos and awnings over the entrance doors, window awnings (their
+   colour, striped or not), bay windows, unroofed decks and balconies, an
+   exterior stair's side, solar panels on the front roof, and the front
+   porch's roof, posts and railing with its colour. Only these reads enter the
+   repository; no photograph, owner or sale detail does.
 4. Wall tops. Each frame's inset wall top is traced from the solid itself, so
    windows can stand in a gable under its rakes.
 5. Open porches. Where a photograph shows an open front porch the plan
@@ -205,18 +211,21 @@ def open_porches(records, jobs, reuse):
     """Houses whose photographs show an open porch the plan holds: their
     bodies measured again with the porch cut out under its roof (porches.py).
     Returns the records, carved where so, and each carved house's porch."""
-    from porches import open_porch, carve_rings
+    from porches import open_porch, stacked_porch, carve_rings
     facades = json.load(open(HERE / 'facade-reads.json'))
+    layouts = json.load(open(HERE / 'layout-reads.json'))
     homes = {h['id']: h for h in M.houses()}
     porches, jobs_ = {}, []
     for r in records:
         if r.get('status') != 'ok' or r['id'] not in facades: continue
         house = homes[r['id']]
         ep = [None if pr is None else pr[0][1] if all(abs(q[1] - pr[0][1]) < 0.015 for q in pr) else pr for pr in wall_profiles(r, house)]
-        porch = open_porch(house, r, ep, facade(facades[r['id']]))
+        fc = facade(facades[r['id']]); lo = layout(layouts.get(r['id']))
+        if lo: fc['lo'] = lo
+        porch = open_porch(house, r, ep, fc) or stacked_porch(house, r, ep, fc)
         if not porch: continue
         porches[r['id']] = porch
-        jobs_.append((house, (carve_rings(house, porch), r['base'] - 1.0, r['base'] + porch['c'] - .005)))
+        jobs_.append((house, (carve_rings(house, porch), r['base'] + porch.get('z0', -1.0), r['base'] + porch['c'] - .005)))
     cache = OUT / 'porch-records.jsonl'
     carved = {}
     if reuse and cache.exists():
@@ -418,6 +427,34 @@ def layout(lr):
     return lo or None
 
 
+def details(dr):
+    """The fourth read of the same photographs: covers over the entrance doors
+    (hood, portico or awning), window awnings (their colour, striped or not),
+    bay windows, unroofed decks and balconies, an exterior stair's side, solar
+    panels on the front roof, and the front porch's roof, posts and railing;
+    positions in percent of the street front as in layout()."""
+    if not dr: return None
+    pct = lambda x: isinstance(x, int) and 0 <= x <= 100
+    d = {}
+    dh = [c for c in dr.get('dh') or [] if isinstance(c, list) and len(c) == 2 and pct(c[0]) and c[1] in ('h', 'p', 'a')]
+    if dh: d['dh'] = dh
+    aw = [c for c in dr.get('aw') or [] if isinstance(c, list) and len(c) == 2 and pct(c[0]) and c[1] in (1, 2, 3)]
+    if aw: d['aw'] = aw
+    if (aw or any(t == 'a' for _, t in dh)) and hexok(dr.get('awc')):
+        d['awc'] = dr['awc']
+        if dr.get('aws') == 1: d['aws'] = 1
+    for k, levels in (('bw', (0, 1, 2, 3)), ('dk', (1, 2, 3))):
+        rows = [c for c in dr.get(k) or [] if isinstance(c, list) and len(c) == 3 and pct(c[0]) and pct(c[1]) and c[1] > c[0] and c[2] in levels]
+        if rows: d[k] = rows
+    if dr.get('xs') in ('l', 'r'): d['xs'] = dr['xs']
+    sol = dr.get('sol')
+    if isinstance(sol, list) and len(sol) == 2 and all(pct(x) for x in sol) and sol[1] > sol[0]: d['sol'] = sol
+    for k, ok in (('pr', ('shed', 'hip', 'gable', 'flat', 'main')), ('po', ('square', 'round', 'turned', 'metal')),
+                  ('rl', ('b', 's', 'l', 'm', 'n')), ('rc', ('white', 'house', 'dark', 'wood'))):
+        if dr.get(k) in ok: d[k] = dr[k]
+    return d or None
+
+
 def simplify(points, tol):
     """Douglas-Peucker on a (u, h) polyline."""
     if len(points) < 3: return points
@@ -485,10 +522,53 @@ def tile_grid(tiles):
     return [x0, y0, w, base64.b64encode(bytes(bits)).decode()]
 
 
+def clear_chimneys(r, house):
+    """The chimneys that stand clear: each stack stands inside the walls
+    (moved in up to 0.8 m where the survey put it at the wall line) and its
+    top rises at least 0.2 m over every roof within 0.9 m of it; the rest were
+    a taller wall's eave over a lower roof, or a roof the fit drew too low."""
+    from shapely.geometry import Point, Polygon
+    from shapely.ops import nearest_points
+    if not r['chimneys']: return []
+    v = np.frombuffer(base64.b64decode(r['v']), dtype='<i2').reshape(-1, 3).astype(float) / 100
+    tri = np.frombuffer(base64.b64decode(r['roof']), dtype='<u2').reshape(-1, 3)
+    P = v[tri]
+    a, b, c = P[:, 0], P[:, 1], P[:, 2]
+    det = (b[:, 1] - c[:, 1]) * (a[:, 0] - c[:, 0]) + (c[:, 0] - b[:, 0]) * (a[:, 1] - c[:, 1])
+    ok = np.abs(det) > 1e-9
+    def roof_at(e, n):
+        l1 = ((b[:, 1] - c[:, 1]) * (e - c[:, 0]) + (c[:, 0] - b[:, 0]) * (n - c[:, 1])) / np.where(ok, det, 1)
+        l2 = ((c[:, 1] - a[:, 1]) * (e - c[:, 0]) + (a[:, 0] - c[:, 0]) * (n - c[:, 1])) / np.where(ok, det, 1)
+        l3 = 1 - l1 - l2
+        inside = ok & (l1 >= -1e-6) & (l2 >= -1e-6) & (l3 >= -1e-6)
+        if not inside.any(): return None
+        return float((l1 * a[:, 2] + l2 * b[:, 2] + l3 * c[:, 2])[inside].max())
+    o = np.asarray(r['origin'], float)
+    walls = Polygon(np.asarray(house['outline'], float) - o).buffer(-INSET)
+    out = []
+    for de, dn, top, sx, sy, yaw, roofZ in r['chimneys']:
+        rad = math.hypot(sx, sy) / 2
+        room = walls.buffer(-(rad + .05))
+        if room.is_empty: continue
+        p = Point(de, dn)
+        if not room.contains(p):
+            q = nearest_points(room, p)[0]
+            if q.distance(p) > .8: continue
+            de, dn = round(q.x, 2), round(q.y, 2)
+        here = roof_at(de, dn)
+        if here is None: continue
+        ring = [roof_at(de + (rad + d) * math.cos(k * math.pi / 8), dn + (rad + d) * math.sin(k * math.pi / 8)) for d in (.3, .9) for k in range(16)]
+        near = max([here] + [z for z in ring if z is not None])
+        if top - r['base'] < near + .2: continue
+        out.append([de, dn, top, sx, sy, yaw, round(r['base'] + here, 2)])
+    return out
+
+
 def packets(records, colours, lots, others=(), porches={}):
     from faces import Cover, street_face
     facades = json.load(open(HERE / 'facade-reads.json'))
     layouts = json.load(open(HERE / 'layout-reads.json'))
+    extra = json.load(open(HERE / 'detail-reads.json'))
     homes = {h['id']: h for h in M.houses()}
     cover = Cover(SITE)
     tiles = collections.defaultdict(list); skipped = collections.Counter()
@@ -502,7 +582,7 @@ def packets(records, colours, lots, others=(), porches={}):
                # a level wall top is one height; a gable or a stepped wall, its polyline
                'ep': [None if pr is None else pr[0][1] if all(abs(q[1] - pr[0][1]) < 0.015 for q in pr) else pr
                       for pr in wall_profiles(r, homes[r['id']])],
-               'c': [c for c in r['chimneys'] if all(math.isfinite(x) for x in c)],
+               'c': [c for c in clear_chimneys(r, homes[r['id']]) if all(math.isfinite(x) for x in c)],
                'g': [g for g in r.get('gutters', []) if all(math.isfinite(x) for x in g)], 'q': q}
         if r['id'] in colours: row['rc'] = roof_colour(colours[r['id']])
         pc = porches.get(r['id'])
@@ -516,7 +596,7 @@ def packets(records, colours, lots, others=(), porches={}):
             for q in pc['s']:
                 top = wall_profile(r, s0 - o * q['d'] + t * q['u'][0], t, o, q['u'][1] - q['u'][0])
                 if top: strips.append([q['u'][0], q['u'][1], q['d'], top])
-            if strips: row['pp'] = {'f': pc['f'], 'c': pc['c'], 's': strips}
+            if strips: row['pp'] = {'f': pc['f'], 'c': pc['c'], 's': strips, **({'z0': pc['z0']} if 'z0' in pc else {}), **({'n': pc['n']} if 'n' in pc else {})}
         fc = facades.get(r['id'])
         if fc:
             if hexok(fc.get('wall')): row['wc'] = paint(fc['wall'])
@@ -528,6 +608,8 @@ def packets(records, colours, lots, others=(), porches={}):
                 sf = street_face(homes[r['id']], row['ep'], lo, lots, cover)
                 if sf is not None: lo['sf'] = sf
                 row['f']['lo'] = lo
+                dt = details(extra.get(r['id']))
+                if dt: row['f']['dt'] = dt
             if row['f'].get('fe'):
                 # the fence's line along the lot's street frontage, decimetres from the house centre
                 lines = lots.frontage(homes[r['id']], homes[r['id']].get('address'))
@@ -546,7 +628,10 @@ def packets(records, colours, lots, others=(), porches={}):
         if hexok(fc.get('trim')): row['tc'] = paint(fc['trim'])
         row['f'] = facade(fc)
         lo = layout(layouts.get(hid))
-        if lo: row['f']['lo'] = lo
+        if lo:
+            row['f']['lo'] = lo
+            dt = details(extra.get(hid))
+            if dt: row['f']['dt'] = dt
         if row['f'].get('fe'):
             lines = lots.frontage(house, house.get('address'))
             if lines: row['f']['fl'] = [[round((a[0] - o[0]) * 10), round((a[1] - o[1]) * 10), round((b[0] - o[0]) * 10), round((b[1] - o[1]) * 10)] for a, b in lines]

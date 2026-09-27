@@ -11,10 +11,12 @@ treetops, each crown the canopy nearest its top; a trunk over a road steps off
 its edge, and one inside a building goes. The block trees in that zone give
 way to these; farther out the blocks stay.
 
-The ground is interpolated from the road network's surveyed centrelines, the
-sampled ground along every house wall and the block trees' own feet. A tree
-ships as its place, height and crown radius; the game stands it on its
-terrain.
+The ground is the survey's own (townwide/ground_grid.npz: the mean ground
+return in each 2 m cell, gaps under dense canopy filled from the nearest
+surveyed cell); without that file it is interpolated from the road network's
+surveyed centrelines, the sampled ground along every house wall and the block
+trees' own feet. A tree ships as its place, height and crown radius; the game
+stands it on its terrain.
 """
 import base64, gzip, json, math
 from pathlib import Path
@@ -87,12 +89,27 @@ def ground_model(network, houses, block_feet):
     return ground
 
 
-def treetops(max_z, count, origin, cell, zone, ground):
+def ground_grid(source, shape):
+    """The survey's own ground (mean class-2 return per 2 m cell, on the vegetation
+    grid's cells), gaps under dense canopy filled from the nearest surveyed cell;
+    None when the research folder does not hold it."""
+    path = Path(source) / 'townwide/ground_grid.npz'
+    if not path.exists(): return None
+    g = np.load(path)['mean_z'].astype(float)
+    if g.shape != shape: return None
+    bad = ~np.isfinite(g)
+    if bad.any():
+        _, (iy, ix) = ndimage.distance_transform_edt(bad, return_indices=True)
+        g = g[iy, ix]
+    return g
+
+
+def treetops(max_z, count, origin, cell, zone, ground, grid=None):
     """Treetops in the zone: (east, north, height, crown radius) per tree."""
     rows, cols = np.nonzero(zone & (count > 0))
     chm = np.zeros(max_z.shape, float)
     xy = np.c_[origin[0] + (cols + .5) * cell, origin[1] + (rows + .5) * cell]
-    chm[rows, cols] = max_z[rows, cols] - ground(xy)
+    chm[rows, cols] = max_z[rows, cols] - (grid[rows, cols] if grid is not None else ground(xy))
     chm[~np.isfinite(chm)] = 0; chm = np.clip(chm, 0, 45)
     smooth = ndimage.gaussian_filter(chm, 1.0)
     peak = (smooth == ndimage.maximum_filter(smooth, size=2 * MIN_GAP + 1)) & (ndimage.maximum_filter(chm, size=3) >= MIN_HEIGHT) & zone
@@ -146,8 +163,9 @@ def lidar_tiles(site, source, houses, others_outlines, tile_rows):
     feet = []
     for tid, (o, rows) in tile_rows.items():
         for x, y, z, sx, sy, sz, yaw in rows: feet.append([x + o[0], -(z + o[2]), y + o[1] - .71 * sy / .30])
-    ground = ground_model(network, houses, feet)
-    tops = clear_of(treetops(max_z, count, origin, cell, zone, ground), network, [h['outline'] for h in houses] + list(others_outlines))
+    grid = ground_grid(source, max_z.shape)
+    ground = None if grid is not None else ground_model(network, houses, feet)
+    tops = clear_of(treetops(max_z, count, origin, cell, zone, ground, grid), network, [h['outline'] for h in houses] + list(others_outlines))
     ti = np.floor(tops[:, 0] / 250).astype(int); tj = np.floor(tops[:, 1] / 250).astype(int)
     inzone = lambda e, n: zone[min(zone.shape[0] - 1, max(0, int((n - origin[1]) / cell))), min(zone.shape[1] - 1, max(0, int((e - origin[0]) / cell)))]
     out, combined = {}, {}

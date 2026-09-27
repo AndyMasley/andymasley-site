@@ -29,8 +29,10 @@ export type MeasuredRoof = {
   /** An open porch cut from the body under its roof: the frame it fronts, the
    * porch ceiling above `b`, and its strips (the house wall behind may step),
    * each [u0, u1] along that frame's inset wall, the depth of the house wall
-   * behind and that wall's top ([u from the strip's start, height above `b`]). */
-  pp?: { f: number; c: number; s: [number, number, number, [number, number][]][] };
+   * behind and that wall's top ([u from the strip's start, height above `b`]).
+   * Stacked porches carry their levels `n`, and `z0`, the cut's floor above
+   * `b`, where they stand over an enclosed ground level. */
+  pp?: { f: number; c: number; s: [number, number, number, [number, number][]][]; z0?: number; n?: number };
   /** Read from the assessor's street photograph, when one shows the house;
    * shutters is their colour, absent when the front windows have none. */
   f?: {
@@ -45,6 +47,8 @@ export type MeasuredRoof = {
     fl?: number[][];
     /** The street front's layout as photographed, in percent of its width from its left end as seen. */
     lo?: FrontLayout;
+    /** Its smaller features, from a fourth read of the photograph, placed the same way. */
+    dt?: FrontDetails;
   };
 };
 /** Entrance doors, window centres on each storey (w1 the ground floor) and in
@@ -58,6 +62,19 @@ export type FrontLayout = {
   rf?: 'side' | 'front' | 'cross' | 'hip' | 'gambrel' | 'mansard' | 'flat' | 'shed'; st?: number;
   /** The frame the photograph shows, where it is not the plan's front. */
   sf?: number;
+};
+/** The smaller features of a photographed street front, in percent of its
+ * width as FrontLayout: covers over entrance doors (a hood, a portico on posts,
+ * an awning), window awnings by storey, their colour and whether striped, bay
+ * windows [from, to, storeys they rise from the ground floor; 0 an oriel],
+ * unroofed decks and balconies [from, to, storey], the side of an exterior
+ * stair, solar panels' extent on the front roof, and the front porch's roof,
+ * posts, railing (balusters, solid, lattice, metal, none) and its colour. */
+export type FrontDetails = {
+  dh?: [number, 'h' | 'p' | 'a'][]; aw?: [number, number][]; awc?: string; aws?: 1;
+  bw?: [number, number, number][]; dk?: [number, number, number][]; xs?: 'l' | 'r'; sol?: [number, number];
+  pr?: 'shed' | 'hip' | 'gable' | 'flat' | 'main'; po?: 'square' | 'round' | 'turned' | 'metal';
+  rl?: 'b' | 's' | 'l' | 'm' | 'n'; rc?: 'white' | 'house' | 'dark' | 'wood';
 };
 /** A garage, shed or other building that is not one of the evidence houses.
  * 'o' (garage or shed) and 'b' (a building with storeys of windows) carry a
@@ -166,7 +183,8 @@ export function validMeasuredRoofPacket(value: unknown, tileId: string): value i
     if (!validBody(r, r.e.length) || !hex(r.wc) || !validFacade(r.f)) return false;
     if (r.pp !== undefined && !(r.pp && Number.isInteger(r.pp.f) && r.pp.f >= 0 && r.pp.f < r.e.length && finite(r.pp.c) && Array.isArray(r.pp.s) && r.pp.s.length >= 1 && r.pp.s.length <= 6 &&
       r.pp.s.every(([u0, u1, d, t], i) => finite(u0) && finite(u1) && u1 > u0 && (i === 0 || u0 >= r.pp!.s[i - 1][1] - .25) && finite(d) && d > 0 && d < 5 &&
-        Array.isArray(t) && t.length >= 2 && t.every(q => Array.isArray(q) && q.length === 2 && q.every(finite))))) return false;
+        Array.isArray(t) && t.length >= 2 && t.every(q => Array.isArray(q) && q.length === 2 && q.every(finite))) &&
+      (r.pp.z0 === undefined || (finite(r.pp.z0) && r.pp.z0 < r.pp.c)) && (r.pp.n === undefined || [2, 3].includes(r.pp.n)))) return false;
   }
   return true;
 }
@@ -201,8 +219,20 @@ function validFacade(f: MeasuredRoof['f']): boolean {
     (f.gd !== undefined && !(Number.isInteger(f.gd) && f.gd >= 1 && f.gd <= 3)) || (f.gs !== undefined && !['left', 'right', 'center'].includes(f.gs)) ||
     (f.fe !== undefined && !['picket', 'chain', 'stone', 'retaining', 'rail', 'privacy', 'iron', 'hedge'].includes(f.fe)) || !hex(f.gc) || !hex(f.fc) ||
     (f.fl !== undefined && !(f.fe && Array.isArray(f.fl) && f.fl.every(l => Array.isArray(l) && l.length === 4 && l.every(x => Number.isInteger(x) && Math.abs(x) < 2000)))) ||
-    (f.lo !== undefined && !validLayout(f.lo))) return false;
+    (f.lo !== undefined && !validLayout(f.lo)) || (f.dt !== undefined && !validDetails(f.dt))) return false;
   return true;
+}
+
+function validDetails(d: FrontDetails): boolean {
+  if (!d || typeof d !== 'object') return false;
+  const list = <T,>(v: T[] | undefined, ok: (x: T) => boolean) => v === undefined || (Array.isArray(v) && v.length <= 12 && v.every(ok));
+  const span = (x: unknown, levels: number[]) => Array.isArray(x) && x.length === 3 && percent(x[0]) && percent(x[1]) && x[1] > x[0] && levels.includes(x[2]);
+  return list(d.dh, c => Array.isArray(c) && c.length === 2 && percent(c[0]) && ['h', 'p', 'a'].includes(c[1])) &&
+    list(d.aw, c => Array.isArray(c) && c.length === 2 && percent(c[0]) && [1, 2, 3].includes(c[1])) && hex(d.awc) && (d.aws === undefined || d.aws === 1) &&
+    list(d.bw, c => span(c, [0, 1, 2, 3])) && list(d.dk, c => span(c, [1, 2, 3])) && (d.xs === undefined || d.xs === 'l' || d.xs === 'r') &&
+    (d.sol === undefined || (Array.isArray(d.sol) && d.sol.length === 2 && d.sol.every(percent) && d.sol[1] > d.sol[0])) &&
+    (d.pr === undefined || ['shed', 'hip', 'gable', 'flat', 'main'].includes(d.pr)) && (d.po === undefined || ['square', 'round', 'turned', 'metal'].includes(d.po)) &&
+    (d.rl === undefined || ['b', 's', 'l', 'm', 'n'].includes(d.rl)) && (d.rc === undefined || ['white', 'house', 'dark', 'wood'].includes(d.rc));
 }
 
 const percent = (x: unknown) => Number.isInteger(x) && (x as number) >= 0 && (x as number) <= 100;

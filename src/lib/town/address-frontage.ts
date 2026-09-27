@@ -4,6 +4,9 @@ import type {EvidenceBuilding} from './evidence-types';
 import {Batch,type Frame} from './crafted-frontages';
 import {GrassTerrain} from './grass';
 
+/** The wall a door needs over its sill: a Cape's low eave (its frieze meeting the door's head) is enough. */
+export const DOOR_ROOM=2.2;
+
 type Correction={frameIndex:number;address:string;outline:number[][];formerEntry:NonNullable<EvidenceBuilding['entry']>;selectedFrame:Pick<EvidenceBuilding['frames'][number],'start'|'tangent'|'outward'|'width'>;clearance:{maximumWidthM:number;maximumProjectionM:number;neighborBuildingIntersections:number;roadEnvelopeClearanceM:number};basis:string};
 export type EntryStepEnvelope={frame:Frame;u:number;floor:number};
 export type AddressStoop={home:EvidenceBuilding;former:EntryStepEnvelope;blocks:{u:number;v:number;width:number;depth:number;bottom:number;top:number}[];basis:string};
@@ -32,7 +35,7 @@ export function prepareAddressFrontages(group:THREE.Object3D,origin:readonly num
       return h;
     };
     const heights=pad as number[],floor=Math.max(home.floor,Math.max(...heights)+.15),eave=Math.min(top(u-.6),top(u),top(u+.6));
-    if(floor+2.32>=eave||floor-Math.min(...heights)>1.15)return undefined;
+    if(floor+DOOR_ROOM>=eave||floor-Math.min(...heights)>1.15)return undefined;
     const blocks=[{u,v:.48,width:1.45,depth:.96,bottom:Math.min(...heights)-.045,top:floor-.025}];
     for(let i=1;i<=7;i++){
       const v=.96+(i-.5)*.29,values=ground(v,1.25,.30);if(values.some(y=>y===undefined))return undefined;

@@ -345,7 +345,21 @@ sash. Where a photograph shows an open porch the plan holds (a low front on a
 taller house, the house wall standing on the porch roof behind), the body is
 measured again with the porch cut out under its roof (`porches.py`); the door
 and windows move onto the house wall and the porch gets a deck, posts under a
-beam, railings and steps. The same packets carry the town's other
+beam, railings and steps. A triple-decker's stacked porches that the plan
+holds as a box standing proud of the front are cut out the same way, with a
+deck and railings on every level and open ends. A fourth read
+(`detail-reads.json`) adds what else the photograph shows on the front: a
+bracketed hood, a portico on posts or an awning over an entrance door no
+porch covers, awnings over the windows it names (in their colour, striped or
+plain), bay windows standing out from the wall (canted, or square where
+narrow, windowed on every face and storey, under a low hipped roof; an oriel
+on brackets) unless the plan already holds the bay as a jog, unroofed decks
+and balconies on posts, an exterior stair up to a railed landing, solar
+panels in rows up the measured slope, and the porch's own roof (shed, hip,
+gable facing the street, flat), posts (square, round, turned, metal) and
+railing (balusters, solid sided walls, lattice, metal, none) in its colour.
+Measured chimneys stand only where their tops clear the roof around them,
+moved in off the wall line. The same packets carry the town's other
 plainly modelled buildings (`outbuildings.py`): garages, sheds and barns, and
 shops, works, apartment blocks and public buildings that no crafted model
 replaces, each measured like a house where the LiDAR has building returns (a

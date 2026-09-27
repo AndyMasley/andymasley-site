@@ -580,6 +580,90 @@ describe('measured house roofs', () => {
     expect(posts.length).toBeGreaterThanOrEqual(4);
     for (const [lo, hi] of posts) { expect(lo).toBeCloseTo(floor, 1); expect(hi).toBeCloseTo(b + 3, 1); }
     group.traverse(x => { if (x instanceof THREE.Mesh) { x.geometry.dispose(); for (const m of [x.material].flat()) m.dispose(); } });
+    // A triple-decker's stacked porches: a deck on every level, railings along each upper one.
+    const stacked = new THREE.Group(), g3 = new THREE.BufferGeometry();
+    g3.setAttribute('position', new THREE.Float32BufferAttribute([498, b + 1, -596, 499, b + 1, -596, 498, b + 2, -596], 3));
+    const m3 = new THREE.MeshStandardMaterial(); m3.name = 'V2 inferred | siding';
+    stacked.add(new THREE.Mesh(g3, m3));
+    applyEvidenceBuildings(stacked, 't', [0, 0, 0], 0, [home], [], undefined, [], [{ ...row, e: [b + 9, b + 9, b + 9, b + 9], ep: [8.9, 9, 9, 9],
+      pp: { f: 0, c: 8.9, n: 3, s: [[0, 9.36, 2, [[0, 9], [9.36, 9]]]] }, f: { porch: 'stacked', ground: 'open', upper: 'open', levels: 3 } }]);
+    const decks = new Set<number>(), rails = new Set<number>();
+    stacked.traverse(x => { if (x instanceof THREE.Mesh) for (const m of [x.material].flat()) {
+      if (!m.name.startsWith('Crafted frontage | trim |')) continue;
+      const p = x.geometry.getAttribute('position');
+      for (let i = 0; i < p.count; i += 36) {
+        let lo = Infinity, hi = -Infinity, north = 0; for (let k = i; k < i + 36; k++) { lo = Math.min(lo, p.getY(k)); hi = Math.max(hi, p.getY(k)); north += -p.getZ(k) / 36; }
+        if (hi - lo > .07 && hi - lo < .2 && north > 596.9 && north < 597.8) decks.add(Math.round((lo - floor) * 10) / 10);
+        if (Math.abs(hi - lo - .06) < .005) rails.add(Math.round((lo - floor) * 10) / 10);
+      }
+    } });
+    expect([...decks].filter(y => [-.1, 2.6, 5.4].some(z => Math.abs(y - z) < .15)).length).toBeGreaterThanOrEqual(3);
+    expect([...rails].filter(y => y > 3 && y < 3.8).length).toBeGreaterThan(0);
+    expect([...rails].filter(y => y > 5.8 && y < 6.6).length).toBeGreaterThan(0);
+    stacked.traverse(x => { if (x instanceof THREE.Mesh) { x.geometry.dispose(); for (const m of [x.material].flat()) m.dispose(); } });
+  });
+
+  it('adds the smaller photographed features: a portico, window awnings, a bay, a deck, solar panels and the porch\'s own roof and posts', () => {
+    // A 12 m two-storey front facing south with a gable roof (eaves 6 m up, ridge 9 m up 4 m back).
+    const o: [number, number] = [300, 400], b = 30, floor = b + .6;
+    const points = [[-600, -400, 600], [600, -400, 600], [600, 0, 900], [-600, 0, 900], [-600, 400, 600], [600, 400, 600]];
+    const v = Buffer.from(new Int16Array(points.flat()).buffer).toString('base64'), r = Buffer.from(Uint8Array.from([0, 1, 2, 0, 2, 3, 3, 2, 5, 3, 5, 4])).toString('base64');
+    const frames = [{ start: [294, 396], tangent: [1, 0], outward: [0, -1], width: 12, front: true, groundMaximum: b + .1, clearanceM: 6, eave: b + 6 }];
+    const make = (id: string): EvidenceBuilding => ({ id, tileId: 't', address: 'Fixture', outline: [[294, 396], [306, 396], [306, 404], [294, 404]], frames, base: b, floor,
+      eave: b + 6, peak: b + 9, stories: 2, style: 'COLONIAL', year: 1960, material: 'siding', paint: '#d9d5c8', roof: 'gable', porch: 'none', documented: false, evidenceIds: [],
+      colorsDated: false, entry: { frameIndex: 0, u: 6, floor }, roofSurface: { o, b, v, r, color: '#3c3d3f' } });
+    const build = (home: EvidenceBuilding) => {
+      const group = new THREE.Group(), geometry = new THREE.BufferGeometry();
+      geometry.setAttribute('position', new THREE.Float32BufferAttribute([298, b + 1, -396, 299, b + 1, -396, 298, b + 2, -396], 3));
+      const material = new THREE.MeshStandardMaterial(); material.name = 'V2 inferred | siding';
+      group.add(new THREE.Mesh(geometry, material));
+      applyEvidenceBuildings(group, 't', [0, 0, 0], 0, [home], [], undefined, [], []);
+      const parts: { name: string; x: number[]; y: number[]; n: number[] }[] = [];
+      group.traverse(x => { if (x instanceof THREE.Mesh) for (const m of [x.material].flat()) {
+        const p = x.geometry.getAttribute('position'), part = { name: m.name, x: [] as number[], y: [] as number[], n: [] as number[] };
+        for (let i = 0; i < p.count; i++) { part.x.push(p.getX(i)); part.y.push(p.getY(i)); part.n.push(-p.getZ(i)); }
+        parts.push(part);
+      } });
+      group.traverse(x => { if (x instanceof THREE.Mesh) { x.geometry.dispose(); for (const m of [x.material].flat()) m.dispose(); } });
+      return parts;
+    };
+    const home = make('details');
+    home.layout = photoLayout(home, { d: [50], w1: [17, 83], w2: [17, 50, 83] }, { dh: [[50, 'p']], aw: [[83, 1]], awc: '#3f6b4a', aws: 1, bw: [[8, 26, 2]], dk: [[70, 95, 1]], sol: [[20, 80]][0] as [number, number] })!;
+    expect(home.layout.covers).toEqual([{ frameIndex: 0, u: 6, kind: 'p' }]);
+    expect(home.layout.bays).toEqual([{ frameIndex: 0, u0: expect.closeTo(.96, 1), u1: expect.closeTo(3.12, 1), levels: 2 }]);
+    const parts = build(home), named = (s: string) => parts.filter(p => p.name.includes(s));
+    // the portico's roof stands out over the door and its posts reach down to the ground in front of it
+    const roof = named('| roof | #3c3d3f').flatMap(p => p.n.map((n, i) => [p.x[i], p.y[i], n]));
+    expect(roof.some(([x, y, n]) => Math.abs(x - 300) < 1.2 && n < 395 && n > 394.4 && y > floor + 2.3 && y < floor + 3.4)).toBe(true);
+    // a striped green awning over the right-hand ground-floor window
+    const awn = named('| trim | #3f6b4a').flatMap(p => p.x.map((x, i) => [x, p.y[i], p.n[i]]));
+    expect(awn.length).toBeGreaterThan(0);
+    expect(awn.every(([x, y, n]) => x > 302.5 && x < 306 && y > floor + 1.5 && y < floor + 3.3 && n > 395 && n <= 396.01)).toBe(true);
+    expect(named('| trim | #ecebe6').length).toBeGreaterThan(0);
+    // the bay's sided front stands out from the wall on the left, with glass on both storeys
+    const glass = named('| glass |').flatMap(p => p.x.map((x, i) => [x, p.y[i], p.n[i]]));
+    const bayGlass = glass.filter(([x, , n]) => x > 295 && x < 297.2 && n < 395.6 && n > 395.1);
+    expect(new Set(bayGlass.map(([, y]) => Math.round(y - floor) > 2)).size).toBe(2);
+    // the deck on the right, at the ground floor, two metres and more out from the wall
+    const deckTop = named('| trim | #8c7f6c').flatMap(p => p.n.map((n, i) => [p.x[i], p.y[i], n])).filter(([, , n]) => n < 394);
+    expect(deckTop.length).toBeGreaterThan(0);
+    expect(Math.min(...deckTop.map(([x]) => x))).toBeGreaterThan(302);
+    // panels on the front slope, above the roof and below its ridge
+    const panels = named('| glass | #1c2533').flatMap(p => p.y.map((y, i) => [p.x[i], y, p.n[i]]));
+    expect(panels.length).toBeGreaterThanOrEqual(12);
+    for (const [, y, n] of panels) { expect(y).toBeGreaterThan(b + 6 + (n - 396.3) * .75); expect(y).toBeLessThan(b + 9); }
+    // an open porch with a hip roof on round columns, railed with solid sided walls
+    const porch = make('porch');
+    porch.porch = 'open'; porch.porchPlacement = 'front';
+    porch.layout = photoLayout(porch, { d: [50], pw: [20, 80] }, { pr: 'hip', po: 'round', rl: 's', rc: 'house' })!;
+    const pp = build(porch), faces = pp.filter(p => p.name.includes('| roof | #3c3d3f'));
+    expect(faces.length).toBeGreaterThan(0);
+    // hipped: the roof rises from its eaves toward the wall
+    const ys = faces.flatMap(p => p.y), ns = faces.flatMap(p => p.n);
+    expect(Math.max(...ys) - Math.min(...ys)).toBeGreaterThan(.4);
+    expect(ns[ys.indexOf(Math.max(...ys))]).toBeGreaterThan(395.9);
+    const sided = pp.filter(p => p.name.includes('siding') || p.name.includes('| wall |')).flatMap(p => p.y.map((y, i) => [y, p.n[i]])).filter(([y, n]) => n < 395 && y > floor && y < floor + 1);
+    expect(sided.length).toBeGreaterThan(0);
   });
 
   it('stands the survey\'s trees in place of the scenery\'s block trees near streets and houses', () => {
