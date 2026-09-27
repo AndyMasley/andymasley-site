@@ -888,6 +888,25 @@ function openPorch(batch:Batch,home:EvidenceBuilding):void{
   if(decks[0]<floor+.5&&rise>.15){const steps=Math.min(8,Math.ceil(rise/.18));for(let i=0;i<steps;i++){const h=rise*(steps-i)/steps;batch.box(f,'foundation',door,ground+h/2-.03,.15+i*.28,1.3,h,.3,'#a19f93');}}
 }
 
+/** A gambrel the photograph shows over a measured body: the survey finds its
+ * shallow upper slopes, and its steep lower ones stand nearly upright (four
+ * or five to one) over the upper storey of each eave wall. That storey is
+ * shingled in the roof's colour from a flared eave at the storey's head up
+ * to the knee, its windows standing in the slope as the photograph shows them. */
+function gambrelSides(batch:Batch,home:EvidenceBuilding):void{
+  const color=home.roofSurface?.color??'#50544e',storey=home.floorHeight??2.7;
+  for(const edge of home.frames){
+    const f:Frame={...edge,structId:home.id,tileId:home.tileId},w=edge.width,profile=edge.profile;
+    const tops=profile?profile.map(p=>p[1]):[edge.eave??home.eave],top=Math.min(...tops);
+    // eave walls only: a level top standing a storey and more over the lower storey's head
+    const y=home.floor+storey+.05;
+    if(w<1||Math.max(...tops)-top>.25||top-y<1.2)continue;
+    batch.box(f,'roof',w/2,(y+top)/2,.035,w,top-y,.03,color);
+    face(batch,f,'roof',[[-.08,y+.14,.03],[w+.08,y+.14,.03],[w+.08,y-.06,.4],[-.08,y-.06,.4]],color,[0,1,1]);
+    batch.box(f,'trim',w/2,y-.1,.4,w+.16,.1,.03);
+  }
+}
+
 /** The storey above the top full one the photograph shows (or the record gives). */
 function atticLevel(home:EvidenceBuilding):number{
   // The storeys the photograph shows under the roof, else the record's (or the survey's).
@@ -1416,6 +1435,7 @@ export function applyEvidenceBuildings(group:THREE.Object3D,tileId:string,tileOr
     if(survey){measuredBody(batch,row.id,row.tileId,survey,buildingMaterial(row),row.paint,'#50544e');foundationBand(batch,row);}
     else if(roof)roofGeometry(batch,row,roof);
     homeWindows(batch,row);
+    if(survey&&row.layout?.roof==='gambrel')gambrelSides(batch,row);
     const stoop=stoopById.get(row.id);if(stoop)renderAddressStoop(batch,stoop);
   }
   buildExtra?.(batch,filtered.matched);

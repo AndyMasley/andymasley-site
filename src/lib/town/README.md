@@ -317,7 +317,13 @@ moved onto its plan by the shift that lays the two together best
 height, along one side. Outbuildings and the survey's trees move by the local
 shift. A lower part at one end of a section (a wing, a porch or a garage under
 its own lower roof) is split from the section spanning it and fitted again,
-where that explains enough more of the returns. Roof
+where that explains enough more of the returns. No shed is steeper than 45
+degrees and no gable side steeper than two to one, so a small porch's roof no
+longer stands upright on a front. Where the photograph shows a gambrel, the
+survey finds its shallow upper slopes and the steep lower ones stand nearly
+upright over the upper storey of each eave wall, so that storey is shingled in
+the roof's colour from a flared eave at its head (`gambrelSides`), its windows
+standing in the slope. Roof
 colour is sampled from the lean-registered 2025 aerial. Siding, trim, door and
 shutter colours, wall material, front porch and window bays are reads of the
 assessor's street photographs (`facade-reads.json`); no photograph ships.

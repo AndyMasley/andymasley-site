@@ -7,7 +7,11 @@ plus LiDAR height breaks, chosen greedily by how many returns they explain,
 then refined: wings reach into their neighbours, raised parts (cross gables,
 dormers) become overlays, and a lower part at a section's end (a wing, a
 porch or a garage under its own lower roof) is split from the section
-spanning it, each part fitted again.
+spanning it, each part fitted again. No shed is steeper than 45 degrees and
+no gable side steeper than two to one (a steeper plane over a section is half
+of a small gable or the top of a wall, and drew as a roof standing upright on
+a front), and a section over a third of the plan leans toward the roof form
+the street photograph shows.
 """
 import json, math, glob, collections, os
 from pathlib import Path
@@ -98,10 +102,11 @@ def fit_models(s, t, z, A, B, quick=False):
     # flat
     coef, e, n = robust_lstsq(np.c_[one], z)
     if coef is not None: put('flat', [(0.0, 0.0, coef[0])], e, n, {})
-    # sheds
+    # sheds (no steeper than 45 degrees: a steeper single plane over a
+    # section is half of a small gable or the edge of a wall, not a roof)
     for axis, u in (('s', s), ('t', t)):
         coef, e, n = robust_lstsq(np.c_[one, u], z)
-        if coef is not None:
+        if coef is not None and abs(coef[1]) <= 1.0:
             pl = [(coef[1], 0.0, coef[0])] if axis == 's' else [(0.0, coef[1], coef[0])]
             put('shed_' + axis, pl, e, n, {'slope': float(coef[1])})
     # gables (ridge along s: slopes in t) and (ridge along t: slopes in s)
@@ -112,7 +117,7 @@ def fit_models(s, t, z, A, B, quick=False):
             coef, e, n = robust_lstsq(np.c_[one, -np.maximum(d, 0), -np.maximum(-d, 0)], z)
             if coef is None: continue
             H, k1, k2 = coef
-            if k1 <= 0.05 or k2 <= 0.05: continue
+            if k1 <= 0.05 or k2 <= 0.05 or max(k1, k2) > 2.0: continue
             if axis == 's': pl = [(0.0, -k1, H + k1 * off), (0.0, k2, H - k2 * off)]
             else: pl = [(-k1, 0.0, H + k1 * off), (k2, 0.0, H - k2 * off)]
             put('gable_' + axis, pl, e, n, {'offset': float(off), 'k1': float(k1), 'k2': float(k2)})
@@ -178,12 +183,19 @@ def fit_models(s, t, z, A, B, quick=False):
 COMPLEXITY = {'flat': 1, 'shed_s': 2, 'shed_t': 2, 'gable_s': 4, 'gable_t': 4, 'hip': 5, 'hip_t': 5, 'gambrel': 5, 'mansard': 4}
 
 
-def choose(fits, n):
-    """Prefer simpler roofs unless a richer one explains clearly more returns."""
+# The roof the street photograph shows (layout-reads.json 'rf'), as the models it favours.
+FORMS = {'gambrel': {'gambrel'}, 'hip': {'hip', 'hip_t'}, 'mansard': {'mansard'}, 'flat': {'flat'},
+         'side': {'gable_s', 'gable_t'}, 'front': {'gable_s', 'gable_t'}, 'cross': {'gable_s', 'gable_t'}}
+
+
+def choose(fits, n, form=None):
+    """Prefer simpler roofs unless a richer one explains clearly more returns;
+    a main roof leans toward the form its photograph shows, by as much as
+    four in a hundred of its returns."""
     if not fits: return None
     best = None
     for name, (planes, rmse, inl, params) in fits.items():
-        score = inl - COMPLEXITY[name] * max(2.0, 0.015 * n) - rmse * n * 0.25
+        score = inl - COMPLEXITY[name] * max(2.0, 0.015 * n) - rmse * n * 0.25 + (0.04 * n if name in FORMS.get(form, ()) else 0.0)
         if best is None or score > best[0]: best = (score, name)
     name = best[1]
     # A pitched roof must actually pitch; nearly level fits are flat.
@@ -272,7 +284,7 @@ def total_score(sections, P, Z, lam):
     return inl - lam * sum(COMPLEXITY[s['model']] for s in sections)
 
 
-def make_section(rect, P, Z, mask=None, quick=False, allowed=None):
+def make_section(rect, P, Z, mask=None, quick=False, allowed=None, form=None):
     frame = section_frame(rect)
     m = in_rect(rect, P)
     if mask is not None: m &= mask
@@ -280,7 +292,7 @@ def make_section(rect, P, Z, mask=None, quick=False, allowed=None):
     s, t = local_st(frame, P[m])
     fits = fit_models(s, t, Z[m], frame[2], frame[3], quick=quick)
     if allowed: fits = {k: v for k, v in fits.items() if k in allowed}
-    name = choose(fits, int(m.sum()))
+    name = choose(fits, int(m.sum()), form)
     if not name: return None
     planes, rmse, inl, params = fits[name]
     return {'rect': [float(v) for v in rect], 'frame': [float(v) for v in frame[:4]] + [bool(frame[4])], 'model': name,
@@ -309,9 +321,11 @@ def residual_clusters(P, r, thresh, cell=0.5):
     return out
 
 
-def measure(house, debug=False, shift=None):
+def measure(house, debug=False, shift=None, form=None):
     """The roof over a plan from the returns inside it; `shift` [east, north]
-    is where the plan's returns lie from it (register.py), and moves them onto it."""
+    is where the plan's returns lie from it (register.py), and moves them onto
+    it; `form` is the roof its street photograph shows, which a section over
+    at least a third of the plan leans toward (choose)."""
     x, y, z, tree = lidar()
     s = np.zeros(2) if shift is None else np.asarray(shift, dtype='f8')
     outline = np.asarray(house['outline'], dtype='f8')
@@ -386,7 +400,8 @@ def measure(house, debug=False, shift=None):
         if best is None: break
         val, (i0, i1, j0, j1), m = best
         rect = (us[i0], vs[j0], us[i1], vs[j1])
-        sec = make_section(rect, PL, Z, mask=m)
+        main = (rect[2] - rect[0]) * (rect[3] - rect[1]) >= total_area / 3
+        sec = make_section(rect, PL, Z, mask=m, form=form if main else None)
         if not sec: break
         sections.append(sec)
         covered[i0:i1, j0:j1] = True
@@ -457,7 +472,8 @@ def measure(house, debug=False, shift=None):
                     olo, ohi, c0, c1 = (y0, y1, by0, by1) if axis == 0 else (x0, x1, bx0, bx1)
                     if sec.get('overlay') or not (lo + 1.0 < cut < hi - 1.0) or ohi < c0 or olo > c1: trial.append(sec); continue
                     a, b = ((x0, y0, cut, y1), (cut, y0, x1, y1)) if axis == 0 else ((x0, y0, x1, cut), (x0, cut, x1, y1))
-                    sa, sb = make_section(a, PL, Z), make_section(b, PL, Z)
+                    big = lambda q: form if (q[2] - q[0]) * (q[3] - q[1]) >= total_area / 3 else None
+                    sa, sb = make_section(a, PL, Z, form=big(a)), make_section(b, PL, Z, form=big(b))
                     if not sa or not sb: trial.append(sec); continue
                     trial += [sa, sb]; ok = True
                 if not ok: continue

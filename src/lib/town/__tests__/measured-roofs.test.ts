@@ -321,6 +321,35 @@ describe('measured house roofs', () => {
     expect(Math.max(...band)).toBeLessThan(.7 + .3 + .01);
   });
 
+  it("shingles the upper storey of a photographed gambrel's eave walls, with a flared eave at the storey's head", () => {
+    const tile = tiles.find(t => houses(t).length)!, row = houses(tile)[0], [e, n] = row.o, b = row.b;
+    const frames = [{ start: [e - 6.32, n - 4.32], tangent: [1, 0], outward: [0, -1], width: 12.64, front: true, groundMaximum: b, clearanceM: 6 }];
+    const home = { id: row.id, tileId: tile, address: 'Fixture', outline: [[e - 6.32, n - 4.32], [e + 6.32, n - 4.32], [e + 6.32, n + 4.32], [e - 6.32, n + 4.32]],
+      frames, base: b, floor: b + .4, eave: b + 6.1, peak: b + 9, stories: 2, style: 'COLONIAL', year: 1960, material: 'siding', paint: '#f1f1ed',
+      roof: 'gable', porch: 'none', documented: false, evidenceIds: [], colorsDated: false, entry: null } as unknown as EvidenceBuilding;
+    const build = (rf: string) => {
+      const group = new THREE.Group(), geometry = new THREE.BufferGeometry();
+      geometry.setAttribute('position', new THREE.Float32BufferAttribute([e - 4, b + 2, -(n - 4.32), e - 2, b + 2, -(n - 4.32), e - 4, b + 4, -(n - 4.32)], 3));
+      const inferred = new THREE.MeshStandardMaterial(); inferred.name = 'V2 inferred | siding';
+      group.add(new THREE.Mesh(geometry, inferred));
+      applyEvidenceBuildings(group, tile, [0, 0, 0], 0, [home], [], undefined, [], [{ ...row, e: [b + 6.1], ep: [6.1], w: '', r: '', t: '', rc: '#5c5a57',
+        f: { material: 'siding', bays: 3, lo: { rf, st: 2, w1: [20, 50, 80], w2: [20, 80] } } } as MeasuredRoof]);
+      // roof-coloured faces standing on the eave wall's plane, 1.5-4 cm out from it
+      let low = Infinity, high = -Infinity, faces = 0;
+      group.traverse(o => { if (o instanceof THREE.Mesh && [o.material].flat().some(m => m.name.includes('| roof |'))) {
+        const p = o.geometry.getAttribute('position');
+        for (let i = 0; i < p.count; i++) { const out = (n - 4.0) - -p.getZ(i); if (out > .015 && out < .055) { low = Math.min(low, p.getY(i) - b); high = Math.max(high, p.getY(i) - b); faces++; } }
+      } });
+      return { low, high, faces };
+    };
+    const gambrel = build('gambrel'), side = build('side');
+    expect(side.faces).toBe(0);
+    expect(gambrel.faces).toBeGreaterThan(0);
+    // from the upper storey's head (floor + 2.7) to the wall top at 6.1 m
+    expect(gambrel.low).toBeGreaterThan(.4 + 2.7 - .1); expect(gambrel.low).toBeLessThan(.4 + 2.7 + .3);
+    expect(gambrel.high).toBeGreaterThan(6.0); expect(gambrel.high).toBeLessThan(6.15);
+  });
+
   it('rebuilds garages, sheds and other plain buildings: measured bodies, doors where the drive meets them, windows by storey', () => {
     const others = tiles.flatMap(t => packet(t).rows.filter(isMeasuredOther).map(r => ({ tile: t, row: r })));
     expect(others.filter(o => o.row.k !== 'v').length).toBe(index.others);
