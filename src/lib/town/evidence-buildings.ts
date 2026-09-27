@@ -761,26 +761,30 @@ function houseOpenings(batch:Batch,home:EvidenceBuilding):void {
       if(clear(u,garage.width/2)<g+doorHeight+.37)continue;
       vehicleDoor(batch,f,u,g,garage.width,doorHeight,home.garage?.color??'#ecebe6');
     }
-    if(entry&&entry.floor+DOOR_ROOM<clear(doorU,.6)){
+    // The photographed front door stands at the entry's floor; where the wall
+    // there is too low over that floor (a low eave over a floor recorded high),
+    // its sill comes down as far as the ground in front of it.
+    const sill=entry?Math.min(entry.floor,clear(doorU,.6)-DOOR_ROOM-.01):0,lowered=!!entry&&entry.floor-sill>.02;
+    if(entry&&(!lowered||sill>=groundAtU(doorU)-.02&&!!read?.doors.some(d=>d.frameIndex===frameIndex&&Math.abs(d.u-doorU)<1.2))){
       // Keep the existing generated doorway aligned with its retained steps.
       // The source checked grade at the doorway, not at the uphill wall corner.
-      batch.door(f,doorU,entry.floor,.025,multi?1.08:.96,home.door??(home.documented?'#45574d':'#465356'),home.door!==undefined);
+      frontDoor(batch,f,home,doorU,sill,multi?1.08:.96,home.door??(home.documented?'#45574d':'#465356'));
       const span=read?.porch?.frameIndex===frameIndex?read.porch:undefined;
-      if(home.porch!=='none'&&home.porchPlacement==='front'&&!home.porchInPlan&&!home.openPorch)homePorch(batch,{...home,floor:entry.floor},f,w,doorU,ground,top,edge,span);
+      if(home.porch!=='none'&&home.porchPlacement==='front'&&!home.porchInPlan&&!home.openPorch){if(!lowered)homePorch(batch,{...home,floor:entry.floor},f,w,doorU,ground,top,edge,span);}
       // A photographed hood, portico or awning over a door no porch covers.
       else if(!home.openPorch?.strips.some(s=>s.frameIndex===frameIndex)){
         const cover=read?.covers?.find(c=>c.frameIndex===frameIndex&&Math.abs(c.u-doorU)<1.5);
-        if(cover)doorCover(batch,f,home,doorU,entry.floor,groundAtU(doorU),cover.kind,clear(doorU,1.15),trim);
+        if(cover)doorCover(batch,f,home,doorU,sill,groundAtU(doorU),cover.kind,clear(doorU,1.15),trim);
         // A door the map did not give the house has no scenery steps: it takes its own.
-        const g=groundAtU(doorU),rise=entry.floor-g,n=Math.min(8,Math.ceil(rise/.18));
-        if(home.entryFromPhoto&&rise>.2&&rise<1.5)for(let i=0;i<n;i++){const h=rise*(n-i)/n;batch.box(f,'foundation',doorU,g+h/2-.02,.3+i*.28,1.2,h,.3,'#a19f93');}
+        const g=groundAtU(doorU),rise=sill-g,n=Math.min(8,Math.ceil(rise/.18));
+        if((home.entryFromPhoto||lowered)&&rise>.2&&rise<1.5)for(let i=0;i<n;i++){const h=rise*(n-i)/n;batch.box(f,'foundation',doorU,g+h/2-.02,.3+i*.28,1.2,h,.3,'#a19f93');}
       }
     }
     // Another photographed entrance (a two-family's second door), with its steps.
     for(const u of extraDoors){
-      const g=groundAtU(u),sill=Math.max(floor,g+.15);
+      const g=groundAtU(u),sill=Math.max(g+.05,Math.min(Math.max(floor,g+.15),clear(u,.6)-DOOR_ROOM-.01));
       if(sill+DOOR_ROOM>=clear(u,.6)||sill-g>1.4)continue;
-      batch.door(f,u,sill,.025,multi?1.08:.96,home.door??'#465356',home.door!==undefined);
+      frontDoor(batch,f,home,u,sill,multi?1.08:.96,home.door??'#465356');
       const rise=sill-g,steps=Math.min(8,Math.ceil(rise/.18));
       if(rise>.2)for(let i=0;i<steps;i++){const h=rise*(steps-i)/steps;batch.box(f,'foundation',u,g+h/2-.02,.3+i*.28,1.1,h,.3,'#a19f93');}
       const cover=read?.covers?.find(c=>c.frameIndex===frameIndex&&Math.abs(c.u-u)<1.2);
@@ -825,6 +829,15 @@ function houseOpenings(batch:Batch,home:EvidenceBuilding):void {
   if(home.openPorch)openPorch(batch,home);
   const solar=home.layout?.solar;
   if(solar&&home.roofSurface)solarPanels(batch,home,home.frames[solar.frameIndex],solar.u0,solar.u1,home.layout!.dormers.filter(d=>d.frameIndex===solar.frameIndex));
+}
+
+/** An entrance door in its photographed colour; where the photograph shows the
+ * door but no colour of its own (the reading leaves out a white storm door),
+ * a white storm door with its tall pane over it. */
+function frontDoor(batch:Batch,f:Frame,home:EvidenceBuilding,u:number,floor:number,width:number,color:string):void{
+  const storm=!!home.layout?.doors.length&&home.door===undefined;
+  batch.door(f,u,floor,.025,width,storm?'#e7e6e0':color,storm||home.door!==undefined);
+  if(storm)batch.box(f,'glass',u,floor+1.3,.215,width*.74,1.18,.02);
 }
 
 /** An open porch cut from a measured body: a deck at the floor from the house
