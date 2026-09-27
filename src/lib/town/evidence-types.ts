@@ -54,6 +54,8 @@ export type EvidenceBuilding = {
   entry?: {frameIndex:number;u:number;floor:number} | null;
   /** The entry is the photographed front door of a house the map gave none: it takes its own steps. */
   entryFromPhoto?: boolean;
+  /** Built as a split foyer (as a raised ranch) because its photograph shows one. */
+  splitFoyer?: boolean;
   frontageBays?: number | null;
   eaveDetail?: 'dentils' | 'brick-dentils' | 'brackets' | null;
   historicalEvidenceIds?: string[];

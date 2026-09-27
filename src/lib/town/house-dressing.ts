@@ -331,7 +331,14 @@ export class HouseDressing {
       if (random() < 0.4) builder.box('flag', [x - face[0] * 0.05 + face[1] * 0.1, y + 1.33, z - face[1] * 0.05 - face[0] * 0.1], face, 0.04, 0.16, 0.012);
       report.mailboxes++;
     }
-    this.fences(observations, builder, origin, level, groundAt, report);
+    // Hedge shrubs share the foundation shrubs' instances: clipped yew and privet greens.
+    const hedge = (x: number, y: number, z: number, dir: readonly [number, number]) => {
+      const random = seeded(x + origin[0], z + origin[2], 331), r = 0.52 + random() * 0.1, h = 1.3 + random() * 0.3;
+      const q = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.atan2(-dir[1], dir[0]));
+      const color = (random() < 0.5 ? new THREE.Color().setRGB(0.05, 0.095, 0.045) : new THREE.Color().setRGB(0.07, 0.13, 0.05)).multiplyScalar(0.9 + random() * 0.2);
+      shrubs.push({ m: new THREE.Matrix4().compose(new THREE.Vector3(x, y, z), q, new THREE.Vector3(r * 1.1, h / 1.4, r * 0.85)), color, kind: random() * 0.4 });
+    };
+    this.fences(observations, builder, origin, level, groundAt, report, level < 2 ? hedge : undefined);
     const outlines = buildingOutlines(segments);
     const tests = level === 0 ? this.surfaceTests(group, origin) : null;
     const driveways = tests ? this.driveways(group, origin, [...buildings.values()], outlines, tests, report) : [];
@@ -389,7 +396,8 @@ export class HouseDressing {
    * posts, heights and spacing are ordinary New England forms.
    */
   private fences(observations: readonly { e: number; n: number; b?: number; fe?: string; fc?: string; fl?: number[][] }[], builder: Builder, origin: readonly number[],
-    level: number, groundAt: (x: number, z: number, fallback: number) => number, report: HouseDressingReport): void {
+    level: number, groundAt: (x: number, z: number, fallback: number) => number, report: HouseDressingReport,
+    plant?: (x: number, y: number, z: number, dir: readonly [number, number]) => void): void {
     for (const o of observations) {
       if (!o.fe || !o.fl) continue;
       const kind = o.fe, base = o.b ?? 0;
@@ -407,7 +415,12 @@ export class HouseDressing {
         const yard = hx * -dz + hz * dx > 0 ? 1 : -1, nx = -dz * yard, nz = dx * yard;
         for (let k = 0; k < pieces; k++) {
           const t0 = k * step, t1 = (k + 1) * step, tm = (t0 + t1) / 2, [cx, cz] = at(tm), g = ground(tm);
-          if (kind === 'hedge') { builder.box('hedge', [cx + nx * 0.35, g + 0.58, cz + nz * 0.35], dir, step + 0.06, 1.2, 0.8); continue; }
+          if (kind === 'hedge') {
+            // A clipped hedge: overlapping shrubs along the run, else one box.
+            if (plant) for (let t = t0 + 0.26; t < t1 + 0.01; t += 0.52) { const [x, z] = at(Math.min(t, length - 0.2)); plant(x + nx * 0.42, ground(t) - 0.05, z + nz * 0.42, dir); }
+            else builder.box('hedge', [cx + nx * 0.35, g + 0.58, cz + nz * 0.35], dir, step + 0.06, 1.2, 0.8);
+            continue;
+          }
           if (kind === 'stone') { const h = 0.62 + ((k * 7919) % 5) * 0.03; builder.box('fieldstone', [cx, g + h / 2 - 0.05, cz], dir, step + 0.04, h, 0.55); continue; }
           if (kind === 'retaining') {
             // The wall holds the yard up: its face at the frontage, its top at the yard's level.

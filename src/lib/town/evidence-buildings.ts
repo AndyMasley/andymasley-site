@@ -62,8 +62,9 @@ function measuredHome(home:EvidenceBuilding,roof:MeasuredRoof):EvidenceBuilding{
   const stories=Math.max(home.stories,tops.length?Math.min(4,Math.floor((Math.max(...tops)-home.floor+.35)/2.7)):0);
   const setbacks=setbackWalls(roof,frames);
   // A photographed enclosed porch the plan holds as its whole front: the entry
-  // wall a storey tall on a taller house, the house wall rising behind it from
-  // the porch roof. Its walls take a sunporch's band of windows.
+  // wall a storey tall on a taller house, the house wall rising behind it (up
+  // to 5.5 m back, a deep sunroom) from the porch roof. Its walls take a
+  // sunporch's band of windows.
   let enclosed=false;
   if(roof.f?.porch==='enclosed'&&entry&&!openPorch){
     const front=frames[entry.frameIndex],top=(f:typeof front)=>f.profile?Math.max(...f.profile.map(p=>p[1])):f.eave??home.eave,low=top(front);
@@ -72,7 +73,7 @@ function measuredHome(home:EvidenceBuilding,roof:MeasuredRoof):EvidenceBuilding{
       if(s.outward[0]*front.outward[0]+s.outward[1]*front.outward[1]<.99)return false;
       const back=(front.start[0]-s.start[0])*front.outward[0]+(front.start[1]-s.start[1])*front.outward[1];
       let bottom=Infinity;for(let i=1;i<s.outline.length;i+=2)bottom=Math.min(bottom,s.outline[i]);
-      return back>.8&&back<3.8&&bottom>=low-.3&&bottom<=low+1.8;
+      return back>.8&&back<5.5&&bottom>=low-.3&&bottom<=low+1.8;
     });
   }
   return{...photographedHome(home,roof),frames,entry,eave,stories,peak:Math.max(roof.p,eave+.1),measured:true,setbacks,
@@ -130,7 +131,7 @@ export function photoLayout(home:EvidenceBuilding,lo:FrontLayout,dt?:FrontDetail
   // Plan frames run either way round; the photograph's left end is the one on the viewer's left.
   const f=home.frames[front.frames[0]],toRight=f.tangent[0]*-f.outward[1]+f.tangent[1]*f.outward[0]>0;
   const {a0,a1}=front,at=(x:number)=>toRight?a0+x/100*(a1-a0):a1-x/100*(a1-a0);
-  const raised=/RAISED RANCH|SPLIT LEVEL/i.test(home.style);
+  const raised=splitFoyer(home);
   const floors=[lo.w1,lo.w2,lo.w3],full=floors.reduce((n,list,i)=>list?.length?i+1:n,0);
   const windows:PhotoLayout['windows']=[];
   for(const [list,level]of [...floors.map((list,i)=>[list,raised?i-1:i] as const),[lo.wa,raised?full-1:Math.max(1,full)] as const]){
@@ -341,10 +342,25 @@ export function garageFrame(home:EvidenceBuilding):number{
   return best;
 }
 
+/** A split foyer: a raised ranch or split level by its record, or a house
+ * whose photograph shows a lower storey with a garage door and windows only on
+ * the storey above it, under a measured wall too low for two full storeys over
+ * the recorded floor (its main floor stands half a storey up). */
+function splitFoyer(home:EvidenceBuilding):boolean{
+  return home.splitFoyer===true||/RAISED RANCH|SPLIT LEVEL/i.test(home.style);
+}
+const photographedSplitFoyer=(home:EvidenceBuilding,lo:FrontLayout):boolean=>{
+  if(!(lo.st===2&&lo.w2?.length&&!lo.w1?.length&&lo.gx?.length))return false;
+  const front=home.frames.find(f=>f.front);if(!front)return false;
+  const top=front.profile?Math.min(...front.profile.map(p=>p[1])):front.eave??home.eave;
+  return top-home.floor<4.3;
+};
+
 /** A house's photographed layout, on the wall the photograph shows (the plan's front, or the wall facing its address street where the roof read says so). */
 const withLayout=(home:EvidenceBuilding,lo:FrontLayout|undefined,dt?:FrontDetails):EvidenceBuilding=>{
   if(!lo)return home;
-  const shown=lo.sf!==undefined&&lo.sf<home.frames.length&&!home.openPorch?{...home,frames:home.frames.map((f,i)=>({...f,front:i===lo.sf}))}:home;
+  const turned=lo.sf!==undefined&&lo.sf<home.frames.length&&!home.openPorch?{...home,frames:home.frames.map((f,i)=>({...f,front:i===lo.sf}))}:home;
+  const shown=!splitFoyer(turned)&&photographedSplitFoyer(turned,lo)?{...turned,splitFoyer:true}:turned;
   const layout=photoLayout(shown,lo,dt);if(!layout)return home;
   // Under an open porch the photographed door stands on the house wall, reached by the porch's steps.
   const porch=home.openPorch,door=porch?layout.doors.find(d=>porch.strips.some(s=>s.frameIndex!==undefined&&s.frameIndex===d.frameIndex)):undefined;
@@ -612,7 +628,7 @@ export function facadeLayouts(home:EvidenceBuilding,bayCount:(width:number,front
 }
 
 function houseOpenings(batch:Batch,home:EvidenceBuilding):void {
-  const style=home.style.toUpperCase(),ranch=/RANCH|SPLIT LEVEL/.test(style),cape=/CAPE/.test(style),raised=/RAISED RANCH|SPLIT LEVEL/.test(style);
+  const style=home.style.toUpperCase(),raised=splitFoyer(home),ranch=raised||/RANCH|SPLIT LEVEL/.test(style),cape=/CAPE/.test(style);
   const colonial=/COLONIAL|FEDERAL|GEORGIAN/.test(style),multi=/FLATS|APARTMENT|CONVERSION|DUPLEX/.test(style);
   const garageAt=garageFrame(home);
   const bayCount=(w:number,front:boolean)=>{
@@ -1346,7 +1362,7 @@ function roofGeometry(batch:Batch,home:EvidenceBuilding,roof:EvidenceRoof):void 
  * portions remain occluded by the same terrain used to build the source. */
 function foundationBand(batch:Batch,home:EvidenceBuilding):void {
   // A raised ranch's lower level is sided down to a low concrete strip.
-  const raised=/RAISED RANCH|SPLIT LEVEL/.test(home.style.toUpperCase());
+  const raised=splitFoyer(home);
   for(const edge of home.frames){
     const top=raised?Math.min(home.floor,(edge.groundMaximum??home.floor)+.3):home.floor;
     if(top<=home.base+.15)continue;
@@ -1360,9 +1376,10 @@ export function applyEvidenceBuildings(group:THREE.Object3D,tileId:string,tileOr
   const measured=packetRows.filter((r):r is MeasuredRoof=>!isMeasuredOther(r)&&!isPhotographedHouse(r)),others=packetRows.filter(isMeasuredOther);
   const photos=new Map(packetRows.filter(isPhotographedHouse).map(r=>[r.id,r]));
   if(!rows.length&&!extras.length&&!others.length)return undefined;
-  // A curated roof yields only to a measurement that explains most returns.
+  // A curated roof yields to a measurement that explains most returns, or to
+  // any measurement of a house whose current street photograph was read.
   const curated=new Map(roofs.map(r=>[r.id,r]));
-  const surveyed=new Map(measured.filter(m=>!curated.has(m.id)||m.q>=.8).map(m=>[m.id,m]));
+  const surveyed=new Map(measured.filter(m=>!curated.has(m.id)||m.q>=.8||!!m.f).map(m=>[m.id,m]));
   const repairs=new Map(roofs.filter(r=>!surveyed.has(r.id)).map(r=>[r.id,r]));
   const extraIds=new Set(extras.map(r=>r.id)),originalHomes=rows.filter(r=>!extraIds.has(r.id)).map(historicAppearance).map(home=>{
     const survey=surveyed.get(home.id);if(survey)return withLayout(measuredHome(home,survey),survey.f?.lo,survey.f?.dt);

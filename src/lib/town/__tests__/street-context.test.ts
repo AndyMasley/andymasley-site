@@ -149,8 +149,14 @@ describe('yards as photographed', () => {
     const names = materials(group);
     expect(names.has('House dressing | painted picket #f4f4f0')).toBe(true);
     expect(names.has('House dressing | board fence #7a7268')).toBe(true);
-    for (const name of ['House dressing | weathered split rail', 'House dressing | chain-link mesh', 'House dressing | galvanised fence post', 'House dressing | clipped hedge', 'Crafted frontage | stone | #9a968d'])
+    for (const name of ['House dressing | weathered split rail', 'House dressing | chain-link mesh', 'House dressing | galvanised fence post', 'Crafted frontage | stone | #9a968d'])
       expect(names.has(name), name).toBe(true);
+    // The hedge grows as clipped shrubs along its run, a shrub every half metre, on the yard side of the line.
+    const shrubs = group.getObjectByName('House dressing | foundation shrubs') as THREE.InstancedMesh, m = new THREE.Matrix4(), at = new THREE.Vector3();
+    const hedge: number[] = [];
+    for (let i = 0; i < shrubs.count; i++) { shrubs.getMatrixAt(i, m); at.setFromMatrixPosition(m); if (-at.z > 4 && -at.z < 8) hedge.push(-at.z); }
+    expect(hedge.length).toBeGreaterThanOrEqual(14);
+    for (const n of hedge) { expect(n).toBeGreaterThan(6.2); expect(n).toBeLessThan(7); }
     // Everything stands on the frontage line, never out in the street or up against the house.
     group.traverse(o => { if (o instanceof THREE.Mesh && /picket|board fence|split rail|chain-link|hedge|stone/.test([o.material].flat()[0].name)) {
       const p = o.geometry.getAttribute('position');

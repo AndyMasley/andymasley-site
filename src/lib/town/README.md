@@ -359,7 +359,8 @@ panels in rows up the measured slope, and the porch's own roof (shed, hip,
 gable facing the street, flat), posts (square, round, turned, metal) and
 railing (balusters, solid sided walls, lattice, metal, none) in its colour.
 Measured chimneys stand only where their tops clear the roof around them,
-moved in off the wall line. The same packets carry the town's other
+moved in off the wall line. A curated roof repair yields to the measured
+body wherever the house's current photograph was read. The same packets carry the town's other
 plainly modelled buildings (`outbuildings.py`): garages, sheds and barns, and
 shops, works, apartment blocks and public buildings that no crafted model
 replaces, each measured like a house where the LiDAR has building returns (a
@@ -372,7 +373,7 @@ overhead doors (`outbuilding-reads.json`, `building-reads.json`).
 `house-dressing.ts` follows each measured house's photograph for its yard:
 curbside mailboxes only where one is seen, foundation beds as full as seen,
 picket, board, split-rail, iron and chain-link fences, dry stone and retaining
-walls and hedges along the lot's street frontage from the parcel map, open at
+walls and hedges (a row of clipped shrubs) along the lot's street frontage from the parcel map, open at
 the drive and the front walk, and a drive paved (in the photographed surface)
 to any vehicle door the land cover leaves on lawn. It loads as its own chunk
 beside the road network; vehicle doors built during assembly join the tile's
