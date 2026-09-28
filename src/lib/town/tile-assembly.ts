@@ -8,6 +8,7 @@ import release from '../../../data/derived/town/release.json';
 import { applyTownHallMaterials } from './town-hall-materials';
 import { applyRacicotAnnex } from './racicot-annex';
 import { applyMorehouseCompletion } from './morehouse-completion';
+import { applyEddyBlockRepair } from './eddy-block-repair';
 import { applyCivicDetails } from './civic-details';
 import { applyCivicRoofFinish } from './civic-roof-finish';
 import { applyChurchRoofFinish } from './church-roof-finish';
@@ -160,6 +161,7 @@ export function tileAssemblySteps(group: THREE.Group, tile: TownTile, level: num
     { name: 'roadside', apply: () => { return applyRoadsideDetails(group,tile.id,tile.origin,level,sourceSha256,roadside); } },
     { name: 'racicotAnnex', apply: () => applyRacicotAnnex(group,tile.id,tile.origin,level,sourceSha256) },
     { name: 'morehouseCompletion', apply: () => applyMorehouseCompletion(group,tile.id,tile.origin,level,sourceSha256) },
+    { name: 'eddyBlockRepair', apply: () => applyEddyBlockRepair(group,tile.id,tile.origin,level,sourceSha256) },
   ];
   const familyByStage: Record<string,string> = {roadGroundClearance:'roadGroundClearance',foundationWalls:'foundationWalls',propertyTerrain:'propertyTerrain',terrain:'terrain',shoreline:'shoreline',roadPaint:'roadPaint',parking:'parking',roadMaterials:'roadMaterials',streetCornerGround:'streetCornerGround',roadCurve:'roadCurve',roadDash:'roadDash',streetCorners:'streetCorners',additionalEnvironment:'environment',facilities:'facilities',roadside:'roadside'};
   return steps.map(({name,apply}) => ({name,apply:()=>{

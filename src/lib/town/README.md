@@ -89,6 +89,18 @@ source notes describe the different source dates and limitations.
 
 ## Art direction
 
+Eddy Block at 119–131 Main uses `eddy-block-repair.json` and the final
+`eddyBlockRepair` assembly pass. A malformed western roof strip and overlapping
+body planes are replaced inside the mapped footprint, preserving the original
+Main Street landmark facade and all neighboring geometry. The Alpsroads west
+photograph guides green sash windows, brick courses, granite base and the low
+corner shop; the National Register description supports a flat southern roof
+and truncated northern hip. Window spacing, the internal shop corner and hip
+plateau are inferred. The 45.88/48.50 m roof levels retain prior authored heights;
+the 37.615 m shop roof follows the median of native low-roof samples.
+`TOWN_QUALITY_OUT=/outside/repo node scripts/art_finish/eddy-block-repair.mjs`
+checks all three LODs, exact retained source faces and roof closure.
+
 The lower Morehouse Block beside Shumway at 118–120 Main uses
 `morehouse-completion.json` and the final `morehouseCompletion` assembly pass.
 Taupe siding, paired sash windows, a white bracketed cornice and blue-gray

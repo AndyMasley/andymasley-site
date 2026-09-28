@@ -8,7 +8,7 @@ import { StreetDressing, updateDressingViewport, type StreetContext } from './st
 import type { HouseDressing } from './house-dressing';
 import { RoadWear } from './road-wear';
 import { CurbParking } from './curb-parking';
-import { Traffic } from './traffic';
+import type { Traffic } from './traffic';
 import { startupPosition } from './startup';
 import { createSummerHaze, createSummerSky, createShadowAnchor, installAerialPerspective, SUMMER_LIGHT } from './atmosphere';
 import { createTouringCar, type TouringCar } from './vehicle';
@@ -213,8 +213,9 @@ export async function startTown(root: HTMLElement): Promise<Session> {
     // their own chunks, alongside the road network.
     const streetContext = import('../../../data/derived/town/street-context.json').then(m => m.default as StreetContext, () => undefined);
     const houseDressing = import('./house-dressing').catch(error => { console.warn('House dressing unavailable:', error); return undefined; });
+    const trafficModule = import('./traffic');
     const networkRequest = readCriticalJson<NetworkData>(NETWORK_URL, signal, { label: 'Road network', onProgress: p => { transfer.roads = p.receivedBytes; if (!disposed) setStatus(`Loading roads… ${(transfer.roads / 1048576).toFixed(1)} MB received`); } });
-    const initialRequests = Promise.all([manifestRequest, networkRequest]);
+    const initialRequests = Promise.all([manifestRequest, networkRequest, trafficModule]);
     // A renderer failure can cancel requests before the later await attaches.
     void initialRequests.catch(() => {});
     renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false, powerPreference: 'high-performance' });
@@ -291,6 +292,8 @@ export async function startTown(root: HTMLElement): Promise<Session> {
       world.setRoadsideCommerce(commerce);
     }).catch(error => console.warn('Roadside signs unavailable:', error));
     // A few cars share the mapped lanes; fewer on mobile and fewer still on Low.
+    const { Traffic } = await trafficModule;
+    if (disposed) return session;
     traffic = new Traffic(graph, quality === 'low' ? 4 : mobile ? 6 : 12);
     scene.add(traffic.root);
     engine = (requestedResume && restoreSnapshot(graph, requestedResume)) || spawnAtLandmark(graph, startingLocation);
