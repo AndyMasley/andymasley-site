@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { DriveEngine, type RoadGraph, type Vec3 } from './engine';
 import { TemplateFleet } from './parked-life';
 import { applyArtMaterial } from './art-materials';
+import { createTrafficGraph } from './traffic-exits';
 
 /**
  * Light local traffic. A handful of cars drive the same mapped lanes as the
@@ -47,8 +48,10 @@ export class Traffic {
   private readonly size = new THREE.Vector3();
   private clock = 0;
   private serial = 0;
+  private readonly graph: RoadGraph;
 
-  constructor(private readonly graph: RoadGraph, readonly capacity = 12, seed = 0x7a11c) {
+  constructor(private readonly sourceGraph: RoadGraph, readonly capacity = 12, seed = 0x7a11c) {
+    this.graph = createTrafficGraph(sourceGraph);
     this.fleet = new TemplateFleet(capacity, 'Traffic | moving cars');
     // Same paint, glass and rubber response as the parked cars.
     for (const material of this.fleet.materials) applyArtMaterial(material);
@@ -111,8 +114,9 @@ export class Traffic {
     let known = this.eligibility.get(edgeId);
     if (known === undefined) {
       const edge = this.graph.edges.get(edgeId), path = this.graph.paths.get(edgeId);
-      known = !!edge && !!path && edge.manual_reverse_of === undefined && path.length > 30
-        && !this.graph.obstacleStops.has(edgeId) && !this.graph.boundaryStops.has(edgeId) && this.graph.choices(edgeId).length > 0;
+      known = !!edge && !!path && edge.manual_reverse_of === undefined && (this.sourceGraph.paths.get(edgeId)?.length ?? 0) > 30
+        && !this.graph.obstacleStops.has(edgeId) && !this.graph.boundaryStops.has(edgeId)
+        && (this.graph.choices(edgeId).length > 0 || path !== this.sourceGraph.paths.get(edgeId));
       this.eligibility.set(edgeId, known);
     }
     return known;
@@ -123,7 +127,9 @@ export class Traffic {
     for (let attempt = 0; attempt < 8 && candidates.length; attempt++) {
       const edgeId = candidates[Math.floor(this.random() * candidates.length)];
       if (!this.eligible(edgeId)) continue;
-      const path = this.graph.paths.get(edgeId)!;
+      // Sample the retained town segment; the outward-only continuation is
+      // for departing cars, not a new spawn zone in the neighboring scenery.
+      const path = this.sourceGraph.paths.get(edgeId)!;
       const s = 6 + this.random() * (path.length - 12);
       const p = path.sample(s)[0], d = Math.hypot(p[0] - here[0], p[1] - here[1]);
       if (d < TRAFFIC_RANGE.min || d > TRAFFIC_RANGE.max || !hidden(p, d)) continue;

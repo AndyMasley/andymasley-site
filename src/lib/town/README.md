@@ -221,6 +221,14 @@ The September 24 overhaul adds, all as authored interpretation rather than surve
   player's car eases off behind a slower car ahead (`DriveEngine.leadLimit`),
   and traffic's tail lamps light while a car brakes or waits. Numbers, routes
   and colours are authored, not a traffic count.
+  `traffic-exits.ts` gives automated cars an independent routing view with
+  source-qualified continuations along the rendered neighboring roads. The
+  original town paths, measured bridge grades, player boundary stops and
+  obstacle stops remain intact. Cars spawn only on retained town segments,
+  cross supported boundaries without stopping or reversing, and retire in
+  the distance. `traffic-exits.json` is derived by
+  `scripts/boundary_context/prepare-traffic-exits.py`; missing outside-road
+  coverage is left unextended, rather than routing traffic over open terrain.
 - `roadside-commerce.ts` (its own chunk, loaded once the road network is up)
   adds the six fuel stations and the business signs. Each canopy's outline and
   deck height are measured from the 2021 lidar's class-6 upper returns, which
