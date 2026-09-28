@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { describe, expect, it, vi } from 'vitest';
 import * as THREE from 'three';
-import { HouseDressing, type RoadLookup } from '../house-dressing';
+import { HouseDressing, onPavedCover, type RoadLookup } from '../house-dressing';
 import { Batch } from '../crafted-frontages';
 
 const origin = [1000, 60, -2000];
@@ -131,5 +131,122 @@ describe('source-owned yards and actual opening clearance', () => {
     expect(m.opacity).toBe(1); expect(m.side).toBe(THREE.DoubleSide);
     const dispose = vi.fn(); map.addEventListener('dispose', dispose);
     dressing.dispose(); expect(dispose).toHaveBeenCalledTimes(1);
+  });
+});
+
+function paveExistingCover(group: THREE.Group, lawn?: (east: number, north: number) => boolean): void {
+  const mask = group.userData.coverMask;
+  for (let y = 0; y < mask.height; y++) for (let x = 0; x < mask.width; x++) {
+    const e = mask.bounds[0] + (x + .5) / mask.width * (mask.bounds[2] - mask.bounds[0]);
+    const n = -(mask.bounds[1] + (y + .5) / mask.height * (mask.bounds[3] - mask.bounds[1]));
+    const index = (y * mask.width + x) * 4, grass = lawn?.(e, n) ?? false;
+    mask.data[index] = grass ? 255 : 0; mask.data[index + 2] = grass ? 0 : 255;
+  }
+}
+function apronVertices(group: THREE.Group, kind = 'pavers'): THREE.Vector3[] {
+  const object = group.getObjectByName(`House dressing | ${kind} drive aprons`) as THREE.Mesh | undefined;
+  if (!object) return [];
+  const positions = object.geometry.getAttribute('position');
+  return Array.from({ length: positions.count }, (_, i) => new THREE.Vector3().fromBufferAttribute(positions, i));
+}
+
+describe('photographed material on existing generic pavement', () => {
+  it.each(['pavers', 'concrete', 'gravel'])('restores owner-observed %s without changing the cover facts', surface => {
+    const { group, dressing } = yard(surface); paveExistingCover(group);
+    const original = group.userData.coverMask.data.slice();
+    expect(dressing.apply(group, origin, 0).aprons).toBe(1);
+    const vertices = apronVertices(group, surface); expect(vertices.length).toBeGreaterThan(0);
+    for (const p of vertices) { expect(p.z).toBeGreaterThanOrEqual(-20); expect(p.z).toBeLessThanOrEqual(-12.3 + .0001); expect(Math.abs(p.x - 10)).toBeLessThanOrEqual(3.3001); }
+    expect(group.userData.coverMask.data).toEqual(original);
+    dressing.dispose();
+  });
+
+  it.each(['asphalt', 'none', undefined])('preserves existing paving policy for %s', surface => {
+    const { group, dressing } = yard(surface); paveExistingCover(group);
+    if (surface === undefined) group.userData.houseObservations = group.userData.houseObservations.filter((o: { id: string }) => o.id !== 'known');
+    expect(dressing.apply(group, origin, 0).aprons).toBe(0);
+    dressing.dispose();
+  });
+
+  it('does not borrow a neighboring material for an unowned garage over pavement', () => {
+    const { group, dressing } = yard('pavers', 'gravel'); paveExistingCover(group);
+    group.userData.houseFootprints = [];
+    expect(dressing.apply(group, origin, 0).aprons).toBe(0);
+    dressing.dispose();
+  });
+
+  it('clips both sides at neighboring footprints and an angled sidewalk, not only the centerline', () => {
+    const { group, dressing } = yard('pavers'); paveExistingCover(group);
+    group.userData.houseFootprints.push({ id: 'neighbor-shed', outline: [[1006, 2012], [1008.5, 2012], [1008.5, 2018], [1006, 2018]], walls: [] });
+    const material = new THREE.MeshStandardMaterial(); material.name = 'Streetscape | warm sidewalk concrete';
+    const sidewalk = new THREE.Mesh(new THREE.PlaneGeometry(15, 1.2).rotateX(-Math.PI / 2).rotateY(.3).translate(10, 10.06, -15), material); group.add(sidewalk);
+    dressing.apply(group, origin, 0);
+    const vertices = apronVertices(group); expect(vertices.length).toBeGreaterThan(0);
+    for (const p of vertices) {
+      expect(p.x < 8.5 && p.x > 6 && p.z > -18 && p.z < -12).toBe(false);
+      const sx = p.x - 10, sz = p.z + 15;
+      expect(Math.abs(Math.sin(.3) * sx + Math.cos(.3) * sz)).toBeGreaterThanOrEqual(.6 - .00001);
+    }
+    // No material may continue past the full-width sidewalk as an isolated patch.
+    expect(Math.max(...vertices.map(p => p.z))).toBeLessThan(-14.5);
+    dressing.dispose();
+  });
+
+  it('does not jump across a lawn gap to another paved island', () => {
+    const { group, dressing } = yard('pavers');
+    paveExistingCover(group, (_east, north) => north >= 2016 && north <= 2018);
+    dressing.apply(group, origin, 0);
+    const vertices = apronVertices(group); expect(vertices.length).toBeGreaterThan(0);
+    expect(Math.max(...vertices.map(p => p.z))).toBeLessThanOrEqual(-18);
+    dressing.dispose();
+  });
+
+  it('starts on the first verified pixel at the roof edge without painting the unresolved strip', () => {
+    const { group, dressing } = yard('pavers');
+    const mask = group.userData.coverMask;
+    mask.bounds[1] += .6; mask.bounds[3] += .6;
+    paveExistingCover(group, (_east, north) => north > 2019.6);
+    expect(dressing.apply(group, origin, 0).aprons).toBe(1);
+    const vertices = apronVertices(group); expect(vertices.length).toBeGreaterThan(0);
+    for (const p of vertices) {
+      const px = Math.floor((p.x + origin[0] - mask.bounds[0]) / (mask.bounds[2] - mask.bounds[0]) * mask.width);
+      const py = Math.floor((p.z + origin[2] - mask.bounds[1]) / (mask.bounds[3] - mask.bounds[1]) * mask.height);
+      expect(mask.data[(py * mask.width + px) * 4 + 2]).toBe(255);
+    }
+    expect(Math.min(...vertices.map(p => p.z))).toBeGreaterThan(-20);
+    dressing.dispose();
+  });
+
+  it('leaves disconnected pavement unpainted when it never reaches the garage threshold', () => {
+    const { group, dressing } = yard('pavers');
+    paveExistingCover(group, (_east, north) => north > 2019);
+    expect(dressing.apply(group, origin, 0).aprons).toBe(0);
+    dressing.dispose();
+  });
+});
+
+describe('exact source cover clipping', () => {
+  const cover = () => ({ data: new Uint8Array([0,0,255,0, 0,0,255,0, 0,0,255,0, 255,0,0,0]), width: 2, height: 2, bounds: [0,0,2,2], core: [0,0,2,2] });
+
+  it('rejects a diagonal lawn-pixel sliver missed by corners, edge midpoints and center', () => {
+    const mask = cover(), corners = [[.99,1.02],[1.2,.8],[1.16,.76],[.95,.98]];
+    const samples = [...corners, ...corners.map((p,i) => [(p[0]+corners[(i+1)%4][0])/2,(p[1]+corners[(i+1)%4][1])/2]), [1.075,.89]];
+    for (const [x,z] of samples) expect(mask.data[(Math.floor(z)*2+Math.floor(x))*4+2]).toBe(255);
+    expect(onPavedCover(mask, corners)).toBe(false);
+    // Coordinates are world metres; translating the tile cannot alter classification.
+    mask.bounds = [1000,-2000,1002,-1998];
+    expect(onPavedCover(mask, corners.map(([x,z]) => [x+1000,z-2000]))).toBe(false);
+  });
+
+  it('retains zero-area boundary contact but rejects positive-area overlap', () => {
+    const mask = cover();
+    expect(onPavedCover(mask, [[0,0],[1,0],[1,1],[0,1]])).toBe(true);
+    expect(onPavedCover(mask, [[.9,.9],[1.01,.9],[1.01,1.01],[.9,1.01]])).toBe(false);
+  });
+
+  it('rejects cells extending beyond the known raster instead of inventing coverage', () => {
+    const mask = cover();
+    expect(onPavedCover(mask, [[-.01,0],[.5,0],[.5,.5],[-.01,.5]])).toBe(false);
+    expect(onPavedCover(mask, [[0,0],[.5,0],[.5,.5],[0,.5]])).toBe(true);
   });
 });

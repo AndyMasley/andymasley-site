@@ -54,10 +54,10 @@ describe('rigid measured-roof solar panels', () => {
   });
 
   it.each([
-    ['-10_-2', '169022_867164', 12], // 20 Lincoln: interior penetration under almost coplanar corners.
-    ['-13_-9', '168110_865567', 1], // 26 Houghton: a fourth corner more than half a metre off-plane.
+    ['-10_-2', '169022_867164', 22], // 20 Lincoln: interior penetration under almost coplanar corners.
+    ['-13_-9', '168110_865567', 4], // 26 Houghton: a fourth corner more than half a metre off-plane.
     ['-1_7', '171167_869555', 12], // 113 Sutton: bridge across a lower roof facet.
-    ['-6_-5', '169840_866368', 3], // 11 Gorski: both folded and penetrating candidates.
+    ['-6_-5', '169840_866368', 24], // 11 Gorski: both folded and penetrating candidates.
   ] as const)('keeps rigid source-grounded panels at every LOD: %s/%s', (tile, id, count) => {
     const { home, roof } = actual(tile, id), height = roofHeight(roof);
     let first: number[][][] | undefined;
@@ -76,11 +76,10 @@ describe('rigid measured-roof solar panels', () => {
             expect(h).toBeDefined(); expect(p[1] - h!).toBeGreaterThanOrEqual(-.02); expect(p[1] - h!).toBeLessThanOrEqual(.3);
           }
         }
-        if (id === '169022_867164') {
-          const expected = [[-2255.272624228667, -423.2673723904354], [-2255.073820843667, -424.2372059914354], [-2256.4573404143835, -424.52080966694075], [-2256.6561437993837, -423.55097606594074]];
-          const retained = panels.find(ps => Math.abs(ps[0][0] - expected[0][0]) < 1e-8)!;
-          expect(retained).toBeDefined();
-          retained.forEach((p, i) => { expect(p[0]).toBeCloseTo(expected[i][0], 9); expect(p[2]).toBeCloseTo(expected[i][1], 9); });
+        if (id === '169022_867164') for (const ps of panels) {
+          // Every column retains the photographed facade's original orientation.
+          expect(ps[1][0] - ps[0][0]).toBeCloseTo(.1988033849998, 9);
+          expect(ps[1][2] - ps[0][2]).toBeCloseTo(-.969833601, 9);
         }
       } finally { spy.mockRestore(); dispose(group); }
     }

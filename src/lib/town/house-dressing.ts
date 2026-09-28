@@ -69,7 +69,7 @@ function intersectsGarageApproach(x: number, z: number, radius: number, garages:
 }
 
 /** A garage belongs to its source wall, even when another photo centre is closer. */
-function garageObservation(door: readonly number[], footprints: readonly HouseFootprint[], observations: readonly YardObservation[], origin: readonly number[]): YardObservation | undefined {
+function garageObservation(door: readonly number[], footprints: readonly HouseFootprint[], observations: readonly YardObservation[], origin: readonly number[], ownerOnly = false): YardObservation | undefined {
   const e = door[0] + origin[0], n = -door[2] - origin[2];
   let owner: HouseFootprint | undefined, distance = .95;
   for (const home of footprints) for (const wall of home.walls) {
@@ -79,6 +79,7 @@ function garageObservation(door: readonly number[], footprints: readonly HouseFo
     if (d < distance) { distance = d; owner = home; }
   }
   if (owner) return observations.find(o => o.id === owner.id);
+  if (ownerOnly) return undefined;
   let result: YardObservation | undefined, best = 15;
   for (const o of observations) {
     const d = Math.hypot(o.e - e, o.n - n);
@@ -135,6 +136,33 @@ function inside(o: Outline, x: number, z: number): boolean {
   let crossings = 0;
   for (const w of o.walls) if ((w.a.z > z) !== (w.b.z > z) && w.a.x + (z - w.a.z) * (w.b.x - w.a.x) / (w.b.z - w.a.z) > x) crossings++;
   return crossings % 2 === 1;
+}
+
+/** Reject any positive-area overlap with non-paved cover pixels, including
+ * tiny diagonal corner crossings that point samples can miss. */
+export function onPavedCover(mask: GrassMask, points: readonly number[][]): boolean {
+  const ring = points.map(([x, z]) => [(x - mask.bounds[0]) * mask.width / (mask.bounds[2] - mask.bounds[0]), (z - mask.bounds[1]) * mask.height / (mask.bounds[3] - mask.bounds[1])]);
+  const clip = (polygon: number[][], axis: number, edge: number, sign: number): number[][] => {
+    const output: number[][] = [];
+    for (let i = 0; i < polygon.length; i++) {
+      const a = polygon[i], b = polygon[(i + 1) % polygon.length], da = (a[axis] - edge) * sign, db = (b[axis] - edge) * sign;
+      if (da >= 0) output.push(a);
+      if ((da < 0) !== (db < 0)) { const t = da / (da - db); output.push([a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t]); }
+    }
+    return output;
+  };
+  for (let row = Math.floor(Math.min(...ring.map(p => p[1]))); row <= Math.floor(Math.max(...ring.map(p => p[1]))); row++) {
+    for (let column = Math.floor(Math.min(...ring.map(p => p[0]))); column <= Math.floor(Math.max(...ring.map(p => p[0]))); column++) {
+      const index = (row * mask.width + column) * 4;
+      if (row >= 0 && row < mask.height && column >= 0 && column < mask.width && mask.data[index + 2] > 150 && mask.data[index] < 100 && mask.data[index + 1] < 100) continue;
+      let overlap = clip(ring, 0, column, 1);
+      overlap = clip(overlap, 0, column + 1, -1); overlap = clip(overlap, 1, row, 1); overlap = clip(overlap, 1, row + 1, -1);
+      let area = 0;
+      for (let i = 0; i < overlap.length; i++) { const a = overlap[i], b = overlap[(i + 1) % overlap.length]; area += a[0] * b[1] - b[0] * a[1]; }
+      if (Math.abs(area) > 1e-8) return false;
+    }
+  }
+  return true;
 }
 
 function seeded(x: number, z: number, salt: number): () => number {
@@ -678,14 +706,73 @@ export class HouseDressing {
     const doors: number[][] = (group.userData.openings?.garageDoors ?? []).filter((d: number[]) => d.length >= 6);
     const east = (x: number) => x + origin[0], north = (z: number) => -(z + origin[2]);
     const out = { asphalt: { p: [] as number[], n: [] as number[], l: [] as number[] }, gravel: { p: [] as number[], n: [] as number[], l: [] as number[] }, concrete: { p: [] as number[], n: [] as number[], l: [] as number[] }, pavers: { p: [] as number[], n: [] as number[], l: [] as number[] } };
+    const emit = (target: typeof out.asphalt, q: number[][], u: number[][], half: number) => {
+      const n = new THREE.Vector3(q[1][0] - q[0][0], q[1][1] - q[0][1], q[1][2] - q[0][2]).cross(new THREE.Vector3(q[3][0] - q[0][0], q[3][1] - q[0][1], q[3][2] - q[0][2])).normalize();
+      const up = n.y >= 0, order = up ? [0, 1, 2, 0, 2, 3] : [0, 2, 1, 0, 3, 2];
+      if (!up) n.negate();
+      for (const i of order) { target.p.push(...q[i]); target.n.push(n.x, n.y, n.z); target.l.push(u[i][0], u[i][1], half, 1); }
+    };
     for (const [dx, dy, dz, ox, oz, width] of doors) {
       const seen = garageObservation([dx, dy, dz, ox, oz, width], group.userData.houseFootprints ?? [], observations, origin)?.dw;
       if (seen === 'none') continue;
       const kind = seen === 'gravel' || seen === 'concrete' || seen === 'pavers' ? seen : 'asphalt';
-      // A drive the cover already holds needs nothing more.
       const at = (s: number) => [dx + ox * (s - 0.3), dz + oz * (s - 0.3)];
-      if ([1.5, 3, 4.5].filter(s => { const [x, z] = at(s); return tests.paved(east(x), north(z)); }).length >= 2) continue;
       const others = [...outlines.values()].filter(o => o.x0 - 30 < dx && o.x1 + 30 > dx && o.z0 - 30 < dz && o.z1 + 30 > dz);
+      if ([1.5, 3, 4.5].filter(s => { const [x, z] = at(s); return tests.paved(east(x), north(z)); }).length >= 2) {
+        // Generic cover records pavement, not its photographed material. Only
+        // a garage's own explicit observation may correct that existing surface.
+        const own = garageObservation([dx, dy, dz, ox, oz, width], group.userData.houseFootprints ?? [], observations, origin, true);
+        if (kind === 'asphalt' || own?.dw !== kind) continue;
+        const half = width / 2 + .3, ax = -oz, az = ox, cover = group.userData.coverMask as GrassMask;
+        const across = Math.ceil(half * 2 / .4), forward = Math.ceil(7.7 / .4);
+        const point = (row: number, column: number) => {
+          const [x, z] = at(.3 + row / forward * 7.7), side = -half + column / across * half * 2;
+          return [x + ax * side, z + az * side];
+        };
+        const clear = (x: number, z: number) => tests.paved(east(x), north(z)) && !tests.blocked(east(x), north(z)) && !others.some(o => inside(o, x, z));
+        const allowed = new Uint8Array(across * forward);
+        for (let row = 0; row < forward; row++) for (let column = 0; column < across; column++) {
+          const corners = [[row, column], [row, column + 1], [row + 1, column + 1], [row + 1, column]].map(([r, c]) => { const [x, z] = point(r, c); return [x + origin[0], z + origin[2]]; });
+          if (!onPavedCover(cover, corners)) continue;
+          allowed[row * across + column] = [0, .5, 1].every(r => [0, .5, 1].every(c => { const [x, z] = point(row + r, column + c); return clear(x, z); })) ? 1 : 0;
+        }
+        // Roof/outline edges fall between cover pixels. Start at the nearest
+        // verified pavement within one texel of the owning footprint; preserve
+        // the unresolved strip rather than inventing a connector across it.
+        const footprintIndex = (group.userData.houseFootprints as HouseFootprint[]).findIndex(home => home.id === own.id);
+        const ownerOutline = outlines.get(-1 - footprintIndex);
+        const texel = Math.max((cover.bounds[2] - cover.bounds[0]) / cover.width, (cover.bounds[3] - cover.bounds[1]) / cover.height);
+        let threshold = 0;
+        while (threshold <= 1 && ownerOutline && inside(ownerOutline, dx + ox * threshold, dz + oz * threshold)) threshold += .05;
+        const connected = new Set<number>(), queue: number[] = [];
+        if (threshold <= 1) for (let row = 0; row < forward && row / forward * 7.7 <= threshold + texel; row++) {
+          for (let column = 0; column < across; column++) {
+            const cell = row * across + column;
+            if (allowed[cell]) { connected.add(cell); queue.push(cell); }
+          }
+          if (queue.length) break;
+        }
+        // Grow only from that first verified row. Later disconnected pavement
+        // behind lawn, a walk, a road or a neighboring wall is never bridged.
+        for (let cursor = 0; cursor < queue.length; cursor++) {
+          const cell = queue[cursor], row = Math.floor(cell / across), column = cell % across;
+          for (const [r, c] of [[row - 1, column], [row + 1, column], [row, column - 1], [row, column + 1]]) {
+            const next = r * across + c;
+            if (r >= 0 && r < forward && c >= 0 && c < across && allowed[next] && !connected.has(next)) { connected.add(next); queue.push(next); }
+          }
+        }
+        for (const cell of connected) {
+          const row = Math.floor(cell / across), column = cell % across;
+          const q = [[row, column], [row, column + 1], [row + 1, column + 1], [row + 1, column]].map(([r, c]) => {
+            const [x, z] = point(r, c); return [x, groundAt(x, z, dy - 1) + .04, z];
+          });
+          // World-aligned coordinates keep adjacent doors' shared material in phase.
+          const u = q.map(p => [(p[0] + origin[0]) * ax + (p[2] + origin[2]) * az, (p[0] + origin[0]) * ox + (p[2] + origin[2]) * oz]);
+          emit(out[kind], q, u, half);
+        }
+        if (connected.size) report.aprons++;
+        continue;
+      }
       let length = 8;
       for (let s = 0.5; s <= 25; s += 0.5) {
         const [x, z] = at(s);
@@ -700,10 +787,7 @@ export class HouseDressing {
       for (let k = 0; k < steps; k++) {
         const s0 = length * k / steps, s1 = length * (k + 1) / steps;
         const q = [corner(s0, -1), corner(s0, 1), corner(s1, 1), corner(s1, -1)], u = [[-half, s0], [half, s0], [half, s1], [-half, s1]];
-        const n = new THREE.Vector3(q[1][0] - q[0][0], q[1][1] - q[0][1], q[1][2] - q[0][2]).cross(new THREE.Vector3(q[3][0] - q[0][0], q[3][1] - q[0][1], q[3][2] - q[0][2])).normalize();
-        const up = n.y >= 0, order = up ? [0, 1, 2, 0, 2, 3] : [0, 2, 1, 0, 3, 2];
-        if (!up) n.negate();
-        for (const i of order) { target.p.push(...q[i]); target.n.push(n.x, n.y, n.z); target.l.push(u[i][0], u[i][1], half, 1); }
+        emit(target, q, u, half);
       }
       report.aprons++;
     }
