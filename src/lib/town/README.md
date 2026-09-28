@@ -89,6 +89,17 @@ source notes describe the different source dates and limitations.
 
 ## Art direction
 
+The lower Morehouse Block beside Shumway at 118–120 Main uses
+`morehouse-completion.json` and the final `morehouseCompletion` assembly pass.
+Taupe siding, paired sash windows, a white bracketed cornice and blue-gray
+storefront fascia follow the 2012 Wikimedia Shumway photograph; the salon
+owner's parking aerial supports a dark low roof. The photograph crops the
+front, so bay counts, spacing, dimensions and colors are inferred. Unverified
+side openings are omitted. All native roof and wall geometry, and the adjacent
+Shumway brickwork, remain unchanged. The source-pinned materials cover all LODs;
+`TOWN_QUALITY_OUT=/outside/repo node scripts/art_finish/morehouse-completion.mjs`
+checks native ownership, protected surfaces and facade placement.
+
 The low eastern annex of the Racicot/Commerce block at 211 Main Street uses
 `racicot-annex.json` and the final `racicotAnnex` assembly pass. Its red brick,
 two pale bands, broad fascia, gray shingles and dark glazed bays follow the
