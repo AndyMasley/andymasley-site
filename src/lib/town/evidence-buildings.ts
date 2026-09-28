@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { fitRoofPanel } from './roof-panels';
 import { Batch, frontageMaterial, type Frame, type Role } from './crafted-frontages';
 import type { EvidenceBuilding, EvidenceReport, EvidenceRoof, PhotoLayout, SetbackWall } from './evidence-types';
 import { historicAppearance } from './historic-appearance';
@@ -151,9 +152,10 @@ export function photoLayout(home:EvidenceBuilding,lo:FrontLayout,dt?:FrontDetail
       const gap=Math.min(k?centres[k]-centres[k-1]:Infinity,k<groups.length-1?centres[k+1]-centres[k]:Infinity);
       const width=g.length>1?Math.min(2.1,g[g.length-1]-g[0]+.9):gap<1.35?Math.max(.55,gap-.14):Math.max(.6,Math.min(1.05,gap-.45));
       const place=front.at(centres[k],width/2+.12);
-      if(place)windows.push({...place,width,level});
+      if(place)windows.push({...place,width,level,...(g.length>1?{panes:g.length}:{})});
     }
   }
+  fitPhotoWindowSpacing(home,windows);
   const points=(list:number[]|undefined,half:number)=>(list??[]).flatMap(x=>{const p=front.at(at(x),half);return p?[p]:[];});
   const doors=points(lo.d,.6),garage=points(lo.gx,1.25);
   let porch:PhotoLayout['porch'];
@@ -165,6 +167,9 @@ export function photoLayout(home:EvidenceBuilding,lo:FrontLayout,dt?:FrontDetail
     const width=kind==='s'?Math.max(2.4,Math.min(.6*(a1-a0),6.5)):kind==='h'?2:1.7,p=front.at(at(x),Math.min(width/2+.3,1.2));
     return p?[{...p,kind,width}]:[];
   });
+  const dormerSpans=dormers.map(d=>({...d,level:0}));
+  fitPhotoWindowSpacing(home,dormerSpans,{minimum:1.2,combine:false,gap:.3,margin:.15});
+  for(let i=0;i<dormers.length;i++){dormers[i].u=dormerSpans[i].u;dormers[i].width=dormerSpans[i].width;}
   const layout:PhotoLayout={frames:front.frames,doors,windows,garage,...(porch&&porch.u1-porch.u0>=1.2?{porch}:{}),dormers,...(lo.rf?{roof:lo.rf}:{}),...(lo.st?{storeys:lo.st}:{})};
   if(!dt)return layout;
   // A stretch of the front read from x0 to x1, on the frame holding its middle.
@@ -182,6 +187,38 @@ export function photoLayout(home:EvidenceBuilding,lo:FrontLayout,dt?:FrontDetail
     ...(dt.sol&&stretch(dt.sol[0],dt.sol[1])?{solar:stretch(dt.sol[0],dt.sol[1])!}:{}),
     ...(end?{stair:{frameIndex:end.frameIndex,at:end.u<home.frames[end.frameIndex].width/2?'start' as const:'end' as const}}:{}),
     trim:{...(dt.pr?{roof:dt.pr}:{}),...(dt.po?{posts:dt.po}:{}),...(dt.rl?{rail:dt.rl}:{}),...(dt.rc?{railColor:dt.rc}:{}),...(dt.awc?{awning:dt.awc,striped:dt.aws===1}:{})}};
+}
+
+/** Keep observed opening order while fitting inferred widths to the actual wall. */
+function fitPhotoWindowSpacing(home:EvidenceBuilding,windows:PhotoLayout['windows'],options:{minimum?:number;combine?:boolean;gap?:number;margin?:number}={}):void{
+  const {minimum=.55,combine=true,gap=.24,margin=.12}=options,groups=new Map<string,PhotoLayout['windows']>();
+  for(const w of windows){const key=`${w.frameIndex}:${w.level}`,list=groups.get(key)??[];list.push(w);groups.set(key,list);}
+  for(const list of groups.values()){
+    list.sort((a,b)=>a.u-b.u);
+    const width=home.frames[list[0].frameIndex].width;
+    if(!combine&&list.length*minimum+(list.length-1)*gap>width-2*margin)continue;
+    if(list.every((w,i)=>w.u-w.width/2>=margin-1e-6&&w.u+w.width/2<=width-margin+1e-6&&(!i||w.u-list[i-1].u>=(w.width+list[i-1].width)/2+gap-1e-6)))continue;
+    while(list.length*minimum+(list.length-1)*gap>width-2*margin&&list.length>1){
+      let at=1;for(let i=2;i<list.length;i++)if(list[i].u-list[i-1].u<list[at].u-list[at-1].u)at=i;
+      const a=list[at-1],b=list[at],left=Math.min(a.u-a.width/2,b.u-b.width/2),right=Math.max(a.u+a.width/2,b.u+b.width/2);
+      a.u=(left+right)/2;a.width=right-left;a.panes=(a.panes??1)+(b.panes??1);list.splice(at,1);windows.splice(windows.indexOf(b),1);
+    }
+    const available=width-2*margin-(list.length-1)*gap,total=list.reduce((n,w)=>n+w.width,0);
+    if(total>available){const flexible=total-list.length*minimum,scale=Math.max(0,(available-list.length*minimum)/flexible);for(const w of list)w.width=minimum+(w.width-minimum)*scale;}
+    const offsets=[0];for(let i=1;i<list.length;i++)offsets.push(offsets[i-1]+(list[i-1].width+list[i].width)/2+gap);
+    const pools:{from:number;to:number;sum:number;count:number}[]=[];
+    for(let i=0;i<list.length;i++){
+      pools.push({from:i,to:i,sum:list[i].u-offsets[i],count:1});
+      while(pools.length>1){const a=pools[pools.length-2],b=pools[pools.length-1];if(a.sum/a.count<=b.sum/b.count)break;a.to=b.to;a.sum+=b.sum;a.count+=b.count;pools.pop();}
+    }
+    const lo=margin+list[0].width/2,hi=width-margin-list[list.length-1].width/2-offsets[offsets.length-1];
+    for(const pool of pools){const centre=Math.max(lo,Math.min(hi,pool.sum/pool.count));for(let i=pool.from;i<=pool.to;i++)list[i].u=centre+offsets[i];}
+  }
+}
+
+function wallClearance(profile:readonly (readonly [number,number])[],u:number,half:number):number{
+  const left=u-half,right=u+half;
+  return Math.min(wallTop(profile,left),wallTop(profile,right),...profile.filter(p=>p[0]>left&&p[0]<right).map(p=>p[1]));
 }
 
 export type EvidenceTarget = {
@@ -390,7 +427,7 @@ function photoDoorMove(home:EvidenceBuilding):{frameIndex:number;u:number;basis:
   const [best]=doors.map(d=>{const [x,y]=at(d.frameIndex,d.u);return{d,far:Math.hypot(x-e,y-n)};}).sort((a,b)=>a.far-b.far);
   // (a split foyer's door stands on its landing, a step or two over the ground)
   const split=splitFoyer(home),ground=(f:EvidenceBuilding['frames'][number],u:number)=>{const g=f.groundAt;if(!g||g.length<2)return f.groundMaximum??home.floor;const x=Math.max(0,Math.min(1,u/f.width))*(g.length-1),k=Math.min(g.length-2,Math.floor(x));return g[k]+(g[k+1]-g[k])*(x-k);};
-  const fits=(i:number,u:number)=>{const f=home.frames[i],top=(x:number)=>f.profile?wallTop(f.profile,x):f.eave??home.eave;return Math.min(top(u-.6),top(u),top(u+.6))-(split?Math.min(home.floor,ground(f,u)+LANDING):home.floor)>=DOOR_ROOM;};
+  const fits=(i:number,u:number)=>{const f=home.frames[i],top=f.profile?wallClearance(f.profile,u,.6):f.eave??home.eave;return top-(split?Math.min(home.floor,ground(f,u)+LANDING):home.floor)>=DOOR_ROOM;};
   // Places along the street walls within 2.5 m of the photographed door, nearest
   // first, where the wall stands tall enough; the stoop takes the first the ground allows.
   const [x0,y0]=at(best.d.frameIndex,best.d.u),places:{frameIndex:number;u:number;far:number}[]=[];
@@ -650,7 +687,7 @@ function houseOpenings(batch:Batch,home:EvidenceBuilding):void {
     // A measured wall top follows its roof: level under an eave, rising and
     // falling under a gable, stepping where a lower wing meets the frame.
     const profile=edge.profile??[[0,low],[w,low]] as const,eave=Math.max(...profile.map(p=>p[1]));
-    const top=(u:number)=>wallTop(profile,u),clear=(u:number,half:number)=>Math.min(top(u-half),top(u),top(u+half));
+    const top=(u:number)=>wallTop(profile,u),clear=(u:number,half:number)=>wallClearance(profile,u,half);
     if(w<1.4||eave-home.floor<.7)continue;
     const floorHeight=home.floorHeight??(multi?2.85:2.70),levels=Math.max(1,Math.min(4,Math.ceil(home.stories)));
     const ground=edge.groundMaximum??home.floor-.12;
@@ -701,12 +738,16 @@ function houseOpenings(batch:Batch,home:EvidenceBuilding):void {
     const behindBay=(u:number,level:number)=>bayWindows.some(b=>level>=(b.levels?0:1)&&level<(b.levels||2)&&u>b.u0-.25&&u<b.u1+.25);
     const awned=(u:number,level:number)=>!!read?.awnings?.some(a=>a.frameIndex===frameIndex&&a.level===level&&Math.abs(a.u-u)<.8);
     const extraDoors=(read?.doors??[]).filter(d=>d.frameIndex===frameIndex&&!(entry&&Math.abs(d.u-doorU)<1.2)).map(d=>d.u);
-    const bayed=Array.from({length:levels},(_,level)=>centres.map(u=>({u,level,spacing:pitch,street:front,
+    const bayed=Array.from({length:levels},(_,level)=>centres.map(u=>({u,level,spacing:pitch,street:front,panes:1,
       width:sunporch?Math.min(1,pitch-.22):Math.min(ranch&&front&&bays<4?1.72:1.05,pitch-.65)}))).flat();
-    const specs=photographed?read!.windows.filter(x=>x.frameIndex===frameIndex&&x.level>=0).map(x=>({u:x.u,width:x.width,level:x.level,spacing:x.width+1.05,street:true})):bayed;
+    const specs=photographed?read!.windows.filter(x=>x.frameIndex===frameIndex&&x.level>=0).map(x=>({u:x.u,width:x.width,level:x.level,spacing:x.width+1.05,street:true,panes:x.panes??1})):bayed;
     // A photographed dormer where this wall itself rises into the roof (a wall
     // dormer, or the gable the survey made of one) is a window high in the wall.
-    if(read)for(const d of read.dormers)if(d.frameIndex===frameIndex&&highWall(home,edge,d.u))specs.push({u:d.u,width:.8,level:atticLevel(home),spacing:1.85,street:true});
+    if(read)for(const d of read.dormers)if(d.frameIndex===frameIndex&&highWall(home,edge,d.u)){
+      const level=atticLevel(home),overlaps=(s:typeof specs[number])=>s.level===level&&Math.abs(s.u-d.u)<(s.width+.8)/2+.24;
+      if(specs.some(overlaps)){if(photographed)continue;for(let i=specs.length-1;i>=0;i--)if(overlaps(specs[i]))specs.splice(i,1);}
+      specs.push({u:d.u,width:.8,level,spacing:1.85,street:true,panes:1});
+    }
     const placeAll=(list:typeof specs,photographed:boolean):number=>{
     let placed=0;
     const storeys=Math.max(levels,...list.map(x=>x.level+1));
@@ -720,7 +761,7 @@ function houseOpenings(batch:Batch,home:EvidenceBuilding):void {
         // A photographed window a door has displaced steps aside from it, up to half a metre.
         if(photographed&&level===0&&entry&&Math.abs(u-doorU)<.68+width/2){
           const aside=doorU+Math.sign(u-doorU||1)*(.7+width/2);
-          if(Math.abs(aside-u)<=.55&&aside>width/2+.15&&aside<w-width/2-.15)u=aside;
+          if(Math.abs(aside-u)<=.55&&aside>width/2+.15&&aside<w-width/2-.15&&!list.some(other=>other!==spec&&other.level===level&&Math.abs(aside-other.u)<(width+other.width)/2+.24))u=aside;
         }
         const groupedWidth=home.historicalWindowGroup&&!photographed?Math.min(2.65,pitch-.5):0;
         // Upper windows stand in a gable only where its rakes clear them.
@@ -736,7 +777,8 @@ function houseOpenings(batch:Batch,home:EvidenceBuilding):void {
           continue;
         }
         if(width<(sunporch?.45:.55)||behindBay(u,level))continue;
-        batch.window(f,u,bottom,width,height,.01,(ranch||photographed)&&width>1.4,!sunporch&&(home.shutters!==undefined?street&&home.shutters&&spacing>1.9:street&&colonial&&home.material!=='brick'&&spacing>2.7));
+        batch.window(f,u,bottom,width,height,.01,spec.panes===1&&(ranch||photographed)&&width>1.4,!sunporch&&(home.shutters!==undefined?street&&home.shutters&&spacing>1.9:street&&colonial&&home.material!=='brick'&&spacing>2.7));
+        if(batch.level<2&&spec.panes>1)for(let pane=1;pane<spec.panes;pane++)batch.box(f,'trim',u-width/2+width*pane/spec.panes,bottom+height/2,.155,.085,height,.055);
         if(photographed&&awned(spec.u,level)&&room-bottom-height>.4)awning(batch,f,u,bottom+height+.32,width+.3,.65,.4,trim);
         placed++;
         if(home.year>0&&home.year<1940&&batch.level===0&&!sunporch){
@@ -916,13 +958,13 @@ function gambrelSides(batch:Batch,home:EvidenceBuilding):void{
 function atticLevel(home:EvidenceBuilding):number{
   // The storeys the photograph shows under the roof, else the record's (or the survey's).
   const shown=home.layout?.storeys,levels=Math.max(1,Math.min(4,shown?Math.floor(shown):Math.ceil(home.stories)));
-  return Math.max(levels,...(home.layout?.windows??[]).map(x=>x.level+1));
+  return shown?Math.max(1,levels-(splitFoyer(home)?1:0)):Math.max(levels,...(home.layout?.windows??[]).map(x=>x.level+1));
 }
 /** Whether a wall's own top at u leaves room for a window on the attic storey:
  * a wall dormer or a gable the survey made of one, not an eave wall. */
 function highWall(home:EvidenceBuilding,edge:EvidenceBuilding['frames'][number],u:number):boolean{
   const multi=/FLATS|APARTMENT|CONVERSION|DUPLEX/i.test(home.style),storey=home.floorHeight??(multi?2.85:2.70);
-  return !!edge.profile&&Math.min(wallTop(edge.profile,u-.52),wallTop(edge.profile,u+.52))>=home.floor+atticLevel(home)*storey+.72+1.0+.26;
+  return !!edge.profile&&wallClearance(edge.profile,u,.52)>=home.floor+atticLevel(home)*storey+.72+1.0+.26;
 }
 
 /** Dormers the photograph shows on the street slope of a measured roof where
@@ -935,8 +977,8 @@ function photoDormers(batch:Batch,home:EvidenceBuilding):void{
   for(const dormer of home.layout!.dormers){
     const edge=home.frames[dormer.frameIndex],f:Frame={...edge,structId:home.id,tileId:home.tileId};
     if(highWall(home,edge,dormer.u))continue;
-    const width=Math.min(dormer.width,edge.width-.6);if(width<1.2)continue;
-    const u=Math.max(width/2+.3,Math.min(edge.width-width/2-.3,dormer.u));
+    const width=Math.min(dormer.width,edge.width-.3);if(width<1.2)continue;
+    const u=Math.max(width/2+.15,Math.min(edge.width-width/2-.15,dormer.u));
     const z=(depth:number)=>height(edge.start[0]+edge.tangent[0]*u-edge.outward[0]*depth,edge.start[1]+edge.tangent[1]*u-edge.outward[1]*depth);
     // The roof's rise inward from the wall to its ridge.
     const rise:[number,number][]=[];
@@ -978,6 +1020,12 @@ function photoDormers(batch:Batch,home:EvidenceBuilding):void{
       // A shed roof rising gently back into the main roof.
       const back=reach(top+.02,d0),rear=Math.max(top+.02,(z(back)??top)+.03),e=width/2+.12;
       batch.polygon(f,'roof',[[u-e,top+.02,front],[u+e,top+.02,front],[u+e,rear,-back],[u-e,rear,-back]],roofColor);
+      batch.box(f,'trim',u,top-.04,front+.02,width+.26,.14,.06);
+    }else if(dormer.kind==='h'){
+      const ridgeLine=peak(top),back=Math.max(d1,reach(ridgeLine+.05,d0)),tip=Math.max(-back+.05,front-overhang);
+      batch.polygon(f,'roof',[[u-overhang,top-.05,front],[u+overhang,top-.05,front],[u,ridgeLine,tip]],roofColor);
+      batch.polygon(f,'roof',[[u-overhang,top-.05,front],[u,ridgeLine,tip],[u,ridgeLine,-back],[u-overhang,top-.05,-back]],roofColor);
+      batch.polygon(f,'roof',[[u,ridgeLine,tip],[u+overhang,top-.05,front],[u+overhang,top-.05,-back],[u,ridgeLine,-back]],roofColor);
       batch.box(f,'trim',u,top-.04,front+.02,width+.26,.14,.06);
     }else{
       const ridgeLine=peak(top),back=Math.max(d1,reach(ridgeLine+.05,d0));
@@ -1024,17 +1072,19 @@ function setbackOpenings(batch:Batch,home:EvidenceBuilding,walls:readonly Setbac
     // that fall along it (over a porch or wing roof); others their bays.
     const read=facing&&home.layout?.windows.some(x=>x.level>0)?home.layout.windows.filter(x=>x.level>0).flatMap(x=>{
       const g=home.frames[x.frameIndex],u=(g.start[0]+g.tangent[0]*x.u-wall.start[0])*wall.tangent[0]+(g.start[1]+g.tangent[1]*x.u-wall.start[1])*wall.tangent[1];
-      return u>x.width/2&&u<wall.width-x.width/2?[{u,width:x.width,level:x.level,spacing:x.width+1.05}]:[];
+      return u>x.width/2&&u<wall.width-x.width/2?[{u,width:x.width,level:x.level,spacing:x.width+1.05,panes:x.panes??1}]:[];
     }):undefined;
-    const specs=read??(even>=.55?Array.from({length:levels},(_,level)=>Array.from({length:bays},(_,i)=>({u:(i+.5)*pitch,width:even,level,spacing:pitch}))).flat():[]);
+    const specs=read??(even>=.55?Array.from({length:levels},(_,level)=>Array.from({length:bays},(_,i)=>({u:(i+.5)*pitch,width:even,level,spacing:pitch,panes:1}))).flat():[]);
     let placed=0;
-    for(const {u,width,level,spacing}of specs){
+    for(const {u,width,level,spacing,panes}of specs){
       const standard=home.floor+.72+level*floorHeight;
       for(const lift of [0,.15,.3,.45]){
         const bottom=standard+lift;
         if(!fits(u-width/2-.15,u+width/2+.15,bottom-.14,bottom+windowHeight+.26))continue;
         const shutters=facing&&!!home.shutters&&spacing>1.9&&fits(u-width/2-.5,u+width/2+.5,bottom,bottom+windowHeight);
-        batch.window(f,u,bottom,width,windowHeight,.01,width>1.4,shutters);placed++;break;
+        batch.window(f,u,bottom,width,windowHeight,.01,panes===1&&width>1.4,shutters);
+        if(batch.level<2&&panes>1)for(let pane=1;pane<panes;pane++)batch.box(f,'trim',u-width/2+width*pane/panes,bottom+windowHeight/2,.155,.085,windowHeight,.055);
+        placed++;break;
       }
     }
     if(read)continue;
@@ -1268,8 +1318,9 @@ function solarPanels(batch:Batch,home:EvidenceBuilding,edge:EvidenceBuilding['fr
   for(let d=from;d+panel<=to+.05;d+=panel+.02)for(const u of columns){
     const c=[[u,d],[u+.99,d],[u+.99,d+panel],[u,d+panel]].map(([x,y])=>[x,z(x,y),y] as const);
     if(c.some(p=>p[1]===undefined))continue;
-    const pts=c.map(([x,h,y])=>[x,(h as number)+.09,-y]);
-    if(Math.max(...pts.map(p=>p[1]))-Math.min(...pts.map(p=>p[1]))>panel*slope+.25)continue;
+    if(Math.max(...c.map(p=>p[1] as number))-Math.min(...c.map(p=>p[1] as number))>panel*slope+.25)continue;
+    const fitted=fitRoofPanel(z,u,d,.99,panel);if(!fitted)continue;
+    const pts=c.map(([x,,y],i)=>[x,fitted[i],-y]);
     face(batch,f,'glass',pts,'#1c2533',[0,1,1]);
   }
 }

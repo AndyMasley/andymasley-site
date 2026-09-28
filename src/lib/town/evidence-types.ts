@@ -104,7 +104,7 @@ export type EvidenceBuilding = {
 export type PhotoLayout = {
   frames: number[];
   doors: { frameIndex: number; u: number }[];
-  windows: { frameIndex: number; u: number; width: number; level: number }[];
+  windows: { frameIndex: number; u: number; width: number; level: number; panes?: number }[];
   garage: { frameIndex: number; u: number }[];
   porch?: { frameIndex: number; u0: number; u1: number };
   dormers: { frameIndex: number; u: number; kind: 'g' | 's' | 'h' | 'e'; width: number }[];

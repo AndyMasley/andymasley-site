@@ -278,7 +278,11 @@ export function setbackWalls(roof: Pick<MeasuredRoof, 'o' | 'b' | 'v' | 'w'>, pl
     if (l < .01 || Math.abs(nz) > .1 * l) continue;
     nx /= l; ny /= l;
     // Walls square to the plan take its exact direction.
-    const snap = directions.find(o => o[0] * nx + o[1] * ny > .9986);
+    let snap: readonly number[] | undefined, closest = .9986;
+    for (const o of directions) {
+      const alignment = o[0] * nx + o[1] * ny;
+      if (alignment > closest) { closest = alignment; snap = o; }
+    }
     if (snap) { nx = snap[0]; ny = snap[1]; }
     const d = (nx * (p[0][0] + p[1][0] + p[2][0]) + ny * (p[0][1] + p[1][1] + p[2][1])) / 3;
     let plane = planes.find(q => q.o[0] * nx + q.o[1] * ny > .9986 && Math.abs(q.d - d) < .08);
@@ -325,6 +329,42 @@ export function roofHeight(roof: { o: readonly number[]; b: number; v: string; r
   };
 }
 
+/** A gutter faces away from the roof beside it, including inside an L or U
+ * where the house's origin can lie on the empty side of the fascia. */
+export function roofEdgeOutward(height: (e: number, n: number) => number | undefined, origin: readonly number[], edge: readonly number[]): [number, number] {
+  const [e0, n0, e1, n1] = edge, dx = e1 - e0, dy = n1 - n0, length = Math.hypot(dx, dy);
+  if (length < 1e-6) return [0, 0];
+  const right: [number, number] = [dy / length, -dx / length];
+  let occupiedRight = 0, occupiedLeft = 0;
+  for (const fraction of [.2, .5, .8]) for (const offset of [.06, .2]) {
+    const e = origin[0] + e0 + dx * fraction, n = origin[1] + n0 + dy * fraction;
+    const a = height(e + right[0] * offset, n + right[1] * offset) !== undefined;
+    const b = height(e - right[0] * offset, n - right[1] * offset) !== undefined;
+    if (a && !b) occupiedRight++;
+    if (b && !a) occupiedLeft++;
+  }
+  const sign = occupiedRight !== occupiedLeft ? (occupiedRight > occupiedLeft ? -1 : 1)
+    : right[0] * (e0 + e1) + right[1] * (n0 + n1) >= 0 ? 1 : -1;
+  return [right[0] * sign, right[1] * sign];
+}
+
+/** Carry a stack through every roof facet beneath its perimeter, including
+ * valleys and stepped roofs that sit below the measured centre height. */
+export function chimneyBottom(height: (e: number, n: number) => number | undefined, origin: readonly number[], chimney: readonly number[]): number {
+  const [de, dn, , sx, sy, yaw, roofZ] = chimney, c = Math.cos(yaw), s = Math.sin(yaw);
+  let bottom = roofZ - .35;
+  const contact = (u: number, v: number) => {
+    const z = height(origin[0] + de + c * u - s * v, origin[1] + dn + s * u + c * v);
+    if (z !== undefined) bottom = Math.min(bottom, z - .35);
+  };
+  for (const side of [-1, 1]) {
+    const across = Math.max(1, Math.ceil(sx / .15)), along = Math.max(1, Math.ceil(sy / .15));
+    for (let i = 0; i <= across; i++) contact(sx * (i / across - .5), side * sy / 2);
+    for (let i = 0; i <= along; i++) contact(side * sx / 2, sy * (i / along - .5));
+  }
+  return bottom;
+}
+
 /** Adds the measured body, its chimneys and a foundation band to a batch.
  * Walls take the house's wall role and paint; the roof its measured colour. */
 export function measuredBody(batch: Batch, structId: string, tileId: string, roof: MeasuredRoof, wall: Role, paint: string | undefined, fallbackRoof: string): void {
@@ -349,11 +389,11 @@ export function measuredBody(batch: Batch, structId: string, tileId: string, roo
   }
   // Gutters hang on the fascia along level roofprint edges; a downspout runs
   // from each long run back under the soffit and down the inset wall.
+  const height = roof.c.length || batch.level === 0 && roof.g?.length ? roofHeight(roof) : undefined;
   if (batch.level === 0) for (const [e0, n0, e1, n1, z] of roof.g ?? []) {
     const dx = e1 - e0, dy = n1 - n0, length = Math.hypot(dx, dy);
     if (length < .8) continue;
-    const t = [dx / length, dy / length], mid = [(e0 + e1) / 2, (n0 + n1) / 2];
-    const out = t[1] * mid[0] - t[0] * mid[1] >= 0 ? [t[1], -t[0]] : [-t[1], t[0]];
+    const t = [dx / length, dy / length], out = roofEdgeOutward(height!, roof.o, [e0, n0, e1, n1]);
     const g: Frame = { start: [roof.o[0] + e0, roof.o[1] + n0], tangent: t, outward: out, structId, tileId };
     batch.box(g, 'metal', length / 2, z + .1, .07, length, .12, .12, '#aaa99e');
     if (length > 4) {
@@ -365,8 +405,8 @@ export function measuredBody(batch: Batch, structId: string, tileId: string, roo
     }
   }
   // Chimneys stand where the returns rise sharply above the fitted roof.
-  for (const [de, dn, top, sx, sy, yaw, roofZ] of roof.c) {
-    const bottom = roofZ - .35, h = top - bottom;
+  for (const chimney of roof.c) {
+    const [de, dn, top, sx, sy, yaw] = chimney, bottom = chimneyBottom(height!, roof.o, chimney), h = top - bottom;
     if (h <= .2) continue;
     batch.box(f, 'brick', de, bottom + h / 2, -dn, sx, h, sy, '#86523f', yaw);
     batch.box(f, 'foundation', de, top + .04, -dn, sx + .1, .08, sy + .1, '#8f8c84', yaw);

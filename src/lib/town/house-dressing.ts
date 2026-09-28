@@ -6,6 +6,7 @@ import { ROAD_LANE_ATTRIBUTE } from './road-wear';
 import { applyArtMaterial } from './art-materials';
 import { frontageMaterial } from './crafted-frontages';
 import { registerHardscapeGrassExclusions } from './hardscape-grass-exclusions';
+import { chainLinkMaterial, chainLinkUV, paverDriveMaterial } from './yard-materials';
 
 /**
  * Front-yard dressing for houses: clipped foundation shrubs (yew, boxwood,
@@ -34,6 +35,57 @@ type Segment = { a: THREE.Vector3; b: THREE.Vector3; nx: number; nz: number; bui
 type Outline = { walls: Segment[]; x0: number; x1: number; z0: number; z1: number };
 type SurfaceTests = { paved(east: number, north: number): boolean; blocked(east: number, north: number): boolean };
 type HouseFootprint = { id: string; outline: readonly (readonly number[])[]; walls: readonly { start: readonly number[]; tangent: readonly number[]; outward: readonly number[]; width: number }[] };
+
+type YardObservation = { id?: string; e: number; n: number; b?: number; mb?: string; sh?: string; dw?: string; fe?: string; fc?: string; fl?: number[][] };
+
+/** Keep planted crowns and mulch clear of the actual opening widths. */
+function plantingGaps(wall: Segment, doors: readonly number[][], garages: readonly number[][]): number[][] {
+  const dx = wall.b.x - wall.a.x, dz = wall.b.z - wall.a.z, length = Math.hypot(dx, dz);
+  const gaps: number[][] = [];
+  for (const door of doors) {
+    const u = ((door[0] - wall.a.x) * dx + (door[2] - wall.a.z) * dz) / length;
+    const distance = Math.abs((door[0] - wall.a.x) * wall.nx + (door[2] - wall.a.z) * wall.nz);
+    if (distance > .9 || u < -.5 || u > length + .5) continue;
+    const garage = garages.find(g => g.length >= 6 && Math.hypot(g[0] - door[0], g[2] - door[2]) < 1.2 && g[3] * wall.nx + g[4] * wall.nz > .8);
+    const half = garage ? garage[5] / 2 + .35 : 1.35;
+    gaps.push([Math.max(0, u - half), Math.min(length, u + half)]);
+  }
+  gaps.sort((a, b) => a[0] - b[0]);
+  const merged: number[][] = [];
+  for (const gap of gaps) {
+    const last = merged[merged.length - 1];
+    if (last && gap[0] <= last[1]) last[1] = Math.max(last[1], gap[1]);
+    else merged.push([...gap]);
+  }
+  return merged;
+}
+
+function intersectsGarageApproach(x: number, z: number, radius: number, garages: readonly number[][]): boolean {
+  return garages.some(door => {
+    if (door.length < 6) return false;
+    const dx = x - door[0], dz = z - door[2], across = dx * -door[4] + dz * door[3], out = dx * door[3] + dz * door[4];
+    return Math.abs(across) < door[5] / 2 + .15 + radius && out > -.3 - radius && out < 1.6 + radius;
+  });
+}
+
+/** A garage belongs to its source wall, even when another photo centre is closer. */
+function garageObservation(door: readonly number[], footprints: readonly HouseFootprint[], observations: readonly YardObservation[], origin: readonly number[]): YardObservation | undefined {
+  const e = door[0] + origin[0], n = -door[2] - origin[2];
+  let owner: HouseFootprint | undefined, distance = .95;
+  for (const home of footprints) for (const wall of home.walls) {
+    if (door[3] * wall.outward[0] - door[4] * wall.outward[1] < .8) continue;
+    const u = Math.max(0, Math.min(wall.width, (e - wall.start[0]) * wall.tangent[0] + (n - wall.start[1]) * wall.tangent[1]));
+    const d = Math.hypot(e - wall.start[0] - wall.tangent[0] * u, n - wall.start[1] - wall.tangent[1] * u);
+    if (d < distance) { distance = d; owner = home; }
+  }
+  if (owner) return observations.find(o => o.id === owner.id);
+  let result: YardObservation | undefined, best = 15;
+  for (const o of observations) {
+    const d = Math.hypot(o.e - e, o.n - n);
+    if (d < best) { best = d; result = o; }
+  }
+  return result;
+}
 
 /** Measured foundation bands are thin boxes. Only the face pointing out of
  * the authored wall is exterior; their backs must not become another yard. */
@@ -193,7 +245,7 @@ export class HouseDressing {
   private readonly carMaterials = new Map<string, THREE.MeshStandardMaterial>();
   /** Front walks: poured concrete with the sidewalk joints and texture. */
   private readonly walk = walkMaterial();
-  private readonly drives = { asphalt: driveMaterial('asphalt'), gravel: driveMaterial('gravel') };
+  private readonly drives = { asphalt: driveMaterial('asphalt'), gravel: driveMaterial('gravel'), pavers: paverDriveMaterial() };
 
   constructor(private readonly roads: RoadLookup) {
     const standard = (name: string, color: string, roughness: number, metalness = 0): THREE.MeshStandardMaterial => {
@@ -220,8 +272,7 @@ export class HouseDressing {
       fieldstone: frontageMaterial('stone', '#8e897e'),
       block: frontageMaterial('stone', '#9a968d'),
     };
-    const mesh = new THREE.MeshStandardMaterial({ color: '#9a9d9b', roughness: 0.5, metalness: 0.5, transparent: true, opacity: 0.38, depthWrite: false, side: THREE.DoubleSide });
-    mesh.name = 'House dressing | chain-link mesh'; mesh.userData.townCrafted = true; this.solids.chainMesh = mesh;
+    this.solids.chainMesh = chainLinkMaterial();
     // Chimney brick takes the shared running-bond library texture.
     applyArtMaterial(this.solids.chimney);
   }
@@ -279,7 +330,7 @@ export class HouseDressing {
     for (const [id, outline] of sourceOutlines(footprints, origin)) outlines.set(id, outline);
     // Match known foundations to their own photograph by source ID; unowned
     // scenery foundations retain the nearest measured-centre fallback.
-    const observations: { id?: string; e: number; n: number; b?: number; mb?: string; sh?: string; dw?: string; fe?: string; fc?: string; fl?: number[][] }[] = group.userData.houseObservations ?? [];
+    const observations: YardObservation[] = group.userData.houseObservations ?? [];
     const observed = new Map<number, { mb?: string; sh?: string }>();
     if (observations.length) {
       const centres = new Map<number, number[]>();
@@ -297,6 +348,8 @@ export class HouseDressing {
       }
     }
     const doors: number[][] = group.userData.openings?.doors ?? [];
+    const garages: number[][] = group.userData.openings?.garageDoors ?? [];
+    const plantingDoors = [...doors, ...garages.filter(g => !doors.some(d => Math.hypot(d[0] - g[0], d[2] - g[2]) < 1.2))];
     const ground = tileTerrain(group);
     const groundAt = (x: number, z: number, fallback: number) => { const p = ground.sample(x, z); return p && Math.abs(p.y - fallback) < 2.5 ? p.y : fallback; };
     const toEast = (x: number) => x + origin[0], toNorth = (z: number) => -(z + origin[2]);
@@ -323,30 +376,38 @@ export class HouseDressing {
       const species = random();
       const kindFor = (): number => species < 0.38 ? 0 : species < 0.66 ? 1 : species < 0.86 ? 2 : (random() < 0.5 ? 1 : 2);
       const dir = segment.b.clone().sub(segment.a).divideScalar(length);
-      let placed = 0;
+      const gaps = plantingGaps(segment, plantingDoors, garages), planted: number[] = [];
       for (let t = 0.55 + random() * 0.4; t < length - 0.45; t += 0.9 + random() * 0.55) {
         const p = segment.a.clone().addScaledVector(dir, t);
-        if (doors.some(door => Math.hypot(door[0] - p.x, door[2] - p.z) < 1.35)) continue;
+        if (gaps.some(([a, b]) => t > a && t < b)) continue;
         if (random() < (seen === 'some' ? 0.55 : seen === 'many' ? 0.06 : 0.16)) continue;
         const kind = kindFor();
         const radius = kind === 2 ? 0.5 + random() * 0.25 : kind === 0 ? 0.42 + random() * 0.22 : 0.34 + random() * 0.2;
+        if (gaps.some(([a, b]) => t + radius * 1.12 > a && t - radius * 1.12 < b)) continue;
         const height = radius * (kind === 0 ? 1.5 + random() * 0.4 : kind === 2 ? 1.35 + random() * 0.3 : 1.15 + random() * 0.3);
         const x = p.x + segment.nx * (0.3 + radius * 0.85), z = p.z + segment.nz * (0.3 + radius * 0.85);
+        if (intersectsGarageApproach(x, z, radius * 1.12, garages)) continue;
         const y = groundAt(x, z, p.y) - 0.04;
         const m = new THREE.Matrix4().compose(new THREE.Vector3(x, y, z), new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), random() * Math.PI * 2), new THREE.Vector3(radius, height / 1.4, radius));
         // Linear foliage reflectance: yew, boxwood and hydrangea leaf greens.
         const color = kind === 0 ? new THREE.Color().setRGB(0.05, 0.095, 0.045) : kind === 1 ? new THREE.Color().setRGB(0.09, 0.15, 0.052) : new THREE.Color().setRGB(0.085, 0.15, 0.065);
         color.multiplyScalar(0.9 + random() * 0.2);
         shrubs.push({ m, color, kind: kind + random() * 0.4 });
-        placed++;
+        planted.push(t);
       }
-      if (placed && level === 0) {
-        // Mulch bed hugging the wall, following the ground at its corners.
-        const depth = 1.25;
-        const corners = [segment.a, segment.b, segment.b.clone().add(new THREE.Vector3(segment.nx * depth, 0, segment.nz * depth)), segment.a.clone().add(new THREE.Vector3(segment.nx * depth, 0, segment.nz * depth))]
-          .map(p => new THREE.Vector3(p.x, groundAt(p.x, p.z, segment.a.y) + 0.03, p.z));
-        builder.quad('mulch', corners);
-        report.beds++;
+      if (planted.length && level === 0) {
+        const depth = 1.25, spans: number[][] = [];
+        let start = 0;
+        for (const [a, b] of gaps) { if (a > start) spans.push([start, a]); start = b; }
+        if (start < length) spans.push([start, length]);
+        for (const [a, b] of spans) {
+          if (!planted.some(t => t >= a && t <= b)) continue;
+          const left = segment.a.clone().addScaledVector(dir, a), right = segment.a.clone().addScaledVector(dir, b);
+          const corners = [left, right, right.clone().add(new THREE.Vector3(segment.nx * depth, 0, segment.nz * depth)), left.clone().add(new THREE.Vector3(segment.nx * depth, 0, segment.nz * depth))]
+            .map(p => new THREE.Vector3(p.x, groundAt(p.x, p.z, segment.a.y) + .03, p.z));
+          builder.quad('mulch', corners);
+          report.beds++;
+        }
       }
     }
     for (const [building, { best }] of buildings) {
@@ -375,6 +436,7 @@ export class HouseDressing {
     // Hedge shrubs share the foundation shrubs' instances: clipped yew and privet greens.
     const hedge = (x: number, y: number, z: number, dir: readonly [number, number]) => {
       const random = seeded(x + origin[0], z + origin[2], 331), r = 0.52 + random() * 0.1, h = 1.3 + random() * 0.3;
+      if (intersectsGarageApproach(x, z, r * 1.1 * 1.12, garages)) return;
       const q = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.atan2(-dir[1], dir[0]));
       const color = (random() < 0.5 ? new THREE.Color().setRGB(0.05, 0.095, 0.045) : new THREE.Color().setRGB(0.07, 0.13, 0.05)).multiplyScalar(0.9 + random() * 0.2);
       shrubs.push({ m: new THREE.Matrix4().compose(new THREE.Vector3(x, y, z), q, new THREE.Vector3(r * 1.1, h / 1.4, r * 0.85)), color, kind: random() * 0.4 });
@@ -387,6 +449,9 @@ export class HouseDressing {
     this.gutters(group, inverse, builder, groundAt, report);
     this.chimneys(group, inverse, builder, report);
     const built = builder.finish({ ...this.solids, ...Object.fromEntries(this.paints) });
+    built.traverse(object => {
+      if (object instanceof THREE.Mesh && object.material === this.solids.chainMesh) chainLinkUV(object.geometry, origin);
+    });
     if (shrubs.length) {
       const geometry = level === 0 ? this.shrubHigh : this.shrubLow;
       const mesh = new THREE.InstancedMesh(geometry, this.shrub, shrubs.length);
@@ -414,7 +479,7 @@ export class HouseDressing {
     if (built.children.length) { built.name = 'House dressing'; group.add(built); }
     const exclusions: number[][][] = [];
     built.traverse(o => {
-      if (!(o instanceof THREE.Mesh) || ![this.mulch, this.walk, this.drives.asphalt, this.drives.gravel].includes(o.material as THREE.MeshStandardMaterial)) return;
+      if (!(o instanceof THREE.Mesh) || ![this.mulch, this.walk, ...Object.values(this.drives)].includes(o.material as THREE.MeshStandardMaterial)) return;
       const p = o.geometry.getAttribute('position'), index = o.geometry.index;
       for (let i = 0; i < (index?.count ?? p.count); i += 3) exclusions.push([0, 1, 2].map(k => {
         const at = index?.getX(i + k) ?? i + k;
@@ -503,7 +568,7 @@ export class HouseDressing {
             builder.cylinder('chainPost', [ax, ground(t0) - 0.05, az], [ax, ground(t0) + 1.25, az], 0.03, 0.03, 6);
             if (k === pieces - 1) builder.cylinder('chainPost', [bx, ground(t1) - 0.05, bz], [bx, ground(t1) + 1.25, bz], 0.03, 0.03, 6);
             builder.beam('chainPost', [ax, ground(t0) + 1.2, az], [bx, ground(t1) + 1.2, bz], 0.02, 5);
-            builder.box('chainMesh', [cx, g + 0.6, cz], dir, step, 1.18, 0.005);
+            builder.quad('chainMesh', [new THREE.Vector3(ax, ground(t0) + .01, az), new THREE.Vector3(bx, ground(t1) + .01, bz), new THREE.Vector3(bx, ground(t1) + 1.19, bz), new THREE.Vector3(ax, ground(t0) + 1.19, az)]);
           }
         }
         report.fenceM += length;
@@ -608,16 +673,15 @@ export class HouseDressing {
    * else 8 m, in the surface the house's photograph shows. It follows the
    * ground and stops short of any other building.
    */
-  private aprons(group: THREE.Group, origin: readonly number[], outlines: Map<number, Outline>, observations: readonly { e: number; n: number; dw?: string }[],
+  private aprons(group: THREE.Group, origin: readonly number[], outlines: Map<number, Outline>, observations: readonly YardObservation[],
     tests: SurfaceTests, groundAt: (x: number, z: number, fallback: number) => number, report: HouseDressingReport): THREE.Mesh[] {
     const doors: number[][] = (group.userData.openings?.garageDoors ?? []).filter((d: number[]) => d.length >= 6);
     const east = (x: number) => x + origin[0], north = (z: number) => -(z + origin[2]);
-    const out = { asphalt: { p: [] as number[], n: [] as number[], l: [] as number[] }, gravel: { p: [] as number[], n: [] as number[], l: [] as number[] }, concrete: { p: [] as number[], n: [] as number[], l: [] as number[] } };
+    const out = { asphalt: { p: [] as number[], n: [] as number[], l: [] as number[] }, gravel: { p: [] as number[], n: [] as number[], l: [] as number[] }, concrete: { p: [] as number[], n: [] as number[], l: [] as number[] }, pavers: { p: [] as number[], n: [] as number[], l: [] as number[] } };
     for (const [dx, dy, dz, ox, oz, width] of doors) {
-      let seen: string | undefined, bestD = 15;
-      for (const o of observations) { const d = Math.hypot(o.e - east(dx), o.n - north(dz)); if (d < bestD) { bestD = d; seen = o.dw; } }
+      const seen = garageObservation([dx, dy, dz, ox, oz, width], group.userData.houseFootprints ?? [], observations, origin)?.dw;
       if (seen === 'none') continue;
-      const kind = seen === 'gravel' ? 'gravel' : seen === 'concrete' || seen === 'pavers' ? 'concrete' : 'asphalt';
+      const kind = seen === 'gravel' || seen === 'concrete' || seen === 'pavers' ? seen : 'asphalt';
       // A drive the cover already holds needs nothing more.
       const at = (s: number) => [dx + ox * (s - 0.3), dz + oz * (s - 0.3)];
       if ([1.5, 3, 4.5].filter(s => { const [x, z] = at(s); return tests.paved(east(x), north(z)); }).length >= 2) continue;
@@ -651,7 +715,12 @@ export class HouseDressing {
       geometry.setAttribute('normal', new THREE.Float32BufferAttribute(n, 3));
       geometry.setAttribute(ROAD_LANE_ATTRIBUTE, new THREE.Float32BufferAttribute(l, 4));
       geometry.computeBoundingBox(); geometry.computeBoundingSphere();
-      const mesh = new THREE.Mesh(geometry, kind === 'concrete' ? this.walk : this.drives[kind as 'asphalt' | 'gravel']);
+      if (kind === 'pavers') {
+        const uv: number[] = [];
+        for (let i = 0; i < l.length; i += 4) uv.push(l[i] / .4, l[i + 1] / .4);
+        geometry.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
+      }
+      const mesh = new THREE.Mesh(geometry, kind === 'concrete' ? this.walk : this.drives[kind as keyof typeof this.drives]);
       mesh.name = `House dressing | ${kind} drive aprons`; mesh.userData.townCrafted = true; mesh.receiveShadow = true;
       meshes.push(mesh);
     }
@@ -901,7 +970,9 @@ export class HouseDressing {
   dispose(): void {
     for (const material of this.carMaterials.values()) material.dispose();
     this.carMaterials.clear();
-    this.walk.dispose(); this.drives.asphalt.dispose(); this.drives.gravel.dispose();
+    this.walk.dispose();
+    this.drives.pavers.map?.dispose(); this.solids.chainMesh.alphaMap?.dispose();
+    Object.values(this.drives).forEach(material => material.dispose());
     this.shrubHigh.dispose(); this.shrubLow.dispose();
     this.shrub.dispose(); this.mulch.dispose();
     for (const material of Object.values(this.solids)) material.dispose();
