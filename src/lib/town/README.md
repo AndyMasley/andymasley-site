@@ -89,6 +89,16 @@ source notes describe the different source dates and limitations.
 
 ## Art direction
 
+The low eastern annex of the Racicot/Commerce block at 211 Main Street uses
+`racicot-annex.json` and the final `racicotAnnex` assembly pass. Its red brick,
+two pale bands, broad fascia, gray shingles and dark glazed bays follow the
+2024 municipal preservation-plan photographs (PDF pages 63 and 120). Window
+spacing and material colors are estimated; no obscured entrance is invented.
+The source footprint, roof vertices and western historic facade stay intact.
+Face registrations cover all three LODs after the shared school-roof repair;
+`TOWN_QUALITY_OUT=/outside/repo node scripts/art_finish/racicot-annex.mjs`
+checks these registrations and the unchanged neighboring material assignments.
+
 The browser presentation uses an authored late-summer palette over the pinned
 geodata. `art-materials.ts` applies an
 exact-name whitelist to inferred paint, slate roofs, concrete, asphalt, modeled
