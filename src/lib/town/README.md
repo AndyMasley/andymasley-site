@@ -306,6 +306,12 @@ architectural details remain plausible game interpretations. Generators and
 source limitations are documented in the repository README; emitted-file tests
 verify hashes, byte counts, source ownership, entry bounds and stale-file absence.
 
+The retained School Street assessor photographs also guide the crafted fronts:
+107 has broad display panes beneath divided transoms, 140 has solid lower porch
+panels, and 151 has projecting bays with glazed angled cheeks and diamond trim.
+These refinements keep the registered building bodies and height envelopes. The
+photographs' dates still apply; the fitted detail dimensions are not survey values.
+
 `measured-roofs.ts` streams a packet per tile from `scripts/measured_roofs/`:
 each house fitted to the 2021 LiDAR roof returns as a closed body of flat, shed,
 gable, hip, gambrel and mansard sections, walls 0.32 m inside the roofprint so
@@ -339,6 +345,12 @@ assessor's street photographs (`facade-reads.json`); no photograph ships.
 Stacked porches keep their photographed side and open or enclosed levels. A
 measured house replaces its V2 body; storeys follow its tallest wall, and
 windows follow each wall's traced top, up into gables under their rakes.
+Photographed features share one horizontal axis across a house's street front;
+each angled wing converts that axis back into its own wall coordinates. The
+placement is independent of the house's town coordinates and of the direction
+its footprint was traced. An explicit photographed absence of a front porch
+also supersedes the older inferred porch. These are registration corrections,
+not new measurements of features hidden from the photograph.
 Shutters are painted boards, one colour per house (a photographed one, else
 one drawn from the town's photographed mix); an observed door keeps its colour.
 Photographed garage doors (count, side as seen from the street, colour) go in
@@ -410,10 +422,17 @@ walls and hedges (a row of clipped shrubs) along the lot's street frontage from 
 the drive and the front walk, and a drive paved (in the photographed surface)
 to any vehicle door the land cover leaves on lawn. It loads as its own chunk
 beside the road network; vehicle doors built during assembly join the tile's
-gathered openings afterwards (`mergeVehicleDoors`). Each tile's measured
+gathered openings afterwards (`mergeVehicleDoors`). Matched source IDs connect
+photo observations to their own house. Solid source footprints keep planting,
+walks and driveway cars outside buildings; the inner faces of thin foundation
+bands are not additional garden walls. Added mulch, walks and garage aprons
+update the grass mask after dressing, so grass cannot grow through those surfaces.
+Each tile's measured
 packet also carries the trees the 2021 LiDAR found near its streets and houses
 (place, height and crown radius, stood on the tile's terrain by
-`surveyTreeRows` in place of the scenery's block trees there). None stands
+`surveyTreeRows` in place of the scenery's block trees there). If terrain is
+unavailable, retained tree feet supply the fallback in world elevation before
+the tile offset is removed once. None stands
 inside any mapped building (a steeple's or a tower's returns read as a tree
 go), a trunk on a drive, a lot, a walk or in the water steps to open ground
 within 3 m (else the tree goes), a trunk stepped off a road stands up to 1.5 m

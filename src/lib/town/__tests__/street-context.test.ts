@@ -4,6 +4,9 @@ import * as THREE from 'three';
 import context from '../../../../data/derived/town/street-context.json';
 import { StreetDressing, idRuns } from '../street-dressing';
 import { HouseDressing, type RoadLookup } from '../house-dressing';
+import { Batch } from '../crafted-frontages';
+import { TownSurfaces } from '../surfaces';
+import type { GroundSurfaces } from '../contracts';
 import type { NetworkData, RoadEdge } from '../engine';
 
 const edge = (id: number, physical: number, points: number[][], name: string, direction = 1): RoadEdge =>
@@ -115,6 +118,63 @@ describe('yards as photographed', () => {
     expect(shrubs('some')).toBeGreaterThan(0);
     expect(shrubs('many')).toBeGreaterThan(shrubs('some'));
     expect(shrubs('many')).toBeGreaterThanOrEqual(shrubs());
+  });
+
+  it('plants only the exterior faces of measured foundation bands, joined to their exact photo ID', () => {
+    const origin = [1000, 60, -2000], group = new THREE.Group(), batch = new Batch(new THREE.Vector3().fromArray(origin), 0);
+    group.position.fromArray(origin);
+    const ring = [[1000, 2020], [1010, 2020], [1010, 2030], [1000, 2030]];
+    const walls = ring.map((start, i) => {
+      const end = ring[(i + 1) % ring.length], dx = end[0] - start[0], dn = end[1] - start[1], width = Math.hypot(dx, dn);
+      return { start, tangent: [dx / width, dn / width], outward: [dn / width, -dx / width], width };
+    });
+    walls.forEach(w => batch.box({ ...w, structId: 'known', tileId: 't' }, 'foundation', w.width / 2, 70.3, .022, w.width, .6, .08));
+    group.add(batch.finish().group);
+    group.userData.houseFootprints = [{ id: 'known', outline: ring, walls }];
+    // The old nearest-centre join would use this other house's contradictory photo.
+    group.userData.houseObservations = [{ id: 'known', e: 1040, n: 2025, sh: 'many', mb: 'none' }, { id: 'neighbor', e: 1005, n: 2025, sh: 'none', mb: 'curb' }];
+    const roads: RoadLookup = { nearestRoad: (x, n) => ({ x, n: 2000, z: 70, tx: 1, tn: 0, width: 8, type: 5, distance: n - 2000 }) };
+    const dressing = new HouseDressing(roads), report = dressing.apply(group, origin, 0);
+    expect(report.buildings).toBe(1); expect(report.frontWalls).toBe(1); expect(report.mailboxes).toBe(0); expect(report.shrubs).toBeGreaterThan(0);
+    const shrubs = group.getObjectByName('House dressing | foundation shrubs') as THREE.InstancedMesh, matrix = new THREE.Matrix4();
+    for (let i = 0; i < shrubs.count; i++) { shrubs.getMatrixAt(i, matrix); expect(-matrix.elements[14] - origin[2]).toBeLessThan(2020); }
+    dressing.dispose();
+  });
+
+  it('keeps front walks out of source houses without exposed foundation meshes', () => {
+    const { group, dressing } = street(houses);
+    group.userData.openings = { doors: houses.map(hx => [hx, 11.1, -20]), garageDoors: [] };
+    group.userData.houseObservations = houses.map(hx => ({ e: hx, n: 25, sh: 'none', mb: 'none' }));
+    group.userData.houseFootprints = houses.slice(0, 3).map((hx, i) => ({ id: `obstacle-${i}`, outline: [[hx - 4, 10], [hx + 4, 10], [hx + 4, 18], [hx - 4, 18]], walls: [] }));
+    const report = dressing.apply(group, [0, 0, 0], 0);
+    expect(report.walks).toBeGreaterThan(0);
+    const walk = group.getObjectByName('House dressing | front walks') as THREE.Mesh, p = walk.geometry.getAttribute('position');
+    for (let i = 0; i < p.count; i++) expect(p.getX(i)).toBeGreaterThan(20);
+    dressing.dispose();
+  });
+
+  it('removes live grass from house aprons added after the cover mask was registered', async () => {
+    const { group, dressing } = street([-30]);
+    const mask = group.userData.coverMask, source = mask.data.slice();
+    const definition: GroundSurfaces = { grass: { color: { url: 'g', bytes: 1 }, normal: { url: 'n', bytes: 1 }, roughness: { url: 'r', bytes: 1 }, repeatM: 1 }, masks: { t: { url: 'mask', bytes: 1, bounds: mask.bounds } } };
+    const surfaces = new TownSurfaces(definition, async () => { const texture = new THREE.DataTexture(mask.data.slice(), mask.width, mask.height); texture.flipY = false; return texture; });
+    await surfaces.apply(group, 't', new AbortController().signal);
+    const countInDrive = () => {
+      const mesh = group.getObjectByName('Town grass | t') as THREE.InstancedMesh, matrix = new THREE.Matrix4(); let count = 0;
+      for (let i = 0; i < (mesh?.count ?? 0); i++) { mesh.getMatrixAt(i, matrix); const x = matrix.elements[12], n = -matrix.elements[14]; if (Math.abs(x + 28) < 1 && n > 7 && n < 17) count++; }
+      return count;
+    };
+    surfaces.update([-28, 10, -12], false, 0); expect(countInDrive()).toBeGreaterThan(0);
+    group.userData.openings = { doors: [], garageDoors: [[-28, 11, -19.7, 0, 1, 2.4]] };
+    group.userData.houseObservations = [{ e: -30, n: 25, sh: 'none', mb: 'none', dw: 'asphalt' }];
+    expect(dressing.apply(group, [0, 0, 0], 0).aprons).toBe(1);
+    expect(group.userData.hardscapeGrassExclusions.pendingTriangles).toBeGreaterThan(0);
+    surfaces.refreshGrassExclusions(group); surfaces.update([-28, 10, -12], false, 0);
+    expect(countInDrive()).toBe(0); expect(group.userData.coverMask.data).toEqual(source);
+    expect((group.getObjectByName('Town grass | t') as THREE.InstancedMesh).count).toBeGreaterThan(0);
+    expect(group.userData.hardscapeGrassExclusions.pendingTriangles).toBe(0);
+    surfaces.update([-28, 10, -12], true, 0); surfaces.update([-28, 10, -12], false, 0); expect(countInDrive()).toBe(0);
+    surfaces.dispose(); dressing.dispose();
   });
 
   it('paves a drive in front of garage doors the land cover leaves on lawn, in the photographed surface', () => {

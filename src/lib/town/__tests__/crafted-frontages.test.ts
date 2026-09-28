@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import * as THREE from 'three';
 import data from '../../../../data/derived/town/crafted-frontages.json';
 import { applyCraftedFrontages, frontageGround, clipTerrainTriangle } from '../crafted-frontages';
+import { filterEvidenceSources } from '../evidence-buildings';
 
 function mesh(name: string, position: number[] = [0,0,0,1,0,0,0,1,0]) {
   const geometry=new THREE.BufferGeometry(); geometry.setAttribute('position',new THREE.Float32BufferAttribute(position,3)); geometry.computeVertexNormals();
@@ -91,5 +92,69 @@ describe('entrance paving follows rendered terrain',()=>{
       expect(new Set(polygon.map(p=>p.join(','))).size).toBe(polygon.length);
       expect(points[1].clone().sub(points[0]).cross(points[2].clone().sub(points[0])).y).toBeGreaterThan(0);
     }
+  });
+});
+
+
+describe('photo-specific School Street elevations',()=>{
+  const origin=new THREE.Vector3(-3250,0,1250);
+  const home=(number:string)=>data.school.find(row=>row.number===number)!;
+  function scene(level=0) {
+    const group=new THREE.Group();group.add(mesh('Reference | School 60 gray wall'));
+    applyCraftedFrontages(group,'-13_-5',origin.toArray(),level);group.updateMatrixWorld(true);return group;
+  }
+  function frontHit(group:THREE.Group,number:string,u:number,height:number,far=2.2) {
+    const f=home(number),p=new THREE.Vector3(f.start[0]+f.tangent[0]*u+f.outward[0]*2,height,-f.start[1]-f.tangent[1]*u-f.outward[1]*2).sub(origin);
+    return new THREE.Raycaster(p,new THREE.Vector3(-f.outward[0],0,f.outward[1]),0,far).intersectObject(group,true).find(hit=>((hit.object as THREE.Mesh).material as THREE.Material).userData.surfaceRole!=='leaf');
+  }
+  const role=(hit:THREE.Intersection|undefined)=>hit&&((hit.object as THREE.Mesh).material as THREE.Material).userData.surfaceRole;
+  it('gives 107 clear display panes below separate divided transoms at every LOD',()=>{
+    const f=home('107'),u=f.width*.22;
+    for(let level=0;level<3;level++) {
+      const group=scene(level);
+      expect(role(frontHit(group,'107',u,f.floor+1.5))).toBe('glass');
+      expect(role(frontHit(group,'107',u,f.floor+2.08))).toBe('trim');
+      expect(role(frontHit(group,'107',u-f.width*.08,f.floor+2.36))).toBe('trim');
+      expect(role(frontHit(group,'107',u-f.width*.04,f.floor+2.36))).toBe('glass');
+      expect(role(frontHit(group,'107',f.width/2,f.floor+2.48))).toBe('glass');
+      dispose(group);
+    }
+  });
+  it('closes 140 lower porch panels while leaving its entrance and 156 railing gaps open',()=>{
+    for(let level=0;level<3;level++) {
+      const group=scene(level),f=home('140'),other=home('156');
+      expect(role(frontHit(group,'140',.8,f.floor+.56))).toBe('wall');
+      expect(role(frontHit(group,'140',f.width*.52,f.floor+.56))).toBeUndefined();
+      expect(role(frontHit(group,'156',.8,other.floor+.56))).toBeUndefined();
+      dispose(group);
+    }
+  });
+  it('gives 151 glazed canted cheeks and outlined diamonds without changing source bodies',()=>{
+    const f=home('151'),u=f.width*.24,sourceBodies=JSON.stringify(data.school.map(row=>row.body));
+    for(let level=0;level<3;level++) {
+      const group=scene(level),hit=frontHit(group,'151',u-1.155,f.floor+4.0)!;
+      expect(role(hit)).toBe('glass');
+      const n=hit.face!.normal,along=n.x*f.tangent[0]-n.z*f.tangent[1],out=n.x*f.outward[0]-n.z*f.outward[1];
+      expect(Math.abs(along)).toBeGreaterThan(.6);expect(out).toBeGreaterThan(.5);
+      // Look across the side of the projection, halfway back to its source wall.
+      const p=new THREE.Vector3(f.start[0]+f.tangent[0]*(u-2)-f.outward[0]*f.porchDepth/2,f.floor+4,-f.start[1]-f.tangent[1]*(u-2)+f.outward[1]*f.porchDepth/2).sub(origin);
+      const side=new THREE.Raycaster(p,new THREE.Vector3(f.tangent[0],0,-f.tangent[1]),0,1).intersectObject(group,true)[0];
+      expect(role(side)).toBe('wall');expect(side.distance).toBeCloseTo(.7,3);
+      for(const center of [f.width*.40,f.width*.90]) {
+        expect(role(frontHit(group,'151',center-.18,f.floor+4.3,4))).toBe('trim');
+        expect(role(frontHit(group,'151',center,f.floor+4.3,4))).toBe('wall');
+      }
+      expect(JSON.stringify(data.school.map(row=>row.body))).toBe(sourceBodies);
+      dispose(group);
+    }
+  });
+  it('keeps the finished photo fronts protected from subsequent measured-building replacement',()=>{
+    const group=scene(),before=new Map<THREE.Mesh,THREE.BufferGeometry>();
+    group.traverse(o=>{if(o instanceof THREE.Mesh)before.set(o,o.geometry);});
+    const targets=['107','140','151'].map(number=>{const f=home(number);return{id:f.structId,tileId:f.tileId,outline:[[f.start[0]-40,f.start[1]-40],[f.start[0]+40,f.start[1]-40],[f.start[0]+40,f.start[1]+40],[f.start[0]-40,f.start[1]+40]],base:0,peak:80,replaceBody:true,replaceOpenings:true};});
+    const result=filterEvidenceSources(group,origin,targets);
+    expect(result.removedTriangles).toBe(0);expect(result.matched.size).toBe(0);
+    for(const [object,geometry]of before){expect(object.parent).not.toBeNull();expect(object.geometry).toBe(geometry);}
+    dispose(group);
   });
 });

@@ -454,6 +454,7 @@ export class TownWorld {
     stage('wear', () => this.roadWear?.apply(group, origin));
     stage('parking', () => this.curbParking?.apply(group, id, origin, level));
     stage('commerce', () => this.commerce?.apply(group, id, origin, level));
+    this.surfaces?.refreshGrassExclusions(group);
     releaseTileTerrain();
     const ms = performance.now() - started;
     this.timings.dressingMs += ms; this.timings.maxDressingMs = Math.max(this.timings.maxDressingMs, ms);

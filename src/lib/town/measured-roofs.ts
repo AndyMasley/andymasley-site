@@ -120,7 +120,7 @@ export function surveyTreeRows(lt: SurveyTrees, rows: readonly number[][], origi
   if (lt.n !== rows.length) return undefined;
   const bits = atob(lt.k), q = int16(lt.t);
   const kept = rows.filter((_, i) => bits.charCodeAt(i >> 3) >> (i & 7) & 1);
-  const feet = kept.map(r => r[1] - .71 * r[4] / .30).sort((a, b) => a - b), fallback = feet.length ? feet[feet.length >> 1] : origin[1];
+  const feet = kept.map(r => r[1] + origin[1] - .71 * r[4] / .30).sort((a, b) => a - b), fallback = feet.length ? feet[feet.length >> 1] : origin[1];
   const out = [...kept];
   for (let i = 0; i + 3 < q.length; i += 4) {
     const x = q[i] / 10, z = q[i + 1] / 10, h = Math.max(2, q[i + 2] / 10), r = Math.max(.8, q[i + 3] / 10), e = x + origin[0], n = -(z + origin[2]);

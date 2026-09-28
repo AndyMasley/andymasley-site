@@ -564,6 +564,68 @@ describe('measured house roofs', () => {
     expect(photoLayout(reversed, { d: [10] })!.doors[0].u).toBeCloseTo(9, 1);
   });
 
+  it('keeps photographed features registered to angled wings when a house rotates or moves across town', () => {
+    const angle = .2, c = Math.cos(angle), s = Math.sin(angle), span = 6 + 6 * c;
+    for (const reverse of [false, true]) for (const [rotation, east, north] of [[0, 0, 0], [.9, 2400, -3100], [2.3, -2800, 1900]]) {
+      const rotate = ([x, y]: readonly number[]) => [x * Math.cos(rotation) - y * Math.sin(rotation), x * Math.sin(rotation) + y * Math.cos(rotation)];
+      const frames = [
+        { start: [0, 0], tangent: [1, 0], outward: [0, -1], width: 6, front: true },
+        { start: reverse ? [6 + 6 * c, 6 * s] : [6, 0], tangent: reverse ? [-c, -s] : [c, s], outward: [s, -c], width: 6, front: false },
+      ].map(f => ({ ...f, start: rotate(f.start).map((x, i) => x + (i ? north : east)), tangent: rotate(f.tangent), outward: rotate(f.outward) }));
+      const home = { id: 'angled', frames, style: 'COLONIAL', stories: 2 } as unknown as EvidenceBuilding;
+      const layout = photoLayout(home, { d: [80], w1: [75], pw: [60, 95], dm: [[80, 'g']] },
+        { dh: [[80, 'p']], aw: [[75, 1]], bw: [[60, 95, 1]], dk: [[60, 95, 1]], sol: [60, 95], xs: 'r' })!;
+      const local = (percent: number) => { const u = (span * percent / 100 - 6) / c; return reverse ? 6 - u : u; };
+      for (const point of [layout.doors[0], layout.windows[0], layout.dormers[0], layout.covers![0], layout.awnings![0]]) {
+        expect(point.frameIndex).toBe(1);
+        expect(point.u).toBeCloseTo(local(point === layout.windows[0] || point === layout.awnings![0] ? 75 : 80), 7);
+      }
+      for (const stretch of [layout.porch!, layout.bays![0], layout.decks![0], layout.solar!]) {
+        expect(stretch.frameIndex).toBe(1);
+        expect(stretch.u0).toBeCloseTo(Math.min(local(60), local(95)), 7);
+        expect(stretch.u1).toBeCloseTo(Math.max(local(60), local(95)), 7);
+      }
+      expect(layout.stair).toEqual({ frameIndex: 1, at: reverse ? 'start' : 'end' });
+    }
+  });
+
+  it('recovers photographed decks and porches on the angled fronts at Bates Point and School Street', () => {
+    for (const [id, kind] of [['172399_865122', 'deck'], ['168222_865319', 'porch']] as const) {
+      const home = records.get(id)!, row = houses(home.tileId).find(r => r.id === id)!;
+      const original = photoLayout(home, row.f!.lo!, row.f!.dt)!;
+      const moved = photoLayout({ ...home, frames: home.frames.map(f => ({ ...f, start: [f.start[0] + 3000, f.start[1] - 5000] })) }, row.f!.lo!, row.f!.dt)!;
+      const a = kind === 'deck' ? original.decks![0] : original.porch!;
+      const b = kind === 'deck' ? moved.decks![0] : moved.porch!;
+      expect(a, home.address).toBeDefined(); expect(b, home.address).toBeDefined();
+      expect(a.u0).toBeGreaterThanOrEqual(0); expect(a.u1).toBeLessThanOrEqual(home.frames[a.frameIndex].width);
+      expect(a.u1 - a.u0).toBeGreaterThan(5);
+      expect(b.frameIndex).toBe(a.frameIndex); expect(b.u0).toBeCloseTo(a.u0, 7); expect(b.u1).toBeCloseTo(a.u1, 7);
+    }
+  });
+
+  it('lets a photograph showing no front porch replace an older porch guess while retaining its photographed portico', () => {
+    const b = 40, home: EvidenceBuilding = { id: 'no-porch', tileId: 't', address: 'Fixture', outline: [[100, 200], [112, 200], [112, 208], [100, 208]],
+      frames: [{ start: [100, 200], tangent: [1, 0], outward: [0, -1], width: 12, front: true, groundMaximum: b, clearanceM: 6 }],
+      base: b, floor: b + .4, eave: b + 6, peak: b + 8, stories: 2, style: 'COLONIAL', year: 1950, material: 'siding', paint: '#d9d5c8',
+      roof: 'gable', porch: 'enclosed', porchPlacement: 'front', documented: false, evidenceIds: [], colorsDated: false, entry: { frameIndex: 0, u: 6, floor: b + .4 } };
+    const render = (porch?: 'none') => {
+      const group = new THREE.Group(), geometry = new THREE.BufferGeometry(), material = new THREE.MeshStandardMaterial();
+      geometry.setAttribute('position', new THREE.Float32BufferAttribute([101, b + 1, -200, 103, b + 1, -200, 101, b + 3, -200], 3));
+      material.name = 'V2 inferred | siding'; group.add(new THREE.Mesh(geometry, material));
+      applyEvidenceBuildings(group, 't', [0, 0, 0], 0, [home], [], undefined, [], [{ id: home.id, k: 'h', o: [106, 204], b,
+        f: { ...(porch ? { porch } : {}), lo: { d: [50], w1: [20, 80], w2: [20, 50, 80] }, dt: { dh: [[50, 'p']] } } }]);
+      let walls = 0, roofs = 0;
+      group.getObjectByName('Evidence-informed Webster buildings')!.traverse(o => { if (o instanceof THREE.Mesh) for (const m of [o.material].flat()) {
+        if (m.name.includes(' | wall | ')) walls += o.geometry.getAttribute('position').count;
+        if (m.name.includes(' | roof | ')) roofs += o.geometry.getAttribute('position').count;
+      } });
+      group.traverse(o => { if (o instanceof THREE.Mesh) { o.geometry.dispose(); for (const m of [o.material].flat()) m.dispose(); } });
+      return { walls, roofs };
+    };
+    expect(render().walls).toBeGreaterThan(0);
+    const shown = render('none'); expect(shown.walls).toBe(0); expect(shown.roofs).toBeGreaterThan(0);
+  });
+
   it('raises a photographed dormer on the street slope of a measured roof, with its window', () => {
     // A 10 m by 8 m gable, eaves 3 m up along the front, ridge 6 m up across the middle.
     const o: [number, number] = [300, 400], b = 30;
@@ -647,6 +709,38 @@ describe('measured house roofs', () => {
     expect([...rails].filter(y => y > 3 && y < 3.8).length).toBeGreaterThan(0);
     expect([...rails].filter(y => y > 5.8 && y < 6.6).length).toBeGreaterThan(0);
     stacked.traverse(x => { if (x instanceof THREE.Mesh) { x.geometry.dispose(); for (const m of [x.material].flat()) m.dispose(); } });
+  });
+
+  it('keeps the photographed street face after an open porch splits an earlier plan frame', () => {
+    const o: [number, number] = [500, 600], b = 40;
+    const plan = [
+      { start: [495, 596], tangent: [1, 0], outward: [0, -1], width: 10 },
+      { start: [505, 596], tangent: [0, 1], outward: [1, 0], width: 8 },
+      { start: [505, 604], tangent: [-1, 0], outward: [0, 1], width: 10 },
+      { start: [495, 604], tangent: [0, -1], outward: [-1, 0], width: 8 },
+    ];
+    const home: EvidenceBuilding = { id: 'turned-porch', tileId: 't', address: 'Fixture', outline: plan.map(f => f.start),
+      frames: plan.map((f, i) => ({ ...f, front: i === 0, groundMaximum: b, clearanceM: 6 })), base: b, floor: b + .4, eave: b + 3, peak: b + 6,
+      stories: 1, style: 'CAPE', year: 1950, material: 'siding', paint: '#d9d5c8', roof: 'gable', porch: 'none', documented: false, evidenceIds: [], colorsDated: false, entry: null };
+    const row: MeasuredRoof = { id: home.id, o, b, p: b + 6, v: Buffer.from(new Int16Array([0, 0, 0]).buffer).toString('base64'), r: '', w: '',
+      e: [b + 3, b + 3, b + 3, b + 3], ep: [3, 3, 3, 3], c: [], q: .9,
+      pp: { f: 0, c: 3, s: [[2, 7, 2, [[0, 3], [5, 3]]]] }, f: { porch: 'open', lo: { sf: 1, w1: [20, 65], st: 1 } } };
+    const group = new THREE.Group(), geometry = new THREE.BufferGeometry(), material = new THREE.MeshStandardMaterial();
+    geometry.setAttribute('position', new THREE.Float32BufferAttribute([498, b + 1, -596, 499, b + 1, -596, 498, b + 2, -596], 3));
+    material.name = 'V2 inferred | siding'; group.add(new THREE.Mesh(geometry, material));
+    applyEvidenceBuildings(group, 't', [0, 0, 0], 0, [home], [], undefined, [], [row]);
+    const north: number[] = [];
+    group.traverse(mesh => { if (mesh instanceof THREE.Mesh && [mesh.material].flat().some(m => m.name.includes(' | glass | '))) {
+      const p = mesh.geometry.getAttribute('position');
+      for (let i = 0; i < p.count; i += 36) {
+        let x = 0, n = 0; for (let k = i; k < i + 36; k++) { x += p.getX(k) / 36; n -= p.getZ(k) / 36; }
+        if (x > 504.6) north.push(n);
+      }
+    } });
+    expect(north).toHaveLength(2);
+    expect(north[0]).toBeCloseTo(596.32 + 7.36 * .2, 3); expect(north[1]).toBeCloseTo(596.32 + 7.36 * .65, 3);
+    expect(group.userData.houseFootprints[0].walls).toHaveLength(6);
+    group.traverse(mesh => { if (mesh instanceof THREE.Mesh) { mesh.geometry.dispose(); for (const m of [mesh.material].flat()) m.dispose(); } });
   });
 
   it('adds the smaller photographed features: a portico, window awnings, a bay, a deck, solar panels and the porch\'s own roof and posts', () => {

@@ -432,7 +432,7 @@ function approach(batch: Batch, f: School, entry: number): void {
   if(RETAINING_EDGE_HOMES.has(f.number)) retainingEdge(batch,f,entry);
 }
 
-function porch(batch: Batch, f: School, enclosed: boolean, entry: number): void {
+function porch(batch: Batch, f: School, enclosed: boolean, entry: number, solidPanels = false): void {
   const h=2.55, depth=f.porchDepth, floor=f.floor, width=f.width;
   batch.box(f,'foundation',width/2,floor-.12,-depth/2,width,.22,depth);
   batch.polygon(f,'roof',[[0,floor+h+.18,.18],[width,floor+h+.18,.18],[width,floor+h+.65,-depth-.15],[0,floor+h+.65,-depth-.15]]);
@@ -457,7 +457,16 @@ function porch(batch: Batch, f: School, enclosed: boolean, entry: number): void 
     for(const [a,b]of[[.15,entry-.68],[entry+.68,width-.15]]) if(b>a) {
       batch.box(f,'trim',(a+b)/2,floor+.94,.10,b-a,.075,.12);
       batch.box(f,'trim',(a+b)/2,floor+.19,.10,b-a,.08,.12);
-      if(batch.level<2)for(let u=a+.08;u<b;u+=.21)batch.box(f,'trim',u,floor+.56,.10,.035,.72,.035);
+      if(solidPanels) {
+        // 140's April 2023 photograph shows solid lower porch panels.
+        batch.box(f,'trim',(a+b)/2,floor+.56,.085,b-a,.66,.075);
+        const panels=Math.max(1,Math.round((b-a)/1.2)),span=(b-a)/panels;
+        for(let i=0;i<panels;i++) {
+          const u=a+(i+.5)*span;
+          batch.box(f,'wall',u,floor+.56,.13,Math.max(.1,span-.13),.49,.025,f.paint);
+          for(const y of [floor+.285,floor+.835])batch.box(f,'trim',u,y,.15,span-.07,.055,.04);
+        }
+      } else if(batch.level<2)for(let u=a+.08;u<b;u+=.21)batch.box(f,'trim',u,floor+.56,.10,.035,.72,.035);
     }
     batch.door(f,entry,floor,-depth);
     for(const u of [width*.24,width*.78]) if(Math.abs(u-entry)>1)batch.window(f,u,floor+.95,1.0,1.30,-depth);
@@ -525,6 +534,53 @@ function constructionDetails(batch: Batch, f: School, entry: number): void {
   if(report.gutterMeters||report.porchFixtures){report.geometryRanges=[...batch.chunks].map(([key,chunk])=>({key,start:before.get(key)??0,count:chunk.positions.length/3-(before.get(key)??0)})).filter(r=>r.count>0);batch.constructionDetails.push(report);}
 }
 
+function schoolShopfront(batch: Batch, f: School): void {
+  const g=f.floor,w=f.width,bottom=g+.45,transom=g+2.08,top=g+2.64;
+  // The July 2015 photograph has shop displays under a small-pane transom
+  // band. Sizes are fitted; its dated tenant lettering is not reproduced.
+  for(const u of [w*.22,w*.78]) {
+    const width=w*.32;
+    batch.box(f,'recess',u,(bottom+top)/2,.17,width+.17,top-bottom+.17,.08);
+    batch.box(f,'glass',u,(bottom+transom)/2,.228,width,transom-bottom,.035);
+    batch.box(f,'glass',u,(transom+top)/2,.228,width,top-transom,.035);
+    for(const sign of [-1,1])batch.box(f,'trim',u+sign*(width/2+.035),(bottom+top)/2,.29,.085,top-bottom+.16,.13);
+    for(const y of [bottom-.04,transom,top+.045])batch.box(f,'trim',u,y,.32,width+.22,.085,.20);
+    for(let i=1;i<4;i++)batch.box(f,'trim',u-width/2+width*i/4,(transom+top)/2,.285,.05,top-transom,.055);
+  }
+  batch.door(f,w/2,g,.2,1.04,'#8b4738');
+  batch.box(f,'glass',w/2,g+2.48,.29,1.04,.32,.035);
+  batch.box(f,'trim',w/2,top+.045,.34,1.26,.085,.16);
+  for(const sign of [-1,1])batch.box(f,'trim',w/2+sign*.575,g+2.48,.34,.085,.40,.12);
+}
+
+function schoolProjectingBay(batch: Batch, f: School, u: number): void {
+  const g=f.floor,bottom=g+2.9,top=g+5.6;
+  // 151's dated photo records projecting glazed bays and diamond panels.
+  // The fitted faces stay within the previous frontage's maximum projection.
+  batch.box(f,'wall',u,(bottom+top)/2,-f.porchDepth/2,2.6,top-bottom,f.porchDepth,f.paint);
+  const plan=[[u-1.3,0],[u-.87,.60],[u+.87,.60],[u+1.3,0]];
+  const at=(p:number[],y:number)=>[p[0],y,p[1]];
+  batch.polygon(f,'wall',plan.map(p=>at(p,top)),f.paint);
+  batch.polygon(f,'wall',[...plan].reverse().map(p=>at(p,bottom)),f.paint);
+  for(let i=0;i<plan.length;i++) {
+    const a=plan[i],b=plan[(i+1)%plan.length];
+    batch.polygon(f,'wall',[at(a,bottom),at(b,bottom),at(b,top),at(a,top)],f.paint);
+    if(i===3)continue;
+    const du=b[0]-a[0],dv=b[1]-a[1],width=Math.hypot(du,dv);
+    const face:Frame={...f,start:[f.start[0]+f.tangent[0]*a[0]+f.outward[0]*a[1],f.start[1]+f.tangent[1]*a[0]+f.outward[1]*a[1]],
+      tangent:[(f.tangent[0]*du+f.outward[0]*dv)/width,(f.tangent[1]*du+f.outward[1]*dv)/width],
+      outward:[(-f.tangent[0]*dv+f.outward[0]*du)/width,(-f.tangent[1]*dv+f.outward[1]*du)/width]};
+    batch.window(face,width/2,g+3.48,i===1?1.34:.43,1.65,.008,i===1);
+    batch.box(face,'trim',width/2,g+5.63,.06,width+.08,.18,.22);
+    batch.box(face,'trim',width/2,g+2.96,.05,width+.04,.12,.15);
+    for(const x of [.025,width-.025])batch.box(face,'trim',x,(bottom+top)/2,.055,.055,top-bottom,.10);
+
+  }
+  batch.polygon(f,'trim',[[u-1.32,g+5.73,.81],[u+1.32,g+5.73,.81],[u,g+6.57,.81]]);
+  batch.polygon(f,'roof',[[u-1.32,g+5.73,.81],[u,g+6.57,.81],[u,g+6.57,-f.porchDepth],[u-1.32,g+5.73,-f.porchDepth]]);
+  batch.polygon(f,'roof',[[u,g+6.57,.81],[u+1.32,g+5.73,.81],[u+1.32,g+5.73,-f.porchDepth],[u,g+6.57,-f.porchDepth]]);
+}
+
 function school(batch: Batch, f: School): void {
   for(const chunk of f.body)batch.geometry(f,chunk.role as Role,decode(chunk.position),decode(chunk.normal),chunk.role==='wall'?f.number==='116'?PALETTE.brick:f.paint:chunk.role==='roof'&&f.number==='130'?'#665b48':PALETTE[chunk.role as Role]);
   const w=f.width,g=f.floor;let entry=w*.5;
@@ -546,8 +602,7 @@ function school(batch: Batch, f: School): void {
     batch.door(f,entry,g);batch.cornice(f,w,48.92);
   } else if(f.number==='107') {
     batch.box(f,'trim',w/2,g+1.45,.02,w,3.1,.16,'#d9d7c5');
-    for(const u of [w*.22,w*.78])window(u,g+.45,w*.32,2.1,.15,true);
-    batch.door(f,entry,g,.2,1.04,'#8b4738');batch.cornice(f,w,42.55);
+    schoolShopfront(batch,f);batch.cornice(f,w,42.55);
     batch.box(f,'trim',w/2,42.75,.03,w*.42,.42,.30);
   } else if(f.number==='116') {
     // The civic building sits behind a broad paved forecourt on School Street.
@@ -570,16 +625,22 @@ function school(batch: Batch, f: School): void {
     for(const bottom of [g+.65,g+3.6])for(const u of [w*.24,w*.76])window(u,bottom,1.05,1.53);
     window(w*.5,48.2,.68,1.0);batch.door(f,entry,g);batch.box(f,'trim',entry,g+2.39,.32,1.55,.15,.80);
   } else if(f.number==='140'||f.number==='156') {
-    entry=w*.52;porch(batch,f,false,entry);
+    entry=w*.52;porch(batch,f,false,entry,f.number==='140');
     for(let i=0;i<3;i++)window((i+.5)*w/3,g+3.64,.96,1.53,-f.porchDepth,false,f.number==='140');
     window(w*.5,f.number==='140'?48.15:49.05,.58,.88,-f.porchDepth);
   } else if(f.number==='151') {
     porch(batch,f,true,entry);
-    for(const u of [w*.24,w*.72]) {
-      batch.box(f,'wall',u,g+4.3,.18,2.2,2.7,.64,f.paint);window(u,g+3.15,1.46,1.58,.52,true);
-      for(const sign of [-1,1])batch.box(f,'trim',u+sign*1.08,g+4.25,.39,.10,2.75,.55);
-      batch.box(f,'trim',u,g+5.63,.33,2.6,.18,.92);batch.polygon(f,'trim',[[u-1.32,g+5.73,.81],[u+1.32,g+5.73,.81],[u,g+6.57,.81]]);
-      batch.box(f,'trim',u,g+2.87,.6,2.55,.12,.20);
+    for(const u of [w*.24,w*.72])schoolProjectingBay(batch,f,u);
+    // Tall diamonds sit at sash height on the recessed flat wall panels,
+    // between/beside the projecting groups, as in the dated photograph.
+    for(const center of [w*.40,w*.90]) {
+      const y=g+4.3,v=-f.porchDepth+.075;
+      const diamond=[[center-.20,y],[center,y+.48],[center+.20,y],[center,y-.48]];
+      const inner=diamond.map(p=>[center+(p[0]-center)*.75,y+(p[1]-y)*.75]);
+      for(let j=0;j<4;j++) {
+        const k=(j+1)%4;
+        batch.polygon(f,'trim',[[...diamond[j],v],[...diamond[k],v],[...inner[k],v],[...inner[j],v]].reverse());
+      }
     }
   }
   // Quiet side elevations are inferred and subordinate to the observed front.

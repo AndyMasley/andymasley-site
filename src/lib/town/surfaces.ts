@@ -156,6 +156,12 @@ export class TownSurfaces {
 
   update(position: V3, low: boolean, time: number): void { this.detail.value = low ? 0 : 1; this.grass.update(position, low, time); }
 
+  /** House walks and garage aprons are added after their cover mask is read. */
+  refreshGrassExclusions(group: THREE.Object3D): void {
+    if (!group.userData.hardscapeGrassExclusions?.pendingTriangles) return;
+    if (this.grass.exclude(group, group.userData.environmentGrassExclusions ?? [])) releaseHardscapeGrassExclusions(group);
+  }
+
   grassResources(): ReturnType<TownGrass['resources']> { return this.grass.resources(); }
 
   /** Paving borrows the streets' authored asphalt when the surface library is

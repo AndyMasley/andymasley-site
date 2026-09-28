@@ -186,6 +186,14 @@ export class TownGrass {
     this.dirty = true;
   }
 
+  exclude(group: THREE.Object3D, polygons: readonly (readonly (readonly number[])[])[]): boolean {
+    const tile = this.tiles.get(group);
+    if (!tile) return false;
+    tile.mask = excludeGrassPolygons(tile.mask, polygons);
+    this.dirty = true;
+    return true;
+  }
+
   private shared(): void {
     if (this.geometry) return;
     this.geometry = tuftGeometry();

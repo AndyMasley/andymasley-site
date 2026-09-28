@@ -5,6 +5,7 @@ import { addParkedLife, surfaceProxies, type ParkedPlacement } from './parked-li
 import { ROAD_LANE_ATTRIBUTE } from './road-wear';
 import { applyArtMaterial } from './art-materials';
 import { frontageMaterial } from './crafted-frontages';
+import { registerHardscapeGrassExclusions } from './hardscape-grass-exclusions';
 
 /**
  * Front-yard dressing for houses: clipped foundation shrubs (yew, boxwood,
@@ -32,6 +33,37 @@ const FOUNDATION = /^(?:V2 inferred \| (?:foundation|concrete_wall)$|Crafted fro
 type Segment = { a: THREE.Vector3; b: THREE.Vector3; nx: number; nz: number; building: number };
 type Outline = { walls: Segment[]; x0: number; x1: number; z0: number; z1: number };
 type SurfaceTests = { paved(east: number, north: number): boolean; blocked(east: number, north: number): boolean };
+type HouseFootprint = { id: string; outline: readonly (readonly number[])[]; walls: readonly { start: readonly number[]; tangent: readonly number[]; outward: readonly number[]; width: number }[] };
+
+/** Measured foundation bands are thin boxes. Only the face pointing out of
+ * the authored wall is exterior; their backs must not become another yard. */
+function exteriorFoundations(segments: Segment[], footprints: readonly HouseFootprint[], origin: readonly number[]): Segment[] {
+  return segments.filter(segment => {
+    const e = (segment.a.x + segment.b.x) / 2 + origin[0], n = -(segment.a.z + segment.b.z) / 2 - origin[2];
+    let owner = -1, facing = 0, best = .2;
+    footprints.forEach((home, i) => {
+      for (const wall of home.walls) {
+        const u = Math.max(0, Math.min(wall.width, (e - wall.start[0]) * wall.tangent[0] + (n - wall.start[1]) * wall.tangent[1]));
+        const distance = Math.hypot(e - wall.start[0] - wall.tangent[0] * u, n - wall.start[1] - wall.tangent[1] * u);
+        if (distance < best) { best = distance; owner = i; facing = segment.nx * wall.outward[0] - segment.nz * wall.outward[1]; }
+      }
+    });
+    if (owner < 0) return true;
+    segment.building = -1 - owner;
+    return facing > .9;
+  });
+}
+
+/** Source plans provide solid collision footprints even where foundation
+ * bands are separate strips or the house has no exposed foundation. */
+function sourceOutlines(footprints: readonly HouseFootprint[], origin: readonly number[]): Map<number, Outline> {
+  const segments: Segment[] = [];
+  footprints.forEach((home, i) => home.outline.forEach((point, j) => {
+    const next = home.outline[(j + 1) % home.outline.length];
+    segments.push({ a: new THREE.Vector3(point[0] - origin[0], 0, -point[1] - origin[2]), b: new THREE.Vector3(next[0] - origin[0], 0, -next[1] - origin[2]), nx: 0, nz: 0, building: -1 - i });
+  }));
+  return buildingOutlines(segments);
+}
 
 /** Each building's foundation walls with their plan bounds (tile-local x/z). */
 function buildingOutlines(segments: readonly Segment[]): Map<number, Outline> {
@@ -202,7 +234,7 @@ export class HouseDressing {
     if (level > 1) return report;
     group.updateMatrixWorld(true);
     const inverse = group.matrixWorld.clone().invert();
-    const segments: Segment[] = [];
+    let segments: Segment[] = [];
     const a = new THREE.Vector3(), b = new THREE.Vector3(), c = new THREE.Vector3(), relative = new THREE.Matrix4();
     group.traverse(object => {
       if (!(object instanceof THREE.Mesh) || object instanceof THREE.InstancedMesh) return;
@@ -241,14 +273,23 @@ export class HouseDressing {
     segments.forEach((s, i) => { for (const p of [s.a, s.b]) { const k = `${Math.round(p.x * 2)}_${Math.round(p.z * 2)}`; const l = grid.get(k); if (l) l.push(i); else grid.set(k, [i]); } });
     for (const list of grid.values()) for (let i = 1; i < list.length; i++) { const x = find(list[0]), y = find(list[i]); if (x !== y) parent[x] = y; }
     segments.forEach((s, i) => { s.building = find(i); });
-    // What each house's street photograph shows (mailbox, foundation shrubs),
-    // matched to its foundation by the nearest measured house centre.
-    const observations: { e: number; n: number; b?: number; mb?: string; sh?: string; dw?: string; fe?: string; fc?: string; fl?: number[][] }[] = group.userData.houseObservations ?? [];
+    const footprints: HouseFootprint[] = group.userData.houseFootprints ?? [];
+    segments = exteriorFoundations(segments, footprints, origin);
+    const outlines = buildingOutlines(segments);
+    for (const [id, outline] of sourceOutlines(footprints, origin)) outlines.set(id, outline);
+    // Match known foundations to their own photograph by source ID; unowned
+    // scenery foundations retain the nearest measured-centre fallback.
+    const observations: { id?: string; e: number; n: number; b?: number; mb?: string; sh?: string; dw?: string; fe?: string; fc?: string; fl?: number[][] }[] = group.userData.houseObservations ?? [];
     const observed = new Map<number, { mb?: string; sh?: string }>();
     if (observations.length) {
       const centres = new Map<number, number[]>();
       for (const s of segments) { const c = centres.get(s.building) ?? [0, 0, 0]; c[0] += s.a.x + s.b.x; c[1] += s.a.z + s.b.z; c[2] += 2; centres.set(s.building, c); }
       for (const [building, [x, z, k]] of centres) {
+        if (building < 0) {
+          const best = observations.find(o => o.id === footprints[-1 - building].id);
+          if (best) observed.set(building, best);
+          continue;
+        }
         const e = x / k + origin[0], n = -(z / k + origin[2]);
         let best: typeof observations[number] | undefined, bestD = 9;
         for (const o of observations) { const d = Math.hypot(o.e - e, o.n - n); if (d < bestD) { bestD = d; best = o; } }
@@ -339,7 +380,6 @@ export class HouseDressing {
       shrubs.push({ m: new THREE.Matrix4().compose(new THREE.Vector3(x, y, z), q, new THREE.Vector3(r * 1.1, h / 1.4, r * 0.85)), color, kind: random() * 0.4 });
     };
     this.fences(observations, builder, origin, level, groundAt, report, level < 2 ? hedge : undefined);
-    const outlines = buildingOutlines(segments);
     const tests = level === 0 ? this.surfaceTests(group, origin) : null;
     const driveways = tests ? this.driveways(group, origin, [...buildings.values()], outlines, tests, report) : [];
     const walks = tests ? this.walkways(origin, frontWalls, outlines, doors, tests, groundAt, report) : null;
@@ -372,6 +412,16 @@ export class HouseDressing {
     if (walks) built.add(walks);
     for (const apron of aprons) built.add(apron);
     if (built.children.length) { built.name = 'House dressing'; group.add(built); }
+    const exclusions: number[][][] = [];
+    built.traverse(o => {
+      if (!(o instanceof THREE.Mesh) || ![this.mulch, this.walk, this.drives.asphalt, this.drives.gravel].includes(o.material as THREE.MeshStandardMaterial)) return;
+      const p = o.geometry.getAttribute('position'), index = o.geometry.index;
+      for (let i = 0; i < (index?.count ?? p.count); i += 3) exclusions.push([0, 1, 2].map(k => {
+        const at = index?.getX(i + k) ?? i + k;
+        return [p.getX(at) + origin[0], -p.getZ(at) - origin[2]];
+      }));
+    });
+    registerHardscapeGrassExclusions(group, exclusions);
     built.traverse(o => { if (o instanceof THREE.Mesh) report.triangles += ((o.geometry.index?.count ?? o.geometry.getAttribute('position').count) / 3) * (o instanceof THREE.InstancedMesh ? o.count : 1); });
     return report;
   }

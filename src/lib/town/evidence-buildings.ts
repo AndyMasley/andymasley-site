@@ -12,11 +12,12 @@ export const MEASURED_WALL_INSET = .32;
  * under the eaves and take the measured wall-top heights for their windows. */
 function measuredHome(home:EvidenceBuilding,roof:MeasuredRoof):EvidenceBuilding{
   const d=MEASURED_WALL_INSET,valid=roof.e.filter((e):e is number=>e!==null&&e>home.floor+.5);
+  // Select the photographed wall before an open porch changes frame indices.
   let frames=home.frames.map((f,i)=>{
     const width=Math.max(.1,f.width-2*d),top=roof.ep?.[i];
     const profile=top==null?undefined:typeof top==='number'?[[0,roof.b+top],[width,roof.b+top]] as const:top.map(([u,h])=>[u,roof.b+h] as const);
     const eave=profile?Math.min(...profile.map(p=>p[1])):roof.e[i]??f.eave??home.eave;
-    return{...f,width,eave,...(profile?{profile}:{}),
+    return{...f,width,eave,...(profile?{profile}:{}),...(roof.f?.lo?.sf!==undefined&&roof.f.lo.sf<home.frames.length?{front:i===roof.f.lo.sf}:{}),
       start:[f.start[0]+f.tangent[0]*d-f.outward[0]*d,f.start[1]+f.tangent[1]*d-f.outward[1]*d] as const};
   });
   let entry=home.entry?{...home.entry,u:Math.max(0,Math.min(frames[home.entry.frameIndex].width,home.entry.u-d))}:home.entry;
@@ -92,7 +93,7 @@ function photographedHome(home:EvidenceBuilding,photo:Pick<MeasuredRoof,'wc'|'tc
   return{...home,...(porchInPlan?{porchInPlan}:{}),paint:photo.wc??home.paint,
     ...(photo.tc?{trim:photo.tc}:{}),...(seen?.door?{door:seen.door}:{}),...(seen?{shutters:!!seen.shutters,...(seen.shutters?{shutterColor:seen.shutters}:{})}:{}),
     ...(seen?.material?{material:seen.material}:{}),...(seen?.bays?{frontageBays:seen.bays}:{}),
-    ...(seen?.porch&&seen.porch!=='none'?{porch:seen.porch,porchPlacement:'front' as const}:{}),
+    ...(seen?.porch?{porch:seen.porch,porchPlacement:seen.porch==='none'?'none' as const:'front' as const,...(seen.porch==='none'?{porchInPlan:false}:{})}:{}),
     ...(seen?.porch==='stacked'?{porchSide:seen.side,porchGround:seen.ground,porchUpper:seen.upper,porchLevels:seen.levels}:{}),
     ...(seen?.gd&&seen.gs?{garage:{doors:seen.gd,side:seen.gs,...(seen.gc?{color:seen.gc}:{})}}:{})};
 }
@@ -102,14 +103,19 @@ function photographedHome(home:EvidenceBuilding,photo:Pick<MeasuredRoof,'wc'|'tc
  * plan's front is set back in the crook of an L) to 6 m behind, and their
  * span along it (the photograph's left end is the low end). `at` finds the
  * frontmost of them holding a stretch `half` either side of a point along the span. */
-export function streetFront(home:EvidenceBuilding):{frames:number[];a0:number;a1:number;at:(a:number,half:number)=>{frameIndex:number;u:number}|undefined}|undefined{
+export function streetFront(home:EvidenceBuilding):{frames:number[];a0:number;a1:number;toRight:boolean;local:(i:number,a:number)=>number;at:(a:number,half:number)=>{frameIndex:number;u:number}|undefined}|undefined{
   const front=home.frames.find(f=>f.front)??(home.entry?home.frames[home.entry.frameIndex]:undefined);if(!front)return undefined;
   const o=front.outward,t=front.tangent,depth=(f:typeof front)=>(f.start[0]-front.start[0])*o[0]+(f.start[1]-front.start[1])*o[1];
   const parallel=(f:typeof front)=>f.outward[0]*o[0]+f.outward[1]*o[1]>.95;
   const reach=Math.max(3,...home.frames.filter(f=>parallel(f)&&f.width>=2&&depth(f)<12).map(f=>depth(f)+.1));
   const frames=home.frames.flatMap((f,i)=>f.width>=.4&&parallel(f)&&depth(f)>-6&&depth(f)<reach?[i]:[]);
   if(!frames.length)return undefined;
-  const span=(i:number)=>{const f=home.frames[i],a=f.start[0]*t[0]+f.start[1]*t[1];return[a,a+f.width] as const;};
+  // Every wall projects onto the same axis about the front's own origin.
+  // Angled wings must invert that projection before placing their features.
+  const along=(i:number)=>{const f=home.frames[i];return(f.start[0]-front.start[0])*t[0]+(f.start[1]-front.start[1])*t[1];};
+  const scale=(i:number)=>home.frames[i].tangent[0]*t[0]+home.frames[i].tangent[1]*t[1];
+  const local=(i:number,a:number)=>(a-along(i))/scale(i);
+  const span=(i:number)=>{const a=along(i),b=a+home.frames[i].width*scale(i);return[Math.min(a,b),Math.max(a,b)] as const;};
   const a0=Math.min(...frames.map(i=>span(i)[0])),a1=Math.max(...frames.map(i=>span(i)[1]));
   const at=(a:number,half:number)=>{
     let best:{frameIndex:number;u:number;score:number}|undefined;
@@ -117,12 +123,12 @@ export function streetFront(home:EvidenceBuilding):{frames:number[];a0:number;a1
       const [s,e]=span(i),f=home.frames[i];
       if(a<s-.15||a>e+.15||f.width<2*half+.2)continue;
       // Whole on the wall beats clipped at a corner; nearer the street beats set back.
-      const whole=a-half>=s-.15&&a+half<=e+.15,score=(whole?100:0)+depth(f);
-      if(!best||score>best.score)best={frameIndex:i,u:Math.max(half+.1,Math.min(f.width-half-.1,a-s)),score};
+      const u=local(i,a),whole=u-half>=-.15&&u+half<=f.width+.15,score=(whole?100:0)+depth(f)+u*(f.tangent[0]*o[0]+f.tangent[1]*o[1]);
+      if(!best||score>best.score)best={frameIndex:i,u:Math.max(half+.1,Math.min(f.width-half-.1,u)),score};
     }
     return best&&{frameIndex:best.frameIndex,u:best.u};
   };
-  return{frames,a0,a1,at};
+  return{frames,a0,a1,toRight:t[0]*-o[1]+t[1]*o[0]>0,local,at};
 }
 
 /** The photographed layout of a street front on its frames: positions read in
@@ -132,8 +138,7 @@ export function streetFront(home:EvidenceBuilding):{frames:number[];a0:number;a1
 export function photoLayout(home:EvidenceBuilding,lo:FrontLayout,dt?:FrontDetails):PhotoLayout|undefined{
   const front=streetFront(home);if(!front||front.a1-front.a0<3)return undefined;
   // Plan frames run either way round; the photograph's left end is the one on the viewer's left.
-  const f=home.frames[front.frames[0]],toRight=f.tangent[0]*-f.outward[1]+f.tangent[1]*f.outward[0]>0;
-  const {a0,a1}=front,at=(x:number)=>toRight?a0+x/100*(a1-a0):a1-x/100*(a1-a0);
+  const {a0,a1,toRight}=front,at=(x:number)=>toRight?a0+x/100*(a1-a0):a1-x/100*(a1-a0);
   const raised=splitFoyer(home);
   const floors=[lo.w1,lo.w2,lo.w3],full=floors.reduce((n,list,i)=>list?.length?i+1:n,0);
   const windows:PhotoLayout['windows']=[];
@@ -154,7 +159,7 @@ export function photoLayout(home:EvidenceBuilding,lo:FrontLayout,dt?:FrontDetail
   let porch:PhotoLayout['porch'];
   if(lo.pw){
     const p=front.at((at(lo.pw[0])+at(lo.pw[1]))/2,0),[b0,b1]=[at(lo.pw[0]),at(lo.pw[1])].sort((x,y)=>x-y);
-    if(p){const g=home.frames[p.frameIndex],s=g.start[0]*g.tangent[0]+g.start[1]*g.tangent[1];porch={frameIndex:p.frameIndex,u0:Math.max(0,b0-s),u1:Math.min(g.width,b1-s)};}
+    if(p){const g=home.frames[p.frameIndex],[u0,u1]=[front.local(p.frameIndex,b0),front.local(p.frameIndex,b1)].sort((x,y)=>x-y);porch={frameIndex:p.frameIndex,u0:Math.max(0,u0),u1:Math.min(g.width,u1)};}
   }
   const dormers=(lo.dm??[]).flatMap(([x,kind])=>{
     const width=kind==='s'?Math.max(2.4,Math.min(.6*(a1-a0),6.5)):kind==='h'?2:1.7,p=front.at(at(x),Math.min(width/2+.3,1.2));
@@ -165,7 +170,7 @@ export function photoLayout(home:EvidenceBuilding,lo:FrontLayout,dt?:FrontDetail
   // A stretch of the front read from x0 to x1, on the frame holding its middle.
   const stretch=(x0:number,x1:number)=>{
     const [b0,b1]=[at(x0),at(x1)].sort((x,y)=>x-y),p=front.at((b0+b1)/2,0);if(!p)return undefined;
-    const g=home.frames[p.frameIndex],s=g.start[0]*g.tangent[0]+g.start[1]*g.tangent[1],u0=Math.max(0,b0-s),u1=Math.min(g.width,b1-s);
+    const g=home.frames[p.frameIndex],[s,e]=[front.local(p.frameIndex,b0),front.local(p.frameIndex,b1)].sort((x,y)=>x-y),u0=Math.max(0,s),u1=Math.min(g.width,e);
     return u1-u0>=.6?{frameIndex:p.frameIndex,u0,u1}:undefined;
   };
   const storey=(k:number)=>raised?k-2:k-1,end=dt.xs&&front.at(at(dt.xs==='l'?3:97),.3);
@@ -175,7 +180,7 @@ export function photoLayout(home:EvidenceBuilding,lo:FrontLayout,dt?:FrontDetail
     bays:(dt.bw??[]).flatMap(([x0,x1,levels])=>{const p=stretch(x0,x1);return p?[{...p,levels}]:[];}),
     decks:(dt.dk??[]).flatMap(([x0,x1,k])=>{const p=stretch(x0,x1);return p?[{...p,level:storey(k)}]:[];}),
     ...(dt.sol&&stretch(dt.sol[0],dt.sol[1])?{solar:stretch(dt.sol[0],dt.sol[1])!}:{}),
-    ...(end?{stair:{frameIndex:end.frameIndex,at:(dt.xs==='l')===toRight?'start' as const:'end' as const}}:{}),
+    ...(end?{stair:{frameIndex:end.frameIndex,at:end.u<home.frames[end.frameIndex].width/2?'start' as const:'end' as const}}:{}),
     trim:{...(dt.pr?{roof:dt.pr}:{}),...(dt.po?{posts:dt.po}:{}),...(dt.rl?{rail:dt.rl}:{}),...(dt.rc?{railColor:dt.rc}:{}),...(dt.awc?{awning:dt.awc,striped:dt.aws===1}:{})}};
 }
 
@@ -1446,7 +1451,8 @@ export function applyEvidenceBuildings(group:THREE.Object3D,tileId:string,tileOr
   // and follows what each house's photograph shows. The tile's openings are
   // gathered after assembly; the doors join them then (mergeVehicleDoors).
   if(batch.garageDoors.length){group.userData.vehicleDoors=[...(group.userData.vehicleDoors??[]),...batch.garageDoors];mergeVehicleDoors(group);}
-  const observed=[...measured,...photos.values()].filter(m=>m.f&&filtered.matched.has(m.id)).map(m=>({e:m.o[0],n:m.o[1],b:m.b,mb:m.f!.mb,sh:m.f!.sh,dw:m.f!.dw,
+  group.userData.houseFootprints=homes.filter(h=>filtered.matched.has(h.id)).map(h=>({id:h.id,outline:h.outline,walls:h.frames.map(f=>({start:f.start,tangent:f.tangent,outward:f.outward,width:f.width}))}));
+  const observed=[...measured,...photos.values()].filter(m=>m.f&&filtered.matched.has(m.id)).map(m=>({id:m.id,e:m.o[0],n:m.o[1],b:m.b,mb:m.f!.mb,sh:m.f!.sh,dw:m.f!.dw,
     ...(m.f!.fe&&m.f!.fl?{fe:m.f!.fe,fc:m.f!.fc,fl:m.f!.fl.map(([a,b,c,d])=>[m.o[0]+a/10,m.o[1]+b/10,m.o[0]+c/10,m.o[1]+d/10])}:{})}));
   if(observed.length)group.userData.houseObservations=observed;
   if(stoops.length)group.userData.addressFrontages=stoops.filter(s=>filtered.matched.has(s.home.id)).map(s=>({id:s.home.id,frameIndex:s.home.entry!.frameIndex,entry:s.home.entry,blocks:s.blocks,basis:s.basis}));
