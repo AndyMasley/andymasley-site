@@ -7,11 +7,11 @@ import { TownWorld } from './world';
 import { StreetDressing, updateDressingViewport, type StreetContext } from './street-dressing';
 import type { HouseDressing } from './house-dressing';
 import { RoadWear } from './road-wear';
-import { CurbParking } from './curb-parking';
+import type { CurbParking } from './curb-parking';
 import type { Traffic } from './traffic';
 import { startupPosition } from './startup';
 import { createSummerHaze, createSummerSky, createShadowAnchor, installAerialPerspective, SUMMER_LIGHT } from './atmosphere';
-import { createTouringCar, type TouringCar } from './vehicle';
+import type { TouringCar } from './vehicle';
 import { applyMeasuredBridgeGrades } from './bridge-grade';
 import release from '../../../data/derived/town/release.json';
 import { displayRoadName, turnDistanceLabel, displayChoices } from './road-display';
@@ -214,8 +214,9 @@ export async function startTown(root: HTMLElement): Promise<Session> {
     const streetContext = import('../../../data/derived/town/street-context.json').then(m => m.default as StreetContext, () => undefined);
     const houseDressing = import('./house-dressing').catch(error => { console.warn('House dressing unavailable:', error); return undefined; });
     const trafficModule = import('./traffic');
+    const vehicleModules = Promise.all([import('./curb-parking'), import('./vehicle')]);
     const networkRequest = readCriticalJson<NetworkData>(NETWORK_URL, signal, { label: 'Road network', onProgress: p => { transfer.roads = p.receivedBytes; if (!disposed) setStatus(`Loading roads… ${(transfer.roads / 1048576).toFixed(1)} MB received`); } });
-    const initialRequests = Promise.all([manifestRequest, networkRequest, trafficModule]);
+    const initialRequests = Promise.all([manifestRequest, networkRequest, trafficModule, vehicleModules]);
     // A renderer failure can cancel requests before the later await attaches.
     void initialRequests.catch(() => {});
     renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false, powerPreference: 'high-performance' });
@@ -282,6 +283,8 @@ export async function startTown(root: HTMLElement): Promise<Session> {
     // Overhead utilities and hydrants follow the named street centrelines.
     dressing = new StreetDressing(network, await streetContext);
     const yards = await houseDressing;
+    const [{ CurbParking }, { createTouringCar }] = await vehicleModules;
+    if (disposed) return session;
     houses = yards ? new yards.HouseDressing(dressing) : undefined;
     curbParking = new CurbParking(network);
     world.setStreetDressing(dressing, houses, new RoadWear(network), curbParking);

@@ -1,0 +1,68 @@
+{
+  "version": 1,
+  "policy": "Display-terrain cut only at the official Mill Street railroad-under crossing. Railway plan alignment is source-backed; running grade, subgrade and bank dimensions are inferred from retained approach elevations, not surveyed. Only terrain is lowered; existing road/bridge/water/building geometry is untouched. Exact source faces are partitioned with barycentric coordinates so outside geometry and UVs survive.",
+  "officialCrossing": {
+    "id": "501840T",
+    "type": "RR Under",
+    "url": "https://services.arcgis.com/xOi1kZaI0eWDREZv/arcgis/rest/services/NTAD_Railroad_Grade_Crossings/FeatureServer/0"
+  },
+  "sourceRailwaySha256": "f4a3f967ee3988cd6592caf088934df73b2fa88f722ac997aaf258e99cde2400",
+  "sourceManifestSha256": "37fbef34bc2a4467997252be75b4c43174a6a7b2d39963614cadd8d787e56105",
+  "sourceGradeSha256": "08d3c3c998d07f64e1fb9e7d2ae9211c07e17c730f629e70cc4b86760ea5b5a3",
+  "wayId": 1012657197,
+  "tileId": "-11_2",
+  "northRangeM": [
+    502.0,
+    562.0
+  ],
+  "fullCutNorthRangeM": [
+    504.0,
+    560.0
+  ],
+  "maximumWidthM": 5.2,
+  "flatBedWidthM": 3.1,
+  "bedBelowRunningSurfaceM": 0.34,
+  "maximumPermittedLowerM": 5.5,
+  "rows": [
+    {
+      "level": 0,
+      "sourceExportSha256": "d31d2d7ca107fb03577297dd21d05f3cb576fdc7ba4aa0ae4e0f9b8206573f6a",
+      "meshes": 1,
+      "sourceFaces": 79,
+      "outputTriangles": 1789,
+      "addedTriangles": 1710,
+      "modifiedSurfaceAreaM2": 190.84948897457554,
+      "maximumLowerM": 4.860897037745772,
+      "maximumRaiseM": 0,
+      "maximumPartitionAreaErrorM2": 8.049561017742235e-12,
+      "maximumBoundaryHeightChangeM": 0.0
+    },
+    {
+      "level": 1,
+      "sourceExportSha256": "e01b95ee66d0d455fc9c9f1f2163045afae27ee63f7629d0c22daf2a2ebcb06b",
+      "meshes": 1,
+      "sourceFaces": 78,
+      "outputTriangles": 1778,
+      "addedTriangles": 1700,
+      "modifiedSurfaceAreaM2": 190.84722200434766,
+      "maximumLowerM": 4.860897037745772,
+      "maximumRaiseM": 0,
+      "maximumPartitionAreaErrorM2": 5.17985654369113e-12,
+      "maximumBoundaryHeightChangeM": 0.0
+    },
+    {
+      "level": 2,
+      "sourceExportSha256": "3a0e93e7c136f4955a11d802e5a92d7f7b5c496ef536b85327dec61d4b45d595",
+      "meshes": 1,
+      "sourceFaces": 77,
+      "outputTriangles": 1745,
+      "addedTriangles": 1668,
+      "modifiedSurfaceAreaM2": 196.8837601664977,
+      "maximumLowerM": 4.860897037745772,
+      "maximumRaiseM": 0,
+      "maximumPartitionAreaErrorM2": 1.5375700712638718e-11,
+      "maximumBoundaryHeightChangeM": 0.0
+    }
+  ],
+  "packetSha256": "29e1ff7be09f639e740ce555b23d83d220f891053c6f10427a7a7ab3881e34d5"
+}

@@ -89,6 +89,18 @@ source notes describe the different source dates and limitations.
 
 ## Art direction
 
+The continuous Norwich Branch uses `rail-corridor.ts` and streamed per-tile
+packets from `scripts/rail_crossings/prepare-corridor.py`. Eleven connected
+active OSM ways supply the route and mapped bridge spans; the source gauge is
+1435 mm. Heights and track construction remain inferred. Native road surfaces
+anchor the four public crossings and private Railroad Avenue crossing. Mill
+Street remains above the railway, with a source-stamped terrain cut limited to
+the underpass bed. Global stations, normals and ballast-toe elevations retain
+continuity across tile boundaries and detail levels. One uncovered neighboring
+cell is explicitly owned by the adjacent Main Street tile so the real route
+does not break at the scenery boundary. The renderer opens only rail-aligned
+pieces of inferred sidewalks/curbs and preserves existing road panels.
+
 Eddy Block at 119–131 Main uses `eddy-block-repair.json` and the final
 `eddyBlockRepair` assembly pass. A malformed western roof strip and overlapping
 body planes are replaced inside the mapped footprint, preserving the original
