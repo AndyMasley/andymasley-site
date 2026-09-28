@@ -1,3 +1,4 @@
+import { groundTreeRows, resolveTreeGroundGaps, type TreeGroundSampler } from './tree-grounding';
 import { foundationWallAsset, validFoundationWallPacket } from './foundation-wall-finish';
 import { measuredRoofAsset, validMeasuredRoofPacket, evergreens, surveyTreeRows, type SurveyTrees } from './measured-roofs';
 import { tileGround } from './address-frontage';
@@ -38,6 +39,7 @@ import { parkingFinishAsset, pavedMaskReference } from './paved-surfaces';
 import { applyParkingFinish, validParkingPacket } from './parking-finish';
 import { beginOptionalDetail, TileDetailStream } from './optional-detail';
 import { BoundaryContext } from './boundary-context';
+import { roadGroundClearanceAsset, validRoadGroundClearancePacket, type RoadGroundClearancePacket } from './road-ground-clearance';
 import { propertyTerrainAsset, validPropertyTerrainPacket, type PropertyTerrainPacket } from './property-terrain-finish';
 import { createDistantCanopyPrototype, disposeDistantCanopyPrototype } from './distant-canopy';
 import { createTrunkContactPrototype, disposeTrunkContactPrototype, TRUNK_CONTACT_SOURCE_SHA256 } from './trunk-contact';
@@ -51,7 +53,7 @@ import type { CurbParking } from './curb-parking';
 import type { RoadsideCommerce } from './roadside-commerce';
 
 type TreePlan = { near: Set<number>; shadows: Set<number>; excluded: Set<number>; key: string };
-type LoadedTile = { group: THREE.Group; level: number; lastUsed: number; trees?: THREE.Group; treeRows?: number[][]; treeExcluded?: Set<number>; treePlan?: TreePlan; occluders?: THREE.Mesh[]; geometryBytes?: number; detailRetryAt?: number; detailAttempts?: number };
+type LoadedTile = { group: THREE.Group; level: number; lastUsed: number; trees?: THREE.Group; treeRows?: number[][]; treeExcluded?: Set<number>; treeSourceExcluded?: Set<number>; treeGroundGaps?: number[]; treeGround?: TreeGroundSampler; treePlan?: TreePlan; occluders?: THREE.Mesh[]; geometryBytes?: number; detailRetryAt?: number; detailAttempts?: number };
 type MaterialEntry = { material: THREE.Material; refs: number; textures: string[] };
 
 
@@ -89,6 +91,7 @@ export class TownWorld {
   private mobile = false;
   private treeShadows = true;
   private position: V3 = [0, 0, 0];
+  private treeGroundVisibilityKey = '';
   private preparingAt: V3 | null = null;
   private sharedAbort = new AbortController();
   private initialization?: Promise<void>;
@@ -148,6 +151,11 @@ export class TownWorld {
     (value, key): value is PropertyTerrainPacket => { const [id, level] = key.split('@'); return validPropertyTerrainPacket(value, id) && value.levels.length === 1 && value.levels[0].level === Number(level); },
     (url, signal) => this.fetchJson(url, signal), 2 * 1024 * 1024);
 
+  private readonly roadGroundClearance = new TileDetailStream(
+    key => { const [id, level] = key.split('@'); return roadGroundClearanceAsset(id, Number(level)); },
+    (value, key): value is RoadGroundClearancePacket => { const [id, level] = key.split('@'); return validRoadGroundClearancePacket(value, id) && value.levels.length === 1 && value.levels[0].level === Number(level); },
+    (url, signal) => this.fetchJson(url, signal), 2 * 1024 * 1024);
+
   constructor(readonly manifest: WorldManifest, readonly manifestUrl: string, readonly onChange: () => void) {
     this.root.name = 'Webster scenery';
     this.sourceImages = new SourceImageCache(new URL(manifestUrl).origin, async (url, signal) => {
@@ -159,7 +167,7 @@ export class TownWorld {
     this.boundaryContext = new BoundaryContext(new URL(manifestUrl).pathname.endsWith(`/${release.directory}/manifest.json`) ? release.manifestSha256 : undefined,
       (url, signal) => this.fetchJson(url, signal), {
         adopt: group => { this.acquireMaterials(group); if (!this.boundaryContext.root.parent) this.root.add(this.boundaryContext.root); }, release: group => this.releaseGroup(group),
-        trees: (rows, origin) => this.buildTrees(rows, origin, { near: new Set(), shadows: new Set(), excluded: new Set(), key: 'non-drivable context' }),
+        trees: (rows, origin, plan) => this.buildTrees(rows, origin, { ...plan, excluded: new Set(), key: `non-drivable context:${plan.key}` }),
         releaseTrees: group => this.releaseTrees(group), changed: () => this.onChange(),
       });
     installLeafAtlasOverride(this.loader);
@@ -231,6 +239,7 @@ export class TownWorld {
     const streetCornersRequest=tile?beginOptionalDetail(signal,s=>this.streetCorners.tile(tile.id,s)):undefined;
     const streetCornerGroundRequest=tile?beginOptionalDetail(signal,s=>this.streetCornerGround.tile(tile.id+'@'+level,s)):undefined;
     const roadCurveRequest=tile?beginOptionalDetail(signal,s=>this.roadCurve.tile(tile.id+'@'+level,s)):undefined;
+    const roadGroundClearanceRequest=tile?beginOptionalDetail(signal,s=>this.roadGroundClearance.tile(tile.id+'@'+level,s)):undefined;
     const propertyTerrainRequest=tile?beginOptionalDetail(signal,s=>this.propertyTerrain.tile(tile.id+'@'+level,s)):undefined;
     const roadDashRequest=tile?beginOptionalDetail(signal,s=>this.roadDash.tile(tile.id+'@'+level,s)):undefined;
     // Begin GLTF texture reads as soon as the source bytes arrive. Optional
@@ -243,18 +252,18 @@ export class TownWorld {
       this.timings.parseMs += parseMs; this.timings.maxParseMs = Math.max(this.timings.maxParseMs, parseMs);
       return gltf;
     });
-    const finishes = base.then(() => Promise.all([roadRequest?.finish(),terrainRequest?.finish(),parkingRequest?.finish(),additionalRequest?.finish(),roadsideRequest?.finish(),environmentGroundRequest?.finish(),facilitiesRequest?.finish(),roadMaterialsRequest?.finish(),streetCornersRequest?.finish(),streetCornerGroundRequest?.finish(),roadCurveRequest?.finish(),roadDashRequest?.finish(),propertyTerrainRequest?.finish(),foundationWallsRequest?.finish(),measuredRoofsRequest?.finish()]));
+    const finishes = base.then(() => Promise.all([roadRequest?.finish(),terrainRequest?.finish(),parkingRequest?.finish(),additionalRequest?.finish(),roadsideRequest?.finish(),environmentGroundRequest?.finish(),facilitiesRequest?.finish(),roadMaterialsRequest?.finish(),streetCornersRequest?.finish(),streetCornerGroundRequest?.finish(),roadCurveRequest?.finish(),roadDashRequest?.finish(),propertyTerrainRequest?.finish(),foundationWallsRequest?.finish(),measuredRoofsRequest?.finish(),roadGroundClearanceRequest?.finish()]));
     const complete = Promise.all([base, tile?this.evidence.tile(tile.id,signal,base):Promise.resolve(undefined), finishes, parsed]);
     let loaded: Awaited<typeof complete>;
     try { loaded = await complete; }
     catch(error) {
-      roadRequest?.cancel();terrainRequest?.cancel();parkingRequest?.cancel();additionalRequest?.cancel();roadsideRequest?.cancel();environmentGroundRequest?.cancel();facilitiesRequest?.cancel();roadMaterialsRequest?.cancel();streetCornersRequest?.cancel();streetCornerGroundRequest?.cancel();roadCurveRequest?.cancel();roadDashRequest?.cancel();propertyTerrainRequest?.cancel();foundationWallsRequest?.cancel();measuredRoofsRequest?.cancel();
+      roadRequest?.cancel();terrainRequest?.cancel();parkingRequest?.cancel();additionalRequest?.cancel();roadsideRequest?.cancel();environmentGroundRequest?.cancel();facilitiesRequest?.cancel();roadMaterialsRequest?.cancel();streetCornersRequest?.cancel();streetCornerGroundRequest?.cancel();roadCurveRequest?.cancel();roadDashRequest?.cancel();propertyTerrainRequest?.cancel();foundationWallsRequest?.cancel();measuredRoofsRequest?.cancel();roadGroundClearanceRequest?.cancel();
       // A different family can fail after parsing already succeeded. Retire it
       // here, including a late parse result; release is idempotent.
       void parsed.then(gltf => this.disposeRaw(gltf.scene), () => {});
       throw error;
     }
-    const [data,evidence,[road,terrain,parking,additional,roadside,environmentGround,facilities,roadMaterials,streetCorners,streetCornerGround,roadCurve,roadDash,propertyTerrain,foundationWalls,measuredRoofs],gltf] = loaded;
+    const [data,evidence,[road,terrain,parking,additional,roadside,environmentGround,facilities,roadMaterials,streetCorners,streetCornerGround,roadCurve,roadDash,propertyTerrain,foundationWalls,measuredRoofs,roadGroundClearance],gltf] = loaded;
     if (this.disposed || signal.aborted) {
       this.disposeRaw(gltf.scene);
       throw new DOMException('Loading cancelled', 'AbortError');
@@ -277,12 +286,13 @@ export class TownWorld {
         this.streetCorners.hasAsset(tile.id) && !streetCorners && 'streetCorners',
         this.streetCornerGround.hasAsset(tile.id+'@'+level) && !streetCornerGround && 'streetCornerGround',
         this.roadCurve.hasAsset(tile.id+'@'+level) && !roadCurve && 'roadCurve',
+        this.roadGroundClearance.hasAsset(tile.id+'@'+level) && !roadGroundClearance && 'roadGroundClearance',
         this.propertyTerrain.hasAsset(tile.id+'@'+level) && !propertyTerrain && 'propertyTerrain',
         this.roadDash.hasAsset(tile.id+'@'+level) && !roadDash && 'roadDash',
       ].filter(Boolean) as string[];
       gltf.scene.userData.optionalDetailMissing = missing;
       try {
-        const stages = await assembleTile(gltf.scene, tile, level, { evidence, road, terrain, parking, additional, roadside, environmentGround, facilities, roadMaterials, streetCorners, streetCornerGround, roadCurve, roadDash, propertyTerrain, foundationWalls, measuredRoofs }, signal);
+        const stages = await assembleTile(gltf.scene, tile, level, { evidence, road, terrain, parking, additional, roadside, environmentGround, facilities, roadMaterials, streetCorners, streetCornerGround, roadCurve, roadDash, propertyTerrain, foundationWalls, measuredRoofs, roadGroundClearance }, signal);
         for (const [name, ms] of Object.entries(stages)) this.stageTimings[name] = Math.max(this.stageTimings[name] ?? 0, ms);
       }
       catch (error) { this.disposeRaw(gltf.scene); sourceTextures.forEach(texture => this.textureLifetime.release(texture)); throw error; }
@@ -316,7 +326,7 @@ export class TownWorld {
     gltf.scene.traverse((object) => {
       if (object instanceof THREE.Mesh) {
         object.receiveShadow = true;
-        if (!object.userData.townCrafted) object.castShadow = /building|landmark|car|roof|facade/i.test(object.name);
+        if (!object.userData.townCrafted) object.castShadow = object.userData.category === 'parked' || /building|landmark|car|roof|facade/i.test(object.name);
       }
     });
     return gltf.scene;
@@ -407,10 +417,12 @@ export class TownWorld {
     this.generation++;
     this.detailRequests.limit = mobile ? 2 : 3;
     const mib = 1024 * 1024, scale = mobile ? .5 : 1;
-    this.terrainFinish.setBudget(12 * mib * scale);
+    // Split the existing terrain packet allowance between its predecessor and
+    // final road-clearance finish; loaded mesh ownership is unchanged.
+    this.terrainFinish.setBudget(10 * mib * scale);
     this.evidence.setBudget(7 * mib * scale); this.roadFinish.setBudget(4 * mib * scale);
     for (const stream of [this.parkingFinish, this.additionalEnvironment, this.roadside, this.facilities, this.environmentGround, this.roadMaterials, this.streetCorners, this.streetCornerGround]) stream.setBudget(4 * mib * scale);
-    this.roadCurve.setBudget(2 * mib * scale); this.roadDash.setBudget(.5 * mib * scale); this.propertyTerrain.setBudget(2 * mib * scale); this.foundationWalls.setBudget(.5 * mib * scale); this.measuredRoofs.setBudget(1 * mib * scale);
+    this.roadCurve.setBudget(2 * mib * scale); this.roadDash.setBudget(.5 * mib * scale); this.propertyTerrain.setBudget(2 * mib * scale); this.roadGroundClearance.setBudget(2 * mib * scale); this.foundationWalls.setBudget(.5 * mib * scale); this.measuredRoofs.setBudget(1 * mib * scale);
     this.sourceRetryCache.maxBytes = (mobile ? 12 : 24) * mib; this.sourceRetryCache.trim();
   }
 
@@ -498,7 +510,7 @@ export class TownWorld {
       triangles+=(group.userData.institutionalCompletion?.triangles??0)+(group.userData.commercialCompletion?.triangles??0)+(group.userData.environmentGround?.waterTriangles??0)+(group.userData.environmentGround?.addedTriangles??0);
       triangles+=group.userData.environmentFacilities?.triangles??0;
     }
-    return{campStructures,utilityBasins,lakeVessels,bridges,memorials,civicWindows,landmarkForms,institutions,commercialFacades,environmentObjects,roadsideObjects,facilities,triangles,optionalFailures:this.additionalEnvironment.failures+this.roadside.failures+this.environmentGround.failures+this.facilities.failures+this.roadMaterials.failures+this.streetCorners.failures+this.streetCornerGround.failures+this.roadCurve.failures+this.roadDash.failures+this.propertyTerrain.failures+this.foundationWalls.failures+this.measuredRoofs.failures};
+    return{campStructures,utilityBasins,lakeVessels,bridges,memorials,civicWindows,landmarkForms,institutions,commercialFacades,environmentObjects,roadsideObjects,facilities,triangles,optionalFailures:this.additionalEnvironment.failures+this.roadside.failures+this.environmentGround.failures+this.facilities.failures+this.roadMaterials.failures+this.streetCorners.failures+this.streetCornerGround.failures+this.roadCurve.failures+this.roadDash.failures+this.propertyTerrain.failures+this.foundationWalls.failures+this.measuredRoofs.failures+this.roadGroundClearance.failures};
   }
 
   finishResources() {
@@ -516,7 +528,7 @@ export class TownWorld {
       pavedMasks+=Number(!!group.userData.pavedSurfaceMask);
       rejectedTerrain+=Number(!!group.userData.terrainFinish?.rejected);
     }
-    return{roadDash:[...this.loaded.values()].flatMap(({group})=>group.userData.roadDashResult?[group.userData.roadDashResult]:[]),roadCurve:[...this.loaded.values()].flatMap(({group})=>group.userData.roadCurveResult?[group.userData.roadCurveResult]:[]),arrivalGrounds:[...this.loaded.values()].flatMap(({group})=>group.userData.arrivalGrounds?[group.userData.arrivalGrounds]:[]),parkedCars,parkedDraws,parkedTriangles,streetCornerGround:[...this.loaded.values()].flatMap(({group})=>group.userData.streetCornerGroundResult?[group.userData.streetCornerGroundResult]:[]),streetCorners:[...this.loaded.values()].flatMap(({group})=>group.userData.streetCorners?[group.userData.streetCorners]:[]),streetGeometry,roadTriangles,roadSurfaceTriangles,terrainTriangles,parkingTriangles,parkingBays,pavedMasks,rejectedTerrain,optionalFailures:this.roadFinish.failures+this.terrainFinish.failures+this.parkingFinish.failures+this.additionalEnvironment.failures+this.roadside.failures+this.environmentGround.failures+this.facilities.failures+this.roadMaterials.failures+this.streetCorners.failures+this.streetCornerGround.failures+this.roadCurve.failures+this.roadDash.failures+this.propertyTerrain.failures+this.foundationWalls.failures+this.measuredRoofs.failures};
+    return{roadDash:[...this.loaded.values()].flatMap(({group})=>group.userData.roadDashResult?[group.userData.roadDashResult]:[]),roadCurve:[...this.loaded.values()].flatMap(({group})=>group.userData.roadCurveResult?[group.userData.roadCurveResult]:[]),arrivalGrounds:[...this.loaded.values()].flatMap(({group})=>group.userData.arrivalGrounds?[group.userData.arrivalGrounds]:[]),parkedCars,parkedDraws,parkedTriangles,streetCornerGround:[...this.loaded.values()].flatMap(({group})=>group.userData.streetCornerGroundResult?[group.userData.streetCornerGroundResult]:[]),streetCorners:[...this.loaded.values()].flatMap(({group})=>group.userData.streetCorners?[group.userData.streetCorners]:[]),streetGeometry,roadTriangles,roadSurfaceTriangles,terrainTriangles,parkingTriangles,parkingBays,pavedMasks,rejectedTerrain,optionalFailures:this.roadFinish.failures+this.terrainFinish.failures+this.parkingFinish.failures+this.additionalEnvironment.failures+this.roadside.failures+this.environmentGround.failures+this.facilities.failures+this.roadMaterials.failures+this.streetCorners.failures+this.streetCornerGround.failures+this.roadCurve.failures+this.roadDash.failures+this.propertyTerrain.failures+this.foundationWalls.failures+this.measuredRoofs.failures+this.roadGroundClearance.failures};
   }
 
   update(position: V3, lookAhead: V3, force = false): void {
@@ -532,6 +544,7 @@ export class TownWorld {
       .sort((a, b) => Number(this.ownsCell(b.tile, position)) - Number(this.ownsCell(a.tile, position)) || Math.min(a.distance, a.ahead + 80) - Math.min(b.distance, b.ahead + 80));
     if (!preparing) selected = selected.slice(0, this.low ? 26 : 48);
     const desired = new Map<string, number>();
+    this.refreshTreeGrounding(selected.map(({ tile }) => tile));
     const treePlans = this.planTrees(selected.map(({ tile }) => tile));
     for (const { tile, distance } of selected) {
       let level = chooseLod(tile, distance, this.low);
@@ -576,7 +589,8 @@ export class TownWorld {
     }
     this.metrics.pending = this.inflight.size;
     this.metrics.loaded = this.loaded.size;
-    this.boundaryContext.update(position, !preparing && this.prototypes.length > 0 && this.isReadyAt(position));
+    const contextShadowBudget = this.treeShadows ? Math.max(0,TREE_SHADOW_CAP-[...treePlans.values()].reduce((sum,plan)=>sum+plan.shadows.size,0)) : 0;
+    this.boundaryContext.update(position, !preparing && this.prototypes.length > 0 && this.isReadyAt(position), contextShadowBudget);
   }
 
   /** Explicit player retry resets only nearby failure backoff, not the town. */
@@ -649,7 +663,7 @@ export class TownWorld {
   streamingResources() {
     const caches = { evidence: this.evidence.resources(), roadPaint: this.roadFinish.resources(), terrain: this.terrainFinish.resources(),
       parking: this.parkingFinish.resources(), environment: this.additionalEnvironment.resources(), roadside: this.roadside.resources(),
-      shoreline: this.environmentGround.resources(), facilities: this.facilities.resources(), roadMaterials: this.roadMaterials.resources(), streetCorners: this.streetCorners.resources(), streetCornerGround: this.streetCornerGround.resources(), roadCurve: this.roadCurve.resources(), roadDash: this.roadDash.resources(), propertyTerrain: this.propertyTerrain.resources(), foundationWalls: this.foundationWalls.resources(), measuredRoofs: this.measuredRoofs.resources(), boundaryContext: this.boundaryContext.resources(), retrySources: this.sourceRetryCache.resources(), sourceImages: this.sourceImages.resources() };
+      shoreline: this.environmentGround.resources(), facilities: this.facilities.resources(), roadMaterials: this.roadMaterials.resources(), streetCorners: this.streetCorners.resources(), streetCornerGround: this.streetCornerGround.resources(), roadCurve: this.roadCurve.resources(), roadDash: this.roadDash.resources(), propertyTerrain: this.propertyTerrain.resources(), roadGroundClearance: this.roadGroundClearance.resources(), foundationWalls: this.foundationWalls.resources(), measuredRoofs: this.measuredRoofs.resources(), boundaryContext: this.boundaryContext.resources(), retrySources: this.sourceRetryCache.resources(), sourceImages: this.sourceImages.resources() };
     const geometryBudgetBytes = (this.mobile ? 192 : 384) * 1024 * 1024;
     const retainedTileGeometryBytes = [...this.loaded.values()].reduce((sum, tile) => sum + (tile.geometryBytes ?? 0), 0);
     return { ...this.timings, groundTextures: this.surfaces?.detailResources(), maxStageMs: { ...this.stageTimings }, detailRequests: { active: this.detailRequests.active, queued: this.detailRequests.queued, peakActive: this.detailRequests.peakActive, cancelled: this.detailRequests.cancelled }, caches, estimatedCacheBytes: Object.values(caches).reduce((sum, cache) => sum + cache.estimatedBytes, 0),
@@ -729,12 +743,23 @@ export class TownWorld {
       this.dress(group, tile.id, tile.origin, level);
       // Near streets and houses, the trees the survey found replace the scenery's block trees.
       const survey = group.userData.surveyTrees as SurveyTrees | undefined;
-      if (survey && treeRows) treeRows = surveyTreeRows(survey, treeRows, tile.origin, tileGround(group, tile.origin)) ?? treeRows;
+      const unsupportedSurveyTrees = new Set<number>(), treeGroundGaps: number[] = [];
+      let treeGround: TreeGroundSampler | undefined;
+      if (treeRows) {
+        const ground = treeGround = tileGround(group, tile.origin, 0);
+        if (survey) treeRows = surveyTreeRows(survey, treeRows, tile.origin, ground, index => unsupportedSurveyTrees.add(index)) ?? treeRows;
+        treeRows = groundTreeRows(treeRows, tile.origin, ground, index => treeGroundGaps.push(index));
+      }
       this.root.add(group);
       // The final update allocates tree instances once, after global shadow selection.
       const treeExcluded = treeRows ? excludedTreeAnchors(treeRows, tile.origin, group.userData.environmentTreeExclusions ?? []) : new Set<number>();
+      const treeSourceExcluded = new Set(treeExcluded);
+      for (const index of treeGroundGaps) treeExcluded.add(index);
+      group.userData.surveyTreeGroundGaps = [...unsupportedSurveyTrees];
+      group.userData.unsupportedSurveyTrees = [...unsupportedSurveyTrees];
+      group.userData.unsupportedTrees = [...treeGroundGaps];
       group.userData.environmentTreeExclusionsReport = { sourceAnchors: treeRows?.length ?? 0, excluded: treeExcluded.size };
-      this.loaded.set(tile.id, { group, treeRows, treeExcluded, level, lastUsed: performance.now(),
+      this.loaded.set(tile.id, { group, treeRows, treeExcluded, treeSourceExcluded, treeGroundGaps, treeGround, level, lastUsed: performance.now(),
         detailAttempts: missing.length ? attempts + 1 : 0,
         detailRetryAt: missing.length ? performance.now() + Math.min(120000, 10000 * 2 ** Math.min(attempts, 4)) : undefined,
         occluders: this.collectOccluders(group), geometryBytes: this.geometryBytes(group),
@@ -754,6 +779,27 @@ export class TownWorld {
       this.metrics.loaded = this.loaded.size;
       this.onChange();
       if (!this.disposed) this.update(this.position, this.position);
+    }
+  }
+
+  /** Tile changes, not animation frames, trigger seam support work. Samplers
+   * remain owned by the loaded tile and are released with its geometry. */
+  private refreshTreeGrounding(tiles: TownTile[]): void {
+    const visible = tiles.flatMap(tile => { const cached = this.loaded.get(tile.id); return cached ? [{tile,cached}] : []; });
+    const key = visible.map(({cached}) => cached.group.uuid).sort().join(',');
+    if (key === this.treeGroundVisibilityKey) return;
+    this.treeGroundVisibilityKey = key;
+    const supports = visible.map(({tile,cached}) => ({ bounds: tile.bounds, ground: (e: number,n: number) => (cached.treeGround ??= tileGround(cached.group,tile.origin,0))(e,n) }));
+    for (const {tile,cached} of visible) {
+      if (!cached.treeRows || !cached.treeGroundGaps?.length) continue;
+      const resolved = resolveTreeGroundGaps(cached.treeRows,tile.origin,cached.treeGroundGaps,supports);
+      if (resolved.rows !== cached.treeRows) { cached.treeRows = resolved.rows; cached.treePlan = undefined; }
+      cached.treeExcluded = new Set([...(cached.treeSourceExcluded ?? []),...resolved.unsupported]);
+      cached.group.userData.unsupportedTrees = resolved.unsupported;
+      const surveyGaps = new Set<number>(cached.group.userData.surveyTreeGroundGaps ?? []);
+      cached.group.userData.unsupportedSurveyTrees = resolved.unsupported.filter(index => surveyGaps.has(index));
+      cached.group.userData.neighborGroundedTrees = resolved.supported;
+      cached.group.userData.environmentTreeExclusionsReport = { sourceAnchors: cached.treeRows.length, excluded: cached.treeExcluded.size };
     }
   }
 
@@ -780,7 +826,7 @@ export class TownWorld {
       plans.set(tile.id, plan);
     }
     candidates.sort((a, b) => a.score - b.score || a.id.localeCompare(b.id) || a.index - b.index);
-    for (const candidate of candidates.slice(0, TREE_SHADOW_CAP)) plans.get(candidate.id)!.shadows.add(candidate.index);
+    for (const candidate of candidates.slice(0, TREE_SHADOW_CAP - (this.treeShadows ? this.boundaryContext?.shadowDemand(this.position) ?? 0 : 0))) plans.get(candidate.id)!.shadows.add(candidate.index);
     for (const plan of plans.values()) {
       plan.key = `${Number(!this.low)}:${Number(this.treeShadows)}:${[...plan.near].join(',')}|${[...plan.shadows].sort((a, b) => a - b).join(',')}|${[...plan.excluded].join(',')}`;
     }
@@ -985,6 +1031,7 @@ export class TownWorld {
     if (!entry) return;
     this.releaseGroup(entry.group);
     if (entry.trees) this.releaseTrees(entry.trees);
+    entry.treeGround = undefined;
     this.loaded.delete(id);
   }
 
@@ -1025,7 +1072,7 @@ export class TownWorld {
     this.boundaryContext.dispose();
     this.sourceRetryCache.clear();
     this.evidence.dispose();
-    this.roadFinish.dispose();this.terrainFinish.dispose();this.parkingFinish.dispose();this.additionalEnvironment.dispose();this.roadside.dispose();this.environmentGround.dispose();this.facilities.dispose();this.roadMaterials.dispose();this.streetCorners.dispose();this.streetCornerGround.dispose();this.roadCurve.dispose();this.roadDash.dispose();this.propertyTerrain.dispose();this.foundationWalls.dispose();this.measuredRoofs.dispose();
+    this.roadFinish.dispose();this.terrainFinish.dispose();this.parkingFinish.dispose();this.additionalEnvironment.dispose();this.roadside.dispose();this.environmentGround.dispose();this.facilities.dispose();this.roadMaterials.dispose();this.streetCorners.dispose();this.streetCornerGround.dispose();this.roadCurve.dispose();this.roadDash.dispose();this.propertyTerrain.dispose();this.roadGroundClearance.dispose();this.foundationWalls.dispose();this.measuredRoofs.dispose();
     if (this.disposed) return;
     this.disposed = true;
     this.sharedAbort.abort();

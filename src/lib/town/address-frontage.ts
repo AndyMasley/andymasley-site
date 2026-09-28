@@ -24,7 +24,7 @@ const rows=new Map((catalog.rows as unknown as {id:string;addressFrontage?:Corre
  * `moves`, where photographed garage doors take the wall the plan gave the
  * door. Each moved door gets a stoop fitted to the sampled ground and retires
  * the steps of the former entry. */
-export function prepareAddressFrontages(group:THREE.Object3D,origin:readonly number[],homes:readonly EvidenceBuilding[],moves:ReadonlyMap<string,{frameIndex:number;u:number;basis?:string;alternatives?:readonly {frameIndex:number;u:number}[]}>=new Map()):{homes:EvidenceBuilding[];stoops:AddressStoop[]}{
+export function prepareAddressFrontages(group:THREE.Object3D,origin:readonly number[],homes:readonly EvidenceBuilding[],moves:ReadonlyMap<string,{frameIndex:number;u:number;basis?:string;alternatives?:readonly {frameIndex:number;u:number}[]}>=new Map(),fitRoad?:(frame:Frame,blocks:AddressStoop['blocks'])=>AddressStoop['blocks']|undefined):{homes:EvidenceBuilding[];stoops:AddressStoop[]}{
   const candidates=homes.filter(h=>rows.has(h.id)||moves.has(h.id));if(!candidates.length)return{homes:[...homes],stoops:[]};
   group.updateMatrixWorld(true);const inverse=group.matrixWorld.clone().invert(),meshes:THREE.Mesh[]=[];
   group.traverse(o=>{if(!(o instanceof THREE.Mesh)||!/^terrain(?:\b|_)/i.test(o.name))return;const proxy=new THREE.Mesh(o.geometry,o.material);proxy.matrixAutoUpdate=false;proxy.matrixWorld.copy(inverse).multiply(o.matrixWorld);meshes.push(proxy);});
@@ -49,7 +49,11 @@ export function prepareAddressFrontages(group:THREE.Object3D,origin:readonly num
     for(let i=1;i<=7;i++){
       const v=.96+(i-.5)*.29,values=ground(v,1.25,.30);if(values.some(y=>y===undefined))return undefined;
       const ys=values as number[],top=floor-.025-i*.16;
-      if(top<=Math.max(...ys)+.08)return top>=Math.min(...ys)-.17?{floor,blocks}:undefined;
+      if(top<=Math.max(...ys)+.08){
+        if(top<Math.min(...ys)-.17)return undefined;
+        const fitted=fitRoad?fitRoad({...edge,structId:home.id,tileId:home.tileId},blocks):blocks;
+        return fitted?{floor,blocks:fitted}:undefined;
+      }
       blocks.push({u,v,width:1.25,depth:.30,bottom:Math.min(...ys)-.045,top});
     }
     return undefined;
@@ -80,13 +84,13 @@ export function prepareAddressFrontages(group:THREE.Object3D,origin:readonly num
 }
 
 /** The tile's terrain height at east/north points; the index is built on first use. */
-export function tileGround(group:THREE.Object3D,origin:readonly number[]):(e:number,n:number)=>number|undefined{
+export function tileGround(group:THREE.Object3D,origin:readonly number[],minimumNormalY=.78):(e:number,n:number)=>number|undefined{
   let terrain:GrassTerrain|null|undefined;
   return (e,n)=>{
     if(terrain===undefined){
       group.updateMatrixWorld(true);const inverse=group.matrixWorld.clone().invert(),meshes:THREE.Mesh[]=[];
       group.traverse(o=>{if(!(o instanceof THREE.Mesh)||!/^terrain(?:\b|_)/i.test(o.name))return;const proxy=new THREE.Mesh(o.geometry,o.material);proxy.matrixAutoUpdate=false;proxy.matrixWorld.copy(inverse).multiply(o.matrixWorld);meshes.push(proxy);});
-      terrain=meshes.length?new GrassTerrain(meshes):null;
+      terrain=meshes.length?new GrassTerrain(meshes,minimumNormalY):null;
     }
     const p=terrain?.sample(e-origin[0],-n-origin[2]);return p?p.y+origin[1]:undefined;
   };

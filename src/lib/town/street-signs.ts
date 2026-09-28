@@ -1,3 +1,4 @@
+import { clearAuthoredProp, type AuthoredPropCorrections } from './authored-prop-clearance';
 import * as THREE from 'three';
 import type { NetworkData, RoadEdge } from './engine';
 
@@ -143,8 +144,8 @@ export class StreetSigns {
   private blade?: THREE.MeshStandardMaterial;
   readonly count: number;
 
-  constructor(network: NetworkData) {
-    const placements = findSignPlacements(network);
+  constructor(network: NetworkData, clearance?: AuthoredPropCorrections) {
+    const placements = findSignPlacements(network).flatMap(sign => { const placed = clearAuthoredProp('sign', sign, clearance); return placed ? [placed] : []; });
     const names = new Set<string>();
     for (const p of placements) {
       const key = `${Math.floor(p.x / TILE)}_${Math.floor(p.n / TILE)}`;

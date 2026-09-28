@@ -85,7 +85,7 @@ export class GrassTerrain {
   private bins = new Map<number, number[]>();
   private binReferences = 0;
 
-  constructor(meshes: readonly THREE.Mesh[]) {
+  constructor(meshes: readonly THREE.Mesh[], minimumNormalY = 0.78) {
     const a = new THREE.Vector3(), b = new THREE.Vector3(), c = new THREE.Vector3();
     for (const mesh of meshes) {
       const position = mesh.geometry.getAttribute('position');
@@ -99,7 +99,7 @@ export class GrassTerrain {
         const vx = c.x - a.x, vy = c.y - a.y, vz = c.z - a.z;
         const nx = uy * vz - uz * vy, ny = uz * vx - ux * vz, nz = ux * vy - uy * vx;
         const length = Math.hypot(nx, ny, nz), determinant = ux * vz - uz * vx;
-        if (!Number.isFinite(length) || length < 1e-8 || ny / length < 0.78 || Math.abs(determinant) < 1e-8) continue;
+        if (!Number.isFinite(length) || length < 1e-8 || ny / length < minimumNormalY || Math.abs(determinant) < 1e-8) continue;
         const x0 = Math.floor(Math.min(a.x, b.x, c.x) / 8), x1 = Math.floor(Math.max(a.x, b.x, c.x) / 8);
         const z0 = Math.floor(Math.min(a.z, b.z, c.z) / 8), z1 = Math.floor(Math.max(a.z, b.z, c.z) / 8);
         if ((x1 - x0 + 1) * (z1 - z0 + 1) > 4096) continue;

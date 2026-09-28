@@ -1,0 +1,13 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import {build} from 'esbuild';
+const root=process.cwd(),out=process.env.TOWN_QUALITY_OUT;
+if(!out)throw new Error('Set TOWN_QUALITY_OUT');
+const plan=JSON.parse(fs.readFileSync(path.join(out,'capture-plan.json')));
+const template=fs.readFileSync('scripts/street_quality/review.astro.template','utf8').replace('/* CAPTURE_PLAN */',JSON.stringify(plan));
+const script=template.split('<script>')[1].split('</script>')[0];
+await build({stdin:{contents:script,resolveDir:path.join(root,'src/pages'),loader:'ts'},bundle:true,platform:'browser',format:'esm',outfile:'dist/street-quality-controller.js'});
+const htmlPath='dist/town-review/index.html';let html=fs.readFileSync(htmlPath,'utf8');
+html=html.replace(/<script type="module" src="\/street-quality-controller\.js[^"]*"><\/script>/g,'');
+html=html.replace('</body>',`<script type="module" src="/street-quality-controller.js?v=${Date.now()}"></script></body>`);
+fs.writeFileSync(htmlPath,html);

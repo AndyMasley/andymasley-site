@@ -5,6 +5,8 @@ import { addParkedLife, surfaceProxies, type ParkedPlacement } from './parked-li
 import { ROAD_LANE_ATTRIBUTE } from './road-wear';
 import { applyArtMaterial } from './art-materials';
 import { frontageMaterial } from './crafted-frontages';
+import { tileGround } from './address-frontage';
+import { StairRoadClearance } from './stair-road-clearance';
 import { registerHardscapeGrassExclusions } from './hardscape-grass-exclusions';
 import { chainLinkMaterial, chainLinkUV, paverDriveMaterial } from './yard-materials';
 
@@ -31,6 +33,16 @@ export type HouseDressingReport = { buildings: number; frontWalls: number; shrub
 const DRIVEWAY_BLOCKERS = /^(?:Streetscape \||Finished parking \||Finished street corner \|)|\| paving(?: \||$)/;
 const DRIVEWAY_PALETTE = ['#ecebe3', '#aeb7b8', '#56666b', '#8e2e2b', '#263e57', '#d0c3a4', '#333739', '#647261', '#9aa3a6', '#1f2a33'];
 const FOUNDATION = /^(?:V2 inferred \| (?:foundation|concrete_wall)$|Crafted frontage \| foundation \|)/;
+/** Bridge abutments and site retaining walls share the foundation material;
+ * only foundations belonging to buildings may generate front-yard planting. */
+function buildingFoundation(object: THREE.Object3D, root: THREE.Object3D, material: THREE.Material): boolean {
+  if (material.name.startsWith('V2 inferred | ')) return true;
+  for (let parent: THREE.Object3D | null = object; parent && parent !== root; parent = parent.parent) {
+    if (parent.userData.category === 'buildings' || ['buildings', 'Evidence-informed Webster buildings', 'Crafted buildings and frontages', 'Institutional completion', 'Commercial completion', 'Landmark completion'].includes(parent.name)) return true;
+  }
+  return false;
+}
+
 type Segment = { a: THREE.Vector3; b: THREE.Vector3; nx: number; nz: number; building: number };
 type Outline = { walls: Segment[]; x0: number; x1: number; z0: number; z1: number };
 type SurfaceTests = { paved(east: number, north: number): boolean; blocked(east: number, north: number): boolean };
@@ -318,7 +330,7 @@ export class HouseDressing {
     group.traverse(object => {
       if (!(object instanceof THREE.Mesh) || object instanceof THREE.InstancedMesh) return;
       const material = Array.isArray(object.material) ? object.material[0] : object.material;
-      if (!material || !FOUNDATION.test(material.name)) return;
+      if (!material || !FOUNDATION.test(material.name) || !buildingFoundation(object, group, material)) return;
       relative.copy(inverse).multiply(object.matrixWorld);
       const position = object.geometry.getAttribute('position'), normals = object.geometry.getAttribute('normal'), index = object.geometry.index;
       if (!position) return;
@@ -378,7 +390,11 @@ export class HouseDressing {
     const doors: number[][] = group.userData.openings?.doors ?? [];
     const garages: number[][] = group.userData.openings?.garageDoors ?? [];
     const plantingDoors = [...doors, ...garages.filter(g => !doors.some(d => Math.hypot(d[0] - g[0], d[2] - g[2]) < 1.2))];
-    const ground = tileTerrain(group);
+    const ground = tileTerrain(group), roadClearance = new StairRoadClearance(group, origin);
+    const plantingClear = (x: number, y: number, z: number, radius: number, height: number): boolean => roadClearance.fits({ start: [x + origin[0], -z - origin[2]], tangent: [1, 0], outward: [0, 1], structId: 'generated planting' },
+      [{ u: 0, v: 0, width: radius * 2, depth: radius * 2, bottom: y + origin[1] - .12, top: y + origin[1] + height }]);
+    const supportedGround = tileGround(group, origin, 0);
+    const strictGroundAt = (x: number, z: number) => { const y = supportedGround(x + origin[0], -z - origin[2]); return y === undefined ? undefined : y - origin[1]; };
     const groundAt = (x: number, z: number, fallback: number) => { const p = ground.sample(x, z); return p && Math.abs(p.y - fallback) < 2.5 ? p.y : fallback; };
     const toEast = (x: number) => x + origin[0], toNorth = (z: number) => -(z + origin[2]);
     const shrubs: { m: THREE.Matrix4; color: THREE.Color; kind: number }[] = [];
@@ -415,7 +431,9 @@ export class HouseDressing {
         const height = radius * (kind === 0 ? 1.5 + random() * 0.4 : kind === 2 ? 1.35 + random() * 0.3 : 1.15 + random() * 0.3);
         const x = p.x + segment.nx * (0.3 + radius * 0.85), z = p.z + segment.nz * (0.3 + radius * 0.85);
         if (intersectsGarageApproach(x, z, radius * 1.12, garages)) continue;
-        const y = groundAt(x, z, p.y) - 0.04;
+        const sampled = ground.sample(x, z); if (!sampled) continue;
+        const y = sampled.y - 0.04;
+        if (!plantingClear(x, y, z, radius * 1.15, height * 1.12)) continue;
         const m = new THREE.Matrix4().compose(new THREE.Vector3(x, y, z), new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), random() * Math.PI * 2), new THREE.Vector3(radius, height / 1.4, radius));
         // Linear foliage reflectance: yew, boxwood and hydrangea leaf greens.
         const color = kind === 0 ? new THREE.Color().setRGB(0.05, 0.095, 0.045) : kind === 1 ? new THREE.Color().setRGB(0.09, 0.15, 0.052) : new THREE.Color().setRGB(0.085, 0.15, 0.065);
@@ -431,8 +449,12 @@ export class HouseDressing {
         for (const [a, b] of spans) {
           if (!planted.some(t => t >= a && t <= b)) continue;
           const left = segment.a.clone().addScaledVector(dir, a), right = segment.a.clone().addScaledVector(dir, b);
-          const corners = [left, right, right.clone().add(new THREE.Vector3(segment.nx * depth, 0, segment.nz * depth)), left.clone().add(new THREE.Vector3(segment.nx * depth, 0, segment.nz * depth))]
-            .map(p => new THREE.Vector3(p.x, groundAt(p.x, p.z, segment.a.y) + .03, p.z));
+          const corners = [left, right, right.clone().add(new THREE.Vector3(segment.nx * depth, 0, segment.nz * depth)), left.clone().add(new THREE.Vector3(segment.nx * depth, 0, segment.nz * depth))];
+          const heights = corners.map(p => ground.sample(p.x, p.z)?.y);
+          if (heights.some(y => y === undefined)) continue;
+          corners.forEach((p, i) => { p.y = heights[i]! + .03; });
+          if (!roadClearance.fits({ start: [left.x + origin[0], -left.z - origin[2]], tangent: [dir.x, -dir.z], outward: [segment.nx, -segment.nz], structId: 'generated planting bed' },
+            [{ u: (b - a) / 2, v: depth / 2, width: b - a, depth, bottom: Math.min(...heights as number[]) + origin[1] - .05, top: Math.max(...heights as number[]) + origin[1] + .1 }])) continue;
           builder.quad('mulch', corners);
           report.beds++;
         }
@@ -465,6 +487,9 @@ export class HouseDressing {
     const hedge = (x: number, y: number, z: number, dir: readonly [number, number]) => {
       const random = seeded(x + origin[0], z + origin[2], 331), r = 0.52 + random() * 0.1, h = 1.3 + random() * 0.3;
       if (intersectsGarageApproach(x, z, r * 1.1 * 1.12, garages)) return;
+      const sampled = ground.sample(x, z); if (!sampled) return;
+      y = sampled.y - .05;
+      if (!plantingClear(x, y, z, r * 1.1 * 1.15, h * 1.12)) return;
       const q = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.atan2(-dir[1], dir[0]));
       const color = (random() < 0.5 ? new THREE.Color().setRGB(0.05, 0.095, 0.045) : new THREE.Color().setRGB(0.07, 0.13, 0.05)).multiplyScalar(0.9 + random() * 0.2);
       shrubs.push({ m: new THREE.Matrix4().compose(new THREE.Vector3(x, y, z), q, new THREE.Vector3(r * 1.1, h / 1.4, r * 0.85)), color, kind: random() * 0.4 });
@@ -472,7 +497,7 @@ export class HouseDressing {
     this.fences(observations, builder, origin, level, groundAt, report, level < 2 ? hedge : undefined);
     const tests = level === 0 ? this.surfaceTests(group, origin) : null;
     const driveways = tests ? this.driveways(group, origin, [...buildings.values()], outlines, tests, report) : [];
-    const walks = tests ? this.walkways(origin, frontWalls, outlines, doors, tests, groundAt, report) : null;
+    const walks = tests ? this.walkways(origin, frontWalls, outlines, doors, tests, strictGroundAt, report) : null;
     const aprons = tests ? this.aprons(group, origin, outlines, observations, tests, groundAt, report) : [];
     this.gutters(group, inverse, builder, groundAt, report);
     this.chimneys(group, inverse, builder, report);
@@ -636,7 +661,7 @@ export class HouseDressing {
    * a driveway, a sidewalk, or the street edge. It follows the ground. Doors
    * whose walk would cross another building or run beyond 40 m get none.
    */
-  private walkways(origin: readonly number[], fronts: Segment[], outlines: Map<number, Outline>, doors: number[][], tests: SurfaceTests, groundAt: (x: number, z: number, fallback: number) => number, report: HouseDressingReport): THREE.Mesh | null {
+  private walkways(origin: readonly number[], fronts: Segment[], outlines: Map<number, Outline>, doors: number[][], tests: SurfaceTests, groundAt: (x: number, z: number) => number | undefined, report: HouseDressingReport): THREE.Mesh | null {
     const position: number[] = [], normal: number[] = [], lane: number[] = [];
     const east = (x: number) => x + origin[0], north = (z: number) => -(z + origin[2]);
     const done: number[][] = [];
@@ -662,16 +687,21 @@ export class HouseDressing {
         if (tests.paved(east(x), north(z)) || tests.blocked(east(x), north(z))) { length = s; reached = true; break; }
       }
       if (!reached || length < 1.5) continue;
-      done.push([door[0], door[2]]);
       const half = 0.47 + random() * 0.1, ax = -wall.nz, az = wall.nx;
       const steps = Math.max(1, Math.ceil(length));
       const corner = (s: number, side: number) => {
         const x = sx + wall!.nx * s + ax * side * half, z = sz + wall!.nz * s + az * side * half;
-        return [x, groundAt(x, z, door[1] - 1.1) + 0.05, z];
+        const y = groundAt(x, z);
+        return y !== undefined && Number.isFinite(y) ? [x, y + .05, z] : undefined;
       };
+      // Never substitute the door's elevation for missing or lower terrain:
+      // that folds downhill walks into upright slabs (Community Road 4878).
+      const sections = Array.from({ length: steps + 1 }, (_, k) => [corner(length * k / steps, -1), corner(length * k / steps, 1)]);
+      if (sections.some(pair => pair.some(p => !p))) continue;
+      done.push([door[0], door[2]]);
       for (let k = 0; k < steps; k++) {
         const s0 = length * k / steps, s1 = length * (k + 1) / steps;
-        const q = [corner(s0, -1), corner(s0, 1), corner(s1, 1), corner(s1, -1)];
+        const q = [sections[k][0]!, sections[k][1]!, sections[k + 1][1]!, sections[k + 1][0]!];
         const u = [[0, s0], [2 * half, s0], [2 * half, s1], [0, s1]];
         // The slab's own tilt, not straight up: on a sloping lawn the shadow
         // normal offset then keeps the walk clear of the ground's shadow depth.

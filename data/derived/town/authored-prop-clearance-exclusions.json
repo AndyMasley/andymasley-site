@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "sourceManifestSha256": "37fbef34bc2a4467997252be75b4c43174a6a7b2d39963614cadd8d787e56105",
+  "policy": "Exact reviewed inferred decorations only. No source-mapped utility object is removed. These exclusions address visible placement errors that a carriageway-only test cannot detect on photographed paved aprons.",
+  "rows": {
+    "pole:-1375.895:-725.174": {
+      "reason": "Generated pole placed on the narrow central island among Park Avenue slip lanes; registered 2025 aerial does not establish a tall pole here. Exact screen rays identify this inferred object in the visible junction.",
+      "evidence": {
+        "service": "https://tiles2.arcgis.com/tiles/hGdibHYSPO59RG1h/arcgis/rest/services/Massachusetts_Aerial_Imagery_2025/MapServer",
+        "imageSha256": "4abb626963a359ed23d438d3c5c621cc48c67f8af7c078d40c5cf267c68b0a12",
+        "artifact": "web-export/street-quality-2026-09-28/aerial/park-thompson-pole.jpg",
+        "view": 2866,
+        "groundMaterial": "ground_097.jpg",
+        "distanceToCarriagewayM": 0.75,
+        "diagnosis": "web-export/street-quality-2026-09-28/park-visible-pole-source-diagnosis.json"
+      },
+      "proceduralIndex": 2043
+    }
+  }
+}

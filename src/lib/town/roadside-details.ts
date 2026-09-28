@@ -1,11 +1,13 @@
+import { clearAuthoredProp, clearAuthoredWireEnd } from './authored-prop-clearance';
 import * as THREE from 'three';
+import { aerialRoadPoint } from './aerial-road-alignment';
 import index from '../../../data/derived/town/roadside-index.json';
 import { Batch, type Frame, type Role } from './crafted-frontages';
 import { GrassTerrain } from './grass';
 import type { AssetRef } from './contracts';
 
 type V3=[number,number,number];
-export type RoadsideObject={id:string;kind:'post-box'|'bus-stop'|'stop'|'utility-pole';point:number[];base:number;normal:number[];label:string;height?:number;light?:boolean;allWay?:boolean;wireEnd?:number[];evidence:string};
+export type RoadsideObject={id:string;kind:'post-box'|'bus-stop'|'stop'|'utility-pole';point:number[];base:number;normal:number[];label:string;height?:number;light?:boolean;allWay?:boolean;wireEnd?:number[];mappedPoint?:number[];shiftM?:number;evidence:string};
 export type RoadsidePacket={version:1;tileId:string;origin:number[];sourceLods:Record<string,string>;objects:RoadsideObject[]};
 export type RoadsideReport={tileId:string;ids:string[];skipped:{id:string;reason:string}[];addedTriangles:number;addedMeshes:number;geometryBytes:number;wireSpans:number;rejected:boolean};
 const labels=['STOP','ALL WAY','WRTA\n42','WRTA\n51','WRTA\n42 · 51'];
@@ -94,9 +96,18 @@ export function applyRoadsideDetails(group:THREE.Group,tileId:string,origin:read
   group.updateMatrixWorld(true);const inverse=group.matrixWorld.clone().invert(),meshes:THREE.Mesh[]=[];
   group.traverse(o=>{if(!(o instanceof THREE.Mesh)||o.userData.townCrafted)return;for(let p:THREE.Object3D|null=o;p&&p!==group;p=p.parent)if(p.name==='terrain'||p.name.startsWith('terrain_')){const proxy=new THREE.Mesh(o.geometry,o.material);proxy.matrixAutoUpdate=false;proxy.matrixWorld.copy(inverse).multiply(o.matrixWorld);meshes.push(proxy);break;}});
   const ground=new GrassTerrain(meshes),batch=new Batch(new THREE.Vector3(...origin),level),letters=new Lettering(origin);
-  for(const r of packet.objects){
-    const p=ground.sample(r.point[0]-origin[0],-r.point[1]-origin[2]);if(!p||Math.abs(p.y+origin[1]-r.base)>1.5){report.skipped.push({id:r.id,reason:'Missing or materially changed source terrain support'});continue;}
-    const y=p.y+origin[1]+.01,f:Frame={start:r.point,tangent:[-r.normal[1],r.normal[0]],outward:r.normal,structId:r.id,tileId};
+  for(const source of packet.objects){
+    let r=source;
+    if(source.kind==='utility-pole'&&source.evidence.startsWith('Inferred infill')){
+      const placed=clearAuthoredProp('utility',{x:source.point[0],n:source.point[1],z:source.base});
+      if(!placed){report.skipped.push({id:source.id,reason:'No supported clearance beside the finished road'});continue;}
+      r={...source,point:[placed.x,placed.n],base:placed.z,wireEnd:source.wireEnd?clearAuthoredWireEnd(source.wireEnd):undefined};
+    }
+    // These stop mounts were authored relative to the old road, not surveyed.
+    // Follow a source-qualified road adjustment; mapped objects stay fixed.
+    const point=group.userData.aerialRoadAlignment&&r.kind==='stop'&&Number.isFinite(r.shiftM)&&r.shiftM!>0&&r.mappedPoint?.length===2?aerialRoadPoint(r.point[0],r.point[1]):r.point;
+    const p=ground.sample(point[0]-origin[0],-point[1]-origin[2]);if(!p||Math.abs(p.y+origin[1]-r.base)>1.5){report.skipped.push({id:r.id,reason:'Missing or materially changed source terrain support'});continue;}
+    const y=p.y+origin[1]+.01,f:Frame={start:point,tangent:[-r.normal[1],r.normal[0]],outward:r.normal,structId:r.id,tileId};
     if(r.kind==='post-box')postBox(batch,f,y);
     else if(r.kind==='utility-pole'){pole(batch,f,r,y);report.wireSpans+=Number(!!r.wireEnd);}
     else if(r.kind==='stop')stopSign(batch,f,y,letters,r.allWay);

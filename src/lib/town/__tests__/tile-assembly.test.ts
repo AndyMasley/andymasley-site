@@ -35,6 +35,8 @@ describe('shared scene dependency order',()=>{
     expect(names.indexOf('propertyTerrain')).toBeLessThan(names.indexOf('frenchRiverPark'));
     expect(names.indexOf('frenchRiverPark')).toBeLessThan(names.indexOf('frenchRiverParkFurniture'));
     expect(names.indexOf('frenchRiverParkFurniture')).toBeLessThan(names.indexOf('evidenceEnvironment'));
+    expect(names.indexOf('roadGroundClearance')).toBeGreaterThan(names.indexOf('propertyTerrain'));
+    expect(names.indexOf('roadGroundClearance') + 1).toBe(names.indexOf('roadside'));
     steps.find(s=>s.name==='streetCornerGround')!.apply();steps.find(s=>s.name==='streetCorners')!.apply();
     if(state==='applied'){expect(add).toHaveBeenCalledOnce();expect(scene.userData.optionalDetailMissing).toBeUndefined();}
     else{expect(add).not.toHaveBeenCalled();expect(scene.userData.optionalDetailMissing).toEqual(['streetCornerGround']);}

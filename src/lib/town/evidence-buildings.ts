@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { StairRoadClearance, type StairBlock } from './stair-road-clearance';
 import { roofPanelRows } from './roof-panels';
 import { wallCoverage } from './wall-coverage';
 import { Batch, frontageMaterial, type Frame, type Role } from './crafted-frontages';
@@ -6,6 +7,13 @@ import type { EvidenceBuilding, EvidenceReport, EvidenceRoof, PhotoLayout, Setba
 import { historicAppearance } from './historic-appearance';
 import {prepareAddressFrontages,insideFormerEntrySteps,renderAddressStoop,tileGround,DOOR_ROOM,LANDING,splitFoyer,type EntryStepEnvelope} from './address-frontage';
 import { measuredBody, setbackWalls, roofHeight, isMeasuredOther, isPhotographedHouse, type FrontDetails, type FrontLayout, type MeasuredRoof, type MeasuredOther, type PhotographedHouse } from './measured-roofs';
+
+const stairClearance = new WeakMap<Batch, StairRoadClearance>();
+/** These blocks are an inferred stair layout, not measured building geometry. */
+function inferredSteps(batch: Batch, frame: Frame, role: Role, blocks: StairBlock[], color: string): void {
+  const clearance = stairClearance.get(batch), fitted = clearance ? clearance.fitFlight(frame, blocks) : blocks;
+  for (const b of fitted ?? []) batch.box(frame, role, b.u, (b.bottom + b.top) / 2, b.v, b.width, b.top - b.bottom, b.depth, color);
+}
 
 /** Measured walls stand this far inside the roofprint, under the eaves. */
 export const MEASURED_WALL_INSET = .32;
@@ -839,7 +847,7 @@ function houseOpenings(batch:Batch,home:EvidenceBuilding):void {
         if(cover)doorCover(batch,f,home,doorU,sill,groundAtU(doorU),cover.kind,clear(doorU,1.15),trim);
         // A door the map did not give the house has no scenery steps: it takes its own.
         const g=groundAtU(doorU),rise=sill-g,n=Math.min(8,Math.ceil(rise/.18));
-        if((home.entryFromPhoto||lowered||landing!==undefined)&&rise>.2&&rise<1.5)for(let i=0;i<n;i++){const h=rise*(n-i)/n;batch.box(f,'foundation',doorU,g+h/2-.02,.3+i*.28,1.2,h,.3,'#a19f93');}
+        if((home.entryFromPhoto||lowered||landing!==undefined)&&rise>.2&&rise<1.5)inferredSteps(batch,f,'foundation',Array.from({length:n},(_,i)=>({u:doorU,v:.3+i*.28,width:1.2,depth:.3,bottom:g-.02,top:g+rise*(n-i)/n-.02})),'#a19f93');
       }
     }
     // Another photographed entrance (a two-family's second door), with its steps.
@@ -848,7 +856,7 @@ function houseOpenings(batch:Batch,home:EvidenceBuilding):void {
       if(sill+DOOR_ROOM>=clear(u,.6)||sill-g>1.4)continue;
       frontDoor(batch,f,home,u,sill,multi?1.08:.96,home.door??'#465356');
       const rise=sill-g,steps=Math.min(8,Math.ceil(rise/.18));
-      if(rise>.2)for(let i=0;i<steps;i++){const h=rise*(steps-i)/steps;batch.box(f,'foundation',u,g+h/2-.02,.3+i*.28,1.1,h,.3,'#a19f93');}
+      if(rise>.2)inferredSteps(batch,f,'foundation',Array.from({length:steps},(_,i)=>({u,v:.3+i*.28,width:1.1,depth:.3,bottom:g-.02,top:g+rise*(steps-i)/steps-.02})),'#a19f93');
       const cover=read?.covers?.find(c=>c.frameIndex===frameIndex&&Math.abs(c.u-u)<1.2);
       if(cover&&!(read?.porch?.frameIndex===frameIndex&&u>read.porch.u0-.3&&u<read.porch.u1+.3))doorCover(batch,f,home,u,sill,g,cover.kind,clear(u,1.15),trim);
     }
@@ -943,7 +951,7 @@ function openPorch(batch:Batch,home:EvidenceBuilding):void{
       porchRail(batch,f,home,a,b,y,-.14,upper?upperRail:trim);
     }
   }
-  if(decks[0]<floor+.5&&rise>.15){const steps=Math.min(8,Math.ceil(rise/.18));for(let i=0;i<steps;i++){const h=rise*(steps-i)/steps;batch.box(f,'foundation',door,ground+h/2-.03,.15+i*.28,1.3,h,.3,'#a19f93');}}
+  if(decks[0]<floor+.5&&rise>.15){const steps=Math.min(8,Math.ceil(rise/.18));inferredSteps(batch,f,'foundation',Array.from({length:steps},(_,i)=>({u:door,v:.15+i*.28,width:1.3,depth:.3,bottom:ground-.03,top:ground+rise*(steps-i)/steps-.03})),'#a19f93');}
 }
 
 /** A gambrel the photograph shows over a measured body: the survey finds its
@@ -1271,7 +1279,8 @@ function bayWindow(batch:Batch,f:Frame,home:EvidenceBuilding,u0:number,u1:number
  * u1, its floor at y, railed on its three open sides, with steps down from a
  * low one. */
 function deck(batch:Batch,f:Frame,home:EvidenceBuilding,u0:number,u1:number,y:number,depth:number,ground:number,trim:Trim|undefined):void{
-  const W=u1-u0,u=(u0+u1)/2,wood='#8c7f6c';
+  const W=u1-u0,u=(u0+u1)/2,wood='#8c7f6c',clearance=stairClearance.get(batch);
+  if(clearance){const fitted=clearance.fitProjection(f,{u,v:depth/2,width:W+.1,depth,bottom:ground-.1,top:y+1.1});if(fitted===undefined)return;depth=fitted;}
   batch.box(f,'trim',u,y-.08,depth/2,W,.16,depth,wood);
   // A deck is railed where the photograph shows a railing, and wherever it stands high.
   const railed=!!trim?.rail&&trim.rail!=='n'||y-ground>.5,posts=Math.max(2,Math.ceil(W/2.4)+1);
@@ -1289,7 +1298,7 @@ function deck(batch:Batch,f:Frame,home:EvidenceBuilding,u0:number,u1:number,y:nu
       porchRail(batch,side,home,.1,depth-.1,y,0,style);
     }
   }
-  if(steps){const rise=y-ground,n=Math.min(8,Math.ceil(rise/.18));for(let i=0;i<n;i++){const h=rise*(n-i)/n;batch.box(f,'trim',u,ground+h/2-.03,depth+.14+i*.27,1.15,h,.28,wood);}}
+  if(steps){const rise=y-ground,n=Math.min(8,Math.ceil(rise/.18));inferredSteps(batch,f,'trim',Array.from({length:n},(_,i)=>({u,v:depth+.14+i*.27,width:1.15,depth:.28,bottom:ground-.03,top:ground+rise*(n-i)/n-.03})),wood);}
 }
 
 /** An exterior stair along the wall from the ground at one end of the street
@@ -1298,6 +1307,8 @@ function outsideStair(batch:Batch,f:Frame,home:EvidenceBuilding,w:number,end:'st
   const landing=floor+floorHeight,rise=landing-ground,n=Math.ceil(rise/.19),run=n*.26;
   if(rise<1.5||run+1.5>w)return;
   const dir=end==='start'?1:-1,x0=end==='start'?.15:w-.15,wood='#8c7f6c',rail=railPaint(home,trim)??wood,v=.62,x=(i:number)=>x0+dir*i*.26;
+  const clearance=stairClearance.get(batch);
+  if(clearance&&clearance.fitProjection(f,{u:x0+dir*(run+1)/2,v:.62,width:run+1.5,depth:1.22,bottom:ground-.2,top:landing+1.2},1.22,'exterior-stair')===undefined)return;
   for(let i=0;i<n;i++)batch.box(f,'trim',x(i+.5),ground+(i+1)*rise/n-.03,v,.27,.06,1,wood);
   const lx=x(n)+dir*.55;
   batch.box(f,'trim',lx,landing-.08,v,1.1,.16,1.1,wood);
@@ -1478,12 +1489,13 @@ export function applyEvidenceBuildings(group:THREE.Object3D,tileId:string,tileOr
     return withLayout(roof?{...home,base:roof.base,floor:roof.floor,eave:roof.eave,peak:roof.peak,stories:roof.stories,frames:home.frames.map((f,i)=>({...f,eave:roof.frameEaves?.[i]??roof.eave,start:[f.start[0]+f.outward[0]*(roof.frameOutsets?.[i]??0),f.start[1]+f.outward[1]*(roof.frameOutsets?.[i]??0)] as const}))}:home,photo?.f?.lo,photo?.f?.dt);
   });
   const moves=new Map(originalHomes.flatMap(home=>{const move=photoDoorMove(home)??garageEntryMove(home);return move?[[home.id,move] as const]:[];}));
-  const {homes,stoops}=prepareAddressFrontages(group,tileOrigin,originalHomes,moves),stoopById=new Map(stoops.map(s=>[s.home.id,s]));
+  const roadClearance=new StairRoadClearance(group,tileOrigin);
+  const {homes,stoops}=prepareAddressFrontages(group,tileOrigin,originalHomes,moves,(frame,blocks)=>roadClearance.fitFlight(frame,blocks,false)),stoopById=new Map(stoops.map(s=>[s.home.id,s]));
   const targets:EvidenceTarget[]=[...homes.map(r=>({...r,material:buildingMaterial(r),replaceOpenings:true,replaceBody:repairs.has(r.id)||surveyed.has(r.id),preserveEntry:shortEntryEnvelope(r),retireEntrySteps:stoopById.get(r.id)?.former})),...extras,
     ...others.map(r=>({id:r.id,tileId,outline:r.ol.map(([x,y])=>[r.o[0]+x/10,r.o[1]+y/10]),base:r.b,peak:r.p??r.b+(r.h??3)+4,replaceBody:r.k!=='v',replaceOpenings:true,
       ...(r.k==='v'&&r.wc?{material:otherRole(r),paint:r.wc}:{})}))];
   const origin=new THREE.Vector3().fromArray(tileOrigin);
-  const filtered=filterEvidenceSources(group,origin,targets),batch=new Batch(origin,level);
+  const filtered=filterEvidenceSources(group,origin,targets),batch=new Batch(origin,level);stairClearance.set(batch,roadClearance);
   for(const row of homes)if(filtered.matched.has(row.id)){
     const survey=surveyed.get(row.id),roof=repairs.get(row.id);
     if(survey){measuredBody(batch,row.id,row.tileId,survey,buildingMaterial(row),row.paint,'#50544e');foundationBand(batch,row);}
@@ -1507,5 +1519,6 @@ export function applyEvidenceBuildings(group:THREE.Object3D,tileId:string,tileOr
   if(stoops.length)group.userData.addressFrontages=stoops.filter(s=>filtered.matched.has(s.home.id)).map(s=>({id:s.home.id,frameIndex:s.home.entry!.frameIndex,entry:s.home.entry,blocks:s.blocks,basis:s.basis}));
   const otherIds=new Set(builtOthers.map(r=>r.id));
   const report:EvidenceReport={version:1,tileId,buildingIds:[...filtered.matched].filter(id=>!otherIds.has(id)).sort(),...(otherIds.size?{otherIds:[...otherIds].sort()}:{}),documentedIds:homes.filter(r=>r.documented&&filtered.matched.has(r.id)).map(r=>r.id),removedTriangles:filtered.removedTriangles,recoloredTriangles:filtered.recoloredTriangles,addedTriangles:built.triangles,addedMeshes:built.group.children.length,geometryBytes:built.bytes};
+  group.userData.stairRoadClearance=roadClearance.decisions;
   group.userData.evidenceBuildings=report;return report;
 }

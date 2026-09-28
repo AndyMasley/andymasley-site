@@ -1,3 +1,4 @@
+import { alignAerialRoadNetwork } from './aerial-road-alignment';
 import * as THREE from 'three';
 import { Sky } from 'three/examples/jsm/objects/Sky.js';
 import { advanceRealTime, DriveEngine, LANDMARKS, MPH, RoadGraph, spawnAtLandmark, type NetworkData } from './engine';
@@ -272,7 +273,7 @@ export async function startTown(root: HTMLElement): Promise<Session> {
     scene.add(world.root);
     const landscapeReady = world.initialize(requestedResume?.position ? toWorld(requestedResume.position) : startupPosition(startingLocation, manifest));
     void landscapeReady.catch(() => {});
-    const network = await networkRequest;
+    const network = alignAerialRoadNetwork(await networkRequest);
     await new Promise((resolve) => setTimeout(resolve, 0));
     if (disposed) return session;
     graph = new RoadGraph(network);

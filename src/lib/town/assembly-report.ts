@@ -7,7 +7,7 @@ export function auditAssemblyReports(userData: Record<string, unknown>, supplied
   }
   const optionalDetailMissing = Array.isArray(userData.optionalDetailMissing) ? [...userData.optionalDetailMissing] : [];
   const errors = optionalDetailMissing.map(name => `Incomplete optional correction: ${name}`);
-  const required: Record<string,string> = { terrain:'terrain', environmentGround:'shoreline', road:'roadPaint', parking:'parking', roadMaterials:'roadMaterials', streetCornerGround:'streetCornerGround', roadCurve:'roadCurve', roadDash:'roadDash', streetCorners:'streetCorners', additional:'additionalEnvironment', facilities:'facilities', roadside:'roadside' };
+  const required: Record<string,string> = { roadGroundClearance:'roadGroundClearance', terrain:'terrain', environmentGround:'shoreline', road:'roadPaint', parking:'parking', roadMaterials:'roadMaterials', streetCornerGround:'streetCornerGround', roadCurve:'roadCurve', roadDash:'roadDash', streetCorners:'streetCorners', additional:'additionalEnvironment', facilities:'facilities', roadside:'roadside' };
   for (const [family, stage] of Object.entries(required)) {
     if (supplied[family] !== undefined && reports[stage] === undefined) errors.push(`Registered ${family} produced no assembly report`);
   }

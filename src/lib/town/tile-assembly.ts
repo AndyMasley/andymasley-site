@@ -1,3 +1,4 @@
+import { applyAerialRoadAlignment } from './aerial-road-alignment';
 import * as THREE from 'three';
 import { applyFoundationWallFinish } from './foundation-wall-finish';
 import type { TownTile } from './contracts';
@@ -31,6 +32,7 @@ import { applyPropertyGrounds } from './property-grounds';
 import { applyCommercialFrontageGrounds } from './commercial-frontage-grounds';
 import { applyModerneFrontageGrounds } from './moderne-frontage-grounds';
 import { applyMillYardGrounds } from './mill-yard-grounds';
+import { applyRoadGroundClearance } from './road-ground-clearance';
 import { applyPropertyTerrainFinish } from './property-terrain-finish';
 import { applyStreetCorners } from './street-corners';
 import { streetCornerGroundAsset, applyStreetCornerGround } from './street-corner-ground';
@@ -62,6 +64,7 @@ export interface TileDetails {
   streetCornerGround?: Parameters<typeof applyStreetCornerGround>[5];
   roadCurve?: Parameters<typeof applyRoadCurveFinish>[5];
   roadDash?: Parameters<typeof applyRoadDashFinish>[5];
+  roadGroundClearance?: Parameters<typeof applyRoadGroundClearance>[5];
   propertyTerrain?: Parameters<typeof applyPropertyTerrainFinish>[5];
   road?: Parameters<typeof applyRoadFinish>[4];
   terrain?: Parameters<typeof applyTerrainFinish>[4];
@@ -77,7 +80,7 @@ export type AssemblyStep = { name: string; apply: () => unknown };
 /** One authoritative transaction order is shared by live loading and native QA.
  * A scene is unpublished until every step and its source guards complete. */
 export function tileAssemblySteps(group: THREE.Group, tile: TownTile, level: number, details: TileDetails): AssemblyStep[] {
-  const { foundationWalls, evidence, measuredRoofs, road, terrain, parking, additional, roadside, environmentGround, facilities, roadMaterials, streetCorners, streetCornerGround, roadCurve, roadDash, propertyTerrain } = details;
+  const { foundationWalls, evidence, measuredRoofs, road, terrain, parking, additional, roadside, environmentGround, facilities, roadMaterials, streetCorners, streetCornerGround, roadCurve, roadDash, propertyTerrain, roadGroundClearance } = details;
   const sourceSha256 = tile.lods.find(row => row.level === level)?.sha256 ?? '';
   let institutions: ReturnType<typeof applyInstitutionalCompletion>;
   const landmarks = landmarkRows(tile.id);
@@ -124,6 +127,7 @@ export function tileAssemblySteps(group: THREE.Group, tile: TownTile, level: num
     { name: 'commercialFrontageGrounds', apply: () => { return applyCommercialFrontageGrounds(group,tile.id,tile.origin,level,sourceSha256); } },
     { name: 'moderneFrontageGrounds', apply: () => { return applyModerneFrontageGrounds(group,tile.id,tile.origin,level,sourceSha256); } },
     { name: 'millYardGrounds', apply: () => { return applyMillYardGrounds(group,tile.id,tile.origin,level,sourceSha256); } },
+    { name: 'aerialRoadAlignment', apply: () => applyAerialRoadAlignment(group,tile.id,tile.origin,level,sourceSha256) },
     { name: 'institutions', apply: () => { return institutions=applyInstitutionalCompletion(group,tile.id,tile.origin,level,sourceSha256); } },
     { name: 'craftedFrontages', apply: () => { return applyCraftedFrontages(group,tile.id,tile.origin,level,institutions?.ids??[]); } },
     { name: 'landmarkCompletion', apply: () => { return applyLandmarkCompletion(group,tile.id,tile.origin,level,sourceSha256); } },
@@ -150,9 +154,10 @@ export function tileAssemblySteps(group: THREE.Group, tile: TownTile, level: num
     { name: 'dockApproaches', apply: () => { return applyDockApproaches(group,tile.id,tile.origin,level,sourceSha256); } },
     { name: 'utilities', apply: () => { return applyUtilitySiteDetails(group,tile.id,tile.origin,level,sourceSha256); } },
     { name: 'lakeLife', apply: () => { return applyLakeLife(group,tile.id,tile.origin,level,sourceSha256); } },
+    { name: 'roadGroundClearance', apply: () => applyRoadGroundClearance(group,tile.id,tile.origin,level,sourceSha256,roadGroundClearance) },
     { name: 'roadside', apply: () => { return applyRoadsideDetails(group,tile.id,tile.origin,level,sourceSha256,roadside); } },
   ];
-  const familyByStage: Record<string,string> = {foundationWalls:'foundationWalls',propertyTerrain:'propertyTerrain',terrain:'terrain',shoreline:'shoreline',roadPaint:'roadPaint',parking:'parking',roadMaterials:'roadMaterials',streetCornerGround:'streetCornerGround',roadCurve:'roadCurve',roadDash:'roadDash',streetCorners:'streetCorners',additionalEnvironment:'environment',facilities:'facilities',roadside:'roadside'};
+  const familyByStage: Record<string,string> = {roadGroundClearance:'roadGroundClearance',foundationWalls:'foundationWalls',propertyTerrain:'propertyTerrain',terrain:'terrain',shoreline:'shoreline',roadPaint:'roadPaint',parking:'parking',roadMaterials:'roadMaterials',streetCornerGround:'streetCornerGround',roadCurve:'roadCurve',roadDash:'roadDash',streetCorners:'streetCorners',additionalEnvironment:'environment',facilities:'facilities',roadside:'roadside'};
   return steps.map(({name,apply}) => ({name,apply:()=>{
     const result=apply();
     if(result && typeof result==='object') {

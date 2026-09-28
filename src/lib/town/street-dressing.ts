@@ -1,3 +1,4 @@
+import { clearAuthoredProp, type AuthoredPropCorrections } from './authored-prop-clearance';
 import * as THREE from 'three';
 import type { NetworkData, RoadEdge } from './engine';
 import { GrassTerrain } from './grass';
@@ -17,9 +18,9 @@ import { StreetSigns } from './street-signs';
  * (buried service) gets none. Painted centre lines are cleared from streets
  * photographed without them (data/derived/town/street-context.json).
  */
-type Pole = { x: number; n: number; z: number; ox: number; on: number; tx: number; tn: number; light: boolean; transformer: boolean };
+type Pole = { x: number; n: number; z: number; ox: number; on: number; tx: number; tn: number; light: boolean; transformer: boolean; omitted?: boolean };
 type Span = { a: number; b: number };
-type Hydrant = { x: number; n: number; z: number; ox: number; on: number };
+type Hydrant = { x: number; n: number; z: number; ox: number; on: number; omitted?: boolean };
 export type DressingReport = { poles: number; spans: number; hydrants: number; signs: number; triangles: number; bytes: number; skippedMapped: number };
 
 const TILE = 250;
@@ -92,8 +93,8 @@ export class StreetDressing {
   /** Centreline segments [e0, n0, e1, n1] of streets photographed without a centre line, by tile. */
   private readonly unmarked = new Map<string, number[][]>();
 
-  constructor(network: NetworkData, context?: StreetContext) {
-    this.signs = new StreetSigns(network);
+  constructor(network: NetworkData, context?: StreetContext, clearance?: AuthoredPropCorrections) {
+    this.signs = new StreetSigns(network, clearance);
     const CLEARED = idRuns(context?.centreCleared ?? ''), POLE_FREE = idRuns(context?.poleFree ?? '');
     const POLE_SIDE = new Map<number, number>([...[...idRuns(context?.polesPositive ?? '')].map(id => [id, 1] as const), ...[...idRuns(context?.polesNegative ?? '')].map(id => [id, -1] as const)]);
     const degree = new Map<number, number>();
@@ -183,6 +184,24 @@ export class StreetDressing {
         h += 115 + random() * 45;
       }
     }
+    // Resolve the complete corridor before assigning tile ownership, so spans
+    // use exactly the same endpoints regardless of tile load order or LOD.
+    this.polesByTile.clear(); this.spansByTile.clear(); this.hydrantsByTile.clear();
+    const add = (index: Map<string, number[]>, key: string, id: number) => { const list = index.get(key) ?? []; list.push(id); index.set(key, list); };
+    this.poles.forEach((pole, id) => {
+      const corrected = clearAuthoredProp('pole', pole, clearance);
+      if (!corrected) { pole.omitted = true; return; }
+      Object.assign(pole, corrected); add(this.polesByTile, tileKey(pole.x, pole.n), id);
+    });
+    this.spans.forEach((span, id) => {
+      const a = this.poles[span.a], b = this.poles[span.b];
+      if (!a.omitted && !b.omitted) add(this.spansByTile, tileKey(a.x, a.n), id);
+    });
+    this.hydrants.forEach((hydrant, id) => {
+      const corrected = clearAuthoredProp('hydrant', hydrant, clearance);
+      if (!corrected) { hydrant.omitted = true; return; }
+      Object.assign(hydrant, corrected); add(this.hydrantsByTile, tileKey(hydrant.x, hydrant.n), id);
+    });
     const standard = (name: string, color: string, roughness: number, metalness = 0): THREE.MeshStandardMaterial => {
       const m = new THREE.MeshStandardMaterial({ color, roughness, metalness });
       m.name = `Street dressing | ${name}`; m.userData.townCrafted = true; m.envMapIntensity = 0.3; return m;
@@ -225,7 +244,7 @@ export class StreetDressing {
   }
 
   resources(): { poles: number; spans: number; hydrants: number; signs: number } {
-    return { poles: this.poles.length, spans: this.spans.length, hydrants: this.hydrants.length, signs: this.signs.count };
+    return { poles: this.poles.filter(p => !p.omitted).length, spans: this.spans.filter(s => !this.poles[s.a].omitted && !this.poles[s.b].omitted).length, hydrants: this.hydrants.filter(h => !h.omitted).length, signs: this.signs.count };
   }
 
   /** Adds the tile's dressing (once). `mapped` are east/north points of mapped poles in or near the tile. */

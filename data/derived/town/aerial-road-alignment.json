@@ -1,0 +1,719 @@
+{
+  "version": 1,
+  "sourceManifestSha256": "37fbef34bc2a4467997252be75b4c43174a6a7b2d39963614cadd8d787e56105",
+  "sourceNetworkSha256": "d5ad755241708d48478d1c2dc08358b821d9cace21ed1c93d33de27ee0def2f4",
+  "evidence": {
+    "date": 2025,
+    "service": "https://tiles2.arcgis.com/tiles/hGdibHYSPO59RG1h/arcgis/rest/services/Massachusetts_Aerial_Imagery_2025/MapServer",
+    "imageSha256": "cc351276b0ec5b8f1ac0e9f5fc4f6925785a3df7aba7796d7210db7e22dc3d6d",
+    "artifact": "web-export/street-quality-2026-09-28/aerial/brown-tracy-all-outlines.jpg",
+    "policy": "Current registered aerial imagery supports bounded carriageway corrections at Brown Court, Tracy Court beside its two obstructed source buildings, High Street at 116 School Street, Maynard Avenue at 36 Lake Street, Whitcomb Street at number 33, narrow side access at 49 Lincoln Street, Starzec Drive at number 10, the driveway at 19 Eastern Avenue, and Lakemont Road beside source shed169625_866111. Shared runtime XY adjustment preserves building roofprints, node identities and topology. Horizontal dimensions are inferred from imagery and checked against retained source footprints, not a survey. Heights remain the source road grade. Final corrected street review also identified source road overlaps at 11 Gore Road office service lane and the shed at 310 Thompson Road apartment parking aisle. Registered 2025 imagery supports bounded local center/width fits there; all retained source bodies remain fixed."
+  },
+  "tiles": {
+    "-12_-5": {
+      "0": "52020281ddc760c4110eb95c0c45f1f6ba4054989fc50c350c3746c746f14e6c",
+      "1": "d45d6e3310d6b43cd1d1f502c5474076ddc87c600266511a3e5b589816985b3b",
+      "2": "3cd6d63f15984962f5d576ffcbe826168e684d4ee11923bb9cace3d66fe96630"
+    },
+    "-12_-4": {
+      "0": "4b1dd83f4372e1f94e3f8870e6c6f363f6590876a22f74d1254664bb5aeebaf4",
+      "1": "c1f0a819e299223165bb8e8d22d2ad10e2fcb2678ee91186f4518163604bf095",
+      "2": "7629e0692f744fa9f293b4f9f16cf375614c24c18954294c7c374384e548f9f4"
+    },
+    "-13_-5": {
+      "0": "e8d9ee78b19579263dd3e06940f1ef5b32025c12b5bec0d4253f44aa9233ee6b",
+      "1": "e9c29889202c9d8405c8ab5de30e1370f2cdab9cfc0a2914ff502db79b32d4f0",
+      "2": "51ddc58176523b315cc2ba60269e69fae44b4fc945d2ac4cf93285f399dd8499"
+    },
+    "-10_-4": {
+      "0": "c45699f47858f19d328b3400928cfa261f8a2a039e69d9e7a9c87c33ad2a997e",
+      "1": "3d7ba63425589bb52e520f473850f7f44358790f6630b6272a9baea1ced5e615",
+      "2": "a7aea1cfe0410eb6d962d93db8e9fbe77e3a04ea5d492efdac1c531f9c9a35cf"
+    },
+    "-10_-3": {
+      "0": "e9f8dd39202aedb5eda2a14a5ce6da65845af120c757fa7d646cbde363d224b5",
+      "1": "5656a617dc30ee689506175892a369ea8e71ef804a9836b8628fc8549d3426f8",
+      "2": "cdcf7e3ee16f6bb862342b15f9ddc988d6655f394790f67be0235e4671698f8f"
+    },
+    "-9_-3": {
+      "0": "0883d79643e409b8e2216f8e715abd38f26747188b8079ae9f0a28c20188b84a",
+      "1": "bf0a51a72fd777c87da8e513424ce499dbcc8a25e10d5aea9cb6c5c95b8212d3",
+      "2": "516231caf2aec10499c8b29e1b667ea87f491ef706d244c6544b420674e1dc9c"
+    },
+    "-11_2": {
+      "0": "a932668380743e3295b7302cd88fd142b1e9da4b695b01e58ad1024a41c58e8d",
+      "1": "f84391738d1f7b759c5605457c2a01f5df499b3dabe1556db9f6d00db9c03ef2",
+      "2": "f2bfe1608dc6558d88fc35c4cac0b65fdeb5901fed99d1885a08809da4207197"
+    },
+    "-7_-6": {
+      "0": "e1671de1a102f00264ebaf6cd8255e1d8a213ee53918e3436464860818e0d7d2",
+      "1": "811f07d3d5e26f6941e61fa28aef80c58d530650b1c0d589ae482c2cda98d08e",
+      "2": "39b950c80472cddf74a94373dbb58842f81ad4f1f79a8d62d030ffd4bce52cfb"
+    },
+    "-4_3": {
+      "0": "c585e60be29a4780a86fce6eb2092772bb19b8240d539948132bb0a726622044",
+      "1": "700bbbf2f21a65b81698d4bf141d1f213e3cc5cf69ad6408b90d222bd05bd3ae",
+      "2": "108bfea4da7ab178ecd1cfa85baf803bd72d9bb6028a8a8f7af7af4074f8aa86"
+    },
+    "7_-12": {
+      "0": "35240bca7f525f1b3e257dd289843ba0e4aa18cf507d697b4aefc1ebb31b20df",
+      "1": "bc639ef3a8eb02dec1e94c1330a6578404b83a3624b8f3e811effdbe2e9dfabb",
+      "2": "6ad9c2e8ef6979060a0ee90544a6283125bfccfaf0ff6661243fe3d6399bdffc"
+    },
+    "3_-5": {
+      "0": "cabac8a78e5e19090d37f588f350115472171c374755a3afca8db4849a1b6e8a",
+      "1": "0834b2a44aef61fe5fa17a283f74d7dad9914bcc22298d550172f29cf38d0969",
+      "2": "293c01fe61ece6ac003a5efe9d68ba6be2cfd5eff8509739ac1fda46048bc730"
+    },
+    "2_-3": {
+      "0": "19c028d3a415170e2980c88ae1afcdf12a3d766c16337d22eae4fc3a7f451ec6",
+      "1": "48e74b2bae63891cc4b8a05156315ea40b9d93b37b66dd9c22908238f9dc0137",
+      "2": "72de5920523c7be975e348387437877a6f18f5221fa09af0ae9902e7faaa9648"
+    },
+    "2_-2": {
+      "0": "ad51cb35c9393ec152752ee51fc88c6b4141ee088cb56bcbe3471452de6b1197",
+      "1": "1a73b89023a623ea5b1a4d01bd130abcb743a62b9c54bd016ba2aaea4a85308d",
+      "2": "fecdd1d36b23c1b9d080a0d31a407f86737568a872f7b124c23d3574d3868ecf"
+    },
+    "-11_-4": {
+      "0": "80ff36f5c0997ea3e88ad343ff56058367edd12d0085292b17bec240319b1b6b",
+      "1": "c3b9677ae2653d5186ca553d7f2ada62a2459ede9244eb6741cc82b8472ef0e7",
+      "2": "d52bc62169857a3315b0f3a60a0b121273e22b71b60a10001ea9249720a93741"
+    },
+    "-8_-6": {
+      "0": "91499e11370f5da5d99a4a221fc8a0ac59c025eb703b1155fb90d1800df2a3bd",
+      "1": "bdbc977753e25526809cea904ae5299d81aafffb742322c7ecd8bc554622f254",
+      "2": "ad2ec351647a54cfb4d161d58a701e855ad91f1f60ad5fab7ab43abdb2080497"
+    },
+    "-7_-7": {
+      "0": "539189ed4c1dc37f0f8b6ba83f06c0ee61fd4de4ec6532e23bf7d76ff8e9f584",
+      "1": "94ea7dd59334589ebe8c226406ba5f13e526bab3d7222a022d39b9b5d43e360e",
+      "2": "190968a6237b58c477ce777445da0e1d55fe9f09f0047f05c986600aee0df41e"
+    },
+    "3_-4": {
+      "0": "4bce44b0645122692816bdd4b0d747fe6ecb3d358acd6cca571467e22cce761d",
+      "1": "1437eb8aeed95a3d9cba8c1beb472449fb5995f1f9f23a65f367ea68eb0e64fe",
+      "2": "1069dfd2b865197050f34f5138c3856b56d5bd8fc81e59b8793f416e954dd682"
+    },
+    "6_-12": {
+      "0": "088a776669f31acd2b6d4908958cbcd48eeb4bdef5d277109d795799f28d0181",
+      "1": "6aebe7c0593737324f30a929a947e6d736473969468683cc126f4726290526af",
+      "2": "f861472e00f969816c00c56efa90493c9fcce21244a0fa387650f1abedff3965"
+    },
+    "-4_1": {
+      "0": "783dfdecd9641121c6234f079d0617a915449904610d2de1a3ed10f69b41bb2e",
+      "1": "3615c433280db8a3287f6a8bfab44f9ce73382cb2ea45976d393bbbd94ad87ec",
+      "2": "762dab8850f1f9e37726b230a4c51fe05395d6377b5081246e9c16243191844b"
+    },
+    "-3_1": {
+      "0": "b80b76232abe0a5861e67045af17e28bad362f877cf64fec382cf6d699454692",
+      "1": "5ba65904ffafa5e813c85f06cc26250002d5dae5c2d7e8d4db0bce06be36f1d3",
+      "2": "42ff059db562c4a5d149ffa2b4d373d9f52664896d2ef0aba1bce435f1187215"
+    },
+    "-3_-13": {
+      "0": "51649240987665659d2ec99ab252bcbdd85724328c20874952b58ac5f8ecba37",
+      "1": "8734fef523d00ebb430beac58c17b06ae0de3756a15cb36f793717cfd31b910e",
+      "2": "d81d1fdf91dcd9c322da76d91dcdde077b992d3262c51331bb072ad1090912da"
+    },
+    "-3_-12": {
+      "0": "98b4b578d5e8d03821cb85b132b84d91b7c6fb91f016943bd6599da0d515f1ce",
+      "1": "d346b2a94a11113d47a4e54cd2a8100843a7cde8a9d92ad5efe55cfe1639aeab",
+      "2": "dc0c30c2f4b0e37bcd9ab6145d26aacc5fbf87cb4d1af0e9ee25de257501d16e"
+    },
+    "-1_-11": {
+      "0": "0c7f22be2436f66ea26a56f7afe551673b71c76debd0379ffd255c1f57bc4669",
+      "1": "f09729f3af8deed689848bcadbf33bc8f9b1c8d677b67e2514fe0288711aff8e",
+      "2": "1b7c8571831933efa62442f935db1c29758610031f6db52ef5023af2c1350d7a"
+    }
+  },
+  "corridors": [
+    {
+      "id": "brown-court",
+      "name": "BROWN COURT",
+      "physicalId": 440,
+      "start": [
+        -2951.8753,
+        -1012.0618
+      ],
+      "tangent": [
+        -0.26283279234829554,
+        0.9648413979853878
+      ],
+      "sourceWidth": 7.3152,
+      "width": 5,
+      "along": [
+        -18,
+        0,
+        42.78309376669704,
+        58
+      ],
+      "across": [
+        7,
+        14
+      ],
+      "widthAlong": [
+        -8,
+        0,
+        32,
+        42.78309376669704
+      ],
+      "laneOffset": 1.25,
+      "resolvedStructures": [
+        "168341_866602"
+      ],
+      "directedIds": [
+        858,
+        859
+      ],
+      "networkWidth": 5,
+      "evidenceImageSha256": "cc351276b0ec5b8f1ac0e9f5fc4f6925785a3df7aba7796d7210db7e22dc3d6d",
+      "evidenceImage": "brown-tracy-2025.jpg",
+      "lateralShift": 5.5
+    },
+    {
+      "id": "tracy-court",
+      "name": "TRACY COURT",
+      "physicalId": 667,
+      "start": [
+        -2946.43,
+        -966.134
+      ],
+      "tangent": [
+        -0.24108776422585876,
+        0.9705033178410967
+      ],
+      "sourceWidth": 4.572,
+      "width": 4.572,
+      "along": [
+        -18,
+        0,
+        40,
+        60
+      ],
+      "across": [
+        7,
+        14
+      ],
+      "widthAlong": [
+        -8,
+        0,
+        40,
+        60
+      ],
+      "laneOffset": 0,
+      "resolvedStructures": [
+        "168339_866650"
+      ],
+      "directedIds": [
+        1295
+      ],
+      "networkWidth": 4.572,
+      "evidenceImageSha256": "cc351276b0ec5b8f1ac0e9f5fc4f6925785a3df7aba7796d7210db7e22dc3d6d",
+      "evidenceImage": "brown-tracy-2025.jpg",
+      "lateralShift": 3
+    },
+    {
+      "id": "high-school-116",
+      "name": "HIGH STREET",
+      "physicalId": 685,
+      "start": [
+        -3142.509913,
+        -1165.989694
+      ],
+      "tangent": [
+        0.194535683,
+        0.980895442
+      ],
+      "sourceWidth": 7.0104,
+      "width": 5.0,
+      "networkWidth": 7.0104,
+      "along": [
+        -38,
+        -18,
+        18,
+        38
+      ],
+      "across": [
+        7,
+        14
+      ],
+      "widthAlong": [
+        -38,
+        -18,
+        18,
+        38
+      ],
+      "laneOffset": 0.4388,
+      "resolvedStructures": [],
+      "directedIds": [
+        1327
+      ],
+      "evidenceImageSha256": "c04ab1dbb488f8894b17428c4eced74c200f83d917d1271090ea9a3b5e947e3b",
+      "evidenceImage": "high-school.jpg",
+      "lateralShift": 1.0
+    },
+    {
+      "id": "maynard-lake-36",
+      "name": "MAYNARD AVENUE",
+      "physicalId": 659,
+      "start": [
+        -2494.167162,
+        -946.594575
+      ],
+      "tangent": [
+        0.213841354,
+        0.976868402
+      ],
+      "sourceWidth": 5.7912,
+      "width": 5,
+      "networkWidth": 5.7912,
+      "along": [
+        -40,
+        -20,
+        16,
+        38
+      ],
+      "across": [
+        7,
+        14
+      ],
+      "widthAlong": [
+        -40,
+        -20,
+        16,
+        38
+      ],
+      "laneOffset": 1.2,
+      "resolvedStructures": [
+        "168798_866641"
+      ],
+      "directedIds": [
+        1281,
+        1282
+      ],
+      "evidenceImageSha256": "6f1450ad62d36739ef2c9b255ef1027ff57425acb92fac8d208db5e53d21a7db",
+      "evidenceImage": "maynard-lake.jpg",
+      "lateralShift": 3.5
+    },
+    {
+      "id": "whitcomb-33",
+      "name": "WHITCOMB STREET",
+      "physicalId": 1471,
+      "start": [
+        -2282.3983,
+        -633.322
+      ],
+      "tangent": [
+        -0.210811572,
+        0.977526716
+      ],
+      "sourceWidth": 8.2296,
+      "width": 8.2296,
+      "networkWidth": 8.2296,
+      "along": [
+        -25,
+        0,
+        25,
+        55
+      ],
+      "across": [
+        7,
+        14
+      ],
+      "widthAlong": [
+        -25,
+        0,
+        25,
+        55
+      ],
+      "laneOffset": 0,
+      "resolvedStructures": [],
+      "directedIds": [
+        2794
+      ],
+      "evidenceImageSha256": "6fefc87dad601fed189463e1e8807bd6fa09cc3c679c8f9ee8c59e227587bf04",
+      "evidenceImage": "whitcomb.jpg",
+      "lateralShift": 2.5
+    },
+    {
+      "id": "tracy-court-15",
+      "name": "TRACY COURT",
+      "physicalId": 666,
+      "start": [
+        -2980.3264,
+        -799.8319
+      ],
+      "tangent": [
+        0,
+        1
+      ],
+      "sourceWidth": 4.572,
+      "width": 3.2,
+      "networkWidth": 4.572,
+      "along": [
+        -40,
+        -24,
+        10,
+        23
+      ],
+      "across": [
+        7,
+        14
+      ],
+      "widthAlong": [
+        -40,
+        -24,
+        10,
+        23
+      ],
+      "laneOffset": 0,
+      "resolvedStructures": [],
+      "directedIds": [
+        1294
+      ],
+      "evidenceImageSha256": "615232b58cd8e33d38ea3a3af9130f9cf0875fe9263f28f8248243c10be25fdf",
+      "evidenceImage": "tracy-north.jpg",
+      "lateralShift": 1
+    },
+    {
+      "id": "lincoln-49-side-access",
+      "name": "Unnamed road",
+      "physicalId": 110,
+      "start": [
+        -2182.523,
+        -715.6347
+      ],
+      "tangent": [
+        0.981050175589432,
+        0.19375384635135534
+      ],
+      "sourceWidth": 6,
+      "width": 3,
+      "networkWidth": 3,
+      "lateralShift": 1.5,
+      "along": [
+        -10,
+        6,
+        33,
+        45
+      ],
+      "across": [
+        7,
+        14
+      ],
+      "widthAlong": [
+        -2,
+        6,
+        33,
+        45
+      ],
+      "laneOffset": 0,
+      "resolvedStructures": [
+        "169117_866871"
+      ],
+      "directedIds": [
+        207,
+        208
+      ],
+      "evidenceImageSha256": "ba234cfaebbbcbc995f007ad0379a3a8b013da4e6d344fda5b994ba9320b2850",
+      "evidenceImage": "lincoln-spur.jpg"
+    },
+    {
+      "id": "starzec-10",
+      "name": "STARZEC DRIVE",
+      "physicalId": 884,
+      "start": [
+        -2627.5425087224544,
+        657.5339924837855
+      ],
+      "tangent": [
+        -0.027928272172,
+        0.99960992973
+      ],
+      "sourceWidth": 4.8768,
+      "width": 4.8768,
+      "networkWidth": 4.8768,
+      "lateralShift": 1.25,
+      "along": [
+        -36,
+        -20,
+        12,
+        30
+      ],
+      "across": [
+        7,
+        14
+      ],
+      "widthAlong": [
+        -36,
+        -20,
+        12,
+        30
+      ],
+      "laneOffset": 1.2192,
+      "resolvedStructures": [],
+      "directedIds": [
+        1711,
+        1712
+      ],
+      "evidenceImageSha256": "89e1ce11f31fbbdac177d63b331aa19bcc14c7396ec9ab110068217cbf15cac7",
+      "evidenceImage": "starzec-10.jpg"
+    },
+    {
+      "id": "eastern-19-driveway",
+      "name": "Unnamed road",
+      "physicalId": 96,
+      "start": [
+        -1737.3046,
+        -1433.8223
+      ],
+      "tangent": [
+        0.9477970277381558,
+        0.31887426081563497
+      ],
+      "sourceWidth": 6,
+      "width": 3,
+      "networkWidth": 3,
+      "lateralShift": 3.25,
+      "along": [
+        -15,
+        0,
+        60,
+        75
+      ],
+      "across": [
+        7,
+        14
+      ],
+      "widthAlong": [
+        -3,
+        8,
+        60,
+        75
+      ],
+      "laneOffset": 0,
+      "resolvedStructures": [
+        "169585_866164",
+        "169601_866170"
+      ],
+      "directedIds": [
+        179,
+        180
+      ],
+      "evidenceImageSha256": "fa0c7721e5022c9829a0a5d698e9c035c0ceed943f632297a4c2ea908f7e42dd",
+      "evidenceImage": "eastern-19.jpg"
+    },
+    {
+      "id": "lakemont-road-shed",
+      "name": "LAKEMONT ROAD",
+      "physicalId": 876,
+      "start": [
+        -1656.3705585593475,
+        -1481.325545686272
+      ],
+      "tangent": [
+        0.9700001898708556,
+        0.24310415802800284
+      ],
+      "sourceWidth": 6.096,
+      "width": 5,
+      "networkWidth": 6.096,
+      "lateralShift": -1,
+      "along": [
+        -40,
+        -20,
+        20,
+        40
+      ],
+      "across": [
+        7,
+        14
+      ],
+      "widthAlong": [
+        -40,
+        -20,
+        20,
+        40
+      ],
+      "laneOffset": 1.25,
+      "resolvedStructures": [],
+      "directedIds": [
+        1695,
+        1696
+      ],
+      "evidenceImageSha256": "fa0c7721e5022c9829a0a5d698e9c035c0ceed943f632297a4c2ea908f7e42dd",
+      "evidenceImage": "eastern-19.jpg"
+    },
+    {
+      "id": "wakefield-3-5-driveway",
+      "name": "Unnamed road",
+      "physicalId": 106,
+      "start": [
+        1834.8996,
+        -2781.0721
+      ],
+      "tangent": [
+        -0.9988539811483049,
+        -0.04786151213847766
+      ],
+      "sourceWidth": 6,
+      "width": 3.5,
+      "networkWidth": 3.5,
+      "lateralShift": 0.6,
+      "along": [
+        0,
+        8,
+        117,
+        125
+      ],
+      "across": [
+        7,
+        14
+      ],
+      "widthAlong": [
+        0,
+        8,
+        117,
+        125
+      ],
+      "laneOffset": 0,
+      "resolvedStructures": [
+        "173040_864798",
+        "173088_864813"
+      ],
+      "directedIds": [
+        199,
+        200
+      ],
+      "evidenceImageSha256": "79724509c0b1d17cd8ca03a2d4331d527dbaa92fcc138df7cb2bd5fda9d903e2",
+      "evidenceImage": "private106.jpg"
+    },
+    {
+      "id": "reid-smith-cove-10",
+      "name": "REID SMITH COVE ROAD",
+      "physicalId": 112,
+      "start": [
+        836.6398004838708,
+        -1021.9722326866529
+      ],
+      "tangent": [
+        -0.24255087104443748,
+        0.9701386885160207
+      ],
+      "sourceWidth": 6,
+      "width": 3.5,
+      "networkWidth": 6,
+      "lateralShift": 0,
+      "along": [
+        -21,
+        -5,
+        30,
+        45
+      ],
+      "across": [
+        7,
+        14
+      ],
+      "widthAlong": [
+        -21,
+        -5,
+        30,
+        45
+      ],
+      "laneOffset": 0.75,
+      "resolvedStructures": [],
+      "directedIds": [
+        211,
+        212
+      ],
+      "evidenceImageSha256": "fb3f41488a63bcf6b4f04fc906670d41ecd57eed1f2cf5a3d86f7142951a92d8",
+      "evidenceImage": "reidsmith112.jpg"
+    },
+    {
+      "id": "gore-11-service-lane",
+      "name": "Unnamed road",
+      "physicalId": 28,
+      "start": [
+        -739.699037695302,
+        431.5199294384517
+      ],
+      "tangent": [
+        0.22907569413117548,
+        0.9734086122273216
+      ],
+      "sourceWidth": 6,
+      "width": 5,
+      "networkWidth": 6,
+      "lateralShift": 2,
+      "along": [
+        -40,
+        -15,
+        10,
+        40
+      ],
+      "across": [
+        7,
+        14
+      ],
+      "widthAlong": [
+        -40,
+        -15,
+        10,
+        40
+      ],
+      "laneOffset": 1.2,
+      "resolvedStructures": [
+        "170579_868005"
+      ],
+      "directedIds": [
+        43,
+        44
+      ],
+      "evidenceImageSha256": "9e57340d2106db5b8874a677b8ab78ecb4d49d56f7a0eb43a5ce59e69fed8c23",
+      "evidenceImage": "warehouse-28.jpg"
+    },
+    {
+      "id": "thompson-310-apartment-aisle",
+      "name": "Unnamed road",
+      "physicalId": 63,
+      "start": [
+        -574.2740051273724,
+        -3012.5678025350335
+      ],
+      "tangent": [
+        0.8094100858895087,
+        0.5872438274348555
+      ],
+      "sourceWidth": 6,
+      "width": 4.5,
+      "networkWidth": 6,
+      "lateralShift": 0.5,
+      "along": [
+        -24,
+        -8,
+        10,
+        28
+      ],
+      "across": [
+        7,
+        14
+      ],
+      "widthAlong": [
+        -24,
+        -8,
+        10,
+        28
+      ],
+      "laneOffset": 0.9,
+      "resolvedStructures": [
+        "170713_864575"
+      ],
+      "directedIds": [
+        113,
+        114
+      ],
+      "evidenceImageSha256": "e0dcb828b189a5f48202951972a55e2bca8dd56576196d9d01e92a7524a5d364",
+      "evidenceImage": "shed-63.jpg"
+    }
+  ]
+}

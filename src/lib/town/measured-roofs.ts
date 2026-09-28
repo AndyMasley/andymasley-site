@@ -115,8 +115,9 @@ export function evergreens(families: TreeFamilies | undefined, rows: number): ((
  * its streets and houses: the scenery rows kept, then each survey tree stood on
  * the ground (its crown centre at 71% of its height, as the scenery's), or
  * undefined when the packet was made for other rows. Every tree keeps its place
- * in the list, so the evergreen flags stay aligned. */
-export function surveyTreeRows(lt: SurveyTrees, rows: readonly number[][], origin: readonly number[], ground: (e: number, n: number) => number | undefined): number[][] | undefined {
+ * in the list, so the evergreen flags stay aligned. Missing terrain is reported
+ * by final row index so callers can suppress unsupported survey instances. */
+export function surveyTreeRows(lt: SurveyTrees, rows: readonly number[][], origin: readonly number[], ground: (e: number, n: number) => number | undefined, missingGround?: (index: number) => void): number[][] | undefined {
   if (lt.n !== rows.length) return undefined;
   const bits = atob(lt.k), q = int16(lt.t);
   const kept = rows.filter((_, i) => bits.charCodeAt(i >> 3) >> (i & 7) & 1);
@@ -124,7 +125,9 @@ export function surveyTreeRows(lt: SurveyTrees, rows: readonly number[][], origi
   const out = [...kept];
   for (let i = 0; i + 3 < q.length; i += 4) {
     const x = q[i] / 10, z = q[i + 1] / 10, h = Math.max(2, q[i + 2] / 10), r = Math.max(.8, q[i + 3] / 10), e = x + origin[0], n = -(z + origin[2]);
-    const g = ground(e, n) ?? fallback, yaw = ((Math.sin(e * 12.9898 + n * 78.233) * 43758.5453) % 1 + 1) % 1 * Math.PI * 2;
+    const sampled = ground(e, n), supported = sampled !== undefined && Number.isFinite(sampled);
+    if (!supported) missingGround?.(out.length);
+    const g = supported ? sampled : fallback, yaw = ((Math.sin(e * 12.9898 + n * 78.233) * 43758.5453) % 1 + 1) % 1 * Math.PI * 2;
     out.push([x, g - origin[1] + .71 * h, z, r, .30 * h, r, yaw]);
   }
   return out;

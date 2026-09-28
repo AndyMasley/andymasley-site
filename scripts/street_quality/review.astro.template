@@ -1,0 +1,92 @@
+---
+import Town from './town.astro';
+---
+<Town />
+<aside style="position:fixed;top:0;left:0;right:0;z-index:9999;background:#fff;color:#111;padding:8px;border-bottom:1px solid #222;font:14px system-ui">
+  <label>Pass <input id="quality-pass" value="baseline" size="12" /></label>
+  <label>Start station <input id="quality-start" type="number" value="0" min="0" style="width:70px" /></label>
+  <label>Station count <input id="quality-count" type="number" value="6" min="1" style="width:70px" /></label>
+  <label>Station indices <input id="quality-indices" value="" size="24" placeholder="Optional comma-separated indices" /></label>
+  <button id="quality-run">Capture streets</button><button id="quality-stop">Stop after view</button>
+  <output id="quality-status">Press Play, then capture.</output>
+</aside>
+<section id="quality-results" style="background:white;color:black;padding:16px"></section>
+<script>
+import * as THREE from 'three';
+import { DriveEngine } from '../lib/town/engine';
+import nonStreetRoutes from '../../data/derived/town/non-street-island-routes.json';
+import { OBSOLETE_PRIVATE_EDGE_IDS } from '../lib/town/obsolete-access-route';
+const plan=/* CAPTURE_PLAN */;
+const excludedEdges=new Set([...nonStreetRoutes.routes.flatMap(route=>route.edges.map(edge=>edge.id)),...OBSOLETE_PRIVATE_EDGE_IDS]);
+const $=(id:string)=>document.getElementById(id)!;
+let running=false,stop=false;
+const wait=(ms:number)=>new Promise(r=>setTimeout(r,ms));
+const save=async(body:unknown)=>{const r=await fetch('/__qa__/capture',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});if(!r.ok)throw new Error(await r.text());};
+$('quality-stop').onclick=()=>{stop=true;};
+$('quality-run').onclick=async()=>{
+ if(running)return;
+ const g=(window as any).__webster;
+ if(!g?.ready){$('quality-status').textContent='Press Play first.';return;}
+ const pass=($('quality-pass') as HTMLInputElement).value;
+ if(!/^[a-z0-9-]+$/.test(pass))throw new Error('Pass must contain lowercase letters, digits or hyphens.');
+ const start=Math.max(0,Number(($('quality-start') as HTMLInputElement).value)),end=Math.min(plan.rows.length,start+Math.max(1,Number(($('quality-count') as HTMLInputElement).value)));
+ const selected=($('quality-indices') as HTMLInputElement).value.trim();
+ const indices=selected?[...new Set(selected.split(',').map(Number).filter(i=>Number.isInteger(i)&&i>=0&&i<plan.rows.length))]:Array.from({length:end-start},(_,i)=>start+i);
+ running=true;stop=false;
+ let sheet=document.createElement('canvas'),ctx=sheet.getContext('2d')!,inSheet=0,sheetFirst=start*2,completed=0;
+ const tileWidth=600,tileHeight=368;sheet.width=tileWidth*4;sheet.height=tileHeight*4;
+ ctx.fillStyle='#fff';ctx.fillRect(0,0,sheet.width,sheet.height);
+ const records:unknown[]=[];
+ const flush=async()=>{if(!inSheet)return;await save({pass,kind:'sheet',name:`sheet-${String(sheetFirst).padStart(5,'0')}`,image:sheet.toDataURL('image/jpeg',.9),records:records.splice(0)});inSheet=0;ctx.fillStyle='#fff';ctx.fillRect(0,0,sheet.width,sheet.height);};
+ try{
+  await save({pass,kind:'plan',plan});
+  for(const index of indices){
+   if(stop)break;
+   const station=plan.rows[index],path=g.graph.paths.get(station.edgeId);
+   if(!path){
+    if(!excludedEdges.has(station.edgeId))throw new Error(`Unexpected missing route ${station.edgeId}`);
+    await save({pass,kind:'excluded',index,edgeId:station.edgeId,name:station.name,reason:'Registered non-street or disproved private access record'});
+    continue;
+   }
+   const s=path.length*station.fraction;
+   Object.assign(g.engine,new DriveEngine(g.graph,station.edgeId,s));g.engine.paused=true;
+   const [p,t]=g.engine.pose(),worldPoint=[p[0],p[2],-p[1]];
+   $('quality-status').textContent=`Loading ${index+1}/${plan.rows.length}: ${station.name}`;
+   const stationBegan=performance.now();
+   if(!g.world.isReadyAt(worldPoint))await g.world.prepareAt(worldPoint);
+   const nearby=g.world.manifest.tiles.filter((tile:any)=>{const b=tile.bounds;const dx=Math.max(b.min[0]-worldPoint[0],0,worldPoint[0]-b.max[0]),dz=Math.max(b.min[2]-worldPoint[2],0,worldPoint[2]-b.max[2]);return tile.lods.length&&dx*dx+dz*dz<=160*160;});
+   const began=performance.now();let settled=0;
+   while(performance.now()-began<30000){
+    g.world.update(worldPoint,worldPoint,true);
+    if(nearby.every((tile:any)=>{const loaded=g.world.loaded.get(tile.id);return loaded&&loaded.level===Math.min(...tile.lods.map((lod:any)=>lod.level))&&!loaded.group.userData.optionalDetailMissing?.length;}))settled++;else settled=0;
+    if(settled>=3)break;await wait(100);
+   }
+   const streaming=g.world.streamingResources(),pending=g.world.metrics.pending,missingNearby=nearby.filter((tile:any)=>{const loaded=g.world.loaded.get(tile.id);return !loaded||loaded.level!==Math.min(...tile.lods.map((lod:any)=>lod.level))||loaded.group.userData.optionalDetailMissing?.length;}).map((t:any)=>t.id);
+   for(const direction of[1,-1]){
+    if(stop)break;
+    const serial=index*2+(direction===1?0:1);
+    const camera=new THREE.PerspectiveCamera(70,16/9,.15,500);
+    camera.position.set(p[0],p[2]+2.5,-p[1]);camera.lookAt(p[0]+t[0]*direction*70,p[2]+2.5+t[2]*direction*70,-p[1]-t[1]*direction*70);
+    g.debugCamera={eye:camera.position.toArray(),target:[p[0]+t[0]*direction*70,p[2]+2.5+t[2]*direction*70,-p[1]-t[1]*direction*70]};
+    g.redraw();await wait(110);
+    // Geometry/material inspection uses the live scene, lights and shader
+    // materials; postprocessing is bypassed so screenshot timing is exact.
+    g.renderer.setRenderTarget(null);g.renderer.render(g.lights.scene,camera);
+    const image=document.createElement('canvas');image.width=1280;image.height=720;image.getContext('2d')!.drawImage(g.renderer.domElement,0,0,image.width,image.height);
+    const record={serial,index,station:station.id,physicalId:station.physicalId,edgeId:station.edgeId,name:station.name,fraction:station.fraction,point:p,direction,pending,missingNearby,incompleteTiles:streaming.incompleteTiles,loadMs:Math.round(performance.now()-stationBegan),errors:g.world.metrics.errors,loaded:g.world.metrics.loaded};
+    await save({pass,kind:'view',name:`view-${String(serial).padStart(5,'0')}`,image:image.toDataURL('image/jpeg',.88),record});
+    if(!inSheet)sheetFirst=serial;
+    const x=inSheet%4*tileWidth,y=Math.floor(inSheet/4)*tileHeight;
+    ctx.drawImage(image,x,y,tileWidth,337.5);ctx.fillStyle='#fff';ctx.fillRect(x,y+337.5,tileWidth,30.5);ctx.fillStyle='#111';ctx.font='15px monospace';
+    ctx.fillText(`${serial} · ${station.name} · ${direction===1?'forward':'reverse'}`,x+5,y+357,tileWidth-10);
+    records.push(record);inSheet++;completed++;
+    $('quality-status').textContent=`Saved ${serial}: ${station.name} (${completed} views this batch)`;
+    if(inSheet===16)await flush();
+   }
+   ($('quality-start') as HTMLInputElement).value=String(index+1);
+  }
+  await flush();$('quality-status').textContent=`Complete: ${completed} views saved for ${pass}. Next station ${($('quality-start') as HTMLInputElement).value}.`;
+ }catch(error){$('quality-status').textContent='Capture failed: '+String(error);await save({pass,kind:'error',error:String(error)}).catch(()=>{});}
+ finally{running=false;}
+};
+</script>

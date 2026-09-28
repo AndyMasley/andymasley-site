@@ -4,8 +4,9 @@ import path from 'node:path';
 import { createHash } from 'node:crypto';
 import { describe, expect, it, vi } from 'vitest';
 import * as THREE from 'three';
+import { TownWorld, TREE_SHADOW_CAP } from '../world';
 import catalog from '../../../../data/derived/town/boundary-context-index.json';
-import { BoundaryContext, boundaryContextAsset, boundaryTreeRows, createBoundaryContext, smoothContextGround, validBoundaryContext, type ContextPacket } from '../boundary-context';
+import { BoundaryContext, planContextTrees, boundaryContextAsset, boundaryTreeRows, createBoundaryContext, smoothContextGround, validBoundaryContext, type ContextPacket } from '../boundary-context';
 
 const entries = Object.entries(catalog.tiles), publicRoot = path.resolve('public');
 const read = (url: string): ContextPacket => JSON.parse(fs.readFileSync(path.join(publicRoot, url.slice(1)), 'utf8'));
@@ -66,6 +67,36 @@ describe('registered neighboring scenery', () => {
     group.traverse(object => { if (!(object instanceof THREE.Mesh)) return; expect((object.material as THREE.MeshStandardMaterial).map).toBeNull(); object.geometry.dispose(); (object.material as THREE.Material).dispose(); });
     const synthetic = { ...packet, origin: [512, 0, 1024] as [number, number, number], trees: [[530, -1030, 25, 10, 3, .5]] };
     expect(boundaryTreeRows(synthetic)).toEqual([[18, 32.1, 6, 3, 3, 3, .5]]);
+  });
+  it('bounds close context detail globally and spends only the town shadow budget left over', () => {
+    const cells = [0,1,2].map(k=>({id:String(k),origin:[1000,40,-2000] as [number,number,number],rows:Array.from({length:40},(_,i)=>[i+k*.1,50,0,2,3,2,0])})),before=structuredClone(cells);
+    const plans=planContextTrees(cells,[1000,40,-2000],false,5);
+    expect([...plans.values()].reduce((n,p)=>n+p.near.size,0)).toBe(32);
+    expect([...plans.values()].reduce((n,p)=>n+p.shadows.size,0)).toBe(5);
+    const low=planContextTrees(cells,[1000,40,-2000],true,64);
+    expect([...low.values()].reduce((n,p)=>n+p.near.size,0)).toBe(12);
+    expect([...low.values()].reduce((n,p)=>n+p.shadows.size,0)).toBe(0);
+    const away=planContextTrees(cells,[1200,40,-2000],false,64);
+    expect([...away.values()].every(p=>!p.near.size&&!p.shadows.size)).toBe(true);expect(cells).toEqual(before);
+  });
+  it('reserves context contact shadows inside the existing global town shadow cap', () => {
+    const world=Object.create(TownWorld.prototype),rows=Array.from({length:100},(_,i)=>[i,10,0,2,3,2,0]);
+    Object.assign(world,{low:false,position:[0,0,0],treeShadows:true,loaded:new Map([['t',{treeRows:rows}]]),boundaryContext:{shadowDemand:()=>12}});
+    const plans=(world as unknown as {planTrees(tiles:{id:string;origin:number[]}[]):Map<string,{shadows:Set<number>}>}).planTrees([{id:'t',origin:[0,0,0]}]);
+    expect(plans.get('t')!.shadows.size+12).toBe(TREE_SHADOW_CAP);
+  });
+  it('updates close context detail after movement, releases old instances, and keeps anchors fixed', async () => {
+    const packet=read(catalog.tiles['-4_-8'].url),tree=packet.trees[0],position:[number,number,number]=[tree[0],tree[2],-tree[1]],f=harness();
+    f.stream.update(position,true,3);await flush();
+    expect(f.stream.resources().nearTrees).toBeGreaterThan(0);expect(f.stream.resources().shadowTrees).toBeGreaterThan(0);expect(f.stream.shadowDemand(position)).toBe(1);
+    const initial=f.hooks.trees.mock.calls.length,rows=(f.hooks.trees.mock.calls as unknown as [number[][]][]).map(call=>structuredClone(call[0]));
+    f.stream.update([position[0]+.1,position[1],position[2]+.1],false,3);expect(f.hooks.trees).toHaveBeenCalledTimes(initial);
+    f.stream.update([position[0]+160,position[1],position[2]],false,3);expect(f.hooks.trees.mock.calls.length).toBeGreaterThan(initial);expect(f.hooks.releaseTrees).toHaveBeenCalled();
+    expect(f.stream.resources().nearTrees).toBe(0);expect(f.stream.resources().shadowTrees).toBe(0);expect(f.stream.shadowDemand([position[0]+160,position[1],position[2]])).toBe(0);
+    expect((f.hooks.trees.mock.calls as unknown as [number[][]][]).slice(0,initial).map(call=>call[0])).toEqual(rows);
+    f.stream.update(position,false,0);expect(f.stream.resources().nearTrees).toBeGreaterThan(0);expect(f.stream.resources().shadowTrees).toBe(0);
+    f.stream.setLow(true);f.stream.update(position,false,12);expect(f.stream.resources().nearTrees).toBeLessThanOrEqual(12);expect(f.stream.resources().shadowTrees).toBe(0);
+    f.stream.dispose();expect(f.bodies.size).toBe(0);expect(f.trees.size).toBe(0);expect(f.hooks.releaseTrees.mock.calls.length).toBe(f.hooks.trees.mock.calls.length);
   });
   it('does not request context before street readiness and cancels a late result without adoption', async () => {
     const f = harness(true), [id, ref] = entries[0], position: [number, number, number] = [ref.origin[0] + 256, 30, ref.origin[2] - 256];

@@ -130,6 +130,7 @@ describe('yards as photographed', () => {
     });
     walls.forEach(w => batch.box({ ...w, structId: 'known', tileId: 't' }, 'foundation', w.width / 2, 70.3, .022, w.width, .6, .08));
     group.add(batch.finish().group);
+    const terrain = new THREE.Mesh(new THREE.PlaneGeometry(100,100).rotateX(-Math.PI / 2).translate(0,10,-25)); terrain.name = 'terrain'; group.add(terrain);
     group.userData.houseFootprints = [{ id: 'known', outline: ring, walls }];
     // The old nearest-centre join would use this other house's contradictory photo.
     group.userData.houseObservations = [{ id: 'known', e: 1040, n: 2025, sh: 'many', mb: 'none' }, { id: 'neighbor', e: 1005, n: 2025, sh: 'none', mb: 'curb' }];
@@ -151,6 +152,21 @@ describe('yards as photographed', () => {
     const walk = group.getObjectByName('House dressing | front walks') as THREE.Mesh, p = walk.geometry.getAttribute('position');
     for (let i = 0; i < p.count; i++) expect(p.getX(i)).toBeGreaterThan(20);
     dressing.dispose();
+  });
+
+  it('keeps downhill front walks on actual terrain and omits unsupported walks without partial slabs', () => {
+    for (const supported of [true, false]) {
+      const { group, dressing } = street(houses), terrain = group.getObjectByName('terrain') as THREE.Mesh;
+      if (supported) { const p = terrain.geometry.getAttribute('position'); for (let i=0;i<p.count;i++) p.setY(i,10-(p.getZ(i)+20)*.4); }
+      else group.remove(terrain);
+      group.userData.openings = { doors: houses.map(hx => [hx,11.1,-20]), garageDoors: [] };
+      const report = dressing.apply(group,[0,0,0],0), walk = group.getObjectByName('House dressing | front walks') as THREE.Mesh | undefined;
+      if (supported) {
+        expect(report.walks).toBeGreaterThan(0); const p=walk!.geometry.getAttribute('position');
+        let low=Infinity; for(let i=0;i<p.count;i++){expect(p.getY(i)).toBeCloseTo(10-(p.getZ(i)+20)*.4+.05,4);low=Math.min(low,p.getY(i));} expect(low).toBeLessThan(7);
+      } else { expect(report.walks).toBe(0); expect(walk).toBeUndefined(); }
+      dressing.dispose();
+    }
   });
 
   it('removes live grass from house aprons added after the cover mask was registered', async () => {
