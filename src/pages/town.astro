@@ -13,7 +13,7 @@ const poster = '/town-assets/webster-cover-art-v2.webp';
 
 <Base
   title="Webster, Massachusetts"
-  description="Take an unhurried drive through a reconstruction of Webster, Massachusetts. Follow the roads, choose your turns, and explore a New England mill town."
+  description="Drive, walk and fly through a reconstruction of Webster, Massachusetts. Explore the streets and scenery of a New England mill town."
   ogImage={poster}
   ogImageAlt="Illustrated game cover: a teal car on Webster’s Main Street in warm evening sunlight."
   ogImageWidth={1586}
@@ -26,17 +26,17 @@ const poster = '/town-assets/webster-cover-art-v2.webp';
       <h1 id="town-title">Webster, Massachusetts</h1>
     </header>
 
-    <section class="town-game town-wide" data-town-root aria-label="Interactive driving game">
+    <section class="town-game town-wide" data-town-root aria-label="Explore Webster by car or on foot">
       <div class="town-stage">
         <canvas
           class="town-canvas"
           data-town-canvas
           tabindex="0"
           role="application"
-          aria-label="Drive through Webster"
+          aria-label="Explore Webster"
           aria-describedby="town-controls-summary town-status"
         >
-          This interactive town uses a 3D canvas. Its current road, speed, and turn choices are also shown as text.
+          This interactive town uses a 3D canvas. Travel mode, speed, driving directions, and available actions are also shown as text.
         </canvas>
 
         <div class="town-intro" data-town-intro>
@@ -57,7 +57,7 @@ const poster = '/town-assets/webster-cover-art-v2.webp';
             </h2>
           </div>
           <div class="town-intro__content">
-            <p>The car follows the road.<br />You choose where it goes.</p>
+            <p>Drive the streets.<br />Step out, walk, or fly.</p>
             <button class="town-play" type="button" data-town-play>
               <span>Play</span>
               <svg aria-hidden="true" width="24" height="18" viewBox="0 0 24 18" fill="none">
@@ -67,7 +67,7 @@ const poster = '/town-assets/webster-cover-art-v2.webp';
             <button class="town-resume-drive" type="button" data-town-resume hidden>Resume last drive</button>
             <button class="town-resume-drive" type="button" data-town-reload hidden>Reload updated game</button>
             <p data-town-resume-label hidden></p>
-            <p class="town-intro__hint">Arrow keys or touch controls</p>
+            <p class="town-intro__hint">Arrow keys or touch · E to get out</p>
           </div>
           <span class="town-poster-caption">Cover art · Main Street</span>
         </div>
@@ -77,7 +77,17 @@ const poster = '/town-assets/webster-cover-art-v2.webp';
           <progress data-town-loading-progress aria-label="Drive preparation"></progress>
         </div>
 
-        <div class="town-hud" aria-label="Driving information">
+        <div class="town-exploration" role="group" aria-label="Exploration controls">
+          <span class="town-exploration__mode" data-town-mode>Driving</span>
+          <div class="town-exploration__actions">
+            <button type="button" data-town-exit aria-keyshortcuts="E" disabled>Get out</button>
+            <button type="button" data-town-summon aria-keyshortcuts="F" hidden disabled>Summon car</button>
+            <button type="button" data-town-jetpack aria-keyshortcuts="J" aria-pressed="false" hidden disabled>Jetpack off</button>
+          </div>
+          <p class="town-exploration__hint" data-town-exploration-hint role="status" aria-live="polite" aria-label="Explore on foot" hidden>Explore on foot. Drag the view to look around.</p>
+        </div>
+
+        <div class="town-hud" aria-label="Your location and movement">
           <div class="town-route">
             <span class="town-hud__label">On the road</span>
             <span class="town-road" data-town-road>Main Street</span>
@@ -118,11 +128,25 @@ const poster = '/town-assets/webster-cover-art-v2.webp';
             <button type="button" data-town-input="up" aria-label="Accelerate" aria-keyshortcuts="ArrowUp"><span aria-hidden="true">↑</span><span class="town-touch__label">Go</span></button>
           </div>
         </div>
+
+        <div class="town-onfoot" data-town-onfoot-controls role="group" aria-label="Touch walking and jetpack controls" hidden>
+          <div class="town-onfoot__movement">
+            <button type="button" data-town-foot-input="forward" aria-label="Walk forward" aria-keyshortcuts="W ArrowUp"><span aria-hidden="true">↑</span></button>
+            <button type="button" data-town-foot-input="left" aria-label="Turn left" aria-keyshortcuts="ArrowLeft"><span aria-hidden="true">↶</span></button>
+            <button type="button" data-town-foot-input="back" aria-label="Walk backward" aria-keyshortcuts="S ArrowDown"><span aria-hidden="true">↓</span></button>
+            <button type="button" data-town-foot-input="right" aria-label="Turn right" aria-keyshortcuts="ArrowRight"><span aria-hidden="true">↷</span></button>
+          </div>
+          <div class="town-onfoot__pace">
+            <button type="button" data-town-foot-input="ascend" aria-label="Rise with jetpack" aria-keyshortcuts="Space"><span aria-hidden="true">↑</span><span class="town-touch__label">Rise</span></button>
+            <button type="button" data-town-foot-input="descend" aria-label="Descend with jetpack" aria-keyshortcuts="Q"><span aria-hidden="true">↓</span><span class="town-touch__label">Down</span></button>
+            <button type="button" data-town-foot-input="run" aria-label="Hold to run" aria-keyshortcuts="Shift"><span class="town-touch__label">Hold to run</span></button>
+          </div>
+        </div>
       </div>
 
       <div class="town-toolbar">
         <div class="town-actions" aria-label="Game controls">
-          <button type="button" data-town-pause aria-keyshortcuts="Space" disabled>Pause</button>
+          <button type="button" data-town-pause aria-keyshortcuts="Escape P" disabled>Pause</button>
           <button type="button" data-town-reverse aria-keyshortcuts="R" disabled>Turn around</button>
           <button type="button" data-town-camera aria-keyshortcuts="C" disabled>Camera</button>
           <button type="button" data-town-sound aria-pressed="false" disabled>Engine sound off</button>
@@ -191,26 +215,34 @@ const poster = '/town-assets/webster-cover-art-v2.webp';
       <div class="town-below-game">
         <p id="town-status" class="town-status" data-town-status role="status" aria-live="polite">Ready when you are.</p>
         <details class="town-help">
-          <summary>How to drive</summary>
+          <summary>How to drive and explore</summary>
           <div class="town-help__content" id="town-controls-summary">
             <dl class="town-key-list">
               <div><dt><kbd>↑</kbd> <kbd>↓</kbd></dt><dd>Cruise at the road limit / brake</dd></div>
               <div><dt><kbd>←</kbd> <kbd>→</kbd></dt><dd>Choose a turn at a junction</dd></div>
-              <div><dt><kbd>Space</kbd></dt><dd>Pause / resume</dd></div>
+              <div><dt><kbd>Esc</kbd> <kbd>P</kbd></dt><dd>Esc pauses; P pauses / resumes. Space also pauses / resumes while driving</dd></div>
               <div><dt><kbd>R</kbd></dt><dd>Instantly turn around</dd></div>
               <div><dt><kbd>C</kbd></dt><dd>Change camera</dd></div>
               <div><dt><kbd>S</kbd></dt><dd>Clear a pending turn and follow the road where possible</dd></div>
               <div><dt><kbd>M</kbd></dt><dd>Silence all driving sound and radio</dd></div>
               <div><dt><kbd>1</kbd>–<kbd>6</kbd></dt><dd>Move to the corresponding starting place; resets this drive</dd></div>
+              <div><dt><kbd>E</kbd></dt><dd>Get out, or enter the car when you are close to it</dd></div>
+              <div><dt><kbd>F</kbd></dt><dd>Summon your car to the nearest safe street while on foot</dd></div>
+              <div><dt><kbd>W A S D</kbd></dt><dd>Move relative to the view while on foot; drag the town view to look around</dd></div>
+              <div><dt><kbd>↑ ↓ ← →</kbd></dt><dd>On foot: walk forward / backward, or turn left / right</dd></div>
+              <div><dt><kbd>Shift</kbd></dt><dd>Hold to run</dd></div>
+              <div><dt><kbd>J</kbd></dt><dd>Turn your jetpack on / off while on foot</dd></div>
+              <div><dt><kbd>Space</kbd> <kbd>Q</kbd></dt><dd>Hold to rise / descend with your jetpack</dd></div>
           </dl>
             <p>The car stays on the road. Press Up to accelerate smoothly to the road’s speed limit, including 65 mph on I-395. On entrance ramps, speed builds gradually toward the highway limit before merging. Pick a direction as you approach a junction, or click a labeled road option to select that exact branch. Turn around instantly with the button or R. On a touch screen, use the arrows below the road.</p>
             <p>Click the town view to use the keyboard. Tab leaves the driving view for the controls. Leaving the game pauses the drive. Use Resume or Up to continue. Braking reduces your cruise target; press Up again to return to the road limit. Once a turn begins, a new choice applies to the following junction.</p>
+            <p>Choose Get out to explore on foot. Drag the view to look around, then walk with W A S D or use the touch arrows. Hold Shift or Hold to run to move faster. Enable the jetpack to fly; hold Space or Rise to climb, and Q or Down to descend. Release thrust to hover, or press J to switch the jetpack off and land. Over water, the jetpack keeps you hovering; fly to shore to land. Choose Enter car when you are nearby, or Summon car to bring it to the nearest safe street.</p>
             <p>Sound starts only if you turn it on. Pause stops driving sound and leaves the radio available; M or Mute all sound silences both. Radio turns off when you leave the tab. The road limit may be an estimate where the road inventory has no posted value; a ramp target is modeled acceleration toward the highway limit.</p>
             <p>Automatic detail can reduce resolution and shadows to keep the drive responsive. Choose a detail setting again to restore its starting quality. The saved camera, comfort, detail and volume settings return on your next visit; sound still starts off.</p>
           </div>
         </details>
       </div>
-      <noscript><p class="town-noscript">JavaScript is needed to drive. The image above shows the town reconstruction.</p></noscript>
+      <noscript><p class="town-noscript">JavaScript is needed to drive, walk or fly. The image above shows the town reconstruction.</p></noscript>
     </section>
 
     <div class="town-endmatter">
@@ -225,6 +257,7 @@ const poster = '/town-assets/webster-cover-art-v2.webp';
             <div><dt>The architecture</dt><dd>{buildingEvidence.count.toLocaleString('en-US')} residential profiles use mapped footprints, assessor styles, story counts and elevation evidence. Roofs, chimneys and eaves on {measuredHouses.count.toLocaleString('en-US')} of them are fitted to the 2021 lidar, its returns shifted onto each mapped footprint; the town assessor’s street photographs supply siding, trim, shutter and door colors, porches and their roofs, posts and railings, where the doors, windows, dormers and garage doors stand, door hoods and porticos, awnings, bay windows, decks, outside stairs, solar panels, mailboxes, planting and front fences for {measuredHouses.photoReads.toLocaleString('en-US')}, and whether each street has a painted center line and which side its poles stand on. {measuredHouses.others.toLocaleString('en-US')} garages, sheds and other buildings are fitted to the lidar the same way, and {measuredHouses.kept.toLocaleString('en-US')} more keep their inferred shapes with doors facing their drives. Dated property descriptions inform {buildingEvidence.documentedCount} of those homes; historical inventory descriptions guide materials and frontage treatments for {historicEvidence.count} profiles. Sacred Heart, First Baptist, St. Louis, St. Joseph, Reconciliation, the Kelly Library, the Samuel Slater Experience and the fire station have individually composed building forms. Town Hall and the former school have source-fitted window bays and pale trim. The schools, police and post office use separately composed masses and entrances. Main Street blocks and mill façades use dated architectural records, parcel divisions and roof evidence; ordinary shops and garages have inferred storefront details. Selected landmarks and eleven School Street properties also use public exterior photographs. Other roof shapes, opening dimensions, hidden elevations and unrecorded finishes remain interpretations. Historic descriptions and older paint colors are references; present appearance may differ.</dd></div>
             <div><dt>The season</dt><dd>Late-summer grass, foliage, light, and finishes are artistic choices. MassGIS 2016 land cover distinguishes lawns, woods, and paved areas, with mapped roads, buildings, and water refining their boundaries. Near the streets and houses, trees stand where the 2021 lidar found their crowns, at their measured heights and spreads; farther out, woods are grouped canopy. Each tree is drawn as an evergreen or a broadleaf by what the 2025 leaf-off aerial shows at its crown; individual species are not surveyed. Grass beneath trees near homes is inferred as lawn. Sources come from different dates, so some buildings and streets may differ from Webster today.</dd></div>
             <div><dt>Parking and ground finishes</dt><dd>Reviewed OpenStreetMap outlines and spring 2025 MassGIS aerial views refine paved lots and selected driveways. Parking bay layouts are composed for the game within those boundaries; they do not reproduce surveyed stall counts or accessible-space assignments. Continuous road markings, pavement edges and woodland-floor materials include modeled finishing choices.</dd></div>
+            <div><dt>People in the town</dt><dd>The pedestrians are animated characters authored for the game. They do not represent real people or their movements.</dd></div>
             <div><dt>The railway</dt><dd>The Norwich Branch follows its active mapped route through town, including the river crossings and the passage beneath Mill Street. OpenStreetMap supplies the alignment and standard gauge; MassGIS and federal crossing records distinguish the active line and road crossings. Rail elevations are fitted to the modeled terrain and road surfaces. Ballast, ties, rail profiles and bridge construction are interpretations, not a railway engineering survey.</dd></div>
             <div><dt>Bridges, memorials and shorelines</dt><dd>Historical surveys guide Memorial Beach’s iron truss and sidewalk posts. The Court of Honor, lawn howitzers, relocated Slater markers and other public memorials use dated records and photographs; small dimensions and placements remain interpretations. Cemetery stones, shoreline plants and dam fragments sit within mapped settings, with anonymous layouts and inferred details. Memorial Beach has its documented double launch and 65-foot flagpole; the DCR Lakeside launch has a single concrete strip with a locally registered water edge. The Indian Princess uses its photographed two-deck riverboat appearance and a berth visible in 2025 imagery; it is a stationary interpretation.</dd></div>
             <div><dt>Roadside details</dt><dd>WRTA boarding-stop coordinates locate bus flags; OpenStreetMap records locate collection boxes. Stop signs and traffic lights combine OpenStreetMap controls with MassDOT sign assets and intersection-control records, retrieved September 2026. Road approaches, roadside offsets and signal hardware are modeled where the records do not survey them. Signal colors follow simplified game timing, not real controller programs. The inventories are incomplete and include older surveys; construction changes and unmapped controls may differ today. Flag and box designs and pole hardware are modeled interpretations. Selected overhead utility runs follow photographed corridor character, with inferred spacing and placement; they are not a surveyed utility map. Matched road-inventory segments distinguish earth, gravel and surface-treated pavement using inferred material tones. The Gore Road plaza’s lake-name sign uses a dated exterior reference. Playing fields and solar-site boundaries receive restrained inferred equipment. Nine aerial-registered wastewater basins preserve the surrounding real buildings; rails and small dimensions are authored.</dd></div>

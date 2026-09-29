@@ -1216,3 +1216,149 @@ body:has(.town-game.town-expanded) {
 .town-directory__list button { width: 100%; }
 .town-directory__list button[aria-pressed="true"] { border-color: var(--text); background: var(--bg-subtle); }
 .town-directory__list p { margin: var(--space-sm) 0; }
+
+/* Reserve the action strip's actual height so it never sits over the route HUD,
+   including larger text and the two-line walking hint on a narrow screen. */
+.town-game[data-ready="true"] .town-stage {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+}
+
+.town-game[data-ready="true"] .town-hud {
+  position: relative;
+  grid-row: 2;
+  min-height: 0;
+}
+
+.town-exploration {
+  position: relative;
+  z-index: 1;
+  grid-row: 1;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  column-gap: 12px;
+  padding: 5px 16px;
+  border-bottom: 1px solid var(--town-screen-rule);
+  background: rgba(16, 33, 28, .86);
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+.town-game:not([data-ready="true"]) .town-exploration,
+.town-stage:has(.town-intro:not([hidden])) .town-exploration,
+.town-stage:has(.town-intro:not([hidden])) .town-onfoot {
+  display: none;
+}
+
+.town-exploration__mode {
+  color: var(--town-brass);
+  font-size: var(--text-xs);
+  line-height: 1.3;
+}
+
+.town-exploration__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.town-exploration button {
+  min-width: 44px;
+  min-height: 44px;
+  padding: 8px 12px;
+  border: 1px solid var(--town-screen-rule);
+  border-radius: 5px;
+  color: var(--town-screen-ink);
+  background: rgba(255, 247, 232, .035);
+  font: inherit;
+  font-size: var(--text-xs);
+  line-height: 1.3;
+}
+
+.town-exploration button:not(:disabled):is(:hover, [aria-pressed="true"]) {
+  color: var(--town-screen);
+  background: var(--town-screen-ink);
+}
+
+.town-page .town-exploration__hint {
+  grid-column: 1 / -1;
+  margin: 3px 0 5px;
+  color: var(--town-screen-dim);
+  font-size: var(--text-xs);
+  line-height: 1.4;
+}
+
+.town-game[data-mode="foot"] :is(.town-directions, .town-touch, .town-road-limit, .town-cruise-state, .town-odometer, [data-town-reverse], [data-town-camera]) {
+  display: none;
+}
+
+.town-onfoot {
+  position: absolute;
+  inset: auto 12px 12px;
+  display: none;
+  justify-content: space-between;
+  align-items: end;
+  gap: 12px;
+  pointer-events: none;
+}
+
+.town-onfoot__movement,
+.town-onfoot__pace {
+  display: grid;
+  gap: 5px;
+}
+
+.town-onfoot__movement { grid-template-columns: repeat(3, minmax(44px, 56px)); }
+.town-onfoot__pace { grid-template-columns: repeat(2, minmax(44px, 56px)); }
+.town-onfoot [data-town-foot-input="forward"] { grid-column: 2; }
+.town-onfoot [data-town-foot-input="left"] { grid-column: 1; grid-row: 2; }
+.town-onfoot [data-town-foot-input="back"] { grid-column: 2; grid-row: 2; }
+.town-onfoot [data-town-foot-input="right"] { grid-column: 3; grid-row: 2; }
+.town-onfoot [data-town-foot-input="run"] { grid-column: 1 / -1; }
+
+.town-onfoot button {
+  display: grid;
+  place-content: center;
+  min-width: 44px;
+  min-height: 52px;
+  padding: 6px;
+  border: 1px solid var(--town-screen-rule);
+  border-radius: 5px;
+  color: var(--town-screen-ink);
+  background: var(--town-panel);
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: var(--text-xl);
+  line-height: 1;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  pointer-events: auto;
+}
+
+.town-onfoot button:is(:active, [aria-pressed="true"], .active) {
+  color: var(--town-screen);
+  background: var(--town-screen-ink);
+}
+
+.town-onfoot button:disabled { opacity: .5; }
+
+@media (any-pointer: coarse), (max-width: 720px) {
+  .town-game[data-mode="foot"] .town-onfoot { display: flex; }
+  .town-game[data-mode="foot"] :is(.town-map, .town-instruments) { bottom: 134px; }
+}
+
+@media (max-width: 420px) {
+  .town-exploration { column-gap: 6px; padding-inline: 8px; }
+  .town-exploration__actions { gap: 4px; }
+  .town-exploration button { padding-inline: 7px; }
+  .town-onfoot__movement { grid-template-columns: repeat(3, 44px); }
+  .town-onfoot__pace { grid-template-columns: repeat(2, 44px); }
+}
+
+@media (max-height: 520px) and (orientation: landscape) {
+  .town-game[data-mode="foot"] :is(.town-instruments, .town-route) { display: none; }
+  .town-onfoot__movement,
+  .town-onfoot__pace { display: flex; }
+  .town-onfoot button { min-width: 48px; min-height: 48px; }
+}

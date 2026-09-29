@@ -89,6 +89,44 @@ describe('camera raycast acceleration', () => {
     expectHits(index.intersect(ray, [mesh]), expected);
   });
 
+  it.each(['nonuniform', 'parent-shear', 'reflected'] as const)('bounds oblique %s rays while retaining hits beyond an excluded nearer face', async transform => {
+    const mesh = makeMesh(), index = makeIndex(), parent = new THREE.Group();
+    mesh.position.set(11, -4, 7); mesh.rotation.set(.29, -.61, .37); mesh.scale.set(.4, 2.3, 3.7);
+    parent.add(mesh);
+    if (transform === 'parent-shear') { parent.scale.set(3, .45, 1.6); parent.rotation.set(-.32, .54, .18); }
+    if (transform === 'reflected') mesh.scale.x *= -1;
+    parent.updateMatrixWorld(true);
+    const localOrigin = new THREE.Vector3(5, 4, 6), localTarget = new THREE.Vector3(.1, .2, .3);
+    const origin = localOrigin.clone().applyMatrix4(mesh.matrixWorld), target = localTarget.clone().applyMatrix4(mesh.matrixWorld);
+    const scale = localOrigin.distanceTo(localTarget) / origin.distanceTo(target);
+    const ray = new THREE.Raycaster(origin, target.clone().sub(origin).normalize());
+    const allHits = ray.intersectObject(mesh, false); expect(allHits).toHaveLength(2);
+    await prepare(index, [mesh]);
+    const accelerated = vi.spyOn(MeshBVH.prototype, 'raycast');
+    ray.near = (allHits[0].distance + allHits[1].distance) / 2; ray.far = allHits[1].distance + .01;
+    const expected = ray.intersectObject(mesh, false); expect(expected).toHaveLength(1);
+    expectHits(index.intersect(ray, [mesh]), expected);
+    const [, , near, far] = accelerated.mock.calls.at(-1)!;
+    expect(near).toBeCloseTo(ray.near * scale, 9); expect(far).toBeCloseTo(ray.far * scale, 9);
+    expect(near).toBeGreaterThan(0); expect(Number.isFinite(far)).toBe(true);
+    ray.far = allHits[1].distance - .01;
+    expectHits(index.intersect(ray, [mesh]), ray.intersectObject(mesh, false));
+    expect(index.intersect(ray, [mesh])).toEqual([]);
+  });
+
+  it('retains an exact zero-width near/far interval while pruning farther tile faces', async () => {
+    const geometry = new THREE.PlaneGeometry(10, 10, 32, 32), material = new THREE.MeshBasicMaterial({ side: THREE.DoubleSide });
+    geometries.push(geometry); materials.push(material);
+    const mesh = new THREE.Mesh(geometry, material), index = makeIndex(); mesh.position.z = -4; mesh.scale.set(.5, 3, 2); mesh.updateMatrixWorld(true);
+    const ray = new THREE.Raycaster(new THREE.Vector3(.123, .321, 6), new THREE.Vector3(0, 0, -1), 10, 10);
+    await prepare(index, [mesh]);
+    const accelerated = vi.spyOn(MeshBVH.prototype, 'raycast');
+    const expected = ray.intersectObject(mesh, false); expect(expected).toHaveLength(1);
+    expectHits(index.intersect(ray, [mesh]), expected);
+    const [, , near, far] = accelerated.mock.calls.at(-1)!;
+    expect(near).toBeLessThan(5); expect(far).toBeGreaterThan(5); expect(far! - near!).toBeLessThan(1e-9);
+  });
+
   it('respects drawRange and leaves the source indices, attributes, groups and bounds intact', async () => {
     const mesh = makeMesh(), index = makeIndex(), ray = makeRay(), geometry = mesh.geometry;
     const fullHits = ray.intersectObjects([mesh], false);

@@ -117,4 +117,27 @@ describe('local traffic', () => {
     expect((traffic.root.children[0] as THREE.InstancedMesh).count).toBe(0);
     traffic.dispose();
   });
+
+  it('protects the parked car when the explorer puts it inside the traffic spawn ring', () => {
+    // Every point in this small loop lies within 40 m of the parked car, but
+    // 200–300 m from the explorer. The entire loop is behind the camera.
+    const corners = [[-17.5, -17.5, 10], [17.5, -17.5, 10], [17.5, 17.5, 10], [-17.5, 17.5, 10]];
+    const graph = new RoadGraph({ edges: corners.map((point, id) => ({
+      id, from: id, to: (id + 1) % 4, physical_id: id,
+      points: [point, corners[(id + 1) % 4]], lane_offset_m: 0, road_type: 5, speed_kph: 30,
+    })) });
+    const parked = new DriveEngine(graph, 0, 17.5), traffic = new Traffic(graph, 1, 42);
+    const camera = new THREE.PerspectiveCamera();
+    camera.position.set(250, 13, 0); camera.lookAt(350, 10, 0);
+    try {
+      for (let i = 0; i < 30; i++) traffic.update(.1, parked, camera, true, [250, 0, 10]);
+      expect(traffic.metrics.spawned).toBe(0);
+      expect(traffic.vehicles).toHaveLength(0);
+      // This is an eligible, populated neighborhood once the car is elsewhere;
+      // the assertion above must not pass just because no roads can spawn cars.
+      const distant = new DriveEngine(new RoadGraph({ edges: [{ id: 0, from: 0, to: 1, points: [[1000, 0, 10], [1100, 0, 10]], lane_offset_m: 0 }] }));
+      for (let i = 0; i < 30 && !traffic.vehicles.length; i++) traffic.update(.1, distant, camera, true, [250, 0, 10]);
+      expect(traffic.vehicles).toHaveLength(1);
+    } finally { traffic.dispose(); }
+  });
 });

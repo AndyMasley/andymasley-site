@@ -17,6 +17,8 @@ export class CameraRaycastIndex {
   private readonly lifetime = new AbortController();
   private timer?: ReturnType<typeof setTimeout>;
   private readonly inverse = new THREE.Matrix4();
+  private readonly linear = new THREE.Matrix3();
+  private readonly direction = new THREE.Vector3();
   private readonly ray = new THREE.Ray();
 
   private eligible(mesh: THREE.Mesh): boolean {
@@ -118,12 +120,19 @@ export class CameraRaycastIndex {
         if (eligible) this.queue(mesh);
         continue;
       }
-      this.metrics.acceleratedQueries++;
       this.inverse.copy(mesh.matrixWorld).invert(); this.ray.copy(raycaster.ray).applyMatrix4(this.inverse);
-      // Query all exact hits, then apply native world-space near/far filtering.
-      // This retains hits beyond a closer excluded face and handles nonuniform
-      // and parent-sheared transforms without approximate distance conversion.
-      for (const hit of entry.tree.raycast(this.ray, (mesh.material as THREE.Material).side)) {
+      const scale = this.direction.copy(raycaster.ray.direction).normalize().applyMatrix3(this.linear.setFromMatrix4(this.inverse)).length();
+      if (!(scale > 0) || !Number.isFinite(scale)) {
+        this.metrics.nativeQueries++; raycaster.intersectObject(mesh, false, hits); continue;
+      }
+      this.metrics.acceleratedQueries++;
+      // An affine transform scales distance along this particular ray by the
+      // length of its transformed unit direction, even under parent shear.
+      // Bound traversal to the short probe instead of the entire tile. Keep
+      // all hits in the interval so excluding a front face retains rear faces.
+      const near = raycaster.near * scale, far = raycaster.far * scale;
+      const guard = 64 * Number.EPSILON * Math.max(1, this.ray.origin.length(), Math.abs(near), Number.isFinite(far) ? Math.abs(far) : 0);
+      for (const hit of entry.tree.raycast(this.ray, (mesh.material as THREE.Material).side, Math.max(0, near - guard), far + guard)) {
         hit.point.applyMatrix4(mesh.matrixWorld); hit.distance = hit.point.distanceTo(raycaster.ray.origin); hit.object = mesh;
         if (hit.distance >= raycaster.near && hit.distance <= raycaster.far) hits.push(hit);
       }

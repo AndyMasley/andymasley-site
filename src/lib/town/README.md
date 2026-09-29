@@ -1,4 +1,4 @@
-# Webster browser drive
+# Webster browser drive and exploration
 
 Startup deliberately spends longer preparing a drive to reduce work during play.
 The loading indicator reports actual neighborhood tile completion, then texture
@@ -31,7 +31,7 @@ geometry releases its index. Measure camera-test time separately from GPU cost.
 
 `/town` is part of the existing Astro site. `main.ts` starts Three.js after Play,
 owns input, cameras, HUD and audio, and disposes the session during Astro
-navigation. `world.ts` streams scenery around the car, selects display LODs, and
+navigation. `world.ts` streams scenery around the car or on-foot explorer, selects display LODs, and
 shares/reclaims materials and textures. `engine.ts` keeps the complete directed
 road graph resident, independent of scenery loading or display quality.
 
@@ -40,11 +40,12 @@ road graph resident, independent of scenery loading or display quality.
 | ↑ / ↓ | Engage road-limit cruise / brake; releasing ↑ retains cruise |
 | ← / → | Buffer a choice for the next junction |
 | S | Clear the turn choice; continue straight where possible |
-| Space / Escape | Toggle pause / pause |
+| Space while driving / P / Escape | Toggle pause / toggle pause / pause |
 | C | Cycle hood, chase and wide cameras |
 | R / Flip direction button | Immediately face the opposite driving direction |
 | 1–6 | Select the corresponding starting location |
 | On-screen arrows | Touch or keyboard-operated driving controls |
+| E / Get out or Enter car | Leave the car, or board when close enough |
 
 Page initialization is idempotent for the same DOM root: a late Astro page-load
 event cannot cancel an early Play click while the game module is importing.
@@ -67,6 +68,86 @@ along the whole ramp chain toward the highway limit. Exit ramps and explicit
 posted limits are not promoted. The clipped Cudworth entrance builds speed then
 brakes before the retained map boundary; obstacles and route ends still stop the
 car. These are guided-game driving rules rather than a vehicle-physics model.
+
+## Walking, jetpack and pedestrians
+
+**Get out** stops the car and places the explorer on checked ground beside it.
+The car stays at its road position while scenery, shadows, the map and nearby
+traffic follow the explorer. **Enter car** requires being within 5 m of the car
+and within 2 m vertically. The car returns stopped; Up engages cruise again.
+
+| On-foot control | Action |
+| --- | --- |
+| W / A / S / D | Move forward, strafe left, move backward, strafe right relative to the view |
+| ↑ / ↓ / ← / → | Walk forward, walk backward, turn left, turn right |
+| Drag the town view | Turn the view and adjust camera height |
+| Shift / Hold to run | Run while held |
+| J / Jetpack button | Equip the jetpack, or switch it off to land |
+| Space / Q | Rise / descend while held with the jetpack enabled |
+| F / Summon car | Place the car at a checked nearby mapped street position |
+| P / Escape | Toggle pause / pause |
+
+Releasing vertical thrust hovers while the jetpack is enabled. Switching it off
+restores gravity. Water cannot be landed on: descending near its surface engages
+a protective hover, and the explorer must return to dry ground to land. Touch
+controls have separate held movement, turning, run, rise and descent buttons;
+dragging the canvas still changes the view. Space pauses only in driving mode.
+The action strip and touch controls appear after loading, and driving-only HUD
+and actions are hidden on foot. Pause, focus loss and tab visibility changes clear
+held inputs; key autorepeat cannot immediately resume a newly paused walk.
+
+`exploration.ts` owns the movement state in renderer coordinates (X east, Y up,
+Z south). It advances at most 100 ms per update, split into steps of at most
+25 ms. Authored speeds are 2.1 m/s walking, 5.4 m/s running and 9 m/s in flight;
+vertical thrust is 6 m/s up and 5 m/s down. The ascent ceiling is 45 m above the
+support surface. This is a bounded game movement model, not an engineering or
+accessibility assessment of the real ground. `exploration-surface.ts` samples
+resident meshes and reuses the session's camera ray index, without changing
+source geometry. It checks a 0.30 m radius and 1.75 m height, rejects water and
+unsupported ground, and limits ground steps to 0.42 m. Missing terrain stops
+movement instead of letting the explorer fall through unloaded space. Prolonged
+loading offers a retry near the explorer. Surface queries cache up to 96 resident
+groups, inspect at most four nearby tiles and reject ray queries exceeding
+32 mesh candidates rather than accepting unchecked movement. Capsule queries
+select nearby bounds once for all their rays. Nearby support meshes join the
+startup BVH preparation, and finite ray intervals remain exact under scaled or
+sheared transforms.
+
+Summoning searches existing directed lane positions within 2 km horizontally,
+excluding highways, ramps, restricted roads and routes beyond their mapped
+obstacle/boundary stops. The nearest candidate is loaded, then resident ground,
+vehicle-footprint clearance and nearby traffic are checked before changing the
+car's position. It can fail without moving the car. Summoning is an instant game
+assist, not autonomous driving; it does not create a road where none is mapped.
+Async completion preserves intervening pause requests. Nearby traffic retains
+40 m of spawn clearance from the parked car even when the explorer is elsewhere.
+The minimap marks the parked car while following the explorer. Resume persistence
+continues to save only a qualified, safe road-car snapshot: walking position,
+jetpack state and pedestrians are not saved. Reload/recovery resumes the car
+paused at its last saved road position, and choosing a starting place returns to
+driving mode.
+
+`pedestrians.ts` creates anonymous, authored characters on material-tagged
+sidewalk geometry. Their appearances, numbers, routes, pauses and articulated
+gaits do not reproduce real people, their movements or surveyed pedestrian
+counts. Each short route checks full foot support, slope, water and solid
+clearance; paths turn back instead of inventing crossings. New walkers normally
+appear outside the camera view, within 150 m, and can retire out of view beyond
+190 m. Characters keep space from one another and the explorer. Missing support
+halts movement while later checks can restore it.
+
+`humanoid.ts` batches the pedestrian crowd into six instanced draws, with a cap of
+24 walkers on desktop and 10 on mobile/Low. The separate player avatar and jetpack
+have their own geometry. Pedestrian planning runs at 0.25-second intervals, with
+at most one tile index and one path attempt per planning update. Routes use
+separate corridors, and at most one world-support/clearance position is checked
+per frame. Startup preparation yields between checks, aiming for six nearby
+people and stopping after 1,500 ms of accumulated work or four elapsed seconds
+(checked between steps). Crowd animation shares the game's clock and
+stops when paused. Batches, geometry and surface caches are owned by the session
+and released on disposal; no additional animation timer or whole-town simulation
+is introduced. Check `window.__webster.exploration` for mode, surface-query and
+crowd metrics when profiling.
 
 ## Car radio
 

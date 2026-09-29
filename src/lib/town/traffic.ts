@@ -67,8 +67,10 @@ export class Traffic {
    * around the player, sets the player's lead limit for its next step, and
    * places the instanced cars. `camera` decides what is out of view.
    */
-  update(dt: number, player: DriveEngine, camera: THREE.Camera, running: boolean): void {
-    const here = player.pose()[0];
+  update(dt: number, player: DriveEngine, camera: THREE.Camera, running: boolean, spectator?: Vec3): void {
+    // On foot, cars populate the explorer's neighborhood while the parked
+    // player vehicle remains a real obstacle at its unchanged road position.
+    const playerPosition = player.pose()[0], here = spectator ?? playerPosition;
     camera.getWorldDirection(this.forward);
     const flat = Math.hypot(this.forward.x, this.forward.z) || 1;
     const view = { x: camera.position.x, z: camera.position.z, fx: this.forward.x / flat, fz: this.forward.z / flat };
@@ -83,7 +85,7 @@ export class Traffic {
     }
     if (running) {
       this.clock += dt;
-      if (this.cars.length < this.capacity && this.clock > 0.4) { this.clock = 0; this.spawn(here, hidden); }
+      if (this.cars.length < this.capacity && this.clock > 0.4) { this.clock = 0; this.spawn(here, hidden, playerPosition); }
       const vehicles: Vehicle[] = [player, ...this.cars.map(car => car.engine)].map(engine => { const [position, tangent] = engine.pose(); return { engine, position, tangent }; });
       const approaches = new Map<DriveEngine, Approach>();
       for (const car of this.cars) {
@@ -122,7 +124,7 @@ export class Traffic {
     return known;
   }
 
-  private spawn(here: Vec3, hidden: (p: Vec3, d: number) => boolean): void {
+  private spawn(here: Vec3, hidden: (p: Vec3, d: number) => boolean, playerPosition: Vec3): void {
     const candidates = [...this.graph.nearby(here[0], here[1], TRAFFIC_RANGE.max)];
     for (let attempt = 0; attempt < 8 && candidates.length; attempt++) {
       const edgeId = candidates[Math.floor(this.random() * candidates.length)];
@@ -133,6 +135,9 @@ export class Traffic {
       const s = 6 + this.random() * (path.length - 12);
       const p = path.sample(s)[0], d = Math.hypot(p[0] - here[0], p[1] - here[1]);
       if (d < TRAFFIC_RANGE.min || d > TRAFFIC_RANGE.max || !hidden(p, d)) continue;
+      // The explorer may be far from the parked car. Keep the same initial
+      // braking room around it as around cars already moving in the scene.
+      if (Math.hypot(p[0] - playerPosition[0], p[1] - playerPosition[1]) < 40) continue;
       if (this.cars.some(car => { const q = car.engine.pose()[0]; return Math.hypot(q[0] - p[0], q[1] - p[1]) < 40; })) continue;
       const engine = new DriveEngine(this.graph, edgeId, s);
       engine.cruiseAtLimit = true;
