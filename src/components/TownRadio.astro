@@ -4,42 +4,62 @@ const recommended = RADIO_STATIONS.filter((station) => station.recommended);
 ---
 
 <details class="town-radio" data-town-radio>
-  <summary>Car radio <span class="town-radio__summary" data-radio-summary>Off</span></summary>
+  <summary>
+    <span class="town-radio__grille" aria-hidden="true"></span>
+    <span class="town-radio__brand">Webster <span>Car radio · AM / FM</span></span>
+    <span class="town-radio__summary" data-radio-summary>Off</span>
+    <span class="town-radio__expand">Controls <span aria-hidden="true">⌄</span></span>
+    <span class="town-radio__grille" aria-hidden="true"></span>
+  </summary>
   <div class="town-radio__body">
     <div class="town-radio__top">
+      <div class="town-radio__power">
+        <button type="button" data-radio-power aria-pressed="false">Turn radio on</button>
+        <span class="town-radio__engraved" aria-hidden="true">Power</span>
+      </div>
       <div class="town-radio__display">
+        <span class="town-radio__display-label">Local radio</span>
         <output class="town-radio__frequency" data-radio-frequency>91.3 FM</output>
         <span data-radio-name>Local radio</span>
         <span class="town-radio__muted" data-radio-detail>Webster and the surrounding towns</span>
       </div>
-      <div class="town-radio__switches">
-        <label>Band <select data-radio-band><option value="fm">FM</option><option value="am">AM</option></select></label>
-        <button type="button" data-radio-power aria-pressed="false">Turn radio on</button>
-      </div>
+      <label class="town-radio__volume">
+        <span class="town-radio__engraved">Volume</span>
+        <input data-radio-volume type="range" min="0" max="100" step="1" value="45" aria-label="Radio volume" />
+        <span class="town-radio__volume-limits" aria-hidden="true"><span>Min</span><span>Max</span></span>
+      </label>
     </div>
 
     <div class="town-radio__tuner">
-      <button type="button" data-radio-down aria-label="Tune down one channel">−</button>
+      <label class="town-radio__band"><span class="town-radio__engraved">Band</span><select data-radio-band><option value="fm">FM</option><option value="am">AM</option></select></label>
       <div class="town-radio__scale">
         <div class="town-radio__markers" data-radio-markers aria-hidden="true"></div>
         <input id="town-radio-dial" data-radio-dial type="range" min="879" max="1079" step="2" value="913" aria-label="Radio frequency" />
         <div class="town-radio__limits"><span data-radio-min>87.9</span><span data-radio-max>107.9 MHz</span></div>
       </div>
-      <button type="button" data-radio-up aria-label="Tune up one channel">+</button>
+      <div class="town-radio__tuning-control">
+        <span class="town-radio__engraved" aria-hidden="true">Tune</span>
+        <div class="town-radio__tuning-keys">
+          <button type="button" data-radio-down aria-label="Tune down one channel">−</button>
+          <button type="button" data-radio-up aria-label="Tune up one channel">+</button>
+        </div>
+      </div>
     </div>
 
     <div class="town-radio__playback">
       <p data-radio-status role="status" aria-live="polite">Off</p>
       <button type="button" data-radio-retry hidden>Retry</button>
-      <label class="town-radio__volume">Volume <input data-radio-volume type="range" min="0" max="100" step="1" value="45" aria-label="Radio volume" /></label>
+      <span class="town-radio__engraved">Internet receiver</span>
     </div>
 
     <div class="town-radio__presets" aria-label="Recommended local stations">
-      <span class="town-radio__label">Recommended</span>
+      <span class="town-radio__engraved town-radio__label">Local presets</span>
       <div class="town-radio__preset-buttons">
-        {recommended.map((station) => (
+        {recommended.map((station, index) => (
           <button type="button" data-radio-station={station.id} aria-pressed="false">
-            <span>{station.frequency.toFixed(station.band === 'fm' ? 1 : 0)} {station.band.toUpperCase()} · {station.name}</span>
+            <span class="town-radio__preset-number" aria-hidden="true">{index + 1}</span>
+            <span class="town-radio__preset-frequency">{station.frequency.toFixed(station.band === 'fm' ? 1 : 0)} <small>{station.band.toUpperCase()}</small></span>
+            <span class="town-radio__preset-name">{station.name}</span>
             <span class="town-radio__muted" data-radio-reception="" hidden></span>
           </button>
         ))}

@@ -8,16 +8,16 @@ import { EXPLORE_PLACES } from '../lib/town/explore-places';
 import directory from '../../data/derived/town/place-directory.json';
 import '../styles/town.css';
 
-const poster = '/town-assets/webster-poster-cinematic.webp';
+const poster = '/town-assets/webster-cover-art-v2.webp';
 ---
 
 <Base
   title="Webster, Massachusetts"
   description="Take an unhurried drive through a reconstruction of Webster, Massachusetts. Follow the roads, choose your turns, and explore a New England mill town."
   ogImage={poster}
-  ogImageAlt="A reconstruction of Main Street in Webster, with brick buildings, summer trees, and a teal car."
-  ogImageWidth={1440}
-  ogImageHeight={900}
+  ogImageAlt="Illustrated game cover: a teal car on Webster’s Main Street in warm evening sunlight."
+  ogImageWidth={1586}
+  ogImageHeight={992}
   activeNav="/visuals"
 >
   <article class="town-page" aria-labelledby="town-title">
@@ -43,14 +43,18 @@ const poster = '/town-assets/webster-poster-cinematic.webp';
           <img
             class="town-poster"
             src={poster}
-            width="1440"
-            height="900"
-            alt="Main Street in the driving game: a brick church and clocktower, leafy summer trees, and a teal car on the road."
+            width="1586"
+            height="992"
+            alt="Illustrated cover art inspired by the game’s Main Street: a teal car, Webster’s brick church and storefronts, and golden summer light."
             fetchpriority="high"
             decoding="async"
           />
+          <div class="town-intro__brand">
+            <span class="town-intro__edition">A late-summer drive</span>
+            <h2>Webster</h2>
+            <span class="town-intro__location">Massachusetts</span>
+          </div>
           <div class="town-intro__content">
-            <h2>Find your way through Webster</h2>
             <p>The car follows the road.<br />You choose where it goes.</p>
             <button class="town-play" type="button" data-town-play>
               <span>Play</span>
@@ -63,7 +67,7 @@ const poster = '/town-assets/webster-poster-cinematic.webp';
             <p data-town-resume-label hidden></p>
             <p class="town-intro__hint">Arrow keys or touch controls</p>
           </div>
-          <span class="town-poster-caption">A late-summer drive through Webster</span>
+          <span class="town-poster-caption">Cover art · Main Street</span>
         </div>
 
         <div class="town-loading" data-town-loading aria-live="off" hidden>

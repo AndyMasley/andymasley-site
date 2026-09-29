@@ -89,6 +89,11 @@ source notes describe the different source dates and limitations.
 
 ## Art direction
 
+The opening screen uses `webster-cover-art-v2.webp`, illustrated promotional
+art based on the prior Main Street game capture. It is labeled cover art and
+does not represent the renderer's graphics. The built-in image generator prompt
+and reference are preserved in `data/source/town/cover-art-v2.json`.
+
 The continuous Norwich Branch uses `rail-corridor.ts` and streamed per-tile
 packets from `scripts/rail_crossings/prepare-corridor.py`. Eleven connected
 active OSM ways supply the route and mapped bridge spans; the source gauge is

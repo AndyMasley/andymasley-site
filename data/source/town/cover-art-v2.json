@@ -1,0 +1,13 @@
+{
+  "asset": "/town-assets/webster-cover-art-v2.webp",
+  "kind": "Illustrated promotional cover art; not a gameplay screenshot",
+  "generator": "Built-in image_gen tool",
+  "editReference": "/town-assets/webster-poster-cinematic.webp",
+  "prompt": "Use case: style-transfer.\nAsset type: landscape key art behind a real driving game's start screen, aspect ratio 16:10, high resolution.\nInput image: edit target and strict location/composition reference, the current Webster Massachusetts game screenshot.\nPrimary request: Make this look like the memorable, polished cover art of a popular driving exploration video game. Transform the screenshot into confident, richly detailed illustrated 3D game key art with crisp shapes, nuanced painterly texture, cinematic depth, warm late-afternoon sunlight, subtle atmosphere, lush late-summer trees, luminous teal car paint and warm brick buildings. A calm appealing small-town road trip, not a racing or crime scene.\nPreserve: the recognizable layout of this real Main Street, its brick church and clock tower on the left, low brick commercial building on the right, sidewalks, road geometry, yellow center lines, and the same unbranded teal touring car seen from behind driving away. Keep landmarks in their correct relative locations. Do not add skyscrapers, mountains, water, people, racing cars, flags or any unrelated landmarks.\nComposition: road and teal car form the hero subject in the lower center-right; town leads into distance. Slightly more dramatic and professional framing, but the street stays recognizably the same. Clear unobstructed dark-green treetop/soft sky area at upper left for a large title to be added later in HTML; quieter shaded area at lower left for the Play button. Do not paint a frame or UI.\nLighting: beautiful warm directional sunlight and cool shadow, refined cinematic color separation, realistic material highlights, no fog that obscures buildings. Finished premium game promotional illustration, not an unedited low-poly screenshot and not a photograph.\nText: none. No words, logos, watermarks, interface, badges, text boxes, letterboxing or fake screenshots. Fill the full image.",
+  "size": [
+    1586,
+    992
+  ],
+  "encoding": "WebP, cwebp quality 86",
+  "generatedFile": "exec-1e3382ed-8eee-4811-b965-bd48893ffb15.png"
+}
