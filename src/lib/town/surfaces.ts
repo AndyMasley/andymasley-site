@@ -8,6 +8,7 @@ import { FOREST_LITTER_GLSL, FOREST_LITTER_LIMITS } from './forest-litter';
 import { releaseHardscapeGrassExclusions } from './hardscape-grass-exclusions';
 import { regularizeCover } from './cover-cleanup';
 import { surfaceSet, surfaceMeanLuminance } from './surface-library';
+import { withLoadDeadline } from './critical-load';
 
 type TileSurface = { mask: THREE.Texture; materials: THREE.Material[] };
 /** Mean linear reflectance of the streets' asphalt, and of the release's own atlas. */
@@ -28,6 +29,7 @@ export class TownSurfaces {
   private fullMaps: { asset: AssetRef; color: boolean }[] = [];
   private previewSlots = new Set<number>();
   private fullResolutionWork?: Promise<void>;
+  private upgradeAbort?: AbortController;
   private upgradeTimer?: ReturnType<typeof setTimeout>;
   private upgradeRetryAt = 0;
   private upgradeFailures = 0;
@@ -66,26 +68,47 @@ export class TownSurfaces {
     this.shared = results.map(result => result.status === 'fulfilled' ? result.value : null);
   }
 
-  /** Only six shared ground maps refine after the first live render. Source
-   * building/car maps always retain full quality. Failed refinement keeps the
-   * usable preview and retries; no source texture or shader formula changes. */
+  /** Only six shared ground maps refine. Startup can await prepare(); later
+   * retries retain their scheduling delay. Source building/car maps always keep
+   * full quality; failed refinement preserves each usable preview. */
   refine(signal: AbortSignal): void {
     if (this.disposed || signal.aborted || !this.previewSlots.size || this.fullResolutionWork || this.upgradeTimer || Date.now() < this.upgradeRetryAt) return;
     this.upgradeTimer = setTimeout(() => {
       this.upgradeTimer = undefined;
-      if (this.disposed || signal.aborted) return;
-      this.fullResolutionWork = Promise.all([...this.previewSlots].map(async i => {
+      void this.prepare(signal);
+    }, 500);
+  }
+
+  /** Resolve after the original full maps are installed or a bounded fallback.
+   * No duplicate image requests when startup meets an already scheduled retry. */
+  prepare(signal: AbortSignal): Promise<void> {
+    if (this.disposed || signal.aborted) return Promise.resolve();
+    if (this.upgradeTimer) clearTimeout(this.upgradeTimer); this.upgradeTimer = undefined;
+    if (this.fullResolutionWork) return this.fullResolutionWork;
+    if (!this.previewSlots.size) return Promise.resolve();
+    const request = new AbortController(); this.upgradeAbort = request;
+    const cancel = () => request.abort();
+    signal.addEventListener('abort', cancel, { once: true });
+    this.fullResolutionWork = withLoadDeadline(request.signal, async child => {
+      await Promise.all([...this.previewSlots].map(async i => {
         const source = this.fullMaps[i];
         try {
-          const texture = await this.read(source.asset, source.color, signal);
-          if (this.disposed || signal.aborted) { this.destroyTexture(texture); return; }
+          const texture = await this.read(source.asset, source.color, child);
+          if (this.disposed || child.aborted) { this.destroyTexture(texture); return; }
           texture.wrapS = texture.wrapT = THREE.RepeatWrapping; texture.anisotropy = 4; texture.needsUpdate = true;
           const old = this.shared[i]; this.shared[i] = texture; this.previewSlots.delete(i);
           for (const versions of this.shaders.values()) for (const uniforms of versions) this.updateUniformTextures(uniforms);
           if (old) this.destroyTexture(old);
-        } catch { if (!this.disposed && !signal.aborted) this.upgradeFailures++; }
-      })).then(() => { this.upgradeRetryAt = Date.now() + 10000; }).finally(() => { this.fullResolutionWork = undefined; });
-    }, 500);
+        } catch { if (!this.disposed && !child.aborted) this.upgradeFailures++; }
+      }));
+    }, { label: 'Ground surface detail', timeoutMs: 12000 }).catch(() => {
+      if (!this.disposed && !request.signal.aborted) this.upgradeFailures += this.previewSlots.size;
+    }).finally(() => {
+      signal.removeEventListener('abort', cancel);
+      this.upgradeRetryAt = Date.now() + 10000;
+      this.fullResolutionWork = undefined; this.upgradeAbort = undefined;
+    });
+    return this.fullResolutionWork;
   }
 
   retryRefinement(signal: AbortSignal): void { this.upgradeRetryAt = 0; this.refine(signal); }
@@ -533,6 +556,7 @@ if(abs(townGroundDet)>1e-10)normal=normalize(abs(townGroundDet)*normal-sign(town
 
   dispose(): void {
     this.disposed = true;
+    this.upgradeAbort?.abort();
     if (this.upgradeTimer) clearTimeout(this.upgradeTimer); this.upgradeTimer = undefined;
     for (const group of this.tiles.keys()) this.release(group);
     this.grass.dispose();

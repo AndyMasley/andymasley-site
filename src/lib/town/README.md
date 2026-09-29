@@ -1,5 +1,34 @@
 # Webster browser drive
 
+Startup deliberately spends longer preparing a drive to reduce work during play.
+The loading indicator reports actual neighborhood tile completion, then texture
+and rendering preparation; it does not show an estimated download percentage.
+The same bounded nearby tile selection and display LODs used during driving are
+prepared before controls become available, with a smaller mobile/Low footprint.
+Optional neighbor failures have a deadline and do not make an otherwise usable
+starting street unplayable. This is not a whole-town preload or an increase in
+the distance rendered. Moving to another starting place uses the same preparation.
+
+Authored surface maps, full ground maps and the photographic sky settle before
+the renderer warms the actual camera finish and shadow path behind the cover.
+`startup-renderer.ts` owns the cancellable preparation work and restores the
+starting camera before revealing the scene. Automatic graphics evaluates frame
+times after driving begins, excluding preparation. Loading can reduce streaming
+and first-use stalls; it does not remove the cost of drawing each frame. Measure
+startup duration, first-drive frame intervals, steady driving and retained
+memory separately on the same device and graphics settings.
+
+Tree detail/shadow cohorts retain their instance buffers across nearby LOD
+changes and update bounds when membership changes. Static tile transforms are
+composed at adoption and after late dressing, while world-matrix traversal and
+new grass children remain live. Camera obstruction candidate selection visits
+resident tiles instead of scanning every tile in the town.
+Large eligible static meshes also get an indirect camera-ray index during
+preparation. It leaves the rendered geometry and source indices unchanged;
+unsupported meshes retain native Three.js intersection tests. New candidates
+use native tests until bounded deferred preparation finishes, and disposing a
+geometry releases its index. Measure camera-test time separately from GPU cost.
+
 `/town` is part of the existing Astro site. `main.ts` starts Three.js after Play,
 owns input, cameras, HUD and audio, and disposes the session during Astro
 navigation. `world.ts` streams scenery around the car, selects display LODs, and

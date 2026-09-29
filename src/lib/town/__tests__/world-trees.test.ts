@@ -136,6 +136,20 @@ describe('Town tree detail, global shadow budget and instance ownership', () => 
     f.world.dispose();
   });
 
+  it('reactivates cached shadow cohorts after an anchor leaves and re-enters the shadow radius', () => {
+    const f = fixture([[row(10)]]); f.update();
+    const shadows = f.meshes().filter(({ mesh }) => mesh.castShadow).map(({ mesh }) => mesh);
+    const buffers = shadows.map(mesh => mesh.instanceMatrix);
+    expect(shadows).toHaveLength(2);
+    f.update(200);
+    shadows.forEach(mesh => { expect(mesh.visible).toBe(false); expect(mesh.castShadow).toBe(false); expect(mesh.count).toBe(0); });
+    f.update();
+    shadows.forEach((mesh, index) => { expect(mesh.visible).toBe(true); expect(mesh.castShadow).toBe(true); expect(mesh.count).toBe(1); expect(mesh.instanceMatrix).toBe(buffers[index]); });
+    expect(f.selections('near', true)).toEqual(['tile-0:0']);
+    expect(f.selections('trunk', true)).toEqual(['tile-0:0']);
+    f.world.dispose();
+  });
+
   it('retains existing instance groups through detail and shadow hysteresis, with a strict 120m shadow exit', () => {
     const f = fixture([[row(210), row(115)]]); f.update();
     expect(f.selections('near')).toEqual(['tile-0:1']);
@@ -199,17 +213,36 @@ describe('Town tree detail, global shadow budget and instance ownership', () => 
     f.world.dispose();
   });
 
-  it('disposes retired instance buffers while keeping shared geometry alive until world disposal', () => {
+  it('reuses cohort buffers through repeated LOD changes and releases them once at tile disposal', () => {
     const f = fixture([[row(210), row(30)]]); f.update();
     const geometries = f.geometries.map(g => vi.spyOn(g, 'dispose'));
-    const retired = f.meshes().map(({ mesh }) => vi.spyOn(mesh, 'dispose'));
+    const retained = f.meshes().map(({ mesh }) => ({ mesh, matrix: mesh.instanceMatrix, dispose: vi.spyOn(mesh, 'dispose') }));
     const originalGroup = f.world.loaded.get('tile-0')!.trees!;
     f.update(30);
-    expect(f.world.loaded.get('tile-0')!.trees).not.toBe(originalGroup);
-    retired.forEach(spy => expect(spy).toHaveBeenCalledTimes(1));
+    expect(f.world.loaded.get('tile-0')!.trees).toBe(originalGroup);
+    retained.forEach(({ mesh, matrix, dispose }) => { expect(mesh.instanceMatrix).toBe(matrix); expect(dispose).not.toHaveBeenCalled(); });
+    const allocations = f.world.streamingResources().treeInstanceAllocations;
+    for (let i = 0; i < 5; i++) { f.update(-20); f.update(30); }
+    expect(f.world.streamingResources().treeInstanceAllocations).toBe(allocations);
+    expect(f.world.streamingResources().treeInstanceReuses).toBeGreaterThan(0);
+    expect(f.selections('near')).toEqual(['tile-0:0', 'tile-0:1']);
+    expect(f.selections('far')).toEqual([]);
+    for (const { mesh } of f.meshes()) {
+      expect(mesh.count).toBe(mesh.userData.sourceRows.length);
+      if (!mesh.count) { expect(mesh.visible).toBe(false); continue; }
+      const expected = new THREE.Box3(), matrix = new THREE.Matrix4();
+      mesh.geometry.computeBoundingBox();
+      for (let index = 0; index < mesh.count; index++) {
+        mesh.getMatrixAt(index, matrix);
+        expected.union(mesh.geometry.boundingBox!.clone().applyMatrix4(matrix));
+      }
+      expect(mesh.boundingBox).toEqual(expected);
+      expect(mesh.boundingSphere!.containsPoint(expected.getCenter(new THREE.Vector3()))).toBe(true);
+    }
     geometries.forEach(spy => expect(spy).not.toHaveBeenCalled());
-    expect(originalGroup.children).toHaveLength(0);
     f.world.dispose(); geometries.forEach(spy => expect(spy).toHaveBeenCalledTimes(1));
+    retained.forEach(({ dispose }) => expect(dispose).toHaveBeenCalledTimes(1));
+    expect(originalGroup.children).toHaveLength(0);
     f.world.dispose(); geometries.forEach(spy => expect(spy).toHaveBeenCalledTimes(1));
   });
 });

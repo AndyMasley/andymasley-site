@@ -56,6 +56,10 @@ import type { RoadsideCommerce } from './roadside-commerce';
 type TreePlan = { near: Set<number>; shadows: Set<number>; excluded: Set<number>; key: string };
 type LoadedTile = { group: THREE.Group; level: number; lastUsed: number; trees?: THREE.Group; treeRows?: number[][]; treeExcluded?: Set<number>; treeSourceExcluded?: Set<number>; treeGroundGaps?: number[]; treeGround?: TreeGroundSampler; treePlan?: TreePlan; occluders?: THREE.Mesh[]; geometryBytes?: number; detailRetryAt?: number; detailAttempts?: number };
 type MaterialEntry = { material: THREE.Material; refs: number; textures: string[] };
+type TileSelection = { tile: TownTile; distance: number; ahead: number };
+export type NeighborhoodProgress = { loaded: number; total: number };
+export type NeighborhoodPreparationOptions = { signal?: AbortSignal; timeoutMs?: number; radiusM?: number; maxTiles?: number; onProgress?: (progress: NeighborhoodProgress) => void };
+export type NeighborhoodPreparationResult = NeighborhoodProgress & { timedOut: boolean };
 
 
 /** Leafy streets read through broken tree shade (VC-0369, VC-0377, VC-0427).
@@ -77,6 +81,8 @@ export class TownWorld {
   private sourceRetryCache = new ByteCache<ArrayBuffer>(24 * 1024 * 1024, 8);
   private leases = new WeakMap<THREE.Object3D, Set<string>>();
   private releasedGroups = new WeakSet<THREE.Object3D>();
+  private treeBufferRows = new WeakMap<THREE.InstancedMesh, number[][]>();
+  private frozenTileTransforms = new WeakSet<THREE.Object3D>();
   private prototypes: THREE.Group[] = [];
   private coniferPrototypes = new Map<number, THREE.Group>();
   private broadleafPrototypes = new Map<number, THREE.Group>();
@@ -94,8 +100,11 @@ export class TownWorld {
   private position: V3 = [0, 0, 0];
   private treeGroundVisibilityKey = '';
   private preparingAt: V3 | null = null;
+  private preparingNeighborhood: { position: V3; lookAhead: V3; selected: TileSelection[]; signal?: AbortSignal } | null = null;
+  private readonly tileDefinitions: Map<string, { tile: TownTile; order: number }>;
   private sharedAbort = new AbortController();
   private initialization?: Promise<void>;
+  private surfaceLibraryPreparation?: Promise<void>;
   private surfaces?: TownSurfaces;
   private dressing?: StreetDressing;
   private houses?: HouseDressing;
@@ -103,7 +112,7 @@ export class TownWorld {
   private curbParking?: CurbParking;
   private commerce?: RoadsideCommerce;
   private readonly stageTimings: Record<string, number> = {};
-  private readonly timings = { tiles: 0, parseMs: 0, assemblyMs: 0, maxParseMs: 0, maxAssemblyMs: 0, dressingMs: 0, maxDressingMs: 0, detailRetries: 0, detailRecovered: 0 };
+  private readonly timings = { tiles: 0, parseMs: 0, assemblyMs: 0, maxParseMs: 0, maxAssemblyMs: 0, dressingMs: 0, maxDressingMs: 0, detailRetries: 0, detailRecovered: 0, treeInstanceAllocations: 0, treeInstanceReuses: 0 };
   private readonly artClock = { value: 0 };
   private readonly boundaryContext: BoundaryContext;
   private readonly sourceImages: SourceImageCache;
@@ -159,6 +168,7 @@ export class TownWorld {
     (url, signal) => this.fetchJson(url, signal), 2 * 1024 * 1024);
 
   constructor(readonly manifest: WorldManifest, readonly manifestUrl: string, readonly onChange: () => void) {
+    this.tileDefinitions = new Map(manifest.tiles.map((tile, order) => [tile.id, { tile, order }]));
     this.root.name = 'Webster scenery';
     this.sourceImages = new SourceImageCache(new URL(manifestUrl).origin, async (url, signal) => {
       const response = await fetch(url, { signal });
@@ -345,9 +355,9 @@ export class TownWorld {
   }
 
   private async initializeShared(): Promise<void> {
-    // The authored surface library installs one-texel placeholders at once and
-    // streams its images behind the first frames; startup never waits for it.
-    void loadSurfaceLibrary(this.manifestUrl, !this.low && !this.mobile, this.sharedAbort.signal, this)
+    // Install placeholders while geometry loads, then await the image work at
+    // the explicit presentation preparation gate.
+    this.surfaceLibraryPreparation = loadSurfaceLibrary(this.manifestUrl, !this.low && !this.mobile, this.sharedAbort.signal, this)
       .catch(error => { if (!this.sharedAbort.signal.aborted) console.warn('Some Webster surface textures are unavailable; their placeholder tones remain.', error); });
     const results = await Promise.allSettled([
       this.surfaces?.initialize(this.sharedAbort.signal),
@@ -442,6 +452,7 @@ export class TownWorld {
       const definition = this.manifest.tiles.find(candidate => candidate.id === id);
       if (!definition) continue;
       this.dress(tile.group, id, definition.origin, tile.level);
+      this.freezeTileTransforms(tile.group);
       tile.geometryBytes = this.geometryBytes(tile.group);
     }
   }
@@ -454,6 +465,7 @@ export class TownWorld {
       if (!definition) continue;
       commerce.apply(tile.group, id, definition.origin, tile.level);
       releaseTileTerrain();
+      this.freezeTileTransforms(tile.group);
       tile.geometryBytes = this.geometryBytes(tile.group);
     }
   }
@@ -476,6 +488,19 @@ export class TownWorld {
     releaseTileTerrain();
     const ms = performance.now() - started;
     this.timings.dressingMs += ms; this.timings.maxDressingMs = Math.max(this.timings.maxDressingMs, ms);
+  }
+
+  private freezeTileTransforms(group: THREE.Group): void {
+    group.traverse(object => {
+      // Preserve pre-existing manually authored matrices. Only recompose the
+      // transforms this world froze when late dressing revisits a tile.
+      if (object.matrixAutoUpdate || this.frozenTileTransforms.has(object)) {
+        object.updateMatrix();
+        object.matrixAutoUpdate = false;
+        this.frozenTileTransforms.add(object);
+      }
+    });
+    group.updateMatrixWorld(true);
   }
 
   updatePresentation(timeSeconds: number, position: V3 = this.position): void {
@@ -537,18 +562,25 @@ export class TownWorld {
     return{railCorridor:[...this.loaded.values()].flatMap(({group})=>group.userData.assemblyReports?.railCorridor?[group.userData.assemblyReports.railCorridor]:[]),roadDash:[...this.loaded.values()].flatMap(({group})=>group.userData.roadDashResult?[group.userData.roadDashResult]:[]),roadCurve:[...this.loaded.values()].flatMap(({group})=>group.userData.roadCurveResult?[group.userData.roadCurveResult]:[]),arrivalGrounds:[...this.loaded.values()].flatMap(({group})=>group.userData.arrivalGrounds?[group.userData.arrivalGrounds]:[]),parkedCars,parkedDraws,parkedTriangles,streetCornerGround:[...this.loaded.values()].flatMap(({group})=>group.userData.streetCornerGroundResult?[group.userData.streetCornerGroundResult]:[]),streetCorners:[...this.loaded.values()].flatMap(({group})=>group.userData.streetCorners?[group.userData.streetCorners]:[]),streetGeometry,roadTriangles,roadSurfaceTriangles,terrainTriangles,parkingTriangles,parkingBays,pavedMasks,rejectedTerrain,optionalFailures:this.roadFinish.failures+this.terrainFinish.failures+this.parkingFinish.failures+this.additionalEnvironment.failures+this.roadside.failures+this.environmentGround.failures+this.facilities.failures+this.roadMaterials.failures+this.streetCorners.failures+this.streetCornerGround.failures+this.roadCurve.failures+this.roadDash.failures+this.propertyTerrain.failures+this.foundationWalls.failures+this.measuredRoofs.failures+this.roadGroundClearance.failures+this.railCorridor.failures};
   }
 
+  private selectTiles(position: V3, lookAhead: V3, radius = this.low ? 620 : 950, limit = this.low ? 26 : 48): TileSelection[] {
+    return this.manifest.tiles
+      .map(tile => ({ tile, distance: Math.sqrt(boundsDistanceSquared(tile.bounds, position)), ahead: Math.sqrt(boundsDistanceSquared(tile.bounds, lookAhead)) }))
+      .filter(({ distance, ahead }) => distance < radius || ahead < Math.min(radius, this.low ? 240 : 350))
+      .sort((a, b) => Number(this.ownsCell(b.tile, position)) - Number(this.ownsCell(a.tile, position)) || Math.min(a.distance, a.ahead + 80) - Math.min(b.distance, b.ahead + 80))
+      .slice(0, limit);
+  }
+
   update(position: V3, lookAhead: V3, force = false): void {
     if (this.disposed) return;
-    const preparing = this.preparingAt;
-    if (preparing) position = lookAhead = preparing;
+    const neighborhood = this.preparingNeighborhood;
+    if (neighborhood?.signal?.aborted) return;
+    const preparing = this.preparingAt || neighborhood;
+    if (this.preparingAt) position = lookAhead = this.preparingAt;
+    else if (neighborhood) { position = neighborhood.position; lookAhead = neighborhood.lookAhead; }
     this.position = position;
-    const radius = this.low ? 620 : 950;
     const time = performance.now();
-    let selected = (preparing ? this.readinessTiles(position) : this.manifest.tiles)
-      .map((tile) => ({ tile, distance: Math.sqrt(boundsDistanceSquared(tile.bounds, position)), ahead: Math.sqrt(boundsDistanceSquared(tile.bounds, lookAhead)) }))
-      .filter(({ distance, ahead }) => preparing || distance < radius || ahead < (this.low ? 240 : 350))
-      .sort((a, b) => Number(this.ownsCell(b.tile, position)) - Number(this.ownsCell(a.tile, position)) || Math.min(a.distance, a.ahead + 80) - Math.min(b.distance, b.ahead + 80));
-    if (!preparing) selected = selected.slice(0, this.low ? 26 : 48);
+    const selected = this.preparingAt ? this.readinessTiles(position).map(tile => ({ tile, distance: Math.sqrt(boundsDistanceSquared(tile.bounds, position)), ahead: 0 }))
+      : neighborhood?.selected ?? this.selectTiles(position, lookAhead);
     const desired = new Map<string, number>();
     this.refreshTreeGrounding(selected.map(({ tile }) => tile));
     const treePlans = this.planTrees(selected.map(({ tile }) => tile));
@@ -562,8 +594,7 @@ export class TownWorld {
         cached.group.visible = true;
         const treePlan = treePlans.get(tile.id);
         if (cached.treeRows && treePlan && cached.treePlan?.key !== treePlan.key) {
-          if (cached.trees) this.releaseTrees(cached.trees);
-          cached.trees = this.buildTrees(cached.treeRows, tile.origin, treePlan, evergreens(cached.group.userData.treeFamilies, cached.treeRows.length));
+          cached.trees = this.buildTrees(cached.treeRows, tile.origin, treePlan, evergreens(cached.group.userData.treeFamilies, cached.treeRows.length), cached.trees);
           cached.treePlan = treePlan;
           this.root.add(cached.trees);
         }
@@ -616,9 +647,12 @@ export class TownWorld {
    * meshes without traversing trees, grass, transparent water or the backdrop. */
   cameraOccluders(position: V3, radius = 30): readonly THREE.Mesh[] {
     const meshes: THREE.Mesh[] = [];
-    for (const tile of this.manifest.tiles) {
-      const loaded = this.loaded.get(tile.id);
-      if (loaded?.group.visible && boundsDistanceSquared(tile.bounds, position) <= radius * radius) meshes.push(...(loaded.occluders ?? []));
+    const candidates = [...this.loaded].flatMap(([id, loaded]) => {
+      const definition = this.tileDefinitions.get(id);
+      return definition && loaded.group.visible && boundsDistanceSquared(definition.tile.bounds, position) <= radius * radius ? [{ ...definition, loaded }] : [];
+    }).sort((a, b) => a.order - b.order);
+    for (const { loaded } of candidates) {
+      meshes.push(...(loaded.occluders ?? []));
     }
     return meshes;
   }
@@ -689,7 +723,7 @@ export class TownWorld {
   }
 
   async prepareAt(position: V3, timeoutMs = 25000): Promise<void> {
-    if (this.preparingAt) throw new Error('Another street is already loading.');
+    if (this.preparingAt || this.preparingNeighborhood) throw new Error('Another street is already loading.');
     const target: V3 = [...position];
     this.preparingAt = target;
     const start = performance.now();
@@ -703,6 +737,41 @@ export class TownWorld {
       throw new Error('This street is taking longer to load. Check your connection and try again.');
     } finally {
       this.preparingAt = null;
+    }
+  }
+
+  async prepareTextures(signal: AbortSignal = this.sharedAbort.signal): Promise<void> {
+    if (this.disposed || signal.aborted) throw new DOMException('Loading cancelled', 'AbortError');
+    await Promise.all([this.surfaceLibraryPreparation, this.surfaces?.prepare(signal)]);
+    if (this.disposed || signal.aborted) throw new DOMException('Loading cancelled', 'AbortError');
+  }
+
+  async prepareNeighborhood(position: V3, lookAhead: V3, options: NeighborhoodPreparationOptions = {}): Promise<NeighborhoodPreparationResult> {
+    if (this.preparingAt || this.preparingNeighborhood) throw new Error('Another street is already loading.');
+    if (this.disposed || options.signal?.aborted) throw new DOMException('Loading cancelled', 'AbortError');
+    const compact = this.low || this.mobile;
+    const bounded = (value: number | undefined, maximum: number) => Number.isFinite(value) ? Math.max(1, Math.min(maximum, value!)) : maximum;
+    const selected = this.selectTiles(position, lookAhead, bounded(options.radiusM, compact ? 620 : 950), Math.floor(bounded(options.maxTiles, compact ? 26 : 48)));
+    const preparation = { position: [...position] as V3, lookAhead: [...lookAhead] as V3, selected, signal: options.signal };
+    this.preparingNeighborhood = preparation;
+    const start = performance.now(), timeoutMs = bounded(options.timeoutMs, 90000);
+    let lastLoaded = -1;
+    const cancel = () => { for (const { tile } of selected) this.inflight.get(tile.id)?.abort(); };
+    options.signal?.addEventListener('abort', cancel, { once: true });
+    try {
+      while (true) {
+        if (this.disposed || options.signal?.aborted) throw new DOMException('Loading cancelled', 'AbortError');
+        this.update(preparation.position, preparation.lookAhead, true);
+        const loaded = selected.filter(({ tile, distance }) => this.loaded.get(tile.id)?.level === chooseLod(tile, distance, this.low)).length;
+        const progress = { loaded, total: selected.length };
+        if (loaded !== lastLoaded) { options.onProgress?.(progress); lastLoaded = loaded; }
+        if (loaded === selected.length) return { ...progress, timedOut: false };
+        if (performance.now() - start >= timeoutMs) return { ...progress, timedOut: true };
+        await new Promise(resolve => setTimeout(resolve, 80));
+      }
+    } finally {
+      options.signal?.removeEventListener('abort', cancel);
+      this.preparingNeighborhood = null;
     }
   }
 
@@ -747,6 +816,7 @@ export class TownWorld {
       }
       this.evict(tile.id);
       this.dress(group, tile.id, tile.origin, level);
+      this.freezeTileTransforms(group);
       // Near streets and houses, the trees the survey found replace the scenery's block trees.
       const survey = group.userData.surveyTrees as SurveyTrees | undefined;
       const unsupportedSurveyTrees = new Set<number>(), treeGroundGaps: number[] = [];
@@ -839,9 +909,11 @@ export class TownWorld {
     return plans;
   }
 
-  private buildTrees(rows: number[][], origin: V3, plan: TreePlan, evergreen?: (index: number) => boolean): THREE.Group {
-    const group = new THREE.Group();
+  private buildTrees(rows: number[][], origin: V3, plan: TreePlan, evergreen?: (index: number) => boolean, existing?: THREE.Group): THREE.Group {
+    const group = existing ?? new THREE.Group();
     group.position.fromArray(origin);
+    const reusable = new Map(group.children.filter((object): object is THREE.InstancedMesh => object instanceof THREE.InstancedMesh).map(mesh => [mesh.userData.treeCohort as string, mesh]));
+    const active = new Set<THREE.InstancedMesh>();
     const matrix = new THREE.Matrix4();
     const point = new THREE.Vector3();
     const scale = new THREE.Vector3();
@@ -881,15 +953,33 @@ export class TownWorld {
             for (const material of Array.isArray(object.material) ? object.material : [object.material]) {
               if (material.alphaTest > 0) material.alphaToCoverage = true;
             }
-            const mesh = new THREE.InstancedMesh(object.geometry, object.material, indices.length);
+            const key = `${band.kind}:${family}:${Number(castShadow)}:${object.uuid}`;
+            let mesh = reusable.get(key);
+            if (mesh && (mesh.instanceMatrix.count < indices.length || mesh.geometry !== object.geometry || mesh.material !== object.material)) {
+              mesh.removeFromParent(); mesh.dispose(); mesh = undefined;
+            }
+            if (!mesh) {
+              const capacity = Math.min(rows.length, THREE.MathUtils.ceilPowerOfTwo(indices.length));
+              mesh = new THREE.InstancedMesh(object.geometry, object.material, capacity);
+              mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+              mesh.userData.treeCohort = key;
+              group.add(mesh);
+              this.timings.treeInstanceAllocations++;
+            } else this.timings.treeInstanceReuses++;
+            active.add(mesh);
+            mesh.visible = true;
+            mesh.count = indices.length;
+            mesh.castShadow = castShadow;
+            mesh.receiveShadow = !this.low && this.treeShadows;
+            const previousIndices = mesh.userData.sourceRows as number[] | undefined;
+            if (this.treeBufferRows.get(mesh) === rows && previousIndices?.length === indices.length && indices.every((index, i) => previousIndices[i] === index)) return;
             mesh.name = `Webster trees | ${band.kind} | ${family} | ${castShadow ? 'shadow' : 'ordinary'}`;
             if (isTrunk) mesh.userData.trunkDetail = family;
             mesh.userData.treeKind = band.kind;
             mesh.userData.treeFamily = isTrunk ? 'trunk' : family === 'open' ? 'broadleaf' : family;
             mesh.userData.treeVariant = family === 'open' ? 'open' : 'standard';
             mesh.userData.sourceRows = indices;
-            mesh.castShadow = castShadow;
-            mesh.receiveShadow = !this.low && this.treeShadows;
+            this.treeBufferRows.set(mesh, rows);
             indices.forEach((rowIndex, index) => {
               const row = rows[rowIndex];
               const form = forms[rowIndex];
@@ -908,10 +998,14 @@ export class TownWorld {
             if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
             mesh.computeBoundingBox();
             mesh.computeBoundingSphere();
-            group.add(mesh);
           });
         }
       }
+    }
+    // Empty cohorts retain their buffers for a later LOD/shadow crossing, but
+    // contribute no draws, bounds, source anchors or shadow instances.
+    for (const object of group.children) if (object instanceof THREE.InstancedMesh && !active.has(object)) {
+      object.count = 0; object.visible = false; object.castShadow = false; object.receiveShadow = false; object.userData.sourceRows = [];
     }
     return group;
   }

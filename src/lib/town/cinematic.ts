@@ -201,7 +201,7 @@ export class CinematicRenderer {
   private readonly previousExposure: number;
   private disposed = false;
 
-  constructor(private readonly renderer: THREE.WebGLRenderer, scene: THREE.Scene, private readonly camera: THREE.PerspectiveCamera, options: { halfResAO: boolean }) {
+  constructor(private readonly renderer: THREE.WebGLRenderer, private readonly scene: THREE.Scene, private readonly camera: THREE.PerspectiveCamera, options: { halfResAO: boolean }) {
     const size = renderer.getDrawingBufferSize(new THREE.Vector2());
     this.composer = new EffectComposer(renderer, { frameBufferType: THREE.HalfFloatType, multisampling: FILM.multisampling });
     this.composer.addPass(new RenderPass(scene, camera));
@@ -302,6 +302,17 @@ export class CinematicRenderer {
 
   render(deltaSeconds: number): void {
     if (!this.disposed) this.composer.render(deltaSeconds);
+  }
+
+  /** Compile scene variants for the same HDR target used by the first pass.
+   * Shadow and fullscreen materials still need an actual covered render. */
+  compile(): Set<THREE.Material> {
+    if (this.disposed) return new Set();
+    const target = this.renderer.getRenderTarget(), cube = this.renderer.getActiveCubeFace(), mip = this.renderer.getActiveMipmapLevel();
+    try {
+      this.renderer.setRenderTarget(this.composer.inputBuffer);
+      return this.renderer.compile(this.scene, this.camera);
+    } finally { this.renderer.setRenderTarget(target, cube, mip); }
   }
 
   metrics(): CinematicMetrics {

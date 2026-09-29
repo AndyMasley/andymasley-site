@@ -38,7 +38,7 @@ async function snapshot(page, includeFrames = false) {
 }
 async function setup(mbps) {
   const context = await browser.newContext({ viewport:report.configuration.viewport, serviceWorkers:'block' });
-  const page = await context.newPage(); page.setDefaultTimeout(90000);
+  const page = await context.newPage(); page.setDefaultTimeout(180000);
   const errors = [], requests = new Map(), cdp = await context.newCDPSession(page);
   page.on('pageerror', error => errors.push(error.message));
   await cdp.send('Network.enable'); await cdp.send('Network.setCacheDisabled', { cacheDisabled:true });
@@ -76,7 +76,7 @@ try {
     } catch(error){row.error=error.stack;row.failureState=await snapshot(page).catch(()=>null);throw error;}
     finally {row.pageErrors=errors;await page.evaluate(()=>window.__webster?.dispose()).catch(()=>{});await context.close();await writeFile(path.join(out,`cold-${i+1}.json`),JSON.stringify(row,null,2)+'\n');}
   }
-  const values=report.cold.map(r=>r.clickToReadyMs);report.coldSummary={medianMs:pct(values,.5),p95Ms:pct(values,.95),count:values.length,localGoalMet:pct(values,.5)<=8000&&pct(values,.95)<=12000,note:'Three runs identify regressions; they do not establish a stable population p95 or public-host acceptance.'};
+  const values=report.cold.map(r=>r.clickToReadyMs);report.coldSummary={medianMs:pct(values,.5),p95Ms:pct(values,.95),count:values.length,legacyFastStartTargetMet:pct(values,.5)<=8000&&pct(values,.95)<=12000,note:'Readiness now includes bounded nearby scenery and renderer preparation. Compare the added loading time against drive stalls and retained memory; the former eight-second fast-start target is informational. Three runs do not establish a stable population p95 or public-host acceptance.'};
   if(seconds>0){
     const {page,context,errors,requests}=await setup(driveMbps),row={samples:[],actions:[],passed:false};report.drive=row;
     try {

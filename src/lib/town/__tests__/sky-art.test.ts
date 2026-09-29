@@ -2,14 +2,15 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import * as THREE from 'three';
 import { createSummerSky } from '../atmosphere';
-import { SKY_ART_URL, installSkyArt, loadSkyArt, streamSkyArt } from '../sky-art';
+import { SKY_ART_URL, installSkyArt, loadSkyArt, prepareSkyArt, streamSkyArt } from '../sky-art';
 
-const pmrem = vi.hoisted(() => ({ maps: [] as unknown[], disposed: vi.fn() }));
+const pmrem = vi.hoisted(() => ({ maps: [] as unknown[], disposed: vi.fn(), fail: false }));
 vi.mock('three', async importOriginal => {
   const actual = await importOriginal<typeof import('three')>();
   return { ...actual, PMREMGenerator: class {
     fromScene(scene: THREE.Scene) {
       pmrem.maps.push((scene.children[0] as THREE.Mesh<THREE.BufferGeometry, THREE.ShaderMaterial>).material.uniforms.summerSkyArt.value);
+      if (pmrem.fail) throw new Error('PMREM unavailable');
       return new actual.WebGLRenderTarget(16, 16);
     }
     dispose() { pmrem.disposed(); }
@@ -21,14 +22,58 @@ const renderer = { getContext: () => ({ isContextLost: () => false }) } as unkno
 const destroy = (sky: ReturnType<typeof createSummerSky>) => { sky.geometry.dispose(); sky.material.dispose(); };
 let bitmap: { width: number; height: number; close: () => void };
 beforeEach(() => {
-  pmrem.maps.length = 0; pmrem.disposed.mockClear();
+  pmrem.maps.length = 0; pmrem.disposed.mockClear(); pmrem.fail = false;
   bitmap = { width: 2048, height: 1024, close: vi.fn() };
   vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, blob: async () => new Blob() }));
   vi.stubGlobal('createImageBitmap', vi.fn().mockResolvedValue(bitmap));
 });
-afterEach(() => { vi.unstubAllGlobals(); vi.restoreAllMocks(); });
+afterEach(() => { vi.useRealTimers(); vi.unstubAllGlobals(); vi.restoreAllMocks(); });
 
 describe('optional photographic sky artwork', () => {
+  it('reports readiness only after the image and reflection environment are installed', async () => {
+    let finish!: (image: ImageBitmap) => void;
+    vi.mocked(createImageBitmap).mockImplementationOnce(() => new Promise(resolve => { finish = resolve; }));
+    const sky = createSummerSky(direction), replace = vi.fn(), preparation = prepareSkyArt(renderer, sky, direction, new AbortController().signal, replace);
+    let ready = false; void preparation.ready.then(() => { ready = true; });
+    await vi.waitFor(() => expect(finish).toBeTypeOf('function'));
+    expect(ready).toBe(false); expect(pmrem.maps).toEqual([]);
+    finish(bitmap as ImageBitmap); await preparation.ready;
+    expect(replace).toHaveBeenCalledOnce(); expect(pmrem.maps).toEqual([sky.material.uniforms.summerSkyArt.value]);
+    preparation.dispose(); replace.mock.calls[0][0].dispose(); destroy(sky);
+  });
+
+  it('bounds readiness when decode ignores cancellation and releases its late bitmap', async () => {
+    vi.useFakeTimers();
+    let finish!: (image: ImageBitmap) => void;
+    vi.mocked(createImageBitmap).mockImplementationOnce(() => new Promise(resolve => { finish = resolve; }));
+    const sky = createSummerSky(direction), original = sky.material.fragmentShader, replace = vi.fn();
+    const preparation = prepareSkyArt(renderer, sky, direction, new AbortController().signal, replace);
+    await vi.advanceTimersByTimeAsync(12000); await preparation.ready;
+    expect(replace).not.toHaveBeenCalled(); expect(sky.material.fragmentShader).toBe(original); expect(vi.getTimerCount()).toBe(0);
+    finish(bitmap as ImageBitmap); await vi.advanceTimersByTimeAsync(0);
+    expect(bitmap.close).toHaveBeenCalledOnce(); preparation.dispose(); destroy(sky);
+  });
+
+  it('settles cancellation promptly and releases a decoded image after context loss', async () => {
+    vi.useFakeTimers();
+    vi.mocked(fetch).mockImplementationOnce(() => new Promise(() => {}));
+    const sky = createSummerSky(direction), request = new AbortController(), replace = vi.fn();
+    const preparation = prepareSkyArt(renderer, sky, direction, request.signal, replace);
+    await vi.advanceTimersByTimeAsync(0); request.abort(); await preparation.ready;
+    expect(vi.getTimerCount()).toBe(0); expect(replace).not.toHaveBeenCalled();
+    const lostRenderer = { getContext: () => ({ isContextLost: () => true }) } as unknown as THREE.WebGLRenderer;
+    const lost = prepareSkyArt(lostRenderer, sky, direction, new AbortController().signal, replace); await lost.ready;
+    expect(bitmap.close).toHaveBeenCalledOnce(); expect(pmrem.maps).toEqual([]); lost.dispose(); preparation.dispose(); destroy(sky);
+  });
+
+  it('keeps the procedural sky and frees reflection resources when PMREM fails', async () => {
+    pmrem.fail = true;
+    const sky = createSummerSky(direction), original = sky.material.fragmentShader, replace = vi.fn();
+    const preparation = prepareSkyArt(renderer, sky, direction, new AbortController().signal, replace); await preparation.ready;
+    expect(replace).not.toHaveBeenCalled(); expect(sky.material.fragmentShader).toBe(original);
+    expect(pmrem.disposed).toHaveBeenCalledOnce(); expect(bitmap.close).toHaveBeenCalledOnce(); preparation.dispose(); destroy(sky);
+  });
+
   it('keeps encoded sRGB values for shader decoding and supplies seamless oriented sampling', async () => {
     const signal = new AbortController().signal, texture = await loadSkyArt(signal);
     expect(fetch).toHaveBeenCalledWith(SKY_ART_URL, { signal });

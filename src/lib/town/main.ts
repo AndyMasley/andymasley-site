@@ -58,6 +58,8 @@ export async function startTown(root: HTMLElement): Promise<Session> {
   const play = element<HTMLButtonElement>('play');
   const status = element('status');
   const loading = root.querySelector<HTMLElement>('[data-town-loading]');
+  const loadingLabel = root.querySelector<HTMLElement>('[data-town-loading-label]') ?? loading;
+  const loadingProgress = root.querySelector<HTMLProgressElement>('[data-town-loading-progress]');
   const qualitySelect = element<HTMLSelectElement>('quality');
   const locationSelect = element<HTMLSelectElement>('location');
   const pauseButton = element<HTMLButtonElement>('pause');
@@ -106,6 +108,7 @@ export async function startTown(root: HTMLElement): Promise<Session> {
   let vehicle: TouringCar | undefined;
   const audio = new RoadAudio();
   const cameraObstruction = new CameraObstruction();
+  let cameraIndex: import('./camera-raycast').CameraRaycastIndex | undefined;
   const waterReflection = new TownWaterReflection();
   let cinematic: CinematicRenderer | undefined;
   let cinematicModule: Promise<CinematicModule | undefined> | undefined;
@@ -128,6 +131,7 @@ export async function startTown(root: HTMLElement): Promise<Session> {
   let quality: Quality = (qualitySelect.value as Quality) || 'auto';
   let streamPaused = false;
   let teleporting = false;
+  let preparingGraphics = false;
   let firstFrame = true;
   // QA-only camera placement (screenshot harnesses); null in normal play.
   let debugCamera: { eye: number[]; target: number[] } | null = null;
@@ -156,7 +160,13 @@ export async function startTown(root: HTMLElement): Promise<Session> {
   const loadCinematic = (): Promise<CinematicModule | undefined> => cinematicModule ??= import('./cinematic').catch(() => { cinematicModule = undefined; return undefined; });
   const setStatus = (message: string): void => {
     if (status.textContent !== message) status.textContent = message;
-    if (loading && !loading.hidden && loading.textContent !== message) loading.textContent = message;
+    if (loading && !loading.hidden && loadingLabel && loadingLabel.textContent !== message) loadingLabel.textContent = message;
+  };
+  const prepareStatus = (message: string, done?: number, total = 1): void => {
+    setStatus(message);
+    if (!loadingProgress) return;
+    if (done === undefined) loadingProgress.removeAttribute('value');
+    else { loadingProgress.max = Math.max(1, total); loadingProgress.value = done; }
   };
   const setPaused = (paused: boolean): void => {
     if (!engine) return;
@@ -185,6 +195,7 @@ export async function startTown(root: HTMLElement): Promise<Session> {
       cinematic?.dispose();
       cinematic = undefined;
       waterReflection.dispose();
+      cameraIndex?.dispose();
       world?.dispose();
       dressing?.dispose();
       houses?.dispose();
@@ -208,9 +219,12 @@ export async function startTown(root: HTMLElement): Promise<Session> {
   play.disabled = true;
   root.setAttribute('aria-busy', 'true');
   if (loading) loading.hidden = false;
+  locationSelect.disabled = qualitySelect.disabled = true;
 
   try {
-    setStatus('Loading the roads and the first streets…');
+    prepareStatus('Loading the roads and the first streets…');
+    const preparationModule = import('./startup-renderer');
+    void preparationModule.catch(() => {});
     const transfer = { roads: 0, manifest: 0 };
     const manifestRequest = readCriticalJson<unknown>(WORLD_URL, signal, { label: 'Town manifest', onProgress: p => { transfer.manifest = p.receivedBytes; } });
     // What the street photographs decided (centre lines, pole sides) and the
@@ -270,12 +284,14 @@ export async function startTown(root: HTMLElement): Promise<Session> {
     try { environmentTarget = pmrem.fromScene(skyScene, 0.04); }
     finally { pmrem.dispose(); environmentSky.geometry.dispose(); environmentSky.material.dispose(); }
     scene.environment = environmentTarget.texture;
-    void cloudModule.then(module => {
+    const cloudsReady = cloudModule.then(module => {
       if (disposed) return;
-      releaseClouds = module.streamSkyArt(renderer!, sky!, SUN_OFFSET, signal, target => {
+      const clouds = module.prepareSkyArt(renderer!, sky!, SUN_OFFSET, signal, target => {
         const previous = environmentTarget; environmentTarget = target; scene!.environment = target.texture;
         previous?.dispose(); renderRequested = true;
       });
+      releaseClouds = clouds.dispose;
+      return clouds.ready;
     }).catch(() => {});
 
     const manifest = await manifestRequest;
@@ -303,7 +319,7 @@ export async function startTown(root: HTMLElement): Promise<Session> {
     curbParking = new CurbParking(network);
     world.setStreetDressing(dressing, houses, new RoadWear(network), curbParking);
     // Fuel stations and business signs arrive in their own chunk.
-    void import('./roadside-commerce').then(module => {
+    const commerceReady = import('./roadside-commerce').then(module => {
       if (disposed || !world) return;
       commerce = new module.RoadsideCommerce(undefined, { low: quality === 'low' || mobile });
       world.setRoadsideCommerce(commerce);
@@ -323,6 +339,15 @@ export async function startTown(root: HTMLElement): Promise<Session> {
     if (disposed) return session;
     car.name = 'Your car';
     scene.add(car);
+    await commerceReady;
+    const neighborhood = await world.prepareNeighborhood(toWorld(engine.pose()[0]), toWorld(engine.pose(100)[0]), {
+      signal,
+      onProgress: ({ loaded, total }) => prepareStatus(`Preparing nearby streets… ${loaded} of ${total}`, loaded, total),
+    });
+    if (disposed) return session;
+    prepareStatus('Preparing textures and the sky…');
+    await Promise.all([world.prepareTextures(signal), cloudsReady]);
+    if (disposed) return session;
 
     const fit = (): void => {
       renderRequested = true;
@@ -351,20 +376,8 @@ export async function startTown(root: HTMLElement): Promise<Session> {
     if (disposed) return session;
     resize = new ResizeObserver(fit);
     resize.observe(canvas);
-    intro.hidden = true;
-    if (loading) loading.hidden = true;
-    root.dataset.ready = 'true';
-    root.removeAttribute('aria-busy');
-    canvas.tabIndex = 0;
-    canvas.focus({ preventScroll: true });
     fit();
-    for (const button of [pauseButton, reverseButton, cameraButton, soundButton, fullscreenButton]) button.disabled = false;
-    element<HTMLButtonElement>('recovery-reverse').disabled = false;
     cameraButton.textContent = `Camera: ${cameraMode}`;
-    controlsReady = true;
-    for (const button of root.querySelectorAll<HTMLButtonElement>('[data-town-place], [data-town-report], [data-town-directory-place], [data-town-directory-reset]')) button.disabled = false;
-    if (engine.paused) setPaused(true);
-    setStatus(engine.paused ? `Resumed on ${displayRoadName(engine.edge.name)}, safely paused. Press Up or Resume when ready.` : `Ready near ${LANDMARKS[startingLocation].name}. Press Up to cruise.`);
     lastEngineMessage = engine.lastMessage;
 
     const changeCamera = (): void => {
@@ -390,19 +403,28 @@ export async function startTown(root: HTMLElement): Promise<Session> {
     const teleport = async (key: LandmarkKey): Promise<void> => {
       if (teleporting || contextLost) return;
       teleporting = true;
-      locationSelect.disabled = true;
+      locationSelect.disabled = qualitySelect.disabled = true;
       if (loading) loading.hidden = false;
+      intro.hidden = false;
       const previous = engine;
       previous.paused = true;
       held.clear();
       audio.silence();
       const destination = spawnAtLandmark(graph, key);
-      setStatus(`Loading ${LANDMARKS[key].name}…`);
+      prepareStatus(`Loading ${LANDMARKS[key].name}…`);
       try {
         await world!.prepareAt(toWorld(destination.pose()[0]));
+        await world!.prepareNeighborhood(toWorld(destination.pose()[0]), toWorld(destination.pose(100)[0]), {
+          signal,
+          onProgress: ({ loaded, total }) => prepareStatus(`Preparing nearby streets… ${loaded} of ${total}`, loaded, total),
+        });
         if (disposed) return;
         engine = destination;
+        engine.paused = true;
         traffic?.clear(engine);
+        firstFrame = true;
+        await warmGraphics();
+        if (disposed) return;
         firstFrame = true;
         setPaused(false);
         locationSelect.value = key;
@@ -411,12 +433,14 @@ export async function startTown(root: HTMLElement): Promise<Session> {
         if (explore.open) drawTownOverview(overview, engine, selectedDirectoryPlace);
       } catch (error) {
         engine = previous;
+        firstFrame = true;
         setPaused(true);
         setStatus(error instanceof Error ? error.message : 'This location could not load. Try again.');
       } finally {
         teleporting = false;
-        locationSelect.disabled = false;
+        locationSelect.disabled = qualitySelect.disabled = false;
         if (loading) loading.hidden = true;
+        intro.hidden = true;
       }
     };
     const activate = (input: string): void => {
@@ -675,18 +699,19 @@ export async function startTown(root: HTMLElement): Promise<Session> {
       drawMap();
     }
 
-    const tick = (now: number): void => {
+    const tick = (now: number, preparing = false): void => {
       if (disposed) return;
-      frame = requestAnimationFrame(tick);
-      const elapsed = Math.min(0.5, Math.max(0, (now - last) / 1000));
+      if (!preparing) frame = requestAnimationFrame(tick);
+      if (preparingGraphics && !preparing) return;
+      const elapsed = preparing ? 0 : Math.min(0.5, Math.max(0, (now - last) / 1000));
       last = now;
       if (contextLost) return;
-      if (!document.hidden && !engine.paused) {
+      if (!preparing && !document.hidden && !engine.paused) {
         snapshots.push(elapsed * 1000);
         if (snapshots.length > 1800) snapshots.shift();
       }
       const forwardPoint = toWorld(engine.pose(Math.max(12, engine.speed * 2))[0]);
-      if (!teleporting) {
+      if (!preparing && !teleporting) {
         const ready = world!.isReadyAt(forwardPoint);
         if (!ready && engine.speed > 0.2 && !streamPaused) { streamPaused = true; streamStartedAt = now; audio.silence(); setStatus('Loading the next street…'); }
         if (ready && streamPaused) { streamPaused = false; setStatus(engine.paused ? 'Street ready. Your drive remains paused.' : 'Street ready. Continuing your drive.'); }
@@ -746,6 +771,7 @@ export async function startTown(root: HTMLElement): Promise<Session> {
       // Most of the shadow frame lies ahead of the car, where the camera looks.
       shadowAnchor(shadowFocus.copy(points.car).addScaledVector(points.direction, SHADOW_LEAD), sun.target.position);
       sun.position.copy(sun.target.position).add(SUN_OFFSET);
+      if (preparing) { world!.updatePresentation(presentationTime, renderedPosition); return; }
       const shore = Math.max(0, ...[LANDMARKS.LAKE, LANDMARKS.BEACH, LANDMARKS.RANCH].map(place => 1 - Math.hypot(position[0] - place.xy[0], position[1] - place.xy[1]) / 220));
       audio.update(engine.speed, engine.paused || streamPaused || teleporting, engine.acceleration, Number(engine.edge.surface_type ?? 6), shore);
       if (drawCount >= 3 && now - streamingAt > 300 && !teleporting) {
@@ -754,7 +780,7 @@ export async function startTown(root: HTMLElement): Promise<Session> {
       }
       if (now - hudAt > 120) { refreshHud(); hudAt = now; }
       if (now - savedAt > 5000) { persist(); savedAt = now; }
-      if (!engine.paused && quality === 'auto' && now - startedAt > 15000 && world!.metrics.pending === 0 && now - qualityAt > 5000 && snapshots.length > 100) {
+      if (!engine.paused && quality === 'auto' && now - readyAt > 15000 && world!.metrics.pending === 0 && now - qualityAt > 5000 && snapshots.length > 100) {
         const average = snapshots.slice(-100).reduce((a, b) => a + b, 0) / 100;
         // Automatic sessions keep the camera finish only while it holds a
         // smooth frame rate (about 48 fps): they first give up its costlier
@@ -794,12 +820,50 @@ export async function startTown(root: HTMLElement): Promise<Session> {
       // Let the starting street draw before requesting surrounding blocks.
       if (drawCount === 3) streamingAt = performance.now();
     };
+    const warmGraphics = async () => {
+      preparingGraphics = true;
+      prepareStatus('Preparing lighting and shadows…');
+      try {
+        const { warmStartupRenderer, CameraRaycastIndex } = await preparationModule;
+        cameraIndex ??= new CameraRaycastIndex();
+        cameraObstruction.intersect = (ray, meshes) => cameraIndex!.intersect(ray, meshes);
+        await cameraIndex.prepare(world!.cameraOccluders(toWorld(engine.pose()[0]), 1000), signal,
+          (done, total) => prepareStatus('Preparing camera clearance…', done, total));
+        tick(performance.now(), true);
+        return await warmStartupRenderer({ renderer: renderer!, scene: scene!, camera, signal,
+          compile: () => cinematic ? cinematic.compile() : renderer!.compile(scene!, camera),
+          render: () => {
+            cinematic?.motion(car, false);
+            if (cinematic) cinematic.render(0);
+            else renderer!.render(scene!, camera);
+          },
+          onProgress: (done, total) => prepareStatus('Preparing lighting and shadows…', done, total),
+        });
+      } finally { preparingGraphics = false; last = performance.now(); }
+    };
+    const startup = { neighborhood, graphics: await warmGraphics() };
+    if (disposed) return session;
+    intro.hidden = true;
+    if (loading) loading.hidden = true;
+    root.dataset.ready = 'true';
+    root.removeAttribute('aria-busy');
+    canvas.tabIndex = 0;
+    canvas.focus({ preventScroll: true });
+    locationSelect.disabled = qualitySelect.disabled = false;
+    for (const button of [pauseButton, reverseButton, cameraButton, soundButton, fullscreenButton]) button.disabled = false;
+    element<HTMLButtonElement>('recovery-reverse').disabled = false;
+    controlsReady = true;
+    for (const button of root.querySelectorAll<HTMLButtonElement>('[data-town-place], [data-town-report], [data-town-directory-place], [data-town-directory-reset]')) button.disabled = false;
+    if (engine.paused) setPaused(true);
+    setStatus(engine.paused ? `Resumed on ${displayRoadName(engine.edge.name)}, safely paused. Press Up or Resume when ready.` : `Ready near ${LANDMARKS[startingLocation].name}. Press Up to cruise.`);
+    firstFrame = true;
     last = performance.now();
     streamingAt = last;
     const readyAt = last;
     frame = requestAnimationFrame(tick);
     (window as unknown as { __webster: unknown }).__webster = {
       root,
+      startup,
       get engine() { return engine; },
       graph,
       world,
@@ -814,7 +878,7 @@ export async function startTown(root: HTMLElement): Promise<Session> {
       redraw() { renderRequested = true; },
       get debugCamera() { return debugCamera; },
       set debugCamera(value: { eye: number[]; target: number[] } | null) { debugCamera = value; renderRequested = true; },
-      get presentation() { return { version: 'finished-webster-v8', grass: world!.presentationResources(), vehicle: vehicle!.resources(), evidence: world!.evidenceResources(), finish: world!.finishResources(), research: world!.researchResources(), streaming: world!.streamingResources(), comfort: preferences.comfort, camera: { checks: cameraObstruction.checks, testedMeshes: cameraObstruction.testedMeshes, milliseconds: cameraObstruction.milliseconds, skippedCandidates: cameraObstruction.skippedCandidates } }; },
+      get presentation() { return { version: 'finished-webster-v8', grass: world!.presentationResources(), vehicle: vehicle!.resources(), evidence: world!.evidenceResources(), finish: world!.finishResources(), research: world!.researchResources(), streaming: world!.streamingResources(), comfort: preferences.comfort, camera: { checks: cameraObstruction.checks, testedMeshes: cameraObstruction.testedMeshes, milliseconds: cameraObstruction.milliseconds, skippedCandidates: cameraObstruction.skippedCandidates, acceleration: cameraIndex?.metrics } }; },
       get ready() { return controlsReady && !disposed; },
       get metrics() {
         const samples = [...snapshots].sort((a, b) => a - b);
@@ -833,6 +897,7 @@ export async function startTown(root: HTMLElement): Promise<Session> {
     return session;
   } catch (error) {
     session.dispose();
+    locationSelect.disabled = qualitySelect.disabled = false;
     play.disabled = false;
     play.textContent = 'Try again';
     if (loading) loading.hidden = true;

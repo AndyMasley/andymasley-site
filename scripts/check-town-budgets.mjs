@@ -25,7 +25,8 @@ if (tile.treeFile) sources.add(path.join(source, tile.treeFile.url));
 for (const group of Object.values(manifest.surfaces ?? {})) {
   for (const value of Object.values(group)) if (value?.url) sources.add(path.join(source, value.url));
 }
-// Ground masks for distant cells are streamed later, never startup payload.
+// This core byte guard covers the first street. Prepared neighboring cells and
+// their masks are measured by the browser's complete readiness request ledger.
 for (const mask of Object.values(manifest.surfaces?.masks ?? {})) sources.delete(path.join(source, mask.url));
 const mask = manifest.surfaces?.masks[tile.id]; if (mask) sources.add(path.join(source, mask.url));
 // Source request aliases are byte-identical; the authored atlas has its own
@@ -52,10 +53,10 @@ if (bundles.length !== 1) throw new Error('Expected exactly one built town main 
 const main = bundles[0], criticalAssetsBytes = rows.reduce((sum, row) => sum + row.losslessTransferBytes, 0);
 // The current healthy core is 7.68 MB; allow bounded content growth but catch
 // regressions to the older full-map/network startup. This byte guard does not
-// assert the separate eight-second wall-clock target. Optional packets and
+// assert a ready-time target. Neighborhood preparation, optional packets and
 // unrelated page assets remain itemized by the browser ledger.
 const budgets = { mainGzipBytes: 1258291, coreSceneTransferBytes: 8388608 };
-const report = { version: 2, scope: 'Healthy core default-start assets, exact network encoding, first-frame ground previews and main script; full ground maps upgrade after readiness, optional detail/host HTTP compression measured separately', main, criticalAssetsBytes, deferredFullGroundBytes: Object.keys(groundPreviews.rows).reduce((sum, url) => sum + fs.statSync(path.join(source, url)).size, 0), budgets, assets: rows,
+const report = { version: 3, scope: 'Healthy first-street core assets, exact network encoding, ground previews and main script; prepared neighboring streets, full ground maps and optional detail/host HTTP compression measured separately at readiness', main, criticalAssetsBytes, deferredFullGroundBytes: Object.keys(groundPreviews.rows).reduce((sum, url) => sum + fs.statSync(path.join(source, url)).size, 0), budgets, assets: rows,
   passed: main.gzipBytes <= budgets.mainGzipBytes && criticalAssetsBytes <= budgets.coreSceneTransferBytes };
 const output = process.env.TOWN_BUDGET_REPORT;
 if (output) { fs.mkdirSync(path.dirname(output), { recursive: true }); fs.writeFileSync(output, JSON.stringify(report, null, 2) + '\n'); }

@@ -12,6 +12,52 @@ const definition: GroundSurfaces = { grass: { color: refs[0], normal: refs[1], r
 function texture(url: string) { const image = { width: url.includes('ground-preview') ? 128 : 1024, height: 128, close: vi.fn() }; const t = new THREE.Texture(image as unknown as ImageBitmap); t.name = url; return t; }
 const flush = async () => { for (let i = 0; i < 20; i++) await Promise.resolve(); };
 describe('progressive shared ground maps', () => {
+  it('awaits full quality during startup and absorbs an existing deferred refinement without extra requests', async () => {
+    vi.useFakeTimers();
+    const created: THREE.Texture[] = [], read = vi.fn(async (asset: { url: string }) => { const t = texture(asset.url); created.push(t); return t; });
+    const s = new TownSurfaces(definition, read), signal = new AbortController().signal;
+    try {
+      await s.initialize(signal); s.refine(signal);
+      const ready = s.prepare(signal); expect(s.prepare(signal)).toBe(ready);
+      await ready;
+      expect(s.detailResources()).toEqual({ previewMaps: 0, fullMaps: 6, upgrading: false, failures: 0 });
+      expect(read).toHaveBeenCalledTimes(12);
+      await vi.advanceTimersByTimeAsync(600); await s.prepare(signal);
+      expect(read).toHaveBeenCalledTimes(12); expect(vi.getTimerCount()).toBe(0);
+      expect(created.slice(0, 6).every(t => t.image.close.mock.calls.length === 1)).toBe(true);
+    } finally { s.dispose(); vi.useRealTimers(); }
+  });
+
+  it('bounds stalled startup refinement and releases late images without replacing previews', async () => {
+    vi.useFakeTimers();
+    const late: ((texture: THREE.Texture) => void)[] = [];
+    const read = vi.fn(async (asset: { url: string }) => asset.url.includes('ground-preview') ? texture(asset.url) : new Promise<THREE.Texture>(resolve => { late.push(resolve); }));
+    const s = new TownSurfaces(definition, read), signal = new AbortController().signal;
+    try {
+      await s.initialize(signal); const ready = s.prepare(signal); await flush();
+      expect(late).toHaveLength(6);
+      await vi.advanceTimersByTimeAsync(12000); await ready;
+      expect(s.detailResources()).toMatchObject({ previewMaps: 6, fullMaps: 0, upgrading: false });
+      const images = late.map((resolve, i) => { const t = texture(refs[i].url); resolve(t); return t; }); await flush();
+      expect(images.every(t => t.image.close.mock.calls.length === 1)).toBe(true);
+      expect(s.detailResources().previewMaps).toBe(6); expect(vi.getTimerCount()).toBe(0);
+    } finally { s.dispose(); vi.useRealTimers(); }
+  });
+
+  it('settles a pending startup refinement immediately on cancellation or disposal', async () => {
+    vi.useFakeTimers();
+    for (const cancel of ['abort', 'dispose']) {
+      const request = new AbortController();
+      const s = new TownSurfaces(definition, async asset => asset.url.includes('ground-preview') ? texture(asset.url) : new Promise(() => {}));
+      try {
+        await s.initialize(request.signal); const ready = s.prepare(request.signal); await flush();
+        if (cancel === 'abort') request.abort(); else s.dispose();
+        await ready; expect(s.detailResources().upgrading).toBe(false); expect(vi.getTimerCount()).toBe(0);
+      } finally { s.dispose(); }
+    }
+    vi.useRealTimers();
+  });
+
   it('pins six small source-derived previews without changing original full-map references', () => {
     expect(catalog.finalMapsUnchanged).toBe(true); expect(rows).toHaveLength(6);
     expect(rows.reduce((sum, [, row]) => sum + row.bytes, 0)).toBeLessThan(200000);

@@ -2,6 +2,7 @@ import * as THREE from 'three';
 
 /** A bounded camera boom test against adopted solid scene meshes only. */
 export class CameraObstruction {
+  intersect = (ray: THREE.Raycaster, meshes: readonly THREE.Mesh[]): THREE.Intersection[] => ray.intersectObjects(meshes as THREE.Mesh[], false);
   private ray = new THREE.Raycaster();
   private box = new THREE.Box3();
   private hit = new THREE.Vector3();
@@ -46,7 +47,7 @@ export class CameraObstruction {
       // boxes. This bound prevents unbounded detailed-prop ray tests per frame.
       const relevant = candidates.slice(0, 32).map(candidate => candidate.mesh);
       this.skippedCandidates += Math.max(0, candidates.length - relevant.length);
-      const hits = this.ray.intersectObjects(relevant, false);
+      const hits = this.intersect(this.ray, relevant);
       this.allowed = hits.length ? Math.max(0.2, hits[0].distance - 0.3) : Infinity;
       this.previousOrigin.copy(origin); this.previousDirection.copy(this.direction); this.checkedAt = now; this.lastMeshes = meshes;
       this.checks++; this.testedMeshes += relevant.length; this.milliseconds += performance.now() - began;

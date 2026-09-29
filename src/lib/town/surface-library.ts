@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import library from '../../../data/derived/town/material-library.json';
+import { withLoadDeadline } from './critical-load';
 
 /**
  * Shared, tileable surface textures (albedo, tangent-space normal and
@@ -12,8 +13,8 @@ import library from '../../../data/derived/town/material-library.json';
  * (walls: along the wall and up; roofs: along the eave and up the slope;
  * pavement: plan view), so they never depend on the source UV layout. The sets
  * exist from the start of a session as one-texel placeholders (each set's mean
- * colour, a flat normal and neutral roughness), so materials compile once and
- * startup never waits for them; the full images stream in afterwards and replace
+ * colour, a flat normal and neutral roughness), so materials keep stable texture
+ * references while startup awaits the authored images. Full images replace
  * the placeholders in place. They are shared by every pooled material and
  * released with the world. If an image fails, its placeholder simply remains.
  */
@@ -23,6 +24,7 @@ type Entry = { url: string; bytes: number; sha256: string; size: number };
 
 let active: Map<SurfaceKind, SurfaceSet> | null = null;
 let owner: object | null = null;
+let activeRequest: AbortController | null = null;
 
 export const SURFACE_LIBRARY_VERSION = library.library;
 export const SURFACE_KINDS = Object.keys(library.materials) as SurfaceKind[];
@@ -100,12 +102,13 @@ const srgb8 = (linear: number) => linear <= 0.0031308 ? linear * 12.92 : 1.055 *
  * Install every set immediately (placeholders) and stream the full images.
  * `detail` false (Low and mobile) keeps only the albedo maps; relief and
  * roughness then come from the existing procedural treatments. The returned
- * promise settles when every image has been tried; failures leave placeholders.
+ * promise settles when every image has been tried, with a bounded wait for slow
+ * connections; failures leave placeholders. Release cancels outstanding work.
  */
 export function loadSurfaceLibrary(base: string, detail: boolean, signal: AbortSignal, holder: object): Promise<void> {
   releaseSurfaceLibrary();
   const sets = new Map<SurfaceKind, SurfaceSet>();
-  const jobs: Promise<void>[] = [];
+  const pending: { texture: THREE.Texture; entry: Entry }[] = [];
   for (const kind of SURFACE_KINDS) {
     const spec = library.materials[kind] as unknown as { tileM: number; meanLinearAlbedo: number[]; albedo: Entry; normal: Entry; orm: Entry };
     const set: SurfaceSet = {
@@ -118,24 +121,34 @@ export function loadSurfaceLibrary(base: string, detail: boolean, signal: AbortS
     for (const [slot, entry] of [['albedo', spec.albedo], ['normal', spec.normal], ['orm', spec.orm]] as const) {
       const texture = set[slot];
       if (!texture) continue;
-      jobs.push(readBitmap(entry, base, signal).then(bitmap => {
-        // A released or replaced library must not adopt late images.
-        if (active !== sets || signal.aborted) { bitmap.close(); return; }
-        fill(texture, bitmap, entry.url);
-      }));
+      pending.push({ texture, entry });
     }
   }
   active = sets;
   owner = holder;
-  return Promise.allSettled(jobs).then(results => {
-    const failed = results.filter(result => result.status === 'rejected');
-    if (failed.length && !signal.aborted) throw (failed[0] as PromiseRejectedResult).reason;
+  const request = new AbortController(); activeRequest = request;
+  const cancel = () => request.abort();
+  signal.addEventListener('abort', cancel, { once: true });
+  if (signal.aborted) cancel();
+  return withLoadDeadline(request.signal, async child => {
+    const results = await Promise.allSettled(pending.map(async ({ texture, entry }) => {
+      const bitmap = await readBitmap(entry, base, child);
+      // A released or replaced library must not adopt late images.
+      if (active !== sets || child.aborted) { bitmap.close(); return; }
+      fill(texture, bitmap, entry.url);
+    }));
+    const failure = results.find(result => result.status === 'rejected');
+    if (failure?.status === 'rejected') throw failure.reason;
+  }, { label: 'Authored surface textures', timeoutMs: 12000 }).finally(() => {
+    signal.removeEventListener('abort', cancel);
+    if (activeRequest === request) activeRequest = null;
   });
 }
 
 /** Only the session that installed the library can release it. */
 export function releaseSurfaceLibrary(holder?: object): void {
   if (holder && holder !== owner) return;
+  activeRequest?.abort(); activeRequest = null;
   for (const set of active?.values() ?? []) { destroy(set.albedo); destroy(set.normal); destroy(set.orm); }
   active = null;
   owner = null;

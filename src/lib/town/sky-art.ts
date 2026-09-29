@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import type { Sky } from 'three/examples/jsm/objects/Sky.js';
 import { createSummerSky } from './atmosphere';
+import { withLoadDeadline } from './critical-load';
 
 export const SKY_ART_URL = '/town-finish/v1/art/sky-color-v1-8dadf831b232.webp';
 
@@ -63,32 +64,50 @@ vec3 townSkySample(vec2 uv) {
   sky.material.needsUpdate = true;
 }
 
-/** Non-blocking, one-shot upgrade. The session owns the returned disposer;
- * its existing owner takes over each successfully generated environment. */
-export function streamSkyArt(renderer: THREE.WebGLRenderer, sky: Sky, direction: THREE.Vector3, signal: AbortSignal, replaceEnvironment: (target: THREE.WebGLRenderTarget) => void): () => void {
+/** Startup can await the actual artwork and reflection generation before GPU
+ * warmup. Slow/failed images keep the procedural sky, without blocking forever.
+ * The session owns dispose; its environment owner takes over the PMREM target. */
+export function prepareSkyArt(renderer: THREE.WebGLRenderer, sky: Sky, direction: THREE.Vector3, signal: AbortSignal, replaceEnvironment: (target: THREE.WebGLRenderTarget) => void): { ready: Promise<void>; dispose: () => void } {
   const request = new AbortController();
   let texture: THREE.Texture | undefined, stopped = false;
-  const timer = setTimeout(() => request.abort(), 12000);
   const dispose = (): void => {
-    if (stopped) return; stopped = true; request.abort(); clearTimeout(timer); signal.removeEventListener('abort', dispose);
+    if (stopped) return; stopped = true; request.abort(); signal.removeEventListener('abort', dispose);
     texture?.dispose(); (texture?.image as ImageBitmap | undefined)?.close(); texture = undefined;
   };
-  if (signal.aborted) { dispose(); return dispose; }
+  if (signal.aborted) { dispose(); return { ready: Promise.resolve(), dispose }; }
   signal.addEventListener('abort', dispose, { once: true });
-  void loadSkyArt(request.signal).then(loaded => {
-    clearTimeout(timer);
-    if (stopped || request.signal.aborted || renderer.getContext().isContextLost()) { loaded.dispose(); (loaded.image as ImageBitmap).close(); return; }
+  const ready = withLoadDeadline(request.signal, async child => {
+    const loaded = await loadSkyArt(child);
+    if (stopped || child.aborted || renderer.getContext().isContextLost()) { loaded.dispose(); (loaded.image as ImageBitmap).close(); dispose(); return; }
     texture = loaded;
-    const reflection = createSummerSky(direction, { surroundings: true }), scene = new THREE.Scene(), pmrem = new THREE.PMREMGenerator(renderer);
+    const reflection = createSummerSky(direction, { surroundings: true }), scene = new THREE.Scene();
+    let pmrem: THREE.PMREMGenerator | undefined;
     let target: THREE.WebGLRenderTarget | undefined;
+    const originalShader = sky.material.fragmentShader, originalUniform = sky.material.uniforms.summerSkyArt;
+    let installed = false;
     try {
+      pmrem = new THREE.PMREMGenerator(renderer);
       installSkyArt(reflection, loaded); scene.add(reflection);
       target = pmrem.fromScene(scene, 0.04);
-      installSkyArt(sky, loaded);
+      if (stopped || child.aborted || renderer.getContext().isContextLost()) throw new Error('Sky renderer unavailable.');
+      installSkyArt(sky, loaded); installed = true;
       replaceEnvironment(target); target = undefined;
+    } catch (error) {
+      if (installed) {
+        sky.material.fragmentShader = originalShader;
+        if (originalUniform) sky.material.uniforms.summerSkyArt = originalUniform;
+        else delete sky.material.uniforms.summerSkyArt;
+        sky.material.needsUpdate = true;
+      }
+      throw error;
     } finally {
-      target?.dispose(); pmrem.dispose(); reflection.geometry.dispose(); reflection.material.dispose();
+      target?.dispose(); pmrem?.dispose(); reflection.geometry.dispose(); reflection.material.dispose();
     }
-  }).catch(() => { clearTimeout(timer); });
-  return dispose;
+  }, { label: 'Sky artwork', timeoutMs: 12000 }).catch(() => { dispose(); });
+  return { ready, dispose };
+}
+
+/** Legacy streaming owner; readiness-aware startup uses prepareSkyArt instead. */
+export function streamSkyArt(renderer: THREE.WebGLRenderer, sky: Sky, direction: THREE.Vector3, signal: AbortSignal, replaceEnvironment: (target: THREE.WebGLRenderTarget) => void): () => void {
+  return prepareSkyArt(renderer, sky, direction, signal, replaceEnvironment).dispose;
 }
