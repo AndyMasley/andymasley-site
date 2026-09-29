@@ -5,9 +5,10 @@ import index from '../../../data/derived/town/roadside-index.json';
 import { Batch, type Frame, type Role } from './crafted-frontages';
 import { GrassTerrain } from './grass';
 import type { AssetRef } from './contracts';
+import { buildRoadsideSignal, RoadsideSignalLenses, type RoadsideSignal } from './roadside-signals';
 
 type V3=[number,number,number];
-export type RoadsideObject={id:string;kind:'post-box'|'bus-stop'|'stop'|'utility-pole';point:number[];base:number;normal:number[];label:string;height?:number;light?:boolean;allWay?:boolean;wireEnd?:number[];mappedPoint?:number[];shiftM?:number;evidence:string};
+export type RoadsideObject={id:string;point:number[];base:number;normal:number[];label:string;height?:number;light?:boolean;allWay?:boolean;wireEnd?:number[];mappedPoint?:number[];shiftM?:number;evidence:string}&({kind:'post-box'|'bus-stop'|'stop'|'utility-pole'}|({kind:'signal'}&RoadsideSignal));
 export type RoadsidePacket={version:1;tileId:string;origin:number[];sourceLods:Record<string,string>;objects:RoadsideObject[]};
 export type RoadsideReport={tileId:string;ids:string[];skipped:{id:string;reason:string}[];addedTriangles:number;addedMeshes:number;geometryBytes:number;wireSpans:number;rejected:boolean};
 const labels=['STOP','ALL WAY','WRTA\n42','WRTA\n51','WRTA\n42 · 51'];
@@ -17,10 +18,11 @@ export function validRoadsidePacket(value:unknown,tileId:string):value is Roadsi
   const p=value as RoadsidePacket,[x,n]=tileId.split('_').map(Number);
   return !!p&&p.version===1&&p.tileId===tileId&&finite(p.origin,3)&&!!p.sourceLods&&Object.values(p.sourceLods).every(h=>/^[a-f0-9]{64}$/.test(h))&&
     Array.isArray(p.objects)&&p.objects.length<100&&new Set(p.objects.map(r=>r.id)).size===p.objects.length&&p.objects.every(r=>
-      typeof r.id==='string'&&['post-box','bus-stop','stop','utility-pole'].includes(r.kind)&&finite(r.point,2)&&r.point[0]>=x*250&&r.point[0]<(x+1)*250&&r.point[1]>=n*250&&r.point[1]<(n+1)*250&&
+      typeof r.id==='string'&&['post-box','bus-stop','stop','utility-pole','signal'].includes(r.kind)&&finite(r.point,2)&&r.point[0]>=x*250&&r.point[0]<(x+1)*250&&r.point[1]>=n*250&&r.point[1]<(n+1)*250&&
       finite(r.normal,2)&&Math.abs(Math.hypot(...r.normal)-1)<.0001&&Number.isFinite(r.base)&&typeof r.evidence==='string'&&typeof r.label==='string'&&
       (r.height===undefined||Number.isFinite(r.height)&&r.height>=8&&r.height<=12)&&
       (r.kind!=='utility-pole'||r.height!==undefined)&&
+      (r.kind!=='signal'||(r.signalGroup===0||r.signalGroup===1||r.signalGroup===2&&r.signalPhases===3)&&Number.isFinite(r.signalOffset)&&['post','mast'].includes(r.signalMount)&&(r.signalPhases===undefined||r.signalPhases===2||r.signalPhases===3)&&(r.armLength===undefined||Number.isFinite(r.armLength)&&r.armLength>=3&&r.armLength<=12))&&
       (r.wireEnd===undefined||finite(r.wireEnd,3)&&Math.hypot(r.wireEnd[0]-r.point[0],r.wireEnd[1]-r.point[1])<70));
 }
 function emit(b:Batch,f:Frame,role:Role,g:THREE.BufferGeometry,color:string):void {
@@ -95,7 +97,7 @@ export function applyRoadsideDetails(group:THREE.Group,tileId:string,origin:read
   if(!validRoadsidePacket(packet,tileId)||packet.sourceLods[String(level)]!==sourceSha256||origin.some((v,i)=>Math.abs(v-packet.origin[i])>1e-6)){report.rejected=true;return report;}
   group.updateMatrixWorld(true);const inverse=group.matrixWorld.clone().invert(),meshes:THREE.Mesh[]=[];
   group.traverse(o=>{if(!(o instanceof THREE.Mesh)||o.userData.townCrafted)return;for(let p:THREE.Object3D|null=o;p&&p!==group;p=p.parent)if(p.name==='terrain'||p.name.startsWith('terrain_')){const proxy=new THREE.Mesh(o.geometry,o.material);proxy.matrixAutoUpdate=false;proxy.matrixWorld.copy(inverse).multiply(o.matrixWorld);meshes.push(proxy);break;}});
-  const ground=new GrassTerrain(meshes),batch=new Batch(new THREE.Vector3(...origin),level),letters=new Lettering(origin);
+  const ground=new GrassTerrain(meshes),batch=new Batch(new THREE.Vector3(...origin),level),letters=new Lettering(origin),signals=new RoadsideSignalLenses(origin);
   for(const source of packet.objects){
     let r=source;
     if(source.kind==='utility-pole'&&source.evidence.startsWith('Inferred infill')){
@@ -111,11 +113,12 @@ export function applyRoadsideDetails(group:THREE.Group,tileId:string,origin:read
     if(r.kind==='post-box')postBox(batch,f,y);
     else if(r.kind==='utility-pole'){pole(batch,f,r,y);report.wireSpans+=Number(!!r.wireEnd);}
     else if(r.kind==='stop')stopSign(batch,f,y,letters,r.allWay);
+    else if(r.kind==='signal')buildRoadsideSignal(batch,f,y,r,signals);
     else {
       batch.box(f,'metal',0,y+1.64,-.018,.05,3.28,.045,'#959c92');batch.box(f,'metal',0,y+2.9,0,.36,.60,.034,'#e7e4d5');letters.panel(f,r.label,y+2.9,.32,.56);
     }
     report.ids.push(r.id);
   }
-  const built=batch.finish();built.group.name='Research roadside details';const text=letters.finish();if(text){built.group.add(text);built.triangles+=text.geometry.getAttribute('position').count/3;built.bytes+=Object.values(text.geometry.attributes).reduce((s,a)=>s+a.array.byteLength,0);}
+  const built=batch.finish();built.group.name='Research roadside details';for(const mesh of [letters.finish(),signals.finish()])if(mesh){built.group.add(mesh);built.triangles+=mesh.geometry.getAttribute('position').count/3;built.bytes+=Object.values(mesh.geometry.attributes).reduce((s,a)=>s+a.array.byteLength,0);}
   report.addedTriangles=built.triangles;report.geometryBytes=built.bytes;report.addedMeshes=built.group.children.length;if(report.ids.length)group.add(built.group);group.userData.roadsideDetails=report;return report;
 }

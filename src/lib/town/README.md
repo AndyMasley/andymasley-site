@@ -329,6 +329,33 @@ The September 24 overhaul adds, all as authored interpretation rather than surve
   the distance. `traffic-exits.json` is derived by
   `scripts/boundary_context/prepare-traffic-exits.py`; missing outside-road
   coverage is left unextended, rather than routing traffic over open terrain.
+- `roadside-details.ts` renders source-supported STOP signs and traffic signals.
+  September 29, 2026 snapshots in `data/source/town/roadside` combine current
+  OSM nodes and connected ways with MassDOT's in-service R1-1 sign assets,
+  intersection screening classifications, and operating signal assets.
+  The state sign surveys are older (2015–2016), the intersection inventory is
+  selective, and community mapping is incomplete. This is not an exhaustive
+  current municipal inventory. Route 16 reconstruction is still underway;
+  proposed controls are not treated as already operating.
+  `acquire-traffic-controls.py` and `acquire-massdot-traffic-controls.py` retain
+  reproducible queries, response fingerprints, coordinates, raw attributes and
+  domain meanings. The latter accepts `--verify` for an offline snapshot check.
+  `prepare-traffic-controls.py` reconciles these with the directed road network,
+  preserving one-way approaches and distinguishing source positions from
+  modeled roadside mounts. The roadside audit records coverage, duplicates,
+  conflicts and omissions; absence of source evidence never implies a stop.
+  Existing bus flags, collection boxes and utility poles are preserved.
+  Rebuilding uses the same external research directory as the other roadside
+  transforms, plus source terrain extracted with
+  `TERRAIN_FINISH_WORK=/private/tmp/webster-traffic-controls-20260929 node scripts/extract-terrain-finish.mjs`.
+  Then run `python3 scripts/prepare-traffic-controls.py` and the traffic-control
+  Python tests. Packets retain source-LOD hashes and runtime terrain checks.
+  Signal housings, mounts and 52/75-second cycles are authored interpretations,
+  not surveyed hardware or actual controller programs. Opposing approach groups
+  share phases, with amber and all-red clearance intervals. One shared shader
+  clock animates batched lens geometry without per-head lights or scene walks.
+  Detailed tile builders load during neighborhood preparation. Driving physics
+  and traffic do not enforce these visual controls; the About panel states this.
 - `roadside-commerce.ts` (its own chunk, loaded once the road network is up)
   adds the six fuel stations and the business signs. Each canopy's outline and
   deck height are measured from the 2021 lidar's class-6 upper returns, which

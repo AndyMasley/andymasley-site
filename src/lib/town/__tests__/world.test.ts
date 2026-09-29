@@ -2,6 +2,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import * as THREE from 'three';
 import { TownWorld } from '../world';
+import { roadsideSignalClock } from '../roadside-signal-state';
 import { boundsDistanceSquared, chooseLod, validateManifest, type TownTile, type WorldManifest } from '../contracts';
 
 const tile = (id: string, x = 0): TownTile => ({ id, origin: [x, 0, 250], bounds: { min: [x, -10, 0], max: [x + 250, 40, 250] }, lods: [0, 1, 2].map(level => ({ level, bytes: 1, url: `${id}-${level}.glb` })) });
@@ -10,6 +11,15 @@ const group = (material: THREE.Material) => { const result = new THREE.Group(); 
 const settle = async () => { for (let i = 0; i < 8; i++) await Promise.resolve(); };
 
 describe('Town streaming and resource ownership', () => {
+  it('advances roadside signals through the presentation clock without per-head updates', () => {
+    const world = new TownWorld(manifest(), 'https://example.test/manifest.json', () => {});
+    try {
+      world.updatePresentation(31);
+      expect(roadsideSignalClock.value).toBe(31);
+      world.updatePresentation(Number.NaN);
+      expect(roadsideSignalClock.value).toBe(31);
+    } finally { world.dispose(); }
+  });
   it.each([false,true])('bounds every registered detail cache under the mobile=%s profile', mobile => {
     const world = new TownWorld(manifest(), 'https://example.test/manifest.json', () => {});
     try {

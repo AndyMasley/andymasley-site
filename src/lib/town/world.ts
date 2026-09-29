@@ -28,7 +28,7 @@ import { TextureLifetime } from './texture-lifetime';
 import { TEXTURE_SLOTS, textureIdentity, materialIdentity } from './material-identity';
 import { ByteCache } from './byte-cache';
 import { RequestQueue } from './request-queue';
-import { assembleTile } from './tile-assembly';
+import { updateRoadsideSignalTime } from './roadside-signal-state';
 import { streetCornerAsset, validStreetCornerPacket } from './street-corners';
 import { streetCornerGroundAsset, validStreetCornerGroundPacket, type StreetCornerGroundPacket } from './street-corner-ground';
 import { roadCurveAsset, validRoadCurvePacket, type RoadCurvePacket } from './road-curve-finish';
@@ -306,6 +306,9 @@ export class TownWorld {
       ].filter(Boolean) as string[];
       gltf.scene.userData.optionalDetailMissing = missing;
       try {
+        // Detailed street models load while the neighborhood is being prepared.
+        // Keep their growing geometry builders out of the initial game script.
+        const { assembleTile } = await import('./tile-assembly');
         const stages = await assembleTile(gltf.scene, tile, level, { evidence, road, terrain, parking, additional, roadside, environmentGround, facilities, roadMaterials, streetCorners, streetCornerGround, roadCurve, roadDash, propertyTerrain, foundationWalls, measuredRoofs, roadGroundClearance, railCorridor }, signal);
         for (const [name, ms] of Object.entries(stages)) this.stageTimings[name] = Math.max(this.stageTimings[name] ?? 0, ms);
       }
@@ -505,6 +508,7 @@ export class TownWorld {
 
   updatePresentation(timeSeconds: number, position: V3 = this.position): void {
     if (Number.isFinite(timeSeconds)) this.artClock.value = timeSeconds;
+    updateRoadsideSignalTime(timeSeconds);
     this.surfaces?.refine(this.sharedAbort.signal);
     this.surfaces?.update(position, this.low || this.mobile, timeSeconds);
   }
