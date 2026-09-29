@@ -1,7 +1,7 @@
 // @vitest-environment node
 import {describe,it,expect} from 'vitest';
 import * as THREE from 'three';
-import {createShadowAnchor,createSummerHaze,createSummerSky,SUMMER_LIGHT,SUMMER_SKY} from '../atmosphere';
+import {createShadowAnchor,createSummerHaze,createSummerSky,installAerialPerspective,SUMMER_LIGHT,SUMMER_SKY} from '../atmosphere';
 
 describe('stable moving directional shadows',()=>{
  it('locks both oblique light-plane axes to texels while preserving depth and sub-texel location',()=>{
@@ -57,6 +57,42 @@ const display=(rgb:readonly number[])=>aces(rgb).map(v=>Math.round(255*(v<=.0031
 const hex=(value:string)=>[1,3,5].map(i=>parseInt(value.slice(i,i+2),16));
 
 describe('summer sky exposure',()=>{
+ it('keeps haze in the same linear sky color when direct rendering supplies an encoded fog uniform',()=>{
+  const restore=installAerialPerspective(new THREE.Vector3(-290,118,-65));
+  try{
+   const fog=createSummerHaze(),linear=fog.color.getRGB(new THREE.Color(),THREE.LinearSRGBColorSpace),encoded=fog.color.getRGB(new THREE.Color(),THREE.SRGBColorSpace);
+   // Three r160 uploads these different values for HDR targets versus the
+   // direct framebuffer. Treating the latter as linear double-converts haze.
+   expect(encoded.r-linear.r).toBeGreaterThan(.2);
+   const shader=THREE.ShaderChunk.tonemapping_fragment;
+   const input=shader.match(/townFogColor = townEveningSky\(vec3\(([^)]+)\)/);
+   expect(input).not.toBeNull();
+   const authored=input![1].split(',').map(Number);
+   expect(authored).toEqual([linear.r,linear.g,linear.b]);
+   expect(display(authored)).toEqual(display(SUMMER_SKY.horizon));
+   expect(shader).not.toContain('townEveningSky(fogColor,');
+   expect(shader).not.toContain('toneMapping(townFogColor)');
+   expect(shader).not.toContain('linearToOutputTexel');
+   expect(shader.indexOf('mix(gl_FragColor.rgb, townFogColor, fogFactor)')).toBeLessThan(shader.indexOf('toneMapping( gl_FragColor.rgb )'));
+   expect(THREE.ShaderChunk.fog_fragment).not.toContain('mix(');
+  }finally{restore();}
+ });
+ it('installs one linear haze blend before the tone curve and restores every shader chunk on teardown',()=>{
+  const names=['fog_pars_vertex','fog_vertex','fog_pars_fragment','fog_fragment','tonemapping_fragment'] as const;
+  const before=Object.fromEntries(names.map(name=>[name,THREE.ShaderChunk[name]]));
+  const restore=installAerialPerspective(new THREE.Vector3(-290,118,-65));
+  try{
+   const tone=THREE.ShaderChunk.tonemapping_fragment,blend='gl_FragColor.rgb = mix(gl_FragColor.rgb, townFogColor, fogFactor);';
+   expect(tone.startsWith('#ifdef USE_FOG')).toBe(true);
+   expect(tone.split(blend)).toHaveLength(2);
+   expect(tone.endsWith(before.tonemapping_fragment)).toBe(true);
+   // Standard/physical materials and custom wires use this same order; a
+   // direct framebuffer gets tone/encoding after the identical HDR blend.
+   const physical=THREE.ShaderLib.physical.fragmentShader;
+   expect(physical.indexOf('#include <tonemapping_fragment>')).toBeLessThan(physical.indexOf('#include <colorspace_fragment>'));
+  }finally{restore();}
+  for(const name of names)expect(THREE.ShaderChunk[name]).toBe(before[name]);
+ });
  it('displays the documented zenith, horizon and cloud after the shared filmic curve',()=>{
   for(const [rgb,target] of [[SUMMER_SKY.zenith,'#3d7cc9'],[SUMMER_SKY.horizon,'#b7d0e8']] as const){
    display(rgb).forEach((channel,i)=>expect(Math.abs(channel-hex(target)[i])).toBeLessThanOrEqual(3));
@@ -77,5 +113,18 @@ describe('summer sky exposure',()=>{
   expect(reflection.material.fragmentShader).toContain('summerSurroundings * (1.0 - smoothstep(treelineTop - 0.03, treelineTop, direction.y))');
   expect(reflection.name).not.toBe(createSummerSky(new THREE.Vector3(-260,205,180)).name);
   reflection.geometry.dispose();reflection.material.dispose();
+ });
+ it('keeps the visible lower hemisphere in horizon haze while retaining the reflection ground',()=>{
+  const visible=createSummerSky(new THREE.Vector3(-290,118,-65)),reflection=createSummerSky(new THREE.Vector3(-290,118,-65),{surroundings:true});
+  try{
+   expect(visible.material.uniforms.summerSurroundings.value).toBe(0);
+   expect(reflection.material.uniforms.summerSurroundings.value).toBe(1);
+   for(const sky of[visible,reflection]){
+    expect(sky.material.fragmentShader).toContain('mix(color,summerGround,summerSurroundings * smoothstep(0.01,0.36,-direction.y))');
+    expect(sky.material.fragmentShader).not.toContain('mix(color,summerGround,smoothstep(');
+    expect(sky.material.depthWrite).toBe(false);
+    expect(sky.material.vertexShader).toContain('gl_Position.z = gl_Position.w');
+   }
+  }finally{for(const sky of[visible,reflection]){sky.geometry.dispose();sky.material.dispose();}}
  });
 });

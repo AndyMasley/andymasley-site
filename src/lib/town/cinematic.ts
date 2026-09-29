@@ -198,11 +198,15 @@ export class CinematicRenderer {
   private readonly currentViewProjection = new THREE.Matrix4();
   private readonly previousCamera = new THREE.Vector3();
   private hasPrevious = false;
+  private readonly previousAutoClear: boolean;
   private readonly previousExposure: number;
   private disposed = false;
 
   constructor(private readonly renderer: THREE.WebGLRenderer, private readonly scene: THREE.Scene, private readonly camera: THREE.PerspectiveCamera, options: { halfResAO: boolean }) {
     const size = renderer.getDrawingBufferSize(new THREE.Vector2());
+    // EffectComposer disables automatic clearing; the direct renderer needs
+    // its original policy back when adaptive quality removes the finish.
+    this.previousAutoClear = renderer.autoClear;
     this.composer = new EffectComposer(renderer, { frameBufferType: THREE.HalfFloatType, multisampling: FILM.multisampling });
     this.composer.addPass(new RenderPass(scene, camera));
     this.ao = new N8AOPostPass(scene, camera, Math.max(1, size.x), Math.max(1, size.y));
@@ -323,6 +327,7 @@ export class CinematicRenderer {
   dispose(): void {
     if (this.disposed) return;
     this.disposed = true;
+    this.renderer.autoClear = this.previousAutoClear;
     this.renderer.toneMappingExposure = this.previousExposure;
     // The composer disposes its passes, their targets and the finish effects.
     // N8AO keeps its shader quads in helper objects the base Pass cleanup does

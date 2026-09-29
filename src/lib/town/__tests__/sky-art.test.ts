@@ -112,6 +112,8 @@ describe('optional photographic sky artwork', () => {
         .toBeLessThan(sky.material.fragmentShader.indexOf('color = mix(color,skyArt'));
       expect(sky.material.fragmentShader).toContain('skyArt = townEveningSky(skyArt,direction,sunDirection)');
       expect(sky.material.fragmentShader.endsWith(sunAndLandscape)).toBe(true);
+      expect(sky.material.fragmentShader).toContain('mix(color,summerGround,summerSurroundings * smoothstep(');
+      expect(sky.material.fragmentShader).not.toContain('mix(color,summerGround,smoothstep(');
     }
     expect(visible.material.uniforms.summerSurroundings.value).toBe(0); expect(reflection.material.uniforms.summerSurroundings.value).toBe(1);
     destroy(visible); destroy(reflection); texture.dispose(); bitmap.close();

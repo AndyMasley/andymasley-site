@@ -260,13 +260,69 @@ downloads do not suppress anything, and hidden or evicted detail restores its
 overview immediately. Camera distance is not a substitute for this ownership
 check. Session disposal releases the five batches and coverage texture.
 
-`exploration-view.ts` keeps the far clip at 14 km, covering every town corner
-even from the opposite edge at maximum jetpack altitude. The near clip stays at
-8 cm on the ground and rises smoothly to 1.5 m by 250 m above ground, improving
-distant depth precision while keeping the player visible from the exploration
-camera. The existing height-dependent haze still softens the distant landscape.
+`exploration-view.ts` keeps the far clip at 350 km for the regional horizon.
+The near clip stays at 8 cm on the ground and rises smoothly to 1.5 m by 250 m
+above ground. Increasing only the far clip changes local depth precision by
+less than 0.02%; the larger flight near plane supplies the material precision
+improvement. The flight camera lengthens its boom without forcing a downward
+pitch. Its default view includes the horizon at every supported altitude; the
+player can still deliberately look down. The visible sky follows the camera and
+keeps horizon haze below level; the dark lower hemisphere is reflection-only.
 
-Rebuild the packet with `node scripts/prepare-town-overview.mjs`, then independently
+`regional-horizon.ts` adds one persistent, non-colliding regional terrain batch
+outside the original town footprint. Its elevations are USGS 3DEP bare-earth
+NAVD88 metres, converted by the existing 100 m world offset without vertical
+exaggeration. The catalog pins acquisition requests, source products, hashes,
+sampling and coastline treatment. The seasonal palette is authored; distant
+forests are ground color, not surveyed tree crowns. This is a finite regional
+landscape, not an expansion of the drivable road graph.
+
+The vertex shader bends the regional surface around the current observer using
+the same stable sagitta as `horizon-math.ts`: `2 * (R + targetASL) * sin(d/(2R))²`,
+with mean spherical radius 6,371,008.8 m. Camera altitude uses world Y plus 100 m,
+not altitude above local ground. Local EPSG:6491 projected distance approximates
+the surface arc; the map's X/Z coordinates stay fixed (omitted horizontal sinc
+correction is about 0.037% at 300 km). The camera naturally reveals or occludes
+real ridges as its position and height change. A sea-horizon distance alone does
+not determine the skyline: hills can block nearby views or remain visible
+beyond that distance. Haze and cloud illumination remain art direction, with
+no atmospheric-refraction or current-weather claim.
+
+Haze integrates a modeled exponential aerosol layer in physical height above
+the curved Earth, with five samples on long sightlines. The sky's linear horizon
+color is embedded in that shader because Three r160 uploads `fogColor` in a
+different color space for direct and HDR rendering. Both paths blend haze in
+linear radiance before tone mapping and output conversion. When adaptive quality drops
+the cinematic finish, it restores the renderer's clear policy and exposure,
+including failed optional initialization, so old frames cannot leak into the
+new view.
+
+Geometric references are [NASA's horizon derivation](https://cdaweb.gsfc.nasa.gov/pub/documents/archived_websites/pwg.gsfc.nasa.gov/stargaze/Shorizon.htm),
+[NGA's WGS84 parameters](https://earth-info.nga.mil/?action=wgs84&dir=wgs84), and
+[GDAL's explicit curvature/refraction distinction](https://gdal.org/en/stable/programs/gdal_raster_viewshed.html).
+The regional packet is checked independently by `npm run validate:town-horizon`
+on every build. Runtime loading verifies compressed and decoded hashes, sizes,
+attribute ranges and index bounds before adoption. Its bounds are 200,000
+vertices, 450,000 triangles, 8 MiB compressed and 12 MiB decoded. It casts no
+shadows and is excluded from nearby water reflections. Both rendering paths
+share the same geometry and depth, and session disposal releases the batch.
+
+The regional bake uses NumPy, SciPy, rasterio, Shapely, mapbox-earcut and pyproj.
+Keep its large raw exports outside the repository. Run
+`python3 scripts/horizon/acquire.py --out <directory>/sources`, then
+`python3 scripts/horizon/repair_gaps.py --out <directory>/sources`, then
+`python3 scripts/horizon/prepare.py --work <directory>`.
+The latter also needs the original sibling `webster-blender/townwide/terrain.npz`
+and `webster-blender/downtown/downtown_terrain.npz`: their union is the exact cut
+through which the detailed town remains visible. Both source hashes are pinned.
+`scripts/horizon/audit_skyline.py --work <directory>` independently samples the
+repaired DEM every 100 m in 72 directions at five flight heights above Town Hall;
+it reports the highest apparent terrain angle, distance and source identity.
+Run the bake regressions with `python3 -m unittest discover -s tests/town -p
+test_horizon_prepare.py`. The current regional mesh is 328,342 triangles and
+2,826,423 compressed bytes, drawn once without a terrain texture download.
+
+Rebuild the separate town overview with `node scripts/prepare-town-overview.mjs`, then independently
 audit it with `node scripts/validate-town-overview.mjs data/derived/town/overview.json`.
 The read-only validator checks source hashes, exact manifest coverage, byte and
 triangle budgets, decoded index bounds, per-triangle ownership and per-owner

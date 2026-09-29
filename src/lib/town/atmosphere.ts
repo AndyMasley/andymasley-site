@@ -37,13 +37,13 @@ export function createSummerHaze(): THREE.Fog {
 /**
  * Aerial perspective: summer boundary-layer haze thickens with distance and
  * thins with height (optical depth integrated along each view ray), and it is
- * brighter and warmer toward the sun. Roughly a quarter of the way to the
- * horizon colour at 1 km and half by 2 km, so ridges and tree lines recede in
- * layers as in the late-afternoon reference photographs. The haze colour is
+ * brighter and warmer toward the sun. Near ground, roughly a tenth of the way
+ * to the horizon colour at 1 km; the shallower boundary layer keeps elevated
+ * ridges visible as the observer climbs above it. The haze colour is
  * the sky's own horizon, so terrain meets the sky without a seam. Installed on
  * the shared shader chunks for the session and restored on disposal.
  */
-export const AERIAL_PERSPECTIVE = { density: 0.00026, scaleHeightM: 900, baseY: 40 } as const;
+export const AERIAL_PERSPECTIVE = { density: 0.00012, scaleHeightM: 275, baseY: 40 } as const;
 
 // Shared by sky, reflections and haze so distant terrain converges on the
 // visible golden horizon, including when the driver turns away from the sun.
@@ -59,27 +59,48 @@ vec3 townEveningSky(vec3 base, vec3 direction, vec3 sunDirection) {
 
 export function installAerialPerspective(sunDirection: THREE.Vector3): () => void {
   const chunks = THREE.ShaderChunk as unknown as Record<string, string>;
-  const names = ['fog_pars_vertex', 'fog_vertex', 'fog_pars_fragment', 'fog_fragment'];
+  const names = ['fog_pars_vertex', 'fog_vertex', 'fog_pars_fragment', 'fog_fragment', 'tonemapping_fragment'];
   const previous = Object.fromEntries(names.map(name => [name, chunks[name]]));
   const sun = sunDirection.clone().normalize(), f = (v: number) => v.toFixed(6);
   const { density, scaleHeightM, baseY } = AERIAL_PERSPECTIVE;
   chunks.fog_pars_vertex = `#ifdef USE_FOG\nvarying float vFogDepth;\nvarying vec3 vTownFogRay;\n#endif`;
   chunks.fog_vertex = `#ifdef USE_FOG\nvFogDepth = - mvPosition.z;\nvTownFogRay = (vec4(mvPosition.xyz, 0.0) * viewMatrix).xyz;\n#endif`;
   chunks.fog_pars_fragment = `#ifdef USE_FOG\nuniform vec3 fogColor;\nvarying float vFogDepth;\nvarying vec3 vTownFogRay;\n${HORIZON_LIGHT}\n#ifdef FOG_EXP2\nuniform float fogDensity;\n#else\nuniform float fogNear;\nuniform float fogFar;\n#endif\n#endif`;
-  chunks.fog_fragment = `#ifdef USE_FOG
+  // Blend atmospheric radiance before either the direct renderer's tone curve
+  // or the HDR compositor. Three's default fog slot is after output encoding.
+  chunks.tonemapping_fragment = `#ifdef USE_FOG
 float townFogDistance = length(vTownFogRay);
 vec3 townFogDir = vTownFogRay / max(townFogDistance, 1e-3);
 float townFogStart = ${f(density)} * exp(-(cameraPosition.y - ${f(baseY)}) / ${f(scaleHeightM)});
 float townFogRise = townFogDir.y * townFogDistance / ${f(scaleHeightM)};
 float townFogOptical = townFogStart * townFogDistance * (abs(townFogRise) > 1e-3 ? (1.0 - exp(-townFogRise)) / townFogRise : 1.0);
+// Beyond the town, optical height follows the curved Earth. Using the curved
+// mesh's global Y alone would incorrectly bury distant ridges in dense haze.
+if (townFogDistance > 8000.0) {
+  // Five-point Gauss-Legendre integration resolves the thinner clear-air
+  // layer even along a long ray grazing the curved Earth's surface.
+  vec3 townFogSteps = vec3(0.0469100770, 0.2307653449, 0.5);
+  vec3 townFogSines = sin(length(vTownFogRay.xz) * townFogSteps / 12742017.6);
+  vec3 townFogHeights = vec3(cameraPosition.y - ${f(baseY)}) + vTownFogRay.y * townFogSteps
+    + 12742017.6 * townFogSines * townFogSines;
+  vec3 townFogDensity = exp(-townFogHeights / ${f(scaleHeightM)});
+  vec2 townFogStepsTail = vec2(0.7692346551, 0.9530899230);
+  vec2 townFogSinesTail = sin(length(vTownFogRay.xz) * townFogStepsTail / 12742017.6);
+  vec2 townFogHeightsTail = vec2(cameraPosition.y - ${f(baseY)}) + vTownFogRay.y * townFogStepsTail
+    + 12742017.6 * townFogSinesTail * townFogSinesTail;
+  vec2 townFogDensityTail = exp(-townFogHeightsTail / ${f(scaleHeightM)});
+  float townCurvedOptical = ${f(density)} * townFogDistance * (dot(townFogDensity, vec3(0.1184634425, 0.2393143352, 0.2844444444))
+    + dot(townFogDensityTail, vec2(0.2393143352, 0.1184634425)));
+  townFogOptical = mix(townFogOptical, townCurvedOptical, smoothstep(8000.0, 12000.0, townFogDistance));
+}
 float fogFactor = 1.0 - exp(-max(townFogOptical, 0.0));
-vec3 townFogColor = townEveningSky(fogColor, townFogDir, vec3(${f(sun.x)}, ${f(sun.y)}, ${f(sun.z)}));
-#ifdef TONE_MAPPING
-townFogColor = toneMapping(townFogColor);
-#endif
-townFogColor = linearToOutputTexel(vec4(townFogColor, 1.0)).rgb;
+// Three uploads fogColor in output space for direct rendering, but in linear
+// space for HDR targets. Start from the sky's authored linear color in both.
+vec3 townFogColor = townEveningSky(vec3(${SUMMER_SKY.horizon.map(f).join(', ')}), townFogDir, vec3(${f(sun.x)}, ${f(sun.y)}, ${f(sun.z)}));
 gl_FragColor.rgb = mix(gl_FragColor.rgb, townFogColor, fogFactor);
-#endif`;
+#endif
+${previous.tonemapping_fragment}`;
+  chunks.fog_fragment = '// Atmospheric radiance is blended before tone mapping.';
   return () => { for (const name of names) chunks[name] = previous[name]; };
 }
 
@@ -161,9 +182,9 @@ export function createSummerSky(sunDirection: THREE.Vector3, { surroundings = fa
       // A broad warm scatter and a small bright disc supply readable reflection
       // structure as well as the visible sky. These are art-directed, not weather data.
       color += vec3(8.0,5.0,2.0) * smoothstep(0.9997,0.99995,sunFacing);
-      // The reflected lower hemisphere is landscape, not a second bright sky.
-      // This gives glass and metallic bodywork a grounded reflection gradient.
-      color = mix(color,summerGround,smoothstep(0.01,0.36,-direction.y));
+      // Only the reflection source needs an inferred ground hemisphere. The
+      // visible sky stays in horizon haze beneath distant terrain silhouettes.
+      color = mix(color,summerGround,summerSurroundings * smoothstep(0.01,0.36,-direction.y));
       // Reflection source only: the low sky seen in windows, paint and water is
       // greyed by haze, screens and street clutter, then an irregular band of
       // trees and roofs replaces the horizon itself.

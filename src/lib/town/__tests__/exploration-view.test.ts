@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest';
 import * as THREE from 'three';
 import release from '../../../../data/derived/town/release.json';
 import type { WorldManifest } from '../contracts';
-import { explorationClipPlanes } from '../exploration-view';
+import { explorationCameraOffset, explorationClipPlanes } from '../exploration-view';
 
 function depth(camera: THREE.PerspectiveCamera, distance: number): number {
   return (new THREE.Vector3(0, 0, -distance).applyMatrix4(camera.projectionMatrix).z + 1) / 2;
@@ -13,8 +13,8 @@ function depth(camera: THREE.PerspectiveCamera, distance: number): number {
 
 describe('town exploration camera clipping', () => {
   it('preserves the close street view and clamps invalid or extreme altitudes', () => {
-    for (const height of [NaN, Infinity, -Infinity, -100, 0, .025, 1, 5, 12]) expect(explorationClipPlanes(height)).toEqual({ near: .08, far: 14000 });
-    for (const height of [250, 1000, 1e9]) expect(explorationClipPlanes(height)).toEqual({ near: 1.5, far: 14000 });
+    for (const height of [NaN, Infinity, -Infinity, -100, 0, .025, 1, 5, 12]) expect(explorationClipPlanes(height)).toEqual({ near: .08, far: 350000 });
+    for (const height of [250, 1000, 1e9]) expect(explorationClipPlanes(height)).toEqual({ near: 1.5, far: 350000 });
     const camera = new THREE.PerspectiveCamera(57, 1, ...Object.values(explorationClipPlanes(0)) as [number, number]);
     expect(depth(camera, .1)).toBeGreaterThan(0); expect(depth(camera, .1)).toBeLessThan(1);
   });
@@ -55,5 +55,44 @@ describe('town exploration camera clipping', () => {
       expect(farthest).toBeLessThan(explorationClipPlanes(1000).far);
       expect(farthest).toBeGreaterThan(6500);
     }
+  });
+});
+
+describe('exploration horizon framing', () => {
+  function view(height: number, pitch?: number, heading = 0) {
+    const camera = new THREE.PerspectiveCamera(57, 1.6, .08, 14000), offset = explorationCameraOffset(height, pitch);
+    const focus = new THREE.Vector3(3200, 45 + height + 1.35, -3600), forward = new THREE.Vector3(-Math.sin(heading), 0, -Math.cos(heading));
+    camera.position.copy(focus).addScaledVector(forward, -offset.back).add(new THREE.Vector3(0, offset.up, 0));
+    camera.lookAt(focus.clone().addScaledVector(forward, 2)); camera.updateMatrixWorld();
+    // Project the actual Earth-horizon bearing at a convenient in-frustum
+    // distance; regional scenery owns the much more distant horizon itself.
+    const dip = Math.acos(6371000 / (6371000 + camera.position.y + 100));
+    const horizon = camera.position.clone().addScaledVector(forward, 10000); horizon.y -= Math.tan(dip) * 10000;
+    return { camera, horizon: horizon.project(camera) };
+  }
+
+  it('keeps a useful band of sky above the real horizon at every default flight altitude and heading', () => {
+    for (const height of [0, 20, 100, 160, 250, 500, 1000]) for (const heading of [0, Math.PI / 2, Math.PI, -Math.PI / 2]) {
+      const { horizon } = view(height);
+      expect(Math.abs(horizon.x)).toBeLessThan(1e-8);
+      expect(horizon.y).toBeGreaterThan(.15); expect(horizon.y).toBeLessThan(.65);
+      expect(horizon.z).toBeLessThan(1);
+    }
+  });
+
+  it('still permits an intentional overhead view instead of clamping every view to the horizon', () => {
+    expect(view(1000, 1.1).horizon.y).toBeGreaterThan(1);
+    expect(view(1000, -.15).horizon.y).toBeLessThan(0);
+  });
+
+  it('lengthens the boom smoothly without changing its user-selected angle', () => {
+    let previous = 0;
+    for (let height = 0; height <= 1000; height += 5) {
+      const { back, up } = explorationCameraOffset(height, .3), length = Math.hypot(back, up);
+      expect(Math.atan2(up, back)).toBeCloseTo(.3, 10);
+      expect(length).toBeGreaterThanOrEqual(previous - 1e-12); expect(length).toBeGreaterThan(5 - 1e-12); expect(length).toBeLessThan(8 + 1e-12);
+      previous = length;
+    }
+    for (const value of [NaN, Infinity, -Infinity]) expect(explorationCameraOffset(value, value)).toEqual(explorationCameraOffset(0));
   });
 });

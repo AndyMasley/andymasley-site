@@ -4,7 +4,10 @@ import { Sky } from 'three/examples/jsm/objects/Sky.js';
 import { advanceRealTime, DriveEngine, LANDMARKS, MPH, RoadGraph, spawnAtLandmark, type NetworkData } from './engine';
 import { validateManifest, type Quality, type V3 } from './contracts';
 import { TownWorld } from './world';
-import { explorationClipPlanes } from './exploration-view';
+import { explorationCameraOffset, explorationClipPlanes } from './exploration-view';
+import { RegionalHorizon, type HorizonCatalog } from './regional-horizon';
+import horizonCatalog from '../../../data/derived/town/horizon.json';
+import { geometricHorizon, observerHeightASL } from './horizon-math';
 import { StreetDressing, updateDressingViewport, type StreetContext } from './street-dressing';
 import type { HouseDressing } from './house-dressing';
 import { RoadWear } from './road-wear';
@@ -122,6 +125,7 @@ export async function startTown(root: HTMLElement): Promise<Session> {
   let resize: ResizeObserver | undefined;
   let environmentTarget: THREE.WebGLRenderTarget | undefined;
   let sky: Sky | undefined;
+  let regionalHorizon: RegionalHorizon | undefined;
   let scene: THREE.Scene | undefined;
   let car: THREE.Group | undefined;
   let vehicle: TouringCar | undefined;
@@ -234,6 +238,7 @@ export async function startTown(root: HTMLElement): Promise<Session> {
       environmentTarget?.dispose();
       sky?.geometry.dispose();
       sky?.material.dispose();
+      regionalHorizon?.dispose();
       renderer?.dispose();
       delete root.dataset.ready;
       delete root.dataset.mode;
@@ -313,6 +318,11 @@ export async function startTown(root: HTMLElement): Promise<Session> {
     try { environmentTarget = pmrem.fromScene(skyScene, 0.04); }
     finally { pmrem.dispose(); environmentSky.geometry.dispose(); environmentSky.material.dispose(); }
     scene.environment = environmentTarget.texture;
+    if (horizonCatalog.sourceManifestSha256 !== release.manifestSha256) throw new Error('Regional landscape belongs to a different town release.');
+    regionalHorizon = new RegionalHorizon(horizonCatalog as HorizonCatalog);
+    scene.add(regionalHorizon.root);
+    const horizonReady = regionalHorizon.initialize(new URL(WORLD_URL, location.href).href, signal);
+    void horizonReady.catch(() => {});
     const cloudsReady = cloudModule.then(module => {
       if (disposed) return;
       const clouds = module.prepareSkyArt(renderer!, sky!, SUN_OFFSET, signal, target => {
@@ -375,7 +385,7 @@ export async function startTown(root: HTMLElement): Promise<Session> {
     });
     if (disposed) return session;
     prepareStatus('Preparing textures and the sky…');
-    await Promise.all([world.prepareTextures(signal), cloudsReady]);
+    await Promise.all([world.prepareTextures(signal), cloudsReady, horizonReady]);
     if (disposed) return session;
     const [{ OnFootController, nearestSummonRoad }, { ExplorationSurface }, { Pedestrians }, { createPlayerHumanoid }] = await explorationModules;
     if (disposed) return session;
@@ -412,10 +422,16 @@ export async function startTown(root: HTMLElement): Promise<Session> {
       // direct render remains, exactly as on Low and mobile.
       if (cinematic || cinematicUnsupported || !module || disposed || contextLost || !cinematicAllowed(quality, mobile)) return;
       if (!renderer!.capabilities.isWebGL2 || !renderer!.extensions.has('EXT_color_buffer_float')) { cinematicUnsupported = true; return; }
+      const previousAutoClear = renderer!.autoClear, previousExposure = renderer!.toneMappingExposure;
       try {
         cinematic = new module.CinematicRenderer(renderer!, scene!, camera, { halfResAO: quality !== 'high' });
         if (!cinematic.verify()) { cinematic.dispose(); cinematic = undefined; cinematicUnsupported = true; }
       } catch { cinematic?.dispose(); cinematic = undefined; cinematicUnsupported = true; }
+      finally {
+        // A constructor can change shared renderer state before returning an
+        // instance. Failed optional HDR setup must leave direct rendering safe.
+        if (!cinematic) { renderer!.autoClear = previousAutoClear; renderer!.toneMappingExposure = previousExposure; }
+      }
       cinematicReductions = 0;
       renderRequested = true;
     };
@@ -954,11 +970,10 @@ export async function startTown(root: HTMLElement): Promise<Session> {
         avatar!.group.position.copy(onFoot!.position); avatar!.group.rotation.y = onFoot!.heading;
         avatar!.update({ time: peopleTime, speed: engine.paused ? 0 : onFoot!.speed, flying: !onFoot!.grounded, jetpackEquipped: onFoot!.jetpack, jetpackActive: onFoot!.jetpack && (!onFoot!.grounded || footHeld.has('ascend')) && !engine.paused });
         points.wantedTarget.copy(points.car).addScaledVector(points.up, 1.35);
-        // As the town drops below the explorer, keep it in view; drag still
-        // adjusts the angle. A slightly longer boom makes fast flight readable.
-        const aerial = Math.min(1, Math.max(0, onFoot!.heightAboveGround - 10) / 150);
-        const pitch = Math.min(1.25, footPitch + aerial * .75), boom = 5 + aerial * 3;
-        points.wantedEye.copy(points.wantedTarget).addScaledVector(points.direction, -boom * Math.cos(pitch)).addScaledVector(points.up, boom * Math.sin(pitch));
+        // Keep the horizon in the default view while the longer flight boom
+        // makes movement readable. Drag remains free to look down at the town.
+        const offset = explorationCameraOffset(onFoot!.heightAboveGround, footPitch);
+        points.wantedEye.copy(points.wantedTarget).addScaledVector(points.direction, -offset.back).addScaledVector(points.up, offset.up);
         points.wantedTarget.addScaledVector(points.direction, 2);
       } else if (cameraMode === 'hood') {
         points.wantedEye.copy(points.car).addScaledVector(points.direction, 0.95).addScaledVector(points.right, -0.28).addScaledVector(points.up, 1.42);
@@ -990,7 +1005,7 @@ export async function startTown(root: HTMLElement): Promise<Session> {
       // for a sense of pace; the steady camera and QA views keep a fixed lens.
       const wantedFov = BASE_FOV + (steady() || debugCamera ? 0 : onFoot!.active ? Math.min(5, Math.max(0, onFoot!.speed - 3)) : Math.min(1, Math.max(0, engine.speed - 4) / 21) * 5);
       const fov = camera.fov + (wantedFov - camera.fov) * (firstFrame ? 1 : 1 - Math.exp(-elapsed * 2.5));
-      const clips = explorationClipPlanes(onFoot!.active ? onFoot!.heightAboveGround : 0);
+      const clips = explorationClipPlanes(debugCamera ? Math.max(0, debugCamera.eye[1] - points.car.y) : onFoot!.active ? onFoot!.heightAboveGround : 0);
       if (Math.abs(fov - camera.fov) > .005 || Math.abs(clips.near - camera.near) > .001 || camera.far !== clips.far) {
         camera.fov = fov; camera.near = clips.near; camera.far = clips.far; camera.updateProjectionMatrix();
       }
@@ -1039,6 +1054,7 @@ export async function startTown(root: HTMLElement): Promise<Session> {
       if (document.hidden || (engine.paused && !renderRequested && drawCount >= 3 && now - lastDraw < 100)) return;
       if (!teleporting) traffic?.update(elapsed, engine, camera, !engine.paused && !streamPaused && !summoning, onFoot!.active ? [onFoot!.position.x, -onFoot!.position.z, onFoot!.position.y] : undefined);
       camera.updateMatrixWorld();
+      sky!.position.copy(camera.position); sky!.updateMatrixWorld();
       peopleView.setFromProjectionMatrix(peopleProjection.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse));
       pedestrians!.update(peopleTime, points.car, false, { suspendPlanning: onFoot!.active && (onFoot!.heightAboveGround > 35 || onFoot!.speed > 20) });
       world!.updatePresentation(presentationTime, renderedPosition);
@@ -1122,7 +1138,7 @@ export async function startTown(root: HTMLElement): Promise<Session> {
       redraw() { renderRequested = true; },
       get debugCamera() { return debugCamera; },
       set debugCamera(value: { eye: number[]; target: number[] } | null) { debugCamera = value; renderRequested = true; },
-      get presentation() { return { version: 'finished-webster-v8', grass: world!.presentationResources(), vehicle: vehicle!.resources(), evidence: world!.evidenceResources(), finish: world!.finishResources(), research: world!.researchResources(), streaming: world!.streamingResources(), comfort: preferences.comfort, camera: { near: camera.near, far: camera.far, checks: cameraObstruction.checks, testedMeshes: cameraObstruction.testedMeshes, milliseconds: cameraObstruction.milliseconds, skippedCandidates: cameraObstruction.skippedCandidates, acceleration: cameraIndex?.metrics } }; },
+      get presentation() { return { version: 'finished-webster-v8', horizon: { ...regionalHorizon?.resources(), observerASL: observerHeightASL(camera.position.y), ...geometricHorizon(observerHeightASL(camera.position.y)) }, grass: world!.presentationResources(), vehicle: vehicle!.resources(), evidence: world!.evidenceResources(), finish: world!.finishResources(), research: world!.researchResources(), streaming: world!.streamingResources(), comfort: preferences.comfort, camera: { near: camera.near, far: camera.far, checks: cameraObstruction.checks, testedMeshes: cameraObstruction.testedMeshes, milliseconds: cameraObstruction.milliseconds, skippedCandidates: cameraObstruction.skippedCandidates, acceleration: cameraIndex?.metrics } }; },
       get ready() { return controlsReady && !disposed; },
       get metrics() {
         const samples = [...snapshots].sort((a, b) => a - b);

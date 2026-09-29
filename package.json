@@ -16,7 +16,8 @@
     "test:town-assets": "node --test data/schema/town/validate-town-assets.checks.mjs tests/town/prepare-transfer.checks.mjs tests/town/prepare-json-transfer.checks.mjs tests/town/source-texture-aliases.checks.mjs tests/town/prepare-startup-transfer.checks.mjs tests/town/overview-coverage.checks.mjs tests/town/overview-canopy.checks.mjs tests/town/overview-ground.checks.mjs tests/town/overview-water.checks.mjs",
     "validate:town-assets": "node scripts/validate-town-assets.mjs",
     "validate:town-overview": "node scripts/validate-town-overview.mjs",
-    "check:town-budgets": "node scripts/check-town-budgets.mjs"
+    "check:town-budgets": "node scripts/check-town-budgets.mjs",
+    "validate:town-horizon": "node scripts/validate-town-horizon.mjs"
   },
   "dependencies": {
     "@astrojs/check": "^0.9.8",

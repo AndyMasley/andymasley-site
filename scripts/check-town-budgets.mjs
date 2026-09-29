@@ -13,6 +13,7 @@ const manifest = read(path.join(source, 'manifest.json')), startup = read(path.j
 const aliases = read(path.join(site,'data/derived/town/source-texture-aliases.json')), atlas = read(path.join(site,'data/derived/town/leaf-atlas.json'));
 const networkTransfer = read(path.join(site, 'data/derived/town/network-transfer.json')), groundPreviews = read(path.join(site, 'data/derived/town/ground-preview.json'));
 const overviewCatalog = read(path.join(site, 'data/derived/town/overview.json'));
+const horizonCatalog = read(path.join(site, 'data/derived/town/horizon.json'));
 const textureAliases = new Map(aliases.aliases.map(row=>[path.join(source,row.from),path.join(source,row.to)]));
 const tile = manifest.tiles.find(tile => tile.id === startup.locations.DOWNTOWN.tileId);
 const sources = new Set([path.join(source, 'manifest.json'), path.join(source, manifest.network.url)]);
@@ -56,19 +57,23 @@ const main = bundles[0], criticalAssetsBytes = rows.reduce((sum, row) => sum + r
 // regressions to the older full-map/network startup. This byte guard does not
 // assert a ready-time target. Neighborhood preparation, optional packets and
 // unrelated page assets remain itemized by the browser ledger.
-const budgets = { mainGzipBytes: 1258291, coreSceneTransferBytes: 8388608, overviewTransferBytes: 12 * 1048576, overviewDecodedBytes: 24.5 * 1048576, overviewTriangles: 1250000, overviewDraws: 5 };
+const budgets = { mainGzipBytes: 1258291, coreSceneTransferBytes: 8388608, overviewTransferBytes: 12 * 1048576, overviewDecodedBytes: 24.5 * 1048576, overviewTriangles: 1250000, overviewDraws: 5, horizonTransferBytes: 8 * 1048576, horizonDecodedBytes: 12 * 1048576, horizonTriangles: 450000 };
 if (overviewCatalog.sourceManifestSha256 !== release.manifestSha256) throw Error('Whole-town overview source identity changed');
 const overview = {
   transferBytes: fs.statSync(path.join(root, overviewCatalog.asset.url)).size,
   decodedBytes: fs.statSync(path.join(root, overviewCatalog.asset.rawUrl)).size,
   triangles: overviewCatalog.layers.reduce((sum, layer) => sum + layer.triangles, 0), draws: overviewCatalog.layers.length,
 };
+if (horizonCatalog.sourceManifestSha256 !== release.manifestSha256) throw Error('Regional horizon source identity changed');
+const horizon = { transferBytes: fs.statSync(path.join(root, horizonCatalog.asset.url)).size, decodedBytes: fs.statSync(path.join(root, horizonCatalog.asset.rawUrl)).size, triangles: horizonCatalog.mesh.triangles, draws: 1 };
 const initialCoreAndOverviewBytes = criticalAssetsBytes + overview.transferBytes;
-const report = { version: 4, scope: 'Healthy first-street core assets plus the required persistent whole-town overview, exact network encoding, ground previews and main script; prepared neighboring streets, full ground maps and optional detail/host HTTP compression measured separately at readiness', main, criticalAssetsBytes, overview, initialCoreAndOverviewBytes, deferredFullGroundBytes: Object.keys(groundPreviews.rows).reduce((sum, url) => sum + fs.statSync(path.join(source, url)).size, 0), budgets, assets: rows,
+const initialCoreAndLandscapeBytes = initialCoreAndOverviewBytes + horizon.transferBytes;
+const report = { version: 5, scope: 'Healthy first-street core assets plus the required persistent whole-town overview and regional horizon, exact network encoding, ground previews and main script; prepared neighboring streets, full ground maps and optional detail/host HTTP compression measured separately at readiness', main, criticalAssetsBytes, overview, horizon, initialCoreAndOverviewBytes, initialCoreAndLandscapeBytes, deferredFullGroundBytes: Object.keys(groundPreviews.rows).reduce((sum, url) => sum + fs.statSync(path.join(source, url)).size, 0), budgets, assets: rows,
   passed: main.gzipBytes <= budgets.mainGzipBytes && criticalAssetsBytes <= budgets.coreSceneTransferBytes
     && overview.transferBytes <= budgets.overviewTransferBytes && overview.decodedBytes <= budgets.overviewDecodedBytes
-    && overview.triangles <= budgets.overviewTriangles && overview.draws <= budgets.overviewDraws };
+    && overview.triangles <= budgets.overviewTriangles && overview.draws <= budgets.overviewDraws
+    && horizon.transferBytes <= budgets.horizonTransferBytes && horizon.decodedBytes <= budgets.horizonDecodedBytes && horizon.triangles <= budgets.horizonTriangles };
 const output = process.env.TOWN_BUDGET_REPORT;
 if (output) { fs.mkdirSync(path.dirname(output), { recursive: true }); fs.writeFileSync(output, JSON.stringify(report, null, 2) + '\n'); }
-console.log(JSON.stringify({ passed: report.passed, main, criticalAssetsBytes, overview, initialCoreAndOverviewBytes, budgets }));
+console.log(JSON.stringify({ passed: report.passed, main, criticalAssetsBytes, overview, horizon, initialCoreAndOverviewBytes, initialCoreAndLandscapeBytes, budgets }));
 if (!report.passed) process.exitCode = 1;
