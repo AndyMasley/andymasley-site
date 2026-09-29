@@ -100,7 +100,7 @@ describe('Scoped late-summer materials', () => {
     const previous = vi.fn((shader: { fragmentShader: string }) => { shader.fragmentShader = '// earlier hook\n'+shader.fragmentShader; });
     m.onBeforeCompile = previous; m.customProgramCacheKey = () => 'prior'; applyArtMaterial(m);
     const shader = compile(m);
-    expect(previous).toHaveBeenCalledOnce(); expect(m.customProgramCacheKey()).toBe('prior|webster-art-material-v2:leaf');
+    expect(previous).toHaveBeenCalledOnce(); expect(m.customProgramCacheKey()).toBe('prior|webster-art-material-v2:leaf|sunlit-foliage-v1');
     expect(shader.vertexShader).toContain('townArtPosition = instanceMatrix * townArtPosition');
     // The breeze displaces the local vertex before projection, keyed to each instance's position.
     expect(shader.vertexShader.indexOf('#include <begin_vertex>')).toBeLessThan(shader.vertexShader.indexOf('float townSwayPhase'));
@@ -109,9 +109,33 @@ describe('Scoped late-summer materials', () => {
     expect(shader.uniforms.townArtTime).toBeDefined();
     expect(shader.fragmentShader).toContain('// earlier hook');
     expect(shader.fragmentShader).toContain('#include <alphatest_fragment>');
-    expect(shader.fragmentShader.indexOf('outgoingLight +=')).toBeGreaterThan(shader.fragmentShader.indexOf('vec3 outgoingLight ='));
-    expect(shader.fragmentShader.indexOf('outgoingLight +=')).toBeLessThan(shader.fragmentShader.indexOf('#include <opaque_fragment>'));
+    expect(shader.fragmentShader.indexOf('float townLeafForward')).toBeGreaterThan(shader.fragmentShader.indexOf('#include <lights_fragment_end>'));
+    expect(shader.fragmentShader.indexOf('float townLeafForward')).toBeLessThan(shader.fragmentShader.indexOf('vec3 totalDiffuse ='));
     expect(m.alphaTest).toBe(0.38); expect(m.side).toBe(THREE.DoubleSide);
+  });
+
+  it('uses the existing shadowed sun once for leaf transmission and preserves alpha boundaries', () => {
+    for (const name of ['Inferred deciduous leaf clusters','Canopy | subdued summer green']) {
+      const leaf = material(name), map = new THREE.Texture();
+      leaf.map = map; leaf.alphaTest = .38; leaf.side = THREE.DoubleSide; applyArtMaterial(leaf);
+      const shader = compile(leaf), transmission = shader.fragmentShader.slice(shader.fragmentShader.indexOf('float townLeafForward'), shader.fragmentShader.indexOf('#include <aomap_fragment>'));
+      // directLight is the final directional incident light in Three's standard
+      // lighting chunk, after receiveShadow and the existing shadow map sample.
+      expect(shader.fragmentShader).toContain('#if NUM_DIR_LIGHTS == 1');
+      expect(transmission).toContain('min(directLight.color,vec3(6.0))');
+      expect(transmission).toContain('dot(geometryViewDir,-directLight.direction)');
+      expect(transmission).toContain('dot(-normal,directLight.direction)');
+      expect(transmission).not.toMatch(/texture2D|getShadow|directionalLights|outgoingLight/);
+      expect(shader.fragmentShader.match(/#include <lights_fragment_begin>/g)).toHaveLength(1);
+      expect(shader.fragmentShader.match(/#include <lights_fragment_end>/g)).toHaveLength(1);
+      expect(shader.fragmentShader.indexOf('#include <alphatest_fragment>')).toBeLessThan(shader.fragmentShader.indexOf('float townLeafForward'));
+      expect(shader.fragmentShader).not.toContain('outgoingLight +=');
+      expect(transmission.includes('.04*(1.0-abs(dot(normal,geometryViewDir)))')).toBe(name.startsWith('Canopy'));
+      expect(leaf.map).toBe(map); expect(leaf.alphaTest).toBe(.38); expect(leaf.side).toBe(THREE.DoubleSide);
+      expect(leaf.emissive.getHex()).toBe(0); leaf.dispose(); map.dispose();
+    }
+    const bark = material('Canopy trunks | schematic bark'); applyArtMaterial(bark);
+    expect(compile(bark).fragmentShader).not.toContain('townLeafForward'); bark.dispose();
   });
 
   it('keeps roof variation continuous across differing architectural UV families', () => {

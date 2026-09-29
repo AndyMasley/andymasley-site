@@ -4,7 +4,7 @@ import { N8AOPostPass } from 'n8ao';
 
 /**
  * Desktop camera finish: screen-space ambient occlusion, a restrained HDR
- * bloom, the AgX filmic curve, contrast-adaptive sharpening and a photographic grade.
+ * bloom, the ACES filmic curve, contrast-adaptive sharpening and a photographic grade.
  *
  * The Webster reference photographs are dominated by contact shade (under
  * parked cars, hedges, eaves and curb faces), crisp pale trim against red
@@ -16,15 +16,15 @@ import { N8AOPostPass } from 'n8ao';
 export const FILM = {
   multisampling: 4,
   maxRadiance: 24,
-  ao: { radius: 2.4, distanceFalloff: 1.0, intensity: 2.5, color: '#101824', samples: 16, denoiseSamples: 8, denoiseRadius: 12 },
-  bloom: { threshold: 2.0, smoothing: 0.5, intensity: 0.3, radius: 0.72, levels: 6 },
-  // AgX keeps bright walls, sky and sunlit lawn from clipping to flat cyan-white
-  // and keeps shade legible; the grade then restores punch and saturation.
-  tone: 'agx',
-  exposure: 1.12,
+  ao: { radius: 1.55, distanceFalloff: 1.0, intensity: 1.6, color: '#101824', samples: 16, denoiseSamples: 8, denoiseRadius: 12 },
+  bloom: { threshold: 3.0, smoothing: 0.5, intensity: 0.2, radius: 0.72, levels: 6 },
+  // ACES retains the warm sunlit midtones; a restrained grade and smaller
+  // contact-occlusion radius keep shade readable without broad dark halos.
+  tone: 'aces' as 'aces' | 'agx',
+  exposure: 1.05,
   // Shade stays close to neutral: the blue sky fill already cools it, and a
   // stronger tint turns shaded lawns and hedges teal.
-  grade: { contrast: 1.34, saturation: 1.16, lift: -0.008, gamma: 1, gain: 1, shadowTint: [0.97, 0.99, 1.035], highlightTint: [1.045, 1.005, 0.95], vignette: 0.13 },
+  grade: { contrast: 1.18, saturation: 1.1, lift: -0.004, gamma: 1, gain: 1, shadowTint: [0.98, 1, 1.025], highlightTint: [1.025, 1.005, 0.98], vignette: 0.10 },
   // Contrast-adaptive sharpening restores the texture detail that multisampling
   // and the half-float resolve soften; 0 is off, 1 the strongest setting.
   sharpen: 0.5,

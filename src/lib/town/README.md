@@ -109,12 +109,19 @@ The sky upgrade does not block starting a drive, refreshes reflections once, and
 uses a 250 by 170 metre light-space rectangle: with the lower sun this retains
 the previous roughly 460 metre ground coverage, with separate texel snapping
 on each axis rather than rendering a larger off-camera area.
+Warm direct sunlight now has greater separation from the cool hemispherical fill.
+ACES highlight compression, smaller contact-occlusion radii and a restrained grade
+retain brighter sunlit materials without broad dark AO halos. The existing
+4096px interpolated shadow filter, map coverage and texel snapping are retained.
 This is an artistic time-of-day treatment, not a dated lighting reconstruction.
 The natural broadleaf atlas is generated from the original twig layout; its
 master and prompt live in `data/source/town/leaf-cluster-v2.png` and
 `leaf-art-v2.json`. The reproducible 512px export retains transparent gutters,
 existing twig anchors and atlas UVs. Rounded foliage normals and varied leaf
-shading preserve the source crown envelope and tree geometry budget.
+shading preserve the source crown envelope and tree geometry budget. Thin leaves
+transmit the already-shadowed sunlight when viewed against the sun; distant crowns
+receive a weaker rim response. This reuses existing lighting without extra shadow
+samples, geometry, textures or draw calls.
 Far crown fringes now filter against projected pixel size so grazing edges keep
 their irregular bough outline; unresolved distant masses remain opaque.
 
@@ -196,7 +203,7 @@ On desktop High and Automatic graphics with WebGL2 half-float targets,
 `cinematic.ts` (a separately loaded chunk, fetched beside the first tiles) renders
 the scene into a 4× multisampled HDR buffer, adds N8AO screen-space ambient
 occlusion (full resolution on High, half on Automatic), removes non-finite pixels,
-then applies camera motion blur, a thresholded bloom and the AgX filmic curve,
+then applies camera motion blur, a thresholded bloom and the ACES filmic curve,
 and finally contrast-adaptive sharpening and a photographic grade (contrast,
 saturation, lift, warm highlights/cool shade, vignette). Motion blur uses a
 180-degree shutter over the frame's own camera motion, capped at 22 px; the

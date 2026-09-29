@@ -339,7 +339,7 @@ describe('car body lean', () => {
 
 describe('camera finish', () => {
   it('keeps motion blur bounded and the grade in a sane range', () => {
-    expect(FILM.tone).toBe('agx');
+    expect(FILM.tone).toBe('aces');
     expect(FILM.motion.shutter).toBeLessThanOrEqual(0.5);
     expect(FILM.motion.maxPixels).toBeLessThanOrEqual(32);
     expect(FILM.sharpen).toBeGreaterThan(0);

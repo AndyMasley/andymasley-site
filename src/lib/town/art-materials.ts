@@ -301,18 +301,22 @@ if(townCrownRim<.46 && townCrownRim<townCrownEdge) discard;
   if (kind === 'glass') return WINDOW_INTERIOR_GLSL + `
 #include <opaque_fragment>
 `;
-  if (kind === 'leaf') return `
-// A restrained forward-scattering response restores thin-leaf readability;
-// sunlit summer maples in the photographs glow yellow-green through the crown.
-// Alpha testing, the original leaf atlas, vertex color and shadow rules remain.
-#if NUM_DIR_LIGHTS > 0
-float townLeafBacklight = pow(max(0.0,dot(normalize(vViewPosition),-directionalLights[0].direction)),2.0);
-float townLeafSun = min(2.5,max(directionalLights[0].color.r,max(directionalLights[0].color.g,directionalLights[0].color.b)));
-outgoingLight += diffuseColor.rgb * townLeafSun * (0.03+0.09*townLeafBacklight);
-#endif
-#include <opaque_fragment>
-`;
   return '#include <opaque_fragment>';
+}
+
+// The scene has one directional sun. Reuse its already shadowed incident
+// color after lighting evaluation; no second shadow lookup or ambient glow.
+// Atlas/vertex colors still darken dense boughs, and far hulls get only a rim.
+function leafTransmission(kind: ArtKind): string {
+  return `
+#include <lights_fragment_end>
+#if NUM_DIR_LIGHTS == 1
+float townLeafForward = pow(max(0.0,dot(geometryViewDir,-directLight.direction)),3.0);
+float townLeafThrough = max(0.0,dot(-normal,directLight.direction));
+reflectedLight.directDiffuse += diffuseColor.rgb * min(directLight.color,vec3(6.0))
+  * townLeafForward * townLeafThrough * ${kind === 'leaf' ? '.22' : '.04*(1.0-abs(dot(normal,geometryViewDir)))'};
+#endif
+`;
 }
 
 // A light summer breeze for near crowns: a slow sway that grows toward the crown
@@ -427,6 +431,10 @@ ${lanes ? `vTownRoadLane = ${ROAD_LANE_ATTRIBUTE};` : ''}
     shader.fragmentShader = functions + (opening ? 'varying vec4 vTownOpening;\n' : '') + (lanes ? 'varying vec4 vTownRoadLane;\n' : '') + (use && set ? surfaceDeclarations(!!set.normal) : '')
       + shader.fragmentShader.replace('#include <map_fragment>', map).replace('#include <opaque_fragment>', finishTreatment(kind));
     if (['siding','roof','flat-roof','asphalt','concrete','granite','foundation','shoulder','water','bark','far-leaf'].includes(kind)) shader.fragmentShader = shader.fragmentShader.replace('#include <normal_fragment_maps>', mineralNormal);
+    if (kind === 'leaf' || kind === 'far-leaf') {
+      if (!shader.fragmentShader.includes('#include <lights_fragment_end>')) throw new Error('Town leaf lighting shader anchor changed.');
+      shader.fragmentShader = shader.fragmentShader.replace('#include <lights_fragment_end>', leafTransmission(kind));
+    }
     if (kind === 'glass') shader.fragmentShader = shader.fragmentShader.replace('#include <normal_fragment_maps>', GLASS_NORMAL_GLSL);
     if (kind === 'door') shader.fragmentShader = shader.fragmentShader.replace('#include <normal_fragment_maps>', DOOR_PANEL_NORMAL);
     if (use && set) {
@@ -465,7 +473,7 @@ vNormalMapUv *= 1.6;
   material.customProgramCacheKey = () => {
     const use = LIBRARY[kind], set = use ? surfaceSet(use.set) : undefined;
     const library = use ? `|surface-library-v1:${set ? set.normal ? 'detail' : 'albedo' : 'off'}` : '';
-    return `${previousKey}|webster-art-material-v2:${kind}${kind==='water'?'|summer-water-optics-v2':kind==='bark'?'|regional-bark-v2|world-bark-v1':kind==='glass'?'|interior-rooms-v2':kind==='door'?'|panel-door-v1':kind==='far-leaf'?'|layered-far-foliage-v2':kind==='roof'?'|shingle-courses-v1':kind==='asphalt'?'|paving-fields-v2|lane-wear-v1':''}${['asphalt','concrete','granite','foundation','shoulder'].includes(kind)?'|mineral-families-v2':''}${kind==='concrete'?'|walk-joints-v1':''}${library}`;
+    return `${previousKey}|webster-art-material-v2:${kind}${kind==='water'?'|summer-water-optics-v2':kind==='bark'?'|regional-bark-v2|world-bark-v1':kind==='glass'?'|interior-rooms-v2':kind==='door'?'|panel-door-v1':kind==='leaf'?'|sunlit-foliage-v1':kind==='far-leaf'?'|layered-far-foliage-v2|sunlit-foliage-v1':kind==='roof'?'|shingle-courses-v1':kind==='asphalt'?'|paving-fields-v2|lane-wear-v1':''}${['asphalt','concrete','granite','foundation','shoulder'].includes(kind)?'|mineral-families-v2':''}${kind==='concrete'?'|walk-joints-v1':''}${library}`;
   };
   material.addEventListener('dispose', onMaterialDispose);
   material.needsUpdate = true;

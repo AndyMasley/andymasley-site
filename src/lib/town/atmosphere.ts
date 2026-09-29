@@ -2,13 +2,13 @@ import * as THREE from 'three';
 import { Sky } from 'three/examples/jsm/objects/Sky.js';
 
 export const SUMMER_LIGHT = {
-  sun: '#ffdfa9',
-  skyFill: '#c3d5ed',
-  groundFill: '#b9aa87',
+  sun: '#ffdc9d',
+  skyFill: '#c5d8ff',
+  groundFill: '#cfb58b',
   // An authored late-afternoon look: a low warm sun and neutral-cool sky fill
-  // retain readable shade while separating brick, stone and foliage.
-  sunIntensity: 4.1,
-  fillIntensity: 1.05,
+  // use less uniform fill so lit pavement and leaves separate from cool shade.
+  sunIntensity: 8.2,
+  fillIntensity: 0.75,
   exposure: 1.03,
 } as const;
 
