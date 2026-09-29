@@ -12,6 +12,21 @@ let waterPaths: { path?: Path2D; rings: number[][][]; bounds: Bounds }[] | undef
 const CELL = 512;
 const MARKER_OFFSETS = Array.from({ length: 49 }, (_, i) => [(i % 7 - 3) * 18, (Math.floor(i / 7) - 3) * 18]).sort((a, b) => Math.hypot(...a) - Math.hypot(...b) || a[0] - b[0] || a[1] - b[1]);
 
+/** Coarse overview terrain has no water plane. Never use its lakebed as a
+ * temporary walking surface while the detailed shoreline is still loading. */
+export function isMappedWater(east: number, north: number): boolean {
+  if (!Number.isFinite(east) || !Number.isFinite(north)) return false;
+  return water.polygons.some(({ bounds, rings }) => {
+    if (east < bounds[0] || north < bounds[1] || east > bounds[2] || north > bounds[3]) return false;
+    let inside = false;
+    for (const ring of rings) for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+      const a = ring[i], b = ring[j];
+      if ((a[1] > north) !== (b[1] > north) && east < (b[0] - a[0]) * (north - a[1]) / (b[1] - a[1]) + a[0]) inside = !inside;
+    }
+    return inside;
+  });
+}
+
 export function navigationPoint(point: readonly number[], view: NavigationView): [number, number] {
   return [view.width / 2 + (point[0] - view.center[0]) * view.scale, view.height / 2 - (point[1] - view.center[1]) * view.scale];
 }

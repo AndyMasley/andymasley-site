@@ -1,12 +1,13 @@
 import * as THREE from 'three';
 import type { RoadGraph, RoadEdge } from './engine';
 
-export const EXPLORATION_LIMITS = { radius: .30, height: 1.75, walkSpeed: 2.1, runSpeed: 5.4, flightSpeed: 9, ascentSpeed: 6, descentSpeed: 5, altitude: 45, gravity: 18, terminalSpeed: 18, stepHeight: .42, slopeNormal: .65, frameSeconds: .10, stepSeconds: .025 } as const;
-export type ExplorationGround = { y: number; normal: THREE.Vector3; water: boolean };
+export const EXPLORATION_LIMITS = { radius: .26, height: 1.75, walkSpeed: 2.8, runSpeed: 7.2, flightSpeed: 40, flightBoostSpeed: 80, ascentSpeed: 30, descentSpeed: 35, altitude: 1000, gravity: 24, terminalSpeed: 45, stepHeight: .85, slopeNormal: .42, frameSeconds: .10, stepSeconds: .025 } as const;
+export type ExplorationGround = { y: number; normal: THREE.Vector3; water: boolean; fallback?: boolean };
 export interface ExplorationSurfaceLike {
   ground(point: THREE.Vector3, maxRise?: number, maxDrop?: number): ExplorationGround | null;
   sweep(from: THREE.Vector3, to: THREE.Vector3, radius?: number, height?: number): THREE.Vector3;
   clear(point: THREE.Vector3, radius?: number, height?: number): boolean;
+  recoverGround?(point: THREE.Vector3): ExplorationGround | null;
 }
 export type ExplorationInput = { forward?: number; right?: number; turn?: number; run?: boolean; ascend?: boolean; descend?: boolean };
 export type ExplorationBlock = 'unloaded' | 'water' | 'obstacle' | null;
@@ -26,6 +27,13 @@ export class OnFootController {
   blocked: ExplorationBlock = null;
   private verticalSpeed = 0;
   private readonly safe = new THREE.Vector3();
+  private lastGroundHeight = 0;
+  private readonly motion = new THREE.Vector3();
+  private footContact?: THREE.Vector3;
+  private fallbackSupport = false;
+
+  get heightAboveGround(): number { const height = this.position.y - this.lastGroundHeight; return Number.isFinite(height) ? Math.max(0, height) : 0; }
+  get velocity(): THREE.Vector3 { return this.motion.clone(); }
 
   enter(carPosition: THREE.Vector3, heading: number, surface: ExplorationSurfaceLike): boolean {
     if (!finitePoint(carPosition) || !Number.isFinite(heading)) return false;
@@ -53,12 +61,12 @@ export class OnFootController {
     if (!ground || ground.water || ground.normal.y < EXPLORATION_LIMITS.slopeNormal) return false;
     const supported = point.clone(); supported.y = ground.y + clearance;
     if (!surface.clear(supported)) return false;
-    this.position.copy(supported); this.safe.copy(supported); this.heading = heading;
+    this.position.copy(supported); this.safe.copy(supported); this.heading = heading; this.lastGroundHeight = ground.y; this.motion.set(0, 0, 0); this.footContact = undefined; this.fallbackSupport = !!ground.fallback;
     this.active = true; this.grounded = true; this.jetpack = false; this.verticalSpeed = 0; this.speed = 0; this.blocked = null;
     return true;
   }
 
-  leave(): void { this.active = false; this.jetpack = false; this.verticalSpeed = 0; this.speed = 0; this.blocked = null; }
+  leave(): void { this.motion.set(0, 0, 0); this.active = false; this.jetpack = false; this.verticalSpeed = 0; this.speed = 0; this.blocked = null; }
   setJetpack(enabled: boolean): void { this.jetpack = this.active && enabled; this.verticalSpeed = 0; }
 
   update(dt: number, input: ExplorationInput, surface: ExplorationSurfaceLike): void {
@@ -68,71 +76,128 @@ export class OnFootController {
     const seconds = Math.min(dt, EXPLORATION_LIMITS.frameSeconds), steps = Math.ceil(seconds / EXPLORATION_LIMITS.stepSeconds), step = seconds / steps;
     const before = this.position.clone(); this.blocked = null;
     for (let i = 0; i < steps; i++) this.step(step, input, surface);
-    this.speed = Math.hypot(this.position.x - before.x, this.position.z - before.z) / seconds;
+    this.motion.copy(this.position).sub(before).divideScalar(seconds);
+    this.speed = Math.hypot(this.motion.x, this.motion.z);
+  }
+
+  private footGround(point: THREE.Vector3, surface: ExplorationSurfaceLike, airborne: boolean): ExplorationGround | null {
+    const center = surface.ground(point, airborne ? .1 : EXPLORATION_LIMITS.stepHeight, EXPLORATION_LIMITS.altitude + 80);
+    if (airborne || !this.footContact || center && center.y + clearance >= point.y - .04) return center;
+    // Preserve a real leading-foot contact while the body center crosses a
+    // stair edge. Recheck its resident surface instead of inventing a floor.
+    if (Math.hypot(point.x - this.footContact.x, point.z - this.footContact.z) > EXPLORATION_LIMITS.radius + .07) return center;
+    const contact = this.footContact.clone().setY(point.y), edge = surface.ground(contact, .1, 2);
+    return edge && !edge.water && edge.normal.y >= EXPLORATION_LIMITS.slopeNormal && edge.y + clearance <= point.y + .04 && (!center || edge.y > center.y) ? edge : center;
+  }
+
+  /** A curb can meet the capsule before its center reaches the top. Probe the
+   * leading foot, then try a real up/across/down path; every leg checks walls
+   * and ceilings. No raised collision plane or invented ground is involved. */
+  private walkSweep(target: THREE.Vector3, surface: ExplorationSurfaceLike): THREE.Vector3 {
+    const direct = surface.sweep(this.position, target);
+    if (direct.distanceToSquared(target) < 1e-6 || !this.grounded) return direct;
+    const stepped = target.clone(); let contact: THREE.Vector3 | undefined;
+    if (stepped.y - this.position.y <= .04) {
+      const direction = target.clone().sub(this.position).setY(0);
+      if (direction.lengthSq() < 1e-9) return direct;
+      const ahead = target.clone().addScaledVector(direction.normalize(), EXPLORATION_LIMITS.radius + .06);
+      const support = surface.ground(ahead, EXPLORATION_LIMITS.stepHeight, 2);
+      if (!support || support.water || support.normal.y < EXPLORATION_LIMITS.slopeNormal) return direct;
+      stepped.y = support.y + clearance; contact = ahead;
+    }
+    const rise = stepped.y - this.position.y;
+    if (rise <= .04 || rise > EXPLORATION_LIMITS.stepHeight + .001) return direct;
+    const raised = this.position.clone().setY(stepped.y + .03), up = surface.sweep(this.position, raised);
+    if (up.distanceToSquared(raised) > 1e-6) return direct;
+    const across = stepped.clone().setY(raised.y), crossed = surface.sweep(up, across);
+    if (crossed.distanceToSquared(across) > 1e-6) return direct;
+    const down = surface.sweep(crossed, stepped);
+    if (down.distanceToSquared(stepped) >= .0025) return direct;
+    if (contact) this.footContact = contact;
+    target.copy(stepped);
+    return down;
   }
 
   private step(dt: number, input: ExplorationInput, surface: ExplorationSurfaceLike): void {
     this.heading -= axis(input.turn) * 2.2 * dt;
-    const ground = surface.ground(this.position, EXPLORATION_LIMITS.stepHeight, EXPLORATION_LIMITS.altitude + 80);
-    // Never integrate gravity into absent/unloaded geometry. Streaming resumes
-    // movement when a real support surface becomes resident beneath the player.
-    if (!ground) { this.blocked = 'unloaded'; this.verticalSpeed = 0; return; }
+    const groundDrop = EXPLORATION_LIMITS.altitude + 80;
+    let ground = this.footGround(this.position, surface, !this.grounded);
+    if (this.grounded && this.fallbackSupport && (!ground || ground.fallback)) {
+      // The overview can sit below newly adopted grading. Only the surface's
+      // terrain-only, ceiling-checked migration may raise an existing fallback
+      // contact; ordinary steps and roofs retain their normal collision rules.
+      const adopted = surface.recoverGround?.(this.position);
+      if (adopted && !adopted.water && !adopted.fallback && Number.isFinite(adopted.y) && adopted.y > this.position.y && adopted.y - this.position.y <= 8) {
+        this.position.y = adopted.y + clearance; this.safe.copy(this.position);
+        this.footContact = undefined; this.fallbackSupport = false; ground = adopted;
+      }
+    }
+    // A missing streamed tile stops an unprotected walker at its last safe
+    // edge. Airborne movement remains free; only unsafe descent must hover.
+    if (!ground && this.grounded && !this.jetpack) { this.blocked = 'unloaded'; this.verticalSpeed = 0; return; }
+    if (ground) this.lastGroundHeight = ground.y;
+    const takingOff = this.jetpack && !!input.ascend && !input.descend;
+    const airborne = !this.grounded || takingOff || !ground && this.jetpack;
     const forward = axis(input.forward), right = axis(input.right), magnitude = Math.max(1, Math.hypot(forward, right));
-    const speed = this.jetpack && !this.grounded ? EXPLORATION_LIMITS.flightSpeed : input.run ? EXPLORATION_LIMITS.runSpeed : EXPLORATION_LIMITS.walkSpeed;
+    const speed = this.jetpack && airborne ? input.run ? EXPLORATION_LIMITS.flightBoostSpeed : EXPLORATION_LIMITS.flightSpeed : input.run ? EXPLORATION_LIMITS.runSpeed : EXPLORATION_LIMITS.walkSpeed;
     const dx = (-Math.sin(this.heading) * forward + Math.cos(this.heading) * right) / magnitude * speed * dt;
     const dz = (-Math.cos(this.heading) * forward - Math.sin(this.heading) * right) / magnitude * speed * dt;
     const proposed = this.position.clone().add(new THREE.Vector3(dx, 0, dz));
-    const support = Math.abs(dx) + Math.abs(dz) < 1e-9 ? ground : surface.ground(proposed, EXPLORATION_LIMITS.stepHeight, EXPLORATION_LIMITS.altitude + 80);
-    const aboveWater = !!support?.water && !this.grounded && proposed.y >= support.y + .5;
-    if (!support || support.water && !aboveWater || !support.water && support.normal.y < EXPLORATION_LIMITS.slopeNormal) {
+    const support = Math.abs(dx) + Math.abs(dz) < 1e-9 ? ground : this.footGround(proposed, surface, airborne);
+    if (!airborne && (!support || support.water || support.normal.y < EXPLORATION_LIMITS.slopeNormal)) {
       if (Math.abs(dx) + Math.abs(dz) > 1e-8) this.blocked = !support ? 'unloaded' : support.water ? 'water' : 'obstacle';
       proposed.copy(this.position);
     } else {
-      const rise = support.y + clearance - this.position.y;
-      if (this.grounded && rise > EXPLORATION_LIMITS.stepHeight + .001) { proposed.copy(this.position); this.blocked = 'obstacle'; }
+      const rise = support ? support.y + clearance - this.position.y : 0;
+      if (!airborne && rise > EXPLORATION_LIMITS.stepHeight + .001) { proposed.copy(this.position); this.blocked = 'obstacle'; }
       else {
-        if (this.grounded && rise >= -.45) proposed.y = support.y + clearance;
-        const swept = surface.sweep(this.position, proposed);
+        if (!airborne && support && rise >= -EXPLORATION_LIMITS.stepHeight) proposed.y = support.y + clearance;
+        const swept = airborne ? surface.sweep(this.position, proposed) : this.walkSweep(proposed, surface);
         if (swept.distanceToSquared(proposed) > 1e-6) {
           this.blocked = 'obstacle';
-          // Try the two wall tangents without allowing either to escape its
-          // independently checked ground/water footprint.
+          // Airborne tangents need no terrain below them. Walking tangents keep
+          // their independently checked dry, traversable ground footprint.
           for (const component of ['x', 'z'] as const) {
             const slide = this.position.clone(); slide[component] = proposed[component];
-            const floor = surface.ground(slide, EXPLORATION_LIMITS.stepHeight, EXPLORATION_LIMITS.altitude + 80);
-            if (!floor || floor.water && (this.grounded || slide.y < floor.y + .5) || !floor.water && floor.normal.y < EXPLORATION_LIMITS.slopeNormal) continue;
-            if (this.grounded && Math.abs(floor.y + clearance - slide.y) <= EXPLORATION_LIMITS.stepHeight) slide.y = floor.y + clearance;
-            const result = surface.sweep(this.position, slide);
-            if (result.distanceToSquared(this.position) > swept.distanceToSquared(this.position)) swept.copy(result);
+            if (Math.abs(slide[component] - this.position[component]) < 1e-8) continue;
+            if (!airborne) {
+              const floor = surface.ground(slide, EXPLORATION_LIMITS.stepHeight, groundDrop);
+              if (!floor || floor.water || floor.normal.y < EXPLORATION_LIMITS.slopeNormal || floor.y + clearance - slide.y > EXPLORATION_LIMITS.stepHeight) continue;
+              if (floor.y + clearance - slide.y >= -EXPLORATION_LIMITS.stepHeight) slide.y = floor.y + clearance;
+            }
+            const result = airborne ? surface.sweep(this.position, slide) : this.walkSweep(slide, surface);
+            if (Math.hypot(result.x - this.position.x, result.z - this.position.z) > Math.hypot(swept.x - this.position.x, swept.z - this.position.z)) swept.copy(result);
           }
         }
         proposed.copy(swept);
       }
     }
-    // Re-query the accepted position, since wall sliding can change its floor.
+    // Sliding and step traversal can change the floor under the accepted feet.
     const floor = proposed.x === this.position.x && proposed.z === this.position.z ? ground
-      : proposed.x === this.position.x + dx && proposed.z === this.position.z + dz ? support
-      : surface.ground(proposed, EXPLORATION_LIMITS.stepHeight, EXPLORATION_LIMITS.altitude + 80);
-    if (!floor) { this.blocked = 'unloaded'; this.verticalSpeed = 0; return; }
-    const base = floor.y + clearance, hover = floor.y + 2;
-    this.grounded = !floor.water && proposed.y <= base + .04;
+      : !this.footContact && proposed.x === this.position.x + dx && proposed.z === this.position.z + dz ? support
+      : this.footGround(proposed, surface, airborne);
+    if (floor) this.lastGroundHeight = floor.y;
+    const base = floor ? floor.y + clearance : -Infinity;
+    this.grounded = !!floor && !floor.water && Math.abs(proposed.y - base) <= .04;
     if (this.jetpack) this.verticalSpeed = input.ascend && !input.descend ? EXPLORATION_LIMITS.ascentSpeed : input.descend && !input.ascend ? -EXPLORATION_LIMITS.descentSpeed : 0;
     else this.verticalSpeed = this.grounded ? 0 : Math.max(-EXPLORATION_LIMITS.terminalSpeed, this.verticalSpeed - EXPLORATION_LIMITS.gravity * dt);
+    if (!floor && this.verticalSpeed < 0) { this.verticalSpeed = 0; this.blocked = 'unloaded'; }
     const vertical = proposed.clone();
-    const ceiling = Math.max(proposed.y, floor.y + EXPLORATION_LIMITS.altitude);
+    // Keep the last known ground datum across unloaded tiles; crossing a lower
+    // valley never pulls the player down to a newly reduced ceiling.
+    const ceiling = Math.max(proposed.y, this.lastGroundHeight + EXPLORATION_LIMITS.altitude);
     vertical.y = Math.max(base, Math.min(ceiling, proposed.y + this.verticalSpeed * dt));
-    if (floor.water && vertical.y < hover) {
-      // Water can be crossed in flight. Releasing the pack or descending over
-      // the lake engages a hover so landing requires returning to dry ground.
+    if (floor?.water && vertical.y < floor.y + 2) {
       this.jetpack = true; this.blocked = 'water'; this.verticalSpeed = 0;
-      vertical.y = proposed.y >= hover ? hover : Math.min(hover, proposed.y + EXPLORATION_LIMITS.ascentSpeed * dt);
+      vertical.y = proposed.y >= floor.y + 2 ? floor.y + 2 : Math.min(floor.y + 2, proposed.y + EXPLORATION_LIMITS.ascentSpeed * dt);
     }
-    const resolved = surface.sweep(proposed, vertical);
+    const resolved = Math.abs(vertical.y - proposed.y) < 1e-9 ? proposed : surface.sweep(proposed, vertical);
     if (Math.abs(resolved.y - vertical.y) > .001) { this.verticalSpeed = 0; this.blocked = 'obstacle'; }
     this.position.copy(resolved);
-    this.grounded = !floor.water && this.position.y <= base + .04;
-    if (this.grounded) { this.position.y = base; this.verticalSpeed = 0; this.safe.copy(this.position); }
+    this.grounded = !!floor && !floor.water && Math.abs(this.position.y - base) <= .04;
+    if (this.grounded) { this.position.y = base; this.verticalSpeed = 0; this.safe.copy(this.position); this.fallbackSupport = !!floor?.fallback; }
   }
+
 }
 
 export type SummonRoad = { edgeId: number; s: number; position: THREE.Vector3; heading: number; distance: number };

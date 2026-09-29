@@ -18,7 +18,7 @@ import { displayRoadName, turnDistanceLabel, displayChoices } from './road-displ
 import { updateChoiceControls } from './choice-controls';
 import { qualityPixelRatio, readPreferences, writePreferences, readSnapshot, restoreSnapshot, saveSnapshot, snapshotDrive, type CameraMode, type ComfortMode } from './ux-state';
 import { drawTownOverview } from './explore-map';
-import { drawNavigationBase, drawNavigationFurniture, drawNavigationPlaces, navigationPoint } from './navigation-map';
+import { drawNavigationBase, drawNavigationFurniture, drawNavigationPlaces, navigationPoint, isMappedWater } from './navigation-map';
 import placeDirectory from '../../../data/derived/town/place-directory.json';
 import { readCriticalJson } from './critical-load';
 import { CameraObstruction } from './camera-comfort';
@@ -381,6 +381,8 @@ export async function startTown(root: HTMLElement): Promise<Session> {
     const residentGroups = function* () { for (const tile of world!.loaded.values()) yield tile.group; };
     explorationSurface = new ExplorationSurface({
       groups: residentGroups,
+      fallbackGroups: () => world!.overview ? [world!.overview] : [],
+      fallbackAllowed: position => !isMappedWater(position.x, -position.z),
       solids: (position, radius) => world!.cameraOccluders(position.toArray() as V3, radius),
       intersect: (ray, meshes) => cameraIndex ? cameraIndex.intersect(ray, meshes) : ray.intersectObjects([...meshes], false),
     });
@@ -476,7 +478,7 @@ export async function startTown(root: HTMLElement): Promise<Session> {
     const toggleJetpack = (): void => {
       if (!controlsReady || !onFoot!.active || summoning || teleporting || contextLost) return;
       onFoot!.setJetpack(!onFoot!.jetpack);
-      setStatus(onFoot!.jetpack ? 'Jetpack on. Hold Space to rise, Q to descend. WASD steers; release thrust to hover.' : 'Jetpack off. You will settle back onto the ground; above water the pack keeps you safe until you reach shore.');
+      setStatus(onFoot!.jetpack ? 'Jetpack on. Hold Space to rise, Q to descend. WASD steers; Shift boosts. Release thrust to hover.' : 'Jetpack off. You will settle back onto the ground; above water the pack keeps you safe until you reach shore.');
       refreshHud(); focusCanvas();
     };
     const summonCar = async (): Promise<void> => {
@@ -844,10 +846,10 @@ export async function startTown(root: HTMLElement): Promise<Session> {
       jetpackButton.textContent = onFoot!.jetpack ? 'Jetpack on' : 'Jetpack off';
       jetpackButton.setAttribute('aria-pressed', String(onFoot!.jetpack));
       pauseButton.setAttribute('aria-keyshortcuts', exploring ? 'P Escape' : 'Space P Escape');
-      modeText.textContent = exploring ? onFoot!.jetpack ? 'Jetpack' : 'On foot' : 'Driving';
+      modeText.textContent = exploring ? onFoot!.jetpack ? `Jetpack · ${Math.round(onFoot!.heightAboveGround)} m` : 'On foot' : 'Driving';
       element<HTMLButtonElement>('recovery-reverse').hidden = exploring;
       if (exploring) {
-        const message = onFoot!.blocked === 'unloaded' ? 'Loading the ground ahead…' : onFoot!.blocked === 'water' ? onFoot!.jetpack ? 'Hovering above water. Fly to shore to land.' : 'Water ahead. Use the jetpack to fly over it.' : onFoot!.jetpack ? 'WASD steer · Space rise · Q descend · J land · F summon car' : 'WASD walk · Shift run · Drag to look · J jetpack · F summon car';
+        const message = onFoot!.blocked === 'unloaded' ? 'Loading the ground ahead…' : onFoot!.blocked === 'water' ? onFoot!.jetpack ? 'Hovering above water. Fly to shore to land.' : 'Water ahead. Use the jetpack to fly over it.' : onFoot!.jetpack ? 'WASD fly · Shift boost · Space rise · Q descend · J land · F summon car' : 'WASD walk · Shift run · Drag to look · J jetpack · F summon car';
         if (explorationHint.textContent !== message) explorationHint.textContent = message;
         speedText.textContent = String(Math.round(onFoot!.speed / MPH));
         roadText.textContent = engine.paused ? 'Exploration paused' : onFoot!.grounded ? 'Exploring Webster' : 'Above Webster';
@@ -951,7 +953,11 @@ export async function startTown(root: HTMLElement): Promise<Session> {
         avatar!.group.position.copy(onFoot!.position); avatar!.group.rotation.y = onFoot!.heading;
         avatar!.update({ time: peopleTime, speed: engine.paused ? 0 : onFoot!.speed, flying: !onFoot!.grounded, jetpackEquipped: onFoot!.jetpack, jetpackActive: onFoot!.jetpack && (!onFoot!.grounded || footHeld.has('ascend')) && !engine.paused });
         points.wantedTarget.copy(points.car).addScaledVector(points.up, 1.35);
-        points.wantedEye.copy(points.wantedTarget).addScaledVector(points.direction, -5 * Math.cos(footPitch)).addScaledVector(points.up, 5 * Math.sin(footPitch));
+        // As the town drops below the explorer, keep it in view; drag still
+        // adjusts the angle. A slightly longer boom makes fast flight readable.
+        const aerial = Math.min(1, Math.max(0, onFoot!.heightAboveGround - 10) / 150);
+        const pitch = Math.min(1.25, footPitch + aerial * .75), boom = 5 + aerial * 3;
+        points.wantedEye.copy(points.wantedTarget).addScaledVector(points.direction, -boom * Math.cos(pitch)).addScaledVector(points.up, boom * Math.sin(pitch));
         points.wantedTarget.addScaledVector(points.direction, 2);
       } else if (cameraMode === 'hood') {
         points.wantedEye.copy(points.car).addScaledVector(points.direction, 0.95).addScaledVector(points.right, -0.28).addScaledVector(points.up, 1.42);
@@ -990,11 +996,15 @@ export async function startTown(root: HTMLElement): Promise<Session> {
       // Most of the shadow frame lies ahead of the car, where the camera looks.
       shadowAnchor(shadowFocus.copy(points.car).addScaledVector(points.direction, SHADOW_LEAD), sun.target.position);
       sun.position.copy(sun.target.position).add(SUN_OFFSET);
+      world!.setExplorationView(onFoot!.active ? onFoot!.heightAboveGround : 0, onFoot!.active ? onFoot!.speed : 0);
       if (preparing) { world!.updatePresentation(presentationTime, renderedPosition); return; }
       const shore = Math.max(0, ...[LANDMARKS.LAKE, LANDMARKS.BEACH, LANDMARKS.RANCH].map(place => 1 - Math.hypot(position[0] - place.xy[0], position[1] - place.xy[1]) / 220));
       audio.update(engine.speed, engine.paused || streamPaused || teleporting || onFoot!.active, engine.acceleration, Number(engine.edge.surface_type ?? 6), shore);
-      if (drawCount >= 3 && now - streamingAt > 300 && !teleporting && !summoning) {
-        const ahead = onFoot!.active ? points.car.clone().addScaledVector(points.direction, 65).toArray() as V3 : toWorld(engine.pose(Math.max(100, engine.speed * 10))[0]);
+      if (drawCount >= 3 && now - streamingAt > (onFoot!.active ? 200 : 300) && !teleporting && !summoning) {
+        const motion = onFoot!.velocity; motion.y = 0;
+        const ahead = onFoot!.active
+          ? points.car.clone().addScaledVector(motion.lengthSq() > 1 ? motion.normalize() : points.direction, Math.min(600, Math.max(90, onFoot!.speed * 6))).toArray() as V3
+          : toWorld(engine.pose(Math.max(100, engine.speed * 10))[0]);
         world!.update(renderedPosition, ahead);
         streamingAt = now;
       }
@@ -1026,7 +1036,7 @@ export async function startTown(root: HTMLElement): Promise<Session> {
       if (!teleporting) traffic?.update(elapsed, engine, camera, !engine.paused && !streamPaused && !summoning, onFoot!.active ? [onFoot!.position.x, -onFoot!.position.z, onFoot!.position.y] : undefined);
       camera.updateMatrixWorld();
       peopleView.setFromProjectionMatrix(peopleProjection.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse));
-      pedestrians!.update(peopleTime, points.car);
+      pedestrians!.update(peopleTime, points.car, false, { suspendPlanning: onFoot!.active && (onFoot!.heightAboveGround > 35 || onFoot!.speed > 20) });
       world!.updatePresentation(presentationTime, renderedPosition);
       // Optional shore reflection starts after the first playable frames. It
       // owns a bounded offscreen pass; the following main render keeps the
@@ -1119,7 +1129,7 @@ export async function startTown(root: HTMLElement): Promise<Session> {
           geometries: renderer!.info.memory.geometries, textures: renderer!.info.memory.textures, calls: renderer!.info.render.calls };
       },
       get traffic() { return traffic ? { ...traffic.metrics } : undefined; },
-      get exploration() { return { active: onFoot!.active, position: onFoot!.position.toArray(), heading: onFoot!.heading, speed: onFoot!.speed, grounded: onFoot!.grounded, jetpack: onFoot!.jetpack, blocked: onFoot!.blocked, summoning, pedestrians: { ...pedestrians!.metrics }, people: pedestrians!.positions.map(p => p.toArray()), surface: { ...explorationSurface!.metrics } }; },
+      get exploration() { return { active: onFoot!.active, position: onFoot!.position.toArray(), heading: onFoot!.heading, speed: onFoot!.speed, heightAboveGround: onFoot!.heightAboveGround, velocity: onFoot!.velocity.toArray(), grounded: onFoot!.grounded, jetpack: onFoot!.jetpack, blocked: onFoot!.blocked, summoning, pedestrians: { ...pedestrians!.metrics }, people: pedestrians!.positions.map(p => p.toArray()), surface: { ...explorationSurface!.metrics } }; },
       /** QA: runs traffic for `seconds` of simulated time around the (unmoving) player. */
       advanceTraffic(seconds: number) { for (let t = 0; t < Math.min(600, seconds); t += 1 / 30) traffic?.update(1 / 30, engine, camera, true); renderRequested = true; },
       teleport,

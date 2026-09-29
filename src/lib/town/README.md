@@ -81,7 +81,7 @@ and within 2 m vertically. The car returns stopped; Up engages cruise again.
 | W / A / S / D | Move forward, strafe left, move backward, strafe right relative to the view |
 | ↑ / ↓ / ← / → | Walk forward, walk backward, turn left, turn right |
 | Drag the town view | Turn the view and adjust camera height |
-| Shift / Hold to run | Run while held |
+| Shift / Run / boost | Run on the ground or boost flight speed while held |
 | J / Jetpack button | Equip the jetpack, or switch it off to land |
 | Space / Q | Rise / descend while held with the jetpack enabled |
 | F / Summon car | Place the car at a checked nearby mapped street position |
@@ -90,7 +90,7 @@ and within 2 m vertically. The car returns stopped; Up engages cruise again.
 Releasing vertical thrust hovers while the jetpack is enabled. Switching it off
 restores gravity. Water cannot be landed on: descending near its surface engages
 a protective hover, and the explorer must return to dry ground to land. Touch
-controls have separate held movement, turning, run, rise and descent buttons;
+controls have separate held movement, turning, run/boost, rise and descent buttons;
 dragging the canvas still changes the view. Space pauses only in driving mode.
 The action strip and touch controls appear after loading, and driving-only HUD
 and actions are hidden on foot. Pause, focus loss and tab visibility changes clear
@@ -98,20 +98,40 @@ held inputs; key autorepeat cannot immediately resume a newly paused walk.
 
 `exploration.ts` owns the movement state in renderer coordinates (X east, Y up,
 Z south). It advances at most 100 ms per update, split into steps of at most
-25 ms. Authored speeds are 2.1 m/s walking, 5.4 m/s running and 9 m/s in flight;
-vertical thrust is 6 m/s up and 5 m/s down. The ascent ceiling is 45 m above the
-support surface. This is a bounded game movement model, not an engineering or
-accessibility assessment of the real ground. `exploration-surface.ts` samples
-resident meshes and reuses the session's camera ray index, without changing
-source geometry. It checks a 0.30 m radius and 1.75 m height, rejects water and
-unsupported ground, and limits ground steps to 0.42 m. Missing terrain stops
-movement instead of letting the explorer fall through unloaded space. Prolonged
-loading offers a retry near the explorer. Surface queries cache up to 96 resident
-groups, inspect at most four nearby tiles and reject ray queries exceeding
-32 mesh candidates rather than accepting unchecked movement. Capsule queries
-select nearby bounds once for all their rays. Nearby support meshes join the
-startup BVH preparation, and finite ray intervals remain exact under scaled or
-sheared transforms.
+25 ms. Authored speeds are 2.8 m/s walking, 7.2 m/s running and 40 m/s in flight;
+holding Shift boosts flight to 80 m/s. Vertical thrust is 30 m/s up and 35 m/s
+down, with an ascent ceiling 1,000 m above the support surface. Crossing lower
+terrain does not pull an already higher explorer down to its new ceiling. This
+is a bounded game movement model, not an engineering or accessibility assessment
+of the real ground. The 0.26 m radius, 1.75 m tall controller traverses supported
+steps up to 0.85 m and slopes of approximately 65 degrees. A leading-foot probe
+and checked up/across/down sweep carry it over real stair and curb edges while
+walls and ceilings still block it.
+
+`exploration-surface.ts` samples resident meshes and reuses the session's camera
+ray index without changing source geometry. Shared coarse terrain supplies dry
+ground where detailed support has not loaded; mapped water vetoes that fallback.
+When detailed grading arrives above a former fallback contact, a terrain-only
+reconciliation of at most 8 m checks both the standing body and its upward path
+against buildings and ceilings before adopting the real ground.
+Unsupported walking stops, but flight can continue across a streaming gap and
+holds altitude if descending would enter missing ground. Prolonged loading
+offers a retry near the explorer. Surface queries cache up to 96 resident groups
+and inspect at most four nearby tiles. Dense geometry is queried in batches of
+32 mesh candidates instead of turning an otherwise supported location into a
+gap. Capsule queries select nearby bounds once for all their rays. Nearby support
+meshes join startup BVH preparation; the camera index evicts least recently used
+entries within its 512-geometry, six-million-triangle and 64 MiB bounds. Finite
+ray intervals remain exact under scaled or sheared transforms.
+
+While exploring, streaming looks six seconds ahead along actual horizontal
+velocity (including strafing), bounded to 90–600 m, and refreshes every 200 ms.
+Newly approached blocks select display LODs using altitude, while tile residency
+still uses horizontal distance. Existing finer blocks remain in place during
+flight, avoiding whole-neighborhood reparsing merely to demote their detail. Fast or high flight defers fine street-detail work and reduces nearby
+grass work; those details return when the explorer slows or lands. The flight
+camera gradually looks down over the town, remains draggable, and the mode
+label reports metres above the current known ground.
 
 Summoning searches existing directed lane positions within 2 km horizontally,
 excluding highways, ramps, restricted roads and routes beyond their mapped
@@ -138,10 +158,15 @@ halts movement while later checks can restore it.
 
 `humanoid.ts` batches the pedestrian crowd into six instanced draws, with a cap of
 24 walkers on desktop and 10 on mobile/Low. The separate player avatar and jetpack
-have their own geometry. Pedestrian planning runs at 0.25-second intervals, with
-at most one tile index and one path attempt per planning update. Routes use
-separate corridors, and at most one world-support/clearance position is checked
-per frame. Startup preparation yields between checks, aiming for six nearby
+have their own geometry. Pedestrian candidate selection runs at 0.25-second
+intervals with at most one path attempt. Sidewalk indexing advances cooperatively
+by at most 256 source triangles or 64 scene nodes per frame. Hidden resident
+tiles retain their indices until eviction, and immutable geometric traces,
+including rejected narrow paths, are cached. Transient clearance failures retry
+after 12 seconds using the cached trace. Routes use separate corridors, and at
+most one world-support/clearance position is checked per frame. Planning and
+support probes pause above 35 m or faster than 20 m/s, while already checked
+walkers continue animating. Startup preparation yields between checks, aiming for six nearby
 people and stopping after 1,500 ms of accumulated work or four elapsed seconds
 (checked between steps). Crowd animation shares the game's clock and
 stops when paused. Batches, geometry and surface caches are owned by the session

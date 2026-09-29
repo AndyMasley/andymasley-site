@@ -269,4 +269,29 @@ describe('camera raycast acceleration', () => {
     await vi.runAllTimersAsync();
     expect(index.metrics).toMatchObject({ geometries: 0, triangles: 0, bytes: 0, pending: 0 });
   });
+
+  it('replaces unused runtime trees within the byte budget without permanently rejecting a newly visited street', async () => {
+    // Model large source trees without allocating their backing buffers. The
+    // actual BVHs and exact intersections remain real throughout the test.
+    const serialize = MeshBVH.serialize;
+    vi.spyOn(MeshBVH, 'serialize').mockImplementation((...args) => ({ ...serialize(...args), roots: [{ byteLength: 20 * 1048576 }] as ArrayBuffer[] }));
+    const [first, second, third, next] = [makeMesh(), makeMesh(), makeMesh(), makeMesh()], index = makeIndex(), ray = makeRay();
+    await prepare(index, [first, second, third, next]);
+    // Earlier preparation entries retain priority when the fourth cannot fit.
+    expect(index.metrics.geometries).toBe(3); expect(index.metrics.evictions).toBe(0); expect(index.metrics.limited).toBeGreaterThan(0);
+    expect(index.metrics.bytes).toBeLessThanOrEqual(64 * 1048576);
+    index.intersect(ray, [first]); // This tree is still actively used.
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+    const released = vi.spyOn(second.geometry, 'removeEventListener');
+    expectHits(index.intersect(ray, [next]), ray.intersectObject(next, false));
+    expect(index.metrics.pending).toBe(1); await vi.runAllTimersAsync();
+    expect(index.metrics).toMatchObject({ geometries: 3, evictions: 1, pending: 0 });
+    expect(index.metrics.bytes).toBeLessThanOrEqual(64 * 1048576); expect(released).toHaveBeenCalled();
+    const accelerated = vi.spyOn(MeshBVH.prototype, 'raycast');
+    expectHits(index.intersect(ray, [first, next]), ray.intersectObjects([first, next], false));
+    expect(accelerated).toHaveBeenCalledTimes(2);
+    accelerated.mockClear(); second.geometry.dispose();
+    expect(index.metrics.geometries).toBe(3); // Eviction removed its listener.
+    index.dispose(); expect(index.metrics).toMatchObject({ geometries: 0, bytes: 0, triangles: 0 });
+  });
 });

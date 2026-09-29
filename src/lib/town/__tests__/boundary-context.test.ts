@@ -81,9 +81,12 @@ describe('registered neighboring scenery', () => {
   });
   it('reserves context contact shadows inside the existing global town shadow cap', () => {
     const world=Object.create(TownWorld.prototype),rows=Array.from({length:100},(_,i)=>[i,10,0,2,3,2,0]);
-    Object.assign(world,{low:false,position:[0,0,0],treeShadows:true,loaded:new Map([['t',{treeRows:rows}]]),boundaryContext:{shadowDemand:()=>12}});
+    Object.assign(world,{low:false,position:[0,0,0],explorationHeight:0,treeShadows:true,loaded:new Map([['t',{treeRows:rows}]]),boundaryContext:{shadowDemand:()=>12}});
     const plans=(world as unknown as {planTrees(tiles:{id:string;origin:number[]}[]):Map<string,{shadows:Set<number>}>}).planTrees([{id:'t',origin:[0,0,0]}]);
     expect(plans.get('t')!.shadows.size+12).toBe(TREE_SHADOW_CAP);
+    world.setExplorationView(400,80);
+    const aerial=(world as unknown as {planTrees(tiles:{id:string;origin:number[]}[]):Map<string,{near:Set<number>;shadows:Set<number>}>}).planTrees([{id:'t',origin:[0,0,0]}]);
+    expect(aerial.get('t')!.near.size).toBe(0); expect(aerial.get('t')!.shadows.size).toBe(0);
   });
   it('updates close context detail after movement, releases old instances, and keeps anchors fixed', async () => {
     const packet=read(catalog.tiles['-4_-8'].url),tree=packet.trees[0],position:[number,number,number]=[tree[0],tree[2],-tree[1]],f=harness();

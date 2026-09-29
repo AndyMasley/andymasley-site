@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import * as THREE from 'three';
 import { EXPLORATION_LIMITS, OnFootController, nearestSummonRoad, type ExplorationSurfaceLike } from '../exploration';
 import { RoadGraph, type RoadEdge } from '../engine';
+import { ExplorationSurface } from '../exploration-surface';
 
 function surface(height: (point: THREE.Vector3) => number | 'water' | null = () => 0): ExplorationSurfaceLike {
   return {
@@ -55,21 +56,82 @@ describe('on-foot exploration physics', () => {
 
   it('caps jetpack height/speed and returns to dry ground under gravity after disabling it', () => {
     const ground = surface(), controller = new OnFootController(); controller.enterAt(new THREE.Vector3(), 0, ground); controller.setJetpack(true);
-    step(controller, { ascend: true }, ground, 10); expect(controller.position.y).toBeCloseTo(EXPLORATION_LIMITS.altitude, 5); expect(controller.grounded).toBe(false);
+    step(controller, { ascend: true }, ground, 35); expect(controller.position.y).toBeCloseTo(EXPLORATION_LIMITS.altitude, 5); expect(controller.grounded).toBe(false);
     const start = controller.position.clone(); step(controller, { forward: 1, right: 1, run: true }, ground);
-    expect(Math.hypot(controller.position.x - start.x, controller.position.z - start.z)).toBeCloseTo(EXPLORATION_LIMITS.flightSpeed, 5);
-    controller.setJetpack(false); step(controller, {}, ground, 8); expect(controller.grounded).toBe(true); expect(controller.position.y).toBeCloseTo(.025, 5);
+    expect(Math.hypot(controller.position.x - start.x, controller.position.z - start.z)).toBeCloseTo(EXPLORATION_LIMITS.flightBoostSpeed, 5);
+    controller.setJetpack(false); step(controller, {}, ground, 30); expect(controller.grounded).toBe(true); expect(controller.position.y).toBeCloseTo(.025, 5);
     controller.leave(); const end = controller.position.clone(); step(controller, { forward: 1, ascend: true }, ground); expect(controller.position.equals(end)).toBe(true); expect(controller.jetpack).toBe(false);
   });
 
   it('blocks walking into water, permits flight across it, and automatically hovers when descent or disabled thrust would land in water', () => {
     const ground = surface(point => point.x > 1 && point.x < 20 ? 'water' : 0), controller = new OnFootController(); controller.enterAt(new THREE.Vector3(), 0, ground);
     step(controller, { right: 1 }, ground); expect(controller.position.x).toBeLessThanOrEqual(1); expect(controller.blocked).toBe('water');
-    controller.setJetpack(true); step(controller, { ascend: true }, ground, 1); step(controller, { right: 1 }, ground, .8);
+    controller.setJetpack(true); step(controller, { ascend: true }, ground, 1); step(controller, { right: 1 }, ground, .2);
     expect(controller.position.x).toBeGreaterThan(3); expect(controller.grounded).toBe(false);
     controller.setJetpack(false); step(controller, {}, ground, 3); expect(controller.position.y).toBeCloseTo(2, 4); expect(controller.jetpack).toBe(true); expect(controller.grounded).toBe(false);
     step(controller, { descend: true }, ground); expect(controller.position.y).toBeCloseTo(2, 4); expect(controller.blocked).toBe('water');
     step(controller, { right: 1 }, ground, 2); controller.setJetpack(false); step(controller, {}, ground, 2); expect(controller.grounded).toBe(true);
+  });
+
+  it('steps over tall curbs using a clear up/across/down path while preserving walls and low ceilings', () => {
+    const curb = surface(point => point.x >= 1 ? .65 : 0);
+    curb.sweep = (from, to) => from.x < 1 && to.x >= 1 && Math.min(from.y, to.y) < .68 ? from.clone() : to.clone();
+    const controller = new OnFootController(); controller.enterAt(new THREE.Vector3(), 0, curb);
+    step(controller, { right: 1 }, curb, .6); expect(controller.position.x).toBeGreaterThan(1.5); expect(controller.position.y).toBeCloseTo(.675); expect(controller.grounded).toBe(true);
+    const wall = { ...curb, sweep: (from: THREE.Vector3, to: THREE.Vector3) => from.x < 1 && to.x >= 1 ? from.clone() : to.clone() };
+    controller.enterAt(new THREE.Vector3(), 0, wall); step(controller, { right: 1 }, wall, 1);
+    expect(controller.position.x).toBeLessThan(1); expect(controller.blocked).toBe('obstacle');
+    const ceiling = { ...curb, sweep: (from: THREE.Vector3, to: THREE.Vector3) => to.y > from.y && to.y + EXPLORATION_LIMITS.height > 2 ? from.clone() : curb.sweep(from, to) };
+    controller.enterAt(new THREE.Vector3(), 0, ceiling); step(controller, { right: 1 }, ceiling, 1); expect(controller.position.x).toBeLessThan(1);
+  });
+
+  it('crosses an actual sidewalk mesh riser before its body center reaches the curb', () => {
+    const group = new THREE.Group(), material = new THREE.MeshStandardMaterial(); material.name = 'sidewalk concrete';
+    const base = new THREE.PlaneGeometry(30, 30); base.rotateX(-Math.PI / 2);
+    const stepGeometry = new THREE.BoxGeometry(6, .65, 10), curb = new THREE.Mesh(stepGeometry, material); curb.position.set(4, .325, 0);
+    group.add(new THREE.Mesh(base, material), curb);
+    const terrain = new ExplorationSurface({ groups: () => [group] }), controller = new OnFootController(); expect(controller.enterAt(new THREE.Vector3(), 0, terrain)).toBe(true);
+    step(controller, { right: 1 }, terrain, 1);
+    expect(controller.position.x).toBeGreaterThan(2); expect(controller.position.y).toBeCloseTo(.675, 3); expect(controller.grounded).toBe(true);
+    terrain.dispose(); base.dispose(); stepGeometry.dispose(); material.dispose();
+  });
+
+  it('retains continuous collision with thin walls at boosted flight speed', () => {
+    const group = new THREE.Group(), material = new THREE.MeshStandardMaterial(); material.name = 'building wall stone';
+    const base = new THREE.PlaneGeometry(100, 100); base.rotateX(-Math.PI / 2);
+    const wallGeometry = new THREE.BoxGeometry(.05, 80, 30), wall = new THREE.Mesh(wallGeometry, material); wall.position.set(8, 40, 0);
+    group.add(new THREE.Mesh(base, material), wall);
+    const terrain = new ExplorationSurface({ groups: () => [group] }), controller = new OnFootController(); controller.enterAt(new THREE.Vector3(), 0, terrain); controller.setJetpack(true);
+    step(controller, { ascend: true }, terrain, 1); step(controller, { right: 1, run: true }, terrain, .4);
+    expect(controller.position.x).toBeGreaterThan(7); expect(controller.position.x).toBeLessThan(8); expect(controller.blocked).toBe('obstacle'); expect(controller.position.y).toBeCloseTo(30.025);
+    terrain.dispose(); base.dispose(); wallGeometry.dispose(); material.dispose();
+  });
+
+  it('walks freely uphill over steep dry terrain without relying on mapped roads', () => {
+    const slope = surface(point => point.x * 1.5), sample = slope.ground;
+    slope.ground = (...args) => { const ground = sample(...args); if (ground) ground.normal.set(-1.5, 1, 0).normalize(); return ground; };
+    const controller = new OnFootController(); expect(controller.enterAt(new THREE.Vector3(), 0, slope)).toBe(true);
+    step(controller, { right: 1 }, slope); expect(controller.position.x).toBeCloseTo(EXPLORATION_LIMITS.walkSpeed); expect(controller.position.y).toBeCloseTo(controller.position.x * 1.5 + .025); expect(controller.blocked).toBeNull();
+  });
+
+  it('flies above the former ground-query range with normal and boosted speed and exposes finite motion', () => {
+    const ground = surface(), controller = new OnFootController(); controller.enterAt(new THREE.Vector3(), 0, ground); controller.setJetpack(true);
+    step(controller, { ascend: true }, ground, 8); expect(controller.heightAboveGround).toBeCloseTo(240.025); expect(controller.velocity.y).toBeCloseTo(30);
+    const start = controller.position.clone(); step(controller, { forward: 1 }, ground); expect(controller.position.z - start.z).toBeCloseTo(-40); expect(controller.velocity.z).toBeCloseTo(-40);
+    const boosted = controller.position.clone(); step(controller, { forward: 1, right: 1, run: true }, ground); expect(Math.hypot(controller.position.x - boosted.x, controller.position.z - boosted.z)).toBeCloseTo(80);
+    const leaked = controller.velocity; leaked.set(NaN, NaN, NaN); expect(controller.velocity.toArray().every(Number.isFinite)).toBe(true);
+    step(controller, { descend: true }, ground, 1); expect(controller.velocity.y).toBeCloseTo(-35); controller.leave(); expect(controller.velocity.length()).toBe(0);
+  });
+
+  it('continues horizontal flight and ascent across missing tiles, hovering only unsafe descent until ground returns', () => {
+    let loaded = true;
+    const ground = surface(() => loaded ? 0 : null), controller = new OnFootController(); controller.enterAt(new THREE.Vector3(), 0, ground); controller.setJetpack(true);
+    step(controller, { ascend: true }, ground); loaded = false;
+    const start = controller.position.clone(); step(controller, { forward: 1, ascend: true }, ground);
+    expect(controller.position.z - start.z).toBeCloseTo(-40); expect(controller.position.y - start.y).toBeCloseTo(30);
+    const high = controller.position.y; step(controller, { right: 1, descend: true }, ground);
+    expect(controller.position.x).toBeCloseTo(40); expect(controller.position.y).toBeCloseTo(high); expect(controller.blocked).toBe('unloaded'); expect(controller.grounded).toBe(false);
+    loaded = true; step(controller, { descend: true }, ground, 2); expect(controller.grounded).toBe(true); expect(controller.position.y).toBeCloseTo(.025);
   });
 
   it('ignores invalid deltas/axes and keeps controller state finite', () => {

@@ -72,6 +72,8 @@ export class TownWorld {
   readonly root = new THREE.Group();
   readonly loader = new GLTFLoader().setMeshoptDecoder(MeshoptDecoder);
   readonly loaded = new Map<string, LoadedTile>();
+  /** Resident coarse terrain supports exploration while detailed tiles stream. */
+  overview?: THREE.Group;
   private inflight = new Map<string, AbortController>();
   private wanted = new Map<string, number>();
   private materialPool = new Map<string, MaterialEntry>();
@@ -98,6 +100,9 @@ export class TownWorld {
   private mobile = false;
   private treeShadows = true;
   private position: V3 = [0, 0, 0];
+  private lookAhead: V3 = [0, 0, 0];
+  private explorationHeight = 0;
+  private explorationSpeed = 0;
   private treeGroundVisibilityKey = '';
   private preparingAt: V3 | null = null;
   private preparingNeighborhood: { position: V3; lookAhead: V3; selected: TileSelection[]; signal?: AbortSignal } | null = null;
@@ -392,6 +397,7 @@ export class TownWorld {
       };
       object.material = Array.isArray(object.material) ? object.material.map(backdrop) : backdrop(object.material);
     });
+    this.overview = fallback;
     this.root.add(fallback);
     this.prototypes.push(...prototypes);
     // Borrow pooled leaf materials; shared variants are allocated once for the
@@ -506,11 +512,20 @@ export class TownWorld {
     group.updateMatrixWorld(true);
   }
 
+  /** Street details return automatically when the explorer lands or boards. */
+  setExplorationView(heightAboveGround = 0, speed = 0): void {
+    this.explorationHeight = Number.isFinite(heightAboveGround) ? Math.max(0, heightAboveGround) : 0;
+    this.explorationSpeed = Number.isFinite(speed) ? Math.max(0, speed) : 0;
+  }
+
+  private get flyingFast(): boolean { return this.explorationHeight > 60 || this.explorationSpeed > 20; }
+  private detailDistance(horizontal: number): number { return Math.hypot(horizontal, this.explorationHeight); }
+
   updatePresentation(timeSeconds: number, position: V3 = this.position): void {
     if (Number.isFinite(timeSeconds)) this.artClock.value = timeSeconds;
     updateRoadsideSignalTime(timeSeconds);
     this.surfaces?.refine(this.sharedAbort.signal);
-    this.surfaces?.update(position, this.low || this.mobile, timeSeconds);
+    this.surfaces?.update(position, this.low || this.mobile || this.explorationHeight > 15 || this.explorationSpeed > 20, timeSeconds);
   }
 
   presentationResources() {
@@ -581,17 +596,23 @@ export class TownWorld {
     const preparing = this.preparingAt || neighborhood;
     if (this.preparingAt) position = lookAhead = this.preparingAt;
     else if (neighborhood) { position = neighborhood.position; lookAhead = neighborhood.lookAhead; }
-    this.position = position;
+    this.position = [...position];
+    this.lookAhead = [...lookAhead];
     const time = performance.now();
     const selected = this.preparingAt ? this.readinessTiles(position).map(tile => ({ tile, distance: Math.sqrt(boundsDistanceSquared(tile.bounds, position)), ahead: 0 }))
       : neighborhood?.selected ?? this.selectTiles(position, lookAhead);
     const desired = new Map<string, number>();
     this.refreshTreeGrounding(selected.map(({ tile }) => tile));
     const treePlans = this.planTrees(selected.map(({ tile }) => tile));
-    for (const { tile, distance } of selected) {
+    for (const { tile, distance: horizontal } of selected) {
+      const distance = preparing ? horizontal : this.detailDistance(horizontal);
       let level = chooseLod(tile, distance, this.low);
       const cached = this.loaded.get(tile.id);
       if (cached) {
+        // Climbing must not reparse a whole resident neighborhood just to make
+        // it coarser. Reuse its geometry in flight; newly approached blocks
+        // still load the altitude-appropriate LOD, and near trees/grass simplify.
+        if (!preparing && this.flyingFast && level > cached.level) level = cached.level;
         cached.lastUsed = time;
         const boundary = Math.min(cached.level, level) === 0 ? (this.low ? 160 : 280) : (this.low ? 430 : 650);
         if (!force && cached.level !== level && Math.abs(distance - boundary) < 35) level = cached.level;
@@ -602,7 +623,7 @@ export class TownWorld {
           cached.treePlan = treePlan;
           this.root.add(cached.trees);
         }
-        if (cached.trees) cached.trees.visible = distance < (this.low ? 500 : 800);
+        if (cached.trees) cached.trees.visible = horizontal < (this.low ? 500 : 800);
       }
       desired.set(tile.id, level);
     }
@@ -620,7 +641,7 @@ export class TownWorld {
       if (this.inflight.size >= 2) break;
       if (this.inflight.has(tile.id)) continue;
       const current = this.loaded.get(tile.id);
-      const retry = !!current && current.level === desired.get(tile.id) && !!current.group.userData.optionalDetailMissing?.length && time >= (current.detailRetryAt ?? Infinity);
+      const retry = !this.flyingFast && !!current && current.level === desired.get(tile.id) && !!current.group.userData.optionalDetailMissing?.length && time >= (current.detailRetryAt ?? Infinity);
       if (current?.level === desired.get(tile.id) && !retry) continue;
       // Ready streets take precedence over a second attempt at optional detail.
       if (retry && selected.some(({tile: next}) => !this.loaded.has(next.id) && !this.inflight.has(next.id) && time - (this.failures.get(next.id) ?? -Infinity) >= 10000)) continue;
@@ -631,7 +652,7 @@ export class TownWorld {
     this.metrics.pending = this.inflight.size;
     this.metrics.loaded = this.loaded.size;
     const contextShadowBudget = this.treeShadows ? Math.max(0,TREE_SHADOW_CAP-[...treePlans.values()].reduce((sum,plan)=>sum+plan.shadows.size,0)) : 0;
-    this.boundaryContext.update(position, !preparing && this.prototypes.length > 0 && this.isReadyAt(position), contextShadowBudget);
+    this.boundaryContext.update(position, !preparing && this.explorationHeight < 150 && this.prototypes.length > 0 && this.isReadyAt(position), contextShadowBudget);
   }
 
   /** Explicit player retry resets only nearby failure backoff, not the town. */
@@ -710,7 +731,7 @@ export class TownWorld {
       shoreline: this.environmentGround.resources(), facilities: this.facilities.resources(), roadMaterials: this.roadMaterials.resources(), streetCorners: this.streetCorners.resources(), streetCornerGround: this.streetCornerGround.resources(), roadCurve: this.roadCurve.resources(), roadDash: this.roadDash.resources(), propertyTerrain: this.propertyTerrain.resources(), roadGroundClearance: this.roadGroundClearance.resources(), foundationWalls: this.foundationWalls.resources(), railCorridor: this.railCorridor.resources(), measuredRoofs: this.measuredRoofs.resources(), boundaryContext: this.boundaryContext.resources(), retrySources: this.sourceRetryCache.resources(), sourceImages: this.sourceImages.resources() };
     const geometryBudgetBytes = (this.mobile ? 192 : 384) * 1024 * 1024;
     const retainedTileGeometryBytes = [...this.loaded.values()].reduce((sum, tile) => sum + (tile.geometryBytes ?? 0), 0);
-    return { ...this.timings, groundTextures: this.surfaces?.detailResources(), maxStageMs: { ...this.stageTimings }, detailRequests: { active: this.detailRequests.active, queued: this.detailRequests.queued, peakActive: this.detailRequests.peakActive, cancelled: this.detailRequests.cancelled }, caches, estimatedCacheBytes: Object.values(caches).reduce((sum, cache) => sum + cache.estimatedBytes, 0),
+    return { ...this.timings, explorationHeight: this.explorationHeight, explorationSpeed: this.explorationSpeed, lookAhead: [...this.lookAhead], groundTextures: this.surfaces?.detailResources(), maxStageMs: { ...this.stageTimings }, detailRequests: { active: this.detailRequests.active, queued: this.detailRequests.queued, peakActive: this.detailRequests.peakActive, cancelled: this.detailRequests.cancelled }, caches, estimatedCacheBytes: Object.values(caches).reduce((sum, cache) => sum + cache.estimatedBytes, 0),
       geometryBudgetBytes, retainedTileGeometryBytes, geometryBudgetExceeded: retainedTileGeometryBytes > geometryBudgetBytes,
       incompleteTiles: [...this.loaded.entries()].filter(([,tile]) => tile.group.userData.optionalDetailMissing?.length).map(([id,tile]) => ({ id, missing: tile.group.userData.optionalDetailMissing as string[], attempts: tile.detailAttempts ?? 0 })),
     };
@@ -858,7 +879,7 @@ export class TownWorld {
       this.metrics.pending = this.inflight.size;
       this.metrics.loaded = this.loaded.size;
       this.onChange();
-      if (!this.disposed) this.update(this.position, this.position);
+      if (!this.disposed) this.update(this.position, this.lookAhead);
     }
   }
 
@@ -893,7 +914,7 @@ export class TownWorld {
       const plan: TreePlan = { near: new Set(), shadows: new Set(), excluded: cached.treeExcluded ?? new Set(), key: '' };
       cached.treeRows.forEach((row, index) => {
         if (plan.excluded.has(index)) return;
-        const distance = Math.hypot(row[0] + tile.origin[0] - this.position[0], row[2] + tile.origin[2] - this.position[2]);
+        const distance = Math.hypot(row[0] + tile.origin[0] - this.position[0], row[2] + tile.origin[2] - this.position[2], this.explorationHeight);
         // Per-anchor LOD, with a 20m exit band to avoid rebuilding at the boundary.
         const wasNear = cached.treePlan?.near.has(index);
         if (distance < nearRadius + (wasNear ? 20 : 0)) plan.near.add(index);
@@ -1172,6 +1193,7 @@ export class TownWorld {
   }
 
   dispose(): void {
+    this.overview = undefined;
     this.sourceImages.dispose();
     this.boundaryContext.dispose();
     this.sourceRetryCache.clear();

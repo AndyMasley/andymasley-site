@@ -3,17 +3,19 @@ import { MeshBVH } from 'three-mesh-bvh';
 
 const LIMITS = { minimumTriangles: 512, geometries: 512, triangles: 6000000, bytes: 64 * 1048576, preparationMs: 15000, pending: 64 };
 type Attribute = THREE.BufferAttribute | THREE.InterleavedBufferAttribute;
-type Entry = { tree: MeshBVH; position: Attribute; index: THREE.BufferAttribute | null; positionVersion: number; indexVersion: number; start: number; count: number; triangles: number; bytes: number; release: () => void };
+type Entry = { tree: MeshBVH; position: Attribute; index: THREE.BufferAttribute | null; positionVersion: number; indexVersion: number; start: number; count: number; triangles: number; bytes: number; used: number; release: () => void };
 const version = (attribute: Attribute): number => attribute instanceof THREE.InterleavedBufferAttribute ? attribute.data.version : attribute.version;
 const triangleCount = (mesh: THREE.Mesh): number => Math.floor((mesh.geometry.index?.count ?? mesh.geometry.attributes.position?.count ?? 0) / 3);
 
 /** Session-owned camera indexes. Render geometry and global raycast methods stay untouched. */
 export class CameraRaycastIndex {
-  readonly metrics = { geometries: 0, triangles: 0, bytes: 0, eligibleTriangles: 0, fallbackTriangles: 0, acceleratedQueries: 0, nativeQueries: 0, buildMs: 0, maxBuildMs: 0, failures: 0, limited: 0, pending: 0 };
+  readonly metrics = { geometries: 0, triangles: 0, bytes: 0, eligibleTriangles: 0, fallbackTriangles: 0, acceleratedQueries: 0, nativeQueries: 0, buildMs: 0, maxBuildMs: 0, failures: 0, limited: 0, pending: 0, evictions: 0 };
   private readonly entries = new Map<THREE.BufferGeometry, Entry>();
   private readonly pending = new Map<THREE.BufferGeometry, THREE.Mesh>();
   private readonly rejected = new WeakSet<THREE.BufferGeometry>();
   private readonly observed = new WeakSet<THREE.Mesh>();
+  private readonly preparations = new Set<Set<THREE.BufferGeometry>>();
+  private used = 0;
   private readonly lifetime = new AbortController();
   private timer?: ReturnType<typeof setTimeout>;
   private readonly inverse = new THREE.Matrix4();
@@ -42,6 +44,19 @@ export class CameraRaycastIndex {
       && entry.start === geometry.drawRange.start && entry.count === geometry.drawRange.count;
   }
 
+  private makeRoom(triangles: number, bytes: number): boolean {
+    while (this.entries.size >= LIMITS.geometries || this.metrics.triangles + triangles > LIMITS.triangles || this.metrics.bytes + bytes > LIMITS.bytes) {
+      let oldest: Entry | undefined;
+      for (const [geometry, entry] of this.entries) {
+        if ([...this.preparations].some(protectedGeometry => protectedGeometry.has(geometry))) continue;
+        if (!oldest || entry.used < oldest.used) oldest = entry;
+      }
+      if (!oldest) return false;
+      oldest.release(); this.metrics.evictions++;
+    }
+    return true;
+  }
+
   private build(mesh: THREE.Mesh): void {
     const geometry = mesh.geometry;
     if (this.lifetime.signal.aborted || this.rejected.has(geometry) || !this.eligible(mesh)) return;
@@ -49,7 +64,8 @@ export class CameraRaycastIndex {
     if (previous && this.valid(geometry, previous)) return;
     previous?.release();
     const triangles = triangleCount(mesh);
-    if (this.entries.size >= LIMITS.geometries || this.metrics.triangles + triangles > LIMITS.triangles || this.metrics.bytes >= LIMITS.bytes) { this.metrics.limited++; this.rejected.add(geometry); return; }
+    if (triangles > LIMITS.triangles) { this.metrics.limited++; this.rejected.add(geometry); return; }
+    if (!this.makeRoom(triangles, 0)) { this.metrics.limited++; return; }
     const started = performance.now();
     try {
       // Indirect mode preserves the source index and non-indexed topology.
@@ -58,14 +74,17 @@ export class CameraRaycastIndex {
       const tree = new MeshBVH(geometry, { indirect: true, setBoundingBox: false, maxLeafTris: 10 });
       const data = MeshBVH.serialize(tree, { cloneBuffers: false }) as ReturnType<typeof MeshBVH.serialize> & { indirectBuffer?: Uint16Array | Uint32Array };
       const bytes = data.roots.reduce((sum, root) => sum + root.byteLength, 0) + (data.indirectBuffer?.byteLength ?? 0);
-      if (this.metrics.bytes + bytes > LIMITS.bytes) { this.metrics.limited++; this.rejected.add(geometry); return; }
+      if (bytes > LIMITS.bytes) { this.metrics.limited++; this.rejected.add(geometry); return; }
+      // Capacity is temporary. A new street replaces old, unused trees rather
+      // than permanently falling back to full triangle scans for this session.
+      if (!this.makeRoom(triangles, bytes)) { this.metrics.limited++; return; }
       const release = (): void => {
         if (!this.entries.has(geometry)) return;
         this.entries.delete(geometry); geometry.removeEventListener('dispose', onDispose);
         this.metrics.geometries--; this.metrics.triangles -= triangles; this.metrics.bytes -= bytes;
       };
       const onDispose = (): void => { release(); this.pending.delete(geometry); this.rejected.add(geometry); this.metrics.pending = this.pending.size; };
-      this.entries.set(geometry, { tree, position: geometry.attributes.position, index: geometry.index, positionVersion: version(geometry.attributes.position), indexVersion: geometry.index?.version ?? 0, start: geometry.drawRange.start, count: geometry.drawRange.count, triangles, bytes, release });
+      this.entries.set(geometry, { tree, position: geometry.attributes.position, index: geometry.index, positionVersion: version(geometry.attributes.position), indexVersion: geometry.index?.version ?? 0, start: geometry.drawRange.start, count: geometry.drawRange.count, triangles, bytes, used: ++this.used, release });
       geometry.addEventListener('dispose', onDispose);
       this.metrics.geometries++; this.metrics.triangles += triangles; this.metrics.bytes += bytes;
     } catch { this.metrics.failures++; this.rejected.add(geometry); }
@@ -86,12 +105,19 @@ export class CameraRaycastIndex {
     const selected = new Map<THREE.BufferGeometry, THREE.Mesh>();
     for (const mesh of meshes) { const eligible = this.eligible(mesh); this.observe(mesh, eligible); if (eligible) selected.set(mesh.geometry, mesh); }
     let done = 0; const start = performance.now(); onProgress?.(0, selected.size);
-    for (const mesh of selected.values()) {
-      await this.pause(signal);
-      if (performance.now() - start >= LIMITS.preparationMs) { this.metrics.limited++; break; }
-      this.build(mesh); done++; onProgress?.(done, selected.size);
-    }
-    if (signal.aborted || this.lifetime.signal.aborted) throw new DOMException('Camera preparation cancelled', 'AbortError');
+    const protectedGeometry = new Set<THREE.BufferGeometry>(); this.preparations.add(protectedGeometry);
+    try {
+      for (const mesh of selected.values()) {
+        await this.pause(signal);
+        if (performance.now() - start >= LIMITS.preparationMs) { this.metrics.limited++; break; }
+        this.build(mesh);
+        // Earlier supplied geometry has startup priority and cannot be evicted
+        // by later distant geometry, including a concurrently queued query.
+        if (this.entries.has(mesh.geometry)) protectedGeometry.add(mesh.geometry);
+        done++; onProgress?.(done, selected.size);
+      }
+      if (signal.aborted || this.lifetime.signal.aborted) throw new DOMException('Camera preparation cancelled', 'AbortError');
+    } finally { this.preparations.delete(protectedGeometry); }
   }
 
   private queue(mesh: THREE.Mesh): void {
@@ -105,7 +131,7 @@ export class CameraRaycastIndex {
       this.pending.delete(next[0]); this.metrics.pending = this.pending.size; this.build(next[1]);
       const following = this.pending.values().next().value as THREE.Mesh | undefined;
       if (following) this.queue(following);
-    }, 80);
+    }, 16);
   }
 
   intersect(raycaster: THREE.Raycaster, meshes: readonly THREE.Mesh[]): THREE.Intersection[] {
@@ -126,6 +152,7 @@ export class CameraRaycastIndex {
         this.metrics.nativeQueries++; raycaster.intersectObject(mesh, false, hits); continue;
       }
       this.metrics.acceleratedQueries++;
+      entry.used = ++this.used;
       // An affine transform scales distance along this particular ray by the
       // length of its transformed unit direction, even under parent shear.
       // Bound traversal to the short probe instead of the entire tile. Keep
@@ -143,6 +170,7 @@ export class CameraRaycastIndex {
   dispose(): void {
     this.lifetime.abort(); if (this.timer !== undefined) clearTimeout(this.timer); this.timer = undefined;
     this.pending.clear(); this.metrics.pending = 0;
+    this.preparations.clear();
     for (const entry of [...this.entries.values()]) entry.release();
   }
 }

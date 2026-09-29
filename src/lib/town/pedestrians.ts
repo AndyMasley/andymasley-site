@@ -13,28 +13,67 @@ export interface PedestrianOptions extends PedestrianSurface {
 }
 export interface SidewalkPath { id: string; points: THREE.Vector3[]; lengths: number[]; length: number }
 interface Seed { point: THREE.Vector3; direction: THREE.Vector3 }
-interface SidewalkIndex { terrain: GrassTerrain; seeds: Seed[]; cursor: number; nextScan: number; sortedFor?: THREE.Vector3 }
-interface PendingPath { path: SidewalkPath; samples: THREE.Vector3[]; cursor: number; index: SidewalkIndex }
+interface SidewalkIndex { terrain: SidewalkTerrain; seeds: Seed[]; cursor: number; nextScan: number; sortedFor?: THREE.Vector3; routes: Map<Seed, SidewalkPath | null>; retryAt: Map<Seed, number> }
+interface PendingPath { path: SidewalkPath; samples: THREE.Vector3[]; cursor: number; index: SidewalkIndex; seed: Seed; group: THREE.Group }
+export interface PedestrianUpdateOptions { suspendPlanning?: boolean }
 interface Walker { path: SidewalkPath; distance: number; direction: number; pause: number; yaw: number; position: THREE.Vector3; appearance: HumanoidAppearance; speed: number; phase: number; lastGround: number; supported: boolean; groundOffset: number }
-export const PEDESTRIAN_LIMITS = { high: 24, low: 10, radius: 150, retireRadius: 190, pathMinimum: 6, pathMaximum: 24, footRadius: .29, geometryPerFrame: 1, attemptsPerFrame: 1, planningInterval: .25, validationPerFrame: 1, routeSeparation: 2.4 } as const;
+export const PEDESTRIAN_LIMITS = { high: 24, low: 10, radius: 150, retireRadius: 190, pathMinimum: 6, pathMaximum: 24, footRadius: .29, geometryPerFrame: 1, indexTrianglesPerFrame: 256, indexNodesPerFrame: 64, attemptsPerFrame: 1, planningInterval: .25, validationPerFrame: 1, routeSeparation: 2.4, rejectedRetrySeconds: 12 } as const;
 
 function seeded(value: string): number { let n = 2166136261; for (let i = 0; i < value.length; i++) n = Math.imul(n ^ value.charCodeAt(i), 16777619); return n >>> 0; }
 function distanceXZ(a: THREE.Vector3, b: THREE.Vector3): number { return Math.hypot(a.x - b.x, a.z - b.z); }
 
-/** Reads only material-tagged sidewalk faces; source meshes and transforms stay intact. */
-export function sidewalkIndex(group: THREE.Group): SidewalkIndex | null {
-  group.updateWorldMatrix(true, true);
-  const positions: number[] = [], seeds: Seed[] = [], seen = new Set<string>();
+/** Small immutable terrain chunks avoid one large index allocation during play.
+ * A coarse spatial lookup keeps sampling independent of the total chunk count. */
+class SidewalkTerrain {
+  private readonly bins = new Map<string, GrassTerrain[]>();
+  parts = 0;
+
+  append(positions: number[]): void {
+    if (!positions.length) return;
+    const geometry = new THREE.BufferGeometry(); geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+    geometry.computeBoundingBox();
+    const bounds = geometry.boundingBox!, proxy = new THREE.Mesh(geometry), terrain = new GrassTerrain([proxy], .9);
+    for (let z = Math.floor(bounds.min.z / 16); z <= Math.floor(bounds.max.z / 16); z++) for (let x = Math.floor(bounds.min.x / 16); x <= Math.floor(bounds.max.x / 16); x++) {
+      const key = `${x}:${z}`, bin = this.bins.get(key);
+      if (bin) bin.push(terrain); else this.bins.set(key, [terrain]);
+    }
+    this.parts++; geometry.dispose(); (proxy.material as THREE.Material).dispose();
+  }
+
+  sample(x: number, z: number): ReturnType<GrassTerrain['sample']> {
+    let result: ReturnType<GrassTerrain['sample']> = null;
+    for (const terrain of this.bins.get(`${Math.floor(x / 16)}:${Math.floor(z / 16)}`) ?? []) {
+      const found = terrain.sample(x, z);
+      if (found && (!result || found.y > result.y)) result = found;
+    }
+    return result;
+  }
+}
+
+/** Reads only material-tagged sidewalk faces; yields after bounded source work.
+ * Source meshes and transforms stay intact, and hidden resident indices survive. */
+function* buildSidewalkIndex(group: THREE.Group): Generator<void, SidewalkIndex | null> {
+  group.updateWorldMatrix(true, false);
+  let positions: number[] = [], triangles = 0, nodes = 0;
+  const seeds: Seed[] = [], seen = new Set<string>(), terrain = new SidewalkTerrain(), stack: THREE.Object3D[] = [group];
   const a = new THREE.Vector3(), b = new THREE.Vector3(), c = new THREE.Vector3(), normal = new THREE.Vector3();
-  group.traverse(object => {
-    if (!(object instanceof THREE.Mesh) || object instanceof THREE.InstancedMesh) return;
+  const flush = () => { terrain.append(positions); positions = []; };
+  while (stack.length) {
+    const object = stack.pop()!;
+    // Reverse insertion retains Object3D.traverse's original stable order.
+    for (let i = object.children.length - 1; i >= 0; i--) stack.push(object.children[i]);
+    if (++nodes >= PEDESTRIAN_LIMITS.indexNodesPerFrame) { flush(); nodes = triangles = 0; yield; }
+    if (!(object instanceof THREE.Mesh) || object instanceof THREE.InstancedMesh) continue;
     const materials = Array.isArray(object.material) ? object.material : [object.material];
     const geometry = object.geometry, position = geometry.getAttribute('position'), index = geometry.index;
-    if (!position || !materials.some(material => /sidewalk concrete/i.test(material.name))) return;
+    if (!position || !materials.some(material => /sidewalk concrete/i.test(material.name))) continue;
+    object.updateWorldMatrix(true, false);
     const count = index?.count ?? position.count;
     for (const part of geometry.groups.length ? geometry.groups : [{ start: 0, count, materialIndex: 0 }]) {
       if (!/sidewalk concrete/i.test(materials[part.materialIndex ?? 0]?.name ?? '')) continue;
       for (let i = part.start; i + 2 < Math.min(count, part.start + part.count); i += 3) {
+        if (triangles >= PEDESTRIAN_LIMITS.indexTrianglesPerFrame) { flush(); nodes = triangles = 0; yield; }
+        triangles++;
         a.fromBufferAttribute(position, index ? index.getX(i) : i).applyMatrix4(object.matrixWorld);
         b.fromBufferAttribute(position, index ? index.getX(i + 1) : i + 1).applyMatrix4(object.matrixWorld);
         c.fromBufferAttribute(position, index ? index.getX(i + 2) : i + 2).applyMatrix4(object.matrixWorld);
@@ -50,13 +89,19 @@ export function sidewalkIndex(group: THREE.Group): SidewalkIndex | null {
         seeds.push({ point, direction });
       }
     }
-  });
-  if (!positions.length) return null;
-  const geometry = new THREE.BufferGeometry(); geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
-  const proxy = new THREE.Mesh(geometry), terrain = new GrassTerrain([proxy], .9);
-  geometry.dispose(); (proxy.material as THREE.Material).dispose();
+  }
+  flush();
+  if (!terrain.parts) return null;
   seeds.sort((a, b) => seeded(a.point.x.toFixed(1) + ':' + a.point.z.toFixed(1)) - seeded(b.point.x.toFixed(1) + ':' + b.point.z.toFixed(1)));
-  return { terrain, seeds, cursor: 0, nextScan: 0 };
+  return { terrain, seeds, cursor: 0, nextScan: 0, routes: new Map(), retryAt: new Map() };
+}
+
+/** Synchronous utility for fixtures/offline checks. Runtime consumes one chunk. */
+export function sidewalkIndex(group: THREE.Group): SidewalkIndex | null {
+  const build = buildSidewalkIndex(group);
+  let step = build.next();
+  while (!step.done) step = build.next();
+  return step.value;
 }
 
 /** Pure resident-sidewalk support test. It performs no world raycasts. */
@@ -158,6 +203,10 @@ export class Pedestrians {
   private pending?: PendingPath;
   private validationSamples = 0;
   private nextWalkerProbe = 0;
+  private indexBuild?: { group: THREE.Group; steps: Generator<void, SidewalkIndex | null> };
+  private indexChunks = 0;
+  private traceBuilds = 0;
+  private traceCacheHits = 0;
 
   constructor(private readonly options: PedestrianOptions) {
     this.capacity = options.low ? PEDESTRIAN_LIMITS.low : PEDESTRIAN_LIMITS.high;
@@ -165,8 +214,8 @@ export class Pedestrians {
     this.group = this.batch.group;
   }
 
-  get metrics(): { people: number; capacity: number; draws: number; indexedTiles: number; pathAttempts: number; planningMs: number; maxPlanningMs: number; maxRuntimeMs: number; pendingSamples: number; validationSamples: number } {
-    return { people: this.walkers.length, capacity: this.capacity, draws: this.walkers.length ? 6 : 0, indexedTiles: this.cache.size, pathAttempts: this.pathAttempts, planningMs: this.planningTime, maxPlanningMs: this.maxPlanningTime, maxRuntimeMs: this.maxRuntimeTime, pendingSamples: this.pending ? this.pending.samples.length - this.pending.cursor : 0, validationSamples: this.validationSamples };
+  get metrics(): { people: number; capacity: number; draws: number; indexedTiles: number; indexChunks: number; traceBuilds: number; traceCacheHits: number; pathAttempts: number; planningMs: number; maxPlanningMs: number; maxRuntimeMs: number; pendingSamples: number; validationSamples: number } {
+    return { people: this.walkers.length, capacity: this.capacity, draws: this.walkers.length ? 6 : 0, indexedTiles: this.cache.size, indexChunks: this.indexChunks, traceBuilds: this.traceBuilds, traceCacheHits: this.traceCacheHits, pathAttempts: this.pathAttempts, planningMs: this.planningTime, maxPlanningMs: this.maxPlanningTime, maxRuntimeMs: this.maxRuntimeTime, pendingSamples: this.pending ? this.pending.samples.length - this.pending.cursor : 0, validationSamples: this.validationSamples };
   }
 
   setLow(low: boolean): void { this.capacity = low ? PEDESTRIAN_LIMITS.low : PEDESTRIAN_LIMITS.high; this.walkers.length = Math.min(this.walkers.length, this.capacity); }
@@ -188,29 +237,36 @@ export class Pedestrians {
 
   private visible(point: THREE.Vector3): boolean { return this.options.isVisible?.(point.clone().add(new THREE.Vector3(0, .9, 0))) ?? true; }
 
-  update(time: number, focus: THREE.Vector3, preparing = false): void {
+  update(time: number, focus: THREE.Vector3, preparing = false, options: PedestrianUpdateOptions = {}): void {
     if (this.disposed || !Number.isFinite(time) || !focus.toArray().every(Number.isFinite)) return;
     const dt = this.previousTime === undefined ? 0 : Math.max(0, Math.min(.1, time - this.previousTime)); this.previousTime = time;
-    const planning = preparing || time >= this.nextPlanning, started = performance.now();
+    const planning = preparing || time >= this.nextPlanning, canPlan = preparing || !options.suspendPlanning, started = performance.now();
+    if (canPlan && this.indexBuild) {
+      const build = this.indexBuild, step = build.steps.next(); this.indexChunks++;
+      if (step.done) { this.cache.set(build.group, step.value); this.indexBuild = undefined; }
+    }
     if (planning) {
       this.nextPlanning = time + PEDESTRIAN_LIMITS.planningInterval;
-      const groups = [...this.options.groups()].filter(group => group.visible);
-      const retained = new Set(groups);
+      const resident = [...this.options.groups()], retained = new Set(resident);
+      // Hidden tiles are often shown again after a slight turn or LOD decision.
+      // Their immutable sidewalk masks only expire when the tile is evicted.
       for (const group of this.cache.keys()) if (!retained.has(group)) this.cache.delete(group);
-      groups.sort((a, b) => distanceXZ(a.getWorldPosition(new THREE.Vector3()), focus) - distanceXZ(b.getWorldPosition(new THREE.Vector3()), focus));
-      let built = 0;
-      for (const group of groups) {
-        if (this.cache.has(group) || built >= PEDESTRIAN_LIMITS.geometryPerFrame) continue;
-        if (distanceXZ(group.getWorldPosition(new THREE.Vector3()), focus) > 350) continue;
-        this.cache.set(group, sidewalkIndex(group)); built++;
+      if (this.indexBuild && !retained.has(this.indexBuild.group)) { this.indexBuild.steps.return(null); this.indexBuild = undefined; }
+      if (canPlan && !this.indexBuild && this.walkers.length < this.capacity) {
+        const point = new THREE.Vector3();
+        const groups = resident.filter(group => group.visible && !this.cache.has(group))
+          .map(group => ({ group, distance: distanceXZ(group.getWorldPosition(point), focus) }))
+          .filter(entry => entry.distance <= 350).sort((a, b) => a.distance - b.distance);
+        if (groups.length) this.indexBuild = { group: groups[0].group, steps: buildSidewalkIndex(groups[0].group) };
       }
       for (let i = this.walkers.length - 1; i >= 0; i--) {
         const walker = this.walkers[i];
         if ((!walker.supported || distanceXZ(walker.position, focus) > PEDESTRIAN_LIMITS.retireRadius) && !this.visible(walker.position)) this.walkers.splice(i, 1);
       }
-      if (this.pending && ![...this.cache.values()].includes(this.pending.index)) this.pending = undefined;
+      if (this.pending && (!retained.has(this.pending.group) || !this.pending.group.visible || distanceXZ(this.pending.seed.point, focus) > PEDESTRIAN_LIMITS.retireRadius)) this.pending = undefined;
       let attempts = 0;
-      for (const index of this.cache.values()) {
+      for (const [group, index] of this.cache) {
+        if (!canPlan || !group.visible) continue;
         if (!index || this.pending || this.walkers.length >= this.capacity || attempts >= PEDESTRIAN_LIMITS.attemptsPerFrame) continue;
         if (!index.sortedFor || distanceXZ(index.sortedFor, focus) > 30) {
           index.seeds.sort((a, b) => distanceXZ(a.point, focus) - distanceXZ(b.point, focus));
@@ -220,13 +276,16 @@ export class Pedestrians {
         while (index.cursor < index.seeds.length && attempts < PEDESTRIAN_LIMITS.attemptsPerFrame && this.walkers.length < this.capacity) {
           const seed = index.seeds[index.cursor++], distance = distanceXZ(seed.point, focus);
           if (distance > PEDESTRIAN_LIMITS.radius || distance < 5 || this.walkers.some(walker => walker.path.points.some(point => distanceXZ(point, seed.point) < 4))) continue;
+          if (index.routes.get(seed) === null || (index.retryAt.get(seed) ?? -Infinity) > time) continue;
           if (!this.initial && !preparing && this.visible(seed.point)) continue;
           attempts++; this.pathAttempts++;
           // Short routes finish preparation quickly; all candidates first pass the
           // cheap sidewalk mask before any expensive source-geometry raycast.
-          const path = traceSidewalkPath(index, seed, 6);
+          let path = index.routes.get(seed);
+          if (path === undefined) { path = traceSidewalkPath(index, seed, 6); index.routes.set(seed, path); this.traceBuilds++; }
+          else this.traceCacheHits++;
           if (!path || this.walkers.some(walker => pathsOverlap(path, walker.path))) continue;
-          this.pending = { path, samples: validationSamples(path), cursor: 0, index };
+          this.pending = { path, samples: validationSamples(path), cursor: 0, index, seed, group };
           break;
         }
       }
@@ -234,10 +293,10 @@ export class Pedestrians {
     // One collision position per frame: a route can never synchronously fan out
     // into hundreds of raycasts. It is invisible until every sample is safe.
     let validations = 0;
-    if (this.pending) {
+    if (this.pending && this.pending.group.visible && canPlan) {
       const pending = this.pending, point = pending.samples[pending.cursor];
       const supported = worldSupport(point, this.options); validations++; this.validationSamples++;
-      if (!supported) this.pending = undefined;
+      if (!supported) { pending.index.retryAt.set(pending.seed, time + PEDESTRIAN_LIMITS.rejectedRetrySeconds); this.pending = undefined; }
       else {
         point.copy(supported); pending.cursor++;
         if (pending.cursor >= pending.samples.length) {
@@ -258,7 +317,7 @@ export class Pedestrians {
       if (!walker.pause) {
         const distance = Math.max(0, Math.min(walker.path.length, walker.distance + walker.direction * walker.speed * dt)), next = pathPoint(walker.path, distance);
         const occupied = distanceXZ(next.point, focus) < .9 || this.walkers.some(other => other !== walker && distanceXZ(next.point, other.position) < .8 && distanceXZ(next.point, other.position) < distanceXZ(walker.position, other.position));
-        if (!preparing && time >= this.nextWalkerProbe && time - walker.lastGround > 1 && validations < PEDESTRIAN_LIMITS.validationPerFrame) {
+        if (!preparing && canPlan && time >= this.nextWalkerProbe && time - walker.lastGround > 1 && validations < PEDESTRIAN_LIMITS.validationPerFrame) {
           validations++; this.validationSamples++; this.nextWalkerProbe = time + .10;
           const ground = this.options.ground(next.point, .3, .5); walker.lastGround = time;
           walker.supported = !!ground && !ground.water && Math.abs(ground.y - next.point.y) < .22 && this.options.clear(next.point, .30, 1.86);
@@ -276,5 +335,5 @@ export class Pedestrians {
     if (!preparing) this.maxRuntimeTime = Math.max(this.maxRuntimeTime, elapsed);
   }
 
-  dispose(): void { if (this.disposed) return; this.disposed = true; this.batch.dispose(); this.cache.clear(); this.walkers.length = 0; this.pending = undefined; }
+  dispose(): void { if (this.disposed) return; this.disposed = true; this.batch.dispose(); this.cache.clear(); this.walkers.length = 0; this.pending = undefined; this.indexBuild?.steps.return(null); this.indexBuild = undefined; }
 }

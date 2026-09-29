@@ -11,6 +11,55 @@ const group = (material: THREE.Material) => { const result = new THREE.Group(); 
 const settle = async () => { for (let i = 0; i < 8; i++) await Promise.resolve(); };
 
 describe('Town streaming and resource ownership', () => {
+  it('uses altitude for scenery detail and restores street detail after landing', async () => {
+    const world = new TownWorld(manifest(), 'https://example.test/manifest.json', () => {});
+    vi.spyOn(world, 'loadGlb').mockImplementation(async () => group(new THREE.MeshStandardMaterial()));
+    try {
+      world.setExplorationView(900, 80);
+      world.update([125, 900, 125], [500, 900, 125]); await settle();
+      expect(world.loaded.get('a')?.level).toBe(2);
+      world.setExplorationView();
+      world.update([125, 0, 125], [125, 0, 125]); await settle();
+      expect(world.loaded.get('a')?.level).toBe(0);
+      expect(world.streamingResources()).toMatchObject({ explorationHeight: 0, explorationSpeed: 0 });
+    } finally { world.dispose(); }
+  });
+  it('does not replace resident blocks merely because the player climbs', async () => {
+    const world = new TownWorld(manifest(), 'https://example.test/manifest.json', () => {});
+    const load = vi.spyOn(world, 'loadGlb').mockImplementation(async () => group(new THREE.MeshStandardMaterial()));
+    try {
+      world.update([125, 0, 125], [125, 0, 125]); await settle();
+      const street = world.loaded.get('a')?.group;
+      world.setExplorationView(900, 80);
+      world.update([125, 900, 125], [500, 900, 125]); await settle();
+      expect(load).toHaveBeenCalledOnce();
+      expect(world.loaded.get('a')?.group).toBe(street);
+      expect(world.loaded.get('a')?.level).toBe(0);
+    } finally { world.dispose(); }
+  });
+  it('preserves directional prefetch after an asynchronous tile finishes', async () => {
+    const world = new TownWorld(manifest([tile('a'), tile('ahead', 1200)]), 'https://example.test/manifest.json', () => {});
+    vi.spyOn(world, 'loadGlb').mockImplementation(async () => group(new THREE.MeshStandardMaterial()));
+    try {
+      world.update([125, 0, 125], [1250, 0, 125]); await settle();
+      expect(world.loaded.get('ahead')?.group.visible).toBe(true);
+      expect(world.streamingResources().lookAhead).toEqual([1250, 0, 125]);
+    } finally { world.dispose(); }
+  });
+  it('suspends invisible close grass during flight and resumes it on the ground', () => {
+    const world = new TownWorld(manifest(), 'https://example.test/manifest.json', () => {});
+    const update = vi.fn();
+    (world as unknown as { surfaces: unknown }).surfaces = { update, refine: vi.fn(), dispose: vi.fn() };
+    try {
+      world.setExplorationView(20, 0); world.updatePresentation(1, [0, 20, 0]);
+      expect(update).toHaveBeenLastCalledWith([0, 20, 0], true, 1);
+      world.setExplorationView(2, 80); world.updatePresentation(2, [0, 2, 0]);
+      expect(update).toHaveBeenLastCalledWith([0, 2, 0], true, 2);
+      world.setExplorationView(); world.updatePresentation(3, [0, 0, 0]);
+      expect(update).toHaveBeenLastCalledWith([0, 0, 0], false, 3);
+    } finally { world.dispose(); }
+  });
+
   it('advances roadside signals through the presentation clock without per-head updates', () => {
     const world = new TownWorld(manifest(), 'https://example.test/manifest.json', () => {});
     try {

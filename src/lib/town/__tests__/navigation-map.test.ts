@@ -5,7 +5,7 @@ import water from '../../../../data/derived/town/navigation-water.json';
 import provenance from '../../../../data/derived/town/navigation-water-provenance.json';
 import release from '../../../../data/derived/town/release.json';
 import directory from '../../../../data/derived/town/place-directory.json';
-import { drawNavigationBase, navigationMarkers, navigationPoint, navigationRoadRank, navigationScale, type NavigationView } from '../navigation-map';
+import { drawNavigationBase, isMappedWater, navigationMarkers, navigationPoint, navigationRoadRank, navigationScale, type NavigationView } from '../navigation-map';
 import { LANDMARKS, type RoadEdge, type RoadGraph } from '../engine';
 
 const area = (ring: number[][]): number => Math.abs(ring.slice(1).reduce((sum, p, i) => sum + ring[i][0] * p[1] - p[0] * ring[i][1], 0) / 2);
@@ -48,6 +48,15 @@ describe('source-derived navigation geography', () => {
     expect(provenance.maximumBoundaryDisplacementM).toBeLessThan(4);
     expect(wet([1000, -1800])).toBe(true);
     expect(wet(directory.places.find(place => place.id === 'town-hall')!.point)).toBe(false);
+  });
+
+  it('keeps overview exploration off mapped lakebeds while preserving islands', () => {
+    expect(isMappedWater(1000, -1800)).toBe(true);
+    const hall = directory.places.find(place => place.id === 'town-hall')!.point;
+    expect(isMappedWater(hall[0], hall[1])).toBe(false);
+    // Compare a grid over all retained rings, including the eleven island holes.
+    for (let x = -4500; x <= 4500; x += 150) for (let y = -5500; y <= 3500; y += 150) expect(isMappedWater(x, y)).toBe(wet([x, y]));
+    expect(isMappedWater(Number.NaN, 0)).toBe(false);
   });
 
   it('projects local east/north metres north-up and derives road hierarchy from mapped road classes', () => {

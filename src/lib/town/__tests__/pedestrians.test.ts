@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { describe, expect, it } from 'vitest';
 import * as THREE from 'three';
-import { makeSidewalkPath, Pedestrians, sidewalkIndex, sidewalkPoint, type PedestrianSurface } from '../pedestrians';
+import { makeSidewalkPath, Pedestrians, PEDESTRIAN_LIMITS, sidewalkIndex, sidewalkPoint, type PedestrianSurface } from '../pedestrians';
 
 function sidewalk(length = 100, width = 4, x = 0, z = 0): THREE.Group {
   const group = new THREE.Group(), material = new THREE.MeshStandardMaterial(); material.name = 'Streetscape | warm sidewalk concrete';
@@ -92,6 +92,63 @@ describe('pedestrian sidewalk routes', () => {
     await crowd.prepare(1, new THREE.Vector3(1000, 0, 10), new AbortController().signal);
     expect(crowd.metrics.people).toBe(6);
     expect(crowd.positions.every(point => Math.abs(point.x - 1000) < 150)).toBe(true);
+    crowd.dispose();
+  });
+
+  it('indexes a dense resident sidewalk in bounded chunks without changing its geometry', () => {
+    const group = new THREE.Group(), material = new THREE.MeshStandardMaterial(); material.name = 'Sidewalk concrete';
+    const geometry = new THREE.PlaneGeometry(120, 4, 2048, 1); geometry.rotateX(-Math.PI / 2); group.add(new THREE.Mesh(geometry, material));
+    const positions = geometry.getAttribute('position').array.slice(), focus = new THREE.Vector3(0, 0, 10);
+    const crowd = new Pedestrians({ ...surface, groups: () => [group], isVisible: () => false });
+    let chunks = 0;
+    for (let i = 0; i < 40; i++) {
+      crowd.update(i / 60, focus);
+      expect(crowd.metrics.indexChunks - chunks).toBeLessThanOrEqual(1); chunks = crowd.metrics.indexChunks;
+      if (chunks < 4096 / PEDESTRIAN_LIMITS.indexTrianglesPerFrame) expect(crowd.metrics.indexedTiles).toBe(0);
+    }
+    expect(chunks).toBeGreaterThanOrEqual(16); expect(crowd.metrics.indexedTiles).toBe(1);
+    expect(geometry.getAttribute('position').array).toEqual(positions);
+    crowd.dispose(); geometry.dispose(); material.dispose();
+  });
+
+  it('retains hidden resident indices and never retraces immutable narrow paths that failed', () => {
+    const group = sidewalk(60, .3), focus = new THREE.Vector3(0, 0, 10); let groups = [group];
+    const crowd = new Pedestrians({ ...surface, groups: () => groups, isVisible: () => false });
+    for (let i = 0; i < 300; i++) crowd.update(i * .1, focus);
+    const { traceBuilds, indexChunks, pathAttempts } = crowd.metrics;
+    expect(traceBuilds).toBeGreaterThan(0); expect(crowd.metrics.people).toBe(0);
+    for (let i = 300; i < 600; i++) crowd.update(i * .1, focus);
+    expect(crowd.metrics.traceBuilds).toBe(traceBuilds); expect(crowd.metrics.pathAttempts).toBe(pathAttempts);
+    group.visible = false; crowd.update(61, focus);
+    expect(crowd.metrics.indexedTiles).toBe(1);
+    group.visible = true;
+    for (let i = 0; i < 20; i++) crowd.update(62 + i * .1, focus);
+    expect(crowd.metrics.indexChunks).toBe(indexChunks);
+    groups = []; crowd.update(65, focus); expect(crowd.metrics.indexedTiles).toBe(0);
+    crowd.dispose();
+  });
+
+  it('reuses a traced route when transient resident-world clearance becomes available', () => {
+    const group = sidewalk(40, 4), focus = new THREE.Vector3(0, 0, 10); let clear = false;
+    const crowd = new Pedestrians({ ...surface, clear: () => clear, groups: () => [group], isVisible: () => false });
+    for (let i = 0; i < 400; i++) crowd.update(i * .1, focus);
+    expect(crowd.metrics.people).toBe(0); expect(crowd.metrics.traceBuilds).toBeGreaterThan(0);
+    clear = true;
+    for (let i = 400; i < 650; i++) crowd.update(i * .1, focus);
+    expect(crowd.metrics.people).toBeGreaterThan(0); expect(crowd.metrics.traceCacheHits).toBeGreaterThan(0);
+    crowd.dispose();
+  });
+
+  it('defers optional planning and world probes during fast flight while existing walkers animate', async () => {
+    const group = sidewalk(240), focus = new THREE.Vector3(0, 0, 10); let probes = 0;
+    const crowd = new Pedestrians({ ...surface, ground: (...args) => { probes++; return surface.ground(...args); }, groups: () => [group], isVisible: () => false });
+    await crowd.prepare(0, focus, new AbortController().signal);
+    const before = crowd.positions.map(point => point.toArray()), attempts = crowd.metrics.pathAttempts, chunks = crowd.metrics.indexChunks;
+    probes = 0;
+    for (let i = 1; i <= 15; i++) crowd.update(i * .1, focus, false, { suspendPlanning: true });
+    expect(probes).toBe(0); expect(crowd.metrics.pathAttempts).toBe(attempts); expect(crowd.metrics.indexChunks).toBe(chunks);
+    expect(crowd.positions.map(point => point.toArray())).not.toEqual(before);
+    crowd.update(2, focus); expect(probes).toBeGreaterThan(0);
     crowd.dispose();
   });
 
