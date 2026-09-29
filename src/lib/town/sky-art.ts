@@ -59,6 +59,15 @@ vec3 townSkySample(vec2 uv) {
       float skyLatitude = asin(clamp(direction.y,0.0,1.0))*0.636619772;
       vec2 skyUV = vec2((atan(direction.z,direction.x)-atan(sunDirection.z,sunDirection.x))*0.159154943+0.5,0.5+0.5*pow(skyLatitude,0.65));
       vec3 skyArt = townSkyLinear(townSkySample(skyUV))*2.2;
+      // Keep blue gaps blue while low, sun-facing cloud highlights pick up
+      // the same amber light as the street. Apply the shared scatter to the
+      // artwork too: replacing the procedural field must not erase sunset.
+      float skyPeak = max(max(skyArt.r,skyArt.g),skyArt.b);
+      float cloudNeutral = min(min(skyArt.r,skyArt.g),skyArt.b)/max(skyPeak,0.0001);
+      float cloudHighlight = smoothstep(0.45,0.8,cloudNeutral)*smoothstep(0.18,0.75,skyPeak);
+      float cloudWarmth = cloudHighlight*pow(sunFacing,3.0)*(1.0-smoothstep(0.25,0.85,elevation));
+      skyArt *= mix(vec3(1.0),vec3(1.3,1.02,0.7),cloudWarmth);
+      skyArt = townEveningSky(skyArt,direction,sunDirection);
       color = mix(color,skyArt,smoothstep(0.0,0.10,elevation));
       ${shader.slice(to)}`;
   sky.material.needsUpdate = true;

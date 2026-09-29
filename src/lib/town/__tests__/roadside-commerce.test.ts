@@ -286,12 +286,34 @@ describe('lot cars', () => {
       g.computeBoundingBox();
       g.computeBoundingBox(); box.union(g.boundingBox!);
     }
-    expect(triangles).toBeLessThan(220);
+    expect(triangles).toBeLessThan(450);
     const size = box.getSize(new THREE.Vector3());
     expect(size.z).toBeCloseTo(4.6, 1); expect(size.x).toBeGreaterThan(1.7); expect(size.x).toBeLessThan(1.9);
     expect(box.min.y).toBeGreaterThanOrEqual(0); expect(box.max.y).toBeCloseTo(1.4, 1);
     // The hood leads: the front is at -Z, as for the drive car.
-    const glass = parts.glass.boundingBox!;
-    expect((glass.min.z + glass.max.z) / 2).toBeGreaterThan(0);
+    const glazing = new THREE.Box3(), glass = parts.glass.getAttribute('position');
+    for (let i = 0; i < glass.count; i++) if (glass.getY(i) > .9) glazing.expandByPoint(new THREE.Vector3().fromBufferAttribute(glass, i));
+    expect((glazing.min.z + glazing.max.z) / 2).toBeGreaterThan(0);
+    expect(size.x).toBeLessThan(1.77); expect(size.z).toBeLessThan(4.64);
+  });
+  it('keeps dark glazing, alloy wheels and correctly facing lamp details in three instanced parts', () => {
+    const parts = lotCarGeometry();
+    expect(Object.keys(parts)).toEqual(['body', 'glass', 'tyres']);
+    expect(parts.body.getAttribute('color')).toBeUndefined();
+    for (const part of [parts.glass, parts.tyres]) {
+      expect(part.getAttribute('color').count).toBe(part.getAttribute('position').count);
+      expect(Array.from(part.getAttribute('color').array).every(Number.isFinite)).toBe(true);
+    }
+    const position = parts.glass.getAttribute('position'), color = parts.glass.getAttribute('color'), normal = parts.glass.getAttribute('normal');
+    let glazing = 0, headlights = 0, tailLights = 0;
+    for (let i = 0; i < position.count; i++) {
+      if (position.getY(i) > .9) { expect(color.getX(i)).toBeLessThan(.03); expect(color.getZ(i)).toBeLessThan(.04); glazing++; }
+      if (position.getZ(i) < -2.33 && color.getX(i) > .5) { expect(normal.getZ(i)).toBeLessThan(-.99); headlights++; }
+      if (position.getZ(i) > 2.3 && color.getX(i) > color.getY(i) * 4) { expect(normal.getZ(i)).toBeGreaterThan(.99); tailLights++; }
+      if (Math.abs(position.getX(i)) > .88) expect(normal.getX(i) * Math.sign(position.getX(i))).toBeGreaterThan(.99);
+    }
+    expect(glazing).toBeGreaterThan(0); expect(headlights).toBe(12); expect(tailLights).toBe(12);
+    const tyreColor = parts.tyres.getAttribute('color');
+    expect(Array.from({ length: tyreColor.count }, (_, i) => tyreColor.getX(i)).some(value => value > .2)).toBe(true);
   });
 });

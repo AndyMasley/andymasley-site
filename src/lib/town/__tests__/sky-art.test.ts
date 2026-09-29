@@ -106,6 +106,11 @@ describe('optional photographic sky artwork', () => {
       expect(sky.material.fragmentShader).toContain('asin(clamp(direction.y,0.0,1.0))*0.636619772');
       expect(sky.material.fragmentShader).toContain('0.5+0.5*pow(skyLatitude,0.65)');
       expect(sky.material.fragmentShader).toContain('mix(color,skyArt,smoothstep(0.0,0.10,elevation))');
+      // A loaded panorama must keep the directional evening scatter in both
+      // the visible sky and the environment bake, before horizon blending.
+      expect(sky.material.fragmentShader.indexOf('skyArt = townEveningSky(skyArt,direction,sunDirection)'))
+        .toBeLessThan(sky.material.fragmentShader.indexOf('color = mix(color,skyArt'));
+      expect(sky.material.fragmentShader).toContain('skyArt = townEveningSky(skyArt,direction,sunDirection)');
       expect(sky.material.fragmentShader.endsWith(sunAndLandscape)).toBe(true);
     }
     expect(visible.material.uniforms.summerSurroundings.value).toBe(0); expect(reflection.material.uniforms.summerSurroundings.value).toBe(1);

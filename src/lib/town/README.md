@@ -129,12 +129,15 @@ and cloud lighting, cooler open shade, and a restrained camera grade. An optiona
 with one texture lookup, plus edge blending at the panorama seam. Explicit sRGB
 conversion keeps the sky in the same linear lighting space as the scene. Its warm
 glow follows the sun azimuth and blends into the shared horizon haze. The panorama
-is shared by the sky and reflection environment;
+retains directional evening scatter after loading; neutral sun-facing cloud
+highlights receive amber light while blue gaps retain their color. Visible sky
+and the reflection environment share that treatment. Lower reflections retain
+more sunset color and a warmer ground bounce rather than a strong blue-grey tint;
 the original procedural sky remains available during loading or asset failure.
 The generated master and prompt are `data/source/town/sky-color-v1.png` and
 `sky-art-v1.json`. Only the upper hemisphere is used; the ground remains procedural.
 A latitude curve keeps the cloud band below the open blue sky in the chase view.
-The sky upgrade does not block starting a drive, refreshes reflections once, and keeps the existing shadow-map resolution. The shadow frame
+Sky preparation has a bounded startup deadline, refreshes reflections once, and keeps the existing shadow-map resolution. The shadow frame
 uses a 250 by 170 metre light-space rectangle: with the lower sun this retains
 the previous roughly 460 metre ground coverage, with separate texel snapping
 on each axis rather than rendering a larger off-camera area.
@@ -153,6 +156,12 @@ receive a weaker rim response. This reuses existing lighting without extra shado
 samples, geometry, textures or draw calls.
 Far crown fringes now filter against projected pixel size so grazing edges keep
 their irregular bough outline; unresolved distant masses remain opaque.
+Distant crowns also bake smaller overlapping bough normals and interior shading
+into their existing hull. Scalloped edges retain exact source bounds, anchors,
+topology and instancing, with no additional textures or per-frame updates.
+Commerce parking-lot cars use beveled bodies, divided glazing, lamp faces and
+alloy wheel centers within three existing instanced parts. Their authored detail
+uses 342 triangles per car and preserves parking locations, occupancy and LOD caps.
 
 Central Main Street near/mid-detail glazing gains inward jamb and head returns.
 The additional 7.5cm recess is authored construction detail; opening rhythm,

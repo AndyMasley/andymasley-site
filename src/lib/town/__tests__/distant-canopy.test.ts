@@ -38,7 +38,7 @@ describe('shared distant canopy refinement', () => {
       for (const side of ['min', 'max'] as const) for (const axis of ['x', 'y', 'z'] as const) expect(bounds[side][axis]).toBeCloseTo(sourceBounds[side][axis], 6);
       const p = geometry.getAttribute('position'), n = geometry.getAttribute('normal'), color = geometry.getAttribute('color');
       expect(p.count).toBe(original.geometry.getAttribute('position').count);
-      expect(Math.min(...color.array)).toBeGreaterThan(.60); expect(Math.max(...color.array)).toBeLessThan(1);
+      expect(Math.min(...color.array)).toBeGreaterThan(.55); expect(Math.max(...color.array)).toBeLessThan(1.02);
       expect(new Set(Array.from(color.array).map(value => Math.round(value * 100))).size).toBeGreaterThan(15);
       for (let i = 0; i < n.count; i++) expect(Math.hypot(n.getX(i), n.getY(i), n.getZ(i))).toBeCloseTo(1, 5);
       const index = geometry.index!, sourcePositions = original.geometry.getAttribute('position');
@@ -74,18 +74,30 @@ describe('shared distant canopy refinement', () => {
     disposeDistantCanopyPrototype(second); original.geometry.dispose();
   });
 
-  it('lights the sparse distant hull as a curved crown rather than a collection of flat facets', async () => {
+  it('lights smaller rounded boughs while keeping the whole crown outward and the same resource envelope', async () => {
     const source = await sourceCrown(), variant = createDistantCanopyPrototype(source);
     const geometry = (variant.children[0] as THREE.Mesh).geometry;
     const bounds = geometry.boundingBox!, size = bounds.getSize(new THREE.Vector3()), center = bounds.getCenter(new THREE.Vector3());
     const position = geometry.getAttribute('position'), normal = geometry.getAttribute('normal'), outward = new THREE.Vector3(), lit = new THREE.Vector3();
-    let alignment = 0;
+    let alignment = 0, boughNormals = 0, upper = 0, lower = 0, upperCount = 0, lowerCount = 0;
+    const colors = geometry.getAttribute('color');
     for (let i = 0; i < position.count; i++) {
       outward.set((position.getX(i) - center.x) / size.x ** 2, (position.getY(i) - center.y) / size.y ** 2, (position.getZ(i) - center.z) / size.z ** 2).normalize();
       const dot = outward.dot(lit.fromBufferAttribute(normal, i));
-      expect(dot).toBeGreaterThan(.90); alignment += dot;
+      expect(dot).toBeGreaterThan(.75); alignment += dot;
+      if (dot < .97) boughNormals++;
+      if (position.getY(i) > center.y) { upper += colors.getY(i); upperCount++; }
+      else { lower += colors.getY(i); lowerCount++; }
     }
-    expect(alignment / position.count).toBeGreaterThan(.98);
+    expect(alignment / position.count).toBeGreaterThan(.92);
+    // A near-perfect whole-tree sphere was the previous blob-like result.
+    // Many smaller bough directions must contribute, with shaded interiors
+    // below and exposed tips above, without introducing a second shell.
+    expect(boughNormals).toBeGreaterThan(position.count * .20);
+    expect(upper / upperCount - lower / lowerCount).toBeGreaterThan(.12);
+    expect(variant.userData.townDistantCanopy.boughs).toBeGreaterThan(12);
+    expect(Object.keys(geometry.attributes).sort()).toEqual(['color', 'normal', 'position']);
+    expect(geometry.index!.count).toBe(588);
     disposeDistantCanopyPrototype(variant); (source.children[0] as THREE.Mesh).geometry.dispose();
   });
 });

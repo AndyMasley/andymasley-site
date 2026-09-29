@@ -2,6 +2,29 @@ import * as THREE from 'three';
 
 const owned = new WeakMap<THREE.Group, Set<THREE.BufferGeometry>>();
 
+// These are shading neighborhoods inside the one existing hull, not extra
+// trees, surveyed branches or additional geometry. Unequal staggered tiers
+// break the whole-crown sphere into a collection of smaller leafy boughs.
+const boughs = [
+  ...Array.from({ length: 6 }, (_, i) => { const a = i * Math.PI / 3 + .28; return new THREE.Vector3(Math.cos(a) * .29, -.23 + .025 * Math.sin(i * 2.1), Math.sin(a) * .29); }),
+  ...Array.from({ length: 7 }, (_, i) => { const a = i * Math.PI * 2 / 7 + .62; return new THREE.Vector3(Math.cos(a) * .34, .04 + .035 * Math.sin(i * 1.7), Math.sin(a) * .34); }),
+  ...Array.from({ length: 5 }, (_, i) => { const a = i * Math.PI * 2 / 5; return new THREE.Vector3(Math.cos(a) * .24, .29 + .025 * Math.sin(i * 2.4), Math.sin(a) * .24); }),
+  new THREE.Vector3(.045, .395, -.025),
+];
+
+function crownBough(point: THREE.Vector3, center: THREE.Vector3): number {
+  center.set(0, 0, 0); let weight = 0, nearest = Infinity;
+  for (const bough of boughs) {
+    const distance = point.distanceToSquared(bough);
+    // Blending, rather than assigning a nearest lobe, keeps shared vertices
+    // smooth across crown pockets and avoids hard artificial patch boundaries.
+    const w = Math.exp(-distance * 65);
+    center.addScaledVector(bough, w); weight += w; nearest = Math.min(nearest, distance);
+  }
+  center.multiplyScalar(1 / Math.max(weight, 1e-12));
+  return Math.sqrt(nearest);
+}
+
 /** TER-023/024 motivate mature, irregular canopy masses. Their species palette
  * is regional inference; source anchors, envelopes and habitat families remain. */
 export function createDistantCanopyPrototype(base: THREE.Group): THREE.Group {
@@ -29,17 +52,13 @@ export function createDistantCanopyPrototype(base: THREE.Group): THREE.Group {
         const clump = Math.sin(x * 11.3 + t * 4.1) * Math.cos(z * 9.7 - t * 3.3);
         // Coherent unequal bough lobes, not per-vertex jitter. At driving
         // distance the retained hull reads as crown layers instead of a ball.
-        const spread = 1 + .049 * envelope * Math.sin(Math.atan2(z, x) * 3 + t * 4.2) + .027 * clump;
+        const angle = Math.atan2(z, x);
+        const scallop = Math.sin(angle * 6 + t * 7.1) * Math.sin(t * Math.PI * 3 + .4);
+        const spread = 1 + .040 * envelope * Math.sin(angle * 3 + t * 4.2) + .027 * clump + .032 * envelope * scallop;
         position.setXYZ(i,
           bounds.min.x + size.x * (.5 + x * spread + .013 * envelope),
-          bounds.min.y + size.y * (t + .019 * envelope * clump),
+          bounds.min.y + size.y * (t + .019 * envelope * clump + .009 * envelope * scallop),
           bounds.min.z + size.z * (.5 + z * spread - .009 * envelope));
-        // Baked occlusion between broad branch masses softens the uniform solid
-        // spheres without more triangles, texture lookups or work while driving.
-        const shade = .73 + .21 * THREE.MathUtils.smoothstep(t, .05, .95) + .045 * clump;
-        colors[i * 3] = shade * (.985 + t * .02) * (originalColors?.getX(i) ?? 1);
-        colors[i * 3 + 1] = shade * (originalColors?.getY(i) ?? 1);
-        colors[i * 3 + 2] = shade * (1.015 - t * .045) * (originalColors?.getZ(i) ?? 1);
       }
       geometry.computeBoundingBox();
       const nextBounds = geometry.boundingBox!, nextSize = nextBounds.getSize(new THREE.Vector3());
@@ -52,15 +71,29 @@ export function createDistantCanopyPrototype(base: THREE.Group): THREE.Group {
       geometry.computeVertexNormals();
       const normal = geometry.getAttribute('normal');
       const soft = new THREE.Vector3(), actual = new THREE.Vector3(), center = bounds.getCenter(new THREE.Vector3());
+      const point = new THREE.Vector3(), bough = new THREE.Vector3(), cluster = new THREE.Vector3();
       for (let i = 0; i < normal.count; i++) {
         actual.fromBufferAttribute(normal, i);
         if (actual.lengthSq() < 1e-8) actual.set(oldNormal?.getX(i) ?? 0, oldNormal?.getY(i) ?? 1, oldNormal?.getZ(i) ?? 0).normalize();
-        // Sparse hull triangles still determine occlusion and silhouette. A
-        // predominantly curved normal field softens their planar lighting without
-        // replacing the hull or introducing transparent billboard layers.
+        // Preserve a soft global envelope, but light each smaller bough from
+        // its own center. A global sphere normal alone made the entire forest
+        // read as giant smooth blobs even when the rim shader cut leaf notches.
         soft.set((position.getX(i) - center.x) / (size.x * size.x), (position.getY(i) - center.y) / (size.y * size.y), (position.getZ(i) - center.z) / (size.z * size.z)).normalize();
-        if (soft.dot(actual) > .25) actual.multiplyScalar(.36).addScaledVector(soft, .64).normalize();
+        point.set((position.getX(i) - center.x) / size.x, (position.getY(i) - center.y) / size.y, (position.getZ(i) - center.z) / size.z);
+        const pocket = crownBough(point, bough), t = point.y + .5;
+        cluster.copy(point).sub(bough).divide(size).normalize();
+        const facing = cluster.dot(soft);
+        if (facing < .35) cluster.addScaledVector(soft, .35 - facing).normalize();
+        if (soft.dot(actual) > .25) actual.multiplyScalar(.12).addScaledVector(soft, .40).addScaledVector(cluster, .48).normalize();
         normal.setXYZ(i, actual.x, actual.y, actual.z);
+        // The same bough field bakes shaded undersides and brighter outer tips;
+        // no new shader, texture, alpha layer or per-frame CPU work is needed.
+        const exposure = THREE.MathUtils.smoothstep(cluster.y, -.55, .80);
+        const recess = THREE.MathUtils.smoothstep(pocket, .16, .32);
+        const shade = .67 + .17 * THREE.MathUtils.smoothstep(t, .05, .95) + .16 * exposure - .075 * recess;
+        colors[i * 3] = shade * (.99 + t * .025) * (originalColors?.getX(i) ?? 1);
+        colors[i * 3 + 1] = shade * (originalColors?.getY(i) ?? 1);
+        colors[i * 3 + 2] = shade * (1.015 - t * .055) * (originalColors?.getZ(i) ?? 1);
       }
       geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
       geometry.computeBoundingBox(); geometry.computeBoundingSphere();
@@ -74,7 +107,7 @@ export function createDistantCanopyPrototype(base: THREE.Group): THREE.Group {
       for (const attribute of Object.values(geometry.attributes)) buffers.add(attribute instanceof THREE.InterleavedBufferAttribute ? attribute.data.array.buffer : attribute.array.buffer);
       if (geometry.index) buffers.add(geometry.index.array.buffer);
     }
-    result.userData.townDistantCanopy = { geometryBytes: [...buffers].reduce((sum, buffer) => sum + buffer.byteLength, 0), basis: 'TER-023 and TER-024: mature late-summer canopy character, authored unequal bough lobes and soft crown lighting; original anchors, topology and exact bounds retained.' };
+    result.userData.townDistantCanopy = { geometryBytes: [...buffers].reduce((sum, buffer) => sum + buffer.byteLength, 0), boughs: boughs.length, basis: 'TER-023 and TER-024: mature late-summer canopy character, authored staggered bough-cluster lighting, recessed interiors and scalloped crown edges; original anchors, topology and exact bounds retained.' };
     return result;
   } catch (error) { disposeDistantCanopyPrototype(result); throw error; }
 }

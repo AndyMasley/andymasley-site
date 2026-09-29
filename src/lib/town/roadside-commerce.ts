@@ -37,7 +37,7 @@ const DATA = data as unknown as CommerceData;
 export type CommerceReport = { stations: number; islands: number; signs: number; faces: number; stalls: number; cars: number; carvedTriangles: number; triangles: number; bytes: number };
 export const STALL = { width: 2.75, depth: 5.5, line: 0.1 } as const;
 /** Parked cars per tile by display level: stable, and none far off. Low
- * graphics keep fewer. Lot cars are light instanced forms (about 160
+ * graphics keep fewer. Lot cars are light instanced forms (under 450
  * triangles each), not the detailed kerbside model. */
 export const PARKED_CAP = [240, 120, 0] as const;
 export const PARKED_CAP_LOW = [60, 0, 0] as const;
@@ -321,6 +321,8 @@ export class RoadsideCommerce {
     this.materials.pier = this.materials.concrete;
     // Parked-car glass mirrors the treeline more than open sky.
     this.materials.carGlass.envMapIntensity = 0.55;
+    this.materials.carGlass.color.set(0xffffff); this.materials.carGlass.vertexColors = true;
+    this.materials.carTyres.color.set(0xffffff); this.materials.carTyres.vertexColors = true;
     if (this.faces.size) this.atlas = drawAtlas([...this.faces.values()]);
   }
 
@@ -692,7 +694,8 @@ export class RoadsideCommerce {
 
 /** A light parked-car form in local car space (forward is -Z, as the drive
  * car): a painted lower body with hood and deck, a narrower glass cabin with a
- * painted roof, and four tyres. About 160 triangles. */
+ * painted roof, and four tyres. Trim, lamps and wheel faces share the existing
+ * glass/rubber draws through vertex colors, keeping the whole car under 450 triangles. */
 export function lotCarGeometry(): { body: THREE.BufferGeometry; glass: THREE.BufferGeometry; tyres: THREE.BufferGeometry } {
   /** Appends a closed convex part with every face turned away from its centre. */
   const add = (triangles: number[][][], out: number[]) => {
@@ -719,30 +722,74 @@ export function lotCarGeometry(): { body: THREE.BufferGeometry; glass: THREE.Buf
       for (const side of [-1, 1]) triangles.push(t.map(k => at(profile[k], side)));
     add(triangles, out);
   };
-  const geometry = (positions: number[]) => {
+  const geometry = (positions: number[], colors?: number[]) => {
     const g = new THREE.BufferGeometry();
     g.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+    if (colors) g.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
     g.computeVertexNormals(); g.computeBoundingBox(); g.computeBoundingSphere();
     return g;
   };
-  const body: number[] = [], glass: number[] = [], tyres: number[] = [];
-  // A mid-size sedan: bumpers, hood and deck to the beltline, then a tapering
-  // glass cabin under a painted roof.
-  prism([[-2.28, 0.22], [2.3, 0.22], [2.33, 0.6], [2.2, 0.78], [1.2, 0.95], [-1.45, 0.98], [-2.15, 0.98], [-2.3, 0.74]], 0.88, body);
+  const body: number[] = [], glass: number[] = [], tyres: number[] = [], glassColors: number[] = [], tyreColors: number[] = [];
+  const tint = (out: number[], colors: number[], start: number, value: string) => {
+    const color = new THREE.Color(value);
+    for (let i = start; i < out.length; i += 3) colors.push(color.r, color.g, color.b);
+  };
+  const face = (points: number[][], out: number[], colors?: number[], color = '#ffffff') => {
+    const start = out.length;
+    out.push(...points[0], ...points[1], ...points[2], ...points[0], ...points[2], ...points[3]);
+    if (colors) tint(out, colors, start, color);
+  };
+  // Beveled shoulders and tapered bumper corners break up the old broad white
+  // wedge while keeping its original 1.76 x 4.63 m occupied footprint.
+  const sections = [[2.33, .70, .64], [2.15, .85, .81], [1.16, .88, .93], [-1.42, .88, .96], [-2.13, .84, .82], [-2.3, .73, .67]];
+  const rings = sections.map(([along, half, top]) => [[-.82 * half, .22], [-half, .35], [-half, top - .10], [-.86 * half, top], [.86 * half, top], [half, top - .10], [half, .35], [.82 * half, .22]].map(([x, y]) => [x, y, -along]));
+  const shell: number[][][] = [];
+  for (let i = 0; i < rings.length - 1; i++) for (let k = 0; k < 8; k++) {
+    const next = (k + 1) % 8;
+    shell.push([rings[i][k], rings[i + 1][k], rings[i + 1][next]], [rings[i][k], rings[i + 1][next], rings[i][next]]);
+  }
+  for (const ring of [rings[0], rings[rings.length - 1]]) for (let k = 1; k < 7; k++) shell.push([ring[0], ring[k], ring[k + 1]]);
+  add(shell, body);
   const tumble = (y: number) => 1 - Math.max(0, y - 0.93) * 0.38;
   prism([[1.26, 0.93], [0.36, 1.37], [-0.86, 1.39], [-1.5, 0.95]], 0.8, glass, tumble);
+  tint(glass, glassColors, 0, '#17252e');
   prism([[0.38, 1.36], [-0.88, 1.38], [-0.86, 1.42], [0.34, 1.4]], 0.8, body, tumble);
-  for (const [x, z] of [[1.38, -0.75], [1.38, 0.75], [-1.35, -0.75], [-1.35, 0.75]]) {
-    const r = 0.32, w = 0.2, sides = 10, c = [z, r, -x], triangles: number[][][] = [];
+  for (const side of [-1, 1]) {
+    const window = (along: number, y: number) => [side * (.8 * tumble(y) + .004), y, -along];
+    const panel = (points: number[][], out: number[], colors?: number[], color?: string) => face(side < 0 ? points : [...points].reverse(), out, colors, color);
+    panel([window(.32, 1.37), window(.38, 1.37), window(1.28, .93), window(1.21, .93)], body);
+    panel([window(-.9, 1.39), window(-.83, 1.39), window(-1.45, .95), window(-1.52, .95)], body);
+    panel([window(-.25, 1.385), window(-.17, 1.385), window(-.17, .944), window(-.25, .944)], body);
+    const at = (along: number, y: number) => [side * .881, y, -along];
+    for (const along of [.63, -.72]) panel([at(along - .10, .805), at(along - .10, .85), at(along + .10, .85), at(along + .10, .805)], glass, glassColors, '#89949b');
+    panel([at(-.22, .38), at(-.22, .86), at(-.208, .86), at(-.208, .38)], glass, glassColors, '#313a3d');
+  }
+  const front = (x: number, y: number) => [x, y, -2.332], rear = (x: number, y: number) => [x, y, 2.302];
+  for (const side of [-1, 1]) {
+    const a = side * .43, b = side * .67;
+    face([front(Math.min(a, b), .49), front(Math.min(a, b), .59), front(Math.max(a, b), .59), front(Math.max(a, b), .49)], glass, glassColors, '#d9e6e9');
+    face([rear(Math.min(a, b), .53), rear(Math.max(a, b), .53), rear(Math.max(a, b), .63), rear(Math.min(a, b), .63)], glass, glassColors, '#9b211e');
+  }
+  face([front(-.34, .34), front(-.34, .47), front(.34, .47), front(.34, .34)], glass, glassColors, '#172025');
+  for (const [x, z] of [[1.38, -0.782], [1.38, 0.782], [-1.35, -0.782], [-1.35, 0.782]]) {
+    const r = 0.32, w = 0.2, sides = 8, c = [z, r, -x], triangles: number[][][] = [];
     const p = (a: number, s: number) => [c[0] + s * w / 2, c[1] + Math.sin(a) * r, c[2] + Math.cos(a) * r];
     for (let i = 0; i < sides; i++) {
       const a0 = i / sides * Math.PI * 2, a1 = (i + 1) / sides * Math.PI * 2;
       triangles.push([p(a0, -1), p(a1, -1), p(a1, 1)], [p(a0, -1), p(a1, 1), p(a0, 1)]);
       for (const s of [-1, 1]) triangles.push([[c[0] + s * w / 2, c[1], c[2]], p(a0, s), p(a1, s)]);
     }
-    add(triangles, tyres);
+    const start = tyres.length; add(triangles, tyres); tint(tyres, tyreColors, start, '#171a1d');
+    const outside = Math.sign(z), faceX = z + outside * .101;
+    for (const [radius, color] of [[.205, '#88959c'], [.07, '#4b5357']] as const) for (let i = 0; i < sides; i++) {
+      const a = i / sides * Math.PI * 2, b = (i + 1) / sides * Math.PI * 2;
+      const centre = [faceX + outside * (radius < .1 ? .001 : 0), c[1], c[2]];
+      const p0 = [centre[0], c[1] + Math.sin(a) * radius, c[2] + Math.cos(a) * radius], p1 = [centre[0], c[1] + Math.sin(b) * radius, c[2] + Math.cos(b) * radius];
+      const at = tyres.length; tyres.push(...centre, ...(outside > 0 ? p1 : p0), ...(outside > 0 ? p0 : p1));
+      tint(tyres, tyreColors, at, radius > .1 && i % 2 ? '#4e5a61' : color);
+    }
   }
-  return { body: geometry(body), glass: geometry(glass), tyres: geometry(tyres) };
+  return { body: geometry(body), glass: geometry(glass, glassColors), tyres: geometry(tyres, tyreColors) };
 }
 
 /** Foundation planting laid along a traced footprint that turned out to be a

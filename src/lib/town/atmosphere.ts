@@ -23,7 +23,7 @@ export const SUMMER_SKY = {
   zenith: [0.048, 0.167, 0.55],
   horizon: [0.31, 0.6, 1.22],
   cloud: [2.45, 2.34, 1.9],
-  ground: [0.095, 0.113, 0.077],
+  ground: [0.15, 0.115, 0.075],
   treeline: [0.05, 0.066, 0.045],
 } as const;
 
@@ -167,7 +167,7 @@ export function createSummerSky(sunDirection: THREE.Vector3, { surroundings = fa
       // Reflection source only: the low sky seen in windows, paint and water is
       // greyed by haze, screens and street clutter, then an irregular band of
       // trees and roofs replaces the horizon itself.
-      color = mix(color, vec3(dot(color, vec3(0.2126, 0.7152, 0.0722))) * vec3(0.94, 0.98, 1.06), summerSurroundings * 0.45 * (1.0 - smoothstep(0.06, 0.26, direction.y)));
+      color = mix(color, vec3(dot(color, vec3(0.2126, 0.7152, 0.0722))) * vec3(1.04, 1.0, 0.94), summerSurroundings * 0.22 * (1.0 - smoothstep(0.06, 0.26, direction.y)));
       float treelineTop = 0.045 + 0.05 * cloudNoise(vec2(atan(direction.z, direction.x) * 7.0, 2.7));
       color = mix(color, summerTreeline, summerSurroundings * (1.0 - smoothstep(treelineTop - 0.03, treelineTop, direction.y)) * smoothstep(-0.2, -0.02, direction.y));
       gl_FragColor = vec4(color,1.0);
