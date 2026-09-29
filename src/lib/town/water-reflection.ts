@@ -366,6 +366,10 @@ if(townLakeReflectionEnabled>.0 && abs(vTownArtWorld.y-townLakeReflectionHeight)
     const reflectedFrustum = new THREE.Frustum().setFromProjectionMatrix(new THREE.Matrix4().multiplyMatrices(reflected.camera.projectionMatrix, reflected.camera.matrixWorldInverse));
     const candidates: Candidate[] = [];
     for (const mesh of visible) {
+      // These five global batches have whole-town bounds, so proximity cannot
+      // select a local shoreline from them. Keep the reflection budget for
+      // actual nearby detail rather than submitting the distant town again.
+      if (mesh.userData.townOverview) continue;
       const ms = materials(mesh), name = meshName(mesh);
       if (ms.some(waterMaterial) || /\bwater\b|grass|turf blades|flower|shrub|hedge|lettering|roadside|bench|picnic|bollard|contact shadow|touring car/i.test(name)) continue;
       const sky = /\bsky\b/i.test(name) || (mesh.material instanceof THREE.ShaderMaterial && /sky/i.test(mesh.material.name));

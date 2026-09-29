@@ -4,6 +4,7 @@ import { Sky } from 'three/examples/jsm/objects/Sky.js';
 import { advanceRealTime, DriveEngine, LANDMARKS, MPH, RoadGraph, spawnAtLandmark, type NetworkData } from './engine';
 import { validateManifest, type Quality, type V3 } from './contracts';
 import { TownWorld } from './world';
+import { explorationClipPlanes } from './exploration-view';
 import { StreetDressing, updateDressingViewport, type StreetContext } from './street-dressing';
 import type { HouseDressing } from './house-dressing';
 import { RoadWear } from './road-wear';
@@ -284,7 +285,7 @@ export async function startTown(root: HTMLElement): Promise<Session> {
     scene = new THREE.Scene();
     scene.fog = createSummerHaze();
     restoreFog = installAerialPerspective(SUN_OFFSET);
-    const camera = new THREE.PerspectiveCamera(BASE_FOV, 1, 0.08, 6500);
+    const camera = new THREE.PerspectiveCamera(BASE_FOV, 1, 0.08, explorationClipPlanes(0).far);
     const ambient = new THREE.HemisphereLight(SUMMER_LIGHT.skyFill, SUMMER_LIGHT.groundFill, SUMMER_LIGHT.fillIntensity);
     scene.add(ambient);
     const sun = new THREE.DirectionalLight(SUMMER_LIGHT.sun, SUMMER_LIGHT.sunIntensity);
@@ -989,7 +990,10 @@ export async function startTown(root: HTMLElement): Promise<Session> {
       // for a sense of pace; the steady camera and QA views keep a fixed lens.
       const wantedFov = BASE_FOV + (steady() || debugCamera ? 0 : onFoot!.active ? Math.min(5, Math.max(0, onFoot!.speed - 3)) : Math.min(1, Math.max(0, engine.speed - 4) / 21) * 5);
       const fov = camera.fov + (wantedFov - camera.fov) * (firstFrame ? 1 : 1 - Math.exp(-elapsed * 2.5));
-      if (Math.abs(fov - camera.fov) > 0.005) { camera.fov = fov; camera.updateProjectionMatrix(); }
+      const clips = explorationClipPlanes(onFoot!.active ? onFoot!.heightAboveGround : 0);
+      if (Math.abs(fov - camera.fov) > .005 || Math.abs(clips.near - camera.near) > .001 || camera.far !== clips.far) {
+        camera.fov = fov; camera.near = clips.near; camera.far = clips.far; camera.updateProjectionMatrix();
+      }
       if (debugCamera) { camera.position.set(debugCamera.eye[0], debugCamera.eye[1], debugCamera.eye[2]); camera.lookAt(debugCamera.target[0], debugCamera.target[1], debugCamera.target[2]); }
       if (firstFrame) renderRequested = true;
       firstFrame = false;
@@ -1118,7 +1122,7 @@ export async function startTown(root: HTMLElement): Promise<Session> {
       redraw() { renderRequested = true; },
       get debugCamera() { return debugCamera; },
       set debugCamera(value: { eye: number[]; target: number[] } | null) { debugCamera = value; renderRequested = true; },
-      get presentation() { return { version: 'finished-webster-v8', grass: world!.presentationResources(), vehicle: vehicle!.resources(), evidence: world!.evidenceResources(), finish: world!.finishResources(), research: world!.researchResources(), streaming: world!.streamingResources(), comfort: preferences.comfort, camera: { checks: cameraObstruction.checks, testedMeshes: cameraObstruction.testedMeshes, milliseconds: cameraObstruction.milliseconds, skippedCandidates: cameraObstruction.skippedCandidates, acceleration: cameraIndex?.metrics } }; },
+      get presentation() { return { version: 'finished-webster-v8', grass: world!.presentationResources(), vehicle: vehicle!.resources(), evidence: world!.evidenceResources(), finish: world!.finishResources(), research: world!.researchResources(), streaming: world!.streamingResources(), comfort: preferences.comfort, camera: { near: camera.near, far: camera.far, checks: cameraObstruction.checks, testedMeshes: cameraObstruction.testedMeshes, milliseconds: cameraObstruction.milliseconds, skippedCandidates: cameraObstruction.skippedCandidates, acceleration: cameraIndex?.metrics } }; },
       get ready() { return controlsReady && !disposed; },
       get metrics() {
         const samples = [...snapshots].sort((a, b) => a - b);

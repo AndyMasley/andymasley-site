@@ -121,6 +121,29 @@ describe('bounded real lake reflection', () => {
     effect.dispose(); renderer.originalTarget.dispose();
   });
 
+  it('keeps whole-town batches out of local reflections while preserving them for the main view', () => {
+    const f = fixture(), effect = new TownWaterReflection();
+    const overview = ['terrain', 'water', 'roads', 'buildings', 'trees'].map(kind => {
+      // Whole-town bounds contain the camera and intersect its reflected view,
+      // even though the actual local shoreline is supplied by resident detail.
+      const mesh = new THREE.Mesh(new THREE.BoxGeometry(8000, 300, 8000), new THREE.MeshStandardMaterial());
+      mesh.name = `Distant town ${kind}`; mesh.userData.townOverview = true;
+      f.scene.add(mesh); return mesh;
+    });
+    const renderer = fakeRenderer(() => {
+      expect(overview.every(mesh => !mesh.visible)).toBe(true);
+      expect(f.house.visible).toBe(true);
+    });
+    try {
+      expect(effect.update(renderer.r, f.scene, f.camera, 100, high)).toMatchObject({ active: true, calls: 1, triangles: 12, reflectedShoreMeshes: 1 });
+      expect(overview.every(mesh => mesh.visible)).toBe(true);
+      expect(effect.metrics.warmupMaterials).toBe(2); // Nearby water and shore only.
+    } finally {
+      effect.dispose(); renderer.originalTarget.dispose();
+      for (const mesh of overview) { mesh.geometry.dispose(); mesh.material.dispose(); }
+    }
+  });
+
   it.each([
     { prior:true, fail:false }, { prior:false, fail:false },
     { prior:true, fail:true }, { prior:false, fail:true },

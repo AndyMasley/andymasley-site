@@ -217,6 +217,66 @@ relative to the GLB. Tree rows are tile-local `[x,y,z,sx,sy,sz,yaw]`. LOD0 prese
 the source float32 geometry. Lower display LODs and portable materials are browser
 derivatives; they never change the driving graph.
 
+`town-overview.ts` keeps a compact version of the whole mapped town resident,
+including terrain, water, roads, building silhouettes and grouped tree canopy.
+The loading cover waits for this packet along with the starting neighborhood.
+Nearby streets still use their existing streamed detail; travelling or flying
+away never requires loading every full-resolution tile to retain the town's
+distant shape. The five opaque category batches cast no shadows and use no
+additional image textures. Their budgets are 1,250,000 triangles, 12 MiB compressed
+and 24.5 MiB of decoded packet data, rather than the source LOD2 collection's
+14,008,856 triangles and 359,963,036 bytes.
+The exact baked triangle, vertex and byte totals are recorded in the catalog
+and checked independently against the binary on every build.
+
+Far-ground colors use the same mapped lawn, woodland litter, pavement and soil
+cover as the live summer terrain. The offline bake chooses hash-matched corrected
+paving masks where available, applies the shared `cover-cleanup.ts`, and samples
+their RGBA weights in world coordinates. Existing summer material reflectance
+and broad variations are baked into terrain vertex colors; unclassified building
+and water pixels retain their source color. This replaces the leaf-off aerial
+cast on classified ground without adding runtime image textures or cover classes.
+The catalog pins every selected mask, the color helper and the live shader and
+material sources used for that appearance.
+
+Distant canopy groups start at actual source anchors, join nearby anchors within
+32 m and 7 m of vertical difference, and reject links crossing mapped road or
+water footprints. Each group uses a closed, rounded 20-face hull, with a stable
+orientation and bounds derived from the original crown prototype transformed by
+its anchors, scales and rotations. Water cleanup clips overlapping terrain only
+inside the original water triangles; dry ground and water elevation remain at
+their source coordinates. Short shoreline sides end 0.12 m below the water to
+close exposed edges. These reduced canopy forms and shoreline closures are
+display geometry; the source inventory and driving network stay unchanged.
+
+The overview catalog records every one of the pinned manifest's 672 source tiles,
+including the tree-only `6_14` cell, all 7,805 building identities and 158,099 tree
+anchors. Those inventories describe source coverage; canopy aggregation and
+building simplification deliberately reduce visible geometry. Source geometry
+can extend outside its nominal 250 m square, so each overview vertex carries its
+source owner ID. A small texture suppresses only owners replaced by actual
+visible resident detail, with independent masks for scenery and trees. Pending
+downloads do not suppress anything, and hidden or evicted detail restores its
+overview immediately. Camera distance is not a substitute for this ownership
+check. Session disposal releases the five batches and coverage texture.
+
+`exploration-view.ts` keeps the far clip at 14 km, covering every town corner
+even from the opposite edge at maximum jetpack altitude. The near clip stays at
+8 cm on the ground and rises smoothly to 1.5 m by 250 m above ground, improving
+distant depth precision while keeping the player visible from the exploration
+camera. The existing height-dependent haze still softens the distant landscape.
+
+Rebuild the packet with `node scripts/prepare-town-overview.mjs`, then independently
+audit it with `node scripts/validate-town-overview.mjs data/derived/town/overview.json`.
+The read-only validator checks source hashes, exact manifest coverage, byte and
+triangle budgets, decoded index bounds, per-triangle ownership and per-owner
+category counts recomputed from the actual binary. The derived and public
+catalogs must match; they pin the compressed packet and decoded content
+separately, and the raw fallback file must match that same decoded content. Focused
+regressions are `src/lib/town/__tests__/town-overview.test.ts` and
+`tests/town/overview-coverage.checks.mjs`; the latter also covers source geometry
+spilling into another cell and missing coverage disguised by catalog counters.
+
 The late-summer appearance is inferred: foliage, lighting, material treatments
 and many façades are modeled. Selected exteriors use observed reference details.
 This is not a house-by-house survey or a live depiction of Webster. The page's

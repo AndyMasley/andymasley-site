@@ -11,6 +11,61 @@ const group = (material: THREE.Material) => { const result = new THREE.Group(); 
 const settle = async () => { for (let i = 0; i < 8; i++) await Promise.resolve(); };
 
 describe('Town streaming and resource ownership', () => {
+  it('keeps distant source coverage until detail is adopted and follows independent tree visibility', async () => {
+    const world = new TownWorld(manifest(), 'https://example.test/manifest.json', () => {});
+    const coverage = { setCoverage: vi.fn(), dispose: vi.fn() };
+    (world as unknown as { distantTown: unknown }).distantTown = coverage;
+    let finish!: (value: THREE.Group) => void;
+    vi.spyOn(world, 'loadGlb').mockImplementation(() => new Promise(resolve => { finish = resolve; }));
+    try {
+      world.update([125, 0, 125], [125, 0, 125]);
+      expect(coverage.setCoverage).toHaveBeenLastCalledWith([], []);
+      finish(group(new THREE.MeshStandardMaterial())); await settle();
+      expect(coverage.setCoverage).toHaveBeenLastCalledWith(['a'], []);
+      world.loaded.get('a')!.trees = new THREE.Group();
+      world.update([125, 0, 125], [125, 0, 125]);
+      expect(coverage.setCoverage).toHaveBeenLastCalledWith(['a'], []);
+      const body = world.loaded.get('a')!.group.children[0] as THREE.Mesh;
+      const crown = new THREE.InstancedMesh(body.geometry, body.material, 1); crown.userData.treeKind = 'far'; crown.count = 0;
+      world.loaded.get('a')!.trees!.add(crown);
+      world.update([125, 0, 125], [125, 0, 125]);
+      expect(coverage.setCoverage).toHaveBeenLastCalledWith(['a'], []);
+      crown.count = 1; crown.visible = false;
+      world.update([125, 0, 125], [125, 0, 125]);
+      expect(coverage.setCoverage).toHaveBeenLastCalledWith(['a'], []);
+      crown.visible = true;
+      world.update([125, 0, 125], [125, 0, 125]);
+      expect(coverage.setCoverage).toHaveBeenLastCalledWith(['a'], ['a']);
+      // Detailed body remains inside950m while its trees are hidden beyond800m.
+      world.update([1100, 0, 125], [1100, 0, 125]);
+      expect(coverage.setCoverage).toHaveBeenLastCalledWith(['a'], []);
+      world.update([2500, 0, 125], [2500, 0, 125]);
+      expect(coverage.setCoverage).toHaveBeenLastCalledWith([], []);
+    } finally { world.dispose(); }
+  });
+
+  it('keeps overview coverage for empty and tree-only detail while respecting deliberate complete tree exclusions', async () => {
+    const empty = tile('empty'), treesOnly = { ...tile('trees', 250), lods: [] };
+    const world = new TownWorld(manifest([empty, treesOnly]), 'https://example.test/manifest.json', () => {});
+    const coverage = { setCoverage: vi.fn(), dispose: vi.fn() };
+    (world as unknown as { distantTown: unknown }).distantTown = coverage;
+    vi.spyOn(world, 'loadGlb').mockResolvedValue(new THREE.Group());
+    try {
+      world.update([125, 0, 125], [125, 0, 125]); await settle();
+      expect(world.loaded.has('empty')).toBe(true); expect(world.loaded.has('trees')).toBe(true);
+      expect(coverage.setCoverage).toHaveBeenLastCalledWith([], []);
+      const entry = world.loaded.get('trees')!;
+      entry.treeRows = [[0, 10, 0, 2, 2, 2, 0]]; entry.treeExcluded = new Set([0]);
+      entry.treeGroundGaps = [0]; entry.treeSourceExcluded = new Set();
+      entry.trees = new THREE.Group();
+      world.update([125, 0, 125], [125, 0, 125]);
+      expect(coverage.setCoverage).toHaveBeenLastCalledWith([], []);
+      entry.treeSourceExcluded.add(0);
+      world.update([125, 0, 125], [125, 0, 125]);
+      expect(coverage.setCoverage).toHaveBeenLastCalledWith([], ['trees']);
+    } finally { world.dispose(); }
+  });
+
   it('uses altitude for scenery detail and restores street detail after landing', async () => {
     const world = new TownWorld(manifest(), 'https://example.test/manifest.json', () => {});
     vi.spyOn(world, 'loadGlb').mockImplementation(async () => group(new THREE.MeshStandardMaterial()));

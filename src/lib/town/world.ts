@@ -5,6 +5,8 @@ import { measuredRoofAsset, validMeasuredRoofPacket, evergreens, surveyTreeRows,
 import { tileGround } from './address-frontage';
 import * as THREE from 'three';
 import release from '../../../data/derived/town/release.json';
+import overviewCatalog from '../../../data/derived/town/overview.json';
+import { TownOverview, type OverviewCatalog } from './town-overview';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js';
 import { boundsDistanceSquared, chooseLod, type Quality, type TownTile, type V3, type WorldManifest, type WorldMetrics } from './contracts';
@@ -120,6 +122,7 @@ export class TownWorld {
   private readonly timings = { tiles: 0, parseMs: 0, assemblyMs: 0, maxParseMs: 0, maxAssemblyMs: 0, dressingMs: 0, maxDressingMs: 0, detailRetries: 0, detailRecovered: 0, treeInstanceAllocations: 0, treeInstanceReuses: 0 };
   private readonly artClock = { value: 0 };
   private readonly boundaryContext: BoundaryContext;
+  private readonly distantTown?: TownOverview;
   private readonly sourceImages: SourceImageCache;
   private readonly railCorridor = new TileDetailStream(railCorridorAsset, validRailCorridorPacket, (url, signal) => this.fetchJson(url, signal), 1.5 * 1024 * 1024);
   private readonly foundationWalls = new TileDetailStream(foundationWallAsset, validFoundationWallPacket, (url, signal) => this.fetchJson(url, signal), 512 * 1024);
@@ -175,6 +178,11 @@ export class TownWorld {
   constructor(readonly manifest: WorldManifest, readonly manifestUrl: string, readonly onChange: () => void) {
     this.tileDefinitions = new Map(manifest.tiles.map((tile, order) => [tile.id, { tile, order }]));
     this.root.name = 'Webster scenery';
+    if (new URL(manifestUrl).pathname.endsWith(`/${release.directory}/manifest.json`)) {
+      if (overviewCatalog.sourceManifestSha256 !== release.manifestSha256) throw new Error('The distant town belongs to a different scenery release.');
+      this.distantTown = new TownOverview(overviewCatalog as OverviewCatalog);
+      this.root.add(this.distantTown.root);
+    }
     this.sourceImages = new SourceImageCache(new URL(manifestUrl).origin, async (url, signal) => {
       const response = await fetch(url, { signal });
       if (!response.ok) throw new Error(`Scenery image could not load (${response.status}).`);
@@ -368,7 +376,10 @@ export class TownWorld {
     this.surfaceLibraryPreparation = loadSurfaceLibrary(this.manifestUrl, !this.low && !this.mobile, this.sharedAbort.signal, this)
       .catch(error => { if (!this.sharedAbort.signal.aborted) console.warn('Some Webster surface textures are unavailable; their placeholder tones remain.', error); });
     const results = await Promise.allSettled([
-      this.surfaces?.initialize(this.sharedAbort.signal),
+      Promise.all([
+        this.surfaces?.initialize(this.sharedAbort.signal),
+        this.distantTown?.initialize(this.manifestUrl, this.sharedAbort.signal, bytes => { this.metrics.bytes += bytes; }),
+      ]).then(() => undefined),
       this.loadGlb(this.manifest.fallback.url),
       ...(this.manifest.trees?.prototypes ?? []).map(prototype => this.loadGlb(prototype.url)),
     ]);
@@ -376,7 +387,7 @@ export class TownWorld {
     const failure = results.find(result => result.status === 'rejected');
     if (this.disposed || this.sharedAbort.signal.aborted || failure) {
       groups.forEach(group => this.releaseGroup(group));
-      this.surfaces?.dispose();
+      this.surfaces?.dispose(); this.distantTown?.dispose();
       if (failure?.status === 'rejected') throw failure.reason;
       throw new DOMException('Loading cancelled', 'AbortError');
     }
@@ -653,6 +664,23 @@ export class TownWorld {
     this.metrics.loaded = this.loaded.size;
     const contextShadowBudget = this.treeShadows ? Math.max(0,TREE_SHADOW_CAP-[...treePlans.values()].reduce((sum,plan)=>sum+plan.shadows.size,0)) : 0;
     this.boundaryContext.update(position, !preparing && this.explorationHeight < 150 && this.prototypes.length > 0 && this.isReadyAt(position), contextShadowBudget);
+    // Source meshes can spill across their map square. Replace by source ID,
+    // and keep distant trees where detailed tree groups are culled separately.
+    this.distantTown?.setCoverage(
+      [...this.loaded].filter(([id, entry]) => entry.group.visible && (entry.geometryBytes ?? 0) > 0 && !!this.tileDefinitions.get(id)?.tile.lods.length).map(([id]) => id),
+      [...this.loaded].filter(([, entry]) => entry.group.visible && this.overviewTreesReplaced(entry)).map(([id]) => id),
+    );
+  }
+
+  private overviewTreesReplaced(entry: LoadedTile): boolean {
+    if (!entry.trees?.visible) return false;
+    // An empty cohort may mean support is still missing. Keep its coarse
+    // canopy until a real visible crown replaces it, not just a Group object.
+    const hasCrown = entry.trees.children.some(object => object instanceof THREE.InstancedMesh && object.visible && object.count > 0 && object.userData.treeKind !== 'trunk');
+    if (hasCrown) return true;
+    // Authored road/building exclusions are deliberate absences. If every
+    // anchor was removed by those checks, do not reintroduce them from afar.
+    return !!entry.treeRows?.length && entry.treeRows.every((_, index) => entry.treeSourceExcluded?.has(index));
   }
 
   /** Explicit player retry resets only nearby failure backoff, not the town. */
@@ -731,7 +759,7 @@ export class TownWorld {
       shoreline: this.environmentGround.resources(), facilities: this.facilities.resources(), roadMaterials: this.roadMaterials.resources(), streetCorners: this.streetCorners.resources(), streetCornerGround: this.streetCornerGround.resources(), roadCurve: this.roadCurve.resources(), roadDash: this.roadDash.resources(), propertyTerrain: this.propertyTerrain.resources(), roadGroundClearance: this.roadGroundClearance.resources(), foundationWalls: this.foundationWalls.resources(), railCorridor: this.railCorridor.resources(), measuredRoofs: this.measuredRoofs.resources(), boundaryContext: this.boundaryContext.resources(), retrySources: this.sourceRetryCache.resources(), sourceImages: this.sourceImages.resources() };
     const geometryBudgetBytes = (this.mobile ? 192 : 384) * 1024 * 1024;
     const retainedTileGeometryBytes = [...this.loaded.values()].reduce((sum, tile) => sum + (tile.geometryBytes ?? 0), 0);
-    return { ...this.timings, explorationHeight: this.explorationHeight, explorationSpeed: this.explorationSpeed, lookAhead: [...this.lookAhead], groundTextures: this.surfaces?.detailResources(), maxStageMs: { ...this.stageTimings }, detailRequests: { active: this.detailRequests.active, queued: this.detailRequests.queued, peakActive: this.detailRequests.peakActive, cancelled: this.detailRequests.cancelled }, caches, estimatedCacheBytes: Object.values(caches).reduce((sum, cache) => sum + cache.estimatedBytes, 0),
+    return { ...this.timings, overview: this.distantTown?.resources(), explorationHeight: this.explorationHeight, explorationSpeed: this.explorationSpeed, lookAhead: [...this.lookAhead], groundTextures: this.surfaces?.detailResources(), maxStageMs: { ...this.stageTimings }, detailRequests: { active: this.detailRequests.active, queued: this.detailRequests.queued, peakActive: this.detailRequests.peakActive, cancelled: this.detailRequests.cancelled }, caches, estimatedCacheBytes: Object.values(caches).reduce((sum, cache) => sum + cache.estimatedBytes, 0),
       geometryBudgetBytes, retainedTileGeometryBytes, geometryBudgetExceeded: retainedTileGeometryBytes > geometryBudgetBytes,
       incompleteTiles: [...this.loaded.entries()].filter(([,tile]) => tile.group.userData.optionalDetailMissing?.length).map(([id,tile]) => ({ id, missing: tile.group.userData.optionalDetailMissing as string[], attempts: tile.detailAttempts ?? 0 })),
     };
@@ -1189,11 +1217,13 @@ export class TownWorld {
     }
     const surfaces = this.surfaces?.resources() ?? { materials: 0, textures: 0, bytes: 0 };
     const library = surfaceLibraryResources();
-    return { materialCount: this.materialPool.size + surfaces.materials, textureCount: this.texturePool.size + surfaces.textures + library.textures, estimatedTextureBytes: Math.round(estimatedTextureBytes + surfaces.bytes + library.bytes), estimatedGeometryBytes: [...buffers].reduce((sum, buffer) => sum + buffer.byteLength, 0) };
+    const distant = this.distantTown?.resources();
+    return { materialCount: this.materialPool.size + surfaces.materials + (distant?.draws ?? 0), textureCount: this.texturePool.size + surfaces.textures + library.textures + (distant?.maskBytes ? 1 : 0), estimatedTextureBytes: Math.round(estimatedTextureBytes + surfaces.bytes + library.bytes + (distant?.maskBytes ?? 0)), estimatedGeometryBytes: [...buffers].reduce((sum, buffer) => sum + buffer.byteLength, 0) };
   }
 
   dispose(): void {
     this.overview = undefined;
+    this.distantTown?.dispose();
     this.sourceImages.dispose();
     this.boundaryContext.dispose();
     this.sourceRetryCache.clear();
