@@ -96,23 +96,34 @@ and reference are preserved in `data/source/town/cover-art-v2.json`.
 
 The playable scene now uses an authored golden-hour sun, directional warm sky
 and cloud lighting, cooler open shade, and a restrained camera grade. An optional
-112KB cloud-density panorama replaces the repeated procedural noise evaluations
-with two texture lookups, plus edge blending at the panorama seam. It is shared
-by the sky and reflection environment;
+182KiB full-color sky panorama supplies photographic cloud color and fine structure
+with one texture lookup, plus edge blending at the panorama seam. Explicit sRGB
+conversion keeps the sky in the same linear lighting space as the scene. Its warm
+glow follows the sun azimuth and blends into the shared horizon haze. The panorama
+is shared by the sky and reflection environment;
 the original procedural sky remains available during loading or asset failure.
-The generated master and prompt are `data/source/town/cloud-density-v1.png` and
-`cloud-art-v1.json`. The cloud upgrade does not block starting a drive, refreshes
-reflections once, and keeps the existing shadow-map resolution.
+The generated master and prompt are `data/source/town/sky-color-v1.png` and
+`sky-art-v1.json`. Only the upper hemisphere is used; the ground remains procedural.
+A latitude curve keeps the cloud band below the open blue sky in the chase view.
+The sky upgrade does not block starting a drive, refreshes reflections once, and keeps the existing shadow-map resolution. The shadow frame
+uses a 250 by 170 metre light-space rectangle: with the lower sun this retains
+the previous roughly 460 metre ground coverage, with separate texel snapping
+on each axis rather than rendering a larger off-camera area.
 This is an artistic time-of-day treatment, not a dated lighting reconstruction.
 The natural broadleaf atlas is generated from the original twig layout; its
 master and prompt live in `data/source/town/leaf-cluster-v2.png` and
 `leaf-art-v2.json`. The reproducible 512px export retains transparent gutters,
 existing twig anchors and atlas UVs. Rounded foliage normals and varied leaf
 shading preserve the source crown envelope and tree geometry budget.
+Far crown fringes now filter against projected pixel size so grazing edges keep
+their irregular bough outline; unresolved distant masses remain opaque.
 
 Central Main Street near/mid-detail glazing gains inward jamb and head returns.
 The additional 7.5cm recess is authored construction detail; opening rhythm,
 external clearance envelopes, triangle counts and draw counts are unchanged.
+Broad display glazing keeps a dark inferred interior instead of residential
+blinds, with bounded two-interface Fresnel reflections and slight stable pane
+bowing. Ordinary sash windows retain their existing privacy treatments.
 Surface normal-map slopes preserve mortar and siding relief while filtering
 detail smaller than a screen pixel. The touring car uses angle-dependent
 dielectric glass and a soft underbody/tyre contact patch (one draw, two triangles,

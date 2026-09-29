@@ -85,13 +85,13 @@ gl_FragColor.rgb = mix(gl_FragColor.rgb, townFogColor, fogFactor);
 
 /** Keep the directional shadow's light-space texels fixed as the car moves.
  * Snapping in world X/Z would still crawl along an oblique sun's image plane. */
-export function createShadowAnchor(direction:THREE.Vector3,span:number,resolution:number):(focus:THREE.Vector3,target:THREE.Vector3)=>THREE.Vector3 {
+export function createShadowAnchor(direction:THREE.Vector3,span:number,resolution:number,verticalSpan=span):(focus:THREE.Vector3,target:THREE.Vector3)=>THREE.Vector3 {
   const forward=direction.clone().normalize(),right=new THREE.Vector3(0,1,0).cross(forward).normalize();
-  if(right.lengthSq()<.5||!Number.isFinite(span/resolution)||span<=0||resolution<=0)throw new Error('Invalid directional shadow frame');
-  const up=forward.clone().cross(right).normalize(),step=span/resolution;
+  if(right.lengthSq()<.5||!Number.isFinite(span/resolution)||!Number.isFinite(verticalSpan/resolution)||span<=0||verticalSpan<=0||resolution<=0)throw new Error('Invalid directional shadow frame');
+  const up=forward.clone().cross(right).normalize(),stepX=span/resolution,stepY=verticalSpan/resolution;
   return(focus,target)=>{
     const x=focus.dot(right),y=focus.dot(up);
-    return target.copy(focus).addScaledVector(right,Math.round(x/step)*step-x).addScaledVector(up,Math.round(y/step)*step-y);
+    return target.copy(focus).addScaledVector(right,Math.round(x/stepX)*stepX-x).addScaledVector(up,Math.round(y/stepY)*stepY-y);
   };
 }
 
@@ -152,11 +152,11 @@ export function createSummerSky(sunDirection: THREE.Vector3, { surroundings = fa
       vec2 lightStep = normalize(vSunDirection.xz) * 0.19;
       float lightField = cloudField(cloudUV + lightStep);
       float cloudLight = clamp(0.48+(field-lightField)*4.7,0.12,1.0);
-      vec3 cloudShade = mix(summerHorizon * 0.64, vec3(0.58,0.39,0.29),evening * 0.52);
-      vec3 cloudLit = mix(summerCloud,vec3(3.2,1.82,0.69),evening * 0.72);
+      vec3 cloudShade = mix(summerHorizon * 0.38, vec3(0.38,0.30,0.28),evening * 0.35);
+      vec3 cloudLit = mix(summerCloud,vec3(3.5,2.2,1.1),evening * 0.62);
       vec3 cloudColor = mix(cloudShade, cloudLit, cloudLight);
       float rim = (1.0-smoothstep(0.54,0.63,field)) * smoothstep(0.50,0.55,field);
-      cloudColor += vec3(1.45,0.77,0.25) * rim * pow(sunFacing,6.0);
+      cloudColor += vec3(0.28,0.16,0.055) * rim * pow(sunFacing,6.0);
       color = mix(color, cloudColor, cloud * 0.94);
       // A broad warm scatter and a small bright disc supply readable reflection
       // structure as well as the visible sky. These are art-directed, not weather data.

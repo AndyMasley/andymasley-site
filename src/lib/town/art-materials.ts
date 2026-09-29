@@ -3,7 +3,7 @@ import { BARK_FINISH_GLSL } from './vegetation-finish';
 import { applySiteArtMaterial, removeSiteArtMaterial } from './site-surface-finish';
 import { mineralFragment, MINERAL_ROUGHNESS } from './mineral-finish';
 import { surfaceSet, surfaceUniforms, surfaceDeclarations, surfaceSampling, SURFACE_NORMAL, SURFACE_ROUGHNESS, SURFACE_OCCLUSION, type SurfaceKind, type ProjectionMode } from './surface-library';
-import { OPENING_ATTRIBUTE, WINDOW_INTERIOR_GLSL, DOOR_PANEL_GLSL, DOOR_PANEL_NORMAL } from './opening-detail';
+import { OPENING_ATTRIBUTE, GLASS_NORMAL_GLSL, WINDOW_INTERIOR_GLSL, DOOR_PANEL_GLSL, DOOR_PANEL_NORMAL } from './opening-detail';
 import { ROAD_LANE_ATTRIBUTE, ROAD_WEAR_GLSL, WALK_WEAR_GLSL } from './road-wear';
 
 type ArtKind = 'siding' | 'roof' | 'flat-roof' | 'brick' | 'trim' | 'glass' | 'door' | 'foundation' | 'concrete' | 'granite' | 'asphalt' | 'shoulder' | 'road-paint' | 'leaf' | 'far-leaf' | 'bark' | 'car-paint' | 'car-glass' | 'rubber' | 'water';
@@ -260,9 +260,9 @@ float townCrownCoarse = townArtNoise(townCrownP*.77);
 float townCrownFine = townArtNoise(townCrownP*2.6+vec2(23.7,8.1));
 float townCrownResolved = 1.0-smoothstep(.12,.48,townArtFootprint);
 float townCrownMass = mix(townCrownCoarse,townCrownFine,.32*townCrownResolved);
-diffuseColor.rgb *= mix(vec3(.82,.88,.78),vec3(1.14,1.11,1.03),townCrownMass);
-townArtHeight = (townCrownCoarse-.5)*.075*(1.0-smoothstep(.3,.9,townArtFootprint))
-  +(townCrownFine-.5)*.032*townCrownResolved;
+diffuseColor.rgb *= mix(vec3(.70,.78,.66),vec3(1.24,1.18,1.06),smoothstep(.12,.88,townCrownMass));
+townArtHeight = (townCrownCoarse-.5)*.20*(1.0-smoothstep(.3,.9,townArtFootprint))
+  +(townCrownFine-.5)*.045*townCrownResolved;
 `;
   if (kind === 'brick') return start + `
 diffuseColor.rgb *= mix(0.96,1.04,townArtNoise(vTownArtWorld.xz*0.31+vec2(vTownArtWorld.y*0.29)));
@@ -285,11 +285,17 @@ if (abs(townArtDet)>0.0000000001) {
 
 function finishTreatment(kind: ArtKind): string {
   if (kind === 'far-leaf') return `
-// A few stable openings on the outer rim soften the solid hull silhouette.
-// No screen-space dither: unresolved foliage keeps an opaque, steady outline.
-float townCrownRim = abs(dot(nonPerturbedNormal,normalize(vViewPosition)));
-float townCrownFringe = 1.0-smoothstep(.045,.20,townArtFootprint);
-if(townCrownRim<.22 && townCrownFine<.27*townCrownFringe) discard;
+// Trim only the outer bough fringe into a continuous, irregular silhouette.
+// Removing the view-depth component measures projected pixel size: the old
+// surface derivative grew at grazing angles and disabled detail at the rim.
+vec3 townCrownView = normalize(vViewPosition);
+float townCrownRim = abs(dot(nonPerturbedNormal,townCrownView));
+float townCrownPixel = max(length(cross(dFdx(vViewPosition),townCrownView)),length(cross(dFdy(vViewPosition),townCrownView)));
+float townCrownFringe = 1.0-smoothstep(.18,.65,townCrownPixel);
+float townCrownEdge = (.05+.33*(1.0-townCrownCoarse)+.06*(1.0-townCrownFine)*townCrownResolved)*townCrownFringe;
+// Keep the entire central crown opaque. Still world-space noise and gradual
+// filtering avoid animated stipple, broad holes, or disappearing distant trees.
+if(townCrownRim<.46 && townCrownRim<townCrownEdge) discard;
 #include <opaque_fragment>
 `;
   if (kind === 'glass') return WINDOW_INTERIOR_GLSL + `
@@ -421,6 +427,7 @@ ${lanes ? `vTownRoadLane = ${ROAD_LANE_ATTRIBUTE};` : ''}
     shader.fragmentShader = functions + (opening ? 'varying vec4 vTownOpening;\n' : '') + (lanes ? 'varying vec4 vTownRoadLane;\n' : '') + (use && set ? surfaceDeclarations(!!set.normal) : '')
       + shader.fragmentShader.replace('#include <map_fragment>', map).replace('#include <opaque_fragment>', finishTreatment(kind));
     if (['siding','roof','flat-roof','asphalt','concrete','granite','foundation','shoulder','water','bark','far-leaf'].includes(kind)) shader.fragmentShader = shader.fragmentShader.replace('#include <normal_fragment_maps>', mineralNormal);
+    if (kind === 'glass') shader.fragmentShader = shader.fragmentShader.replace('#include <normal_fragment_maps>', GLASS_NORMAL_GLSL);
     if (kind === 'door') shader.fragmentShader = shader.fragmentShader.replace('#include <normal_fragment_maps>', DOOR_PANEL_NORMAL);
     if (use && set) {
       Object.assign(shader.uniforms, surfaceUniforms(set, use.normal, use.roughness, use.occlusion));
@@ -458,7 +465,7 @@ vNormalMapUv *= 1.6;
   material.customProgramCacheKey = () => {
     const use = LIBRARY[kind], set = use ? surfaceSet(use.set) : undefined;
     const library = use ? `|surface-library-v1:${set ? set.normal ? 'detail' : 'albedo' : 'off'}` : '';
-    return `${previousKey}|webster-art-material-v2:${kind}${kind==='water'?'|summer-water-optics-v2':kind==='bark'?'|regional-bark-v2|world-bark-v1':kind==='glass'?'|interior-rooms-v1':kind==='door'?'|panel-door-v1':kind==='far-leaf'?'|layered-far-foliage-v1':kind==='roof'?'|shingle-courses-v1':kind==='asphalt'?'|paving-fields-v2|lane-wear-v1':''}${['asphalt','concrete','granite','foundation','shoulder'].includes(kind)?'|mineral-families-v2':''}${kind==='concrete'?'|walk-joints-v1':''}${library}`;
+    return `${previousKey}|webster-art-material-v2:${kind}${kind==='water'?'|summer-water-optics-v2':kind==='bark'?'|regional-bark-v2|world-bark-v1':kind==='glass'?'|interior-rooms-v2':kind==='door'?'|panel-door-v1':kind==='far-leaf'?'|layered-far-foliage-v2':kind==='roof'?'|shingle-courses-v1':kind==='asphalt'?'|paving-fields-v2|lane-wear-v1':''}${['asphalt','concrete','granite','foundation','shoulder'].includes(kind)?'|mineral-families-v2':''}${kind==='concrete'?'|walk-joints-v1':''}${library}`;
   };
   material.addEventListener('dispose', onMaterialDispose);
   material.needsUpdate = true;

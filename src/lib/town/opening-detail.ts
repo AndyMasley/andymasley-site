@@ -43,10 +43,10 @@ vTownArtWorld = (modelMatrix * townOpenPosition).xyz;
 vTownArtNormal = inverseTransformDirection(transformedNormal, viewMatrix);
 vTownOpening = ${OPENING_ATTRIBUTE};`);
     shader.fragmentShader = `${keepColor ? '#define TOWN_DOOR_KEEP_COLOR\n' : ''}varying vec3 vTownArtWorld;\nvarying vec3 vTownArtNormal;\nvarying vec4 vTownOpening;\n${OPENING_HASH}\n${shader.fragmentShader}`;
-    if (kind === 'glass') shader.fragmentShader = shader.fragmentShader.replace('#include <opaque_fragment>', `${WINDOW_INTERIOR_GLSL}\n#include <opaque_fragment>`);
+    if (kind === 'glass') shader.fragmentShader = shader.fragmentShader.replace('#include <normal_fragment_maps>', GLASS_NORMAL_GLSL).replace('#include <opaque_fragment>', `${WINDOW_INTERIOR_GLSL}\n#include <opaque_fragment>`);
     else shader.fragmentShader = shader.fragmentShader.replace('#include <map_fragment>', `#include <map_fragment>\nfloat townArtHeight = 0.0;\n${DOOR_PANEL_GLSL}`).replace('#include <normal_fragment_maps>', DOOR_PANEL_NORMAL);
   };
-  material.customProgramCacheKey = () => `${previousKey}|opening-${kind}-v1${keepColor ? '-kept' : ''}`;
+  material.customProgramCacheKey = () => `${previousKey}|opening-${kind}-${kind === 'glass' ? 'v2' : 'v1'}${keepColor ? '-kept' : ''}`;
   material.needsUpdate = true;
 }
 
@@ -154,6 +154,22 @@ float townOpenSeed = (floor(clamp(fract(vTownOpening.w * 100.0 + 0.0005) / 0.9, 
 vec2 townOpenUV = vec2(townOpenDU < 0.0 ? 1.0 - vTownOpening.x : vTownOpening.x, vTownOpening.y);
 `;
 
+/** Gentle pane bowing changes the existing environment lookup only. It is
+ * stable per opening, never a new reflected scene or an animated surface. */
+export const GLASS_NORMAL_GLSL = `
+#include <normal_fragment_maps>
+vec3 townGlassN = normalize(vTownArtNormal);
+vec3 townGlassT = cross(vec3(0.0,1.0,0.0),townGlassN);
+if (vTownOpening.z > .05 && vTownOpening.w > .05 && length(townGlassT) > .25) {
+  townGlassT = normalize(townGlassT);
+  vec3 townGlassUp = normalize(cross(townGlassN,townGlassT));
+  vec2 townGlassUV = clamp(vTownOpening.xy,0.0,1.0);
+  float townGlassBow = .002 + .002 * fract(vTownOpening.w * 91.7);
+  vec2 townGlassSlope = (townGlassUV-.5) * townGlassBow;
+  normal = normalize(normal + mat3(viewMatrix) * (townGlassT*townGlassSlope.x + townGlassUp*townGlassSlope.y));
+}
+`;
+
 /**
  * Replaces the glass finish. Each pane shows a room box with parallax: plaster
  * walls, a wood floor and pale ceiling, occasional doorways, low furniture and
@@ -188,13 +204,16 @@ float townH3 = townArtHash(vec2(townRoomSeed * 33.1, 4.7));
 float townH4 = townArtHash(vec2(townRoomSeed * 71.9, 6.1));
 float townH5 = townArtHash(vec2(townRoomSeed * 13.7, 8.3));
 float townH6 = townArtHash(vec2(townRoomSeed * 29.3, 9.9));
-float townStore = step(2.0, townPaneSize.y) * step(1.4, townPaneSize.x);
+float townStore = step(1.8, townPaneSize.y) * step(1.65, townPaneSize.x);
 float townSill = mix(0.72 + 0.22 * townH1, 0.12, townStore);
 float townRoomH = max(townSill + townPaneSize.y + 0.28 + 0.35 * townH2, 2.45);
 float townMarginL = 0.35 + 1.3 * townH3;
 float townRoomW = townPaneSize.x + townMarginL + 0.35 + 1.3 * townH4;
 float townRoomD = mix(2.6 + 2.8 * townH5, 5.0 + 5.0 * townH5, townStore);
-vec3 townEntry = vec3(townPane.x + townMarginL, townPane.y + townSill, 0.0);
+// Inner jambs sit behind the glass, distinct from the exterior frame geometry.
+vec2 townReveal = townPane + townRay.xy / townRay.z * mix(.10,.07,townStore);
+float townRevealEdge = min(min(townReveal.x,townPaneSize.x-townReveal.x),min(townReveal.y,townPaneSize.y-townReveal.y));
+vec3 townEntry = vec3(clamp(townReveal,vec2(0.0),townPaneSize) + vec2(townMarginL,townSill),0.0);
 vec3 townFar = (step(vec3(0.0), townRay) * vec3(townRoomW, townRoomH, townRoomD) - townEntry) / townRay;
 float townT = min(min(townFar.x, townFar.y), townFar.z);
 vec3 townHit = townEntry + townRay * townT;
@@ -221,27 +240,29 @@ float townLamp = step(0.93, townH6);
 vec3 townInterior = townSurface * townRoomLight * (0.55 + townLamp * vec3(0.9, 0.55, 0.2));
 vec2 townWin = clamp(townPane / townPaneSize, 0.0, 1.0);
 float townTreatment = townArtHash(vec2(townRoomSeed * 17.3, 12.1));
-if (townTreatment < 0.42) {
+if (townStore < .5 && townTreatment < 0.42) {
   float townBlindBottom = mix(0.25, 0.92, townArtHash(vec2(townRoomSeed * 5.1, 13.7)));
   if (townWin.y > townBlindBottom) {
     float townSlat = fract(townPane.y * 20.0);
     vec3 townBlind = mix(vec3(0.74, 0.72, 0.66), vec3(0.62, 0.55, 0.45), step(0.7, townH4));
     townInterior = townBlind * (0.62 + 0.3 * smoothstep(0.08, 0.5, townSlat)) * 0.85;
   }
-} else if (townTreatment < 0.72) {
+} else if (townStore < .5 && townTreatment < 0.72) {
   float townCurtainW = 0.14 + 0.2 * townArtHash(vec2(townRoomSeed * 3.7, 14.9));
   if (townWin.x < townCurtainW || townWin.x > 1.0 - townCurtainW) {
     vec3 townFabric = mix(vec3(0.72, 0.68, 0.58), mix(vec3(0.42, 0.14, 0.12), vec3(0.30, 0.40, 0.34), townH2), step(0.55, townH5));
     townInterior = townFabric * (0.55 + 0.25 * sin(townPane.x * 38.0 + townH1 * 6.0));
   }
 }
-// Double glazing reflects about twice a single dielectric surface; interiors
-// in daylight read several stops darker than the street, behind a faint tint.
-vec3 townReflection = totalSpecular * 2.2;
-townReflection = mix(vec3(dot(townReflection, vec3(0.2126, 0.7152, 0.0722))), townReflection, 0.72);
-float townGlassCos = clamp(dot(townOpenN, normalize(townOpenView)), 0.0, 1.0);
-float townFresnel = 0.08 + 0.92 * pow(1.0 - townGlassCos, 5.0);
-outgoingLight = townReflection + townInterior * (1.0 - townFresnel) * 0.38 * vec3(0.92, 0.96, 0.98);
+// Glass keeps its reflected light while the reveal occludes only the room.
+townInterior = mix(vec3(.035,.044,.042),townInterior,smoothstep(0.0,.045,townRevealEdge));
+// Two dielectric interfaces: reflection rises toward grazing incidence without
+// doubling an already near-total reflection or adding light at the silhouette.
+float townGlassCos = clamp(dot(normal,normalize(vViewPosition)),0.0,1.0);
+float townSingleFresnel = 0.04 + 0.96 * pow(1.0-townGlassCos,5.0);
+float townFresnel = 2.0 * townSingleFresnel / (1.0+townSingleFresnel);
+vec3 townReflection = totalSpecular * (2.0 / (1.0+townSingleFresnel));
+outgoingLight = townReflection + townInterior * (1.0-townFresnel) * mix(.38,.30,townStore) * vec3(.92,.96,.98);
 `;
 
 /**

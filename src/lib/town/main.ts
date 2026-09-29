@@ -37,6 +37,9 @@ const SUN_OFFSET = new THREE.Vector3(-290, 118, -65);
 const BASE_FOV = 57;
 const SHADOW_MAP = 4096;
 const SHADOW_SPAN = 250;
+// At the lower afternoon sun, 170 light-space metres cover about 461 ground
+// metres, matching the previous higher sun's 460 m footprint at a 250 m span.
+const SHADOW_HEIGHT = 170;
 const SHADOW_LEAD = 55;
 const CINEMATIC_FRAME_MS = 21;
 const toWorld = (p: readonly number[]): V3 => [p[0], p[2], -p[1]];
@@ -217,7 +220,7 @@ export async function startTown(root: HTMLElement): Promise<Session> {
     const houseDressing = import('./house-dressing').catch(error => { console.warn('House dressing unavailable:', error); return undefined; });
     const trafficModule = import('./traffic');
     const vehicleModules = Promise.all([import('./curb-parking'), import('./vehicle')]);
-    const cloudModule = import('./cloud-density');
+    const cloudModule = import('./sky-art');
     void cloudModule.catch(() => {});
     const networkRequest = readCriticalJson<NetworkData>(NETWORK_URL, signal, { label: 'Road network', onProgress: p => { transfer.roads = p.receivedBytes; if (!disposed) setStatus(`Loading roads… ${(transfer.roads / 1048576).toFixed(1)} MB received`); } });
     const initialRequests = Promise.all([manifestRequest, networkRequest, trafficModule, vehicleModules]);
@@ -249,13 +252,13 @@ export async function startTown(root: HTMLElement): Promise<Session> {
     sun.shadow.mapSize.set(SHADOW_MAP, SHADOW_MAP);
     sun.shadow.camera.left = -SHADOW_SPAN / 2;
     sun.shadow.camera.right = SHADOW_SPAN / 2;
-    sun.shadow.camera.top = SHADOW_SPAN / 2;
-    sun.shadow.camera.bottom = -SHADOW_SPAN / 2;
+    sun.shadow.camera.top = SHADOW_HEIGHT / 2;
+    sun.shadow.camera.bottom = -SHADOW_HEIGHT / 2;
     sun.shadow.camera.near = 10;
     sun.shadow.camera.far = 900;
     sun.shadow.bias = -0.00012;
     sun.shadow.normalBias = 0.035;
-    const shadowAnchor=createShadowAnchor(SUN_OFFSET,SHADOW_SPAN,sun.shadow.mapSize.x);
+    const shadowAnchor=createShadowAnchor(SUN_OFFSET,SHADOW_SPAN,sun.shadow.mapSize.x,SHADOW_HEIGHT);
     const shadowFocus = new THREE.Vector3();
     scene.add(sun, sun.target);
     const pmrem = new THREE.PMREMGenerator(renderer);
@@ -269,7 +272,7 @@ export async function startTown(root: HTMLElement): Promise<Session> {
     scene.environment = environmentTarget.texture;
     void cloudModule.then(module => {
       if (disposed) return;
-      releaseClouds = module.streamCloudSky(renderer!, sky!, SUN_OFFSET, signal, target => {
+      releaseClouds = module.streamSkyArt(renderer!, sky!, SUN_OFFSET, signal, target => {
         const previous = environmentTarget; environmentTarget = target; scene!.environment = target.texture;
         previous?.dispose(); renderRequested = true;
       });

@@ -16,12 +16,16 @@ const compile = (m: THREE.MeshStandardMaterial) => {
 };
 
 describe('Scoped late-summer materials', () => {
-  it('limits filtered canopy relief and stable rim openings to distant foliage while retaining source resources',()=>{
+  it('limits projected-size bough fringes to distant crown rims while keeping their interior and source resources',()=>{
     const far=material('Canopy | subdued summer green'),original=far.onBeforeCompile,map=new THREE.Texture();far.map=map;
     applyArtMaterial(far);const shader=compile(far);
     expect(shader.fragmentShader).toContain('townCrownResolved');
-    expect(shader.fragmentShader).toContain('townCrownRim<.22');
-    expect(shader.fragmentShader).toContain('townCrownFine<.27*townCrownFringe');
+    expect(shader.fragmentShader).toContain('townCrownRim<.46 && townCrownRim<townCrownEdge');
+    expect(shader.fragmentShader).toContain('cross(dFdx(vViewPosition),townCrownView)');
+    expect(shader.fragmentShader).toContain('cross(dFdy(vViewPosition),townCrownView)');
+    expect(shader.fragmentShader).toContain('smoothstep(.18,.65,townCrownPixel)');
+    expect(shader.fragmentShader).toContain('townCrownResolved)*townCrownFringe');
+    expect(shader.fragmentShader.match(/townArtNoise\(townCrownP/g)).toHaveLength(2);
     expect(shader.fragmentShader).not.toContain('gl_FragCoord');
     expect(shader.fragmentShader).not.toContain('townCrownP* townArtTime');
     expect(far.map).toBe(map);expect(far.transparent).toBe(false);expect(far.opacity).toBe(1);

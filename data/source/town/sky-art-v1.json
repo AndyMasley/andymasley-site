@@ -1,0 +1,19 @@
+{
+  "generator": "Built-in image_gen tool",
+  "source": "exec-efc31176-e6de-4fb4-bcec-2b442e86ef21.png",
+  "purpose": "Authored photographic late-afternoon sky artwork, not observed weather. Only the upper hemisphere is sampled; the renderer retains its own horizon, sun and ground.",
+  "prompt": "Use case: photorealistic-natural.\nAsset type: full-color equirectangular 360-degree sky texture for a real-time driving game, a technical sky environment panorama, 2:1 aspect ratio, highest available resolution ideally 3840x1920.\nPrimary request: An exquisitely photographic late-summer late-afternoon sky, deep natural blue above with scattered small broken altocumulus and modest cumulus clouds, fine vapor detail and warm honey-gold sunlit cloud edges. Match the mood of a premium realistic driving game at golden hour in a New England town. Real photography, no painterly contours or flat cloud blobs.\nProjection: exact equirectangular latitude/longitude 360x180 environment map. Horizon precisely at the horizontal center of the image. Top edge is zenith, entire lower hemisphere is a smooth continuation of pale horizon sky with NO scenery. Left and right edges join seamlessly. Blue sky fills at least 65% of the upper hemisphere. Keep cloud shapes modest in angular size, especially near the horizon; richly detailed scattered clouds in the 5–25 degree elevation band that a driver sees. No enormous towering clouds.\nLighting: late-afternoon warm sunlight from azimuth at the horizontal CENTER of the panorama, around 20 degrees above the horizon. That region has a soft warm atmospheric glow and golden cloud rims. No visible sun disc. The opposite direction, at the left/right edges, has clean natural blue sky and softly illuminated neutral clouds. Cloud undersides retain realistic soft gray-blue depth; highlights have delicate golden color, not a yellow wash over the whole image.\nStyle: natural photographic exposure, sophisticated cinematic color, vivid but believable blue and honey light. Fine cloud volume and wisps, realistic atmosphere. Smooth quiet horizon without a sharp line.\nConstraints: This is only a sky texture. No ground, buildings, mountains, trees, water, cars, roads, lens flares, starfield, moon, objects, text, logo, border, watermark, checkerboard. No visible equirectangular grid. Not a fisheye, not a perspective landscape, not a cubemap cross. No dense overcast.",
+  "master": "data/source/town/sky-color-v1.png",
+  "sourceSha256": "d5e182035d1e7fcfe6f0f6ca27375572126477244fea624fc84e7e16dda44be2",
+  "asset": "/town-finish/v1/art/sky-color-v1-8dadf831b232.webp",
+  "sha256": "8dadf831b232bce71c3c0fedeee589ca4b6240bfe0cc61feff70dc41f6582dce",
+  "export": {
+    "encoder": "cwebp 1.6.0; libsharpyuv 0.4.2",
+    "command": "cwebp -quiet -q 90 -resize 2048 1024 data/source/town/sky-color-v1.png -o public/town-finish/v1/art/sky-color-v1-8dadf831b232.webp",
+    "size": [
+      2048,
+      1024
+    ],
+    "bytes": 186628
+  }
+}

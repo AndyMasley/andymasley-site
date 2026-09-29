@@ -25,6 +25,23 @@ describe('stable moving directional shadows',()=>{
  it('rejects a degenerate light basis and invalid texel grid',()=>{
   expect(()=>createShadowAnchor(new THREE.Vector3(0,1,0),200,2048)).toThrow();
   expect(()=>createShadowAnchor(new THREE.Vector3(1,1,0),200,0)).toThrow();
+  for(const span of[0,-1,Infinity,NaN])expect(()=>createShadowAnchor(new THREE.Vector3(1,1,0),250,4096,span)).toThrow();
+ });
+ it('snaps an afternoon rectangular light frame on both actual texel pitches without moving its depth',()=>{
+  const direction=new THREE.Vector3(-290,118,-65),forward=direction.clone().normalize(),right=new THREE.Vector3(0,1,0).cross(forward).normalize(),up=forward.clone().cross(right).normalize();
+  const stepX=250/4096,stepY=170/4096,snap=createShadowAnchor(direction,250,4096,170),target=new THREE.Vector3();
+  for(let i=0;i<160;i++){
+   const focus=new THREE.Vector3(-2800+i*.013,42+Math.sin(i*.13)*.09,970+i*.027);
+   snap(focus,target);
+   expect(target.dot(right)/stepX).toBeCloseTo(Math.round(target.dot(right)/stepX),7);
+   expect(target.dot(up)/stepY).toBeCloseTo(Math.round(target.dot(up)/stepY),7);
+   expect(target.dot(forward)).toBeCloseTo(focus.dot(forward),8);
+   expect(target.distanceTo(focus)).toBeLessThanOrEqual(Math.hypot(stepX,stepY)/2+1e-9);
+  }
+  const a=snap(new THREE.Vector3(),new THREE.Vector3()),b=snap(right.clone().multiplyScalar(stepX*.2).addScaledVector(up,stepY*.3),new THREE.Vector3());
+  expect(a.distanceTo(b)).toBeLessThan(1e-12);
+  const previousGroundSpan=250/new THREE.Vector3(-260,205,180).normalize().y;
+  expect(Math.abs(170/forward.y-previousGroundSpan)).toBeLessThan(2);
  });
 });
 
