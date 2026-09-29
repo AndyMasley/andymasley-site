@@ -94,6 +94,30 @@ art based on the prior Main Street game capture. It is labeled cover art and
 does not represent the renderer's graphics. The built-in image generator prompt
 and reference are preserved in `data/source/town/cover-art-v2.json`.
 
+The playable scene now uses an authored golden-hour sun, directional warm sky
+and cloud lighting, cooler open shade, and a restrained camera grade. An optional
+112KB cloud-density panorama replaces the repeated procedural noise evaluations
+with two texture lookups, plus edge blending at the panorama seam. It is shared
+by the sky and reflection environment;
+the original procedural sky remains available during loading or asset failure.
+The generated master and prompt are `data/source/town/cloud-density-v1.png` and
+`cloud-art-v1.json`. The cloud upgrade does not block starting a drive, refreshes
+reflections once, and keeps the existing shadow-map resolution.
+This is an artistic time-of-day treatment, not a dated lighting reconstruction.
+The natural broadleaf atlas is generated from the original twig layout; its
+master and prompt live in `data/source/town/leaf-cluster-v2.png` and
+`leaf-art-v2.json`. The reproducible 512px export retains transparent gutters,
+existing twig anchors and atlas UVs. Rounded foliage normals and varied leaf
+shading preserve the source crown envelope and tree geometry budget.
+
+Central Main Street near/mid-detail glazing gains inward jamb and head returns.
+The additional 7.5cm recess is authored construction detail; opening rhythm,
+external clearance envelopes, triangle counts and draw counts are unchanged.
+Surface normal-map slopes preserve mortar and siding relief while filtering
+detail smaller than a screen pixel. The touring car uses angle-dependent
+dielectric glass and a soft underbody/tyre contact patch (one draw, two triangles,
+no textures), attached to the road plane rather than the sprung body.
+
 The continuous Norwich Branch uses `rail-corridor.ts` and streamed per-tile
 packets from `scripts/rail_crossings/prepare-corridor.py`. Eleven connected
 active OSM ways supply the route and mapped bridge spans; the source gauge is

@@ -69,6 +69,19 @@ describe('baked leaf cluster volume', () => {
     geometry.dispose();
   });
 
+  it('catches light at each branch card tip without changing the branch hue or making a hard light band', () => {
+    const geometry = cards(); geometry.computeBoundingBox(); finishLeafClusters(geometry, geometry.boundingBox!);
+    const position = geometry.getAttribute('position'), color = geometry.getAttribute('color');
+    for (let first = 0; first < position.count; first += 4) {
+      const sorted = [first, first + 1, first + 2, first + 3].sort((a, b) => position.getY(a) - position.getY(b));
+      const bottom = sorted[0], top = sorted[3], ratio = color.getY(top) / color.getY(bottom);
+      expect(ratio).toBeGreaterThan(1.01); expect(ratio).toBeLessThan(1.08);
+      expect(color.getX(top) / color.getY(top)).toBeCloseTo(color.getX(bottom) / color.getY(bottom), 6);
+      expect(color.getZ(top) / color.getY(top)).toBeCloseTo(color.getZ(bottom) / color.getY(bottom), 6);
+    }
+    geometry.dispose();
+  });
+
   it('preserves the native crown envelope and all card topology across standard, open and conifer variants with bounded shared storage', async () => {
     const base = `public/town-assets/${release.directory}/`, bytes = readFileSync(base + 'manifest.json');
     expect(createHash('sha256').update(bytes).digest('hex')).toBe(release.manifestSha256);

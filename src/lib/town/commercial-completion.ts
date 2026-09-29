@@ -14,17 +14,21 @@ function panel(b:Batch,f:Frame,role:Role,u:number,y:number,v:number,w:number,h:n
  if(w<=0||h<=0)return;
  b.polygon(f,role,[[u-w/2,y-h/2,v],[u+w/2,y-h/2,v],[u+w/2,y+h/2,v],[u-w/2,y+h/2,v]],color);
 }
+// The reviewed central Main Street skins retain every authored opening and
+// exterior edge. Recess depth is inferred joinery, not a new facade survey.
+const openingDepth=(b:Batch,f:Frame):number=>b.level<2&&['-13_-4','-12_-4'].includes(f.tileId)&&f.structId.startsWith('MS-')?.075:0;
 function pane(b:Batch,f:Frame,u:number,y:number,w:number,h:number,v=.34,industrial=false):void {
- panel(b,f,'recess',u,y+h/2,v,w+.12,h+.14,DARK);
- panel(b,f,'glass',u,y+h/2,v+.018,w,h,GLASS);
+ const depth=openingDepth(b,f);
+ panel(b,f,'recess',u,y+h/2,v-depth,w+.12,h+.14,DARK);
+ panel(b,f,'glass',u,y+h/2,v+.018-depth,w,h,GLASS);
  const trim=industrial?'#6e766b':PALE;
- for(const x of[u-w/2-.045,u+w/2+.045])b.box(f,'trim',x,y+h/2,v+.035,.09,h+.12,.07,trim);
- for(const z of[y-.055,y+h+.055])b.box(f,'trim',u,z,v+.035,w+.18,.10,.07,trim);
- b.box(f,'metal',u,y+h*.50,v+.07,w,.04,.045,DARK);
+ for(const x of[u-w/2-.045,u+w/2+.045])b.box(f,'trim',x,y+h/2,v+.035-depth/2,.09,h+.12,.07+depth,trim);
+ for(const z of[y-.055,y+h+.055])b.box(f,'trim',u,z,v+.035-depth/2,w+.18,.10,.07+depth,trim);
+ b.box(f,'metal',u,y+h*.50,v+.07-depth,w,.04,.045,DARK);
  if(b.level<2){
   const columns=industrial?3:2,rows=industrial?4:2;
-  for(let i=1;i<columns;i++)panel(b,f,'metal',u-w/2+w*i/columns,y+h/2,v+.095,.025,h,DARK);
-  for(let i=1;i<rows;i++)panel(b,f,'metal',u,y+h*i/rows,v+.10,w,.025,DARK);
+  for(let i=1;i<columns;i++)panel(b,f,'metal',u-w/2+w*i/columns,y+h/2,v+.095-depth,.025,h,DARK);
+  for(let i=1;i<rows;i++)panel(b,f,'metal',u,y+h*i/rows,v+.10-depth,w,.025,DARK);
  }
  b.box(f,'stone',u,y-.11,v+.03,w+.26,.13,.22,PALE);
 }
@@ -56,15 +60,15 @@ function entrance(b:Batch,f:Frame,u:number,y:number,w:number,h:number,canopy:boo
  * proportions. All dimensions here are restrained authored inference. */
 function displayWindow(b:Batch,f:Frame,left:number,right:number,bottom:number,top:number):void {
  const w=right-left,h=top-bottom;if(w<.55||h<.8)return;
- const u=(left+right)/2,metal='#68766f',v=.34;
- panel(b,f,'recess',u,(bottom+top)/2,v,w+.10,h+.10,DARK);
- panel(b,f,'glass',u,(bottom+top)/2,v+.018,w,h,GLASS);
- for(const x of[left,right])b.box(f,'metal',x,(bottom+top)/2,v+.045,.055,h+.08,.07,metal);
- for(const z of[bottom,top])b.box(f,'metal',u,z,v+.045,w+.09,.055,.07,metal);
+ const u=(left+right)/2,metal='#68766f',v=.34,depth=openingDepth(b,f);
+ panel(b,f,'recess',u,(bottom+top)/2,v-depth,w+.10,h+.10,DARK);
+ panel(b,f,'glass',u,(bottom+top)/2,v+.018-depth,w,h,GLASS);
+ for(const x of[left,right])b.box(f,'metal',x,(bottom+top)/2,v+.045-depth/2,.055,h+.08,.07+depth,metal);
+ for(const z of[bottom,top])b.box(f,'metal',u,z,v+.045-depth/2,w+.09,.055,.07+depth,metal);
  const divisions=Math.max(1,Math.ceil(w/1.7));
- for(let i=1;i<divisions;i++)b.box(f,'metal',left+w*i/divisions,(bottom+top)/2,v+.06,.045,h,.065,metal);
+ for(let i=1;i<divisions;i++)b.box(f,'metal',left+w*i/divisions,(bottom+top)/2,v+.06-depth,.045,h,.065,metal);
  // A transom reads as shop joinery; never a residential cross in the middle.
- if(h>1.65)b.box(f,'metal',u,top-Math.min(.43,h*.20),v+.07,w,.055,.075,metal);
+ if(h>1.65)b.box(f,'metal',u,top-Math.min(.43,h*.20),v+.07-depth,w,.055,.075,metal);
  b.box(f,'stone',u,bottom-.11,.36,w+.12,.16,.19,PALE);
 }
 export function storefrontDisplaySpans(left:number,right:number,entry:number,doorWidth:number):Array<[number,number]> {

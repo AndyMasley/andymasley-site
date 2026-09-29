@@ -10,6 +10,26 @@ function owned(root: THREE.Object3D) {
 }
 
 describe('authored touring car', () => {
+  it('keeps the contact shade on the unsprung road plane while the cabin leans', () => {
+    const car = createTouringCar();
+    const contact = car.root.children.find(node => node.userData.vehicleRole === 'road-contact') as THREE.Mesh<THREE.BufferGeometry, THREE.MeshBasicMaterial>;
+    expect(contact).toBeDefined();
+    expect(contact.geometry.getAttribute('position').count).toBe(6);
+    const bounds = new THREE.Box3().setFromObject(contact);
+    expect(bounds.min.y).toBeCloseTo(0.008); expect(bounds.max.y).toBeCloseTo(0.008);
+    expect(bounds.getSize(new THREE.Vector3()).x).toBeLessThan(TOURING_CAR_DIMENSIONS.mirrorWidth);
+    expect(bounds.getSize(new THREE.Vector3()).z).toBeLessThan(TOURING_CAR_DIMENSIONS.length);
+    expect(contact.material.transparent).toBe(true); expect(contact.material.depthWrite).toBe(false);
+    expect(contact.material.map).toBeNull(); expect(contact.castShadow).toBe(false);
+    car.root.position.set(2100, 56, -1850); car.root.rotation.set(0.08, 1.3, 0, 'YXZ'); car.root.updateMatrixWorld(true);
+    const groundPose = contact.matrixWorld.clone();
+    car.update({ distanceM: 2, steeringRadians: 0.2, braking: true, rollRadians: 0.04, pitchRadians: -0.03 }); car.root.updateMatrixWorld(true);
+    expect(contact.matrixWorld.equals(groundPose)).toBe(true);
+    const glass = [...owned(car.root).materials].find(m => m.name === 'Touring | smoked automotive glass') as THREE.MeshPhysicalMaterial;
+    expect(glass.metalness).toBe(0); expect(glass.transparent).toBe(true); expect(glass.opacity).toBeLessThan(0.7);
+    car.dispose();
+  });
+
   it('keeps the road-contact origin, axle spacing and physical vehicle envelope', () => {
     const car = createTouringCar(), box = new THREE.Box3().setFromObject(car.root), size = box.getSize(new THREE.Vector3());
     expect(box.min.y).toBeCloseTo(0, 5);

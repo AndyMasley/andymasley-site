@@ -1,16 +1,35 @@
 {
-  "version": 1,
+  "version": 2,
   "sourceManifestSha256": "37fbef34bc2a4467997252be75b4c43174a6a7b2d39963614cadd8d787e56105",
   "sourceUri": "../textures/leaf-cluster.png",
   "sourceSha256": "af97b35b70960a864a0f7c44b6faf8e131175652876888fe3ee6156ce4820d91",
-  "url": "/town-finish/v1/art/leaf-cluster-e1efc172cdf0.png",
-  "sha256": "e1efc172cdf0d18f00ce4111ae4064c8efe6b88e4a7f1b99e3580a96d2fbd22b",
-  "bytes": 69021,
+  "url": "/town-finish/v1/art/leaf-cluster-v2-048d859a8050.png",
+  "sha256": "048d859a805000079747006f0874eb32c4e4a9869dd7c7a02c64367c55b4c0f0",
+  "bytes": 79387,
   "width": 512,
   "height": 512,
   "originalVectorSha256": "0d6629e3cbad4e835612d21460a6b0f2d910affd50c9b23c86b91157c2c0ce9b",
-  "leafShapes": 64,
-  "evidence": "ART-040. Original authored curved broadleaf cluster, regional late-summer interpretation; no photographed tree or verified species. Finer leaf shapes replace the source atlas stars without changing twig anchors, card geometry, UVs or texture dimensions.",
+  "generatedSource": {
+    "path": "data/source/town/leaf-cluster-v2.png",
+    "sha256": "dc3bfe6b851b801ee3157f2649e304acbc5883811a1fb6fbfac0b78646c71fcc",
+    "width": 1254,
+    "height": 1254,
+    "method": "Built-in image generation; authored realistic leaf artwork, not a photograph or surveyed species.",
+    "prompt": "data/source/town/leaf-art-v2.json"
+  },
+  "export": {
+    "resize": [
+      496,
+      496
+    ],
+    "kernel": "lanczos3",
+    "transparentGutter": 8,
+    "format": "palette PNG",
+    "quality": 95,
+    "effort": 10,
+    "compressionLevel": 9
+  },
+  "evidence": "ART-040 appearance upgrade: generated curved broadleaf texture with fine veins, varied green surfaces and open gaps. Authored regional late-summer interpretation; no photographed tree or verified species. Original twig anchors, card geometry, UVs and 512px texture dimensions are retained.",
   "original": {
     "opaquePixels": 76296,
     "coverage": 0.291046142578125,
@@ -21,12 +40,12 @@
     ]
   },
   "replacement": {
-    "opaquePixels": 57860,
-    "coverage": 0.2207183837890625,
+    "opaquePixels": 70211,
+    "coverage": 0.2678337097167969,
     "meanSRGB": [
-      0.36609313894932327,
-      0.45464264655049713,
-      0.2511383799976956
+      0.3290995405725207,
+      0.38657922156770586,
+      0.15489696184693702
     ]
   }
 }

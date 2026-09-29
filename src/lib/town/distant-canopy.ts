@@ -56,10 +56,10 @@ export function createDistantCanopyPrototype(base: THREE.Group): THREE.Group {
         actual.fromBufferAttribute(normal, i);
         if (actual.lengthSq() < 1e-8) actual.set(oldNormal?.getX(i) ?? 0, oldNormal?.getY(i) ?? 1, oldNormal?.getZ(i) ?? 0).normalize();
         // Sparse hull triangles still determine occlusion and silhouette. A
-        // partial ellipsoid normal field softens their planar lighting without
+        // predominantly curved normal field softens their planar lighting without
         // replacing the hull or introducing transparent billboard layers.
         soft.set((position.getX(i) - center.x) / (size.x * size.x), (position.getY(i) - center.y) / (size.y * size.y), (position.getZ(i) - center.z) / (size.z * size.z)).normalize();
-        if (soft.dot(actual) > .25) actual.multiplyScalar(.72).addScaledVector(soft, .28).normalize();
+        if (soft.dot(actual) > .25) actual.multiplyScalar(.36).addScaledVector(soft, .64).normalize();
         normal.setXYZ(i, actual.x, actual.y, actual.z);
       }
       geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));

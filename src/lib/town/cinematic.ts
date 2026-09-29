@@ -21,10 +21,10 @@ export const FILM = {
   // AgX keeps bright walls, sky and sunlit lawn from clipping to flat cyan-white
   // and keeps shade legible; the grade then restores punch and saturation.
   tone: 'agx',
-  exposure: 1.2,
+  exposure: 1.12,
   // Shade stays close to neutral: the blue sky fill already cools it, and a
   // stronger tint turns shaded lawns and hedges teal.
-  grade: { contrast: 1.45, saturation: 1.3, lift: -0.015, gamma: 1, gain: 1, shadowTint: [0.975, 1.0, 1.025], highlightTint: [1.05, 1.0, 0.93], vignette: 0.2 },
+  grade: { contrast: 1.34, saturation: 1.16, lift: -0.008, gamma: 1, gain: 1, shadowTint: [0.97, 0.99, 1.035], highlightTint: [1.045, 1.005, 0.95], vignette: 0.13 },
   // Contrast-adaptive sharpening restores the texture detail that multisampling
   // and the half-float resolve soften; 0 is off, 1 the strongest setting.
   sharpen: 0.5,

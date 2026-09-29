@@ -69,8 +69,8 @@ function roundedPlate(width: number, height: number, radius: number, depth = 0.0
 
 export function createTouringCar(): TouringCar {
   const root = new THREE.Group();
-  root.name = 'Your car'; root.userData.vehicleVersion = 'webster-touring-v1'; root.userData.dimensions = TOURING_CAR_DIMENSIONS;
-  const materials = new Set<Material>(), geometries = new Set<THREE.BufferGeometry>();
+  root.name = 'Your car'; root.userData.vehicleVersion = 'webster-touring-v2'; root.userData.dimensions = TOURING_CAR_DIMENSIONS;
+  const materials = new Set<THREE.Material>(), geometries = new Set<THREE.BufferGeometry>();
   const material = (name: string, color: number, roughness: number, metalness = 0): Material => {
     const m = new THREE.MeshStandardMaterial({ name, color, roughness, metalness }); materials.add(m); return m;
   };
@@ -84,8 +84,16 @@ export function createTouringCar(): TouringCar {
   const alloy = material('Touring | machined aluminium', 0xc2c8c9, 0.27, 0.86);
   const darkAlloy = material('Touring | graphite wheel barrel', 0x3c474c, 0.33, 0.76);
   const chrome = material('Touring | satin brightwork', 0xaebfc3, 0.23, 0.85);
-  const glass = new THREE.MeshPhysicalMaterial({ name: 'Touring | smoked automotive glass', color: 0x1a2226, metalness: 0.22, roughness: 0.06,
-    clearcoat: 1, clearcoatRoughness: 0.04, transparent: true, opacity: 0.86, depthWrite: false, side: THREE.DoubleSide, envMapIntensity: 1.35 }); materials.add(glass);
+  const glass = new THREE.MeshPhysicalMaterial({ name: 'Touring | smoked automotive glass', color: 0x263b40, metalness: 0, roughness: 0.06,
+    clearcoat: 1, clearcoatRoughness: 0.04, transparent: true, opacity: 0.56, depthWrite: false, side: THREE.DoubleSide, envMapIntensity: 1.35 }); materials.add(glass);
+  glass.onBeforeCompile = (shader) => {
+    if (!shader.fragmentShader.includes('#include <opaque_fragment>')) throw new Error('Touring glass shader anchor changed.');
+    shader.fragmentShader = shader.fragmentShader.replace('#include <opaque_fragment>', `
+float touringGlassAngle = 1.0 - clamp(abs(dot(normal, normalize(vViewPosition))), 0.0, 1.0);
+diffuseColor.a = mix(opacity, 0.96, pow(touringGlassAngle, 5.0));
+#include <opaque_fragment>`);
+  };
+  glass.customProgramCacheKey = () => 'touring-dielectric-glass-v1';
   const interior = material('Touring | warm charcoal interior', 0x292c2b, 0.9);
   const red = material('Touring | ruby rear lamp', 0x8d1014, 0.23, 0.16); red.emissive.setHex(0xff251b); red.emissiveIntensity = 0.12;
   const led = material('Touring | warm white running lamps', 0xe2e8df, 0.21, 0.22); led.emissive.setHex(0xfff4d8); led.emissiveIntensity = 0.65;
@@ -93,6 +101,29 @@ export function createTouringCar(): TouringCar {
   const plate = material('Touring | ivory registration plate', 0xd4d8ca, 0.5, 0.06);
   const caliperMaterial = material('Touring | brake caliper', 0x62676a, 0.65, 0.5);
   let disposed = false;
+
+  // Ambient contact beneath the chassis and tyres remains on the road plane,
+  // independent of sprung-body lean and directional-shadow quality. No atlas,
+  // render target or per-frame allocation is needed for this six-vertex patch.
+  const contactMaterial = new THREE.MeshBasicMaterial({ name: 'Touring | soft contact shade', color: 0x080b0c,
+    transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 });
+  contactMaterial.onBeforeCompile = (shader) => {
+    if (!shader.vertexShader.includes('#include <begin_vertex>') || !shader.fragmentShader.includes('#include <opaque_fragment>')) throw new Error('Touring contact shader anchors changed.');
+    shader.vertexShader = `varying vec2 touringContact;\n${shader.vertexShader}`.replace('#include <begin_vertex>', '#include <begin_vertex>\ntouringContact = uv * 2.0 - 1.0;');
+    shader.fragmentShader = `varying vec2 touringContact;\n${shader.fragmentShader}`.replace('#include <opaque_fragment>', `
+vec2 touringContactM = touringContact * vec2(1.08, 2.21);
+float touringUnderbody = 1.0 - smoothstep(0.45, 1.0, length(touringContactM / vec2(1.05, 2.2)));
+vec2 touringTyreD = (abs(touringContactM) - vec2(0.814, 1.325)) / vec2(0.22, 0.40);
+float touringTyreContact = exp(-dot(touringTyreD, touringTyreD) * 2.0);
+diffuseColor.a = max(touringUnderbody * 0.28, touringTyreContact * 0.46)
+  * (1.0 - smoothstep(0.9, 1.0, max(abs(touringContact.x), abs(touringContact.y))));
+#include <opaque_fragment>`);
+  };
+  contactMaterial.customProgramCacheKey = () => 'touring-contact-v1';
+  const contactPlane = new THREE.PlaneGeometry(2.16, 4.42), contactGeometry = contactPlane.toNonIndexed(); contactPlane.dispose();
+  contactGeometry.rotateX(-Math.PI / 2); contactGeometry.translate(0, 0.008, 0);
+  const contact = new THREE.Mesh(contactGeometry, contactMaterial); contact.name = contactMaterial.name; contact.userData.vehicleRole = 'road-contact';
+  root.add(contact); materials.add(contactMaterial); geometries.add(contactGeometry);
 
   function add(batch: Batch, g: THREE.BufferGeometry, m: Material, position: Point = [0, 0, 0], rotation: Point = [0, 0, 0], scale: Point = [1, 1, 1]): void {
     g.applyMatrix4(new THREE.Matrix4().compose(new THREE.Vector3(...position), new THREE.Quaternion().setFromEuler(new THREE.Euler(...rotation)), new THREE.Vector3(...scale)));

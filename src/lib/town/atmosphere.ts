@@ -2,14 +2,13 @@ import * as THREE from 'three';
 import { Sky } from 'three/examples/jsm/objects/Sky.js';
 
 export const SUMMER_LIGHT = {
-  sun: '#fff2dc',
-  skyFill: '#b4cfee',
-  groundFill: '#9d9a7d',
-  // Clear-day key/fill balance. The dated Main Street, St. Joseph and
-  // Sitkowski photographs show roughly four-to-one sunlit/shaded ground, crisp
-  // cool shade under trees and cars, and differently lit wall orientations.
-  sunIntensity: 3.3,
-  fillIntensity: 1.3,
+  sun: '#ffdfa9',
+  skyFill: '#c3d5ed',
+  groundFill: '#b9aa87',
+  // An authored late-afternoon look: a low warm sun and neutral-cool sky fill
+  // retain readable shade while separating brick, stone and foliage.
+  sunIntensity: 4.1,
+  fillIntensity: 1.05,
   exposure: 1.03,
 } as const;
 
@@ -44,17 +43,29 @@ export function createSummerHaze(): THREE.Fog {
  * the sky's own horizon, so terrain meets the sky without a seam. Installed on
  * the shared shader chunks for the session and restored on disposal.
  */
-export const AERIAL_PERSPECTIVE = { density: 0.00032, scaleHeightM: 900, baseY: 40, sunTint: [1.55, 1.25, 0.92], sunGlow: 0.6 } as const;
+export const AERIAL_PERSPECTIVE = { density: 0.00026, scaleHeightM: 900, baseY: 40 } as const;
+
+// Shared by sky, reflections and haze so distant terrain converges on the
+// visible golden horizon, including when the driver turns away from the sun.
+const HORIZON_LIGHT = `
+vec3 townEveningSky(vec3 base, vec3 direction, vec3 sunDirection) {
+  float facing = max(0.0,dot(direction,sunDirection));
+  float evening = pow(clamp(dot(direction.xz,sunDirection.xz) / max(length(direction.xz)*length(sunDirection.xz),0.0001),0.0,1.0),3.0);
+  float lowSky = 1.0-smoothstep(0.0,0.48,max(0.0,direction.y));
+  return mix(base,vec3(1.48,1.05,0.58),evening*lowSky*0.58)
+    + vec3(0.26,0.12,0.026)*pow(facing,8.0)
+    + vec3(0.85,0.46,0.13)*pow(facing,128.0);
+}`;
 
 export function installAerialPerspective(sunDirection: THREE.Vector3): () => void {
   const chunks = THREE.ShaderChunk as unknown as Record<string, string>;
   const names = ['fog_pars_vertex', 'fog_vertex', 'fog_pars_fragment', 'fog_fragment'];
   const previous = Object.fromEntries(names.map(name => [name, chunks[name]]));
   const sun = sunDirection.clone().normalize(), f = (v: number) => v.toFixed(6);
-  const { density, scaleHeightM, baseY, sunTint, sunGlow } = AERIAL_PERSPECTIVE;
+  const { density, scaleHeightM, baseY } = AERIAL_PERSPECTIVE;
   chunks.fog_pars_vertex = `#ifdef USE_FOG\nvarying float vFogDepth;\nvarying vec3 vTownFogRay;\n#endif`;
   chunks.fog_vertex = `#ifdef USE_FOG\nvFogDepth = - mvPosition.z;\nvTownFogRay = (vec4(mvPosition.xyz, 0.0) * viewMatrix).xyz;\n#endif`;
-  chunks.fog_pars_fragment = `#ifdef USE_FOG\nuniform vec3 fogColor;\nvarying float vFogDepth;\nvarying vec3 vTownFogRay;\n#ifdef FOG_EXP2\nuniform float fogDensity;\n#else\nuniform float fogNear;\nuniform float fogFar;\n#endif\n#endif`;
+  chunks.fog_pars_fragment = `#ifdef USE_FOG\nuniform vec3 fogColor;\nvarying float vFogDepth;\nvarying vec3 vTownFogRay;\n${HORIZON_LIGHT}\n#ifdef FOG_EXP2\nuniform float fogDensity;\n#else\nuniform float fogNear;\nuniform float fogFar;\n#endif\n#endif`;
   chunks.fog_fragment = `#ifdef USE_FOG
 float townFogDistance = length(vTownFogRay);
 vec3 townFogDir = vTownFogRay / max(townFogDistance, 1e-3);
@@ -62,8 +73,7 @@ float townFogStart = ${f(density)} * exp(-(cameraPosition.y - ${f(baseY)}) / ${f
 float townFogRise = townFogDir.y * townFogDistance / ${f(scaleHeightM)};
 float townFogOptical = townFogStart * townFogDistance * (abs(townFogRise) > 1e-3 ? (1.0 - exp(-townFogRise)) / townFogRise : 1.0);
 float fogFactor = 1.0 - exp(-max(townFogOptical, 0.0));
-float townFogSun = pow(max(dot(townFogDir, vec3(${f(sun.x)}, ${f(sun.y)}, ${f(sun.z)})), 0.0), 6.0);
-vec3 townFogColor = fogColor * mix(vec3(1.0), vec3(${sunTint.map(f).join(', ')}), townFogSun * ${f(sunGlow)});
+vec3 townFogColor = townEveningSky(fogColor, townFogDir, vec3(${f(sun.x)}, ${f(sun.y)}, ${f(sun.z)}));
 #ifdef TONE_MAPPING
 townFogColor = toneMapping(townFogColor);
 #endif
@@ -111,6 +121,7 @@ export function createSummerSky(sunDirection: THREE.Vector3, { surroundings = fa
     varying vec3 vSunDirection;
     uniform vec3 summerZenith, summerHorizon, summerCloud, summerGround, summerTreeline;
     uniform float summerSurroundings;
+    ${HORIZON_LIGHT}
     float cloudHash(vec2 p) { return fract(sin(dot(p, vec2(127.1,311.7))) * 43758.5453); }
     float cloudNoise(vec2 p) {
       vec2 i = floor(p), f = fract(p); f = f*f*(3.0-2.0*f);
@@ -130,29 +141,26 @@ export function createSummerSky(sunDirection: THREE.Vector3, { surroundings = fa
       vec3 direction = normalize(vWorldPosition - cameraPosition);
       float elevation = max(0.0, direction.y);
       vec3 color = mix(summerHorizon, summerZenith, pow(smoothstep(0.0,0.72,elevation),0.65));
-      // Broad, separated fair-weather cloud masses keep a blue sky between
-      // them. A second nearby field shades the sun-facing lobes without a
-      // texture download, ray march, or moving noise in the player's view.
-      // A flat cloud deck seen toward the horizon: its projection keeps
-      // shrinking with elevation, so low clouds flatten into slivers. (A floor
-      // on the elevation froze the pattern below it into vertical streaks
-      // hanging under the low clouds.)
-      vec2 cloudUV = direction.xz / (elevation + 0.035) * 0.62 + vec2(3.1,8.7);
-      float field = cloudField(cloudUV);
-      // The civic photograph's open blue sky is the baseline. Keep a few
-      // separated fair-weather clouds, with the same bounded five-octave cost.
-      float cloud = smoothstep(0.55,0.70,field) * smoothstep(0.025,0.15,elevation);
-      vec2 lightStep = normalize(vSunDirection.xz) * 0.16;
-      float lightField = cloudField(cloudUV + lightStep);
-      float cloudLight = clamp(0.63+(field-lightField)*3.6,0.25,1.0);
-      vec3 cloudColor = mix(summerHorizon * 0.87, summerCloud, cloudLight);
-      color = mix(color, cloudColor, cloud * 0.94);
       float sunFacing = max(0.0,dot(direction,normalize(vSunDirection)));
+      float evening = pow(clamp(dot(direction.xz,vSunDirection.xz) / max(length(direction.xz)*length(vSunDirection.xz),0.0001),0.0,1.0),3.0);
+      color = townEveningSky(color,direction,normalize(vSunDirection));
+      // Two density scales give the cloud deck small broken edges and broad
+      // soft bodies. The displaced density supplies lighting without ray marching.
+      vec2 cloudUV = direction.xz / (elevation + 0.035) * 0.84 + vec2(3.1,8.7);
+      float field = cloudField(cloudUV);
+      float cloud = smoothstep(0.51,0.65,field) * smoothstep(0.015,0.12,elevation);
+      vec2 lightStep = normalize(vSunDirection.xz) * 0.19;
+      float lightField = cloudField(cloudUV + lightStep);
+      float cloudLight = clamp(0.48+(field-lightField)*4.7,0.12,1.0);
+      vec3 cloudShade = mix(summerHorizon * 0.64, vec3(0.58,0.39,0.29),evening * 0.52);
+      vec3 cloudLit = mix(summerCloud,vec3(3.2,1.82,0.69),evening * 0.72);
+      vec3 cloudColor = mix(cloudShade, cloudLit, cloudLight);
+      float rim = (1.0-smoothstep(0.54,0.63,field)) * smoothstep(0.50,0.55,field);
+      cloudColor += vec3(1.45,0.77,0.25) * rim * pow(sunFacing,6.0);
+      color = mix(color, cloudColor, cloud * 0.94);
       // A broad warm scatter and a small bright disc supply readable reflection
       // structure as well as the visible sky. These are art-directed, not weather data.
-      color += vec3(0.13,0.075,0.025) * pow(sunFacing,8.0);
-      color += vec3(0.50,0.34,0.15) * pow(sunFacing,128.0);
-      color += vec3(5.0,3.6,1.8) * smoothstep(0.9997,0.99995,sunFacing);
+      color += vec3(8.0,5.0,2.0) * smoothstep(0.9997,0.99995,sunFacing);
       // The reflected lower hemisphere is landscape, not a second bright sky.
       // This gives glass and metallic bodywork a grounded reflection gradient.
       color = mix(color,summerGround,smoothstep(0.01,0.36,-direction.y));

@@ -1,0 +1,10 @@
+{
+  "generator": "Built-in image_gen tool",
+  "source": "exec-0f5a70cd-f3ad-4243-baff-b5f41e068c44.png",
+  "reference": "/town-finish/v1/art/leaf-cluster-e1efc172cdf0.png",
+  "purpose": "Authored natural broadleaf texture for existing tree cards; interpreted foliage, not a surveyed tree or verified species",
+  "prompt": "Use case: style-transfer.\nAsset type: RGBA foliage card texture for real-time 3D trees; square image, transparent background.\nInput image: edit target and strict branch layout reference. The existing green vector twig texture must become a realistic botanical game texture.\nPrimary request: transform the leaves and fine twig into natural photorealistic late-summer broadleaf foliage with believable leaf veins, softly curled edges, slight shape and hue variation, and subtle diffuse self-shading. Keep the same single vertically oriented twig, overall shape, leaf count/density and spread, gaps between leaves, and stem ending near bottom center. Rich natural medium olive/summer green; some warmer fresh leaves, no autumn colors. The texture will be multiplied by in-game light, so use neutral diffuse daylight, not golden light, no strong directional highlights, no cast shadow.\nComposition: exact square standalone foliage cluster occupying central 88 percent; at least 5 percent fully transparent empty border on every side. Preserve the open airy coverage of the reference; never a solid bush or filled leafy rectangle. All leaf and twig edges sharp and properly cut out, including internal gaps, actual alpha transparency.\nMaterials: natural fine veins, small biological irregularities, darker twig, varied leaf faces; restrained realistic detail without noise or painted outlines.\nAvoid: text, labels, frame, background color, checkerboard pixels, ground, pot, fake transparency, opaque rectangle, excessive leaf overlap, shiny wet leaves. No UI. Transparent background is essential.",
+  "master": "data/source/town/leaf-cluster-v2.png",
+  "asset": "/town-finish/v1/art/leaf-cluster-v2-048d859a8050.png",
+  "exportManifest": "data/derived/town/leaf-atlas.json"
+}

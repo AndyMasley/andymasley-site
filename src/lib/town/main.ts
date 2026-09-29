@@ -33,7 +33,7 @@ const cinematicAllowed = (quality: Quality, mobile: boolean): boolean => !mobile
 const ASSET_ROOT = `/town-assets/${release.directory}/`;
 const WORLD_URL = `${ASSET_ROOT}manifest.json`;
 const NETWORK_URL = `${ASSET_ROOT}network.json`;
-const SUN_OFFSET = new THREE.Vector3(-260, 205, 180);
+const SUN_OFFSET = new THREE.Vector3(-290, 118, -65);
 const BASE_FOV = 57;
 const SHADOW_MAP = 4096;
 const SHADOW_SPAN = 250;
@@ -93,6 +93,7 @@ export async function startTown(root: HTMLElement): Promise<Session> {
   let commerce: RoadsideCommerce | undefined;
   let traffic: Traffic | undefined;
   let restoreFog: (() => void) | undefined;
+  let releaseClouds: (() => void) | undefined;
   let renderer: THREE.WebGLRenderer | undefined;
   let resize: ResizeObserver | undefined;
   let environmentTarget: THREE.WebGLRenderTarget | undefined;
@@ -189,6 +190,7 @@ export async function startTown(root: HTMLElement): Promise<Session> {
       traffic?.dispose();
       restoreFog?.();
       restoreFog = undefined;
+      releaseClouds?.();
       environmentTarget?.dispose();
       sky?.geometry.dispose();
       sky?.material.dispose();
@@ -215,6 +217,8 @@ export async function startTown(root: HTMLElement): Promise<Session> {
     const houseDressing = import('./house-dressing').catch(error => { console.warn('House dressing unavailable:', error); return undefined; });
     const trafficModule = import('./traffic');
     const vehicleModules = Promise.all([import('./curb-parking'), import('./vehicle')]);
+    const cloudModule = import('./cloud-density');
+    void cloudModule.catch(() => {});
     const networkRequest = readCriticalJson<NetworkData>(NETWORK_URL, signal, { label: 'Road network', onProgress: p => { transfer.roads = p.receivedBytes; if (!disposed) setStatus(`Loading roads… ${(transfer.roads / 1048576).toFixed(1)} MB received`); } });
     const initialRequests = Promise.all([manifestRequest, networkRequest, trafficModule, vehicleModules]);
     // A renderer failure can cancel requests before the later await attaches.
@@ -263,6 +267,13 @@ export async function startTown(root: HTMLElement): Promise<Session> {
     try { environmentTarget = pmrem.fromScene(skyScene, 0.04); }
     finally { pmrem.dispose(); environmentSky.geometry.dispose(); environmentSky.material.dispose(); }
     scene.environment = environmentTarget.texture;
+    void cloudModule.then(module => {
+      if (disposed) return;
+      releaseClouds = module.streamCloudSky(renderer!, sky!, SUN_OFFSET, signal, target => {
+        const previous = environmentTarget; environmentTarget = target; scene!.environment = target.texture;
+        previous?.dispose(); renderRequested = true;
+      });
+    }).catch(() => {});
 
     const manifest = await manifestRequest;
     validateManifest(manifest);

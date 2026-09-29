@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 
-export const FOLIAGE_CLUSTER_BASIS = 'VC-0184/0205/0207: authored late-summer branch-cluster shading, with darker interiors and restrained green/yellow-green variation between exposed clusters. Existing twig/card locations, atlas UVs, topology, crown envelope and habitat inference remain unchanged; no individual species is asserted.';
+export const FOLIAGE_CLUSTER_BASIS = 'VC-0184/0205/0207: authored late-summer branch-cluster shading, with rounded bough lighting, darker interiors and light-catching leaf tips. Existing twig/card locations, atlas UVs, topology, crown envelope and habitat inference remain unchanged; no individual species is asserted.';
 
 type Card = { ids: number[]; center: THREE.Vector3; normal: THREE.Vector3; radius: number; cluster: THREE.Vector3 };
 
@@ -63,19 +63,21 @@ export function finishLeafClusters(geometry: THREE.BufferGeometry, bounds: THREE
     // cards share a tone while the individual source leaf edges remain intact.
     const cx = (card.cluster.x - center.x) / size.x, cy = (card.cluster.y - center.y) / size.y, cz = (card.cluster.z - center.z) / size.z;
     const clusterTone = Math.sin(cx * 7.1 + cy * 2.3) * Math.cos(cz * 6.7 - cy * 3.1);
-    const shade = (.89 + .22 * exposure) * (1 + .035 * clusterTone);
+    const shade = (.82 + .32 * exposure) * (1 + .045 * clusterTone);
     for (const id of card.ids) {
       point.fromBufferAttribute(position, id);
-      lobe.copy(point).sub(card.cluster); lobe.y += card.radius * .23; lobe.normalize();
-      direction.copy(crown).multiplyScalar(.72).addScaledVector(lobe, .28).normalize().multiplyScalar(orientation);
+      lobe.copy(point).sub(card.cluster); lobe.y += card.radius * .30; lobe.normalize();
+      direction.copy(crown).multiplyScalar(.42).addScaledVector(lobe, .58).normalize().multiplyScalar(orientation);
       // Keep the bent normals in the original card's hemisphere, so double-
       // sided alpha leaves retain a consistent front/back lighting response.
-      direction.addScaledVector(card.normal, Math.max(0, .28 - direction.dot(card.normal))).normalize();
-      direction.multiplyScalar(.66).addScaledVector(card.normal, .34).normalize();
+      const facing = direction.dot(card.normal);
+      if (facing < .5) direction.addScaledVector(card.normal, -facing).normalize().multiplyScalar(Math.sqrt(.75)).addScaledVector(card.normal, .5);
+      direction.multiplyScalar(.90).addScaledVector(card.normal, .10).normalize();
       normal.setXYZ(id, direction.x, direction.y, direction.z);
-      colors[id * 3] *= shade * (1.005 + t * .012 + .025 * clusterTone);
-      colors[id * 3 + 1] *= shade * 1.025;
-      colors[id * 3 + 2] *= shade * (.98 + (1 - t) * .02 - .012 * clusterTone);
+      const tip = .965 + .075 * THREE.MathUtils.clamp(.5 + (point.y - card.center.y) / (2 * card.radius), 0, 1);
+      colors[id * 3] *= shade * tip * (1.005 + t * .012 + .025 * clusterTone);
+      colors[id * 3 + 1] *= shade * tip * 1.025;
+      colors[id * 3 + 2] *= shade * tip * (.98 + (1 - t) * .02 - .012 * clusterTone);
     }
   }
   normal.needsUpdate = true;

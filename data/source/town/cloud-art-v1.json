@@ -1,0 +1,19 @@
+{
+  "generator": "Built-in image_gen tool",
+  "source": "exec-d3568cba-4a19-42e0-b3b2-9da9a4f71036.png",
+  "purpose": "Authored grayscale sky cloud density panorama; appearance asset, not measured weather",
+  "prompt": "Use case: photorealistic-natural.\nAsset type: 2:1 equirectangular grayscale CLOUD DENSITY MAP for a real-time game sky shader, ideally 2048x1024. This is a technical texture, no scene or artwork layout.\nPrimary request: Natural, sharply detailed late-afternoon fair-weather cumulus and delicate broken altocumulus cloud distribution across a complete 360-degree sky panorama. Convincing rounded cauliflower cloud bodies, detailed wispy and ragged edges, varied cloud group sizes and beautiful large clear-sky openings. Cloud density represented in grayscale only: pure BLACK means clear sky, WHITE means dense cloud interior, intermediate gray soft thin edges. White fluffy cloud masses on pure black, no blue, orange or other colors. Cloud shapes should have real photographic richness; no blurry amorphous blobs and no smooth paint strokes.\nProjection/layout: exact equirectangular lat-long 360x180-degree environment map. Zenith is top edge, horizon is exactly horizontal image center (50 percent height), lower hemisphere (entire bottom half) completely pure black. Clouds only in upper hemisphere between about 8 and 70 degrees elevation. Cumulus in the lower upper hemisphere, small broken high cloud clusters higher up, mostly clear at zenith. Leave a narrow black margin immediately above horizon; distant clouds gradually smaller. Left and right edges match seamlessly. No seams or horizon steps.\nLighting/materials: GRAYSCALE unlit density/opacity mask, natural cloud texture, no directional light, no sun disc, no sunbeams. 35 percent sky coverage with cloud islands and plenty of black gaps.\nText: none.\nAvoid: land, water, trees, buildings, objects, starfield, sun, moon, colored sky, horizon line drawn, fog, grain, checkerboard, transparency, text, labels, watermark.",
+  "master": "data/source/town/cloud-density-v1.png",
+  "sourceSha256": "809f1353f54507f148b39d2f0363ea0622d61a09e7d8ba92c6a0304b94f60eca",
+  "asset": "/town-finish/v1/art/cloud-density-v1-41616ab20f0d.webp",
+  "sha256": "41616ab20f0dca0a18bd7a893f4b69359040907fc4680e490fec2a81a59dbf02",
+  "export": {
+    "encoder": "cwebp 1.6.0; libsharpyuv 0.4.2",
+    "command": "cwebp -quiet -q 85 -resize 2048 1024 data/source/town/cloud-density-v1.png -o public/town-finish/v1/art/cloud-density-v1-41616ab20f0d.webp",
+    "size": [
+      2048,
+      1024
+    ],
+    "bytes": 114828
+  }
+}

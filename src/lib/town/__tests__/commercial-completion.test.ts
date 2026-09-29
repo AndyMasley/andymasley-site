@@ -22,6 +22,36 @@ describe('commercial research completion',()=>{
    for(let i=1;i<spans.length;i++)expect(spans[i][0]).toBeGreaterThan(spans[i-1][1]);
   }
  });
+ it('recesses central Main Street glazing inside its existing joinery without moving the facade envelope',()=>{
+  const row=data.rows.find(r=>r.id==='168369_866612')!,f=row.frames[0],origin=new THREE.Vector3(...row.origin);
+  const at=(u:number,y:number,v:number)=>new THREE.Vector3(f.start[0]+f.tangent[0]*u+f.outward[0]*v,y,-f.start[1]-f.tangent[1]*u-f.outward[1]*v).sub(origin);
+  const geometry=new THREE.BufferGeometry().setAttribute('position',new THREE.Float32BufferAttribute([...at(f.width/2,row.floor,0),...at(f.width/2+.1,row.floor,0),...at(f.width/2,row.floor+.1,0)],3));
+  const material=new THREE.MeshStandardMaterial();material.name='V2 inferred | siding';
+  const counts:number[]=[],bounds:THREE.Box3[]=[];
+  for(const level of[0,1,2]){
+   const group=new THREE.Group();group.add(new THREE.Mesh(geometry,material));
+   const report=applyCommercialCompletion(group,row.tileId,row.origin,level,row.lods[level].sha256)!;
+   expect(report.buildingIds).toEqual([row.id]);
+   const authored=group.getObjectByName('Commercial research completion')!;authored.updateMatrixWorld(true);
+   const hit=(u:number,y:number)=>new THREE.Raycaster(at(u,y,2),new THREE.Vector3(-f.outward[0],0,f.outward[1]),0,2).intersectObject(authored,true)[0];
+   const outward=(hit:THREE.Intersection)=>2-hit.distance;
+   const role=(hit:THREE.Intersection)=>((hit.object as THREE.Mesh).material as THREE.Material).userData.surfaceRole;
+   const floorHeight=(f.top-f.floor)/f.stories,windowU=f.width/Math.floor(f.width/3.15)/2,windowBottom=f.floor+floorHeight+.34;
+   const pane=hit(windowU+.3,windowBottom+.3),jamb=hit(windowU+1.48/2+.045,windowBottom+.3);
+   expect(role(pane)).toBe('glass');expect(role(jamb)).toBe('trim');
+   expect(outward(pane)).toBeCloseTo(level<2?.283:.358,4);expect(outward(jamb)).toBeCloseTo(.410,4);
+   const pitch=f.width/2,displayWidth=pitch*.79,displayLeft=pitch*1.5-displayWidth/2;
+   const display=hit(displayLeft+displayWidth*.1,f.floor+.85),shopJamb=hit(displayLeft,f.floor+.85);
+   expect(role(display)).toBe('glass');expect(role(shopJamb)).toBe('metal');
+   expect(outward(display)).toBeCloseTo(level<2?.283:.358,4);expect(outward(shopJamb)).toBeCloseTo(.420,4);
+   // The returns occupy existing frame volume; they add no draw calls or triangles.
+   counts.push(report.triangles);bounds.push(new THREE.Box3().setFromObject(authored));
+   authored.traverse(o=>{if(o instanceof THREE.Mesh){o.geometry.dispose();(o.material as THREE.Material).dispose();}});
+  }
+  expect(counts[0]).toBe(counts[1]);expect(counts[0]).toBeLessThan(1500);
+  expect(bounds[0].min.distanceTo(bounds[2].min)).toBeLessThan(.0001);expect(bounds[0].max.distanceTo(bounds[2].max)).toBeLessThan(.0001);
+  geometry.dispose();material.dispose();
+ });
  it('keeps shared Main Street identities on disjoint street segments',()=>{
   const row=data.rows.find(r=>r.id==='168341_866602')!,f=row.frames[0];
   const intervals=row.frames.map(g=>{const u=g.start.reduce((sum,v,i)=>sum+(v-f.start[i])*f.tangent[i],0);return[u,u+g.width,g.id] as const;}).sort((a,b)=>a[0]-b[0]);

@@ -170,8 +170,8 @@ ${detail ? 'uniform sampler2D townLibNormal, townLibOrm;\n#define TOWN_LIB_DETAI
  * Chooses a per-face projection frame and samples the set. Walls map along the
  * wall and straight up (clapboard laps stay level), roofs along the eave and up
  * the slope (shingle courses parallel to the eave, lapping downhill), and
- * pavement in plan. The face normal comes from screen derivatives, so smooth or
- * flat source normals, missing UVs and tile LODs all give the same frame.
+ * pavement in plan. Interpolated world normals keep the projection stable on
+ * buildings far from the origin, independently of their source UV layouts.
  */
 export function surfaceSampling(mode: ProjectionMode, world = 'vTownArtWorld', normal = 'vTownArtNormal'): string {
   const vertical = mode === 'auto' ? 'abs(townLibFace.y) < 0.72' : mode === 'roof' ? 'townLibEL > 0.12' : 'townLibEL > 0.05';
@@ -193,6 +193,8 @@ if (${vertical}) {
 vec2 townLibST = townLibUV / townLibTile;
 vec3 townLibAlb = texture2D(townLibAlbedo, townLibST).rgb;
 float townLibDetailFade = 1.0 - smoothstep(45.0, 160.0, length(cameraPosition - ${world}));
+float townLibFootprint = max(length(dFdx(townLibUV)), length(dFdy(townLibUV)));
+townLibDetailFade *= 1.0 - smoothstep(0.04, 0.18, townLibFootprint);
 #ifdef TOWN_LIB_DETAIL
 vec3 townLibOrmS = texture2D(townLibOrm, townLibST).rgb;
 vec3 townLibMapN = texture2D(townLibNormal, townLibST).xyz * 2.0 - 1.0;
@@ -207,7 +209,10 @@ vec3 townLibMapN = vec3(0.0, 0.0, 1.0);
 export const SURFACE_NORMAL = `
 #include <normal_fragment_maps>
 #ifdef TOWN_LIB_DETAIL
-vec3 townLibPerturb = (townLibT * townLibMapN.x + townLibB * townLibMapN.y) * townLibNormalStrength * townLibDetailFade;
+// Tangent normal xy/z is the surface slope. Dropping z flattened mortar
+// recesses and clapboard lips; cap very steep texels before filtering them.
+vec2 townLibSlope = townLibMapN.xy / max(townLibMapN.z, 0.35);
+vec3 townLibPerturb = (townLibT * townLibSlope.x + townLibB * townLibSlope.y) * townLibNormalStrength * townLibDetailFade;
 normal = normalize(normal + (viewMatrix * vec4(townLibPerturb, 0.0)).xyz);
 #endif
 `;

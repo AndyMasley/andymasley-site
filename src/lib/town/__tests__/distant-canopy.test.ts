@@ -73,4 +73,19 @@ describe('shared distant canopy refinement', () => {
     expect(first.children).toHaveLength(0);
     disposeDistantCanopyPrototype(second); original.geometry.dispose();
   });
+
+  it('lights the sparse distant hull as a curved crown rather than a collection of flat facets', async () => {
+    const source = await sourceCrown(), variant = createDistantCanopyPrototype(source);
+    const geometry = (variant.children[0] as THREE.Mesh).geometry;
+    const bounds = geometry.boundingBox!, size = bounds.getSize(new THREE.Vector3()), center = bounds.getCenter(new THREE.Vector3());
+    const position = geometry.getAttribute('position'), normal = geometry.getAttribute('normal'), outward = new THREE.Vector3(), lit = new THREE.Vector3();
+    let alignment = 0;
+    for (let i = 0; i < position.count; i++) {
+      outward.set((position.getX(i) - center.x) / size.x ** 2, (position.getY(i) - center.y) / size.y ** 2, (position.getZ(i) - center.z) / size.z ** 2).normalize();
+      const dot = outward.dot(lit.fromBufferAttribute(normal, i));
+      expect(dot).toBeGreaterThan(.90); alignment += dot;
+    }
+    expect(alignment / position.count).toBeGreaterThan(.98);
+    disposeDistantCanopyPrototype(variant); (source.children[0] as THREE.Mesh).geometry.dispose();
+  });
 });
