@@ -99,32 +99,44 @@
 
 .town-intro__brand {
   flex-shrink: 0;
-  color: #fff7e9;
-  text-shadow: 0 3px 24px rgba(0, 0, 0, .22);
+  max-width: 100%;
+  color: #fff;
+  text-shadow: 0 2px 20px rgba(4, 19, 28, .45);
 }
-
-.town-intro__edition,
-.town-intro__location {
-  display: block;
-  font-size: .75em;
-  font-weight: 700;
-  letter-spacing: .26em;
-  text-transform: uppercase;
-}
-
-.town-intro__edition { margin-bottom: 12px; color: #f7d7a3; }
-.town-intro__location { margin-top: 16px; letter-spacing: .42em; }
 
 .town-intro__brand h2 {
-  --text-town-title: clamp(3.4rem, 8.4vw, 7.5rem);
-  margin: 0 0 0 -.04em;
+  --text-town-title: clamp(2.5rem, 7.3vw, 6.4rem);
+  margin: 0;
   color: inherit;
-  font-family: 'Arial Black', 'Helvetica Neue', Arial, sans-serif;
+  font-family: 'Helvetica Neue', 'Segoe UI', Arial, sans-serif;
   font-size: var(--text-town-title);
-  font-weight: 900;
-  letter-spacing: -.065em;
-  line-height: .88;
+  font-weight: 300;
+  line-height: 1;
   text-transform: uppercase;
+}
+
+.town-intro__brand h2 span {
+  display: block;
+  white-space: nowrap;
+}
+
+.town-intro__name {
+  letter-spacing: .075em;
+}
+
+.town-intro__location {
+  --text-town-location: max(.235em, .6875rem);
+  margin-top: .7em;
+  font-size: var(--text-town-location);
+  font-weight: 500;
+  letter-spacing: .37em;
+}
+
+.town-intro__simulator {
+  margin-top: .34em;
+  font-size: .45em;
+  font-weight: 300;
+  letter-spacing: .215em;
 }
 
 .town-intro__content {
@@ -688,7 +700,7 @@ body:has(.town-game.town-expanded) {
   }
 
   .town-intro {
-    padding: var(--space-md);
+    padding: var(--space-md) var(--space-md) calc(var(--space-md) + var(--space-lg));
   }
 
   .town-intro__content {
@@ -706,9 +718,7 @@ body:has(.town-game.town-expanded) {
     font-size: .625em;
   }
 
-  .town-intro__brand h2 { --text-town-title: clamp(3rem, 10.5vw, 5rem); }
-  .town-intro__edition { margin-bottom: 10px; font-size: .625em; }
-  .town-intro__location { margin-top: 12px; font-size: .625em; }
+  .town-intro__brand h2 { --text-town-title: clamp(2.2rem, 10.3vw, 4.8rem); }
   .town-intro__content p { margin-bottom: var(--space-sm); font-size: .875em; }
   .town-page .town-play { min-height: 48px; width: 200px; }
 
