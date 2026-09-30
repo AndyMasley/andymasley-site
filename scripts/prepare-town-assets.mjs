@@ -45,4 +45,5 @@ execFileSync(process.execPath, [join(project, 'scripts/prepare-network-transfer.
 execFileSync(process.execPath, [join(project, 'scripts/prepare-ground-previews.mjs')], { stdio: 'inherit', cwd: project });
 execFileSync(process.execPath, [join(project, 'scripts/validate-town-overview.mjs')], { stdio: 'inherit', cwd: project });
 execFileSync(process.execPath, [join(project, 'scripts/validate-town-horizon.mjs')], { stdio: 'inherit', cwd: project });
+execFileSync(process.execPath, [join(project, 'scripts/validate-town-landcover.mjs')], { stdio: 'inherit', cwd: project });
 execFileSync(process.execPath, [join(project, 'scripts/prepare-town-version.mjs')], { stdio: 'inherit', cwd: project });

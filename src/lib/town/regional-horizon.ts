@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { withLoadDeadline } from './critical-load';
+import type { RegionalLandcover } from './regional-landcover';
 
 export const HORIZON_LIMITS = { vertices: 200000, triangles: 450000, decodedBytes: 12 * 1048576, transferBytes: 8 * 1048576 } as const;
 type Attribute = { byteOffset: number; count: number; itemSize: number; componentType: 'float32' | 'int8' | 'uint8' | 'uint32' };
@@ -20,7 +21,7 @@ export class RegionalHorizon {
   private disposed = false;
   private geometryBytes = 0;
 
-  constructor(readonly catalog: HorizonCatalog) {
+  constructor(readonly catalog: HorizonCatalog, private readonly landcover?: RegionalLandcover) {
     const { asset, mesh, model } = catalog;
     if (catalog.version !== 1 || catalog.format !== 'town-horizon-f32-v1' || asset.compression !== 'gzip'
       || !integer(asset.bytes, HORIZON_LIMITS.transferBytes) || asset.bytes === 0
@@ -107,8 +108,9 @@ vec2 horizonDelta = transformed.xz - cameraPosition.xz;
 float horizonHalfAngle = length(horizonDelta) / ${(2 * model.earthRadiusM).toFixed(1)};
 float horizonSine = sin(horizonHalfAngle);
 transformed.y -= 2.0 * (${model.earthRadiusM.toFixed(1)} + transformed.y + ${model.verticalOffsetM.toFixed(1)}) * horizonSine * horizonSine;`);
+        this.landcover?.patch(shader);
       };
-      material.customProgramCacheKey = () => 'webster-measured-horizon-v1';
+      material.customProgramCacheKey = () => this.landcover ? 'webster-measured-horizon-landcover-v2' : 'webster-measured-horizon-v1';
       this.mesh = new THREE.Mesh(geometry, material);
       this.mesh.name = 'Regional hills beyond Webster';
       this.mesh.userData.townHorizon = true;

@@ -7,6 +7,10 @@ import { TownWorld } from './world';
 import { explorationCameraOffset, explorationClipPlanes } from './exploration-view';
 import { RegionalHorizon, type HorizonCatalog } from './regional-horizon';
 import horizonCatalog from '../../../data/derived/town/horizon.json';
+import { RegionalLandcover, type LandcoverCatalog } from './regional-landcover';
+import { RegionalCanopy, type RegionalCanopyCatalog } from './regional-canopy';
+import landcoverCatalog from '../../../data/derived/town/landcover.json';
+import regionalCanopyCatalog from '../../../data/derived/town/regional-canopy.json';
 import { geometricHorizon, observerHeightASL } from './horizon-math';
 import { StreetDressing, updateDressingViewport, type StreetContext } from './street-dressing';
 import type { HouseDressing } from './house-dressing';
@@ -126,6 +130,8 @@ export async function startTown(root: HTMLElement): Promise<Session> {
   let environmentTarget: THREE.WebGLRenderTarget | undefined;
   let sky: Sky | undefined;
   let regionalHorizon: RegionalHorizon | undefined;
+  let regionalLandcover: RegionalLandcover | undefined;
+  let regionalCanopy: RegionalCanopy | undefined;
   let scene: THREE.Scene | undefined;
   let car: THREE.Group | undefined;
   let vehicle: TouringCar | undefined;
@@ -239,6 +245,8 @@ export async function startTown(root: HTMLElement): Promise<Session> {
       sky?.geometry.dispose();
       sky?.material.dispose();
       regionalHorizon?.dispose();
+      regionalLandcover?.dispose();
+      regionalCanopy?.dispose();
       renderer?.dispose();
       delete root.dataset.ready;
       delete root.dataset.mode;
@@ -319,7 +327,14 @@ export async function startTown(root: HTMLElement): Promise<Session> {
     finally { pmrem.dispose(); environmentSky.geometry.dispose(); environmentSky.material.dispose(); }
     scene.environment = environmentTarget.texture;
     if (horizonCatalog.sourceManifestSha256 !== release.manifestSha256) throw new Error('Regional landscape belongs to a different town release.');
-    regionalHorizon = new RegionalHorizon(horizonCatalog as HorizonCatalog);
+    if ([landcoverCatalog, regionalCanopyCatalog].some(catalog => catalog.sourceManifestSha256 !== release.manifestSha256)) throw new Error('Regional landcover belongs to a different town release.');
+    regionalLandcover = new RegionalLandcover(landcoverCatalog as LandcoverCatalog);
+    regionalCanopy = new RegionalCanopy(regionalCanopyCatalog as RegionalCanopyCatalog);
+    scene.add(regionalCanopy.root);
+    const landscapeBaseURL = new URL(WORLD_URL, location.href).href;
+    const landcoverReady = Promise.all([regionalLandcover.initialize(landscapeBaseURL, signal), regionalCanopy.initialize(landscapeBaseURL, signal)]);
+    void landcoverReady.catch(() => {});
+    regionalHorizon = new RegionalHorizon(horizonCatalog as HorizonCatalog, regionalLandcover);
     scene.add(regionalHorizon.root);
     const horizonReady = regionalHorizon.initialize(new URL(WORLD_URL, location.href).href, signal);
     void horizonReady.catch(() => {});
@@ -385,7 +400,7 @@ export async function startTown(root: HTMLElement): Promise<Session> {
     });
     if (disposed) return session;
     prepareStatus('Preparing textures and the sky…');
-    await Promise.all([world.prepareTextures(signal), cloudsReady, horizonReady]);
+    await Promise.all([world.prepareTextures(signal), cloudsReady, horizonReady, landcoverReady]);
     if (disposed) return session;
     const [{ OnFootController, nearestSummonRoad }, { ExplorationSurface }, { Pedestrians }, { createPlayerHumanoid }] = await explorationModules;
     if (disposed) return session;
@@ -1138,7 +1153,7 @@ export async function startTown(root: HTMLElement): Promise<Session> {
       redraw() { renderRequested = true; },
       get debugCamera() { return debugCamera; },
       set debugCamera(value: { eye: number[]; target: number[] } | null) { debugCamera = value; renderRequested = true; },
-      get presentation() { return { version: 'finished-webster-v8', horizon: { ...regionalHorizon?.resources(), observerASL: observerHeightASL(camera.position.y), ...geometricHorizon(observerHeightASL(camera.position.y)) }, grass: world!.presentationResources(), vehicle: vehicle!.resources(), evidence: world!.evidenceResources(), finish: world!.finishResources(), research: world!.researchResources(), streaming: world!.streamingResources(), comfort: preferences.comfort, camera: { near: camera.near, far: camera.far, checks: cameraObstruction.checks, testedMeshes: cameraObstruction.testedMeshes, milliseconds: cameraObstruction.milliseconds, skippedCandidates: cameraObstruction.skippedCandidates, acceleration: cameraIndex?.metrics } }; },
+      get presentation() { return { version: 'finished-webster-v9', regionalLandcover: regionalLandcover?.resources(), regionalCanopy: regionalCanopy?.resources(), horizon: { ...regionalHorizon?.resources(), observerASL: observerHeightASL(camera.position.y), ...geometricHorizon(observerHeightASL(camera.position.y)) }, grass: world!.presentationResources(), vehicle: vehicle!.resources(), evidence: world!.evidenceResources(), finish: world!.finishResources(), research: world!.researchResources(), streaming: world!.streamingResources(), comfort: preferences.comfort, camera: { near: camera.near, far: camera.far, checks: cameraObstruction.checks, testedMeshes: cameraObstruction.testedMeshes, milliseconds: cameraObstruction.milliseconds, skippedCandidates: cameraObstruction.skippedCandidates, acceleration: cameraIndex?.metrics } }; },
       get ready() { return controlsReady && !disposed; },
       get metrics() {
         const samples = [...snapshots].sort((a, b) => a - b);

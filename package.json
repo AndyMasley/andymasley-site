@@ -17,6 +17,7 @@
     "validate:town-assets": "node scripts/validate-town-assets.mjs",
     "validate:town-overview": "node scripts/validate-town-overview.mjs",
     "check:town-budgets": "node scripts/check-town-budgets.mjs",
+    "validate:town-landcover": "node scripts/validate-town-landcover.mjs",
     "validate:town-horizon": "node scripts/validate-town-horizon.mjs"
   },
   "dependencies": {
