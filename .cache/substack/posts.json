@@ -1,8 +1,18 @@
 {
-  "timestamp": 1790921930613,
+  "timestamp": 1791559083798,
   "posts": [
     {
-      "title": "Why I believe current AI models can really think and understand - Part 1 of 2",
+      "title": "Why I believe current AI models can really think and understand - Part 2 of 3",
+      "slug": "why-i-believe-current-ai-models-can-d63",
+      "date": "2026-10-09T12:29:32.973Z",
+      "description": "Why computers can in principle produce thinking and understanding",
+      "url": "https://blog.andymasley.com/p/why-i-believe-current-ai-models-can-d63",
+      "category": "Artificial Intelligence",
+      "source": "substack",
+      "cover_image": "https://substack-post-media.s3.amazonaws.com/public/images/cc3e41cc-5e03-4726-a6ec-d43c37e13512_2098x1318.png"
+    },
+    {
+      "title": "Why I believe current AI models can really think and understand - Part 1 of 3",
       "slug": "why-i-believe-current-ai-models-can",
       "date": "2026-09-30T02:36:47.493Z",
       "description": "How the human mind is different from our conception of it",
