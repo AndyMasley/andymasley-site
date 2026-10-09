@@ -38,6 +38,16 @@ export const series: Record<string, SeriesEntry> = {
     part: 3,
     of: 3,
   },
+  'why-i-believe-current-ai-models-can': {
+    series: 'Why I believe current AI models can really think and understand',
+    part: 1,
+    of: 3,
+  },
+  'why-i-believe-current-ai-models-can-d63': {
+    series: 'Why I believe current AI models can really think and understand',
+    part: 2,
+    of: 3,
+  },
 };
 
 export function getSeriesEntry(slug: string): SeriesEntry | undefined {
