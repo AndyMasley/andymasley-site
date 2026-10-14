@@ -1,6 +1,16 @@
 {
-  "timestamp": 1791559083798,
+  "timestamp": 1792009650609,
   "posts": [
+    {
+      "title": "The direction I’d like for effective altruism",
+      "slug": "the-direction-id-like-for-effective",
+      "date": "2026-10-14T19:16:57.385Z",
+      "description": "Planting a flag for the version of EA I want to promote and grow",
+      "url": "https://blog.andymasley.com/p/the-direction-id-like-for-effective",
+      "category": "Charity",
+      "source": "substack",
+      "cover_image": "https://substack-post-media.s3.amazonaws.com/public/images/fabdb30a-97f4-4a0d-8ced-9bc7a3585887_3104x1552.png"
+    },
     {
       "title": "Why I believe current AI models can really think and understand - Part 2 of 3",
       "slug": "why-i-believe-current-ai-models-can-d63",
