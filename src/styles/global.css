@@ -620,6 +620,12 @@ a:active {
   margin: 0 auto;
 }
 
+/* Opt-in wide page (Base `wideMeasure`; per-essay list in
+   src/data/wide-measure.ts): the whole column moves to the wide measure. */
+.main-content--wide-measure {
+  --measure: var(--max-width-wide);
+}
+
 /* ============================================
    Components: Header
    ============================================ */

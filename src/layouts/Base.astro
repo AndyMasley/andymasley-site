@@ -18,6 +18,9 @@ interface Props {
   noindex?: boolean;
   structuredData?: unknown | unknown[];
   activeNav?: string;
+  // Opt-in: the page column uses the wide measure (--max-width-wide)
+  // instead of the standard 640px one. See src/data/wide-measure.ts.
+  wideMeasure?: boolean;
 }
 
 const {
@@ -34,6 +37,7 @@ const {
   noindex = false,
   structuredData,
   activeNav,
+  wideMeasure = false,
 } = Astro.props;
 const resolvedOgTitle = ogTitle || title;
 const siteOrigin = Astro.site || Astro.url.origin;
@@ -168,7 +172,7 @@ function isActive(href: string): boolean {
 
   <a class="skip-link" href="#main">Skip to content</a>
 
-  <div class="main-content" transition:animate="fade">
+  <div class:list={['main-content', { 'main-content--wide-measure': wideMeasure }]} transition:animate="fade">
     <header class="header">
       <div class="header__inner">
         <div class="header__logo">
