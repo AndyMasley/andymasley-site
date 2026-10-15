@@ -35,3 +35,8 @@
 # layer, and the old URL lands on the archive instead of a 404.
 /writing/the-place-to-start-in-your-learning /writing 301
 /writing/the-place-to-start-in-your-learning/ /writing 301
+
+# 2026-10: "Ideas from philosophy I use to think about AI" unpublished from
+# the site (still on Substack); links unwrap, old URL lands on the archive.
+/writing/guiding-ideas-i-use-to-think-about /writing 301
+/writing/guiding-ideas-i-use-to-think-about/ /writing 301

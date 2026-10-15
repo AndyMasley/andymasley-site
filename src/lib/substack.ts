@@ -164,6 +164,15 @@ let memoryCache: SubstackPost[] | null = null;
 // their old URLs to the archive.
 const DELETED_POST_SLUGS = ['the-place-to-start-in-your-learning'];
 
+// Posts still live on Substack but unpublished from this site (Andy's call).
+// Dropped on every path, live fetch and committed-cache fallback, so CI
+// builds (which always take the fallback) agree. Body links to them unwrap
+// like deleted posts, and public/_redirects 301s their old URLs.
+const UNPUBLISHED_FROM_SITE_SLUGS = [
+  // Oct 2026
+  'guiding-ideas-i-use-to-think-about',
+];
+
 // Hand-curated category overrides: a post whose Substack section doesn't
 // match where it belongs on this site. Applied in hydratePosts so every
 // path — live fetch and committed-cache fallback — agrees.
@@ -177,7 +186,7 @@ const categoryOverrides: Record<string, string> = {
 // fallback (Substack blocks CI IPs) and titles render at display size.
 // The cache on disk stays raw.
 function hydratePosts(posts: Array<Omit<SubstackPost, 'date'> & { date: Date | string }>): SubstackPost[] {
-  return posts.map(p => ({
+  return posts.filter(p => !UNPUBLISHED_FROM_SITE_SLUGS.includes(p.slug)).map(p => ({
     ...p,
     date: p.date instanceof Date ? p.date : new Date(p.date),
     title: normalizePlainText(p.title),
@@ -259,6 +268,7 @@ export async function fetchSubstackPosts(): Promise<SubstackPost[]> {
         // Skip unpublished-from-site posts
         if (post.slug === 'i-cant-find-any-instances-of-data') continue;
         if (post.slug === 'stories-of-ai-turning-users-delusional') continue;
+        if (UNPUBLISHED_FROM_SITE_SLUGS.includes(post.slug)) continue;
 
         allPosts.push({
           title: post.title,
@@ -850,7 +860,7 @@ export function processPostContent(html: string, slug: string, opts: { sidenotes
   // the target page no longer exists to link to. A _redirects 301 catches
   // anyone arriving at the old URL from elsewhere. Slugs listed at Andy's
   // direction only.
-  for (const gone of DELETED_POST_SLUGS) {
+  for (const gone of [...DELETED_POST_SLUGS, ...UNPUBLISHED_FROM_SITE_SLUGS]) {
     processed = processed.replace(
       new RegExp(`<a\\b[^>]*href="/writing/${gone}(?:[#?][^"]*)?"[^>]*>([\\s\\S]*?)<\\/a>`, 'gi'),
       '$1'
