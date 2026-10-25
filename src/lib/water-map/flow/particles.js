@@ -188,7 +188,13 @@ export class FlowParticles {
         let ax, az, hx = 0, hz = 0, bx, bz, depth = 0, arc1 = 0, arc2 = 0, split = 1, period = 3, rise = 0, c1 = 0, c2 = 0, L = 0;
         const t = s.to[Math.floor(rnd() * s.to.length)];
         const phase = (k + rnd() * 0.6) / n;
-        if (s.kind === KIND.intake && s.well) {
+        if (s.kind === KIND.intake && s.well && place) {
+          // a selected place's wells: the water comes up at the wellhead and arcs out over the land it serves, above
+          // ground where it can be seen (the well's own channel runs down into the ground beneath it)
+          const ang = rnd() * 2 * Math.PI, rr = 0.06 + rnd() * 0.24;
+          ax = t[0]; az = t[1]; bx = t[0] + Math.cos(ang) * rr; bz = t[1] + Math.sin(ang) * rr;
+          depth = 0.015; hx = ax; hz = az; arc1 = 0.03 + rnd() * 0.05; L = rr; period = 1.3 + rnd() * 0.9;
+        } else if (s.kind === KIND.intake && s.well) {
           // groundwater: up out of the ground beneath the use site
           bx = t[0] + (rnd() - 0.5) * 0.12 * J; bz = t[1] + (rnd() - 0.5) * 0.12 * J;
           ax = bx + (rnd() - 0.5) * 0.22 * J; az = bz + (rnd() - 0.5) * 0.22 * J; depth = 0.10 + rnd() * 0.18;
