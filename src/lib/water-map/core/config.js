@@ -6,6 +6,9 @@ export const KM_PER_UNIT = 6371 / 1240.583314171773;
 export const SLAB_ORDER = ['conus', 'ak', 'hi', 'pr'];
 // Alaska, Hawaii and Puerto Rico were baked beside the lower 48; the map moves them below it, the usual inset places,
 // so the whole country frames larger. Every baked coordinate in those slabs moves by the same amount when it loads.
+// The layout for phones and upright tablets: the uses as a row of chips over the map and the panels as sheets from
+// the bottom. Keep in step with the matching @media rule in src/styles/water-map.css.
+export const PHONE_MQ = '(max-width: 760px), (max-width: 1024px) and (orientation: portrait)';
 export const SLAB_MOVE = { ak: [290.7, 610.0], hi: [509.0, 194.0], pr: [-118.8, 112.0] };
 export function moveXZ(slab, x, z) { const m = SLAB_MOVE[slab]; return m ? [x + m[0], z + m[1]] : [x, z]; }
 export const SLAB_LABEL = { conus: 'Lower 48', ak: 'Alaska', hi: 'Hawaii', pr: 'Puerto Rico & U.S. Virgin Islands' };

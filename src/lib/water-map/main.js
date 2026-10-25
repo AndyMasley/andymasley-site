@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { SUN, SLAB_ORDER, exagAt, CAT, CATS, DC, riverLabel, lakeLabel } from './core/config.js';
+import { SUN, SLAB_ORDER, exagAt, CAT, CATS, DC, riverLabel, lakeLabel, PHONE_MQ, SLAB_MOVE } from './core/config.js';
 import { loadSlabs, progress, fetchPixels, fetchBitmap, setDataBase, resetProgress } from './core/assets.js';
 import { Slab } from './world/slab.js';
 import { TerrainSlab } from './world/terrain.js';
@@ -210,17 +210,17 @@ export async function startWaterMap(root, { dataBase = '/water-map/data/', lite 
   // the opening view: every slab, framed in the part of the stage the panels leave free
   const freeRegion = () => {
     const sr = stage.getBoundingClientRect(), W0 = sr.width;
-    if (W0 < 760) return [-0.98, 0.98];
+    if (window.matchMedia(PHONE_MQ).matches) return [-0.98, 0.98];
     const lg = stage.querySelector('[data-uses]'), ins = stage.querySelector('[data-insp]');
     const lr = lg && lg.offsetParent ? lg.getBoundingClientRect().right - sr.left + 8 : 8;
     const ir = ins && ins.offsetParent ? ins.getBoundingClientRect().left - sr.left - 8 : W0 - 8;
     return [(lr / W0) * 2 - 1, (ir / W0) * 2 - 1];
   };
-  const phoneLayout = () => window.matchMedia('(max-width: 760px)').matches;
+  const phoneLayout = () => window.matchMedia(PHONE_MQ).matches;
   const fitHome = () => {
     const sr = stage.getBoundingClientRect();
     const portrait = sr.width / Math.max(1, sr.height) < 0.9;
-    const phone = phoneLayout() && portrait;
+    const phone = phoneLayout();
     const box = portrait ? { x0: 58.7, x1: 998.8, z0: 14.8, z1: 625.2 } : SCENE_BOX;
     home.x = (box.x0 + box.x1) / 2; home.z = (box.z0 + box.z1) / 2 + 8;
     home.tilt = portrait ? 0.30 : 0.42; home.az = 0;
@@ -267,8 +267,8 @@ export async function startWaterMap(root, { dataBase = '/water-map/data/', lite 
     W = Math.max(1, r.width | 0); H = Math.max(1, r.height | 0);
     renderer.setSize(W, H, false);
     finish.setSize(W, H);
-    // on a phone held upright the panels open as sheets from the bottom, so the camera's focus sits higher in the frame
-    const lift = phoneLayout() && H > W * 1.1 ? Math.round(H * 0.16) : 0;
+    // on phones and upright tablets the panels open as sheets from the bottom, so the camera's focus sits higher
+    const lift = phoneLayout() ? Math.round(H * 0.16) : 0;
     camera.aspect = W / (H + 2 * lift);
     if (lift) camera.setViewOffset(W, H + 2 * lift, 0, 2 * lift, W, H); else camera.clearViewOffset();
     camera.updateProjectionMatrix();
@@ -326,10 +326,27 @@ export async function startWaterMap(root, { dataBase = '/water-map/data/', lite 
     }
     return best ? riverLabel(best.name) : null;
   };
+  // the named lake whose shore is nearest a point (the outlines are in baked coordinates, before the insets moved)
   const lakeNameNear = (x, z) => {
     let best = null, bd = Infinity;
-    for (const l of model.features.lakes) { if (!l.name) continue; const d = Math.hypot(l.cx - x, l.cz - z) - Math.sqrt(l.area_km2) / 5.135 * 0.6; if (d < bd) { bd = d; best = l; } }
-    return best && bd < 6 ? lakeLabel(best.name) : null;
+    for (const l of model.features.lakes) {
+      if (!l.name || !l.polys) continue;
+      const mv = SLAB_MOVE[l.slab] || [0, 0], px = x - mv[0], pz = z - mv[1];
+      if (!l._bb) {
+        const b = [Infinity, Infinity, -Infinity, -Infinity];
+        for (const poly of l.polys) { const r = poly[0]; for (let k = 0; k < r.length; k += 2) { b[0] = Math.min(b[0], r[k]); b[1] = Math.min(b[1], r[k + 1]); b[2] = Math.max(b[2], r[k]); b[3] = Math.max(b[3], r[k + 1]); } }
+        l._bb = b;
+      }
+      if (px < l._bb[0] - 4 || px > l._bb[2] + 4 || pz < l._bb[1] - 4 || pz > l._bb[3] + 4) continue;
+      let d = Infinity;
+      for (const poly of l.polys) for (const r of poly) for (let k = 0; k + 3 < r.length; k += 2) {
+        const ax = r[k], az = r[k + 1], ex = r[k + 2] - ax, ez = r[k + 3] - az;
+        const t = Math.max(0, Math.min(1, ((px - ax) * ex + (pz - az) * ez) / (ex * ex + ez * ez || 1)));
+        d = Math.min(d, Math.hypot(px - ax - t * ex, pz - az - t * ez));
+      }
+      if (d < bd) { bd = d; best = l; }
+    }
+    return best && bd < 3 ? lakeLabel(best.name) : null;
   };
   {
     const acc = new Map();
@@ -552,7 +569,7 @@ export async function startWaterMap(root, { dataBase = '/water-map/data/', lite 
       const c = model.cdata[i];
       if (fly && c) {
         const span = Math.sqrt(c.area) / 5.135;
-        const upright = phoneLayout() && stage.clientHeight > stage.clientWidth * 1.1;
+        const upright = phoneLayout();
         controls.flyTo({ x: c.cx, z: c.cz + span * 0.08, d: Math.min(upright ? 700 : 420, Math.max(22, span * (upright ? 5.6 : 3.4))), tilt: Math.max(controls.state.tilt, 0.8) }, 1800);
       }
     },
@@ -606,7 +623,7 @@ export async function startWaterMap(root, { dataBase = '/water-map/data/', lite 
         if (x0 < x1) {
           // fit the canal's extent into the part of the frame the panels leave open
           const [xl, xr] = freeRegion();
-          const upright = phoneLayout() && H > W * 1.1;
+          const upright = phoneLayout();
           const th = camera.userData.tanHalf || Math.tan((camera.fov * Math.PI) / 360);
           const wFrac = (xr - xl) / 2, hFrac = upright ? 0.48 : 0.8;
           const d = 1.15 * Math.max((x1 - x0) / (2 * th * (W / H) * wFrac), (z1 - z0) / (2 * th * hFrac));
@@ -740,7 +757,7 @@ export async function startWaterMap(root, { dataBase = '/water-map/data/', lite 
         const list = s.from;
         // the stream's water is spread over its intakes by river size; name the biggest
         const top = list.reduce((b, p) => (!b || (p[2] || 0) > (b[2] || 0) ? p : b), null);
-        const name = s.src === SRC.lake ? (lakeNameNear(top[0], top[1]) || 'Lake') : (riverNameNear(top[0], top[1]) || null);
+        const name = s.src === SRC.lake ? (lakeNameNear(top[0], top[1]) || 'Lakes and reservoirs') : (riverNameNear(top[0], top[1]) || null);
         const m = s.src === SRC.lake ? srcVol.lake : srcVol.river;
         const key = name || 'Rivers and streams';
         const e = m.get(key) || { v: 0, p: top }; e.v += s.vol; m.set(key, e);

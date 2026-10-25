@@ -793,8 +793,10 @@ button.wm-li:hover { color: var(--wm-brass); }
   .wm-uses { max-height: calc(100% - 96px); }
 }
 
-@media (max-width: 760px) {
+/* phones and upright tablets (PHONE_MQ in core/config.js) */
+@media (max-width: 760px), (max-width: 1024px) and (orientation: portrait) {
   .wm-stage { height: min(80svh, 760px); min-height: 480px; }
+  .wm-key { display: none; }
   .wm.wm-expanded .wm-stage { height: 100%; }
   /* the uses become a row of chips across the top of the map */
   .wm-uses {

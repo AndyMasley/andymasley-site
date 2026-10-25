@@ -1,4 +1,4 @@
-import { CATS, CAT, DC, riverLabel, lakeLabel } from '../core/config.js';
+import { CATS, CAT, DC, riverLabel, lakeLabel, PHONE_MQ } from '../core/config.js';
 import { CAT_KEYS } from '../flow/model.js';
 import { sankeySVG } from './sankey.js';
 import { AQ_FLOWS, DATA_CENTERS, DEPLETION, AQ_STORAGE } from '../core/flows_data.js';
@@ -116,7 +116,7 @@ export class Hud {
     };
     fold('[data-uses-head]', '[data-uses]', 'wm-uses-folded');
     fold('[data-key-head]', '[data-key]', 'wm-key-folded');
-    if (this.root.clientWidth < 760) { this.$('[data-key]').classList.add('collapsed'); this.$('[data-key-head]').setAttribute('aria-expanded', 'false'); }
+    if (window.matchMedia(PHONE_MQ).matches) { this.$('[data-key]').classList.add('collapsed'); this.$('[data-key-head]').setAttribute('aria-expanded', 'false'); }
 
     // layers sheet
     const ck = Object.entries(this.app.CHORO);
@@ -171,7 +171,7 @@ export class Hud {
     if (this.app.tour.i >= 0 || this._welcomed) return;
     this._welcomed = true;
     this.caption(`<p class="wm-cap">How to read this</p><h4>Every moving light is water</h4>
-      <p>Each streak is water leaving a river, lake, aquifer or the sea on its way to a use, colored by that use. For crops, golf and power plants, the water consumed rises as white mist and the rest flows back to rivers in blue. ${this.root.clientWidth < 760 ? 'Tap a use above the map to see only its water, tap any place to trace its water, or go Underground to see the aquifers.' : 'Pick a use on the left to see only its water, click any place to trace where its water comes from, or look underground at the aquifers.'}</p>`,
+      <p>Each streak is water leaving a river, lake, aquifer or the sea on its way to a use, colored by that use. For crops, golf and power plants, the water consumed rises as white mist and the rest flows back to rivers in blue. ${window.matchMedia(PHONE_MQ).matches ? 'Tap a use above the map to see only its water, tap any place to trace its water, or go Underground to see the aquifers.' : 'Pick a use on the left to see only its water, click any place to trace where its water comes from, or look underground at the aquifers.'}</p>`,
       [['close', 'Explore on my own'], ['tour', 'Take the tour']], (a) => { if (a === 'tour') this.app.tour.go(0); });
     const off = () => { if (this.app.tour.i < 0 && this._capKind === 'welcome') this.hideCaption(); };
     setTimeout(() => this.on(this.app.canvas, 'wheel', off, { once: true }), 1500);
@@ -667,7 +667,7 @@ export class Hud {
     this.on(input, 'blur', () => setTimeout(() => box.classList.remove('show'), 150));
   }
   buildButtons() {
-    if (this.root.clientWidth < 760) this.$('[data-search]').placeholder = 'Search';
+    if (window.matchMedia(PHONE_MQ).matches) this.$('[data-search]').placeholder = 'Search';
     const act = {
       home: () => this.app.goHome(),
       tour: () => this.app.tour.toggle(),
