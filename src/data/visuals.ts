@@ -16,6 +16,13 @@ export interface VisualEntry {
 
 export const visuals: VisualEntry[] = [
   {
+    title: 'Where America’s water goes',
+    href: '/visuals/water-map',
+    description: 'A 3D map of every gallon the U.S. withdrew in 2015, from source to use, with the aquifers underground.',
+    searchTerms:
+      'water map USGS county water use rivers aquifers groundwater irrigation power plants thermoelectric public supply data centers golf dams canals aqueducts Ogallala High Plains',
+  },
+  {
     title: 'Factory-farmed chickens',
     href: '/visuals/factory-farmed-chickens',
     description: 'Visualizing the scale of factory farming in the United States.',

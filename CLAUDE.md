@@ -111,6 +111,14 @@ The methodology section at the bottom of the page documents every number. If you
 
 The file `WATER-VIZ-METHODOLOGY.md` at the repo root contains a comprehensive audit of all sources. Keep it in sync if data changes.
 
+## Water map (`src/pages/visuals/water-map.astro`)
+
+A 3D map of USGS 2015 county water use ("Where America’s water goes"). The Three.js app lives in `src/lib/water-map/` (entry `main.js`, `startWaterMap(root)`), its styles in `src/styles/water-map.css`, and its baked data in `public/water-map/data/`. The Python scripts that baked the data from the raw sources are in `scripts/water-map/` (the raw downloads are not in the repo).
+
+- The map sits on a dark screen like `/town`; the chrome around and over it uses the site tokens (Georgia, hairlines, square corners, no shadows). Keep it that way.
+- Every number on it comes from the sources in the page’s “About the data” section. If a data value changes, update that section and the panel text that quotes it.
+- The page script disposes the app on `astro:before-swap`, because the site uses view transitions.
+
 ## Project structure
 
 - **Framework:** Astro

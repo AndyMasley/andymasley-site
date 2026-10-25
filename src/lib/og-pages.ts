@@ -35,5 +35,6 @@ export const ogPages: Record<string, OgPage> = {
   'carbon-boundary-crosswalk': { title: 'Why carbon calculator numbers differ', panel: shot('carbon-boundary-crosswalk') },
   'factory-farmed-chickens': { title: 'Factory-farmed chickens', panel: shot('factory-farmed-chickens') },
   water: { title: 'How thirsty is AI?', panel: shot('water') },
+  'water-map': { title: 'Where America’s water goes', panel: shot('water-map') },
   'pm25-county-exposure': { title: 'PM2.5 exposure by county', panel: shot('pm25-county-exposure') },
 };
