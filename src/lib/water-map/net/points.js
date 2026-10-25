@@ -112,7 +112,7 @@ export class PointLayer {
   pick(camera, cx, cy, rect, ground, d, radiusPx = 9) {
     if (!this.group.visible || !ground) return -1;
     const exag = this.shared.uExag.value;
-    const worldPerPx = d * 2 * Math.tan((camera.fov * Math.PI) / 360) / rect.height;
+    const worldPerPx = d * 2 * (camera.userData.tanHalf || Math.tan((camera.fov * Math.PI) / 360)) / rect.height;
     const R = Math.max(0.05, worldPerPx * radiusPx * 3);
     const i0 = Math.floor((ground.x - R) / this.cell), i1 = Math.floor((ground.x + R) / this.cell);
     const j0 = Math.floor((ground.z - R) / this.cell), j1 = Math.floor((ground.z + R) / this.cell);

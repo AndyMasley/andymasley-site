@@ -63,17 +63,30 @@ export class Labels {
     cand.sort((a, b) => b.pri - a.pri);
     const placed = this.avoid ? this.avoid.map((r) => [r[0], r[1], r[2], r[3]]) : [];
     const pad = 3;
+    const fits = (x0, y0, x1, y1) => {
+      if (!(x0 > 4 && x1 < W - 4 && y0 > 4 && y1 < H - 4)) return false;
+      for (const p of placed) if (x0 < p[2] && x1 > p[0] && y0 < p[3] && y1 > p[1]) return false;
+      return true;
+    };
     for (const it of cand) {
       const dot = it.anchor === 'dot';
-      const left = dot ? it.sx - 5 : it.sx - it.w / 2;
-      const x0 = left - pad, x1 = left + it.w + pad, y0 = it.sy - it.hgt / 2 - pad, y1 = it.sy + it.hgt / 2 + pad;
-      let ok = x0 > 4 && x1 < W - 4 && y0 > 4 && y1 < H - 4;
-      if (ok) for (const p of placed) if (x0 < p[2] && x1 > p[0] && y0 < p[3] && y1 > p[1]) { ok = false; break; }
-      if (ok) {
+      // a dotted label may also sit a line above or below its point (with a short leader) when its own spot is taken
+      const tries = dot && it.group !== 'base' ? [0, -1, 1, -2, 2] : [0];
+      let done = false;
+      for (const t of tries) {
+        const left = dot ? it.sx - 5 : it.sx - it.w / 2;
+        const top = it.sy - it.hgt / 2 + t * (it.hgt + 4);
+        const x0 = left - pad, x1 = left + it.w + pad, y0 = top - pad, y1 = top + it.hgt + pad;
+        if (!fits(x0, y0, x1, y1)) continue;
         placed.push([x0, y0, x1, y1]);
-        it.el.style.transform = `translate(${left.toFixed(1)}px, ${(it.sy - it.hgt / 2).toFixed(1)}px)`;
+        it.el.style.transform = `translate(${left.toFixed(1)}px, ${top.toFixed(1)}px)`;
+        it.el.classList.toggle('lift', t !== 0);
+        it.el.style.setProperty('--wm-lead', `${(-t * (it.hgt + 4)).toFixed(0)}px`);
         if (!it.shown) { it.el.style.opacity = '1'; it.shown = true; }
-      } else if (it.shown) { it.el.style.opacity = '0'; it.shown = false; }
+        done = true;
+        break;
+      }
+      if (!done && it.shown) { it.el.style.opacity = '0'; it.shown = false; }
     }
   }
   dispose() { for (const it of this.items) it.el.remove(); this.items = []; }

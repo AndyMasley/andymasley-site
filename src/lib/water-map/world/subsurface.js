@@ -129,7 +129,7 @@ export class SubsurfaceSlab {
   update(camera, frustum, exag, viewportH, depth, thick) {
     if (!this.group.visible) return;
     const counts = this.lods.map(() => 0);
-    const k = 2 * Math.tan((camera.fov * Math.PI) / 360) / viewportH;
+    const k = 2 * (camera.userData.tanHalf || Math.tan((camera.fov * Math.PI) / 360)) / viewportH;
     const vs = exag / this.slab.mpu;
     for (const c of this.chunks) {
       const yhi = Math.max(0, c.hi) * vs - depth + 0.5, ylo = -depth - thick - 1;

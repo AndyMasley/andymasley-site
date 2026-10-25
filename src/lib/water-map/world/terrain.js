@@ -162,9 +162,10 @@ float countyAt(vec2 uv) {
             if (uChoroMode > 2.5) {
               // one use isolated: the land goes quiet and each county is tinted by how much of that use it has
               float l = dot(alb, vec3(0.2126, 0.7152, 0.0722));
-              vec3 quiet = mix(vec3(l), alb, 0.3) * 0.62;
+              vec3 quiet = mix(vec3(l), alb, 0.3) * mix(0.70, 0.62, uNight);
               isoV = cv.a > 0.5 ? cv.r : 0.0;
-              float k = smoothstep(0.0, 0.06, isoV) * (0.30 + 0.62 * isoV);
+              // the tint grows with the use's density, so light use stays close to the quiet land
+              float k = smoothstep(0.0, 0.04, isoV) * (0.10 + 0.78 * pow(isoV, 1.15));
               alb = mix(alb, mix(quiet, uIsoCol * (0.30 + 0.75 * isoV) * clamp(l / 0.16, 0.55, 1.35), k), uIsoAmt);
               isoV *= uIsoAmt;
             } else if (uChoroMode > 0.5 && cv.a > 0.5) {
@@ -280,7 +281,7 @@ export class TerrainSlab {
   /** choose a level of detail for every chunk in view */
   update(camera, frustum, exag, viewportH) {
     const counts = this.lods.map(() => 0);
-    const k = 2 * Math.tan((camera.fov * Math.PI) / 360) / viewportH; // world size of a pixel at distance 1
+    const k = 2 * (camera.userData.tanHalf || Math.tan((camera.fov * Math.PI) / 360)) / viewportH; // world size of a pixel at distance 1
     const vs = exag / this.slab.mpu;
     for (const c of this.chunks) {
       const ylo = Math.min(0, (c.lo >= 0 ? c.lo : -200) * vs) - 1, yhi = Math.max(0, c.hi) * vs + 0.5;

@@ -216,8 +216,11 @@ export async function startWaterMap(root, { dataBase = '/water-map/data/', lite 
     const ir = ins && ins.offsetParent ? ins.getBoundingClientRect().left - sr.left - 8 : W0 - 8;
     return [(lr / W0) * 2 - 1, (ir / W0) * 2 - 1];
   };
+  const phoneLayout = () => window.matchMedia('(max-width: 760px)').matches;
   const fitHome = () => {
-    const portrait = camera.aspect < 0.9;
+    const sr = stage.getBoundingClientRect();
+    const portrait = sr.width / Math.max(1, sr.height) < 0.9;
+    const phone = phoneLayout() && portrait;
     const box = portrait ? { x0: 58.7, x1: 998.8, z0: 14.8, z1: 625.2 } : SCENE_BOX;
     home.x = (box.x0 + box.x1) / 2; home.z = (box.z0 + box.z1) / 2 + 8;
     home.tilt = portrait ? 0.30 : 0.42; home.az = 0;
@@ -231,9 +234,11 @@ export async function startWaterMap(root, { dataBase = '/water-map/data/', lite 
       for (const c of corners) { const p = c.clone().project(camera); mnx = Math.min(mnx, p.x); mxx = Math.max(mxx, p.x); mny = Math.min(mny, p.y); mxy = Math.max(mxy, p.y); }
       return { mnx, mxx, mny, mxy };
     };
-    // keep clear of the toolbar (and, on phones, the sheets above it) at the bottom
-    const sh = stage.getBoundingClientRect().height || 800;
-    const yb = -1 + 2 * ((portrait ? 104 : 64) / sh), yt = portrait ? 0.90 : 0.92;
+    // keep clear of the toolbar at the bottom; on phones, keep the map in the top part, below the row of uses and
+    // above the sheets that open from the bottom
+    const sh = sr.height || 800;
+    const yb = phone ? 1 - 2 * 0.58 : -1 + 2 * ((portrait ? 104 : 64) / sh);
+    const yt = phone ? 1 - 2 * (52 / sh) : portrait ? 0.90 : 0.92;
     for (let pass = 0; pass < 3; pass++) {
       let lo = 150, hi = 8000;
       for (let it = 0; it < 28; it++) {
@@ -248,7 +253,7 @@ export async function startWaterMap(root, { dataBase = '/water-map/data/', lite 
       home.x -= shiftNdc * worldPerNdc;
       // and centre it in the height left free
       const shiftY = (yb + yt) / 2 - (r.mny + r.mxy) / 2;
-      home.z += shiftY * home.d * Math.tan((camera.fov * Math.PI) / 360) / Math.max(0.3, Math.cos(home.tilt));
+      home.z += shiftY * home.d * (camera.userData.tanHalf || Math.tan((camera.fov * Math.PI) / 360)) / Math.max(0.3, Math.cos(home.tilt));
     }
     Object.assign(controls.state, save);
     controls.maxDist = Math.max(1900, home.d * 1.3);
@@ -262,9 +267,14 @@ export async function startWaterMap(root, { dataBase = '/water-map/data/', lite 
     W = Math.max(1, r.width | 0); H = Math.max(1, r.height | 0);
     renderer.setSize(W, H, false);
     finish.setSize(W, H);
-    camera.aspect = W / H; camera.updateProjectionMatrix();
+    // on a phone held upright the panels open as sheets from the bottom, so the camera's focus sits higher in the frame
+    const lift = phoneLayout() && H > W * 1.1 ? Math.round(H * 0.16) : 0;
+    camera.aspect = W / (H + 2 * lift);
+    if (lift) camera.setViewOffset(W, H + 2 * lift, 0, 2 * lift, W, H); else camera.clearViewOffset();
+    camera.updateProjectionMatrix();
+    camera.userData.tanHalf = Math.tan((camera.fov * Math.PI) / 360) * H / (H + 2 * lift);
     shared.uViewport.value.set(W, H);
-    shared.uFocalPx.value = (H / 2) / Math.tan((camera.fov * Math.PI) / 360);
+    shared.uFocalPx.value = (H / 2) / camera.userData.tanHalf;
     const wasHome = !started || Math.abs(controls.goal.d - home.d) < 1;
     fitHome();
     if (wasHome) controls.set(home, !started);
@@ -361,7 +371,7 @@ export async function startWaterMap(root, { dataBase = '/water-map/data/', lite 
       const sg = a.segs.reduce((b, s) => (s.p.length > b.p.length ? s : b), a.segs[0]);
       const k = Math.floor(sg.p.length / 4) * 2;
       const both = f && f.share && f.share < 1;
-      const html = f ? `${esc(a.name)}<small>${volShort(f.mgd)}${both ? ', both barrels' : ''}${f.year !== '2015' ? ` (${esc(f.year)})` : ''}</small>` : esc(a.name);
+      const html = f ? `${esc(a.name)}<small>${volShort(f.mgd)}${f.label ? ` ${esc(f.label)}` : ''}${both ? ', both barrels' : ''}${f.year !== '2015' ? ` (${esc(f.year)})` : ''}</small>` : esc(a.name);
       if (f && both && seen.has(f.url)) continue;
       if (f) seen.add(f.url);
       labels.add({ html, cls: 'canal', x: sg.p[k], z: sg.p[k + 1], h: hUnits(sg.p[k], sg.p[k + 1]), pri: 26 + Math.log10(a.km) * 2 + (f ? 6 : 0), dmin: 0, dmax: f ? (f.mgd > 500 ? 1300 : 700) : a.km > 300 ? 650 : 260 });
@@ -401,7 +411,7 @@ export async function startWaterMap(root, { dataBase = '/water-map/data/', lite 
     model, flows, rivers, plants, controls, shared, CHORO, setChoro, stateList, aquifers, nlcd, canvas, stage,
     dams: null, osm: null, damCounty: null, damsByCounty: null,
     night: false, underground: false, iso: null, expanded: false, _home: () => home,
-    setNight(on) { app.night = on; looks.night = on ? 1 : 0; hud.syncButtons(); },
+    setNight(on) { app.night = on; looks.night = on ? 1 : 0; hud.syncButtons(); writeHash(); },
     setUnderground(on) {
       app.underground = on; looks.aq = on ? 1 : 0;
       labels.setGroup('aquifers', on);
@@ -414,6 +424,7 @@ export async function startWaterMap(root, { dataBase = '/water-map/data/', lite 
         if (selCounty < 0 && selPlant < 0) { app.isolate(null, true); hud.showGroundwater(); }
       }
       if (!on && hud.$('[data-insp]').dataset.kind === 'ground') hud.showNational();
+      writeHash();
     },
     stateName: (st) => STATES[st] || st,
     /** emphasis on the flows: an isolated use, a use hovered in the picker, or a band hovered in a Sankey */
@@ -496,6 +507,7 @@ export async function startWaterMap(root, { dataBase = '/water-map/data/', lite 
       hud.syncUses();
       syncTop();
       if (!quiet) { if (k) hud.showCategory(k); else if (app.underground) hud.showGroundwater(); else hud.showNational(); }
+      writeHash();
     },
     selectState(st, fly = true) {
       const ids = model.states.get(st); if (!ids) return;
@@ -536,10 +548,12 @@ export async function startWaterMap(root, { dataBase = '/water-map/data/', lite 
       const notes = traceCounty(i);
       syncTop();
       hud.showCounty(i, notes);
+      writeHash();
       const c = model.cdata[i];
       if (fly && c) {
         const span = Math.sqrt(c.area) / 5.135;
-        controls.flyTo({ x: c.cx, z: c.cz + span * 0.08, d: Math.min(420, Math.max(22, span * 3.4)), tilt: Math.max(controls.state.tilt, 0.8) }, 1800);
+        const upright = phoneLayout() && stage.clientHeight > stage.clientWidth * 1.1;
+        controls.flyTo({ x: c.cx, z: c.cz + span * 0.08, d: Math.min(upright ? 700 : 420, Math.max(22, span * (upright ? 5.6 : 3.4))), tilt: Math.max(controls.state.tilt, 0.8) }, 1800);
       }
     },
     selectPlant(pi, fly = true) {
@@ -551,6 +565,7 @@ export async function startWaterMap(root, { dataBase = '/water-map/data/', lite 
       tracePlant(p);
       syncTop();
       hud.showPlant(pi);
+      writeHash();
       if (fly) controls.flyTo({ x: p.x, z: p.z + 0.4, d: 16, tilt: 1.05 }, 1800);
     },
     selectAquifer(ai, fly = true) {
@@ -559,6 +574,7 @@ export async function startWaterMap(root, { dataBase = '/water-map/data/', lite 
       app.clearMarks(); clearTrace();
       shared.uAqSel.value = ai;
       hud.showAquifer(ai);
+      writeHash();
       const e = aquifers.extent && aquifers.extent.get(ai);
       if (fly && e) { const span = Math.max(e.x1 - e.x0, (e.z1 - e.z0) * 1.3); controls.flyTo({ x: (e.x0 + e.x1) / 2, z: (e.z0 + e.z1) / 2 + span * 0.12, d: Math.min(1300, Math.max(60, span * 1.75)), tilt: 1.0, az: 0 }, 2000); }
     },
@@ -578,12 +594,35 @@ export async function startWaterMap(root, { dataBase = '/water-map/data/', lite 
       hud.showOsm(i);
       if (fly) controls.flyTo({ x: app.osm.data.x[i], z: app.osm.data.z[i] + 0.2, d: 9, tilt: Math.max(1.0, controls.state.tilt) }, 1800);
     },
+    selectAqueduct(ai, fly = false) {
+      const it = aqueducts.items[ai]; if (!it) return;
+      app.clearMarks(); clearTrace();
+      selCounty = -1; selPlant = -1; shared.uSelCounty.value = -1; plants.uSelPlant.value = -1; shared.uSelState.value = -1;
+      hud.showAqueduct(it);
+      if (fly) {
+        const a = model.features.aqueducts[ai];
+        let x0 = Infinity, x1 = -Infinity, z0 = Infinity, z1 = -Infinity;
+        for (const sg of a.segs) for (let k = 0; k < sg.p.length; k += 2) { x0 = Math.min(x0, sg.p[k]); x1 = Math.max(x1, sg.p[k]); z0 = Math.min(z0, sg.p[k + 1]); z1 = Math.max(z1, sg.p[k + 1]); }
+        if (x0 < x1) {
+          // fit the canal's extent into the part of the frame the panels leave open
+          const [xl, xr] = freeRegion();
+          const upright = phoneLayout() && H > W * 1.1;
+          const th = camera.userData.tanHalf || Math.tan((camera.fov * Math.PI) / 360);
+          const wFrac = (xr - xl) / 2, hFrac = upright ? 0.48 : 0.8;
+          const d = 1.15 * Math.max((x1 - x0) / (2 * th * (W / H) * wFrac), (z1 - z0) / (2 * th * hFrac));
+          const dd = Math.min(900, Math.max(10, d)), az = controls.state.az;
+          const sx = -((xl + xr) / 2) * dd * th * (W / H);
+          controls.flyTo({ x: (x0 + x1) / 2 + sx * Math.cos(az), z: (z0 + z1) / 2 - sx * Math.sin(az), d: dd, tilt: Math.max(0.9, controls.state.tilt) }, 1800);
+        }
+      }
+    },
     clearSelection(silent) {
       app.clearMarks(); clearTrace();
       selCounty = -1; selPlant = -1; shared.uSelCounty.value = -1; plants.uSelPlant.value = -1; shared.uSelState.value = -1;
       syncTop();
       if (silent && app.iso) return;
       if (app.iso) hud.showCategory(app.iso); else if (app.underground) hud.showGroundwater(); else hud.showNational();
+      writeHash();
     },
     loadNames() { if (app.dams) app.dams.loadNames().then(() => { app._index = null; }); if (app.osm) app.osm.loadNames().then(() => { app._index = null; }); },
     _index: null,
@@ -604,7 +643,7 @@ export async function startWaterMap(root, { dataBase = '/water-map/data/', lite 
         }
       }
       for (const l of model.features.lakes) if (l.name) idx.push({ key: lakeLabel(l.name).toLowerCase(), label: lakeLabel(l.name), kind: l.kind === 'Reservoir' ? 'Reservoir' : 'Lake', weight: Math.log10(1 + l.area_km2), x: l.cx, z: l.cz, d: Math.min(700, Math.max(40, Math.sqrt(l.area_km2) / 5.135 * 4)) });
-      for (const a of model.features.aqueducts) { const s0 = a.segs[0]; if (s0) idx.push({ key: a.name.toLowerCase(), label: a.name, kind: a.kind === 'aqueduct' ? 'Aqueduct' : 'Canal', weight: Math.log10(1 + a.km), x: s0.p[0], z: s0.p[1], d: Math.min(400, Math.max(40, a.km / 5.135 * 1.2)) }); }
+      model.features.aqueducts.forEach((a, ai) => { if (a.segs[0]) idx.push({ key: a.name.toLowerCase(), label: a.name, kind: a.kind === 'aqueduct' ? 'Aqueduct' : 'Canal', weight: Math.log10(1 + a.km), aqi: ai }); });
       if (aquifers) for (const a of aquifers.list) idx.push({ key: a.name.toLowerCase(), label: a.name, kind: 'Aquifer', weight: Math.log10(1 + a.total), aquifer: a.i });
       for (const c of [...CATS, DC]) idx.push({ key: c.name.toLowerCase(), label: c.name, kind: 'Use of water', weight: 12, iso: c.k });
       if (app.dams && app.dams.names) {
@@ -625,6 +664,7 @@ export async function startWaterMap(root, { dataBase = '/water-map/data/', lite 
       if (it.dam != null) return app.selectDam(it.dam, true);
       if (it.osm != null) return app.selectOsm(it.osm, true);
       if (it.aquifer != null) return app.selectAquifer(it.aquifer, true);
+      if (it.aqi != null) return app.selectAqueduct(it.aqi, true);
       if (it.kind === 'County') return app.selectCounty(it.county, true);
       if (it.kind === 'State') return app.selectState(it.st, true);
       app.clearSelection(true);
@@ -640,6 +680,30 @@ export async function startWaterMap(root, { dataBase = '/water-map/data/', lite 
   };
   on(document, 'fullscreenchange', () => { app.expanded = document.fullscreenElement === root || root.classList.contains('wm-expanded'); hud.syncButtons(); });
 
+  // ---- links: the view's state rides in the address, so any view can be shared
+  let hashTimer = 0, hashReady = false;
+  function writeHash() {
+    if (!hashReady || tour.i >= 0) return;
+    clearTimeout(hashTimer);
+    hashTimer = setTimeout(() => {
+      if (disposed) return;
+      const p = [];
+      if (app.iso) p.push(`use=${app.iso}`);
+      if (selPlant >= 0 && model.plants[selPlant]) p.push(`plant=${model.plants[selPlant].eia}`);
+      else if (selCounty >= 0) p.push(`county=${model.wu.id[selCounty]}`);
+      if (aquifers && shared.uAqSel.value > 0) { const a = aquifers.byIndex.get(shared.uAqSel.value); if (a) p.push(`aquifer=${a.code}`); }
+      if (app.underground) p.push('under');
+      if (!app.night) p.push('day');
+      const h = p.length ? `#${p.join('&')}` : '';
+      if (h === location.hash || (!h && !location.hash)) return;
+      try { history.replaceState(history.state, '', `${location.pathname}${location.search}${h}`); } catch { /* not allowed here */ }
+    }, 250);
+  }
+  function readHash() {
+    const out = {};
+    for (const kv of location.hash.replace(/^#/, '').split('&')) { if (!kv) continue; const [k, v = ''] = kv.split('='); out[decodeURIComponent(k)] = decodeURIComponent(v); }
+    return out;
+  }
   function syncTop() { labels.setGroup('top', !app.iso && !app.underground && selCounty < 0 && selPlant < 0); }
   // ---- tracing: name where a selected place's water comes from and where it goes, on the map
   function clearTrace() { labels.removeGroup('trace'); if (typeof syncTop === 'function') syncTop(); }
@@ -724,9 +788,20 @@ export async function startWaterMap(root, { dataBase = '/water-map/data/', lite 
       controls.set({ ...home, d: home.d * 1.45, tilt: 0.16, az: -0.32 }, true);
       later(() => controls.flyTo({ ...home }, 5200), 350);
     }
-    later(() => hud.welcome(), 1800);
+    const h = readHash();
+    if ('day' in h) { app.setNight(false); shared.uNight.value = 0; }
+    if (h.use && (CAT[h.use] || h.use === 'dc')) app.isolate(h.use);
+    if ('under' in h) app.setUnderground(true);
+    const ci = h.county ? model.wu.id.indexOf(h.county) : -1;
+    const pi = h.plant ? model.plants.findIndex((q) => String(q.eia) === h.plant) : -1;
+    const aq = h.aquifer && aquifers ? aquifers.list.find((q) => String(q.code) === h.aquifer) : null;
+    if (pi >= 0) later(() => app.selectPlant(pi, true), 900);
+    else if (ci >= 0) later(() => app.selectCounty(ci, true), 900);
+    else if (aq) later(() => app.selectAquifer(aq.i, true), 900);
+    if (!Object.keys(h).length) later(() => hud.welcome(), 1800);
   }
 
+  later(() => { hashReady = true; }, 1200);
   // dams and mapped facilities load after the first frame
   (async () => {
     try {
@@ -808,7 +883,7 @@ export async function startWaterMap(root, { dataBase = '/water-map/data/', lite 
         hud.tip(cx, cy, hud.nidTip(ni)); canvas.classList.add('pointing'); return;
       }
     }
-    const pxWorld = d * 2 * Math.tan((camera.fov * Math.PI) / 360) / H;
+    const pxWorld = d * 2 * (camera.userData.tanHalf || Math.tan((camera.fov * Math.PI) / 360)) / H;
     const s = slabAt(g.x, g.z);
     if (app.underground && aquifers) {
       const ai = subsurfaceAt(g);
@@ -831,7 +906,6 @@ export async function startWaterMap(root, { dataBase = '/water-map/data/', lite 
   on(window, 'pointerup', () => canvas.classList.remove('dragging'));
   controls.onClick = (cx, cy) => {
     const rect = canvas.getBoundingClientRect();
-    hud.$('[data-uses]').classList.remove('show');
     const pi = plants.enabled !== false ? plants.pick(camera, cx, cy, rect, shared.uExag.value) : -1;
     if (pi >= 0) { tour.stop(); return app.selectPlant(pi, true); }
     const g = pickGround(cx, cy);
@@ -839,6 +913,11 @@ export async function startWaterMap(root, { dataBase = '/water-map/data/', lite 
     if (g && app.osm) { const oi = app.osm.pick(camera, cx, cy, rect, g, controls.state.d); if (oi >= 0) { tour.stop(); return app.selectOsm(oi); } }
     if (g && app.dams && app.dams.group.visible) { const ni = app.dams.pick(camera, cx, cy, rect, g, controls.state.d); if (ni >= 0) { tour.stop(); return app.selectDam(ni); } }
     if (g && app.underground && hovered && hovered.aquifer) { tour.stop(); return app.selectAquifer(hovered.aquifer, false); }
+    if (g && aqueducts.group.visible && !app.underground) {
+      const pxWorld = controls.state.d * 2 * (camera.userData.tanHalf || Math.tan((camera.fov * Math.PI) / 360)) / rect.height;
+      const it = aqueducts.pick(g.x, g.z, pxWorld * (rect.width < 700 ? 9 : 6));
+      if (it) { tour.stop(); return app.selectAqueduct(aqueducts.items.indexOf(it)); }
+    }
     const ci = g ? countyAt(g.x, g.z) : -1;
     if (ci >= 0) { tour.stop(); if (ci === selCounty) app.selectCounty(ci, true); else app.selectCounty(ci, false); }
     else app.clearSelection();

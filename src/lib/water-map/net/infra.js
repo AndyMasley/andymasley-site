@@ -1,5 +1,6 @@
 import { fetchPacked, fetchJSON } from '../core/assets.js';
 import { PointLayer } from './points.js';
+import { CAT, DC } from '../core/config.js';
 
 /** National Inventory of Dams (USACE): every dam, sized by its storage. */
 /** move points baked beside the lower 48 to where the inset slabs are drawn now */
@@ -60,11 +61,11 @@ export async function loadOsm(shared, slabAt, slabs) {
   const DMAX = [34, 75, 75, 70, 160], SIZE = [0.03, 0.22, 0.20, 0.18, 0.34];
   for (let i = 0; i < n; i++) { size[i] = SIZE[kind[i]]; dmax[i] = DMAX[kind[i]]; }
   const kinds = [
-    { color: '#9fd8ff', shape: 3 },   // water tower: ring
-    { color: '#3fb0ff', shape: 1 },   // water treatment: square
+    { color: '#e8dcb4', shape: 3 },   // water tower: ring (pale, like the public supply it holds)
+    { color: '#f2cf63', shape: 1 },   // water treatment: square, in the public-supply gold
     { color: '#d2a467', shape: 1 },   // wastewater: square
-    { color: '#c3df52', shape: 0 },   // golf: disc
-    { color: '#c9a2ff', shape: 2 },   // data center: diamond
+    { color: CAT.go.color, shape: 0 },   // golf: disc
+    { color: DC.color, shape: 2 },       // data center: diamond
   ];
   const layer = new PointLayer(shared, { n, x, z, kind, size, dmax }, kinds, slabAt, 'osm-points');
   layer.data = { n, x, z, kind, slab, county };

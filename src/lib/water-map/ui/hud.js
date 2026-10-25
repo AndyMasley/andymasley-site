@@ -64,7 +64,6 @@ export class Hud {
       </section>
       <aside class="wm-panel wm-insp" data-insp aria-live="polite" aria-label="Details"></aside>
       <div class="wm-bar" data-bar>
-        <button class="wm-btn wm-only-m" type="button" data-a="uses">Uses</button>
         <div class="wm-search">
           <input type="search" data-search placeholder="Find a place, river, plant, aquifer or dam" autocomplete="off" spellcheck="false" aria-label="Search the map">
           <div class="wm-panel wm-results" data-results role="listbox"></div>
@@ -172,7 +171,7 @@ export class Hud {
     if (this.app.tour.i >= 0 || this._welcomed) return;
     this._welcomed = true;
     this.caption(`<p class="wm-cap">How to read this</p><h4>Every moving light is water</h4>
-      <p>Each streak is water leaving a river, lake, aquifer or the sea on its way to a use, colored by that use. Some of it rises as white mist (consumed); the rest returns to rivers in blue. ${this.root.clientWidth < 760 ? 'Tap Uses to see one use’s water, tap any place to trace its water, or go Underground to see the aquifers.' : 'Pick a use on the left to see only its water, click any place to trace where its water comes from, or look underground at the aquifers.'}</p>`,
+      <p>Each streak is water leaving a river, lake, aquifer or the sea on its way to a use, colored by that use. For crops, golf and power plants, the water consumed rises as white mist and the rest flows back to rivers in blue. ${this.root.clientWidth < 760 ? 'Tap a use above the map to see only its water, tap any place to trace its water, or go Underground to see the aquifers.' : 'Pick a use on the left to see only its water, click any place to trace where its water comes from, or look underground at the aquifers.'}</p>`,
       [['close', 'Explore on my own'], ['tour', 'Take the tour']], (a) => { if (a === 'tour') this.app.tour.go(0); });
     const off = () => { if (this.app.tour.i < 0 && this._capKind === 'welcome') this.hideCaption(); };
     setTimeout(() => this.on(this.app.canvas, 'wheel', off, { once: true }), 1500);
@@ -199,8 +198,17 @@ export class Hud {
     const el = this.$('[data-insp]');
     el.dataset.kind = kind;
     el.classList.toggle('wm-national', !closable);
-    el.innerHTML = (closable ? '<button type="button" class="wm-close" aria-label="Close">&times;</button>' : '') + html;
+    const tall = el.classList.contains('wm-tall');
+    el.innerHTML = `<button type="button" class="wm-grip" aria-expanded="${tall}" aria-label="${tall ? 'Show less of this panel' : 'Show more of this panel'}"></button>` +
+      (closable ? '<button type="button" class="wm-close" aria-label="Close">&times;</button>' : '') + html;
     el.scrollTop = 0;
+    const grip = el.querySelector('.wm-grip');
+    this.on(grip, 'click', () => {
+      const t = el.classList.toggle('wm-tall');
+      grip.setAttribute('aria-expanded', String(t));
+      grip.setAttribute('aria-label', t ? 'Show less of this panel' : 'Show more of this panel');
+      if (!t) el.scrollTop = 0;
+    });
     if (closable) this.on(el.querySelector('.wm-close'), 'click', () => { if (kind === 'iso') this.app.isolate(null); else this.app.clearSelection(); });
     for (const a of el.querySelectorAll('[data-plant]')) this.on(a, 'click', () => this.app.selectPlant(+a.dataset.plant, true));
     for (const a of el.querySelectorAll('[data-county]')) this.on(a, 'click', () => this.app.selectCounty(+a.dataset.county, true));
@@ -221,7 +229,7 @@ export class Hud {
   pinButton(item) { return `<button type="button" class="wm-btn wm-sm" data-pin='${esc(JSON.stringify(item))}'>+ Compare</button>`; }
   forScale() {
     const n = this.m.national, D = DATA_CENTERS;
-    const dcAll = (D.directGal + D.indirectLiters / 3.78541) / 365 / 1e6;
+    const dcAll = (D.directGal + D.indirectGal) / 365 / 1e6;
     return `<h5>For scale</h5>
       <div class="wm-kv">
         <span>U.S. data centers, consumed on site (2023)</span><span>${nf(D.directMgd)} Mgal/d</span>
@@ -274,7 +282,7 @@ export class Hud {
   }
   showDataCenters() {
     const D = DATA_CENTERS, n = this.m.national;
-    const ind = D.indirectLiters / 3.78541 / 365 / 1e6;
+    const ind = D.indirectGal / 365 / 1e6;
     const osm = this.app.osm;
     const dcCount = osm ? osm.counts[4] : null;
     let top = [];
@@ -294,7 +302,8 @@ export class Hud {
         <span>Crop irrigation, consumed (2015)</span><span>${volShort(n.cu.ir)}</span>
         <span>On-site use as a share of all U.S. withdrawals</span><span>${nf(100 * D.directMgd / n.total, 3)}%</span>
       </div>
-      <p class="wm-note">Data centers are not a USGS category. Their water is counted inside public supply and industry, so the map draws no flows for them. The violet diamonds are data centers mapped in OpenStreetMap${dcCount ? ` (${nf(dcCount)} of them)` : ''}, which misses many.</p>`;
+      <p class="wm-note">Their ${D.electricityTWh} terawatt-hours of electricity are counted at ${D.galPerKWh} gallons per kilowatt-hour, the average water thermoelectric plants consume (<a href="${esc(D.factorUrl)}" target="_blank" rel="noopener">NREL</a>). LBNL’s own estimate, about ${nf(D.lbnlIndirectLiters / 1e9)} billion liters a year, also counts evaporation from hydroelectric reservoirs, which the USGS consumption figures on this map leave out.</p>
+      <p class="wm-note">Data centers are not a USGS category. The water they use on site is counted inside public supply and industry, and the water for their electricity inside power plants, so the map draws no separate flows for them. The violet diamonds are data centers mapped in OpenStreetMap${dcCount ? ` (${nf(dcCount)} of them)` : ''}, which misses many.</p>`;
     if (rep.length) html += `<h5>Reported by the operator</h5><div class="wm-list">${rep.map((r) => `<button type="button" class="wm-li" data-go='${esc(JSON.stringify({ x: r.x, z: r.z, d: 30, tilt: 1.0 }))}'><span>${esc(r.name)}<small>${esc(r.op)}, ${esc(r.year)}</small></span><span>${nf(r.gal / 1e6)}M gal</span></button>`).join('')}</div><p class="wm-note">${esc(D.reportedSrc || '')}</p>`;
     if (top.length) html += `<h5>Counties with the most mapped data centers</h5><div class="wm-list">${top.map(([ci, cnt]) => `<button type="button" class="wm-li" data-county="${ci}"><span>${esc(this.m.wu.name[ci])}, ${esc(this.m.wu.st[ci])}</span><span>${nf(cnt)}</span></button>`).join('')}</div>`;
     html += `<p class="wm-note">Source: ${esc(D.src)}. <button type="button" class="wm-lnk" data-open-compare="1">Compare with other uses</button> · <button type="button" class="wm-lnk" data-iso="all">Show every use</button></p>`;
@@ -316,7 +325,7 @@ export class Hud {
         <span>From the mapped principal aquifers</span><span>${nf(100 * mapped / g)}%</span>
         <span>Drawn down, 1900–2008</span><span>${nf(dep)} km³</span>
       </div>
-      <p class="wm-note">The rest came from glacial, alluvial and other aquifers the map does not outline. ${nf(dep)} cubic kilometers is about ${nf(km3gal(dep) / 1e12)} trillion gallons (Konikow, 2013).${st ? ` The High Plains aquifer alone held about ${nf(st.af / 1e9, 2)} billion acre-feet in ${st.year} (${esc(st.src)}).` : ''} The shapes come from the USGS map; their depth and thickness are drawn the same everywhere, so they are not to scale.</p>`;
+      <p class="wm-note">The rest came from glacial, alluvial and other aquifers the map does not outline. ${nf(dep)} cubic kilometers is about ${nf(km3gal(dep) / 1e12)} trillion gallons (Konikow, 2013).${st ? ` The High Plains aquifer alone had about ${nf(st.af / 1e9, 2)} billion acre-feet of recoverable water in storage in ${st.year} (${esc(st.src)}).` : ''} The shapes come from the USGS map; their depth and thickness are drawn the same everywhere, so they are not to scale.</p>`;
     this.setInspector(html, true, 'ground');
   }
   showState(st) {
@@ -476,6 +485,22 @@ export class Hud {
       ${ci >= 0 ? `<div class="wm-list"><button type="button" class="wm-li" data-county="${ci}"><span>See all of ${esc(c.name)}</span><span>→</span></button></div>` : ''}`;
     this.setInspector(html, true);
   }
+  showAqueduct(a) {
+    const f = a.flow;
+    const kind = a.kind === 'aqueduct' ? 'Aqueduct' : 'Canal';
+    let html = `<p class="wm-cap">${kind}${a.op ? ` · ${esc(a.op)}` : ''}</p><h3>${esc(a.name)}</h3>`;
+    if (f) {
+      const when = f.when != null ? f.when : `in ${f.year}`;
+      html += `<div class="wm-big">${f.mgd >= 1000 ? nf(f.mgd / 1000, 2) : nf(f.mgd)} <small>${f.mgd >= 1000 ? 'billion' : 'million'} gallons a day</small></div>
+        <p class="wm-sub">${esc(f.what)}${when ? ` ${esc(when)}` : ''}${f.af ? `, or ${nf(f.af)} acre-feet over the year` : ''}.</p>
+        ${f.note ? `<p class="wm-sub">${esc(f.note)}</p>` : ''}
+        <p class="wm-note">Source: <a href="${esc(f.url)}" target="_blank" rel="noopener">${esc(f.src)}</a>.</p>`;
+    } else {
+      html += `<p class="wm-sub">${a.km ? `About ${nf(a.km)} kilometers of it are mapped. ` : ''}The map has no measured flow for it.</p>`;
+    }
+    html += `<p class="wm-note">Route from OpenStreetMap (© OpenStreetMap contributors, ODbL). Tunnels and buried pipe are often missing.</p>`;
+    this.setInspector(html, true);
+  }
   showAquifer(ai) {
     const A = this.app.aquifers; if (!A) return;
     const a = A.byIndex.get(ai); if (!a) return;
@@ -488,7 +513,7 @@ export class Hud {
       <p class="wm-sub">${nf(100 * tot / A.json.national, 1)}% of all U.S. groundwater withdrawals${rows.length ? `, ${pct(rows[0][1], tot)}% of it for ${esc(rows[0][0].toLowerCase())}` : ''}.${area ? ` Its outline on the map covers about ${nf(Math.round(area / 1000) * 1000)} square miles.` : ''}</p>
       <div class="wm-bars">${rows.map((r) => `<div class="wm-cbar"><span>${r[0]}</span><span class="wm-t"><i style="width:${(100 * r[1] / rows[0][1]).toFixed(1)}%"></i></span><span class="wm-v">${mgd(r[1])}</span></div>`).join('')}</div>`;
     if (st || dep) {
-      html += `<div class="wm-kv">${st ? `<span>Water held, ${esc(st.year)}</span><span>${af(st.af)}</span>` : ''}${dep ? `<span>${dep.km3 >= 0 ? 'Drawn down' : 'Gained'}, 1900–2008</span><span>${nf(Math.abs(dep.km3), 1)} km³</span>` : ''}</div>`;
+      html += `<div class="wm-kv">${st ? `<span>Recoverable water in storage, ${esc(st.year)}</span><span>${af(st.af)}</span>` : ''}${dep ? `<span>${dep.km3 >= 0 ? 'Drawn down' : 'Gained'}, 1900–2008</span><span>${nf(Math.abs(dep.km3), 1)} km³</span>` : ''}</div>`;
       html += `<p class="wm-note">${st ? `${esc(st.src)}. ` : ''}${dep ? `${esc(dep.note || '')} Konikow (2013), groundwater depletion in the United States.` : ''}</p>`;
     }
     html += `<p class="wm-note">Million gallons a day. Lovelace and others (2020), groundwater withdrawals from principal aquifers for 2015 (USGS), drawn on the USGS map of principal aquifers. The map shows the uppermost principal aquifer at each place.</p>`;
@@ -532,7 +557,7 @@ export class Hud {
   }
   aqTip(a) {
     const f = a.flow;
-    return `<b>${esc(a.name)}</b><span>${a.kind === 'aqueduct' ? 'Aqueduct' : 'Canal'} · ${esc(a.op)}</span>${f ? `<span>${mgd(f.mgd)} Mgal/d ${esc(f.what)} (${esc(f.year)})${f.af ? `: ${nf(f.af)} acre-feet` : ''}</span>` : ''}`;
+    return `<b>${esc(a.name)}</b><span>${a.kind === 'aqueduct' ? 'Aqueduct' : 'Canal'}${a.op ? ` · ${esc(a.op)}` : ''}</span>${f ? `<span>${mgd(f.mgd)} Mgal/d ${esc(f.what)} (${esc(f.year)})</span><span class="wm-tip-hint">Click for the source</span>` : ''}`;
   }
   aquiferTip(ai) {
     const a = this.app.aquifers && this.app.aquifers.byIndex.get(ai); if (!a) return '';
@@ -570,7 +595,7 @@ export class Hud {
   closeCompare() { this.$('[data-compare]').hidden = true; this.$('[data-a="compare"]').focus?.(); }
   openCompare() {
     const m = this.m, n = m.national, D = DATA_CENTERS;
-    const dcAll = (D.directGal + D.indirectLiters / 3.78541) / 365 / 1e6;
+    const dcAll = (D.directGal + D.indirectGal) / 365 / 1e6;
     const ref = [
       { label: 'U.S. data centers, on site', v: D.directMgd, kind: 'c', year: '2023', src: 'LBNL 2024' },
       { label: 'U.S. data centers, with their electricity', v: dcAll, kind: 'c', year: '2023', src: 'LBNL 2024' },
@@ -598,7 +623,7 @@ export class Hud {
         <div class="wm-cmp-ticks">${ticks.map((e) => `<span style="left:${X(Math.pow(10, e)).toFixed(2)}%">${tl(e)}</span>`).join('')}</div>
         ${rows.map((r) => `<div class="wm-cmp-row${r.pick ? ' pick' : ''}"><div class="wm-cmp-l">${esc(r.label)}<small>${KIND[r.kind]}, ${esc(r.year)}</small></div><div class="wm-cmp-t">${ticks.map((e) => `<i class="g" style="left:${X(Math.pow(10, e)).toFixed(2)}%"></i>`).join('')}<i class="b ${r.kind}" style="width:${X(r.v).toFixed(2)}%"></i></div><div class="wm-cmp-v">${mgd(r.v)}</div></div>`).join('')}
       </div>
-      <p class="wm-note">${picks.length ? '' : 'Add counties, states or power plants with the + Compare button in their panels. '}Data centers: ${esc(D.src)}, on-site consumption of ${nf(D.directLiters / 1e9)} billion liters and about ${nf(D.indirectLiters / 1e9)} billion liters consumed generating their ${D.electricityTWh} TWh of electricity. Golf: USGS 2015 in the ${esc(m.splitWords)} that reported golf separately, so the national figure is higher. Aqueducts: the operators' and Bureau of Reclamation's reports (hover an aqueduct on the map for each source).</p>
+      <p class="wm-note">${picks.length ? '' : 'Add counties, states or power plants with the + Compare button in their panels. '}Data centers: ${esc(D.src)}, on-site consumption of ${nf(D.directLiters / 1e9)} billion liters, plus their ${D.electricityTWh} TWh of electricity at ${D.galPerKWh} gallons per kilowatt-hour consumed by thermoelectric plants (NREL). Golf: USGS 2015 in the ${esc(m.splitWords)} that reported golf separately, so the national figure is higher. Aqueducts: the operators' and Bureau of Reclamation's reports (click an aqueduct on the map for each source).</p>
       <p class="wm-cmp-bs"><button type="button" class="wm-btn" data-a="clear">Clear my picks</button> <button type="button" class="wm-btn" data-a="close">Close</button></p>`;
     const box = this.$('[data-compare]');
     box.hidden = false;
@@ -650,7 +675,6 @@ export class Hud {
       under: () => this.app.setUnderground(!this.app.underground),
       compare: () => this.openCompare(),
       full: () => this.app.toggleExpanded(),
-      uses: () => this.$('[data-uses]').classList.toggle('show'),
       layers: () => { const el = this.$('[data-layers]'); el.hidden = !el.hidden; this.$('[data-a="layers"]').setAttribute('aria-expanded', String(!el.hidden)); this.$('[data-a="layers"]').classList.toggle('on', !el.hidden); },
     };
     for (const b of this.$$('[data-bar] [data-a]')) this.on(b, 'click', () => act[b.dataset.a]?.());

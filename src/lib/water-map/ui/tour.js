@@ -1,4 +1,4 @@
-import { DATA_CENTERS, AQ_FLOWS } from '../core/flows_data.js';
+import { DATA_CENTERS, AQ_FLOWS, NID } from '../core/flows_data.js';
 import { CAT } from '../core/config.js';
 import { esc, nf, pct } from './fmt.js';
 
@@ -38,7 +38,6 @@ export class Tour {
     const mar = this.ix('04013'), marC = mar >= 0 ? m.county(mar) : null;
     const D = DATA_CENTERS;
     const aac = AQ_FLOWS['All-American Canal'];
-    const damN = this.app.dams ? this.app.dams.data.n : 92528;
     const gwShare = pct(n.src.gf + n.src.gs, n.total);
     const fresGw = fresC ? pct(fresC.src.ir.gf, fresC.W.ir) : 0;
     return [
@@ -55,18 +54,18 @@ export class Tour {
       ...(cookC ? [{ kicker: 'Public supply', title: 'Chicago and Lake Michigan', view: this.at('17031', 70, 0.95, 0.0), select: cook, night: true,
         text: `Cook County's utilities withdrew ${nf(cookC.W.ps)} million gallons a day, ${pct(cookC.src.ps.sf, cookC.W.ps)}% of it surface water, which here means Lake Michigan. Just east, in Lake County, Indiana, the steel mills and refinery on the shore drew ${lakeINsf >= 1000 ? B(lakeINsf) + ' billion' : nf(lakeINsf) + ' million'} gallons a day of surface water for industry.` }] : []),
       ...(impC ? [{ kicker: 'The Colorado River', title: 'Imperial Valley', view: this.at('06025', 110, 0.95, 0.2), select: imp,
-        text: `The All-American Canal diverted ${nf(aac.af / 1e6, 2)} million acre-feet from the Colorado River at Imperial Dam in 2015, about ${B(aac.mgd)} billion gallons a day (Bureau of Reclamation). Imperial County withdrew ${B(impC.total)} billion gallons a day, ${pct(impC.W.ir, impC.total)}% of it for irrigation. ${impC.total > il.W.ps ? `That is more than every public water system in Illinois combined (${B(il.W.ps)} billion).` : ''}` }] : []),
+        text: `In 2015 the Bureau of Reclamation counted ${nf(aac.af / 1e6, 2)} million acre-feet diverted from the Colorado River at Imperial Dam into the All-American Canal for the Imperial and Coachella valleys, about ${B(aac.mgd)} billion gallons a day. Imperial County withdrew ${B(impC.total)} billion gallons a day, ${pct(impC.W.ir, impC.total)}% of it for irrigation. ${impC.total > il.W.ps ? `That is more than every public water system in Illinois combined (${B(il.W.ps)} billion).` : ''}` }] : []),
       ...(marC && marC.split ? [{ kicker: 'For scale', title: 'Golf courses and data centers', view: this.at('04013', 900, 0.62, 0.0), iso: 'dc', night: true,
-        text: `Lawrence Berkeley National Laboratory estimates that every data center in the country consumed about ${nf(D.directMgd)} million gallons a day on site in ${D.year}, or about ${nf((D.directGal + D.indirectLiters / 3.78541) / 365e6)} million counting the water consumed generating their electricity. USGS estimated that golf courses in Maricopa County alone, around Phoenix, consumed ${nf(marC.cu.go)} million gallons a day in 2015. The violet diamonds are data centers mapped in OpenStreetMap.` }] : []),
-      { kicker: 'Storage', title: () => `${nf(this.app.dams ? this.app.dams.data.n : damN)} dams`, view: { x: 515.1, z: 421.0, d: 210, tilt: 0.95, az: 0.15 }, layers: { nid: true }, damBoost: 11,
+        text: `Lawrence Berkeley National Laboratory estimates that every data center in the country consumed about ${nf(D.directMgd)} million gallons a day on site in ${D.year}, or about ${nf((D.directGal + D.indirectGal) / 365e6)} million counting the water power plants consumed generating their electricity. USGS estimated that golf courses in Maricopa County alone, around Phoenix, consumed ${nf(marC.cu.go)} million gallons a day in 2015. The violet diamonds are data centers mapped in OpenStreetMap.` }] : []),
+      { kicker: 'Storage', title: `${nf(NID.listed)} dams`, view: { x: 515.1, z: 421.0, d: 210, tilt: 0.95, az: 0.15 }, layers: { nid: true }, damBoost: 11,
         text: () => {
           const d = this.app.dams ? this.app.dams.data : null;
           let priv = 0, small = 0;
           if (d) for (let k = 0; k < d.n; k++) { if (d.ow[k] === 1) priv++; if (d.stor[k] < 1000) small++; }
-          return `The National Inventory of Dams lists ${nf(d ? d.n : damN)} of them, from farm ponds to Hoover Dam, which can hold back about 30 million acre-feet of the Colorado River in Lake Mead. Each mark is one dam, sized by how much it can store; this is Oklahoma and its neighbors.${d ? ` Across the country ${pct(priv, d.n)}% are privately owned and ${pct(small, d.n)}% store less than 1,000 acre-feet.` : ''}`;
+          return `That is how many the National Inventory of Dams lists, from farm ponds to Hoover Dam, which can hold back about 30 million acre-feet of the Colorado River in Lake Mead. Each mark is one dam, sized by how much it can store; this is Oklahoma and its neighbors.${d ? ` Of the ${nf(d.n)} with coordinates, ${pct(priv, d.n)}% are privately owned and ${pct(small, d.n)}% store less than 1,000 acre-feet.` : ''}`;
         } },
       { kicker: 'Your turn', title: 'Explore', view: 'home',
-        text: 'Pick a use on the left to see only its water. Click any county, power plant, dam or facility to trace where its water comes from. Search for a place, river, aquifer or dam by name, switch between day and night, or look underground.' },
+        text: 'Pick a use to see only its water. Click any county, power plant, dam, canal or facility to see where its water comes from. Search for a place, river, aquifer or dam by name, switch between day and night, or look underground.' },
     ];
   }
   toggle() { if (this.i >= 0) this.stop(); else this.go(0); }
