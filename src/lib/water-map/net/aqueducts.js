@@ -4,8 +4,7 @@ import { AQ_FLOWS } from '../core/flows_data.js';
 /**
  * Major canals and aqueducts from OpenStreetMap: the plumbing that moves water between basins (the California
  * Aqueduct, the Central Arizona Project, the Colorado River Aqueduct, the All-American Canal, New York's Catskill and
- * Delaware aqueducts and others). Drawn as bright channels with light moving away from each system's source;
- * tunnels and pipelines are dashed. OpenStreetMap's mapping of some systems is incomplete (the Colorado River Aqueduct
+ * Delaware aqueducts and others). Drawn as channels wider for more measured flow; tunnels and pipelines are dashed. OpenStreetMap's mapping of some systems is incomplete (the Colorado River Aqueduct
  * is mostly tunnels and barely mapped), so the hover card gives the mapped length.
  */
 
@@ -114,17 +113,12 @@ export class Aqueducts {
           float period = max(0.6, uCamDist * 0.012);
           if (vUnder > 0.5) a *= step(0.45, fract(vDist / period));
           if (a < 0.01) discard;
-          vec3 wall = vec3(0.55, 0.62, 0.62), water = vec3(0.20, 0.85, 0.95);
+          // a canal: river-blue water between pale concrete banks, still like the rivers (the moving light on the map
+          // is the water people withdraw)
+          vec3 wall = mix(vec3(0.55, 0.60, 0.62), vec3(0.16, 0.20, 0.24), uNight);
+          vec3 water = mix(vec3(0.10, 0.36, 0.66), vec3(0.025, 0.14, 0.36), uNight);
           vec3 c = mix(water, wall, smoothstep(0.35, 0.95, abs(vSide)));
-          // pulses of water moving away from the source: closer together where more water flows
-          float lv = vVol > 0.0 ? log(1.0 + vVol) / 2.302585 : 0.0;
-          float spacing = period * (vVol > 0.0 ? 7.0 / (0.6 + 0.55 * lv) : 6.0);
-          float ph = fract(vDist / spacing - uTime * 0.35 * period * 6.0 / spacing);
-          float pulse = smoothstep(0.0, 0.08, ph) * (1.0 - smoothstep(0.08, 0.30, ph));
-          c += vec3(0.5, 0.9, 1.0) * pulse * (vVol > 0.0 ? 0.6 + 0.25 * lv : 0.6);
-          c *= mix(1.0, 0.55, uNight);
-          c += vec3(0.25, 0.85, 1.0) * uNight * (0.35 + pulse * (0.9 + 0.5 * lv)) * (1.0 - smoothstep(0.35, 0.95, abs(vSide)));
-          gl_FragColor = vec4(c * 1.15, a * 0.95 * uFade);
+          gl_FragColor = vec4(c, a * 0.95 * uFade);
         }`,
     });
     this.mesh = new THREE.Mesh(g, mat);

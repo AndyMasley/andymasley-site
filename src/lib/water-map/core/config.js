@@ -9,7 +9,8 @@ export const SLAB_ORDER = ['conus', 'ak', 'hi', 'pr'];
 // The layout for phones and upright tablets: the uses as a row of chips over the map and the panels as sheets from
 // the bottom. Keep in step with the matching @media rule in src/styles/water-map.css.
 export const PHONE_MQ = '(max-width: 760px), (max-width: 1024px) and (orientation: portrait)';
-export const SLAB_MOVE = { ak: [290.7, 610.0], hi: [509.0, 194.0], pr: [-118.8, 112.0] };
+// (the three insets' top edges line up, at z = 640)
+export const SLAB_MOVE = { ak: [290.7, 610.0], hi: [509.0, 174.0], pr: [-118.8, 112.0] };
 export function moveXZ(slab, x, z) { const m = SLAB_MOVE[slab]; return m ? [x + m[0], z + m[1]] : [x, z]; }
 export const SLAB_LABEL = { conus: 'Lower 48', ak: 'Alaska', hi: 'Hawaii', pr: 'Puerto Rico & U.S. Virgin Islands' };
 
@@ -34,17 +35,32 @@ export const SUN = { azimuthDeg: 315, elevationDeg: 38 };
 
 // Water-use categories (USGS 2015), in the order of the national totals. Blue is kept for water itself (rivers,
 // lakes, returns), so no use is blue. `usgs` is the name USGS gives the category.
+// One name per use, the same on every surface (the list, the panels, the Sankey, the map's labels).
 export const CATS = [
   { k: 'pt', name: 'Power plants', short: 'Power plants', usgs: 'Thermoelectric power', color: '#ee7a3a', what: 'Water that cools steam power plants: coal, gas, nuclear and others.' },
   { k: 'ir', name: 'Crops', short: 'Crops', usgs: 'Irrigation (crops)', color: '#3cc483', what: 'Water sprayed, dripped or flooded onto farm fields.' },
-  { k: 'ps', name: 'Public water systems', short: 'Public supply', usgs: 'Public supply', color: '#f2cf63', what: 'Water utilities: what comes out of the tap in homes, offices, schools and some factories.' },
+  { k: 'ps', name: 'Public supply', short: 'Public supply', usgs: 'Public supply', color: '#f2cf63', what: 'Water utilities: what comes out of the tap in homes, offices, schools and some factories.' },
   { k: 'in', name: 'Industry', short: 'Industry', usgs: 'Industrial (self-supplied)', color: '#ef6f6c', what: 'Factories, refineries, mills and chemical plants that draw their own water.' },
   { k: 'aq', name: 'Fish farms', short: 'Fish farms', usgs: 'Aquaculture', color: '#8b94ff', what: 'Hatcheries and fish farms, most of it flowing through raceways and back out.' },
   { k: 'mi', name: 'Mining', short: 'Mining', usgs: 'Mining', color: '#c08a57', what: 'Mines, quarries and oil and gas wells.' },
-  { k: 'do', name: 'Homes on private wells', short: 'Private wells', usgs: 'Domestic (self-supplied)', color: '#e66fa0', what: 'Households that pump their own water, mostly from wells.' },
+  { k: 'do', name: 'Private wells', short: 'Private wells', usgs: 'Domestic (self-supplied)', color: '#e66fa0', what: 'Homes that pump their own water from private wells instead of buying it from a utility.' },
   { k: 'li', name: 'Livestock', short: 'Livestock', usgs: 'Livestock', color: '#9aab45', what: 'Drinking water for animals and cleaning on farms and feedlots.' },
-  { k: 'go', name: 'Golf courses', short: 'Golf', usgs: 'Irrigation (golf courses)', color: '#d6ea6c', what: 'Watering golf courses, counted separately where states reported it.' },
+  { k: 'go', name: 'Golf courses', short: 'Golf courses', usgs: 'Irrigation (golf courses)', color: '#d6ea6c', what: 'Watering golf courses, counted separately where states reported it.' },
 ];
+// Where water comes from, in the words and colors every panel uses. A selected place's channels, particles and dots
+// on the map take these colors too, so the map and the panel show the same shares.
+export const SRC_DEF = {
+  sf: { name: 'Rivers and lakes', sub: 'fresh surface water', color: '#5aa9ff' },
+  gf: { name: 'Groundwater', sub: 'fresh, pumped from wells', color: '#7fe0b8' },
+  ss: { name: 'Seawater', sub: 'saline surface water, including brackish bays', color: '#4fd0c8' },
+  gs: { name: 'Salty groundwater', sub: 'saline, pumped from wells', color: '#a7c7b8' },
+  rec: { name: 'Reclaimed wastewater', sub: 'treated and reused', color: '#b49cff' },
+  ps: { name: 'Public supply', sub: 'bought from a public water system', color: '#f2cf63' },
+};
+// water a selected place sends back to rivers, and treated water piped from a utility's plant to its customers
+export const RETURN_GRAY = '#9aa4ad', PIPED_GRAY = '#cdd5d9';
+// state names the way a news map abbreviates them (AP style)
+export const AP_STATE = { AL: 'Ala.', AK: 'Alaska', AZ: 'Ariz.', AR: 'Ark.', CA: 'Calif.', CO: 'Colo.', CT: 'Conn.', DE: 'Del.', DC: 'D.C.', FL: 'Fla.', GA: 'Ga.', HI: 'Hawaii', ID: 'Idaho', IL: 'Ill.', IN: 'Ind.', IA: 'Iowa', KS: 'Kan.', KY: 'Ky.', LA: 'La.', ME: 'Maine', MD: 'Md.', MA: 'Mass.', MI: 'Mich.', MN: 'Minn.', MS: 'Miss.', MO: 'Mo.', MT: 'Mont.', NE: 'Neb.', NV: 'Nev.', NH: 'N.H.', NJ: 'N.J.', NM: 'N.M.', NY: 'N.Y.', NC: 'N.C.', ND: 'N.D.', OH: 'Ohio', OK: 'Okla.', OR: 'Ore.', PA: 'Pa.', RI: 'R.I.', SC: 'S.C.', SD: 'S.D.', TN: 'Tenn.', TX: 'Texas', UT: 'Utah', VT: 'Vt.', VA: 'Va.', WA: 'Wash.', WV: 'W.Va.', WI: 'Wis.', WY: 'Wyo.', PR: 'P.R.', VI: 'V.I.' };
 export const CAT = Object.fromEntries(CATS.map((c, i) => [c.k, { ...c, i }]));
 // data centers are not a USGS category: their water is inside public supply and industry. Shown for scale.
 export const DC = { k: 'dc', name: 'Data centers', short: 'Data centers', color: '#d68cff' };

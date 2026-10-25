@@ -18,7 +18,8 @@ function spread(ys, gap, lo, hi) {
 const SNAME = { sf: 'Rivers and lakes', ss: 'Seawater', gf: 'Groundwater', gs: 'Salty groundwater' };
 
 export function sankeySVG({ sources, uses, links, width = 330, unit = '', fmt = (v) => v.toFixed(0) }) {
-  const L = 92, R = 128, bar = 7, gap = width - L - R - 2 * bar;
+  // label columns narrow with the panel (the labels may run into its padding: the SVG lets them overflow)
+  const L = Math.min(106, Math.round(width * 0.31)), R = Math.min(116, Math.round(width * 0.36)), bar = 7, gap = width - L - R - 2 * bar;
   const srcs = sources.filter((s) => s.value > 0), us = uses.filter((u) => u.value > 0);
   const total = Math.max(1e-9, srcs.reduce((a, b) => a + b.value, 0));
   const nodePad = 5;
@@ -43,17 +44,21 @@ export function sankeySVG({ sources, uses, links, width = 330, unit = '', fmt = 
   for (const l of [...live].sort((a, b) => si(a.s) - si(b.s))) { const p = pos.get(l); p.yt = UK[l.t].y + uOff[l.t]; uOff[l.t] += p.ht; }
   const x0 = L + bar, x1 = L + bar + gap, xm = (x0 + x1) / 2;
   let paths = '';
+  // each band in the colour of its source, so how much of each use came from each source reads at a glance (the map
+  // draws a selected place's water in the same colours)
   for (const l of [...live].sort((a, b) => b.value - a.value)) {
-    const p = pos.get(l), c = UK[l.t].color;
-    paths += `<path data-s="${l.s}" data-t="${l.t}" d="M${x0},${p.ys.toFixed(1)} C${xm},${p.ys.toFixed(1)} ${xm},${p.yt.toFixed(1)} ${x1},${p.yt.toFixed(1)} L${x1},${(p.yt + p.ht).toFixed(1)} C${xm},${(p.yt + p.ht).toFixed(1)} ${xm},${(p.ys + p.hs).toFixed(1)} ${x0},${(p.ys + p.hs).toFixed(1)} Z" fill="${c}" fill-opacity="0.42"><title>${esc(SNAME[l.s] || l.s)} to ${esc(UK[l.t].name)}: ${esc(fmt(l.value))}</title></path>`;
+    const p = pos.get(l), c = SK[l.s].color;
+    paths += `<path data-s="${l.s}" data-t="${l.t}" d="M${x0},${p.ys.toFixed(1)} C${xm},${p.ys.toFixed(1)} ${xm},${p.yt.toFixed(1)} ${x1},${p.yt.toFixed(1)} L${x1},${(p.yt + p.ht).toFixed(1)} C${xm},${(p.yt + p.ht).toFixed(1)} ${xm},${(p.ys + p.hs).toFixed(1)} ${x0},${(p.ys + p.hs).toFixed(1)} Z" fill="${c}" fill-opacity="0.38"><title>${esc(SNAME[l.s] || l.s)} to ${esc(UK[l.t].name)}: ${esc(fmt(l.value))}</title></path>`;
   }
   let nodes = '';
+  // a label moved off its bar is joined to it by a small bracket: out from the bar, along, and in to the label
+  const elbow = (xa, ya, xb, yb) => `<path d="M${xa},${ya.toFixed(1)} H${((xa + xb) / 2).toFixed(1)} V${yb.toFixed(1)} H${xb}" stroke="rgba(255,247,232,.32)" fill="none"/>`;
   // sources: two-line labels on the left
   const sy = spread(S.map((s) => s.y + s.h / 2), 26, 10, H - 6);
   S.forEach((s, i) => {
     nodes += `<rect x="${L}" y="${s.y.toFixed(1)}" width="${bar}" height="${s.h.toFixed(1)}" fill="${s.color}"/>`;
     const cy = sy[i], c0 = s.y + s.h / 2;
-    if (Math.abs(cy - c0) > 3) nodes += `<path d="M${L - 2},${c0.toFixed(1)} L${L - 4},${cy.toFixed(1)}" stroke="rgba(255,247,232,.35)" fill="none"/>`;
+    if (Math.abs(cy - c0) > 3) nodes += elbow(L - 1, c0, L - 5, cy);
     nodes += `<rect data-t="*" data-s="${s.key}" x="0" y="${(cy - 12).toFixed(1)}" width="${L + bar}" height="24" fill="transparent"/>`;
     nodes += `<text x="${L - 6}" y="${(cy - 1.5).toFixed(1)}" text-anchor="end">${esc(s.name)}</text><text class="v" x="${L - 6}" y="${(cy + 10).toFixed(1)}" text-anchor="end">${esc(fmt(s.value))}</text>`;
   });
@@ -64,7 +69,7 @@ export function sankeySVG({ sources, uses, links, width = 330, unit = '', fmt = 
     nodes += `<rect data-t="${u.key}" x="${x1}" y="${u.y.toFixed(1)}" width="${bar + 90}" height="${Math.max(8, u.h).toFixed(1)}" fill="transparent"/><rect x="${x1}" y="${u.y.toFixed(1)}" width="${bar}" height="${u.h.toFixed(1)}" fill="${u.color}" fill-opacity="0.6"/>`;
     if (cf > 0) nodes += `<rect x="${x1}" y="${u.y.toFixed(1)}" width="${bar}" height="${Math.max(1, u.h * cf).toFixed(1)}" fill="#fff7e8" fill-opacity="0.92"/>`;
     const cy = uy[i], c0 = u.y + u.h / 2, tx = x1 + bar + 6;
-    if (Math.abs(cy - c0) > 3) nodes += `<path d="M${x1 + bar + 1},${c0.toFixed(1)} L${tx - 2},${cy.toFixed(1)}" stroke="rgba(255,247,232,.35)" fill="none"/>`;
+    if (Math.abs(cy - c0) > 3) nodes += elbow(x1 + bar + 1, c0, tx - 1, cy);
     nodes += `<text x="${tx}" y="${(cy + 3.5).toFixed(1)}">${esc(u.name)} <tspan class="v">${esc(fmt(u.value))}</tspan></text>`;
     if (cf > 0 && u.h > 26) nodes += `<text class="v" x="${tx}" y="${(cy + 16).toFixed(1)}">${Math.round(cf * 100)}% consumed</text>`;
   });

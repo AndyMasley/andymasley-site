@@ -5,7 +5,7 @@ import { EFF_HEIGHT_GLSL } from '../world/slab.js';
 /**
  * Rivers from HydroRIVERS (Lehner & Grill 2013): every reach with a modelled long-term mean natural discharge of at
  * least 0.8 m3/s in the lower 48 (2 m3/s in Alaska). Drawn as screen-space ribbons on the terrain, wider for more
- * discharge, with light pulses travelling downstream. Small rivers fade in as you zoom.
+ * discharge. Small rivers fade in as you zoom.
  */
 
 const SUBDIV = 0.4;   // max world units between ribbon vertices (keeps ribbons on the terrain)
@@ -152,17 +152,11 @@ export function createRiverMaterial(slabObj, shared) {
         float big = clamp(0.1 + 0.22 * lq, 0.0, 1.0);
         vec3 deep = vec3(0.010, 0.060, 0.150), light = vec3(0.050, 0.230, 0.500);
         vec3 c = mix(deep, light, big);
-        // a brighter core: moving water catching the sky
+        // a brighter core: water catching the sky
         c += vec3(0.04, 0.10, 0.17) * (1.0 - smoothstep(0.0, 0.75, abs(vSide))) * big;
-        // water moving downstream: streaks in two or three lanes, more of them on bigger rivers; spacing and speed
-        // scale with the view so they read at every zoom
-        float period = max(5.0, uCamDist * 0.30) / (0.7 + 0.5 * big);
-        float lane = floor((vSide * 0.5 + 0.5) * (vW > 5.0 ? 2.999 : 0.999));
-        float ph = fract((vDist + uTime * period * 0.25) / period + lane * 0.43);
-        float pulse = smoothstep(0.0, 0.05, ph) * (1.0 - smoothstep(0.05, 0.35, ph));
-        c += vec3(0.10, 0.22, 0.32) * pulse * big;
-        // night: the rivers glow, brightest where the most water flows
-        vec3 night = vec3(0.012, 0.090, 0.260) * (0.22 + 1.05 * big) + vec3(0.30, 0.72, 1.0) * pulse * (0.08 + 0.9 * big * big);
+        // night: the rivers are quiet lines, a little brighter where more water flows (the moving light on the map is
+        // the water people withdraw, so the rivers themselves stay still)
+        vec3 night = vec3(0.012, 0.085, 0.230) * (0.22 + 0.95 * big);
         c = mix(c, night, uNight);
         c *= uBright * mix(0.6, 1.0, vUS);
         gl_FragColor = vec4(c, a * mix(mix(0.45, 0.95, big), mix(0.35, 1.0, big), uNight) * mix(0.55, 1.0, vUS));

@@ -179,7 +179,7 @@ export class WaterModel {
           if (vol <= 0) continue;
           if (s === 'sf') { for (const [from, v2, st] of surf(vol)) if (v2 > 0) out.push({ county: i, cat: k, kind: KIND.intake, src: st, vol: v2, from, to, local: !!LOCAL[k] }); }
           else if (s === 'ss') out.push({ county: i, cat: k, kind: KIND.intake, src: SRC.sea, vol, from: sea, to });
-          else out.push({ county: i, cat: k, kind: KIND.intake, src: SRC.ground, vol, from: to, to, well: true });
+          else out.push({ county: i, cat: k, kind: KIND.intake, src: SRC.ground, vol, from: to, to, well: true, sal: s === 'gs' });
         }
       }
       if (c.W.ps > 0 && urb.length > 1) out.push({ county: i, cat: 'ps', kind: KIND.deliver, src: SRC.delivered, vol: c.W.ps, from: [plantPt], to: urb });
@@ -203,7 +203,8 @@ export class WaterModel {
       const kindSrc = p.intake && p.intake.kind === 'sea' ? SRC.sea : (p.intake && p.intake.kind === 'lake' ? SRC.lake : SRC.river);
       if (sw > 0) out.push({ county, cat: 'pt', kind: KIND.intake, src: kindSrc, vol: sw, from: intake, to: at, plant: p });
       if (ss > 0) out.push({ county, cat: 'pt', kind: KIND.intake, src: SRC.sea, vol: ss, from: intake, to: at, plant: p });
-      if (gw > 0) out.push({ county, cat: 'pt', kind: KIND.intake, src: SRC.ground, vol: gw, from: at, to: at, well: true, plant: p });
+      if (src.gf > 0) out.push({ county, cat: 'pt', kind: KIND.intake, src: SRC.ground, vol: src.gf, from: at, to: at, well: true, plant: p });
+      if (src.gs > 0) out.push({ county, cat: 'pt', kind: KIND.intake, src: SRC.ground, vol: src.gs, from: at, to: at, well: true, sal: true, plant: p });
       const a = this.anchors[county];
       const ww = a && a.wwtp.length ? a.wwtp : a && a.urban.length ? a.urban : at;
       if (rec > 0 && a) out.push({ county, cat: 'pt', kind: KIND.intake, src: SRC.reclaimed, vol: rec, from: ww, to: at, plant: p });

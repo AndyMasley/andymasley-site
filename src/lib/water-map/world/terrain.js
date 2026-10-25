@@ -201,15 +201,15 @@ float countyAt(vec2 uv) {
           // county edges from neighbouring samples (one texel apart)
           vec2 tx = fwidth(vColorUv) * 0.9;
           float e = 0.0;
-          if (uSel >= 0.0 || uHover >= 0.0) {
+          // (a selected county's outline is drawn as a line over the terrain; see world/outline.js)
+          if (uHover >= 0.0 && uHover != uSel) {
             float a = countyAt(vColorUv + vec2(tx.x, 0.0)), b = countyAt(vColorUv - vec2(tx.x, 0.0));
             float c = countyAt(vColorUv + vec2(0.0, tx.y)), d = countyAt(vColorUv - vec2(0.0, tx.y));
-            if (cid == uSel && (a != uSel || b != uSel || c != uSel || d != uSel)) e = 1.0;
-            if (cid == uHover && (a != uHover || b != uHover || c != uHover || d != uHover)) e = max(e, 0.6);
+            if (cid == uHover && (a != uHover || b != uHover || c != uHover || d != uHover)) e = 1.0;
           }
           if (cid == uHover && uHover >= 0.0) outgoingLight = outgoingLight * 1.18 + vec3(0.012, 0.010, 0.006) * (1.0 - 0.7 * uNight);
           if (uSel >= 0.0 && cid != uSel) { outgoingLight *= 0.62; devI *= 0.4; }
-          outgoingLight = mix(outgoingLight, vec3(1.0, 0.86, 0.55) * 1.4, e * 0.85);
+          outgoingLight = mix(outgoingLight, mix(vec3(0.10, 0.10, 0.09), vec3(0.62, 0.62, 0.60), uNight), e * 0.55);
         }
         // lakes & reservoirs: still water over the baked lake-floor colour
         if (lakeW > 0.01) {

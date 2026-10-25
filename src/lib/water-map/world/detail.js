@@ -164,7 +164,7 @@ vec3 cityLights(float dev, vec2 p, float pxw) {
   float arterial = 1.0 - smoothstep(0.004, 0.016, min(min(aq.x, 1.0 - aq.x), min(aq.y, 1.0 - aq.y)));
   float vis = 1.0 - smoothstep(0.003, 0.016, pxw);
   float pattern = mix(1.0, 0.18 + 1.4 * street * (0.6 + 0.4 * dh12(c)) + 2.2 * arterial + 1.6 * step(0.93, dh12(c + 3.1)) * dev, vis);
-  vec3 warm = vec3(1.0, 0.52, 0.20), white = vec3(1.0, 0.84, 0.62);
-  return mix(warm, white, smoothstep(0.55, 1.0, dev)) * k * pattern * 1.9;
+  // neutral and dim: the developed land is context, and the warm colours belong to power plants and public supply
+  return vec3(0.70, 0.73, 0.78) * k * pattern * 0.42;
 }
 `;

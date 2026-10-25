@@ -53,7 +53,9 @@ export function plantParts(p) {
   // cooling
   const towers = [];
   if (/TOWER|COMPLEX/.test(cool)) {
-    const natural = (fuel === 'nuclear' || fuel === 'coal') && mwh > 2.5e6;
+    // the tall hourglass towers only at big coal and nuclear plants that cool with towers alone; plants that mostly
+    // pass water through (COMPLEX: once-through with helper towers, like Browns Ferry) get rows of fan cells
+    const natural = (fuel === 'nuclear' || fuel === 'coal') && mwh > 2.5e6 && cool === 'RECIRCULATING TOWER';
     if (natural) {
       const n = Math.min(4, Math.max(1, Math.round(mwh / 8e6)));
       for (let i = 0; i < n; i++) {

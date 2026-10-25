@@ -223,7 +223,7 @@ html.wm-lock body {
 
 .wm-sw-src { border-radius: 50%; }
 .wm-sw-vap { background: #f4f1ea; border-radius: 50%; }
-.wm-sw-ret { background: #3c7fe0; }
+.wm-sw-ret { background: #9aa4ad; }
 
 .wm-caret {
   width: 7px;
@@ -251,6 +251,8 @@ html.wm-lock body {
 .wm .wm-lnk:hover {
   border-bottom-color: var(--wm-link);
 }
+
+.wm .wm-cap .wm-lnk { letter-spacing: inherit; text-transform: inherit; }
 
 /* the stage is always dark, so its links use the site's dark-mode link colors */
 .wm-stage a {
@@ -280,25 +282,33 @@ html.wm-lock body {
 .wm-btn:hover { border-color: var(--wm-brass); color: var(--wm-brass); }
 .wm-btn.on { border-color: var(--wm-brass); color: var(--wm-brass); }
 .wm-btn.wm-sm { height: 28px; padding: 0 var(--space-xs); font-size: var(--text-xs); }
+.wm-btn.wm-more-btn { display: none; }
 
-/* ---- left column: the use picker and the reading key */
-.wm-uses,
-.wm-key {
+/* ---- left column: the use picker, and the reading key docked under it (clear of the toolbar) */
+.wm-left {
   position: absolute;
+  top: var(--space-md);
   left: var(--space-md);
+  display: flex;
   width: var(--wm-left);
+  max-height: calc(100% - 2 * var(--space-md) - 44px);
+  flex-direction: column;
+  gap: var(--space-xs);
+  pointer-events: none;
 }
 
+.wm-left > * { pointer-events: auto; }
+
 .wm-uses {
-  top: var(--space-md);
-  max-height: calc(100% - 300px);
+  flex: 0 1 auto;
+  min-height: 0;
   overflow: auto;
   scrollbar-width: thin;
   scrollbar-color: var(--wm-rule2) transparent;
 }
 
 .wm-key {
-  bottom: var(--space-md);
+  flex: none;
 }
 
 .wm-uses-head,
@@ -326,7 +336,7 @@ html.wm-lock body {
 .wm-row {
   display: grid;
   width: 100%;
-  padding: 3px var(--space-2xs) 4px var(--space-xs);
+  padding: 2px var(--space-2xs) 3px var(--space-xs);
   border: 0;
   border-left: 2px solid transparent;
   background: none;
@@ -345,6 +355,7 @@ html.wm-lock body {
 .wm-row-b { height: 2px; margin-top: 3px; background: rgba(255, 247, 232, 0.07); grid-column: 1 / 3; }
 .wm-row-b i { display: block; height: 100%; }
 .wm-isolating .wm-row:not(.on) .wm-row-n { color: var(--wm-dim); }
+.wm .wm-rows-sep { margin: var(--space-xs) var(--space-2xs) 0; padding-top: var(--space-2xs); border-top: 1px solid var(--wm-rule); color: var(--wm-mute); font-size: var(--text-xs); }
 
 .wm-key-body { padding: 0 var(--space-sm) var(--space-sm); }
 
@@ -363,6 +374,10 @@ html.wm-lock body {
 .wm .wm-key-src { display: flex; flex-wrap: wrap; margin: var(--space-xs) 0 0; color: var(--wm-dim); font-size: var(--text-xs); gap: 2px var(--space-sm); }
 .wm-key-src span { display: inline-flex; align-items: center; }
 .wm-key-src .wm-sw { width: 8px; height: 8px; margin-right: 5px; }
+.wm-key-widths { display: flex; margin-top: var(--space-xs); flex-wrap: wrap; align-items: center; gap: 0 var(--space-sm); color: var(--wm-dim); font-size: var(--text-xs); }
+.wm-key-widths span { display: inline-flex; align-items: center; gap: 3px; }
+.wm-key-widths .wm-key-wl { flex-basis: 100%; }
+.wm-key-widths svg { display: block; }
 
 /* ---- inspector */
 .wm-insp {
@@ -378,6 +393,20 @@ html.wm-lock body {
 }
 
 .wm-grip { display: none; }
+
+/* a fade at the foot of the panel while there is more to scroll to */
+.wm-fade {
+  position: sticky;
+  bottom: calc(-1 * var(--space-md));
+  display: none;
+  height: 40px;
+  margin: -40px calc(-1 * var(--space-md)) calc(-1 * var(--space-md));
+  background: linear-gradient(rgba(14, 26, 22, 0), rgba(14, 26, 22, 0.96));
+  pointer-events: none;
+}
+
+.wm-insp.wm-more .wm-fade { display: block; }
+.wm-insp .wm-story { margin-top: var(--space-sm); }
 
 .wm-insp h3 {
   display: flex;
@@ -485,6 +514,7 @@ button.wm-li:hover { color: var(--wm-brass); }
 .wm-mix-n small { display: block; margin-top: 1px; color: var(--wm-mute); font-size: var(--text-xs); }
 .wm-mix-p { min-width: 3em; color: var(--wm-ink); text-align: right; font-variant-numeric: tabular-nums; }
 .wm-mix-v { min-width: 6.4em; color: var(--wm-dim); font-size: var(--text-xs); text-align: right; font-variant-numeric: tabular-nums; }
+.wm-mix-r.wm-mix-r2 { grid-template-columns: minmax(0, 1fr) auto; }
 
 .wm .wm-legend-line {
   margin: var(--space-2xs) 0 0;
@@ -493,6 +523,8 @@ button.wm-li:hover { color: var(--wm-brass); }
 }
 
 .wm-legend-line .wm-sw { width: 8px; height: 8px; margin-right: 4px; }
+.wm-rocks span { display: inline-flex; margin-right: var(--space-sm); align-items: center; white-space: nowrap; }
+.wm-li .wm-sw { width: 8px; height: 8px; margin-right: 6px; }
 .wm-dotsep { color: var(--wm-mute); }
 
 .wm-bars { margin-top: var(--space-xs); }
@@ -510,7 +542,7 @@ button.wm-li:hover { color: var(--wm-brass); }
 .wm-cbar .wm-t i { display: block; height: 100%; background: #7fe0b8; }
 .wm-cbar .wm-v { color: var(--wm-dim); text-align: right; font-variant-numeric: tabular-nums; }
 
-.wm-sankey { display: block; margin: var(--space-sm) 0 var(--space-2xs); }
+.wm-sankey { display: block; margin: var(--space-sm) 0 var(--space-2xs); overflow: visible; }
 .wm-sankey text { fill: var(--wm-ink); font-family: var(--font-body); font-size: var(--text-xs); }
 .wm-sankey text.v { fill: var(--wm-dim); }
 .wm-sankey text.h { fill: var(--wm-brass); }
@@ -518,19 +550,22 @@ button.wm-li:hover { color: var(--wm-brass); }
 .wm-sankey path[data-t]:hover { fill-opacity: 0.85; }
 .wm-sankey rect[data-t] { cursor: crosshair; }
 
-/* ---- toolbar */
+/* ---- toolbar: centred between the panels, or from the left edge when it would not fit there */
 .wm-bar {
   position: absolute;
   bottom: var(--space-md);
   left: calc(var(--space-md) + var(--wm-left) + var(--space-md));
   right: calc(var(--space-md) + var(--wm-right) + var(--space-md));
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   justify-content: center;
   align-items: stretch;
   gap: var(--space-2xs);
   pointer-events: none;
 }
+
+.wm-stage.wm-wide-bar .wm-bar,
+.wm-stage.wm-wide-bar .wm-hint { left: var(--space-md); }
 
 .wm-bar > * { pointer-events: auto; }
 
@@ -616,14 +651,15 @@ button.wm-li:hover { color: var(--wm-brass); }
 .wm-ramp { height: 6px; margin-top: var(--space-xs); background: linear-gradient(90deg, #173847, #1f6e86, #3a9e8c, #a9cf7f, #f3e08a); }
 .wm-ramp-t { display: flex; margin-top: 2px; justify-content: space-between; color: var(--wm-dim); font-size: var(--text-xs); }
 
-/* ---- caption: the welcome note and the tour */
+/* ---- caption: the welcome note and the tour, centred over the map like the toolbar */
 .wm-caption {
   position: absolute;
+  right: calc(var(--space-md) + var(--wm-right) + var(--space-md));
   bottom: 64px;
-  left: 50%;
-  width: min(560px, calc(100% - 2 * var(--space-md)));
+  left: calc(var(--space-md) + var(--wm-left) + var(--space-md));
+  max-width: 560px;
+  margin-inline: auto;
   padding: var(--space-sm) var(--space-md);
-  transform: translateX(-50%);
 }
 
 .wm-caption h4 {
@@ -667,6 +703,20 @@ button.wm-li:hover { color: var(--wm-brass); }
 .wm-tip .wm-tip-lc { color: var(--wm-mute); }
 .wm-tip .wm-tip-hint { margin-top: 2px; color: var(--wm-brass); }
 
+/* ---- the prompt over the map until the first selection */
+.wm .wm-hint {
+  position: absolute;
+  right: calc(var(--space-md) + var(--wm-right) + var(--space-md));
+  bottom: 64px;
+  left: calc(var(--space-md) + var(--wm-left) + var(--space-md));
+  margin: 0;
+  color: var(--wm-dim);
+  font-size: var(--text-sm);
+  pointer-events: none;
+  text-align: center;
+  text-shadow: 0 0 6px #0a1310, 0 0 2px #0a1310;
+}
+
 /* ---- labels on the map */
 .wm-labels {
   position: absolute;
@@ -701,24 +751,27 @@ button.wm-li:hover { color: var(--wm-brass); }
 .wm-lbl.dot { padding-left: 13px; }
 .wm-lbl.dot::before { position: absolute; top: 50%; left: 1px; width: 7px; height: 7px; border: 1.5px solid var(--wm-c, #fff7e8); border-radius: 50%; content: ''; transform: translateY(-50%); }
 .wm-lbl.dot.lift::before { transform: translateY(calc(-50% + var(--wm-lead, 0px))); }
-.wm-lbl.dot.lift::after { position: absolute; top: calc(50% + min(0px, var(--wm-lead, 0px))); left: 4.5px; width: 1px; height: max(var(--wm-lead, 0px), calc(-1 * var(--wm-lead, 0px))); background: rgba(255, 247, 232, 0.45); content: ''; }
+.wm-lbl.dot.lift::after { position: absolute; top: calc(50% + min(0px, var(--wm-lead, 0px))); left: 4.5px; width: 1px; height: max(var(--wm-lead, 0px), calc(-1 * var(--wm-lead, 0px))); background: rgba(255, 247, 232, 0.6); content: ''; }
 .wm-lbl.callout { font-size: var(--text-sm); }
 .wm-lbl.callout small { display: inline; margin-left: 5px; color: var(--wm-brass); }
 .wm-lbl.top { color: rgba(255, 247, 232, 0.86); font-size: var(--text-xs); }
 .wm-lbl.top small { color: var(--wm-dim); }
-.wm-lbl.trace { padding: 2px 7px 3px 14px; border: 1px solid var(--wm-rule2); background: rgba(10, 19, 16, 0.86); font-size: var(--text-xs); text-shadow: none; }
-.wm-lbl.trace::before { left: -4px; background: #fff7e8; }
-.wm-lbl.trace.lift::after { left: -0.5px; }
-.wm-lbl.trace small { display: inline; margin-left: 5px; color: var(--wm-dim); }
-.wm-lbl.trace b { margin-left: 6px; color: var(--wm-ink); font-weight: 700; font-variant-numeric: tabular-nums; }
 /* a dotted label turned to the left of its point: the dot (and the leader of a lifted label) on the right */
 .wm-lbl.dot.flip { padding-right: 13px; padding-left: 0; }
 .wm-lbl.dot.flip::before { right: 1px; left: auto; }
 .wm-lbl.dot.flip.lift::after { right: 4.5px; left: auto; }
-.wm-lbl.trace.flip { padding: 2px 14px 3px 7px; }
-.wm-lbl.trace.flip::before { right: -4px; left: auto; }
-.wm-lbl.trace.flip.lift::after { right: -0.5px; left: auto; }
+/* a selected place: each source boxed with its share, joined to its dot by a leader when it has had to move; each use
+   it goes to named, unboxed, where its channels gather */
+.wm-lbl.lead::before, .wm-lbl.lead::after { display: none; }
+.wm-lbl.trace { font-size: var(--text-xs); }
 .wm-lbl.trace .wm-sw { width: 8px; height: 8px; margin-right: 5px; }
+.wm-lbl.trace.src,
+.wm-lbl.trace.src.flip { padding: 2px 7px 3px; border: 1px solid var(--wm-rule2); background: rgba(10, 19, 16, 0.88); text-shadow: none; }
+.wm-lbl.trace.src b { margin-left: 6px; color: var(--wm-ink); font-weight: 700; font-variant-numeric: tabular-nums; }
+.wm-lbl.trace.src small { display: inline; margin-left: 6px; color: var(--wm-dim); }
+.wm-lbl.trace.use small { display: inline; color: var(--wm-dim); }
+.wm-leads { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.wm-leads path { fill: none; stroke: rgba(255, 247, 232, 0.5); stroke-width: 1; }
 
 .wm-perf {
   position: absolute;
@@ -787,8 +840,9 @@ button.wm-li:hover { color: var(--wm-brass); }
 
 @media (max-width: 980px) {
   .wm-bar { left: var(--space-md); right: calc(var(--space-md) + var(--wm-right) + var(--space-md)); }
+  .wm-search { flex-basis: 150px; min-width: 120px; }
+  .wm-bar .wm-btn { padding: 0 7px; }
   .wm-key { display: none; }
-  .wm-uses { max-height: calc(100% - 96px); }
 }
 
 /* phones and upright tablets (PHONE_MQ in core/config.js) */
@@ -796,8 +850,10 @@ button.wm-li:hover { color: var(--wm-brass); }
   .wm-stage { height: min(80svh, 760px); min-height: 480px; }
   .wm-key { display: none; }
   .wm.wm-expanded .wm-stage { height: 100%; }
-  /* the uses become a row of chips across the top of the map */
+  .wm-left { display: contents; }
+  /* the uses become a row of chips across the top of the map, fading at the right edge where more scroll in */
   .wm-uses {
+    position: absolute;
     top: var(--space-xs);
     right: 0;
     left: 0;
@@ -809,7 +865,8 @@ button.wm-li:hover { color: var(--wm-brass); }
   }
   .wm-uses-head { display: none; }
   .wm-uses.collapsed .wm-uses-body { display: block; }
-  .wm-uses-body { padding: 0 var(--space-xs); overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; }
+  .wm-uses-body { padding: 0 var(--space-xs); overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 32px), transparent); mask-image: linear-gradient(90deg, #000 calc(100% - 32px), transparent); }
+  .wm .wm-rows-sep { display: none; }
   .wm-uses-body::-webkit-scrollbar { display: none; }
   .wm-uses-body .wm-note { display: none; }
   .wm-rows { display: flex; width: max-content; gap: 4px; }
@@ -818,8 +875,8 @@ button.wm-li:hover { color: var(--wm-brass); }
   .wm-row-v, .wm-row-b { display: none; }
   .wm-row-n { font-size: var(--text-xs); }
   /* the inspector is a sheet that peeks up below the map; its grip pulls it taller */
-  .wm-insp { top: auto; right: var(--space-xs); bottom: 96px; left: var(--space-xs); width: auto; max-height: max(150px, calc(42% - 104px)); padding-top: 0; }
-  .wm-insp.wm-tall { max-height: calc(100% - 152px); }
+  .wm-insp { top: auto; right: var(--space-xs); bottom: 52px; left: var(--space-xs); width: auto; max-height: max(150px, calc(42% - 60px)); padding-top: 0; }
+  .wm-insp.wm-tall { max-height: calc(100% - 108px); }
   .wm-grip {
     position: sticky;
     top: 0;
@@ -836,10 +893,17 @@ button.wm-li:hover { color: var(--wm-brass); }
   .wm-grip::before { display: block; width: 40px; height: 3px; margin: 0 auto; background: rgba(255, 247, 232, 0.32); content: ''; }
   .wm-insp.wm-tall .wm-grip::before { background: var(--wm-brass); }
   .wm-insp .wm-close { top: 20px; z-index: 3; }
+  .wm .wm-hint { top: 50px; right: var(--space-xs); bottom: auto; left: var(--space-xs); font-size: var(--text-xs); }
+  /* the toolbar: search and one button; the others fold out above it */
   .wm-bar { right: var(--space-xs); bottom: var(--space-xs); left: var(--space-xs); flex-wrap: wrap; gap: 3px; }
-  .wm-search { flex: 1 1 100%; order: -1; }
+  .wm-search { flex: 1 1 0; order: -1; min-width: 0; }
   .wm-bar .wm-btn { flex: 1 1 auto; height: 36px; padding: 0 4px; font-size: var(--text-xs); }
-  .wm-caption { bottom: 96px; width: calc(100% - 2 * var(--space-xs)); }
+  .wm-bar .wm-btn.wm-more-btn { display: block; flex: 0 0 auto; order: -1; padding: 0 var(--space-sm); }
+  .wm-stage:not(.wm-menu-open) .wm-bar .wm-btn:not(.wm-more-btn) { display: none; }
+  .wm-stage.wm-menu-open .wm-bar .wm-btn:not(.wm-more-btn) { order: -2; }
+  .wm-stage.wm-menu-open .wm-search { flex-basis: 60%; }
+  .wm-caption { right: var(--space-xs); bottom: 52px; left: var(--space-xs); max-width: none; margin: 0; }
   .wm-caption > p:not(.wm-cap) { line-height: var(--leading-note); }
-  .wm-layers { bottom: 96px; }
+  .wm-layers { bottom: 92px; }
+  .wm-stage.wm-menu-open .wm-insp, .wm-stage.wm-menu-open .wm-caption { bottom: 92px; }
 }

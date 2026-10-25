@@ -48,7 +48,7 @@ export class Tour {
       { kicker: 'One use at a time', title: 'Crops consume the most', view: 'home', iso: 'ir', night: true,
         text: `Crop irrigation withdrew ${B(n.W.ir)} billion gallons a day, and unlike power plants it used most of it up: crops and golf courses accounted for ${irShareOfCu}% of the water USGS estimated was consumed in 2015. The counties glow green where irrigation is heaviest per square mile, along the Mississippi, across the Great Plains and in the irrigated valleys of the West.` },
       ...(fresC ? [{ kicker: 'Tracing one county', title: 'Fresno County, California', view: this.at('06019', 70, 1.0, 0.25), select: fresno, night: false,
-        text: `Clicking a county names where its water comes from and where it goes. Fresno County withdrew ${B(fresC.total)} billion gallons a day, ${pct(fresC.W.ir, fresC.total)}% of it for crops, and ${fresGw}% of the crop water came from wells. 2015 was the fourth year of a severe drought, when surface deliveries were cut. California as a whole irrigated with ${B(ca.W.ir + ca.W.go)} billion gallons a day.` }] : []),
+        text: `Clicking a county draws its water in the color of each source, with the share from each in a box. Fresno County withdrew ${B(fresC.total)} billion gallons a day, ${pct(fresC.W.ir, fresC.total)}% of it for crops, and ${fresGw}% of the crop water came from wells. 2015 was the fourth year of a severe drought, when surface deliveries were cut. California as a whole irrigated with ${B(ca.W.ir + ca.W.go)} billion gallons a day.` }] : []),
       ...(hp ? [{ kicker: 'Underground', title: 'The High Plains aquifer', view: this.at('31079', 560, 1.0, 0.0), aq: true, sel: { aquifer: hp.i }, night: true,
         text: `Under the land are aquifers: sand, gravel and rock holding water in their pores. Wells drew ${nf(hp.total / 1000, 1)} billion gallons a day from the High Plains aquifer in 2015, ${pct(hp.gw.it, hp.total)}% of it for irrigation${mrva ? `, and ${nf(mrva.total / 1000, 1)} billion from the Mississippi River Valley alluvial aquifer` : ''}. Konikow (2013) estimates the High Plains aquifer lost about 341 cubic kilometers of water between 1900 and 2008. Groundwater supplied ${gwShare}% of all withdrawals.` }] : []),
       ...(cookC ? [{ kicker: 'Public supply', title: 'Chicago and Lake Michigan', view: this.at('17031', 70, 0.95, 0.0), select: cook, night: true,
@@ -94,7 +94,7 @@ export class Tour {
     if (s.iso) hud.showCategory(s.iso);
     else if (s.aq) hud.showGroundwater();
     else hud.showNational();
-    if (s.view === 'home') app.flyTo({ ...app._home() }, 2400); else if (s.view) app.flyTo(s.view, 2600);
+    if (s.view === 'home') app.flyTo({ ...app._home() }, 2400, false); else if (s.view) app.flyTo(s.view, 2600);
     if (s.select != null) this.later(() => { if (this.i === i) app.selectCounty(s.select, false); }, 1300);
     if (s.sel && s.sel.aquifer) this.later(() => { if (this.i === i) app.selectAquifer(s.sel.aquifer, false); }, 1300);
   }

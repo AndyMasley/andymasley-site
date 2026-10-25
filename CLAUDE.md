@@ -118,6 +118,8 @@ A 3D map of USGS 2015 county water use ("Where America’s water goes"). The Thr
 - The map sits on a dark screen like `/town`; the chrome around and over it uses the site tokens (Georgia, hairlines, square corners, no shadows). Keep it that way.
 - Every number on it comes from the sources in the page’s “About the data” section. If a data value changes, update that section and the panel text that quotes it.
 - The page script disposes the app on `astro:before-swap`, because the site uses view transitions.
+- Color means use for the streaks and the use list. A selected place is the one exception: clicking a county, power plant, treatment plant or golf course calls `FlowParticles.setFocus`, which draws that place's channels, particles and dots in the color of each source (`SRC_DEF` in `core/config.js`, the same names and colors as the panels), with widths set by their share of its water, returns as gray dashes and no fate labels. Each source is boxed on the map with its share and is never dropped; keep those shares and the panel's "Where its water comes from" in agreement (both include reclaimed wastewater).
+- Andy had the Compare chart (a log-scale comparison) removed in Oct 2026. Do not bring it back.
 
 ## Project structure
 

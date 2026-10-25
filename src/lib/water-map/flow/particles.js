@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { CATS } from '../core/config.js';
+import { CATS, SRC_DEF, RETURN_GRAY, PIPED_GRAY } from '../core/config.js';
 import { KIND, SRC, CAT_KEYS } from './model.js';
 
 /**
@@ -20,8 +20,15 @@ const SRC_COL = {
   [SRC.river]: [0.22, 0.55, 1.00], [SRC.lake]: [0.22, 0.55, 1.00], [SRC.ground]: [0.18, 0.95, 0.78], [SRC.sea]: [0.25, 0.92, 0.95],
   [SRC.reclaimed]: [0.70, 0.55, 1.00], [SRC.delivered]: [0.40, 0.68, 1.00],
 };
-const RET_COL = [0.20, 0.50, 1.0];
 const hexLin = (h) => { const c = new THREE.Color(h); return [c.r, c.g, c.b]; };   // three converts hex sRGB -> linear
+/** the kind of source a stream draws from, as the panels name it (SRC_DEF) */
+export const srcKey = (s) => (s.src === SRC.ground ? (s.sal ? 'gs' : 'gf') : s.src === SRC.sea ? 'ss' : s.src === SRC.reclaimed ? 'rec' : s.src === SRC.delivered ? 'ps' : 'sf');
+const SRC_LIN = Object.fromEntries(Object.entries(SRC_DEF).map(([k, d]) => [k, hexLin(d.color)]));
+const RET_LIN = hexLin(RETURN_GRAY), PIPED_LIN = hexLin(PIPED_GRAY);
+/** a selected place's colours: each stream in the colour of its source; returns grey; a utility's pipes to its customers pale */
+const placeCol = (s) => (s.kind === KIND.ret ? RET_LIN : s.kind === KIND.deliver ? PIPED_LIN : SRC_LIN[srcKey(s)]);
+/** diameter in pixels of the dot at a source drawing share f of a place's water (its area follows the water) */
+export const markerPx = (f) => 5 + 14 * Math.sqrt(Math.min(1, Math.max(0, f)));
 
 // small deterministic RNG so the layout is stable between loads
 export function mulberry32(a) { return () => { a |= 0; a = (a + 0x6D2B79F5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
@@ -84,7 +91,7 @@ export class FlowParticles {
     this.common = {
       uExag: shared.uExag, uTime: shared.uTime, uCamDist: shared.uCamDist, uViewport: shared.uViewport, uSel: shared.uSelCounty, uHov: shared.uHoverCounty,
       uCat: { value: this.catVis }, uKind: { value: this.kindVis }, uHole: { value: this.hole },
-      uSize: { value: 1 }, uAlpha: { value: 1 }, uSpeed: { value: 1 }, uTrail: { value: 0.06 }, uCatW: { value: this.catW }, uFocusSrc: { value: -1 }, uVapor: { value: 1 },
+      uSize: { value: 1 }, uAlpha: { value: 1 }, uDayLook: { value: 0 }, uSpeed: { value: 1 }, uTrail: { value: 0.06 }, uCatW: { value: this.catW }, uFocusSrc: { value: -1 }, uVapor: { value: 1 },
       uAqDepth: shared.uAqDepth,
       uModelScale: { value: 0.1 }, uAqMode: shared.uAqMode, uNight: shared.uNight,
       // a selected place's own water is redrawn by the focus layer: hide it here and dim everything else
@@ -148,10 +155,15 @@ export class FlowParticles {
     return s._rg;
   }
 
-  /** turn streams into particle arrays (and, optionally, channel lines) at `unit` Mgal/d per particle */
-  generate(streams, unit, rnd, withPaths = false, tight = false) {
-    const J = tight ? 0 : 1;   // jitter around the anchors (none when particles must ride drawn channels)
-    const cnt = streams.map((s) => { const x = s.vol / unit; let n = Math.floor(x); if (rnd() < x - n) n++; return n; });
+  /**
+   * turn streams into particle arrays (and, optionally, channel lines) at `unit` Mgal/d per particle. For a selected
+   * place (`place`), particles ride its drawn channels exactly, take the colour of their source, and returns are left
+   * to the channels' grey dashes.
+   */
+  generate(streams, unit, rnd, withPaths = false, place = false) {
+    const J = place ? 0 : 1;   // jitter around the anchors (none when particles must ride drawn channels)
+    // (for a place, the water it returns and a utility's pipes to its customers are drawn as channels only)
+    const cnt = streams.map((s) => { if (place && (s.kind === KIND.ret || s.kind === KIND.deliver)) return 0; const x = s.vol / unit; let n = Math.floor(x); if (rnd() < x - n) n++; return n; });
     const N = cnt.reduce((a, b) => a + b, 0);
     const A = new Float32Array(N * 4), Hb = new Float32Array(N * 4), B = new Float32Array(N * 4), C = new Float32Array(N * 4), D = new Float32Array(N * 4), E = new Float32Array(N * 4);
     const col0 = new Float32Array(N * 3), col1 = new Float32Array(N * 3);
@@ -215,7 +227,7 @@ export class FlowParticles {
             bx = r[0] + (rnd() - 0.5) * 0.04 * J; bz = r[1] + (rnd() - 0.5) * 0.04 * J;
             hx = bx; hz = bz;
             L = Math.hypot(bx - ax, bz - az); arc1 = 0.008 + 0.025 * L;
-            addLine([o[0], o[1]], [r[0], r[1]], RET_COL, unit, s.county, s.kind);
+            addLine([o[0], o[1]], [r[0], r[1]], RET_LIN, unit, s.county, s.kind);
           }
         } else if (s.local && s.kind === KIND.intake) {
           // diffuse uses (fields, ranches, rural homes, mines): each intake runs to a canal head, then out to the land
@@ -259,11 +271,12 @@ export class FlowParticles {
         // w: 0 not a power plant, 1 a plant outside the USGS plant model, 2 + i the model's plant i
         D[4 * p] = s.county; D[4 * p + 1] = ci; D[4 * p + 2] = s.src; D[4 * p + 3] = s.plant ? (s.plant._i != null ? s.plant._i + 2 : 1) : 0;
         E[4 * p] = c1; E[4 * p + 1] = c2; E[4 * p + 2] = alphaK;
-        // colours: water on its way to a use is the colour of that use the whole way; vapour is white; returns turn back
-        // to river blue as they leave
+        // colours: water on its way to a use is the colour of that use the whole way (for a selected place, the colour of
+        // its source); vapour is white; returns fade to grey as they leave
         let k0 = cc, k1 = cc;
-        if (s.kind === KIND.vapor) { k0 = [0.95, 0.95, 0.93]; k1 = [0.80, 0.84, 0.90]; }
-        else if (s.kind === KIND.ret) { k0 = cc; k1 = RET_COL; }
+        if (s.kind === KIND.vapor) { k0 = [0.95, 0.95, 0.93]; k1 = [0.84, 0.85, 0.85]; }
+        else if (place) { k0 = k1 = placeCol(s); }
+        else if (s.kind === KIND.ret) { k0 = cc; k1 = RET_LIN; }
         else if (s.kind === KIND.deliver) { k0 = cc; k1 = [Math.min(1, cc[0] * 1.1 + 0.08), Math.min(1, cc[1] * 1.1 + 0.08), Math.min(1, cc[2] * 1.1 + 0.08)]; }
         col0.set(k0, 3 * p); col1.set(k1, 3 * p);
       }
@@ -349,61 +362,64 @@ export class FlowParticles {
   }
 
   /**
-   * The channels a set of streams runs through, as ribbons whose width follows the water they carry. They use the same
-   * anchors and curves as generate() with tight paths, so the focus layer's particles ride on them: trunks from each
-   * source to the hub, branches from the hub to each use site, short local runs, wells, returns and deliveries.
+   * The channels a selected place's water runs through, as ribbons whose width follows the water they carry, in the
+   * colour of its source. They use the same anchors and curves as generate() does for a place, so its particles ride
+   * on them: trunks from each source to the hub, branches from the hub to each use site, short local runs, wells,
+   * returns (grey) and a utility's pipes to its customers (pale).
    */
-  channels(streams) {
+  channels(streams, W = 0) {
     const segs = new Map();
+    // a flow under 1% of the place's water draws only its trunk from the source, not a branch to every site it serves
+    const tiny = (s) => W > 0 && s.vol < 0.01 * W;
     const add = (r) => {
-      const key = `${r.cat}|${r.kind}|${r.a[0].toFixed(3)},${r.a[1].toFixed(3)}|${r.h[0].toFixed(3)},${r.h[1].toFixed(3)}|${r.b[0].toFixed(3)},${r.b[1].toFixed(3)}|${r.split}`;
+      const key = `${r.cat}|${r.kind}|${r.sk}|${r.a[0].toFixed(3)},${r.a[1].toFixed(3)}|${r.h[0].toFixed(3)},${r.h[1].toFixed(3)}|${r.b[0].toFixed(3)},${r.b[1].toFixed(3)}|${r.split}`;
       const e = segs.get(key);
       if (e) e.vol += r.vol; else segs.set(key, r);
     };
     const wts = (list) => { const w = list.map((p) => (list[0] && list[0].length > 2 ? Math.sqrt(p[2] || 1) : 1)); const t = w.reduce((a, b) => a + b, 0) || 1; return w.map((x) => x / t); };
     for (const s of streams) {
       if (s.kind === KIND.vapor || !(s.vol > 0)) continue;
-      const cc = CAT_COL[s.cat];
+      const col = placeCol(s);
       const hub = this.hubOf(s);
       const low = s.cat === 'ir' || s.cat === 'go' || s.cat === 'li' || s.cat === 'do' || s.kind === KIND.deliver;
-      const base = { cat: s.cat, kind: s.kind, county: s.county, well: false, depth: 0 };
+      const base = { cat: s.cat, kind: s.kind, sk: s.kind === KIND.intake ? srcKey(s) : '', county: s.county, well: false, depth: 0, col };
       if (s.kind === KIND.intake && s.well) {
-        for (const t of s.to) add({ ...base, a: t, h: t, b: t, split: 1, arc1: 0.05, arc2: 0, depth: 0.28, well: true, vol: s.vol / s.to.length, col: cc });
+        for (const t of s.to) add({ ...base, a: t, h: t, b: t, split: 1, arc1: 0.05, arc2: 0, depth: 0.28, well: true, vol: s.vol / s.to.length });
       } else if (s.kind === KIND.ret) {
         if (s.spread) {
-          // fields -> collector (one thin run per field), collector -> river (one channel per collector)
+          // fields -> collector (one run per field), collector -> river (one channel per collector)
           const RG = this.returnGroups(s), per = s.vol / s.from.length;
           for (const e of RG.groups) {
-            for (const o of e.sites) { const L1 = Math.hypot(e.head[0] - o[0], e.head[1] - o[1]); if (L1 > 1e-4) add({ ...base, a: o, h: e.head, b: e.head, split: 1, arc1: 0.006 + 0.02 * L1, arc2: 0, vol: per, col: RET_COL }); }
+            for (const o of e.sites) { const L1 = Math.hypot(e.head[0] - o[0], e.head[1] - o[1]); if (L1 > 1e-4) add({ ...base, a: o, h: e.head, b: e.head, split: 1, arc1: 0.006 + 0.02 * L1, arc2: 0, vol: per }); }
             const L2 = Math.hypot(e.r[0] - e.head[0], e.r[1] - e.head[1]);
-            if (L2 > 1e-4) add({ ...base, a: e.head, h: e.head, b: e.r, split: 0, arc1: 0, arc2: 0.008 + 0.025 * L2, vol: per * e.sites.length, col: RET_COL });
+            if (L2 > 1e-4) add({ ...base, a: e.head, h: e.head, b: e.r, split: 0, arc1: 0, arc2: 0.008 + 0.025 * L2, vol: per * e.sites.length });
           }
         } else {
           const o = s.from[0], r = s.to[0], L = Math.hypot(r[0] - o[0], r[1] - o[1]);
-          if (L > 1e-4) add({ ...base, a: o, h: r, b: r, split: 1, arc1: 0.008 + 0.025 * L, arc2: 0, vol: s.vol, col: RET_COL });
+          if (L > 1e-4) add({ ...base, a: o, h: r, b: r, split: 1, arc1: 0.008 + 0.025 * L, arc2: 0, vol: s.vol });
         }
       } else if (s.local && s.kind === KIND.intake) {
         // intake -> canal head (the whole share of that intake), canal head -> each field
         const w = wts(s.from), fans = this.localFans(s);
         s.from.forEach((f, j) => {
           const fan = fans[j], L1 = Math.hypot(fan.head[0] - f[0], fan.head[1] - f[1]);
-          if (L1 > 1e-4) add({ ...base, a: f, h: fan.head, b: fan.head, split: 1, arc1: 0.008 + 0.025 * L1, arc2: 0, vol: s.vol * w[j], col: cc });
-          for (const t of fan.near) { const L2 = Math.hypot(t[0] - fan.head[0], t[1] - fan.head[1]); if (L2 > 1e-4) add({ ...base, a: fan.head, h: fan.head, b: t, split: 0, arc1: 0, arc2: 0.004 + 0.02 * L2, vol: s.vol * w[j] / fan.near.length, col: cc }); }
+          if (L1 > 1e-4) add({ ...base, a: f, h: fan.head, b: fan.head, split: 1, arc1: 0.008 + 0.025 * L1, arc2: 0, vol: s.vol * w[j] });
+          if (!tiny(s)) for (const t of fan.near) { const L2 = Math.hypot(t[0] - fan.head[0], t[1] - fan.head[1]); if (L2 > 1e-4) add({ ...base, a: fan.head, h: fan.head, b: t, split: 0, arc1: 0, arc2: 0.004 + 0.02 * L2, vol: s.vol * w[j] / fan.near.length }); }
         });
       } else {
         const from = s.kind === KIND.deliver ? [s.from[0]] : s.from;
         const w = s.kind === KIND.deliver ? [1] : wts(from);
-        const lighter = s.kind === KIND.deliver ? [Math.min(1, cc[0] * 1.1 + 0.08), Math.min(1, cc[1] * 1.1 + 0.08), Math.min(1, cc[2] * 1.1 + 0.08)] : cc;
-        from.forEach((f, j) => { const L1 = Math.hypot(hub[0] - f[0], hub[1] - f[1]); if (L1 > 1e-4) add({ ...base, a: f, h: hub, b: hub, split: 1, arc1: (low ? 0.008 : 0.014) + (low ? 0.025 : 0.05) * L1, arc2: 0, vol: s.vol * w[j], col: cc }); });
-        for (const t of s.to) { const L2 = Math.hypot(t[0] - hub[0], t[1] - hub[1]); if (L2 > 1e-4) add({ ...base, a: hub, h: hub, b: t, split: 0, arc1: 0, arc2: 0.004 + 0.02 * L2, vol: s.vol / s.to.length, col: lighter }); }
+        from.forEach((f, j) => { const L1 = Math.hypot(hub[0] - f[0], hub[1] - f[1]); if (L1 > 1e-4) add({ ...base, a: f, h: hub, b: hub, split: 1, arc1: (low ? 0.008 : 0.014) + (low ? 0.025 : 0.05) * L1, arc2: 0, vol: s.vol * w[j] }); });
+        if (!tiny(s)) for (const t of s.to) { const L2 = Math.hypot(t[0] - hub[0], t[1] - hub[1]); if (L2 > 1e-4) add({ ...base, a: hub, h: hub, b: t, split: 0, arc1: 0, arc2: 0.004 + 0.02 * L2, vol: s.vol / s.to.length }); }
       }
     }
     return [...segs.values()];
   }
 
   /** ribbon geometry for channels: two vertices per sample along each curve, offset across it on the screen */
-  ribbonMesh(segs) {
+  ribbonMesh(segs, total = 0) {
     let vmax = 0; for (const r of segs) vmax = Math.max(vmax, r.vol);
+    const V = total > 0 ? total : vmax;
     let nv = 0;
     const steps = segs.map((r) => { const L = Math.hypot(r.b[0] - r.a[0], r.b[1] - r.a[1]) + Math.hypot(r.h[0] - r.a[0], r.h[1] - r.a[1]); const n = r.well ? 6 : Math.max(8, Math.min(40, Math.ceil(L * 10))); nv += 2 * (n + 1); return n; });
     const A = new Float32Array(nv * 4), Hb = new Float32Array(nv * 4), B = new Float32Array(nv * 4), C = new Float32Array(nv * 4), E = new Float32Array(nv * 4), Wd = new Float32Array(nv * 2), Col = new Float32Array(nv * 3);
@@ -414,10 +430,11 @@ export class FlowParticles {
       const ha = this.hAt(r.a[0], r.a[1]), hh = this.hAt(r.h[0], r.h[1]), hb = this.hAt(r.b[0], r.b[1]);
       let c1 = 0, c2 = 0;
       if (!r.well) { if (r.split < 1) { c1 = this.clearance(r.a[0], r.a[1], ha, r.h[0], r.h[1], hh); c2 = this.clearance(r.h[0], r.h[1], hh, r.b[0], r.b[1], hb); } else c1 = this.clearance(r.a[0], r.a[1], ha, r.b[0], r.b[1], hb); }
-      const f = Math.sqrt(r.vol / (vmax || 1));
-      const ret = r.kind === KIND.ret;
-      // small flows stay faint so the big channels carry the picture
-      const width = (1.3 + 9.5 * f) * (ret ? 0.7 : 1), alpha = (0.2 + 0.72 * Math.pow(f, 0.8)) * (ret ? 0.85 : 1);
+      const f = Math.min(1, Math.sqrt(r.vol / (V || 1)));
+      // one width scale for everything a place draws (the reading key shows it); small flows stay faint so the big
+      // channels carry the picture, and returns and pipes to customers stay quieter than the water's sources
+      const quiet = r.kind === KIND.ret ? 0.62 : r.kind === KIND.deliver ? 0.55 : 1;
+      const width = 1.3 + 10 * f, alpha = (0.03 + 0.9 * Math.pow(f, 0.75)) * quiet;
       const len = Math.hypot(r.h[0] - r.a[0], r.h[1] - r.a[1]) + Math.hypot(r.b[0] - r.h[0], r.b[1] - r.h[1]);
       const v0 = v;
       for (let k = 0; k <= n; k++) {
@@ -487,48 +504,51 @@ export class FlowParticles {
     });
   }
 
-  /** a dot at every source of a set of streams, in the colour of that kind of source, sized by the water drawn there */
-  sourceMarkers(streams) {
+  /** a dot at every source of a set of streams, in the colour of that kind of source, its area following the water drawn there */
+  sourceMarkers(streams, total = 0) {
     const pts = new Map();
     const add = (p, k, v) => { const key = `${k}|${p[0].toFixed(3)},${p[1].toFixed(3)}`; const e = pts.get(key); if (e) e.v += v; else pts.set(key, { x: p[0], z: p[1], k, v }); };
     const wts = (list) => { const w = list.map((p) => (list[0] && list[0].length > 2 ? Math.sqrt(p[2] || 1) : 1)); const t = w.reduce((a, b) => a + b, 0) || 1; return w.map((x) => x / t); };
     for (const s of streams) {
       if (s.kind !== KIND.intake || !(s.vol > 0)) continue;
-      const k = s.src === SRC.ground ? 'gw' : s.src === SRC.sea ? 'sea' : s.src === SRC.reclaimed ? 'rec' : s.src === SRC.delivered ? 'ps' : 'sw';
+      const k = srcKey(s);
       if (s.well) for (const t of s.to) add(t, k, s.vol / s.to.length);
       else { const w = wts(s.from); s.from.forEach((f, j) => add(f, k, s.vol * w[j])); }
     }
     const list = [...pts.values()];
     if (!list.length) return null;
     let vmax = 0; for (const p of list) vmax = Math.max(vmax, p.v);
-    const COL = { sw: hexLin('#5aa9ff'), gw: hexLin('#7fe0b8'), sea: hexLin('#4fd0c8'), rec: hexLin('#b49cff'), ps: hexLin('#f2cf63') };
-    const n = list.length, P = new Float32Array(n * 4), Cl = new Float32Array(n * 3);
-    list.forEach((p, i) => { P.set([p.x, this.hAt(p.x, p.z), p.z, 5 + 9 * Math.sqrt(p.v / (vmax || 1))], 4 * i); Cl.set(COL[p.k], 3 * i); });
+    const V = total > 0 ? total : vmax;
+    const n = list.length, P = new Float32Array(n * 4), Cl = new Float32Array(n * 4);
+    // a well is a ring, an intake a filled dot
+    list.forEach((p, i) => { P.set([p.x, this.hAt(p.x, p.z), p.z, markerPx(p.v / (V || 1))], 4 * i); Cl.set([...SRC_LIN[p.k], p.k === 'gf' || p.k === 'gs' ? 1 : 0], 4 * i); });
     const g = new THREE.InstancedBufferGeometry();
     g.setAttribute('aCorner', new THREE.Float32BufferAttribute([-1, -1, 1, -1, 1, 1, -1, 1], 2));
     g.setIndex([0, 1, 2, 0, 2, 3]);
     g.setAttribute('aP', new THREE.InstancedBufferAttribute(P, 4));
-    g.setAttribute('aCol', new THREE.InstancedBufferAttribute(Cl, 3));
+    g.setAttribute('aCol', new THREE.InstancedBufferAttribute(Cl, 4));
     g.instanceCount = n;
     const mat = new THREE.ShaderMaterial({
       transparent: true, depthWrite: false, depthTest: false, blending: THREE.NormalBlending, premultipliedAlpha: true,
       uniforms: { uExag: this.common.uExag, uViewport: this.common.uViewport, uA: { value: 0 } },
       vertexShader: /* glsl */`
         uniform float uExag; uniform vec2 uViewport;
-        attribute vec2 aCorner; attribute vec4 aP; attribute vec3 aCol;
-        varying vec2 vUv; varying vec3 vCol; varying float vR;
+        attribute vec2 aCorner; attribute vec4 aP; attribute vec4 aCol;
+        varying vec2 vUv; varying vec3 vCol; varying float vR, vRing;
         void main() {
           vec4 c = projectionMatrix * (viewMatrix * vec4(aP.x, aP.y * uExag + 0.02, aP.z, 1.0));
           float r = aP.w * 0.5 + 1.5;
           c.xy += aCorner * r * 2.0 / uViewport * c.w;
-          gl_Position = c; vUv = aCorner * r; vCol = aCol; vR = aP.w * 0.5;
+          gl_Position = c; vUv = aCorner * r; vCol = aCol.rgb; vR = aP.w * 0.5; vRing = aCol.a;
         }`,
       fragmentShader: /* glsl */`
         uniform float uA;
-        varying vec2 vUv; varying vec3 vCol; varying float vR;
+        varying vec2 vUv; varying vec3 vCol; varying float vR, vRing;
         void main() {
           float d = length(vUv);
           float fill = 1.0 - smoothstep(vR - 1.2, vR - 0.4, d);
+          // a well: a coloured ring around a small dark centre
+          if (vRing > 0.5) fill *= smoothstep(vR * 0.32 - 0.6, vR * 0.32 + 0.4, d);
           float ring = 1.0 - smoothstep(vR + 0.4, vR + 1.3, d);
           if (ring < 0.01) discard;
           float a = uA * (fill * 0.95 + (ring - fill) * 0.8);
@@ -542,15 +562,16 @@ export class FlowParticles {
 
   /** draw these streams on their own, as channels with particles riding them; every other flow steps back */
   setFocus(streams, hide = {}) {
-    this.clearFocus();
+    this.clearFocus(); this.clearPreview();
     const list = (streams || []).filter((s) => s.vol > 0);
     if (!list.length) return;
-    const tot = list.reduce((a, s) => a + s.vol, 0);
+    const tot = list.reduce((a, s) => a + (s.kind === KIND.ret ? 0 : s.vol), 0);
     const unit = Math.max(0.0025, tot / 9000);
     const arr = this.generate(list, unit, mulberry32(7 + (list[0].county || 0)), false, true);
     const mesh = arr.N ? this.makeMesh(arr, 2) : null;
-    const ribbons = this.ribbonMesh(this.channels(list));
-    const markers = this.sourceMarkers(list);
+    const W = list.filter((s) => s.kind === KIND.intake).reduce((a, s) => a + s.vol, 0) || tot;
+    const ribbons = this.ribbonMesh(this.channels(list, W), W);
+    const markers = this.sourceMarkers(list, W);
     if (mesh) this.group.add(mesh);
     this.group.add(ribbons);
     if (markers) this.group.add(markers);
@@ -559,6 +580,23 @@ export class FlowParticles {
     const c = this.common;
     c.uHideCounty.value = hide.county ?? -1; c.uHideCat.value = hide.cat ?? -1; c.uHidePlant.value = hide.plant ?? -1;
     c.uFocusOn.value = 1;
+  }
+  /** a lighter look at a place under the pointer: its channels and source dots, no dimming of anything else */
+  setPreview(streams) {
+    this.clearPreview();
+    const list = (streams || []).filter((s) => s.vol > 0);
+    if (!list.length) return;
+    const W = list.filter((s) => s.kind === KIND.intake).reduce((a, s) => a + s.vol, 0) || list.reduce((a, s) => a + s.vol, 0);
+    const ribbons = this.ribbonMesh(this.channels(list, W), W);
+    const markers = this.sourceMarkers(list, W);
+    this.group.add(ribbons); if (markers) this.group.add(markers);
+    this.preview = { ribbons, markers, t0: performance.now() };
+  }
+  clearPreview() {
+    const f = this.preview;
+    if (!f) return;
+    for (const m of [f.ribbons, f.markers]) if (m) { this.group.remove(m); m.geometry.dispose(); m.material.dispose(); }
+    this.preview = null;
   }
   clearFocus() {
     const f = this.focus;
@@ -598,12 +636,11 @@ export class FlowParticles {
   }
 
   material(mode) {
-    // the national layer glows (additive: density reads as brightness); up close, streaks are drawn over one another
-    // so a busy channel keeps the colour of its use instead of washing out to white
-    const isDetail = mode > 0;
+    // streaks are drawn over one another rather than adding light, so the busiest places keep the colour of their use
+    // instead of washing out to white (white is kept for water consumed); at night they are drawn bright enough to glow
     return new THREE.ShaderMaterial({
       transparent: true, depthWrite: false, depthTest: true, side: THREE.DoubleSide,
-      blending: isDetail ? THREE.NormalBlending : THREE.AdditiveBlending, premultipliedAlpha: isDetail,
+      blending: THREE.NormalBlending, premultipliedAlpha: true,
       uniforms: { ...this.common, uDetail: { value: mode }, uLayerAlpha: { value: 1 }, ...(mode === 2 ? { uFocusOn: { value: 0 } } : {}) },
       vertexShader: /* glsl */`
         uniform float uExag, uTime, uCamDist, uSize, uSpeed, uSel, uHov, uFocusSrc, uTrail, uVapor, uDetail, uModelScale, uAqMode, uAqDepth;
@@ -637,12 +674,13 @@ export class FlowParticles {
             bool m = uFocusSrc < 0.5 ? (sc < 0.5 || abs(sc - 5.0) < 0.5) : uFocusSrc < 1.5 ? abs(sc - 1.0) < 0.5 : abs(sc - 2.0) < 0.5;
             if (!m) vis *= 0.05;
           }
-          if (uAqMode > 0.001 && abs(aD.z - 1.0) > 0.5) vis *= 1.0 - 0.85 * uAqMode;   // underground view: groundwater only
+          if (uAqMode > 0.001 && abs(aD.z - 1.0) > 0.5) vis *= 1.0 - uAqMode;   // underground view: groundwater only
           // the detail layer covers a disc around the view; the national layer gives way inside it
           float dh = length(aB.xz - uHole.xy);
           float inside = 1.0 - smoothstep(uHole.z, uHole.w, dh);
           if (uDetail < 1.5) vis *= uDetail > 0.5 ? inside : 1.0 - inside;
-          vA = env * vis * (vapor ? 0.55 : 1.0) * aE.z;
+          // returns stay faint, so the colour of a place is the colour of the use its water went to
+          vA = env * vis * (vapor ? 0.55 : kind > 1.5 && kind < 2.5 ? 0.4 : 1.0) * aE.z;
           if (vA < 0.003) { gl_Position = vec4(2.0, 2.0, 2.0, 1.0); return; }
           float trail = vapor ? 0.14 : (aD.w > 0.5 ? 0.16 : uTrail);
           vec3 pH = pathAt(t, kind), pT = pathAt(max(0.0, t - trail), kind);
@@ -672,7 +710,7 @@ export class FlowParticles {
           vCol = mix(aCol0, aCol1, smoothstep(0.04, 0.32, t));   // the colour of the use, after a short start in the colour of the source
         }`,
       fragmentShader: /* glsl */`
-        uniform float uAlpha, uLayerAlpha, uDetail;
+        uniform float uAlpha, uLayerAlpha, uDetail, uDayLook;
         varying vec3 vCol; varying float vA, vAlong, vAcross, vLen, vW, vPuff;
         void main() {
           float r = vW * 0.5;
@@ -683,15 +721,30 @@ export class FlowParticles {
           if (vPuff > 0.5) k *= 0.30;
           if (k < 0.004) discard;
           float a = k * vA * uLayerAlpha;
-          if (uDetail > 0.5) gl_FragColor = vec4(vCol * 1.5 * a, a * 0.92);
-          else gl_FragColor = vec4(vCol * a * uAlpha, 1.0);
+          // (a selected place's particles stay close to the colour of their source)
+          if (uDetail > 0.5) gl_FragColor = vec4(vCol * (uDetail > 1.5 ? 1.12 : 1.5) * a, a * 0.92);
+          // by day the national layer is drawn over the land in the colour of each use
+          else if (uDayLook > 0.5) gl_FragColor = vec4(vCol * 0.85 * a * 0.8, a * 0.8);
+          // by night, the same colours bright enough to glow
+          else { float an = min(0.9, a * uAlpha * 4.5); gl_FragColor = vec4(vCol * 1.2 * an, an); }
         }`,
     });
   }
 
+  /** day: the national layer is drawn in the plain colour of each use; night: brighter, so it glows */
+  setDayLook(day) {
+    if (!this.mat || this._day === day) return;
+    this._day = day;
+    this.common.uDayLook.value = day ? 1 : 0;
+  }
   /** per frame: brightness by zoom, and the detail layer around the view centre */
   update(camDist, cx, cz) {
     if (!this.mat) return;
+    if (this.preview) {
+      const f = this.preview, a = 0.6 * Math.min(1, (performance.now() - f.t0) / 300);
+      f.ribbons.material.uniforms.uRibbon.value = a;
+      if (f.markers) f.markers.material.uniforms.uA.value = a;
+    }
     if (this.focus) {
       // the focus layer fades in over half a second
       const f = this.focus, a = Math.min(1, (performance.now() - f.t0) / 500);
@@ -701,7 +754,8 @@ export class FlowParticles {
     }
     const near = Math.min(1, Math.max(0, (900 - camDist) / 800));
     this.common.uAlpha.value = (0.10 + 0.32 * near) * (1 + 0.35 * this.shared.uNight.value);
-    this.common.uVapor.value = 0.35 + 0.65 * near;
+    // the mist of water consumed stays faint from afar, so the busiest farmland keeps the colour of its use
+    this.common.uVapor.value = 0.12 + 0.88 * near;
     const wantDetail = camDist < 260;
     if (wantDetail) {
       const R = Math.max(18, camDist * 1.25);
@@ -718,7 +772,7 @@ export class FlowParticles {
         const dd = this.detail;
         const fade = Math.min(1, Math.max(0, (260 - camDist) / 60));
         dd.mesh.material.uniforms.uLayerAlpha.value = fade;
-        dd.lines.material.uniforms.uLineAlpha.value = 0.30 * fade;
+        dd.lines.material.uniforms.uLineAlpha.value = 0.2 * fade;
         this.hole.set(dd.x, dd.z, dd.radius * 0.80 * fade, dd.radius * Math.max(fade, 0.01));
       }
     } else {

@@ -1,33 +1,21 @@
-import { CATS, CAT, DC, riverLabel, lakeLabel, PHONE_MQ } from '../core/config.js';
+import { CATS, CAT, DC, riverLabel, lakeLabel, PHONE_MQ, SRC_DEF, RETURN_GRAY, AP_STATE } from '../core/config.js';
 import { CAT_KEYS } from '../flow/model.js';
 import { sankeySVG } from './sankey.js';
 import { AQ_FLOWS, DATA_CENTERS, DEPLETION, AQ_STORAGE } from '../core/flows_data.js';
 import { OSM_KINDS, OSM_LABEL } from '../net/infra.js';
 import { NLCD_CLASSES } from '../world/nlcd.js';
-import { esc, nf, vol, volShort, mgd, af, pct, ord, km3gal } from './fmt.js';
+import { ROCK_COLORS } from '../world/aquifers.js';
+import { esc, nf, vol, volShort, mgd, mgdLabel, af, pct, ord, km3gal, shareTxt, sig2 } from './fmt.js';
 
-const SRC_ROWS = [
-  { key: 'sf', name: 'Rivers, lakes', long: 'Fresh surface water', color: '#5aa9ff' },
-  { key: 'ss', name: 'Seawater', long: 'Saline surface water', color: '#4fd0c8' },
-  { key: 'gf', name: 'Groundwater', long: 'Fresh groundwater', color: '#7fe0b8' },
-  { key: 'gs', name: 'Salty groundwater', long: 'Saline groundwater', color: '#a7c7b8' },
-];
+export { SRC_DEF };
+const SRC_ROWS = ['sf', 'ss', 'gf', 'gs'].map((key) => ({ key, name: SRC_DEF[key].name, color: SRC_DEF[key].color }));
 const CONSUMED_NOTE = 'USGS estimated consumption (water that evaporates, goes into crops or products, or is otherwise used up) only for crops, golf courses and power plants in 2015.';
 const genName = (g) => ({ NGCC: 'Natural gas, combined cycle', COAL: 'Coal', 'GAS STEAM': 'Natural gas, steam', BIOMASS: 'Biomass', COMPLEX: 'Mixed fuels', NUCLEAR: 'Nuclear', OIL: 'Oil', 'OIL CC': 'Oil, combined cycle' }[g] || g);
 const coolName = (c) => ({ 'RECIRCULATING TOWER': 'Cooling towers (recirculating)', 'ONCE-THROUGH FRESH': 'Once-through, fresh water', 'ONCE-THROUGH SALINE': 'Once-through, salt water', 'RECIRCULATING POND': 'Cooling pond (recirculating)', COMPLEX: 'Several cooling systems' }[c] || c);
 const consumedOf = (agg, k) => (k === 'ir' ? Math.min(agg.cu.ir, agg.W.ir + agg.other.ir_rec) : k === 'go' ? Math.min(agg.cu.go, agg.W.go + agg.other.go_rec) : k === 'pt' ? Math.min(agg.cu.pt, agg.W.pt) : 0);
 const HAZ = ['Not determined', 'Low', 'Significant', 'High'];
 const sw = (c) => `<i class="wm-sw" style="background:${c}"></i>`;
-// where water comes from, in the words and colors every panel uses
-export const SRC_DEF = {
-  sf: { name: 'Rivers and lakes', sub: 'fresh surface water', color: '#5aa9ff' },
-  gf: { name: 'Groundwater', sub: 'fresh, pumped from wells', color: '#7fe0b8' },
-  ss: { name: 'Seawater', sub: 'saline surface water, including brackish bays', color: '#4fd0c8' },
-  gs: { name: 'Salty groundwater', sub: 'saline, pumped from wells', color: '#a7c7b8' },
-  rec: { name: 'Reclaimed wastewater', sub: 'treated and reused', color: '#b49cff' },
-  ps: { name: 'Utility water', sub: 'bought from a public water system', color: '#f2cf63' },
-};
-const share = (f) => (f >= 0.9995 ? '100%' : f >= 0.99 ? `${nf(100 * f, 1)}%` : f >= 0.005 ? `${Math.round(100 * f)}%` : f > 0 ? '<1%' : '–');
+const CONSUMED_WHITE = '#f4f1ea';
 /** "mostly from the High Plains aquifer", from a county's [[index, name, Mgal/d], ...] list (Lovelace and others, 2020) */
 function aquiferWords(aq) {
   if (!aq || !aq.length) return '';
@@ -39,7 +27,7 @@ function aquiferWords(aq) {
   return `from ${nm(aq[0])} and others`;
 }
 /** the kind of water a plant reports in the USGS plant model, in the same classes as the county figures */
-function plantClass(p) {
+export function plantClass(p) {
   const s = p.wsrc || '', w = p.wtype || '';
   if (s.startsWith('GW')) return /SA|BR/.test(w) ? 'gs' : 'gf';
   if (s.startsWith('PD')) return /BE/.test(w) ? 'rec' : 'ps';
@@ -55,15 +43,20 @@ export function srcName(raw) {
   return n;
 }
 export const withThe = (n) => (/^(lake|lakes|mount|fort|port)\b/i.test(n) || /[\/,&]/.test(n) ? n : `the ${n}`);
-/** a stacked bar and one line per part: name (with a note under it), share, volume */
+/**
+ * a stacked bar and one line per part: name (with a note under it), share, volume (none when `fmtV` is null).
+ * Sources have round swatches, like the dots the map draws at them; uses and fates have square ones.
+ */
 function mixBlock(rows, fmtV = (v) => `${mgd(v)} Mgal/d`) {
   const parts = rows.filter((r) => r.v > 0);
   const tot = parts.reduce((a, r) => a + r.v, 0);
   if (!(tot > 0)) return '';
   const bar = parts.map((r) => `<i style="width:${(100 * r.v / tot).toFixed(2)}%;background:${r.color}"></i>`).join('');
-  const list = parts.map((r) => `<div class="wm-mix-r"><span class="wm-mix-n">${r.round ? `<i class="wm-sw wm-sw-src" style="background:${r.color}"></i>` : sw(r.color)}<span>${esc(r.name)}${r.sub ? `<small>${esc(r.sub)}</small>` : ''}</span></span><span class="wm-mix-p">${share(r.v / tot)}</span><span class="wm-mix-v">${fmtV(r.v)}</span></div>`).join('');
+  const list = parts.map((r) => `<div class="wm-mix-r${fmtV ? '' : ' wm-mix-r2'}"><span class="wm-mix-n">${r.round ? `<i class="wm-sw wm-sw-src" style="background:${r.color}"></i>` : sw(r.color)}<span>${esc(r.name)}${r.sub ? `<small>${esc(r.sub)}</small>` : ''}</span></span><span class="wm-mix-p">${shareTxt(r.v / tot)}</span>${fmtV ? `<span class="wm-mix-v">${fmtV(r.v)}</span>` : ''}</div>`).join('');
   return `<div class="wm-mix"><div class="wm-stack">${bar}</div>${list}</div>`;
 }
+/** the source-colored line that stands for one width of channel in the reading key */
+const keyChannel = (w, c) => `<svg width="28" height="16" viewBox="0 0 28 16" aria-hidden="true"><path d="M1 8 H27" stroke="#0a1310" stroke-width="${(w + 3).toFixed(1)}"/><path d="M1 8 H27" stroke="${c}" stroke-width="${w.toFixed(1)}"/></svg>`;
 
 /**
  * Everything drawn over the map: the use picker on the left, the reading key, the inspector on the right, the toolbar,
@@ -74,7 +67,8 @@ export class Hud {
     this.app = app; this.m = app.model; this.root = stage;
     this.$ = (s) => stage.querySelector(s);
     this.$$ = (s) => stage.querySelectorAll(s);
-    this.layers = { rivers: true, flows: true, plants: true, labels: true, nid: true, infra: true, golf: true, dc: false };
+    // (the National Inventory's 92,000 dams are a layer to turn on: as marks everywhere they read as noise)
+    this.layers = { rivers: true, flows: true, plants: true, labels: true, nid: false, infra: true, golf: true, dc: false };
     this.choro = 'none';
     this.ac = new AbortController();
     this.build();
@@ -90,37 +84,42 @@ export class Hud {
     const wrap = document.createElement('div');
     wrap.className = 'wm-hud';
     wrap.innerHTML = `
+      <div class="wm-left" data-left>
       <section class="wm-panel wm-uses" data-uses aria-label="Choose a use of water to show">
         <button class="wm-uses-head" type="button" data-uses-head aria-expanded="true"><span class="wm-cap">Show the water for</span><i class="wm-caret" aria-hidden="true"></i></button>
         <div class="wm-uses-body">
           <div class="wm-rows" role="radiogroup" aria-label="Uses of water" data-rows></div>
-          <p class="wm-note">Billion gallons a day withdrawn in 2015 (USGS). Data centers: consumed on site in ${D.year} (LBNL), for scale.</p>
+          <p class="wm-note">Billion gallons a day withdrawn in 2015 (USGS), with each bar its share of the total. Data centers: water consumed on site in ${D.year} (LBNL).</p>
         </div>
       </section>
       <section class="wm-panel wm-key" data-key aria-label="How to read the map">
         <button class="wm-key-head" type="button" data-key-head aria-expanded="true"><span class="wm-cap">How to read the map</span><i class="wm-caret" aria-hidden="true"></i></button>
         <div class="wm-key-body">
-          <div class="wm-key-row"><svg viewBox="0 0 40 12" aria-hidden="true"><path d="M2 3 H11" stroke="#ee7a3a" stroke-width="1.6" opacity=".35"/><circle cx="12.5" cy="3" r="1.7" fill="#ee7a3a"/><path d="M9 9 H20" stroke="#3cc483" stroke-width="1.6" opacity=".35"/><circle cx="21.5" cy="9" r="1.7" fill="#3cc483"/><path d="M22 4.5 H32" stroke="#f2cf63" stroke-width="1.6" opacity=".35"/><circle cx="33.5" cy="4.5" r="1.7" fill="#f2cf63"/></svg><span>Each streak is water on its way from where it was drawn to where it is used, in the color of that use. More streaks, more water.</span></div>
-          <div class="wm-key-row"><svg viewBox="0 0 40 12" aria-hidden="true"><path d="M4 7 C12 7 15 6 21 6" fill="none" stroke="#0a1310" stroke-width="5.5"/><path d="M4 7 C12 7 15 6 21 6" fill="none" stroke="#3cc483" stroke-width="3.5"/><path d="M21 6 C27 6 30 2.5 37 2.5 M21 6 C27 6 30 9.5 37 9.5" fill="none" stroke="#3cc483" stroke-width="1.4"/><circle cx="4" cy="7" r="2.6" fill="#5aa9ff" stroke="#0a1310" stroke-width="1"/></svg><span>Click a county, power plant, treatment plant or golf course to draw its channels. The wider the channel, the more water; each source is marked with a dot and labeled with its share.</span></div>
-          <div class="wm-key-row"><svg viewBox="0 0 40 12" aria-hidden="true"><path d="M14 11 C12 7 18 6 15 1 M24 11 C22 7 28 6 25 1" fill="none" stroke="#f4f1ea" stroke-width="1.4" stroke-linecap="round" opacity=".85"/></svg><span>White mist is water consumed: evaporated, or taken up by crops. USGS estimated it only for crops, golf courses and power plants.</span></div>
-          <div class="wm-key-row"><svg viewBox="0 0 40 12" aria-hidden="true"><path d="M4 4 Q20 12 36 6" fill="none" stroke="#3c7fe0" stroke-width="2.2" stroke-linecap="round" stroke-dasharray="5 3"/></svg><span>Blue is water going back to rivers after it was used.</span></div>
+          <div class="wm-key-row"><svg viewBox="0 0 40 12" aria-hidden="true"><path d="M2 3 H11" stroke="#ee7a3a" stroke-width="1.6" opacity=".35"/><circle cx="12.5" cy="3" r="1.7" fill="#ee7a3a"/><path d="M9 9 H20" stroke="#3cc483" stroke-width="1.6" opacity=".35"/><circle cx="21.5" cy="9" r="1.7" fill="#3cc483"/><path d="M22 4.5 H32" stroke="#f2cf63" stroke-width="1.6" opacity=".35"/><circle cx="33.5" cy="4.5" r="1.7" fill="#f2cf63"/></svg><span>Streaks are water moving from where it was drawn to where it was used, in the color of that use.</span></div>
+          <div class="wm-key-row"><svg viewBox="0 0 40 12" aria-hidden="true"><path d="M5 7 C13 7 16 6 22 6" fill="none" stroke="#0a1310" stroke-width="5.5"/><path d="M5 7 C13 7 16 6 22 6" fill="none" stroke="#7fe0b8" stroke-width="3.5"/><path d="M22 6 C28 6 31 2.5 38 2.5 M22 6 C28 6 31 9.5 38 9.5" fill="none" stroke="#7fe0b8" stroke-width="1.4"/><circle cx="5" cy="7" r="3" fill="none" stroke="#7fe0b8" stroke-width="1.6"/></svg><span>Click a place to draw its water in the color of each source, with the share from each in a box.</span></div>
+          <p class="wm-key-src">${['sf', 'gf', 'ss', 'rec', 'ps'].map((k) => `<span><i class="wm-sw wm-sw-src" style="background:${SRC_DEF[k].color}"></i>${esc(SRC_DEF[k].name)}</span>`).join('')}</p>
+          <div class="wm-key-widths"><span class="wm-key-wl">Channel width, by share of the place's water</span>${[[1.3 + 10 * Math.sqrt(0.01), '1%'], [1.3 + 10 * Math.sqrt(0.1), '10%'], [11.3, '100%']].map(([w, t]) => `<span>${keyChannel(w, '#7fe0b8')}${esc(t)}</span>`).join('')}</div>
+          <div class="wm-key-row"><svg viewBox="0 0 40 12" aria-hidden="true"><path d="M14 11 C12 7 18 6 15 1 M24 11 C22 7 28 6 25 1" fill="none" stroke="#f4f1ea" stroke-width="1.4" stroke-linecap="round" opacity=".85"/></svg><span>White mist is water consumed, which USGS estimated only for crops, golf courses and power plants.</span></div>
+          <div class="wm-key-row"><svg viewBox="0 0 40 12" aria-hidden="true"><path d="M4 4 Q20 12 36 6" fill="none" stroke="${RETURN_GRAY}" stroke-width="2" stroke-dasharray="5 3"/></svg><span>Gray is water going back to rivers after it was used (dashes, for a selected place).</span></div>
+          <div class="wm-key-row"><svg viewBox="0 0 40 12" aria-hidden="true"><rect x="3" y="3" width="6" height="6" fill="#f2cf63" stroke="#0a1310"/><circle cx="20" cy="6" r="3" fill="none" stroke="#e8dcb4" stroke-width="1.6"/><circle cx="32" cy="6" r="3" fill="#d6ea6c" stroke="#0a1310"/></svg><span>Water treatment plants, water towers and golf courses, as OpenStreetMap maps them.</span></div>
           <div class="wm-key-row"><svg viewBox="0 0 40 12" aria-hidden="true"><rect x="3" y="7" width="34" height="4" fill="#e7c25e" opacity=".55"/><path d="M20 7 V1" stroke="#7fe0b8" stroke-width="1.6"/></svg><span>Underground, wells lift groundwater out of the aquifers.</span></div>
-          <p class="wm-key-src">${['sf', 'gf', 'ss', 'rec'].map((k) => `<span><i class="wm-sw wm-sw-src" style="background:${SRC_DEF[k].color}"></i>${esc(SRC_DEF[k].name)}</span>`).join('')}</p>
           <p class="wm-note" data-scale></p>
         </div>
       </section>
+      </div>
       <aside class="wm-panel wm-insp" data-insp aria-live="polite" aria-label="Details"></aside>
       <div class="wm-bar" data-bar>
         <div class="wm-search">
-          <input type="search" data-search placeholder="Find a place, river, plant, aquifer or dam" autocomplete="off" spellcheck="false" aria-label="Search the map">
+          <input type="search" data-search placeholder="Search places, rivers, plants" autocomplete="off" spellcheck="false" aria-label="Search for a place, river, plant, aquifer or dam">
           <div class="wm-panel wm-results" data-results role="listbox"></div>
         </div>
-        <button class="wm-btn" type="button" data-a="home" title="Back to the whole country">Home</button>
+        <button class="wm-btn" type="button" data-a="home" title="Back to the whole country">Reset view</button>
         <button class="wm-btn" type="button" data-a="tour" title="A guided tour" aria-pressed="false">Tour</button>
-        <button class="wm-btn" type="button" data-a="night" title="Switch between day and night"><span data-night-label>Day</span></button>
+        <button class="wm-btn" type="button" data-a="night" title="The map at night" aria-pressed="false">Night</button>
         <button class="wm-btn" type="button" data-a="under" title="Look underground at the aquifers" aria-pressed="false">Underground</button>
         <button class="wm-btn" type="button" data-a="layers" title="Layers and land color" aria-expanded="false">Layers</button>
         <button class="wm-btn wm-hide-s" type="button" data-a="full" title="Fill the screen">Full screen</button>
+        <button class="wm-btn wm-more-btn" type="button" data-a="more" aria-expanded="false">More</button>
       </div>
       <section class="wm-panel wm-layers" data-layers hidden aria-label="Layers">
         <p class="wm-cap">Color the land by</p>
@@ -130,18 +129,20 @@ export class Hud {
         <div class="wm-toggles" data-toggles></div>
       </section>
       <section class="wm-panel wm-caption" data-caption hidden aria-live="polite"></section>
+      <p class="wm-hint" data-hint hidden>${window.matchMedia(PHONE_MQ).matches ? 'Tap' : 'Click'} any county, power plant or water treatment plant to see where its water comes from</p>
       <div class="wm-tip" data-tip hidden></div>`;
     this.root.appendChild(wrap);
     this.wrap = wrap;
 
-    // use picker
-    const max = Math.max(...CAT_KEYS.map((k) => nat.W[k]));
+    // use picker: each bar is that use's share of every use (the top row's full bar); data centers, which are not a
+    // USGS use and are counted inside the others, sit apart for comparison
     const row = (k, name, value, color, bar, extra = '') => `<button type="button" class="wm-row" role="radio" aria-checked="false" data-k="${k}" title="${esc(extra)}">
         <span class="wm-row-l">${color ? sw(color) : '<i class="wm-sw wm-sw-all"></i>'}<span class="wm-row-n">${esc(name)}</span></span><span class="wm-row-v">${value}</span>
         <span class="wm-row-b"><i style="width:${bar.toFixed(1)}%;background:${color || 'var(--wm-dim)'}"></i></span></button>`;
     this.$('[data-rows]').innerHTML = row('all', 'Every use', nf(nat.total / 1000), null, 100, 'All water withdrawn in 2015') +
-      CATS.map((c) => row(c.k, c.name, nf(nat.W[c.k] / 1000, nat.W[c.k] < 10000 ? 1 : 0), c.color, Math.max(0.6, (100 * nat.W[c.k]) / max), c.what)).join('') +
-      row('dc', DC.name, nf(DATA_CENTERS.directMgd / 1000, 2), DC.color, 0.6, 'Water consumed on site by U.S. data centers in 2023, for scale');
+      CATS.map((c) => row(c.k, c.name, nf(nat.W[c.k] / 1000, nat.W[c.k] < 10000 ? 1 : 0), c.color, Math.max(0.4, (100 * nat.W[c.k]) / nat.total), c.what)).join('') +
+      `<p class="wm-rows-sep" aria-hidden="true">For comparison</p>` +
+      row('dc', DC.name, nf(DATA_CENTERS.directMgd / 1000, 2), DC.color, Math.max(0.4, (100 * DATA_CENTERS.directMgd) / nat.total), 'Water consumed on site by U.S. data centers in 2023, for scale');
     for (const el of this.$$('.wm-row')) {
       const k = el.dataset.k;
       this.on(el, 'click', () => { this.app.tour?.stop(); this.app.isolate(k === 'all' || this.app.iso === k ? null : k); });
@@ -179,14 +180,27 @@ export class Hud {
     this.buildButtons();
     requestAnimationFrame(() => this.fitLeft());
   }
-  /** the reading key folds itself away when the stage is too short for it and the use picker together */
+  /**
+   * The reading key sits under the use picker and folds itself away when the stage is too short for both; the toolbar
+   * is centred between the panels, or runs from the left edge when it would not fit there.
+   */
   fitLeft() {
     const u = this.$('[data-uses]'), k = this.$('[data-key]');
-    if (!u || !k || this._keyTouched || window.matchMedia(PHONE_MQ).matches) return;
-    k.classList.remove('collapsed');
-    const clash = u.getBoundingClientRect().bottom + 12 > k.getBoundingClientRect().top;
-    k.classList.toggle('collapsed', clash);
-    this.$('[data-key-head]').setAttribute('aria-expanded', String(!clash));
+    if (u && k && !this._keyTouched && !window.matchMedia(PHONE_MQ).matches) {
+      k.classList.remove('collapsed');
+      // the column ends above the toolbar (as in the stylesheet); the use list gets all of it before the key does
+      const avail = this.root.clientHeight - 2 * 16 - 44;
+      const over = u.scrollHeight + 8 + k.scrollHeight > avail;
+      k.classList.toggle('collapsed', over);
+      this.$('[data-key-head]').setAttribute('aria-expanded', String(!over));
+    }
+    this.fitBar();
+  }
+  fitBar() {
+    const bar = this.$('[data-bar]'); if (!bar) return;
+    this.root.classList.remove('wm-wide-bar');
+    if (window.matchMedia(PHONE_MQ).matches) return;
+    if (bar.scrollWidth > bar.clientWidth + 1) this.root.classList.add('wm-wide-bar');
   }
   setLayer(k, on) {
     this.layers[k] = on;
@@ -213,9 +227,10 @@ export class Hud {
     this.root.classList.toggle('wm-isolating', !!this.app.iso);
   }
   syncButtons() {
+    // Night and Underground are switches: lit while on
     const nb = this.$('[data-a="night"]');
-    this.$('[data-night-label]').textContent = this.app.night ? 'Day' : 'Night';
-    nb.title = this.app.night ? 'Switch to daylight' : 'Switch to night';
+    nb.classList.toggle('on', !!this.app.night); nb.setAttribute('aria-pressed', String(!!this.app.night));
+    nb.title = this.app.night ? 'Night is on: switch to daylight' : 'Switch to the map at night';
     const ub = this.$('[data-a="under"]');
     ub.classList.toggle('on', !!this.app.underground); ub.setAttribute('aria-pressed', String(!!this.app.underground));
     const fb = this.$('[data-a="full"]');
@@ -227,7 +242,7 @@ export class Hud {
     if (this.app.tour.i >= 0 || this._welcomed) return;
     this._welcomed = true;
     this.caption(`<p class="wm-cap">How to read this</p><h4>Every moving light is water</h4>
-      <p>Each streak is water on its way from a river, lake, aquifer or the sea to a use, in the color of that use. ${window.matchMedia(PHONE_MQ).matches ? 'Tap a use above the map to see only its water. Tap a county, power plant or water plant to draw its channels, with the share of its water from each source.' : 'Pick a use on the left to see only its water. Click a county, power plant or water plant to draw its channels, with the share of its water from each source.'}</p>`,
+      <p>Each streak is water on its way from a river, lake, aquifer or the sea to a use, in the color of that use. ${window.matchMedia(PHONE_MQ).matches ? 'Tap a use above the map to see only its water. Tap a county, power plant or water treatment plant to see where its water comes from: its channels are drawn in the color of each source, with the share from each.' : 'Pick a use on the left to see only its water. Click a county, power plant or water treatment plant to see where its water comes from: its channels are drawn in the color of each source, with the share from each.'}</p>`,
       [['close', 'Explore on my own'], ['tour', 'Take the tour']], (a) => { if (a === 'tour') this.app.tour.go(0); });
     const off = () => { if (this.app.tour.i < 0 && this._capKind === 'welcome') this.hideCaption(); };
     setTimeout(() => this.on(this.app.canvas, 'wheel', off, { once: true }), 1500);
@@ -239,7 +254,10 @@ export class Hud {
     el.hidden = false;
     for (const b of el.querySelectorAll('[data-a]')) this.on(b, 'click', () => { this.hideCaption(); onAction?.(b.dataset.a); });
   }
-  hideCaption() { this.$('[data-caption]').hidden = true; this._capKind = null; }
+  hideCaption() { const was = this._capKind; this.$('[data-caption]').hidden = true; this._capKind = null; if (was === 'welcome') this.showHint(); }
+  /** a one-line prompt over the map until the reader first selects something */
+  showHint() { if (this._hintDone || this.app.tour.i >= 0) return; const el = this.$('[data-hint]'); if (el) el.hidden = false; }
+  hintDone() { this._hintDone = true; const el = this.$('[data-hint]'); if (el) el.hidden = true; }
 
   // ------------------------------------------------------------ inspector
   sankeyFor(agg, scale = 1, fmt) {
@@ -256,8 +274,12 @@ export class Hud {
     el.classList.toggle('wm-national', !closable);
     const tall = el.classList.contains('wm-tall');
     el.innerHTML = `<button type="button" class="wm-grip" aria-expanded="${tall}" aria-label="${tall ? 'Show less of this panel' : 'Show more of this panel'}"></button>` +
-      (closable ? '<button type="button" class="wm-close" aria-label="Close">&times;</button>' : '') + html;
+      (closable ? '<button type="button" class="wm-close" aria-label="Close">&times;</button>' : '') + html + '<div class="wm-fade" aria-hidden="true"></div>';
     el.scrollTop = 0;
+    // a fade at the bottom while there is more to scroll to
+    const more = () => el.classList.toggle('wm-more', el.scrollHeight - el.scrollTop - el.clientHeight > 6);
+    if (!this._moreBound) { this._moreBound = true; this.on(el, 'scroll', more, { passive: true }); }
+    requestAnimationFrame(more); clearTimeout(this._moreT); this._moreT = setTimeout(more, 450);
     const grip = el.querySelector('.wm-grip');
     this.on(grip, 'click', () => {
       const t = el.classList.toggle('wm-tall');
@@ -305,10 +327,10 @@ export class Hud {
       <h5>What each source was used for</h5>
       ${this.sankeyFor(n, 1000, (v) => nf(v, v < 10 ? 1 : 0))}
       <p class="wm-note">Billion gallons a day. The white part of a bar is the share consumed. Hover a band to see that water on the map.</p>
-      <h5>What happens to it</h5>${mixBlock([{ name: 'Returned', sub: 'to rivers and aquifers', v: Math.max(0, base - cu), color: '#3c7fe0' }, { name: 'Consumed', sub: 'evaporated, or taken up by crops', v: cu, color: '#f4f1ea' }], B)}
+      <h5>What happens to it</h5>${mixBlock([{ name: 'Returned', sub: 'to rivers and aquifers', v: Math.max(0, base - cu), color: RETURN_GRAY }, { name: 'Consumed', sub: 'evaporated, or taken up by crops', v: cu, color: CONSUMED_WHITE }], B)}
       <p class="wm-note">For crops, golf courses and power plants (${Math.round(100 * est)}% of all withdrawals), the uses for which USGS estimated consumption in 2015.</p>
       ${this.forScale()}
-      <p class="wm-note">Click any county, power plant or water plant to draw its channels and the share of its water from each source. Drag to move, scroll or pinch to zoom, right-drag or twist two fingers to turn.</p>`, false, 'national');
+      <p class="wm-note">Click any county, power plant or water treatment plant to see where its water comes from, drawn in the color of each source with the share from each. Drag to move, scroll or pinch to zoom, right-drag or twist two fingers to turn.</p>`, false, 'national');
   }
   /** the panel for one use, shown while it is isolated */
   showCategory(k) {
@@ -319,8 +341,8 @@ export class Hud {
     const states = [...m.states.keys()].map((st) => [st, m.aggregate(m.states.get(st)).W[k]]).filter((r) => r[1] > 0).sort((a, b) => b[1] - a[1]).slice(0, 6);
     const counties = Array.from({ length: m.n }, (_, i) => i).filter((i) => m.byCat[c.i][i] > 0).sort((a, b) => m.byCat[c.i][b] - m.byCat[c.i][a]).slice(0, 8);
     const srcRows = this.srcRows(bySrc);
-    if (k === 'ir' || k === 'go') { const rec = k === 'ir' ? n.other.ir_rec : n.other.go_rec; if (rec > 0) srcRows.push({ v: rec, color: SRC_DEF.rec.color, name: SRC_DEF.rec.name, sub: 'reused; not counted as a withdrawal' }); }
-    if (k === 'pt') { if (n.other.pt_rec > 0) srcRows.push({ v: n.other.pt_rec, color: SRC_DEF.rec.color, name: SRC_DEF.rec.name, sub: 'reused; not counted as a withdrawal' }); if (n.other.pt_ps > 0) srcRows.push({ v: n.other.pt_ps, color: SRC_DEF.ps.color, name: SRC_DEF.ps.name, sub: 'counted under public supply' }); }
+    if (k === 'ir' || k === 'go') { const rec = k === 'ir' ? n.other.ir_rec : n.other.go_rec; if (rec > 0) srcRows.push({ v: rec, color: SRC_DEF.rec.color, round: true, name: SRC_DEF.rec.name, sub: 'reused; not counted as a withdrawal' }); }
+    if (k === 'pt') { if (n.other.pt_rec > 0) srcRows.push({ v: n.other.pt_rec, color: SRC_DEF.rec.color, round: true, name: SRC_DEF.rec.name, sub: 'reused; not counted as a withdrawal' }); if (n.other.pt_ps > 0) srcRows.push({ v: n.other.pt_ps, color: SRC_DEF.ps.color, round: true, name: SRC_DEF.ps.name, sub: 'bought from utilities; counted in their withdrawals' }); }
     const fmtB = (v) => volShort(v);
     let html = `<p class="wm-cap">Water for one use, 2015</p><h3>${sw(c.color)}${esc(c.name)}</h3>
       <div class="wm-big">${W >= 1000 ? nf(W / 1000, W >= 10000 ? 0 : 1) : mgd(W)} <small>${W >= 1000 ? 'billion' : 'million'} gallons a day withdrawn</small></div>
@@ -330,12 +352,13 @@ export class Hud {
     else html += `<p class="wm-note">USGS did not estimate how much of this water was consumed in 2015, so the map shows it arriving and stops there.</p>`;
     if (k === 'pt') html += `<p class="wm-note">Plants that pass water through once withdraw the most and return nearly all of it, warmer. Plants with cooling towers withdraw far less but evaporate most of what they take.</p>`;
     if (k === 'ir' || k === 'go') html += `<p class="wm-note">USGS counted golf courses on their own in the ${esc(m.splitWords)}. In ${esc(m.unsplitWords)} golf is inside crop irrigation.</p>`;
-    html += `<h5>States that withdrew the most</h5><div class="wm-list">${states.map(([st, v]) => `<button type="button" class="wm-li" data-state="${esc(st)}"><span>${esc(this.app.stateName(st))}</span><span>${volShort(v)}</span></button>`).join('')}</div>
-      <h5>Counties that withdrew the most</h5><div class="wm-list">${counties.map((i) => `<button type="button" class="wm-li" data-county="${i}"><span>${esc(m.wu.name[i])}, ${esc(m.wu.st[i])}</span><span>${volShort(m.byCat[c.i][i])}</span></button>`).join('')}</div>`;
+    html += `<h5>States that withdrew the most</h5><div class="wm-list">${states.map(([st, v]) => `<button type="button" class="wm-li" data-state="${esc(st)}"><span>${esc(this.app.stateName(st))}</span><span>${mgd(v)}</span></button>`).join('')}</div>
+      <h5>Counties that withdrew the most</h5><div class="wm-list">${counties.map((i) => `<button type="button" class="wm-li" data-county="${i}"><span>${esc(m.wu.name[i])}, ${esc(AP_STATE[m.wu.st[i]] || m.wu.st[i])}</span><span>${mgd(m.byCat[c.i][i])}</span></button>`).join('')}</div>`;
     if (k === 'pt') {
       const top = m.plants.map((p, i) => [p, i]).filter(([p]) => p.w_env > 0).sort((a, b) => b[0].w_env - a[0].w_env).slice(0, 6);
-      html += `<h5>Plants that withdrew the most</h5><div class="wm-list">${top.map(([p, i]) => `<button type="button" class="wm-li" data-plant="${i}"><span>${esc(p.name)}<small>${esc(genName(p.gen))} · ${esc(coolName(p.cooling))}</small></span><span>${volShort(p.w_env)}</span></button>`).join('')}</div>`;
+      html += `<h5>Plants that withdrew the most</h5><div class="wm-list">${top.map(([p, i]) => `<button type="button" class="wm-li" data-plant="${i}"><span>${esc(p.name)}<small>${esc(genName(p.gen))} · ${esc(coolName(p.cooling))}</small></span><span>${mgd(p.w_env)}</span></button>`).join('')}</div>`;
     }
+    html += `<p class="wm-note">Million gallons a day.</p>`;
     html += `<p class="wm-note"><button type="button" class="wm-lnk" data-iso="all">Show every use again</button></p>`;
     this.setInspector(html, true, 'iso');
   }
@@ -379,7 +402,9 @@ export class Hud {
     let html = `<p class="wm-cap">Underground, 2015</p><h3>Groundwater</h3>
       <div class="wm-big">${nf(g / 1000, 1)} <small>billion gallons a day pumped</small></div>
       <p class="wm-sub">${nf(100 * (n.src.gf + n.src.gs) / n.total)}% of all withdrawals came from wells. Aquifers are layers of sand, gravel and rock that hold water in their pores and cracks. The colored bodies under the land are the principal aquifers the U.S. Geological Survey maps, glowing where counties pump the most.</p>
-      <h5>Aquifers pumped the most</h5><div class="wm-list">${top.map((a) => `<button type="button" class="wm-li" data-aq="${a.i}"><span>${esc(a.name)}<small>${esc(a.rock)}</small></span><span>${volShort(a.total)}</span></button>`).join('')}</div>
+      <h5>Aquifers pumped the most</h5><div class="wm-list">${top.map((a) => `<button type="button" class="wm-li" data-aq="${a.i}"><span>${sw(ROCK_COLORS[a.rock] || ROCK_COLORS.Other)}${esc(a.name)}<small>${esc(a.rock)}</small></span><span>${mgd(a.total)}</span></button>`).join('')}</div>
+      <p class="wm-note">Million gallons a day. Each aquifer under the land is colored by the rock that holds its water:</p>
+      <p class="wm-legend-line wm-rocks">${Object.entries(ROCK_COLORS).filter(([r]) => r !== 'Other' && A.list.some((a) => a.rock === r)).map(([r, c]) => `<span>${sw(c)}${esc(r.charAt(0) + r.slice(1).toLowerCase())}</span>`).join('')}</p>
       <div class="wm-kv">
         <span>From the mapped principal aquifers</span><span>${nf(100 * mapped / g)}%</span>
         <span>Drawn down, 1900–2008</span><span>${nf(dep)} km³</span>
@@ -414,13 +439,13 @@ export class Hud {
     const k = top[0], share = pct(c.W[k], c.total);
     const s = c.src[k], tot = Object.values(s).reduce((a, b) => a + b, 0);
     const gw = (s.gf || 0) + (s.gs || 0), sal = (s.ss || 0) + (s.gs || 0);
-    const from = gw / tot > 0.6 ? 'pumped mostly from groundwater' : sal / tot > 0.6 ? 'drawn mostly from salt water' : gw / tot > 0.25 ? `drawn from rivers and lakes and pumped from wells (${pct(gw, tot)}% groundwater)` : 'drawn mostly from rivers and lakes';
+    const from = gw / tot > 0.6 ? 'mostly pumped from wells' : sal / tot > 0.6 ? 'mostly drawn from salt water' : gw / tot > 0.25 ? `${pct(gw, tot)}% of it pumped from wells and the rest drawn from rivers and lakes` : 'mostly drawn from rivers and lakes';
     const second = top[1] && c.W[top[1]] / c.total > 0.08 ? ` ${CAT[top[1]].name} took ${pct(c.W[top[1]], c.total)}%.` : '';
     return `${share}% of ${esc(name)}'s water went to ${esc(CAT[k].name.toLowerCase())}, ${from}.${second}`;
   }
   /** withdrawals by source (fresh and saline, surface and ground) as mix rows; groundwater names its main aquifers */
   srcRows(src, aq = null) {
-    return ['sf', 'gf', 'ss', 'gs'].map((k) => ({ v: src[k] || 0, color: SRC_DEF[k].color, name: SRC_DEF[k].name, sub: k === 'gf' && aq && aq.length ? aquiferWords(aq) : SRC_DEF[k].sub }))
+    return ['sf', 'gf', 'ss', 'gs'].map((k) => ({ v: src[k] || 0, color: SRC_DEF[k].color, round: true, name: SRC_DEF[k].name, sub: k === 'gf' && aq && aq.length ? aquiferWords(aq) : SRC_DEF[k].sub }))
       .filter((r) => r.v > 0).sort((a, b) => b.v - a.v);
   }
   showCounty(i, flowNotes = '') {
@@ -430,15 +455,24 @@ export class Hud {
     const perCap = c.pop > 0 ? c.total * 1e6 / (c.pop * 1000) : null;
     const stName = this.app.stateName(c.st);
     const aq = this.app.aquifers && this.app.aquifers.county ? this.app.aquifers.county[c.id] : null;
-    let html = `<p class="wm-cap"><button type="button" class="wm-lnk" data-state="${esc(c.st)}">${esc(stName)}</button> · county</p><h3>${esc(c.name)}</h3>
-      <div class="wm-big">${mgd(c.total)} <small>million gallons a day</small></div>
-      <p class="wm-sub">${this.storyOf(c, c.name)} ${c.total > 0 ? `${ord(m.rank[i])} of ${nf(m.n)} counties by water withdrawn.` : ''}${perCap ? ` ${nf(c.pop * 1000)} residents.` : ''}</p>`;
+    // where its water comes from first: the question a click asks (and, on phones, what the folded sheet shows)
+    let html = `<p class="wm-cap">County · <button type="button" class="wm-lnk" data-state="${esc(c.st)}">${esc(stName)}</button></p><h3>${esc(c.name)}</h3>
+      <div class="wm-big">${mgd(c.total)} <small>million gallons a day withdrawn</small></div>`;
     if (c.total > 0) {
-      html += `<h5>Where its water comes from</h5>${mixBlock(this.srcRows(agg.src, aq))}`;
+      // reclaimed wastewater is not a withdrawal, but it is water the county's uses drew, so it is one of the shares
+      // (as on the map); water bought from utilities is already in the utilities' withdrawals
+      const rows = this.srcRows(agg.src, aq);
       const rec = c.other.ir_rec + c.other.go_rec + c.other.pt_rec;
-      if (rec > 0.005) html += `<p class="wm-note">It also reused ${mgd(rec)} Mgal/d of reclaimed wastewater${[['crops', c.other.ir_rec], ['golf courses', c.other.go_rec], ['power plants', c.other.pt_rec]].filter((r) => r[1] > 0.005).length ? `, for ${[['crops', c.other.ir_rec], ['golf courses', c.other.go_rec], ['power plants', c.other.pt_rec]].filter((r) => r[1] > 0.005).map((r) => r[0]).join(' and ')}` : ''}, which USGS does not count as a withdrawal.</p>`;
+      const recFor = [['crops', c.other.ir_rec], ['golf courses', c.other.go_rec], ['power plants', c.other.pt_rec]].filter((r) => r[1] > 0.005).map((r) => r[0]);
+      if (rec > 0.005) rows.push({ v: rec, color: SRC_DEF.rec.color, round: true, name: SRC_DEF.rec.name, sub: `reused${recFor.length ? ` by ${recFor.join(' and ')}` : ''}; not counted as a withdrawal` });
+      rows.sort((a, b) => b.v - a.v);
+      html += `<h5>Where its water comes from</h5>${mixBlock(rows)}`;
+      if (rec > 0.005) html += `<p class="wm-note">Shares of all the water its uses drew: the ${mgd(c.total)} Mgal/d withdrawn and ${mgd(rec)} Mgal/d of reclaimed wastewater.</p>`;
+    }
+    html += `<p class="wm-sub wm-story">${this.storyOf(c, c.name)} ${c.total > 0 ? `${ord(m.rank[i])} of ${nf(m.n)} counties by water withdrawn.` : ''}${perCap ? ` ${nf(c.pop * 1000)} residents.` : ''}</p>`;
+    if (c.total > 0) {
       html += `<h5>What each source was used for</h5>${this.sankeyFor(agg, 1, (v) => mgd(v))}
-        <p class="wm-note">Million gallons a day. The white part of a bar is the share consumed.</p>`;
+        <p class="wm-note">Million gallons a day withdrawn. The white part of a bar is the share consumed.</p>`;
     }
     if (flowNotes) html += flowNotes;
     const kv = [];
@@ -486,7 +520,7 @@ export class Hud {
     const cu = Math.min(p.c || 0, W), ret = Math.max(0, W - cu);
     const once = /ONCE-THROUGH/.test(p.cooling || '');
     const fates = [
-      { name: 'Returned', sub: once ? 'discharged back to surface water, warmer' : 'discharged back to surface water', v: ret, color: '#3c7fe0' },
+      { name: 'Returned', sub: once ? 'discharged back to surface water, warmer' : 'discharged back to surface water', v: ret, color: RETURN_GRAY },
       { name: 'Consumed', sub: /POND/.test(p.cooling || '') ? 'mostly evaporated from its cooling pond' : /TOWER|COMPLEX/.test(p.cooling || '') ? 'mostly evaporated in its cooling towers' : 'mostly evaporated', v: cu, color: '#f4f1ea' },
     ];
     const perMWh = (v) => (p.mwh > 0 && v > 0 ? (v * 1e6 * 365) / p.mwh : null);
@@ -496,9 +530,9 @@ export class Hud {
     let html = `<p class="wm-cap">Power plant · ${esc(genName(p.gen).toLowerCase())}</p><h3>${esc(p.name)}</h3>
       <p class="wm-sub">${c ? `${esc(c.name)}, ${esc(this.app.stateName(c.st))}` : esc(p.st)} · ${esc(coolName(p.cooling).toLowerCase())}</p>`;
     if (W > 0) {
-      html += `<div class="wm-big">${mgd(W)} <small>million gallons of water a day</small></div>
-        <p class="wm-sub">used at the plant in 2015, nearly all of it to carry away heat.${(src.rec || 0) + (src.ps || 0) > 0 && p.w_env > 0 ? ` ${mgd(p.w_env)} of it was withdrawn from rivers, lakes or wells; the rest was reclaimed or bought.` : ''}</p>
+      html += `<div class="wm-big">${mgd(W)} <small>million gallons a day, nearly all to carry away heat</small></div>
         <h5>Where its water comes from</h5>${mixBlock(rows)}
+        ${(src.rec || 0) + (src.ps || 0) > 0 && p.w_env > 0 ? `<p class="wm-note">${mgd(p.w_env)} Mgal/d of it was withdrawn from rivers, lakes or wells; the rest was reclaimed or bought.</p>` : ''}
         ${ownMissing && named ? `<p class="wm-note">The USGS plant model names ${esc(withThe(named))} as this plant's source, but the USGS county figures the map follows count its county's power-plant water as ${esc(rows.map((r) => r.name.toLowerCase()).join(' and '))}.</p>` : ''}
         <h5>What happens to it</h5>${mixBlock(fates)}`;
     } else {
@@ -506,13 +540,17 @@ export class Hud {
     }
     const kv = [];
     if (p.mwh > 0) kv.push(['Electricity generated, 2015', `${nf(p.mwh / 1e6, p.mwh < 1e6 ? 2 : 1)} TWh`]);
-    if (wI) kv.push(['Water used per MWh', `${nf(wI)} gal`]);
-    if (cI) kv.push(['Water consumed per MWh', `${nf(cI)} gal`]);
+    // (to two figures: the water and the electricity are each estimates)
+    if (wI) kv.push(['Water used per MWh', `about ${nf(sig2(wI))} gal`]);
+    if (cI) kv.push(['Water consumed per MWh', `about ${nf(sig2(cI))} gal`]);
     if (kv.length) html += `<h5>Per unit of electricity</h5><div class="wm-kv">${kv.map(([a, b]) => `<span>${a}</span><span>${b}</span>`).join('')}</div>`;
-    html += `<h5>USGS plant model estimate</h5>
-      <div class="wm-kv"><span>Withdrawal</span><span>${mgd(p.model_w)} Mgal/d</span><span>Plausible range</span><span>${mgd(p.model_w_rng[0])}–${mgd(p.model_w_rng[1])}</span>
-        <span>Consumption</span><span>${mgd(p.model_c)} Mgal/d</span><span>Plausible range</span><span>${mgd(p.model_c_rng[0])}–${mgd(p.model_c_rng[1])}</span></div>
-      <p class="wm-note">The figures above are the county's 2015 power-plant water by source (USGS county data), divided among its plants in proportion to the USGS plant model (Harris and Diehl, 2019), so they can differ from the model's own estimate.</p>
+    // the plant model's own estimate, in words, and where the county figures fall against it
+    const rw = p.model_w_rng || [], rc = p.model_c_rng || [];
+    const wRange = rw[0] > 0 && rw[1] / rw[0] < 20 ? ` (plausible range ${mgd(rw[0])} to ${mgd(rw[1])})` : '';
+    const cRange = rc[0] > 0 ? ` (plausible range ${mgd(rc[0])} to ${mgd(rc[1])})` : '';
+    const off = W > 0 && cu > 0 && rc[0] > 0 && (cu < rc[0] * 0.98 || cu > rc[1] * 1.02) ? ` For this plant the county figures put consumption ${cu < rc[0] ? 'below' : 'above'} the model's range.` : '';
+    html += `<h5>The USGS plant model</h5>
+      <p class="wm-note">USGS also estimated every plant's water from its heat budget (Harris and Diehl, 2019). For ${esc(p.name)} that model gives ${mgd(p.model_w)} Mgal/d withdrawn${wRange} and ${mgd(p.model_c)} Mgal/d consumed${cRange}. The figures above follow the USGS county data instead: the county's 2015 power-plant water by source, divided among its plants in proportion to the model.${off}</p>
       ${p.county >= 0 ? `<div class="wm-list"><button type="button" class="wm-li" data-county="${p.county}"><span>See all of ${esc(c.name)}</span><span>→</span></button></div>` : ''}`;
     this.setInspector(html, true);
   }
@@ -528,7 +566,7 @@ export class Hud {
     const ci = this.app.damCounty ? this.app.damCounty[i] : -1;
     const c = ci >= 0 ? this.m.county(ci) : null;
     const stor = d.stor[i];
-    const html = `<p class="wm-cap">Dam · National Inventory of Dams</p><h3>${esc(nm ? nm[0] || 'Unnamed dam' : 'Dam')}</h3>
+    const html = `<p class="wm-cap">Dam</p><h3>${esc(nm ? nm[0] || 'Unnamed dam' : 'Dam')}</h3>
       <p class="wm-sub">${nm && nm[1] ? `${esc(nm[1])} · ` : ''}${c ? `${esc(c.name)}, ${esc(c.st)}` : ''}</p>
       ${stor > 0 ? `<div class="wm-big">${stor >= 1e6 ? nf(stor / 1e6, 1) : nf(stor)} <small>${stor >= 1e6 ? 'million ' : ''}acre-feet of storage</small></div>
       <p class="wm-sub">${stor > 1e8 ? 'The inventory gives this structure the volume of the natural lake it regulates' : `${nf(stor * 325851 / 1e9, stor * 325851 / 1e9 < 10 ? 2 : 0)} billion gallons at most${d.fl[i] ? '. The inventory gives this structure the storage of the larger project it belongs to' : ''}`}.</p>` : ''}
@@ -557,14 +595,14 @@ export class Hud {
       const D = DATA_CENTERS;
       const r = (D.reported || []).find((q) => Math.hypot(q.x - L.data.x[i], q.z - L.data.z[i]) < 1.5);
       body = r ? `<p class="wm-sub">${esc(r.op)} reported that its ${esc(r.name)} data center consumed ${nf(r.gal / 1e6)} million gallons of water in ${esc(r.year)}, about ${nf(r.gal / 365 / 1e6, 2)} million gallons a day.</p>` : `<p class="wm-sub">Its operator does not publish how much water it uses or where the water comes from.</p>`;
-      if (c && psRows.length) body += `<h5>Public water systems in ${esc(c.name)}</h5>${mixBlock(psRows)}<p class="wm-note">For context: where the county's utilities got their water in 2015 (USGS). Many data centers buy water from the local utility, but this one's source is not reported.</p>`;
+      if (c && psRows.length) body += `<h5>Public supply in ${esc(c.name)}</h5>${mixBlock(psRows, null)}<p class="wm-note">For context: where the county's utilities got their water in 2015 (USGS). Many data centers buy water from the local utility, but this one's source is not reported.</p>`;
       body += `<p class="wm-note">For scale, LBNL estimates all U.S. data centers consumed about ${nf(D.directGal / 1e9, 1)} billion gallons on site in ${D.year}, about ${nf(D.directMgd)} million gallons a day.</p>`;
     } else if (k === 'golf_course') {
       if (c && c.split && c.W.go + c.other.go_rec > 0) {
         const rows = this.srcRows(c.src.go, aq);
-        if (c.other.go_rec > 0) rows.push({ v: c.other.go_rec, color: SRC_DEF.rec.color, name: SRC_DEF.rec.name, sub: SRC_DEF.rec.sub });
+        if (c.other.go_rec > 0) rows.push({ v: c.other.go_rec, color: SRC_DEF.rec.color, round: true, name: SRC_DEF.rec.name, sub: SRC_DEF.rec.sub });
         body = `<p class="wm-sub">USGS does not report single courses. Golf courses in ${esc(c.name)} used ${mgd(c.W.go + c.other.go_rec)} million gallons a day in 2015 and consumed ${mgd(c.cu.go)}.</p>
-          <h5>Where the county's golf water comes from</h5>${mixBlock(rows.sort((a, b) => b.v - a.v))}`;
+          <h5>Where the county's golf water comes from</h5>${mixBlock(rows.sort((a, b) => b.v - a.v), null)}<p class="wm-note">Shares of the county's golf water (USGS county figures for 2015).</p>`;
       } else if (c && !c.split) body = `<p class="wm-sub">USGS did not report golf courses separately in ${esc(this.app.stateName(c.st))}; their water is counted with crop irrigation.</p>`;
       else body = `<p class="wm-sub">USGS counted no golf-course water in ${c ? esc(c.name) : 'this county'} in 2015.</p>`;
     } else if (k === 'wastewater_plant') {
@@ -574,15 +612,17 @@ export class Hud {
     } else if (k === 'water_works') {
       const hub = c ? this.app.psHub && this.app.psHub(ci) : null;
       const isHub = hub && Math.hypot(hub[0] - L.data.x[i], hub[1] - L.data.z[i]) < 0.06;
-      body = c && psRows.length ? `<p class="wm-sub">Public water systems in ${esc(c.name)} withdrew ${mgd(c.W.ps)} million gallons a day in 2015. USGS reports this for the whole county, not plant by plant.</p>
-        <h5>Where the county's public water comes from</h5>${mixBlock(psRows)}
+      body = c && psRows.length ? `<p class="wm-sub">USGS reports public supply for each county, not plant by plant: utilities in ${esc(c.name)} withdrew ${mgd(c.W.ps)} million gallons a day in 2015.</p>
+        <h5>Where the county's public supply comes from</h5>${mixBlock(psRows, null)}
         <p class="wm-note">${isHub ? 'The map routes the county’s public supply through this plant.' : 'The map routes the county’s public supply through one mapped plant near the middle of its towns.'} USGS reports how much came from surface water and from wells, not from which river, so the map draws the intakes on the county’s largest rivers and lakes.</p>` : '<p class="wm-sub">USGS counted no public-supply withdrawals in this county in 2015.</p>';
     } else {
       body = c && psRows.length ? `<p class="wm-sub">Water towers hold treated water from the public water system and keep the pipes pressurized.</p>
-        <h5>Where the county's public water comes from</h5>${mixBlock(psRows)}<p class="wm-note">USGS county figures for 2015: ${mgd(c.W.ps)} million gallons a day withdrawn by public water systems in ${esc(c.name)}.</p>` : '<p class="wm-sub">Water towers hold treated water from the public water system and keep the pipes pressurized.</p>';
+        <h5>Where the county's public supply comes from</h5>${mixBlock(psRows, null)}<p class="wm-note">Shares of the ${mgd(c.W.ps)} million gallons a day that utilities in ${esc(c.name)} withdrew in 2015 (USGS county figures).</p>` : '<p class="wm-sub">Water towers hold treated water from the public water system and keep the pipes pressurized.</p>';
     }
-    const html = `<p class="wm-cap">${esc(OSM_LABEL[k])} · OpenStreetMap</p><h3>${esc(nm || OSM_LABEL[k])}</h3>
-      <p class="wm-sub">${op && op !== nm ? `${esc(op)} · ` : ''}${c ? `${esc(c.name)}, ${esc(this.app.stateName(c.st))}` : ''}</p>${body}
+    // a place OpenStreetMap leaves unnamed is called by its operator, or by its county
+    const title = nm || (op ? `${op} ${OSM_LABEL[k].toLowerCase()}` : c ? `${OSM_LABEL[k]} in ${c.name}` : OSM_LABEL[k]);
+    const html = `<p class="wm-cap">${esc(OSM_LABEL[k])}</p><h3>${esc(title)}</h3>
+      <p class="wm-sub">${op && op !== nm && !title.startsWith(op) ? `${esc(op)} · ` : ''}${c ? `${esc(c.name)}, ${esc(this.app.stateName(c.st))}` : ''}</p>${body}
       <p class="wm-note">Location from OpenStreetMap (© OpenStreetMap contributors, ODbL), which maps many but not all such places.</p>
       ${ci >= 0 ? `<div class="wm-list"><button type="button" class="wm-li" data-county="${ci}"><span>See all of ${esc(c.name)}</span><span>→</span></button></div>` : ''}`;
     this.setInspector(html, true);
@@ -607,7 +647,7 @@ export class Hud {
     const A = this.app.aquifers; if (!A) return;
     const a = A.byIndex.get(ai); if (!a) return;
     const g = a.gw, tot = a.total;
-    const rows = [['Crop irrigation', Math.max(0, (g.it || 0) - g.ig)], ['Golf courses', g.ig], ['Public supply', g.ps], ['Homes on private wells', g.do], ['Industry', g.in], ['Livestock', g.li], ['Fish farms', g.aq], ['Mining', g.mi], ['Power plants', g.pt]].filter((r) => r[1] > 0.05).sort((x, y) => y[1] - x[1]);
+    const rows = [['ir', Math.max(0, (g.it || 0) - g.ig)], ['go', g.ig], ['ps', g.ps], ['do', g.do], ['in', g.in], ['li', g.li], ['aq', g.aq], ['mi', g.mi], ['pt', g.pt]].map(([k, v]) => [CAT[k].name, v]).filter((r) => r[1] > 0.05).sort((x, y) => y[1] - x[1]);
     const dep = DEPLETION.byAquifer[a.name], st = AQ_STORAGE[a.name];
     const area = A.area ? A.area.get(ai) : null;
     let html = `<p class="wm-cap">Principal aquifer · ${esc(a.rock)}</p><h3>${esc(a.name)}</h3>
@@ -638,8 +678,8 @@ export class Hud {
     const c = this.m.county(i);
     const top = CAT_KEYS.slice().sort((a, b) => c.W[b] - c.W[a])[0];
     const iso = this.app.iso && CAT[this.app.iso] ? this.app.iso : null;
-    const line = iso ? `${volShort(c.W[iso])} for ${esc(CAT[iso].name.toLowerCase())}` : `${volShort(c.total)} withdrawn${c.total > 0 ? ` · ${pct(c.W[top], c.total)}% ${esc(CAT[top].short.toLowerCase())}` : ''}`;
-    return `<b>${esc(c.name)}, ${esc(c.st)}</b><span>${line}</span>${cls > 0 ? `<span class="wm-tip-lc">Land here: ${esc(NLCD_CLASSES[cls].toLowerCase())}</span>` : ''}<span class="wm-tip-hint">Click to see where its water comes from</span>`;
+    const line = iso ? `${mgdLabel(c.W[iso])} for ${esc(CAT[iso].name.toLowerCase())}` : `${mgdLabel(c.total)} withdrawn${c.total > 0 ? ` · ${pct(c.W[top], c.total)}% ${esc(CAT[top].name.toLowerCase())}` : ''}`;
+    return `<b>${esc(c.name)}, ${esc(AP_STATE[c.st] || c.st)}</b><span>${line}</span>${cls > 0 ? `<span class="wm-tip-lc">Land here: ${esc(NLCD_CLASSES[cls].toLowerCase())}</span>` : ''}<span class="wm-tip-hint">Click to see where its water comes from</span>`;
   }
   riverTip(r) {
     const cfs = r.q * 35.3147;
@@ -674,7 +714,9 @@ export class Hud {
   }
   setScale(unit, detail) {
     const el = this.$('[data-scale]'); if (!el) return;
-    el.textContent = `Each streak carries about ${unit >= 1 ? `${nf(unit, unit < 10 ? 1 : 0)} million` : nf(Math.round(unit * 1000) * 1000)} gallons a day${detail ? ' at this zoom' : ''}.`;
+    // one figure for a sub-million amount, two above: the streak is a symbol, not a measurement
+    const g = unit * 1e6, r = g >= 1e6 ? sig2(g) : Number(g.toPrecision(1));
+    el.textContent = `Each streak stands for about ${r >= 1e6 ? `${nf(r / 1e6, r < 1e7 && r % 1e6 ? 1 : 0)} million` : nf(r)} gallons a day${detail ? ' at this zoom' : ''}.`;
   }
 
   // ------------------------------------------------------------ search
@@ -713,12 +755,15 @@ export class Hud {
   }
   buildButtons() {
     if (window.matchMedia(PHONE_MQ).matches) this.$('[data-search]').placeholder = 'Search';
+    requestAnimationFrame(() => this.fitBar());
     const act = {
       home: () => this.app.goHome(),
       tour: () => this.app.tour.toggle(),
       night: () => this.app.setNight(!this.app.night),
       under: () => this.app.setUnderground(!this.app.underground),
       full: () => this.app.toggleExpanded(),
+      // phones: the buttons fold behind one, so the map keeps the height
+      more: () => { const open = !this.root.classList.contains('wm-menu-open'); this.root.classList.toggle('wm-menu-open', open); const b = this.$('[data-a="more"]'); b.setAttribute('aria-expanded', String(open)); b.textContent = open ? 'Less' : 'More'; },
       layers: () => { const el = this.$('[data-layers]'); el.hidden = !el.hidden; this.$('[data-a="layers"]').setAttribute('aria-expanded', String(!el.hidden)); this.$('[data-a="layers"]').classList.toggle('on', !el.hidden); },
     };
     for (const b of this.$$('[data-bar] [data-a]')) this.on(b, 'click', () => act[b.dataset.a]?.());
