@@ -360,6 +360,9 @@ html.wm-lock body {
 }
 
 .wm-key-row svg { width: 40px; height: 12px; margin-top: 2px; overflow: visible; }
+.wm .wm-key-src { display: flex; flex-wrap: wrap; margin: var(--space-xs) 0 0; color: var(--wm-dim); font-size: var(--text-xs); gap: 2px var(--space-sm); }
+.wm-key-src span { display: inline-flex; align-items: center; }
+.wm-key-src .wm-sw { width: 8px; height: 8px; margin-right: 5px; }
 
 /* ---- inspector */
 .wm-insp {
@@ -460,6 +463,28 @@ button.wm-li:hover { color: var(--wm-brass); }
 }
 
 .wm-stack i { display: block; height: 100%; }
+.wm-stack i + i { box-shadow: inset 1px 0 0 var(--wm-panel-solid); }
+
+/* a breakdown: the stacked bar, then one line per part with its share and volume */
+.wm-mix { margin-top: var(--space-2xs); }
+.wm-mix .wm-stack { height: 10px; margin: 0 0 var(--space-2xs); }
+
+.wm-mix-r {
+  display: grid;
+  padding: 5px 0 4px;
+  border-top: 1px solid var(--wm-rule);
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: baseline;
+  gap: var(--space-sm);
+  font-size: var(--text-sm);
+  line-height: var(--leading-heading);
+}
+
+.wm-mix-n { display: flex; min-width: 0; align-items: baseline; }
+.wm-mix-n .wm-sw { transform: translateY(1px); }
+.wm-mix-n small { display: block; margin-top: 1px; color: var(--wm-mute); font-size: var(--text-xs); }
+.wm-mix-p { min-width: 3em; color: var(--wm-ink); text-align: right; font-variant-numeric: tabular-nums; }
+.wm-mix-v { min-width: 6.4em; color: var(--wm-dim); font-size: var(--text-xs); text-align: right; font-variant-numeric: tabular-nums; }
 
 .wm .wm-legend-line {
   margin: var(--space-2xs) 0 0;
@@ -484,7 +509,6 @@ button.wm-li:hover { color: var(--wm-brass); }
 .wm-cbar .wm-t { height: 6px; background: rgba(255, 247, 232, 0.07); }
 .wm-cbar .wm-t i { display: block; height: 100%; background: #7fe0b8; }
 .wm-cbar .wm-v { color: var(--wm-dim); text-align: right; font-variant-numeric: tabular-nums; }
-.wm-pins { display: flex; margin-top: var(--space-sm); gap: var(--space-xs); }
 
 .wm-sankey { display: block; margin: var(--space-sm) 0 var(--space-2xs); }
 .wm-sankey text { fill: var(--wm-ink); font-family: var(--font-body); font-size: var(--text-xs); }
@@ -643,40 +667,6 @@ button.wm-li:hover { color: var(--wm-brass); }
 .wm-tip .wm-tip-lc { color: var(--wm-mute); }
 .wm-tip .wm-tip-hint { margin-top: 2px; color: var(--wm-brass); }
 
-/* ---- compare sheet */
-.wm-modal {
-  position: absolute;
-  inset: 0;
-  z-index: 40;
-  display: grid;
-  place-items: center;
-  background: rgba(4, 10, 8, 0.62);
-}
-
-.wm-modal-box {
-  width: min(760px, calc(100% - 2 * var(--space-md)));
-  max-height: calc(100% - 2 * var(--space-xl));
-  padding: var(--space-md) var(--space-lg);
-  overflow: auto;
-}
-
-.wm-modal-box h3 { margin: 0 0 var(--space-2xs); font-size: var(--text-xl); font-weight: 400; }
-.wm-cmp { position: relative; margin-top: var(--space-sm); padding-top: 18px; }
-.wm-cmp-ticks { position: absolute; top: 0; right: 64px; left: 228px; height: 16px; }
-.wm-cmp-ticks span { position: absolute; color: var(--wm-mute); font-size: var(--text-xs); transform: translateX(-50%); }
-.wm-cmp-row { display: grid; padding: 3px 0; border-top: 1px solid var(--wm-rule); grid-template-columns: 220px 1fr 56px; gap: var(--space-xs); align-items: center; }
-.wm-cmp-row.pick .wm-cmp-l { color: var(--wm-brass); }
-.wm-cmp-l { font-size: var(--text-sm); line-height: var(--leading-heading); }
-.wm-cmp-l small { display: block; color: var(--wm-mute); font-size: var(--text-xs); }
-.wm-cmp-t { position: relative; height: 14px; }
-.wm-cmp-t .g { position: absolute; top: -3px; bottom: -3px; width: 1px; background: var(--wm-rule); }
-.wm-cmp-t .b { position: absolute; top: 2px; bottom: 2px; left: 0; }
-.wm-cmp-t .b.c { background: #e9d9a8; }
-.wm-cmp-t .b.w { border: 1px solid #8fc1f0; background: rgba(143, 193, 240, 0.14); }
-.wm-cmp-t .b.t { border: 1px solid #5fd1c9; background: rgba(95, 209, 201, 0.18); }
-.wm-cmp-v { color: var(--wm-dim); font-size: var(--text-xs); text-align: right; font-variant-numeric: tabular-nums; }
-.wm-cmp-bs { display: flex; margin: var(--space-sm) 0 0; gap: var(--space-xs); }
-
 /* ---- labels on the map */
 .wm-labels {
   position: absolute;
@@ -720,6 +710,14 @@ button.wm-li:hover { color: var(--wm-brass); }
 .wm-lbl.trace::before { left: -4px; background: #fff7e8; }
 .wm-lbl.trace.lift::after { left: -0.5px; }
 .wm-lbl.trace small { display: inline; margin-left: 5px; color: var(--wm-dim); }
+.wm-lbl.trace b { margin-left: 6px; color: var(--wm-ink); font-weight: 700; font-variant-numeric: tabular-nums; }
+/* a dotted label turned to the left of its point: the dot (and the leader of a lifted label) on the right */
+.wm-lbl.dot.flip { padding-right: 13px; padding-left: 0; }
+.wm-lbl.dot.flip::before { right: 1px; left: auto; }
+.wm-lbl.dot.flip.lift::after { right: 4.5px; left: auto; }
+.wm-lbl.trace.flip { padding: 2px 14px 3px 7px; }
+.wm-lbl.trace.flip::before { right: -4px; left: auto; }
+.wm-lbl.trace.flip.lift::after { right: -0.5px; left: auto; }
 .wm-lbl.trace .wm-sw { width: 8px; height: 8px; margin-right: 5px; }
 
 .wm-perf {
@@ -844,6 +842,4 @@ button.wm-li:hover { color: var(--wm-brass); }
   .wm-caption { bottom: 96px; width: calc(100% - 2 * var(--space-xs)); }
   .wm-caption > p:not(.wm-cap) { line-height: var(--leading-note); }
   .wm-layers { bottom: 96px; }
-  .wm-cmp-row { grid-template-columns: 116px 1fr 46px; }
-  .wm-cmp-ticks { left: 124px; right: 54px; }
 }

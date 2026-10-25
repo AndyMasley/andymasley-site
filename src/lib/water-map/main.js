@@ -19,7 +19,7 @@ import { Aqueducts } from './net/aqueducts.js';
 import { loadDams, loadOsm, plantDots, OSM_KINDS, OSM_LABEL } from './net/infra.js';
 import { AQ_FLOWS, DATA_CENTERS } from './core/flows_data.js';
 import { projectLower48 } from './core/proj.js';
-import { Hud } from './ui/hud.js';
+import { Hud, SRC_DEF, srcName } from './ui/hud.js';
 import { Labels } from './ui/labels.js';
 import { Tour } from './ui/tour.js';
 import { esc, nf, volShort } from './ui/fmt.js';
@@ -34,7 +34,7 @@ const LOOK = {
     zenith: SKY.zenith.clone(), horizon: SKY.horizon.clone(), floor: SKY.floor.clone(), fog: SKY.horizon.clone(), bloom: FINISH.bloom.intensity, thr: FINISH.bloom.threshold },
   night: { sunI: 0.46, sunC: lin(0.62, 0.72, 1.0), hemiI: 0.26, hemiSky: lin(0.30, 0.38, 0.62), hemiGround: lin(0.05, 0.05, 0.06),
     sky: lin(0.020, 0.035, 0.070), sunCol: lin(0.22, 0.26, 0.36), deep: lin(0.002, 0.007, 0.015), shallow: lin(0.10, 0.16, 0.22),
-    zenith: lin(0.002, 0.004, 0.012), horizon: lin(0.012, 0.020, 0.040), floor: lin(0.004, 0.006, 0.007), fog: lin(0.010, 0.016, 0.030), bloom: 1.25, thr: 0.62 },
+    zenith: lin(0.002, 0.004, 0.012), horizon: lin(0.012, 0.020, 0.040), floor: lin(0.004, 0.006, 0.007), fog: lin(0.010, 0.016, 0.030), bloom: 0.95, thr: 0.7 },
 };
 
 /**
@@ -261,7 +261,7 @@ export async function startWaterMap(root, { dataBase = '/water-map/data/', lite 
 
   const finish = createFinish(renderer, scene, camera, { quality });
   const frustum = new THREE.Frustum(), pv = new THREE.Matrix4();
-  let W = 0, H = 0, started = false;
+  let W = 0, H = 0, started = false, hudRef = null;
   const resize = () => {
     const r = stage.getBoundingClientRect();
     W = Math.max(1, r.width | 0); H = Math.max(1, r.height | 0);
@@ -276,6 +276,7 @@ export async function startWaterMap(root, { dataBase = '/water-map/data/', lite 
     shared.uViewport.value.set(W, H);
     shared.uFocalPx.value = (H / 2) / camera.userData.tanHalf;
     const wasHome = !started || Math.abs(controls.goal.d - home.d) < 1;
+    if (hudRef) hudRef.fitLeft();
     fitHome();
     if (wasHome) controls.set(home, !started);
   };
@@ -444,6 +445,7 @@ export async function startWaterMap(root, { dataBase = '/water-map/data/', lite 
       writeHash();
     },
     stateName: (st) => STATES[st] || st,
+    psHub(ci) { const st = (flows.byCounty.get(ci) || []).find((s) => s.cat === 'ps' && s.kind === KIND.intake); return st ? st.to[0] : null; },
     /** emphasis on the flows: an isolated use, a use hovered in the picker, or a band hovered in a Sankey */
     _hoverCat: null, _flowFocus: null,
     applyEmphasis() {
@@ -528,7 +530,7 @@ export async function startWaterMap(root, { dataBase = '/water-map/data/', lite 
     },
     selectState(st, fly = true) {
       const ids = model.states.get(st); if (!ids) return;
-      app.clearMarks(); clearTrace();
+      app.clearMarks(); clearTrace(); flows.clearFocus();
       selCounty = -1; selPlant = -1; shared.uSelCounty.value = -1; plants.uSelPlant.value = -1;
       shared.uSelState.value = stateIdx[st];
       hud.showState(st);
@@ -562,6 +564,7 @@ export async function startWaterMap(root, { dataBase = '/water-map/data/', lite 
       app.clearMarks();
       selCounty = i; selPlant = -1; shared.uSelState.value = -1;
       shared.uSelCounty.value = i; plants.uSelPlant.value = -1;
+      flows.setFocus(flows.byCounty.get(i) || [], { county: i });
       const notes = traceCounty(i);
       syncTop();
       hud.showCounty(i, notes);
@@ -579,16 +582,22 @@ export async function startWaterMap(root, { dataBase = '/water-map/data/', lite 
       app.clearMarks();
       selPlant = pi; selCounty = p.county; shared.uSelState.value = -1;
       plants.uSelPlant.value = pi; shared.uSelCounty.value = p.county;
+      flows.setFocus(flows.streams.filter((s) => s.plant === p), { plant: pi });
       tracePlant(p);
       syncTop();
       hud.showPlant(pi);
       writeHash();
-      if (fly) controls.flyTo({ x: p.x, z: p.z + 0.4, d: 16, tilt: 1.05 }, 1800);
+      if (fly) {
+        // close enough that the plant and its channels fill the view: intake, plant and outfall
+        let x0 = p.x, x1 = p.x, z0 = p.z, z1 = p.z;
+        for (const q of [p.intake, p.outfall]) if (q) { x0 = Math.min(x0, q.x); x1 = Math.max(x1, q.x); z0 = Math.min(z0, q.z); z1 = Math.max(z1, q.z); }
+        app.fitBox(x0 - 0.9, x1 + 0.9, z0 - 0.7, z1 + 0.7, { minD: 8, maxD: 40, tilt: 1.05 });
+      }
     },
     selectAquifer(ai, fly = true) {
       if (!aquifers) return;
       if (!app.underground) app.setUnderground(true);
-      app.clearMarks(); clearTrace();
+      app.clearMarks(); clearTrace(); flows.clearFocus();
       shared.uAqSel.value = ai;
       hud.showAquifer(ai);
       writeHash();
@@ -598,7 +607,7 @@ export async function startWaterMap(root, { dataBase = '/water-map/data/', lite 
     async selectDam(i, fly = false) {
       if (!app.dams) return;
       await app.dams.loadNames();
-      app.clearMarks(); clearTrace(); app.dams.uniforms.uSel.value = i;
+      app.clearMarks(); clearTrace(); flows.clearFocus(); app.dams.uniforms.uSel.value = i;
       selCounty = -1; selPlant = -1; shared.uSelCounty.value = -1; plants.uSelPlant.value = -1; shared.uSelState.value = -1;
       hud.showDam(i);
       if (fly) controls.flyTo({ x: app.dams.data.x[i], z: app.dams.data.z[i] + 0.3, d: app.dams.data.stor[i] > 1e5 ? 30 : 14, tilt: Math.max(1.0, controls.state.tilt) }, 1800);
@@ -608,33 +617,42 @@ export async function startWaterMap(root, { dataBase = '/water-map/data/', lite 
       await app.osm.loadNames();
       app.clearMarks(); clearTrace(); app.osm.uniforms.uSel.value = i;
       selCounty = -1; selPlant = -1; shared.uSelCounty.value = -1; plants.uSelPlant.value = -1; shared.uSelState.value = -1;
+      const kind = OSM_KINDS[app.osm.data.kind[i]], ci = app.osm.data.county[i];
+      const cat = kind === 'water_works' || kind === 'water_tower' ? 'ps' : kind === 'golf_course' ? 'go' : null;
+      const ss = cat && ci >= 0 ? (flows.byCounty.get(ci) || []).filter((s) => s.cat === cat && s.kind !== KIND.vapor && s.kind !== KIND.ret) : [];
+      if (ss.length) { flows.setFocus(ss, { county: ci, cat: CAT_KEYS.indexOf(cat) }); traceFacility(ci, cat, ss); } else flows.clearFocus();
       hud.showOsm(i);
-      if (fly) controls.flyTo({ x: app.osm.data.x[i], z: app.osm.data.z[i] + 0.2, d: 9, tilt: Math.max(1.0, controls.state.tilt) }, 1800);
+      if (ss.length) {
+        let x0 = app.osm.data.x[i], x1 = x0, z0 = app.osm.data.z[i], z1 = z0;
+        for (const s of ss) for (const q of [...s.from, ...s.to]) { x0 = Math.min(x0, q[0]); x1 = Math.max(x1, q[0]); z0 = Math.min(z0, q[1]); z1 = Math.max(z1, q[1]); }
+        app.fitBox(x0 - 0.5, x1 + 0.5, z0 - 0.5, z1 + 0.5, { minD: 14, maxD: 420, tilt: Math.max(0.9, controls.state.tilt) });
+      } else if (fly) controls.flyTo({ x: app.osm.data.x[i], z: app.osm.data.z[i] + 0.2, d: 9, tilt: Math.max(1.0, controls.state.tilt) }, 1800);
+    },
+    /** fly so a box of the map fills the part of the frame the panels leave open */
+    fitBox(x0, x1, z0, z1, { tilt = Math.max(0.9, controls.state.tilt), minD = 10, maxD = 900, pad = 1.15 } = {}) {
+      const [xl, xr] = freeRegion();
+      const upright = phoneLayout();
+      const th = camera.userData.tanHalf || Math.tan((camera.fov * Math.PI) / 360);
+      const wFrac = (xr - xl) / 2, hFrac = upright ? 0.48 : 0.8;
+      const d = pad * Math.max((x1 - x0) / (2 * th * (W / H) * wFrac), (z1 - z0) / (2 * th * hFrac));
+      const dd = Math.min(maxD, Math.max(minD, d)), az = controls.state.az;
+      const sx = -((xl + xr) / 2) * dd * th * (W / H);
+      controls.flyTo({ x: (x0 + x1) / 2 + sx * Math.cos(az), z: (z0 + z1) / 2 - sx * Math.sin(az), d: dd, tilt }, 1800);
     },
     selectAqueduct(ai, fly = false) {
       const it = aqueducts.items[ai]; if (!it) return;
-      app.clearMarks(); clearTrace();
+      app.clearMarks(); clearTrace(); flows.clearFocus();
       selCounty = -1; selPlant = -1; shared.uSelCounty.value = -1; plants.uSelPlant.value = -1; shared.uSelState.value = -1;
       hud.showAqueduct(it);
       if (fly) {
         const a = model.features.aqueducts[ai];
         let x0 = Infinity, x1 = -Infinity, z0 = Infinity, z1 = -Infinity;
         for (const sg of a.segs) for (let k = 0; k < sg.p.length; k += 2) { x0 = Math.min(x0, sg.p[k]); x1 = Math.max(x1, sg.p[k]); z0 = Math.min(z0, sg.p[k + 1]); z1 = Math.max(z1, sg.p[k + 1]); }
-        if (x0 < x1) {
-          // fit the canal's extent into the part of the frame the panels leave open
-          const [xl, xr] = freeRegion();
-          const upright = phoneLayout();
-          const th = camera.userData.tanHalf || Math.tan((camera.fov * Math.PI) / 360);
-          const wFrac = (xr - xl) / 2, hFrac = upright ? 0.48 : 0.8;
-          const d = 1.15 * Math.max((x1 - x0) / (2 * th * (W / H) * wFrac), (z1 - z0) / (2 * th * hFrac));
-          const dd = Math.min(900, Math.max(10, d)), az = controls.state.az;
-          const sx = -((xl + xr) / 2) * dd * th * (W / H);
-          controls.flyTo({ x: (x0 + x1) / 2 + sx * Math.cos(az), z: (z0 + z1) / 2 - sx * Math.sin(az), d: dd, tilt: Math.max(0.9, controls.state.tilt) }, 1800);
-        }
+        if (x0 < x1) app.fitBox(x0, x1, z0, z1);
       }
     },
     clearSelection(silent) {
-      app.clearMarks(); clearTrace();
+      app.clearMarks(); clearTrace(); flows.clearFocus();
       selCounty = -1; selPlant = -1; shared.uSelCounty.value = -1; plants.uSelPlant.value = -1; shared.uSelState.value = -1;
       syncTop();
       if (silent && app.iso) return;
@@ -725,6 +743,35 @@ export async function startWaterMap(root, { dataBase = '/water-map/data/', lite 
   // ---- tracing: name where a selected place's water comes from and where it goes, on the map
   function clearTrace() { labels.removeGroup('trace'); if (typeof syncTop === 'function') syncTop(); }
   function traceLabel(html, x, z, pri, cls = '') { labels.add({ html, cls: `trace ${cls}`, anchor: 'dot', x, z, h: hUnits(x, z), group: 'trace', pri: 900 + pri, dmin: 0, dmax: 4000 }); }
+  const shareTxt = (f) => (f >= 0.9995 ? '100%' : f >= 0.99 ? `${nf(100 * f, 1)}%` : f >= 0.005 ? `${Math.round(100 * f)}%` : '<1%');
+  const SRC_KEY = { [SRC.river]: 'sf', [SRC.lake]: 'sf', [SRC.sea]: 'ss', [SRC.ground]: 'gf', [SRC.reclaimed]: 'rec', [SRC.delivered]: 'ps' };
+  /** where on the map to pin a source's label: its biggest intake, a well away from the hub, the sea, the sewage works */
+  function sourceSpots(ss) {
+    const spot = {};
+    for (const s of ss) {
+      if (s.kind !== KIND.intake) continue;
+      const k = SRC_KEY[s.src]; if (!k) continue;
+      const e = spot[k] || (spot[k] = { v: 0, p: null, w: -1 });
+      e.v += s.vol;
+      if (s.well) {
+        if (s.vol > e.w) { const hub = flows.hubOf(s), far = s.to.slice().sort((p1, p2) => Math.hypot(p1[0] - hub[0], p1[1] - hub[1]) - Math.hypot(p2[0] - hub[0], p2[1] - hub[1])); e.p = far[Math.floor(far.length * 0.7)] || s.to[0]; e.w = s.vol; }
+      } else {
+        const top = s.from.reduce((bst, q) => (!bst || (q[2] || 0) > (bst[2] || 0) ? q : bst), null);
+        if (s.vol > e.w && top) { e.p = top; e.w = s.vol; }
+      }
+    }
+    return spot;
+  }
+  /** label each source of a set of streams with its share of their water */
+  function traceSources(ss, total, names = {}) {
+    const spot = sourceSpots(ss);
+    Object.entries(spot).filter(([, e]) => e.p && e.v / total >= 0.02).sort((x, y) => y[1].v - x[1].v).slice(0, 4).forEach(([k, e]) => {
+      const d = SRC_DEF[k], nm = names[k] || d.name, sub = names[`${k}_sub`] || '';
+      // keep map labels short; the panel names the aquifers
+      const short = sub && (nm.length + sub.length) < 34 ? sub : '';
+      traceLabel(`<i class="wm-sw wm-sw-src" style="background:${d.color}"></i>${esc(nm)}<b>${shareTxt(e.v / total)}</b><small>${volShort(e.v)}${short ? ` · ${esc(short)}` : ''}</small>`, e.p[0], e.p[1], 30 + e.v / total * 40, 'src');
+    });
+  }
   function traceCounty(i) {
     clearTrace();
     const c = model.county(i), ss = flows.byCounty.get(i) || [];
@@ -733,66 +780,55 @@ export async function startWaterMap(root, { dataBase = '/water-map/data/', lite 
     // uses, at the hub where each use's water gathers
     const uses = CAT_KEYS.filter((k) => c.W[k] >= min).sort((a, b) => c.W[b] - c.W[a]).slice(0, 5);
     for (const k of uses) {
-      const st = ss.filter((s) => s.cat === k && (s.kind === KIND.intake || s.kind === KIND.deliver)).sort((a, b) => b.vol - a.vol)[0];
+      const st = ss.filter((q) => q.cat === k && (q.kind === KIND.intake || q.kind === KIND.deliver)).sort((x, y) => y.vol - x.vol)[0];
       if (!st) continue;
       const hub = k === 'ps' && st.kind === KIND.intake ? st.to[0] : flows.hubOf(st);
-      traceLabel(`<i class="wm-sw" style="background:${CAT[k].color}"></i>${esc(CAT[k].name)}<small>${volShort(c.W[k])}</small>`, hub[0], hub[1], c.W[k] / c.total * 50, 'use');
+      traceLabel(`<i class="wm-sw" style="background:${CAT[k].color}"></i>${esc(CAT[k].name)}<b>${shareTxt(c.W[k] / c.total)}</b><small>${volShort(c.W[k])}</small>`, hub[0], hub[1], c.W[k] / c.total * 50, 'use');
     }
-    // sources: named rivers, lakes, aquifers, the sea
-    const srcVol = { river: new Map(), lake: new Map() };
-    let gw = 0, sea = 0, rec = 0, gwAt = null, seaAt = null, recAt = null;
-    for (const s of ss) {
-      if (s.kind !== KIND.intake) continue;
-      if (s.src === SRC.ground) {
-        gw += s.vol;
-        if (!gwAt || s.vol > gwAt.v) {
-          // a well site away from the hub, so the label does not sit on the use's own
-          const hub = flows.hubOf(s), far = s.to.slice().sort((p, q) => Math.hypot(p[0] - hub[0], p[1] - hub[1]) - Math.hypot(q[0] - hub[0], q[1] - hub[1]));
-          gwAt = { v: s.vol, p: far[Math.floor(far.length * 0.7)] || s.to[0] };
-        }
-      }
-      else if (s.src === SRC.sea) { sea += s.vol; if (!seaAt || s.vol > seaAt.v) seaAt = { v: s.vol, p: s.from[0] }; }
-      else if (s.src === SRC.reclaimed) { rec += s.vol; if (!recAt) recAt = { p: s.from[0] }; }
-      else if (s.src === SRC.river || s.src === SRC.lake) {
-        const list = s.from;
-        // the stream's water is spread over its intakes by river size; name the biggest
-        const top = list.reduce((b, p) => (!b || (p[2] || 0) > (b[2] || 0) ? p : b), null);
-        const name = s.src === SRC.lake ? (lakeNameNear(top[0], top[1]) || 'Lakes and reservoirs') : (riverNameNear(top[0], top[1]) || null);
-        const m = s.src === SRC.lake ? srcVol.lake : srcVol.river;
-        const key = name || 'Rivers and streams';
-        const e = m.get(key) || { v: 0, p: top }; e.v += s.vol; m.set(key, e);
-      }
-    }
-    const rows = [];
-    for (const [name, e] of [...srcVol.river, ...srcVol.lake]) if (e.v >= min) rows.push([name, e.v, e.p, '#5aa9ff']);
-    if (gw >= min) {
-      const aq = aquifers && aquifers.county ? aquifers.county[c.id] : null;
-      rows.push([aq && aq[0] ? `Groundwater: ${aq[0][1]}` : 'Groundwater', gw, gwAt.p, '#7fe0b8']);
-    }
-    if (sea >= min) rows.push(['Seawater', sea, seaAt.p, '#4fd0c8']);
-    if (rec >= min) rows.push(['Reclaimed wastewater', rec, recAt.p, '#b49cff']);
-    rows.sort((a, b) => b[1] - a[1]).slice(0, 4).forEach(([name, v, p, col]) => traceLabel(`<i class="wm-sw wm-sw-src" style="background:${col}"></i>${esc(name)}<small>${volShort(v)} drawn</small>`, p[0], p[1], v / c.total * 40, 'src'));
+    // sources, by kind, with their share of the county's withdrawals (reclaimed water is extra, so it is not in the total)
+    const aq = aquifers && aquifers.county ? aquifers.county[c.id] : null;
+    const names = {};
+    if (aq && aq[0] && aq[0][0] > 0) { const tot = aq.reduce((x, r) => x + r[2], 0); if (aq[0][2] / tot >= 0.5) names.gf_sub = aq[0][1]; }
+    // (water bought from utilities or reclaimed is not a withdrawal of its own, so it is left out of the shares)
+    traceSources(ss.filter((q) => q.src !== SRC.delivered && q.src !== SRC.reclaimed), c.total, names);
     // fates: consumed and returned (USGS estimated these for irrigation and power)
     const cu = Math.min(c.cu.ir, c.W.ir + c.other.ir_rec) + Math.min(c.cu.go, c.W.go + c.other.go_rec) + Math.min(c.cu.pt, c.W.pt + 1e9);
-    const vap = ss.filter((s) => s.kind === KIND.vapor).sort((a, b) => b.vol - a.vol)[0];
+    const vap = ss.filter((q) => q.kind === KIND.vapor).sort((x, y) => y.vol - x.vol)[0];
     if (cu >= min && vap) traceLabel(`<i class="wm-sw wm-sw-vap"></i>Consumed<small>${volShort(cu)} evaporated or used up</small>`, vap.to[0][0] + 0.15, vap.to[0][1] - 0.15, 10, 'fate');
-    const ret = ss.filter((s) => s.kind === KIND.ret).sort((a, b) => b.vol - a.vol)[0];
-    const retV = ss.filter((s) => s.kind === KIND.ret).reduce((a, s) => a + s.vol, 0);
+    const ret = ss.filter((q) => q.kind === KIND.ret).sort((x, y) => y.vol - x.vol)[0];
+    const retV = ss.filter((q) => q.kind === KIND.ret).reduce((x, q) => x + q.vol, 0);
     if (ret && retV >= min) { const p = ret.plant ? ret.to[0] : ret.to[Math.floor(ret.to.length / 2)]; traceLabel(`<i class="wm-sw wm-sw-ret"></i>Returned<small>${volShort(retV)} to rivers</small>`, p[0], p[1], 8, 'fate'); }
     return '';
   }
   function tracePlant(p) {
     clearTrace();
-    const src = p.src_name && p.src_name !== '-NR-' ? p.src_name : null;
-    const ix = p.intake ? [p.intake.x, p.intake.z] : [p.x, p.z];
-    traceLabel(`<i class="wm-sw wm-sw-src" style="background:#5aa9ff"></i>${esc(src || (p.intake && p.intake.kind === 'sea' ? 'Seawater' : 'Cooling water'))}<small>${volShort(p.w_env)} drawn</small>`, ix[0], ix[1], 20, 'src');
-    if (p.c > 0) traceLabel(`<i class="wm-sw wm-sw-vap"></i>Consumed<small>${volShort(p.c)} evaporated</small>`, p.x + 0.12, p.z - 0.12, 10, 'fate');
-    const ret = Math.max(0, (p.w_env || 0) - (p.c || 0));
-    if (ret > 0.05 && p.outfall) traceLabel(`<i class="wm-sw wm-sw-ret"></i>Returned<small>${volShort(ret)}, warmer</small>`, p.outfall.x, p.outfall.z, 8, 'fate');
+    const ss = flows.streams.filter((q) => q.plant === p);
+    const W = Object.values(p.src || {}).reduce((x, v) => x + v, 0);
+    if (!(W > 0)) return;
+    const own = p.wsrc && p.wsrc.startsWith('SW') ? (/SA|BE|BR/.test(p.wtype || '') ? 'ss' : 'sf') : null;
+    const named = srcName(p.src_name);
+    const names = {};
+    if (own && named) names[own] = named;
+    traceSources(ss, W, names);
+    const cu = Math.min(p.c || 0, W), ret = Math.max(0, W - cu);
+    if (cu > 0) traceLabel(`<i class="wm-sw wm-sw-vap"></i>Consumed<b>${shareTxt(cu / W)}</b><small>${volShort(cu)}, mostly evaporated</small>`, p.x + 0.12, p.z - 0.12, 10, 'fate');
+    if (ret > 0.05 && p.outfall) traceLabel(`<i class="wm-sw wm-sw-ret"></i>Returned<b>${shareTxt(ret / W)}</b><small>${volShort(ret)}${/ONCE-THROUGH/.test(p.cooling || '') ? ', warmer' : ''}</small>`, p.outfall.x, p.outfall.z, 8, 'fate');
+  }
+  /** a treatment plant or golf course: the county's water for that use, by source */
+  function traceFacility(ci, cat, ss) {
+    clearTrace();
+    const c = model.county(ci), W = c.W[cat] || 0;
+    if (!(W > 0)) return;
+    const aq = aquifers && aquifers.county ? aquifers.county[c.id] : null;
+    const names = {};
+    if (aq && aq[0] && aq[0][0] > 0) { const tot = aq.reduce((x, r) => x + r[2], 0); if (aq[0][2] / tot >= 0.5) names.gf_sub = aq[0][1]; }
+    traceSources(ss, W + (cat === 'go' ? c.other.go_rec : 0), names);
+    const st = ss.find((q) => q.kind === KIND.intake && !q.well) || ss[0];
+    if (st) { const hub = cat === 'ps' ? st.to[0] : flows.hubOf(st); traceLabel(`<i class="wm-sw" style="background:${CAT[cat].color}"></i>${esc(CAT[cat].name)}<small>${volShort(W)}</small>`, hub[0], hub[1], 40, 'use'); }
   }
 
   const hud = new Hud(app, stage);
-  app.hud = hud;
+  app.hud = hud; hudRef = hud;
   const tour = new Tour(app);
   app.tour = tour;
   hud.syncButtons();
@@ -967,8 +1003,7 @@ export async function startWaterMap(root, { dataBase = '/water-map/data/', lite 
   on(stage, 'keydown', (e) => {
     if (e.target && e.target.closest && e.target.closest('input, textarea, select')) return;
     if (e.key === 'Escape') {
-      if (!hud.$('[data-compare]').hidden) hud.closeCompare();
-      else if (!hud.$('[data-layers]').hidden) hud.$('[data-layers]').hidden = true;
+      if (!hud.$('[data-layers]').hidden) hud.$('[data-layers]').hidden = true;
       else if (tour.i >= 0) tour.stop();
       else if (app.expanded && !document.fullscreenElement) app.toggleExpanded();
       else if (app.iso) app.isolate(null);
@@ -1004,7 +1039,7 @@ export async function startWaterMap(root, { dataBase = '/water-map/data/', lite 
     if (finish.bloom) { finish.bloom.intensity = D.bloom + (N.bloom - D.bloom) * t; finish.bloom.luminanceMaterial.threshold = D.thr + (N.thr - D.thr) * t; }
   };
   applyLook(0);
-  let last = performance.now(), frames = 0, lastScale = '', lastLook = -1, visible = true;
+  let last = performance.now(), frames = 0, lastScale = '', lastLook = -1, visible = true, riverBright = 1;
   const io = new IntersectionObserver((ents) => { for (const e of ents) visible = e.isIntersecting; }, { threshold: 0 });
   io.observe(stage);
   const stats = { lod: null, fps: 0 };
@@ -1052,6 +1087,8 @@ export async function startWaterMap(root, { dataBase = '/water-map/data/', lite 
     if (app.osm) app.osm.setPx(app.iso === 'dc' ? mk * 1.5 : mk);
     pdots.setPx(mk);
     flows.update(d, controls.state.x, controls.state.z);
+    const rb = flows.focus ? 0.5 : 1;
+    if (rb !== riverBright) { rivers.setBright(rb); riverBright = rb; }
     doHover();
     if ((frames & 15) === 0) {
       // keep labels out from under the panels

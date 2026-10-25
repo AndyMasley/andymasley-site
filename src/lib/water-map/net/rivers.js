@@ -162,7 +162,7 @@ export function createRiverMaterial(slabObj, shared) {
         float pulse = smoothstep(0.0, 0.05, ph) * (1.0 - smoothstep(0.05, 0.35, ph));
         c += vec3(0.10, 0.22, 0.32) * pulse * big;
         // night: the rivers glow, brightest where the most water flows
-        vec3 night = vec3(0.012, 0.090, 0.260) * (0.22 + 1.05 * big) + vec3(0.30, 0.72, 1.0) * pulse * (0.12 + 1.6 * big * big);
+        vec3 night = vec3(0.012, 0.090, 0.260) * (0.22 + 1.05 * big) + vec3(0.30, 0.72, 1.0) * pulse * (0.08 + 0.9 * big * big);
         c = mix(c, night, uNight);
         c *= uBright * mix(0.6, 1.0, vUS);
         gl_FragColor = vec4(c, a * mix(mix(0.45, 0.95, big), mix(0.35, 1.0, big), uNight) * mix(0.55, 1.0, vUS));
@@ -224,6 +224,8 @@ export class RiverNet {
     this.slabs.push({ R, slab, tiers, mat, grid, cell, reachOf });
   }
   /** per-frame: which tiers to draw and the discharge cut-off for the zoom */
+  /** dim the rivers (behind a selected place's channels) or bring them back */
+  setBright(v) { for (const s of this.slabs) s.mat.uniforms.uBright.value = v; }
   update(camDist) {
     const qcut = 40 * Math.pow(camDist / 1600, 1.2);
     const zoomW = Math.min(2.4, Math.max(1, Math.pow(1600 / camDist, 0.25)));

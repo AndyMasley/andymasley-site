@@ -70,21 +70,27 @@ export class Labels {
     };
     for (const it of cand) {
       const dot = it.anchor === 'dot';
-      // a dotted label may also sit a line above or below its point (with a short leader) when its own spot is taken
-      const tries = dot && it.group !== 'base' ? [0, -1, 1, -2, 2] : [0];
+      // a dotted label may also sit a line above or below its point (with a short leader) when its own spot is taken,
+      // and may turn to the left of its point when the right side is blocked (by a panel or the edge of the stage)
+      const tries = dot && it.group !== 'base' ? [0, -1, 1, -2, 2, -3, 3] : [0];
+      const sides = dot && it.group !== 'base' ? [false, true] : [false];
       let done = false;
-      for (const t of tries) {
-        const left = dot ? it.sx - 5 : it.sx - it.w / 2;
-        const top = it.sy - it.hgt / 2 + t * (it.hgt + 4);
-        const x0 = left - pad, x1 = left + it.w + pad, y0 = top - pad, y1 = top + it.hgt + pad;
-        if (!fits(x0, y0, x1, y1)) continue;
-        placed.push([x0, y0, x1, y1]);
-        it.el.style.transform = `translate(${left.toFixed(1)}px, ${top.toFixed(1)}px)`;
-        it.el.classList.toggle('lift', t !== 0);
-        it.el.style.setProperty('--wm-lead', `${(-t * (it.hgt + 4)).toFixed(0)}px`);
-        if (!it.shown) { it.el.style.opacity = '1'; it.shown = true; }
-        done = true;
-        break;
+      for (const flip of sides) {
+        for (const t of tries) {
+          const left = dot ? (flip ? it.sx + 5 - it.w : it.sx - 5) : it.sx - it.w / 2;
+          const top = it.sy - it.hgt / 2 + t * (it.hgt + 4);
+          const x0 = left - pad, x1 = left + it.w + pad, y0 = top - pad, y1 = top + it.hgt + pad;
+          if (!fits(x0, y0, x1, y1)) continue;
+          placed.push([x0, y0, x1, y1]);
+          it.el.style.transform = `translate(${left.toFixed(1)}px, ${top.toFixed(1)}px)`;
+          it.el.classList.toggle('lift', t !== 0);
+          it.el.classList.toggle('flip', flip);
+          it.el.style.setProperty('--wm-lead', `${(-t * (it.hgt + 4)).toFixed(0)}px`);
+          if (!it.shown) { it.el.style.opacity = '1'; it.shown = true; }
+          done = true;
+          break;
+        }
+        if (done) break;
       }
       if (!done && it.shown) { it.el.style.opacity = '0'; it.shown = false; }
     }
