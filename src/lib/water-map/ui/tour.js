@@ -40,6 +40,15 @@ export class Tour {
     const aac = AQ_FLOWS['All-American Canal'];
     const gwShare = pct(n.src.gf + n.src.gs, n.total);
     const fresGw = fresC ? pct(fresC.src.ir.gf, fresC.W.ir) : 0;
+    const topOf = (c) => Object.keys(c.W).sort((p, q) => c.W[q] - c.W[p])[0];
+    const jef = this.ix('21111'), jefC = jef >= 0 ? m.county(jef) : null;
+    // New York City's water, which USGS counts in the counties that hold its reservoirs (core/transfers.js)
+    const kings = this.ix('36047');
+    const nycMoved = [...m.xOut.values()].flat().filter((x) => x.sys.id === 'nyc').reduce((q, x) => q + x.vol, 0);
+    const boros = ['36047', '36081', '36061', '36005', '36085'].map((f) => this.ix(f)).filter((i) => i >= 0);
+    const boroPs = boros.reduce((q, i) => q + m.county(i).W.ps, 0);
+    const kIn = kings >= 0 ? (m.xIn.get(kings) || []).reduce((q, x) => q + x.vol, 0) : 0;
+    const kUsed = kings >= 0 ? m.county(kings).total + kIn : 0;
     return [
       { kicker: 'The whole country', title: `${B(n.total)} billion gallons a day`, view: 'home', night: true,
         text: `That is how much water the United States withdrew in 2015, by the U.S. Geological Survey's county-by-county estimate. Each streak of light is some of it, moving from the river, lake, aquifer or sea it came from to the place it was used, in the color of that use. Power plants, farms and golf courses took ${ptShare}% of it.` },
@@ -47,6 +56,10 @@ export class Tour {
         text: `Thermoelectric plants withdrew ${B(n.W.pt)} billion gallons a day, more than any other use, nearly all of it to carry away heat. Plants that pass water through once and return it warmer withdrew ${B(po)} billion and consumed ${nf(100 * pocu / po, 1)}% of it. Plants with cooling towers or ponds withdrew ${B(pc)} billion but consumed ${pct(pccu, pc)}%, mostly as evaporation. Each orange dot is a plant, sized by its water.` },
       { kicker: 'One use at a time', title: 'Crops consume the most', view: 'home', iso: 'ir', night: true,
         text: `Crop irrigation withdrew ${B(n.W.ir)} billion gallons a day, and unlike power plants it used most of it up: crops and golf courses accounted for ${irShareOfCu}% of the water USGS estimated was consumed in 2015. The counties glow green where irrigation is heaviest per square mile, along the Mississippi, across the Great Plains and in the irrigated valleys of the West.` },
+      ...(jefC && topOf(jefC) === 'pt' ? [{ kicker: 'Up close', title: 'The channels', view: this.at('21111', 120, 1.0, 0.0), night: true,
+        text: `Zoom in and the channels appear. Each carries one use's water from where it was drawn, a dot for an intake on a river or lake and a ring for a well, to where it was used, and the wider the channel, the more water. Here on the Ohio at Louisville the widest feed power plants, which took ${pct(jefC.W.pt, jefC.total)}% of the ${nf(jefC.total)} million gallons a day Jefferson County, Kentucky, withdrew.` }] : []),
+      ...(kings >= 0 && nycMoved > 0 ? [{ kicker: 'Across county lines', title: 'New York City’s water', view: this.at('36047', 230, 0.85, 0.0), select: kings, night: true,
+        text: `USGS counts public water where it is withdrawn, so on its figures New York City's five boroughs ${boroPs < 0.5 ? 'withdraw none of their own' : `withdraw only ${nf(boroPs)} million gallons a day of their own`}: the city's supply is counted in the counties that hold its Catskill, Delaware and Croton reservoirs. The map carries the ${nf(nycMoved)} million gallons a day back along the aqueducts to the counties the city serves. In Brooklyn, ${pct(kIn, kUsed)}% of the water its uses drew was piped in.` }] : []),
       ...(fresC ? [{ kicker: 'Tracing one county', title: 'Fresno County, California', view: this.at('06019', 70, 1.0, 0.25), select: fresno, night: false,
         text: `Clicking a county draws its water in the color of each source, with the share from each in a box. Fresno County withdrew ${B(fresC.total)} billion gallons a day, ${pct(fresC.W.ir, fresC.total)}% of it for crops, and ${fresGw}% of the crop water came from wells. 2015 was the fourth year of a severe drought, when surface deliveries were cut. California as a whole irrigated with ${B(ca.W.ir + ca.W.go)} billion gallons a day.` }] : []),
       ...(hp ? [{ kicker: 'Underground', title: 'The High Plains aquifer', view: this.at('31079', 560, 1.0, 0.0), aq: true, sel: { aquifer: hp.i }, night: true,
