@@ -134,6 +134,11 @@ export class WaterModel {
     // in words: "36 states and DC", "14 states and Puerto Rico"
     const words = (list) => { const n = list.filter((s) => !['DC', 'PR', 'VI'].includes(s)).length, extra = list.filter((s) => ['DC', 'PR', 'VI'].includes(s) && (s !== 'VI' || this.aggregate(this.states.get(s)).W.ir > 0)); return `${n} states${extra.length ? ` and ${extra.map((s) => ({ DC: 'DC', PR: 'Puerto Rico', VI: 'the Virgin Islands' }[s])).join(' and ')}` : ''}`; };
     this.splitWords = words(this.splitStates); this.unsplitWords = words(this.unsplitStates);
+    // California's 2015 irrigation figures divide 40 counties' water between wells and surface water in one statewide
+    // proportion, about 70 percent groundwater (see "Imported water in the West" under the map), so for those counties
+    // the split by source is not an estimate for the county itself
+    this.propIr = new Set();
+    for (const i of this.states.get('CA') || []) { const c = this.county(i), t = c.src.ir.gf + c.src.ir.sf; if (t > 0 && Math.abs(c.src.ir.gf / t - 0.7046) < 0.001) this.propIr.add(i); }
     // plants grouped by county
     this.plantsByCounty = new Map();
     for (const p of this.plants) { if (p.county < 0) continue; let a = this.plantsByCounty.get(p.county); if (!a) this.plantsByCounty.set(p.county, (a = [])); a.push(p); }
@@ -181,12 +186,14 @@ export class WaterModel {
       const riv = pick(a, 'riv', 'lake', 'land');
       const lake = a.lake && a.lake.length ? a.lake : null;
       // where a mapped canal or aqueduct runs through the county (the dry West), farms, towns and industry take their
-      // surface water from it, not from rivers whose natural flow it has carried away
+      // surface water from it, not from rivers whose natural flow it has carried away (farms not from the aqueducts
+      // built for cities, AQ_CITY in core/flows_data.js)
       const canal = this.canals && this.canals.get(i);
+      const farmCanal = this.farmCanals ? this.farmCanals.get(i) : canal;
       const surf = (vol, k) => {   // rivers vs lake shores: the Great Lakes counties draw mostly from the lakes
         // (a town or a factory takes its canal water where the canal passes nearest it, not all along the canal)
         if (canal && (k === 'ps' || k === 'in')) return [[canalNear, vol, SRC.river]];
-        if (canal && (k === 'ir' || k === 'go' || k === 'li')) return [[canal, vol, SRC.river]];
+        if (farmCanal && (k === 'ir' || k === 'go' || k === 'li')) return [[farmCanal, vol, SRC.river]];
         if (!lake) return [[riv, vol, SRC.river]];
         const big = a.riv.length ? Math.max(...a.riv.map((r) => r[2])) : 0;
         const fl = big > 200 ? 0.3 : 0.75;

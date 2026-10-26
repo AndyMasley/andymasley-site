@@ -6,7 +6,7 @@ const USBR15 = 'https://www.usbr.gov/lc/region/g4000/4200Rpts/DecreeRpt/2015/201
 const CVO = (t) => `https://www.usbr.gov/mp/cvo/vungvari/table_${t}_2015.pdf`;
 export const AQ_FLOWS = {
   'Central Arizona Project Canal': { mgd: 1355.2, af: 1518022, year: '2015', what: 'pumped from Lake Havasu', note: 'It delivered 1,449,209 acre-feet that year to Phoenix, Tucson, tribes, farms and aquifer recharge.', src: 'Bureau of Reclamation, Colorado River Accounting and Water Use Report 2015, Table 4a', url: USBR15 },
-  'Colorado River Aqueduct': { mgd: 1054.9, af: 1181597, year: '2015', what: 'pumped from Lake Havasu', note: 'Most of its 242 miles are tunnels and buried conduit, only partly mapped in OpenStreetMap.', src: 'Bureau of Reclamation, Colorado River Accounting and Water Use Report 2015, Table 5a', url: USBR15 },
+  'Colorado River Aqueduct': { mgd: 1054.9, af: 1181597, year: '2015', what: 'pumped from Lake Havasu', note: 'It runs 242 miles to Lake Mathews, near Riverside, nearly three-quarters of the way through tunnels, conduits and siphons (USGS National Hydrography Dataset).', src: 'Bureau of Reclamation, Colorado River Accounting and Water Use Report 2015, Table 5a', url: USBR15 },
   'All-American Canal': { mgd: 2514.0, af: 2816030, year: '2015', what: 'diverted at Imperial Dam for the Imperial and Coachella valleys', label: 'for Imperial and Coachella', note: '2,455,649 acre-feet for the Imperial Irrigation District and 360,381 for the Coachella Valley Water District, which leaves through the Coachella Canal. The canal also carries water for farms and towns around Yuma and some of Mexico’s share of the river, which this figure leaves out.', src: 'Bureau of Reclamation, Colorado River Accounting and Water Use Report 2015, Table 5a', url: USBR15 },
   'Coachella Canal': { mgd: 321.7, af: 360381, year: '2015', what: 'diverted for the Coachella Valley Water District', src: 'Bureau of Reclamation, Colorado River Accounting and Water Use Report 2015, Table 5a', url: USBR15 },
   'California Aqueduct': { mgd: 1193.5, af: 1336889, year: '2015', what: 'of State Water Project water delivered to its long-term contractors', label: 'delivered', note: 'A drought year: contractors got 20 percent of their contract amounts. Counting other agencies’ water moved through the project, 2,104,264 acre-feet.', src: 'California Department of Water Resources, Bulletin 132-16', url: 'https://water.ca.gov/-/media/DWR-Website/Web-Pages/Programs/State-Water-Project/Management/Files/Bulletin-132-Appendix-B-2017.pdf' },
@@ -20,6 +20,10 @@ export const AQ_FLOWS = {
   'Catskill Aqueduct': { mgd: 400, year: 'typical', when: '', what: 'carried on a typical day, per New York City', src: 'New York City Department of Environmental Protection, press release 18-100', url: 'https://www.nyc.gov/html/dep/html/press_releases/18-100pr.shtml' },
   'San Diego Aqueduct': { mgd: 325.9, af: 365083, year: 'fiscal 2018–19', what: 'of imported water supplied to the San Diego County Water Authority', src: 'San Diego County Water Authority, 2019 annual report', url: 'https://www.sdcwa.org/annualreport/2019/diversification-and-efficiency/water-sources-and-uses.php' },
 };
+
+// Aqueducts built to carry water to cities. Where one runs through a county, the model draws the county's public supply
+// and industry from it but not its farms', golf courses' or livestock's water (WaterModel.streams).
+export const AQ_CITY = new Set(['Colorado River Aqueduct', 'Los Angeles Aqueduct', 'Second Los Angeles Aqueduct', 'San Diego Aqueduct', 'Mokelumne Aqueduct', 'Catskill Aqueduct', 'Delaware Aqueduct', 'New Croton Aqueduct']);
 
 // U.S. data centers, for scale, in 2023 rather than 2015. On-site water and electricity are from Lawrence Berkeley
 // National Laboratory's 2024 report (Shehabi et al.). The water for their electricity uses the same thermoelectric-only
@@ -66,6 +70,16 @@ export const NID = { listed: 92693, updated: 'October 2026' };
 
 export const AQ_STORAGE = {
   'High Plains aquifer': { af: 2.91e9, year: '2015', src: 'McGuire (2017), USGS Scientific Investigations Report 2017–5040', url: 'https://pubs.usgs.gov/publication/sir20175040' },
+};
+
+// Water-level change in the High Plains aquifer, predevelopment (about 1950) to 2015: USGS's grid of 500-meter cells
+// (ScienceBase item 58ff75a2e4b006455f2d6327, hp_wlcpd15a), drawn on the map as conus_hpwl.png. The areas and the
+// extremes are counted from the grid by scripts/water-map/bake_hp_levels.py; the wells are from the item's summary.
+export const HP_LEVELS = {
+  wells: 3092, maxFallFt: 234, maxRiseFt: 82, fell100Sqmi: 8393, fell50Sqmi: 19121, rose10Sqmi: 5202,
+  fell100States: 'Texas and Kansas', rose10States: 'Nebraska',
+  src: 'McGuire (2017), water-level changes in the High Plains aquifer, predevelopment (about 1950) to 2015 (USGS)',
+  url: 'https://www.sciencebase.gov/catalog/item/58ff75a2e4b006455f2d6327',
 };
 
 // Notes on a county's figures where the USGS estimate is known to sit oddly against other official records.

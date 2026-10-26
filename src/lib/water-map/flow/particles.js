@@ -31,12 +31,15 @@ export const markerPx = (f) => 5 + 14 * Math.sqrt(Math.min(1, Math.max(0, f)));
  */
 export const VREF = 2000;
 const vf = (v) => Math.min(1, Math.max(0, v) / VREF);
-// (width grows a little slower than the square root of the water, so the many middling flows stay visible beside the
-// few enormous ones: 10 Mgal/d draws about 2.3 px, 100 about 4.3, 1,000 about 9.3)
-export const chanPx = (v) => 1.0 + 11 * Math.pow(vf(v), 0.4);
+// (width grows with the 0.6 power of the water, so ten times the water draws about four times as wide: 100 Mgal/d
+// draws 2.5 px, 1,000 draws 10 px and 3,000 about 19. Below about 30 Mgal/d every channel draws 1.25 px wide, the
+// narrowest that still reads, and fainter for less water)
+export const chanPx = (v) => Math.max(1.25, 0.1585 * Math.pow(Math.max(0, v), 0.6));
 export const chanAlpha = (v) => 0.30 + 0.65 * Math.pow(vf(v), 0.3);
-/** diameter in pixels of a source's dot on the fixed scale */
-export const srcDotPx = (v) => 3.5 + 11 * Math.pow(vf(v), 0.4);
+/** diameter in pixels of a source's dot on the fixed scale: a little wider than the channel leaving it */
+export const srcDotPx = (v) => Math.max(4, chanPx(v) + 3);
+// what became of the water, for the marks at the end of each use: consumed white, returned gray (as in the panels)
+const CONSUMED_LIN = hexLin('#f4f1ea');
 const lighten = (c, k) => c.map((x) => x + (1 - x) * k);
 
 // small deterministic RNG so the layout is stable between loads
@@ -377,13 +380,14 @@ export class FlowParticles {
     // (one particle for the same volume as a streak of the national layer, so density means the same thing on both)
     const arr = this.generate(R, this.unit, mulberry32(41), 3);
     const mesh = arr.N ? this.makeMesh(arr, 3) : null;
-    const ribbons = this.ribbonMesh(this.channels(R, 0, true), VREF, true, true);
+    const segs = this.channels(R, 0, true);
+    const ribbons = this.ribbonMesh(segs, VREF, true, true);
     // (drawn over the land, never hidden behind a ridge: most of these routes are tunnels and pipes anyway)
     ribbons.material.depthTest = false; if (mesh) mesh.material.depthTest = false;
     if (mesh) this.group.add(mesh);
     this.group.add(ribbons);
     ribbons.material.uniforms.uRibbon.value = 1;
-    this.routes = { mesh, ribbons, N: arr.N };
+    this.routes = { mesh, ribbons, segs, N: arr.N };
   }
 
   /** one county's channels on the fixed scale, built the first time they are needed */
@@ -421,14 +425,15 @@ export class FlowParticles {
     const segs = [];
     for (const i of ids) for (const r of this.countySegs(i)) if (r.vol >= minVol) segs.push(r);
     const ribbons = segs.length ? this.ribbonMesh(segs, VREF, true) : null;
-    // a dot at every intake and a ring at every well that supplies enough to be drawn
+    // a dot at every intake and a ring at every well that supplies enough to be drawn, and what became of the water
     const markers = this.sourceMarkers(set, VREF, true, Math.max(0.25, 2 * minVol));
-    this.group.add(mesh); if (ribbons) this.group.add(ribbons); if (markers) this.group.add(markers);
-    this.detail = { mesh, ribbons, markers, unit, x, z, radius, N: arr.N, minVol, nSegs: segs.length };
+    const pies = this.endMarks(set, Math.max(0.25, 2 * minVol));
+    this.group.add(mesh); for (const m of [ribbons, markers, pies]) if (m) this.group.add(m);
+    this.detail = { mesh, ribbons, markers, pies, segs, unit, x, z, radius, N: arr.N, minVol, nSegs: segs.length };
   }
   disposeDetail() {
     const d = this.detail; if (!d) return;
-    for (const m of [d.mesh, d.ribbons, d.markers]) if (m) { this.group.remove(m); m.geometry.dispose(); m.material.dispose(); }
+    for (const m of [d.mesh, d.ribbons, d.markers, d.pies]) if (m) { this.group.remove(m); m.geometry.dispose(); m.material.dispose(); }
     this.detail = null;
   }
   /**
@@ -439,10 +444,12 @@ export class FlowParticles {
   buildMid(minVol = this.midMin0, idle = null) {
     this.disposeMid();
     const segs = [];
-    for (const i of this.byCounty.keys()) for (const r of this.countySegs(i)) if (r.vol >= minVol && r.kind !== KIND.ret && !r.well) segs.push(r);
+    // (returns too, as gray dashes back to the river, so what happens to the water shows from afar)
+    for (const i of this.byCounty.keys()) for (const r of this.countySegs(i)) if (r.vol >= minVol && !r.well) segs.push(r);
     const markers = this.sourceMarkers(this.local, VREF, true, minVol, true);
-    if (markers) this.group.add(markers);
-    const mid = this.mid = { ribbons: [], markers, minVol, nSegs: segs.length };
+    const pies = this.endMarks(this.local, minVol, true);
+    for (const m of [markers, pies]) if (m) this.group.add(m);
+    const mid = this.mid = { ribbons: [], markers, pies, segs, minVol, nSegs: segs.length };
     // the ribbons in pieces, one piece per idle moment when there is time, so building them never stalls the page
     let k = 0;
     const piece = () => {
@@ -473,7 +480,7 @@ export class FlowParticles {
   }
   disposeMid() {
     const d = this.mid; if (!d) return;
-    for (const m of [...d.ribbons, d.markers]) if (m) { this.group.remove(m); m.geometry.dispose(); m.material.dispose(); }
+    for (const m of [...d.ribbons, d.markers, d.pies]) if (m) { this.group.remove(m); m.geometry.dispose(); m.material.dispose(); }
     this.mid = null;
   }
 
@@ -505,7 +512,7 @@ export class FlowParticles {
       const hub = this.hubOf(s);
       const low = s.cat === 'ir' || s.cat === 'go' || s.cat === 'li' || s.cat === 'do' || s.kind === KIND.deliver;
       const sk = s.kind === KIND.intake ? srcKey(s) : '';
-      const base = { cat: s.cat, ci: CAT_IDX[s.cat], kind: s.kind, sk, gw: sk === 'gf' || sk === 'gs' ? 1 : 0, county: s.county,
+      const base = { cat: s.cat, ci: CAT_IDX[s.cat], kind: s.kind, sk, gw: sk === 'gf' || sk === 'gs' ? 1 : 0, county: s.county, xfer: s.xfer || null,
         pl: s.plant ? (s.plant._i != null ? s.plant._i + 2 : 1) : 0, well: false, depth: 0, col };
       if (s.route) {
         // a system's route between counties, leg by leg (legs that several streams share add up)
@@ -607,7 +614,7 @@ export class FlowParticles {
         uniform float uExag, uAqMode, uAqDepth, uCamDist, uModelScale, uRibbon, uConsumed, uMinVol;
         uniform vec2 uViewport;
         attribute vec4 aA, aH, aB, aC, aE; attribute vec2 aW; attribute vec3 aCol;
-        varying vec3 vCol; varying float vA, vAcross, vT, vW, vKind, vLen;
+        varying vec3 vCol; varying float vA, vAcross, vT, vW, vKind, vLen, vSl, vChev;
         #ifdef GENERAL
         uniform float uCat[${CAT_KEYS.length}]; uniform float uCatW[${CAT_KEYS.length}];
         uniform float uSel, uHov, uFocusOn, uHideCounty, uHideCat, uHidePlant, uMinPx; uniform vec4 uHole;
@@ -643,35 +650,36 @@ export class FlowParticles {
           vec4 ca = projectionMatrix * (viewMatrix * vec4(pa, 1.0)), cb = projectionMatrix * (viewMatrix * vec4(pb, 1.0));
           vec2 half_ = uViewport * 0.5;
           vec2 sa = ca.xy / ca.w * half_, sb = cb.xy / cb.w * half_, sc = c.xy / c.w * half_;
-          #ifdef GENERAL
-          // a channel too short to see is drawn longer, keeping its direction and the end that matters: water on its
-          // way in keeps its hub, water going back keeps the place it leaves
-          if (aA.w <= 0.0 && (kind < 0.5 || (kind > 1.5 && kind < 2.5))) {
+          // the channel's length on screen, for the chevron near its end
+          float sl = 0.0;
+          {
             vec4 q0 = projectionMatrix * (viewMatrix * vec4(pathAt(0.0, kind), 1.0)), q1 = projectionMatrix * (viewMatrix * vec4(pathAt(1.0, kind), 1.0));
             if (q0.w > 0.0 && q1.w > 0.0) {
               vec2 e0 = q0.xy / q0.w * half_, e1 = q1.xy / q1.w * half_;
-              float sl = length(e1 - e0);
-              if (sl > 0.01 && sl < uMinPx) { vec2 piv = kind < 0.5 ? e1 : e0; sc = piv + (sc - piv) * (uMinPx / sl); }
+              sl = length(e1 - e0);
+              #ifdef GENERAL
+              // a channel too short to see is drawn longer, keeping its direction and the end that matters: water on
+              // its way in keeps its hub, water going back keeps the place it leaves
+              if (aA.w <= 0.0 && (kind < 0.5 || (kind > 1.5 && kind < 2.5)) && sl > 0.01 && sl < uMinPx) {
+                vec2 piv = kind < 0.5 ? e1 : e0; sc = piv + (sc - piv) * (uMinPx / sl); sl = uMinPx;
+              }
+              #endif
             }
           }
-          #endif
           vec2 dir = sb - sa; float len = length(dir);
           vec2 dn = len > 1e-4 ? dir / len : vec2(1.0, 0.0);
           vec2 nrm = vec2(-dn.y, dn.x);
           float wb = aW.x;
-          #ifdef GENERAL
-          // water on its way to a use narrows toward it, so even a short channel shows which way the water goes
-          // (only a little, so its width still reads as its water)
-          wb *= kind < 0.5 && aA.w <= 0.0 ? 1.0 - 0.3 * t : kind > 2.5 && kind < 3.5 ? 1.0 - 0.3 * t : 1.0;
-          #endif
           float w = wb + 4.0;   // room for a dark casing and a soft edge on each side
           vec2 sp = sc + nrm * aE.w * w * 0.5;
           gl_Position = vec4(sp / half_ * c.w, c.z, c.w);
-          vAcross = aE.w * w * 0.5; vA = min(1.0, aW.y * uRibbon * vis); vCol = aCol; vT = t; vW = wb;
+          vAcross = aE.w * w * 0.5; vA = min(1.0, aW.y * uRibbon * vis); vCol = aCol; vT = t; vW = wb; vSl = sl;
+          // water on its way to a use (not a well's short run up out of the ground) gets a chevron pointing to it
+          vChev = (kind < 0.5 && aA.w <= 0.0) || (kind > 2.5 && kind < 3.5) ? 1.0 : 0.0;
         }`,
       fragmentShader: /* glsl */`
         uniform float uNight, uTime;
-        varying vec3 vCol; varying float vA, vAcross, vT, vW, vKind, vLen;
+        varying vec3 vCol; varying float vA, vAcross, vT, vW, vKind, vLen, vSl, vChev;
         void main() {
           float r = vW * 0.5, d = abs(vAcross);
           float body = 1.0 - smoothstep(r - 0.6, r + 0.3, d);
@@ -682,6 +690,14 @@ export class FlowParticles {
           // a brighter core down the middle of wide channels
           float core = 1.0 - smoothstep(0.0, max(r * 0.55, 0.8), d);
           vec3 col = mix(vCol, vec3(1.0), 0.16 * core);
+          // a chevron just short of the end of a wide channel, pointing the way the water goes (the channel keeps its
+          // width all the way, so the width always reads as the water)
+          if (vChev > 0.5 && vW > 4.5 && vSl > 3.0 * vW) {
+            float u = (1.0 - vT) * vSl, c0 = r + 4.0;
+            float arm = abs(u - c0 - d * 0.9);
+            float ch = (1.0 - smoothstep(0.55, 1.35, arm)) * (1.0 - smoothstep(r - 1.4, r - 0.5, d));
+            col = mix(col, vec3(0.02, 0.04, 0.035), 0.72 * ch);
+          }
           float aBody = vA * body * (0.7 + 0.3 * core), aCase = vA * 0.55 * max(0.0, casing - body);
           gl_FragColor = vec4(col * aBody, aBody + aCase);
         }`,
@@ -691,10 +707,11 @@ export class FlowParticles {
   /** a dot at every source of a set of streams, in the colour of that kind of source, its area following the water drawn there */
   sourceMarkers(streams, total = 0, general = false, minV = 0, everywhere = false) {
     const pts = new Map();
-    // (on the fixed scale, one dot per use at each source, so a use picked on its own keeps its own dots)
-    const add = (p, k, v, s) => {
+    // (on the fixed scale, one dot per use at each source, so a use picked on its own keeps its own dots; each dot
+    // remembers where its water is gathered, so when its channel is drawn longer than it is, the dot moves with it)
+    const add = (p, k, v, s, hub = null) => {
       const key = general ? `${k}|${s.cat}|${s.county}|${p[0].toFixed(3)},${p[1].toFixed(3)}` : `${k}|${p[0].toFixed(3)},${p[1].toFixed(3)}`;
-      const e = pts.get(key); if (e) e.v += v; else pts.set(key, { x: p[0], z: p[1], k, v, county: s.county, ci: CAT_IDX[s.cat], pl: s.plant ? (s.plant._i != null ? s.plant._i + 2 : 1) : 0 });
+      const e = pts.get(key); if (e) e.v += v; else pts.set(key, { x: p[0], z: p[1], k, v, hub, county: s.county, ci: CAT_IDX[s.cat], pl: s.plant ? (s.plant._i != null ? s.plant._i + 2 : 1) : 0 });
     };
     const wts = (list) => { const w = list.map((p) => (list[0] && list[0].length > 2 ? Math.sqrt(p[2] || 1) : 1)); const t = w.reduce((a, b) => a + b, 0) || 1; return w.map((x) => x / t); };
     for (const s of streams) {
@@ -705,7 +722,10 @@ export class FlowParticles {
         let cx = 0, cz = 0; for (const t of s.to) { cx += t[0]; cz += t[1]; }
         add(nearest(s.to, cx / s.to.length, cz / s.to.length), k, s.vol, s);
       } else if (s.well) for (const t of s.to) add(t, k, s.vol / s.to.length, s);
-      else { const w = wts(s.from); s.from.forEach((f, j) => add(f, k, s.vol * w[j], s)); }
+      else {
+        const w = wts(s.from), fans = s.local ? this.localFans(s) : null, hub = s.route ? null : this.hubOf(s);
+        s.from.forEach((f, j) => add(f, k, s.vol * w[j], s, fans ? fans[j].head : hub));
+      }
       // on the fixed scale, a square where a utility, factory or fish farm gathers its water (a power plant is drawn
       // as itself; fields, ranches, mines and homes take theirs over the land)
       if (general && !s.local && !s.plant && (s.cat === 'ps' || s.cat === 'in' || s.cat === 'aq')) add(this.hubOf(s), `hub`, s.vol, s);
@@ -715,13 +735,14 @@ export class FlowParticles {
     if (!list.length) return null;
     let vmax = 0; for (const p of list) vmax = Math.max(vmax, p.v);
     const V = total > 0 ? total : vmax;
-    const n = list.length, P = new Float32Array(n * 4), Cl = new Float32Array(n * 4), Dd = new Float32Array(n * 4), Vv = new Float32Array(n);
+    const n = list.length, P = new Float32Array(n * 4), Cl = new Float32Array(n * 4), Dd = new Float32Array(n * 4), Vv = new Float32Array(n), Hu = new Float32Array(n * 2);
     // a well is a ring, an intake a filled dot, a place water is gathered a square in the colour of its use
     list.forEach((p, i) => {
       const gw = p.k === 'gf' || p.k === 'gs', hub = p.k === 'hub';
       P.set([p.x, this.hAt(p.x, p.z), p.z, general ? (hub ? 2 + srcDotPx(p.v) : srcDotPx(p.v)) : markerPx(p.v / (V || 1))], 4 * i);
       Cl.set([...(hub ? CAT_COL[CAT_KEYS[p.ci]] : SRC_LIN[p.k]), hub ? 2 : gw ? 1 : 0], 4 * i);
       Dd.set([p.county, p.ci, p.pl, gw ? 1 : 0], 4 * i); Vv[i] = p.v;
+      Hu.set(p.hub ? [p.hub[0], p.hub[1]] : [-1e6, -1e6], 2 * i);
     });
     const g = new THREE.InstancedBufferGeometry();
     g.setAttribute('aCorner', new THREE.Float32BufferAttribute([-1, -1, 1, -1, 1, 1, -1, 1], 2));
@@ -730,20 +751,21 @@ export class FlowParticles {
     g.setAttribute('aCol', new THREE.InstancedBufferAttribute(Cl, 4));
     g.setAttribute('aD', new THREE.InstancedBufferAttribute(Dd, 4));
     g.setAttribute('aV', new THREE.InstancedBufferAttribute(Vv, 1));
+    g.setAttribute('aHub', new THREE.InstancedBufferAttribute(Hu, 2));
     g.instanceCount = n;
     const c = this.common;
     const mat = new THREE.ShaderMaterial({
       transparent: true, depthWrite: false, depthTest: general, blending: THREE.NormalBlending, premultipliedAlpha: true,
       defines: general ? (everywhere ? { GENERAL: 1, EVERYWHERE: 1 } : { GENERAL: 1 }) : {},
       uniforms: { uExag: c.uExag, uViewport: c.uViewport, uA: { value: 0 }, uMinVol: { value: 0 },
-        ...(general ? { uCat: c.uCat, uCatW: c.uCatW, uSel: c.uSel, uHov: c.uHov, uHole: c.uHole, uFocusOn: c.uFocusOn, uHideCounty: c.uHideCounty, uHideCat: c.uHideCat, uHidePlant: c.uHidePlant, uAqMode: c.uAqMode, uConsumed: c.uConsumed } : {}) },
+        ...(general ? { uCat: c.uCat, uCatW: c.uCatW, uSel: c.uSel, uHov: c.uHov, uHole: c.uHole, uFocusOn: c.uFocusOn, uHideCounty: c.uHideCounty, uHideCat: c.uHideCat, uHidePlant: c.uHidePlant, uAqMode: c.uAqMode, uConsumed: c.uConsumed, uMinPx: c.uMinPx } : {}) },
       vertexShader: /* glsl */`
         uniform float uExag, uA, uMinVol; uniform vec2 uViewport;
-        attribute vec2 aCorner; attribute vec4 aP; attribute vec4 aCol; attribute vec4 aD; attribute float aV;
+        attribute vec2 aCorner; attribute vec4 aP; attribute vec4 aCol; attribute vec4 aD; attribute float aV; attribute vec2 aHub;
         varying vec2 vUv; varying vec3 vCol; varying float vR, vRing, vVis;
         #ifdef GENERAL
         uniform float uCat[${CAT_KEYS.length}]; uniform float uCatW[${CAT_KEYS.length}];
-        uniform float uSel, uHov, uFocusOn, uHideCounty, uHideCat, uHidePlant, uAqMode, uConsumed; uniform vec4 uHole;
+        uniform float uSel, uHov, uFocusOn, uHideCounty, uHideCat, uHidePlant, uAqMode, uConsumed, uMinPx; uniform vec4 uHole;
         #endif
         void main() {
           float vis = 1.0;
@@ -764,6 +786,17 @@ export class FlowParticles {
           #endif
           vec4 c = projectionMatrix * (viewMatrix * vec4(aP.x, aP.y * uExag + 0.02, aP.z, 1.0));
           float r = aP.w * 0.5 + 1.5;
+          #ifdef GENERAL
+          // an intake whose channel is drawn longer than it is (see the ribbons) sits at the far end of the channel
+          if (aHub.x > -1e5 && c.w > 0.0) {
+            vec4 ch = projectionMatrix * (viewMatrix * vec4(aHub.x, aP.y * uExag + 0.02, aHub.y, 1.0));
+            if (ch.w > 0.0) {
+              vec2 half_ = uViewport * 0.5, sc = c.xy / c.w * half_, sh = ch.xy / ch.w * half_;
+              float sl = length(sc - sh);
+              if (sl > 0.01 && sl < uMinPx) c.xy = (sh + (sc - sh) * (uMinPx / sl)) / half_ * c.w;
+            }
+          }
+          #endif
           c.xy += aCorner * r * 2.0 / uViewport * c.w;
           #ifdef GENERAL
           c.z -= 0.002 * c.w;   // over the channels that start at it
@@ -789,6 +822,207 @@ export class FlowParticles {
     const mesh = new THREE.Mesh(g, mat);
     mesh.frustumCulled = false; mesh.renderOrder = general ? 5.8 : 8;
     return mesh;
+  }
+
+  /**
+   * Discs drawn over the map at points on the ground: each one's size in pixels, the share of its water consumed (a
+   * white slice clockwise from the top; none when USGS did not estimate it) and the colour of the rest. They follow
+   * the same rules as the channels: a use picked on its own, a selected place, the underground view.
+   */
+  discMesh(items, everywhere = false) {
+    if (!items.length) return null;
+    const list = items.slice().sort((a, b) => b.px - a.px);   // (the smaller over the bigger where they meet)
+    const n = list.length, P = new Float32Array(n * 4), F = new Float32Array(n), Cr = new Float32Array(n * 3), Dd = new Float32Array(n * 4), Vv = new Float32Array(n);
+    list.forEach((e, i) => {
+      P.set([e.x, this.hAt(e.x, e.z), e.z, e.px], 4 * i);
+      F[i] = e.f; Cr.set(e.rest, 3 * i); Dd.set([e.county, e.ci, e.pl, 0], 4 * i); Vv[i] = e.v;
+    });
+    const g = new THREE.InstancedBufferGeometry();
+    g.setAttribute('aCorner', new THREE.Float32BufferAttribute([-1, -1, 1, -1, 1, 1, -1, 1], 2));
+    g.setIndex([0, 1, 2, 0, 2, 3]);
+    g.setAttribute('aP', new THREE.InstancedBufferAttribute(P, 4));
+    g.setAttribute('aF', new THREE.InstancedBufferAttribute(F, 1));
+    g.setAttribute('aRest', new THREE.InstancedBufferAttribute(Cr, 3));
+    g.setAttribute('aD', new THREE.InstancedBufferAttribute(Dd, 4));
+    g.setAttribute('aV', new THREE.InstancedBufferAttribute(Vv, 1));
+    g.instanceCount = n;
+    const c = this.common;
+    const mat = new THREE.ShaderMaterial({
+      transparent: true, depthWrite: false, depthTest: true, blending: THREE.NormalBlending, premultipliedAlpha: true,
+      defines: everywhere ? { EVERYWHERE: 1 } : {},
+      uniforms: { uExag: c.uExag, uViewport: c.uViewport, uA: { value: 0 }, uMinVol: { value: 0 }, uCat: c.uCat, uCatW: c.uCatW, uSel: c.uSel, uHole: c.uHole,
+        uFocusOn: c.uFocusOn, uHideCounty: c.uHideCounty, uHideCat: c.uHideCat, uHidePlant: c.uHidePlant, uAqMode: c.uAqMode,
+        uCons: { value: new THREE.Color().setRGB(...CONSUMED_LIN, THREE.LinearSRGBColorSpace) } },
+      vertexShader: /* glsl */`
+        uniform float uExag, uA, uMinVol; uniform vec2 uViewport;
+        uniform float uCat[${CAT_KEYS.length}]; uniform float uCatW[${CAT_KEYS.length}];
+        uniform float uSel, uFocusOn, uHideCounty, uHideCat, uHidePlant, uAqMode; uniform vec4 uHole;
+        attribute vec2 aCorner; attribute vec4 aP; attribute float aF; attribute vec3 aRest; attribute vec4 aD; attribute float aV;
+        varying vec2 vUv; varying float vR, vF, vVis; varying vec3 vRest;
+        void main() {
+          float vis = uCat[int(aD.y + 0.5)] * min(1.0, uCatW[int(aD.y + 0.5)]);
+          // (a selected place keeps its own marks: its water is redrawn, but what became of it is shown here)
+          if (uFocusOn > 0.5) {
+            bool mine = uHidePlant >= 0.0 ? abs(aD.z - 2.0 - uHidePlant) < 0.5 : abs(aD.x - uHideCounty) < 0.5 && (uHideCat < 0.0 || abs(aD.y - uHideCat) < 0.5);
+            vis *= mine ? 1.0 : 0.12;
+          }
+          else if (uSel >= 0.0 && abs(aD.x - uSel) > 0.5) vis *= 0.18;
+          vis *= 1.0 - uAqMode;
+          #ifndef EVERYWHERE
+          vis *= 1.0 - smoothstep(uHole.z, uHole.w, length(aP.xz - uHole.xy));
+          #endif
+          if (uMinVol > 0.0) vis *= smoothstep(uMinVol * 0.6, uMinVol, aV);
+          if (vis * uA < 0.01) { gl_Position = vec4(2.0, 2.0, 2.0, 1.0); return; }
+          vec4 c = projectionMatrix * (viewMatrix * vec4(aP.x, aP.y * uExag + 0.03, aP.z, 1.0));
+          float r = aP.w * 0.5 + 1.5;
+          c.xy += aCorner * r * 2.0 / uViewport * c.w;
+          c.z -= 0.003 * c.w;   // over the dots and rings
+          gl_Position = c; vUv = aCorner * r; vR = aP.w * 0.5; vF = aF; vVis = vis; vRest = aRest;
+        }`,
+      fragmentShader: /* glsl */`
+        uniform float uA; uniform vec3 uCons;
+        varying vec2 vUv; varying float vR, vF, vVis; varying vec3 vRest;
+        void main() {
+          float d = length(vUv);
+          float fill = 1.0 - smoothstep(vR - 1.0, vR - 0.2, d);
+          float rim = 1.0 - smoothstep(vR + 0.3, vR + 1.2, d);
+          if (rim < 0.01) discard;
+          // the consumed share runs clockwise from the top
+          float ang = atan(vUv.x, vUv.y); if (ang < 0.0) ang += 6.2831853;
+          float edge = 6.2831853 * vF;
+          float k = vF < 0.0 ? 1.0 : smoothstep(edge - 0.06, edge + 0.06, ang);
+          vec3 col = mix(uCons, vRest, k);
+          float A = uA * vVis;
+          gl_FragColor = vec4(col * fill * A * 0.96 + vec3(0.02, 0.04, 0.035) * (rim - fill) * A * 0.85, A * (fill * 0.96 + (rim - fill) * 0.85));
+        }`,
+    });
+    const mesh = new THREE.Mesh(g, mat);
+    mesh.frustumCulled = false; mesh.renderOrder = 5.9;
+    return mesh;
+  }
+  /**
+   * Where each use's water ends up, as a mark at the use, white for the share consumed and gray for the share
+   * returned, as in the panels' diagram: a disc whose area follows the water (a little smaller than the dot at a
+   * source of the same water, so it sits inside the ring of a field's wells). Only for the uses USGS estimated
+   * consumption for: crops, golf courses and power plants. One mark per power plant, and one per county for crops and
+   * for golf, in the middle of its fields or courses.
+   */
+  endMarks(streams, minV = 0, everywhere = false) {
+    const ends = this.fates(streams);
+    const items = [];
+    for (const e of ends.values()) {
+      const W = e.cu + e.ret;
+      if (!(W > 0) || W < minV) continue;
+      items.push({ x: e.x, z: e.z, px: 0.75 * srcDotPx(W), f: e.cu / W, rest: RET_LIN, county: e.county, ci: e.ci, pl: e.pl, v: W });
+    }
+    return this.discMesh(items, everywhere);
+  }
+  /** what became of each plant's water and each county's water for crops and for golf: consumed, returned, and where */
+  fates(streams) {
+    const ends = new Map();
+    for (const s of streams) {
+      if (!(s.cat === 'ir' || s.cat === 'go' || s.cat === 'pt') || !(s.vol > 0) || (s.kind !== KIND.vapor && s.kind !== KIND.ret)) continue;
+      const key = s.plant ? `p|${s.plant._i != null ? s.plant._i : `h${s.county}`}` : `${s.county}|${s.cat}`;
+      let e = ends.get(key);
+      if (!e) {
+        let p;
+        if (s.plant) p = s.kind === KIND.vapor ? s.to[0] : s.from[0];
+        else { const at = s.kind === KIND.vapor ? s.to : s.from; let cx = 0, cz = 0; for (const t of at) { cx += t[0]; cz += t[1]; } p = nearest(at, cx / at.length, cz / at.length); }
+        e = { x: p[0], z: p[1], cu: 0, ret: 0, county: s.county, ci: CAT_IDX[s.cat], pl: s.plant ? (s.plant._i != null ? s.plant._i + 2 : 1) : 0 };
+        ends.set(key, e);
+      }
+      if (s.kind === KIND.vapor) e.cu += s.vol; else e.ret += s.vol;
+    }
+    return ends;
+  }
+
+  /**
+   * The places that take the most water, for the national view, where every flow is a texture of streaks: a power
+   * plant, a county's water for one use, or the water a system pipes between counties (which the routes draw, at
+   * every zoom). Each place gets a disc in the colour of its use, as wide as the dot at a source of that much water,
+   * with a white slice for the share consumed where USGS estimated it. this.top.list names them, biggest first, with
+   * how much of their water came from each kind of source, for the labels.
+   */
+  buildTop(n = 40) {
+    const groups = new Map();
+    for (const s of this.streams) {
+      if (s.kind !== KIND.intake || !(s.vol > 0) || s.src === SRC.delivered) continue;
+      const sk = srcKey(s), sg = sk === 'gf' || sk === 'gs' ? 'w' : sk === 'ss' ? 's' : sk === 'rec' ? 'r' : 'f';
+      const key = s.route ? `x|${s.xfer}` : s.plant ? `p|${s.plant._i != null ? s.plant._i : `h${s.county}`}` : `c|${s.county}|${s.cat}`;
+      let e = groups.get(key);
+      if (!e) groups.set(key, (e = { key, vol: 0, cat: s.cat, by: {}, county: s.county, plant: s.plant || null, xfer: s.xfer || null, streams: [] }));
+      e.vol += s.vol; e.by[sg] = (e.by[sg] || 0) + s.vol; e.streams.push(s);
+    }
+    const list = [...groups.values()].sort((a, b) => b.vol - a.vol).slice(0, n);
+    const fate = new Map();
+    for (const e of list) for (const [k, v] of this.fates(this.byCounty.get(e.county) || [])) fate.set(k, v);
+    const items = [];
+    for (const e of list) {
+      if (e.xfer) continue;
+      // at the plant, or at the middle of the county's fields, towns or works for that use
+      let x, z;
+      if (e.plant) { const t = e.streams[0].to[0]; x = t[0]; z = t[1]; }
+      else { const at = e.streams[0].to; let cx = 0, cz = 0; for (const t of at) { cx += t[0]; cz += t[1]; } [x, z] = nearest(at, cx / at.length, cz / at.length); }
+      e.x = x; e.z = z; e.px = srcDotPx(e.vol);
+      const fk = e.plant ? `p|${e.key.split('|')[1]}` : `${e.county}|${e.cat}`, fv = fate.get(fk);
+      const f = fv && fv.cu + fv.ret > 0 ? fv.cu / (fv.cu + fv.ret) : -1;
+      e.consumed = f;
+      items.push({ x, z, px: e.px, f, rest: CAT_COL[e.cat], county: e.county, ci: CAT_IDX[e.cat], pl: e.plant ? (e.plant._i != null ? e.plant._i + 2 : 1) : 0, v: e.vol });
+    }
+    this.disposeTop();
+    const discs = this.discMesh(items, true);
+    if (discs) this.group.add(discs);
+    this.top = { discs, list };
+    return list;
+  }
+  disposeTop() {
+    const d = this.top; if (!d) return;
+    if (d.discs) { this.group.remove(d.discs); d.discs.geometry.dispose(); d.discs.material.dispose(); }
+    this.top = null;
+  }
+
+  /**
+   * The disc or channel drawn under a point of the screen, for the tooltip and a click: `at(x, y, z)` gives a world
+   * point's position on the screen (null behind the camera), `g` is the ground under the pointer and `pxWorld` the
+   * world size of a pixel there. Channels are matched within a few pixels of their edge, drawn as the ribbons draw
+   * them (a channel too short to see is drawn longer, from the end that matters).
+   */
+  pickAt(px, py, at, g, pxWorld, exag) {
+    if (this.focus || this.common.uConsumed.value > 0.5) return null;
+    const vis = (ci) => this.catVis[ci] * Math.min(1, this.catW[ci]) > 0.3;
+    let best = null, bd = Infinity;
+    if (this.top && (this._topA || 0) > 0.3) {
+      for (const e of this.top.list) {
+        if (e.xfer || e.px == null || !vis(CAT_IDX[e.cat])) continue;
+        const sc = at(e.x, this.hAt(e.x, e.z) * exag, e.z); if (!sc) continue;
+        const dd = Math.hypot(sc[0] - px, sc[1] - py);
+        if (dd < e.px / 2 + 3 && dd < bd) { bd = dd; best = { disc: e }; }
+      }
+      if (best) return best;
+    }
+    const minPx = this.common.uMinPx.value, R = pxWorld * (minPx + 30);
+    const lists = [];
+    if (this.routes && this.routes.segs) lists.push([this.routes.segs, 0]);
+    if (this.mid && (this._midA || 0) > 0.3) lists.push([this.mid.segs, Math.max(this.mid.minVol, FlowParticles.midMin(this._camDist || 1000))]);
+    if (this.detail && (this._detailA || 0) > 0.3) lists.push([this.detail.segs, this.detail.minVol]);
+    const P = (q) => at(q[0], this.hAt(q[0], q[1]) * exag, q[1]);
+    const dSeg = (p, a, b) => { const ex = b[0] - a[0], ey = b[1] - a[1], L2 = ex * ex + ey * ey; const t = L2 > 0 ? Math.max(0, Math.min(1, ((p[0] - a[0]) * ex + (p[1] - a[1]) * ey) / L2)) : 0; return Math.hypot(p[0] - a[0] - t * ex, p[1] - a[1] - t * ey); };
+    for (const [segs, mv] of lists) for (const r of segs) {
+      if (r.vol < mv || r.well || !vis(r.ci)) continue;
+      const x0 = Math.min(r.a[0], r.h[0], r.b[0]) - R, x1 = Math.max(r.a[0], r.h[0], r.b[0]) + R, z0 = Math.min(r.a[1], r.h[1], r.b[1]) - R, z1 = Math.max(r.a[1], r.h[1], r.b[1]) + R;
+      if (g.x < x0 || g.x > x1 || g.z < z0 || g.z > z1) continue;
+      let sa = P(r.a), sb = P(r.b); if (!sa || !sb) continue;
+      const sh = r.split < 1 ? P(r.h) : null;
+      const sl = Math.hypot(sb[0] - sa[0], sb[1] - sa[1]);
+      if (r.kind !== KIND_ROUTE && sl > 0.01 && sl < minPx) {
+        if (r.kind === KIND.ret) sb = [sa[0] + (sb[0] - sa[0]) * minPx / sl, sa[1] + (sb[1] - sa[1]) * minPx / sl];
+        else sa = [sb[0] + (sa[0] - sb[0]) * minPx / sl, sb[1] + (sa[1] - sb[1]) * minPx / sl];
+      }
+      const p = [px, py], dd = sh ? Math.min(dSeg(p, sa, sh), dSeg(p, sh, sb)) : dSeg(p, sa, sb);
+      const tol = chanPx(r.vol) / 2 + 3;
+      if (dd < tol && dd - tol < bd) { bd = dd - tol; best = { chan: r }; }
+    }
+    return best;
   }
 
   /** draw these streams on their own, as channels with particles riding them; every other flow steps back */
@@ -970,6 +1204,7 @@ export class FlowParticles {
   /** per frame: brightness by zoom, and the detail layer around the view centre */
   update(camDist, cx, cz) {
     if (!this.mat) return;
+    this._camDist = camDist;
     if (this.preview) {
       const f = this.preview, a = 0.6 * Math.min(1, (performance.now() - f.t0) / 300);
       f.ribbons.material.uniforms.uRibbon.value = a;
@@ -991,12 +1226,18 @@ export class FlowParticles {
     // the biggest channels everywhere, between the national view and the detail (which takes over as it fades in)
     const midA = Math.min(1, Math.max(0, (MM - camDist) / (MM * 0.2))) * (1 - Math.min(1, Math.max(0, (DM - camDist) / (DM * 0.23))));
     if (midA > 0.001 && !this.mid) this.buildMid();
-    this.common.uNatK.value = 1 - 0.4 * midA;
+    this._midA = midA;
+    // from farther out, only the biggest flows, bold over a dimmer texture of every other flow
+    const topA = this.top ? Math.min(1, Math.max(0, (camDist - MM * 0.8) / (MM * 0.25))) : 0;
+    this._topA = topA;
+    this.common.uNatK.value = Math.max(0.3, 1 - 0.4 * midA - 0.65 * topA);
+    if (this.top && this.top.discs) this.top.discs.material.uniforms.uA.value = topA;
     if (this.mid) {
       const mv = Math.max(this.mid.minVol, FlowParticles.midMin(camDist));
       for (const m of this.mid.ribbons) { const u = m.material.uniforms; u.uRibbon.value = midA; u.uMinVol.value = mv; }
-      // (a source's dot appears once its water is twice the smallest channel drawn)
-      if (this.mid.markers) { const u = this.mid.markers.material.uniforms; u.uA.value = midA; u.uMinVol.value = 2 * mv; }
+      // (a source's dot, and the mark of what became of a use's water, appear once the water is twice the smallest
+      // channel drawn)
+      for (const m of [this.mid.markers, this.mid.pies]) if (m) { const u = m.material.uniforms; u.uA.value = midA; u.uMinVol.value = 2 * mv; }
     }
     const wantDetail = camDist < DM;
     if (wantDetail) {
@@ -1014,15 +1255,17 @@ export class FlowParticles {
       if (this.detail) {
         const dd = this.detail;
         const fade = Math.min(1, Math.max(0, (DM - camDist) / (DM * 0.23)));
+        this._detailA = fade;
         dd.mesh.material.uniforms.uLayerAlpha.value = fade;
         if (dd.ribbons) dd.ribbons.material.uniforms.uRibbon.value = fade;
-        if (dd.markers) dd.markers.material.uniforms.uA.value = fade;
+        for (const m of [dd.markers, dd.pies]) if (m) m.material.uniforms.uA.value = fade;
         this.hole.set(dd.x, dd.z, dd.radius * 0.80 * fade, dd.radius * Math.max(fade, 0.01));
       }
     } else {
+      this._detailA = 0;
       this.hole.set(0, 0, -1, -1);
       const dd = this.detail;
-      if (dd) { dd.mesh.material.uniforms.uLayerAlpha.value = 0; if (dd.ribbons) dd.ribbons.material.uniforms.uRibbon.value = 0; if (dd.markers) dd.markers.material.uniforms.uA.value = 0; }
+      if (dd) { dd.mesh.material.uniforms.uLayerAlpha.value = 0; if (dd.ribbons) dd.ribbons.material.uniforms.uRibbon.value = 0; for (const m of [dd.markers, dd.pies]) if (m) m.material.uniforms.uA.value = 0; }
     }
   }
 }

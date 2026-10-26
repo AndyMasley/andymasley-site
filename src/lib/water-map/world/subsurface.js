@@ -22,7 +22,9 @@ export class SubsurfaceSlab {
       uAqTex: { value: slab.aquiferTex }, uCounty: { value: slab.countyTex },
       uAqPal: shared.uAqPal, uGwTex: shared.uGwTex, uExag: shared.uExag, uAqDepth: shared.uAqDepth, uAqThick: shared.uAqThick,
       uAqMode: shared.uAqMode, uNight: shared.uNight, uSunDir: shared.uSunDir, uAqHover: shared.uAqHover, uAqSel: shared.uAqSel,
+      uWlTex: { value: null }, uWlOn: shared.uWlOn, uWlRamp: shared.uWlRamp,
     };
+    this.base = base;
     // conservative height bounds per chunk, as the terrain keeps them
     this.chunks = [];
     this.cx = Math.ceil((slab.W - 1) / CHUNK); this.cz = Math.ceil((slab.H - 1) / CHUNK);
@@ -85,9 +87,9 @@ export class SubsurfaceSlab {
           gl_Position = projectionMatrix * viewMatrix * vec4(P, 1.0);
         }`,
       fragmentShader: /* glsl */`
-        uniform sampler2D uAqTex, uAqPal, uGwTex, uCounty;
-        uniform vec3 uSunDir;
-        uniform float uNight, uAqMode, uAqHover, uAqSel;
+        uniform sampler2D uAqTex, uAqPal, uGwTex, uCounty, uWlTex;
+        uniform vec3 uSunDir, uWlRamp[5];
+        uniform float uNight, uAqMode, uAqHover, uAqSel, uWlOn;
         varying vec3 vWorld; varying vec2 vUv; varying float vFlag, vUnder; varying vec3 vPal;
         float countyAt(vec2 uv) { vec4 c = texture2D(uCounty, uv); return floor(c.r * 255.0 + 0.5) * 256.0 + floor(c.g * 255.0 + 0.5) - 1.0; }
         float aqAt(vec2 uv) { return floor(texture2D(uAqTex, uv).r * 255.0 + 0.5); }
@@ -111,6 +113,17 @@ export class SubsurfaceSlab {
             float e = (ai > 0.5 && (aqAt(vUv + vec2(tq.x, 0.0)) != ai || aqAt(vUv + vec2(0.0, tq.y)) != ai)) ? 1.0 : 0.0;
             col = mix(col, vec3(0.80, 0.92, 1.0) * 0.55, e * 0.45);
             col += pal * gw * gw * mix(0.05, 0.55, uNight);
+            // the measured change in water level, where it is mapped (one byte: 128 + feet from -100 feet up, and one
+            // step for each 5 feet of decline below that); the rest steps back
+            if (uWlOn > 0.001) {
+              float wl = floor(texture2D(uWlTex, vUv).r * 255.0 + 0.5);
+              if (wl > 0.5) {
+                float ft = wl >= 28.0 ? wl - 128.0 : -100.0 - (28.0 - wl) * 5.0;
+                vec3 wc = ft < -10.0 ? mix(uWlRamp[0], uWlRamp[1], clamp((-ft - 10.0) / 140.0, 0.0, 1.0))
+                  : ft > 10.0 ? mix(uWlRamp[3], uWlRamp[4], clamp((ft - 10.0) / 40.0, 0.0, 1.0)) : uWlRamp[2];
+                col = mix(col, wc * (0.5 + 0.5 * lam), uWlOn);
+              } else col *= 1.0 - 0.55 * uWlOn;
+            }
             hi = (ai > 0.5 && (abs(ai - uAqHover) < 0.5 || abs(ai - uAqSel) < 0.5)) ? 1.0 : 0.0;
           } else {
             // the walls: the same rock, darker, in faint layers
@@ -126,6 +139,8 @@ export class SubsurfaceSlab {
     });
   }
   setVisible(on) { this.group.visible = on && this.chunks.length > 0; }
+  /** a raster on the aquifer grid of water-level change (see uWlTex) */
+  setLevels(tex) { this.base.uWlTex.value = tex; }
   update(camera, frustum, exag, viewportH, depth, thick) {
     if (!this.group.visible) return;
     const counts = this.lods.map(() => 0);

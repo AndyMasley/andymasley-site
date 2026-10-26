@@ -454,6 +454,11 @@ def aqueducts():
             total += ls.length * TER[slab].km
             segs.append(dict(u=bool(under), p=np.round(c, 3).ravel().tolist()))
         out.append(dict(name=nm, kind=kind, op=op, km=round(total), segs=segs, slab='conus'))
+    # aqueducts OpenStreetMap maps only in pieces come from the National Hydrography Dataset (bake_nhd_aqueducts.py)
+    from bake_nhd_aqueducts import nhd_override
+    nhd = {'Colorado River Aqueduct': f'{RAW}/nhd_colorado_river_aqueduct.json', 'Los Angeles Aqueduct': f'{RAW}/nhd_los_angeles_aqueduct.json',
+           'Delta-Mendota Canal': f'{RAW}/nhd_delta_mendota_canal.json'}
+    nhd_override(out, {k: v for k, v in nhd.items() if os.path.exists(v)})
     print('aqueducts', len(out), sorted((a['name'], a['km'], len(a['segs'])) for a in out))
     return out
 

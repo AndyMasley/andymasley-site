@@ -33,6 +33,12 @@
   line-height: var(--leading-prose);
 }
 
+.wm-page .wm-dek-links {
+  margin: var(--space-sm) 0 0;
+  font-size: var(--text-sm);
+  line-height: var(--leading-ui);
+}
+
 /* ---- the stage: nearly full width, the height of the window less a margin, so it docks under the top edge */
 .wm {
   --wm-gutter: var(--space-md);
@@ -404,6 +410,14 @@ html.wm-lock body {
 
 .wm-grip { display: none; }
 
+/* where the panel would crowd the map, the whole country's (and the view's) starts as a slim card with the headline */
+.wm-insp .wm-rail-only { display: none; }
+/* (in the bottom corner, where the map has open sea and the insets: at the top it would cover the Northeast) */
+.wm-insp.wm-rail { top: auto; bottom: var(--space-md); width: min(var(--wm-right), 252px); }
+.wm-insp.wm-rail .wm-rail-body { display: none; }
+.wm-insp.wm-rail .wm-rail-only { display: block; }
+.wm-insp .wm-rail-more { margin: var(--space-xs) 0 0; }
+
 /* a fade at the foot of the panel while there is more to scroll to */
 .wm-fade {
   position: sticky;
@@ -418,7 +432,8 @@ html.wm-lock body {
 .wm-insp.wm-more .wm-fade { display: block; }
 .wm-insp .wm-story { margin-top: var(--space-sm); }
 
-.wm-insp h3 {
+.wm-insp h3,
+.wm-flat-panel h3 {
   display: flex;
   margin: var(--space-2xs) 0 0;
   align-items: center;
@@ -429,7 +444,8 @@ html.wm-lock body {
 
 .wm-insp h3 .wm-sw { width: 12px; height: 12px; margin-right: var(--space-xs); }
 
-.wm-insp h5 {
+.wm-insp h5,
+.wm-flat-panel h5 {
   margin: var(--space-md) 0 var(--space-2xs);
   color: var(--wm-brass);
   font-size: var(--text-sm);
@@ -601,10 +617,11 @@ button.wm-li:hover { color: var(--wm-brass); }
 
 .wm-results {
   position: absolute;
-  right: 0;
+  z-index: 8;
   bottom: 40px;
   left: 0;
   display: none;
+  width: max(100%, 300px);
   max-height: 320px;
   overflow: auto;
 }
@@ -661,6 +678,9 @@ button.wm-li:hover { color: var(--wm-brass); }
 .wm-tg:hover { color: var(--wm-brass); }
 
 .wm-ramp { height: 6px; margin-top: var(--space-xs); background: linear-gradient(90deg, #173847, #1f6e86, #3a9e8c, #a9cf7f, #f3e08a); }
+.wm-ramp-div { background: linear-gradient(90deg, #2f78b5, #93c4dd, #8c918e, #e4a3cf, #b24a9a); }
+.wm-hist { display: block; margin-top: var(--space-xs); overflow: visible; }
+.wm-hist text { fill: var(--wm-dim); font-family: inherit; font-size: var(--text-xs); text-anchor: middle; }
 .wm-ramp-t { display: flex; margin-top: 2px; justify-content: space-between; color: var(--wm-dim); font-size: var(--text-xs); }
 
 /* ---- caption: the welcome note and the tour, centred over the map like the toolbar */
@@ -779,6 +799,8 @@ button.wm-li:hover { color: var(--wm-brass); }
 .wm-lbl.callout small { display: inline; margin-left: 5px; color: var(--wm-brass); }
 .wm-lbl.top { color: rgba(255, 247, 232, 0.86); font-size: var(--text-xs); }
 .wm-lbl.top small { color: var(--wm-dim); }
+/* the biggest flows: the name, and under it how much water from where */
+.wm-lbl.top.flow small { display: block; margin-left: 0; color: var(--wm-dim); }
 /* a dotted label turned to the left of its point: the dot (and the leader of a lifted label) on the right */
 .wm-lbl.dot.flip { padding-right: 13px; padding-left: 0; }
 .wm-lbl.dot.flip::before { right: 1px; left: auto; }
@@ -1017,4 +1039,52 @@ button.wm-li:hover { color: var(--wm-brass); }
   .wm-caption > p:not(.wm-cap) { line-height: var(--leading-note); }
   .wm-layers { bottom: 92px; }
   .wm-stage.wm-menu-open .wm-insp, .wm-stage.wm-menu-open .wm-caption { bottom: 92px; }
+}
+
+/* ---- the flat map (flat.js): the same figures without WebGL, for screen readers, keyboards and print */
+.wm-stage.wm-stage-flat { height: auto; max-height: none; min-height: 0; overflow: visible; }
+.wm-flat { display: flex; flex-direction: column; gap: var(--space-sm); padding: var(--space-md); }
+.wm-flat-bar { display: flex; flex-wrap: wrap; gap: var(--space-sm); align-items: center; justify-content: space-between; }
+.wm-flat-lens { display: flex; gap: var(--space-xs); align-items: center; color: var(--wm-dim); }
+.wm-flat-lens select { height: 36px; padding: 0 var(--space-xs); border: 1px solid var(--wm-rule2); border-radius: 0; background: var(--wm-panel-solid); color: var(--wm-ink); font: inherit; }
+.wm-flat .wm-search { flex: 0 1 280px; }
+.wm-flat .wm-results { top: 40px; bottom: auto; }
+.wm-flat-body { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: var(--space-md); align-items: start; }
+.wm-flat-map { position: relative; min-width: 0; }
+.wm-flat-map canvas { display: block; max-width: 100%; cursor: pointer; }
+.wm-flat-map canvas:focus-visible { outline: 1px solid var(--wm-brass); outline-offset: 2px; }
+.wm-flat-map .wm-tip { position: absolute; top: 0; left: 0; }
+.wm-flat-panel { position: static; width: auto; max-height: none; padding: var(--space-md); }
+.wm-flat-key { max-width: 640px; }
+@media (max-width: 760px) { .wm-flat-body { grid-template-columns: minmax(0, 1fr); } }
+@media print {
+  .wm-flat-bar, .wm-flat .wm-tip { display: none; }
+  .wm-flat-body { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* ---- story mode (ui/story.js): the tour as an essay in a column beside the pinned map */
+.wm.wm-story-on { display: grid; grid-template-columns: minmax(0, 400px) minmax(0, 1fr); gap: var(--space-xl); align-items: start; }
+.wm.wm-story-on .wm-stage { position: sticky; top: var(--wm-gutter); }
+.wm.wm-story-on .wm-caption,
+.wm.wm-story-on .wm-uses,
+.wm.wm-story-on .wm-key,
+.wm.wm-story-on .wm-insp,
+.wm.wm-story-on .wm-bar { display: none; }
+/* (the scenes carry the words, so the map gets the whole stage, with only its key line over it) */
+.wm.wm-story-on .wm-hint { right: var(--space-md); bottom: var(--space-md); left: var(--space-md); }
+.wm-storycol { padding: 0 0 30vh var(--space-sm); color: var(--text); font-family: var(--font-body); }
+.wm-story-head { position: sticky; top: 0; z-index: 1; display: flex; justify-content: space-between; gap: var(--space-sm); padding: var(--space-xs) 0; border-bottom: 1px solid var(--border); background: var(--bg); }
+.wm-scene-cap { margin: 0; color: var(--dim); font-size: var(--text-xs); letter-spacing: 0.12em; text-transform: uppercase; }
+.wm-story-x { padding: 0; border: 0; background: none; color: var(--accent); font: inherit; font-size: var(--text-sm); text-decoration: underline; cursor: pointer; }
+.wm-scene { min-height: 78vh; padding-top: 30vh; }
+.wm-scene h2 { margin: var(--space-xs) 0 var(--space-sm); font-size: var(--text-xl); font-weight: 400; line-height: var(--leading-heading); text-wrap: balance; }
+.wm-scene p { margin: 0 0 var(--space-sm); font-size: var(--text-md); line-height: var(--leading-prose); }
+.wm-scene .wm-scene-cap { font-size: var(--text-xs); line-height: var(--leading-ui); }
+.wm-scene-link { font-size: var(--text-sm); }
+.wm-story-end { padding-top: 20vh; }
+@media (max-width: 900px) {
+  .wm.wm-story-on { display: flex; flex-direction: column; gap: 0; }
+  .wm.wm-story-on .wm-stage { order: -1; z-index: 2; height: 52svh; min-height: 0; }
+  .wm-story-head { position: static; }
+  .wm-scene { min-height: 70vh; padding-top: 12vh; }
 }

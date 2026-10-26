@@ -19,8 +19,8 @@ export function volShort(v) {
   return '<0.1 Mgal/d';
 }
 export const mgd = (v) => (v >= 100 ? nf(v) : v >= 10 ? nf(v, 1) : v >= 0.1 ? nf(v, 2) : v > 0 ? '<0.1' : '0');
-/** a volume for a label on the map, always in Mgal/d so labels side by side compare: "2,850 Mgal/d", "8.4 Mgal/d" */
-export const mgdLabel = (v) => `${v >= 10 ? nf(v) : v >= 1 ? nf(v, 1) : v >= 0.1 ? nf(v, 2) : v > 0 ? '<0.1' : '0'} Mgal/d`;
+/** a volume for a label on the map: billions from 1,000 Mgal/d up, as in the use list ("2.9 Bgal/d", "858 Mgal/d") */
+export const mgdLabel = (v) => (v >= 1000 ? `${nf(v / 1000, v >= 10000 ? 0 : 1)} Bgal/d` : `${v >= 10 ? nf(v) : v >= 1 ? nf(v, 1) : v >= 0.1 ? nf(v, 2) : v > 0 ? '<0.1' : '0'} Mgal/d`);
 /** a share: whole percents, with a decimal under 1% and over 99% (so 99.6% sits beside 0.4%, not beside "<1%") */
 export const shareTxt = (f) => (f >= 0.9995 ? '100%' : f >= 0.99 ? `${nf(100 * f, 1)}%` : f >= 0.01 ? `${Math.round(100 * f)}%` : f >= 0.0005 ? `${nf(100 * f, 1)}%` : f > 0 ? '<0.1%' : '0%');
 /** rounded to two significant figures (37,597 -> 38,000), for numbers the data cannot give more exactly */

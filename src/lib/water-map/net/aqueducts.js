@@ -4,8 +4,9 @@ import { AQ_FLOWS } from '../core/flows_data.js';
 /**
  * Major canals and aqueducts from OpenStreetMap: the plumbing that moves water between basins (the California
  * Aqueduct, the Central Arizona Project, the Colorado River Aqueduct, the All-American Canal, New York's Catskill and
- * Delaware aqueducts and others). Drawn as channels wider for more measured flow; tunnels and pipelines are dashed. OpenStreetMap's mapping of some systems is incomplete (the Colorado River Aqueduct
- * is mostly tunnels and barely mapped), so the hover card gives the mapped length.
+ * Delaware aqueducts and others). Drawn as channels wider for more measured flow; tunnels and pipelines are dashed. OpenStreetMap's mapping of some systems is incomplete, so the hover card gives the mapped length;
+ * the Colorado River Aqueduct, mostly tunnels and barely in OpenStreetMap, is drawn from the USGS National
+ * Hydrography Dataset instead (scripts/water-map/bake_nhd_aqueducts.py, `geom: 'nhd'`).
  */
 
 // approximate source of each system (lon, lat): only used to point the animation downstream
@@ -36,7 +37,7 @@ export class Aqueducts {
     for (const [ai, a] of features.aqueducts.entries()) {
       const src = SOURCES[a.name] ? project(SOURCES[a.name][0], SOURCES[a.name][1]) : null;
       const fl = AQ_FLOWS[a.name] || null;
-      this.items.push({ name: a.name, kind: a.kind, op: a.op, km: a.km, flow: fl });
+      this.items.push({ name: a.name, kind: a.kind, op: a.op, km: a.km, flow: fl, geom: a.geom });
       const v = fl ? fl.mgd * (fl.share || 1) : 0;
       for (const sg of a.segs) {
         let pts = [];
@@ -96,9 +97,9 @@ export class Aqueducts {
           vec4 c1 = projectionMatrix * (mv + vec4(dv * max(0.05, -mv.z * 0.01), 0.0));
           vec2 s0 = c0.xy / c0.w * uViewport, s1 = c1.xy / c1.w * uViewport;
           vec2 d = s1 - s0; float dl = length(d); d = dl > 1e-5 ? d / dl : vec2(1.0, 0.0);
-          // wider for more water: measured flows set the width (unmeasured canals stay thin)
-          float lv = aVol > 0.0 ? log(1.0 + aVol) / 2.302585 : 0.0;
-          float w = clamp(2.4 * pow(900.0 / uCamDist, 0.25), 1.6, 4.5) * (aVol > 0.0 ? 0.75 + 0.32 * lv : 0.85);
+          // wider for more water: a measured flow sets the width on the channels' own scale (chanPx in
+          // flow/particles.js: ten times the water, about four times as wide); unmeasured canals stay thin
+          float w = aVol > 0.0 ? max(1.6, 0.1585 * pow(aVol, 0.6)) : clamp(1.4 * pow(900.0 / uCamDist, 0.25), 1.2, 2.0);
           c0.xy += vec2(-d.y, d.x) * aSide * (w * 0.5 + 1.0) * 2.0 / uViewport * c0.w;
           gl_Position = c0;
           vSide = aSide; vDist = aDist; vUnder = aUnder; vW = w; vVol = aVol;

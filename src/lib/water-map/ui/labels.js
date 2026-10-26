@@ -7,7 +7,7 @@ import * as THREE from 'three';
  *
  * anchor 'center' centres the label on its point; 'dot' puts a small marker on the point with the text to its right.
  * A label with `lead` sits `gap` pixels from its point (clear of the dot the map draws there) and, when it has to
- * move away to find room, is joined to its point by a leader line. A label with `must` is never dropped: if nowhere
+ * move away to find room (up to `shift` lines), is joined to its point by a leader line. A label with `must` is never dropped: if nowhere
  * near its point is free, it takes the nearest free spot further out, and if there is none, its own spot.
  */
 const SVGNS = 'http://www.w3.org/2000/svg';
@@ -26,7 +26,7 @@ export class Labels {
     this.svg.appendChild(this.path);
     root.appendChild(this.svg);
   }
-  add({ text, html, cls = '', x, z, h = 0, y = null, pri = 0, dmin = 0, dmax = Infinity, group = 'base', anchor = 'center', title = null, color = null, must = false, lead = false, gap = 5 }) {
+  add({ text, html, cls = '', x, z, h = 0, y = null, pri = 0, dmin = 0, dmax = Infinity, group = 'base', anchor = 'center', title = null, color = null, must = false, lead = false, gap = 5, shift = 3 }) {
     const el = document.createElement('div');
     el.className = `wm-lbl ${cls}${anchor === 'dot' ? ' dot' : ''}${lead ? ' lead' : ''}`;
     if (color) el.style.setProperty('--wm-c', color);
@@ -34,7 +34,7 @@ export class Labels {
     if (title) el.title = title;
     el.style.opacity = '0';
     this.root.appendChild(el);
-    const it = { cls, x, z, h, y, pri, dmin, dmax, el, w: 0, hgt: 0, shown: false, group, anchor, must, lead, gap, key: text != null ? text : null };
+    const it = { cls, x, z, h, y, pri, dmin, dmax, el, w: 0, hgt: 0, shown: false, group, anchor, must, lead, gap, shift, key: text != null ? text : null };
     this.items.push(it);
     this.dirty = true;
     return it;
@@ -105,7 +105,8 @@ export class Labels {
       const dot = it.anchor === 'dot';
       // a dotted label may also sit a line above or below its point (with a short leader) when its own spot is taken,
       // and may turn to the left of its point when the right side is blocked (by a panel or the edge of the stage)
-      const tries = dot && it.group !== 'base' ? [0, -1, 1, -2, 2, -3, 3] : [0];
+      // (up to `shift` lines: a label far from its point reads as another place's)
+      const tries = dot && it.group !== 'base' ? [0, -1, 1, -2, 2, -3, 3].filter((t) => Math.abs(t) <= it.shift) : [0];
       const sides = dot && it.group !== 'base' ? [false, true] : [false];
       const g = it.lead ? it.gap : 5;
       let done = false;
