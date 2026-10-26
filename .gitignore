@@ -44,3 +44,6 @@ data/source/GLHYMPS*
 
 /data/derived/town/assembly-audit/
 /artifacts/town-*/
+
+# Python bytecode from the bake scripts
+__pycache__/
