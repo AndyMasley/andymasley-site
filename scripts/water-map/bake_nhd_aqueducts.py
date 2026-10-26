@@ -7,7 +7,8 @@ line of each file is a '# source: ...' comment and the rest a list of {fc: NHD F
 and the paths through reservoirs on the line (33xxx, 558xx) are drawn solid.
 
 Usage: python bake_nhd_aqueducts.py features.json 'Colorado River Aqueduct=nhd_colorado_river_aqueduct.json' ...
-replaces each named aqueduct's segments in features.json (bake_features.py calls nhd_override for the same result).
+replaces each named aqueduct's segments in features.json, or adds the aqueducts in NEW, which OpenStreetMap does not
+map (bake_features.py calls nhd_override for the same result).
 """
 import json, os, sys
 import numpy as np
@@ -17,6 +18,11 @@ sys.path.insert(0, os.path.dirname(__file__))
 from proj import SLABS
 
 KM_PER_UNIT = 5.135487417266569   # conus_meta.json km_per_unit, the scale bake_features.py measures aqueducts with
+# aqueducts OpenStreetMap does not map at all, added from the NHD: name -> (kind, operator)
+NEW = {
+    'California Aqueduct East Branch': ('aqueduct', 'State Water Project'),
+    'California Aqueduct West Branch': ('aqueduct', 'State Water Project'),
+}
 
 def read_nhd(path):
     with open(path) as f:
@@ -56,7 +62,10 @@ def nhd_override(aqueducts, files):
         segs, km = nhd_segments(feats)
         a = byname.get(name)
         if a is None:
-            raise SystemExit(f'{name} is not among the aqueducts; add it to AQ_KEEP in bake_features.py first')
+            if name not in NEW: raise SystemExit(f'{name} is not among the aqueducts; add it to NEW first')
+            kind, op = NEW[name]
+            a = byname[name] = dict(name=name, kind=kind, op=op, km=0, segs=[], slab='conus')
+            aqueducts.append(a)
         a['segs'] = segs; a['km'] = round(km); a['geom'] = 'nhd'
         nkm = sum(f.get('km') or 0 for f in feats)
         print(f'{name}: {len(feats)} NHD flowlines, {nkm:.1f} km by NHD lengthkm, {km:.1f} km as drawn, {len(segs)} segments,'

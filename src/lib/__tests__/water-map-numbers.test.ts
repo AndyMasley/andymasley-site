@@ -169,6 +169,17 @@ describe('water map: the figures taken from reports are converted right', () => 
       expect(Math.round(f.af * AF / 365 / 1e5) / 10, name).toBe(f.mgd);
     }
   });
+  it('the Colorado River Aqueduct: its length and the share of it underground, as drawn from the NHD', () => {
+    const a = feats.aqueducts.find((q: any) => q.name === 'Colorado River Aqueduct');
+    expect(a.geom).toBe('nhd');
+    const [mi, share] = grab(AQ_FLOWS['Colorado River Aqueduct'].note, /runs (\d+) miles to Lake Mathews, near Riverside, (nearly three-quarters) of the way through tunnels/, 'the aqueduct\'s length and tunnels');
+    expect(Math.abs(a.km / 1.609344 - num(mi))).toBeLessThan(3);
+    const len = (s: any) => { let L = 0; for (let k = 2; k < s.p.length; k += 2) L += Math.hypot(s.p[k] - s.p[k - 2], s.p[k + 1] - s.p[k - 1]); return L; };
+    const under = a.segs.filter((s: any) => s.u).reduce((t: number, s: any) => t + len(s), 0), all = a.segs.reduce((t: number, s: any) => t + len(s), 0);
+    expect(share).toBe('nearly three-quarters');
+    expect(under / all).toBeGreaterThan(0.68);
+    expect(under / all).toBeLessThan(0.75);
+  });
   it('the data centers: liters to gallons, and the water for their electricity', () => {
     expect(Math.abs(DATA_CENTERS.directLiters / 3.785411784 - DATA_CENTERS.directGal) / DATA_CENTERS.directGal).toBeLessThan(0.005);
     expect(DATA_CENTERS.indirectGal).toBeCloseTo(DATA_CENTERS.electricityTWh * 1e9 * DATA_CENTERS.galPerKWh, -6);

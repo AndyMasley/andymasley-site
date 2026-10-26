@@ -41,7 +41,7 @@ estimated it for in 2015.
 | Rivers | HydroRIVERS 1.0 (Lehner and Grill, 2013) | River network, widths by modeled natural discharge 1971 to 2000 |
 | Lakes | Natural Earth | Lakes and reservoirs |
 | Aqueducts, canals, facilities | OpenStreetMap (ODbL) | Canal and aqueduct lines, treatment plants, towers, golf courses, data centers |
-| Colorado River Aqueduct, first Los Angeles Aqueduct and Delta-Mendota Canal lines | USGS National Hydrography Dataset, large-scale flowlines (nhd MapServer layer 6), by GNIS name, fetched October 2026 | Lake Havasu to Lake Mathews, 389.7 km; the Owens River intake to Sylmar, 381.2 km; Tracy to Mendota, 187.8 km. Pipeline reaches (FCodes 428xx) are dashed |
+| Colorado River Aqueduct, first Los Angeles Aqueduct, Delta-Mendota Canal and State Water Project branch lines | USGS National Hydrography Dataset, large-scale flowlines (nhd MapServer layer 6), by GNIS name, fetched October 2026 | Lake Havasu to Lake Mathews, 389.7 km; the Owens River intake to Sylmar, 381.2 km; Tracy to Mendota, 187.8 km; the East Branch ("Governor Edmund G Brown East Branch California Aqueduct") to Lake Perris, 218.8 km, and the West Branch to Castaic, 40.9 km, which OpenStreetMap does not map. Pipeline reaches (FCodes 428xx) are dashed |
 | Canal flows | Operator and government reports, each cited where it is shown | Canal and aqueduct flows |
 | Colorado River diversions | Reclamation, Colorado River Accounting and Water Use Report, 2015 | Imperial Irrigation District and the All-American Canal |
 | Dams | National Inventory of Dams, October 2026 | 92,693 dams |

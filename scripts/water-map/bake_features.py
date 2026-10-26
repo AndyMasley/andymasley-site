@@ -457,7 +457,8 @@ def aqueducts():
     # aqueducts OpenStreetMap maps only in pieces come from the National Hydrography Dataset (bake_nhd_aqueducts.py)
     from bake_nhd_aqueducts import nhd_override
     nhd = {'Colorado River Aqueduct': f'{RAW}/nhd_colorado_river_aqueduct.json', 'Los Angeles Aqueduct': f'{RAW}/nhd_los_angeles_aqueduct.json',
-           'Delta-Mendota Canal': f'{RAW}/nhd_delta_mendota_canal.json'}
+           'Delta-Mendota Canal': f'{RAW}/nhd_delta_mendota_canal.json',
+           'California Aqueduct East Branch': f'{RAW}/nhd_swp_east_branch.json', 'California Aqueduct West Branch': f'{RAW}/nhd_swp_west_branch.json'}
     nhd_override(out, {k: v for k, v in nhd.items() if os.path.exists(v)})
     print('aqueducts', len(out), sorted((a['name'], a['km'], len(a['segs'])) for a in out))
     return out

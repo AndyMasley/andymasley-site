@@ -12,6 +12,7 @@ import { AQ_FLOWS } from '../core/flows_data.js';
 // approximate source of each system (lon, lat): only used to point the animation downstream
 const SOURCES = {
   'California Aqueduct': [-121.56, 37.80], 'San Luis Canal': [-121.0, 37.3], 'East Branch': [-118.8, 34.95], 'West Branch': [-118.8, 34.95],
+  'California Aqueduct East Branch': [-118.71, 34.83], 'California Aqueduct West Branch': [-118.71, 34.83],
   'South Bay Aqueduct': [-121.60, 37.78], 'Delta-Mendota Canal': [-121.58, 37.80], 'Friant-Kern Canal': [-119.71, 37.00], 'Madera Canal': [-119.71, 37.00],
   'Contra Costa Canal': [-121.64, 37.97], 'Folsom South Canal': [-121.22, 38.63], 'Corning Canal': [-122.20, 40.15], 'Putah South Canal': [-122.10, 38.51],
   'Cross Valley Canal': [-119.15, 35.33], 'Kern River Canal': [-119.15, 35.33], 'Mokelumne Aqueduct': [-120.85, 38.25],
