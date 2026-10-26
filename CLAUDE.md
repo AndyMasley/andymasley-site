@@ -124,6 +124,7 @@ A 3D map of USGS 2015 county water use ("Where America’s water goes"). The Thr
 - In counties with mapped canals and aqueducts (outside New York), surface water for crops, golf courses, livestock, public supply and industry is drawn from the canals, not the rivers.
 - USGS counts the water of Brunner Island and Peach Bottom, on the York County bank of the Susquehanna, in Lancaster County across the river (`COUNTED_IN` in `scripts/water-map/bake_features.py`, mirrored in the baked `features.json`). Their `loc_county` keeps the county they stand in.
 - The Withdrawn/Consumed switch above the use list shows only the water consumed, for the uses USGS estimated it for (crops, golf courses and power plants); the other uses read "not estimated".
+- Rivers carry glowing pulses that travel downstream (`net/rivers.js`). A session removed them in Oct 2026 to quiet the basemap, and Andy asked for them back the same day: keep them.
 - Andy had the Compare chart (a log-scale comparison) removed in Oct 2026. Do not bring it back.
 
 ## Project structure
