@@ -729,6 +729,17 @@ button.wm-li:hover { color: var(--wm-brass); }
   text-shadow: 0 0 6px #0a1310, 0 0 2px #0a1310;
 }
 
+/* ---- while the channels are drawn: a one-line key to them, in place of the prompt */
+.wm .wm-legend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-2xs) var(--space-md);
+  font-size: var(--text-xs);
+}
+.wm-lg { display: inline-flex; align-items: center; gap: var(--space-2xs); white-space: nowrap; }
+.wm-lg svg { flex: none; }
+
 /* ---- labels on the map */
 .wm-labels {
   position: absolute;
@@ -993,6 +1004,7 @@ button.wm-li:hover { color: var(--wm-brass); }
   .wm-insp.wm-tall .wm-grip::before { background: var(--wm-brass); }
   .wm-insp .wm-close { top: 20px; z-index: 3; }
   .wm .wm-hint { top: 50px; right: var(--space-xs); bottom: auto; left: var(--space-xs); font-size: var(--text-xs); }
+  .wm .wm-legend { display: none; }
   /* the toolbar: search and one button; the others fold out above it */
   .wm-bar { right: var(--space-xs); bottom: var(--space-xs); left: var(--space-xs); flex-wrap: wrap; gap: 3px; }
   .wm-search { flex: 1 1 0; order: -1; min-width: 0; }

@@ -5,7 +5,7 @@
 
 <section class="wc" aria-labelledby="wc-title" data-wc>
   <h2 id="wc-title" class="wt-title">Every county</h2>
-  <p class="wt-dek">The figures the map is drawn from, for all 3,223 counties and county equivalents, in million gallons a day. Click a column to sort by it.</p>
+  <p class="wt-dek">The figures the map is drawn from, for all 3,223 counties and county equivalents, in million gallons a day except the share drawn from wells and the gallons a day per resident. Click a column to sort by it.</p>
   <div class="wc-bar">
     <label class="wc-search"><span class="wc-vh">Find a county or state</span><input type="search" placeholder="Find a county or state" data-wc-q autocomplete="off" spellcheck="false" /></label>
     <button type="button" class="wc-btn" data-wc-csv>Download all of it (CSV)</button>
@@ -17,16 +17,16 @@
     </table>
   </div>
   <p class="wc-foot"><span data-wc-count></span> <button type="button" class="wc-btn wc-more" data-wc-more hidden>Show every county</button></p>
-  <p class="wt-src">Source: <a href="https://www.usgs.gov/data/estimated-use-water-united-states-county-level-data-2015">USGS county water use, 2015</a> (Dieter and others, 2018, version 2.0). Crops include golf courses in the states that did not count them apart. Consumed is shown only for the uses USGS estimated it for: crops, golf courses and power plants. Public supply is counted where it was withdrawn, as USGS counts it; the map moves the water of the largest systems that cross county lines to the counties they serve.</p>
+  <p class="wt-src">Source: <a href="https://www.usgs.gov/data/estimated-use-water-united-states-county-level-data-2015">USGS county water use, 2015</a> (Dieter and others, 2018, version 2.0). Crops include golf courses in the states that did not count them apart. Consumed is USGS’s estimate, which it made only for crops, golf courses and power plants; where they also used reclaimed wastewater or water bought from utilities, it can be more than they withdrew. Public supply is counted where it was withdrawn, as USGS counts it; the map moves the water of the largest systems that cross county lines to the counties they serve.</p>
 </section>
 
 <script>
-  type Row = { i: number; fips: string; name: string; st: string; total: number; pt: number; ir: number; go: number; ps: number; in: number; aq: number; mi: number; do: number; li: number; gw: number; cu: number; pop: number };
+  type Row = { i: number; fips: string; name: string; st: string; split: boolean; total: number; pt: number; ir: number; go: number; ps: number; in: number; aq: number; mi: number; do: number; li: number; gw: number; cu: number; pop: number };
   const COLS: { k: keyof Row | 'gwShare' | 'perCap' | 'top'; label: string; num?: boolean; csv?: string }[] = [
     { k: 'name', label: 'County' }, { k: 'st', label: 'State' }, { k: 'total', label: 'Withdrawn', num: true },
     { k: 'ps', label: 'Public supply', num: true }, { k: 'ir', label: 'Crops', num: true }, { k: 'pt', label: 'Power plants', num: true },
     { k: 'in', label: 'Industry', num: true }, { k: 'gwShare', label: 'From wells', num: true }, { k: 'cu', label: 'Consumed', num: true },
-    { k: 'pop', label: 'Residents', num: true }, { k: 'perCap', label: 'Per resident', num: true },
+    { k: 'pop', label: 'Residents', num: true }, { k: 'perCap', label: 'Per resident, gal/d', num: true },
   ];
   function initCounties() {
     const root = document.querySelector<HTMLElement>('[data-wc]');
@@ -69,7 +69,8 @@
     csvBtn.addEventListener('click', () => {
       if (!rows.length) return;
       const H = ['fips', 'county', 'state', 'withdrawn_mgd', 'power_plants_mgd', 'crops_mgd', 'golf_courses_mgd', 'public_supply_mgd', 'industry_mgd', 'fish_farms_mgd', 'mining_mgd', 'private_wells_mgd', 'livestock_mgd', 'groundwater_mgd', 'consumed_mgd', 'residents'];
-      const lines = [H.join(',')].concat(rows.map((r) => [r.fips, `"${r.name.replace(/"/g, '""')}"`, r.st, r.total, r.pt, r.ir, r.go, r.ps, r.in, r.aq, r.mi, r.do, r.li, r.gw, r.cu || '', Math.round(r.pop * 1000)].map((v) => typeof v === 'number' ? Number(v.toFixed(3)) : v).join(',')));
+      // (golf courses are blank, not zero, where the state counted them with crops)
+      const lines = [H.join(',')].concat(rows.map((r) => [r.fips, `"${r.name.replace(/"/g, '""')}"`, r.st, r.total, r.pt, r.ir, r.split ? r.go : '', r.ps, r.in, r.aq, r.mi, r.do, r.li, r.gw, r.cu || '', Math.round(r.pop * 1000)].map((v) => typeof v === 'number' ? Number(v.toFixed(3)) : v).join(',')));
       const url = URL.createObjectURL(new Blob([lines.join('\n') + '\n'], { type: 'text/csv' }));
       const a = document.createElement('a'); a.href = url; a.download = 'usgs-county-water-use-2015.csv'; document.body.appendChild(a); a.click(); a.remove();
       setTimeout(() => URL.revokeObjectURL(url), 2000);
@@ -87,10 +88,10 @@
         const total = pt + ir + go + ps + ind + aq + mi + dom + li;
         const gw = ['ps', 'in', 'aq', 'mi'].reduce((a, p) => a + g(`${p}_gf`, i) + g(`${p}_gs`, i), 0) + g('po_gf', i) + g('po_gs', i) + g('pc_gf', i) + g('pc_gs', i)
           + (split ? g('ic_gf', i) + g('ig_gf', i) : g('ir_gf', i)) + g('do_gf', i) + g('li_gf', i);
-        const rec = (split ? g('ic_rec', i) + g('ig_rec', i) : g('ir_rec', i));
-        const cuIr = split ? Math.min(g('ic_cu', i), g('ic_sf', i) + g('ic_gf', i) + g('ic_rec', i)) + Math.min(g('ig_cu', i), go + g('ig_rec', i)) : Math.min(g('ir_cu', i), ir + rec);
+        // consumed: USGS's estimates as published, for crops, golf courses and power plants
+        const cuIr = split ? g('ic_cu', i) + g('ig_cu', i) : g('ir_cu', i);
         const cuPt = g('po_cuf', i) + g('po_cus', i) + g('pc_cuf', i) + g('pc_cus', i);
-        return { i, fips, name: wu.name[i], st: wu.st[i], total, pt, ir, go, ps, in: ind, aq, mi, do: dom, li, gw, cu: cuIr + cuPt, pop: g('pop', i) };
+        return { i, fips, name: wu.name[i], st: wu.st[i], split, total, pt, ir, go, ps, in: ind, aq, mi, do: dom, li, gw, cu: cuIr + cuPt, pop: g('pop', i) };
       });
       draw();
     }).catch(() => { body.innerHTML = `<tr><td class="wc-load" colspan="${COLS.length}">The county figures could not be loaded.</td></tr>`; });

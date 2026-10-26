@@ -1,5 +1,5 @@
 ---
-// Seventy years of U.S. water withdrawals (USGS trends table, 1950–2015), as two small charts drawn at build time:
+// Sixty-five years of U.S. water withdrawals (USGS trends table, 1950–2015), as two small charts drawn at build time:
 // withdrawals by use, and withdrawals per person. Every value is the table's; per person is total ÷ population.
 // Each chart is drawn twice, for a wide column and a phone, so its text stays at the house label size.
 import { TRENDS as T } from '../../lib/water-map/core/trends.js';
@@ -84,7 +84,7 @@ const cell = (k: keyof typeof T.printed, i: number) => T.printed[k][i] + ((T.rev
 ---
 
 <section class="wt" aria-labelledby="wt-title" data-wt>
-  <h2 id="wt-title" class="wt-title">Seventy years of water use</h2>
+  <h2 id="wt-title" class="wt-title">Sixty-five years of water use</h2>
   <p class="wt-dek">Withdrawals rose every five years from 1950 to 1980, held roughly level for the next 25 years, and then fell. By 2015 the country withdrew a quarter less water than at the peak, with 95 million more people. Power plants account for most of the drop.</p>
 
   <figure class="wt-fig">
@@ -92,7 +92,7 @@ const cell = (k: keyof typeof T.printed, i: number) => T.printed[k][i] + ((T.rev
     {sizes.map(([k, c]) => <div class={`wt-plot wt-${k}`} data-wt-plot="a" data-box={c.box}><Fragment set:html={c.a} /><div class="wt-tip" data-tip hidden></div></div>)}
     <figcaption class="wt-cap wt-cap2">Withdrawals per person, gallons a day</figcaption>
     {sizes.map(([k, c]) => <div class={`wt-plot wt-${k}`} data-wt-plot="b" data-box={c.box}><Fragment set:html={c.b} /><div class="wt-tip" data-tip hidden></div></div>)}
-    <p class="wt-src">Source: <a href={T.url}>USGS, trends in estimated water use in the United States, 1950–2015</a>, from <a href={T.circularUrl}>Dieter and others (2018)</a>. Irrigation includes golf courses. Everything else is industry, mining, fish farms and businesses that supply their own water, homes on private wells, and livestock. USGS rounded the figures for 1950 to 1980 to two significant figures and later ones to three, so the uses do not always add up to the total. The early years also cover slightly fewer places, without Alaska, Puerto Rico or the Virgin Islands in some. Per person is total withdrawals divided by population.</p>
+    <p class="wt-src">Source: <a href={T.url}>USGS, trends in estimated water use in the United States, 1950–2015</a>, from <a href={T.circularUrl}>Dieter and others (2018)</a>. Irrigation includes golf courses. Everything else is industry, mining, fish farms and businesses that supply their own water, homes on private wells, and livestock. USGS rounded the figures for 1950 to 1980 to two significant figures and later ones to three, so the uses do not always add up to the total. The early years also cover slightly fewer places, without Alaska, Hawaii, Puerto Rico or the Virgin Islands in some. Per person is total withdrawals divided by population.</p>
   </figure>
 
   <details class="wm-details wt-table">

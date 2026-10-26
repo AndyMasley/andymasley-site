@@ -917,14 +917,14 @@ export async function startWaterMap(root, { dataBase = '/water-map/data/', lite 
       names[gw ? 'gf_sub' : 'sf_sub'] = `${v >= own ? '' : 'some '}piped in: ${sys}`;
     }
     traceSources(ss.filter((q) => q.src !== SRC.delivered), used + rec, names);
-    // where the water it sent away went: one name at each system's far end
+    // the water it sent away: one name where each system's route leaves the county, on its busiest route
     const bySys = new Map();
     for (const x of xout) { const e = bySys.get(x.sys.id) || { sys: x.sys, vol: 0 }; e.vol += x.vol; bySys.set(x.sys.id, e); }
     for (const e of bySys.values()) {
       const st = (flows.exportsOf.get(i) || []).filter((q) => q.xfer === e.sys.id).sort((a, b) => b.vol - a.vol)[0];
       if (!st) continue;
-      const end = st.route[st.route.length - 1];
-      traceLabel(`<i class="wm-sw" style="background:${PIPED_GRAY}"></i>Piped to ${esc(e.sys.short)} <b>${esc(mgdLabel(e.vol))}</b>`, end[0], end[1], 40, 'use', { color: PIPED_GRAY });
+      const at = st.route[Math.min(st.route.length - 1, 2)];
+      traceLabel(`<i class="wm-sw" style="background:${PIPED_GRAY}"></i>Piped to ${esc(e.sys.short)} <b>${esc(mgdLabel(e.vol))}</b>`, at[0], at[1], 40, 'use', { color: PIPED_GRAY });
     }
     return '';
   }
@@ -1176,7 +1176,7 @@ export async function startWaterMap(root, { dataBase = '/water-map/data/', lite 
     if (finish.bloom) { finish.bloom.intensity = D.bloom + (N.bloom - D.bloom) * t; finish.bloom.luminanceMaterial.threshold = D.thr + (N.thr - D.thr) * t; }
   };
   applyLook(0);
-  let last = performance.now(), frames = 0, lastScale = '', lastLook = -1, visible = true, riverBright = 1;
+  let last = performance.now(), frames = 0, lastScale = '', lastLook = -1, visible = true, riverBright = 1, lastLegend = false;
   const io = new IntersectionObserver((ents) => { for (const e of ents) visible = e.isIntersecting; }, { threshold: 0 });
   io.observe(stage);
   const stats = { lod: null, fps: 0 };
@@ -1233,7 +1233,7 @@ export async function startWaterMap(root, { dataBase = '/water-map/data/', lite 
     if ((frames & 15) === 0) {
       // keep labels out from under the panels
       const sr = stage.getBoundingClientRect(), av = [];
-      for (const el of stage.querySelectorAll('.wm-uses, .wm-key, .wm-insp, .wm-bar > *, .wm-caption, .wm-layers')) {
+      for (const el of stage.querySelectorAll('.wm-uses, .wm-key, .wm-insp, .wm-bar > *, .wm-caption, .wm-layers, .wm-hint')) {
         if (!el.offsetParent || el.hidden) continue;
         const r = el.getBoundingClientRect(); if (!r.width) continue;
         av.push([r.left - sr.left, r.top - sr.top, r.right - sr.left, r.bottom - sr.top]);
@@ -1243,6 +1243,9 @@ export async function startWaterMap(root, { dataBase = '/water-map/data/', lite 
     shared.uLights.value = 1 - 0.5 * Math.min(1, Math.max(0, (260 - d) / 90));
     // names show by how big the map is on screen: on a narrow screen the same view is further out
     labels.update(d * Math.min(1, W / 1000), shared.uExag.value, { width: W, height: H });
+    // the one-line key to the channels, while they are drawn and nothing is selected
+    const lg = !phoneLayout() && d < flows.midMax * 0.9 && !flows.focus && app.measure !== 'c' && !app.underground && !(app.tour && app.tour.i >= 0);
+    if (lg !== lastLegend) { lastLegend = lg; hud.setLegend(lg); }
     const det = flows.detail && d < 230;
     const sc = `${(det ? flows.detail.unit : flows.unit).toPrecision(2)}|${det}`;
     if (sc !== lastScale) { lastScale = sc; hud.setScale(det ? flows.detail.unit : flows.unit, det); }

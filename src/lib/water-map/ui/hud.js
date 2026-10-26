@@ -136,6 +136,7 @@ export class Hud {
       </section>
       <section class="wm-panel wm-caption" data-caption hidden aria-live="polite"></section>
       <p class="wm-hint" data-hint hidden>${window.matchMedia(PHONE_MQ).matches ? 'Tap' : 'Click'} any county, power plant or water treatment plant to see where its water comes from</p>
+      <p class="wm-hint wm-legend" data-legend hidden></p>
       <div class="wm-tip" data-tip hidden></div>`;
     this.root.appendChild(wrap);
     this.wrap = wrap;
@@ -249,6 +250,7 @@ export class Hud {
     for (const b of this.$$('[data-measure] button')) { const on = b.dataset.m === m; b.classList.toggle('on', on); b.setAttribute('aria-checked', String(on)); }
     this.app.setMeasure(m);
     this.renderRows();
+    if (this.$('[data-insp]').dataset.kind === 'national') this.showNational();
     requestAnimationFrame(() => this.fitLeft());
   }
   syncUses() {
@@ -288,6 +290,22 @@ export class Hud {
   /** a one-line prompt over the map until the reader first selects something */
   showHint() { if (this._hintDone || this.app.tour.i >= 0) return; const el = this.$('[data-hint]'); if (el) el.hidden = false; }
   hintDone() { this._hintDone = true; const el = this.$('[data-hint]'); if (el) el.hidden = true; }
+  /** while the channels are drawn, a one-line key to them over the map, in place of the prompt */
+  setLegend(on) {
+    const el = this.$('[data-legend]'), h = this.$('[data-hint]');
+    if (!el || !!on === !el.hidden) return;
+    if (on && !el.innerHTML) {
+      const g = (svg, t) => `<span class="wm-lg"><svg viewBox="0 0 14 14" width="14" height="14" aria-hidden="true">${svg}</svg>${t}</span>`;
+      el.innerHTML = g(`<circle cx="7" cy="7" r="4" fill="${SRC_DEF.sf.color}" stroke="#0a1310" stroke-width="1"/>`, 'intake')
+        + g(`<circle cx="7" cy="7" r="4" fill="none" stroke="${SRC_DEF.gf.color}" stroke-width="2"/>`, 'well')
+        + g(`<rect x="2.5" y="2.5" width="9" height="9" fill="#f2cf63" stroke="#0a1310" stroke-width="1"/>`, 'where it is gathered')
+        + `<span class="wm-lg">${[10, 100, 1000].map((v) => keyChannel(chanPx(v), '#d8d2c2')).join('')}10, 100, 1,000 Mgal/d</span>`
+        + g(`<path d="M1 7 H13" stroke="${RETURN_GRAY}" stroke-width="2" stroke-dasharray="3 2"/>`, 'back to a river');
+    }
+    if (on) { this._hintWas = !!h && !h.hidden; if (h) h.hidden = true; }
+    else if (h && this._hintWas && !this._hintDone) h.hidden = false;
+    el.hidden = !on;
+  }
 
   // ------------------------------------------------------------ inspector
   sankeyFor(agg, scale = 1, fmt) {
@@ -368,13 +386,18 @@ export class Hud {
     const base = n.W.ir + n.other.ir_rec + n.W.go + n.other.go_rec + n.W.pt;
     const est = (n.W.ir + n.W.go + n.W.pt) / n.total;
     const B = (v) => `${nf(v / 1000, v < 10000 ? 1 : 0)} Bgal/d`;
+    // (the flow from source to use to fate first: it is the whole picture in one figure)
+    const head = this.measure === 'c'
+      ? `<div class="wm-big">${nf(cu / 1000)} <small>billion gallons a day consumed</small></div>
+      <p class="wm-sub">evaporated, taken up by crops or otherwise not returned, out of the ${nf(n.total / 1000)} billion withdrawn. USGS estimated it only for crops, golf courses and power plants, which withdrew ${Math.round(100 * est)}% of the water; for the other uses it is not known, so the map draws none for them.</p>`
+      : `<div class="wm-big">${nf(n.total / 1000)} <small>billion gallons a day</small></div>
+      <p class="wm-sub">withdrawn from rivers, lakes, aquifers and the sea, about ${nf(perCap)} gallons a day for every resident (counting the water power plants borrow and return).</p>`;
     this.setInspector(`<p class="wm-cap">The whole country, 2015</p>
-      <div class="wm-big">${nf(n.total / 1000)} <small>billion gallons a day</small></div>
-      <p class="wm-sub">withdrawn from rivers, lakes, aquifers and the sea, about ${nf(perCap)} gallons a day for every resident (counting the water power plants borrow and return).</p>
-      <h5>Where it comes from</h5>${mixBlock(this.srcRows(n.src), B)}
-      <h5>Where it goes</h5>
+      ${head}
+      <h5>Where it comes from, and where it goes</h5>
       ${this.sankey3For(n, 1000, (v) => nf(v, v < 10 ? 1 : 0))}
       <p class="wm-note">Billion gallons a day. Consumed water evaporated or went into crops; returned water went back to rivers and aquifers. USGS estimated what became of the water only for crops, golf courses and power plants (${Math.round(100 * est)}% of all withdrawals). Hover a band to see that water on the map.</p>
+      <h5>The sources</h5>${mixBlock(this.srcRows(n.src), B)}
       ${this.forScale()}
       <p class="wm-note">Click any county, power plant or water treatment plant to see where its water comes from, drawn in the color of each source with the share from each. Drag to move, scroll or pinch to zoom, right-drag or twist two fingers to turn.</p>`, false, 'national');
   }
@@ -523,10 +546,11 @@ export class Hud {
     const xin = m.xIn.get(i) || [], xout = m.xOut.get(i) || [];
     const imp = xin.reduce((a, x) => a + x.vol, 0), exp = xout.reduce((a, x) => a + x.vol, 0);
     const ap = (j) => `${m.wu.name[j]}, ${AP_STATE[m.wu.st[j]] || m.wu.st[j]}`;
+    // (where a big system pipes water in, the headline is all the water its uses drew, as the map's shares are)
     let html = `<p class="wm-cap">County · <button type="button" class="wm-lnk" data-state="${esc(c.st)}">${esc(stName)}</button></p><h3>${esc(c.name)}</h3>
-      <div class="wm-big">${mgd(c.total)} <small>million gallons a day withdrawn</small></div>`;
-    if (imp > 0.05) html += `<p class="wm-sub">plus ${mgd(imp)} Mgal/d piped in for its public water systems from reservoirs in other counties, which USGS counts where it was withdrawn.</p>`;
-    if (exp > 0.05) html += `<p class="wm-sub">${mgd(exp)} Mgal/d of it was piped to other counties: ${esc([...new Set(xout.map((x) => x.sys.short))].join(', '))}.</p>`;
+      <div class="wm-big">${imp > 0.05 ? `${mgd(c.total - exp + imp)} <small>million gallons a day for its uses</small>` : `${mgd(c.total)} <small>million gallons a day withdrawn</small>`}</div>`;
+    if (imp > 0.05) html += `<p class="wm-sub">${mgd(c.total)} Mgal/d withdrawn here${exp > 0.05 ? ` (${mgd(exp)} of it piped to other counties)` : ''} and ${mgd(imp)} piped in for its public water systems from reservoirs in other counties, where USGS counts it.</p>`;
+    else if (exp > 0.05) html += `<p class="wm-sub">${mgd(exp)} Mgal/d of it was piped to other counties: ${esc([...new Set(xout.map((x) => x.sys.short))].join(', '))}. Its own uses drew the other ${mgd(c.total - exp)}.</p>`;
     if (c.total + imp > 0) {
       // reclaimed wastewater is not a withdrawal, but it is water the county's uses drew, so it is one of the shares
       // (as on the map); water bought from utilities is already in the utilities' withdrawals. Water piped in counts,

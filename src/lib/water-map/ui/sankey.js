@@ -86,7 +86,8 @@ export function sankeySVG({ sources, uses, links, width = 330, unit = '', fmt = 
  */
 export function sankey3SVG({ sources, uses, fates, links1, links2, width = 330, fmt = (v) => v.toFixed(0) }) {
   const L = Math.round(Math.min(96, width * 0.27)), R = Math.round(Math.min(92, width * 0.26)), bar = 7;
-  const span = width - L - R - 3 * bar, g1 = Math.round(span * 0.42), g2 = span - g1;
+  // (the uses' labels sit in the second gap, so it gets the larger share)
+  const span = width - L - R - 3 * bar, g1 = Math.round(span * 0.26), g2 = span - g1;
   const X0 = L, X1 = L + bar + g1, X2 = X1 + bar + g2;
   const S0 = sources.filter((s) => s.value > 0), U0 = uses.filter((u) => u.value > 0), F0 = fates.filter((f) => f.value > 0);
   const total = Math.max(1e-9, S0.reduce((a, b) => a + b.value, 0));
@@ -140,7 +141,8 @@ export function sankey3SVG({ sources, uses, fates, links1, links2, width = 330, 
     nodes += `<rect data-t="${u.key}" x="${X1}" y="${u.y.toFixed(1)}" width="${bar + 70}" height="${Math.max(8, u.h).toFixed(1)}" fill="transparent"/><rect x="${X1}" y="${u.y.toFixed(1)}" width="${bar}" height="${u.h.toFixed(1)}" fill="${u.color}"/>`;
     const cy = uy[i], c0 = u.y + u.h / 2, tx = X1 + bar + 5;
     if (Math.abs(cy - c0) > 3) nodes += elbow(X1 + bar + 1, c0, tx - 1, cy);
-    nodes += `<text class="halo" x="${tx}" y="${(cy + 3.5).toFixed(1)}">${esc(u.name)} <tspan class="v">${esc(fmt(u.value))}</tspan></text>`;
+    // a swatch in the use's colour, so a label pushed off its bar still says which bar it is
+    nodes += `<rect x="${tx}" y="${(cy - 3).toFixed(1)}" width="6" height="6" fill="${u.color}"/><text class="halo" x="${tx + 9}" y="${(cy + 3.5).toFixed(1)}">${esc(u.name)} <tspan class="v">${esc(fmt(u.value))}</tspan></text>`;
   });
   const top = 18;
   return `<svg class="wm-sankey wm-sankey3" width="${width}" height="${H + top + 18}" viewBox="0 -${top} ${width} ${H + top + 18}" role="img" aria-label="Where the water came from, what it was used for and what became of it">

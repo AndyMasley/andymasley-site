@@ -320,11 +320,12 @@ export class FlowParticles {
         D[4 * p] = s.county; D[4 * p + 1] = ci; D[4 * p + 2] = s.src; D[4 * p + 3] = s.plant ? (s.plant._i != null ? s.plant._i + 2 : 1) : 0;
         E[4 * p] = c1; E[4 * p + 1] = c2; E[4 * p + 2] = alphaK;
         // colours: water on its way to a use is the colour of that use the whole way (for a selected place, the colour of
-        // its source); vapour is white; returns fade to grey as they leave
+        // its source); vapour is white; water going back is grey from the start, so it never reads as more water on its
+        // way in
         let k0 = cc, k1 = cc;
         if (s.kind === KIND.vapor) { k0 = [0.95, 0.95, 0.93]; k1 = [0.84, 0.85, 0.85]; }
         else if (place) { k0 = k1 = placeCol(s); }
-        else if (s.kind === KIND.ret) { k0 = cc; k1 = RET_LIN; }
+        else if (s.kind === KIND.ret) { k0 = k1 = RET_LIN; }
         else if (s.kind === KIND.deliver) { k0 = cc; k1 = [Math.min(1, cc[0] * 1.1 + 0.08), Math.min(1, cc[1] * 1.1 + 0.08), Math.min(1, cc[2] * 1.1 + 0.08)]; }
         col0.set(k0, 3 * p); col1.set(k1, 3 * p);
       }
@@ -660,7 +661,8 @@ export class FlowParticles {
           float wb = aW.x;
           #ifdef GENERAL
           // water on its way to a use narrows toward it, so even a short channel shows which way the water goes
-          wb *= kind < 0.5 && aA.w <= 0.0 ? 1.0 - 0.45 * t : kind > 2.5 && kind < 3.5 ? 1.0 - 0.3 * t : 1.0;
+          // (only a little, so its width still reads as its water)
+          wb *= kind < 0.5 && aA.w <= 0.0 ? 1.0 - 0.3 * t : kind > 2.5 && kind < 3.5 ? 1.0 - 0.3 * t : 1.0;
           #endif
           float w = wb + 4.0;   // room for a dark casing and a soft edge on each side
           vec2 sp = sc + nrm * aE.w * w * 0.5;

@@ -118,13 +118,13 @@ export const TRANSFERS = [
   {
     id: 'baltimore', name: 'Baltimore City’s water system', short: 'Baltimore water',
     operator: 'Baltimore City Department of Public Works', via: 'tunnels from the Loch Raven and Liberty reservoirs',
-    mgdSys: 205, year: '2015', what: 'produced on an average day in 2015',
-    src: 'Baltimore City Department of Public Works, 2015 water quality report release',
+    mgdSys: 205, year: '', what: 'produced on an average day, as the department put it in April 2016 (it gives no year)',
+    src: 'Baltimore City Department of Public Works, release on its 2015 water quality report (April 2016)',
     url: 'https://publicworks.baltimorecity.gov/node/9645',
     routes: { montebello: [P.montebello], ashburton: [P.ashburton] },
     from: [{ fips: '24005', share: 0.98, what: 'the Loch Raven, Prettyboy and Liberty reservoirs', at: [[P.lochRaven, 0.6, 'montebello'], [P.liberty, 0.4, 'ashburton']] }],
-    to: [{ fips: '24510' }, { fips: '24005' }, { fips: '24027', mgd: 19.2 }, { fips: '24003' }],
-    conf: 'Howard County: its purchases. Baltimore City and Anne Arundel County: their estimated use less what they withdraw themselves.',
+    to: [{ fips: '24510' }, { fips: '24005' }, { fips: '24027' }, { fips: '24003' }],
+    conf: 'The receiving counties’ shares are their estimated use less what they withdraw themselves.',
   },
   {
     id: 'jersey_city', name: 'Jersey City’s water system', short: 'Jersey City water',
@@ -136,17 +136,6 @@ export const TRANSFERS = [
     from: [{ fips: '34027', share: 0.56, what: 'the Boonton and Split Rock reservoirs', at: [[P.boonton, 1, 'a']] }],
     to: [{ fips: '34017' }],
     conf: 'The receiving county’s share is its estimated use less what it withdraws itself.',
-  },
-  {
-    id: 'nj_raritan', name: 'the Raritan Basin system', short: 'Raritan reservoirs',
-    operator: 'New Jersey Water Supply Authority', via: 'the Raritan River, from the Round Valley and Spruce Run reservoirs',
-    mgdSys: 241, year: '', what: 'safe yield of the system (no 2015 total found)',
-    src: 'New Jersey Water Supply Authority, Raritan Basin System',
-    url: 'https://www.njwsa.org/raritan-basin.html',
-    routes: { a: [P.boundBrook] },
-    from: [{ fips: '34019', share: 0.96, what: 'the Round Valley and Spruce Run reservoirs', at: [[P.roundValley, 0.75, 'a'], [P.spruceRun, 0.25, 'a']] }],
-    to: [{ fips: '34023' }, { fips: '34035' }, { fips: '34021' }],
-    conf: 'The reservoirs release raw water down the Raritan to utilities’ intakes at Bound Brook. The receiving counties’ shares are their estimated use less what they withdraw themselves.',
   },
   {
     id: 'va_beach', name: 'Virginia Beach’s Lake Gaston supply', short: 'Lake Gaston pipeline',
@@ -174,12 +163,12 @@ TRANSFERS.push(
       { fips: '40131', what: 'Oologah Lake', at: [[P.oologah, 1, 'oologah']] },
     ],
     to: [{ fips: '40143', mgd: 102.52 }],
-    conf: 'Each lake county’s part is its public-supply withdrawals less its own estimated use.',
+    conf: 'Each lake county’s part is its public-supply withdrawals less its own estimated use. Tulsa County’s part is capped at the city’s average pumpage into its whole system, some of which serves suburbs in neighboring counties.',
   },
   {
     id: 'okc', name: 'Oklahoma City’s Atoka pipeline', short: 'Atoka pipeline',
     operator: 'Oklahoma City Water Utilities Trust', via: 'a 100-mile pipeline from Atoka Lake and McGee Creek Reservoir to Lake Stanley Draper',
-    mgdSys: 85, year: '2016', what: 'moved by the pipeline, as the city described it in 2016',
+    mgdSys: 85, year: '2016', what: 'that the existing pipes can move, as KGOU reported in April 2016 (a capacity, not a 2015 flow)',
     src: 'KGOU, Oklahoma City awards contracts for new pipeline to bring water from Atoka (April 14, 2016)',
     url: 'https://www.kgou.org/post/oklahoma-city-awards-contracts-new-pipeline-bring-water-atoka',
     routes: { a: [P.draper] },
@@ -198,22 +187,13 @@ TRANSFERS.push(
     conf: 'Georgia records the withdrawal in Hall County, where Lake Lanier is. Gwinnett’s share is its estimated use less what it withdraws itself.',
   },
   {
-    id: 'cobb', name: 'the Cobb County–Marietta Water Authority', short: 'Lake Allatoona',
-    operator: 'Cobb County–Marietta Water Authority', via: 'its intake on Lake Allatoona',
-    mgdSys: null, year: '', what: '', src: '', url: '',
-    routes: { a: [P.wyckoff] },
-    from: [{ fips: '13015', what: 'Lake Allatoona', at: [[P.allatoona, 1, 'a']] }],
-    to: [{ fips: '13067' }],
-    conf: 'No 2015 figure was found. Cobb’s share is its estimated use less what it withdraws itself, out of Bartow County’s public-supply withdrawals less Bartow’s own use.',
-  },
-  {
     id: 'houston', name: 'Houston’s Trinity River water', short: 'Lake Livingston',
     operator: 'City of Houston and the Coastal Water Authority', via: 'the Trinity River and the Coastal Water Authority’s canal to Lake Houston',
     mgdSys: null, year: '', what: '', src: 'Coastal Water Authority', url: 'https://coastalwaterauthority.org/',
     routes: { a: [P.cwaPump, P.lakeHouston] },
     from: [{ fips: '48373', share: 0.99, what: 'Lake Livingston', at: [[P.livingston, 1, 'a']] }],
     to: [{ fips: '48201', all: true }],
-    conf: 'Texas records the city’s Lake Livingston water in Polk County, where the reservoir is. Houston also sells this water to industry along the Ship Channel, which public supply includes in Texas, so it goes here to Harris County. No audited 2015 figure was found; a local estimate in 2015 put the draw at 450 to 500 million gallons a day.',
+    conf: 'Texas records the city’s Lake Livingston water in Polk County, where the reservoir is. Houston also sells this water to industry along the Ship Channel, which public supply includes in Texas, so it goes here to Harris County. No 2015 figure for the system was found.',
   },
   {
     id: 'detroit', name: 'the Great Lakes Water Authority’s system', short: 'Detroit water',
@@ -249,12 +229,12 @@ TRANSFERS.push(
     routes: { a: [] },
     from: [{ fips: '27003', share: 0.53, what: 'the Mississippi at Fridley', at: [[P.fridley, 1, 'a']] }],
     to: [{ fips: '27053' }],
-    conf: 'Minnesota records the withdrawal in Anoka County, where the plant is. The part sent on is the city’s figure, out of Anoka County’s public-supply withdrawals.',
+    conf: 'Minnesota records the withdrawal in Anoka County, where the plant is. The part sent on is the city’s figure, out of Anoka County’s public-supply withdrawals; two of the suburbs Minneapolis supplies are in Anoka County, so a little of it does not leave.',
   },
   {
     id: 'tampa_bay', name: 'Tampa Bay Water', short: 'Tampa Bay Water',
     operator: 'Tampa Bay Water', via: 'its regional pipelines',
-    mgdSys: 175, year: '2015', what: 'of public supply moved between Hillsborough, Pasco and Pinellas counties in 2015 (USGS)',
+    mgdSys: 175, year: '2015', what: 'of public supply imported by Hillsborough, Pasco and Pinellas counties in 2015 (USGS)',
     src: 'Marella and others (2019), USGS Scientific Investigations Report 2019–5147, table 4',
     url: 'https://pubs.usgs.gov/sir/2019/5147/sir20195147.pdf',
     from: [{ fips: '12057', share: 0.585, what: 'wellfields and the Hillsborough River' }, { fips: '12101', share: 0.803, what: 'wellfields in Pasco County' }, { fips: '12103', share: 0.845, what: 'wellfields in Pinellas County' }],
@@ -270,7 +250,7 @@ TRANSFERS.push(
     routes: { a: [] },
     from: [{ fips: '12027', share: 0.986, what: 'the Peace River', at: [[P.peaceRiver, 1, 'a']] }],
     to: [{ fips: '12015', mgd: 10.71 }, { fips: '12115', mgd: 18.9 }],
-    conf: '',
+    conf: 'USGS publishes each Florida county’s public-supply imports and exports for 2015; it does not name the supplier. These are Charlotte’s and Sarasota’s imports.',
   },
   {
     id: 'fkaa', name: 'the Florida Keys Aqueduct', short: 'Florida Keys Aqueduct',
@@ -304,7 +284,7 @@ TRANSFERS.push(
     url: 'https://sections.asce.org/puerto-rico/sites/sections.asce.org.puerto-rico/files/Morris%20-%202020%20ASCE%20water%20supply%20white%20paper%2016dec2020.pdf',
     from: [{ fips: '72013', share: 0.82, what: 'the Río Grande de Arecibo' }],
     to: [{ fips: '72127' }, { fips: '72021' }, { fips: '72061' }, { fips: '72137' }, { fips: '72033' }],
-    conf: 'The receiving municipios’ shares are their estimated use less what they withdraw themselves.',
+    conf: 'Morris (2020) says its water is divided among municipios from Hatillo to Caguas; the map sends it to five of the largest around San Juan, each getting its estimated use less what it withdraws itself.',
   },
   {
     id: 'pr_carraizo', name: 'Lago Carraízo', short: 'Lago Carraízo',
@@ -320,5 +300,7 @@ TRANSFERS.push(
 
 // USGS's state ratios of public-supply withdrawals to domestic deliveries, corrected where a state's withdrawals include
 // water for another state: Maryland's include about 228 Mgal/d taken from the Potomac for the District and Virginia
-// (Washington Aqueduct and Fairfax Water), which Virginia's leave out.
-export const RATIO_FIX = { MD: 1.63, DC: 1.63, VA: 1.44 };
+// (Washington Aqueduct and Fairfax Water), which Virginia's leave out. Virginia's ratio adds back Fairfax Water's
+// Potomac water (88.7) and the Aqueduct's water for Arlington and Falls Church (22.15 + 14.08) to its 697.2 Mgal/d of
+// withdrawals, over its 545.8 Mgal/d of domestic deliveries.
+export const RATIO_FIX = { MD: 1.63, DC: 1.63, VA: 1.51 };
