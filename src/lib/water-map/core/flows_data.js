@@ -25,16 +25,22 @@ export const AQ_FLOWS = {
 // and industry from it but not its farms', golf courses' or livestock's water (WaterModel.streams).
 export const AQ_CITY = new Set(['Colorado River Aqueduct', 'Los Angeles Aqueduct', 'Second Los Angeles Aqueduct', 'San Diego Aqueduct', 'Mokelumne Aqueduct', 'Catskill Aqueduct', 'Delaware Aqueduct', 'New Croton Aqueduct']);
 
-// U.S. data centers, for scale, in 2023 rather than 2015. On-site water and electricity are from Lawrence Berkeley
-// National Laboratory's 2024 report (Shehabi et al.). The water for their electricity uses the same thermoelectric-only
-// factor as the site's other water page, 0.47 gal/kWh (NREL), because the USGS consumption figures on the map also
-// leave out evaporation from hydroelectric reservoirs. LBNL's own indirect estimate, which counts that evaporation, is
-// kept for the notes.
+// U.S. data centers, for scale: what Lawrence Berkeley National Laboratory's 2024 report (Shehabi et al.) projects for
+// 2028, in its low and high scenarios, beside its estimate for 2023. On-site water for 2028 is read from the report's
+// Figure 5.9 (the totals of its 2028 bars, about 145 and 276 billion liters; their hyperscale parts read 60 and 124, the
+// figures its text gives); electricity is its "roughly 325 and 580 TWh" (executive summary). The water for their
+// electricity uses the same thermoelectric-only factor as the site's other water page, 0.47 gal/kWh (NREL), because
+// the USGS consumption figures on the map also leave out evaporation from hydroelectric reservoirs. LBNL's own
+// indirect estimate for 2023, which counts that evaporation, is kept for the notes. Each figure for 2028 is [low, high].
+const L_PER_GAL = 3.785411784;
+const DC_L = [145e9, 276e9], DC_TWH = [325, 580];
 export const DATA_CENTERS = {
-  year: 2023,
-  directLiters: 66e9, directGal: 17.4e9, directMgd: 17.4e3 / 365,
-  electricityTWh: 176, galPerKWh: 0.47, indirectGal: 176e9 * 0.47,
-  lbnlIndirectLiters: 800e9,
+  year: 2028, projected: true,
+  directLiters: DC_L, directGal: DC_L.map((l) => l / L_PER_GAL), directMgd: DC_L.map((l) => l / L_PER_GAL / 365 / 1e6),
+  electricityTWh: DC_TWH, galPerKWh: 0.47, indirectGal: DC_TWH.map((t) => t * 1e9 * 0.47),
+  hyperscaleLiters: [60e9, 124e9],
+  // the report's estimate for 2023
+  y2023: { year: 2023, directLiters: 66e9, directGal: 17.4e9, directMgd: 17.4e3 / 365, electricityTWh: 176, lbnlIndirectLiters: 800e9 },
   src: 'Lawrence Berkeley National Laboratory, 2024 United States Data Center Energy Usage Report',
   url: 'https://eta-publications.lbl.gov/publications/2024-lbnl-data-center-energy-usage-report',
   factorSrc: 'NREL, Consumptive Water Use for U.S. Power Production (Torcellini and others, 2003)',

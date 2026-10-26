@@ -261,7 +261,7 @@ export class Hud {
     this.$('[data-rows]').innerHTML = row('all', 'Every use', fig(total), null, 100, cons ? 'All water consumed in 2015, as far as USGS estimated it' : 'All water withdrawn in 2015') +
       CATS.map((c) => { const v = val(c.k); return row(c.k, c.name, fig(v), c.color, v == null ? 0 : Math.max(0.4, (100 * v) / total), c.what); }).join('') +
       `<p class="wm-rows-sep" aria-hidden="true">For comparison</p>` +
-      row('dc', DC.name, nf(D.directMgd / 1000, 2), DC.color, Math.max(0.4, (100 * D.directMgd) / total), 'Water consumed on site by U.S. data centers in 2023, for scale');
+      row('dc', DC.name, `${nf(D.directMgd[0] / 1000, 2)}–${nf(D.directMgd[1] / 1000, 2)}`, DC.color, Math.max(0.4, (100 * D.directMgd[1]) / total), `Water U.S. data centers are projected to consume on site in ${D.year}, LBNL's low and high scenarios, for scale`);
     this.rowsNote();
     for (const el of this.$$('.wm-row')) {
       const k = el.dataset.k;
@@ -337,10 +337,10 @@ export class Hud {
     const el = this.$('[data-rows-note]'); if (!el) return;
     const D = DATA_CENTERS, cons = this.measure === 'c', sk = this.$('[data-uses]')?.classList.contains('wm-uses-sk');
     el.textContent = sk
-      ? `Billion gallons a day in 2015 (USGS). ${cons ? 'Consumed water evaporated or went into crops; USGS estimated it only for crops, golf courses and power plants. ' : ''}Click a use to see only its water, or a source or band to hold that water on the map. Data centers: water consumed on site in ${D.year} (LBNL).`
+      ? `Billion gallons a day in 2015 (USGS). ${cons ? 'Consumed water evaporated or went into crops; USGS estimated it only for crops, golf courses and power plants. ' : ''}Click a use to see only its water, or a source or band to hold that water on the map. Data centers: water LBNL projects they will consume on site in ${D.year}, low to high.`
       : cons
-        ? `Billion gallons a day consumed in 2015: evaporated, taken up by crops or otherwise not returned (USGS). USGS estimated it only for crops, golf courses and power plants. Data centers: consumed on site in ${D.year} (LBNL).`
-        : `Billion gallons a day withdrawn in 2015 (USGS), with each bar its share of the total. Data centers: water consumed on site in ${D.year} (LBNL).`;
+        ? `Billion gallons a day consumed in 2015: evaporated, taken up by crops or otherwise not returned (USGS). USGS estimated it only for crops, golf courses and power plants. Data centers: projected to consume on site in ${D.year}, low to high (LBNL).`
+        : `Billion gallons a day withdrawn in 2015 (USGS), with each bar its share of the total. Data centers: water LBNL projects they will consume on site in ${D.year}, low to high.`;
   }
   /** a line under the picker for the water held on the map: how much, and its share */
   pinCaption() {
@@ -516,11 +516,11 @@ export class Hud {
   }
   forScale() {
     const n = this.m.national, D = DATA_CENTERS;
-    const dcAll = (D.directGal + D.indirectGal) / 365 / 1e6;
+    const dcAll = D.directGal.map((g, i) => (g + D.indirectGal[i]) / 365 / 1e6);
     return `<h5>For scale</h5>
       <div class="wm-kv">
-        <span>U.S. data centers, consumed on site (2023)</span><span>${nf(D.directMgd)} Mgal/d</span>
-        <span>With the water for their electricity</span><span>${nf(dcAll)} Mgal/d</span>
+        <span>U.S. data centers, consumed on site (projected for ${D.year})</span><span>${nf(D.directMgd[0])}–${nf(D.directMgd[1])} Mgal/d</span>
+        <span>With the water for their electricity</span><span>${nf(dcAll[0])}–${nf(dcAll[1])} Mgal/d</span>
         <span>Golf courses, consumed (2015, where reported)</span><span>${nf(n.cu.go)} Mgal/d</span>
       </div>
       <p class="wm-note"><button type="button" class="wm-lnk" data-iso="dc">Show data centers on the map</button></p>`;
@@ -616,8 +616,9 @@ export class Hud {
     this.setInspector(html, true, 'iso');
   }
   showDataCenters() {
-    const D = DATA_CENTERS, n = this.m.national;
-    const ind = D.indirectGal / 365 / 1e6;
+    const D = DATA_CENTERS, n = this.m.national, T = D.y2023;
+    const ind = D.indirectGal.map((g) => g / 365 / 1e6), both = D.directMgd.map((v, i) => v + ind[i]);
+    const to = (a, f = (v) => nf(v)) => `${f(a[0])} to ${f(a[1])}`, dash = (a, f = (v) => nf(v)) => `${f(a[0])}–${f(a[1])}`;
     const osm = this.app.osm;
     const dcCount = osm ? osm.counts[4] : null;
     let top = [];
@@ -627,17 +628,17 @@ export class Hud {
       top = byC.sort((a, b) => b[1] - a[1]).slice(0, 6);
     }
     const rep = (D.reported || []).slice().sort((a, b) => b.gal - a.gal);
-    let html = `<p class="wm-cap">For scale, 2023</p><h3>${sw(DC.color)}Data centers</h3>
-      <div class="wm-big">${nf(D.directMgd)} <small>million gallons a day</small></div>
-      <p class="wm-sub">consumed on site by every U.S. data center in ${D.year}, about ${nf(D.directGal / 1e9, 1)} billion gallons over the year, by Lawrence Berkeley National Laboratory's estimate. Most of it evaporates in cooling systems.</p>
+    let html = `<p class="wm-cap">For scale, projected for ${D.year}</p><h3>${sw(DC.color)}Data centers</h3>
+      <div class="wm-big">${to(D.directMgd)} <small>million gallons a day</small></div>
+      <p class="wm-sub">that Lawrence Berkeley National Laboratory projects every U.S. data center together will consume on site in ${D.year}, in its low and high scenarios, about ${to(D.directGal, (v) => nf(v / 1e9))} billion gallons over the year. Most of it evaporates in cooling systems. Its estimate for ${T.year} is ${nf(T.directGal / 1e9, 1)} billion gallons, about ${nf(T.directMgd)} million gallons a day.</p>
       <div class="wm-kv">
-        <span>Consumed making their electricity, at power plants</span><span>${nf(ind)} Mgal/d</span>
-        <span>On site and at power plants together</span><span>${nf(D.directMgd + ind)} Mgal/d</span>
+        <span>Consumed making their electricity, at power plants</span><span>${dash(ind)} Mgal/d</span>
+        <span>On site and at power plants together</span><span>${dash(both)} Mgal/d</span>
         <span>Golf courses, consumed where reported (2015)</span><span>${nf(n.cu.go)} Mgal/d</span>
         <span>Crop irrigation, consumed (2015)</span><span>${volShort(n.cu.ir)}</span>
-        <span>On-site use as a share of all U.S. withdrawals</span><span>${nf(100 * D.directMgd / n.total, 3)}%</span>
+        <span>On-site use as a share of all U.S. withdrawals in 2015</span><span>${dash(D.directMgd, (v) => nf(100 * v / n.total, 3))}%</span>
       </div>
-      <p class="wm-note">Their ${D.electricityTWh} terawatt-hours of electricity are counted at ${D.galPerKWh} gallons per kilowatt-hour, the average water thermoelectric plants consume (<a href="${esc(D.factorUrl)}" target="_blank" rel="noopener">NREL</a>). LBNL’s own estimate, about ${nf(D.lbnlIndirectLiters / 1e9)} billion liters a year, also counts evaporation from hydroelectric reservoirs, which the USGS consumption figures on this map leave out.</p>
+      <p class="wm-note">Their ${to(D.electricityTWh)} terawatt-hours of electricity are counted at ${D.galPerKWh} gallons per kilowatt-hour, the average water thermoelectric plants consume (<a href="${esc(D.factorUrl)}" target="_blank" rel="noopener">NREL</a>). LBNL’s own estimate for ${T.year}, about ${nf(T.lbnlIndirectLiters / 1e9)} billion liters, also counts evaporation from hydroelectric reservoirs, which the USGS consumption figures on this map leave out.</p>
       <p class="wm-note">Data centers are not a USGS category. The water they use on site is counted inside public supply and industry, and the water for their electricity inside power plants, so the map draws no separate flows for them. The violet diamonds are data centers mapped in OpenStreetMap${dcCount ? ` (${nf(dcCount)} of them)` : ''}, which misses many.</p>`;
     if (rep.length) html += `<h5>Reported by the operator</h5><div class="wm-list">${rep.map((r) => `<button type="button" class="wm-li" data-go='${esc(JSON.stringify({ x: r.x, z: r.z, d: 30, tilt: 1.0 }))}'><span>${esc(r.name)}<small>${esc(r.op)}, ${esc(r.year)}</small></span><span>${nf(r.gal / 1e6)}M gal</span></button>`).join('')}</div><p class="wm-note">${esc(D.reportedSrc || '')}</p>`;
     if (top.length) html += `<h5>Counties with the most mapped data centers</h5><div class="wm-list">${top.map(([ci, cnt]) => `<button type="button" class="wm-li" data-county="${ci}"><span>${esc(this.m.wu.name[ci])}, ${esc(this.m.wu.st[ci])}</span><span>${nf(cnt)}</span></button>`).join('')}</div>`;
@@ -1004,7 +1005,7 @@ export class Hud {
       const r = (D.reported || []).find((q) => Math.hypot(q.x - L.data.x[i], q.z - L.data.z[i]) < 1.5);
       body = r ? `<p class="wm-sub">${esc(r.op)} reported that its ${esc(r.name)} data center consumed ${nf(r.gal / 1e6)} million gallons of water in ${esc(r.year)}, about ${nf(r.gal / 365 / 1e6, 2)} million gallons a day.</p>` : `<p class="wm-sub">Its operator does not publish how much water it uses or where the water comes from.</p>`;
       if (c && psRows.length) body += `<h5>Public supply in ${esc(c.name)}</h5>${mixBlock(psRows, null)}<p class="wm-note">For context: where the county's utilities got their water in 2015 (USGS). Many data centers buy water from the local utility, but this one's source is not reported.</p>`;
-      body += `<p class="wm-note">For scale, LBNL estimates all U.S. data centers consumed about ${nf(D.directGal / 1e9, 1)} billion gallons on site in ${D.year}, about ${nf(D.directMgd)} million gallons a day.</p>`;
+      body += `<p class="wm-note">For scale, LBNL projects that all U.S. data centers together will consume about ${nf(D.directGal[0] / 1e9)} to ${nf(D.directGal[1] / 1e9)} billion gallons on site in ${D.year}, about ${nf(D.directMgd[0])} to ${nf(D.directMgd[1])} million gallons a day.</p>`;
     } else if (k === 'golf_course') {
       if (c && c.split && c.W.go + c.other.go_rec > 0) {
         const rows = this.srcRows(c.src.go, aq);

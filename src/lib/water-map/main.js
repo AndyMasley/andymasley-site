@@ -644,7 +644,7 @@ export async function startWaterMap(root, { dataBase = '/water-map/data/', lite 
     focusFlow(use, src) { if (use === 'xout') use = 'ps'; if (src === 'xin') src = 'sf'; app._flowFocus = use ? { use, src } : null; app.applyEmphasis(); },
     /** show only one use's water (k: a USGS category or 'dc'), or every use (null) */
     isolate(k, quiet = false) {
-      if (!quiet && k !== app.iso) { if (k) sound.pour(k === 'dc' ? DATA_CENTERS.directMgd : model.national.W[k] || 1); else sound.close(); }
+      if (!quiet && k !== app.iso) { if (k) sound.pour(k === 'dc' ? DATA_CENTERS.directMgd[1] : model.national.W[k] || 1); else sound.close(); }
       if (k && !quiet) hud.welcomeOff();
       if (k && selCounty >= 0) app.clearSelection(true);
       app.iso = k || null;

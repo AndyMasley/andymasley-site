@@ -114,19 +114,27 @@ describe('water map: the page text agrees with the data', () => {
     expect(Math.round((aquifers.national - mapped) / 1000)).toBe(num(b));
   });
   it('the data centers paragraph', () => {
-    const [l, g, y] = grab(page, /consumed about (\d+) billion liters \(([\d.]+) billion gallons\) of water on site in (\d+)/, 'data centers on site');
-    expect(DATA_CENTERS.directLiters / 1e9).toBe(num(l));
-    expect(Math.round(DATA_CENTERS.directLiters / 3.785411784 / 1e8) / 10).toBe(num(g));
-    expect(DATA_CENTERS.directGal / 1e9).toBe(num(g));
-    expect(DATA_CENTERS.year).toBe(num(y));
-    const [t] = grab(page, /used (\d+) terawatt-hours of electricity/, 'data center electricity');
-    expect(DATA_CENTERS.electricityTWh).toBe(num(t));
+    const D = DATA_CENTERS, T = D.y2023;
+    const [l0, l1, g0, g1, y] = grab(page, /will consume about (\d+) to (\d+) billion liters \((\d+) to (\d+) billion gallons\) of water on site in (\d+)/, 'data centers on site');
+    expect(D.directLiters.map((v: number) => v / 1e9)).toEqual([num(l0), num(l1)]);
+    expect(D.directGal.map((v: number) => Math.round(v / 1e9))).toEqual([num(g0), num(g1)]);
+    expect(D.year).toBe(num(y));
+    const [t0, t1] = grab(page, /use about (\d+) to (\d+) terawatt-hours of electricity/, 'data center electricity');
+    expect(D.electricityTWh).toEqual([num(t0), num(t1)]);
+    const [h0, h1] = grab(page, /whose hyperscale parts are the (\d+) and (\d+) billion liters its text gives/, 'the hyperscale parts');
+    expect(D.hyperscaleLiters.map((v: number) => v / 1e9)).toEqual([num(h0), num(h1)]);
+    const [l23, g23, t23] = grab(page, /For 2023 it estimates (\d+) billion liters \(([\d.]+) billion gallons\) and (\d+) terawatt-hours/, 'the 2023 estimate');
+    expect(T.directLiters / 1e9).toBe(num(l23));
+    expect(T.directGal / 1e9).toBe(num(g23));
+    expect(Math.round(T.directLiters / 3.785411784 / 1e8) / 10).toBe(num(g23));
+    expect(T.electricityTWh).toBe(num(t23));
+    expect(T.year).toBe(2023);
     const [k] = grab(page, /at ([\d.]+) gallons per kilowatt-hour/, 'the water factor');
-    expect(DATA_CENTERS.galPerKWh).toBe(num(k));
-    const [a] = grab(page, /which adds about (\d+) billion gallons a year/, 'the water for their electricity');
-    expect(Math.round(DATA_CENTERS.electricityTWh * DATA_CENTERS.galPerKWh)).toBe(num(a));
+    expect(D.galPerKWh).toBe(num(k));
+    const [a0, a1] = grab(page, /which adds about (\d+) to (\d+) billion gallons a year in 2028/, 'the water for their electricity');
+    expect(D.electricityTWh.map((t: number) => Math.round(t * D.galPerKWh))).toEqual([num(a0), num(a1)]);
     const [lb] = grab(page, /about (\d+) billion liters, also counts evaporation/, "LBNL's own estimate");
-    expect(DATA_CENTERS.lbnlIndirectLiters / 1e9).toBe(num(lb));
+    expect(T.lbnlIndirectLiters / 1e9).toBe(num(lb));
   });
   it('the dams', () => {
     const [n, c] = grab(page, /It lists ([\d,]+) dams, and the map can draw all of them except (\d+) without coordinates and one in Guam/, 'the dams');
@@ -191,14 +199,16 @@ describe('water map: the common questions', () => {
   });
   it('data centers against the rest', () => {
     const D = DATA_CENTERS;
-    const [g, d, e, all, x] = grab(page, /consumed about ([\d.]+) billion gallons of water on site in 2023, about (\d+) million gallons a day\. Generating their electricity consumed about (\d+) billion gallons more.*?Together that is about (\d+) million gallons a day\. Crops, golf courses and power plants consumed about 77 billion gallons a day in 2015, some (\d+) times as much/, 'data centers');
-    expect(D.directGal / 1e9).toBe(num(g));
-    expect(Math.round(D.directGal / 365 / 1e6)).toBe(num(d));
-    expect(Math.round(D.indirectGal / 1e9)).toBe(num(e));
-    const perDay = (D.directGal + D.indirectGal) / 365 / 1e6;
-    expect(Math.round(perDay / 5) * 5).toBe(num(all));
-    expect(Math.round((cu('ir') + cu('go') + cu('pt')) / 1000)).toBe(77);
-    expect(Math.round((cu('ir') + cu('go') + cu('pt')) / perDay / 10) * 10).toBe(num(x));
+    const [g0, g1, d0, d1, e0, e1, all0, all1, x0, x1] = grab(page, /will consume about (\d+) to (\d+) billion gallons of water on site in 2028, in its low and high scenarios, about (\d+) to (\d+) million gallons a day\. Generating their electricity would consume about (\d+) to (\d+) billion gallons more.*?Together that is about (\d+) to (\d+) million gallons a day\. Crops, golf courses and power plants consumed about 77 billion gallons a day in 2015, some (\d+) to (\d+) times as much/, 'data centers');
+    expect(D.directGal.map((v: number) => Math.round(v / 1e9))).toEqual([num(g0), num(g1)]);
+    expect(D.directMgd.map((v: number) => Math.round(v / 5) * 5)).toEqual([num(d0), num(d1)]);
+    expect(D.indirectGal.map((v: number) => Math.round(v / 1e9))).toEqual([num(e0), num(e1)]);
+    const perDay = D.directGal.map((g: number, i: number) => (g + D.indirectGal[i]) / 365 / 1e6);
+    expect(perDay.map((v: number) => Math.round(v / 5) * 5)).toEqual([num(all0), num(all1)]);
+    const C = cu('ir') + cu('go') + cu('pt');
+    expect(Math.round(C / 1000)).toBe(77);
+    // (the high projection gives the smaller multiple)
+    expect([Math.round(C / perDay[1] / 10) * 10, Math.round(C / perDay[0] / 10) * 10]).toEqual([num(x0), num(x1)]);
   });
 });
 
@@ -222,8 +232,14 @@ describe('water map: the figures taken from reports are converted right', () => 
     expect(under / all).toBeLessThan(0.75);
   });
   it('the data centers: liters to gallons, and the water for their electricity', () => {
-    expect(Math.abs(DATA_CENTERS.directLiters / 3.785411784 - DATA_CENTERS.directGal) / DATA_CENTERS.directGal).toBeLessThan(0.005);
-    expect(DATA_CENTERS.indirectGal).toBeCloseTo(DATA_CENTERS.electricityTWh * 1e9 * DATA_CENTERS.galPerKWh, -6);
+    const D = DATA_CENTERS;
+    for (let i = 0; i < 2; i++) {
+      expect(Math.abs(D.directLiters[i] / 3.785411784 - D.directGal[i]) / D.directGal[i]).toBeLessThan(1e-9);
+      expect(D.directMgd[i]).toBeCloseTo(D.directGal[i] / 365 / 1e6, 6);
+      expect(D.indirectGal[i]).toBeCloseTo(D.electricityTWh[i] * 1e9 * D.galPerKWh, -6);
+    }
+    expect(Math.abs(D.y2023.directLiters / 3.785411784 - D.y2023.directGal) / D.y2023.directGal).toBeLessThan(0.005);
+    expect(D.y2023.directMgd).toBeCloseTo(D.y2023.directGal / 365 / 1e6, 6);
   });
 });
 

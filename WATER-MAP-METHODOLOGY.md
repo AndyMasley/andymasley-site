@@ -142,10 +142,18 @@ courses 1 and power plants 4.3.
 
 ## 5. Data centers
 
-For scale only, outside the 2015 totals: LBNL estimates 66 billion liters (17.4 billion gallons) consumed on site in
-2023 and 176 TWh of electricity. The water for that electricity is counted at 0.47 gal/kWh, the thermoelectric
-average (NREL), matching /visuals/water, which leaves out hydroelectric reservoir evaporation. LBNL's own estimate,
-about 800 billion liters, includes that evaporation.
+For scale only, outside the 2015 totals, the map shows LBNL's projection for 2028 (at Andy's direction, October
+2026), in its low and high scenarios: about 145 and 276 billion liters (38 and 73 billion gallons; 105 and 200 Mgal/d)
+consumed on site, and "roughly 325 and 580 TWh" of electricity (executive summary). The report's text gives only the
+hyperscale part of the on-site water for 2028 ("Hyperscale data centers in 2028 are expected to consume between 60
+and 124 billion liters", section 5, Water and Emission Impacts), so the totals are read from Figure 5.9, Direct water
+consumption by data center type: its 2028 bars are an 888 by 595 pixel image in the PDF (eScholarship qt32d6m0d1),
+whose gridlines put 0 at row 556 and 300 at row 17, and whose bars top out at rows 295 (low) and 60 (high), 145.3 and
+276.1 billion liters. Their hyperscale segments read 59.6 and 123.6, the 60 and 124 of the text. The report's 2023
+estimate stays in the notes: 66 billion liters (17.4 billion gallons) on site and 176 TWh. The water for their
+electricity is counted at 0.47 gal/kWh, the thermoelectric average (NREL), matching /visuals/water, which leaves out
+hydroelectric reservoir evaporation. LBNL's own estimate for 2023, about 800 billion liters, includes that
+evaporation.
 
 ## 6. The strain index
 
