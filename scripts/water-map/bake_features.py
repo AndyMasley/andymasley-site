@@ -217,6 +217,13 @@ def plants():
         byname.setdefault((st, norm(nm)), []).append(i)
     P = []
     nm_hits = 0
+    # USGS counts the water of the two big plants on the Susquehanna at Brunner Island and Peach Bottom, which stand on
+    # its York County bank, in Lancaster County across the river: the 2015 county data give York County 2.1 Mgal/d for
+    # power plants (all recirculating) and Lancaster County 2,525 Mgal/d (all once-through), and the only plant the model
+    # places in Lancaster County is a waste-to-energy plant it estimates at 0.8 Mgal/d. Their water is divided with
+    # Lancaster County's, where USGS counts it; loc_county keeps the county they stand in.
+    fips_ix = {f: i for i, f in enumerate(WU['id'])}
+    COUNTED_IN = {3140: '42071', 3166: '42071'}
     for d in data:
         lat, lon = num(d['LATITUDE']), num(d['LONGITUDE'])
         slab = slab_for_state(FIPS_OF.get(d['STATE'], '00'))
@@ -231,6 +238,7 @@ def plants():
                       wsrc=d['WATER_SOURCE_CODE'].strip(), wtype=d['WATER_TYPE_CODE'].strip(),
                       model_w=num(d['WITHDRAWAL']), model_c=num(d['CONSUMPTION']), model_w_rng=[num(d['MIN_WITHDRAWAL']), num(d['MAX_WITHDRAWAL'])],
                       model_c_rng=[num(d['MIN_CONSUMPTION']), num(d['MAX_CONSUMPTION'])], mwh=num(d['NET_GENERATION'])))
+        if P[-1]['eia'] in COUNTED_IN: P[-1]['loc_county'] = c; P[-1]['county'] = fips_ix[COUNTED_IN[P[-1]['eia']]]
     print('plants re-assigned to their named county:', nm_hits)
     # county compilation totals (Mgal/d) by source, once-through (po) and recirculating (pc) combined
     F = WU['fields']; col = {k: WU[k] for k in F}

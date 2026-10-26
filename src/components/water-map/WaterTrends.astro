@@ -1,0 +1,166 @@
+---
+// Seventy years of U.S. water withdrawals (USGS trends table, 1950–2015), as two small charts drawn at build time:
+// withdrawals by use, and withdrawals per person. Every value is the table's; per person is total ÷ population.
+// Each chart is drawn twice, for a wide column and a phone, so its text stays at the house label size.
+import { TRENDS as T } from '../../lib/water-map/core/trends.js';
+
+const Y = T.years;
+const n = Y.length;
+const sum = (...xs: (number | null)[]) => xs.reduce<number>((a, b) => a + (b ?? 0), 0);
+// everything but power plants, irrigation and public supply: self-supplied industry (before 1985 including mining,
+// commercial and aquaculture), then mining, aquaculture and commercial on their own, homes on private wells, livestock
+const other = Y.map((_, i) => sum(T.ind[i], T.mi[i], T.com[i], T.aq[i], T.dom[i], T.li[i]));
+const perCap = Y.map((_, i) => (T.total[i] * 1000) / T.pop[i]);
+
+const fmt = (v: number, d = 0) => v.toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
+const one = (v: number) => (v >= 100 ? fmt(v) : fmt(v, 1));
+// per person to two significant figures, since the totals before 1985 are rounded to two
+const sig2 = (v: number) => { const p = Math.pow(10, Math.floor(Math.log10(v)) - 1); return Math.round(v / p) * p; };
+const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c] as string));
+
+/** push label centres apart by at least `gap`, keeping them inside [lo, hi] */
+function spread(ys: number[], gap: number, lo: number, hi: number) {
+  const o = ys.map((y, i) => ({ y, i })).sort((a, b) => a.y - b.y);
+  for (let k = 1; k < o.length; k++) if (o[k].y < o[k - 1].y + gap) o[k].y = o[k - 1].y + gap;
+  const over = o.length ? o[o.length - 1].y - hi : 0;
+  if (over > 0) { o[o.length - 1].y -= over; for (let k = o.length - 2; k >= 0; k--) if (o[k].y > o[k + 1].y - gap) o[k].y = o[k + 1].y - gap; }
+  if (o.length && o[0].y < lo) { const d = lo - o[0].y; for (const p of o) p.y += d; }
+  const out = new Array(ys.length); for (const p of o) out[p.i] = p.y; return out as number[];
+}
+
+type Series = { key: string; name: string; short: string; values: number[]; cls: string; label: string; w?: number };
+const series: Series[] = [
+  { key: 'total', name: 'All uses', short: 'All uses', values: T.total, cls: 'wt-total', label: T.printed.total[n - 1], w: 2.5 },
+  { key: 'pt', name: 'Power plants', short: 'Power plants', values: T.pt, cls: 'wt-pt', label: T.printed.pt[n - 1] },
+  { key: 'ir', name: 'Irrigation', short: 'Irrigation', values: T.ir, cls: 'wt-ir', label: T.printed.ir[n - 1] },
+  { key: 'ps', name: 'Public supply', short: 'Public supply', values: T.ps, cls: 'wt-ps', label: T.printed.ps[n - 1] },
+  { key: 'other', name: 'Everything else', short: 'Other', values: other, cls: 'wt-other', label: one(other[n - 1]) },
+];
+const peak = T.total.indexOf(Math.max(...T.total));
+const pPeak = perCap.indexOf(Math.max(...perCap));
+
+/** both charts at one width: { a, b } SVG markup, plus the plot box the pointer script needs */
+function charts(W: number) {
+  const phone = W < 400;
+  const L = phone ? 36 : 46, R = phone ? 112 : W < 560 ? 128 : 138, TOP = 22, BOT = 30, PW = W - L - R;
+  const x = (yr: number) => L + ((yr - 1950) / 65) * PW;
+  const ticks = phone ? [1950, 1970, 1990, 2010] : [1950, 1960, 1970, 1980, 1990, 2000, 2010];
+  const path = (vals: number[], yf: (v: number) => number) => vals.map((v, i) => `${i ? 'L' : 'M'}${x(Y[i]).toFixed(1)},${yf(v).toFixed(1)}`).join(' ');
+  const axes = (grid: number[], yf: (v: number) => number, PH: number) =>
+    grid.map((g) => `<line class="wt-grid" x1="${L}" x2="${L + PW}" y1="${yf(g).toFixed(1)}" y2="${yf(g).toFixed(1)}"/><text class="wt-tick" x="${L - 8}" y="${(yf(g) + 4).toFixed(1)}" text-anchor="end">${fmt(g)}</text>`).join('') +
+    ticks.map((t) => `<text class="wt-tick" x="${x(t).toFixed(1)}" y="${TOP + PH + 20}" text-anchor="middle">${t}</text>`).join('');
+  const hover = (PH: number) => `<line class="wt-cross" data-cross x1="0" x2="0" y1="${TOP}" y2="${TOP + PH}"/><rect class="wt-hit" x="${L}" y="${TOP}" width="${PW}" height="${PH}"/>`;
+
+  const AH = phone ? 280 : 300, APH = AH - TOP - BOT, AMAX = 450;
+  const ya = (v: number) => TOP + APH - (v / AMAX) * APH;
+  const endY = spread(series.map((s) => ya(s.values[n - 1])), 15, TOP + 6, TOP + APH);
+  let a = axes([0, 100, 200, 300, 400], ya, APH);
+  for (const s of series.slice().reverse()) a += `<path class="wt-line ${s.cls}" d="${path(s.values, ya)}"${s.w ? ` style="stroke-width:${s.w}px"` : ''}/>`;
+  series.forEach((s, i) => {
+    a += `<circle class="wt-end ${s.cls}" cx="${x(Y[n - 1]).toFixed(1)}" cy="${ya(s.values[n - 1]).toFixed(1)}" r="3"/>`;
+    a += `<text class="wt-lab" x="${(x(Y[n - 1]) + 10).toFixed(1)}" y="${(endY[i] + 4).toFixed(1)}">${esc(phone ? s.short : s.name)} <tspan class="wt-v">${esc(s.label)}</tspan></text>`;
+  });
+  a += `<text class="wt-note" x="${x(Y[peak]).toFixed(1)}" y="${(ya(T.total[peak]) - 10).toFixed(1)}" text-anchor="middle">${esc(`${T.printed.total[peak]} in ${Y[peak]}`)}</text>`;
+  a += hover(APH);
+  const aLabel = 'Line chart of U.S. water withdrawals by use, 1950 to 2015. All uses rose from 180 billion gallons a day in 1950 to 430 in 1980, then fell to 322 by 2015. Power plants went from 40 to 210 in 1980 and down to 133; irrigation from 89 to 150 and down to 118; public supply rose from 14 to 44.4 in 2005 and fell to 39.';
+
+  const BH = 190, BPH = BH - TOP - BOT, BMAX = 2000;
+  const yb = (v: number) => TOP + BPH - (v / BMAX) * BPH;
+  let b = axes([0, 500, 1000, 1500, 2000], yb, BPH);
+  b += `<path class="wt-line wt-total" d="${path(perCap, yb)}" style="stroke-width:2.5px"/>`;
+  b += `<circle class="wt-end wt-total" cx="${x(Y[n - 1]).toFixed(1)}" cy="${yb(perCap[n - 1]).toFixed(1)}" r="3"/>`;
+  b += `<text class="wt-lab" x="${(x(Y[n - 1]) + 10).toFixed(1)}" y="${(yb(perCap[n - 1]) + 4).toFixed(1)}">About ${fmt(sig2(perCap[n - 1]))}</text>`;
+  b += `<text class="wt-note" x="${x(Y[pPeak]).toFixed(1)}" y="${(yb(perCap[pPeak]) - 10).toFixed(1)}" text-anchor="middle">About ${fmt(sig2(perCap[pPeak]))} in ${Y[pPeak]}</text>`;
+  b += hover(BPH);
+  const bLabel = `Line chart of U.S. water withdrawals per person, 1950 to 2015: about ${fmt(sig2(perCap[0]))} gallons a day in 1950, about ${fmt(sig2(perCap[pPeak]))} in ${Y[pPeak]}, and about ${fmt(sig2(perCap[n - 1]))} in 2015.`;
+  const svg = (h: number, body: string, label: string) => `<svg viewBox="0 0 ${W} ${h}" width="${W}" height="${h}" role="img" aria-label="${esc(label)}">${body}</svg>`;
+  return { a: svg(AH, a, aLabel), b: svg(BH, b, bLabel), box: `${W},${L},${PW}` };
+}
+const sizes = [['sm', charts(360)], ['md', charts(480)], ['lg', charts(640)]] as const;
+
+// hover data: one row per year, as the table prints it
+const rows = Y.map((yr, i) => ({ yr, total: T.printed.total[i], pt: T.printed.pt[i], ir: T.printed.ir[i], ps: T.printed.ps[i], other: one(other[i]), pop: T.printed.pop[i], pc: fmt(sig2(perCap[i])) }));
+const cell = (k: keyof typeof T.printed, i: number) => T.printed[k][i] + ((T.revised as Record<string, number[]>)[k]?.includes(Y[i]) ? '<sup>a</sup>' : '');
+---
+
+<section class="wt" aria-labelledby="wt-title" data-wt>
+  <h2 id="wt-title" class="wt-title">Seventy years of water use</h2>
+  <p class="wt-dek">Withdrawals rose every five years from 1950 to 1980, held roughly level for the next 25 years, and then fell. By 2015 the country withdrew a quarter less water than at the peak, with 95 million more people. Power plants account for most of the drop.</p>
+
+  <figure class="wt-fig">
+    <figcaption class="wt-cap">Withdrawals by use, billion gallons a day</figcaption>
+    {sizes.map(([k, c]) => <div class={`wt-plot wt-${k}`} data-wt-plot="a" data-box={c.box}><Fragment set:html={c.a} /><div class="wt-tip" data-tip hidden></div></div>)}
+    <figcaption class="wt-cap wt-cap2">Withdrawals per person, gallons a day</figcaption>
+    {sizes.map(([k, c]) => <div class={`wt-plot wt-${k}`} data-wt-plot="b" data-box={c.box}><Fragment set:html={c.b} /><div class="wt-tip" data-tip hidden></div></div>)}
+    <p class="wt-src">Source: <a href={T.url}>USGS, trends in estimated water use in the United States, 1950–2015</a>, from <a href={T.circularUrl}>Dieter and others (2018)</a>. Irrigation includes golf courses. Everything else is industry, mining, fish farms and businesses that supply their own water, homes on private wells, and livestock. USGS rounded the figures for 1950 to 1980 to two significant figures and later ones to three, so the uses do not always add up to the total. The early years also cover slightly fewer places, without Alaska, Puerto Rico or the Virgin Islands in some. Per person is total withdrawals divided by population.</p>
+  </figure>
+
+  <details class="wm-details wt-table">
+    <summary>The numbers</summary>
+    <div class="wm-details__body">
+      <div class="wt-scroll">
+        <table>
+          <caption>Estimated U.S. water withdrawals, billion gallons a day, and population, millions</caption>
+          <thead>
+            <tr><th scope="col">Year</th><th scope="col">Population</th><th scope="col">Total</th><th scope="col">Power plants</th><th scope="col">Irrigation</th><th scope="col">Public supply</th><th scope="col">Industry</th><th scope="col">Mining</th><th scope="col">Fish farms</th><th scope="col">Commercial</th><th scope="col">Private wells</th><th scope="col">Livestock</th></tr>
+          </thead>
+          <tbody>
+            {Y.map((yr, i) => (
+              <tr>
+                <th scope="row">{yr}</th>
+                <td>{T.printed.pop[i]}</td>
+                <td set:html={cell('total', i)} />
+                <td set:html={cell('pt', i)} />
+                <td set:html={cell('ir', i)} />
+                <td set:html={cell('ps', i)} />
+                <td set:html={cell('ind', i)} />
+                <td set:html={cell('mi', i)} />
+                <td set:html={cell('aq', i)} />
+                <td set:html={cell('com', i)} />
+                <td set:html={cell('dom', i)} />
+                <td set:html={cell('li', i)} />
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <p class="wm-note-line">(b) Included in industry, which before 1985 also counts mining, fish farms and commercial use. (c) Not estimated. <sup>a</sup> Revised by USGS since its report on 2010.</p>
+    </div>
+  </details>
+  <script type="application/json" data-wt-rows set:html={JSON.stringify(rows)} />
+</section>
+
+<script>
+  // a crosshair and the year's figures under the pointer (the table below has every value)
+  function initTrends() {
+    const root = document.querySelector<HTMLElement>('[data-wt]');
+    if (!root || root.dataset.ready) return;
+    root.dataset.ready = '1';
+    const rows = JSON.parse(root.querySelector('[data-wt-rows]')?.textContent || '[]');
+    for (const plot of root.querySelectorAll<HTMLElement>('[data-wt-plot]')) {
+      const svg = plot.querySelector('svg'), hit = plot.querySelector<SVGRectElement>('.wt-hit');
+      const cross = plot.querySelector<SVGLineElement>('[data-cross]'), tip = plot.querySelector<HTMLElement>('[data-tip]');
+      if (!svg || !hit || !cross || !tip) continue;
+      const [W, L, PW] = (plot.dataset.box || '640,46,456').split(',').map(Number);
+      const kind = plot.dataset.wtPlot;
+      const show = (cx: number) => {
+        const r = svg.getBoundingClientRect(); if (!r.width) return;
+        const ux = ((cx - r.left) / r.width) * W;
+        const i = Math.max(0, Math.min(rows.length - 1, Math.round(((ux - L) / PW) * 13)));
+        const row = rows[i], gx = L + (i / 13) * PW;
+        cross.setAttribute('x1', String(gx)); cross.setAttribute('x2', String(gx)); cross.classList.add('on');
+        tip.innerHTML = kind === 'a'
+          ? `<b>${row.yr}</b><span>All uses</span><span>${row.total}</span><span>Power plants</span><span>${row.pt}</span><span>Irrigation</span><span>${row.ir}</span><span>Public supply</span><span>${row.ps}</span><span>Everything else</span><span>${row.other}</span>`
+          : `<b>${row.yr}</b><span>Per person</span><span>about ${row.pc} gallons a day</span><span>Population</span><span>${row.pop} million</span>`;
+        tip.hidden = false;
+        const px = (gx / W) * r.width, w = tip.offsetWidth;
+        tip.style.left = `${Math.min(r.width - w, Math.max(0, px + (px > r.width * 0.55 ? -w - 12 : 12)))}px`;
+      };
+      const hide = () => { tip.hidden = true; cross.classList.remove('on'); };
+      hit.addEventListener('pointermove', (e) => show(e.clientX));
+      hit.addEventListener('pointerdown', (e) => show(e.clientX));
+      hit.addEventListener('pointerleave', hide);
+    }
+  }
+  document.addEventListener('astro:page-load', initTrends);
+</script>

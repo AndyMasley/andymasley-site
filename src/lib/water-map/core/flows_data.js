@@ -67,3 +67,8 @@ export const NID = { listed: 92693, updated: 'October 2026' };
 export const AQ_STORAGE = {
   'High Plains aquifer': { af: 2.91e9, year: '2015', src: 'McGuire (2017), USGS Scientific Investigations Report 2017–5040', url: 'https://pubs.usgs.gov/publication/sir20175040' },
 };
+
+// Notes on a county's figures where the USGS estimate is known to sit oddly against other official records.
+export const COUNTY_NOTES = {
+  '06025': 'USGS divides this county’s irrigation between groundwater and surface water in the same proportion as 39 other California counties, about 70 percent groundwater. Reclamation counted 2.46 million acre-feet of Colorado River water diverted for the Imperial Irrigation District in 2015, more than all the irrigation water USGS estimated for the county (2.07 million acre-feet).',
+};

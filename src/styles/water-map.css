@@ -356,6 +356,16 @@ html.wm-lock body {
 .wm-row-b i { display: block; height: 100%; }
 .wm-isolating .wm-row:not(.on) .wm-row-n { color: var(--wm-dim); }
 .wm .wm-rows-sep { margin: var(--space-xs) var(--space-2xs) 0; padding-top: var(--space-2xs); border-top: 1px solid var(--wm-rule); color: var(--wm-mute); font-size: var(--text-xs); }
+.wm-row-na .wm-row-v { color: var(--wm-mute); font-style: italic; }
+/* withdrawn or consumed: an underlined pair, like the site's other segmented controls */
+.wm-seg { display: flex; gap: var(--space-sm); margin: 0 var(--space-2xs) var(--space-xs); border-bottom: 1px solid var(--wm-rule); }
+.wm-seg button {
+  margin-bottom: -1px; padding: var(--space-2xs) 0; border: 0; border-bottom: 2px solid transparent; background: none;
+  color: var(--wm-dim); font-family: var(--font-body); font-size: var(--text-sm); cursor: pointer;
+}
+.wm-seg button:hover { color: var(--wm-ink); }
+.wm-seg button.on { border-bottom-color: var(--wm-brass); color: var(--wm-ink); }
+.wm-seg button:focus-visible { outline: 1px solid var(--wm-brass); outline-offset: 2px; }
 
 .wm-key-body { padding: 0 var(--space-sm) var(--space-sm); }
 
@@ -461,6 +471,7 @@ html.wm-lock body {
 
 .wm-kv span:nth-child(odd) { color: var(--wm-dim); }
 .wm-kv span:nth-child(even) { text-align: right; font-variant-numeric: tabular-nums; }
+.wm-kv small { display: block; color: var(--wm-mute); font-size: var(--text-xs); }
 
 .wm-list { margin-top: var(--space-2xs); }
 
@@ -549,6 +560,7 @@ button.wm-li:hover { color: var(--wm-brass); }
 .wm-sankey path[data-t] { mix-blend-mode: screen; cursor: crosshair; }
 .wm-sankey path[data-t]:hover { fill-opacity: 0.85; }
 .wm-sankey rect[data-t] { cursor: crosshair; }
+.wm-sankey text.halo { paint-order: stroke; stroke: var(--wm-panel-solid); stroke-width: 3px; stroke-linejoin: round; }
 
 /* ---- toolbar: centred between the panels, or from the left edge when it would not fit there */
 .wm-bar {
@@ -787,6 +799,93 @@ button.wm-li:hover { color: var(--wm-brass); }
   font-size: var(--text-xs);
   white-space: pre;
 }
+
+/* ---- seventy years of water use: two line charts, drawn at three widths so the labels stay at the house size */
+.wt { margin-top: var(--space-2xl); }
+.wt-title { margin: 0 0 var(--space-xs); font-size: var(--text-xl); line-height: var(--leading-heading); }
+.wt-dek { margin: 0 0 var(--space-md); color: var(--text-secondary); font-size: var(--text-md); line-height: var(--leading-prose); }
+.wt-fig {
+  --wt-pt: #c8551b; --wt-ir: #1f8a57; --wt-ps: #a8790c; --wt-other: var(--dim);
+  container-type: inline-size;
+  margin: 0;
+}
+.wt-cap { margin: var(--space-sm) 0 0; color: var(--text-secondary); font-size: var(--text-sm); line-height: var(--leading-note); }
+.wt-cap2 { margin-top: var(--space-lg); }
+.wt-plot { position: relative; display: none; }
+@container (max-width: 419px) { .wt-plot.wt-sm { display: block; } }
+@container (min-width: 420px) and (max-width: 579px) { .wt-plot.wt-md { display: block; } }
+@container (min-width: 580px) { .wt-plot.wt-lg { display: block; } }
+.wt-plot svg { display: block; width: 100%; height: auto; overflow: visible; }
+.wt-plot text { font-family: var(--font-body); font-size: var(--text-xs); fill: var(--chart-ink); }
+.wt-plot .wt-tick { fill: var(--dim); }
+.wt-plot .wt-v { fill: var(--dim); }
+.wt-plot .wt-note { fill: var(--text-secondary); }
+.wt-grid { stroke: var(--chart-hairline); stroke-width: 1px; }
+.wt-line { fill: none; stroke-width: 2px; stroke-linejoin: round; stroke-linecap: round; }
+.wt-total { stroke: var(--chart-ink); fill: var(--chart-ink); }
+.wt-pt { stroke: var(--wt-pt); fill: var(--wt-pt); }
+.wt-ir { stroke: var(--wt-ir); fill: var(--wt-ir); }
+.wt-ps { stroke: var(--wt-ps); fill: var(--wt-ps); }
+.wt-other { stroke: var(--wt-other); fill: var(--wt-other); }
+.wt-line.wt-total, .wt-line.wt-pt, .wt-line.wt-ir, .wt-line.wt-ps, .wt-line.wt-other { fill: none; }
+.wt-end { stroke: var(--bg); stroke-width: 2px; }
+.wt-cross { stroke: var(--dim); stroke-width: 1px; opacity: 0; }
+.wt-cross.on { opacity: 1; }
+.wt-hit { fill: transparent; cursor: crosshair; }
+.wt-tip {
+  position: absolute; top: var(--space-xs);
+  display: grid; grid-template-columns: auto auto; column-gap: var(--space-sm);
+  padding: var(--space-xs) var(--space-sm);
+  border: 1px solid var(--border-strong); background: var(--bg);
+  font-size: var(--text-sm); line-height: var(--leading-note); pointer-events: none;
+}
+.wt-tip b { grid-column: 1 / -1; font-weight: 700; }
+.wt-tip span:nth-child(odd) { color: var(--text-secondary); }
+.wt-src { margin: var(--space-md) 0 0; color: var(--dim); font-size: var(--text-sm); line-height: var(--leading-note); }
+.wt-table { margin-top: var(--space-lg); }
+.wt-scroll { overflow-x: auto; }
+.wt-table table { border-collapse: collapse; font-size: var(--text-sm); font-variant-numeric: tabular-nums; }
+.wt-table caption { text-align: left; color: var(--dim); padding-bottom: var(--space-xs); }
+.wt-table th, .wt-table td { padding: var(--space-2xs) var(--space-sm) var(--space-2xs) 0; text-align: right; border-bottom: 1px solid var(--border); white-space: nowrap; }
+.wt-table thead th { font-weight: 400; color: var(--text-secondary); vertical-align: bottom; }
+.wt-table tbody th { text-align: left; font-weight: 400; }
+.wt-table sup { font-size: var(--text-xs); color: var(--dim); }
+
+/* ---- every county: a table to sort and search, and the CSV */
+.wc { margin-top: var(--space-2xl); }
+.wc-bar { display: flex; flex-wrap: wrap; gap: var(--space-sm); align-items: center; margin-bottom: var(--space-sm); }
+.wc-search { flex: 1 1 220px; }
+.wc-search input {
+  width: 100%; padding: var(--space-2xs) var(--space-xs); border: 1px solid var(--border-strong); border-radius: 0;
+  background: var(--bg); color: var(--text); font-family: var(--font-body); font-size: var(--text-base);
+}
+.wc-search input:focus-visible { outline: 1px solid var(--accent); outline-offset: 1px; }
+.wc-vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.wc-btn {
+  padding: var(--space-2xs) var(--space-sm); border: 1px solid var(--border-strong); border-radius: 0; background: none;
+  color: var(--text); font-family: var(--font-body); font-size: var(--text-sm); cursor: pointer;
+}
+.wc-btn:hover { border-color: var(--text-secondary); }
+.wc-scroll { overflow-x: auto; border-top: 1px solid var(--border); }
+/* on a wide screen the table steps out of the reading column, centred under it, so every column fits */
+@media (min-width: 1040px) {
+  .wc-scroll {
+    --wc-w: min(calc(var(--measure) * 1.5), calc(100vw - 2 * var(--space-md)));
+    width: var(--wc-w);
+    margin-inline: calc((100% - var(--wc-w)) / 2);
+  }
+}
+.wc table { width: 100%; border-collapse: collapse; font-size: var(--text-sm); font-variant-numeric: tabular-nums; }
+.wc th, .wc td { padding: var(--space-2xs) var(--space-sm) var(--space-2xs) 0; border-bottom: 1px solid var(--border); text-align: left; white-space: nowrap; }
+.wc .n { text-align: right; }
+.wc thead th { font-weight: 400; vertical-align: bottom; }
+.wc thead button { padding: 0; border: 0; background: none; color: var(--text-secondary); font: inherit; cursor: pointer; }
+.wc thead th[aria-sort="ascending"] button, .wc thead th[aria-sort="descending"] button { color: var(--text); }
+.wc tbody th { font-weight: 400; }
+.wc-go { padding: 0; border: 0; background: none; color: var(--accent); font: inherit; text-align: left; text-decoration: underline; text-decoration-color: var(--underline-quiet); text-underline-offset: var(--underline-offset); cursor: pointer; }
+.wc-go:hover { text-decoration-color: var(--accent); }
+.wc-load { padding: var(--space-md) 0; color: var(--dim); }
+.wc-foot { display: flex; flex-wrap: wrap; gap: var(--space-sm); align-items: center; margin: var(--space-sm) 0 0; color: var(--dim); font-size: var(--text-sm); }
 
 /* ---- below the map */
 .wm-endmatter {

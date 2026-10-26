@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { SUN, SLAB_ORDER, exagAt, CAT, CATS, DC, riverLabel, lakeLabel, PHONE_MQ, SLAB_MOVE, SRC_DEF, AP_STATE } from './core/config.js';
+import { SUN, SLAB_ORDER, exagAt, CAT, CATS, DC, riverLabel, lakeLabel, PHONE_MQ, SLAB_MOVE, SRC_DEF, AP_STATE, PIPED_GRAY } from './core/config.js';
 import { loadSlabs, progress, fetchPixels, fetchBitmap, setDataBase, resetProgress } from './core/assets.js';
 import { Slab } from './world/slab.js';
 import { TerrainSlab } from './world/terrain.js';
@@ -86,6 +86,8 @@ export async function startWaterMap(root, { dataBase = '/water-map/data/', lite 
     uNight: { value: 0 }, uAqMode: { value: 0 }, uAqPal: { value: null }, uGwTex: { value: null }, uAqHover: { value: -1 }, uAqSel: { value: -1 },
     uAqDepth: { value: 4 }, uAqThick: { value: 3 }, uAqAlpha: { value: 0.36 },
     uIsoCol: { value: new THREE.Color(1, 1, 1) }, uIsoAmt: { value: 0 }, uStateLines: { value: 1 },
+    // city lights step back where the channels are drawn, so the water's colours carry the picture
+    uLights: { value: 1 },
   };
   const sun = new THREE.DirectionalLight(LOOK.day.sunC.clone(), LOOK.day.sunI);
   sun.position.copy(sunDir).multiplyScalar(1000);
@@ -167,6 +169,8 @@ export async function startWaterMap(root, { dataBase = '/water-map/data/', lite 
       f: (i) => { const c = model.county(i); return c.total > 0 ? 100 * Object.keys(c.src).reduce((s, k) => s + (c.src[k].gf || 0) + (c.src[k].gs || 0), 0) / c.total : -1; } },
     percap: { name: 'Water per resident', unit: 'Gallons a day withdrawn per resident, all uses', log: [50, 5e4],
       f: (i) => { const c = model.county(i); return c.pop > 0 ? c.total * 1e6 / (c.pop * 1000) : -1; } },
+    consumed: { name: 'Water consumed per square mile', unit: 'Gallons a day consumed per square mile by crops, golf courses and power plants', log: [2e3, 2e6],
+      f: (i) => { const c = model.cdata[i], q = model.county(i); if (!(c && c.area > 0)) return 0; const cu = Math.min(q.cu.ir, q.W.ir + q.other.ir_rec) + Math.min(q.cu.go, q.W.go + q.other.go_rec) + Math.min(q.cu.pt, q.W.pt + q.other.pt_rec + q.other.pt_ps); return cu * 1e6 / (c.area / 2.58999); } },
   };
   let userChoro = 'none';
   const writeChoro = (spec, mode) => {
@@ -192,15 +196,34 @@ export async function startWaterMap(root, { dataBase = '/water-map/data/', lite 
     if (!app.iso) writeChoro(spec, spec.cat ? 2 : spec.f ? 1 : 0);
     return spec;
   };
+  // the land colouring that goes with what the map shows: the reader's own choice, or, while only consumed water is
+  // shown and the reader has not chosen one, how much each county consumes per square mile
+  const landChoro = () => (app.measure === 'c' && userChoro === 'none' ? CHORO.consumed : CHORO[userChoro] || CHORO.none);
   const plants = new PlantLayer(shared, model, slabAt);
   scene.add(plants.group);
   const dams3d = new DamLayer(shared, model.features.dams, slabAt, plants.uScale);
   scene.add(dams3d.group);
   const aqueducts = new Aqueducts(shared, model.features, slabAt, projectLower48);
   scene.add(aqueducts.group);
+  // points along the mapped canals and aqueducts in each county: in the dry West most surface water reaches its users
+  // through them, so the model draws those counties' surface intakes on the canals (see WaterModel.streams)
+  {
+    const pts = new Map();
+    for (const a of model.features.aqueducts) {
+      for (const sg of a.segs) for (let k = 0; k < sg.p.length; k += 2) {
+        const x = sg.p[k], z = sg.p[k + 1], c = countyAt(x, z);
+        if (c < 0 || model.wu.st[c] === 'NY') continue;   // (New York City's aqueducts are drawn as its transfers)
+        let arr = pts.get(c); if (!arr) pts.set(c, (arr = [])); arr.push([x, z, 1]);
+      }
+    }
+    // a dozen points spread along each county's canals at most
+    for (const [c, arr] of pts) if (arr.length > 12) pts.set(c, Array.from({ length: 12 }, (_, k) => arr[Math.floor((k + 0.5) * arr.length / 12)]));
+    model.canals = pts;
+  }
   const flows = new FlowParticles(shared, slabs, model);
   flows.setPlants(plants);
   flows.build(isMobile ? 8 : 2.0, lite ? 40000 : isMobile ? 60000 : 240000);
+  flows.lite = lite || isMobile;
   scene.add(flows.group);
   const outline = new CountyOutline(shared);
   scene.add(outline.group);
@@ -398,6 +421,20 @@ export async function startWaterMap(root, { dataBase = '/water-map/data/', lite 
       if (f) seen.add(f.url);
       labels.add({ html, cls: 'canal', x: sg.p[k], z: sg.p[k + 1], h: hUnits(sg.p[k], sg.p[k + 1]), pri: 26 + Math.log10(a.km) * 2 + (f ? 6 : 0), dmin: 0, dmax: f ? (f.mgd > 500 ? 1300 : 700) : a.km > 300 ? 650 : 260 });
     }
+    // the public systems that move water between counties, named halfway along their busiest route
+    {
+      const bySys = new Map();
+      for (const q of flows.routed) { if (q.kind !== KIND.intake) continue; const e = bySys.get(q.xfer) || { vol: 0, best: null }; e.vol += q.vol; if (!e.best || q.vol > e.best.vol) e.best = q; bySys.set(q.xfer, e); }
+      for (const [id, e] of bySys) {
+        const sys = model.xIn && [...model.xIn.values()].flat().find((x) => x.sys.id === id)?.sys;
+        if (!sys || !e.best) continue;
+        const lg = flows.legs(e.best); let u = lg.total / 2, q = 0; while (q < lg.len.length - 1 && u > lg.len[q]) { u -= lg.len[q]; q++; }
+        const a = e.best.route[q], b = e.best.route[q + 1], f = lg.len[q] > 0 ? u / lg.len[q] : 0;
+        const x = a[0] + (b[0] - a[0]) * f, z = a[1] + (b[1] - a[1]) * f;
+        labels.add({ html: `${esc(sys.short)}<small>${mgdLabel(e.vol)} piped</small>`, cls: 'canal xfer', x, z, h: hUnits(x, z), group: 'xfer',
+          pri: 32 + Math.log10(1 + e.vol) * 3, dmin: 0, dmax: e.vol > 300 ? 1300 : e.vol > 60 ? 700 : 320 });
+      }
+    }
     const topPlants = model.plants.map((p, i) => [p, i]).filter(([p]) => (p.w_env || 0) > 20).sort((a, b) => b[0].w_env - a[0].w_env);
     for (const [p] of topPlants) labels.add({ text: p.name, cls: 'plant', x: p.x, z: p.z, h: hUnits(p.x, p.z), pri: 30 + Math.log10(p.w_env), dmin: 0, dmax: p.w_env > 800 ? 170 : 90 });
     // the counties that withdrew the most, with a dot in the colour of their biggest use (hidden while a use is
@@ -442,7 +479,7 @@ export async function startWaterMap(root, { dataBase = '/water-map/data/', lite 
   const wTarget = new Float32Array(CAT_KEYS.length).fill(1);   // flows ease toward these emphasis weights
   const iso = { target: 0, pending: false };                     // the isolated use's tint fades in and out
   const looks = { night: 0, aq: 0 };
-  const layerOn = { nid: true, infra: true, golf: true, dc: false, flows: true, plants: true, rivers: true, labels: true };
+  const layerOn = { nid: true, infra: true, towers: false, golf: false, dc: false, flows: true, plants: true, rivers: true, labels: true };
   const app = {
     model, flows, rivers, plants, controls, shared, CHORO, setChoro, stateList, aquifers, nlcd, canvas, stage,
     dams: null, osm: null, damCounty: null, damsByCounty: null,
@@ -480,7 +517,19 @@ export async function startWaterMap(root, { dataBase = '/water-map/data/', lite 
       flows.common.uFocusSrc.value = ff && ff.src ? ({ sf: 0, gf: 1, gs: 1, ss: 2 }[ff.src] ?? -1) : -1;
     },
     focusCat(k) { app._hoverCat = k; app.applyEmphasis(); },
-    focusFlow(use, src) { app._flowFocus = use ? { use, src } : null; app.applyEmphasis(); },
+    /** 'w': every flow, withdrawn; 'c': only the water consumed */
+    measure: 'w',
+    setMeasure(m) {
+      app.measure = m === 'c' ? 'c' : 'w';
+      flows.setConsumed(app.measure === 'c');
+      if (!app.iso) { const spec = landChoro(); writeChoro(spec, spec.cat ? 2 : spec.f ? 1 : 0); hud.choroKey(spec); }
+      // the systems' routes are withdrawals too
+      if (flows.routes) { if (flows.routes.mesh) flows.routes.mesh.visible = app.measure === 'w'; flows.routes.ribbons.visible = app.measure === 'w'; }
+      syncTop();
+      writeHash();
+    },
+    // (a county's water piped in or away is public supply, drawn from rivers and lakes)
+    focusFlow(use, src) { if (use === 'xout') use = 'ps'; if (src === 'xin') src = 'sf'; app._flowFocus = use ? { use, src } : null; app.applyEmphasis(); },
     /** show only one use's water (k: a USGS category or 'dc'), or every use (null) */
     isolate(k, quiet = false) {
       if (k && selCounty >= 0) app.clearSelection(true);
@@ -504,14 +553,14 @@ export async function startWaterMap(root, { dataBase = '/water-map/data/', lite 
         // fade the tint out, then put back the reader's own land colouring
         iso.target = 0; iso.pending = true;
       } else {
-        const spec = CHORO[userChoro] || CHORO.none;
+        const spec = landChoro();
         writeChoro(spec, spec.cat ? 2 : spec.f ? 1 : 0);
       }
       app.applyEmphasis();
       // facilities that belong to the use
       if (app.osm) {
         const v = app.osm.kindVis, b = app.osm.kindBoost;
-        v[0] = v[1] = v[2] = !k && layerOn.infra ? 1 : 0; v[3] = (!k && layerOn.golf) || k === 'go' ? 1 : 0; v[4] = (!k && layerOn.dc) || k === 'dc' ? 1 : 0;
+        v[1] = !k && layerOn.infra ? 1 : 0; v[0] = v[2] = !k && layerOn.towers ? 1 : 0; v[3] = (!k && layerOn.golf) || k === 'go' ? 1 : 0; v[4] = (!k && layerOn.dc) || k === 'dc' ? 1 : 0;
         if (k === 'ps') { v[1] = 1; v[0] = 0; }
         b.fill(1); b[4] = k === 'dc' ? 20 : layerOn.dc ? 14 : 1; b[3] = k === 'go' ? 4 : 1; b[1] = k === 'ps' ? 5 : 1;
         app.osm.uniforms.uPx.value = 1;
@@ -567,9 +616,10 @@ export async function startWaterMap(root, { dataBase = '/water-map/data/', lite 
       if (name === 'plants') { plants.enabled = onv; dams3d.enabled = onv; }
       if (name === 'labels') labels.enabled = onv;
       if (name === 'nid' && app.dams) app.dams.group.visible = onv && !app.iso && !app.underground;
-      if (app.osm && ['infra', 'golf', 'dc'].includes(name) && !app.iso) {
+      if (app.osm && ['infra', 'towers', 'golf', 'dc'].includes(name) && !app.iso) {
         const v = app.osm.kindVis, b = app.osm.kindBoost;
-        if (name === 'infra') { v[0] = v[1] = v[2] = onv ? 1 : 0; }
+        if (name === 'infra') v[1] = onv ? 1 : 0;
+        if (name === 'towers') v[0] = v[2] = onv ? 1 : 0;
         if (name === 'golf') v[3] = onv ? 1 : 0;
         if (name === 'dc') { v[4] = onv ? 1 : 0; b[4] = onv ? 14 : 1; }
       }
@@ -592,7 +642,9 @@ export async function startWaterMap(root, { dataBase = '/water-map/data/', lite 
       app.clearMarks();
       selCounty = i; selPlant = -1; shared.uSelState.value = -1;
       shared.uSelCounty.value = i; plants.uSelPlant.value = -1;
-      flows.setFocus(flows.byCounty.get(i) || [], { county: i }); hud.hintDone();
+      // its own water, water piped in from other counties, and (pale) the water it sends away to them
+      const exp = (flows.exportsOf.get(i) || []).map((q) => ({ ...q, county: i, export: true }));
+      flows.setFocus([...(flows.byCounty.get(i) || []), ...exp], { county: i }); hud.hintDone();
       outline.set(slabs, i);
       const notes = traceCounty(i);
       syncTop();
@@ -600,8 +652,14 @@ export async function startWaterMap(root, { dataBase = '/water-map/data/', lite 
       writeHash();
       const c = model.cdata[i];
       if (fly && c) {
-        // the whole county, in the part of the frame the panels leave free
-        const b = outline.worldBox(slabs, i);
+        // the whole county, in the part of the frame the panels leave free, with the far end of any water piped in
+        // or out (a reservoir upstate, the city it supplies)
+        let b = outline.worldBox(slabs, i);
+        if (b) {
+          b = b.slice();
+          const far = [...(flows.byCounty.get(i) || []).filter((q) => q.route).map((q) => q.route[0]), ...exp.map((q) => q.route[q.route.length - 1])];
+          for (const [x, z] of far) { b[0] = Math.min(b[0], x); b[1] = Math.max(b[1], x); b[2] = Math.min(b[2], z); b[3] = Math.max(b[3], z); }
+        }
         if (b) app.fitBox(b[0], b[1], b[2], b[3], { minD: 16, maxD: 700, pad: 1.3, tilt: Math.max(controls.state.tilt, 0.8) });
         else { const span = Math.sqrt(c.area) / 5.135; controls.flyTo({ x: c.cx, z: c.cz + span * 0.08, d: Math.min(420, Math.max(22, span * 3.4)), tilt: Math.max(controls.state.tilt, 0.8) }, 1800); }
       }
@@ -613,7 +671,7 @@ export async function startWaterMap(root, { dataBase = '/water-map/data/', lite 
       selPlant = pi; selCounty = p.county; shared.uSelState.value = -1;
       plants.uSelPlant.value = pi; shared.uSelCounty.value = p.county;
       flows.setFocus(flows.streams.filter((s) => s.plant === p), { plant: pi }); hud.hintDone();
-      outline.set(slabs, p.county);
+      outline.set(slabs, p.loc_county ?? p.county);
       tracePlant(p);
       syncTop();
       hud.showPlant(pi);
@@ -764,6 +822,7 @@ export async function startWaterMap(root, { dataBase = '/water-map/data/', lite 
       else if (selCounty >= 0) p.push(`county=${model.wu.id[selCounty]}`);
       if (aquifers && shared.uAqSel.value > 0) { const a = aquifers.byIndex.get(shared.uAqSel.value); if (a) p.push(`aquifer=${a.code}`); }
       if (app.underground) p.push('under');
+      if (app.measure === 'c') p.push('consumed');
       if (!app.night) p.push('day');
       const h = p.length ? `#${p.join('&')}` : '';
       if (h === location.hash || (!h && !location.hash)) return;
@@ -775,7 +834,10 @@ export async function startWaterMap(root, { dataBase = '/water-map/data/', lite 
     for (const kv of location.hash.replace(/^#/, '').split('&')) { if (!kv) continue; const [k, v = ''] = kv.split('='); out[decodeURIComponent(k)] = decodeURIComponent(v); }
     return out;
   }
-  function syncTop() { labels.setGroup('top', !app.iso && !app.underground && selCounty < 0 && selPlant < 0 && !flows.focus); }
+  function syncTop() {
+    labels.setGroup('top', !app.iso && !app.underground && selCounty < 0 && selPlant < 0 && !flows.focus);
+    labels.setGroup('xfer', !app.underground && app.measure !== 'c' && (!app.iso || app.iso === 'ps') && !flows.focus);
+  }
   // ---- tracing: on the map, each source of a selected place's water is boxed with its share (the same shares as the
   // panel), and each use it goes to is named where its channels gather. What happens to the water afterwards is left
   // to the panel; the map shows it as white mist and grey dashes.
@@ -835,13 +897,35 @@ export async function startWaterMap(root, { dataBase = '/water-map/data/', lite 
   function traceCounty(i) {
     clearTrace();
     const c = model.county(i), ss = flows.byCounty.get(i) || [];
-    if (!(c.total > 0)) return '';
-    traceUses(ss, c.W, c.total, Math.max(0.05, c.total * 0.03));
-    // shares of all the water its uses drew, as in the panel: its withdrawals plus any reclaimed wastewater (water
-    // bought from a utility is already counted in the utility's withdrawals, so it is left out)
+    const xin = model.xIn.get(i) || [], xout = model.xOut.get(i) || [];
+    const imp = xin.reduce((a, x) => a + x.vol, 0), exp = xout.reduce((a, x) => a + x.vol, 0);
+    if (!(c.total + imp > 0)) return '';
+    // the uses its water went to, with public supply counting what was piped in and leaving out what was piped away
+    const W = { ...c.W, ps: Math.max(0, c.W.ps - exp) + imp };
+    const used = c.total - exp + imp;
+    traceUses(ss, W, used, Math.max(0.05, used * 0.03));
+    // shares of all the water its uses drew, as in the panel: what it withdrew and kept, what was piped in, and any
+    // reclaimed wastewater (water bought from a utility is already counted in the utility's withdrawals)
     const rec = c.other.ir_rec + c.other.go_rec + c.other.pt_rec;
     const aqn = mainAquifer(c);
-    traceSources(ss.filter((q) => q.src !== SRC.delivered), c.total + rec, aqn ? { gf_sub: aqn } : {});
+    const names = aqn ? { gf_sub: aqn } : {};
+    for (const gw of [false, true]) {
+      const part = xin.filter((x) => !!x.sys.gw === gw), v = part.reduce((a, x) => a + x.vol, 0);
+      if (!(v > 0)) continue;
+      const sys = [...new Set(part.map((x) => x.sys.short))].join(', ');
+      const own = gw ? (c.src.ps.gf || 0) + (c.src.in.gf || 0) : (c.src.ps.sf || 0) + (c.src.in.sf || 0);
+      names[gw ? 'gf_sub' : 'sf_sub'] = `${v >= own ? '' : 'some '}piped in: ${sys}`;
+    }
+    traceSources(ss.filter((q) => q.src !== SRC.delivered), used + rec, names);
+    // where the water it sent away went: one name at each system's far end
+    const bySys = new Map();
+    for (const x of xout) { const e = bySys.get(x.sys.id) || { sys: x.sys, vol: 0 }; e.vol += x.vol; bySys.set(x.sys.id, e); }
+    for (const e of bySys.values()) {
+      const st = (flows.exportsOf.get(i) || []).filter((q) => q.xfer === e.sys.id).sort((a, b) => b.vol - a.vol)[0];
+      if (!st) continue;
+      const end = st.route[st.route.length - 1];
+      traceLabel(`<i class="wm-sw" style="background:${PIPED_GRAY}"></i>Piped to ${esc(e.sys.short)} <b>${esc(mgdLabel(e.vol))}</b>`, end[0], end[1], 40, 'use', { color: PIPED_GRAY });
+    }
     return '';
   }
   function tracePlant(p) {
@@ -881,6 +965,7 @@ export async function startWaterMap(root, { dataBase = '/water-map/data/', lite 
     if ('day' in h) { app.setNight(false); shared.uNight.value = 0; }
     if (h.use && (CAT[h.use] || h.use === 'dc')) app.isolate(h.use);
     if ('under' in h) app.setUnderground(true);
+    if ('consumed' in h) hud.setMeasure('c');
     const ci = h.county ? model.wu.id.indexOf(h.county) : -1;
     const pi = h.plant ? model.plants.findIndex((q) => String(q.eia) === h.plant) : -1;
     const aq = h.aquifer && aquifers ? aquifers.list.find((q) => String(q.code) === h.aquifer) : null;
@@ -909,7 +994,7 @@ export async function startWaterMap(root, { dataBase = '/water-map/data/', lite 
         a.n++; if (!dams.data.fl[i]) a.stor += dams.data.stor[i];
       }
       app.damCounty = dc; app.damsByCounty = byC;
-      for (const k of ['nid', 'infra', 'golf', 'dc']) app.setLayer(k, hud.layers[k]);
+      for (const k of ['nid', 'infra', 'towers', 'golf', 'dc']) app.setLayer(k, hud.layers[k]);
       if (app.iso) app.isolate(app.iso, true);
       app._index = null;
       dams.loadNames().then(() => {
@@ -927,10 +1012,11 @@ export async function startWaterMap(root, { dataBase = '/water-map/data/', lite 
   // ---- pointer: hover tooltips and selection
   let hoverPending = null;
   controls.onHover = (cx, cy) => { hoverPending = cx == null ? 'none' : [cx, cy]; };
-  // hovering a county when zoomed in and nothing is selected shows its channels, a moment after the pointer settles
+  // hovering a county from further out, with nothing selected, shows its channels a moment after the pointer settles
+  // (closer in, every county's channels are drawn already, and the one under the pointer brightens)
   let previewCi = -1, previewTimer = 0;
   const previewCounty = (ci) => {
-    const ok = ci >= 0 && !flows.focus && !app.iso && !app.underground && controls.state.d < 700 && !tour.busy;
+    const ok = ci >= 0 && !flows.focus && !app.iso && !app.underground && controls.state.d < 700 && controls.state.d > 200 && !tour.busy;
     if (!ok) { clearTimeout(previewTimer); if (previewCi >= 0) { flows.clearPreview(); previewCi = -1; } return; }
     if (ci === previewCi) return;
     clearTimeout(previewTimer);
@@ -1104,7 +1190,7 @@ export async function startWaterMap(root, { dataBase = '/water-map/data/', lite 
     const ke = 1 - Math.exp(-dt * 7);
     for (let j = 0; j < wTarget.length; j++) { const w = flows.catW; w[j] += (wTarget[j] - w[j]) * ke; if (Math.abs(w[j] - wTarget[j]) < 0.004) w[j] = wTarget[j]; }
     shared.uIsoAmt.value += (iso.target - shared.uIsoAmt.value) * ke;
-    if (iso.pending && shared.uIsoAmt.value < 0.02) { iso.pending = false; shared.uIsoAmt.value = 0; const spec = CHORO[userChoro] || CHORO.none; writeChoro(spec, spec.cat ? 2 : spec.f ? 1 : 0); }
+    if (iso.pending && shared.uIsoAmt.value < 0.02) { iso.pending = false; shared.uIsoAmt.value = 0; const spec = landChoro(); writeChoro(spec, spec.cat ? 2 : spec.f ? 1 : 0); }
     shared.uNight.value += (looks.night - shared.uNight.value) * k;
     if (Math.abs(shared.uNight.value - looks.night) < 0.002) shared.uNight.value = looks.night;
     shared.uAqMode.value += (looks.aq - shared.uAqMode.value) * k;
@@ -1154,6 +1240,7 @@ export async function startWaterMap(root, { dataBase = '/water-map/data/', lite 
       }
       labels.setAvoid(av);
     }
+    shared.uLights.value = 1 - 0.5 * Math.min(1, Math.max(0, (260 - d) / 90));
     // names show by how big the map is on screen: on a narrow screen the same view is further out
     labels.update(d * Math.min(1, W / 1000), shared.uExag.value, { width: W, height: H });
     const det = flows.detail && d < 230;
@@ -1169,11 +1256,13 @@ export async function startWaterMap(root, { dataBase = '/water-map/data/', lite 
   }, 1000);
   if (loadingEl) loadingEl.classList.add('done');
   root.dataset.ready = 'true';
+  // every county's channels, worked out while the page is idle, for the middle zoom
+  later(() => flows.prewarm(), 2500);
   const handle = {
     app, scene, camera, controls, shared, renderer, home, model, flows, labels, tour, hud, aquifers, subsurface, applyLook, terrains,
     dispose() {
       if (disposed) return;
-      disposed = true;
+      disposed = true; flows.disposed = true;
       cancelAnimationFrame(raf); clearInterval(fpsTimer); for (const t of timers) clearTimeout(t); timers.clear();
       ac.abort(); ro.disconnect(); io.disconnect();
       controls.dispose(); hud.dispose(); tour.dispose?.(); labels.dispose();

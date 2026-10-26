@@ -82,7 +82,7 @@ export function createTerrainMaterial(slab, shared, nlcd) {
     uLand: { value: slab.landTex || null }, uApex: { value: new THREE.Vector2(538.289, -1275.091) }, uGrid: { value: slab.name === 'conus' ? 1 : 0 },
     uDetailAmt: shared.uDetailAmt, uTime2: shared.uTime,
     uNight: shared.uNight, uCamDist: shared.uCamDist,
-    uAqMode: shared.uAqMode, uAqAlpha: shared.uAqAlpha, uIsoCol: shared.uIsoCol, uIsoAmt: shared.uIsoAmt, uStateLines: shared.uStateLines,
+    uAqMode: shared.uAqMode, uAqAlpha: shared.uAqAlpha, uIsoCol: shared.uIsoCol, uIsoAmt: shared.uIsoAmt, uStateLines: shared.uStateLines, uLights: shared.uLights,
     ...(nlcd ? nlcd.uniformsFor(slab) : { uNlcdArr: { value: null }, uNlcdIdx: { value: null }, uNlcdGrid: { value: new THREE.Vector4() }, uNlcdHas: { value: 0 } }),
   };
   const compile = (sh) => {
@@ -112,7 +112,7 @@ uniform float uTime, uRipple, uNight, uCamDist;
 uniform sampler2D uCounty;
 uniform float uHover, uSel, uHasCounty, uChoro;
 uniform sampler2D uChoroTex; uniform float uChoroMode, uSelState; uniform vec3 uRamp[5]; uniform vec3 uCatCols[9];
-uniform float uAqMode, uAqAlpha, uStateLines, uIsoAmt; uniform vec3 uIsoCol;
+uniform float uAqMode, uAqAlpha, uStateLines, uIsoAmt, uLights; uniform vec3 uIsoCol;
 varying float vSkirt;
 vec3 rampAt(float v) {
   v = clamp(v, 0.0, 1.0) * 4.0;
@@ -219,7 +219,7 @@ float countyAt(vec2 uv) {
           devI *= 1.0 - lakeW;
         }
         // city lights
-        if (uNight > 0.001) outgoingLight += cityLights(devI, vWorldPos.xz, pxw) * uNight * (1.0 - 0.6 * uAqMode) * (isoV >= 0.0 ? mix(1.0, 0.35, uIsoAmt) : 1.0);
+        if (uNight > 0.001) outgoingLight += cityLights(devI, vWorldPos.xz, pxw) * uNight * uLights * (1.0 - 0.6 * uAqMode) * (isoV >= 0.0 ? mix(1.0, 0.35, uIsoAmt) : 1.0);
         // an isolated use glows faintly at night where it is heaviest
         if (isoV > 0.0) outgoingLight += uIsoCol * isoV * isoV * (0.004 + 0.05 * uNight);
         // state lines: ink by day, a pale hairline at night
