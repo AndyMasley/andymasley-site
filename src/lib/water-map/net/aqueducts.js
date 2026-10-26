@@ -32,7 +32,7 @@ export class Aqueducts {
     this.shared = shared; this.slabAt = slabAt;
     this.group = new THREE.Group(); this.group.name = 'aqueducts';
     this.items = [];
-    const pos = [], dir = [], side = [], dist = [], under = [], vol = [], idx = [];
+    const pos = [], dir = [], side = [], dist = [], under = [], vol = [], aq = [], idx = [];
     let vc = 0;
     const grid = new Map(), cell = 2;
     for (const [ai, a] of features.aqueducts.entries()) {
@@ -65,7 +65,7 @@ export class Aqueducts {
           if (k > 0) acc += Math.hypot(dense[k][0] - dense[k - 1][0], dense[k][1] - dense[k - 1][1]);
           const s = slabAt(dense[k][0], dense[k][1]);
           const h = s ? Math.max(0, s.sampleH(dense[k][0], dense[k][1])) / s.mpu : 0;
-          for (const sd of [-1, 1]) { pos.push(dense[k][0], h, dense[k][1]); dir.push(dx, dz); side.push(sd); dist.push(acc); under.push(sg.u ? 1 : 0); vol.push(v); }
+          for (const sd of [-1, 1]) { pos.push(dense[k][0], h, dense[k][1]); dir.push(dx, dz); side.push(sd); dist.push(acc); under.push(sg.u ? 1 : 0); vol.push(v); aq.push(ai); }
           if (k < dense.length - 1) { const v = base + 2 * k; idx.push(v, v + 1, v + 2, v + 2, v + 1, v + 3); }
           vc += 2;
           const key = `${Math.floor(dense[k][0] / cell)},${Math.floor(dense[k][1] / cell)}`;
@@ -81,15 +81,16 @@ export class Aqueducts {
     g.setAttribute('aDist', new THREE.Float32BufferAttribute(dist, 1));
     g.setAttribute('aUnder', new THREE.Float32BufferAttribute(under, 1));
     g.setAttribute('aVol', new THREE.Float32BufferAttribute(vol, 1));
+    g.setAttribute('aAq', new THREE.Float32BufferAttribute(aq, 1));
     g.setIndex(vc > 65000 ? new THREE.Uint32BufferAttribute(idx, 1) : new THREE.Uint16BufferAttribute(idx, 1));
     g.boundingSphere = new THREE.Sphere(new THREE.Vector3(430, 0, 320), 2000);
     const mat = new THREE.ShaderMaterial({
       transparent: true, depthWrite: false, depthTest: true, side: THREE.DoubleSide,
       uniforms: { uExag: shared.uExag, uTime: shared.uTime, uViewport: shared.uViewport, uCamDist: shared.uCamDist, uHi: { value: -1 }, uFade: { value: 1 }, uNight: shared.uNight },
       vertexShader: /* glsl */`
-        uniform float uExag, uCamDist; uniform vec2 uViewport;
-        attribute vec2 aDir; attribute float aSide, aDist, aUnder, aVol;
-        varying float vSide, vDist, vUnder, vW, vVol;
+        uniform float uExag, uCamDist, uHi; uniform vec2 uViewport;
+        attribute vec2 aDir; attribute float aSide, aDist, aUnder, aVol, aAq;
+        varying float vSide, vDist, vUnder, vW, vVol, vHi;
         void main() {
           vec3 P = vec3(position.x, position.y * uExag, position.z);
           vec4 mv = viewMatrix * vec4(P, 1.0); mv.xyz *= 0.995;
@@ -101,13 +102,16 @@ export class Aqueducts {
           // wider for more water: a measured flow sets the width on the channels' own scale (chanPx in
           // flow/particles.js: ten times the water, about four times as wide); unmeasured canals stay thin
           float w = aVol > 0.0 ? max(1.6, 0.1585 * pow(aVol, 0.6)) : clamp(1.4 * pow(900.0 / uCamDist, 0.25), 1.2, 2.0);
+          // the selected one (uHi) gets a light edge outside its width
+          vHi = uHi > -0.5 && abs(aAq - uHi) < 0.5 ? 1.0 : 0.0;
+          w += vHi * 4.0;
           c0.xy += vec2(-d.y, d.x) * aSide * (w * 0.5 + 1.0) * 2.0 / uViewport * c0.w;
           gl_Position = c0;
           vSide = aSide; vDist = aDist; vUnder = aUnder; vW = w; vVol = aVol;
         }`,
       fragmentShader: /* glsl */`
-        uniform float uTime, uCamDist, uFade, uNight;
-        varying float vSide, vDist, vUnder, vW, vVol;
+        uniform float uTime, uCamDist, uFade, uNight, uHi;
+        varying float vSide, vDist, vUnder, vW, vVol, vHi;
         void main() {
           float px = abs(vSide) * (vW * 0.5 + 1.0);
           float a = 1.0 - smoothstep(vW * 0.5 - 0.6, vW * 0.5 + 0.6, px);
@@ -120,7 +124,11 @@ export class Aqueducts {
           vec3 wall = mix(vec3(0.55, 0.60, 0.62), vec3(0.16, 0.20, 0.24), uNight);
           vec3 water = mix(vec3(0.10, 0.36, 0.66), vec3(0.025, 0.14, 0.36), uNight);
           vec3 c = mix(water, wall, smoothstep(0.35, 0.95, abs(vSide)));
-          gl_FragColor = vec4(c, a * 0.95 * uFade);
+          // selected: a warm edge round it; the others step back
+          float edge = max(0.0, (vW - 4.0) * 0.5) / (vW * 0.5 + 1.0);
+          c = mix(c, vec3(1.0, 0.91, 0.62), vHi * smoothstep(edge - 0.08, edge + 0.04, abs(vSide)));
+          float dim = uHi > -0.5 && vHi < 0.5 ? 0.5 : 1.0;
+          gl_FragColor = vec4(c, a * 0.95 * uFade * dim);
         }`,
     });
     this.mesh = new THREE.Mesh(g, mat);
@@ -128,6 +136,8 @@ export class Aqueducts {
     this.group.add(this.mesh);
     this.mat = mat;
   }
+  /** draw one aqueduct as selected (its index in items), or none (-1) */
+  setHi(ai) { this.mat.uniforms.uHi.value = ai == null ? -1 : ai; }
   update(camDist) { this.mat.uniforms.uFade.value = Math.min(1, Math.max(0, (1400 - camDist) / 500)); this.group.visible = camDist < 1400 && this.enabled !== false; }
   pick(x, z, radius) {
     let best = null;

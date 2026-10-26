@@ -500,7 +500,8 @@ export class FlowParticles {
     const add = (r) => {
       const key = `${r.cat}|${r.kind}|${r.sk}|${r.pl}|${r.a[0].toFixed(3)},${r.a[1].toFixed(3)}|${r.h[0].toFixed(3)},${r.h[1].toFixed(3)}|${r.b[0].toFixed(3)},${r.b[1].toFixed(3)}|${r.split}`;
       const e = segs.get(key);
-      if (e) e.vol += r.vol; else segs.set(key, r);
+      // (a leg several counties' water shares keeps their names, for the hover)
+      if (e) { e.vol += r.vol; if (r.county !== e.county) (e.also || (e.also = new Set())).add(r.county); } else segs.set(key, r);
     };
     const wts = (list) => { const w = list.map((p) => (list[0] && list[0].length > 2 ? Math.sqrt(p[2] || 1) : 1)); const t = w.reduce((a, b) => a + b, 0) || 1; return w.map((x) => x / t); };
     for (const s of streams) {
@@ -512,8 +513,10 @@ export class FlowParticles {
       const hub = this.hubOf(s);
       const low = s.cat === 'ir' || s.cat === 'go' || s.cat === 'li' || s.cat === 'do' || s.kind === KIND.deliver;
       const sk = s.kind === KIND.intake ? srcKey(s) : '';
+      // (on the fixed scale, water on its way in starts in the colour of its source and turns to its use's colour)
+      const scol = general && s.kind === KIND.intake && !s.route ? SRC_LIN[sk] || col : col;
       const base = { cat: s.cat, ci: CAT_IDX[s.cat], kind: s.kind, sk, gw: sk === 'gf' || sk === 'gs' ? 1 : 0, county: s.county, xfer: s.xfer || null,
-        pl: s.plant ? (s.plant._i != null ? s.plant._i + 2 : 1) : 0, well: false, depth: 0, col };
+        pl: s.plant ? (s.plant._i != null ? s.plant._i + 2 : 1) : 0, well: false, depth: 0, col, scol };
       if (s.route) {
         // a system's route between counties, leg by leg (legs that several streams share add up)
         for (let q = 0; q < s.route.length - 1; q++) {
@@ -563,7 +566,7 @@ export class FlowParticles {
       const n = r.well ? 6 : general ? Math.max(6, Math.min(28, Math.ceil(L * 6))) : Math.max(8, Math.min(40, Math.ceil(L * 10)));
       nv += 2 * (n + 1); return n;
     });
-    const A = new Float32Array(nv * 4), Hb = new Float32Array(nv * 4), B = new Float32Array(nv * 4), C = new Float32Array(nv * 4), E = new Float32Array(nv * 4), Wd = new Float32Array(nv * 2), Col = new Float32Array(nv * 3);
+    const A = new Float32Array(nv * 4), Hb = new Float32Array(nv * 4), B = new Float32Array(nv * 4), C = new Float32Array(nv * 4), E = new Float32Array(nv * 4), Wd = new Float32Array(nv * 2), Col = new Float32Array(nv * 3), SCol = new Float32Array(nv * 3);
     const Dd = general ? new Float32Array(nv * 4) : null;
     const idx = new (nv > 65000 ? Uint32Array : Uint16Array)(segs.reduce((a, r, i) => a + 6 * steps[i], 0));
     let v = 0, ii = 0;
@@ -584,7 +587,7 @@ export class FlowParticles {
       for (let k = 0; k <= n; k++) {
         for (const side of [-1, 1]) {
           A.set([r.a[0], ha, r.a[1], r.depth], 4 * v); Hb.set([r.h[0], hh, r.h[1], r.split], 4 * v); B.set([r.b[0], hb, r.b[1], r.kind], 4 * v);
-          C.set([r.arc1, r.arc2, len, r.vol], 4 * v); E.set([c1, c2, k / n, side], 4 * v); Wd.set([width, alpha], 2 * v); Col.set(r.col, 3 * v);
+          C.set([r.arc1, r.arc2, len, r.vol], 4 * v); E.set([c1, c2, k / n, side], 4 * v); Wd.set([width, alpha], 2 * v); Col.set(r.col, 3 * v); SCol.set(r.scol || r.col, 3 * v);
           if (Dd) Dd.set([r.county, r.ci, r.pl, r.gw], 4 * v);
           v++;
         }
@@ -592,7 +595,7 @@ export class FlowParticles {
       }
     });
     const g = new THREE.BufferGeometry();
-    for (const [k, a, n] of [['aA', A, 4], ['aH', Hb, 4], ['aB', B, 4], ['aC', C, 4], ['aE', E, 4], ['aW', Wd, 2], ['aCol', Col, 3], ...(Dd ? [['aD', Dd, 4]] : [])]) g.setAttribute(k, new THREE.BufferAttribute(a, n));
+    for (const [k, a, n] of [['aA', A, 4], ['aH', Hb, 4], ['aB', B, 4], ['aC', C, 4], ['aE', E, 4], ['aW', Wd, 2], ['aCol', Col, 3], ['aSCol', SCol, 3], ...(Dd ? [['aD', Dd, 4]] : [])]) g.setAttribute(k, new THREE.BufferAttribute(a, n));
     g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(nv * 3), 3));
     g.setIndex(new THREE.BufferAttribute(idx, 1));
     g.boundingSphere = new THREE.Sphere(new THREE.Vector3(430, 0, 320), 2000);
@@ -613,8 +616,8 @@ export class FlowParticles {
       vertexShader: /* glsl */`
         uniform float uExag, uAqMode, uAqDepth, uCamDist, uModelScale, uRibbon, uConsumed, uMinVol;
         uniform vec2 uViewport;
-        attribute vec4 aA, aH, aB, aC, aE; attribute vec2 aW; attribute vec3 aCol;
-        varying vec3 vCol; varying float vA, vAcross, vT, vW, vKind, vLen, vSl, vChev;
+        attribute vec4 aA, aH, aB, aC, aE; attribute vec2 aW; attribute vec3 aCol, aSCol;
+        varying vec3 vCol, vSCol; varying float vA, vAcross, vT, vW, vKind, vLen, vSl, vChev;
         #ifdef GENERAL
         uniform float uCat[${CAT_KEYS.length}]; uniform float uCatW[${CAT_KEYS.length}];
         uniform float uSel, uHov, uFocusOn, uHideCounty, uHideCat, uHidePlant, uMinPx; uniform vec4 uHole;
@@ -673,15 +676,17 @@ export class FlowParticles {
           float w = wb + 4.0;   // room for a dark casing and a soft edge on each side
           vec2 sp = sc + nrm * aE.w * w * 0.5;
           gl_Position = vec4(sp / half_ * c.w, c.z, c.w);
-          vAcross = aE.w * w * 0.5; vA = min(1.0, aW.y * uRibbon * vis); vCol = aCol; vT = t; vW = wb; vSl = sl;
+          vAcross = aE.w * w * 0.5; vA = min(1.0, aW.y * uRibbon * vis); vCol = aCol; vSCol = aSCol; vT = t; vW = wb; vSl = sl;
           // water on its way to a use (not a well's short run up out of the ground) gets a chevron pointing to it
           vChev = (kind < 0.5 && aA.w <= 0.0) || (kind > 2.5 && kind < 3.5) ? 1.0 : 0.0;
         }`,
       fragmentShader: /* glsl */`
         uniform float uNight, uTime;
-        varying vec3 vCol; varying float vA, vAcross, vT, vW, vKind, vLen, vSl, vChev;
+        varying vec3 vCol, vSCol; varying float vA, vAcross, vT, vW, vKind, vLen, vSl, vChev;
         void main() {
           float r = vW * 0.5, d = abs(vAcross);
+          // from its source's colour at the intake to its use's colour by the time it arrives
+          vec3 cUse = mix(vSCol, vCol, smoothstep(0.08, 0.7, vT));
           float body = 1.0 - smoothstep(r - 0.6, r + 0.3, d);
           // a dark casing keeps the channel legible over bright city lights and pale daytime land
           float casing = 1.0 - smoothstep(r + 0.7, r + 1.8, d);
@@ -689,7 +694,7 @@ export class FlowParticles {
           if (vKind > 1.5 && vKind < 2.5) { float ph = fract(vT * vLen * 7.0 - uTime * 0.9); body *= smoothstep(0.0, 0.06, ph) * (1.0 - smoothstep(0.55, 0.61, ph)); }
           // a brighter core down the middle of wide channels
           float core = 1.0 - smoothstep(0.0, max(r * 0.55, 0.8), d);
-          vec3 col = mix(vCol, vec3(1.0), 0.16 * core);
+          vec3 col = mix(cUse, vec3(1.0), 0.16 * core);
           // a chevron just short of the end of a wide channel, pointing the way the water goes (the channel keeps its
           // width all the way, so the width always reads as the water)
           if (vChev > 0.5 && vW > 4.5 && vSl > 3.0 * vW) {
@@ -698,7 +703,8 @@ export class FlowParticles {
             float ch = (1.0 - smoothstep(0.55, 1.35, arm)) * (1.0 - smoothstep(r - 1.4, r - 0.5, d));
             col = mix(col, vec3(0.02, 0.04, 0.035), 0.72 * ch);
           }
-          float aBody = vA * body * (0.7 + 0.3 * core), aCase = vA * 0.55 * max(0.0, casing - body);
+          // (the casing is darker by day, when the land under it is pale)
+          float aBody = vA * body * (0.7 + 0.3 * core), aCase = vA * mix(0.85, 0.55, uNight) * max(0.0, casing - body);
           gl_FragColor = vec4(col * aBody, aBody + aCase);
         }`,
     });
@@ -739,7 +745,9 @@ export class FlowParticles {
     // a well is a ring, an intake a filled dot, a place water is gathered a square in the colour of its use
     list.forEach((p, i) => {
       const gw = p.k === 'gf' || p.k === 'gs', hub = p.k === 'hub';
-      P.set([p.x, this.hAt(p.x, p.z), p.z, general ? (hub ? 2 + srcDotPx(p.v) : srcDotPx(p.v)) : markerPx(p.v / (V || 1))], 4 * i);
+      // (on the fixed scale the channel's width carries the water, so an intake is a small dot of one size and a well a
+      // small ring; where water is gathered, the square keeps its size)
+      P.set([p.x, this.hAt(p.x, p.z), p.z, general ? (hub ? 2 + srcDotPx(p.v) : gw ? 8 : 6) : markerPx(p.v / (V || 1))], 4 * i);
       Cl.set([...(hub ? CAT_COL[CAT_KEYS[p.ci]] : SRC_LIN[p.k]), hub ? 2 : gw ? 1 : 0], 4 * i);
       Dd.set([p.county, p.ci, p.pl, gw ? 1 : 0], 4 * i); Vv[i] = p.v;
       Hu.set(p.hub ? [p.hub[0], p.hub[1]] : [-1e6, -1e6], 2 * i);
@@ -832,10 +840,10 @@ export class FlowParticles {
   discMesh(items, everywhere = false) {
     if (!items.length) return null;
     const list = items.slice().sort((a, b) => b.px - a.px);   // (the smaller over the bigger where they meet)
-    const n = list.length, P = new Float32Array(n * 4), F = new Float32Array(n), Cr = new Float32Array(n * 3), Dd = new Float32Array(n * 4), Vv = new Float32Array(n);
+    const n = list.length, P = new Float32Array(n * 4), F = new Float32Array(n), Cr = new Float32Array(n * 3), Rm = new Float32Array(n * 4), Dd = new Float32Array(n * 4), Vv = new Float32Array(n);
     list.forEach((e, i) => {
       P.set([e.x, this.hAt(e.x, e.z), e.z, e.px], 4 * i);
-      F[i] = e.f; Cr.set(e.rest, 3 * i); Dd.set([e.county, e.ci, e.pl, 0], 4 * i); Vv[i] = e.v;
+      F[i] = e.f; Cr.set(e.rest, 3 * i); Rm.set(e.rim ? [...e.rim, 1] : [0, 0, 0, 0], 4 * i); Dd.set([e.county, e.ci, e.pl, 0], 4 * i); Vv[i] = e.v;
     });
     const g = new THREE.InstancedBufferGeometry();
     g.setAttribute('aCorner', new THREE.Float32BufferAttribute([-1, -1, 1, -1, 1, 1, -1, 1], 2));
@@ -843,6 +851,7 @@ export class FlowParticles {
     g.setAttribute('aP', new THREE.InstancedBufferAttribute(P, 4));
     g.setAttribute('aF', new THREE.InstancedBufferAttribute(F, 1));
     g.setAttribute('aRest', new THREE.InstancedBufferAttribute(Cr, 3));
+    g.setAttribute('aRim', new THREE.InstancedBufferAttribute(Rm, 4));
     g.setAttribute('aD', new THREE.InstancedBufferAttribute(Dd, 4));
     g.setAttribute('aV', new THREE.InstancedBufferAttribute(Vv, 1));
     g.instanceCount = n;
@@ -857,8 +866,8 @@ export class FlowParticles {
         uniform float uExag, uA, uMinVol; uniform vec2 uViewport;
         uniform float uCat[${CAT_KEYS.length}]; uniform float uCatW[${CAT_KEYS.length}];
         uniform float uSel, uFocusOn, uHideCounty, uHideCat, uHidePlant, uAqMode; uniform vec4 uHole;
-        attribute vec2 aCorner; attribute vec4 aP; attribute float aF; attribute vec3 aRest; attribute vec4 aD; attribute float aV;
-        varying vec2 vUv; varying float vR, vF, vVis; varying vec3 vRest;
+        attribute vec2 aCorner; attribute vec4 aP; attribute float aF; attribute vec3 aRest; attribute vec4 aRim; attribute vec4 aD; attribute float aV;
+        varying vec2 vUv; varying float vR, vF, vVis; varying vec3 vRest; varying vec4 vRim;
         void main() {
           float vis = uCat[int(aD.y + 0.5)] * min(1.0, uCatW[int(aD.y + 0.5)]);
           // (a selected place keeps its own marks: its water is redrawn, but what became of it is shown here)
@@ -877,11 +886,11 @@ export class FlowParticles {
           float r = aP.w * 0.5 + 1.5;
           c.xy += aCorner * r * 2.0 / uViewport * c.w;
           c.z -= 0.003 * c.w;   // over the dots and rings
-          gl_Position = c; vUv = aCorner * r; vR = aP.w * 0.5; vF = aF; vVis = vis; vRest = aRest;
+          gl_Position = c; vUv = aCorner * r; vR = aP.w * 0.5; vF = aF; vVis = vis; vRest = aRest; vRim = aRim;
         }`,
       fragmentShader: /* glsl */`
         uniform float uA; uniform vec3 uCons;
-        varying vec2 vUv; varying float vR, vF, vVis; varying vec3 vRest;
+        varying vec2 vUv; varying float vR, vF, vVis; varying vec3 vRest; varying vec4 vRim;
         void main() {
           float d = length(vUv);
           float fill = 1.0 - smoothstep(vR - 1.0, vR - 0.2, d);
@@ -892,6 +901,8 @@ export class FlowParticles {
           float edge = 6.2831853 * vF;
           float k = vF < 0.0 ? 1.0 : smoothstep(edge - 0.06, edge + 0.06, ang);
           vec3 col = mix(uCons, vRest, k);
+          // what became of a use's water is ringed in the use's colour, so the mark says whose water it is
+          if (vRim.a > 0.5) col = mix(col, vRim.rgb, smoothstep(vR - 2.9, vR - 2.1, d));
           float A = uA * vVis;
           gl_FragColor = vec4(col * fill * A * 0.96 + vec3(0.02, 0.04, 0.035) * (rim - fill) * A * 0.85, A * (fill * 0.96 + (rim - fill) * 0.85));
         }`,
@@ -913,7 +924,7 @@ export class FlowParticles {
     for (const e of ends.values()) {
       const W = e.cu + e.ret;
       if (!(W > 0) || W < minV) continue;
-      items.push({ x: e.x, z: e.z, px: 0.75 * srcDotPx(W), f: e.cu / W, rest: RET_LIN, county: e.county, ci: e.ci, pl: e.pl, v: W });
+      items.push({ x: e.x, z: e.z, px: Math.max(9, 0.75 * srcDotPx(W) + 3), f: e.cu / W, rest: RET_LIN, rim: CAT_COL[CAT_KEYS[e.ci]], county: e.county, ci: e.ci, pl: e.pl, v: W });
     }
     return this.discMesh(items, everywhere);
   }
@@ -939,18 +950,20 @@ export class FlowParticles {
   /**
    * The places that take the most water, for the national view, where every flow is a texture of streaks: a power
    * plant, a county's water for one use, or the water a system pipes between counties (which the routes draw, at
-   * every zoom). Each place gets a disc in the colour of its use, as wide as the dot at a source of that much water,
+   * every zoom). Each place gets a disc in the colour of its use, a little wider than a channel carrying its water,
    * with a white slice for the share consumed where USGS estimated it. this.top.list names them, biggest first, with
    * how much of their water came from each kind of source, for the labels.
    */
   buildTop(n = 40) {
     const groups = new Map();
     for (const s of this.streams) {
-      if (s.kind !== KIND.intake || !(s.vol > 0) || s.src === SRC.delivered) continue;
-      const sk = srcKey(s), sg = sk === 'gf' || sk === 'gs' ? 'w' : sk === 'ss' ? 's' : sk === 'rec' ? 'r' : 'f';
-      const key = s.route ? `x|${s.xfer}` : s.plant ? `p|${s.plant._i != null ? s.plant._i : `h${s.county}`}` : `c|${s.county}|${s.cat}`;
+      // (withdrawals only: reclaimed wastewater is water a place uses but does not withdraw, and the labels say withdrawn)
+      if (s.kind !== KIND.intake || !(s.vol > 0) || s.src === SRC.delivered || s.src === SRC.reclaimed) continue;
+      const sk = srcKey(s), sg = sk === 'gf' || sk === 'gs' ? 'w' : sk === 'ss' ? 's' : 'f';
+      // (the West's imported water is the receiving county's own withdrawal, as USGS counts it, so it counts there)
+      const key = s.route && !s.imp ? `x|${s.xfer}` : s.plant ? `p|${s.plant._i != null ? s.plant._i : `h${s.county}`}` : `c|${s.county}|${s.cat}`;
       let e = groups.get(key);
-      if (!e) groups.set(key, (e = { key, vol: 0, cat: s.cat, by: {}, county: s.county, plant: s.plant || null, xfer: s.xfer || null, streams: [] }));
+      if (!e) groups.set(key, (e = { key, vol: 0, cat: s.cat, by: {}, county: s.county, plant: s.plant || null, xfer: key[0] === 'x' ? s.xfer : null, streams: [] }));
       e.vol += s.vol; e.by[sg] = (e.by[sg] || 0) + s.vol; e.streams.push(s);
     }
     const list = [...groups.values()].sort((a, b) => b.vol - a.vol).slice(0, n);
@@ -961,8 +974,9 @@ export class FlowParticles {
       if (e.xfer) continue;
       // at the plant, or at the middle of the county's fields, towns or works for that use
       let x, z;
-      if (e.plant) { const t = e.streams[0].to[0]; x = t[0]; z = t[1]; }
-      else { const at = e.streams[0].to; let cx = 0, cz = 0; for (const t of at) { cx += t[0]; cz += t[1]; } [x, z] = nearest(at, cx / at.length, cz / at.length); }
+      const s0 = e.streams.find((q) => !q.route) || e.streams[0];
+      if (e.plant) { const t = s0.to[0]; x = t[0]; z = t[1]; }
+      else { const at = s0.to; let cx = 0, cz = 0; for (const t of at) { cx += t[0]; cz += t[1]; } [x, z] = nearest(at, cx / at.length, cz / at.length); }
       e.x = x; e.z = z; e.px = srcDotPx(e.vol);
       const fk = e.plant ? `p|${e.key.split('|')[1]}` : `${e.county}|${e.cat}`, fv = fate.get(fk);
       const f = fv && fv.cu + fv.ret > 0 ? fv.cu / (fv.cu + fv.ret) : -1;
@@ -974,6 +988,15 @@ export class FlowParticles {
     if (discs) this.group.add(discs);
     this.top = { discs, list };
     return list;
+  }
+  /** where a county's water for one use is drawn to: the middle of its fields, its works, or (for power plants) its biggest plant */
+  useAnchor(i, cat) {
+    const ss = (this.byCounty.get(i) || []).filter((q) => q.cat === cat && q.kind === KIND.intake && !q.route && q.vol > 0 && q.to && q.to.length);
+    if (!ss.length) return null;
+    if (cat === 'pt') { const q = ss.slice().sort((a, b) => b.vol - a.vol)[0]; return { at: q.to[0], plant: q.plant || null }; }
+    const at = []; for (const q of ss) for (const t of q.to) at.push(t);
+    let cx = 0, cz = 0; for (const t of at) { cx += t[0]; cz += t[1]; }
+    return { at: nearest(at, cx / at.length, cz / at.length), plant: null };
   }
   disposeTop() {
     const d = this.top; if (!d) return;
@@ -1230,7 +1253,8 @@ export class FlowParticles {
     // from farther out, only the biggest flows, bold over a dimmer texture of every other flow
     const topA = this.top ? Math.min(1, Math.max(0, (camDist - MM * 0.8) / (MM * 0.25))) : 0;
     this._topA = topA;
-    this.common.uNatK.value = Math.max(0.3, 1 - 0.4 * midA - 0.65 * topA);
+    // (once the channels are drawn the national streaks step back, so the two do not read as one scratchy texture)
+    this.common.uNatK.value = Math.max(0.25, 1 - 0.6 * midA - 0.65 * topA);
     if (this.top && this.top.discs) this.top.discs.material.uniforms.uA.value = topA;
     if (this.mid) {
       const mv = Math.max(this.mid.minVol, FlowParticles.midMin(camDist));

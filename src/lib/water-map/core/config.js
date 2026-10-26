@@ -34,18 +34,20 @@ export const SLAB_BASE = -16; // world units, bottom of every slab
 export const SUN = { azimuthDeg: 315, elevationDeg: 38 };
 
 // Water-use categories (USGS 2015), in the order of the national totals. Blue is kept for water itself (rivers,
-// lakes, returns), so no use is blue. `usgs` is the name USGS gives the category.
+// lakes, returns), so no use is blue. `usgs` is the name USGS gives the category. The colors were chosen so the five
+// biggest uses stay apart for readers with red-green color blindness (an OKLab difference of 8 or more under the
+// Machado simulation, and 17 or more for everyone else); the four smallest lean on their labels.
 // One name per use, the same on every surface (the list, the panels, the Sankey, the map's labels).
 export const CATS = [
   { k: 'pt', name: 'Power plants', short: 'Power plants', usgs: 'Thermoelectric power', color: '#ee7a3a', what: 'Water that cools steam power plants: coal, gas, nuclear and others.' },
   { k: 'ir', name: 'Crops', short: 'Crops', usgs: 'Irrigation (crops)', color: '#3cc483', what: 'Water sprayed, dripped or flooded onto farm fields.' },
   { k: 'ps', name: 'Public supply', short: 'Public supply', usgs: 'Public supply', color: '#f2cf63', what: 'Water utilities: what comes out of the tap in homes, offices, schools and some factories.' },
-  { k: 'in', name: 'Industry', short: 'Industry', usgs: 'Industrial (self-supplied)', color: '#ef6f6c', what: 'Factories, refineries, mills and chemical plants that draw their own water.' },
+  { k: 'in', name: 'Industry', short: 'Industry', usgs: 'Industrial (self-supplied)', color: '#e958a9', what: 'Factories, refineries, mills and chemical plants that draw their own water.' },
   { k: 'aq', name: 'Fish farms', short: 'Fish farms', usgs: 'Aquaculture', color: '#8b94ff', what: 'Hatcheries and fish farms, most of it flowing through raceways and back out.' },
-  { k: 'mi', name: 'Mining', short: 'Mining', usgs: 'Mining', color: '#c08a57', what: 'Mines, quarries and oil and gas wells.' },
-  { k: 'do', name: 'Private wells', short: 'Private wells', usgs: 'Domestic (self-supplied)', color: '#e66fa0', what: 'Homes that pump their own water from private wells instead of buying it from a utility.' },
-  { k: 'li', name: 'Livestock', short: 'Livestock', usgs: 'Livestock', color: '#9aab45', what: 'Drinking water for animals and cleaning on farms and feedlots.' },
-  { k: 'go', name: 'Golf courses', short: 'Golf courses', usgs: 'Irrigation (golf courses)', color: '#d6ea6c', what: 'Watering golf courses, counted separately where states reported it.' },
+  { k: 'mi', name: 'Mining', short: 'Mining', usgs: 'Mining', color: '#c75a53', what: 'Mines, quarries and oil and gas wells.' },
+  { k: 'do', name: 'Private wells', short: 'Private wells', usgs: 'Domestic (self-supplied)', color: '#9068cd', what: 'Homes that pump their own water from private wells instead of buying it from a utility.' },
+  { k: 'li', name: 'Livestock', short: 'Livestock', usgs: 'Livestock', color: '#f296bd', what: 'Drinking water for animals and cleaning on farms and feedlots.' },
+  { k: 'go', name: 'Golf courses', short: 'Golf courses', usgs: 'Irrigation (golf courses)', color: '#bfaa66', what: 'Watering golf courses, counted separately where states reported it.' },
 ];
 // Where water comes from, in the words and colors every panel uses. A selected place's channels, particles and dots
 // on the map take these colors too, so the map and the panel show the same shares.
@@ -77,6 +79,28 @@ export const SOURCE_COLORS = {
 export const HUD = {
   screen: '#1b302b', ink: '#fff7e8', dim: '#d7dfd3', brass: '#d9c28d', panel: 'rgba(21, 38, 32, 0.9)',
 };
+
+/**
+ * A power plant's name as a reader would say it, from the name it has in the EIA and USGS files: no state in
+ * parentheses ("Monroe (MI)"), no owner in front ("FirstEnergy W H Sammis", "PSEG Salem Generating Station", "AES
+ * Petersburg") or LLC behind, initials and Saint with periods ("W. H. Sammis", "St. Lucie") and Mount spelled out.
+ */
+export function plantName(raw) {
+  let n = String(raw || '').trim();
+  n = n.replace(/\s*\((?:[A-Z]{2})\)$/, '').replace(/^(FirstEnergy|PSEG|AES|Duke Energy|Dominion|TVA|NRG|Exelon|Entergy|Vistra|Luminant|Calpine|Dynegy)\s+/, '').replace(/,?\s+(LLC|Inc\.?|L\.?P\.?)$/i, '');
+  n = n.replace(/\bMt\.?\s/g, 'Mount ').replace(/\bSt\s/g, 'St. ').replace(/\bJr\b(?!\.)/g, 'Jr.');
+  // single capitals followed by a name are initials
+  for (let k = 0; k < 3; k++) n = n.replace(/(^|\s)([A-Z])\s(?=[A-Z][a-z]|[A-Z]\s)/g, '$1$2. ');
+  return n;
+}
+const GEN_WORD = { NUCLEAR: 'nuclear', COAL: 'coal', NGCC: 'gas', 'GAS STEAM': 'gas', OIL: 'oil', 'OIL CC': 'oil', BIOMASS: 'biomass' };
+/** a plant's name with what it is, for a label on the map: "Surry nuclear plant", "Brunswick Nuclear plant", "Chalk Point power plant" */
+export function plantLabel(p) {
+  const n = p.name || '', g = GEN_WORD[p.gen] || 'power';
+  if (/\b(plant|station|generating|generation|power|energy center|facility|steam|nuclear one)\b/i.test(n)) return n;
+  if (new RegExp(`\\b${g}$`, 'i').test(n)) return `${n} plant`;
+  return `${n} ${g} plant`;
+}
 
 /** "Kings" -> "Kings River"; names that already say what they are (Fresno Slough, Rio Grande, Bear Creek) stay */
 export function riverLabel(nm) {

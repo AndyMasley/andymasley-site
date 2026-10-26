@@ -41,6 +41,7 @@ export class Story {
   show(i) {
     if (!this.on || i === this.cur || i < 0 || i >= this.stops.length) return;
     this.cur = i;
+    this.app.sound?.scene(i);
     this.app.tour.go(i);
     try { history.replaceState(history.state, '', `${location.pathname}${location.search}#story=${this.slugs()[i]}`); } catch { /* not allowed here */ }
   }

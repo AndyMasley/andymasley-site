@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { WaterModel } from '../water-map/flow/model.js';
 import { CATS, EXAG_KEYS } from '../water-map/core/config.js';
-import { TRANSFERS } from '../water-map/core/transfers.js';
+import { TRANSFERS, IMPORTS } from '../water-map/core/transfers.js';
 import { AQ_FLOWS, DATA_CENTERS, DEPLETION, NID, COUNTY_NOTES, HP_LEVELS } from '../water-map/core/flows_data.js';
 import { TRENDS } from '../water-map/core/trends.js';
 
@@ -66,6 +66,47 @@ describe('water map: the page text agrees with the data', () => {
   it('the plants in the USGS plant model', () => {
     const [n] = grab(page, /The ([\d,]+) plants in the USGS model of thermoelectric water use/, 'the number of plants');
     expect(feats.plants.length).toBe(num(n));
+  });
+  it('the West\'s imported water fits inside each county\'s own surface water for the use', () => {
+    const by = new Map<string, number>();
+    for (const y of IMPORTS as any[]) for (const t of y.to) { const k = `${t.fips}|${t.cat || 'ps'}`; by.set(k, (by.get(k) || 0) + t.mgd); }
+    for (const [k, v] of by) {
+      const [f, cat] = k.split('|'), i = wu.id.indexOf(f);
+      expect(i, f).toBeGreaterThanOrEqual(0);
+      expect(v, k).toBeLessThanOrEqual(m.county(i).src[cat].sf + 1e-6);
+    }
+    expect((IMPORTS as any[]).find((y) => y.id === 'laa').to[0].mgd).toBe(AQ_FLOWS['Los Angeles Aqueduct'].mgd);
+  });
+  it('the Central Arizona Project\'s deliveries by county and use, as the page and the methods give them', () => {
+    const cap = (IMPORTS as any[]).find((y) => y.id === 'cap'), K = AF / 365 / 1e6;
+    const [la, placed, all] = grab(page, /The Los Angeles Aqueduct supplied ([\d,]+) acre-feet to Los Angeles.*? ([\d,]+) of the ([\d,]+) acre-feet it delivered/, 'the imports');
+    expect(num(la)).toBe(AQ_FLOWS['Los Angeles Aqueduct'].af);
+    expect(num(placed)).toBe(cap.af);
+    expect(num(all)).toBe(cap.afAll);
+    expect(AQ_FLOWS['Central Arizona Project Canal'].note).toContain(`delivered ${num(all).toLocaleString('en-US')} acre-feet`);
+    // each county's figure is its acre-feet in Mgal/d, and where it is drawn to more than one place, the parts add up to it
+    const af: Record<string, number> = { '04013|ps': 323176, '04013|ir': 86060, '04021|ir': 414411, '04021|ps': 6911, '04019|ir': 26570 };
+    let sum = 0;
+    for (const t of cap.to) {
+      const k = `${t.fips}|${t.cat}`;
+      expect(t.mgd, k).toBeCloseTo(af[k] * K, 1);
+      if (t.at && t.at.length > 1) expect(t.at.reduce((q: number, x: any[]) => q + x[1], 0), k).toBe(af[k]);
+      sum += af[k];
+    }
+    expect(sum).toBe(cap.af);
+    expect(cap.conf).toContain(`${cap.af.toLocaleString('en-US')} of the ${cap.afAll.toLocaleString('en-US')} acre-feet`);
+  });
+  it('the operators\' 2015 reports to EIA, as the methods quote them', () => {
+    const by = (name: string) => feats.plants.find((p: any) => p.name === name);
+    expect(feats.plants.filter((p: any) => p.eia_w != null).length).toBe(734);
+    expect(by('Gerald Gentleman').eia_w).toBeCloseTo(544.0, 1);
+    expect(by('Gerald Gentleman').w).toBeCloseTo(544.0, 1);
+    expect(by('Ray Olinger').eia_w).toBeCloseTo(160.2, 1);
+    expect(Math.round(by('W A Parish').eia_w)).toBe(1446);
+    expect(Math.round(by('W A Parish').w)).toBe(702);
+    expect(by('Brazos Valley Generating Facility').eia_w).toBeCloseTo(2.7, 1);
+    expect(by('FirstEnergy Ashtabula').eia_w).toBeUndefined();
+    expect(Math.round(by('Braidwood Generation Station').eia_w)).toBe(2419);
   });
   it('the groundwater from aquifers the map does not outline', () => {
     const [b] = grab(page, /About (\d+) billion gallons a day was pumped from glacial, alluvial and other aquifers/, 'the unmapped aquifers');

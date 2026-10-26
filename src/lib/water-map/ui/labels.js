@@ -52,6 +52,8 @@ export class Labels {
   hideAll() { for (const it of this.items) if (it.shown) { it.el.style.opacity = '0'; it.shown = false; } this.path.setAttribute('d', ''); }
   /** screen rectangles (stage pixels) that labels must stay out of: the panels over the map */
   setAvoid(rects) { this.avoid = rects; }
+  /** marks on the map that labels must not cover (world points with a radius in pixels), or null */
+  setMarks(list) { this.marks = list; }
   update(camDist, exag, rect, yOffset = 0) {
     if (!this.enabled) { if (this._wasOn) { this.hideAll(); this._wasOn = false; } return; }
     this._wasOn = true;
@@ -73,6 +75,12 @@ export class Labels {
     }
     cand.sort((a, b) => b.pri - a.pri);
     const placed = this.avoid ? this.avoid.map((r) => [r[0], r[1], r[2], r[3]]) : [];
+    if (this.marks) for (const k of this.marks) {
+      this.v.set(k.x, k.h * exag + yOffset, k.z).project(this.camera);
+      if (this.v.z > 1 || Math.abs(this.v.x) > 1.05 || Math.abs(this.v.y) > 1.05) continue;
+      const sx = (this.v.x * 0.5 + 0.5) * W, sy = (-this.v.y * 0.5 + 0.5) * H;
+      placed.push([sx - k.r - 1, sy - k.r - 1, sx + k.r + 1, sy + k.r + 1]);
+    }
     const pad = 3;
     const inStage = (x0, y0, x1, y1) => x0 > 4 && x1 < W - 4 && y0 > 4 && y1 < H - 4;
     const fits = (x0, y0, x1, y1) => {

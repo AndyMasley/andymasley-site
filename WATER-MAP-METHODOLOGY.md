@@ -43,7 +43,10 @@ estimated it for in 2015.
 | Aqueducts, canals, facilities | OpenStreetMap (ODbL) | Canal and aqueduct lines, treatment plants, towers, golf courses, data centers |
 | Colorado River Aqueduct, first Los Angeles Aqueduct, Delta-Mendota Canal and State Water Project branch lines | USGS National Hydrography Dataset, large-scale flowlines (nhd MapServer layer 6), by GNIS name, fetched October 2026 | Lake Havasu to Lake Mathews, 389.7 km; the Owens River intake to Sylmar, 381.2 km; Tracy to Mendota, 187.8 km; the East Branch ("Governor Edmund G Brown East Branch California Aqueduct") to Lake Perris, 218.8 km, and the West Branch to Castaic, 40.9 km, which OpenStreetMap does not map. Pipeline reaches (FCodes 428xx) are dashed |
 | Canal flows | Operator and government reports, each cited where it is shown | Canal and aqueduct flows |
+| Power plants' reported cooling water | U.S. Energy Information Administration, thermoelectric cooling water data for 2015 (Form EIA-923) | Each plant's panel: what its operator reported, beside the county figure and the model |
 | Colorado River diversions | Reclamation, Colorado River Accounting and Water Use Report, 2015 | Imperial Irrigation District and the All-American Canal |
+| Central Arizona Project deliveries | CAP, Monthly Deliveries, calendar year 2015 (printed 9/7/2016), library.cap-az.com; storage facilities' types and places from the Arizona Water Banking Authority's list | CAP water drawn from Lake Havasu to Maricopa, Pinal and Pima counties (section 3) |
+| Los Angeles Aqueduct supply | LADWP, Water Supply in Acre Feet (data.lacity.org), fiscal 2014–15 | Its water for Los Angeles, drawn from the Owens River intake |
 | Dams | National Inventory of Dams, October 2026 | 92,693 dams |
 | Land cover | NLCD (MRLC): 2021 lower 48, 2016 Alaska, 2001 Hawaii and Puerto Rico | Land color, city lights, painted fields |
 | Terrain | NOAA ETOPO 2022, 15 arc-seconds | Relief, exaggerated 24 times for the whole country, about 2 times up close |
@@ -77,7 +80,44 @@ Aqueduct, the State Water Project, the Los Angeles Aqueduct and the Central Ariz
 the receiving county. The map keeps those county totals and draws them from the canals in the county: public supply and
 industry from the canal points nearest the county's water works, farms, golf courses and livestock from points spread
 along its canals, but not along the aqueducts built to carry water to cities (`AQ_CITY`: the Colorado River, Los
-Angeles, San Diego and Mokelumne aqueducts). Routing them from their real intakes is open work (section 11).
+Angeles, San Diego and Mokelumne aqueducts).
+
+Where a source says how much of an aqueduct's water reached a county, that part of the county's surface water for the
+use starts at the aqueduct's intake instead and runs along the aqueduct (`IMPORTS` in `core/transfers.js`,
+`WaterModel._imports`), never more than the county's own surface withdrawals for that use. The county's totals stay as
+USGS gives them. Two systems so far:
+
+- The Los Angeles Aqueduct: 51.5 Mgal/d (57,716 acre-feet) supplied to Los Angeles in fiscal 2014–15 (LADWP open data),
+  from the Owens River intake to Sylmar along the NHD line.
+- The Central Arizona Project: its 2015 delivery report (Monthly Deliveries, calendar year 2015, printed 9/7/2016) lists
+  each customer's deliveries; the rows add up to its printed subtotals and its total of 1,449,209 acre-feet
+  (`scripts/water-map/cap_deliveries.py` holds the rows and the groups, checks both and prints the sums). The map
+  sums them by the county and use they went to, 857,128 acre-feet in all, and draws them from the intake on Lake
+  Havasu (34°17′10″N 114°06′13″W, as Wikipedia's article on the project gives it) along the canal as OpenStreetMap
+  maps it, straight across the unmapped first stretch through the Buckskin Mountains. An acre-foot a year is 0.000892742 Mgal/d.
+  - Maricopa County, public supply, 323,176 acre-feet (288.5 Mgal/d): deliveries straight to its water providers
+    (Phoenix, Mesa, Scottsdale, Chandler, Gilbert, Glendale, Peoria, Tempe, Avondale, Queen Creek, Cave Creek,
+    Carefree, Chaparral City, EPCOR Agua Fria, Rio Verde and Tonto Hills), including the water they lease or take by
+    assignment and exchange from the tribes, Hohokam, Roosevelt and Wellton-Mohawk districts and Del Webb's lease.
+  - Maricopa County, crops, 86,060 acre-feet (76.8): the agricultural pool and the water stored at the Roosevelt Water
+    Conservation District (49,329), the Maricopa Water District (20,367) and the Tonopah Irrigation District (16,364).
+  - Pinal County, crops, 414,411 acre-feet (370.0): the agricultural pool, Ak-Chin's deliveries and the water stored at
+    the Central Arizona, Hohokam and Maricopa-Stanfield districts and at Kai Farms (Red Rock), in three parts drawn to
+    the fields near Eloy (129,998), Coolidge (66,622) and Stanfield (217,791).
+  - Pinal County, public supply, 6,911 acre-feet (6.2): Arizona Water's Casa Grande and Superstition systems, Eloy and
+    Apache Junction.
+  - Pima County, crops, 26,570 acre-feet (23.7): the Tohono O'odham Nation's San Xavier (7,667) and Schuk Toak (10,615)
+    farms and the water stored at the Cortaro-Marana district (8,288).
+
+  Left out: water stored underground at recharge projects (it is pumped back up later as groundwater, which is how
+  USGS counts Tucson's CAP water), deliveries to the Salt River Project, to the Gila River Indian Community and to the
+  New Magma district (each in both Maricopa and Pinal), to the Harquahala Valley and Queen Creek districts and BKW
+  Farms (county not confirmed), to mines, to the replenishment and banking authorities' own accounts, and a few small
+  deliveries (temporary uses, county parks, State Land, a power company's exchange). The storage
+  facilities' types and places are from the Arizona Water Banking Authority's list of storage facilities. Every sum is
+  inside the county's own surface withdrawals for the use (Maricopa 587.2 Mgal/d for public supply and 244.2 for crops,
+  Pinal 9.0 and 571.8, Pima 32.0 for crops), consistent with USGS's Arizona compilation counting CAP water as surface
+  water of the county that receives it. Pima County's public supply has no surface water in the USGS figures.
 
 **Width.** Every channel, route and canal uses one width function, `chanPx(v) = max(1.25, 0.1585 v^0.6)` pixels for v
 Mgal/d (`src/lib/water-map/flow/particles.js`), so ten times the water draws about four times as wide. Flows too thin
@@ -186,16 +226,44 @@ the ZIP lookup and the common questions.
 estimate. On 2026-10-26 it lists 22, nine of them above 50 Mgal/d: W A Parish (TX), Gerald Gentleman (NE), Stryker
 Creek (TX), Winyah (SC), Crist (FL), FirstEnergy Ashtabula (OH), Ray Olinger (TX), Brazos Valley (TX) and Grand Tower
 (IL). Most are the only plant in their county, so the gap is between two USGS estimates for the same water, and the map
-follows the county figures. Each plant's panel says so. Each still needs a check against the plant's reported cooling
-water.
+follows the county figures.
+
+Checked against what the operators reported to EIA for 2015 (cooling_summary_2015.xlsx, 5,493,196 bytes, sha256
+`822804925f7246465ef4d9efdb67aa45b6c04438b927a75d22211fdbe59f0716`, summed over each plant's cooling systems and months
+by `scripts/water-map/bake_eia_plants.py`): Gerald Gentleman 544.0 Mgal/d and Ray Olinger 160.2, the same as the county
+figures; Stryker Creek 381 (county figure 368), Winyah 276 (293), Crist 181 (174) and Grand Tower 63 (66), all close. So
+for these the county figures, not the plant model, match what the plants reported. W A Parish reported 1,446, more than
+twice its 702; Fort Bend County's 800 Mgal/d is split between it and Brazos Valley by the model, which gives Brazos
+Valley 98 though its operator reported 2.7. FirstEnergy Ashtabula filed no report. Every plant's panel now gives its
+operator's figure beside the model's.
+
+Across the 711 plants with water on the map and an EIA report, the map's figure is within a factor of two of the
+operator's for 73 percent of them (median ratio 1.00) and the plant model's for 66 percent (median 0.86). EIA's
+reports add up to 166.8 billion gallons a day for 2015, more than the 132.9 billion in the USGS county figures; some
+plants cooled by ponds or lakes report far more than USGS counts (Braidwood in Illinois reported 2,419 Mgal/d; the
+map gives it 62). The map keeps the USGS county figures and the model's split within each county.
+
+On 2026-10-26 every measured canal flow was checked again against its source. Reclamation's 2015 accounting gives
+1,518,022 acre-feet pumped for the Central Arizona Project (Table 4a), and 1,181,597 for the Metropolitan Water
+District, 2,455,649 diverted for the Imperial Irrigation District and 360,381 for the Coachella Valley Water District
+(Table 5a). The Central Valley Operations figures (Table 21, 2015, preliminary), Bulletin 132-16, the River Master's
+report, NYC DEP's release 18-100, SDCWA's 2019 annual report and LADWP's open data all match. LADWP's 2015 Urban Water
+Management Plan gives 53,500 acre-feet for the Los Angeles Aqueduct in fiscal 2014–15 (53,546 in Exhibit ES-T),
+against 57,716 in its open data; the map keeps the open data and its panel quotes both. The transfer systems' figures
+match their sources. Arlington's purchase from the Washington Aqueduct (22.15 Mgal/d) is for 2013, and Fairfax
+County's 73.97 is Fairfax Water's 2013 retail sales (70.34) plus Herndon's (1.97) and Fort Belvoir's (1.66) purchases
+(ICPRB 2015, tables B-1 to B-4); the panels now say so. The national totals match Circular 1441, the trends chart
+matches USGS's 1950–2015 table, and the depletion figures match Konikow's Table 1.
 
 ## 11. Known limits and open work
 
-- Imported water in the West is drawn from canals inside the receiving county, not from the real intakes. The
-  aqueducts themselves are drawn at their measured flows (the Colorado River Aqueduct along the National Hydrography
-  Dataset's line), but how much of each one's water reaches each county is not in the sources used so far, so the
-  county flows do not yet start at Lake Havasu, the Delta or the Owens Valley. Hetch Hetchy and the Front Range tunnels
-  are not mapped, and the San Diego Aqueduct and the Delaware Aqueduct are mapped only in part.
+- Imported water in the West is drawn from canals inside the receiving county except for the Los Angeles Aqueduct's
+  water for Los Angeles and the Central Arizona Project's deliveries that can be placed by county and use (section 3).
+  The aqueducts themselves are drawn at their measured flows (the Colorado River Aqueduct along the National
+  Hydrography Dataset's line), but how much of the Colorado River Aqueduct's and the State Water Project's water reached
+  each county is not in the sources used so far (Metropolitan's sales to its member agencies blend the two), so those
+  county flows do not yet start at Lake Havasu or the Delta. Hetch Hetchy and the Front Range tunnels are not mapped,
+  and the San Diego Aqueduct and the Delaware Aqueduct are mapped only in part.
 - In 40 California counties, including Imperial, USGS divides irrigation between groundwater and surface water in one
   statewide proportion (about 70 percent groundwater).
 - Reservoir evaporation is not on the map. It is a large consumptive use the county data leave out, and it changes any
@@ -203,4 +271,4 @@ water.
 - Desalination and aquifer storage and recovery (such as Tucson's banked Colorado River water, which USGS counts as
   groundwater when pumped) are as USGS counts them.
 - Intake positions inside a county are illustrative.
-- The map has no version without WebGL.
+- The flat map (`?flat`, or any browser without WebGL 2) gives the county figures and panels but draws no flows.

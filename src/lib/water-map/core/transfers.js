@@ -46,6 +46,15 @@ const P = {
   // Florida
   peaceRiver: [809.06, 548.49], flCity: [843.65, 578.28], keyLargo: [845.85, 585.51], islamorada: [842.55, 589.95],
   marathon: [834.22, 595.84], bigPine: [828.84, 597.55], keyWest: [821.11, 601.11], dyal: [824.24, 515.61],
+  // the West's aqueducts: their ends on the USGS National Hydrography Dataset lines (scripts/water-map/bake_nhd_aqueducts.py)
+  laaIntake: [161.24, 308.91], laaSylmar: [142.91, 364.58], craHavasu: [218.2, 380.51], craMathews: [159.72, 378.91],
+  // the Central Arizona Project: its intake on Lake Havasu (the Mark Wilmer pumping plant), then points on the canal as
+  // OpenStreetMap maps it, which leaves out the first stretch through the Buckskin Mountains (stanfield is off the canal,
+  // among the Maricopa-Stanfield and Ak-Chin farms)
+  capIntake: [218.89, 381.42], capBuckskin: [220.76, 388.99], capBouse: [222.07, 390.08], capHarcuvar: [224.33, 397.68],
+  capTonopah: [236.23, 400.42], capWaddell: [243.56, 399.02], capPhoenix: [254.26, 402.09], capMesa: [258.26, 406.56],
+  capGilbert: [258.34, 406.93], capCoolidge: [260.69, 418.81], capEloy: [260.32, 422.68], capMarana: [263.13, 430.79],
+  capAvra: [261.83, 433.82], capSanXavier: [264.18, 437.05], stanfield: [250.75, 417.23],
 };
 
 export const TRANSFER_POINTS = P;
@@ -88,7 +97,11 @@ export const TRANSFERS = [
     routes: { a: [P.dalecarlia] },
     from: [{ fips: '24031', share: 0.39, what: 'the Potomac at Great Falls and Little Falls', at: [[P.greatFalls, 1, 'a']] }],
     to: [{ fips: '11001', mgd: 101 }, { fips: '51013', mgd: 22.15 }, { fips: '51059', mgd: 14.08 }],
-    conf: 'Maryland’s boundary runs along the Virginia shore of the Potomac, and USGS counts every intake on the river in Montgomery County, Maryland. District of Columbia: about 73 percent of the Aqueduct’s water (DC Water, 2015); Arlington and the former Falls Church system: their purchases.',
+    conf: 'Maryland’s boundary runs along the Virginia shore of the Potomac, and USGS counts every intake on the river in Montgomery County, Maryland. The District of Columbia gets about 73 percent of the Aqueduct’s water (DC Water, fiscal 2015). Arlington’s figure is its purchases in 2013, the latest year ICPRB’s 2015 study gives; the former Falls Church system’s is Fairfax Water’s purchases in 2015.',
+    more: [
+      { src: 'DC Water, comprehensive annual financial report, fiscal 2015', url: 'https://www.dcwater.com/sites/default/files/finance/2015%20CAFR.pdf' },
+      { src: 'ICPRB, 2015 Washington Metropolitan Area Water Supply Study, demand appendices', url: 'https://www.potomacriver.org/wp-content/uploads/2015/08/ICP15-04b_Ahmed.pdf' },
+    ],
   },
   {
     id: 'fairfax', name: 'Fairfax Water', short: 'Fairfax Water',
@@ -102,7 +115,8 @@ export const TRANSFERS = [
       { fips: '51153', share: 0.84, what: 'the Occoquan Reservoir', at: [[P.griffith, 1, 'occoquan']] },
     ],
     to: [{ fips: '51059', mgd: 73.97 }, { fips: '51107', mgd: 18 }, { fips: '51153', mgd: 29.9 }, { fips: '51510', mgd: 14.9 }],
-    conf: 'Deliveries by county: Loudoun’s for 2015 (ICPRB, 2020), the others for 2013 (ICPRB, 2015).',
+    conf: 'Loudoun County’s figure is Loudoun Water’s purchases in 2015 (ICPRB, 2020). The others are for 2013 (ICPRB, 2015): Fairfax County’s is Fairfax Water’s retail sales plus its sales to Herndon and Fort Belvoir; Prince William’s, the purchases of its Service Authority and of Virginia American Water’s Dale City system; Alexandria’s, Virginia American Water’s purchases there.',
+    more: [{ src: 'ICPRB, 2015 Washington Metropolitan Area Water Supply Study, demand appendices', url: 'https://www.potomacriver.org/wp-content/uploads/2015/08/ICP15-04b_Ahmed.pdf' }],
   },
   {
     id: 'mwra', name: 'the Massachusetts Water Resources Authority', short: 'MWRA',
@@ -139,7 +153,7 @@ export const TRANSFERS = [
   },
   {
     id: 'va_beach', name: 'Virginia Beach’s Lake Gaston supply', short: 'Lake Gaston pipeline',
-    operator: 'City of Virginia Beach', via: 'a 76-mile pipeline from Lake Gaston',
+    operator: 'City of Virginia Beach', via: 'a pipeline from Lake Gaston',
     mgdSys: 23.5, year: '2015', what: 'withdrawn from Lake Gaston in 2015',
     src: 'Virginia Department of Environmental Quality, status of Virginia’s water resources, 2016',
     url: 'https://rga.lis.virginia.gov/Published/2016/RD309/PDF',
@@ -167,7 +181,7 @@ TRANSFERS.push(
   },
   {
     id: 'okc', name: 'Oklahoma City’s Atoka pipeline', short: 'Atoka pipeline',
-    operator: 'Oklahoma City Water Utilities Trust', via: 'a 100-mile pipeline from Atoka Lake and McGee Creek Reservoir to Lake Stanley Draper',
+    operator: 'Oklahoma City Water Utilities Trust', via: 'a pipeline from Atoka Lake and McGee Creek Reservoir to Lake Stanley Draper',
     mgdSys: 85, year: '2016', what: 'that the existing pipes can move, as KGOU reported in April 2016 (a capacity, not a 2015 flow)',
     src: 'KGOU, Oklahoma City awards contracts for new pipeline to bring water from Atoka (April 14, 2016)',
     url: 'https://www.kgou.org/post/oklahoma-city-awards-contracts-new-pipeline-bring-water-atoka',
@@ -178,7 +192,7 @@ TRANSFERS.push(
   },
   {
     id: 'gwinnett', name: 'Gwinnett County’s Lake Lanier supply', short: 'Lake Lanier',
-    operator: 'Gwinnett County Department of Water Resources', via: 'its intake on Lake Lanier, above Buford Dam',
+    operator: 'Gwinnett County Department of Water Resources', via: 'its intake on Lake Lanier',
     mgdSys: 84, year: '', what: 'drawn from Lake Lanier on an average day (the county gives no year)',
     src: 'Gwinnett County, Lake Lanier fast facts', url: 'https://www.gwinnettcounty.com/aboutgwinnett/FastFacts/LakeLanier',
     routes: { a: [P.lanierPlant] },
@@ -193,7 +207,7 @@ TRANSFERS.push(
     routes: { a: [P.cwaPump, P.lakeHouston] },
     from: [{ fips: '48373', share: 0.99, what: 'Lake Livingston', at: [[P.livingston, 1, 'a']] }],
     to: [{ fips: '48201', all: true }],
-    conf: 'Texas records the city’s Lake Livingston water in Polk County, where the reservoir is. Houston also sells this water to industry along the Ship Channel, which public supply includes in Texas, so it goes here to Harris County. No 2015 figure for the system was found.',
+    conf: 'Texas records the city’s Lake Livingston water in Polk County, where the reservoir is. The Coastal Water Authority supplies it untreated to Houston, Baytown and Deer Park, and to about 100 industries and farms. No 2015 figure for the system was found, so the map sends Polk County’s public-supply withdrawals to Harris County.',
   },
   {
     id: 'detroit', name: 'the Great Lakes Water Authority’s system', short: 'Detroit water',
@@ -254,7 +268,7 @@ TRANSFERS.push(
   },
   {
     id: 'fkaa', name: 'the Florida Keys Aqueduct', short: 'Florida Keys Aqueduct',
-    operator: 'Florida Keys Aqueduct Authority', via: 'a 130-mile pipeline from its wellfield at Florida City to Key West',
+    operator: 'Florida Keys Aqueduct Authority', via: 'a pipeline from its wellfield at Florida City to Key West',
     mgdSys: 17.96, year: '2015', what: 'delivered to Monroe County in 2015',
     src: 'South Florida Water Management District, 2015 estimated water use report; USGS SIR 2019–5147',
     url: 'https://www.sfwmd.gov/sites/default/files/documents/2015_est_water_use_report.pdf',
@@ -299,8 +313,53 @@ TRANSFERS.push(
 );
 
 // USGS's state ratios of public-supply withdrawals to domestic deliveries, corrected where a state's withdrawals include
-// water for another state: Maryland's include about 228 Mgal/d taken from the Potomac for the District and Virginia
+// water for another state: Maryland's include about 227 Mgal/d taken from the Potomac for the District and Virginia
 // (Washington Aqueduct and Fairfax Water), which Virginia's leave out. Virginia's ratio adds back Fairfax Water's
 // Potomac water (88.7) and the Aqueduct's water for Arlington and Falls Church (22.15 + 14.08) to its 697.2 Mgal/d of
 // withdrawals, over its 545.8 Mgal/d of domestic deliveries.
 export const RATIO_FIX = { MD: 1.63, DC: 1.63, VA: 1.51 };
+
+// Water the West's aqueducts bring to counties where USGS counts it: California's and Arizona's 2015 compilations count
+// imported water as surface water withdrawn by the county that receives it, so on the county figures alone Los Angeles
+// draws it from rivers and lakes of its own. The map keeps those county totals and starts that part of the county's
+// surface water at the aqueduct's intake instead, drawn along the aqueduct. Each county's share is a cited delivery
+// (`mgd`), never more than the county's own surface-water withdrawals for that use (`cat`).
+export const IMPORTS = [
+  {
+    id: 'laa', name: 'the Los Angeles Aqueduct', short: 'Los Angeles Aqueduct', operator: 'Los Angeles Department of Water and Power',
+    via: 'the Los Angeles Aqueduct, from its intake on the Owens River', from: 'the Owens River in the Owens Valley',
+    at: [[P.laaIntake, 1, 'a']], routes: { a: [P.laaSylmar] },
+    to: [{ fips: '06037', mgd: 51.5, cat: 'ps' }],
+    year: 'fiscal 2014–15', what: 'supplied to Los Angeles by both barrels together',
+    src: 'Los Angeles Department of Water and Power, Water Supply in Acre Feet (open data)', url: 'https://data.lacity.org/d/qyvz-diiw',
+    conf: 'A drought year: Owens Valley runoff was very low.',
+  },
+  {
+    // CAP's 2015 deliveries, customer by customer, summed by the county and use each went to by
+    // scripts/water-map/cap_deliveries.py (and described in WATER-MAP-METHODOLOGY.md, section 3); the weights in `at`
+    // are acre-feet, for where in the county each part goes
+    id: 'cap', name: 'the Central Arizona Project', short: 'Central Arizona Project', operator: 'Central Arizona Water Conservation District',
+    via: 'the Central Arizona Project canal, from Lake Havasu', from: 'Lake Havasu, on the Colorado River',
+    at: [[P.capIntake, 1, 'phx']],
+    routes: (() => {
+      const head = [P.capBuckskin, P.capBouse, P.capHarcuvar], east = [...head, P.capPhoenix, P.capMesa, P.capGilbert];
+      const south = [...east, P.capCoolidge, P.capEloy, P.capMarana];
+      return {
+        phx: [...head, P.capPhoenix], tonopah: [...head, P.capTonopah], waddell: [...head, P.capTonopah, P.capWaddell], gilbert: east,
+        coolidge: [...east, P.capCoolidge], eloy: [...east, P.capCoolidge, P.capEloy], stanfield: [...east, P.capCoolidge, P.stanfield],
+        marana: south, avra: [...south, P.capAvra], sanXavier: [...south, P.capAvra, P.capSanXavier],
+      };
+    })(),
+    to: [
+      { fips: '04013', cat: 'ps', mgd: 288.5 },
+      { fips: '04013', cat: 'ir', mgd: 76.8, at: [[P.capIntake, 49329, 'gilbert'], [P.capIntake, 20367, 'waddell'], [P.capIntake, 16364, 'tonopah']] },
+      { fips: '04021', cat: 'ir', mgd: 370.0, at: [[P.capIntake, 129998, 'eloy'], [P.capIntake, 66622, 'coolidge'], [P.capIntake, 217791, 'stanfield']] },
+      { fips: '04021', cat: 'ps', mgd: 6.2, at: [[P.capIntake, 1, 'coolidge']] },
+      { fips: '04019', cat: 'ir', mgd: 23.7, at: [[P.capIntake, 8288, 'marana'], [P.capIntake, 10615, 'avra'], [P.capIntake, 7667, 'sanXavier']] },
+    ],
+    year: '2015', what: 'delivered', af: 857128, afAll: 1449209,
+    figNote: 'Each figure sums what CAP reports delivering in 2015 to the county’s water providers, or to its farms and irrigation districts',
+    src: 'Central Arizona Project, monthly deliveries, calendar year 2015', url: 'https://library.cap-az.com/documents/departments/water-operations/monthly-delivery-report-2015.pdf',
+    conf: 'For farms it counts the agricultural pool, the deliveries to the Ak-Chin and Tohono O’odham farms, and water stored at irrigation districts, whose farms use it in place of pumping groundwater. It leaves out water stored underground at recharge sites, which is pumped back up later as groundwater (most of Tucson’s CAP water), and deliveries whose county or use the report leaves unclear, such as those to the Salt River Project, the Gila River Indian Community and the New Magma district. The figures add up to 857,128 of the 1,449,209 acre-feet CAP delivered.',
+  },
+];

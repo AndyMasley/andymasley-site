@@ -1,6 +1,6 @@
 import { fetchPacked, fetchJSON } from '../core/assets.js';
-import { SLAB_MOVE } from '../core/config.js';
-import { TRANSFERS, RATIO_FIX } from '../core/transfers.js';
+import { SLAB_MOVE, plantName } from '../core/config.js';
+import { TRANSFERS, IMPORTS, RATIO_FIX } from '../core/transfers.js';
 import { aqGraph, aqPath } from './aqroute.js';
 
 /**
@@ -65,6 +65,8 @@ export class WaterModel {
     this._move();
     this.n = wu.id.length;
     this.plants = feats.plants; this.placeholders = feats.te_placeholders;
+    // (plant names as a reader would say them; the EIA's own spelling stays searchable)
+    for (const p of this.plants) { if (p.eia_name == null) { p.eia_name = p.name; p.name = plantName(p.name); } }
     this._derive();
     return this;
   }
@@ -178,6 +180,8 @@ export class WaterModel {
     const A = this.anchors;
     // each county's public-water hub and built-up area, and its public-supply streams, for the transfers below
     const hubs = new Array(this.n), urbs = new Array(this.n), psIn = new Array(this.n), psDel = new Array(this.n);
+    // each county's own surface intakes by use, and its fields, for the West's imported water (core/transfers.js IMPORTS)
+    const inBy = new Array(this.n), fields = new Array(this.n);
     const pick = (a, ...types) => { for (const t of types) if (a[t] && a[t].length) return a[t]; return null; };
     const nearestTo = (list, x, z) => { let best = list[0], bd = Infinity; for (const p of list) { const d = (p[0] - x) ** 2 + (p[1] - z) ** 2; if (d < bd) { bd = d; best = p; } } return best; };
     for (let i = 0; i < this.n; i++) {
@@ -224,6 +228,8 @@ export class WaterModel {
         }
       }
       for (let q = first; q < out.length; q++) if (out[q].cat === 'ps') (psIn[i] || (psIn[i] = [])).push(out[q]);
+      for (let q = first; q < out.length; q++) { const s = out[q]; if (s.kind !== KIND.intake || s.well || s.src === SRC.sea || s.src === SRC.reclaimed) continue; const o = inBy[i] || (inBy[i] = {}); (o[s.cat] || (o[s.cat] = [])).push(s); }
+      fields[i] = use.ir;
       if (c.W.ps > 0 && urb.length > 1) { const d = { county: i, cat: 'ps', kind: KIND.deliver, src: SRC.delivered, vol: c.W.ps, from: [plantPt], to: urb }; out.push(d); psDel[i] = d; }
       // irrigation (crops, and golf courses where USGS split them): reclaimed water in, vapour up, the rest back
       for (const k of ['ir', 'go']) {
@@ -267,6 +273,7 @@ export class WaterModel {
       plantStreams(pseudo, h.county, loc);
     }
     this._transfers(out, hubs, urbs, psIn, psDel);
+    this._imports(out, hubs, inBy, fields);
     return out;
   }
 
@@ -286,6 +293,37 @@ export class WaterModel {
       if (p) for (let k = 1; k < p.length; k++) out.push(p[k]); else out.push(b);
     }
     return out;
+  }
+  /**
+   * The West's imported water (core/transfers.js IMPORTS): USGS counts it in the county that receives it, as surface
+   * water, so the county keeps its totals and that part of its surface intakes for the use starts at the aqueduct's
+   * intake instead, drawn along the aqueduct. this.imp lists, by county, what came in: { sys, vol, cat, what }.
+   */
+  _imports(out, hubs, inBy, fields) {
+    this.imp = new Map();
+    for (const sys of IMPORTS) {
+      for (const t of sys.to) {
+        const i = this.ix.get(t.fips); if (i == null || !hubs[i]) continue;
+        const cat = t.cat || 'ps';
+        const surf = ((inBy[i] && inBy[i][cat]) || []).filter((s) => !s.route);
+        const sfT = surf.reduce((a, s) => a + s.vol, 0), vol = Math.min(t.mgd, sfT);
+        if (!(vol > 0.05)) continue;
+        for (const s of surf) s.vol *= (sfT - vol) / sfT;
+        let a = this.imp.get(i); if (!a) this.imp.set(i, (a = [])); a.push({ sys, vol, cat, what: t.what || sys.from });
+        // (a county can take a system's water by its own way: t.at overrides the system's intakes and routes)
+        const at = t.at || sys.at, wsum = at.reduce((q, x) => q + x[1], 0) || 1;
+        for (const [pt, w, rk] of at) {
+          const v = vol * w / wsum; if (v < 0.02) continue;
+          const way = [pt, ...((sys.routes && sys.routes[rk]) || [])];
+          const last = way[way.length - 1];
+          // public supply ends at the county's water works; crops at the fields nearest the aqueduct's end
+          let dest = hubs[i];
+          if (cat !== 'ps' && fields[i] && fields[i].length) { let bd = Infinity; for (const f of fields[i]) { const d = (f[0] - last[0]) ** 2 + (f[1] - last[1]) ** 2; if (d < bd) { bd = d; dest = f; } } }
+          const route = densify(this._follow([...way, dest]), 1.2);
+          out.push({ county: i, cat, kind: KIND.intake, src: SRC.river, vol: v, from: [pt], to: [dest], route, xfer: sys.id, imp: true });
+        }
+      }
+    }
   }
   _transfers(out, hubs, urbs, psIn, psDel) {
     this.xIn = new Map(); this.xOut = new Map(); this.xTaken = new Map();

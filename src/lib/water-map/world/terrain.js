@@ -73,7 +73,7 @@ export function createTerrainMaterial(slab, shared, nlcd) {
     uLitMix: shared.uTerrainLitMix,
     uFlat: shared.uTerrainFlat,
     uFocus: shared.uFocus,
-    uDim: shared.uDim,
+    uDim: shared.uDim, uVeil: shared.uVeil,
     uSunDir: shared.uSunDir, uSkyCol: shared.uSkyCol, uSunCol: shared.uSunCol, uTime: shared.uTime, uRipple: shared.uRipple,
     uLakeDeep: { value: new THREE.Color().setRGB(0.012, 0.062, 0.115, THREE.LinearSRGBColorSpace) },
     uCounty: { value: slab.countyTex || null }, uHover: shared.uHoverCounty, uSel: shared.uSelCounty, uHasCounty: { value: slab.countyTex ? 1 : 0 },
@@ -106,7 +106,7 @@ uniform vec4 uColorMap;
 uniform float uLitMix;
 uniform float uFlat;
 uniform vec4 uFocus;   // x, z, radius, strength: brightens a selected region
-uniform float uDim;
+uniform float uDim, uVeil;
 uniform vec3 uSunDir, uSkyCol, uSunCol, uLakeDeep;
 uniform float uTime, uRipple, uNight, uCamDist;
 uniform sampler2D uCounty;
@@ -222,6 +222,8 @@ float countyAt(vec2 uv) {
         if (uNight > 0.001) outgoingLight += cityLights(devI, vWorldPos.xz, pxw) * uNight * uLights * (1.0 - 0.6 * uAqMode) * (isoV >= 0.0 ? mix(1.0, 0.35, uIsoAmt) : 1.0);
         // an isolated use glows faintly at night where it is heaviest
         if (isoV > 0.0) outgoingLight += uIsoCol * isoV * isoV * (0.004 + 0.05 * uNight);
+        // a veil by day, so the water drawn over the land outshines it: the land a little greyer and darker
+        if (uVeil > 0.001) { float lum = dot(outgoingLight, vec3(0.2126, 0.7152, 0.0722)); outgoingLight = mix(outgoingLight, vec3(lum), 0.4 * uVeil) * (1.0 - 0.25 * uVeil); }
         // state lines: ink by day, a pale hairline at night
         outgoingLight = mix(outgoingLight, mix(vec3(0.035, 0.035, 0.03), vec3(0.62, 0.66, 0.72) * 0.55, uNight), stLine * uStateLines * (1.0 - lakeW) * mix(0.42, 0.30, uNight));
         outgoingLight *= 1.0 - uDim;

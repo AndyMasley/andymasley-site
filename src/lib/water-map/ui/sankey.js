@@ -84,7 +84,16 @@ export function sankeySVG({ sources, uses, links, width = 330, unit = '', fmt = 
  * (consumed, returned, or, for the uses USGS did not estimate in 2015, not known). Bands from a source take the
  * source's colour, bands to a fate the use's, so each use can be followed from one end to the other.
  */
-export function sankey3SVG({ sources, uses, fates, links1, links2, width = 330, fmt = (v) => v.toFixed(0) }) {
+export function sankey3SVG({ sources, uses, fates, links1, links2, width = 330, fmt = (v) => v.toFixed(0), pick = false, hi = null, pin = null, cons = false }) {
+  // pick: the use picker's version, whose uses and sources are buttons; hi: the use shown alone, the others dimmed;
+  // pin: the band held on the map ({ t: use, s: source }); cons: the water consumed is what counts, the rest steps back
+  const dimUse = (k) => (hi && k !== hi ? 0.25 : 1);
+  const pinned = (s, t) => pin && pin.t === t && (pin.s || null) === (s || null);
+  // (the bands of the water held on the map stand out, the rest step back: a source held lights all of its bands, a
+  // use held without a source all the bands into it)
+  const lit1 = (s, t) => !!pin && (pin.t === '*' ? pin.s === s : pinned(s, t) || (!pin.s && pin.t === t));
+  const lit2 = (u) => !!pin && pin.t === u && !pin.s;
+  const back = (on) => (pin && !on ? 0.4 : 1);
   const L = Math.round(Math.min(96, width * 0.27)), R = Math.round(Math.min(92, width * 0.26)), bar = 7;
   // (the uses' labels sit in the second gap, so it gets the larger share)
   const span = width - L - R - 3 * bar, g1 = Math.round(span * 0.26), g2 = span - g1;
@@ -112,25 +121,29 @@ export function sankey3SVG({ sources, uses, fates, links1, links2, width = 330, 
     for (const l of [...live].sort((p, q) => oa(p.s) - oa(q.s))) { const b = B[l.t], p = pos.get(l); p.hb = b.h * (l.value / b.value); p.yb = b.y + (offB[l.t] || 0); offB[l.t] = (offB[l.t] || 0) + p.hb; }
     return { live, pos };
   };
-  const band = (xa, xb, p, color, op, title, ds, dt) => {
+  const band = (xa, xb, p, color, op, title, ds, dt, on) => {
     const xm = (xa + xb) / 2;
-    return `<path${ds ? ` data-s="${ds}"` : ''}${dt ? ` data-t="${dt}"` : ''} d="M${xa},${p.ya.toFixed(1)} C${xm},${p.ya.toFixed(1)} ${xm},${p.yb.toFixed(1)} ${xb},${p.yb.toFixed(1)} L${xb},${(p.yb + p.hb).toFixed(1)} C${xm},${(p.yb + p.hb).toFixed(1)} ${xm},${(p.ya + p.ha).toFixed(1)} ${xa},${(p.ya + p.ha).toFixed(1)} Z" fill="${color}" fill-opacity="${op}"><title>${esc(title)}</title></path>`;
+    return `<path${ds ? ` data-s="${ds}"` : ''}${dt ? ` data-t="${dt}"` : ''}${on ? ' class="pin"' : ''} d="M${xa},${p.ya.toFixed(1)} C${xm},${p.ya.toFixed(1)} ${xm},${p.yb.toFixed(1)} ${xb},${p.yb.toFixed(1)} L${xb},${(p.yb + p.hb).toFixed(1)} C${xm},${(p.yb + p.hb).toFixed(1)} ${xm},${(p.ya + p.ha).toFixed(1)} ${xa},${(p.ya + p.ha).toFixed(1)} Z" fill="${color}" fill-opacity="${on ? 0.9 : op}"><title>${esc(title)}</title></path>`;
   };
   let paths = '';
   const A1 = stack(links1, SK, UK, ord(S), ord(U));
-  for (const l of [...A1.live].sort((a, b) => b.value - a.value)) paths += band(X0 + bar, X1, A1.pos.get(l), SK[l.s].color, 0.38, `${SK[l.s].name} to ${UK[l.t].name}: ${fmt(l.value)}`, l.s, l.t);
+  for (const l of [...A1.live].sort((a, b) => b.value - a.value)) paths += band(X0 + bar, X1, A1.pos.get(l), SK[l.s].color, 0.38 * dimUse(l.t) * (cons ? 0.45 : 1) * back(lit1(l.s, l.t)), `${SK[l.s].name} to ${UK[l.t].name}: ${fmt(l.value)}`, l.s, l.t, lit1(l.s, l.t));
   const A2 = stack(links2, UK, FK, ord(U), ord(F));
-  for (const l of [...A2.live].sort((a, b) => b.value - a.value)) paths += band(X1 + bar, X2, A2.pos.get(l), UK[l.s].color, 0.26, `${UK[l.s].name}, ${FK[l.t].name.toLowerCase()}: ${fmt(l.value)}`, null, l.s);
+  for (const l of [...A2.live].sort((a, b) => b.value - a.value)) paths += band(X1 + bar, X2, A2.pos.get(l), UK[l.s].color, 0.26 * dimUse(l.s) * (cons ? (l.t === 'cu' ? 2.6 : 0.4) : 1) * back(lit2(l.s)), `${UK[l.s].name}, ${FK[l.t].name.toLowerCase()}: ${fmt(l.value)}`, null, l.s, lit2(l.s));
   let nodes = '';
   const elbow = (xa, ya, xb, yb) => `<path d="M${xa},${ya.toFixed(1)} H${((xa + xb) / 2).toFixed(1)} V${yb.toFixed(1)} H${xb}" stroke="rgba(255,247,232,.32)" fill="none"/>`;
   // sources and fates: two-line labels outside the bars
   const side = (list, x, anchorEnd) => {
     const ys = spread(list.map((a) => a.y + a.h / 2), 26, 10, H - 6);
     list.forEach((a, i) => {
-      nodes += `<rect x="${x}" y="${a.y.toFixed(1)}" width="${bar}" height="${a.h.toFixed(1)}" fill="${a.color}"${a.key && anchorEnd ? ` data-t="*" data-s="${a.key}"` : ''}/>`;
       const cy = ys[i], c0 = a.y + a.h / 2, tx = anchorEnd ? x - 6 : x + bar + 6;
+      // (in the picker a source is a button: it holds all of that source's water on the map)
+      const btn = pick && anchorEnd && a.key, on = btn && pinned(a.key, '*');
+      if (btn) nodes += `<g class="wm-sk-src${on ? ' pin' : ''}" data-t="*" data-s="${a.key}" tabindex="0" role="button" aria-pressed="${!!on}" aria-label="${esc(`${a.name}, ${fmt(a.value)}: show where this water goes`)}"><rect x="0" y="${(Math.min(cy, c0) - 13).toFixed(1)}" width="${x + bar}" height="${(Math.abs(cy - c0) + 26).toFixed(1)}" fill="transparent"/>`;
+      nodes += `<rect x="${x}" y="${a.y.toFixed(1)}" width="${bar}" height="${a.h.toFixed(1)}" fill="${a.color}"${a.key && anchorEnd && !pick ? ` data-t="*" data-s="${a.key}"` : ''}${cons && !anchorEnd && a.key !== 'cu' ? ' fill-opacity="0.45"' : ''}/>`;
       if (Math.abs(cy - c0) > 3) nodes += anchorEnd ? elbow(x - 1, c0, x - 5, cy) : elbow(x + bar + 1, c0, x + bar + 5, cy);
       nodes += `<text x="${tx}" y="${(cy - 1.5).toFixed(1)}" text-anchor="${anchorEnd ? 'end' : 'start'}">${esc(a.name)}</text><text class="v" x="${tx}" y="${(cy + 10).toFixed(1)}" text-anchor="${anchorEnd ? 'end' : 'start'}">${esc(fmt(a.value))}</text>`;
+      if (btn) nodes += '</g>';
     });
   };
   side(S, X0, true);
@@ -138,11 +151,15 @@ export function sankey3SVG({ sources, uses, fates, links1, links2, width = 330, 
   // uses: one line each, just right of their bars, over the bands to the fates (a halo keeps them legible)
   const uy = spread(U.map((u) => u.y + u.h / 2), 13, 6, H - 2);
   U.forEach((u, i) => {
-    nodes += `<rect data-t="${u.key}" x="${X1}" y="${u.y.toFixed(1)}" width="${bar + 70}" height="${Math.max(8, u.h).toFixed(1)}" fill="transparent"/><rect x="${X1}" y="${u.y.toFixed(1)}" width="${bar}" height="${u.h.toFixed(1)}" fill="${u.color}"/>`;
-    const cy = uy[i], c0 = u.y + u.h / 2, tx = X1 + bar + 5;
+    const cy = uy[i], c0 = u.y + u.h / 2, tx = X1 + bar + 5, op = dimUse(u.key);
+    // (in the picker a use is a button: it shows that use's water alone)
+    if (pick) nodes += `<g class="wm-sk-use${hi === u.key ? ' on' : ''}" data-u="${u.key}" tabindex="0" role="button" aria-pressed="${hi === u.key}" aria-label="${esc(`${u.name}, ${fmt(u.value)}: ${hi === u.key ? 'show every use' : 'show only this water'}`)}"><rect x="${X1 - 2}" y="${(Math.min(u.y, cy - 7) - 1).toFixed(1)}" width="${bar + 96}" height="${(Math.max(u.y + Math.max(8, u.h), cy + 7) - Math.min(u.y, cy - 7) + 2).toFixed(1)}" fill="transparent"/>`;
+    else nodes += `<rect data-t="${u.key}" x="${X1}" y="${u.y.toFixed(1)}" width="${bar + 70}" height="${Math.max(8, u.h).toFixed(1)}" fill="transparent"/>`;
+    nodes += `<rect x="${X1}" y="${u.y.toFixed(1)}" width="${bar}" height="${u.h.toFixed(1)}" fill="${u.color}" fill-opacity="${op}"/>`;
     if (Math.abs(cy - c0) > 3) nodes += elbow(X1 + bar + 1, c0, tx - 1, cy);
     // a swatch in the use's colour, so a label pushed off its bar still says which bar it is
-    nodes += `<rect x="${tx}" y="${(cy - 3).toFixed(1)}" width="6" height="6" fill="${u.color}"/><text class="halo" x="${tx + 9}" y="${(cy + 3.5).toFixed(1)}">${esc(u.name)} <tspan class="v">${esc(fmt(u.value))}</tspan></text>`;
+    nodes += `<rect x="${tx}" y="${(cy - 3).toFixed(1)}" width="6" height="6" fill="${u.color}" fill-opacity="${op}"/><text class="halo${op < 1 ? ' dim' : ''}" x="${tx + 9}" y="${(cy + 3.5).toFixed(1)}">${esc(u.name)} <tspan class="v">${esc(fmt(u.value))}</tspan></text>`;
+    if (pick) nodes += '</g>';
   });
   const top = 18;
   return `<svg class="wm-sankey wm-sankey3" width="${width}" height="${H + top + 18}" viewBox="0 -${top} ${width} ${H + top + 18}" role="img" aria-label="Where the water came from, what it was used for and what became of it">

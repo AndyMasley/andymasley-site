@@ -1,6 +1,8 @@
 import { CATS, CAT, AP_STATE } from './core/config.js';
 import { fetchJSON, fetchPixels, setDataBase } from './core/assets.js';
 import { WaterModel, CAT_KEYS } from './flow/model.js';
+import { IMPORTS } from './core/transfers.js';
+import { COUNTY_NOTES, propIrNote } from './core/flows_data.js';
 import { esc, nf, mgd, mgdLabel, pct, ord } from './ui/fmt.js';
 
 /**
@@ -144,7 +146,12 @@ export async function startFlatMap(root, { dataBase = '/water-map/data/', reason
       <p class="wm-sub">${esc(sentence(i))}</p>`;
     if (rows.length) html += `<h5>What it was used for</h5>${bars(rows, rows[0][1])}`;
     if (srcRows.length) html += `<h5>Where it came from</h5>${bars(srcRows, Math.max(...srcRows.map((r) => r[1])))}`;
+    // the West's imported water, which USGS counts in this county's own surface withdrawals (as the 3D map draws it)
+    const brought = IMPORTS.flatMap((y) => y.to.filter((t) => t.fips === c.id).map((t) => [y, Math.min(t.mgd, (c.src[t.cat || 'ps'] || {}).sf || 0), t]));
+    for (const [y, v, t] of brought) if (v > 0.05) html += `<p class="wm-note">Of its water from rivers and lakes${t.cat && t.cat !== 'ps' ? ` for ${esc(CAT[t.cat].name.toLowerCase())}` : ''}, ${mgd(v)} million gallons a day was brought in through ${esc(y.name)} from ${esc(t.what || y.from)}.</p>`;
     if (cu > 0) html += `<p class="wm-note">Crops, golf courses and power plants here consumed ${mgd(cu)} million gallons a day, the uses USGS estimated consumption for.</p>`;
+    if (COUNTY_NOTES[c.id]) html += `<p class="wm-note">${esc(COUNTY_NOTES[c.id])}</p>`;
+    else if (m.propIr.has(i)) html += `<p class="wm-note">${esc(propIrNote(m.propIr.size - 1))}</p>`;
     if (strain && strain.sui[i] >= 0) html += `<h5>Strain on its rivers and streams</h5><p class="wm-sub">In an average month of water years 2010 to 2020, ${Math.round(100 * strain.sui[i])} percent of the usual streamflow in its watersheds was missing, because of dry spells or because it was consumed (USGS surface water supply and use index).</p>`;
     if (history && history.t[i][4] > 0.05 && history.t[i][6] != null) html += `<h5>Since 2005</h5><p class="wm-sub">It withdrew ${mgd(history.t[i][4])} Mgal/d in 2005 and ${mgd(history.t[i][6])} in 2015 (USGS county estimates).</p>`;
     html += `<p class="wm-note">Million gallons a day, USGS county estimates for 2015.</p>`;
