@@ -85,6 +85,7 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px s
 .crest .ct { display: flex; flex-direction: column; min-width: 0; }
 .townname { font-weight: 600; font-size: 16.5px; line-height: 1.15; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .chapterline { font-size: 12.5px; color: var(--band-ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.crestdate { display: none; }
 .crest:hover .townname { text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 1px; }
 .when { display: flex; align-items: center; gap: 10px; flex: none; }
 .when canvas { width: 30px; height: 30px; }
@@ -334,6 +335,17 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px s
 .seg button:hover { background: var(--card-2); }
 .seg button.on { background: var(--ink); color: var(--card); border-color: var(--ink); }
 .seg button img { width: 24px; height: 24px; }
+.jrow { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 5px 0; }
+.jl { display: inline-flex; align-items: center; gap: 6px; font-size: 13.5px; }
+.jsw { width: 10px; height: 10px; border-radius: 2px; border: 1px solid rgba(28, 41, 36, 0.4); flex: none; }
+.jds { display: flex; gap: 3px; }
+.jd { width: 34px; height: 30px; padding: 0; border: 1px solid var(--rule); border-radius: 5px; background: var(--card); color: var(--ink-3); display: grid; place-items: center; cursor: pointer; }
+.jd svg { width: 20px; height: 20px; display: block; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.jd.to { color: var(--ink); }
+.jd:hover { background: var(--card-2); }
+.jd.on { background: var(--jc); border-color: var(--ink); color: var(--ink); }
+.jd[disabled] { opacity: 0.4; cursor: default; background: var(--card-2); }
+.jnote { font-size: 12.5px !important; margin-top: 4px !important; }
 .btns { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 14px; }
 .btn { border: 1.5px solid var(--ink); background: var(--card); color: var(--ink); padding: 6px 12px; border-radius: 5px; cursor: pointer; font-size: 13.5px; font-weight: 500; }
 .btn:hover { background: var(--card-2); }
@@ -521,6 +533,7 @@ table.led canvas { width: 120px; height: 24px; vertical-align: middle; }
 .titlefoot { font-size: 13px; color: rgba(242, 244, 236, 0.66); }
 #title .confirmline { color: #f2f4ec; }
 .titlenote { font-size: 14px; line-height: 1.45; color: #f0c062; max-width: 44ch; margin: 0; }
+.titletip { font-size: 13.5px; line-height: 1.45; color: rgba(242, 244, 236, 0.86); max-width: 40ch; margin: 0; }
 .oops { position: fixed; left: 50%; top: 72px; transform: translateX(-50%); z-index: 60; max-width: min(460px, calc(100% - 32px)); background: #f6efe0; color: #1c2924; border: 1.5px solid #ae3d2c; border-radius: 8px; padding: 10px 12px 12px; font: 13.5px/1.4 "Jost", system-ui, sans-serif; box-shadow: 0 10px 28px rgba(10, 16, 13, 0.35); }
 .oops .ot { font-weight: 500; }
 .oops .od { width: 100%; height: 90px; margin-top: 8px; font: 12px ui-monospace, monospace; }
@@ -555,45 +568,108 @@ table.led canvas { width: 120px; height: 24px; vertical-align: middle; }
   .datelabel { min-width: 0; }
   .when canvas { display: none; }
 }
+/* a phone held upright: the valley gets most of the screen. The band is two rows (the town, its date, the speed and the
+   menu; then the people and the stores), the plan is a line or two under it, and the drawer is a slim shelf */
 @media (max-width: 760px) and (min-height: 521px), (max-width: 560px) {
-  .band { flex-wrap: wrap; gap: 6px 10px; padding-top: calc(6px + env(safe-area-inset-top, 0px)); }
+  .band { flex-wrap: wrap; gap: 5px 8px; min-height: 0; padding: calc(5px + env(safe-area-inset-top, 0px)) max(10px, env(safe-area-inset-right, 0px)) 5px max(10px, env(safe-area-inset-left, 0px)); }
+  .band::after { content: ""; order: 5; flex-basis: 100%; height: 0; }
   .band .sep { display: none; }
-  .crest { flex: 1 1 auto; max-width: none; order: 1; }
-  .crest .mark { width: 26px; height: 26px; }
-  .bandbtns { order: 2; }
-  .bandbtn { padding: 4px 9px; font-size: 13px; }
-  .when { order: 3; flex: 1 1 auto; }
-  .peoplebox { order: 4; min-width: 0; }
-  .tierbar { width: 90px; }
-  .powerbox { order: 5; }
-  .stores { order: 6; flex: 1 1 100%; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; touch-action: pan-x; padding-bottom: 2px; }
+  .crest { order: 1; flex: 1 1 auto; max-width: none; gap: 8px; padding: 0; }
+  .crest .mark { width: 28px; height: 28px; }
+  .townname { font-size: 15px; }
+  .crestdate { display: block; font-size: 12.5px; line-height: 1.25; color: var(--band-ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .when { order: 2; }
+  .when .datelabel { display: none; }
+  .speed button { width: 31px; height: 28px; }
+  .bandbtns { order: 3; }
+  #bMap { display: none; }
+  .bandbtn { padding: 5px 11px; font-size: 13px; }
+  .peoplebox { order: 6; min-width: 0; gap: 3px; padding: 0 10px 0 0; border-right: 1px solid rgba(233, 237, 226, 0.16); border-radius: 0; }
+  .peoplebox .ppl { font-size: 13.5px; }
+  .peoplebox.want .ppl::after { content: ""; display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--band-warn); margin-left: 5px; vertical-align: 1px; }
+  .tierbar { width: auto; height: 4px; }
+  .newcomers { display: none; }
+  .powerbox { order: 7; min-width: 0; gap: 3px; padding-right: 10px; border-right: 1px solid rgba(233, 237, 226, 0.16); }
+  .powerbox .pw { font-size: 13px; }
+  .powerbox .pb { height: 4px; }
+  .stores { order: 8; flex: 1 1 0; min-width: 0; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; touch-action: pan-x; gap: 2px 12px; }
   .stores::-webkit-scrollbar { display: none; }
   .chip { flex: none; }
-  .speed button { width: 36px; height: 32px; }
-  .bandbtn { padding: 6px 11px; }
-  .tab { padding: 8px 11px 7px; }
-  .plan { width: 100%; max-height: 34%; border-right: none; border-radius: 0 0 10px 10px; padding-right: env(safe-area-inset-right, 0px); }
-  .plan > section { padding: 9px 14px; }
-  .plan > .tour { padding: 10px 14px 11px; }
+  .chip img { width: 24px; height: 24px; }
+  .chip .n { font-size: 14px; }
+  .stores .bandbtn { padding: 3px 9px; font-size: 12.5px; }
+  .plan { width: 100%; max-height: 40%; border-right: none; border-radius: 0 0 10px 10px; padding-right: env(safe-area-inset-right, 0px); }
+  .plan > section { padding: 7px 12px 8px; }
+  /* the study on one line, its progress a hairline along the bottom; what it is using shows only when something is missing */
+  .plan > .study { position: relative; }
+  .study .r1 { gap: 8px; }
+  .study .r1 img { width: 24px; height: 24px; }
+  .study .nm { font-size: 13.5px; }
+  .study .nm small { display: none; }
+  .study .frac { font-size: 12.5px; }
+  .study .meter { position: absolute; left: 0; right: 0; bottom: 0; height: 3px; border-radius: 0; margin: 0; }
+  .study .packs { margin-top: 4px; }
+  .study .packs:not(:has(.miss)) { display: none; }
+  .study .unl { margin-top: 4px; }
+  .study .unl img { width: 20px; height: 20px; }
+  /* with no school yet the goals already say to build one */
+  .plan > .study.quiet { display: none; }
+  .goals header { margin-bottom: 4px; }
+  .goals h2 { font-size: 14.5px; }
+  .goal .gt { font-size: 13px; }
+  .goal { padding: 5px 0; }
+  .sky .r1 img, .happen .r1 img { width: 24px; height: 24px; }
+  .sky .nm, .happen .nm { font-size: 13.5px; }
+  .sky p, .happen p { margin-top: 4px; }
+  .plan > .tour { padding: 8px 12px 9px; }
   .plan.touring > .study.idle { display: none; }
-  .tour p { font-size: 13px; line-height: 1.4; }
-  .tour .tb { margin-top: 8px; }
+  .plan.touring > .goals:not(.coached) { display: none; }
+  .tour .th { gap: 2px 8px; flex-wrap: wrap; }
+  .tour .th b { font-size: 14px; }
+  .tour .th .skip { margin-left: 4px; font-size: 12px; }
+  .tour p { font-size: 12.5px; line-height: 1.38; margin-top: 4px; }
+  .tour p.aside { font-size: 12px; }
+  .tour .tb { margin-top: 7px; }
+  .tour .btn { padding: 4px 12px; font-size: 13px; }
   #hud.inspecting .plan { display: none; }
-  .placard { left: 0; width: auto; top: auto; bottom: var(--drawer-h); max-height: 50%; border-right: none; border-left: none; border-bottom: none; border-radius: 10px 10px 0 0; border-top: 1.5px solid var(--ink); padding-left: env(safe-area-inset-left, 0px); }
+  /* what is picked has the bottom of the screen to itself, in place of the drawer */
+  .placard { left: 0; width: auto; top: auto; bottom: 0; max-height: 46%; border-right: none; border-left: none; border-bottom: none; border-radius: 10px 10px 0 0; border-top: 1.5px solid var(--ink); padding-left: env(safe-area-inset-left, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+  #hud.inspecting .drawer { display: none; }
+  .phead { padding: 8px 42px 9px 12px; }
+  .phead img { width: 38px; height: 38px; }
+  .phead h3 { font-size: 16.5px; }
+  .pbody { padding: 10px 14px 12px; }
+  .pbody > .btns:last-child { margin: 12px -14px -12px; padding: 8px 14px 10px; }
   .drawer { left: 0; right: 0; transform: none; width: auto; max-width: none; }
-  .tabs { padding: 0 8px; }
-  .tab { font-size: 12.5px; }
-  .tools { border-radius: 0; border-left: none; border-right: none; }
-  .tool { width: 66px; }
-  .tool > img, .tool > svg { width: 42px; height: 42px; }
-  .tool .nm { font-size: 11.5px; }
-  .toast { white-space: normal; text-align: center; font-size: 13px; }
-  .toasts { width: calc(100% - 32px); align-items: stretch; }
-  .story-line { width: calc(100% - 32px); min-width: 0; font-size: 14.5px; top: auto; bottom: calc(var(--drawer-h) + 70px); }
-  #hud.inspecting .story-line, #hud.legending .story-line, #hud.tooling .story-line { display: none; }
+  .tabs { padding: 0 6px; gap: 2px; }
+  .tab { font-size: 12.5px; padding: 7px 11px 6px; }
+  .tab.on { padding-bottom: 7px; }
+  .tabfold { width: 38px; height: 29px; }
+  .tools { border-radius: 0; border-left: none; border-right: none; padding: 5px 6px calc(5px + env(safe-area-inset-bottom, 0px)); gap: 0; }
+  .tool { width: auto; min-width: 60px; padding: 3px 6px 4px; gap: 1px; }
+  .tool > img, .tool > svg { width: 38px; height: 38px; }
+  .tool .nm { font-size: 11.5px; white-space: nowrap; }
+  .tool .lock { top: 2px; right: 4px; width: 17px; height: 17px; }
+  .tool .newdot { top: 4px; right: 5px; }
+  .toolsep { margin: 6px 4px; }
+  /* the sign for the tool in hand: one slim strip over the drawer, which fades once it has been read */
+  .toolsign { display: block; left: 8px; right: 8px; transform: none; max-width: none; text-align: center; bottom: calc(var(--drawer-h) + 6px); padding: 6px 12px 7px; font-size: 12.5px; line-height: 1.38; transition: opacity 0.8s ease; }
+  .toolsign > * { display: inline; }
+  .toolsign > * + * { margin-left: 5px; }
+  .toolsign.quiet { opacity: 0; }
+  .toast { white-space: normal; text-align: center; font-size: 13px; padding: 6px 12px; }
+  .toasts { width: calc(100% - 24px); align-items: stretch; bottom: calc(var(--drawer-h) + 8px); }
+  #hud.tooling .toasts { bottom: calc(var(--drawer-h) + 52px); }
+  /* the chronicle's lines come in just under the plan, small enough to leave the valley in view */
+  .story-line { width: calc(100% - 24px); min-width: 0; font-size: 13.5px; line-height: 1.42; padding: 7px 12px 8px; top: calc(var(--plan-b, var(--band-h)) + 8px); }
+  #hud.legending .story-line { top: calc(var(--plan-b, var(--band-h)) + 8px); }
   .legend { flex-wrap: wrap; top: auto; bottom: calc(var(--drawer-h) + 10px); left: 12px; right: 12px; transform: none; max-width: none; border: 1.5px solid var(--ink); border-radius: 8px; gap: 8px 14px; }
   #hud.legending .toasts { bottom: calc(var(--drawer-h) + 96px); }
-  .menu { right: 0 !important; left: 0 !important; min-width: 0; border-radius: 0 0 10px 10px; border-left: none; border-right: none; }
+  .menu { right: 0 !important; left: 0 !important; min-width: 0; max-height: calc(100% - var(--band-h)); overflow: auto; touch-action: pan-y; border-radius: 0 0 10px 10px; border-left: none; border-right: none; }
+  body.touch #hud .menu button { padding-top: 8px; padding-bottom: 8px; }
+  .menu .mapviews { display: grid; grid-template-columns: 1fr 1fr; }
+  .menu .mapviews button { grid-template-columns: 18px 1fr; padding-left: 16px; }
+  .menu .mh { font-size: 12.5px; color: var(--ink-2); padding: 4px 16px 2px; }
   .titleblock { margin-left: 0; gap: 14px; }
   .titleblock .lede { font-size: 15.5px; }
   .sbody { padding: 12px 16px 16px; }
@@ -646,7 +722,7 @@ table.led canvas { width: 120px; height: 24px; vertical-align: middle; }
   .namefield { grid-column: 1; }
   .namefield input { font-size: 17px; padding: 6px 10px; }
   .titlebtns, #confirmNew { grid-column: 2; }
-  .titlenote, .titlefoot { grid-column: 1 / -1; }
+  .titlenote, .titletip, .titlefoot { grid-column: 1 / -1; }
   .bigbtn { padding: 9px 20px; font-size: 15px; }
   #card { padding-block: calc(14px + env(safe-area-inset-top, 0px)) calc(14px + env(safe-area-inset-bottom, 0px)); }
   .cardinner { gap: 10px; }
@@ -674,7 +750,7 @@ button, .tab, .tool, .chip, a { -webkit-tap-highlight-color: transparent; }
     <header class="band" id="band">
       <button class="crest" id="crest" title="Read the chronicle (J)">
         <canvas class="mark" id="crestMark" width="64" height="64"></canvas>
-        <span class="ct"><span class="townname" id="townName">Fernmere</span><span class="chapterline" id="chapterLine">Chapter one</span></span>
+        <span class="ct"><span class="townname" id="townName">Fernmere</span><span class="chapterline" id="chapterLine">Chapter one</span><span class="crestdate" id="crestDate"></span></span>
       </button>
       <span class="sep"></span>
       <div class="when">
@@ -735,6 +811,7 @@ button, .tab, .tool, .chip, a { -webkit-tap-highlight-color: transparent; }
         <button class="bigbtn ghost" id="bReroll">Another valley</button>
       </div>
       <p class="titlenote" id="titleNote" hidden></p>
+      <p class="titletip" id="titleTip" hidden></p>
       <div class="confirmline" id="confirmNew" hidden><span>Start over? Your saved settlement will be replaced.</span><button class="btn primary" id="bConfirmNew">Start over</button><button class="btn" id="bCancelNew">Keep it</button></div>
       <div class="titlefoot">Sound on, if you can. Drag to look around, scroll to zoom.</div>
     </div>
@@ -5215,6 +5292,88 @@ function rotateEntity(e, dir) {
   markChanDirty(); EV.emit('change', e);
 }
 
+/* ---------- junctions: where their two outlets point ---------- */
+// whether whatever is on side d of hex t would take goods from a channel piece there
+function sideTakes(t, d, self) {
+  const n = nbr(t, d); if (!n || n.outer) return false;
+  const o = entAtTile(n); if (!o) return false;
+  const def = BUILD[o.type]; if (!def || !linkOK(self, t, o, n)) return false;
+  const entry = (d + 3) % 6;
+  if (def.chan) {
+    if (o.type === 'culvert') return !o.exit && entry === (o.out + 3) % 6;
+    if (o.type === 'ropeway') return !o.exit;
+    if (o.type === 'crossing') return true;
+    if (o.type === 'junction') return entry !== o.out && entry !== o.alt;
+    return entry !== o.out;
+  }
+  return !!(def.accepts || def.recipe || def.great);
+}
+// whether whatever is on side d of hex t sends goods into it: a channel pointing at it, or a works whose spout faces it
+function sideFeeds(t, d) {
+  const n = nbr(t, d); if (!n || n.outer) return false;
+  const o = entAtTile(n); if (!o) return false;
+  const back = (d + 3) % 6;
+  if (isChan(o)) {
+    if (o.type === 'junction') return o.out === back || o.alt === back;
+    if (o.type === 'crossing' || ((o.type === 'culvert' || o.type === 'ropeway') && !o.exit)) return false;
+    return o.out === back;
+  }
+  const def = BUILD[o.type];
+  return !!(def && def.rot && o.rot === back);
+}
+const JUNCTION = { type: 'junction' };
+const hexTurn = (a, b) => Math.min((a - b + 6) % 6, (b - a + 6) % 6);
+// Where a junction set down on hex t should point. The main way keeps the line going: the way the piece it replaces
+// was going, or straight on from where goods come in. The side way turns toward another channel or works that would
+// take goods, the one nearest the main way; failing that, a gentle turn off the main way onto open ground.
+// `pin` holds the main way where the player has already chosen it.
+function junctionAim(t, prev, pin = -1) {
+  const ins = [], takes = [];
+  for (let d = 0; d < 6; d++) { if (sideFeeds(t, d)) ins.push(d); else if (sideTakes(t, d, JUNCTION)) takes.push(d); }
+  const isIn = (d) => ins.includes(d);
+  let out = pin >= 0 && !isIn(pin) ? pin : -1;
+  if (out < 0 && prev && isChan(prev) && prev.type !== 'crossing' && prev.type !== 'culvert' && prev.type !== 'ropeway' && !isIn(prev.out)) out = prev.out;
+  if (out < 0 && ins.length) {
+    const straight = (ins[0] + 3) % 6; let best = -1, bs = 9;
+    for (const d of takes) { const s = hexTurn(d, straight); if (s < bs) { bs = s; best = d; } }
+    out = best >= 0 && bs <= 1 ? best : !isIn(straight) ? straight : best;
+  }
+  if (out < 0 && takes.length) out = takes[0];
+  if (out < 0) out = pin >= 0 ? pin : [0, 1, 2, 3, 4, 5].find((d) => !isIn(d)) ?? 0;
+  let alt = -1, as = 9;
+  for (const d of takes) { if (d === out) continue; const s = hexTurn(d, out); if (s < as) { as = s; alt = d; } }
+  if (alt < 0) {
+    const cands = [1, 5, 2, 4, 3].map((k) => (out + k) % 6).filter((d) => !isIn(d));
+    const open = cands.find((d) => { const n = nbr(t, d); return n && !n.outer && !n.ent && !TILE_BLOCK[n.type]; });
+    alt = open !== undefined ? open : cands.length ? cands[0] : (out + 1) % 6;
+  }
+  return { out, alt };
+}
+function setJunction(e, out, alt) {
+  if (alt === out) alt = (out + 1) % 6;
+  if (e.out === out && e.alt === alt) return false;
+  e.out = out; e.alt = alt;
+  // goods already in the basin choose again between the new outlets
+  for (const it of e.items) it.exit = undefined;
+  markChanDirty(); EV.emit('change', e); return true;
+}
+// a line drawn into a junction by side `from`: if its main way pointed back up the new line it now carries the line
+// straight on, and a side way pointing back turns away to open ground or another channel
+function junctionMend(e, from) {
+  if (e.out !== from && e.alt !== from) return false;
+  const t = tileOf(e);
+  let main = e.out === from ? (from + 3) % 6 : e.out;
+  if (sideFeeds(t, main)) main = junctionAim(t, null, -1).out;
+  const alt = e.alt !== from && e.alt !== main && !sideFeeds(t, e.alt) ? e.alt : junctionAim(t, null, main).alt;
+  return setJunction(e, main, alt);
+}
+// a line drawn out of a junction in a new direction: while the main way carries goods somewhere it is never cut, and
+// the side way turns to the new line; a main way that leads nowhere yet becomes the new line itself.
+function junctionBranch(e, dir) {
+  if (e.out === dir || e.alt === dir) return false;
+  return sideTakes(tileOf(e), e.out, e) ? setJunction(e, e.out, dir) : setJunction(e, dir, e.alt);
+}
+
 /* ---------- culverts ---------- */
 function pairCulvert(e) {
   const back = (e.out + 3) % 6; let t = tileOf(e);
@@ -8322,6 +8481,9 @@ function makeOverlays() {
   ag.tri([0.62, 0, 0], [0.43, 0, -0.15], [0.25, 0, 0], '#ffd27a'); ag.tri([0.62, 0, 0], [0.25, 0, 0], [0.43, 0, 0.15], '#ffd27a');
   OVER.arrow = new THREE.Mesh(ag.build(), new THREE.MeshBasicMaterial({ vertexColors: true, transparent: true, opacity: 0.95, depthTest: false })); OVER.arrow.renderOrder = 7; OVER.arrow.visible = false; R3.scene.add(OVER.arrow);
   OVER.arrow2 = OVER.arrow.clone(); OVER.arrow2.material = new THREE.MeshBasicMaterial({ color: lin('#9fe0d4'), transparent: true, opacity: 0.95, depthTest: false }); R3.scene.add(OVER.arrow2);
+  // a junction's two outlets: the main way in the yellow of its flag, the side way in green
+  OVER.jMain = OVER.arrow.clone(); OVER.jMain.material = new THREE.MeshBasicMaterial({ color: lin('#ffd27a'), transparent: true, opacity: 0.95, depthTest: false }); R3.scene.add(OVER.jMain);
+  OVER.jSide = OVER.arrow.clone(); OVER.jSide.material = new THREE.MeshBasicMaterial({ color: lin('#9be3bf'), transparent: true, opacity: 0.95, depthTest: false }); R3.scene.add(OVER.jSide);
   // a line of dots showing a channel being dragged, and the path of a culvert
   OVER.trail = new THREE.Points(new THREE.BufferGeometry().setAttribute('position', new THREE.Float32BufferAttribute(new Float32Array(3 * 64), 3)), new THREE.PointsMaterial({ color: lin('#ffe08a'), size: 0.12, depthTest: false, transparent: true, opacity: 0.9 }));
   OVER.trail.renderOrder = 8; OVER.trail.visible = false; R3.scene.add(OVER.trail);
@@ -8376,6 +8538,14 @@ function setGhost(t, rot, ok) {
 function showArrow(arrow, t, dir, y) {
   if (!t || dir < 0) { arrow.visible = false; return; }
   arrow.visible = true; arrow.position.set(t.x, (y === undefined ? groundY(t) : y) + 0.16, t.z); arrow.rotation.y = dir * Math.PI / 3;
+}
+function showJunctionArrows(t, out, alt, y, mode = 'alt') {
+  if (!OVER.jMain) return;
+  if (!t) { OVER.jMain.visible = false; OVER.jSide.visible = false; return; }
+  // the side arrow takes the colour of the junction's side flag: green when it shares, orange when it spills, a good's own colour when it sorts
+  const col = mode === 'over' ? '#f0a070' : mode !== 'alt' && ITEMS[mode] ? ITEMS[mode].color : '#9be3bf';
+  if (OVER.jSide.userData.col !== col) { OVER.jSide.userData.col = col; OVER.jSide.material.color.copy(lin(col)); }
+  showArrow(OVER.jMain, t, out, y); showArrow(OVER.jSide, t, alt, y);
 }
 function showOutline(line, t) { if (!t) { line.visible = false; return; } line.visible = true; line.position.set(t.x, groundY(t) + 0.035, t.z); line.scale.setScalar(1); }
 
@@ -9270,6 +9440,13 @@ function updateHover() {
     const def = BUILD[tool.type];
     if (def.chan) {
       const existing = entAtTile(t);
+      // a junction about to be set down shows where both its outlets will point
+      if (tool.type === 'junction' && !INPUT.drag && t && !t.outer && (!existing || isChan(existing))) {
+        const aim = existing && existing.type === 'junction' ? existing : junctionAim(t, existing, INPUT.rotLocked ? INPUT.rot : -1);
+        showJunctionArrows(t, aim.out, aim.alt, existing ? troughHeight(existing) : groundY(t) + 0.02, aim.mode);
+        UI.buildTip(t, tool.type, placeCheck(tool.type, t, aim.out), aim.out);
+        return;
+      }
       const dir = INPUT.drag && INPUT.drag.lastDir !== undefined ? INPUT.drag.lastDir : INPUT.rot;
       showArrow(OVER.arrow, t, dir, t ? (existing && isChan(existing) ? troughHeight(existing) : groundY(t) + 0.02) : 0);
       const chk = t ? placeCheck(tool.type, t, dir) : { ok: false };
@@ -9354,22 +9531,28 @@ function tryBuild(t, quiet) {
   if (def.size === 7) setTool(null);
   return true;
 }
-function placeChanAt(t, dir) {
+function placeChanAt(t, dir, tap) {
   const type = INPUT.tool.type;
   if (!t || t.outer) return false;
   const o = entAtTile(t);
   if (o && !isChan(o)) return false;
   if (o && isChan(o)) {
+    // a junction already here keeps its outlets; a line dragged out of it points one
+    if (o.type === 'junction' && type === 'junction') return true;
     if (o.type === type) { if (o.type !== 'crossing' && o.type !== 'culvert' && o.out !== dir) rotateEntity(o, dir); return true; }
     const tier = BUILD[type].chan, otier = BUILD[o.type].chan;
     // dragging a plain channel over a special piece leaves the piece alone; over a slower channel, upgrades it
     if (isPlainChan({ type }) && !isPlainChan(o)) return true;
     if (isPlainChan({ type }) && isPlainChan(o) && tier <= otier) { if (o.out !== dir) rotateEntity(o, dir); return true; }
   }
+  // a junction points its own outlets: on the way the line was going, and off toward a branch
+  const aim = type === 'junction' ? junctionAim(t, o, tap ? (INPUT.rotLocked ? INPUT.rot : -1) : dir) : null;
+  if (aim) dir = aim.out;
   const chk = placeCheck(type, t, dir);
   if (!chk.ok) { toast(chk.reason, 'warn'); AUDIO.sfx('deny'); return false; }
   if (!canAfford(BUILD[type].cost)) { toast('Not enough ' + shortItems(BUILD[type].cost).map((k) => ITEMS[k].name.toLowerCase()).join(' or '), 'warn'); UI.flashChips(shortItems(BUILD[type].cost)); AUDIO.sfx('deny'); return false; }
   const e = place(type, t, dir);
+  if (e && aim) setJunction(e, aim.out, aim.alt);
   if (e) { AUDIO.sfx('chan'); if (type === 'culvert' && e.exit) { toast('The culvert is joined. Goods will pass underneath.', 'good'); } }
   return !!e;
 }
@@ -9379,7 +9562,7 @@ function chanDragStart(t) {
   if (INPUT.tool.type === 'culvert') { INPUT.drag.kind = 'culvert'; return; }
   if (INPUT.tool.type === 'ropeway') { INPUT.drag.kind = 'rope'; return; }
   const o = entAtTile(t);
-  if (!o || isChan(o)) placeChanAt(t, INPUT.rot);
+  if (!o || isChan(o)) placeChanAt(t, INPUT.rot, true);
 }
 function chanDragMove(t) {
   const d = INPUT.drag; if (!d || !t) return;
@@ -9390,12 +9573,14 @@ function chanDragMove(t) {
     const dir = dirBetween(prev, tt); if (dir < 0) break;
     const po = entAtTile(prev);
     if (po && !isChan(po) && BUILD[po.type] && BUILD[po.type].rot && d.path.length === 1 && po.rot !== dir) { rotateEntity(po, dir); toast('Turned its spout toward the channel.', ''); }
-    if (po && isChan(po) && po.type !== 'crossing' && po.type !== 'culvert') { if (po.type === 'junction') { if (po.out !== dir && po.alt !== dir) rotateEntity(po, dir); } else if (po.out !== dir) rotateEntity(po, dir); }
+    if (po && isChan(po) && po.type !== 'crossing' && po.type !== 'culvert') { if (po.type === 'junction') junctionBranch(po, dir); else if (po.out !== dir) rotateEntity(po, dir); }
     d.lastDir = dir;
     const oT = entAtTile(tt);
     if (!INPUT.steepWarned && Math.abs(prev.level - tt.level) > 1 && INPUT.tool.type !== 'aqueduct' && tt.type !== 'water' && prev.type !== 'water') { INPUT.steepWarned = true; toast('Too steep here. Channels climb one step per hex; aqueducts climb any height.', 'warn'); }
     if (oT && !isChan(oT)) { d.path.push(tt); d.stopped = true; break; }
     if (!placeChanAt(tt, dir)) { d.stopped = true; break; }
+    // a line drawn into a junction: an outlet left pointing back up it turns away
+    const tj = entAtTile(tt); if (tj && tj.type === 'junction' && INPUT.tool.type !== 'junction') junctionMend(tj, (dir + 3) % 6);
     d.path.push(tt); prev = tt;
   }
   if (d.stopped) INPUT.drag = Object.assign(d, { kind: 'chanStopped' });
@@ -9461,11 +9646,14 @@ function select(id) {
   } else { showOutline(OVER.sel, null); if (!INPUT.tool) paintOverlay(UI.overlay || null); }
   showSelArrow();
   UI.renderInspect();
+  if (e) keepInView(tileOf(e));
 }
 function showSelArrow() {
   const e = INPUT.selected ? S.ents.get(INPUT.selected) : null;
-  if (!e || INPUT.tool) { OVER.arrow2.visible = false; return; }
+  if (!e || INPUT.tool) { OVER.arrow2.visible = false; showJunctionArrows(null); return; }
   const t = tileOf(e);
+  if (e.type === 'junction') { OVER.arrow2.visible = false; showJunctionArrows(t, e.out, e.alt, troughHeight(e), e.mode); return; }
+  showJunctionArrows(null);
   if (BUILD[e.type] && BUILD[e.type].rot) showArrow(OVER.arrow2, t, e.rot);
   else if (isChan(e) && e.type !== 'crossing') showArrow(OVER.arrow2, t, e.out, troughHeight(e));
   else OVER.arrow2.visible = false;
@@ -9481,6 +9669,7 @@ function selectTile(t) {
   INPUT.selected = 0; INPUT.selTile = t ? t.i : -1;
   showOutline(OVER.sel, t); OVER.sel.scale.setScalar(1); showSelArrow();
   UI.renderInspect();
+  keepInView(t);
 }
 // Q: pick up the kind of thing under the cursor, like a pipette
 function pipette() {
@@ -9719,7 +9908,7 @@ function onKey(ev) {
   else if (k === 'r') {
     if (INPUT.tool && INPUT.tool.kind === 'paste' && INPUT.bp) { INPUT.bp.rot = (INPUT.bp.rot + (ev.shiftKey ? 5 : 1)) % 6; updateHover(); AUDIO.sfx('tick'); }
     else if (INPUT.tool && INPUT.tool.kind === 'build') { INPUT.rot = ((INPUT.tool && BUILD[INPUT.tool.type].rot && !INPUT.rotLocked ? INPUT.ghostRot ?? INPUT.rot : INPUT.rot) + (ev.shiftKey ? 5 : 1)) % 6; INPUT.rotLocked = true; updateHover(); AUDIO.sfx('tick'); }
-    else if (INPUT.selected) { const e = S.ents.get(INPUT.selected); if (e && ((BUILD[e.type] && BUILD[e.type].rot) || (isChan(e) && e.type !== 'crossing' && e.type !== 'culvert'))) { rotateEntity(e, ((isChan(e) ? e.out : e.rot) + (ev.shiftKey ? 5 : 1)) % 6); AUDIO.sfx('tick'); UI.renderInspect(); } }
+    else if (INPUT.selected) { const e = S.ents.get(INPUT.selected); if (e && ((BUILD[e.type] && BUILD[e.type].rot) || (isChan(e) && e.type !== 'crossing' && e.type !== 'culvert'))) { rotateEntity(e, ((isChan(e) ? e.out : e.rot) + (ev.shiftKey ? 5 : 1)) % 6); AUDIO.sfx('tick'); showSelArrow(); UI.renderInspect(); } }
   }
   else if (k === 'x') setTool(INPUT.tool && INPUT.tool.kind === 'remove' ? null : { kind: 'remove' });
   else if (k === 'm') { const e = INPUT.selected ? S.ents.get(INPUT.selected) : null; if (e && canMove(e)) startMove(e); else setTool(INPUT.tool && INPUT.tool.kind === 'move' ? null : { kind: 'move' }); }
@@ -9861,6 +10050,7 @@ UI.init = function () {
   $('mapMenu').onclick = (ev) => { const b = ev.target.closest('button'); if (!b) return; UI.closeMenus(); UI.setOverlay(b.dataset.map || null); };
   $('mainMenu').onclick = (ev) => {
     const b = ev.target.closest('button'); if (!b) return; const a = b.dataset.act; UI.closeMenus();
+    if (b.dataset.map !== undefined) { UI.setOverlay(b.dataset.map || null); return; }
     if (a === 'postcard') UI.postcard(true);
     else if (a === 'save') { const ok = saveGame(); toast(ok ? 'Saved in this browser.' : 'This browser would not let the game save.', ok ? 'good' : 'warn'); }
     else if (a === 'title') { saveGame(); toTitle(); }
@@ -9964,9 +10154,9 @@ const NEAR_WORD = { forest: 'forest', rock: 'a rock outcrop', water: 'water', sa
 const FIELD_WORD = { field: 'grain fields', pasture: 'pasture', orchard: 'orchard rows' };
 UI.renderToolSign = function () {
   const el = $('toolSign'); if (!el) return; const T = INPUT.tool;
-  if (!T) { el.hidden = true; $('hud').classList.remove('tooling'); return; }
+  if (!T) { el.hidden = true; el.dataset.sig = ''; clearTimeout(UI.signT); $('hud').classList.remove('tooling'); return; }
   let name = '', how = '';
-  if (T.kind === 'build' && T.carry) { name = 'Moving the ' + lower(BUILD[T.type].name); how = `Click where it should go.${BUILD[T.type].rot && !UI.touch ? ' R turns the spout.' : ''}`; el.innerHTML = `<b>${name}</b><span>${how}</span><span class="esc">${UI.touch ? 'Tap the tool again to put it back.' : 'Right-click or Esc puts it back where it was.'}</span>`; el.hidden = false; $('hud').classList.add('tooling'); return; }
+  if (T.kind === 'build' && T.carry) { name = 'Moving the ' + lower(BUILD[T.type].name); how = `Click where it should go.${BUILD[T.type].rot && !UI.touch ? ' R turns the spout.' : ''}`; el.innerHTML = `<b>${name}</b><span>${how}</span><span class="esc">${UI.touch ? 'Tap the tool again to put it back.' : 'Right-click or Esc puts it back where it was.'}</span>`; UI.signShown(el); return; }
   if (T.kind === 'move') { name = 'Move'; how = 'Click a works to pick it up, then click where it should go. Nothing is lost.'; }
   else if (T.kind === 'build') {
     const def = BUILD[T.type]; name = def.name;
@@ -9974,6 +10164,8 @@ UI.renderToolSign = function () {
     else if (def.unzoneTool) how = 'Drag over marked land to unmark it.';
     else if (T.type === 'culvert') how = 'Drag from the entrance to the exit, two to five hexes in a straight line.';
     else if (T.type === 'ropeway') how = `Drag from where the goods start to where they should come down, up to ${ropeSpan()} hexes, over anything in between.`;
+    else if (T.type === 'junction') how = 'Click a channel to split it in two. The yellow outlet carries the line on and the side outlet turns off toward a branch, which you lay by dragging out of the junction.';
+    else if (T.type === 'crossing') how = 'Click where two lines should pass through each other. Goods go straight across and never mix.';
     else if (def.chan) how = 'Drag from a spout toward where the goods should go. Drag over slower channels to upgrade them.';
     else if (def.extract && def.extract.near) how = `Place it beside ${nearKinds(def.extract).map((k) => NEAR_WORD[k]).join(' or ')}. Lit hexes can take it; brighter ones gather more.`;
     else if (def.extract && def.extract.fields) how = `Place it in open meadow, which becomes ${FIELD_WORD[def.extract.fields]} around it. Brighter hexes have more room.`;
@@ -9986,7 +10178,14 @@ UI.renderToolSign = function () {
   else if (T.kind === 'paste') { name = 'Paste'; how = 'Click to stamp the copy down. R turns it.'; }
   else if (T.kind === 'call') { name = 'Call the wardens'; how = 'Click where they should go. Every crew within reach comes, works whatever needs it there, and stands by.'; }
   el.innerHTML = `<b>${name}</b><span>${noKeys(how)}</span><span class="esc">${UI.touch ? 'Tap the tool again to put it away.' : 'Right-click or Esc puts it away.'}</span>`;
+  UI.signShown(el);
+};
+// on a phone the sign fades once there has been time to read it, and comes back when another tool is picked
+UI.signShown = function (el) {
   el.hidden = false; $('hud').classList.add('tooling');
+  const sig = el.textContent; if (el.dataset.sig === sig) return; el.dataset.sig = sig;
+  el.classList.remove('quiet'); clearTimeout(UI.signT);
+  if (UI.form() === 'phone') UI.signT = setTimeout(() => el.classList.add('quiet'), 3000 + sig.length * 45);
 };
 UI.pickTool = function (type) { const def = BUILD[type]; if (!unlocked(type)) { toast(def.name + ' needs research first: ' + TECHS[def.tech].name + '.', ''); return; } UI.tab = def.cat; UI.seenUnlock[type] = 1; UI.renderTabs(); setTool(INPUT.tool && INPUT.tool.type === type ? null : { kind: 'build', type }); UI.palSig = ''; UI.refreshPalette(); };
 UI.flashChips = function (items) { for (const k of items) { const c = document.querySelector(`.chip[data-item="${k}"]`); if (c) { c.classList.remove('flash'); void c.offsetWidth; c.classList.add('flash'); } } };
@@ -10001,7 +10200,11 @@ UI.toggleMenu = function (which) {
   const el = which === 'map' ? $('mapMenu') : $('mainMenu'); const btn = which === 'map' ? $('bMap') : $('bMenu');
   const opening = el.hidden; UI.closeMenus(); if (!opening) return;
   if (which === 'map') el.innerHTML = MAP_VIEWS.map(([m, nm, key, desc]) => `<button data-map="${m || ''}" class="${UI.overlay === m ? 'on' : ''}"><span class="dot"></span><span>${nm}</span><span class="key">${key}</span><span class="desc">${desc}</span></button>`).join('');
-  else el.innerHTML = [['research', 'Research', 'T'], ['ledger', 'Ledger', 'P'], ['chronicle', 'Chronicle', 'J'], ['postcard', 'Postcard view', 'O'], ['guide', 'How to play', 'F1'], '-', ['settings', 'Sound and picture', ''], ['save', 'Save now', ''], ['title', 'Back to the title', '']].map((x) => x === '-' ? '<hr>' : `<button data-act="${x[0]}"><span></span><span>${x[1]}</span><span class="key">${x[2]}</span></button>`).join('');
+  else {
+    // a phone has no room in the band for the map views, so they come into this menu
+    const views = UI.form() === 'phone' ? '<hr><div class="mh">Map view</div><div class="mapviews">' + MAP_VIEWS.map(([m, nm]) => `<button data-map="${m || ''}" class="${UI.overlay === m ? 'on' : ''}"><span class="dot"></span><span>${nm}</span></button>`).join('') + '</div>' : '';
+    el.innerHTML = [['research', 'Research', 'T'], ['ledger', 'Ledger', 'P'], ['chronicle', 'Chronicle', 'J'], ['postcard', 'Postcard view', 'O'], ['guide', 'How to play', 'F1'], 'views', '-', ['settings', 'Sound and picture', ''], ['save', 'Save now', ''], ['title', 'Back to the title', '']].map((x) => x === '-' ? '<hr>' : x === 'views' ? views : `<button data-act="${x[0]}"><span></span><span>${x[1]}</span><span class="key">${x[2]}</span></button>`).join('');
+  }
   el.hidden = false; btn.classList.add('on'); btn.setAttribute('aria-expanded', 'true');
   if (UI.form() !== 'phone') { const r = btn.getBoundingClientRect(); el.style.left = 'auto'; el.style.right = Math.max(0, Math.round(window.innerWidth - r.right - 8)) + 'px'; }
   AUDIO.sfx('tick');
@@ -10081,16 +10284,18 @@ UI.update = function () {
   const dt = D.why === 'food' ? 'Nobody comes without food' : D.why === 'short' ? 'Nobody comes while homes go short' : D.want > 0 ? (D.why === 'land' ? `${D.want} ${wv} to move in: mark land` : D.why === 'materials' ? `${D.want} waiting for timber and stone` : `${D.want} ${wv} to move in`) : 'Nobody waiting to move in';
   if (dm.textContent !== dt) dm.textContent = dt;
   dm.classList.toggle('want', D.want > 0 || D.why === 'food' || D.why === 'short');
+  $('people').classList.toggle('want', D.want > 0 || D.why === 'food' || D.why === 'short');
   const pw = $('powerw'); const showP = S.power.gen > 0 || S.power.use > 0;
   if (pw.hidden === showP) pw.hidden = !showP;
   if (showP) {
     const P = S.power, short = P.sat < 0.999, gen = Math.floor(P.gen);
-    $('powerNum').textContent = short ? `Power short: ${gen} for ${P.use}` : `Power: ${P.use} of ${gen} in use`;
+    const pt = short ? `Power short: ${gen} for ${P.use}` : UI.form() === 'phone' ? `Power: ${P.use} of ${gen}` : `Power: ${P.use} of ${gen} in use`; if ($('powerNum').textContent !== pt) $('powerNum').textContent = pt;
     $('powerBar').style.width = (short ? Math.min(100, P.gen / Math.max(1, P.use) * 100) : P.gen ? Math.min(100, P.use / P.gen * 100) : 0) + '%';
     pw.classList.toggle('short', short);
   }
   const SE = seasonInfo();
   const dl = SE.name + (S.second && S.season === 3 ? ' (mild)' : '') + ', year ' + (Math.floor((S.day - 1) / 4) + 1); if ($('dayLabel').textContent !== dl) $('dayLabel').textContent = dl;
+  if ($('crestDate').textContent !== dl) $('crestDate').textContent = dl;
   drawClock();
   if ($('townName').textContent !== S.name) $('townName').textContent = S.name;
   const cl = 'Chapter ' + lower(WORDNUM[S.chapter]) + ': ' + CHAPTERS[S.chapter].title; if ($('chapterLine').textContent !== cl) $('chapterLine').textContent = cl;
@@ -10124,10 +10329,14 @@ UI.fitBand = function () {
 };
 UI.layout = function () {
   const hud = $('hud'); if (!hud || hud.hidden) return;
-  const bh = Math.round($('band').getBoundingClientRect().height), dh = Math.round($('palette').getBoundingClientRect().height);
+  hud.classList.toggle('inspecting', !$('inspect').hidden);
+  // on a phone the card for what is picked stands in for the drawer, so whatever sits on the drawer sits on the card
+  const card = UI.form() === 'phone' && !$('inspect').hidden;
+  const bh = Math.round($('band').getBoundingClientRect().height), dh = Math.round((card ? $('inspect') : $('palette')).getBoundingClientRect().height);
   if (bh && UI.bandH !== bh) { UI.bandH = bh; hud.style.setProperty('--band-h', bh + 'px'); }
   if (dh && UI.drawerH !== dh) { UI.drawerH = dh; hud.style.setProperty('--drawer-h', dh + 'px'); }
-  hud.classList.toggle('inspecting', !$('inspect').hidden);
+  const lc = $('leftcol').getBoundingClientRect(), pb = Math.round(lc.height ? lc.bottom : bh);
+  if (pb && UI.planB !== pb) { UI.planB = pb; hud.style.setProperty('--plan-b', pb + 'px'); }
 };
 UI.renderStudy = function () {
   const box = $('studyw'); const R = S.research; let h, sig;
@@ -10136,7 +10345,7 @@ UI.renderStudy = function () {
     sig = 'learned' + UI.learned.id; if (sig === UI.studySig) return; UI.studySig = sig;
     const un = (t.unlocks || []).map((k) => `<span title="${BUILD[k].name}">${iconImg('b_' + k)}${BUILD[k].name}</span>`);
     for (const ef of t.effects || []) if (ef.k === 'home') un.push(`<span>${iconImg('home' + ef.level)}${HOMES[ef.level].name}s</span>`);
-    box.classList.remove('idle', 'pulse'); box.classList.add('learned');
+    box.classList.remove('idle', 'pulse', 'quiet'); box.classList.add('learned');
     box.innerHTML = `<div class="r1">${iconImg(techIcon(UI.learned.id))}<span class="nm">Learned: ${t.name}<small>${un.length ? 'You can now build:' : t.desc}</small></span></div>${un.length ? `<div class="unl">${un.join('')}</div>` : ''}`;
     return;
   }
@@ -10145,13 +10354,14 @@ UI.renderStudy = function () {
     const any = Object.keys(TECHS).some((id) => techAvailable(id));
     sig = 'idle' + any + S.techs.size + (S.labSpeed > 0);
     if (sig === UI.studySig) return; UI.studySig = sig;
+    box.classList.toggle('quiet', !any || !(S.labSpeed > 0));
     h = `<div class="r1">${iconImg('slates')}<span class="nm">${any ? 'Nothing is being studied' : 'Everything is learned'}<small>${!any ? 'The valley knows all it can, for now.' : noKeys(S.labSpeed > 0 ? 'Choose what to study next (T)' : 'Build a Schoolhouse, then choose a topic (T)')}</small></span></div>`;
     box.classList.add('idle'); box.classList.toggle('pulse', any && S.labSpeed > 0);
   } else {
     const t = TECHS[R.cur]; const units = techUnits(R.cur); const p = (R.prog + (R.active ? R.unit : 0)) / units;
     sig = R.cur + Math.round(p * 200) + R.queue.length + t.packs.map((k) => Math.floor(S.stores[k])).join();
     if (sig === UI.studySig) return; UI.studySig = sig;
-    box.classList.remove('idle', 'pulse');
+    box.classList.remove('idle', 'pulse', 'quiet');
     h = `<div class="r1">${iconImg(techIcon(R.cur))}<span class="nm">${t.name}${t.repeat ? ' ' + ((S.techLevel[R.cur] || 0) + 1) : ''}<small>Studying${R.queue.length ? `, ${R.queue.length} more after this` : ''}</small></span><span class="frac">${R.prog} of ${units}</span></div><span class="meter"><i style="width:${Math.round(p * 100)}%"></i></span>`;
     h += `<div class="packs"><span>In store:</span>${t.packs.map((k) => `<span class="${S.stores[k] < 1 ? 'miss' : ''}" title="${ITEMS[k].name}">${iconImg(k)}${fmt(Math.floor(S.stores[k]))}</span>`).join('')}</div>`;
   }
@@ -10430,7 +10640,7 @@ UI.buildTip = function (t, type, chk, rot) {
   }
   if (def.zoneTool) h += `<br><span class="num">${S.reach[t.i] ? 'Within reach of a Commons.' : 'Outside the reach of every Commons, so nobody will build here.'} Harmony ${S.harmony[t.i].toFixed(1)}. Drag to paint.</span>`;
   else if (def.harmony || def.service) h += `<br><span class="num">Harmony here: ${S.harmony[t.i].toFixed(1)}</span>`;
-  if (def.chan) h += `<br><span class="num">${type === 'culvert' ? 'Drag from the entrance to the exit, two to five hexes in a straight line.' : type === 'ropeway' ? `Drag from the near station to the far one, up to ${ropeSpan()} hexes. It costs two stations.` : 'Drag to lay a line. R turns it. Drag over slower channels to upgrade them.'}</span>`;
+  if (def.chan) h += `<br><span class="num">${type === 'culvert' ? 'Drag from the entrance to the exit, two to five hexes in a straight line.' : type === 'ropeway' ? `Drag from the near station to the far one, up to ${ropeSpan()} hexes. It costs two stations.` : type === 'junction' ? 'Click a channel to split it. The arrows show where its yellow and side outlets will point. Drag out of a junction to lay a branch.' : type === 'crossing' ? 'Click where two lines should cross.' : 'Drag to lay a line. R turns it. Drag over slower channels to upgrade them.'}</span>`;
   else if (def.rot && !UI.touch) h += `<br><span class="num">R turns the spout.</span>`;
   if (INPUT.tool && INPUT.tool.carry) h += `<br><span class="num">Moving it costs nothing.</span>`;
   else if (Object.keys(def.cost).length) h += costLine(def.cost);
@@ -10529,7 +10739,9 @@ UI.renderInspect = function (periodic) {
   if (!e) { box.hidden = true; UI.inspectSig = ''; UI.layout(); return; }
   if (periodic && UI.pressInInspect) return;
   const def = e.type === 'home' ? HOME_DEF : BUILD[e.type]; let h = '';
-  const sigParts = [e.id, e.status, e.level, e.residents, e.cap, e.rot, e.out, e.alt, e.mode, e.item, e.enabled, e.greened, e.hold, e.blocker, e.on, Math.round((e.progress || 0) * 10), e.out_n, JSON.stringify(e.inBuf || ''), JSON.stringify(e.got || ''), JSON.stringify(e.met || ''), e.items ? e.items.length : 0, Math.round((e.harmony || S.harmony[e.tile]) * 10), e.done, S.techs.size, Math.round(speedOf(e) * 20), e.count, e.pair, e.genOut && e.genOut.toFixed(1), e.limit, e.jam, Math.round(e.flow || 0), e.refit, e.adjWith, e.handsWhy, Math.round((e.staff || 0) * 10), S.mods.refit, e.raising !== undefined ? Math.round(e.raising * 100) : '', e.type === 'home' && e.level >= 5 && !e.arc ? arcRingCount(e) + (canAfford(ARCOLOGY.cost) ? 'a' : 'n') : '', e.voy ? e.voy.st + JSON.stringify(e.voy.got) + Math.round(e.voy.t / 15) : '', e.under ? e.under.length : '', e.type === 'ropeway' ? S.flags.roped : ''];
+  // a junction's arrows follow the view as it turns, and its neighbours as they are built
+  const jsig = e.type === 'junction' ? Math.round(CAM.yaw * 12) + ':' + [0, 1, 2, 3, 4, 5].map((d) => (sideFeeds(tileOf(e), d) ? 'i' : sideTakes(tileOf(e), d, e) ? 't' : '-')).join('') : '';
+  const sigParts = [jsig, e.id, e.status, e.level, e.residents, e.cap, e.rot, e.out, e.alt, e.mode, e.item, e.enabled, e.greened, e.hold, e.blocker, e.on, Math.round((e.progress || 0) * 10), e.out_n, JSON.stringify(e.inBuf || ''), JSON.stringify(e.got || ''), JSON.stringify(e.met || ''), e.items ? e.items.length : 0, Math.round((e.harmony || S.harmony[e.tile]) * 10), e.done, S.techs.size, Math.round(speedOf(e) * 20), e.count, e.pair, e.genOut && e.genOut.toFixed(1), e.limit, e.jam, Math.round(e.flow || 0), e.refit, e.adjWith, e.handsWhy, Math.round((e.staff || 0) * 10), S.mods.refit, e.raising !== undefined ? Math.round(e.raising * 100) : '', e.type === 'home' && e.level >= 5 && !e.arc ? arcRingCount(e) + (canAfford(ARCOLOGY.cost) ? 'a' : 'n') : '', e.voy ? e.voy.st + JSON.stringify(e.voy.got) + Math.round(e.voy.t / 15) : '', e.under ? e.under.length : '', e.type === 'ropeway' ? S.flags.roped : ''];
   const sig = sigParts.join('|'); if (periodic && sig === UI.inspectSig) return; UI.inspectSig = sig;
   const cordE = S.cordOf[e.tile] && S.ents.get(S.cordOf[e.tile]); const cord = cordE ? `on the ${cordE.cord} Green` : '';
   box.style.setProperty('--k', `var(--k-${def.cat || 'city'})`);
@@ -10612,17 +10824,20 @@ UI.renderInspect = function (periodic) {
   if (isChan(e)) {
     const capN = Math.round(def.speed / SPACING * 60), flowN = Math.round(e.flow || 0);
     h += chanStuck(e) ? `<div class="status warn">Backed up: whatever is downstream is not taking goods.</div>` : flowN ? `<div class="status">Carrying ${flowN} goods a minute.</div>` : `<div class="status idle">Nothing afloat just now.</div>`;
-    h += `<p>${def.desc}</p><span class="meter"><i style="width:${Math.min(100, Math.round(flowN / capN * 100))}%"></i></span>` + facts([['Carrying now', `${flowN} a minute`], ['Can carry', `${capN} a minute`]]);
-    const mix = chanMix(e); if (mix.length) h += `<div class="ph">Afloat here</div><div class="costline">${mix.map(([k, n]) => `<span title="${ITEMS[k].name}">${iconImg(k)}${n}</span>`).join('')}</div>`;
-    if (e.type === 'culvert') h += facts([[e.exit ? 'Exit' : 'Entrance', e.pair ? 'joined, ' + (e.gap || 0) + ' hexes apart' : 'no partner yet', e.pair ? 'good' : 'bad']]);
+    // a junction leads with where its goods go and how it chooses, since that is what anyone opening it wants to change
     if (e.type === 'junction') {
+      h += junctionDials(e);
       h += `<div class="ph">What it does</div><div class="seg"><button class="${e.mode === 'alt' ? 'on' : ''}" data-a="mode" data-v="alt">Share in turn</button>`;
       if (S.mods.overflow) h += `<button class="${e.mode === 'over' ? 'on' : ''}" data-a="mode" data-v="over">Spill over</button>`;
       h += `</div><div class="ph">Or send one good out of the side</div><div class="seg">`;
       for (const k of ITEM_ORDER) if (S.made[k] > 0 || S.stores[k] >= 1) h += `<button class="${e.mode === k ? 'on' : ''}" data-a="mode" data-v="${k}" title="Send ${ITEMS[k].name.toLowerCase()} out of the side">${iconImg(k)}</button>`;
-      h += `</div><p>${e.mode === 'alt' ? 'Goods go to the yellow outlet and the green outlet in turn. If one is backed up, everything goes to the other.' : e.mode === 'over' ? 'Goods go out of the yellow outlet. Only when it is backed up do they spill out of the side.' : ITEMS[e.mode].name + ' leave by the green outlet. Everything else goes on through the yellow one.'}</p>`;
-      h += `<div class="btns"><button class="btn" data-a="rotMain">Turn the yellow outlet</button><button class="btn" data-a="rotAlt">Turn the side outlet</button><button class="btn danger" data-a="remove">Clear</button></div>`;
-    } else h += `<div class="btns">${e.type !== 'crossing' && e.type !== 'culvert' ? `<button class="btn" data-a="rot">Turn it${UI.touch ? '' : ' (R)'}</button>` : ''}<button class="btn danger" data-a="remove">Clear</button></div>`;
+      h += `</div><p>${e.mode === 'alt' ? 'Goods go to the yellow outlet and the side outlet in turn. If one is backed up, everything goes to the other.' : e.mode === 'over' ? 'Goods go out of the yellow outlet. Only when it is backed up do they spill out of the side.' : ITEMS[e.mode].name + ' leave by the side outlet. Everything else goes on through the yellow one.'}</p>`;
+    } else h += `<p>${def.desc}</p>`;
+    h += `<span class="meter"><i style="width:${Math.min(100, Math.round(flowN / capN * 100))}%"></i></span>` + facts([['Carrying now', `${flowN} a minute`], ['Can carry', `${capN} a minute`]]);
+    const mix = chanMix(e); if (mix.length) h += `<div class="ph">Afloat here</div><div class="costline">${mix.map(([k, n]) => `<span title="${ITEMS[k].name}">${iconImg(k)}${n}</span>`).join('')}</div>`;
+    if (e.type === 'culvert') h += facts([[e.exit ? 'Exit' : 'Entrance', e.pair ? 'joined, ' + (e.gap || 0) + ' hexes apart' : 'no partner yet', e.pair ? 'good' : 'bad']]);
+    if (e.type === 'junction') h += `<div class="btns"><button class="btn" data-a="jSwap">Swap the outlets</button><button class="btn danger" data-a="remove">Clear</button></div>`;
+    else h += `<div class="btns">${e.type !== 'crossing' && e.type !== 'culvert' ? `<button class="btn" data-a="rot">Turn it${UI.touch ? '' : ' (R)'}</button>` : ''}<button class="btn danger" data-a="remove">Clear</button></div>`;
     h += '</div>'; done(); return;
   }
   if (e.type === 'skyship' && e.done && e.voy) {
@@ -10837,8 +11052,10 @@ UI.onInspectClick = function (ev) {
   AUDIO.sfx('tick');
   if (a === 'remove') { removeAt(tileOf(e)); return; }
   if (a === 'rot') rotateEntity(e, ((isChan(e) ? e.out : e.rot) + 1) % 6);
-  if (a === 'rotMain') { let d = (e.out + 1) % 6; if (d === e.alt) d = (d + 1) % 6; e.out = d; markChanDirty(); EV.emit('change', e); }
-  if (a === 'rotAlt') { let d = (e.alt + 1) % 6; if (d === e.out) d = (d + 1) % 6; e.alt = d; markChanDirty(); EV.emit('change', e); }
+  // pointing one outlet where the other one is swaps them
+  if (a === 'jOut') { const d = +b.dataset.v; setJunction(e, d, e.alt === d ? e.out : e.alt); }
+  if (a === 'jAlt') { const d = +b.dataset.v; setJunction(e, e.out === d ? e.alt : e.out, d); }
+  if (a === 'jSwap') setJunction(e, e.alt, e.out);
   if (a === 'mode') { e.mode = b.dataset.v; EV.emit('change', e); }
   if (a === 'item') { e.item = b.dataset.v; }
   if (a === 'toggle') { e.enabled = !e.enabled; markDirty(); S.dirty.cover = true; }
@@ -10851,8 +11068,28 @@ UI.onInspectClick = function (ev) {
   if (a === 'arcClearNo') { const c = $('arcConfirm'); if (c) c.hidden = true; return; }
   if (a === 'arcClearYes') { if (removeEntity(e)) { AUDIO.sfx('remove'); select(0); } return; }
   if (a === 'trellis') { if (canAfford(TRELLIS_COST)) { pay(TRELLIS_COST); e.greened = true; markDirty(); EV.emit('change', e); toast('Vines will cover it by summer.', 'good'); AUDIO.sfx('grow'); } }
-  UI.renderInspect();
+  showSelArrow(); UI.renderInspect();
 };
+// A junction's outlets, as two rows of arrows: one for the yellow outlet, one for the side outlet. Each arrow points the
+// way that side of the hex lies on the screen, so the rows read like the junction seen from where the camera is.
+// An arrow is dark where something would take the goods, and a side goods come in by is greyed out.
+const JSIDE_COL = (e) => (e.mode === 'over' ? '#d4703f' : e.mode && e.mode !== 'alt' && ITEMS[e.mode] ? ITEMS[e.mode].color : '#6fb59a');
+function junctionDials(e) {
+  const t = tileOf(e), y = troughHeight(e), c = tourProject(t.x, y, t.z);
+  const dirs = [];
+  for (let d = 0; d < 6; d++) {
+    const v = dirVec(d, 1), p = tourProject(t.x + v.x, y, t.z + v.z);
+    const ang = Math.atan2(p.y - c.y, p.x - c.x);
+    dirs.push({ d, ang, feeds: sideFeeds(t, d), takes: sideTakes(t, d, e), k: (ang + Math.PI * 2.5) % (Math.PI * 2) });
+  }
+  dirs.sort((a, b) => a.k - b.k);
+  const arrow = (deg) => `<svg viewBox="-12 -12 24 24" aria-hidden="true"><path d="M-7 0h12M1-5l5 5-5 5" transform="rotate(${deg})"/></svg>`;
+  const row = (which, label, col) => `<div class="jrow"><span class="jl"><i class="jsw" style="background:${col}"></i>${label}</span><span class="jds" style="--jc:${col}">${dirs.map((x) => {
+    const on = e[which] === x.d, deg = Math.round(x.ang * 180 / Math.PI);
+    return `<button class="jd${on ? ' on' : ''}${x.takes ? ' to' : ''}" data-a="${which === 'out' ? 'jOut' : 'jAlt'}" data-v="${x.d}"${x.feeds ? ' disabled title="Goods come in this way"' : ''} aria-pressed="${on}" aria-label="${label}: ${on ? 'points this way' : 'point it this way'}">${arrow(deg)}</button>`;
+  }).join('')}</span></div>`;
+  return `<div class="ph">Outlets</div>${row('out', 'Yellow', '#e3b04b')}${row('alt', 'Side', JSIDE_COL(e))}<p class="jnote">The arrows point the way they do on the screen. Dark ones lead to a channel or works, and greyed ones are where goods come in.</p>`;
+}
 
 /* ---------- research tree ---------- */
 function techLayout() {
@@ -11012,7 +11249,7 @@ UI.openModal = function (kind, arg) {
   } else if (kind === 'guide') {
     h += `<div class="tourline"><button class="btn" data-a="tour">Take the quick tour</button><span>Five short steps through the basics, on your own valley.</span></div>
       <h4 style="margin-top:4px">Homes</h4><p>Press Z and paint land for homes near a Commons. Newcomers build cabins there by themselves when there is work for them, food in store, homes enough already fed, and 6 timber and 2 stone to build with. Each need a home has met makes room for more people. When a home has every need and comfort, the services it wants nearby, enough harmony, and the materials in store, it grows into the next kind of home, once you have studied how.</p>
-      <h4>Goods and channels</h4><p>Every works has a yellow spout. Goods come out there into whatever is in front of it: a channel, another works, or a Commons. Press C and drag to lay a line; the water flows the way you drag. Flumes climb one terrace step per hex. Stone and swift channels carry more; drag them over slower ones to upgrade. Junctions split lines or pull out one good. Culverts run under anything. Ropeways, once studied, carry goods in hanging buckets straight over water, hills and works, up to twelve hexes: drag from the near station to the far one, feed the near one from any side, and the goods leave the far one by its spout. Storehouses and every Commons take deliveries into the shared stores. A channel carrying two goods into one works can jam, so give each good its own way in.</p>
+      <h4>Goods and channels</h4><p>Every works has a yellow spout. Goods come out there into whatever is in front of it: a channel, another works, or a Commons. Press C and drag to lay a line; the water flows the way you drag. Flumes climb one terrace step per hex. Stone and swift channels carry more; drag them over slower ones to upgrade. A junction set onto a line splits it. Its yellow outlet carries the line on and its side outlet turns off for a branch, which you lay by dragging out of the junction. Select a junction to point either outlet another way, or to have it send one good out of the side. Culverts run under anything. Ropeways, once studied, carry goods in hanging buckets straight over water, hills and works, up to twelve hexes: drag from the near station to the far one, feed the near one from any side, and the goods leave the far one by its spout. Storehouses and every Commons take deliveries into the shared stores. A channel carrying two goods into one works can jam, so give each good its own way in.</p>
       <h4>Hands and power</h4><p>About half of everyone works. Each works needs hands of a certain kind of people, and anyone can work at a works of their own kind or a simpler one. People walk up to ${COMMUTE} hexes to work, so a works far from any home stands idle until you mark land for homes nearer to it. Bicycles let them ride further. Newer works also need power from turbines, water wheels or steam engines. When power runs short, the works slow down together.</p>
       <h4>Where things go</h4><p>Many works run faster beside a natural partner: a Sawmill beside a Woodcutter, a Bakery beside a Gristmill. The card that appears when you choose a building says whether a spot has one. Once you know Better Tools, a works can be refitted to run faster still. Press M to pick a works up and set it down somewhere else; moving costs nothing and keeps its refits.</p>
       <h4>Fairs, letters and arcologies</h4><p>On the last evening of every summer the valley holds a fair. In spring and summer its basket shows above the goals; if everything in it is in store by then, every home is happier for a year. Letters come from away asking for things the valley makes; send what they ask and something comes back, a keepsake that helps for good. Late on, seven Belvederes in a ring on level ground can be raised into one arcology.</p>
@@ -11304,19 +11541,27 @@ function tourFrameWork() {
 function viewFree() {
   const cv = $('view'), W = cv.clientWidth, H = cv.clientHeight, phone = UI.form() === 'phone';
   const plan = $('leftcol').getBoundingClientRect(), drawer = $('palette').getBoundingClientRect();
-  const f = { l: 0, t: UI.bandH || 54, r: W, b: drawer.height ? drawer.top : H };
+  const card = $('inspect').getBoundingClientRect();
+  const f = { l: 0, t: UI.bandH || 54, r: W, b: phone && card.height ? card.top : drawer.height ? drawer.top : H };
   if (plan.height) { if (phone) f.t = Math.max(f.t, plan.bottom); else f.l = plan.right; }
-  // on a phone the story line sits low over the valley while it shows, so keep what matters above it
-  const sl = $('storyLine'); if (phone && sl && sl.classList.contains('on')) { const r = sl.getBoundingClientRect(); if (r.height && r.top > f.t + 90) f.b = Math.min(f.b, r.top); }
+  // on a phone the chronicle's line sits at the top of the valley while it shows, so keep what matters below it
+  const sl = $('storyLine'); if (phone && sl && sl.classList.contains('on')) { const r = sl.getBoundingClientRect(); if (r.height && r.top < f.t + 40) f.t = Math.max(f.t, r.bottom); }
   return f;
 }
 // point the camera so that a spot on the ground sits in the middle of that open part, from the given distance
-function aimAt(x, z, dist) {
-  const f = viewFree(), cv = $('view'), H = cv.clientHeight || 1;
+function aimAt(x, z, dist, f = viewFree()) {
+  const cv = $('view'), H = cv.clientHeight || 1;
   const dx = (f.l + f.r) / 2 - cv.clientWidth / 2, dy = (f.t + f.b) / 2 - H / 2;
   const k = 2 * dist * Math.tan(R3.camera.fov * Math.PI / 360) / H, s = Math.sin(camPitch(dist));
   const rx = Math.cos(CAM.tyaw), rz = -Math.sin(CAM.tyaw), fx = -Math.sin(CAM.tyaw), fz = -Math.cos(CAM.tyaw);
   CAM.tx = x - rx * dx * k + fx * dy * k / s; CAM.tz = z - rz * dx * k + fz * dy * k / s; CAM.tdist = dist;
+}
+// on a phone the card for what was picked covers the bottom of the screen: if the thing itself is under it, slide the view
+function keepInView(t) {
+  if (!t || UI.form() !== 'phone' || CAM.cinematic || $('inspect').hidden) return;
+  const f = viewFree(), p = tourProject(t.x, groundY(t) + 0.3, t.z);
+  if (p.front && p.x > f.l + 24 && p.x < f.r - 24 && p.y > f.t + 24 && p.y < f.b - 24) return;
+  aimAt(t.x, t.z, CAM.tdist, f);
 }
 const _tp = new THREE.Vector3();
 function tourProject(x, y, z) { _tp.set(x, y, z).project(R3.camera); const cv = $('view'); return { x: (_tp.x * 0.5 + 0.5) * cv.clientWidth, y: (0.5 - _tp.y * 0.5) * cv.clientHeight, front: _tp.z < 1 }; }
@@ -11338,14 +11583,17 @@ function tourRender() {
   const box = $('tourw'); if (!box) return;
   if (!TOUR.on) { if (box.innerHTML) { box.innerHTML = ''; box.className = 'tour'; TOUR.sig = ''; UI.layout(); } return; }
   const st = TOUR_STEPS[TOUR.i], mini = $('leftcol').classList.contains('mini'), last = TOUR.i === TOUR_STEPS.length - 1;
-  const sig = [TOUR.i, TOUR.sub, TOUR.ok, TOUR.pre, TOUR.replay, UI.touch, mini].join('|');
+  // on a phone the way out of the tour sits in the heading, so a step with nothing to press is one line shorter
+  const phone = UI.form() === 'phone';
+  const sig = [TOUR.i, TOUR.sub, TOUR.ok, TOUR.pre, TOUR.replay, UI.touch, mini, phone].join('|');
   if (sig === TOUR.sig) return; TOUR.sig = sig;
   const hexes = TOUR_STEPS.map((s, i) => `<svg viewBox="0 0 12 14" class="${i < TOUR.i || (i === TOUR.i && TOUR.ok) ? 'done' : i === TOUR.i ? 'cur' : ''}">${TOUR_HEX}</svg>`).join('');
   const aside = st.aside ? st.aside() : '';
   const next = !TOUR.ok && (st.next || last || TOUR.pre || TOUR.replay);
-  let h = `<div class="th"><b>${st.title}</b>${TOUR.ok ? '<span class="ok">Done</span>' : ''}<span class="steps" role="img" aria-label="Step ${TOUR.i + 1} of ${TOUR_STEPS.length}">${hexes}</span></div>`;
+  const skip = last ? '' : '<button class="skip" data-a="tourSkip">Skip the tour</button>';
+  let h = `<div class="th"><b>${st.title}</b>${TOUR.ok ? '<span class="ok">Done</span>' : ''}<span class="steps" role="img" aria-label="Step ${TOUR.i + 1} of ${TOUR_STEPS.length}">${hexes}</span>${phone ? skip : ''}</div>`;
   h += `<p>${st.text(mini)}</p>${aside ? `<p class="aside">${aside}</p>` : ''}`;
-  if (next || !last) h += `<div class="tb">${next ? `<button class="btn" data-a="tourNext">${last ? 'Start playing' : 'Next'}</button>` : ''}${last ? '' : '<button class="skip" data-a="tourSkip">Skip the tour</button>'}</div>`;
+  if (next || (!last && !phone)) h += `<div class="tb">${next ? `<button class="btn" data-a="tourNext">${last ? 'Start playing' : 'Next'}</button>` : ''}${phone ? '' : skip}</div>`;
   box.innerHTML = h;
   if (TOUR.enter) { TOUR.enter = false; box.classList.remove('enter'); void box.offsetWidth; box.classList.add('enter'); }
   UI.layout();
@@ -11853,7 +12101,7 @@ let lastFrame = 0, simAcc = 0, uiTimer = 0;
 
 function initStaticVisuals() { makeItemMeshes(); makeWalkers(); makeParticles(); makeSkyLife(); makeLife(); makeRain(); }
 function rebuildOverlays() {
-  for (const k of ['mesh', 'grid', 'hover', 'sel', 'arrow', 'arrow2', 'trail']) if (OVER[k]) { R3.scene.remove(OVER[k]); if (OVER[k].geometry && k !== 'sel' && k !== 'arrow2') OVER[k].geometry.dispose(); OVER[k] = null; }
+  for (const k of ['mesh', 'grid', 'hover', 'sel', 'arrow', 'arrow2', 'jMain', 'jSide', 'trail']) if (OVER[k]) { R3.scene.remove(OVER[k]); if (OVER[k].geometry && k !== 'sel' && k !== 'arrow2' && k !== 'jMain' && k !== 'jSide') OVER[k].geometry.dispose(); OVER[k] = null; }
   makeOverlays();
 }
 function clearEntityViews() {
@@ -12016,7 +12264,19 @@ function beginPlay(skipLeader) {
     // halfway through it picks it up again where it stopped
     const ts = tourState();
     if (ts !== 'done' && (!window.__TEST__ || window.__TOUR_TEST__)) {
-      if (S.time < 2) setTimeout(() => { if (!TOUR.on) tourStart(0); }, 1500);
+      // on a phone the opening lines of the chronicle have the screen to themselves before the tour comes in
+      if (S.time < 2) {
+        const t0 = performance.now();
+        const go2 = () => {
+          if (TOUR.on || GAME.mode !== 'play') return;
+          const phone = UI.form() === 'phone';
+          if (phone && (STORY.busy || STORY.queue.length) && performance.now() - t0 < 12000) { setTimeout(go2, 400); return; }
+          // a line still up when the wait runs out fades first, so the tour does not push it down the screen
+          if (phone && $('storyLine').classList.contains('on')) { $('storyLine').classList.remove('on'); setTimeout(() => { if (!TOUR.on && GAME.mode === 'play') tourStart(0); }, 900); return; }
+          tourStart(0);
+        };
+        setTimeout(go2, 1500);
+      }
       else if (ts.startsWith('step:') && S.chapter === 1) setTimeout(() => { if (!TOUR.on) tourStart(+ts.slice(5)); }, 1500);
     }
     if (S.chapterReady) setTimeout(() => { if (GAME.mode === 'play' && $('card').hidden) UI.showChapterCard(S.chapter); }, 1500);
@@ -12031,6 +12291,14 @@ function setAsideSave(src, err) {
 }
 function bindTitle() {
   if (window.matchMedia && window.matchMedia('(pointer: coarse)').matches) { const f = document.querySelector('.titlefoot'); if (f) f.textContent = 'Sound on, if you can. Drag to look around, pinch to zoom.'; }
+  // in Safari on an iPhone or iPad the browser's own bars take a third of the screen; from the Home Screen the game has all of it
+  {
+    const ios = /iPhone|iPod|iPad/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    const standalone = navigator.standalone === true || !!(window.matchMedia && window.matchMedia('(display-mode: standalone)').matches);
+    let framed = true; try { framed = window.self !== window.top; } catch (e) { framed = true; }
+    const tip = $('titleTip');
+    if (tip && ios && !standalone && !framed && document.querySelector('link[rel="manifest"]')) { tip.textContent = 'To play full screen, tap Share, then Add to Home Screen, and open the game from there.'; tip.hidden = false; }
+  }
   $('townInput').addEventListener('input', (ev) => { S.name = ev.target.value.trim() || 'Fernmere'; });
   $('bBegin').onclick = () => {
     AUDIO.unlock();
