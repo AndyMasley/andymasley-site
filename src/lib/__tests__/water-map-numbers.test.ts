@@ -361,6 +361,16 @@ describe('water map: permitted facilities, water systems and irrigated land', ()
     grab(page, /wastewater plants within (750) meters of one of them are the same plant/, 'the 750 meters');
     expect(read('scripts/water-map/bake_sewage.py')).toMatch(/T\['conus'\]\.km < 0\.75\]/);
   });
+  it('the facilities and sewage plants that reported a 2015 flow, and the flows taken to be in the wrong units', () => {
+    const sew = json('public/water-map/data/sewage.json');
+    const [a, b] = grab(page, /([\d,]+) of the facilities and ([\d,]+) of the sewage plants reported one/, 'the reported flows');
+    expect(fac.dmr.length).toBe(fac.names.length);
+    expect(sew.dmr.length).toBe(sew.names.length);
+    expect(fac.dmr.filter((d: any) => d).length).toBe(num(a));
+    expect(sew.dmr.filter((d: any) => d).length).toBe(num(b));
+    const [c] = grab(page, /For ([\d,]+) of them the flow is far too large for the place/, 'the flows in the wrong units');
+    expect(fac.dmr.filter((d: any) => d && d[3]).length + sew.dmr.filter((d: any) => d && d[3]).length).toBe(num(c));
+  });
   it('the county panels\' irrigated acreage from LANID is on the lower 48 only', () => {
     const cd = json('public/water-map/data/county_data.json');
     cd.forEach((c: any, i: number) => { if (c && c.lanid_km2 != null) expect(['AK', 'HI', 'PR', 'VI'], wu.id[i]).not.toContain(wu.st[i]); });

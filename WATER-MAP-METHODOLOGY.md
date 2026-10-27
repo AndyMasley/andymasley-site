@@ -51,6 +51,8 @@ estimated it for in 2015.
 | Land cover | NLCD (MRLC): 2021 lower 48, 2016 Alaska, 2001 Hawaii and Puerto Rico | Land color, city lights, painted fields |
 | Irrigated land, 2015 | LANID, the Landsat-based Irrigation Dataset (Xie, Gibbs and Lark, 2021, Earth System Science Data 13: 5689–5710), data version 3, Zenodo doi 10.5281/zenodo.5548555 | Where the lower 48 was irrigated, the fields crop water ends on, each county's irrigated acreage seen from space (section 13), and the fields drawn up close (section 17) |
 | Permitted dischargers | EPA ECHO data downloads, October 25, 2026: ICIS-NPDES Discharge Points (`npdes_outfalls_layer.zip`) and the ECHO Exporter (`echo_exporter.zip`) | Factories, mines, fish farms and farms with an individual discharge permit (section 14), and sewage plants (section 16) |
+| Discharge monitoring reports | EPA ECHO data downloads, October 27, 2026: ICIS-NPDES DMR data sets for fiscal 2015 and 2016 (`npdes_dmrs_fy2015.zip`, `npdes_dmrs_fy2016.zip`) | What each of those facilities and sewage plants discharged in 2015 (section 18) |
+| Crops, 2015 | USDA National Agricultural Statistics Service, Cropland Data Layer 2015, national 30 m file (`2015_30m_cdls.zip`, the edition published in February 2022) | What the irrigated fields grew (section 17) |
 | Public water systems | Buchwald and others (2022), Public-supply water service areas within the conterminous United States, 2017, USGS data release doi 10.5066/P9I22Z24 (`WSA_v1`) | The public water systems listed for each county, their outlines, and where public supply ends (section 15) |
 | Terrain | NOAA ETOPO 2022, 15 arc-seconds | Relief, exaggerated 24 times for the whole country, about 2 times up close |
 
@@ -235,8 +237,9 @@ disagrees with the data it comes from: the national total, the shares in the led
 exaggeration, the systems moved between counties, Imperial County's irrigation against Reclamation, every canal flow's
 unit conversion, the data center conversions, the discs' count, Konikow's High Plains depletion, the trends chart,
 the High Plains water levels against the map's grid, the strain index, the five-year history against the trends table,
-the ZIP lookup, the common questions, and the counts of permitted facilities and water systems the page gives
-(sections 14 and 15). `src/lib/__tests__/water-map-drop.test.ts` checks Follow a drop (section 12).
+the ZIP lookup, the common questions, the counts of permitted facilities and water systems the page gives
+(sections 14 and 15), and the counts of facilities and sewage plants that reported a 2015 flow and of flows taken to
+be in the wrong units (section 18). `src/lib/__tests__/water-map-drop.test.ts` checks Follow a drop (section 12).
 
 `scripts/water-map/check_plants.mjs` lists every plant the map credits with more than ten times its own plant-model
 estimate. On 2026-10-26 it lists 22, nine of them above 50 Mgal/d: W A Parish (TX), Gerald Gentleman (NE), Stryker
@@ -471,7 +474,7 @@ permits, then by permit number (`ind`, `mine` and `fish` anchors; 1,395, 823 and
 without them keep the old places: developed land for industry, the county's land for mining, its rivers for fish
 farms. Livestock water stays on the county's farmland, since the permitted farms are a small and uneven share of the
 country's livestock. USGS gives no figure for any one facility, so a facility's panel shows its county's water for
-the use.
+the use. What a facility reported discharging in 2015 is in its panel too (section 18).
 
 ## 15. Public water systems
 
@@ -532,7 +535,8 @@ almost nothing), so the check is against people instead: a flow over 3,000 gallo
 or over 1 Mgal/d where fewer than 333 people live, is flagged as probably in the wrong units. Ten are: eight in South
 Carolina recorded in gallons a day (Sumter's Pocotaligo River plant at 24,000,000), Grand Isle in Maine (80,000) and
 Bernice in Louisiana (603). Their panels give the figure with that warning, and the map sizes them as if no flow were
-recorded.
+recorded. USGS has no figure for what a sewage plant returns, so the panel gives the design flow, and beside it what the
+plant reported discharging in 2015 (section 18).
 
 OpenStreetMap maps 14,221 wastewater plants (section 2). The 5,379 of them within 750 m of one of these plants or its
 outfalls are the same plants mapped twice, and the map leaves them out so each shows once. The rest stay under
@@ -542,20 +546,91 @@ EPA's list of individual permits.
 ## 17. Irrigated fields up close
 
 Closer than about 24 world units (some 120 km), the lower 48's irrigated land is drawn from LANID itself rather than
-from the 262 m close-up grid (section 13). `scripts/water-map/fields_fine.py`, run where `lanid2015.tif` was
-downloaded, resamples it onto the lower-48 slab's texture grid at 12 times the colour texture's resolution, about
-65.5 m a pixel (73,728 by 47,868 pixels), so a center pivot about 800 m across is a disc a dozen pixels wide. Each
-output pixel projects its centre into EPSG:5070 (the slab's own spherical conic inverted, then the NAD83 Albers
-equations, which agree with PROJ to a nanometre) and takes the 30 m pixels under a box 65.5 m wide around it, weighted
-by how much of each the box covers; its level is the irrigated share of that box in eighths. The pixels are cut into
-2,048-pixel sheets, and the 483 sheets with any irrigated land are kept (`fields_lanid.tar`, 36,997,120 bytes, sha256
+from the 262 m close-up grid (section 13). `scripts/water-map/fields_fine.py`, run where `lanid2015.tif` was downloaded,
+resamples it onto the lower-48 slab's texture grid at 12 times the colour texture's resolution, about 65.5 m a pixel
+(73,728 by 47,868 pixels), so a center pivot about 800 m across is a disc a dozen pixels wide. Each output pixel
+projects its centre into EPSG:5070 (the slab's own spherical conic inverted, then the NAD83 Albers equations, which
+agree with PROJ to a nanometre) and takes the 30 m pixels under a box 65.5 m wide around it, weighted by how much of
+each the box covers; its level is the irrigated share of that box in eighths. The pixels are cut into 2,048-pixel
+sheets, and the 483 sheets with any irrigated land are kept (`fields_lanid.tar`, 36,997,120 bytes, sha256
 `1c8157d8eb4d57ba520f812da4f32a9cf82e54dba5441e7c49c329746f2ee955`). They add up to 246,581 km² of irrigated land,
 against 246,724 km² for LANID's 274,138,269 pixels; county by county they agree with the 240 m counts to within 5.3 km².
-`scripts/water-map/bake_fields.py` writes them as lossless WebP (24 MB in all), loaded 512-pixel tile by tile around the
-view (`src/lib/water-map/world/fields.js`).
+`scripts/water-map/bake_fields.py` writes them as lossless WebP (31 MB in all, with the crops below), loaded 512-pixel
+tile by tile around the view (`src/lib/water-map/world/fields.js`).
 
 The terrain shader draws the irrigated land from these tiles where they are loaded, with edges smoothed between the
 pixels, and no longer paints its own pivots, orchards and furrows there; finer than 65 m it adds only texture (crop
-rows, orchard trees). Each byte keeps five bits for the crop the land grew, for the Cropland Data Layer: until it is
-added they are 0 and the fields are drawn in one irrigated green. Fields that were not irrigated, which LANID does not
-map, are still painted in the survey's mile grid on NLCD cropland.
+rows, orchard trees). Fields that were not irrigated, which LANID does not map, are still painted in the survey's mile
+grid on NLCD cropland.
+
+The five low bits of each byte keep what the land grew in 2015, by the USDA's Cropland Data Layer (`2015_30m_cdls.zip`,
+1,807,983,697 bytes, holding `2015_30m_cdls.tif`, 2,958,731,075 bytes, CRC-32 `3441c38a`, sha256
+`68baf627c1537f870086be4cfea907b527b96465071041326e8a2453f69c2cbc`; the edition NASS published in February 2022), also
+30 m in EPSG:5070. Its classes are sorted into 29 groups (`CROPS` in `fields_fine.py`; a double crop goes with its first
+crop). `fields_fine.py` can take the crop in the same pass as LANID, counting only the pixels LANID calls irrigated, but
+the two were downloaded on different computers, so `scripts/water-map/fields_crops.py` added the crops afterwards where
+the Cropland Data Layer was. For every pixel of a published sheet with irrigated land, it weighs the Cropland Data
+Layer's pixels under the same 65.5 m box and takes the group with the most weight among the crops, fallow land and grass
+and pasture, or, where there are none of those, among developed land, woods, wetland and water. Inside a field the two
+ways agree. At a field's edge the land beside it counts too, so an edge pixel can take the crop of the field next to it.
+The crops were packed for the move (`crops.xz`, 10,459,604 bytes, sha256
+`98c63fb57272e6e4e80763cee2a2e586314a193bda7236c8a011c598b667d0b2`), unpacked against the published sheets by
+`scripts/water-map/bake_crops.py`, and written into the tiles by `bake_fields.py`. By this measure the lower 48's
+irrigated land in 2015 was 24 percent corn (58,702 km²), 18 percent soybeans, 12 percent alfalfa, 8 percent wheat, 6
+percent grass and pasture and 4 percent cotton, and 3 percent of it lay fallow or idle; almonds took 4,609 km² (1.14
+million acres).
+
+The terrain shader colors each field by its crop and, finer than 65 m, draws rows, orchard trees, vines, flooded rice or
+bare ground by the kind of crop; the tooltip names the crop under the pointer. `bake_fields.py` also sums each county's
+irrigated land by crop (`proc/net/county_fields.json`), and `bake_crops.py --counties` puts up to six crops that each
+hold at least 1 percent of it, with the rest as other, into `county_data.json` (`crops`) for the 2,041 counties with at
+least 0.5 km² of irrigated land. The county panel shows them as shares, and so does the flat map.
+
+## 18. What the permits reported for 2015
+
+A permit holder reports what it discharged on discharge monitoring reports, and EPA publishes them by fiscal year:
+`npdes_dmrs_fy2015.zip` (400,858,399 bytes, sha256 `a110790ebf5319fc0bd9a98579e780df590286741867e202913f639119cdb5b6`,
+holding `NPDES_DMRS_FY2015.csv`, 6,356,839,650 bytes, CRC-32 `f5f881c0`) and `npdes_dmrs_fy2016.zip` (463,653,275 bytes,
+sha256 `7376c317238e3e969965a71557d9d4bd197a86df865ceede13708b2d36c7dbc9`, holding `NPDES_DMRS_FY2016.csv`,
+7,341,011,632 bytes, CRC-32 `17091a14`), downloaded October 27, 2026. A fiscal year runs from October to September, so
+the two hold calendar 2015 between them. `scripts/water-map/npdes_dmr_flows.py`, run where they were downloaded, keeps
+every value of parameter 50050 (flow, in conduit or through treatment plant) for a monitoring period that ended in 2015:
+1,198,346 values from 41,671 permits, all in millions of gallons a day (`dmr_flow_2015.csv.gz`, 5,327,860 bytes, sha256
+`7744ee1e86452d356dc7dce37b65e77525948070299febcc72be43abe3e9a215`).
+
+`scripts/water-map/bake_dmr.py` keeps each outfall's monthly average for its effluent. That is the values whose
+statistical base ECHO's reference table marks as a monthly average (`REF_STATISTICAL_BASE.csv`, 8,218 bytes, sha256
+`c5fbb9b2031606770953ed579382a99cdd815d327a5ca18eb97cf8eaddd6fcc3`: codes DA, DB, MK, ML, MM, M4, 3A, 3B, 3C, 3D, 3F and
+3H, the monthly, 30-day and daily averages, arithmetic or geometric), at monitoring locations 1, EG and Y (effluent
+gross), from external outfalls (feature type EXO). Daily maximums, influent, internal outfalls and sums of outfalls are
+left out. Where an outfall reported more than one monthly average for a month, the largest is taken. A month reported as
+no discharge (NODI code C) counts as no flow, and values missing for any other reason are left out. A permit's flow in a
+month is the sum over its outfalls, and its 2015 flow is the mean over the months it reported. 30,223 permits have one
+(`dmr_flows.json`, sha256 `7d9ae23497fa324111b9959cf70378eeb60719a70b5b63a8af60eef6f4d14a3f`), 19,148 of them for all
+twelve months.
+
+`scripts/water-map/bake_dmr_join.py` joins them by permit number to the facilities (section 14) and sewage plants
+(section 16) and writes `dmr` into `npdes.json` and `sewage.json`: for each point its flow, the months and outfalls it
+reported, and flags. 2,971 of the 9,071 facilities and 10,511 of the 16,518 sewage plants reported a flow, and 313
+facilities and 520 plants reported no discharge in every month they reported.
+
+Some reported figures are impossibly large, most likely entered in gallons a day where the form asks for millions. A
+flow is taken to be in the wrong units when, for a facility, it is more than ten times all the water USGS counted for
+its county in 2015 (the test for design flows in section 14) or more than a thousand times the facility's own design
+flow (a factory's design flow often covers only its process water, so smaller multiples are no sign of error). For a
+sewage plant the tests are more than 3,000 gallons a day for everyone in its county or 1 Mgal/d where fewer than 333
+people live (the test in section 16), more than ten times its design flow, or more than 10 Mgal/d from a plant on a
+minor permit with no design flow of 10 Mgal/d or more, since EPA counts as major every sewage plant built for 1 Mgal/d
+or serving 10,000 people. Combined sewer overflow and retention treatment facilities, which treat only storm flows, are
+not held to that last test. 53 facilities and 132 sewage plants fail one of them, 185 in all, and their panels give the
+figure with the warning and not as a measured flow. The largest is a CertainTeed plant in Norwood, Massachusetts, at
+just over a billion Mgal/d; among sewage plants it is Kennett, Missouri, at 779,167.
+
+The rest of the facilities that reported a flow discharged 16,788 Mgal/d between them, and the rest of the sewage plants
+21,953. Of the 8,437 sewage plants with both a design flow and a believable reported flow above zero, the median plant
+discharged 48 percent of its design flow, and 589 discharged more than it; of the 872 such facilities the median
+discharged 53 percent, and 189 more than their design flow. A reported flow is what left through the outfalls: for a
+sewage plant it includes storm water and groundwater that get into the sewers, and for a factory it can include storm
+water and once-through cooling water. It is not what USGS counted as withdrawn, and the map's flows still follow the
+USGS county figures. A facility or plant with no reported flow may not have had to measure its flow, may have held a
+different permit in 2015, or may have sent its reports to a state whose records did not reach EPA's system.

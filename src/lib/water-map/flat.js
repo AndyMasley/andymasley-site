@@ -39,7 +39,7 @@ export async function startFlatMap(root, { dataBase = '/water-map/data/', reason
   for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { const c = ids[y * W + x]; if (c >= 0 && c < n) { cx[c] += x; cz[c] += y; cn[c]++; } }
   for (let c = 0; c < n; c++) if (cn[c]) { cx[c] /= cn[c]; cz[c] /= cn[c]; }
   const area = (i) => (cdata[i] && cdata[i].area > 0 ? cdata[i].area / 2.58999 : 0);   // square miles
-  let strain = null, history = null, systems = null;
+  let strain = null, history = null, systems = null, cropNames = null;
 
   // ---- the page: a map, a panel beside it, a lens picker and a search box
   for (const el of stage.children) el.hidden = true;
@@ -157,6 +157,12 @@ export async function startFlatMap(root, { dataBase = '/water-map/data/', reason
     // (as in the 3D map's panel: the irrigated land a satellite map shows, and the water systems serving it)
     const lk = cdata[i] && cdata[i].lanid_km2;
     if (lk >= 0.5) html += `<p class="wm-note">A satellite map of irrigated land (LANID; Xie, Gibbs and Lark, 2021) shows about ${nf(Math.round(lk * 247.105 / 100) * 100)} acres irrigated here in 2015${c.acres.ir > 0 ? `, where USGS counted ${nf(c.acres.ir * 1000)} acres` : ''}.</p>`;
+    const cr = lk >= 0.5 && cdata[i] && cdata[i].crops;
+    if (cr && cr.length && cropNames) {
+      const tot = cr.reduce((a, r) => a + r[1], 0);
+      const items = cr.map(([g, k]) => `${g > 0 ? esc(cropNames[g].toLowerCase()) : 'other land'} (${Math.max(1, pct(k, tot))}%)`);
+      html += `<p class="wm-note">In the USDA Cropland Data Layer for 2015, that land is ${items.length > 1 ? `${items.slice(0, -1).join(', ')} and ${items[items.length - 1]}` : items[0]}.</p>`;
+    }
     const sys = systems && systems.by[i];
     if (sys && sys.length) html += `<h5>Public water systems</h5><p class="wm-sub">${sys.map(([k, sh]) => { const [nm, , pop] = systems.sys[k]; return `${esc(nm)}, serving ${pop >= 1e6 ? `${nf(pop / 1e6, 1)} million` : nf(pop)} people${sh < 0.9 ? ' here and in other counties' : ''}`; }).join('; ')}.</p><p class="wm-note">The systems serving the most people here, from the USGS map of water service areas (Buchwald and others, 2022).</p>`;
     html += `<p class="wm-note">Million gallons a day, USGS county estimates for 2015.</p>`;
@@ -232,6 +238,7 @@ export async function startFlatMap(root, { dataBase = '/water-map/data/', reason
   fetchJSON('strain.json').then((s) => { strain = s; if (sel >= 0) showCounty(sel); }).catch(() => {});
   fetchJSON('history.json').then((h) => { history = h; if (sel >= 0) showCounty(sel); }).catch(() => {});
   fetchJSON('water_systems.json').then((j) => { systems = j; if (sel >= 0) showCounty(sel); }).catch(() => {});
+  fetchJSON('fields/manifest.json').then((j) => { cropNames = j.crops; if (sel >= 0) showCounty(sel); }).catch(() => {});
   key(); select(-1, false);
   root.dataset.ready = 'true';
   return { dispose() { ro.disconnect(); wrap.remove(); for (const el of stage.children) el.hidden = false; stage.classList.remove('wm-stage-flat'); } };

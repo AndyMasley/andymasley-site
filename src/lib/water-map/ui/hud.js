@@ -24,6 +24,23 @@ const CROP_WORDS = { Corn: 'corn', Soybeans: 'soybeans', Cotton: 'cotton', Rice:
   'Fallow or idle': 'fallow or idle', 'Grass and pasture': 'grass or pasture', 'Developed land': 'lawns or parks', 'Woods, wetland or other natural cover': 'woods or wetland', 'Open water': 'water' };
 const sw = (c) => `<i class="wm-sw" style="background:${c}"></i>`;
 const CONSUMED_WHITE = '#f4f1ea';
+// a reported flow in words, down to the 100 gallons a day the reports are rounded to (vol rounds to thousands)
+const flowWords = (v) => (v >= 0.001 ? vol(v) : `${nf(Math.round(v * 1e6))} gallons a day`);
+// a flow among a panel's figures: Mgal/d, or gallons a day under a tenth of a million
+const flowTxt = (v) => (v >= 0.1 ? `${mgd(v)} Mgal/d` : flowWords(v));
+/** what a permit's 2015 discharge monitoring reports say: dm = [Mgal/d, months, outfalls, flags] (scripts/water-map/bake_dmr_join.py) */
+function dmrNote(dm, c, sewage) {
+  const [v, months, outs, fl] = dm;
+  const when = months >= 12 ? 'every month of 2015' : `${months} ${months === 1 ? 'month' : 'months'} of 2015`;
+  if (fl) {
+    const why = fl & 2 ? `more than ${sewage ? 'ten' : 'a thousand'} times its design flow`
+      : fl & 4 ? 'though it holds a minor permit, which EPA gives only to plants built for less than a million gallons a day that serve fewer than 10,000 people'
+      : c ? (sewage ? `far more than a plant could treat for everyone in ${esc(c.name)}` : `more than ten times all the water USGS counted for ${esc(c.name)} in 2015`) : '';
+    return `Its reports to EPA for ${when} average ${esc(vol(v))}${why ? `, ${why}` : ''}, so the figure is probably in the wrong units in the record.`;
+  }
+  if (!(v > 0)) return `Its reports to EPA for ${when} say it discharged nothing.`;
+  return `The measured flow is the average of the monthly averages it reported to EPA for ${when}${outs > 1 ? `, added up over the ${nf(outs)} outfalls in its reports` : ''}${sewage ? '. It is what the plant discharged, including storm water and groundwater that get into the sewers' : ''}.`;
+}
 /** "mostly from the High Plains aquifer", from a county's [[index, name, Mgal/d], ...] list (Lovelace and others, 2020) */
 function aquiferWords(aq) {
   if (!aq || !aq.length) return '';
@@ -920,6 +937,13 @@ export class Hud {
     if (c.acres.go > 0) kv.push(['Irrigated golf courses', `${nf(c.acres.go * 1000)} acres`]);
     if (kv.length) html += `<h5>Consumed, delivered and irrigated</h5><div class="wm-kv">${kv.map(([a, b]) => `<span>${a}</span><span>${b}</span>`).join('')}</div>` + ptNote;
     if (lk >= 0.5) html += `<p class="wm-note">The acreage seen from space comes from LANID, a map of the land irrigated in 2015 made from Landsat images (Xie, Gibbs and Lark, 2021). Its fields are the ones tinted green on the map${lk >= 1 ? ', and the county’s crop water ends on them' : ''}.</p>`;
+    // (what that land grew in 2015, by the Cropland Data Layer: crops [[group, km2], ...], the rest last as group 0)
+    const cr = lk >= 0.5 && m.cdata[i] && m.cdata[i].crops, cn = this.app.fieldCrops;
+    if (cr && cr.length && cn) {
+      const tot = cr.reduce((a, r) => a + r[1], 0), top = Math.max(...cr.map((r) => r[1]));
+      html += `<h5>What the irrigated land grew</h5><div class="wm-bars">${cr.map(([g, k]) => `<div class="wm-cbar"><span>${esc(g > 0 ? cn[g] : 'Other')}</span><span class="wm-t"><i style="width:${(100 * k / Math.max(1e-9, top)).toFixed(1)}%"></i></span><span class="wm-v">${shareTxt(k / tot)}</span></div>`).join('')}</div>
+        <p class="wm-note">Shares of the land LANID shows was irrigated in 2015, by what the USDA Cropland Data Layer says grew on it that year. Zoom in close to see the fields in the colors of their crops.</p>`;
+    }
     if (!c.split && c.W.ir > 0) html += `<p class="wm-note">USGS reported ${esc(stName)}'s crop and golf irrigation as one number, shown here as crops.</p>`;
     if (aq && aq.length) {
       const tot = aq.reduce((s, r) => s + r[2], 0);
@@ -981,8 +1005,14 @@ export class Hud {
     const top = ids.slice().sort((a, b) => f(b) - f(a) || (S.flags[b] & 1) - (S.flags[a] & 1)).slice(0, 5);
     const list = L.names ? top.map((j) => `<button type="button" class="wm-li" data-sew="${j}"><span>${esc(L.names[j])}<small>${M.water[j] && M.water[j].length ? `to ${esc(M.water[j][0])}` : esc(M.place[j] || '')}</small></span><span>${f(j) ? mgd(f(j)) : ''}</span></button>`).join('') : '';
     const tot = ids.reduce((a, j) => a + f(j), 0);
+    // what the plants that reported to EPA for 2015 discharged (bake_dmr_join.py), leaving out flows in the wrong units
+    const D = M && M.dmr, rep = D ? ids.filter((j) => D[j] && !D[j][3]) : [], meas = rep.reduce((a, j) => a + D[j][0], 0);
+    const bad = D ? ids.filter((j) => D[j] && D[j][3]).length : 0, amount = meas > 0 ? `${flowWords(meas)}${rep.length > 1 ? ' between them' : ''}` : 'nothing';
+    const measured = !rep.length ? '' : rep.length === ids.length
+      ? ` ${ids.length === 1 ? 'It' : 'They'} discharged ${amount} in 2015, by ${ids.length === 1 ? 'its' : 'their'} own monthly reports to EPA.`
+      : ` The ${rep.length === 1 ? 'one' : nf(rep.length)} that reported a flow to EPA for 2015 discharged ${amount} that year.${bad ? ` ${bad === 1 ? 'Another reported a flow that is' : `${nf(bad)} others reported flows that are`} probably in the wrong units.` : ''}`;
     return `<h5>Sewage plants with EPA permits</h5>${list ? `<div class="wm-list">${list}</div>` : ''}
-      <p class="wm-note">${ids.length === 1 ? 'One sewage plant here holds' : `${nf(ids.length)} sewage plants here hold`} an individual EPA discharge permit${tot > 0 ? `, built to treat ${mgd(tot)} million gallons a day between them` : ''}. ${list && top.some((j) => f(j)) ? 'The figures are design flows, what each plant was built to treat.' : ''}</p>`;
+      <p class="wm-note">${ids.length === 1 ? 'One sewage plant here holds' : `${nf(ids.length)} sewage plants here hold`} an individual EPA discharge permit${tot > 0 ? `, built to treat ${mgd(tot)} million gallons a day${ids.length > 1 ? ' between them' : ''}` : ''}.${measured} ${list && top.some((j) => f(j)) ? 'The figures are design flows, what each plant was built to treat.' : ''}</p>`;
   }
   /** the public water systems that serve a county (USGS service areas), the most people served there first */
   sysBlock(i) {
@@ -1138,10 +1168,13 @@ export class Hud {
       <p class="wm-sub">${what ? `${esc(what)} · ` : ''}${esc(place)}${c && !place.includes(c.name) ? ` · ${esc(c.name)}` : ''}</p>`;
     const kv = [['Permit', `${esc(permit)}${major ? ' (major)' : ''}`]];
     if (water.length) kv.push(['Discharges to', esc(water.join('; '))]);
+    const dm = M.dmr ? M.dmr[i] : 0;
     if (flow > 0 && !bad) kv.push(['Design flow', `${mgd(flow)} Mgal/d`]);
+    if (dm && !dm[3]) kv.push(['Measured flow, 2015', dm[0] > 0 ? flowTxt(dm[0]) : 'No discharge']);
     html += `<div class="wm-kv">${kv.map(([a, b]) => `<span>${a}</span><span>${b}</span>`).join('')}</div>`;
     if (flow > 0 && !bad) html += `<p class="wm-note">The design flow is what the permit says the facility was built to discharge, which can be well above what it uses.</p>`;
     if (bad && c) html += `<p class="wm-note">EPA's record gives a design flow of ${esc(nf(flow))} million gallons a day, more than ten times all the water USGS counted for ${esc(c.name)} in 2015, so the figure or the facility's location is probably wrong in the record.</p>`;
+    if (dm) html += `<p class="wm-note">${dmrNote(dm, c, false)}</p>`;
     // its county's water for the use: USGS has no figure for one facility
     if (c) {
       const W = c.W[cat] || 0;
@@ -1174,10 +1207,13 @@ export class Hud {
     if (OWN[own]) kv.push(['Owner', OWN[own]]);
     if (water.length) kv.push([nout > 1 ? 'Discharges to' : 'Discharges to', esc(water.join('; '))]);
     if (nout > 1) kv.push(['Outfalls', nf(nout)]);
+    const dm = M.dmr ? M.dmr[i] : 0;
     if (flow > 0 && !(fl & 2)) kv.push(['Design flow', `${mgd(flow)} Mgal/d`]);
+    if (dm && !dm[3]) kv.push(['Measured flow, 2015', dm[0] > 0 ? flowTxt(dm[0]) : 'No discharge']);
     html += `<div class="wm-kv">${kv.map(([a, b]) => `<span>${a}</span><span>${b}</span>`).join('')}</div>`;
     if (flow > 0 && !(fl & 2)) html += `<p class="wm-note">The design flow is what the plant was built to treat on an average day. What it treats is usually less, and more after heavy rain where storm water runs into the sewers.</p>`;
     if (fl & 2 && c) html += `<p class="wm-note">EPA's record gives a design flow of ${esc(nf(flow))} million gallons a day, far more than a plant could treat for everyone in ${esc(c.name)}, so the figure is probably in the wrong units in the record.</p>`;
+    if (dm) html += `<p class="wm-note">${dmrNote(dm, c, true)}</p>`;
     const named = M.named && M.named[i] != null ? M.named[i] : -1;
     if (named >= 0 && c) { const nc = this.m.county(named); html += `<p class="wm-note">EPA's permit names ${esc(nc.name)}, ${esc(this.app.stateName(nc.st))}, but its coordinates put it in ${esc(c.name)}, so one of the two is probably wrong in the record. The map goes by the coordinates.</p>`; }
     if (fl & 4) html += `<p class="wm-note">EPA has no location for the plant itself, so the map puts it at its first outfall.</p>`;

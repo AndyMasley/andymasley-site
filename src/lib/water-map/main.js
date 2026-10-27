@@ -543,6 +543,8 @@ export async function startWaterMap(root, { dataBase = '/water-map/data/', lite 
   const app = {
     model, flows, rivers, plants, controls, shared, CHORO, setChoro, stateList, aquifers, nlcd, canvas, stage, sound,
     dams: null, osm: null, fac: null, sew: null, damCounty: null, damsByCounty: null,
+    // the crop groups of the 65 m fields (fields/manifest.json), for the county panels' crops
+    fieldCrops: fields.crops,
     night: false, underground: false, iso: null, expanded: false, _home: () => home,
     // ZIP codes (the Census Bureau's 2020 ZIP code tabulation areas), each with the county holding most of its land
     // (zips.json, from scripts/water-map/bake_zips.py); fetched the first time someone types five digits
