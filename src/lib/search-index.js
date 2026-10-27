@@ -212,13 +212,16 @@ export async function buildSearchIndex() {
     });
   }
 
-  // Every game from its registry; the games are static pages, so there is
-  // no .astro source to read their text from.
+  // Every game from its registry. Games copied in as static pages have no
+  // .astro source to read their text from; the site's own (the Webster
+  // drive) do.
   for (const game of games) {
     searchIndex.push({
       title: game.title,
       description: game.description,
-      content: [game.description, game.searchTerms || ''].join(' ').trim(),
+      content: [game.description, game.searchTerms || '', game.astro ? extractAstroContent(game.astro, 8000) : '']
+        .join(' ')
+        .trim(),
       type: 'game',
       url: game.href,
       tags: [],

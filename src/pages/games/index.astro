@@ -12,10 +12,9 @@ import { games } from '@/data/games';
     {games.map(g => (
       <li class="annotated-list__item">
         <div class="annotated-list__row">
-          {/* each game is its own full-screen page, outside the site's page transitions */}
-          <a href={g.href} class="annotated-list__title" data-astro-reload>{g.title}</a>
+          {/* a game copied in under /games/ is its own full-screen page, outside the site's page transitions */}
+          <a href={g.href} class="annotated-list__title" data-astro-reload={g.astro ? undefined : true}>{g.title}</a>
         </div>
-        <p class="annotated-list__note">{g.description}</p>
       </li>
     ))}
   </ul>
